@@ -998,7 +998,7 @@ void check_model_local_functions(
   for (const auto& function_proto : model.functions()) {
     for (const auto& opset_import : function_proto.opset_import()) {
       if (get_version_for_domain(opset_import.domain(), model_opset_imports) == -1) {
-        model_opset_imports[opset_import.domain()] = opset_import.version();
+        model_opset_imports[opset_import.domain()] = static_cast<int>(opset_import.version());
       }
     }
   }

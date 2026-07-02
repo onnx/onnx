@@ -1992,10 +1992,10 @@ static void einsumShapeInference(ONNX_NAMESPACE::InferenceContext& ctx, std::str
 
   // Parse the left-hand side
   std::stringstream str(left_equation);
-  std::map<char, size_t> label_maps;
+  std::map<char, int> label_maps;
   std::unordered_set<char> repeated_labels;
   ONNX_NAMESPACE::TensorShapeProto dims_value, ellipsis_dims_value;
-  size_t num_labels = 0;
+  int num_labels = 0;
   bool ellipsis_flag = true;
 
   while (!str.eof()) {
@@ -2045,12 +2045,12 @@ static void einsumShapeInference(ONNX_NAMESPACE::InferenceContext& ctx, std::str
         if (ellipsis_flag) {
           ellipsis_flag = false;
           for (size_t i = 0; i < ellipsis_dims; i++) {
-            *ellipsis_dims_value.add_dim() = shape.dim(index + i - num_illegal_char);
+            *ellipsis_dims_value.add_dim() = shape.dim(static_cast<int>(index + i - num_illegal_char));
           }
         } else {
           for (size_t i = 0; i < ellipsis_dims; i++) {
-            const auto shape_dim = shape.dim(index + i - num_illegal_char);
-            auto* const current_dim = ellipsis_dims_value.mutable_dim(i);
+            const auto shape_dim = shape.dim(static_cast<int>(index + i - num_illegal_char));
+            auto* const current_dim = ellipsis_dims_value.mutable_dim(static_cast<int>(i));
             if (shape_dim.has_dim_value() && current_dim->has_dim_value() &&
                 shape_dim.dim_value() > current_dim->dim_value() && current_dim->dim_value() == 1) {
               current_dim->set_dim_value(shape_dim.dim_value());
@@ -2068,7 +2068,7 @@ static void einsumShapeInference(ONNX_NAMESPACE::InferenceContext& ctx, std::str
 
       const auto inserted = label_maps.emplace(term[index], num_labels).second;
       if (inserted) {
-        *dims_value.add_dim() = shape.dim(index + ellipsis_dims - num_illegal_char);
+        *dims_value.add_dim() = shape.dim(static_cast<int>(index + ellipsis_dims - num_illegal_char));
         ++num_labels;
       } else {
         repeated_labels.insert(term[index]);
@@ -2104,7 +2104,7 @@ static void einsumShapeInference(ONNX_NAMESPACE::InferenceContext& ctx, std::str
       // If there's an ellipsis, add its corresponding dimensions
       if (index == right_ellipsis_index) {
         for (size_t i = 0; i < num_ellipsis_indices; i++) {
-          *output_shape.add_dim() = ellipsis_dims_value.dim(i);
+          *output_shape.add_dim() = ellipsis_dims_value.dim(static_cast<int>(i));
         }
         index += 2; // skip the rest of dots
         continue;
@@ -2117,7 +2117,7 @@ static void einsumShapeInference(ONNX_NAMESPACE::InferenceContext& ctx, std::str
   } else { // Infer the dimension for right-hand side
     // If there's an ellipsis, add its corresponding dimensions
     for (size_t i = 0; i < num_ellipsis_indices; i++) {
-      *output_shape.add_dim() = ellipsis_dims_value.dim(i);
+      *output_shape.add_dim() = ellipsis_dims_value.dim(static_cast<int>(i));
     }
     // If no explicit output was given, generate an implicit output by ordering all the
     // labels in alphabetic order (by ASCII value consistent with numpy, so Z < a).
@@ -2649,7 +2649,7 @@ Generates a {name} window as described in the paper https://ieeexplore.ieee.org/
     schema.TypeAndShapeInferenceFunction([](ONNX_NAMESPACE::InferenceContext& ctx) {
       // Update the output data type to the output_datatype
       auto output_datatype = getAttribute(ctx, "output_datatype", static_cast<int64_t>(TensorProto_DataType_FLOAT));
-      updateOutputElemType(ctx, 0, output_datatype);
+      updateOutputElemType(ctx, 0, static_cast<int32_t>(output_datatype));
 
       if (!hasInputShape(ctx, 0)) {
         // If no shape is available for the input, skip shape inference.

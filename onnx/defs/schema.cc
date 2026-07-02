@@ -115,8 +115,8 @@ OpSchemaRegistry* OpSchemaRegistry::Instance() {
 void OpSchema::CheckInputOutputType(struct InferenceContext& ctx) const {
   std::unordered_map<std::string, std::string> type_constraints;
   // Check the number of inputs / output.
-  VerifyInputNum(ctx.getNumInputs());
-  VerifyOutputNum(ctx.getNumOutputs());
+  VerifyInputNum(static_cast<int>(ctx.getNumInputs()));
+  VerifyOutputNum(static_cast<int>(ctx.getNumOutputs()));
 
   // check all input types
   for (size_t in_idx = 0; in_idx < ctx.getNumInputs(); ++in_idx) {
@@ -1531,7 +1531,7 @@ OpSchema::NodeDeterminism OpSchema::GetNodeDeterminism() const {
       const OpSchemaRegistry& reg = *OpSchemaRegistry::Instance();
       std::unordered_map<std::string, int> domain_to_opset_version;
       for (const auto& opset : func_proto->opset_import()) {
-        domain_to_opset_version[opset.domain()] = opset.version();
+        domain_to_opset_version[opset.domain()] = static_cast<int>(opset.version());
       }
       for (const NodeProto& n : func_proto->node()) {
         const int opset = domain_to_opset_version[n.domain()];

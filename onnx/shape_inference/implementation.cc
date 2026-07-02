@@ -830,7 +830,7 @@ void InferShapes(
       model_local_functions_by_id,
       schema_registry,
       generated_shape_data_by_name,
-      m.ir_version());
+      static_cast<int>(m.ir_version()));
 }
 
 void InferShapes(

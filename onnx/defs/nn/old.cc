@@ -213,10 +213,10 @@ static void convPoolShapeInference_opset19(
         int64_t residual = 0;
         int64_t stride = strides[i];
         if (stride > 1) {
-          if (!input_shape.dim(2 + i).has_dim_value()) {
+          if (!input_shape.dim(static_cast<int>(2 + i)).has_dim_value()) {
             continue;
           }
-          residual = input_shape.dim(2 + i).dim_value();
+          residual = input_shape.dim(static_cast<int>(2 + i)).dim_value();
           if (residual < 0) {
             continue;
           }
@@ -275,7 +275,7 @@ static void convPoolShapeInference_opset19(
 
     if (ceil_mode == 1)
       strided_kernel_positions = static_cast<int64_t>(
-          std::ceil((effective_input_size - effective_kernel_shape[i]) / static_cast<float>(strides[i])));
+          std::ceil(static_cast<float>(effective_input_size - effective_kernel_shape[i]) / static_cast<float>(strides[i])));
     else
       strided_kernel_positions = (effective_input_size - effective_kernel_shape[i]) / strides[i];
 
@@ -2118,7 +2118,7 @@ static void convPoolShapeInference_opset1_to_11(
 
     if (ceil_mode == 1)
       strided_kernel_positions = static_cast<int64_t>(
-          std::ceil((effective_input_size - effective_kernel_shape[i]) / static_cast<float>(strides[i])));
+          std::ceil(static_cast<float>(effective_input_size - effective_kernel_shape[i]) / static_cast<float>(strides[i])));
     else
       strided_kernel_positions = (effective_input_size - effective_kernel_shape[i]) / strides[i];
 
