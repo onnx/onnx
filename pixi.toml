@@ -114,7 +114,7 @@ zizmor = ">=1.24.1,<2"
 pillow = ">=11.2.1,<12"
 
 [feature.oldies.dependencies]
-protobuf = "==4.25.1"
+protobuf = "==6.31.1"
 python = "3.10.*"
 numpy = "==1.23.2"
 
