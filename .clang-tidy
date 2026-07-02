@@ -36,7 +36,6 @@ Checks: >-
   -misc-use-anonymous-namespace,
   modernize-*,
   -modernize-avoid-c-arrays,
-  -modernize-concat-nested-namespaces,
   -modernize-return-braced-init-list,
   -modernize-use-auto,
   -modernize-use-constraints,
