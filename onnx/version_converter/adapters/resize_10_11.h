@@ -22,7 +22,7 @@ class Resize_10_11 final : public Adapter {
     const ArrayRef<Value*>& inputs = node->inputs();
     ONNX_ASSERTM(inputs.size() >= 2, "Resize in opset 10 needs to have at least 2 inputs.")
 
-    int64_t input_rank = inputs[0]->sizes().size();
+    int64_t input_rank = static_cast<int64_t>(inputs[0]->sizes().size());
 
     Value* scales_input = inputs[1];
     node->addInput(scales_input);

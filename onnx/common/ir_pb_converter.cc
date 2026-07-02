@@ -424,7 +424,7 @@ std::unique_ptr<Graph> ImportModelProto(const ModelProto& mp) {
     return nullptr;
   }
 
-  std::unique_ptr<Graph> g(graphProtoToGraph(mp.graph(), false, mp.ir_version()));
+  std::unique_ptr<Graph> g(graphProtoToGraph(mp.graph(), false, static_cast<int>(mp.ir_version())));
   for (int i = 0; i < mp.opset_import_size(); i++) {
     OpSetID new_opset_version(mp.opset_import(i).domain(), mp.opset_import(i).version());
     g->forSelfAndEachSubGraph(

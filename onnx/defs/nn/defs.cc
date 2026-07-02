@@ -2294,7 +2294,7 @@ static void col2imShapeInference(InferenceContext& ctx) {
   const TensorProto* image_shape_data = ctx.getInputData(1);
   if (image_shape_data) {
     image_shape = ParseData<int64_t>(image_shape_data);
-    unifyDim(n_input_dims, image_shape.size());
+    unifyDim(n_input_dims, static_cast<int64_t>(image_shape.size()));
   }
 
   std::vector<int64_t> pads = {};
@@ -2302,17 +2302,17 @@ static void col2imShapeInference(InferenceContext& ctx) {
     if (pads.size() % 2) {
       fail_shape_inference("Attribute pads must have an even size");
     }
-    unifyDim(n_input_dims, pads.size() / 2);
+    unifyDim(n_input_dims, static_cast<int64_t>(pads.size() / 2));
   }
 
   std::vector<int64_t> dilations = {};
   if (getRepeatedAttribute(ctx, "dilations", dilations)) {
-    unifyDim(n_input_dims, dilations.size());
+    unifyDim(n_input_dims, static_cast<int64_t>(dilations.size()));
   }
 
   std::vector<int64_t> strides = {};
   if (getRepeatedAttribute(ctx, "strides", strides)) {
-    unifyDim(n_input_dims, strides.size());
+    unifyDim(n_input_dims, static_cast<int64_t>(strides.size()));
   }
 
   auto input_shape = ctx.getInputType(0)->tensor_type().shape();
@@ -2324,7 +2324,7 @@ static void col2imShapeInference(InferenceContext& ctx) {
   const TensorProto* block_shape_data = ctx.getInputData(2);
   if (block_shape_data) {
     block_shape = ParseData<int64_t>(block_shape_data);
-    unifyDim(n_input_dims, block_shape.size());
+    unifyDim(n_input_dims, static_cast<int64_t>(block_shape.size()));
   }
   unifyInputDim(ctx, 2, 0, n_input_dims);
 
@@ -2332,7 +2332,7 @@ static void col2imShapeInference(InferenceContext& ctx) {
   if (static_cast<int>(block_shape.size()) > 0) {
     block_shape_size = 1;
     for (const auto& dim : block_shape) {
-      block_shape_size *= dim;
+      block_shape_size *= static_cast<int>(dim);
     }
   }
   // If we haven't inferred the number of image dimensions, we can't set inferred shape.
