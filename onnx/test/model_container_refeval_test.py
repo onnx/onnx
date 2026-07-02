@@ -9,6 +9,7 @@ import unittest
 
 import numpy as np
 import numpy.testing as npt
+import pytest
 
 import onnx
 import onnx.helper
@@ -103,7 +104,7 @@ class TestLargeOnnxReferenceEvaluator(unittest.TestCase):
         model_proto = _linear_regression()
         large_model = onnx.model_container.make_large_model(model_proto.graph)
         self.common_check_reference_evaluator(large_model)
-        with self.assertRaises(ValueError):
+        with pytest.raises(ValueError):
             large_model["#anymissingkey"]
 
         with tempfile.TemporaryDirectory() as temp:

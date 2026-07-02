@@ -36,55 +36,55 @@ class TestHelperAttributeFunctions(unittest.TestCase):
     def test_attr_float(self) -> None:
         # float
         attr = helper.make_attribute("float", 1.0)
-        self.assertEqual(attr.name, "float")
-        self.assertEqual(attr.f, 1.0)
+        assert attr.name == "float"
+        assert attr.f == 1.0
         checker.check_attribute(attr)
         # float with scientific
         attr = helper.make_attribute("float", 1e10)
-        self.assertEqual(attr.name, "float")
-        self.assertEqual(attr.f, 1e10)
+        assert attr.name == "float"
+        assert attr.f == 1e10
         checker.check_attribute(attr)
 
     def test_attr_int(self) -> None:
         # integer
         attr = helper.make_attribute("int", 3)
-        self.assertEqual(attr.name, "int")
-        self.assertEqual(attr.i, 3)
+        assert attr.name == "int"
+        assert attr.i == 3
         checker.check_attribute(attr)
         # long integer
         attr = helper.make_attribute("int", 5)
-        self.assertEqual(attr.name, "int")
-        self.assertEqual(attr.i, 5)
+        assert attr.name == "int"
+        assert attr.i == 5
         checker.check_attribute(attr)
         # octinteger
         attr = helper.make_attribute("int", 0o1701)
-        self.assertEqual(attr.name, "int")
-        self.assertEqual(attr.i, 0o1701)
+        assert attr.name == "int"
+        assert attr.i == 0o1701
         checker.check_attribute(attr)
         # hexinteger
         attr = helper.make_attribute("int", 0x1701)
-        self.assertEqual(attr.name, "int")
-        self.assertEqual(attr.i, 0x1701)
+        assert attr.name == "int"
+        assert attr.i == 0x1701
         checker.check_attribute(attr)
 
     def test_attr_doc_string(self) -> None:
         attr = helper.make_attribute("a", "value")
-        self.assertEqual(attr.name, "a")
-        self.assertEqual(attr.doc_string, "")
+        assert attr.name == "a"
+        assert attr.doc_string == ""
         attr = helper.make_attribute("a", "value", "doc")
-        self.assertEqual(attr.name, "a")
-        self.assertEqual(attr.doc_string, "doc")
+        assert attr.name == "a"
+        assert attr.doc_string == "doc"
 
     def test_make_attribute_ref(self) -> None:
         attr = helper.make_attribute_ref(
             "alpha", AttributeProto.FLOAT, ref_attr_name="parent_alpha"
         )
-        self.assertEqual(attr.name, "alpha")
-        self.assertEqual(attr.type, AttributeProto.FLOAT)
-        self.assertEqual(attr.ref_attr_name, "parent_alpha")
+        assert attr.name == "alpha"
+        assert attr.type == AttributeProto.FLOAT
+        assert attr.ref_attr_name == "parent_alpha"
         # A reference attribute carries no data; it is resolved from the parent
         # function's attribute at instantiation time.
-        with self.assertRaises(ValueError):
+        with pytest.raises(ValueError):
             helper.get_attribute_value(attr)
 
     def test_make_attribute_ref_doc_string(self) -> None:
@@ -94,62 +94,62 @@ class TestHelperAttributeFunctions(unittest.TestCase):
             doc_string="doc",
             ref_attr_name="parent_alpha",
         )
-        self.assertEqual(attr.ref_attr_name, "parent_alpha")
-        self.assertEqual(attr.doc_string, "doc")
+        assert attr.ref_attr_name == "parent_alpha"
+        assert attr.doc_string == "doc"
 
     def test_make_attribute_ref_doc_string_positional(self) -> None:
         attr = helper.make_attribute_ref("alpha", AttributeProto.FLOAT, "doc")
-        self.assertEqual(attr.ref_attr_name, "alpha")
-        self.assertEqual(attr.doc_string, "doc")
+        assert attr.ref_attr_name == "alpha"
+        assert attr.doc_string == "doc"
 
     def test_make_attribute_ref_requires_ref_attr_name(self) -> None:
-        with self.assertRaises(ValueError):
+        with pytest.raises(ValueError):
             helper.make_attribute_ref("alpha", AttributeProto.FLOAT, ref_attr_name="")
 
     def test_attr_string(self) -> None:
         # bytes
         attr = helper.make_attribute("str", b"test")
-        self.assertEqual(attr.name, "str")
-        self.assertEqual(attr.s, b"test")
+        assert attr.name == "str"
+        assert attr.s == b"test"
         checker.check_attribute(attr)
         # unspecified
         attr = helper.make_attribute("str", "test")
-        self.assertEqual(attr.name, "str")
-        self.assertEqual(attr.s, b"test")
+        assert attr.name == "str"
+        assert attr.s == b"test"
         checker.check_attribute(attr)
         # unicode
         attr = helper.make_attribute("str", "test")
-        self.assertEqual(attr.name, "str")
-        self.assertEqual(attr.s, b"test")
+        assert attr.name == "str"
+        assert attr.s == b"test"
         checker.check_attribute(attr)
         # empty str
         attr = helper.make_attribute("str", "")
-        self.assertEqual(attr.name, "str")
-        self.assertEqual(helper.get_attribute_value(attr), b"")
+        assert attr.name == "str"
+        assert helper.get_attribute_value(attr) == b""
         checker.check_attribute(attr)
 
     def test_attr_repeated_float(self) -> None:
         attr = helper.make_attribute("floats", [1.0, 2.0])
-        self.assertEqual(attr.name, "floats")
-        self.assertEqual(list(attr.floats), [1.0, 2.0])
+        assert attr.name == "floats"
+        assert list(attr.floats) == [1.0, 2.0]
         checker.check_attribute(attr)
 
     def test_attr_repeated_int(self) -> None:
         attr = helper.make_attribute("ints", [1, 2])
-        self.assertEqual(attr.name, "ints")
-        self.assertEqual(list(attr.ints), [1, 2])
+        assert attr.name == "ints"
+        assert list(attr.ints) == [1, 2]
         checker.check_attribute(attr)
 
     def test_attr_repeated_mixed_floats_and_ints(self) -> None:
         attr = helper.make_attribute("mixed", [1, 2, 3.0, 4.5])
-        self.assertEqual(attr.name, "mixed")
-        self.assertEqual(list(attr.floats), [1.0, 2.0, 3.0, 4.5])
+        assert attr.name == "mixed"
+        assert list(attr.floats) == [1.0, 2.0, 3.0, 4.5]
         checker.check_attribute(attr)
 
     def test_attr_repeated_str(self) -> None:
         attr = helper.make_attribute("strings", ["str1", "str2"])
-        self.assertEqual(attr.name, "strings")
-        self.assertEqual(list(attr.strings), [b"str1", b"str2"])
+        assert attr.name == "strings"
+        assert list(attr.strings) == [b"str1", b"str2"]
         checker.check_attribute(attr)
 
     def test_attr_repeated_tensor_proto(self) -> None:
@@ -162,8 +162,8 @@ class TestHelperAttributeFunctions(unittest.TestCase):
             ),
         ]
         attr = helper.make_attribute("tensors", tensors)
-        self.assertEqual(attr.name, "tensors")
-        self.assertEqual(list(attr.tensors), tensors)
+        assert attr.name == "tensors"
+        assert list(attr.tensors) == tensors
         checker.check_attribute(attr)
 
     @staticmethod
@@ -190,14 +190,14 @@ class TestHelperAttributeFunctions(unittest.TestCase):
     def test_attr_sparse_tensor_proto(self) -> None:
         sparse_tensor = self._make_sparse_tensor()
         attr = helper.make_attribute("sparse_attr", sparse_tensor)
-        self.assertEqual(attr.name, "sparse_attr")
+        assert attr.name == "sparse_attr"
         checker.check_sparse_tensor(helper.get_attribute_value(attr))
         checker.check_attribute(attr)
 
     def test_attr_sparse_tensor_repeated_protos(self) -> None:
         sparse_tensor = self._make_sparse_tensor()
         attr = helper.make_attribute("sparse_attrs", [sparse_tensor, sparse_tensor])
-        self.assertEqual(attr.name, "sparse_attrs")
+        assert attr.name == "sparse_attrs"
         checker.check_attribute(attr)
         for s in helper.get_attribute_value(attr):
             checker.check_sparse_tensor(s)
@@ -206,59 +206,63 @@ class TestHelperAttributeFunctions(unittest.TestCase):
         sparse_tensor = self._make_sparse_tensor()
 
         attr = helper.make_attribute("st", sparse_tensor)
-        self.assertIn("<Sparse Tensor>", helper.printable_attribute(attr))
+        assert "<Sparse Tensor>" in helper.printable_attribute(attr)
 
         attr = helper.make_attribute("sts", [sparse_tensor, sparse_tensor])
-        self.assertIn("[<Sparse Tensor>, ...]", helper.printable_attribute(attr))
+        assert "[<Sparse Tensor>, ...]" in helper.printable_attribute(attr)
 
     def test_attr_repeated_graph_proto(self) -> None:
         graphs = [GraphProto(), GraphProto()]
         graphs[0].name = "a"
         graphs[1].name = "b"
         attr = helper.make_attribute("graphs", graphs)
-        self.assertEqual(attr.name, "graphs")
-        self.assertEqual(list(attr.graphs), graphs)
+        assert attr.name == "graphs"
+        assert list(attr.graphs) == graphs
         checker.check_attribute(attr)
 
     def test_attr_type_proto(self) -> None:
         # type_proto
         type_proto = TypeProto()
         attr = helper.make_attribute("type_proto", type_proto)
-        self.assertEqual(attr.name, "type_proto")
-        self.assertEqual(attr.tp, type_proto)
-        self.assertEqual(attr.type, AttributeProto.TYPE_PROTO)
+        assert attr.name == "type_proto"
+        assert attr.tp == type_proto
+        assert attr.type == AttributeProto.TYPE_PROTO
         # type_protos
         types = [TypeProto(), TypeProto()]
         attr = helper.make_attribute("type_protos", types)
 
-        self.assertEqual(attr.name, "type_protos")
-        self.assertEqual(list(attr.type_protos), types)
-        self.assertEqual(attr.type, AttributeProto.TYPE_PROTOS)
+        assert attr.name == "type_protos"
+        assert list(attr.type_protos) == types
+        assert attr.type == AttributeProto.TYPE_PROTOS
 
     def test_attr_empty_list(self) -> None:
         attr = helper.make_attribute("empty", [], attr_type=AttributeProto.STRINGS)
-        self.assertEqual(attr.type, AttributeProto.STRINGS)
-        self.assertEqual(len(attr.strings), 0)
-        self.assertRaises(ValueError, helper.make_attribute, "empty", [])
+        assert attr.type == AttributeProto.STRINGS
+        assert len(attr.strings) == 0
+        with pytest.raises(ValueError):
+            helper.make_attribute("empty", [])
 
     def test_attr_mismatch(self) -> None:
-        with self.assertRaisesRegex(TypeError, "Inferred attribute type 'FLOAT'"):
+        with pytest.raises(TypeError, match="Inferred attribute type 'FLOAT'"):
             helper.make_attribute("test", 6.4, attr_type=AttributeProto.STRING)
 
     def test_is_attr_legal(self) -> None:
         # no name, no field
         attr = AttributeProto()
-        self.assertRaises(checker.ValidationError, checker.check_attribute, attr)
+        with pytest.raises(checker.ValidationError):
+            checker.check_attribute(attr)
         # name, but no field
         attr = AttributeProto()
         attr.name = "test"
-        self.assertRaises(checker.ValidationError, checker.check_attribute, attr)
+        with pytest.raises(checker.ValidationError):
+            checker.check_attribute(attr)
         # name, with two fields
         attr = AttributeProto()
         attr.name = "test"
         attr.f = 1.0
         attr.i = 2
-        self.assertRaises(checker.ValidationError, checker.check_attribute, attr)
+        with pytest.raises(checker.ValidationError):
+            checker.check_attribute(attr)
 
     def test_is_attr_legal_verbose(self) -> None:
         def _set(
@@ -307,38 +311,39 @@ class TestHelperAttributeFunctions(unittest.TestCase):
             attr.name = "test"
             for func in random.sample(SET_ATTR, 2):
                 func(attr)
-            self.assertRaises(checker.ValidationError, checker.check_attribute, attr)
+            with pytest.raises(checker.ValidationError):
+                checker.check_attribute(attr)
 
 
 class TestHelperNodeFunctions(unittest.TestCase):
     def test_node_no_arg(self) -> None:
-        self.assertTrue(defs.has("Relu"))
+        assert defs.has("Relu")
         node_def = helper.make_node("Relu", ["X"], ["Y"], name="test")
-        self.assertEqual(node_def.op_type, "Relu")
-        self.assertEqual(node_def.name, "test")
-        self.assertEqual(list(node_def.input), ["X"])
-        self.assertEqual(list(node_def.output), ["Y"])
+        assert node_def.op_type == "Relu"
+        assert node_def.name == "test"
+        assert list(node_def.input) == ["X"]
+        assert list(node_def.output) == ["Y"]
 
     def test_attr_doc_string(self) -> None:
         node_def = helper.make_node("Relu", ["X"], ["Y"], name="test", doc_string="doc")
-        self.assertEqual(node_def.doc_string, "doc")
+        assert node_def.doc_string == "doc"
 
     def test_node_with_arg(self) -> None:
-        self.assertTrue(defs.has("Relu"))
+        assert defs.has("Relu")
         # Note: Relu actually does not need an arg, but let's
         # test it.
         node_def = helper.make_node("Relu", ["X"], ["Y"], arg_value=1)
-        self.assertEqual(node_def.op_type, "Relu")
-        self.assertEqual(list(node_def.input), ["X"])
-        self.assertEqual(list(node_def.output), ["Y"])
-        self.assertEqual(len(node_def.attribute), 1)
-        self.assertEqual(node_def.attribute[0], helper.make_attribute("arg_value", 1))
+        assert node_def.op_type == "Relu"
+        assert list(node_def.input) == ["X"]
+        assert list(node_def.output) == ["Y"]
+        assert len(node_def.attribute) == 1
+        assert node_def.attribute[0] == helper.make_attribute("arg_value", 1)
 
     def test_node_domain(self) -> None:
         node_def = helper.make_node(
             "Relu", ["X"], ["Y"], name="test", doc_string="doc", domain="test.domain"
         )
-        self.assertEqual(node_def.domain, "test.domain")
+        assert node_def.domain == "test.domain"
 
     def test_graph(self) -> None:
         node_def1 = helper.make_node("Relu", ["X"], ["Y"])
@@ -352,17 +357,17 @@ class TestHelperNodeFunctions(unittest.TestCase):
             doc_string=None,
             value_info=value_info,
         )
-        self.assertEqual(graph.name, "test")
-        self.assertEqual(len(graph.node), 2)
-        self.assertEqual(graph.node[0], node_def1)
-        self.assertEqual(graph.node[1], node_def2)
-        self.assertEqual(graph.doc_string, "")
-        self.assertEqual(graph.value_info[0], value_info[0])
+        assert graph.name == "test"
+        assert len(graph.node) == 2
+        assert graph.node[0] == node_def1
+        assert graph.node[1] == node_def2
+        assert graph.doc_string == ""
+        assert graph.value_info[0] == value_info[0]
 
     def test_graph_docstring(self) -> None:
         graph = helper.make_graph([], "my graph", [], [], None, "my docs")
-        self.assertEqual(graph.name, "my graph")
-        self.assertEqual(graph.doc_string, "my docs")
+        assert graph.name == "my graph"
+        assert graph.doc_string == "my docs"
 
     def test_model(self) -> None:
         node_def = helper.make_node("Relu", ["X"], ["Y"])
@@ -372,17 +377,18 @@ class TestHelperNodeFunctions(unittest.TestCase):
             [helper.make_tensor_value_info("X", TensorProto.FLOAT, [1, 2])],
             [helper.make_tensor_value_info("Y", TensorProto.FLOAT, [1, 2])],
         )
-        self.assertRaises(AttributeError, helper.make_model, graph_def, xxx=1)
+        with pytest.raises(AttributeError):
+            helper.make_model(graph_def, xxx=1)
         model_def = helper.make_model(graph_def, producer_name="test")
-        self.assertEqual(model_def.producer_name, "test")
+        assert model_def.producer_name == "test"
 
     def test_model_docstring(self) -> None:
         graph = helper.make_graph([], "my graph", [], [])
         model_def = helper.make_model(graph, doc_string="test")
         # models may have their own documentation, but don't have a name
         # their name is the domain-qualified name of the underlying graph.
-        self.assertFalse(hasattr(model_def, "name"))
-        self.assertEqual(model_def.doc_string, "test")
+        assert not hasattr(model_def, "name")
+        assert model_def.doc_string == "test"
 
     def test_model_metadata_props(self) -> None:
         graph = helper.make_graph([], "my graph", [], [])
@@ -399,7 +405,8 @@ class TestHelperNodeFunctions(unittest.TestCase):
         dupe = model_def.metadata_props.add()
         dupe.key = "Title"
         dupe.value = "Other"
-        self.assertRaises(checker.ValidationError, checker.check_model, model_def)
+        with pytest.raises(checker.ValidationError):
+            checker.check_model(model_def)
 
     def test_model_irversion(self) -> None:
         def mk_model(opset_versions: list[tuple[str, int]]) -> ModelProto:
@@ -411,7 +418,7 @@ class TestHelperNodeFunctions(unittest.TestCase):
 
         def test(opset_versions: list[tuple[str, int]], ir_version: int) -> None:
             model = mk_model(opset_versions)
-            self.assertEqual(model.ir_version, ir_version)
+            assert model.ir_version == ir_version
 
         # opset version 9 requires minimum ir_version 4
         test([("", 9)], 4)
@@ -441,7 +448,8 @@ class TestHelperNodeFunctions(unittest.TestCase):
         test([("ai.onnx.training", 1)], 7)
         # helper should pick *max* IR version required from all opsets specified.
         test([("", 10), ("ai.onnx.ml", 2)], 6)
-        self.assertRaises(ValueError, mk_model, [("", 100)])
+        with pytest.raises(ValueError):
+            mk_model([("", 100)])
 
 
 class TestHelperTensorFunctions(unittest.TestCase):
@@ -454,7 +462,7 @@ class TestHelperTensorFunctions(unittest.TestCase):
             vals=string_list,
             raw=False,
         )
-        self.assertEqual(string_list, list(tensor.string_data))
+        assert string_list == list(tensor.string_data)
 
     def test_make_bfloat16_tensor(self) -> None:
         # numpy doesn't support bf16, so we have to compute the correct result manually
@@ -475,7 +483,7 @@ class TestHelperTensorFunctions(unittest.TestCase):
             dims=np_array.shape,
             vals=np_array,
         )
-        self.assertEqual(tensor.name, "test")
+        assert tensor.name == "test"
         np.testing.assert_equal(
             numpy_helper.to_array(tensor).view(np.uint16),
             np_array.astype(ml_dtypes.bfloat16).view(np.uint16),
@@ -780,9 +788,9 @@ class TestHelperTensorFunctions(unittest.TestCase):
         )
         dense_shape = [10]
         sparse = helper.make_sparse_tensor(values_tensor, indices_tensor, dense_shape)
-        self.assertEqual(sparse.values, values_tensor)
-        self.assertEqual(sparse.indices, indices_tensor)
-        self.assertEqual(sparse.dims, dense_shape)
+        assert sparse.values == values_tensor
+        assert sparse.indices == indices_tensor
+        assert sparse.dims == dense_shape
 
     def test_make_tensor_value_info(self) -> None:
         vi = helper.make_tensor_value_info("X", TensorProto.FLOAT, (2, 4))
@@ -801,7 +809,7 @@ class TestHelperTensorFunctions(unittest.TestCase):
         checker.check_value_info(vi)
 
     def test_make_tensor_mismatched_dims_raises_error(self) -> None:
-        with self.assertRaises(ValueError) as context:
+        with pytest.raises(ValueError) as context:
             helper.make_tensor(
                 name="mismatch_test",
                 data_type=TensorProto.FLOAT,
@@ -809,11 +817,11 @@ class TestHelperTensorFunctions(unittest.TestCase):
                 vals=[1.0, 2.0, 3.0],  # Only 3 elements provided
                 raw=False,
             )
-        self.assertIn("Number of values", str(context.exception))
-        self.assertIn("does not match tensor dimensions", str(context.exception))
+        assert "Number of values" in str(context.exception)
+        assert "does not match tensor dimensions" in str(context.exception)
 
     def test_make_tensor_too_many_values_raises_error(self) -> None:
-        with self.assertRaises(ValueError):
+        with pytest.raises(ValueError):
             helper.make_tensor(
                 name="too_many_test",
                 data_type=TensorProto.FLOAT,
@@ -830,8 +838,8 @@ class TestHelperTensorFunctions(unittest.TestCase):
             vals=[42.0],
             raw=False,
         )
-        self.assertEqual(tensor.dims, [])
-        self.assertEqual(tensor.float_data, [42.0])
+        assert tensor.dims == []
+        assert tensor.float_data == [42.0]
 
     def test_make_tensor_zero_dims(self) -> None:
         tensor = helper.make_tensor(
@@ -841,11 +849,11 @@ class TestHelperTensorFunctions(unittest.TestCase):
             vals=[],
             raw=False,
         )
-        self.assertEqual(tensor.dims, [0])
-        self.assertEqual(len(tensor.float_data), 0)
+        assert tensor.dims == [0]
+        assert len(tensor.float_data) == 0
 
     def test_make_tensor_mismatched_dims_int4(self) -> None:
-        with self.assertRaises(ValueError):
+        with pytest.raises(ValueError):
             helper.make_tensor(
                 name="mismatch_int4",
                 data_type=TensorProto.INT4,
@@ -855,7 +863,7 @@ class TestHelperTensorFunctions(unittest.TestCase):
             )
 
     def test_make_tensor_mismatched_dims_complex(self) -> None:
-        with self.assertRaises(ValueError):
+        with pytest.raises(ValueError):
             helper.make_tensor(
                 name="mismatch_complex",
                 data_type=TensorProto.COMPLEX64,
@@ -874,9 +882,9 @@ class TestHelperOptionalAndSequenceFunctions(unittest.TestCase):
         optional = helper.make_optional(
             name="test", elem_type=OptionalProto.TENSOR, value=values_tensor
         )
-        self.assertEqual(optional.name, "test")
-        self.assertEqual(optional.elem_type, OptionalProto.TENSOR)
-        self.assertEqual(optional.tensor_value, values_tensor)
+        assert optional.name == "test"
+        assert optional.elem_type == OptionalProto.TENSOR
+        assert optional.tensor_value == values_tensor
 
         # Test Sequence
         values_sequence = helper.make_sequence(
@@ -887,17 +895,17 @@ class TestHelperOptionalAndSequenceFunctions(unittest.TestCase):
         optional = helper.make_optional(
             name="test", elem_type=OptionalProto.SEQUENCE, value=values_sequence
         )
-        self.assertEqual(optional.name, "test")
-        self.assertEqual(optional.elem_type, OptionalProto.SEQUENCE)
-        self.assertEqual(optional.sequence_value, values_sequence)
+        assert optional.name == "test"
+        assert optional.elem_type == OptionalProto.SEQUENCE
+        assert optional.sequence_value == values_sequence
 
         # Test None
         optional_none = helper.make_optional(
             name="test", elem_type=OptionalProto.UNDEFINED, value=None
         )
-        self.assertEqual(optional_none.name, "test")
-        self.assertEqual(optional_none.elem_type, OptionalProto.UNDEFINED)
-        self.assertFalse(optional_none.HasField("tensor_value"))
+        assert optional_none.name == "test"
+        assert optional_none.elem_type == OptionalProto.UNDEFINED
+        assert not optional_none.HasField("tensor_value")
 
     def test_make_optional_value_info(self) -> None:
         tensor_type_proto = helper.make_tensor_type_proto(elem_type=2, shape=[5])
@@ -909,11 +917,9 @@ class TestHelperOptionalAndSequenceFunctions(unittest.TestCase):
             name="test", type_proto=optional_type_proto
         )
 
-        self.assertEqual(optional_val_info.name, "test")
-        self.assertTrue(optional_val_info.type.optional_type)
-        self.assertEqual(
-            optional_val_info.type.optional_type.elem_type, tensor_val_into.type
-        )
+        assert optional_val_info.name == "test"
+        assert optional_val_info.type.optional_type
+        assert optional_val_info.type.optional_type.elem_type == tensor_val_into.type
 
         # Test Sequence
         sequence_type_proto = helper.make_sequence_type_proto(tensor_type_proto)
@@ -922,14 +928,14 @@ class TestHelperOptionalAndSequenceFunctions(unittest.TestCase):
             name="test", type_proto=optional_type_proto
         )
 
-        self.assertEqual(optional_val_info.name, "test")
-        self.assertTrue(optional_val_info.type.optional_type)
+        assert optional_val_info.name == "test"
+        assert optional_val_info.type.optional_type
         sequence_value_info = helper.make_value_info(
             name="test", type_proto=tensor_type_proto
         )
-        self.assertEqual(
-            optional_val_info.type.optional_type.elem_type.sequence_type.elem_type,
-            sequence_value_info.type,
+        assert (
+            optional_val_info.type.optional_type.elem_type.sequence_type.elem_type
+            == sequence_value_info.type
         )
 
     def test_make_sequence_value_info(self) -> None:
@@ -942,7 +948,7 @@ class TestHelperOptionalAndSequenceFunctions(unittest.TestCase):
             name="test", elem_type=2, shape=None
         )
 
-        self.assertEqual(sequence_val_info, sequence_val_info_prim)
+        assert sequence_val_info == sequence_val_info_prim
 
 
 class TestPrintableGraph(unittest.TestCase):
@@ -966,12 +972,11 @@ class TestPrintableGraph(unittest.TestCase):
         )
 
         graph_str = helper.printable_graph(graph)
-        self.assertTrue(
+        assert (
             """) optional inputs with matching initializers (
   %Y_Initializer[FLOAT, 1]"""
-            in graph_str,
-            graph_str,
-        )
+            in graph_str
+        ), graph_str
 
     def test_initializer_no_matching_graph_input(self) -> None:
         add = helper.make_node("Add", ["X", "Y_Initializer"], ["Z"])
@@ -990,12 +995,11 @@ class TestPrintableGraph(unittest.TestCase):
         )
 
         graph_str = helper.printable_graph(graph)
-        self.assertTrue(
+        assert (
             """) initializers (
   %Y_Initializer[FLOAT, 1]"""
-            in graph_str,
-            graph_str,
-        )
+            in graph_str
+        ), graph_str
 
     def test_unknown_dimensions(self) -> None:
         graph = helper.make_graph(
@@ -1012,7 +1016,7 @@ class TestPrintableGraph(unittest.TestCase):
         checker.check_model(model)
 
         graph_str = helper.printable_graph(graph)
-        self.assertIn("X[FLOAT, ?]", graph_str)
+        assert "X[FLOAT, ?]" in graph_str
 
 
 @pytest.mark.parametrize(
@@ -1144,20 +1148,18 @@ class TestHelperMappingFunctions(unittest.TestCase):
         _ = helper.np_dtype_to_tensor_dtype(np.dtype("float32"))
 
     def test_tensor_dtype_to_np_dtype_bfloat16(self) -> None:
-        self.assertEqual(
-            helper.tensor_dtype_to_np_dtype(TensorProto.BFLOAT16), ml_dtypes.bfloat16
+        assert (
+            helper.tensor_dtype_to_np_dtype(TensorProto.BFLOAT16) == ml_dtypes.bfloat16
         )
 
     def test_tensor_dtype_to_storage_tensor_dtype_bfloat16(self) -> None:
-        self.assertEqual(
-            helper.tensor_dtype_to_storage_tensor_dtype(TensorProto.BFLOAT16),
-            TensorProto.INT32,
+        assert (
+            helper.tensor_dtype_to_storage_tensor_dtype(TensorProto.BFLOAT16)
+            == TensorProto.INT32
         )
 
     def test_tensor_dtype_to_field_bfloat16(self) -> None:
-        self.assertEqual(
-            helper.tensor_dtype_to_field(TensorProto.BFLOAT16), "int32_data"
-        )
+        assert helper.tensor_dtype_to_field(TensorProto.BFLOAT16) == "int32_data"
 
 
 class TestAttrTypeToStr(unittest.TestCase):
@@ -1181,8 +1183,8 @@ class TestAttrTypeToStr(unittest.TestCase):
     )
     def test_attr_type_to_str(self, attr_type, expected_str):
         result = helper._attr_type_to_str(attr_type)
-        self.assertEqual(result, expected_str)
+        assert result == expected_str
 
     def test_attr_type_to_str_undefined(self):
         result = helper._attr_type_to_str(9999)
-        self.assertEqual(result, "UNDEFINED")
+        assert result == "UNDEFINED"

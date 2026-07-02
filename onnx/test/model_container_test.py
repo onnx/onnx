@@ -8,6 +8,7 @@ import tempfile
 import unittest
 
 import numpy as np
+import pytest
 
 import onnx
 import onnx.external_data_helper as ext_data
@@ -93,7 +94,7 @@ class TestLargeOnnx(unittest.TestCase):
             filename = os.path.join(temp, "model.onnx")
             large_model.save(filename)
             copy = onnx.model_container.ModelContainer()
-            with self.assertRaises(RuntimeError):
+            with pytest.raises(RuntimeError):
                 assert copy.model_proto
             copy.load(filename)
             assert copy.model_proto is not None
@@ -128,6 +129,6 @@ class TestLargeOnnx(unittest.TestCase):
                         if ext.key == "location":
                             assert os.path.exists(ext.value)
                             tested += 1
-                    self.assertEqual(tested, 1)
+                    assert tested == 1
             loaded_model = onnx.load_model(filename, load_external_data=True)
             onnx.checker.check_model(loaded_model)

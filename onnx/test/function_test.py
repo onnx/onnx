@@ -12,9 +12,9 @@ from onnx import checker, utils
 class TestFunction(unittest.TestCase):
     def _verify_function_set(self, extracted_model, function_set, func_domain):
         checker.check_model(extracted_model)
-        self.assertEqual(len(extracted_model.functions), len(function_set))
+        assert len(extracted_model.functions) == len(function_set)
         for function in function_set:
-            self.assertIsNotNone(
+            assert (
                 next(
                     (
                         f
@@ -23,6 +23,7 @@ class TestFunction(unittest.TestCase):
                     ),
                     None,
                 )
+                is not None
             )
 
     def test_extract_model_with_local_function(self) -> None:
