@@ -75,7 +75,7 @@ inline void GatherOp13DataPropagator(DataPropagationContext& ctx) {
   TensorShapeProto tsp;
   for (int i = 0; i < input_indices->dim_size(); ++i) {
     if (input_indices->dim(i).has_dim_value()) {
-      appendDimToTensorShapeProto(tsp, input_data, input_indices->dim(i).dim_value());
+      appendDimToTensorShapeProto(tsp, input_data, narrow<int>(input_indices->dim(i).dim_value()));
     } else {
       return;
     }

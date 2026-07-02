@@ -698,7 +698,7 @@ struct Node : public Attributes<Node> {
       auto it = findUseForInput(j);
       it->offset--;
     }
-    inputs_.erase(inputs_.begin() + i);
+    inputs_.erase(inputs_.begin() + static_cast<std::ptrdiff_t>(i));
   }
 
   // Remove all inputs from a node.
@@ -1352,7 +1352,7 @@ inline void Node::eraseOutput(size_t i) {
   ONNX_ASSERT(i < outputs_.size())
   ONNX_ASSERT(outputs_[i]->uses().empty())
   Value* n = outputs_[i];
-  outputs_.erase(outputs_.begin() + i);
+  outputs_.erase(outputs_.begin() + static_cast<std::ptrdiff_t>(i));
   owningGraph()->freeValue(n);
   for (size_t j = i; j < outputs_.size(); j++) {
     outputs_[j]->offset_--;
