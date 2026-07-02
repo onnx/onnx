@@ -2014,10 +2014,16 @@ ONNX_OPERATOR_SET_SCHEMA(
               if (blocksize_attr == nullptr) {
                 return false;
               }
-              int64_t blocksize = blocksize_attr->i();
-
+              const int64_t blocksize = blocksize_attr->i();
+              if (blocksize <= 0) {
+                return false;
+              }
               auto* mode_attr = ctx.getAttribute("mode");
-              std::string mode = (mode_attr != nullptr) ? mode_attr->s() : "DCR";
+              const std::string mode = (mode_attr != nullptr) ? mode_attr->s() : "DCR";
+
+              if (mode != "DCR" && mode != "CRD") {
+                return false;
+              }
 
               FunctionBuilder builder(functionProto);
               builder.AddOpset("", 13);

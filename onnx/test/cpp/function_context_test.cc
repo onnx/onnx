@@ -307,11 +307,13 @@ TEST(FunctionAPITest, DepthToSpaceFunctionBodyDCR) {
   EXPECT_GT(fnProto.node_size(), 0);
 
   bool found_transpose = false;
+  bool found_perm = false;
   for (const auto& node : fnProto.node()) {
     if (node.op_type() == "Transpose") {
       found_transpose = true;
       for (const auto& attr : node.attribute()) {
         if (attr.name() == "perm") {
+          found_perm = true;
           std::vector<int64_t> expected = {0, 3, 4, 1, 5, 2};
           std::vector<int64_t> actual(attr.ints().begin(), attr.ints().end());
           EXPECT_EQ(actual, expected);
@@ -320,6 +322,7 @@ TEST(FunctionAPITest, DepthToSpaceFunctionBodyDCR) {
     }
   }
   EXPECT_TRUE(found_transpose);
+  EXPECT_TRUE(found_perm);
 
   checker::LexicalScopeContext lexicalScope;
   checker::CheckerContext checkerCtx;
@@ -329,5 +332,60 @@ TEST(FunctionAPITest, DepthToSpaceFunctionBodyDCR) {
   checker::check_function(fnProto, checkerCtx, lexicalScope);
 }
 
+TEST(FunctionAPITest, DepthToSpaceFunctionBodyCRD) {
+  const auto* const schema = OpSchemaRegistry::Schema("DepthToSpace", 13, ONNX_DOMAIN);
+  EXPECT_TRUE(schema);
+  EXPECT_FALSE(schema->HasFunction());
+  EXPECT_TRUE(schema->HasContextDependentFunction());
+
+  NodeProto nodeProto;
+  nodeProto.set_op_type("DepthToSpace");
+  nodeProto.add_input("X");
+  nodeProto.add_output("Y");
+
+  auto* blocksize_attr = nodeProto.add_attribute();
+  blocksize_attr->set_name("blocksize");
+  blocksize_attr->set_type(AttributeProto::INT);
+  blocksize_attr->set_i(2);
+
+  auto* mode_attr = nodeProto.add_attribute();
+  mode_attr->set_name("mode");
+  mode_attr->set_type(AttributeProto::STRING);
+  mode_attr->set_s("CRD");
+
+  TypeProto floatTypeProto;
+  floatTypeProto.mutable_tensor_type()->set_elem_type(TensorProto_DataType::TensorProto_DataType_FLOAT);
+
+  FunctionBodyBuildContextImpl ctx(nodeProto, {floatTypeProto});
+  FunctionProto fnProto;
+  EXPECT_TRUE(schema->BuildContextDependentFunction(ctx, fnProto));
+  EXPECT_GT(fnProto.node_size(), 0);
+
+  bool found_transpose = false;
+  bool found_perm = false;
+  for (const auto& node : fnProto.node()) {
+    if (node.op_type() == "Transpose") {
+      found_transpose = true;
+      for (const auto& attr : node.attribute()) {
+        if (attr.name() == "perm") {
+          found_perm = true;
+          // The permutation logic changes for CRD,different order requires
+          std::vector<int64_t> expected = {0, 1, 4, 2, 5, 3};
+          std::vector<int64_t> actual(attr.ints().begin(), attr.ints().end());
+          EXPECT_EQ(actual, expected);
+        }
+      }
+    }
+  }
+  EXPECT_TRUE(found_transpose);
+  EXPECT_TRUE(found_perm);
+
+  checker::LexicalScopeContext lexicalScope;
+  checker::CheckerContext checkerCtx;
+  std::unordered_map<std::string, int> opset_imports({{ONNX_DOMAIN, 13}});
+  checkerCtx.set_opset_imports(opset_imports);
+  checkerCtx.set_ir_version(7);
+  checker::check_function(fnProto, checkerCtx, lexicalScope);
+}
 } // namespace Test
 } // namespace ONNX_NAMESPACE
