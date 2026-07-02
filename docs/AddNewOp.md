@@ -20,6 +20,7 @@ Or updating an existing operator to a new Opset version.
     - [Step 3: PR Review by Operators SIG](#step-3-pr-review-by-operators-sig)
       - [Sign-off](#sign-off)
     - [Step 4: ONNX release](#step-4-onnx-release)
+  - [Preview Domain Path](#preview-domain-path)
   - [Updating an existing operator](#updating-an-existing-operator)
     - [Checklist](#checklist)
   - [Removing operator or function](#removing-operator-or-function)
@@ -75,7 +76,7 @@ Once the criteria of proposing new operator/function has been satisfied, you wil
 | Shape inference tests | `onnx/test/shape_inference_test.py` |
 | Upgrade/downgrade tests | `onnx/test/version_converter/automatic_upgrade_test.py` and `automatic_downgrade_test.py` |
 
-Domain subdirectories under `onnx/defs/`: `math/`, `nn/`, `tensor/`, `logical/`, `reduction/`, `rnn/`, `sequence/`, `image/`, `text/`, `quantization/`, `controlflow/`, `optional/`, `traditionalml/`, `training/`
+Domain subdirectories under `onnx/defs/`: `math/`, `nn/`, `tensor/`, `logical/`, `reduction/`, `rnn/`, `sequence/`, `image/`, `text/`, `quantization/`, `controlflow/`, `optional/`, `traditionalml/`, `training/`, `preview/`
 
 1. Description:
     1. Write a detailed description about the operator, and its expected behavior. Pretty much, the description should be clear enough to avoid confusion between implementors.
@@ -122,6 +123,32 @@ At least two sign-off from the Operators SIG [contributors](https://github.com/o
 ### Step 4: ONNX release
 
 Once the PR is reviewed and signed off by the Operators SIG, it will be merged. Your new operator/function will be part of the main branch and available to anyone building from source. These are not official releases. ONNX periodically releases official new versions that are a snapshot of the main branch. Your new operator/function will be part of that release.
+
+## Preview Domain Path
+
+For operators that are not yet ready for the standard namespace, ONNX provides the preview domains: `ai.onnx.preview` (for standard ops) and `ai.onnx.preview.training` (for training ops). The preview domain is designed to enable active experimentation and collect early feedback before formal standardization.
+
+### Proposing a Preview Operator
+Proposing a preview operator follows a similar path to Step 1 and Step 2 above:
+1. Submit an Issue with a proposal explaining the motivation, use cases, and design.
+2. The proposal must be reviewed and approved by the Operators SIG.
+
+### Implementation and Domain Mapping
+- **Schema Definition**: Place schemas in `onnx/defs/preview/defs.cc` (or `onnx/defs/training/defs.cc` for training ops).
+- **Subdirectory**: The C++ schemas are defined under the `preview/` subdirectory of `onnx/defs/`.
+- **Registration**: Define preview schemas using `ONNX_PREVIEW_OPERATOR_SET_SCHEMA` or `ONNX_PREVIEW_TRAINING_OPERATOR_SET_SCHEMA` macros, and register them in `onnx/defs/operator_sets_preview.h`.
+- **Reference Implementation**: Implement in Python under `onnx/reference/ops/aionnx_preview/`.
+
+### Stability Guarantees
+- **None**: Preview operators carry no backward compatibility guarantees.
+- **Single Version**: Preview domains do not increment their opset versions. They are fixed at version 1. If changes are needed, the existing version 1 specification is modified in-place.
+- **Deprecation/Removal**: A preview operator can be modified or removed at any time if experimentation shows a better design or if it is no longer needed.
+
+### Graduation to Standard Namespace
+Once a preview operator has stabilized and there is community consensus:
+1. Propose promoting the operator to the standard `ai.onnx` or `ai.onnx.training` namespace.
+2. The operator will graduate at a new opset version under the standard namespace.
+3. Once graduated, the preview operator schema under `ai.onnx.preview` (or `ai.onnx.preview.training`) is removed, and users are expected to transition to the standard namespace.
 
 ## Updating an existing operator
 
