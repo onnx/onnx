@@ -7039,6 +7039,30 @@ class TestShapeInference(TestShapeInferenceHelper):
             graph, [make_tensor_value_info("loop_output", TensorProto.FLOAT, (None, 3))]
         )
 
+    def test_loop_with_constant_trip_count_and_early_exit(self) -> None:
+        model = onnx.parser.parse_model(
+            """
+            <ir_version: 8, opset_import: ["" : 13]>
+            test () => ()
+               <int64 max_trip_count = {5}, bool cond_orig = {1}, float[3] outer_scope_input = {1, 2, 3}>
+            {
+               loop_output = Loop (max_trip_count, cond_orig) <body: graph = subgraph (int64 iter_num_in, bool cond_in) => (bool cond_out, float[3] output) {
+                  cond_out = Constant <value: tensor = bool cond_out_value {0}> ()
+                  output = Identity (outer_scope_input)
+               }>
+            }
+            """
+        )
+        inferred_model = self._inferred(model, data_prop=True)
+        loop_output = next(
+            value_info
+            for value_info in inferred_model.graph.value_info
+            if value_info.name == "loop_output"
+        )
+        first_dim = loop_output.type.tensor_type.shape.dim[0]
+        self.assertFalse(first_dim.HasField("dim_value") and first_dim.dim_value == 5)
+        self.assertEqual(loop_output.type.tensor_type.shape.dim[1].dim_value, 3)
+
     def test_constantofshape_with_input_shape(self) -> None:
         graph = self._make_graph(
             [],
