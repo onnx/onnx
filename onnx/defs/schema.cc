@@ -1529,13 +1529,13 @@ OpSchema::NodeDeterminism OpSchema::GetNodeDeterminism() const {
       return NodeDeterminism::Unknown;
     } else if (const FunctionProto* func_proto = GetFunction(); func_proto) {
       const OpSchemaRegistry& reg = *OpSchemaRegistry::Instance();
-      std::unordered_map<std::string, int> domain_to_opset_version;
+      std::unordered_map<std::string, int64_t> domain_to_opset_version;
       for (const auto& opset : func_proto->opset_import()) {
         domain_to_opset_version[opset.domain()] = opset.version();
       }
       for (const NodeProto& n : func_proto->node()) {
-        const int opset = domain_to_opset_version[n.domain()];
-        const OpSchema* sch = reg.GetSchema(n.op_type(), opset, n.domain());
+        const int64_t opset = domain_to_opset_version[n.domain()];
+        const OpSchema* sch = reg.GetSchema(n.op_type(), static_cast<int>(opset), n.domain());
         if (!sch) {
           return NodeDeterminism::Unknown;
         }
