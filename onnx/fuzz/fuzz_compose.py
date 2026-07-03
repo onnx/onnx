@@ -30,8 +30,14 @@ import sys
 import atheris
 
 with atheris.instrument_imports():
-    import onnx
-    from onnx import TensorProto, checker, compose, helper
+    from onnx import (
+        TensorProto,
+        checker,
+        compose,
+        defs,
+        helper,
+        load_model_from_string,
+    )
 
 _UNARY = ("Relu", "Sigmoid", "Tanh", "Abs", "Neg", "Identity")
 
@@ -40,13 +46,16 @@ def _value_info(name):
     return helper.make_tensor_value_info(name, TensorProto.FLOAT, ["N"])
 
 
-def _build_model(fdp, tag):
+def _build_model(fdp, tag, opset):
     """Build a small linear graph with predictable input/output names.
 
     Naming the sole input/output `In<tag>`/`Out<tag>` lets the derived
     io_map (m1's outputs -> m2's inputs) connect on most iterations, so
     merge_models' rewrite logic is reached without relying on the raw
-    protobuf parser to produce compatible names.
+    protobuf parser to produce compatible names. `opset` is shared between
+    both models: merge_models rejects mismatched opset_import up front, so
+    picking it independently per model would make the structured path
+    rarely reach the merge/connect logic it exists to exercise.
     """
     n_ops = fdp.ConsumeIntInRange(0, 4)
     last = f"In{tag}"
@@ -61,7 +70,6 @@ def _build_model(fdp, tag):
     graph = helper.make_graph(
         nodes, f"g{tag}", [_value_info(f"In{tag}")], [_value_info(out_name)]
     )
-    opset = fdp.ConsumeIntInRange(7, onnx.defs.onnx_opset_version())
     return helper.make_model(graph, opset_imports=[helper.make_opsetid("", opset)])
 
 
@@ -99,8 +107,9 @@ def TestOneInput(data):
     try:
         if use_structured:
             fdp = atheris.FuzzedDataProvider(body)
-            m1 = _build_model(fdp, 1)
-            m2 = _build_model(fdp, 2)
+            opset = fdp.ConsumeIntInRange(7, defs.onnx_opset_version())
+            m1 = _build_model(fdp, 1, opset)
+            m2 = _build_model(fdp, 2, opset)
         else:
             if len(body) < 4:
                 return
@@ -108,8 +117,8 @@ def TestOneInput(data):
             rest = body[4:]
             if n1 > len(rest):
                 return
-            m1 = onnx.load_model_from_string(rest[:n1])
-            m2 = onnx.load_model_from_string(rest[n1:])
+            m1 = load_model_from_string(rest[:n1])
+            m2 = load_model_from_string(rest[n1:])
 
         io_map = (
             _random_io_map(body, m1, m2)
@@ -117,12 +126,9 @@ def TestOneInput(data):
             else _derived_io_map(m1, m2)
         )
 
-        kwargs = {}
-        if use_prefix:
-            kwargs["prefix1"] = "g1_"
-            kwargs["prefix2"] = "g2_"
-
-        merged = compose.merge_models(m1, m2, io_map, **kwargs)
+        prefix1 = "g1_" if use_prefix else None
+        prefix2 = "g2_" if use_prefix else None
+        merged = compose.merge_models(m1, m2, io_map, prefix1=prefix1, prefix2=prefix2)
         checker.check_model(merged, full_check=True)
     except Exception:
         # Malformed fuzz inputs raise a broad set of expected exceptions

@@ -19,12 +19,14 @@ on:
     paths:
       - 'onnx/**'
       - 'pyproject.toml'
+      - '.github/workflows/fuzz.yml'
   push:
     branches:
       - main
     paths:
       - 'onnx/**'
       - 'pyproject.toml'
+      - '.github/workflows/fuzz.yml'
   schedule:
     - cron: '0 6 * * *'  # nightly: run each harness for longer than the PR smoke test
   workflow_dispatch:
