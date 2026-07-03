@@ -13,7 +13,6 @@
 #include <nanobind/stl/vector.h>
 
 #include <algorithm>
-#include <climits>
 #include <limits>
 #include <string>
 #include <tuple>
