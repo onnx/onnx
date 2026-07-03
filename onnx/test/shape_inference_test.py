@@ -6748,6 +6748,9 @@ class TestShapeInference(TestShapeInferenceHelper):
         # can't use self._make_graph for the subgraph as it add more inputs for the Reshape operations it inserts.
         # this breaks the subgraph inferencing as it expects the number of inputs passed from Loop to match
         # the GraphProto, but Loop knows nothing about the additional inputs.
+        # Note: loop_state_in must be declared with an UNDEFINED element type (so that Loop shape inference
+        # fills only its element type while preserving the declared shape); the text parser cannot express
+        # such an input, so this test keeps using helper.make_graph for the body.
         input_value_infos = [
             make_tensor_value_info("iter_num_in", TensorProto.INT64, (1,)),
             make_tensor_value_info("cond_in", TensorProto.UNDEFINED, None),
@@ -6799,41 +6802,22 @@ class TestShapeInference(TestShapeInferenceHelper):
         )
 
     def test_loop_no_state(self) -> None:
-        input_value_infos = [
-            make_tensor_value_info("iter_num_in", TensorProto.INT64, (1,)),
-            make_tensor_value_info("cond_in", TensorProto.UNDEFINED, None),
-        ]
-        output_value_infos = [
-            make_tensor_value_info("cond_out", TensorProto.UNDEFINED, None),
-            make_tensor_value_info("output", TensorProto.FLOAT, (3,)),
-        ]
-
-        subgraph = helper.make_graph(
-            [
-                make_node("Identity", ["cond_in"], ["cond_out"]),
-                make_node("Identity", ["outer_scope_input"], ["output"]),
-            ],
-            "subgraph",
-            input_value_infos,
-            output_value_infos,
-        )
-
-        graph = self._make_graph(
-            [
-                ("max_trip_count", TensorProto.INT64, (1,)),
-                ("cond_orig", TensorProto.FLOAT, (1,)),
-                ("outer_scope_input", TensorProto.FLOAT, (3,)),
-            ],
-            [
-                make_node(
-                    "Loop",
-                    ["max_trip_count", "cond_orig"],
-                    ["loop_output"],
-                    body=subgraph,
-                )
-            ],
-            [],
-        )
+        # The whole graph (including the Loop body subgraph) is expressed in one parse_graph call.
+        # The body's cond_in is left untyped (its type is supplied by Loop), and the body references
+        # outer_scope_input from the enclosing graph. The Loop output is left untyped so that shape
+        # inference must compute its type/shape.
+        graph = parse_graph("""
+            agraph (int64[1] max_trip_count, float[1] cond_orig, float[3] outer_scope_input)
+                => (loop_output)
+            {
+                loop_output = Loop (max_trip_count, cond_orig) <
+                    body = subgraph (int64[1] iter_num_in, cond_in) => (cond_out, output) {
+                        cond_out = Identity(cond_in)
+                        output = Identity(outer_scope_input)
+                    }
+                >
+            }
+        """)
 
         self._assert_inferred(
             graph, [make_tensor_value_info("loop_output", TensorProto.FLOAT, (None, 3))]
@@ -11038,34 +11022,18 @@ class TestShapeInference(TestShapeInferenceHelper):
         )
 
     def test_sequence_map_identity_known_dims(self):
-        input_value_infos = [
-            make_tensor_value_info("input", TensorProto.FLOAT, (220, 220, 3))
-        ]
-        output_value_infos = [
-            make_tensor_value_info("output", TensorProto.FLOAT, (220, 220, 3))
-        ]
-        body_graph = helper.make_graph(
-            [make_node("Identity", ["input"], ["output"])],
-            "body_graph",
-            input_value_infos,
-            output_value_infos,
-        )
-        graph = self._make_graph(
-            [
-                ("input1", TensorProto.FLOAT, (220, 220, 3)),
-                ("input2", TensorProto.FLOAT, (220, 220, 3)),
-                ("input3", TensorProto.FLOAT, (220, 220, 3)),
-            ],
-            [
-                make_node(
-                    "SequenceConstruct", ["input1", "input2", "input3"], ["in_sequence"]
-                ),
-                make_node(
-                    "SequenceMap", ["in_sequence"], ["out_sequence"], body=body_graph
-                ),
-            ],
-            [],
-        )
+        graph = parse_graph("""
+            agraph (float[220,220,3] input1, float[220,220,3] input2, float[220,220,3] input3)
+                => (out_sequence)
+            {
+                in_sequence = SequenceConstruct(input1, input2, input3)
+                out_sequence = SequenceMap (in_sequence) <
+                    body = body_graph (float[220,220,3] input) => (output) {
+                        output = Identity(input)
+                    }
+                >
+            }
+        """)
         self._assert_inferred(
             graph,
             [
@@ -11079,34 +11047,18 @@ class TestShapeInference(TestShapeInferenceHelper):
         )
 
     def test_sequence_map_identity_unknown_dims(self):
-        input_value_infos = [
-            make_tensor_value_info("input", TensorProto.FLOAT, ("H", "W", 3))
-        ]
-        output_value_infos = [
-            make_tensor_value_info("output", TensorProto.FLOAT, ("H", "W", 3))
-        ]
-        body_graph = helper.make_graph(
-            [make_node("Identity", ["input"], ["output"])],
-            "body_graph",
-            input_value_infos,
-            output_value_infos,
-        )
-        graph = self._make_graph(
-            [
-                ("input1", TensorProto.FLOAT, (200, 300, 3)),
-                ("input2", TensorProto.FLOAT, (100, 200, 3)),
-                ("input3", TensorProto.FLOAT, (5, 1, 3)),
-            ],
-            [
-                make_node(
-                    "SequenceConstruct", ["input1", "input2", "input3"], ["in_sequence"]
-                ),
-                make_node(
-                    "SequenceMap", ["in_sequence"], ["out_sequence"], body=body_graph
-                ),
-            ],
-            [],
-        )
+        graph = parse_graph("""
+            agraph (float[200,300,3] input1, float[100,200,3] input2, float[5,1,3] input3)
+                => (out_sequence)
+            {
+                in_sequence = SequenceConstruct(input1, input2, input3)
+                out_sequence = SequenceMap (in_sequence) <
+                    body = body_graph (float[H,W,3] input) => (output) {
+                        output = Identity(input)
+                    }
+                >
+            }
+        """)
         self._assert_inferred(
             graph,
             [
@@ -11120,53 +11072,27 @@ class TestShapeInference(TestShapeInferenceHelper):
         )
 
     def test_sequence_map_slice_outs_known_dims(self):
-        body_graph = helper.make_graph(
-            nodes=[
-                make_node("Slice", ["x", "starts1", "ends1", "axes", ""], ["y1"]),
-                make_node("Slice", ["x", "starts2", "ends2", "axes", ""], ["y2"]),
-            ],
-            name="body_graph",
-            inputs=[
-                onnx.helper.make_tensor_value_info(
-                    "x", onnx.TensorProto.FLOAT, ("H", "W", 3)
-                )
-            ],
-            outputs=[
-                onnx.helper.make_tensor_value_info(
-                    "y1", onnx.TensorProto.FLOAT, (10, 20, 3)
-                ),
-                onnx.helper.make_tensor_value_info(
-                    "y2", onnx.TensorProto.FLOAT, (30, 40, 3)
-                ),
-            ],
-            initializer=[
-                make_tensor("axes", TensorProto.INT64, (2,), (0, 1)),
-                make_tensor("starts1", TensorProto.INT64, (2,), (0, 0)),
-                make_tensor("ends1", TensorProto.INT64, (2,), (10, 20)),
-                make_tensor("starts2", TensorProto.INT64, (2,), (0, 0)),
-                make_tensor("ends2", TensorProto.INT64, (2,), (30, 40)),
-            ],
-        )
-
-        graph = self._make_graph(
-            [
-                ("input1", TensorProto.FLOAT, (220, 310, 3)),
-                ("input2", TensorProto.FLOAT, (110, 210, 3)),
-                ("input3", TensorProto.FLOAT, (90, 110, 3)),
-            ],
-            [
-                make_node(
-                    "SequenceConstruct", ["input1", "input2", "input3"], ["in_sequence"]
-                ),
-                make_node(
-                    "SequenceMap",
-                    ["in_sequence"],
-                    ["out_sequence1", "out_sequence2"],
-                    body=body_graph,
-                ),
-            ],
-            [],
-        )
+        # The body's y1/y2 outputs are declared with concrete shapes; SequenceMap propagates those
+        # element shapes into the output sequences.
+        graph = parse_graph("""
+            agraph (float[220,310,3] input1, float[110,210,3] input2, float[90,110,3] input3)
+                => (out_sequence1, out_sequence2)
+            {
+                in_sequence = SequenceConstruct(input1, input2, input3)
+                out_sequence1, out_sequence2 = SequenceMap (in_sequence) <
+                    body = body_graph (float[H,W,3] x) => (float[10,20,3] y1, float[30,40,3] y2)
+                    <
+                        int64[2] axes = {0,1},
+                        int64[2] starts1 = {0,0}, int64[2] ends1 = {10,20},
+                        int64[2] starts2 = {0,0}, int64[2] ends2 = {30,40}
+                    >
+                    {
+                        y1 = Slice(x, starts1, ends1, axes)
+                        y2 = Slice(x, starts2, ends2, axes)
+                    }
+                >
+            }
+        """)
         self._assert_inferred(
             graph,
             [
@@ -11183,53 +11109,25 @@ class TestShapeInference(TestShapeInferenceHelper):
         )
 
     def test_sequence_map_slice_outs_unknown_dims(self):
-        body_graph = helper.make_graph(
-            nodes=[
-                make_node("Slice", ["x", "starts1", "ends1", "axes", ""], ["y1"]),
-                make_node("Slice", ["x", "starts2", "ends2", "axes", ""], ["y2"]),
-            ],
-            name="body_graph",
-            inputs=[
-                onnx.helper.make_tensor_value_info(
-                    "x", onnx.TensorProto.FLOAT, ("H", "W", 3)
-                )
-            ],
-            outputs=[
-                onnx.helper.make_tensor_value_info(
-                    "y1", onnx.TensorProto.FLOAT, ("H1", "W1", 3)
-                ),
-                onnx.helper.make_tensor_value_info(
-                    "y2", onnx.TensorProto.FLOAT, ("H2", "W2", 3)
-                ),
-            ],
-            initializer=[
-                make_tensor("axes", TensorProto.INT64, (2,), (0, 1)),
-                make_tensor("starts1", TensorProto.INT64, (2,), (0, 0)),
-                make_tensor("ends1", TensorProto.INT64, (2,), (10, 20)),
-                make_tensor("starts2", TensorProto.INT64, (2,), (0, 0)),
-                make_tensor("ends2", TensorProto.INT64, (2,), (30, 40)),
-            ],
-        )
-
-        graph = self._make_graph(
-            [
-                ("input1", TensorProto.FLOAT, (220, 310, 3)),
-                ("input2", TensorProto.FLOAT, (110, 210, 3)),
-                ("input3", TensorProto.FLOAT, (90, 110, 3)),
-            ],
-            [
-                make_node(
-                    "SequenceConstruct", ["input1", "input2", "input3"], ["in_sequence"]
-                ),
-                make_node(
-                    "SequenceMap",
-                    ["in_sequence"],
-                    ["out_sequence1", "out_sequence2"],
-                    body=body_graph,
-                ),
-            ],
-            [],
-        )
+        graph = parse_graph("""
+            agraph (float[220,310,3] input1, float[110,210,3] input2, float[90,110,3] input3)
+                => (out_sequence1, out_sequence2)
+            {
+                in_sequence = SequenceConstruct(input1, input2, input3)
+                out_sequence1, out_sequence2 = SequenceMap (in_sequence) <
+                    body = body_graph (float[H,W,3] x) => (float[H1,W1,3] y1, float[H2,W2,3] y2)
+                    <
+                        int64[2] axes = {0,1},
+                        int64[2] starts1 = {0,0}, int64[2] ends1 = {10,20},
+                        int64[2] starts2 = {0,0}, int64[2] ends2 = {30,40}
+                    >
+                    {
+                        y1 = Slice(x, starts1, ends1, axes)
+                        y2 = Slice(x, starts2, ends2, axes)
+                    }
+                >
+            }
+        """)
         self._assert_inferred(
             graph,
             [
@@ -11246,35 +11144,18 @@ class TestShapeInference(TestShapeInferenceHelper):
         )
 
     def test_sequence_map_different_tensor_type(self):
-        body_graph = helper.make_graph(
-            nodes=[make_node("Shape", ["x"], ["shape"])],
-            name="body_graph",
-            inputs=[
-                onnx.helper.make_tensor_value_info(
-                    "x", onnx.TensorProto.FLOAT, ("H", "W", "C")
-                )
-            ],
-            outputs=[
-                onnx.helper.make_tensor_value_info(
-                    "shape", onnx.TensorProto.INT64, (3,)
-                )
-            ],
-        )
-
-        graph = self._make_graph(
-            [
-                ("input1", TensorProto.FLOAT, (220, 310, 3)),
-                ("input2", TensorProto.FLOAT, (110, 210, 3)),
-                ("input3", TensorProto.FLOAT, (90, 110, 3)),
-            ],
-            [
-                make_node(
-                    "SequenceConstruct", ["input1", "input2", "input3"], ["in_sequence"]
-                ),
-                make_node("SequenceMap", ["in_sequence"], ["shapes"], body=body_graph),
-            ],
-            [],
-        )
+        graph = parse_graph("""
+            agraph (float[220,310,3] input1, float[110,210,3] input2, float[90,110,3] input3)
+                => (shapes)
+            {
+                in_sequence = SequenceConstruct(input1, input2, input3)
+                shapes = SequenceMap (in_sequence) <
+                    body = body_graph (float[H,W,C] x) => (int64[3] shape) {
+                        shape = Shape(x)
+                    }
+                >
+            }
+        """)
         self._assert_inferred(
             graph,
             [
