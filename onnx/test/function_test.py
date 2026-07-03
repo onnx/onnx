@@ -220,7 +220,3 @@ class TestFunction(unittest.TestCase):
             {func_add_name, func_identity_name, func_nested_identity_add_name},
             func_domain,
         )
-
-
-if __name__ == "__main__":
-    unittest.main()

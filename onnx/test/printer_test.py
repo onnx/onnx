@@ -66,7 +66,3 @@ class TestBasicFunctions(unittest.TestCase):
         # arguments. Use a proto type outside the supported set.
         with self.assertRaises(TypeError):
             printer.to_text(onnx.AttributeProto())
-
-
-if __name__ == "__main__":
-    unittest.main()

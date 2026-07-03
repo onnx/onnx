@@ -13610,7 +13610,3 @@ class TestCustomSchemaShapeInference(TestShapeInferenceHelper):
             self.assertEqual([d.dim_value for d in sym.dim], [2, 3])
         finally:
             onnx.defs.deregister_schema(op_type, 1, domain)
-
-
-if __name__ == "__main__":
-    unittest.main(verbosity=2)

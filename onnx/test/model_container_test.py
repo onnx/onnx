@@ -131,7 +131,3 @@ class TestLargeOnnx(unittest.TestCase):
                     self.assertEqual(tested, 1)
             loaded_model = onnx.load_model(filename, load_external_data=True)
             onnx.checker.check_model(loaded_model)
-
-
-if __name__ == "__main__":
-    unittest.main(verbosity=2)

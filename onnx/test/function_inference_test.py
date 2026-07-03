@@ -3,7 +3,6 @@
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
-import unittest
 from typing import TYPE_CHECKING
 
 from shape_inference_test import TestShapeInferenceHelper
@@ -116,7 +115,3 @@ class TestFunctionInference(TestShapeInferenceHelper):
 
         # A failing test-case with a non-trailing missing optional parameter
         self._check_fails(code, [float_type_, no_type_, int8_type_], [])
-
-
-if __name__ == "__main__":
-    unittest.main()

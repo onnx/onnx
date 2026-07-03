@@ -321,7 +321,3 @@ class TestToolsFunctions(unittest.TestCase):
         oinf2 = ReferenceEvaluator(repl)
         y2 = oinf2.run(None, {"X": x})[0]
         assert_allclose(y1.shape, y2.shape)
-
-
-if __name__ == "__main__":
-    unittest.main(verbosity=2)

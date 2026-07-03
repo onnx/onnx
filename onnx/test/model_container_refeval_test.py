@@ -134,7 +134,3 @@ class TestLargeOnnxReferenceEvaluator(unittest.TestCase):
             self.common_check_reference_evaluator(copy)
             loaded_model = onnx.load_model(filename, load_external_data=True)
             self.common_check_reference_evaluator(loaded_model)
-
-
-if __name__ == "__main__":
-    unittest.main(verbosity=2)
