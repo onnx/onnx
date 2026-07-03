@@ -17,6 +17,7 @@ name: Fuzz
 on:
   pull_request:
     paths:
+      - '.github/workflows/fuzz.yml'
       - 'onnx/**'
       - 'pyproject.toml'
       - '.github/workflows/fuzz.yml'
@@ -24,13 +25,13 @@ on:
     branches:
       - main
     paths:
+      - '.github/workflows/fuzz.yml'
       - 'onnx/**'
       - 'pyproject.toml'
       - '.github/workflows/fuzz.yml'
   schedule:
     - cron: '0 6 * * *'  # nightly: run each harness for longer than the PR smoke test
   workflow_dispatch:
-
 permissions:
   contents: read
 
