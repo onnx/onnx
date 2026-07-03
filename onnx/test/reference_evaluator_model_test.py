@@ -124,7 +124,3 @@ class TestReferenceEvaluatorModel(unittest.TestCase):
         model = create_model()
         session = orf.ReferenceEvaluator(model)
         session.run(None, {"A": -np.arange(10).astype(np.float32)})
-
-
-if __name__ == "__main__":
-    unittest.main(verbosity=2)

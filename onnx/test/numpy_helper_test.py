@@ -338,7 +338,3 @@ class TestNumpyHelper(unittest.TestCase):
         tensor.int32_data.append(0)  # encodes 16 elements, not 1000
         with self.assertRaises(ValueError, msg="payload too small for declared dims"):
             numpy_helper.to_array(tensor)
-
-
-if __name__ == "__main__":
-    unittest.main(verbosity=2)

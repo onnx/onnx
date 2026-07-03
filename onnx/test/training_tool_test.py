@@ -95,7 +95,3 @@ class TestTrainingTool(unittest.TestCase):
             full_training_model
         )
         onnx.checker.check_model(full_training_model_with_shapes)
-
-
-if __name__ == "__main__":
-    unittest.main()

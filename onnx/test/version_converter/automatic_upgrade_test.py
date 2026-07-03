@@ -3,8 +3,6 @@
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
-import unittest
-
 import automatic_conversion_test_base
 import numpy as np
 
@@ -2105,7 +2103,3 @@ class TestAutomaticUpgrade(automatic_conversion_test_base.TestAutomaticConversio
 
         untested_ops = expected_tested_ops - set(self.tested_ops)
         self.assertEqual(untested_ops, set())
-
-
-if __name__ == "__main__":
-    unittest.main()
