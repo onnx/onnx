@@ -6108,69 +6108,94 @@ class TestShapeInference(TestShapeInferenceHelper):
 
     def test_scan_num_scan_inputs_out_of_range(self) -> None:
         # num_scan_inputs exceeding the input count must fail, not underflow.
-        subgraph = helper.make_graph(
-            [make_node("Add", ["a", "b"], ["c"])],
-            "subgraph",
-            [
-                make_tensor_value_info("a", TensorProto.UNDEFINED, None),
-                make_tensor_value_info("b", TensorProto.UNDEFINED, None),
-            ],
-            [make_tensor_value_info("c", TensorProto.UNDEFINED, None)],
-        )
-        graph = self._make_graph(
-            [
-                ("in0", TensorProto.FLOAT, (2,)),
-                ("in1", TensorProto.FLOAT, (3, 2)),
-            ],
-            [
-                make_node(
-                    "Scan",
-                    ["in0", "in1"],
-                    ["out"],
-                    num_scan_inputs=9,
-                    body=subgraph,
-                )
-            ],
-            [],
+        model = onnx.parser.parse_model(
+            """
+            <ir_version: 10, opset_import: ["" : 21]>
+            agraph (float[2] in0, float[3, 2] in1) => (out)
+            {
+                out = Scan <num_scan_inputs = 9, body = subgraph (float a, float b) => (float c) {
+                    c = Add(a, b)
+                }> (in0, in1)
+            }
+            """
         )
         with self.assertRaisesRegex(
             onnx.shape_inference.InferenceError, "num_scan_inputs"
         ):
-            self._inferred(graph)
+            self._inferred(model)
 
     def test_scan_loop_state_vars_exceed_outputs(self) -> None:
         # More loop state vars than outputs must fail, not underflow.
-        subgraph = helper.make_graph(
-            [make_node("Identity", ["a"], ["c"])],
-            "subgraph",
-            [
-                make_tensor_value_info("a", TensorProto.UNDEFINED, None),
-                make_tensor_value_info("s0", TensorProto.UNDEFINED, None),
-                make_tensor_value_info("s1", TensorProto.UNDEFINED, None),
-            ],
-            [make_tensor_value_info("c", TensorProto.UNDEFINED, None)],
-        )
-        graph = self._make_graph(
-            [
-                ("in0", TensorProto.FLOAT, (2,)),
-                ("in1", TensorProto.FLOAT, (2,)),
-                ("in2", TensorProto.FLOAT, (3, 2)),
-            ],
-            [
-                make_node(
-                    "Scan",
-                    ["in0", "in1", "in2"],
-                    ["out"],
-                    num_scan_inputs=1,
-                    body=subgraph,
-                )
-            ],
-            [],
+        model = onnx.parser.parse_model(
+            """
+            <ir_version: 10, opset_import: ["" : 21]>
+            agraph (float[2] in0, float[2] in1, float[3, 2] in2) => (out)
+            {
+                out = Scan <num_scan_inputs = 1, body = subgraph (float a, float s0, float s1) => (float c) {
+                    c = Identity(a)
+                }> (in0, in1, in2)
+            }
+            """
         )
         with self.assertRaisesRegex(
             onnx.shape_inference.InferenceError, "loop state variables"
         ):
-            self._inferred(graph)
+            self._inferred(model)
+
+    def test_scan_opset8_num_scan_inputs_out_of_range(self) -> None:
+        # Opset-8 Scan has a leading sequence_lens input; num_scan_inputs
+        # exceeding the remaining inputs must fail, not underflow.
+        model = onnx.parser.parse_model(
+            """
+            <ir_version: 8, opset_import: ["" : 8]>
+            agraph (float[1, 3] loop_state, float[1, 2, 2] scan_input) => (out)
+            {
+                out = Scan <num_scan_inputs = 9, body = subgraph (float a, float b) => (float c) {
+                    c = Add(a, b)
+                }> ("", loop_state, scan_input)
+            }
+            """
+        )
+        with self.assertRaisesRegex(
+            onnx.shape_inference.InferenceError, "num_scan_inputs"
+        ):
+            self._inferred(model)
+
+    def test_scan_opset9_num_scan_inputs_out_of_range(self) -> None:
+        # Opset-9 Scan shares the same underflow risk as the latest opset.
+        model = onnx.parser.parse_model(
+            """
+            <ir_version: 8, opset_import: ["" : 9]>
+            agraph (float[2] in0, float[3, 2] in1) => (out)
+            {
+                out = Scan <num_scan_inputs = 9, body = subgraph (float a, float b) => (float c) {
+                    c = Add(a, b)
+                }> (in0, in1)
+            }
+            """
+        )
+        with self.assertRaisesRegex(
+            onnx.shape_inference.InferenceError, "num_scan_inputs"
+        ):
+            self._inferred(model)
+
+    def test_scan_opset9_loop_state_vars_exceed_outputs(self) -> None:
+        # Opset-9 Scan: more loop state vars than outputs must fail, not underflow.
+        model = onnx.parser.parse_model(
+            """
+            <ir_version: 8, opset_import: ["" : 9]>
+            agraph (float[2] in0, float[2] in1, float[3, 2] in2) => (out)
+            {
+                out = Scan <num_scan_inputs = 1, body = subgraph (float a, float s0, float s1) => (float c) {
+                    c = Identity(a)
+                }> (in0, in1, in2)
+            }
+            """
+        )
+        with self.assertRaisesRegex(
+            onnx.shape_inference.InferenceError, "loop state variables"
+        ):
+            self._inferred(model)
 
     def test_scan_opset9(self) -> None:
         # The whole graph (including the Scan body subgraph) is expressed in one parse_graph call;

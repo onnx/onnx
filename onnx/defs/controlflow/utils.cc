@@ -210,11 +210,11 @@ void ScanInferenceFunction(InferenceContext& ctx) {
   auto num_outputs = ctx.getNumOutputs();
   if (num_loop_state_vars > num_outputs) {
     fail_shape_inference(
-        "Number of loop state variables (",
-        num_loop_state_vars,
-        ") cannot exceed the number of Scan outputs (",
+        "The number of outputs of the Scan (",
         num_outputs,
-        ").");
+        ") should equal the sum of the number of loop state variables (",
+        num_loop_state_vars,
+        ") and the number of scan-outputs.");
   }
   auto num_scan_outputs = num_outputs - num_loop_state_vars;
 
