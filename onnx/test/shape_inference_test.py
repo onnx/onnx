@@ -6175,13 +6175,13 @@ class TestShapeInference(TestShapeInferenceHelper):
             agraph (float[1, 3] loop_state_orig, float[1, sequence, 2] scan_input)
                 => (loop_state_final, scan_output)
             {
-                loop_state_final, scan_output = Scan <
+                loop_state_final, scan_output = Scan ("", loop_state_orig, scan_input) <
                     num_scan_inputs = 1,
                     body = subgraph (loop_state_in, input) => (loop_state_out, output) {
                         loop_state_out = Identity(loop_state_in)
                         output = Identity(input)
                     }
-                > ("", loop_state_orig, scan_input)
+                >
             }
         """)
 
@@ -6203,13 +6203,13 @@ class TestShapeInference(TestShapeInferenceHelper):
             agraph (float[3] loop_state_orig, float[sequence, 2] scan_input)
                 => (loop_state_final, scan_output)
             {
-                loop_state_final, scan_output = Scan <
+                loop_state_final, scan_output = Scan (loop_state_orig, scan_input) <
                     num_scan_inputs = 1,
                     body = subgraph (loop_state_in, input) => (loop_state_out, output) {
                         loop_state_out = Identity(loop_state_in)
                         output = Identity(input)
                     }
-                > (loop_state_orig, scan_input)
+                >
             }
         """)
 
@@ -6231,13 +6231,13 @@ class TestShapeInference(TestShapeInferenceHelper):
             agraph (float[3] loop_state_orig, float[axis0, sequence, 2] scan_input)
                 => (loop_state_final, scan_output)
             {
-                loop_state_final, scan_output = Scan <
+                loop_state_final, scan_output = Scan (loop_state_orig, scan_input) <
                     num_scan_inputs = 1, scan_input_axes = [1],
                     body = subgraph (loop_state_in, input) => (loop_state_out, output) {
                         loop_state_out = Identity(loop_state_in)
                         output = Identity(input)
                     }
-                > (loop_state_orig, scan_input)
+                >
             }
         """)
 
@@ -6259,13 +6259,13 @@ class TestShapeInference(TestShapeInferenceHelper):
             agraph (float[3] loop_state_orig, float[axis0, sequence, 2] scan_input)
                 => (loop_state_final, scan_output)
             {
-                loop_state_final, scan_output = Scan <
+                loop_state_final, scan_output = Scan (loop_state_orig, scan_input) <
                     num_scan_inputs = 1, scan_input_axes = [1], scan_output_axes = [1],
                     body = subgraph (loop_state_in, input) => (loop_state_out, output) {
                         loop_state_out = Identity(loop_state_in)
                         output = Identity(input)
                     }
-                > (loop_state_orig, scan_input)
+                >
             }
         """)
 
@@ -6287,13 +6287,13 @@ class TestShapeInference(TestShapeInferenceHelper):
             agraph (float[3] loop_state_orig, float[axis0, sequence, 2] scan_input)
                 => (loop_state_final, scan_output)
             {
-                loop_state_final, scan_output = Scan <
+                loop_state_final, scan_output = Scan (loop_state_orig, scan_input) <
                     num_scan_inputs = 1, scan_input_axes = [-2], scan_output_axes = [-2],
                     body = subgraph (loop_state_in, input) => (loop_state_out, output) {
                         loop_state_out = Identity(loop_state_in)
                         output = Identity(input)
                     }
-                > (loop_state_orig, scan_input)
+                >
             }
         """)
 
