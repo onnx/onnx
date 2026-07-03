@@ -6745,51 +6745,27 @@ class TestShapeInference(TestShapeInferenceHelper):
         )
 
     def test_loop(self) -> None:
-        # can't use self._make_graph for the subgraph as it add more inputs for the Reshape operations it inserts.
-        # this breaks the subgraph inferencing as it expects the number of inputs passed from Loop to match
-        # the GraphProto, but Loop knows nothing about the additional inputs.
-        # Note: loop_state_in must be declared with an UNDEFINED element type (so that Loop shape inference
-        # fills only its element type while preserving the declared shape); the text parser cannot express
-        # such an input, so this test keeps using helper.make_graph for the body.
-        input_value_infos = [
-            make_tensor_value_info("iter_num_in", TensorProto.INT64, (1,)),
-            make_tensor_value_info("cond_in", TensorProto.UNDEFINED, None),
-            make_tensor_value_info("loop_state_in", TensorProto.UNDEFINED, ()),
-        ]
-        output_value_infos = [
-            make_tensor_value_info("cond_out", TensorProto.UNDEFINED, None),
-            make_tensor_value_info("loop_state_out", TensorProto.UNDEFINED, None),
-            make_tensor_value_info("output", TensorProto.FLOAT, (3,)),
-        ]
-
-        subgraph = helper.make_graph(
-            [
-                make_node("Identity", ["cond_in"], ["cond_out"]),
-                make_node("Identity", ["loop_state_in"], ["loop_state_out"]),
-                make_node("Identity", ["outer_scope_input"], ["output"]),
-            ],
-            "subgraph",
-            input_value_infos,
-            output_value_infos,
-        )
-
-        graph = self._make_graph(
-            [
-                ("max_trip_count", TensorProto.INT64, (1,)),
-                ("cond_orig", TensorProto.FLOAT, (1,)),
-                ("loop_state_orig", TensorProto.FLOAT, (2,)),
-                ("outer_scope_input", TensorProto.FLOAT, (3,)),
-            ],
-            [
-                make_node(
-                    "Loop",
-                    ["max_trip_count", "cond_orig", "loop_state_orig"],
-                    ["loop_state_final", "loop_output"],
-                    body=subgraph,
-                )
-            ],
-            [],
-        )
+        # The whole graph (including the Loop body subgraph) is expressed in one parse_graph call.
+        # The body's cond_in and loop_state_in are left untyped (their types are supplied by Loop), and the
+        # body references outer_scope_input from the enclosing graph. loop_state_final's rank may change
+        # between iterations, so it is left as a (dangling) value rather than a graph output, since a graph
+        # output would require a fully-specified shape; its inferred type/shape is still checked. loop_output
+        # is declared as an untyped graph output so that shape inference must compute its type/shape.
+        graph = parse_graph("""
+            agraph (
+                int64[1] max_trip_count, float[1] cond_orig, float[2] loop_state_orig, float[3] outer_scope_input
+            ) => (loop_output)
+            {
+                loop_state_final, loop_output = Loop (max_trip_count, cond_orig, loop_state_orig) <
+                    body = subgraph (int64[1] iter_num_in, cond_in, loop_state_in)
+                        => (cond_out, loop_state_out, float[3] output) {
+                        cond_out = Identity(cond_in)
+                        loop_state_out = Identity(loop_state_in)
+                        output = Identity(outer_scope_input)
+                    }
+                >
+            }
+        """)
 
         self._assert_inferred(
             graph,
