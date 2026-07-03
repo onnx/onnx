@@ -10,7 +10,8 @@
 # instead of silently, since OSS-Fuzz failures are not surfaced here.
 #
 # atheris only ships wheels for Linux and macOS, so this does not run on
-# Windows. See onnx/fuzz/README.md for the harness/toggle-byte details.
+# Windows. See https://github.com/onnx/onnx/blob/main/onnx/fuzz/README.md 
+# for the harness/toggle-byte details.
 
 name: Fuzz
 
