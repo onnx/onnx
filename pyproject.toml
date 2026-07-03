@@ -273,6 +273,7 @@ required-imports = ["from __future__ import annotations"]
     "PLR2004",  # Magic numbers are fine in low-level fuzz scaffolding
     "S112",     # try-except-continue is the correct pattern for per-version fuzzing
     "PERF203",  # try-except in loop is unavoidable in the version-converter harness
+    "S311",     # Non-crypto random is fine for fuzz input shuffling
 ]
 "onnx/gen_proto.py" = ["T20"] # Build script uses print for progress
 "onnx/defs/gen_*.py" = ["T20"] # Code generators use print for output

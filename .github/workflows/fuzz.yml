@@ -1,0 +1,114 @@
+# Copyright (c) ONNX Project Contributors
+#
+# SPDX-License-Identifier: Apache-2.0
+
+# Runs the OSS-Fuzz harnesses under onnx/fuzz/ directly (not via OSS-Fuzz
+# infrastructure) as a regression check. This is deliberately not a
+# replacement for OSS-Fuzz's own continuous, long-running campaigns
+# (see google/oss-fuzz#15382) — it exists to catch harness regressions
+# (import errors, API drift, a harness file going missing) at PR time
+# instead of silently, since OSS-Fuzz failures are not surfaced here.
+#
+# atheris only ships wheels for Linux and macOS, so this does not run on
+# Windows. See onnx/fuzz/README.md for the harness/toggle-byte details.
+
+name: Fuzz
+
+on:
+  pull_request:
+    paths:
+      - 'onnx/**'
+      - 'pyproject.toml'
+  push:
+    branches:
+      - main
+    paths:
+      - 'onnx/**'
+      - 'pyproject.toml'
+  schedule:
+    - cron: '0 6 * * *'  # nightly: run each harness for longer than the PR smoke test
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  fuzz:
+    name: Run fuzz harnesses (${{ github.event_name == 'schedule' && 'nightly' || 'smoke' }})
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          submodules: recursive
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
+        with:
+          python-version: '3.12'
+
+      - name: Build and install ONNX
+        run: pip install -e ".[reference]" -v
+        env:
+          ONNX_ML: 1
+
+      - name: Install atheris
+        run: pip install atheris
+
+      - name: Generate seed corpora
+        run: |
+          mkdir -p corpus
+          python onnx/fuzz/make_seed_corpus.py \
+            corpus/version_converter.zip corpus/parser.zip \
+            corpus/checker.zip corpus/shape_inference.zip corpus/compose.zip
+          for name in version_converter parser checker shape_inference compose; do
+            mkdir -p "corpus/$name"
+            python -m zipfile -e "corpus/$name.zip" "corpus/$name/"
+          done
+          # fuzz_model_loader.py has no dedicated seeds; it exercises the same
+          # load+check path as fuzz_checker.py, so reuse that corpus.
+          mkdir -p corpus/model_loader
+          cp corpus/checker/* corpus/model_loader/
+
+      - name: Set fuzz duration
+        id: duration
+        run: |
+          if [ "${{ github.event_name }}" = "schedule" ]; then
+            echo "seconds=300" >> "$GITHUB_OUTPUT"
+          else
+            echo "seconds=60" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Run fuzz_checker.py
+        run: python onnx/fuzz/fuzz_checker.py -max_total_time=${{ steps.duration.outputs.seconds }} -timeout=20 corpus/checker
+
+      - name: Run fuzz_model_loader.py
+        run: python onnx/fuzz/fuzz_model_loader.py -max_total_time=${{ steps.duration.outputs.seconds }} -timeout=20 corpus/model_loader
+
+      - name: Run fuzz_parser.py
+        run: python onnx/fuzz/fuzz_parser.py -max_total_time=${{ steps.duration.outputs.seconds }} -timeout=20 corpus/parser
+
+      - name: Run fuzz_shape_inference.py
+        run: python onnx/fuzz/fuzz_shape_inference.py -max_total_time=${{ steps.duration.outputs.seconds }} -timeout=20 corpus/shape_inference
+
+      - name: Run fuzz_version_converter.py
+        run: python onnx/fuzz/fuzz_version_converter.py -max_total_time=${{ steps.duration.outputs.seconds }} -timeout=20 corpus/version_converter
+
+      - name: Run fuzz_compose.py
+        run: python onnx/fuzz/fuzz_compose.py -max_total_time=${{ steps.duration.outputs.seconds }} -timeout=20 corpus/compose
+
+      - name: Upload crash artifacts
+        if: failure()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: fuzz-crashes
+          path: |
+            crash-*
+            timeout-*
+            oom-*
+          if-no-files-found: ignore
