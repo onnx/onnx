@@ -6811,7 +6811,7 @@ class TestShapeInference(TestShapeInferenceHelper):
                 => (loop_output)
             {
                 loop_output = Loop (max_trip_count, cond_orig) <
-                    body = subgraph (int64[1] iter_num_in, cond_in) => (cond_out, output) {
+                    body = subgraph (int64[1] iter_num_in, cond_in) => (cond_out, float[3] output) {
                         cond_out = Identity(cond_in)
                         output = Identity(outer_scope_input)
                     }
@@ -11028,7 +11028,7 @@ class TestShapeInference(TestShapeInferenceHelper):
             {
                 in_sequence = SequenceConstruct(input1, input2, input3)
                 out_sequence = SequenceMap (in_sequence) <
-                    body = body_graph (float[220,220,3] input) => (output) {
+                    body = body_graph (float[220,220,3] input) => (float[220,220,3] output) {
                         output = Identity(input)
                     }
                 >
@@ -11053,7 +11053,7 @@ class TestShapeInference(TestShapeInferenceHelper):
             {
                 in_sequence = SequenceConstruct(input1, input2, input3)
                 out_sequence = SequenceMap (in_sequence) <
-                    body = body_graph (float[H,W,3] input) => (output) {
+                    body = body_graph (float[H,W,3] input) => (float[H,W,3] output) {
                         output = Identity(input)
                     }
                 >
