@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
+import struct
 import sys
 import zipfile
 from typing import TYPE_CHECKING
@@ -39,13 +40,48 @@ def _make_model(
     return model.SerializeToString()
 
 
+def _make_model_unchecked(
+    op_type: str,
+    opset_version: int,
+    node_inputs: list[str],
+    node_outputs: list[str],
+    graph_inputs: list[str],
+    graph_outputs: list[str],
+    attrs=None,
+) -> bytes:
+    """Serialized ModelProto with explicit, possibly inconsistent graph I/O.
+
+    The graph output need not be produced by the node, so the result can carry
+    a topological gap (an output or node input that nothing produces) to seed
+    the version converter's undefined-name handling.
+    """
+    if attrs is None:
+        attrs = {}
+
+    def vi(name: str):
+        return helper.make_tensor_value_info(name, TensorProto.FLOAT, [1])
+
+    node = helper.make_node(op_type, node_inputs, node_outputs, **attrs)
+    graph = helper.make_graph(
+        [node],
+        f"{op_type.lower()}-unchecked",
+        [vi(n) for n in graph_inputs],
+        [vi(n) for n in graph_outputs],
+    )
+    model = helper.make_model(
+        graph,
+        producer_name="oss-fuzz",
+        opset_imports=[helper.make_opsetid("", opset_version)],
+    )
+    return model.SerializeToString()
+
+
 # Text-format seeds for fuzz_parser, extracted from onnx/test/parser_test.py.
 # Each string is a valid input to onnx.parser.parse_model().
 _PARSER_SEEDS: dict[str, str] = {
     # Minimal 3-op linear model; exercises basic node and graph parsing.
     "basic_matmul_softmax.txt": """\
-<
-  ir_version: 7,
+< ir_version: 7,
   opset_import: ["" : 10]
 >
 agraph (float[N, 128] X, float[128, 10] W, float[10] B) => (float[N] C)
@@ -57,8 +93,7 @@ agraph (float[N, 128] X, float[128, 10] W, float[10] B) => (float[N] C)
 """,
     # Multiple opset imports; exercises opset_import list parsing.
     "multi_opset.txt": """\
-<
-  ir_version: 7,
+< ir_version: 7,
   opset_import: ["" : 10, "com.microsoft" : 1]
 >
 agraph (float[N, 128] X, float[128, 10] W, float[10] B) => (float[N] C)
@@ -70,8 +105,7 @@ agraph (float[N, 128] X, float[128, 10] W, float[10] B) => (float[N] C)
 """,
     # All top-level metadata fields; exercises producer_name, doc_string, etc.
     "model_with_metadata.txt": """\
-<
-  ir_version: 9,
+< ir_version: 9,
   opset_import: ["" : 15],
   producer_name: "oss-fuzz-seed",
   producer_version: "1.0",
@@ -86,8 +120,7 @@ agraph (float[N] x) => (float[N] y)
     # Model with a local function definition and attribute references;
     # exercises the function-proto and attribute-default parsing paths.
     "function_with_attributes.txt": """\
-<
-  ir_version: 9,
+< ir_version: 9,
   opset_import: ["" : 15, "custom_domain" : 1],
   producer_name: "oss-fuzz-seed",
   producer_version: "1.0",
@@ -98,8 +131,7 @@ agraph (float[N] x) => (float[N] out)
 {
    out = custom_domain.Selu<alpha=2.0, gamma=3.0>(x)
 }
-<
-  domain: "custom_domain",
+< domain: "custom_domain",
   opset_import: ["" : 15],
   doc_string: "custom Selu function"
 >
@@ -124,13 +156,11 @@ Selu
 """,
     # Cast op with a type initializer; exercises initializer and attribute parsing.
     "cast_with_initializer.txt": """\
-<
-  ir_version: 10,
+< ir_version: 10,
   opset_import: ["" : 19]
 >
 agraph (float[N] X) => (int64[N] C)
-<
-  int64[1] weight = {0}
+< int64[1] weight = {0}
 >
 {
    C = Cast<to=7>(X)
@@ -139,8 +169,7 @@ agraph (float[N] X) => (int64[N] C)
     # Special float literal values (inf, -inf, nan); exercises the float
     # literal parser branches that differ from ordinary decimal parsing.
     "float_special_values.txt": """\
-<
-  ir_version: 8,
+< ir_version: 8,
   opset_import: ["" : 18]
 >
 agraph (float[1] X) => (float[1] Y)
@@ -154,12 +183,12 @@ agraph (float[1] X) => (float[1] Y)
 }
 
 
-# Seed models for fuzz_shape_inference. The harness reads a trailing toggle
-# byte (strict_mode / check_type / structured-vs-raw path); seeds use 0x00,
-# which selects the raw-bytes path. Each seed is a valid serialized
-# ModelProto + one trailing 0x00 byte so the harness slices the toggle off
-# and passes the rest to onnx.load_model_from_string.
-_SHAPE_INFERENCE_TOGGLE_RAW = bytes([0x00])
+# Seed models for fuzz_shape_inference. Each seed is a complete serialized
+# ModelProto with no trailing bytes: the harness's raw path passes the full
+# input to onnx.load_model_from_string, which rejects any trailing bytes, so
+# the toggle byte comes from the model bytes themselves (libFuzzer mutates
+# it freely). When the toggle's structured bit is clear, the seed loads and
+# reaches infer_shapes directly.
 
 
 def _si_linear() -> bytes:
@@ -301,23 +330,153 @@ def _si_loop() -> bytes:
     ).SerializeToString()
 
 
+# Seed models for fuzz_compose. Each seed is a model pair packed for the
+# harness's raw path: a 4-byte big-endian length prefix for m1's serialized
+# bytes, followed by m2's serialized bytes, then a trailing toggle byte.
+# Toggle 0x00 = raw path + derived io_map; 0x01 also sets prefix1/prefix2.
+# The harness derives the io_map from m1's output names and m2's input names,
+# so each pair reaches merge_models logic on the first iteration.
+def _compose_value_info(name: str):
+    return helper.make_tensor_value_info(name, TensorProto.FLOAT, ["N", "M"])
+
+
+def _compose_model(graph):
+    return helper.make_model(graph, opset_imports=[helper.make_opsetid("", 15)])
+
+
+def _compose_pack(m1, m2, toggle: int) -> bytes:
+    b1: bytes = m1.SerializeToString()
+    b2: bytes = m2.SerializeToString()
+    return struct.pack(">I", len(b1)) + b1 + b2 + bytes([toggle])
+
+
+def _compose_linear() -> bytes:
+    """Simplest valid merge: Relu output -> Sigmoid input (derived io_map)."""
+    m1 = _compose_model(
+        helper.make_graph(
+            [helper.make_node("Relu", ["X"], ["Y"])],
+            "m1",
+            [_compose_value_info("X")],
+            [_compose_value_info("Y")],
+        )
+    )
+    m2 = _compose_model(
+        helper.make_graph(
+            [helper.make_node("Sigmoid", ["Yin"], ["Z"])],
+            "m2",
+            [_compose_value_info("Yin")],
+            [_compose_value_info("Z")],
+        )
+    )
+    return _compose_pack(m1, m2, 0x00)
+
+
+def _compose_multi() -> bytes:
+    """Three outputs wired to three inputs; exercises variadic io_map."""
+    m1 = _compose_model(
+        helper.make_graph(
+            [
+                helper.make_node("Add", ["X", "X"], ["O0"]),
+                helper.make_node("Sub", ["X", "X"], ["O1"]),
+                helper.make_node("Mul", ["X", "X"], ["O2"]),
+            ],
+            "m1",
+            [_compose_value_info("X")],
+            [_compose_value_info(n) for n in ("O0", "O1", "O2")],
+        )
+    )
+    m2 = _compose_model(
+        helper.make_graph(
+            [
+                helper.make_node("Add", ["I0", "I1"], ["S"]),
+                helper.make_node("Mul", ["S", "I2"], ["D"]),
+            ],
+            "m2",
+            [_compose_value_info(n) for n in ("I0", "I1", "I2")],
+            [_compose_value_info("D")],
+        )
+    )
+    return _compose_pack(m1, m2, 0x00)
+
+
+def _compose_if() -> bytes:
+    """m2 contains an If whose branches reference its input; exercises the
+    recursive connect_io subgraph rewrite during merge.
+    """
+    m1 = _compose_model(
+        helper.make_graph(
+            [helper.make_node("Relu", ["X"], ["Y"])],
+            "m1",
+            [_compose_value_info("X")],
+            [_compose_value_info("Y")],
+        )
+    )
+    cond = helper.make_node(
+        "Constant",
+        [],
+        ["c"],
+        value=helper.make_tensor("cv", TensorProto.BOOL, [], [True]),
+    )
+    then_g = helper.make_graph(
+        [helper.make_node("Relu", ["Yin"], ["tr"])],
+        "then",
+        [],
+        [_compose_value_info("tr")],
+    )
+    else_g = helper.make_graph(
+        [helper.make_node("Neg", ["Yin"], ["er"])],
+        "else",
+        [],
+        [_compose_value_info("er")],
+    )
+    if_node = helper.make_node(
+        "If", ["c"], ["Z"], then_branch=then_g, else_branch=else_g
+    )
+    m2 = _compose_model(
+        helper.make_graph(
+            [cond, if_node],
+            "m2",
+            [_compose_value_info("Yin")],
+            [_compose_value_info("Z")],
+        )
+    )
+    return _compose_pack(m1, m2, 0x00)
+
+
+def _compose_prefix() -> bytes:
+    """Identical model merged with itself; all names collide, so the seed
+    sets the prefix toggle (0x01) to exercise add_prefix collision
+    resolution.
+    """
+    graph = helper.make_graph(
+        [helper.make_node("Add", ["A", "B"], ["C"])],
+        "m",
+        [_compose_value_info("A"), _compose_value_info("B")],
+        [_compose_value_info("C")],
+    )
+    m1 = _compose_model(graph)
+    m2 = _compose_model(graph)
+    return _compose_pack(m1, m2, 0x01)
+
+
 def _write_zip(path: str, entries: Mapping[str, bytes | str]) -> None:
     with zipfile.ZipFile(path, "w", compression=zipfile.ZIP_DEFLATED) as zf:
         for name, entry in entries.items():
             zf.writestr(name, entry.encode() if isinstance(entry, str) else entry)
 
 
-_USAGE = "Usage: {prog} <version_converter_out.zip> <parser_out.zip> <checker_out.zip> <shape_inference_out.zip>\n"
+_USAGE = "Usage: {prog} <version_converter_out.zip> <parser_out.zip> <checker_out.zip> <shape_inference_out.zip> [compose_out.zip]\n"
 
 
 def main() -> int:
-    if len(sys.argv) != 5:
+    if len(sys.argv) not in (5, 6):
         sys.stderr.write(_USAGE.format(prog=sys.argv[0]))
         return 2
     version_converter_out = sys.argv[1]
     parser_out = sys.argv[2]
     checker_out = sys.argv[3]
     shape_inference_out = sys.argv[4]
+    compose_out = sys.argv[5] if len(sys.argv) == 6 else None
 
     version_converter_seeds = {
         "cast_9_missing_input.onnx": _make_model(
@@ -328,6 +487,17 @@ def main() -> int:
         "upsample_6_missing_input.onnx": _make_model("Upsample", 6, []),
         "upsample_9_missing_scales.onnx": _make_model("Upsample", 9, ["X"]),
         "upsample_9_valid.onnx": _make_model("Upsample", 9, ["X", "scales"]),
+        # Models with a topological gap (an output or node input that nothing
+        # produces) seed graphProtoToGraph's undefined-name handling directly.
+        "identity_13_output_undefined.onnx": _make_model_unchecked(
+            "Identity", 13, ["X"], ["Y"], ["X"], ["Z"]
+        ),
+        "add_13_output_partial_undefined.onnx": _make_model_unchecked(
+            "Add", 13, ["X", "X"], ["Y"], ["X"], ["Y", "Z"]
+        ),
+        "add_13_node_input_undefined.onnx": _make_model_unchecked(
+            "Add", 13, ["X", "W"], ["Y"], ["X"], ["Y"]
+        ),
     }
 
     # Seed models for fuzz_checker: valid serialized ModelProtos covering a
@@ -344,23 +514,35 @@ def main() -> int:
 
     # Seed models for fuzz_shape_inference covering both the per-op dispatch
     # table (Concat / MatMul / Reshape data propagation, unary chains) and the
-    # recursive subgraph visitor (If / Loop). Each seed is a serialized
-    # ModelProto with a trailing 0x00 toggle byte, which the harness reads
-    # as (strict=False, check_type=False, use_structured=False) and slices
-    # off before parsing.
+    # recursive subgraph visitor (If / Loop). Each seed is a complete
+    # serialized ModelProto with no trailing bytes, so the harness's raw path
+    # loads it directly via onnx.load_model_from_string.
     shape_inference_seeds = {
-        "linear_relu_sigmoid.onnx": _si_linear() + _SHAPE_INFERENCE_TOGGLE_RAW,
-        "concat_axis0.onnx": _si_concat() + _SHAPE_INFERENCE_TOGGLE_RAW,
-        "matmul_4x8_8x2.onnx": _si_matmul() + _SHAPE_INFERENCE_TOGGLE_RAW,
-        "reshape_2x4_to_8x1.onnx": _si_reshape() + _SHAPE_INFERENCE_TOGGLE_RAW,
-        "if_then_else.onnx": _si_if() + _SHAPE_INFERENCE_TOGGLE_RAW,
-        "loop_scan_output.onnx": _si_loop() + _SHAPE_INFERENCE_TOGGLE_RAW,
+        "linear_relu_sigmoid.onnx": _si_linear(),
+        "concat_axis0.onnx": _si_concat(),
+        "matmul_4x8_8x2.onnx": _si_matmul(),
+        "reshape_2x4_to_8x1.onnx": _si_reshape(),
+        "if_then_else.onnx": _si_if(),
+        "loop_scan_output.onnx": _si_loop(),
     }
 
     _write_zip(version_converter_out, version_converter_seeds)
     _write_zip(parser_out, _PARSER_SEEDS)
     _write_zip(checker_out, checker_seeds)
     _write_zip(shape_inference_out, shape_inference_seeds)
+
+    if compose_out is not None:
+        # Seed models for fuzz_compose covering: a minimal valid merge, a
+        # variadic three-pair io_map, an If subgraph (recursive connect_io
+        # rewrite), and a full name collision resolved via prefixing.
+        compose_seeds = {
+            "compose_linear.bin": _compose_linear(),
+            "compose_multi.bin": _compose_multi(),
+            "compose_if.bin": _compose_if(),
+            "compose_prefix.bin": _compose_prefix(),
+        }
+        _write_zip(compose_out, compose_seeds)
+
     return 0
 
 

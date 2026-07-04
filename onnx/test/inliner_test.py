@@ -139,7 +139,3 @@ class InlinerTest(unittest.TestCase):
         )
         inlined_nodes = inlined.graph.node
         self.assertIn("Abs", [n.op_type for n in inlined_nodes])
-
-
-if __name__ == "__main__":
-    unittest.main()

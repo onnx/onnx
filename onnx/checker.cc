@@ -61,14 +61,14 @@ namespace checker {
 
 #define enforce_has_field(proto, field)                                              \
   do {                                                                               \
-    if (!proto.has_##field()) {                                                      \
+    if (!(proto).has_##field()) {                                                    \
       fail_check("Field '", #field, "' of '", #proto, "' is required but missing."); \
     }                                                                                \
   } while (0)
 
 #define enforce_non_empty_field(proto, field)                                            \
   do {                                                                                   \
-    if (proto.field().empty()) {                                                         \
+    if ((proto).field().empty()) {                                                       \
       fail_check("Field '", #field, "' of '", #proto, "' is required to be non-empty."); \
     }                                                                                    \
   } while (0)
@@ -527,7 +527,7 @@ void check_attribute(const AttributeProto& attr, const CheckerContext& ctx, cons
   int used_fields = 0;
 
 #define check_type(expected_type)                                                     \
-  if (attr.has_type() && attr.type() != expected_type) {                              \
+  if (attr.has_type() && attr.type() != (expected_type)) {                            \
     fail_check("type field and data field mismatch in attribute ", attr.name(), "."); \
   }
 
@@ -1498,7 +1498,7 @@ int64_t open_external_data(
 
 #endif
 
-static std::unordered_set<std::string> experimental_ops = {
+static const std::unordered_set<std::string> experimental_ops = {
     "ATen",
     "Affine",
     "ConstantFill",

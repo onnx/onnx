@@ -57,7 +57,7 @@ struct Tensor final {
     if (dim < 0) {
       dim += static_cast<int>(sizes_.size());
     }
-    ONNX_ASSERT(dim >= 0 && (size_t)dim < sizes_.size())
+    ONNX_ASSERT(dim >= 0 && static_cast<size_t>(dim) < sizes_.size())
     return safe_dim_product(sizes_.begin() + dim, sizes_.end(), [](const char* msg) { throw tensor_error(msg); });
   }
 
@@ -205,6 +205,7 @@ inline const std::string* Tensor::data<std::string>() const {
   return string_data_.data();
 }
 
+// NOLINTBEGIN(bugprone-macro-parentheses)
 #define define_data(type, field)                              \
   template <>                                                 \
   inline type* Tensor::data<type>() {                         \
@@ -223,6 +224,7 @@ inline const std::string* Tensor::data<std::string>() const {
       return field.data();                                    \
     }                                                         \
   }
+// NOLINTEND(bugprone-macro-parentheses)
 
 define_data(float, float_data_)
 define_data(double, double_data_)

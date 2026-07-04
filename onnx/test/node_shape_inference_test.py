@@ -32,7 +32,3 @@ class NodeInferenceTest(unittest.TestCase):
             [dim.dim_value for dim in result["z"].tensor_type.shape.dim],
             [10, 10],
         )
-
-
-if __name__ == "__main__":
-    unittest.main()
