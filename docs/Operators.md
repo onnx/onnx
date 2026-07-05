@@ -12136,7 +12136,7 @@ expect(node, inputs=[x], outputs=[y], name="test_depthtospace_example")
 
 
 <details>
-<summary>nonsqure_matrix</summary>
+<summary>nonsquare_matrix</summary>
 
 ```python
 node = onnx.helper.make_node(
@@ -12145,7 +12145,7 @@ node = onnx.helper.make_node(
 
 x = np.arange(1 * 8 * 2 * 4, dtype=np.float32).reshape(
     1, 8, 2, 4
-)  # Define nonsqure shape where H != W to catch dim swap
+)  # Define nonsquare shape where H != W to catch dim swap
 b, c, h, w = x.shape
 blocksize = 2
 tmp = x.reshape(b, blocksize, blocksize, c // (blocksize**2), h, w)
