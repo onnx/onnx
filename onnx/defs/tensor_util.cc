@@ -26,8 +26,9 @@ namespace ONNX_NAMESPACE {
     /* require a whole number of elements */                                                  \
     ONNX_ASSERTM(                                                                             \
         raw_data.size() % sizeof(type) == 0,                                                  \
-        "raw_data size %zu is not a multiple of element size %zu",                            \
+        "raw_data size ",                                                                     \
         raw_data.size(),                                                                      \
+        " is not a multiple of element size ",                                                \
         sizeof(type));                                                                        \
     res.resize(raw_data.size() / sizeof(type));                                               \
     std::byte* bytes = reinterpret_cast<std::byte*>(res.data());                              \
