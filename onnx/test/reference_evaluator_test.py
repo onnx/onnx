@@ -1873,7 +1873,32 @@ class TestReferenceEvaluator(unittest.TestCase):
         (a/x, a_scale, a_zero_point, b/w, b_scale, b_zero_point, y_scale,
         y_zero_point); the operands and output are int8, the scales float.
         """
-        names = list(feeds)
+        if op_type == "QLinearConv":
+            names = [
+                "x",
+                "x_scale",
+                "x_zero_point",
+                "w",
+                "w_scale",
+                "w_zero_point",
+                "y_scale",
+                "y_zero_point",
+            ]
+        elif op_type == "QLinearMatMul":
+            names = [
+                "a",
+                "a_scale",
+                "a_zero_point",
+                "b",
+                "b_scale",
+                "b_zero_point",
+                "y_scale",
+                "y_zero_point",
+            ]
+        else:
+            raise ValueError(f"Unsupported op_type: {op_type!r}")
+        if set(names) != set(feeds):
+            raise ValueError(f"feeds must contain exactly these keys: {names}")
         a_shape, b_shape = operand_shapes
         i8, flt = TensorProto.INT8, TensorProto.FLOAT
         graph = make_graph(
