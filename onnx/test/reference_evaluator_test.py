@@ -1866,6 +1866,83 @@ class TestReferenceEvaluator(unittest.TestCase):
             ):
                 sess.run(None, feeds)[0]
 
+    def _run_qlinear_int8(self, op_type, feeds, operand_shapes, output_shape, opset):
+        """Build and run a single-node int8 QLinear{Conv,MatMul} graph.
+
+        ``feeds`` supplies the eight quantized inputs in operator order
+        (a/x, a_scale, a_zero_point, b/w, b_scale, b_zero_point, y_scale,
+        y_zero_point); the operands and output are int8, the scales float.
+        """
+        if op_type == "QLinearConv":
+            names = [
+                "x",
+                "x_scale",
+                "x_zero_point",
+                "w",
+                "w_scale",
+                "w_zero_point",
+                "y_scale",
+                "y_zero_point",
+            ]
+        elif op_type == "QLinearMatMul":
+            names = [
+                "a",
+                "a_scale",
+                "a_zero_point",
+                "b",
+                "b_scale",
+                "b_zero_point",
+                "y_scale",
+                "y_zero_point",
+            ]
+        else:
+            raise ValueError(f"Unsupported op_type: {op_type!r}")
+        if set(names) != set(feeds):
+            raise ValueError(f"feeds must contain exactly these keys: {names}")
+        a_shape, b_shape = operand_shapes
+        i8, flt = TensorProto.INT8, TensorProto.FLOAT
+        graph = make_graph(
+            [make_node(op_type, names, ["y"])],
+            "g",
+            [
+                make_tensor_value_info(names[0], i8, a_shape),
+                make_tensor_value_info(names[1], flt, [1]),
+                make_tensor_value_info(names[2], i8, [1]),
+                make_tensor_value_info(names[3], i8, b_shape),
+                make_tensor_value_info(names[4], flt, [1]),
+                make_tensor_value_info(names[5], i8, [1]),
+                make_tensor_value_info(names[6], flt, [1]),
+                make_tensor_value_info(names[7], i8, [1]),
+            ],
+            [make_tensor_value_info("y", i8, output_shape)],
+        )
+        onnx_model = make_model_gen_version(
+            graph, opset_imports=[make_opsetid("", opset)]
+        )
+        return ReferenceEvaluator(onnx_model).run(None, feeds)[0]
+
+    def test_qlinearconv_int8(self):
+        # Self-contained int8 QLinearConv (no onnxruntime needed): a negative
+        # zero point and negative output exercise the signed int8 path that the
+        # uint8 tests above never reach.
+        feeds = {
+            "x": np.array([[[[10, 20], [30, 40]]]], dtype=np.int8),
+            "x_scale": np.array([0.1], dtype=np.float32),
+            "x_zero_point": np.array([5], dtype=np.int8),
+            "w": np.array([[[[1, 1], [1, 1]]]], dtype=np.int8),
+            "w_scale": np.array([1.0], dtype=np.float32),
+            "w_zero_point": np.array([0], dtype=np.int8),
+            "y_scale": np.array([1.0], dtype=np.float32),
+            "y_zero_point": np.array([-10], dtype=np.int8),
+        }
+        # dequantize(x) = (x - 5) * 0.1 = [[0.5, 1.5], [2.5, 3.5]]; dequantize(w) = 1.0
+        # valid conv (2x2 input, 2x2 kernel) = 0.5 + 1.5 + 2.5 + 3.5 = 8.0
+        # quantize(8.0, scale=1, zero_point=-10) = round(8.0) + (-10) = -2
+        got = self._run_qlinear_int8(
+            "QLinearConv", feeds, ([1, 1, 2, 2], [1, 1, 2, 2]), [1, 1, 1, 1], opset=16
+        )
+        np.testing.assert_array_equal(np.array([[[[-2]]]], dtype=np.int8), got)
+
     def common_test_im2col(self, kernel_shape, pads, strides, dilations):
         X = make_tensor_value_info("X", TensorProto.FLOAT, [None, None, None, None])
         Y1 = make_tensor_value_info("Y1", TensorProto.FLOAT, [None, None, None, None])
@@ -5492,74 +5569,27 @@ class TestReferenceEvaluator(unittest.TestCase):
             num_splits, np.array(expected_num_splits, dtype=np.int64)
         )
 
-    def test_qlinearconv_int8(self):
-        node = make_node(
-            "QLinearMatMul",
-            inputs=[
-                "a",
-                "a_scale",
-                "a_zero_point",
-                "b",
-                "b_scale",
-                "b_zero_point",
-                "y_scale",
-                "y_zero_point",
-            ],
-            outputs=["y"],
+    def test_qlinearmatmul_int8(self):
+        a = (np.array([[208, 236, 0, 238], [3, 214, 255, 29]]) - 127).astype(np.int8)
+        b = (
+            np.array([[152, 51, 244], [60, 26, 255], [0, 127, 246], [127, 254, 247]])
+            - 127
+        ).astype(np.int8)
+        feeds = {
+            "a": a,
+            "a_scale": np.array([0.0066], dtype=np.float32),
+            "a_zero_point": np.array([113 - 127], dtype=np.int8),
+            "b": b,
+            "b_scale": np.array([0.00705], dtype=np.float32),
+            "b_zero_point": np.array([114 - 127], dtype=np.int8),
+            "y_scale": np.array([0.0107], dtype=np.float32),
+            "y_zero_point": np.array([118 - 127], dtype=np.int8),
+        }
+        got = self._run_qlinear_int8(
+            "QLinearMatMul", feeds, ([2, 4], [4, 3]), [2, 3], opset=20
         )
-        graph = make_graph(
-            [node],
-            "g",
-            [
-                make_tensor_value_info("a", TensorProto.FLOAT, [None, None]),
-                make_tensor_value_info("a_scale", TensorProto.FLOAT, [1]),
-                make_tensor_value_info("a_zero_point", TensorProto.INT8, [1]),
-                make_tensor_value_info("b", TensorProto.FLOAT, [None, None]),
-                make_tensor_value_info("b_scale", TensorProto.FLOAT, [1]),
-                make_tensor_value_info("b_zero_point", TensorProto.INT8, [1]),
-                make_tensor_value_info("y_scale", TensorProto.FLOAT, [1]),
-                make_tensor_value_info("y_zero_point", TensorProto.INT8, [1]),
-            ],
-            [make_tensor_value_info("y", TensorProto.FLOAT, [None, None])],
-        )
-        onnx_model = make_model(
-            graph, opset_imports=[make_opsetid("", 20)], ir_version=9
-        )
-        sess = ReferenceEvaluator(onnx_model)
-
-        a = np.array([[208, 236, 0, 238], [3, 214, 255, 29]])
-        a -= 127
-        a = a.astype(np.int8)
-
-        a_scale = np.array([0.0066], dtype=np.float32)
-        a_zero_point = np.array([113 - 127], dtype=np.int8)
-
-        b = np.array([[152, 51, 244], [60, 26, 255], [0, 127, 246], [127, 254, 247]])
-        b -= 127
-        b = b.astype(np.int8)
-
-        b_scale = np.array([0.00705], dtype=np.float32)
-        b_zero_point = np.array([114 - 127], dtype=np.int8)
-
-        y_scale = np.array([0.0107], dtype=np.float32)
-        y_zero_point = np.array([118 - 127], dtype=np.int8)
-
-        got = sess.run(
-            None,
-            dict(
-                a=a,
-                a_scale=a_scale,
-                a_zero_point=a_zero_point,
-                b=b,
-                b_scale=b_scale,
-                b_zero_point=b_zero_point,
-                y_scale=y_scale,
-                y_zero_point=y_zero_point,
-            ),
-        )
-
         np.testing.assert_array_equal(
-            np.array([[41, -12, -9], [1, -75, -128]], dtype=np.int8), got[0]
+            np.array([[41, -12, -9], [1, -75, -128]], dtype=np.int8), got
         )
 
     @parameterized.parameterized.expand(
