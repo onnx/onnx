@@ -1469,7 +1469,7 @@ class TestVersionConverter(unittest.TestCase):
 
     # Test Upsample Adapter: 9 -> 8
     def test_upsample_with_raw_initializer_9_8(self) -> None:
-        self.helper_upsample_with_constant(raw_scale=True)
+        self.helper_upsample_with_initializer(raw_scale=True)
 
     # Test Upsample Adapter: 9 -> 8
     def test_upsample_with_raw_constant_node_9_8(self) -> None:
