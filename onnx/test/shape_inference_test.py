@@ -159,7 +159,7 @@ class TestShapeInferenceHelper(unittest.TestCase):
     def _assert_inferred(
         self,
         graph_or_model: GraphProto | ModelProto,
-        vis: list[ValueInfoProto],
+        inferred_value_infos: list[ValueInfoProto],
         **kwargs: Any,
     ) -> None:
         graph = (
@@ -167,26 +167,25 @@ class TestShapeInferenceHelper(unittest.TestCase):
             if isinstance(graph_or_model, GraphProto)
             else graph_or_model.graph
         )
-        names_in_vis = {x.name for x in vis}
-        # Expected type info: the explicitly provided `vis`, plus any pre-existing
-        # type info declared on the graph's value_info or outputs that `vis` does
-        # not override. Considering graph outputs (in addition to value_info) lets
-        # a test specify the whole model in one parser.parse_graph/parse_model call
-        # and still have its (graph-output) results checked.
+        # "inferred_value_infos" specifies the expected delta produced by type/shape inference.
+        # The types/shapes specified in inferred_value_infos should be inferred by the inference implementation,
+        # while for names not in inferred_value_infos, the original type/shape in input model should be preserved.
+        names_in_inferred_value_infos = {x.name for x in inferred_value_infos}
+        # The types/shapes can be recorded in graph.output and/or graph.value_info.
+        # For input model, if specified in both, they are assumed to be same.
         expected = {
             x.name: x
             for x in itertools.chain(graph.value_info, graph.output)
-            if x.name not in names_in_vis
+            if x.name not in names_in_inferred_value_infos
         }
-        expected.update({x.name: x for x in vis})
+        expected.update({x.name: x for x in inferred_value_infos})
         inferred_model = self._inferred(graph_or_model, **kwargs)
         inferred_graph = inferred_model.graph
         # Inferred type info may be recorded either in value_info (intermediate
         # values, and outputs that were untyped in the input model) or directly on
         # the graph outputs (outputs that were already typed). Merge both by name.
         # An untyped graph output is recorded in BOTH value_info and output; when a
-        # name appears in both, verify the two records agree rather than silently
-        # keeping one of them.
+        # name appears in both, verify that the two records agree.
         inferred: dict[str, ValueInfoProto] = {}
         for x in itertools.chain(inferred_graph.value_info, inferred_graph.output):
             if x.name in inferred:
