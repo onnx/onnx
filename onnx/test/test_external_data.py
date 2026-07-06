@@ -52,7 +52,6 @@ class TestLoadExternalDataBase:
 
     @pytest.fixture(autouse=True)
     def setup(self, tmp_path: Path):
-        self._temp_path = tmp_path
         self.temp_dir = str(tmp_path)
         self.initializer_value = np.arange(6).reshape(3, 2).astype(np.float32) + 512
         self.attribute_value = np.arange(6).reshape(2, 3).astype(np.float32) + 256
@@ -265,17 +264,11 @@ class TestLoadExternalDataSingleFile(TestLoadExternalDataBase):
             onnx.save_model(model, new_model_filepath, self.serialization_format)
 
 
-@parameterized.parameterized_class(
-    [
-        {"serialization_format": "protobuf"},
-        {"serialization_format": "textproto"},
-    ]
-)
+@pytest.mark.parametrize("serialization_format", ["protobuf", "textproto"])
 class TestSaveAllTensorsAsExternalData:
-    serialization_format: str = "protobuf"
-
     @pytest.fixture(autouse=True)
-    def setup(self, tmp_path):
+    def setup(self, tmp_path, serialization_format: str):
+        self.serialization_format = serialization_format
         self.temp_dir: str = str(tmp_path)
         self.initializer_value = np.arange(6).reshape(3, 2).astype(np.float32) + 512
         self.attribute_value = np.arange(6).reshape(2, 3).astype(np.float32) + 256
@@ -322,11 +315,9 @@ class TestSaveAllTensorsAsExternalData:
         )
         return helper.make_model(graph)
 
-    @pytest.mark.skipif(
-        serialization_format != "protobuf",
-        reason="check_model supports protobuf only when provided as a path",
-    )
     def test_check_model(self) -> None:
+        if self.serialization_format != "protobuf":
+            pytest.skip("check_model supports protobuf only when provided as a path")
         checker.check_model(self.model)
 
     def test_convert_model_to_external_data_with_size_threshold(self) -> None:
@@ -567,17 +558,11 @@ class TestSaveAllTensorsAsExternalData:
         assert initializer_tensor.raw_data == original_raw_data
 
 
-@parameterized.parameterized_class(
-    [
-        {"serialization_format": "protobuf"},
-        {"serialization_format": "textproto"},
-    ]
-)
+@pytest.mark.parametrize("serialization_format", ["protobuf", "textproto"])
 class TestExternalDataToArray:
-    serialization_format: str = "protobuf"
-
     @pytest.fixture(autouse=True)
-    def setup(self, tmp_path) -> None:
+    def setup(self, tmp_path, serialization_format: str) -> None:
+        self.serialization_format = serialization_format
         self.temp_dir = str(tmp_path)
         self._model_file_path: str = os.path.join(self.temp_dir, "model.onnx")
         self.large_data = np.random.rand(10, 60, 100).astype(np.float32)
@@ -626,11 +611,10 @@ class TestExternalDataToArray:
         )
         return helper.make_model(graph_def, producer_name="onnx-example")
 
-    @pytest.mark.skipif(
-        serialization_format != "protobuf",
-        reason="check_model supports protobuf only when provided as a path",
-    )
     def test_check_model(self) -> None:
+        if self.serialization_format != "protobuf":
+            pytest.skip("check_model supports protobuf only when provided as a path")
+
         checker.check_model(self.model)
 
     def test_reshape_inference_with_external_data_fail(self) -> None:
