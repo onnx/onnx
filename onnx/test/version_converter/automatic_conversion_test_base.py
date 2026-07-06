@@ -7,6 +7,8 @@ import string
 import unittest
 from typing import TYPE_CHECKING, Any, cast
 
+import pytest
+
 import onnx
 from onnx import TensorProto, ValueInfoProto, helper, shape_inference, version_converter
 
@@ -37,7 +39,7 @@ class TestAutomaticConversion(unittest.TestCase):
         onnx.checker.check_model(model)
         shape_inference.infer_shapes(model, strict_mode=True)
 
-        with self.assertRaises(RuntimeError):
+        with pytest.raises(RuntimeError):
             version_converter.convert_version(model, to_opset)
 
     def _test_op_conversion(
