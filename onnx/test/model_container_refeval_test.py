@@ -5,10 +5,10 @@ from __future__ import annotations
 
 import os
 import tempfile
-import unittest
 
 import numpy as np
 import numpy.testing as npt
+import pytest
 
 import onnx
 import onnx.helper
@@ -84,7 +84,7 @@ def _large_linear_regression():
     return large_model
 
 
-class TestLargeOnnxReferenceEvaluator(unittest.TestCase):
+class TestLargeOnnxReferenceEvaluator:
     def common_check_reference_evaluator(self, container):
         X = np.arange(9).astype(np.float32).reshape((-1, 3))
         ref = onnx.reference.ReferenceEvaluator(container)
@@ -103,7 +103,7 @@ class TestLargeOnnxReferenceEvaluator(unittest.TestCase):
         model_proto = _linear_regression()
         large_model = onnx.model_container.make_large_model(model_proto.graph)
         self.common_check_reference_evaluator(large_model)
-        with self.assertRaises(ValueError):
+        with pytest.raises(ValueError):
             large_model["#anymissingkey"]
 
         with tempfile.TemporaryDirectory() as temp:

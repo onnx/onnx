@@ -3,9 +3,8 @@
 # Copyright (c) ONNX Project Contributors
 from __future__ import annotations
 
-import unittest
-
 import numpy as np
+import pytest
 
 import onnx
 from onnx import TensorProto, TypeProto
@@ -62,7 +61,7 @@ def _run_case(
     )
 
 
-class TestInferenceFunctionCall(unittest.TestCase):
+class TestInferenceFunctionCall:
     def test_add_inference(self) -> None:
         cases = [
             (
@@ -120,21 +119,21 @@ class TestInferenceFunctionCall(unittest.TestCase):
         )
 
     def test_add_inference_raises_errors(self) -> None:
-        with self.assertRaises(ValidationError):
+        with pytest.raises(ValidationError):
             _run_case(
                 ADD_SCHEMA,
                 ["A"],
                 ["C"],
                 _to_tensor_types({"A": (TensorProto.FLOAT, (3, 4))}),
             )
-        with self.assertRaises(ValidationError):
+        with pytest.raises(ValidationError):
             _run_case(
                 ADD_SCHEMA,
                 ["A", "B"],
                 ["C"],
                 _to_tensor_types({"A": (TensorProto.FLOAT, (3, 4)), "B": (2, (3, 4))}),
             )
-        with self.assertRaises(InferenceError):
+        with pytest.raises(InferenceError):
             _run_case(
                 ADD_SCHEMA,
                 ["A", "B"],
@@ -146,7 +145,7 @@ class TestInferenceFunctionCall(unittest.TestCase):
                     }
                 ),
             )
-        with self.assertRaises(KeyError):
+        with pytest.raises(KeyError):
             _run_case(
                 ADD_SCHEMA,
                 ["A", "B"],
@@ -259,7 +258,7 @@ class TestInferenceFunctionCall(unittest.TestCase):
         """
         model = onnx.parser.parse_model(model_script)
         onnx.shape_inference.infer_shapes(model, strict_mode=False)
-        with self.assertRaises(onnx.shape_inference.InferenceError):
+        with pytest.raises(onnx.shape_inference.InferenceError):
             onnx.shape_inference.infer_shapes(model, strict_mode=True)
 
     def test_inference_with_attribute(self) -> None:

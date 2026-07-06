@@ -15,6 +15,7 @@ from typing import TYPE_CHECKING, Any
 
 import numpy as np
 import parameterized
+import pytest
 
 import onnx
 from onnx import (
@@ -263,7 +264,7 @@ class TestLoadExternalDataSingleFile(TestLoadExternalDataBase):
             location=traversal_external_data_location,
         )
 
-        with self.assertRaises(onnx.checker.ValidationError):
+        with pytest.raises(onnx.checker.ValidationError):
             onnx.save_model(model, new_model_filepath, self.serialization_format)
 
 
@@ -339,7 +340,7 @@ class TestSaveAllTensorsAsExternalData(unittest.TestCase):
 
         model = onnx.load_model(model_file_path, self.serialization_format)
         initializer_tensor = model.graph.initializer[0]
-        self.assertFalse(initializer_tensor.HasField("data_location"))
+        assert not initializer_tensor.HasField("data_location")
 
     def test_convert_model_to_external_data_without_size_threshold(self) -> None:
         model_file_path = self.get_temp_model_filename()
@@ -348,7 +349,7 @@ class TestSaveAllTensorsAsExternalData(unittest.TestCase):
 
         model = onnx.load_model(model_file_path, self.serialization_format)
         initializer_tensor = model.graph.initializer[0]
-        self.assertTrue(initializer_tensor.HasField("data_location"))
+        assert initializer_tensor.HasField("data_location")
         np.testing.assert_allclose(to_array(initializer_tensor), self.initializer_value)
 
     def test_convert_model_to_external_data_from_one_file_with_location(self) -> None:
@@ -363,7 +364,7 @@ class TestSaveAllTensorsAsExternalData(unittest.TestCase):
         )
         onnx.save_model(self.model, model_file_path, self.serialization_format)
 
-        self.assertTrue(os.path.isfile(os.path.join(self.temp_dir, external_data_file)))
+        assert os.path.isfile(os.path.join(self.temp_dir, external_data_file))
 
         model = onnx.load_model(model_file_path, self.serialization_format)
 
@@ -373,13 +374,13 @@ class TestSaveAllTensorsAsExternalData(unittest.TestCase):
         onnx.save_model(model, model_file_path, self.serialization_format)
         model = onnx.load_model(model_file_path, self.serialization_format)
         initializer_tensor = model.graph.initializer[0]
-        self.assertFalse(len(initializer_tensor.external_data))
-        self.assertEqual(initializer_tensor.data_location, TensorProto.DEFAULT)
+        assert not len(initializer_tensor.external_data)
+        assert initializer_tensor.data_location == TensorProto.DEFAULT
         np.testing.assert_allclose(to_array(initializer_tensor), self.initializer_value)
 
         attribute_tensor = model.graph.node[0].attribute[0].t
-        self.assertFalse(len(attribute_tensor.external_data))
-        self.assertEqual(attribute_tensor.data_location, TensorProto.DEFAULT)
+        assert not len(attribute_tensor.external_data)
+        assert attribute_tensor.data_location == TensorProto.DEFAULT
         np.testing.assert_allclose(to_array(attribute_tensor), self.attribute_value)
 
     def test_convert_model_to_external_data_from_one_file_without_location_uses_model_name(
@@ -392,8 +393,8 @@ class TestSaveAllTensorsAsExternalData(unittest.TestCase):
         )
         onnx.save_model(self.model, model_file_path, self.serialization_format)
 
-        self.assertTrue(os.path.isfile(model_file_path))
-        self.assertTrue(os.path.isfile(os.path.join(self.temp_dir, model_file_path)))
+        assert os.path.isfile(model_file_path)
+        assert os.path.isfile(os.path.join(self.temp_dir, model_file_path))
 
     def test_convert_model_to_external_data_one_file_per_tensor_without_attribute(
         self,
@@ -408,9 +409,9 @@ class TestSaveAllTensorsAsExternalData(unittest.TestCase):
         )
         onnx.save_model(self.model, model_file_path, self.serialization_format)
 
-        self.assertTrue(os.path.isfile(model_file_path))
-        self.assertTrue(os.path.isfile(os.path.join(self.temp_dir, "input_value")))
-        self.assertFalse(os.path.isfile(os.path.join(self.temp_dir, "attribute_value")))
+        assert os.path.isfile(model_file_path)
+        assert os.path.isfile(os.path.join(self.temp_dir, "input_value"))
+        assert not os.path.isfile(os.path.join(self.temp_dir, "attribute_value"))
 
     def test_convert_model_to_external_data_one_file_per_tensor_with_attribute(
         self,
@@ -425,9 +426,9 @@ class TestSaveAllTensorsAsExternalData(unittest.TestCase):
         )
         onnx.save_model(self.model, model_file_path, self.serialization_format)
 
-        self.assertTrue(os.path.isfile(model_file_path))
-        self.assertTrue(os.path.isfile(os.path.join(self.temp_dir, "input_value")))
-        self.assertTrue(os.path.isfile(os.path.join(self.temp_dir, "attribute_value")))
+        assert os.path.isfile(model_file_path)
+        assert os.path.isfile(os.path.join(self.temp_dir, "input_value"))
+        assert os.path.isfile(os.path.join(self.temp_dir, "attribute_value"))
 
     def test_convert_model_to_external_data_does_not_convert_attribute_values(
         self,
@@ -442,15 +443,15 @@ class TestSaveAllTensorsAsExternalData(unittest.TestCase):
         )
         onnx.save_model(self.model, model_file_path, self.serialization_format)
 
-        self.assertTrue(os.path.isfile(os.path.join(self.temp_dir, "input_value")))
-        self.assertFalse(os.path.isfile(os.path.join(self.temp_dir, "attribute_value")))
+        assert os.path.isfile(os.path.join(self.temp_dir, "input_value"))
+        assert not os.path.isfile(os.path.join(self.temp_dir, "attribute_value"))
 
         model = onnx.load_model(model_file_path, self.serialization_format)
         initializer_tensor = model.graph.initializer[0]
-        self.assertTrue(initializer_tensor.HasField("data_location"))
+        assert initializer_tensor.HasField("data_location")
 
         attribute_tensor = model.graph.node[0].attribute[0].t
-        self.assertFalse(attribute_tensor.HasField("data_location"))
+        assert not attribute_tensor.HasField("data_location")
 
     def test_convert_model_to_external_data_converts_attribute_values(self) -> None:
         model_file_path = self.get_temp_model_filename()
@@ -464,11 +465,11 @@ class TestSaveAllTensorsAsExternalData(unittest.TestCase):
 
         initializer_tensor = model.graph.initializer[0]
         np.testing.assert_allclose(to_array(initializer_tensor), self.initializer_value)
-        self.assertTrue(initializer_tensor.HasField("data_location"))
+        assert initializer_tensor.HasField("data_location")
 
         attribute_tensor = model.graph.node[0].attribute[0].t
         np.testing.assert_allclose(to_array(attribute_tensor), self.attribute_value)
-        self.assertTrue(attribute_tensor.HasField("data_location"))
+        assert attribute_tensor.HasField("data_location")
 
     def test_save_model_does_not_convert_to_external_data_and_saves_the_model(
         self,
@@ -480,14 +481,14 @@ class TestSaveAllTensorsAsExternalData(unittest.TestCase):
             self.serialization_format,
             save_as_external_data=False,
         )
-        self.assertTrue(os.path.isfile(model_file_path))
+        assert os.path.isfile(model_file_path)
 
         model = onnx.load_model(model_file_path, self.serialization_format)
         initializer_tensor = model.graph.initializer[0]
-        self.assertFalse(initializer_tensor.HasField("data_location"))
+        assert not initializer_tensor.HasField("data_location")
 
         attribute_tensor = model.graph.node[0].attribute[0].t
-        self.assertFalse(attribute_tensor.HasField("data_location"))
+        assert not attribute_tensor.HasField("data_location")
 
     def test_save_model_does_convert_and_saves_the_model(self) -> None:
         model_file_path = self.get_temp_model_filename()
@@ -505,11 +506,11 @@ class TestSaveAllTensorsAsExternalData(unittest.TestCase):
         model = onnx.load_model(model_file_path, self.serialization_format)
 
         initializer_tensor = model.graph.initializer[0]
-        self.assertTrue(initializer_tensor.HasField("data_location"))
+        assert initializer_tensor.HasField("data_location")
         np.testing.assert_allclose(to_array(initializer_tensor), self.initializer_value)
 
         attribute_tensor = model.graph.node[0].attribute[0].t
-        self.assertFalse(attribute_tensor.HasField("data_location"))
+        assert not attribute_tensor.HasField("data_location")
         np.testing.assert_allclose(to_array(attribute_tensor), self.attribute_value)
 
     def test_save_model_without_loading_external_data(self) -> None:
@@ -540,11 +541,11 @@ class TestSaveAllTensorsAsExternalData(unittest.TestCase):
         model = onnx.load_model(model_file_path, self.serialization_format)
 
         initializer_tensor = model.graph.initializer[0]
-        self.assertTrue(initializer_tensor.HasField("data_location"))
+        assert initializer_tensor.HasField("data_location")
         np.testing.assert_allclose(to_array(initializer_tensor), self.initializer_value)
 
         attribute_tensor = model.graph.node[0].attribute[0].t
-        self.assertFalse(attribute_tensor.HasField("data_location"))
+        assert not attribute_tensor.HasField("data_location")
         np.testing.assert_allclose(to_array(attribute_tensor), self.attribute_value)
 
     def test_save_model_with_existing_raw_data_should_override(self) -> None:
@@ -557,7 +558,7 @@ class TestSaveAllTensorsAsExternalData(unittest.TestCase):
             save_as_external_data=True,
             size_threshold=0,
         )
-        self.assertTrue(os.path.isfile(model_file_path))
+        assert os.path.isfile(model_file_path)
 
         model = onnx.load_model(
             model_file_path, self.serialization_format, load_external_data=False
@@ -566,7 +567,7 @@ class TestSaveAllTensorsAsExternalData(unittest.TestCase):
         initializer_tensor.raw_data = b"dummpy_raw_data"
         # If raw_data and external tensor exist at the same time, override existing raw_data
         load_external_data_for_tensor(initializer_tensor, self.temp_dir)
-        self.assertEqual(initializer_tensor.raw_data, original_raw_data)
+        assert initializer_tensor.raw_data == original_raw_data
 
 
 @parameterized.parameterized_class(
@@ -653,12 +654,11 @@ class TestExternalDataToArray(unittest.TestCase):
         # Shape inference of Reshape uses ParseData
         # ParseData cannot handle external data and should throw the error as follows:
         # Cannot parse data from external tensors. Please load external data into raw data for tensor: Shape
-        self.assertRaises(
-            shape_inference.InferenceError,
-            shape_inference.infer_shapes,
-            model_without_external_data,
-            strict_mode=True,
-        )
+        with pytest.raises(shape_inference.InferenceError):
+            shape_inference.infer_shapes(
+                model_without_external_data,
+                strict_mode=True,
+            )
 
     def test_to_array_with_external_data(self) -> None:
         onnx.save_model(
@@ -695,13 +695,13 @@ class TestExternalDataToArray(unittest.TestCase):
             self.model_file_path, self.serialization_format, load_external_data=False
         )
         large_input_tensor = model_without_loading_external.graph.initializer[0]
-        self.assertTrue(large_input_tensor.HasField("data_location"))
+        assert large_input_tensor.HasField("data_location")
         np.testing.assert_allclose(
             to_array(large_input_tensor, self.temp_dir), self.large_data
         )
 
         small_shape_tensor = model_without_loading_external.graph.initializer[1]
-        self.assertTrue(not small_shape_tensor.HasField("data_location"))
+        assert not small_shape_tensor.HasField("data_location")
         np.testing.assert_allclose(to_array(small_shape_tensor), self.small_data)
 
         # 2nd save: one tensor has raw_data (small); one external tensor (large)
@@ -721,13 +721,13 @@ class TestExternalDataToArray(unittest.TestCase):
             self.model_file_path, self.serialization_format, load_external_data=False
         )
         large_input_tensor = model_without_loading_external.graph.initializer[0]
-        self.assertTrue(large_input_tensor.HasField("data_location"))
+        assert large_input_tensor.HasField("data_location")
         np.testing.assert_allclose(
             to_array(large_input_tensor, self.temp_dir), self.large_data
         )
 
         small_shape_tensor = model_without_loading_external.graph.initializer[1]
-        self.assertTrue(small_shape_tensor.HasField("data_location"))
+        assert small_shape_tensor.HasField("data_location")
         np.testing.assert_allclose(
             to_array(small_shape_tensor, self.temp_dir), self.small_data
         )
@@ -754,19 +754,19 @@ class TestNotAllowToLoadExternalDataOutsideModelDirectory(TestLoadExternalDataBa
     def test_check_model(self) -> None:
         """We only test the model validation as onnxruntime uses this to load the model."""
         self.model_filename = self.create_test_model("../../file.bin")
-        with self.assertRaises(onnx.checker.ValidationError):
+        with pytest.raises(onnx.checker.ValidationError):
             checker.check_model(self.model_filename)
 
     def test_check_model_relative(self) -> None:
         """More relative path test."""
         self.model_filename = self.create_test_model("../test/../file.bin")
-        with self.assertRaises(onnx.checker.ValidationError):
+        with pytest.raises(onnx.checker.ValidationError):
             checker.check_model(self.model_filename)
 
     def test_check_model_absolute(self) -> None:
         """ONNX checker disallows using absolute path as location in external tensor."""
         self.model_filename = self.create_test_model("//file.bin")
-        with self.assertRaises(onnx.checker.ValidationError):
+        with pytest.raises(onnx.checker.ValidationError):
             checker.check_model(self.model_filename)
 
 
@@ -781,19 +781,19 @@ class TestNotAllowToLoadExternalDataOutsideModelDirectoryOnWindows(
     def test_check_model(self) -> None:
         """We only test the model validation as onnxruntime uses this to load the model."""
         self.model_filename = self.create_test_model("..\\..\\file.bin")
-        with self.assertRaises(onnx.checker.ValidationError):
+        with pytest.raises(onnx.checker.ValidationError):
             checker.check_model(self.model_filename)
 
     def test_check_model_relative(self) -> None:
         """More relative path test."""
         self.model_filename = self.create_test_model("..\\test\\..\\file.bin")
-        with self.assertRaises(onnx.checker.ValidationError):
+        with pytest.raises(onnx.checker.ValidationError):
             checker.check_model(self.model_filename)
 
     def test_check_model_absolute(self) -> None:
         """ONNX checker disallows using absolute path as location in external tensor."""
         self.model_filename = self.create_test_model("C:/file.bin")
-        with self.assertRaises(onnx.checker.ValidationError):
+        with pytest.raises(onnx.checker.ValidationError):
             checker.check_model(self.model_filename)
 
 
@@ -820,10 +820,10 @@ class TestFunctionsAndSubGraphs(unittest.TestCase):
         self._temp_dir_obj.cleanup()
 
     def _check_is_internal(self, tensor: TensorProto) -> None:
-        self.assertEqual(tensor.data_location, TensorProto.DEFAULT)
+        assert tensor.data_location == TensorProto.DEFAULT
 
     def _check_is_external(self, tensor: TensorProto) -> None:
-        self.assertEqual(tensor.data_location, TensorProto.EXTERNAL)
+        assert tensor.data_location == TensorProto.EXTERNAL
 
     def _check(self, model: ModelProto, nodes: Sequence[NodeProto]) -> None:
         """Check that the tensors in the model are externalized.
@@ -838,7 +838,7 @@ class TestFunctionsAndSubGraphs(unittest.TestCase):
 
         """
         for node in nodes:
-            self.assertEqual(node.op_type, "Constant")
+            assert node.op_type == "Constant"
             tensor = node.attribute[0].t
             tensor.CopyFrom(self._tensor)
             self._check_is_internal(tensor)
@@ -936,7 +936,7 @@ class TestSaveExternalDataSymlinkProtection(TestLoadExternalDataBase):
         loaded_model = onnx.load(model_path, load_external_data=False)
         loaded_model.graph.initializer[0].raw_data = array.tobytes()
 
-        with self.assertRaises(checker.ValidationError):
+        with pytest.raises(checker.ValidationError):
             onnx.save_model(
                 loaded_model,
                 model_path,
@@ -948,7 +948,7 @@ class TestSaveExternalDataSymlinkProtection(TestLoadExternalDataBase):
 
         # Sensitive file must not be modified
         with open(sensitive_file) as f:
-            self.assertEqual(f.read(), "SENSITIVE DATA")
+            assert f.read() == "SENSITIVE DATA"
 
 
 @unittest.skipIf(
@@ -981,7 +981,7 @@ class TestLoadExternalDataSymlinkProtection(TestLoadExternalDataBase):
         os.symlink(target_file, ext_data_path)
 
         # Loading with onnx.load (which loads external data) must fail
-        with self.assertRaises(checker.ValidationError):
+        with pytest.raises(checker.ValidationError):
             onnx.load(model_path)
 
     def test_load_external_data_for_model_rejects_symlink(self) -> None:
@@ -1009,7 +1009,7 @@ class TestLoadExternalDataSymlinkProtection(TestLoadExternalDataBase):
 
         # Load model without external data, then try to load external data explicitly
         loaded_model = onnx.load(model_path, load_external_data=False)
-        with self.assertRaises(checker.ValidationError):
+        with pytest.raises(checker.ValidationError):
             load_external_data_for_model(loaded_model, self.temp_dir)
 
     def test_load_rejects_parent_directory_symlink(self) -> None:
@@ -1045,7 +1045,7 @@ class TestLoadExternalDataSymlinkProtection(TestLoadExternalDataBase):
 
         # Loading must fail because realpath resolves outside model_dir.
         loaded_model = onnx.load(model_path, load_external_data=False)
-        with self.assertRaises(checker.ValidationError):
+        with pytest.raises(checker.ValidationError):
             load_external_data_for_model(loaded_model, model_dir)
 
 
@@ -1074,7 +1074,7 @@ class TestLoadExternalDataHardlinkProtection(TestLoadExternalDataBase):
 
         # Loading must fail because the external data file has multiple hardlinks.
         # Either the C++ checker or Python code catches this as ValidationError.
-        with self.assertRaises(checker.ValidationError):
+        with pytest.raises(checker.ValidationError):
             onnx.load(model_path)
 
 
@@ -1086,11 +1086,11 @@ class TestSaveExternalDataAbsolutePathValidation(TestLoadExternalDataBase):
         array = np.ones((100,), dtype=np.float32)
         tensor = from_array(array, name="weight")
         set_external_data(tensor, location="/etc/passwd")
-        with self.assertRaises(checker.ValidationError):
+        with pytest.raises(checker.ValidationError):
             save_external_data(tensor, self.temp_dir)
 
 
-class TestExternalDataInfoSecurity(unittest.TestCase):
+class TestExternalDataInfoSecurity:
     """Tests for ExternalDataInfo hardening against attribute injection and bounds.
 
     Covers all attack vectors from the security advisory: unknown key injection,
@@ -1126,12 +1126,12 @@ class TestExternalDataInfoSecurity(unittest.TestCase):
             }
         )
         info = ExternalDataInfo(tensor)
-        self.assertEqual(info.location, "weights.bin")
-        self.assertEqual(info.offset, 16)
-        self.assertIsInstance(info.offset, int)
-        self.assertEqual(info.length, 1024)
-        self.assertIsInstance(info.length, int)
-        self.assertEqual(info.checksum, "sha256:abc123")
+        assert info.location == "weights.bin"
+        assert info.offset == 16
+        assert isinstance(info.offset, int)
+        assert info.length == 1024
+        assert isinstance(info.length, int)
+        assert info.checksum == "sha256:abc123"
 
     def test_unknown_key_rejected(self) -> None:
         """Unknown external_data keys must not be set as object attributes (CWE-915)."""
@@ -1142,16 +1142,14 @@ class TestExternalDataInfoSecurity(unittest.TestCase):
             warnings.simplefilter("always")
             info = ExternalDataInfo(tensor)
         # Unknown attribute must NOT be set on the object
-        self.assertFalse(
-            hasattr(info, "malicious_attr"),
-            "Unknown key 'malicious_attr' should not become an attribute",
+        assert not hasattr(info, "malicious_attr"), (
+            "Unknown key 'malicious_attr' should not become an attribute"
         )
         # Valid key must still work
-        self.assertEqual(info.location, "weights.bin")
+        assert info.location == "weights.bin"
         # A warning must have been emitted for the unknown key
-        self.assertTrue(
-            any("malicious_attr" in str(w.message) for w in caught),
-            "Expected warning about unknown key 'malicious_attr'",
+        assert any("malicious_attr" in str(w.message) for w in caught), (
+            "Expected warning about unknown key 'malicious_attr'"
         )
 
     def test_dunder_key_rejected(self) -> None:
@@ -1171,13 +1169,12 @@ class TestExternalDataInfoSecurity(unittest.TestCase):
             warnings.simplefilter("always")
             info = ExternalDataInfo(tensor)
         # Object type must not have been corrupted
-        self.assertIsInstance(info, original_class)
-        self.assertEqual(type(info).__name__, "ExternalDataInfo")
-        self.assertEqual(info.location, "weights.bin")
+        assert isinstance(info, original_class)
+        assert type(info).__name__ == "ExternalDataInfo"
+        assert info.location == "weights.bin"
         # A warning must have been emitted for the dunder key
-        self.assertTrue(
-            any("__class__" in str(w.message) for w in caught),
-            "Expected warning about dunder key '__class__'",
+        assert any("__class__" in str(w.message) for w in caught), (
+            "Expected warning about dunder key '__class__'"
         )
 
     def test_negative_offset_rejected(self) -> None:
@@ -1185,18 +1182,16 @@ class TestExternalDataInfoSecurity(unittest.TestCase):
         tensor = self._make_tensor_with_external_data(
             {"location": "weights.bin", "offset": "-1"}
         )
-        with self.assertRaises(ValueError) as ctx:
+        with pytest.raises(ValueError, match="non-negative"):
             ExternalDataInfo(tensor)
-        self.assertIn("non-negative", str(ctx.exception).lower())
 
     def test_negative_length_rejected(self) -> None:
         """Negative length must raise ValueError to prevent underflow attacks."""
         tensor = self._make_tensor_with_external_data(
             {"location": "weights.bin", "length": "-100"}
         )
-        with self.assertRaises(ValueError) as ctx:
+        with pytest.raises(ValueError, match="non-negative"):
             ExternalDataInfo(tensor)
-        self.assertIn("non-negative", str(ctx.exception).lower())
 
     def test_zero_offset_and_length_accepted(self) -> None:
         """Zero values for offset/length should be accepted (edge case for bounds check)."""
@@ -1205,9 +1200,9 @@ class TestExternalDataInfoSecurity(unittest.TestCase):
         )
         # Should not raise — zero is a valid non-negative value
         info = ExternalDataInfo(tensor)
-        self.assertEqual(info.location, "weights.bin")
-        self.assertEqual(info.offset, 0)
-        self.assertEqual(info.length, 0)
+        assert info.location == "weights.bin"
+        assert info.offset == 0
+        assert info.length == 0
 
     def test_multiple_unknown_keys_all_rejected(self) -> None:
         """Multiple unknown keys in a single tensor must all be rejected."""
@@ -1222,30 +1217,28 @@ class TestExternalDataInfoSecurity(unittest.TestCase):
         with warnings.catch_warnings(record=True) as caught:
             warnings.simplefilter("always")
             info = ExternalDataInfo(tensor)
-        self.assertFalse(hasattr(info, "evil_one"))
-        self.assertFalse(hasattr(info, "evil_two"))
-        self.assertEqual(info.location, "weights.bin")
+        assert not hasattr(info, "evil_one")
+        assert not hasattr(info, "evil_two")
+        assert info.location == "weights.bin"
         unknown_key_warnings = [
             str(w.message)
             for w in caught
             if "unknown external data key" in str(w.message).lower()
         ]
-        self.assertEqual(
-            len(unknown_key_warnings),
-            1,
-            "Expected 1 aggregated warning for unknown keys",
+        assert len(unknown_key_warnings) == 1, (
+            "Expected 1 aggregated warning for unknown keys"
         )
         # All unknown keys should be mentioned in the single warning
-        self.assertIn("evil_one", unknown_key_warnings[0])
-        self.assertIn("evil_two", unknown_key_warnings[0])
-        self.assertIn("__dict__", unknown_key_warnings[0])
+        assert "evil_one" in unknown_key_warnings[0]
+        assert "evil_two" in unknown_key_warnings[0]
+        assert "__dict__" in unknown_key_warnings[0]
 
     def test_allowed_keys_constant_is_frozen(self) -> None:
         """The whitelist must be a frozenset to prevent runtime mutation."""
-        self.assertIsInstance(_ALLOWED_EXTERNAL_DATA_KEYS, frozenset)
-        self.assertEqual(
-            _ALLOWED_EXTERNAL_DATA_KEYS,
-            frozenset({"location", "offset", "length", "checksum", "basepath"}),
+        assert isinstance(_ALLOWED_EXTERNAL_DATA_KEYS, frozenset)
+        assert (
+            frozenset({"location", "offset", "length", "checksum", "basepath"})
+            == _ALLOWED_EXTERNAL_DATA_KEYS
         )
 
     def test_non_numeric_offset_raises(self) -> None:
@@ -1253,7 +1246,7 @@ class TestExternalDataInfoSecurity(unittest.TestCase):
         tensor = self._make_tensor_with_external_data(
             {"location": "weights.bin", "offset": "abc"}
         )
-        with self.assertRaises(ValueError):
+        with pytest.raises(ValueError):
             ExternalDataInfo(tensor)
 
     def test_non_numeric_length_raises(self) -> None:
@@ -1261,7 +1254,7 @@ class TestExternalDataInfoSecurity(unittest.TestCase):
         tensor = self._make_tensor_with_external_data(
             {"location": "weights.bin", "length": "not_a_number"}
         )
-        with self.assertRaises(ValueError):
+        with pytest.raises(ValueError):
             ExternalDataInfo(tensor)
 
 
@@ -1283,7 +1276,7 @@ class TestLoadExternalDataFileSizeValidation(TestLoadExternalDataBase):
         set_external_data(tensor, location="data.bin", offset=file_size + 100)
         tensor.ClearField("raw_data")
 
-        with self.assertRaisesRegex(ValueError, "offset.*exceeds file size"):
+        with pytest.raises(ValueError, match=r"offset.*exceeds file size"):
             load_external_data_for_tensor(tensor, self.temp_dir)
 
     def test_length_exceeds_available_data_raises(self) -> None:
@@ -1301,7 +1294,7 @@ class TestLoadExternalDataFileSizeValidation(TestLoadExternalDataBase):
         set_external_data(tensor, location="data.bin", length=file_size * 1000)
         tensor.ClearField("raw_data")
 
-        with self.assertRaisesRegex(ValueError, "length.*exceeds available data"):
+        with pytest.raises(ValueError, match=r"length.*exceeds available data"):
             load_external_data_for_tensor(tensor, self.temp_dir)
 
     def test_valid_offset_and_length_load_correctly(self) -> None:
@@ -1318,4 +1311,4 @@ class TestLoadExternalDataFileSizeValidation(TestLoadExternalDataBase):
         tensor.ClearField("raw_data")
 
         load_external_data_for_tensor(tensor, self.temp_dir)
-        self.assertEqual(tensor.raw_data, raw)
+        assert tensor.raw_data == raw
