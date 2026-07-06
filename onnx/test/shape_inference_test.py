@@ -6288,7 +6288,7 @@ class TestShapeInference(TestShapeInferenceHelper):
     def test_if_with_different_shapes_in_then_else_branches(self) -> None:
         # Create a simple If node where the 'then' subgraph adds to the current value, and the 'else' subgraph
         # subtracts. The then/else branches produce different shapes ((1,) vs (5,)), so inference merges them
-        # to an unknown dimension. 
+        # to an unknown dimension.
         # Test-input alteration: the branch outputs were declared as UNDEFINED with shapes (1,)/(5,) in the
         # original make_graph version; the new version leaves them untyped, dropping those (redundant) declared
         # shapes -- shape inference computes the merged shape (None,) either way.
