@@ -3851,39 +3851,17 @@ class TestShapeInference(TestShapeInferenceHelper):
 
     def test_flex_attention_with_score_mod(self) -> None:
         """Test FlexAttention with score_mod subgraph."""
-        # Create score_mod subgraph: (scores) -> scores_out
-        score_mod_graph = helper.make_graph(
-            [make_node("Identity", ["scores"], ["scores_out"])],
-            "score_mod",
-            [
-                make_tensor_value_info(
-                    "scores", TensorProto.FLOAT, ("B", "Hq", "L", "S")
-                ),
-            ],
-            [
-                make_tensor_value_info(
-                    "scores_out", TensorProto.FLOAT, ("B", "Hq", "L", "S")
-                )
-            ],
-        )
-
-        graph = self._make_graph(
-            [
-                ("Q", TensorProto.FLOAT, (2, 8, 128, 64)),
-                ("K", TensorProto.FLOAT, (2, 8, 256, 64)),
-                ("V", TensorProto.FLOAT, (2, 8, 256, 64)),
-            ],
-            [
-                make_node(
-                    "FlexAttention",
-                    ["Q", "K", "V"],
-                    ["Y"],
-                    score_mod=score_mod_graph,
-                    domain=AI_ONNX_PREVIEW_DOMAIN,
-                )
-            ],
-            [],
-        )
+        # The whole graph (including the score_mod subgraph) is expressed in one parse_graph call.
+        graph = parse_graph("""
+            agraph (float[2,8,128,64] Q, float[2,8,256,64] K, float[2,8,256,64] V) => (Y)
+            {
+                Y = ai.onnx.preview.FlexAttention (Q, K, V) <
+                    score_mod = score_mod (float[B,Hq,L,S] scores) => (float[B,Hq,L,S] scores_out) {
+                        scores_out = Identity(scores)
+                    }
+                >
+            }
+        """)
         self._assert_inferred(
             graph,
             [make_tensor_value_info("Y", TensorProto.FLOAT, (2, 8, 128, 64))],
@@ -3895,39 +3873,17 @@ class TestShapeInference(TestShapeInferenceHelper):
 
     def test_flex_attention_with_prob_mod(self) -> None:
         """Test FlexAttention with prob_mod subgraph."""
-        # Create prob_mod subgraph: (probs) -> probs_out
-        prob_mod_graph = helper.make_graph(
-            [make_node("Identity", ["probs"], ["probs_out"])],
-            "prob_mod",
-            [
-                make_tensor_value_info(
-                    "probs", TensorProto.FLOAT, ("B", "Hq", "L", "S")
-                ),
-            ],
-            [
-                make_tensor_value_info(
-                    "probs_out", TensorProto.FLOAT, ("B", "Hq", "L", "S")
-                )
-            ],
-        )
-
-        graph = self._make_graph(
-            [
-                ("Q", TensorProto.FLOAT, (2, 8, 128, 64)),
-                ("K", TensorProto.FLOAT, (2, 8, 256, 64)),
-                ("V", TensorProto.FLOAT, (2, 8, 256, 64)),
-            ],
-            [
-                make_node(
-                    "FlexAttention",
-                    ["Q", "K", "V"],
-                    ["Y"],
-                    prob_mod=prob_mod_graph,
-                    domain=AI_ONNX_PREVIEW_DOMAIN,
-                )
-            ],
-            [],
-        )
+        # The whole graph (including the prob_mod subgraph) is expressed in one parse_graph call.
+        graph = parse_graph("""
+            agraph (float[2,8,128,64] Q, float[2,8,256,64] K, float[2,8,256,64] V) => (Y)
+            {
+                Y = ai.onnx.preview.FlexAttention (Q, K, V) <
+                    prob_mod = prob_mod (float[B,Hq,L,S] probs) => (float[B,Hq,L,S] probs_out) {
+                        probs_out = Identity(probs)
+                    }
+                >
+            }
+        """)
         self._assert_inferred(
             graph,
             [make_tensor_value_info("Y", TensorProto.FLOAT, (2, 8, 128, 64))],
@@ -3939,56 +3895,20 @@ class TestShapeInference(TestShapeInferenceHelper):
 
     def test_flex_attention_with_all_modifiers(self) -> None:
         """Test FlexAttention with all modifier subgraphs."""
-        # Create score_mod subgraph
-        score_mod_graph = helper.make_graph(
-            [make_node("Identity", ["scores"], ["scores_out"])],
-            "score_mod",
-            [
-                make_tensor_value_info(
-                    "scores", TensorProto.FLOAT, ("B", "Hq", "L", "S")
-                ),
-            ],
-            [
-                make_tensor_value_info(
-                    "scores_out", TensorProto.FLOAT, ("B", "Hq", "L", "S")
-                )
-            ],
-        )
-
-        # Create prob_mod subgraph
-        prob_mod_graph = helper.make_graph(
-            [make_node("Identity", ["probs"], ["probs_out"])],
-            "prob_mod",
-            [
-                make_tensor_value_info(
-                    "probs", TensorProto.FLOAT, ("B", "Hq", "L", "S")
-                ),
-            ],
-            [
-                make_tensor_value_info(
-                    "probs_out", TensorProto.FLOAT, ("B", "Hq", "L", "S")
-                )
-            ],
-        )
-
-        graph = self._make_graph(
-            [
-                ("Q", TensorProto.FLOAT, (2, 8, 128, 64)),
-                ("K", TensorProto.FLOAT, (2, 8, 256, 64)),
-                ("V", TensorProto.FLOAT, (2, 8, 256, 64)),
-            ],
-            [
-                make_node(
-                    "FlexAttention",
-                    ["Q", "K", "V"],
-                    ["Y"],
-                    score_mod=score_mod_graph,
-                    prob_mod=prob_mod_graph,
-                    domain=AI_ONNX_PREVIEW_DOMAIN,
-                )
-            ],
-            [],
-        )
+        # The whole graph (including the score_mod and prob_mod subgraphs) is expressed in one parse_graph call.
+        graph = parse_graph("""
+            agraph (float[2,8,128,64] Q, float[2,8,256,64] K, float[2,8,256,64] V) => (Y)
+            {
+                Y = ai.onnx.preview.FlexAttention (Q, K, V) <
+                    score_mod = score_mod (float[B,Hq,L,S] scores) => (float[B,Hq,L,S] scores_out) {
+                        scores_out = Identity(scores)
+                    },
+                    prob_mod = prob_mod (float[B,Hq,L,S] probs) => (float[B,Hq,L,S] probs_out) {
+                        probs_out = Identity(probs)
+                    }
+                >
+            }
+        """)
         self._assert_inferred(
             graph,
             [make_tensor_value_info("Y", TensorProto.FLOAT, (2, 8, 128, 64))],
@@ -6171,6 +6091,9 @@ class TestShapeInference(TestShapeInferenceHelper):
         # The whole graph (including the Scan body subgraph) is expressed in one parse_graph call;
         # the Scan outputs are left untyped so that shape inference must compute their type/shape.
         # The leading "" input is the (unused) optional sequence_lens input of opset-8 Scan.
+        # Test-input alteration: the body placeholders (loop_state_in/input/loop_state_out/output) were declared
+        # with an explicit UNDEFINED element type in the original make_graph version; the parser leaves them
+        # untyped, which shape inference fills identically.
         graph = parse_graph("""
             agraph (float[1, 3] loop_state_orig, float[1, sequence, 2] scan_input)
                 => (loop_state_final, scan_output)
@@ -6199,6 +6122,9 @@ class TestShapeInference(TestShapeInferenceHelper):
     def test_scan_opset9(self) -> None:
         # The whole graph (including the Scan body subgraph) is expressed in one parse_graph call;
         # the Scan outputs are left untyped so that shape inference must compute their type/shape.
+        # Test-input alteration: the body placeholders (loop_state_in/input/loop_state_out/output) were declared
+        # with an explicit UNDEFINED element type in the original make_graph version; the parser leaves them
+        # untyped, which shape inference fills identically.
         graph = parse_graph("""
             agraph (float[3] loop_state_orig, float[sequence, 2] scan_input)
                 => (loop_state_final, scan_output)
@@ -6227,6 +6153,9 @@ class TestShapeInference(TestShapeInferenceHelper):
     def test_scan_opset9_axes(self) -> None:
         # The whole graph (including the Scan body subgraph) is expressed in one parse_graph call;
         # the Scan outputs are left untyped so that shape inference must compute their type/shape.
+        # Test-input alteration: the body placeholders (loop_state_in/input/loop_state_out/output) were declared
+        # with an explicit UNDEFINED element type in the original make_graph version; the parser leaves them
+        # untyped, which shape inference fills identically.
         graph = parse_graph("""
             agraph (float[3] loop_state_orig, float[axis0, sequence, 2] scan_input)
                 => (loop_state_final, scan_output)
@@ -6255,6 +6184,9 @@ class TestShapeInference(TestShapeInferenceHelper):
     def test_scan_opset9_output_axes(self) -> None:
         # The whole graph (including the Scan body subgraph) is expressed in one parse_graph call;
         # the Scan outputs are left untyped so that shape inference must compute their type/shape.
+        # Test-input alteration: the body placeholders (loop_state_in/input/loop_state_out/output) were declared
+        # with an explicit UNDEFINED element type in the original make_graph version; the parser leaves them
+        # untyped, which shape inference fills identically.
         graph = parse_graph("""
             agraph (float[3] loop_state_orig, float[axis0, sequence, 2] scan_input)
                 => (loop_state_final, scan_output)
@@ -6283,6 +6215,9 @@ class TestShapeInference(TestShapeInferenceHelper):
     def test_scan_opset9_negative_axes(self) -> None:
         # The whole graph (including the Scan body subgraph) is expressed in one parse_graph call;
         # the Scan outputs are left untyped so that shape inference must compute their type/shape.
+        # Test-input alteration: the body placeholders (loop_state_in/input/loop_state_out/output) were declared
+        # with an explicit UNDEFINED element type in the original make_graph version; the parser leaves them
+        # untyped, which shape inference fills identically.
         graph = parse_graph("""
             agraph (float[3] loop_state_orig, float[axis0, sequence, 2] scan_input)
                 => (loop_state_final, scan_output)
@@ -6312,6 +6247,9 @@ class TestShapeInference(TestShapeInferenceHelper):
         # Create a simple If node where the 'then' subgraph adds to the current value, and the 'else' subgraph
         # subtracts. The whole graph (including both subgraphs) is expressed in one parse_graph call;
         # if_output is left untyped so that shape inference must compute its type/shape.
+        # Test-input alteration: the branch outputs (then_output/else_output) were declared with an explicit
+        # UNDEFINED element type in the original make_graph version; the parser leaves them untyped, which
+        # shape inference fills identically.
         graph = parse_graph("""
             agraph (bool[1] cond, float[1] current_value, float[1] add_value, float[1] sub_value) => (if_output)
             {
@@ -6332,6 +6270,9 @@ class TestShapeInference(TestShapeInferenceHelper):
         # Create a simple If node where the 'then' subgraph adds to the current value, and the 'else' subgraph
         # subtracts. The whole graph (including both subgraphs) is expressed in one parse_graph call;
         # if_output is left untyped so that shape inference must compute its type/shape.
+        # Test-input alteration: the branch outputs (then_output/else_output) were declared with an explicit
+        # UNDEFINED element type in the original make_graph version; the parser leaves them untyped, which
+        # shape inference fills identically.
         graph = parse_graph("""
             agraph (bool[1] cond, float[1] current_value, float[1] add_value, float[1] sub_value) => (if_output)
             {
@@ -6351,6 +6292,9 @@ class TestShapeInference(TestShapeInferenceHelper):
         # subtracts. The then/else branches produce different shapes ((1,) vs (5,)), so inference merges them
         # to an unknown dimension. The whole graph is expressed in one parse_graph call, with if_output left
         # untyped so that shape inference must compute its type/shape.
+        # Test-input alteration: the branch outputs were declared as UNDEFINED with shapes (1,)/(5,) in the
+        # original make_graph version; the parser leaves them untyped, dropping those (redundant) declared
+        # shapes -- shape inference computes the merged shape (None,) either way.
         graph = parse_graph("""
             agraph (bool[1] cond, float[1] current_value, float[1] add_value, float[5] sub_value) => (if_output)
             {
@@ -6366,117 +6310,66 @@ class TestShapeInference(TestShapeInferenceHelper):
         )
 
     def test_if_no_shape_in_then_branch(self) -> None:
-        then_graph = parse_graph(
-            "then_graph () => (then_output) { then_output = ReduceSum <keepdims=0> (X, axes) }"
-        )
-        else_graph = parse_graph(
-            "else_graph () => (else_output) { else_output = ReduceSum <keepdims=0> (X) }"
-        )
-        graph = self._make_graph(
-            [
-                ("cond", TensorProto.BOOL, (1,)),
-                ("X", TensorProto.FLOAT, (4, 8, 16)),
-                ("axes", TensorProto.INT64, (1,)),
-            ],
-            [
-                make_node(
-                    "If",
-                    ["cond"],
-                    ["if_output"],
-                    then_branch=then_graph,
-                    else_branch=else_graph,
-                )
-            ],
-            [],
-        )
+        # The whole graph (including both If branches) is expressed in one parse_graph call. The branches
+        # reference X/axes from the enclosing scope. if_output has unknown rank, so it is left as a (dangling)
+        # value rather than a graph output (a graph output would require a fully-specified shape); its inferred
+        # type/shape is still checked via value_info.
+        graph = parse_graph("""
+            agraph (bool[1] cond, float[4,8,16] X, int64[1] axes) => ()
+            {
+                if_output = If (cond) <
+                    then_branch = then_graph () => (then_output) { then_output = ReduceSum <keepdims=0> (X, axes) },
+                    else_branch = else_graph () => (else_output) { else_output = ReduceSum <keepdims=0> (X) }
+                >
+            }
+        """)
         self._assert_inferred(
             graph, [make_tensor_value_info("if_output", TensorProto.FLOAT, None)]
         )
 
     def test_if_no_shape_in_else_branch(self) -> None:
-        then_graph = parse_graph(
-            "then_graph () => (then_output) { then_output = ReduceSum <keepdims=0> (X) }"
-        )
-        else_graph = parse_graph(
-            "else_graph () => (else_output) { else_output = ReduceSum <keepdims=0> (X, axes) }"
-        )
-        graph = self._make_graph(
-            [
-                ("cond", TensorProto.BOOL, (1,)),
-                ("X", TensorProto.FLOAT, (4, 8, 16)),
-                ("axes", TensorProto.INT64, (1,)),
-            ],
-            [
-                make_node(
-                    "If",
-                    ["cond"],
-                    ["if_output"],
-                    then_branch=then_graph,
-                    else_branch=else_graph,
-                )
-            ],
-            [],
-        )
+        # The whole graph (including both If branches) is expressed in one parse_graph call. The branches
+        # reference X/axes from the enclosing scope. if_output has unknown rank, so it is left as a (dangling)
+        # value rather than a graph output (a graph output would require a fully-specified shape); its inferred
+        # type/shape is still checked via value_info.
+        graph = parse_graph("""
+            agraph (bool[1] cond, float[4,8,16] X, int64[1] axes) => ()
+            {
+                if_output = If (cond) <
+                    then_branch = then_graph () => (then_output) { then_output = ReduceSum <keepdims=0> (X) },
+                    else_branch = else_graph () => (else_output) { else_output = ReduceSum <keepdims=0> (X, axes) }
+                >
+            }
+        """)
         self._assert_inferred(
             graph, [make_tensor_value_info("if_output", TensorProto.FLOAT, None)]
         )
 
     def test_if_with_different_optional_shapes_in_then_else_branches(self) -> None:
-        # Create a simple If node where the 'then' subgraph adds to the current value, and the 'else' subgraph
-        # subtracts.
-        # can't use self._make_graph for the subgraphs as that add more inputs for the Reshape operations it inserts.
-        # this breaks the subgraph inferencing as it expects the subgraphs to have zero inputs
-        then_tensor_proto = helper.make_tensor_type_proto(
-            elem_type=TensorProto.UNDEFINED,
-            shape=[
-                1,
-            ],
-        )
-        then_optional_type_proto = helper.make_optional_type_proto(then_tensor_proto)
-        then_optional_vi = helper.make_value_info(
-            "then_optional_output", then_optional_type_proto
-        )
-        then_subgraph = helper.make_graph(
-            [make_node("Optional", ["then_tensor_value"], ["then_optional_output"])],
-            "then_subgraph",
-            [],  # no inputs
-            [then_optional_vi],
-        )
-
-        else_tensor_proto = helper.make_tensor_type_proto(
-            elem_type=TensorProto.UNDEFINED,
-            shape=[
-                5,
-            ],
-        )
-        else_optional_type_proto = helper.make_optional_type_proto(else_tensor_proto)
-        else_optional_vi = helper.make_value_info(
-            "else_optional_output", else_optional_type_proto
-        )
-        else_subgraph = helper.make_graph(
-            [make_node("Optional", ["else_tensor_value"], ["else_optional_output"])],
-            "else_subgraph",
-            [],  # no inputs
-            [else_optional_vi],
-        )
-
-        graph = self._make_graph(
-            [
-                ("cond", TensorProto.BOOL, (1,)),
-                ("then_tensor_value", TensorProto.FLOAT, (1,)),
-                ("else_tensor_value", TensorProto.FLOAT, (5,)),
-            ],
-            [
-                make_node(
-                    "If",
-                    ["cond"],
-                    ["if_output"],
-                    then_branch=then_subgraph,
-                    else_branch=else_subgraph,
-                )
-            ],
-            [],
-        )
+        # The whole graph (including both If branches) is expressed in one parse_graph call. Each branch wraps
+        # an outer-scope tensor (then_tensor_value FLOAT[1] / else_tensor_value FLOAT[5]) with Optional; the
+        # branch outputs are left untyped so shape inference must compute them, and the If-merge yields
+        # optional<FLOAT[None]> (shapes 1 and 5 differ). if_output is left as a (dangling) value rather than a
+        # graph output; its inferred type is checked via value_info.
+        #
+        # NOTE (test-input alteration): the original make_graph version pre-declared each branch output as
+        # optional<tensor(UNDEFINED)[1]> / optional<tensor(UNDEFINED)[5]>. Those pre-declared types are
+        # overwritten by shape inference (Optional re-derives the type from the wrapped tensor), so leaving the
+        # branch outputs untyped produces an identical inferred result; the subgraph output protos differ
+        # slightly from the pre-conversion version.
+        graph = parse_graph("""
+            agraph (bool[1] cond, float[1] then_tensor_value, float[5] else_tensor_value) => ()
+            {
+                if_output = If (cond) <
+                    then_branch = then_subgraph () => (then_optional_output) {
+                        then_optional_output = Optional(then_tensor_value)
+                    },
+                    else_branch = else_subgraph () => (else_optional_output) {
+                        else_optional_output = Optional(else_tensor_value)
+                    }
+                >
+            }
+        """)
 
         output_tensor_proto = helper.make_tensor_type_proto(
             elem_type=TensorProto.FLOAT, shape=(None,)
@@ -6751,6 +6644,11 @@ class TestShapeInference(TestShapeInferenceHelper):
         # between iterations, so it is left as a (dangling) value rather than a graph output, since a graph
         # output would require a fully-specified shape; its inferred type/shape is still checked. loop_output
         # is declared as an untyped graph output so that shape inference must compute its type/shape.
+        #
+        # NOTE (test-input alteration): the original make_graph version declared cond_in/loop_state_in with an
+        # explicit UNDEFINED element type (type field present, elem_type 0, no shape); the parser instead emits
+        # no type field at all. Both are accepted by Loop shape inference and yield identical inferred results,
+        # but the body input protos differ slightly from the pre-conversion version.
         graph = parse_graph("""
             agraph (
                 int64[1] max_trip_count, float[1] cond_orig, float[2] loop_state_orig, float[3] outer_scope_input
@@ -6782,6 +6680,8 @@ class TestShapeInference(TestShapeInferenceHelper):
         # The body's cond_in is left untyped (its type is supplied by Loop), and the body references
         # outer_scope_input from the enclosing graph. The Loop output is left untyped so that shape
         # inference must compute its type/shape.
+        # Test-input alteration: cond_in/cond_out were declared with an explicit UNDEFINED element type in the
+        # original make_graph version; the parser leaves them untyped, which shape inference fills identically.
         graph = parse_graph("""
             agraph (int64[1] max_trip_count, float[1] cond_orig, float[3] outer_scope_input)
                 => (loop_output)
