@@ -2165,7 +2165,7 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
                     )
                 ],
                 "tfidf",
-                [make_tensor_value_info("tokens", TensorProto.INT64, [None, None])],
+                [make_tensor_value_info("tokens", TensorProto.STRING, [None, None])],
                 [make_tensor_value_info("out", TensorProto.FLOAT, [None, None])],
             ),
             opset_imports=OPSETS,
