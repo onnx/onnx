@@ -6186,10 +6186,8 @@ class TestShapeInference(TestShapeInferenceHelper):
         )
 
     def test_scan_opset9_output_axes(self) -> None:
-        # The whole graph (including the Scan body subgraph) is expressed in one parse_graph call;
-        # the Scan outputs are left untyped so that shape inference must compute their type/shape.
         # Test-input alteration: the body placeholders (loop_state_in/input/loop_state_out/output) were declared
-        # with an explicit UNDEFINED element type in the original make_graph version; the parser leaves them
+        # with an explicit UNDEFINED element type in the original make_graph version; the new version leaves them
         # untyped, which shape inference fills identically.
         graph = parse_graph("""
             agraph (float[3] loop_state_orig, float[axis0, sequence, 2] scan_input)
@@ -6217,10 +6215,8 @@ class TestShapeInference(TestShapeInferenceHelper):
         )
 
     def test_scan_opset9_negative_axes(self) -> None:
-        # The whole graph (including the Scan body subgraph) is expressed in one parse_graph call;
-        # the Scan outputs are left untyped so that shape inference must compute their type/shape.
         # Test-input alteration: the body placeholders (loop_state_in/input/loop_state_out/output) were declared
-        # with an explicit UNDEFINED element type in the original make_graph version; the parser leaves them
+        # with an explicit UNDEFINED element type in the original make_graph version; the new version leaves them
         # untyped, which shape inference fills identically.
         graph = parse_graph("""
             agraph (float[3] loop_state_orig, float[axis0, sequence, 2] scan_input)
@@ -6249,8 +6245,7 @@ class TestShapeInference(TestShapeInferenceHelper):
 
     def test_if_ver1(self) -> None:
         # Create a simple If node where the 'then' subgraph adds to the current value, and the 'else' subgraph
-        # subtracts. The whole graph (including both subgraphs) is expressed in one parse_graph call;
-        # if_output is left untyped so that shape inference must compute its type/shape.
+        # subtracts.
         # Test-input alteration: the branch outputs (then_output/else_output) were declared with an explicit
         # UNDEFINED element type in the original make_graph version; the parser leaves them untyped, which
         # shape inference fills identically.
@@ -6272,10 +6267,9 @@ class TestShapeInference(TestShapeInferenceHelper):
 
     def test_if(self) -> None:
         # Create a simple If node where the 'then' subgraph adds to the current value, and the 'else' subgraph
-        # subtracts. The whole graph (including both subgraphs) is expressed in one parse_graph call;
-        # if_output is left untyped so that shape inference must compute its type/shape.
+        # subtracts.
         # Test-input alteration: the branch outputs (then_output/else_output) were declared with an explicit
-        # UNDEFINED element type in the original make_graph version; the parser leaves them untyped, which
+        # UNDEFINED element type in the original make_graph version; the new version leaves them untyped, which
         # shape inference fills identically.
         graph = parse_graph("""
             agraph (bool[1] cond, float[1] current_value, float[1] add_value, float[1] sub_value) => (if_output)
@@ -6294,10 +6288,9 @@ class TestShapeInference(TestShapeInferenceHelper):
     def test_if_with_different_shapes_in_then_else_branches(self) -> None:
         # Create a simple If node where the 'then' subgraph adds to the current value, and the 'else' subgraph
         # subtracts. The then/else branches produce different shapes ((1,) vs (5,)), so inference merges them
-        # to an unknown dimension. The whole graph is expressed in one parse_graph call, with if_output left
-        # untyped so that shape inference must compute its type/shape.
+        # to an unknown dimension. 
         # Test-input alteration: the branch outputs were declared as UNDEFINED with shapes (1,)/(5,) in the
-        # original make_graph version; the parser leaves them untyped, dropping those (redundant) declared
+        # original make_graph version; the new version leaves them untyped, dropping those (redundant) declared
         # shapes -- shape inference computes the merged shape (None,) either way.
         graph = parse_graph("""
             agraph (bool[1] cond, float[1] current_value, float[1] add_value, float[5] sub_value) => (if_output)
@@ -6314,10 +6307,9 @@ class TestShapeInference(TestShapeInferenceHelper):
         )
 
     def test_if_no_shape_in_then_branch(self) -> None:
-        # The whole graph (including both If branches) is expressed in one parse_graph call. The branches
-        # reference X/axes from the enclosing scope. if_output has unknown rank, so it is left as a (dangling)
-        # value rather than a graph output (a graph output would require a fully-specified shape); its inferred
-        # type/shape is still checked via value_info.
+        # The branches reference X/axes from the enclosing scope. if_output has unknown rank, so it is left as
+        # an intermediate value rather than a graph output (a graph output would require a fully-specified shape);
+        # its inferred type/shape is still checked via value_info.
         graph = parse_graph("""
             agraph (bool[1] cond, float[4,8,16] X, int64[1] axes) => ()
             {
@@ -6332,10 +6324,7 @@ class TestShapeInference(TestShapeInferenceHelper):
         )
 
     def test_if_no_shape_in_else_branch(self) -> None:
-        # The whole graph (including both If branches) is expressed in one parse_graph call. The branches
-        # reference X/axes from the enclosing scope. if_output has unknown rank, so it is left as a (dangling)
-        # value rather than a graph output (a graph output would require a fully-specified shape); its inferred
-        # type/shape is still checked via value_info.
+        # The branches reference X/axes from the enclosing scope.
         graph = parse_graph("""
             agraph (bool[1] cond, float[4,8,16] X, int64[1] axes) => ()
             {
@@ -6350,11 +6339,9 @@ class TestShapeInference(TestShapeInferenceHelper):
         )
 
     def test_if_with_different_optional_shapes_in_then_else_branches(self) -> None:
-        # The whole graph (including both If branches) is expressed in one parse_graph call. Each branch wraps
-        # an outer-scope tensor (then_tensor_value FLOAT[1] / else_tensor_value FLOAT[5]) with Optional; the
+        # Each branch wraps an outer-scope tensor (then_tensor_value FLOAT[1] / else_tensor_value FLOAT[5]) with Optional; the
         # branch outputs are left untyped so shape inference must compute them, and the If-merge yields
-        # optional<FLOAT[None]> (shapes 1 and 5 differ). if_output is left as a (dangling) value rather than a
-        # graph output; its inferred type is checked via value_info.
+        # optional<FLOAT[None]> (shapes 1 and 5 differ).
         #
         # NOTE (test-input alteration): the original make_graph version pre-declared each branch output as
         # optional<tensor(UNDEFINED)[1]> / optional<tensor(UNDEFINED)[5]>. Those pre-declared types are
@@ -6642,10 +6629,9 @@ class TestShapeInference(TestShapeInferenceHelper):
         )
 
     def test_loop(self) -> None:
-        # The whole graph (including the Loop body subgraph) is expressed in one parse_graph call.
         # The body's cond_in and loop_state_in are left untyped (their types are supplied by Loop), and the
         # body references outer_scope_input from the enclosing graph. loop_state_final's rank may change
-        # between iterations, so it is left as a (dangling) value rather than a graph output, since a graph
+        # between iterations, so it is left as an intermediate value rather than a graph output, since a graph
         # output would require a fully-specified shape; its inferred type/shape is still checked. loop_output
         # is declared as an untyped graph output so that shape inference must compute its type/shape.
         #
@@ -6680,7 +6666,6 @@ class TestShapeInference(TestShapeInferenceHelper):
         )
 
     def test_loop_no_state(self) -> None:
-        # The whole graph (including the Loop body subgraph) is expressed in one parse_graph call.
         # The body's cond_in is left untyped (its type is supplied by Loop), and the body references
         # outer_scope_input from the enclosing graph. The Loop output is left untyped so that shape
         # inference must compute its type/shape.
