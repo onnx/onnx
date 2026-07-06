@@ -91,7 +91,7 @@ def all_versions_for(op_name: str) -> list[tuple[str, int]]:
     ]
 
 
-class TestShapeInferenceHelper(unittest.TestCase):
+class TestShapeInferenceHelper:
     def _make_graph(
         self,
         seed_values: Sequence[str | tuple[str, TensorProto.DataType, Any]],
@@ -2729,7 +2729,7 @@ class TestShapeInference(TestShapeInferenceHelper):
     @parameterized.expand(all_versions_for("MaxPool"))
     def test_maxpool_negative_dilations(self, _: str, version: int) -> None:
         if version < 10:
-            self.skipTest("dilations not supported before MaxPool-10")
+            pytest.skip("dilations not supported before MaxPool-10")
         graph = self._make_graph(
             [("X", TensorProto.FLOAT, (1, 1, 5, 5))],
             [
@@ -12988,15 +12988,18 @@ class TestShapeInference(TestShapeInferenceHelper):
                 ],
             )
 
-    @unittest.skipUnless(ONNX_ML, "ONNX_ML required to test ai.onnx.ml operators")
-    def test_zip_map(self) -> None:
-        params = (
+    @pytest.mark.skipif(
+        not ONNX_ML, reason="ONNX_ML required to test ai.onnx.ml operators"
+    )
+    @pytest.mark.parametrize(
+        "attrs, input_type",
+        [
             ({"classlabels_int64s": [1, 2, 3]}, onnx.TensorProto.INT64),
             ({"classlabels_strings": ["a", "b", "c"]}, onnx.TensorProto.STRING),
-        )
-        for attrs, input_type in params:
-            with self.subTest(attrs=attrs, input_type=input_type):
-                self.zip_map_test_case(attrs, input_type)
+        ],
+    )
+    def test_zip_map(self, attrs, input_type) -> None:
+        self.zip_map_test_case(attrs, input_type)
 
     def zip_map_test_case(self, attrs, input_type) -> None:
         graph = self._make_graph(
@@ -13230,25 +13233,24 @@ class TestShapeInference(TestShapeInferenceHelper):
         with pytest.raises(onnx.checker.ValidationError):
             onnx.shape_inference.infer_shapes(model)
 
-    def test_scan_invalid_num_scan_inputs_does_not_crash(self):
+    @pytest.mark.parametrize("attrs", ["", "num_scan_inputs = -1, "])
+    def test_scan_invalid_num_scan_inputs_does_not_crash(self, attrs):
         # Missing required attribute would null-deref; negative value would
         # overflow narrow<size_t>. Both must raise InferenceError, not crash.
         scan_body = (
             "body = b (float[1] si, float[1] xi) => (float[1] so, float[1] xo) "
             "{ so = Identity(si) xo = Identity(xi) }"
         )
-        for attrs in ("", "num_scan_inputs = -1, "):
-            with self.subTest(attrs=attrs or "missing"):
-                model = onnx.parser.parse_model(
-                    f"""
-                    <ir_version: 8, opset_import: [ "" : 9 ]>
-                    g (float[1] s, float[3,1] x) => (float[1] so, float[3,1] xo) {{
-                        so, xo = Scan <{attrs}{scan_body}> (s, x)
-                    }}
-                    """
-                )
-                with pytest.raises(onnx.shape_inference.InferenceError):
-                    onnx.shape_inference.infer_shapes(model, strict_mode=True)
+        model = onnx.parser.parse_model(
+            f"""
+            <ir_version: 8, opset_import: [ "" : 9 ]>
+            g (float[1] s, float[3,1] x) => (float[1] so, float[3,1] xo) {{
+                so, xo = Scan <{attrs}{scan_body}> (s, x)
+            }}
+            """
+        )
+        with pytest.raises(onnx.shape_inference.InferenceError):
+            onnx.shape_inference.infer_shapes(model, strict_mode=True)
 
     def test_function_output_count_mismatch_does_not_crash(self):
         # Function declares 2 outputs; calling node declares 1.
