@@ -172,12 +172,17 @@ class TestShapeInferenceHelper(unittest.TestCase):
         # while for names not in inferred_value_infos, the original type/shape in input model should be preserved.
         names_in_inferred_value_infos = {x.name for x in inferred_value_infos}
         # The types/shapes can be recorded in graph.output and/or graph.value_info.
-        # For input model, if specified in both, they are assumed to be same.
-        expected = {
-            x.name: x
-            for x in itertools.chain(graph.value_info, graph.output)
-            if x.name not in names_in_inferred_value_infos
-        }
+        # For the input model, if a name is specified in both, verify the two records
+        # agree (symmetric to the check applied to the inferred model below), to avoid
+        # masking inconsistent test inputs.
+        expected: dict[str, ValueInfoProto] = {}
+        for x in itertools.chain(graph.value_info, graph.output):
+            if x.name in names_in_inferred_value_infos:
+                continue
+            if x.name in expected:
+                self._compare_value_infos(expected[x.name].type, x.type)
+            else:
+                expected[x.name] = x
         expected.update({x.name: x for x in inferred_value_infos})
         inferred_model = self._inferred(graph_or_model, **kwargs)
         inferred_graph = inferred_model.graph
@@ -6307,9 +6312,10 @@ class TestShapeInference(TestShapeInferenceHelper):
         )
 
     def test_if_no_shape_in_then_branch(self) -> None:
-        # The branches reference X/axes from the enclosing scope. if_output has unknown rank, so it is left as
-        # an intermediate value rather than a graph output (a graph output would require a fully-specified shape);
-        # its inferred type/shape is still checked via value_info.
+        # The branches reference X/axes from the enclosing scope. if_output's inferred type has unknown rank (no
+        # shape field), so it is kept as an intermediate value (checked via value_info) rather than a graph
+        # output: the checker requires graph inputs/outputs to carry a shape (i.e. a known rank), while
+        # value_info entries have no such requirement.
         graph = parse_graph("""
             agraph (bool[1] cond, float[4,8,16] X, int64[1] axes) => ()
             {
@@ -6631,9 +6637,10 @@ class TestShapeInference(TestShapeInferenceHelper):
     def test_loop(self) -> None:
         # The body's cond_in and loop_state_in are left untyped (their types are supplied by Loop), and the
         # body references outer_scope_input from the enclosing graph. loop_state_final's rank may change
-        # between iterations, so it is left as an intermediate value rather than a graph output, since a graph
-        # output would require a fully-specified shape; its inferred type/shape is still checked. loop_output
-        # is declared as an untyped graph output so that shape inference must compute its type/shape.
+        # between iterations, so its inferred type has unknown rank (no shape field); it is kept as an
+        # intermediate value (checked via value_info) rather than a graph output, since the checker requires
+        # graph inputs/outputs to carry a shape (i.e. a known rank). loop_output is declared as an untyped
+        # graph output so that shape inference must compute its type/shape.
         #
         # NOTE (test-input alteration): the original make_graph version declared cond_in/loop_state_in with an
         # explicit UNDEFINED element type (type field present, elem_type 0, no shape); the parser instead emits
