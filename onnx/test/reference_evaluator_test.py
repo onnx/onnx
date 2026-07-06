@@ -12,14 +12,10 @@
 
 from __future__ import annotations
 
-import importlib
+import importlib.util
 import itertools
 import math
-import unittest
 import warnings
-from contextlib import redirect_stdout
-from functools import wraps
-from io import StringIO
 from os import getenv
 from textwrap import dedent
 from typing import TYPE_CHECKING
@@ -86,34 +82,15 @@ ORT_MAX_ONNX_OPSET_SUPPORTED_VERSION = int(
 )
 
 
-def skip_if_no_onnxruntime(fn):
-    @wraps(fn)
-    def wrapper(*args, **kwargs):
-        if importlib.util.find_spec("onnxruntime") is None:
-            raise unittest.SkipTest("onnxruntime not installed")
-        fn(*args, **kwargs)
-
-    return wrapper
-
-
-def skip_if_no_torch(fn):
-    @wraps(fn)
-    def wrapper(*args, **kwargs):
-        if importlib.util.find_spec("torch") is None:
-            raise unittest.SkipTest("torch not installed")
-        fn(*args, **kwargs)
-
-    return wrapper
-
-
-def skip_if_no_torchvision(fn):
-    @wraps(fn)
-    def wrapper(*args, **kwargs):
-        if importlib.util.find_spec("torchvision") is None:
-            raise unittest.SkipTest("torchvision not installed")
-        fn(*args, **kwargs)
-
-    return wrapper
+skip_if_no_onnxruntime = pytest.mark.skipif(
+    importlib.util.find_spec("onnxruntime") is None, reason="onnxruntime not installed"
+)
+skip_if_no_torch = pytest.mark.skipif(
+    importlib.util.find_spec("torch") is None, reason="torch not installed"
+)
+skip_if_no_torchvision = pytest.mark.skipif(
+    importlib.util.find_spec("torchvision") is None, reason="torchvision not installed"
+)
 
 
 def make_sequence_value_info(name, elem_type, shape):
@@ -212,7 +189,7 @@ def im2col(
     return res.reshape(new_shape)
 
 
-class TestReferenceEvaluator(unittest.TestCase):
+class TestReferenceEvaluator:
     m2_def = """
         <
             ir_version: 7,
@@ -340,50 +317,33 @@ class TestReferenceEvaluator(unittest.TestCase):
         expected = (x + y) * (y - z)
         assert_allclose(res, expected)
 
-    def test_reference_evaluator_no_attribute_verbose(self):
-        m = TestReferenceEvaluator._load_model(TestReferenceEvaluator.m2_def)
-        x = np.array([[0, 1], [2, 3]], dtype=np.float32)
-        y = np.array([[4, 5], [6, 7]], dtype=np.float32)
-        z = np.array([[-4, -5], [-6, -7]], dtype=np.float32)
-
-        with self.subTest(level=2):
-            sess = ReferenceEvaluator(m, verbose=2)
-            stdout = StringIO()
-            with redirect_stdout(stdout):
-                sess.run(None, {"B01": x, "B11": y, "B21": z})
-            out = stdout.getvalue()
-            log = "Add(B01, B11) -> C0\nSub(B11, B21) -> C1\nMul(C0, C1) -> D0\n"
-            assert log == out
-
-        with self.subTest(level=3):
-            sess = ReferenceEvaluator(m, verbose=3)
-            stdout = StringIO()
-            with redirect_stdout(stdout):
-                sess.run(None, {"B01": x, "B11": y, "B21": z})
-            out = stdout.getvalue()
-            log = dedent(
-                """
-                 +I B01: float32:(2, 2) in [0.0, 3.0]
-                 +I B11: float32:(2, 2) in [4.0, 7.0]
-                 +I B21: float32:(2, 2) in [-7.0, -4.0]
-                Add(B01, B11) -> C0
-                 + C0: float32:(2, 2) in [4.0, 10.0]
-                Sub(B11, B21) -> C1
-                 + C1: float32:(2, 2) in [8.0, 14.0]
-                Mul(C0, C1) -> D0
-                 + D0: float32:(2, 2) in [32.0, 140.0]
-                """
-            ).lstrip("\n")
-            assert log == out
-
-        with self.subTest(level=4):
-            sess = ReferenceEvaluator(m, verbose=4)
-            stdout = StringIO()
-            with redirect_stdout(stdout):
-                sess.run(None, {"B01": x, "B11": y, "B21": z})
-            out = stdout.getvalue()
-            log = dedent(
-                """
+    @pytest.mark.parametrize(
+        "level, expected",
+        [
+            (
+                2,
+                "Add(B01, B11) -> C0\nSub(B11, B21) -> C1\nMul(C0, C1) -> D0\n",
+            ),
+            (
+                3,
+                dedent(
+                    """
+                     +I B01: float32:(2, 2) in [0.0, 3.0]
+                     +I B11: float32:(2, 2) in [4.0, 7.0]
+                     +I B21: float32:(2, 2) in [-7.0, -4.0]
+                    Add(B01, B11) -> C0
+                     + C0: float32:(2, 2) in [4.0, 10.0]
+                    Sub(B11, B21) -> C1
+                     + C1: float32:(2, 2) in [8.0, 14.0]
+                    Mul(C0, C1) -> D0
+                     + D0: float32:(2, 2) in [32.0, 140.0]
+                    """
+                ).lstrip("\n"),
+            ),
+            (
+                4,
+                dedent(
+                    """
                  +I B01: float32:(2, 2):[0.0, 1.0, 2.0, 3.0]
                  +I B11: float32:(2, 2):[4.0, 5.0, 6.0, 7.0]
                  +I B21: float32:(2, 2):[-4.0, -5.0, -6.0, -7.0]
@@ -394,17 +354,12 @@ class TestReferenceEvaluator(unittest.TestCase):
                 Mul(C0, C1) -> D0
                  + D0: float32:(2, 2):[32.0, 60.0, 96.0, 140.0]
                 """
-            ).lstrip("\n")
-            assert log == out
-
-        with self.subTest(level=15):
-            sess = ReferenceEvaluator(m, verbose=15)
-            stdout = StringIO()
-            with redirect_stdout(stdout):
-                sess.run(None, {"B01": x, "B11": y, "B21": z})
-            out = stdout.getvalue()
-            log = dedent(
-                """
+                ).lstrip("\n"),
+            ),
+            (
+                15,
+                dedent(
+                    """
                  +I B01: float32:(2, 2):[0.0, 1.0, 2.0, 3.0]
                  +I B11: float32:(2, 2):[4.0, 5.0, 6.0, 7.0]
                  +I B21: float32:(2, 2):[-4.0, -5.0, -6.0, -7.0]
@@ -421,10 +376,27 @@ class TestReferenceEvaluator(unittest.TestCase):
                 -- done Mul.run -> 1 outputs
                  + D0: float32:(2, 2):[32.0, 60.0, 96.0, 140.0]
                 """
-            ).lstrip("\n")
-            assert log == out
+                ).lstrip("\n"),
+            ),
+        ],
+    )
+    def test_reference_evaluator_no_attribute_verbose(
+        self, level, expected, capsys: pytest.CaptureFixture
+    ):
+        m = TestReferenceEvaluator._load_model(TestReferenceEvaluator.m2_def)
+        x = np.array([[0, 1], [2, 3]], dtype=np.float32)
+        y = np.array([[4, 5], [6, 7]], dtype=np.float32)
+        z = np.array([[-4, -5], [-6, -7]], dtype=np.float32)
 
-    def test_reference_evaluator_empty_array_verbose(self):
+        sess = ReferenceEvaluator(m, verbose=level)
+        sess.run(None, {"B01": x, "B11": y, "B21": z})
+        out, _err = capsys.readouterr()
+        assert expected == out
+
+    @pytest.mark.parametrize("level", [2, 3, 4, 15])
+    def test_reference_evaluator_empty_array_verbose(
+        self, level, capsys: pytest.CaptureFixture
+    ):
         input_tensor = make_tensor_value_info("input", TensorProto.FLOAT, [None, 3])
         output_tensor = make_tensor_value_info("output", TensorProto.FLOAT, [None, 3])
 
@@ -432,22 +404,18 @@ class TestReferenceEvaluator(unittest.TestCase):
         graph = make_graph([node], "test_empty_array", [input_tensor], [output_tensor])
         model = make_model(graph)
 
-        for verbose_level in [2, 3, 4, 15]:
-            with self.subTest(level=verbose_level):
-                sess = ReferenceEvaluator(model, verbose=verbose_level)
+        sess = ReferenceEvaluator(model, verbose=level)
 
-                empty_input = np.array([], dtype=np.float32).reshape(0, 3)
+        empty_input = np.array([], dtype=np.float32).reshape(0, 3)
 
-                stdout = StringIO()
-                with redirect_stdout(stdout):
-                    result = sess.run(None, {"input": empty_input})
+        (result,) = sess.run(None, {"input": empty_input})
 
-                expected = empty_input
-                assert_allclose(result[0], expected)
-                assert result[0].shape == (0, 3)
+        expected = empty_input
+        assert_allclose(result, expected)
+        assert result.shape == (0, 3)
 
-                out = stdout.getvalue()
-                assert "Identity" in out
+        out, _err = capsys.readouterr()
+        assert "Identity" in out
 
     def test_reference_evaluator_lr(self):
         lr, f = TestReferenceEvaluator._linear_regression()
@@ -459,89 +427,42 @@ class TestReferenceEvaluator(unittest.TestCase):
         got = sess.run(None, {"X": a, "A": a, "B": b})[0]
         assert_allclose(got, expected)
 
-    def test_reference_evaluator_lr_clip(self):
-        with self.subTest(opt="min+max"):
-            lr, f = TestReferenceEvaluator._linear_regression(clip=True)
-            x = np.array([[0, 1], [2, 3]], dtype=np.float32)
-            a = np.array([1, 1], dtype=np.float32)
-            b = np.array([11], dtype=np.float32)
-            expected = f(x, a, b)
-            sess = ReferenceEvaluator(lr)
-            last_node = sess.rt_nodes_[-1]
-            assert last_node.__class__.__name__ == "Clip_11"
-            got = sess.run(None, {"X": a, "A": a, "B": b})[0]
-            assert_allclose(got, expected)
+    @pytest.mark.parametrize("kwargs", [{}, {"min_value": None}, {"max_value": None}])
+    def test_reference_evaluator_lr_clip(self, kwargs):
+        lr, f = TestReferenceEvaluator._linear_regression(clip=True, **kwargs)
+        x = np.array([[0, 1], [2, 3]], dtype=np.float32)
+        a = np.array([1, 1], dtype=np.float32)
+        b = np.array([11], dtype=np.float32)
+        expected = f(x, a, b)
+        sess = ReferenceEvaluator(lr)
+        last_node = sess.rt_nodes_[-1]
+        assert last_node.__class__.__name__ == "Clip_11"
+        (got,) = sess.run(None, {"X": a, "A": a, "B": b})
+        assert_allclose(got, expected)
 
-        with self.subTest(opt="max"):
-            lr, f = TestReferenceEvaluator._linear_regression(clip=True, min_value=None)
-            x = np.array([[0, 1], [2, 3]], dtype=np.float32)
-            a = np.array([1, 1], dtype=np.float32)
-            b = np.array([11], dtype=np.float32)
-            expected = f(x, a, b)
-            sess = ReferenceEvaluator(lr)
-            last_node = sess.rt_nodes_[-1]
-            assert last_node.__class__.__name__ == "Clip_11"
-            got = sess.run(None, {"X": a, "A": a, "B": b})[0]
-            assert_allclose(got, expected)
-
-        with self.subTest(opt="min"):
-            lr, f = TestReferenceEvaluator._linear_regression(clip=True, max_value=None)
-            x = np.array([[0, 1], [2, 3]], dtype=np.float32)
-            a = np.array([1, 1], dtype=np.float32)
-            b = np.array([11], dtype=np.float32)
-            expected = f(x, a, b)
-            sess = ReferenceEvaluator(lr)
-            last_node = sess.rt_nodes_[-1]
-            assert last_node.__class__.__name__ == "Clip_11"
-            got = sess.run(None, {"X": a, "A": a, "B": b})[0]
-            assert_allclose(got, expected)
-
-    def test_reference_evaluator_lr_clip_6(self):
-        with self.subTest(opt="min+max"):
-            lr, f = TestReferenceEvaluator._linear_regression(clip=True, opset=10)
-            x = np.array([[0, 1], [2, 3]], dtype=np.float32)
-            a = np.array([1, 1], dtype=np.float32)
-            b = np.array([11], dtype=np.float32)
-            expected = f(x, a, b)
-            sess = ReferenceEvaluator(lr)
-            last_node = sess.rt_nodes_[-1]
-            assert last_node.__class__.__name__ == "Clip_6"
-            assert last_node.min == -1
-            assert last_node.max == 1
-            got = sess.run(None, {"X": a, "A": a, "B": b})[0]
-            assert_allclose(got, expected)
-
-        with self.subTest(opt="max"):
-            lr, f = TestReferenceEvaluator._linear_regression(
-                clip=True, opset=10, min_value=None
-            )
-            x = np.array([[0, 1], [2, 3]], dtype=np.float32)
-            a = np.array([1, 1], dtype=np.float32)
-            b = np.array([11], dtype=np.float32)
-            expected = f(x, a, b)
-            sess = ReferenceEvaluator(lr)
-            last_node = sess.rt_nodes_[-1]
-            assert last_node.__class__.__name__ == "Clip_6"
-            assert last_node.max == 1
-            assert last_node.min == -3.4028234663852886e38
-            got = sess.run(None, {"X": a, "A": a, "B": b})[0]
-            assert_allclose(got, expected)
-
-        with self.subTest(opt="min"):
-            lr, f = TestReferenceEvaluator._linear_regression(
-                clip=True, opset=10, max_value=None
-            )
-            x = np.array([[0, 1], [2, 3]], dtype=np.float32)
-            a = np.array([1, 1], dtype=np.float32)
-            b = np.array([11], dtype=np.float32)
-            expected = f(x, a, b)
-            sess = ReferenceEvaluator(lr)
-            last_node = sess.rt_nodes_[-1]
-            assert last_node.__class__.__name__ == "Clip_6"
-            assert last_node.min == -1
-            assert last_node.max == 3.4028234663852886e38
-            got = sess.run(None, {"X": a, "A": a, "B": b})[0]
-            assert_allclose(got, expected)
+    @pytest.mark.parametrize(
+        "kwargs, min_expected, max_expected",
+        [
+            ({}, -1, 1),
+            ({"min_value": None}, -3.4028234663852886e38, 1),
+            ({"max_value": None}, -1, 3.4028234663852886e38),
+        ],
+    )
+    def test_reference_evaluator_lr_clip_6(self, kwargs, min_expected, max_expected):
+        # FIXME: This test reads as if it is a test for the
+        # implementation details of the TestReferenceEvaluator.
+        lr, f = TestReferenceEvaluator._linear_regression(clip=True, opset=10, **kwargs)
+        x = np.array([[0, 1], [2, 3]], dtype=np.float32)
+        a = np.array([1, 1], dtype=np.float32)
+        b = np.array([11], dtype=np.float32)
+        expected = f(x, a, b)
+        sess = ReferenceEvaluator(lr)
+        last_node = sess.rt_nodes_[-1]
+        assert last_node.__class__.__name__ == "Clip_6"
+        assert last_node.min == min_expected
+        assert last_node.max == max_expected
+        (got,) = sess.run(None, {"X": a, "A": a, "B": b})
+        assert_allclose(got, expected)
 
     def test_nested_local_functions(self):
         m = parser.parse_model(
@@ -1629,56 +1550,65 @@ class TestReferenceEvaluator(unittest.TestCase):
             for j in range(sW):
                 x = np.zeros((1, 1, sH, sW), dtype=np.uint8)
                 x[0, 0, i, j] = 1.0
-                with self.subTest(w="1x1", i=i, j=j):
-                    w = np.zeros((1, 1, 1, 1), dtype=np.uint8)
-                    w[0, 0, :, :] = 1
-                    feeds = {
-                        "x": x,
-                        "x_scale": np.array([1], dtype=np.float32),
-                        "x_zero_point": np.array([0], dtype=np.uint8),
-                        "w": w,
-                        "w_scale": np.array([1], dtype=np.float32),
-                        "w_zero_point": np.array([0], dtype=np.uint8),
-                        "y_scale": np.array([1], dtype=np.float32),
-                        "y_zero_point": np.array([0], np.uint8),
-                    }
-                    expected = sess1.run(None, feeds)[0]
-                    got = sess2.run(None, feeds)[0]
-                    assert_allclose(got, expected)
-                with self.subTest(w="3x3", i=i, j=j):
-                    w = np.zeros((1, 1, 3, 3), dtype=np.uint8)
-                    w[0, 0, :, :] = np.minimum(2 ** np.arange(9).reshape((3, -1)), 128)
-                    feeds = {
-                        "x": x,
-                        "x_scale": np.array([1], dtype=np.float32),
-                        "x_zero_point": np.array([0], dtype=np.uint8),
-                        "w": w,
-                        "w_scale": np.array([1], dtype=np.float32),
-                        "w_zero_point": np.array([0], dtype=np.uint8),
-                        "y_scale": np.array([1], dtype=np.float32),
-                        "y_zero_point": np.array([0], np.uint8),
-                    }
-                    expected = sess1.run(None, feeds)[0]
-                    got = sess2.run(None, feeds)[0]
-                    assert_allclose(got, expected)
-                with self.subTest(w="1x1", i=i, j=j):
-                    w = np.zeros((1, 1, 1, 1), dtype=np.uint8)
-                    w[0, 0, :, :] = 0
-                    feeds = {
-                        "x": x,
-                        "x_scale": np.array([0.00369204697], dtype=np.float32),
-                        "x_zero_point": np.array([132], dtype=np.uint8),
-                        "w": w,
-                        "w_scale": np.array([100.001727945750], dtype=np.float32),
-                        "w_zero_point": np.array([255], dtype=np.uint8),
-                        "y_scale": np.array([0.00162681262], dtype=np.float32),
-                        "y_zero_point": np.array([132], np.uint8),
-                    }
-                    expected = sess1.run(None, feeds)[0]
-                    got = sess2.run(None, feeds)[0]
-                    assert_allclose(got, expected)
+                #######
+                # 1x1 #
+                #######
+                w = np.zeros((1, 1, 1, 1), dtype=np.uint8)
+                w[0, 0, :, :] = 1
+                feeds = {
+                    "x": x,
+                    "x_scale": np.array([1], dtype=np.float32),
+                    "x_zero_point": np.array([0], dtype=np.uint8),
+                    "w": w,
+                    "w_scale": np.array([1], dtype=np.float32),
+                    "w_zero_point": np.array([0], dtype=np.uint8),
+                    "y_scale": np.array([1], dtype=np.float32),
+                    "y_zero_point": np.array([0], np.uint8),
+                }
+                expected = sess1.run(None, feeds)[0]
+                got = sess2.run(None, feeds)[0]
+                assert_allclose(got, expected)
 
-    def test_qlinearconv_w_scale_vector(self):
+                #######
+                # 3x3 #
+                #######
+                w = np.zeros((1, 1, 3, 3), dtype=np.uint8)
+                w[0, 0, :, :] = np.minimum(2 ** np.arange(9).reshape((3, -1)), 128)
+                feeds = {
+                    "x": x,
+                    "x_scale": np.array([1], dtype=np.float32),
+                    "x_zero_point": np.array([0], dtype=np.uint8),
+                    "w": w,
+                    "w_scale": np.array([1], dtype=np.float32),
+                    "w_zero_point": np.array([0], dtype=np.uint8),
+                    "y_scale": np.array([1], dtype=np.float32),
+                    "y_zero_point": np.array([0], np.uint8),
+                }
+                expected = sess1.run(None, feeds)[0]
+                got = sess2.run(None, feeds)[0]
+                assert_allclose(got, expected)
+
+                #######
+                # 1x1 #
+                #######
+                w = np.zeros((1, 1, 1, 1), dtype=np.uint8)
+                w[0, 0, :, :] = 0
+                feeds = {
+                    "x": x,
+                    "x_scale": np.array([0.00369204697], dtype=np.float32),
+                    "x_zero_point": np.array([132], dtype=np.uint8),
+                    "w": w,
+                    "w_scale": np.array([100.001727945750], dtype=np.float32),
+                    "w_zero_point": np.array([255], dtype=np.uint8),
+                    "y_scale": np.array([0.00162681262], dtype=np.float32),
+                    "y_zero_point": np.array([132], np.uint8),
+                }
+                expected = sess1.run(None, feeds)[0]
+                got = sess2.run(None, feeds)[0]
+                assert_allclose(got, expected)
+
+    @pytest.fixture
+    def qlinearconv_w_scale_vector_session(self) -> ReferenceEvaluator:
         x = make_tensor_value_info("x", TensorProto.UINT8, [None, None, None, None])
         w = make_tensor_value_info("w", TensorProto.UINT8, [None, None, None, None])
         y = make_tensor_value_info("y", TensorProto.UINT8, [None, None, None, None])
@@ -1710,160 +1640,168 @@ class TestReferenceEvaluator(unittest.TestCase):
             [y],
         )
         onnx_model = make_model_gen_version(graph, opset_imports=[make_opsetid("", 16)])
-        sess = ReferenceEvaluator(onnx_model)
+        return ReferenceEvaluator(onnx_model)
 
-        with self.subTest("single_channel"):
-            x = np.array(
-                [
-                    [255, 174, 162, 25, 203, 168, 58],
-                    [15, 59, 237, 95, 129, 0, 64],
-                    [56, 242, 153, 221, 168, 12, 166],
-                    [232, 178, 186, 195, 237, 162, 237],
-                    [188, 39, 124, 77, 80, 102, 43],
-                    [127, 230, 21, 83, 41, 40, 134],
-                    [255, 154, 92, 141, 42, 148, 247],
-                ],
-                dtype=np.uint8,
-            ).reshape((1, 1, 7, 7))
-            x_scale = np.array([0.00369204697], dtype=np.float32)
-            x_zero_point = np.array([132], dtype=np.uint8)
-            w = np.array([0], dtype=np.uint8).reshape((1, 1, 1, 1))
-            w_scale = np.array([0.00172794575], dtype=np.float32)
-            w_zero_point = np.array([255], dtype=np.uint8)
-            y_scale = np.array([0.00162681262], dtype=np.float32)
-            y_zero_point = np.array([123], dtype=np.uint8)
+    def test_qlinearconv_w_scale_vector_single_channel(
+        self, qlinearconv_w_scale_vector_session: ReferenceEvaluator
+    ):
+        x = np.array(
+            [
+                [255, 174, 162, 25, 203, 168, 58],
+                [15, 59, 237, 95, 129, 0, 64],
+                [56, 242, 153, 221, 168, 12, 166],
+                [232, 178, 186, 195, 237, 162, 237],
+                [188, 39, 124, 77, 80, 102, 43],
+                [127, 230, 21, 83, 41, 40, 134],
+                [255, 154, 92, 141, 42, 148, 247],
+            ],
+            dtype=np.uint8,
+        ).reshape((1, 1, 7, 7))
+        x_scale = np.array([0.00369204697], dtype=np.float32)
+        x_zero_point = np.array([132], dtype=np.uint8)
+        w = np.array([0], dtype=np.uint8).reshape((1, 1, 1, 1))
+        w_scale = np.array([0.00172794575], dtype=np.float32)
+        w_zero_point = np.array([255], dtype=np.uint8)
+        y_scale = np.array([0.00162681262], dtype=np.float32)
+        y_zero_point = np.array([123], dtype=np.uint8)
 
-            feeds = {
-                "x": x,
-                "x_scale": x_scale,
-                "x_zero_point": x_zero_point,
-                "w": w,
-                "w_scale": w_scale,
-                "w_zero_point": w_zero_point,
-                "y_scale": y_scale,
-                "y_zero_point": y_zero_point,
-            }
-            expected = [
+        feeds = {
+            "x": x,
+            "x_scale": x_scale,
+            "x_zero_point": x_zero_point,
+            "w": w,
+            "w_scale": w_scale,
+            "w_zero_point": w_zero_point,
+            "y_scale": y_scale,
+            "y_zero_point": y_zero_point,
+        }
+        expected = [
+            [
                 [
-                    [
-                        [0, 81, 93, 230, 52, 87, 197],
-                        [240, 196, 18, 160, 126, 255, 191],
-                        [199, 13, 102, 34, 87, 243, 89],
-                        [23, 77, 69, 60, 18, 93, 18],
-                        [67, 216, 131, 178, 175, 153, 212],
-                        [128, 25, 234, 172, 214, 215, 121],
-                        [0, 101, 163, 114, 213, 107, 8],
-                    ]
+                    [0, 81, 93, 230, 52, 87, 197],
+                    [240, 196, 18, 160, 126, 255, 191],
+                    [199, 13, 102, 34, 87, 243, 89],
+                    [23, 77, 69, 60, 18, 93, 18],
+                    [67, 216, 131, 178, 175, 153, 212],
+                    [128, 25, 234, 172, 214, 215, 121],
+                    [0, 101, 163, 114, 213, 107, 8],
                 ]
             ]
+        ]
 
-            got = sess.run(None, feeds)[0]
-            assert_allclose(got, expected)
+        (got,) = qlinearconv_w_scale_vector_session.run(None, feeds)
+        assert_allclose(got, expected)
 
-        with self.subTest("multiple_output_channels"):
-            x = np.array(
+    def test_qlinearconv_w_scale_vector_multiple_output_channels(
+        self, qlinearconv_w_scale_vector_session: ReferenceEvaluator
+    ):
+        x = np.array(
+            [
+                [255, 174, 162, 25, 203, 168, 58],
+                [15, 59, 237, 95, 129, 0, 64],
+                [56, 242, 153, 221, 168, 12, 166],
+                [232, 178, 186, 195, 237, 162, 237],
+                [188, 39, 124, 77, 80, 102, 43],
+                [127, 230, 21, 83, 41, 40, 134],
+                [255, 154, 92, 141, 42, 148, 247],
+            ],
+            dtype=np.uint8,
+        ).reshape((1, 1, 7, 7))
+        x_scale = np.array([0.00390625], dtype=np.float32)
+        x_zero_point = np.array([0], dtype=np.uint8)
+        w = np.full([2, 1, 3, 3], 128, dtype=np.uint8)
+        w[0, 0, 1, 2] = 200
+        w[1, 0, 1, 0] = 2
+        w_scale = np.array([0.00390625, 0.001953125], dtype=np.float32)
+        w_zero_point = np.array([128, 128], dtype=np.uint8)
+        y_scale = np.array([0.00162681262], dtype=np.float32)
+        y_zero_point = np.array([123], dtype=np.uint8)
+
+        feeds = {
+            "x": x,
+            "x_scale": x_scale,
+            "x_zero_point": x_zero_point,
+            "w": w,
+            "w_scale": w_scale,
+            "w_zero_point": w_zero_point,
+            "y_scale": y_scale,
+            "y_zero_point": y_zero_point,
+        }
+        expected = [
+            [
                 [
-                    [255, 174, 162, 25, 203, 168, 58],
-                    [15, 59, 237, 95, 129, 0, 64],
-                    [56, 242, 153, 221, 168, 12, 166],
-                    [232, 178, 186, 195, 237, 162, 237],
-                    [188, 39, 124, 77, 80, 102, 43],
-                    [127, 230, 21, 83, 41, 40, 134],
-                    [255, 154, 92, 141, 42, 148, 247],
+                    [255, 187, 210, 123, 166],
+                    [226, 255, 236, 131, 235],
+                    [249, 255, 255, 232, 255],
+                    [207, 175, 177, 192, 152],
+                    [137, 179, 151, 150, 213],
                 ],
-                dtype=np.uint8,
-            ).reshape((1, 1, 7, 7))
-            x_scale = np.array([0.00390625], dtype=np.float32)
-            x_zero_point = np.array([0], dtype=np.uint8)
-            w = np.full([2, 1, 3, 3], 128, dtype=np.uint8)
-            w[0, 0, 1, 2] = 200
-            w[1, 0, 1, 0] = 2
-            w_scale = np.array([0.00390625, 0.001953125], dtype=np.float32)
-            w_zero_point = np.array([128, 128], dtype=np.uint8)
-            y_scale = np.array([0.00162681262], dtype=np.float32)
-            y_zero_point = np.array([123], dtype=np.uint8)
-
-            feeds = {
-                "x": x,
-                "x_scale": x_scale,
-                "x_zero_point": x_zero_point,
-                "w": w,
-                "w_scale": w_scale,
-                "w_zero_point": w_zero_point,
-                "y_scale": y_scale,
-                "y_zero_point": y_zero_point,
-            }
-            expected = [
                 [
-                    [
-                        [255, 187, 210, 123, 166],
-                        [226, 255, 236, 131, 235],
-                        [249, 255, 255, 232, 255],
-                        [207, 175, 177, 192, 152],
-                        [137, 179, 151, 150, 213],
-                    ],
-                    [
-                        [114, 88, 0, 67, 47],
-                        [90, 0, 33, 0, 24],
-                        [0, 18, 13, 8, 0],
-                        [12, 100, 50, 77, 76],
-                        [48, 0, 111, 74, 99],
-                    ],
-                ]
+                    [114, 88, 0, 67, 47],
+                    [90, 0, 33, 0, 24],
+                    [0, 18, 13, 8, 0],
+                    [12, 100, 50, 77, 76],
+                    [48, 0, 111, 74, 99],
+                ],
             ]
+        ]
 
-            got = sess.run(None, feeds)[0]
-            assert_allclose(got, expected)
+        got = qlinearconv_w_scale_vector_session.run(None, feeds)[0]
+        assert_allclose(got, expected)
 
-        with self.subTest("fails_with_w_scale_2D"):
-            x = np.zeros((1, 1, 7, 7), dtype=np.uint8)
-            x_scale = np.array([0.00390625], dtype=np.float32)
-            x_zero_point = np.array([0], dtype=np.uint8)
-            w = np.full([2, 1, 3, 3], 128, dtype=np.uint8)
-            w_scale = np.array([[0.00390625, 0.001953125], [1, 1]], dtype=np.float32)
-            w_zero_point = np.array([128, 128], dtype=np.uint8)
-            y_scale = np.array([0.00162681262], dtype=np.float32)
-            y_zero_point = np.array([123], dtype=np.uint8)
+    def test_qlinearconv_w_scale_vector_fails_with_w_scale_2D(
+        self, qlinearconv_w_scale_vector_session: ReferenceEvaluator
+    ):
+        x = np.zeros((1, 1, 7, 7), dtype=np.uint8)
+        x_scale = np.array([0.00390625], dtype=np.float32)
+        x_zero_point = np.array([0], dtype=np.uint8)
+        w = np.full([2, 1, 3, 3], 128, dtype=np.uint8)
+        w_scale = np.array([[0.00390625, 0.001953125], [1, 1]], dtype=np.float32)
+        w_zero_point = np.array([128, 128], dtype=np.uint8)
+        y_scale = np.array([0.00162681262], dtype=np.float32)
+        y_zero_point = np.array([123], dtype=np.uint8)
 
-            feeds = {
-                "x": x,
-                "x_scale": x_scale,
-                "x_zero_point": x_zero_point,
-                "w": w,
-                "w_scale": w_scale,
-                "w_zero_point": w_zero_point,
-                "y_scale": y_scale,
-                "y_zero_point": y_zero_point,
-            }
-            with pytest.raises(
-                ValueError, match="w_scale must be a scalar or a 1-D tensor"
-            ):
-                sess.run(None, feeds)[0]
+        feeds = {
+            "x": x,
+            "x_scale": x_scale,
+            "x_zero_point": x_zero_point,
+            "w": w,
+            "w_scale": w_scale,
+            "w_zero_point": w_zero_point,
+            "y_scale": y_scale,
+            "y_zero_point": y_zero_point,
+        }
+        with pytest.raises(
+            ValueError, match="w_scale must be a scalar or a 1-D tensor"
+        ):
+            qlinearconv_w_scale_vector_session.run(None, feeds)
 
-        with self.subTest("fails_with_w_scale_wrong_length"):
-            x = np.zeros((1, 1, 7, 7), dtype=np.uint8)
-            x_scale = np.array([0.00390625], dtype=np.float32)
-            x_zero_point = np.array([0], dtype=np.uint8)
-            w = np.full([2, 1, 3, 3], 128, dtype=np.uint8)
-            w_scale = np.array([0.00390625, 0.001953125, 1], dtype=np.float32)
-            w_zero_point = np.array([128, 128], dtype=np.uint8)
-            y_scale = np.array([0.00162681262], dtype=np.float32)
-            y_zero_point = np.array([123], dtype=np.uint8)
+    def test_qlinearconv_w_scale_vector_fails_with_w_scale_wrong_length(
+        self, qlinearconv_w_scale_vector_session: ReferenceEvaluator
+    ):
+        x = np.zeros((1, 1, 7, 7), dtype=np.uint8)
+        x_scale = np.array([0.00390625], dtype=np.float32)
+        x_zero_point = np.array([0], dtype=np.uint8)
+        w = np.full([2, 1, 3, 3], 128, dtype=np.uint8)
+        w_scale = np.array([0.00390625, 0.001953125, 1], dtype=np.float32)
+        w_zero_point = np.array([128, 128], dtype=np.uint8)
+        y_scale = np.array([0.00162681262], dtype=np.float32)
+        y_zero_point = np.array([123], dtype=np.uint8)
 
-            feeds = {
-                "x": x,
-                "x_scale": x_scale,
-                "x_zero_point": x_zero_point,
-                "w": w,
-                "w_scale": w_scale,
-                "w_zero_point": w_zero_point,
-                "y_scale": y_scale,
-                "y_zero_point": y_zero_point,
-            }
-            with pytest.raises(
-                ValueError, match="w_scale elements must match output channels"
-            ):
-                sess.run(None, feeds)[0]
+        feeds = {
+            "x": x,
+            "x_scale": x_scale,
+            "x_zero_point": x_zero_point,
+            "w": w,
+            "w_scale": w_scale,
+            "w_zero_point": w_zero_point,
+            "y_scale": y_scale,
+            "y_zero_point": y_zero_point,
+        }
+        with pytest.raises(
+            ValueError, match="w_scale elements must match output channels"
+        ):
+            qlinearconv_w_scale_vector_session.run(None, feeds)
 
     def _run_qlinear_int8(self, op_type, feeds, operand_shapes, output_shape, opset):
         """Build and run a single-node int8 QLinear{Conv,MatMul} graph.
@@ -2683,13 +2621,10 @@ class TestReferenceEvaluator(unittest.TestCase):
         got = ref.run(None, feeds)
         assert_allclose(got[0], expected[0], atol=1e-5)
 
+    @pytest.mark.parametrize("mode", ["avg", "max"])
     @skip_if_no_onnxruntime
-    def test_roi_align(self):
-        with self.subTest(mode="avg"):
-            self.common_test_roi_align("avg")
-        # max does not have example in the backend
-        with self.subTest(mode="max"):
-            self.common_test_roi_align("max")
+    def test_roi_align(self, mode):
+        self.common_test_roi_align(mode)
 
     def common_test_roi_align_torch(self, mode):
         import torch  # noqa: PLC0415
@@ -2707,11 +2642,7 @@ class TestReferenceEvaluator(unittest.TestCase):
     @skip_if_no_torch
     @skip_if_no_torchvision
     def test_roi_align_torch(self):
-        with self.subTest(mode="avg"):
-            self.common_test_roi_align_torch("avg")
-        # not implemented in torch
-        # with self.subTest(mode="max"):
-        #     self.common_test_roi_align_torch("max")
+        self.common_test_roi_align_torch("avg")
 
     def test_split(self):
         X = make_tensor_value_info("X", TensorProto.FLOAT, [None])
@@ -3436,9 +3367,9 @@ class TestReferenceEvaluator(unittest.TestCase):
         assert_allclose(got[2], expected1)
         assert_allclose(got[3], expected2)
 
-    @unittest.skipIf(
+    @pytest.mark.skipif(
         version_utils.numpy_older_than("2.0"),
-        "assert_allclose does not support ml_dtypes in numpy < 2.0",
+        reason="assert_allclose does not support ml_dtypes in numpy < 2.0",
     )
     def test_cast_like_float8(self):
         X = make_tensor_value_info("X", TensorProto.FLOAT, [None])
@@ -3493,7 +3424,108 @@ class TestReferenceEvaluator(unittest.TestCase):
         assert got[0].tolist() == expected1.tolist()
         assert got[1].tolist() == expected2.tolist()
 
-    def test_float8_4_types(self):
+    @pytest.mark.parametrize(
+        "to, expected",
+        [
+            (
+                TensorProto.FLOAT8E4M3FN,
+                np.array(
+                    [
+                        0.40625,
+                        352.0,
+                        416.0,
+                        320.0,
+                        320.0,
+                        256.0,
+                        -256.0,
+                        -96.0,
+                        0.0,
+                        0.009765625,
+                        416.0,
+                        448.0,
+                        448.0,
+                        448.0,
+                        -448.0,
+                        np.nan,
+                    ],
+                    dtype=np.float32,
+                ),
+            ),
+            (
+                TensorProto.FLOAT8E4M3FNUZ,
+                np.array(
+                    [
+                        0.40625,
+                        240.0,
+                        240.0,
+                        240.0,
+                        240.0,
+                        240.0,
+                        -240.0,
+                        -96.0,
+                        0.0,
+                        0.009765625,
+                        240.0,
+                        240.0,
+                        240.0,
+                        240.0,
+                        -240.0,
+                        np.nan,
+                    ],
+                    dtype=np.float32,
+                ),
+            ),
+            (
+                TensorProto.FLOAT8E5M2,
+                np.array(
+                    [
+                        0.4375,
+                        384.0,
+                        384.0,
+                        320.0,
+                        320.0,
+                        256.0,
+                        -256.0,
+                        -96.0,
+                        0.0001068115234375,
+                        0.009765625,
+                        384.0,
+                        448.0,
+                        57344.0,
+                        57344.0,
+                        -57344.0,
+                        np.nan,
+                    ],
+                    dtype=np.float32,
+                ),
+            ),
+            (
+                TensorProto.FLOAT8E5M2FNUZ,
+                np.array(
+                    [
+                        4.3750000e-01,
+                        3.8400000e02,
+                        3.8400000e02,
+                        3.2000000e02,
+                        3.2000000e02,
+                        2.5600000e02,
+                        -2.5600000e02,
+                        -9.6000000e01,
+                        1.0681152e-04,
+                        9.7656250e-03,
+                        3.8400000e02,
+                        4.4800000e02,
+                        5.7344000e04,
+                        5.7344000e04,
+                        -5.7344000e04,
+                        np.nan,
+                    ],
+                    dtype=np.float32,
+                ),
+            ),
+        ],
+    )
+    def test_float8_4_types(self, to, expected):
         x = np.array(
             [
                 0.4068359375,
@@ -3515,92 +3547,6 @@ class TestReferenceEvaluator(unittest.TestCase):
             ],
             dtype=np.float32,
         )
-        expected = {
-            TensorProto.FLOAT8E4M3FN: np.array(
-                [
-                    0.40625,
-                    352.0,
-                    416.0,
-                    320.0,
-                    320.0,
-                    256.0,
-                    -256.0,
-                    -96.0,
-                    0.0,
-                    0.009765625,
-                    416.0,
-                    448.0,
-                    448.0,
-                    448.0,
-                    -448.0,
-                    np.nan,
-                ],
-                dtype=np.float32,
-            ),
-            TensorProto.FLOAT8E4M3FNUZ: np.array(
-                [
-                    0.40625,
-                    240.0,
-                    240.0,
-                    240.0,
-                    240.0,
-                    240.0,
-                    -240.0,
-                    -96.0,
-                    0.0,
-                    0.009765625,
-                    240.0,
-                    240.0,
-                    240.0,
-                    240.0,
-                    -240.0,
-                    np.nan,
-                ],
-                dtype=np.float32,
-            ),
-            TensorProto.FLOAT8E5M2: np.array(
-                [
-                    0.4375,
-                    384.0,
-                    384.0,
-                    320.0,
-                    320.0,
-                    256.0,
-                    -256.0,
-                    -96.0,
-                    0.0001068115234375,
-                    0.009765625,
-                    384.0,
-                    448.0,
-                    57344.0,
-                    57344.0,
-                    -57344.0,
-                    np.nan,
-                ],
-                dtype=np.float32,
-            ),
-            TensorProto.FLOAT8E5M2FNUZ: np.array(
-                [
-                    4.3750000e-01,
-                    3.8400000e02,
-                    3.8400000e02,
-                    3.2000000e02,
-                    3.2000000e02,
-                    2.5600000e02,
-                    -2.5600000e02,
-                    -9.6000000e01,
-                    1.0681152e-04,
-                    9.7656250e-03,
-                    3.8400000e02,
-                    4.4800000e02,
-                    5.7344000e04,
-                    5.7344000e04,
-                    -5.7344000e04,
-                    np.nan,
-                ],
-                dtype=np.float32,
-            ),
-        }
 
         def model_cast_cast(to):
             X = make_tensor_value_info("X", TensorProto.FLOAT, [None])
@@ -3612,14 +3558,12 @@ class TestReferenceEvaluator(unittest.TestCase):
             check_model(onnx_model)
             return onnx_model
 
-        for to, expect in expected.items():
-            with self.subTest(to=to):
-                onnx_model = model_cast_cast(to)
-                ref = ReferenceEvaluator(onnx_model)
-                y = ref.run(None, {"X": x})[0]
-                assert_allclose(y, expect)
-                assert y.shape == expect.shape
-                assert y.dtype == expect.dtype
+        onnx_model = model_cast_cast(to)
+        ref = ReferenceEvaluator(onnx_model)
+        (y,) = ref.run(None, {"X": x})
+        assert_allclose(y, expected)
+        assert y.shape == expected.shape
+        assert y.dtype == expected.dtype
 
     def test_cast_bfloat16_output(self):
         X = make_tensor_value_info("X", TensorProto.FLOAT, [None])

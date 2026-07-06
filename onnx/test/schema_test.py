@@ -17,7 +17,7 @@ if TYPE_CHECKING:
     from collections.abc import Sequence
 
 
-class TestSchema(unittest.TestCase):
+class TestSchema:
     def test_get_schema(self) -> None:
         relu_schema = defs.get_schema("Relu")
         assert (
@@ -99,10 +99,9 @@ class TestSchema(unittest.TestCase):
         }
 
         for expected_type in expected_types:
-            with self.subTest(type=expected_type):
-                assert expected_type in supported_types, (
-                    f"Range should support {expected_type}"
-                )
+            assert expected_type in supported_types, (
+                f"Range should support {expected_type}"
+            )
 
         # Verify no unexpected types are supported (regression check)
         allowed_type_families = {
