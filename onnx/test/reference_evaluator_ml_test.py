@@ -198,6 +198,7 @@ class TestReferenceEvaluatorAiOnnxMl:
             ("L2", lambda x: x / (x**2).sum(axis=1, keepdims=1) ** 0.5),
         ],
     )
+    @pytest.mark.skipif(not ONNX_ML, reason="onnx not compiled with ai.onnx.ml")
     def test_normalizer(self, norm, compute):
         X = make_tensor_value_info("X", TensorProto.FLOAT, [None, None])
         Y = make_tensor_value_info("Y", TensorProto.FLOAT, [None, None])
