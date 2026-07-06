@@ -7039,8 +7039,8 @@ class TestShapeInference(TestShapeInferenceHelper):
             if value_info.name == "loop_output"
         )
         first_dim = loop_output.type.tensor_type.shape.dim[0]
-        self.assertFalse(first_dim.HasField("dim_value") and first_dim.dim_value == 5)
-        self.assertEqual(loop_output.type.tensor_type.shape.dim[1].dim_value, 3)
+        assert not (first_dim.HasField("dim_value") and first_dim.dim_value == 5)
+        assert loop_output.type.tensor_type.shape.dim[1].dim_value == 3
 
     def test_constantofshape_with_input_shape(self) -> None:
         graph = self._make_graph(
