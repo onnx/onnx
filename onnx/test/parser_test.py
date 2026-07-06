@@ -401,7 +401,7 @@ class TestBasicFunctions:
             node = model.graph.node[0]
             assert node.attribute[0].name == "alpha"
             alpha = node.attribute[0].f
-            assert round(abs(alpha - 0.123), 5) == 0, (
+            assert alpha == pytest.approx(0.123, abs=1e-5), (
                 "Float attribute misparsed under non-US locale"
             )
         finally:
