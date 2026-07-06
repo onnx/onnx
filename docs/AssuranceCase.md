@@ -81,7 +81,7 @@ A malicious model references external tensor data via attacker-controlled file p
 |--------|---------|
 | Static analysis | CodeQL (GitHub Advanced Security), Clang Static Analyzer, sonarcloud |
 | Dynamic analysis | ASan, MSan, UBSan, TSan in CI build matrix |
-| Fuzzing | not yet |
+| Fuzzing | Early stage — OSS-Fuzz harnesses ([onnx/fuzz](https://github.com/onnx/onnx/tree/main/onnx/fuzz)) cover the checker, model loader, text parser, shape inference, version converter, and compose; reference evaluator and external-data parsing are not yet covered. A short smoke run of these harnesses is part of this repo's CI ([fuzz.yml](https://github.com/onnx/onnx/blob/main/.github/workflows/fuzz.yml)); the full OSS-Fuzz continuous campaigns run separately and are not surfaced here |
 | Dependency scanning | Dependabot, OpenSSF Scorecard |
 
 

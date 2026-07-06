@@ -616,10 +616,10 @@ class TestVersionConverter(unittest.TestCase):
             ],
             [helper.make_tensor_value_info("sum", TensorProto.FLOAT, (5,))],
         )
-        converted_model = self._converted(graph, helper.make_operatorsetid("", 5), 7)
+        converted_model = self._converted(graph, helper.make_operatorsetid("", 5), 8)
         # Assert equality of graph and converted_model
         assert converted_model.graph.node[0].op_type == "Sum"
-        assert converted_model.opset_import[0].version == 7
+        assert converted_model.opset_import[0].version == 8
 
     # Test Sum Adapter: 8 -> 5
     def test_sum_8_5(self) -> None:
@@ -1469,7 +1469,7 @@ class TestVersionConverter(unittest.TestCase):
 
     # Test Upsample Adapter: 9 -> 8
     def test_upsample_with_raw_initializer_9_8(self) -> None:
-        self.helper_upsample_with_constant(raw_scale=True)
+        self.helper_upsample_with_initializer(raw_scale=True)
 
     # Test Upsample Adapter: 9 -> 8
     def test_upsample_with_raw_constant_node_9_8(self) -> None:
