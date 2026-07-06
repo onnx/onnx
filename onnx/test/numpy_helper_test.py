@@ -65,7 +65,7 @@ class TestNumpyHelper:
         np.testing.assert_equal(a, a_recover)
 
     def test_float16(self) -> None:
-        self._test_numpy_helper_float_type(np.float32)
+        self._test_numpy_helper_float_type(np.float16)
 
     def test_complex64(self) -> None:
         self._test_numpy_helper_float_type(np.complex64)
