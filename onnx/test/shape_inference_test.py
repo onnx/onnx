@@ -184,10 +184,15 @@ class TestShapeInferenceHelper(unittest.TestCase):
         # Inferred type info may be recorded either in value_info (intermediate
         # values, and outputs that were untyped in the input model) or directly on
         # the graph outputs (outputs that were already typed). Merge both by name.
-        inferred = {
-            x.name: x
-            for x in itertools.chain(inferred_graph.value_info, inferred_graph.output)
-        }
+        # An untyped graph output is recorded in BOTH value_info and output; when a
+        # name appears in both, verify the two records agree rather than silently
+        # keeping one of them.
+        inferred: dict[str, ValueInfoProto] = {}
+        for x in itertools.chain(inferred_graph.value_info, inferred_graph.output):
+            if x.name in inferred:
+                self._compare_value_infos(inferred[x.name].type, x.type)
+            else:
+                inferred[x.name] = x
         assert expected.keys() == inferred.keys(), (
             f"\nExpected value infos for: {sorted(expected)}"
             f"\nInferred value infos for: {sorted(inferred)}\n"
