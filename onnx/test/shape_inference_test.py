@@ -12807,12 +12807,13 @@ class TestCustomSchemaShapeInference(TestShapeInferenceHelper):
     op_version: int = 1
     op_domain: str = ""
 
-    def setUp(self) -> None:
+    @pytest.fixture(autouse=True)
+    def schema_cleanup(self):
         # Ensure the schema is unregistered
         assert not onnx.defs.has(self.custom_op_type, self.op_domain)
         assert not onnx.defs.has(self.dummy_graph_op_type, self.op_domain)
+        yield
 
-    def tearDown(self) -> None:
         # Clean up the registered schema
         with contextlib.suppress(onnx.defs.SchemaError):
             onnx.defs.deregister_schema(
