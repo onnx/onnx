@@ -1,6 +1,5 @@
 build
 numpy
-parameterized
 protobuf
 pytest
 pytest-cov

@@ -3,19 +3,14 @@
 # Copyright (c) ONNX Project Contributors
 from __future__ import annotations
 
-import parameterized
+import pytest
 
 import onnx.helper
 import onnx.shape_inference
 
 
 class TestNodeInference:
-    @parameterized.parameterized.expand(
-        [
-            ("GreaterOrEqual",),
-            ("LessOrEqual",),
-        ]
-    )
+    @pytest.mark.parametrize("op_type", ["GreaterOrEqual", "LessOrEqual"])
     def test_comparison_op(self, op_type):
         node = onnx.helper.make_node(op_type, ["x", "y"], ["z"])
         schema = onnx.defs.get_schema(node.op_type, 23, "")

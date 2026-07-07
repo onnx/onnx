@@ -10,7 +10,6 @@ import tempfile
 
 import google.protobuf.message
 import google.protobuf.text_format
-import parameterized
 import pytest
 
 import onnx
@@ -34,95 +33,78 @@ def _simple_tensor() -> onnx.TensorProto:
     )
 
 
-@parameterized.parameterized_class(
-    [
-        {"format": "protobuf"},
-        {"format": "textproto"},
-        {"format": "json"},
-        {"format": "onnxtxt"},
-    ]
-)
+@pytest.mark.parametrize("format", ["protobuf", "textproto", "json", "onnxtxt"])
 class TestIO:
-    format: str
-
-    def test_load_model_when_input_is_bytes(self) -> None:
+    def test_load_model_when_input_is_bytes(self, format) -> None:  # noqa: A002
         proto = _simple_model()
-        proto_string = serialization.registry.get(self.format).serialize_proto(proto)
-        loaded_proto = onnx.load_model_from_string(proto_string, format=self.format)
+        proto_string = serialization.registry.get(format).serialize_proto(proto)
+        loaded_proto = onnx.load_model_from_string(proto_string, format=format)
         assert proto == loaded_proto
 
-    def test_save_and_load_model_when_input_has_read_function(self) -> None:
+    def test_save_and_load_model_when_input_has_read_function(self, format) -> None:  # noqa: A002
         proto = _simple_model()
         # When the proto is a bytes representation provided to `save_model`,
         # it should always be a serialized binary protobuf representation. Aka. format="protobuf"
         # The saved file format is specified by the `format` argument.
         proto_string = serialization.registry.get("protobuf").serialize_proto(proto)
         f = io.BytesIO()
-        onnx.save_model(proto_string, f, format=self.format)
-        loaded_proto = onnx.load_model(io.BytesIO(f.getvalue()), format=self.format)
+        onnx.save_model(proto_string, f, format=format)
+        loaded_proto = onnx.load_model(io.BytesIO(f.getvalue()), format=format)
         assert proto == loaded_proto
 
-    def test_save_and_load_model_when_input_is_file_name(self) -> None:
+    @pytest.mark.parametrize("path_type", [str, pathlib.Path])
+    def test_save_and_load_model_when_input_is_file_path(
+        self,
+        tmp_path,
+        format,  # noqa: A002
+        path_type,
+    ) -> None:
         proto = _simple_model()
-        with tempfile.TemporaryDirectory() as temp_dir:
-            model_path = os.path.join(temp_dir, "model.onnx")
-            onnx.save_model(proto, model_path, format=self.format)
-            loaded_proto = onnx.load_model(model_path, format=self.format)
-            assert proto == loaded_proto
-
-    def test_save_and_load_model_when_input_is_pathlike(self) -> None:
-        proto = _simple_model()
-        with tempfile.TemporaryDirectory() as temp_dir:
-            model_path = pathlib.Path(temp_dir, "model.onnx")
-            onnx.save_model(proto, model_path, format=self.format)
-            loaded_proto = onnx.load_model(model_path, format=self.format)
-            assert proto == loaded_proto
+        model_path = path_type(tmp_path / "model.onnx")
+        onnx.save_model(proto, model_path, format=format)
+        loaded_proto = onnx.load_model(model_path, format=format)
+        assert proto == loaded_proto
 
 
-@parameterized.parameterized_class(
+@pytest.mark.parametrize(
+    "format",
     [
-        {"format": "protobuf"},
-        {"format": "textproto"},
-        {"format": "json"},
+        "protobuf",
+        "textproto",
+        "json",
         # The onnxtxt format does not support saving/loading tensors yet
-    ]
+    ],
 )
 class TestIOTensor:
     """Test loading and saving of TensorProto."""
 
-    format: str
-
-    def test_load_tensor_when_input_is_bytes(self) -> None:
+    def test_load_tensor_when_input_is_bytes(self, format) -> None:  # noqa: A002
         proto = _simple_tensor()
-        proto_string = serialization.registry.get(self.format).serialize_proto(proto)
-        loaded_proto = onnx.load_tensor_from_string(proto_string, format=self.format)
+        proto_string = serialization.registry.get(format).serialize_proto(proto)
+        loaded_proto = onnx.load_tensor_from_string(proto_string, format=format)
         assert proto == loaded_proto
 
-    def test_save_and_load_tensor_when_input_has_read_function(self) -> None:
+    def test_save_and_load_tensor_when_input_has_read_function(self, format) -> None:  # noqa: A002
         # Test if input has a read function
         proto = _simple_tensor()
         f = io.BytesIO()
-        onnx.save_tensor(proto, f, format=self.format)
-        loaded_proto = onnx.load_tensor(io.BytesIO(f.getvalue()), format=self.format)
+        onnx.save_tensor(proto, f, format=format)
+        loaded_proto = onnx.load_tensor(io.BytesIO(f.getvalue()), format=format)
         assert proto == loaded_proto
 
-    def test_save_and_load_tensor_when_input_is_file_name(self) -> None:
+    @pytest.mark.parametrize("path_type", [str, pathlib.Path])
+    def test_save_and_load_tensor_when_input_is_file_path(
+        self,
+        format,  # noqa: A002
+        tmp_path,
+        path_type,
+    ) -> None:
         # Test if input is a file name
         proto = _simple_tensor()
-        with tempfile.TemporaryDirectory() as temp_dir:
-            model_path = os.path.join(temp_dir, "model.onnx")
-            onnx.save_tensor(proto, model_path, format=self.format)
-            loaded_proto = onnx.load_tensor(model_path, format=self.format)
-            assert proto == loaded_proto
-
-    def test_save_and_load_tensor_when_input_is_pathlike(self) -> None:
-        # Test if input is a file name
-        proto = _simple_tensor()
-        with tempfile.TemporaryDirectory() as temp_dir:
-            model_path = pathlib.Path(temp_dir, "model.onnx")
-            onnx.save_tensor(proto, model_path, format=self.format)
-            loaded_proto = onnx.load_tensor(model_path, format=self.format)
-            assert proto == loaded_proto
+        model_path = path_type(tmp_path / "model.onnx")
+        onnx.save_tensor(proto, model_path, format=format)
+        loaded_proto = onnx.load_tensor(model_path, format=format)
+        assert proto == loaded_proto
 
 
 class TestSaveAndLoadFileExtensions:

@@ -6,7 +6,6 @@ from __future__ import annotations
 import contextlib
 from typing import TYPE_CHECKING
 
-import parameterized
 import pytest
 
 import onnx
@@ -364,21 +363,20 @@ class TestFormalParameter:
 
 
 class TestTypeConstraintParam:
-    @parameterized.parameterized.expand(
+    @pytest.mark.parametrize(
+        "type_param_str, allowed_types, description",
         [
-            ("single_type", "T", ["tensor(float)"], "Test description"),
+            ("T", ["tensor(float)"], "Test description"),
             (
-                "double_types",
                 "T",
                 ["tensor(float)", "tensor(int64)"],
                 "Test description",
             ),
-            ("tuple", "T", ("tensor(float)", "tensor(int64)"), "Test description"),
-        ]
+            ("T", ("tensor(float)", "tensor(int64)"), "Test description"),
+        ],
     )
     def test_init(
         self,
-        _: str,
         type_param_str: str,
         allowed_types: Sequence[str],
         description: str,
