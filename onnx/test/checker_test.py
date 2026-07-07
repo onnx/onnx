@@ -5,8 +5,6 @@ from __future__ import annotations
 
 import os
 import tempfile
-import unittest
-import unittest.mock
 from typing import TYPE_CHECKING
 
 import numpy as np
@@ -309,7 +307,9 @@ class TestChecker:
 
         checker.check_model(model.SerializeToString())
 
-    def test_check_model_protobuf_size_boundary(self) -> None:
+    def test_check_model_protobuf_size_boundary(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         node = helper.make_node("Relu", ["X"], ["Y"], name="test")
         graph = helper.make_graph(
             [node],
@@ -320,10 +320,12 @@ class TestChecker:
         model = helper.make_model(graph, producer_name="test")
         serialized = model.SerializeToString()
 
-        with unittest.mock.patch.object(checker, "MAXIMUM_PROTOBUF", len(serialized)):
-            checker.check_model(serialized)
+        monkeypatch.setattr(checker, "MAXIMUM_PROTOBUF", len(serialized))
+        checker.check_model(serialized)
 
-    def test_check_model_protobuf_size_over_limit_raises(self) -> None:
+    def test_check_model_protobuf_size_over_limit_raises(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         node = helper.make_node("Relu", ["X"], ["Y"], name="test")
         graph = helper.make_graph(
             [node],
@@ -334,12 +336,8 @@ class TestChecker:
         model = helper.make_model(graph, producer_name="test")
         serialized = model.SerializeToString()
 
-        with (
-            unittest.mock.patch.object(
-                checker, "MAXIMUM_PROTOBUF", len(serialized) - 1
-            ),
-            pytest.raises(ValueError),
-        ):
+        monkeypatch.setattr(checker, "MAXIMUM_PROTOBUF", len(serialized) - 1)
+        with pytest.raises(ValueError):
             checker.check_model(serialized)
 
     def test_check_old_model(self) -> None:
