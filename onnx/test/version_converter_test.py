@@ -2336,8 +2336,10 @@ class TestVersionConverter:
     @pytest.mark.parametrize(
         "x_shape, scale_shape, axis, block_size, output_dtype, zero_point_dtype, compatible",
         [
-            ((16, 3), (1,), None, None, None, TensorProto.INT8, True),
-            (
+            pytest.param(
+                (16, 3), (1,), None, None, None, TensorProto.INT8, True, id="per_tensor"
+            ),
+            pytest.param(
                 (16, 3),
                 (16,),
                 1,
@@ -2345,8 +2347,9 @@ class TestVersionConverter:
                 None,
                 TensorProto.INT8,
                 True,
+                id="per_axis_none_block_shape",
             ),
-            (
+            pytest.param(
                 (16, 3),
                 (16,),
                 1,
@@ -2354,8 +2357,9 @@ class TestVersionConverter:
                 None,
                 TensorProto.INT8,
                 True,
+                id="per_axis_zero_block_shape",
             ),
-            (
+            pytest.param(
                 (16, 3),
                 (1,),
                 1,
@@ -2363,8 +2367,9 @@ class TestVersionConverter:
                 None,
                 TensorProto.INT8,
                 False,
+                id="per_tensor_positive_block_shape",
             ),
-            (
+            pytest.param(
                 (16, 3),
                 (16,),
                 1,
@@ -2372,10 +2377,22 @@ class TestVersionConverter:
                 None,
                 TensorProto.INT8,
                 False,
+                id="per_axis_positive_block_shape",
             ),
-            ((16, 3), (4, 3), 0, 4, None, TensorProto.INT8, False),
-            ((4, 3, 32), (4, 3, 8), 2, 4, None, TensorProto.INT8, False),
-            (
+            pytest.param(
+                (16, 3), (4, 3), 0, 4, None, TensorProto.INT8, False, id="blocked_2d"
+            ),
+            pytest.param(
+                (4, 3, 32),
+                (4, 3, 8),
+                2,
+                4,
+                None,
+                TensorProto.INT8,
+                False,
+                id="blocked_3d",
+            ),
+            pytest.param(
                 (16, 3),
                 (16,),
                 1,
@@ -2383,8 +2400,9 @@ class TestVersionConverter:
                 TensorProto.FLOAT8E4M3FN,
                 None,
                 False,
+                id="per_axis_output_dtype",
             ),
-            (
+            pytest.param(
                 (16, 3),
                 (16,),
                 1,
@@ -2392,6 +2410,7 @@ class TestVersionConverter:
                 None,
                 TensorProto.UINT16,
                 False,
+                id="per_axis_unsupported_type",
             ),
         ],
     )
@@ -2445,13 +2464,17 @@ class TestVersionConverter:
     @pytest.mark.parametrize(
         "y_shape, scale_shape, axis, block_size, compatible",
         [
-            ((16, 3), (1,), None, None, True),
-            ((16, 3), (16,), 1, None, True),
-            ((16, 3), (16,), 1, 0, True),
-            ((16, 3), (1,), 1, 2, False),
-            ((16, 3), (16,), 1, 2, False),
-            ((16, 3), (4, 3), 0, 4, False),
-            ((4, 3, 32), (4, 3, 8), 2, 4, False),
+            pytest.param((16, 3), (1,), None, None, True, id="per_tensor"),
+            pytest.param((16, 3), (16,), 1, None, True, id="per_axis_none_block_shape"),
+            pytest.param((16, 3), (16,), 1, 0, True, id="per_axis_zero_block_shape"),
+            pytest.param(
+                (16, 3), (1,), 1, 2, False, id="per_tensor_positive_block_shape"
+            ),
+            pytest.param(
+                (16, 3), (16,), 1, 2, False, id="per_axis_positive_block_shape"
+            ),
+            pytest.param((16, 3), (4, 3), 0, 4, False, id="blocked_2d"),
+            pytest.param((4, 3, 32), (4, 3, 8), 2, 4, False, id="blocked_3d"),
         ],
     )
     def test_dequantize_21_20(

@@ -364,23 +364,16 @@ class TestFormalParameter:
 
 class TestTypeConstraintParam:
     @pytest.mark.parametrize(
-        "type_param_str, allowed_types, description",
+        "allowed_types",
         [
-            ("T", ["tensor(float)"], "Test description"),
-            (
-                "T",
-                ["tensor(float)", "tensor(int64)"],
-                "Test description",
-            ),
-            ("T", ("tensor(float)", "tensor(int64)"), "Test description"),
+            pytest.param(["tensor(float)"], id="list_single"),
+            pytest.param(["tensor(float)", "tensor(int64)"], id="list_multiple"),
+            pytest.param(("tensor(float)", "tensor(int64)"), id="tuple_multiple"),
         ],
     )
-    def test_init(
-        self,
-        type_param_str: str,
-        allowed_types: Sequence[str],
-        description: str,
-    ) -> None:
+    def test_init(self, allowed_types: Sequence[str]) -> None:
+        type_param_str = "T"
+        description = "Test description"
         type_constraint = defs.OpSchema.TypeConstraintParam(
             type_param_str, allowed_types, description
         )
