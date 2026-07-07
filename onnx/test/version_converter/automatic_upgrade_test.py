@@ -3,8 +3,6 @@
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
-import unittest
-
 import automatic_conversion_test_base
 import numpy as np
 
@@ -307,8 +305,13 @@ class TestAutomaticUpgrade(automatic_conversion_test_base.TestAutomaticConversio
         )
 
     def test_Conv_2(self) -> None:
+        # strided Conv: floor((5 - 2) / 2) + 1 = 2 in each spatial dim
         self._test_op_upgrade(
-            "Conv", 1, [[1, 3, 5, 5], [4, 3, 2, 2], [4]], [[1, 4, 4, 4]]
+            "Conv",
+            1,
+            [[1, 3, 5, 5], [4, 3, 2, 2], [4]],
+            [[1, 4, 2, 2]],
+            attrs={"strides": [2, 2]},
         )
 
     def test_Conv_3(self) -> None:
@@ -2104,8 +2107,4 @@ class TestAutomaticUpgrade(automatic_conversion_test_base.TestAutomaticConversio
         expected_tested_ops = all_op_names - excluded_ops
 
         untested_ops = expected_tested_ops - set(self.tested_ops)
-        self.assertEqual(untested_ops, set())
-
-
-if __name__ == "__main__":
-    unittest.main()
+        assert untested_ops == set()

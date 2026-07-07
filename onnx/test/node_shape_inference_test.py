@@ -3,15 +3,13 @@
 # Copyright (c) ONNX Project Contributors
 from __future__ import annotations
 
-import unittest
-
 import parameterized
 
 import onnx.helper
 import onnx.shape_inference
 
 
-class NodeInferenceTest(unittest.TestCase):
+class TestNodeInference:
     @parameterized.parameterized.expand(
         [
             ("GreaterOrEqual",),
@@ -26,13 +24,6 @@ class NodeInferenceTest(unittest.TestCase):
         result = onnx.shape_inference.infer_node_outputs(
             schema, node, {"x": xtype, "y": ytype}
         )
-        self.assertEqual(list(result.keys()), ["z"])
-        self.assertEqual(result["z"].tensor_type.elem_type, onnx.TensorProto.BOOL)
-        self.assertEqual(
-            [dim.dim_value for dim in result["z"].tensor_type.shape.dim],
-            [10, 10],
-        )
-
-
-if __name__ == "__main__":
-    unittest.main()
+        assert list(result.keys()) == ["z"]
+        assert result["z"].tensor_type.elem_type == onnx.TensorProto.BOOL
+        assert [dim.dim_value for dim in result["z"].tensor_type.shape.dim] == [10, 10]
