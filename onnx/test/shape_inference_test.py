@@ -176,7 +176,7 @@ class TestShapeInferenceHelper(unittest.TestCase):
         # agree (symmetric to the check applied to the inferred model below), to avoid
         # masking inconsistent test inputs.
         expected: dict[str, ValueInfoProto] = {}
-        for x in itertools.chain(graph.value_info, graph.output):
+        for x in [*graph.value_info, *graph.output]:
             if x.name in names_in_inferred_value_infos:
                 continue
             if x.name in expected:
@@ -192,7 +192,7 @@ class TestShapeInferenceHelper(unittest.TestCase):
         # An untyped graph output is recorded in BOTH value_info and output; when a
         # name appears in both, verify that the two records agree.
         inferred: dict[str, ValueInfoProto] = {}
-        for x in itertools.chain(inferred_graph.value_info, inferred_graph.output):
+        for x in [*inferred_graph.value_info, *inferred_graph.output]:
             if x.name in inferred:
                 self._compare_value_infos(inferred[x.name].type, x.type)
             else:
