@@ -10,6 +10,7 @@ import unittest.mock
 from typing import TYPE_CHECKING
 
 import numpy as np
+import pytest
 
 import onnx.defs
 import onnx.parser
@@ -27,7 +28,7 @@ if TYPE_CHECKING:
     from collections.abc import Sequence
 
 
-class TestChecker(unittest.TestCase):
+class TestChecker:
     @property
     def _sample_float_tensor(self) -> TensorProto:
         np_array = np.random.randn(2, 3).astype(np.float32)
@@ -74,7 +75,8 @@ class TestChecker(unittest.TestCase):
 
         # Input of RELU is not optional
         node = helper.make_node("Relu", [""], ["Y"], name="test")
-        self.assertRaises(checker.ValidationError, checker.check_node, node)
+        with pytest.raises(checker.ValidationError):
+            checker.check_node(node)
 
     def test_check_function_nested(self) -> None:
         func_domain = "local"
@@ -124,7 +126,8 @@ class TestChecker(unittest.TestCase):
 
         graph.initializer[0].name = "no-exist"
 
-        self.assertRaises(checker.ValidationError, check_ir_version_3, graph)
+        with pytest.raises(checker.ValidationError):
+            check_ir_version_3(graph)
 
         graph.initializer[0].name = "X"
         check_ir_version_3(graph)
@@ -168,9 +171,8 @@ class TestChecker(unittest.TestCase):
 
         model = helper.make_model(graph, producer_name="test")
 
-        self.assertRaises(
-            shape_inference.InferenceError, checker.check_model, model, True
-        )
+        with pytest.raises(shape_inference.InferenceError):
+            checker.check_model(model, True)
 
         checker.check_graph(graph)
 
@@ -187,9 +189,8 @@ class TestChecker(unittest.TestCase):
 
         model = helper.make_model(graph, producer_name="test")
 
-        self.assertRaises(
-            shape_inference.InferenceError, checker.check_model, model, True
-        )
+        with pytest.raises(shape_inference.InferenceError):
+            checker.check_model(model, True)
 
         checker.check_graph(graph)
 
@@ -206,7 +207,8 @@ class TestChecker(unittest.TestCase):
         # Supply no name for the initializer
         graph.initializer.extend([self._sample_float_tensor])
         graph.initializer[0].name = ""
-        self.assertRaises(checker.ValidationError, checker.check_graph, graph)
+        with pytest.raises(checker.ValidationError):
+            checker.check_graph(graph)
 
     def test_check_graph_empty_sparse_initializer_name(self) -> None:
         node = helper.make_node("Relu", ["X"], ["Y"], name="test")
@@ -221,7 +223,8 @@ class TestChecker(unittest.TestCase):
         # Supply no name for the sparse_initializer
         sparse = self.make_sparse([100], [13, 17, 19], [3], [9, 27, 81], "")
         graph.sparse_initializer.extend([sparse])
-        self.assertRaises(checker.ValidationError, checker.check_graph, graph)
+        with pytest.raises(checker.ValidationError):
+            checker.check_graph(graph)
 
     def test_check_graph_duplicate_init_names(self) -> None:
         node = helper.make_node("Relu", ["X"], ["Y"], name="test")
@@ -239,7 +242,8 @@ class TestChecker(unittest.TestCase):
         # Add sparse initializer with the same name as above
         sparse = self.make_sparse([100], [13, 17, 19], [3], [9, 27, 81], "X")
         graph.sparse_initializer.extend([sparse])
-        self.assertRaises(checker.ValidationError, checker.check_graph, graph)
+        with pytest.raises(checker.ValidationError):
+            checker.check_graph(graph)
 
     def test_check_graph_optional_input(self) -> None:
         # GivenTensorFill's input is marked optional, hence it is used in this test.
@@ -265,7 +269,8 @@ class TestChecker(unittest.TestCase):
             ],
             outputs=[helper.make_tensor_value_info("Z", TensorProto.FLOAT, [1, 2])],
         )
-        self.assertRaises(checker.ValidationError, checker.check_graph, graph)
+        with pytest.raises(checker.ValidationError):
+            checker.check_graph(graph)
 
     def test_check_graph_topologically_sorted(self) -> None:
         n1 = helper.make_node("Scale", ["X"], ["Y"], scale=2.0, name="n1")
@@ -277,7 +282,8 @@ class TestChecker(unittest.TestCase):
             inputs=[helper.make_tensor_value_info("X", TensorProto.FLOAT, [1, 2])],
             outputs=[helper.make_tensor_value_info("Z", TensorProto.FLOAT, [1, 2])],
         )
-        self.assertRaises(checker.ValidationError, checker.check_graph, graph)
+        with pytest.raises(checker.ValidationError):
+            checker.check_graph(graph)
 
     def test_check_model(self) -> None:
         node = helper.make_node("Relu", ["X"], ["Y"], name="test")
@@ -328,10 +334,13 @@ class TestChecker(unittest.TestCase):
         model = helper.make_model(graph, producer_name="test")
         serialized = model.SerializeToString()
 
-        with unittest.mock.patch.object(
-            checker, "MAXIMUM_PROTOBUF", len(serialized) - 1
+        with (
+            unittest.mock.patch.object(
+                checker, "MAXIMUM_PROTOBUF", len(serialized) - 1
+            ),
+            pytest.raises(ValueError),
         ):
-            self.assertRaises(ValueError, checker.check_model, serialized)
+            checker.check_model(serialized)
 
     def test_check_old_model(self) -> None:
         node = helper.make_node("Pad", ["X"], ["Y"], paddings=(0, 0, 0, 0))
@@ -353,7 +362,8 @@ class TestChecker(unittest.TestCase):
         input_np = np.random.randn(2, 3).astype(np.float32)
 
         tensor.raw_data = onnx.numpy_helper.tobytes_little_endian(input_np)
-        self.assertRaises(checker.ValidationError, checker.check_tensor, tensor)
+        with pytest.raises(checker.ValidationError):
+            checker.check_tensor(tensor)
 
     def test_check_string_tensor(self) -> None:
         tensor = TensorProto()
@@ -365,12 +375,14 @@ class TestChecker(unittest.TestCase):
         del tensor.string_data[:]
         tensor.raw_data = b"Test"
         # string data should not be stored in raw_data field
-        self.assertRaises(checker.ValidationError, checker.check_tensor, tensor)
+        with pytest.raises(checker.ValidationError):
+            checker.check_tensor(tensor)
 
     def test_check_tensor_mismatched_field(self) -> None:
         tensor = self._sample_float_tensor
         tensor.data_type = TensorProto.INT32
-        self.assertRaises(checker.ValidationError, checker.check_tensor, tensor)
+        with pytest.raises(checker.ValidationError):
+            checker.check_tensor(tensor)
 
     def test_nested_graph(self) -> None:
         n1 = helper.make_node("Scale", ["X"], ["Y"], scale=2.0, name="n1")
@@ -467,12 +479,14 @@ class TestChecker(unittest.TestCase):
     def test_check_sparse_tensor_invalid_index(self) -> None:
         # index value 181 is out-of-range
         sparse = self.make_sparse([100], [13, 17, 19], [3], [9, 27, 181])
-        self.assertRaises(checker.ValidationError, checker.check_sparse_tensor, sparse)
+        with pytest.raises(checker.ValidationError):
+            checker.check_sparse_tensor(sparse)
 
     def test_check_sparse_tensor_unordered(self) -> None:
         # index values are not in sorted order
         sparse = self.make_sparse([100], [13, 17, 19], [3], [27, 9, 81])
-        self.assertRaises(checker.ValidationError, checker.check_sparse_tensor, sparse)
+        with pytest.raises(checker.ValidationError):
+            checker.check_sparse_tensor(sparse)
 
     def test_check_sparse_tensor_coo_format(self) -> None:
         sparse = self.make_sparse([10, 10], [13, 17, 19], [3, 2], [0, 9, 2, 7, 8, 1])
@@ -480,15 +494,18 @@ class TestChecker(unittest.TestCase):
 
     def test_check_sparse_tensor_coo_format_invalid_index(self) -> None:
         sparse = self.make_sparse([10, 10], [13, 17, 19], [3, 2], [0, 9, 0, 27, 8, 1])
-        self.assertRaises(checker.ValidationError, checker.check_sparse_tensor, sparse)
+        with pytest.raises(checker.ValidationError):
+            checker.check_sparse_tensor(sparse)
 
     def test_check_sparse_tensor_coo_format_invalid_shape(self) -> None:
         sparse = self.make_sparse([10, 10], [13, 17, 19], [2, 3], [0, 9, 2, 7, 8, 1])
-        self.assertRaises(checker.ValidationError, checker.check_sparse_tensor, sparse)
+        with pytest.raises(checker.ValidationError):
+            checker.check_sparse_tensor(sparse)
 
     def test_check_sparse_tensor_coo_format_invalid_dim2(self) -> None:
         sparse = self.make_sparse([10, 10], [13, 17, 19], [3, 1], [0, 1, 2])
-        self.assertRaises(checker.ValidationError, checker.check_sparse_tensor, sparse)
+        with pytest.raises(checker.ValidationError):
+            checker.check_sparse_tensor(sparse)
 
     def test_check_sparse_matmul(self) -> None:
         M = 5
@@ -516,9 +533,8 @@ class TestChecker(unittest.TestCase):
         node = helper.make_node("Add", ["X", "Y"], ["Z"])
         graph = helper.make_graph([node], "test_add_input", [X, Y], [Z])
         model = helper.make_model(graph, producer_name="test", opset_imports=[onnx_id])
-        self.assertRaises(
-            shape_inference.InferenceError, checker.check_model, model, True
-        )
+        with pytest.raises(shape_inference.InferenceError):
+            checker.check_model(model, True)
 
     def test_check_model_inconsistent_type(self) -> None:
         N = 10
@@ -529,9 +545,8 @@ class TestChecker(unittest.TestCase):
         node = helper.make_node("Add", ["X", "Y"], ["Z"])
         graph = helper.make_graph([node], "test_add_input", [X, Y], [Z])
         model = helper.make_model(graph, producer_name="test", opset_imports=[onnx_id])
-        self.assertRaises(
-            shape_inference.InferenceError, checker.check_model, model, True
-        )
+        with pytest.raises(shape_inference.InferenceError):
+            checker.check_model(model, True)
 
     def test_check_model_unsupported_output_type(self) -> None:
         N = 10
@@ -542,9 +557,8 @@ class TestChecker(unittest.TestCase):
         node = helper.make_node("Add", ["X", "Y"], ["Z"])
         graph = helper.make_graph([node], "test_add_input", [X, Y], [Z])
         model = helper.make_model(graph, producer_name="test", opset_imports=[onnx_id])
-        self.assertRaises(
-            shape_inference.InferenceError, checker.check_model, model, True
-        )
+        with pytest.raises(shape_inference.InferenceError):
+            checker.check_model(model, True)
 
     def test_loop_with_same_initializer_input_below_ir4(self) -> None:
         # This is for testing IR<4: tensors must exist both in initializer and input
@@ -884,9 +898,8 @@ class TestChecker(unittest.TestCase):
                 ],
             ),
         )
-        self.assertRaises(
-            shape_inference.InferenceError, checker.check_model, model, True
-        )
+        with pytest.raises(shape_inference.InferenceError):
+            checker.check_model(model, True)
 
     def test_loop_with_same_initializer_input_above_ir4(self) -> None:
         # This is for testing IR>=4:
@@ -1064,9 +1077,8 @@ class TestChecker(unittest.TestCase):
                 ],
             ),
         )
-        self.assertRaises(
-            shape_inference.InferenceError, checker.check_model, model, True
-        )
+        with pytest.raises(shape_inference.InferenceError):
+            checker.check_model(model, True)
 
     def test_empty_list_attribute(self):
         model = onnx.parser.parse_model(
@@ -1125,7 +1137,8 @@ class TestChecker(unittest.TestCase):
             # Error: z is not defined
         """
         )
-        self.assertRaises(checker.ValidationError, checker.check_model, model)
+        with pytest.raises(checker.ValidationError):
+            checker.check_model(model)
 
     def test_graph_output_is_defined_within_sub_graph(self):
         model = onnx.parser.parse_model(
@@ -1145,7 +1158,8 @@ class TestChecker(unittest.TestCase):
             # An explicit "Identity(sum)" must be used to return sum as output.
         """
         )
-        self.assertRaises(checker.ValidationError, checker.check_model, model)
+        with pytest.raises(checker.ValidationError):
+            checker.check_model(model)
 
     def test_check_model_rejects_self_recursive_function(self) -> None:
         model = onnx.parser.parse_model(
@@ -1158,7 +1172,8 @@ class TestChecker(unittest.TestCase):
             foo (x) => (y) { y = local.foo (x) }
         """
         )
-        self.assertRaises(checker.ValidationError, checker.check_model, model)
+        with pytest.raises(checker.ValidationError):
+            checker.check_model(model)
 
     def test_check_model_rejects_indirect_cycle(self) -> None:
         model = onnx.parser.parse_model(
@@ -1173,7 +1188,8 @@ class TestChecker(unittest.TestCase):
             bar (x) => (y) { y = local.foo (x) }
         """
         )
-        self.assertRaises(checker.ValidationError, checker.check_model, model)
+        with pytest.raises(checker.ValidationError):
+            checker.check_model(model)
 
     def test_check_tensor_invalid_dims(self) -> None:
         """Reject tensors with overflowing or negative dimensions."""
@@ -1183,14 +1199,16 @@ class TestChecker(unittest.TestCase):
         tensor.dims.extend([2**62, 2**62])
         tensor.name = "t"
         tensor.raw_data = b"\x00"
-        self.assertRaises(checker.ValidationError, checker.check_tensor, tensor)
+        with pytest.raises(checker.ValidationError):
+            checker.check_tensor(tensor)
         # Negative dim
         tensor2 = TensorProto()
         tensor2.data_type = TensorProto.FLOAT
         tensor2.dims.extend([-1, 4])
         tensor2.name = "t"
         tensor2.raw_data = b"\x00" * 16
-        self.assertRaises(checker.ValidationError, checker.check_tensor, tensor2)
+        with pytest.raises(checker.ValidationError):
+            checker.check_tensor(tensor2)
         # Zero dim: empty tensors are valid and must be accepted.
         tensor3 = TensorProto()
         tensor3.data_type = TensorProto.FLOAT
@@ -1208,7 +1226,8 @@ class TestChecker(unittest.TestCase):
             tensor.dims.extend([10])
             tensor.name = "t"
             tensor.raw_data = b"\x00" * 4  # 1 byte too short
-            self.assertRaises(checker.ValidationError, checker.check_tensor, tensor)
+            with pytest.raises(checker.ValidationError):
+                checker.check_tensor(tensor)
             # Exactly enough bytes must pass.
             tensor2 = TensorProto()
             tensor2.data_type = dtype
@@ -1225,7 +1244,8 @@ class TestChecker(unittest.TestCase):
             tensor.dims.extend([10])
             tensor.name = "t"
             tensor.raw_data = b"\x00" * 2  # 1 byte too short
-            self.assertRaises(checker.ValidationError, checker.check_tensor, tensor)
+            with pytest.raises(checker.ValidationError):
+                checker.check_tensor(tensor)
             # Exactly enough bytes must pass.
             tensor2 = TensorProto()
             tensor2.data_type = dtype
@@ -1244,7 +1264,8 @@ class TestChecker(unittest.TestCase):
             tensor.dims.extend([10])
             tensor.name = "t"
             tensor.int32_data.extend([0])  # 1 int32, need 2
-            self.assertRaises(checker.ValidationError, checker.check_tensor, tensor)
+            with pytest.raises(checker.ValidationError):
+                checker.check_tensor(tensor)
             # Exactly enough int32 values must pass.
             tensor2 = TensorProto()
             tensor2.data_type = dtype
@@ -1261,7 +1282,8 @@ class TestChecker(unittest.TestCase):
             tensor.dims.extend([20])
             tensor.name = "t"
             tensor.int32_data.extend([0])  # 1 int32, need 2
-            self.assertRaises(checker.ValidationError, checker.check_tensor, tensor)
+            with pytest.raises(checker.ValidationError):
+                checker.check_tensor(tensor)
             # Exactly enough int32 values must pass.
             tensor2 = TensorProto()
             tensor2.data_type = dtype
@@ -1306,12 +1328,8 @@ class TestChecker(unittest.TestCase):
             graph, opset_imports=[helper.make_opsetid("", 17)], ir_version=7
         )
 
-        with self.assertRaisesRegex(
+        with pytest.raises(
             shape_inference.InferenceError,
-            r"Input channels C must be divisible by group for ConvTranspose",
+            match=r"Input channels C must be divisible by group for ConvTranspose",
         ):
             checker.check_model(model, full_check=True)
-
-
-if __name__ == "__main__":
-    unittest.main()

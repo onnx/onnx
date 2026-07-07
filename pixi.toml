@@ -102,19 +102,20 @@ cxx-compiler = ">=1.8.0"
 ml_dtypes = ">=0.5.1"
 numpy = ">=1.22.0"
 parameterized = ">=0.9.0"
-protobuf = ">=4.25.1"
+protobuf = ">=6.31.1"
 pytest = ">=8.3.4"
 pytest-cov = ">=6.0.0"
 pytest-xdist = ">=3.6.1"
 setuptools = ">=75.8.0"
 wheel = ">=0.45.1"
 zizmor = ">=1.24.1,<2"
+onnxruntime = "*"
 
 [feature.reference.dependencies]
 pillow = ">=11.2.1,<12"
 
 [feature.oldies.dependencies]
-protobuf = "==4.25.1"
+protobuf = "==6.31.1"
 python = "3.10.*"
 numpy = "==1.23.2"
 
@@ -147,7 +148,6 @@ furo = "*"
 markupsafe = "*"
 matplotlib = "*"
 myst-parser = "*"
-onnxruntime = "*"
 pillow = "*"
 pydot = "*"
 sphinx = "<9"  # Seems to be required by sphinx-tabs?

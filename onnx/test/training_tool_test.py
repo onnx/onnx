@@ -3,15 +3,13 @@
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
-import unittest
-
 import numpy as np
 
 import onnx
 from onnx import TensorProto, helper, numpy_helper, shape_inference
 
 
-class TestTrainingTool(unittest.TestCase):
+class TestTrainingTool:
     def test_training_info_proto(self) -> None:
         # Inference graph.
         A_shape = [2, 2]
@@ -95,7 +93,3 @@ class TestTrainingTool(unittest.TestCase):
             full_training_model
         )
         onnx.checker.check_model(full_training_model_with_shapes)
-
-
-if __name__ == "__main__":
-    unittest.main()

@@ -5,20 +5,20 @@ from __future__ import annotations
 
 import locale
 import platform
-import unittest
 
+import pytest
 from parameterized import parameterized
 
 import onnx
 from onnx import GraphProto, OperatorSetIdProto, TensorProto, checker
 
 
-class TestBasicFunctions(unittest.TestCase):
+class TestBasicFunctions:
     def check_graph(self, graph: GraphProto) -> None:
-        self.assertEqual(len(graph.node), 3)
-        self.assertEqual(graph.node[0].op_type, "MatMul")
-        self.assertEqual(graph.node[1].op_type, "Add")
-        self.assertEqual(graph.node[2].op_type, "Softmax")
+        assert len(graph.node) == 3
+        assert graph.node[0].op_type == "MatMul"
+        assert graph.node[1].op_type == "Add"
+        assert graph.node[2].op_type == "Softmax"
 
     def test_parse_graph(self) -> None:
         input = """
@@ -46,8 +46,8 @@ class TestBasicFunctions(unittest.TestCase):
            }
            """
         model = onnx.parser.parse_model(input)
-        self.assertEqual(model.ir_version, 7)
-        self.assertEqual(len(model.opset_import), 2)
+        assert model.ir_version == 7
+        assert len(model.opset_import) == 2
         self.check_graph(model.graph)
 
     def test_parse_graph_error(self) -> None:
@@ -59,9 +59,8 @@ class TestBasicFunctions(unittest.TestCase):
               C = Softmax(S)
            }
            """
-        self.assertRaises(
-            onnx.parser.ParseError, lambda: onnx.parser.parse_graph(input)
-        )
+        with pytest.raises(onnx.parser.ParseError):
+            onnx.parser.parse_graph(input)
 
     def test_parse_model_error(self) -> None:
         input = """
@@ -76,9 +75,8 @@ class TestBasicFunctions(unittest.TestCase):
               C = Softmax(S)
            }
            """
-        self.assertRaises(
-            onnx.parser.ParseError, lambda: onnx.parser.parse_model(input)
-        )
+        with pytest.raises(onnx.parser.ParseError):
+            onnx.parser.parse_model(input)
 
     def test_parse_function_with_attributes(self) -> None:
         input = """
@@ -214,13 +212,13 @@ class TestBasicFunctions(unittest.TestCase):
         node = onnx.parser.parse_node(
             "out1, out2 = SomeDomain.SomeOp <attr1 = 1> (in1, in2)"
         )
-        self.assertEqual(list(node.input), ["in1", "in2"])
-        self.assertEqual(list(node.output), ["out1", "out2"])
-        self.assertEqual(len(node.attribute), 1)
+        assert list(node.input) == ["in1", "in2"]
+        assert list(node.output) == ["out1", "out2"]
+        assert len(node.attribute) == 1
         attr_val = onnx.helper.get_node_attr_value(node, "attr1")
-        self.assertEqual(attr_val, 1)
-        self.assertEqual(node.domain, "SomeDomain")
-        self.assertEqual(node.op_type, "SomeOp")
+        assert attr_val == 1
+        assert node.domain == "SomeDomain"
+        assert node.op_type == "SomeOp"
 
     def test_parse_float_attribute_from_int_literal(self):
         model = onnx.parser.parse_model(
@@ -236,44 +234,40 @@ class TestBasicFunctions(unittest.TestCase):
             """
         )
         attr = model.graph.node[0].attribute[0]
-        self.assertEqual(attr.type, onnx.AttributeProto.FLOAT)
-        self.assertTrue(attr.HasField("f"))
-        self.assertFalse(attr.HasField("i"))
-        self.assertEqual(attr.f, 2.0)
+        assert attr.type == onnx.AttributeProto.FLOAT
+        assert attr.HasField("f")
+        assert not attr.HasField("i")
+        assert attr.f == 2.0
 
     def test_missing_identifier(self):
         node = onnx.parser.parse_node("= SomeOp ()")
-        self.assertEqual(list(node.input), [])
-        self.assertEqual(list(node.output), [])
+        assert list(node.input) == []
+        assert list(node.output) == []
         node = onnx.parser.parse_node(", = SomeOp (,)")
-        self.assertEqual(list(node.input), [""])
-        self.assertEqual(list(node.output), [""])
+        assert list(node.input) == [""]
+        assert list(node.output) == [""]
         node = onnx.parser.parse_node("x, = SomeOp (y,)")
-        self.assertEqual(list(node.input), ["y"])
-        self.assertEqual(list(node.output), ["x"])
+        assert list(node.input) == ["y"]
+        assert list(node.output) == ["x"]
         node = onnx.parser.parse_node(",x = SomeOp (,y)")
-        self.assertEqual(list(node.input), ["", "y"])
-        self.assertEqual(list(node.output), ["", "x"])
+        assert list(node.input) == ["", "y"]
+        assert list(node.output) == ["", "x"]
 
     def test_quoted_empty_identifier(self):
         node = onnx.parser.parse_node('"" = SomeOp ("")')
-        self.assertEqual(list(node.input), [""])
-        self.assertEqual(list(node.output), [""])
+        assert list(node.input) == [""]
+        assert list(node.output) == [""]
         node = onnx.parser.parse_node('"",x = SomeOp ("",y)')
-        self.assertEqual(list(node.input), ["", "y"])
-        self.assertEqual(list(node.output), ["", "x"])
+        assert list(node.input) == ["", "y"]
+        assert list(node.output) == ["", "x"]
 
     def test_quoted_string_symbolic_dim(self):
         # Test parsing a quoted string as a symbolic dimension (non-identifier dim_param)
         graph = onnx.parser.parse_graph(
             'agraph (float["M + N"] x) => (float["M + N"] y) { y = Identity(x) }'
         )
-        self.assertEqual(
-            graph.input[0].type.tensor_type.shape.dim[0].dim_param, "M + N"
-        )
-        self.assertEqual(
-            graph.output[0].type.tensor_type.shape.dim[0].dim_param, "M + N"
-        )
+        assert graph.input[0].type.tensor_type.shape.dim[0].dim_param == "M + N"
+        assert graph.output[0].type.tensor_type.shape.dim[0].dim_param == "M + N"
 
     @parameterized.expand(
         [
@@ -305,23 +299,18 @@ class TestBasicFunctions(unittest.TestCase):
         }}
         """
         if expect_exception:
-            self.assertRaises(
-                onnx.parser.ParseError, lambda: onnx.parser.parse_model(model_text)
-            )
+            with pytest.raises(onnx.parser.ParseError):
+                onnx.parser.parse_model(model_text)
         else:
             model = onnx.parser.parse_model(model_text)
-            self.assertEqual(model.ir_version, 8)
-            self.assertEqual(model.producer_name, "FunctionProtoTest")
-            self.assertEqual(model.producer_version, "1.0")
-            self.assertEqual(len(model.graph.node), 1)
-            self.assertEqual(len(model.graph.node[0].attribute), 1)
-            self.assertEqual(model.graph.node[0].attribute[0].name, "value_float")
-            self.assertEqual(
-                model.graph.node[0].attribute[0].type, onnx.AttributeProto.FLOAT
-            )
-            self.assertEqual(
-                str(model.graph.node[0].attribute[0].f), str(float(test_literal))
-            )
+            assert model.ir_version == 8
+            assert model.producer_name == "FunctionProtoTest"
+            assert model.producer_version == "1.0"
+            assert len(model.graph.node) == 1
+            assert len(model.graph.node[0].attribute) == 1
+            assert model.graph.node[0].attribute[0].name == "value_float"
+            assert model.graph.node[0].attribute[0].type == onnx.AttributeProto.FLOAT
+            assert str(model.graph.node[0].attribute[0].f) == str(float(test_literal))
 
     @parameterized.expand(
         [
@@ -368,7 +357,7 @@ class TestBasicFunctions(unittest.TestCase):
            }}
            """
         graph = onnx.parser.parse_model(text_graph)
-        self.assertEqual(len(graph.graph.node), 1)
+        assert len(graph.graph.node) == 1
 
     def test_locale_independent_float_parsing(self) -> None:
         """Regression test: float parsing must work under non-US locales.
@@ -399,7 +388,7 @@ class TestBasicFunctions(unittest.TestCase):
 
         if not locale_set:
             restore_locale()
-            self.skipTest("No locale with comma decimal separator available")
+            pytest.skip("No locale with comma decimal separator available")
 
         try:
             model_text = """
@@ -410,17 +399,10 @@ class TestBasicFunctions(unittest.TestCase):
             """
             model = onnx.parser.parse_model(model_text)
             node = model.graph.node[0]
-            self.assertEqual(node.attribute[0].name, "alpha")
+            assert node.attribute[0].name == "alpha"
             alpha = node.attribute[0].f
-            self.assertAlmostEqual(
-                alpha,
-                0.123,
-                places=5,
-                msg="Float attribute misparsed under non-US locale",
+            assert alpha == pytest.approx(0.123, abs=1e-5), (
+                "Float attribute misparsed under non-US locale"
             )
         finally:
             restore_locale()
-
-
-if __name__ == "__main__":
-    unittest.main(verbosity=2)
