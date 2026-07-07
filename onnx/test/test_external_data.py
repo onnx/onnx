@@ -119,7 +119,7 @@ class TestLoadExternalDataBase:
 
 
 class TestLoadExternalData(TestLoadExternalDataBase):
-    @pytest.fixture(params=["protobuf", "textproto"], autouse=True)
+    @pytest.fixture(scope="class", params=["protobuf", "textproto"], autouse=True)
     def override_serialization_format(self, request):
         # Override the class' `serialization_format`.
         # This is not idiomatic pytest code which would structure all
@@ -164,7 +164,7 @@ class TestLoadExternalData(TestLoadExternalDataBase):
 
 
 class TestLoadExternalDataSingleFile(TestLoadExternalDataBase):
-    @pytest.fixture(params=["protobuf", "textproto"], autouse=True)
+    @pytest.fixture(scope="class", params=["protobuf", "textproto"], autouse=True)
     def override_serialization_format(self, request):
         # Override the class' `serialization_format`.
         # This is not idiomatic pytest code which would structure all
