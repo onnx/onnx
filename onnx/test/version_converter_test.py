@@ -7,10 +7,10 @@ import contextlib
 import os
 import struct
 import tempfile
-import unittest
 
 import numpy as np
 import parameterized
+import pytest
 
 import onnx.version_converter
 from onnx import (
@@ -24,7 +24,7 @@ from onnx import (
 )
 
 
-class TestVersionConverter(unittest.TestCase):
+class TestVersionConverter:
     def _converted(
         self,
         graph: GraphProto,
@@ -61,7 +61,8 @@ class TestVersionConverter(unittest.TestCase):
             )
             self._converted(graph, helper.make_operatorsetid("", 8), 2)
 
-        self.assertRaises(RuntimeError, test)
+        with pytest.raises(RuntimeError):
+            test()
 
     # Test 2: Backwards Compatible Conversion (No Adaptations): Add: 3 -> 2
     def test_backwards_compatible(self) -> None:
@@ -92,7 +93,8 @@ class TestVersionConverter(unittest.TestCase):
             )
             self._converted(graph, helper.make_operatorsetid("", 8), 6)
 
-        self.assertRaises(RuntimeError, test)
+        with pytest.raises(RuntimeError):
+            test()
 
     # A graph output that nothing produces must raise (ConvertError), not crash.
     # Regression test for a SEGV in graphProtoToGraph when a top-level
@@ -109,7 +111,8 @@ class TestVersionConverter(unittest.TestCase):
             )
             self._converted(graph, helper.make_operatorsetid("", 13), 14)
 
-        self.assertRaises(onnx.version_converter.ConvertError, test)
+        with pytest.raises(onnx.version_converter.ConvertError):
+            test()
 
     # A node input that nothing produces must raise, not crash.
     def test_undefined_input(self) -> None:
@@ -124,7 +127,8 @@ class TestVersionConverter(unittest.TestCase):
             )
             self._converted(graph, helper.make_operatorsetid("", 13), 14)
 
-        self.assertRaises(onnx.version_converter.ConvertError, test)
+        with pytest.raises(onnx.version_converter.ConvertError):
+            test()
 
     # A nested (subgraph) output that resolves to a value captured from the
     # enclosing scope is handled via a dummy node, not a crash. Exercises the
@@ -362,7 +366,8 @@ class TestVersionConverter(unittest.TestCase):
             )
             self._converted(graph, helper.make_operatorsetid("", 7), 6)
 
-        self.assertRaises(RuntimeError, test)
+        with pytest.raises(RuntimeError):
+            test()
 
     def test_gemm_6_7_rejects_1d_input(self) -> None:
         # Regression test: heap-buffer-overflow when B has rank < 2 (same pattern, upward)
@@ -380,7 +385,8 @@ class TestVersionConverter(unittest.TestCase):
             )
             self._converted(graph, helper.make_operatorsetid("", 6), 7)
 
-        self.assertRaises(RuntimeError, test)
+        with pytest.raises(RuntimeError):
+            test()
 
     def test_gemm_7_6_rejects_1d_A(self) -> None:
         # Exercises the A-rank guard (B is valid rank-2, A is rank-1).
@@ -398,7 +404,8 @@ class TestVersionConverter(unittest.TestCase):
             )
             self._converted(graph, helper.make_operatorsetid("", 7), 6)
 
-        self.assertRaises(RuntimeError, test)
+        with pytest.raises(RuntimeError):
+            test()
 
     def test_gemm_6_7_rejects_1d_A(self) -> None:
         # Exercises the A-rank guard (B is valid rank-2, A is rank-1).
@@ -416,7 +423,8 @@ class TestVersionConverter(unittest.TestCase):
             )
             self._converted(graph, helper.make_operatorsetid("", 6), 7)
 
-        self.assertRaises(RuntimeError, test)
+        with pytest.raises(RuntimeError):
+            test()
 
     # Test Relu Adapter: 5 -> 7
     def test_relu_5_7(self) -> None:
@@ -616,10 +624,10 @@ class TestVersionConverter(unittest.TestCase):
             ],
             [helper.make_tensor_value_info("sum", TensorProto.FLOAT, (5,))],
         )
-        converted_model = self._converted(graph, helper.make_operatorsetid("", 5), 7)
+        converted_model = self._converted(graph, helper.make_operatorsetid("", 5), 8)
         # Assert equality of graph and converted_model
         assert converted_model.graph.node[0].op_type == "Sum"
-        assert converted_model.opset_import[0].version == 7
+        assert converted_model.opset_import[0].version == 8
 
     # Test Sum Adapter: 8 -> 5
     def test_sum_8_5(self) -> None:
@@ -1469,7 +1477,7 @@ class TestVersionConverter(unittest.TestCase):
 
     # Test Upsample Adapter: 9 -> 8
     def test_upsample_with_raw_initializer_9_8(self) -> None:
-        self.helper_upsample_with_constant(raw_scale=True)
+        self.helper_upsample_with_initializer(raw_scale=True)
 
     # Test Upsample Adapter: 9 -> 8
     def test_upsample_with_raw_constant_node_9_8(self) -> None:
@@ -2309,7 +2317,8 @@ class TestVersionConverter(unittest.TestCase):
             )
             self._converted(graph, helper.make_operatorsetid("", from_opset), to_opset)
 
-        self.assertRaises((RuntimeError, shape_inference.InferenceError), test)
+        with pytest.raises((RuntimeError, shape_inference.InferenceError)):
+            test()
 
     def test_softmax_13_12_rejects_malformed_flatten_input(self) -> None:
         def test() -> None:
@@ -2325,7 +2334,8 @@ class TestVersionConverter(unittest.TestCase):
             )
             self._converted(graph, helper.make_operatorsetid("", 13), 12)
 
-        self.assertRaises((RuntimeError, shape_inference.InferenceError), test)
+        with pytest.raises((RuntimeError, shape_inference.InferenceError)):
+            test()
 
     @parameterized.parameterized.expand(
         [
@@ -2437,7 +2447,7 @@ class TestVersionConverter(unittest.TestCase):
             _ = self._converted(graph, helper.make_operatorsetid("", 21), 20)
 
         context_manager = (
-            contextlib.nullcontext() if compatible else self.assertRaises(RuntimeError)
+            contextlib.nullcontext() if compatible else pytest.raises(RuntimeError)
         )
         with context_manager:
             test(x_shape, scale_shape, axis, block_size, output_dtype, zero_point_dtype)
@@ -2485,7 +2495,7 @@ class TestVersionConverter(unittest.TestCase):
             _ = self._converted(graph, helper.make_operatorsetid("", 21), 20)
 
         context_manager = (
-            contextlib.nullcontext() if compatible else self.assertRaises(RuntimeError)
+            contextlib.nullcontext() if compatible else pytest.raises(RuntimeError)
         )
         with context_manager:
             test(y_shape, scale_shape, axis, block_size)
@@ -2548,20 +2558,20 @@ class TestVersionConverter(unittest.TestCase):
             converted_model = onnx.version_converter.convert_version(
                 onnx.load(model_filename, load_external_data=False), 21
             )
-            self.assertEqual(len(converted_model.graph.initializer), 2)
+            assert len(converted_model.graph.initializer) == 2
 
             # Verify the large tensor has external data
             tensors = {init.name: init for init in converted_model.graph.initializer}
-            self.assertIn("initializer_tensor", tensors)
+            assert "initializer_tensor" in tensors
             large_tensor = tensors["initializer_tensor"]
-            self.assertEqual(large_tensor.data_location, TensorProto.EXTERNAL)
-            self.assertEqual(len(large_tensor.external_data), 3)
+            assert large_tensor.data_location == TensorProto.EXTERNAL
+            assert len(large_tensor.external_data) == 3
 
             # Convert external_data to dictionary for order-independent checking
             external_data_dict = {ed.key: ed.value for ed in large_tensor.external_data}
-            self.assertEqual(external_data_dict["location"], data_filename)
-            self.assertEqual(external_data_dict["offset"], "0")
-            self.assertEqual(external_data_dict["length"], "24")
+            assert external_data_dict["location"] == data_filename
+            assert external_data_dict["offset"] == "0"
+            assert external_data_dict["length"] == "24"
 
     # Where 16 -> 15: TypeRestriction rejects bfloat16
     def test_where_16_15_success(self) -> None:
@@ -2594,7 +2604,8 @@ class TestVersionConverter(unittest.TestCase):
             )
             self._converted(graph, helper.make_operatorsetid("", 16), 15)
 
-        self.assertRaises(RuntimeError, test)
+        with pytest.raises(RuntimeError):
+            test()
 
     def _make_scatter_graph(
         self,
@@ -2638,7 +2649,8 @@ class TestVersionConverter(unittest.TestCase):
             graph = self._make_scatter_graph(op_name, TensorProto.BFLOAT16)
             self._converted(graph, helper.make_operatorsetid("", 16), 15)
 
-        self.assertRaises(RuntimeError, test)
+        with pytest.raises(RuntimeError):
+            test()
 
     # Opset 16 added reduction 'add' and 'mul'; 16 -> 15 only allows 'none'
     @parameterized.parameterized.expand(
@@ -2656,7 +2668,8 @@ class TestVersionConverter(unittest.TestCase):
             graph = self._make_scatter_graph(op_name, TensorProto.FLOAT, reduction)
             self._converted(graph, helper.make_operatorsetid("", 16), 15)
 
-        self.assertRaises(RuntimeError, test)
+        with pytest.raises(RuntimeError):
+            test()
 
     # Scatter 18 -> 17: reject reduction "max" / "min"
     @parameterized.parameterized.expand(
@@ -2674,7 +2687,8 @@ class TestVersionConverter(unittest.TestCase):
             graph = self._make_scatter_graph(op_name, TensorProto.FLOAT, reduction)
             self._converted(graph, helper.make_operatorsetid("", 18), 17)
 
-        self.assertRaises(RuntimeError, test)
+        with pytest.raises(RuntimeError):
+            test()
 
     @parameterized.parameterized.expand(
         [
@@ -2784,7 +2798,7 @@ class TestVersionConverter(unittest.TestCase):
         model = helper.make_model(
             graph, opset_imports=[helper.make_operatorsetid("", 13)]
         )
-        with self.assertRaises(RuntimeError):
+        with pytest.raises(RuntimeError):
             onnx.version_converter.convert_version(model, 12)
 
     def test_split_13_12_raw_data_constant_node(self) -> None:
@@ -2868,7 +2882,8 @@ class TestVersionConverter(unittest.TestCase):
             )
             self._converted(graph, helper.make_operatorsetid("", 27), 26)
 
-        self.assertRaises(RuntimeError, test)
+        with pytest.raises(RuntimeError):
+            test()
 
     def test_scan_8_9_rejects_no_inputs(self) -> None:
         # Scan in opset 8 must have at least 1 input; zero inputs is UB (inputs[0] OOB).
@@ -2996,8 +3011,5 @@ class TestVersionConverter(unittest.TestCase):
         ]
     )
     def test_celu_28_27_unsupported_type_fails(self, _: str, dtype: int) -> None:
-        self.assertRaises(RuntimeError, lambda: self._celu_converted(dtype, 28, 27))
-
-
-if __name__ == "__main__":
-    unittest.main()
+        with pytest.raises(RuntimeError):
+            self._celu_converted(dtype, 28, 27)
