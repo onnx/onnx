@@ -938,6 +938,32 @@ void DetectCycleDFS(
   }
 }
 
+// Collect callee edges from a list of nodes into the callee set. A node in a
+// function body may carry subgraphs (via GRAPH / GRAPHS attributes on control-flow
+// ops such as If/Loop/Scan) whose own nodes can also call model-local functions, so
+// we descend recursively to detect cycles hidden at any nesting level.
+// Recursion depth is bounded by protobuf's message nesting limit (the same bound that
+// already governs graph/subgraph checking), so this traversal is stack-safe.
+void CollectCalleeEdges(
+    const google::protobuf::RepeatedPtrField<NodeProto>& nodes,
+    const std::unordered_map<std::string, FuncPtr>& func_by_key,
+    std::unordered_set<FuncPtr>& callees) {
+  for (const auto& node : nodes) {
+    auto it = func_by_key.find(GetCalleeId(node));
+    if (it != func_by_key.end()) {
+      callees.insert(it->second);
+    }
+    for (const auto& attr : node.attribute()) {
+      if (attr.has_g()) {
+        CollectCalleeEdges(attr.g().node(), func_by_key, callees);
+      }
+      for (const auto& subgraph : attr.graphs()) {
+        CollectCalleeEdges(subgraph.node(), func_by_key, callees);
+      }
+    }
+  }
+}
+
 } // namespace
 
 void check_function_call_cycles(const ModelProto& model) {
@@ -965,13 +991,7 @@ void check_function_call_cycles(const ModelProto& model) {
   CallGraph call_graph;
   for (const auto& entry : func_by_key) {
     const auto* func = entry.second;
-    auto& callees = call_graph[func];
-    for (const auto& node : func->node()) {
-      auto it = func_by_key.find(GetCalleeId(node));
-      if (it != func_by_key.end()) {
-        callees.insert(it->second);
-      }
-    }
+    CollectCalleeEdges(func->node(), func_by_key, call_graph[func]);
   }
 
   std::unordered_map<FuncPtr, VisitState> state;
