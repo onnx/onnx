@@ -1207,7 +1207,10 @@ class TestChecker:
             }
         """
         )
-        with pytest.raises(checker.ValidationError):
+        with pytest.raises(
+            checker.ValidationError,
+            match="Cycle detected in model-local function references",
+        ):
             checker.check_model(model)
 
     def test_check_model_rejects_mutual_recursion_in_subgraph(self) -> None:
@@ -1222,21 +1225,24 @@ class TestChecker:
             foo (x) => (y) {
                 cond = Constant <value = bool {1}> ()
                 y = If (cond) <
-                    then_branch = g1 () => (yt) { yt = local.bar (x) },
-                    else_branch = g2 () => (ye) { ye = Identity (x) }
+                    then_branch = foo_then () => (yt) { yt = local.bar (x) },
+                    else_branch = foo_else () => (ye) { ye = Identity (x) }
                 >
             }
             <opset_import: [ "" : 17, "local" : 1 ], domain: "local">
             bar (x) => (y) {
                 cond = Constant <value = bool {1}> ()
                 y = If (cond) <
-                    then_branch = g3 () => (yt) { yt = local.foo (x) },
-                    else_branch = g4 () => (ye) { ye = Identity (x) }
+                    then_branch = bar_then () => (yt) { yt = local.foo (x) },
+                    else_branch = bar_else () => (ye) { ye = Identity (x) }
                 >
             }
         """
         )
-        with pytest.raises(checker.ValidationError):
+        with pytest.raises(
+            checker.ValidationError,
+            match="Cycle detected in model-local function references",
+        ):
             checker.check_model(model)
 
     def test_check_model_rejects_cycle_in_loop_body(self) -> None:
@@ -1260,7 +1266,10 @@ class TestChecker:
             }
         """
         )
-        with pytest.raises(checker.ValidationError):
+        with pytest.raises(
+            checker.ValidationError,
+            match="Cycle detected in model-local function references",
+        ):
             checker.check_model(model)
 
     def test_check_model_rejects_cycle_in_scan_body(self) -> None:
@@ -1282,7 +1291,10 @@ class TestChecker:
             }
         """
         )
-        with pytest.raises(checker.ValidationError):
+        with pytest.raises(
+            checker.ValidationError,
+            match="Cycle detected in model-local function references",
+        ):
             checker.check_model(model)
 
     def test_check_model_rejects_deeply_nested_cycle(self) -> None:
@@ -1299,8 +1311,8 @@ class TestChecker:
                 y = If (cond) <
                     then_branch = g_then () => (yt) {
                         trip = Constant <value = int64 {1}> ()
-                        lcond = Constant <value = bool {1}> ()
-                        yt = Loop (trip, lcond, x) <
+                        loop_cond = Constant <value = bool {1}> ()
+                        yt = Loop (trip, loop_cond, x) <
                             body = loop_body (iter, keep, x_in) => (keep_out, x_out) {
                                 keep_out = Identity (keep)
                                 x_out = local.foo (x_in)
@@ -1312,7 +1324,10 @@ class TestChecker:
             }
         """
         )
-        with pytest.raises(checker.ValidationError):
+        with pytest.raises(
+            checker.ValidationError,
+            match="Cycle detected in model-local function references",
+        ):
             checker.check_model(model)
 
     def test_check_model_accepts_noncyclic_call_from_subgraph(self) -> None:
