@@ -12,6 +12,7 @@
 #include "onnx/common/constants.h"
 #include "onnx/defs/function.h"
 #include "onnx/defs/schema.h"
+#include "onnx/parser.h"
 
 namespace ONNX_NAMESPACE {
 namespace Test {
@@ -283,20 +284,19 @@ TEST(FunctionAPITest, DepthToSpaceFunctionBodyDCR) {
   EXPECT_FALSE(schema->HasFunction());
   EXPECT_TRUE(schema->HasContextDependentFunction());
 
-  NodeProto nodeProto;
-  nodeProto.set_op_type("DepthToSpace");
-  nodeProto.add_input("X");
-  nodeProto.add_output("Y");
+  std::string node_str = R"(
+    <
+    ir_version: 10,
+    opset_import: ["" : 13]
+    >
+    agraph (float[1, 8, 2, 3], X) => (float[1, 2, 4, 6], Y) {
+    Y = DepthToSpace<blocksize: 2, mode: "DCR">(X)
+    }
+  )";
 
-  auto* blocksize_attr = nodeProto.add_attribute();
-  blocksize_attr->set_name("blocksize");
-  blocksize_attr->set_type(AttributeProto::INT);
-  blocksize_attr->set_i(2);
-
-  auto* mode_attr = nodeProto.add_attribute();
-  mode_attr->set_name("mode");
-  mode_attr->set_type(AttributeProto::STRING);
-  mode_attr->set_s("DCR");
+  auto graph = ONNX_NAMESPACE::parse_graph(node_str);
+  EXPECT_EQ(graph->node().size(), 1);
+  NodeProto nodeProto = graph->node(0);
 
   TypeProto floatTypeProto;
   floatTypeProto.mutable_tensor_type()->set_elem_type(TensorProto_DataType::TensorProto_DataType_FLOAT);
@@ -338,20 +338,19 @@ TEST(FunctionAPITest, DepthToSpaceFunctionBodyCRD) {
   EXPECT_FALSE(schema->HasFunction());
   EXPECT_TRUE(schema->HasContextDependentFunction());
 
-  NodeProto nodeProto;
-  nodeProto.set_op_type("DepthToSpace");
-  nodeProto.add_input("X");
-  nodeProto.add_output("Y");
+  std::string node_str = R"(
+    <
+    ir_version: 10,
+    opset_import: ["" : 13]
+    >
+    agraph (float[1, 8, 2, 3], X) => (float[1, 2, 4, 6], Y) {
+    Y = DepthToSpace<blocksize: 2, mode: "CRD">(X)
+    }
+  )";
 
-  auto* blocksize_attr = nodeProto.add_attribute();
-  blocksize_attr->set_name("blocksize");
-  blocksize_attr->set_type(AttributeProto::INT);
-  blocksize_attr->set_i(2);
-
-  auto* mode_attr = nodeProto.add_attribute();
-  mode_attr->set_name("mode");
-  mode_attr->set_type(AttributeProto::STRING);
-  mode_attr->set_s("CRD");
+  auto graph = ONNX_NAMESPACE::parse_graph(node_str);
+  EXPECT_EQ(graph->node().size(), 1);
+  NodeProto nodeProto = graph->node(0);
 
   TypeProto floatTypeProto;
   floatTypeProto.mutable_tensor_type()->set_elem_type(TensorProto_DataType::TensorProto_DataType_FLOAT);

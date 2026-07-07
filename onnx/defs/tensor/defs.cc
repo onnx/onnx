@@ -2035,7 +2035,7 @@ ONNX_OPERATOR_SET_SCHEMA(
                   .Const1D("Blocksize", blocksize)
                   .Const1D("BlocksizeSq", blocksize * blocksize)
                   .Add(R"(
-              InputShape = Shape (input)
+              InputShape = Shape <start=1, end=2> (input)
               B = Gather (InputShape, Ind0)
               C = Gather (InputShape, Ind1)
               H = Gather (InputShape, Ind2)
