@@ -5,7 +5,6 @@ from __future__ import annotations
 
 import os
 import tempfile
-import unittest
 
 import pytest
 
@@ -55,9 +54,11 @@ class _OnnxTestTextualSerializer(onnx.serialization.ProtoSerializer):
         raise ValueError(f"Unsupported proto type: {type(proto)}")
 
 
-class TestRegistry(unittest.TestCase):
-    def setUp(self) -> None:
+class TestRegistry:
+    @pytest.fixture(autouse=True)
+    def register_serializer(self):
         self.serializer = _OnnxTestTextualSerializer()
+        # FIXME: There is no API to unregister
         onnx.serialization.registry.register(self.serializer)
 
     def test_get_returns_the_registered_instance(self) -> None:
