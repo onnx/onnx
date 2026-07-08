@@ -21,6 +21,11 @@ struct Scan_8_9 final : public Adapter {
     const std::vector<Value*> inputs(node->inputs().vec());
     const std::vector<Value*> outputs(node->outputs().vec());
 
+    // Validate preconditions before mutating the node, so a failed assertion
+    // doesn't leave the graph in a partially-converted state.
+    ONNX_ASSERTM(!inputs.empty(), "Scan node in opset 8 must have at least 1 input")
+    ONNX_ASSERTM(inputs[0]->uniqueName().empty(), "Unsupported conversion to opset 9")
+
     // Handling Attribute Changes
 
     Symbol dirs = Symbol("directions");
@@ -33,9 +38,6 @@ struct Scan_8_9 final : public Adapter {
     // Handling Input and Output Changes
 
     node->removeAllInputs();
-
-    ONNX_ASSERTM(!inputs.empty(), "Scan node in opset 8 must have at least 1 input")
-    ONNX_ASSERTM(inputs[0]->uniqueName().empty(), "Unsupported conversion to opset 9")
 
     for (Value* input : inputs) {
       if (!input->sizes().empty()) {
