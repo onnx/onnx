@@ -6106,12 +6106,11 @@ class TestShapeInference(TestShapeInferenceHelper):
             opset_imports=[helper.make_opsetid(ONNX_DOMAIN, 8)],
         )
 
-    def test_scan_num_scan_inputs_out_of_range(self) -> None:
-        # num_scan_inputs exceeding the input count must fail, not underflow.
-        # Opset 8 has a leading sequence_lens input; 9 and 21 (latest) use the
-        # separate and shared inference functions respectively.
-        models = {
-            21: """
+    @pytest.mark.parametrize(
+        "model_text",
+        [
+            pytest.param(
+                """
                 <ir_version: 10, opset_import: ["" : 21]>
                 agraph (float[2] in0, float[3, 2] in1) => (out) {
                     out = Scan <num_scan_inputs = 9, body = b (float a, float x) => (float c) {
@@ -6119,7 +6118,10 @@ class TestShapeInference(TestShapeInferenceHelper):
                     }> (in0, in1)
                 }
                 """,
-            9: """
+                id="opset21",
+            ),
+            pytest.param(
+                """
                 <ir_version: 8, opset_import: ["" : 9]>
                 agraph (float[2] in0, float[3, 2] in1) => (out) {
                     out = Scan <num_scan_inputs = 9, body = b (float a, float x) => (float c) {
@@ -6127,7 +6129,10 @@ class TestShapeInference(TestShapeInferenceHelper):
                     }> (in0, in1)
                 }
                 """,
-            8: """
+                id="opset9",
+            ),
+            pytest.param(
+                """
                 <ir_version: 8, opset_import: ["" : 8]>
                 agraph (float[1, 3] ls, float[1, 2, 2] si) => (out) {
                     out = Scan <num_scan_inputs = 9, body = b (float a, float x) => (float c) {
@@ -6135,34 +6140,44 @@ class TestShapeInference(TestShapeInferenceHelper):
                     }> ("", ls, si)
                 }
                 """,
-        }
-        for opset, model_text in models.items():
-            with self.subTest(opset=opset):
-                model = onnx.parser.parse_model(model_text)
-                with self.assertRaisesRegex(
-                    onnx.shape_inference.InferenceError, "num_scan_inputs"
-                ):
-                    self._inferred(model)
+                id="opset8",
+            ),
+        ],
+    )
+    def test_scan_num_scan_inputs_out_of_range(self, model_text: str) -> None:
+        # num_scan_inputs exceeding the input count must fail, not underflow.
+        # Opset 8 has a leading sequence_lens input; 9 and 21 (latest) use the
+        # separate and shared inference functions respectively.
+        model = onnx.parser.parse_model(model_text)
+        with pytest.raises(
+            onnx.shape_inference.InferenceError, match="num_scan_inputs"
+        ):
+            self._inferred(model)
 
-    def test_scan_loop_state_vars_exceed_outputs(self) -> None:
+    @pytest.mark.parametrize(
+        ("opset", "ir_version"),
+        [(21, 10), (9, 8)],
+        ids=["opset21", "opset9"],
+    )
+    def test_scan_loop_state_vars_exceed_outputs(
+        self, opset: int, ir_version: int
+    ) -> None:
         # More loop state vars than outputs must fail, not underflow. Covers the
         # shared (latest) and the separate opset-9 inference functions.
-        for opset, ir_version in ((21, 10), (9, 8)):
-            with self.subTest(opset=opset):
-                model = onnx.parser.parse_model(
-                    f"""
-                    <ir_version: {ir_version}, opset_import: ["" : {opset}]>
-                    agraph (float[2] in0, float[2] in1, float[3, 2] in2) => (out) {{
-                        out = Scan <num_scan_inputs = 1, body = b (float a, float s0, float s1) => (float c) {{
-                            c = Identity(a)
-                        }}> (in0, in1, in2)
-                    }}
-                    """
-                )
-                with self.assertRaisesRegex(
-                    onnx.shape_inference.InferenceError, "loop state variables"
-                ):
-                    self._inferred(model)
+        model = onnx.parser.parse_model(
+            f"""
+            <ir_version: {ir_version}, opset_import: ["" : {opset}]>
+            agraph (float[2] in0, float[2] in1, float[3, 2] in2) => (out) {{
+                out = Scan <num_scan_inputs = 1, body = b (float a, float s0, float s1) => (float c) {{
+                    c = Identity(a)
+                }}> (in0, in1, in2)
+            }}
+            """
+        )
+        with pytest.raises(
+            onnx.shape_inference.InferenceError, match="loop state variables"
+        ):
+            self._inferred(model)
 
     def test_scan_opset9(self) -> None:
         # The whole graph (including the Scan body subgraph) is expressed in one parse_graph call;
