@@ -31,7 +31,7 @@ This proposal relies on the following components:
 * An independent library manipulating symbolic expressions,
 * Backend tests to evaluate the proposed algorithm,
 * New shape inference functions implementing the logic for every kernel,
-* A mechnism to propagate tiny values as shapes (to handle scenarios such as `Reshape(X, Shape(Y))`),
+* A mechanism to propagate tiny values as shapes (to handle scenarios such as `Reshape(X, Shape(Y))`),
 * A mechanism to store the fact that two expressions are the same otherwise the model computation would fail,
 * A mechanism to store the fact that a dimension is necessarily less or equal than another (which happens with Compress operator)
 * A logging mechanism to trace the decisions made along the inference.
@@ -283,7 +283,7 @@ both algorithms and let user switch to the new one after fixing potential issues
 [rationale-and-alternatives]: #rationale-and-alternatives
 
 The current shape inference algorithm fails most of the LLMs and therefore is not useful.
-The fact that there exists many existing shape inference algorithms prooves that the current
+The fact that there exists many existing shape inference algorithms proves that the current
 one is not efficient enough and it is needed. It must be implemented in C++
 to be integrated in runtimes.
 
