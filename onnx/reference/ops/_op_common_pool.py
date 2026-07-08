@@ -75,7 +75,11 @@ def _get_output_shape(
 ) -> tuple[int]:
     if not ceil_mode:
         out_shape = _get_output_shape_no_ceil(
-        auto_pad, input_spatial_shape, kernel_spatial_shape, strides_spatial, dilations_spatial
+            auto_pad,
+            input_spatial_shape,
+            kernel_spatial_shape,
+            strides_spatial,
+            dilations_spatial,
         )
     else:
         round_fct = np.ceil if ceil_mode else np.floor
