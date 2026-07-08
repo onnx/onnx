@@ -3,10 +3,10 @@
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
-import unittest
 from typing import TYPE_CHECKING
 
 import numpy as np
+import pytest
 
 from onnx import (
     FunctionProto,
@@ -96,7 +96,7 @@ M2_DEF = """
     """
 
 
-class TestComposeFunctions(unittest.TestCase):
+class TestComposeFunctions:
     def _test_merge_models(
         self,
         m1def: str,
@@ -138,12 +138,16 @@ class TestComposeFunctions(unittest.TestCase):
         """
 
         def check_expectations(g1: GraphProto, g2: GraphProto, g3: GraphProto) -> None:
-            self.assertEqual(g3.input, g1.input)
-            self.assertEqual(g3.output, g2.output)
-            self.assertEqual(
-                ["Add", "Sub", "Mul", "Add", "Sub", "Mul"],
-                [item.op_type for item in g3.node],
-            )
+            assert g3.input == g1.input
+            assert g3.output == g2.output
+            assert [item.op_type for item in g3.node] == [
+                "Add",
+                "Sub",
+                "Mul",
+                "Add",
+                "Sub",
+                "Mul",
+            ]
 
         io_map = [("B00", "B01"), ("B10", "B11"), ("B20", "B21")]
         self._test_merge_models(M1_DEF, M2_DEF, io_map, check_expectations)
@@ -155,12 +159,16 @@ class TestComposeFunctions(unittest.TestCase):
 
         def check_expectations(g1: GraphProto, g2: GraphProto, g3: GraphProto) -> None:
             del g2  # Unused
-            self.assertEqual(g3.input, g1.input)
-            self.assertEqual(["B10", "B20", "D0"], [elem.name for elem in g3.output])
-            self.assertEqual(
-                ["Add", "Sub", "Mul", "Add", "Sub", "Mul"],
-                [item.op_type for item in g3.node],
-            )
+            assert g3.input == g1.input
+            assert [elem.name for elem in g3.output] == ["B10", "B20", "D0"]
+            assert [item.op_type for item in g3.node] == [
+                "Add",
+                "Sub",
+                "Mul",
+                "Add",
+                "Sub",
+                "Mul",
+            ]
 
         io_map = [("B00", "B01"), ("B00", "B11"), ("B00", "B21")]
         self._test_merge_models(M1_DEF, M2_DEF, io_map, check_expectations)
@@ -172,11 +180,9 @@ class TestComposeFunctions(unittest.TestCase):
 
         def check_expectations(g1: GraphProto, g2: GraphProto, g3: GraphProto) -> None:
             del g2  # Unused
-            self.assertEqual(g3.input, g1.input)
-            self.assertEqual(["D0"], [elem.name for elem in g3.output])
-            self.assertEqual(
-                ["Add", "Add", "Sub", "Mul"], [item.op_type for item in g3.node]
-            )
+            assert g3.input == g1.input
+            assert [elem.name for elem in g3.output] == ["D0"]
+            assert [item.op_type for item in g3.node] == ["Add", "Add", "Sub", "Mul"]
 
         io_map = [("B00", "B01"), ("B00", "B11"), ("B00", "B21")]
         outputs = ["D0"]
@@ -213,8 +219,8 @@ class TestComposeFunctions(unittest.TestCase):
         def check_expectations(g1: GraphProto, g2: GraphProto, g3: GraphProto) -> None:
             del g1, g2  # Unused
 
-            self.assertEqual(["A"], [elem.name for elem in g3.input])
-            self.assertEqual(["C"], [elem.name for elem in g3.output])
+            assert [elem.name for elem in g3.input] == ["A"]
+            assert [elem.name for elem in g3.output] == ["C"]
 
         self._test_merge_models(m1_def, m2_def, io_map, check_expectations)
 
@@ -247,9 +253,9 @@ class TestComposeFunctions(unittest.TestCase):
         def check_expectations(g1: GraphProto, g2: GraphProto, g3: GraphProto) -> None:
             del g1, g2  # Unused
 
-            self.assertEqual(["A0"], [elem.name for elem in g3.input])
-            self.assertEqual(["B3"], [elem.name for elem in g3.output])
-            self.assertEqual(["Add", "Sub"], [elem.op_type for elem in g3.node])
+            assert [elem.name for elem in g3.input] == ["A0"]
+            assert [elem.name for elem in g3.output] == ["B3"]
+            assert [elem.op_type for elem in g3.node] == ["Add", "Sub"]
 
         inputs = ["A0"]
         outputs = ["B3"]
@@ -276,9 +282,9 @@ class TestComposeFunctions(unittest.TestCase):
         def check_expectations(g1: GraphProto, g2: GraphProto, g3: GraphProto) -> None:
             del g1, g2  # Unused
 
-            self.assertEqual(["m1/A", "m1/B", "m2/B"], [elem.name for elem in g3.input])
-            self.assertEqual(["m2/C"], [elem.name for elem in g3.output])
-            self.assertEqual(["Add", "Add"], [elem.op_type for elem in g3.node])
+            assert [elem.name for elem in g3.input] == ["m1/A", "m1/B", "m2/B"]
+            assert [elem.name for elem in g3.output] == ["m2/C"]
+            assert [elem.op_type for elem in g3.node] == ["Add", "Add"]
 
         self._test_merge_models(
             m1_def, m1_def, io_map, check_expectations, prefix1="m1/", prefix2="m2/"
@@ -295,10 +301,8 @@ class TestComposeFunctions(unittest.TestCase):
 
             # B20 <-> B21 not connected. They should still be present
             # in the inputs and outputs of the combined graph
-            self.assertEqual(
-                ["A0", "A1", "_A", "B21"], [elem.name for elem in g4.input]
-            )
-            self.assertEqual(["B20", "D0"], [elem.name for elem in g4.output])
+            assert [elem.name for elem in g4.input] == ["A0", "A1", "_A", "B21"]
+            assert [elem.name for elem in g4.output] == ["B20", "D0"]
 
         io_map = [("B00", "B01"), ("B10", "B11")]
         self._test_merge_models(M1_DEF, M2_DEF, io_map, check_expectations)
@@ -321,28 +325,27 @@ class TestComposeFunctions(unittest.TestCase):
 
         # Same keys but not same value. Error
         helper.set_model_props(m2, {"p1": "v5", "p4": "v4"})
-        self.assertRaises(ValueError, compose.merge_models, m1, m2, io_map=io_map)
+        with pytest.raises(ValueError):
+            compose.merge_models(m1, m2, io_map=io_map)
 
     def test_error_wrong_input_output_name(self) -> None:
         """Tests that providing a non existing output/input name in the io_map argument produces an error."""
         m1, m2 = _load_model(M1_DEF), _load_model(M2_DEF)
 
-        self.assertRaises(
-            ValueError,
-            compose.merge_models,
-            m1,
-            m2,
-            io_map=[("wrong_outname", "B01"), ("B10", "B11"), ("B20", "B21")],
-        )
+        with pytest.raises(ValueError):
+            compose.merge_models(
+                m1,
+                m2,
+                io_map=[("wrong_outname", "B01"), ("B10", "B11"), ("B20", "B21")],
+            )
 
         # Wrong output name
-        self.assertRaises(
-            ValueError,
-            compose.merge_models,
-            m1,
-            m2,
-            io_map=[("B00", "wrong_input"), ("B10", "B11"), ("B20", "B21")],
-        )
+        with pytest.raises(ValueError):
+            compose.merge_models(
+                m1,
+                m2,
+                io_map=[("B00", "wrong_input"), ("B10", "B11"), ("B20", "B21")],
+            )
 
     def test_error_ir_version_mismatch(self) -> None:
         m1 = _load_model(
@@ -371,9 +374,8 @@ class TestComposeFunctions(unittest.TestCase):
     """
         )
         # Wrong IR version name
-        self.assertRaises(
-            ValueError, compose.merge_models, m1, m2, io_map=[("Y0", "X1")]
-        )
+        with pytest.raises(ValueError):
+            compose.merge_models(m1, m2, io_map=[("Y0", "X1")])
 
     def test_error_opset_import_mismatch(self) -> None:
         """Tests that providing models with different operator set imported produces an error."""
@@ -386,7 +388,8 @@ class TestComposeFunctions(unittest.TestCase):
         )
 
         io_map = [("B00", "B01"), ("B10", "B11"), ("B20", "B21")]
-        self.assertRaises(ValueError, compose.merge_models, m1, m2, io_map)
+        with pytest.raises(ValueError):
+            compose.merge_models(m1, m2, io_map)
 
         # Converting to the same Operator set version, should work
         m1 = version_converter.convert_version(m1, 15)
@@ -420,9 +423,9 @@ class TestComposeFunctions(unittest.TestCase):
         checker.check_graph(prefixed_model.graph)
 
         for i in prefixed_model.graph.input:
-            self.assertTrue(i.name.startswith(prefix))
+            assert i.name.startswith(prefix)
         for o in prefixed_model.graph.output:
-            self.assertTrue(o.name.startswith(prefix))
+            assert o.name.startswith(prefix)
 
     def test_add_prefix_wo_inputs_outputs(self) -> None:
         """Tests prefixing input and output nodes, when renaming of inputs/outputs is deactivated."""
@@ -447,8 +450,8 @@ class TestComposeFunctions(unittest.TestCase):
         )
 
         checker.check_graph(prefixed_model.graph)
-        self.assertEqual(input_model.graph.input, prefixed_model.graph.input)
-        self.assertEqual(input_model.graph.output, prefixed_model.graph.output)
+        assert input_model.graph.input == prefixed_model.graph.input
+        assert input_model.graph.output == prefixed_model.graph.output
 
     def test_add_prefix_with_loose_inputs_outputs(self) -> None:
         """Tests prefixing of graphs with loose inputs."""
@@ -478,10 +481,10 @@ class TestComposeFunctions(unittest.TestCase):
 
         # Check if all inputs are prefixed even if input is not connected to node. e.g., 'unused_input'.
         for i in prefixed_model.graph.input:
-            self.assertTrue(i.name.startswith(prefix))
+            assert i.name.startswith(prefix)
 
         for graph_output in prefixed_model.graph.output:
-            self.assertTrue(graph_output.name.startswith(prefix))
+            assert graph_output.name.startswith(prefix)
 
     def _test_add_prefix(
         self,
@@ -565,39 +568,37 @@ class TestComposeFunctions(unittest.TestCase):
 
             for n1, n0 in zip(g_out.node, g_in.node, strict=True):
                 for e1, e0 in zip(n1.input, n0.input, strict=True):
-                    self.assertEqual(name_mapping.get(e0, e0), e1)
+                    assert name_mapping.get(e0, e0) == e1
                 for e1, e0 in zip(n1.output, n0.output, strict=True):
-                    self.assertEqual(name_mapping.get(e0, e0), e1)
+                    assert name_mapping.get(e0, e0) == e1
             for i1, i0 in zip(g_out.input, g_in.input, strict=True):
-                self.assertEqual(name_mapping.get(i0.name, i0.name), i1.name)
+                assert name_mapping.get(i0.name, i0.name) == i1.name
             for o1, o0 in zip(g_out.output, g_in.output, strict=True):
-                self.assertEqual(name_mapping.get(o0.name, o0.name), o1.name)
+                assert name_mapping.get(o0.name, o0.name) == o1.name
 
             for init1, init0 in zip(g_out.initializer, g_in.initializer, strict=True):
-                self.assertEqual(name_mapping.get(init0.name, init0.name), init1.name)
+                assert name_mapping.get(init0.name, init0.name) == init1.name
 
             for sparse_init1, sparse_init0 in zip(
                 g_out.sparse_initializer, g_in.sparse_initializer, strict=True
             ):
-                self.assertEqual(
-                    name_mapping.get(
-                        sparse_init0.values.name, sparse_init0.values.name
-                    ),
-                    sparse_init1.values.name,
+                assert (
+                    name_mapping.get(sparse_init0.values.name, sparse_init0.values.name)
+                    == sparse_init1.values.name
                 )
-                self.assertEqual(
+                assert (
                     name_mapping.get(
                         sparse_init0.indices.name, sparse_init0.indices.name
-                    ),
-                    sparse_init1.indices.name,
+                    )
+                    == sparse_init1.indices.name
                 )
 
             for vi1, vi0 in zip(g_out.value_info, g_in.value_info, strict=True):
-                self.assertEqual(name_mapping.get(vi0.name, vi0.name), vi1.name)
+                assert name_mapping.get(vi0.name, vi0.name) == vi1.name
 
             if rename_nodes:
                 for n1, n0 in zip(g_out.node, g_in.node, strict=True):
-                    self.assertEqual(_prefixed(prefix, n0.name), n1.name)
+                    assert _prefixed(prefix, n0.name) == n1.name
 
     def test_add_prefix_nodes(self) -> None:
         """Tests renaming nodes only"""
@@ -647,7 +648,7 @@ class TestComposeFunctions(unittest.TestCase):
         prefixed_graph = compose.add_prefix_graph(graph, prefix)
         checker.check_graph(prefixed_graph)
         for n1, n0 in zip(prefixed_graph.node, graph.node, strict=True):
-            self.assertEqual(_prefixed(prefix, n0.name), n1.name)
+            assert _prefixed(prefix, n0.name) == n1.name
             for attribute1, attribute0 in zip(n1.attribute, n0.attribute, strict=True):
                 if attribute1.g:
                     for subgraph_n1, subgraph_n0 in zip(
@@ -656,11 +657,11 @@ class TestComposeFunctions(unittest.TestCase):
                         for input_n1, input_n0 in zip(
                             subgraph_n1.input, subgraph_n0.input, strict=True
                         ):
-                            self.assertEqual(_prefixed(prefix, input_n0), input_n1)
+                            assert _prefixed(prefix, input_n0) == input_n1
                         for output_n1, output_n0 in zip(
                             subgraph_n1.output, subgraph_n0.output, strict=True
                         ):
-                            self.assertEqual(_prefixed(prefix, output_n0), output_n1)
+                            assert _prefixed(prefix, output_n0) == output_n1
 
     def test_add_prefix_attribute_multiple_subgraphs(self) -> None:
         """Tests prefixing attribute's repeated graphs field."""
@@ -690,18 +691,14 @@ class TestComposeFunctions(unittest.TestCase):
 
         prefix = "pfx."
         prefixed = compose.add_prefix_graph(graph, prefix)
-        self.assertEqual(prefixed.node[0].name, _prefixed(prefix, "custom"))
+        assert prefixed.node[0].name == _prefixed(prefix, "custom")
 
         # Verify both subgraphs in the repeated graphs field are prefixed
         pfx_graphs = prefixed.node[0].attribute[0].graphs
-        self.assertEqual(len(pfx_graphs), 2)
+        assert len(pfx_graphs) == 2
         for name in ("id1", "id2"):
-            self.assertTrue(
-                any(
-                    n.name == _prefixed(prefix, name)
-                    for g in pfx_graphs
-                    for n in g.node
-                )
+            assert any(
+                n.name == _prefixed(prefix, name) for g in pfx_graphs for n in g.node
             )
 
     def test_add_prefix_all(self) -> None:
@@ -720,13 +717,14 @@ class TestComposeFunctions(unittest.TestCase):
 
         def _check_model(m1: ModelProto, m2: ModelProto, dim_idx: int) -> None:
             for out_g2, out_g1 in zip(m2.graph.output, m1.graph.output, strict=True):
-                self.assertEqual(out_g2.name, out_g1.name)
-                self.assertEqual(
-                    out_g2.type.tensor_type.elem_type, out_g1.type.tensor_type.elem_type
+                assert out_g2.name == out_g1.name
+                assert (
+                    out_g2.type.tensor_type.elem_type
+                    == out_g1.type.tensor_type.elem_type
                 )
                 expected_out_shape = _get_shape(out_g1)
                 expected_out_shape.insert(dim_idx, 1)
-                self.assertEqual(_get_shape(out_g2), expected_out_shape)
+                assert _get_shape(out_g2) == expected_out_shape
 
         for dim_idx in [0, 2, -1, -3]:
             m2 = compose.expand_out_dim(m1, dim_idx)
@@ -842,17 +840,17 @@ class TestComposeFunctions(unittest.TestCase):
         overlapping_outputs = list(set(outputs0) & set(outputs1))
         overlapping_edges = list(set(overlapping_inputs + overlapping_outputs))
         if overlapping_edges:
-            self.assertEqual(overlap[i], ("edge", overlapping_edges))
+            assert overlap[i] == ("edge", overlapping_edges)
             i += 1
 
         overlapping_vis = list(set(value_info0) & set(value_info1))
         if overlapping_vis:
-            self.assertEqual(overlap[i], ("value_info", overlapping_vis))
+            assert overlap[i] == ("value_info", overlapping_vis)
             i += 1
 
         overlapping_init = list(set(initializer0) & set(initializer1))
         if overlapping_init:
-            self.assertEqual(overlap[i], ("initializer", overlapping_init))
+            assert overlap[i] == ("initializer", overlapping_init)
             i += 1
 
         overlapping_sparse_init = list(
@@ -863,12 +861,12 @@ class TestComposeFunctions(unittest.TestCase):
             for overlapping_name in overlapping_sparse_init:
                 expected_overlap.append(overlapping_name + "_values")
                 expected_overlap.append(overlapping_name + "_idx")
-            self.assertEqual(overlap[i], ("sparse_initializer", expected_overlap))
+            assert overlap[i] == ("sparse_initializer", expected_overlap)
             i += 1
 
         m0_new = compose.add_prefix(m0, prefix="g0/")
         overlap = compose.check_overlapping_names(m0_new.graph, m1.graph)
-        self.assertEqual(0, len(overlap))
+        assert len(overlap) == 0
 
     def test_overlapping_input_names(self) -> None:
         """Tests error checking when the name of the inputs overlaps"""
@@ -975,10 +973,10 @@ class TestComposeFunctions(unittest.TestCase):
         checker.check_model(m)
 
         nodes = [n.op_type for n in m.graph.node]
-        self.assertEqual(["m1/f1", "m2/f1"], nodes)
+        assert nodes == ["m1/f1", "m2/f1"]
 
         functions = [f.name for f in m.functions]
-        self.assertEqual(["m1/f1", "m2/f1"], functions)
+        assert functions == ["m1/f1", "m2/f1"]
 
         g3 = GraphProto()
         g3.CopyFrom(g)
@@ -1021,18 +1019,14 @@ class TestComposeFunctions(unittest.TestCase):
         checker.check_model(m)
 
         nodes = [n.op_type for n in m.graph.node]
-        self.assertEqual(["m1/f1", "m3/f2"], nodes)
+        assert nodes == ["m1/f1", "m3/f2"]
 
         functions = [f.name for f in m.functions]
-        self.assertEqual(["m1/f1", "m3/f1", "m3/f2"], functions)
+        assert functions == ["m1/f1", "m3/f1", "m3/f2"]
 
-        self.assertEqual(["Add"], [n.op_type for n in m.functions[0].node])
-        self.assertEqual(
-            ["Add", "Mul", "Add"], [n.op_type for n in m.functions[1].node]
-        )
-        self.assertEqual(
-            ["m3/f1", "Mul", "Add"], [n.op_type for n in m.functions[2].node]
-        )
+        assert [n.op_type for n in m.functions[0].node] == ["Add"]
+        assert [n.op_type for n in m.functions[1].node] == ["Add", "Mul", "Add"]
+        assert [n.op_type for n in m.functions[2].node] == ["m3/f1", "Mul", "Add"]
 
     def test_merge_drop_unnecessary_initializers_and_value_info(self) -> None:
         """Tests automatic removal of initializers when merging graphs"""
@@ -1080,17 +1074,17 @@ class TestComposeFunctions(unittest.TestCase):
 
         # Initializer 'x' from m1 is removed, because there is no longer an input with that name
         out_m1 = compose.merge_models(m1, m2, prefix1="m1/", io_map=[("y", "x")])
-        self.assertEqual(0, len(out_m1.graph.initializer))
+        assert len(out_m1.graph.initializer) == 0
 
         # Sparse initializer 'x' from m1 is removed, because there is no longer an input with that name
         out_m2 = compose.merge_models(m1, m3, prefix1="m1/", io_map=[("y", "x")])
-        self.assertEqual(0, len(out_m2.graph.initializer))
+        assert len(out_m2.graph.initializer) == 0
 
         # Value info 'x' from m1 is removed, because there is no longer an input with that name
         out_m3 = compose.merge_models(m1, m4, prefix1="m1/", io_map=[("y", "x")])
         value_info_names = {vi.name for vi in out_m3.graph.value_info}
-        self.assertNotIn("x", value_info_names)
-        self.assertEqual({"m1/y"}, value_info_names)
+        assert "x" not in value_info_names
+        assert {"m1/y"} == value_info_names
 
     def test_merge_preserves_mapped_output_value_info(self) -> None:
         """Mapped outputs should keep their type info as value_info in merged graph."""
@@ -1120,9 +1114,9 @@ class TestComposeFunctions(unittest.TestCase):
         output_names = {o.name for o in merged.graph.output}
         value_info_by_name = {vi.name: vi for vi in merged.graph.value_info}
 
-        self.assertNotIn("Y", output_names)
-        self.assertIn("Y", value_info_by_name)
-        self.assertEqual(
-            m1.graph.output[0].SerializeToString(),
-            value_info_by_name["Y"].SerializeToString(),
+        assert "Y" not in output_names
+        assert "Y" in value_info_by_name
+        assert (
+            m1.graph.output[0].SerializeToString()
+            == value_info_by_name["Y"].SerializeToString()
         )
