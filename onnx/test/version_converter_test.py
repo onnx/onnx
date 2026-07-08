@@ -2907,7 +2907,8 @@ class TestVersionConverter:
             )
             onnx.version_converter.convert_version(model, 9)
 
-        self.assertRaises(RuntimeError, test)
+        with pytest.raises(RuntimeError):
+            test()
 
     def test_scan_9_8_with_valid_node(self) -> None:
         data_type = TensorProto.FLOAT
