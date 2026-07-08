@@ -43,6 +43,7 @@ def _get_output_shape_no_ceil(
     input_spatial_shape: tuple[int],
     kernel_spatial_shape: tuple[int],
     strides_spatial: tuple[int],
+    dilations_spatial: tuple[int] | None = None,
 ) -> tuple[int]:
     out_shape = [0] * len(input_spatial_shape)
     if auto_pad in ("SAME_UPPER", "SAME_LOWER"):
@@ -52,9 +53,11 @@ def _get_output_shape_no_ceil(
             )
     elif auto_pad == "VALID":
         for i in range(len(input_spatial_shape)):
+            dilation = dilations_spatial[i] if dilations_spatial else 1
+            effective_kernel = dilation * (kernel_spatial_shape[i] - 1) + 1
             out_shape[i] = int(
                 np.ceil(
-                    float(input_spatial_shape[i] - (kernel_spatial_shape[i] - 1))
+                    float(input_spatial_shape[i] - effective_kernel + 1)
                     / float(strides_spatial[i])
                 )
             )
@@ -68,10 +71,11 @@ def _get_output_shape(
     strides_spatial: tuple[int],
     pad_shape: tuple[int] | None = None,
     ceil_mode: int | None = 0,
+    dilations_spatial: tuple[int] | None = None,
 ) -> tuple[int]:
     if not ceil_mode:
         out_shape = _get_output_shape_no_ceil(
-            auto_pad, input_spatial_shape, kernel_spatial_shape, strides_spatial
+        auto_pad, input_spatial_shape, kernel_spatial_shape, strides_spatial, dilations_spatial
         )
     else:
         round_fct = np.ceil if ceil_mode else np.floor
@@ -251,6 +255,7 @@ class CommonPool(OpRun):
                 strides,
                 pad_shape,
                 ceil_mode,
+                dilations,
             )
             pad_shape = _get_pad_shape(
                 auto_pad, x_shape, kernel_shape, strides, out_shape
