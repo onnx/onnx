@@ -6683,6 +6683,26 @@ class TestShapeInference(TestShapeInferenceHelper):
             graph, [make_tensor_value_info("Y", TensorProto.FLOAT, (2, 256, 3, 5))]
         )
 
+    def test_onehot_empty_depth(self) -> None:
+        # A 'depth' initializer that claims zero elements (dims=[0], no data) must
+        # not trigger an out-of-bounds read in shape inference. The 'depth' tensor
+        # is required to hold exactly one element; the zero-element tensor is
+        # rejected with an InferenceError instead of crashing the process.
+        graph = self._make_graph(
+            [
+                ("indices", TensorProto.INT64, (2, 2)),
+                ("depth", TensorProto.INT64, (0,)),
+                ("values", TensorProto.FLOAT, (2,)),
+            ],
+            [make_node("OneHot", ["indices", "depth", "values"], "Y")],
+            [],
+            initializer=[make_tensor("depth", TensorProto.INT64, (0,), [])],
+        )
+        with pytest.raises(onnx.shape_inference.InferenceError):
+            onnx.shape_inference.infer_shapes(
+                helper.make_model(graph), strict_mode=True
+            )
+
     def test_loop(self) -> None:
         # The body's cond_in and loop_state_in are left untyped (their types are supplied by Loop), and the
         # body references outer_scope_input from the enclosing graph. loop_state_final's rank may change
