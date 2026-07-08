@@ -42,20 +42,170 @@ This proposal is actually based on an existing C++ implementation described on p
 ## Reference-level explanation
 [reference-level-explanation]: #reference-level-explanation
 
-This proposal is based on an existing C++ implementation
-[onnx_light/onnx_optim/shapes](https://github.com/xadupre/onnx-light/tree/main/onnx_light/onnx_optim/shapes).
+This proposal is based on an existing C++ implementation under
+[onnx_light/onnx_optim](https://github.com/xadupre/onnx-light/tree/main/onnx_light/onnx_optim).
+Shape inference computes, for every value in a graph, its element type and a
+(possibly symbolic) shape without running the model. The engine keeps its
+working state in a `ShapesContext`
+([shapes/shapes_context.h](https://github.com/xadupre/onnx-light/blob/main/onnx_light/onnx_optim/shapes/shapes_context.h)):
+a `name → OptimTensor` map, where each `OptimTensor`
+([optim_tensor.h](https://github.com/xadupre/onnx-light/blob/main/onnx_light/onnx_optim/optim_tensor.h))
+holds an element type and a shape made of `OptimDim` entries, each either a
+concrete integer or a symbolic expression string.
+
+The top-level driver `ShapesContext::ComputeShapeModel`
+([shapes/shape_inference.cc](https://github.com/xadupre/onnx-light/blob/main/onnx_light/onnx_optim/shapes/shape_inference.cc),
+Python entry point
+[shape_inference.py](https://github.com/xadupre/onnx-light/blob/main/onnx_light/onnx_optim/shape_inference.py))
+registers opsets and local functions, collects the shapes declared on the graph
+outputs and `value_info` as authoritative *anchors*, seeds the context from
+initializers and inputs, walks the nodes in topological order, reconciles the
+inferred shapes with the anchors, propagates the resulting constraints, and
+(optionally) writes the descriptors back as `value_info`.
 
 ### Symbolic Expressions
 
+Dynamic dimensions are represented as symbolic expression strings such as
+`"2*batch"` or `"cache_length + seq_length"`. Rather than manipulating these
+strings with regex substitution or `eval`, the engine parses them into an AST
+and applies systematic simplification, evaluation, renaming and arithmetic. The
+library lives in
+[expressions.h](https://github.com/xadupre/onnx-light/blob/main/onnx_light/onnx_optim/expressions.h)
+/
+[expressions.cc](https://github.com/xadupre/onnx-light/blob/main/onnx_light/onnx_optim/expressions.cc)
+with a documented Python wrapper in
+[expressions.py](https://github.com/xadupre/onnx-light/blob/main/onnx_light/onnx_optim/expressions.py).
+
+- **Grammar**: a subset of Python arithmetic — `+`, `-`, `*`, `//` (floor
+  division), `%`, plus `^` and `&` re-interpreted as `max` and `min`, and the
+  function calls `CeilToInt(n, div)` and `Max(a, b)`. A dedicated `/:` operator
+  encodes *exact* integer division (the caller asserts no remainder), which lets
+  the simplifier cancel factors across a division where `//` cannot. Its primary
+  use is `Reshape`, where the inferred `-1` dimension is always an exact
+  quotient.
+- **Simplification** applies a fixed pipeline of pure tree-to-tree transformers
+  (constant folding, mul/div cancellation, floor-division distribution,
+  commutative reordering, ring collapsing) twice, then collects a linear
+  combination `{symbol → coefficient}` so that `2*batch//batch → 2` and
+  `a + b - a → b`. The simplifier is conservative: it never rewrites unless the
+  result holds for *every* integer value of the symbols (hence `(2*H)//2 → H`
+  but `2*(H//2)` is left unchanged).
+- **Dimension arithmetic** helpers (`dim_add`, `dim_sub`, `dim_mul`, `dim_div`,
+  `dim_exact_div`, `dim_mod`, `dim_max`, `dim_min`) compute exactly when both
+  operands are integers and otherwise build and simplify an expression string,
+  so symbolic arithmetic never accumulates unnormalised intermediates.
+- **Renaming** (`rename_expression`, `rename_dynamic_expression`,
+  `rename_dynamic_dimensions`) rewrites internal symbols to the user-visible
+  names, and is what the constraint pass relies on.
+
 ### Backend Tests
+
+Correctness is measured against the ONNX backend test suite. Every backend test
+case tagged `"inference"` is run through the pipeline and the *computed* shapes
+are compared value-by-value against the *expected* intermediate and output
+shapes recorded by the test author. For each case the model's `graph.value_info`
+is stripped (so inference cannot simply reuse the recorded shapes),
+[infer_shapes_model](https://github.com/xadupre/onnx-light/blob/main/onnx_light/onnx_optim/shape_inference.py)
+is run on the stripped clone, and a side-by-side table reports the match status
+of every input, intermediate and output. When inference raises, the error is
+shown instead. This coverage report is the primary regression signal for the
+whole engine and is used to track how many operators produce shapes that exactly
+match the expectations.
 
 ### Operator shape inference function
 
+Each node is dispatched to a per-operator shape function. `ComputeShapeNode`
+first expands **model-local function** calls (by recursively inferring the
+function body), then honours any registered **custom callback** for a
+`(domain, op_type)` pair, and otherwise looks up the built-in **dispatch table**
+([shapes/dispatch_table.cc](https://github.com/xadupre/onnx-light/blob/main/onnx_light/onnx_optim/shapes/dispatch_table.cc),
+[shapes/dispatch_table.h](https://github.com/xadupre/onnx-light/blob/main/onnx_light/onnx_optim/shapes/dispatch_table.h))
+keyed by `domain:op_type`. The individual operator implementations are grouped by
+domain under
+[shapes/](https://github.com/xadupre/onnx-light/tree/main/onnx_light/onnx_optim/shapes)
+(`math/`, `nn/`, `tensor/`, `reduction/`, `logical/`, `sequence/`,
+`controlflow/`, `quantization/`, ...). Before each dispatch the engine checks
+that all declared inputs are known and the outputs are not yet defined, so
+missing inputs or duplicate definitions are reported early.
+
+Symbolic expressions are introduced here: operators such as `Conv`, `MaxPool`,
+`Slice`, `Pad`, `Concat` and `Tile` compute their output dimensions through the
+dimension-arithmetic helpers, and every new dimension is simplified before it is
+stored. Broadcasting of two shapes is handled by
+[shapes/shape_broadcast.cc](https://github.com/xadupre/onnx-light/blob/main/onnx_light/onnx_optim/shapes/shape_broadcast.cc).
+Besides tensors, the engine tracks sequence- and map-typed values (`OptimSequence`,
+[optim_sequence.h](https://github.com/xadupre/onnx-light/blob/main/onnx_light/onnx_optim/optim_sequence.h))
+and infers the nested graphs of `If` / `Loop` / `Scan` in child contexts under
+[shapes/controlflow](https://github.com/xadupre/onnx-light/tree/main/onnx_light/onnx_optim/shapes/controlflow),
+retaining each child context so the descriptors inferred inside a subgraph stay
+inspectable.
+
 ### Propagating Value as Shape
+
+Many operators take a **shape tensor** whose runtime *values* determine the
+output shape (`Reshape`'s `shape`, `Expand`'s `shape`, `Tile`'s `repeats`,
+`Resize`'s `sizes`, ...). Static inference cannot read runtime values in general,
+so each `OptimTensor` carries an optional secondary `value_as_shape` annotation
+that records the symbolic *content* of an integer tensor. For example
+`Shape(x)` on a `[N, C, H, W]` input produces a storage shape `[4]` but a
+`value_as_shape` of `[N, C, H, W]`.
+
+- The annotation is **seeded** from integer initializer literals and by the
+  `Shape` and `Size` operators.
+- It is **propagated** through `Concat` / `Split`, element-wise `Add` / `Sub`
+  (via `PropagateValueAsShapeArithmetic` in
+  [shapes/shape_broadcast.cc](https://github.com/xadupre/onnx-light/blob/main/onnx_light/onnx_optim/shapes/shape_broadcast.cc),
+  which applies `dim_add` / `dim_sub` element-wise), `Gather`, `Slice`,
+  `Reshape`, `Squeeze` and `Unsqueeze`, keeping every entry canonical through the
+  expression simplifier.
+- It is **consumed** by shape-input operators (`Reshape`, `Expand`, `Tile`,
+  `Resize`, `ConstantOfShape`, `Pad`, `OneHot`, ...), which read the symbolic
+  dimension values directly instead of falling back to a generic output shape.
+
+This lets a `Shape → Concat → Add → Sub → Reshape/Expand` round-trip recover an
+exact symbolic output shape such as `[N, 1]`.
 
 ### Constraints
 
+Per-operator inference names the symbols it produces locally (e.g. `NonZero`
+emits a fresh `NonZero_nz_nnz`), while the model author annotates graph outputs
+with their own names (`Z: [2*dnz]`). The constraint store on `ShapesContext`
+([shapes/shapes_context.h](https://github.com/xadupre/onnx-light/blob/main/onnx_light/onnx_optim/shapes/shapes_context.h))
+bridges the two naming schemes so the inferred `value_info` matches the declared
+shapes.
+
+- **Equality constraints** (`a == b`, `AddConstraint`) are recorded when merging
+  an inferred shape against an anchor reveals two symbolic expressions must be
+  equal. `AddSymbolicConstraintWithLeafDerivation`
+  ([shapes/shape_inference.cc](https://github.com/xadupre/onnx-light/blob/main/onnx_light/onnx_optim/shapes/shape_inference.cc))
+  also derives leaf equalities from compound anchors — e.g. `2*dnz == 2*nnz`
+  yields `dnz == nnz` by asking the simplifier for the algebraic difference of
+  the two sides.
+- **Upper-bound constraints** (`lhs <= rhs`, `AddLessEqualConstraint`) record
+  data-dependent but provably bounded dimensions, e.g. `NonZero`'s `nnz <=
+  prod(shape(X))`, `Compress`'s output `count`, or an `If` merge bounded by the
+  `max` of the two branches.
+- After node inference, `PropagateAnchorConstraintsIntoContext` turns the
+  equality constraints into a renaming: it collects the user-declared *preferred*
+  names, builds equivalence classes, calls `rename_dynamic_dimensions`, and
+  rewrites both `shape` and `value_as_shape` of every tensor to a fixed point —
+  so an internally named sibling of `N` becomes `N` while the user's `N` is never
+  renamed away.
+
 ### Logging
+
+`ShapesContext` carries an **opt-in event log** (disabled by default, so it adds
+no overhead) that records what inference did step by step: each descriptor
+insertion (`kAdd`) or overwrite (`kReplace`), each node dispatch
+(`kComputeNode`), and each recorded constraint (`kConstraint` /
+`kConstraintMax`). Every `ShapeEvent`
+([shapes/shapes_context.h](https://github.com/xadupre/onnx-light/blob/main/onnx_light/onnx_optim/shapes/shapes_context.h))
+carries a `node_index` (with `-1` for graph inputs and `-2` for initializers)
+plus a `subgraph_node_index` / `subgraph_attr_name` so an event can be traced
+back to the exact node — including inside `If` / `Loop` / `Scan` subgraphs. It is
+enabled in Python with `ctx.events_enabled = True` and read through
+`ctx.events()`; replaying the log is the easiest way to find which node produced
+a given dimension or where an inference error originates.
 
 ## Related work
 
