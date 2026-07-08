@@ -31,6 +31,8 @@ Here is a short list:
   converts models from [scikit-learn](https://scikit-learn.org/stable/),
 - [tensorflow-onnx](https://github.com/onnx/tensorflow-onnx):
   converts models from [tensorflow](https://www.tensorflow.org/),
+- [jax2onnx](https://github.com/enpasos/jax2onnx):
+  converts models from [JAX](https://docs.jax.dev/),
 - [onnxmltools](https://github.com/onnx/onnxmltools):
   converts models from [lightgbm](https://lightgbm.readthedocs.io/),
   [xgboost](https://xgboost.readthedocs.io/en/stable/),
