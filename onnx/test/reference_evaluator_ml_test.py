@@ -11,7 +11,6 @@ import os
 import numpy as np
 import pytest
 from numpy.testing import assert_allclose
-from parameterized import parameterized
 
 import onnx
 from onnx import ONNX_ML, TensorProto, TypeProto, ValueInfoProto
@@ -908,7 +907,8 @@ class TestReferenceEvaluatorAiOnnxMl:
         onnx.checker.check_model(model)
         return model
 
-    @parameterized.expand(
+    @pytest.mark.parametrize(
+        "aggregate_function, expected_result, opset5",
         tuple(
             itertools.chain.from_iterable(
                 (
@@ -941,7 +941,7 @@ class TestReferenceEvaluatorAiOnnxMl:
                 )
                 for opset5 in [True, False]
             )
-        )
+        ),
     )
     @pytest.mark.skipif(not ONNX_ML, reason="onnx not compiled with ai.onnx.ml")
     def test_tree_ensemble_regressor_aggregation_functions(
@@ -960,7 +960,8 @@ class TestReferenceEvaluatorAiOnnxMl:
         (actual,) = sess.run(None, {"X": x})
         assert_allclose(actual, expected_result, atol=1e-6)
 
-    @parameterized.expand(
+    @pytest.mark.parametrize(
+        "rule, expected, opset5",
         tuple(
             itertools.chain.from_iterable(
                 (
@@ -1003,7 +1004,7 @@ class TestReferenceEvaluatorAiOnnxMl:
                 )
                 for opset5 in [True, False]
             )
-        )
+        ),
     )
     @pytest.mark.skipif(not ONNX_ML, reason="onnx not compiled with ai.onnx.ml")
     def test_tree_ensemble_regressor_rule(self, rule, expected, opset5):

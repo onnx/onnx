@@ -7,7 +7,6 @@ import locale
 import platform
 
 import pytest
-from parameterized import parameterized
 
 import onnx
 from onnx import GraphProto, OperatorSetIdProto, TensorProto, checker
@@ -120,7 +119,8 @@ class TestBasicFunctions:
         model = onnx.parser.parse_model(input)
         checker.check_model(model)
 
-    @parameterized.expand(
+    @pytest.mark.parametrize(
+        "graph_text, expected_attribute",
         [
             (
                 "agraph (float[N] x) => (float[N] out) { out = custom_domain.Selu(x) }",
@@ -138,7 +138,7 @@ class TestBasicFunctions:
                 "agraph (float[N] x) => (float[N] out) { out = custom_domain.Selu<alpha=2.0, gamma=3.0>(x) }",
                 {"alpha": 2.0, "gamma": 3.0},
             ),
-        ]
+        ],
     )
     def test_composite_parse_function_with_attributes(
         self, graph_text: str, expected_attribute: dict
@@ -269,7 +269,8 @@ class TestBasicFunctions:
         assert graph.input[0].type.tensor_type.shape.dim[0].dim_param == "M + N"
         assert graph.output[0].type.tensor_type.shape.dim[0].dim_param == "M + N"
 
-    @parameterized.expand(
+    @pytest.mark.parametrize(
+        "test_literal, expect_exception",
         [
             ("not_a_good_float", True),
             ("inf1", True),
@@ -283,7 +284,7 @@ class TestBasicFunctions:
             ("-infinity", False),
             ("nan", False),
             ("-NaN", False),
-        ]
+        ],
     )
     def test_parse_various_float_values(self, test_literal, expect_exception):
         model_text = f"""
@@ -312,7 +313,8 @@ class TestBasicFunctions:
             assert model.graph.node[0].attribute[0].type == onnx.AttributeProto.FLOAT
             assert str(model.graph.node[0].attribute[0].f) == str(float(test_literal))
 
-    @parameterized.expand(
+    @pytest.mark.parametrize(
+        "name, itype",
         [
             ("bfloat16", TensorProto.BFLOAT16),
             ("bool", TensorProto.BOOL),
@@ -339,7 +341,7 @@ class TestBasicFunctions:
             ("uint32", TensorProto.UINT32),
             ("uint64", TensorProto.UINT64),
             ("float4e2m1", TensorProto.FLOAT4E2M1),
-        ]
+        ],
     )
     def test_parse_graph_types(self, name, itype) -> None:
         w = '{"0"}' if itype == TensorProto.STRING else "{0}"

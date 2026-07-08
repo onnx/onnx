@@ -3,14 +3,12 @@
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
-import itertools
 import math
 import random
 from typing import Any
 
 import ml_dtypes
 import numpy as np
-import parameterized
 import pytest
 
 from onnx import (
@@ -635,12 +633,8 @@ class TestHelperTensorFunctions:
             expected.view(np.uint8),
         )
 
-    @parameterized.parameterized.expand(
-        itertools.product(
-            (TensorProto.UINT4, TensorProto.INT4),
-            ((5, 4, 6), (4, 6, 5), (3, 3), (1,), (2**10,)),
-        )
-    )
+    @pytest.mark.parametrize("dtype", (TensorProto.UINT4, TensorProto.INT4))
+    @pytest.mark.parametrize("dims", ((5, 4, 6), (4, 6, 5), (3, 3), (1,), (2**10,)))
     def test_make_4bit_tensor(self, dtype, dims) -> None:
         type_range = {
             TensorProto.UINT4: (0, 15),
@@ -660,10 +654,9 @@ class TestHelperTensorFunctions:
         ynp = numpy_helper.to_array(y)
         np.testing.assert_equal(ynp, data)
 
-    @parameterized.parameterized.expand(
-        itertools.product(
-            ((5, 4, 6), (4, 6, 5), (3, 3), (1,), (2**10,)),
-        )
+    @pytest.mark.parametrize(
+        "dims",
+        ((5, 4, 6), (4, 6, 5), (3, 3), (1,), (2**10,)),
     )
     def test_4bit_tensor_size(self, dims) -> None:
         # A bug caused negative int4 values to inflate tensor size.
@@ -677,11 +670,8 @@ class TestHelperTensorFunctions:
         actual_data_size = len(bytes(y.int32_data))
         np.testing.assert_equal(actual_data_size, expected_data_size)
 
-    @parameterized.parameterized.expand(
-        itertools.product(
-            (TensorProto.UINT4, TensorProto.INT4), ((5, 4, 6), (4, 6, 5), (3, 3), (1,))
-        )
-    )
+    @pytest.mark.parametrize("dtype", (TensorProto.UINT4, TensorProto.INT4))
+    @pytest.mark.parametrize("dims", ((5, 4, 6), (4, 6, 5), (3, 3), (1,)))
     def test_make_4bit_raw_tensor(self, dtype, dims) -> None:
         data = np.random.randint(0, high=16, size=dims, dtype=np.uint8)
         packed_data = _pack_4bit(data)
@@ -706,12 +696,8 @@ class TestHelperTensorFunctions:
         ynp = numpy_helper.to_array(y)
         np.testing.assert_equal(ynp.view(np.uint8), expected)
 
-    @parameterized.parameterized.expand(
-        itertools.product(
-            (TensorProto.UINT2, TensorProto.INT2),
-            ((5, 4, 6), (4, 6, 5), (3, 3), (1,), (2**10,)),
-        )
-    )
+    @pytest.mark.parametrize("dtype", (TensorProto.UINT2, TensorProto.INT2))
+    @pytest.mark.parametrize("dims", ((5, 4, 6), (4, 6, 5), (3, 3), (1,), (2**10,)))
     def test_make_2bit_tensor(self, dtype, dims) -> None:
         type_range = {
             TensorProto.UINT2: (0, 3),
@@ -731,10 +717,9 @@ class TestHelperTensorFunctions:
         ynp = numpy_helper.to_array(y)
         np.testing.assert_equal(ynp, data)
 
-    @parameterized.parameterized.expand(
-        itertools.product(
-            ((5, 4, 6), (4, 6, 5), (3, 3), (1,), (2**10,)),
-        )
+    @pytest.mark.parametrize(
+        "dims",
+        ((5, 4, 6), (4, 6, 5), (3, 3), (1,), (2**10,)),
     )
     def test_2bit_tensor_size(self, dims) -> None:
         # A bug caused negative int2 values to inflate tensor size.
@@ -748,11 +733,8 @@ class TestHelperTensorFunctions:
         actual_data_size = len(bytes(y.int32_data))
         np.testing.assert_equal(actual_data_size, expected_data_size)
 
-    @parameterized.parameterized.expand(
-        itertools.product(
-            (TensorProto.UINT2, TensorProto.INT2), ((5, 4, 6), (4, 6, 5), (3, 3), (1,))
-        )
-    )
+    @pytest.mark.parametrize("dtype", (TensorProto.UINT2, TensorProto.INT2))
+    @pytest.mark.parametrize("dims", ((5, 4, 6), (4, 6, 5), (3, 3), (1,)))
     def test_make_2bit_raw_tensor(self, dtype, dims) -> None:
         data = np.random.randint(0, high=4, size=dims, dtype=np.uint8)
         packed_data = _pack_2bit(data)
@@ -1162,7 +1144,8 @@ class TestHelperMappingFunctions:
 
 
 class TestAttrTypeToStr:
-    @parameterized.parameterized.expand(
+    @pytest.mark.parametrize(
+        "attr_type, expected_str",
         [
             (AttributeProto.AttributeType.FLOAT, "FLOAT"),
             (AttributeProto.AttributeType.INT, "INT"),
@@ -1178,7 +1161,7 @@ class TestAttrTypeToStr:
             (AttributeProto.AttributeType.GRAPHS, "GRAPHS"),
             (AttributeProto.AttributeType.SPARSE_TENSORS, "SPARSE_TENSORS"),
             (AttributeProto.AttributeType.TYPE_PROTOS, "TYPE_PROTOS"),
-        ]
+        ],
     )
     def test_attr_type_to_str(self, attr_type, expected_str):
         result = helper._attr_type_to_str(attr_type)
