@@ -1245,6 +1245,48 @@ class TestChecker:
         ):
             checker.check_model(model)
 
+    def test_check_model_rejects_indirect_cycle_through_subgraph(self) -> None:
+        # Three-function indirect cycle foo -> foo2 -> foo3 -> foo where every call
+        # edge lives inside an If-branch subgraph, so the cycle is only discoverable
+        # through the recursive subgraph descent (not the top-level function bodies).
+        model = onnx.parser.parse_model(
+            """
+            <ir_version: 8, opset_import: [ "" : 17, "local" : 1 ]>
+            agraph (float[N] X) => (float[N] Y) {
+                Y = local.foo (X)
+            }
+            <opset_import: [ "" : 17, "local" : 1 ], domain: "local">
+            foo (x) => (y) {
+                cond = Constant <value = bool {1}> ()
+                y = If (cond) <
+                    then_branch = foo_then () => (yt) { yt = local.foo2 (x) },
+                    else_branch = foo_else () => (ye) { ye = Identity (x) }
+                >
+            }
+            <opset_import: [ "" : 17, "local" : 1 ], domain: "local">
+            foo2 (x) => (y) {
+                cond = Constant <value = bool {1}> ()
+                y = If (cond) <
+                    then_branch = foo2_then () => (yt) { yt = local.foo3 (x) },
+                    else_branch = foo2_else () => (ye) { ye = Identity (x) }
+                >
+            }
+            <opset_import: [ "" : 17, "local" : 1 ], domain: "local">
+            foo3 (x) => (y) {
+                cond = Constant <value = bool {1}> ()
+                y = If (cond) <
+                    then_branch = foo3_then () => (yt) { yt = local.foo (x) },
+                    else_branch = foo3_else () => (ye) { ye = Identity (x) }
+                >
+            }
+        """
+        )
+        with pytest.raises(
+            checker.ValidationError,
+            match="Cycle detected in model-local function references",
+        ):
+            checker.check_model(model)
+
     def test_check_model_rejects_cycle_in_loop_body(self) -> None:
         # Cycle edge hidden inside a Loop body subgraph rather than an If branch.
         model = onnx.parser.parse_model(
