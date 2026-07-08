@@ -5,7 +5,7 @@ SPDX-License-Identifier: Apache-2.0
 -->
 - Feature Name: symbolic_shapes
 - Start Date: 2026-07-08
-- RFC PR: [onnx/onnx#0000](https://github.com/onnx/onnx/pull/0000)
+- RFC PR: [onnx/onnx#8175](https://github.com/onnx/onnx/pull/8175)
 - Status: under discussion
 - Authors: (list of github user names)
 
