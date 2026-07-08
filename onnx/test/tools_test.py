@@ -3,8 +3,6 @@
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
-import unittest
-
 import numpy as np
 from numpy.testing import assert_allclose
 
@@ -16,7 +14,7 @@ from onnx.tools import update_model_dims
 from onnx.tools.replace_constants import replace_initializer_by_constant_of_shape
 
 
-class TestToolsFunctions(unittest.TestCase):
+class TestToolsFunctions:
     def test_update_inputs_outputs_dim(self) -> None:
         node_def = helper.make_node(
             "Conv",
@@ -46,17 +44,17 @@ class TestToolsFunctions(unittest.TestCase):
             },
         )
         onnx.checker.check_model(updated_def)
-        self.assertEqual(
-            updated_def.graph.input[0].type.tensor_type.shape.dim[2].dim_param, "x1"
+        assert (
+            updated_def.graph.input[0].type.tensor_type.shape.dim[2].dim_param == "x1"
         )
-        self.assertEqual(
-            updated_def.graph.input[0].type.tensor_type.shape.dim[3].dim_param, "x_3"
+        assert (
+            updated_def.graph.input[0].type.tensor_type.shape.dim[3].dim_param == "x_3"
         )
-        self.assertEqual(
-            updated_def.graph.output[0].type.tensor_type.shape.dim[2].dim_param, "y_2"
+        assert (
+            updated_def.graph.output[0].type.tensor_type.shape.dim[2].dim_param == "y_2"
         )
-        self.assertEqual(
-            updated_def.graph.output[0].type.tensor_type.shape.dim[3].dim_param, "y_3"
+        assert (
+            updated_def.graph.output[0].type.tensor_type.shape.dim[3].dim_param == "y_3"
         )
 
     def test_replace_initializer(self):
@@ -78,7 +76,7 @@ class TestToolsFunctions(unittest.TestCase):
         y1 = oinf1.run(None, {"X": x})[0]
         repl = replace_initializer_by_constant_of_shape(model_def)
         node_types = {n.op_type for n in repl.graph.node}
-        self.assertIn("ConstantOfShape", node_types)
+        assert "ConstantOfShape" in node_types
         oinf2 = ReferenceEvaluator(repl)
         y1[:, :] = 3.5
         y1[0, :] = 0.5
@@ -105,7 +103,7 @@ class TestToolsFunctions(unittest.TestCase):
         y1 = oinf1.run(None, {"X": x})[0]
         repl = replace_initializer_by_constant_of_shape(model_def)
         node_types = {n.op_type for n in repl.graph.node}
-        self.assertIn("ConstantOfShape", node_types)
+        assert "ConstantOfShape" in node_types
         oinf2 = ReferenceEvaluator(repl)
         y1[:, :] = 3.5
         y1[0, :] = 0.5
@@ -132,8 +130,8 @@ class TestToolsFunctions(unittest.TestCase):
         y1 = oinf1.run(None, {"X": x})[0]
         repl = replace_initializer_by_constant_of_shape(model_def, use_range=True)
         node_types = {n.op_type for n in repl.graph.node}
-        self.assertIn("Range", node_types)
-        self.assertNotIn("ConstantOfShape", node_types)
+        assert "Range" in node_types
+        assert "ConstantOfShape" not in node_types
         oinf2 = ReferenceEvaluator(repl)
         y2 = oinf2.run(None, {"X": x})[0]
         assert_allclose(y1.shape, y2.shape)
@@ -175,7 +173,7 @@ class TestToolsFunctions(unittest.TestCase):
         y1 = oinf1.run(None, {"X": x})[0]
         repl = replace_initializer_by_constant_of_shape(model_def)
         node_types = {n.op_type for n in repl.functions[0].node}
-        self.assertIn("ConstantOfShape", node_types)
+        assert "ConstantOfShape" in node_types
         oinf2 = ReferenceEvaluator(repl)
         y1[:, :] = 3.5
         y1[0, :] = 0.5
@@ -219,8 +217,8 @@ class TestToolsFunctions(unittest.TestCase):
         y1 = oinf1.run(None, {"X": x})[0]
         repl = replace_initializer_by_constant_of_shape(model_def, use_range=True)
         node_types = {n.op_type for n in repl.functions[0].node}
-        self.assertIn("Range", node_types)
-        self.assertNotIn("ConstantOfShape", node_types)
+        assert "Range" in node_types
+        assert "ConstantOfShape" not in node_types
         oinf2 = ReferenceEvaluator(repl)
         y2 = oinf2.run(None, {"X": x})[0]
         assert_allclose(y1.shape, y2.shape)
@@ -261,13 +259,13 @@ class TestToolsFunctions(unittest.TestCase):
         onnx_model = helper.make_model(
             graph, opset_imports=[helper.make_opsetid("", onnx_opset_version())]
         )
-        self.assertNotIn("ConstantOfShape", str(onnx_model))
+        assert "ConstantOfShape" not in str(onnx_model)
 
         x = np.ones((3, 2), dtype=np.float32)
         oinf1 = ReferenceEvaluator(onnx_model)
         y1 = oinf1.run(None, {"X": x})[0]
         repl = replace_initializer_by_constant_of_shape(onnx_model)
-        self.assertIn("ConstantOfShape", str(repl))
+        assert "ConstantOfShape" in str(repl)
         oinf2 = ReferenceEvaluator(repl)
         y2 = oinf2.run(None, {"X": x})[0]
         y1 = y1.copy()
@@ -310,14 +308,14 @@ class TestToolsFunctions(unittest.TestCase):
         onnx_model = helper.make_model(
             graph, opset_imports=[helper.make_opsetid("", onnx_opset_version())]
         )
-        self.assertNotIn("ConstantOfShape", str(onnx_model))
+        assert "ConstantOfShape" not in str(onnx_model)
 
         x = np.ones((3, 2), dtype=np.float32)
         oinf1 = ReferenceEvaluator(onnx_model)
         y1 = oinf1.run(None, {"X": x})[0]
         repl = replace_initializer_by_constant_of_shape(onnx_model, use_range=True)
-        self.assertNotIn("ConstantOfShape", str(repl))
-        self.assertIn("Range", str(repl))
+        assert "ConstantOfShape" not in str(repl)
+        assert "Range" in str(repl)
         oinf2 = ReferenceEvaluator(repl)
         y2 = oinf2.run(None, {"X": x})[0]
         assert_allclose(y1.shape, y2.shape)

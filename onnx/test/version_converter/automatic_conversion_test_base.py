@@ -4,8 +4,9 @@
 from __future__ import annotations
 
 import string
-import unittest
 from typing import TYPE_CHECKING, Any, cast
+
+import pytest
 
 import onnx
 from onnx import TensorProto, ValueInfoProto, helper, shape_inference, version_converter
@@ -16,7 +17,7 @@ if TYPE_CHECKING:
 LATEST_OPSET = onnx.defs.onnx_opset_version()
 
 
-class TestAutomaticConversion(unittest.TestCase):
+class TestAutomaticConversion:
     def _test_model_conversion(
         self, to_opset: int, model: str | onnx.ModelProto
     ) -> None:
@@ -37,7 +38,7 @@ class TestAutomaticConversion(unittest.TestCase):
         onnx.checker.check_model(model)
         shape_inference.infer_shapes(model, strict_mode=True)
 
-        with self.assertRaises(RuntimeError):
+        with pytest.raises(RuntimeError):
             version_converter.convert_version(model, to_opset)
 
     def _test_op_conversion(
