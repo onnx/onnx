@@ -139,3 +139,12 @@ Checkout [https://trademarks.justia.com](https://trademarks.justia.com/877/25/on
 # Code of Conduct
 
 [ONNX Open Source Code of Conduct](https://onnx.ai/codeofconduct.html)
+
+
+## Known Issues and Workarounds
+
+The maintainers are aware of the following issues:
+
+- Issue mentioned in the bug tracker
+- Users should follow the recommended practices
+- See the documentation for more details
