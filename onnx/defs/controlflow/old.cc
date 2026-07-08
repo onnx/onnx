@@ -906,8 +906,7 @@ void ScanInferenceFunction_opset8(InferenceContext& ctx) {
   // inputs in many places below, so the - 1 in multiple places is due to that.
   auto num_inputs = ctx.getNumInputs();
   auto num_scan_inputs = narrow<size_t>(getRequiredAttributeInt(ctx, "num_scan_inputs"));
-  // Guard the size_t subtraction below against underflow. The first input is
-  // sequence_lens, so num_scan_inputs plus it cannot exceed the input count.
+  // Guard the subtraction below; opset 8's first input is sequence_lens, hence the + 1.
   if (num_scan_inputs + 1 > num_inputs) {
     fail_shape_inference(
         "num_scan_inputs (",

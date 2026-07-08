@@ -199,7 +199,7 @@ int handle_negative_axis_validate(const std::string& attrib, int axis, int rank)
 }
 
 size_t ValidateScanCountsAndGetNumLoopStateVars(size_t num_inputs, size_t num_scan_inputs, size_t num_outputs) {
-  // Guard the size_t subtractions in Scan shape inference against underflow.
+  // Guard the subtractions below against underflow.
   if (num_scan_inputs > num_inputs) {
     fail_shape_inference(
         "num_scan_inputs (", num_scan_inputs, ") cannot exceed the number of Scan inputs (", num_inputs, ").");

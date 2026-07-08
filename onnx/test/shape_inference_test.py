@@ -6145,9 +6145,7 @@ class TestShapeInference(TestShapeInferenceHelper):
         ],
     )
     def test_scan_num_scan_inputs_out_of_range(self, model_text: str) -> None:
-        # num_scan_inputs exceeding the input count must fail, not underflow.
-        # Opset 8 has a leading sequence_lens input; 9 and 21 (latest) use the
-        # separate and shared inference functions respectively.
+        # num_scan_inputs > input count must raise, not underflow (opsets 8, 9, 21).
         model = onnx.parser.parse_model(model_text)
         with pytest.raises(
             onnx.shape_inference.InferenceError, match="num_scan_inputs"
@@ -6162,8 +6160,7 @@ class TestShapeInference(TestShapeInferenceHelper):
     def test_scan_loop_state_vars_exceed_outputs(
         self, opset: int, ir_version: int
     ) -> None:
-        # More loop state vars than outputs must fail, not underflow. Covers the
-        # shared (latest) and the separate opset-9 inference functions.
+        # More loop state vars than outputs must raise, not underflow (opsets 9, 21).
         model = onnx.parser.parse_model(
             f"""
             <ir_version: {ir_version}, opset_import: ["" : {opset}]>
@@ -12824,8 +12821,7 @@ class TestShapeInference(TestShapeInferenceHelper):
 
     @pytest.mark.parametrize("attrs", ["", "num_scan_inputs = -1, "])
     def test_scan_invalid_num_scan_inputs_does_not_crash(self, attrs):
-        # Missing required attribute would null-deref; negative value would
-        # overflow narrow<size_t>. Both must raise InferenceError, not crash.
+        # Missing attr null-derefs; -1 overflows size_t. Both must raise, not crash.
         scan_body = (
             "body = b (float[1] si, float[1] xi) => (float[1] so, float[1] xo) "
             "{ so = Identity(si) xo = Identity(xi) }"
