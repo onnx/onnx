@@ -507,6 +507,25 @@ void oneHotShapeInference(InferenceContext& ctx, int version) {
   if (ctx.getNumInputs() != 3) {
     fail_type_inference("OneHot node must have three inputs.");
   }
+  // Before opset 11, 'indices' were required to be non-negative; opset 11
+  // relaxed this to allow negative indices that wrap around. We can only
+  // enforce the older constraint when 'indices' is available as a constant.
+  if (version < 11) {
+    if (const TensorProto* indices_data = ctx.getInputData(0)) {
+      auto is_negative = [](auto index) { return index < 0; };
+      bool has_negative = false;
+      if (indices_data->data_type() == TensorProto::INT64) {
+        const auto indices = ParseData<int64_t>(indices_data);
+        has_negative = std::any_of(indices.begin(), indices.end(), is_negative);
+      } else if (indices_data->data_type() == TensorProto::INT32) {
+        const auto indices = ParseData<int32_t>(indices_data);
+        has_negative = std::any_of(indices.begin(), indices.end(), is_negative);
+      }
+      if (has_negative) {
+        fail_shape_inference("Input 'indices' must be non-negative for OneHot opset < 11.");
+      }
+    }
+  }
   // Input 'depth' must be a scalar or a single-element vector.
   // TODO(ONNX): Ideally to match spec for this input only Scalar should
   // be allowed. Making this change now can affect backward
@@ -559,13 +578,9 @@ void oneHotShapeInference(InferenceContext& ctx, int version) {
     int out_rank = r + 1;
     int axis = static_cast<int>(getAttribute(ctx, "axis", -1));
     if (axis < -out_rank || axis >= out_rank) {
-      // The valid range is identical across versions; only the error message
-      // wording differs between the opset 9 and opset 11 schemas.
-      if (version < 11) {
-        fail_shape_inference("'axis' must be in [-rank(indices)-1, rank(indices)]");
-      } else {
-        fail_shape_inference("'axis' must be in [-rank(indices), rank(indices)-1]");
-      }
+      // 'axis' may address any slot in the output (rank out_rank = rank(indices) + 1),
+      // including the newly inserted one, so the valid range is [-out_rank, out_rank-1].
+      fail_shape_inference("'axis' must be in [-rank(indices)-1, rank(indices)]");
     }
     if (axis < 0) {
       axis += out_rank;
