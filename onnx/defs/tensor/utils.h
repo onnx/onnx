@@ -16,6 +16,11 @@ void resizeShapeInference(InferenceContext& ctx);
 
 void gridSampleShapeInference(InferenceContext& ctx);
 
+// Shared type/shape inference for the OneHot operator. 'version' is the opset
+// version of the calling schema; it selects the version-specific 'axis' error
+// message while all other checks are identical across versions.
+void oneHotShapeInference(InferenceContext& ctx, int version);
+
 void resizeShapeInferenceHelper(
     const TensorShapeProto& input_shape,
     const std::vector<float>& scales_data,
