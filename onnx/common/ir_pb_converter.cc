@@ -8,7 +8,6 @@
 #include "onnx/common/ir_pb_converter.h"
 
 #include <memory>
-#include <sstream>
 #include <string>
 #include <unordered_map>
 #include <unordered_set>
@@ -18,7 +17,7 @@
 namespace ONNX_NAMESPACE {
 
 // Part 1: convert ONNX Protobuf to IR
-static std::unique_ptr<Graph> graphProtoToGraph(const GraphProto& gp, bool nested, int ir_version = IR_VERSION);
+static std::unique_ptr<Graph> graphProtoToGraph(const GraphProto& gp, bool nested, int64_t ir_version = IR_VERSION);
 
 static Tensor tensorProtoToTensor(const ONNX_NAMESPACE::TensorProto& tp) {
   Tensor ret;
@@ -120,7 +119,7 @@ static Tensor tensorProtoToTensor(const ONNX_NAMESPACE::TensorProto& tp) {
   return ret;
 }
 
-static void convertAttribute(const ONNX_NAMESPACE::AttributeProto& ap, Node& n, const int ir_version = IR_VERSION) {
+static void convertAttribute(const ONNX_NAMESPACE::AttributeProto& ap, Node& n, const int64_t ir_version = IR_VERSION) {
   Symbol sym = Symbol(ap.name());
   switch (ap.type()) {
     case ONNX_NAMESPACE::AttributeProto_AttributeType_FLOAT:
@@ -205,7 +204,7 @@ static void convertAttribute(const ONNX_NAMESPACE::AttributeProto& ap, Node& n, 
   }
 }
 
-static void convertAttributes(const ONNX_NAMESPACE::NodeProto& np, Node& n, const int ir_version = IR_VERSION) {
+static void convertAttributes(const ONNX_NAMESPACE::NodeProto& np, Node& n, const int64_t ir_version = IR_VERSION) {
   for (int i = 0; i < np.attribute_size(); i++) {
     convertAttribute(np.attribute(i), n, ir_version);
   }
@@ -228,17 +227,19 @@ static std::vector<Dimension> tensorShapeProtoToDimensions(const ONNX_NAMESPACE:
   return dims;
 }
 
-static void createDummyValue(
+static Value* createDummyValue(
     const std::unique_ptr<Graph>& g,
     const std::string& name,
     std::unordered_map<std::string, Value*>& value_by_name_of) {
   auto* undef = g->create(kCaptured, 1);
   g->appendNode(undef);
-  undef->outputs()[0]->setUniqueName(name);
-  value_by_name_of[name] = undef->outputs()[0];
+  Value* v = undef->outputs()[0];
+  v->setUniqueName(name);
+  value_by_name_of[name] = v;
+  return v;
 }
 
-std::unique_ptr<Graph> graphProtoToGraph(const ONNX_NAMESPACE::GraphProto& gp, bool nested, const int ir_version) {
+std::unique_ptr<Graph> graphProtoToGraph(const ONNX_NAMESPACE::GraphProto& gp, bool nested, const int64_t ir_version) {
   auto g = std::make_unique<Graph>();
 
   if (gp.has_name()) {
@@ -360,33 +361,36 @@ std::unique_ptr<Graph> graphProtoToGraph(const ONNX_NAMESPACE::GraphProto& gp, b
       }
 
       if (!value_by_name_of.count(input)) {
-        std::ostringstream msg;
-        msg << "Input " << input << " is undefined!";
-        ONNX_THROW_EX(std::out_of_range(msg.str()));
+        fail_convert("Input ", input, " is undefined!");
       }
       n->addInput(value_by_name_of.at(input));
     }
   }
 
   for (int i = 0; i < gp.output_size(); i++) {
-    if (!value_by_name_of.count(gp.output(i).name()) && nested) {
-      // Same captured value logic as above. We can consider outputs of a
-      // graph to be "inputs" of a dummy "output" node. The same lexical
-      // scoping rules are valid here, thus we need to add a dummy node
-      // in the case of an undefined reference
-      createDummyValue(g, gp.output(i).name(), value_by_name_of);
+    const auto& output = gp.output(i);
+    const std::string& output_name = output.name();
+    auto it = value_by_name_of.find(output_name);
+    Value* output_value = nullptr;
+    if (it != value_by_name_of.end()) {
+      output_value = it->second;
+    } else if (nested) {
+      // Undefined reference: a value captured from an enclosing scope.
+      output_value = createDummyValue(g, output_name, value_by_name_of);
+    } else {
+      fail_convert("Output ", output_name, " is undefined!");
     }
-    const auto& output_tensor_type = gp.output(i).type().tensor_type();
+    const auto& output_tensor_type = output.type().tensor_type();
     if (output_tensor_type.has_elem_type()) {
-      value_by_name_of[gp.output(i).name()]->setElemType(output_tensor_type.elem_type());
+      output_value->setElemType(output_tensor_type.elem_type());
     }
     if (output_tensor_type.has_shape()) {
-      value_by_name_of[gp.output(i).name()]->setSizes(tensorShapeProtoToDimensions(output_tensor_type.shape()));
+      output_value->setSizes(tensorShapeProtoToDimensions(output_tensor_type.shape()));
     }
-    if (!gp.output(i).type().has_tensor_type()) {
-      value_by_name_of[gp.output(i).name()]->type() = std::make_unique<TypeProto>(gp.output(i).type());
+    if (!output.type().has_tensor_type()) {
+      output_value->type() = std::make_unique<TypeProto>(output.type());
     }
-    g->registerOutput(value_by_name_of[gp.output(i).name()]);
+    g->registerOutput(output_value);
   }
 
   for (int i = 0; i < gp.value_info_size(); i++) {
@@ -526,7 +530,7 @@ static void encodeTensor(ONNX_NAMESPACE::TensorProto& p, const Tensor& tensor) {
   }
 }
 
-static void addAttribute(ONNX_NAMESPACE::NodeProto& n_p, Node& n, Symbol name) {
+static void addAttribute(ONNX_NAMESPACE::NodeProto& n_p, const Node& n, Symbol name) {
   auto* attr = n_p.add_attribute();
   attr->set_name(name.toString());
   switch (n.kindOf(name)) {
