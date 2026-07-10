@@ -15,6 +15,7 @@
 
 // Capture context by copying values; the graph is unused by these transformers.
 
+// NOLINTNEXTLINE(bugprone-macro-parentheses)
 #define NODE_TRANSFORMER(node) [=](const std::shared_ptr<Graph>&, Node* node)
 
 namespace ONNX_NAMESPACE {
