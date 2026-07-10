@@ -693,3 +693,56 @@ class AveragePool(Base):
 
                 test_name = f"test_averagepool_3d_dilations_large_count_include_pad_is_{count_include_pad}_ceil_mode_is_{ceil_mode}"
                 expect(node, inputs=[x], outputs=[y], name=test_name)
+
+    @staticmethod
+    def export_averagepool_2d_dilations() -> None:
+        """input_shape: [1, 1, 7, 7]
+        output_shape: [1, 1, 3, 3]
+        """
+        node = onnx.helper.make_node(
+            "AveragePool",
+            inputs=["x"],
+            outputs=["y"],
+            kernel_shape=[3, 3],
+            strides=[1, 1],
+            dilations=[2, 2],
+            auto_pad="VALID",
+        )
+
+        x = np.random.randn(1, 1, 7, 7).astype(np.float32)
+
+        out_shape, extra_pads = get_output_shape_explicit_padding(
+            None,
+            (7, 7),
+            (3, 3),
+            (1, 1),
+            dilations=(2, 2),
+            ceil_mode=0,
+        )
+        padded = np.pad(
+            x,
+            (
+                (0, 0),
+                (0, 0),
+                (extra_pads[0], extra_pads[2]),
+                (extra_pads[1], extra_pads[3]),
+            ),
+            mode="constant",
+            constant_values=np.nan,
+        )
+        y = pool(
+            padded,
+            (1, 1, 7, 7),
+            (3, 3),
+            (1, 1),
+            out_shape,
+            "AVG",
+            pads_required=extra_pads,
+            pads=None,
+            dilations=(2, 2),
+            count_include_pad=0,
+        )
+
+        expect(
+            node, inputs=[x], outputs=[y], name="test_averagepool_2d_dilations"
+        )
