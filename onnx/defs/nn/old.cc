@@ -621,11 +621,23 @@ static void convTransposeShapeInference_opset11(InferenceContext& ctx) {
   }
 
   int64_t group = getAttribute(ctx, "group", 1);
+  if (group <= 0) {
+    fail_shape_inference("Attribute group must be > 0 for ConvTranspose. group=", group, ".");
+  }
 
   auto input_shape = ctx.getInputType(0)->tensor_type().shape();
   if (input_shape.dim_size() < 3) {
     fail_shape_inference(
         "Input tensor must have at least 3 dimensions (N x C x D1...Dn). Got: ", input_shape.dim_size());
+  }
+  const auto& input_channels_dim = input_shape.dim(1);
+  if (input_channels_dim.has_dim_value() && input_channels_dim.dim_value() % group != 0) {
+    fail_shape_inference(
+        "Input channels C must be divisible by group for ConvTranspose. C=",
+        input_channels_dim.dim_value(),
+        " group=",
+        group,
+        ".");
   }
 
   // Weight tensor (input 1) must also have at least 3 dimensions (C x M/group x k1...kn).
@@ -2972,11 +2984,23 @@ static void convTransposeShapeInference_opset1(InferenceContext& ctx) {
   }
 
   int64_t group = getAttribute(ctx, "group", 1);
+  if (group <= 0) {
+    fail_shape_inference("Attribute group must be > 0 for ConvTranspose. group=", group, ".");
+  }
 
   auto input_shape = ctx.getInputType(0)->tensor_type().shape();
   if (input_shape.dim_size() < 3) {
     fail_shape_inference(
         "Input tensor must have at least 3 dimensions (N x C x D1...Dn). Got: ", input_shape.dim_size());
+  }
+  const auto& input_channels_dim = input_shape.dim(1);
+  if (input_channels_dim.has_dim_value() && input_channels_dim.dim_value() % group != 0) {
+    fail_shape_inference(
+        "Input channels C must be divisible by group for ConvTranspose. C=",
+        input_channels_dim.dim_value(),
+        " group=",
+        group,
+        ".");
   }
 
   // Weight tensor (input 1) must also have at least 3 dimensions (C x M/group x k1...kn).
@@ -4206,9 +4230,11 @@ This operator also covers the 3 following variants based on the number of heads:
 2) Group-query Attention (GQA): Described in the paper https://arxiv.org/pdf/2305.13245, `q_num_heads > kv_num_heads`, `q_num_heads % kv_num_heads == 0`.
 3) Multi-query Attention (MQA): Described in the paper https://arxiv.org/pdf/1911.02150, `q_num_heads > kv_num_heads`, `kv_num_heads=1`.
 
-Attention bias to be added is calculated based on `attn_mask` input and `is_causal attribute`, only one of which can be provided.
-1) If `is_causal` is set to `1`, the attention masking is a lower triangular matrix when the mask is a square matrix. The attention masking has the form of the upper left causal bias due to the alignment.
-2) `attn_mask`: A boolean mask where a value of `True` indicates that the element should take part in attention or a float mask of the same type as query, key, value that is added to the attention score.
+Attention bias to be added is calculated based on `attn_mask` input and `is_causal` attribute:
+1) `attn_mask`: A boolean mask where a value of `True` indicates that the element should take part in attention or a float mask of the same type as query, key, value that is added to the attention score.
+2) If `is_causal` is set to `1`, causal masking is applied with bottom-right (offset-aware) alignment: query `i` attends key `j` iff `j <= i + past_sequence_length` (the count of cached keys in `past_key`); for a square Q/K this is the standard lower-triangular mask. The causal frontier is computed independently of the `attn_mask` input and is then composed with it additively, by summing their attention biases: a boolean `attn_mask` intersects the allowed set (its disallowed positions contribute `-inf` to the bias), while a float `attn_mask` is added to the attention scores rather than disabling positions. A fully-masked query row (every key's combined additive bias is `-inf`, e.g. an all-`False` boolean `attn_mask` row) produces a zero output row (matching prevailing runtime practice), not `NaN`.
+
+Errata (in-place behavioral correction, no opset bump): a fully-masked query row (e.g. an all-`False` boolean `attn_mask` row) now produces a zero output row instead of `NaN`, and the same zero-row guard applies to the mode-`3` `qk_matmul_output` debug output; this only replaces previously-`NaN` outputs. The mode-`3` `qk_matmul_output` is also now emitted at the operator's output precision (`T1`), matching the reference implementation, which affects only its dtype and only when `softmax_precision` differs from `T1`. No numerically useful, well-defined result of the released opset is otherwise changed.
 
 Both past and present state key/values are optional. They shall be used together, and not allowed to use only one of them.
 The following pattern is applied to the Q, K and V inputs after appropriate reshaping of K and V inputs based on sequence lengths and num heads provided:
@@ -4243,8 +4269,9 @@ ONNX_OPERATOR_SET_SCHEMA(
         .SetDoc(Attention_ver23_doc)
         .Attr(
             "is_causal",
-            "If set to `1`, the attention masking is a lower triangular matrix when the mask is a square matrix. "
-            "The attention masking has the form of the upper left causal bias due to the alignment.",
+            "If set to `1`, causal masking is applied with bottom-right (offset-aware) alignment: "
+            "query `i` attends key `j` iff `j <= i + past_sequence_length` (the count of cached keys in "
+            "`past_key`); for a square Q/K this is the standard lower-triangular mask.",
             AttributeProto::INT,
             static_cast<int64_t>(0))
         .Attr(
@@ -4280,6 +4307,11 @@ ONNX_OPERATOR_SET_SCHEMA(
             "If set to `1`, qk_matmul_output is the output after the softcap operation (before mask addition). "
             "If set to `2`, qk_matmul_output includes the attention mask and softcap (if provided) applied to the output of qk matmul. "
             "If set to `3`, qk_matmul_output is the output after the softmax operation. "
+            "In mode `3`, a fully-masked query row (every key disallowed, e.g. an all-`False` boolean `attn_mask` row) "
+            "is a zero row, consistent with the corresponding row of the primary output `Y`: the "
+            "fully-masked-row guard is applied before this output is produced. "
+            "The mode-`3` output is emitted at the operator's output precision (`T1`); when "
+            "`softmax_precision` differs from `T1` this is a cast of the softmax result to `T1`. "
             "Default value is 0.",
             AttributeProto::INT,
             static_cast<int64_t>(0))
@@ -4546,6 +4578,21 @@ ONNX_OPERATOR_SET_SCHEMA(
               .Add("AttnWeightSoftmax = Softmax (SoftmaxCast)")
               .Add("SoftmaxOut = Cast (AttnWeightSoftmax)", "to", T1);
 
+          // Fully-masked-row guard: a query row whose additive bias (AttnBiasT) is
+          // entirely -inf softmaxes to NaN. Detect such rows on the additive bias
+          // row-max and zero their probabilities with Where (not Mul; NaN * 0 = NaN)
+          // BEFORE the P @ V contraction so 0 @ V = 0. The guard runs before the
+          // mode-3 output capture so the exposed qk_matmul_output row is also zeroed,
+          // consistent with Y. Mirrors the reference impl so primary == _expanded
+          // bit-for-bit. In v23 the only reachable fully-masked rows come from an
+          // all-False bool attn_mask (no nonpad/external cache).
+          builder.Add("BiasRowMaxAxes = Constant <value = int64[1] {-1}> ()")
+              .Add("BiasRowMax = ReduceMax(AttnBiasT, BiasRowMaxAxes)") // keepdims=1 (default)
+              .Add("FloatNegInfT = CastLike(FloatNegInf, AttnBiasT)")
+              .Add("RowAllMasked = Equal(BiasRowMax, FloatNegInfT)")
+              .Add("ZeroProbT = CastLike(ScalarZero, SoftmaxOut)")
+              .Add("SoftmaxOutSafe = Where(RowAllMasked, ZeroProbT, SoftmaxOut)");
+
           // QK MatMul output if required
           auto qk_matmul_output_mode_attr = ctx.getAttribute("qk_matmul_output_mode");
           int64_t qk_matmul_output_mode = (qk_matmul_output_mode_attr != nullptr) ? qk_matmul_output_mode_attr->i() : 0;
@@ -4562,13 +4609,15 @@ ONNX_OPERATOR_SET_SCHEMA(
               // Mode 2: QK + softcap + bias (after softcap + bias addition)
               builder.Add("qk_matmul_output = Identity(QKAttnWeightSoftcap)");
             } else if (qk_matmul_output_mode == 3) {
-              builder.Add("qk_matmul_output = Identity(AttnWeightSoftmax)");
+              // Mode 3: post-softmax, after the fully-masked-row guard (a fully-masked
+              // row is zeroed, consistent with the primary output Y).
+              builder.Add("qk_matmul_output = Identity(SoftmaxOutSafe)");
             } else {
               builder.Add("qk_matmul_output = Identity(QKAttnWeight)");
             }
           }
 
-          builder.Add("YPreReshape = MatMul(SoftmaxOut, VAttentionInput)");
+          builder.Add("YPreReshape = MatMul(SoftmaxOutSafe, VAttentionInput)");
           // Reshape Y to 3D if input is a 3D tensor
           if (is_3d_input) {
             builder.Add("YTranspose = Transpose <perm = [0, 2, 1, 3]> (YPreReshape)")

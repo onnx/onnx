@@ -21,7 +21,7 @@ class NoPreviousVersionAdapter final : public Adapter {
       : Adapter(op_name, initial, target) {}
 
   Node* adapt(std::shared_ptr<Graph> /*unused*/, Node* node) const override {
-    ONNX_ASSERTM(false, "No Previous Version of %s exists", name().c_str())
+    ONNX_ASSERTM(false, "No Previous Version of ", name(), " exists")
     return node;
   }
 };
