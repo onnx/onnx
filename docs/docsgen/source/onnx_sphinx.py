@@ -25,8 +25,6 @@ import onnx
 from onnx.backend.test.case.base import _Exporter
 from onnx.defs import OpSchema
 
-_GITHUB_REPO_URL = "https://github.com/onnx/onnx/blob/main/"
-
 REPO_DOCS_EXCLUDE = {
     "Changelog-ml.md",
     "Changelog.md",
@@ -48,7 +46,12 @@ def _get_diff_template():
             <link rel="stylesheet" type="text/css" href="../_static/diff2html.min.css" />
             <script type="text/javascript" src="../_static/diff2html-ui-slim.min.js"></script>
             <script>
-            const diffString = {{ diff_content | tojson }};
+            const diffString = `
+            --- a/{{ op_name }}{{ version1 }}
+            +++ b/{{ op_name }}{{ version2 }}
+            @@ -1 +1 @@
+            {{ diff_content }}
+            `;
 
             document.addEventListener('DOMContentLoaded', function () {
             var targetElement = document.getElementById('{{ div_name }}');
@@ -74,13 +77,7 @@ def _get_diff_template():
     )
 
 
-_OP_NAME_RE = re.compile(r"^[A-Za-z][A-Za-z0-9_]*$")
-
-
 def _get_ops_template():
-    # autoescape=False is intentional: the template produces Markdown, not HTML.
-    # HTML-escaping would corrupt Markdown syntax (e.g. turning `<T>` into `&lt;T&gt;`).
-    # All data rendered here comes from ONNX schema definitions, not external input.
     return jinja2.Template(
         """\
 {% for sch in schemas %}
@@ -206,7 +203,7 @@ def _get_main_template():
             parameters, examples, and line-by-line version history.
             This section also includes tables detailing each operator
             with its versions, as done in `Operators.md
-            <{{ github_repo_url }}docs/Operators.md>`_.
+            <https://github.com/onnx/onnx/blob/main/docs/Operators.md>`_.
 
             All examples end by calling function `expect`.
             which checks a runtime produces the expected output for this example.
@@ -227,8 +224,17 @@ def _get_main_template():
                 {% endfor %}
             """
         ),
-        autoescape=False,
+        autoescape=True,
     )
+
+
+def _clean_unicode(text):
+    text = text.replace("&#34;", '"')
+    text = text.replace("&#8212;", "-")
+    text = text.replace("&#160;", " ")
+    text = text.replace("&#39;", "'")
+    text = text.replace("&gt;", ">")
+    return text.replace("&lt;", "<")
 
 
 _template_diff = _get_diff_template()
@@ -394,16 +400,17 @@ def get_markdown_doc(
             doc = ""
         if not isinstance(doc, str):
             raise TypeError(f"doc must be a string not {type(doc)!r} - {doc + 42!r}.")
+        main_docs_url = "https://github.com/onnx/onnx/blob/main/"
         rep = {
-            "[the doc](IR.md)": f"[ONNX IR]({_GITHUB_REPO_URL}docs/IR.md)",
-            "[the doc](Broadcasting.md)": f"[Broadcasting in ONNX]({_GITHUB_REPO_URL}docs/Broadcasting.md)",
+            "[the doc](IR.md)": f"[ONNX IR]({main_docs_url}docs/IR.md)",
+            "[the doc](Broadcasting.md)": f"[Broadcasting in ONNX]({main_docs_url}docs/Broadcasting.md)",
         }
         for key, value in rep.items():
             doc = doc.replace(key, value)
         return textwrap.dedent(doc)
 
     def build_doc_url(sch):
-        doc_url = _GITHUB_REPO_URL + "docs/Operators"
+        doc_url = "https://github.com/onnx/onnx/blob/main/docs/Operators"
         if "ml" in sch.domain:
             doc_url += "-ml"
         doc_url += ".md"
@@ -568,12 +575,15 @@ def _insert_diff(
             differ = difflib.Differ()
             result = list(differ.compare(s2, s1))
             raw = "".join(result)
-            full_diff = f"--- a/{op_name}{v2}\n+++ b/{op_name}{v1}\n@@ -1 +1 @@\n{raw}"
 
             diff = _template_diff.render(
+                op_name=op_name,
+                version1=v2,
+                version2=v1,
                 div_name=f"div_{op_name}_{i}",
-                diff_content=full_diff,
+                diff_content=raw,
             )
+            diff = _clean_unicode(diff)
 
             title = f"{op_name} - {v2} vs {v1}"
 
@@ -639,12 +649,7 @@ def get_onnx_example(op_name, domain):
     :param fmt: rendering format
     :return: dictionary
     """
-    if not _OP_NAME_RE.match(op_name):
-        raise ValueError(f"Invalid operator name for module lookup: {op_name!r}")
-    if domain not in (None, "") and not re.match(r"^[A-Za-z][A-Za-z0-9_.]*$", domain):
-        raise ValueError(f"Invalid domain for module lookup: {domain!r}")
-
-    if domain in (None, "", "ai.onnx"):
+    if domain in (None, "ai.onnx"):
         modules = [
             f"onnx.backend.test.case.node.{op_name.lower()}",
             f"onnx.backend.test.case.node.{pascal_to_snake_case(op_name)}",
@@ -847,9 +852,8 @@ def onnx_documentation_folder(
     # final
     if len(tables) < 3:  # noqa: PLR2004
         raise RuntimeError(f"At least three domain are expected not {len(tables)}.")
-    index = _template_main.render(
-        pages=pages, tabs=tables, os=os, len=len, title=title, github_repo_url=_GITHUB_REPO_URL
-    )
+    index = _template_main.render(pages=pages, tabs=tables, os=os, len=len, title=title)
+    index = _clean_unicode(index)
     page_name = os.path.join(folder, "index.rst")
     pathlib.Path(page_name).write_text(index, encoding="utf-8")
     pages.append(page_name)
