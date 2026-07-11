@@ -641,10 +641,10 @@ def get_onnx_example(op_name, domain):
     """
     if not _OP_NAME_RE.match(op_name):
         raise ValueError(f"Invalid operator name for module lookup: {op_name!r}")
-    if domain is not None and not re.match(r"^[A-Za-z][A-Za-z0-9_.]*$", domain):
+    if domain not in (None, "") and not re.match(r"^[A-Za-z][A-Za-z0-9_.]*$", domain):
         raise ValueError(f"Invalid domain for module lookup: {domain!r}")
 
-    if domain in (None, "ai.onnx"):
+    if domain in (None, "", "ai.onnx"):
         modules = [
             f"onnx.backend.test.case.node.{op_name.lower()}",
             f"onnx.backend.test.case.node.{pascal_to_snake_case(op_name)}",
