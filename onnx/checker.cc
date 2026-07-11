@@ -944,6 +944,33 @@ void DetectCycleDFS(
   }
 }
 
+// Collect callee edges from a list of nodes into the callee set. A node in a
+// function body may carry subgraphs (via GRAPH / GRAPHS attributes on control-flow
+// ops such as If/Loop/Scan) whose own nodes can also call model-local functions, so
+// we descend recursively to detect cycles hidden at any nesting level. This follows the
+// same subgraph descent as the existing checker recursion (check_graph -> check_node ->
+// check_attribute -> check_graph) and does not add a new unbounded-recursion characteristic.
+void CollectCalleeEdges(
+    const google::protobuf::RepeatedPtrField<NodeProto>& nodes,
+    const std::unordered_map<std::string, FuncPtr>& func_by_key,
+    std::unordered_set<FuncPtr>& callees) {
+  for (const auto& node : nodes) {
+    auto it = func_by_key.find(GetCalleeId(node));
+    if (it != func_by_key.end()) {
+      callees.insert(it->second);
+    }
+    // has_g() guards the singular GRAPH attribute; graphs() is the repeated GRAPHS field.
+    for (const auto& attr : node.attribute()) {
+      if (attr.has_g()) {
+        CollectCalleeEdges(attr.g().node(), func_by_key, callees);
+      }
+      for (const auto& subgraph : attr.graphs()) {
+        CollectCalleeEdges(subgraph.node(), func_by_key, callees);
+      }
+    }
+  }
+}
+
 } // namespace
 
 void check_function_call_cycles(const ModelProto& model) {
@@ -967,17 +994,12 @@ void check_function_call_cycles(const ModelProto& model) {
     }
   }
 
-  // Build adjacency list using pointers directly
+  // Build adjacency list of FuncPtr edges. FuncPtr points into model.functions(), which
+  // outlives this local map, so storing raw pointers as graph nodes is safe here.
   CallGraph call_graph;
   for (const auto& entry : func_by_key) {
     const auto* func = entry.second;
-    auto& callees = call_graph[func];
-    for (const auto& node : func->node()) {
-      auto it = func_by_key.find(GetCalleeId(node));
-      if (it != func_by_key.end()) {
-        callees.insert(it->second);
-      }
-    }
+    CollectCalleeEdges(func->node(), func_by_key, call_graph[func]);
   }
 
   std::unordered_map<FuncPtr, VisitState> state;
