@@ -145,5 +145,24 @@ TEST(SafeMathTest, MulInt64MinByTwo) {
   EXPECT_TRUE(checked_mul_overflow(std::numeric_limits<int64_t>::min(), 2, &result));
 }
 
+TEST(SafeMathTest, MulProductEqualsInt64MinNotFlaggedAsOverflow) {
+  // INT64_MIN / 2 * 2 == INT64_MIN exactly, which is representable.
+  // A naive abs-based bounds check falsely reports this as overflow because
+  // abs(INT64_MIN / 2) can appear to exceed INT64_MAX / abs(2) under truncation.
+  int64_t result = 0;
+  const int64_t half_min = std::numeric_limits<int64_t>::min() / 2;
+  EXPECT_FALSE(checked_mul_overflow(half_min, 2, &result));
+  EXPECT_EQ(result, std::numeric_limits<int64_t>::min());
+  EXPECT_FALSE(checked_mul_overflow(2, half_min, &result));
+  EXPECT_EQ(result, std::numeric_limits<int64_t>::min());
+}
+
+TEST(SafeMathTest, MulProductOneLessThanInt64MinMagnitudeNoOverflow) {
+  int64_t result = 0;
+  const int64_t half_min_plus_one = std::numeric_limits<int64_t>::min() / 2 + 1;
+  EXPECT_FALSE(checked_mul_overflow(half_min_plus_one, 2, &result));
+  EXPECT_EQ(result, std::numeric_limits<int64_t>::min() + 2);
+}
+
 } // namespace Test
 } // namespace ONNX_NAMESPACE

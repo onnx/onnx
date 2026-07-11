@@ -164,24 +164,22 @@ UnaryFloatMathOpGenerator(const char* doc, const char* output_description, std::
 }
 
 int64_t MathOpTwoIntegers(const std::string& op_type, int64_t a, int64_t b) {
-  int64_t result;
+  bool (*checked_op)(int64_t, int64_t, int64_t*) = nullptr;
   if (op_type == "Add") {
-    if (checked_add_overflow(a, b, &result)) {
-      fail_shape_inference("Integer overflow in Add during data propagation");
-    }
-    return result;
+    checked_op = checked_add_overflow;
   } else if (op_type == "Sub") {
-    if (checked_sub_overflow(a, b, &result)) {
-      fail_shape_inference("Integer overflow in Sub during data propagation");
-    }
-    return result;
+    checked_op = checked_sub_overflow;
   } else if (op_type == "Mul") {
-    if (checked_mul_overflow(a, b, &result)) {
-      fail_shape_inference("Integer overflow in Mul during data propagation");
-    }
-    return result;
+    checked_op = checked_mul_overflow;
+  } else {
+    fail_shape_inference("Wrong op_type name for running propagation: ", op_type);
   }
-  fail_shape_inference("Wrong op_type name for running propagation: ", op_type);
+
+  int64_t result;
+  if (checked_op(a, b, &result)) {
+    fail_shape_inference("Integer overflow in ", op_type, " during data propagation");
+  }
+  return result;
 }
 
 void MatMulShapeInference(ONNX_NAMESPACE::InferenceContext& ctx, int input1Idx, int input2Idx) {

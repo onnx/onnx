@@ -12,8 +12,10 @@
 namespace ONNX_NAMESPACE {
 
 // Returns true on overflow for all signed int64 values.
-// GCC/Clang use the compiler builtin. The MSVC fallback handles INT64_MIN
-// explicitly (it cannot be negated) and uses abs-based division for the rest.
+// GCC/Clang use the compiler builtin. The MSVC fallback compares against the
+// int64 bounds per sign combination (the classic CERT INT32-C style check,
+// generalized to 64 bits) before multiplying, so it never computes a product
+// that doesn't fit and never divides INT64_MIN by -1.
 inline bool checked_mul_overflow(int64_t a, int64_t b, int64_t* result) {
 #if defined(__GNUC__) || defined(__clang__)
   return __builtin_mul_overflow(a, b, result);
@@ -22,24 +24,10 @@ inline bool checked_mul_overflow(int64_t a, int64_t b, int64_t* result) {
     *result = 0;
     return false;
   }
-  // INT64_MIN cannot be negated safely; its only non-overflowing multiplier is 1.
-  if (a == std::numeric_limits<int64_t>::min()) {
-    if (b == 1) {
-      *result = a;
-      return false;
-    }
-    return true;
-  }
-  if (b == std::numeric_limits<int64_t>::min()) {
-    if (a == 1) {
-      *result = b;
-      return false;
-    }
-    return true;
-  }
-  const int64_t abs_a = a < 0 ? -a : a;
-  const int64_t abs_b = b < 0 ? -b : b;
-  if (abs_a > std::numeric_limits<int64_t>::max() / abs_b) {
+  constexpr int64_t kMax = std::numeric_limits<int64_t>::max();
+  constexpr int64_t kMin = std::numeric_limits<int64_t>::min();
+  const bool overflow = a > 0 ? (b > 0 ? a > kMax / b : b < kMin / a) : (b > 0 ? a < kMin / b : b < kMax / a);
+  if (overflow) {
     return true;
   }
   *result = a * b;
