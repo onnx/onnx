@@ -175,7 +175,7 @@ int64_t MathOpTwoIntegers(const std::string& op_type, int64_t a, int64_t b) {
     fail_shape_inference("Wrong op_type name for running propagation: ", op_type);
   }
 
-  int64_t result;
+  int64_t result = 0;
   if (checked_op(a, b, &result)) {
     fail_shape_inference("Integer overflow in ", op_type, " during data propagation");
   }

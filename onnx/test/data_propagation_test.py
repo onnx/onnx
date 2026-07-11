@@ -4,6 +4,7 @@
 
 from __future__ import annotations
 
+import pytest
 from shape_inference_test import TestShapeInferenceHelper
 
 import onnx.parser
@@ -232,13 +233,8 @@ class TestDataPropagation(TestShapeInferenceHelper):
             ],
             [],
         )
-        self.assertRaises(
-            onnx.shape_inference.InferenceError,
-            self._assert_inferred,
-            graph,
-            [],
-            data_prop=True,
-        )
+        with pytest.raises(onnx.shape_inference.InferenceError):
+            self._assert_inferred(graph, [], data_prop=True)
 
     def test_sub_overflow(self) -> None:
         # Sub with INT64_MIN - 1 must raise InferenceError rather than silently wrapping.
@@ -269,13 +265,8 @@ class TestDataPropagation(TestShapeInferenceHelper):
             ],
             [],
         )
-        self.assertRaises(
-            onnx.shape_inference.InferenceError,
-            self._assert_inferred,
-            graph,
-            [],
-            data_prop=True,
-        )
+        with pytest.raises(onnx.shape_inference.InferenceError):
+            self._assert_inferred(graph, [], data_prop=True)
 
     def test_mul_overflow(self) -> None:
         # Mul with INT64_MAX * 2 must raise InferenceError rather than silently wrapping.
@@ -305,13 +296,8 @@ class TestDataPropagation(TestShapeInferenceHelper):
             ],
             [],
         )
-        self.assertRaises(
-            onnx.shape_inference.InferenceError,
-            self._assert_inferred,
-            graph,
-            [],
-            data_prop=True,
-        )
+        with pytest.raises(onnx.shape_inference.InferenceError):
+            self._assert_inferred(graph, [], data_prop=True)
 
     def test_empty_tensor(self) -> None:
         """Test that a Concat with an empty tensor as input is handled correctly by data-propagation."""
