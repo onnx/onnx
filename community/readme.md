@@ -48,9 +48,9 @@ Approvers need to be active Contributors for at least 3 months and be sponsored 
 
 > **Work in Progress:** This role definition is under active discussion. Details may change before ratification by the Steering Committee.
 
-A Release Manager is an active Contributor who takes responsibility for driving a single release cycle from branch cut to final publication. The role rotates each release; the same person may serve multiple consecutive cycles by mutual agreement. Release Managers are nominated by the SIG Architecture & Infra chairs and confirmed by the Steering Committee.
+A Release Manager takes responsibility for driving a single release cycle from branch cut to final publication. The role commonly rotates among Member Companies each release; the same person or company may serve multiple consecutive cycles by mutual agreement. Release Managers are nominated by the SIG Architecture & Infra chairs and confirmed by the Steering Committee.
 
-**Eligibility:** Must be an active Contributor. Prior participation in at least one release cycle (in any capacity) is strongly encouraged but not required.
+**Eligibility:** No prior Contributor status or codebase familiarity is required. In practice, Release Managers are often designated through an informal rotation among Member Companies and may be new to the codebase; nomination by SIG Architecture & Infra and confirmation by the Steering Committee are the operative checks.
 
 **Duties for a release cycle:**
 
