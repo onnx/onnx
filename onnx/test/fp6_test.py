@@ -4,12 +4,13 @@
 from __future__ import annotations
 
 import unittest
+
 import numpy as np
 
 import onnx
 from onnx import helper
-from onnx.reference import ReferenceEvaluator
 from onnx.numpy_helper import to_array
+from onnx.reference import ReferenceEvaluator
 
 
 class TestFP6(unittest.TestCase):
@@ -64,8 +65,15 @@ class TestFP6(unittest.TestCase):
     def _qdq_model(self, qdtype: int) -> onnx.ModelProto:
         g = helper.make_graph(
             [
-                helper.make_node("QuantizeLinear", ["X", "S"], ["Q"], saturate=1, output_dtype=qdtype),
-                helper.make_node("DequantizeLinear", ["Q", "S"], ["Y"], output_dtype=onnx.TensorProto.FLOAT),
+                helper.make_node(
+                    "QuantizeLinear", ["X", "S"], ["Q"], saturate=1, output_dtype=qdtype
+                ),
+                helper.make_node(
+                    "DequantizeLinear",
+                    ["Q", "S"],
+                    ["Y"],
+                    output_dtype=onnx.TensorProto.FLOAT,
+                ),
             ],
             "g",
             [
@@ -89,4 +97,3 @@ class TestFP6(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)
-

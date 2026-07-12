@@ -398,14 +398,18 @@ def make_tensor(
 
     if raw:
         # Special-case FP6: allow passing float values and pack to raw_data.
-        if data_type in {TensorProto.FLOAT6E2M3, TensorProto.FLOAT6E3M2} and not isinstance(vals, (bytes, bytearray)) and not (
-            isinstance(vals, np.ndarray) and vals.dtype == np.uint8
+        if (
+            data_type in {TensorProto.FLOAT6E2M3, TensorProto.FLOAT6E3M2}
+            and not isinstance(vals, (bytes, bytearray))
+            and not (isinstance(vals, np.ndarray) and vals.dtype == np.uint8)
         ):
             arr = np.asarray(vals, dtype=np.float32).ravel()
-            from onnx.numpy_helper import _pack_6bit  # local import to avoid cycle
+            # Local import to avoid a cycle with numpy_helper.
+            from onnx.numpy_helper import _pack_6bit  # noqa: PLC0415
+
             # Encode FP6 manually (round to nearest-even via numpy round, saturate, handle subnormals),
             # then pack into 6-bit stream.
-            sign = (np.signbit(arr).astype(np.uint8) << 5)
+            sign = np.signbit(arr).astype(np.uint8) << 5
             abs_x = np.abs(arr)
             if data_type == TensorProto.FLOAT6E2M3:
                 bias = 3
@@ -417,7 +421,7 @@ def make_tensor(
                 max_exp = 7
             e = np.floor(np.log2(np.where(abs_x == 0, 1.0, abs_x))).astype(np.int32)
             exp_biased = e + bias
-            frac = abs_x / (2.0 ** e) - 1.0
+            frac = abs_x / (2.0**e) - 1.0
             mant_f = frac * (1 << n_mant)
             mant_r = np.round(mant_f).astype(np.int32)
             max_mant = (1 << n_mant) - 1

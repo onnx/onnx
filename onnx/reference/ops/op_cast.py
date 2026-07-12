@@ -59,7 +59,7 @@ class Cast_24(OpRun):
 
 def float32_to_float6e2m3(x: np.ndarray, saturate: bool) -> np.ndarray:
     x = x.astype(np.float32)
-    sign_bit = (np.signbit(x).astype(np.uint8) << 5)
+    sign_bit = np.signbit(x).astype(np.uint8) << 5
     abs_x = np.abs(x)
     # Handle zeros early
     is_zero = abs_x == 0
@@ -74,8 +74,8 @@ def float32_to_float6e2m3(x: np.ndarray, saturate: bool) -> np.ndarray:
     exp_biased = e + bias
 
     # Normalized where exp_biased in [1, max_exp]
-    is_normal = (exp_biased >= 1) & (exp_biased <= max_exp)
-    frac = abs_x / (2.0 ** e) - 1.0
+    (exp_biased >= 1) & (exp_biased <= max_exp)
+    frac = abs_x / (2.0**e) - 1.0
     mant_f = frac * (1 << n_mant)
     mant_r = np.round(mant_f).astype(np.int32)  # ties to even
 
@@ -120,12 +120,12 @@ def float32_to_float6e2m3(x: np.ndarray, saturate: bool) -> np.ndarray:
     out = np.where(overflow, sat_val, out)
     out = np.where(is_nan_or_inf, sat_val, out)
     # Force -0 to +0
-    out = np.where(is_zero, 0, out)
-    return out
+    return np.where(is_zero, 0, out)
+
 
 def float32_to_float6e3m2(x: np.ndarray, saturate: bool) -> np.ndarray:
     x = x.astype(np.float32)
-    sign_bit = (np.signbit(x).astype(np.uint8) << 5)
+    sign_bit = np.signbit(x).astype(np.uint8) << 5
     abs_x = np.abs(x)
     is_zero = abs_x == 0
     bias = 4
@@ -136,8 +136,8 @@ def float32_to_float6e3m2(x: np.ndarray, saturate: bool) -> np.ndarray:
     e = np.floor(np.log2(np.where(is_zero, 1.0, abs_x))).astype(np.int32)
     exp_biased = e + bias
 
-    is_normal = (exp_biased >= 1) & (exp_biased <= max_exp)
-    frac = abs_x / (2.0 ** e) - 1.0
+    (exp_biased >= 1) & (exp_biased <= max_exp)
+    frac = abs_x / (2.0**e) - 1.0
     mant_f = frac * (1 << n_mant)
     mant_r = np.round(mant_f).astype(np.int32)
 
@@ -173,8 +173,7 @@ def float32_to_float6e3m2(x: np.ndarray, saturate: bool) -> np.ndarray:
     is_nan_or_inf = np.isnan(x) | np.isinf(x)
     out = np.where(overflow, sat_val, out)
     out = np.where(is_nan_or_inf, sat_val, out)
-    out = np.where(is_zero, 0, out)
-    return out
+    return np.where(is_zero, 0, out)
 
 
 class Cast_25(OpRun):

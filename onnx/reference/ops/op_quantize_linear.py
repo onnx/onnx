@@ -8,10 +8,6 @@ from __future__ import annotations
 import numpy as np
 
 import onnx
-from onnx.reference.ops.op_cast import (
-    float32_to_float6e2m3,
-    float32_to_float6e3m2,
-)
 from onnx import TensorProto
 from onnx.helper import (
     np_dtype_to_tensor_dtype,
@@ -19,6 +15,10 @@ from onnx.helper import (
 )
 from onnx.reference.op_run import OpRun
 from onnx.reference.ops._quant_utils import reshape_input as _reshape_input
+from onnx.reference.ops.op_cast import (
+    float32_to_float6e2m3,
+    float32_to_float6e3m2,
+)
 
 _QUANT_TYPES = {
     TensorProto.UINT8,
@@ -118,10 +118,18 @@ class _CommonQuantizeLinear(OpRun):
             return (x.astype(tensor_dtype_to_np_dtype(tensor_type)),)
 
         if tensor_type == TensorProto.FLOAT6E2M3:
-            return (float32_to_float6e2m3((x + zero_point).astype(np.float32), saturate).astype(np.uint8),)
+            return (
+                float32_to_float6e2m3(
+                    (x + zero_point).astype(np.float32), saturate
+                ).astype(np.uint8),
+            )
 
         if tensor_type == TensorProto.FLOAT6E3M2:
-            return (float32_to_float6e3m2((x + zero_point).astype(np.float32), saturate).astype(np.uint8),)
+            return (
+                float32_to_float6e3m2(
+                    (x + zero_point).astype(np.float32), saturate
+                ).astype(np.uint8),
+            )
 
         raise ValueError(
             f"Unexpected type: output_dtype={tensor_type} is not a supported quantized type."

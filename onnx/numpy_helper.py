@@ -5,7 +5,8 @@ from __future__ import annotations
 
 import math
 import sys
-from typing import TYPE_CHECKING, Any, Sequence
+from collections.abc import Sequence
+from typing import TYPE_CHECKING, Any
 
 import ml_dtypes
 import numpy as np
@@ -198,7 +199,9 @@ def _pack_6bit(values: np.ndarray) -> np.ndarray:
     return packed
 
 
-def _unpack_6bit(data: np.ndarray, original_size: int, dims: Sequence[int]) -> np.ndarray:
+def _unpack_6bit(
+    data: np.ndarray, original_size: int, dims: Sequence[int]
+) -> np.ndarray:
     """Unpack 6-bit packed buffer back into uint8 array of given dims."""
     unpacked = np.zeros(original_size, dtype=np.uint8)
     bit_pos = 0
@@ -206,7 +209,7 @@ def _unpack_6bit(data: np.ndarray, original_size: int, dims: Sequence[int]) -> n
         val = 0
         for j in range(6):
             byte_index = bit_pos >> 3  # bit_pos // 8
-            bit_index = bit_pos & 7    # bit_pos % 8
+            bit_index = bit_pos & 7  # bit_pos % 8
             if byte_index < len(data):
                 val |= ((data[byte_index] >> bit_index) & 1) << j
             bit_pos += 1
@@ -277,13 +280,14 @@ def to_array(tensor: onnx.TensorProto, base_dir: str = "") -> np.ndarray:  # noq
             num_elems = int(np.prod(dims))
             if len(raw_data) == num_elems:
                 return np.frombuffer(raw_data, dtype=np_dtype).reshape(dims)
-            from onnx.reference.ops.op_dequantize_linear import (
+            from onnx.reference.ops.op_dequantize_linear import (  # noqa: PLC0415
                 float6e2m3_to_float32,
                 float6e3m2_to_float32,
             )
+
             data = np.frombuffer(raw_data, dtype=np.uint8)
             unpacked = _unpack_6bit(data, num_elems, dims)
-            unpacked = np.where(unpacked == 0x20, 0, unpacked).astype(np.uint8)
+            unpacked = np.where(unpacked == 0x20, 0, unpacked).astype(np.uint8)  # noqa: PLR2004
             if np_dtype == np.dtype("uint8"):
                 # Fallback path: upcast to float32 so callers see numeric values
                 floats = (

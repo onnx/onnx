@@ -23,7 +23,7 @@ As a result, two new types were introduced in `onnx==1.19.0` to support a limite
    :widths: 10 10 10
    :header-rows: 1
 
-   * - 
+   * -
      - FLOAT6E2M3
      - FLOAT6E3M2
    * - Bits
@@ -76,4 +76,4 @@ Upcasting exact. Downcasting RNE with saturation. Examples:
 ```
 
 ## Packing and Unpacking
-Pack 4 vals (24 bits) into 3 bytes, pad with 0s if not multiple of 4. Little-endian bit order. 
+Pack 4 vals (24 bits) into 3 bytes, pad with 0s if not multiple of 4. Little-endian bit order.
