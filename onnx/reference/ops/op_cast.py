@@ -73,8 +73,6 @@ def float32_to_float6e2m3(x: np.ndarray, saturate: bool) -> np.ndarray:
     e = np.floor(np.log2(np.where(is_zero, 1.0, abs_x))).astype(np.int32)
     exp_biased = e + bias
 
-    # Normalized where exp_biased in [1, max_exp]
-    (exp_biased >= 1) & (exp_biased <= max_exp)
     frac = abs_x / (2.0**e) - 1.0
     mant_f = frac * (1 << n_mant)
     mant_r = np.round(mant_f).astype(np.int32)  # ties to even
@@ -136,7 +134,6 @@ def float32_to_float6e3m2(x: np.ndarray, saturate: bool) -> np.ndarray:
     e = np.floor(np.log2(np.where(is_zero, 1.0, abs_x))).astype(np.int32)
     exp_biased = e + bias
 
-    (exp_biased >= 1) & (exp_biased <= max_exp)
     frac = abs_x / (2.0**e) - 1.0
     mant_f = frac * (1 << n_mant)
     mant_r = np.round(mant_f).astype(np.int32)
