@@ -1021,3 +1021,7 @@ message FunctionProto {
   // Named metadata values; keys should be distinct.
   repeated StringStringEntryProto metadata_props = 14;
 }
+
+// For using protobuf-lite
+option optimize_for = LITE_RUNTIME;
+
