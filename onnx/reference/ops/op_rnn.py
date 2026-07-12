@@ -136,6 +136,8 @@ class CommonRNN(OpRun):
             else np.zeros((self.num_directions, batch_size, hidden_size), dtype=X.dtype)
         )
 
+        if self.direction not in {"forward", "reverse", "bidirectional"}:
+            raise RuntimeError(f"Unknown direction {self.direction!r}.")
         expected_num_directions = 2 if self.direction == "bidirectional" else 1
         if self.num_directions != expected_num_directions:
             raise RuntimeError(
@@ -144,7 +146,6 @@ class CommonRNN(OpRun):
             )
 
         if self.direction == "forward":
-            assert self.num_directions == 1
             Y, Y_h = self._run_forward(
                 X,
                 R[0],
@@ -156,7 +157,6 @@ class CommonRNN(OpRun):
             Y = np.expand_dims(Y, 1)
             Y_h = np.expand_dims(Y_h, 0)
         elif self.direction == "reverse":
-            assert self.num_directions == 1
             Y, Y_h = self._run_forward(
                 np.flip(X, axis=0),
                 R[0],
@@ -168,8 +168,6 @@ class CommonRNN(OpRun):
             Y = np.expand_dims(Y, 1)
             Y_h = np.expand_dims(Y_h, 0)
         else:
-            assert self.direction == "bidirectional"
-            assert self.num_directions == 2
             Yf, Yf_h = self._run_forward(
                 X,
                 R[0],
