@@ -76,8 +76,16 @@ class CommonLSTM(OpRun):
         P: np.ndarray,
         num_directions: int,
     ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+        if self.direction not in {"forward", "reverse", "bidirectional"}:
+            raise RuntimeError(f"Unknown direction {self.direction!r}.")
+        expected_num_directions = 2 if self.direction == "bidirectional" else 1
+        if num_directions != expected_num_directions:
+            raise RuntimeError(
+                f"direction={self.direction!r} requires num_directions={expected_num_directions} "
+                f"but got {num_directions}."
+            )
+
         if self.direction == "forward":
-            assert num_directions == 1
             Y, Y_h, Y_c = self._run_forward(
                 X,
                 W[0],
@@ -92,7 +100,6 @@ class CommonLSTM(OpRun):
             Y_h = np.expand_dims(Y_h, 0)
             Y_c = np.expand_dims(Y_c, 0)
         elif self.direction == "reverse":
-            assert num_directions == 1
             Y, Y_h, Y_c = self._run_forward(
                 np.flip(X, axis=0),
                 W[0],
@@ -107,8 +114,6 @@ class CommonLSTM(OpRun):
             Y_h = np.expand_dims(Y_h, 0)
             Y_c = np.expand_dims(Y_c, 0)
         else:
-            assert self.direction == "bidirectional"
-            assert num_directions == 2
             Yf, Yf_h, Yf_c = self._run_forward(
                 X,
                 W[0],
