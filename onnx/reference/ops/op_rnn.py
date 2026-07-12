@@ -136,6 +136,13 @@ class CommonRNN(OpRun):
             else np.zeros((self.num_directions, batch_size, hidden_size), dtype=X.dtype)
         )
 
+        expected_num_directions = 2 if self.direction == "bidirectional" else 1
+        if self.num_directions != expected_num_directions:
+            raise RuntimeError(
+                f"direction={self.direction!r} requires num_directions={expected_num_directions} "
+                f"but got {self.num_directions}."
+            )
+
         if self.direction == "forward":
             assert self.num_directions == 1
             Y, Y_h = self._run_forward(
