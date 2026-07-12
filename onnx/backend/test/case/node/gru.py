@@ -44,10 +44,17 @@ class GRUHelper:
 
         batch_size = x.shape[1]
         b = params.get(
-            B, np.zeros((self.num_directions, 2 * number_of_gates * hidden_size))
+            B,
+            np.zeros(
+                (self.num_directions, 2 * number_of_gates * hidden_size),
+                dtype=x.dtype,
+            ),
         )
         if h_0 is None:
-            h_0 = np.zeros((self.num_directions, batch_size, hidden_size))
+            h_0 = np.zeros(
+                (self.num_directions, batch_size, hidden_size),
+                dtype=x.dtype,
+            )
         lbr = params.get(LBR, 0)
 
         self.X = x

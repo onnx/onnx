@@ -52,23 +52,23 @@ class LSTMHelper:
             B,
             np.zeros(
                 (self.num_directions, 2 * number_of_gates * hidden_size),
-                dtype=np.float32,
+                dtype=x.dtype,
             ),
         )
         p = params.get(
             P,
             np.zeros(
                 (self.num_directions, number_of_peepholes * hidden_size),
-                dtype=np.float32,
+                dtype=x.dtype,
             ),
         )
         if h_0 is None:
             h_0 = np.zeros(
-                (self.num_directions, batch_size, hidden_size), dtype=np.float32
+                (self.num_directions, batch_size, hidden_size), dtype=x.dtype
             )
         if c_0 is None:
             c_0 = np.zeros(
-                (self.num_directions, batch_size, hidden_size), dtype=np.float32
+                (self.num_directions, batch_size, hidden_size), dtype=x.dtype
             )
 
         self.X = x

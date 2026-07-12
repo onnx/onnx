@@ -42,11 +42,15 @@ class RNNHelper:
 
         batch_size = x.shape[1]
         b = params.get(
-            B, np.zeros((self.num_directions, 2 * hidden_size), dtype=np.float32)
+            B,
+            np.zeros(
+                (self.num_directions, 2 * hidden_size),
+                dtype=x.dtype,
+            ),
         )
         if h_0 is None:
             h_0 = np.zeros(
-                (self.num_directions, batch_size, hidden_size), dtype=np.float32
+                (self.num_directions, batch_size, hidden_size), dtype=x.dtype
             )
 
         self.X = x
