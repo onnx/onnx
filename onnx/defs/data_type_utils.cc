@@ -173,12 +173,6 @@ std::string DataTypeUtils::ToDataTypeString(int32_t tensor_data_type) {
   return iter->second;
 }
 
-// Helper to validate if a data type string maps to a known TensorProto data type.
-static bool IsValidDataTypeString(const std::string& type_str) {
-  TypesWrapper& t = TypesWrapper::GetTypesWrapper();
-  return t.TypeStrToTensorDataType().find(type_str) != t.TypeStrToTensorDataType().end();
-}
-
 void DataTypeUtils::FromString(const std::string& type_str, TypeProto& type_proto) {
   StringRange s(type_str);
   type_proto.Clear();
@@ -235,6 +229,12 @@ void DataTypeUtils::FromString(const std::string& type_str, TypeProto& type_prot
     t->mutable_shape();
   }
 } // namespace Utils
+
+bool DataTypeUtils::IsValidDataTypeString(const std::string& type_str) {
+  TypesWrapper& t = TypesWrapper::GetTypesWrapper();
+  const auto& allowedSet = t.GetAllowedDataTypes();
+  return (allowedSet.find(type_str) != allowedSet.end());
+}
 
 int32_t DataTypeUtils::FromDataTypeString(const std::string& type_str) {
   if (!IsValidDataTypeString(type_str)) {
