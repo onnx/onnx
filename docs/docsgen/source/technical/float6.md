@@ -12,7 +12,7 @@ SPDX-License-Identifier: Apache-2.0
 
 Based on OCP Microscaling Formats (MX) v1.0 spec. FP6 introduced for reduced precision in model inference and training.
 
-As a result, two new types were introduced in `onnx==1.19.0` to support a limited set of operators.
+As a result, two new types were introduced in `onnx==1.23.0` to support a limited set of operators.
 
 - `FLOAT6E2M3`: 1 sign, 2 exp, 3 mant
 - `FLOAT6E3M2`: 1 sign, 3 exp, 2 mant
@@ -30,8 +30,8 @@ As a result, two new types were introduced in `onnx==1.19.0` to support a limite
      - sign:1 exp:2 mant:3
      - sign:1 exp:3 mant:2
    * - Exponent bias
+     - 1
      - 3
-     - 4
    * - Infinities
      - No
      - No
@@ -42,14 +42,14 @@ As a result, two new types were introduced in `onnx==1.19.0` to support a limite
      - +/-0: 0x00 / 0x20 (but -0 saturates to 0)
      - +/-0: 0x00 / 0x20
    * - Max normalized
-     - 1.111 * 2^0 = 15 (but effective max 24 with denorm? Confirm spec)
-     - 1.11 * 2^3 = 48
+     - 1.111 * 2^2 = 7.5
+     - 1.11 * 2^4 = 28
    * - Min normalized
-     - 0.001 * 2^{-3} = 0.03125
-     - 0.01 * 2^{-4} = 0.00390625
+     - 1.000 * 2^0 = 1
+     - 1.00 * 2^{-2} = 0.25
    * - Min denorm
-     - 0.001 * 2^{-3} = 0.03125 (spec)
-     - 0.01 * 2^{-4}
+     - 0.001 * 2^0 = 0.125
+     - 0.01 * 2^{-2} = 0.0625
 ```
 
 ## Cast
@@ -62,17 +62,17 @@ Upcasting exact. Downcasting RNE with saturation. Examples:
      - FLOAT6E2M3 (sat=true)
      - FLOAT6E3M2 (sat=true)
    * - 25.0
-     - 24.0 (sat)
-     - 25.0 (round)
+     - 7.5 (sat)
+     - 24.0 (round)
    * - -0.0
      - 0.0
      - 0.0
    * - inf
-     - 24.0 (sat)
-     - 48.0 (sat)
+     - 7.5 (sat)
+     - 28.0 (sat)
    * - nan
-     - 24.0 (sat)
-     - 48.0 (sat)
+     - 7.5 (sat)
+     - 28.0 (sat)
 ```
 
 ## Packing and Unpacking

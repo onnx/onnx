@@ -64,7 +64,7 @@ def float32_to_float6e2m3(x: np.ndarray, saturate: bool) -> np.ndarray:
     # Handle zeros early
     is_zero = abs_x == 0
     # Constants
-    bias = 3
+    bias = 1
     n_mant = 3
     max_exp = 3
     max_mant = (1 << n_mant) - 1
@@ -97,8 +97,9 @@ def float32_to_float6e2m3(x: np.ndarray, saturate: bool) -> np.ndarray:
     final_mant = np.where(is_sub, sub_mant_r, mant_r)
     final_mant = np.clip(final_mant, 0, max_mant)
 
-    # Saturation for overflow
-    overflow = final_exp > max_exp
+    # Saturation for overflow (checked against the pre-clip biased exponent;
+    # final_exp is already clamped to max_exp by this point)
+    overflow = exp_biased > max_exp
     if saturate:
         pos_sat = (0 << 5) | (max_exp << 3) | max_mant
         neg_sat = (1 << 5) | (max_exp << 3) | max_mant
@@ -126,7 +127,7 @@ def float32_to_float6e3m2(x: np.ndarray, saturate: bool) -> np.ndarray:
     sign_bit = np.signbit(x).astype(np.uint8) << 5
     abs_x = np.abs(x)
     is_zero = abs_x == 0
-    bias = 4
+    bias = 3
     n_mant = 2
     max_exp = 7
     max_mant = (1 << n_mant) - 1
@@ -154,7 +155,9 @@ def float32_to_float6e3m2(x: np.ndarray, saturate: bool) -> np.ndarray:
     final_mant = np.where(is_sub, sub_mant_r, mant_r)
     final_mant = np.clip(final_mant, 0, max_mant)
 
-    overflow = final_exp > max_exp
+    # checked against the pre-clip biased exponent; final_exp is already
+    # clamped to max_exp by this point
+    overflow = exp_biased > max_exp
     if saturate:
         pos_sat = (0 << 5) | (max_exp << 2) | max_mant
         neg_sat = (1 << 5) | (max_exp << 2) | max_mant

@@ -19,9 +19,9 @@ def float6e2m3_to_float32(x: np.ndarray) -> np.ndarray:
     # normalized when exp != 0
     norm = exp != 0
     norm_val = (1.0 + mant.astype(np.float32) / 8.0) * (
-        2.0 ** (exp.astype(np.int16) - 3)
+        2.0 ** (exp.astype(np.int16) - 1)
     )
-    sub_val = (mant.astype(np.float32) / 8.0) * (2.0 ** (1 - 3))  # 1 - bias = -2
+    sub_val = (mant.astype(np.float32) / 8.0) * (2.0 ** (1 - 1))  # 1 - bias = 0
     val = np.where(norm, norm_val, sub_val).astype(np.float32)
     return np.where(sign == 1, -val, val)
 
@@ -33,9 +33,9 @@ def float6e3m2_to_float32(x: np.ndarray) -> np.ndarray:
     mant = x & 0x03
     norm = exp != 0
     norm_val = (1.0 + mant.astype(np.float32) / 4.0) * (
-        2.0 ** (exp.astype(np.int16) - 4)
+        2.0 ** (exp.astype(np.int16) - 3)
     )
-    sub_val = (mant.astype(np.float32) / 4.0) * (2.0 ** (1 - 4))  # 1 - bias = -3
+    sub_val = (mant.astype(np.float32) / 4.0) * (2.0 ** (1 - 3))  # 1 - bias = -2
     val = np.where(norm, norm_val, sub_val).astype(np.float32)
     return np.where(sign == 1, -val, val)
 

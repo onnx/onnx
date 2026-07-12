@@ -412,11 +412,11 @@ def make_tensor(
             sign = np.signbit(arr).astype(np.uint8) << 5
             abs_x = np.abs(arr)
             if data_type == TensorProto.FLOAT6E2M3:
-                bias = 3
+                bias = 1
                 n_mant = 3
                 max_exp = 3
             else:
-                bias = 4
+                bias = 3
                 n_mant = 2
                 max_exp = 7
             e = np.floor(np.log2(np.where(abs_x == 0, 1.0, abs_x))).astype(np.int32)
