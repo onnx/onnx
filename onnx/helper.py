@@ -404,9 +404,6 @@ def make_tensor(
             and not (isinstance(vals, np.ndarray) and vals.dtype == np.uint8)
         ):
             arr = np.asarray(vals, dtype=np.float32).ravel()
-            # Local import to avoid a cycle with numpy_helper.
-            from onnx.numpy_helper import _pack_6bit  # noqa: PLC0415
-
             # Encode FP6 manually (round to nearest-even via numpy round, saturate, handle subnormals),
             # then pack into 6-bit stream.
             sign = np.signbit(arr).astype(np.uint8) << 5
@@ -444,7 +441,7 @@ def make_tensor(
                 base = (final_exp.astype(np.uint8) << 2) | (final_mant.astype(np.uint8))
             fp6 = (sign | base).astype(np.uint8)
             fp6 = np.where(abs_x == 0, 0, fp6).astype(np.uint8)
-            packed = _pack_6bit(fp6)
+            packed = onnx.numpy_helper._pack_6bit(fp6)
             expected_packed_size_bytes = math.ceil(0.75 * math.prod(dims))
             if len(packed) != expected_packed_size_bytes:
                 raise ValueError(
