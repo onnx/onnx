@@ -3,16 +3,19 @@
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
+import io
 import os
 import shutil
+import tarfile
 import tempfile
-import unittest
+
+import pytest
 
 import onnx
 from onnx import TensorProto, helper
 
 
-class TestUtilityFunctions(unittest.TestCase):
+class TestUtilityFunctions:
     def test_extract_model(self) -> None:
         def create_tensor(name):
             return helper.make_tensor_value_info(name, TensorProto.FLOAT, [1, 2])
@@ -46,19 +49,31 @@ class TestUtilityFunctions(unittest.TestCase):
         onnx.utils.extract_model(p0, p1, input_names, output_names)
 
         m1 = onnx.load(p1)
-        self.assertEqual(m1.producer_name, "onnx.utils.extract_model")
-        self.assertEqual(m1.ir_version, m0.ir_version)
-        self.assertEqual(m1.opset_import, m0.opset_import)
-        self.assertEqual(len(m1.graph.node), 2)
-        self.assertEqual(len(m1.graph.input), 3)
-        self.assertEqual(len(m1.graph.output), 2)
-        self.assertEqual(m1.graph.input[0], B0)
-        self.assertEqual(m1.graph.input[1], B1)
-        self.assertEqual(m1.graph.input[2], B2)
-        self.assertEqual(m1.graph.output[0], C0)
-        self.assertEqual(m1.graph.output[1], C1)
+        assert m1.producer_name == "onnx.utils.extract_model"
+        assert m1.ir_version == m0.ir_version
+        assert m1.opset_import == m0.opset_import
+        assert len(m1.graph.node) == 2
+        assert len(m1.graph.input) == 3
+        assert len(m1.graph.output) == 2
+        assert m1.graph.input[0] == B0
+        assert m1.graph.input[1] == B1
+        assert m1.graph.input[2] == B2
+        assert m1.graph.output[0] == C0
+        assert m1.graph.output[1] == C1
         shutil.rmtree(tdir, ignore_errors=True)
 
+    def test_tar_members_filter_rejects_sibling_prefix_escape(self) -> None:
+        with tempfile.TemporaryDirectory() as tdir:
+            base = os.path.join(tdir, "model")
+            os.mkdir(base)
+            tar_path = os.path.join(tdir, "payload.tar")
 
-if __name__ == "__main__":
-    unittest.main()
+            with tarfile.open(tar_path, "w") as tar:
+                payload = b"outside extraction root"
+                info = tarfile.TarInfo("../model_evil/pwned.txt")
+                info.size = len(payload)
+                tar.addfile(info, io.BytesIO(payload))
+
+            with tarfile.open(tar_path) as tar:  # noqa: SIM117
+                with pytest.raises(RuntimeError, match="directory traversal"):
+                    onnx.utils._tar_members_filter(tar, base)

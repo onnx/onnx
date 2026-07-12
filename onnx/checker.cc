@@ -16,6 +16,7 @@
 #include "onnx/common/file_utils.h"
 #include "onnx/common/path.h"
 #include "onnx/common/proto_util.h"
+#include "onnx/common/safe_math.h"
 #include "onnx/common/scoped_resource.h"
 #include "onnx/defs/tensor_proto_util.h"
 #include "onnx/shape_inference/implementation.h"
@@ -60,14 +61,14 @@ namespace checker {
 
 #define enforce_has_field(proto, field)                                              \
   do {                                                                               \
-    if (!proto.has_##field()) {                                                      \
+    if (!(proto).has_##field()) {                                                    \
       fail_check("Field '", #field, "' of '", #proto, "' is required but missing."); \
     }                                                                                \
   } while (0)
 
 #define enforce_non_empty_field(proto, field)                                            \
   do {                                                                                   \
-    if (proto.field().empty()) {                                                         \
+    if ((proto).field().empty()) {                                                       \
       fail_check("Field '", #field, "' of '", #proto, "' is required to be non-empty."); \
     }                                                                                    \
   } while (0)
@@ -162,10 +163,8 @@ void check_tensor(const TensorProto& tensor, const CheckerContext& ctx) {
     }
     return;
   }
-  int64_t nelem = 1;
-  for (auto x : tensor.dims()) {
-    nelem *= x;
-  }
+  int64_t nelem =
+      safe_dim_product(tensor.dims(), [&](const char* msg) { fail_check(msg, " (tensor name: ", tensor.name(), ")"); });
   if (nelem == 0 && num_value_fields != 0) {
     fail_check("TensorProto (tensor name: ", tensor.name(), ") is 0-element but contains data!");
   }
@@ -175,6 +174,31 @@ void check_tensor(const TensorProto& tensor, const CheckerContext& ctx) {
   if (has_raw_data) {
     if (tensor.data_type() == TensorProto::STRING) {
       fail_check("STRING data (tensor name: ", tensor.name(), ") should not be stored in raw_data field");
+    }
+    // Validate that raw_data is large enough for the declared packed sub-byte type and shape.
+    int64_t expected_bytes = 0;
+    switch (tensor.data_type()) {
+      case TensorProto::UINT4:
+      case TensorProto::INT4:
+      case TensorProto::FLOAT4E2M1:
+        expected_bytes = (nelem + 1) / 2; // 2 elements per byte, ceiling division
+        break;
+      case TensorProto::UINT2:
+      case TensorProto::INT2:
+        expected_bytes = (nelem + 3) / 4; // 4 elements per byte, ceiling division
+        break;
+      default:
+        break;
+    }
+    if (expected_bytes > 0 && static_cast<int64_t>(tensor.raw_data().size()) < expected_bytes) {
+      fail_check(
+          "TensorProto (tensor name: ",
+          tensor.name(),
+          ") raw_data size (",
+          tensor.raw_data().size(),
+          " bytes) is too small for the declared shape and packed type (",
+          expected_bytes,
+          " bytes required).");
     }
     return;
   } else {
@@ -216,10 +240,40 @@ void check_tensor(const TensorProto& tensor, const CheckerContext& ctx) {
       case TensorProto::FLOAT8E8M0:
       case TensorProto::UINT4:
       case TensorProto::INT4:
-      case TensorProto::UINT2:
-      case TensorProto::INT2:
       case TensorProto::FLOAT4E2M1:
         check_field(int32_data);
+        if (nelem > 0) {
+          // Each int32 stores 4 bytes = 8 4-bit elements.
+          const int64_t expected_int32s = (nelem + 7) / 8;
+          if (static_cast<int64_t>(tensor.int32_data().size()) < expected_int32s) {
+            fail_check(
+                "TensorProto (tensor name: ",
+                tensor.name(),
+                ") int32_data size (",
+                tensor.int32_data().size(),
+                ") is too small for the declared shape and packed type (",
+                expected_int32s,
+                " int32 values required).");
+          }
+        }
+        break;
+      case TensorProto::UINT2:
+      case TensorProto::INT2:
+        check_field(int32_data);
+        if (nelem > 0) {
+          // Each int32 stores 4 bytes = 16 2-bit elements.
+          const int64_t expected_int32s = (nelem + 15) / 16;
+          if (static_cast<int64_t>(tensor.int32_data().size()) < expected_int32s) {
+            fail_check(
+                "TensorProto (tensor name: ",
+                tensor.name(),
+                ") int32_data size (",
+                tensor.int32_data().size(),
+                ") is too small for the declared shape and packed type (",
+                expected_int32s,
+                " int32 values required).");
+          }
+        }
         break;
 
       case TensorProto::INT64:
@@ -473,7 +527,7 @@ void check_attribute(const AttributeProto& attr, const CheckerContext& ctx, cons
   int used_fields = 0;
 
 #define check_type(expected_type)                                                     \
-  if (attr.has_type() && attr.type() != expected_type) {                              \
+  if (attr.has_type() && attr.type() != (expected_type)) {                            \
     fail_check("type field and data field mismatch in attribute ", attr.name(), "."); \
   }
 
@@ -884,6 +938,33 @@ void DetectCycleDFS(
   }
 }
 
+// Collect callee edges from a list of nodes into the callee set. A node in a
+// function body may carry subgraphs (via GRAPH / GRAPHS attributes on control-flow
+// ops such as If/Loop/Scan) whose own nodes can also call model-local functions, so
+// we descend recursively to detect cycles hidden at any nesting level. This follows the
+// same subgraph descent as the existing checker recursion (check_graph -> check_node ->
+// check_attribute -> check_graph) and does not add a new unbounded-recursion characteristic.
+void CollectCalleeEdges(
+    const google::protobuf::RepeatedPtrField<NodeProto>& nodes,
+    const std::unordered_map<std::string, FuncPtr>& func_by_key,
+    std::unordered_set<FuncPtr>& callees) {
+  for (const auto& node : nodes) {
+    auto it = func_by_key.find(GetCalleeId(node));
+    if (it != func_by_key.end()) {
+      callees.insert(it->second);
+    }
+    // has_g() guards the singular GRAPH attribute; graphs() is the repeated GRAPHS field.
+    for (const auto& attr : node.attribute()) {
+      if (attr.has_g()) {
+        CollectCalleeEdges(attr.g().node(), func_by_key, callees);
+      }
+      for (const auto& subgraph : attr.graphs()) {
+        CollectCalleeEdges(subgraph.node(), func_by_key, callees);
+      }
+    }
+  }
+}
+
 } // namespace
 
 void check_function_call_cycles(const ModelProto& model) {
@@ -907,17 +988,12 @@ void check_function_call_cycles(const ModelProto& model) {
     }
   }
 
-  // Build adjacency list using pointers directly
+  // Build adjacency list of FuncPtr edges. FuncPtr points into model.functions(), which
+  // outlives this local map, so storing raw pointers as graph nodes is safe here.
   CallGraph call_graph;
   for (const auto& entry : func_by_key) {
     const auto* func = entry.second;
-    auto& callees = call_graph[func];
-    for (const auto& node : func->node()) {
-      auto it = func_by_key.find(GetCalleeId(node));
-      if (it != func_by_key.end()) {
-        callees.insert(it->second);
-      }
-    }
+    CollectCalleeEdges(func->node(), func_by_key, call_graph[func]);
   }
 
   std::unordered_map<FuncPtr, VisitState> state;
@@ -1444,7 +1520,7 @@ int64_t open_external_data(
 
 #endif
 
-static std::unordered_set<std::string> experimental_ops = {
+static const std::unordered_set<std::string> experimental_ops = {
     "ATen",
     "Affine",
     "ConstantFill",

@@ -45,11 +45,11 @@ option(ONNX_USE_LITE_PROTO "Use lite protobuf instead of full." OFF)
 option(ONNX_DISABLE_EXCEPTIONS "Disable exception handling." OFF)
 option(ONNX_DISABLE_STATIC_REGISTRATION "Disable static registration for ONNX operator schemas." OFF)
 option(ONNX_USE_UNITY_BUILD "Enable Unity (Jumbo) build for" OFF)
+option(ONNX_PYODIDE_BUILD "Build ONNX for Pyodide/Emscripten (wasm32)." OFF)
 option(ONNX_INSTALL "Install ONNX targets, headers, and CMake config files" ON)
 if(WIN32)
   option(ONNX_USE_MSVC_STATIC_RUNTIME "Build with MSVC static runtime. Ignored if CMAKE_MSVC_RUNTIME_LIBRARY is defined." OFF)
 endif()
-option(ONNX_PYODIDE_BUILD "Build ONNX for Pyodide/Emscripten (wasm32)." OFF)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
@@ -93,11 +93,6 @@ set(ONNX_VERSION_MAJOR ${CMAKE_MATCH_1})
 set(ONNX_VERSION_MINOR ${CMAKE_MATCH_2})
 set(ONNX_VERSION_PATCH ${CMAKE_MATCH_3})
 
-configure_file(
-  ${ONNX_ROOT}/onnx/common/version.h.in
-  ${CMAKE_CURRENT_BINARY_DIR}/onnx/common/version.h
-  @ONLY)
-
 if(NOT MSVC)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wnon-virtual-dtor")
   set(CMAKE_C_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O0")
@@ -135,6 +130,12 @@ if(ONNX_DISABLE_EXCEPTIONS)
   endif()
 endif()
 
+if(ONNX_BUILD_PYTHON AND ONNX_DISABLE_EXCEPTIONS)
+  message(FATAL_ERROR
+    "ONNX_DISABLE_EXCEPTIONS=ON is incompatible with ONNX_BUILD_PYTHON=ON. "
+    "The Python binding requires exceptions to be enabled.")
+endif()
+
 if(ONNX_BUILD_PYTHON)
   set(python_dev_component Development.Module Development.SABIModule)
 endif()
@@ -148,6 +149,19 @@ if(CMAKE_CROSSCOMPILING)
   endif()
   find_package(Python REQUIRED COMPONENTS Interpreter)
   set(ONNX_PYTHON_INTERPRETER Python::Interpreter)
+  if(ONNX_BUILD_PYTHON)
+    # nanobind >= 2.13 only auto-runs its own find_package(Python ...) when
+    # neither Python::Interpreter nor Python::Module exist yet. Since
+    # Python::Interpreter is already provided above (host interpreter, while
+    # Python3::Module above is the cross-compilation target's dev libs),
+    # nanobind would otherwise skip that step and fail to find Python::Module.
+    if(NOT TARGET Python::Module)
+      add_library(Python::Module ALIAS Python3::Module)
+    endif()
+    if(TARGET Python3::SABIModule AND NOT TARGET Python::SABIModule)
+      add_library(Python::SABIModule ALIAS Python3::SABIModule)
+    endif()
+  endif()
 else()
   find_package(Python3 REQUIRED COMPONENTS Interpreter ${python_dev_component})
   # Find Python for nanobind
@@ -221,77 +235,64 @@ if(NOT ONNX_BUILD_CUSTOM_PROTOBUF)
         set(Protobuf_USE_STATIC_LIBS ON)
       endif()
       find_package(Protobuf)
-      if(CMAKE_VERBOSE_MAKEFILE)
-        message(STATUS "Protobuf_FOUND: ${Protobuf_FOUND}")
-        message(STATUS "Protobuf_VERSION: ${Protobuf_VERSION}")
-        message(STATUS "Protobuf_INCLUDE_DIR: ${Protobuf_INCLUDE_DIR}")
-        message(STATUS "Protobuf_LITE_LIBRARY: ${Protobuf_LITE_LIBRARY}")
-      endif()
       if(Protobuf_FOUND)
         set(PROTOBUF_DIR "${_PROTOBUF_INSTALL_PREFIX}")
         set(Build_Protobuf OFF)
         if("${Protobuf_VERSION}" VERSION_GREATER_EQUAL "4.22.0")
-          if(ONNX_PYODIDE_BUILD)
-            # find_package(absl) is skipped for Pyodide: cmake imported targets
-            # carry transitive deps on absl::examine_stack (EM_JS, hard linker
-            # error in wasm side-modules).  Safe static libs are linked via
-            # cmake/PyodideBuild.cmake included below.
-            message(STATUS "Pyodide build: skipping find_package(absl) to avoid EM_JS transitive deps")
-          else()
-            message(STATUS "Protobuf >= 4.22.0: searching for absl and utf8_range via find_package")
-            # There are extra dependencies for protobuf.
-            find_package(absl REQUIRED)
-            find_package(utf8_range)
-            message(STATUS "absl_VERSION: ${absl_VERSION}")
-            set(protobuf_ABSL_USED_TARGETS
-              absl::absl_check
-              absl::absl_log
-              absl::algorithm
-              absl::base
-              absl::bind_front
-              absl::bits
-              absl::btree
-              absl::cleanup
-              absl::cord
-              absl::core_headers
-              absl::debugging
-              absl::die_if_null
-              absl::dynamic_annotations
-              absl::flags
-              absl::flat_hash_map
-              absl::flat_hash_set
-              absl::function_ref
-              absl::hash
-              absl::layout
-              absl::log_initialize
-              absl::log_severity
-              absl::memory
-              absl::node_hash_map
-              absl::node_hash_set
-              absl::optional
-              absl::span
-              absl::status
-              absl::statusor
-              absl::strings
-              absl::synchronization
-              absl::time
-              absl::type_traits
-              absl::utility
-              absl::variant
-              utf8_range::utf8_range
-              utf8_range::utf8_validity
-            )
-          endif()
-        else()
-          message(STATUS "Protobuf_VERSION '${Protobuf_VERSION}' < 4.22.0 or undetected: skipping absl find_package")
+          # There are extra dependencies for protobuf.
+          find_package(absl REQUIRED)
+          find_package(utf8_range)
+          message(STATUS "absl_VERSION: ${absl_VERSION}")
+          set(protobuf_ABSL_USED_TARGETS
+            absl::absl_check
+            absl::absl_log
+            absl::algorithm
+            absl::base
+            absl::bind_front
+            absl::bits
+            absl::btree
+            absl::cleanup
+            absl::cord
+            absl::core_headers
+            absl::debugging
+            absl::die_if_null
+            absl::dynamic_annotations
+            absl::flags
+            absl::flat_hash_map
+            absl::flat_hash_set
+            absl::function_ref
+            absl::hash
+            absl::layout
+            absl::log_initialize
+            absl::log_severity
+            absl::memory
+            absl::node_hash_map
+            absl::node_hash_set
+            absl::optional
+            absl::span
+            absl::status
+            absl::statusor
+            absl::strings
+            absl::synchronization
+            absl::time
+            absl::type_traits
+            absl::utility
+            absl::variant
+            utf8_range::utf8_range
+            utf8_range::utf8_validity
+          )
         endif()
       endif()
     endif()
   endif()
 endif()
+
 if(ONNX_PYODIDE_BUILD)
-  include(cmake/PyodideBuild.cmake)
+    # Prevent absl from using EM_JS-based symbolize_emscripten.inc which is
+    # incompatible with Emscripten SIDE_MODULE builds (Pyodide).
+    add_compile_definitions(STANDALONE_WASM)
 endif()
+
 if(NOT ONNX_PROTOC_EXECUTABLE)
     set(Build_Protobuf ON)
     set(protobuf_MSVC_STATIC_RUNTIME ${ONNX_USE_MSVC_STATIC_RUNTIME})
@@ -302,30 +303,44 @@ if(NOT ONNX_PROTOC_EXECUTABLE)
     set(ONNX_CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS})
     # Use this setting to build third-party libs.
     set(BUILD_SHARED_LIBS ${ONNX_USE_PROTOBUF_SHARED_LIBS})
-    # Fetch Abseil via URL tarball so protobuf doesn't fall back to git clone,
-    # which fails in restricted environments (e.g. piwheels).
-    set(AbseilURL https://github.com/abseil/abseil-cpp/releases/download/20250127.0/abseil-cpp-20250127.0.tar.gz)
-    set(AbseilSHA256 16242f394245627e508ec6bb296b433c90f8d914f73b9c026fddb905e27276e8)
+    # Read dependency URLs/hashes from sbom.cdx.json (single source of truth).
+    sbom_get_dep("abseil-cpp" _absl)
+    sbom_get_dep("protobuf" _protobuf)
+    # Assign ${Protobuf_VERSION} to the version read from sbom.cdx.json like `find_package(Protobuf)` would do.
+    set(Protobuf_VERSION ${_protobuf_VERSION})
     if(NOT DEFINED ABSL_ENABLE_INSTALL)
-      set(ABSL_ENABLE_INSTALL ON CACHE BOOL "Enable installation of Abseil targets")
+      if(ONNX_BUILD_PYTHON)
+        set(ABSL_ENABLE_INSTALL OFF CACHE BOOL "Enable installation of Abseil targets")
+      else()
+        set(ABSL_ENABLE_INSTALL ON CACHE BOOL "Enable installation of Abseil targets")
+      endif()
     endif()
     FetchContent_Declare(
       absl
-      URL ${AbseilURL}
-      URL_HASH SHA256=${AbseilSHA256}
+      URL ${_absl_URL}
+      URL_HASH SHA256=${_absl_SHA256}
     )
     FetchContent_MakeAvailable(absl)
-    set(ProtobufURL https://github.com/protocolbuffers/protobuf/releases/download/v33.6/protobuf-33.6.tar.gz)
-    set(ProtobufSHA256 16498d7dc7967e9b100632138babd4b86b61592beeccdd556f67539d9c231355)
     FetchContent_Declare(
       Protobuf
-      URL ${ProtobufURL}
-      URL_HASH SHA256=${ProtobufSHA256}
+      URL ${_protobuf_URL}
+      URL_HASH SHA256=${_protobuf_SHA256}
     )
     if(NOT DEFINED protobuf_BUILD_TESTS)
       set(protobuf_BUILD_TESTS OFF CACHE BOOL "Build protobuf tests")
     endif()
-    message(STATUS "Download and build Protobuf from ${ProtobufURL}")
+    if(EXISTS "${ONNX_CUSTOM_PROTOC_EXECUTABLE}")
+      # We already have a host protoc binary; skip building libprotoc and protoc
+      # (saves compiling code generators for Java, C#, Kotlin, ObjC, etc.)
+      set(protobuf_BUILD_PROTOC_BINARIES OFF CACHE BOOL "Skip building protoc")
+      # libupb is only needed by protoc's code generators; skip it too.
+      set(protobuf_BUILD_LIBUPB OFF CACHE BOOL "Skip building libupb")
+    endif()
+    set(protobuf_WITH_ZLIB OFF CACHE BOOL "Skip zlib support")
+    if(ONNX_BUILD_PYTHON)
+      set(protobuf_INSTALL OFF CACHE BOOL "Skip protobuf install rules")
+    endif()
+    message(STATUS "Download and build Protobuf from ${_protobuf_URL}")
     FetchContent_MakeAvailable(Protobuf)
     # utf8_validity.h is included by protobuf headers but its include dir
     # is only added via include_directories() inside protobuf's directory scope.
@@ -349,8 +364,11 @@ if(NOT ONNX_PROTOC_EXECUTABLE)
         endif()
       endforeach()
     endif()
-    set(ONNX_PROTOC_EXECUTABLE $<TARGET_FILE:protobuf::protoc>)
-    set(Protobuf_VERSION "6.33.6")
+    if(EXISTS "${ONNX_CUSTOM_PROTOC_EXECUTABLE}")
+      set(ONNX_PROTOC_EXECUTABLE ${ONNX_CUSTOM_PROTOC_EXECUTABLE})
+    else()
+      set(ONNX_PROTOC_EXECUTABLE $<TARGET_FILE:protobuf::protoc>)
+    endif()
     # Change back the BUILD_SHARED_LIBS to control the onnx project.
     set(BUILD_SHARED_LIBS ${ONNX_BUILD_SHARED_LIBS})
     set(PROTOBUF_DIR "${protobuf_BINARY_DIR}")
@@ -372,6 +390,7 @@ function(RELATIVE_PROTOBUF_GENERATE_CPP SRCS)
   endif()
 
   set(${SRCS})
+  set(_py_files)
 
   set(GEN_PROTO_PY "${ONNX_ROOT}/onnx/gen_proto.py")
   set(GENERATED_FILES)
@@ -429,7 +448,16 @@ function(RELATIVE_PROTOBUF_GENERATE_CPP SRCS)
     if(TARGET protobuf::protoc)
       list(APPEND deps protobuf::protoc)
     endif()
-    add_custom_command(OUTPUT "${GENERATED_PROTO}"
+    set(_gen_proto_outputs "${GENERATED_PROTO}")
+    if(ONNX_BUILD_PYTHON)
+      # gen_proto.py also produces a _pb.py re-export wrapper
+      string(REPLACE "-" "_" _stem_py "${FILE_WE}")
+      set(_pb_py "${OUTPUT_PROTO_DIR}/${_stem_py}_pb.py")
+      list(APPEND _gen_proto_outputs "${_pb_py}")
+      list(APPEND _py_files "${_pb_py}")
+    endif()
+
+    add_custom_command(OUTPUT ${_gen_proto_outputs}
         COMMAND ${ONNX_PYTHON_INTERPRETER} "${GEN_PROTO_PY}" ${GEN_PROTO_ARGS}
         DEPENDS ${deps}
         COMMENT "Running gen_proto.py on ${INFILE}")
@@ -450,13 +478,29 @@ function(RELATIVE_PROTOBUF_GENERATE_CPP SRCS)
       endif()
     endif()
     list(APPEND GENERATED_FILES "${GENERATED_PROTO}")
-    add_custom_command(OUTPUT "${OUTPUT_PB_SRC}"
+
+    set(_protoc_outputs "${OUTPUT_PB_SRC}")
+    if(ONNX_BUILD_PYTHON)
+      string(REPLACE "-" "_" _py_stem "${GENERATED_FILE_WE}")
+      set(_pb2_py "${OUTPUT_PROTO_DIR}/${_py_stem}_pb2.py")
+      list(APPEND _protoc_outputs "${_pb2_py}")
+      list(APPEND _py_files "${_pb2_py}")
+      if(ONNX_GEN_PB_TYPE_STUBS)
+        set(_pb2_pyi "${OUTPUT_PROTO_DIR}/${_py_stem}_pb2.pyi")
+        list(APPEND _protoc_outputs "${_pb2_pyi}")
+        list(APPEND _py_files "${_pb2_pyi}")
+      endif()
+    endif()
+
+    add_custom_command(OUTPUT ${_protoc_outputs}
         COMMAND "${ONNX_PROTOC_EXECUTABLE}" ${PROTOC_ARGS}
         DEPENDS ${GENERATED_FILES}
         COMMENT "Running C++ protocol buffer compiler on ${GENERATED_PROTO}")
   endforeach()
 
   set(${SRCS} ${${SRCS}} PARENT_SCOPE)
+  set(ONNX_PROTO_PY_FILES ${_py_files} PARENT_SCOPE)
+  set(ONNX_GENERATED_PROTO_FILES ${GENERATED_FILES} PARENT_SCOPE)
 endfunction()
 
 relative_protobuf_generate_cpp(ONNX_PROTO_SRCS
@@ -464,14 +508,9 @@ relative_protobuf_generate_cpp(ONNX_PROTO_SRCS
                                onnx/onnx-operators.in.proto
                                onnx/onnx-data.in.proto)
 
-file(GLOB_RECURSE __tmp_srcs "${ONNX_ROOT}/onnx/*.h" "${ONNX_ROOT}/onnx/*.cc")
-file(GLOB_RECURSE onnx_gtests_src "${ONNX_ROOT}/onnx/test/cpp/*.h"
-    "${ONNX_ROOT}/onnx/test/cpp/*.cc"
-    "${ONNX_ROOT}/onnx/backend/test/cpp/*.cc"
-    "${ONNX_ROOT}/onnx/backend/test/cpp/*.h")
-list(REMOVE_ITEM __tmp_srcs "${ONNX_ROOT}/onnx/cpp2py_export.cc")
-list(REMOVE_ITEM __tmp_srcs ${onnx_gtests_src} "${ONNX_ROOT}/onnx/test/cmake/main.cc")
-list(APPEND ONNX_SRCS ${__tmp_srcs})
+# Serialises the gen_proto.py step so parallel builds don't race writing the
+# generated .proto files; protoc and C++ compilation still overlap afterwards.
+add_custom_target(onnx_proto_gen DEPENDS ${ONNX_GENERATED_PROTO_FILES})
 
 set(LINKED_PROTOBUF_TARGET protobuf::libprotobuf)
 if(ONNX_USE_LITE_PROTO)
@@ -479,15 +518,30 @@ if(ONNX_USE_LITE_PROTO)
     set(LINKED_PROTOBUF_TARGET protobuf::libprotobuf-lite)
   endif()
 endif()
+
+# Compile the generated .pb.cc sources in exactly one target: Xcode's build
+# system rejects a protoc custom command shared across several targets.
 add_library(onnx_proto ${ONNX_PROTO_SRCS})
 add_onnx_global_defines(onnx_proto)
+add_dependencies(onnx_proto onnx_proto_gen)
 
-add_library(onnx ${ONNX_SRCS} ${ONNX_PROTO_SRCS})
+# Core library. Hand-written sources come from target_sources(onnx ...) in the
+# subdirectories; the protobuf objects are pulled in from onnx_proto.
+add_library(onnx $<TARGET_OBJECTS:onnx_proto>)
+add_subdirectory(onnx)
 add_dependencies(onnx onnx_proto)
-set_source_files_properties(${ONNX_SRCS} PROPERTIES CXX_VISIBILITY_PRESET hidden)
+set_target_properties(onnx PROPERTIES CXX_VISIBILITY_PRESET hidden)
 add_onnx_global_defines(onnx)
 
 if(ONNX_BUILD_PYTHON)
+  if(BUILD_SHARED_LIBS)
+    # The extension links ONNX internals not on the public ONNX_API surface,
+    # which a hidden-visibility shared libonnx does not export. The wheel always
+    # builds onnx statically; a shared libonnx is for C++ use only.
+    message(FATAL_ERROR
+      "ONNX_BUILD_PYTHON=ON requires a static onnx; do not combine it with "
+      "BUILD_SHARED_LIBS=ON. Use ONNX_BUILD_PYTHON=OFF to build a shared libonnx.")
+  endif()
   # find system nanobind
   if(NOT DEFINED nanobind_DIR OR "${nanobind_DIR}" STREQUAL "")
     execute_process(
@@ -509,32 +563,26 @@ if(ONNX_BUILD_PYTHON)
         "FetchContent dependency provider for first-run offline builds.")
     endif()
     include(FetchContent)
-
+    sbom_get_dep("nanobind" _nanobind)
     FetchContent_Declare(
       nanobind
-      GIT_REPOSITORY https://github.com/wjakob/nanobind.git
-      GIT_TAG v2.12.0
+      GIT_REPOSITORY ${_nanobind_URL}
+      GIT_TAG v${_nanobind_VERSION}
       GIT_SHALLOW TRUE
     )
     FetchContent_MakeAvailable(nanobind)
   endif()
 
   # Configure nanobind: https://nanobind.readthedocs.io/en/latest/api_cmake.html
-  # FREE_THREADED and LTO are disabled for Pyodide: FREE_THREADED causes nanobind
-  # to call PyUnstable_Module_SetGIL(), which is outside the stable ABI and not
-  # exported by Pyodide's wasm runtime, causing the module to fail to load.
-  if(ONNX_PYODIDE_BUILD)
-    nanobind_add_module(
-      onnx_cpp2py_export
-      NB_STATIC NB_DOMAIN onnx STABLE_ABI
-      "${ONNX_ROOT}/onnx/cpp2py_export.cc" ${ONNX_SRCS} ${ONNX_PROTO_SRCS})
-  else()
-    nanobind_add_module(
-      onnx_cpp2py_export
-      NB_STATIC NB_DOMAIN onnx STABLE_ABI FREE_THREADED LTO
-      "${ONNX_ROOT}/onnx/cpp2py_export.cc" ${ONNX_SRCS} ${ONNX_PROTO_SRCS})
-  endif()
-  add_dependencies(onnx_cpp2py_export onnx)
+  nanobind_add_module(
+    onnx_cpp2py_export
+    NB_STATIC NB_DOMAIN onnx STABLE_ABI FREE_THREADED LTO
+    "${ONNX_ROOT}/onnx/cpp2py_export.cc")
+  # Force-load the whole (static) archive so the operator schemas' static
+  # initializers are not dropped as apparently-unused. $<LINK_LIBRARY:WHOLE_ARCHIVE,...>
+  # is the portable --whole-archive / -force_load / /WHOLEARCHIVE spelling.
+  target_link_libraries(onnx_cpp2py_export PRIVATE
+    $<LINK_LIBRARY:WHOLE_ARCHIVE,onnx>)
 endif()
 
 add_onnx_compile_options(onnx_proto)
@@ -585,21 +633,11 @@ if(ONNX_INSTALL)
 endif()
 
 if(ONNX_USE_UNITY_BUILD)
-  # If ONNX_USE_UNITY_BUILD is set to ON, set ONNX target to use Unity builds.
-  #  We set Unity build to use groups, it allows us to set some specific files to be compiled individually
+  # If ONNX_USE_UNITY_BUILD is set to ON, set onnx to use Unity builds.
   set_target_properties(onnx
     PROPERTIES
       UNITY_BUILD ON
-      UNITY_BUILD_MODE GROUP
   )
-
-  set(NEW_LIST __unity_src_files)
-  list(APPEND __unity_src_files ${ONNX_SRCS})
-  # These files have an issue with template explicit specialization after instantiation:
-  #   We take them out of the unity group so that they are compiled individually.
-  list(REMOVE_ITEM __unity_src_files "${ONNX_ROOT}/onnx/defs/schema.cc")
-  list(REMOVE_ITEM __unity_src_files "${ONNX_ROOT}/onnx/defs/tensor_proto_util.cc")
-  set_source_files_properties(${__unity_src_files} PROPERTIES UNITY_GROUP "Unity_Group" )
 
   # With unity build object file could get big, need this switch in MSVC.
   if(MSVC)
@@ -624,6 +662,15 @@ if(ONNX_INSTALL)
     DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/ONNX"
     NAMESPACE ONNX::
   )
+endif()
+
+if(ONNX_BUILD_PYTHON)
+  install(TARGETS onnx_cpp2py_export LIBRARY DESTINATION onnx)
+  install(FILES ${ONNX_PROTO_PY_FILES} DESTINATION onnx)
+  # PEP 770: embed SBOM in dist-info/sboms/ inside the wheel.
+  if(DEFINED SKBUILD_METADATA_DIR)
+    install(FILES "${CMAKE_SOURCE_DIR}/sbom.cdx.json" DESTINATION "${SKBUILD_METADATA_DIR}/sboms")
+  endif()
 endif()
 
 if(ONNX_BUILD_TESTS)

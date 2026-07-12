@@ -9,6 +9,7 @@
 #include "onnx/defs/function.h"
 #include "onnx/defs/generator/utils.h"
 #include "onnx/defs/schema.h"
+#include "onnx/defs/type_builders.h"
 
 namespace ONNX_NAMESPACE {
 ONNX_OPERATOR_SET_SCHEMA(
@@ -81,32 +82,14 @@ ONNX_OPERATOR_SET_SCHEMA(
             "If attribute 'value' is not specified, the value in the output defaults to 0, and the datatype "
             "defaults to float32.",
             "T2")
-        .TypeConstraint("T1", {"tensor(int64)"}, "Constrain input types.")
+        .TypeConstraint("T1", {types::Int64}, "Constrain input types.")
         .TypeConstraint(
             "T2",
-            {"tensor(float16)",
-             "tensor(float)",
-             "tensor(double)",
-             "tensor(int8)",
-             "tensor(int16)",
-             "tensor(int32)",
-             "tensor(int64)",
-             "tensor(uint8)",
-             "tensor(uint16)",
-             "tensor(uint32)",
-             "tensor(uint64)",
-             "tensor(uint4)",
-             "tensor(int4)",
-             "tensor(bool)",
-             "tensor(bfloat16)",
-             "tensor(float8e4m3fn)",
-             "tensor(float8e4m3fnuz)",
-             "tensor(float8e5m2)",
-             "tensor(float8e5m2fnuz)",
-             "tensor(float4e2m1)",
-             "tensor(float8e8m0)",
-             "tensor(uint2)",
-             "tensor(int2)"},
+            {types::Float16,      types::Float,          types::Double,     types::Int8,           types::Int16,
+             types::Int32,        types::Int64,          types::UInt8,      types::UInt16,         types::UInt32,
+             types::UInt64,       types::UInt4,          types::Int4,       types::Bool,           types::BFloat16,
+             types::Float8E4M3FN, types::Float8E4M3FNUZ, types::Float8E5M2, types::Float8E5M2FNUZ, types::Float4E2M1,
+             types::Float8E8M0,   types::UInt2,          types::Int2},
             "Constrain output types to be numerics or boolean.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           if (ctx.getAttribute("value") != nullptr) {
@@ -318,7 +301,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Output tensor with shape [batch_size, sample_size], where sample_size is the number of times to sample. Each value along the axis zero represents the outcome of the corresponding sample in a batch.",
             "T2")
         .TypeConstraint("T1", OpSchema::all_float_types_ir4(), "Constrain input types to float tensors.")
-        .TypeConstraint("T2", {"tensor(int32)", "tensor(int64)"}, "Constrain output types to integral tensors.")
+        .TypeConstraint("T2", {types::Int32, types::Int64}, "Constrain output types to integral tensors.")
         .SetNodeDeterminism(OpSchema::NodeDeterminism::NonDeterministic)
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           auto dtype = ctx.getAttribute("dtype");
@@ -344,88 +327,87 @@ ONNX_OPERATOR_SET_SCHEMA(
           updateOutputShape(ctx, 0, {batch_size, sample_size});
         }));
 
-static constexpr const char* Range_ver11_doc = R"DOC(
-Generate a tensor containing a sequence of numbers that begin at `start` and extends by increments of `delta`
-up to `limit` (exclusive).
+static bool
+BuildFunctionBodyRange27(const FunctionBodyBuildContext& ctx, const OpSchema& schema, FunctionProto& functionProto) {
+  if (ctx.getInputType(0) == nullptr) {
+    return false;
+  }
+  int64_t T = ctx.getInputType(0)->tensor_type().elem_type();
+  bool needs_stash =
+      (T == static_cast<int64_t>(TensorProto_DataType_FLOAT16) ||
+       T == static_cast<int64_t>(TensorProto_DataType_BFLOAT16));
 
-The number of elements in the output of range is computed as below:
-
-```
-number_of_elements = max( ceil( (limit - start) / delta ) , 0 )
-```
-
-The pseudocode determining the contents of the output is shown below:
-
-```
-for(int i=0; i<number_of_elements; ++i) {
-  output[i] =  start + (i * delta);
-}
-```
-
-Example 1
-
-```
-Inputs: start = 3, limit = 9, delta = 3
-Output: [3, 6]
-```
-
-Example 2
-
-```
-Inputs: start = 10, limit = 4, delta = -2
-Output: [10, 8, 6]
-```
-)DOC";
-
-template <typename T>
-static int64_t
-compute_output_dim_for_range(const TensorProto* start, const TensorProto* limit, const TensorProto* delta) {
-  if (!start->dims().empty() || !limit->dims().empty() || !delta->dims().empty()) {
-    fail_shape_inference("Input to 'Range' op should be scalars (Tensor with only one element and shape empty)");
+  int64_t stash_type = T;
+  if (needs_stash) {
+    const auto* stash_attr = ctx.getAttribute("stash_type");
+    stash_type = (stash_attr != nullptr) ? stash_attr->i() : static_cast<int64_t>(TensorProto_DataType_FLOAT);
+    if (stash_type != static_cast<int64_t>(TensorProto_DataType_FLOAT) &&
+        stash_type != static_cast<int64_t>(TensorProto_DataType_DOUBLE))
+      // return false so no inline function body is emitted; the model checker
+      // will catch the invalid attribute value during validation.
+      return false;
   }
 
-  const auto start_data = ParseData<T>(start);
-  const auto limit_data = ParseData<T>(limit);
-  const auto delta_data = ParseData<T>(delta);
-
-  int64_t n = static_cast<int64_t>(ceil((1.0 * (limit_data[0] - start_data[0])) / delta_data[0]));
-
-  n = std::max<int64_t>(n, 0);
-
-  return n;
+  FunctionBuilder builder(functionProto);
+  if (needs_stash && stash_type != T) {
+    // Cast inputs to stash_type for higher-precision loop accumulation,
+    // then cast the collected output back to T.
+    builder.Add("start_s = Cast (start)", "to", stash_type)
+        .Add("limit_s = Cast (limit)", "to", stash_type)
+        .Add("delta_s = Cast (delta)", "to", stash_type)
+        .Add("sub_result = Sub (limit_s, start_s)")
+        .Add("div_result = Div (sub_result, delta_s)")
+        .Add("ceil_result = Ceil (div_result)")
+        .Add("ceil_relu = Relu (ceil_result)")
+        .Add("n = Cast (ceil_relu)", "to", static_cast<int64_t>(TensorProto_DataType_INT64))
+        .Add("loop_cond = Cast (ceil_relu)", "to", static_cast<int64_t>(TensorProto_DataType_BOOL))
+        .Add(R"ONNX(variadic_output, output_s = Loop (n, loop_cond, start_s)
+          <body = loop_body (int64 i, bool cond_in, prev) => (cond_out, current, range) {
+            cond_out = Identity (cond_in)
+            current = Add (prev, delta_s)
+            range = Identity (prev)
+          }>)ONNX")
+        .Add("output = Cast (output_s)", "to", T);
+  } else {
+    builder.Add("sub_result = Sub (limit, start)")
+        .Add("sub_result_casted = Cast (sub_result)", "to", static_cast<int64_t>(TensorProto_DataType_FLOAT))
+        .Add("delta_casted = Cast (delta)", "to", static_cast<int64_t>(TensorProto_DataType_FLOAT))
+        .Add("div_result = Div (sub_result_casted, delta_casted)")
+        .Add("ceil_result = Ceil (div_result)")
+        .Add("ceil_result_relu = Relu (ceil_result)")
+        .Add("ceil_result_relu_int = Cast (ceil_result_relu)", "to", static_cast<int64_t>(TensorProto_DataType_INT64))
+        .Add("ceil_result_relu_bool = Cast (ceil_result_relu)", "to", static_cast<int64_t>(TensorProto_DataType_BOOL))
+        .Add(R"ONNX(variadic_output, output = Loop (ceil_result_relu_int, ceil_result_relu_bool, start)
+          <body = loop_body_attribute (int64 i, bool cond, prev) => (cond_out, current, range) {
+            cond_out = Identity (cond)
+            current = Add (prev, delta)
+            range = Identity (prev)
+          }>)ONNX");
+  }
+  schema.BuildFunction(functionProto);
+  return true;
 }
 
 ONNX_OPERATOR_SET_SCHEMA(
     Range,
-    11,
+    27,
     OpSchema()
-        .SetDoc(Range_ver11_doc)
+        .SetDoc(kDoc_Range_ver27)
+        .Attr(
+            "stash_type",
+            "The data type used for intermediate computation when T is float16 or bfloat16. "
+            "Defaults to 1 (float). Has no effect for other types.",
+            AttributeProto::INT,
+            static_cast<int64_t>(TensorProto_DataType_FLOAT))
         .Input(0, "start", "Scalar. First entry for the range of output values.", "T")
         .Input(1, "limit", "Scalar. Exclusive upper limit for the range of output values.", "T")
         .Input(2, "delta", "Scalar. Value to step by.", "T")
         .Output(0, "output", "A 1-D tensor with same type as the inputs containing generated range of values.", "T")
         .TypeConstraint(
             "T",
-            {"tensor(float)", "tensor(double)", "tensor(int16)", "tensor(int32)", "tensor(int64)"},
+            {types::Float, types::Double, types::Int16, types::Int32, types::Int64, types::Float16, types::BFloat16},
             "Constrain input types to common numeric type tensors.")
-        .FunctionBody(R"ONNX(
-          {
-            sub_result = Sub (limit, start)
-            sub_result_casted = Cast <to = 1> (sub_result)
-            delta_casted = Cast <to = 1> (delta)
-            div_result = Div (sub_result_casted, delta_casted)
-            ceil_result = Ceil (div_result)
-            ceil_result_relu = Relu (ceil_result)
-            ceil_result_relu_int = Cast <to = 7> (ceil_result_relu)
-            ceil_result_relu_bool = Cast <to = 9> (ceil_result_relu)
-            variadic_output, output = Loop (ceil_result_relu_int, ceil_result_relu_bool, start)
-              <body = loop_body_attribute (int64 i, bool cond, prev) => (cond_out, current, range) {
-                cond_out = Identity (cond)
-                current = Add (prev, delta)
-                range = Identity (prev)
-              }>
-          }
-        )ONNX")
+        .SetContextDependentFunctionBodyBuilder(BuildFunctionBodyRange27)
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           // Type inference
           propagateElemTypeFromInputToOutput(ctx, 0, 0);
@@ -462,8 +444,8 @@ ONNX_OPERATOR_SET_SCHEMA(
               output_dim->set_dim_value(
                   compute_output_dim_for_range<double>(start_initializer, limit_initializer, delta_initializer));
             } else {
-              // 'float16' has no native CPU type -
-              // stop with rank inference, no action here
+              // float16, bfloat16, int16, and other types without a native C++
+              // range-computation type — stop with rank inference, no action here
             }
 
             return;
