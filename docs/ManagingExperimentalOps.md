@@ -24,7 +24,9 @@ Old operator        |New Operator
 `Scale`             |`Mul(X, scale)`
 `ScaledTanh`        |`Mul(Tanh(Mul(X, beta)), alpha)`
 
-## Adding Experimental Operators [Deprecated - as of v1.5 experimental ops are no longer supported]
+# Adding Experimental Operators
+
+> **Note:** The experimental flag in the `ai.onnx` namespace is deprecated as of ONNX v1.5. New experimental operators should instead use the `ai.onnx.preview` (and related preview) namespaces while following the standard ONNX review process.
 
 The experimental flag in ONNX operator definitions indicates that a customer of ONNX may not be able to take a long term dependency on that op. Ops in the ONNX namespace (ai.onnx) in the _main_ branch, whether experimental or not, go through the regular review process.
 
