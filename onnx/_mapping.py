@@ -5,8 +5,8 @@ from __future__ import annotations
 
 from typing import NamedTuple
 
-import numpy as np
 import ml_dtypes
+import numpy as np
 
 from onnx.onnx_pb import TensorProto
 

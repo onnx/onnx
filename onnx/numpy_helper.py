@@ -3,6 +3,7 @@
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
+import math
 import sys
 from typing import TYPE_CHECKING, Any, Sequence
 
@@ -133,7 +134,6 @@ def _pack_4bitx2(array: np.ndarray) -> npt.NDArray[np.uint8]:
     return array_flat[0::2] | array_flat[1::2]  # type: ignore[return-type]
 
 
-import math
 def _pack_6bit(values: np.ndarray) -> np.ndarray:
     flat = values.astype(np.uint8) & 0x3F
     n = len(flat)
