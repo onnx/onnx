@@ -987,6 +987,18 @@ class DefaultVersionConverter : public BaseVersionConverter {
     const std::vector<TensorProto_DataType> celu_28_unallowed_types = {
         TensorProto_DataType_FLOAT16, TensorProto_DataType_BFLOAT16, TensorProto_DataType_DOUBLE};
     registerAdapter(std::make_unique<TypeRestriction>("Celu", OpSetID(28), OpSetID(27), celu_28_unallowed_types));
+
+    /******** 28 -> 29 ********/
+    registerAdapter(std::make_unique<CompatibleAdapter>("QuantizeLinear", OpSetID(28), OpSetID(29)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("DequantizeLinear", OpSetID(28), OpSetID(29)));
+
+    /******** 29 -> 28 ********/
+    const std::vector<TensorProto_DataType> ir14_types_not_in_ir13 = {
+        TensorProto_DataType_FLOAT6E2M3, TensorProto_DataType_FLOAT6E3M2};
+    registerAdapter(
+        std::make_unique<TypeRestriction>("QuantizeLinear", OpSetID(29), OpSetID(28), ir14_types_not_in_ir13));
+    registerAdapter(
+        std::make_unique<TypeRestriction>("DequantizeLinear", OpSetID(29), OpSetID(28), ir14_types_not_in_ir13));
   }
 
   ModelProto convert_version(const ModelProto& mp_in, const OpSetID& initial_version, const OpSetID& target_version)
