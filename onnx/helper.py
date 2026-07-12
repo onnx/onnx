@@ -441,10 +441,10 @@ def make_tensor(
             fp6 = (sign | base).astype(np.uint8)
             fp6 = np.where(abs_x == 0, 0, fp6).astype(np.uint8)
             packed = _pack_6bit(fp6)
-            expected_size_bytes = math.ceil(0.75 * math.prod(dims))
-            if len(packed) != expected_size_bytes:
+            expected_packed_size_bytes = math.ceil(0.75 * math.prod(dims))
+            if len(packed) != expected_packed_size_bytes:
                 raise ValueError(
-                    f"Raw data size does not match tensor's size. Expected {expected_size_bytes} bytes, but got {len(packed)} bytes."
+                    f"Raw data size does not match tensor's size. Expected {expected_packed_size_bytes} bytes, but got {len(packed)} bytes."
                 )
             tensor.raw_data = packed.tobytes()
             return tensor
