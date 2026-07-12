@@ -10,10 +10,7 @@
 
 #include "onnx/defs/type_builders.h"
 
-namespace ONNX_NAMESPACE {
-namespace defs {
-namespace math {
-namespace utils {
+namespace ONNX_NAMESPACE::defs::math::utils {
 
 static constexpr const char* TopK_ver11_doc = R"DOC(
 Retrieve the top-K largest or smallest elements along a specified axis. Given an input tensor of
@@ -283,7 +280,4 @@ Production must never overflow, and accumulation may overflow if and only if in 
   return QLinearMatMul_doc;
 }
 
-} // namespace utils
-} // namespace math
-} // namespace defs
-} // namespace ONNX_NAMESPACE
+} // namespace ONNX_NAMESPACE::defs::math::utils

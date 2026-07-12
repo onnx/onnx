@@ -12,10 +12,7 @@
 #include "onnx/defs/tensor_proto_util.h"
 #include "onnx/onnx_pb.h"
 
-namespace ONNX_NAMESPACE {
-namespace defs {
-namespace math {
-namespace utils {
+namespace ONNX_NAMESPACE::defs::math::utils {
 
 std::function<void(OpSchema&)> TopKOpGenerator(std::vector<std::string> allowed_types);
 
@@ -54,7 +51,4 @@ const char* QLinearMatMulDoc();
 
 int MathOpTwoIntegers(const std::string& op_type, int a, int b);
 
-} // namespace utils
-} // namespace math
-} // namespace defs
-} // namespace ONNX_NAMESPACE
+} // namespace ONNX_NAMESPACE::defs::math::utils

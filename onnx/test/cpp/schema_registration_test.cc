@@ -6,8 +6,7 @@
 #include "onnx/defs/operator_sets.h"
 #include "onnx/defs/schema.h"
 
-namespace ONNX_NAMESPACE {
-namespace Test {
+namespace ONNX_NAMESPACE::Test {
 
 TEST(SchemaRegistrationTest, DisabledOnnxStaticRegistrationAPICall) {
 #ifdef __ONNX_DISABLE_STATIC_REGISTRATION
@@ -265,5 +264,4 @@ TEST(SchemaRegistrationTest, RegisterAllThenSpecificVersion) {
 #endif
 }
 
-} // namespace Test
-} // namespace ONNX_NAMESPACE
+} // namespace ONNX_NAMESPACE::Test

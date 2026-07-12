@@ -10,8 +10,7 @@
 #include <unordered_map>
 #include <unordered_set>
 
-namespace ONNX_NAMESPACE {
-namespace Utils {
+namespace ONNX_NAMESPACE::Utils {
 namespace {
 
 // Singleton wrapper around allowed data types.
@@ -401,5 +400,4 @@ TypesWrapper::TypesWrapper() {
 
 } // namespace
 
-} // namespace Utils
-} // namespace ONNX_NAMESPACE
+} // namespace ONNX_NAMESPACE::Utils
