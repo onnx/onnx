@@ -23,8 +23,6 @@ def cast_to(
             onnx.TensorProto.FLOAT8E4M3FNUZ,
             onnx.TensorProto.FLOAT8E5M2,
             onnx.TensorProto.FLOAT8E5M2FNUZ,
-            onnx.TensorProto.FLOAT6E2M3,
-            onnx.TensorProto.FLOAT6E3M2,
         }
         and saturate
     ):

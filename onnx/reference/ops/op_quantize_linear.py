@@ -109,16 +109,17 @@ class _CommonQuantizeLinear(OpRun):
                 )
             return (x.astype(tensor_dtype_to_np_dtype(tensor_type)),)
 
-        if tensor_type == TensorProto.FLOAT4E2M1:
+        if tensor_type in {
+            TensorProto.FLOAT4E2M1,
+            TensorProto.FLOAT6E2M3,
+            TensorProto.FLOAT6E3M2,
+        }:
+            # No Inf/NaN encoding, so ml_dtypes' cast already saturates overflow
+            # to the max finite value on its own; `saturate` has no distinct
+            # effect for these types (same as FLOAT8E4M3FN etc. would produce
+            # with saturate=True, but there's no non-saturating alternative here).
             x += zero_point
             return (x.astype(tensor_dtype_to_np_dtype(tensor_type)),)
-
-        if tensor_type in {TensorProto.FLOAT6E2M3, TensorProto.FLOAT6E3M2}:
-            dtype = tensor_dtype_to_np_dtype(tensor_type)
-            xz = (x + zero_point).astype(np.float32)
-            if saturate:
-                return (onnx.numpy_helper.saturate_cast(xz, dtype),)
-            return (xz.astype(dtype),)
 
         raise ValueError(
             f"Unexpected type: output_dtype={tensor_type} is not a supported quantized type."
