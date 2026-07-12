@@ -22,7 +22,6 @@ __all__ = [
 ]
 
 import os
-import sys
 from typing import TYPE_CHECKING
 
 import onnx.defs
@@ -32,8 +31,8 @@ from onnx.onnx_pb import IR_VERSION
 if TYPE_CHECKING:
     from google.protobuf.message import Message
 
-# Limitation of single protobuf file is 2GiB
-MAXIMUM_PROTOBUF = 2147483648
+# Maximum single-protobuf size; matches the C++ parser limit in proto_utils.h (2 GiB - 1 byte)
+MAXIMUM_PROTOBUF = 2147483647
 
 
 # NB: Please don't edit this context!
@@ -157,7 +156,7 @@ def check_model(
         )
         # If the protobuf is larger than 2GiB,
         # remind users should use the model path to check
-        if sys.getsizeof(protobuf_string) > MAXIMUM_PROTOBUF:
+        if len(protobuf_string) > MAXIMUM_PROTOBUF:
             raise ValueError(
                 "This protobuf of onnx model is too large (>2GiB). Call check_model with model path instead."
             )

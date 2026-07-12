@@ -8,13 +8,12 @@
 #pragma once
 
 #include <cmath>
-#include <functional>
-#include <numeric>
 #include <string>
 #include <utility>
 #include <vector>
 
 #include "onnx/common/assertions.h"
+#include "onnx/common/safe_math.h"
 #include "onnx/onnx_pb.h"
 
 namespace ONNX_NAMESPACE {
@@ -52,14 +51,14 @@ struct Tensor final {
   /// if tensor is a scalar, the sizes is empty, but the element number is actually 1.
   /// size_from_dim() cannot handle this case, while elem_num() handles it correctly
   int64_t elem_num() const {
-    return std::accumulate(sizes_.begin(), sizes_.end(), 1, std::multiplies<int64_t>{});
+    return safe_dim_product(sizes_, [](const char* msg) { throw tensor_error(msg); });
   }
   int64_t size_from_dim(int dim) const {
     if (dim < 0) {
       dim += static_cast<int>(sizes_.size());
     }
-    ONNX_ASSERT(dim >= 0 && (size_t)dim < sizes_.size())
-    return std::accumulate(sizes_.begin() + dim, sizes_.end(), 1, std::multiplies<int64_t>{});
+    ONNX_ASSERT(dim >= 0 && static_cast<size_t>(dim) < sizes_.size())
+    return safe_dim_product(sizes_.begin() + dim, sizes_.end(), [](const char* msg) { throw tensor_error(msg); });
   }
 
   int32_t elem_type() const {
@@ -206,6 +205,7 @@ inline const std::string* Tensor::data<std::string>() const {
   return string_data_.data();
 }
 
+// NOLINTBEGIN(bugprone-macro-parentheses)
 #define define_data(type, field)                              \
   template <>                                                 \
   inline type* Tensor::data<type>() {                         \
@@ -224,6 +224,7 @@ inline const std::string* Tensor::data<std::string>() const {
       return field.data();                                    \
     }                                                         \
   }
+// NOLINTEND(bugprone-macro-parentheses)
 
 define_data(float, float_data_)
 define_data(double, double_data_)

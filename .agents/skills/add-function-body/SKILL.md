@@ -3,7 +3,7 @@ name: add-function-body
 description: Add a function body definition to an ONNX operator, defining how it decomposes into simpler ops. Use when asked to make an op decomposable, add a FunctionBody, implement SetContextDependentFunctionBodyBuilder, or express an op in terms of other ONNX operators.
 ---
 
-Follow the full guide in [docs/AddFunctionBody.md](../../docs/AddFunctionBody.md).
+Follow the full guide in [docs/AddFunctionBody.md](../../../docs/AddFunctionBody.md).
 
 ## File Locations
 
@@ -91,24 +91,11 @@ return true;
 
 ## ONNX Function Body Syntax
 
-```
-variable = OpName <attr = value> (input1, input2)
-```
+Function body strings use the ONNX text format ("onnxtxt"). See the [`onnxtxt`](../onnxtxt/SKILL.md) skill for the full syntax cheat sheet, attribute references (`@attr_name`), `Constant <value = ...>` forms, `CastLike` vs `Cast`, body-subgraph idioms, and parser tests. Quick reminders specific to function bodies:
 
-- Variable names are local intermediates
-- Input/output names must match schema declarations
-- Use `CastLike` (not `Cast`) when target type depends on input
-- Reference attributes with `@attr_name`
-
-For the formal grammar, see [docs/Syntax.md](../../docs/Syntax.md). Parser tests provide additional examples:
-
-| Resource | File |
-|----------|------|
-| Formal syntax specification | `docs/Syntax.md` |
-| C++ parser | `onnx/defs/parser.h`, `onnx/defs/parser.cc` |
-| Python parser | `onnx/parser.py` |
-| C++ parser tests | `onnx/test/cpp/parser_test.cc` |
-| Python parser tests | `onnx/test/parser_test.py` |
+- Variable names are local intermediates; input/output names must match the schema's declared names.
+- Reference enclosing-op attributes with `@attr_name` — and only those declared in `.Attr(...)` calls.
+- Use `CastLike` (not `Cast`) when the target type depends on another input.
 
 ## Code Style: Prefer Named Functions
 

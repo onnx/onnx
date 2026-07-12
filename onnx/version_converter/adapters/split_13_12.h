@@ -33,19 +33,7 @@ class Split_13_12 : public Adapter {
     Value* const_val = inputs[1];
     Node* node_ptr = const_val->node();
     if (node_ptr->kind() == kConstant) {
-      // Get value attribute of kConstant
-      const std::vector<int64_t>& int64s = node_ptr->t(kvalue).int64s();
-      if (int64s.empty()) {
-        // Also handle raw data
-        std::string raw_data = node_ptr->t(kvalue).raw();
-        ONNX_ASSERTM(
-            !raw_data.empty() && raw_data.size() % 8 == 0,
-            "Raw Data must be non-empty and size must be a multiple of 8")
-        int64_t* raw = reinterpret_cast<int64_t*>(raw_data.data());
-        node->is_(ksplit, std::vector<int64_t>(raw, raw + node_ptr->t(kvalue).size_from_dim(0)));
-      } else {
-        node->is_(ksplit, std::forward<const std::vector<int64_t>>(int64s));
-      }
+      node->is_(ksplit, ReadInt64Tensor(node_ptr->t(kvalue)));
       // If Constant node isn't used anywhere else, remove it
       node->removeInput(1);
       if (const_val->uses().empty()) {
@@ -55,7 +43,7 @@ class Split_13_12 : public Adapter {
       // Get Value name, find Initializer with same name
       for (const auto& initializer : graph->initializers()) {
         if (initializer.name() == inputs[1]->uniqueName()) {
-          node->is_(ksplit, std::forward<const std::vector<int64_t>>(initializer.int64s()));
+          node->is_(ksplit, ReadInt64Tensor(initializer));
           node->removeInput(1);
           // Remove initializer
           if (const_val->uses().empty())

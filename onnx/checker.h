@@ -17,6 +17,8 @@
 
 namespace ONNX_NAMESPACE {
 namespace checker {
+// std::string member means copy may throw when allocation fails
+// NOLINTNEXTLINE(bugprone-exception-copy-constructor-throws)
 class ValidationError final : public std::runtime_error {
  public:
   using std::runtime_error::runtime_error;
@@ -34,8 +36,7 @@ class ValidationError final : public std::runtime_error {
   std::string expanded_message_;
 };
 
-#define fail_check(...) \
-  ONNX_THROW_EX(ONNX_NAMESPACE::checker::ValidationError(ONNX_NAMESPACE::MakeString(__VA_ARGS__)));
+#define fail_check(...) ONNX_THROW_EX(ONNX_NAMESPACE::checker::ValidationError(ONNX_NAMESPACE::MakeString(__VA_ARGS__)))
 
 class CheckerContext final {
  public:
@@ -70,7 +71,7 @@ class CheckerContext final {
     model_dir_ = model_dir;
   }
 
-  std::string get_model_dir() const {
+  const std::string& get_model_dir() const {
     return model_dir_;
   }
 

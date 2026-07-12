@@ -217,7 +217,7 @@ void mergeShapesAndTypes(const TypeProto& inferred_type, TypeProto* existing_typ
 
 // TypeProto_Tensor or TypeProto_SparseTensor
 template <typename TensorTypeProto>
-void GenerateSymbolicShape(TensorTypeProto* inferred_type, SymbolTable& symbol_table) {
+static void GenerateSymbolicShape(TensorTypeProto* inferred_type, SymbolTable& symbol_table) {
   if (!inferred_type->has_shape()) {
     return;
   }
@@ -271,9 +271,10 @@ static std::string GetFunctionIdentifier(const NodeProto& node) {
   return node.domain() + ":" + node.op_type() + ":" + overload;
 }
 
+namespace {
 // Either ModelProto or FunctionProto
 template <class T>
-static std::unordered_map<std::string, int> GetOpsetImportsFromProto(const T& proto) {
+std::unordered_map<std::string, int> GetOpsetImportsFromProto(const T& proto) {
   std::unordered_map<std::string, int> opset_imports;
   for (const auto& opset_import : proto.opset_import()) {
     opset_imports[opset_import.domain()] = static_cast<int>(opset_import.version());
@@ -310,7 +311,7 @@ class InferredTypes {
 };
 
 // Initialize a DataValueMap for a called function from the DataValueMap of the caller
-static void BindValuesOnCall(
+void BindValuesOnCall(
     const DataValueMap& caller_map,
     const NodeProto& caller,
     DataValueMap& callee_map,
@@ -329,7 +330,7 @@ static void BindValuesOnCall(
 }
 
 // Update a DataValueMap for a calling function from the DataValueMap of the callee
-static void BindValuesOnReturn(
+void BindValuesOnReturn(
     const DataValueMap& callee_map,
     const FunctionProto& callee,
     DataValueMap& caller_map,
@@ -601,7 +602,7 @@ class ShapeInferenceImplBase {
 
   void Process(const NodeProto& n, internal::AttributeBinder& attribute_binder) {
     NodeProto copy_n(n);
-    attribute_binder.VisitNode(&copy_n);
+    attribute_binder.VisitNode(copy_n);
     Process(copy_n);
   }
 
@@ -683,7 +684,7 @@ class ShapeInferenceImplBase {
       const ModelLocalFunctionsMap& model_local_functions_map_in,
       const ISchemaRegistry* schema_registry_in = OpSchemaRegistry::Instance(),
       DataValueMap* generated_shape_data_by_name_in = nullptr,
-      const int ir_version_in = IR_VERSION,
+      const int64_t ir_version_in = IR_VERSION,
       std::shared_ptr<std::unordered_set<const FunctionProto*>> active_functions_in = nullptr)
       : inferred_types(graph),
         value_types_by_name(outer_scope_value_types_by_name_in),
@@ -740,7 +741,7 @@ class ShapeInferenceImplBase {
   const ModelLocalFunctionsMap& model_local_functions_map;
   const ISchemaRegistry* schema_registry;
   DataValueMap* generated_shape_data_by_name;
-  int ir_version;
+  int64_t ir_version;
   std::shared_ptr<std::unordered_set<const FunctionProto*>> active_functions;
   GraphInferenceContext graph_inference_context;
 
@@ -760,7 +761,7 @@ class ShapeInferenceImplBase {
   bool reuse_constant_tensors = true;
 };
 
-static void InferShapesImpl(
+void InferShapesImpl(
     GraphProto* g,
     const std::unordered_map<std::string, TypeProto*>& outer_scope_value_types_by_name,
     const std::unordered_map<std::string, int>& opset_imports,
@@ -769,7 +770,7 @@ static void InferShapesImpl(
     const ModelLocalFunctionsMap& model_local_functions_map,
     const ISchemaRegistry* schema_registry = OpSchemaRegistry::Instance(),
     DataValueMap* generated_shape_data_by_name = nullptr,
-    const int ir_version = IR_VERSION // default the latest one
+    const int64_t ir_version = IR_VERSION // default the latest one
 ) {
   DataValueMap empty;
   if (generated_shape_data_by_name == nullptr) {
@@ -788,6 +789,8 @@ static void InferShapesImpl(
   base.Process(*g);
   base.FinalizeShapeInference();
 }
+
+} // namespace
 
 void InferShapes(
     GraphProto* g,
@@ -947,6 +950,8 @@ void InferShapeForFunctionNode(
       nullptr);
 }
 
+namespace {
+
 struct FunctionInferenceContext : public InferenceContext {
   FunctionInferenceContext(
       const FunctionProto& func_proto,
@@ -1038,6 +1043,8 @@ struct FunctionInferenceContext : public InferenceContext {
   ShapeInferenceOptions options_;
   const FunctionProto* func_proto_;
 };
+
+} // namespace
 
 std::vector<TypeProto> InferFunctionOutputTypes(
     const FunctionProto& function_proto,

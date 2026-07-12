@@ -27,6 +27,8 @@ class Gemm_7_6 final : public Adapter {
     const auto& B_shape = inputs[1]->sizes();
     // Determine if C is broadcastable
     const auto& C_shape = inputs[2]->sizes();
+    ONNX_ASSERTM(A_shape.size() == 2, "Gemm input A must have exactly 2 dimensions")
+    ONNX_ASSERTM(B_shape.size() == 2, "Gemm input B must have exactly 2 dimensions")
     // Create (M, N) to input to numpy_unibroadcastable
     // TODO(ONNX): Reconcile fact that shapes aren't determined for 1st 2 inputs
     std::vector<Dimension> MN;
@@ -43,12 +45,12 @@ class Gemm_7_6 final : public Adapter {
     int req_broadcast = check_numpy_unibroadcastable_and_require_broadcast(MN, C_shape);
     ONNX_ASSERTM(
         req_broadcast != -1,
-        "%s being converted from %" PRId64 " to %" PRId64
-        " does "
-        "not have broadcastable inputs.",
-        name().c_str(),
+        name(),
+        " being converted from ",
         static_cast<int64_t>(initial_version().version()),
-        static_cast<int64_t>(target_version().version()))
+        " to ",
+        static_cast<int64_t>(target_version().version()),
+        " does not have broadcastable inputs.")
     if (req_broadcast == 1) {
       node->i_(kbroadcast, 1);
     }
