@@ -1,16 +1,15 @@
-/*
- * SPDX-License-Identifier: Apache-2.0
- */
+// Copyright (c) ONNX Project Contributors
+//
+// SPDX-License-Identifier: Apache-2.0
 
-#include <functional>
+#include <string>
 
-#include "onnx/defs/data_type_utils.h"
 #include "onnx/defs/schema.h"
-#include "onnx/defs/tensor_proto_util.h"
+#include "onnx/defs/type_builders.h"
 
 namespace ONNX_NAMESPACE {
 
-static const char* ImageDecoder_ver20_doc =
+static constexpr const char* ImageDecoder_ver20_doc =
     R"DOC(Loads and decodes and image from a file. If it can't decode for any reason (e.g. corrupted encoded
 stream, invalid format, it will return an empty matrix).
 The following image formats are supported:
@@ -48,8 +47,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             std::string("RGB"))
         .Input(0, "encoded_stream", "Encoded stream", "T1", OpSchema::Single, true, 1, OpSchema::NonDifferentiable)
         .Output(0, "image", "Decoded image", "T2", OpSchema::Single, true, 1, OpSchema::NonDifferentiable)
-        .TypeConstraint("T1", {"tensor(uint8)"}, "Constrain input types to 8-bit unsigned integer tensor.")
-        .TypeConstraint("T2", {"tensor(uint8)"}, "Constrain output types to 8-bit unsigned integer tensor.")
+        .TypeConstraint("T1", {types::UInt8}, "Constrain input types to 8-bit unsigned integer tensor.")
+        .TypeConstraint("T2", {types::UInt8}, "Constrain output types to 8-bit unsigned integer tensor.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           if (hasInputShape(ctx, 0)) {
             auto& input_shape = getInputShape(ctx, 0);
@@ -59,7 +58,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
           propagateElemTypeFromDtypeToOutput(ctx, TensorProto::UINT8, 0);
           auto output_type = ctx.getOutputType(0);
-          auto* sh = output_type->mutable_tensor_type()->mutable_shape();
+          auto sh = output_type->mutable_tensor_type()->mutable_shape();
           sh->clear_dim();
           sh->add_dim();
           sh->add_dim();

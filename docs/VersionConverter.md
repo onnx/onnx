@@ -28,7 +28,7 @@ is described, with example,
 
 The C++ API consists of a single function
 
-```
+```cpp
 ModelProto ConvertVersion(
     const ModelProto& mp_in,
     const OpSetID& initial_version,

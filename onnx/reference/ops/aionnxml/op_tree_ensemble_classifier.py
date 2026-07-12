@@ -72,7 +72,7 @@ class TreeEnsembleClassifier(OpRunAiOnnxMl):
             res[:, :] = np.array(tr.atts.base_values).reshape((1, -1))
 
         class_index = {}
-        for i, (tid, nid) in enumerate(zip(class_treeids, class_nodeids)):
+        for i, (tid, nid) in enumerate(zip(class_treeids, class_nodeids, strict=False)):
             if (tid, nid) not in class_index:
                 class_index[tid, nid] = []
             class_index[tid, nid].append(i)

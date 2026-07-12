@@ -20,3 +20,8 @@ class CastLike_15(OpRun):
 class CastLike_19(OpRun):
     def _run(self, x, y, saturate=False):
         return _cast_like(x, y, saturate)
+
+
+class CastLike_25(OpRun):
+    def _run(self, x, y, saturate=False):
+        return _cast_like(x, y, saturate)

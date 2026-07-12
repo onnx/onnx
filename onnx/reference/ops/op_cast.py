@@ -3,8 +3,8 @@
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
-import numpy as np
 import ml_dtypes
+import numpy as np
 
 import onnx
 from onnx.reference.op_run import OpRun
@@ -175,3 +175,8 @@ def float32_to_float6e3m2(x: np.ndarray, saturate: bool) -> np.ndarray:
     out = np.where(is_nan_or_inf, sat_val, out)
     out = np.where(is_zero, 0, out)
     return out
+
+
+class Cast_25(OpRun):
+    def _run(self, x, to=None, saturate=None, round_mode=None):
+        return (cast_to(x, to, saturate, round_mode),)

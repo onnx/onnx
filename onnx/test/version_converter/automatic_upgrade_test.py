@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
-import unittest
+from typing import ClassVar
 
 import automatic_conversion_test_base
 import numpy as np
@@ -18,9 +18,7 @@ from onnx import TensorProto, helper
 
 
 class TestAutomaticUpgrade(automatic_conversion_test_base.TestAutomaticConversion):
-    @classmethod
-    def setUpClass(cls):
-        cls.tested_ops = []
+    tested_ops: ClassVar[list] = []
 
     def _test_op_upgrade(self, op, *args, **kwargs):
         self.tested_ops.append(op)
@@ -293,7 +291,7 @@ class TestAutomaticUpgrade(automatic_conversion_test_base.TestAutomaticConversio
             "Value",
             TensorProto.FLOAT,
             dims=[3, 4, 5],
-            vals=np.random.rand(3, 4, 5).astype(np.float32).tobytes(),
+            vals=np.random.rand(3, 4, 5).astype(np.float32),
             raw=True,
         )
         self._test_op_upgrade("Constant", 1, [], attrs={"value": value})
@@ -307,8 +305,13 @@ class TestAutomaticUpgrade(automatic_conversion_test_base.TestAutomaticConversio
         )
 
     def test_Conv_2(self) -> None:
+        # strided Conv: floor((5 - 2) / 2) + 1 = 2 in each spatial dim
         self._test_op_upgrade(
-            "Conv", 1, [[1, 3, 5, 5], [4, 3, 2, 2], [4]], [[1, 4, 4, 4]]
+            "Conv",
+            1,
+            [[1, 3, 5, 5], [4, 3, 2, 2], [4]],
+            [[1, 4, 2, 2]],
+            attrs={"strides": [2, 2]},
         )
 
     def test_Conv_3(self) -> None:
@@ -353,6 +356,15 @@ class TestAutomaticUpgrade(automatic_conversion_test_base.TestAutomaticConversio
 
     def test_Cos(self) -> None:
         self._test_op_upgrade("Cos", 7)
+
+    def test_CumProd(self) -> None:
+        self._test_op_upgrade(
+            "CumProd",
+            26,
+            [[3, 4, 5], []],
+            [[3, 4, 5]],
+            [TensorProto.FLOAT, TensorProto.INT64],
+        )
 
     def test_Cumsum(self) -> None:
         self._test_op_upgrade(
@@ -577,7 +589,7 @@ class TestAutomaticUpgrade(automatic_conversion_test_base.TestAutomaticConversio
             "Value",
             TensorProto.FLOAT,
             dims=[3, 4, 5],
-            vals=np.random.rand(3, 4, 5).astype(np.float32).tobytes(),
+            vals=np.random.rand(3, 4, 5).astype(np.float32),
             raw=True,
         )
         then_node = helper.make_node("Constant", [], ["out"], value=then_tensor)
@@ -586,7 +598,7 @@ class TestAutomaticUpgrade(automatic_conversion_test_base.TestAutomaticConversio
             "Value",
             TensorProto.FLOAT,
             dims=[3, 4, 5],
-            vals=np.random.rand(3, 4, 5).astype(np.float32).tobytes(),
+            vals=np.random.rand(3, 4, 5).astype(np.float32),
             raw=True,
         )
         else_node = helper.make_node("Constant", [], ["out"], value=else_tensor)
@@ -1038,7 +1050,7 @@ class TestAutomaticUpgrade(automatic_conversion_test_base.TestAutomaticConversio
             "a",
             TensorProto.FLOAT,
             dims=[3, 4, 5],
-            vals=np.random.rand(3, 4, 5).astype(np.float32).tobytes(),
+            vals=np.random.rand(3, 4, 5).astype(np.float32),
             raw=True,
         )
         self._test_op_upgrade(
@@ -1055,7 +1067,7 @@ class TestAutomaticUpgrade(automatic_conversion_test_base.TestAutomaticConversio
             "a",
             TensorProto.FLOAT,
             dims=[3, 4, 5],
-            vals=np.random.rand(3, 4, 5).astype(np.float32).tobytes(),
+            vals=np.random.rand(3, 4, 5).astype(np.float32),
             raw=True,
         )
         self._test_op_upgrade(
@@ -1627,9 +1639,6 @@ class TestAutomaticUpgrade(automatic_conversion_test_base.TestAutomaticConversio
             "DFT", 17, [[2, 16, 1], []], [[2, 9, 2]], attrs={"onesided": 1}
         )
         self._test_op_upgrade(
-            "DFT", 17, [[2, 16, 2], []], [[2, 9, 2]], attrs={"onesided": 1}
-        )
-        self._test_op_upgrade(
             "DFT", 17, [[2, 16, 1], []], [[2, 16, 2]], attrs={"inverse": 1}
         )
         self._test_op_upgrade(
@@ -1933,6 +1942,147 @@ class TestAutomaticUpgrade(automatic_conversion_test_base.TestAutomaticConversio
             [TensorProto.FLOAT],
         )
 
+    def test_BitCast(self) -> None:
+        self._test_op_upgrade(
+            "BitCast",
+            26,
+            [[2, 3, 4]],
+            [[2, 3, 4]],
+            [TensorProto.FLOAT],
+            [TensorProto.INT32],
+            attrs={"to": TensorProto.INT32},
+        )
+
+    def test_CausalConvWithState_basic(self) -> None:
+        # input [B=2, C=4, L=8] with kernel size 4: output preserves L,
+        # present_state last dim is kernel_size - 1 = 3.
+        self._test_op_upgrade(
+            "CausalConvWithState",
+            27,
+            [[2, 4, 8], [4, 1, 4]],
+            [[2, 4, 8], [2, 4, 3]],
+            [TensorProto.FLOAT, TensorProto.FLOAT],
+            [TensorProto.FLOAT, TensorProto.FLOAT],
+        )
+
+    def test_CausalConvWithState_with_bias_and_past_state(self) -> None:
+        # Exercises all four inputs (input, weight, bias, past_state).
+        self._test_op_upgrade(
+            "CausalConvWithState",
+            27,
+            [[2, 4, 8], [4, 1, 4], [4], [2, 4, 3]],
+            [[2, 4, 8], [2, 4, 3]],
+            [
+                TensorProto.FLOAT,
+                TensorProto.FLOAT,
+                TensorProto.FLOAT,
+                TensorProto.FLOAT,
+            ],
+            [TensorProto.FLOAT, TensorProto.FLOAT],
+        )
+
+    def test_CausalConvWithState_kernel_one(self) -> None:
+        # Edge case: kernel_size == 1 -> present_state last dim == 0.
+        self._test_op_upgrade(
+            "CausalConvWithState",
+            27,
+            [[2, 4, 8], [4, 1, 1]],
+            [[2, 4, 8], [2, 4, 0]],
+            [TensorProto.FLOAT, TensorProto.FLOAT],
+            [TensorProto.FLOAT, TensorProto.FLOAT],
+        )
+
+    def test_LinearAttention_basic_mha(self) -> None:
+        # H_q == H_kv == 4, d_k == d_v == 16. update_rule="linear" with no
+        # optional inputs: baseline shape/dtype plumbing on the no-op upgrade.
+        self._test_op_upgrade(
+            "LinearAttention",
+            27,
+            [[2, 4, 64], [2, 4, 64], [2, 4, 64]],
+            [[2, 4, 64], [2, 4, 16, 16]],
+            [TensorProto.FLOAT, TensorProto.FLOAT, TensorProto.FLOAT],
+            [TensorProto.FLOAT, TensorProto.FLOAT],
+            attrs={
+                "q_num_heads": 4,
+                "kv_num_heads": 4,
+                "update_rule": "linear",
+            },
+        )
+
+    def test_LinearAttention_gqa(self) -> None:
+        # Grouped-query: H_q=8, H_kv=2. Output last dim must be H_q * d_v while
+        # present_state's H dim must be H_kv -- highest-risk regression for
+        # confusing q vs kv head counts.
+        self._test_op_upgrade(
+            "LinearAttention",
+            27,
+            [[2, 4, 128], [2, 4, 32], [2, 4, 32]],
+            [[2, 4, 128], [2, 2, 16, 16]],
+            [TensorProto.FLOAT, TensorProto.FLOAT, TensorProto.FLOAT],
+            [TensorProto.FLOAT, TensorProto.FLOAT],
+            attrs={
+                "q_num_heads": 8,
+                "kv_num_heads": 2,
+                "update_rule": "linear",
+            },
+        )
+
+    def test_LinearAttention_gated_delta(self) -> None:
+        # update_rule="gated_delta" with both decay (per-keydim) and beta
+        # required. Exercises the 6-positional-input form with a skipped
+        # optional past_state (input index 3 left empty).
+        self._test_op_upgrade(
+            "LinearAttention",
+            27,
+            [[2, 4, 64], [2, 4, 64], [2, 4, 64], "", [2, 4, 64], [2, 4, 4]],
+            [[2, 4, 64], [2, 4, 16, 16]],
+            [
+                TensorProto.FLOAT,
+                TensorProto.FLOAT,
+                TensorProto.FLOAT,
+                TensorProto.FLOAT,
+                TensorProto.FLOAT,
+                TensorProto.FLOAT,
+            ],
+            [TensorProto.FLOAT, TensorProto.FLOAT],
+            attrs={
+                "q_num_heads": 4,
+                "kv_num_heads": 4,
+                "update_rule": "gated_delta",
+            },
+        )
+
+    def test_LinearAttention_with_past_state(self) -> None:
+        # past_state has dtype S (FLOAT16) different from T (FLOAT).
+        # present_state must inherit dtype from past_state, not from query.
+        self._test_op_upgrade(
+            "LinearAttention",
+            27,
+            [
+                [2, 1, 64],
+                [2, 1, 64],
+                [2, 1, 64],
+                [2, 4, 16, 16],
+                [2, 1, 64],
+                [2, 1, 4],
+            ],
+            [[2, 1, 64], [2, 4, 16, 16]],
+            [
+                TensorProto.FLOAT,
+                TensorProto.FLOAT,
+                TensorProto.FLOAT,
+                TensorProto.FLOAT16,
+                TensorProto.FLOAT,
+                TensorProto.FLOAT,
+            ],
+            [TensorProto.FLOAT, TensorProto.FLOAT16],
+            attrs={
+                "q_num_heads": 4,
+                "kv_num_heads": 4,
+                "update_rule": "gated_delta",
+            },
+        )
+
     def test_ops_tested(self) -> None:
         # NOTE: This test is order dependent and needs to run last in this class
         all_schemas = onnx.defs.get_all_schemas()
@@ -1957,8 +2107,4 @@ class TestAutomaticUpgrade(automatic_conversion_test_base.TestAutomaticConversio
         expected_tested_ops = all_op_names - excluded_ops
 
         untested_ops = expected_tested_ops - set(self.tested_ops)
-        self.assertEqual(untested_ops, set())
-
-
-if __name__ == "__main__":
-    unittest.main()
+        assert untested_ops == set()

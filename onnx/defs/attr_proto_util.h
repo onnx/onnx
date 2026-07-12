@@ -1,8 +1,6 @@
 // Copyright (c) ONNX Project Contributors
-
-/*
- * SPDX-License-Identifier: Apache-2.0
- */
+//
+// SPDX-License-Identifier: Apache-2.0
 
 #pragma once
 
@@ -15,6 +13,7 @@ namespace ONNX_NAMESPACE {
 
 ONNX_API AttributeProto MakeAttribute(std::string attr_name, float value);
 ONNX_API AttributeProto MakeAttribute(std::string attr_name, int64_t value);
+ONNX_API AttributeProto MakeAttribute(std::string attr_name, int value);
 ONNX_API AttributeProto MakeAttribute(std::string attr_name, std::string value);
 ONNX_API AttributeProto MakeAttribute(std::string attr_name, TensorProto value);
 ONNX_API AttributeProto MakeAttribute(std::string attr_name, GraphProto value);

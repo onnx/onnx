@@ -2177,6 +2177,9 @@ This version of the operator has been available since version 1 of the default O
 ### <a name="LpNormalization-1"></a>**LpNormalization-1**</a>
 
   Given a matrix, apply Lp-normalization along the provided axis.
+  The output is computed as: `output = input / Lp_norm(input, axis)`.
+  When the Lp norm is zero (i.e., all elements along the axis are zero),
+  the output is defined to be zero to avoid division by zero.
 
 #### Version
 
@@ -4413,9 +4416,16 @@ This version of the operator has been available since version 1 of the default O
 
 ### <a name="Transpose-1"></a>**Transpose-1**</a>
 
-  Transpose the input tensor similar to numpy.transpose. For example, when
-  perm=(1, 0, 2), given an input tensor of shape (1, 2, 3), the output shape
-  will be (2, 1, 3).
+  Returns a transpose of the input tensor. (Similar to `numpy.transpose`).
+  The optional attribute `perm` must be a permutation of the dimensions of
+  the input tensor. Axis `i` of the output tensor corresponds to the axis
+  `perm[i]` of the input tensor.
+  For example, when perm=(1, 0, 2), given an input tensor of shape (1, 2, 3),
+  the output shape will be (2, 1, 3).
+  When perm=(1, 2, 0), given an input tensor of shape (1, 2, 3),
+  the output shape will be (2, 3, 1).
+  If the attribute `perm` is omitted, its default value is `(n-1, ..., 0)`,
+  where `n` is the rank of the input tensor.
 
 #### Version
 
@@ -5276,6 +5286,9 @@ This version of the operator has been available since version 6 of the default O
     shape(A) = (2, 3, 4, 5), shape(B) = (2), with axis=0
 
   Attribute `broadcast=1` needs to be passed to enable broadcasting.
+
+
+  For integer inputs, the result is computed using truncating division (rounding toward zero).
 
 #### Version
 
@@ -6514,6 +6527,8 @@ This version of the operator has been available since version 7 of the default O
 
   This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
 
+  For integer inputs, the result is computed using truncating division (rounding toward zero).
+
 #### Version
 
 This version of the operator has been available since version 7 of the default ONNX operator set.
@@ -7148,6 +7163,7 @@ This version of the operator has been available since version 7 of the default O
   PRelu takes input data (Tensor<T>) and slope tensor as input, and produces one
   output data (Tensor<T>) where the function `f(x) = slope * x for x < 0`,
   `f(x) = x for x >= 0`., is applied to the data tensor elementwise.
+
   This operator supports **unidirectional broadcasting** (tensor slope should be unidirectional broadcastable to input tensor X); for more details please check [the doc](Broadcasting.md).
 
 #### Version
@@ -8744,6 +8760,7 @@ This version of the operator has been available since version 9 of the default O
   PRelu takes input data (Tensor<T>) and slope tensor as input, and produces one
   output data (Tensor<T>) where the function `f(x) = slope * x for x < 0`,
   `f(x) = x for x >= 0`., is applied to the data tensor elementwise.
+
   This operator supports **unidirectional broadcasting** (tensor slope should be unidirectional broadcastable to input tensor X); for more details please check [the doc](Broadcasting.md).
 
 #### Version
@@ -9186,7 +9203,7 @@ This version of the operator has been available since version 9 of the default O
 
 <dl>
 <dt><tt>T</tt> : tensor(string), tensor(int32), tensor(int64)</dt>
-<dd>Input is ether string UTF-8 or int32/int64</dd>
+<dd>Input is either string UTF-8 or int32/int64</dd>
 <dt><tt>T1</tt> : tensor(float)</dt>
 <dd>1-D tensor of floats</dd>
 </dl>
@@ -9698,6 +9715,7 @@ This version of the operator has been available since version 10 of the default 
 
   Filter out boxes that have high intersection-over-union (IOU) overlap with previously selected boxes.
   Bounding boxes with score less than score_threshold are removed. Bounding box format is indicated by attribute center_point_box.
+  Boxes are suppressed if their IOU with a previously selected box is strictly greater than iou_threshold (i.e., boxes with IOU exactly equal to the threshold are kept).
   Note that this algorithm is agnostic to where the origin is in the coordinate system and more generally is invariant to
   orthogonal transformations and translations of the coordinate system; thus translating or reflections of the coordinate system
   result in the same boxes being selected by the algorithm.
@@ -10750,7 +10768,7 @@ This version of the operator has been available since version 11 of the default 
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float16), tensor(float), tensor(double)</dt>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
@@ -10994,7 +11012,7 @@ This version of the operator has been available since version 11 of the default 
   Zero point is calculated as:
   ```
   intermediate_zero_point = qmin - min(x)/y_scale
-  y_zero_point = cast(round(saturate(itermediate_zero_point)))
+  y_zero_point = cast(round(saturate(intermediate_zero_point)))
   ```
 
   * where qmax and qmin are max and min values for quantization range .i.e [0, 255] in case of uint8
@@ -11708,7 +11726,7 @@ This version of the operator has been available since version 11 of the default 
   1) Values from the enclosing scope (i.e. variable "a" here) are in scope and can
      be referenced in the inputs of the loop.
   2) Any values computed in the loop body that needs to be used in a subsequent
-     iteration or after the loop are modelled using a pair of variables in the loop-body,
+     iteration or after the loop are modeled using a pair of variables in the loop-body,
      consisting of an input variable (eg., b_in) and an output variable (eg., b_out).
      These are referred to as loop-carried dependences. The loop operation node
      supplies the input value of the input variable for the first iteration, and
@@ -11964,6 +11982,7 @@ This version of the operator has been available since version 11 of the default 
 
   Filter out boxes that have high intersection-over-union (IOU) overlap with previously selected boxes.
   Bounding boxes with score less than score_threshold are removed. Bounding box format is indicated by attribute center_point_box.
+  Boxes are suppressed if their IOU with a previously selected box is strictly greater than iou_threshold (i.e., boxes with IOU exactly equal to the threshold are kept).
   Note that this algorithm is agnostic to where the origin is in the coordinate system and more generally is invariant to
   orthogonal transformations and translations of the coordinate system; thus translating or reflections of the coordinate system
   result in the same boxes being selected by the algorithm.
@@ -11991,7 +12010,7 @@ This version of the operator has been available since version 11 of the default 
 <dt><tt>max_output_boxes_per_class</tt> (optional) : tensor(int64)</dt>
 <dd>Integer representing the maximum number of boxes to be selected per batch per class. It is a scalar. Default to 0, which means no output.</dd>
 <dt><tt>iou_threshold</tt> (optional) : tensor(float)</dt>
-<dd>Float representing the threshold for deciding whether boxes overlap too much with respect to IOU. It is scalar. Value range [0, 1]. Default to 0.</dd>
+<dd>Float representing the threshold for deciding whether boxes overlap too much with respect to IOU. Boxes with IoU strictly greater than this threshold are suppressed. It is scalar. Value range [0, 1]. Default to 0.</dd>
 <dt><tt>score_threshold</tt> (optional) : tensor(float)</dt>
 <dd>Float representing the threshold for deciding when to remove boxes based on score. It is a scalar.</dd>
 </dl>
@@ -12188,28 +12207,21 @@ This version of the operator has been available since version 11 of the default 
   up to `limit` (exclusive).
 
   The number of elements in the output of range is computed as below:
-
   ```
   number_of_elements = max( ceil( (limit - start) / delta ) , 0 )
   ```
-
   The pseudocode determining the contents of the output is shown below:
-
   ```
   for(int i=0; i<number_of_elements; ++i) {
     output[i] =  start + (i * delta);
   }
   ```
-
-  Example 1
-
+  Example 1:
   ```
   Inputs: start = 3, limit = 9, delta = 3
   Output: [3, 6]
   ```
-
-  Example 2
-
+  Example 2:
   ```
   Inputs: start = 10, limit = 4, delta = -2
   Output: [10, 8, 6]
@@ -13143,7 +13155,7 @@ This version of the operator has been available since version 11 of the default 
       output = np.copy(data)
       update_indices = indices.shape[:-1]
       for idx in np.ndindex(update_indices):
-          output[indices[idx]] = updates[idx]
+          output[tuple(indices[idx])] = updates[idx]
 
   The order of iteration in the above loop is not specified.
   In particular, indices should not have duplicate entries: that is, if idx1 != idx2, then indices[idx1] != indices[idx2].
@@ -15392,6 +15404,8 @@ This version of the operator has been available since version 13 of the default 
 
   This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
 
+  For integer inputs, the result is computed using truncating division (rounding toward zero).
+
 #### Version
 
 This version of the operator has been available since version 13 of the default ONNX operator set.
@@ -15537,8 +15551,8 @@ This version of the operator has been available since version 13 of the default 
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
-<dd>Constrain input and output types to all numeric tensors.</dd>
+<dt><tt>T</tt> : tensor(bfloat16), tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
 ### <a name="Exp-13"></a>**Exp-13**</a>
@@ -16506,7 +16520,7 @@ from the back. Accepted range is [-r, r-1] where r = rank(input).
   1) Values from the enclosing scope (i.e. variable "a" here) are in scope and can
      be referenced in the inputs of the loop.
   2) Any values computed in the loop body that needs to be used in a subsequent
-     iteration or after the loop are modelled using a pair of variables in the loop-body,
+     iteration or after the loop are modeled using a pair of variables in the loop-body,
      consisting of an input variable (eg., b_in) and an output variable (eg., b_out).
      These are referred to as loop-carried dependences. The loop operation node
      supplies the input value of the input variable for the first iteration, and
@@ -17633,7 +17647,7 @@ This version of the operator has been available since version 13 of the default 
 <dt><tt>keepdims</tt> : int (default is 1)</dt>
 <dd>Keep the reduced dimension or not, default 1 means keep reduced dimension.</dd>
 <dt><tt>noop_with_empty_axes</tt> : int (default is 0)</dt>
-<dd>Defines behavior when axes is not provided or is empty. If false (default), reduction happens over all axes. If true, no reduction is applied, but other operations will be performed. For example, ReduceSumSquare acts as a vanilla Square.</dd>
+<dd>Defines behavior when axes is not provided or is empty. If false (default), reduction happens over all axes (similar to the case when `axis=None` in numpy). If true, reduction happens over an empty set of axes (similar to the case when `axis=()` in numpy). Note that reduction over an empty set of axes means that the reduction step behaves like a no-op (identity function), but composite-reduction operators will still perform the non-reduction steps as needed. Thus, ReduceLogSum returns the Log of input tensor, and ReduceSumSquare returns the Square of the input tensor, in this case.</dd>
 </dl>
 
 #### Inputs (1 - 2)
@@ -17642,7 +17656,7 @@ This version of the operator has been available since version 13 of the default 
 <dt><tt>data</tt> (differentiable) : T</dt>
 <dd>An input tensor.</dd>
 <dt><tt>axes</tt> (optional, non-differentiable) : tensor(int64)</dt>
-<dd>Optional input list of integers, along which to reduce. The default is to reduce over empty axes. When axes is empty (either not provided or explicitly empty), behavior depends on 'noop_with_empty_axes': reduction over all axes if 'noop_with_empty_axes' is false, or no reduction is applied if 'noop_with_empty_axes' is true (but other operations will be performed). Accepted range is [-r, r-1] where r = rank(data).</dd>
+<dd>Optional input list of integers, along which to reduce. The default is to reduce over empty axes. When axes is empty (either not provided or explicitly empty), behavior depends on 'noop_with_empty_axes': reduction over all axes if 'noop_with_empty_axes' is false, and reduction over the empty set of axes when 'noop_with_empty_axes' is true. Accepted range is [-r, r-1] where r = rank(data).</dd>
 </dl>
 
 #### Outputs
@@ -17968,7 +17982,7 @@ This version of the operator has been available since version 13 of the default 
       output = np.copy(data)
       update_indices = indices.shape[:-1]
       for idx in np.ndindex(update_indices):
-          output[indices[idx]] = updates[idx]
+          output[tuple(indices[idx])] = updates[idx]
 
   The order of iteration in the above loop is not specified.
   In particular, indices should not have duplicate entries: that is, if idx1 != idx2, then indices[idx1] != indices[idx2].
@@ -18655,9 +18669,16 @@ This version of the operator has been available since version 13 of the default 
 
 ### <a name="Transpose-13"></a>**Transpose-13**</a>
 
-  Transpose the input tensor similar to numpy.transpose. For example, when
-  perm=(1, 0, 2), given an input tensor of shape (1, 2, 3), the output shape
-  will be (2, 1, 3).
+  Returns a transpose of the input tensor. (Similar to `numpy.transpose`).
+  The optional attribute `perm` must be a permutation of the dimensions of
+  the input tensor. Axis `i` of the output tensor corresponds to the axis
+  `perm[i]` of the input tensor.
+  For example, when perm=(1, 0, 2), given an input tensor of shape (1, 2, 3),
+  the output shape will be (2, 1, 3).
+  When perm=(1, 2, 0), given an input tensor of shape (1, 2, 3),
+  the output shape will be (2, 3, 1).
+  If the attribute `perm` is omitted, its default value is `(n-1, ..., 0)`,
+  where `n` is the rank of the input tensor.
 
 #### Version
 
@@ -18915,7 +18936,7 @@ This version of the operator has been available since version 14 of the default 
 
 <dl>
 <dt><tt>T</tt> : tensor(uint32), tensor(uint64), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
-<dd>Constrain input and output types to high-precision numeric tensors.</dd>
+<dd>Constrain input and output types to numeric tensors.</dd>
 <dt><tt>T2</tt> : tensor(int32), tensor(int64)</dt>
 <dd>axis tensor can be int32 or int64 only</dd>
 </dl>
@@ -18926,6 +18947,7 @@ This version of the operator has been available since version 14 of the default 
 
   This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
 
+  For integer inputs, the result is computed using truncating division (rounding toward zero).
   (Opset 14 change): Extend supported types to include uint8, int8, uint16, and int16.
 
 #### Version
@@ -20286,7 +20308,7 @@ This version of the operator has been available since version 16 of the default 
   1) Values from the enclosing scope (i.e. variable "a" here) are in scope and can
      be referenced in the inputs of the loop.
   2) Any values computed in the loop body that needs to be used in a subsequent
-     iteration or after the loop are modelled using a pair of variables in the loop-body,
+     iteration or after the loop are modeled using a pair of variables in the loop-body,
      consisting of an input variable (eg., b_in) and an output variable (eg., b_out).
      These are referred to as loop-carried dependences. The loop operation node
      supplies the input value of the input variable for the first iteration, and
@@ -20741,7 +20763,7 @@ This version of the operator has been available since version 16 of the default 
       output = np.copy(data)
       update_indices = indices.shape[:-1]
       for idx in np.ndindex(update_indices):
-          output[indices[idx]] = updates[idx]
+          output[tuple(indices[idx])] = updates[idx]
   The order of iteration in the above loop is not specified.
   In particular, indices should not have duplicate entries: that is, if idx1 != idx2, then indices[idx1] != indices[idx2].
   This ensures that the output value does not depend on the iteration order.
@@ -20754,12 +20776,12 @@ This version of the operator has been available since version 16 of the default 
       output = np.copy(data)
       update_indices = indices.shape[:-1]
       for idx in np.ndindex(update_indices):
-          output[indices[idx]] += updates[idx]
+          output[tuple(indices[idx])] += updates[idx]
   When `reduction` is set to "mul", `output` is calculated as follows:
       output = np.copy(data)
       update_indices = indices.shape[:-1]
       for idx in np.ndindex(update_indices):
-          output[indices[idx]] *= updates[idx]
+          output[tuple(indices[idx])] *= updates[idx]
   This operator is the inverse of GatherND.
   Example 1:
   ```
@@ -20895,7 +20917,7 @@ This version of the operator has been available since version 17 of the default 
 
 <dl>
 <dt><tt>T1</tt> : tensor(int32), tensor(int64)</dt>
-<dd>Constrain the input size to int64_t.</dd>
+<dd>Constrain the input size to int32_t or int64_t.</dd>
 <dt><tt>T2</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
 <dd>Constrain output types to numeric tensors.</dd>
 </dl>
@@ -20916,7 +20938,7 @@ This version of the operator has been available since version 17 of the default 
 <dt><tt>inverse</tt> : int (default is 0)</dt>
 <dd>Whether to perform the inverse discrete fourier transform. By default this value is set to 0, which corresponds to false.</dd>
 <dt><tt>onesided</tt> : int (default is 0)</dt>
-<dd>If onesided is 1, only values for w in [0, 1, 2, ..., floor(n_fft/2) + 1] are returned because the real-to-complex Fourier transform satisfies the conjugate symmetry, i.e., X[m, w] = X[m, n_fft-w]*. Note if the input or window tensors are complex, then onesided output is not possible. Enabling onesided with real inputs performs a Real-valued fast Fourier transform (RFFT). When invoked with real or complex valued input, the default value is 0. Values can be 0 or 1.</dd>
+<dd>If onesided is 1, only values for w in [0, 1, 2, ..., floor(n_fft/2) + 1] are used or returned because the real-to-complex Fourier transform satisfies the conjugate symmetry, i.e., X[m, w] = X[m, n_fft-w]*. When onesided=1 and inverse=0 (forward DFT), only real input is supported and a one-sided complex spectrum is returned (RFFT). When onesided=1 and inverse=1 (inverse DFT), only complex input is supported and a full real signal is returned (IRFFT). When invoked with real or complex valued input, the default value is 0. Values can be 0 or 1.</dd>
 </dl>
 
 #### Inputs (1 - 2)
@@ -20925,14 +20947,14 @@ This version of the operator has been available since version 17 of the default 
 <dt><tt>input</tt> (non-differentiable) : T1</dt>
 <dd>For real input, the following shape is expected: [batch_idx][signal_dim1][signal_dim2]...[signal_dimN][1]. For complex input, the following shape is expected: [batch_idx][signal_dim1][signal_dim2]...[signal_dimN][2]. The first dimension is the batch dimension. The following N dimensions correspond to the signal's dimensions. The final dimension represents the real and imaginary parts of the value in that order.</dd>
 <dt><tt>dft_length</tt> (optional, non-differentiable) : T2</dt>
-<dd>The length of the signal as a scalar. If greater than the axis dimension, the signal will be zero-padded up to dft_length. If less than the axis dimension, only the first dft_length values will be used as the signal. It's an optional value. </dd>
+<dd>The length of the signal as a scalar. If greater than the axis dimension, the signal will be zero-padded up to dft_length. If less than the axis dimension, only the first dft_length values will be used as the signal. If not provided, the default dft_length = signal_dim_axis, except for the IRFFT case (onesided=1, inverse=1), in which case the default dft_length is 2 * (signal_dim_axis - 1). It's an optional value.</dd>
 </dl>
 
 #### Outputs
 
 <dl>
 <dt><tt>output</tt> : T1</dt>
-<dd>The Fourier Transform of the input vector. If onesided is 0, the following shape is expected: [batch_idx][signal_dim1][signal_dim2]...[signal_dimN][2]. If axis=1 and onesided is 1, the following shape is expected: [batch_idx][floor(signal_dim1/2)+1][signal_dim2]...[signal_dimN][2]. If axis=2 and onesided is 1, the following shape is expected: [batch_idx][signal_dim1][floor(signal_dim2/2)+1]...[signal_dimN][2]. If axis=N and onesided is 1, the following shape is expected: [batch_idx][signal_dim1][signal_dim2]...[floor(signal_dimN/2)+1][2]. The signal_dim at the specified axis is equal to the dft_length.</dd>
+<dd>The Fourier Transform of the input vector. For standard DFT (onesided=0), the output shape is: [batch_idx][signal_dim1][signal_dim2]...[signal_dimN][2] (complex), with signal_dim_axis = dft_length. For RFFT (onesided=1, inverse=0), the output shape is: [batch_idx][signal_dim1][signal_dim2]...[signal_dimN][2] (one-sided complex), with signal_dim_axis = floor(dft_length/2) + 1. For IRFFT (onesided=1, inverse=1), the output shape is: [batch_idx][signal_dim1][signal_dim2]...[signal_dimN][1] (real), where signal_dim_axis = dft_length.</dd>
 </dl>
 
 #### Type Constraints
@@ -20979,7 +21001,7 @@ This version of the operator has been available since version 17 of the default 
 
 <dl>
 <dt><tt>T1</tt> : tensor(int32), tensor(int64)</dt>
-<dd>Constrain the input size to int64_t.</dd>
+<dd>Constrain the input size to int32_t or int64_t.</dd>
 <dt><tt>T2</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
 <dd>Constrain output types to numeric tensors.</dd>
 </dl>
@@ -21019,7 +21041,7 @@ This version of the operator has been available since version 17 of the default 
 
 <dl>
 <dt><tt>T1</tt> : tensor(int32), tensor(int64)</dt>
-<dd>Constrain the input size to int64_t.</dd>
+<dd>Constrain the input size to int32_t or int64_t.</dd>
 <dt><tt>T2</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
 <dd>Constrain output types to numeric tensors.</dd>
 </dl>
@@ -21836,7 +21858,7 @@ This version of the operator has been available since version 18 of the default 
 <dt><tt>keepdims</tt> : int (default is 1)</dt>
 <dd>Keep the reduced dimension or not, default 1 means keep reduced dimension.</dd>
 <dt><tt>noop_with_empty_axes</tt> : int (default is 0)</dt>
-<dd>Defines behavior when axes is not provided or is empty. If false (default), reduction happens over all axes. If true, no reduction is applied, but other operations will be performed. For example, ReduceSumSquare acts as a vanilla Square.</dd>
+<dd>Defines behavior when axes is not provided or is empty. If false (default), reduction happens over all axes (similar to the case when `axis=None` in numpy). If true, reduction happens over an empty set of axes (similar to the case when `axis=()` in numpy). Note that reduction over an empty set of axes means that the reduction step behaves like a no-op (identity function), but composite-reduction operators will still perform the non-reduction steps as needed. Thus, ReduceLogSum returns the Log of input tensor, and ReduceSumSquare returns the Square of the input tensor, in this case.</dd>
 </dl>
 
 #### Inputs (1 - 2)
@@ -21845,7 +21867,7 @@ This version of the operator has been available since version 18 of the default 
 <dt><tt>data</tt> (differentiable) : T</dt>
 <dd>An input tensor.</dd>
 <dt><tt>axes</tt> (optional, non-differentiable) : tensor(int64)</dt>
-<dd>Optional input list of integers, along which to reduce. The default is to reduce over empty axes. When axes is empty (either not provided or explicitly empty), behavior depends on 'noop_with_empty_axes': reduction over all axes if 'noop_with_empty_axes' is false, or no reduction is applied if 'noop_with_empty_axes' is true (but other operations will be performed). Accepted range is [-r, r-1] where r = rank(data).</dd>
+<dd>Optional input list of integers, along which to reduce. The default is to reduce over empty axes. When axes is empty (either not provided or explicitly empty), behavior depends on 'noop_with_empty_axes': reduction over all axes if 'noop_with_empty_axes' is false, and reduction over the empty set of axes when 'noop_with_empty_axes' is true. Accepted range is [-r, r-1] where r = rank(data).</dd>
 </dl>
 
 #### Outputs
@@ -21883,7 +21905,7 @@ This version of the operator has been available since version 18 of the default 
 <dt><tt>keepdims</tt> : int (default is 1)</dt>
 <dd>Keep the reduced dimension or not, default 1 means keep reduced dimension.</dd>
 <dt><tt>noop_with_empty_axes</tt> : int (default is 0)</dt>
-<dd>Defines behavior when axes is not provided or is empty. If false (default), reduction happens over all axes. If true, no reduction is applied, but other operations will be performed. For example, ReduceSumSquare acts as a vanilla Square.</dd>
+<dd>Defines behavior when axes is not provided or is empty. If false (default), reduction happens over all axes (similar to the case when `axis=None` in numpy). If true, reduction happens over an empty set of axes (similar to the case when `axis=()` in numpy). Note that reduction over an empty set of axes means that the reduction step behaves like a no-op (identity function), but composite-reduction operators will still perform the non-reduction steps as needed. Thus, ReduceLogSum returns the Log of input tensor, and ReduceSumSquare returns the Square of the input tensor, in this case.</dd>
 </dl>
 
 #### Inputs (1 - 2)
@@ -21892,7 +21914,7 @@ This version of the operator has been available since version 18 of the default 
 <dt><tt>data</tt> (differentiable) : T</dt>
 <dd>An input tensor.</dd>
 <dt><tt>axes</tt> (optional, non-differentiable) : tensor(int64)</dt>
-<dd>Optional input list of integers, along which to reduce. The default is to reduce over empty axes. When axes is empty (either not provided or explicitly empty), behavior depends on 'noop_with_empty_axes': reduction over all axes if 'noop_with_empty_axes' is false, or no reduction is applied if 'noop_with_empty_axes' is true (but other operations will be performed). Accepted range is [-r, r-1] where r = rank(data).</dd>
+<dd>Optional input list of integers, along which to reduce. The default is to reduce over empty axes. When axes is empty (either not provided or explicitly empty), behavior depends on 'noop_with_empty_axes': reduction over all axes if 'noop_with_empty_axes' is false, and reduction over the empty set of axes when 'noop_with_empty_axes' is true. Accepted range is [-r, r-1] where r = rank(data).</dd>
 </dl>
 
 #### Outputs
@@ -21930,7 +21952,7 @@ This version of the operator has been available since version 18 of the default 
 <dt><tt>keepdims</tt> : int (default is 1)</dt>
 <dd>Keep the reduced dimension or not, default 1 means keep reduced dimension.</dd>
 <dt><tt>noop_with_empty_axes</tt> : int (default is 0)</dt>
-<dd>Defines behavior when axes is not provided or is empty. If false (default), reduction happens over all axes. If true, no reduction is applied, but other operations will be performed. For example, ReduceSumSquare acts as a vanilla Square.</dd>
+<dd>Defines behavior when axes is not provided or is empty. If false (default), reduction happens over all axes (similar to the case when `axis=None` in numpy). If true, reduction happens over an empty set of axes (similar to the case when `axis=()` in numpy). Note that reduction over an empty set of axes means that the reduction step behaves like a no-op (identity function), but composite-reduction operators will still perform the non-reduction steps as needed. Thus, ReduceLogSum returns the Log of input tensor, and ReduceSumSquare returns the Square of the input tensor, in this case.</dd>
 </dl>
 
 #### Inputs (1 - 2)
@@ -21939,7 +21961,7 @@ This version of the operator has been available since version 18 of the default 
 <dt><tt>data</tt> (differentiable) : T</dt>
 <dd>An input tensor.</dd>
 <dt><tt>axes</tt> (optional, non-differentiable) : tensor(int64)</dt>
-<dd>Optional input list of integers, along which to reduce. The default is to reduce over empty axes. When axes is empty (either not provided or explicitly empty), behavior depends on 'noop_with_empty_axes': reduction over all axes if 'noop_with_empty_axes' is false, or no reduction is applied if 'noop_with_empty_axes' is true (but other operations will be performed). Accepted range is [-r, r-1] where r = rank(data).</dd>
+<dd>Optional input list of integers, along which to reduce. The default is to reduce over empty axes. When axes is empty (either not provided or explicitly empty), behavior depends on 'noop_with_empty_axes': reduction over all axes if 'noop_with_empty_axes' is false, and reduction over the empty set of axes when 'noop_with_empty_axes' is true. Accepted range is [-r, r-1] where r = rank(data).</dd>
 </dl>
 
 #### Outputs
@@ -21977,7 +21999,7 @@ This version of the operator has been available since version 18 of the default 
 <dt><tt>keepdims</tt> : int (default is 1)</dt>
 <dd>Keep the reduced dimension or not, default 1 means keep reduced dimension.</dd>
 <dt><tt>noop_with_empty_axes</tt> : int (default is 0)</dt>
-<dd>Defines behavior when axes is not provided or is empty. If false (default), reduction happens over all axes. If true, no reduction is applied, but other operations will be performed. For example, ReduceSumSquare acts as a vanilla Square.</dd>
+<dd>Defines behavior when axes is not provided or is empty. If false (default), reduction happens over all axes (similar to the case when `axis=None` in numpy). If true, reduction happens over an empty set of axes (similar to the case when `axis=()` in numpy). Note that reduction over an empty set of axes means that the reduction step behaves like a no-op (identity function), but composite-reduction operators will still perform the non-reduction steps as needed. Thus, ReduceLogSum returns the Log of input tensor, and ReduceSumSquare returns the Square of the input tensor, in this case.</dd>
 </dl>
 
 #### Inputs (1 - 2)
@@ -21986,7 +22008,7 @@ This version of the operator has been available since version 18 of the default 
 <dt><tt>data</tt> (differentiable) : T</dt>
 <dd>An input tensor.</dd>
 <dt><tt>axes</tt> (optional, non-differentiable) : tensor(int64)</dt>
-<dd>Optional input list of integers, along which to reduce. The default is to reduce over empty axes. When axes is empty (either not provided or explicitly empty), behavior depends on 'noop_with_empty_axes': reduction over all axes if 'noop_with_empty_axes' is false, or no reduction is applied if 'noop_with_empty_axes' is true (but other operations will be performed). Accepted range is [-r, r-1] where r = rank(data).</dd>
+<dd>Optional input list of integers, along which to reduce. The default is to reduce over empty axes. When axes is empty (either not provided or explicitly empty), behavior depends on 'noop_with_empty_axes': reduction over all axes if 'noop_with_empty_axes' is false, and reduction over the empty set of axes when 'noop_with_empty_axes' is true. Accepted range is [-r, r-1] where r = rank(data).</dd>
 </dl>
 
 #### Outputs
@@ -22024,7 +22046,7 @@ This version of the operator has been available since version 18 of the default 
 <dt><tt>keepdims</tt> : int (default is 1)</dt>
 <dd>Keep the reduced dimension or not, default 1 means keep reduced dimension.</dd>
 <dt><tt>noop_with_empty_axes</tt> : int (default is 0)</dt>
-<dd>Defines behavior when axes is not provided or is empty. If false (default), reduction happens over all axes. If true, no reduction is applied, but other operations will be performed. For example, ReduceSumSquare acts as a vanilla Square.</dd>
+<dd>Defines behavior when axes is not provided or is empty. If false (default), reduction happens over all axes (similar to the case when `axis=None` in numpy). If true, reduction happens over an empty set of axes (similar to the case when `axis=()` in numpy). Note that reduction over an empty set of axes means that the reduction step behaves like a no-op (identity function), but composite-reduction operators will still perform the non-reduction steps as needed. Thus, ReduceLogSum returns the Log of input tensor, and ReduceSumSquare returns the Square of the input tensor, in this case.</dd>
 </dl>
 
 #### Inputs (1 - 2)
@@ -22033,7 +22055,7 @@ This version of the operator has been available since version 18 of the default 
 <dt><tt>data</tt> (differentiable) : T</dt>
 <dd>An input tensor.</dd>
 <dt><tt>axes</tt> (optional, non-differentiable) : tensor(int64)</dt>
-<dd>Optional input list of integers, along which to reduce. The default is to reduce over empty axes. When axes is empty (either not provided or explicitly empty), behavior depends on 'noop_with_empty_axes': reduction over all axes if 'noop_with_empty_axes' is false, or no reduction is applied if 'noop_with_empty_axes' is true (but other operations will be performed). Accepted range is [-r, r-1] where r = rank(data).</dd>
+<dd>Optional input list of integers, along which to reduce. The default is to reduce over empty axes. When axes is empty (either not provided or explicitly empty), behavior depends on 'noop_with_empty_axes': reduction over all axes if 'noop_with_empty_axes' is false, and reduction over the empty set of axes when 'noop_with_empty_axes' is true. Accepted range is [-r, r-1] where r = rank(data).</dd>
 </dl>
 
 #### Outputs
@@ -22071,7 +22093,7 @@ This version of the operator has been available since version 18 of the default 
 <dt><tt>keepdims</tt> : int (default is 1)</dt>
 <dd>Keep the reduced dimension or not, default 1 means keep reduced dimension.</dd>
 <dt><tt>noop_with_empty_axes</tt> : int (default is 0)</dt>
-<dd>Defines behavior when axes is not provided or is empty. If false (default), reduction happens over all axes. If true, no reduction is applied, but other operations will be performed. For example, ReduceSumSquare acts as a vanilla Square.</dd>
+<dd>Defines behavior when axes is not provided or is empty. If false (default), reduction happens over all axes (similar to the case when `axis=None` in numpy). If true, reduction happens over an empty set of axes (similar to the case when `axis=()` in numpy). Note that reduction over an empty set of axes means that the reduction step behaves like a no-op (identity function), but composite-reduction operators will still perform the non-reduction steps as needed. Thus, ReduceLogSum returns the Log of input tensor, and ReduceSumSquare returns the Square of the input tensor, in this case.</dd>
 </dl>
 
 #### Inputs (1 - 2)
@@ -22080,7 +22102,7 @@ This version of the operator has been available since version 18 of the default 
 <dt><tt>data</tt> (differentiable) : T</dt>
 <dd>An input tensor.</dd>
 <dt><tt>axes</tt> (optional, non-differentiable) : tensor(int64)</dt>
-<dd>Optional input list of integers, along which to reduce. The default is to reduce over empty axes. When axes is empty (either not provided or explicitly empty), behavior depends on 'noop_with_empty_axes': reduction over all axes if 'noop_with_empty_axes' is false, or no reduction is applied if 'noop_with_empty_axes' is true (but other operations will be performed). Accepted range is [-r, r-1] where r = rank(data).</dd>
+<dd>Optional input list of integers, along which to reduce. The default is to reduce over empty axes. When axes is empty (either not provided or explicitly empty), behavior depends on 'noop_with_empty_axes': reduction over all axes if 'noop_with_empty_axes' is false, and reduction over the empty set of axes when 'noop_with_empty_axes' is true. Accepted range is [-r, r-1] where r = rank(data).</dd>
 </dl>
 
 #### Outputs
@@ -22118,7 +22140,7 @@ This version of the operator has been available since version 18 of the default 
 <dt><tt>keepdims</tt> : int (default is 1)</dt>
 <dd>Keep the reduced dimension or not, default 1 means keep reduced dimension.</dd>
 <dt><tt>noop_with_empty_axes</tt> : int (default is 0)</dt>
-<dd>Defines behavior when axes is not provided or is empty. If false (default), reduction happens over all axes. If true, no reduction is applied, but other operations will be performed. For example, ReduceSumSquare acts as a vanilla Square.</dd>
+<dd>Defines behavior when axes is not provided or is empty. If false (default), reduction happens over all axes (similar to the case when `axis=None` in numpy). If true, reduction happens over an empty set of axes (similar to the case when `axis=()` in numpy). Note that reduction over an empty set of axes means that the reduction step behaves like a no-op (identity function), but composite-reduction operators will still perform the non-reduction steps as needed. Thus, ReduceLogSum returns the Log of input tensor, and ReduceSumSquare returns the Square of the input tensor, in this case.</dd>
 </dl>
 
 #### Inputs (1 - 2)
@@ -22127,7 +22149,7 @@ This version of the operator has been available since version 18 of the default 
 <dt><tt>data</tt> (differentiable) : T</dt>
 <dd>An input tensor.</dd>
 <dt><tt>axes</tt> (optional, non-differentiable) : tensor(int64)</dt>
-<dd>Optional input list of integers, along which to reduce. The default is to reduce over empty axes. When axes is empty (either not provided or explicitly empty), behavior depends on 'noop_with_empty_axes': reduction over all axes if 'noop_with_empty_axes' is false, or no reduction is applied if 'noop_with_empty_axes' is true (but other operations will be performed). Accepted range is [-r, r-1] where r = rank(data).</dd>
+<dd>Optional input list of integers, along which to reduce. The default is to reduce over empty axes. When axes is empty (either not provided or explicitly empty), behavior depends on 'noop_with_empty_axes': reduction over all axes if 'noop_with_empty_axes' is false, and reduction over the empty set of axes when 'noop_with_empty_axes' is true. Accepted range is [-r, r-1] where r = rank(data).</dd>
 </dl>
 
 #### Outputs
@@ -22165,7 +22187,7 @@ This version of the operator has been available since version 18 of the default 
 <dt><tt>keepdims</tt> : int (default is 1)</dt>
 <dd>Keep the reduced dimension or not, default 1 means keep reduced dimension.</dd>
 <dt><tt>noop_with_empty_axes</tt> : int (default is 0)</dt>
-<dd>Defines behavior when axes is not provided or is empty. If false (default), reduction happens over all axes. If true, no reduction is applied, but other operations will be performed. For example, ReduceSumSquare acts as a vanilla Square.</dd>
+<dd>Defines behavior when axes is not provided or is empty. If false (default), reduction happens over all axes (similar to the case when `axis=None` in numpy). If true, reduction happens over an empty set of axes (similar to the case when `axis=()` in numpy). Note that reduction over an empty set of axes means that the reduction step behaves like a no-op (identity function), but composite-reduction operators will still perform the non-reduction steps as needed. Thus, ReduceLogSum returns the Log of input tensor, and ReduceSumSquare returns the Square of the input tensor, in this case.</dd>
 </dl>
 
 #### Inputs (1 - 2)
@@ -22174,7 +22196,7 @@ This version of the operator has been available since version 18 of the default 
 <dt><tt>data</tt> (differentiable) : T</dt>
 <dd>An input tensor.</dd>
 <dt><tt>axes</tt> (optional, non-differentiable) : tensor(int64)</dt>
-<dd>Optional input list of integers, along which to reduce. The default is to reduce over empty axes. When axes is empty (either not provided or explicitly empty), behavior depends on 'noop_with_empty_axes': reduction over all axes if 'noop_with_empty_axes' is false, or no reduction is applied if 'noop_with_empty_axes' is true (but other operations will be performed). Accepted range is [-r, r-1] where r = rank(data).</dd>
+<dd>Optional input list of integers, along which to reduce. The default is to reduce over empty axes. When axes is empty (either not provided or explicitly empty), behavior depends on 'noop_with_empty_axes': reduction over all axes if 'noop_with_empty_axes' is false, and reduction over the empty set of axes when 'noop_with_empty_axes' is true. Accepted range is [-r, r-1] where r = rank(data).</dd>
 </dl>
 
 #### Outputs
@@ -22212,7 +22234,7 @@ This version of the operator has been available since version 18 of the default 
 <dt><tt>keepdims</tt> : int (default is 1)</dt>
 <dd>Keep the reduced dimension or not, default 1 means keep reduced dimension.</dd>
 <dt><tt>noop_with_empty_axes</tt> : int (default is 0)</dt>
-<dd>Defines behavior when axes is not provided or is empty. If false (default), reduction happens over all axes. If true, no reduction is applied, but other operations will be performed. For example, ReduceSumSquare acts as a vanilla Square.</dd>
+<dd>Defines behavior when axes is not provided or is empty. If false (default), reduction happens over all axes (similar to the case when `axis=None` in numpy). If true, reduction happens over an empty set of axes (similar to the case when `axis=()` in numpy). Note that reduction over an empty set of axes means that the reduction step behaves like a no-op (identity function), but composite-reduction operators will still perform the non-reduction steps as needed. Thus, ReduceLogSum returns the Log of input tensor, and ReduceSumSquare returns the Square of the input tensor, in this case.</dd>
 </dl>
 
 #### Inputs (1 - 2)
@@ -22221,7 +22243,7 @@ This version of the operator has been available since version 18 of the default 
 <dt><tt>data</tt> (differentiable) : T</dt>
 <dd>An input tensor.</dd>
 <dt><tt>axes</tt> (optional, non-differentiable) : tensor(int64)</dt>
-<dd>Optional input list of integers, along which to reduce. The default is to reduce over empty axes. When axes is empty (either not provided or explicitly empty), behavior depends on 'noop_with_empty_axes': reduction over all axes if 'noop_with_empty_axes' is false, or no reduction is applied if 'noop_with_empty_axes' is true (but other operations will be performed). Accepted range is [-r, r-1] where r = rank(data).</dd>
+<dd>Optional input list of integers, along which to reduce. The default is to reduce over empty axes. When axes is empty (either not provided or explicitly empty), behavior depends on 'noop_with_empty_axes': reduction over all axes if 'noop_with_empty_axes' is false, and reduction over the empty set of axes when 'noop_with_empty_axes' is true. Accepted range is [-r, r-1] where r = rank(data).</dd>
 </dl>
 
 #### Outputs
@@ -22474,7 +22496,7 @@ This version of the operator has been available since version 18 of the default 
   output = np.copy(data)
   update_indices = indices.shape[:-1]
   for idx in np.ndindex(update_indices):
-      output[indices[idx]] = updates[idx]
+      output[tuple(indices[idx])] = updates[idx]
   ```
 
   The order of iteration in the above loop is not specified.
@@ -22491,7 +22513,7 @@ This version of the operator has been available since version 18 of the default 
   output = np.copy(data)
   update_indices = indices.shape[:-1]
   for idx in np.ndindex(update_indices):
-      output[indices[idx]] = f(output[indices[idx]], updates[idx])
+      output[tuple(indices[idx])] = f(output[tuple(indices[idx])], updates[idx])
   ```
 
   where the `f` is `+`, `*`, `max` or `min` as specified.
@@ -23201,7 +23223,7 @@ This version of the operator has been available since version 19 of the default 
   1) Values from the enclosing scope (i.e. variable "a" here) are in scope and can
      be referenced in the inputs of the loop.
   2) Any values computed in the loop body that needs to be used in a subsequent
-     iteration or after the loop are modelled using a pair of variables in the loop-body,
+     iteration or after the loop are modeled using a pair of variables in the loop-body,
      consisting of an input variable (eg., b_in) and an output variable (eg., b_out).
      These are referred to as loop-carried dependences. The loop operation node
      supplies the input value of the input variable for the first iteration, and
@@ -23269,7 +23291,7 @@ This version of the operator has been available since version 19 of the default 
   Given a tensor containing the data to be padded (`data`), a tensor containing the number of start and end pad values for axis (`pads`), (optionally) a `mode`, and (optionally) `constant_value`,
   a padded tensor (`output`) is generated.
 
-  The three supported `modes` are (similar to corresponding modes supported by `numpy.pad`):
+  The four supported `modes` are (similar to corresponding modes supported by `numpy.pad`):
 
   1) `constant`(default) - pads with a given constant value as specified by `constant_value` (which defaults to 0, empty string, or False)
 
@@ -24050,7 +24072,7 @@ This version of the operator has been available since version 20 of the default 
 <dt><tt>inverse</tt> : int (default is 0)</dt>
 <dd>Whether to perform the inverse discrete Fourier Transform. Default is 0, which corresponds to `false`.</dd>
 <dt><tt>onesided</tt> : int (default is 0)</dt>
-<dd>If `onesided` is `1` and input is real, only values for `k` in `[0, 1, 2, ..., floor(n_fft/2) + 1]` are returned because the real-to-complex Fourier transform satisfies the conjugate symmetry, i.e., `X[m, k] = X[m, n_fft-k]*`, where `m` denotes "all other dimensions" DFT was not applied on. If the input tensor is complex, onesided output is not possible. Value can be `0` or `1`. Default is `0`.</dd>
+<dd>If `onesided` is `1`, only values for `k` in `[0, 1, 2, ..., floor(n_fft/2) + 1]` are used or returned because the real-to-complex Fourier transform satisfies the conjugate symmetry, i.e., `X[m, k] = X[m, n_fft-k]*`, where `m` denotes "all other dimensions" DFT was not applied on. When `onesided=1` and `inverse=0` (forward DFT), only real input is supported and a one-sided complex spectrum is returned (RFFT). When `onesided=1` and `inverse=1` (inverse DFT), only complex input is supported and a full real signal is returned (IRFFT). Value can be `0` or `1`. Default is `0`.</dd>
 </dl>
 
 #### Inputs (1 - 3)
@@ -24059,7 +24081,7 @@ This version of the operator has been available since version 20 of the default 
 <dt><tt>input</tt> (non-differentiable) : T1</dt>
 <dd>For real input, the following shape is expected: `[signal_dim0][signal_dim1][signal_dim2]...[signal_dimN][1]`. For complex input, the following shape is expected: `[signal_dim0][signal_dim1][signal_dim2]...[signal_dimN][2]`. The final dimension represents the real and imaginary parts of the value in that order.</dd>
 <dt><tt>dft_length</tt> (optional, non-differentiable) : T2</dt>
-<dd>The length of the signal as a scalar. If greater than the axis dimension, the signal will be zero-padded up to `dft_length`. If less than the axis dimension, only the first `dft_length` values will be used as the signal. </dd>
+<dd>The length of the signal as a scalar. If greater than the axis dimension, the signal will be zero-padded up to `dft_length`. If less than the axis dimension, only the first `dft_length` values will be used as the signal. If not provided, the default `dft_length = signal_dim_axis`, except for the IRFFT case (`onesided=1`, `inverse=1`), in which case the default dft_length is `2 * (signal_dim_axis - 1)`.</dd>
 <dt><tt>axis</tt> (optional, non-differentiable) : tensor(int64)</dt>
 <dd>The axis as a scalar on which to perform the DFT. Default is `-2` (last signal axis). Negative value means counting dimensions from the back. Accepted range is $[-r, -2] \cup [0, r-2]$ where `r = rank(input)`. The last dimension is for representing complex numbers and thus is an invalid axis.</dd>
 </dl>
@@ -24068,7 +24090,7 @@ This version of the operator has been available since version 20 of the default 
 
 <dl>
 <dt><tt>output</tt> : T1</dt>
-<dd>The Fourier Transform of the input vector. If `onesided` is `0`, the following shape is expected: `[signal_dim0][signal_dim1][signal_dim2]...[signal_dimN][2]`. If `axis=0` and `onesided` is `1`, the following shape is expected: `[floor(signal_dim0/2)+1][signal_dim1][signal_dim2]...[signal_dimN][2]`. If `axis=1` and `onesided` is `1`, the following shape is expected: `[signal_dim0][floor(signal_dim1/2)+1][signal_dim2]...[signal_dimN][2]`. If `axis=N` and `onesided` is `1`, the following shape is expected: `[signal_dim0][signal_dim1][signal_dim2]...[floor(signal_dimN/2)+1][2]`. The `signal_dim` at the specified `axis` is equal to the `dft_length`.</dd>
+<dd>The Fourier Transform of the input vector. For standard DFT (`onesided=0`), the output shape is: `[signal_dim0][signal_dim1][signal_dim2]...[signal_dimN][2]` (complex), with `signal_dim_axis = dft_length`. For RFFT (`onesided=1`, `inverse=0`), the output shape is: `[signal_dim0][signal_dim1][signal_dim2]...[signal_dimN][2]` (one-sided complex), with `signal_dim_axis = floor(dft_length/2) + 1`. For IRFFT (`onesided=1`, `inverse=1`), the output shape is: `[signal_dim0][signal_dim1][signal_dim2]...[signal_dimN][1]` (real), where `signal_dim_axis = dft_length`.</dd>
 </dl>
 
 #### Type Constraints
@@ -24337,7 +24359,7 @@ This version of the operator has been available since version 20 of the default 
 <dt><tt>keepdims</tt> : int (default is 1)</dt>
 <dd>Keep the reduced dimension or not, default 1 means keep reduced dimension.</dd>
 <dt><tt>noop_with_empty_axes</tt> : int (default is 0)</dt>
-<dd>Defines behavior when axes is not provided or is empty. If false (default), reduction happens over all axes. If true, no reduction is applied, but other operations will be performed. For example, ReduceSumSquare acts as a vanilla Square.</dd>
+<dd>Defines behavior when axes is not provided or is empty. If false (default), reduction happens over all axes (similar to the case when `axis=None` in numpy). If true, reduction happens over an empty set of axes (similar to the case when `axis=()` in numpy). Note that reduction over an empty set of axes means that the reduction step behaves like a no-op (identity function), but composite-reduction operators will still perform the non-reduction steps as needed. Thus, ReduceLogSum returns the Log of input tensor, and ReduceSumSquare returns the Square of the input tensor, in this case.</dd>
 </dl>
 
 #### Inputs (1 - 2)
@@ -24346,7 +24368,7 @@ This version of the operator has been available since version 20 of the default 
 <dt><tt>data</tt> (differentiable) : T</dt>
 <dd>An input tensor.</dd>
 <dt><tt>axes</tt> (optional, non-differentiable) : tensor(int64)</dt>
-<dd>Optional input list of integers, along which to reduce. The default is to reduce over empty axes. When axes is empty (either not provided or explicitly empty), behavior depends on 'noop_with_empty_axes': reduction over all axes if 'noop_with_empty_axes' is false, or no reduction is applied if 'noop_with_empty_axes' is true (but other operations will be performed). Accepted range is [-r, r-1] where r = rank(data).</dd>
+<dd>Optional input list of integers, along which to reduce. The default is to reduce over empty axes. When axes is empty (either not provided or explicitly empty), behavior depends on 'noop_with_empty_axes': reduction over all axes if 'noop_with_empty_axes' is false, and reduction over the empty set of axes when 'noop_with_empty_axes' is true. Accepted range is [-r, r-1] where r = rank(data).</dd>
 </dl>
 
 #### Outputs
@@ -24386,7 +24408,7 @@ This version of the operator has been available since version 20 of the default 
 <dt><tt>keepdims</tt> : int (default is 1)</dt>
 <dd>Keep the reduced dimension or not, default 1 means keep reduced dimension.</dd>
 <dt><tt>noop_with_empty_axes</tt> : int (default is 0)</dt>
-<dd>Defines behavior when axes is not provided or is empty. If false (default), reduction happens over all axes. If true, no reduction is applied, but other operations will be performed. For example, ReduceSumSquare acts as a vanilla Square.</dd>
+<dd>Defines behavior when axes is not provided or is empty. If false (default), reduction happens over all axes (similar to the case when `axis=None` in numpy). If true, reduction happens over an empty set of axes (similar to the case when `axis=()` in numpy). Note that reduction over an empty set of axes means that the reduction step behaves like a no-op (identity function), but composite-reduction operators will still perform the non-reduction steps as needed. Thus, ReduceLogSum returns the Log of input tensor, and ReduceSumSquare returns the Square of the input tensor, in this case.</dd>
 </dl>
 
 #### Inputs (1 - 2)
@@ -24395,7 +24417,7 @@ This version of the operator has been available since version 20 of the default 
 <dt><tt>data</tt> (differentiable) : T</dt>
 <dd>An input tensor.</dd>
 <dt><tt>axes</tt> (optional, non-differentiable) : tensor(int64)</dt>
-<dd>Optional input list of integers, along which to reduce. The default is to reduce over empty axes. When axes is empty (either not provided or explicitly empty), behavior depends on 'noop_with_empty_axes': reduction over all axes if 'noop_with_empty_axes' is false, or no reduction is applied if 'noop_with_empty_axes' is true (but other operations will be performed). Accepted range is [-r, r-1] where r = rank(data).</dd>
+<dd>Optional input list of integers, along which to reduce. The default is to reduce over empty axes. When axes is empty (either not provided or explicitly empty), behavior depends on 'noop_with_empty_axes': reduction over all axes if 'noop_with_empty_axes' is false, and reduction over the empty set of axes when 'noop_with_empty_axes' is true. Accepted range is [-r, r-1] where r = rank(data).</dd>
 </dl>
 
 #### Outputs
@@ -25103,7 +25125,7 @@ This version of the operator has been available since version 21 of the default 
   1) Values from the enclosing scope (i.e. variable "a" here) are in scope and can
      be referenced in the inputs of the loop.
   2) Any values computed in the loop body that needs to be used in a subsequent
-     iteration or after the loop are modelled using a pair of variables in the loop-body,
+     iteration or after the loop are modeled using a pair of variables in the loop-body,
      consisting of an input variable (eg., b_in) and an output variable (eg., b_out).
      These are referred to as loop-carried dependences. The loop operation node
      supplies the input value of the input variable for the first iteration, and
@@ -25171,7 +25193,7 @@ This version of the operator has been available since version 21 of the default 
   Given a tensor containing the data to be padded (`data`), a tensor containing the number of start and end pad values for axis (`pads`), (optionally) a `mode`, and (optionally) `constant_value`,
   a padded tensor (`output`) is generated.
 
-  The three supported `modes` are (similar to corresponding modes supported by `numpy.pad`):
+  The four supported `modes` are (similar to corresponding modes supported by `numpy.pad`):
 
   1) `constant`(default) - pads with a given constant value as specified by `constant_value` (which defaults to 0, empty string, or False)
 
@@ -25796,9 +25818,16 @@ This version of the operator has been available since version 21 of the default 
 
 ### <a name="Transpose-21"></a>**Transpose-21**</a>
 
-  Transpose the input tensor similar to numpy.transpose. For example, when
-  perm=(1, 0, 2), given an input tensor of shape (1, 2, 3), the output shape
-  will be (2, 1, 3).
+  Returns a transpose of the input tensor. (Similar to `numpy.transpose`).
+  The optional attribute `perm` must be a permutation of the dimensions of
+  the input tensor. Axis `i` of the output tensor corresponds to the axis
+  `perm[i]` of the input tensor.
+  For example, when perm=(1, 0, 2), given an input tensor of shape (1, 2, 3),
+  the output shape will be (2, 1, 3).
+  When perm=(1, 2, 0), given an input tensor of shape (1, 2, 3),
+  the output shape will be (2, 3, 1).
+  If the attribute `perm` is omitted, its default value is `(n-1, ..., 0)`,
+  where `n` is the rank of the input tensor.
 
 #### Version
 
@@ -27086,6 +27115,9 @@ This version of the operator has been available since version 22 of the default 
 ### <a name="LpNormalization-22"></a>**LpNormalization-22**</a>
 
   Given a matrix, apply Lp-normalization along the provided axis.
+  The output is computed as: `output = input / Lp_norm(input, axis)`.
+  When the Lp norm is zero (i.e., all elements along the axis are zero),
+  the output is defined to be zero to avoid division by zero.
 
 #### Version
 
@@ -28239,9 +28271,11 @@ This version of the operator has been available since version 22 of the default 
   2) Group-query Attention (GQA): Described in the paper https://arxiv.org/pdf/2305.13245, `q_num_heads > kv_num_heads`, `q_num_heads % kv_num_heads == 0`.
   3) Multi-query Attention (MQA): Described in the paper https://arxiv.org/pdf/1911.02150, `q_num_heads > kv_num_heads`, `kv_num_heads=1`.
 
-  Attention bias to be added is calculated based on `attn_mask` input and `is_causal attribute`, only one of which can be provided.
-  1) If `is_causal` is set to `1`, the attention masking is a lower triangular matrix when the mask is a square matrix. The attention masking has the form of the upper left causal bias due to the alignment.
-  2) `attn_mask`: A boolean mask where a value of `True` indicates that the element should take part in attention or a float mask of the same type as query, key, value that is added to the attention score.
+  Attention bias to be added is calculated based on `attn_mask` input and `is_causal` attribute:
+  1) `attn_mask`: A boolean mask where a value of `True` indicates that the element should take part in attention or a float mask of the same type as query, key, value that is added to the attention score.
+  2) If `is_causal` is set to `1`, causal masking is applied with bottom-right (offset-aware) alignment: query `i` attends key `j` iff `j <= i + past_sequence_length` (the count of cached keys in `past_key`); for a square Q/K this is the standard lower-triangular mask. The causal frontier is computed independently of the `attn_mask` input and is then composed with it additively, by summing their attention biases: a boolean `attn_mask` intersects the allowed set (its disallowed positions contribute `-inf` to the bias), while a float `attn_mask` is added to the attention scores rather than disabling positions. A fully-masked query row (every key's combined additive bias is `-inf`, e.g. an all-`False` boolean `attn_mask` row) produces a zero output row (matching prevailing runtime practice), not `NaN`.
+
+  Errata (in-place behavioral correction, no opset bump): a fully-masked query row (e.g. an all-`False` boolean `attn_mask` row) now produces a zero output row instead of `NaN`, and the same zero-row guard applies to the mode-`3` `qk_matmul_output` debug output; this only replaces previously-`NaN` outputs. The mode-`3` `qk_matmul_output` is also now emitted at the operator's output precision (`T1`), matching the reference implementation, which affects only its dtype and only when `softmax_precision` differs from `T1`. No numerically useful, well-defined result of the released opset is otherwise changed.
 
   Both past and present state key/values are optional. They shall be used together, and not allowed to use only one of them.
   The following pattern is applied to the Q, K and V inputs after appropriate reshaping of K and V inputs based on sequence lengths and num heads provided:
@@ -28256,9 +28290,9 @@ This version of the operator has been available since version 22 of the default 
         |          |          |
         ---MatMul---          |
               |               |
-   at_mask---Add              |
-              |               |
     softcap (if provided)     |
+              |               |
+   at_mask---Add              |
               |               |
            Softmax            |
               |               |
@@ -28276,13 +28310,13 @@ This version of the operator has been available since version 23 of the default 
 
 <dl>
 <dt><tt>is_causal</tt> : int (default is 0)</dt>
-<dd>If set to `1`, the attention masking is a lower triangular matrix when the mask is a square matrix. The attention masking has the form of the upper left causal bias due to the alignment.</dd>
+<dd>If set to `1`, causal masking is applied with bottom-right (offset-aware) alignment: query `i` attends key `j` iff `j <= i + past_sequence_length` (the count of cached keys in `past_key`); for a square Q/K this is the standard lower-triangular mask.</dd>
 <dt><tt>kv_num_heads</tt> : int</dt>
 <dd>Number of heads of key and value. Must be used with 3D inputs of Q, K and V. </dd>
 <dt><tt>q_num_heads</tt> : int</dt>
 <dd>Number of heads of query. Must be used with 3D inputs of Q, K and V. </dd>
 <dt><tt>qk_matmul_output_mode</tt> : int (default is 0)</dt>
-<dd>If set to `0`, qk_matmul_output is the output of qk matmul. If set to `1`, qk_matmul_output includes the addition of the attention mask to the output of qk matmul. If set to `2`, qk_matmul_output is the output after the softcap operation. If set to `3`, qk_matmul_output is the output after the softmax operation. Default value is 0.</dd>
+<dd>If set to `0`, qk_matmul_output is the output of qk matmul. If set to `1`, qk_matmul_output is the output after the softcap operation (before mask addition). If set to `2`, qk_matmul_output includes the attention mask and softcap (if provided) applied to the output of qk matmul. If set to `3`, qk_matmul_output is the output after the softmax operation. In mode `3`, a fully-masked query row (every key disallowed, e.g. an all-`False` boolean `attn_mask` row) is a zero row, consistent with the corresponding row of the primary output `Y`: the fully-masked-row guard is applied before this output is produced. The mode-`3` output is emitted at the operator's output precision (`T1`); when `softmax_precision` differs from `T1` this is a cast of the softmax result to `T1`. Default value is 0.</dd>
 <dt><tt>scale</tt> : float</dt>
 <dd>Scaling factor applied to $Q*K^T$. Default value is `1/sqrt(head_size)`. To prevent [numerical overflow](https://tinyurl.com/sudb9s96), scale `Q`, `K` by `sqrt(scale)` before matmul.</dd>
 <dt><tt>softcap</tt> : float (default is 0.0)</dt>
@@ -28846,7 +28880,7 @@ This version of the operator has been available since version 23 of the default 
   1) Values from the enclosing scope (i.e. variable "a" here) are in scope and can
      be referenced in the inputs of the loop.
   2) Any values computed in the loop body that needs to be used in a subsequent
-     iteration or after the loop are modelled using a pair of variables in the loop-body,
+     iteration or after the loop are modeled using a pair of variables in the loop-body,
      consisting of an input variable (eg., b_in) and an output variable (eg., b_out).
      These are referred to as loop-carried dependences. The loop operation node
      supplies the input value of the input variable for the first iteration, and
@@ -28914,7 +28948,7 @@ This version of the operator has been available since version 23 of the default 
   Given a tensor containing the data to be padded (`data`), a tensor containing the number of start and end pad values for axis (`pads`), (optionally) a `mode`, and (optionally) `constant_value`,
   a padded tensor (`output`) is generated.
 
-  The three supported `modes` are (similar to corresponding modes supported by `numpy.pad`):
+  The four supported `modes` are (similar to corresponding modes supported by `numpy.pad`):
 
   1) `constant`(default) - pads with a given constant value as specified by `constant_value` (which defaults to 0, empty string, or False)
 
@@ -29267,15 +29301,16 @@ This version of the operator has been available since version 23 of the default 
   Rotary embeddings are defined using the following algorithm:
 
   ```python
-  def compute_rotary_embedding(
-      input,
-      position_ids,
-      sin_cache,
-      cos_cache,
-      interleaved=0,
-      rotary_embedding_dim=0,
-      num_heads=0,
-  ):
+  def rotary_embedding(
+      input: np.ndarray,
+      cos_cache: np.ndarray,
+      sin_cache: np.ndarray,
+      position_ids: np.ndarray | None = None,
+      interleaved=None,
+      rotary_embedding_dim=None,
+      num_heads=None,
+  ) -> np.ndarray:
+      original_input_shape = input.shape
       # First ensure input to be processed has shape [batch_size, seq_len, num_heads, head_size]
       if len(input.shape) == 4:
           input = np.transpose(input, (0, 2, 1, 3))
@@ -29291,7 +29326,7 @@ This version of the operator has been available since version 23 of the default 
       head_size = input.shape[3]
 
       # Fully or partially perform rotation on input based on rotary_embedding_dim attribute
-      if rotary_embedding_dim == 0:
+      if rotary_embedding_dim is None or rotary_embedding_dim == 0:
           # If rotary_embedding_dim not provided, perform full rotation by using head_size
           rotary_embedding_dim = head_size
       x_rotate = input[:, :, :, :rotary_embedding_dim]
@@ -29300,15 +29335,29 @@ This version of the operator has been available since version 23 of the default 
 
       # Retrieve sin and cos caches using position ids
       if position_ids is not None:
-          cos = cos_cache[position_ids]  # Shape: [batch_size, sequence_length, head_size/2]
-          sin = sin_cache[position_ids]  # Shape: [batch_size, sequence_length, head_size/2]
-      else:
-          cos = cos_cache
-          sin = sin_cache
-      cos = cos[:, :, :rotary_embedding_dim_half]  # Shape: [batch_size, sequence_length, rotary_embedding_dim/2]
-      sin = sin[:, :, :rotary_embedding_dim_half]  # Shape: [batch_size, sequence_length, rotary_embedding_dim/2]
-      cos = np.expand_dims(cos, axis=2)  # Shape: [batch_size, sequence_length, 1, rotary_embedding_dim/2]
-      sin = np.expand_dims(sin, axis=2)  # Shape: [batch_size, sequence_length, 1, rotary_embedding_dim/2]
+          cos_cache = cos_cache[
+              position_ids
+          ]  # Shape: [batch_size, sequence_length, rotary_embedding_dim/2]
+          sin_cache = sin_cache[
+              position_ids
+          ]  # Shape: [batch_size, sequence_length, rotary_embedding_dim/2]
+
+      # Shape: [batch_size, sequence_length, rotary_embedding_dim/2]
+      if cos_cache.shape[-1] != rotary_embedding_dim_half:
+          raise ValueError(
+              f"Last dimension of cos cache ({cos_cache.shape[-1]}) does not match rotary_embedding_dim/2 ({rotary_embedding_dim_half})."
+          )
+      if sin_cache.shape[-1] != rotary_embedding_dim_half:
+          raise ValueError(
+              f"Last dimension of sin cache ({sin_cache.shape[-1]}) does not match rotary_embedding_dim/2 ({rotary_embedding_dim_half})."
+          )
+
+      cos_cache = np.expand_dims(
+          cos_cache, axis=2
+      )  # Shape: [batch_size, sequence_length, 1, rotary_embedding_dim/2]
+      sin_cache = np.expand_dims(
+          sin_cache, axis=2
+      )  # Shape: [batch_size, sequence_length, 1, rotary_embedding_dim/2]
 
       # Either divide the input in halves or interleave (based on interleaved attribute)
       if interleaved:
@@ -29318,8 +29367,8 @@ This version of the operator has been available since version 23 of the default 
           x1, x2 = np.split(x_rotate, 2, axis=-1)
 
       # Calculate real and imaginary values
-      real = cos * x1 - sin * x2
-      imag = sin * x1 + cos * x2
+      real = (cos_cache * x1) - (sin_cache * x2)
+      imag = (sin_cache * x1) + (cos_cache * x2)
 
       # Inserted rotated embeddings back to the original input
       if interleaved:
@@ -29333,7 +29382,7 @@ This version of the operator has been available since version 23 of the default 
           x_rotate = np.concatenate((real, imag), axis=-1)
       output = np.concatenate((x_rotate, x_not_rotate), axis=-1)
       if len(original_input_shape) == 3:
-          output = np.reshape(output, input.shape)
+          output = np.reshape(output, original_input_shape)
       else:
           output = np.transpose(output, (0, 2, 1, 3))
       return output
@@ -29693,9 +29742,16 @@ This version of the operator has been available since version 23 of the default 
 
 ### <a name="Transpose-23"></a>**Transpose-23**</a>
 
-  Transpose the input tensor similar to numpy.transpose. For example, when
-  perm=(1, 0, 2), given an input tensor of shape (1, 2, 3), the output shape
-  will be (2, 1, 3).
+  Returns a transpose of the input tensor. (Similar to `numpy.transpose`).
+  The optional attribute `perm` must be a permutation of the dimensions of
+  the input tensor. Axis `i` of the output tensor corresponds to the axis
+  `perm[i]` of the input tensor.
+  For example, when perm=(1, 0, 2), given an input tensor of shape (1, 2, 3),
+  the output shape will be (2, 1, 3).
+  When perm=(1, 2, 0), given an input tensor of shape (1, 2, 3),
+  the output shape will be (2, 3, 1).
+  If the attribute `perm` is omitted, its default value is `(n-1, ..., 0)`,
+  where `n` is the rank of the input tensor.
 
 #### Version
 
@@ -29787,7 +29843,47 @@ This version of the operator has been available since version 23 of the default 
 
   Attention bias to be added is calculated based on `attn_mask` input and `is_causal` attribute:
   1) `attn_mask`: A boolean mask where a value of `True` indicates that the element should take part in attention or a float mask of the same type as query, key, value that is added to the attention score.
-  2) If `is_causal` is set to `1`, attention scores above the diagonal are masked out, regardless of the `attn_mask` input.
+  2) If `is_causal` is set to `1`, causal masking is applied with bottom-right (offset-aware) alignment: query `i` attends key `j` iff `j <= i + offset`, as illustrated below.
+
+  ```
+    2D causal mask for Attention (PR onnx/onnx#8068)
+     S_q=4 queries, S_k=8 keys
+     Rule: query i attends key j iff j <= i + offset
+           offset = nonpad_kv_seqlen - S_q
+
+     nonpad_kv_seqlen=4, offset=4-4=0
+
+            k0  k1  k2  k3  k4  k5  k6  k7
+           +----+----+----+----+----+----+----+----+
+      q0   | ## |    |    |    |    |    |    |    |
+           +----+----+----+----+----+----+----+----+
+      q1   | ## | ## |    |    |    |    |    |    |
+           +----+----+----+----+----+----+----+----+
+      q2   | ## | ## | ## |    |    |    |    |    |
+           +----+----+----+----+----+----+----+----+
+      q3   | ## | ## | ## | ## |    |    |    |    |
+           +----+----+----+----+----+----+----+----+
+
+
+     nonpad_kv_seqlen=8, offset=8-4=4
+
+            k0  k1  k2  k3  k4  k5  k6  k7
+           +----+----+----+----+----+----+----+----+
+      q0   | ## | ## | ## | ## | ## |    |    |    |
+           +----+----+----+----+----+----+----+----+
+      q1   | ## | ## | ## | ## | ## | ## |    |    |
+           +----+----+----+----+----+----+----+----+
+      q2   | ## | ## | ## | ## | ## | ## | ## |    |
+           +----+----+----+----+----+----+----+----+
+      q3   | ## | ## | ## | ## | ## | ## | ## | ## |
+           +----+----+----+----+----+----+----+----+
+  ```
+
+  With `nonpad_kv_seqlen=4` (offset=0), the mask is the standard lower-triangular. With `nonpad_kv_seqlen=8` (offset=4), the diagonal shifts right by 4, so each query sees the 4 additional valid cached keys.
+
+  `offset` is the count of valid keys preceding the current query block: `offset = past_sequence_length` when `past_key` is provided; `offset = nonpad_kv_seqlen - q_sequence_length` (per batch) when an external cache is indicated by `nonpad_kv_seqlen` without `past_key`; `offset = 0` when neither is provided (the no-cache case, which reduces to the standard lower-triangular mask). When `offset < 0` (`nonpad_kv_seqlen < q_sequence_length`, i.e. more query tokens than cached keys) the leading query rows have an empty key set (no key satisfies `j <= i + offset`) and are fully masked. The causal frontier is computed independently of `attn_mask` and is then composed with it additively: a boolean `attn_mask` intersects the allowed set (its disallowed positions contribute `-inf` to the bias), while a float `attn_mask` is added to the attention scores rather than disabling positions. A fully-masked query row (no key attended, including the negative-offset leading rows) produces a zero output row, not `NaN`, for both `Y` and the mode-`3` `qk_matmul_output` debug output; the mode-`3` `qk_matmul_output` is emitted at the operator's output precision (`T1`).
+
+  Errata (in-place behavioral correction, no opset bump): the reference implementation and backend tests were incorrect when `nonpad_kv_seqlen != q_sequence_length` (nonzero bottom-right offset, top-left instead of bottom-right causal alignment) and produced `NaN` for fully-masked rows; corrected in version 1.23. This fixed three behaviors described above: external-cache bottom-right causal alignment (`offset = nonpad_kv_seqlen - q_sequence_length`), zero (non-`NaN`) output for fully-masked rows including the mode-`3` `qk_matmul_output`, and the mode-`3` `qk_matmul_output` precision (`T1`).
 
   With respect to KV cache update, this operator allows the following two use cases:
 
@@ -29816,9 +29912,9 @@ This version of the operator has been available since version 23 of the default 
         |          |          |
         ---MatMul---          |
               |               |
-   at_mask---Add              |
-              |               |
     softcap (if provided)     |
+              |               |
+   at_mask---Add              |
               |               |
            Softmax            |
               |               |
@@ -29836,13 +29932,13 @@ This version of the operator has been available since version 24 of the default 
 
 <dl>
 <dt><tt>is_causal</tt> : int (default is 0)</dt>
-<dd>If set to `1`, the attention masking is a lower triangular matrix when the mask is a square matrix. The attention masking has the form of the upper left causal bias due to the alignment.</dd>
+<dd>If set to `1`, causal masking is applied. For a square Q/K (no cache offset) this is a lower-triangular matrix. In general the mask is bottom-right (offset-aware): query in-block index `i` attends key `j` iff `j <= i + offset`, where `offset` is the count of valid keys preceding the query block (`past_sequence_length` for an internal `past_key` cache, or `nonpad_kv_seqlen - q_sequence_length` per batch for an external cache). When `offset = 0` this reduces to the lower-triangular (top-left) mask.</dd>
 <dt><tt>kv_num_heads</tt> : int</dt>
 <dd>Number of heads of key and value. Must be used with 3D inputs of Q, K and V. </dd>
 <dt><tt>q_num_heads</tt> : int</dt>
 <dd>Number of heads of query. Must be used with 3D inputs of Q, K and V. </dd>
 <dt><tt>qk_matmul_output_mode</tt> : int (default is 0)</dt>
-<dd>If set to `0`, qk_matmul_output is the output of qk matmul. If set to `1`, qk_matmul_output includes the addition of the attention mask to the output of qk matmul. If set to `2`, qk_matmul_output is the output after the softcap operation. If set to `3`, qk_matmul_output is the output after the softmax operation. Default value is 0.</dd>
+<dd>If set to `0`, qk_matmul_output is the output of qk matmul. If set to `1`, qk_matmul_output is the output after the softcap operation (before mask addition). If set to `2`, qk_matmul_output includes the attention mask and softcap (if provided) applied to the output of qk matmul. If set to `3`, qk_matmul_output is the output after the softmax operation. In mode `3`, a fully-masked query row (every key disallowed) is a zero row, consistent with the corresponding row of the primary output `Y`: the fully-masked-row guard is applied before this output is produced. The mode-`3` output is emitted at the operator's output precision (`T1`); when `softmax_precision` differs from `T1` this is a cast of the softmax result to `T1`. Default value is 0.</dd>
 <dt><tt>scale</tt> : float</dt>
 <dd>Scaling factor applied to $Q*K^T$. Default value is `1/sqrt(head_size)`. To prevent [numerical overflow](https://tinyurl.com/sudb9s96), scale `Q`, `K` by `sqrt(scale)` before matmul.</dd>
 <dt><tt>softcap</tt> : float (default is 0.0)</dt>
@@ -29976,8 +30072,8 @@ This version of the operator has been available since version 24 of the default 
   | NaN               | NaN           | NaN                    |
   | Inf               | E8M0_MAX      | NaN                    |
   | x > E8M0_MAX      | E8M0_MAX      | NaN                    |
-  | x \< E8M0_MIN     | E8M0_MIN      | NaN                    |
-  | x \< 0            | Unspecified   | Unspecified            |
+  | x < E8M0_MIN      | E8M0_MIN      | NaN                    |
+  | x < 0             | Unspecified   | Unspecified            |
 
 #### Version
 
@@ -30427,7 +30523,7 @@ This version of the operator has been available since version 24 of the default 
   1) Values from the enclosing scope (i.e. variable "a" here) are in scope and can
      be referenced in the inputs of the loop.
   2) Any values computed in the loop body that needs to be used in a subsequent
-     iteration or after the loop are modelled using a pair of variables in the loop-body,
+     iteration or after the loop are modeled using a pair of variables in the loop-body,
      consisting of an input variable (eg., b_in) and an output variable (eg., b_out).
      These are referred to as loop-carried dependences. The loop operation node
      supplies the input value of the input variable for the first iteration, and
@@ -30495,7 +30591,7 @@ This version of the operator has been available since version 24 of the default 
   Given a tensor containing the data to be padded (`data`), a tensor containing the number of start and end pad values for axis (`pads`), (optionally) a `mode`, and (optionally) `constant_value`,
   a padded tensor (`output`) is generated.
 
-  The three supported `modes` are (similar to corresponding modes supported by `numpy.pad`):
+  The four supported `modes` are (similar to corresponding modes supported by `numpy.pad`):
 
   1) `constant`(default) - pads with a given constant value as specified by `constant_value` (which defaults to 0, empty string, or False)
 
@@ -31290,9 +31386,16 @@ This version of the operator has been available since version 24 of the default 
 
 ### <a name="Transpose-24"></a>**Transpose-24**</a>
 
-  Transpose the input tensor similar to numpy.transpose. For example, when
-  perm=(1, 0, 2), given an input tensor of shape (1, 2, 3), the output shape
-  will be (2, 1, 3).
+  Returns a transpose of the input tensor. (Similar to `numpy.transpose`).
+  The optional attribute `perm` must be a permutation of the dimensions of
+  the input tensor. Axis `i` of the output tensor corresponds to the axis
+  `perm[i]` of the input tensor.
+  For example, when perm=(1, 0, 2), given an input tensor of shape (1, 2, 3),
+  the output shape will be (2, 1, 3).
+  When perm=(1, 2, 0), given an input tensor of shape (1, 2, 3),
+  the output shape will be (2, 3, 1).
+  If the attribute `perm` is omitted, its default value is `(n-1, ..., 0)`,
+  where `n` is the rank of the input tensor.
 
 #### Version
 
@@ -31364,6 +31467,1719 @@ This version of the operator has been available since version 24 of the default 
 <dl>
 <dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128), tensor(float8e4m3fn), tensor(float8e4m3fnuz), tensor(float8e5m2), tensor(float8e5m2fnuz), tensor(uint4), tensor(int4), tensor(float4e2m1), tensor(float8e8m0)</dt>
 <dd>Constrain input and output types to all tensor types up to IRv12.</dd>
+</dl>
+
+## Version 25 of the default ONNX operator set
+### <a name="Cast-25"></a>**Cast-25**</a>
+
+  The operator casts the elements of a given input tensor to a data type
+  specified by the 'to' argument and returns an output tensor of the same size in
+  the converted type. The 'to' argument must be one of the data types specified
+  in the 'DataType' enum field in the TensorProto message.
+
+  Casting from string tensor in plain (e.g., "3.14" and "1000") and scientific numeric representations
+  (e.g., "1e-5" and "1E8") to float types is supported. For example, converting string "100.5" to an integer may
+  yield result 100. There are some string literals reserved for special floating-point values;
+  "+INF" (and "INF"), "-INF", and "NaN" are positive infinity, negative infinity, and not-a-number, respectively.
+  Any string which can exactly match "+INF" in a case-insensitive way would be mapped to positive infinite. Similarly,
+  this case-insensitive rule is applied to "INF" and "NaN". When casting from numeric tensors
+  to string tensors, plain floating-point representation (such as "314.15926") would be used.
+  Converting non-numerical-literal string such as "Hello World!" is an undefined behavior. Cases
+  of converting string representing floating-point arithmetic value, such as "2.718", to INT is an undefined behavior.
+
+  Conversion from a numerical type to any numerical type is always allowed.
+  User must be aware of precision loss and value change caused by range difference between two types.
+  For example, a 64-bit float 3.1415926459 may be round to a 32-bit float 3.141592. Similarly, converting
+  an integer 36 to Boolean may produce 1 because we truncate bits which can't be stored in the targeted type.
+
+  In more detail, the conversion among numerical types should follow these rules
+  if the destination type is not a float 8 type.
+
+  * Casting from floating point to:
+    * floating point: +/- infinity if OOR (out of range).
+    * fixed point: undefined if OOR.
+    * bool: +/- 0.0 to False; all else to True.
+  * Casting from fixed point to:
+    * floating point: +/- infinity if OOR. (+ infinity in the case of uint)
+    * fixed point: when OOR, discard higher bits and reinterpret (with respect to two's complement representation for
+      signed types). For example, 200 (int16) -> -56 (int8).
+    * bool: zero to False; nonzero to True.
+  * Casting from bool to:
+    * floating point: `{1.0, 0.0}`.
+    * fixed point: `{1, 0}`.
+    * bool: no change.
+
+  Float 8 types (E4M3FN, E4M3FNUZ, E5M2, E5M2FNUZ) were introduced to speed up the training of
+  deep models. By default the conversion of a float *x* obeys
+  to the following rules. `[x]` means the value rounded to
+  the target mantissa width.
+
+  | x                 | E4M3FN   | E4M3FNUZ | E5M2     | E5M2FNUZ |
+  | ----------------- | -------- | -------- | -------- | -------- |
+  | 0                 | 0        | 0        | 0        | 0        |
+  | -0                | -0       | 0        | -0       | 0        |
+  | NaN               | NaN      | NaN      | NaN      | NaN      |
+  | Inf               | FLT_MAX  | FLT_MAX  | FLT_MAX  | FLT_MAX  |
+  | -Inf              | -FLT_MAX | -FLT_MAX | -FLT_MAX | -FLT_MAX |
+  | \[x\] > FLT_MAX   | FLT_MAX  | FLT_MAX  | FLT_MAX  | FLT_MAX  |
+  | \[x\] \< -FLT_MAX | -FLT_MAX | -FLT_MAX | -FLT_MAX | -FLT_MAX |
+  | else              | RNE      | RNE      | RNE      | RNE      |
+
+  The behavior changes if the parameter 'saturate' is set to False.
+  The rules then become:
+
+  | x                 | E4M3FN | E4M3FNUZ | E5M2 | E5M2FNUZ |
+  | ----------------- | ------ | -------- | ---- | -------- |
+  | 0                 | 0      | 0        | 0    | 0        |
+  | -0                | -0     | 0        | -0   | 0        |
+  | NaN               | NaN    | NaN      | NaN  | NaN      |
+  | -NaN              | -NaN   | NaN      | -NaN | NaN      |
+  | Inf               | NaN    | NaN      | Inf  | NaN      |
+  | -Inf              | -NaN   | NaN      | -Inf | NaN      |
+  | \[x\] > FLT_MAX   | NaN    | NaN      | Inf  | NaN      |
+  | \[x\] \< -FLT_MAX | NaN    | NaN      | -Inf | NaN      |
+  | else              | RNE    | RNE      | RNE  | RNE      |
+
+  FLOAT8E8M0 type was introduced to enable [Microscaling (MX) formats](https://www.opencompute.org/documents/ocp-microscaling-formats-mx-v1-0-spec-final-pdf).
+  When casting to FLOAT8E8M0, the rounding behavior can be specified using the `round_mode` and `saturate` attributes.
+  The current CUDA behavior is to round up and saturate. Casting negative values to FLOAT8E8M0 gives undefined behavior.
+  The following table describes the casting behavior of special values to FLOAT8E8M0 in the two most common cases.
+
+  | x                 | saturate + up | non-saturate + nearest |
+  | ----------------- | ------------- | ---------------------  |
+  | 0                 | 0             | NaN                    |
+  | -0                | Unspecified   | Unspecified            |
+  | NaN               | NaN           | NaN                    |
+  | Inf               | E8M0_MAX      | NaN                    |
+  | x > E8M0_MAX      | E8M0_MAX      | NaN                    |
+  | x < E8M0_MIN      | E8M0_MIN      | NaN                    |
+  | x < 0             | Unspecified   | Unspecified            |
+
+#### Version
+
+This version of the operator has been available since version 25 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>round_mode</tt> : string (default is up)</dt>
+<dd>Rounding mode for conversion to float8e8m0. It only applies to casting to float8e8m0 and is `up` by default. `up`: round to nearest value away from zero, `down`: round to nearest value towards zero, `nearest`: round to nearest value and ties round up.</dd>
+<dt><tt>saturate</tt> : int (default is 1)</dt>
+<dd>The parameter defines how the conversion behaves if an input value is out of range of the destination type. It only applies for float 8 conversion (float8e4m3fn, float8e4m3fnuz, float8e5m2, float8e5m2fnuz, float8e8m0). It is true by default. All cases are fully described in the tables inserted in the operator description.</dd>
+<dt><tt>to</tt> : int (required)</dt>
+<dd>The data type to which the elements of the input tensor are cast. Strictly must be one of the types from DataType enum in TensorProto</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>input</tt> (differentiable) : T1</dt>
+<dd>Input tensor to be cast.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> (differentiable) : T2</dt>
+<dd>Output tensor with the same shape as input with type specified by the 'to' argument</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T1</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(float8e4m3fn), tensor(float8e4m3fnuz), tensor(float8e5m2), tensor(float8e5m2fnuz), tensor(uint4), tensor(int4), tensor(float4e2m1), tensor(float8e8m0), tensor(uint2), tensor(int2)</dt>
+<dd>Constrain input types. Casting from complex is not supported.</dd>
+<dt><tt>T2</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(float8e4m3fn), tensor(float8e4m3fnuz), tensor(float8e5m2), tensor(float8e5m2fnuz), tensor(uint4), tensor(int4), tensor(float4e2m1), tensor(float8e8m0), tensor(uint2), tensor(int2)</dt>
+<dd>Constrain output types. Casting to complex is not supported.</dd>
+</dl>
+
+### <a name="CastLike-25"></a>**CastLike-25**</a>
+
+  The operator casts the elements of a given input tensor (the first input) to
+  the same data type as the elements of the second input tensor.
+  See documentation of the Cast operator for further details.
+
+#### Version
+
+This version of the operator has been available since version 25 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>round_mode</tt> : string (default is up)</dt>
+<dd>Rounding mode for conversion to float8e8m0. It only applies to casting to float8e8m0 and is `up` by default. `up`: round to nearest value away from zero, `down`: round to nearest value towards zero, `nearest`: round to nearest value and ties round up. Please refer to operator Cast description for further details.</dd>
+<dt><tt>saturate</tt> : int (default is 1)</dt>
+<dd>The parameter defines how the conversion behaves if an input value is out of range of the destination type. It only applies for float 8 conversion (float8e4m3fn, float8e4m3fnuz, float8e5m2, float8e5m2fnuz, float8e8m0). It is true by default. Please refer to operator Cast description for further details.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>input</tt> (differentiable) : T1</dt>
+<dd>Input tensor to be cast.</dd>
+<dt><tt>target_type</tt> (non-differentiable) : T2</dt>
+<dd>The (first) input tensor will be cast to produce a tensor of the same type as this (second input) tensor.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> (differentiable) : T2</dt>
+<dd>Output tensor produced by casting the first input tensor to have the same type as the second input tensor.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T1</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(float8e4m3fn), tensor(float8e4m3fnuz), tensor(float8e5m2), tensor(float8e5m2fnuz), tensor(uint4), tensor(int4), tensor(float4e2m1), tensor(float8e8m0), tensor(uint2), tensor(int2)</dt>
+<dd>Constrain input types. Casting from complex is not supported.</dd>
+<dt><tt>T2</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(float8e4m3fn), tensor(float8e4m3fnuz), tensor(float8e5m2), tensor(float8e5m2fnuz), tensor(uint4), tensor(int4), tensor(float4e2m1), tensor(float8e8m0), tensor(uint2), tensor(int2)</dt>
+<dd>Constrain output types. Casting to complex is not supported.</dd>
+</dl>
+
+### <a name="Constant-25"></a>**Constant-25**</a>
+
+  This operator produces a constant tensor. Exactly one of the provided attributes, either value, sparse_value,
+  or value_* must be specified.
+
+#### Version
+
+This version of the operator has been available since version 25 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>sparse_value</tt> : sparse_tensor</dt>
+<dd>The value for the elements of the output tensor in sparse format.</dd>
+<dt><tt>value</tt> : tensor</dt>
+<dd>The value for the elements of the output tensor.</dd>
+<dt><tt>value_float</tt> : float</dt>
+<dd>The value for the sole element for the scalar, float32, output tensor.</dd>
+<dt><tt>value_floats</tt> : list of floats</dt>
+<dd>The values for the elements for the 1D, float32, output tensor.</dd>
+<dt><tt>value_int</tt> : int</dt>
+<dd>The value for the sole element for the scalar, int64, output tensor.</dd>
+<dt><tt>value_ints</tt> : list of ints</dt>
+<dd>The values for the elements for the 1D, int64, output tensor.</dd>
+<dt><tt>value_string</tt> : string</dt>
+<dd>The value for the sole element for the scalar, UTF-8 string, output tensor.</dd>
+<dt><tt>value_strings</tt> : list of strings</dt>
+<dd>The values for the elements for the 1D, UTF-8 string, output tensor.</dd>
+</dl>
+
+#### Inputs
+
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> : T</dt>
+<dd>Output tensor containing the same value of the provided tensor.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128), tensor(float8e4m3fn), tensor(float8e4m3fnuz), tensor(float8e5m2), tensor(float8e5m2fnuz), tensor(uint4), tensor(int4), tensor(float4e2m1), tensor(float8e8m0), tensor(uint2), tensor(int2)</dt>
+<dd>Constrain input and output types to all tensor types.</dd>
+</dl>
+
+### <a name="ConstantOfShape-25"></a>**ConstantOfShape-25**</a>
+
+  Generate a tensor with given value and shape.
+
+#### Version
+
+This version of the operator has been available since version 25 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>value</tt> : tensor</dt>
+<dd>(Optional) The value of the output elements.Should be a one-element tensor. If not specified, it defaults to a tensor of value 0 and datatype float32</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>input</tt> : T1</dt>
+<dd>1D tensor. The shape of the expected output tensor. If empty tensor is given, the output would be a scalar. All values must be >= 0.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> : T2</dt>
+<dd>Output tensor of shape specified by 'input'.If attribute 'value' is specified, the value and datatype of the output tensor is taken from 'value'.If attribute 'value' is not specified, the value in the output defaults to 0, and the datatype defaults to float32.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T1</tt> : tensor(int64)</dt>
+<dd>Constrain input types.</dd>
+<dt><tt>T2</tt> : tensor(float16), tensor(float), tensor(double), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(uint4), tensor(int4), tensor(bool), tensor(bfloat16), tensor(float8e4m3fn), tensor(float8e4m3fnuz), tensor(float8e5m2), tensor(float8e5m2fnuz), tensor(float4e2m1), tensor(float8e8m0), tensor(uint2), tensor(int2)</dt>
+<dd>Constrain output types to be numerics or boolean.</dd>
+</dl>
+
+### <a name="DequantizeLinear-25"></a>**DequantizeLinear-25**</a>
+
+  The linear dequantization operator. It consumes a quantized tensor, a scale, and a zero point to compute the
+  full-precision tensor. The dequantization formula is `y = (x - x_zero_point) * x_scale`. `x_scale` and `x_zero_point`
+  must have the same shape, determining the quantization's granularity: a scalar for per-tensor/per-layer quantization,
+  a 1-D tensor for per-axis quantization, or have a rank identical to the input for blocked quantization.
+  See QuantizeLinear for details on quantization granularity.
+
+  `x_zero_point` and `x` must have the same type. `x` and `y` must have the same shape. In the case of dequantizing
+  `int32`, there's no zero point (zero point is supposed to be 0).
+  `zero-point` is usually not used in the case of float8 and 4-bit types quantization, but the dequantization formula remains the same
+  for consistency. The output type is determined by the attribute `output_dtype`. If `output_dtype` is not supplied then the output type
+  is the same as `x_scale`. The output type also determines the precision of the multiplication operation.
+
+
+#### Version
+
+This version of the operator has been available since version 25 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>axis</tt> : int (default is 1)</dt>
+<dd>(Optional) The axis of the dequantizing dimension of the input tensor. Used for per-axis and blocked quantization. Negative value means counting dimensions from the back. Accepted range is `[-r, r-1]` where `r = rank(input)`.</dd>
+<dt><tt>block_size</tt> : int (default is 0)</dt>
+<dd>(Optional) The size of the quantization block (number of times every scale is replicated). Used only for blocked quantization. The block size is a positive integer. Given `x` shape `(D0, ..., Di, ..., Dn)`, `y_scale` shape `(S0, ... Si, ...Sn)` and `axis=i`, the accepted range is `[ceil(Di/Si), ceil(Di/(Si-1))-1]`</dd>
+<dt><tt>output_dtype</tt> : int (default is 0)</dt>
+<dd>(Optional) The output data type. If not supplied, the output data type is inferred from `x_scale` data type (`T2`)</dd>
+</dl>
+
+#### Inputs (2 - 3)
+
+<dl>
+<dt><tt>x</tt> : T1</dt>
+<dd>N-D quantized input tensor to be de-quantized.</dd>
+<dt><tt>x_scale</tt> : T2</dt>
+<dd>Scale for input `x`. For per-tensor/layer dequantization the scale is a scalar, for per per-axis dequantization it is a 1-D Tensor and for blocked dequantization it has the same shape as the input, except for one dimension in which blocking is performed.</dd>
+<dt><tt>x_zero_point</tt> (optional) : T1</dt>
+<dd>Zero point for input `x`. Shape must match x_scale. It's optional. Zero point is 0 when it's not specified.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>y</tt> : T3</dt>
+<dd>N-D full precision output tensor. It has the same shape as input `x`. The data type is specified by the `output_dtype` attribute or, in its absence, the type of `x_scale`.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T1</tt> : tensor(int8), tensor(uint8), tensor(int16), tensor(uint16), tensor(int32), tensor(float8e4m3fn), tensor(float8e4m3fnuz), tensor(float8e5m2), tensor(float8e5m2fnuz), tensor(uint4), tensor(int4), tensor(float4e2m1), tensor(uint2), tensor(int2)</dt>
+<dd>The type of the inputs 'x_zero_point' and 'x'.</dd>
+<dt><tt>T2</tt> : tensor(float), tensor(float16), tensor(bfloat16), tensor(float8e8m0)</dt>
+<dd>The type of the input 'x_scale'.</dd>
+<dt><tt>T3</tt> : tensor(float), tensor(float16), tensor(bfloat16)</dt>
+<dd>The type of the output 'y'.</dd>
+</dl>
+
+### <a name="Flatten-25"></a>**Flatten-25**</a>
+
+  Flattens the input tensor into a 2D matrix. If input tensor has shape
+  (d_0, d_1, ... d_n) then the output will have shape
+  (d_0 X d_1 ... d_(axis-1), d_axis X d_(axis+1) ... X dn).
+
+#### Version
+
+This version of the operator has been available since version 25 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>axis</tt> : int (default is 1)</dt>
+<dd>Indicate up to which input dimensions (exclusive) should be flattened to the outer dimension of the output. The value for axis must be in the range [-r, r], where r is the rank of the input tensor. Negative value means counting dimensions from the back. When axis = 0, the shape of the output tensor is (1, (d_0 X d_1 ... d_n), where the shape of the input tensor is (d_0, d_1, ... d_n). </dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>input</tt> (differentiable) : T</dt>
+<dd>A tensor of rank >= axis.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> (differentiable) : T</dt>
+<dd>A 2D tensor with the contents of the input tensor, with input dimensions up to axis flattened to the outer dimension of the output and remaining input dimensions flattened into the inner dimension of the output.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128), tensor(float8e4m3fn), tensor(float8e4m3fnuz), tensor(float8e5m2), tensor(float8e5m2fnuz), tensor(uint4), tensor(int4), tensor(float4e2m1), tensor(float8e8m0), tensor(uint2), tensor(int2)</dt>
+<dd>Constrain input and output to all tensor types up to IRv13.</dd>
+</dl>
+
+### <a name="Identity-25"></a>**Identity-25**</a>
+
+  Identity operator
+
+#### Version
+
+This version of the operator has been available since version 25 of the default ONNX operator set.
+
+#### Inputs
+
+<dl>
+<dt><tt>input</tt> (differentiable) : V</dt>
+<dd>Input tensor</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> (differentiable) : V</dt>
+<dd>Tensor to copy input into.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>V</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128), tensor(float8e4m3fn), tensor(float8e4m3fnuz), tensor(float8e5m2), tensor(float8e5m2fnuz), tensor(uint4), tensor(int4), tensor(float4e2m1), tensor(float8e8m0), tensor(uint2), tensor(int2), seq(tensor(uint8)), seq(tensor(uint16)), seq(tensor(uint32)), seq(tensor(uint64)), seq(tensor(int8)), seq(tensor(int16)), seq(tensor(int32)), seq(tensor(int64)), seq(tensor(float16)), seq(tensor(float)), seq(tensor(double)), seq(tensor(string)), seq(tensor(bool)), seq(tensor(complex64)), seq(tensor(complex128)), optional(seq(tensor(uint8))), optional(seq(tensor(uint16))), optional(seq(tensor(uint32))), optional(seq(tensor(uint64))), optional(seq(tensor(int8))), optional(seq(tensor(int16))), optional(seq(tensor(int32))), optional(seq(tensor(int64))), optional(seq(tensor(float16))), optional(seq(tensor(float))), optional(seq(tensor(double))), optional(seq(tensor(string))), optional(seq(tensor(bool))), optional(seq(tensor(complex64))), optional(seq(tensor(complex128))), optional(tensor(uint8)), optional(tensor(uint16)), optional(tensor(uint32)), optional(tensor(uint64)), optional(tensor(int8)), optional(tensor(int16)), optional(tensor(int32)), optional(tensor(int64)), optional(tensor(float16)), optional(tensor(float)), optional(tensor(double)), optional(tensor(string)), optional(tensor(bool)), optional(tensor(complex64)), optional(tensor(complex128))</dt>
+<dd>Constrain input and output types to all tensor, sequence, and optional types.</dd>
+</dl>
+
+### <a name="If-25"></a>**If-25**</a>
+
+  If conditional
+
+#### Version
+
+This version of the operator has been available since version 25 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>else_branch</tt> : graph (required)</dt>
+<dd>Graph to run if condition is false. Has N outputs: values you wish to be live-out to the enclosing scope. The number of outputs must match the number of outputs in the then_branch.</dd>
+<dt><tt>then_branch</tt> : graph (required)</dt>
+<dd>Graph to run if condition is true. Has N outputs: values you wish to be live-out to the enclosing scope. The number of outputs must match the number of outputs in the else_branch.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>cond</tt> : B</dt>
+<dd>Condition for the if. The tensor must contain a single element.</dd>
+</dl>
+
+#### Outputs (1 - &#8734;)
+
+<dl>
+<dt><tt>outputs</tt> (variadic, heterogeneous) : V</dt>
+<dd>Values that are live-out to the enclosing scope. The return values in the `then_branch` and `else_branch` must be of the same data type. The `then_branch` and `else_branch` may produce tensors with the same element type and different shapes. If corresponding outputs from the then-branch and the else-branch have static shapes S1 and S2, then the shape of the corresponding output variable of the if-node (if present) must be compatible with both S1 and S2 as it represents the union of both possible shapes.For example, if in a model file, the first output of `then_branch` is typed float tensor with shape [2] and the first output of `else_branch` is another float tensor with shape [3], If's first output should have (a) no shape set, or (b) a shape of rank 1 with neither `dim_value` nor `dim_param` set, or (c) a shape of rank 1 with a unique `dim_param`. In contrast, the first output cannot have the shape [2] since [2] and [3] are not compatible.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>V</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128), tensor(float8e4m3fn), tensor(float8e4m3fnuz), tensor(float8e5m2), tensor(float8e5m2fnuz), tensor(uint4), tensor(int4), tensor(float4e2m1), tensor(float8e8m0), tensor(uint2), tensor(int2), seq(tensor(uint8)), seq(tensor(uint16)), seq(tensor(uint32)), seq(tensor(uint64)), seq(tensor(int8)), seq(tensor(int16)), seq(tensor(int32)), seq(tensor(int64)), seq(tensor(bfloat16)), seq(tensor(float16)), seq(tensor(float)), seq(tensor(double)), seq(tensor(string)), seq(tensor(bool)), seq(tensor(complex64)), seq(tensor(complex128)), seq(tensor(float8e4m3fn)), seq(tensor(float8e4m3fnuz)), seq(tensor(float8e5m2)), seq(tensor(float8e5m2fnuz)), seq(tensor(uint4)), seq(tensor(int4)), seq(tensor(float4e2m1)), seq(tensor(float8e8m0)), seq(tensor(uint2)), seq(tensor(int2)), optional(seq(tensor(uint8))), optional(seq(tensor(uint16))), optional(seq(tensor(uint32))), optional(seq(tensor(uint64))), optional(seq(tensor(int8))), optional(seq(tensor(int16))), optional(seq(tensor(int32))), optional(seq(tensor(int64))), optional(seq(tensor(bfloat16))), optional(seq(tensor(float16))), optional(seq(tensor(float))), optional(seq(tensor(double))), optional(seq(tensor(string))), optional(seq(tensor(bool))), optional(seq(tensor(complex64))), optional(seq(tensor(complex128))), optional(tensor(uint8)), optional(tensor(uint16)), optional(tensor(uint32)), optional(tensor(uint64)), optional(tensor(int8)), optional(tensor(int16)), optional(tensor(int32)), optional(tensor(int64)), optional(tensor(bfloat16)), optional(tensor(float16)), optional(tensor(float)), optional(tensor(double)), optional(tensor(string)), optional(tensor(bool)), optional(tensor(complex64)), optional(tensor(complex128)), optional(tensor(float8e4m3fn)), optional(tensor(float8e4m3fnuz)), optional(tensor(float8e5m2)), optional(tensor(float8e5m2fnuz)), optional(tensor(uint4)), optional(tensor(int4)), optional(tensor(float4e2m1)), optional(tensor(float8e8m0)), optional(tensor(uint2)), optional(tensor(int2))</dt>
+<dd>All Tensor, Sequence(Tensor), Optional(Tensor), and Optional(Sequence(Tensor)) types up to IRv13.</dd>
+<dt><tt>B</tt> : tensor(bool)</dt>
+<dd>Only bool</dd>
+</dl>
+
+### <a name="Loop-25"></a>**Loop-25**</a>
+
+  Generic Looping construct. This loop has multiple termination conditions:
+
+  1) Trip count. Iteration count specified at runtime. Set by
+     specifying the input M. Optional. Set to empty string to omit.
+     Note that a static trip count (specified at graph construction time) can be
+     specified by passing in a constant node for input M.
+  2) Loop termination condition. This is an input to the op that determines
+     whether to run the first iteration and also a loop-carried dependency for
+     the body graph. The body graph must yield a value for the condition variable,
+     whether this input is provided or not.
+
+  This table summarizes the operating modes of this operator with equivalent
+  C-style code:
+
+  Operator inputs defined as (max_trip_count, condition_var).
+
+  * input ("", ""):
+          for (int i=0; ; ++i) {
+            cond = ... // Note this value is ignored, but is required in the body
+          }
+
+  * input ("", cond) // Note this is analogous to a while loop
+          bool cond = ...;
+          for (int i=0; cond; ++i) {
+            cond = ...;
+          }
+
+  * input ("", 1) // Note this is analogous to a do-while loop
+          bool cond = true
+          for (int i=0; cond; ++i) {
+            cond = ...;
+          }
+
+  * input (trip_count, "") // Note this is analogous to a for loop
+          int trip_count = ...
+          for (int i=0; i < trip_count; ++i) {
+            cond = ...; // ignored
+          }
+
+  * input (trip_count, cond)
+          int trip_count = ...;
+          bool cond = ...;
+          for (int i=0; i < trip_count && cond; ++i) {
+            cond = ...;
+          }
+
+
+  *Sample usage - cond as well as trip count*
+
+      graph predict-net {
+        %a = Constant[value = <Scalar Tensor [3]>]()
+        %b = Constant[value = <Scalar Tensor [6]>]()
+        %keepgoing = Constant[value = <Scalar Tensor [1]>]()
+        %max_trip_count = Constant[value = <Scalar Tensor [10]>]()
+        %keepgoing_out, %b_out, %user_defined_vals = Loop[body = <graph body-net>](%max_trip_count, %keepgoing, %b)
+        return
+      }
+
+      graph body-net (
+        %i[INT32, scalar]           // iteration number
+        %keepgoing_in[BOOL, scalar] // incoming loop-termination-condition; not used
+        %b_in[INT32, scalar]        // incoming value of loop-carried-dependency b
+      ) {
+        %my_local = Add(%a, %b_in)
+        %b_out = Sub(%a, %b_in) // outgoing value of loop-carried-dependency b
+        %keepgoing_out = Greater(%my_local, %b_out) // outgoing loop-termination-condition
+        %user_defined_val = Add(%b_in, %b_in) // scan-output value to be accumulated
+        return %keepgoing_out, %b_out, %user_defined_val
+      }
+
+  *Sample equivalent C code*
+
+      {
+        /* User-defined code (enclosing scope) */
+        int a = 3, b = 6;
+        bool keepgoing = true; // Analogous to input cond
+        /* End user-defined code */
+
+        /* Implicitly-defined code */
+        const int max_trip_count = 10; // Analogous to input M
+        int user_defined_vals[]; // Imagine this is resizable
+        /* End implicitly-defined code */
+        /* initialize loop-carried variables and scan-output variables */
+        bool keepgoing_out = keepgoing
+        int b_out = b
+
+        for (int i=0; i < max_trip_count && keepgoing_out; ++i) {
+          /* Implicitly-defined code: bind actual parameter values
+             to formal parameter variables of loop-body */
+          bool keepgoing_in = keepgoing_out;
+          bool b_in = b_out;
+
+          /* User-defined code (loop body) */
+          int my_local = a + b_in; // Reading value "a" from the enclosing scope is fine
+          b_out = a - b_in;
+          keepgoing_out = my_local > b_out;
+          user_defined_val = b_in + b_in; // b_in and b_out are different variables
+          /* End user-defined code */
+
+          /* Implicitly defined-code */
+          user_defined_vals[i] = user_defined_val // accumulate scan-output values
+        }
+        // int t = my_local; // Can't do this. my_local is not accessible here.
+
+        // The values below are bound to the output variables of the loop and therefore accessible
+        // b_out; user_defined_vals; keepgoing_out;
+      }
+
+  There are several things of note in this code snippet:
+
+  1) Values from the enclosing scope (i.e. variable "a" here) are in scope and can
+     be referenced in the inputs of the loop.
+  2) Any values computed in the loop body that needs to be used in a subsequent
+     iteration or after the loop are modeled using a pair of variables in the loop-body,
+     consisting of an input variable (eg., b_in) and an output variable (eg., b_out).
+     These are referred to as loop-carried dependences. The loop operation node
+     supplies the input value of the input variable for the first iteration, and
+     returns the output value of the output variable produced by the final
+     iteration.
+  3) Scan_output variables are used to implicitly concatenate values computed across
+     all the iterations. In the above example, the value of user_defined_val computed
+     over all iterations are concatenated and returned as the value of user_defined_vals
+     after the loop.
+  4) Values created in the body cannot be accessed in the enclosing scope,
+     except using the mechanism described above.
+
+  Note that the semantics of this op support "diagonal" or "wavefront" execution.
+  (See Step 3 here for an example:
+  https://devblogs.nvidia.com/optimizing-recurrent-neural-networks-cudnn-5/).
+  Frontends should emit multi-layer RNNs as a series of While operators (with
+  time being the inner looping dimension), with each successive layer consuming
+  the scan_outputs from the previous layer, possibly going through several
+  point-wise operators (e.g. dropout, residual connections, linear layer).
+
+  The input/output of subgraph (produced by loop node) matching is based on order instead of name. The implementation will figure out the names based on this order.
+
+#### Version
+
+This version of the operator has been available since version 25 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>body</tt> : graph (required)</dt>
+<dd>The graph run each iteration. It has 2+N inputs: (iteration_num, condition, loop carried dependencies...). It has 1+N+K outputs: (condition, loop carried dependencies..., scan_outputs...). Each scan_output is created by concatenating the value of the specified output value at the end of each iteration of the loop. It is an error if the dimensions or data type of these scan_outputs change across loop iterations.</dd>
+</dl>
+
+#### Inputs (2 - &#8734;)
+
+<dl>
+<dt><tt>M</tt> (optional) : I</dt>
+<dd>A maximum trip-count for the loop specified at runtime. Optional. Pass empty string to skip.</dd>
+<dt><tt>cond</tt> (optional) : B</dt>
+<dd>A boolean termination condition. Optional. Pass empty string to skip.</dd>
+<dt><tt>v_initial</tt> (variadic, heterogeneous) : V</dt>
+<dd>The initial values of any loop-carried dependencies (values that change across loop iterations)</dd>
+</dl>
+
+#### Outputs (1 - &#8734;)
+
+<dl>
+<dt><tt>v_final_and_scan_outputs</tt> (variadic, heterogeneous) : V</dt>
+<dd>Final N loop carried dependency values then K scan_outputs. Scan outputs must be Tensors.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>V</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128), tensor(float8e4m3fn), tensor(float8e4m3fnuz), tensor(float8e5m2), tensor(float8e5m2fnuz), tensor(uint4), tensor(int4), tensor(float4e2m1), tensor(float8e8m0), tensor(uint2), tensor(int2), seq(tensor(uint8)), seq(tensor(uint16)), seq(tensor(uint32)), seq(tensor(uint64)), seq(tensor(int8)), seq(tensor(int16)), seq(tensor(int32)), seq(tensor(int64)), seq(tensor(bfloat16)), seq(tensor(float16)), seq(tensor(float)), seq(tensor(double)), seq(tensor(string)), seq(tensor(bool)), seq(tensor(complex64)), seq(tensor(complex128)), seq(tensor(float8e4m3fn)), seq(tensor(float8e4m3fnuz)), seq(tensor(float8e5m2)), seq(tensor(float8e5m2fnuz)), seq(tensor(uint4)), seq(tensor(int4)), seq(tensor(float4e2m1)), seq(tensor(float8e8m0)), seq(tensor(uint2)), seq(tensor(int2)), optional(seq(tensor(uint8))), optional(seq(tensor(uint16))), optional(seq(tensor(uint32))), optional(seq(tensor(uint64))), optional(seq(tensor(int8))), optional(seq(tensor(int16))), optional(seq(tensor(int32))), optional(seq(tensor(int64))), optional(seq(tensor(bfloat16))), optional(seq(tensor(float16))), optional(seq(tensor(float))), optional(seq(tensor(double))), optional(seq(tensor(string))), optional(seq(tensor(bool))), optional(seq(tensor(complex64))), optional(seq(tensor(complex128))), optional(tensor(uint8)), optional(tensor(uint16)), optional(tensor(uint32)), optional(tensor(uint64)), optional(tensor(int8)), optional(tensor(int16)), optional(tensor(int32)), optional(tensor(int64)), optional(tensor(bfloat16)), optional(tensor(float16)), optional(tensor(float)), optional(tensor(double)), optional(tensor(string)), optional(tensor(bool)), optional(tensor(complex64)), optional(tensor(complex128)), optional(tensor(float8e4m3fn)), optional(tensor(float8e4m3fnuz)), optional(tensor(float8e5m2)), optional(tensor(float8e5m2fnuz)), optional(tensor(uint4)), optional(tensor(int4)), optional(tensor(float4e2m1)), optional(tensor(float8e8m0)), optional(tensor(uint2)), optional(tensor(int2))</dt>
+<dd>All Tensor, Sequence(Tensor), Optional(Tensor), and Optional(Sequence(Tensor)) types up to IRv13.</dd>
+<dt><tt>I</tt> : tensor(int64)</dt>
+<dd>tensor of int64, which should be a scalar.</dd>
+<dt><tt>B</tt> : tensor(bool)</dt>
+<dd>tensor of bool, which should be a scalar.</dd>
+</dl>
+
+### <a name="Pad-25"></a>**Pad-25**</a>
+
+  Given a tensor containing the data to be padded (`data`), a tensor containing the number of start and end pad values for axis (`pads`), (optionally) a `mode`, and (optionally) `constant_value`,
+  a padded tensor (`output`) is generated.
+
+  The four supported `modes` are (similar to corresponding modes supported by `numpy.pad`):
+
+  1) `constant`(default) - pads with a given constant value as specified by `constant_value` (which defaults to 0, empty string, or False)
+
+  2) `reflect` - pads with the reflection of the vector mirrored on the first and last values of the vector along each axis
+
+  3) `edge` - pads with the edge values of array
+
+  4) `wrap` - wrap-around padding as if the data tensor forms a torus
+
+
+  Example 1 (`constant` mode):
+
+  Insert 0 pads to the beginning of the second dimension.
+
+  ```
+  data = [
+      [1.0, 1.2],
+      [2.3, 3.4],
+      [4.5, 5.7],
+  ]
+
+  pads = [0, 2, 0, 0]
+
+  mode = 'constant'
+
+  constant_value = 0.0
+
+  output = [
+      [0.0, 0.0, 1.0, 1.2],
+      [0.0, 0.0, 2.3, 3.4],
+      [0.0, 0.0, 4.5, 5.7],
+  ]
+  ```
+
+  Example 2 (`reflect` mode):
+
+  ```
+  data = [
+      [1.0, 1.2],
+      [2.3, 3.4],
+      [4.5, 5.7],
+  ]
+
+  pads = [0, 2, 0, 0]
+
+  mode = 'reflect'
+
+  output = [
+      [1.0, 1.2, 1.0, 1.2],
+      [2.3, 3.4, 2.3, 3.4],
+      [4.5, 5.7, 4.5, 5.7],
+  ]
+  ```
+
+  Example 3 (`edge` mode):
+
+  ```
+  data = [
+      [1.0, 1.2],
+      [2.3, 3.4],
+      [4.5, 5.7],
+  ]
+
+  pads = [0, 2, 0, 0]
+
+  mode = 'edge'
+
+  output = [
+      [1.0, 1.0, 1.0, 1.2],
+      [2.3, 2.3, 2.3, 3.4],
+      [4.5, 4.5, 4.5, 5.7],
+  ]
+  ```
+
+  Example 4 (`wrap` mode):
+
+  ```
+  data = [
+      [1.0, 1.2],
+      [2.3, 3.4],
+      [4.5, 5.7],
+  ]
+
+  pads = [2, 1, 1, 1]
+
+  mode = 'wrap'
+
+  output = [
+      [3.4, 2.3, 3.4, 2.3],
+      [5.7, 4.5, 5.7, 4.5],
+      [1.2, 1.0, 1.2, 1.0],
+      [3.4, 2.3, 3.4, 2.3],
+      [5.7, 4.5, 5.7, 4.5],
+      [1.2, 1.0, 1.2, 1.0],
+  ]
+  ```
+
+#### Version
+
+This version of the operator has been available since version 25 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>mode</tt> : string (default is constant)</dt>
+<dd>Supported modes: `constant`(default), `reflect`, `edge`, `wrap`</dd>
+</dl>
+
+#### Inputs (2 - 4)
+
+<dl>
+<dt><tt>data</tt> (differentiable) : T</dt>
+<dd>Input tensor.</dd>
+<dt><tt>pads</tt> (non-differentiable) : tensor(int64)</dt>
+<dd>Tensor of integers indicating the number of padding elements to add or remove (if negative) at the beginning and end of each axis. For 2D input tensor, it is the number of pixels. `pads` should be a 1D tensor of shape [2 * num_axes] where `num_axes` refers to the number of elements in the `axes` input or the input rank if `axes` are not provided explicitly. `pads` format should be: [x1_begin, x2_begin, ..., x1_end, x2_end,...], where xi_begin is the number of pad values added at the beginning of axis `axes[i]` and xi_end, the number of pad values added at the end of axis `axes[i]`.</dd>
+<dt><tt>constant_value</tt> (optional, non-differentiable) : T</dt>
+<dd>(Optional) A scalar value to be used if the mode chosen is `constant` (by default it is 0, empty string or False).</dd>
+<dt><tt>axes</tt> (optional, non-differentiable) : Tind</dt>
+<dd>1-D tensor of axes that `pads` apply to. Negative value means counting dimensions from the back. Accepted range is [-r, r-1] where r = rank(data). Behavior is undefined if an axis is repeated. If not provided, all axes are assumed (`[0, 1, ..., input_rank-1]`).</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> (differentiable) : T</dt>
+<dd>Tensor after padding.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128), tensor(float8e4m3fn), tensor(float8e4m3fnuz), tensor(float8e5m2), tensor(float8e5m2fnuz), tensor(uint4), tensor(int4), tensor(float4e2m1), tensor(float8e8m0), tensor(uint2), tensor(int2)</dt>
+<dd>Constrain input and output types to all tensor types up to IRv13.</dd>
+<dt><tt>Tind</tt> : tensor(int32), tensor(int64)</dt>
+<dd>Constrain indices to integer types</dd>
+</dl>
+
+### <a name="QuantizeLinear-25"></a>**QuantizeLinear-25**</a>
+
+  The linear quantization operator consumes a high-precision tensor, a scale, and a zero point to compute the
+  low-precision/quantized tensor. The scale factor and zero point must have the same shape, determining the quantization
+  granularity. The quantization formula is `y = saturate((x / y_scale) + y_zero_point)`.
+
+  Saturation is done according to:
+  - uint16: [0, 65535]
+  - int16: [-32768, 32767]
+  - uint8: [0, 255]
+  - int8: [-128, 127]
+  - uint4: [0, 15]
+  - int4: [-8, 7]
+  - uint2: [0, 3]
+  - int2: [-2, 1]
+
+  For `(x / y_scale)`, it rounds to the nearest even. Refer to https://en.wikipedia.org/wiki/Rounding for details.
+
+  `y_zero_point` and `y` must have the same type. `y_zero_point` is usually not used for quantization to float8 and 4bit types, but the quantization
+  formula remains the same for consistency, and the type of the attribute `y_zero_point` still determines the quantization type.
+  `x` and `y_scale` are allowed to have different types. The type of `y_scale` determines the precision of the division operation between `x` and
+  `y_scale`, unless the `precision` attribute is specified.
+
+  There are three supported quantization granularities, determined by the shape of `y_scale`.
+  In all cases, `y_zero_point` must have the same shape as `y_scale`.
+  - Per-tensor (per-layer) quantization: `y_scale` is a scalar.
+  - Per-axis quantization: The scale must be a 1-D tensor, with the length of the quantization axis. For an input shape
+   `(D0, ..., Di, ..., Dn)` and `axis=i`, `y_scale` is a 1-D tensor of length `Di`.
+  - Blocked quantization: The scale's shape is identical to the input's shape, except for one dimension, in which
+    blocking is performed. Given `x` shape `(D0, ..., Di, ..., Dn)`, `axis=i`, and block size `B`: `y_scale` shape is
+    `(D0, ..., ceil(Di/B), ..., Dn)`.
+
+#### Version
+
+This version of the operator has been available since version 25 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>axis</tt> : int (default is 1)</dt>
+<dd>(Optional) The axis of the dequantizing dimension of the input tensor. Used only for per-axis and blocked quantization. Negative value means counting dimensions from the back. Accepted range is `[-r, r-1]` where `r = rank(input)`. When the rank of the input is 1, per-tensor quantization is applied, rendering the axis unnecessary in this scenario.</dd>
+<dt><tt>block_size</tt> : int (default is 0)</dt>
+<dd>(Optional) The size of the quantization block (number of times every scale is replicated). Used only for blocked quantization. The block size is a positive integer. Given `x` shape `(D0, ..., Di, ..., Dn)`, `y_scale` shape `(S0, ... Si, ...Sn)` and `axis=i`, the accepted range is `[ceil(Di/Si), ceil(Di/(Si-1))-1]`</dd>
+<dt><tt>output_dtype</tt> : int (default is 0)</dt>
+<dd>(Optional) The output data type. If not supplied, the output data type is inferred from `y_zero_point` data type (`T3`). If neither `output_dtype` nor `y_zero_point` are supplied, output data type is uint8. If both `output_dtype` and `y_zero_point` are specified, `output_dtype` must be `T3`.</dd>
+<dt><tt>precision</tt> : int (default is 0)</dt>
+<dd>(Optional) The precision of the division operation between `x` and `y_scale`. If not provided, it will be the same as the type of `y_scale`.</dd>
+<dt><tt>saturate</tt> : int (default is 1)</dt>
+<dd>The parameter defines how the conversion behaves if an input value is out of range of the destination type. It only applies for float 8 quantization (float8e4m3fn, float8e4m3fnuz, float8e5m2, float8e5m2fnuz). It is true by default. All cases are fully described in two tables inserted in the operator description.</dd>
+</dl>
+
+#### Inputs (2 - 3)
+
+<dl>
+<dt><tt>x</tt> : T1</dt>
+<dd>N-D full precision Input tensor to be quantized.</dd>
+<dt><tt>y_scale</tt> : T2</dt>
+<dd>Scale for doing quantization to get `y`. For per-tensor/layer quantization the scale is a scalar, for per-axis quantization it is a 1-D Tensor and for blocked quantization it has the same shape as the input, except for one dimension in which blocking is performed.</dd>
+<dt><tt>y_zero_point</tt> (optional) : T3</dt>
+<dd>Zero point for doing quantization to get `y`. Shape must match `y_scale`. Default is uint8 with zero point of 0 if it's not specified.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>y</tt> : T3</dt>
+<dd>N-D quantized output tensor. It has same shape as input `x`.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T1</tt> : tensor(float), tensor(float16), tensor(bfloat16), tensor(int32)</dt>
+<dd>The type of the input 'x'.</dd>
+<dt><tt>T2</tt> : tensor(float), tensor(float16), tensor(bfloat16), tensor(int32), tensor(float8e8m0)</dt>
+<dd>The type of the input 'y_scale'.</dd>
+<dt><tt>T3</tt> : tensor(int8), tensor(uint8), tensor(int16), tensor(uint16), tensor(float8e4m3fn), tensor(float8e4m3fnuz), tensor(float8e5m2), tensor(float8e5m2fnuz), tensor(uint4), tensor(int4), tensor(float4e2m1), tensor(uint2), tensor(int2)</dt>
+<dd>The type of the input `y_zero_point` and the output `y`.</dd>
+</dl>
+
+### <a name="Reshape-25"></a>**Reshape-25**</a>
+
+  Reshape the input tensor similar to numpy.reshape.
+  First input is the data tensor, second input is a shape tensor which specifies the output shape. It outputs the reshaped tensor.
+  At most one dimension of the new shape can be -1. In this case, the value is
+  inferred from the size of the tensor and the remaining dimensions. A dimension
+  could also be 0, in which case the actual dimension value is unchanged (i.e. taken
+  from the input tensor). If 'allowzero' is set, and the new shape includes 0, the
+  dimension will be set explicitly to zero (i.e. not taken from input tensor).
+  Shape (second input) could be an empty shape, which means converting to a scalar.
+  The input tensor's shape and the output tensor's shape are required to have the same number of elements.
+
+  If the attribute 'allowzero' is set, it is invalid for the specified shape to
+  contain both a zero value and -1, as the value of the dimension corresponding
+  to -1 cannot be determined uniquely.
+
+#### Version
+
+This version of the operator has been available since version 25 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>allowzero</tt> : int (default is 0)</dt>
+<dd>(Optional) By default, when any value in the 'shape' input is equal to zero the corresponding dimension value is copied from the input tensor dynamically. allowzero=1 indicates that if any value in the 'shape' input is set to zero, the zero value is honored, similar to NumPy.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>data</tt> (differentiable) : T</dt>
+<dd>An input tensor.</dd>
+<dt><tt>shape</tt> (non-differentiable) : tensor(int64)</dt>
+<dd>Specified shape for output.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>reshaped</tt> (differentiable) : T</dt>
+<dd>Reshaped data.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128), tensor(float8e4m3fn), tensor(float8e4m3fnuz), tensor(float8e5m2), tensor(float8e5m2fnuz), tensor(uint4), tensor(int4), tensor(float4e2m1), tensor(float8e8m0), tensor(uint2), tensor(int2)</dt>
+<dd>Constrain input and output types to all tensor types.</dd>
+</dl>
+
+### <a name="Scan-25"></a>**Scan-25**</a>
+
+  Scan can be used to iterate over one or more scan_input tensors,
+  constructing zero or more scan_output tensors. It combines ideas from general recurrences,
+  functional programming constructs such as scan, fold, map, and zip, and is intended to enable
+  generalizations of RNN-like constructs for sequence-to-sequence processing.
+  Other tensors (referred to as state_variables here) can be used to carry a state
+  when iterating from one element to another (similar to hidden-state in RNNs, also referred
+  to as loop-carried dependences in the context of loops).
+  Many common usages involve a single scan_input tensor (where functionality
+  similar to scan, fold and map can be obtained). When more than one scan_input is used,
+  a behavior similar to zip is obtained.
+
+  The attribute body must be a graph, specifying the computation to be performed in
+  every iteration. It takes as input the current values of the state_variables and
+  the current iterated element of the scan_inputs. It must return the (updated) values
+  of the state_variables and zero or more scan_output_element tensors. The values of the
+  scan_output_element tensors are concatenated over all the iterations to produce the
+  scan_output values of the scan construct (similar to the concatenated intermediate
+  hidden-state values of RNN-like constructs). All the output tensors (state_variables as
+  well as scan_output_element tensors) are required to have the same shape in each iteration
+  of the loop (a restriction imposed to enable efficient memory allocation).
+
+  Note that the iterated element passed to the body subgraph does not have a sequence
+  axis. It will have a rank one less than the rank of the corresponding scan_input.
+
+  The scan operation returns the final values of the state_variables as well as the
+  scan_outputs.
+
+  The optional attribute scan_input_directions specifies the direction (forward or backward)
+  for each scan input. If this attribute is omitted, all sequences are scanned in the forward
+  direction. A bidirectional scan may be performed by specifying the same tensor input twice
+  in the scan_inputs, once with a forward direction, and once with a backward direction.
+
+  The scan_output of the operation is produced by concatenating the scan_output_element
+  values produced by the body in each iteration.  The optional attribute scan_output_directions
+  specifies the direction in which scan_output is constructed (by appending or prepending the
+  scan_output_element to scan_output in each iteration) for each scan_output. If this attribute
+  is omitted, the scan_output_element is appended to the scan_output in each iteration.
+
+  The optional attribute scan_input_axes specifies the axis to be scanned for each scan_input.
+  If omitted, every scan_input will be scanned in axis 0. For example, if axis 0 is the
+  batch axis and axis 1 is the time axis (to be scanned), specify an axis value of 1.
+  Note that scanning a non-zero axis may be less efficient than scanning axis zero.
+
+  The optional attribute scan_output_axes specifies the axis along which the scan_outputs
+  are accumulated for each scan_output. For example, if axis 1 is the time axis (to be
+  scanned) for both inputs and outputs, specify a scan_input axis and scan_output axis
+  value of 1.
+
+  Note that because of the ONNX restriction that only the last parameter of an operator can
+  be variadic, the initial-states and scan-inputs are listed together as one input parameter.
+  Similarly, the final-states and scan-outputs are listed together as one output parameter.
+  The attribute num_scan_inputs indicates the number M of scan-inputs.
+
+  The behavior of
+
+      Scan <
+          num_scan_inputs = m,
+          body = loop-body,
+          scan_input_axes = [axis_1, ..., axis_m]
+      > (init_1, ..., init_n, scan_1, ..., scan_m)
+
+  is equivalent to the following pseudo-code:
+
+      // scan_i.shape[axis_i] denotes the (max) sequence-length of scan_i
+      // scan_i.shape[axis_i] is required to be equal to scan_j.shape[axis_j] for all i,j.
+      sequence_length = scan_1.shape[axis_1];
+
+      // initialize state-variables
+      st_1 = init_1; ... st_n = init_n;
+      // initialize scan-output variables: [] denotes an empty tensor
+      scan_out_1 = []; ...; scan_out_k = [];
+      // identify number of iterations:
+
+      // execute loop
+      for (int t = 0; t < sequence_length; ++t) {
+          // generate the scan-input elements: the notation T<axis=k>[t] indicates the sub-tensor
+          // of rank one less than T obtained by indexing T at position t along axis k.
+          si_1 = scan_1<axis=axis_1>[t];
+          ... ;
+          si_m = scan_m<axis=axis_m>[t];
+          // execute loop-body
+          st_1, ..., st_n, so_1, ..., so_k = loop-body(st_1, ..., st_n, si_1, ..., si_m)
+          // accumulate the scan-output elements
+          scan_out_1 = Concat<axis=0>(scan_out_1, so_1); ... ; scan_out_k = Concat<axis=0>(scan_out_k, so_k);
+      }
+
+      return st_1, ..., st_n, scan_out_1, ..., scan_out_k;
+
+  *Sample usage: Encoding RNN using a Scan*
+
+  The following example shows how a simple RNN over an input tensor %X, with weight tensor %Wi,
+  recurrence weight tensor %Ri, bias tensors %Wbi and %Rbi, and initial hidden-state %H_0 can
+  be encoded as a ScanLoop. Note that the loop-body is a nested graph, and it directly computes
+  %Wi, %Ri, %Wbi, and %Rbi (typically constants or initializers in the body graph). If these
+  values are computed in the outer graph, they need to be passed in as extra state_variables.
+
+      graph rnn-encoding {
+        %H_0 = ...
+        %X = ...
+        %Y_h, %Y = Scan[body = <graph rnn-cell-1>, num_scan_inputs=1](%H_0, %X)
+        return %Y, %Y_h
+      }
+
+      graph rnn-cell-1 (
+        %H_tminus1[FLOAT, tensor]
+        %X_t[FLOAT, tensor]
+      ) {
+        %Wi = ...
+        %Ri = ...
+        %Wbi = ...
+        %Rbi = ...
+        %t1 = X_t * (Wi^T)
+        %t2 = H_tminus1*(Ri^T)
+        %t3 = Add(%t1, %t2)
+        %t4 = Add(%t3, %Wbi)
+        %t5 = Add(%t4, %Rbi)
+        %Ht = Tanh(%t5)
+        %Accumulate = Identity(%Ht)
+        return %Ht, %Accumulate
+      }
+
+
+#### Version
+
+This version of the operator has been available since version 25 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>body</tt> : graph (required)</dt>
+<dd>The graph run each iteration. It has N+M inputs: (loop state variables..., scan_input_elts...). It has N+K outputs: (loop state variables..., scan_output_elts...). Each scan_output is created by concatenating the value of the specified scan_output_elt value at the end of each iteration of the loop. It is an error if the dimensions of these values change across loop iterations.</dd>
+<dt><tt>num_scan_inputs</tt> : int (required)</dt>
+<dd>An attribute specifying the number of scan_inputs M. </dd>
+<dt><tt>scan_input_axes</tt> : list of ints</dt>
+<dd>An optional list of M flags. The i-th element of the list specifies the axis to be scanned (the sequence axis) for the i-th scan_input. If omitted, 0 will be used as the scan axis for every scan_input. Negative value for an axis means counting dimensions from the back. Accepted range is [-r, r-1] where r = rank(input).</dd>
+<dt><tt>scan_input_directions</tt> : list of ints</dt>
+<dd>An optional list of M flags. The i-th element of the list specifies the direction to be scanned for the i-th scan_input tensor: 0 indicates forward direction and 1 indicates reverse direction. If omitted, all scan_input tensors will be scanned in the forward direction.</dd>
+<dt><tt>scan_output_axes</tt> : list of ints</dt>
+<dd>An optional list of K flags. The i-th element of the list specifies the axis for the i-th scan_output. The scan outputs are accumulated along the specified axis. If omitted, 0 will be used as the scan axis for every scan_output. Negative value for an axis means counting dimensions from the back. Accepted range is [-r, r-1].</dd>
+<dt><tt>scan_output_directions</tt> : list of ints</dt>
+<dd>An optional list of K flags, one for each scan_output. The i-th element of the list specifies whether the i-th scan_output should be constructed by appending or prepending a new value in each iteration: 0 indicates appending and 1 indicates prepending. If omitted, all scan_output tensors will be produced by appending a value in each iteration.</dd>
+</dl>
+
+#### Inputs (1 - &#8734;)
+
+<dl>
+<dt><tt>initial_state_and_scan_inputs</tt> (variadic, heterogeneous) : V</dt>
+<dd>Initial values of the loop's N state variables followed by M scan_inputs</dd>
+</dl>
+
+#### Outputs (1 - &#8734;)
+
+<dl>
+<dt><tt>final_state_and_scan_outputs</tt> (variadic, heterogeneous) : V</dt>
+<dd>Final values of the loop's N state variables followed by K scan_outputs</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>V</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128), tensor(float8e4m3fn), tensor(float8e4m3fnuz), tensor(float8e5m2), tensor(float8e5m2fnuz), tensor(uint4), tensor(int4), tensor(float4e2m1), tensor(float8e8m0), tensor(uint2), tensor(int2)</dt>
+<dd>All Tensor types up to IRv13.</dd>
+</dl>
+
+### <a name="Shape-25"></a>**Shape-25**</a>
+
+  Takes a tensor as input and outputs an 1D int64 tensor containing the shape of the input tensor.
+  Optional attributes start and end can be used to compute a slice of the input tensor's shape.
+  If start axis is omitted, the slice starts from axis 0.
+  The end axis, if specified, is exclusive (and the returned value will not include the size of that axis).
+  If the end axis is omitted, the axes upto the last one will be included.
+  Negative axes indicate counting back from the last axis.
+  Note that axes will be clamped to the range [0, r], where r is the
+  rank of the input tensor if they are out-of-range (after adding r in the case of
+  negative axis). Thus, specifying any end value > r is equivalent to specifying an end
+  value of r, and specifying any start value < -r is equivalent to specifying a start
+  value of 0. If start > end, the result will be an empty shape.
+
+  Examples:
+
+  ```
+  Input tensor with shape: [2, 3, 4]
+  No attributes specified.
+  Output: [2, 3, 4]
+  ```
+
+  ```
+  Input tensor with shape: [2, 3, 4]
+  start: -1
+  Output: [4]
+  ```
+
+  ```
+  Input tensor with shape: [2, 3, 4]
+  end: -1
+  Output: [2, 3]
+  ```
+
+  ```
+  Input tensor with shape: [2, 3, 4]
+  start: 1
+  end: 2
+  Output: [3]
+  ```
+
+#### Version
+
+This version of the operator has been available since version 25 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>end</tt> : int</dt>
+<dd>(Optional) Ending axis for slicing the shape. Negative value means counting dimensions from the back. If omitted, sizes of all axes upto (including) the last one will be included.</dd>
+<dt><tt>start</tt> : int (default is 0)</dt>
+<dd>(Optional) Starting axis for slicing the shape. Default value is 0.Negative value means counting dimensions from the back.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>data</tt> (non-differentiable) : T</dt>
+<dd>An input tensor.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>shape</tt> (non-differentiable) : T1</dt>
+<dd>Shape of the input tensor</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128), tensor(float8e4m3fn), tensor(float8e4m3fnuz), tensor(float8e5m2), tensor(float8e5m2fnuz), tensor(uint4), tensor(int4), tensor(float4e2m1), tensor(float8e8m0), tensor(uint2), tensor(int2)</dt>
+<dd>Input tensor can be of arbitrary type.</dd>
+<dt><tt>T1</tt> : tensor(int64)</dt>
+<dd>Constrain output to int64 tensor.</dd>
+</dl>
+
+### <a name="Size-25"></a>**Size-25**</a>
+
+  Takes a tensor as input and outputs a int64 scalar that equals to the total number of elements of the input tensor.
+
+#### Version
+
+This version of the operator has been available since version 25 of the default ONNX operator set.
+
+#### Inputs
+
+<dl>
+<dt><tt>data</tt> (non-differentiable) : T</dt>
+<dd>An input tensor.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>size</tt> (non-differentiable) : T1</dt>
+<dd>Total number of elements of the input tensor</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128), tensor(float8e4m3fn), tensor(float8e4m3fnuz), tensor(float8e5m2), tensor(float8e5m2fnuz), tensor(uint4), tensor(int4), tensor(float4e2m1), tensor(float8e8m0), tensor(uint2), tensor(int2)</dt>
+<dd>Input tensor can be of arbitrary type.</dd>
+<dt><tt>T1</tt> : tensor(int64)</dt>
+<dd>Constrain output to int64 tensor, which should be a scalar though.</dd>
+</dl>
+
+### <a name="Squeeze-25"></a>**Squeeze-25**</a>
+
+  Remove single-dimensional entries from the shape of a tensor.
+  Takes an input `axes` with a list of axes to squeeze.
+  If `axes` is not provided, all the single dimensions will be removed from
+  the shape. If an axis is selected with shape entry not equal to one, an error is raised.
+
+#### Version
+
+This version of the operator has been available since version 25 of the default ONNX operator set.
+
+#### Inputs (1 - 2)
+
+<dl>
+<dt><tt>data</tt> (differentiable) : T</dt>
+<dd>Tensors with at least max(dims) dimensions.</dd>
+<dt><tt>axes</tt> (optional, non-differentiable) : tensor(int64)</dt>
+<dd>1D tensor of integers indicating the dimensions to squeeze. Negative value means counting dimensions from the back. Accepted range is [-r, r-1] where r = rank(data).</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>squeezed</tt> (differentiable) : T</dt>
+<dd>Reshaped tensor with same data as input.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128), tensor(float8e4m3fn), tensor(float8e4m3fnuz), tensor(float8e5m2), tensor(float8e5m2fnuz), tensor(uint4), tensor(int4), tensor(float4e2m1), tensor(float8e8m0), tensor(uint2), tensor(int2)</dt>
+<dd>Constrain input and output types to all tensor types up to IRv13.</dd>
+</dl>
+
+### <a name="Transpose-25"></a>**Transpose-25**</a>
+
+  Returns a transpose of the input tensor. (Similar to `numpy.transpose`).
+  The optional attribute `perm` must be a permutation of the dimensions of
+  the input tensor. Axis `i` of the output tensor corresponds to the axis
+  `perm[i]` of the input tensor.
+  For example, when perm=(1, 0, 2), given an input tensor of shape (1, 2, 3),
+  the output shape will be (2, 1, 3).
+  When perm=(1, 2, 0), given an input tensor of shape (1, 2, 3),
+  the output shape will be (2, 3, 1).
+  If the attribute `perm` is omitted, its default value is `(n-1, ..., 0)`,
+  where `n` is the rank of the input tensor.
+
+#### Version
+
+This version of the operator has been available since version 25 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>perm</tt> : list of ints</dt>
+<dd>A list of integers. By default, reverse the dimensions, otherwise permute the axes according to the values given. Its length must be equal to the rank of the input.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>data</tt> (differentiable) : T</dt>
+<dd>An input tensor.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>transposed</tt> (differentiable) : T</dt>
+<dd>Transposed output.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128), tensor(float8e4m3fn), tensor(float8e4m3fnuz), tensor(float8e5m2), tensor(float8e5m2fnuz), tensor(uint4), tensor(int4), tensor(float4e2m1), tensor(float8e8m0), tensor(uint2), tensor(int2)</dt>
+<dd>Constrain input and output types to all tensor types.</dd>
+</dl>
+
+### <a name="Unsqueeze-25"></a>**Unsqueeze-25**</a>
+
+  Insert single-dimensional entries to the shape of an input tensor (`data`).
+  Takes one required input `axes` - which contains a list of dimension indices and this operator will insert a dimension of value `1` into the corresponding index of the output tensor (`expanded`).
+
+  For example, given an input tensor (`data`) of shape [3, 4, 5], then
+  Unsqueeze(data, axes=[0, 4]) outputs a tensor (`expanded`) containing same data as `data` but with shape [1, 3, 4, 5, 1].
+
+  The input `axes` should not contain any duplicate entries. It is an error if it contains duplicates.
+  The rank of the output tensor (`output_rank`) is the rank of the input tensor (`data`) plus the number of values in `axes`.
+  Each value in `axes` should be within the (inclusive) range [-output_rank , output_rank - 1].
+  The order of values in `axes` does not matter and can come in any order.
+
+#### Version
+
+This version of the operator has been available since version 25 of the default ONNX operator set.
+
+#### Inputs
+
+<dl>
+<dt><tt>data</tt> (differentiable) : T</dt>
+<dd>Original tensor</dd>
+<dt><tt>axes</tt> (non-differentiable) : tensor(int64)</dt>
+<dd>1D tensor of integers indicating the dimensions to be inserted. Negative value means counting dimensions from the back. Accepted range is [-r, r-1] where r = rank(expanded).</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>expanded</tt> (differentiable) : T</dt>
+<dd>Reshaped tensor with same data as input.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128), tensor(float8e4m3fn), tensor(float8e4m3fnuz), tensor(float8e5m2), tensor(float8e5m2fnuz), tensor(uint4), tensor(int4), tensor(float4e2m1), tensor(float8e8m0), tensor(uint2), tensor(int2)</dt>
+<dd>Constrain input and output types to all tensor types up to IRv13.</dd>
+</dl>
+
+## Version 26 of the default ONNX operator set
+### <a name="BitCast-26"></a>**BitCast-26**</a>
+
+  Reinterprets the binary representation of a tensor as a different data type,
+  specified by the 'to' attribute. Unlike Cast, BitCast preserves the exact bit
+  pattern without any value conversion.
+
+  The target data type must have the same bit-width as the input data type.
+  The output tensor has the same shape as the input tensor.
+  All types except string are supported. Implementations must treat the
+  underlying bytes as little endian.
+
+#### Version
+
+This version of the operator has been available since version 26 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>to</tt> : int (required)</dt>
+<dd>The data type to which the input tensor is bitwise reinterpreted. Must be one of the non-string types from DataType enum in TensorProto. The target type must have the same bit-width as the input type.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>input</tt> (non-differentiable) : T1</dt>
+<dd>Input tensor to be bitcast.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> (non-differentiable) : T2</dt>
+<dd>Output tensor with the same shape as the input.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T1</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(bool), tensor(complex64), tensor(complex128), tensor(float8e4m3fn), tensor(float8e4m3fnuz), tensor(float8e5m2), tensor(float8e5m2fnuz), tensor(uint4), tensor(int4), tensor(float4e2m1), tensor(float8e8m0), tensor(uint2), tensor(int2)</dt>
+<dd>Constrain input types. Bitcasting from string is not supported.</dd>
+<dt><tt>T2</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(bool), tensor(complex64), tensor(complex128), tensor(float8e4m3fn), tensor(float8e4m3fnuz), tensor(float8e5m2), tensor(float8e5m2fnuz), tensor(uint4), tensor(int4), tensor(float4e2m1), tensor(float8e8m0), tensor(uint2), tensor(int2)</dt>
+<dd>Constrain output types. Bitcasting to string is not supported.</dd>
+</dl>
+
+### <a name="CumProd-26"></a>**CumProd-26**</a>
+
+  Performs cumulative product of the input elements along the given axis.
+  By default, it will do the product inclusively meaning the first element is copied as is.
+  Through an `exclusive` attribute, this behavior can change to exclude the first element.
+  It can also perform product in the opposite direction of the axis. For that, set `reverse` attribute to 1.
+
+  Example:
+  ```
+  input_x = [1, 2, 3]
+  axis=0
+  output = [1, 2, 6]
+  exclusive=1
+  output = [1, 1, 2]
+  exclusive=0
+  reverse=1
+  output = [6, 6, 3]
+  exclusive=1
+  reverse=1
+  output = [6, 3, 1]
+  ```
+
+
+#### Version
+
+This version of the operator has been available since version 26 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>exclusive</tt> : int (default is 0)</dt>
+<dd>If set to 1 will return exclusive product in which the top element is not included. In other terms, if set to 1, the j-th output element would be the product of the first (j-1) elements. Otherwise, it would be the product of the first j elements.</dd>
+<dt><tt>reverse</tt> : int (default is 0)</dt>
+<dd>If set to 1 will perform the products in reverse direction.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>x</tt> (differentiable) : T</dt>
+<dd>An input tensor that is to be processed.</dd>
+<dt><tt>axis</tt> (non-differentiable) : T2</dt>
+<dd>A 0-D tensor. Must be in the range [-rank(x), rank(x)-1]. Negative value means counting dimensions from the back.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>y</tt> (differentiable) : T</dt>
+<dd>Output tensor of the same type as 'x' with cumulative products of the x's elements</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(uint32), tensor(uint64), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
+<dd>Constrain input and output types to numeric tensors.</dd>
+<dt><tt>T2</tt> : tensor(int32), tensor(int64)</dt>
+<dd>axis tensor can be int32 or int64 only</dd>
+</dl>
+
+## Version 27 of the default ONNX operator set
+### <a name="CausalConvWithState-27"></a>**CausalConvWithState-27**</a>
+
+  Stateful causal 1D depthwise convolution.
+
+  Used by Gated DeltaNet (Qwen3.5) and Mamba (Jamba, FalconMamba) as a preprocessing step.
+  Replaces the 3-op pattern (Concat + Conv + Slice) with a single fused operation.
+
+  The convolution is causal (looks only at current and past positions) and depthwise
+  (each channel is convolved independently with its own kernel).
+
+  The input, weight, past_state, output, and present_state tensors are rank-3 with
+  shape (batch_size, channels, length). The optional bias input is rank-1 with
+  shape (channels). For higher-dimensional data, use Reshape nodes before and
+  after this operator to pack extra dimensions into the batch or channel axis.
+
+  Weight layout: (channels, 1, k) for depthwise convolution.
+  The carry state stores the last (k-1) positions for incremental decode.
+
+  The optional activation attribute supports fused SiLU/Swish activation.
+
+
+#### Version
+
+This version of the operator has been available since version 27 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>activation</tt> : string (default is none)</dt>
+<dd>Fused activation function. One of: 'silu', 'swish', 'none'. Default is 'none'.</dd>
+</dl>
+
+#### Inputs (2 - 4)
+
+<dl>
+<dt><tt>input</tt> (differentiable) : T</dt>
+<dd>Input tensor with shape (batch_size, channels, length). Channels-first layout.</dd>
+<dt><tt>weight</tt> (differentiable) : T</dt>
+<dd>Depthwise convolution kernel with shape (channels, 1, k) where k is the kernel size. The middle dim of size 1 follows the ONNX `Conv` weight layout `(M, C/group, k1, ..., kn)`: since this op is always depthwise, `group = channels`, so `C/group = 1`. Keeping this layout makes the weight tensor a drop-in for a depthwise `Conv(group=channels)` weight, so `Conv` <-> `CausalConvWithState` rewrites require no reshape.</dd>
+<dt><tt>bias</tt> (optional, differentiable) : T</dt>
+<dd>Optional per-channel bias with shape (channels).</dd>
+<dt><tt>past_state</tt> (optional, non-differentiable) : T</dt>
+<dd>Carry state from previous step with shape (batch_size, channels, k - 1). If not provided, padding is zero.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> (differentiable) : T</dt>
+<dd>Convolution output with same shape as input.</dd>
+<dt><tt>present_state</tt> (non-differentiable) : T</dt>
+<dd>Updated carry state with shape (batch_size, channels, k - 1). Contains the last (k - 1) values of the effective padded/concatenated sequence along the causal axis, including any values from past_state or zero-padding when the current input is shorter than k - 1.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float), tensor(float16), tensor(bfloat16)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
+### <a name="LinearAttention-27"></a>**LinearAttention-27**</a>
+
+  Unified linear attention operator for autoregressive decoding (T=1) and prefill (T>1).
+
+  The query, key, value, and (where applicable) decay/beta inputs use 3D packed format
+  [B, T, H*D], where heads are flattened into the last dimension; q_num_heads and
+  kv_num_heads are always required and are used to unpack to 4D internally for computation.
+  The optional past_state and present_state are 4D with shape (B, H_kv, d_k, d_v).
+
+  Group-query attention (GQA) is supported: q_num_heads must be a positive multiple of
+  kv_num_heads. When q_num_heads == kv_num_heads this reduces to multi-headed linear
+  attention; when q_num_heads > kv_num_heads each KV head (and its recurrent state) is
+  shared by `q_num_heads / kv_num_heads` query heads (multi-query attention is the
+  special case kv_num_heads == 1).
+
+  The update_rule attribute selects the recurrence type:
+  - "linear": S_t = S_{t-1} + k_t ⊗ v_t; o_t = scale * q_t^T S_t
+  - "gated": S_t = exp(g_t) * S_{t-1} + k_t ⊗ v_t; o_t = scale * q_t^T S_t
+  - "delta": S_t = S_{t-1} + β_t * k_t ⊗ (v_t - S_{t-1}^T k_t); o_t = scale * q_t^T S_t
+  - "gated_delta": S_t = exp(g_t) * S_{t-1} + β_t * k_t ⊗ (v_t - exp(g_t) * S_{t-1}^T k_t); o_t = scale * q_t^T S_t
+
+  where g_t is the decay (in log-space), β_t is the update rate, and ⊗ denotes outer product.
+
+  Semantics: Equivalent to running the recurrent update sequentially for each token,
+  but may be implemented using chunk-parallel algorithms for GPU efficiency.
+
+
+#### Version
+
+This version of the operator has been available since version 27 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>chunk_size</tt> : int (default is 64)</dt>
+<dd>Chunk size for the chunk-parallel WY decomposition during prefill (T>1). Tuning hint; does not affect output correctness.</dd>
+<dt><tt>kv_num_heads</tt> : int (required)</dt>
+<dd>Number of key/value heads. Always required.</dd>
+<dt><tt>q_num_heads</tt> : int (required)</dt>
+<dd>Number of query heads. Always required.</dd>
+<dt><tt>scale</tt> : float (default is 0.0)</dt>
+<dd>Output scaling factor. When 0.0 (default), derives d_k = query.shape[-1] / q_num_heads and uses 1/sqrt(d_k). Set explicitly to override.</dd>
+<dt><tt>update_rule</tt> : string (default is gated_delta)</dt>
+<dd>The update rule for the linear attention recurrence. One of: 'linear', 'gated', 'delta', 'gated_delta'. Default is 'gated_delta'.</dd>
+</dl>
+
+#### Inputs (3 - 6)
+
+<dl>
+<dt><tt>query</tt> (differentiable) : T</dt>
+<dd>Query vectors with 3D packed shape (B, T, H_q * d_k). Heads are packed into the last dimension.</dd>
+<dt><tt>key</tt> (differentiable) : T</dt>
+<dd>Key vectors with 3D packed shape (B, T, H_kv * d_k). Should be L2-normalized for delta/gated_delta modes.</dd>
+<dt><tt>value</tt> (differentiable) : T</dt>
+<dd>Value vectors with 3D packed shape (B, T, H_kv * d_v).</dd>
+<dt><tt>past_state</tt> (optional, non-differentiable) : S</dt>
+<dd>Recurrent state from previous step with shape (B, H_kv, d_k, d_v). Always 4D. If not provided, defaults to zeros.</dd>
+<dt><tt>decay</tt> (optional, differentiable) : T</dt>
+<dd>Exponential decay gate in log-space. 3D packed shape: (B, T, H_kv * d_k) for per-key-dimension decay (GLA/RWKV-6), or (B, T, H_kv) for per-head scalar decay (DeltaNet/RetNet). Required for 'gated' and 'gated_delta' modes.</dd>
+<dt><tt>beta</tt> (optional, differentiable) : T</dt>
+<dd>Update rate (sigmoid output). 3D packed shape: (B, T, H_kv) or (B, T, 1). Required for 'delta' and 'gated_delta' modes.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> (differentiable) : T</dt>
+<dd>Attention output with 3D packed shape (B, T, H_q * d_v).</dd>
+<dt><tt>present_state</tt> (non-differentiable) : S</dt>
+<dd>Updated recurrent state with shape (B, H_kv, d_k, d_v). Always 4D.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(bfloat16), tensor(float)</dt>
+<dd>Constrain activation input and output types to float16, bfloat16, or float32 tensors.</dd>
+<dt><tt>S</tt> : tensor(float16), tensor(bfloat16), tensor(float)</dt>
+<dd>Constrain state types to float16, bfloat16, or float32 tensors. Should be float32 or the same as T for numerical stability on long sequences.</dd>
+</dl>
+
+### <a name="Range-27"></a>**Range-27**</a>
+
+  Generate a tensor containing a sequence of numbers that begin at `start` and extends by increments of `delta`
+  up to `limit` (exclusive).
+
+  The number of elements in the output of range is computed as below:
+  ```
+  number_of_elements = max( ceil( (limit - start) / delta ) , 0 )
+  ```
+  The pseudocode determining the contents of the output is shown below:
+  ```
+  for(int i=0; i<number_of_elements; ++i) {
+    output[i] =  start + (i * delta);
+  }
+  ```
+  Example 1:
+  ```
+  Inputs: start = 3, limit = 9, delta = 3
+  Output: [3, 6]
+  ```
+  Example 2:
+  ```
+  Inputs: start = 10, limit = 4, delta = -2
+  Output: [10, 8, 6]
+  ```
+
+  For `float16` and `bfloat16` inputs, the `stash_type` attribute controls the precision used for
+  intermediate accumulation. Setting `stash_type` to `1` (float) causes `start`, `limit`, and
+  `delta` to be cast to 32-bit float before the loop, with the output cast back to the original
+  type. This avoids precision loss for large ranges where successive additions in float16 or
+  bfloat16 would otherwise be inexact (e.g. `x + 1 == x` for large `x`).
+
+#### Version
+
+This version of the operator has been available since version 27 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>stash_type</tt> : int (default is 1)</dt>
+<dd>The data type used for intermediate computation when T is float16 or bfloat16. Defaults to 1 (float). Has no effect for other types.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>start</tt> : T</dt>
+<dd>Scalar. First entry for the range of output values.</dd>
+<dt><tt>limit</tt> : T</dt>
+<dd>Scalar. Exclusive upper limit for the range of output values.</dd>
+<dt><tt>delta</tt> : T</dt>
+<dd>Scalar. Value to step by.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> : T</dt>
+<dd>A 1-D tensor with same type as the inputs containing generated range of values.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float), tensor(double), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(bfloat16)</dt>
+<dd>Constrain input types to common numeric type tensors.</dd>
+</dl>
+
+## Version 28 of the default ONNX operator set
+### <a name="Celu-28"></a>**Celu-28**</a>
+
+  Continuously Differentiable Exponential Linear Units:
+  Perform the linear unit element-wise on the input tensor X
+  using formula:
+
+  ```
+  max(0,x) + min(0,alpha*(exp(x/alpha)-1))
+  ```
+
+#### Version
+
+This version of the operator has been available since version 28 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>alpha</tt> : float (default is 1.0)</dt>
+<dd>The Alpha value in Celu formula which control the shape of the unit. The default value is 1.0.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> (differentiable) : T</dt>
+<dd>Input tensor</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> (differentiable) : T</dt>
+<dd>Output tensor</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(bfloat16), tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
+# ai.onnx.preview
+## Version 1 of the 'ai.onnx.preview' operator set
+### <a name="ai.onnx.preview.FlexAttention-1"></a>**ai.onnx.preview.FlexAttention-1**</a>
+
+  Computes scaled dot-product attention over rank-4 (batched, multi-head) inputs,
+  with optional user-provided customization subgraphs at two stages:
+
+  1. score_mod: Modify the attention score tensor after Q·K^T
+  2. prob_mod: Modify the probability tensor after Softmax
+
+  This operator mirrors the capabilities of PyTorch's flex_attention:
+  https://docs.pytorch.org/docs/stable/nn.attention.flex_attention.html
+
+  Input Shapes (MUST be rank-4 tensors):
+  - Q: `(batch_size, q_num_heads, q_sequence_length, head_size)`
+  - K: `(batch_size, kv_num_heads, kv_sequence_length, head_size)`
+  - V: `(batch_size, kv_num_heads, kv_sequence_length, v_head_size)`
+
+  Output Shape:
+  - Y: `(batch_size, q_num_heads, q_sequence_length, v_head_size)`
+
+  FlexAttention Computation:
+  ```
+  Scores = (Q @ K^T) * scale
+  Scores = score_mod(Scores)             # if 'score_mod' is provided
+  Probs = Softmax(Scores, axis=-1)
+  Probs = prob_mod(Probs)                # if 'prob_mod' is provided
+  Y = Probs @ V
+  ```
+
+  Grouped Query Attention (GQA):
+  When `q_num_heads != kv_num_heads`, each K/V head is shared by a contiguous
+  group of query heads in head-index order. Let
+  `group_size = q_num_heads / kv_num_heads`; then query head `h` uses K/V head
+  `floor(h / group_size)`. `q_num_heads` must be a multiple of
+  `kv_num_heads`.
+
+  Modifier Subgraphs (score_mod, prob_mod):
+  Each modifier subgraph takes exactly one rank-4 tensor input and must produce
+  exactly one rank-4 tensor output of the same shape and element type.
+  - score_mod input/output shape: `(batch_size, q_num_heads, q_sequence_length, kv_sequence_length)`
+  - prob_mod  input/output shape: `(batch_size, q_num_heads, q_sequence_length, kv_sequence_length)`
+  The element type is determined by softmax_precision (defaults to float32 for
+  non-double inputs, otherwise double).
+
+  Masking can be expressed in score_mod by writing masked positions as -inf (or a
+  large negative value appropriate for the target precision).
+
+#### Version
+
+No versioning maintained for experimental ops.
+#### Attributes
+
+<dl>
+<dt><tt>prob_mod</tt> : graph</dt>
+<dd>Optional probability modifier subgraph with 1 rank-4 tensor input and 1 rank-4 tensor output of the same shape and element type: (probs) -> probs_out. probs has softmax_precision element type and shape (B, Hq, L, S). The output must preserve the input shape.</dd>
+<dt><tt>scale</tt> : float</dt>
+<dd>Scaling factor for Q*K^T. Defaults to 1/sqrt(head_size).</dd>
+<dt><tt>score_mod</tt> : graph</dt>
+<dd>Optional score modifier subgraph with 1 rank-4 tensor input and 1 rank-4 tensor output of the same shape and element type: (scores) -> scores_out. scores has softmax_precision element type and shape (B, Hq, L, S). The output must preserve the input shape.</dd>
+<dt><tt>softmax_precision</tt> : int</dt>
+<dd>Floating-point precision for softmax computation. Defaults to float32 for non-double inputs, otherwise uses double. Must be explicitly specified for non-float types.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>Q</tt> : T1</dt>
+<dd>Query tensor with shape `(batch_size, q_num_heads, q_seq_len, head_size)`.</dd>
+<dt><tt>K</tt> : T1</dt>
+<dd>Key tensor with shape `(batch_size, kv_num_heads, kv_seq_len, head_size)`.</dd>
+<dt><tt>V</tt> : T1</dt>
+<dd>Value tensor with shape `(batch_size, kv_num_heads, kv_seq_len, v_head_size)`.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> : T1</dt>
+<dd>Output tensor with shape `(batch_size, q_num_heads, q_seq_len, v_head_size)`.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T1</tt> : tensor(bfloat16), tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain Q, K, V to float tensors.</dd>
 </dl>
 
 # ai.onnx.preview.training

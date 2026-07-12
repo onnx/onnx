@@ -18,6 +18,7 @@ from onnx.onnx_pb import (
     GraphProto,
     ModelProto,
     NodeProto,
+    OperatorSetIdProto,
     TensorProto,
     TypeProto,
 )
@@ -116,35 +117,58 @@ def function_expand_helper(
     def rename_helper(internal_name: str) -> Any:
         if internal_name in io_names_map:
             return io_names_map[internal_name]
-        elif internal_name == "":
+        if internal_name == "":
             return ""
         return op_prefix + internal_name
 
-    new_node_list = [
+    return [
         _rename_edges_helper(internal_node, rename_helper, attribute_map, op_prefix)
         for internal_node in function_proto.node
     ]
-    return new_node_list
 
 
 def function_testcase_helper(
-    node: NodeProto, input_types: list[TypeProto], name: str
+    node: NodeProto,
+    input_types: list[TypeProto],
+    name: str,
+    opset_imports: Sequence[OperatorSetIdProto] | None = None,
 ) -> tuple[list[tuple[list[NodeProto], Any]], int]:
     test_op = node.op_type
     op_prefix = test_op + "_" + name + "_expanded_function_"
-    schema = onnx.defs.get_schema(test_op, domain=node.domain)
+    if opset_imports is None:
+        # No opset in the model. We take the most recent definition.
+        schema = onnx.defs.get_schema(test_op, domain=node.domain)
+    else:
+        # We take the function defined in the specific version mentioned
+        # in the model. Find the opset_import matching the node's domain.
+        node_domain = node.domain or ""
+        matching_opset = None
+        for opset in opset_imports:
+            opset_domain = opset.domain or ""
+            if opset_domain == node_domain or (
+                node_domain in {"", "ai.onnx"} and opset_domain in {"", "ai.onnx"}
+            ):
+                matching_opset = opset
+                break
+        if matching_opset is None:
+            raise ValueError(
+                f"No matching opset_import found for domain {node_domain!r} "
+                f"in {[o.domain for o in opset_imports]}."
+            )
+        version = matching_opset.version
+        schema = onnx.defs.get_schema(test_op, version, domain=node.domain)
 
     # an op schema may have several functions, each for one opset version
     # opset versions include the op's since_version and other opset versions
     # if it is needed to define the op for a opset version other than the op's since_version.
     function_protos = []
-    for opset_version in schema.function_opset_versions:  # type: ignore
-        function_proto_str = schema.get_function_with_opset_version(opset_version)  # type: ignore
+    for opset_version in schema.function_opset_versions:  # type: ignore[attr-defined]
+        function_proto_str = schema.get_function_with_opset_version(opset_version)  # type: ignore[attr-defined]
         function_proto = FunctionProto()
         function_proto.ParseFromString(function_proto_str)
         function_protos.append(function_proto)
-    for opset_version in schema.context_dependent_function_opset_versions:  # type: ignore
-        function_proto_str = schema.get_context_dependent_function_with_opset_version(  # type: ignore
+    for opset_version in schema.context_dependent_function_opset_versions:  # type: ignore[attr-defined]
+        function_proto_str = schema.get_context_dependent_function_with_opset_version(  # type: ignore[attr-defined]
             opset_version,
             node.SerializeToString(),
             [t.SerializeToString() for t in input_types],
@@ -178,7 +202,7 @@ def _extract_value_info(
             raise NotImplementedError(
                 "_extract_value_info: both input and type_proto arguments cannot be None."
             )
-        elif isinstance(input, list):
+        if isinstance(input, list):
             elem_type = onnx.helper.np_dtype_to_tensor_dtype(input[0].dtype)
             shape = None
             tensor_type_proto = onnx.helper.make_tensor_type_proto(elem_type, shape)
@@ -200,7 +224,7 @@ def _make_test_model_gen_version(graph: GraphProto, **kwargs: Any) -> ModelProto
         latest_onnx_version,
         latest_ml_version,
         latest_training_version,
-    ) = onnx.helper.VERSION_TABLE[-1][2:5]  # type: ignore
+    ) = onnx.helper.VERSION_TABLE[-1][2:5]  # type: ignore[index]
     if "opset_imports" in kwargs:
         for opset in kwargs["opset_imports"]:
             # If the test model uses an unreleased opset version (latest_version+1),
@@ -236,7 +260,7 @@ def _make_test_model_gen_version(graph: GraphProto, **kwargs: Any) -> ModelProto
 # Instead of creating model with latest version, it now generates models for since_version by default.
 # Thus it can make every model uses the same opset version after every opset change.
 # Besides, user can specify "use_max_opset_version" to generate models for
-# the latest opset vesion that supports before targeted opset version
+# the latest opset version that supports before targeted opset version
 def expect(
     node_op: onnx.NodeProto,
     inputs: Sequence[np.ndarray | TensorProto],
@@ -269,12 +293,14 @@ def expect(
         del kwargs["output_type_protos"]
     inputs_vi = [
         _extract_value_info(arr, arr_name, input_type)
-        for arr, arr_name, input_type in zip(inputs, present_inputs, input_type_protos)
+        for arr, arr_name, input_type in zip(
+            inputs, present_inputs, input_type_protos, strict=False
+        )
     ]
     outputs_vi = [
         _extract_value_info(arr, arr_name, output_type)
         for arr, arr_name, output_type in zip(
-            outputs, present_outputs, output_type_protos
+            outputs, present_outputs, output_type_protos, strict=False
         )
     ]
     graph = onnx.helper.make_graph(
@@ -319,15 +345,16 @@ def expect(
                     present_value_info[0].type,
                     *merge(node_inputs[1:], present_value_info[1:]),
                 ]
-            else:
-                return [TypeProto(), *merge(node_inputs[1:], present_value_info)]
+            return [TypeProto(), *merge(node_inputs[1:], present_value_info)]
         return []
 
     merged_types = merge(list(node.input), inputs_vi)
     (
         expanded_tests,
         since_version,
-    ) = function_testcase_helper(node, merged_types, name)
+    ) = function_testcase_helper(
+        node, merged_types, name, opset_imports=kwargs.get("opset_imports")
+    )
     for expanded_function_nodes, func_opset_import in expanded_tests:
         kwargs["producer_name"] = "backend-test"
 
@@ -401,27 +428,47 @@ def collect_diff_testcases() -> list[TestCase]:
 
 def get_diff_op_types():
     cwd_path = Path.cwd()
-    # git fetch first for git diff on GitHub Action
-    subprocess.run(
-        ["git", "fetch", "origin", "main:main"],
+    # Resolve the upstream main branch from the canonical onnx/onnx repository
+    # to avoid depending on local branch or remote naming conventions.
+    upstream_url = "https://github.com/onnx/onnx.git"
+    ls_remote = subprocess.run(
+        ["git", "ls-remote", upstream_url, "refs/heads/main"],
         cwd=cwd_path,
         capture_output=True,
         check=True,
     )
-    # obtain list of added or modified files in this PR
-    with subprocess.Popen(
-        ["git", "diff", "--name-only", "--diff-filter=AM", "origin/main", "HEAD"],
+    upstream_main_hash = ls_remote.stdout.split()[0].decode("utf-8")
+    # Fetch the upstream main commit so merge-base works even if the
+    # local repo hasn't fetched recently.
+    subprocess.run(
+        ["git", "fetch", upstream_url, upstream_main_hash],
         cwd=cwd_path,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-    ) as obtain_diff:
-        stdoutput, _ = obtain_diff.communicate()
-        diff_list = stdoutput.split()
-        changed_op_types = []
-        for file in diff_list:
-            file_name = file.decode("utf-8")
-            if file_name.startswith(
-                "onnx/backend/test/case/node/"
-            ) and file_name.endswith(".py"):
-                changed_op_types.append(file_name.split("/")[-1].replace(".py", ""))
-        return changed_op_types
+        capture_output=True,
+        check=True,
+    )
+    # Find the fork point from upstream main
+    merge_base = subprocess.run(
+        ["git", "merge-base", "HEAD", upstream_main_hash],
+        cwd=cwd_path,
+        capture_output=True,
+        check=True,
+    )
+    base_commit = merge_base.stdout.strip().decode("utf-8")
+    # obtain list of added or modified files since the fork point
+    result = subprocess.run(
+        ["git", "diff", "--name-only", "--diff-filter=AM", base_commit, "HEAD"],
+        cwd=cwd_path,
+        capture_output=True,
+        check=True,
+    )
+    diff_list = result.stdout.split()
+    changed_op_types = []
+    for file in diff_list:
+        file_name = file.decode("utf-8")
+        if file_name.startswith("onnx/backend/test/case/node/") and file_name.endswith(
+            ".py"
+        ):
+            changed_op_types.append(
+                file_name.split("/")[-1].replace(".py", "").rstrip("_")
+            )
+    return changed_op_types

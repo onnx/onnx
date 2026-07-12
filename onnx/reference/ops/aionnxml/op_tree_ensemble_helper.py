@@ -48,7 +48,7 @@ class TreeEnsemble:
         self.node_index = {
             (tid, nid): i
             for i, (tid, nid) in enumerate(
-                zip(self.atts.nodes_treeids, self.atts.nodes_nodeids)
+                zip(self.atts.nodes_treeids, self.atts.nodes_nodeids, strict=False)
             )
         }
 

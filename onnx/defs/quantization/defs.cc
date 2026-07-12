@@ -1,13 +1,14 @@
-/*
- * SPDX-License-Identifier: Apache-2.0
- */
+// Copyright (c) ONNX Project Contributors
+//
+// SPDX-License-Identifier: Apache-2.0
 
-#include "onnx/defs/function.h"
+#include "onnx/defs/doc_strings.h"
 #include "onnx/defs/schema.h"
+#include "onnx/defs/type_builders.h"
 
 namespace ONNX_NAMESPACE {
 
-static const char* QuantizeLinear_ver24_doc = R"DOC(
+static constexpr const char* QuantizeLinear_ver29_doc = R"DOC(
 The linear quantization operator consumes a high-precision tensor, a scale, and a zero point to compute the
 low-precision/quantized tensor. The scale factor and zero point must have the same shape, determining the quantization
 granularity. The quantization formula is `y = saturate((x / y_scale) + y_zero_point)`.
@@ -19,6 +20,8 @@ Saturation is done according to:
 - int8: [-128, 127]
 - uint4: [0, 15]
 - int4: [-8, 7]
+- uint2: [0, 3]
+- int2: [-2, 1]
 
 For `(x / y_scale)`, it rounds to the nearest even. Refer to https://en.wikipedia.org/wiki/Rounding for details.
 
@@ -39,7 +42,7 @@ In all cases, `y_zero_point` must have the same shape as `y_scale`.
 
 ONNX_OPERATOR_SET_SCHEMA(
     QuantizeLinear,
-    24,
+    29,
     OpSchema()
         .Input(0, "x", "N-D full precision Input tensor to be quantized.", "T1")
         .Input(
@@ -68,8 +71,8 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Attr(
             "saturate",
             "The parameter defines how the conversion behaves if an input value is out of "
-            "range of the destination type. It only applies for float 8 quantization "
-            "(float8e4m3fn, float8e4m3fnuz, float8e5m2, float8e5m2fnuz). It is true by default. "
+            "range of the destination type. It only applies for float 8 and float 6 quantization "
+            "(float8e4m3fn, float8e4m3fnuz, float8e5m2, float8e5m2fnuz, float6e2m3, float6e3m2). It is true by default. "
             "All cases are fully described in two tables inserted in the operator description.",
             AttributeProto::INT,
             static_cast<int64_t>(1))
@@ -96,29 +99,31 @@ ONNX_OPERATOR_SET_SCHEMA(
             static_cast<int64_t>(0))
         .TypeConstraint(
             "T1",
-            {"tensor(float)", "tensor(float16)", "tensor(bfloat16)", "tensor(int32)"},
+            {types::Float, types::Float16, types::BFloat16, types::Int32},
             "The type of the input 'x'.")
         .TypeConstraint(
             "T2",
-            {"tensor(float)", "tensor(float16)", "tensor(bfloat16)", "tensor(int32)", "tensor(float8e8m0)"},
+            {types::Float, types::Float16, types::BFloat16, types::Int32, types::Float8E8M0},
             "The type of the input 'y_scale'.")
         .TypeConstraint(
             "T3",
-            {"tensor(int8)",
-             "tensor(uint8)",
-             "tensor(int16)",
-             "tensor(uint16)",
-             "tensor(float8e4m3fn)",
-             "tensor(float8e4m3fnuz)",
-             "tensor(float8e5m2)",
-             "tensor(float8e5m2fnuz)",
-             "tensor(uint4)",
-             "tensor(int4)",
-             "tensor(float4e2m1)",
-             "tensor(float6e2m3)",
-             "tensor(float6e3m2)"},
-            "Constrain y_zero_point and y to 8-bit integer tensor, 16-bit integer tensor, float8, uint4, int4, or float4e2m1 tensor.")
-        .SetDoc(QuantizeLinear_ver24_doc)
+            {types::Int8,
+             types::UInt8,
+             types::Int16,
+             types::UInt16,
+             types::Float8E4M3FN,
+             types::Float8E4M3FNUZ,
+             types::Float8E5M2,
+             types::Float8E5M2FNUZ,
+             types::UInt4,
+             types::Int4,
+             types::Float4E2M1,
+             types::UInt2,
+             types::Int2,
+             types::Float6E2M3,
+             types::Float6E3M2},
+            "The type of the input `y_zero_point` and the output `y`.")
+        .SetDoc(QuantizeLinear_ver29_doc)
         .TypeAndShapeInferenceFunction([](ONNX_NAMESPACE::InferenceContext& ctx) {
           auto const zp_type = ctx.hasInput(2) ? ctx.getInputType(2) : nullptr;
           auto const output_dtype =
@@ -147,24 +152,9 @@ ONNX_OPERATOR_SET_SCHEMA(
           updateOutputShape(ctx, 0, input_shape);
         }));
 
-static const char* DequantizeLinear_ver24_doc = R"DOC(
-The linear dequantization operator. It consumes a quantized tensor, a scale, and a zero point to compute the
-full-precision tensor. The dequantization formula is `y = (x - x_zero_point) * x_scale`. `x_scale` and `x_zero_point`
-must have the same shape, determining the quantization's granularity: a scalar for per-tensor/per-layer quantization,
-a 1-D tensor for per-axis quantization, or have a rank identical to the input for blocked quantization.
-See QuantizeLinear for details on quantization granularity.
-
-`x_zero_point` and `x` must have the same type. `x` and `y` must have the same shape. In the case of dequantizing
-`int32`, there's no zero point (zero point is supposed to be 0).
-`zero-point` is usually not used in the case of float8 and 4-bit types quantization, but the dequantization formula remains the same
-for consistency. The output type is determined by the attribute `output_dtype`. If `output_dtype` is not supplied then the output type
-is the same as `x_scale`. The output type also determines the precision of the multiplication operation.
-
-)DOC";
-
 ONNX_OPERATOR_SET_SCHEMA(
     DequantizeLinear,
-    24,
+    29,
     OpSchema()
         .Input(0, "x", "N-D quantized input tensor to be de-quantized.", "T1")
         .Input(
@@ -209,27 +199,29 @@ ONNX_OPERATOR_SET_SCHEMA(
             static_cast<int64_t>(0))
         .TypeConstraint(
             "T1",
-            {"tensor(int8)",
-             "tensor(uint8)",
-             "tensor(int16)",
-             "tensor(uint16)",
-             "tensor(int32)",
-             "tensor(float8e4m3fn)",
-             "tensor(float8e4m3fnuz)",
-             "tensor(float8e5m2)",
-             "tensor(float8e5m2fnuz)",
-             "tensor(uint4)",
-             "tensor(int4)",
-             "tensor(float4e2m1)",
-             "tensor(float6e2m3)",
-             "tensor(float6e3m2)"},
+            {types::Int8,
+             types::UInt8,
+             types::Int16,
+             types::UInt16,
+             types::Int32,
+             types::Float8E4M3FN,
+             types::Float8E4M3FNUZ,
+             types::Float8E5M2,
+             types::Float8E5M2FNUZ,
+             types::UInt4,
+             types::Int4,
+             types::Float4E2M1,
+             types::UInt2,
+             types::Int2,
+             types::Float6E2M3,
+             types::Float6E3M2},
             "The type of the inputs 'x_zero_point' and 'x'.")
         .TypeConstraint(
             "T2",
-            {"tensor(float)", "tensor(float16)", "tensor(bfloat16)", "tensor(float8e8m0)"},
+            {types::Float, types::Float16, types::BFloat16, types::Float8E8M0},
             "The type of the input 'x_scale'.")
-        .TypeConstraint("T3", {"tensor(float)", "tensor(float16)", "tensor(bfloat16)"}, "The type of the output 'y'.")
-        .SetDoc(DequantizeLinear_ver24_doc)
+        .TypeConstraint("T3", {types::Float, types::Float16, types::BFloat16}, "The type of the output 'y'.")
+        .SetDoc(kDoc_DequantizeLinear_ver24)
         .TypeAndShapeInferenceFunction([](ONNX_NAMESPACE::InferenceContext& ctx) {
           auto const output_dtype =
               static_cast<TensorProto_DataType>(getAttribute(ctx, "output_dtype", TensorProto::UNDEFINED));
@@ -245,7 +237,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           updateOutputShape(ctx, 0, input_shape);
         }));
 
-static const char* DynamicQuantizeLinear_ver11_doc = R"DOC(
+static constexpr const char* DynamicQuantizeLinear_ver11_doc = R"DOC(
 A Function to fuse calculation for Scale, Zero Point and FP32->8Bit conversion of FP32 Input data.
 Outputs Scale, ZeroPoint and Quantized Input for a given FP32 Input.
 Scale is calculated as:
@@ -259,7 +251,7 @@ y_scale = (maximum(0, max(x)) - minimum(0, min(x))) / (qmax - qmin)
 Zero point is calculated as:
 ```
 intermediate_zero_point = qmin - min(x)/y_scale
-y_zero_point = cast(round(saturate(itermediate_zero_point)))
+y_zero_point = cast(round(saturate(intermediate_zero_point)))
 ```
 
 * where qmax and qmin are max and min values for quantization range .i.e [0, 255] in case of uint8
@@ -292,8 +284,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             "y_zero_point",
             "Output zero point. It's a scalar, which means a per-tensor/layer quantization.",
             "T2")
-        .TypeConstraint("T1", {"tensor(float)"}, "Constrain 'x' to float tensor.")
-        .TypeConstraint("T2", {"tensor(uint8)"}, "Constrain 'y_zero_point' and 'y' to 8-bit unsigned integer tensor.")
+        .TypeConstraint("T1", {types::Float}, "Constrain 'x' to float tensor.")
+        .TypeConstraint("T2", {types::UInt8}, "Constrain 'y_zero_point' and 'y' to 8-bit unsigned integer tensor.")
         .FunctionBody(R"ONNX(
         {
            Q_Min = Constant<value = float {0.0}>()

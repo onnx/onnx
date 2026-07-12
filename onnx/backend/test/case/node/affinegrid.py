@@ -121,10 +121,9 @@ def create_theta_2d():
     shear_y = np.array([0.3, -0.3])
     scale_x = np.array([2.2, 1.1])
     scale_y = np.array([3.1, 0.9])
-    theta_2d = create_affine_matrix_2d(
+    return create_affine_matrix_2d(
         angle, offset_x, offset_y, shear_x, shear_y, scale_x, scale_y
     )
-    return theta_2d
 
 
 def create_theta_3d():
@@ -140,7 +139,7 @@ def create_theta_3d():
     scale_y = np.array([3.1, 0.9])
     scale_z = np.array([0.5, 1.5])
 
-    theta_3d = create_affine_matrix_3d(
+    return create_affine_matrix_3d(
         angle1,
         angle2,
         offset_x,
@@ -153,7 +152,6 @@ def create_theta_3d():
         scale_y,
         scale_z,
     )
-    return theta_3d
 
 
 class AffineGrid(Base):

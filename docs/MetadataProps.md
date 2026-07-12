@@ -33,6 +33,3 @@ Specifically, we define here the following set image metadata:
 |`Image.BitmapPixelFormat`|__string__|Specifies the format of pixel data. Each enumeration value defines a channel ordering and bit depth. Possible values: <ul><li>`Gray8`: 1 channel image, the pixel data is 8 bpp grayscale.</li><li>`Rgb8`: 3 channel image, channel order is RGB, pixel data is 8bpp (No alpha)</li><li>`Bgr8`: 3 channel image, channel order is BGR, pixel data is 8bpp (No alpha)</li><li>`Rgba8`: 4 channel image, channel order is RGBA, pixel data is 8bpp (Straight alpha)</li><li>`Bgra8`: 4 channel image, channel order is BGRA, pixel data is 8bpp (Straight alpha)</li></ul>|
 |`Image.ColorSpaceGamma`|__string__|Specifies the gamma color space used. Possible values:<ul><li>`Linear`: Linear color space, gamma == 1.0</li><li>`SRGB`: sRGB color space, gamma == 2.2</li></ul>|
 |`Image.NominalPixelRange`|__string__|Specifies the range that pixel values are stored. Possible values: <ul><li>`NominalRange_0_255`:  [0...255] for 8bpp samples</li><li>`Normalized_0_1`: [0...1] pixel data is stored normalized</li><li>`Normalized_1_1`: [-1...1] pixel data is stored normalized</li><li>`NominalRange_16_235`: [16...235] for 8bpp samples</li></ul>|
-
-
-

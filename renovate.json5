@@ -1,0 +1,105 @@
+// Copyright (c) ONNX Project Contributors
+//
+// SPDX-License-Identifier: Apache-2.0
+
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  // Only enable specific managers to avoid overlap with dependabot
+  // Dependabot handles: pip (Python), github-actions
+  // Renovate handles: nanobind, googletest, and pixi lockfile (lock-file maintenance only -- see
+  // packageRules below; the version pins in pixi.toml are managed manually)
+  "enabledManagers": ["custom.regex", "pixi"],
+  // Disable the Dependency Dashboard issue
+  "dependencyDashboard": false,
+  // Regenerate lock files (pixi.lock) on a schedule to pull in newer versions
+  // permitted by the existing constraints, without editing the manifest.
+  "lockFileMaintenance": {
+    "enabled": true,
+    "schedule": ["on the first day of the month"]
+  },
+  // Wait one week after a release before creating an update PR
+  "minimumReleaseAge": "7 days",
+  // Apply labels to all Renovate PRs:
+  // - "module: dependencies" satisfies the "Require topic/module label" branch-protection check
+  // - "run release CIs" triggers release CI
+  "labels": ["module: dependencies", "run release CIs"],
+  // Add a note to every Renovate PR body explaining the update context
+  "prBodyNotes": [
+    "This PR was automatically created by [Renovate Bot](https://docs.renovatebot.com/) to keep build dependencies up to date.",
+    "Renovate manages dependencies **not** handled by Dependabot: manylinux Docker images, nanobind (via sbom.cdx.json), googletest (release tarball + SHA256), and the Pixi lockfile.",
+    "Please review the linked changelog/release notes before merging. A one-week stabilization period (`minimumReleaseAge`) has already elapsed since the new version was published."
+  ],
+  // Custom managers for dependencies not auto-detected by Renovate
+  "customManagers": [
+    {
+      // Detect manylinux Docker images in GitHub Actions workflows
+      // Example: uses: docker://quay.io/pypa/manylinux_2_28_x86_64:2024.10.10-1
+      "customType": "regex",
+      "fileMatch": ["^\\.github/workflows/release_linux\\.yml$"],
+      "matchStrings": [
+        "uses:\\s*docker://quay\\.io/pypa/(?<depName>manylinux_[^:]+):(?<currentValue>[0-9]{4}\\.[0-9]{2}\\.[0-9]{2}-[0-9]+)"
+      ],
+      "datasourceTemplate": "docker",
+      "depNameTemplate": "quay.io/pypa/{{{depName}}}",
+      "versioningTemplate": "loose"
+    },
+    {
+      // Detect nanobind version in sbom.cdx.json. CMakeLists.txt reads the version and
+      // GIT_REPOSITORY URL from this file via sbom_get_dep() (see cmake/Utils.cmake) rather
+      // than hardcoding them, so this is the only place the pin needs to be bumped.
+      // Example:
+      //   {
+      //     "type": "library",
+      //     "name": "nanobind",
+      //     "version": "2.12.0",
+      //     "bom-ref": "nanobind",
+      //     "purl": "pkg:github/wjakob/nanobind@v2.12.0",
+      // nanobind is fetched via GIT_TAG (git clone), not as a release tarball, so no
+      // hash is recorded here (see the "hashes" field on other sbom.cdx.json entries).
+      // If nanobind switches to publishing release tarballs, this should be migrated to
+      // github-releases with a URL + SHA256 hash (like googletest / protobuf / abseil-cpp).
+      "customType": "regex",
+      "fileMatch": ["^sbom\\.cdx\\.json$"],
+      "matchStrings": [
+        "\"name\":\\s*\"nanobind\",\\s*\"version\":\\s*\"(?<currentValue>[0-9]+\\.[0-9]+\\.[0-9]+)\",\\s*\"bom-ref\":\\s*\"nanobind\",\\s*\"purl\":\\s*\"pkg:github/(?<depName>[^/]+/[^@]+)@v[0-9]+\\.[0-9]+\\.[0-9]+\""
+      ],
+      "autoReplaceStringTemplate": "\"name\": \"nanobind\",\n      \"version\": \"{{{newValue}}}\",\n      \"bom-ref\": \"nanobind\",\n      \"purl\": \"pkg:github/{{{depName}}}@v{{{newValue}}}\"",
+      // github-tags is used because nanobind publishes tags (e.g. v2.12.0) but not GitHub releases
+      "datasourceTemplate": "github-tags"
+    },
+    {
+      // Detect googletest release tarball and SHA256 hash in cmake/external/googletest.cmake
+      // Example:
+      //   URL https://github.com/google/googletest/releases/download/v1.17.0/googletest-1.17.0.tar.gz
+      //   URL_HASH SHA256=65fab701d9829d38cb77c14acdc431d2108bfdbf8979e40eb8ae567edf10b27c
+      "customType": "regex",
+      "fileMatch": ["^cmake/external/googletest\\.cmake$"],
+      "matchStrings": [
+        "URL\\s+https://github\\.com/google/googletest/releases/download/v(?<currentValue>[0-9]+\\.[0-9]+\\.[0-9]+)/googletest-[0-9]+\\.[0-9]+\\.[0-9]+\\.tar\\.gz\\n\\s+URL_HASH\\s+SHA256=(?<currentDigest>[a-f0-9]+)"
+      ],
+      "autoReplaceStringTemplate": "URL https://github.com/google/googletest/releases/download/v{{{newValue}}}/googletest-{{{newValue}}}.tar.gz\n  URL_HASH SHA256={{{newDigest}}}",
+      "depNameTemplate": "google/googletest",
+      "datasourceTemplate": "github-releases",
+      "extractVersionTemplate": "^v(?<version>.*)$"
+    }
+  ],
+  // Package-specific rules for grouping
+  "packageRules": [
+    {
+      // Group manylinux Docker images together in a single PR
+      "matchDatasources": ["docker"],
+      "matchPackageNames": ["quay.io/pypa/manylinux_**"],
+      "groupName": "manylinux docker images"
+    },
+    {
+      // Do not bump the version pins in pixi.toml. Renovate only refreshes
+      // pixi.lock via lockFileMaintenance (configured above); the manifest
+      // constraints are managed manually. We disable every dependency-bump
+      // update type for the pixi manager but leave lockFileMaintenance on
+      // (it is a separate update type, not matched here).
+      "matchManagers": ["pixi"],
+      "matchUpdateTypes": ["major", "minor", "patch", "pin", "digest", "pinDigest"],
+      "enabled": false
+    }
+  ]
+}

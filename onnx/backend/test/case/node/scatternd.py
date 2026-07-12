@@ -10,7 +10,9 @@ from onnx.backend.test.case.base import Base
 from onnx.backend.test.case.node import expect
 
 
-def scatter_nd_impl(data, indices, updates, reduction="none"):  # type: ignore
+def scatter_nd_impl(
+    data: np.ndarray, indices: np.ndarray, updates: np.ndarray, reduction: str = "none"
+) -> np.ndarray:
     # Check tensor shapes
     assert indices.shape[-1] <= len(data.shape)
     assert updates.shape == indices.shape[:-1] + data.shape[indices.shape[-1] :]
@@ -24,9 +26,13 @@ def scatter_nd_impl(data, indices, updates, reduction="none"):  # type: ignore
         elif reduction == "mul":
             output[tuple(indices[i])] *= updates[i]
         elif reduction == "max":
-            output[tuple(indices[i])] = np.maximum(output[indices[i]], updates[i])
+            output[tuple(indices[i])] = np.maximum(
+                output[tuple(indices[i])], updates[i]
+            )
         elif reduction == "min":
-            output[tuple(indices[i])] = np.minimum(output[indices[i]], updates[i])
+            output[tuple(indices[i])] = np.minimum(
+                output[tuple(indices[i])], updates[i]
+            )
         else:
             output[tuple(indices[i])] = updates[i]
     return output
@@ -220,4 +226,46 @@ class ScatterND(Base):
             inputs=[data, indices, updates],
             outputs=[output],
             name="test_scatternd_min",
+        )
+
+    @staticmethod
+    def export_scatternd_max_with_element_indices() -> None:
+        node = onnx.helper.make_node(
+            "ScatterND",
+            inputs=["data", "indices", "updates"],
+            outputs=["y"],
+            reduction="max",
+        )
+        data = np.array([[1, 2], [3, 4]], dtype=np.float32)
+        # Indices address individual elements (index rank == data rank),
+        # which exercises the reduction at the element level.
+        indices = np.array([[0, 0], [1, 1]], dtype=np.int64)
+        updates = np.array([5, 1], dtype=np.float32)
+        # Expecting output as np.array([[5, 2], [3, 4]], dtype=np.float32)
+        output = scatter_nd_impl(data, indices, updates, reduction="max")
+        expect(
+            node,
+            inputs=[data, indices, updates],
+            outputs=[output],
+            name="test_scatternd_max_with_element_indices",
+        )
+
+    @staticmethod
+    def export_scatternd_min_with_element_indices() -> None:
+        node = onnx.helper.make_node(
+            "ScatterND",
+            inputs=["data", "indices", "updates"],
+            outputs=["y"],
+            reduction="min",
+        )
+        data = np.array([[1, 2], [3, 4]], dtype=np.float32)
+        indices = np.array([[0, 0], [1, 1]], dtype=np.int64)
+        updates = np.array([5, 1], dtype=np.float32)
+        # Expecting output as np.array([[1, 2], [3, 1]], dtype=np.float32)
+        output = scatter_nd_impl(data, indices, updates, reduction="min")
+        expect(
+            node,
+            inputs=[data, indices, updates],
+            outputs=[output],
+            name="test_scatternd_min_with_element_indices",
         )

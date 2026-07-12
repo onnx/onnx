@@ -6,7 +6,6 @@ from __future__ import annotations
 import os
 import platform
 import sys
-import unittest
 from typing import Any
 
 import numpy
@@ -19,6 +18,7 @@ from onnx.backend.base import Device, DeviceType
 from onnx.reference import ReferenceEvaluator
 
 # The following just executes a backend based on ReferenceEvaluator through the backend test
+VERBOSE = int(os.environ.get("VERBOSE", "0"))
 
 
 class ReferenceEvaluatorBackendRep(onnx.backend.base.BackendRep):
@@ -30,12 +30,12 @@ class ReferenceEvaluatorBackendRep(onnx.backend.base.BackendRep):
             inputs = [inputs]
         if isinstance(inputs, list):
             if len(inputs) == len(self._session.input_names):
-                feeds = dict(zip(self._session.input_names, inputs))
+                feeds = dict(zip(self._session.input_names, inputs, strict=True))
             else:
                 feeds = {}
                 pos_inputs = 0
                 for inp, tshape in zip(
-                    self._session.input_names, self._session.input_types
+                    self._session.input_names, self._session.input_types, strict=True
                 ):
                     shape = tuple(d.dim_value for d in tshape.tensor_type.shape.dim)
                     if shape == inputs[pos_inputs].shape:
@@ -47,8 +47,7 @@ class ReferenceEvaluatorBackendRep(onnx.backend.base.BackendRep):
             feeds = inputs
         else:
             raise TypeError(f"Unexpected input type {type(inputs)!r}.")
-        outs = self._session.run(None, feeds)
-        return outs
+        return self._session.run(None, feeds)
 
 
 class ReferenceEvaluatorBackend(onnx.backend.base.Backend):
@@ -63,14 +62,12 @@ class ReferenceEvaluatorBackend(onnx.backend.base.Backend):
 
     @classmethod
     def create_inference_session(cls, model):
-        return ReferenceEvaluator(model)
+        return ReferenceEvaluator(model, verbose=VERBOSE)
 
     @classmethod
     def prepare(
         cls, model: Any, device: str = "CPU", **kwargs: Any
     ) -> ReferenceEvaluatorBackendRep:
-        # if isinstance(model, ReferenceEvaluatorBackendRep):
-        #    return model
         if isinstance(model, ReferenceEvaluator):
             return ReferenceEvaluatorBackendRep(model)
         if isinstance(model, (str, bytes, ModelProto)):
@@ -99,11 +96,12 @@ backend_test = onnx.backend.test.BackendTest(
         "test_dft_inverse": {"atol": dft_atol},
         "test_dft_inverse_opset19": {"atol": dft_atol},
         "test_dft_opset19": {"atol": dft_atol},
+        # The Celu function body rounds every step to bfloat16, so the expanded
+        # form drifts ~1 bfloat16 ULP from the direct reference.
+        "test_celu_bfloat16_expanded": {"rtol": 1e-2, "atol": 1e-2},
     },
 )
 
-if os.getenv("APPVEYOR"):
-    backend_test.exclude("(test_vgg19|test_zfnet)")
 if platform.architecture()[0] == "32bit":
     backend_test.exclude("(test_vgg19|test_zfnet|test_bvlc_alexnet)")
 if platform.system() == "Windows":
@@ -115,6 +113,8 @@ backend_test.exclude(
     "|test_if_opt"
     "|test_loop16_seq_none"
     "|test_range_float_type_positive_delta_expanded"
+    "|test_range_float16_type_positive_delta_expanded"
+    "|test_range_bfloat16_type_positive_delta_expanded"
     "|test_range_int32_type_negative_delta_expanded"
     "|test_scan_sum)"
 )
@@ -143,16 +143,13 @@ backend_test.exclude("test_adam_multiple")  # 1e-2
 
 # Currently Pillow is not supported on Win32 and is required for the reference implementation of RegexFullMatch.
 if sys.platform == "win32":
-    backend_test.exclude("test_regex_full_match_basic_cpu")
-    backend_test.exclude("test_regex_full_match_email_domain_cpu")
-    backend_test.exclude("test_regex_full_match_empty_cpu")
-    backend_test.exclude("test_image_decoder_decode_")
+    backend_test.exclude(
+        "(test_regex_full_match_basic_cpu"
+        "|test_regex_full_match_email_domain_cpu"
+        "|test_regex_full_match_empty_cpu"
+        "|test_image_decoder_decode_)"
+    )
 
-
-if sys.platform == "darwin":
-    # FIXME: https://github.com/onnx/onnx/issues/5792
-    backend_test.exclude("test_qlinearmatmul_3D_int8_float16_cpu")
-    backend_test.exclude("test_qlinearmatmul_3D_int8_float32_cpu")
 
 if version_utils.pillow_older_than("10.0"):
     backend_test.exclude("test_image_decoder_decode_webp_rgb")
@@ -163,11 +160,19 @@ if version_utils.numpy_older_than("2.0"):
     backend_test.exclude(r"test_cast.*(FLOAT8|BFLOAT16|FLOAT4|INT4)")
     backend_test.exclude(r"test_quantizelinear_e4m3fn")
     backend_test.exclude(r"test_quantizelinear_float4e2m1")
+    # float16 is a native NumPy dtype and works with assert_allclose in all NumPy versions;
+    # only bfloat16 (ml_dtypes) requires NumPy >= 2.0.
+    backend_test.exclude(r"test_range_bfloat16_type_positive_delta")
+    backend_test.exclude(r"test_range_bfloat16_type_positive_delta_expanded")
+    # Both the direct and expanded bfloat16 forms use ml_dtypes; the per-test
+    # tolerance for the expanded case applies only on NumPy >= 2.0.
+    backend_test.exclude(r"test_celu_bfloat16_cpu")
+    backend_test.exclude(r"test_celu_bfloat16_expanded_cpu")
 
 # The documentation does not explicitly say that is_causal=1 and attn_mask is not None
 # is not allowed. The expansion (based on the function definition in ONNX)
 # assumes this case never happens and behaves likes is_causal=0 even if it is 1.
-# The reference implementation and the backend tests have a different behabiour in that case.
+# The reference implementation and the backend tests have a different behavior in that case.
 backend_test.exclude(
     "(test_attention_4d_with_past_and_present_qk_matmul_bias_4d_mask_causal_expanded"
     "|test_attention_4d_with_past_and_present_qk_matmul_bias_3d_mask_causal_expanded"
@@ -177,17 +182,3 @@ backend_test.exclude(
 
 # import all test cases at global scope to make them visible to python.unittest
 globals().update(backend_test.test_cases)
-
-if __name__ == "__main__":
-    res = unittest.main(verbosity=2, exit=False)
-    tests_run = res.result.testsRun
-    errors = len(res.result.errors)
-    skipped = len(res.result.skipped)
-    unexpected_successes = len(res.result.unexpectedSuccesses)
-    expected_failures = len(res.result.expectedFailures)
-    print("---------------------------------")
-    print(
-        f"tests_run={tests_run} errors={errors} skipped={skipped} "
-        f"unexpected_successes={unexpected_successes} "
-        f"expected_failures={expected_failures}"
-    )

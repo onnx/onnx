@@ -1,8 +1,6 @@
 // Copyright (c) ONNX Project Contributors
-
-/*
- * SPDX-License-Identifier: Apache-2.0
- */
+//
+// SPDX-License-Identifier: Apache-2.0
 
 // Adapter for Dropout in default domain from version 11 to 12
 
@@ -23,10 +21,10 @@ class Dropout_11_12 final : public Adapter {
   void adapt_dropout_11_12(const std::shared_ptr<Graph>& graph, Node* node) const {
     float ratio = NAN;
     if (node->hasAttribute(kratio)) {
-      ratio = node->f(kratio);
+      ratio = static_cast<float>(node->f(kratio));
       node->removeAttribute(kratio);
     } else {
-      ratio = 0.5;
+      ratio = 0.5f;
     }
 
     Tensor t_ratio;

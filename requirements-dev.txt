@@ -1,15 +1,13 @@
 build
 numpy
-parameterized
 protobuf
 pytest
 pytest-cov
 pytest-xdist
 setuptools
 wheel
-ml_dtypes
-lintrunner>=0.10.7
-lintrunner-adapters>=0.12.3
+lintrunner>=0.13.1
+lintrunner-adapters>=0.14.0
 # Edit additional linter dependencies in requirements-lintrunner.txt
 # Dependencies for the reference implementation.
--r requirements-reference.txt
+Pillow

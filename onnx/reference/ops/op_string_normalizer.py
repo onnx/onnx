@@ -146,5 +146,4 @@ class StringNormalizer(OpRun):
             return s  # noqa: TRY300
         except UnicodeEncodeError:
             normalized = unicodedata.normalize("NFKD", s)
-            s = "".join([c for c in normalized if not unicodedata.combining(c)])
-            return s
+            return "".join([c for c in normalized if not unicodedata.combining(c)])

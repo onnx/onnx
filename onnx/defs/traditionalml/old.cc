@@ -1,12 +1,16 @@
-/*
- * SPDX-License-Identifier: Apache-2.0
- */
+// Copyright (c) ONNX Project Contributors
+//
+// SPDX-License-Identifier: Apache-2.0
+
+#include <string>
+#include <vector>
 
 #include "onnx/defs/schema.h"
+#include "onnx/defs/type_builders.h"
 
 #ifdef ONNX_ML
 namespace ONNX_NAMESPACE {
-static const char* LabelEncoder_ver1_doc = R"DOC(
+static constexpr const char* LabelEncoder_ver1_doc = R"DOC(
     Converts strings to integers and vice versa.<br>
     If the string default value is set, it will convert integers to strings.
     If the int default value is set, it will convert strings to integers.<br>
@@ -28,11 +32,11 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
         .Output(0, "Y", "Output data. If strings are input, the output values are integers, and vice versa.", "T2")
         .TypeConstraint(
             "T1",
-            {"tensor(string)", "tensor(int64)"},
+            {types::String, types::Int64},
             "The input type must be a tensor of integers or strings, of any shape.")
         .TypeConstraint(
             "T2",
-            {"tensor(string)", "tensor(int64)"},
+            {types::String, types::Int64},
             "The output type will be a tensor of strings or integers, and will have the same shape as the input.")
         .Attr("classes_strings", "A list of labels.", AttributeProto::STRINGS, OPTIONAL_VALUE)
         .Attr(
@@ -57,7 +61,7 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static const char* TreeEnsembleClassifier_ver1_doc = R"DOC(
+static constexpr const char* TreeEnsembleClassifier_ver1_doc = R"DOC(
     Tree Ensemble classifier.  Returns the top class for each of N inputs.<br>
     The attributes named 'nodes_X' form a sequence of tuples, associated by
     index into the sequences, which must all be of equal length. These tuples
@@ -79,11 +83,11 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
         .Output(1, "Z", "The class score for each class, for each point, a tensor of shape [N,E].", "tensor(float)")
         .TypeConstraint(
             "T1",
-            {"tensor(float)", "tensor(double)", "tensor(int64)", "tensor(int32)"},
+            {types::Float, types::Double, types::Int64, types::Int32},
             "The input type must be a tensor of a numeric type.")
         .TypeConstraint(
             "T2",
-            {"tensor(string)", "tensor(int64)"},
+            {types::String, types::Int64},
             "The output type will be a tensor of strings or integers, depending on which of the classlabels_* "
             "attributes is used.")
         .Attr("nodes_treeids", "Tree id for each node.", AttributeProto::INTS, OPTIONAL_VALUE)
@@ -158,7 +162,7 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static const char* TreeEnsembleClassifier_ver3_doc = R"DOC(
+static constexpr const char* TreeEnsembleClassifier_ver3_doc = R"DOC(
     Tree Ensemble classifier. Returns the top class for each of N inputs.<br>
     The attributes named 'nodes_X' form a sequence of tuples, associated by
     index into the sequences, which must all be of equal length. These tuples
@@ -182,11 +186,11 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
         .Output(1, "Z", "The class score for each class, for each point, a tensor of shape [N,E].", "tensor(float)")
         .TypeConstraint(
             "T1",
-            {"tensor(float)", "tensor(double)", "tensor(int64)", "tensor(int32)"},
+            {types::Float, types::Double, types::Int64, types::Int32},
             "The input type must be a tensor of a numeric type.")
         .TypeConstraint(
             "T2",
-            {"tensor(string)", "tensor(int64)"},
+            {types::String, types::Int64},
             "The output type will be a tensor of strings or integers, depending on which of the classlabels_* "
             "attributes is used.")
         .Attr("nodes_treeids", "Tree id for each node.", AttributeProto::INTS, OPTIONAL_VALUE)
@@ -271,14 +275,14 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
             AttributeProto::TENSOR,
             OPTIONAL_VALUE)
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-          auto* nodes_values = ctx.getAttribute("nodes_values");
-          auto* nodes_values_as_tensor = ctx.getAttribute("nodes_values_as_tensor");
-          auto* nodes_hitrates = ctx.getAttribute("nodes_hitrates");
-          auto* nodes_hitrates_as_tensor = ctx.getAttribute("nodes_hitrates_as_tensor");
-          auto* class_weights = ctx.getAttribute("class_weights");
-          auto* class_weights_as_tensor = ctx.getAttribute("class_weights_as_tensor");
-          auto* base_values = ctx.getAttribute("base_values");
-          auto* base_values_as_tensor = ctx.getAttribute("base_values_as_tensor");
+          auto nodes_values = ctx.getAttribute("nodes_values");
+          auto nodes_values_as_tensor = ctx.getAttribute("nodes_values_as_tensor");
+          auto nodes_hitrates = ctx.getAttribute("nodes_hitrates");
+          auto nodes_hitrates_as_tensor = ctx.getAttribute("nodes_hitrates_as_tensor");
+          auto class_weights = ctx.getAttribute("class_weights");
+          auto class_weights_as_tensor = ctx.getAttribute("class_weights_as_tensor");
+          auto base_values = ctx.getAttribute("base_values");
+          auto base_values_as_tensor = ctx.getAttribute("base_values_as_tensor");
 
           if (nullptr != nodes_values && nullptr != nodes_values_as_tensor) {
             fail_shape_inference(
@@ -325,7 +329,7 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
           updateOutputShape(ctx, 1, {N, E});
         }));
 
-static const char* TreeEnsembleRegressor_ver1_doc = R"DOC(
+static constexpr const char* TreeEnsembleRegressor_ver1_doc = R"DOC(
     Tree Ensemble regressor.  Returns the regressed values for each input in N.<br>
     All args with nodes_ are fields of a tuple of tree nodes, and
     it is assumed they are the same length, and an index i will decode the
@@ -347,7 +351,7 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
         .Output(0, "Y", "N classes", "tensor(float)")
         .TypeConstraint(
             "T",
-            {"tensor(float)", "tensor(double)", "tensor(int64)", "tensor(int32)"},
+            {types::Float, types::Double, types::Int64, types::Int32},
             "The input type must be a tensor of a numeric type.")
         .Attr("nodes_treeids", "Tree id for each node.", AttributeProto::INTS, OPTIONAL_VALUE)
         .Attr(
@@ -404,7 +408,7 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
             AttributeProto::FLOATS,
             OPTIONAL_VALUE));
 
-static const char* TreeEnsembleRegressor_ver3_doc = R"DOC(
+static constexpr const char* TreeEnsembleRegressor_ver3_doc = R"DOC(
     Tree Ensemble regressor.  Returns the regressed values for each input in N.<br>
     All args with nodes_ are fields of a tuple of tree nodes, and
     it is assumed they are the same length, and an index i will decode the
@@ -428,7 +432,7 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
         .Output(0, "Y", "N classes", "tensor(float)")
         .TypeConstraint(
             "T",
-            {"tensor(float)", "tensor(double)", "tensor(int64)", "tensor(int32)"},
+            {types::Float, types::Double, types::Int64, types::Int32},
             "The input type must be a tensor of a numeric type.")
         .Attr("nodes_treeids", "Tree id for each node.", AttributeProto::INTS, OPTIONAL_VALUE)
         .Attr(
@@ -502,14 +506,14 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
             AttributeProto::TENSOR,
             OPTIONAL_VALUE)
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-          auto* nodes_values = ctx.getAttribute("nodes_values");
-          auto* nodes_values_as_tensor = ctx.getAttribute("nodes_values_as_tensor");
-          auto* nodes_hitrates = ctx.getAttribute("nodes_hitrates");
-          auto* nodes_hitrates_as_tensor = ctx.getAttribute("nodes_hitrates_as_tensor");
-          auto* target_weights = ctx.getAttribute("target_weights");
-          auto* target_weights_as_tensor = ctx.getAttribute("target_weights_as_tensor");
-          auto* base_values = ctx.getAttribute("base_values");
-          auto* base_values_as_tensor = ctx.getAttribute("base_values_as_tensor");
+          auto nodes_values = ctx.getAttribute("nodes_values");
+          auto nodes_values_as_tensor = ctx.getAttribute("nodes_values_as_tensor");
+          auto nodes_hitrates = ctx.getAttribute("nodes_hitrates");
+          auto nodes_hitrates_as_tensor = ctx.getAttribute("nodes_hitrates_as_tensor");
+          auto target_weights = ctx.getAttribute("target_weights");
+          auto target_weights_as_tensor = ctx.getAttribute("target_weights_as_tensor");
+          auto base_values = ctx.getAttribute("base_values");
+          auto base_values_as_tensor = ctx.getAttribute("base_values_as_tensor");
 
           if (nullptr != nodes_values && nullptr != nodes_values_as_tensor) {
             fail_shape_inference(
@@ -538,7 +542,7 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
           updateOutputShape(ctx, 0, {N, E});
         }));
 
-static const char* LabelEncoder_ver2_doc = R"DOC(
+static constexpr const char* LabelEncoder_ver2_doc = R"DOC(
     Maps each element in the input tensor to another value.<br>
     The mapping is determined by the two parallel attributes, 'keys_*' and
     'values_*' attribute. The i-th value in the specified 'keys_*' attribute
@@ -565,13 +569,10 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
         .SetDoc(LabelEncoder_ver2_doc)
         .Input(0, "X", "Input data. It can be either tensor or scalar.", "T1")
         .Output(0, "Y", "Output data.", "T2")
-        .TypeConstraint(
-            "T1",
-            {"tensor(string)", "tensor(int64)", "tensor(float)"},
-            "The input type is a tensor of any shape.")
+        .TypeConstraint("T1", {types::String, types::Int64, types::Float}, "The input type is a tensor of any shape.")
         .TypeConstraint(
             "T2",
-            {"tensor(string)", "tensor(int64)", "tensor(float)"},
+            {types::String, types::Int64, types::Float},
             "Output type is determined by the specified 'values_*' attribute.")
         .Attr(
             "keys_strings",

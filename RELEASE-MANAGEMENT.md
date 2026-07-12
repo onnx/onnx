@@ -8,18 +8,24 @@ SPDX-License-Identifier: Apache-2.0
 
 This describes the process by which versions of ONNX are officially released to the public.
 
-
 Release Cadence
 ---------------
 
-Branch cuts for a new release are planned every 4 months. However, the times can be changed as required.
+Branch cuts for a new release are planned every 3 months. However, the times can be changed as required.
 
 | Minor Version | Release branch cut | Release date | First patch release date |
 | --- | --- | --- | --- |
 | 1.17.0 | XYZ | XYZ | Not planned |
 | 1.18.0 | Mar 2025 | May 2025 | Not planned |
-| 1.19.0 (tbd) | 31. July 2025 | August 2025 | Not planned |
-| 1.20.0 (tbd) | November 2025 | December 2025 | Not planned |
+| 1.19.0 | 31. July 2025 | 27. August 2025 | 9. October 2025 |
+| 1.20.0  | 31. October 2025 | November 2025 | January 2026 |
+| 1.21.0  | 25. February 2026 | 28. March 2026 | - |
+| 1.22.0 (tbd) | 1st June 2026 | June 2026 | tbd |
+
+## Long-Term Support (LTS)
+
+ONNX does not currently maintain LTS branches. Each minor release is superseded by the next; only the latest release receives ongoing attention. If your environment cannot upgrade and you need a backported security or bug fix, please
+[open an issue](https://github.com/onnx/onnx/issues/new) describing your situation — we will assess feasibility on a case-by-case basis. Community contributions for backport PRs are welcome and will be reviewed.
 
 Release Compatibility Matrix
 ----------------------------
@@ -30,12 +36,23 @@ Release Compatibility Matrix
 Changes are discussed in the community. Please do not hesitate to contact us if you have any requests.
 Planned changes for future releases as listed in the table below are subject to change.
 
-|ONNX version	| Python wheels | C++ | Min Cmake Version | Min Protobuf | manylinux |
+|ONNX version	| Python wheels | C++ | Min CMake Version | Min Protobuf | manylinux |
 | --- | --- | --- | --- | --- | --- |
-| 1.18 | 3.9-3.13, 3.13t (win, mac) | --- | 3.18 | v25.1 | manylinux2014 |
-| *1.19* | *3.9-3.13, 3.13t (win, mac, linux)* | --- | *3.24* | *v25.1* | *manylinux2014* |
-| *1.20* | *3.10-3.13, 3.13t (win, mac, linux), 3.14* | --- | --- | *v25.1* | *manylinux2_28* |
-| *1.21* | | | | *manylinux2_28* |
+| 1.10 | 3.6-3.9 | 11 | 3.1 | --- | manylinux2010 |
+| 1.11 | 3.6-3.9 | 11 | 3.1 | 3.12.2 | manylinux2010 |
+| 1.12 | 3.7-3.10 | 11 | 3.1 | 3.12.2 | manylinux2014 |
+| 1.13 | 3.7-3.11 | 11 | 3.1 | 3.20.2 | manylinux2014 |
+| 1.14 | 3.7-3.11 | 11 | 3.1 | 3.20.2 | manylinux2014 |
+| 1.15 | 3.8-3.11 | 14 | 3.1 | 3.20.2 | manylinux2014 |
+| 1.16 | 3.8-3.12 | 17 | 3.1 | 3.20.2 | manylinux2014 |
+| 1.17 | 3.8-3.12 | 17 | 3.14 | 3.20.2 | manylinux2014 |
+| 1.18 | 3.9-3.13, 3.13t (win, mac) | 17 | 3.18 | v25.1 | manylinux2014 |
+| 1.19 | 3.9-3.13, 3.13t (win, mac, linux) | 17 | 3.24 | v25.1 | manylinux2014 |
+| 1.19.1 | 3.9-3.13, 3.13t (win, mac, linux) | 17 | 3.24 | v25.1 | manylinux2014 |
+| 1.20 | 3.10-3.13, 3.13t (win, mac, linux), 3.14 (mac) | 17 | 3.26 | v25.1 | manylinux_2_28 |
+| 1.21 | 3.10-3.13, 3.13t, 3.14, 3.14t | 17 | 3.26 | v25.1 | manylinux_2_28 |
+| *1.22* | 3.10, 3.11, 3.12-abi3, 3.14 (win, mac, linux), 3.14 pyodide | 17 | 3.24 | v25.1 | manylinux_2_28 |
+
 
 Releases
 --------
@@ -72,7 +89,7 @@ to be produced.
 - The release manager announces a second round of testing (unless it's only a
   patch update with no regressions found). Only critical bugs are fixed at
   this point, or those introduced by patches from the first week. A third
-  weeek may be introduced at the release manager's discretion if significant
+  week may be introduced at the release manager's discretion if significant
   fixes need to be taken. Distributions with -RCn suffixes can be made
   available if convenient.
 
@@ -96,3 +113,17 @@ can help test if you care about one that's missing.
 The community is encouraged to perform additional testing during the test
 periods. Bugs and issues should be filed in the ONNX GitHub repo.
 
+# ONNX Weekly Builds on PyPI
+
+In addition to stable releases, we publish **weekly development builds** to a separate PyPI package: [`onnx-weekly`](https://pypi.org/project/onnx-weekly/).
+
+## Why a Separate Package?
+
+- **Avoid accidental installs:** Pre-release versions can be installed unintentionally; `onnx-weekly` ensures stable users are unaffected.
+- **Enable safe testing:** Try upcoming features without impacting stable installs. Both packages can coexist.
+- **Simplify automation:** Weekly builds are pushed automatically from `main` without polluting the main release history.
+
+## Installation
+
+```bash
+pip install onnx-weekly

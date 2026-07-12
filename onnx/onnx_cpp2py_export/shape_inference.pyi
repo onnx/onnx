@@ -1,4 +1,3 @@
-
 from onnx.onnx_pb import (
     AttributeProto,
     SparseTensorProto,
@@ -10,7 +9,9 @@ from onnx.onnx_pb import (
 class InferenceError(Exception): ...
 
 class GraphInferencer:
-    def do_inferencing(self, input_types: list[TypeProto], input_data: list[TensorProto | None]) -> list[TypeProto]: ...
+    def do_inferencing(
+        self, input_types: list[TypeProto], input_data: list[TensorProto | None]
+    ) -> list[TypeProto]: ...
 
 class InferenceContext:
     def get_attribute(self, name: str) -> AttributeProto: ...

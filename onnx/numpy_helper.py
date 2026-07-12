@@ -17,9 +17,6 @@ from onnx import helper
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
-# System is little endian
-_IS_LITTLE_ENDIAN = sys.byteorder == "little"
-
 
 def to_float8e8m0(
     x: np.ndarray,
@@ -73,7 +70,7 @@ def to_float8e8m0(
         exponent += increment
 
     elif round_mode == "up":
-        has_fraction = (f_bits & 0x4FFFFF) > 0
+        has_fraction = (f_bits & 0x7FFFFF) > 0
         round_up = has_fraction & normal_mask
 
         if saturate:
@@ -114,9 +111,16 @@ def _unpack_4bit(
     array_high >>= np.uint8(4)
     result[0::2] = array_low
     result[1::2] = array_high
-    if result.size == np.prod(dims) + 1:
+    expected_elements = math.prod(dims)
+    if result.size == expected_elements + 1:
         # handle single-element padding due to odd number of elements
         result = result[:-1]
+    if expected_elements > result.size:
+        raise ValueError(
+            f"Packed 4-bit data ({data.size} bytes, {result.size} elements unpacked) "
+            f"is too small for the declared shape {list(dims)} "
+            f"({expected_elements} elements required)."
+        )
     result.resize(dims, refcheck=False)
     return result
 
@@ -131,7 +135,53 @@ def _pack_4bitx2(array: np.ndarray) -> npt.NDArray[np.uint8]:
         array_flat.resize([size + 1], refcheck=False)
     array_flat &= 0x0F
     array_flat[1::2] <<= 4
-    return array_flat[0::2] | array_flat[1::2]  # type: ignore[return-type]
+    return array_flat[0::2] | array_flat[1::2]
+
+
+def _unpack_2bit(
+    data: npt.NDArray[np.uint8], dims: Sequence[int]
+) -> npt.NDArray[np.uint8]:
+    """Convert a packed uint2 array to unpacked uint2 array represented as uint8.
+
+    Args:
+        data: A numpy array.
+        dims: The dimensions are used to reshape the unpacked buffer.
+
+    Returns:
+        A numpy array of int8/uint8 reshaped to dims.
+    """
+    result = np.empty([data.size * 4], dtype=data.dtype)
+    result[0::4] = data & 0x03
+    result[1::4] = (data >> 2) & 0x03
+    result[2::4] = (data >> 4) & 0x03
+    result[3::4] = (data >> 6) & 0x03
+    expected_elements = math.prod(dims)
+    if result.size > expected_elements:
+        # handle padding due to non multiple of 4 elements
+        result = result[:expected_elements]
+    if expected_elements > result.size:
+        raise ValueError(
+            f"Packed 2-bit data ({data.size} bytes, {result.size} elements unpacked) "
+            f"is too small for the declared shape {list(dims)} "
+            f"({expected_elements} elements required)."
+        )
+    result.resize(dims, refcheck=False)
+    return result
+
+
+def _pack_2bitx4(array: np.ndarray) -> npt.NDArray[np.uint8]:
+    """Convert a numpy array to flatten, packed int2/uint2. Elements must be in the correct range."""
+    # Create a 1D copy
+    array_flat = array.ravel().view(np.uint8).copy()
+    size = array.size
+    pad_len = size % 4
+    if pad_len:
+        array_flat.resize([size + (4 - pad_len)], refcheck=False)
+    array_flat &= 0x03
+    array_flat[1::4] <<= 2
+    array_flat[2::4] <<= 4
+    array_flat[3::4] <<= 6
+    return array_flat[0::4] | array_flat[1::4] | array_flat[2::4] | array_flat[3::4]
 
 
 def _pack_6bit(values: np.ndarray) -> np.ndarray:
@@ -213,6 +263,13 @@ def to_array(tensor: onnx.TensorProto, base_dir: str = "") -> np.ndarray:  # noq
             data = np.frombuffer(raw_data, dtype=np.uint8)
             return _unpack_4bit(data, dims).view(np_dtype)
 
+        if tensor_dtype in {
+            onnx.TensorProto.UINT2,
+            onnx.TensorProto.INT2,
+        }:
+            data = np.frombuffer(raw_data, dtype=np.uint8)
+            return _unpack_2bit(data, dims).view(np_dtype)
+
         if tensor_dtype in {onnx.TensorProto.FLOAT6E2M3, onnx.TensorProto.FLOAT6E3M2}:
             # Two supported encodings for raw_data:
             # 1) Per-element bytes (canonical): len(raw_data) == num_elements
@@ -281,11 +338,40 @@ def to_array(tensor: onnx.TensorProto, base_dir: str = "") -> np.ndarray:  # noq
         )
         return _unpack_4bit(data, dims).view(np_dtype)
 
+    if tensor_dtype in {
+        onnx.TensorProto.UINT2,
+        onnx.TensorProto.INT2,
+    }:
+        data = (
+            np.array(tensor.int32_data, dtype=np.int32).view(np.uint32).astype(np.uint8)
+        )
+        return _unpack_2bit(data, dims).view(np_dtype)
+
     data = getattr(tensor, storage_field)
     if tensor_dtype in (onnx.TensorProto.COMPLEX64, onnx.TensorProto.COMPLEX128):
         return np.array(data, dtype=storage_np_dtype).view(dtype=np_dtype).reshape(dims)
 
     return np.asarray(data, dtype=storage_np_dtype).astype(np_dtype).reshape(dims)
+
+
+def tobytes_little_endian(array: np.ndarray) -> bytes:
+    """Converts an array into bytes in little endian byte order.
+
+    Args:
+        array: a numpy array.
+
+    Returns:
+        bytes: Byte representation of passed array in little endian byte order.
+
+    .. versionadded:: 1.20
+    """
+    if array.dtype.byteorder == ">" or (
+        sys.byteorder == "big" and array.dtype.byteorder == "="
+    ):
+        # Ensure that the bytes will be in little-endian byte-order.
+        array = array.astype(array.dtype.newbyteorder("<"))
+
+    return array.tobytes()
 
 
 def from_array(array: np.ndarray, /, name: str | None = None) -> onnx.TensorProto:
@@ -321,8 +407,7 @@ def from_array(array: np.ndarray, /, name: str | None = None) -> onnx.TensorProt
                 tensor.string_data.append(e)
             else:
                 raise NotImplementedError(
-                    "Unrecognized object in the object array, expect a string, or array of bytes: ",
-                    str(type(e)),
+                    f"Unrecognized object in the object array, expect a string, or array of bytes: {type(e)}"
                 )
         return tensor
 
@@ -334,11 +419,16 @@ def from_array(array: np.ndarray, /, name: str | None = None) -> onnx.TensorProt
     }:
         # Pack the array into int4
         array = _pack_4bitx2(array)
-    if not _IS_LITTLE_ENDIAN:
-        array = array.view(array.dtype.newbyteorder("<"))
 
-    tensor.raw_data = array.tobytes()
-    tensor.data_type = dtype
+    if dtype in {
+        onnx.TensorProto.UINT2,
+        onnx.TensorProto.INT2,
+    }:
+        # Pack the array into int2
+        array = _pack_2bitx4(array)
+
+    tensor.raw_data = tobytes_little_endian(array)
+    tensor.data_type = dtype  # type: ignore[assignment]
     return tensor
 
 
@@ -381,7 +471,7 @@ def from_list(
     if name:
         sequence.name = name
 
-    if dtype:
+    if dtype is not None:
         elem_type = dtype
     elif len(lst) > 0:
         first_elem = lst[0]
@@ -438,12 +528,9 @@ def to_dict(map_proto: onnx.MapProto) -> dict[Any, Any]:
     value_list = to_list(map_proto.values)
     if len(key_list) != len(value_list):
         raise IndexError(
-            "Length of keys and values for MapProto (map name: ",
-            map_proto.name,
-            ") are not the same.",
+            f"Length of keys and values for MapProto (map name: {map_proto.name}) are not the same."
         )
-    dictionary = dict(zip(key_list, value_list))
-    return dictionary
+    return dict(zip(key_list, value_list, strict=False))
 
 
 def from_dict(dict_: dict[Any, Any], name: str | None = None) -> onnx.MapProto:
@@ -459,6 +546,8 @@ def from_dict(dict_: dict[Any, Any], name: str | None = None) -> onnx.MapProto:
     map_proto = onnx.MapProto()
     if name:
         map_proto.name = name
+    if not dict_:
+        raise ValueError("Cannot convert an empty dictionary to MapProto.")
     keys = list(dict_)
     raw_key_type = np.result_type(keys[0])
     key_type = helper.np_dtype_to_tensor_dtype(raw_key_type)
@@ -490,11 +579,13 @@ def from_dict(dict_: dict[Any, Any], name: str | None = None) -> onnx.MapProto:
 
     value_seq = from_list(values)
 
-    map_proto.key_type = key_type
+    map_proto.key_type = key_type  # type: ignore[assignment]
     if key_type == onnx.TensorProto.STRING:
         map_proto.string_keys.extend(keys)
     elif key_type in valid_key_int_types:
         map_proto.keys.extend(keys)
+    else:
+        raise TypeError(f"Unsupported map key type: {key_type}")
     map_proto.values.CopyFrom(value_seq)
     return map_proto
 
@@ -603,8 +694,7 @@ def create_random_int(
         end = min(np.iinfo(dtype).max, np.iinfo(np.int32).max)
         start = max(np.iinfo(dtype).min, np.iinfo(np.int32).min)
         return np.random.randint(start, end, size=input_shape).astype(dtype)
-    else:
-        raise TypeError(f"{dtype} is not supported by create_random_int.")
+    raise TypeError(f"{dtype} is not supported by create_random_int.")
 
 
 def saturate_cast(x: np.ndarray, dtype: np.dtype) -> np.ndarray:
@@ -614,10 +704,15 @@ def saturate_cast(x: np.ndarray, dtype: np.dtype) -> np.ndarray:
     of the target dtype are clamped to the maximum or minimum representable
     value of that dtype.
     """
-    if np.issubdtype(dtype, np.integer) or dtype in (ml_dtypes.int4, ml_dtypes.uint4):
+    if np.issubdtype(dtype, np.integer) or dtype in (
+        ml_dtypes.int4,
+        ml_dtypes.uint4,
+        ml_dtypes.int2,
+        ml_dtypes.uint2,
+    ):
         info = ml_dtypes.iinfo(dtype)
         x = np.round(x)
     else:
         info = ml_dtypes.finfo(dtype)  # type: ignore[assignment]
 
-    return np.clip(x, info.min, info.max).astype(dtype)
+    return np.clip(x, info.min, info.max).astype(dtype)  # type: ignore[no-any-return]

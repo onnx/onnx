@@ -186,10 +186,9 @@ class Extractor:
         nodes = self._collect_reachable_nodes(input_names, output_names)
         initializer, value_info = self._collect_reachable_tensors(nodes)
         local_functions = self._collect_referred_local_functions(nodes)
-        model = self._make_model(
+        return self._make_model(
             nodes, inputs, outputs, initializer, value_info, local_functions
         )
-        return model
 
 
 def extract_model(
@@ -272,11 +271,15 @@ def _tar_members_filter(
         list of tarball members
     """
     result = []
+    abs_base = os.path.abspath(base)
     for member in tar:
         member_path = os.path.join(base, member.name)
-        abs_base = os.path.abspath(base)
         abs_member = os.path.abspath(member_path)
-        if not abs_member.startswith(abs_base):
+        try:
+            is_within_base = os.path.commonpath([abs_base, abs_member]) == abs_base
+        except ValueError:
+            is_within_base = False
+        if not is_within_base:
             raise RuntimeError(
                 f"The tarball member {member_path} in downloading model contains "
                 f"directory traversal sequence which may contain harmful payload."
@@ -313,7 +316,7 @@ def _extract_model_safe(
                 path=local_model_with_data_dir_path, filter="data"
             )
         else:
-            model_with_data_zipped.extractall(
+            model_with_data_zipped.extractall(  # noqa: S202
                 path=local_model_with_data_dir_path,
                 members=_tar_members_filter(
                     model_with_data_zipped, local_model_with_data_dir_path

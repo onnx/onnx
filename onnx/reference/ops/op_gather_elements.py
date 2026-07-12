@@ -10,7 +10,7 @@ from onnx.reference.op_run import OpRun
 
 def gather_numpy_2(self: np.ndarray, index: np.ndarray) -> np.ndarray:
     res = []
-    for a, b in zip(self, index):
+    for a, b in zip(self, index, strict=True):
         res.append(a[b[0]])
     return np.array(res, dtype=self.dtype).reshape(index.shape)
 
@@ -23,13 +23,13 @@ def gather_numpy(self: np.ndarray, dim: int, index: np.ndarray) -> np.ndarray:
             f"Except for dimension {dim!r}, all dimensions of "
             f"index and self should be the same size."
         )
-    data_swaped = np.swapaxes(self, 0, dim)
-    index_swaped = np.swapaxes(index, 0, dim)
+    data_swapped = np.swapaxes(self, 0, dim)
+    index_swapped = np.swapaxes(index, 0, dim)
 
     try:
-        gathered = np.choose(index_swaped, data_swaped, mode="wrap")
+        gathered = np.choose(index_swapped, data_swapped, mode="wrap")
     except ValueError:
-        if len(index_swaped.shape) == 2 and len(data_swaped.shape) == 2:
+        if len(index_swapped.shape) == 2 and len(data_swapped.shape) == 2:
             return gather_numpy_2(self, index)
         raise  # pragma: no cover
 

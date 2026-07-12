@@ -1,8 +1,6 @@
 // Copyright (c) ONNX Project Contributors
-
-/*
- * SPDX-License-Identifier: Apache-2.0
- */
+//
+// SPDX-License-Identifier: Apache-2.0
 
 #include "onnx/inliner/inliner.h"
 
@@ -14,6 +12,7 @@
 #include <utility>
 #include <vector>
 
+#include "onnx/checker.h"
 #include "onnx/common/assertions.h"
 #include "onnx/common/constants.h"
 #include "onnx/common/proto_util.h"
@@ -27,8 +26,6 @@ namespace ONNX_NAMESPACE {
 namespace inliner {
 
 namespace { // internal/private API
-
-using namespace internal;
 
 using OpsetMapBase = std::unordered_map<std::string, int64_t>;
 
@@ -84,7 +81,10 @@ struct OpsetMap : public OpsetMapBase {
 
 using RepeatedNodeProto = google::protobuf::RepeatedPtrField<NodeProto>;
 
-class NameGenerator : private Visitor {
+} // namespace
+
+// NOLINTBEGIN(misc-use-internal-linkage): used by Renamer::Impl (pimpl with external linkage)
+class NameGenerator : private internal::Visitor {
  public:
   explicit NameGenerator(const GraphProto& graph) : index_(0) {
     NameGenerator::VisitGraph(graph);
@@ -159,13 +159,13 @@ class NameGenerator : private Visitor {
   std::unordered_set<std::string> existing_names_;
 };
 
-class InliningRenamer : public MutableVisitor {
+class InliningRenamer : public internal::MutableVisitor {
  private:
   std::string suffix;
   NameGenerator& generator;
 
  protected:
-  std::vector<std::unordered_map<std::string, std::string>> rename_scopes{};
+  std::vector<std::unordered_map<std::string, std::string>> rename_scopes;
 
  public:
   InliningRenamer(std::string suffix_, NameGenerator& generator_) : suffix(std::move(suffix_)), generator(generator_) {
@@ -246,14 +246,14 @@ class InliningRenamer : public MutableVisitor {
   }
 
   // Process a node:
-  bool ProcessNode(NodeProto* node) override {
-    if (!node->name().empty())
-      node->set_name(MakeUnique(node->name()));
+  bool ProcessNode(NodeProto& node) override {
+    if (!node.name().empty())
+      node.set_name(MakeUnique(node.name()));
 
-    for (auto& x : *node->mutable_input()) {
+    for (auto& x : *node.mutable_input()) {
       LookupOrRename(x, false);
     }
-    for (auto& y : *node->mutable_output()) {
+    for (auto& y : *node.mutable_output()) {
       LookupOrRename(y, true);
     }
     return true; // Process attribute subgraphs in traversal
@@ -262,16 +262,16 @@ class InliningRenamer : public MutableVisitor {
   // Process a sub-graph, contained as an attribute in a control-flow op node.
   // Since we need both pre-processing and post-processing in the traversal, we
   // override the VisitGraph method.
-  void VisitGraph(GraphProto* graph) override {
+  void VisitGraph(GraphProto& graph) override {
     rename_scopes.emplace_back();
-    for (auto& x : *graph->mutable_input())
+    for (auto& x : *graph.mutable_input())
       Rename(*x.mutable_name());
-    for (auto& init : *graph->mutable_initializer())
+    for (auto& init : *graph.mutable_initializer())
       Rename(*init.mutable_name());
-    for (auto& y : *graph->mutable_output())
+    for (auto& y : *graph.mutable_output())
       Rename(*y.mutable_name());
-    for (auto& n : *graph->mutable_node())
-      VisitNode(&n);
+    for (auto& n : *graph.mutable_node())
+      VisitNode(n);
     rename_scopes.pop_back();
   }
 
@@ -313,11 +313,14 @@ class InliningRenamer : public MutableVisitor {
     renamer.Bind<false>(*callee.mutable_input(), callnode.input());
     renamer.Bind<true>(*callee.mutable_output(), callnode.output());
 
-    renamer.VisitFunction(&callee);
+    renamer.VisitFunction(callee);
     for (auto& v : *callee.mutable_value_info())
       renamer.LookupOrRename(*v.mutable_name(), false);
   }
 };
+// NOLINTEND(misc-use-internal-linkage)
+
+namespace {
 
 // Identify the set of all "input" variables used by a given node.
 // This includes the variables listed as node.input, as well as
@@ -325,7 +328,7 @@ class InliningRenamer : public MutableVisitor {
 // In the case of variables referenced in sub-graphs, only non-local variables
 // are treated as implicit inputs.
 
-class ComputeInputs : private Visitor {
+class ComputeInputs : private internal::Visitor {
  private:
   std::vector<std::unordered_set<std::string>> namescopes;
 
@@ -338,7 +341,7 @@ class ComputeInputs : private Visitor {
   }
 
   bool IsLocalVar(const std::string& name) const {
-    for (auto& scope : namescopes) {
+    for (const auto& scope : namescopes) {
       if (scope.count(name) > 0) {
         return true;
       }
@@ -348,23 +351,23 @@ class ComputeInputs : private Visitor {
 
   void VisitGraph(const GraphProto& graph) override {
     namescopes.emplace_back();
-    for (auto& x : graph.input())
+    for (const auto& x : graph.input())
       CurrentScope().insert(x.name());
-    for (auto& init : graph.initializer())
+    for (const auto& init : graph.initializer())
       CurrentScope().insert(init.name());
-    for (auto& n : graph.node())
+    for (const auto& n : graph.node())
       VisitNode(n);
     namescopes.pop_back();
   }
 
   bool ProcessNode(const NodeProto& node) override {
-    for (auto& var : node.input()) {
+    for (const auto& var : node.input()) {
       if (!var.empty() && !IsLocalVar(var)) {
         result.push_back(var);
       }
     }
     if (InNestedScope()) {
-      for (auto& var : node.output()) {
+      for (const auto& var : node.output()) {
         if (!var.empty()) {
           CurrentScope().insert(var);
         }
@@ -399,19 +402,19 @@ ConstNodeMap FindConstantNodes(const GraphProto& graph) {
 }
 
 const TypeProto& GetType(const ModelProto& model, const std::string& var) {
-  for (auto& vi : model.graph().value_info()) {
+  for (const auto& vi : model.graph().value_info()) {
     if (vi.name() == var)
       return vi.type();
   }
-  for (auto& vi : model.graph().input()) {
+  for (const auto& vi : model.graph().input()) {
     if (vi.name() == var)
       return vi.type();
   }
-  for (auto& vi : model.graph().output()) {
+  for (const auto& vi : model.graph().output()) {
     if (vi.name() == var)
       return vi.type();
   }
-  ONNX_ASSERTM(false, "Type unknown for %s", var.c_str())
+  ONNX_ASSERTM(false, "Type unknown for ", var)
 }
 
 void ConvertVersion(ModelProto& model, const NodeProto& call_node, FunctionProto& function, int target_version) {
@@ -453,9 +456,8 @@ void ConvertVersion(ModelProto& model, const NodeProto& call_node, FunctionProto
     }
   }
 
-  // TODO: Use std::move when it is fully supported on all protobuf platforms used
   for (auto& function_node : function_nodes)
-    *nodes.Add() = function_node;
+    *nodes.Add() = std::move(function_node);
   function_nodes.Clear();
 
   auto converted = ONNX_NAMESPACE::version_conversion::ConvertVersion(function_as_model, target_version);
@@ -463,9 +465,9 @@ void ConvertVersion(ModelProto& model, const NodeProto& call_node, FunctionProto
   function_nodes.Swap(converted.mutable_graph()->mutable_node());
 
   // Append new initializers to main graph initializers
-  for (auto& added_initializer : converted.graph().initializer())
+  for (const auto& added_initializer : converted.graph().initializer())
     *model.mutable_graph()->mutable_initializer()->Add() = added_initializer;
-  for (auto& added_initializer : converted.graph().sparse_initializer())
+  for (const auto& added_initializer : converted.graph().sparse_initializer())
     *model.mutable_graph()->mutable_sparse_initializer()->Add() = added_initializer;
 }
 
@@ -519,9 +521,9 @@ struct InlinerImpl {
         schema_registry(schema_registry_),
         name_generator(model_.graph()) {}
 
-  virtual ~InlinerImpl() = default;
+  ~InlinerImpl() = default;
 
-  virtual bool GetCallee(const NodeProto& node, FunctionProto& callee, int64_t& target_version) {
+  bool GetCallee(const NodeProto& node, FunctionProto& callee, int64_t& target_version) {
     const std::string& domain = node.domain();
     const std::string& function_name = node.op_type();
     if (!to_inline.Contains(domain, function_name)) {
@@ -529,16 +531,16 @@ struct InlinerImpl {
     }
 
     if (function_map != nullptr) {
-      auto iter = this->function_map->find(GetCalleeId(node));
-      if (iter != this->function_map->end()) {
-        callee = *iter->second.first;
-        target_version = iter->second.second;
+      if (auto iter = this->function_map->find(GetCalleeId(node)); iter != this->function_map->end()) {
+        const auto& [func_ptr, version] = iter->second;
+        callee = *func_ptr;
+        target_version = version;
         return true;
       }
     }
     if (schema_registry != nullptr) {
       int64_t domain_version = GetDomainVersion(model, domain);
-      const auto* op_schema = schema_registry->GetSchema(node.op_type(), domain_version, domain);
+      const auto* const op_schema = schema_registry->GetSchema(node.op_type(), domain_version, domain);
 
       if (op_schema == nullptr) {
         // If the schema is not found, we cannot inline the function.
@@ -556,7 +558,7 @@ struct InlinerImpl {
 
       // Check if this node has a schema defined function proto.
       if (op_schema->HasContextDependentFunction()) {
-        shape_inference::InferShapes(model); // TODO: do shape inference incrementally
+        shape_inference::InferShapes(model); // TODO(ONNX): do shape inference incrementally
         std::vector<TypeProto> input_types;
         for (const auto& input : node.input()) {
           input_types.emplace_back(GetType(model, input));
@@ -596,7 +598,7 @@ struct InlinerImpl {
         for (const auto& x : node.output())
           actual_parameters.insert(x);
         // Append valueinfos of called function
-        for (auto& callee_vi : callee.value_info()) {
+        for (const auto& callee_vi : callee.value_info()) {
           if (actual_parameters.count(callee_vi.name()) == 0) {
             *value_infos.Add() = callee_vi;
           }
@@ -606,9 +608,6 @@ struct InlinerImpl {
           append_node(callee_node);
       } else {
         // Append node without inlining.
-        // TODO: use std::move instead of copying. Use of move doesn't seem to work with
-        // protobuf in some platforms/settings. [nodes->Add(std::move(node));]
-
         for (auto& attr : *node.mutable_attribute()) {
           if (attr.has_g()) {
             ProcessGraph(*attr.mutable_g());
@@ -618,7 +617,7 @@ struct InlinerImpl {
           }
         }
 
-        *nodes.Add() = node;
+        *nodes.Add() = std::move(node);
       }
     };
     for (auto& node : original_nodes) {
@@ -644,7 +643,19 @@ struct InlinerImpl {
     Process(*nodes, *value_infos);
   }
 
+  // Erase every model-local function whose id appears in `inlined`.
+  static void RemoveInlinedFunctions(ModelProto& model, const FunctionMap& inlined) {
+    auto* local_functions = model.mutable_functions();
+    for (auto it = local_functions->begin(); it != local_functions->end();) {
+      if (inlined.count(GetFunctionImplId(*it)) > 0)
+        it = local_functions->erase(it);
+      else
+        ++it;
+    }
+  }
+
   static void InlineLocalFunctions(ModelProto& model, bool convert_version) {
+    checker::check_function_call_cycles(model);
     FunctionIdVector empty_set;
     VectorSet all_functions(std::move(empty_set), true);
     OpsetMap model_imports(model);
@@ -657,7 +668,7 @@ struct InlinerImpl {
     // Otherwise, we cannot inline, since currently version-conversion supports only
     // standard ONNX domain.
 
-    for (auto& function : model.functions()) {
+    for (const auto& function : model.functions()) {
       auto mismatches = model_imports.Mismatches(function);
       auto iter = mismatches.find(ONNX_DOMAIN);
       int64_t target_onnx_version = kNoConversion;
@@ -673,19 +684,14 @@ struct InlinerImpl {
     InlinerImpl inliner(model, all_functions, &map, nullptr);
     inliner.ProcessGraph(*model.mutable_graph());
 
-    // Remove all model-local functions. We do not remove functions with a mis-matched
-    // opset version. They need to be handled some other way, eg., using a version-adapter.
-    auto* local_functions = model.mutable_functions();
-    for (auto it = local_functions->begin(); it != local_functions->end();) {
-      if (map.count(GetFunctionImplId(*it)) > 0)
-        it = local_functions->erase(it);
-      else
-        ++it;
-    }
+    // Remove the model-local functions we inlined. Functions with a mismatched opset
+    // version are not in `map`, so they are left for other handling (eg. a version-adapter).
+    RemoveInlinedFunctions(model, map);
   }
 
   static void
   InlineSelectedFunctions(ModelProto& model, const FunctionIdSet& to_inline, const ISchemaRegistry* schema_registry) {
+    checker::check_function_call_cycles(model);
     OpsetMap model_imports(model);
     FunctionMap map;
     std::vector<FunctionProto*> non_inlined_functions;
@@ -711,13 +717,7 @@ struct InlinerImpl {
     }
 
     // Remove all inlined model-local functions.
-    auto* local_functions = model.mutable_functions();
-    for (auto it = local_functions->begin(); it != local_functions->end();) {
-      if (map.count(GetFunctionImplId(*it)) > 0)
-        it = local_functions->erase(it);
-      else
-        ++it;
-    }
+    RemoveInlinedFunctions(model, map);
   }
 
   static void InlineSelectedLocalFunctions(ModelProto& model, const FunctionIdSet& to_inline) {
@@ -779,7 +779,7 @@ class Renamer::Impl {
 
   void RenameNode(NodeProto& node) {
     // Use the InliningRenamer's ProcessNode method which handles graph-value attributes
-    renamer_.ProcessNode(&node);
+    renamer_.ProcessNode(node);
   }
 };
 

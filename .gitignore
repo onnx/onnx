@@ -79,7 +79,6 @@ onnx.egg-info
 compile_commands.json
 
 # generated files
-onnx/version.py
 compile_commands.json
 
 # test generated files
@@ -112,4 +111,8 @@ docs/docsgen/**/*.pb
 
 # PyEnv files
 .python-version
-=0.10.7
+.pixi/**
+=0.*
+_codeql_build_dir/
+_codeql_detected_source_root
+/.lycheecache

@@ -1,8 +1,6 @@
 // Copyright (c) ONNX Project Contributors
-
-/*
- * SPDX-License-Identifier: Apache-2.0
- */
+//
+// SPDX-License-Identifier: Apache-2.0
 
 #include "onnx/version_converter/convert.h"
 
@@ -35,7 +33,7 @@ void DefaultVersionConverter::convert_graph(
     const OpSetID& target_version) const {
   assertNonNull(g);
 
-  // TODO: Move to Inter-Domain Converter
+  // TODO(ONNX): Move to Inter-Domain Converter
   // Get initial model versions
   // std::vector<OpSetID> initial_versions = g->opset_versions_mutable();
 
@@ -91,12 +89,19 @@ void DefaultVersionConverter::convert_graph(
           std::cerr << "Warning: opset domain '" << cur_op->domain() << "' is not supported." << '\n';
         }
       } else if (op_name != "Undefined" && op_name != "Captured") {
-        auto& op_domain_map = all_schemas.at(op_name);
+        const auto schema_it = all_schemas.find(op_name);
+        ONNX_ASSERTM(
+            schema_it != all_schemas.end(),
+            "Op '%s' has no registered schema; cannot convert it from version %lld to %lld.",
+            op_name.c_str(),
+            static_cast<long long>(curr_version),
+            static_cast<long long>(target_version.version()));
+        const auto& op_domain_map = schema_it->second;
         OpSetID curr_id(curr_version);
         OpSetID next_id(curr_version + step);
         if (searchOpDomainMap(op_domain_map, curr_version, step)) {
           // Op is specifically defined for this domain and version
-          auto& op_adapter = adapter_lookup(cur_op, curr_id, next_id);
+          const auto& op_adapter = adapter_lookup(cur_op, curr_id, next_id);
           // If adapter_lookup returns null, no adapter is present.
           // Error thrown by adapter_lookup
           if (DEBUG) {
@@ -113,7 +118,7 @@ void DefaultVersionConverter::convert_graph(
           }
         }
       }
-      it++;
+      ++it;
     }
     // Update model version
     curr_version += step;

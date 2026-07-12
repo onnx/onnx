@@ -1,23 +1,28 @@
-/*
- * SPDX-License-Identifier: Apache-2.0
- */
+// Copyright (c) ONNX Project Contributors
+//
+// SPDX-License-Identifier: Apache-2.0
 
 // Experimental language syntax and parser for ONNX. Please note that the syntax as formalized
 // by this parser is preliminary and may change.
 
 #pragma once
 
+#include <algorithm>
 #include <cctype>
 #include <string>
+#include <string_view>
 #include <unordered_map>
 
+#include "onnx/common/common.h"
 #include "onnx/common/status.h"
 #include "onnx/onnx_pb.h"
 #include "onnx/string_utils.h"
 
 namespace ONNX_NAMESPACE {
 
-using namespace ONNX_NAMESPACE::Common;
+// Locale-independent string-to-float/double conversion (defined in parser.cc).
+ONNX_API float LocaleIndependentStof(const std::string& s);
+ONNX_API double LocaleIndependentStod(const std::string& s);
 
 using IdList = google::protobuf::RepeatedPtrField<std::string>;
 
@@ -58,9 +63,9 @@ class StringIntMap {
 
   static const std::string& ToString(int32_t dtype) {
     static std::string undefined("undefined");
-    for (const auto& pair : Instance()) {
-      if (pair.second == dtype)
-        return pair.first;
+    for (const auto& [name, value] : Instance()) {
+      if (value == dtype)
+        return name;
     }
     return undefined;
   }
@@ -96,6 +101,8 @@ class PrimitiveTypeNameMap : public StringIntMap<PrimitiveTypeNameMap> {
     map_["uint4"] = TensorProto_DataType_UINT4;
     map_["int4"] = TensorProto_DataType_INT4;
     map_["float4e2m1"] = TensorProto_DataType_FLOAT4E2M1;
+    map_["uint2"] = TensorProto_DataType_UINT2;
+    map_["int2"] = TensorProto_DataType_INT2;
     map_["float6e2m3"] = TensorProto_DataType_FLOAT6E2M3;
     map_["float6e3m2"] = TensorProto_DataType_FLOAT6E3M2;
   }
@@ -177,23 +184,20 @@ class KeyWordMap {
 
 class ParserBase {
  public:
-  explicit ParserBase(const std::string& str)
-      : start_(str.data()), next_(str.data()), end_(str.data() + str.length()), saved_pos_(next_) {}
-
-  explicit ParserBase(const char* cstr) : start_(cstr), next_(cstr), end_(cstr + strlen(cstr)), saved_pos_(next_) {}
+  explicit ParserBase(std::string_view input) : input_(input) {}
 
   void SavePos() {
-    saved_pos_ = next_;
+    saved_pos_ = pos_;
   }
 
   void RestorePos() {
-    next_ = saved_pos_;
+    pos_ = saved_pos_;
   }
 
   std::string GetCurrentPos() {
     uint32_t line = 1, col = 1;
-    for (const char* p = start_; p < next_; ++p) {
-      if (*p == '\n') {
+    for (size_t i = 0; i < pos_; ++i) {
+      if (input_[i] == '\n') {
         ++line;
         col = 1;
       } else {
@@ -206,65 +210,68 @@ class ParserBase {
   // Return a suitable suffix of what has been parsed to provide error message context:
   // return the line containing the last non-space character preceding the error (if it exists).
   std::string GetErrorContext() {
-    // Special cases: empty input string, and parse-error at first character.
-    const char* p = next_ < end_ ? next_ : next_ - 1;
-    while ((p > start_) && isspace(*p))
+    if (input_.empty())
+      return std::string();
+    // Special case: a parse-error at end of input starts from the last character.
+    size_t p = (pos_ < input_.size()) ? pos_ : input_.size() - 1;
+    while ((p > 0) && IsSpace(input_[p]))
       --p;
-    while ((p > start_) && (*p != '\n'))
+    while ((p > 0) && (input_[p] != '\n'))
       --p;
     // Start at character after '\n' unless we are at start of input
-    const char* context_start = (p > start_) ? (p + 1) : start_;
-    for (p = context_start; (p < end_) && (*p != '\n'); ++p)
-      ;
-    return std::string(context_start, p - context_start);
+    size_t context_start = (p > 0) ? (p + 1) : 0;
+    size_t context_end = context_start;
+    while ((context_end < input_.size()) && (input_[context_end] != '\n'))
+      ++context_end;
+    return std::string(input_.substr(context_start, context_end - context_start));
   }
 
   template <typename... Args>
-  Status ParseError(const Args&... args) {
-    return Status(
-        StatusCategory::NONE,
-        StatusCode::FAIL,
+  Common::Status ParseError(const Args&... args) {
+    return Common::Status(
+        Common::StatusCategory::NONE,
+        Common::StatusCode::FAIL,
         ONNX_NAMESPACE::MakeString(
             "[ParseError at position ", GetCurrentPos(), "]\n", "Error context: ", GetErrorContext(), "\n", args...));
   }
 
   void SkipWhiteSpace() {
     do {
-      while ((next_ < end_) && (isspace(*next_)))
-        ++next_;
-      if ((next_ >= end_) || ((*next_) != '#'))
+      while (!AtEnd() && IsSpace(Cur()))
+        ++pos_;
+      if (AtEnd() || (Cur() != '#'))
         return;
-      // Skip rest of the line:
-      while ((next_ < end_) && ((*next_) != '\n'))
-        ++next_;
+      // Skip rest of the line; the loop then consumes the newline as whitespace.
+      pos_ = std::min(input_.find('\n', pos_), input_.size());
     } while (true);
   }
 
   int NextChar(bool skipspace = true) {
     if (skipspace)
       SkipWhiteSpace();
-    return (next_ < end_) ? *next_ : 0;
+    // Return as unsigned char so the value is safe to pass to ctype functions.
+    return AtEnd() ? 0 : static_cast<unsigned char>(Cur());
   }
 
   bool Matches(char ch, bool skipspace = true) {
     if (skipspace)
       SkipWhiteSpace();
-    if ((next_ < end_) && (*next_ == ch)) {
-      ++next_;
+    if (!AtEnd() && (Cur() == ch)) {
+      ++pos_;
       return true;
     }
     return false;
   }
 
-  Status Match(char ch, bool skipspace = true) {
+  Common::Status Match(char ch, bool skipspace = true) {
     if (!Matches(ch, skipspace))
       return ParseError("Expected character ", ch, " not found.");
-    return Status::OK();
+    return Common::Status::OK();
   }
 
   bool EndOfInput() {
     SkipWhiteSpace();
-    return (next_ >= end_);
+    return AtEnd();
   }
 
   enum class LiteralType : std::uint8_t { UNDEFINED, INT_LITERAL, FLOAT_LITERAL, STRING_LITERAL };
@@ -274,99 +281,97 @@ class ParserBase {
     std::string value;
   };
 
-  Status Parse(Literal& result);
+  Common::Status Parse(Literal& result);
 
-  Status Parse(int64_t& val) {
+  Common::Status Parse(int64_t& val) {
     Literal literal;
     CHECK_PARSER_STATUS(Parse(literal))
     if (literal.type != LiteralType::INT_LITERAL)
       return ParseError("Integer value expected, but not found.");
-    std::string s = literal.value;
-    val = std::stoll(s);
-    return Status::OK();
+    val = std::stoll(literal.value);
+    return Common::Status::OK();
   }
 
-  Status Parse(uint64_t& val) {
+  Common::Status Parse(uint64_t& val) {
     Literal literal;
     CHECK_PARSER_STATUS(Parse(literal))
     if (literal.type != LiteralType::INT_LITERAL)
       return ParseError("Integer value expected, but not found.");
-    std::string s = literal.value;
-    val = std::stoull(s);
-    return Status::OK();
+    val = std::stoull(literal.value);
+    return Common::Status::OK();
   }
 
-  Status Parse(float& val) {
+  Common::Status Parse(float& val) {
     Literal literal;
     CHECK_PARSER_STATUS(Parse(literal))
     switch (literal.type) {
       case LiteralType::INT_LITERAL:
       case LiteralType::FLOAT_LITERAL:
-        val = std::stof(literal.value);
+        val = LocaleIndependentStof(literal.value);
         break;
       default:
         return ParseError("Unexpected literal type.");
     }
-    return Status::OK();
+    return Common::Status::OK();
   }
 
-  Status Parse(double& val) {
+  Common::Status Parse(double& val) {
     Literal literal;
     CHECK_PARSER_STATUS(Parse(literal))
     switch (literal.type) {
       case LiteralType::INT_LITERAL:
       case LiteralType::FLOAT_LITERAL:
-        val = std::stod(literal.value);
+        val = LocaleIndependentStod(literal.value);
         break;
       default:
         return ParseError("Unexpected literal type.");
     }
-    return Status::OK();
+    return Common::Status::OK();
   }
 
   // Parse a string-literal enclosed within double-quotes.
-  Status Parse(std::string& val) {
+  Common::Status Parse(std::string& val) {
     Literal literal;
     CHECK_PARSER_STATUS(Parse(literal))
     if (literal.type != LiteralType::STRING_LITERAL)
       return ParseError("String value expected, but not found.");
     val = literal.value;
-    return Status::OK();
+    return Common::Status::OK();
   }
 
   // Parse an identifier, including keywords. If none found, this will
   // return an empty-string identifier.
   std::string ParseOptionalIdentifier() {
     SkipWhiteSpace();
-    auto from = next_;
-    if ((next_ < end_) && (isalpha(*next_) || (*next_ == '_'))) {
-      ++next_;
-      while ((next_ < end_) && (isalnum(*next_) || (*next_ == '_')))
-        ++next_;
+    size_t from = pos_;
+    if (!AtEnd() && (IsAlpha(Cur()) || (Cur() == '_'))) {
+      ++pos_;
+      while (!AtEnd() && (IsAlnum(Cur()) || (Cur() == '_')))
+        ++pos_;
     }
-    return std::string(from, next_ - from);
+    return std::string(input_.substr(from, pos_ - from));
   }
 
-  Status ParseIdentifier(std::string& id) {
+  Common::Status ParseIdentifier(std::string& id) {
     id = ParseOptionalIdentifier();
     if (id.empty())
       return ParseError("Identifier expected but not found.");
-    return Status::OK();
+    return Common::Status::OK();
   }
 
-  Status ParseQuotableIdentifier(std::string& id) {
+  Common::Status ParseQuotableIdentifier(std::string& id) {
     if (NextChar() == '"') {
       return Parse(id);
     }
     return ParseIdentifier(id);
   }
 
-  Status ParseOptionalQuotableIdentifier(std::string& id) {
+  Common::Status ParseOptionalQuotableIdentifier(std::string& id) {
     if (NextChar() == '"') {
       return Parse(id);
     }
     id = ParseOptionalIdentifier();
-    return Status::OK();
+    return Common::Status::OK();
   }
 
   // Parse an optional quotable identifier, and return whether an identifier was found
@@ -382,14 +387,14 @@ class ParserBase {
   //
   // This is mostly for some backward compatibility. "" is a simpler way to represent an
   // empty identifier that is less confusing and is recommended.
-  Status ParseOptionalQuotableIdentifier(std::string& id, bool& id_found) {
+  Common::Status ParseOptionalQuotableIdentifier(std::string& id, bool& id_found) {
     if (NextChar() == '"') {
       id_found = true;
       return Parse(id);
     }
     id = ParseOptionalIdentifier();
     id_found = !id.empty() || NextChar() == ',';
-    return Status::OK();
+    return Common::Status::OK();
   }
 
   std::string PeekIdentifier() {
@@ -399,84 +404,105 @@ class ParserBase {
     return id;
   }
 
-  Status Parse(KeyWordMap::KeyWord& keyword) {
+  Common::Status Parse(KeyWordMap::KeyWord& keyword) {
     std::string id;
     CHECK_PARSER_STATUS(ParseIdentifier(id))
     keyword = KeyWordMap::Lookup(id);
-    return Status::OK();
+    return Common::Status::OK();
   }
 
  protected:
-  const char* start_;
-  const char* next_;
-  const char* end_;
-  const char* saved_pos_;
+  // True when the cursor has consumed all input.
+  bool AtEnd() const {
+    return pos_ >= input_.size();
+  }
+  // Character at the cursor; only valid when !AtEnd().
+  char Cur() const {
+    return input_[pos_];
+  }
+  // ctype wrappers that pass the character as unsigned char (UB otherwise for bytes > 127).
+  static bool IsSpace(char c) {
+    return std::isspace(static_cast<unsigned char>(c));
+  }
+  static bool IsAlpha(char c) {
+    return std::isalpha(static_cast<unsigned char>(c));
+  }
+  static bool IsAlnum(char c) {
+    return std::isalnum(static_cast<unsigned char>(c));
+  }
+  static bool IsDigit(char c) {
+    return std::isdigit(static_cast<unsigned char>(c));
+  }
+
+  std::string_view input_;
+  size_t pos_ = 0;
+  size_t saved_pos_ = 0;
 
   bool NextIsValidFloatString();
 };
 
 class OnnxParser : public ParserBase {
  public:
-  explicit OnnxParser(const char* cstr) : ParserBase(cstr) {}
+  using ParserBase::ParserBase;
 
-  ONNX_API Status Parse(TensorShapeProto& shape);
+  ONNX_API Common::Status Parse(TensorShapeProto& shape);
 
-  ONNX_API Status Parse(TypeProto& typeProto);
+  ONNX_API Common::Status Parse(TypeProto& typeProto);
 
-  ONNX_API Status Parse(StringStringList& stringStringList);
+  ONNX_API Common::Status Parse(StringStringList& stringStringList);
 
-  ONNX_API Status Parse(TensorProto& tensorProto);
+  ONNX_API Common::Status Parse(TensorProto& tensorProto);
 
-  ONNX_API Status Parse(AttributeProto& attr);
+  ONNX_API Common::Status Parse(AttributeProto& attr);
 
-  ONNX_API Status Parse(AttributeProto& attr, std::string& name);
+  ONNX_API Common::Status Parse(AttributeProto& attr, std::string& name);
 
-  ONNX_API Status Parse(AttrList& attrlist);
+  ONNX_API Common::Status Parse(AttrList& attrlist);
 
-  ONNX_API Status Parse(NodeProto& node);
+  ONNX_API Common::Status Parse(NodeProto& node);
 
-  ONNX_API Status Parse(NodeList& nodelist);
+  ONNX_API Common::Status Parse(NodeList& nodelist);
 
-  ONNX_API Status Parse(GraphProto& graph);
+  ONNX_API Common::Status Parse(GraphProto& graph);
 
-  ONNX_API Status Parse(FunctionProto& fn);
+  ONNX_API Common::Status Parse(FunctionProto& fn);
 
-  ONNX_API Status Parse(ModelProto& model);
+  ONNX_API Common::Status Parse(ModelProto& model);
 
   template <typename T>
-  static Status Parse(T& parsedData, const char* input) {
+  static Common::Status Parse(T& parsedData, std::string_view input) {
     OnnxParser parser(input);
     return parser.Parse(parsedData);
   }
 
  private:
-  Status Parse(std::string name, GraphProto& graph);
+  Common::Status Parse(std::string name, GraphProto& graph);
 
-  Status Parse(IdList& idlist);
+  Common::Status Parse(IdList& idlist);
 
-  Status Parse(char open, IdList& idlist, char close);
+  Common::Status Parse(char open, IdList& idlist, char close);
 
-  Status Parse(IdList& idlist, AttrList& attrlist);
+  Common::Status Parse(IdList& idlist, AttrList& attrlist);
 
-  Status Parse(char open, IdList& idlist, AttrList& attrlist, char close);
+  Common::Status Parse(char open, IdList& idlist, AttrList& attrlist, char close);
 
-  Status ParseSingleAttributeValue(AttributeProto& attr, AttributeProto_AttributeType expected);
+  Common::Status ParseSingleAttributeValue(AttributeProto& attr, AttributeProto_AttributeType expected);
 
-  Status Parse(ValueInfoProto& valueinfo);
+  Common::Status Parse(ValueInfoProto& valueinfo);
 
-  Status ParseGraphInputOutput(ValueInfoList& vilist);
+  Common::Status ParseGraphInputOutput(ValueInfoList& vilist);
 
-  Status ParseFunctionInputOutput(IdList& idlist, ValueInfoList& vilist);
+  Common::Status ParseFunctionInputOutput(IdList& idlist, ValueInfoList& vilist);
 
-  Status Parse(char open, ValueInfoList& vilist, char close);
+  Common::Status Parse(char open, ValueInfoList& vilist, char close);
 
-  Status ParseInput(ValueInfoList& vilist, TensorList& initializers);
+  Common::Status ParseInput(ValueInfoList& inputs, TensorList& initializers);
 
-  Status ParseValueInfo(ValueInfoList& vilist, TensorList& initializers);
+  Common::Status ParseValueInfo(ValueInfoList& value_infos, TensorList& initializers);
 
-  Status Parse(TensorProto& tensorProto, const TypeProto& tensorTypeProto);
+  Common::Status Parse(TensorProto& tensorProto, const TypeProto& tensorTypeProto);
 
-  Status Parse(OpsetIdList& opsets);
+  Common::Status Parse(OpsetIdList& opsets);
 
   bool NextIsType();
 

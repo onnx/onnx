@@ -10,7 +10,7 @@ python onnx\gen_proto.py -l
 
 python onnx\gen_proto.py -l --ml
 
-python setup.py develop
+python -m pip install -e . --no-build-isolation
 
 python onnx\backend\test\cmd_tools.py generate-data
 

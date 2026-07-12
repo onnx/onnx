@@ -131,7 +131,7 @@ def _attribute_conversion_function(attr_type: onnx.AttributeProto.AttributeType)
         onnx.AttributeProto.TYPE_PROTOS: lambda att: [
             OnnxType(t) for t in att.type_protos
         ],
-    }[attr_type]
+    }[attr_type]  # type: ignore[index]
 
 
 class Graph:
@@ -208,7 +208,7 @@ class OpRun(abc.ABC):
                 functions=functions,
             )
 
-        conversion_function = _attribute_conversion_function(att.type)
+        conversion_function = _attribute_conversion_function(att.type)  # type: ignore[arg-type]
         if conversion_function is not None:
             return conversion_function(att)
 
@@ -248,14 +248,12 @@ class OpRun(abc.ABC):
                 setattr(
                     self,
                     f"_run_{att.name}",
-                    lambda context,
-                    value=value,
-                    attributes=None: OpRun._evaluate_subgraph(
-                        context, value, attributes
+                    lambda context, value=value, attributes=None: (
+                        OpRun._evaluate_subgraph(context, value, attributes)
                     ),
                 )
 
-        if self._schema and self.onnx_node.op_type not in {"Constant"}:
+        if self._schema and self.onnx_node.op_type != "Constant":
             for k, v in self._schema.attributes.items():
                 if not hasattr(self, k):
                     if getattr(v, "required", True):
@@ -303,12 +301,12 @@ class OpRun(abc.ABC):
     @property
     def input(self) -> Sequence[str]:
         """Returns node attribute `input`."""
-        return self.onnx_node.input  # type: ignore[no-any-return]
+        return self.onnx_node.input
 
     @property
     def output(self) -> Sequence[str]:
         """Returns node attribute `output`."""
-        return self.onnx_node.output  # type: ignore[no-any-return]
+        return self.onnx_node.output
 
     @property
     def op_type(self) -> str:
@@ -373,9 +371,7 @@ class OpRun(abc.ABC):
                 f"is a tuple, this is no ONNX corresponding type (Map, List, Tensor, SparseTensor). "
                 f"All returned types: {dtypes!r}."
             )
-        res = tuple(  # type: ignore[assignment]
-            (np.array(x) if np.isscalar(x) else x) for x in res
-        )
+        res = tuple((np.array(x) if np.isscalar(x) else x) for x in res)
         if any(
             not (isinstance(t, (np.ndarray, list, dict)) or hasattr(t, "todense"))
             for t in res
@@ -394,7 +390,7 @@ class OpRun(abc.ABC):
 
         Args:
             *args: inputs
-            linked_attributes: used if this has an attriute linked to
+            linked_attributes: used if this has an attribute linked to
                 the attribute of the function it belongs to
             context: if this node is part of the subgraph, `context` is
                 a dictionary with the values this node may use
@@ -530,8 +526,7 @@ class OpRun(abc.ABC):
 
         names_in = [f"x{i}" for i in range(n_inputs)]
         names_out = [f"y{i}" for i in range(n_outputs)]
-        node = onnx.helper.make_node(op_type, names_in, names_out, **kwargs)
-        return node
+        return onnx.helper.make_node(op_type, names_in, names_out, **kwargs)
 
     @classmethod
     def create(
@@ -557,7 +552,7 @@ class OpRun(abc.ABC):
 
         def log_function(pattern: str, *args: Any) -> None:
             if verbose > 1:
-                print(pattern % tuple(args))
+                print(pattern % tuple(args))  # noqa: T201
 
         node = cls.make_node(n_inputs, n_outputs, **kwargs)
         run_params = {
@@ -566,8 +561,7 @@ class OpRun(abc.ABC):
             "new_ops": None,
             "opsets": {"": onnx.defs.onnx_opset_version()},
         }
-        cl = cls(node, run_params)
-        return cl
+        return cls(node, run_params)
 
     @classmethod
     def eval(
@@ -599,9 +593,9 @@ class OpRun(abc.ABC):
 class OpRunExpand(OpRun):
     """Class any operator to avoid must inherit from."""
 
-    def __init__(self, *args, **kwargs):  # noqa: ARG002
+    def __new__(cls, *args, **kwargs):  # noqa: ARG004
         raise RuntimeError(
-            f"The reference implementation must not use this node ({type(self)})."
+            f"The reference implementation must not use this node ({cls})."
         )
 
     def _run(self, *inputs, **kwargs):  # noqa: ARG002
@@ -644,7 +638,7 @@ class OpFunction(OpRun):
                 f"and the expected number of inputs {len(impl.input_names)} "
                 f"for node {self.op_type!r} from domain {self.domain!r}."
             )
-        feeds = dict(zip(impl.input_names, inputs))
+        feeds = dict(zip(impl.input_names, inputs, strict=False))
         attributes = self.attributes_.copy()
         attributes.update(kwargs)
         results = impl.run(None, feeds, attributes=attributes)
@@ -682,7 +676,7 @@ class OpFunctionContextDependant(OpFunction):
         types = []
         for t in inputs:
             dtype = onnx.helper.np_dtype_to_tensor_dtype(t.dtype)
-            types.append(onnx.helper.make_tensor_type_proto(dtype, t.shape))
+            types.append(onnx.helper.make_tensor_type_proto(dtype, t.shape))  # type: ignore[arg-type]
         cl = self.parent._load_impl(self.onnx_node, types)
         inst = cl(self.onnx_node, self.run_params)
         return self._run_impl(inst.impl_, *inputs, **kwargs)

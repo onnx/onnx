@@ -44,7 +44,7 @@ def _replace_constant(
             value = att.t
             new_name = f"{value.name}__SHAPE"
             dims = value.dims
-            size = np.prod(dims)
+            size = np.prod(dims, dtype=np.int64)
             if size <= threshold:
                 return [node]
             init = from_array(np.array(list(dims), dtype=np.int64), name=new_name)
@@ -76,9 +76,7 @@ def _replace_constant_of_shape_with_range(
     The function is not recursive. The recursivity is done by
     *replace_initializer_by_constant_of_shape*.
     """
-    if isinstance(onx, GraphProto):
-        nodes = list(onx.node)
-    elif isinstance(onx, FunctionProto):
+    if isinstance(onx, (GraphProto, FunctionProto)):
         nodes = list(onx.node)
     else:
         raise TypeError(f"Not implemented for type {type(onx)}.")
@@ -99,8 +97,6 @@ def _replace_constant_of_shape_with_range(
                 existing_names.add(name)
                 return name
             i += 1
-        # The function should never go through that line.
-        raise RuntimeError("The function should never go through that line.")
 
     cst0 = make_node("Constant", [], [_find_name("zero")], value_int=0)
     cst1 = make_node("Constant", [], [_find_name("one")], value_int=1)
@@ -134,7 +130,7 @@ def _replace_constant_of_shape_with_range(
     nodes.insert(1, cst1)
 
     if isinstance(onx, GraphProto):
-        graph = make_graph(
+        return make_graph(
             nodes,
             onx.name,
             onx.input,
@@ -142,9 +138,8 @@ def _replace_constant_of_shape_with_range(
             initializer=onx.initializer,
             sparse_initializer=onx.sparse_initializer,
         )
-        return graph
     if isinstance(onx, FunctionProto):
-        new_onx = make_function(
+        return make_function(
             onx.domain,
             onx.name,
             onx.input,
@@ -152,7 +147,6 @@ def _replace_constant_of_shape_with_range(
             nodes,
             opset_imports=onx.opset_import,
         )
-        return new_onx
     raise TypeError(f"Not implemented for type {type(onx)}.")
 
 
@@ -160,17 +154,10 @@ def _replace_constant_of_shape_value(
     onx: GraphProto | FunctionProto, value_constant_of_shape: float
 ) -> GraphProto | FunctionProto:
     """Replaces all fill value of all nodes *ConstantOfShape*."""
-    if isinstance(onx, GraphProto):
-        nodes = list(onx.node)
-    elif isinstance(onx, FunctionProto):
+    if isinstance(onx, (GraphProto, FunctionProto)):
         nodes = list(onx.node)
     else:
         raise TypeError(f"Not implemented for type {type(onx)}.")
-
-    existing_names = set()
-    for node in nodes:
-        existing_names |= set(node.input)
-        existing_names |= set(node.output)
 
     update = {}
     for inode, node in enumerate(nodes):
@@ -189,7 +176,7 @@ def _replace_constant_of_shape_value(
         nodes[inode] = up
 
     if isinstance(onx, GraphProto):
-        graph = make_graph(
+        return make_graph(
             nodes,
             onx.name,
             onx.input,
@@ -197,9 +184,8 @@ def _replace_constant_of_shape_value(
             initializer=onx.initializer,
             sparse_initializer=onx.sparse_initializer,
         )
-        return graph
     if isinstance(onx, FunctionProto):
-        new_onx = make_function(
+        return make_function(
             onx.domain,
             onx.name,
             onx.input,
@@ -207,7 +193,6 @@ def _replace_constant_of_shape_value(
             nodes,
             opset_imports=onx.opset_import,
         )
-        return new_onx
     raise TypeError(f"Not implemented for type {type(onx)}.")
 
 
@@ -334,7 +319,7 @@ def replace_initializer_by_constant_of_shape(  # noqa: PLR0911
     new_inits: list[TensorProto] = []
     for init in onx.initializer:
         dims = tuple(init.dims)
-        size = np.prod(dims)
+        size = np.prod(dims, dtype=np.int64)
         if size <= threshold:
             new_inits.append(init)
             continue
@@ -360,7 +345,7 @@ def replace_initializer_by_constant_of_shape(  # noqa: PLR0911
     new_sparse_inits: list[SparseTensorProto] = []
     for sp_init in onx.sparse_initializer:
         dims = tuple(sp_init.dims)
-        size = np.prod(dims)
+        size = np.prod(dims, dtype=np.int64)
         if size <= threshold:
             new_sparse_inits.append(sp_init)
             continue
@@ -380,11 +365,7 @@ def replace_initializer_by_constant_of_shape(  # noqa: PLR0911
         modified = False
         atts = []
         for att in node.attribute:
-            if (
-                att.type == AttributeProto.GRAPH
-                and hasattr(att, "g")
-                and att.g is not None
-            ):
+            if att.type == AttributeProto.GRAPH and att.HasField("g"):
                 g = replace_initializer_by_constant_of_shape(
                     att.g,
                     threshold=threshold,
@@ -395,6 +376,21 @@ def replace_initializer_by_constant_of_shape(  # noqa: PLR0911
                 if id(g) != id(att.g):
                     modified = True
                     att = make_attribute(att.name, g)  # noqa: PLW2901
+            elif att.type == AttributeProto.GRAPHS:
+                new_graphs = []
+                for sub_g in att.graphs:
+                    new_g = replace_initializer_by_constant_of_shape(
+                        sub_g,
+                        threshold=threshold,
+                        ir_version=ir_version,
+                        use_range=use_range,
+                        value_constant_of_shape=value_constant_of_shape,
+                    )
+                    if id(new_g) != id(sub_g):
+                        modified = True
+                    new_graphs.append(new_g)
+                if modified:
+                    att = make_attribute(att.name, new_graphs)  # noqa: PLW2901
             atts.append(att)
         if modified:
             new_node = make_node(node.op_type, node.input, node.output)

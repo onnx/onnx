@@ -24,7 +24,7 @@ class ExpandDynamicShape(Base):
             shape_shape: Sequence[int],
             output_shape: Sequence[int],
         ) -> onnx.helper.GraphProto:
-            graph = onnx.helper.make_graph(
+            return onnx.helper.make_graph(
                 nodes=[node],
                 name="Expand",
                 inputs=[
@@ -41,7 +41,6 @@ class ExpandDynamicShape(Base):
                     )
                 ],
             )
-            return graph
 
         node = onnx.helper.make_node("Expand", ["X", "shape"], ["Y"], name="test")
         input_shape = [1, 3, 1]

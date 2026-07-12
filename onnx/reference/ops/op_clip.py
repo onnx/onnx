@@ -9,7 +9,7 @@ from onnx.reference.op_run import OpRun
 
 
 class Clip_6(OpRun):
-    def _run(self, data, min=None, max=None):  # type: ignore  # noqa: A002
+    def _run(self, data, min=None, max=None):  # type: ignore[override]  # noqa: A002
         amin = min
         amax = max
         res = data if amin is amax is None else np.clip(data, amin, amax)
@@ -22,5 +22,4 @@ class Clip_11(OpRun):
         amin = minmax[0] if le > 0 else None
         amax = minmax[1] if le > 1 else None
         res = data if amin is amax is None else np.clip(data, amin, amax)
-        res = (res,) if res.dtype == data.dtype else (res.astype(data.dtype),)
-        return res
+        return (res,) if res.dtype == data.dtype else (res.astype(data.dtype),)

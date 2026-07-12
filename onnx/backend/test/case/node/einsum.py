@@ -13,8 +13,7 @@ from onnx.backend.test.case.node import expect
 def einsum_reference_implementation(
     Eqn: str, Operands: tuple[np.ndarray, ...]
 ) -> np.ndarray:
-    Z = np.einsum(Eqn, *Operands)
-    return Z
+    return np.einsum(Eqn, *Operands)
 
 
 class Einsum(Base):

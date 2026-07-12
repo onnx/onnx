@@ -1,8 +1,6 @@
 // Copyright (c) ONNX Project Contributors
-
-/*
- * SPDX-License-Identifier: Apache-2.0
- */
+//
+// SPDX-License-Identifier: Apache-2.0
 
 // Adapter for Gemm in default domain from version 6 to 7
 
@@ -20,13 +18,15 @@ class Gemm_6_7 final : public Adapter {
  public:
   explicit Gemm_6_7() : Adapter("Gemm", OpSetID(6), OpSetID(7)) {}
 
-  void adapt_gemm_6_7(const std::shared_ptr<Graph>&, Node* node) const {
+  void adapt_gemm_6_7(const std::shared_ptr<Graph>& /*unused*/, Node* node) const {
     const ArrayRef<Value*>& inputs = node->inputs();
     assertInputsAvailable(inputs, name().c_str(), 3);
     const auto& A_shape = inputs[0]->sizes();
     const auto& B_shape = inputs[1]->sizes();
     // Determine if C is broadcastable
     const auto& C_shape = inputs[2]->sizes();
+    ONNX_ASSERTM(A_shape.size() == 2, "Gemm input A must have exactly 2 dimensions")
+    ONNX_ASSERTM(B_shape.size() == 2, "Gemm input B must have exactly 2 dimensions")
     // Create (M, N) to input to numpy_unibroadcastable
     std::vector<Dimension> MN;
     if (node->hasAttribute(ktransA) && node->i(ktransA) == 1) {

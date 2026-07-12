@@ -4,8 +4,9 @@
 from __future__ import annotations
 
 import string
-import unittest
 from typing import TYPE_CHECKING, Any, cast
+
+import pytest
 
 import onnx
 from onnx import TensorProto, ValueInfoProto, helper, shape_inference, version_converter
@@ -16,7 +17,7 @@ if TYPE_CHECKING:
 LATEST_OPSET = onnx.defs.onnx_opset_version()
 
 
-class TestAutomaticConversion(unittest.TestCase):
+class TestAutomaticConversion:
     def _test_model_conversion(
         self, to_opset: int, model: str | onnx.ModelProto
     ) -> None:
@@ -37,7 +38,7 @@ class TestAutomaticConversion(unittest.TestCase):
         onnx.checker.check_model(model)
         shape_inference.infer_shapes(model, strict_mode=True)
 
-        with self.assertRaises(RuntimeError):
+        with pytest.raises(RuntimeError):
             version_converter.convert_version(model, to_opset)
 
     def _test_op_conversion(
@@ -84,7 +85,7 @@ class TestAutomaticConversion(unittest.TestCase):
         letters = list(string.ascii_lowercase)[:n_inputs]
         input_names = [
             letter if shape != "" else ""
-            for (letter, shape) in zip(letters, input_shapes)
+            for (letter, shape) in zip(letters, input_shapes, strict=True)
         ]
         if input_types is None:
             input_types = [TensorProto.FLOAT] * n_inputs
@@ -98,7 +99,12 @@ class TestAutomaticConversion(unittest.TestCase):
         )
         inputs: list[ValueInfoProto] = []
         for name, ttype, shape, is_seq, is_opt in zip(
-            input_names, input_types, input_shapes_cast, is_sequence, is_optional
+            input_names,
+            input_types,
+            input_shapes_cast,
+            is_sequence,
+            is_optional,
+            strict=False,
         ):
             if name != "":
                 if is_seq:
@@ -126,7 +132,12 @@ class TestAutomaticConversion(unittest.TestCase):
         )
         outputs: list[ValueInfoProto] = []
         for name, ttype, shape, is_seq, is_opt in zip(
-            output_names, output_types, output_shapes_cast, is_sequence, is_optional
+            output_names,
+            output_types,
+            output_shapes_cast,
+            is_sequence,
+            is_optional,
+            strict=True,
         ):
             if is_seq:
                 outputs += [helper.make_tensor_sequence_value_info(name, ttype, shape)]

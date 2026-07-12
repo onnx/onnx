@@ -23,7 +23,7 @@ class NormalizeStrings(Base):
             input_shape: Sequence[int],
             output_shape: Sequence[int],
         ) -> onnx.helper.GraphProto:
-            graph = onnx.helper.make_graph(
+            return onnx.helper.make_graph(
                 nodes=[node],
                 name="StringNormalizer",
                 inputs=[
@@ -37,7 +37,6 @@ class NormalizeStrings(Base):
                     )
                 ],
             )
-            return graph
 
         # 1st model_monday_casesensintive_nochangecase
         stopwords = ["monday"]

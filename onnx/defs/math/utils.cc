@@ -1,17 +1,21 @@
-/*
- * SPDX-License-Identifier: Apache-2.0
- */
+// Copyright (c) ONNX Project Contributors
+//
+// SPDX-License-Identifier: Apache-2.0
 
 #include "onnx/defs/math/utils.h"
 
 #include <string>
+#include <utility>
+#include <vector>
+
+#include "onnx/defs/type_builders.h"
 
 namespace ONNX_NAMESPACE {
 namespace defs {
 namespace math {
 namespace utils {
 
-static const char* TopK_ver11_doc = R"DOC(
+static constexpr const char* TopK_ver11_doc = R"DOC(
 Retrieve the top-K largest or smallest elements along a specified axis. Given an input tensor of
 shape [a_0, a_1, ..., a_{n-1}] and integer argument k, return two outputs:
 
@@ -29,8 +33,8 @@ Given two equivalent values, this operator uses the indices along the axis as
 a tiebreaker. That is, the element with the lower index will appear first.
 )DOC";
 
-std::function<void(OpSchema&)> TopKOpGenerator(const std::vector<std::string>& allowed_types) {
-  return [=](OpSchema& schema) {
+std::function<void(OpSchema&)> TopKOpGenerator(std::vector<std::string> allowed_types) {
+  return [allowed_types = std::move(allowed_types)](OpSchema& schema) {
     schema.SetDoc(TopK_ver11_doc)
         .Input(
             0,
@@ -72,7 +76,7 @@ std::function<void(OpSchema&)> TopKOpGenerator(const std::vector<std::string>& a
             1,
             OpSchema::NonDifferentiable)
         .TypeConstraint("T", allowed_types, "Constrain input and output types to numeric tensors.")
-        .TypeConstraint("I", {"tensor(int64)"}, "Constrain index tensor to int64")
+        .TypeConstraint("I", {types::Int64}, "Constrain index tensor to int64")
         .Attr(
             "axis",
             "Dimension on which to do the sort. Negative value means counting dimensions "
@@ -92,7 +96,7 @@ std::function<void(OpSchema&)> TopKOpGenerator(const std::vector<std::string>& a
           // Shape inference:
           if (!hasInputShape(ctx, 0))
             return;
-          auto& input_shape = getInputShape(ctx, 0);
+          const auto& input_shape = getInputShape(ctx, 0);
           int64_t rank = input_shape.dim_size();
           int64_t axis = getAttribute(ctx, "axis", -1);
           if (axis < 0)
@@ -102,7 +106,7 @@ std::function<void(OpSchema&)> TopKOpGenerator(const std::vector<std::string>& a
           }
 
           const auto& axis_dim = input_shape.dim(static_cast<int>(axis));
-          const auto* k = ctx.getInputData(1);
+          const auto* const k = ctx.getInputData(1);
 
           // Infer output shape if:
           // (1) 'K' is available
@@ -144,6 +148,17 @@ std::function<void(OpSchema&)> TopKOpGenerator(const std::vector<std::string>& a
 
           return;
         });
+  };
+}
+
+std::function<void(OpSchema&)>
+UnaryFloatMathOpGenerator(const char* doc, const char* output_description, std::vector<std::string> allowed_types) {
+  return [doc, output_description, allowed_types = std::move(allowed_types)](OpSchema& schema) {
+    schema.SetDoc(doc)
+        .Input(0, "input", "Input tensor", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
+        .Output(0, "output", output_description, "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
+        .TypeConstraint("T", allowed_types, "Constrain input and output types to float tensors.")
+        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput);
   };
 }
 
@@ -227,20 +242,20 @@ void MatMulShapeInference(ONNX_NAMESPACE::InferenceContext& ctx, int input1Idx, 
 }
 
 void QLinearMatMulShapeInference(ONNX_NAMESPACE::InferenceContext& ctx) {
-  auto a_type = ctx.getInputType(0);
-  auto b_type = ctx.getInputType(3);
+  const auto* const a_type = ctx.getInputType(0);
+  const auto* const b_type = ctx.getInputType(3);
   if (nullptr == a_type || nullptr == b_type || a_type->value_case() != ONNX_NAMESPACE::TypeProto::kTensorType ||
       b_type->value_case() != ONNX_NAMESPACE::TypeProto::kTensorType) {
     fail_type_inference("inputs are expected to have tensor type.");
   }
 
-  auto a_zero_point_type = ctx.getInputType(2);
+  const auto* const a_zero_point_type = ctx.getInputType(2);
   if (nullptr == a_zero_point_type ||
       a_zero_point_type->tensor_type().elem_type() != a_type->tensor_type().elem_type()) {
     fail_type_inference("input and zero_point pair is expected to have be same type.");
   }
 
-  auto b_zero_point_type = ctx.getInputType(5);
+  const auto* const b_zero_point_type = ctx.getInputType(5);
   if (nullptr == b_zero_point_type ||
       b_zero_point_type->tensor_type().elem_type() != b_type->tensor_type().elem_type()) {
     fail_type_inference("input and zero_point pair is expected to have same type.");
@@ -252,7 +267,7 @@ void QLinearMatMulShapeInference(ONNX_NAMESPACE::InferenceContext& ctx) {
 }
 
 const char* QLinearMatMulDoc() {
-  static const char* QLinearMatMul_doc = R"DOC(
+  static constexpr const char* QLinearMatMul_doc = R"DOC(
 Matrix product that behaves like [numpy.matmul](https://numpy.org/doc/stable/reference/generated/numpy.matmul.html).
 It consumes two quantized input tensors, their scales and zero points, scale and zero point of output,
 and computes the quantized output. The quantization formula is y = saturate((x / y_scale) + y_zero_point).
