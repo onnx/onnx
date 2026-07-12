@@ -14,7 +14,7 @@ namespace nb = nanobind;
 template <typename Proto>
 bool ParseProtoFromPyBytes(Proto* proto, const nb::bytes& bytes) {
   // Get the buffer from Python bytes object
-  auto buffer = static_cast<const char*>(bytes.data());
+  const auto* buffer = static_cast<const char*>(bytes.data());
   size_t length = bytes.size();
 
   return ParseProtoFromBytes(proto, buffer, length);

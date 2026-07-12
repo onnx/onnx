@@ -5,7 +5,8 @@ from __future__ import annotations
 
 import os
 import tempfile
-import unittest
+
+import pytest
 
 import onnx
 
@@ -53,17 +54,19 @@ class _OnnxTestTextualSerializer(onnx.serialization.ProtoSerializer):
         raise ValueError(f"Unsupported proto type: {type(proto)}")
 
 
-class TestRegistry(unittest.TestCase):
-    def setUp(self) -> None:
+class TestRegistry:
+    @pytest.fixture(autouse=True)
+    def register_serializer(self):
         self.serializer = _OnnxTestTextualSerializer()
+        # FIXME: There is no API to unregister
         onnx.serialization.registry.register(self.serializer)
 
     def test_get_returns_the_registered_instance(self) -> None:
         serializer = onnx.serialization.registry.get("onnxtext")
-        self.assertIs(serializer, self.serializer)
+        assert serializer is self.serializer
 
     def test_get_raises_for_unsupported_format(self) -> None:
-        with self.assertRaises(ValueError):
+        with pytest.raises(ValueError):
             onnx.serialization.registry.get("unsupported")
 
     def test_onnx_save_load_model_uses_the_custom_serializer(self) -> None:
@@ -75,23 +78,21 @@ class TestRegistry(unittest.TestCase):
             # Check the file content
             with open(model_path, encoding="utf-8") as f:
                 content = f.read()
-                self.assertEqual(content, onnx.printer.to_text(model))
+                assert content == onnx.printer.to_text(model)
 
             loaded_model = onnx.load_model(model_path, format="onnxtext")
 
-            self.assertEqual(
-                model.SerializeToString(deterministic=True),
-                loaded_model.SerializeToString(deterministic=True),
-            )
+            assert model.SerializeToString(
+                deterministic=True
+            ) == loaded_model.SerializeToString(deterministic=True)
 
 
-class TestCustomSerializer(unittest.TestCase):
+class TestCustomSerializer:
     def test_serialize_deserialize_model(self) -> None:
         serializer = _OnnxTestTextualSerializer()
         model = onnx.parser.parse_model(_TEST_MODEL)
         serialized = serializer.serialize_proto(model)
         deserialized = serializer.deserialize_proto(serialized, onnx.ModelProto())
-        self.assertEqual(
-            model.SerializeToString(deterministic=True),
-            deserialized.SerializeToString(deterministic=True),
-        )
+        assert model.SerializeToString(
+            deterministic=True
+        ) == deserialized.SerializeToString(deterministic=True)
