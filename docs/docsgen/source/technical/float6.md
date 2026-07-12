@@ -39,7 +39,7 @@ As a result, two new types were introduced in `onnx==1.23.0` to support a limite
      - No
      - No
    * - Zeros
-     - +/-0: 0x00 / 0x20 (but -0 saturates to 0)
+     - +/-0: 0x00 / 0x20
      - +/-0: 0x00 / 0x20
    * - Max normalized
      - 1.111 * 2^2 = 7.5
@@ -65,14 +65,14 @@ Upcasting exact. Downcasting RNE with saturation. Examples:
      - 7.5 (sat)
      - 24.0 (round)
    * - -0.0
-     - 0.0
-     - 0.0
+     - -0.0
+     - -0.0
    * - inf
      - 7.5 (sat)
      - 28.0 (sat)
    * - nan
-     - 7.5 (sat)
-     - 28.0 (sat)
+     - -0.0 (unspecified; matches FLOAT4E2M1's cast behavior, not saturated)
+     - -0.0 (unspecified; matches FLOAT4E2M1's cast behavior, not saturated)
 ```
 
 ## Packing and Unpacking

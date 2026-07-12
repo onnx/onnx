@@ -404,43 +404,11 @@ def make_tensor(
             and not (isinstance(vals, np.ndarray) and vals.dtype == np.uint8)
         ):
             arr = np.asarray(vals, dtype=np.float32).ravel()
-            # Encode FP6 manually (round to nearest-even via numpy round, saturate, handle subnormals),
-            # then pack into 6-bit stream.
-            sign = np.signbit(arr).astype(np.uint8) << 5
-            abs_x = np.abs(arr)
-            if data_type == TensorProto.FLOAT6E2M3:
-                bias = 1
-                n_mant = 3
-                max_exp = 3
-            else:
-                bias = 3
-                n_mant = 2
-                max_exp = 7
-            e = np.floor(np.log2(np.where(abs_x == 0, 1.0, abs_x))).astype(np.int32)
-            exp_biased = e + bias
-            frac = abs_x / (2.0**e) - 1.0
-            mant_f = frac * (1 << n_mant)
-            mant_r = np.round(mant_f).astype(np.int32)
-            max_mant = (1 << n_mant) - 1
-            carry = mant_r > max_mant
-            mant_r = np.where(carry, 0, mant_r)
-            exp_biased = np.where(carry, exp_biased + 1, exp_biased)
-            is_sub = exp_biased <= 0
-            sub_scale = abs_x / (2.0 ** (1 - bias))
-            sub_mant_f = sub_scale * (1 << n_mant)
-            sub_mant_r = np.round(sub_mant_f).astype(np.int32)
-            promote = sub_mant_r > max_mant
-            sub_mant_r = np.where(promote, 0, sub_mant_r)
-            exp_biased = np.where(is_sub & promote, 1, exp_biased)
-            final_exp = np.clip(exp_biased, 0, max_exp)
-            final_mant = np.where(is_sub, sub_mant_r, mant_r)
-            final_mant = np.clip(final_mant, 0, max_mant)
-            if data_type == TensorProto.FLOAT6E2M3:
-                base = (final_exp.astype(np.uint8) << 3) | (final_mant.astype(np.uint8))
-            else:
-                base = (final_exp.astype(np.uint8) << 2) | (final_mant.astype(np.uint8))
-            fp6 = (sign | base).astype(np.uint8)
-            fp6 = np.where(abs_x == 0, 0, fp6).astype(np.uint8)
+            # Encode via ml_dtypes' own cast (RNE rounding and saturation are
+            # implemented there, matching every other low-precision float type),
+            # then pack the resulting 6-bit codes into a byte stream.
+            fp6_typed = onnx.numpy_helper.saturate_cast(arr, np_dtype)
+            fp6 = fp6_typed.view(np.uint8)
             packed = onnx.numpy_helper._pack_6bit(fp6)
             expected_packed_size_bytes = math.ceil(0.75 * math.prod(dims))
             if len(packed) != expected_packed_size_bytes:

@@ -280,22 +280,8 @@ def to_array(tensor: onnx.TensorProto, base_dir: str = "") -> np.ndarray:  # noq
             num_elems = int(np.prod(dims))
             if len(raw_data) == num_elems:
                 return np.frombuffer(raw_data, dtype=np_dtype).reshape(dims)
-            from onnx.reference.ops.op_dequantize_linear import (  # noqa: PLC0415
-                float6e2m3_to_float32,
-                float6e3m2_to_float32,
-            )
-
             data = np.frombuffer(raw_data, dtype=np.uint8)
             unpacked = _unpack_6bit(data, num_elems, dims)
-            unpacked = np.where(unpacked == 0x20, 0, unpacked).astype(np.uint8)  # noqa: PLR2004
-            if np_dtype == np.dtype("uint8"):
-                # Fallback path: upcast to float32 so callers see numeric values
-                floats = (
-                    float6e2m3_to_float32(unpacked)
-                    if tensor_dtype == onnx.TensorProto.FLOAT6E2M3
-                    else float6e3m2_to_float32(unpacked)
-                )
-                return floats.reshape(dims)
             return unpacked.view(np_dtype)
 
         return np.frombuffer(raw_data, dtype=np_dtype).reshape(dims)
