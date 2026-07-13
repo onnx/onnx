@@ -1,6 +1,6 @@
 ## PR titles
 
-PRs are squash-merged, so the **PR title becomes the commit message on `main`**. Title every PR using [Conventional Commits](https://www.conventionalcommits.org/):
+PRs are squash-merged, so the **PR title becomes the commit message on `main`**. As a starting point, agent-authored PRs should use [Conventional Commits](https://www.conventionalcommits.org/) for their title — this isn't yet a project-wide requirement for human contributors:
 
 ```
 <type>(<scope>): <description>
