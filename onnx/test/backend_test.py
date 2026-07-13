@@ -106,7 +106,7 @@ def do_enforce_test_coverage_safelist(model: ModelProto) -> bool:
 
 
 test_kwargs = {
-    # https://github.com/onnx/onnx/issues/5510 (test_mvn fails with test_backend_test.py)
+    # https://github.com/onnx/onnx/issues/5510 (test_mvn fails with backend_test.py)
     "test_mvn": {"strict_mode": False},
 }
 

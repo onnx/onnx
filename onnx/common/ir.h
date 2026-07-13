@@ -113,9 +113,9 @@ struct AttributeValue {
 
 template <typename T, AttributeKind Kind>
 struct ScalarAttributeValue final : public AttributeValue {
-  using ConstructorType = const T&;
+  using ConstructorType = T;
   using ValueType = T;
-  ScalarAttributeValue(Symbol name, ConstructorType value_) : AttributeValue(name), value_(value_) {}
+  ScalarAttributeValue(Symbol name, ValueType value_) : AttributeValue(name), value_(std::move(value_)) {}
   ValueType& value() {
     return value_;
   }
@@ -1187,42 +1187,48 @@ struct Graph final {
   friend std::ostream& operator<<(std::ostream& out, const Graph& g);
 
   void forSelfAndEachSubGraph(const std::function<void(Graph*)>& fn) {
-    fn(this);
+    forSelfAndEachSubGraphImpl(this, fn);
+  }
 
-    for (const auto& node_entry : all_nodes) {
+  void forSelfAndEachSubGraph(const std::function<void(const Graph*)>& fn) const {
+    forSelfAndEachSubGraphImpl(this, fn);
+  }
+
+  void forEachNode(const std::function<void(Node*)>& fn) {
+    forEachNodeImpl(this, fn);
+  }
+
+  void forEachNode(const std::function<void(const Node*)>& fn) const {
+    forEachNodeImpl(this, fn);
+  }
+
+ private:
+  template <typename GraphPtr, typename Fn>
+  static void forSelfAndEachSubGraphImpl(GraphPtr self, const Fn& fn) {
+    fn(self);
+    for (const auto& node_entry : self->all_nodes) {
       const Node* node = node_entry.first;
       for (const auto& attr : node->attributeNames()) {
         if (node->kindOf(attr) == AttributeKind::g) {
-          std::shared_ptr<Graph> subgraph = node->g(attr);
-          subgraph->forSelfAndEachSubGraph(fn);
+          forSelfAndEachSubGraphImpl(node->g(attr).get(), fn);
         } else if (node->kindOf(attr) == AttributeKind::gs) {
           for (const auto& subgraph : node->gs(attr)) {
-            subgraph->forSelfAndEachSubGraph(fn);
+            forSelfAndEachSubGraphImpl(subgraph.get(), fn);
           }
         }
       }
     }
   }
 
-  void forSelfAndEachSubGraph(const std::function<void(const Graph*)>& fn) const {
-    std::function<void(Graph*)> tmp_fn = [fn](Graph* graph) { fn(graph); };
-    const_cast<Graph*>(this)->forSelfAndEachSubGraph(tmp_fn);
-  }
-
-  void forEachNode(const std::function<void(Node*)>& fn) {
-    forSelfAndEachSubGraph([&fn](Graph* graph) {
-      for (Node* node : graph->nodes()) {
+  template <typename GraphPtr, typename Fn>
+  static void forEachNodeImpl(GraphPtr self, const Fn& fn) {
+    forSelfAndEachSubGraphImpl(self, [&fn](auto* graph) {
+      for (auto* node : graph->nodes()) {
         fn(node);
       }
     });
   }
 
-  void forEachNode(const std::function<void(const Node*)>& fn) const {
-    std::function<void(Node*)> tmp_fn = [fn](Node* node) { fn(node); };
-    const_cast<Graph*>(this)->forEachNode(tmp_fn);
-  }
-
- private:
   // should only be called in the constructor
   Node* initOutput(Node* p) {
     p->next() = p;

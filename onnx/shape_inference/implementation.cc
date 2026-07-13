@@ -674,7 +674,6 @@ class ShapeInferenceImplBase {
     reuse_constant_tensors = old_reuse_constant_tensors;
   }
 
- public:
   ShapeInferenceImplBase(
       GraphProto* graph, // nullptr for FunctionProto inference
       const std::unordered_map<std::string, TypeProto*>& outer_scope_value_types_by_name_in,
