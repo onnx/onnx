@@ -39,6 +39,10 @@ quality operators to ONNX specification.
 
 Before proposing a new operator, please read [the tutorial](docs/AddNewOp.md).
 
+## Reporting bugs
+
+Bugs are tracked as [GitHub issues](https://github.com/onnx/onnx/issues). Most bugs, including easily-discovered security issues, can be filed as a normal public issue — see [SECURITY.md](SECURITY.md) for the disclosure policy that applies to non-trivial security vulnerabilities.
+
 ## Contributing code
 
 You can submit a pull request (PR) with your code. The [SIG](community/sigs.md) or [Working Group](community/working-groups.md) that is responsible for the area of the project your PR touches will review it and merge once any comments are addressed.

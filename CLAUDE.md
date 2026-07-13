@@ -21,6 +21,7 @@ Before committing, pushing, filing an issue, or opening a pull request, review [
 - Match existing code patterns and conventions — read surrounding code before making changes.
 - Keep PRs focused. Do not bundle unrelated changes or refactor code outside the scope of the task.
 - New operators must follow the process in `docs/AddNewOp.md`.
+- Do not introduce new dependencies as a matter of course. If one genuinely seems necessary, it must be MIT- or Apache-2.0-licensed, and should be raised with maintainers rather than added unilaterally.
 
 ## Build
 
