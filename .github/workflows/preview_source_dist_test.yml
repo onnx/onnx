@@ -39,5 +39,5 @@ jobs:
         - name: Test preview build source distribution from PyPI
           run: |
             python -m pip install --no-binary onnx-weekly onnx-weekly
-            python -m pip install pytest ml_dtypes pillow parameterized
+            python -m pip install pytest ml_dtypes pillow
             pytest

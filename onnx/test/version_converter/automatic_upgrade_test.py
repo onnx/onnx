@@ -3,6 +3,8 @@
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
+from typing import ClassVar
+
 import automatic_conversion_test_base
 import numpy as np
 
@@ -16,9 +18,7 @@ from onnx import TensorProto, helper
 
 
 class TestAutomaticUpgrade(automatic_conversion_test_base.TestAutomaticConversion):
-    @classmethod
-    def setUpClass(cls):
-        cls.tested_ops = []
+    tested_ops: ClassVar[list] = []
 
     def _test_op_upgrade(self, op, *args, **kwargs):
         self.tested_ops.append(op)
@@ -2107,4 +2107,4 @@ class TestAutomaticUpgrade(automatic_conversion_test_base.TestAutomaticConversio
         expected_tested_ops = all_op_names - excluded_ops
 
         untested_ops = expected_tested_ops - set(self.tested_ops)
-        self.assertEqual(untested_ops, set())
+        assert untested_ops == set()

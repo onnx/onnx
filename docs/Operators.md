@@ -35118,6 +35118,34 @@ expect(
 
 
 <details>
+<summary>scatternd_max_with_element_indices</summary>
+
+```python
+node = onnx.helper.make_node(
+    "ScatterND",
+    inputs=["data", "indices", "updates"],
+    outputs=["y"],
+    reduction="max",
+)
+data = np.array([[1, 2], [3, 4]], dtype=np.float32)
+# Indices address individual elements (index rank == data rank),
+# which exercises the reduction at the element level.
+indices = np.array([[0, 0], [1, 1]], dtype=np.int64)
+updates = np.array([5, 1], dtype=np.float32)
+# Expecting output as np.array([[5, 2], [3, 4]], dtype=np.float32)
+output = scatter_nd_impl(data, indices, updates, reduction="max")
+expect(
+    node,
+    inputs=[data, indices, updates],
+    outputs=[output],
+    name="test_scatternd_max_with_element_indices",
+)
+```
+
+</details>
+
+
+<details>
 <summary>scatternd_min</summary>
 
 ```python
@@ -35155,6 +35183,32 @@ expect(
     inputs=[data, indices, updates],
     outputs=[output],
     name="test_scatternd_min",
+)
+```
+
+</details>
+
+
+<details>
+<summary>scatternd_min_with_element_indices</summary>
+
+```python
+node = onnx.helper.make_node(
+    "ScatterND",
+    inputs=["data", "indices", "updates"],
+    outputs=["y"],
+    reduction="min",
+)
+data = np.array([[1, 2], [3, 4]], dtype=np.float32)
+indices = np.array([[0, 0], [1, 1]], dtype=np.int64)
+updates = np.array([5, 1], dtype=np.float32)
+# Expecting output as np.array([[1, 2], [3, 1]], dtype=np.float32)
+output = scatter_nd_impl(data, indices, updates, reduction="min")
+expect(
+    node,
+    inputs=[data, indices, updates],
+    outputs=[output],
+    name="test_scatternd_min_with_element_indices",
 )
 ```
 

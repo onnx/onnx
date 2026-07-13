@@ -3,21 +3,14 @@
 # Copyright (c) ONNX Project Contributors
 from __future__ import annotations
 
-import unittest
-
-import parameterized
+import pytest
 
 import onnx.helper
 import onnx.shape_inference
 
 
-class NodeInferenceTest(unittest.TestCase):
-    @parameterized.parameterized.expand(
-        [
-            ("GreaterOrEqual",),
-            ("LessOrEqual",),
-        ]
-    )
+class TestNodeInference:
+    @pytest.mark.parametrize("op_type", ["GreaterOrEqual", "LessOrEqual"])
     def test_comparison_op(self, op_type):
         node = onnx.helper.make_node(op_type, ["x", "y"], ["z"])
         schema = onnx.defs.get_schema(node.op_type, 23, "")
@@ -26,9 +19,6 @@ class NodeInferenceTest(unittest.TestCase):
         result = onnx.shape_inference.infer_node_outputs(
             schema, node, {"x": xtype, "y": ytype}
         )
-        self.assertEqual(list(result.keys()), ["z"])
-        self.assertEqual(result["z"].tensor_type.elem_type, onnx.TensorProto.BOOL)
-        self.assertEqual(
-            [dim.dim_value for dim in result["z"].tensor_type.shape.dim],
-            [10, 10],
-        )
+        assert list(result.keys()) == ["z"]
+        assert result["z"].tensor_type.elem_type == onnx.TensorProto.BOOL
+        assert [dim.dim_value for dim in result["z"].tensor_type.shape.dim] == [10, 10]

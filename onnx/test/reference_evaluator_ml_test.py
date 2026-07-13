@@ -7,11 +7,10 @@ from __future__ import annotations
 import importlib
 import itertools
 import os
-import unittest
 
 import numpy as np
+import pytest
 from numpy.testing import assert_allclose
-from parameterized import parameterized
 
 import onnx
 from onnx import ONNX_ML, TensorProto, TypeProto, ValueInfoProto
@@ -49,11 +48,11 @@ def has_onnxruntime():
     return importlib.util.find_spec("onnxruntime") is not None
 
 
-class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
+class TestReferenceEvaluatorAiOnnxMl:
     @staticmethod
     def _check_ort(model, feeds, atol=0, rtol=0, equal=False, rev=False):
         if not has_onnxruntime():
-            raise unittest.SkipTest("onnxruntime not installed")
+            pytest.skip("onnxruntime not installed")
 
         from onnxruntime import InferenceSession  # noqa: PLC0415
 
@@ -112,7 +111,7 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
                     err_msg=f"Discrepancies for output {i} expected[0]={e.ravel()[0]}.",
                 )
 
-    @unittest.skipIf(not ONNX_ML, reason="onnx not compiled with ai.onnx.ml")
+    @pytest.mark.skipif(not ONNX_ML, reason="onnx not compiled with ai.onnx.ml")
     def test_binarizer(self):
         X = make_tensor_value_info("X", TensorProto.FLOAT, [None, None])
         Y = make_tensor_value_info("Y", TensorProto.FLOAT, [None, None])
@@ -129,7 +128,7 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
         got = sess.run(None, {"X": x})[0]
         assert_allclose(got, expected)
 
-    @unittest.skipIf(not ONNX_ML, reason="onnx not compiled with ai.onnx.ml")
+    @pytest.mark.skipif(not ONNX_ML, reason="onnx not compiled with ai.onnx.ml")
     def test_scaler(self):
         X = make_tensor_value_info("X", TensorProto.FLOAT, [None, None])
         Y = make_tensor_value_info("Y", TensorProto.FLOAT, [None, None])
@@ -153,7 +152,7 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
         got = sess.run(None, {"X": x})[0]
         assert_allclose(got, expected)
 
-    @unittest.skipIf(not ONNX_ML, reason="onnx not compiled with ai.onnx.ml")
+    @pytest.mark.skipif(not ONNX_ML, reason="onnx not compiled with ai.onnx.ml")
     def test_array_feature_extractor(self):
         X = make_tensor_value_info("X", TensorProto.FLOAT, [None, None])
         A = make_tensor_value_info("A", TensorProto.INT64, [None])
@@ -190,33 +189,47 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
         got = sess.run(None, feeds)[0]
         assert_allclose(got, expected)
 
-    @unittest.skipIf(not ONNX_ML, reason="onnx not compiled with ai.onnx.ml")
-    def test_normalizer(self):
+    @pytest.mark.parametrize(
+        "norm, compute",
+        [
+            ("MAX", lambda x: x / x.max(axis=1, keepdims=1)),
+            ("L1", lambda x: x / np.abs(x).sum(axis=1, keepdims=1)),
+            ("L2", lambda x: x / (x**2).sum(axis=1, keepdims=1) ** 0.5),
+        ],
+    )
+    @pytest.mark.skipif(not ONNX_ML, reason="onnx not compiled with ai.onnx.ml")
+    def test_normalizer(self, norm, compute):
         X = make_tensor_value_info("X", TensorProto.FLOAT, [None, None])
         Y = make_tensor_value_info("Y", TensorProto.FLOAT, [None, None])
         x = np.arange(12).reshape((3, 4)).astype(np.float32)
-        expected = {
-            "MAX": x / x.max(axis=1, keepdims=1),
-            "L1": x / np.abs(x).sum(axis=1, keepdims=1),
-            "L2": x / (x**2).sum(axis=1, keepdims=1) ** 0.5,
-        }
-        for norm, value in expected.items():
-            with self.subTest(norm=norm):
-                node1 = make_node(
-                    "Normalizer", ["X"], ["Y"], norm=norm, domain="ai.onnx.ml"
-                )
-                graph = make_graph([node1], "ml", [X], [Y])
-                model = make_model_gen_version(graph, opset_imports=OPSETS)
-                onnx.checker.check_model(model)
 
-                feeds = {"X": x}
-                self._check_ort(model, feeds, atol=1e-6)
-                sess = ReferenceEvaluator(model)
-                got = sess.run(None, feeds)[0]
-                assert_allclose(got, value, atol=1e-6)
+        node1 = make_node("Normalizer", ["X"], ["Y"], norm=norm, domain="ai.onnx.ml")
+        graph = make_graph([node1], "ml", [X], [Y])
+        model = make_model_gen_version(graph, opset_imports=OPSETS)
+        onnx.checker.check_model(model)
 
-    @unittest.skipIf(not ONNX_ML, reason="onnx not compiled with ai.onnx.ml")
-    def test_feature_vectorizer(self):
+        feeds = {"X": x}
+        expected = compute(x)
+        self._check_ort(model, feeds, atol=1e-6)
+        sess = ReferenceEvaluator(model)
+        got = sess.run(None, feeds)[0]
+        assert_allclose(got, expected, atol=1e-6)
+
+    @pytest.mark.parametrize(
+        "inputdimensions, expected_value",
+        [
+            ((1,), np.array([[0], [3], [6]], dtype=np.float32)),
+            ((2,), np.array([[0, 1], [3, 4], [6, 7]], dtype=np.float32)),
+            (
+                (4,),
+                np.array([[0, 1, 2, 0], [3, 4, 5, 0], [6, 7, 8, 0]], dtype=np.float32),
+            ),
+            ((1, 1), np.array([[0, 0.5], [3, 3.5], [6, 6.5]], dtype=np.float32)),
+            ((0, 1), np.array([[0.5], [3.5], [6.5]], dtype=np.float32)),
+        ],
+    )
+    @pytest.mark.skipif(not ONNX_ML, reason="onnx not compiled with ai.onnx.ml")
+    def test_feature_vectorizer(self, inputdimensions, expected_value):
         X = [
             make_tensor_value_info("X0", TensorProto.FLOAT, [None, None]),
             make_tensor_value_info("X1", TensorProto.FLOAT, [None, None]),
@@ -226,40 +239,29 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
             np.arange(9).reshape((3, 3)).astype(np.float32),
             np.arange(9).reshape((3, 3)).astype(np.float32) + 0.5,
         ]
-        expected = {
-            (1,): np.array([[0], [3], [6]], dtype=np.float32),
-            (2,): np.array([[0, 1], [3, 4], [6, 7]], dtype=np.float32),
-            (4,): np.array(
-                [[0, 1, 2, 0], [3, 4, 5, 0], [6, 7, 8, 0]], dtype=np.float32
-            ),
-            (1, 1): np.array([[0, 0.5], [3, 3.5], [6, 6.5]], dtype=np.float32),
-            (0, 1): np.array([[0.5], [3.5], [6.5]], dtype=np.float32),
-        }
-        for inputdimensions, value in expected.items():
-            att = (
-                list(inputdimensions)
-                if isinstance(inputdimensions, tuple)
-                else inputdimensions
-            )
-            with self.subTest(inputdimensions=att):
-                node1 = make_node(
-                    "FeatureVectorizer",
-                    [f"X{i}" for i in range(len(att))],
-                    ["Y"],
-                    inputdimensions=att,
-                    domain="ai.onnx.ml",
-                )
-                graph = make_graph([node1], "ml", X[: len(att)], [Y])
-                model = make_model_gen_version(graph, opset_imports=OPSETS)
-                onnx.checker.check_model(model)
+        att = (
+            list(inputdimensions)
+            if isinstance(inputdimensions, tuple)
+            else inputdimensions
+        )
+        node1 = make_node(
+            "FeatureVectorizer",
+            [f"X{i}" for i in range(len(att))],
+            ["Y"],
+            inputdimensions=att,
+            domain="ai.onnx.ml",
+        )
+        graph = make_graph([node1], "ml", X[: len(att)], [Y])
+        model = make_model_gen_version(graph, opset_imports=OPSETS)
+        onnx.checker.check_model(model)
 
-                feeds = {f"X{i}": v for i, v in enumerate(x[: len(att)])}
-                self._check_ort(model, feeds, atol=1e-6)
-                sess = ReferenceEvaluator(model)
-                got = sess.run(None, feeds)[0]
-                assert_allclose(got, value, atol=1e-6)
+        feeds = {f"X{i}": v for i, v in enumerate(x[: len(att)])}
+        self._check_ort(model, feeds, atol=1e-6)
+        sess = ReferenceEvaluator(model)
+        got = sess.run(None, feeds)[0]
+        assert_allclose(got, expected_value, atol=1e-6)
 
-    @unittest.skipIf(not ONNX_ML, reason="onnx not compiled with ai.onnx.ml")
+    @pytest.mark.skipif(not ONNX_ML, reason="onnx not compiled with ai.onnx.ml")
     def test_imputer_float(self):
         X = make_tensor_value_info("X", TensorProto.FLOAT, [None, None])
         Y = make_tensor_value_info("Y", TensorProto.FLOAT, [None, None])
@@ -281,7 +283,7 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
         got = sess.run(None, {"X": x})[0]
         assert_allclose(got, expected)
 
-    @unittest.skipIf(not ONNX_ML, reason="onnx not compiled with ai.onnx.ml")
+    @pytest.mark.skipif(not ONNX_ML, reason="onnx not compiled with ai.onnx.ml")
     def test_imputer_float_2d(self):
         X = make_tensor_value_info("X", TensorProto.FLOAT, [None, None])
         Y = make_tensor_value_info("Y", TensorProto.FLOAT, [None, None])
@@ -303,7 +305,7 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
         got = sess.run(None, {"X": x})[0]
         assert_allclose(got, expected)
 
-    @unittest.skipIf(not ONNX_ML, reason="onnx not compiled with ai.onnx.ml")
+    @pytest.mark.skipif(not ONNX_ML, reason="onnx not compiled with ai.onnx.ml")
     def test_imputer_int(self):
         X = make_tensor_value_info("X", TensorProto.INT64, [None, None])
         Y = make_tensor_value_info("Y", TensorProto.INT64, [None, None])
@@ -325,7 +327,7 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
         got = sess.run(None, {"X": x})[0]
         assert_allclose(got, expected)
 
-    @unittest.skipIf(not ONNX_ML, reason="onnx not compiled with ai.onnx.ml")
+    @pytest.mark.skipif(not ONNX_ML, reason="onnx not compiled with ai.onnx.ml")
     def test_label_encoder_float_int(self):
         X = make_tensor_value_info("X", TensorProto.FLOAT, [None, None])
         Y = make_tensor_value_info("Y", TensorProto.INT64, [None, None])
@@ -348,7 +350,7 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
         got = sess.run(None, {"X": x})[0]
         assert_allclose(got, expected)
 
-    @unittest.skipIf(not ONNX_ML, reason="onnx not compiled with ai.onnx.ml")
+    @pytest.mark.skipif(not ONNX_ML, reason="onnx not compiled with ai.onnx.ml")
     def test_label_encoder_int_string(self):
         X = make_tensor_value_info("X", TensorProto.INT64, [None, None])
         Y = make_tensor_value_info("Y", TensorProto.STRING, [None, None])
@@ -369,9 +371,9 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
         self._check_ort(model, {"X": x}, equal=True)
         sess = ReferenceEvaluator(model)
         got = sess.run(None, {"X": x})[0]
-        self.assertEqual(expected.tolist(), got.tolist())
+        assert expected.tolist() == got.tolist()
 
-    @unittest.skipIf(not ONNX_ML, reason="onnx not compiled with ai.onnx.ml")
+    @pytest.mark.skipif(not ONNX_ML, reason="onnx not compiled with ai.onnx.ml")
     def test_label_encoder_int_string_tensor_attributes(self):
         X = make_tensor_value_info("X", TensorProto.INT64, [None, None])
         Y = make_tensor_value_info("Y", TensorProto.STRING, [None, None])
@@ -398,9 +400,9 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
         self._check_ort(model, {"X": x}, equal=True)
         sess = ReferenceEvaluator(model)
         got = sess.run(None, {"X": x})[0]
-        self.assertEqual(expected.tolist(), got.tolist())
+        assert expected.tolist() == got.tolist()
 
-    @unittest.skipIf(not ONNX_ML, reason="onnx not compiled with ai.onnx.ml")
+    @pytest.mark.skipif(not ONNX_ML, reason="onnx not compiled with ai.onnx.ml")
     def test_dict_vectorizer(self):
         value_type = TypeProto()
         value_type.tensor_type.elem_type = TensorProto.INT64
@@ -429,9 +431,9 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
         # self._check_ort(model, {"X": x}, equal=True)
         sess = ReferenceEvaluator(model)
         got = sess.run(None, {"X": x})[0]
-        self.assertEqual(expected.tolist(), got.tolist())
+        assert expected.tolist() == got.tolist()
 
-    @unittest.skipIf(not ONNX_ML, reason="onnx not compiled with ai.onnx.ml")
+    @pytest.mark.skipif(not ONNX_ML, reason="onnx not compiled with ai.onnx.ml")
     def test_one_hot_encoder_int(self):
         X = make_tensor_value_info("X", TensorProto.INT64, [None, None])
         Y = make_tensor_value_info("Y", TensorProto.FLOAT, [None, None, None])
@@ -454,9 +456,9 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
         self._check_ort(model, {"X": x}, equal=True)
         sess = ReferenceEvaluator(model)
         got = sess.run(None, {"X": x})[0]
-        self.assertEqual(expected.tolist(), got.tolist())
+        assert expected.tolist() == got.tolist()
 
-    @unittest.skipIf(not ONNX_ML, reason="onnx not compiled with ai.onnx.ml")
+    @pytest.mark.skipif(not ONNX_ML, reason="onnx not compiled with ai.onnx.ml")
     def test_one_hot_encoder_string(self):
         X = make_tensor_value_info("X", TensorProto.STRING, [None, None])
         Y = make_tensor_value_info("Y", TensorProto.FLOAT, [None, None, None])
@@ -479,9 +481,9 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
         self._check_ort(model, {"X": x}, equal=True)
         sess = ReferenceEvaluator(model)
         got = sess.run(None, {"X": x})[0]
-        self.assertEqual(expected.tolist(), got.tolist())
+        assert expected.tolist() == got.tolist()
 
-    @unittest.skipIf(not ONNX_ML, reason="onnx not compiled with ai.onnx.ml")
+    @pytest.mark.skipif(not ONNX_ML, reason="onnx not compiled with ai.onnx.ml")
     def test_one_hot_encoder_zeros(self):
         X = make_tensor_value_info("X", TensorProto.INT64, [None, None])
         Y = make_tensor_value_info("Y", TensorProto.FLOAT, [None, None, None])
@@ -504,9 +506,9 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
         self._check_ort(model, {"X": x}, equal=True)
         sess = ReferenceEvaluator(model)
         got = sess.run(None, {"X": x})[0]
-        self.assertEqual(expected.tolist(), got.tolist())
+        assert expected.tolist() == got.tolist()
 
-    @unittest.skipIf(not ONNX_ML, reason="onnx not compiled with ai.onnx.ml")
+    @pytest.mark.skipif(not ONNX_ML, reason="onnx not compiled with ai.onnx.ml")
     def test_linear_regressor(self):
         X = make_tensor_value_info("X", TensorProto.FLOAT, [None, None])
         Y = make_tensor_value_info("Y", TensorProto.FLOAT, [None, None])
@@ -530,7 +532,7 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
         got = sess.run(None, {"X": x})
         assert_allclose(got[0], expected, atol=1e-6)
 
-    @unittest.skipIf(not ONNX_ML, reason="onnx not compiled with ai.onnx.ml")
+    @pytest.mark.skipif(not ONNX_ML, reason="onnx not compiled with ai.onnx.ml")
     def test_linear_regressor_2(self):
         X = make_tensor_value_info("X", TensorProto.FLOAT, [None, None])
         Y = make_tensor_value_info("Y", TensorProto.FLOAT, [None, None])
@@ -556,8 +558,11 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
         got = sess.run(None, {"X": x})
         assert_allclose(got[0], expected, atol=1e-6)
 
-    @unittest.skipIf(not ONNX_ML, reason="onnx not compiled with ai.onnx.ml")
-    def test_linear_classifier_multi(self):
+    @pytest.mark.parametrize(
+        "post", ["SOFTMAX", "NONE", "LOGISTIC", "SOFTMAX_ZERO", "PROBIT"]
+    )
+    @pytest.mark.skipif(not ONNX_ML, reason="onnx not compiled with ai.onnx.ml")
+    def test_linear_classifier_multi(self, post):
         X = make_tensor_value_info("X", TensorProto.FLOAT, [None, None])
         In = make_tensor_value_info("I", TensorProto.INT64, [None])
         Y = make_tensor_value_info("Y", TensorProto.FLOAT, [None, None])
@@ -614,38 +619,37 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
                 ),
             ],
         }
-        for post in ("SOFTMAX", "NONE", "LOGISTIC", "SOFTMAX_ZERO", "PROBIT"):
-            if post == "PROBIT":
-                coefficients = [0.058, 0.029, 0.09, 0.058, 0.029, 0.09]
-                intercepts = [0.27, 0.27, 0.05]
-            else:
-                coefficients = [-0.58, -0.29, -0.09, 0.58, 0.29, 0.09]
-                intercepts = [2.7, -2.7, 0.5]
-            with self.subTest(post_transform=post):
-                node1 = make_node(
-                    "LinearClassifier",
-                    ["X"],
-                    ["I", "Y"],
-                    domain="ai.onnx.ml",
-                    classlabels_ints=[0, 1, 2],
-                    coefficients=coefficients,
-                    intercepts=intercepts,
-                    multi_class=0,
-                    post_transform=post,
-                )
-                graph = make_graph([node1], "ml", [X], [In, Y])
-                model = make_model_gen_version(graph, opset_imports=OPSETS)
-                onnx.checker.check_model(model)
-                x = np.arange(6).reshape((-1, 2)).astype(np.float32)
-                self._check_ort(model, {"X": x}, rev=True, atol=1e-4)
-                sess = ReferenceEvaluator(model)
-                got = sess.run(None, {"X": x})
-                expected = expected_post[post]
-                assert_allclose(got[1], expected[1], atol=1e-4)
-                assert_allclose(got[0], expected[0])
+        if post == "PROBIT":
+            coefficients = [0.058, 0.029, 0.09, 0.058, 0.029, 0.09]
+            intercepts = [0.27, 0.27, 0.05]
+        else:
+            coefficients = [-0.58, -0.29, -0.09, 0.58, 0.29, 0.09]
+            intercepts = [2.7, -2.7, 0.5]
+        node1 = make_node(
+            "LinearClassifier",
+            ["X"],
+            ["I", "Y"],
+            domain="ai.onnx.ml",
+            classlabels_ints=[0, 1, 2],
+            coefficients=coefficients,
+            intercepts=intercepts,
+            multi_class=0,
+            post_transform=post,
+        )
+        graph = make_graph([node1], "ml", [X], [In, Y])
+        model = make_model_gen_version(graph, opset_imports=OPSETS)
+        onnx.checker.check_model(model)
+        x = np.arange(6).reshape((-1, 2)).astype(np.float32)
+        self._check_ort(model, {"X": x}, rev=True, atol=1e-4)
+        sess = ReferenceEvaluator(model)
+        got = sess.run(None, {"X": x})
+        expected = expected_post[post]
+        assert_allclose(got[1], expected[1], atol=1e-4)
+        assert_allclose(got[0], expected[0])
 
-    @unittest.skipIf(not ONNX_ML, reason="onnx not compiled with ai.onnx.ml")
-    def test_linear_classifier_binary(self):
+    @pytest.mark.parametrize("post", ["SOFTMAX", "NONE", "LOGISTIC", "SOFTMAX_ZERO"])
+    @pytest.mark.skipif(not ONNX_ML, reason="onnx not compiled with ai.onnx.ml")
+    def test_linear_classifier_binary(self, post):
         X = make_tensor_value_info("X", TensorProto.FLOAT, [None, None])
         In = make_tensor_value_info("I", TensorProto.INT64, [None])
         Y = make_tensor_value_info("Y", TensorProto.FLOAT, [None, None])
@@ -677,77 +681,87 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
             ],
         }
         x = np.arange(6).reshape((-1, 3)).astype(np.float32)
-        for post in ("SOFTMAX", "NONE", "LOGISTIC", "SOFTMAX_ZERO"):
-            expected = expected_post[post]
-            with self.subTest(post_transform=post):
-                node1 = make_node(
-                    "LinearClassifier",
-                    ["X"],
-                    ["I", "Y"],
-                    domain="ai.onnx.ml",
-                    classlabels_ints=[0, 1],
-                    coefficients=[-0.58, -0.29, -0.09],
-                    intercepts=[10.0],
-                    multi_class=0,
-                    post_transform=post,
-                )
-                graph = make_graph([node1], "ml", [X], [In, Y])
-                model = make_model_gen_version(graph, opset_imports=OPSETS)
-                onnx.checker.check_model(model)
-                # onnxruntime answer seems odd.
-                # self._check_ort(model, {"X": x}, rev=True)
-                sess = ReferenceEvaluator(model)
-                got = sess.run(None, {"X": x})
-                assert_allclose(got[1], expected[1], atol=1e-6)
-                assert_allclose(got[0], expected[0])
+        expected = expected_post[post]
+        node1 = make_node(
+            "LinearClassifier",
+            ["X"],
+            ["I", "Y"],
+            domain="ai.onnx.ml",
+            classlabels_ints=[0, 1],
+            coefficients=[-0.58, -0.29, -0.09],
+            intercepts=[10.0],
+            multi_class=0,
+            post_transform=post,
+        )
+        graph = make_graph([node1], "ml", [X], [In, Y])
+        model = make_model_gen_version(graph, opset_imports=OPSETS)
+        onnx.checker.check_model(model)
+        # onnxruntime answer seems odd.
+        # self._check_ort(model, {"X": x}, rev=True)
+        sess = ReferenceEvaluator(model)
+        got = sess.run(None, {"X": x})
+        assert_allclose(got[1], expected[1], atol=1e-6)
+        assert_allclose(got[0], expected[0])
 
-    @unittest.skipIf(not ONNX_ML, reason="onnx not compiled with ai.onnx.ml")
-    def test_linear_classifier_unary(self):
+    @pytest.mark.skipif(not ONNX_ML, reason="onnx not compiled with ai.onnx.ml")
+    @pytest.mark.parametrize(
+        "post, expected",
+        [
+            (
+                "NONE",
+                (
+                    np.array([1, 0], dtype=np.int64),
+                    np.array([[2.23], [-0.65]], dtype=np.float32),
+                ),
+            ),
+            (
+                "LOGISTIC",
+                (
+                    np.array([1, 0], dtype=np.int64),
+                    np.array([[0.902911], [0.34299]], dtype=np.float32),
+                ),
+            ),
+            (
+                "SOFTMAX",
+                (
+                    np.array([1, 1], dtype=np.int64),
+                    np.array([[1.0], [1.0]], dtype=np.float32),
+                ),
+            ),
+            (
+                "SOFTMAX_ZERO",
+                (
+                    np.array([1, 1], dtype=np.int64),
+                    np.array([[1.0], [1.0]], dtype=np.float32),
+                ),
+            ),
+        ],
+    )
+    def test_linear_classifier_unary(self, post, expected):
         X = make_tensor_value_info("X", TensorProto.FLOAT, [None, None])
         In = make_tensor_value_info("I", TensorProto.INT64, [None])
         Y = make_tensor_value_info("Y", TensorProto.FLOAT, [None, None])
-        expected_post = {
-            "NONE": [
-                np.array([1, 0], dtype=np.int64),
-                np.array([[2.23], [-0.65]], dtype=np.float32),
-            ],
-            "LOGISTIC": [
-                np.array([1, 0], dtype=np.int64),
-                np.array([[0.902911], [0.34299]], dtype=np.float32),
-            ],
-            "SOFTMAX": [
-                np.array([1, 1], dtype=np.int64),
-                np.array([[1.0], [1.0]], dtype=np.float32),
-            ],
-            "SOFTMAX_ZERO": [
-                np.array([1, 1], dtype=np.int64),
-                np.array([[1.0], [1.0]], dtype=np.float32),
-            ],
-        }
         x = np.arange(6).reshape((-1, 3)).astype(np.float32)
-        for post in ("NONE", "LOGISTIC", "SOFTMAX_ZERO", "SOFTMAX"):
-            expected = expected_post[post]
-            with self.subTest(post_transform=post):
-                node1 = make_node(
-                    "LinearClassifier",
-                    ["X"],
-                    ["I", "Y"],
-                    domain="ai.onnx.ml",
-                    classlabels_ints=[1],
-                    coefficients=[-0.58, -0.29, -0.09],
-                    intercepts=[2.7],
-                    multi_class=0,
-                    post_transform=post,
-                )
-                graph = make_graph([node1], "ml", [X], [In, Y])
-                model = make_model_gen_version(graph, opset_imports=OPSETS)
-                onnx.checker.check_model(model)
-                # onnxruntime answer seems odd.
-                # self._check_ort(model, {"X": x}, rev=True)
-                sess = ReferenceEvaluator(model)
-                got = sess.run(None, {"X": x})
-                assert_allclose(got[1], expected[1], atol=1e-6)
-                assert_allclose(got[0], expected[0])
+        node1 = make_node(
+            "LinearClassifier",
+            ["X"],
+            ["I", "Y"],
+            domain="ai.onnx.ml",
+            classlabels_ints=[1],
+            coefficients=[-0.58, -0.29, -0.09],
+            intercepts=[2.7],
+            multi_class=0,
+            post_transform=post,
+        )
+        graph = make_graph([node1], "ml", [X], [In, Y])
+        model = make_model_gen_version(graph, opset_imports=OPSETS)
+        onnx.checker.check_model(model)
+        # onnxruntime answer seems odd.
+        # self._check_ort(model, {"X": x}, rev=True)
+        sess = ReferenceEvaluator(model)
+        got = sess.run(None, {"X": x})
+        assert_allclose(got[1], expected[1], atol=1e-6)
+        assert_allclose(got[0], expected[0])
 
     @staticmethod
     def _get_test_tree_ensemble_opset_latest(
@@ -893,7 +907,8 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
         onnx.checker.check_model(model)
         return model
 
-    @parameterized.expand(
+    @pytest.mark.parametrize(
+        "aggregate_function, expected_result, opset5",
         tuple(
             itertools.chain.from_iterable(
                 (
@@ -926,9 +941,9 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
                 )
                 for opset5 in [True, False]
             )
-        )
+        ),
     )
-    @unittest.skipIf(not ONNX_ML, reason="onnx not compiled with ai.onnx.ml")
+    @pytest.mark.skipif(not ONNX_ML, reason="onnx not compiled with ai.onnx.ml")
     def test_tree_ensemble_regressor_aggregation_functions(
         self, aggregate_function, expected_result, opset5
     ):
@@ -945,7 +960,8 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
         (actual,) = sess.run(None, {"X": x})
         assert_allclose(actual, expected_result, atol=1e-6)
 
-    @parameterized.expand(
+    @pytest.mark.parametrize(
+        "rule, expected, opset5",
         tuple(
             itertools.chain.from_iterable(
                 (
@@ -988,9 +1004,9 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
                 )
                 for opset5 in [True, False]
             )
-        )
+        ),
     )
-    @unittest.skipIf(not ONNX_ML, reason="onnx not compiled with ai.onnx.ml")
+    @pytest.mark.skipif(not ONNX_ML, reason="onnx not compiled with ai.onnx.ml")
     def test_tree_ensemble_regressor_rule(self, rule, expected, opset5):
         x = np.arange(9).reshape((-1, 3)).astype(np.float32) / 10 - 0.5
         model_factory = (
@@ -1005,7 +1021,7 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
         (actual,) = sess.run(None, {"X": x})
         assert_allclose(actual, expected, atol=1e-6)
 
-    @unittest.skipIf(not ONNX_ML, reason="onnx not compiled with ai.onnx.ml")
+    @pytest.mark.skipif(not ONNX_ML, reason="onnx not compiled with ai.onnx.ml")
     def test_tree_ensemble_regressor_2_targets_opset3(self):
         X = make_tensor_value_info("X", TensorProto.FLOAT, [None, None])
         Y = make_tensor_value_info("Y", TensorProto.FLOAT, [None, None])
@@ -1105,7 +1121,7 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
         got = sess.run(None, {"X": x})
         assert_allclose(got[0], expected, atol=1e-6)
 
-    @unittest.skipIf(not ONNX_ML, reason="onnx not compiled with ai.onnx.ml")
+    @pytest.mark.skipif(not ONNX_ML, reason="onnx not compiled with ai.onnx.ml")
     def test_tree_ensemble_regressor_missing_opset3(self):
         x = np.arange(9).reshape((-1, 3)).astype(np.float32) / 10 - 0.5
         x[2, 0] = 5
@@ -1116,12 +1132,10 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
         sess = ReferenceEvaluator(model)
         got = sess.run(None, {"X": x})
         assert_allclose(got[0], expected, atol=1e-6)
-        self.assertIn("op_type=TreeEnsembleRegressor", str(sess.rt_nodes_[0]))
+        assert "op_type=TreeEnsembleRegressor" in str(sess.rt_nodes_[0])
 
-    @unittest.skipIf(not ONNX_ML, reason="onnx not compiled with ai.onnx.ml")
-    @parameterized.expand(
-        [(input_type,) for input_type in [TensorProto.FLOAT, TensorProto.DOUBLE]]
-    )
+    @pytest.mark.skipif(not ONNX_ML, reason="onnx not compiled with ai.onnx.ml")
+    @pytest.mark.parametrize("input_type", [TensorProto.FLOAT, TensorProto.DOUBLE])
     def test_tree_ensemble_missing_opset5(self, input_type):
         model = self._get_test_tree_ensemble_opset_latest(
             AggregationFunction.SUM, Mode.LEQ, True, input_type
@@ -1135,7 +1149,7 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
         (actual,) = session.run(None, {"X": x})
         assert_allclose(actual, expected, atol=1e-6)
 
-    @unittest.skipIf(not ONNX_ML, reason="onnx not compiled with ai.onnx.ml")
+    @pytest.mark.skipif(not ONNX_ML, reason="onnx not compiled with ai.onnx.ml")
     def test_tree_ensemble_regressor_missing_opset5_float16(self):
         model = self._get_test_tree_ensemble_opset_latest(
             AggregationFunction.SUM, Mode.LEQ, False, TensorProto.FLOAT16
@@ -1149,7 +1163,7 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
         (actual,) = session.run(None, {"X": x})
         assert_allclose(actual, expected, atol=1e-6)
 
-    @unittest.skipIf(not ONNX_ML, reason="onnx not compiled with ai.onnx.ml")
+    @pytest.mark.skipif(not ONNX_ML, reason="onnx not compiled with ai.onnx.ml")
     def test_single_tree_ensemble(self):
         X = make_tensor_value_info("X", TensorProto.DOUBLE, [None, None])
         Y = make_tensor_value_info("Y", TensorProto.DOUBLE, [None, None])
@@ -1212,7 +1226,7 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
             output, np.array([[5.23, 0], [5.23, 0], [0, 12.12]], dtype=np.float64)
         )
 
-    @unittest.skipIf(not ONNX_ML, reason="onnx not compiled with ai.onnx.ml")
+    @pytest.mark.skipif(not ONNX_ML, reason="onnx not compiled with ai.onnx.ml")
     def test_tree_ensemble_regressor_set_membership_opset5(self):
         X = make_tensor_value_info("X", TensorProto.FLOAT, [None, None])
         Y = make_tensor_value_info("Y", TensorProto.FLOAT, [None, None])
@@ -1329,34 +1343,40 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
         onnx.checker.check_model(model)
         return model
 
-    @unittest.skipIf(not ONNX_ML, reason="onnx not compiled with ai.onnx.ml")
-    def test_svm_regressor(self):
-        x = np.arange(9).reshape((-1, 3)).astype(np.float32) / 10 - 0.5
-        expected_kernel = {
-            "LINEAR": (
+    @pytest.mark.parametrize(
+        "kernel, params, expected",
+        [
+            (
+                "LINEAR",
                 [0.42438405752182007, 0.0, 3.0],
                 np.array([[-0.468206], [0.227487], [0.92318]], dtype=np.float32),
             ),
-            "POLY": (
+            (
+                "POLY",
                 [0.3426632285118103, 0.0, 3.0],
                 np.array([[0.527084], [0.543578], [0.546506]], dtype=np.float32),
             ),
-            "RBF": (
+            (
+                "RBF",
                 [0.30286383628845215, 0.0, 3.0],
                 np.array([[0.295655], [0.477876], [0.695292]], dtype=np.float32),
             ),
-            "SIGMOID": (
+            (
+                "SIGMOID",
                 [0.30682486295700073, 0.0, 3.0],
                 np.array([[0.239304], [0.448929], [0.661689]], dtype=np.float32),
             ),
-        }
-        for kernel, (params, expected) in expected_kernel.items():
-            with self.subTest(kernel=kernel):
-                model = self._get_test_svm_regressor(kernel, params)
-                self._check_ort(model, {"X": x}, atol=1e-6)
-                sess = ReferenceEvaluator(model)
-                got = sess.run(None, {"X": x})
-                assert_allclose(got[0], expected, atol=1e-6)
+        ],
+    )
+    @pytest.mark.skipif(not ONNX_ML, reason="onnx not compiled with ai.onnx.ml")
+    def test_svm_regressor(self, kernel, params, expected):
+        x = np.arange(9).reshape((-1, 3)).astype(np.float32) / 10 - 0.5
+
+        model = self._get_test_svm_regressor(kernel, params)
+        self._check_ort(model, {"X": x}, atol=1e-6)
+        sess = ReferenceEvaluator(model)
+        (got,) = sess.run(None, {"X": x})
+        assert_allclose(got, expected, atol=1e-6)
 
     @staticmethod
     def _get_test_tree_ensemble_classifier_binary(post_transform):
@@ -1429,55 +1449,71 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
         onnx.checker.check_model(model)
         return model
 
-    @unittest.skipIf(not ONNX_ML, reason="onnx not compiled with ai.onnx.ml")
-    def test_tree_ensemble_classifier_binary(self):
+    @pytest.mark.parametrize(
+        "post, expected",
+        [
+            (
+                "NONE",
+                (
+                    np.array([0, 1, 1], dtype=np.int64),
+                    np.array(
+                        [[1.0, 0.0], [0.394958, 0.605042], [0.394958, 0.605042]],
+                        dtype=np.float32,
+                    ),
+                ),
+            ),
+            (
+                "LOGISTIC",
+                (
+                    np.array([0, 1, 1], dtype=np.int64),
+                    np.array(
+                        [[0.5, 0.5], [0.353191, 0.646809], [0.353191, 0.646809]],
+                        dtype=np.float32,
+                    ),
+                ),
+            ),
+            (
+                "SOFTMAX",
+                (
+                    np.array([0, 1, 1], dtype=np.int64),
+                    np.array(
+                        [[0.5, 0.5], [0.229686, 0.770314], [0.229686, 0.770314]],
+                        dtype=np.float32,
+                    ),
+                ),
+            ),
+            (
+                "SOFTMAX_ZERO",
+                (
+                    np.array([0, 1, 1], dtype=np.int64),
+                    np.array(
+                        [[0.5, 0.5], [0.229686, 0.770314], [0.229686, 0.770314]],
+                        dtype=np.float32,
+                    ),
+                ),
+            ),
+            (
+                "PROBIT",
+                (
+                    np.array([0, 1, 1], dtype=np.int64),
+                    np.array(
+                        [[0.0, 0.0], [-0.266426, 0.266426], [-0.266426, 0.266426]],
+                        dtype=np.float32,
+                    ),
+                ),
+            ),
+        ],
+    )
+    @pytest.mark.skipif(not ONNX_ML, reason="onnx not compiled with ai.onnx.ml")
+    def test_tree_ensemble_classifier_binary(self, post, expected):
         x = (np.arange(9).reshape((-1, 3)) - 5).astype(np.float32) / 5
-        expected_post = {
-            "NONE": (
-                np.array([0, 1, 1], dtype=np.int64),
-                np.array(
-                    [[1.0, 0.0], [0.394958, 0.605042], [0.394958, 0.605042]],
-                    dtype=np.float32,
-                ),
-            ),
-            "LOGISTIC": (
-                np.array([0, 1, 1], dtype=np.int64),
-                np.array(
-                    [[0.5, 0.5], [0.353191, 0.646809], [0.353191, 0.646809]],
-                    dtype=np.float32,
-                ),
-            ),
-            "SOFTMAX": (
-                np.array([0, 1, 1], dtype=np.int64),
-                np.array(
-                    [[0.5, 0.5], [0.229686, 0.770314], [0.229686, 0.770314]],
-                    dtype=np.float32,
-                ),
-            ),
-            "SOFTMAX_ZERO": (
-                np.array([0, 1, 1], dtype=np.int64),
-                np.array(
-                    [[0.5, 0.5], [0.229686, 0.770314], [0.229686, 0.770314]],
-                    dtype=np.float32,
-                ),
-            ),
-            "PROBIT": (
-                np.array([0, 1, 1], dtype=np.int64),
-                np.array(
-                    [[0.0, 0.0], [-0.266426, 0.266426], [-0.266426, 0.266426]],
-                    dtype=np.float32,
-                ),
-            ),
-        }
-        for post, expected in expected_post.items():
-            with self.subTest(post_transform=post):
-                model = self._get_test_tree_ensemble_classifier_binary(post)
-                if post == "NONE":
-                    self._check_ort(model, {"X": x})
-                sess = ReferenceEvaluator(model)
-                got = sess.run(None, {"X": x})
-                assert_allclose(got[1], expected[1], atol=1e-6)
-                assert_allclose(got[0], expected[0])
+        model = self._get_test_tree_ensemble_classifier_binary(post)
+        if post == "NONE":
+            self._check_ort(model, {"X": x})
+        sess = ReferenceEvaluator(model)
+        got = sess.run(None, {"X": x})
+        assert_allclose(got[1], expected[1], atol=1e-6)
+        assert_allclose(got[0], expected[0])
 
     @staticmethod
     def _get_test_tree_ensemble_classifier_multi(post_transform):
@@ -1557,75 +1593,91 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
         onnx.checker.check_model(model)
         return model
 
-    @unittest.skipIf(not ONNX_ML, reason="onnx not compiled with ai.onnx.ml")
-    def test_tree_ensemble_classifier_multi(self):
+    @pytest.mark.parametrize(
+        "post, expected",
+        [
+            (
+                "NONE",
+                (
+                    np.array([0, 0, 1], dtype=np.int64),
+                    np.array(
+                        [
+                            [0.916667, 0.0, 0.083333],
+                            [0.569608, 0.191176, 0.239216],
+                            [0.302941, 0.431176, 0.265882],
+                        ],
+                        dtype=np.float32,
+                    ),
+                ),
+            ),
+            (
+                "LOGISTIC",
+                (
+                    np.array([0, 0, 1], dtype=np.int64),
+                    np.array(
+                        [
+                            [0.714362, 0.5, 0.520821],
+                            [0.638673, 0.547649, 0.55952],
+                            [0.575161, 0.606155, 0.566082],
+                        ],
+                        dtype=np.float32,
+                    ),
+                ),
+            ),
+            (
+                "SOFTMAX",
+                (
+                    np.array([0, 0, 1], dtype=np.int64),
+                    np.array(
+                        [
+                            [0.545123, 0.217967, 0.23691],
+                            [0.416047, 0.284965, 0.298988],
+                            [0.322535, 0.366664, 0.310801],
+                        ],
+                        dtype=np.float32,
+                    ),
+                ),
+            ),
+            (
+                "SOFTMAX_ZERO",
+                (
+                    np.array([0, 0, 1], dtype=np.int64),
+                    np.array(
+                        [
+                            [0.697059, 0.0, 0.302941],
+                            [0.416047, 0.284965, 0.298988],
+                            [0.322535, 0.366664, 0.310801],
+                        ],
+                        dtype=np.float32,
+                    ),
+                ),
+            ),
+            (
+                "PROBIT",
+                (
+                    np.array([0, 0, 1], dtype=np.int64),
+                    np.array(
+                        [
+                            [1.383104, 0, -1.383105],
+                            [0.175378, -0.873713, -0.708922],
+                            [-0.516003, -0.173382, -0.625385],
+                        ],
+                        dtype=np.float32,
+                    ),
+                ),
+            ),
+        ],
+    )
+    @pytest.mark.skipif(not ONNX_ML, reason="onnx not compiled with ai.onnx.ml")
+    def test_tree_ensemble_classifier_multi(self, post, expected):
         x = (np.arange(9).reshape((-1, 3)) - 5).astype(np.float32) / 5
-        expected_post = {
-            "NONE": (
-                np.array([0, 0, 1], dtype=np.int64),
-                np.array(
-                    [
-                        [0.916667, 0.0, 0.083333],
-                        [0.569608, 0.191176, 0.239216],
-                        [0.302941, 0.431176, 0.265882],
-                    ],
-                    dtype=np.float32,
-                ),
-            ),
-            "LOGISTIC": (
-                np.array([0, 0, 1], dtype=np.int64),
-                np.array(
-                    [
-                        [0.714362, 0.5, 0.520821],
-                        [0.638673, 0.547649, 0.55952],
-                        [0.575161, 0.606155, 0.566082],
-                    ],
-                    dtype=np.float32,
-                ),
-            ),
-            "SOFTMAX": (
-                np.array([0, 0, 1], dtype=np.int64),
-                np.array(
-                    [
-                        [0.545123, 0.217967, 0.23691],
-                        [0.416047, 0.284965, 0.298988],
-                        [0.322535, 0.366664, 0.310801],
-                    ],
-                    dtype=np.float32,
-                ),
-            ),
-            "SOFTMAX_ZERO": (
-                np.array([0, 0, 1], dtype=np.int64),
-                np.array(
-                    [
-                        [0.697059, 0.0, 0.302941],
-                        [0.416047, 0.284965, 0.298988],
-                        [0.322535, 0.366664, 0.310801],
-                    ],
-                    dtype=np.float32,
-                ),
-            ),
-            "PROBIT": (
-                np.array([0, 0, 1], dtype=np.int64),
-                np.array(
-                    [
-                        [1.383104, 0, -1.383105],
-                        [0.175378, -0.873713, -0.708922],
-                        [-0.516003, -0.173382, -0.625385],
-                    ],
-                    dtype=np.float32,
-                ),
-            ),
-        }
-        for post, expected in expected_post.items():
-            with self.subTest(post_transform=post):
-                model = self._get_test_tree_ensemble_classifier_multi(post)
-                if post != "PROBIT":
-                    self._check_ort(model, {"X": x}, atol=1e-5)
-                sess = ReferenceEvaluator(model)
-                got = sess.run(None, {"X": x})
-                assert_allclose(got[1], expected[1], atol=1e-6)
-                assert_allclose(got[0], expected[0])
+        model = self._get_test_tree_ensemble_classifier_multi(post)
+        if post != "PROBIT":
+            self._check_ort(model, {"X": x}, atol=1e-5)
+        sess = ReferenceEvaluator(model)
+        got = sess.run(None, {"X": x})
+        assert_allclose(got[1], expected[1], atol=1e-6)
+        assert_allclose(got[0], expected[0])
 
     @staticmethod
     def _get_test_svm_classifier_binary(post_transform, probability=True, linear=False):
@@ -1706,246 +1758,337 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
         onnx.checker.check_model(model)
         return model
 
-    @unittest.skipIf(not ONNX_ML, reason="onnx not compiled with ai.onnx.ml")
-    def test_svm_classifier_binary(self):
+    @pytest.mark.parametrize(
+        "post, expected",
+        [
+            (
+                "NONE",
+                (
+                    np.array([0, 1, 1], dtype=np.int64),
+                    np.array(
+                        [
+                            [0.993287, 0.006713],
+                            [0.469401, 0.530599],
+                            [0.014997, 0.985003],
+                        ],
+                        dtype=np.float32,
+                    ),
+                ),
+            ),
+            (
+                "LOGISTIC",
+                (
+                    np.array([0, 1, 1], dtype=np.int64),
+                    np.array(
+                        [
+                            [0.729737, 0.501678],
+                            [0.615242, 0.629623],
+                            [0.503749, 0.7281],
+                        ],
+                        dtype=np.float32,
+                    ),
+                ),
+            ),
+            (
+                "SOFTMAX",
+                (
+                    np.array([0, 1, 1], dtype=np.int64),
+                    np.array(
+                        [
+                            [0.728411, 0.271589],
+                            [0.484705, 0.515295],
+                            [0.274879, 0.725121],
+                        ],
+                        dtype=np.float32,
+                    ),
+                ),
+            ),
+            (
+                "SOFTMAX_ZERO",
+                (
+                    np.array([0, 1, 1], dtype=np.int64),
+                    np.array(
+                        [
+                            [0.728411, 0.271589],
+                            [0.484705, 0.515295],
+                            [0.274879, 0.725121],
+                        ],
+                        dtype=np.float32,
+                    ),
+                ),
+            ),
+            (
+                "PROBIT",
+                (
+                    np.array([0, 1, 1], dtype=np.int64),
+                    np.array(
+                        [
+                            [2.469393, -2.469391],
+                            [-0.076776, 0.076776],
+                            [-2.16853, 2.16853],
+                        ],
+                        dtype=np.float32,
+                    ),
+                ),
+            ),
+        ],
+    )
+    @pytest.mark.skipif(not ONNX_ML, reason="onnx not compiled with ai.onnx.ml")
+    def test_svm_classifier_binary(self, post, expected):
         x = (np.arange(9).reshape((-1, 3)) - 5).astype(np.float32) / 5
-        expected_post = {
-            "NONE": (
-                np.array([0, 1, 1], dtype=np.int64),
-                np.array(
-                    [[0.993287, 0.006713], [0.469401, 0.530599], [0.014997, 0.985003]],
-                    dtype=np.float32,
-                ),
-            ),
-            "LOGISTIC": (
-                np.array([0, 1, 1], dtype=np.int64),
-                np.array(
-                    [[0.729737, 0.501678], [0.615242, 0.629623], [0.503749, 0.7281]],
-                    dtype=np.float32,
-                ),
-            ),
-            "SOFTMAX": (
-                np.array([0, 1, 1], dtype=np.int64),
-                np.array(
-                    [[0.728411, 0.271589], [0.484705, 0.515295], [0.274879, 0.725121]],
-                    dtype=np.float32,
-                ),
-            ),
-            "SOFTMAX_ZERO": (
-                np.array([0, 1, 1], dtype=np.int64),
-                np.array(
-                    [[0.728411, 0.271589], [0.484705, 0.515295], [0.274879, 0.725121]],
-                    dtype=np.float32,
-                ),
-            ),
-            "PROBIT": (
-                np.array([0, 1, 1], dtype=np.int64),
-                np.array(
-                    [[2.469393, -2.469391], [-0.076776, 0.076776], [-2.16853, 2.16853]],
-                    dtype=np.float32,
-                ),
-            ),
-        }
-        for post, expected in expected_post.items():
-            with self.subTest(post_transform=post):
-                model = self._get_test_svm_classifier_binary(post)
-                self._check_ort(model, {"X": x}, rev=True, atol=1e-5)
-                sess = ReferenceEvaluator(model)
-                got = sess.run(None, {"X": x})
-                assert_allclose(got[1], expected[1], atol=1e-5)
-                assert_allclose(got[0], expected[0])
+        model = self._get_test_svm_classifier_binary(post)
+        self._check_ort(model, {"X": x}, rev=True, atol=1e-5)
+        sess = ReferenceEvaluator(model)
+        got = sess.run(None, {"X": x})
+        assert_allclose(got[1], expected[1], atol=1e-5)
+        assert_allclose(got[0], expected[0])
 
-    @unittest.skipIf(not ONNX_ML, reason="onnx not compiled with ai.onnx.ml")
-    def test_svm_classifier_binary_noprob(self):
+    @pytest.mark.parametrize(
+        "post, expected",
+        [
+            (
+                "NONE",
+                (
+                    np.array([0, 1, 1], dtype=np.int64),
+                    np.array(
+                        [
+                            [-0.986073, 0.986073],
+                            [0.011387, -0.011387],
+                            [0.801808, -0.801808],
+                        ],
+                        dtype=np.float32,
+                    ),
+                ),
+            ),
+            (
+                "LOGISTIC",
+                (
+                    np.array([0, 1, 1], dtype=np.int64),
+                    np.array(
+                        [
+                            [0.271688, 0.728312],
+                            [0.502847, 0.497153],
+                            [0.690361, 0.309639],
+                        ],
+                        dtype=np.float32,
+                    ),
+                ),
+            ),
+            (
+                "SOFTMAX",
+                (
+                    np.array([0, 1, 1], dtype=np.int64),
+                    np.array(
+                        [
+                            [0.122158, 0.877842],
+                            [0.505693, 0.494307],
+                            [0.832523, 0.167477],
+                        ],
+                        dtype=np.float32,
+                    ),
+                ),
+            ),
+            (
+                "SOFTMAX_ZERO",
+                (
+                    np.array([0, 1, 1], dtype=np.int64),
+                    np.array(
+                        [
+                            [0.122158, 0.877842],
+                            [0.505693, 0.494307],
+                            [0.832523, 0.167477],
+                        ],
+                        dtype=np.float32,
+                    ),
+                ),
+            ),
+        ],
+    )
+    @pytest.mark.skipif(not ONNX_ML, reason="onnx not compiled with ai.onnx.ml")
+    def test_svm_classifier_binary_noprob(self, post, expected):
         x = (np.arange(9).reshape((-1, 3)) - 5).astype(np.float32) / 5
-        expected_post = {
-            "NONE": (
-                np.array([0, 1, 1], dtype=np.int64),
-                np.array(
-                    [
-                        [-0.986073, 0.986073],
-                        [0.011387, -0.011387],
-                        [0.801808, -0.801808],
-                    ],
-                    dtype=np.float32,
-                ),
-            ),
-            "LOGISTIC": (
-                np.array([0, 1, 1], dtype=np.int64),
-                np.array(
-                    [[0.271688, 0.728312], [0.502847, 0.497153], [0.690361, 0.309639]],
-                    dtype=np.float32,
-                ),
-            ),
-            "SOFTMAX": (
-                np.array([0, 1, 1], dtype=np.int64),
-                np.array(
-                    [[0.122158, 0.877842], [0.505693, 0.494307], [0.832523, 0.167477]],
-                    dtype=np.float32,
-                ),
-            ),
-            "SOFTMAX_ZERO": (
-                np.array([0, 1, 1], dtype=np.int64),
-                np.array(
-                    [[0.122158, 0.877842], [0.505693, 0.494307], [0.832523, 0.167477]],
-                    dtype=np.float32,
-                ),
-            ),
-        }
-        for post, expected in expected_post.items():
-            with self.subTest(post_transform=post):
-                model = self._get_test_svm_classifier_binary(post, probability=False)
-                if post not in {"LOGISTIC", "SOFTMAX", "SOFTMAX_ZERO", "PROBIT"}:
-                    self._check_ort(model, {"X": x}, rev=True, atol=1e-5)
-                sess = ReferenceEvaluator(model)
-                got = sess.run(None, {"X": x})
-                assert_allclose(got[1], expected[1], atol=1e-6)
-                assert_allclose(got[0], expected[0])
+        model = self._get_test_svm_classifier_binary(post, probability=False)
+        if post not in {"LOGISTIC", "SOFTMAX", "SOFTMAX_ZERO", "PROBIT"}:
+            self._check_ort(model, {"X": x}, rev=True, atol=1e-5)
+        sess = ReferenceEvaluator(model)
+        got = sess.run(None, {"X": x})
+        assert_allclose(got[1], expected[1], atol=1e-6)
+        assert_allclose(got[0], expected[0])
 
-    @unittest.skipIf(not ONNX_ML, reason="onnx not compiled with ai.onnx.ml")
-    def test_svm_classifier_noprob_linear(self):
+    @pytest.mark.parametrize(
+        "post, expected",
+        [
+            (
+                "NONE",
+                (
+                    np.array([2, 3, 0], dtype=np.int64),
+                    np.array(
+                        [
+                            [-0.118086, -0.456685, 0.415783, 0.334506],
+                            [-0.061364, -0.231444, 0.073899, 0.091242],
+                            [-0.004642, -0.006203, -0.267985, -0.152023],
+                        ],
+                        dtype=np.float32,
+                    ),
+                ),
+            ),
+            (
+                "LOGISTIC",
+                (
+                    np.array([2, 3, 0], dtype=np.int64),
+                    np.array(
+                        [
+                            [0.470513, 0.387773, 0.602474, 0.582855],
+                            [0.484664, 0.442396, 0.518466, 0.522795],
+                            [0.498839, 0.498449, 0.433402, 0.462067],
+                        ],
+                        dtype=np.float32,
+                    ),
+                ),
+            ),
+            (
+                "SOFTMAX",
+                (
+                    np.array([2, 3, 0], dtype=np.int64),
+                    np.array(
+                        [
+                            [0.200374, 0.14282, 0.341741, 0.315065],
+                            [0.240772, 0.203115, 0.275645, 0.280467],
+                            [0.275491, 0.275061, 0.211709, 0.237739],
+                        ],
+                        dtype=np.float32,
+                    ),
+                ),
+            ),
+            (
+                "SOFTMAX_ZERO",
+                (
+                    np.array([2, 3, 0], dtype=np.int64),
+                    np.array(
+                        [
+                            [0.200374, 0.14282, 0.341741, 0.315065],
+                            [0.240772, 0.203115, 0.275645, 0.280467],
+                            [0.275491, 0.275061, 0.211709, 0.237739],
+                        ],
+                        dtype=np.float32,
+                    ),
+                ),
+            ),
+            (
+                "PROBIT",
+                (
+                    np.array([2, 3, 0], dtype=np.int64),
+                    np.array(
+                        [
+                            [np.nan, np.nan, -0.212698, -0.427529],
+                            [np.nan, np.nan, -1.447414, -1.333286],
+                            [np.nan, np.nan, np.nan, np.nan],
+                        ],
+                        dtype=np.float32,
+                    ),
+                ),
+            ),
+        ],
+    )
+    @pytest.mark.skipif(not ONNX_ML, reason="onnx not compiled with ai.onnx.ml")
+    def test_svm_classifier_noprob_linear(self, post, expected):
         x = (np.arange(9).reshape((-1, 3)) - 5).astype(np.float32) / 5
-        nan = np.nan
-        expected_post = {
-            "NONE": (
-                np.array([2, 3, 0], dtype=np.int64),
-                np.array(
-                    [
-                        [-0.118086, -0.456685, 0.415783, 0.334506],
-                        [-0.061364, -0.231444, 0.073899, 0.091242],
-                        [-0.004642, -0.006203, -0.267985, -0.152023],
-                    ],
-                    dtype=np.float32,
-                ),
-            ),
-            "LOGISTIC": (
-                np.array([2, 3, 0], dtype=np.int64),
-                np.array(
-                    [
-                        [0.470513, 0.387773, 0.602474, 0.582855],
-                        [0.484664, 0.442396, 0.518466, 0.522795],
-                        [0.498839, 0.498449, 0.433402, 0.462067],
-                    ],
-                    dtype=np.float32,
-                ),
-            ),
-            "SOFTMAX": (
-                np.array([2, 3, 0], dtype=np.int64),
-                np.array(
-                    [
-                        [0.200374, 0.14282, 0.341741, 0.315065],
-                        [0.240772, 0.203115, 0.275645, 0.280467],
-                        [0.275491, 0.275061, 0.211709, 0.237739],
-                    ],
-                    dtype=np.float32,
-                ),
-            ),
-            "SOFTMAX_ZERO": (
-                np.array([2, 3, 0], dtype=np.int64),
-                np.array(
-                    [
-                        [0.200374, 0.14282, 0.341741, 0.315065],
-                        [0.240772, 0.203115, 0.275645, 0.280467],
-                        [0.275491, 0.275061, 0.211709, 0.237739],
-                    ],
-                    dtype=np.float32,
-                ),
-            ),
-            "PROBIT": (
-                np.array([2, 3, 0], dtype=np.int64),
-                np.array(
-                    [
-                        [nan, nan, -0.212698, -0.427529],
-                        [nan, nan, -1.447414, -1.333286],
-                        [nan, nan, nan, nan],
-                    ],
-                    dtype=np.float32,
-                ),
-            ),
-        }
-        for post, expected in expected_post.items():
-            with self.subTest(post_transform=post):
-                model = self._get_test_svm_classifier_binary(
-                    post, probability=False, linear=True
-                )
-                self._check_ort(model, {"X": x}, rev=True, atol=1e-5)
-                sess = ReferenceEvaluator(model)
-                got = sess.run(None, {"X": x})
-                assert_allclose(got[1], expected[1], atol=1e-6)
-                assert_allclose(got[0], expected[0])
+        model = self._get_test_svm_classifier_binary(
+            post, probability=False, linear=True
+        )
+        self._check_ort(model, {"X": x}, rev=True, atol=1e-5)
+        sess = ReferenceEvaluator(model)
+        got = sess.run(None, {"X": x})
+        assert_allclose(got[1], expected[1], atol=1e-6)
+        assert_allclose(got[0], expected[0])
 
-    @unittest.skipIf(not ONNX_ML, reason="onnx not compiled with ai.onnx.ml")
-    def test_svm_classifier_linear(self):
+    @pytest.mark.parametrize(
+        "post, expected",
+        [
+            (
+                "NONE",
+                (
+                    np.array([2, 3, 0], dtype=np.int64),
+                    np.array(
+                        [
+                            [-0.118086, -0.456685, 0.415783, 0.334506],
+                            [-0.061364, -0.231444, 0.073899, 0.091242],
+                            [-0.004642, -0.006203, -0.267985, -0.152023],
+                        ],
+                        dtype=np.float32,
+                    ),
+                ),
+            ),
+            (
+                "LOGISTIC",
+                (
+                    np.array([2, 3, 0], dtype=np.int64),
+                    np.array(
+                        [
+                            [0.470513, 0.387773, 0.602474, 0.582855],
+                            [0.484664, 0.442396, 0.518466, 0.522795],
+                            [0.498839, 0.498449, 0.433402, 0.462067],
+                        ],
+                        dtype=np.float32,
+                    ),
+                ),
+            ),
+            (
+                "SOFTMAX",
+                (
+                    np.array([2, 3, 0], dtype=np.int64),
+                    np.array(
+                        [
+                            [0.200374, 0.14282, 0.341741, 0.315065],
+                            [0.240772, 0.203115, 0.275645, 0.280467],
+                            [0.275491, 0.275061, 0.211709, 0.237739],
+                        ],
+                        dtype=np.float32,
+                    ),
+                ),
+            ),
+            (
+                "SOFTMAX_ZERO",
+                (
+                    np.array([2, 3, 0], dtype=np.int64),
+                    np.array(
+                        [
+                            [0.200374, 0.14282, 0.341741, 0.315065],
+                            [0.240772, 0.203115, 0.275645, 0.280467],
+                            [0.275491, 0.275061, 0.211709, 0.237739],
+                        ],
+                        dtype=np.float32,
+                    ),
+                ),
+            ),
+            (
+                "PROBIT",
+                (
+                    np.array([2, 3, 0], dtype=np.int64),
+                    np.array(
+                        [
+                            [np.nan, np.nan, -0.212698, -0.427529],
+                            [np.nan, np.nan, -1.447414, -1.333286],
+                            [np.nan, np.nan, np.nan, np.nan],
+                        ],
+                        dtype=np.float32,
+                    ),
+                ),
+            ),
+        ],
+    )
+    @pytest.mark.skipif(not ONNX_ML, reason="onnx not compiled with ai.onnx.ml")
+    def test_svm_classifier_linear(self, post, expected):
         # prob_a, prob_b are not used in this case.
         x = (np.arange(9).reshape((-1, 3)) - 5).astype(np.float32) / 5
-        nan = np.nan
-        expected_post = {
-            "NONE": (
-                np.array([2, 3, 0], dtype=np.int64),
-                np.array(
-                    [
-                        [-0.118086, -0.456685, 0.415783, 0.334506],
-                        [-0.061364, -0.231444, 0.073899, 0.091242],
-                        [-0.004642, -0.006203, -0.267985, -0.152023],
-                    ],
-                    dtype=np.float32,
-                ),
-            ),
-            "LOGISTIC": (
-                np.array([2, 3, 0], dtype=np.int64),
-                np.array(
-                    [
-                        [0.470513, 0.387773, 0.602474, 0.582855],
-                        [0.484664, 0.442396, 0.518466, 0.522795],
-                        [0.498839, 0.498449, 0.433402, 0.462067],
-                    ],
-                    dtype=np.float32,
-                ),
-            ),
-            "SOFTMAX": (
-                np.array([2, 3, 0], dtype=np.int64),
-                np.array(
-                    [
-                        [0.200374, 0.14282, 0.341741, 0.315065],
-                        [0.240772, 0.203115, 0.275645, 0.280467],
-                        [0.275491, 0.275061, 0.211709, 0.237739],
-                    ],
-                    dtype=np.float32,
-                ),
-            ),
-            "SOFTMAX_ZERO": (
-                np.array([2, 3, 0], dtype=np.int64),
-                np.array(
-                    [
-                        [0.200374, 0.14282, 0.341741, 0.315065],
-                        [0.240772, 0.203115, 0.275645, 0.280467],
-                        [0.275491, 0.275061, 0.211709, 0.237739],
-                    ],
-                    dtype=np.float32,
-                ),
-            ),
-            "PROBIT": (
-                np.array([2, 3, 0], dtype=np.int64),
-                np.array(
-                    [
-                        [nan, nan, -0.212698, -0.427529],
-                        [nan, nan, -1.447414, -1.333286],
-                        [nan, nan, nan, nan],
-                    ],
-                    dtype=np.float32,
-                ),
-            ),
-        }
-        for post, expected in expected_post.items():
-            with self.subTest(post_transform=post):
-                model = self._get_test_svm_classifier_binary(
-                    post, probability=True, linear=True
-                )
-                self._check_ort(model, {"X": x}, rev=True, atol=1e-5)
-                sess = ReferenceEvaluator(model)
-                got = sess.run(None, {"X": x})
-                assert_allclose(got[1], expected[1], atol=1e-6)
-                assert_allclose(got[0], expected[0])
+        model = self._get_test_svm_classifier_binary(
+            post, probability=True, linear=True
+        )
+        self._check_ort(model, {"X": x}, rev=True, atol=1e-5)
+        sess = ReferenceEvaluator(model)
+        got = sess.run(None, {"X": x})
+        assert_allclose(got[1], expected[1], atol=1e-6)
+        assert_allclose(got[0], expected[0])
 
     @staticmethod
     def _get_test_svm_classifier_linear_sv(post_transform, probability=True):
@@ -1994,48 +2137,78 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
         onnx.checker.check_model(model)
         return model
 
-    @unittest.skipIf(not ONNX_ML, reason="onnx not compiled with ai.onnx.ml")
-    def test_svm_classifier_binary_noprob_linear_sv(self):
+    @pytest.mark.parametrize(
+        "post, expected",
+        [
+            (
+                "NONE",
+                (
+                    np.array([0, 0, 0], dtype=np.int64),
+                    np.array(
+                        [
+                            [-2.662655, 2.662655],
+                            [-2.21481, 2.21481],
+                            [-1.766964, 1.766964],
+                        ],
+                        dtype=np.float32,
+                    ),
+                ),
+            ),
+            (
+                "LOGISTIC",
+                (
+                    np.array([0, 0, 0], dtype=np.int64),
+                    np.array(
+                        [
+                            [0.065213, 0.934787],
+                            [0.098428, 0.901572],
+                            [0.14592, 0.85408],
+                        ],
+                        dtype=np.float32,
+                    ),
+                ),
+            ),
+            (
+                "SOFTMAX",
+                (
+                    np.array([0, 0, 0], dtype=np.int64),
+                    np.array(
+                        [
+                            [0.004843, 0.995157],
+                            [0.011779, 0.988221],
+                            [0.028362, 0.971638],
+                        ],
+                        dtype=np.float32,
+                    ),
+                ),
+            ),
+            (
+                "SOFTMAX_ZERO",
+                (
+                    np.array([0, 0, 0], dtype=np.int64),
+                    np.array(
+                        [
+                            [0.004843, 0.995157],
+                            [0.011779, 0.988221],
+                            [0.028362, 0.971638],
+                        ],
+                        dtype=np.float32,
+                    ),
+                ),
+            ),
+        ],
+    )
+    @pytest.mark.skipif(not ONNX_ML, reason="onnx not compiled with ai.onnx.ml")
+    def test_svm_classifier_binary_noprob_linear_sv(self, post, expected):
         x = (np.arange(9).reshape((-1, 3)) - 5).astype(np.float32) / 5
-        expected_post = {
-            "NONE": (
-                np.array([0, 0, 0], dtype=np.int64),
-                np.array(
-                    [[-2.662655, 2.662655], [-2.21481, 2.21481], [-1.766964, 1.766964]],
-                    dtype=np.float32,
-                ),
-            ),
-            "LOGISTIC": (
-                np.array([0, 0, 0], dtype=np.int64),
-                np.array(
-                    [[0.065213, 0.934787], [0.098428, 0.901572], [0.14592, 0.85408]],
-                    dtype=np.float32,
-                ),
-            ),
-            "SOFTMAX": (
-                np.array([0, 0, 0], dtype=np.int64),
-                np.array(
-                    [[0.004843, 0.995157], [0.011779, 0.988221], [0.028362, 0.971638]],
-                    dtype=np.float32,
-                ),
-            ),
-            "SOFTMAX_ZERO": (
-                np.array([0, 0, 0], dtype=np.int64),
-                np.array(
-                    [[0.004843, 0.995157], [0.011779, 0.988221], [0.028362, 0.971638]],
-                    dtype=np.float32,
-                ),
-            ),
-        }
-        for post, expected in expected_post.items():
-            with self.subTest(post_transform=post):
-                model = self._get_test_svm_classifier_linear_sv(post, probability=False)
-                if post not in {"LOGISTIC", "SOFTMAX", "SOFTMAX_ZERO"}:
-                    self._check_ort(model, {"X": x}, rev=True, atol=1e-5)
-                sess = ReferenceEvaluator(model)
-                got = sess.run(None, {"X": x})
-                assert_allclose(got[1], expected[1], atol=1e-6)
-                assert_allclose(got[0], expected[0])
+
+        model = self._get_test_svm_classifier_linear_sv(post, probability=False)
+        if post not in {"LOGISTIC", "SOFTMAX", "SOFTMAX_ZERO"}:
+            self._check_ort(model, {"X": x}, rev=True, atol=1e-5)
+        sess = ReferenceEvaluator(model)
+        got = sess.run(None, {"X": x})
+        assert_allclose(got[1], expected[1], atol=1e-6)
+        assert_allclose(got[0], expected[0])
 
     @staticmethod
     def _get_test_svm_regressor_linear(post_transform, one_class=0):
@@ -2057,43 +2230,47 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
         onnx.checker.check_model(model)
         return model
 
-    @unittest.skipIf(not ONNX_ML, reason="onnx not compiled with ai.onnx.ml")
-    def test_svm_regressor_linear(self):
-        x = (np.arange(9).reshape((-1, 3)) - 5).astype(np.float32) / 5
-        expected_post = {
-            "NONE": (
+    @pytest.mark.parametrize(
+        "post, expected",
+        [
+            (
+                "NONE",
                 np.array(
                     [[0.96869], [1.132491], [1.296293]],
                     dtype=np.float32,
                 ),
             ),
-        }
-        for post, expected in expected_post.items():
-            with self.subTest(post_transform=post):
-                model = self._get_test_svm_regressor_linear(post)
-                self._check_ort(model, {"X": x}, rev=True, atol=1e-5)
-                sess = ReferenceEvaluator(model)
-                got = sess.run(None, {"X": x})
-                assert_allclose(got[0], expected[0], atol=1e-6)
-
-    @unittest.skipIf(not ONNX_ML, reason="onnx not compiled with ai.onnx.ml")
-    def test_svm_regressor_linear_one_class(self):
+        ],
+    )
+    @pytest.mark.skipif(not ONNX_ML, reason="onnx not compiled with ai.onnx.ml")
+    def test_svm_regressor_linear(self, post, expected):
         x = (np.arange(9).reshape((-1, 3)) - 5).astype(np.float32) / 5
-        expected_post = {
-            "NONE": (
+        model = self._get_test_svm_regressor_linear(post)
+        self._check_ort(model, {"X": x}, rev=True, atol=1e-5)
+        sess = ReferenceEvaluator(model)
+        (got,) = sess.run(None, {"X": x})
+        assert_allclose(got, expected, atol=1e-6)
+
+    @pytest.mark.parametrize(
+        "post, expected",
+        [
+            (
+                "NONE",
                 np.array(
                     [[1.0], [1.0], [1.0]],
                     dtype=np.float32,
                 ),
-            ),
-        }
-        for post, expected in expected_post.items():
-            with self.subTest(post_transform=post):
-                model = self._get_test_svm_regressor_linear(post, one_class=1)
-                self._check_ort(model, {"X": x}, rev=True, atol=1e-5)
-                sess = ReferenceEvaluator(model)
-                got = sess.run(None, {"X": x})
-                assert_allclose(got[0], expected[0], atol=1e-6)
+            )
+        ],
+    )
+    @pytest.mark.skipif(not ONNX_ML, reason="onnx not compiled with ai.onnx.ml")
+    def test_svm_regressor_linear_one_class(self, post, expected):
+        x = (np.arange(9).reshape((-1, 3)) - 5).astype(np.float32) / 5
+        model = self._get_test_svm_regressor_linear(post, one_class=1)
+        self._check_ort(model, {"X": x}, rev=True, atol=1e-5)
+        sess = ReferenceEvaluator(model)
+        (got,) = sess.run(None, {"X": x})
+        assert_allclose(got, expected, atol=1e-6)
 
     def test_onnxrt_tfidf_vectorizer_ints(self):
         inputi = np.array([[1, 1, 3, 3, 3, 7], [8, 6, 7, 5, 6, 8]]).astype(np.int64)
@@ -2132,7 +2309,7 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
 
         oinf = ReferenceEvaluator(model)
         res = oinf.run(None, {"tokens": inputi})
-        self.assertEqual(output.tolist(), res[0].tolist())
+        assert output.tolist() == res[0].tolist()
 
     def test_onnxrt_tfidf_vectorizer_strings(self):
         inputi = np.array(
@@ -2173,4 +2350,4 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
 
         oinf = ReferenceEvaluator(model)
         res = oinf.run(None, {"tokens": inputi})
-        self.assertEqual(output.tolist(), res[0].tolist())
+        assert output.tolist() == res[0].tolist()

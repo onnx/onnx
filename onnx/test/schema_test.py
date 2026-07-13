@@ -4,10 +4,9 @@
 from __future__ import annotations
 
 import contextlib
-import unittest
 from typing import TYPE_CHECKING
 
-import parameterized
+import pytest
 
 import onnx
 from onnx import defs
@@ -16,11 +15,11 @@ if TYPE_CHECKING:
     from collections.abc import Sequence
 
 
-class TestSchema(unittest.TestCase):
+class TestSchema:
     def test_get_schema(self) -> None:
         relu_schema = defs.get_schema("Relu")
-        self.assertEqual(
-            relu_schema.node_determinism, defs.OpSchema.NodeDeterminism.Deterministic
+        assert (
+            relu_schema.node_determinism == defs.OpSchema.NodeDeterminism.Deterministic
         )
 
     def test_typecheck(self) -> None:
@@ -28,39 +27,37 @@ class TestSchema(unittest.TestCase):
 
     def test_attr_default_value(self) -> None:
         v = defs.get_schema("BatchNormalization").attributes["epsilon"].default_value
-        self.assertEqual(type(v), onnx.AttributeProto)
-        self.assertEqual(v.type, onnx.AttributeProto.FLOAT)
+        assert type(v) is onnx.AttributeProto
+        assert v.type == onnx.AttributeProto.FLOAT
 
     def test_function_body(self) -> None:
         selu_schema = defs.get_schema("Selu")
-        self.assertEqual(type(selu_schema.function_body), onnx.FunctionProto)
-        self.assertEqual(
-            selu_schema.node_determinism, defs.OpSchema.NodeDeterminism.Deterministic
+        assert type(selu_schema.function_body) is onnx.FunctionProto
+        assert (
+            selu_schema.node_determinism == defs.OpSchema.NodeDeterminism.Deterministic
         )
 
     def test_node_determinism(self) -> None:
         rand_schema = defs.get_schema("RandomNormalLike")
-        self.assertEqual(
-            rand_schema.node_determinism, defs.OpSchema.NodeDeterminism.NonDeterministic
+        assert (
+            rand_schema.node_determinism
+            == defs.OpSchema.NodeDeterminism.NonDeterministic
         )
-        self.assertTrue(rand_schema.non_deterministic)
+        assert rand_schema.non_deterministic
         bn_schema = defs.get_schema("BatchNormalization")
-        self.assertEqual(
-            bn_schema.node_determinism, defs.OpSchema.NodeDeterminism.Deterministic
-        )
-        self.assertFalse(bn_schema.non_deterministic)
+        assert bn_schema.node_determinism == defs.OpSchema.NodeDeterminism.Deterministic
+        assert not bn_schema.non_deterministic
         cast_like_schema = defs.get_schema("CastLike")
-        self.assertEqual(
-            cast_like_schema.node_determinism,
-            defs.OpSchema.NodeDeterminism.Deterministic,
+        assert (
+            cast_like_schema.node_determinism
+            == defs.OpSchema.NodeDeterminism.Deterministic
         )
-        self.assertFalse(cast_like_schema.non_deterministic)
+        assert not cast_like_schema.non_deterministic
         if_schema = defs.get_schema("If")
-        self.assertEqual(
-            if_schema.node_determinism,
-            defs.OpSchema.NodeDeterminism.NonDeterministic,
+        assert (
+            if_schema.node_determinism == defs.OpSchema.NodeDeterminism.NonDeterministic
         )
-        self.assertTrue(if_schema.non_deterministic)
+        assert if_schema.non_deterministic
 
     def test_celu_type_constraints(self) -> None:
         def allowed(schema):
@@ -71,12 +68,14 @@ class TestSchema(unittest.TestCase):
             )
 
         celu28 = defs.get_schema("Celu", 28)
-        self.assertEqual(
-            allowed(celu28),
-            {"tensor(bfloat16)", "tensor(float16)", "tensor(float)", "tensor(double)"},
-        )
-        self.assertTrue(celu28.has_function)
-        self.assertEqual(allowed(defs.get_schema("Celu", 12)), {"tensor(float)"})
+        assert allowed(celu28) == {
+            "tensor(bfloat16)",
+            "tensor(float16)",
+            "tensor(float)",
+            "tensor(double)",
+        }
+        assert celu28.has_function
+        assert allowed(defs.get_schema("Celu", 12)) == {"tensor(float)"}
 
     def test_range_supported_types(self) -> None:
         """Test Range operator supports all expected numeric types."""
@@ -98,12 +97,9 @@ class TestSchema(unittest.TestCase):
         }
 
         for expected_type in expected_types:
-            with self.subTest(type=expected_type):
-                self.assertIn(
-                    expected_type,
-                    supported_types,
-                    f"Range should support {expected_type}",
-                )
+            assert expected_type in supported_types, (
+                f"Range should support {expected_type}"
+            )
 
         # Verify no unexpected types are supported (regression check)
         allowed_type_families = {
@@ -119,10 +115,8 @@ class TestSchema(unittest.TestCase):
         for supported_type in supported_types:
             if supported_type.startswith("tensor(") and supported_type.endswith(")"):
                 base_type = supported_type[7:-1]
-                self.assertIn(
-                    base_type,
-                    allowed_type_families,
-                    f"Unexpected type {supported_type} supported by Range",
+                assert base_type in allowed_type_families, (
+                    f"Unexpected type {supported_type} supported by Range"
                 )
 
     def test_range_type_consistency(self) -> None:
@@ -131,31 +125,25 @@ class TestSchema(unittest.TestCase):
 
         # All inputs should use the same type constraint "T"
         expected_input_names = ["start", "limit", "delta"]
-        self.assertEqual(len(range_schema.inputs), len(expected_input_names))
+        assert len(range_schema.inputs) == len(expected_input_names)
 
         for i, expected_name in enumerate(expected_input_names):
             input_param = range_schema.inputs[i]
-            self.assertEqual(input_param.name, expected_name)
-            self.assertEqual(
-                input_param.type_str,
-                "T",
-                f"Input '{expected_name}' should use type constraint 'T'",
+            assert input_param.name == expected_name
+            assert input_param.type_str == "T", (
+                f"Input '{expected_name}' should use type constraint 'T'"
             )
 
-        self.assertEqual(len(range_schema.outputs), 1)
+        assert len(range_schema.outputs) == 1
         output_param = range_schema.outputs[0]
-        self.assertEqual(output_param.name, "output")
-        self.assertEqual(
-            output_param.type_str, "T", "Output should use type constraint 'T'"
-        )
+        assert output_param.name == "output"
+        assert output_param.type_str == "T", "Output should use type constraint 'T'"
 
         type_constraints = [
             c for c in range_schema.type_constraints if c.type_param_str == "T"
         ]
-        self.assertEqual(
-            len(type_constraints),
-            1,
-            "Range should have exactly one type constraint 'T'",
+        assert len(type_constraints) == 1, (
+            "Range should have exactly one type constraint 'T'"
         )
 
     def test_range_numeric_types_only(self) -> None:
@@ -178,35 +166,34 @@ class TestSchema(unittest.TestCase):
         }
 
         for unsupported_type in unsupported_types:
-            self.assertNotIn(
-                unsupported_type,
-                supported_types,
-                f"Range should not support {unsupported_type}",
+            assert unsupported_type not in supported_types, (
+                f"Range should not support {unsupported_type}"
             )
 
         # All supported types should be appropriate for arithmetic operations
         for supported_type in supported_types:
-            self.assertTrue(
-                supported_type.startswith("tensor("),
-                f"All Range types should be tensors, got {supported_type}",
+            assert supported_type.startswith("tensor("), (
+                f"All Range types should be tensors, got {supported_type}"
             )
 
             base_type = supported_type[7:-1]
-            self.assertIn(
-                base_type,
-                ["float16", "bfloat16", "float", "double", "int16", "int32", "int64"],
-                f"Range type {base_type} should be a supported numeric type",
-            )
+            assert base_type in [
+                "float16",
+                "bfloat16",
+                "float",
+                "double",
+                "int16",
+                "int32",
+                "int64",
+            ], f"Range type {base_type} should be a supported numeric type"
 
 
-class TestOpSchema(unittest.TestCase):
+class TestOpSchema:
     def test_init(self):
         # Test that the constructor creates an OpSchema object
         schema = defs.OpSchema("test_op", "test_domain", 1)
-        self.assertIsInstance(schema, defs.OpSchema)
-        self.assertEqual(
-            schema.node_determinism, defs.OpSchema.NodeDeterminism.Deterministic
-        )
+        assert isinstance(schema, defs.OpSchema)
+        assert schema.node_determinism == defs.OpSchema.NodeDeterminism.Deterministic
 
     def test_init_with_inputs(self) -> None:
         op_schema = defs.OpSchema(
@@ -216,17 +203,15 @@ class TestOpSchema(unittest.TestCase):
             inputs=[defs.OpSchema.FormalParameter("input1", "T")],
             type_constraints=[("T", ["tensor(int64)"], "")],
         )
-        self.assertEqual(op_schema.name, "test_op")
-        self.assertEqual(op_schema.domain, "test_domain")
-        self.assertEqual(op_schema.since_version, 1)
-        self.assertEqual(len(op_schema.inputs), 1)
-        self.assertEqual(op_schema.inputs[0].name, "input1")
-        self.assertEqual(op_schema.inputs[0].type_str, "T")
-        self.assertEqual(len(op_schema.type_constraints), 1)
-        self.assertEqual(op_schema.type_constraints[0].type_param_str, "T")
-        self.assertEqual(
-            op_schema.type_constraints[0].allowed_type_strs, ["tensor(int64)"]
-        )
+        assert op_schema.name == "test_op"
+        assert op_schema.domain == "test_domain"
+        assert op_schema.since_version == 1
+        assert len(op_schema.inputs) == 1
+        assert op_schema.inputs[0].name == "input1"
+        assert op_schema.inputs[0].type_str == "T"
+        assert len(op_schema.type_constraints) == 1
+        assert op_schema.type_constraints[0].type_param_str == "T"
+        assert op_schema.type_constraints[0].allowed_type_strs == ["tensor(int64)"]
 
     def test_init_creates_multi_input_output_schema(self) -> None:
         op_schema = defs.OpSchema(
@@ -248,68 +233,64 @@ class TestOpSchema(unittest.TestCase):
                 )
             ],
         )
-        self.assertEqual(len(op_schema.inputs), 2)
-        self.assertEqual(op_schema.inputs[0].name, "input1")
-        self.assertEqual(op_schema.inputs[0].type_str, "T")
-        self.assertEqual(op_schema.inputs[1].name, "input2")
-        self.assertEqual(op_schema.inputs[1].type_str, "T")
-        self.assertEqual(len(op_schema.outputs), 2)
-        self.assertEqual(op_schema.outputs[0].name, "output1")
-        self.assertEqual(op_schema.outputs[0].type_str, "T")
-        self.assertEqual(op_schema.outputs[1].name, "output2")
-        self.assertEqual(op_schema.outputs[1].type_str, "T")
-        self.assertEqual(len(op_schema.type_constraints), 1)
-        self.assertEqual(op_schema.type_constraints[0].type_param_str, "T")
-        self.assertEqual(
-            op_schema.type_constraints[0].allowed_type_strs, ["tensor(int64)"]
-        )
-        self.assertEqual(len(op_schema.attributes), 1)
-        self.assertEqual(op_schema.attributes["attr1"].name, "attr1")
-        self.assertEqual(
-            op_schema.attributes["attr1"].type, defs.OpSchema.AttrType.INTS
-        )
-        self.assertEqual(op_schema.attributes["attr1"].description, "attr1 description")
+        assert len(op_schema.inputs) == 2
+        assert op_schema.inputs[0].name == "input1"
+        assert op_schema.inputs[0].type_str == "T"
+        assert op_schema.inputs[1].name == "input2"
+        assert op_schema.inputs[1].type_str == "T"
+        assert len(op_schema.outputs) == 2
+        assert op_schema.outputs[0].name == "output1"
+        assert op_schema.outputs[0].type_str == "T"
+        assert op_schema.outputs[1].name == "output2"
+        assert op_schema.outputs[1].type_str == "T"
+        assert len(op_schema.type_constraints) == 1
+        assert op_schema.type_constraints[0].type_param_str == "T"
+        assert op_schema.type_constraints[0].allowed_type_strs == ["tensor(int64)"]
+        assert len(op_schema.attributes) == 1
+        assert op_schema.attributes["attr1"].name == "attr1"
+        assert op_schema.attributes["attr1"].type == defs.OpSchema.AttrType.INTS
+        assert op_schema.attributes["attr1"].description == "attr1 description"
 
     def test_init_without_optional_arguments(self) -> None:
         op_schema = defs.OpSchema("test_op", "test_domain", 1)
-        self.assertEqual(op_schema.name, "test_op")
-        self.assertEqual(op_schema.domain, "test_domain")
-        self.assertEqual(op_schema.since_version, 1)
-        self.assertEqual(len(op_schema.inputs), 0)
-        self.assertEqual(len(op_schema.outputs), 0)
-        self.assertEqual(len(op_schema.type_constraints), 0)
+        assert op_schema.name == "test_op"
+        assert op_schema.domain == "test_domain"
+        assert op_schema.since_version == 1
+        assert len(op_schema.inputs) == 0
+        assert len(op_schema.outputs) == 0
+        assert len(op_schema.type_constraints) == 0
 
     def test_name(self):
         # Test that the name parameter is required and is a string
-        with self.assertRaises(TypeError):
+        with pytest.raises(TypeError):
             defs.OpSchema(domain="test_domain", since_version=1)
-        with self.assertRaises(TypeError):
+        with pytest.raises(TypeError):
             defs.OpSchema(123, "test_domain", 1)
 
         schema = defs.OpSchema("test_op", "test_domain", 1)
-        self.assertEqual(schema.name, "test_op")
+        assert schema.name == "test_op"
 
     def test_domain(self):
         # Test that the domain parameter is required and is a string
-        with self.assertRaises(TypeError):
+        with pytest.raises(TypeError):
             defs.OpSchema(name="test_op", since_version=1)
-        with self.assertRaises(TypeError):
+        with pytest.raises(TypeError):
             defs.OpSchema("test_op", 123, 1)
 
         schema = defs.OpSchema("test_op", "test_domain", 1)
-        self.assertEqual(schema.domain, "test_domain")
+        assert schema.domain == "test_domain"
 
     def test_since_version(self):
         # Test that the since_version parameter is required and is an integer
-        with self.assertRaises(TypeError):
+        with pytest.raises(TypeError):
             defs.OpSchema("test_op", "test_domain")
 
         schema = defs.OpSchema("test_op", "test_domain", 1)
-        self.assertEqual(schema.since_version, 1)
+        assert schema.since_version == 1
 
     def test_doc(self):
         schema = defs.OpSchema("test_op", "test_domain", 1, doc="test_doc")
-        self.assertEqual(schema.doc, "test_doc")
+        assert schema.doc == "test_doc"
 
     def test_inputs(self):
         # Test that the inputs parameter is optional and is a sequence of FormalParameter tuples
@@ -326,10 +307,10 @@ class TestOpSchema(unittest.TestCase):
             type_constraints=[("T", ["tensor(int64)"], "")],
         )
 
-        self.assertEqual(len(schema.inputs), 1)
-        self.assertEqual(schema.inputs[0].name, "input1")
-        self.assertEqual(schema.inputs[0].type_str, "T")
-        self.assertEqual(schema.inputs[0].description, "The first input.")
+        assert len(schema.inputs) == 1
+        assert schema.inputs[0].name == "input1"
+        assert schema.inputs[0].type_str == "T"
+        assert schema.inputs[0].description == "The first input."
 
     def test_outputs(self):
         # Test that the outputs parameter is optional and is a sequence of FormalParameter tuples
@@ -346,13 +327,13 @@ class TestOpSchema(unittest.TestCase):
             outputs=outputs,
             type_constraints=[("T", ["tensor(int64)"], "")],
         )
-        self.assertEqual(len(schema.outputs), 1)
-        self.assertEqual(schema.outputs[0].name, "output1")
-        self.assertEqual(schema.outputs[0].type_str, "T")
-        self.assertEqual(schema.outputs[0].description, "The first output.")
+        assert len(schema.outputs) == 1
+        assert schema.outputs[0].name == "output1"
+        assert schema.outputs[0].type_str == "T"
+        assert schema.outputs[0].description == "The first output."
 
 
-class TestFormalParameter(unittest.TestCase):
+class TestFormalParameter:
     def test_init(self):
         name = "input1"
         type_str = "tensor(float)"
@@ -371,98 +352,83 @@ class TestFormalParameter(unittest.TestCase):
             differentiation_category=differentiation_category,
         )
 
-        self.assertEqual(formal_parameter.name, name)
-        self.assertEqual(formal_parameter.type_str, type_str)
-        self.assertIsInstance(formal_parameter.types, set)
-        self.assertEqual(formal_parameter.description, description)
-        self.assertEqual(formal_parameter.option, param_option)
-        self.assertEqual(formal_parameter.is_homogeneous, is_homogeneous)
-        self.assertEqual(formal_parameter.min_arity, min_arity)
-        self.assertEqual(
-            formal_parameter.differentiation_category, differentiation_category
-        )
+        assert formal_parameter.name == name
+        assert formal_parameter.type_str == type_str
+        assert isinstance(formal_parameter.types, set)
+        assert formal_parameter.description == description
+        assert formal_parameter.option == param_option
+        assert formal_parameter.is_homogeneous == is_homogeneous
+        assert formal_parameter.min_arity == min_arity
+        assert formal_parameter.differentiation_category == differentiation_category
 
 
-class TestTypeConstraintParam(unittest.TestCase):
-    @parameterized.parameterized.expand(
+class TestTypeConstraintParam:
+    @pytest.mark.parametrize(
+        "allowed_types",
         [
-            ("single_type", "T", ["tensor(float)"], "Test description"),
-            (
-                "double_types",
-                "T",
-                ["tensor(float)", "tensor(int64)"],
-                "Test description",
-            ),
-            ("tuple", "T", ("tensor(float)", "tensor(int64)"), "Test description"),
-        ]
+            pytest.param(["tensor(float)"], id="list_single"),
+            pytest.param(["tensor(float)", "tensor(int64)"], id="list_multiple"),
+            pytest.param(("tensor(float)", "tensor(int64)"), id="tuple_multiple"),
+        ],
     )
-    def test_init(
-        self,
-        _: str,
-        type_param_str: str,
-        allowed_types: Sequence[str],
-        description: str,
-    ) -> None:
+    def test_init(self, allowed_types: Sequence[str]) -> None:
+        type_param_str = "T"
+        description = "Test description"
         type_constraint = defs.OpSchema.TypeConstraintParam(
             type_param_str, allowed_types, description
         )
-        self.assertEqual(type_constraint.description, description)
-        self.assertEqual(type_constraint.allowed_type_strs, list(allowed_types))
-        self.assertEqual(type_constraint.type_param_str, type_param_str)
+        assert type_constraint.description == description
+        assert type_constraint.allowed_type_strs == list(allowed_types)
+        assert type_constraint.type_param_str == type_param_str
 
 
-class TestAttribute(unittest.TestCase):
+class TestAttribute:
     def test_init(self):
         name = "test_attr"
         type_ = defs.OpSchema.AttrType.STRINGS
         description = "Test attribute"
         attribute = defs.OpSchema.Attribute(name, type_, description)
 
-        self.assertEqual(attribute.name, name)
-        self.assertEqual(attribute.type, type_)
-        self.assertEqual(attribute.description, description)
+        assert attribute.name == name
+        assert attribute.type == type_
+        assert attribute.description == description
 
     def test_init_with_default_value(self):
         default_value = (
             defs.get_schema("BatchNormalization").attributes["epsilon"].default_value
         )
-        self.assertIsInstance(default_value, onnx.AttributeProto)
+        assert isinstance(default_value, onnx.AttributeProto)
         attribute = defs.OpSchema.Attribute("attr1", default_value, "attr1 description")
-        self.assertEqual(default_value, attribute.default_value)
-        self.assertEqual("attr1", attribute.name)
-        self.assertEqual("attr1 description", attribute.description)
+        assert default_value == attribute.default_value
+        assert attribute.name == "attr1"
+        assert attribute.description == "attr1 description"
 
 
-@parameterized.parameterized_class(
+@pytest.mark.parametrize(
+    ("op_type", "op_version", "op_domain", "trap_op_version"),
     [
         # register to exist domain
-        {
-            "op_type": "CustomOp",
-            "op_version": 5,
-            "op_domain": "",
-            "trap_op_version": [1, 2, 6, 7],
-        },
+        ("CustomOp", 5, "", [1, 2, 6, 7]),
         # register to new domain
-        {
-            "op_type": "CustomOp",
-            "op_version": 5,
-            "op_domain": "test",
-            "trap_op_version": [1, 2, 6, 7],
-        },
-    ]
+        ("CustomOp", 5, "test", [1, 2, 6, 7]),
+    ],
 )
-class TestOpSchemaRegister(unittest.TestCase):
+class TestOpSchemaRegister:
     op_type: str
     op_version: int
     op_domain: str
     # register some fake schema to check behavior
     trap_op_version: list[int]
 
-    def setUp(self) -> None:
+    @pytest.fixture(autouse=True)
+    def _register_schema(self, op_type, op_version, op_domain, trap_op_version):
+        self.op_type = op_type
+        self.op_version = op_version
+        self.op_domain = op_domain
+        self.trap_op_version = trap_op_version
         # Ensure the schema is unregistered
-        self.assertFalse(onnx.defs.has(self.op_type, self.op_domain))
-
-    def tearDown(self) -> None:
+        assert not onnx.defs.has(self.op_type, self.op_domain)
+        yield
         # Clean up the registered schema
         for version in [*self.trap_op_version, self.op_version]:
             with contextlib.suppress(onnx.defs.SchemaError):
@@ -476,7 +442,7 @@ class TestOpSchemaRegister(unittest.TestCase):
                 version,
             )
             onnx.defs.register_schema(op_schema)
-            self.assertTrue(onnx.defs.has(self.op_type, version, self.op_domain))
+            assert onnx.defs.has(self.op_type, version, self.op_domain)
         for version in [*self.trap_op_version, self.op_version]:
             # Also make sure the `op_schema` is accessible after register
             registered_op = onnx.defs.get_schema(
@@ -487,7 +453,7 @@ class TestOpSchemaRegister(unittest.TestCase):
                 self.op_domain,
                 version,
             )
-            self.assertEqual(str(registered_op), str(op_schema))
+            assert str(registered_op) == str(op_schema)
 
     def test_using_the_specified_version_in_onnx_check(self):
         input = f"""
@@ -521,7 +487,7 @@ class TestOpSchemaRegister(unittest.TestCase):
                 )
             ],
         )
-        with self.assertRaises(onnx.checker.ValidationError):
+        with pytest.raises(onnx.checker.ValidationError):
             onnx.checker.check_model(model, check_custom_domain=True)
         onnx.defs.register_schema(op_schema)
         # The fake schema will raise check exception if selected in checker
@@ -545,7 +511,7 @@ class TestOpSchemaRegister(unittest.TestCase):
             self.op_version,
         )
         onnx.defs.register_schema(op_schema)
-        with self.assertRaises(onnx.defs.SchemaError):
+        with pytest.raises(onnx.defs.SchemaError):
             onnx.defs.register_schema(op_schema)
 
     def test_deregister_the_specified_schema(self):
@@ -556,19 +522,19 @@ class TestOpSchemaRegister(unittest.TestCase):
                 version,
             )
             onnx.defs.register_schema(op_schema)
-            self.assertTrue(onnx.defs.has(op_schema.name, version, op_schema.domain))
+            assert onnx.defs.has(op_schema.name, version, op_schema.domain)
         onnx.defs.deregister_schema(op_schema.name, self.op_version, op_schema.domain)
         for version in self.trap_op_version:
-            self.assertTrue(onnx.defs.has(op_schema.name, version, op_schema.domain))
+            assert onnx.defs.has(op_schema.name, version, op_schema.domain)
         # Maybe has lesser op version in trap list
         if onnx.defs.has(op_schema.name, self.op_version, op_schema.domain):
             schema = onnx.defs.get_schema(
                 op_schema.name, self.op_version, op_schema.domain
             )
-            self.assertLess(schema.since_version, self.op_version)
+            assert schema.since_version < self.op_version
 
     def test_deregister_schema_raises_error_when_opschema_does_not_exist(self):
-        with self.assertRaises(onnx.defs.SchemaError):
+        with pytest.raises(onnx.defs.SchemaError):
             onnx.defs.deregister_schema(self.op_type, self.op_version, self.op_domain)
 
     def test_legacy_schema_accessible_after_deregister(self):
@@ -588,10 +554,10 @@ class TestOpSchemaRegister(unittest.TestCase):
 
         schema_c = filter_schema(onnx.defs.get_all_schemas())
         schema_d = filter_schema(onnx.defs.get_all_schemas_with_history())
-        self.assertEqual(len(schema_c), 1)
-        self.assertEqual(len(schema_d), 1)
+        assert len(schema_c) == 1
+        assert len(schema_d) == 1
         # Avoid memory residue and access storage as much as possible
-        self.assertEqual(str(schema_a), str(op_schema))
-        self.assertEqual(str(schema_b), str(op_schema))
-        self.assertEqual(str(schema_c[0]), str(op_schema))
-        self.assertEqual(str(schema_d[0]), str(op_schema))
+        assert str(schema_a) == str(op_schema)
+        assert str(schema_b) == str(op_schema)
+        assert str(schema_c[0]) == str(op_schema)
+        assert str(schema_d[0]) == str(op_schema)
