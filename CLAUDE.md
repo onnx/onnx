@@ -10,7 +10,7 @@ ONNX (Open Neural Network Exchange) — open-source standard format for AI model
 
 Also follow the shared AI assistant guidelines in `.github/copilot-instructions.md`.
 
-Before committing, pushing, filing an issue, or opening a pull request, review [CONTRIBUTING.md](CONTRIBUTING.md) — it defines the PR process, branch/CI expectations, and coding style. When writing up a bug report, evaluating its severity, or handling anything that looks like a security vulnerability, follow the disclosure policy in [SECURITY.md](SECURITY.md) instead of filing a public issue.
+Before committing, pushing, filing an issue, or opening a pull request, review [CONTRIBUTING.md](CONTRIBUTING.md) — it defines the PR process, branch/CI expectations, and coding style. When writing up a bug report or evaluating its severity, check [SECURITY.md](SECURITY.md)'s disclosure policy first: easily-discovered bugs (found with widely available tooling) are fine as a normal public issue or PR, but a non-trivial security vulnerability must be reported privately via GitHub Security Advisories, not a public issue.
 
 ## Project Norms
 
