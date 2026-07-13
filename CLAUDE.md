@@ -10,6 +10,8 @@ ONNX (Open Neural Network Exchange) — open-source standard format for AI model
 
 Also follow the shared AI assistant guidelines in `.github/copilot-instructions.md`.
 
+Before committing, pushing, filing an issue, or opening a pull request, review [CONTRIBUTING.md](CONTRIBUTING.md) — it defines the PR process, branch/CI expectations, and coding style. When writing up a bug report, evaluating its severity, or handling anything that looks like a security vulnerability, follow the disclosure policy in [SECURITY.md](SECURITY.md) instead of filing a public issue.
+
 ## Project Norms
 
 - Follow the [ONNX Code of Conduct](https://onnx.ai/codeofconduct.html). All generated code, comments, commit messages, and PR descriptions must be professional, welcoming, and free of hostile, discriminatory, or demeaning language.
@@ -51,7 +53,7 @@ lintrunner         # Lint changed files
 lintrunner -a      # Auto-fix
 ```
 
-Runs ruff, mypy, clang-format, editorconfig-checker, and a namespace checker.
+Runs ruff, mypy, clang-format, editorconfig-checker, and a namespace checker. **`lintrunner` must pass with no errors before a coding task is considered complete.**
 
 ## Code Conventions
 
