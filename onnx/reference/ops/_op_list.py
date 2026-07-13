@@ -76,6 +76,8 @@ __all__ = [
     "DepthToSpace",
     "DequantizeLinear_19",
     "DequantizeLinear_21",
+    "DequantizeLinear_23",
+    "DequantizeLinear_25",
     "Det",
     "DFT_17",
     "DFT_20",
@@ -156,6 +158,8 @@ __all__ = [
     "QuantizeLinear_10",
     "QuantizeLinear_19",
     "QuantizeLinear_21",
+    "QuantizeLinear_23",
+    "QuantizeLinear_25",
     "RandomNormal",
     "RandomNormalLike",
     "RandomUniform",
@@ -332,6 +336,8 @@ from onnx.reference.ops.op_depth_to_space import DepthToSpace
 from onnx.reference.ops.op_dequantize_linear import (
     DequantizeLinear_19,
     DequantizeLinear_21,
+    DequantizeLinear_23,
+    DequantizeLinear_25,
 )
 from onnx.reference.ops.op_det import Det
 from onnx.reference.ops.op_dft import DFT_17, DFT_20
@@ -408,6 +414,8 @@ from onnx.reference.ops.op_quantize_linear import (
     QuantizeLinear_10,
     QuantizeLinear_19,
     QuantizeLinear_21,
+    QuantizeLinear_23,
+    QuantizeLinear_25,
 )
 from onnx.reference.ops.op_random_normal import RandomNormal
 from onnx.reference.ops.op_random_normal_like import RandomNormalLike
