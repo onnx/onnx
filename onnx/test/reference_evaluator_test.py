@@ -13,7 +13,6 @@
 from __future__ import annotations
 
 import importlib.util
-import itertools
 import math
 import warnings
 from os import getenv
@@ -22,7 +21,6 @@ from typing import TYPE_CHECKING
 
 import ml_dtypes
 import numpy as np
-import parameterized
 import pytest
 import version_utils
 from numpy.testing import assert_allclose
@@ -3006,100 +3004,99 @@ class TestReferenceEvaluator:
         # model
         return make_model(graph, opset_imports=[make_opsetid("", opset)])
 
-    @parameterized.parameterized.expand(
-        itertools.product(
-            [
-                (
-                    "ReduceMin",
-                    [
-                        np.array(
-                            [[np.nan, np.nan], [14.422706, 18.80527]], dtype=np.float32
-                        ),
-                        np.array([[2, 15], [10, 4]], dtype=np.int64),
-                    ],
-                ),
-                (
-                    "ReduceL1",
-                    [
-                        np.array(
-                            [[2.2367053, 2.3516612], [4.076292, 4.2970634]],
-                            dtype=np.float32,
-                        ),
-                        np.array([[18, 6], [13, 6]], dtype=np.int64),
-                    ],
-                ),
-                (
-                    "ReduceL2",
-                    [
-                        np.array(
-                            [[1.80155, 1.8169948], [2.9928076, 3.1205883]],
-                            dtype=np.float32,
-                        ),
-                        np.array([[11, 18], [13, 6]], dtype=np.int64),
-                    ],
-                ),
-                (
-                    "ReduceLogSum",
-                    [
-                        np.array(
-                            [[0.9497848, 1.1872643], [1.6764175, 1.70759]],
-                            dtype=np.float32,
-                        ),
-                        np.array([[6, 18], [13, 6]], dtype=np.int64),
-                    ],
-                ),
-                (
-                    "ReduceLogSumExp",
-                    [
-                        np.array(
-                            [[1.6005973, 1.7445935], [2.5616229, 2.6539795]],
-                            dtype=np.float32,
-                        ),
-                        np.array([[13, 6], [13, 6]], dtype=np.int64),
-                    ],
-                ),
-                (
-                    "ReduceMax",
-                    [
-                        np.array(
-                            [[1.4217108, 1.5069536], [2.453826, 2.5041783]],
-                            dtype=np.float32,
-                        ),
-                        np.array([[13, 11], [13, 11]], dtype=np.int64),
-                    ],
-                ),
-                (
-                    "ReduceMean",
-                    [
-                        np.array(
-                            [[0.39247903, 0.78497636], [2.038146, 2.1485317]],
-                            dtype=np.float32,
-                        ),
-                        np.array([[13, 6], [13, 6]], dtype=np.int64),
-                    ],
-                ),
-                (
-                    "ReduceSumSquare",
-                    [
-                        np.array(
-                            [[3.2455828, 3.3014696], [8.956896, 9.7380705]],
-                            dtype=np.float32,
-                        ),
-                        np.array([[11, 18], [13, 6]], dtype=np.int64),
-                    ],
-                ),
-                (
-                    "ReduceProd",
-                    [
-                        np.array(
-                            [[np.nan, np.nan], [14.422706, 18.80527]], dtype=np.float32
-                        ),
-                        np.array([[2, 15], [13, 6]], dtype=np.int64),
-                    ],
-                ),
-            ],
-            [17, 18],
-        )
+    @pytest.mark.parametrize("opset", [17, 18])
+    @pytest.mark.parametrize(
+        "reduce_op_expected",
+        [
+            (
+                "ReduceMin",
+                [
+                    np.array(
+                        [[np.nan, np.nan], [14.422706, 18.80527]], dtype=np.float32
+                    ),
+                    np.array([[2, 15], [10, 4]], dtype=np.int64),
+                ],
+            ),
+            (
+                "ReduceL1",
+                [
+                    np.array(
+                        [[2.2367053, 2.3516612], [4.076292, 4.2970634]],
+                        dtype=np.float32,
+                    ),
+                    np.array([[18, 6], [13, 6]], dtype=np.int64),
+                ],
+            ),
+            (
+                "ReduceL2",
+                [
+                    np.array(
+                        [[1.80155, 1.8169948], [2.9928076, 3.1205883]],
+                        dtype=np.float32,
+                    ),
+                    np.array([[11, 18], [13, 6]], dtype=np.int64),
+                ],
+            ),
+            (
+                "ReduceLogSum",
+                [
+                    np.array(
+                        [[0.9497848, 1.1872643], [1.6764175, 1.70759]],
+                        dtype=np.float32,
+                    ),
+                    np.array([[6, 18], [13, 6]], dtype=np.int64),
+                ],
+            ),
+            (
+                "ReduceLogSumExp",
+                [
+                    np.array(
+                        [[1.6005973, 1.7445935], [2.5616229, 2.6539795]],
+                        dtype=np.float32,
+                    ),
+                    np.array([[13, 6], [13, 6]], dtype=np.int64),
+                ],
+            ),
+            (
+                "ReduceMax",
+                [
+                    np.array(
+                        [[1.4217108, 1.5069536], [2.453826, 2.5041783]],
+                        dtype=np.float32,
+                    ),
+                    np.array([[13, 11], [13, 11]], dtype=np.int64),
+                ],
+            ),
+            (
+                "ReduceMean",
+                [
+                    np.array(
+                        [[0.39247903, 0.78497636], [2.038146, 2.1485317]],
+                        dtype=np.float32,
+                    ),
+                    np.array([[13, 6], [13, 6]], dtype=np.int64),
+                ],
+            ),
+            (
+                "ReduceSumSquare",
+                [
+                    np.array(
+                        [[3.2455828, 3.3014696], [8.956896, 9.7380705]],
+                        dtype=np.float32,
+                    ),
+                    np.array([[11, 18], [13, 6]], dtype=np.int64),
+                ],
+            ),
+            (
+                "ReduceProd",
+                [
+                    np.array(
+                        [[np.nan, np.nan], [14.422706, 18.80527]], dtype=np.float32
+                    ),
+                    np.array([[2, 15], [13, 6]], dtype=np.int64),
+                ],
+            ),
+        ],
     )
     def test_op_reduce(self, reduce_op_expected, opset: int):
         reduce_op, expected = reduce_op_expected
@@ -3136,13 +3133,7 @@ class TestReferenceEvaluator:
                         f"Discrepancies (max={diff}) for {reduce_op!r}, {baseline} != {k}\n{a}\n!=\n{b}"
                     )
 
-    @parameterized.parameterized.expand(
-        [
-            (13,),
-            (17,),
-            (18,),
-        ]
-    )
+    @pytest.mark.parametrize("opset", [13, 17, 18])
     def test_mvn(self, opset: int, ref_opset: int = 13):
         X = make_tensor_value_info("X", TensorProto.FLOAT, [None, None, None, None])
         Y = make_tensor_value_info("Y", TensorProto.FLOAT, [None, None, None, None])
@@ -3850,7 +3841,8 @@ class TestReferenceEvaluator:
         got = ref.run(None, {"X": data})
         assert_allclose(got[0], expected)
 
-    @parameterized.parameterized.expand(
+    @pytest.mark.parametrize(
+        "x, scale, zero_point, axis, block_size, expected",
         [
             (
                 4 * np.arange(12).reshape(3, 4),
@@ -3904,7 +3896,7 @@ class TestReferenceEvaluator:
                 2,
                 None,  # Scale and ZP must have the same rank as the input
             ),
-        ]
+        ],
     )
     def test_blocked_quantize_linear(
         self, x, scale, zero_point, axis, block_size, expected
@@ -3948,7 +3940,8 @@ class TestReferenceEvaluator:
             with pytest.raises(ValueError):
                 ref.run(None, {"X": data})
 
-    @parameterized.parameterized.expand(
+    @pytest.mark.parametrize(
+        "x, scale, zero_point, axis, block_size, expected",
         [
             (
                 np.arange(12).reshape(3, 4),
@@ -4012,7 +4005,7 @@ class TestReferenceEvaluator:
                 2,
                 None,  # Scale and ZP must have the same rank as the input
             ),
-        ]
+        ],
     )
     def test_blocked_dequantize_linear(
         self, x, scale, zero_point, axis, block_size, expected
@@ -4238,16 +4231,17 @@ class TestReferenceEvaluator:
         got = _conv_implementation_im2col(**feeds, **kwargs)
         assert_allclose(got, expected)
 
-    @parameterized.parameterized.expand(
+    @pytest.mark.parametrize(
+        "op",
         [
-            ("ReduceSum",),
-            ("ReduceL1",),
-            ("ReduceL2",),
-            ("ReduceMin",),
-            ("ReduceMax",),
-            ("ReduceProd",),
-            ("ReduceSumSquare",),
-        ]
+            "ReduceSum",
+            "ReduceL1",
+            "ReduceL2",
+            "ReduceMin",
+            "ReduceMax",
+            "ReduceProd",
+            "ReduceSumSquare",
+        ],
     )
     def test_reduce_op_no_axis(self, op):
         X = make_tensor_value_info("X", TensorProto.FLOAT, None)
@@ -4261,7 +4255,7 @@ class TestReferenceEvaluator:
         assert isinstance(r, np.ndarray)
         assert r.shape == ()
 
-    @parameterized.parameterized.expand([(1,), (2,), (3,), (4,), (5,), (6,)])
+    @pytest.mark.parametrize("dim", [1, 2, 3, 4, 5, 6])
     def test_pad(self, dim):
         X = make_tensor_value_info("X", TensorProto.FLOAT, None)
         P = make_tensor_value_info("P", TensorProto.INT64, None)
@@ -5394,13 +5388,14 @@ class TestReferenceEvaluator:
         for i in range(2, -1, -1):
             assert_allclose(got[i], expected[i])
 
-    @parameterized.parameterized.expand(
+    @pytest.mark.parametrize(
+        "a, b, expected, expected_shape",
         [
             (["abc", "def"], [".com", ".net"], ["abc.com", "def.net"], (2,)),
             (["cat", "dog", "snake"], ["s"], ["cats", "dogs", "snakes"], (3,)),
             ("cat", "s", "cats", ()),
             (["a", "ß", "y"], ["a", "ß", "y"], ["aa", "ßß", "yy"], (3,)),
-        ]
+        ],
     )
     def test_string_concat(self, a, b, expected, expected_shape):
         A = make_tensor_value_info("A", TensorProto.STRING, None)
@@ -5414,7 +5409,8 @@ class TestReferenceEvaluator:
         assert result.dtype.kind in {"O", "U"}
         assert result.shape == expected_shape
 
-    @parameterized.parameterized.expand(
+    @pytest.mark.parametrize(
+        "x, delimiter, maxsplit, expected_split, expected_num_splits",
         [
             (
                 ["1,2,3", "4,5,6"],
@@ -5483,7 +5479,7 @@ class TestReferenceEvaluator:
                 np.array([]).reshape((0, 0)),
                 [],
             ),
-        ]
+        ],
     )
     def test_string_split(
         self,
@@ -5535,11 +5531,12 @@ class TestReferenceEvaluator:
             np.array([[41, -12, -9], [1, -75, -128]], dtype=np.int8), got
         )
 
-    @parameterized.parameterized.expand(
+    @pytest.mark.parametrize(
+        "dtype, tensor_type, a_values, b_values, y_scale_value, expected_values",
         [
             (np.uint8, TensorProto.UINT8, [[100]], [[100]], 0.2, [[255]]),
             (np.int8, TensorProto.INT8, [[-100]], [[100]], 0.5, [[-128]]),
-        ]
+        ],
     )
     def test_qlinearmatmul_saturates_output(
         self, dtype, tensor_type, a_values, b_values, y_scale_value, expected_values
@@ -5595,7 +5592,8 @@ class TestReferenceEvaluator:
 
         np.testing.assert_array_equal(np.array(expected_values, dtype=dtype), got[0])
 
-    @parameterized.parameterized.expand(
+    @pytest.mark.parametrize(
+        "x, pattern, expected, expected_shape",
         [
             (
                 ["www.google.com", "www.facebook.com", "www.bbc.co.uk"],
@@ -5620,7 +5618,7 @@ class TestReferenceEvaluator:
                 [True, False, False, True],
                 (4,),
             ),
-        ]
+        ],
     )
     def test_regex_full_match(self, x, pattern, expected, expected_shape):
         X = make_tensor_value_info("X", TensorProto.STRING, None)
@@ -5642,7 +5640,8 @@ class TestReferenceEvaluator:
         with pytest.raises(ValueError):
             ref.run(None, {"X": np.array(["x"])})
 
-    @parameterized.parameterized.expand(
+    @pytest.mark.parametrize(
+        "qtype, data, expected",
         [
             (
                 TensorProto.UINT2,
@@ -5662,7 +5661,7 @@ class TestReferenceEvaluator:
                 [-4, -4, 0, 2, 2, 2, 2],
             ),
             (TensorProto.INT2, [0], [0]),
-        ]
+        ],
     )
     def test_quantize_linear_int2(self, qtype, data, expected):
         X = make_tensor_value_info("X", TensorProto.FLOAT, [None])
@@ -5694,12 +5693,8 @@ class TestReferenceEvaluator:
         got = ref.run(None, {"X": np.asarray(data)})
         assert_allclose(got[0], expected)
 
-    @parameterized.parameterized.expand(
-        itertools.product(
-            (TensorProto.FLOAT, TensorProto.FLOAT16),
-            (TensorProto.UINT2, TensorProto.INT2),
-        )
-    )
+    @pytest.mark.parametrize("cast_from", (TensorProto.FLOAT, TensorProto.FLOAT16))
+    @pytest.mark.parametrize("cast_to", (TensorProto.UINT2, TensorProto.INT2))
     def test_cast_int2_output(self, cast_from, cast_to):
         X = make_tensor_value_info("X", cast_from, [None])
         Y = make_tensor_value_info("Y", cast_to, [None])
@@ -5722,12 +5717,8 @@ class TestReferenceEvaluator:
         got = ref.run(None, {"X": data})
         assert got[0].tolist() == expected.tolist()
 
-    @parameterized.parameterized.expand(
-        itertools.product(
-            (TensorProto.UINT2, TensorProto.INT2),
-            (TensorProto.FLOAT, TensorProto.FLOAT16),
-        )
-    )
+    @pytest.mark.parametrize("cast_from", (TensorProto.UINT2, TensorProto.INT2))
+    @pytest.mark.parametrize("cast_to", (TensorProto.FLOAT, TensorProto.FLOAT16))
     def test_cast_int2_input(
         self, cast_from: TensorProto.DataType, cast_to: TensorProto.DataType
     ):
@@ -5749,7 +5740,8 @@ class TestReferenceEvaluator:
         got = ref.run(None, {"X": data})
         np.testing.assert_array_equal(got[0], expected)
 
-    @parameterized.parameterized.expand(
+    @pytest.mark.parametrize(
+        "qtype, data, expected",
         [
             (
                 TensorProto.UINT4,
@@ -5769,7 +5761,7 @@ class TestReferenceEvaluator:
                 [-16, -14, 0, 2, 2, 4, 10],
             ),
             (TensorProto.INT4, [0], [0]),
-        ]
+        ],
     )
     def test_quantize_linear_int4(self, qtype, data, expected):
         X = make_tensor_value_info("X", TensorProto.FLOAT, [None])
@@ -5801,12 +5793,8 @@ class TestReferenceEvaluator:
         got = ref.run(None, {"X": np.asarray(data)})
         assert_allclose(got[0], expected)
 
-    @parameterized.parameterized.expand(
-        itertools.product(
-            (TensorProto.FLOAT, TensorProto.FLOAT16),
-            (TensorProto.UINT4, TensorProto.INT4),
-        )
-    )
+    @pytest.mark.parametrize("cast_from", (TensorProto.FLOAT, TensorProto.FLOAT16))
+    @pytest.mark.parametrize("cast_to", (TensorProto.UINT4, TensorProto.INT4))
     def test_cast_int4_output(self, cast_from, cast_to):
         X = make_tensor_value_info("X", cast_from, [None])
         Y = make_tensor_value_info("Y", cast_to, [None])
@@ -5829,12 +5817,8 @@ class TestReferenceEvaluator:
         got = ref.run(None, {"X": data})
         assert got[0].tolist() == expected.tolist()
 
-    @parameterized.parameterized.expand(
-        itertools.product(
-            (TensorProto.UINT4, TensorProto.INT4),
-            (TensorProto.FLOAT, TensorProto.FLOAT16),
-        )
-    )
+    @pytest.mark.parametrize("cast_from", (TensorProto.UINT4, TensorProto.INT4))
+    @pytest.mark.parametrize("cast_to", (TensorProto.FLOAT, TensorProto.FLOAT16))
     def test_cast_int4_input(
         self, cast_from: TensorProto.DataType, cast_to: TensorProto.DataType
     ):
@@ -6088,7 +6072,8 @@ class TestReferenceEvaluator:
         for v in oinf.functions_.values():
             assert isinstance(v, MyReferenceEvaluator)
 
-    @parameterized.parameterized.expand(
+    @pytest.mark.parametrize(
+        "stype, atol",
         [
             ("FLOAT8E4M3FN", 0.23),
             ("FLOAT8E4M3FNUZ", 0.23),
@@ -6098,7 +6083,7 @@ class TestReferenceEvaluator:
             ("FLOAT", 0),
             ("FLOAT16", 2e-3),
             ("BFLOAT16", 2e-2),
-        ]
+        ],
     )
     def test_add_custom_dtype(self, stype: str, atol: float):
         itype = getattr(TensorProto, stype)
@@ -6130,21 +6115,22 @@ class TestReferenceEvaluator:
         got = ref.run(None, feeds)[0]
         assert_allclose(got, expected, atol=atol)
 
-    @parameterized.parameterized.expand(
+    @pytest.mark.parametrize(
+        "stype",
         [
-            ("DOUBLE",),
-            ("FLOAT",),
-            ("FLOAT16",),
-            ("BFLOAT16",),
-            ("FLOAT8E4M3FN",),
-            ("FLOAT8E4M3FNUZ",),
-            ("FLOAT8E5M2",),
-            ("FLOAT8E5M2FNUZ",),
-            ("INT4",),
-            ("UINT4",),
-            ("INT2",),
-            ("UINT2",),
-        ]
+            "DOUBLE",
+            "FLOAT",
+            "FLOAT16",
+            "BFLOAT16",
+            "FLOAT8E4M3FN",
+            "FLOAT8E4M3FNUZ",
+            "FLOAT8E5M2",
+            "FLOAT8E5M2FNUZ",
+            "INT4",
+            "UINT4",
+            "INT2",
+            "UINT2",
+        ],
     )
     def test_cmp_custom_dtype(self, stype):
         itype = getattr(TensorProto, stype)
