@@ -30,6 +30,8 @@ pip install -e . -v                        # Development install
 ONNX_BUILD_TESTS=1 pip install -e . -v     # With C++ tests
 ```
 
+If [pixi](https://pixi.prefix.dev/latest/) is available in your environment, `pixi run install` (and `pixi run pytest`, `pixi run gtest`, `pixi run gen-all`) is the preferred, more reproducible way to build and test — see `pixi.toml` for the full task list. Fall back to the plain commands below when pixi isn't available.
+
 Pure Python changes take effect immediately in editable installs. C++ changes require rebuild.
 
 ## Testing
