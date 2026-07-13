@@ -9,7 +9,6 @@ import struct
 import tempfile
 
 import numpy as np
-import parameterized
 import pytest
 
 import onnx.version_converter
@@ -2266,10 +2265,10 @@ class TestVersionConverter:
         assert converted_model.graph.node[0].attribute[0].i == 2
         assert converted_model.opset_import[0].version == 12
 
-    @parameterized.parameterized.expand(
+    @pytest.mark.parametrize(
+        "op_type, attrs, from_opset, to_opset, output_type, output_shape",
         [
             (
-                "cast_9_8",
                 "Cast",
                 {"to": TensorProto.FLOAT},
                 9,
@@ -2278,7 +2277,6 @@ class TestVersionConverter:
                 (1,),
             ),
             (
-                "softmax_12_13",
                 "Softmax",
                 {"axis": 1},
                 12,
@@ -2287,7 +2285,6 @@ class TestVersionConverter:
                 (1,),
             ),
             (
-                "upsample_9_10",
                 "Upsample",
                 {"mode": "nearest"},
                 9,
@@ -2295,11 +2292,10 @@ class TestVersionConverter:
                 TensorProto.FLOAT,
                 (1, 1, 2, 2),
             ),
-        ]
+        ],
     )
     def test_rejects_missing_required_inputs(
         self,
-        _: str,
         op_type: str,
         attrs: dict[str, int | str],
         from_opset: int,
@@ -2337,11 +2333,13 @@ class TestVersionConverter:
         with pytest.raises((RuntimeError, shape_inference.InferenceError)):
             test()
 
-    @parameterized.parameterized.expand(
+    @pytest.mark.parametrize(
+        "x_shape, scale_shape, axis, block_size, output_dtype, zero_point_dtype, compatible",
         [
-            ("per_tensor", (16, 3), (1,), None, None, None, TensorProto.INT8, True),
-            (
-                "per_axis_none_block_shape",
+            pytest.param(
+                (16, 3), (1,), None, None, None, TensorProto.INT8, True, id="per_tensor"
+            ),
+            pytest.param(
                 (16, 3),
                 (16,),
                 1,
@@ -2349,9 +2347,9 @@ class TestVersionConverter:
                 None,
                 TensorProto.INT8,
                 True,
+                id="per_axis_none_block_shape",
             ),
-            (
-                "per_axis_zero_block_shape",
+            pytest.param(
                 (16, 3),
                 (16,),
                 1,
@@ -2359,9 +2357,9 @@ class TestVersionConverter:
                 None,
                 TensorProto.INT8,
                 True,
+                id="per_axis_zero_block_shape",
             ),
-            (
-                "per_tensor_positive_block_shape",
+            pytest.param(
                 (16, 3),
                 (1,),
                 1,
@@ -2369,9 +2367,9 @@ class TestVersionConverter:
                 None,
                 TensorProto.INT8,
                 False,
+                id="per_tensor_positive_block_shape",
             ),
-            (
-                "per_axis_positive_block_shape",
+            pytest.param(
                 (16, 3),
                 (16,),
                 1,
@@ -2379,11 +2377,22 @@ class TestVersionConverter:
                 None,
                 TensorProto.INT8,
                 False,
+                id="per_axis_positive_block_shape",
             ),
-            ("blocked_2d", (16, 3), (4, 3), 0, 4, None, TensorProto.INT8, False),
-            ("blocked_3d", (4, 3, 32), (4, 3, 8), 2, 4, None, TensorProto.INT8, False),
-            (
-                "per_axis_output_dtype",
+            pytest.param(
+                (16, 3), (4, 3), 0, 4, None, TensorProto.INT8, False, id="blocked_2d"
+            ),
+            pytest.param(
+                (4, 3, 32),
+                (4, 3, 8),
+                2,
+                4,
+                None,
+                TensorProto.INT8,
+                False,
+                id="blocked_3d",
+            ),
+            pytest.param(
                 (16, 3),
                 (16,),
                 1,
@@ -2391,9 +2400,9 @@ class TestVersionConverter:
                 TensorProto.FLOAT8E4M3FN,
                 None,
                 False,
+                id="per_axis_output_dtype",
             ),
-            (
-                "per_axis_unsupported_type",
+            pytest.param(
                 (16, 3),
                 (16,),
                 1,
@@ -2401,12 +2410,12 @@ class TestVersionConverter:
                 None,
                 TensorProto.UINT16,
                 False,
+                id="per_axis_unsupported_type",
             ),
-        ]
+        ],
     )
     def test_quantize_21_20(
         self,
-        _: str,
         x_shape: tuple[int, ...],
         scale_shape: tuple[int, ...],
         axis: int,
@@ -2452,20 +2461,24 @@ class TestVersionConverter:
         with context_manager:
             test(x_shape, scale_shape, axis, block_size, output_dtype, zero_point_dtype)
 
-    @parameterized.parameterized.expand(
+    @pytest.mark.parametrize(
+        "y_shape, scale_shape, axis, block_size, compatible",
         [
-            ("per_tensor", (16, 3), (1,), None, None, True),
-            ("per_axis_none_block_shape", (16, 3), (16,), 1, None, True),
-            ("per_axis_zero_block_shape", (16, 3), (16,), 1, 0, True),
-            ("per_tensor_positive_block_shape", (16, 3), (1,), 1, 2, False),
-            ("per_axis_positive_block_shape", (16, 3), (16,), 1, 2, False),
-            ("blocked_2d", (16, 3), (4, 3), 0, 4, False),
-            ("blocked_3d", (4, 3, 32), (4, 3, 8), 2, 4, False),
-        ]
+            pytest.param((16, 3), (1,), None, None, True, id="per_tensor"),
+            pytest.param((16, 3), (16,), 1, None, True, id="per_axis_none_block_shape"),
+            pytest.param((16, 3), (16,), 1, 0, True, id="per_axis_zero_block_shape"),
+            pytest.param(
+                (16, 3), (1,), 1, 2, False, id="per_tensor_positive_block_shape"
+            ),
+            pytest.param(
+                (16, 3), (16,), 1, 2, False, id="per_axis_positive_block_shape"
+            ),
+            pytest.param((16, 3), (4, 3), 0, 4, False, id="blocked_2d"),
+            pytest.param((4, 3, 32), (4, 3, 8), 2, 4, False, id="blocked_3d"),
+        ],
     )
     def test_dequantize_21_20(
         self,
-        _: str,
         y_shape: tuple[int, ...],
         scale_shape: tuple[int, ...],
         axis: int,
@@ -2637,13 +2650,13 @@ class TestVersionConverter:
         )
 
     # Scatter 16 -> 15: TypeRestriction (bfloat16) + RemoveAttribute (reduction)
-    @parameterized.parameterized.expand([("ScatterElements",), ("ScatterND",)])
+    @pytest.mark.parametrize("op_name", ["ScatterElements", "ScatterND"])
     def test_scatter_16_15_success(self, op_name: str) -> None:
         graph = self._make_scatter_graph(op_name, TensorProto.FLOAT, "none")
         converted = self._converted(graph, helper.make_operatorsetid("", 16), 15)
         assert converted.opset_import[0].version == 15
 
-    @parameterized.parameterized.expand([("ScatterElements",), ("ScatterND",)])
+    @pytest.mark.parametrize("op_name", ["ScatterElements", "ScatterND"])
     def test_scatter_16_15_bfloat16_fails(self, op_name: str) -> None:
         def test() -> None:
             graph = self._make_scatter_graph(op_name, TensorProto.BFLOAT16)
@@ -2653,13 +2666,14 @@ class TestVersionConverter:
             test()
 
     # Opset 16 added reduction 'add' and 'mul'; 16 -> 15 only allows 'none'
-    @parameterized.parameterized.expand(
+    @pytest.mark.parametrize(
+        "op_name, reduction",
         [
             ("ScatterElements", "add"),
             ("ScatterElements", "mul"),
             ("ScatterND", "add"),
             ("ScatterND", "mul"),
-        ]
+        ],
     )
     def test_scatter_16_15_reduction_add_mul_fails(
         self, op_name: str, reduction: str
@@ -2672,13 +2686,14 @@ class TestVersionConverter:
             test()
 
     # Scatter 18 -> 17: reject reduction "max" / "min"
-    @parameterized.parameterized.expand(
+    @pytest.mark.parametrize(
+        "op_name, reduction",
         [
             ("ScatterElements", "max"),
             ("ScatterElements", "min"),
             ("ScatterND", "max"),
             ("ScatterND", "min"),
-        ]
+        ],
     )
     def test_scatter_18_17_reduction_max_min_fails(
         self, op_name: str, reduction: str
@@ -2690,7 +2705,8 @@ class TestVersionConverter:
         with pytest.raises(RuntimeError):
             test()
 
-    @parameterized.parameterized.expand(
+    @pytest.mark.parametrize(
+        "op_name, reduction",
         [
             ("ScatterElements", None),
             ("ScatterElements", "none"),
@@ -2700,7 +2716,7 @@ class TestVersionConverter:
             ("ScatterND", "none"),
             ("ScatterND", "add"),
             ("ScatterND", "mul"),
-        ]
+        ],
     )
     def test_scatter_18_17_allowed_reductions_success(
         self, op_name: str, reduction: str | None
@@ -2861,13 +2877,11 @@ class TestVersionConverter:
         assert not any(a.name == "stash_type" for a in range_node.attribute)
 
     # Range 27 -> 26: float16 and bfloat16 inputs must be rejected
-    @parameterized.parameterized.expand(
-        [
-            ("float16", TensorProto.FLOAT16),
-            ("bfloat16", TensorProto.BFLOAT16),
-        ]
+    @pytest.mark.parametrize(
+        "dtype",
+        [TensorProto.FLOAT16, TensorProto.BFLOAT16],
     )
-    def test_range_27_26_low_precision_fails(self, _: str, dtype: int) -> None:
+    def test_range_27_26_low_precision_fails(self, dtype: int) -> None:
         def test() -> None:
             nodes = [helper.make_node("Range", ["start", "limit", "delta"], ["output"])]
             graph = helper.make_graph(
@@ -2884,6 +2898,104 @@ class TestVersionConverter:
 
         with pytest.raises(RuntimeError):
             test()
+
+    def test_scan_8_9_rejects_no_inputs(self) -> None:
+        # Scan in opset 8 must have at least 1 input; zero inputs is UB (inputs[0] OOB).
+        def test() -> None:
+            nodes = [
+                helper.make_node(
+                    "Scan",
+                    inputs=[],
+                    outputs=["y"],
+                    body=helper.make_graph([], "body", [], []),
+                )
+            ]
+            graph = helper.make_graph(
+                nodes,
+                "test_scan_no_inputs",
+                [],
+                [helper.make_tensor_value_info("y", TensorProto.FLOAT, None)],
+            )
+            model = helper.make_model(
+                graph, opset_imports=[helper.make_operatorsetid("", 8)]
+            )
+            onnx.version_converter.convert_version(model, 9)
+
+        with pytest.raises(RuntimeError):
+            test()
+
+    def test_scan_9_8_with_valid_node(self) -> None:
+        data_type = TensorProto.FLOAT
+        node1 = helper.make_node("Add", inputs=["sum_in", "next"], outputs=["sum_out"])
+        node2 = helper.make_node("Identity", inputs=["sum_out"], outputs=["scan_out"])
+        body = helper.make_graph(
+            [node1, node2],
+            "scan_body",
+            [
+                helper.make_tensor_value_info("sum_in", data_type, [2]),
+                helper.make_tensor_value_info("next", data_type, [2]),
+            ],
+            [
+                helper.make_tensor_value_info("sum_out", data_type, [2]),
+                helper.make_tensor_value_info("scan_out", data_type, [2]),
+            ],
+        )
+        nodes = [
+            helper.make_node(
+                "Scan",
+                inputs=["initial", "x"],
+                outputs=["y", "z"],
+                body=body,
+                num_scan_inputs=1,
+            )
+        ]
+        graph = helper.make_graph(
+            nodes,
+            "test_scan_9_8",
+            [
+                helper.make_tensor_value_info("initial", data_type, [2]),
+                helper.make_tensor_value_info("x", data_type, [3, 2]),
+            ],
+            [
+                helper.make_tensor_value_info("y", data_type, [2]),
+                helper.make_tensor_value_info("z", data_type, [3, 2]),
+            ],
+        )
+        converted_model = self._converted(graph, helper.make_operatorsetid("", 9), 8)
+        assert converted_model.graph.node[0].op_type == "Scan"
+        assert converted_model.opset_import[0].version == 8
+
+    def test_convert_version_ai_onnx_domain_spelling_preserves_custom_domain(
+        self,
+    ) -> None:
+        # convert_graph's default-domain lookup must match "ai.onnx" (not just ""),
+        # and must only increment that entry -- a custom-domain opset_import must
+        # be left untouched.
+        node = helper.make_node("Add", inputs=["X", "Y"], outputs=["Z"])
+        graph = helper.make_graph(
+            [node],
+            "test_default_domain_ai_onnx_spelling",
+            [
+                helper.make_tensor_value_info("X", TensorProto.FLOAT, [1]),
+                helper.make_tensor_value_info("Y", TensorProto.FLOAT, [1]),
+            ],
+            [helper.make_tensor_value_info("Z", TensorProto.FLOAT, [1])],
+        )
+        model = helper.make_model(
+            graph,
+            opset_imports=[
+                helper.make_operatorsetid("ai.onnx", 9),
+                helper.make_operatorsetid("custom.domain", 1),
+            ],
+        )
+        converted_model = onnx.version_converter.convert_version(model, 8)
+        checker.check_model(converted_model)
+
+        opset_by_domain = {
+            opset.domain: opset.version for opset in converted_model.opset_import
+        }
+        assert opset_by_domain["ai.onnx"] == 8
+        assert opset_by_domain["custom.domain"] == 1
 
     def _celu_converted(self, dtype: int, src: int, dst: int) -> ModelProto:
         node = helper.make_node("Celu", ["X"], ["Y"], alpha=2.0)
@@ -2906,13 +3018,10 @@ class TestVersionConverter:
         )
 
     # Celu 28 -> 27: types added in v28 must be rejected
-    @parameterized.parameterized.expand(
-        [
-            ("float16", TensorProto.FLOAT16),
-            ("bfloat16", TensorProto.BFLOAT16),
-            ("double", TensorProto.DOUBLE),
-        ]
+    @pytest.mark.parametrize(
+        "dtype",
+        [TensorProto.FLOAT16, TensorProto.BFLOAT16, TensorProto.DOUBLE],
     )
-    def test_celu_28_27_unsupported_type_fails(self, _: str, dtype: int) -> None:
+    def test_celu_28_27_unsupported_type_fails(self, dtype: int) -> None:
         with pytest.raises(RuntimeError):
             self._celu_converted(dtype, 28, 27)

@@ -3,18 +3,14 @@
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
-import itertools
 import os
 import pathlib
 import shutil
-import tempfile
-import unittest
 import uuid
 import warnings
 from typing import TYPE_CHECKING, Any
 
 import numpy as np
-import parameterized
 import pytest
 
 import onnx
@@ -41,9 +37,10 @@ from onnx.numpy_helper import from_array, to_array
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
+    from pathlib import Path
 
 
-class TestLoadExternalDataBase(unittest.TestCase):
+class TestLoadExternalDataBase:
     """Base class for testing external data related behaviors.
 
     Subclasses should be parameterized with a serialization format.
@@ -51,15 +48,12 @@ class TestLoadExternalDataBase(unittest.TestCase):
 
     serialization_format: str = "protobuf"
 
-    def setUp(self) -> None:
-        self._temp_dir_obj = tempfile.TemporaryDirectory()
-        self.temp_dir: str = self._temp_dir_obj.name
+    @pytest.fixture(autouse=True)
+    def setup(self, tmp_path: Path):
+        self.temp_dir = str(tmp_path)
         self.initializer_value = np.arange(6).reshape(3, 2).astype(np.float32) + 512
         self.attribute_value = np.arange(6).reshape(2, 3).astype(np.float32) + 256
         self.model_filename = self.create_test_model()
-
-    def tearDown(self) -> None:
-        self._temp_dir_obj.cleanup()
 
     def get_temp_model_filename(self) -> str:
         return os.path.join(self.temp_dir, str(uuid.uuid4()) + ".onnx")
@@ -118,19 +112,22 @@ class TestLoadExternalDataBase(unittest.TestCase):
 
     def test_check_model(self) -> None:
         if self.serialization_format != "protobuf":
-            self.skipTest(
+            pytest.skip(
                 "check_model supports protobuf only as binary when provided as a path"
             )
         checker.check_model(self.model_filename)
 
 
-@parameterized.parameterized_class(
-    [
-        {"serialization_format": "protobuf"},
-        {"serialization_format": "textproto"},
-    ]
-)
 class TestLoadExternalData(TestLoadExternalDataBase):
+    @pytest.fixture(scope="class", params=["protobuf", "textproto"], autouse=True)
+    def override_serialization_format(self, request):
+        # Override the class' `serialization_format`.
+        # This is not idiomatic pytest code which would structure all
+        # these dependencies as explicit fixtures rather than setting
+        # state on `self`. The code is as it is because it was
+        # inherited from an earlier unittest/parameterized setup.
+        self.serialization_format = request.param
+
     def test_load_external_data(self) -> None:
         model = onnx.load_model(self.model_filename, self.serialization_format)
         initializer_tensor = model.graph.initializer[0]
@@ -166,13 +163,16 @@ class TestLoadExternalData(TestLoadExternalDataBase):
         np.testing.assert_allclose(to_array(attribute_tensor), self.attribute_value)
 
 
-@parameterized.parameterized_class(
-    [
-        {"serialization_format": "protobuf"},
-        {"serialization_format": "textproto"},
-    ]
-)
 class TestLoadExternalDataSingleFile(TestLoadExternalDataBase):
+    @pytest.fixture(scope="class", params=["protobuf", "textproto"], autouse=True)
+    def override_serialization_format(self, request):
+        # Override the class' `serialization_format`.
+        # This is not idiomatic pytest code which would structure all
+        # these dependencies as explicit fixtures rather than setting
+        # state on `self`. The code is as it is because it was
+        # inherited from an earlier unittest/parameterized setup.
+        self.serialization_format = request.param
+
     def create_external_data_tensors(
         self, tensors_data: list[tuple[list[Any], Any]]
     ) -> list[TensorProto]:
@@ -225,11 +225,7 @@ class TestLoadExternalDataSingleFile(TestLoadExternalDataBase):
         attribute_tensor = new_model.graph.node[0].attribute[0].t
         np.testing.assert_allclose(to_array(attribute_tensor), self.attribute_value)
 
-    @parameterized.parameterized.expand(
-        itertools.product(
-            (True, False),
-        )
-    )
+    @pytest.mark.parametrize("use_absolute_path", (True, False))
     def test_save_external_invalid_single_file_data_and_check(
         self, use_absolute_path: bool
     ) -> None:
@@ -268,18 +264,12 @@ class TestLoadExternalDataSingleFile(TestLoadExternalDataBase):
             onnx.save_model(model, new_model_filepath, self.serialization_format)
 
 
-@parameterized.parameterized_class(
-    [
-        {"serialization_format": "protobuf"},
-        {"serialization_format": "textproto"},
-    ]
-)
-class TestSaveAllTensorsAsExternalData(unittest.TestCase):
-    serialization_format: str = "protobuf"
-
-    def setUp(self) -> None:
-        self._temp_dir_obj = tempfile.TemporaryDirectory()
-        self.temp_dir: str = self._temp_dir_obj.name
+@pytest.mark.parametrize("serialization_format", ["protobuf", "textproto"])
+class TestSaveAllTensorsAsExternalData:
+    @pytest.fixture(autouse=True)
+    def setup(self, tmp_path, serialization_format: str):
+        self.serialization_format = serialization_format
+        self.temp_dir: str = str(tmp_path)
         self.initializer_value = np.arange(6).reshape(3, 2).astype(np.float32) + 512
         self.attribute_value = np.arange(6).reshape(2, 3).astype(np.float32) + 256
         self.model = self.create_test_model_proto()
@@ -325,11 +315,9 @@ class TestSaveAllTensorsAsExternalData(unittest.TestCase):
         )
         return helper.make_model(graph)
 
-    @unittest.skipIf(
-        serialization_format != "protobuf",
-        "check_model supports protobuf only when provided as a path",
-    )
     def test_check_model(self) -> None:
+        if self.serialization_format != "protobuf":
+            pytest.skip("check_model supports protobuf only when provided as a path")
         checker.check_model(self.model)
 
     def test_convert_model_to_external_data_with_size_threshold(self) -> None:
@@ -570,18 +558,12 @@ class TestSaveAllTensorsAsExternalData(unittest.TestCase):
         assert initializer_tensor.raw_data == original_raw_data
 
 
-@parameterized.parameterized_class(
-    [
-        {"serialization_format": "protobuf"},
-        {"serialization_format": "textproto"},
-    ]
-)
-class TestExternalDataToArray(unittest.TestCase):
-    serialization_format: str = "protobuf"
-
-    def setUp(self) -> None:
-        self._temp_dir_obj = tempfile.TemporaryDirectory()
-        self.temp_dir: str = self._temp_dir_obj.name
+@pytest.mark.parametrize("serialization_format", ["protobuf", "textproto"])
+class TestExternalDataToArray:
+    @pytest.fixture(autouse=True)
+    def setup(self, tmp_path, serialization_format: str) -> None:
+        self.serialization_format = serialization_format
+        self.temp_dir = str(tmp_path)
         self._model_file_path: str = os.path.join(self.temp_dir, "model.onnx")
         self.large_data = np.random.rand(10, 60, 100).astype(np.float32)
         self.small_data = (200, 300)
@@ -590,9 +572,6 @@ class TestExternalDataToArray(unittest.TestCase):
     @property
     def model_file_path(self):
         return self._model_file_path
-
-    def tearDown(self) -> None:
-        self._temp_dir_obj.cleanup()
 
     def create_test_model(self) -> ModelProto:
         X = helper.make_tensor_value_info("X", TensorProto.FLOAT, self.large_data.shape)
@@ -632,11 +611,10 @@ class TestExternalDataToArray(unittest.TestCase):
         )
         return helper.make_model(graph_def, producer_name="onnx-example")
 
-    @unittest.skipIf(
-        serialization_format != "protobuf",
-        "check_model supports protobuf only when provided as a path",
-    )
     def test_check_model(self) -> None:
+        if self.serialization_format != "protobuf":
+            pytest.skip("check_model supports protobuf only when provided as a path")
+
         checker.check_model(self.model)
 
     def test_reshape_inference_with_external_data_fail(self) -> None:
@@ -770,7 +748,7 @@ class TestNotAllowToLoadExternalDataOutsideModelDirectory(TestLoadExternalDataBa
             checker.check_model(self.model_filename)
 
 
-@unittest.skipIf(os.name != "nt", reason="Skip Windows test")
+@pytest.mark.skipif(os.name != "nt", reason="Skip Windows test")
 class TestNotAllowToLoadExternalDataOutsideModelDirectoryOnWindows(
     TestNotAllowToLoadExternalDataOutsideModelDirectory
 ):
@@ -808,16 +786,13 @@ class TestExternalDataToArrayWithPath(TestExternalDataToArray):
         return pathlib.Path(self._model_file_path)
 
 
-class TestFunctionsAndSubGraphs(unittest.TestCase):
-    def setUp(self) -> None:
-        self._temp_dir_obj = tempfile.TemporaryDirectory()
-        temp_dir = self._temp_dir_obj.name
+class TestFunctionsAndSubGraphs:
+    @pytest.fixture(autouse=True)
+    def setup(self, tmp_path) -> None:
+        temp_dir = str(tmp_path)
         self._model_file_path: str = os.path.join(temp_dir, "model.onnx")
         array = np.arange(4096).astype(np.float32)
         self._tensor = from_array(array, "tensor")
-
-    def tearDown(self) -> None:
-        self._temp_dir_obj.cleanup()
 
     def _check_is_internal(self, tensor: TensorProto) -> None:
         assert tensor.data_location == TensorProto.DEFAULT
@@ -904,7 +879,7 @@ def _make_external_data_test_model() -> tuple[ModelProto, np.ndarray]:
     return model, array
 
 
-@unittest.skipIf(
+@pytest.mark.skipif(
     os.name == "nt", reason="Symlinks require elevated privileges on Windows"
 )
 class TestSaveExternalDataSymlinkProtection(TestLoadExternalDataBase):
@@ -951,7 +926,7 @@ class TestSaveExternalDataSymlinkProtection(TestLoadExternalDataBase):
             assert f.read() == "SENSITIVE DATA"
 
 
-@unittest.skipIf(
+@pytest.mark.skipif(
     os.name == "nt", reason="Symlinks require elevated privileges on Windows"
 )
 class TestLoadExternalDataSymlinkProtection(TestLoadExternalDataBase):
@@ -1049,7 +1024,7 @@ class TestLoadExternalDataSymlinkProtection(TestLoadExternalDataBase):
             load_external_data_for_model(loaded_model, model_dir)
 
 
-@unittest.skipIf(os.name == "nt", reason="Hardlinks behave differently on Windows")
+@pytest.mark.skipif(os.name == "nt", reason="Hardlinks behave differently on Windows")
 class TestLoadExternalDataHardlinkProtection(TestLoadExternalDataBase):
     """Test that loading external data rejects files with multiple hardlinks."""
 

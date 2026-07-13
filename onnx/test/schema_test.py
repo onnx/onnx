@@ -4,10 +4,8 @@
 from __future__ import annotations
 
 import contextlib
-import unittest
 from typing import TYPE_CHECKING
 
-import parameterized
 import pytest
 
 import onnx
@@ -365,25 +363,17 @@ class TestFormalParameter:
 
 
 class TestTypeConstraintParam:
-    @parameterized.parameterized.expand(
+    @pytest.mark.parametrize(
+        "allowed_types",
         [
-            ("single_type", "T", ["tensor(float)"], "Test description"),
-            (
-                "double_types",
-                "T",
-                ["tensor(float)", "tensor(int64)"],
-                "Test description",
-            ),
-            ("tuple", "T", ("tensor(float)", "tensor(int64)"), "Test description"),
-        ]
+            pytest.param(["tensor(float)"], id="list_single"),
+            pytest.param(["tensor(float)", "tensor(int64)"], id="list_multiple"),
+            pytest.param(("tensor(float)", "tensor(int64)"), id="tuple_multiple"),
+        ],
     )
-    def test_init(
-        self,
-        _: str,
-        type_param_str: str,
-        allowed_types: Sequence[str],
-        description: str,
-    ) -> None:
+    def test_init(self, allowed_types: Sequence[str]) -> None:
+        type_param_str = "T"
+        description = "Test description"
         type_constraint = defs.OpSchema.TypeConstraintParam(
             type_param_str, allowed_types, description
         )
@@ -414,36 +404,31 @@ class TestAttribute:
         assert attribute.description == "attr1 description"
 
 
-@parameterized.parameterized_class(
+@pytest.mark.parametrize(
+    ("op_type", "op_version", "op_domain", "trap_op_version"),
     [
         # register to exist domain
-        {
-            "op_type": "CustomOp",
-            "op_version": 5,
-            "op_domain": "",
-            "trap_op_version": [1, 2, 6, 7],
-        },
+        ("CustomOp", 5, "", [1, 2, 6, 7]),
         # register to new domain
-        {
-            "op_type": "CustomOp",
-            "op_version": 5,
-            "op_domain": "test",
-            "trap_op_version": [1, 2, 6, 7],
-        },
-    ]
+        ("CustomOp", 5, "test", [1, 2, 6, 7]),
+    ],
 )
-class TestOpSchemaRegister(unittest.TestCase):
+class TestOpSchemaRegister:
     op_type: str
     op_version: int
     op_domain: str
     # register some fake schema to check behavior
     trap_op_version: list[int]
 
-    def setUp(self) -> None:
+    @pytest.fixture(autouse=True)
+    def _register_schema(self, op_type, op_version, op_domain, trap_op_version):
+        self.op_type = op_type
+        self.op_version = op_version
+        self.op_domain = op_domain
+        self.trap_op_version = trap_op_version
         # Ensure the schema is unregistered
         assert not onnx.defs.has(self.op_type, self.op_domain)
-
-    def tearDown(self) -> None:
+        yield
         # Clean up the registered schema
         for version in [*self.trap_op_version, self.op_version]:
             with contextlib.suppress(onnx.defs.SchemaError):

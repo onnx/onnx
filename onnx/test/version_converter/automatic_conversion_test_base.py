@@ -4,7 +4,6 @@
 from __future__ import annotations
 
 import string
-import unittest
 from typing import TYPE_CHECKING, Any, cast
 
 import pytest
@@ -18,7 +17,7 @@ if TYPE_CHECKING:
 LATEST_OPSET = onnx.defs.onnx_opset_version()
 
 
-class TestAutomaticConversion(unittest.TestCase):
+class TestAutomaticConversion:
     def _test_model_conversion(
         self, to_opset: int, model: str | onnx.ModelProto
     ) -> None:
