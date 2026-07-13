@@ -7,18 +7,19 @@ import itertools
 import platform
 from typing import TYPE_CHECKING, Any
 
+import numpy
+
 import onnx.backend.base
 import onnx.backend.test
 import onnx.shape_inference
 import onnx.version_converter
 from onnx import ModelProto, NodeProto, TensorProto
 from onnx.backend.base import Device, DeviceType
+from onnx.backend.test.case.node.unique import unique_output_types
 from onnx.backend.test.runner import BackendIsNotSupposedToImplementIt
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
-
-    import numpy
 
 # The following just executes the fake backend through the backend test
 # infrastructure. Since we don't have full reference implementation of all ops
@@ -103,6 +104,19 @@ def do_enforce_test_coverage_safelist(model: ModelProto) -> bool:
     if model.graph.name not in test_coverage_safelist:
         return False
     return all(node.op_type not in {"RNN", "LSTM", "GRU"} for node in model.graph.node)
+
+
+def test_unique_output_types() -> None:
+    x = numpy.empty((2, 3, 4), dtype=numpy.float32)
+    for axis, y_shape in ((None, [None]), (-1, [2, 3, None])):
+        expected = [
+            onnx.helper.make_tensor_type_proto(TensorProto.FLOAT, y_shape),
+            *[
+                onnx.helper.make_tensor_type_proto(TensorProto.INT64, [None])
+                for _ in range(3)
+            ],
+        ]
+        assert unique_output_types(x, axis) == expected
 
 
 test_kwargs = {

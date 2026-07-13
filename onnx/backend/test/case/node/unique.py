@@ -19,7 +19,7 @@ def specify_int64(indices, inverse_indices, counts):
 
 
 def unique_output_types(x: np.ndarray, axis: int | None = None) -> list[onnx.TypeProto]:
-    y_shape = [None] if axis is None else list(x.shape)
+    y_shape: list[int | None] = [None] if axis is None else list(x.shape)
     if axis is not None:
         y_shape[axis] = None
     element_type = onnx.helper.np_dtype_to_tensor_dtype(x.dtype)
