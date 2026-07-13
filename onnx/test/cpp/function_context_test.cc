@@ -11,8 +11,8 @@
 #include "onnx/checker.h"
 #include "onnx/common/constants.h"
 #include "onnx/defs/function.h"
+#include "onnx/defs/parser.h"
 #include "onnx/defs/schema.h"
-#include "onnx/parser.h"
 
 namespace ONNX_NAMESPACE {
 namespace Test {
@@ -285,23 +285,21 @@ TEST(FunctionAPITest, DepthToSpaceFunctionBodyDCR) {
   EXPECT_TRUE(schema->HasContextDependentFunction());
 
   std::string node_str = R"(
-    <
-    ir_version: 10,
-    opset_import: ["" : 13]
-    >
-    agraph (float[1, 8, 2, 3], X) => (float[1, 2, 4, 6], Y) {
-    Y = DepthToSpace<blocksize: 2, mode: "DCR">(X)
+    agraph (float[1, 8, 2, 3] X) => (float[1, 2, 4, 6] Y) {
+    Y = DepthToSpace<blocksize = 2, mode = "DCR">(X)
     }
   )";
 
-  auto graph = ONNX_NAMESPACE::parse_graph(node_str);
-  EXPECT_EQ(graph->node().size(), 1);
-  NodeProto nodeProto = graph->node(0);
+  OnnxParser parser(node_str);
+  GraphProto graph;
+  auto status = parser.Parse(graph);
+  EXPECT_TRUE(status.IsOK()) << status.ErrorMessage();
+  EXPECT_EQ(graph.node().size(), 1);
 
   TypeProto floatTypeProto;
   floatTypeProto.mutable_tensor_type()->set_elem_type(TensorProto_DataType::TensorProto_DataType_FLOAT);
 
-  FunctionBodyBuildContextImpl ctx(nodeProto, {floatTypeProto});
+  FunctionBodyBuildContextImpl ctx(graph.node(0), {floatTypeProto});
   FunctionProto fnProto;
   EXPECT_TRUE(schema->BuildContextDependentFunction(ctx, fnProto));
   EXPECT_GT(fnProto.node_size(), 0);
@@ -339,23 +337,21 @@ TEST(FunctionAPITest, DepthToSpaceFunctionBodyCRD) {
   EXPECT_TRUE(schema->HasContextDependentFunction());
 
   std::string node_str = R"(
-    <
-    ir_version: 10,
-    opset_import: ["" : 13]
-    >
-    agraph (float[1, 8, 2, 3], X) => (float[1, 2, 4, 6], Y) {
-    Y = DepthToSpace<blocksize: 2, mode: "CRD">(X)
+    agraph (float[1, 8, 2, 3] X) => (float[1, 2, 4, 6] Y) {
+    Y = DepthToSpace<blocksize = 2, mode = "CRD">(X)
     }
   )";
 
-  auto graph = ONNX_NAMESPACE::parse_graph(node_str);
-  EXPECT_EQ(graph->node().size(), 1);
-  NodeProto nodeProto = graph->node(0);
+  OnnxParser parser(node_str);
+  GraphProto graph;
+  auto status = parser.Parse(graph);
+  EXPECT_TRUE(status.IsOK()) << status.ErrorMessage();
+  EXPECT_EQ(graph.node().size(), 1);
 
   TypeProto floatTypeProto;
   floatTypeProto.mutable_tensor_type()->set_elem_type(TensorProto_DataType::TensorProto_DataType_FLOAT);
 
-  FunctionBodyBuildContextImpl ctx(nodeProto, {floatTypeProto});
+  FunctionBodyBuildContextImpl ctx(graph.node(0), {floatTypeProto});
   FunctionProto fnProto;
   EXPECT_TRUE(schema->BuildContextDependentFunction(ctx, fnProto));
   EXPECT_GT(fnProto.node_size(), 0);
