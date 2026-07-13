@@ -2,10 +2,7 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
-#include <iostream>
-
 #include "gtest/gtest.h"
-#include "onnx/common/constants.h"
 #include "onnx/defs/schema.h"
 
 namespace ONNX_NAMESPACE {
