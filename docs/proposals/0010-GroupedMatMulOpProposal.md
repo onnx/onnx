@@ -8,7 +8,8 @@ Copyright (c) ONNX Project Contributors
 - Start Date: 2026-07-14
 - RFC PR: [onnx/onnx#0000](https://github.com/onnx/onnx/pull/0000)
 - Status: under discussion
-- Authors: gramalingam
+- Authors:
+  - gramalingam
 
 ## Summary
 [summary]: #summary
