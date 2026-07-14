@@ -763,7 +763,4 @@ def export_averagepool_2d_dilations_valid() -> None:
             count_include_pad=0,
         )
 
-        expect(
-            node, inputs=[x], outputs=[y], name="test_averagepool_2d_dilations_valid"
-        )
-        
+        expect(node, inputs=[x], outputs=[y], name="test_averagepool_2d_dilations")
