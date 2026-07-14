@@ -22,8 +22,9 @@ The operator is specified as a context-dependent ONNX function, so its meaning i
 the composition of standard ONNX operators given in the
 [Reference-level explanation](#reference-level-explanation).
 
-A reference implementation already exists as `com.microsoft.GroupedMatMul` in the ONNX
-Runtime `contrib_ops` (opset 1), and the proposal is related to
+ONNX Runtime does not expose a standalone grouped-matmul contrib op; instead it provides a
+larger fused `com.microsoft.MoE` (and quantized `com.microsoft.QMoE`) contrib op that
+implements an entire MoE feed-forward layer. This proposal is related to
 [onnx/onnx#7902](https://github.com/onnx/onnx/issues/7902).
 
 ## Motivation
@@ -305,25 +306,6 @@ group_indices = [[0], [0], [0]]        # all tokens -> group 0
 # output == MatMul(input, weights[0]) (reshaped from [M,1,N] to [M,1,N])
 ```
 
-## Drawbacks
-[drawbacks]: #drawbacks
-
-Why should we *not* do this?
-
-* **Adds a new operator to the standard.** Every new standard operator increases the surface
-  area that all ONNX backends are expected to support. Backends that do not implement a fused
-  `GroupedMatMul` kernel must fall back to the (memory-expensive) function decomposition.
-* **Overlaps with existing operators.** The computation is already expressible with
-  `Gather`, `Expand`, `MatMul`, `Mul`, and `ReduceSum`. A reader could argue the standard
-  should stay minimal and leave fusion to graph optimisers / pattern matchers rather than
-  introducing a dedicated op.
-* **Scope limited to homogeneous experts.** The proposed shape `[G, K, N]` assumes all
-  experts share `K` and `N`; heterogeneous-expert MoE variants are not covered and would
-  need a different mechanism.
-* **Risk of premature standardisation.** The MoE design space is still evolving quickly
-  (routing schemes, activations, fused variants), so a standard op risks being either too
-  narrow or too broad relative to where the ecosystem settles.
-
 ## Rationale and alternatives
 [rationale-and-alternatives]: #rationale-and-alternatives
 
@@ -336,8 +318,8 @@ avoiding materialised intermediates.
 
 **Impact of not doing this.** Without `GroupedMatMul`, MoE models must either be exported with
 the naive `Gather`/`Expand`/`MatMul` decomposition (which materialises gigabyte-scale
-intermediates and is impractical), or rely on vendor-specific contrib ops such as
-`com.microsoft.GroupedMatMul`, which are not portable across the ONNX ecosystem.
+intermediates and is impractical), or vendor-specific contrib ops such as ONNX Runtime's `com.microsoft.MoE`, which are not
+portable across the ONNX ecosystem.
 
 The following alternatives were considered.
 
@@ -399,7 +381,7 @@ into memory at same time).
 | cuBLAS | `cublasGemmBatchedEx` / `cublasGemmGroupedBatchedEx` |
 | CUTLASS | `GroupedGemm` kernel |
 | OpenVINO | `GroupConvolution` (analogous for convolution) |
-| ONNX Runtime | `com.microsoft.GroupedMatMul` (`contrib_ops`, opset 1) — reference implementation |
+| ONNX Runtime | `com.microsoft.MoE` / `com.microsoft.QMoE` (`contrib_ops`) — a larger fused MoE layer, not a standalone grouped matmul |
 
 The PyTorch `torch.nn.functional.grouped_mm` API (added in 2.5) directly matches the semantics proposed here:
 
@@ -415,17 +397,13 @@ out = torch.nn.functional.grouped_mm(input, weight, offs=None)
 
 - Should the `k == 1` case be allowed a 1-D `group_indices` of shape `[M]`, or should the
   operator always require the 2-D `[M, k]` form? (See *Special-case shapes for `k==1`*.)
-- Which floating-point type constraints should be required of conformant implementations, and
-  should integer/quantized types be in scope for a first version?
-- What is the exact required error behaviour for out-of-range indices across backends
-  (raise vs. undefined), and how is it validated in the conformance tests?
-- What is the target opset version for introduction?
+- Should the operator take an explicit batch dimension (e.g. multi-dimensional token inputs
+  such as `[B, S, K]`) to avoid the surrounding `Reshape`s, or keep the flattened `[M, K]`
+  form? (See *Explicit batch dimension* under Rationale and alternatives.)
 
 ## Future possibilities
 [future-possibilities]: #future-possibilities
 
-- **Explicit batch dimension.** A future revision could allow multi-dimensional token inputs
-  (e.g. `[B, S, K]`) to avoid the surrounding `Reshape`s.
 - **Heterogeneous experts.** Support for experts with differing `K`/`N` via a sequence of
   weight tensors, covering the general grouped-GEMM case.
 - **Additional fused steps.** More aggressive fusion (activation, up-/down-projection) as
