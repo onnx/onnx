@@ -92,7 +92,7 @@ cmake.build-type = "Debug"
 cmake.define.ONNX_COVERAGE = "ON"
 
 [tool.cibuildwheel.pyodide]
-build = "cp313-pyodide_wasm32"
+build = "cp314-pyodide_wasm32"
 
 [tool.cibuildwheel]
 test-command = "pytest {project}/onnx/test"
