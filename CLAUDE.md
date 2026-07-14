@@ -10,6 +10,8 @@ ONNX (Open Neural Network Exchange) — open-source standard format for AI model
 
 Also follow the shared AI assistant guidelines in `.github/copilot-instructions.md`.
 
+Before committing, pushing, filing an issue, or opening a pull request, review [CONTRIBUTING.md](CONTRIBUTING.md) — it defines the PR process, branch/CI expectations, and coding style. When writing up a bug report or evaluating its severity, check [SECURITY.md](SECURITY.md)'s disclosure policy first: easily-discovered bugs (found with widely available tooling) are fine as a normal public issue or PR, but a non-trivial security vulnerability must be reported privately via GitHub Security Advisories, not a public issue.
+
 ## Project Norms
 
 - Follow the [ONNX Code of Conduct](https://onnx.ai/codeofconduct.html). All generated code, comments, commit messages, and PR descriptions must be professional, welcoming, and free of hostile, discriminatory, or demeaning language.
@@ -19,6 +21,7 @@ Also follow the shared AI assistant guidelines in `.github/copilot-instructions.
 - Match existing code patterns and conventions — read surrounding code before making changes.
 - Keep PRs focused. Do not bundle unrelated changes or refactor code outside the scope of the task.
 - New operators must follow the process in `docs/AddNewOp.md`.
+- Do not introduce new dependencies as a matter of course. If one genuinely seems necessary, it must be MIT- or Apache-2.0-licensed, and should be raised with maintainers rather than added unilaterally.
 
 ## Build
 
@@ -26,6 +29,8 @@ Also follow the shared AI assistant guidelines in `.github/copilot-instructions.
 pip install -e . -v                        # Development install
 ONNX_BUILD_TESTS=1 pip install -e . -v     # With C++ tests
 ```
+
+If [pixi](https://pixi.prefix.dev/latest/) is available in your environment, `pixi run install` (and `pixi run pytest`, `pixi run gtest`, `pixi run gen-all`) is the preferred, more reproducible way to build and test — see `pixi.toml` for the full task list. Fall back to the plain commands below when pixi isn't available.
 
 Pure Python changes take effect immediately in editable installs. C++ changes require rebuild.
 
@@ -51,7 +56,7 @@ lintrunner         # Lint changed files
 lintrunner -a      # Auto-fix
 ```
 
-Runs ruff, mypy, clang-format, editorconfig-checker, and a namespace checker.
+Runs ruff, mypy, clang-format, editorconfig-checker, and a namespace checker. **`lintrunner` must pass with no errors before a coding task is considered complete.**
 
 ## Code Conventions
 
