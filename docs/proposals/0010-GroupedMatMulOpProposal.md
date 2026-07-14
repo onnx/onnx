@@ -6,7 +6,7 @@ Copyright (c) ONNX Project Contributors
 
 - Feature Name: `grouped_matmul`
 - Start Date: 2026-07-14
-- RFC PR: [onnx/onnx#0000](https://github.com/onnx/onnx/pull/0000)
+- RFC PR: [onnx/onnx#8193](https://github.com/onnx/onnx/pull/8193)
 - Status: under discussion
 - Authors:
   - gramalingam
@@ -81,19 +81,24 @@ h_up = SiLU(h_up)
 
 # Reshape for down projection: treat each (token, expert-slot) pair as a row.
 h_flat  = Reshape(h_up, [B*S*k, F])
-idx2    = Reshape(idx,  [B*S*k, 1])               # each flat row still in one expert
-val2    = Reshape(val,  [B*S*k, 1])               # combine weight (k=1 -> simple scale)
+idx2    = Reshape(idx,  [B*S*k, 1])               # each flat row selects one expert
+val2    = Reshape(val,  [B*S*k, 1])               # per-row combine weight (k=1 -> scale)
 
-# --- Down projection: fused weighted-sum combine ---
-# output shape: [B*S, H]
-out = GroupedMatMul(h_flat, expert_down_W, idx2, val2)
-out = Reshape(out, [B, S, H])
+# --- Down projection: fuse the per-slot scaling, then reduce over the k slots ---
+# GroupedMatMul (combine form, k=1) scales each expert output by its combine weight.
+d       = GroupedMatMul(h_flat, expert_down_W, idx2, val2)  # [B*S*k, H]
+d       = Reshape(d, [B*S, k, H])                           # regroup the k slots
+out     = ReduceSum(d, axis=1)                              # [B*S, H] sum over k experts
+out     = Reshape(out, [B, S, H])
 ```
 
 The up-projection uses the **no-combine** form because the activation must run per expert
-before the reduce. The down-projection uses the **combine** form to fuse the top-k weighted
-sum, avoiding a separate `Mul + ReduceSum` and the round-trip of the `[B*S*k, H]`
-intermediate through memory.
+before the reduce. The down-projection flattens the `k` selected experts into the token
+dimension, so each row selects a single expert; the **combine** form then fuses the per-slot
+weighting (the `val` multiply) into the matmul, avoiding a separate `Mul` and the round-trip
+of the `[B*S*k, H]` product through memory. A final `ReduceSum` over the regrouped `k` slots
+produces the per-token output — this cross-slot sum is not fused by the operator, because the
+`k` experts here have distinct per-slot inputs rather than sharing a single input row.
 
 ## Reference-level explanation
 [reference-level-explanation]: #reference-level-explanation
@@ -286,8 +291,8 @@ M, k, K, G, N = 2, 2, 2, 3, 2
 combine_weights = [[0.6, 0.4], [0.3, 0.7]]       # [2, 2]
 
 # token 0: 0.6*[1,0] + 0.4*[0,1] = [0.6, 0.4]
-# token 1: 0.3*[0,1] + 0.7*[0,1] = [0.0, 1.0]
-output = [[0.6, 0.4], [0.0, 1.0]]                 # [2, 2]
+# token 1: 0.3*[0,0] + 0.7*[0,1] = [0.0, 0.7]
+output = [[0.6, 0.4], [0.0, 0.7]]                 # [2, 2]
 ```
 
 #### Test 4 — Empty group (one expert unused)
