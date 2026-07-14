@@ -16,9 +16,9 @@ Copyright (c) ONNX Project Contributors
 
 This RFC proposes adding a `GroupedMatMul` operator to the standard `ai.onnx` domain.
 `GroupedMatMul` multiplies a batch of token vectors by a set of expert weight matrices,
-with each token selecting one or more experts, and optionally combines the per-expert
-results with learned combine weights. It provides a compact, efficiently fusable
-representation of the core computation in Mixture-of-Experts (MoE) feed-forward layers.
+with each token selecting one or more experts, and returns the per-expert results (with an
+optional per-expert bias). It provides a compact, efficiently fusable representation of the
+core matrix-multiplication computation in Mixture-of-Experts (MoE) feed-forward layers.
 The operator is specified as a context-dependent ONNX function, so its meaning is exactly
 the composition of standard ONNX operators given in the
 [Reference-level explanation](#reference-level-explanation).
@@ -33,12 +33,12 @@ implements an entire MoE feed-forward layer. This proposal is related to
 
 Mixture-of-Experts (MoE) feed-forward layers are a central component of large language models (Mixtral, DeepSeek, Grok, Switch Transformer, etc.). The core computation of an MoE layer is:
 
-> Given a batch of `M` token vectors and a set of `num_groups` expert weight matrices, multiply each token by one or more expert matrices chosen per-token by a router. Optionally, combine the `k` per-expert results with learned combine weights.
+> Given a batch of `M` token vectors and a set of `num_groups` expert weight matrices, multiply each token by one or more expert matrices chosen per-token by a router.
 
 This pattern — often called **grouped matrix multiplication** or **grouped GEMM** — can be expressed using existing standard ONNX operators, but a straightforward (unfused) implementation will be very inefficient and impractical.
 
 * The natural decomposition (`Gather` weights → `Expand` tokens → batched `MatMul`) materialises a full `[M×k, K, N]` weight slice and an `[M×k, K]` copy of tokens. For real MoE layers these tensors are gigabytes in size, making the decomposition impractical.
-* A fused grouped-GEMM kernel, on the other hand, processes each expert weight matrix once regardless of the number of tokens that select it, and reuses each token row across its `k` experts without copying. It can additionally fuse the `k`-way weighted sum (the "combine" step), avoiding a materialised `[M, k, N]` intermediate.
+* A fused grouped-GEMM kernel, on the other hand, processes each expert weight matrix once regardless of the number of tokens that select it, and reuses each token row across its `k` experts without copying.
 
 Adding `GroupedMatMul` to the ONNX standard will enable a more compact and efficient representation of MoE models.
 
@@ -47,13 +47,13 @@ Adding `GroupedMatMul` to the ONNX standard will enable a more compact and effic
 
 `GroupedMatMul` takes a token matrix `input` of shape `[M, K]`, a stack of `G` expert weight
 matrices `weights` of shape `[G, K, N]`, and a `group_indices` tensor of shape `[M, k]` that
-selects, for each token, the `k` experts it should be multiplied by. It optionally takes
-`combine_weights` (shape `[M, k]`) and a per-group `bias` (shape `[G, N]`).
+selects, for each token, the `k` experts it should be multiplied by. It optionally takes a
+per-group `bias` (shape `[G, N]`).
 
-* When `combine_weights` is **absent**, the output has shape `[M, k, N]`: the per-expert
-  result for each selected expert.
-* When `combine_weights` is **present**, the output has shape `[M, N]`: the weighted sum over
-  the `k` selected experts.
+The output has shape `[M, k, N]`: the per-expert result for each of the `k` selected experts.
+Any weighted combination of these per-expert results (for example the top-`k` router-weighted
+sum in an MoE layer) is expressed with standard `Mul` / `ReduceSum` ops in the surrounding
+graph (see the example below).
 
 Use `k = 1` for the dense (single-expert) case.
 
@@ -74,7 +74,7 @@ h   = Reshape(hidden,  [B*S, H])
 idx = Reshape(indices, [B*S, k])
 val = Reshape(values,  [B*S, k])
 
-# --- Up projection: per-expert output, no combine ---
+# --- Up projection: per-expert output ---
 # output shape: [B*S, k, F]
 h_up = GroupedMatMul(h, expert_gate_W, idx)       # + expert_gate_bias (optional)
 h_up = SiLU(h_up)
@@ -82,23 +82,20 @@ h_up = SiLU(h_up)
 # Reshape for down projection: treat each (token, expert-slot) pair as a row.
 h_flat  = Reshape(h_up, [B*S*k, F])
 idx2    = Reshape(idx,  [B*S*k, 1])               # each flat row selects one expert
-val2    = Reshape(val,  [B*S*k, 1])               # per-row combine weight (k=1 -> scale)
 
-# --- Down projection: fuse the per-slot scaling, then reduce over the k slots ---
-# GroupedMatMul (combine form, k=1) scales each expert output by its combine weight.
-d       = GroupedMatMul(h_flat, expert_down_W, idx2, val2)  # [B*S*k, H]
-d       = Reshape(d, [B*S, k, H])                           # regroup the k slots
-out     = ReduceSum(d, axis=1)                              # [B*S, H] sum over k experts
+# --- Down projection: per-expert output, then router-weighted sum over the k slots ---
+d       = GroupedMatMul(h_flat, expert_down_W, idx2)   # [B*S*k, 1, H]
+d       = Reshape(d, [B*S, k, H])                      # regroup the k slots
+out     = ReduceSum(d * Unsqueeze(val, -1), axis=1)    # [B*S, H] weighted sum over k
 out     = Reshape(out, [B, S, H])
 ```
 
-The up-projection uses the **no-combine** form because the activation must run per expert
-before the reduce. The down-projection flattens the `k` selected experts into the token
-dimension, so each row selects a single expert; the **combine** form then fuses the per-slot
-weighting (the `val` multiply) into the matmul, avoiding a separate `Mul` and the round-trip
-of the `[B*S*k, H]` product through memory. A final `ReduceSum` over the regrouped `k` slots
-produces the per-token output — this cross-slot sum is not fused by the operator, because the
-`k` experts here have distinct per-slot inputs rather than sharing a single input row.
+Both projections use `GroupedMatMul` purely for the grouped matrix multiplication. The
+top-`k` router-weighted sum in the down-projection is expressed explicitly with `Mul` +
+`ReduceSum` over the regrouped `k` slots. Fusing that weighted sum into the matmul is a
+possible future extension (see [Future possibilities](#future-possibilities)); it is kept
+out of this operator because the `k` experts here have distinct per-slot inputs (their
+post-activation up-projection outputs) rather than sharing a single input row.
 
 ## Reference-level explanation
 [reference-level-explanation]: #reference-level-explanation
@@ -107,9 +104,9 @@ produces the per-token output — this cross-slot sum is not fused by the operat
 
 This section is the **single, normative definition** of `GroupedMatMul`. The operator is
 specified as an ONNX **function**: its meaning is exactly the composition of standard ONNX
-operators given below. Because the presence of the optional `combine_weights` and `bias`
-inputs changes the graph that is produced, the function body is **context-dependent** (built
-via `SetContextDependentFunctionBodyBuilder`, in the style of existing ops such as
+operators given below. Because the presence of the optional `bias` input changes the graph
+that is produced, the function body is **context-dependent** (built via
+`SetContextDependentFunctionBodyBuilder`, in the style of existing ops such as
 `CenterCropPad`).
 
 Defining the semantics as a function has a useful consequence for onnx/onnx: the reference
@@ -133,7 +130,6 @@ The symbols used below are `M`, `K`, `N`, `G` (= `weights.shape[0]`) and `k` (=
 #### Function Decomposition
 
 ```
-# Common part — per-expert results r: [M, k, N]
 idx_flat  = Reshape(group_indices, [M*k])
 W_sel     = Gather(weights, idx_flat, axis=0)            # [M*k, K, N] — duplicates weights!
 X         = Reshape(Expand(Unsqueeze(input, 1), [M, k, K]),
@@ -144,17 +140,11 @@ r         = Reshape(MatMul(X, W_sel), [M, k, N])         # [M, k, N]
 bias_sel  = Reshape(Gather(bias, idx_flat, axis=0), [M, k, N])   # [M, k, N]
 r         = r + bias_sel                                          # (only when bias present)
 
-# If `combine_weights` is present -> weighted sum over the k slots, output [M, N]:
-output    = ReduceSum(r * Unsqueeze(combine_weights, -1), axis=1, keepdims=0)   # [M, N]
-
-# Otherwise (combine_weights absent) -> per-expert results, output [M, k, N]:
-output    = r                                                                    # [M, k, N]
+output    = r                                                    # [M, k, N]
 ```
 
-The four resulting cases (with/without `bias` × with/without `combine_weights`) are what the
-context-dependent function body emits: the `bias` line is included only when input 4 is
-present, and exactly one of the two `output` assignments is emitted depending on whether
-input 3 (`combine_weights`) is present.
+The two resulting cases (with/without `bias`) are what the context-dependent function body
+emits: the `bias` line is included only when input 3 is present.
 
 #### Edge Cases
 
@@ -163,12 +153,10 @@ table records the resulting behaviour for clarity.
 
 | Case | Behaviour |
 |---|---|
-| `k == 0` without combine | No expert selected, empty tensor output of shape `[M, 0, N]`. (Not expected in real model.) |
-| `k == 0` with combine | No expert selected, output is all zeros of shape `[M, N]`. (Not expected in real model.) |
-| `k == 1` without combine | One expert per token, output of shape `[M, 1, N]`. |
-| `k == 1` with combine | Effectively scales each token result by `combine_weights[i, 0]`. |
+| `k == 0` | No expert selected, empty tensor output of shape `[M, 0, N]`. (Not expected in real model.) |
+| `k == 1` | One expert per token, output of shape `[M, 1, N]`. |
 | `G == 1`, all indices 0 | Equivalent to `MatMul(input, weights[0])` (+ optional bias). |
-| `M == 0` | Zero-token input; output shape is `[0, N]` or `[0, k, N]`; no compute required. |
+| `M == 0` | Zero-token input; output shape is `[0, k, N]`; no compute required. |
 | Out-of-range index | Invalid input (implementations must raise an error). |
 
 ### Operator Specification
@@ -189,8 +177,7 @@ table records the resulting behaviour for clarity.
 | 0 | `input` | T | **Required** | `[M, K]` | Row-major token matrix. `M` tokens, `K` is the contraction (hidden) dimension. |
 | 1 | `weights` | T | **Required** | `[G, K, N]` | Stack of `G` expert weight matrices, each `K × N`. All experts share the same `K` and `N`. |
 | 2 | `group_indices` | tensor(int64) | **Required** | `[M, k]` | Group (expert) index per token per slot. Each of the `M` tokens selects `k` experts. Values must be in `[0, G)`. Use `k=1` for the dense (single-expert) case. |
-| 3 | `combine_weights` | T | **Optional** | `[M, k]` | Per-selection combine weight. When present, the output is the weighted sum over the `k` selected experts (shape `[M, N]`). When absent, per-expert results are returned (shape `[M, k, N]`). |
-| 4 | `bias` | T | **Optional** | `[G, N]` | Per-group bias vector. Added to each expert's result before the optional combine. |
+| 3 | `bias` | T | **Optional** | `[G, N]` | Per-group bias vector. Added to each expert's result. |
 
 **Notes:**
 
@@ -202,7 +189,7 @@ table records the resulting behaviour for clarity.
 
 | Index | Name | Type | Shape | Description |
 |---|---|---|---|---|
-| 0 | `output` | T | `[M, N]` or `[M, k, N]` | When `combine_weights` is present: `[M, N]` (weighted sum over k experts). When absent: `[M, k, N]` (per-expert results). |
+| 0 | `output` | T | `[M, k, N]` | Per-expert results: for each token, the result of multiplying it by each of its `k` selected experts (plus the optional bias). |
 
 #### Type Constraints
 
@@ -231,20 +218,18 @@ Validation checks (raise error if violated):
 2. `weights.rank == 3`
 3. `group_indices.rank == 2` and `group_indices.shape[0] == M`
 4. `weights.shape[1] == K` (contraction dimension agrees)
-5. If `combine_weights` present: `combine_weights.shape == [M, k]`
-6. If `bias` present: `bias.shape == [G, N]`
+5. If `bias` present: `bias.shape == [G, N]`
 
 Output shape:
 ```
-output.shape = [M, N]       if combine_weights is present
-             = [M, k, N]    otherwise
+output.shape = [M, k, N]
 ```
 
 ### Test Cases
 
 These cases are intended for `onnx/backend/test/case/node/groupedmatmul.py`.
 
-#### Test 1 — Dense (k=1), no combine, no bias
+#### Test 1 — Dense (k=1), no bias
 
 ```python
 # 4 tokens, K=3, G=2 groups, N=2, k=1
@@ -266,7 +251,7 @@ group_indices  = [[0], [1], [0], [1]]  # shape [4, 1]
 output         = [[[2, 0]], [[1, 2]], [[1, 1]], [[0, 1]]]  # shape [4, 1, 2]
 ```
 
-#### Test 2 — Top-k (k=2), no combine, with bias
+#### Test 2 — Top-k (k=2), with bias
 
 ```python
 M, k, K, G, N = 2, 2, 2, 3, 2
@@ -283,19 +268,7 @@ output = [[[1.1, 0.2], [0.3, 1.0]],
           [[0.5, 0.5], [0.1, 1.2]]]   # [2, 2, 2]
 ```
 
-#### Test 3 — Top-k (k=2) with combine, no bias
-
-```python
-M, k, K, G, N = 2, 2, 2, 3, 2
-# (same input/weights/group_indices as Test 2, no bias)
-combine_weights = [[0.6, 0.4], [0.3, 0.7]]       # [2, 2]
-
-# token 0: 0.6*[1,0] + 0.4*[0,1] = [0.6, 0.4]
-# token 1: 0.3*[0,0] + 0.7*[0,1] = [0.0, 0.7]
-output = [[0.6, 0.4], [0.0, 0.7]]                 # [2, 2]
-```
-
-#### Test 4 — Empty group (one expert unused)
+#### Test 3 — Empty group (one expert unused)
 
 ```python
 # Group 1 receives no tokens.
@@ -304,7 +277,7 @@ group_indices = [[0], [0], [2], [2]]   # group 1 unused
 # weights[1] is never accessed; output is well-defined.
 ```
 
-#### Test 5 — Single group (degenerates to MatMul)
+#### Test 4 — Single group (degenerates to MatMul)
 
 ```python
 G = 1
@@ -317,10 +290,12 @@ group_indices = [[0], [0], [0]]        # all tokens -> group 0
 
 **Why this design?** Expressing `GroupedMatMul` as a context-dependent ONNX function gives a
 single normative definition that doubles as the reference implementation, keeps the operator
-composable with the surrounding graph (router, activation, reshapes), and lets runtimes fuse
-the computation without prescribing a fusion strategy. Making the `combine` and `bias` inputs
-optional keeps the common MoE up-/down-projection patterns expressible with a single op while
-avoiding materialised intermediates.
+composable with the surrounding graph (router, activation, reshapes, weighted sum), and lets
+runtimes fuse the computation without prescribing a fusion strategy. Restricting the operator
+to the grouped matrix multiplication itself (with an optional per-group `bias`) keeps it small
+and general; the router-weighted sum used in MoE layers is left to standard `Mul` / `ReduceSum`
+ops, and can be addressed by a separate fused operator later (see
+[Future possibilities](#future-possibilities)).
 
 **Impact of not doing this.** Without `GroupedMatMul`, MoE models must either be exported with
 the naive `Gather`/`Expand`/`MatMul` decomposition (which materialises gigabyte-scale
@@ -353,9 +328,15 @@ use of newer activations all the time. Thus, onnxruntime's contrib op faces a ne
 be continuously updated to support newer activations. There is no good solution for this
 currently.
 
-**Decision: no fused activation.** Activations stay as separate ONNX ops to keep the graph
-composable across the many MoE routing variants. The combine step is (optionally) fused
-because it is common to all variants and helps avoid the `Expand`/`ReduceSum` memory overhead.
+**Decision: no fused activation, and no fused combine in this operator.** Activations stay as
+separate ONNX ops to keep the graph composable across the many MoE routing variants. The
+router-weighted sum ("combine") is likewise expressed with standard `Mul` / `ReduceSum` rather
+than folded into `GroupedMatMul`: in a standard MoE down-projection the `k` experts have
+distinct per-slot inputs, so the weighted sum reduces over a *different* grouping than the
+matmul's own `k`, and folding it in would require decoupling the two groupings and pinning down
+a normative result layout — added specification and shape-inference complexity for a fusion
+that a dedicated future operator can capture more cleanly (see
+[Future possibilities](#future-possibilities)).
 
 ### `group_indices` vs. `group_offsets`
 
@@ -410,6 +391,14 @@ out = torch.nn.functional.grouped_mm(input, weight, offs=None)
 ## Future possibilities
 [future-possibilities]: #future-possibilities
 
+- **Fused down-projection with reduction.** A separate operator could represent an MoE
+  down-projection: a `GroupedMatMul` whose own `k` is 1 (each flattened `(token, slot)` row
+  selects a single expert) fused with the subsequent router-weighted `ReduceSum` over a
+  *different* group size `k > 1` (the `k` experts of each token). This fuses the weighted sum
+  that the current proposal leaves as explicit `Mul` / `ReduceSum`, at the cost of decoupling
+  the matmul grouping from the reduction grouping (with a total-count constraint such as
+  `M*k == M2*k2`) and defining a normative result layout. It is deferred to a follow-up
+  proposal rather than complicating `GroupedMatMul`.
 - **Heterogeneous experts.** Support for experts with differing `K`/`N` via a sequence of
   weight tensors, covering the general grouped-GEMM case.
 - **Additional fused steps.** More aggressive fusion (activation, up-/down-projection) as
