@@ -10,39 +10,39 @@
 
 namespace ONNX_NAMESPACE {
 static std::vector<std::string> optional_and_tensor_types() {
-  auto optional_types = OpSchema::all_optional_types();
-  auto tensor_types = OpSchema::all_tensor_types();
-  auto sequence_types = OpSchema::all_tensor_sequence_types();
+  auto optional_types = OpSchema::all_optional_types_ir13();
+  auto tensor_types = OpSchema::all_tensor_types_ir13();
+  auto sequence_types = OpSchema::all_tensor_sequence_types_ir13();
   optional_types.insert(optional_types.end(), tensor_types.begin(), tensor_types.end());
   optional_types.insert(optional_types.end(), sequence_types.begin(), sequence_types.end());
   return optional_types;
 }
 
-static constexpr const char* Optional_ver15_doc = R"DOC(
+static constexpr const char* Optional_ver28_doc = R"DOC(
 Constructs an optional-type value containing either an empty optional of a certain type specified by the attribute,
 or a non-empty value containing the input element.
 )DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
     Optional,
-    15,
+    28,
     OpSchema()
-        .SetDoc(Optional_ver15_doc)
+        .SetDoc(Optional_ver28_doc)
         .Input(0, "input", "The input element.", "V", OpSchema::Optional)
         .Attr("type", "Type of the element in the optional output", AttributeProto::TYPE_PROTO, OPTIONAL_VALUE)
         .Output(0, "output", "The optional output enclosing the input element.", "O")
         .TypeConstraint(
             "V",
             []() {
-              auto t = OpSchema::all_tensor_types();
-              auto s = OpSchema::all_tensor_sequence_types();
+              auto t = OpSchema::all_tensor_types_ir13();
+              auto s = OpSchema::all_tensor_sequence_types_ir13();
               t.insert(t.end(), s.begin(), s.end());
               return t;
             }(),
             "Constrain input type to all tensor and sequence types.")
         .TypeConstraint(
             "O",
-            OpSchema::all_optional_types(),
+            OpSchema::all_optional_types_ir13(),
             "Constrain output type to all optional tensor or optional sequence types.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           const size_t numOutputs = ctx.getNumOutputs();
@@ -70,7 +70,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static constexpr const char* OptionalHasElement_ver18_doc = R"DOC(
+static constexpr const char* OptionalHasElement_ver28_doc = R"DOC(
 Returns true if (1) the input is an optional-type and contains an element,
 or, (2) the input is a tensor or sequence type.
 If the input is not provided or is an empty optional-type, this op returns false.
@@ -78,9 +78,9 @@ If the input is not provided or is an empty optional-type, this op returns false
 
 ONNX_OPERATOR_SET_SCHEMA(
     OptionalHasElement,
-    18,
+    28,
     OpSchema()
-        .SetDoc(OptionalHasElement_ver18_doc)
+        .SetDoc(OptionalHasElement_ver28_doc)
         .Input(0, "input", "The optional input.", "O", OpSchema::Optional)
         .Output(
             0,
@@ -106,7 +106,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           output_tensor_type->mutable_shape()->Clear();
         }));
 
-static constexpr const char* OptionalGetElement_ver18_doc = R"DOC(
+static constexpr const char* OptionalGetElement_ver28_doc = R"DOC(
 If the input is a tensor or sequence type, it returns the input.
 If the input is an optional type, it outputs the element in the input.
 It is an error if the input is an empty optional-type (i.e. does not have an element) and the behavior is undefined in this case.
@@ -114,9 +114,9 @@ It is an error if the input is an empty optional-type (i.e. does not have an ele
 
 ONNX_OPERATOR_SET_SCHEMA(
     OptionalGetElement,
-    18,
+    28,
     OpSchema()
-        .SetDoc(OptionalGetElement_ver18_doc)
+        .SetDoc(OptionalGetElement_ver28_doc)
         .Input(0, "input", "The optional input.", "O")
         .Output(0, "output", "Output element in the optional input.", "V")
         .TypeConstraint(
@@ -126,8 +126,8 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint(
             "V",
             []() {
-              auto t = OpSchema::all_tensor_types();
-              auto s = OpSchema::all_tensor_sequence_types();
+              auto t = OpSchema::all_tensor_types_ir13();
+              auto s = OpSchema::all_tensor_sequence_types_ir13();
               t.insert(t.end(), s.begin(), s.end());
               return t;
             }(),
