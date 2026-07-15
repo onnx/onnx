@@ -4,8 +4,12 @@
 
 #include "onnx/defs/printer.h"
 
+#include <array>
+#include <charconv>
+#include <cmath>
 #include <iomanip>
 #include <string>
+#include <type_traits>
 
 #include "onnx/defs/tensor_proto_util.h"
 
@@ -13,6 +17,23 @@ namespace ONNX_NAMESPACE {
 namespace {
 
 using StringStringEntryProtos = google::protobuf::RepeatedPtrField<StringStringEntryProto>;
+
+// Format numbers with std::to_chars: locale-independent and, for floating
+// point, the shortest form that round-trips through the parser.
+template <typename T>
+void PrintNumber(std::ostream& os, T value) {
+  if constexpr (std::is_floating_point_v<T>) {
+    // Normalize NaN: MSVC's to_chars emits payload forms like "nan(ind)"
+    // that the parser does not accept.
+    if (std::isnan(value)) {
+      os << (std::signbit(value) ? "-nan" : "nan");
+      return;
+    }
+  }
+  std::array<char, 32> buf;
+  const auto res = std::to_chars(buf.data(), buf.data() + buf.size(), value);
+  os.write(buf.data(), res.ptr - buf.data());
+}
 
 bool IsValidIdentifier(const std::string& str) {
   // Check if str is a valid identifier
@@ -92,7 +113,11 @@ class ProtoPrinter {
 
   template <typename T>
   void print(const T& prim) {
-    output_ << prim;
+    if constexpr (std::is_arithmetic_v<T>) {
+      PrintNumber(output_, prim);
+    } else {
+      output_ << prim;
+    }
   }
 
   void printQuoted(const std::string& str) {
@@ -157,7 +182,7 @@ class ProtoPrinter {
 
 void ProtoPrinter::print(const TensorShapeProto_Dimension& dim) {
   if (dim.has_dim_value()) {
-    output_ << dim.dim_value();
+    print(dim.dim_value());
   } else if (dim.has_dim_param()) {
     if (IsValidIdentifier(dim.dim_param()))
       output_ << dim.dim_param();
@@ -319,13 +344,13 @@ void ProtoPrinter::print(const AttributeProto& attr) {
   output_ << attr.name() << ": " << AttributeTypeNameMap::ToString(attr.type()) << " = ";
   switch (attr.type()) {
     case AttributeProto_AttributeType_INT:
-      output_ << attr.i();
+      print(attr.i());
       break;
     case AttributeProto_AttributeType_INTS:
       printSet("[", ", ", "]", attr.ints());
       break;
     case AttributeProto_AttributeType_FLOAT:
-      output_ << attr.f();
+      print(attr.f());
       break;
     case AttributeProto_AttributeType_FLOATS:
       printSet("[", ", ", "]", attr.floats());
@@ -458,7 +483,8 @@ void ProtoPrinter::print(const ModelProto& model) {
 
 void ProtoPrinter::print(const OperatorSetIdProto& opset) {
   printQuoted(opset.domain());
-  output_ << " : " << opset.version();
+  output_ << " : ";
+  print(opset.version());
 }
 
 void ProtoPrinter::print(const OpsetIdList& opsets) {
