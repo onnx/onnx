@@ -6,6 +6,8 @@ SPDX-License-Identifier: Apache-2.0
 
 # Python API Overview
 
+> **Tip:** Check out the [ir-py project](https://github.com/onnx/ir-py) for an alternative set of Python APIs for creating and manipulating ONNX models. The ir-py project provides a more modern and ergonomic interface compared to the ONNX Protobuf APIs described here.
+
 The full API is described at [API Reference](https://onnx.ai/onnx/api).
 
 ## Loading an ONNX Model
