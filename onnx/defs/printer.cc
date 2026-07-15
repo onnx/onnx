@@ -20,10 +20,10 @@ bool IsValidIdentifier(const std::string& str) {
   const char* end_ = next_ + str.size();
   if (next_ == end_)
     return false; // empty string is not a valid identifier
-  if (!isalpha(*next_) && (*next_ != '_'))
+  if (!IsAlpha(*next_) && (*next_ != '_'))
     return false; // first character must be a letter or '_'
   ++next_;
-  while ((next_ < end_) && (isalnum(*next_) || (*next_ == '_')))
+  while ((next_ < end_) && (IsAlnum(*next_) || (*next_ == '_')))
     ++next_;
   return next_ == end_;
 }
@@ -467,19 +467,16 @@ void ProtoPrinter::print(const OpsetIdList& opsets) {
 
 void ProtoPrinter::print(const FunctionProto& fn) {
   output_ << "<\n";
-  output_ << "  "
-          << "domain: ";
+  output_ << "  " << "domain: ";
   printQuoted(fn.domain());
   output_ << ",\n";
   if (!fn.overload().empty()) {
-    output_ << "  "
-            << "overload: ";
+    output_ << "  " << "overload: ";
     printQuoted(fn.overload());
     output_ << ",\n";
   }
 
-  output_ << "  "
-          << "opset_import: ";
+  output_ << "  " << "opset_import: ";
   printSet("[", ",", "]", fn.opset_import());
   output_ << "\n>\n";
   printId(fn.name());

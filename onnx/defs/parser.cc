@@ -13,7 +13,6 @@
 #include <locale.h> // NOLINT(modernize-deprecated-headers)
 #endif
 
-#include <cctype>
 #include <cerrno>
 #include <charconv>
 #include <cstdlib>
@@ -183,7 +182,7 @@ Common::Status ParserBase::Parse(Literal& result) {
   }
 
   // Check for float literals that start with alphabet characters.
-  if (isalpha(nextch)) {
+  if (IsAlpha(nextch)) {
     // Has to be a special float literal now: (-)*(nan|inf|infinity).
     if (NextIsValidFloatString()) {
       while (!AtEnd() && IsAlpha(Cur())) {
@@ -204,7 +203,7 @@ Common::Status ParserBase::Parse(Literal& result) {
   }
 
   // Checking for numeric ints or float literal.
-  if (isdigit(nextch)) {
+  if (IsDigit(nextch)) {
     ++pos_;
 
     while (!AtEnd() && (IsDigit(Cur()) || (Cur() == '.'))) {
@@ -240,7 +239,7 @@ bool ParserBase::NextIsValidFloatString() {
   const size_t from = pos_;
   constexpr int INFINITY_LENGTH = 8;
 
-  if (isalpha(nextch)) {
+  if (IsAlpha(nextch)) {
     while (!AtEnd() && IsAlpha(Cur()) && (pos_ - from) <= INFINITY_LENGTH) {
       ++pos_;
     }
@@ -255,8 +254,10 @@ bool ParserBase::NextIsValidFloatString() {
     // Reset parser location before continuing.
     pos_ = from;
 
-    std::transform(
-        candidate.begin(), candidate.end(), candidate.begin(), [](unsigned char c) { return std::tolower(c); });
+    std::transform(candidate.begin(), candidate.end(), candidate.begin(), [](char c) {
+      // ASCII-only lowercasing; std::tolower is locale-dependent.
+      return (c >= 'A' && c <= 'Z') ? static_cast<char>(c - 'A' + 'a') : c;
+    });
     if (candidate == std::string_view("inf") || candidate == std::string_view("infinity") ||
         candidate == std::string_view("nan")) {
       return true;
@@ -683,7 +684,7 @@ bool OnnxParser::NextIsType() {
 Common::Status OnnxParser::ParseSingleAttributeValue(AttributeProto& attr, AttributeProto_AttributeType expected) {
   // Parse a single-value
   auto next = NextChar();
-  if (isalpha(next) || next == '_') {
+  if (IsAlpha(next) || next == '_') {
     if (NextIsType()) {
       TypeProto typeProto;
       CHECK_PARSER_STATUS(Parse(typeProto));
