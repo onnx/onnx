@@ -30,7 +30,7 @@ void PrintNumber(std::ostream& os, T value) {
       return;
     }
   }
-  std::array<char, 32> buf;
+  std::array<char, 32> buf{};
   const auto res = std::to_chars(buf.data(), buf.data() + buf.size(), value);
   os.write(buf.data(), res.ptr - buf.data());
 }
