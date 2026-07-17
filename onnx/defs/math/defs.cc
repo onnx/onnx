@@ -597,6 +597,12 @@ The gate activation `Swish_alpha` is exactly the `Swish` operator with the same
 `alpha`, i.e. `Swish_alpha(a) = a * Sigmoid(alpha * a)`. Inputs `A` and `B` must
 have identical shapes; broadcasting is not applied and the output `Y` has the same
 shape as the inputs.
+
+Exporters typically produce `A` and `B` in one of two ways: for the common
+two-projection form (e.g. Llama's `gate_proj`/`up_proj`) wire the two projection
+outputs directly to `A` (gate) and `B` (value); for a fused/packed single
+projection, split it upstream into `A` and `B` with `Split` (contiguous layout)
+or `Slice`/`Gather` (interleaved layout).
 )DOC";
 
 static void SwiGLUShapeInference(InferenceContext& ctx) {
@@ -625,7 +631,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             AttributeProto::FLOAT,
             1.0f)
         .Input(0, "A", "Gate input tensor", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
-        .Input(1, "B", "Linear input tensor", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
+        .Input(1, "B", "Linear (value) input tensor", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
         .Output(0, "Y", "Output tensor", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
         .TypeConstraint("T", OpSchema::all_float_types_ir4(), "Constrain input and output types to float tensors.")
         .SetNodeDeterminism(OpSchema::NodeDeterminism::Deterministic)

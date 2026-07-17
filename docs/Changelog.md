@@ -33144,6 +33144,12 @@ This version of the operator has been available since version 28 of the default 
   have identical shapes; broadcasting is not applied and the output `Y` has the same
   shape as the inputs.
 
+  Exporters typically produce `A` and `B` in one of two ways: for the common
+  two-projection form (e.g. Llama's `gate_proj`/`up_proj`) wire the two projection
+  outputs directly to `A` (gate) and `B` (value); for a fused/packed single
+  projection, split it upstream into `A` and `B` with `Split` (contiguous layout)
+  or `Slice`/`Gather` (interleaved layout).
+
 #### Version
 
 This version of the operator has been available since version 28 of the default ONNX operator set.
@@ -33161,7 +33167,7 @@ This version of the operator has been available since version 28 of the default 
 <dt><tt>A</tt> (differentiable) : T</dt>
 <dd>Gate input tensor</dd>
 <dt><tt>B</tt> (differentiable) : T</dt>
-<dd>Linear input tensor</dd>
+<dd>Linear (value) input tensor</dd>
 </dl>
 
 #### Outputs
