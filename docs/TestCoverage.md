@@ -28839,7 +28839,7 @@ expect(
 
 
 ### SwiGLU
-There are 3 test cases, listed as following:
+There are 4 test cases, listed as following:
 <details>
 <summary>alpha</summary>
 
@@ -28865,26 +28865,9 @@ expect(
 
 </details>
 <details>
-<summary>float16</summary>
+<summary>axis</summary>
 
 ```python
-node = onnx.helper.make_node(
-    "SwiGLU",
-    inputs=["x"],
-    outputs=["y"],
-)
-
-x = np.array([[1.0, -2.0, 3.0, 4.0], [-1.0, 2.0, -3.0, 0.5]], dtype=np.float16)
-y = swiglu(x.astype(np.float32), alpha=1.0, axis=-1).astype(np.float16)
-
-expect(
-    node,
-    inputs=[x],
-    outputs=[y],
-    name="test_swiglu_float16",
-    opset_imports=[onnx.helper.make_opsetid("", 28)],
-)
-
 node = onnx.helper.make_node(
     "SwiGLU",
     inputs=["x"],
@@ -28902,6 +28885,29 @@ expect(
     inputs=[x],
     outputs=[y],
     name="test_swiglu_axis",
+    opset_imports=[onnx.helper.make_opsetid("", 28)],
+)
+```
+
+</details>
+<details>
+<summary>float16</summary>
+
+```python
+node = onnx.helper.make_node(
+    "SwiGLU",
+    inputs=["x"],
+    outputs=["y"],
+)
+
+x = np.array([[1.0, -2.0, 3.0, 4.0], [-1.0, 2.0, -3.0, 0.5]], dtype=np.float16)
+y = swiglu(x.astype(np.float32), alpha=1.0, axis=-1).astype(np.float16)
+
+expect(
+    node,
+    inputs=[x],
+    outputs=[y],
+    name="test_swiglu_float16",
     opset_imports=[onnx.helper.make_opsetid("", 28)],
 )
 ```

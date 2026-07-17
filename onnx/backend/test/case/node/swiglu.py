@@ -75,6 +75,8 @@ class SwiGLU(Base):
             opset_imports=[onnx.helper.make_opsetid("", 28)],
         )
 
+    @staticmethod
+    def export_axis() -> None:
         node = onnx.helper.make_node(
             "SwiGLU",
             inputs=["x"],
