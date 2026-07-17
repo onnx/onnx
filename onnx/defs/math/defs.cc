@@ -584,6 +584,89 @@ ONNX_OPERATOR_SET_SCHEMA(
             }
             )ONNX"));
 
+static constexpr const char* SwiGLU_ver28_doc = R"DOC(
+SwiGLU takes one input data (Tensor<T>) and produces one output data (Tensor<T>).
+It is a gated activation in the split form: the input `X` is split along `axis`
+into two equal-sized halves, a gate half `A` and a linear half `B`, and the
+output is the elementwise product of a Swish-activated gate and the linear half:
+
+```
+A, B = Split(X, axis=axis, num_outputs=2)
+Y = (A * Sigmoid(alpha * A)) * B
+```
+
+The first half `A` (the gate) is passed through Swish and the second half `B` is
+the linear multiplier. The size of `X` along `axis` must be even, and the output
+`Y` has the same shape as `X` except that the `axis` dimension is halved.
+)DOC";
+
+static void SwiGLUShapeInference(InferenceContext& ctx) {
+  propagateElemTypeFromInputToOutput(ctx, 0, 0);
+  if (!hasNInputShapes(ctx, 1)) {
+    return;
+  }
+  const auto& input_shape = ctx.getInputType(0)->tensor_type().shape();
+  const int rank = input_shape.dim_size();
+  int axis = static_cast<int>(getAttribute(ctx, "axis", -1));
+  if (axis < 0) {
+    axis += rank;
+  }
+  if (axis < 0 || axis >= rank) {
+    fail_shape_inference("SwiGLU axis attribute is out of range for the input rank.");
+  }
+  auto* output_shape = getOutputShape(ctx, 0);
+  for (int i = 0; i < rank; ++i) {
+    auto* dim = output_shape->add_dim();
+    if (i == axis) {
+      if (input_shape.dim(i).has_dim_value()) {
+        const int64_t value = input_shape.dim(i).dim_value();
+        if (value % 2 != 0) {
+          fail_shape_inference("SwiGLU requires the input dimension along axis to be even.");
+        }
+        dim->set_dim_value(value / 2);
+      }
+      // Otherwise the split dimension is symbolic/unknown: leave it unset.
+    } else {
+      *dim = input_shape.dim(i);
+    }
+  }
+}
+
+ONNX_OPERATOR_SET_SCHEMA(
+    SwiGLU,
+    28,
+    OpSchema()
+        .SetDoc(SwiGLU_ver28_doc)
+        .Attr(
+            "alpha",
+            "Coefficient that scales the input inside the sigmoid of the Swish activation applied to the gate half. "
+            "The default value is 1.0.",
+            AttributeProto::FLOAT,
+            1.0f)
+        .Attr(
+            "axis",
+            "The axis along which the input is split into the gate and linear halves. "
+            "A negative value counts dimensions from the back. The default value is -1.",
+            AttributeProto::INT,
+            static_cast<int64_t>(-1))
+        .Input(0, "X", "Input tensor", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
+        .Output(0, "Y", "Output tensor", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
+        .TypeConstraint("T", OpSchema::all_float_types_ir4(), "Constrain input and output types to float tensors.")
+        .SetNodeDeterminism(OpSchema::NodeDeterminism::Deterministic)
+        .TypeAndShapeInferenceFunction(SwiGLUShapeInference)
+        .FunctionBody(
+            R"ONNX(
+          {
+            Gate, Linear = Split <axis : int = @axis, num_outputs = 2> (X)
+            Alpha = Constant <value_float : float = @alpha>()
+            AlphaCast = CastLike (Alpha, X)
+            AlphaGate = Mul (AlphaCast, Gate)
+            SigGate = Sigmoid (AlphaGate)
+            SwishGate = Mul (Gate, SigGate)
+            Y = Mul (SwishGate, Linear)
+          }
+        )ONNX"));
+
 ONNX_OPERATOR_SET_SCHEMA(
     Exp,
     13,
