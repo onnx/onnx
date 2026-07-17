@@ -10098,10 +10098,31 @@ class TestShapeInference(TestShapeInferenceHelper):
             graph, [make_tensor_value_info("Y", TensorProto.FLOAT, ("N", "C", 4))]
         )
 
+    def test_swiglu_symbolic_split_dim(self) -> None:
+        graph = self._make_graph(
+            [("X", TensorProto.FLOAT, ("N", "C", "D"))],
+            [make_node("SwiGLU", ["X"], ["Y"])],
+            [],
+        )
+        # The split-axis dimension "D" is symbolic, so its halved size is unknown
+        # and must be left unset while the other dimensions are preserved.
+        self._assert_inferred(
+            graph, [make_tensor_value_info("Y", TensorProto.FLOAT, ("N", "C", None))]
+        )
+
     def test_swiglu_odd_split_dim_fails(self) -> None:
         graph = self._make_graph(
             [("X", TensorProto.FLOAT, (2, 3, 7))],
             [make_node("SwiGLU", ["X"], ["Y"])],
+            [],
+        )
+        with pytest.raises(onnx.shape_inference.InferenceError):
+            self._inferred(graph)
+
+    def test_swiglu_axis_out_of_range_fails(self) -> None:
+        graph = self._make_graph(
+            [("X", TensorProto.FLOAT, (2, 3, 8))],
+            [make_node("SwiGLU", ["X"], ["Y"], axis=5)],
             [],
         )
         with pytest.raises(onnx.shape_inference.InferenceError):
