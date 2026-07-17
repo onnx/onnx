@@ -9,9 +9,7 @@ from onnx.reference.op_run import OpRun
 
 
 class SwiGLU(OpRun):
-    def _run(self, x, alpha=None, axis=None):
+    def _run(self, a, b, alpha=None):
         alpha = 1.0 if alpha is None else alpha
-        axis = -1 if axis is None else axis
-        gate, linear = np.split(x, 2, axis=axis)
-        swish_gate = gate * (1 / (1 + np.exp(-alpha * gate)))
-        return ((swish_gate * linear).astype(x.dtype),)
+        swish_a = a * (1 / (1 + np.exp(-alpha * a)))
+        return ((swish_a * b).astype(a.dtype),)

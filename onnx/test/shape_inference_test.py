@@ -10068,83 +10068,110 @@ class TestShapeInference(TestShapeInferenceHelper):
                 graph, [make_tensor_value_info("Y", elem_type, (3, 4))]
             )
 
-    def test_swiglu_default_axis(self) -> None:
+    def test_swiglu_equal_shapes(self) -> None:
         graph = self._make_graph(
-            [("X", TensorProto.FLOAT, (2, 3, 8))],
-            [make_node("SwiGLU", ["X"], ["Y"])],
+            [
+                ("A", TensorProto.FLOAT, (2, 3, 8)),
+                ("B", TensorProto.FLOAT, (2, 3, 8)),
+            ],
+            [make_node("SwiGLU", ["A", "B"], ["Y"])],
             [],
         )
         self._assert_inferred(
-            graph, [make_tensor_value_info("Y", TensorProto.FLOAT, (2, 3, 4))]
+            graph, [make_tensor_value_info("Y", TensorProto.FLOAT, (2, 3, 8))]
         )
 
-    def test_swiglu_explicit_axis(self) -> None:
+    def test_swiglu_symbolic_merge_toward_static(self) -> None:
+        # A has a symbolic dim where B is static: the merged output must adopt
+        # the more-specified (static) dimension, not reject it.
         graph = self._make_graph(
-            [("X", TensorProto.FLOAT, (4, 6))],
-            [make_node("SwiGLU", ["X"], ["Y"], axis=0)],
+            [
+                ("A", TensorProto.FLOAT, ("N", 3, 8)),
+                ("B", TensorProto.FLOAT, (2, 3, 8)),
+            ],
+            [make_node("SwiGLU", ["A", "B"], ["Y"], alpha=2.0)],
             [],
         )
         self._assert_inferred(
-            graph, [make_tensor_value_info("Y", TensorProto.FLOAT, (2, 6))]
+            graph, [make_tensor_value_info("Y", TensorProto.FLOAT, (2, 3, 8))]
         )
 
-    def test_swiglu_negative_axis(self) -> None:
+    def test_swiglu_symbolic_both(self) -> None:
         graph = self._make_graph(
-            [("X", TensorProto.FLOAT, (4, 6, 8))],
-            [make_node("SwiGLU", ["X"], ["Y"], axis=-2)],
+            [
+                ("A", TensorProto.FLOAT, ("N", "C", 8)),
+                ("B", TensorProto.FLOAT, ("N", "C", 8)),
+            ],
+            [make_node("SwiGLU", ["A", "B"], ["Y"])],
             [],
         )
         self._assert_inferred(
-            graph, [make_tensor_value_info("Y", TensorProto.FLOAT, (4, 3, 8))]
+            graph, [make_tensor_value_info("Y", TensorProto.FLOAT, ("N", "C", 8))]
         )
 
-    def test_swiglu_unknown_rank(self) -> None:
+    def test_swiglu_symbolic_partial_merge(self) -> None:
+        # Each input specifies a dimension the other leaves symbolic; the merge
+        # combines them toward the more-specified value per dimension.
         graph = self._make_graph(
-            [("X", TensorProto.FLOAT, None)],
-            [make_node("SwiGLU", ["X"], ["Y"])],
+            [
+                ("A", TensorProto.FLOAT, ("N", 3, "D")),
+                ("B", TensorProto.FLOAT, ("N", "C", 8)),
+            ],
+            [make_node("SwiGLU", ["A", "B"], ["Y"])],
             [],
         )
-        # With no input shape the element type is still propagated, but the
+        self._assert_inferred(
+            graph, [make_tensor_value_info("Y", TensorProto.FLOAT, ("N", 3, 8))]
+        )
+
+    def test_swiglu_missing_input_shape(self) -> None:
+        graph = self._make_graph(
+            [
+                ("A", TensorProto.FLOAT, None),
+                ("B", TensorProto.FLOAT, (2, 3, 8)),
+            ],
+            [make_node("SwiGLU", ["A", "B"], ["Y"])],
+            [],
+        )
+        # Without both input shapes the element type is still propagated, but the
         # output shape stays unknown (early-return path, must not crash).
         self._assert_inferred(
             graph, [make_tensor_value_info("Y", TensorProto.FLOAT, None)]
         )
 
-    def test_swiglu_symbolic_dims(self) -> None:
+    def test_swiglu_rank_mismatch_fails(self) -> None:
         graph = self._make_graph(
-            [("X", TensorProto.FLOAT, ("N", "C", 8))],
-            [make_node("SwiGLU", ["X"], ["Y"], alpha=2.0)],
-            [],
-        )
-        self._assert_inferred(
-            graph, [make_tensor_value_info("Y", TensorProto.FLOAT, ("N", "C", 4))]
-        )
-
-    def test_swiglu_symbolic_split_dim(self) -> None:
-        graph = self._make_graph(
-            [("X", TensorProto.FLOAT, ("N", "C", "D"))],
-            [make_node("SwiGLU", ["X"], ["Y"])],
-            [],
-        )
-        # The split-axis dimension "D" is symbolic, so its halved size is unknown
-        # and must be left unset while the other dimensions are preserved.
-        self._assert_inferred(
-            graph, [make_tensor_value_info("Y", TensorProto.FLOAT, ("N", "C", None))]
-        )
-
-    def test_swiglu_odd_split_dim_fails(self) -> None:
-        graph = self._make_graph(
-            [("X", TensorProto.FLOAT, (2, 3, 7))],
-            [make_node("SwiGLU", ["X"], ["Y"])],
+            [
+                ("A", TensorProto.FLOAT, (2, 3, 8)),
+                ("B", TensorProto.FLOAT, (2, 3)),
+            ],
+            [make_node("SwiGLU", ["A", "B"], ["Y"])],
             [],
         )
         with pytest.raises(onnx.shape_inference.InferenceError):
             self._inferred(graph)
 
-    def test_swiglu_axis_out_of_range_fails(self) -> None:
+    def test_swiglu_static_dim_mismatch_fails(self) -> None:
         graph = self._make_graph(
-            [("X", TensorProto.FLOAT, (2, 3, 8))],
-            [make_node("SwiGLU", ["X"], ["Y"], axis=5)],
+            [
+                ("A", TensorProto.FLOAT, (2, 3, 8)),
+                ("B", TensorProto.FLOAT, (2, 4, 8)),
+            ],
+            [make_node("SwiGLU", ["A", "B"], ["Y"])],
+            [],
+        )
+        with pytest.raises(onnx.shape_inference.InferenceError):
+            self._inferred(graph)
+
+    def test_swiglu_broadcast_size1_fails(self) -> None:
+        # Broadcasting is explicitly forbidden: a size-1 dimension must not be
+        # stretched to match the other input.
+        graph = self._make_graph(
+            [
+                ("A", TensorProto.FLOAT, (2, 1, 8)),
+                ("B", TensorProto.FLOAT, (2, 3, 8)),
+            ],
+            [make_node("SwiGLU", ["A", "B"], ["Y"])],
             [],
         )
         with pytest.raises(onnx.shape_inference.InferenceError):

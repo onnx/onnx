@@ -10,10 +10,9 @@ from onnx.backend.test.case.base import Base
 from onnx.backend.test.case.node import expect
 
 
-def swiglu(x: np.ndarray, alpha: float, axis: int) -> np.ndarray:
-    gate, linear = np.split(x, 2, axis=axis)
-    swish_gate = gate * (1 / (1 + np.exp(-alpha * gate)))
-    return swish_gate * linear
+def swiglu(a: np.ndarray, b: np.ndarray, alpha: float) -> np.ndarray:
+    swish_a = a * (1 / (1 + np.exp(-alpha * a)))
+    return swish_a * b
 
 
 class SwiGLU(Base):
@@ -21,16 +20,17 @@ class SwiGLU(Base):
     def export() -> None:
         node = onnx.helper.make_node(
             "SwiGLU",
-            inputs=["x"],
+            inputs=["a", "b"],
             outputs=["y"],
         )
 
-        x = np.array([[1.0, -2.0, 3.0, 4.0], [-1.0, 2.0, -3.0, 0.5]], dtype=np.float32)
-        y = swiglu(x, alpha=1.0, axis=-1)
+        a = np.array([[1.0, -2.0, 3.0, 4.0], [-1.0, 2.0, -3.0, 0.5]], dtype=np.float32)
+        b = np.array([[0.5, 1.0, -1.0, 2.0], [2.0, -1.0, 0.5, 1.0]], dtype=np.float32)
+        y = swiglu(a, b, alpha=1.0)
 
         expect(
             node,
-            inputs=[x],
+            inputs=[a, b],
             outputs=[y],
             name="test_swiglu",
             opset_imports=[onnx.helper.make_opsetid("", 28)],
@@ -40,17 +40,18 @@ class SwiGLU(Base):
     def export_alpha() -> None:
         node = onnx.helper.make_node(
             "SwiGLU",
-            inputs=["x"],
+            inputs=["a", "b"],
             outputs=["y"],
             alpha=0.5,  # pass alpha as attribute
         )
 
-        x = np.array([[1.0, -2.0, 3.0, 4.0], [-1.0, 2.0, -3.0, 0.5]], dtype=np.float32)
-        y = swiglu(x, alpha=0.5, axis=-1)
+        a = np.array([[1.0, -2.0, 3.0, 4.0], [-1.0, 2.0, -3.0, 0.5]], dtype=np.float32)
+        b = np.array([[0.5, 1.0, -1.0, 2.0], [2.0, -1.0, 0.5, 1.0]], dtype=np.float32)
+        y = swiglu(a, b, alpha=0.5)
 
         expect(
             node,
-            inputs=[x],
+            inputs=[a, b],
             outputs=[y],
             name="test_swiglu_alpha",
             opset_imports=[onnx.helper.make_opsetid("", 28)],
@@ -60,39 +61,20 @@ class SwiGLU(Base):
     def export_float16() -> None:
         node = onnx.helper.make_node(
             "SwiGLU",
-            inputs=["x"],
+            inputs=["a", "b"],
             outputs=["y"],
         )
 
-        x = np.array([[1.0, -2.0, 3.0, 4.0], [-1.0, 2.0, -3.0, 0.5]], dtype=np.float16)
-        y = swiglu(x.astype(np.float32), alpha=1.0, axis=-1).astype(np.float16)
+        a = np.array([[1.0, -2.0, 3.0, 4.0], [-1.0, 2.0, -3.0, 0.5]], dtype=np.float16)
+        b = np.array([[0.5, 1.0, -1.0, 2.0], [2.0, -1.0, 0.5, 1.0]], dtype=np.float16)
+        y = swiglu(a.astype(np.float32), b.astype(np.float32), alpha=1.0).astype(
+            np.float16
+        )
 
         expect(
             node,
-            inputs=[x],
+            inputs=[a, b],
             outputs=[y],
             name="test_swiglu_float16",
-            opset_imports=[onnx.helper.make_opsetid("", 28)],
-        )
-
-    @staticmethod
-    def export_axis() -> None:
-        node = onnx.helper.make_node(
-            "SwiGLU",
-            inputs=["x"],
-            outputs=["y"],
-            axis=0,  # split along the first axis
-        )
-
-        x = np.array(
-            [[1.0, -2.0], [3.0, 4.0], [-1.0, 2.0], [-3.0, 0.5]], dtype=np.float32
-        )
-        y = swiglu(x, alpha=1.0, axis=0)
-
-        expect(
-            node,
-            inputs=[x],
-            outputs=[y],
-            name="test_swiglu_axis",
             opset_imports=[onnx.helper.make_opsetid("", 28)],
         )

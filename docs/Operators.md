@@ -39994,22 +39994,18 @@ expect(
 
 ### <a name="SwiGLU"></a><a name="swiglu">**SwiGLU**</a>
 
-  SwiGLU takes one input data (Tensor<T>) and produces one output data (Tensor<T>).
-  It is a gated activation in the split form: the input `X` is split along `axis`
-  into two equal-sized halves, a gate half `Gate` and a linear half `Linear`, and
-  the output is the elementwise product of a Swish-activated gate and the linear
-  half:
+  SwiGLU is a gated activation that takes two inputs, a gate `A` and a linear (value)
+  input `B`, and produces one output `Y`. It applies the Swish activation to the gate
+  and multiplies the result elementwise by the linear input:
 
   ```
-  Gate, Linear = Split(X, axis=axis, num_outputs=2)
-  Y = Swish_alpha(Gate) * Linear
+  Y = Swish_alpha(A) * B
   ```
 
   The gate activation `Swish_alpha` is exactly the `Swish` operator with the same
-  `alpha`, i.e. `Swish_alpha(g) = g * Sigmoid(alpha * g)`. The first half `Gate` is
-  passed through Swish and the second half `Linear` is the linear multiplier. The
-  size of `X` along `axis` must be even, and the output `Y` has the same shape as
-  `X` except that the `axis` dimension is halved.
+  `alpha`, i.e. `Swish_alpha(a) = a * Sigmoid(alpha * a)`. Inputs `A` and `B` must
+  have identical shapes; broadcasting is not applied and the output `Y` has the same
+  shape as the inputs.
 
 #### Version
 
@@ -40019,16 +40015,16 @@ This version of the operator has been available since version 28 of the default 
 
 <dl>
 <dt><tt>alpha</tt> : float (default is 1.0)</dt>
-<dd>Coefficient that scales the input inside the sigmoid of the Swish activation applied to the gate half. The default value is 1.0.</dd>
-<dt><tt>axis</tt> : int (default is -1)</dt>
-<dd>The axis along which the input is split into the gate and linear halves. A negative value counts dimensions from the back. The default value is -1.</dd>
+<dd>Coefficient that scales the gate input inside the sigmoid of the Swish activation. The default value is 1.0.</dd>
 </dl>
 
 #### Inputs
 
 <dl>
-<dt><tt>X</tt> (differentiable) : T</dt>
-<dd>Input tensor</dd>
+<dt><tt>A</tt> (differentiable) : T</dt>
+<dd>Gate input tensor</dd>
+<dt><tt>B</tt> (differentiable) : T</dt>
+<dd>Linear input tensor</dd>
 </dl>
 
 #### Outputs
@@ -40054,47 +40050,20 @@ This version of the operator has been available since version 28 of the default 
 ```python
 node = onnx.helper.make_node(
     "SwiGLU",
-    inputs=["x"],
+    inputs=["a", "b"],
     outputs=["y"],
     alpha=0.5,  # pass alpha as attribute
 )
 
-x = np.array([[1.0, -2.0, 3.0, 4.0], [-1.0, 2.0, -3.0, 0.5]], dtype=np.float32)
-y = swiglu(x, alpha=0.5, axis=-1)
+a = np.array([[1.0, -2.0, 3.0, 4.0], [-1.0, 2.0, -3.0, 0.5]], dtype=np.float32)
+b = np.array([[0.5, 1.0, -1.0, 2.0], [2.0, -1.0, 0.5, 1.0]], dtype=np.float32)
+y = swiglu(a, b, alpha=0.5)
 
 expect(
     node,
-    inputs=[x],
+    inputs=[a, b],
     outputs=[y],
     name="test_swiglu_alpha",
-    opset_imports=[onnx.helper.make_opsetid("", 28)],
-)
-```
-
-</details>
-
-
-<details>
-<summary>axis</summary>
-
-```python
-node = onnx.helper.make_node(
-    "SwiGLU",
-    inputs=["x"],
-    outputs=["y"],
-    axis=0,  # split along the first axis
-)
-
-x = np.array(
-    [[1.0, -2.0], [3.0, 4.0], [-1.0, 2.0], [-3.0, 0.5]], dtype=np.float32
-)
-y = swiglu(x, alpha=1.0, axis=0)
-
-expect(
-    node,
-    inputs=[x],
-    outputs=[y],
-    name="test_swiglu_axis",
     opset_imports=[onnx.helper.make_opsetid("", 28)],
 )
 ```
@@ -40108,16 +40077,19 @@ expect(
 ```python
 node = onnx.helper.make_node(
     "SwiGLU",
-    inputs=["x"],
+    inputs=["a", "b"],
     outputs=["y"],
 )
 
-x = np.array([[1.0, -2.0, 3.0, 4.0], [-1.0, 2.0, -3.0, 0.5]], dtype=np.float16)
-y = swiglu(x.astype(np.float32), alpha=1.0, axis=-1).astype(np.float16)
+a = np.array([[1.0, -2.0, 3.0, 4.0], [-1.0, 2.0, -3.0, 0.5]], dtype=np.float16)
+b = np.array([[0.5, 1.0, -1.0, 2.0], [2.0, -1.0, 0.5, 1.0]], dtype=np.float16)
+y = swiglu(a.astype(np.float32), b.astype(np.float32), alpha=1.0).astype(
+    np.float16
+)
 
 expect(
     node,
-    inputs=[x],
+    inputs=[a, b],
     outputs=[y],
     name="test_swiglu_float16",
     opset_imports=[onnx.helper.make_opsetid("", 28)],
@@ -40133,16 +40105,17 @@ expect(
 ```python
 node = onnx.helper.make_node(
     "SwiGLU",
-    inputs=["x"],
+    inputs=["a", "b"],
     outputs=["y"],
 )
 
-x = np.array([[1.0, -2.0, 3.0, 4.0], [-1.0, 2.0, -3.0, 0.5]], dtype=np.float32)
-y = swiglu(x, alpha=1.0, axis=-1)
+a = np.array([[1.0, -2.0, 3.0, 4.0], [-1.0, 2.0, -3.0, 0.5]], dtype=np.float32)
+b = np.array([[0.5, 1.0, -1.0, 2.0], [2.0, -1.0, 0.5, 1.0]], dtype=np.float32)
+y = swiglu(a, b, alpha=1.0)
 
 expect(
     node,
-    inputs=[x],
+    inputs=[a, b],
     outputs=[y],
     name="test_swiglu",
     opset_imports=[onnx.helper.make_opsetid("", 28)],
