@@ -28874,9 +28874,7 @@ node = onnx.helper.make_node(
     outputs=["y"],
 )
 
-x = np.array(
-    [[1.0, -2.0, 3.0, 4.0], [-1.0, 2.0, -3.0, 0.5]], dtype=np.float16
-)
+x = np.array([[1.0, -2.0, 3.0, 4.0], [-1.0, 2.0, -3.0, 0.5]], dtype=np.float16)
 y = swiglu(x.astype(np.float32), alpha=1.0, axis=-1).astype(np.float16)
 
 expect(

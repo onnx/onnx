@@ -39996,17 +39996,20 @@ expect(
 
   SwiGLU takes one input data (Tensor<T>) and produces one output data (Tensor<T>).
   It is a gated activation in the split form: the input `X` is split along `axis`
-  into two equal-sized halves, a gate half `A` and a linear half `B`, and the
-  output is the elementwise product of a Swish-activated gate and the linear half:
+  into two equal-sized halves, a gate half `Gate` and a linear half `Linear`, and
+  the output is the elementwise product of a Swish-activated gate and the linear
+  half:
 
   ```
-  A, B = Split(X, axis=axis, num_outputs=2)
-  Y = (A * Sigmoid(alpha * A)) * B
+  Gate, Linear = Split(X, axis=axis, num_outputs=2)
+  Y = Swish_alpha(Gate) * Linear
   ```
 
-  The first half `A` (the gate) is passed through Swish and the second half `B` is
-  the linear multiplier. The size of `X` along `axis` must be even, and the output
-  `Y` has the same shape as `X` except that the `axis` dimension is halved.
+  The gate activation `Swish_alpha` is exactly the `Swish` operator with the same
+  `alpha`, i.e. `Swish_alpha(g) = g * Sigmoid(alpha * g)`. The first half `Gate` is
+  passed through Swish and the second half `Linear` is the linear multiplier. The
+  size of `X` along `axis` must be even, and the output `Y` has the same shape as
+  `X` except that the `axis` dimension is halved.
 
 #### Version
 
@@ -40081,9 +40084,7 @@ node = onnx.helper.make_node(
     outputs=["y"],
 )
 
-x = np.array(
-    [[1.0, -2.0, 3.0, 4.0], [-1.0, 2.0, -3.0, 0.5]], dtype=np.float16
-)
+x = np.array([[1.0, -2.0, 3.0, 4.0], [-1.0, 2.0, -3.0, 0.5]], dtype=np.float16)
 y = swiglu(x.astype(np.float32), alpha=1.0, axis=-1).astype(np.float16)
 
 expect(
