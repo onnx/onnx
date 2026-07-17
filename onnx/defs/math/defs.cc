@@ -585,54 +585,32 @@ ONNX_OPERATOR_SET_SCHEMA(
             )ONNX"));
 
 static constexpr const char* SwiGLU_ver28_doc = R"DOC(
-SwiGLU takes one input data (Tensor<T>) and produces one output data (Tensor<T>).
-It is a gated activation in the split form: the input `X` is split along `axis`
-into two equal-sized halves, a gate half `Gate` and a linear half `Linear`, and
-the output is the elementwise product of a Swish-activated gate and the linear
-half:
+SwiGLU is a gated activation that takes two inputs, a gate `A` and a linear (value)
+input `B`, and produces one output `Y`. It applies the Swish activation to the gate
+and multiplies the result elementwise by the linear input:
 
 ```
-Gate, Linear = Split(X, axis=axis, num_outputs=2)
-Y = Swish_alpha(Gate) * Linear
+Y = Swish_alpha(A) * B
 ```
 
 The gate activation `Swish_alpha` is exactly the `Swish` operator with the same
-`alpha`, i.e. `Swish_alpha(g) = g * Sigmoid(alpha * g)`. The first half `Gate` is
-passed through Swish and the second half `Linear` is the linear multiplier. The
-size of `X` along `axis` must be even, and the output `Y` has the same shape as
-`X` except that the `axis` dimension is halved.
+`alpha`, i.e. `Swish_alpha(a) = a * Sigmoid(alpha * a)`. Inputs `A` and `B` must
+have identical shapes; broadcasting is not applied and the output `Y` has the same
+shape as the inputs.
 )DOC";
 
 static void SwiGLUShapeInference(InferenceContext& ctx) {
   propagateElemTypeFromInputToOutput(ctx, 0, 0);
-  if (!hasNInputShapes(ctx, 1)) {
+  if (!hasNInputShapes(ctx, 2)) {
     return;
   }
-  const auto& input_shape = ctx.getInputType(0)->tensor_type().shape();
-  const int rank = input_shape.dim_size();
-  int axis = static_cast<int>(getAttribute(ctx, "axis", -1));
-  if (axis < 0) {
-    axis += rank;
-  }
-  if (axis < 0 || axis >= rank) {
-    fail_shape_inference("SwiGLU axis attribute is out of range for the input rank.");
-  }
-  auto* output_shape = getOutputShape(ctx, 0);
-  for (int i = 0; i < rank; ++i) {
-    auto* dim = output_shape->add_dim();
-    if (i == axis) {
-      if (input_shape.dim(i).has_dim_value()) {
-        const int64_t value = input_shape.dim(i).dim_value();
-        if (value % 2 != 0) {
-          fail_shape_inference("SwiGLU requires the input dimension along axis to be even.");
-        }
-        dim->set_dim_value(value / 2);
-      }
-      // Otherwise the split dimension is symbolic/unknown: leave it unset.
-    } else {
-      *dim = input_shape.dim(i);
-    }
-  }
+  // A and B must have identical shapes: no broadcasting, no rank expansion, no
+  // size-1 stretching. Seed the output with A's shape and merge B into it, which
+  // fails on any rank mismatch or conflicting static dimension while merging
+  // symbolic/unknown dimensions toward the more-specified one.
+  auto* output_type = ctx.getOutputType(0)->mutable_tensor_type();
+  *output_type->mutable_shape() = ctx.getInputType(0)->tensor_type().shape();
+  mergeInShapeInfo(ctx.getInputType(1)->tensor_type(), *output_type);
 }
 
 ONNX_OPERATOR_SET_SCHEMA(
@@ -642,17 +620,12 @@ ONNX_OPERATOR_SET_SCHEMA(
         .SetDoc(SwiGLU_ver28_doc)
         .Attr(
             "alpha",
-            "Coefficient that scales the input inside the sigmoid of the Swish activation applied to the gate half. "
+            "Coefficient that scales the gate input inside the sigmoid of the Swish activation. "
             "The default value is 1.0.",
             AttributeProto::FLOAT,
             1.0f)
-        .Attr(
-            "axis",
-            "The axis along which the input is split into the gate and linear halves. "
-            "A negative value counts dimensions from the back. The default value is -1.",
-            AttributeProto::INT,
-            static_cast<int64_t>(-1))
-        .Input(0, "X", "Input tensor", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
+        .Input(0, "A", "Gate input tensor", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
+        .Input(1, "B", "Linear input tensor", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
         .Output(0, "Y", "Output tensor", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
         .TypeConstraint("T", OpSchema::all_float_types_ir4(), "Constrain input and output types to float tensors.")
         .SetNodeDeterminism(OpSchema::NodeDeterminism::Deterministic)
@@ -660,9 +633,8 @@ ONNX_OPERATOR_SET_SCHEMA(
         .FunctionBody(
             R"ONNX(
           {
-            Gate, Linear = Split <axis : int = @axis, num_outputs = 2> (X)
-            SwishGate = Swish <alpha : float = @alpha> (Gate)
-            Y = Mul (SwishGate, Linear)
+            SwishGate = Swish <alpha : float = @alpha> (A)
+            Y = Mul (SwishGate, B)
           }
         )ONNX"));
 
