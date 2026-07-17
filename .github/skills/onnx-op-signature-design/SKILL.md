@@ -47,9 +47,9 @@ function-ops and other ops that are just a named decomposition of existing ops.
 An early single-input SwiGLU split one packed tensor into gate/value halves along
 an axis. That produces correct output *shapes* regardless of how the producer
 packed the tensor — but silently miscomputes any model that interleaves gate/value
-instead of using contiguous halves. The layout ambiguity was real enough that ONNX
-Runtime shipped a 3-valued `swiglu_fusion` enum and llama.cpp carried a swapped
-flag to parametrize it. The redesigned **two-input** form `Y = Swish_alpha(A) * B`
+instead of using contiguous halves. The layout ambiguity was real enough that, as
+of this writing, ONNX Runtime exposes a 3-valued `swiglu_fusion` attribute and
+llama.cpp carries a swapped flag to parametrize it. The redesigned **two-input** form `Y = Swish_alpha(A) * B`
 takes gate `A` and value `B` as separate inputs, pushing any packing/splitting into
 explicit upstream graph ops, and adds an equal-shape/no-broadcast guard — removing
 the silent-miscompute mode entirely.
