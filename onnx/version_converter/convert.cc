@@ -56,13 +56,18 @@ void DefaultVersionConverter::convert_graph(
   } else {
     step = -1;
   }
-  // Identify index of this domain in g.opset_versions
-  unsigned int domain_index = 0;
-  for (unsigned int i = 0; i < g->opset_versions_mutable().size(); i++) {
-    if (g->opset_versions_mutable()[i].domain().empty()) {
+  // Identify index of the default domain ("" or "ai.onnx") in g.opset_versions.
+  // ImportModelProto preserves domain strings verbatim from the proto, so both
+  // spellings must be matched here (ConvertVersion also accepts both).
+  int domain_index = -1;
+  for (int i = 0; i < static_cast<int>(g->opset_versions_mutable().size()); i++) {
+    const std::string& dom = g->opset_versions_mutable()[i].domain();
+    if (dom.empty() || dom == "ai.onnx") {
       domain_index = i;
+      break;
     }
   }
+  ONNX_ASSERTM(domain_index >= 0, "Graph has no default-domain (\"\" or \"ai.onnx\") opset entry")
   while (curr_version != target_version.version()) {
     debug(
         "curr_version: " + ONNX_NAMESPACE::to_string(curr_version) +
@@ -89,7 +94,14 @@ void DefaultVersionConverter::convert_graph(
           std::cerr << "Warning: opset domain '" << cur_op->domain() << "' is not supported." << '\n';
         }
       } else if (op_name != "Undefined" && op_name != "Captured") {
-        const auto& op_domain_map = all_schemas.at(op_name);
+        const auto schema_it = all_schemas.find(op_name);
+        ONNX_ASSERTM(
+            schema_it != all_schemas.end(),
+            "Op '%s' has no registered schema; cannot convert it from version %lld to %lld.",
+            op_name.c_str(),
+            static_cast<long long>(curr_version),
+            static_cast<long long>(target_version.version()));
+        const auto& op_domain_map = schema_it->second;
         OpSetID curr_id(curr_version);
         OpSetID next_id(curr_version + step);
         if (searchOpDomainMap(op_domain_map, curr_version, step)) {
@@ -111,11 +123,11 @@ void DefaultVersionConverter::convert_graph(
           }
         }
       }
-      it++;
+      ++it;
     }
     // Update model version
     curr_version += step;
-    g->opset_versions_mutable()[domain_index].incrementVersion(step);
+    g->opset_versions_mutable()[static_cast<size_t>(domain_index)].incrementVersion(step);
   }
 }
 

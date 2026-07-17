@@ -1,8 +1,5 @@
-<!--
-Copyright (c) ONNX Project Contributors
-
-SPDX-License-Identifier: Apache-2.0
--->
+<!-- Copyright (c) ONNX Project Contributors -->
+<!-- SPDX-License-Identifier: Apache-2.0 -->
 
 # ONNX OSS-Fuzz Harnesses
 
@@ -15,11 +12,20 @@ for crashes, hangs, and sanitizer violations.
 | File | Entry point fuzzed | Input path |
 |---|---|---|
 | `fuzz_checker.py` | `checker.check_model` | Raw bytes → protobuf parser |
+| `fuzz_compose.py` | `compose.merge_models` | Raw (length-prefixed model pair) **and** structured (toggle byte) |
 | `fuzz_model_loader.py` | `load_model_from_string` + `checker.check_model` | Raw bytes → protobuf parser |
 | `fuzz_parser.py` | `parser.parse_model` | UTF-8 text (ONNX text format) |
 | `fuzz_shape_inference.py` | `shape_inference.infer_shapes` | Raw bytes **and** structured model (toggle byte) |
 | `fuzz_version_converter.py` | `version_converter.convert_version` | Raw bytes → protobuf parser |
 | `make_seed_corpus.py` | *(seed generator, not a fuzzer)* | Produces seed zips for OSS-Fuzz |
+
+## CI regression check
+
+[`.github/workflows/fuzz.yml`](../../.github/workflows/fuzz.yml) runs each harness in this
+repo's own CI (a short smoke run on PRs/pushes that touch `onnx/`, a longer nightly run) as
+a regression check — e.g. to catch a harness failing to import or a documented harness file
+going missing. This is separate from, and much shallower than, OSS-Fuzz's own continuous
+fuzzing campaigns; OSS-Fuzz findings are not surfaced in this repo's CI.
 
 ## How OSS-Fuzz uses these files
 
@@ -37,15 +43,20 @@ passing `-runs=0` (just loads the harness):
 ```bash
 pip install atheris
 python onnx/fuzz/fuzz_checker.py -runs=1000
+python onnx/fuzz/fuzz_compose.py -runs=1000
 python onnx/fuzz/fuzz_parser.py -runs=1000
 python onnx/fuzz/fuzz_shape_inference.py -runs=1000
 python onnx/fuzz/fuzz_version_converter.py -runs=1000
 ```
 
-To generate the seed corpora that OSS-Fuzz uses as starting inputs:
+To generate the seed corpora that OSS-Fuzz uses as starting inputs. The 5th
+argument (`compose_seeds.zip`) is optional, so existing 4-zip invocations keep
+working unchanged:
 
 ```bash
-python onnx/fuzz/make_seed_corpus.py /tmp/vc_seeds.zip /tmp/parser_seeds.zip /tmp/checker_seeds.zip
+python onnx/fuzz/make_seed_corpus.py \
+    /tmp/vc_seeds.zip /tmp/parser_seeds.zip /tmp/checker_seeds.zip \
+    /tmp/shape_inference_seeds.zip [/tmp/compose_seeds.zip]  # 5th arg optional
 ```
 
 ## Design notes
@@ -77,6 +88,21 @@ the last byte of the input:
 
 This lets a single harness cover both the protobuf-parser path and the recursive
 subgraph visitor without needing separate fuzzers.
+
+### `fuzz_compose.py` toggle byte
+
+The compose harness drives two ModelProtos plus an io_map into
+`compose.merge_models`. The last byte selects the input strategy:
+
+| Bit | Meaning |
+|---|---|
+| `0x01` | pass `prefix1`/`prefix2` (collision-resolution path) |
+| `0x04` | structured: build both models from `FuzzedDataProvider` (else raw: a 4-byte length prefix splits the remaining bytes into m1 \| m2) |
+| `0x08` | random io_map (else derive it from m1's output names and m2's input names) |
+
+`merge_models` transitively exercises `merge_graphs`, `check_overlapping_names`,
+the recursive `connect_io` subgraph rewrite, `add_prefix`, and a final
+`checker.check_model` on the merged result.
 
 ## Adding a new harness
 

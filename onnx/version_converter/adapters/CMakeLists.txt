@@ -1,7 +1,7 @@
 # Copyright (c) ONNX Project Contributors
 # SPDX-License-Identifier: Apache-2.0
 
-target_sources(onnx_core PRIVATE
+target_sources(onnx PRIVATE
     adapter.h
     Attention_24_23.h
     axes_attribute_to_input.h
