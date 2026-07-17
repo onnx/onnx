@@ -6,7 +6,7 @@
 * [Overall Test Coverage](#overall-test-coverage)
 # Node Test Coverage
 ## Summary
-Node tests have covered 189/201 (94.03%, 5 generators excluded) common operators.
+Node tests have covered 190/202 (94.06%, 5 generators excluded) common operators.
 
 Node tests have covered 1/1 (100.00%, 0 generators excluded) experimental operators.
 
@@ -28832,6 +28832,83 @@ node = onnx.helper.make_node(
 )
 expect(
     node, inputs=[data_0, data_1], outputs=[result], name="test_sum_two_inputs"
+)
+```
+
+</details>
+
+
+### SwiGLU
+There are 3 test cases, listed as following:
+<details>
+<summary>alpha</summary>
+
+```python
+node = onnx.helper.make_node(
+    "SwiGLU",
+    inputs=["x"],
+    outputs=["y"],
+    alpha=0.5,  # pass alpha as attribute
+)
+
+x = np.array([[1.0, -2.0, 3.0, 4.0], [-1.0, 2.0, -3.0, 0.5]], dtype=np.float32)
+y = swiglu(x, alpha=0.5, axis=-1)
+
+expect(
+    node,
+    inputs=[x],
+    outputs=[y],
+    name="test_swiglu_alpha",
+    opset_imports=[onnx.helper.make_opsetid("", 28)],
+)
+```
+
+</details>
+<details>
+<summary>axis</summary>
+
+```python
+node = onnx.helper.make_node(
+    "SwiGLU",
+    inputs=["x"],
+    outputs=["y"],
+    axis=0,  # split along the first axis
+)
+
+x = np.array(
+    [[1.0, -2.0], [3.0, 4.0], [-1.0, 2.0], [-3.0, 0.5]], dtype=np.float32
+)
+y = swiglu(x, alpha=1.0, axis=0)
+
+expect(
+    node,
+    inputs=[x],
+    outputs=[y],
+    name="test_swiglu_axis",
+    opset_imports=[onnx.helper.make_opsetid("", 28)],
+)
+```
+
+</details>
+<details>
+<summary>swiglu</summary>
+
+```python
+node = onnx.helper.make_node(
+    "SwiGLU",
+    inputs=["x"],
+    outputs=["y"],
+)
+
+x = np.array([[1.0, -2.0, 3.0, 4.0], [-1.0, 2.0, -3.0, 0.5]], dtype=np.float32)
+y = swiglu(x, alpha=1.0, axis=-1)
+
+expect(
+    node,
+    inputs=[x],
+    outputs=[y],
+    name="test_swiglu",
+    opset_imports=[onnx.helper.make_opsetid("", 28)],
 )
 ```
 

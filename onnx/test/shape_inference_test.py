@@ -10068,6 +10068,45 @@ class TestShapeInference(TestShapeInferenceHelper):
                 graph, [make_tensor_value_info("Y", elem_type, (3, 4))]
             )
 
+    def test_swiglu_default_axis(self) -> None:
+        graph = self._make_graph(
+            [("X", TensorProto.FLOAT, (2, 3, 8))],
+            [make_node("SwiGLU", ["X"], ["Y"])],
+            [],
+        )
+        self._assert_inferred(
+            graph, [make_tensor_value_info("Y", TensorProto.FLOAT, (2, 3, 4))]
+        )
+
+    def test_swiglu_explicit_axis(self) -> None:
+        graph = self._make_graph(
+            [("X", TensorProto.FLOAT, (4, 6))],
+            [make_node("SwiGLU", ["X"], ["Y"], axis=0)],
+            [],
+        )
+        self._assert_inferred(
+            graph, [make_tensor_value_info("Y", TensorProto.FLOAT, (2, 6))]
+        )
+
+    def test_swiglu_symbolic_dims(self) -> None:
+        graph = self._make_graph(
+            [("X", TensorProto.FLOAT, ("N", "C", 8))],
+            [make_node("SwiGLU", ["X"], ["Y"], alpha=2.0)],
+            [],
+        )
+        self._assert_inferred(
+            graph, [make_tensor_value_info("Y", TensorProto.FLOAT, ("N", "C", 4))]
+        )
+
+    def test_swiglu_odd_split_dim_fails(self) -> None:
+        graph = self._make_graph(
+            [("X", TensorProto.FLOAT, (2, 3, 7))],
+            [make_node("SwiGLU", ["X"], ["Y"])],
+            [],
+        )
+        with pytest.raises(onnx.shape_inference.InferenceError):
+            self._inferred(graph)
+
     def prepare_input_initializer_tensors(self, initializer_shape, input_shape):
         nodes = [make_node("Add", ["x", "y"], "z")]
         if initializer_shape is None:

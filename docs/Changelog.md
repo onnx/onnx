@@ -33129,6 +33129,56 @@ This version of the operator has been available since version 28 of the default 
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
+### <a name="SwiGLU-28"></a>**SwiGLU-28**</a>
+
+  SwiGLU takes one input data (Tensor<T>) and produces one output data (Tensor<T>).
+  It is a gated activation in the split form: the input `X` is split along `axis`
+  into two equal-sized halves, a gate half `A` and a linear half `B`, and the
+  output is the elementwise product of a Swish-activated gate and the linear half:
+
+  ```
+  A, B = Split(X, axis=axis, num_outputs=2)
+  Y = (A * Sigmoid(alpha * A)) * B
+  ```
+
+  The first half `A` (the gate) is passed through Swish and the second half `B` is
+  the linear multiplier. The size of `X` along `axis` must be even, and the output
+  `Y` has the same shape as `X` except that the `axis` dimension is halved.
+
+#### Version
+
+This version of the operator has been available since version 28 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>alpha</tt> : float (default is 1.0)</dt>
+<dd>Coefficient that scales the input inside the sigmoid of the Swish activation applied to the gate half. The default value is 1.0.</dd>
+<dt><tt>axis</tt> : int (default is -1)</dt>
+<dd>The axis along which the input is split into the gate and linear halves. A negative value counts dimensions from the back. The default value is -1.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> (differentiable) : T</dt>
+<dd>Input tensor</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> (differentiable) : T</dt>
+<dd>Output tensor</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(bfloat16), tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
 # ai.onnx.preview
 ## Version 1 of the 'ai.onnx.preview' operator set
 ### <a name="ai.onnx.preview.FlexAttention-1"></a>**ai.onnx.preview.FlexAttention-1**</a>

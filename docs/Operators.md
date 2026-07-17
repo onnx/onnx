@@ -212,6 +212,7 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#SoftmaxCrossEntropyLoss">SoftmaxCrossEntropyLoss</a>|<a href="Changelog.md#SoftmaxCrossEntropyLoss-13">13</a>, <a href="Changelog.md#SoftmaxCrossEntropyLoss-12">12</a>|13|
 |<a href="#Softplus">Softplus</a>|<a href="Changelog.md#Softplus-22">22</a>, <a href="Changelog.md#Softplus-1">1</a>|18|
 |<a href="#Softsign">Softsign</a>|<a href="Changelog.md#Softsign-22">22</a>, <a href="Changelog.md#Softsign-1">1</a>|18|
+|<a href="#SwiGLU">SwiGLU</a>|<a href="Changelog.md#SwiGLU-28">28</a>|28|
 |<a href="#Swish">Swish</a>|<a href="Changelog.md#Swish-24">24</a>|24|
 |<a href="#ThresholdedRelu">ThresholdedRelu</a>|<a href="Changelog.md#ThresholdedRelu-22">22</a>, <a href="Changelog.md#ThresholdedRelu-10">10</a>|18|
 
@@ -39985,6 +39986,138 @@ node = onnx.helper.make_node(
 )
 expect(
     node, inputs=[data_0, data_1], outputs=[result], name="test_sum_two_inputs"
+)
+```
+
+</details>
+
+
+### <a name="SwiGLU"></a><a name="swiglu">**SwiGLU**</a>
+
+  SwiGLU takes one input data (Tensor<T>) and produces one output data (Tensor<T>).
+  It is a gated activation in the split form: the input `X` is split along `axis`
+  into two equal-sized halves, a gate half `A` and a linear half `B`, and the
+  output is the elementwise product of a Swish-activated gate and the linear half:
+
+  ```
+  A, B = Split(X, axis=axis, num_outputs=2)
+  Y = (A * Sigmoid(alpha * A)) * B
+  ```
+
+  The first half `A` (the gate) is passed through Swish and the second half `B` is
+  the linear multiplier. The size of `X` along `axis` must be even, and the output
+  `Y` has the same shape as `X` except that the `axis` dimension is halved.
+
+#### Version
+
+This version of the operator has been available since version 28 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>alpha</tt> : float (default is 1.0)</dt>
+<dd>Coefficient that scales the input inside the sigmoid of the Swish activation applied to the gate half. The default value is 1.0.</dd>
+<dt><tt>axis</tt> : int (default is -1)</dt>
+<dd>The axis along which the input is split into the gate and linear halves. A negative value counts dimensions from the back. The default value is -1.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> (differentiable) : T</dt>
+<dd>Input tensor</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> (differentiable) : T</dt>
+<dd>Output tensor</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(bfloat16), tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>alpha</summary>
+
+```python
+node = onnx.helper.make_node(
+    "SwiGLU",
+    inputs=["x"],
+    outputs=["y"],
+    alpha=0.5,  # pass alpha as attribute
+)
+
+x = np.array([[1.0, -2.0, 3.0, 4.0], [-1.0, 2.0, -3.0, 0.5]], dtype=np.float32)
+y = swiglu(x, alpha=0.5, axis=-1)
+
+expect(
+    node,
+    inputs=[x],
+    outputs=[y],
+    name="test_swiglu_alpha",
+    opset_imports=[onnx.helper.make_opsetid("", 28)],
+)
+```
+
+</details>
+
+
+<details>
+<summary>axis</summary>
+
+```python
+node = onnx.helper.make_node(
+    "SwiGLU",
+    inputs=["x"],
+    outputs=["y"],
+    axis=0,  # split along the first axis
+)
+
+x = np.array(
+    [[1.0, -2.0], [3.0, 4.0], [-1.0, 2.0], [-3.0, 0.5]], dtype=np.float32
+)
+y = swiglu(x, alpha=1.0, axis=0)
+
+expect(
+    node,
+    inputs=[x],
+    outputs=[y],
+    name="test_swiglu_axis",
+    opset_imports=[onnx.helper.make_opsetid("", 28)],
+)
+```
+
+</details>
+
+
+<details>
+<summary>swiglu</summary>
+
+```python
+node = onnx.helper.make_node(
+    "SwiGLU",
+    inputs=["x"],
+    outputs=["y"],
+)
+
+x = np.array([[1.0, -2.0, 3.0, 4.0], [-1.0, 2.0, -3.0, 0.5]], dtype=np.float32)
+y = swiglu(x, alpha=1.0, axis=-1)
+
+expect(
+    node,
+    inputs=[x],
+    outputs=[y],
+    name="test_swiglu",
+    opset_imports=[onnx.helper.make_opsetid("", 28)],
 )
 ```
 
