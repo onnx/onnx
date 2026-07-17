@@ -10088,6 +10088,28 @@ class TestShapeInference(TestShapeInferenceHelper):
             graph, [make_tensor_value_info("Y", TensorProto.FLOAT, (2, 6))]
         )
 
+    def test_swiglu_negative_axis(self) -> None:
+        graph = self._make_graph(
+            [("X", TensorProto.FLOAT, (4, 6, 8))],
+            [make_node("SwiGLU", ["X"], ["Y"], axis=-2)],
+            [],
+        )
+        self._assert_inferred(
+            graph, [make_tensor_value_info("Y", TensorProto.FLOAT, (4, 3, 8))]
+        )
+
+    def test_swiglu_unknown_rank(self) -> None:
+        graph = self._make_graph(
+            [("X", TensorProto.FLOAT, None)],
+            [make_node("SwiGLU", ["X"], ["Y"])],
+            [],
+        )
+        # With no input shape the element type is still propagated, but the
+        # output shape stays unknown (early-return path, must not crash).
+        self._assert_inferred(
+            graph, [make_tensor_value_info("Y", TensorProto.FLOAT, None)]
+        )
+
     def test_swiglu_symbolic_dims(self) -> None:
         graph = self._make_graph(
             [("X", TensorProto.FLOAT, ("N", "C", 8))],
