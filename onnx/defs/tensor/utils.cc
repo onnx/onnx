@@ -38,13 +38,13 @@ void KeepAspectRatioHelper(
   if (policy != KeepAspectRatioPolicy::NOT_LARGER && policy != KeepAspectRatioPolicy::NOT_SMALLER) {
     return;
   }
-  float scale = policy == KeepAspectRatioPolicy::NOT_LARGER ? std::numeric_limits<float>::max()
-                                                            : std::numeric_limits<float>::min();
-  std::function<float(float, float)> reduce_f;
+  double scale = policy == KeepAspectRatioPolicy::NOT_LARGER ? std::numeric_limits<double>::max()
+                                                             : std::numeric_limits<double>::lowest();
+  std::function<double(double, double)> reduce_f;
   if (policy == KeepAspectRatioPolicy::NOT_LARGER) {
-    reduce_f = [](float a, float b) { return std::min(a, b); };
+    reduce_f = [](double a, double b) { return std::min(a, b); };
   } else {
-    reduce_f = [](float a, float b) { return std::max(a, b); };
+    reduce_f = [](double a, double b) { return std::max(a, b); };
   }
 
   bool has_unknown_dim = false;
@@ -54,14 +54,16 @@ void KeepAspectRatioHelper(
       has_unknown_dim = true;
       break;
     }
-    float s = sizes_data[i] / static_cast<float>(input_shape.dim(d).dim_value());
+    double s = sizes_data[i] / static_cast<double>(input_shape.dim(d).dim_value());
     scale = reduce_f(scale, s);
   }
   // If there's at least one unknown dim we can't infer the output shape, since it
   // will depend on the original aspect ratio of the input.
   for (size_t i = 0; i < sizes_data.size(); i++) {
     int d = axes.empty() ? i : axes[i];
-    sizes_data[i] = has_unknown_dim ? -1 : std::roundf(scale * input_shape.dim(d).dim_value());
+    sizes_data[i] = has_unknown_dim
+        ? -1
+        : static_cast<int64_t>(std::round(scale * static_cast<double>(input_shape.dim(d).dim_value())));
   }
 }
 
@@ -131,29 +133,8 @@ void resizeShapeInferenceHelper(
     const TensorShapeProto& input_shape,
     const std::vector<float>& scales_data,
     TensorShapeProto* output_shape) {
-  for (int i = 0; i < input_shape.dim_size(); ++i) {
-    auto* dim = output_shape->mutable_dim(i);
-    // If input_shape has dim_value, we calculate the scaled result
-    // If input_shape doesn's have one, we leave it here
-    if (input_shape.dim(i).has_dim_value()) {
-      int64_t dim_value = static_cast<int64_t>(
-          std::floor(static_cast<double>(input_shape.dim(i).dim_value()) * static_cast<double>(scales_data[i])));
-      // If output_shape has dim_value, we validate the calculated result
-      // If output_shape doesn's have one, we set it to the scaled result
-      if (dim->has_dim_value()) {
-        if (static_cast<int64_t>(dim->dim_value()) != dim_value) {
-          fail_shape_inference(
-              "Dimension value inferred (",
-              dim_value,
-              ") is not equal to the existing dim value (",
-              dim->dim_value(),
-              ").");
-        }
-      } else {
-        dim->set_dim_value(dim_value);
-      } // dim->has_dim_value()
-    } // input_shape.dim(i).has_dim_value()
-  }
+  // Newer opsets reuse the frozen opset 7-10 helper; give this its own body when they diverge.
+  resizeShapeInferenceHelper_opset7_to_10(input_shape, scales_data, output_shape);
 }
 
 static void resizeShapeInferenceVersioned(InferenceContext& ctx, int opset_version) {

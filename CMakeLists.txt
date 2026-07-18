@@ -151,6 +151,19 @@ if(CMAKE_CROSSCOMPILING)
   endif()
   find_package(Python REQUIRED COMPONENTS Interpreter)
   set(ONNX_PYTHON_INTERPRETER Python::Interpreter)
+  if(ONNX_BUILD_PYTHON)
+    # nanobind >= 2.13 only auto-runs its own find_package(Python ...) when
+    # neither Python::Interpreter nor Python::Module exist yet. Since
+    # Python::Interpreter is already provided above (host interpreter, while
+    # Python3::Module above is the cross-compilation target's dev libs),
+    # nanobind would otherwise skip that step and fail to find Python::Module.
+    if(NOT TARGET Python::Module)
+      add_library(Python::Module ALIAS Python3::Module)
+    endif()
+    if(TARGET Python3::SABIModule AND NOT TARGET Python::SABIModule)
+      add_library(Python::SABIModule ALIAS Python3::SABIModule)
+    endif()
+  endif()
 else()
   find_package(Python3 REQUIRED COMPONENTS Interpreter ${python_dev_component})
   # Find Python for nanobind
@@ -299,6 +312,8 @@ if(NOT ONNX_PROTOC_EXECUTABLE)
     # Read dependency URLs/hashes from sbom.cdx.json (single source of truth).
     sbom_get_dep("abseil-cpp" _absl)
     sbom_get_dep("protobuf" _protobuf)
+    # Assign ${Protobuf_VERSION} to the version read from sbom.cdx.json like `find_package(Protobuf)` would do.
+    set(Protobuf_VERSION ${_protobuf_VERSION})
     if(NOT DEFINED ABSL_ENABLE_INSTALL)
       if(ONNX_BUILD_PYTHON)
         set(ABSL_ENABLE_INSTALL OFF CACHE BOOL "Enable installation of Abseil targets")
@@ -360,7 +375,6 @@ if(NOT ONNX_PROTOC_EXECUTABLE)
     else()
       set(ONNX_PROTOC_EXECUTABLE $<TARGET_FILE:protobuf::protoc>)
     endif()
-    set(Protobuf_VERSION "6.33.6")  # TODO: Remove this hard coded version when updating protobuf
     # Change back the BUILD_SHARED_LIBS to control the onnx project.
     set(BUILD_SHARED_LIBS ${ONNX_BUILD_SHARED_LIBS})
     set(PROTOBUF_DIR "${protobuf_BINARY_DIR}")
@@ -492,25 +506,17 @@ function(RELATIVE_PROTOBUF_GENERATE_CPP SRCS)
 
   set(${SRCS} ${${SRCS}} PARENT_SCOPE)
   set(ONNX_PROTO_PY_FILES ${_py_files} PARENT_SCOPE)
+  set(ONNX_GENERATED_PROTO_FILES ${GENERATED_FILES} PARENT_SCOPE)
 endfunction()
-
-# Sources are listed explicitly in subdirectory CMakeLists.txt files via
-# target_sources. onnx_core is an OBJECT library consumed by both the onnx
-# static library and the onnx_cpp2py_export Python extension module.
-add_library(onnx_core OBJECT)
-add_subdirectory(onnx)
 
 relative_protobuf_generate_cpp(ONNX_PROTO_SRCS
                                onnx/onnx.in.proto
                                onnx/onnx-operators.in.proto
                                onnx/onnx-data.in.proto)
-target_sources(onnx_core PRIVATE ${ONNX_PROTO_SRCS})
 
-# Proto sources don't play well with unity builds.
-set_source_files_properties(${ONNX_PROTO_SRCS}
-    TARGET_DIRECTORY onnx_core
-    PROPERTIES SKIP_UNITY_BUILD_INCLUSION TRUE
-)
+# Serialises the gen_proto.py step so parallel builds don't race writing the
+# generated .proto files; protoc and C++ compilation still overlap afterwards.
+add_custom_target(onnx_proto_gen DEPENDS ${ONNX_GENERATED_PROTO_FILES})
 
 set(LINKED_PROTOBUF_TARGET protobuf::libprotobuf)
 if(ONNX_USE_LITE_PROTO)
@@ -518,16 +524,30 @@ if(ONNX_USE_LITE_PROTO)
     set(LINKED_PROTOBUF_TARGET protobuf::libprotobuf-lite)
   endif()
 endif()
+
+# Compile the generated .pb.cc sources in exactly one target: Xcode's build
+# system rejects a protoc custom command shared across several targets.
 add_library(onnx_proto ${ONNX_PROTO_SRCS})
 add_onnx_global_defines(onnx_proto)
+add_dependencies(onnx_proto onnx_proto_gen)
 
-add_library(onnx $<TARGET_OBJECTS:onnx_core>)
-add_dependencies(onnx onnx_proto onnx_core)
-set_target_properties(onnx_core PROPERTIES CXX_VISIBILITY_PRESET hidden)
-add_onnx_global_defines(onnx_core)
+# Core library. Hand-written sources come from target_sources(onnx ...) in the
+# subdirectories; the protobuf objects are pulled in from onnx_proto.
+add_library(onnx $<TARGET_OBJECTS:onnx_proto>)
+add_subdirectory(onnx)
+add_dependencies(onnx onnx_proto)
+set_target_properties(onnx PROPERTIES CXX_VISIBILITY_PRESET hidden)
 add_onnx_global_defines(onnx)
 
 if(ONNX_BUILD_PYTHON)
+  if(BUILD_SHARED_LIBS)
+    # The extension links ONNX internals not on the public ONNX_API surface,
+    # which a hidden-visibility shared libonnx does not export. The wheel always
+    # builds onnx statically; a shared libonnx is for C++ use only.
+    message(FATAL_ERROR
+      "ONNX_BUILD_PYTHON=ON requires a static onnx; do not combine it with "
+      "BUILD_SHARED_LIBS=ON. Use ONNX_BUILD_PYTHON=OFF to build a shared libonnx.")
+  endif()
   # find system nanobind
   if(NOT DEFINED nanobind_DIR OR "${nanobind_DIR}" STREQUAL "")
     execute_process(
@@ -563,12 +583,15 @@ if(ONNX_BUILD_PYTHON)
   nanobind_add_module(
     onnx_cpp2py_export
     NB_STATIC NB_DOMAIN onnx STABLE_ABI FREE_THREADED LTO
-    "${ONNX_ROOT}/onnx/cpp2py_export.cc" $<TARGET_OBJECTS:onnx_core>)
-  add_dependencies(onnx_cpp2py_export onnx)
+    "${ONNX_ROOT}/onnx/cpp2py_export.cc")
+  # Force-load the whole (static) archive so the operator schemas' static
+  # initializers are not dropped as apparently-unused. $<LINK_LIBRARY:WHOLE_ARCHIVE,...>
+  # is the portable --whole-archive / -force_load / /WHOLEARCHIVE spelling.
+  target_link_libraries(onnx_cpp2py_export PRIVATE
+    $<LINK_LIBRARY:WHOLE_ARCHIVE,onnx>)
 endif()
 
 add_onnx_compile_options(onnx_proto)
-add_onnx_compile_options(onnx_core)
 add_onnx_compile_options(onnx)
 if(TARGET onnx_cpp2py_export)
   add_onnx_global_defines(onnx_cpp2py_export)
@@ -616,15 +639,15 @@ if(ONNX_INSTALL)
 endif()
 
 if(ONNX_USE_UNITY_BUILD)
-  # If ONNX_USE_UNITY_BUILD is set to ON, set onnx_core to use Unity builds.
-  set_target_properties(onnx_core
+  # If ONNX_USE_UNITY_BUILD is set to ON, set onnx to use Unity builds.
+  set_target_properties(onnx
     PROPERTIES
       UNITY_BUILD ON
   )
 
   # With unity build object file could get big, need this switch in MSVC.
   if(MSVC)
-    target_compile_options(onnx_core PRIVATE /bigobj)
+    target_compile_options(onnx PRIVATE /bigobj)
   endif()
 # should be enabled for onnx_proto when protobuf can support Unity builds
 endif()

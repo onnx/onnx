@@ -34,26 +34,26 @@
     {
       "type": "library",
       "name": "protobuf",
-      "version": "33.6",
+      "version": "31.1",
       "bom-ref": "protobuf",
-      "purl": "pkg:github/protocolbuffers/protobuf@v33.6",
+      "purl": "pkg:github/protocolbuffers/protobuf@v31.1",
       "externalReferences": [
         {
           "type": "distribution",
-          "url": "https://github.com/protocolbuffers/protobuf/releases/download/v33.6/protobuf-33.6.tar.gz"
+          "url": "https://github.com/protocolbuffers/protobuf/releases/download/v31.1/protobuf-31.1.tar.gz"
         }
       ],
       "hashes": [
-        {"alg": "SHA-256", "content": "16498d7dc7967e9b100632138babd4b86b61592beeccdd556f67539d9c231355"}
+        {"alg": "SHA-256", "content": "12bfd76d27b9ac3d65c00966901609e020481b9474ef75c7ff4601ac06fa0b82"}
       ],
       "licenses": [{"license": {"id": "BSD-3-Clause"}}]
     },
     {
       "type": "library",
       "name": "nanobind",
-      "version": "2.12.0",
+      "version": "2.13.0",
       "bom-ref": "nanobind",
-      "purl": "pkg:github/wjakob/nanobind@v2.12.0",
+      "purl": "pkg:github/wjakob/nanobind@v2.13.0",
       "externalReferences": [
         {
           "type": "vcs",

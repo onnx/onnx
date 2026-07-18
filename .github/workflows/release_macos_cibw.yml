@@ -11,10 +11,6 @@ on:
         required: false
         type: string
         default: "preview"
-      protobuf_version:
-        required: false
-        type: string
-        default: "25.1"
   workflow_dispatch:
 
 permissions:
@@ -37,15 +33,15 @@ jobs:
 
     runs-on: macos-14
 
-    env:
-      PROTOBUF_VERSION: ${{ inputs.protobuf_version }}
-
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           persist-credentials: false
 
-      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+      - name: Read protobuf version from sbom.cdx.json
+        run: echo "PROTOBUF_VERSION=$(jq -r '.components[] | select(.name=="protobuf") | .version' sbom.cdx.json)" >> $GITHUB_ENV
+
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
         with:
           python-version: "3.12"
 
@@ -67,21 +63,17 @@ jobs:
           curl -sSL "https://github.com/protocolbuffers/protobuf/releases/download/v${PROTOBUF_VERSION}/protobuf-${PROTOBUF_VERSION}.tar.gz" -o protobuf.tar.gz
           tar -xf protobuf.tar.gz
 
-      - name: Patch sbom.cdx.json with actual protobuf version and hash
-        shell: bash
-        run: python .github/scripts/patch_sbom.py
-
       - name: Set SOURCE_DATE_EPOCH for reproducible builds
         run: echo "SOURCE_DATE_EPOCH=$(git log -1 --pretty=%ct)" >> $GITHUB_ENV
 
       - name: Build wheels
-        uses: pypa/cibuildwheel@8d2b08b68458a16aeb24b64e68a09ab1c8e82084  # v3.4.1
+        uses: pypa/cibuildwheel@294735312765b09d24a2fbec22660ce817587d55  # v4.1.0
         with:
           output-dir: dist/
           only: ${{ matrix.build }}
         env:
           CIBW_ENVIRONMENT: >-
-            MACOSX_DEPLOYMENT_TARGET=12.0
+            MACOSX_DEPLOYMENT_TARGET=13.3
             CMAKE_ARGS="
             -DFETCHCONTENT_SOURCE_DIR_PROTOBUF=${{ github.workspace }}/protobuf-${{ env.PROTOBUF_VERSION }}
             -DONNX_CUSTOM_PROTOC_EXECUTABLE=${{ github.workspace }}/protoc-host/bin/protoc
@@ -90,7 +82,7 @@ jobs:
             -DONNX_WERROR=ON
             "
 
-      - uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: wheels-macos-${{ matrix.build }}
           path: dist/*.whl
@@ -103,28 +95,3 @@ jobs:
             check-wheel-contents "$whl"
             python -m abi3audit -v "$whl"
           done
-
-  test-min-deps:
-    needs: build
-    if: github.event_name == 'schedule'
-    runs-on: macos-14
-    steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-        with:
-          persist-credentials: false
-
-      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
-        with:
-          name: wheels-macos-cp312-macosx_universal2
-          path: dist
-
-      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
-        with:
-          python-version: "3.12"
-
-      - name: Verify with minimum supported packages
-        run: |
-          python -m pip install -q pytest
-          python -m pip install -q dist/*.whl
-          python -m pip install -q -r requirements-min.txt
-          pytest
