@@ -9310,6 +9310,23 @@ class TestShapeInference(TestShapeInferenceHelper):
             graph, [make_tensor_value_info("y", TensorProto.FLOAT, (3, None, 4))]
         )
 
+    def test_pad_with_constant_value_ints(self) -> None:
+        graph = self._make_graph(
+            [("x", TensorProto.FLOAT, (1, 2))],
+            [
+                make_node("Constant", [], ["pads"], value_ints=[0, 1, 0, 1]),
+                make_node("Pad", ["x", "pads"], ["y"]),
+            ],
+            [],
+        )
+        self._assert_inferred(
+            graph,
+            [
+                make_tensor_value_info("pads", TensorProto.INT64, (4,)),
+                make_tensor_value_info("y", TensorProto.FLOAT, (1, 4)),
+            ],
+        )
+
     def test_gatherelements_basic(self) -> None:
         graph = self._make_graph(
             [("x", TensorProto.FLOAT, (6,)), ("indices", TensorProto.INT64, (2,))],
