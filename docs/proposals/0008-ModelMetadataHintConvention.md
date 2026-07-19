@@ -5,7 +5,7 @@ SPDX-License-Identifier: Apache-2.0
 -->
 - Feature Name: `model_metadata_hint_convention`
 - Start Date: 2026-07-19
-- RFC PR: [onnx/onnx#0000](https://github.com/onnx/onnx/pull/0000)
+- RFC PR: TBD
 - Status: under discussion
 - Authors: justinchuby
 
@@ -42,10 +42,10 @@ time but have no standardized way to communicate:
    others. An exporter that ran calibration can annotate per-node precision
    recommendations.
 
-4. **Deployment-specific sharding.** The same model may be deployed on 8×H200
-   (TP8, NVLink) or 4×Mac Studio (TP4, Thunderbolt). The existing
-   `ShardingSpecProto` supports only one configuration per model. Exporters
-   need a way to embed multiple deployment profiles.
+4. **Deployment-specific hints.** The same model may be deployed on 8×H200
+   (TP8, NVLink) or 4×Mac Studio (TP4, Thunderbolt). While ONNX multi-device
+   configs can express multiple sharding configurations, exporters still need a
+   portable way to embed multiple *advisory* deployment hint profiles.
 
 ### Current Workaround
 
@@ -102,7 +102,7 @@ All values are strings. Interpretation is type-specific (documented per key).
 | `placement` | Device affinity & parallelism | `device_type`, `shard_axis`, `shard_count`, `pipeline_stage` |
 | `memory` | Memory tier & residency | `tier` (hot/warm/cold), `offload_priority`, `pin` |
 | `expert` | MoE expert scheduling | `affinity_group`, `activation_frequency`, `prefetch_window` |
-| `compute` | Precision & kernel selection | `precision` (fp32/fp16/bf16/fp8/int8), `kernel_hint` |
+| `compute` | Precision & kernel selection | `precision` (fp32/fp16/bf16/fp8_e4m3/fp8_e5m2/int8/int4), `kernel_hint` |
 
 ### Semantics
 
@@ -171,7 +171,7 @@ complementary:
 | Aspect | ShardingSpecProto | ai.onnx.hint.* |
 |---|---|---|
 | Scope | Tensor partitioning | Broad (memory, scheduling, precision) |
-| Authority | Normative (runtime should honor) | Advisory (runtime may ignore) |
+|| Authority | Optional annotation (backend may ignore if unsupported/unavailable) | Advisory (runtime may ignore) |
 | Schema | Protobuf fields | metadata_props (string KV) |
 | Multi-config | One per model | Multiple via config.{name} overlay |
 
