@@ -2997,6 +2997,129 @@ class TestVersionConverter:
         assert opset_by_domain["ai.onnx"] == 8
         assert opset_by_domain["custom.domain"] == 1
 
+    def _resize_18_17_converted(
+        self,
+        *,
+        use_sizes: bool = True,
+        antialias: int | None = None,
+        keep_aspect_ratio_policy: str | None = None,
+        axes: list[int] | None = None,
+    ) -> ModelProto:
+        attributes: dict[str, object] = {
+            "mode": "nearest",
+            "coordinate_transformation_mode": "asymmetric",
+            "nearest_mode": "floor",
+        }
+
+        if antialias is not None:
+            attributes["antialias"] = antialias
+        if keep_aspect_ratio_policy is not None:
+            attributes["keep_aspect_ratio_policy"] = keep_aspect_ratio_policy
+        if axes is not None:
+            attributes["axes"] = axes
+
+        parameter_shape = (len(axes),) if axes is not None else (4,)
+
+        if use_sizes:
+            resize_inputs = ["X", "", "", "resize_parameter"]
+            parameter_type = TensorProto.INT64
+        else:
+            resize_inputs = ["X", "", "resize_parameter"]
+            parameter_type = TensorProto.FLOAT
+
+        node = helper.make_node(
+            "Resize",
+            resize_inputs,
+            ["Y"],
+            **attributes,
+        )
+        graph = helper.make_graph(
+            [node],
+            "test_resize_18_17",
+            [
+                helper.make_tensor_value_info(
+                    "X",
+                    TensorProto.FLOAT,
+                    (1, 1, 2, 2),
+                ),
+                helper.make_tensor_value_info(
+                    "resize_parameter",
+                    parameter_type,
+                    parameter_shape,
+                ),
+            ],
+            [
+                helper.make_tensor_value_info(
+                    "Y",
+                    TensorProto.FLOAT,
+                    (None, None, None, None),
+                )
+            ],
+        )
+
+        return self._converted(
+            graph,
+            helper.make_operatorsetid("", 18),
+            17,
+        )
+
+    @pytest.mark.parametrize("use_sizes", [False, True])
+    def test_resize_18_17_converts_compatible_nodes(
+        self,
+        use_sizes: bool,
+    ) -> None:
+        converted = self._resize_18_17_converted(use_sizes=use_sizes)
+
+        resize = converted.graph.node[0]
+        expected_inputs = (
+            ["X", "", "", "resize_parameter"]
+            if use_sizes
+            else ["X", "", "resize_parameter"]
+        )
+
+        assert converted.opset_import[0].version == 17
+        assert resize.op_type == "Resize"
+        assert list(resize.input) == expected_inputs
+
+    def test_resize_18_17_removes_default_attributes(self) -> None:
+        converted = self._resize_18_17_converted(
+            antialias=0,
+            keep_aspect_ratio_policy="stretch",
+        )
+
+        attributes = {
+            attribute.name: helper.get_attribute_value(attribute)
+            for attribute in converted.graph.node[0].attribute
+        }
+
+        assert "antialias" not in attributes
+        assert "keep_aspect_ratio_policy" not in attributes
+        assert attributes["mode"] == b"nearest"
+        assert attributes["coordinate_transformation_mode"] == b"asymmetric"
+        assert attributes["nearest_mode"] == b"floor"
+
+    def test_resize_18_17_rejects_antialias(self) -> None:
+        with pytest.raises(RuntimeError, match="antialias=1"):
+            self._resize_18_17_converted(antialias=1)
+
+    @pytest.mark.parametrize(
+        "policy",
+        ["not_larger", "not_smaller"],
+    )
+    def test_resize_18_17_rejects_aspect_ratio_policy(
+        self,
+        policy: str,
+    ) -> None:
+        with pytest.raises(
+            RuntimeError,
+            match="keep_aspect_ratio_policy",
+        ):
+            self._resize_18_17_converted(keep_aspect_ratio_policy=policy)
+
+    def test_resize_18_17_rejects_axes(self) -> None:
+        with pytest.raises(RuntimeError, match="axes"):
+            self._resize_18_17_converted(axes=[2, 3])
+
     def _celu_converted(self, dtype: int, src: int, dst: int) -> ModelProto:
         node = helper.make_node("Celu", ["X"], ["Y"], alpha=2.0)
         graph = helper.make_graph(
