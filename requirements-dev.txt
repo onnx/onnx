@@ -1,13 +1,13 @@
 build
-numpy
-protobuf
+numpy>=1.23.2
+protobuf>=6.33.1
 pytest
 pytest-cov
 pytest-xdist
-setuptools
-wheel
+setuptools>=78.1.1
+wheel>=0.38.1
 lintrunner>=0.13.1
 lintrunner-adapters>=0.14.0
 # Edit additional linter dependencies in requirements-lintrunner.txt
 # Dependencies for the reference implementation.
-Pillow
+Pillow>=12.2.0
