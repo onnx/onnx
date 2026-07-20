@@ -396,6 +396,8 @@ TypesWrapper::TypesWrapper() {
   type_str_to_tensor_data_type_["uint2"] = TensorProto_DataType_UINT2;
   type_str_to_tensor_data_type_["int2"] = TensorProto_DataType_INT2;
   type_str_to_tensor_data_type_["float4e2m1"] = TensorProto_DataType_FLOAT4E2M1;
+  type_str_to_tensor_data_type_["float6e2m3"] = TensorProto_DataType_FLOAT6E2M3;
+  type_str_to_tensor_data_type_["float6e3m2"] = TensorProto_DataType_FLOAT6E3M2;
 
   for (auto& [type_str, data_type] : type_str_to_tensor_data_type_) {
     tensor_data_type_to_type_str_[data_type] = type_str;

@@ -214,7 +214,7 @@ class TestBasicFunctions:
         model_repr = repr(model)
         assert (
             model_repr
-            == "ModelProto(ir_version=13, producer_name='onnx-test', graph=GraphProto('test'))"
+            == "ModelProto(ir_version=14, producer_name='onnx-test', graph=GraphProto('test'))"
         )
 
         text_model = """

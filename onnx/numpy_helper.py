@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import math
 import sys
+from collections.abc import Sequence
 from typing import TYPE_CHECKING, Any
 
 import ml_dtypes
@@ -184,6 +185,38 @@ def _pack_2bitx4(array: np.ndarray) -> npt.NDArray[np.uint8]:
     return array_flat[0::4] | array_flat[1::4] | array_flat[2::4] | array_flat[3::4]
 
 
+def _pack_6bit(values: np.ndarray) -> np.ndarray:
+    flat = values.astype(np.uint8).ravel() & 0x3F
+    n = len(flat)
+    packed_size = math.ceil(n * 6 / 8)
+    packed = np.zeros(packed_size, dtype=np.uint8)
+    bit_pos = 0
+    for val in flat:
+        for i in range(6):
+            if bit_pos // 8 < packed_size:
+                packed[bit_pos // 8] |= ((val >> i) & 1) << (bit_pos % 8)
+            bit_pos += 1
+    return packed
+
+
+def _unpack_6bit(
+    data: np.ndarray, original_size: int, dims: Sequence[int]
+) -> np.ndarray:
+    """Unpack 6-bit packed buffer back into uint8 array of given dims."""
+    unpacked = np.zeros(original_size, dtype=np.uint8)
+    bit_pos = 0
+    for i in range(original_size):
+        val = 0
+        for j in range(6):
+            byte_index = bit_pos >> 3  # bit_pos // 8
+            bit_index = bit_pos & 7  # bit_pos % 8
+            if byte_index < len(data):
+                val |= ((data[byte_index] >> bit_index) & 1) << j
+            bit_pos += 1
+        unpacked[i] = val
+    return unpacked.reshape(dims)
+
+
 def to_array(tensor: onnx.TensorProto, base_dir: str = "") -> np.ndarray:  # noqa: PLR0911
     """Converts a tensor def object to a numpy array.
 
@@ -240,6 +273,16 @@ def to_array(tensor: onnx.TensorProto, base_dir: str = "") -> np.ndarray:  # noq
             data = np.frombuffer(raw_data, dtype=np.uint8)
             return _unpack_2bit(data, dims).view(np_dtype)
 
+        if tensor_dtype in {onnx.TensorProto.FLOAT6E2M3, onnx.TensorProto.FLOAT6E3M2}:
+            # raw_data is always the packed 6-bit stream (matching UINT4/UINT2's
+            # single-format convention below). A byte-length-based sniff between
+            # "packed" and "one byte per element" would be ambiguous for small
+            # tensors -- e.g. 3 elements pack to ceil(3*6/8) = 3 bytes too.
+            num_elems = int(np.prod(dims))
+            data = np.frombuffer(raw_data, dtype=np.uint8)
+            unpacked = _unpack_6bit(data, num_elems, dims)
+            return unpacked.view(np_dtype)
+
         return np.frombuffer(raw_data, dtype=np_dtype).reshape(dims)
 
     if tensor_dtype in {
@@ -263,6 +306,8 @@ def to_array(tensor: onnx.TensorProto, base_dir: str = "") -> np.ndarray:  # noq
         onnx.TensorProto.FLOAT8E5M2FNUZ,
         onnx.TensorProto.FLOAT8E8M0,
         onnx.TensorProto.BOOL,
+        onnx.TensorProto.FLOAT6E2M3,
+        onnx.TensorProto.FLOAT6E3M2,
     }:
         return (
             np.array(tensor.int32_data, dtype=np.int32)
@@ -370,6 +415,13 @@ def from_array(array: np.ndarray, /, name: str | None = None) -> onnx.TensorProt
     }:
         # Pack the array into int2
         array = _pack_2bitx4(array)
+
+    if dtype in {
+        onnx.TensorProto.FLOAT6E2M3,
+        onnx.TensorProto.FLOAT6E3M2,
+    }:
+        # Pack the array into 6-bit codes
+        array = _pack_6bit(array.view(np.uint8))
 
     tensor.raw_data = tobytes_little_endian(array)
     tensor.data_type = dtype  # type: ignore[assignment]
