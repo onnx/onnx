@@ -4278,6 +4278,48 @@ class TestReferenceEvaluator:
         assert got.shape == (11,) * dim
         assert got.dtype == np.float32
 
+    def test_pad_negative_pads_constant(self):
+        X = make_tensor_value_info("X", TensorProto.FLOAT, None)
+        P = make_tensor_value_info("P", TensorProto.INT64, None)
+        V = make_tensor_value_info("V", TensorProto.FLOAT, None)
+        Y = make_tensor_value_info("Y", TensorProto.FLOAT, None)
+
+        node = make_node("Pad", inputs=["X", "P", "V"], outputs=["Y"], mode="constant")
+        model = make_model(make_graph([node], "g", [X, P, V], [Y]))
+        ref = ReferenceEvaluator(model)
+        x = np.arange(20, dtype=np.float32).reshape((4, 5))
+        value = np.array(-5, dtype=np.float32)
+
+        # pure cropping
+        p = np.array([-1, -1, -1, -2], dtype=np.int64)
+        got = ref.run(None, {"X": x, "P": p, "V": value})[0]
+        assert_allclose(x[1:-1, 1:-2], got)
+
+        # mixed cropping and padding on the same axis
+        p = np.array([-2, 1, 1, -1], dtype=np.int64)
+        expected = np.pad(x[2:, :-1], [(0, 1), (1, 0)], constant_values=-5)
+        got = ref.run(None, {"X": x, "P": p, "V": value})[0]
+        assert_allclose(expected, got)
+
+    @pytest.mark.parametrize("mode", ["edge", "reflect", "wrap"])
+    def test_pad_negative_pads_non_constant_modes(self, mode):
+        X = make_tensor_value_info("X", TensorProto.FLOAT, None)
+        P = make_tensor_value_info("P", TensorProto.INT64, None)
+        A = make_tensor_value_info("A", TensorProto.INT64, None)
+        Y = make_tensor_value_info("Y", TensorProto.FLOAT, None)
+
+        node = make_node("Pad", inputs=["X", "P", "", "A"], outputs=["Y"], mode=mode)
+        model = make_model(make_graph([node], "g", [X, P, A], [Y]))
+        ref = ReferenceEvaluator(model)
+        x = np.arange(20, dtype=np.float32).reshape((4, 5))
+
+        # crop the start, pad the end; pad values come from the cropped data
+        p = np.array([-1, 3], dtype=np.int64)
+        axes = np.array([1], dtype=np.int64)
+        expected = np.pad(x[:, 1:], [(0, 0), (0, 3)], mode=mode)
+        got = ref.run(None, {"X": x, "P": p, "A": axes})[0]
+        assert_allclose(expected, got)
+
     def test_constant_of_shape(self):
         X = make_tensor_value_info("X", TensorProto.FLOAT, None)
         Y = make_tensor_value_info("Y", TensorProto.FLOAT, None)
