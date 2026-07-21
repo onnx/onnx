@@ -85,7 +85,7 @@ class LSTMHelper:
     def h(self, x: np.ndarray) -> np.ndarray:
         return np.tanh(x)
 
-    def step(self) -> tuple[np.ndarray, np.ndarray]:
+    def step(self) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
         seq_length = self.X.shape[0]
         hidden_size = self.H_0.shape[-1]
         batch_size = self.X.shape[1]
@@ -119,11 +119,13 @@ class LSTMHelper:
 
         if self.LAYOUT == 0:
             Y_h = Y[-1]
+            Y_c = C_t
         else:
             Y = np.transpose(Y, [2, 0, 1, 3])
             Y_h = Y[:, :, -1, :]
+            Y_c = np.transpose(C_t, [1, 0, 2])
 
-        return Y, Y_h
+        return Y, Y_h, Y_c
 
 
 class LSTM(Base):
@@ -148,7 +150,7 @@ class LSTM(Base):
         ).astype(np.float32)
 
         lstm = LSTMHelper(X=input, W=W, R=R)
-        _, Y_h = lstm.step()
+        _, Y_h, _ = lstm.step()
         expect(
             node,
             inputs=[input, W, R],
@@ -190,7 +192,7 @@ class LSTM(Base):
         B = np.concatenate((W_B, R_B), 1)
 
         lstm = LSTMHelper(X=input, W=W, R=R, B=B)
-        _, Y_h = lstm.step()
+        _, Y_h, _ = lstm.step()
         expect(
             node,
             inputs=[input, W, R, B],
@@ -235,12 +237,44 @@ class LSTM(Base):
         lstm = LSTMHelper(
             X=input, W=W, R=R, B=B, P=P, initial_c=init_c, initial_h=init_h
         )
-        _, Y_h = lstm.step()
+        _, Y_h, _ = lstm.step()
         expect(
             node,
             inputs=[input, W, R, B, seq_lens, init_h, init_c, P],
             outputs=[Y_h.astype(np.float32)],
             name="test_lstm_with_peepholes",
+        )
+
+    @staticmethod
+    def export_with_output_cell_state() -> None:
+        input = np.array([[[1.0, 2.0], [3.0, 4.0], [5.0, 6.0]]]).astype(np.float32)
+
+        input_size = 2
+        hidden_size = 3
+        weight_scale = 0.1
+        number_of_gates = 4
+
+        node = onnx.helper.make_node(
+            "LSTM",
+            inputs=["X", "W", "R"],
+            outputs=["", "Y_h", "Y_c"],
+            hidden_size=hidden_size,
+        )
+
+        W = weight_scale * np.ones(
+            (1, number_of_gates * hidden_size, input_size)
+        ).astype(np.float32)
+        R = weight_scale * np.ones(
+            (1, number_of_gates * hidden_size, hidden_size)
+        ).astype(np.float32)
+
+        lstm = LSTMHelper(X=input, W=W, R=R)
+        _, Y_h, Y_c = lstm.step()
+        expect(
+            node,
+            inputs=[input, W, R],
+            outputs=[Y_h.astype(np.float32), Y_c.astype(np.float32)],
+            name="test_lstm_with_output_cell_state",
         )
 
     @staticmethod
@@ -269,7 +303,7 @@ class LSTM(Base):
         ).astype(np.float32)
 
         lstm = LSTMHelper(X=input, W=W, R=R, layout=layout)
-        Y, Y_h = lstm.step()
+        Y, Y_h, _ = lstm.step()
         expect(
             node,
             inputs=[input, W, R],
