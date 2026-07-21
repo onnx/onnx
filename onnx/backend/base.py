@@ -32,7 +32,14 @@ class Device:
 
     def __init__(self, device: str) -> None:
         options = device.split(":")
-        self.type = getattr(DeviceType, options[0])
+        device_type = options[0]
+        if not hasattr(DeviceType, device_type):
+            valid = [d for d in vars(DeviceType) if not d.startswith("_")]
+            raise ValueError(
+                f"Unsupported device type '{device_type}'. "
+                f"Expected one of: {', '.join(valid)}"
+            )
+        self.type = getattr(DeviceType, device_type)
         self.device_id = 0
         if len(options) > 1:
             self.device_id = int(options[1])
