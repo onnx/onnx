@@ -635,8 +635,7 @@ Common::Status OnnxParser::Parse(TensorProto& tensorProto, const TypeProto& tens
             if (intval > std::numeric_limits<int32_t>::max() || intval < std::numeric_limits<int32_t>::min()) {
               return ParseError("Mismatch between data type and value: %d, %d", elem_type, intval);
             }
-            // NOLINTNEXTLINE(bugprone-narrowing-conversions)
-            tensorProto.add_int32_data(intval);
+            tensorProto.add_int32_data(static_cast<int32_t>(intval));
             break;
           case TensorProto::DataType::TensorProto_DataType_INT64:
             PARSE_TOKEN(intval);

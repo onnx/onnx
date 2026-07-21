@@ -49,18 +49,18 @@ void KeepAspectRatioHelper(
 
   bool has_unknown_dim = false;
   for (size_t i = 0; i < sizes_data.size(); i++) {
-    int d = axes.empty() ? i : axes[i];
+    int d = axes.empty() ? static_cast<int>(i) : static_cast<int>(axes[i]);
     if (!input_shape.dim(d).has_dim_value()) {
       has_unknown_dim = true;
       break;
     }
-    double s = sizes_data[i] / static_cast<double>(input_shape.dim(d).dim_value());
+    double s = static_cast<double>(sizes_data[i]) / static_cast<double>(input_shape.dim(d).dim_value());
     scale = reduce_f(scale, s);
   }
   // If there's at least one unknown dim we can't infer the output shape, since it
   // will depend on the original aspect ratio of the input.
   for (size_t i = 0; i < sizes_data.size(); i++) {
-    int d = axes.empty() ? i : axes[i];
+    int d = axes.empty() ? static_cast<int>(i) : static_cast<int>(axes[i]);
     sizes_data[i] = has_unknown_dim
         ? -1
         : static_cast<int64_t>(std::round(scale * static_cast<double>(input_shape.dim(d).dim_value())));
@@ -217,9 +217,9 @@ static void resizeShapeInferenceVersioned(InferenceContext& ctx, int opset_versi
   std::vector<int64_t> axes;
   if (axes_attr) {
     axes = RetrieveValues<int64_t>(*axes_attr);
-    checkAxesRange(axes, rank_x);
-    adjustNegativeAxes(axes, rank_x);
-    checkDuplicateAxes(axes, rank_x);
+    checkAxesRange(axes, static_cast<int>(rank_x));
+    adjustNegativeAxes(axes, static_cast<int>(rank_x));
+    checkDuplicateAxes(axes, static_cast<int>(rank_x));
   }
   if (hasSizesInput) {
     if (!axes.empty()) {
@@ -250,10 +250,11 @@ static void resizeShapeInferenceVersioned(InferenceContext& ctx, int opset_versi
     if (!axes.empty()) {
       std::vector<int64_t> tmp(rank_x);
       for (size_t i = 0; i < rank_x; i++) {
-        tmp[i] = input_shape.dim(i).has_dim_value() ? input_shape.dim(i).dim_value() : -1;
+        tmp[i] = input_shape.dim(static_cast<int>(i)).has_dim_value() ? input_shape.dim(static_cast<int>(i)).dim_value()
+                                                                      : -1;
       }
       for (size_t i = 0; i < axes.size(); i++) {
-        int d = axes[i];
+        int d = static_cast<int>(axes[i]);
         tmp[d] = sizes_data[i];
       }
       std::swap(tmp, sizes_data);
@@ -278,7 +279,7 @@ static void resizeShapeInferenceVersioned(InferenceContext& ctx, int opset_versi
 
         std::vector<float> tmp(rank_x, 1.0f);
         for (size_t i = 0; i < axes.size(); i++) {
-          int d = axes[i];
+          int d = static_cast<int>(axes[i]);
           tmp[d] = scales_data[i];
         }
         std::swap(tmp, scales_data);
@@ -487,7 +488,7 @@ std::function<void(OpSchema&)> PadDocGenerator(
 
         for (size_t i = 0; i < num_axes; ++i) {
           auto axis = axes[i];
-          const auto& input_dim = input_shape.dim(axis);
+          const auto& input_dim = input_shape.dim(static_cast<int>(axis));
           auto& out_dim = *out_dims[axis];
           auto total_pad = pads_data[i] + pads_data[num_axes + i];
           if (input_dim.has_dim_value()) {

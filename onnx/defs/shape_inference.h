@@ -832,11 +832,10 @@ inline TypeProto RemoveDimensionsFromShape(const TypeProto& proto, int num_dimen
 // (sign change or truncation). Matches gsl::narrow:
 // https://github.com/microsoft/GSL/blob/main/include/gsl/narrow
 template <class T, class U>
-static constexpr T narrow(U&& u) {
-  const U original = u;
-  const T result = static_cast<T>(std::forward<U>(u));
-  if (static_cast<U>(result) != original || ((result < T{}) != (original < U{}))) {
-    fail_shape_inference("narrow: value ", original, " cannot be represented in target type");
+static constexpr T narrow(U u) {
+  const T result = static_cast<T>(u);
+  if (static_cast<U>(result) != u || ((result < T{}) != (u < U{}))) {
+    fail_shape_inference("narrow: value ", u, " cannot be represented in target type");
   }
   return result;
 }
