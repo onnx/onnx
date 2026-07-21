@@ -202,5 +202,11 @@ ONNX version|IR version|Opset version ai.onnx|Opset version ai.onnx.ml|Opset ver
 1.21.0|13|26|5|1
 1.22.0|13|27|5|1
 
+### Preview Domains Versioning
+
+The preview domains `ai.onnx.preview` and `ai.onnx.preview.training` do not follow the standard incrementing opset versioning scheme shown in the table above. Instead, they are fixed at version `1`.
+
+Any new operator or update to an operator in these domains is made in-place on version `1` without incrementing the version number. They do not have backward compatibility or stability guarantees. Once a preview operator graduates, it is added to the standard namespace (`ai.onnx` or `ai.onnx.training`) at a new opset version.
+
 The version number is centrally defined in [VERSION_NUMBER](../VERSION_NUMBER).
 Programmatically accessible version information is available from [onnx/helper.py](../onnx/helper.py), `onnx/common/version.h` (auto-generated) and [onnx/defs/schema.h](../onnx/defs/schema.h).
