@@ -6552,3 +6552,37 @@ class TestReferenceEvaluator:
 
         assert_allclose(got_state, expected_state)
         assert_allclose(got_output, expected_output)
+
+    @staticmethod
+    def _swiglu_model() -> ModelProto:
+        # Dynamic shapes so model-level shape inference does not reject the
+        # mismatched-shape/dtype cases before they reach the reference _run.
+        a = make_tensor_value_info("A", TensorProto.FLOAT, [None, None])
+        b = make_tensor_value_info("B", TensorProto.FLOAT, [None, None])
+        y = make_tensor_value_info("Y", TensorProto.FLOAT, [None, None])
+        node = make_node("SwiGLU", ["A", "B"], ["Y"])
+        graph = make_graph([node], "swiglu", [a, b], [y])
+        return make_model(graph, opset_imports=[make_opsetid("", 28)])
+
+    def test_swiglu(self) -> None:
+        ref = ReferenceEvaluator(self._swiglu_model())
+        a = np.array([[1.0, -2.0, 3.0], [-1.0, 2.0, 0.5]], dtype=np.float32)
+        b = np.array([[0.5, 1.0, -1.0], [2.0, -1.0, 1.0]], dtype=np.float32)
+        expected = a * (1 / (1 + np.exp(-1.0 * a))) * b
+        (got,) = ref.run(None, {"A": a, "B": b})
+        assert_allclose(got, expected, rtol=1e-6)
+        assert got.dtype == np.float32
+
+    def test_swiglu_shape_mismatch_raises(self) -> None:
+        ref = ReferenceEvaluator(self._swiglu_model())
+        a = np.ones((2, 3), dtype=np.float32)
+        b = np.ones((2, 1), dtype=np.float32)
+        with pytest.raises(ValueError, match="identical shapes"):
+            ref.run(None, {"A": a, "B": b})
+
+    def test_swiglu_dtype_mismatch_raises(self) -> None:
+        ref = ReferenceEvaluator(self._swiglu_model())
+        a = np.ones((2, 3), dtype=np.float32)
+        b = np.ones((2, 3), dtype=np.float16)
+        with pytest.raises(ValueError, match="identical dtypes"):
+            ref.run(None, {"A": a, "B": b})
