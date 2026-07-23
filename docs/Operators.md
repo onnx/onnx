@@ -30841,7 +30841,7 @@ Other versions of this operator: <a href="Changelog.md#Resize-10">10</a>, <a hre
 
 <dl>
 <dt><tt>antialias</tt> : int (default is 0)</dt>
-<dd>If set to 1, "linear" and "cubic" interpolation modes will use an antialiasing filter when downscaling. Antialiasing is achieved by stretching the resampling filter by a factor max(1, 1 / scale), which means that when downsampling, more input pixels contribute to an output pixel.</dd>
+<dd>If set to 1, "linear" and "cubic" interpolation modes will use an antialiasing filter when downscaling. Antialiasing is achieved by stretching the resampling filter by a factor max(1, 1 / scale) for each dimension, where the scale for each dimension may be provided explicitly through the "scales" input or implicitly derived from the ratio of output size to input size when the "sizes" input is used. This means that when downsampling, more input pixels contribute to an output pixel.</dd>
 <dt><tt>axes</tt> : list of ints</dt>
 <dd>If provided, it specifies a subset of axes that 'roi', 'scales' and 'sizes' refer to. If not provided, all axes are assumed [0, 1, ..., r-1], where r = rank(data). Non-specified dimensions are interpreted as non-resizable. Negative value means counting dimensions from the back. Accepted range is [-r, r-1], where r = rank(data). Behavior is undefined if an axis is repeated.</dd>
 <dt><tt>coordinate_transformation_mode</tt> : string (default is half_pixel)</dt>
