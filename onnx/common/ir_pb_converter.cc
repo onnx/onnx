@@ -295,6 +295,9 @@ std::unique_ptr<Graph> graphProtoToGraph(const ONNX_NAMESPACE::GraphProto& gp, b
     if (!vip.type().has_tensor_type()) {
       v->type() = std::make_unique<TypeProto>(vip.type());
     }
+    if (vip.has_doc_string()) {
+      v->setDocString(vip.doc_string());
+    }
     v->setUniqueName(vip.name());
     value_by_name_of[vip.name()] = v;
   }
@@ -390,6 +393,9 @@ std::unique_ptr<Graph> graphProtoToGraph(const ONNX_NAMESPACE::GraphProto& gp, b
     if (!output.type().has_tensor_type()) {
       output_value->type() = std::make_unique<TypeProto>(output.type());
     }
+    if (output.has_doc_string()) {
+      output_value->setDocString(output.doc_string());
+    }
     g->registerOutput(output_value);
   }
 
@@ -409,6 +415,9 @@ std::unique_ptr<Graph> graphProtoToGraph(const ONNX_NAMESPACE::GraphProto& gp, b
     }
     if (!gp.value_info(i).type().has_tensor_type()) {
       v->type() = std::make_unique<TypeProto>(gp.value_info(i).type());
+    }
+    if (gp.value_info(i).has_doc_string()) {
+      v->setDocString(gp.value_info(i).doc_string());
     }
   }
 
@@ -627,6 +636,9 @@ static void encodeValueInfo(ONNX_NAMESPACE::ValueInfoProto& v, Value& n) {
     encodeTypeProtoTensorType(*tensor_type, n);
   } else if (n.type()) {
     v.mutable_type()->CopyFrom(*n.type());
+  }
+  if (n.has_doc_string()) {
+    v.set_doc_string(n.docString());
   }
 }
 
