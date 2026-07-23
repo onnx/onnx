@@ -299,6 +299,8 @@ struct Value final {
   use_list uses_in_current_graph_;
   bool has_unique_name_{false};
   std::string unique_name_;
+  bool has_doc_string_{false};
+  std::string doc_string_;
   int32_t elem_type_{ONNX_NAMESPACE::TensorProto_DataType_UNDEFINED};
   bool has_sizes_{false};
   std::vector<Dimension> sizes_;
@@ -340,6 +342,17 @@ struct Value final {
     return toVarName(unique());
   }
   Value* setUniqueName(const std::string& name, bool update_related_names = true);
+  bool has_doc_string() const {
+    return has_doc_string_;
+  }
+  const std::string& docString() const {
+    return doc_string_;
+  }
+  Value* setDocString(std::string doc_string) {
+    has_doc_string_ = true;
+    doc_string_ = std::move(doc_string);
+    return this;
+  }
   Value* setStage(size_t s) {
     stage_ = s;
     return this;
@@ -376,6 +389,9 @@ struct Value final {
     setSizes(from->sizes());
     if (from->has_unique_name()) {
       setUniqueName(from->uniqueName());
+    }
+    if (from->has_doc_string()) {
+      setDocString(from->docString());
     }
     return this;
   }
