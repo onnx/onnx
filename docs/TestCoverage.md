@@ -30340,6 +30340,7 @@ expect(
     inputs=[x],
     outputs=[y, indices, inverse_indices, counts],
     name="test_unique_length_1",
+    output_type_protos=unique_output_types(x),
 )
 ```
 
@@ -30389,6 +30390,7 @@ expect(
     inputs=[x],
     outputs=[y, indices, inverse_indices, counts],
     name="test_unique_not_sorted_without_axis",
+    output_type_protos=unique_output_types(x),
 )
 ```
 
@@ -30427,6 +30429,7 @@ expect(
     inputs=[x],
     outputs=[y, indices, inverse_indices, counts],
     name="test_unique_sorted_with_axis",
+    output_type_protos=unique_output_types(x, axis=0),
 )
 ```
 
@@ -30474,6 +30477,7 @@ expect(
     inputs=[x],
     outputs=[y, indices, inverse_indices, counts],
     name="test_unique_sorted_with_axis_3d",
+    output_type_protos=unique_output_types(x, axis=1),
 )
 ```
 
@@ -30513,6 +30517,7 @@ expect(
     inputs=[x],
     outputs=[y, indices, inverse_indices, counts],
     name="test_unique_sorted_with_negative_axis",
+    output_type_protos=unique_output_types(x, axis=-1),
 )
 ```
 
@@ -30537,6 +30542,7 @@ expect(
     inputs=[x],
     outputs=[y, indices, inverse_indices, counts],
     name="test_unique_sorted_without_axis",
+    output_type_protos=unique_output_types(x),
 )
 ```
 
