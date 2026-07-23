@@ -1189,6 +1189,211 @@ class TestChecker:
         with pytest.raises(checker.ValidationError):
             checker.check_model(model)
 
+    def test_check_model_rejects_self_recursion_in_subgraph(self) -> None:
+        # Cycle reachable only through an If-branch subgraph nested in the function body.
+        model = onnx.parser.parse_model(
+            """
+            <ir_version: 8, opset_import: [ "" : 17, "local" : 1 ]>
+            agraph (float[N] X) => (float[N] Y) {
+                Y = local.foo (X)
+            }
+            <opset_import: [ "" : 17, "local" : 1 ], domain: "local">
+            foo (x) => (y) {
+                cond = Constant <value = bool {1}> ()
+                y = If (cond) <
+                    then_branch = g_then () => (yt) { yt = local.foo (x) },
+                    else_branch = g_else () => (ye) { ye = Identity (x) }
+                >
+            }
+        """
+        )
+        with pytest.raises(
+            checker.ValidationError,
+            match="Cycle detected in model-local function references",
+        ):
+            checker.check_model(model)
+
+    def test_check_model_rejects_mutual_recursion_in_subgraph(self) -> None:
+        # Mutual A<->B cycle where each edge lives inside an If-branch subgraph.
+        model = onnx.parser.parse_model(
+            """
+            <ir_version: 8, opset_import: [ "" : 17, "local" : 1 ]>
+            agraph (float[N] X) => (float[N] Y) {
+                Y = local.foo (X)
+            }
+            <opset_import: [ "" : 17, "local" : 1 ], domain: "local">
+            foo (x) => (y) {
+                cond = Constant <value = bool {1}> ()
+                y = If (cond) <
+                    then_branch = foo_then () => (yt) { yt = local.bar (x) },
+                    else_branch = foo_else () => (ye) { ye = Identity (x) }
+                >
+            }
+            <opset_import: [ "" : 17, "local" : 1 ], domain: "local">
+            bar (x) => (y) {
+                cond = Constant <value = bool {1}> ()
+                y = If (cond) <
+                    then_branch = bar_then () => (yt) { yt = local.foo (x) },
+                    else_branch = bar_else () => (ye) { ye = Identity (x) }
+                >
+            }
+        """
+        )
+        with pytest.raises(
+            checker.ValidationError,
+            match="Cycle detected in model-local function references",
+        ):
+            checker.check_model(model)
+
+    def test_check_model_rejects_indirect_cycle_through_subgraph(self) -> None:
+        # Three-function indirect cycle foo -> foo2 -> foo3 -> foo where every call
+        # edge lives inside an If-branch subgraph, so the cycle is only discoverable
+        # through the recursive subgraph descent (not the top-level function bodies).
+        model = onnx.parser.parse_model(
+            """
+            <ir_version: 8, opset_import: [ "" : 17, "local" : 1 ]>
+            agraph (float[N] X) => (float[N] Y) {
+                Y = local.foo (X)
+            }
+            <opset_import: [ "" : 17, "local" : 1 ], domain: "local">
+            foo (x) => (y) {
+                cond = Constant <value = bool {1}> ()
+                y = If (cond) <
+                    then_branch = foo_then () => (yt) { yt = local.foo2 (x) },
+                    else_branch = foo_else () => (ye) { ye = Identity (x) }
+                >
+            }
+            <opset_import: [ "" : 17, "local" : 1 ], domain: "local">
+            foo2 (x) => (y) {
+                cond = Constant <value = bool {1}> ()
+                y = If (cond) <
+                    then_branch = foo2_then () => (yt) { yt = local.foo3 (x) },
+                    else_branch = foo2_else () => (ye) { ye = Identity (x) }
+                >
+            }
+            <opset_import: [ "" : 17, "local" : 1 ], domain: "local">
+            foo3 (x) => (y) {
+                cond = Constant <value = bool {1}> ()
+                y = If (cond) <
+                    then_branch = foo3_then () => (yt) { yt = local.foo (x) },
+                    else_branch = foo3_else () => (ye) { ye = Identity (x) }
+                >
+            }
+        """
+        )
+        with pytest.raises(
+            checker.ValidationError,
+            match="Cycle detected in model-local function references",
+        ):
+            checker.check_model(model)
+
+    def test_check_model_rejects_cycle_in_loop_body(self) -> None:
+        # Cycle edge hidden inside a Loop body subgraph rather than an If branch.
+        model = onnx.parser.parse_model(
+            """
+            <ir_version: 8, opset_import: [ "" : 17, "local" : 1 ]>
+            agraph (float[N] X) => (float[N] Y) {
+                Y = local.foo (X)
+            }
+            <opset_import: [ "" : 17, "local" : 1 ], domain: "local">
+            foo (x) => (y) {
+                trip = Constant <value = int64 {1}> ()
+                cond = Constant <value = bool {1}> ()
+                y = Loop (trip, cond, x) <
+                    body = loop_body (iter, keep, x_in) => (keep_out, x_out) {
+                        keep_out = Identity (keep)
+                        x_out = local.foo (x_in)
+                    }
+                >
+            }
+        """
+        )
+        with pytest.raises(
+            checker.ValidationError,
+            match="Cycle detected in model-local function references",
+        ):
+            checker.check_model(model)
+
+    def test_check_model_rejects_cycle_in_scan_body(self) -> None:
+        # Cycle edge hidden inside a Scan body subgraph, mirroring the Loop-body case.
+        model = onnx.parser.parse_model(
+            """
+            <ir_version: 8, opset_import: [ "" : 17, "local" : 1 ]>
+            agraph (float[N] X) => (float[N] Y) {
+                Y = local.foo (X)
+            }
+            <opset_import: [ "" : 17, "local" : 1 ], domain: "local">
+            foo (x) => (y) {
+                y = Scan (x) <
+                    num_scan_inputs = 1,
+                    body = scan_body (x_in) => (x_out) {
+                        x_out = local.foo (x_in)
+                    }
+                >
+            }
+        """
+        )
+        with pytest.raises(
+            checker.ValidationError,
+            match="Cycle detected in model-local function references",
+        ):
+            checker.check_model(model)
+
+    def test_check_model_rejects_deeply_nested_cycle(self) -> None:
+        # Cycle reachable only through If -> Loop -> self, exercising arbitrary-depth descent.
+        model = onnx.parser.parse_model(
+            """
+            <ir_version: 8, opset_import: [ "" : 17, "local" : 1 ]>
+            agraph (float[N] X) => (float[N] Y) {
+                Y = local.foo (X)
+            }
+            <opset_import: [ "" : 17, "local" : 1 ], domain: "local">
+            foo (x) => (y) {
+                cond = Constant <value = bool {1}> ()
+                y = If (cond) <
+                    then_branch = g_then () => (yt) {
+                        trip = Constant <value = int64 {1}> ()
+                        loop_cond = Constant <value = bool {1}> ()
+                        yt = Loop (trip, loop_cond, x) <
+                            body = loop_body (iter, keep, x_in) => (keep_out, x_out) {
+                                keep_out = Identity (keep)
+                                x_out = local.foo (x_in)
+                            }
+                        >
+                    },
+                    else_branch = g_else () => (ye) { ye = Identity (x) }
+                >
+            }
+        """
+        )
+        with pytest.raises(
+            checker.ValidationError,
+            match="Cycle detected in model-local function references",
+        ):
+            checker.check_model(model)
+
+    def test_check_model_accepts_noncyclic_call_from_subgraph(self) -> None:
+        # A function whose subgraph calls a DIFFERENT non-cyclic local function must pass.
+        model = onnx.parser.parse_model(
+            """
+            <ir_version: 8, opset_import: [ "" : 17, "local" : 1 ]>
+            agraph (float[N] X) => (float[N] Y) {
+                Y = local.foo (X)
+            }
+            <opset_import: [ "" : 17, "local" : 1 ], domain: "local">
+            foo (x) => (y) {
+                cond = Constant <value = bool {1}> ()
+                y = If (cond) <
+                    then_branch = g_then () => (yt) { yt = local.bar (x) },
+                    else_branch = g_else () => (ye) { ye = Identity (x) }
+                >
+            }
+            <opset_import: [ "" : 17, "local" : 1 ], domain: "local">
+            bar (x) => (y) { y = Identity (x) }
+        """
+        )
+        checker.check_model(model)
+
     def test_check_tensor_invalid_dims(self) -> None:
         """Reject tensors with overflowing or negative dimensions."""
         # Overflow: 2^62 * 2^62 exceeds int64
@@ -1288,6 +1493,46 @@ class TestChecker:
             tensor2.dims.extend([20])
             tensor2.name = "t"
             tensor2.int32_data.extend([0, 0])  # ceil(20/16) = 2
+            checker.check_tensor(tensor2)
+
+    def test_check_tensor_unpacked_int32_data(self) -> None:
+        """Reject non-packed int32_data-stored tensors whose payload is too small.
+
+        BOOL, INT8, UINT8, INT16, UINT16, FLOAT16, BFLOAT16, and FLOAT8* types are
+        stored one element per int32_data entry (they are not bit-packed), unlike
+        INT4/UINT4/FLOAT4E2M1. Regression test for a checker/runtime discrepancy
+        where check_model() incorrectly accepted these types using the packed
+        ceil(nelem/8) formula instead of requiring nelem entries.
+        """
+        for dtype in (
+            TensorProto.BOOL,
+            TensorProto.INT8,
+            TensorProto.UINT8,
+            TensorProto.INT16,
+            TensorProto.UINT16,
+            TensorProto.FLOAT16,
+            TensorProto.BFLOAT16,
+            TensorProto.FLOAT8E4M3FN,
+            TensorProto.FLOAT8E4M3FNUZ,
+            TensorProto.FLOAT8E5M2,
+            TensorProto.FLOAT8E5M2FNUZ,
+            TensorProto.FLOAT8E8M0,
+        ):
+            tensor = TensorProto()
+            tensor.data_type = dtype
+            tensor.dims.extend([32])
+            tensor.name = "t"
+            # Only 4 int32_data entries; the packed formula ceil(32/8) = 4 would
+            # incorrectly accept this, but 32 entries (one per element) are needed.
+            tensor.int32_data.extend([0] * 4)
+            with pytest.raises(checker.ValidationError):
+                checker.check_tensor(tensor)
+            # Exactly enough (unpacked) int32 values must pass.
+            tensor2 = TensorProto()
+            tensor2.data_type = dtype
+            tensor2.dims.extend([32])
+            tensor2.name = "t"
+            tensor2.int32_data.extend([0] * 32)
             checker.check_tensor(tensor2)
 
     def test_check_tensor_packed_subbyte_zero_elems(self) -> None:

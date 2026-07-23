@@ -584,6 +584,66 @@ ONNX_OPERATOR_SET_SCHEMA(
             }
             )ONNX"));
 
+static constexpr const char* SwiGLU_ver28_doc = R"DOC(
+SwiGLU is a gated activation that takes two inputs, a gate `A` and a linear (value)
+input `B`, and produces one output `Y`. It applies the Swish activation to the gate
+and multiplies the result elementwise by the linear input:
+
+```
+Y = Swish_alpha(A) * B
+```
+
+The gate activation `Swish_alpha` is exactly the `Swish` operator with the same
+`alpha`, i.e. `Swish_alpha(a) = a * Sigmoid(alpha * a)`. Inputs `A` and `B` must
+have identical shapes; broadcasting is not applied and the output `Y` has the same
+shape as the inputs.
+
+Exporters typically produce `A` and `B` in one of two ways: for the common
+two-projection form (e.g. Llama's `gate_proj`/`up_proj`) wire the two projection
+outputs directly to `A` (gate) and `B` (value); for a fused/packed single
+projection, split it upstream into `A` and `B` with `Split` (contiguous layout)
+or `Slice`/`Gather` (interleaved layout).
+)DOC";
+
+static void SwiGLUShapeInference(InferenceContext& ctx) {
+  propagateElemTypeFromInputToOutput(ctx, 0, 0);
+  if (!hasNInputShapes(ctx, 2)) {
+    return;
+  }
+  // A and B must have identical shapes: no broadcasting, no rank expansion, no
+  // size-1 stretching. Seed the output with A's shape and merge B into it, which
+  // fails on any rank mismatch or conflicting static dimension while merging
+  // symbolic/unknown dimensions toward the more-specified one.
+  auto* output_type = ctx.getOutputType(0)->mutable_tensor_type();
+  *output_type->mutable_shape() = ctx.getInputType(0)->tensor_type().shape();
+  mergeInShapeInfo(ctx.getInputType(1)->tensor_type(), *output_type);
+}
+
+ONNX_OPERATOR_SET_SCHEMA(
+    SwiGLU,
+    28,
+    OpSchema()
+        .SetDoc(SwiGLU_ver28_doc)
+        .Attr(
+            "alpha",
+            "Coefficient that scales the gate input inside the sigmoid of the Swish activation. "
+            "The default value is 1.0.",
+            AttributeProto::FLOAT,
+            1.0f)
+        .Input(0, "A", "Gate input tensor", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
+        .Input(1, "B", "Linear (value) input tensor", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
+        .Output(0, "Y", "Output tensor", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
+        .TypeConstraint("T", OpSchema::all_float_types_ir4(), "Constrain input and output types to float tensors.")
+        .SetNodeDeterminism(OpSchema::NodeDeterminism::Deterministic)
+        .TypeAndShapeInferenceFunction(SwiGLUShapeInference)
+        .FunctionBody(
+            R"ONNX(
+          {
+            SwishGate = Swish <alpha : float = @alpha> (A)
+            Y = Mul (SwishGate, B)
+          }
+        )ONNX"));
+
 ONNX_OPERATOR_SET_SCHEMA(
     Exp,
     13,
