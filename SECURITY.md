@@ -35,7 +35,7 @@ Reports describing expected behavior, unrealistic preconditions, or issues outsi
 3. **Fix.** A patch is developed in a private fork or Security Advisory draft and reviewed by a second maintainer.
 4. **Disclose.** Merge the fix and release the patched version, then publish the GitHub Security Advisory — this requests a CVE if applicable and serves as the public announcement.
 
-Out-of-cycle releases are triggered for confirmed Critical/High vulnerabilities or active exploitation.
+Out-of-cycle releases are triggered for confirmed Critical/High vulnerabilities or active exploitation. ONNX has no LTS branches; backporting a fix to an already-released version beyond the current out-of-cycle release is assessed case by case — see [RELEASE-MANAGEMENT.md](RELEASE-MANAGEMENT.md#long-term-support-lts).
 
 ## Security announcements
 
