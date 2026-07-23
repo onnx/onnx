@@ -29,6 +29,16 @@ std::vector<int64_t> getConvPoolStrides(InferenceContext& ctx, size_t n_input_di
 void AttentionPropagateElemTypeFromInputToOutput(InferenceContext& ctx) {
   propagateElemTypeFromInputToOutput(ctx, 0, 0);
 
+  // Validate local_window_size early so invalid values are rejected during
+  // model checking / shape inference, before the function body builder runs.
+  const auto* const lws_attr = ctx.getAttribute("local_window_size");
+  if (lws_attr != nullptr) {
+    int64_t lws = lws_attr->i();
+    if (lws != -1 && lws <= 0) {
+      fail_shape_inference("local_window_size must be -1 or positive, got ", lws);
+    }
+  }
+
   int64_t kv_sequence_length = -1;
   ONNX_NAMESPACE::TensorShapeProto output_shape;
   ONNX_NAMESPACE::TensorShapeProto qk_matmul_shape;
@@ -46,7 +56,7 @@ void AttentionPropagateElemTypeFromInputToOutput(InferenceContext& ctx) {
       }
       const auto* const kv_num_heads_attr = ctx.getAttribute("kv_num_heads");
       if (kv_num_heads_attr == nullptr) {
-        fail_type_inference("3D inputs expected to have q_num_heads attribute.");
+        fail_type_inference("3D inputs expected to have kv_num_heads attribute.");
       }
     }
 
@@ -240,13 +250,34 @@ bool AttentionAppendFunctionCausalMask(const FunctionBodyBuildContext& ctx, Func
           .Add("OffsetB4D = Unsqueeze(CausalOffsetPerBatch, Axes123)") // (batch, 1, 1, 1)
           .Add("RowPlusOff = Add(RangeRow4D, OffsetB4D)") // (batch, 1, q, 1)
           .Add("BoolMaskTri = Less(RowPlusOff, RangeCol4D)"); // (batch, 1, q, total)
+      // MaskTri is 4D (batch, 1, q, total).  AttnBias may be 3D (batch, q, kv)
+      // which does not broadcast correctly against a 4D tensor (ONNX left-pads
+      // with 1s, giving (1, batch, q, kv) instead of (batch, 1, q, kv)).
+      // Promote AttnBias to 4D at build time based on the known rank of attn_mask.
+      int causal_mask_rank = -1;
+      if (ctx.hasInput(3)) {
+        const auto* mask_tp = ctx.getInputType(3);
+        if (mask_tp && mask_tp->has_tensor_type() && mask_tp->tensor_type().has_shape()) {
+          causal_mask_rank = mask_tp->tensor_type().shape().dim_size();
+        }
+      }
+      if (causal_mask_rank == 3) {
+        builder.Add("AttnBias4DCausal = Unsqueeze(AttnBias, One)");
+      } else if (causal_mask_rank == 4) {
+        builder.Add("AttnBias4DCausal = Identity(AttnBias)");
+      } else {
+        builder.Add("CausalBiasShape = Concat <axis = 0> (NegOne1D, One1D, QSeqLen, NewKVSeqLen)")
+            .Add("AttnBias4DCausal = Reshape(AttnBias, CausalBiasShape)");
+      }
+      builder.Add("MaskTri = Where(BoolMaskTri, FloatNegInf, ScalarZero)")
+          .Add("AttnBiasCausalOrNot = Add(AttnBias4DCausal, MaskTri)");
     } else {
       // Internal cache / no cache: scalar offset (PastKVSeqLen), 2D (q, total) mask.
       builder.Add("RangeRow2DPast = Add(RangeRow2D, PastKVSeqLen)")
           .Add("BoolMaskTri = Less(RangeRow2DPast, RangeCol2D)");
+      builder.Add("MaskTri = Where(BoolMaskTri, FloatNegInf, ScalarZero)")
+          .Add("AttnBiasCausalOrNot = Add(AttnBias, MaskTri)");
     }
-    builder.Add("MaskTri = Where(BoolMaskTri, FloatNegInf, ScalarZero)")
-        .Add("AttnBiasCausalOrNot = Add(AttnBias, MaskTri)");
   } else {
     builder.Add("AttnBiasCausalOrNot = Identity(AttnBias)");
   }
