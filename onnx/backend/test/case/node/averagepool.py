@@ -548,38 +548,58 @@ class AveragePool(Base):
             name="test_averagepool_2d_ceil_last_window_starts_on_pad",
         )
 
-    @staticmethod
-    def export_averagepool_2d_dilations() -> None:
-        """input_shape: [1, 1, 4, 4]
-        output_shape: [1, 1, 2, 2]
-        """
-        node = onnx.helper.make_node(
-            "AveragePool",
-            inputs=["x"],
-            outputs=["y"],
-            kernel_shape=[2, 2],
-            strides=[1, 1],
-            dilations=[2, 2],
-            ceil_mode=True,
-        )
+@staticmethod
+def export_averagepool_2d_dilations_valid() -> None:
+    """input_shape: [1, 1, 7, 7]
+    output_shape: [1, 1, 3, 3]
+    """
+    node = onnx.helper.make_node(
+        "AveragePool",
+        inputs=["x"],
+        outputs=["y"],
+        kernel_shape=[3, 3],
+        strides=[1, 1],
+        dilations=[2, 2],
+        auto_pad="VALID",
+    )
 
-        # input shape: [1, 1, 4, 4]
-        x = np.array(
-            [
-                [
-                    [
-                        [1, 2, 3, 4],
-                        [5, 6, 7, 8],
-                        [9, 10, 11, 12],
-                        [13, 14, 15, 16],
-                    ]
-                ]
-            ]
-        ).astype(np.float32)
+    x = np.random.randn(1, 1, 7, 7).astype(np.float32)
 
-        y = np.array([[[[6, 7], [10, 11]]]]).astype(np.float32)
+    out_shape, extra_pads = get_output_shape_explicit_padding(
+        None,
+        (7, 7),
+        (3, 3),
+        (1, 1),
+        dilations=(2, 2),
+        ceil_mode=0,
+    )
+    padded = np.pad(
+        x,
+        (
+            (0, 0),
+            (0, 0),
+            (extra_pads[0], extra_pads[2]),
+            (extra_pads[1], extra_pads[3]),
+        ),
+        mode="constant",
+        constant_values=np.nan,
+    )
+    y = pool(
+        padded,
+        (1, 1, 7, 7),
+        (3, 3),
+        (1, 1),
+        out_shape,
+        "AVG",
+        pads_required=extra_pads,
+        pads=None,
+        dilations=(2, 2),
+        count_include_pad=0,
+    )
 
-        expect(node, inputs=[x], outputs=[y], name="test_averagepool_2d_dilations")
+    expect(
+        node, inputs=[x], outputs=[y], name="test_averagepool_2d_dilations_valid"
+    )
 
     @staticmethod
     def export_averagepool_3d_dilations() -> None:
@@ -693,3 +713,54 @@ class AveragePool(Base):
 
                 test_name = f"test_averagepool_3d_dilations_large_count_include_pad_is_{count_include_pad}_ceil_mode_is_{ceil_mode}"
                 expect(node, inputs=[x], outputs=[y], name=test_name)
+
+    @staticmethod
+    def export_averagepool_2d_dilations_valid() -> None:
+        """input_shape: [1, 1, 7, 7]
+        output_shape: [1, 1, 3, 3]
+        """
+        node = onnx.helper.make_node(
+            "AveragePool",
+            inputs=["x"],
+            outputs=["y"],
+            kernel_shape=[3, 3],
+            strides=[1, 1],
+            dilations=[2, 2],
+            auto_pad="VALID",
+        )
+
+        x = np.random.randn(1, 1, 7, 7).astype(np.float32)
+
+        out_shape, extra_pads = get_output_shape_explicit_padding(
+            None,
+            (7, 7),
+            (3, 3),
+            (1, 1),
+            dilations=(2, 2),
+            ceil_mode=0,
+        )
+        padded = np.pad(
+            x,
+            (
+                (0, 0),
+                (0, 0),
+                (extra_pads[0], extra_pads[2]),
+                (extra_pads[1], extra_pads[3]),
+            ),
+            mode="constant",
+            constant_values=np.nan,
+        )
+        y = pool(
+            padded,
+            (1, 1, 7, 7),
+            (3, 3),
+            (1, 1),
+            out_shape,
+            "AVG",
+            pads_required=extra_pads,
+            pads=None,
+            dilations=(2, 2),
+            count_include_pad=0,
+        )
+
+        expect(node, inputs=[x], outputs=[y], name="test_averagepool_2d_dilations")
