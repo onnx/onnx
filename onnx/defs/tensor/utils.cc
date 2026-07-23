@@ -7,6 +7,7 @@
 #include <algorithm>
 #include <limits>
 #include <numeric>
+#include <optional>
 #include <string>
 #include <utility>
 #include <vector>
@@ -499,5 +500,110 @@ std::function<void(OpSchema&)> PadDocGenerator(
       }
     });
   };
+}
+
+void oneHotShapeInference(InferenceContext& ctx, int version) {
+  // Check that the node has three inputs.
+  if (ctx.getNumInputs() != 3) {
+    fail_type_inference("OneHot node must have three inputs.");
+  }
+  // Before opset 11, 'indices' were required to be non-negative; opset 11
+  // relaxed this to allow negative indices that wrap around. We can only
+  // enforce the older constraint when 'indices' is available as a constant.
+  if (version < 11) {
+    if (const TensorProto* indices_data = ctx.getInputData(0)) {
+      auto is_negative = [](auto index) { return index < 0; };
+      bool has_negative = false;
+      if (indices_data->data_type() == TensorProto::INT64) {
+        const auto indices = ParseData<int64_t>(indices_data);
+        has_negative = std::any_of(indices.begin(), indices.end(), is_negative);
+      } else if (indices_data->data_type() == TensorProto::INT32) {
+        const auto indices = ParseData<int32_t>(indices_data);
+        has_negative = std::any_of(indices.begin(), indices.end(), is_negative);
+      }
+      if (has_negative) {
+        fail_shape_inference("Input 'indices' must be non-negative for OneHot opset < 11.");
+      }
+    }
+  }
+  // Input 'depth' must be a scalar or a single-element vector.
+  // TODO(ONNX): Ideally to match spec for this input only Scalar should
+  // be allowed. Making this change now can affect backward
+  // compatibility for this op. Since this does not seem like a good
+  // justification to update version for this op, allowing both scalar
+  // and 1 element vector for now. In future when version update for
+  // this op is done we should only allow scalar or change the spec to
+  // allow both.
+  std::optional<int64_t> depth_value;
+  if (hasInputShape(ctx, 1)) {
+    auto& depth_shape = getInputShape(ctx, 1);
+    // Validate the 'depth' shape before reading its data so that a tensor
+    // claiming zero (or more than one) elements is rejected rather than read
+    // out of bounds.
+    if (depth_shape.dim_size() != 0 && depth_shape.dim_size() != 1) {
+      fail_type_inference("Input 'depth' must be a scalar or rank 1 tensor.");
+    }
+    if (depth_shape.dim_size() == 1 && depth_shape.dim(0).has_dim_value() && depth_shape.dim(0).dim_value() != 1) {
+      fail_type_inference("Input 'depth' must have exactly one element.");
+    }
+    if (const TensorProto* depth_data = ctx.getInputData(1)) {
+      if (depth_data->data_type() == TensorProto::INT64) {
+        depth_value = ParseData<int64_t>(depth_data)[0];
+      } else if (depth_data->data_type() == TensorProto::INT32) {
+        depth_value = ParseData<int32_t>(depth_data)[0];
+      } else if (depth_data->data_type() == TensorProto::FLOAT) {
+        depth_value = static_cast<int64_t>(ParseData<float>(depth_data)[0]);
+      }
+    }
+  }
+  // Input 'values' must be a two-element vector.
+  if (hasInputShape(ctx, 2)) {
+    auto& values_shape = getInputShape(ctx, 2);
+    if (values_shape.dim_size() != 1) {
+      fail_type_inference("Input 'values' must be rank 1 tensor.");
+    }
+    if (values_shape.dim(0).has_dim_value() && values_shape.dim(0).dim_value() != 2) {
+      fail_type_inference("Input 'values' must have exactly two elements.");
+    }
+  }
+  // Set output type to be the same as the third input, 'values'.
+  propagateElemTypeFromInputToOutput(ctx, 2, 0);
+  // Set the output shape, if input 0 (indices) shape is available.
+  if (hasInputShape(ctx, 0)) {
+    const TensorShapeProto& indices_shape = ctx.getInputType(0)->tensor_type().shape();
+    int r = indices_shape.dim_size();
+    if (r < 1) {
+      fail_shape_inference("Indices tensor must have rank >= 1");
+    }
+    int out_rank = r + 1;
+    int axis = static_cast<int>(getAttribute(ctx, "axis", -1));
+    if (axis < -out_rank || axis >= out_rank) {
+      // 'axis' may address any slot in the output (rank out_rank = rank(indices) + 1),
+      // including the newly inserted one, so the valid range is [-out_rank, out_rank-1].
+      fail_shape_inference("'axis' must be in [-rank(indices)-1, rank(indices)]");
+    }
+    if (axis < 0) {
+      axis += out_rank;
+    }
+    auto output_shape = getOutputShape(ctx, 0);
+    for (int i = 0; i < out_rank; ++i) {
+      auto dim = output_shape->add_dim();
+      if (i < axis) {
+        if (indices_shape.dim(i).has_dim_value()) {
+          dim->set_dim_value(indices_shape.dim(i).dim_value());
+        } else if (indices_shape.dim(i).has_dim_param()) {
+          dim->set_dim_param(indices_shape.dim(i).dim_param());
+        }
+      } else if (i > axis) {
+        if (indices_shape.dim(i - 1).has_dim_value()) {
+          dim->set_dim_value(indices_shape.dim(i - 1).dim_value());
+        } else if (indices_shape.dim(i - 1).has_dim_param()) {
+          dim->set_dim_param(indices_shape.dim(i - 1).dim_param());
+        }
+      } else if (depth_value) {
+        dim->set_dim_value(*depth_value);
+      }
+    }
+  }
 }
 } // namespace ONNX_NAMESPACE
