@@ -39,10 +39,11 @@ struct Scan_8_9 final : public Adapter {
 
     node->removeAllInputs();
 
-    // inputs[0] is the optional sequence_lens (asserted empty above), which opset-9 Scan does
-    // not have, so it is dropped. Every remaining input is kept: opset 9 has no batch dimension,
-    // so strip the leading axis when the shape is known, but preserve an input whose shape is
-    // unknown rather than dropping it.
+    // inputs[0] is the optional sequence_lens (asserted to be empty).
+    // Scan does not have it as optset 9, so it is intentionally dropped.
+    // All other inputs are kept. But opset 9 has no batch dimension, so strip
+    // the leading axis when the shape is known, skipping inputs with unknown
+    // shape.
     for (size_t i = 1; i < inputs.size(); ++i) {
       Value* input = inputs[i];
       if (!input->sizes().empty()) {
