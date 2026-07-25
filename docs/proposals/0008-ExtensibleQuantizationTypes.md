@@ -94,12 +94,12 @@ fallback to software decode is always available.
 
 ### New Proto Messages
 
-#### QuantTypeDecl
+#### QuantTypeDeclProto
 
 Added to `ModelProto.quant_type_declarations` (repeated):
 
 ```protobuf
-message QuantTypeDecl {
+message QuantTypeDeclProto {
   // Globally unique identifier with namespace prefix.
   // Reserved prefixes: "onnx:" (spec-blessed), "vendor:<name>:" (vendor).
   string type_uri = 1;
@@ -108,16 +108,21 @@ message QuantTypeDecl {
   int32 block_size = 2;           // logical elements per block
   int32 bytes_per_block = 3;      // storage bytes per block
 
-  // Encoding descriptor
-  EncodingDescriptor encoding = 4;
+  // Encoding descriptor (hints for runtime fast-path selection)
+  EncodingDescriptorProto encoding = 4;
 
   // Scale/zero-point composition
   optional int32 scale_data_type = 5;      // TensorProto.DataType enum
   optional int32 zero_point_data_type = 6;
   int32 group_size = 7;                     // 0 = per-tensor scale
 
-  // Dequantization specification
-  DequantFormula dequant_formula = 8;
+  // Dequantization function — an inline ONNX FunctionProto.
+  // Signature: input "packed" (uint8[bytes_per_block]),
+  //            input "scale" (scale_data_type scalar)
+  //         -> output "values" (float32[block_size])
+  // Runtime uses encoding.family as a hint to select native kernels;
+  // falls back to executing this function when no native path exists.
+  FunctionProto dequant_function = 8;
 
   // Reference test vector for correctness validation
   // Runtime MAY validate its codec against these vectors.
@@ -134,10 +139,10 @@ message QuantTypeDecl {
   PaddingMode padding_mode = 15;
 }
 
-message EncodingDescriptor {
+message EncodingDescriptorProto {
   EncodingFamily family = 1;
 
-  // Family-specific parameters
+  // Family-specific parameters (hints for runtime optimization)
   int32 packing_base = 2;          // PACKED_INTEGER: radix (3=ternary, 5=quinary)
   int32 elements_per_unit = 3;     // PACKED_INTEGER: elements encoded per byte/unit
   BitOrder bit_order = 4;
@@ -145,20 +150,20 @@ message EncodingDescriptor {
   float value_offset = 6;          // additive offset after raw decode
 
   // Nested block structure (K-Quants, MXFP shared exponent, etc.)
-  optional NestedBlockLayout nested = 7;
+  optional NestedBlockLayoutProto nested = 7;
 }
 
-message NestedBlockLayout {
+message NestedBlockLayoutProto {
   int32 super_block_size = 1;        // total elements per super-block (e.g., 256)
   int32 sub_block_size = 2;          // elements per sub-block (e.g., 32)
   int32 sub_blocks_per_super = 3;    // super / sub
 
-  repeated BlockField super_fields = 4;  // decoded once per super-block
-  repeated BlockField sub_fields = 5;    // decoded once per sub-block
+  repeated BlockFieldProto super_fields = 4;  // decoded once per super-block
+  repeated BlockFieldProto sub_fields = 5;    // decoded once per sub-block
 }
 
-message BlockField {
-  string name = 1;       // referenced in DequantFormula as "super.<name>" or "sub.<name>"
+message BlockFieldProto {
+  string name = 1;       // referenced in dequant_function graph
   int32 data_type = 2;   // TensorProto.DataType
   int32 bits = 3;        // for sub-byte fields (e.g., 6-bit scales)
   int32 count = 4;       // elements of this field per block (default 1)
@@ -170,7 +175,7 @@ enum EncodingFamily {
   ENCODING_LOOKUP_TABLE = 2;       // codebook[index] * scale
   ENCODING_PACKED_INTEGER = 3;     // base-N packing
   ENCODING_LOGARITHMIC = 4;       // sign * scale * base^exp
-  ENCODING_CUSTOM = 15;            // requires runtime plugin; no auto-decode
+  ENCODING_CUSTOM = 15;            // no standard pattern; rely on dequant_function
 }
 
 enum BitOrder {
@@ -182,26 +187,6 @@ enum PaddingMode {
   PADDING_ERROR = 0;
   PADDING_ZERO = 1;
   PADDING_REPEAT_LAST = 2;
-}
-
-message DequantFormula {
-  repeated DequantStep steps = 1;
-}
-
-message DequantStep {
-  DequantOp op = 1;
-  optional int32 cast_to = 2;      // TensorProto.DataType for CAST
-  optional float constant = 3;     // for ADD/MULTIPLY with a constant
-  optional string operand = 4;     // "scale" | "zero_point" | "codebook"
-}
-
-enum DequantOp {
-  DEQUANT_UNPACK = 0;
-  DEQUANT_ADD = 1;
-  DEQUANT_MULTIPLY = 2;
-  DEQUANT_CAST = 3;
-  DEQUANT_LOOKUP = 4;
-  DEQUANT_SUBTRACT = 5;
 }
 ```
 
@@ -220,22 +205,29 @@ message TensorProto {
   // data_type MUST be set to CUSTOM_QUANT (32).
   // Shape represents logical element counts (not storage bytes).
   // Storage size is determined by: ceil(product(shape) / block_size) × bytes_per_block
-  // where block_size and bytes_per_block come from the corresponding QuantTypeDecl.
+  // where block_size and bytes_per_block come from the corresponding QuantTypeDeclProto.
   optional string quant_type_uri = 20;
 }
 ```
 
 **Storage size computation:** For a tensor with logical shape `[M, N]` and a
-`QuantTypeDecl` with `block_size=B` and `bytes_per_block=P`, the expected
+`QuantTypeDeclProto` with `block_size=B` and `bytes_per_block=P`, the expected
 `raw_data` size is `ceil(M × N / B) × P` bytes. Runtimes MUST validate this
 before processing.
 
-**Dequant function fallback:** A model MAY include an ONNX function in its
-`functions` list whose name matches the `type_uri`. When a runtime encounters
-a `type_uri` for which it has no native codec or plugin, it SHOULD look for a
-matching function in the model and use it as a reference dequantization
-implementation. When a native codec IS available, it takes precedence over the
-model-embedded function (the function serves only as a portable fallback).
+**Dequant function:** Each `QuantTypeDeclProto` embeds a `dequant_function`
+(standard ONNX `FunctionProto`) that defines the canonical dequantization logic
+using existing ONNX ops. Runtime resolution order:
+1. Native kernel (EP recognizes `encoding.family` + parameters) → fastest
+2. Execute the inline `dequant_function` → always correct, portable
+
+The function signature is fixed:
+- Input `packed`: uint8[bytes_per_block] — one block of raw packed bytes
+- Input `scale`: scalar of `scale_data_type`
+- Output `values`: float32[block_size]
+
+This eliminates the need for external codec plugins or a separate formula DSL.
+All dequantization knowledge is self-contained in the model.
 
 ### Activation Quantization
 
@@ -244,10 +236,10 @@ For static (calibrated) activation quantization, a new repeated field on `GraphP
 ```protobuf
 message GraphProto {
   // ... existing fields ...
-  repeated ActivationQuantPolicy activation_quant_policies = 20;
+  repeated ActivationQuantPolicyProto activation_quant_policies = 20;
 }
 
-message ActivationQuantPolicy {
+message ActivationQuantPolicyProto {
   string type_uri = 1;
   ActivationQuantGranularity granularity = 2;
   TensorProto scale = 3;
@@ -274,7 +266,7 @@ This section describes expected runtime behavior. ONNX spec normatively defines
 only the model format; runtime behavior is implementation-defined but SHOULD
 follow these guidelines:
 
-1. **Load model** → parse `QuantTypeDecl` list
+1. **Load model** → parse `QuantTypeDeclProto` list
 2. **For each tensor with `quant_type_uri`:**
    - Look up declaration by URI
    - Resolve codec (registered plugin, EP-provided, or auto-generated from formula)
@@ -330,7 +322,7 @@ bytes_per_block: 18            // 2 (fp16 scale) + 16 (4-bit × 32)
 encoding: { family: ENCODING_SYMMETRIC, bit_order: BIT_ORDER_LSB_FIRST }
 group_size: 32
 scale_data_type: FLOAT16
-dequant_formula: { steps: [UNPACK, CAST(f16), MULTIPLY(scale)] }
+dequant_function: { // equivalent ops: [UNPACK, CAST(f16), MULTIPLY(scale)] }
 ```
 
 ### Example 2: NF4 (QLoRA / bitsandbytes)
@@ -348,7 +340,7 @@ encoding: {
 }
 group_size: 64
 scale_data_type: FLOAT16
-dequant_formula: { steps: [UNPACK, LOOKUP(codebook), CAST(f16), MULTIPLY(scale)] }
+dequant_function: { // equivalent ops: [UNPACK, LOOKUP(codebook), CAST(f16), MULTIPLY(scale)] }
 ```
 
 ### Example 3: Q4_K (llama.cpp K-Quant, nested super-blocks)
@@ -370,7 +362,7 @@ encoding: {
   }
 }
 group_size: 256
-dequant_formula: {
+dequant_function: { // equivalent ops:
   steps: [UNPACK, CAST(f32), MULTIPLY(sub.scale), MULTIPLY(super.d),
           SUBTRACT(sub.min * super.dmin), CAST(f16)]
 }
@@ -391,7 +383,7 @@ encoding: {
     sub_fields: [ {name:"shared_exp", data_type:UINT8, bits:8} ]
   }
 }
-dequant_formula: { steps: [UNPACK, CAST(f16), MULTIPLY(sub.shared_exp)] }
+dequant_function: { // equivalent ops: [UNPACK, CAST(f16), MULTIPLY(sub.shared_exp)] }
 ```
 
 ### Example 5: MXFP6 E3M2 (OCP Microscaling FP6)
@@ -414,7 +406,7 @@ encoding: {
     sub_fields: [ {name:"shared_exp", data_type:UINT8, bits:8} ]
   }
 }
-dequant_formula: { steps: [UNPACK, FP_DECODE(e3m2), CAST(f16), MULTIPLY(sub.shared_exp)] }
+dequant_function: { // equivalent ops: [UNPACK, FP_DECODE(e3m2), CAST(f16), MULTIPLY(sub.shared_exp)] }
 ```
 
 ### Example 6: FP6 LLM (DeepSpeed TC-FPn split storage)
@@ -450,7 +442,7 @@ encoding: {
 }
 group_size: 64
 scale_data_type: FLOAT16
-dequant_formula: { steps: [UNPACK, ADD(-1.0), CAST(f16), MULTIPLY(scale)] }
+dequant_function: { // equivalent ops: [UNPACK, ADD(-1.0), CAST(f16), MULTIPLY(scale)] }
 test_vector_packed: <0xA4>   // byte 164 = 2*81+0*27+1*9+2*3+2 → [2,2,1,0,2]
 test_vector_float32: <...>   // [1,-1,0,-1,1] * 0.5
 test_vector_scale: 0.5
@@ -470,7 +462,7 @@ encoding: {
 }
 group_size: 32
 scale_data_type: FLOAT16
-dequant_formula: { steps: [UNPACK, LOOKUP(codebook), CAST(f16), MULTIPLY(scale)] }
+dequant_function: { // equivalent ops: [UNPACK, LOOKUP(codebook), CAST(f16), MULTIPLY(scale)] }
 ```
 
 ### Example 9: IQ1_S (ENCODING_CUSTOM — requires plugin)
@@ -489,7 +481,7 @@ test_vector_float32: <256 × f32>
 
 ### Format Coverage Summary
 
-| Format | bpw | Family | Nested | Auto-Codec | QDQ-Expressible |
+| Format | bpw | Family | Nested | Native Fast-Path | QDQ-Expressible |
 |--------|-----|--------|--------|------------|------------------|
 | INT4 Symmetric | 4.5 | SYMMETRIC | No | ✅ | ✅ |
 | NF4 (QLoRA) | 4.5 | LOOKUP_TABLE | No | ✅ | ❌ |
@@ -520,8 +512,8 @@ test_vector_float32: <256 × f32>
 - Backward compatibility with all existing models
 
 ### Runtime implementer burden
-- **Minimum:** parse new fields + reject with clear error if no codec available
-- **Recommended:** auto-codec from formula for non-CUSTOM families; fall back to model-embedded dequant function when present
+- **Minimum:** parse new fields + execute inline `dequant_function` for any unrecognized type
+- **Recommended:** pattern-match `encoding.family` to dispatch native kernels for common families (AFFINE, SYMMETRIC, LOOKUP_TABLE)
 - **Advanced:** EP negotiation, native kernels, plugin registry
 
 ## Alternatives Considered
@@ -540,23 +532,27 @@ test_vector_float32: <256 × f32>
 - **Pro:** Works today
 - **Con:** Zero portability; fragments ecosystem; models locked to one runtime
 
-### 4. This proposal (declarative + fallback)
-- **Pro:** Portable, extensible, secure (no executable in model), backward compatible
-- **Con:** New proto fields; auto-codec may be slow; CUSTOM family not portable
+### 4. This proposal (declarative + inline dequant function)
+- **Pro:** Portable, extensible, secure, self-contained, backward compatible.
+  Models carry their own dequant logic as standard ONNX ops — no external
+  plugins or new ABIs needed. Runtimes optimize via `encoding.family` hints.
+- **Con:** New proto fields; function execution slower than native kernels
+  (but serves as correctness reference, not hot path)
 
 ## Open Questions
 
 1. Should `test_vector_*` fields be mandatory or recommended?
 2. ~~Should we define a standard WASM ABI for portable codec plugins?~~
-   **Resolved:** Model-embedded ONNX functions serve as the portable fallback
-   mechanism. WASM adds complexity without clear benefit over existing ONNX
-   function infrastructure.
-3. Should `ActivationQuantPolicy` live on edges (GraphProto level) or as node
+   **Resolved:** The inline `dequant_function` (standard `FunctionProto`) provides
+   portability without external plugins or new ABIs.
+3. Should `ActivationQuantPolicyProto` live on edges (GraphProto level) or as node
    attributes?
 4. Is there value in a "type alias" mechanism (e.g., `onnx:int8-symmetric/v1`
    desugars to a built-in type for migration)?
-5. Should the model-embedded dequant function signature be standardized?
-   (Proposed: input `raw_block: uint8[bytes_per_block]` → output `values: float32[block_size]`)
+5. ~~Should the model-embedded dequant function signature be standardized?~~
+   **Resolved:** Fixed signature defined in `QuantTypeDeclProto.dequant_function`:
+   inputs `packed` (uint8[bytes_per_block]) + `scale` (scale_data_type scalar) →
+   output `values` (float32[block_size]).
 
 ## References
 
