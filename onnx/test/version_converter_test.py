@@ -2967,7 +2967,7 @@ class TestVersionConverter:
 
     def test_scan_8_9_preserves_unshaped_input(self) -> None:
         """Scan 8 -> 9 removes the batch axis from each input.
-        
+
         An input whose shape is unknown must still be kept, and will be
         unedited (the shape is unknown with or without batch axis). Only the
         sequence_lens input should be removed.
