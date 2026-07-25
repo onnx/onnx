@@ -208,14 +208,34 @@ enum DequantOp {
 #### TensorProto Extension
 
 ```protobuf
+enum DataType {
+  // ... existing values ...
+  CUSTOM_QUANT = 32;  // Opaque quantized storage; see quant_type_uri for semantics
+}
+
 message TensorProto {
   // ... existing fields ...
 
   // When set, raw_data contains opaque packed bytes for this quantized type.
-  // data_type SHOULD be set to UNDEFINED. Shape represents logical element counts.
+  // data_type MUST be set to CUSTOM_QUANT (32).
+  // Shape represents logical element counts (not storage bytes).
+  // Storage size is determined by: ceil(product(shape) / block_size) × bytes_per_block
+  // where block_size and bytes_per_block come from the corresponding QuantTypeDecl.
   optional string quant_type_uri = 20;
 }
 ```
+
+**Storage size computation:** For a tensor with logical shape `[M, N]` and a
+`QuantTypeDecl` with `block_size=B` and `bytes_per_block=P`, the expected
+`raw_data` size is `ceil(M × N / B) × P` bytes. Runtimes MUST validate this
+before processing.
+
+**Dequant function fallback:** A model MAY include an ONNX function in its
+`functions` list whose name matches the `type_uri`. When a runtime encounters
+a `type_uri` for which it has no native codec or plugin, it SHOULD look for a
+matching function in the model and use it as a reference dequantization
+implementation. When a native codec IS available, it takes precedence over the
+model-embedded function (the function serves only as a portable fallback).
 
 ### Activation Quantization
 
@@ -487,6 +507,7 @@ test_vector_float32: <256 × f32>
 ## Impact Assessment
 
 ### What changes in the ONNX spec
+- New `CUSTOM_QUANT` data type enum value (additive)
 - New proto messages (additive)
 - New optional field on TensorProto (additive)
 - New optional field on GraphProto (additive)
@@ -500,7 +521,7 @@ test_vector_float32: <256 × f32>
 
 ### Runtime implementer burden
 - **Minimum:** parse new fields + reject with clear error if no codec available
-- **Recommended:** auto-codec from formula for non-CUSTOM families
+- **Recommended:** auto-codec from formula for non-CUSTOM families; fall back to model-embedded dequant function when present
 - **Advanced:** EP negotiation, native kernels, plugin registry
 
 ## Alternatives Considered
@@ -512,6 +533,8 @@ test_vector_float32: <256 × f32>
 ### 2. Embed codec logic (WASM/bytecode) in model
 - **Pro:** Fully self-contained models
 - **Con:** Security nightmare; model files become executable; massive complexity
+- **Resolution:** Model-embedded ONNX *functions* achieve self-containment without
+  executable bytecode. The function is a standard ONNX graph — no new security surface.
 
 ### 3. Opaque vendor ops (status quo workaround)
 - **Pro:** Works today
@@ -524,11 +547,16 @@ test_vector_float32: <256 × f32>
 ## Open Questions
 
 1. Should `test_vector_*` fields be mandatory or recommended?
-2. Should we define a standard WASM ABI for portable codec plugins?
+2. ~~Should we define a standard WASM ABI for portable codec plugins?~~
+   **Resolved:** Model-embedded ONNX functions serve as the portable fallback
+   mechanism. WASM adds complexity without clear benefit over existing ONNX
+   function infrastructure.
 3. Should `ActivationQuantPolicy` live on edges (GraphProto level) or as node
    attributes?
 4. Is there value in a "type alias" mechanism (e.g., `onnx:int8-symmetric/v1`
    desugars to a built-in type for migration)?
+5. Should the model-embedded dequant function signature be standardized?
+   (Proposed: input `raw_block: uint8[bytes_per_block]` → output `values: float32[block_size]`)
 
 ## References
 
