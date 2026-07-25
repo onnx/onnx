@@ -26,8 +26,18 @@ def generate_data(args: argparse.Namespace) -> None:
     # Clean the output directory before generating data for node testcases
     # It is used to check new generated data is correct in CIs
     node_root = os.path.join(args.output, "node")
-    original_dir_number = len(
-        [name for name in os.listdir(node_root) if os.path.isfile(name)]
+    # Every entry under node_root is a directory holding one test case, so count
+    # directories and resolve each name against node_root rather than the cwd.
+    original_dir_number = (
+        len(
+            [
+                name
+                for name in os.listdir(node_root)
+                if os.path.isdir(os.path.join(node_root, name))
+            ]
+        )
+        if os.path.exists(node_root)
+        else 0
     )
     if args.clean and os.path.exists(node_root):
         for sub_dir in os.listdir(node_root):
