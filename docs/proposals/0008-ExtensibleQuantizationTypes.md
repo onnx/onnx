@@ -326,6 +326,50 @@ DequantizeExtensible(W) → MatMul(X, W_dequant)
 
 This preserves compatibility with existing ops while enabling quantized fast paths.
 
+### CUSTOM_QUANT and Gather (MoE Support)
+
+Mixture-of-Experts models store all expert weights in a single tensor
+(`[num_experts, hidden, intermediate]`) and dynamically select a subset via
+routing. This requires `Gather` on quantized tensors.
+
+**Rule:** `Gather` on a `CUSTOM_QUANT` tensor is valid when the gather axis is
+**block-boundary aligned** — i.e., slicing along that axis produces complete
+blocks with no partial-block splits. The expert dimension (axis=0) is always
+aligned because each expert is an independent weight matrix.
+
+```
+# MoE forward pass with quantized experts
+expert_weights: CUSTOM_QUANT [num_experts, hidden, intermediate]
+routing_indices: int64 [top_k]              # from gating network
+scales: float16 [num_experts, hidden, intermediate / group_size]
+
+# Step 1: Gather selected experts (still CUSTOM_QUANT)
+selected_weights = Gather(expert_weights, routing_indices, axis=0)
+    # → CUSTOM_QUANT [top_k, hidden, intermediate]
+
+# Step 2: Gather corresponding scales
+selected_scales = Gather(scales, routing_indices, axis=0)
+    # → float16 [top_k, hidden, intermediate / group_size]
+
+# Step 3: Dequantize + compute
+for k in top_k:
+    dequant_w = DequantizeExtensible(selected_weights[k], selected_scales[k])
+    output += gate_score[k] * MatMul(token, dequant_w)
+```
+
+**Fusion:** EPs SHOULD recognize the pattern:
+```
+Gather(CUSTOM_QUANT, indices) → DequantizeExtensible → MatMul
+→ fused: QuantizedMoEMatMul(packed_experts, indices, tokens, gate_scores)
+```
+
+This avoids materializing the intermediate CUSTOM_QUANT gather result;
+the fused kernel reads only the selected experts' packed bytes directly.
+
+**Constraint:** Gather on non-block-aligned axes (e.g., slicing individual
+weights within a block) is undefined behavior for CUSTOM_QUANT tensors.
+Runtimes MUST reject such operations with a clear error.
+
 ### Backward Compatibility
 
 - Models without `quant_type_uri` are unaffected
