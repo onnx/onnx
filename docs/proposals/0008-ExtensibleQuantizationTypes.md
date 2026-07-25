@@ -269,11 +269,62 @@ follow these guidelines:
 1. **Load model** → parse `QuantTypeDeclProto` list
 2. **For each tensor with `quant_type_uri`:**
    - Look up declaration by URI
-   - Resolve codec (registered plugin, EP-provided, or auto-generated from formula)
-   - If `encoding.family == ENCODING_CUSTOM` and no codec registered → error with
-     actionable message
-3. **Execution:** EP claims tensors it can handle natively; remainder gets
-   dequantized through the codec
+   - Validate `raw_data` size matches `ceil(elements / block_size) × bytes_per_block`
+3. **Execution resolution order:**
+   1. EP native kernel (recognizes `encoding.family` + parameters)
+   2. User-registered codec (runtime plugin API — see below)
+   3. Inline `dequant_function` execution (always available)
+4. **Op integration:** A new `DequantizeExtensible` op accepts `CUSTOM_QUANT`
+   tensors and outputs float. EPs MAY fuse `DequantizeExtensible → MatMul`
+   patterns into quantized compute kernels.
+
+#### User-Registered Codecs (Runtime Extension Point)
+
+Runtimes SHOULD expose an API for users to register high-performance codec
+implementations for specific `type_uri` values:
+
+```cpp
+// Example C++ API (runtime-specific, not part of ONNX spec)
+runtime.RegisterQuantCodec(
+    "onnx-community:fp6-llm-e3m2/v1",
+    [](const uint8_t* packed, size_t block_size, float scale, float* output) {
+        // Custom high-performance dequant kernel
+    }
+);
+```
+
+This allows hardware vendors and researchers to ship optimized kernels without
+modifying the model or the runtime source. The inline `dequant_function` in the
+model serves as the correctness reference; registered codecs MUST produce
+bit-identical results (validated against `test_vector_*` fields).
+
+### DequantizeExtensible Op
+
+A new ONNX operator that bridges `CUSTOM_QUANT` tensors to standard float ops:
+
+```
+DequantizeExtensible(input: T1, scale: T2, zero_point?: T2) → output: T3
+
+Type constraints:
+  T1: CUSTOM_QUANT
+  T2: float16, bfloat16, float32
+  T3: float16, bfloat16, float32
+
+Attributes:
+  block_size: int (from QuantTypeDeclProto)
+```
+
+Semantics: Reads `quant_type_uri` from the input tensor, looks up the
+`QuantTypeDeclProto`, and applies dequantization (via native kernel, registered
+codec, or inline function).
+
+**Fusion pattern:** EPs SHOULD recognize and fuse:
+```
+DequantizeExtensible(W) → MatMul(X, W_dequant)
+→ fused: QuantizedMatMul(X, W_packed)
+```
+
+This preserves compatibility with existing ops while enabling quantized fast paths.
 
 ### Backward Compatibility
 
@@ -500,6 +551,7 @@ test_vector_float32: <256 × f32>
 
 ### What changes in the ONNX spec
 - New `CUSTOM_QUANT` data type enum value (additive)
+- New `DequantizeExtensible` operator (additive)
 - New proto messages (additive)
 - New optional field on TensorProto (additive)
 - New optional field on GraphProto (additive)
