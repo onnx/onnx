@@ -1585,6 +1585,8 @@ class TestVersionConverter:
         checker.check_model(model)
 
         converted = onnx.version_converter.convert_version(model, 9)
+        checker.check_model(converted, full_check=True)
+
         scan_node = next(n for n in converted.graph.node if n.op_type == "Scan")
         # The empty sequence_lens is removed, but the unshaped scan input is kept.
         assert list(scan_node.input) == ["initial", "x"]
