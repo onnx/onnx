@@ -92,7 +92,7 @@ The community roles described above map directly to permissions in the ONNX GitH
 | **SIG Chair** | Appointed by Steering Committee from Approvers | Organization Member | Maintain on SIG-owned repos | Yes — same rule as Contributors |
 | **Steering Committee** | Self-nominated; elected by Contributors via Condorcet/Schulze ranked vote | Organization Owner | Admin (shared with SC) | N/A |
 
-> **Note on SC voting:** To be eligible to vote in a Steering Committee election, a Contributor must register their GitHub handle, email address, and affiliated company before the April deadline each year. Votes are tallied per-individual first, then rolled up to one vote per Member Company. See [sc-election-guidelines.md](sc-election-guidelines.md) for the full process.
+> **Note on SC voting:** To be eligible to vote in a Steering Committee election, a Contributor must register their GitHub handle, email address, and affiliated company before the April deadline each year. Votes are tallied per individual first, then rolled up to one vote per Member Company. See [sc-election-guidelines.md](sc-election-guidelines.md) for the full process.
 
 ### Becoming an Organization Member (Contributor step)
 
