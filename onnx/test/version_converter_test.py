@@ -1536,6 +1536,59 @@ class TestVersionConverter:
         assert converted_model.graph.node[0].op_type == "Scan"
         assert converted_model.opset_import[0].version == to_opset
 
+    def test_scan_8_9_preserves_unshaped_input(self) -> None:
+        """Scan 8 -> 9 removes the batch axis from each input. An input whose shape
+        is unknown must still be kept (only the shape strip is skipped), not dropped
+        together with the removed optional sequence_lens.
+        """
+        data_type = TensorProto.FLOAT
+        body = helper.make_graph(
+            [
+                helper.make_node("Add", ["sum_in", "next_in"], ["sum_out"]),
+                helper.make_node("Identity", ["sum_out"], ["scan_out"]),
+            ],
+            "scan_body",
+            [
+                helper.make_tensor_value_info("sum_in", data_type, [2]),
+                helper.make_tensor_value_info("next_in", data_type, [2]),
+            ],
+            [
+                helper.make_tensor_value_info("sum_out", data_type, [2]),
+                helper.make_tensor_value_info("scan_out", data_type, [2]),
+            ],
+        )
+        # A custom op produces `x` with no inferable shape, so it reaches the
+        # Scan 8 -> 9 adapter unshaped.
+        my_op = helper.make_node("MyOp", ["raw"], ["x"], domain="my.domain")
+        scan = helper.make_node(
+            "Scan", ["", "initial", "x"], ["y", "z"], body=body, num_scan_inputs=1
+        )
+        graph = helper.make_graph(
+            [my_op, scan],
+            "test_scan_8_9_unshaped_input",
+            [
+                helper.make_tensor_value_info("initial", data_type, [1, 2]),
+                helper.make_tensor_value_info("raw", data_type, [1, 3, 2]),
+            ],
+            [
+                helper.make_tensor_value_info("y", data_type, [1, 2]),
+                helper.make_tensor_value_info("z", data_type, [1, 3, 2]),
+            ],
+        )
+        model = helper.make_model(
+            graph,
+            opset_imports=[
+                helper.make_operatorsetid("", 8),
+                helper.make_operatorsetid("my.domain", 1),
+            ],
+        )
+        checker.check_model(model)
+
+        converted = onnx.version_converter.convert_version(model, 9)
+        scan_node = next(n for n in converted.graph.node if n.op_type == "Scan")
+        # The empty sequence_lens is removed, but the unshaped scan input is kept.
+        assert list(scan_node.input) == ["initial", "x"]
+
     # Test Cast Adapter: 8 -> 9
     def test_cast_8_9(self) -> None:
         from_opset = 8
