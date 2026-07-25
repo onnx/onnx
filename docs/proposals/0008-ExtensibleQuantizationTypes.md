@@ -374,7 +374,47 @@ encoding: {
 dequant_formula: { steps: [UNPACK, CAST(f16), MULTIPLY(sub.shared_exp)] }
 ```
 
-### Example 5: 1.58-bit Ternary (BitNet b1.58)
+### Example 5: MXFP6 E3M2 (OCP Microscaling FP6)
+
+6-bit floating point with shared E8M0 block exponent (MX format family).
+Same structure as MXFP4, wider elements for better accuracy. **Not expressible in QDQ.**
+
+```
+type_uri: "onnx:mxfp6-e3m2-block32/v1"
+block_size: 32
+bytes_per_block: 25          // 32 × 6 bits = 24 bytes data + 1 byte shared_exp
+encoding: {
+  family: ENCODING_AFFINE
+  bits: 6
+  bit_interpretation: FP_E3M2  // 1 sign + 3 exp + 2 mantissa
+  nested: {
+    super_block_size: 32
+    sub_block_size: 32
+    sub_blocks_per_super: 1
+    sub_fields: [ {name:"shared_exp", data_type:UINT8, bits:8} ]
+  }
+}
+dequant_formula: { steps: [UNPACK, FP_DECODE(e3m2), CAST(f16), MULTIPLY(sub.shared_exp)] }
+```
+
+### Example 6: FP6 LLM (DeepSpeed TC-FPn split storage)
+
+6-bit floating point with split-byte packing for Tensor Core alignment.
+Requires custom dequant kernel due to non-standard memory layout. **Requires plugin.**
+
+```
+type_uri: "onnx-community:fp6-llm-e3m2/v1"
+block_size: 128
+bytes_per_block: 112
+encoding: {
+  family: ENCODING_CUSTOM
+  // 6-bit values split into 2-bit + 4-bit segments for TC tile alignment
+}
+group_size: 128
+scale_data_type: FLOAT16
+```
+
+### Example 7: 1.58-bit Ternary (BitNet b1.58)
 
 Base-3 packed. 5 values per byte. **Not expressible in QDQ.**
 
@@ -396,7 +436,7 @@ test_vector_float32: <...>   // [1,-1,0,-1,1] * 0.5
 test_vector_scale: 0.5
 ```
 
-### Example 6: IQ4_NL (Non-Linear 4-bit, fixed codebook)
+### Example 8: IQ4_NL (Non-Linear 4-bit, fixed codebook)
 
 ```
 type_uri: "ggml:iq4_nl/v1"
@@ -413,7 +453,7 @@ scale_data_type: FLOAT16
 dequant_formula: { steps: [UNPACK, LOOKUP(codebook), CAST(f16), MULTIPLY(scale)] }
 ```
 
-### Example 7: IQ1_S (ENCODING_CUSTOM — requires plugin)
+### Example 9: IQ1_S (ENCODING_CUSTOM — requires plugin)
 
 ```
 type_uri: "ggml:iq1_s/v1"
@@ -441,6 +481,8 @@ test_vector_float32: <256 × f32>
 | Ternary 1.58 | 1.63 | PACKED_INTEGER | No | ✅ | ❌ |
 | FP8 E4M3 | 8.0 | SYMMETRIC | No | ✅ | ✅ |
 | AQLM 2×8 | 3.0 | CUSTOM | N/A | ❌ | ❌ |
+| MXFP6 E3M2 | 6.125 | AFFINE | Yes | ✅ | ❌ |
+| FP6 LLM (TC-FPn) | 6.125 | CUSTOM | No | ❌ | ❌ |
 
 ## Impact Assessment
 
