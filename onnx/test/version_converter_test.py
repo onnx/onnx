@@ -2966,9 +2966,11 @@ class TestVersionConverter:
         assert converted_model.opset_import[0].version == 8
 
     def test_scan_8_9_preserves_unshaped_input(self) -> None:
-        """Scan 8 -> 9 removes the batch axis from each input. An input whose shape
-        is unknown must still be kept (only the shape strip is skipped), not dropped
-        together with the removed optional sequence_lens.
+        """Scan 8 -> 9 removes the batch axis from each input.
+        
+        An input whose shape is unknown must still be kept, and will be
+        unedited (the shape is unknown with or without batch axis). Only the
+        sequence_lens input should be removed.
         """
         data_type = TensorProto.FLOAT
         body = helper.make_graph(
@@ -2987,7 +2989,7 @@ class TestVersionConverter:
             ],
         )
         # A custom op produces `x` with no inferable shape, so it reaches the
-        # Scan 8 -> 9 adapter unshaped.
+        # Scan 8 -> 9 with no shape.
         my_op = helper.make_node("MyOp", ["raw"], ["x"], domain="my.domain")
         scan = helper.make_node(
             "Scan", ["", "initial", "x"], ["y", "z"], body=body, num_scan_inputs=1
