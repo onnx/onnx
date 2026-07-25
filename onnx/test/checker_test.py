@@ -1495,6 +1495,46 @@ class TestChecker:
             tensor2.int32_data.extend([0, 0])  # ceil(20/16) = 2
             checker.check_tensor(tensor2)
 
+    def test_check_tensor_unpacked_int32_data(self) -> None:
+        """Reject non-packed int32_data-stored tensors whose payload is too small.
+
+        BOOL, INT8, UINT8, INT16, UINT16, FLOAT16, BFLOAT16, and FLOAT8* types are
+        stored one element per int32_data entry (they are not bit-packed), unlike
+        INT4/UINT4/FLOAT4E2M1. Regression test for a checker/runtime discrepancy
+        where check_model() incorrectly accepted these types using the packed
+        ceil(nelem/8) formula instead of requiring nelem entries.
+        """
+        for dtype in (
+            TensorProto.BOOL,
+            TensorProto.INT8,
+            TensorProto.UINT8,
+            TensorProto.INT16,
+            TensorProto.UINT16,
+            TensorProto.FLOAT16,
+            TensorProto.BFLOAT16,
+            TensorProto.FLOAT8E4M3FN,
+            TensorProto.FLOAT8E4M3FNUZ,
+            TensorProto.FLOAT8E5M2,
+            TensorProto.FLOAT8E5M2FNUZ,
+            TensorProto.FLOAT8E8M0,
+        ):
+            tensor = TensorProto()
+            tensor.data_type = dtype
+            tensor.dims.extend([32])
+            tensor.name = "t"
+            # Only 4 int32_data entries; the packed formula ceil(32/8) = 4 would
+            # incorrectly accept this, but 32 entries (one per element) are needed.
+            tensor.int32_data.extend([0] * 4)
+            with pytest.raises(checker.ValidationError):
+                checker.check_tensor(tensor)
+            # Exactly enough (unpacked) int32 values must pass.
+            tensor2 = TensorProto()
+            tensor2.data_type = dtype
+            tensor2.dims.extend([32])
+            tensor2.name = "t"
+            tensor2.int32_data.extend([0] * 32)
+            checker.check_tensor(tensor2)
+
     def test_check_tensor_packed_subbyte_zero_elems(self) -> None:
         """Zero-element packed tensors with empty payload must be valid."""
         for dtype in (
