@@ -56,7 +56,7 @@ A Release Manager takes responsibility for driving a single release cycle from b
 
 * Announce the release timeline and branch-cut date on community channels (Slack, mailing list, GitHub discussion)
 * Create the release branch (`rel-X.Y.Z`) and update all version references in build scripts and metadata
-* Coordinate the RC1 build: trigger CI, publish the `-rc1` wheel to the test index, and announce the start of the two-week testing period
+* Coordinate the RC1 build: trigger CI, publish the `X.Y.Zrc1` wheel per the process in [docs/OnnxReleases.md](../docs/OnnxReleases.md), and announce the start of the two-week testing period
 * Communicate with each SIG during the RC period: share the RC build, solicit testing feedback, track open issues by SIG ownership, and report status back to the community in weekly updates
 * Triage incoming bug reports during RC testing; decide with SIG chairs which fixes are release-critical
 * Cut additional RC builds as needed (RC2, RC3) until no critical regressions remain
@@ -109,12 +109,12 @@ The ONNX GitHub organization has a **limited number of member seats**. Seats are
 
 **Removal triggers** — a member is removed from the organization when any of the following apply:
 
-* No contribution activity (commits, PR reviews, issue comments, SIG meeting participation) for **12 consecutive months**, assessed at the annual review each January
-* The member explicitly resigns or notifies the SIG Architecture & Infra chairs that they are no longer active
-* The organization is approaching its seat limit: if fewer than 5 seats remain, the SIG Architecture & Infra chairs will audit activity and remove the least-recently-active members first to free capacity, notifying affected members at least 2 weeks in advance
-* A Code of Conduct violation results in a ruling by the Steering Committee
+* No contribution activity (commits, PR reviews, issue comments, SIG meeting participation) for **12 consecutive months**, assessed at the annual review each January. This ends the member's Contributor/Approver governance status and SC election voting eligibility, consistent with the Contributors section above.
+* The member explicitly resigns or notifies the SIG Architecture & Infra chairs that they are no longer active. This also ends their governance status and voting eligibility.
+* A Code of Conduct violation results in a ruling by the Steering Committee. This also ends their governance status and voting eligibility.
+* The organization is approaching its seat limit: if fewer than 5 seats remain, the SIG Architecture & Infra chairs will audit activity and remove the least-recently-active members' GitHub org membership first to free capacity, notifying affected members at least 2 weeks in advance. **This trigger is a seat-capacity action only** — it does not end the member's Contributor/Approver governance status or SC election voting eligibility.
 
-**Process:** The SIG Architecture & Infra chairs are responsible for conducting the annual review and for acting on seat-pressure removals. Removed members retain their Contributor or Approver role in the governance sense and may be re-added to the GitHub organization when they become active again, subject to seat availability.
+**Process:** The SIG Architecture & Infra chairs are responsible for conducting the annual review and for acting on seat-pressure removals. Members removed solely for seat capacity keep their Contributor/Approver governance status and voting eligibility, and may be re-added to the GitHub organization when a seat becomes available. Members removed for inactivity, resignation, or a Code of Conduct ruling must requalify through the normal sponsorship process described under "Becoming an Organization Member" to regain governance status.
 
 ## Organizational Structure
 
