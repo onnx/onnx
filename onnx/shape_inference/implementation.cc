@@ -147,72 +147,93 @@ void checkShapesAndTypes(const TypeProto& inferred_type, const TypeProto& existi
   }
 }
 
-void mergeShapesAndTypes(const TypeProto_Tensor& inferred_type, TypeProto_Tensor* existing_type) {
+// Merges the dimensions of an inferred tensor/sparse-tensor shape into an existing
+// shape (both are known to have a shape). Returns true if any dimension was changed.
+template <typename TensorShapeProtoType>
+static bool MergeShapeDims(const TensorShapeProtoType& inferred_shape, TensorShapeProtoType* existing_shape) {
+  bool modified = false;
+  for (int i = 0; i < inferred_shape.dim_size(); ++i) {
+    const auto& inferred_dim = inferred_shape.dim(i);
+    auto* existing_dim = existing_shape->mutable_dim(i);
+    const bool existing_unknown = !existing_dim->has_dim_value() && !existing_dim->has_dim_param();
+    if (existing_unknown || inferred_dim.has_dim_value()) {
+      // A dimension is considered changed when previously-unknown dimension info
+      // becomes known, or an existing symbolic/value dimension is replaced by a
+      // different concrete value.
+      if ((existing_unknown && (inferred_dim.has_dim_value() || inferred_dim.has_dim_param())) ||
+          (!existing_unknown && inferred_dim.has_dim_value() &&
+           (!existing_dim->has_dim_value() || existing_dim->dim_value() != inferred_dim.dim_value()))) {
+        modified = true;
+      }
+      *existing_dim = inferred_dim;
+    }
+  }
+  return modified;
+}
+
+bool mergeShapesAndTypes(const TypeProto_Tensor& inferred_type, TypeProto_Tensor* existing_type) {
+  bool modified = false;
   if (existing_type->elem_type() == TensorProto::UNDEFINED) {
+    modified = inferred_type.elem_type() != TensorProto::UNDEFINED;
     existing_type->set_elem_type(inferred_type.elem_type());
   }
 
   if (!inferred_type.has_shape()) {
-    return;
+    return modified;
   }
 
   if (!existing_type->has_shape()) {
     *existing_type->mutable_shape() = inferred_type.shape();
-    return;
+    return true;
   }
 
-  for (int i = 0; i < inferred_type.shape().dim_size(); ++i) {
-    const auto& inferred_dim = inferred_type.shape().dim(i);
-    auto* existing_dim = existing_type->mutable_shape()->mutable_dim(i);
-    if ((!existing_dim->has_dim_value() && !existing_dim->has_dim_param()) || inferred_dim.has_dim_value()) {
-      *existing_dim = inferred_dim;
-    }
-  }
+  return MergeShapeDims(inferred_type.shape(), existing_type->mutable_shape()) || modified;
 }
 
-void mergeShapesAndTypes(const TypeProto_SparseTensor& inferred_type, TypeProto_SparseTensor* existing_type) {
+bool mergeShapesAndTypes(const TypeProto_SparseTensor& inferred_type, TypeProto_SparseTensor* existing_type) {
+  bool modified = false;
   if (existing_type->elem_type() == TensorProto::UNDEFINED) {
+    modified = inferred_type.elem_type() != TensorProto::UNDEFINED;
     existing_type->set_elem_type(inferred_type.elem_type());
   }
 
   if (!inferred_type.has_shape()) {
-    return;
+    return modified;
   }
 
   if (!existing_type->has_shape()) {
     *existing_type->mutable_shape() = inferred_type.shape();
-    return;
+    return true;
   }
 
-  for (int i = 0; i < inferred_type.shape().dim_size(); ++i) {
-    const auto& inferred_dim = inferred_type.shape().dim(i);
-    auto* existing_dim = existing_type->mutable_shape()->mutable_dim(i);
-    if ((!existing_dim->has_dim_value() && !existing_dim->has_dim_param()) || inferred_dim.has_dim_value()) {
-      *existing_dim = inferred_dim;
-    }
-  }
+  return MergeShapeDims(inferred_type.shape(), existing_type->mutable_shape()) || modified;
 }
 
-void mergeShapesAndTypes(const TypeProto& inferred_type, TypeProto* existing_type) {
+bool mergeShapesAndTypes(const TypeProto& inferred_type, TypeProto* existing_type) {
   // Check before merge
   checkShapesAndTypes(inferred_type, *existing_type);
   const auto inferred_val_case = inferred_type.value_case();
   if (inferred_val_case == TypeProto::kTensorType) {
-    mergeShapesAndTypes(inferred_type.tensor_type(), existing_type->mutable_tensor_type());
+    return mergeShapesAndTypes(inferred_type.tensor_type(), existing_type->mutable_tensor_type());
   } else if (inferred_val_case == TypeProto::kSparseTensorType) {
-    mergeShapesAndTypes(inferred_type.sparse_tensor_type(), existing_type->mutable_sparse_tensor_type());
+    return mergeShapesAndTypes(inferred_type.sparse_tensor_type(), existing_type->mutable_sparse_tensor_type());
   } else if (inferred_val_case == TypeProto::kSequenceType) {
-    mergeShapesAndTypes(
+    return mergeShapesAndTypes(
         inferred_type.sequence_type().elem_type(), existing_type->mutable_sequence_type()->mutable_elem_type());
   } else if (inferred_val_case == TypeProto::kOptionalType) {
-    mergeShapesAndTypes(
+    return mergeShapesAndTypes(
         inferred_type.optional_type().elem_type(), existing_type->mutable_optional_type()->mutable_elem_type());
   } else if (inferred_val_case == TypeProto::kMapType) {
+    bool modified = false;
     if (existing_type->map_type().key_type() == TensorProto::UNDEFINED) {
+      modified = inferred_type.map_type().key_type() != TensorProto::UNDEFINED;
       existing_type->mutable_map_type()->set_key_type(inferred_type.map_type().key_type());
     }
-    mergeShapesAndTypes(inferred_type.map_type().value_type(), existing_type->mutable_map_type()->mutable_value_type());
+    return mergeShapesAndTypes(
+               inferred_type.map_type().value_type(), existing_type->mutable_map_type()->mutable_value_type()) ||
+        modified;
   }
+  return false;
 }
 
 // TypeProto_Tensor or TypeProto_SparseTensor
@@ -364,9 +385,12 @@ class ShapeInferenceImplBase {
     // information. Otherwise, initialize it in an empty state.
     auto iter = value_types_by_name.find(name);
     if (iter != value_types_by_name.end()) {
-      mergeShapesAndTypes(*inferred_type, iter->second);
+      if (mergeShapesAndTypes(*inferred_type, iter->second)) {
+        ++num_inferred_values;
+      }
     } else {
       value_types_by_name[name] = inferred_types.Add(name, *inferred_type);
+      ++num_inferred_values;
       // For undefined output type, update both value_info and output for now
       // Update existing output with undefined type: assign inferred type to it
       iter = undefined_value_types_by_name.find(name);
@@ -730,6 +754,12 @@ class ShapeInferenceImplBase {
     return inference_errors;
   }
 
+  // Number of graph values (value_info entries) that were newly inferred or
+  // updated during this inference pass.
+  size_t getNumInferredValues() const {
+    return num_inferred_values;
+  }
+
  private:
   InferredTypes inferred_types;
   std::unordered_map<std::string, TypeProto*> value_types_by_name;
@@ -751,6 +781,8 @@ class ShapeInferenceImplBase {
 
   bool has_unsupported_op = false;
 
+  size_t num_inferred_values = 0;
+
   std::vector<std::string> inference_errors;
 
   std::list<TypeProto> initializer_type_list;
@@ -769,8 +801,8 @@ void InferShapesImpl(
     const ModelLocalFunctionsMap& model_local_functions_map,
     const ISchemaRegistry* schema_registry = OpSchemaRegistry::Instance(),
     DataValueMap* generated_shape_data_by_name = nullptr,
-    const int64_t ir_version = IR_VERSION // default the latest one
-) {
+    const int64_t ir_version = IR_VERSION, // default the latest one
+    size_t* num_inferred_values = nullptr) {
   DataValueMap empty;
   if (generated_shape_data_by_name == nullptr) {
     generated_shape_data_by_name = &empty;
@@ -787,6 +819,9 @@ void InferShapesImpl(
       ir_version);
   base.Process(*g);
   base.FinalizeShapeInference();
+  if (num_inferred_values != nullptr) {
+    *num_inferred_values = base.getNumInferredValues();
+  }
 }
 
 } // namespace
@@ -812,7 +847,8 @@ void InferShapes(
     ModelProto& m,
     const ISchemaRegistry* schema_registry,
     const ShapeInferenceOptions& options,
-    DataValueMap* generated_shape_data_by_name) {
+    DataValueMap* generated_shape_data_by_name,
+    size_t* num_inferred_values) {
   auto opset_imports = GetOpsetImportsFromProto(m);
   SymbolTableImpl symbol_table;
   ModelLocalFunctionsMap model_local_functions_by_id;
@@ -829,7 +865,8 @@ void InferShapes(
       model_local_functions_by_id,
       schema_registry,
       generated_shape_data_by_name,
-      m.ir_version());
+      m.ir_version(),
+      num_inferred_values);
 }
 
 void InferShapes(

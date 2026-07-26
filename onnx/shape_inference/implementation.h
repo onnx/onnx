@@ -460,11 +460,15 @@ void checkShapesAndTypes(const TypeProto& inferred_type, const TypeProto& existi
 
 void MaterializeSymbolicShape(TypeProto* inferred_type, SymbolTable& symbol_table);
 
-void mergeShapesAndTypes(const TypeProto_Tensor& inferred_type, TypeProto_Tensor* existing_type);
+// The mergeShapesAndTypes overloads merge inferred type/shape information into an
+// existing type. They return true if the existing type was actually modified (a
+// previously-unknown element type, rank, or dimension became known), and false if
+// the merge was a no-op. Callers may ignore the return value.
+bool mergeShapesAndTypes(const TypeProto_Tensor& inferred_type, TypeProto_Tensor* existing_type);
 
-void mergeShapesAndTypes(const TypeProto_SparseTensor& inferred_type, TypeProto_SparseTensor* existing_type);
+bool mergeShapesAndTypes(const TypeProto_SparseTensor& inferred_type, TypeProto_SparseTensor* existing_type);
 
-void mergeShapesAndTypes(const TypeProto& inferred_type, TypeProto* existing_type);
+bool mergeShapesAndTypes(const TypeProto& inferred_type, TypeProto* existing_type);
 
 ///
 /// ModelLocalFunctionsMap is a map of function id -> model local function proto
@@ -477,11 +481,14 @@ ONNX_API void InferShapes(
     const ShapeInferenceOptions& options = ShapeInferenceOptions(),
     const ModelLocalFunctionsMap& in_model_functions = {});
 
+/// If \p num_inferred_values is non-null, it is set to the number of graph values
+/// (value_info entries) that were newly inferred or updated during this pass.
 ONNX_API void InferShapes(
     ModelProto& m,
     const ISchemaRegistry* schema_registry = OpSchemaRegistry::Instance(),
     const ShapeInferenceOptions& options = ShapeInferenceOptions(),
-    DataValueMap* generated_shape_data_by_name = nullptr);
+    DataValueMap* generated_shape_data_by_name = nullptr,
+    size_t* num_inferred_values = nullptr);
 
 ONNX_API void InferShapes(
     const std::string& model_path,
