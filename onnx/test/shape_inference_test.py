@@ -682,7 +682,7 @@ class TestShapeInference(TestShapeInferenceHelper):
             opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
         )
 
-@pytest.mark.parametrize("version", all_versions_for("Concat"))
+    @pytest.mark.parametrize("version", all_versions_for("Concat"))
     def test_concat_axis_overflow(self, version) -> None:
         # Two inputs whose axis dimensions sum past INT64_MAX must raise InferenceError
         # rather than silently wrapping (fixed by checked_add_overflow in Concat inference).
