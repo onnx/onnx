@@ -56,6 +56,21 @@ Member Companies do not have any voting rights, except via their employees who a
 
 Member Companies can request their logo be displayed on the website and other materials by following these [instructions](logo_request.md).
 
+## GitHub Organization Seat Policy
+
+> **Work in Progress:** This policy is under active discussion and is not yet ratified by the Steering Committee.
+
+The ONNX GitHub organization has a **limited number of member seats**. Seats are a shared resource and must be actively managed.
+
+**Removal triggers** — a member is removed from the organization when any of the following apply:
+
+* No contribution activity (commits, PR reviews, issue comments, SIG meeting participation) for **12 consecutive months**, assessed at the annual review each January. This ends the member's Contributor/Approver governance status and SC election voting eligibility, consistent with the Contributors section above.
+* The member explicitly resigns or notifies the SIG Architecture & Infra chairs that they are no longer active. This also ends their governance status and voting eligibility.
+* A Code of Conduct violation results in a ruling by the Steering Committee. This also ends their governance status and voting eligibility.
+* The organization is approaching its seat limit: if fewer than 5 seats remain, the SIG Architecture & Infra chairs will audit activity and remove the least-recently-active members' GitHub org membership first to free capacity, notifying affected members at least 2 weeks in advance. **This trigger is a seat-capacity action only** — it does not end the member's Contributor/Approver governance status or SC election voting eligibility.
+
+**Process:** The SIG Architecture & Infra chairs are responsible for conducting the annual review and for acting on seat-pressure removals. Members removed solely for seat capacity keep their Contributor/Approver governance status and voting eligibility, and may be re-added to the GitHub organization when a seat becomes available. Members removed for inactivity, resignation, or a Code of Conduct ruling must requalify through the normal sponsorship process to regain governance status.
+
 ## Organizational Structure
 
 The ONNX community is organized in the following manner, with all governance and execution being planned and coordinated as follows:
