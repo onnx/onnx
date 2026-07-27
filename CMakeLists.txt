@@ -526,10 +526,14 @@ add_onnx_global_defines(onnx_proto)
 add_dependencies(onnx_proto onnx_proto_gen)
 
 # Core library. Hand-written sources come from target_sources(onnx ...) in the
-# subdirectories; the protobuf objects are pulled in from onnx_proto.
-add_library(onnx $<TARGET_OBJECTS:onnx_proto>)
+# subdirectories. onnx links onnx_proto rather than embedding its objects:
+# both targets are installed and exported, so embedding puts a second copy of
+# the generated descriptors into any process that ends up with both libraries.
+# Protobuf aborts on the second registration of the same file name with
+# "File already exists in database: onnx/onnx-ml.proto".
+add_library(onnx)
 add_subdirectory(onnx)
-add_dependencies(onnx onnx_proto)
+target_link_libraries(onnx PUBLIC onnx_proto)
 set_target_properties(onnx PROPERTIES CXX_VISIBILITY_PRESET hidden)
 add_onnx_global_defines(onnx)
 
