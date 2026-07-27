@@ -3,7 +3,6 @@
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
-import itertools
 import os
 import pathlib
 import shutil
@@ -12,7 +11,6 @@ import warnings
 from typing import TYPE_CHECKING, Any
 
 import numpy as np
-import parameterized
 import pytest
 
 import onnx
@@ -120,13 +118,16 @@ class TestLoadExternalDataBase:
         checker.check_model(self.model_filename)
 
 
-@parameterized.parameterized_class(
-    [
-        {"serialization_format": "protobuf"},
-        {"serialization_format": "textproto"},
-    ]
-)
 class TestLoadExternalData(TestLoadExternalDataBase):
+    @pytest.fixture(scope="class", params=["protobuf", "textproto"], autouse=True)
+    def override_serialization_format(self, request):
+        # Override the class' `serialization_format`.
+        # This is not idiomatic pytest code which would structure all
+        # these dependencies as explicit fixtures rather than setting
+        # state on `self`. The code is as it is because it was
+        # inherited from an earlier unittest/parameterized setup.
+        self.serialization_format = request.param
+
     def test_load_external_data(self) -> None:
         model = onnx.load_model(self.model_filename, self.serialization_format)
         initializer_tensor = model.graph.initializer[0]
@@ -162,13 +163,16 @@ class TestLoadExternalData(TestLoadExternalDataBase):
         np.testing.assert_allclose(to_array(attribute_tensor), self.attribute_value)
 
 
-@parameterized.parameterized_class(
-    [
-        {"serialization_format": "protobuf"},
-        {"serialization_format": "textproto"},
-    ]
-)
 class TestLoadExternalDataSingleFile(TestLoadExternalDataBase):
+    @pytest.fixture(scope="class", params=["protobuf", "textproto"], autouse=True)
+    def override_serialization_format(self, request):
+        # Override the class' `serialization_format`.
+        # This is not idiomatic pytest code which would structure all
+        # these dependencies as explicit fixtures rather than setting
+        # state on `self`. The code is as it is because it was
+        # inherited from an earlier unittest/parameterized setup.
+        self.serialization_format = request.param
+
     def create_external_data_tensors(
         self, tensors_data: list[tuple[list[Any], Any]]
     ) -> list[TensorProto]:
@@ -221,11 +225,7 @@ class TestLoadExternalDataSingleFile(TestLoadExternalDataBase):
         attribute_tensor = new_model.graph.node[0].attribute[0].t
         np.testing.assert_allclose(to_array(attribute_tensor), self.attribute_value)
 
-    @parameterized.parameterized.expand(
-        itertools.product(
-            (True, False),
-        )
-    )
+    @pytest.mark.parametrize("use_absolute_path", (True, False))
     def test_save_external_invalid_single_file_data_and_check(
         self, use_absolute_path: bool
     ) -> None:

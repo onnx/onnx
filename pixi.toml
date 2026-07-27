@@ -101,7 +101,6 @@ cxx-compiler = ">=1.8.0"
 # follows requirements-dev.txt
 ml_dtypes = ">=0.5.1"
 numpy = ">=1.22.0"
-parameterized = ">=0.9.0"
 protobuf = ">=6.31.1"
 pytest = ">=8.3.4"
 pytest-cov = ">=6.0.0"

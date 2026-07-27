@@ -5,7 +5,7 @@ from __future__ import annotations
 
 import automatic_conversion_test_base
 import numpy as np
-import parameterized
+import pytest
 
 import onnx
 from onnx import helper
@@ -20,7 +20,8 @@ class TestAutomaticDowngrade(automatic_conversion_test_base.TestAutomaticConvers
     def _test_op_downgrade(self, op: str, *args, **kwargs):
         self._test_op_conversion(op, *args, **kwargs, is_upgrade=False)
 
-    @parameterized.parameterized.expand(
+    @pytest.mark.parametrize(
+        "op",
         [
             "ReduceL1",
             "ReduceL2",
@@ -32,7 +33,7 @@ class TestAutomaticDowngrade(automatic_conversion_test_base.TestAutomaticConvers
             "ReduceProd",
             "ReduceSum",
             "ReduceSumSquare",
-        ]
+        ],
     )
     def test_reduce_ops(self, op) -> None:
         # TODO: need to add test cases for missing axes input which depends on this pr:
