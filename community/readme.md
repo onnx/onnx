@@ -56,6 +56,31 @@ Member Companies do not have any voting rights, except via their employees who a
 
 Member Companies can request their logo be displayed on the website and other materials by following these [instructions](logo_request.md).
 
+## Contributor Ladder and GitHub Permissions
+
+> **Work in Progress:** The GitHub permission mappings and organization membership process below are under active discussion.
+
+The community roles described above map directly to permissions in the ONNX GitHub organization. This table summarizes the full ladder from first-time participant to Steering Committee member.
+
+| Ladder rung | How to advance | GitHub org status | Repository access | SC election vote |
+|---|---|---|---|---|
+| **Member** | Engage with the community (issues, Slack, meetings) | Outside collaborator or none | Read (public repos are public) | No |
+| **Contributor** | Sponsored by 2 Approvers from different companies; active in last 12 months | Organization Member | Triage on repos owned by their SIG(s) | Yes — one vote per Member Company (individual votes roll up) |
+| **Approver** | Active Contributor ≥ 3 months; sponsored by a SIG chair; no objections from other SIG chairs | Organization Member | Write on repos/directories they approve for | Yes — same rule as Contributors |
+| **SIG Chair** | Appointed by Steering Committee from Approvers | Organization Member | Maintain on SIG-owned repos | Yes — same rule as Contributors |
+| **Steering Committee** | Self-nominated; elected by Contributors via Condorcet/Schulze ranked vote | Organization Owner | Admin (shared with SC) | N/A |
+
+> **Note on SC voting:** To be eligible to vote in a Steering Committee election, a Contributor must register their GitHub handle, email address, and affiliated company before the April deadline each year. Votes are tallied per individual first, then rolled up to one vote per Member Company. See [sc-election-guidelines.md](sc-election-guidelines.md) for the full process.
+
+### Becoming an Organization Member (Contributor step)
+
+To request GitHub organization membership, open an issue in the `onnx/onnx` repository using the title `Contributor nomination: <your GitHub handle>` and include:
+
+* A brief summary of your contributions (PRs, reviews, issues, SIG participation)
+* The GitHub handles of the two Approvers from different companies who are sponsoring you
+
+One of your sponsors will add you to the organization once the nomination is confirmed.
+
 ## Organizational Structure
 
 The ONNX community is organized in the following manner, with all governance and execution being planned and coordinated as follows:
