@@ -682,7 +682,8 @@ class TestShapeInference(TestShapeInferenceHelper):
             opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
         )
 
-    def test_concat_axis_overflow(self) -> None:
+@pytest.mark.parametrize("version", all_versions_for("Concat"))
+    def test_concat_axis_overflow(self, version) -> None:
         # Two inputs whose axis dimensions sum past INT64_MAX must raise InferenceError
         # rather than silently wrapping (fixed by checked_add_overflow in Concat inference).
         INT64_MAX = (1 << 63) - 1
@@ -695,7 +696,7 @@ class TestShapeInference(TestShapeInferenceHelper):
             [],
         )
         with pytest.raises(onnx.shape_inference.InferenceError):
-            self._inferred(graph)
+            self._inferred(graph, opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)])
 
     def test_concat_missing_shape(self) -> None:
         graph = self._make_graph(
