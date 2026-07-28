@@ -188,19 +188,6 @@ jobs:
           persist-credentials: false
           submodules: true
 
-      - name: "WARNING: about to publish to PyPI-release"
-        env:
-          PUBLISH_PYPI_RELEASE: ${{ github.event.inputs.publish_pypi_release }}
-          RELEASE_TYPE: ${{ github.event.inputs.release_type }}
-          CONFIRM_PUBLISH_RELEASE: ${{ github.event.inputs.confirm_publish_release }}
-        run: |
-          echo "####################################################################"
-          echo "WARNING: This run will publish to pypi-release. Be certain you want to do this."
-          echo "publish_pypi_release=${PUBLISH_PYPI_RELEASE}"
-          echo "release_type=${RELEASE_TYPE}"
-          echo "confirm_publish_release=${CONFIRM_PUBLISH_RELEASE}"
-          echo "####################################################################"
-
       - name: Check if package_version matches branch
         env:
           RELEASE_TYPE: ${{ github.event.inputs.release_type }}
