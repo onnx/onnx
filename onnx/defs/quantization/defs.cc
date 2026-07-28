@@ -71,9 +71,11 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Attr(
             "saturate",
             "The parameter defines how the conversion behaves if an input value is out of "
-            "range of the destination type. It only applies for float 8 and float 6 quantization "
-            "(float8e4m3fn, float8e4m3fnuz, float8e5m2, float8e5m2fnuz, float6e2m3, float6e3m2). It is true by default. "
-            "All cases are fully described in two tables inserted in the operator description.",
+            "range of the destination type. It only applies for float 8 quantization "
+            "(float8e4m3fn, float8e4m3fnuz, float8e5m2, float8e5m2fnuz). It is true by default. "
+            "All cases are fully described in two tables inserted in the operator description. "
+            "It has no effect for float4e2m1, float6e2m3, or float6e3m2, since those types have no "
+            "non-saturating (infinity-representable) encoding to fall back to.",
             AttributeProto::INT,
             static_cast<int64_t>(1))
         .Attr(

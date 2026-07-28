@@ -71,6 +71,11 @@ class TestFP6(unittest.TestCase):
         # not just a shape-preserving no-op.
         expected = x.astype(ml_dtypes.float6_e2m3fn).astype(np.float32)
         np.testing.assert_array_equal(y.astype(np.float32), expected)
+        # assert_array_equal treats 0.0 == -0.0, so it alone wouldn't catch a
+        # regression that canonicalizes -0.0 to +0.0; check the sign bit too.
+        np.testing.assert_array_equal(
+            np.signbit(y.astype(np.float32)), np.signbit(expected)
+        )
 
     def test_cast_fp6_e3m2(self):
         m = self._cast_model(onnx.TensorProto.FLOAT6E3M2)
@@ -80,6 +85,9 @@ class TestFP6(unittest.TestCase):
         self.assertEqual(y.shape, x.shape)
         expected = x.astype(ml_dtypes.float6_e3m2fn).astype(np.float32)
         np.testing.assert_array_equal(y.astype(np.float32), expected)
+        np.testing.assert_array_equal(
+            np.signbit(y.astype(np.float32)), np.signbit(expected)
+        )
 
     def _qdq_model(self, qdtype: int) -> onnx.ModelProto:
         g = helper.make_graph(
@@ -112,6 +120,12 @@ class TestFP6(unittest.TestCase):
         self.assertEqual(y.shape, x.shape)
         expected_e2m3 = x.astype(ml_dtypes.float6_e2m3fn).astype(np.float32)
         np.testing.assert_array_equal(y, expected_e2m3)
+        # Note: unlike test_cast_fp6_e2m3/e3m2, this round-trip does not
+        # currently preserve the sign of -0.0 (QuantizeLinear's `x +=
+        # zero_point` turns -0.0 into +0.0 for the default zero_point=0,
+        # a pre-existing issue shared with FLOAT4E2M1) -- see
+        # https://github.com/onnx/onnx/issues/8227. No signbit assertion
+        # here until that's resolved.
 
         ref2 = ReferenceEvaluator(self._qdq_model(onnx.TensorProto.FLOAT6E3M2))
         (y2,) = ref2.run(None, {"X": x, "S": scale})

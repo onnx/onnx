@@ -124,7 +124,7 @@ enum Version {
   // Added UINT2, INT2.
   IR_VERSION_2025_11_06 = 0x000000000000000D;
 
-  // IR VERSION 14 published on TBD
+  // IR VERSION 14 (not yet published)
   // Added FLOAT6E2M3, FLOAT6E3M2
   IR_VERSION = 0x000000000000000E;
 }

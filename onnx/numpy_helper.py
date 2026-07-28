@@ -185,36 +185,44 @@ def _pack_2bitx4(array: np.ndarray) -> npt.NDArray[np.uint8]:
     return array_flat[0::4] | array_flat[1::4] | array_flat[2::4] | array_flat[3::4]
 
 
-def _pack_6bit(values: np.ndarray) -> np.ndarray:
+def _pack_6bit(values: np.ndarray) -> npt.NDArray[np.uint8]:
+    """Pack a flat uint8 array of 6-bit codes 4-at-a-time into 3 bytes (LSB-first bit order)."""
     flat = values.astype(np.uint8).ravel() & 0x3F
-    n = len(flat)
+    n = flat.size
     packed_size = math.ceil(n * 6 / 8)
-    packed = np.zeros(packed_size, dtype=np.uint8)
-    bit_pos = 0
-    for val in flat:
-        for i in range(6):
-            if bit_pos // 8 < packed_size:
-                packed[bit_pos // 8] |= ((val >> i) & 1) << (bit_pos % 8)
-            bit_pos += 1
-    return packed
+    pad = -n % 4
+    if pad:
+        flat = np.concatenate([flat, np.zeros(pad, dtype=np.uint8)])
+    v0, v1, v2, v3 = flat[0::4], flat[1::4], flat[2::4], flat[3::4]
+    packed = np.empty((v0.size, 3), dtype=np.uint8)
+    packed[:, 0] = v0 | ((v1 & 0x03) << 6)
+    packed[:, 1] = (v1 >> 2) | ((v2 & 0x0F) << 4)
+    packed[:, 2] = (v2 >> 4) | (v3 << 2)
+    return packed.reshape(-1)[:packed_size]
 
 
 def _unpack_6bit(
     data: np.ndarray, original_size: int, dims: Sequence[int]
-) -> np.ndarray:
-    """Unpack 6-bit packed buffer back into uint8 array of given dims."""
-    unpacked = np.zeros(original_size, dtype=np.uint8)
-    bit_pos = 0
-    for i in range(original_size):
-        val = 0
-        for j in range(6):
-            byte_index = bit_pos >> 3  # bit_pos // 8
-            bit_index = bit_pos & 7  # bit_pos % 8
-            if byte_index < len(data):
-                val |= ((data[byte_index] >> bit_index) & 1) << j
-            bit_pos += 1
-        unpacked[i] = val
-    return unpacked.reshape(dims)
+) -> npt.NDArray[np.uint8]:
+    """Unpack a 6-bit packed buffer (see _pack_6bit) back into a uint8 array of given dims."""
+    num_groups = -(-original_size // 4)  # ceil division
+    needed_bytes = num_groups * 3
+    data = data.astype(np.uint8, copy=False)
+    if data.size < needed_bytes:
+        # Missing trailing bytes are treated as 0, matching the packer's implicit
+        # zero-padding for a partial final group.
+        data = np.concatenate(
+            [data, np.zeros(needed_bytes - data.size, dtype=np.uint8)]
+        )
+    else:
+        data = data[:needed_bytes]
+    b0, b1, b2 = data[0::3], data[1::3], data[2::3]
+    unpacked = np.empty((num_groups, 4), dtype=np.uint8)
+    unpacked[:, 0] = b0 & 0x3F
+    unpacked[:, 1] = ((b0 >> 6) & 0x03) | ((b1 & 0x0F) << 2)
+    unpacked[:, 2] = ((b1 >> 4) & 0x0F) | ((b2 & 0x03) << 4)
+    unpacked[:, 3] = (b2 >> 2) & 0x3F
+    return unpacked.reshape(-1)[:original_size].reshape(dims)
 
 
 def to_array(tensor: onnx.TensorProto, base_dir: str = "") -> np.ndarray:  # noqa: PLR0911
