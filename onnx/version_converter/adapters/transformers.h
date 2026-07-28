@@ -1,8 +1,6 @@
 // Copyright (c) ONNX Project Contributors
-
-/*
- * SPDX-License-Identifier: Apache-2.0
- */
+//
+// SPDX-License-Identifier: Apache-2.0
 
 #pragma once
 
@@ -17,6 +15,7 @@
 
 // Capture context by copying values; the graph is unused by these transformers.
 
+// NOLINTNEXTLINE(bugprone-macro-parentheses)
 #define NODE_TRANSFORMER(node) [=](const std::shared_ptr<Graph>&, Node* node)
 
 namespace ONNX_NAMESPACE {
@@ -34,7 +33,23 @@ inline NodeTransformerFunction RemoveAttribute(Symbol attr) {
 inline NodeTransformerFunction RemoveAttribute(Symbol attr, int64_t value) {
   return NODE_TRANSFORMER(node) {
     if (node->hasAttribute(attr)) {
-      ONNX_ASSERTM(node->i(attr) == value, "Attribute %s must have value %" PRId64, attr.toString(), value)
+      ONNX_ASSERTM(node->i(attr) == value, "Attribute ", attr.toString(), " must have value ", value)
+      node->removeAttribute(attr);
+    }
+    return node;
+  };
+}
+
+inline NodeTransformerFunction RemoveAttribute(Symbol attr, const std::string& value) {
+  return NODE_TRANSFORMER(node) {
+    if (node->hasAttribute(attr)) {
+      ONNX_ASSERTM(
+          node->s(attr) == value,
+          "Attribute ",
+          attr.toString(),
+          " must have value ",
+          value,
+          " for this version conversion")
       node->removeAttribute(attr);
     }
     return node;
@@ -44,7 +59,7 @@ inline NodeTransformerFunction RemoveAttribute(Symbol attr, int64_t value) {
 inline NodeTransformerFunction RemoveAttributeNotEq(Symbol attr, int64_t value) {
   return NODE_TRANSFORMER(node) {
     if (node->hasAttribute(attr)) {
-      ONNX_ASSERTM(node->i(attr) != value, "Attribute %s must not have value %" PRId64, attr.toString(), value)
+      ONNX_ASSERTM(node->i(attr) != value, "Attribute ", attr.toString(), " must not have value ", value)
       node->removeAttribute(attr);
     }
     return node;

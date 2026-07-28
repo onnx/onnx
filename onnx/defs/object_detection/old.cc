@@ -1,31 +1,20 @@
-/*
- * SPDX-License-Identifier: Apache-2.0
- */
+// Copyright (c) ONNX Project Contributors
+//
+// SPDX-License-Identifier: Apache-2.0
 
+#include <string>
+
+#include "onnx/defs/doc_strings.h"
 #include "onnx/defs/schema.h"
-using namespace ONNX_NAMESPACE;
+#include "onnx/defs/type_builders.h"
 
 namespace ONNX_NAMESPACE {
-
-static const char* RoiAlign_ver16_doc = R"DOC(
-Region of Interest (RoI) align operation described in the
-[Mask R-CNN paper](https://arxiv.org/abs/1703.06870).
-RoiAlign consumes an input tensor X and region of interests (rois)
-to apply pooling across each RoI; it produces a 4-D tensor of shape
-(num_rois, C, output_height, output_width).
-
-RoiAlign is proposed to avoid the misalignment by removing
-quantizations while converting from original image into feature
-map and from feature map into RoI feature; in each ROI bin,
-the value of the sampled locations are computed directly
-through bilinear interpolation.
-)DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
     RoiAlign,
     16,
     OpSchema()
-        .SetDoc(RoiAlign_ver16_doc)
+        .SetDoc(kDoc_RoiAlign_ver16)
         .Attr(
             "spatial_scale",
             "Multiplicative spatial scale factor to translate ROI coordinates "
@@ -89,11 +78,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             "(num_rois, C, output_height, output_width). The r-th batch element Y[r-1] "
             "is a pooled feature map corresponding to the r-th RoI X[r-1].",
             "T1")
-        .TypeConstraint(
-            "T1",
-            {"tensor(float16)", "tensor(float)", "tensor(double)"},
-            "Constrain types to float tensors.")
-        .TypeConstraint("T2", {"tensor(int64)"}, "Constrain types to int tensors.")
+        .TypeConstraint("T1", {types::Float16, types::Float, types::Double}, "Constrain types to float tensors.")
+        .TypeConstraint("T2", {types::Int64}, "Constrain types to int tensors.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           propagateElemTypeFromInputToOutput(ctx, 0, 0);
 
@@ -124,25 +110,11 @@ ONNX_OPERATOR_SET_SCHEMA(
           updateOutputShape(ctx, 0, {num_rois, C, ht, width});
         }));
 
-static const char* RoiAlign_ver10_doc = R"DOC(
-Region of Interest (RoI) align operation described in the
-[Mask R-CNN paper](https://arxiv.org/abs/1703.06870).
-RoiAlign consumes an input tensor X and region of interests (rois)
-to apply pooling across each RoI; it produces a 4-D tensor of shape
-(num_rois, C, output_height, output_width).
-
-RoiAlign is proposed to avoid the misalignment by removing
-quantizations while converting from original image into feature
-map and from feature map into RoI feature; in each ROI bin,
-the value of the sampled locations are computed directly
-through bilinear interpolation.
-)DOC";
-
 ONNX_OPERATOR_SET_SCHEMA(
     RoiAlign,
     10,
     OpSchema()
-        .SetDoc(RoiAlign_ver10_doc)
+        .SetDoc(kDoc_RoiAlign_ver16)
         .Attr(
             "spatial_scale",
             "Multiplicative spatial scale factor to translate ROI coordinates "
@@ -198,11 +170,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             "(num_rois, C, output_height, output_width). The r-th batch element Y[r-1] "
             "is a pooled feature map corresponding to the r-th RoI X[r-1].",
             "T1")
-        .TypeConstraint(
-            "T1",
-            {"tensor(float16)", "tensor(float)", "tensor(double)"},
-            "Constrain types to float tensors.")
-        .TypeConstraint("T2", {"tensor(int64)"}, "Constrain types to int tensors.")
+        .TypeConstraint("T1", {types::Float16, types::Float, types::Double}, "Constrain types to float tensors.")
+        .TypeConstraint("T2", {types::Int64}, "Constrain types to int tensors.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           propagateElemTypeFromInputToOutput(ctx, 0, 0);
 
@@ -232,16 +201,6 @@ ONNX_OPERATOR_SET_SCHEMA(
           // set output shape:
           updateOutputShape(ctx, 0, {num_rois, C, ht, width});
         }));
-
-static const char* NonMaxSuppression_ver10_doc = R"DOC(
-Filter out boxes that have high intersection-over-union (IOU) overlap with previously selected boxes.
-Bounding boxes with score less than score_threshold are removed. Bounding box format is indicated by attribute center_point_box.
-Note that this algorithm is agnostic to where the origin is in the coordinate system and more generally is invariant to
-orthogonal transformations and translations of the coordinate system; thus translating or reflections of the coordinate system
-result in the same boxes being selected by the algorithm.
-The selected_indices output is a set of integers indexing into the input collection of bounding boxes representing the selected boxes.
-The bounding box coordinates corresponding to the selected indices can then be obtained using the Gather or GatherND operation.
-)DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
     NonMaxSuppression,
@@ -284,7 +243,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "1 - the box data is supplied as [x_center, y_center, width, height]. Mostly used for Pytorch models.",
             AttributeProto::INT,
             static_cast<int64_t>(0))
-        .SetDoc(NonMaxSuppression_ver10_doc)
+        .SetDoc(kDoc_NonMaxSuppression_ver10)
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           auto selected_indices_type = ctx.getOutputType(0)->mutable_tensor_type();
           selected_indices_type->set_elem_type(::ONNX_NAMESPACE::TensorProto_DataType::TensorProto_DataType_INT64);

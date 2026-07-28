@@ -1,14 +1,13 @@
 // Copyright (c) ONNX Project Contributors
-
-/*
- * SPDX-License-Identifier: Apache-2.0
- */
+//
+// SPDX-License-Identifier: Apache-2.0
 
 // Default converter for ONNX models between different opset versions
 // in the default domain ("" or "ai.onnx").
 
 #pragma once
 
+#include <algorithm>
 #include <iostream>
 #include <map>
 #include <memory>
@@ -39,12 +38,15 @@
 #include "onnx/version_converter/adapters/no_previous_version.h"
 #include "onnx/version_converter/adapters/pad_10_11.h"
 #include "onnx/version_converter/adapters/q_dq_21_20.h"
+#include "onnx/version_converter/adapters/range_27_26.h"
 #include "onnx/version_converter/adapters/reshape_4_5.h"
 #include "onnx/version_converter/adapters/reshape_5_4.h"
 #include "onnx/version_converter/adapters/resize_10_11.h"
 #include "onnx/version_converter/adapters/scan_8_9.h"
 #include "onnx/version_converter/adapters/scan_9_8.h"
 #include "onnx/version_converter/adapters/scatter_10_11.h"
+#include "onnx/version_converter/adapters/scatter_16_15.h"
+#include "onnx/version_converter/adapters/scatter_18_17.h"
 #include "onnx/version_converter/adapters/slice_9_10.h"
 #include "onnx/version_converter/adapters/softmax_12_13.h"
 #include "onnx/version_converter/adapters/softmax_13_12.h"
@@ -88,9 +90,11 @@ class DefaultVersionConverter : public BaseVersionConverter {
   void assertInVersionRange(int64_t version) const {
     ONNX_ASSERTM(
         version >= version_range.first && version <= version_range.second,
-        "Warning: invalid version (must be between %d and %d)",
+        "Warning: invalid version (must be between ",
         version_range.first,
-        version_range.second)
+        " and ",
+        version_range.second,
+        ")")
   }
 
   void assertDefaultDomain(const std::string& initial_domain, const std::string& target_domain) const {
@@ -114,23 +118,20 @@ class DefaultVersionConverter : public BaseVersionConverter {
     const std::vector<OpSchema> all_opschemas = OpSchemaRegistry::get_all_schemas_with_history();
 
     for (const OpSchema& schema : all_opschemas) {
-      all_schemas[schema.Name()][schema.domain()][(int64_t)schema.since_version()] = &schema;
+      all_schemas[schema.Name()][schema.domain()][schema.since_version()] = &schema;
     }
 
     // Iterate through all_schemas to determine NoPreviousVersionAdapters
-    for (auto& op_pair : all_schemas) {
-      const auto default_versions = op_pair.second.find("");
-      if (default_versions != op_pair.second.end()) {
+    for (auto& [op_name, domain_map] : all_schemas) {
+      const auto default_versions = domain_map.find("");
+      if (default_versions != domain_map.end()) {
         int64_t min_version = version_range.second;
-        for (auto& version_pair : default_versions->second) {
-          if (version_pair.first < min_version) {
-            min_version = version_pair.first;
-          }
+        for (auto& [version, _] : default_versions->second) {
+          min_version = std::min(version, min_version);
         }
         if (min_version > 1) {
           registerAdapter(
-              std::make_unique<NoPreviousVersionAdapter>(
-                  op_pair.first, OpSetID(min_version), OpSetID(min_version - 1)));
+              std::make_unique<NoPreviousVersionAdapter>(op_name, OpSetID(min_version), OpSetID(min_version - 1)));
         }
       }
     }
@@ -538,6 +539,18 @@ class DefaultVersionConverter : public BaseVersionConverter {
     registerAdapter(std::make_unique<CompatibleAdapter>("LeakyRelu", OpSetID(15), OpSetID(16)));
     registerAdapter(std::make_unique<CompatibleAdapter>("PRelu", OpSetID(15), OpSetID(16)));
 
+    /******** 16 -> 15 ********/
+    const std::vector<TensorProto_DataType> bfloat16_not_allowed = {TensorProto_DataType_BFLOAT16};
+    registerAdapter(std::make_unique<TypeRestriction>("Where", OpSetID(16), OpSetID(15), bfloat16_not_allowed));
+    registerAdapter(std::make_unique<Scatter_16_15>("ScatterElements", OpSetID(16), OpSetID(15), bfloat16_not_allowed));
+    registerAdapter(std::make_unique<Scatter_16_15>("ScatterND", OpSetID(16), OpSetID(15), bfloat16_not_allowed));
+    registerAdapter(std::make_unique<TypeRestriction>("Scan", OpSetID(16), OpSetID(15), bfloat16_not_allowed));
+    registerAdapter(std::make_unique<TypeRestriction>("LessOrEqual", OpSetID(16), OpSetID(15), bfloat16_not_allowed));
+    registerAdapter(
+        std::make_unique<TypeRestriction>("GreaterOrEqual", OpSetID(16), OpSetID(15), bfloat16_not_allowed));
+    registerAdapter(std::make_unique<TypeRestriction>("LeakyRelu", OpSetID(16), OpSetID(15), bfloat16_not_allowed));
+    registerAdapter(std::make_unique<TypeRestriction>("PRelu", OpSetID(16), OpSetID(15), bfloat16_not_allowed));
+
     /******** 17 -> 18 ********/
     registerAdapter(std::make_unique<CompatibleAdapter>("Pad", OpSetID(17), OpSetID(18)));
     registerAdapter(std::make_unique<CompatibleAdapter>("Resize", OpSetID(17), OpSetID(18)));
@@ -567,6 +580,8 @@ class DefaultVersionConverter : public BaseVersionConverter {
     registerAdapter(std::make_unique<AxesInputToAttribute>("ReduceMin", OpSetID(18), OpSetID(17)));
     registerAdapter(std::make_unique<AxesInputToAttribute>("ReduceProd", OpSetID(18), OpSetID(17)));
     registerAdapter(std::make_unique<AxesInputToAttribute>("ReduceSumSquare", OpSetID(18), OpSetID(17)));
+    registerAdapter(std::make_unique<Scatter_18_17>("ScatterElements"));
+    registerAdapter(std::make_unique<Scatter_18_17>("ScatterND"));
 
     /******** 18 -> 19 ********/
     registerAdapter(std::make_unique<CompatibleAdapter>("Equal", OpSetID(18), OpSetID(19)));
@@ -585,6 +600,34 @@ class DefaultVersionConverter : public BaseVersionConverter {
     registerAdapter(std::make_unique<CompatibleAdapter>("Scan", OpSetID(18), OpSetID(19)));
     registerAdapter(std::make_unique<CompatibleAdapter>("Shape", OpSetID(18), OpSetID(19)));
     registerAdapter(std::make_unique<CompatibleAdapter>("Size", OpSetID(18), OpSetID(19)));
+
+    /******** 19 -> 18 ********/
+    const std::vector<TensorProto_DataType> float8_unallowed_types = {
+        TensorProto_DataType_FLOAT8E4M3FN,
+        TensorProto_DataType_FLOAT8E4M3FNUZ,
+        TensorProto_DataType_FLOAT8E5M2,
+        TensorProto_DataType_FLOAT8E5M2FNUZ};
+    const std::vector<TensorProto_DataType> string_unallowed_types = {TensorProto_DataType_STRING};
+    // Opset 19 introduced float8 support across a number of ops. When downgrading
+    // to 18 we must reject models that actually use those new element types.
+    registerAdapter(std::make_unique<CompatibleAdapter>("AveragePool", OpSetID(19), OpSetID(18)));
+    registerAdapter(std::make_unique<TypeRestriction>("Constant", OpSetID(19), OpSetID(18), float8_unallowed_types));
+    registerAdapter(std::make_unique<TypeRestriction>("Cast", OpSetID(19), OpSetID(18), float8_unallowed_types));
+    registerAdapter(std::make_unique<TypeRestriction>("CastLike", OpSetID(19), OpSetID(18), float8_unallowed_types));
+    registerAdapter(
+        std::make_unique<TypeRestriction>("DequantizeLinear", OpSetID(19), OpSetID(18), float8_unallowed_types));
+    registerAdapter(
+        std::make_unique<TypeRestriction>("QuantizeLinear", OpSetID(19), OpSetID(18), float8_unallowed_types));
+    registerAdapter(std::make_unique<TypeRestriction>("Equal", OpSetID(19), OpSetID(18), string_unallowed_types));
+    registerAdapter(std::make_unique<TypeRestriction>("Identity", OpSetID(19), OpSetID(18), float8_unallowed_types));
+    registerAdapter(std::make_unique<TypeRestriction>("If", OpSetID(19), OpSetID(18), float8_unallowed_types));
+    registerAdapter(std::make_unique<TypeRestriction>("Loop", OpSetID(19), OpSetID(18), float8_unallowed_types));
+    registerAdapter(std::make_unique<CompatibleAdapter>("Pad", OpSetID(19), OpSetID(18)));
+    registerAdapter(std::make_unique<TypeRestriction>("Reshape", OpSetID(19), OpSetID(18), float8_unallowed_types));
+    registerAdapter(std::make_unique<CompatibleAdapter>("Resize", OpSetID(19), OpSetID(18)));
+    registerAdapter(std::make_unique<TypeRestriction>("Scan", OpSetID(19), OpSetID(18), float8_unallowed_types));
+    registerAdapter(std::make_unique<TypeRestriction>("Shape", OpSetID(19), OpSetID(18), float8_unallowed_types));
+    registerAdapter(std::make_unique<TypeRestriction>("Size", OpSetID(19), OpSetID(18), float8_unallowed_types));
 
     /******** 19 -> 20 ********/
     registerAdapter(std::make_unique<AxisAttributeToInput>("DFT", OpSetID(19), OpSetID(20), 2, 1));
@@ -729,7 +772,6 @@ class DefaultVersionConverter : public BaseVersionConverter {
     registerAdapter(std::make_unique<CompatibleAdapter>("GridSample", OpSetID(21), OpSetID(22)));
 
     /******** 22 -> 21 ********/
-    const std::vector<TensorProto_DataType> bfloat16_not_allowed = {TensorProto_DataType_BFLOAT16};
     registerAdapter(std::make_unique<TypeRestriction>("EyeLike", OpSetID(22), OpSetID(21), bfloat16_not_allowed));
     registerAdapter(std::make_unique<TypeRestriction>("AveragePool", OpSetID(22), OpSetID(21), bfloat16_not_allowed));
     registerAdapter(std::make_unique<TypeRestriction>("MaxPool", OpSetID(22), OpSetID(21), bfloat16_not_allowed));
@@ -882,6 +924,69 @@ class DefaultVersionConverter : public BaseVersionConverter {
     registerAdapter(std::make_unique<TypeRestriction>("TopK", OpSetID(24), OpSetID(23), bfloat16_not_allowed));
     registerAdapter(
         std::make_unique<TypeRestriction>("SplitToSequence", OpSetID(24), OpSetID(23), bfloat16_not_allowed));
+
+    /******** 24 -> 25 ********/
+    registerAdapter(std::make_unique<CompatibleAdapter>("Cast", OpSetID(24), OpSetID(25)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("CastLike", OpSetID(24), OpSetID(25)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("Constant", OpSetID(24), OpSetID(25)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("ConstantOfShape", OpSetID(24), OpSetID(25)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("DequantizeLinear", OpSetID(24), OpSetID(25)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("Flatten", OpSetID(24), OpSetID(25)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("Identity", OpSetID(24), OpSetID(25)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("Reshape", OpSetID(24), OpSetID(25)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("Shape", OpSetID(24), OpSetID(25)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("Size", OpSetID(24), OpSetID(25)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("If", OpSetID(24), OpSetID(25)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("Loop", OpSetID(24), OpSetID(25)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("Scan", OpSetID(24), OpSetID(25)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("Pad", OpSetID(24), OpSetID(25)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("Squeeze", OpSetID(24), OpSetID(25)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("Transpose", OpSetID(24), OpSetID(25)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("Unsqueeze", OpSetID(24), OpSetID(25)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("QuantizeLinear", OpSetID(24), OpSetID(25)));
+
+    /******** 25 -> 24 ********/
+    const std::vector<TensorProto_DataType> ir13_types_not_in_ir12 = {
+        TensorProto_DataType_UINT2, TensorProto_DataType_INT2};
+    registerAdapter(std::make_unique<TypeRestriction>("Cast", OpSetID(25), OpSetID(24), ir13_types_not_in_ir12));
+    registerAdapter(std::make_unique<TypeRestriction>("CastLike", OpSetID(25), OpSetID(24), ir13_types_not_in_ir12));
+    registerAdapter(std::make_unique<TypeRestriction>("Constant", OpSetID(25), OpSetID(24), ir13_types_not_in_ir12));
+    registerAdapter(
+        std::make_unique<TypeRestriction>("ConstantOfShape", OpSetID(25), OpSetID(24), ir13_types_not_in_ir12));
+    registerAdapter(
+        std::make_unique<TypeRestriction>("DequantizeLinear", OpSetID(25), OpSetID(24), ir13_types_not_in_ir12));
+    registerAdapter(std::make_unique<TypeRestriction>("Flatten", OpSetID(25), OpSetID(24), ir13_types_not_in_ir12));
+    registerAdapter(std::make_unique<TypeRestriction>("Identity", OpSetID(25), OpSetID(24), ir13_types_not_in_ir12));
+    registerAdapter(std::make_unique<TypeRestriction>("Reshape", OpSetID(25), OpSetID(24), ir13_types_not_in_ir12));
+    registerAdapter(std::make_unique<TypeRestriction>("Shape", OpSetID(25), OpSetID(24), ir13_types_not_in_ir12));
+    registerAdapter(std::make_unique<TypeRestriction>("Size", OpSetID(25), OpSetID(24), ir13_types_not_in_ir12));
+    registerAdapter(std::make_unique<TypeRestriction>("If", OpSetID(25), OpSetID(24), ir13_types_not_in_ir12));
+    registerAdapter(std::make_unique<TypeRestriction>("Loop", OpSetID(25), OpSetID(24), ir13_types_not_in_ir12));
+    registerAdapter(std::make_unique<TypeRestriction>("Scan", OpSetID(25), OpSetID(24), ir13_types_not_in_ir12));
+    registerAdapter(std::make_unique<TypeRestriction>("Pad", OpSetID(25), OpSetID(24), ir13_types_not_in_ir12));
+    registerAdapter(std::make_unique<TypeRestriction>("Squeeze", OpSetID(25), OpSetID(24), ir13_types_not_in_ir12));
+    registerAdapter(std::make_unique<TypeRestriction>("Transpose", OpSetID(25), OpSetID(24), ir13_types_not_in_ir12));
+    registerAdapter(std::make_unique<TypeRestriction>("Unsqueeze", OpSetID(25), OpSetID(24), ir13_types_not_in_ir12));
+    registerAdapter(
+        std::make_unique<TypeRestriction>("QuantizeLinear", OpSetID(25), OpSetID(24), ir13_types_not_in_ir12));
+
+    /******** 26 -> 27 ********/
+    registerAdapter(std::make_unique<CompatibleAdapter>("Range", OpSetID(26), OpSetID(27)));
+
+    /******** 27 -> 26 ********/
+    // Range v27 added FLOAT16/BFLOAT16 and stash_type; Range v11 (opset 26) supports neither.
+    const std::vector<TensorProto_DataType> range_27_unallowed_types = {
+        TensorProto_DataType_FLOAT16, TensorProto_DataType_BFLOAT16};
+    registerAdapter(std::make_unique<Range_27_26>(range_27_unallowed_types));
+
+    /******** 27 -> 28 ********/
+    registerAdapter(std::make_unique<CompatibleAdapter>("Celu", OpSetID(27), OpSetID(28)));
+
+    /******** 28 -> 27 ********/
+    // Celu v28 widened T to all_float_types_ir4(); Celu v12 (opset 27) supports only FLOAT.
+    const std::vector<TensorProto_DataType> celu_28_unallowed_types = {
+        TensorProto_DataType_FLOAT16, TensorProto_DataType_BFLOAT16, TensorProto_DataType_DOUBLE};
+    registerAdapter(std::make_unique<TypeRestriction>("Celu", OpSetID(28), OpSetID(27), celu_28_unallowed_types));
   }
 
   ModelProto convert_version(const ModelProto& mp_in, const OpSetID& initial_version, const OpSetID& target_version)

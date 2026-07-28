@@ -51,6 +51,7 @@ def retry_execute(times: int) -> Callable[[Callable[..., Any]], Callable[..., An
                     if i == times:
                         raise
                     time.sleep(5 * i)
+            return None
 
         return wrapped
 
@@ -89,8 +90,8 @@ class Runner:
         for ct in load_model_tests(kind="pytorch-converted"):
             self._add_model_test(ct, "PyTorchConverted")
 
-        for ot in load_model_tests(kind="pytorch-operator"):
-            self._add_model_test(ot, "PyTorchOperator")
+        for test_case in load_model_tests(kind="pytorch-operator"):
+            self._add_model_test(test_case, "PyTorchOperator")
 
     def _get_test_case(self, name: str) -> type[unittest.TestCase]:
         test_case = type(str(name), (unittest.TestCase,), {})

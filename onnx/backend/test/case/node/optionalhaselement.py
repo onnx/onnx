@@ -15,8 +15,7 @@ def optional_has_element_reference_implementation(
 ) -> np.ndarray:
     if optional is None:
         return np.array(False)
-    else:
-        return np.array(True)
+    return np.array(True)
 
 
 class OptionalHasElement(Base):

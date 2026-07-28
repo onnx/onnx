@@ -195,7 +195,7 @@ class Col2Im(OpRun):
         if strides is None:
             strides = [1 for s in image_shape]
 
-        bl = np.prod(block_shape)
+        bl = np.prod(block_shape, dtype=np.int64)
         C = data.shape[1] // bl
         data = data.reshape((*data.shape[:1], C, bl, *data.shape[2:]))
 

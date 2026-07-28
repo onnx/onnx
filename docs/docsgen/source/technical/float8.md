@@ -198,7 +198,6 @@ The conversion may also be defined without any saturation.
 | \[x\] \< -FLT_MAX | NaN    | NaN      | -Inf | NaN      |
 | else              | RNE    | RNE      | RNE  | RNE      |
 
-
 ## E8M0
 
 The E8M0 data type serves as the common scale type for all [OCP Microscaling (MX) Formats](https://www.opencompute.org/documents/ocp-microscaling-formats-mx-v1-0-spec-final-pdf). It has eight bits for the exponent, and no sign or mantissa bits.
@@ -225,6 +224,7 @@ The E8M0 data type serves as the common scale type for all [OCP Microscaling (MX
 ```
 
 When computing scale factors in MX formats, there are different casting choices one can make. For this reason, the ONNX spec for the Cast operator has introduced an additional "round_mode" attribute, which accepts the following:
+
 - "up": round to nearest value away from zero
 - "down": round to nearest value towards zero
 - "nearest": round to nearest value and ties round up

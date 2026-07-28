@@ -1,10 +1,6 @@
 // Copyright (c) ONNX Project Contributors
-
-/*
- * SPDX-License-Identifier: Apache-2.0
- */
-
-#include <iostream>
+//
+// SPDX-License-Identifier: Apache-2.0
 
 #include "gtest/gtest.h"
 #include "onnx/defs/schema.h"
@@ -12,7 +8,7 @@
 namespace ONNX_NAMESPACE {
 namespace Test {
 TEST(OpRegistrationTest, GemmOp) {
-  auto opSchema = OpSchemaRegistry::Schema("Gemm");
+  const auto* const opSchema = OpSchemaRegistry::Schema("Gemm");
   EXPECT_TRUE(nullptr != opSchema);
   size_t input_size = opSchema->inputs().size();
   EXPECT_EQ(input_size, 3);

@@ -67,11 +67,9 @@ def _stft(x, fft_length: int, hop_length, n_frames, window, onesided=False):
     weights = np.reshape(window, window_shape)
     weighted_new_x = new_x * weights
 
-    result = _dft(
+    return _dft(
         weighted_new_x, fft_length, last_axis, onesided=onesided, normalize=False
     )
-
-    return result
 
 
 def _istft(x, fft_length: int, hop_length, window, onesided=False):
@@ -151,8 +149,7 @@ def _istft(x, fft_length: int, hop_length, window, onesided=False):
     transposed = np.transpose(reshaped_result, (1, 0))
     other_dimensions = result_shape[1:]
     final_shape = _concat(other_dimensions, two, axis=0)
-    final = transposed.reshape(final_shape)
-    return final
+    return transposed.reshape(final_shape)
 
 
 class STFT(OpRun):

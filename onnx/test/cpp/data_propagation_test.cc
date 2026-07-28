@@ -1,25 +1,23 @@
 // Copyright (c) ONNX Project Contributors
+//
+// SPDX-License-Identifier: Apache-2.0
 
-/*
- * SPDX-License-Identifier: Apache-2.0
- */
+#include <string>
+#include <unordered_map>
 
 #include "gtest/gtest.h"
 #include "onnx/defs/parser.h"
 #include "onnx/defs/schema.h"
 #include "onnx/shape_inference/implementation.h"
 
-using namespace ONNX_NAMESPACE::shape_inference;
-
 namespace ONNX_NAMESPACE {
-
 namespace Test {
 
 static bool CompareShape(
     const TensorShapeProto& inferredShape,
     const TensorShapeProto& expectedShape,
     bool checkSameParam = false) {
-  EXPECT_TRUE(inferredShape.dim_size() == expectedShape.dim_size())
+  EXPECT_EQ(inferredShape.dim_size(), expectedShape.dim_size())
       << "Dim size for inferred and expected shape is different.";
 
   for (int i = 0; i < inferredShape.dim_size(); i++) {
@@ -92,8 +90,9 @@ static TensorShapeProto RunDataPropagation(const char* graphCode, int domainVers
     if (n.op_type() == "Constant") {
       continue;
     }
-    DataPropagationContextImpl dataPropagationCtx(n, valueTypesByName, inputDataByName, generatedShapeDataByName);
-    const auto schema = schemaRegistry->GetSchema(n.op_type(), domainVersion, n.domain());
+    shape_inference::DataPropagationContextImpl dataPropagationCtx(
+        n, valueTypesByName, inputDataByName, generatedShapeDataByName);
+    const auto* const schema = schemaRegistry->GetSchema(n.op_type(), domainVersion, n.domain());
     EXPECT_TRUE(schema->has_data_propagation_function());
     schema->GetDataPropagationFunction()(dataPropagationCtx);
   }

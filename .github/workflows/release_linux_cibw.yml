@@ -1,0 +1,101 @@
+# Copyright (c) ONNX Project Contributors
+#
+# SPDX-License-Identifier: Apache-2.0
+
+name: Linux Release
+
+on:
+  workflow_call:
+    inputs:
+      build_mode:
+        required: false
+        type: string
+        default: "preview"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: linux-release-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        build:
+          - "cp310-manylinux_x86_64"
+          - "cp310-manylinux_aarch64"
+          - "cp311-manylinux_x86_64"
+          - "cp311-manylinux_aarch64"
+          - "cp312-manylinux_x86_64"
+          - "cp312-manylinux_aarch64"
+          - "cp314t-manylinux_x86_64"
+          - "cp314t-manylinux_aarch64"
+
+    runs-on: ${{ contains(matrix.build, 'aarch64') && 'ubuntu-24.04-arm' || 'ubuntu-24.04' }}
+
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+
+      - name: Read protobuf version from sbom.cdx.json
+        run: echo "PROTOBUF_VERSION=$(jq -r '.components[] | select(.name=="protobuf") | .version' sbom.cdx.json)" >> $GITHUB_ENV
+
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
+        with:
+          python-version: "3.12"
+
+      - name: Set preview version
+        if: inputs.build_mode != 'release'
+        shell: bash
+        run: |
+          sed -i'' 's/name = "onnx"/name = "onnx-weekly"/' pyproject.toml
+          echo "$(cat VERSION_NUMBER).dev$(date -u +%Y%m%d)" > VERSION_NUMBER
+
+      - name: Download protoc
+        run: |
+          ARCH=${{ contains(matrix.build, 'aarch64') && 'aarch_64' || 'x86_64' }}
+          curl -sSL "https://github.com/protocolbuffers/protobuf/releases/download/v${PROTOBUF_VERSION}/protoc-${PROTOBUF_VERSION}-linux-${ARCH}.zip" -o protoc.zip
+          unzip -q protoc.zip -d protoc-host
+          chmod +x protoc-host/bin/protoc
+
+      - name: Download protobuf source
+        run: |
+          curl -sSL "https://github.com/protocolbuffers/protobuf/releases/download/v${PROTOBUF_VERSION}/protobuf-${PROTOBUF_VERSION}.tar.gz" -o protobuf.tar.gz
+          tar -xf protobuf.tar.gz
+
+      - name: Set SOURCE_DATE_EPOCH for reproducible builds
+        run: echo "SOURCE_DATE_EPOCH=$(git log -1 --pretty=%ct)" >> $GITHUB_ENV
+
+      - name: Build wheels
+        uses: pypa/cibuildwheel@294735312765b09d24a2fbec22660ce817587d55  # v4.1.0
+        with:
+          output-dir: dist/
+          only: ${{ matrix.build }}
+        env:
+          CIBW_ENVIRONMENT: >-
+            CMAKE_ARGS="
+            -DFETCHCONTENT_SOURCE_DIR_PROTOBUF=/project/protobuf-${{ env.PROTOBUF_VERSION }}
+            -DONNX_CUSTOM_PROTOC_EXECUTABLE=/project/protoc-host/bin/protoc
+            -DONNX_HARDENING=ON
+            -DONNX_USE_LITE_PROTO=ON
+            -DONNX_WERROR=ON
+            "
+
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: wheels-linux-${{ matrix.build }}
+          path: dist/*.whl
+
+      - name: Validate wheel
+        run: |
+          python -m pip install -q abi3audit check-wheel-contents
+          for whl in dist/*.whl; do
+            echo "Checking $whl"
+            check-wheel-contents "$whl"
+            python -m abi3audit -v "$whl"
+          done

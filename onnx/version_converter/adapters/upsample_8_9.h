@@ -1,8 +1,6 @@
 // Copyright (c) ONNX Project Contributors
-
-/*
- * SPDX-License-Identifier: Apache-2.0
- */
+//
+// SPDX-License-Identifier: Apache-2.0
 
 // Adapter for Upsample in default domain from version 8 to 9
 
@@ -21,7 +19,7 @@ struct Upsample_8_9 final : public Adapter {
 
   void adapt_upsample_8_9(const std::shared_ptr<Graph>& graph, Node* node) const {
     Symbol input_dirs = Symbol("scales");
-    int dim = (int)(node->fs(kscales).size());
+    int dim = static_cast<int>(node->fs(kscales).size());
     Tensor t;
     t.elem_type() = TensorProto_DataType_FLOAT;
     t.sizes() = std::vector<int64_t>{dim};
@@ -29,7 +27,7 @@ struct Upsample_8_9 final : public Adapter {
 
     if (node->hasAttribute(input_dirs)) {
       for (double scale : node->fs(kscales)) {
-        data.emplace_back((float)scale);
+        data.emplace_back(static_cast<float>(scale));
       }
 
       Node* constant = graph->create(kConstant);

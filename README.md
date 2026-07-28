@@ -10,9 +10,9 @@ SPDX-License-Identifier: Apache-2.0
 [![CI](https://github.com/onnx/onnx/actions/workflows/main.yml/badge.svg)](https://github.com/onnx/onnx/actions/workflows/main.yml)
 [![CII Best Practices](https://bestpractices.coreinfrastructure.org/projects/3313/badge)](https://bestpractices.coreinfrastructure.org/projects/3313)
 [![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/onnx/onnx/badge)](https://api.securityscorecards.dev/projects/github.com/onnx/onnx)
+[![SLSA 2](https://slsa.dev/images/gh-badge-level2.svg)](https://slsa.dev)
 [![REUSE compliant](https://api.reuse.software/badge/github.com/onnx/onnx)](https://api.reuse.software/info/github.com/onnx/onnx)
 [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
-[![Black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 [![abi3 compatible](https://img.shields.io/badge/abi3-compatible-brightgreen)](https://docs.python.org/3/c-api/stable.html)
 
 [Open Neural Network Exchange (ONNX)](https://onnx.ai) is an open ecosystem that empowers AI developers
@@ -26,7 +26,7 @@ ONNX is [widely supported](http://onnx.ai/supported-tools) and can be found in m
 
 * [Documentation of ONNX Python Package](https://onnx.ai/onnx/)
 * [Tutorials for creating ONNX models](https://github.com/onnx/tutorials)
-* [Pre-trained ONNX models](https://github.com/onnx/models)
+* [Pre-trained ONNX models](https://huggingface.co/onnx-community)
 
 # Learn about the ONNX spec
 
@@ -67,7 +67,7 @@ Community Meetups are held at least once a year. Content from previous community
 
 # Discuss
 
-We encourage you to open [Issues](https://github.com/onnx/onnx/issues), or use [Slack](https://lfaifoundation.slack.com/) (If you have not joined yet, please use this [link](https://join.slack.com/t/lfaifoundation/shared_invite/zt-o65errpw-gMTbwNr7FnNbVXNVFkmyNA) to join the group) for more real-time discussion.
+We encourage you to open [Issues](https://github.com/onnx/onnx/issues), or use [Slack](https://lfaifoundation.slack.com/) (If you have not joined yet, please use this [link](https://join.slack.com/t/lfaifoundation/shared_invite/zt-3wx5vohc3-MeSYi3_dscb~u~cqs7zlPg) to join the group) for more real-time discussion.
 
 # Follow Us
 
@@ -75,7 +75,7 @@ Stay up to date with the latest ONNX news. [[Facebook](https://www.facebook.com/
 
 # Roadmap
 
-A roadmap process takes place every year. More details can be found [here](https://github.com/onnx/steering-committee/tree/main/roadmap)
+A roadmap process takes place every year. More details can be found in [ROADMAP.md](ROADMAP.md).
 
 # Installation
 

@@ -59,10 +59,10 @@ def infer_shapes(
             model_str, check_type, strict_mode, data_prop
         )
         return onnx.load_from_string(inferred_model_str)
-    if isinstance(model, str):
+    if isinstance(model, (str, os.PathLike)):
         raise TypeError(
             "infer_shapes only accepts ModelProto or bytes,"
-            "you can use infer_shapes_path for the model path (String)."
+            " For Model paths (str or os.PathLike), use infer_shapes_path()."
         )
 
     raise TypeError(
@@ -117,8 +117,6 @@ def infer_node_outputs(
     opset_imports: list[onnx.OperatorSetIdProto] | None = None,
     ir_version: int = IR_VERSION,
 ) -> dict[str, onnx.TypeProto]:
-    if not schema.has_type_and_shape_inference_function:
-        return {}
     if input_data is None:
         input_data = {}
     if input_sparse_data is None:

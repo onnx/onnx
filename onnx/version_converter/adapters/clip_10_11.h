@@ -1,8 +1,6 @@
 // Copyright (c) ONNX Project Contributors
-
-/*
- * SPDX-License-Identifier: Apache-2.0
- */
+//
+// SPDX-License-Identifier: Apache-2.0
 
 // Adapter for Clip in default domain from version 10 to 11
 
@@ -25,14 +23,14 @@ class Clip_10_11 final : public Adapter {
 
     // Turn min/max attributes into tensor (if present) and add value as input
     if (has_min) {
-      attrToInput(graph, node, node->f(kmin));
+      attrToInput(graph, node, static_cast<float>(node->f(kmin)));
       node->removeAttribute(kmin);
     }
     if (has_max) {
       if (!has_min) {
         attrToInput(graph, node, std::numeric_limits<float>::lowest());
       }
-      attrToInput(graph, node, node->f(kmax));
+      attrToInput(graph, node, static_cast<float>(node->f(kmax)));
       node->removeAttribute(kmax);
     }
   }

@@ -26,7 +26,7 @@ We are happy to accept contributions as repos under the ONNX organization of new
 * Project is closely related to ONNX
 * Adds value to the ONNX ecosystem
 * Determined to need a new repo rather than a folder in an existing repo
-* Applicable and usable by a wide set of ONNX users (for example, implemented support for multiple hardware backends at time of contribution or committment to do so soon after)
+* Applicable and usable by a wide set of ONNX users (for example, implemented support for multiple hardware backends at time of contribution or commitment to do so soon after)
 * All contributors must have signed the ONNX DCO
 * Licenses of dependencies must be acceptable
 * Commitment to maintain the repo

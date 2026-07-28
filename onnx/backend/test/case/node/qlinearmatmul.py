@@ -61,7 +61,7 @@ class QLinearMatMul(Base):
                 )
 
                 if quant_type == np.int8:
-                    output = np.array([[41, -12, -9], [1, -75, 20]])
+                    output = np.array([[41, -12, -9], [1, -75, -128]])
                 else:
                     output = np.array([[168, 115, 255], [1, 66, 151]])
                 output = output.astype(quant_type)
@@ -117,20 +117,12 @@ class QLinearMatMul(Base):
                 )
 
                 if quant_type == np.int8:
-                    if dtype == np.float32:
-                        output = np.array(
-                            [
-                                [[-86, 117, 120], [115, 39, -121]],
-                                [[-86, 117, 120], [115, 39, -121]],
-                            ]
-                        )
-                    else:
-                        output = np.array(
-                            [
-                                [[-86, 116, 119], [115, 39, -121]],
-                                [[-86, 116, 119], [115, 39, -121]],
-                            ]
-                        )
+                    output = np.array(
+                        [
+                            [[-86, -128, -128], [115, 39, -121]],
+                            [[-86, -128, -128], [115, 39, -121]],
+                        ]
+                    )
                 else:
                     output = np.array(
                         [

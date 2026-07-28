@@ -13,7 +13,9 @@ from onnx.backend.test.case.node import expect
 class InstanceNormalization(Base):
     @staticmethod
     def export() -> None:
-        def _instancenorm_test_mode(x, s, bias, epsilon=1e-5):  # type: ignore
+        def _instancenorm_test_mode(
+            x: np.ndarray, s: np.ndarray, bias: np.ndarray, epsilon: float = 1e-5
+        ) -> np.ndarray:
             dims_x = len(x.shape)
             axis = tuple(range(2, dims_x))
             mean = np.mean(x, axis=axis, keepdims=True)

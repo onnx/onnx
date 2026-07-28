@@ -74,7 +74,7 @@ class LSTMHelper:
             self.LAYOUT = layout
 
         else:
-            raise NotImplementedError()
+            raise NotImplementedError
 
     def f(self, x: np.ndarray) -> np.ndarray:
         return 1 / (1 + np.exp(-x))

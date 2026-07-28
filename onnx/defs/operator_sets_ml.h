@@ -1,6 +1,6 @@
-/*
- * SPDX-License-Identifier: Apache-2.0
- */
+// Copyright (c) ONNX Project Contributors
+//
+// SPDX-License-Identifier: Apache-2.0
 
 #pragma once
 
@@ -97,7 +97,7 @@ class OpSet_OnnxML_ver5 {
   }
 };
 
-inline void RegisterOnnxMLOperatorSetSchema() {
+ONNX_API inline void RegisterOnnxMLOperatorSetSchema() {
   RegisterOpSetSchema<OpSet_OnnxML_ver1>();
   RegisterOpSetSchema<OpSet_OnnxML_ver2>();
   RegisterOpSetSchema<OpSet_OnnxML_ver3>();

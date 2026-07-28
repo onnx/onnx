@@ -1,11 +1,7 @@
-/*
- * SPDX-License-Identifier: Apache-2.0
- */
+// Copyright (c) ONNX Project Contributors
+//
+// SPDX-License-Identifier: Apache-2.0
 
-#include <algorithm>
-#include <numeric>
-
-#include "onnx/defs/function.h"
 #include "onnx/defs/schema.h"
 #include "onnx/defs/sequence/utils.h"
 
@@ -19,4 +15,4 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::all_tensor_types(),
             OpSchema::all_tensor_sequence_types())));
 
-}
+} // namespace ONNX_NAMESPACE

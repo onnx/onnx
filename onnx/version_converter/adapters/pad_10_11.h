@@ -1,8 +1,6 @@
 // Copyright (c) ONNX Project Contributors
-
-/*
- * SPDX-License-Identifier: Apache-2.0
- */
+//
+// SPDX-License-Identifier: Apache-2.0
 
 // Adapter for Pad in default domain from version 10 to 11
 
@@ -28,7 +26,7 @@ class Pad_10_11 final : public Adapter {
     for (int64_t shape : node->is(kpads)) {
       data_pads.emplace_back(shape);
     }
-    t_pads.sizes() = std::vector<int64_t>{(int64_t)data_pads.size()};
+    t_pads.sizes() = std::vector<int64_t>{static_cast<int64_t>(data_pads.size())};
     Value* v_pads = graph->addInitializerAndCreateValue(t_pads);
     node->addInput(v_pads);
     node->removeAttribute(kpads);
@@ -39,7 +37,7 @@ class Pad_10_11 final : public Adapter {
       Tensor t_value;
       t_value.elem_type() = TensorProto_DataType_FLOAT;
       auto& data_value = t_value.floats();
-      data_value.emplace_back(node->f(kvalue));
+      data_value.emplace_back(static_cast<float>(node->f(kvalue)));
       Node* constant = graph->create(kConstant);
       constant->insertBefore(node);
       constant->t_(kvalue, t_value);

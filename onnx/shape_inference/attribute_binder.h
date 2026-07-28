@@ -1,10 +1,12 @@
 // Copyright (c) ONNX Project Contributors
-
-/*
- * SPDX-License-Identifier: Apache-2.0
- */
+//
+// SPDX-License-Identifier: Apache-2.0
 
 #pragma once
+
+#include <string>
+#include <unordered_map>
+
 #include "onnx/common/visitor.h"
 
 namespace ONNX_NAMESPACE {
@@ -22,8 +24,8 @@ class AttributeBinder : public MutableVisitor {
   // remove the attribute from the list of attributes of a node (when the attribute
   // has no specified value). Hence, we need to do the processing at a Node level
   // rather than an attribute level.
-  void VisitNode(NodeProto* node) override {
-    auto& attributes = *node->mutable_attribute();
+  void VisitNode(NodeProto& node) override {
+    auto& attributes = *node.mutable_attribute();
     for (auto attr_iter = attributes.begin(); attr_iter != attributes.end();) {
       auto& attr = *attr_iter;
       if (!attr.ref_attr_name().empty()) {
@@ -42,7 +44,7 @@ class AttributeBinder : public MutableVisitor {
         }
       } else {
         // For regular attributes, we process subgraphs, if present, recursively.
-        VisitAttribute(&attr);
+        VisitAttribute(attr);
         ++attr_iter;
       }
     }
@@ -52,11 +54,11 @@ class AttributeBinder : public MutableVisitor {
   // attribute-values in the call-node, if present. Otherwise, the attribute is removed.
   static void BindAttributes(const NodeProto& callnode, FunctionProto& callee) {
     AttributeMap map;
-    for (auto& attr : callnode.attribute()) {
+    for (const auto& attr : callnode.attribute()) {
       map[attr.name()] = &attr;
     }
     AttributeBinder attr_binder(map);
-    attr_binder.VisitFunction(&callee);
+    attr_binder.VisitFunction(callee);
   }
 
  private:

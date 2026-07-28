@@ -1,10 +1,11 @@
-/*
- * SPDX-License-Identifier: Apache-2.0
- */
+// Copyright (c) ONNX Project Contributors
+//
+// SPDX-License-Identifier: Apache-2.0
 
 #pragma once
 
 #include <string>
+#include <vector>
 
 #include "onnx/defs/schema.h"
 #include "onnx/defs/shape_inference.h"
@@ -16,7 +17,13 @@ namespace defs {
 namespace math {
 namespace utils {
 
-std::function<void(OpSchema&)> TopKOpGenerator(const std::vector<std::string>& allowed_types);
+std::function<void(OpSchema&)> TopKOpGenerator(std::vector<std::string> allowed_types);
+
+// Unary elementwise ops on float types: T input -> T output, no attrs, no function body.
+std::function<void(OpSchema&)> UnaryFloatMathOpGenerator(
+    const char* doc,
+    const char* output_description,
+    std::vector<std::string> allowed_types = OpSchema::all_float_types_ir4());
 
 template <typename T>
 T GetScalarValueFromTensor(const ONNX_NAMESPACE::TensorProto* t) {
