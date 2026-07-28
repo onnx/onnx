@@ -59,7 +59,7 @@ outputs = session.run(None, {input_name: dummy_input.numpy()})
 
 * [Documentation of ONNX Python Package](https://onnx.ai/onnx/)
 * [Tutorials for creating ONNX models](https://github.com/onnx/tutorials)
-* [Pre-trained ONNX models](https://github.com/onnx/models)
+* [Pre-trained ONNX models](https://huggingface.co/onnx-community)
 
 # Learn about the ONNX spec
 
@@ -108,7 +108,7 @@ Stay up to date with the latest ONNX news. [[Facebook](https://www.facebook.com/
 
 # Roadmap
 
-A roadmap process takes place every year. More details can be found [here](https://github.com/onnx/steering-committee/tree/main/roadmap)
+A roadmap process takes place every year. More details can be found in [ROADMAP.md](ROADMAP.md).
 
 # Installation
 

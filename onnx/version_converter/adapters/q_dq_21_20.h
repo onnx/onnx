@@ -33,8 +33,9 @@ class QuantizeLinear_21_20 final : public TypeRestriction {
       if ((node->i(kblock_size) != 0)) {
         ONNX_ASSERTM(
             false,
-            "Blocked quantization is not supported for Opset Version %" PRId64 ".",
-            static_cast<int64_t>(target_version().version()))
+            "Blocked quantization is not supported for Opset Version ",
+            static_cast<int64_t>(target_version().version()),
+            ".")
       }
       node->removeAttribute(kblock_size);
     }
@@ -42,8 +43,9 @@ class QuantizeLinear_21_20 final : public TypeRestriction {
       if (node->i(koutput_dtype) != TensorProto_DataType_UINT8 && node->inputs().size() < 3) {
         ONNX_ASSERTM(
             false,
-            "Attribute output_dtype is not supported for Opset Version %" PRId64 ", supply a zero-point tensor instead",
-            static_cast<int64_t>(target_version().version()))
+            "Attribute output_dtype is not supported for Opset Version ",
+            static_cast<int64_t>(target_version().version()),
+            ", supply a zero-point tensor instead")
       }
       node->removeAttribute(koutput_dtype);
     }
@@ -66,8 +68,9 @@ class DequantizeLinear_21_20 final : public TypeRestriction {
       if ((node->i(kblock_size) != 0)) {
         ONNX_ASSERTM(
             false,
-            "Blocked quantization is not supported for Opset Version %" PRId64 ".",
-            static_cast<int64_t>(target_version().version()))
+            "Blocked quantization is not supported for Opset Version ",
+            static_cast<int64_t>(target_version().version()),
+            ".")
       }
       node->removeAttribute(kblock_size);
     }

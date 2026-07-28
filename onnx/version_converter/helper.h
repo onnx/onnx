@@ -31,16 +31,18 @@ void assertInputsAvailable(const ArrayRef<Value*>& inputs, const char* name, uin
 inline std::vector<int64_t> ReadInt64Tensor(const Tensor& tensor) {
   ONNX_ASSERTM(
       tensor.elem_type() == ONNX_NAMESPACE::TensorProto_DataType_INT64,
-      "expected INT64 tensor, got elem_type=%d",
+      "expected INT64 tensor, got elem_type=",
       tensor.elem_type())
   if (tensor.is_raw_data()) {
     const size_t raw_bytes = tensor.raw().size();
     // elem_num() returns 1 for scalars, so covers dims=[].
     ONNX_ASSERTM(
         raw_bytes == static_cast<size_t>(tensor.elem_num()) * sizeof(int64_t),
-        "INT64 tensor: %zu raw bytes does not match dims (%lld elements)",
+        "INT64 tensor: ",
         raw_bytes,
-        static_cast<long long>(tensor.elem_num()))
+        " raw bytes does not match dims (",
+        tensor.elem_num(),
+        " elements)")
   }
   return ParseData<int64_t>(&tensor);
 }

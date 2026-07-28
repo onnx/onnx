@@ -99,8 +99,8 @@ Dim multiplyDims(const TensorShapeProto& shape, int from, int upto);
 The `_make_graph` / `_assert_inferred` helpers are right for parameterized op-version sweeps:
 
 ```python
-@parameterized.expand(all_versions_for("OpName"))
-def test_opname(self, _, version) -> None:
+@pytest.mark.parametrize("version", all_versions_for("OpName"))
+def test_opname(self, version) -> None:
     graph = self._make_graph(
         [("X", TensorProto.FLOAT, (2, 3, 4))],
         [make_node("OpName", ["X"], ["Y"], attr_name=attr_value)],
