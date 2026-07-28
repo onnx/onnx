@@ -6,7 +6,6 @@ from __future__ import annotations
 import os
 import platform
 import sys
-import unittest
 from typing import Any
 
 import numpy
@@ -97,6 +96,9 @@ backend_test = onnx.backend.test.BackendTest(
         "test_dft_inverse": {"atol": dft_atol},
         "test_dft_inverse_opset19": {"atol": dft_atol},
         "test_dft_opset19": {"atol": dft_atol},
+        # The Celu function body rounds every step to bfloat16, so the expanded
+        # form drifts ~1 bfloat16 ULP from the direct reference.
+        "test_celu_bfloat16_expanded": {"rtol": 1e-2, "atol": 1e-2},
     },
 )
 
@@ -162,6 +164,10 @@ if version_utils.numpy_older_than("2.0"):
     # only bfloat16 (ml_dtypes) requires NumPy >= 2.0.
     backend_test.exclude(r"test_range_bfloat16_type_positive_delta")
     backend_test.exclude(r"test_range_bfloat16_type_positive_delta_expanded")
+    # Both the direct and expanded bfloat16 forms use ml_dtypes; the per-test
+    # tolerance for the expanded case applies only on NumPy >= 2.0.
+    backend_test.exclude(r"test_celu_bfloat16_cpu")
+    backend_test.exclude(r"test_celu_bfloat16_expanded_cpu")
 
 # The documentation does not explicitly say that is_causal=1 and attn_mask is not None
 # is not allowed. The expansion (based on the function definition in ONNX)
@@ -176,17 +182,3 @@ backend_test.exclude(
 
 # import all test cases at global scope to make them visible to python.unittest
 globals().update(backend_test.test_cases)
-
-if __name__ == "__main__":
-    res = unittest.main(verbosity=2, exit=False)
-    tests_run = res.result.testsRun
-    errors = len(res.result.errors)
-    skipped = len(res.result.skipped)
-    unexpected_successes = len(res.result.unexpectedSuccesses)
-    expected_failures = len(res.result.expectedFailures)
-    print("---------------------------------")
-    print(
-        f"tests_run={tests_run} errors={errors} skipped={skipped} "
-        f"unexpected_successes={unexpected_successes} "
-        f"expected_failures={expected_failures}"
-    )

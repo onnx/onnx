@@ -3,14 +3,12 @@
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
-import unittest
-
 import onnx.shape_inference
 from onnx import ModelProto, TensorProto, TensorShapeProto, ValueInfoProto, helper
 from onnx.helper import make_model, make_tensor_value_info
 
 
-class TestSymbolicShape(unittest.TestCase):
+class TestSymbolicShape:
     def _assert_valueinfo_shape(
         self, onnx_model: ModelProto, value_infos: list[ValueInfoProto]
     ) -> None:
@@ -193,7 +191,3 @@ class TestSymbolicShape(unittest.TestCase):
         assert self._get_shape_from_name(
             inferred_model, "C"
         ) == self._get_shape_from_name(inferred_model, "output")
-
-
-if __name__ == "__main__":
-    unittest.main()

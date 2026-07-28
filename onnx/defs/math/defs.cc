@@ -433,7 +433,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         )ONNX")
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
-static constexpr const char* celu_ver12_doc = R"DOC(
+static constexpr const char* celu_ver28_doc = R"DOC(
 Continuously Differentiable Exponential Linear Units:
 Perform the linear unit element-wise on the input tensor X
 using formula:
@@ -443,40 +443,32 @@ max(0,x) + min(0,alpha*(exp(x/alpha)-1))
 ```
 )DOC";
 
-static float celu_default_alpha = 1.0;
-
-static bool BuildContextDependentFunctionBodyCelu(
-    const FunctionBodyBuildContext& ctx,
-    const OpSchema& schema,
-    FunctionProto& functionProto) {
-  float alpha = ctx.getAttribute("alpha") != nullptr ? ctx.getAttribute("alpha")->f() : celu_default_alpha;
-  FunctionBuilder builder(functionProto);
-  builder.Const("alpha", std::vector<float>{alpha}).Add(R"(
-            X_alpha = Div (X, alpha)
-            Elu_Result = Elu <alpha = 1.0>(X_alpha)
-            Y = Mul (alpha, Elu_Result)
-        )");
-  schema.BuildFunction(functionProto);
-  return true;
-}
-
 ONNX_OPERATOR_SET_SCHEMA(
     Celu,
-    12,
+    28,
     OpSchema()
-        .SetDoc(celu_ver12_doc)
-        .Input(0, "X", "Input tensor", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
-        .Output(0, "Y", "Output tensor", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
+        .SetDoc(celu_ver28_doc)
         .Attr(
             "alpha",
             "The Alpha value in Celu formula which control the shape of "
             "the unit. The default value is 1.0.",
             AttributeProto::FLOAT,
-            celu_default_alpha)
-        .TypeConstraint("T", {types::Float}, "Constrain input and output types to float32 tensors.")
+            1.0f)
+        .Input(0, "X", "Input tensor", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
+        .Output(0, "Y", "Output tensor", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
+        .TypeConstraint("T", OpSchema::all_float_types_ir4(), "Constrain input and output types to float tensors.")
         .SetNodeDeterminism(OpSchema::NodeDeterminism::Deterministic)
-        .SetContextDependentFunctionBodyBuilder(BuildContextDependentFunctionBodyCelu)
-        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
+        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput)
+        .FunctionBody(
+            R"ONNX(
+          {
+            Alpha = Constant <value_float: float = @alpha>()
+            AlphaCast = CastLike (Alpha, X)
+            XScaled = Div (X, AlphaCast)
+            EluResult = Elu <alpha = 1.0> (XScaled)
+            Y = Mul (AlphaCast, EluResult)
+          }
+        )ONNX"));
 
 static constexpr const char* gelu_ver20_doc = R"DOC(
 Gelu takes one input data (Tensor<T>) and produces one
@@ -591,6 +583,66 @@ ONNX_OPERATOR_SET_SCHEMA(
                 Y = Mul (X, SigmoidAlphaMulX)
             }
             )ONNX"));
+
+static constexpr const char* SwiGLU_ver28_doc = R"DOC(
+SwiGLU is a gated activation that takes two inputs, a gate `A` and a linear (value)
+input `B`, and produces one output `Y`. It applies the Swish activation to the gate
+and multiplies the result elementwise by the linear input:
+
+```
+Y = Swish_alpha(A) * B
+```
+
+The gate activation `Swish_alpha` is exactly the `Swish` operator with the same
+`alpha`, i.e. `Swish_alpha(a) = a * Sigmoid(alpha * a)`. Inputs `A` and `B` must
+have identical shapes; broadcasting is not applied and the output `Y` has the same
+shape as the inputs.
+
+Exporters typically produce `A` and `B` in one of two ways: for the common
+two-projection form (e.g. Llama's `gate_proj`/`up_proj`) wire the two projection
+outputs directly to `A` (gate) and `B` (value); for a fused/packed single
+projection, split it upstream into `A` and `B` with `Split` (contiguous layout)
+or `Slice`/`Gather` (interleaved layout).
+)DOC";
+
+static void SwiGLUShapeInference(InferenceContext& ctx) {
+  propagateElemTypeFromInputToOutput(ctx, 0, 0);
+  if (!hasNInputShapes(ctx, 2)) {
+    return;
+  }
+  // A and B must have identical shapes: no broadcasting, no rank expansion, no
+  // size-1 stretching. Seed the output with A's shape and merge B into it, which
+  // fails on any rank mismatch or conflicting static dimension while merging
+  // symbolic/unknown dimensions toward the more-specified one.
+  auto* output_type = ctx.getOutputType(0)->mutable_tensor_type();
+  *output_type->mutable_shape() = ctx.getInputType(0)->tensor_type().shape();
+  mergeInShapeInfo(ctx.getInputType(1)->tensor_type(), *output_type);
+}
+
+ONNX_OPERATOR_SET_SCHEMA(
+    SwiGLU,
+    28,
+    OpSchema()
+        .SetDoc(SwiGLU_ver28_doc)
+        .Attr(
+            "alpha",
+            "Coefficient that scales the gate input inside the sigmoid of the Swish activation. "
+            "The default value is 1.0.",
+            AttributeProto::FLOAT,
+            1.0f)
+        .Input(0, "A", "Gate input tensor", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
+        .Input(1, "B", "Linear (value) input tensor", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
+        .Output(0, "Y", "Output tensor", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
+        .TypeConstraint("T", OpSchema::all_float_types_ir4(), "Constrain input and output types to float tensors.")
+        .SetNodeDeterminism(OpSchema::NodeDeterminism::Deterministic)
+        .TypeAndShapeInferenceFunction(SwiGLUShapeInference)
+        .FunctionBody(
+            R"ONNX(
+          {
+            SwishGate = Swish <alpha : float = @alpha> (A)
+            Y = Mul (SwishGate, B)
+          }
+        )ONNX"));
 
 ONNX_OPERATOR_SET_SCHEMA(
     Exp,

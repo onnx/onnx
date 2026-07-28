@@ -101,7 +101,7 @@ struct GraphInferenceContext {
       const ModelLocalFunctionsMap& model_local_functions_in = {},
       const ISchemaRegistry* schema_registry_in = OpSchemaRegistry::Instance(),
       DataValueMap* generated_shape_data_by_name_in = nullptr,
-      const int ir_version_in = IR_VERSION)
+      const int64_t ir_version_in = IR_VERSION)
       : outer_scope_value_types_by_name{&outer_scope_value_types_by_name_in},
         opset_imports{std::move(opset_imports_in)},
         symbol_table{symbol_table_in},
@@ -116,7 +116,7 @@ struct GraphInferenceContext {
   const ModelLocalFunctionsMap& model_local_functions;
   const ISchemaRegistry* schema_registry;
   DataValueMap* generated_shape_data_by_name;
-  const int ir_version;
+  const int64_t ir_version;
 };
 
 class GraphInferencerImpl : public GraphInferencer {
@@ -456,20 +456,13 @@ struct DataPropagationContextImpl : public DataPropagationContext {
   std::unordered_map<std::string, const AttributeProto*> attributesByName_;
 };
 
-void checkShapesAndTypes(const TypeProto_Sequence& inferredType, const TypeProto_Sequence& existingType);
-
 void checkShapesAndTypes(const TypeProto& inferred_type, const TypeProto& existing_type);
-
-template <typename TensorTypeProto>
-void GenerateSymbolicShape(TensorTypeProto* inferred_type, SymbolTable& symbol_table);
 
 void MaterializeSymbolicShape(TypeProto* inferred_type, SymbolTable& symbol_table);
 
 void mergeShapesAndTypes(const TypeProto_Tensor& inferred_type, TypeProto_Tensor* existing_type);
 
 void mergeShapesAndTypes(const TypeProto_SparseTensor& inferred_type, TypeProto_SparseTensor* existing_type);
-
-void mergeShapesAndTypes(const TypeProto_Sequence& inferredType, TypeProto_Tensor* existingType);
 
 void mergeShapesAndTypes(const TypeProto& inferred_type, TypeProto* existing_type);
 

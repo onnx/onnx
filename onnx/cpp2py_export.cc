@@ -13,7 +13,6 @@
 #include <nanobind/stl/vector.h>
 
 #include <algorithm>
-#include <climits>
 #include <limits>
 #include <string>
 #include <tuple>
@@ -52,7 +51,9 @@ using BASE_PROTO_TYPE = ::google::protobuf::Message;
         }                                                                                         \
         auto serialized = nanobind::cast<nanobind::bytes>(py_proto.attr("SerializeToString")());  \
         return ParseProtoFromPyBytes(&value, serialized);                                         \
-      } catch (const nanobind::python_error&) {                                                   \
+      } catch (...) {                                                                             \
+        /* from_python is noexcept: nanobind::cast (cast_error) and ParseProtoFromPyBytes      */ \
+        /* (bad_alloc) can throw non-python_error types, which would otherwise call terminate. */ \
         return false;                                                                             \
       }                                                                                           \
     }                                                                                             \
@@ -216,7 +217,7 @@ static auto MakeChecker(void (*check_fn)(const ProtoType&, const Ctx&...)) {
   };
 }
 
-NB_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
+NB_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) { // NOLINT(cppcoreguidelines-pro-type-cstyle-cast)
   // Disabling nanobind leak warnings
   // TODO(#7283): Avoid leaks if possible
   nb::set_leak_warnings(false);

@@ -906,6 +906,15 @@ void ScanInferenceFunction_opset8(InferenceContext& ctx) {
   // inputs in many places below, so the - 1 in multiple places is due to that.
   auto num_inputs = ctx.getNumInputs();
   auto num_scan_inputs = narrow<size_t>(getRequiredAttributeInt(ctx, "num_scan_inputs"));
+  // Guard the subtraction below; opset 8's first input is sequence_lens, hence the + 1.
+  if (num_scan_inputs + 1 > num_inputs) {
+    fail_shape_inference(
+        "num_scan_inputs (",
+        num_scan_inputs,
+        ") plus the sequence_lens input cannot exceed the number of Scan inputs (",
+        num_inputs,
+        ").");
+  }
   auto num_loop_state_vars = num_inputs - 1 - num_scan_inputs;
 
   std::vector<TypeProto> temporary_type_protos;
@@ -1043,8 +1052,8 @@ static int handle_negative_axis_validate_opset9(const std::string& attrib, int a
 static void ScanInferenceFunction_opset9(InferenceContext& ctx) {
   auto num_inputs = ctx.getNumInputs();
   auto num_scan_inputs = narrow<size_t>(getRequiredAttributeInt(ctx, "num_scan_inputs"));
-  auto num_loop_state_vars = num_inputs - num_scan_inputs;
   auto num_outputs = ctx.getNumOutputs();
+  auto num_loop_state_vars = ValidateScanCountsAndGetNumLoopStateVars(num_inputs, num_scan_inputs, num_outputs);
   auto num_scan_outputs = num_outputs - num_loop_state_vars;
 
   std::vector<int64_t> axes, output_axes;

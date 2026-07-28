@@ -6,7 +6,7 @@
 * [Overall Test Coverage](#overall-test-coverage)
 # Node Test Coverage
 ## Summary
-Node tests have covered 189/201 (94.03%, 5 generators excluded) common operators.
+Node tests have covered 190/202 (94.06%, 5 generators excluded) common operators.
 
 Node tests have covered 1/1 (100.00%, 0 generators excluded) experimental operators.
 
@@ -6669,7 +6669,7 @@ expect(node, inputs=[x], outputs=[y], name="test_ceil")
 
 
 ### Celu
-There are 1 test cases, listed as following:
+There are 3 test cases, listed as following:
 <details>
 <summary>celu</summary>
 
@@ -6709,6 +6709,60 @@ negative_input = np.minimum(0, alpha * (np.exp(input_data / alpha) - 1))
 expected_output = positive_input + negative_input
 
 expect(node, inputs=[input_data], outputs=[expected_output], name="test_celu")
+```
+
+</details>
+<details>
+<summary>celu_bfloat16</summary>
+
+```python
+alpha = 2.0
+node = onnx.helper.make_node(
+    "Celu",
+    inputs=["X"],
+    outputs=["Y"],
+    alpha=alpha,
+)
+
+input_data = np.array([-3.0, -0.5, 0.0, 0.5, 3.0], dtype=ml_dtypes.bfloat16)
+
+positive_input = np.maximum(0, input_data)
+negative_input = np.minimum(0, alpha * (np.exp(input_data / alpha) - 1))
+expected_output = (positive_input + negative_input).astype(ml_dtypes.bfloat16)
+
+expect(
+    node,
+    inputs=[input_data],
+    outputs=[expected_output],
+    name="test_celu_bfloat16",
+)
+```
+
+</details>
+<details>
+<summary>celu_float16</summary>
+
+```python
+alpha = 2.0
+node = onnx.helper.make_node(
+    "Celu",
+    inputs=["X"],
+    outputs=["Y"],
+    alpha=alpha,
+)
+
+input_data = np.array([-3.0, -0.5, 0.0, 0.5, 3.0], dtype=np.float16)
+
+positive_input = np.maximum(0, input_data)
+negative_input = np.minimum(0, alpha * (np.exp(input_data / alpha) - 1))
+expected_output = (positive_input + negative_input).astype(np.float16)
+
+expect(
+    node,
+    inputs=[input_data],
+    outputs=[expected_output],
+    name="test_celu_float16",
+)
 ```
 
 </details>
@@ -18130,7 +18184,7 @@ expect(node, inputs=[x], outputs=[np.logical_not(x)], name="test_not_4d")
 
 
 ### OneHot
-There are 4 test cases, listed as following:
+There are 5 test cases, listed as following:
 <details>
 <summary>with_axis</summary>
 
@@ -18217,6 +18271,41 @@ expect(
     inputs=[indices, depth, values],
     outputs=[y],
     name="test_onehot_negative_indices",
+)
+```
+
+</details>
+<details>
+<summary>with_out_of_range_indices</summary>
+
+```python
+axisValue = 1
+on_value = 3
+off_value = 1
+output_type = np.float32
+node = onnx.helper.make_node(
+    "OneHot",
+    inputs=["indices", "depth", "values"],
+    outputs=["y"],
+    axis=axisValue,
+)
+# Indices outside [-depth, depth-1] map to an all-off_value row.
+indices = np.array([5, -6, -1], dtype=np.int64)
+
+# print(y)
+# [[1. 1. 1. 1. 1.]
+#  [1. 1. 1. 1. 1.]
+#  [1. 1. 1. 1. 3.]]
+
+depth = np.float32(5)
+values = np.array([off_value, on_value], dtype=output_type)
+y = one_hot(indices, depth, axis=axisValue, dtype=output_type)
+y = y * (on_value - off_value) + off_value
+expect(
+    node,
+    inputs=[indices, depth, values],
+    outputs=[y],
+    name="test_onehot_out_of_range_indices",
 )
 ```
 
@@ -25198,7 +25287,7 @@ expect(
 
 
 ### ScatterND
-There are 5 test cases, listed as following:
+There are 7 test cases, listed as following:
 <details>
 <summary>scatternd</summary>
 
@@ -25325,6 +25414,32 @@ expect(
 
 </details>
 <details>
+<summary>scatternd_max_with_element_indices</summary>
+
+```python
+node = onnx.helper.make_node(
+    "ScatterND",
+    inputs=["data", "indices", "updates"],
+    outputs=["y"],
+    reduction="max",
+)
+data = np.array([[1, 2], [3, 4]], dtype=np.float32)
+# Indices address individual elements (index rank == data rank),
+# which exercises the reduction at the element level.
+indices = np.array([[0, 0], [1, 1]], dtype=np.int64)
+updates = np.array([5, 1], dtype=np.float32)
+# Expecting output as np.array([[5, 2], [3, 4]], dtype=np.float32)
+output = scatter_nd_impl(data, indices, updates, reduction="max")
+expect(
+    node,
+    inputs=[data, indices, updates],
+    outputs=[output],
+    name="test_scatternd_max_with_element_indices",
+)
+```
+
+</details>
+<details>
 <summary>scatternd_min</summary>
 
 ```python
@@ -25362,6 +25477,30 @@ expect(
     inputs=[data, indices, updates],
     outputs=[output],
     name="test_scatternd_min",
+)
+```
+
+</details>
+<details>
+<summary>scatternd_min_with_element_indices</summary>
+
+```python
+node = onnx.helper.make_node(
+    "ScatterND",
+    inputs=["data", "indices", "updates"],
+    outputs=["y"],
+    reduction="min",
+)
+data = np.array([[1, 2], [3, 4]], dtype=np.float32)
+indices = np.array([[0, 0], [1, 1]], dtype=np.int64)
+updates = np.array([5, 1], dtype=np.float32)
+# Expecting output as np.array([[1, 2], [3, 1]], dtype=np.float32)
+output = scatter_nd_impl(data, indices, updates, reduction="min")
+expect(
+    node,
+    inputs=[data, indices, updates],
+    outputs=[output],
+    name="test_scatternd_min_with_element_indices",
 )
 ```
 
@@ -28693,6 +28832,85 @@ node = onnx.helper.make_node(
 )
 expect(
     node, inputs=[data_0, data_1], outputs=[result], name="test_sum_two_inputs"
+)
+```
+
+</details>
+
+
+### SwiGLU
+There are 3 test cases, listed as following:
+<details>
+<summary>alpha</summary>
+
+```python
+node = onnx.helper.make_node(
+    "SwiGLU",
+    inputs=["a", "b"],
+    outputs=["y"],
+    alpha=0.5,  # pass alpha as attribute
+)
+
+a = np.array([[1.0, -2.0, 3.0, 4.0], [-1.0, 2.0, -3.0, 0.5]], dtype=np.float32)
+b = np.array([[0.5, 1.0, -1.0, 2.0], [2.0, -1.0, 0.5, 1.0]], dtype=np.float32)
+y = swiglu(a, b, alpha=0.5)
+
+expect(
+    node,
+    inputs=[a, b],
+    outputs=[y],
+    name="test_swiglu_alpha",
+    opset_imports=[onnx.helper.make_opsetid("", 28)],
+)
+```
+
+</details>
+<details>
+<summary>float16</summary>
+
+```python
+node = onnx.helper.make_node(
+    "SwiGLU",
+    inputs=["a", "b"],
+    outputs=["y"],
+)
+
+a = np.array([[1.0, -2.0, 3.0, 4.0], [-1.0, 2.0, -3.0, 0.5]], dtype=np.float16)
+b = np.array([[0.5, 1.0, -1.0, 2.0], [2.0, -1.0, 0.5, 1.0]], dtype=np.float16)
+y = swiglu(a.astype(np.float32), b.astype(np.float32), alpha=1.0).astype(
+    np.float16
+)
+
+expect(
+    node,
+    inputs=[a, b],
+    outputs=[y],
+    name="test_swiglu_float16",
+    opset_imports=[onnx.helper.make_opsetid("", 28)],
+)
+```
+
+</details>
+<details>
+<summary>swiglu</summary>
+
+```python
+node = onnx.helper.make_node(
+    "SwiGLU",
+    inputs=["a", "b"],
+    outputs=["y"],
+)
+
+a = np.array([[1.0, -2.0, 3.0, 4.0], [-1.0, 2.0, -3.0, 0.5]], dtype=np.float32)
+b = np.array([[0.5, 1.0, -1.0, 2.0], [2.0, -1.0, 0.5, 1.0]], dtype=np.float32)
+y = swiglu(a, b, alpha=1.0)
+
+expect(
+    node,
+    inputs=[a, b],
+    outputs=[y],
+    name="test_swiglu",
+    opset_imports=[onnx.helper.make_opsetid("", 28)],
 )
 ```
 

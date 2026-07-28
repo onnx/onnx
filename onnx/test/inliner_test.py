@@ -3,12 +3,12 @@
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
-import unittest
+import pytest
 
 from onnx import checker, inliner, parser
 
 
-class InlinerTest(unittest.TestCase):
+class TestInliner:
     def test_basic(self):
         model = parser.parse_model(
             """
@@ -33,9 +33,9 @@ class InlinerTest(unittest.TestCase):
         inlined = inliner.inline_local_functions(model)
         inlined_nodes = inlined.graph.node
         # function-call should be replaced by Add, followed by Mul
-        self.assertEqual(len(inlined_nodes), 2)
-        self.assertEqual(inlined_nodes[0].op_type, "Add")
-        self.assertEqual(inlined_nodes[1].op_type, "Mul")
+        assert len(inlined_nodes) == 2
+        assert inlined_nodes[0].op_type == "Add"
+        assert inlined_nodes[1].op_type == "Mul"
 
     def test_selective_inlining(self):
         model = parser.parse_model(
@@ -64,15 +64,15 @@ class InlinerTest(unittest.TestCase):
         )
         inlined_nodes = inlined.graph.node
         # function-call to square should be replaced by Add, but not the one to double_and_square
-        self.assertEqual(len(inlined_nodes), 2)
-        self.assertEqual(inlined_nodes[0].op_type, "Mul")
-        self.assertEqual(inlined_nodes[1].op_type, "double_and_square")
+        assert len(inlined_nodes) == 2
+        assert inlined_nodes[0].op_type == "Mul"
+        assert inlined_nodes[1].op_type == "double_and_square"
 
         # check call to square inside double_and_square was inlined:
         function_nodes = inlined.functions[0].node
-        self.assertEqual(len(function_nodes), 2)
-        self.assertEqual(function_nodes[0].op_type, "Add")
-        self.assertEqual(function_nodes[1].op_type, "Mul")
+        assert len(function_nodes) == 2
+        assert function_nodes[0].op_type == "Add"
+        assert function_nodes[1].op_type == "Mul"
 
     def test_selective_exclusion(self):
         model = parser.parse_model(
@@ -101,15 +101,15 @@ class InlinerTest(unittest.TestCase):
         )
         inlined_nodes = inlined.graph.node
         # function-call to square should be replaced by Add, but not the one to double_and_square
-        self.assertEqual(len(inlined_nodes), 2)
-        self.assertEqual(inlined_nodes[0].op_type, "Mul")
-        self.assertEqual(inlined_nodes[1].op_type, "double_and_square")
+        assert len(inlined_nodes) == 2
+        assert inlined_nodes[0].op_type == "Mul"
+        assert inlined_nodes[1].op_type == "double_and_square"
 
         # check call to square inside double_and_square was inlined:
         function_nodes = inlined.functions[0].node
-        self.assertEqual(len(function_nodes), 2)
-        self.assertEqual(function_nodes[0].op_type, "Add")
-        self.assertEqual(function_nodes[1].op_type, "Mul")
+        assert len(function_nodes) == 2
+        assert function_nodes[0].op_type == "Add"
+        assert function_nodes[1].op_type == "Mul"
 
     def test_inline_rejects_cyclic_function(self):
         model = parser.parse_model(
@@ -120,9 +120,8 @@ class InlinerTest(unittest.TestCase):
             foo (x) => (y) { y = local.foo (x) }
         """
         )
-        self.assertRaises(
-            checker.ValidationError, inliner.inline_local_functions, model
-        )
+        with pytest.raises(checker.ValidationError):
+            inliner.inline_local_functions(model)
 
     def test_schema_function_inlining(self):
         model = parser.parse_model(
@@ -138,8 +137,4 @@ class InlinerTest(unittest.TestCase):
             model, [], exclude=True, inline_schema_functions=True
         )
         inlined_nodes = inlined.graph.node
-        self.assertIn("Abs", [n.op_type for n in inlined_nodes])
-
-
-if __name__ == "__main__":
-    unittest.main()
+        assert "Abs" in [n.op_type for n in inlined_nodes]

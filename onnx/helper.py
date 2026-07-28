@@ -76,6 +76,8 @@ VERSION_TABLE: VersionTableType = [
     ("1.20.0", 13, 25, 5, 1),
     ("1.20.1", 13, 25, 5, 1),
     ("1.21.0", 13, 26, 5, 1),
+    ("1.22.0", 13, 27, 5, 1),
+    ("1.23.0", 13, 28, 5, 1),
 ]
 
 VersionMapType = dict[tuple[str, int], int]

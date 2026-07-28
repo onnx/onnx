@@ -175,7 +175,7 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#BlackmanWindow">BlackmanWindow</a>|<a href="Changelog.md#BlackmanWindow-17">17</a>|17|
 |<a href="#CastLike">CastLike</a>|<a href="Changelog.md#CastLike-25">25</a>, <a href="Changelog.md#CastLike-24">24</a>, <a href="Changelog.md#CastLike-23">23</a>, <a href="Changelog.md#CastLike-21">21</a>, <a href="Changelog.md#CastLike-19">19</a>, <a href="Changelog.md#CastLike-15">15</a>|25|
 |<a href="#CausalConvWithState">CausalConvWithState</a>|<a href="Changelog.md#CausalConvWithState-27">27</a>|27|
-|<a href="#Celu">Celu</a>|<a href="Changelog.md#Celu-12">12</a>|12|
+|<a href="#Celu">Celu</a>|<a href="Changelog.md#Celu-28">28</a>, <a href="Changelog.md#Celu-12">12</a>|28|
 |<a href="#CenterCropPad">CenterCropPad</a>|<a href="Changelog.md#CenterCropPad-18">18</a>|18|
 |<a href="#Clip">Clip</a>|<a href="Changelog.md#Clip-13">13</a>, <a href="Changelog.md#Clip-12">12</a>, <a href="Changelog.md#Clip-11">11</a>, <a href="Changelog.md#Clip-6">6</a>, <a href="Changelog.md#Clip-1">1</a>|13|
 |<a href="#DynamicQuantizeLinear">DynamicQuantizeLinear</a>|<a href="Changelog.md#DynamicQuantizeLinear-11">11</a>|11|
@@ -212,6 +212,7 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#SoftmaxCrossEntropyLoss">SoftmaxCrossEntropyLoss</a>|<a href="Changelog.md#SoftmaxCrossEntropyLoss-13">13</a>, <a href="Changelog.md#SoftmaxCrossEntropyLoss-12">12</a>|13|
 |<a href="#Softplus">Softplus</a>|<a href="Changelog.md#Softplus-22">22</a>, <a href="Changelog.md#Softplus-1">1</a>|18|
 |<a href="#Softsign">Softsign</a>|<a href="Changelog.md#Softsign-22">22</a>, <a href="Changelog.md#Softsign-1">1</a>|18|
+|<a href="#SwiGLU">SwiGLU</a>|<a href="Changelog.md#SwiGLU-28">28</a>|28|
 |<a href="#Swish">Swish</a>|<a href="Changelog.md#Swish-24">24</a>|24|
 |<a href="#ThresholdedRelu">ThresholdedRelu</a>|<a href="Changelog.md#ThresholdedRelu-22">22</a>, <a href="Changelog.md#ThresholdedRelu-10">10</a>|18|
 
@@ -8399,7 +8400,9 @@ expect(node, inputs=[x], outputs=[y], name="test_ceil")
 
 #### Version
 
-This version of the operator has been available since version 12 of the default ONNX operator set.
+This version of the operator has been available since version 28 of the default ONNX operator set.
+
+Other versions of this operator: <a href="Changelog.md#Celu-12">12</a>
 
 #### Attributes
 
@@ -8425,8 +8428,8 @@ This version of the operator has been available since version 12 of the default 
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float)</dt>
-<dd>Constrain input and output types to float32 tensors.</dd>
+<dt><tt>T</tt> : tensor(bfloat16), tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
 
@@ -8471,6 +8474,64 @@ negative_input = np.minimum(0, alpha * (np.exp(input_data / alpha) - 1))
 expected_output = positive_input + negative_input
 
 expect(node, inputs=[input_data], outputs=[expected_output], name="test_celu")
+```
+
+</details>
+
+
+<details>
+<summary>celu_bfloat16</summary>
+
+```python
+alpha = 2.0
+node = onnx.helper.make_node(
+    "Celu",
+    inputs=["X"],
+    outputs=["Y"],
+    alpha=alpha,
+)
+
+input_data = np.array([-3.0, -0.5, 0.0, 0.5, 3.0], dtype=ml_dtypes.bfloat16)
+
+positive_input = np.maximum(0, input_data)
+negative_input = np.minimum(0, alpha * (np.exp(input_data / alpha) - 1))
+expected_output = (positive_input + negative_input).astype(ml_dtypes.bfloat16)
+
+expect(
+    node,
+    inputs=[input_data],
+    outputs=[expected_output],
+    name="test_celu_bfloat16",
+)
+```
+
+</details>
+
+
+<details>
+<summary>celu_float16</summary>
+
+```python
+alpha = 2.0
+node = onnx.helper.make_node(
+    "Celu",
+    inputs=["X"],
+    outputs=["Y"],
+    alpha=alpha,
+)
+
+input_data = np.array([-3.0, -0.5, 0.0, 0.5, 3.0], dtype=np.float16)
+
+positive_input = np.maximum(0, input_data)
+negative_input = np.minimum(0, alpha * (np.exp(input_data / alpha) - 1))
+expected_output = (positive_input + negative_input).astype(np.float16)
+
+expect(
+    node,
+    inputs=[input_data],
+    outputs=[expected_output],
+    name="test_celu_float16",
+)
 ```
 
 </details>
@@ -24947,6 +25008,43 @@ expect(
 
 
 <details>
+<summary>with_out_of_range_indices</summary>
+
+```python
+axisValue = 1
+on_value = 3
+off_value = 1
+output_type = np.float32
+node = onnx.helper.make_node(
+    "OneHot",
+    inputs=["indices", "depth", "values"],
+    outputs=["y"],
+    axis=axisValue,
+)
+# Indices outside [-depth, depth-1] map to an all-off_value row.
+indices = np.array([5, -6, -1], dtype=np.int64)
+
+# print(y)
+# [[1. 1. 1. 1. 1.]
+#  [1. 1. 1. 1. 1.]
+#  [1. 1. 1. 1. 3.]]
+
+depth = np.float32(5)
+values = np.array([off_value, on_value], dtype=output_type)
+y = one_hot(indices, depth, axis=axisValue, dtype=output_type)
+y = y * (on_value - off_value) + off_value
+expect(
+    node,
+    inputs=[indices, depth, values],
+    outputs=[y],
+    name="test_onehot_out_of_range_indices",
+)
+```
+
+</details>
+
+
+<details>
 <summary>without_axis</summary>
 
 ```python
@@ -34999,6 +35097,34 @@ expect(
 
 
 <details>
+<summary>scatternd_max_with_element_indices</summary>
+
+```python
+node = onnx.helper.make_node(
+    "ScatterND",
+    inputs=["data", "indices", "updates"],
+    outputs=["y"],
+    reduction="max",
+)
+data = np.array([[1, 2], [3, 4]], dtype=np.float32)
+# Indices address individual elements (index rank == data rank),
+# which exercises the reduction at the element level.
+indices = np.array([[0, 0], [1, 1]], dtype=np.int64)
+updates = np.array([5, 1], dtype=np.float32)
+# Expecting output as np.array([[5, 2], [3, 4]], dtype=np.float32)
+output = scatter_nd_impl(data, indices, updates, reduction="max")
+expect(
+    node,
+    inputs=[data, indices, updates],
+    outputs=[output],
+    name="test_scatternd_max_with_element_indices",
+)
+```
+
+</details>
+
+
+<details>
 <summary>scatternd_min</summary>
 
 ```python
@@ -35036,6 +35162,32 @@ expect(
     inputs=[data, indices, updates],
     outputs=[output],
     name="test_scatternd_min",
+)
+```
+
+</details>
+
+
+<details>
+<summary>scatternd_min_with_element_indices</summary>
+
+```python
+node = onnx.helper.make_node(
+    "ScatterND",
+    inputs=["data", "indices", "updates"],
+    outputs=["y"],
+    reduction="min",
+)
+data = np.array([[1, 2], [3, 4]], dtype=np.float32)
+indices = np.array([[0, 0], [1, 1]], dtype=np.int64)
+updates = np.array([5, 1], dtype=np.float32)
+# Expecting output as np.array([[1, 2], [3, 1]], dtype=np.float32)
+output = scatter_nd_impl(data, indices, updates, reduction="min")
+expect(
+    node,
+    inputs=[data, indices, updates],
+    outputs=[output],
+    name="test_scatternd_min_with_element_indices",
 )
 ```
 
@@ -39840,6 +39992,145 @@ expect(
 </details>
 
 
+### <a name="SwiGLU"></a><a name="swiglu">**SwiGLU**</a>
+
+  SwiGLU is a gated activation that takes two inputs, a gate `A` and a linear (value)
+  input `B`, and produces one output `Y`. It applies the Swish activation to the gate
+  and multiplies the result elementwise by the linear input:
+
+  ```
+  Y = Swish_alpha(A) * B
+  ```
+
+  The gate activation `Swish_alpha` is exactly the `Swish` operator with the same
+  `alpha`, i.e. `Swish_alpha(a) = a * Sigmoid(alpha * a)`. Inputs `A` and `B` must
+  have identical shapes; broadcasting is not applied and the output `Y` has the same
+  shape as the inputs.
+
+  Exporters typically produce `A` and `B` in one of two ways: for the common
+  two-projection form (e.g. Llama's `gate_proj`/`up_proj`) wire the two projection
+  outputs directly to `A` (gate) and `B` (value); for a fused/packed single
+  projection, split it upstream into `A` and `B` with `Split` (contiguous layout)
+  or `Slice`/`Gather` (interleaved layout).
+
+#### Version
+
+This version of the operator has been available since version 28 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>alpha</tt> : float (default is 1.0)</dt>
+<dd>Coefficient that scales the gate input inside the sigmoid of the Swish activation. The default value is 1.0.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>A</tt> (differentiable) : T</dt>
+<dd>Gate input tensor</dd>
+<dt><tt>B</tt> (differentiable) : T</dt>
+<dd>Linear (value) input tensor</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> (differentiable) : T</dt>
+<dd>Output tensor</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(bfloat16), tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>alpha</summary>
+
+```python
+node = onnx.helper.make_node(
+    "SwiGLU",
+    inputs=["a", "b"],
+    outputs=["y"],
+    alpha=0.5,  # pass alpha as attribute
+)
+
+a = np.array([[1.0, -2.0, 3.0, 4.0], [-1.0, 2.0, -3.0, 0.5]], dtype=np.float32)
+b = np.array([[0.5, 1.0, -1.0, 2.0], [2.0, -1.0, 0.5, 1.0]], dtype=np.float32)
+y = swiglu(a, b, alpha=0.5)
+
+expect(
+    node,
+    inputs=[a, b],
+    outputs=[y],
+    name="test_swiglu_alpha",
+    opset_imports=[onnx.helper.make_opsetid("", 28)],
+)
+```
+
+</details>
+
+
+<details>
+<summary>float16</summary>
+
+```python
+node = onnx.helper.make_node(
+    "SwiGLU",
+    inputs=["a", "b"],
+    outputs=["y"],
+)
+
+a = np.array([[1.0, -2.0, 3.0, 4.0], [-1.0, 2.0, -3.0, 0.5]], dtype=np.float16)
+b = np.array([[0.5, 1.0, -1.0, 2.0], [2.0, -1.0, 0.5, 1.0]], dtype=np.float16)
+y = swiglu(a.astype(np.float32), b.astype(np.float32), alpha=1.0).astype(
+    np.float16
+)
+
+expect(
+    node,
+    inputs=[a, b],
+    outputs=[y],
+    name="test_swiglu_float16",
+    opset_imports=[onnx.helper.make_opsetid("", 28)],
+)
+```
+
+</details>
+
+
+<details>
+<summary>swiglu</summary>
+
+```python
+node = onnx.helper.make_node(
+    "SwiGLU",
+    inputs=["a", "b"],
+    outputs=["y"],
+)
+
+a = np.array([[1.0, -2.0, 3.0, 4.0], [-1.0, 2.0, -3.0, 0.5]], dtype=np.float32)
+b = np.array([[0.5, 1.0, -1.0, 2.0], [2.0, -1.0, 0.5, 1.0]], dtype=np.float32)
+y = swiglu(a, b, alpha=1.0)
+
+expect(
+    node,
+    inputs=[a, b],
+    outputs=[y],
+    name="test_swiglu",
+    opset_imports=[onnx.helper.make_opsetid("", 28)],
+)
+```
+
+</details>
+
+
 ### <a name="Swish"></a><a name="swish">**Swish**</a>
 
   Swish function takes one input data (Tensor<T>) and produces one output data (Tensor<T>) of the same shape,
@@ -41103,15 +41394,21 @@ expect(
 ### <a name="Transpose"></a><a name="transpose">**Transpose**</a>
 
   Returns a transpose of the input tensor. (Similar to `numpy.transpose`).
-  The optional attribute `perm` must be a permutation of the dimensions of
-  the input tensor. Axis `i` of the output tensor corresponds to the axis
-  `perm[i]` of the input tensor.
+  The optional attribute `perm` specifies the permutation of the axes of the
+  input tensor. `perm` must contain each axis index in `[0, n-1]` exactly once,
+  so its length is equal to the rank `n` of the input tensor.
+
+  Axis `i` of the output tensor corresponds to axis `perm[i]` of the input tensor.
+
+  If the attribute is omitted, its default value is `(n-1, ..., 0)`, where `n`
+  is the rank of the input tensor (that is, the dimensions are reversed).
+
   For example, when perm=(1, 0, 2), given an input tensor of shape (1, 2, 3),
   the output shape will be (2, 1, 3).
   When perm=(1, 2, 0), given an input tensor of shape (1, 2, 3),
   the output shape will be (2, 3, 1).
-  If the attribute `perm` is omitted, its default value is `(n-1, ..., 0)`,
-  where `n` is the rank of the input tensor.
+  A 0-D or 1-D input is valid; in those cases the output has the same shape
+  as the input.
 
 #### Version
 
@@ -41123,7 +41420,7 @@ Other versions of this operator: <a href="Changelog.md#Transpose-1">1</a>, <a hr
 
 <dl>
 <dt><tt>perm</tt> : list of ints</dt>
-<dd>A list of integers. By default, reverse the dimensions, otherwise permute the axes according to the values given. Its length must be equal to the rank of the input.</dd>
+<dd>A list of integers. By default, reverse the dimensions; otherwise permute the axes according to the values given. Its length must be equal to the rank of the input, and each value must be in the range `[0, rank-1]`.</dd>
 </dl>
 
 #### Inputs
