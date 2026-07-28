@@ -696,7 +696,9 @@ class TestShapeInference(TestShapeInferenceHelper):
             [],
         )
         with pytest.raises(onnx.shape_inference.InferenceError):
-            self._inferred(graph, opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)])
+            self._inferred(
+                graph, opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)]
+            )
 
     def test_concat_missing_shape(self) -> None:
         graph = self._make_graph(
