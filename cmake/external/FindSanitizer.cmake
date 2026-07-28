@@ -83,6 +83,16 @@ int main(int argc, char** argv) {
 }
 ]==])
 
+set(_bug_type_code
+    [==[
+int main(int argc, char **argv) {
+  int i = argc;
+  float *p = (float *)&i;
+  *p = 1.0f;  // BOOM: write through a type incompatible with the allocation
+  return (int)*p;
+}
+]==])
+
 include(CMakePushCheckState)
 foreach(lang IN LISTS languages)
   if(lang STREQUAL C OR lang STREQUAL CXX)
