@@ -4,7 +4,6 @@
 
 #include "onnx/defs/data_type_utils.h"
 
-#include <cctype>
 #include <string>
 #include <string_view>
 #include <unordered_map>
@@ -13,6 +12,11 @@
 namespace ONNX_NAMESPACE {
 namespace Utils {
 namespace {
+
+// ASCII-only whitespace check; isspace is locale-dependent.
+constexpr bool IsAsciiSpace(char c) {
+  return c == ' ' || c == '\t' || c == '\n' || c == '\v' || c == '\f' || c == '\r';
+}
 
 // Singleton wrapper around allowed data types.
 // This implements construct on first use which is needed to ensure
@@ -279,7 +283,7 @@ bool StringRange::EndsWith(const StringRange& str) const {
 
 bool StringRange::LStrip() {
   size_t count = 0;
-  while (count < view_.size() && isspace(static_cast<unsigned char>(view_[count]))) {
+  while (count < view_.size() && IsAsciiSpace(view_[count])) {
     ++count;
   }
   if (count > 0) {
@@ -305,7 +309,7 @@ bool StringRange::LStrip(StringRange str) {
 
 bool StringRange::RStrip() {
   size_t count = 0;
-  while (count < view_.size() && isspace(static_cast<unsigned char>(view_[view_.size() - 1 - count]))) {
+  while (count < view_.size() && IsAsciiSpace(view_[view_.size() - 1 - count])) {
     ++count;
   }
   if (count > 0) {
