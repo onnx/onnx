@@ -28,15 +28,15 @@ def generate_data(args: argparse.Namespace) -> None:
     node_root = os.path.join(args.output, "node")
     # Every entry under node_root is a directory holding one test case, so count
     # directories and resolve each name against node_root rather than the cwd.
+    # Use os.path.isdir rather than os.path.exists so that a stale file named
+    # "node" does not raise NotADirectoryError from os.listdir below.
     original_dir_number = (
-        len(
-            [
-                name
-                for name in os.listdir(node_root)
-                if os.path.isdir(os.path.join(node_root, name))
-            ]
+        sum(
+            1
+            for name in os.listdir(node_root)
+            if os.path.isdir(os.path.join(node_root, name))
         )
-        if os.path.exists(node_root)
+        if os.path.isdir(node_root)
         else 0
     )
     if args.clean and os.path.exists(node_root):
