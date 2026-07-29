@@ -8,6 +8,7 @@
 #include <utility>
 #include <vector>
 
+#include "onnx/defs/doc_strings.h"
 #include "onnx/defs/type_builders.h"
 
 namespace ONNX_NAMESPACE {
@@ -159,6 +160,78 @@ UnaryFloatMathOpGenerator(const char* doc, const char* output_description, std::
         .Output(0, "output", output_description, "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
         .TypeConstraint("T", allowed_types, "Constrain input and output types to float tensors.")
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput);
+  };
+}
+
+std::function<void(OpSchema&)> MathDocGenerator_v14(const char* name) {
+  return [=](OpSchema& schema) {
+    std::string doc;
+    if (std::string(name) == "division") {
+      POPULATE_OP_DOC_STR(
+          doc = R"DOC(
+Performs element-wise binary {name} (with Numpy-style broadcasting support).
+
+{broadcast_doc}
+
+For integer inputs, the result is computed using truncating division (rounding toward zero).
+(Opset 14 change): Extend supported types to include uint8, int8, uint16, and int16.
+)DOC";
+          ReplaceAll(doc, "{name}", name);
+          ReplaceAll(doc, "{broadcast_doc}", GenerateBroadcastingDocMul().c_str()););
+    } else {
+      POPULATE_OP_DOC_STR(
+          doc = R"DOC(
+Performs element-wise binary {name} (with Numpy-style broadcasting support).
+
+{broadcast_doc}
+
+(Opset 14 change): Extend supported types to include uint8, int8, uint16, and int16.
+)DOC";
+          ReplaceAll(doc, "{name}", name);
+          ReplaceAll(doc, "{broadcast_doc}", GenerateBroadcastingDocMul().c_str()););
+    }
+    schema.SetDoc(doc);
+    schema.Input(0, "A", "First operand.", "T", OpSchema::Single, true, 1, OpSchema::Differentiable);
+    schema.Input(1, "B", "Second operand.", "T", OpSchema::Single, true, 1, OpSchema::Differentiable);
+    schema.Output(
+        0,
+        "C",
+        "Result, has same element type as two inputs",
+        "T",
+        OpSchema::Single,
+        true,
+        1,
+        OpSchema::Differentiable);
+    schema.TypeConstraint(
+        "T", OpSchema::all_numeric_types_ir4(), "Constrain input and output types to all numeric tensors.");
+    schema.TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+      propagateElemTypeFromInputToOutput(ctx, 0, 0);
+      if (hasNInputShapes(ctx, 2))
+        bidirectionalBroadcastShapeInference(
+            ctx.getInputType(0)->tensor_type().shape(),
+            ctx.getInputType(1)->tensor_type().shape(),
+            *ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape());
+    });
+  };
+}
+
+std::function<void(OpSchema&)> PowOpGenerator(std::vector<std::string> t_types, std::vector<std::string> t1_types) {
+  return [t_types = std::move(t_types), t1_types = std::move(t1_types)](OpSchema& schema) {
+    schema.SetDoc(GET_OP_DOC_STR(std::string(kDoc_Pow_ver13) + GenerateBroadcastingDocMul()))
+        .Input(0, "X", "First operand, base of the exponent.", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
+        .Input(
+            1, "Y", "Second operand, power of the exponent.", "T1", OpSchema::Single, true, 1, OpSchema::Differentiable)
+        .Output(0, "Z", "Output tensor", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
+        .TypeConstraint("T", t_types, "Constrain input X and output types to float/int tensors.")
+        .TypeConstraint("T1", t1_types, "Constrain input Y types to float/int tensors.")
+        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+          propagateElemTypeFromInputToOutput(ctx, 0, 0);
+          if (hasNInputShapes(ctx, 2))
+            bidirectionalBroadcastShapeInference(
+                ctx.getInputType(0)->tensor_type().shape(),
+                ctx.getInputType(1)->tensor_type().shape(),
+                *ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape());
+        });
   };
 }
 
