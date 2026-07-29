@@ -30,11 +30,15 @@ def generate_data(args: argparse.Namespace) -> None:
     # directories and resolve each name against node_root rather than the cwd.
     # Use os.path.isdir rather than os.path.exists so that a stale file named
     # "node" does not raise NotADirectoryError from os.listdir below.
+    # Mirror the generation/cleanup filter: when ONNX_ML is disabled, ai.onnx.ml
+    # test-case directories are neither regenerated nor cleaned, so they must not
+    # be counted here either, or the mismatch check would always fire for them.
     original_dir_number = (
         sum(
             1
             for name in os.listdir(node_root)
             if os.path.isdir(os.path.join(node_root, name))
+            and (ONNX_ML or not name.startswith("test_ai_onnx_ml_"))
         )
         if os.path.isdir(node_root)
         else 0
