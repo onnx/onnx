@@ -75,11 +75,8 @@ class _CommonQuantizeLinear(OpRun):
             )
 
         # Compute
-        zero_point = (
-            _reshape_input(zero_point, x.shape, axis, block_size)
-            if zero_point is not None
-            else 0
-        )
+        if zero_point is not None:
+            zero_point = _reshape_input(zero_point, x.shape, axis, block_size)
         if precision:
             precision_np = tensor_dtype_to_np_dtype(precision)
             x = x.astype(precision_np) / y_scale.astype(precision_np)
@@ -88,7 +85,8 @@ class _CommonQuantizeLinear(OpRun):
 
         if tensor_type in _QUANT_INTEGER_RANGES:
             xi = np.rint(x).astype(np.int32)
-            xi += zero_point
+            if zero_point is not None:
+                xi += zero_point
             dtype = tensor_dtype_to_np_dtype(tensor_type)
             quant_range = _QUANT_INTEGER_RANGES[tensor_type]
             return (np.clip(xi, quant_range[0], quant_range[1]).astype(dtype),)
@@ -108,7 +106,8 @@ class _CommonQuantizeLinear(OpRun):
             return (x.astype(tensor_dtype_to_np_dtype(tensor_type)),)
 
         if tensor_type == TensorProto.FLOAT4E2M1:
-            x += zero_point
+            if zero_point is not None:
+                x = x + zero_point
             return (x.astype(tensor_dtype_to_np_dtype(tensor_type)),)
 
         raise ValueError(
