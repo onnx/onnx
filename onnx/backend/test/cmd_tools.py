@@ -39,7 +39,7 @@ def generate_data(args: argparse.Namespace) -> None:
         if os.path.isdir(node_root)
         else 0
     )
-    if args.clean and os.path.exists(node_root):
+    if args.clean and os.path.isdir(node_root):
         for sub_dir in os.listdir(node_root):
             if ONNX_ML or not sub_dir.startswith("test_ai_onnx_ml_"):
                 shutil.rmtree(os.path.join(node_root, sub_dir))
