@@ -122,6 +122,7 @@ class NameGenerator : private internal::Visitor {
     existing_names_.insert(name);
   }
 
+ private:
   bool ProcessGraph(const GraphProto& graph) override {
     for (const auto& x : graph.input())
       Add(x.name());
@@ -154,7 +155,6 @@ class NameGenerator : private internal::Visitor {
     return true;
   }
 
- private:
   unsigned int index_;
   std::unordered_set<std::string> existing_names_;
 };

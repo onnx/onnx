@@ -53,6 +53,11 @@ class TestSchema:
             == defs.OpSchema.NodeDeterminism.Deterministic
         )
         assert not cast_like_schema.non_deterministic
+        range_schema = defs.get_schema("Range")
+        assert (
+            range_schema.node_determinism == defs.OpSchema.NodeDeterminism.Deterministic
+        )
+        assert not range_schema.non_deterministic
         if_schema = defs.get_schema("If")
         assert (
             if_schema.node_determinism == defs.OpSchema.NodeDeterminism.NonDeterministic

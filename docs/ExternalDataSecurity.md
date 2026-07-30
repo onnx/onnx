@@ -81,7 +81,7 @@ The canonical path containment checks (Layers 1 and 3) use string comparison. On
 Test coverage is in:
 
 - **C++**: `onnx/test/cpp/checker_test.cc` — `*SymLink*` tests for symlink detection and containment, `OpenExternalData*` for secure open and verification.
-- **Python**: `onnx/test/test_external_data.py`:
+- **Python**: `onnx/test/external_data_test.py`:
   - `TestSaveExternalDataSymlinkProtection` — save-side symlink rejection.
   - `TestLoadExternalDataSymlinkProtection` — load-side symlink rejection, parent-directory symlink, `load_external_data_for_model` rejection.
   - `TestLoadExternalDataHardlinkProtection` — load-side hardlink rejection.
@@ -153,7 +153,7 @@ In `load_external_data_for_tensor()` and `ModelContainer._load_large_initializer
 
 ## Testing
 
-Test coverage is in `onnx/test/test_external_data.py`:
+Test coverage is in `onnx/test/external_data_test.py`:
 
 - `TestExternalDataInfoSecurity`:
   - **CWE-915 (attribute injection):** `test_unknown_key_rejected`, `test_dunder_key_rejected`, `test_multiple_unknown_keys_all_rejected`, `test_allowed_keys_constant_is_frozen`

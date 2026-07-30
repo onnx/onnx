@@ -1068,15 +1068,21 @@ ONNX_OPERATOR_SET_SCHEMA(
 
 const char* Transpose_doc = R"DOC(
 Returns a transpose of the input tensor. (Similar to `numpy.transpose`).
-The optional attribute `perm` must be a permutation of the dimensions of
-the input tensor. Axis `i` of the output tensor corresponds to the axis
-`perm[i]` of the input tensor.
+The optional attribute `perm` specifies the permutation of the axes of the
+input tensor. `perm` must contain each axis index in `[0, n-1]` exactly once,
+so its length is equal to the rank `n` of the input tensor.
+
+Axis `i` of the output tensor corresponds to axis `perm[i]` of the input tensor.
+
+If the attribute is omitted, its default value is `(n-1, ..., 0)`, where `n`
+is the rank of the input tensor (that is, the dimensions are reversed).
+
 For example, when perm=(1, 0, 2), given an input tensor of shape (1, 2, 3),
 the output shape will be (2, 1, 3).
 When perm=(1, 2, 0), given an input tensor of shape (1, 2, 3),
 the output shape will be (2, 3, 1).
-If the attribute `perm` is omitted, its default value is `(n-1, ..., 0)`,
-where `n` is the rank of the input tensor.
+A 0-D or 1-D input is valid; in those cases the output has the same shape
+as the input.
 )DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
@@ -1086,9 +1092,10 @@ ONNX_OPERATOR_SET_SCHEMA(
         .SetDoc(Transpose_doc)
         .Attr(
             "perm",
-            "A list of integers. By default, reverse the dimensions, "
+            "A list of integers. By default, reverse the dimensions; "
             "otherwise permute the axes according to the values given. "
-            "Its length must be equal to the rank of the input.",
+            "Its length must be equal to the rank of the input, and each "
+            "value must be in the range `[0, rank-1]`.",
             AttributeProto::INTS,
             OPTIONAL_VALUE)
         .Input(0, "data", "An input tensor.", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)

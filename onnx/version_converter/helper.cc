@@ -6,7 +6,6 @@
 
 #include "onnx/version_converter/helper.h"
 
-#include <cinttypes>
 #include <vector>
 
 namespace ONNX_NAMESPACE {
