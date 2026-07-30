@@ -1,0 +1,52 @@
+# Copyright (c) ONNX Project Contributors
+#
+# SPDX-License-Identifier: Apache-2.0
+
+# Downstream integration check: build onnxruntime against the onnx
+# revision of this branch/PR.
+name: Integration test onnxruntime
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-onnxruntime:
+    name: Build onnxruntime against this onnx
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout onnx (this PR branch)
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          path: onnx
+          persist-credentials: false
+
+      - name: Checkout onnxruntime main
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          repository: microsoft/onnxruntime
+          ref: main
+          path: onnxruntime
+          persist-credentials: false
+
+      - name: Set up pixi
+        uses: prefix-dev/setup-pixi@5185adfbffb4bd703da3010310260805d89ebb11 # v0.9.6
+        with:
+          manifest-path: onnx/pixi.toml
+          environments: ort
+
+      - name: Build onnxruntime against this onnx
+        working-directory: onnx
+        env:
+          FETCHCONTENT_SOURCE_DIR_ONNX: ${{ github.workspace }}/onnx
+        run: pixi run -e ort build-onnxruntime ${{ github.workspace }}/onnxruntime
+
+      - name: Test onnxruntime
+        working-directory: onnx
+        run: pixi run -e ort test-onnxruntime

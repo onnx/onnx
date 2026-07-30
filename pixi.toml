@@ -168,6 +168,36 @@ reuse = ">=6.2.0,<7"
 [feature.reuse.tasks.reuse]
 cmd = "reuse"
 
+# Toolchain for the onnxruntime downstream integration check
+# (see .github/workflows/downstream_onnxruntime.yml).
+[feature.ort.dependencies]
+cmake = ">=3.30.2"
+make = "*"
+ninja = "*"
+numpy = "*"
+pip = "*"
+protobuf = "*"
+libdate = ">=3.0.1,<4"
+c-compiler = ">=1.8.0,<2"
+cxx-compiler = ">=1.8.0,<2"
+packaging = ">=24.1"
+setuptools = ">=75.6.0"
+sympy = "*"
+pytest = ">=8.4.2"
+parameterized = ">=0.9.0"
+
+# Build onnxruntime. `src_dir` points at an onnxruntime checkout.
+# FETCHCONTENT_SOURCE_DIR_ONNX makes onnxruntime build against a local
+# onnx source tree instead of its pinned release (this also skips
+# onnxruntime's onnx patch step).
+[feature.ort.tasks.build-onnxruntime]
+args = [{ "arg" = "src_dir" }]
+cmd = 'python {{ src_dir }}/tools/ci_build/build.py --update --build --build_wheel --enable_pybind --build_dir build --config Release --parallel --compile_no_warning_as_error --skip_pip_install'
+
+# Run onnxruntime's ctest suite against the build produced above.
+[feature.ort.tasks.test-onnxruntime]
+cmd = "ctest -V -C Release --test-dir build/Release/"
+
 [environments]
 default = ["dev", "lint", "reference"]
 oldies = ["dev", "lint", "reference", "oldies"]
@@ -178,3 +208,4 @@ clang-tools = {features=["clang-tools"], no-default-feature=true}
 link-checker = {features=["link-checker"], no-default-feature=true}
 lintrunner = ["dev", "reference", "lint", "lintrunner"]
 reuse = {features=["reuse"], no-default-feature=true}
+ort = {features=["ort"], no-default-feature=true}
