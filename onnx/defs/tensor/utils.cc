@@ -520,6 +520,12 @@ void oneHotShapeInference(InferenceContext& ctx, int version) {
       } else if (indices_data->data_type() == TensorProto::INT32) {
         const auto indices = ParseData<int32_t>(indices_data);
         has_negative = std::any_of(indices.begin(), indices.end(), is_negative);
+      } else if (indices_data->data_type() == TensorProto::FLOAT) {
+        const auto indices = ParseData<float>(indices_data);
+        has_negative = std::any_of(indices.begin(), indices.end(), is_negative);
+      } else if (indices_data->data_type() == TensorProto::DOUBLE) {
+        const auto indices = ParseData<double>(indices_data);
+        has_negative = std::any_of(indices.begin(), indices.end(), is_negative);
       }
       if (has_negative) {
         fail_shape_inference("Input 'indices' must be non-negative for OneHot opset < 11.");
@@ -537,22 +543,40 @@ void oneHotShapeInference(InferenceContext& ctx, int version) {
   std::optional<int64_t> depth_value;
   if (hasInputShape(ctx, 1)) {
     auto& depth_shape = getInputShape(ctx, 1);
-    // Validate the 'depth' shape before reading its data so that a tensor
-    // claiming zero (or more than one) elements is rejected rather than read
-    // out of bounds.
     if (depth_shape.dim_size() != 0 && depth_shape.dim_size() != 1) {
       fail_type_inference("Input 'depth' must be a scalar or rank 1 tensor.");
     }
-    if (depth_shape.dim_size() == 1 && depth_shape.dim(0).has_dim_value() && depth_shape.dim(0).dim_value() != 1) {
-      fail_type_inference("Input 'depth' must have exactly one element.");
+    // A rank-1 'depth' must hold at most one element. A zero-element tensor is
+    // tolerated here (the output depth dimension is simply left unknown) rather
+    // than rejected, but more than one element is an error.
+    if (depth_shape.dim_size() == 1 && depth_shape.dim(0).has_dim_value() && depth_shape.dim(0).dim_value() > 1) {
+      fail_type_inference("Input 'depth' must have at most one element.");
     }
     if (const TensorProto* depth_data = ctx.getInputData(1)) {
+      // Read the concrete 'depth' value from the parsed data rather than
+      // trusting the declared shape: the two can disagree (e.g. a scalar or
+      // dynamic-rank-1 value_info backed by a zero-element initializer). Guard
+      // the index so an empty parse leaves 'depth' unknown instead of reading
+      // out of bounds.
       if (depth_data->data_type() == TensorProto::INT64) {
-        depth_value = ParseData<int64_t>(depth_data)[0];
+        const auto depth_data_parsed = ParseData<int64_t>(depth_data);
+        if (!depth_data_parsed.empty()) {
+          depth_value = depth_data_parsed[0];
+        }
       } else if (depth_data->data_type() == TensorProto::INT32) {
-        depth_value = ParseData<int32_t>(depth_data)[0];
+        const auto depth_data_parsed = ParseData<int32_t>(depth_data);
+        if (!depth_data_parsed.empty()) {
+          depth_value = depth_data_parsed[0];
+        }
       } else if (depth_data->data_type() == TensorProto::FLOAT) {
-        depth_value = static_cast<int64_t>(ParseData<float>(depth_data)[0]);
+        const auto depth_data_parsed = ParseData<float>(depth_data);
+        if (!depth_data_parsed.empty()) {
+          depth_value = static_cast<int64_t>(depth_data_parsed[0]);
+        }
+      }
+      // A negative 'depth' cannot describe a valid output dimension.
+      if (depth_value && *depth_value < 0) {
+        fail_shape_inference("Input 'depth' must be non-negative.");
       }
     }
   }
