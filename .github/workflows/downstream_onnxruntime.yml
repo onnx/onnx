@@ -26,7 +26,7 @@ jobs:
     # Building onnxruntime is expensive, so on pull requests only run
     # when the 'run onnxruntime CI' label is set (akin to 'run release CIs').
     if: github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'run onnxruntime CI')
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04-arm
     steps:
       - name: Checkout onnx (this PR branch)
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
@@ -50,9 +50,7 @@ jobs:
 
       - name: Build onnxruntime against this onnx
         working-directory: onnx
-        env:
-          FETCHCONTENT_SOURCE_DIR_ONNX: ${{ github.workspace }}/onnx
-        run: pixi run -e ort build-onnxruntime ${{ github.workspace }}/onnxruntime
+        run: pixi run -e ort build-onnxruntime ${{ github.workspace }}/onnxruntime ${{ github.workspace }}/onnx
 
       - name: Test onnxruntime
         working-directory: onnx

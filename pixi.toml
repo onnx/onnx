@@ -176,7 +176,7 @@ cmake = ">=3.30.2"
 cxx-compiler = ">=1.8.0,<2"
 eigen = ">=5.0.1,<6"
 git = ">=2.55.0,<3"
-libabseil = "==20250814"
+libabseil = "==20250814"  # must match onnxruntime's pinned abseil
 libdate = ">=3.0.1,<4"
 libprotobuf = "<7"
 make = "*"
@@ -192,16 +192,13 @@ setuptools = ">=75.6.0"
 sympy = "*"
 wheel = ">=0.47.0"
 
-# Build onnxruntime. `src_dir` points at an onnxruntime checkout.
-# FETCHCONTENT_SOURCE_DIR_ONNX makes onnxruntime build against a local
-# onnx source tree instead of its pinned release (this also skips
-# onnxruntime's onnx patch step).
-# FETCHCONTENT_TRY_FIND_PACKAGE_MODE=ALWAYS is used to make
-# onnxruntime use conda-forge dependencies for a faster build.
-# ONNX_CUSTOM_PROTOC_EXECUTABLE points ort at the conda-forge's protoc
+# FETCHCONTENT_SOURCE_DIR_ONNX builds onnxruntime against the local onnx
+# tree; it must be a -D cache var (CMake ignores it in the environment).
+# TRY_FIND_PACKAGE_MODE=ALWAYS reuses conda-forge deps; the custom protoc
+# must match the conda-forge libprotobuf headers.
 [feature.ort.tasks.build-onnxruntime]
-args = [{ "arg" = "src_dir" }]
-cmd = 'python {{ src_dir }}/tools/ci_build/build.py --update --build --build_wheel --enable_pybind --build_dir build --config Release --parallel --compile_no_warning_as_error --skip_pip_install --cmake_extra_defines FETCHCONTENT_TRY_FIND_PACKAGE_MODE=ALWAYS ONNX_CUSTOM_PROTOC_EXECUTABLE="$CONDA_PREFIX/bin/protoc"'
+args = [{ "arg" = "onnxruntime_dir" }, { "arg" = "onnx_dir" }]
+cmd = 'python {{ onnxruntime_dir }}/tools/ci_build/build.py --update --build --build_wheel --enable_pybind --build_dir build --config Release --parallel --compile_no_warning_as_error --skip_pip_install --cmake_extra_defines FETCHCONTENT_TRY_FIND_PACKAGE_MODE=ALWAYS ONNX_CUSTOM_PROTOC_EXECUTABLE="$CONDA_PREFIX/bin/protoc" FETCHCONTENT_SOURCE_DIR_ONNX="{{ onnx_dir }}"'
 
 # Run onnxruntime's ctest suite against the build produced above.
 [feature.ort.tasks.test-onnxruntime]
