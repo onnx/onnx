@@ -5,7 +5,7 @@
 name: CI
 
 env:
-  ASAN_OPTIONS: detect_leaks=0:symbolize=1:detect_stack_use_after_return=true:strict_init_order=true:detect_odr_violation=1:detect_container_overflow=0:check_initialization_order=true:debug=true:fast_unwind_on_malloc=1:verify_asan_link_order=0
+  ASAN_OPTIONS: detect_leaks=0:symbolize=1:detect_stack_use_after_return=true:strict_init_order=true:detect_odr_violation=1:detect_container_overflow=1:check_initialization_order=true:debug=true:fast_unwind_on_malloc=1:verify_asan_link_order=0
   UBSAN_OPTIONS: print_stacktrace=1
 
 on:
@@ -104,7 +104,6 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
         with:
-          submodules: recursive
           persist-credentials: false
 
       - name: Set up Python
