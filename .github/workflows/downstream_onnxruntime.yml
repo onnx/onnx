@@ -8,6 +8,7 @@ name: Integration test onnxruntime
 
 on:
   workflow_dispatch:
+  pull_request:
 
 permissions:
   contents: read
