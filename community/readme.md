@@ -62,14 +62,16 @@ Member Companies can request their logo be displayed on the website and other ma
 
 The ONNX GitHub organization has a **limited number of GitHub organization membership seats**. These seats are a shared resource and must be actively managed.
 
+Every person granted GitHub organization membership is added to a GitHub Team corresponding to their sponsoring SIG (e.g., `sig-architecture-infra`), and repository permissions (Triage/Write/Maintain) are granted through that Team rather than directly to the individual. This keeps each seat traceable to a SIG and lets seat audits assess activity by area.
+
 **Removal triggers** — a person is removed from GitHub organization membership when any of the following apply:
 
-* No contribution activity (commits, PR reviews, issue comments, SIG meeting participation) for **12 consecutive months**, assessed at the annual review each January. This ends the member's Contributor/Approver governance status and SC election voting eligibility, consistent with the Contributors section above.
+* No contribution activity (commits, PR reviews, issue comments, SIG meeting participation) for **12 consecutive months**, assessed whenever the SIG Architecture & Infra chairs conduct an activity audit (see seat-pressure trigger below) rather than on a fixed calendar date. This ends the member's Contributor/Approver governance status and SC election voting eligibility, consistent with the Contributors section above.
 * The member explicitly resigns or notifies the SIG Architecture & Infra chairs that they are no longer active. This also ends their governance status and voting eligibility.
 * A Code of Conduct violation results in a ruling by the Steering Committee. This also ends their governance status and voting eligibility.
-* The organization is approaching its seat limit: if fewer than 5 seats remain, the SIG Architecture & Infra chairs will audit activity and remove the least-recently-active members' GitHub org membership first to free capacity, notifying affected members at least 2 weeks in advance. **This trigger is a seat-capacity action only** — it does not end the member's Contributor/Approver governance status or SC election voting eligibility.
+* The organization is approaching its seat limit: if fewer than 5 seats remain, the SIG Architecture & Infra chairs audit activity across SIG Teams and remove the least-recently-active members' GitHub org membership (i.e., their SIG Team membership) to free capacity, notifying affected members at least 2 weeks in advance. **This trigger is a seat-capacity action only** — it does not end the member's Contributor/Approver governance status or SC election voting eligibility.
 
-**Process:** The SIG Architecture & Infra chairs are responsible for conducting the annual review and for acting on seat-pressure removals. Members removed solely for seat capacity keep their Contributor/Approver governance status and voting eligibility, and may be re-added to the GitHub organization when a seat becomes available. Members removed for inactivity, resignation, or a Code of Conduct ruling must requalify through the normal sponsorship process to regain governance status.
+**Process:** The SIG Architecture & Infra chairs are responsible for conducting activity audits — triggered by seat pressure rather than a fixed schedule — and for acting on the resulting removals. Members removed solely for seat capacity keep their Contributor/Approver governance status and voting eligibility, and may be re-added to the GitHub organization (and their SIG Team) when a seat becomes available. Members removed for inactivity, resignation, or a Code of Conduct ruling must requalify through the normal sponsorship process to regain governance status.
 
 ## Organizational Structure
 
