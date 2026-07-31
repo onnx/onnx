@@ -4,6 +4,7 @@
 
 #include <cstdint>
 #include <limits>
+#include <stdexcept>
 #include <string>
 
 #include "gtest/gtest.h"
