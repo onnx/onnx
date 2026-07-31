@@ -1,0 +1,52 @@
+# Copyright (c) ONNX Project Contributors
+#
+# SPDX-License-Identifier: Apache-2.0
+
+name: Linux_No_Exception_CI
+
+on:
+   push:
+    branches: [ main, rel-* ]
+   pull_request:
+    branches: [ main, rel-* ]
+
+permissions:  # set top-level default permissions as security best practice
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}-${{ github.event_name == 'workflow_dispatch' }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build and test (${{ matrix.compiler }})
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        compiler: [gcc, clang]
+        include:
+          - compiler: gcc
+            cc: gcc
+            cxx: g++
+          - compiler: clang
+            cc: clang
+            cxx: clang++
+    steps:
+    - name: Checkout ONNX
+      uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      with:
+         persist-credentials: false
+
+    - name: Build and test ONNX binaries with exceptions disabled
+      env:
+        CC: ${{ matrix.cc }}
+        CXX: ${{ matrix.cxx }}
+      run: |
+        echo "Build ONNX with -DONNX_DISABLE_EXCEPTIONS=ON"
+        cmake -DONNX_WERROR=ON -DONNX_DISABLE_EXCEPTIONS=ON -DONNX_USE_LITE_PROTO=ON -DCMAKE_BUILD_TYPE=Release -DONNX_ML=1 -DONNX_BUILD_TESTS=ON -S . -B .setuptools-cmake-build
+        cmake --build .setuptools-cmake-build --parallel "$(nproc)"
+
+        echo "Run gtests"
+        export LD_LIBRARY_PATH="./.setuptools-cmake-build/:$LD_LIBRARY_PATH"
+        .setuptools-cmake-build/onnx_gtests
