@@ -72,6 +72,11 @@ void FunctionExpandHelper(
 
   const OpSchemaRegistry* schema_registry = OpSchemaRegistry::Instance();
   const auto* const schema = schema_registry->GetSchema(node.op_type(), domain_version, node.domain());
+  if (schema == nullptr) {
+    ONNX_THROW(
+        "No schema registered for op '" + node.op_type() + "' in domain '" + node.domain() + "' at version " +
+        std::to_string(domain_version) + " while expanding function node " + node_name);
+  }
   const auto& default_attrs = schema->attributes();
 
   for (const auto& [attr_name, attr] : default_attrs) {

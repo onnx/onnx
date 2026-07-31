@@ -502,7 +502,7 @@ OpSchema& OpSchema::Attr(
 #define ATTR_SETTER_WITH_SINGLE_VALUE(type, field, attrtype)                                                           \
   OpSchema& OpSchema::Attr(                                                                                            \
       std::string name, std::string description, AttributeProto::AttributeType attr_type, const type& default_value) { \
-    if (attrtype != attr_type) {                                                                                       \
+    if ((attrtype) != attr_type) {                                                                                     \
       fail_schema("Attribute specification type mismatch.");                                                           \
     }                                                                                                                  \
     AttributeProto a;                                                                                                  \
@@ -523,7 +523,7 @@ OpSchema& OpSchema::Attr(
       std::string description,                                              \
       AttributeProto::AttributeType attr_type,                              \
       const std::vector<type>& default_value) {                             \
-    if (attrtype != attr_type) {                                            \
+    if ((attrtype) != attr_type) {                                          \
       fail_schema("Attribute specification type mismatch.");                \
     }                                                                       \
     AttributeProto a;                                                       \
@@ -539,7 +539,7 @@ OpSchema& OpSchema::Attr(
 #define ATTR_SETTER_WITH_SINGLE_COMPLEXVALUE(type, field, attrtype)                                                    \
   OpSchema& OpSchema::Attr(                                                                                            \
       std::string name, std::string description, AttributeProto::AttributeType attr_type, const type& default_value) { \
-    if (attrtype != attr_type) {                                                                                       \
+    if ((attrtype) != attr_type) {                                                                                     \
       fail_schema("Attribute specification type mismatch.");                                                           \
     }                                                                                                                  \
     AttributeProto a;                                                                                                  \
@@ -556,7 +556,7 @@ OpSchema& OpSchema::Attr(
       std::string description,                                              \
       AttributeProto::AttributeType attr_type,                              \
       const std::vector<type>& default_value) {                             \
-    if (attrtype != attr_type) {                                            \
+    if ((attrtype) != attr_type) {                                          \
       fail_schema("Attribute specification type mismatch.");                \
     }                                                                       \
     AttributeProto a;                                                       \
@@ -1529,13 +1529,13 @@ OpSchema::NodeDeterminism OpSchema::GetNodeDeterminism() const {
       return NodeDeterminism::Unknown;
     } else if (const FunctionProto* func_proto = GetFunction(); func_proto) {
       const OpSchemaRegistry& reg = *OpSchemaRegistry::Instance();
-      std::unordered_map<std::string, int> domain_to_opset_version;
+      std::unordered_map<std::string, int64_t> domain_to_opset_version;
       for (const auto& opset : func_proto->opset_import()) {
         domain_to_opset_version[opset.domain()] = opset.version();
       }
       for (const NodeProto& n : func_proto->node()) {
-        const int opset = domain_to_opset_version[n.domain()];
-        const OpSchema* sch = reg.GetSchema(n.op_type(), opset, n.domain());
+        const int64_t opset = domain_to_opset_version[n.domain()];
+        const OpSchema* sch = reg.GetSchema(n.op_type(), static_cast<int>(opset), n.domain());
         if (!sch) {
           return NodeDeterminism::Unknown;
         }
@@ -1654,10 +1654,10 @@ OpName_Domain_Version_Schema_Map& OpSchemaRegistry::map() {
       if (OpSchemaRegistry::Instance()->GetLoadedSchemaVersion() == 0) {
         ONNX_ASSERTM(
             dbg_registered_schema_count == ONNX_DBG_GET_COUNT_IN_OPSETS(),
-            "%zu schema were exposed from operator sets and automatically placed into the static registry.  "
-            "%zu were expected based on calls to registration macros. Operator set functions may need to be updated.",
             dbg_registered_schema_count,
-            ONNX_DBG_GET_COUNT_IN_OPSETS())
+            " schema were exposed from operator sets and automatically placed into the static registry.  ",
+            ONNX_DBG_GET_COUNT_IN_OPSETS(),
+            " were expected based on calls to registration macros. Operator set functions may need to be updated.")
       }
 #endif
     }

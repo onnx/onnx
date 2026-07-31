@@ -112,8 +112,8 @@ Our goal is to enable a distributed decision structure and code ownership, as we
     * This SIG is responsible for determining the operators that are part of the ONNX spec (ONNX and ONNX-ML domains), ensuring high quality operator definitions and documentation, establishing criteria for adding new operators, managing ops domains and compliance tiers, and enforcing versioning mechanisms.
 * Converters
     * This SIG is responsible for developing and maintaining the various converter repositories under ONNX.
-* Model zoo and tutorials
-    * This SIG is responsible for the respective repositories with the charter of providing a comprehensive collection of state of the art ONNX models from a variety of sources and making it easy for users to get started with ONNX and the ecosystem around it.
+* Models and tutorials
+    * This SIG is responsible for tutorials and for maintaining the collection of ONNX models on the [ONNX community on Hugging Face](https://huggingface.co/onnx-community), with the charter of providing a comprehensive collection of state of the art ONNX models from a variety of sources and making it easy for users to get started with ONNX and the ecosystem around it.
 
 #### Structure
 

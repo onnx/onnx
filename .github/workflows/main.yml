@@ -5,7 +5,7 @@
 name: CI
 
 env:
-  ASAN_OPTIONS: detect_leaks=0:symbolize=1:detect_stack_use_after_return=true:strict_init_order=true:detect_odr_violation=1:detect_container_overflow=0:check_initialization_order=true:debug=true:fast_unwind_on_malloc=1:verify_asan_link_order=0
+  ASAN_OPTIONS: detect_leaks=0:symbolize=1:detect_stack_use_after_return=true:strict_init_order=true:detect_odr_violation=1:detect_container_overflow=1:check_initialization_order=true:debug=true:fast_unwind_on_malloc=1:verify_asan_link_order=0
   UBSAN_OPTIONS: print_stacktrace=1
 
 on:
@@ -102,13 +102,12 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
         with:
-          submodules: recursive
           persist-credentials: false
 
       - name: Set up Python
-        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
         with:
           python-version: ${{ matrix.python_version }}
 
