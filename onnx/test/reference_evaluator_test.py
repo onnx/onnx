@@ -5792,6 +5792,30 @@ class TestReferenceEvaluator:
         got = ref.run(None, {"X": np.asarray(data)})
         assert_allclose(got[0], expected)
 
+    def test_quantize_linear_float4e2m1_signed_zero(self):
+        X = make_tensor_value_info("X", TensorProto.FLOAT, [None])
+        Y = make_tensor_value_info("Y", TensorProto.FLOAT4E2M1, [None])
+        model = make_model(
+            make_graph(
+                [
+                    make_node(
+                        "QuantizeLinear",
+                        ["X", "scale"],
+                        ["Y"],
+                        output_dtype=TensorProto.FLOAT4E2M1,
+                    ),
+                ],
+                "g",
+                [X],
+                [Y],
+                [make_tensor("scale", TensorProto.FLOAT, [1], [1.0])],
+            )
+        )
+        ref = ReferenceEvaluator(model)
+        data = np.array([-0.0, 0.0], dtype=np.float32)
+        got = ref.run(None, {"X": data})
+        assert np.signbit(got[0].astype(np.float32)).tolist() == [True, False]
+
     @pytest.mark.parametrize("cast_from", (TensorProto.FLOAT, TensorProto.FLOAT16))
     @pytest.mark.parametrize("cast_to", (TensorProto.UINT4, TensorProto.INT4))
     def test_cast_int4_output(self, cast_from, cast_to):
