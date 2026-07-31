@@ -1448,7 +1448,7 @@ class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 26, CumProd);
 // Iterate over schema from ai.onnx version 26
 class OpSet_Onnx_ver26 {
  public:
-  static void ForEachSchema(std::function<void(OpSchema&&)> fn) {
+  static void ForEachSchema(const std::function<void(OpSchema&&)>& fn) {
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 26, BitCast)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 26, CumProd)>());
   }
@@ -1462,7 +1462,7 @@ class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 27, Range);
 // Iterate over schema from ai.onnx version 27
 class OpSet_Onnx_ver27 {
  public:
-  static void ForEachSchema(std::function<void(OpSchema&&)> fn) {
+  static void ForEachSchema(const std::function<void(OpSchema&&)>& fn) {
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 27, CausalConvWithState)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 27, LinearAttention)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 27, Range)>());
@@ -1478,7 +1478,7 @@ class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 28, Unique);
 // Iterate over schema from ai.onnx version 28
 class OpSet_Onnx_ver28 {
  public:
-  static void ForEachSchema(std::function<void(OpSchema&&)> fn) {
+  static void ForEachSchema(const std::function<void(OpSchema&&)>& fn) {
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 28, Compress)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 28, OneHot)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 28, ReverseSequence)>());
