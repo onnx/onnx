@@ -60,9 +60,9 @@ Member Companies can request their logo be displayed on the website and other ma
 
 > **Work in Progress:** This policy is under active discussion and is not yet ratified by the Steering Committee.
 
-The ONNX GitHub organization has a **limited number of member seats**. Seats are a shared resource and must be actively managed.
+The ONNX GitHub organization has a **limited number of GitHub organization membership seats**. These seats are a shared resource and must be actively managed.
 
-**Removal triggers** — a member is removed from the organization when any of the following apply:
+**Removal triggers** — a person is removed from GitHub organization membership when any of the following apply:
 
 * No contribution activity (commits, PR reviews, issue comments, SIG meeting participation) for **12 consecutive months**, assessed at the annual review each January. This ends the member's Contributor/Approver governance status and SC election voting eligibility, consistent with the Contributors section above.
 * The member explicitly resigns or notifies the SIG Architecture & Infra chairs that they are no longer active. This also ends their governance status and voting eligibility.
