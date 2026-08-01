@@ -27,18 +27,24 @@ class Range_27_26 final : public Adapter {
     for (const Value* input : node->inputs()) {
       ONNX_ASSERTM(
           std::find(unallowed_types_.begin(), unallowed_types_.end(), input->elemType()) == unallowed_types_.end(),
-          "DataType (%d) of input of operator '%s' is not supported in Opset Version %" PRId64 ".",
+          "DataType (",
           input->elemType(),
-          name().c_str(),
-          static_cast<int64_t>(target_version().version()));
+          ") of input of operator '",
+          name(),
+          "' is not supported in Opset Version ",
+          static_cast<int64_t>(target_version().version()),
+          ".");
     }
     for (const Value* output : node->outputs()) {
       ONNX_ASSERTM(
           std::find(unallowed_types_.begin(), unallowed_types_.end(), output->elemType()) == unallowed_types_.end(),
-          "DataType (%d) of output of operator '%s' is not supported in Opset Version %" PRId64 ".",
+          "DataType (",
           output->elemType(),
-          name().c_str(),
-          static_cast<int64_t>(target_version().version()));
+          ") of output of operator '",
+          name(),
+          "' is not supported in Opset Version ",
+          static_cast<int64_t>(target_version().version()),
+          ".");
     }
     // Remove stash_type — Range v11 has no such attribute.
     if (node->hasAttribute(kstash_type)) {

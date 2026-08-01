@@ -4,14 +4,15 @@
 from __future__ import annotations
 
 import typing
-import unittest
+
+import pytest
 
 import onnx
 import onnx.parser
 import onnx.shape_inference
 
 
-class TestModelInference(unittest.TestCase):
+class TestModelInference:
     def _check(self, model_text: str, *expected: int):
         """Check that the model inference infers the expected types for outputs.
         Restricted to the simple case of tensor types, so expected types specify
@@ -22,16 +23,16 @@ class TestModelInference(unittest.TestCase):
         outputs = inferred.graph.output
         for output, expected_elem_type in zip(outputs, expected, strict=False):
             inferred_type = output.type
-            self.assertTrue(inferred_type.HasField("tensor_type"))
+            assert inferred_type.HasField("tensor_type")
             tensor_type = inferred_type.tensor_type
-            self.assertTrue(tensor_type.HasField("elem_type"))
+            assert tensor_type.HasField("elem_type")
             elem_type = tensor_type.elem_type
-            self.assertEqual(elem_type, expected_elem_type)
+            assert elem_type == expected_elem_type
 
     def _check_inference_error(self, model_text: str):
         """Check that the model inference raises an InferenceError."""
         model = onnx.parser.parse_model(model_text)
-        with self.assertRaises(onnx.shape_inference.InferenceError):
+        with pytest.raises(onnx.shape_inference.InferenceError):
             onnx.shape_inference.infer_shapes(model, True, True)
 
     def test_unknown_op(self):
@@ -169,16 +170,16 @@ class TestModelInference(unittest.TestCase):
         outputs = inferred.graph.output
         for output, expected_shape in zip(outputs, expected, strict=True):
             inferred_type = output.type
-            self.assertTrue(inferred_type.HasField("tensor_type"))
+            assert inferred_type.HasField("tensor_type")
             tensor_type = inferred_type.tensor_type
-            self.assertTrue(tensor_type.HasField("shape"))
+            assert tensor_type.HasField("shape")
             inferred_shape = tensor_type.shape
-            self.assertEqual(len(inferred_shape.dim), len(expected_shape))
+            assert len(inferred_shape.dim) == len(expected_shape)
             for inferred_dim, expected_dim in zip(
                 inferred_shape.dim, expected_shape, strict=True
             ):
-                self.assertTrue(inferred_dim.HasField("dim_value"))
-                self.assertEqual(inferred_dim.dim_value, expected_dim)
+                assert inferred_dim.HasField("dim_value")
+                assert inferred_dim.dim_value == expected_dim
 
     def test_mi_constant(self):
         model = """
@@ -269,7 +270,3 @@ class TestModelInference(unittest.TestCase):
             }
         """
         self._check(model, onnx.TensorProto.INT32, onnx.TensorProto.INT64)
-
-
-if __name__ == "__main__":
-    unittest.main()

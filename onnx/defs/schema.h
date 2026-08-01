@@ -378,12 +378,18 @@ class OpSchema final {
   // any structs used from ir.h
   ONNX_API OpSchema& TypeAndShapeInferenceFunction(InferenceFunction inferenceFunction);
   InferenceFunction GetTypeAndShapeInferenceFunction() const {
-    return tensor_inference_function_ ? tensor_inference_function_ : dummyInferenceFunction;
+    if (tensor_inference_function_) {
+      return tensor_inference_function_;
+    }
+    return dummyInferenceFunction;
   }
 
   ONNX_API OpSchema& PartialDataPropagationFunction(DataPropagationFunction dataPropagationFunction);
   ONNX_API DataPropagationFunction GetDataPropagationFunction() const {
-    return data_propagation_function_ ? data_propagation_function_ : dummyDataPropagationFunction;
+    if (data_propagation_function_) {
+      return data_propagation_function_;
+    }
+    return dummyDataPropagationFunction;
   }
 
   // Set the support level for the op schema.
@@ -896,7 +902,7 @@ class ISchemaRegistry {
 
   ONNX_API virtual const OpSchema*
   // NOLINTNEXTLINE(google-default-arguments)
-  GetSchema(const std::string& key, const int maxInclusiveVersion, const std::string& domain = ONNX_DOMAIN) const = 0;
+  GetSchema(const std::string& key, int maxInclusiveVersion, const std::string& domain = ONNX_DOMAIN) const = 0;
 };
 
 /**
@@ -912,7 +918,7 @@ class OpSchemaRegistry final : public ISchemaRegistry {
       // Increase the highest version when you make BC-breaking changes to the
       // operator schema on specific domain. Update the lowest version when it's
       // determined to remove too old version history.
-      map_[ONNX_DOMAIN] = std::make_pair(1, 27);
+      map_[ONNX_DOMAIN] = std::make_pair(1, 28);
       map_[AI_ONNX_ML_DOMAIN] = std::make_pair(1, 5);
       map_[AI_ONNX_TRAINING_DOMAIN] = std::make_pair(1, 1);
       map_[AI_ONNX_PREVIEW_DOMAIN] = std::make_pair(1, 1);
@@ -923,7 +929,7 @@ class OpSchemaRegistry final : public ISchemaRegistry {
       // Version corresponding last release of ONNX. Update this to match with
       // the max version above in a *release* version of ONNX. But in other
       // versions, the max version may be ahead of the last-release-version.
-      last_release_version_map_[ONNX_DOMAIN] = 26;
+      last_release_version_map_[ONNX_DOMAIN] = 27;
       last_release_version_map_[AI_ONNX_ML_DOMAIN] = 5;
       last_release_version_map_[AI_ONNX_TRAINING_DOMAIN] = 1;
       last_release_version_map_[AI_ONNX_PREVIEW_DOMAIN] = 1;
@@ -1328,12 +1334,12 @@ class DbgOperatorSetTracker {
 // assists with runtime validation in DEBUG builds ensuring the intended set
 // of operator schema is registered.
 
-#define ONNX_OPERATOR_SET_SCHEMA_EX(name, domain, domain_str, ver, dbg_included_in_static_opset, impl)  \
-  class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(domain, ver, name);                                         \
-  template <>                                                                                           \
-  ONNX_API OpSchema GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(domain, ver, name)>() {             \
-    return impl.SetName(#name).SetDomain(domain_str).SinceVersion(ver).SetLocation(__FILE__, __LINE__); \
-  }                                                                                                     \
+#define ONNX_OPERATOR_SET_SCHEMA_EX(name, domain, domain_str, ver, dbg_included_in_static_opset, impl)    \
+  class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(domain, ver, name);                                           \
+  template <>                                                                                             \
+  ONNX_API OpSchema GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(domain, ver, name)>() {               \
+    return (impl).SetName(#name).SetDomain(domain_str).SinceVersion(ver).SetLocation(__FILE__, __LINE__); \
+  }                                                                                                       \
   ONNX_OPERATOR_SET_SCHEMA_DEBUG_VARIABLE(name, domain, ver, dbg_included_in_static_opset)
 #ifndef NDEBUG
 #define ONNX_DBG_GET_COUNT_IN_OPSETS() DbgOperatorSetTracker::Instance().GetCount()

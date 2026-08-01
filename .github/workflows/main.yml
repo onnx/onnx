@@ -5,8 +5,12 @@
 name: CI
 
 env:
-  ASAN_OPTIONS: detect_leaks=0:symbolize=1:detect_stack_use_after_return=true:strict_init_order=true:detect_odr_violation=1:detect_container_overflow=0:check_initialization_order=true:debug=true:fast_unwind_on_malloc=1:verify_asan_link_order=0
+  # detect_container_overflow is off: CPython, protobuf and googletest are built
+  # without instrumentation, so their containers lack the annotations ASan expects
+  # and the check reports false positives.
+  ASAN_OPTIONS: detect_leaks=0:symbolize=1:detect_stack_use_after_return=true:strict_init_order=true:detect_odr_violation=1:detect_container_overflow=0:check_initialization_order=true:debug=true:fast_unwind_on_malloc=1:verify_asan_link_order=0:alloc_dealloc_mismatch=1:abort_on_error=1
   UBSAN_OPTIONS: print_stacktrace=1
+  TSAN_OPTIONS: suppressions=./tsan.supp
 
 on:
   schedule:
@@ -50,6 +54,15 @@ jobs:
             protobuf_type: 'Internal'
             unity_build: 0
 
+          # Ubuntu debug build with TSAN (free-threaded Python)
+          - python_version: "3.14t"
+            autogenerate_files: 0
+            debug_build: 1
+            onnx_ml: 1
+            os: "ubuntu-24.04"
+            protobuf_type: 'Internal'
+            unity_build: 0
+
           # Test compilation with dynamically linked protobuf.
           # This is actually redundant with the pixi-tests which
           # also use dynamic linking.
@@ -64,7 +77,7 @@ jobs:
             autogenerate_files: 0
             debug_build: 0
             onnx_ml: 1
-            os: "windows-latest"
+            os: "windows-2022"
             protobuf_type: 'External'
             unity_build: 0
           # build_protobuf_unix.sh appears broken on macos-arm64
@@ -102,13 +115,12 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
         with:
-          submodules: recursive
           persist-credentials: false
 
       - name: Set up Python
-        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
         with:
           python-version: ${{ matrix.python_version }}
 
@@ -129,7 +141,7 @@ jobs:
           source workflow_scripts/protobuf/build_protobuf_unix.sh 3 $(pwd)/protobuf/protobuf_install
 
       - name: Set up MSBuild (x64)
-        if: startsWith(matrix.os,'windows-latest')
+        if: startsWith(matrix.os,'windows')
         uses: microsoft/setup-msbuild@30375c66a4eea26614e0d39710365f22f8b0af57 # v3.0.0
         with:
           msbuild-architecture: x64
@@ -157,6 +169,13 @@ jobs:
 
           if [ "${{ matrix.protobuf_type }}" == "External" ]; then
             export CMAKE_ARGS="$CMAKE_ARGS -DCMAKE_POSITION_INDEPENDENT_CODE=ON -DONNX_USE_PROTOBUF_SHARED_LIBS=ON"
+          fi
+          if [ "${{ matrix.debug_build }}" == "1" ]; then
+            if [ "${{ matrix.python_version }}" == "3.14t" ]; then
+              export CMAKE_ARGS="$CMAKE_ARGS -DONNX_USE_ASAN=OFF -DONNX_USE_TSAN=ON"
+            else
+              export CMAKE_ARGS="$CMAKE_ARGS -DONNX_USE_ASAN=ON"
+            fi
           fi
           pip install -e ".[reference]" -v
         env:
@@ -189,14 +208,19 @@ jobs:
         run: |
           pip freeze
 
-      - name: Setup GCC ASAN LD_PRELOAD
-        if: startsWith(matrix.os,'ubuntu') && (matrix.python_version != '3.13t')
-        run: |
-          export LD_PRELOAD="$(/usr/bin/c++ -print-file-name=libasan.so):$LD_PRELOAD"
-
       - name: Install test dependencies
         run: |
           python -m pip install -r requirements-release_test.txt
+
+      - name: Setup ASAN LD_PRELOAD
+        if: startsWith(matrix.os,'ubuntu') && (matrix.debug_build == 1) && (matrix.python_version != '3.14t') && (matrix.python_version != '3.10')
+        run: |
+          echo "LD_PRELOAD=$(/usr/bin/c++ -print-file-name=libasan.so):$(/usr/bin/c++ -print-file-name=libstdc++.so)" >> $GITHUB_ENV
+
+      - name: Setup TSAN LD_PRELOAD
+        if: startsWith(matrix.os,'ubuntu') && (matrix.debug_build == 1) && (matrix.python_version == '3.14t')
+        run: |
+          echo "LD_PRELOAD=$(/usr/bin/c++ -print-file-name=libtsan.so):$(/usr/bin/c++ -print-file-name=libstdc++.so)" >> $GITHUB_ENV
 
       - name: Run Python tests
         # Prohibitively slow for Windows debug builds
@@ -227,13 +251,13 @@ jobs:
 
       - name: Upload coverage to Codecov
         if: github.repository_owner == 'onnx'
-        uses: codecov/codecov-action@57e3a136b779b570ffcdbf80b3bdc90e7fab3de2 # v6.0.0
+        uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f # v7.0.0
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
 
       - name: Upload test results to Codecov
         if: github.repository_owner == 'onnx' && !cancelled()
-        uses: codecov/codecov-action@57e3a136b779b570ffcdbf80b3bdc90e7fab3de2 # v6.0.0
+        uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f # v7.0.0
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           report_type: test_results

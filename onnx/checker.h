@@ -71,7 +71,7 @@ class CheckerContext final {
     model_dir_ = model_dir;
   }
 
-  std::string get_model_dir() const {
+  const std::string& get_model_dir() const {
     return model_dir_;
   }
 
