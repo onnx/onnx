@@ -364,7 +364,7 @@ TEST(FunctionAPITest, DepthToSpaceFunctionBodyCRD) {
       for (const auto& attr : node.attribute()) {
         if (attr.name() == "perm") {
           found_perm = true;
-          // The permutation logic changes for CRD,different order requires
+          // The permutation logic changes for CRD, different order requires
           std::vector<int64_t> expected = {0, 1, 4, 2, 5, 3};
           std::vector<int64_t> actual(attr.ints().begin(), attr.ints().end());
           EXPECT_EQ(actual, expected);

@@ -2025,6 +2025,12 @@ ONNX_OPERATOR_SET_SCHEMA(
               if (blocksize <= 0) {
                 return false;
               }
+
+              int64_t blocksize_sq = 0;
+              if (ONNX_NAMESPACE::checked_mul_overflow(blocksize, blocksize, &blocksize_sq)) {
+                return false;
+              }
+
               auto* mode_attr = ctx.getAttribute("mode");
               const std::string mode = (mode_attr != nullptr) ? mode_attr->s() : "DCR";
 
@@ -2040,7 +2046,7 @@ ONNX_OPERATOR_SET_SCHEMA(
                   .Const1D("Ind2", (int64_t)2)
                   .Const1D("Ind3", (int64_t)3)
                   .Const1D("Blocksize", blocksize)
-                  .Const1D("BlocksizeSq", blocksize * blocksize)
+                  .Const1D("BlocksizeSq", blocksize_sq)
                   .Add(R"(
               InputShape = Shape (input)
               B = Gather (InputShape, Ind0)
