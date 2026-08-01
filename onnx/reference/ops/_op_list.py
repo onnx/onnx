@@ -223,6 +223,7 @@ __all__ = [
     "SoftmaxCrossEntropyLoss",
     "Softplus",
     "Softsign",
+    "SwiGLU",
     "Swish",
     "SpaceToDepth",
     "Split_2",
@@ -483,6 +484,7 @@ from onnx.reference.ops.op_string_normalizer import StringNormalizer
 from onnx.reference.ops.op_string_split import StringSplit
 from onnx.reference.ops.op_sub import Sub
 from onnx.reference.ops.op_sum import Sum
+from onnx.reference.ops.op_swiglu import SwiGLU
 from onnx.reference.ops.op_swish import Swish
 from onnx.reference.ops.op_tan import Tan
 from onnx.reference.ops.op_tanh import Tanh
@@ -590,7 +592,7 @@ def load_op(
             f"and domain {domain!r}, schema.has_function is {has_function}, "
             f"schema.has_context_dependent_function is {has_context_dependent_function}. "
             f"You may either add one or skip the test in "
-            f"'test_backend_reference.py'. Available implementations:\n{available}"
+            f"'backend_reference_test.py'. Available implementations:\n{available}"
         )
     impl = _registered_operators[op_type]
     if None not in impl:

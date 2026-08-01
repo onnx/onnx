@@ -8,6 +8,7 @@
 #include <cstdint>
 #include <filesystem> // NOLINT(build/c++17)
 #include <iostream>
+#include <limits>
 #include <string>
 #include <unordered_map>
 #include <unordered_set>
@@ -238,6 +239,23 @@ void check_tensor(const TensorProto& tensor, const CheckerContext& ctx) {
       case TensorProto::FLOAT8E5M2:
       case TensorProto::FLOAT8E5M2FNUZ:
       case TensorProto::FLOAT8E8M0:
+        check_field(int32_data);
+        if (nelem > 0) {
+          // These types are not packed: each element occupies one int32_data entry.
+          const int64_t expected_int32s = nelem;
+          if (static_cast<int64_t>(tensor.int32_data().size()) < expected_int32s) {
+            fail_check(
+                "TensorProto (tensor name: ",
+                tensor.name(),
+                ") int32_data size (",
+                tensor.int32_data().size(),
+                ") is too small for the declared shape (",
+                expected_int32s,
+                " int32 values required).");
+          }
+        }
+        break;
+
       case TensorProto::UINT4:
       case TensorProto::INT4:
       case TensorProto::FLOAT4E2M1:
@@ -808,6 +826,14 @@ void check_graph(const GraphProto& graph, const CheckerContext& ctx, const Lexic
   print_warning_if_has_experimental(used_experimental_ops);
 }
 
+// Converts a proto opset version to int, rejecting values that do not fit.
+static int checked_opset_version(int64_t version) {
+  if (version < std::numeric_limits<int>::min() || version > std::numeric_limits<int>::max()) {
+    fail_check("Opset import version ", version, " is out of supported range");
+  }
+  return static_cast<int>(version);
+}
+
 // Utilify function to get the imported version of domain from opset imports
 // Returns -1 if requested domain is not found in the opset_imports
 static int get_version_for_domain(
@@ -1026,7 +1052,7 @@ void check_model_local_functions(
   for (const auto& function_proto : model.functions()) {
     for (const auto& opset_import : function_proto.opset_import()) {
       if (get_version_for_domain(opset_import.domain(), model_opset_imports) == -1) {
-        model_opset_imports[opset_import.domain()] = opset_import.version();
+        model_opset_imports[opset_import.domain()] = checked_opset_version(opset_import.version());
       }
     }
   }
@@ -1053,7 +1079,7 @@ void check_function(const FunctionProto& function, const CheckerContext& ctx, co
 
   std::unordered_map<std::string, int> func_opset_imports;
   for (const auto& relied_opset : function.opset_import()) {
-    func_opset_imports[relied_opset.domain()] = static_cast<int>(relied_opset.version());
+    func_opset_imports[relied_opset.domain()] = checked_opset_version(relied_opset.version());
   }
 
   ctx_copy.set_opset_imports(func_opset_imports);
@@ -1150,7 +1176,7 @@ static void check_model(const ModelProto& model, CheckerContext& ctx) {
   ctx.set_ir_version(static_cast<int>(model.ir_version()));
   std::unordered_map<std::string, int> opset_imports;
   for (const auto& opset_import : model.opset_import()) {
-    opset_imports[opset_import.domain()] = static_cast<int>(opset_import.version());
+    opset_imports[opset_import.domain()] = checked_opset_version(opset_import.version());
   }
   if (model.ir_version() >= 3) {
     if (opset_imports.empty()) {

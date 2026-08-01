@@ -10,7 +10,7 @@ ONNX is a community project and we welcome your contributions! In addition to co
 
 - Meetings and Discussions
 
-    Join SIGS, Working Groups, Community meetings to learn about what is needed and then where there is a good fit to interest and areas of expertise, find ways to actively contribute.  Participate in [ONNX technical discussions](https://github.com/onnx/onnx/discussions) on GitHub.  Join the ONNX Slack channels at LF AI and Data, help answer questions and welcome new members.
+    Join SIGs, Working Groups, Community meetings to learn about what is needed and then where there is a good fit to interest and areas of expertise, find ways to actively contribute.  Meeting times can be found on the [ONNX calendar](https://onnx.ai/calendar).  Participate in [ONNX technical discussions](https://github.com/onnx/onnx/discussions) on GitHub.  Join the [ONNX Slack channels](https://lfaifoundation.slack.com/) at LF AI and Data ([invite link](https://join.slack.com/t/lfaifoundation/shared_invite/zt-3wx5vohc3-MeSYi3_dscb~u~cqs7zlPg)), help answer questions and welcome new members.
 
 - Use Cases and Tools
 
@@ -18,11 +18,15 @@ ONNX is a community project and we welcome your contributions! In addition to co
 
 - Roadmap and Features
 
-    Understand the ONNX roadmap document, feature priorities, and help implement them.  Become an ONNX code and documentation contributor, and work towards committer status on important repos.
+    Understand the [ONNX roadmap](ROADMAP.md), feature priorities, and help implement them.  Become an ONNX code and documentation contributor, and work towards committer status on important repos.
 
-- Releases and Model Zoo
+- Releases
 
-    Help in achieving a release of ONNX, including increasing the number of models in the ONNX Model Zoo that exercise ONNX features.
+    Help in achieving a release of ONNX by contributing to the Architecture & Infra SIG.
+
+- Models and Tutorials
+
+    Contribute ONNX models to the [ONNX community on Hugging Face](https://huggingface.co/onnx-community) and tutorials that exercise ONNX features and help users get started with ONNX.
 
 - Publications and Blogs
 
@@ -38,6 +42,10 @@ ONNX is an open standard, and we encourage developers to contribute high
 quality operators to ONNX specification.
 
 Before proposing a new operator, please read [the tutorial](docs/AddNewOp.md).
+
+## Reporting bugs
+
+Bugs are tracked as [GitHub issues](https://github.com/onnx/onnx/issues). Most bugs, including easily-discovered security issues, can be filed as a normal public issue — see [SECURITY.md](SECURITY.md) for the disclosure policy that applies to non-trivial security vulnerabilities.
 
 ## Contributing code
 
@@ -62,7 +70,7 @@ Pre-commit hooks, that are identical to those run on CI, can be installed by run
 pixi run pre-commit-install
 ```
 
-A list of all pixi task is available by running `pixi run`.
+A list of all pixi tasks is available by running `pixi run`.
 The following is a list of the most common ones:
 
 - `pixi run gen-all` to regenerate all auto-generated files
@@ -71,18 +79,18 @@ The following is a list of the most common ones:
 - `pixi run lint` to run the pre-commit hooks on all files
 - `pixi run docs-build` to build the documentation locally (may require a prior `rm -rf .setuptools-cmake-build && pixi run -e docs install`)
 
-The following section provide guidance for developing onnx without Pixi and is not relevant to Pixi users.
+The following section provides guidance for developing onnx without Pixi and is not relevant to Pixi users.
 
 ### Development
 
-To build ONNX from source please follow the instructions listed [here](https://github.com/onnx/onnx/blob/main/INSTALL.md#build-onnx-from-source).
+To build ONNX from source please follow the instructions in [INSTALL.md](INSTALL.md#build-onnx-from-source).
 
 Then, after you have made changes to Python and C++ files:
 
 - `Python files`: The changes are effective immediately in your installation. You don't need to install these again.
 - `C++ files`: You need to install these again to trigger the native extension build.
 
-Assuming build succeed in the initial step, simply running
+Assuming the build succeeds in the initial step, simply running
 
 ```sh
 pip install -e . -v
@@ -93,7 +101,7 @@ from onnx root dir should work.
 ### Folder structure
 
 - `onnx/`: the main folder that all code lies under
-  - `onnx.proto`: the protobuf that contains all the structures
+  - `onnx.in.proto`: the protobuf source that defines all the structures (auto-generated `onnx.proto` — do not edit directly)
   - `checker.py`: a utility to check whether a serialized ONNX proto is legal
   - `shape_inference.py`: a utility to infer types and shapes for ONNX models
   - `version_converter.py`: a utility to upgrade or downgrade version for ONNX models
@@ -101,6 +109,7 @@ from onnx root dir should work.
   - `compose.py`: a utility to merge ONNX models
   - `helper.py`: tools for graph operation
   - `defs/`: a subfolder that defines the ONNX operators
+  - `backend/`: reference implementation and backend test framework
   - `test/`: test files
 
 ### Auto generated files
@@ -114,6 +123,8 @@ Operator docs ([Operators.md](docs/Operators.md), [Operators-ml.md](docs/Operato
 ```pwsh
 # Windows
 set ONNX_ML=1
+pip install -e . -v
+python onnx/defs/gen_doc.py
 ```
 
 ```sh
@@ -159,7 +170,7 @@ We adopted the [Google Python Style Guide](https://google.github.io/styleguide/p
 
 We use `lintrunner` to drive multiple linters defined in `.lintrunner.toml` to lint the codebase.
 
-To run these checks locally, install `lintrunner` and the linters with
+Pixi users can run `pixi run lint` directly. For non-Pixi users, install `lintrunner` and the linters with
 
 ```sh
 pip install lintrunner lintrunner-adapters
@@ -195,23 +206,21 @@ Examples: `RNNShapeInference_opset7_to_13`, `PoolOpSchemaGenerator_opset10_to_11
 
 ### Testing
 
-ONNX uses [pytest](https://docs.pytest.org) as a test driver. To run tests, you'll first need to install pytest:
+ONNX uses [pytest](https://docs.pytest.org) as a test driver. Pixi users can run `pixi run pytest` directly. For non-Pixi users, first install pytest:
 
 ```sh
 pip install pytest
 ```
 
-After installing pytest, run from the root of the repo:
+Then run from the root of the repo:
 
 ```sh
 pytest
 ```
 
-to run the tests.
-
 #### Cpp tests (googletest)
 
-Some functionalities are tested with googletest. Those tests are listed in `test/cpp`, and include tests for shape inference, data propagation, parser, and others.
+Some functionalities are tested with googletest. Those tests are listed in `onnx/test/cpp`, and include tests for shape inference, data propagation, parser, and others.
 
 To run them, first build ONNX with `-DONNX_BUILD_TESTS=1` or `ONNX_BUILD_TESTS=1 pip install -e . -v`.
 
@@ -233,15 +242,15 @@ export LD_LIBRARY_PATH="./.setuptools-cmake-build/:$LD_LIBRARY_PATH"
 
 ## DCO
 
-ONNX has adopted the [DCO](https://en.wikipedia.org/wiki/Developer_Certificate_of_Origin). All code repositories under ONNX require a DCO. (ONNX previously used a CLA, which is being replaced with the DCO.)
+ONNX has adopted the [DCO](https://en.wikipedia.org/wiki/Developer_Certificate_of_Origin). All code repositories under ONNX require a DCO. (ONNX previously used a CLA, which was replaced with the DCO.)
 
 DCO is provided by including a sign-off-by line in commit messages. Using the `-s` flag for `git commit` will automatically append this line. For example, running `git commit -s -m 'commit info.'` it will produce a commit that has the message `commit info. Signed-off-by: My Name <my_email@my_company.com>`. The DCO bot will ensure commits are signed with an email address that matches the commit author before they are eligible to be merged.
 
-If you are using a GUI like the GitHub web site or GitHub Desktop, you'll need to append the `Signed-off-by: My Name <my_email@my_company.com>` manually to each commit message. For the onnx organization [sign-off](https://github.blog/changelog/2022-06-08-admins-can-require-sign-off-on-web-based-commits/) for web based commits is enabled. When this is activated you will see "Sign off and propose changes" instead of "Propose changes" when you are editing files directly at github. It is recommended to set this setting for your own fork as well. Since in the review process commits are made on this fork.
+If you are using a GUI like the GitHub web site or GitHub Desktop, you'll need to append the `Signed-off-by: My Name <my_email@my_company.com>` manually to each commit message. For the onnx organization [sign-off](https://github.blog/changelog/2022-06-08-admins-can-require-sign-off-on-web-based-commits/) for web based commits is enabled. When this is activated you will see "Sign off and propose changes" instead of "Propose changes" when you are editing files directly at github. It is recommended to set this setting for your own fork as well, since commits in the review process are made on this fork.
 
 NOTE: the sign-off is needed for each commit in the PR, not at the PR level.
 
-If you have old commits that are not signed, use the following commands to squash the old PR (original branch) into a single commit. This is an easier way to signoff old commits in old PR.
+If you have old commits that are not signed, use the following commands to squash the old PR (original branch) into a single commit. This is an easier way to sign off old commits in an old PR.
 
 ```bash
 git checkout main
@@ -250,15 +259,17 @@ git merge --squash original_patch            # copy from old branch
 git branch -d original_patch                 # remove old branch
 git checkout -b original_patch               # create a new branch with the same name (override)
 git commit -m 'type your own commit msg' -s  # signoff that single commit
-git push origin original_patch -f            # forcibly override the old branch`
+git push origin original_patch -f            # forcibly override the old branch
 ```
 
 ## CI Pipelines
 
-Every PR needs to pass CIs before merge. CI pipelines details are [here](docs/CIPipelines.md).
+Every PR needs to pass CIs before merge. CI pipelines are described in [CIPipelines.md](docs/CIPipelines.md).
 
 ## Other developer documentation
 
+- [Installation and build instructions](INSTALL.md)
+- [Project roadmap](ROADMAP.md)
 - [How to implement ONNX backend (ONNX to something converter)](docs/ImplementingAnOnnxBackend.md)
 - [Backend test infrastructure and how to add tests](docs/OnnxBackendTest.md)
 
@@ -268,4 +279,4 @@ Every PR needs to pass CIs before merge. CI pipelines details are [here](docs/CI
 
 ## Code of Conduct
 
-[ONNX Open Source Code of Conduct](http://onnx.ai/codeofconduct.html)
+[ONNX Open Source Code of Conduct](https://onnx.ai/codeofconduct.html)
