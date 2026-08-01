@@ -125,7 +125,10 @@ namespace ONNX_NAMESPACE {
     /* copying as the underlying type, otherwise we may hit memory   */                                              \
     /* misalignment issues on certain platforms, such as arm32-v7a */                                                \
     res.resize(required_bytes_sz / element_size);                                                                    \
-    memcpy(reinterpret_cast<char*>(res.data()), bytes, required_bytes_sz);                                           \
+    /* memcpy requires a non-null destination even for a zero-length copy */                                         \
+    if (required_bytes_sz != 0) {                                                                                    \
+      memcpy(reinterpret_cast<char*>(res.data()), bytes, required_bytes_sz);                                         \
+    }                                                                                                                \
     return res;                                                                                                      \
   }
 
