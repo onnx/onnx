@@ -5,7 +5,10 @@
 name: CI
 
 env:
-  ASAN_OPTIONS: detect_leaks=0:symbolize=1:detect_stack_use_after_return=true:strict_init_order=true:detect_odr_violation=1:detect_container_overflow=1:check_initialization_order=true:debug=true:fast_unwind_on_malloc=1:verify_asan_link_order=0:alloc_dealloc_mismatch=1:abort_on_error=1
+  # detect_container_overflow is off: CPython, protobuf and googletest are built
+  # without instrumentation, so their containers lack the annotations ASan expects
+  # and the check reports false positives.
+  ASAN_OPTIONS: detect_leaks=0:symbolize=1:detect_stack_use_after_return=true:strict_init_order=true:detect_odr_violation=1:detect_container_overflow=0:check_initialization_order=true:debug=true:fast_unwind_on_malloc=1:verify_asan_link_order=0:alloc_dealloc_mismatch=1:abort_on_error=1
   UBSAN_OPTIONS: print_stacktrace=1
   TSAN_OPTIONS: suppressions=./tsan.supp
 
@@ -223,8 +226,6 @@ jobs:
         # Prohibitively slow for Windows debug builds
         if: ${{ !(startsWith(matrix.os, 'windows') && matrix.debug_build == 1) }}
         run: |
-          # LD_PRELOAD'd ASan trips a protobuf RepeatedField false positive (protobuf #13115); keep the check on for gtests, disable it only here.
-          if [ -n "$LD_PRELOAD" ]; then export ASAN_OPTIONS="${ASAN_OPTIONS//detect_container_overflow=1/detect_container_overflow=0}"; fi
           pytest -sv --cov=onnx --cov-report=xml --cov-append --cov-branch --junitxml junit.xml -n auto --dist loadscope
       - name: Run C++ tests
         if: startsWith(matrix.os,'ubuntu') || matrix.os == 'macos-latest'
