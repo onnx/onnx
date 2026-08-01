@@ -213,10 +213,10 @@ static void convPoolShapeInference_opset19(
         int64_t residual = 0;
         int64_t stride = strides[i];
         if (stride > 1) {
-          if (!input_shape.dim(2 + i).has_dim_value()) {
+          if (!input_shape.dim(static_cast<int>(2 + i)).has_dim_value()) {
             continue;
           }
-          residual = input_shape.dim(2 + i).dim_value();
+          residual = input_shape.dim(static_cast<int>(2 + i)).dim_value();
           if (residual < 0) {
             continue;
           }
@@ -273,11 +273,12 @@ static void convPoolShapeInference_opset19(
     // on the stride
     int64_t strided_kernel_positions = 0;
 
+    const int64_t stride_gap = effective_input_size - effective_kernel_shape[i];
     if (ceil_mode == 1)
-      strided_kernel_positions = static_cast<int64_t>(
-          std::ceil((effective_input_size - effective_kernel_shape[i]) / static_cast<float>(strides[i])));
+      // exact ceil division; (a + b - 1) / b would be wrong for negative a
+      strided_kernel_positions = stride_gap / strides[i] + (stride_gap % strides[i] > 0 ? 1 : 0);
     else
-      strided_kernel_positions = (effective_input_size - effective_kernel_shape[i]) / strides[i];
+      strided_kernel_positions = stride_gap / strides[i];
 
     // add in the initial position
     newdim->set_dim_value(1 + strided_kernel_positions);
@@ -2116,11 +2117,12 @@ static void convPoolShapeInference_opset1_to_11(
     // on the stride
     int64_t strided_kernel_positions = 0;
 
+    const int64_t stride_gap = effective_input_size - effective_kernel_shape[i];
     if (ceil_mode == 1)
-      strided_kernel_positions = static_cast<int64_t>(
-          std::ceil((effective_input_size - effective_kernel_shape[i]) / static_cast<float>(strides[i])));
+      // exact ceil division; (a + b - 1) / b would be wrong for negative a
+      strided_kernel_positions = stride_gap / strides[i] + (stride_gap % strides[i] > 0 ? 1 : 0);
     else
-      strided_kernel_positions = (effective_input_size - effective_kernel_shape[i]) / strides[i];
+      strided_kernel_positions = stride_gap / strides[i];
 
     // add in the initial position
     newdim->set_dim_value(1 + strided_kernel_positions);
