@@ -32,7 +32,7 @@ class Resize_18_17 final : public Adapter {
 
     // half_pixel_symmetric was introduced in opset 19.
     if (node->hasAttribute(coordinate_transformation_mode)) {
-      const auto value = node->s(coordinate_transformation_mode);
+      const auto& value = node->s(coordinate_transformation_mode);
       ONNX_ASSERTM(
           value != "half_pixel_symmetric",
           "Resize coordinate_transformation_mode='",
