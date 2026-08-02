@@ -299,6 +299,8 @@ struct Value final {
   use_list uses_in_current_graph_;
   bool has_unique_name_{false};
   std::string unique_name_;
+  bool has_doc_string_{false};
+  std::string doc_string_;
   int32_t elem_type_{ONNX_NAMESPACE::TensorProto_DataType_UNDEFINED};
   bool has_sizes_{false};
   std::vector<Dimension> sizes_;
@@ -340,6 +342,17 @@ struct Value final {
     return toVarName(unique());
   }
   Value* setUniqueName(const std::string& name, bool update_related_names = true);
+  bool has_doc_string() const {
+    return has_doc_string_;
+  }
+  const std::string& docString() const {
+    return doc_string_;
+  }
+  Value* setDocString(std::string doc_string) {
+    has_doc_string_ = true;
+    doc_string_ = std::move(doc_string);
+    return this;
+  }
   Value* setStage(size_t s) {
     stage_ = s;
     return this;
@@ -376,6 +389,9 @@ struct Value final {
     setSizes(from->sizes());
     if (from->has_unique_name()) {
       setUniqueName(from->uniqueName());
+    }
+    if (from->has_doc_string()) {
+      setDocString(from->docString());
     }
     return this;
   }
@@ -698,7 +714,7 @@ struct Node : public Attributes<Node> {
       auto it = findUseForInput(j);
       it->offset--;
     }
-    inputs_.erase(inputs_.begin() + i);
+    inputs_.erase(inputs_.begin() + static_cast<std::ptrdiff_t>(i));
   }
 
   // Remove all inputs from a node.
@@ -1352,7 +1368,7 @@ inline void Node::eraseOutput(size_t i) {
   ONNX_ASSERT(i < outputs_.size())
   ONNX_ASSERT(outputs_[i]->uses().empty())
   Value* n = outputs_[i];
-  outputs_.erase(outputs_.begin() + i);
+  outputs_.erase(outputs_.begin() + static_cast<std::ptrdiff_t>(i));
   owningGraph()->freeValue(n);
   for (size_t j = i; j < outputs_.size(); j++) {
     outputs_[j]->offset_--;

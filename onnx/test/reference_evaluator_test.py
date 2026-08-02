@@ -5793,6 +5793,30 @@ class TestReferenceEvaluator:
         got = ref.run(None, {"X": np.asarray(data)})
         assert_allclose(got[0], expected)
 
+    def test_quantize_linear_float4e2m1_signed_zero(self):
+        X = make_tensor_value_info("X", TensorProto.FLOAT, [None])
+        Y = make_tensor_value_info("Y", TensorProto.FLOAT4E2M1, [None])
+        model = make_model(
+            make_graph(
+                [
+                    make_node(
+                        "QuantizeLinear",
+                        ["X", "scale"],
+                        ["Y"],
+                        output_dtype=TensorProto.FLOAT4E2M1,
+                    ),
+                ],
+                "g",
+                [X],
+                [Y],
+                [make_tensor("scale", TensorProto.FLOAT, [1], [1.0])],
+            )
+        )
+        ref = ReferenceEvaluator(model)
+        data = np.array([-0.0, 0.0], dtype=np.float32)
+        got = ref.run(None, {"X": data})
+        assert np.signbit(got[0].astype(np.float32)).tolist() == [True, False]
+
     @pytest.mark.parametrize("cast_from", (TensorProto.FLOAT, TensorProto.FLOAT16))
     @pytest.mark.parametrize("cast_to", (TensorProto.UINT4, TensorProto.INT4))
     def test_cast_int4_output(self, cast_from, cast_to):
@@ -6510,3 +6534,37 @@ class TestReferenceEvaluator:
 
         assert_allclose(got_state, expected_state)
         assert_allclose(got_output, expected_output)
+
+    @staticmethod
+    def _swiglu_model() -> ModelProto:
+        # Dynamic shapes so model-level shape inference does not reject the
+        # mismatched-shape/dtype cases before they reach the reference _run.
+        a = make_tensor_value_info("A", TensorProto.FLOAT, [None, None])
+        b = make_tensor_value_info("B", TensorProto.FLOAT, [None, None])
+        y = make_tensor_value_info("Y", TensorProto.FLOAT, [None, None])
+        node = make_node("SwiGLU", ["A", "B"], ["Y"])
+        graph = make_graph([node], "swiglu", [a, b], [y])
+        return make_model(graph, opset_imports=[make_opsetid("", 28)])
+
+    def test_swiglu(self) -> None:
+        ref = ReferenceEvaluator(self._swiglu_model())
+        a = np.array([[1.0, -2.0, 3.0], [-1.0, 2.0, 0.5]], dtype=np.float32)
+        b = np.array([[0.5, 1.0, -1.0], [2.0, -1.0, 1.0]], dtype=np.float32)
+        expected = a * (1 / (1 + np.exp(-1.0 * a))) * b
+        (got,) = ref.run(None, {"A": a, "B": b})
+        assert_allclose(got, expected, rtol=1e-6)
+        assert got.dtype == np.float32
+
+    def test_swiglu_shape_mismatch_raises(self) -> None:
+        ref = ReferenceEvaluator(self._swiglu_model())
+        a = np.ones((2, 3), dtype=np.float32)
+        b = np.ones((2, 1), dtype=np.float32)
+        with pytest.raises(ValueError, match="identical shapes"):
+            ref.run(None, {"A": a, "B": b})
+
+    def test_swiglu_dtype_mismatch_raises(self) -> None:
+        ref = ReferenceEvaluator(self._swiglu_model())
+        a = np.ones((2, 3), dtype=np.float32)
+        b = np.ones((2, 3), dtype=np.float16)
+        with pytest.raises(ValueError, match="identical dtypes"):
+            ref.run(None, {"A": a, "B": b})
