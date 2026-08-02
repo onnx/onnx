@@ -3000,6 +3000,8 @@ class TestVersionConverter:
     def _resize_18_17_converted(
         self,
         *,
+        initial_version: int = 18,
+        coordinate_transformation_mode: str = "asymmetric",
         use_sizes: bool = True,
         antialias: int | None = None,
         keep_aspect_ratio_policy: str | None = None,
@@ -3007,7 +3009,7 @@ class TestVersionConverter:
     ) -> ModelProto:
         attributes: dict[str, object] = {
             "mode": "nearest",
-            "coordinate_transformation_mode": "asymmetric",
+            "coordinate_transformation_mode": coordinate_transformation_mode,
             "nearest_mode": "floor",
         }
 
@@ -3059,7 +3061,7 @@ class TestVersionConverter:
 
         return self._converted(
             graph,
-            helper.make_operatorsetid("", 18),
+            helper.make_operatorsetid("", initial_version),
             17,
         )
 
@@ -3119,6 +3121,13 @@ class TestVersionConverter:
     def test_resize_18_17_rejects_axes(self) -> None:
         with pytest.raises(RuntimeError, match="axes"):
             self._resize_18_17_converted(axes=[2, 3])
+
+    def test_resize_19_17_rejects_half_pixel_symmetric(self) -> None:
+        with pytest.raises(RuntimeError, match="half_pixel_symmetric"):
+            self._resize_18_17_converted(
+                initial_version=19,
+                coordinate_transformation_mode="half_pixel_symmetric",
+            )
 
     def _celu_converted(self, dtype: int, src: int, dst: int) -> ModelProto:
         node = helper.make_node("Celu", ["X"], ["Y"], alpha=2.0)

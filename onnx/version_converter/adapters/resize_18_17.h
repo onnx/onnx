@@ -17,35 +17,55 @@ namespace version_conversion {
 
 class Resize_18_17 final : public Adapter {
  public:
-  explicit Resize_18_17() : Adapter("Resize", OpSetID(18), OpSetID(17)) {}
+  Resize_18_17() : Adapter("Resize", OpSetID(18), OpSetID(17)) {}
 
   void adapt_resize_18_17(const std::shared_ptr<Graph>& /*unused*/, Node* node) const {
     const Symbol antialias("antialias");
+    const Symbol coordinate_transformation_mode("coordinate_transformation_mode");
     const Symbol keep_aspect_ratio_policy("keep_aspect_ratio_policy");
+
+    // Reject axes without rank information.
+    ONNX_ASSERTM(
+        !node->hasAttribute(kaxes),
+        "Resize axes is not supported when converting from opset 18 "
+        "to opset 17.");
+
+    // half_pixel_symmetric was introduced in opset 19.
+    if (node->hasAttribute(coordinate_transformation_mode)) {
+      const auto value = node->s(coordinate_transformation_mode);
+      ONNX_ASSERTM(
+          value != "half_pixel_symmetric",
+          "Resize coordinate_transformation_mode='",
+          value,
+          "' is not supported when converting to opset 17.");
+    }
 
     // The default antialias behavior is supported by opset 17.
     if (node->hasAttribute(antialias)) {
+      const auto value = node->i(antialias);
       ONNX_ASSERTM(
-          node->i(antialias) == 0,
-          "Resize antialias=1 is not supported when converting "
-          "from opset 18 to opset 17.");
-      node->removeAttribute(antialias);
+          value == 0,
+          "Resize antialias=",
+          value,
+          " is not supported when "
+          "converting from opset 18 to opset 17.");
     }
 
-    // The default "stretch" behavior is supported by opset 17.
+    // Require "stretch" for a safe downgrade.
     if (node->hasAttribute(keep_aspect_ratio_policy)) {
       ONNX_ASSERTM(
           node->s(keep_aspect_ratio_policy) == "stretch",
           "Resize keep_aspect_ratio_policy must be 'stretch' when "
           "converting from opset 18 to opset 17.");
-      node->removeAttribute(keep_aspect_ratio_policy);
     }
 
-    // Resize-17 does not support the axes attribute.
-    ONNX_ASSERTM(
-        !node->hasAttribute(kaxes),
-        "Resize axes is not supported when converting from opset 18 "
-        "to opset 17.");
+    // Remove explicit defaults that have equivalent behavior.
+    if (node->hasAttribute(antialias)) {
+      node->removeAttribute(antialias);
+    }
+    if (node->hasAttribute(keep_aspect_ratio_policy)) {
+      node->removeAttribute(keep_aspect_ratio_policy);
+    }
   }
 
   Node* adapt(std::shared_ptr<Graph> graph, Node* node) const override {
