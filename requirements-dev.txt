@@ -4,8 +4,6 @@ protobuf>=6.33.1
 pytest
 pytest-cov
 pytest-xdist
-setuptools>=78.1.1
-wheel>=0.38.1
 lintrunner>=0.13.1
 lintrunner-adapters>=0.14.1
 # Edit additional linter dependencies in requirements-lintrunner.txt
