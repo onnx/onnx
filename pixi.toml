@@ -101,13 +101,11 @@ protobuf = ">=6.31.1"
 pytest = ">=8.3.4"
 pytest-cov = ">=6.0.0"
 pytest-xdist = ">=3.6.1"
-setuptools = ">=75.8.0"
-wheel = ">=0.45.1"
 zizmor = ">=1.24.1,<2"
 onnxruntime = "*"
 
 [feature.reference.dependencies]
-pillow = ">=11.2.1,<12"
+pillow = ">=12.2.0"
 
 [feature.oldies.dependencies]
 protobuf = "==6.31.1"
@@ -148,7 +146,6 @@ pydot = "*"
 sphinx = "<9"  # Seems to be required by sphinx-tabs?
 sphinx-copybutton = "*"
 sphinx-tabs = "*"
-setuptools = "<82"  # sphinx-tabs needs pkg_resources which was removed in 82
 linkify-it-py = "*"
 [feature.docs.pypi-dependencies]
 sphinx-exec-code = "*"
