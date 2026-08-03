@@ -509,10 +509,10 @@ def _build_registered_operators() -> dict[str, dict[int | None, type[OpRun]]]:
 def load_op(
     domain: str,
     op_type: str,
-    version: None | int = None,
+    version: int | None = None,
     custom: Any = None,
-    node: None | NodeProto = None,
-    input_types: None | list[TypeProto] = None,
+    node: NodeProto | None = None,
+    input_types: list[TypeProto] | None = None,
     expand: bool = False,
     evaluator_cls: type | None = None,
 ) -> Any:
