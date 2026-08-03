@@ -7,6 +7,9 @@
 name: Integration test onnxruntime
 
 on:
+  schedule:
+    # Run weekly on Monday 00:00 UTC
+    - cron:  '0 0 * * MON'
   workflow_dispatch:
   pull_request:
     types:
