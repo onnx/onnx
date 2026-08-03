@@ -115,8 +115,8 @@ OpSchemaRegistry* OpSchemaRegistry::Instance() {
 void OpSchema::CheckInputOutputType(struct InferenceContext& ctx) const {
   std::unordered_map<std::string, std::string> type_constraints;
   // Check the number of inputs / output.
-  VerifyInputNum(ctx.getNumInputs());
-  VerifyOutputNum(ctx.getNumOutputs());
+  VerifyInputNum(static_cast<int>(ctx.getNumInputs()));
+  VerifyOutputNum(static_cast<int>(ctx.getNumOutputs()));
 
   // check all input types
   for (size_t in_idx = 0; in_idx < ctx.getNumInputs(); ++in_idx) {
