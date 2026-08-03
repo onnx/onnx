@@ -433,7 +433,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         )ONNX")
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
-static constexpr const char* celu_ver12_doc = R"DOC(
+static constexpr const char* celu_ver28_doc = R"DOC(
 Continuously Differentiable Exponential Linear Units:
 Perform the linear unit element-wise on the input tensor X
 using formula:
@@ -443,40 +443,32 @@ max(0,x) + min(0,alpha*(exp(x/alpha)-1))
 ```
 )DOC";
 
-static float celu_default_alpha = 1.0;
-
-static bool BuildContextDependentFunctionBodyCelu(
-    const FunctionBodyBuildContext& ctx,
-    const OpSchema& schema,
-    FunctionProto& functionProto) {
-  float alpha = ctx.getAttribute("alpha") != nullptr ? ctx.getAttribute("alpha")->f() : celu_default_alpha;
-  FunctionBuilder builder(functionProto);
-  builder.Const("alpha", std::vector<float>{alpha}).Add(R"(
-            X_alpha = Div (X, alpha)
-            Elu_Result = Elu <alpha = 1.0>(X_alpha)
-            Y = Mul (alpha, Elu_Result)
-        )");
-  schema.BuildFunction(functionProto);
-  return true;
-}
-
 ONNX_OPERATOR_SET_SCHEMA(
     Celu,
-    12,
+    28,
     OpSchema()
-        .SetDoc(celu_ver12_doc)
-        .Input(0, "X", "Input tensor", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
-        .Output(0, "Y", "Output tensor", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
+        .SetDoc(celu_ver28_doc)
         .Attr(
             "alpha",
             "The Alpha value in Celu formula which control the shape of "
             "the unit. The default value is 1.0.",
             AttributeProto::FLOAT,
-            celu_default_alpha)
-        .TypeConstraint("T", {types::Float}, "Constrain input and output types to float32 tensors.")
+            1.0f)
+        .Input(0, "X", "Input tensor", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
+        .Output(0, "Y", "Output tensor", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
+        .TypeConstraint("T", OpSchema::all_float_types_ir4(), "Constrain input and output types to float tensors.")
         .SetNodeDeterminism(OpSchema::NodeDeterminism::Deterministic)
-        .SetContextDependentFunctionBodyBuilder(BuildContextDependentFunctionBodyCelu)
-        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
+        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput)
+        .FunctionBody(
+            R"ONNX(
+          {
+            Alpha = Constant <value_float: float = @alpha>()
+            AlphaCast = CastLike (Alpha, X)
+            XScaled = Div (X, AlphaCast)
+            EluResult = Elu <alpha = 1.0> (XScaled)
+            Y = Mul (AlphaCast, EluResult)
+          }
+        )ONNX"));
 
 static constexpr const char* gelu_ver20_doc = R"DOC(
 Gelu takes one input data (Tensor<T>) and produces one
@@ -591,6 +583,66 @@ ONNX_OPERATOR_SET_SCHEMA(
                 Y = Mul (X, SigmoidAlphaMulX)
             }
             )ONNX"));
+
+static constexpr const char* SwiGLU_ver28_doc = R"DOC(
+SwiGLU is a gated activation that takes two inputs, a gate `A` and a linear (value)
+input `B`, and produces one output `Y`. It applies the Swish activation to the gate
+and multiplies the result elementwise by the linear input:
+
+```
+Y = Swish_alpha(A) * B
+```
+
+The gate activation `Swish_alpha` is exactly the `Swish` operator with the same
+`alpha`, i.e. `Swish_alpha(a) = a * Sigmoid(alpha * a)`. Inputs `A` and `B` must
+have identical shapes; broadcasting is not applied and the output `Y` has the same
+shape as the inputs.
+
+Exporters typically produce `A` and `B` in one of two ways: for the common
+two-projection form (e.g. Llama's `gate_proj`/`up_proj`) wire the two projection
+outputs directly to `A` (gate) and `B` (value); for a fused/packed single
+projection, split it upstream into `A` and `B` with `Split` (contiguous layout)
+or `Slice`/`Gather` (interleaved layout).
+)DOC";
+
+static void SwiGLUShapeInference(InferenceContext& ctx) {
+  propagateElemTypeFromInputToOutput(ctx, 0, 0);
+  if (!hasNInputShapes(ctx, 2)) {
+    return;
+  }
+  // A and B must have identical shapes: no broadcasting, no rank expansion, no
+  // size-1 stretching. Seed the output with A's shape and merge B into it, which
+  // fails on any rank mismatch or conflicting static dimension while merging
+  // symbolic/unknown dimensions toward the more-specified one.
+  auto* output_type = ctx.getOutputType(0)->mutable_tensor_type();
+  *output_type->mutable_shape() = ctx.getInputType(0)->tensor_type().shape();
+  mergeInShapeInfo(ctx.getInputType(1)->tensor_type(), *output_type);
+}
+
+ONNX_OPERATOR_SET_SCHEMA(
+    SwiGLU,
+    28,
+    OpSchema()
+        .SetDoc(SwiGLU_ver28_doc)
+        .Attr(
+            "alpha",
+            "Coefficient that scales the gate input inside the sigmoid of the Swish activation. "
+            "The default value is 1.0.",
+            AttributeProto::FLOAT,
+            1.0f)
+        .Input(0, "A", "Gate input tensor", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
+        .Input(1, "B", "Linear (value) input tensor", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
+        .Output(0, "Y", "Output tensor", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
+        .TypeConstraint("T", OpSchema::all_float_types_ir4(), "Constrain input and output types to float tensors.")
+        .SetNodeDeterminism(OpSchema::NodeDeterminism::Deterministic)
+        .TypeAndShapeInferenceFunction(SwiGLUShapeInference)
+        .FunctionBody(
+            R"ONNX(
+          {
+            SwishGate = Swish <alpha : float = @alpha> (A)
+            Y = Mul (SwishGate, B)
+          }
+        )ONNX"));
 
 ONNX_OPERATOR_SET_SCHEMA(
     Exp,
@@ -1238,14 +1290,14 @@ ONNX_OPERATOR_SET_SCHEMA(
           // A' is A or A^T depending on transA; B' is B or B^T depending on transB
           Dim M, N, K;
           if (transA) {
-            unifyInputShape(ctx, 0, {K, M});
+            ctx.unifyInputShape(0, {K, M});
           } else {
-            unifyInputShape(ctx, 0, {M, K});
+            ctx.unifyInputShape(0, {M, K});
           }
           if (transB) {
-            unifyInputShape(ctx, 1, {N, K});
+            ctx.unifyInputShape(1, {N, K});
           } else {
-            unifyInputShape(ctx, 1, {K, N});
+            ctx.unifyInputShape(1, {K, N});
           }
           // Output shape is (M, N)
           updateOutputShape(ctx, 0, {M, N});
@@ -1731,30 +1783,24 @@ ONNX_OPERATOR_SET_SCHEMA(
           // Type inference
           propagateElemTypeFromInputToOutput(ctx, 0, 0);
 
-          // Shape inference
+          // Shape inference: input [..., M, M] -> output [...]
           if (hasInputShape(ctx, 0)) {
             const TensorShapeProto& input_shape = ctx.getInputType(0)->tensor_type().shape();
-            TensorShapeProto* output_shape = ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
             const int rank = static_cast<int>(input_shape.dim_size());
 
             if (rank < 2) {
               fail_shape_inference("Input rank must be >= 2.");
             }
 
-            const auto mat_w = input_shape.dim(rank - 1);
-            const auto mat_h = input_shape.dim(rank - 2);
-            if (mat_w.has_dim_value() && mat_h.has_dim_value() && (mat_w.dim_value() != mat_h.dim_value())) {
-              fail_shape_inference(
-                  "The inner-most 2 dimensions must have the same size (mat_w:",
-                  mat_w.dim_value(),
-                  " != mat_h:",
-                  mat_h.dim_value(),
-                  ").");
-            }
+            // Validate the inner-most 2 dims are square
+            Dim M;
+            unifyDim(input_shape.dim(rank - 2), M);
+            unifyDim(input_shape.dim(rank - 1), M);
 
+            // Output is the batch prefix (all dims except the last 2)
+            TensorShapeProto* output_shape = ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
             for (int i = 0; i < rank - 2; ++i) {
-              auto dim = output_shape->add_dim();
-              *dim = input_shape.dim(i);
+              *output_shape->add_dim() = input_shape.dim(i);
             }
           }
         }));
@@ -1934,60 +1980,48 @@ ONNX_OPERATOR_SET_SCHEMA(
           propagateElemTypeFromInputToOutput(ctx, 0, 0);
 
           // Shape inference
-          if (hasNInputShapes(ctx, 2)) {
-            const TensorShapeProto& input_shape = ctx.getInputType(0)->tensor_type().shape();
-            const TensorShapeProto& target_shape = ctx.getInputType(1)->tensor_type().shape();
+          // input: [N, C, d1, ..., dk], target: [N, d1, ..., dk], weight (optional): [C]
+          if (!hasNInputShapes(ctx, 2)) {
+            return;
+          }
 
-            const int input_rank = static_cast<int>(input_shape.dim_size());
-            const int target_rank = static_cast<int>(target_shape.dim_size());
+          const TensorShapeProto& input_shape = ctx.getInputType(0)->tensor_type().shape();
 
-            if (input_rank < 2) {
-              fail_shape_inference("Input rank must be >= 2. input_rank=", input_rank);
-            }
-            if (target_rank != input_rank - 1) {
-              fail_shape_inference(
-                  "Target rank must be 1 less than the input rank. input_rank=",
-                  input_rank,
-                  ", target_rank=",
-                  target_rank);
-            }
+          const int input_rank = static_cast<int>(input_shape.dim_size());
+          const int target_rank = input_rank - 1;
 
-            // match input dimensions (N, C, d1, ..., dk) with target
-            // dimensions of (C, d1, ..., dk)
-            for (int dim = 0; dim < target_rank; dim++) {
-              const auto input_dim = dim == 0 ? input_shape.dim(dim) : input_shape.dim(dim + 1);
-              const auto target_dim = target_shape.dim(dim);
-              if (input_dim.has_dim_value() && target_dim.has_dim_value() &&
-                  input_dim.dim_value() != target_dim.dim_value())
-                fail_shape_inference(
-                    "Input and target dimension value mismatch. input_dim_value=",
-                    input_dim.dim_value(),
-                    " target_dim_value=",
-                    target_dim.dim_value());
-            }
+          if (input_rank < 2) {
+            fail_shape_inference("Input rank must be >= 2. input_rank=", input_rank);
+          }
+          checkInputRank(ctx, 1, target_rank);
 
-            if (ctx.getNumInputs() == 3 && hasInputShape(ctx, 2)) {
-              const TensorShapeProto& weight_shape = ctx.getInputType(2)->tensor_type().shape();
-              const auto weight_rank = weight_shape.dim_size();
-              if (weight_rank != 1) {
-                fail_shape_inference("Weight rank must be 1. weight_rank=", weight_rank);
-              }
-            }
+          // input: [N, C, d1, ..., dk], target: [N, d1, ..., dk]
+          // Build dims array for target shape: [N, d1, ..., dk]
+          Dim C;
+          std::vector<Dim> target_dims(target_rank);
+          // Unify target dims against both inputs
+          for (int i = 0; i < target_rank; i++) {
+            unifyInputDim(ctx, 1, i, target_dims[i]);
+            // input[0]=N matches target[0], input[2..]=d1..dk matches target[1..]
+            int input_i = (i == 0) ? 0 : i + 1;
+            unifyInputDim(ctx, 0, input_i, target_dims[i]);
+          }
+          unifyInputDim(ctx, 0, 1, C);
 
+          // Optional weight input: shape [C]
+          if (ctx.getNumInputs() == 3 && hasInputShape(ctx, 2)) {
+            ctx.unifyInputShape(2, {C});
+          }
+
+          if (getAttribute(ctx, "reduction", "mean") == "none") {
+            // output tensor is of shape (N, d1, d2, ..., dk)
             TensorShapeProto* output_shape = ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
-
-            if (getAttribute(ctx, "reduction", "mean") == "none") {
-              // output tensor is of shape (N, d1, d2, ..., dk) if
-              // reduction attribute is "none".
-              for (int i = 0; i < input_rank - 1; i++) {
-                auto dim = output_shape->add_dim();
-                if (i == 0)
-                  *dim = input_shape.dim(i);
-                else
-                  *dim = input_shape.dim(i + 1);
-              }
+            for (int i = 0; i < target_rank; i++) {
+              *output_shape->add_dim() = target_dims[i];
             }
-            // otherwise output is a scalar.
+          } else {
+            // output is a scalar (empty shape)
+            ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
           }
         }));
 
@@ -2018,10 +2052,10 @@ static void einsumShapeInference(ONNX_NAMESPACE::InferenceContext& ctx, std::str
 
   // Parse the left-hand side
   std::stringstream str(left_equation);
-  std::map<char, size_t> label_maps;
+  std::map<char, int> label_maps;
   std::unordered_set<char> repeated_labels;
   ONNX_NAMESPACE::TensorShapeProto dims_value, ellipsis_dims_value;
-  size_t num_labels = 0;
+  int num_labels = 0;
   bool ellipsis_flag = true;
 
   while (!str.eof()) {
@@ -2071,12 +2105,12 @@ static void einsumShapeInference(ONNX_NAMESPACE::InferenceContext& ctx, std::str
         if (ellipsis_flag) {
           ellipsis_flag = false;
           for (size_t i = 0; i < ellipsis_dims; i++) {
-            *ellipsis_dims_value.add_dim() = shape.dim(index + i - num_illegal_char);
+            *ellipsis_dims_value.add_dim() = shape.dim(static_cast<int>(index + i - num_illegal_char));
           }
         } else {
           for (size_t i = 0; i < ellipsis_dims; i++) {
-            const auto shape_dim = shape.dim(index + i - num_illegal_char);
-            auto* const current_dim = ellipsis_dims_value.mutable_dim(i);
+            const auto shape_dim = shape.dim(static_cast<int>(index + i - num_illegal_char));
+            auto* const current_dim = ellipsis_dims_value.mutable_dim(static_cast<int>(i));
             if (shape_dim.has_dim_value() && current_dim->has_dim_value() &&
                 shape_dim.dim_value() > current_dim->dim_value() && current_dim->dim_value() == 1) {
               current_dim->set_dim_value(shape_dim.dim_value());
@@ -2094,7 +2128,7 @@ static void einsumShapeInference(ONNX_NAMESPACE::InferenceContext& ctx, std::str
 
       const auto inserted = label_maps.emplace(term[index], num_labels).second;
       if (inserted) {
-        *dims_value.add_dim() = shape.dim(index + ellipsis_dims - num_illegal_char);
+        *dims_value.add_dim() = shape.dim(static_cast<int>(index + ellipsis_dims - num_illegal_char));
         ++num_labels;
       } else {
         repeated_labels.insert(term[index]);
@@ -2130,20 +2164,24 @@ static void einsumShapeInference(ONNX_NAMESPACE::InferenceContext& ctx, std::str
       // If there's an ellipsis, add its corresponding dimensions
       if (index == right_ellipsis_index) {
         for (size_t i = 0; i < num_ellipsis_indices; i++) {
-          *output_shape.add_dim() = ellipsis_dims_value.dim(i);
+          *output_shape.add_dim() = ellipsis_dims_value.dim(static_cast<int>(i));
         }
         index += 2; // skip the rest of dots
         continue;
       }
 
       if (is_letter(right_equation[index])) {
-        *output_shape.add_dim() = dims_value.dim(label_maps[right_equation[index]]);
+        auto it = label_maps.find(right_equation[index]);
+        if (it == label_maps.end()) {
+          fail_shape_inference("Equation output contains a label missing from the inputs");
+        }
+        *output_shape.add_dim() = dims_value.dim(it->second);
       }
     }
   } else { // Infer the dimension for right-hand side
     // If there's an ellipsis, add its corresponding dimensions
     for (size_t i = 0; i < num_ellipsis_indices; i++) {
-      *output_shape.add_dim() = ellipsis_dims_value.dim(i);
+      *output_shape.add_dim() = ellipsis_dims_value.dim(static_cast<int>(i));
     }
     // If no explicit output was given, generate an implicit output by ordering all the
     // labels in alphabetic order (by ASCII value consistent with numpy, so Z < a).
@@ -2675,7 +2713,7 @@ Generates a {name} window as described in the paper https://ieeexplore.ieee.org/
     schema.TypeAndShapeInferenceFunction([](ONNX_NAMESPACE::InferenceContext& ctx) {
       // Update the output data type to the output_datatype
       auto output_datatype = getAttribute(ctx, "output_datatype", static_cast<int64_t>(TensorProto_DataType_FLOAT));
-      updateOutputElemType(ctx, 0, output_datatype);
+      updateOutputElemType(ctx, 0, narrow<int32_t>(output_datatype));
 
       if (!hasInputShape(ctx, 0)) {
         // If no shape is available for the input, skip shape inference.
@@ -2905,7 +2943,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint("T3", OpSchema::all_numeric_types_ir4(), "Constrain to any numerical types.")
         .TypeAndShapeInferenceFunction([](ONNX_NAMESPACE::InferenceContext& ctx) {
           auto output_datatype = getAttribute(ctx, "output_datatype", static_cast<int64_t>(TensorProto_DataType_FLOAT));
-          updateOutputElemType(ctx, 0, output_datatype);
+          updateOutputElemType(ctx, 0, narrow<int32_t>(output_datatype));
 
           if (!hasInputShape(ctx, 0) || !hasInputShape(ctx, 1)) {
             return;

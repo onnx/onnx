@@ -65,49 +65,49 @@ struct Visitor {
 
 // MutableVisitor: A version of Visitor that allows mutation of the visited objects.
 struct MutableVisitor {
-  virtual void VisitGraph(GraphProto* graph) {
+  virtual void VisitGraph(GraphProto& graph) {
     if (ProcessGraph(graph))
-      for (auto& node : *(graph->mutable_node()))
-        VisitNode(&node);
+      for (auto& node : *(graph.mutable_node()))
+        VisitNode(node);
   }
 
-  virtual void VisitFunction(FunctionProto* function) {
+  virtual void VisitFunction(FunctionProto& function) {
     if (ProcessFunction(function))
-      for (auto& node : *(function->mutable_node()))
-        VisitNode(&node);
+      for (auto& node : *(function.mutable_node()))
+        VisitNode(node);
   }
 
-  virtual void VisitNode(NodeProto* node) {
+  virtual void VisitNode(NodeProto& node) {
     if (ProcessNode(node)) {
-      for (auto& attr : *(node->mutable_attribute())) {
-        VisitAttribute(&attr);
+      for (auto& attr : *(node.mutable_attribute())) {
+        VisitAttribute(attr);
       }
     }
   }
 
-  virtual void VisitAttribute(AttributeProto* attr) {
+  virtual void VisitAttribute(AttributeProto& attr) {
     if (ProcessAttribute(attr)) {
-      if (attr->has_g()) {
-        VisitGraph(attr->mutable_g());
+      if (attr.has_g()) {
+        VisitGraph(*attr.mutable_g());
       }
-      for (auto& graph : *(attr->mutable_graphs()))
-        VisitGraph(&graph);
+      for (auto& graph : *(attr.mutable_graphs()))
+        VisitGraph(graph);
     }
   }
 
-  virtual bool ProcessGraph(GraphProto* graph [[maybe_unused]]) {
+  virtual bool ProcessGraph(GraphProto& graph [[maybe_unused]]) {
     return true;
   }
 
-  virtual bool ProcessFunction(FunctionProto* function [[maybe_unused]]) {
+  virtual bool ProcessFunction(FunctionProto& function [[maybe_unused]]) {
     return true;
   }
 
-  virtual bool ProcessNode(NodeProto* node [[maybe_unused]]) {
+  virtual bool ProcessNode(NodeProto& node [[maybe_unused]]) {
     return true;
   }
 
-  virtual bool ProcessAttribute(AttributeProto* attr [[maybe_unused]]) {
+  virtual bool ProcessAttribute(AttributeProto& attr [[maybe_unused]]) {
     return true;
   }
 
