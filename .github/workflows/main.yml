@@ -244,10 +244,10 @@ jobs:
           cmake --build build_for_install --parallel
           sudo cmake --install build_for_install
 
-          cmake -S onnx/test/cmake -B onnx/test/cmake/build \
+          cmake -S tests/cmake -B tests/cmake/build \
             -DONNX_ML=${{ matrix.onnx_ml }}
-          cmake --build onnx/test/cmake/build
-          ./onnx/test/cmake/build/main
+          cmake --build tests/cmake/build
+          ./tests/cmake/build/main
 
       - name: Upload coverage to Codecov
         if: github.repository_owner == 'onnx'

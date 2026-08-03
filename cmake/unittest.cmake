@@ -5,20 +5,20 @@ include(CTest)
 set(ONNX_ROOT ${PROJECT_SOURCE_DIR})
 set(UT_NAME ${PROJECT_NAME}_gtests)
 set(test_src
-    ${ONNX_ROOT}/onnx/test/cpp/checker_test.cc
-    ${ONNX_ROOT}/onnx/test/cpp/data_propagation_test.cc
-    ${ONNX_ROOT}/onnx/test/cpp/function_context_test.cc
-    ${ONNX_ROOT}/onnx/test/cpp/function_get_test.cc
-    ${ONNX_ROOT}/onnx/test/cpp/function_verify_test.cc
-    ${ONNX_ROOT}/onnx/test/cpp/inliner_test.cc
-    ${ONNX_ROOT}/onnx/test/cpp/ir_test.cc
-    ${ONNX_ROOT}/onnx/test/cpp/op_reg_test.cc
-    ${ONNX_ROOT}/onnx/test/cpp/parser_test.cc
-    ${ONNX_ROOT}/onnx/test/cpp/schema_registration_test.cc
-    ${ONNX_ROOT}/onnx/test/cpp/shape_inference_test.cc
-    ${ONNX_ROOT}/onnx/test/cpp/tensor_test.cc
-    ${ONNX_ROOT}/onnx/test/cpp/test_main.cc
-    ${ONNX_ROOT}/onnx/test/cpp/utf8_conversion_test.cc
+    ${ONNX_ROOT}/tests/cpp/checker_test.cc
+    ${ONNX_ROOT}/tests/cpp/data_propagation_test.cc
+    ${ONNX_ROOT}/tests/cpp/function_context_test.cc
+    ${ONNX_ROOT}/tests/cpp/function_get_test.cc
+    ${ONNX_ROOT}/tests/cpp/function_verify_test.cc
+    ${ONNX_ROOT}/tests/cpp/inliner_test.cc
+    ${ONNX_ROOT}/tests/cpp/ir_test.cc
+    ${ONNX_ROOT}/tests/cpp/op_reg_test.cc
+    ${ONNX_ROOT}/tests/cpp/parser_test.cc
+    ${ONNX_ROOT}/tests/cpp/schema_registration_test.cc
+    ${ONNX_ROOT}/tests/cpp/shape_inference_test.cc
+    ${ONNX_ROOT}/tests/cpp/tensor_test.cc
+    ${ONNX_ROOT}/tests/cpp/test_main.cc
+    ${ONNX_ROOT}/tests/cpp/utf8_conversion_test.cc
 )
 add_executable(${UT_NAME} ${test_src})
 find_package(Threads REQUIRED)
