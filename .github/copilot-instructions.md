@@ -19,6 +19,8 @@ Individual commits within the PR do not need to follow this format, but each mus
 We use pixi tasks for installing and linting
 
 ```sh
+# Compile and install the project
 pixi run install
+# Run lints and apply fixes
 pixi run lint
 ```
