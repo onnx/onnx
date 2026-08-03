@@ -105,7 +105,7 @@ protobuf = ">=6.31.1"
 pytest = ">=8.3.4"
 pytest-cov = ">=6.0.0"
 pytest-xdist = ">=3.6.1"
-zizmor = ">=1.24.1,<2"
+zizmor = ">=1.24.1,<2,!=1.29.0"  # 1.29.0 has a regression for prek builtins, which is fixed in the next release
 onnxruntime = "*"
 
 [feature.reference.dependencies]
