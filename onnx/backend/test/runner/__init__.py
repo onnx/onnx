@@ -347,6 +347,7 @@ class Runner:
             assert model_test.data_sets is not None
             assert model_test.model is not None
 
+            model_marker[0] = model_test.model
             candidate_rt = self.backend.prepare(model_test.model, device, **kwargs)
             assert candidate_rt is not None
             for inputs, ref_outputs in model_test.data_sets:
@@ -358,8 +359,8 @@ class Runner:
                 self.assert_similar_outputs(
                     ref_outputs=ref_outputs_,
                     outputs=candidate_outputs,
-                    rtol=model_test.rtol,
-                    atol=model_test.atol,
+                    rtol=kwargs.get("rtol", model_test.rtol),
+                    atol=kwargs.get("atol", model_test.atol),
                     model_dir=model_test.model_dir,
                 )
 
