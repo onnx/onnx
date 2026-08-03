@@ -272,6 +272,7 @@ Every PR needs to pass CIs before merge. CI pipelines are described in [CIPipeli
 - [Project roadmap](ROADMAP.md)
 - [How to implement ONNX backend (ONNX to something converter)](docs/ImplementingAnOnnxBackend.md)
 - [Backend test infrastructure and how to add tests](docs/OnnxBackendTest.md)
+- [Backport policy](RELEASE-MANAGEMENT.md#long-term-support-lts) — ONNX has no LTS branches; backporting a fix to an already-released version is assessed case by case.
 
 ## License
 
