@@ -63,8 +63,7 @@
 #include "onnx/version_converter/adapters/upsample_9_10.h"
 #include "onnx/version_converter/adapters/upsample_9_8.h"
 
-namespace ONNX_NAMESPACE {
-namespace version_conversion {
+namespace ONNX_NAMESPACE::version_conversion {
 
 class DefaultVersionConverter : public BaseVersionConverter {
  private:
@@ -996,5 +995,4 @@ class DefaultVersionConverter : public BaseVersionConverter {
 };
 
 ONNX_API ModelProto ConvertVersion(const ModelProto& mp_in, int target_version);
-} // namespace version_conversion
-} // namespace ONNX_NAMESPACE
+} // namespace ONNX_NAMESPACE::version_conversion
