@@ -191,8 +191,8 @@ wheel = ">=0.47.0"
 
 # FETCHCONTENT_SOURCE_DIR_ONNX builds onnxruntime against the local onnx
 # tree; it must be a -D cache var (CMake ignores it in the environment).
-# TRY_FIND_PACKAGE_MODE=ALWAYS reuses conda-forge deps; the custom protoc
-# must match the conda-forge libprotobuf headers.
+# FETCHCONTENT_TRY_FIND_PACKAGE_MODE=ALWAYS reuses conda-forge deps;
+# the custom protoc must match the conda-forge libprotobuf headers.
 [feature.ort.tasks.build-onnxruntime]
 args = [{ "arg" = "onnxruntime_dir" }, { "arg" = "onnx_dir" }]
 cmd = 'python {{ onnxruntime_dir }}/tools/ci_build/build.py --update --build --build_wheel --enable_pybind --build_dir build --config Release --parallel --compile_no_warning_as_error --skip_pip_install --cmake_extra_defines FETCHCONTENT_TRY_FIND_PACKAGE_MODE=ALWAYS ONNX_CUSTOM_PROTOC_EXECUTABLE="$CONDA_PREFIX/bin/protoc" FETCHCONTENT_SOURCE_DIR_ONNX="{{ onnx_dir }}"'
