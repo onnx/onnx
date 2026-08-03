@@ -12,8 +12,7 @@
 #include "onnx/common/tensor.h"
 #include "onnx/defs/tensor_util.h"
 
-namespace ONNX_NAMESPACE {
-namespace Test {
+namespace ONNX_NAMESPACE::Test {
 
 constexpr int64_t kLargeDim = int64_t{1} << 62;
 
@@ -74,5 +73,4 @@ TEST(TensorTest, ParseDataAcceptsAlignedRawData) {
 #endif
 }
 
-} // namespace Test
-} // namespace ONNX_NAMESPACE
+} // namespace ONNX_NAMESPACE::Test

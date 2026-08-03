@@ -105,7 +105,7 @@ protobuf = ">=6.31.1"
 pytest = ">=8.3.4"
 pytest-cov = ">=6.0.0"
 pytest-xdist = ">=3.6.1"
-zizmor = ">=1.24.1,<2"
+zizmor = ">=1.24.1,<2,!=1.29.0"  # 1.29.0 has a regression for prek builtins, which is fixed in the next release
 onnxruntime = "*"
 
 [feature.reference.dependencies]
@@ -165,6 +165,42 @@ reuse = ">=6.2.0,<7"
 [feature.reuse.tasks.reuse]
 cmd = "reuse"
 
+# Toolchain for the onnxruntime downstream integration check
+# (see .github/workflows/downstream_onnxruntime.yml).
+[feature.ort.dependencies]
+c-compiler = ">=1.8.0,<2"
+cmake = ">=3.30.2"
+cxx-compiler = ">=1.8.0,<2"
+eigen = ">=5.0.1,<6"
+git = ">=2.55.0,<3"
+libabseil = "==20250814"  # must match onnxruntime's pinned abseil
+libdate = ">=3.0.1,<4"
+libprotobuf = "<7"
+make = "*"
+ninja = "*"
+numpy = "*"
+packaging = ">=24.1"
+parameterized = ">=0.9.0"
+pip = "*"
+protobuf = "<7"
+pytest = ">=8.4.2"
+re2 = ">=2025.8.12,<2026"
+setuptools = ">=75.6.0"
+sympy = "*"
+wheel = ">=0.47.0"
+
+# FETCHCONTENT_SOURCE_DIR_ONNX builds onnxruntime against the local onnx
+# tree; it must be a -D cache var (CMake ignores it in the environment).
+# FETCHCONTENT_TRY_FIND_PACKAGE_MODE=ALWAYS reuses conda-forge deps;
+# the custom protoc must match the conda-forge libprotobuf headers.
+[feature.ort.tasks.build-onnxruntime]
+args = [{ "arg" = "onnxruntime_dir" }, { "arg" = "onnx_dir" }]
+cmd = 'python {{ onnxruntime_dir }}/tools/ci_build/build.py --update --build --build_wheel --enable_pybind --build_dir build --config Release --parallel --compile_no_warning_as_error --skip_pip_install --cmake_extra_defines FETCHCONTENT_TRY_FIND_PACKAGE_MODE=ALWAYS ONNX_CUSTOM_PROTOC_EXECUTABLE="$CONDA_PREFIX/bin/protoc" FETCHCONTENT_SOURCE_DIR_ONNX="{{ onnx_dir }}"'
+
+# Run onnxruntime's ctest suite against the build produced above.
+[feature.ort.tasks.test-onnxruntime]
+cmd = "ctest -V -C Release --test-dir build/Release/"
+
 [environments]
 default = ["dev", "lint", "reference"]
 oldies = ["dev", "lint", "reference", "oldies"]
@@ -175,3 +211,4 @@ clang-tools = {features=["clang-tools"], no-default-feature=true}
 link-checker = {features=["link-checker"], no-default-feature=true}
 lintrunner = ["dev", "reference", "lint", "lintrunner"]
 reuse = {features=["reuse"], no-default-feature=true}
+ort = {features=["ort"], no-default-feature=true}
