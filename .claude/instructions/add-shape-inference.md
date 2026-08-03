@@ -8,7 +8,7 @@ Canonical guide: [`.agents/skills/add-shape-inference/SKILL.md`](../../.agents/s
 - Always check `hasNInputShapes(ctx, n)` before accessing shapes and `has_dim_value()` before reading dim values. Leave unknown dims unset rather than failing.
 - At minimum, provide rank inference; propagate symbolic dimensions (`dim_param`) when possible.
 - Prefer named `static` inference functions over inline lambdas in `ONNX_OPERATOR_SET_SCHEMA` (macro expansion breaks debugger breakpoints).
-- Tests: `tests/shape_inference_test.py`. The `_make_graph` / `_assert_inferred` helpers fit parameterized op-version sweeps; for one-off fixtures prefer `onnx.parser.parse_model`.
+- Tests: `tests/python/shape_inference_test.py`. The `_make_graph` / `_assert_inferred` helpers fit parameterized op-version sweeps; for one-off fixtures prefer `onnx.parser.parse_model`.
 
 General build/lint/DCO/copyright conventions live in [`CLAUDE.md`](../../CLAUDE.md).
 

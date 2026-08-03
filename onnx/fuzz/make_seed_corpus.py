@@ -76,7 +76,7 @@ def _make_model_unchecked(
     return model.SerializeToString()
 
 
-# Text-format seeds for fuzz_parser, extracted from tests/parser_test.py.
+# Text-format seeds for fuzz_parser, extracted from tests/python/parser_test.py.
 # Each string is a valid input to onnx.parser.parse_model().
 _PARSER_SEEDS: dict[str, str] = {
     # Minimal 3-op linear model; exercises basic node and graph parsing.
