@@ -954,7 +954,7 @@ void DetectCycleDFS(
           cycle,
           " -> ",
           GetFunctionImplId(*callee),
-          ". Self-referencing or cyclically-referencing functions would cause infinite recursion.");
+          ". Model-local functions must not be recursive.");
     } else if (s == VisitState::Unvisited) {
       push(callee);
     }
