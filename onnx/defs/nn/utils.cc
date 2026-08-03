@@ -6,10 +6,7 @@
 
 #include <algorithm>
 
-namespace ONNX_NAMESPACE {
-namespace defs {
-namespace nn {
-namespace utils {
+namespace ONNX_NAMESPACE::defs::nn::utils {
 
 std::vector<int64_t> getConvPoolStrides(InferenceContext& ctx, size_t n_input_dims) {
   std::vector<int64_t> strides;
@@ -253,7 +250,4 @@ bool AttentionAppendFunctionCausalMask(const FunctionBodyBuildContext& ctx, Func
   return true;
 }
 
-} // namespace utils
-} // namespace nn
-} // namespace defs
-} // namespace ONNX_NAMESPACE
+} // namespace ONNX_NAMESPACE::defs::nn::utils

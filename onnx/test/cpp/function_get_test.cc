@@ -5,8 +5,7 @@
 #include "gtest/gtest.h"
 #include "onnx/defs/schema.h"
 
-namespace ONNX_NAMESPACE {
-namespace Test {
+namespace ONNX_NAMESPACE::Test {
 
 TEST(FunctionAPITest, GetFunctionOpWithVersion) {
   const auto* const schema = OpSchemaRegistry::Schema("MeanVarianceNormalization", 9, "");
@@ -40,5 +39,4 @@ TEST(FunctionAPITest, GetMeanVarianceNormalizationFunctionWithVersion) {
   }
 }
 
-} // namespace Test
-} // namespace ONNX_NAMESPACE
+} // namespace ONNX_NAMESPACE::Test
