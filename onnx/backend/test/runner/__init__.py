@@ -466,26 +466,6 @@ class Runner:
                     for i, o in enumerate(expected_outputs):
                         name = os.path.join(test_data_set, f"output_{i}.pb")
                         shutil.copy(o, name)
-            else:
-                # TODO: I think this is now?
-                # TODO after converting all npz files to protobuf, we can delete this.
-                for test_data_npz in glob.glob(
-                    os.path.join(model_dir, "test_data_*.npz")
-                ):
-                    test_data = np.load(test_data_npz, encoding="bytes")
-                    inputs = list(test_data["inputs"])
-                    outputs = list(prepared_model.run(inputs))
-                    ref_outputs = tuple(
-                        np.array(x) if not isinstance(x, (list, dict)) else x
-                        for f in test_data["outputs"]
-                    )
-                    self.assert_similar_outputs(
-                        ref_outputs,
-                        outputs,
-                        rtol=kwargs.get("rtol", model_test.rtol),
-                        atol=kwargs.get("atol", model_test.atol),
-                        model_dir=model_dir,
-                    )
 
             for test_data_dir in glob.glob(os.path.join(model_dir, "test_data_set*")):
                 inputs = []

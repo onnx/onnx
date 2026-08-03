@@ -126,19 +126,6 @@ def parse_args() -> argparse.Namespace:
         default=DATA_DIR,
         help="output directory (default: %(default)s)",
     )
-    subparser.add_argument(
-        "-t",
-        "--op_type",
-        default=None,
-        help="op_type for test case generation. (generates test data for the specified op_type only.)",
-    )
-    subparser.add_argument(
-        "-d",
-        "--diff",
-        default=False,
-        action="store_true",
-        help="only generates test data for those changed files (compared to the main branch).",
-    )
     subparser.set_defaults(func=generate_data)
 
     return parser.parse_args()
