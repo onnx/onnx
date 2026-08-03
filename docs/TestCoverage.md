@@ -9252,7 +9252,7 @@ expect(
 
 
 ### DepthToSpace
-There are 2 test cases, listed as following:
+There are 3 test cases, listed as following:
 <details>
 <summary>crd_mode_example</summary>
 
@@ -9344,6 +9344,26 @@ y = np.array(
     ]
 ).astype(np.float32)
 expect(node, inputs=[x], outputs=[y], name="test_depthtospace_example")
+```
+
+</details>
+<details>
+<summary>nonsquare_matrix</summary>
+
+```python
+node = onnx.helper.make_node(
+    "DepthToSpace", inputs=["x"], outputs=["y"], blocksize=2, mode="DCR"
+)
+
+x = np.arange(1 * 8 * 2 * 4, dtype=np.float32).reshape(
+    1, 8, 2, 4
+)  # Define nonsquare shape where H != W to catch dim swap
+b, c, h, w = x.shape
+blocksize = 2
+tmp = x.reshape(b, blocksize, blocksize, c // (blocksize**2), h, w)
+tmp = tmp.transpose(0, 3, 4, 1, 5, 2)
+y = tmp.reshape(b, c // (blocksize**2), h * blocksize, w * blocksize)
+expect(node, inputs=[x], outputs=[y], name="test_depthtospace_dcr_nonsquare")
 ```
 
 </details>
