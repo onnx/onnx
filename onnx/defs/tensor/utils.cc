@@ -542,7 +542,7 @@ void oneHotShapeInference(InferenceContext& ctx, int version) {
   // allow both.
   std::optional<int64_t> depth_value;
   if (hasInputShape(ctx, 1)) {
-    auto& depth_shape = getInputShape(ctx, 1);
+    const auto& depth_shape = getInputShape(ctx, 1);
     if (depth_shape.dim_size() != 0 && depth_shape.dim_size() != 1) {
       fail_type_inference("Input 'depth' must be a scalar or rank 1 tensor.");
     }
@@ -582,7 +582,7 @@ void oneHotShapeInference(InferenceContext& ctx, int version) {
   }
   // Input 'values' must be a two-element vector.
   if (hasInputShape(ctx, 2)) {
-    auto& values_shape = getInputShape(ctx, 2);
+    const auto& values_shape = getInputShape(ctx, 2);
     if (values_shape.dim_size() != 1) {
       fail_type_inference("Input 'values' must be rank 1 tensor.");
     }
@@ -609,9 +609,9 @@ void oneHotShapeInference(InferenceContext& ctx, int version) {
     if (axis < 0) {
       axis += out_rank;
     }
-    auto output_shape = getOutputShape(ctx, 0);
+    auto* output_shape = getOutputShape(ctx, 0);
     for (int i = 0; i < out_rank; ++i) {
-      auto dim = output_shape->add_dim();
+      auto* dim = output_shape->add_dim();
       if (i < axis) {
         if (indices_shape.dim(i).has_dim_value()) {
           dim->set_dim_value(indices_shape.dim(i).dim_value());
