@@ -28,7 +28,7 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-reference = ["Pillow"]
+reference = ["Pillow>=12.2.0"]
 
 [project.urls]
 Homepage = "https://onnx.ai/"
