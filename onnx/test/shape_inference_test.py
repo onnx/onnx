@@ -6683,6 +6683,71 @@ class TestShapeInference(TestShapeInferenceHelper):
             graph, [make_tensor_value_info("Y", TensorProto.FLOAT, (2, 256, 3, 5))]
         )
 
+    def test_onehot_empty_depth(self) -> None:
+        # A zero-element 'depth' initializer must not trigger an out-of-bounds
+        # read; with no concrete depth available the new axis is left unknown.
+        graph = self._make_graph(
+            [
+                ("indices", TensorProto.INT64, (2, 2)),
+                ("depth", TensorProto.INT64, (0,)),
+                ("values", TensorProto.FLOAT, (2,)),
+            ],
+            [make_node("OneHot", ["indices", "depth", "values"], "Y")],
+            [],
+            initializer=[make_tensor("depth", TensorProto.INT64, (0,), [])],
+        )
+        self._assert_inferred(
+            graph, [make_tensor_value_info("Y", TensorProto.FLOAT, (2, 2, None))]
+        )
+
+    def test_onehot_negative_depth(self) -> None:
+        # A negative constant 'depth' cannot describe a valid output dimension.
+        graph = self._make_graph(
+            [
+                ("indices", TensorProto.INT64, (2, 2)),
+                ("depth", TensorProto.INT64, ()),
+                ("values", TensorProto.FLOAT, (2,)),
+            ],
+            [make_node("OneHot", ["indices", "depth", "values"], "Y")],
+            [],
+            initializer=[make_tensor("depth", TensorProto.INT64, (), (-3,))],
+        )
+        with pytest.raises(onnx.shape_inference.InferenceError):
+            onnx.shape_inference.infer_shapes(
+                helper.make_model(graph), strict_mode=True
+            )
+
+    @pytest.mark.parametrize("version", all_versions_for("OneHot"))
+    def test_onehot_negative_indices(self, version) -> None:
+        # Negative 'indices' were forbidden before opset 11 and allowed (they
+        # wrap around) from opset 11 onwards.
+        graph = self._make_graph(
+            [
+                ("indices", TensorProto.INT64, (2,)),
+                ("depth", TensorProto.INT64, ()),
+                ("values", TensorProto.FLOAT, (2,)),
+            ],
+            [make_node("OneHot", ["indices", "depth", "values"], "Y")],
+            [],
+            initializer=[
+                make_tensor("indices", TensorProto.INT64, (2,), (0, -1)),
+                make_tensor("depth", TensorProto.INT64, (), (3,)),
+            ],
+        )
+        opset_imports = [helper.make_opsetid(ONNX_DOMAIN, version)]
+        if version < 11:
+            with pytest.raises(onnx.shape_inference.InferenceError):
+                onnx.shape_inference.infer_shapes(
+                    helper.make_model(graph, opset_imports=opset_imports),
+                    strict_mode=True,
+                )
+        else:
+            self._assert_inferred(
+                graph,
+                [make_tensor_value_info("Y", TensorProto.FLOAT, (2, 3))],
+                opset_imports=opset_imports,
+            )
+
     def test_loop(self) -> None:
         # The body's cond_in and loop_state_in are left untyped (their types are supplied by Loop), and the
         # body references outer_scope_input from the enclosing graph. loop_state_final's rank may change
