@@ -790,14 +790,15 @@ TEST(ParserTest, QuotedIdentifierTest2) {
 // This is a regression test for https://github.com/onnx/onnx/issues/8111
 namespace {
 // RAII helper to restore locale on scope exit, ensuring no locale leaks to other tests.
+// setlocale is not thread safe, but gtest runs these tests on a single thread.
 class LocaleGuard {
  public:
   LocaleGuard() {
-    const char* loc = std::setlocale(LC_NUMERIC, nullptr);
+    const char* loc = std::setlocale(LC_NUMERIC, nullptr); // NOLINT(concurrency-mt-unsafe)
     saved_ = loc ? loc : "C";
   }
   ~LocaleGuard() {
-    std::setlocale(LC_NUMERIC, saved_.c_str());
+    std::setlocale(LC_NUMERIC, saved_.c_str()); // NOLINT(concurrency-mt-unsafe,cert-err33-c)
   }
   LocaleGuard(const LocaleGuard&) = delete;
   LocaleGuard& operator=(const LocaleGuard&) = delete;
@@ -821,7 +822,7 @@ TEST(ParserTest, LocaleIndependentFloatParsing) {
 
   bool locale_set = false;
   for (const auto* candidate : locale_candidates) {
-    if (std::setlocale(LC_NUMERIC, candidate) != nullptr) {
+    if (std::setlocale(LC_NUMERIC, candidate) != nullptr) { // NOLINT(concurrency-mt-unsafe)
       locale_set = true;
       break;
     }
