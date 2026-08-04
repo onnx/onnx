@@ -19,8 +19,7 @@
 #include "onnx/defs/schema.h"
 #include "onnx/shape_inference/implementation.h"
 
-namespace ONNX_NAMESPACE {
-namespace Test {
+namespace ONNX_NAMESPACE::Test {
 using TENSOR_TYPES_MAP = std::unordered_map<std::string, std::vector<std::string>>;
 
 static void GetFunctionProtoOpsetImport(
@@ -564,5 +563,4 @@ foo (x) => (y) {
   ONNX_NAMESPACE::shape_inference::InferShapes(model, OpSchemaRegistry::Instance(), options);
 }
 
-} // namespace Test
-} // namespace ONNX_NAMESPACE
+} // namespace ONNX_NAMESPACE::Test

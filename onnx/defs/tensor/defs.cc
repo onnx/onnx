@@ -5,7 +5,6 @@
 #include <algorithm>
 #include <cmath>
 #include <numeric>
-#include <optional>
 #include <string>
 #include <utility>
 #include <vector>
@@ -1068,15 +1067,21 @@ ONNX_OPERATOR_SET_SCHEMA(
 
 const char* Transpose_doc = R"DOC(
 Returns a transpose of the input tensor. (Similar to `numpy.transpose`).
-The optional attribute `perm` must be a permutation of the dimensions of
-the input tensor. Axis `i` of the output tensor corresponds to the axis
-`perm[i]` of the input tensor.
+The optional attribute `perm` specifies the permutation of the axes of the
+input tensor. `perm` must contain each axis index in `[0, n-1]` exactly once,
+so its length is equal to the rank `n` of the input tensor.
+
+Axis `i` of the output tensor corresponds to axis `perm[i]` of the input tensor.
+
+If the attribute is omitted, its default value is `(n-1, ..., 0)`, where `n`
+is the rank of the input tensor (that is, the dimensions are reversed).
+
 For example, when perm=(1, 0, 2), given an input tensor of shape (1, 2, 3),
 the output shape will be (2, 1, 3).
 When perm=(1, 2, 0), given an input tensor of shape (1, 2, 3),
 the output shape will be (2, 3, 1).
-If the attribute `perm` is omitted, its default value is `(n-1, ..., 0)`,
-where `n` is the rank of the input tensor.
+A 0-D or 1-D input is valid; in those cases the output has the same shape
+as the input.
 )DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
@@ -1086,9 +1091,10 @@ ONNX_OPERATOR_SET_SCHEMA(
         .SetDoc(Transpose_doc)
         .Attr(
             "perm",
-            "A list of integers. By default, reverse the dimensions, "
+            "A list of integers. By default, reverse the dimensions; "
             "otherwise permute the axes according to the values given. "
-            "Its length must be equal to the rank of the input.",
+            "Its length must be equal to the rank of the input, and each "
+            "value must be in the range `[0, rank-1]`.",
             AttributeProto::INTS,
             OPTIONAL_VALUE)
         .Input(0, "data", "An input tensor.", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
@@ -2822,87 +2828,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint("T1", OpSchema::all_numeric_types(), "Constrain input to only numeric types.")
         .TypeConstraint("T2", OpSchema::all_numeric_types(), "Constrain input to only numeric types.")
         .TypeConstraint("T3", OpSchema::all_tensor_types(), "Constrain to any tensor type.")
-        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-          // Check that the node has three inputs.
-          if (ctx.getNumInputs() != 3) {
-            fail_type_inference("OneHot node must have three inputs.");
-          }
-          // Input 'depth' must be a scalar or a single-element vector.
-          // TODO(ONNX): Ideally to match spec for this input only Scalar should
-          // be allowed. Making this change now can affect backward
-          // compatibility for this op. Since this does not seem like a good
-          // justification to update version for this op, allowing both scalar
-          // and 1 element vector for now. In future when version update for
-          // this op is done we should only allow scalar or change the spec to
-          // allow both.
-          std::optional<int64_t> depth_value;
-          if (hasInputShape(ctx, 1)) {
-            auto& depth_shape = getInputShape(ctx, 1);
-            if (const TensorProto* depth_data = ctx.getInputData(1)) {
-              if (depth_data->data_type() == TensorProto::INT64) {
-                depth_value = ParseData<int64_t>(depth_data)[0];
-              } else if (depth_data->data_type() == TensorProto::INT32) {
-                depth_value = ParseData<int32_t>(depth_data)[0];
-              } else if (depth_data->data_type() == TensorProto::FLOAT) {
-                depth_value = static_cast<int64_t>(ParseData<float>(depth_data)[0]);
-              }
-            }
-            if (depth_shape.dim_size() != 0 && depth_shape.dim_size() != 1) {
-              fail_type_inference("Input 'depth' must be a scalar or rank 1 tensor.");
-            }
-            if (depth_shape.dim_size() == 1 && depth_shape.dim(0).has_dim_value() &&
-                depth_shape.dim(0).dim_value() != 1) {
-              fail_type_inference("Input 'depth' must have exactly one element.");
-            }
-          }
-          // Input 'values' must be a two-element vector.
-          if (hasInputShape(ctx, 2)) {
-            auto& values_shape = getInputShape(ctx, 2);
-            if (values_shape.dim_size() != 1) {
-              fail_type_inference("Input 'values' must be rank 1 tensor.");
-            }
-            if (values_shape.dim(0).has_dim_value() && values_shape.dim(0).dim_value() != 2) {
-              fail_type_inference("Input 'values' must have exactly two elements.");
-            }
-          }
-          // Set output type to be the same as the third input, 'values'.
-          propagateElemTypeFromInputToOutput(ctx, 2, 0);
-          // Set the output shape, if input 0 (indices) shape is available.
-          if (hasInputShape(ctx, 0)) {
-            const TensorShapeProto& indices_shape = ctx.getInputType(0)->tensor_type().shape();
-            int r = indices_shape.dim_size();
-            if (r < 1) {
-              fail_shape_inference("Indices tensor must have rank >= 1");
-            }
-            int out_rank = r + 1;
-            int axis = static_cast<int>(getAttribute(ctx, "axis", -1));
-            if (axis < -out_rank || axis >= out_rank) {
-              fail_shape_inference("'axis' must be in [-rank(indices), rank(indices)-1]");
-            }
-            if (axis < 0) {
-              axis += out_rank;
-            }
-            auto output_shape = getOutputShape(ctx, 0);
-            for (int i = 0; i < out_rank; ++i) {
-              auto dim = output_shape->add_dim();
-              if (i < axis) {
-                if (indices_shape.dim(i).has_dim_value()) {
-                  dim->set_dim_value(indices_shape.dim(i).dim_value());
-                } else if (indices_shape.dim(i).has_dim_param()) {
-                  dim->set_dim_param(indices_shape.dim(i).dim_param());
-                }
-              } else if (i > axis) {
-                if (indices_shape.dim(i - 1).has_dim_value()) {
-                  dim->set_dim_value(indices_shape.dim(i - 1).dim_value());
-                } else if (indices_shape.dim(i - 1).has_dim_param()) {
-                  dim->set_dim_param(indices_shape.dim(i - 1).dim_param());
-                }
-              } else if (depth_value) {
-                dim->set_dim_value(*depth_value);
-              }
-            }
-          }
-        }));
+        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) { oneHotShapeInference(ctx, 11); }));
 
 ONNX_OPERATOR_SET_SCHEMA(
     IsNaN,

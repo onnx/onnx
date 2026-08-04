@@ -19,8 +19,7 @@ namespace fs = std::filesystem;
 
 using ONNX_NAMESPACE::ScopedFd;
 
-namespace ONNX_NAMESPACE {
-namespace Test {
+namespace ONNX_NAMESPACE::Test {
 
 TEST(CHECKER, ValidDataLocationTest) {
 #ifndef ONNX_NO_EXCEPTIONS
@@ -182,5 +181,4 @@ TEST(CHECKER, OpenExternalDataTest) {
 #endif
 }
 
-} // namespace Test
-} // namespace ONNX_NAMESPACE
+} // namespace ONNX_NAMESPACE::Test

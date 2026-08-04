@@ -22,8 +22,7 @@
 #include "onnx/shape_inference/implementation.h"
 #include "onnx/version_converter/convert.h"
 
-namespace ONNX_NAMESPACE {
-namespace inliner {
+namespace ONNX_NAMESPACE::inliner {
 
 namespace { // internal/private API
 
@@ -122,6 +121,7 @@ class NameGenerator : private internal::Visitor {
     existing_names_.insert(name);
   }
 
+ private:
   bool ProcessGraph(const GraphProto& graph) override {
     for (const auto& x : graph.input())
       Add(x.name());
@@ -154,7 +154,6 @@ class NameGenerator : private internal::Visitor {
     return true;
   }
 
- private:
   unsigned int index_;
   std::unordered_set<std::string> existing_names_;
 };
@@ -431,7 +430,7 @@ void ConvertVersion(ModelProto& model, const NodeProto& call_node, FunctionProto
 
   RepeatedNodeProto& function_nodes = *function.mutable_node();
   RepeatedNodeProto& nodes = *graph.mutable_node();
-  nodes.Reserve(function_nodes.size() + used_vars.size());
+  nodes.Reserve(static_cast<int>(function_nodes.size() + used_vars.size()));
 
   auto* inputs = graph.mutable_input();
   for (const auto& var : used_vars) {
@@ -539,7 +538,7 @@ struct InlinerImpl {
       }
     }
     if (schema_registry != nullptr) {
-      int64_t domain_version = GetDomainVersion(model, domain);
+      const int domain_version = static_cast<int>(GetDomainVersion(model, domain));
       const auto* const op_schema = schema_registry->GetSchema(node.op_type(), domain_version, domain);
 
       if (op_schema == nullptr) {
@@ -590,7 +589,7 @@ struct InlinerImpl {
         // Rename variable names in callee
         InliningRenamer::Rename(node, callee, "__" + std::to_string(++(this->inline_count)), this->name_generator);
         if (target_version != kNoConversion) {
-          ConvertVersion(model, node, callee, target_version);
+          ConvertVersion(model, node, callee, static_cast<int>(target_version));
         }
         std::unordered_set<std::string> actual_parameters;
         for (const auto& x : node.input())
@@ -802,5 +801,4 @@ std::string Renamer::BindToUniqueName(const std::string& original_name) {
   return pImpl_->GetRenamer().BindToUniqueName(original_name);
 }
 
-} // namespace inliner
-} // namespace ONNX_NAMESPACE
+} // namespace ONNX_NAMESPACE::inliner

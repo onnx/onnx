@@ -6,11 +6,9 @@
 
 #include "onnx/version_converter/helper.h"
 
-#include <cinttypes>
 #include <vector>
 
-namespace ONNX_NAMESPACE {
-namespace version_conversion {
+namespace ONNX_NAMESPACE::version_conversion {
 int check_numpy_unibroadcastable_and_require_broadcast(
     const std::vector<Dimension>& input1_sizes,
     const std::vector<Dimension>& input2_sizes) {
@@ -79,5 +77,4 @@ void assertInputsAvailable(const ArrayRef<Value*>& inputs, const char* name, uin
     assertNotParams(inputs[i]->sizes());
   }
 }
-} // namespace version_conversion
-} // namespace ONNX_NAMESPACE
+} // namespace ONNX_NAMESPACE::version_conversion

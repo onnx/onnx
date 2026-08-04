@@ -10,10 +10,7 @@
 
 #include "onnx/defs/type_builders.h"
 
-namespace ONNX_NAMESPACE {
-namespace defs {
-namespace math {
-namespace utils {
+namespace ONNX_NAMESPACE::defs::math::utils {
 
 static constexpr const char* TopK_ver11_doc = R"DOC(
 Retrieve the top-K largest or smallest elements along a specified axis. Given an input tensor of
@@ -162,7 +159,7 @@ UnaryFloatMathOpGenerator(const char* doc, const char* output_description, std::
   };
 }
 
-int MathOpTwoIntegers(const std::string& op_type, int a, int b) {
+int64_t MathOpTwoIntegers(const std::string& op_type, int64_t a, int64_t b) {
   if (op_type == "Add") {
     return a + b;
   } else if (op_type == "Sub") {
@@ -283,7 +280,4 @@ Production must never overflow, and accumulation may overflow if and only if in 
   return QLinearMatMul_doc;
 }
 
-} // namespace utils
-} // namespace math
-} // namespace defs
-} // namespace ONNX_NAMESPACE
+} // namespace ONNX_NAMESPACE::defs::math::utils

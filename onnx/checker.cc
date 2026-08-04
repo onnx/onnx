@@ -8,6 +8,7 @@
 #include <cstdint>
 #include <filesystem> // NOLINT(build/c++17)
 #include <iostream>
+#include <limits>
 #include <string>
 #include <unordered_map>
 #include <unordered_set>
@@ -56,8 +57,7 @@ struct open_how {
 
 #endif // _WIN32
 
-namespace ONNX_NAMESPACE {
-namespace checker {
+namespace ONNX_NAMESPACE::checker {
 
 #define enforce_has_field(proto, field)                                              \
   do {                                                                               \
@@ -238,6 +238,23 @@ void check_tensor(const TensorProto& tensor, const CheckerContext& ctx) {
       case TensorProto::FLOAT8E5M2:
       case TensorProto::FLOAT8E5M2FNUZ:
       case TensorProto::FLOAT8E8M0:
+        check_field(int32_data);
+        if (nelem > 0) {
+          // These types are not packed: each element occupies one int32_data entry.
+          const int64_t expected_int32s = nelem;
+          if (static_cast<int64_t>(tensor.int32_data().size()) < expected_int32s) {
+            fail_check(
+                "TensorProto (tensor name: ",
+                tensor.name(),
+                ") int32_data size (",
+                tensor.int32_data().size(),
+                ") is too small for the declared shape (",
+                expected_int32s,
+                " int32 values required).");
+          }
+        }
+        break;
+
       case TensorProto::UINT4:
       case TensorProto::INT4:
       case TensorProto::FLOAT4E2M1:
@@ -630,7 +647,13 @@ void check_node(const NodeProto& node, const CheckerContext& ctx, const LexicalS
   const auto& opset_imports = ctx.get_opset_imports();
   auto dit = opset_imports.find(node.domain());
   if (dit == opset_imports.end()) {
-    fail_check("No opset import for domain '" + node.domain() + "'");
+    // Both "" (ONNX_DOMAIN) and "ai.onnx" (AI_ONNX_DOMAIN) refer to the default ONNX domain
+    if (node.domain() == ONNX_DOMAIN) {
+      dit = opset_imports.find(AI_ONNX_DOMAIN);
+    }
+    if (dit == opset_imports.end()) {
+      fail_check("No opset import for domain '" + node.domain() + "'");
+    }
   }
   auto domain_version = dit->second;
 
@@ -802,6 +825,14 @@ void check_graph(const GraphProto& graph, const CheckerContext& ctx, const Lexic
   print_warning_if_has_experimental(used_experimental_ops);
 }
 
+// Converts a proto opset version to int, rejecting values that do not fit.
+static int checked_opset_version(int64_t version) {
+  if (version < std::numeric_limits<int>::min() || version > std::numeric_limits<int>::max()) {
+    fail_check("Opset import version ", version, " is out of supported range");
+  }
+  return static_cast<int>(version);
+}
+
 // Utilify function to get the imported version of domain from opset imports
 // Returns -1 if requested domain is not found in the opset_imports
 static int get_version_for_domain(
@@ -931,9 +962,36 @@ void DetectCycleDFS(
           cycle,
           " -> ",
           GetFunctionImplId(*callee),
-          ". Self-referencing or cyclically-referencing functions would cause infinite recursion.");
+          ". Model-local functions must not be recursive.");
     } else if (s == VisitState::Unvisited) {
       push(callee);
+    }
+  }
+}
+
+// Collect callee edges from a list of nodes into the callee set. A node in a
+// function body may carry subgraphs (via GRAPH / GRAPHS attributes on control-flow
+// ops such as If/Loop/Scan) whose own nodes can also call model-local functions, so
+// we descend recursively to detect cycles hidden at any nesting level. This follows the
+// same subgraph descent as the existing checker recursion (check_graph -> check_node ->
+// check_attribute -> check_graph) and does not add a new unbounded-recursion characteristic.
+void CollectCalleeEdges(
+    const google::protobuf::RepeatedPtrField<NodeProto>& nodes,
+    const std::unordered_map<std::string, FuncPtr>& func_by_key,
+    std::unordered_set<FuncPtr>& callees) {
+  for (const auto& node : nodes) {
+    auto it = func_by_key.find(GetCalleeId(node));
+    if (it != func_by_key.end()) {
+      callees.insert(it->second);
+    }
+    // has_g() guards the singular GRAPH attribute; graphs() is the repeated GRAPHS field.
+    for (const auto& attr : node.attribute()) {
+      if (attr.has_g()) {
+        CollectCalleeEdges(attr.g().node(), func_by_key, callees);
+      }
+      for (const auto& subgraph : attr.graphs()) {
+        CollectCalleeEdges(subgraph.node(), func_by_key, callees);
+      }
     }
   }
 }
@@ -961,17 +1019,12 @@ void check_function_call_cycles(const ModelProto& model) {
     }
   }
 
-  // Build adjacency list using pointers directly
+  // Build adjacency list of FuncPtr edges. FuncPtr points into model.functions(), which
+  // outlives this local map, so storing raw pointers as graph nodes is safe here.
   CallGraph call_graph;
   for (const auto& entry : func_by_key) {
     const auto* func = entry.second;
-    auto& callees = call_graph[func];
-    for (const auto& node : func->node()) {
-      auto it = func_by_key.find(GetCalleeId(node));
-      if (it != func_by_key.end()) {
-        callees.insert(it->second);
-      }
-    }
+    CollectCalleeEdges(func->node(), func_by_key, call_graph[func]);
   }
 
   std::unordered_map<FuncPtr, VisitState> state;
@@ -998,7 +1051,7 @@ void check_model_local_functions(
   for (const auto& function_proto : model.functions()) {
     for (const auto& opset_import : function_proto.opset_import()) {
       if (get_version_for_domain(opset_import.domain(), model_opset_imports) == -1) {
-        model_opset_imports[opset_import.domain()] = opset_import.version();
+        model_opset_imports[opset_import.domain()] = checked_opset_version(opset_import.version());
       }
     }
   }
@@ -1025,7 +1078,7 @@ void check_function(const FunctionProto& function, const CheckerContext& ctx, co
 
   std::unordered_map<std::string, int> func_opset_imports;
   for (const auto& relied_opset : function.opset_import()) {
-    func_opset_imports[relied_opset.domain()] = static_cast<int>(relied_opset.version());
+    func_opset_imports[relied_opset.domain()] = checked_opset_version(relied_opset.version());
   }
 
   ctx_copy.set_opset_imports(func_opset_imports);
@@ -1122,7 +1175,7 @@ static void check_model(const ModelProto& model, CheckerContext& ctx) {
   ctx.set_ir_version(static_cast<int>(model.ir_version()));
   std::unordered_map<std::string, int> opset_imports;
   for (const auto& opset_import : model.opset_import()) {
-    opset_imports[opset_import.domain()] = static_cast<int>(opset_import.version());
+    opset_imports[opset_import.domain()] = checked_opset_version(opset_import.version());
   }
   if (model.ir_version() >= 3) {
     if (opset_imports.empty()) {
@@ -1518,5 +1571,4 @@ bool check_is_experimental_op(const NodeProto& node) {
 #undef enforce_has_field
 #undef enforce_non_empty_field
 
-} // namespace checker
-} // namespace ONNX_NAMESPACE
+} // namespace ONNX_NAMESPACE::checker

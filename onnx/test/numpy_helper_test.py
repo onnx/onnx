@@ -4,7 +4,6 @@
 from __future__ import annotations
 
 import numpy as np
-import parameterized
 import pytest
 
 import onnx
@@ -139,36 +138,37 @@ class TestNumpyHelper:
         assert tp.SerializeToString() == again.SerializeToString()
         assert tp.data_type == helper.np_dtype_to_tensor_dtype(back.dtype)
 
-    @parameterized.parameterized.expand(
+    @pytest.mark.parametrize(
+        "data_type",
         [
-            ("FLOAT", onnx.TensorProto.FLOAT),
-            ("UINT8", onnx.TensorProto.UINT8),
-            ("INT8", onnx.TensorProto.INT8),
-            ("UINT16", onnx.TensorProto.UINT16),
-            ("INT16", onnx.TensorProto.INT16),
-            ("INT32", onnx.TensorProto.INT32),
-            ("INT64", onnx.TensorProto.INT64),
-            ("BOOL", onnx.TensorProto.BOOL),
-            ("FLOAT16", onnx.TensorProto.FLOAT16),
-            ("DOUBLE", onnx.TensorProto.DOUBLE),
-            ("UINT32", onnx.TensorProto.UINT32),
-            ("UINT64", onnx.TensorProto.UINT64),
-            ("COMPLEX64", onnx.TensorProto.COMPLEX64),
-            ("COMPLEX128", onnx.TensorProto.COMPLEX128),
-            ("BFLOAT16", onnx.TensorProto.BFLOAT16),
-            ("FLOAT8E4M3FN", onnx.TensorProto.FLOAT8E4M3FN),
-            ("FLOAT8E4M3FNUZ", onnx.TensorProto.FLOAT8E4M3FNUZ),
-            ("FLOAT8E5M2", onnx.TensorProto.FLOAT8E5M2),
-            ("FLOAT8E5M2FNUZ", onnx.TensorProto.FLOAT8E5M2FNUZ),
-            ("FLOAT8E8M0", onnx.TensorProto.FLOAT8E8M0),
-            ("UINT4", onnx.TensorProto.UINT4),
-            ("INT4", onnx.TensorProto.INT4),
-            ("UINT2", onnx.TensorProto.UINT2),
-            ("INT2", onnx.TensorProto.INT2),
-            ("FLOAT4E2M1", onnx.TensorProto.FLOAT4E2M1),
-        ]
+            onnx.TensorProto.FLOAT,
+            onnx.TensorProto.UINT8,
+            onnx.TensorProto.INT8,
+            onnx.TensorProto.UINT16,
+            onnx.TensorProto.INT16,
+            onnx.TensorProto.INT32,
+            onnx.TensorProto.INT64,
+            onnx.TensorProto.BOOL,
+            onnx.TensorProto.FLOAT16,
+            onnx.TensorProto.DOUBLE,
+            onnx.TensorProto.UINT32,
+            onnx.TensorProto.UINT64,
+            onnx.TensorProto.COMPLEX64,
+            onnx.TensorProto.COMPLEX128,
+            onnx.TensorProto.BFLOAT16,
+            onnx.TensorProto.FLOAT8E4M3FN,
+            onnx.TensorProto.FLOAT8E4M3FNUZ,
+            onnx.TensorProto.FLOAT8E5M2,
+            onnx.TensorProto.FLOAT8E5M2FNUZ,
+            onnx.TensorProto.FLOAT8E8M0,
+            onnx.TensorProto.UINT4,
+            onnx.TensorProto.INT4,
+            onnx.TensorProto.UINT2,
+            onnx.TensorProto.INT2,
+            onnx.TensorProto.FLOAT4E2M1,
+        ],
     )
-    def test_to_array_from_array(self, _: str, data_type: onnx.TensorProto.DataType):
+    def test_to_array_from_array(self, data_type: onnx.TensorProto.DataType):
         self._to_array_from_array(data_type)
 
     def test_to_array_from_array_string(self):
@@ -261,16 +261,15 @@ class TestNumpyHelper:
         with pytest.raises(TypeError, match="Unsupported map key type"):
             numpy_helper.from_dict({1.5: np.array(1), 2.5: np.array(2)})
 
-    @parameterized.parameterized.expand(
+    @pytest.mark.parametrize(
+        "data_type",
         [
-            ("uint4", onnx.TensorProto.UINT4),
-            ("int4", onnx.TensorProto.INT4),
-            ("float4e2m1", onnx.TensorProto.FLOAT4E2M1),
-        ]
+            onnx.TensorProto.UINT4,
+            onnx.TensorProto.INT4,
+            onnx.TensorProto.FLOAT4E2M1,
+        ],
     )
-    def test_to_array_4bit_payload_too_small_raw_data(
-        self, _: str, data_type: int
-    ) -> None:
+    def test_to_array_4bit_payload_too_small_raw_data(self, data_type: int) -> None:
         tensor = onnx.TensorProto()
         tensor.data_type = data_type
         tensor.dims.extend([1000])
@@ -278,16 +277,15 @@ class TestNumpyHelper:
         with pytest.raises(ValueError):
             numpy_helper.to_array(tensor)
 
-    @parameterized.parameterized.expand(
+    @pytest.mark.parametrize(
+        "data_type",
         [
-            ("uint4", onnx.TensorProto.UINT4),
-            ("int4", onnx.TensorProto.INT4),
-            ("float4e2m1", onnx.TensorProto.FLOAT4E2M1),
-        ]
+            onnx.TensorProto.UINT4,
+            onnx.TensorProto.INT4,
+            onnx.TensorProto.FLOAT4E2M1,
+        ],
     )
-    def test_to_array_4bit_payload_too_small_int32_data(
-        self, _: str, data_type: int
-    ) -> None:
+    def test_to_array_4bit_payload_too_small_int32_data(self, data_type: int) -> None:
         tensor = onnx.TensorProto()
         tensor.data_type = data_type
         tensor.dims.extend([1000])
@@ -295,15 +293,14 @@ class TestNumpyHelper:
         with pytest.raises(ValueError):
             numpy_helper.to_array(tensor)
 
-    @parameterized.parameterized.expand(
+    @pytest.mark.parametrize(
+        "data_type",
         [
-            ("uint2", onnx.TensorProto.UINT2),
-            ("int2", onnx.TensorProto.INT2),
-        ]
+            onnx.TensorProto.UINT2,
+            onnx.TensorProto.INT2,
+        ],
     )
-    def test_to_array_2bit_payload_too_small_raw_data(
-        self, _: str, data_type: int
-    ) -> None:
+    def test_to_array_2bit_payload_too_small_raw_data(self, data_type: int) -> None:
         tensor = onnx.TensorProto()
         tensor.data_type = data_type
         tensor.dims.extend([1000])
@@ -311,15 +308,14 @@ class TestNumpyHelper:
         with pytest.raises(ValueError):
             numpy_helper.to_array(tensor)
 
-    @parameterized.parameterized.expand(
+    @pytest.mark.parametrize(
+        "data_type",
         [
-            ("uint2", onnx.TensorProto.UINT2),
-            ("int2", onnx.TensorProto.INT2),
-        ]
+            onnx.TensorProto.UINT2,
+            onnx.TensorProto.INT2,
+        ],
     )
-    def test_to_array_2bit_payload_too_small_int32_data(
-        self, _: str, data_type: int
-    ) -> None:
+    def test_to_array_2bit_payload_too_small_int32_data(self, data_type: int) -> None:
         tensor = onnx.TensorProto()
         tensor.data_type = data_type
         tensor.dims.extend([1000])

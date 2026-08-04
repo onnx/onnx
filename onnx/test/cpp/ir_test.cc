@@ -12,20 +12,20 @@
 #include "onnx/common/assertions.h"
 #include "onnx/common/ir.h"
 #include "onnx/common/ir_pb_converter.h"
+#include "onnx/defs/parser.h"
 #include "onnx/defs/tensor_util.h"
 
-namespace ONNX_NAMESPACE {
-namespace Test {
+namespace ONNX_NAMESPACE::Test {
 
 static bool IsValidIdentifier(const std::string& name) {
   if (name.empty()) {
     return false;
   }
-  if (!isalpha(name[0]) && name[0] != '_') {
+  if (!IsAlpha(name[0]) && name[0] != '_') {
     return false;
   }
   for (size_t i = 1; i < name.size(); ++i) {
-    if (!isalnum(name[i]) && name[i] != '_') {
+    if (!IsAlnum(name[i]) && name[i] != '_') {
       return false;
     }
   }
@@ -107,5 +107,4 @@ TEST(Tensor, ParseDataRawEmpty) {
   EXPECT_TRUE(ParseData<int32_t>(&t).empty());
 }
 
-} // namespace Test
-} // namespace ONNX_NAMESPACE
+} // namespace ONNX_NAMESPACE::Test
