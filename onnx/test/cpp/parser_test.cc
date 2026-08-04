@@ -12,8 +12,7 @@
 #include "onnx/defs/parser.h"
 #include "onnx/defs/printer.h"
 
-namespace ONNX_NAMESPACE {
-namespace Test {
+namespace ONNX_NAMESPACE::Test {
 
 template <typename T>
 static void Parse(T& parsedData, std::string_view input) {
@@ -854,5 +853,4 @@ TEST(ParserTest, LocaleIndependentFloatParsing) {
   EXPECT_NEAR(alpha, 0.123f, 1e-6f) << "Float attribute misparsed under non-US locale";
 }
 
-} // namespace Test
-} // namespace ONNX_NAMESPACE
+} // namespace ONNX_NAMESPACE::Test

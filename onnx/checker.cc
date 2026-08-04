@@ -57,8 +57,7 @@ struct open_how {
 
 #endif // _WIN32
 
-namespace ONNX_NAMESPACE {
-namespace checker {
+namespace ONNX_NAMESPACE::checker {
 
 #define enforce_has_field(proto, field)                                              \
   do {                                                                               \
@@ -963,7 +962,7 @@ void DetectCycleDFS(
           cycle,
           " -> ",
           GetFunctionImplId(*callee),
-          ". Self-referencing or cyclically-referencing functions would cause infinite recursion.");
+          ". Model-local functions must not be recursive.");
     } else if (s == VisitState::Unvisited) {
       push(callee);
     }
@@ -1572,5 +1571,4 @@ bool check_is_experimental_op(const NodeProto& node) {
 #undef enforce_has_field
 #undef enforce_non_empty_field
 
-} // namespace checker
-} // namespace ONNX_NAMESPACE
+} // namespace ONNX_NAMESPACE::checker
