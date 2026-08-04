@@ -343,6 +343,27 @@ class Runner:
         # never loaded if the test skipped
         model_marker: list[ModelProto | NodeProto | None] = [None]
 
+        def run_node(_: Any, device: str, **kwargs: Any) -> None:
+            assert model_test.data_sets is not None
+            assert model_test.model is not None
+
+            model_marker[0] = model_test.model
+            candidate_rt = self.backend.prepare(model_test.model, device, **kwargs)
+            assert candidate_rt is not None
+            for inputs, ref_outputs in model_test.data_sets:
+                # TestCase type hints are a lie; may contain TensorProto objects
+                inputs_ = [_normalize_tensor(item) for item in inputs]
+                ref_outputs_ = [_normalize_tensor(item) for item in ref_outputs]
+
+                candidate_outputs = candidate_rt.run(inputs_)
+                self.assert_similar_outputs(
+                    ref_outputs=ref_outputs_,
+                    outputs=candidate_outputs,
+                    rtol=kwargs.get("rtol", model_test.rtol),
+                    atol=kwargs.get("atol", model_test.atol),
+                    model_dir=model_test.model_dir,
+                )
+
         def run(test_self: Any, device: str, **kwargs) -> None:  # noqa: ARG001
             if model_test.url is not None and model_test.url.startswith(
                 "onnx/backend/test/data/light/"
@@ -446,25 +467,6 @@ class Runner:
                     for i, o in enumerate(expected_outputs):
                         name = os.path.join(test_data_set, f"output_{i}.pb")
                         shutil.copy(o, name)
-            else:
-                # TODO after converting all npz files to protobuf, we can delete this.
-                for test_data_npz in glob.glob(
-                    os.path.join(model_dir, "test_data_*.npz")
-                ):
-                    test_data = np.load(test_data_npz, encoding="bytes")
-                    inputs = list(test_data["inputs"])
-                    outputs = list(prepared_model.run(inputs))
-                    ref_outputs = tuple(
-                        np.array(x) if not isinstance(x, (list, dict)) else x
-                        for f in test_data["outputs"]
-                    )
-                    self.assert_similar_outputs(
-                        ref_outputs,
-                        outputs,
-                        rtol=kwargs.get("rtol", model_test.rtol),
-                        atol=kwargs.get("atol", model_test.atol),
-                        model_dir=model_dir,
-                    )
 
             for test_data_dir in glob.glob(os.path.join(model_dir, "test_data_set*")):
                 inputs = []
@@ -490,7 +492,18 @@ class Runner:
                     model_dir=model_dir,
                 )
 
-        if model_test.name in self._test_kwargs:
+        if kind == "Node" and model_test.model_dir is None:
+            if model_test.name in self._test_kwargs:
+                self._add_test(
+                    kind + "Model",
+                    model_test.name,
+                    run_node,
+                    model_marker,
+                    **self._test_kwargs[model_test.name],
+                )
+            else:
+                self._add_test(kind + "Model", model_test.name, run_node, model_marker)
+        elif model_test.name in self._test_kwargs:
             self._add_test(
                 kind + "Model",
                 model_test.name,
@@ -527,3 +540,9 @@ class Runner:
                 print(
                     "Loading proto of that specific type (Map/Sparse Tensor) is currently not supported"
                 )
+
+
+def _normalize_tensor(tensor: np.ndarray | onnx.TensorProto) -> np.ndarray:
+    if isinstance(tensor, onnx.TensorProto):
+        return onnx.numpy_helper.to_array(tensor)
+    return tensor
