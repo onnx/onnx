@@ -309,7 +309,7 @@ ONNX_PREVIEW_TRAINING_OPERATOR_SET_SCHEMA(
             propagateShapeFromInputToOutput(ctx, i_in, i_out);
 
             // Pass H1's and H2's shapes to H1_new and H2_new, respectively.
-            i_in = 2 + 2 * num_optimized_tensors + i;
+            i_in = 2 + (2 * num_optimized_tensors) + i;
             i_out = i + num_optimized_tensors;
             propagateElemTypeFromInputToOutput(ctx, i_in, i_out);
             propagateShapeFromInputToOutput(ctx, i_in, i_out);
@@ -445,7 +445,7 @@ ONNX_PREVIEW_TRAINING_OPERATOR_SET_SCHEMA(
             propagateElemTypeFromInputToOutput(ctx, i_in, i_out);
             propagateShapeFromInputToOutput(ctx, i_in, i_out);
             // Pass V1's/V2's shapes to V1_new/V2_new.
-            i_in = 2 + 2 * num_optimized_tensors + i;
+            i_in = 2 + (2 * num_optimized_tensors) + i;
             i_out = i + num_optimized_tensors;
             propagateElemTypeFromInputToOutput(ctx, i_in, i_out);
             propagateShapeFromInputToOutput(ctx, i_in, i_out);
@@ -605,14 +605,14 @@ ONNX_PREVIEW_TRAINING_OPERATOR_SET_SCHEMA(
             propagateShapeFromInputToOutput(ctx, i_in, i_out);
 
             // Pass V1's/V2's shapes to V1_new/V2_new.
-            i_in = 2 + 2 * num_optimized_tensors + i;
+            i_in = 2 + (2 * num_optimized_tensors) + i;
             i_out = num_optimized_tensors + i;
             propagateElemTypeFromInputToOutput(ctx, i_in, i_out);
             propagateShapeFromInputToOutput(ctx, i_in, i_out);
 
             // Pass H1's/H2's shapes to H1_new/H2_new.
-            i_in = 2 + 3 * num_optimized_tensors + i;
-            i_out = 2 * num_optimized_tensors + i;
+            i_in = 2 + (3 * num_optimized_tensors) + i;
+            i_out = (2 * num_optimized_tensors) + i;
             propagateElemTypeFromInputToOutput(ctx, i_in, i_out);
             propagateShapeFromInputToOutput(ctx, i_in, i_out);
           }

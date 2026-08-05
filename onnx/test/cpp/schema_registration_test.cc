@@ -122,7 +122,7 @@ TEST(SchemaRegistrationTest, RegisterSpecifiedOpsetSchemaVersion) {
 
 // Register opset-11, then opset-14
 // Expects Reg(11, 14) == Reg(11) U Reg(14)
-TEST(SchemaRegistrationTest, RegisterMultipleOpsetSchemaVersions_UpgradeVersion) {
+TEST(SchemaRegistrationTest, RegisterMultipleOpsetSchemaVersionsUpgradeVersion) {
 #ifdef __ONNX_DISABLE_STATIC_REGISTRATION
   DeregisterOnnxOperatorSetSchema();
   EXPECT_EQ(OpSchemaRegistry::Instance()->GetLoadedSchemaVersion(), -1);
@@ -165,7 +165,7 @@ TEST(SchemaRegistrationTest, RegisterMultipleOpsetSchemaVersions_UpgradeVersion)
 
 // Register opset-14, then opset-11
 // Expects Reg(14, 11) == Reg(11) U Reg(14)
-TEST(SchemaRegistrationTest, RegisterMultipleOpsetSchemaVersions_DowngradeVersion) {
+TEST(SchemaRegistrationTest, RegisterMultipleOpsetSchemaVersionsDowngradeVersion) {
 #ifdef __ONNX_DISABLE_STATIC_REGISTRATION
   DeregisterOnnxOperatorSetSchema();
   EXPECT_EQ(OpSchemaRegistry::Instance()->GetLoadedSchemaVersion(), -1);
