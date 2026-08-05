@@ -90,7 +90,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint(
             "O",
             optional_and_tensor_types(),
-            "Constrain input type to optional tensor and optional sequence types.")
+            "Constrain input type to optional, tensor and sequence types.")
         .TypeConstraint("B", {types::Bool}, "Constrain output to a boolean tensor.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           const size_t numInputs = ctx.getNumInputs();
@@ -122,7 +122,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint(
             "O",
             optional_and_tensor_types(),
-            "Constrain input type to optional tensor and optional sequence types.")
+            "Constrain input type to optional, tensor and sequence types.")
         .TypeConstraint(
             "V",
             []() {
