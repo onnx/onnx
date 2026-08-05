@@ -28,7 +28,7 @@ repos:
     hooks:
       - id: ruff-lint
         name: ruff lint
-        entry: python3 tools/pixi-shim.py ruff check --force-exclude --fix
+        entry: pixi run ruff check --force-exclude --fix
         language: system
         types_or: [python, pyi]
         exclude: '(_pb2|\.setuptools-cmake-build/|^docs/)'
@@ -36,7 +36,7 @@ repos:
 
       - id: ruff-format
         name: ruff format
-        entry: python3 tools/pixi-shim.py ruff format --force-exclude
+        entry: pixi run ruff format --force-exclude
         language: system
         types_or: [python, pyi]
         exclude: '(_pb2|\.setuptools-cmake-build/|^cmake/|^docs/)'
@@ -44,7 +44,7 @@ repos:
 
       - id: mypy
         name: mypy
-        entry: python3 tools/pixi-shim.py mypy --config-file=pyproject.toml
+        entry: pixi run mypy --config-file=pyproject.toml
         language: system
         types: [python]
         files: "^(onnx|tools)/"
@@ -53,14 +53,14 @@ repos:
 
       - id: clang-format
         name: clang-format
-        entry: python3 tools/pixi-shim.py clang-format -i
+        entry: pixi run clang-format -i
         language: system
         types_or: [c, c++]
         files: "^onnx/"
 
       - id: namespace-check
         name: namespace check (no hardcoded onnx namespace)
-        entry: python3 tools/pixi-shim.py python tools/check_namespace.py
+        entry: pixi run python tools/check_namespace.py
         language: system
         types_or: [c, c++]
         exclude: "^third_party/"
@@ -75,7 +75,7 @@ repos:
 
       - id: typos
         name: typos
-        entry: python3 tools/pixi-shim.py typos --force-exclude
+        entry: pixi run typos --force-exclude
         language: system
         types: [text]
         require_serial: true
@@ -84,19 +84,19 @@ repos:
       # REUSE license compliance
       - id: reuse
         name: reuse lint
-        entry: python3 tools/pixi-shim.py reuse lint
+        entry: pixi run reuse lint
         language: system
         pass_filenames: false
 
       - id: shellcheck
         name: shellcheck
-        entry: python3 tools/pixi-shim.py shellcheck
+        entry: pixi run shellcheck
         language: system
         types: [shell]
 
       - id: zizmor
         name: zizmor
-        entry: python3 tools/pixi-shim.py zizmor --fix .
+        entry: pixi run zizmor --fix .
         language: system
         types: [yaml]
         pass_filenames: false
