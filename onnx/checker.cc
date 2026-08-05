@@ -470,11 +470,11 @@ check_sparse_tensor_indices_2(const TensorProto& indices, const SparseTensorProt
   for (size_t i = 0; i < nnz; ++i) {
     int64_t curr_index = 0; // linearized index of i-th value
     for (int j = 0; j < dense_rank; ++j) {
-      auto index_ij = index_data[i * dense_rank + j];
+      auto index_ij = index_data[(i * dense_rank) + j];
       if ((index_ij < 0) || (index_ij >= sparse_tensor_proto.dims(j))) {
         fail_check("Sparse tensor (", indices.name(), ") index value at position [", i, ",", j, "] out of range.");
       }
-      curr_index = curr_index * sparse_tensor_proto.dims(j) + index_ij;
+      curr_index = (curr_index * sparse_tensor_proto.dims(j)) + index_ij;
     }
     if (curr_index <= prev_index) {
       fail_check(
