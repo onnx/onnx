@@ -42,6 +42,7 @@
 #include "onnx/version_converter/adapters/reshape_4_5.h"
 #include "onnx/version_converter/adapters/reshape_5_4.h"
 #include "onnx/version_converter/adapters/resize_10_11.h"
+#include "onnx/version_converter/adapters/resize_18_17.h"
 #include "onnx/version_converter/adapters/scan_8_9.h"
 #include "onnx/version_converter/adapters/scan_9_8.h"
 #include "onnx/version_converter/adapters/scatter_10_11.h"
@@ -62,8 +63,7 @@
 #include "onnx/version_converter/adapters/upsample_9_10.h"
 #include "onnx/version_converter/adapters/upsample_9_8.h"
 
-namespace ONNX_NAMESPACE {
-namespace version_conversion {
+namespace ONNX_NAMESPACE::version_conversion {
 
 class DefaultVersionConverter : public BaseVersionConverter {
  private:
@@ -580,6 +580,7 @@ class DefaultVersionConverter : public BaseVersionConverter {
     registerAdapter(std::make_unique<AxesInputToAttribute>("ReduceMin", OpSetID(18), OpSetID(17)));
     registerAdapter(std::make_unique<AxesInputToAttribute>("ReduceProd", OpSetID(18), OpSetID(17)));
     registerAdapter(std::make_unique<AxesInputToAttribute>("ReduceSumSquare", OpSetID(18), OpSetID(17)));
+    registerAdapter(std::make_unique<Resize_18_17>());
     registerAdapter(std::make_unique<Scatter_18_17>("ScatterElements"));
     registerAdapter(std::make_unique<Scatter_18_17>("ScatterND"));
 
@@ -1006,5 +1007,4 @@ class DefaultVersionConverter : public BaseVersionConverter {
 };
 
 ONNX_API ModelProto ConvertVersion(const ModelProto& mp_in, int target_version);
-} // namespace version_conversion
-} // namespace ONNX_NAMESPACE
+} // namespace ONNX_NAMESPACE::version_conversion

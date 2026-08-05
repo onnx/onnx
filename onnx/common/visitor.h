@@ -5,8 +5,7 @@
 #pragma once
 #include "onnx/onnx_pb.h"
 
-namespace ONNX_NAMESPACE {
-namespace internal {
+namespace ONNX_NAMESPACE::internal {
 
 // Visitor: A readonly visitor class for ONNX Proto objects.
 // This class is restricted to Nodes, Graphs, Attributes, and Functions.
@@ -114,5 +113,4 @@ struct MutableVisitor {
   virtual ~MutableVisitor() = default;
 };
 
-} // namespace internal
-} // namespace ONNX_NAMESPACE
+} // namespace ONNX_NAMESPACE::internal

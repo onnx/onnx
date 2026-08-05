@@ -9,8 +9,7 @@
 #include <unordered_map>
 #include <unordered_set>
 
-namespace ONNX_NAMESPACE {
-namespace Utils {
+namespace ONNX_NAMESPACE::Utils {
 namespace {
 
 // ASCII-only whitespace check; isspace is locale-dependent.
@@ -407,5 +406,4 @@ TypesWrapper::TypesWrapper() {
 
 } // namespace
 
-} // namespace Utils
-} // namespace ONNX_NAMESPACE
+} // namespace ONNX_NAMESPACE::Utils
