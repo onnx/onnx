@@ -8,8 +8,7 @@
 #include "gtest/gtest.h"
 #include "onnx/common/safe_math.h"
 
-namespace ONNX_NAMESPACE {
-namespace Test {
+namespace ONNX_NAMESPACE::Test {
 
 // ---------------------------------------------------------------------------
 // checked_add_overflow
@@ -159,10 +158,9 @@ TEST(SafeMathTest, MulProductEqualsInt64MinNotFlaggedAsOverflow) {
 
 TEST(SafeMathTest, MulProductOneLessThanInt64MinMagnitudeNoOverflow) {
   int64_t result = 0;
-  const int64_t half_min_plus_one = std::numeric_limits<int64_t>::min() / 2 + 1;
+  const int64_t half_min_plus_one = (std::numeric_limits<int64_t>::min() / 2) + 1;
   EXPECT_FALSE(checked_mul_overflow(half_min_plus_one, 2, &result));
   EXPECT_EQ(result, std::numeric_limits<int64_t>::min() + 2);
 }
 
-} // namespace Test
-} // namespace ONNX_NAMESPACE
+} // namespace ONNX_NAMESPACE::Test
