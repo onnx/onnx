@@ -154,7 +154,7 @@ jobs:
       - name: Generate SLSA Build Provenance attestations
         if: hashFiles('dist/**') != ''
         id: attest
-        uses: actions/attest-build-provenance@a2bbfa25375fe432b6a289bc6b6cd05ecd0c4c32 # v4.1.0
+        uses: actions/attest-build-provenance@0f67c3f4856b2e3261c31976d6725780e5e4c373 # v4.1.1
         with:
           subject-path: dist/**
 
@@ -183,7 +183,7 @@ jobs:
         env:
           BUILD_MODE: ${{ github.event.inputs.build_mode }}
 
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
           submodules: true
@@ -257,7 +257,7 @@ jobs:
       - name: Generate SLSA Build Provenance attestations
         if: hashFiles('dist/**') != ''
         id: attest
-        uses: actions/attest-build-provenance@a2bbfa25375fe432b6a289bc6b6cd05ecd0c4c32 # v4.1.0
+        uses: actions/attest-build-provenance@0f67c3f4856b2e3261c31976d6725780e5e4c373 # v4.1.1
         with:
           subject-path: dist/**
 
@@ -272,7 +272,7 @@ jobs:
         if: (github.ref == 'refs/heads/main') && (github.event.inputs.publish_testpypi_weekly == 'yes') && (github.repository_owner == 'onnx')
         id: upload_preview_build_to_testpypi_weekly
 
-        uses: pypa/gh-action-pypi-publish@cef221092ed1bacb1cc03d23a2d87d1d172e277b
+        uses: pypa/gh-action-pypi-publish@ba38be9e461d3875417946c167d0b5f3d385a247
         with:
           repository-url: https://test.pypi.org/legacy/
           verbose: true
@@ -322,7 +322,7 @@ jobs:
         - name: Generate SLSA Build Provenance attestations
           if: hashFiles('dist/**') != ''
           id: attest
-          uses: actions/attest-build-provenance@a2bbfa25375fe432b6a289bc6b6cd05ecd0c4c32 # v4.1.0
+          uses: actions/attest-build-provenance@0f67c3f4856b2e3261c31976d6725780e5e4c373 # v4.1.1
           with:
             subject-path: dist/**
 
@@ -336,7 +336,7 @@ jobs:
         - name: Upload release build to test.pypi
           id: upload_release_build_to_testpypi
 
-          uses: pypa/gh-action-pypi-publish@cef221092ed1bacb1cc03d23a2d87d1d172e277b
+          uses: pypa/gh-action-pypi-publish@ba38be9e461d3875417946c167d0b5f3d385a247
           with:
             repository-url: https://test.pypi.org/legacy/
             verbose: true
@@ -386,7 +386,7 @@ jobs:
       - name: Generate SLSA Build Provenance attestations
         if: hashFiles('dist/**') != ''
         id: attest
-        uses: actions/attest-build-provenance@a2bbfa25375fe432b6a289bc6b6cd05ecd0c4c32 # v4.1.0
+        uses: actions/attest-build-provenance@0f67c3f4856b2e3261c31976d6725780e5e4c373 # v4.1.1
         with:
           subject-path: dist/**
 
@@ -400,7 +400,7 @@ jobs:
       - name: Upload preview_build to pypi-weekly
         id: upload_preview_build_to_pypi_weekly
         if: (github.ref == 'refs/heads/main')
-        uses: pypa/gh-action-pypi-publish@cef221092ed1bacb1cc03d23a2d87d1d172e277b
+        uses: pypa/gh-action-pypi-publish@ba38be9e461d3875417946c167d0b5f3d385a247
         with:
           repository-url: https://upload.pypi.org/legacy/
           verbose: true
@@ -439,7 +439,7 @@ jobs:
       - name: Generate SLSA Build Provenance attestations
         if: hashFiles('dist/**') != ''
         id: attest
-        uses: actions/attest-build-provenance@a2bbfa25375fe432b6a289bc6b6cd05ecd0c4c32 # v4.1.0
+        uses: actions/attest-build-provenance@0f67c3f4856b2e3261c31976d6725780e5e4c373 # v4.1.1
         with:
           subject-path: dist/**
 
@@ -452,7 +452,7 @@ jobs:
 
       - name: Publish release_build to pypi
         if: (github.repository_owner == 'onnx')
-        uses: pypa/gh-action-pypi-publish@cef221092ed1bacb1cc03d23a2d87d1d172e277b
+        uses: pypa/gh-action-pypi-publish@ba38be9e461d3875417946c167d0b5f3d385a247
         with:
           repository-url: https://upload.pypi.org/legacy/
           verbose: true

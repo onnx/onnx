@@ -8,6 +8,7 @@
 #include <cstdint>
 #include <filesystem> // NOLINT(build/c++17)
 #include <iostream>
+#include <limits>
 #include <string>
 #include <unordered_map>
 #include <unordered_set>
@@ -56,8 +57,7 @@ struct open_how {
 
 #endif // _WIN32
 
-namespace ONNX_NAMESPACE {
-namespace checker {
+namespace ONNX_NAMESPACE::checker {
 
 #define enforce_has_field(proto, field)                                              \
   do {                                                                               \
@@ -470,11 +470,11 @@ check_sparse_tensor_indices_2(const TensorProto& indices, const SparseTensorProt
   for (size_t i = 0; i < nnz; ++i) {
     int64_t curr_index = 0; // linearized index of i-th value
     for (int j = 0; j < dense_rank; ++j) {
-      auto index_ij = index_data[i * dense_rank + j];
+      auto index_ij = index_data[(i * dense_rank) + j];
       if ((index_ij < 0) || (index_ij >= sparse_tensor_proto.dims(j))) {
         fail_check("Sparse tensor (", indices.name(), ") index value at position [", i, ",", j, "] out of range.");
       }
-      curr_index = curr_index * sparse_tensor_proto.dims(j) + index_ij;
+      curr_index = (curr_index * sparse_tensor_proto.dims(j)) + index_ij;
     }
     if (curr_index <= prev_index) {
       fail_check(
@@ -825,6 +825,14 @@ void check_graph(const GraphProto& graph, const CheckerContext& ctx, const Lexic
   print_warning_if_has_experimental(used_experimental_ops);
 }
 
+// Converts a proto opset version to int, rejecting values that do not fit.
+static int checked_opset_version(int64_t version) {
+  if (version < std::numeric_limits<int>::min() || version > std::numeric_limits<int>::max()) {
+    fail_check("Opset import version ", version, " is out of supported range");
+  }
+  return static_cast<int>(version);
+}
+
 // Utilify function to get the imported version of domain from opset imports
 // Returns -1 if requested domain is not found in the opset_imports
 static int get_version_for_domain(
@@ -954,7 +962,7 @@ void DetectCycleDFS(
           cycle,
           " -> ",
           GetFunctionImplId(*callee),
-          ". Self-referencing or cyclically-referencing functions would cause infinite recursion.");
+          ". Model-local functions must not be recursive.");
     } else if (s == VisitState::Unvisited) {
       push(callee);
     }
@@ -1043,7 +1051,7 @@ void check_model_local_functions(
   for (const auto& function_proto : model.functions()) {
     for (const auto& opset_import : function_proto.opset_import()) {
       if (get_version_for_domain(opset_import.domain(), model_opset_imports) == -1) {
-        model_opset_imports[opset_import.domain()] = opset_import.version();
+        model_opset_imports[opset_import.domain()] = checked_opset_version(opset_import.version());
       }
     }
   }
@@ -1070,7 +1078,7 @@ void check_function(const FunctionProto& function, const CheckerContext& ctx, co
 
   std::unordered_map<std::string, int> func_opset_imports;
   for (const auto& relied_opset : function.opset_import()) {
-    func_opset_imports[relied_opset.domain()] = static_cast<int>(relied_opset.version());
+    func_opset_imports[relied_opset.domain()] = checked_opset_version(relied_opset.version());
   }
 
   ctx_copy.set_opset_imports(func_opset_imports);
@@ -1167,7 +1175,7 @@ static void check_model(const ModelProto& model, CheckerContext& ctx) {
   ctx.set_ir_version(static_cast<int>(model.ir_version()));
   std::unordered_map<std::string, int> opset_imports;
   for (const auto& opset_import : model.opset_import()) {
-    opset_imports[opset_import.domain()] = static_cast<int>(opset_import.version());
+    opset_imports[opset_import.domain()] = checked_opset_version(opset_import.version());
   }
   if (model.ir_version() >= 3) {
     if (opset_imports.empty()) {
@@ -1563,5 +1571,4 @@ bool check_is_experimental_op(const NodeProto& node) {
 #undef enforce_has_field
 #undef enforce_non_empty_field
 
-} // namespace checker
-} // namespace ONNX_NAMESPACE
+} // namespace ONNX_NAMESPACE::checker

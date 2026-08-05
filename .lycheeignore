@@ -13,3 +13,6 @@ https://www.opencompute.org/documents/ocp-microscaling-formats-mx-v1-0-spec-fina
 https://join.slack.com/t/lfaifoundation/shared_invite/zt-3wx5vohc3-MeSYi3_dscb~u~cqs7zlPg
 # Also blocked:
 https://en.cppreference.com/c/language/identifier
+
+# stackoverflow seems to block requests from github action runners
+https://stackoverflow.com/questions/34128872/google-protobuf-maximum-size
