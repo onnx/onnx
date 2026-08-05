@@ -2899,6 +2899,293 @@ class TestVersionConverter:
         with pytest.raises(RuntimeError):
             test()
 
+    def test_scan_8_9_rejects_no_inputs(self) -> None:
+        # Scan in opset 8 must have at least 1 input; zero inputs is UB (inputs[0] OOB).
+        def test() -> None:
+            nodes = [
+                helper.make_node(
+                    "Scan",
+                    inputs=[],
+                    outputs=["y"],
+                    body=helper.make_graph([], "body", [], []),
+                )
+            ]
+            graph = helper.make_graph(
+                nodes,
+                "test_scan_no_inputs",
+                [],
+                [helper.make_tensor_value_info("y", TensorProto.FLOAT, None)],
+            )
+            model = helper.make_model(
+                graph, opset_imports=[helper.make_operatorsetid("", 8)]
+            )
+            onnx.version_converter.convert_version(model, 9)
+
+        with pytest.raises(RuntimeError):
+            test()
+
+    def test_scan_9_8_with_valid_node(self) -> None:
+        data_type = TensorProto.FLOAT
+        node1 = helper.make_node("Add", inputs=["sum_in", "next"], outputs=["sum_out"])
+        node2 = helper.make_node("Identity", inputs=["sum_out"], outputs=["scan_out"])
+        body = helper.make_graph(
+            [node1, node2],
+            "scan_body",
+            [
+                helper.make_tensor_value_info("sum_in", data_type, [2]),
+                helper.make_tensor_value_info("next", data_type, [2]),
+            ],
+            [
+                helper.make_tensor_value_info("sum_out", data_type, [2]),
+                helper.make_tensor_value_info("scan_out", data_type, [2]),
+            ],
+        )
+        nodes = [
+            helper.make_node(
+                "Scan",
+                inputs=["initial", "x"],
+                outputs=["y", "z"],
+                body=body,
+                num_scan_inputs=1,
+            )
+        ]
+        graph = helper.make_graph(
+            nodes,
+            "test_scan_9_8",
+            [
+                helper.make_tensor_value_info("initial", data_type, [2]),
+                helper.make_tensor_value_info("x", data_type, [3, 2]),
+            ],
+            [
+                helper.make_tensor_value_info("y", data_type, [2]),
+                helper.make_tensor_value_info("z", data_type, [3, 2]),
+            ],
+        )
+        converted_model = self._converted(graph, helper.make_operatorsetid("", 9), 8)
+        assert converted_model.graph.node[0].op_type == "Scan"
+        assert converted_model.opset_import[0].version == 8
+
+    def test_scan_8_9_preserves_unshaped_input(self) -> None:
+        """Scan 8 -> 9 removes the batch axis from each input.
+
+        An input whose shape is unknown must still be kept, and will be
+        unedited (the shape is unknown with or without batch axis). Only the
+        sequence_lens input should be removed.
+        """
+        data_type = TensorProto.FLOAT
+        body = helper.make_graph(
+            [
+                helper.make_node("Add", ["sum_in", "next_in"], ["sum_out"]),
+                helper.make_node("Identity", ["sum_out"], ["scan_out"]),
+            ],
+            "scan_body",
+            [
+                helper.make_tensor_value_info("sum_in", data_type, [2]),
+                helper.make_tensor_value_info("next_in", data_type, [2]),
+            ],
+            [
+                helper.make_tensor_value_info("sum_out", data_type, [2]),
+                helper.make_tensor_value_info("scan_out", data_type, [2]),
+            ],
+        )
+        # A custom op produces `x` with no inferable shape, so it reaches the
+        # Scan 8 -> 9 with no shape.
+        my_op = helper.make_node("MyOp", ["raw"], ["x"], domain="my.domain")
+        scan = helper.make_node(
+            "Scan", ["", "initial", "x"], ["y", "z"], body=body, num_scan_inputs=1
+        )
+        graph = helper.make_graph(
+            [my_op, scan],
+            "test_scan_8_9_unshaped_input",
+            [
+                helper.make_tensor_value_info("initial", data_type, [1, 2]),
+                helper.make_tensor_value_info("raw", data_type, [1, 3, 2]),
+            ],
+            [
+                helper.make_tensor_value_info("y", data_type, [1, 2]),
+                helper.make_tensor_value_info("z", data_type, [1, 3, 2]),
+            ],
+        )
+        model = helper.make_model(
+            graph,
+            opset_imports=[
+                helper.make_operatorsetid("", 8),
+                helper.make_operatorsetid("my.domain", 1),
+            ],
+        )
+        checker.check_model(model)
+
+        converted = onnx.version_converter.convert_version(model, 9)
+        checker.check_model(converted, full_check=True)
+
+        scan_node = next(n for n in converted.graph.node if n.op_type == "Scan")
+        # The empty sequence_lens is removed, but the unshaped scan input is kept.
+        assert list(scan_node.input) == ["initial", "x"]
+
+    def test_convert_version_ai_onnx_domain_spelling_preserves_custom_domain(
+        self,
+    ) -> None:
+        # convert_graph's default-domain lookup must match "ai.onnx" (not just ""),
+        # and must only increment that entry -- a custom-domain opset_import must
+        # be left untouched.
+        node = helper.make_node("Add", inputs=["X", "Y"], outputs=["Z"])
+        graph = helper.make_graph(
+            [node],
+            "test_default_domain_ai_onnx_spelling",
+            [
+                helper.make_tensor_value_info("X", TensorProto.FLOAT, [1]),
+                helper.make_tensor_value_info("Y", TensorProto.FLOAT, [1]),
+            ],
+            [helper.make_tensor_value_info("Z", TensorProto.FLOAT, [1])],
+        )
+        model = helper.make_model(
+            graph,
+            opset_imports=[
+                helper.make_operatorsetid("ai.onnx", 9),
+                helper.make_operatorsetid("custom.domain", 1),
+            ],
+        )
+        converted_model = onnx.version_converter.convert_version(model, 8)
+        checker.check_model(converted_model)
+
+        opset_by_domain = {
+            opset.domain: opset.version for opset in converted_model.opset_import
+        }
+        assert opset_by_domain["ai.onnx"] == 8
+        assert opset_by_domain["custom.domain"] == 1
+
+    def _resize_18_17_converted(
+        self,
+        *,
+        initial_version: int = 18,
+        coordinate_transformation_mode: str = "asymmetric",
+        use_sizes: bool = True,
+        antialias: int | None = None,
+        keep_aspect_ratio_policy: str | None = None,
+        axes: list[int] | None = None,
+    ) -> ModelProto:
+        attributes: dict[str, object] = {
+            "mode": "nearest",
+            "coordinate_transformation_mode": coordinate_transformation_mode,
+            "nearest_mode": "floor",
+        }
+
+        if antialias is not None:
+            attributes["antialias"] = antialias
+        if keep_aspect_ratio_policy is not None:
+            attributes["keep_aspect_ratio_policy"] = keep_aspect_ratio_policy
+        if axes is not None:
+            attributes["axes"] = axes
+
+        parameter_shape = (len(axes),) if axes is not None else (4,)
+
+        if use_sizes:
+            resize_inputs = ["X", "", "", "resize_parameter"]
+            parameter_type = TensorProto.INT64
+        else:
+            resize_inputs = ["X", "", "resize_parameter"]
+            parameter_type = TensorProto.FLOAT
+
+        node = helper.make_node(
+            "Resize",
+            resize_inputs,
+            ["Y"],
+            **attributes,
+        )
+        graph = helper.make_graph(
+            [node],
+            "test_resize_18_17",
+            [
+                helper.make_tensor_value_info(
+                    "X",
+                    TensorProto.FLOAT,
+                    (1, 1, 2, 2),
+                ),
+                helper.make_tensor_value_info(
+                    "resize_parameter",
+                    parameter_type,
+                    parameter_shape,
+                ),
+            ],
+            [
+                helper.make_tensor_value_info(
+                    "Y",
+                    TensorProto.FLOAT,
+                    (None, None, None, None),
+                )
+            ],
+        )
+
+        return self._converted(
+            graph,
+            helper.make_operatorsetid("", initial_version),
+            17,
+        )
+
+    @pytest.mark.parametrize("use_sizes", [False, True])
+    def test_resize_18_17_converts_compatible_nodes(
+        self,
+        use_sizes: bool,
+    ) -> None:
+        converted = self._resize_18_17_converted(use_sizes=use_sizes)
+
+        resize = converted.graph.node[0]
+        expected_inputs = (
+            ["X", "", "", "resize_parameter"]
+            if use_sizes
+            else ["X", "", "resize_parameter"]
+        )
+
+        assert converted.opset_import[0].version == 17
+        assert resize.op_type == "Resize"
+        assert list(resize.input) == expected_inputs
+
+    def test_resize_18_17_removes_default_attributes(self) -> None:
+        converted = self._resize_18_17_converted(
+            antialias=0,
+            keep_aspect_ratio_policy="stretch",
+        )
+
+        attributes = {
+            attribute.name: helper.get_attribute_value(attribute)
+            for attribute in converted.graph.node[0].attribute
+        }
+
+        assert "antialias" not in attributes
+        assert "keep_aspect_ratio_policy" not in attributes
+        assert attributes["mode"] == b"nearest"
+        assert attributes["coordinate_transformation_mode"] == b"asymmetric"
+        assert attributes["nearest_mode"] == b"floor"
+
+    def test_resize_18_17_rejects_antialias(self) -> None:
+        with pytest.raises(RuntimeError, match="antialias=1"):
+            self._resize_18_17_converted(antialias=1)
+
+    @pytest.mark.parametrize(
+        "policy",
+        ["not_larger", "not_smaller"],
+    )
+    def test_resize_18_17_rejects_aspect_ratio_policy(
+        self,
+        policy: str,
+    ) -> None:
+        with pytest.raises(
+            RuntimeError,
+            match="keep_aspect_ratio_policy",
+        ):
+            self._resize_18_17_converted(keep_aspect_ratio_policy=policy)
+
+    def test_resize_18_17_rejects_axes(self) -> None:
+        with pytest.raises(RuntimeError, match="axes"):
+            self._resize_18_17_converted(axes=[2, 3])
+
+    def test_resize_19_17_rejects_half_pixel_symmetric(self) -> None:
+        with pytest.raises(RuntimeError, match="half_pixel_symmetric"):
+            self._resize_18_17_converted(
+                initial_version=19,
+                coordinate_transformation_mode="half_pixel_symmetric",
+            )
+
     def _celu_converted(self, dtype: int, src: int, dst: int) -> ModelProto:
         node = helper.make_node("Celu", ["X"], ["Y"], alpha=2.0)
         graph = helper.make_graph(

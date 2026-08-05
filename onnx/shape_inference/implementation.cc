@@ -21,8 +21,7 @@
 #include "onnx/defs/data_type_utils.h"
 #include "onnx/shape_inference/attribute_binder.h"
 
-namespace ONNX_NAMESPACE {
-namespace shape_inference {
+namespace ONNX_NAMESPACE::shape_inference {
 namespace {
 
 std::string GetValueCaseString(const TypeProto& type) {
@@ -674,7 +673,6 @@ class ShapeInferenceImplBase {
     reuse_constant_tensors = old_reuse_constant_tensors;
   }
 
- public:
   ShapeInferenceImplBase(
       GraphProto* graph, // nullptr for FunctionProto inference
       const std::unordered_map<std::string, TypeProto*>& outer_scope_value_types_by_name_in,
@@ -1165,5 +1163,4 @@ void TraverseGraphsToAddExistingSymbols(const GraphProto& g, SymbolTable& symbol
   }
 }
 
-} // namespace shape_inference
-} // namespace ONNX_NAMESPACE
+} // namespace ONNX_NAMESPACE::shape_inference

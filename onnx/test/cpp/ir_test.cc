@@ -2,25 +2,30 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
+#include <cstdint>
+#include <cstring>
 #include <memory>
 #include <string>
+#include <vector>
 
 #include "gtest/gtest.h"
+#include "onnx/common/assertions.h"
 #include "onnx/common/ir.h"
 #include "onnx/common/ir_pb_converter.h"
+#include "onnx/defs/parser.h"
+#include "onnx/defs/tensor_util.h"
 
-namespace ONNX_NAMESPACE {
-namespace Test {
+namespace ONNX_NAMESPACE::Test {
 
 static bool IsValidIdentifier(const std::string& name) {
   if (name.empty()) {
     return false;
   }
-  if (!isalpha(name[0]) && name[0] != '_') {
+  if (!IsAlpha(name[0]) && name[0] != '_') {
     return false;
   }
   for (size_t i = 1; i < name.size(); ++i) {
-    if (!isalnum(name[i]) && name[i] != '_') {
+    if (!IsAlnum(name[i]) && name[i] != '_') {
       return false;
     }
   }
@@ -68,5 +73,38 @@ TEST(Tensor, ElemNumLargeTensorNoOverflow) {
   EXPECT_EQ(t.size_from_dim(1), int64_t{50000});
 }
 
-} // namespace Test
-} // namespace ONNX_NAMESPACE
+// Build a raw_data string from native bytes of the given values.
+template <typename T>
+static std::string MakeRawData(const std::vector<T>& values) {
+  std::string raw;
+  raw.resize(values.size() * sizeof(T));
+  std::memcpy(raw.data(), values.data(), raw.size());
+  return raw;
+}
+
+// Regression: raw size not a multiple of the element size used to overflow.
+#ifndef ONNX_NO_EXCEPTIONS
+TEST(Tensor, ParseDataRawSizeNotMultipleThrows) {
+  Tensor t;
+  // 5 bytes is not a multiple of sizeof(int32_t) == 4.
+  t.set_raw_data(std::string(5, '\0'));
+  EXPECT_THROW(ParseData<int32_t>(&t), assert_error);
+}
+#endif
+
+// Valid raw tensor round-trips; byte-symmetric values are endian-independent.
+TEST(Tensor, ParseDataRawValid) {
+  const std::vector<int32_t> values = {0, 0x01010101, 0x7F7F7F7F};
+  Tensor t;
+  t.set_raw_data(MakeRawData(values));
+  EXPECT_EQ(ParseData<int32_t>(&t), values);
+}
+
+// Empty raw_data is a multiple of any element size and yields no elements.
+TEST(Tensor, ParseDataRawEmpty) {
+  Tensor t;
+  t.set_raw_data(std::string());
+  EXPECT_TRUE(ParseData<int32_t>(&t).empty());
+}
+
+} // namespace ONNX_NAMESPACE::Test

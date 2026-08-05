@@ -4,7 +4,8 @@
 
 #include "onnx/defs/tensor_proto_util.h"
 
-#include <cstring>
+#include <algorithm>
+#include <cstddef>
 #include <string>
 #include <vector>
 
@@ -80,9 +81,8 @@ namespace ONNX_NAMESPACE {
           " content is required to be stored in repeated bytes string_data field.",                                  \
           " raw_data type cannot be string.");                                                                       \
     }                                                                                                                \
-    /* The given tensor does have raw_data itself so parse it by given type */                                       \
-    /* make copy as we may have to reverse bytes */                                                                  \
-    std::string raw_data = tensor_proto->raw_data();                                                                 \
+    /* parse raw_data as the given type */                                                                           \
+    const std::string& raw_data = tensor_proto->raw_data();                                                          \
     constexpr size_t element_size = sizeof(type);                                                                    \
     int64_t required_bytes;                                                                                          \
     if (checked_mul_overflow(num_elements, static_cast<int64_t>(element_size), &required_bytes)) {                   \
@@ -99,33 +99,17 @@ namespace ONNX_NAMESPACE {
           ", actual bytes: ",                                                                                        \
           raw_data.size());                                                                                          \
     }                                                                                                                \
-    /* in case raw_data has extra bytes, we only parse the required bytes according to tensor shape */               \
-    raw_data.resize(required_bytes_sz);                                                                              \
-    /* okay to remove const qualifier as we have already made a copy */                                              \
-    char* bytes = raw_data.data();                                                                                   \
-    /* onnx is little endian serialized always-tweak byte order if needed */                                         \
+    /* copy byte-wise: raw_data may be unaligned for type */                                                         \
+    res.resize(required_bytes_sz / element_size);                                                                    \
+    std::byte* bytes = reinterpret_cast<std::byte*>(res.data());                                                     \
+    std::copy_n(reinterpret_cast<const std::byte*>(raw_data.data()), required_bytes_sz, bytes);                      \
+    /* swap byte order on big-endian hosts */                                                                        \
     if (!is_processor_little_endian()) {                                                                             \
-      const size_t num_elements = raw_data.size() / element_size;                                                    \
-      for (size_t i = 0; i < num_elements; ++i) {                                                                    \
-        char* start_byte = bytes + i * element_size;                                                                 \
-        char* end_byte = start_byte + element_size - 1;                                                              \
-        /* keep swapping */                                                                                          \
-        for (size_t count = 0; count < element_size / 2; ++count) {                                                  \
-          char temp = *start_byte;                                                                                   \
-          *start_byte = *end_byte;                                                                                   \
-          *end_byte = temp;                                                                                          \
-          ++start_byte;                                                                                              \
-          --end_byte;                                                                                                \
-        }                                                                                                            \
+      for (auto& element : res) {                                                                                    \
+        std::byte* start_byte = reinterpret_cast<std::byte*>(&element);                                              \
+        std::reverse(start_byte, start_byte + element_size);                                                         \
       }                                                                                                              \
     }                                                                                                                \
-    /* raw_data.c_str()/bytes is a byte array and may not be properly  */                                            \
-    /* aligned for the underlying type */                                                                            \
-    /* We need to copy the raw_data.c_str()/bytes as byte instead of  */                                             \
-    /* copying as the underlying type, otherwise we may hit memory   */                                              \
-    /* misalignment issues on certain platforms, such as arm32-v7a */                                                \
-    res.resize(required_bytes_sz / element_size);                                                                    \
-    memcpy(reinterpret_cast<char*>(res.data()), bytes, required_bytes_sz);                                           \
     return res;                                                                                                      \
   }
 

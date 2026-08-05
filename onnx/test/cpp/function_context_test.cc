@@ -13,8 +13,7 @@
 #include "onnx/defs/function.h"
 #include "onnx/defs/schema.h"
 
-namespace ONNX_NAMESPACE {
-namespace Test {
+namespace ONNX_NAMESPACE::Test {
 
 // Utilities. TODO: Turn them into reusable ONNX utilities for use by
 
@@ -277,5 +276,4 @@ TEST(FunctionAPITest, TypeContextTest) {
   checker::check_function(fnProto, checkerCtx, lexicalScope);
 }
 
-} // namespace Test
-} // namespace ONNX_NAMESPACE
+} // namespace ONNX_NAMESPACE::Test
