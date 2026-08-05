@@ -207,10 +207,16 @@ def _unpack_6bit(
     """Unpack a 6-bit packed buffer (see _pack_6bit) back into a uint8 array of given dims."""
     num_groups = -(-original_size // 4)  # ceil division
     needed_bytes = num_groups * 3
+    # _pack_6bit trims its output to this minimal size: trailing bytes beyond
+    # it would only ever encode a partial final group's zero-padding bits.
+    min_bytes = -(-original_size * 6 // 8)  # ceil division
     data = data.astype(np.uint8, copy=False)
+    if data.size < min_bytes:
+        raise ValueError(
+            f"Packed 6-bit data ({data.size} bytes) is too small for the declared "
+            f"shape {list(dims)} ({min_bytes} bytes required)."
+        )
     if data.size < needed_bytes:
-        # Missing trailing bytes are treated as 0, matching the packer's implicit
-        # zero-padding for a partial final group.
         data = np.concatenate(
             [data, np.zeros(needed_bytes - data.size, dtype=np.uint8)]
         )

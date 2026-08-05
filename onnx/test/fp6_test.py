@@ -22,7 +22,7 @@ class TestFP6(unittest.TestCase):
             "t",
             onnx.TensorProto.FLOAT6E2M3,
             [4],
-            vals,
+            vals.astype(ml_dtypes.float6_e2m3fn),
             raw=True,
         )
         # 4 six-bit values pack exactly into 3 bytes.
@@ -39,7 +39,7 @@ class TestFP6(unittest.TestCase):
             "t",
             onnx.TensorProto.FLOAT6E3M2,
             [3],
-            vals,
+            vals.astype(ml_dtypes.float6_e3m2fn),
             raw=True,
         )
         # 3 six-bit values need ceil(3*6/8) = 3 bytes (padded).
@@ -48,6 +48,19 @@ class TestFP6(unittest.TestCase):
         self.assertEqual(back.shape, (3,))
         # All 3 values are exactly representable in E3M2 (bias=3) too.
         np.testing.assert_array_equal(back.astype(np.float32), vals)
+
+    def test_to_array_raises_on_truncated_raw_data(self):
+        # 4 elements need ceil(4*6/8) = 3 packed bytes; give only 2.
+        tp = helper.make_tensor(
+            "t",
+            onnx.TensorProto.FLOAT6E2M3,
+            [4],
+            np.zeros(4, dtype=ml_dtypes.float6_e2m3fn),
+            raw=True,
+        )
+        tp.raw_data = tp.raw_data[:2]
+        with self.assertRaises(ValueError):
+            to_array(tp)
 
     def _cast_model(self, to_dtype: int) -> onnx.ModelProto:
         return helper.make_model(

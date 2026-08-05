@@ -397,31 +397,7 @@ def make_tensor(
     np_dtype = tensor_dtype_to_np_dtype(data_type)
 
     if raw:
-        # Special-case FP6: allow passing float values and pack to raw_data.
-        if (
-            data_type in {TensorProto.FLOAT6E2M3, TensorProto.FLOAT6E3M2}
-            and not isinstance(vals, (bytes, bytearray))
-            and not (isinstance(vals, np.ndarray) and vals.dtype == np.uint8)
-        ):
-            arr = np.asarray(vals, dtype=np.float32).ravel()
-            # Encode via ml_dtypes' own cast (RNE rounding and saturation are
-            # implemented there, matching every other low-precision float type),
-            # then pack the resulting 6-bit codes into a byte stream.
-            fp6_typed = onnx.numpy_helper.saturate_cast(arr, np_dtype)
-            fp6 = fp6_typed.view(np.uint8)
-            packed = onnx.numpy_helper._pack_6bit(fp6)
-            # Integer ceil(n * 6 / 8); avoids float-multiplication precision
-            # loss for large n that math.ceil(0.75 * n) is susceptible to.
-            expected_packed_size_bytes = -(-math.prod(dims) * 6 // 8)
-            if len(packed) != expected_packed_size_bytes:
-                raise ValueError(
-                    f"Raw data size does not match tensor's size. Expected {expected_packed_size_bytes} bytes, but got {len(packed)} bytes."
-                )
-            tensor.raw_data = packed.tobytes()
-            return tensor
-
-        # Default raw handling: expect pre-serialized content of proper size
-        # NumPy doesn't have INT2/INT4/FP4. It is packed in couples to UINT8 buffers.
+        # NumPy doesn't have INT2/INT4/FP4/FP6. It is packed in couples to UINT8 buffers.
         expected_size_bytes: float
         if data_type in {TensorProto.FLOAT6E2M3, TensorProto.FLOAT6E3M2}:
             # raw_data is always the packed 6-bit stream (see numpy_helper.to_array).
