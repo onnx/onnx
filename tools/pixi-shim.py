@@ -14,6 +14,7 @@ The 'default' environment is used if Pixi is available.
 
 from __future__ import annotations
 
+import os
 import shutil
 import subprocess
 import sys
@@ -22,7 +23,15 @@ import warnings
 args = sys.argv[1:]
 
 if shutil.which("pixi"):
-    raise SystemExit(subprocess.call(["pixi", "run", "--", *args]))  # noqa: S603, S607
+    # Some Python distributions (e.g. standalone builds managed by uv) set
+    # PYTHONHOME/PYTHONPATH for themselves. Inherited by this subprocess, those
+    # variables leak into whichever interpreter pixi activates for the target
+    # environment and make it look for packages in the wrong place, so strip
+    # them and let pixi fully manage the environment.
+    env = os.environ.copy()
+    env.pop("PYTHONHOME", None)
+    env.pop("PYTHONPATH", None)
+    raise SystemExit(subprocess.call(["pixi", "run", "--", *args], env=env))  # noqa: S603, S607
 
 warnings.warn(
     "pixi not found. Running tools directly from PATH. "
