@@ -3,6 +3,12 @@ Copyright (c) ONNX Project Contributors
 -->
 
 <!--- SPDX-License-Identifier: Apache-2.0 -->
+- Feature Name: Quantization Support in ONNX
+- Start Date: 2019-03-18
+- Status: accepted
+- Implementation: [onnx/onnx#1872](https://github.com/onnx/onnx/pull/1872)
+- Authors:
+  - linkerzhang
 
 # Quantization Support in ONNX
 
