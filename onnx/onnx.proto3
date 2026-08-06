@@ -875,6 +875,15 @@ message TypeProto {
     TensorShapeProto shape = 2;
   }
 
+  message Opaque {
+    // When missing, the domain is the same as the model's.
+    string domain = 1;
+    // The name is optional but significant when provided.
+    string name = 2;
+    // parameters that help defining the type
+    // DEPRECATED do not use.
+    // repeated TypeProto parameters = 3;
+  }
 
   oneof value {
     // The type of a tensor.
@@ -897,6 +906,8 @@ message TypeProto {
 
     // Type of the sparse tensor
     SparseTensor sparse_tensor_type = 8;
+
+    Opaque opaque_type = 7;
 
   }
 
