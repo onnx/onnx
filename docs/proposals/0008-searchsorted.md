@@ -22,7 +22,7 @@ The proposed semantics are identical to the `searchsorted` function defined in t
 An operation of this kind is common in tensor libraries (see [Prior Art section](#prior-art)), but cannot be expressed efficiently in the ONNX standard today.
 Thus, a specialized and standardized operator enables exporting more models into a portable and clean computational graph and more efficient execution.
 
-## Guide-level explanation
+## Proposed specification
 
 The following description is based on the array-api documentation and has been adapted to fit the ONNX standard.
 
