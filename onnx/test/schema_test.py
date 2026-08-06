@@ -82,6 +82,25 @@ class TestSchema:
         assert celu28.has_function
         assert allowed(defs.get_schema("Celu", 12)) == {"tensor(float)"}
 
+    def test_bitshift_type_constraints(self) -> None:
+        def allowed(schema):
+            return next(
+                set(t.allowed_type_strs)
+                for t in schema.type_constraints
+                if t.type_param_str == "T"
+            )
+
+        unsigned = {
+            "tensor(uint8)",
+            "tensor(uint16)",
+            "tensor(uint32)",
+            "tensor(uint64)",
+        }
+        signed = {"tensor(int8)", "tensor(int16)", "tensor(int32)", "tensor(int64)"}
+
+        assert allowed(defs.get_schema("BitShift", 28)) == unsigned | signed
+        assert allowed(defs.get_schema("BitShift", 11)) == unsigned
+
     def test_range_supported_types(self) -> None:
         """Test Range operator supports all expected numeric types."""
         range_schema = defs.get_schema("Range")

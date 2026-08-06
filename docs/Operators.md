@@ -25,7 +25,7 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#AveragePool">AveragePool</a>|<a href="Changelog.md#AveragePool-22">22</a>, <a href="Changelog.md#AveragePool-19">19</a>, <a href="Changelog.md#AveragePool-11">11</a>, <a href="Changelog.md#AveragePool-10">10</a>, <a href="Changelog.md#AveragePool-7">7</a>, <a href="Changelog.md#AveragePool-1">1</a>|
 |<a href="#BatchNormalization">BatchNormalization</a>|<a href="Changelog.md#BatchNormalization-15">15</a>, <a href="Changelog.md#BatchNormalization-14">14</a>, <a href="Changelog.md#BatchNormalization-9">9</a>, <a href="Changelog.md#BatchNormalization-7">7</a>, <a href="Changelog.md#BatchNormalization-6">6</a>, <a href="Changelog.md#BatchNormalization-1">1</a>|
 |<a href="#BitCast">BitCast</a>|<a href="Changelog.md#BitCast-26">26</a>|
-|<a href="#BitShift">BitShift</a>|<a href="Changelog.md#BitShift-11">11</a>|
+|<a href="#BitShift">BitShift</a>|<a href="Changelog.md#BitShift-28">28</a>, <a href="Changelog.md#BitShift-11">11</a>|
 |<a href="#BitwiseAnd">BitwiseAnd</a>|<a href="Changelog.md#BitwiseAnd-18">18</a>|
 |<a href="#BitwiseNot">BitwiseNot</a>|<a href="Changelog.md#BitwiseNot-18">18</a>|
 |<a href="#BitwiseOr">BitwiseOr</a>|<a href="Changelog.md#BitwiseOr-18">18</a>|
@@ -6393,13 +6393,34 @@ expect(node, inputs=[x], outputs=[y], name="test_bitcast_uint32_to_int32")
   and S is [1, 1], the corresponding output Z would be [0, 2]. If "direction" is "LEFT" with
   X=[1, 2] and S=[1, 2], the corresponding output Y would be [2, 8].
 
+  The operation is a fixed-width two's-complement shift and the output has the same type
+  as X. For "LEFT", vacated low bits are filled with zeros and bits shifted past the most
+  significant bit are discarded, so the result wraps within the width of T; this is defined
+  for signed types as well, for example tensor(int8) 64 << 1 is -128. For "RIGHT" on a
+  signed type the shift is arithmetic: vacated high bits are filled with copies of the sign
+  bit, so -8 >> 1 is -4. For an unsigned type "RIGHT" is logical (zero-filling). For shift
+  amounts within [0, bit width of T) this agrees with
+  [numpy.left_shift](https://numpy.org/doc/stable/reference/generated/numpy.left_shift.html)
+  and
+  [numpy.right_shift](https://numpy.org/doc/stable/reference/generated/numpy.right_shift.html)
+  on the corresponding dtype.
+
+  As in NumPy, the shift amount Y has to be non-negative; the result for a negative Y is
+  undefined. Unlike NumPy, which does not specify a result once the shift amount reaches
+  the bit width of T, this operator defines it: if Y is greater than or equal to the bit
+  width of T, the result is that of a shift by the full width, namely 0 for "LEFT" and for
+  "RIGHT" on unsigned types, and the fully sign-extended value (0 for a non-negative input,
+  -1 for a negative input) for "RIGHT" on signed types.
+
   Because this operator supports Numpy-style broadcasting, X's and Y's shapes are
   not necessarily identical.
   This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
 
 #### Version
 
-This version of the operator has been available since version 11 of the default ONNX operator set.
+This version of the operator has been available since version 28 of the default ONNX operator set.
+
+Other versions of this operator: <a href="Changelog.md#BitShift-11">11</a>
 
 #### Attributes
 
@@ -6427,7 +6448,7 @@ This version of the operator has been available since version 11 of the default 
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64)</dt>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64)</dt>
 <dd>Constrain input and output types to integer tensors.</dd>
 </dl>
 

@@ -144,7 +144,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint("T", {types::Bool}, "Constrain input/output to boolean tensors.")
         .TypeAndShapeInferenceFunction(unaryLogicalOpInference));
 
-static constexpr const char* BitShift_ver11_doc = R"DOC(
+static constexpr const char* BitShift_ver28_doc = R"DOC(
 Bitwise shift operator performs element-wise operation. For each input element, if the
 attribute "direction" is "RIGHT", this operator moves its binary representation toward
 the right side so that the input value is effectively decreased. If the attribute "direction"
@@ -154,15 +154,34 @@ Y specifies the amounts of shifting. For example, if "direction" is "Right", X i
 and S is [1, 1], the corresponding output Z would be [0, 2]. If "direction" is "LEFT" with
 X=[1, 2] and S=[1, 2], the corresponding output Y would be [2, 8].
 
+The operation is a fixed-width two's-complement shift and the output has the same type
+as X. For "LEFT", vacated low bits are filled with zeros and bits shifted past the most
+significant bit are discarded, so the result wraps within the width of T; this is defined
+for signed types as well, for example tensor(int8) 64 << 1 is -128. For "RIGHT" on a
+signed type the shift is arithmetic: vacated high bits are filled with copies of the sign
+bit, so -8 >> 1 is -4. For an unsigned type "RIGHT" is logical (zero-filling). For shift
+amounts within [0, bit width of T) this agrees with
+[numpy.left_shift](https://numpy.org/doc/stable/reference/generated/numpy.left_shift.html)
+and
+[numpy.right_shift](https://numpy.org/doc/stable/reference/generated/numpy.right_shift.html)
+on the corresponding dtype.
+
+As in NumPy, the shift amount Y has to be non-negative; the result for a negative Y is
+undefined. Unlike NumPy, which does not specify a result once the shift amount reaches
+the bit width of T, this operator defines it: if Y is greater than or equal to the bit
+width of T, the result is that of a shift by the full width, namely 0 for "LEFT" and for
+"RIGHT" on unsigned types, and the fully sign-extended value (0 for a non-negative input,
+-1 for a negative input) for "RIGHT" on signed types.
+
 Because this operator supports Numpy-style broadcasting, X's and Y's shapes are
 not necessarily identical.
 )DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
     BitShift,
-    11,
+    28,
     OpSchema()
-        .SetDoc(GET_OP_DOC_STR(std::string(BitShift_ver11_doc) + GenerateBroadcastingDocMul()))
+        .SetDoc(GET_OP_DOC_STR(std::string(BitShift_ver28_doc) + GenerateBroadcastingDocMul()))
         .Input(
             0,
             "X",
@@ -176,7 +195,14 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Output(0, "Z", "Output tensor", "T", OpSchema::Single, true, 1, OpSchema::NonDifferentiable)
         .TypeConstraint(
             "T",
-            {types::UInt8, types::UInt16, types::UInt32, types::UInt64},
+            {types::UInt8,
+             types::UInt16,
+             types::UInt32,
+             types::UInt64,
+             types::Int8,
+             types::Int16,
+             types::Int32,
+             types::Int64},
             "Constrain input and output types to integer tensors.")
         .Attr(
             "direction",

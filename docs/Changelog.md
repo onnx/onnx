@@ -33087,6 +33087,74 @@ This version of the operator has been available since version 27 of the default 
 </dl>
 
 ## Version 28 of the default ONNX operator set
+### <a name="BitShift-28"></a>**BitShift-28**</a>
+
+  Bitwise shift operator performs element-wise operation. For each input element, if the
+  attribute "direction" is "RIGHT", this operator moves its binary representation toward
+  the right side so that the input value is effectively decreased. If the attribute "direction"
+  is "LEFT", bits of binary representation moves toward the left side, which results the
+  increase of its actual value. The input X is the tensor to be shifted and another input
+  Y specifies the amounts of shifting. For example, if "direction" is "Right", X is [1, 4],
+  and S is [1, 1], the corresponding output Z would be [0, 2]. If "direction" is "LEFT" with
+  X=[1, 2] and S=[1, 2], the corresponding output Y would be [2, 8].
+
+  The operation is a fixed-width two's-complement shift and the output has the same type
+  as X. For "LEFT", vacated low bits are filled with zeros and bits shifted past the most
+  significant bit are discarded, so the result wraps within the width of T; this is defined
+  for signed types as well, for example tensor(int8) 64 << 1 is -128. For "RIGHT" on a
+  signed type the shift is arithmetic: vacated high bits are filled with copies of the sign
+  bit, so -8 >> 1 is -4. For an unsigned type "RIGHT" is logical (zero-filling). For shift
+  amounts within [0, bit width of T) this agrees with
+  [numpy.left_shift](https://numpy.org/doc/stable/reference/generated/numpy.left_shift.html)
+  and
+  [numpy.right_shift](https://numpy.org/doc/stable/reference/generated/numpy.right_shift.html)
+  on the corresponding dtype.
+
+  As in NumPy, the shift amount Y has to be non-negative; the result for a negative Y is
+  undefined. Unlike NumPy, which does not specify a result once the shift amount reaches
+  the bit width of T, this operator defines it: if Y is greater than or equal to the bit
+  width of T, the result is that of a shift by the full width, namely 0 for "LEFT" and for
+  "RIGHT" on unsigned types, and the fully sign-extended value (0 for a non-negative input,
+  -1 for a negative input) for "RIGHT" on signed types.
+
+  Because this operator supports Numpy-style broadcasting, X's and Y's shapes are
+  not necessarily identical.
+  This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
+
+#### Version
+
+This version of the operator has been available since version 28 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>direction</tt> : string (required)</dt>
+<dd>Direction of moving bits. It can be either "RIGHT" (for right shift) or "LEFT" (for left shift).</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> (non-differentiable) : T</dt>
+<dd>First operand, input to be shifted.</dd>
+<dt><tt>Y</tt> (non-differentiable) : T</dt>
+<dd>Second operand, amounts of shift.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Z</tt> (non-differentiable) : T</dt>
+<dd>Output tensor</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64)</dt>
+<dd>Constrain input and output types to integer tensors.</dd>
+</dl>
+
 ### <a name="Celu-28"></a>**Celu-28**</a>
 
   Continuously Differentiable Exponential Linear Units:
