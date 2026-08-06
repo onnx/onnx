@@ -6,7 +6,7 @@
 * [Overall Test Coverage](#overall-test-coverage)
 # Node Test Coverage
 ## Summary
-Node tests have covered 190/202 (94.06%, 5 generators excluded) common operators.
+Node tests have covered 191/203 (94.09%, 5 generators excluded) common operators.
 
 Node tests have covered 1/1 (100.00%, 0 generators excluded) experimental operators.
 
@@ -11190,6 +11190,85 @@ expect(
     inputs=[data, indices],
     outputs=[output],
     name="test_gathernd_example_int32_batch_dim1",
+)
+```
+
+</details>
+
+
+### GeGLU
+There are 3 test cases, listed as following:
+<details>
+<summary>float16</summary>
+
+```python
+node = onnx.helper.make_node(
+    "GeGLU",
+    inputs=["a", "b"],
+    outputs=["y"],
+)
+
+# Gate values stay in [-1, 2]: in float16 the Gelu body's 1 + Erf(a / sqrt(2))
+# cancels badly in the negative tail, giving about 8% error at a = -3.
+a = np.array([[1.0, -1.0, 0.5, 2.0], [-0.5, 1.5, -0.25, 0.75]], dtype=np.float16)
+b = np.array([[0.5, 1.0, -1.0, 2.0], [2.0, -1.0, 0.5, 1.0]], dtype=np.float16)
+y = geglu(a.astype(np.float32), b.astype(np.float32)).astype(np.float16)
+
+expect(
+    node,
+    inputs=[a, b],
+    outputs=[y],
+    name="test_geglu_float16",
+    opset_imports=[onnx.helper.make_opsetid("", 28)],
+)
+```
+
+</details>
+<details>
+<summary>geglu</summary>
+
+```python
+node = onnx.helper.make_node(
+    "GeGLU",
+    inputs=["a", "b"],
+    outputs=["y"],
+)
+
+a = np.array([[1.0, -2.0, 3.0, 4.0], [-1.0, 2.0, -3.0, 0.5]], dtype=np.float32)
+b = np.array([[0.5, 1.0, -1.0, 2.0], [2.0, -1.0, 0.5, 1.0]], dtype=np.float32)
+y = geglu(a, b).astype(np.float32)
+
+expect(
+    node,
+    inputs=[a, b],
+    outputs=[y],
+    name="test_geglu",
+    opset_imports=[onnx.helper.make_opsetid("", 28)],
+)
+```
+
+</details>
+<details>
+<summary>tanh</summary>
+
+```python
+node = onnx.helper.make_node(
+    "GeGLU",
+    inputs=["a", "b"],
+    outputs=["y"],
+    approximate="tanh",
+)
+
+a = np.array([[1.0, -2.0, 3.0, 4.0], [-1.0, 2.0, -3.0, 0.5]], dtype=np.float32)
+b = np.array([[0.5, 1.0, -1.0, 2.0], [2.0, -1.0, 0.5, 1.0]], dtype=np.float32)
+y = geglu(a, b, approximate="tanh").astype(np.float32)
+
+expect(
+    node,
+    inputs=[a, b],
+    outputs=[y],
+    name="test_geglu_tanh",
+    opset_imports=[onnx.helper.make_opsetid("", 28)],
 )
 ```
 

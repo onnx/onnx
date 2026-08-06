@@ -605,7 +605,9 @@ projection, split it upstream into `A` and `B` with `Split` (contiguous layout)
 or `Slice`/`Gather` (interleaved layout).
 )DOC";
 
-static void SwiGLUShapeInference(InferenceContext& ctx) {
+// Shared by the two-input gated activations (SwiGLU, GeGLU), which have an
+// identical gate/value shape contract.
+static void GatedActivationShapeInference(InferenceContext& ctx) {
   propagateElemTypeFromInputToOutput(ctx, 0, 0);
   if (!hasNInputShapes(ctx, 2)) {
     return;
@@ -635,12 +637,60 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Output(0, "Y", "Output tensor", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
         .TypeConstraint("T", OpSchema::all_float_types_ir4(), "Constrain input and output types to float tensors.")
         .SetNodeDeterminism(OpSchema::NodeDeterminism::Deterministic)
-        .TypeAndShapeInferenceFunction(SwiGLUShapeInference)
+        .TypeAndShapeInferenceFunction(GatedActivationShapeInference)
         .FunctionBody(
             R"ONNX(
           {
             SwishGate = Swish <alpha : float = @alpha> (A)
             Y = Mul (SwishGate, B)
+          }
+        )ONNX"));
+
+static constexpr const char* GeGLU_ver28_doc = R"DOC(
+GeGLU is a gated activation that takes two inputs, a gate `A` and a linear (value)
+input `B`, and produces one output `Y`. It applies the Gelu activation to the gate
+and multiplies the result elementwise by the linear input:
+
+```
+Y = Gelu(A) * B
+```
+
+The gate activation is exactly the `Gelu` operator, and the `approximate` attribute
+is forwarded to it unchanged. Inputs `A` and `B` must have identical shapes;
+broadcasting is not applied and the output `Y` has the same shape as the inputs.
+
+Exporters typically produce `A` and `B` in one of two ways: for the common
+two-projection form wire the two projection outputs directly to `A` (gate) and `B`
+(value); for a fused/packed single projection, split it upstream into `A` and `B`
+with `Split` (contiguous layout) or `Slice`/`Gather` (interleaved layout).
+
+GeGLU was introduced in "GLU Variants Improve Transformer" (Shazeer, 2020,
+https://arxiv.org/abs/2002.05202) and is used as the feed-forward gate in models
+such as T5 v1.1, Gemma and PaLM.
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(
+    GeGLU,
+    28,
+    OpSchema()
+        .SetDoc(GeGLU_ver28_doc)
+        .Attr(
+            "approximate",
+            "Gelu approximation algorithm used for the gate: `\"tanh\"`, `\"none\"`(default). "
+            "Forwarded unchanged to the `Gelu` activation.",
+            AttributeProto::STRING,
+            gelu_default_approx)
+        .Input(0, "A", "Gate input tensor", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
+        .Input(1, "B", "Linear (value) input tensor", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
+        .Output(0, "Y", "Output tensor", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
+        .TypeConstraint("T", OpSchema::all_float_types_ir4(), "Constrain input and output types to float tensors.")
+        .SetNodeDeterminism(OpSchema::NodeDeterminism::Deterministic)
+        .TypeAndShapeInferenceFunction(GatedActivationShapeInference)
+        .FunctionBody(
+            R"ONNX(
+          {
+            GeluGate = Gelu <approximate : string = @approximate> (A)
+            Y = Mul (GeluGate, B)
           }
         )ONNX"));
 
