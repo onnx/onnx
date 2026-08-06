@@ -13705,6 +13705,11 @@ This version of the operator has been available since version 11 of the default 
   Given two equivalent values, this operator uses the indices along the axis as
   a tiebreaker. That is, the element with the lower index will appear first.
 
+  For floating-point inputs, NaN values are propagated through the output. When `largest`
+  is 1, NaN values are treated as greater than all non-NaN values; the relative order
+  between multiple NaN values is implementation-defined. When `largest` is 0, NaN
+  handling is implementation-defined.
+
 #### Version
 
 This version of the operator has been available since version 11 of the default ONNX operator set.
@@ -31365,6 +31370,11 @@ This version of the operator has been available since version 24 of the default 
 
   Given two equivalent values, this operator uses the indices along the axis as
   a tiebreaker. That is, the element with the lower index will appear first.
+
+  For floating-point inputs, NaN values are propagated through the output. When `largest`
+  is 1, NaN values are treated as greater than all non-NaN values; the relative order
+  between multiple NaN values is implementation-defined. When `largest` is 0, NaN
+  handling is implementation-defined.
 
 #### Version
 
