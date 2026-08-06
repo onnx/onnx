@@ -518,39 +518,42 @@ void ProtoPrinter::print(const FunctionProto& fn) {
 
 } // namespace
 
-#define DEF_OP(T)                                              \
-  std::ostream& operator<<(std::ostream& os, const T& proto) { \
+// The parameter name must match the declaration in printer.h.
+// NOLINTBEGIN(bugprone-macro-parentheses) `param` is a declarator, it cannot be parenthesized
+#define DEF_OP(T, param)                                       \
+  std::ostream& operator<<(std::ostream& os, const T& param) { \
     ProtoPrinter printer(os);                                  \
-    printer.print(proto);                                      \
+    printer.print(param);                                      \
     return os;                                                 \
   }
+// NOLINTEND(bugprone-macro-parentheses)
 
-DEF_OP(TensorShapeProto_Dimension)
+DEF_OP(TensorShapeProto_Dimension, dim)
 
-DEF_OP(TensorShapeProto)
+DEF_OP(TensorShapeProto, shape)
 
-DEF_OP(TypeProto_Tensor)
+DEF_OP(TypeProto_Tensor, tensortype)
 
-DEF_OP(TypeProto)
+DEF_OP(TypeProto, type)
 
-DEF_OP(TensorProto)
+DEF_OP(TensorProto, tensor)
 
-DEF_OP(ValueInfoProto)
+DEF_OP(ValueInfoProto, value_info)
 
-DEF_OP(ValueInfoList)
+DEF_OP(ValueInfoList, vilist)
 
-DEF_OP(AttributeProto)
+DEF_OP(AttributeProto, attr)
 
-DEF_OP(AttrList)
+DEF_OP(AttrList, attrlist)
 
-DEF_OP(NodeProto)
+DEF_OP(NodeProto, node)
 
-DEF_OP(NodeList)
+DEF_OP(NodeList, nodelist)
 
-DEF_OP(GraphProto)
+DEF_OP(GraphProto, graph)
 
-DEF_OP(FunctionProto)
+DEF_OP(FunctionProto, fn)
 
-DEF_OP(ModelProto)
+DEF_OP(ModelProto, model)
 
 } // namespace ONNX_NAMESPACE
