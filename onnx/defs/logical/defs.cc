@@ -154,24 +154,15 @@ Y specifies the amounts of shifting. For example, if "direction" is "Right", X i
 and S is [1, 1], the corresponding output Z would be [0, 2]. If "direction" is "LEFT" with
 X=[1, 2] and S=[1, 2], the corresponding output Y would be [2, 8].
 
-The operation is a fixed-width two's-complement shift and the output has the same type
-as X. For "LEFT", vacated low bits are filled with zeros and bits shifted past the most
-significant bit are discarded, so the result wraps within the width of T; this is defined
-for signed types as well, for example tensor(int8) 64 << 1 is -128. For "RIGHT" on a
-signed type the shift is arithmetic: vacated high bits are filled with copies of the sign
-bit, so -8 >> 1 is -4. For an unsigned type "RIGHT" is logical (zero-filling). For shift
-amounts within [0, bit width of T) this agrees with
+The shift is a fixed-width two's-complement operation that behaves like
 [numpy.left_shift](https://numpy.org/doc/stable/reference/generated/numpy.left_shift.html)
 and
 [numpy.right_shift](https://numpy.org/doc/stable/reference/generated/numpy.right_shift.html)
-on the corresponding dtype.
+on the corresponding dtype: "LEFT" wraps within the width of T, and "RIGHT" is
+arithmetic (sign-extending) for signed types.
 
-As in NumPy, the shift amount Y has to be non-negative; the result for a negative Y is
-undefined. Unlike NumPy, which does not specify a result once the shift amount reaches
-the bit width of T, this operator defines it: if Y is greater than or equal to the bit
-width of T, the result is that of a shift by the full width, namely 0 for "LEFT" and for
-"RIGHT" on unsigned types, and the fully sign-extended value (0 for a non-negative input,
--1 for a negative input) for "RIGHT" on signed types.
+Y MUST be non-negative. A shift by an amount greater than or equal to the bit width of T
+MUST produce the full-width result: 0, or -1 for "RIGHT" on a negative signed input.
 
 Because this operator supports Numpy-style broadcasting, X's and Y's shapes are
 not necessarily identical.
