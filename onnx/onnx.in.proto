@@ -874,8 +874,6 @@ message TypeProto {
     optional TensorShapeProto shape = 2;
   }
 
-// #if ONNX-ML
-
   message Opaque {
     // When missing, the domain is the same as the model's.
     optional string domain = 1;
@@ -885,8 +883,6 @@ message TypeProto {
     // DEPRECATED do not use.
     // repeated TypeProto parameters = 3;
   }
-
-// #endif
 
   oneof value {
     // The type of a tensor.
@@ -910,11 +906,8 @@ message TypeProto {
     // Type of the sparse tensor
     SparseTensor sparse_tensor_type = 8;
 
-// #if ONNX-ML
-
     Opaque opaque_type = 7;
 
-// #endif
   }
 
   // An optional denotation can be used to denote the whole
