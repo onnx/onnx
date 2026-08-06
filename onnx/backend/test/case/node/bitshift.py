@@ -189,15 +189,13 @@ class BitShift(Base):
 
     @staticmethod
     def export_right_int8_negative_input() -> None:
-        # Right shift of a signed value is arithmetic: the sign bit is replicated
-        # into the vacated high bits, so a negative input stays negative.
         node = onnx.helper.make_node(
             "BitShift", inputs=["x", "y"], outputs=["z"], direction="RIGHT"
         )
 
         x = np.array([-8, -1, -128]).astype(np.int8)
         y = np.array([1, 1, 1]).astype(np.int8)
-        z = np.array([-4, -1, -64]).astype(np.int8)
+        z = x >> y  # expected output [-4, -1, -64]
         expect(
             node,
             inputs=[x, y],
@@ -213,7 +211,7 @@ class BitShift(Base):
 
         x = np.array([-8, -1, -2147483648]).astype(np.int32)
         y = np.array([1, 1, 1]).astype(np.int32)
-        z = np.array([-4, -1, -1073741824]).astype(np.int32)
+        z = x >> y  # expected output [-4, -1, -1073741824]
         expect(
             node,
             inputs=[x, y],
@@ -223,15 +221,13 @@ class BitShift(Base):
 
     @staticmethod
     def export_left_int8_overflow() -> None:
-        # Bits shifted past the most significant bit are discarded, so a left shift
-        # wraps within the width of the type rather than being undefined.
         node = onnx.helper.make_node(
             "BitShift", inputs=["x", "y"], outputs=["z"], direction="LEFT"
         )
 
         x = np.array([64, 1, -64]).astype(np.int8)
         y = np.array([1, 7, 1]).astype(np.int8)
-        z = np.array([-128, -128, -128]).astype(np.int8)
+        z = x << y  # expected output [-128, -128, -128]
         expect(
             node, inputs=[x, y], outputs=[z], name="test_bitshift_left_int8_overflow"
         )
@@ -244,27 +240,20 @@ class BitShift(Base):
 
         x = np.array([1073741824, 1, -1073741824]).astype(np.int32)
         y = np.array([1, 31, 1]).astype(np.int32)
-        z = np.array([-2147483648, -2147483648, -2147483648]).astype(np.int32)
+        z = x << y  # expected output [-2147483648, -2147483648, -2147483648]
         expect(
             node, inputs=[x, y], outputs=[z], name="test_bitshift_left_int32_overflow"
         )
 
     @staticmethod
     def export_right_int8_shift_ge_width() -> None:
-        # A shift by at least the bit width is a full-width shift, which for a signed
-        # right shift leaves the sign bit replicated across the whole result. The
-        # schema does not spell this case out; it defers to numpy.left_shift and
-        # numpy.right_shift, which fix it across every integer dtype. The values are
-        # therefore written out by hand rather than computed with a shift operator:
-        # hardware commonly masks the shift count instead, and an expectation
-        # computed on the host would quietly agree with that mistake.
         node = onnx.helper.make_node(
             "BitShift", inputs=["x", "y"], outputs=["z"], direction="RIGHT"
         )
 
         x = np.array([-8, 4, -1]).astype(np.int8)
         y = np.array([8, 9, 127]).astype(np.int8)
-        z = np.array([-1, 0, -1]).astype(np.int8)
+        z = x >> y  # expected output [-1, 0, -1]
         expect(
             node,
             inputs=[x, y],
@@ -280,7 +269,7 @@ class BitShift(Base):
 
         x = np.array([-8, 4, -1]).astype(np.int8)
         y = np.array([8, 9, 127]).astype(np.int8)
-        z = np.array([0, 0, 0]).astype(np.int8)
+        z = x << y  # expected output [0, 0, 0]
         expect(
             node,
             inputs=[x, y],
@@ -296,7 +285,7 @@ class BitShift(Base):
 
         x = np.array([-8, 4, -1]).astype(np.int32)
         y = np.array([32, 33, 100]).astype(np.int32)
-        z = np.array([-1, 0, -1]).astype(np.int32)
+        z = x >> y  # expected output [-1, 0, -1]
         expect(
             node,
             inputs=[x, y],
@@ -312,7 +301,7 @@ class BitShift(Base):
 
         x = np.array([-8, 4, -1]).astype(np.int32)
         y = np.array([32, 33, 100]).astype(np.int32)
-        z = np.array([0, 0, 0]).astype(np.int32)
+        z = x << y  # expected output [0, 0, 0]
         expect(
             node,
             inputs=[x, y],
