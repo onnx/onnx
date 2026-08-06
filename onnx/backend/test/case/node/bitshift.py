@@ -189,8 +189,8 @@ class BitShift(Base):
 
     @staticmethod
     def export_right_int8_negative_input() -> None:
-        # Right shift of a signed value is arithmetic: the sign bit is replicated
-        # into the vacated high bits, so a negative input stays negative.
+        # Right shift of a signed value is an arithmetic shift: the sign bit is
+        # replicated into the vacated high bits, so a negative input stays negative.
         node = onnx.helper.make_node(
             "BitShift", inputs=["x", "y"], outputs=["z"], direction="RIGHT"
         )

@@ -6779,8 +6779,8 @@ expect(node, inputs=[x, y], outputs=[z], name="test_bitshift_right_int8")
 <summary>right_int8_negative_input</summary>
 
 ```python
-# Right shift of a signed value is arithmetic: the sign bit is replicated
-# into the vacated high bits, so a negative input stays negative.
+# Right shift of a signed value is an arithmetic shift: the sign bit is
+# replicated into the vacated high bits, so a negative input stays negative.
 node = onnx.helper.make_node(
     "BitShift", inputs=["x", "y"], outputs=["z"], direction="RIGHT"
 )
