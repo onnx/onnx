@@ -33105,9 +33105,6 @@ This version of the operator has been available since version 27 of the default 
   on the corresponding dtype: "LEFT" wraps within the width of T, and "RIGHT" is
   arithmetic (sign-extending) for signed types.
 
-  Y MUST be non-negative. A shift by an amount greater than or equal to the bit width of T
-  MUST produce the full-width result: 0, or -1 for "RIGHT" on a negative signed input.
-
   Because this operator supports Numpy-style broadcasting, X's and Y's shapes are
   not necessarily identical.
   This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
