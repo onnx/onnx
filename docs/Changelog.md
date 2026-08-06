@@ -31557,7 +31557,7 @@ This version of the operator has been available since version 24 of the default 
 
   `offset` is the count of valid keys preceding the current query block: `offset = past_sequence_length` when `past_key` is provided; `offset = nonpad_kv_seqlen - q_sequence_length` (per batch) when an external cache is indicated by `nonpad_kv_seqlen` without `past_key`; `offset = 0` when neither is provided (the no-cache case, which reduces to the standard lower-triangular mask). When `offset < 0` (`nonpad_kv_seqlen < q_sequence_length`, i.e. more query tokens than cached keys) the leading query rows have an empty key set (no key satisfies `j <= i + offset`) and are fully masked. The causal frontier is computed independently of `attn_mask` and is then composed with it additively: a boolean `attn_mask` intersects the allowed set (its disallowed positions contribute `-inf` to the bias), while a float `attn_mask` is added to the attention scores rather than disabling positions. A fully-masked query row (no key attended, including the negative-offset leading rows) produces a zero output row, not `NaN`, for both `Y` and the mode-`3` `qk_matmul_output` debug output; the mode-`3` `qk_matmul_output` is emitted at the operator's output precision (`T1`).
 
-  When `local_window_size` is set to a positive integer, sliding window attention is applied with an implicit causal upper bound: each query at absolute position `p = offset + query_index` attends only keys `j` satisfying `0 <= p - j < local_window_size` (equivalently, `p - local_window_size + 1 <= j <= p`), i.e. at most `local_window_size` keys including itself. Future positions are always masked regardless of the `is_causal` attribute. When `local_window_size` is -1 (default), no sliding window is applied and the causal behavior is controlled solely by `is_causal`.
+  When `local_window_size` is set to a positive integer, `is_causal` must be `1`. The window restricts each query at absolute position `p = offset + query_index` to keys `j` satisfying `0 <= p - j < local_window_size` (equivalently, `p - local_window_size + 1 <= j <= p`), i.e. at most `local_window_size` keys including itself. When `local_window_size` is -1 (default), no sliding window is applied.
 
   ```
     2D sliding-window mask for Attention (opset 25)
@@ -31629,7 +31629,7 @@ This version of the operator has been available since version 25 of the default 
 <dt><tt>kv_num_heads</tt> : int</dt>
 <dd>Number of heads of key and value. Must be used with 3D inputs of Q, K and V. </dd>
 <dt><tt>local_window_size</tt> : int (default is -1)</dt>
-<dd>Size of the sliding attention window. When set to a positive integer, each query at absolute position `p` attends only keys `j` satisfying `0 <= p - j < local_window_size`, i.e. at most `local_window_size` keys including itself. This unconditionally includes a causal upper bound (future positions are always masked) regardless of the `is_causal` attribute. Default value of `-1` means no sliding window is applied and the causal behavior is controlled solely by `is_causal`. Must be `-1` or a positive integer; a value of `0` or less than `-1` is invalid.</dd>
+<dd>Size of the left sliding attention window. A positive value requires `is_causal=1`. Each query at absolute position `p` attends only keys `j` satisfying `0 <= p - j < local_window_size`, i.e. at most `local_window_size` keys including itself. Default value of `-1` means no sliding window is applied. Must be `-1` or a positive integer; a value of `0` or less than `-1` is invalid.</dd>
 <dt><tt>q_num_heads</tt> : int</dt>
 <dd>Number of heads of query. Must be used with 3D inputs of Q, K and V. </dd>
 <dt><tt>qk_matmul_output_mode</tt> : int (default is 0)</dt>
@@ -31646,11 +31646,11 @@ This version of the operator has been available since version 25 of the default 
 
 <dl>
 <dt><tt>Q</tt> : T1</dt>
-<dd>Query tensor with shape `(batch_size, q_sequence_length, input_hidden_size)` or `(batch_size, q_num_heads, q_sequence_length, head_size)`. 3D inputs require `q_num_heads` and `kv_num_heads` attributes to be set.</dd>
+<dd>Query tensor. 4D tensor with shape `(batch_size, q_num_heads, q_sequence_length, head_size)` or 3D tensor with shape `(batch_size, q_sequence_length, q_hidden_size)`. For cases with a 3D input tensor, `q_hidden_size = q_num_heads * head_size`</dd>
 <dt><tt>K</tt> : T1</dt>
-<dd>Key tensor with shape `(batch_size, kv_sequence_length, input_hidden_size)` or `(batch_size, kv_num_heads, kv_sequence_length, head_size)`. 3D inputs require `q_num_heads` and `kv_num_heads` attributes to be set.</dd>
+<dd>Key tensor. 4D tensor with shape `(batch_size, kv_num_heads, kv_sequence_length, head_size)` or 3D tensor with shape `(batch_size, kv_sequence_length, k_hidden_size)`. For cases with a 3D input tensor, `k_hidden_size = kv_num_heads * head_size`</dd>
 <dt><tt>V</tt> : T2</dt>
-<dd>Value tensor with shape `(batch_size, kv_sequence_length, input_hidden_size)` or `(batch_size, kv_num_heads, kv_sequence_length, v_head_size)`. 3D inputs require `q_num_heads` and `kv_num_heads` attributes to be set.</dd>
+<dd>Value tensor. 4D tensor with shape `(batch_size, kv_num_heads, kv_sequence_length, v_head_size)` or 3D tensor with shape `(batch_size, kv_sequence_length, v_hidden_size)`. For cases with a 3D input tensor, `v_hidden_size = kv_num_heads * v_head_size`</dd>
 <dt><tt>attn_mask</tt> (optional) : U</dt>
 <dd>Attention mask. Shape must be broadcastable to `(batch_size, q_num_heads, q_sequence_length, total_sequence_length)` where `total_sequence_length = past_sequence_length + kv_sequence_length`. The last dimension can also be shorter than `total_sequence_length` and will be padded to `total_sequence_length` with negative infinity. Two types of masks are supported: a boolean mask where a value of `True` indicates that the element should take part in attention, or a float mask of the same type as query, key, value that is added to the attention score.</dd>
 <dt><tt>past_key</tt> (optional) : T1</dt>
@@ -31665,7 +31665,7 @@ This version of the operator has been available since version 25 of the default 
 
 <dl>
 <dt><tt>Y</tt> : T1</dt>
-<dd>Output tensor with shape `(batch_size, q_sequence_length, hidden_size)` for 3D inputs or `(batch_size, q_num_heads, q_sequence_length, v_head_size)` for 4D inputs.</dd>
+<dd>The output tensor . 4D tensor with shape `(batch_size, q_num_heads, q_sequence_length, v_head_size)` or 3D tensor with shape `(batch_size, q_sequence_length, hidden_size)`. For cases with a 3D input tensor, `hidden_size = q_num_heads * v_head_size`</dd>
 <dt><tt>present_key</tt> (optional) : T1</dt>
 <dd>Updated key cache with shape `(batch_size, kv_num_heads, total_sequence_length, head_size)` where `total_sequence_length = past_sequence_length + kv_sequence_length`.</dd>
 <dt><tt>present_value</tt> (optional) : T2</dt>

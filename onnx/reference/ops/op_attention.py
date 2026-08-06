@@ -70,12 +70,7 @@ def _apply_causal(base, offset):
     causal = np.where(allowed, base.dtype.type(0), base.dtype.type(-np.inf))
     if per_batch:
         # Promote base to (batch, 1, q, kv) and add the per-batch causal bias.
-        # For 3D (batch, q, kv), insert head axis at dim 1; for 4D, keep as-is.
-        if base.ndim == 3:
-            base_4d = base.reshape(base.shape[0], 1, base.shape[1], base.shape[2])
-        else:
-            base_4d = base.reshape((1,) * (4 - base.ndim) + base.shape)
-        return base_4d + causal.reshape(
+        return base.reshape((1,) * (4 - base.ndim) + base.shape) + causal.reshape(
             causal.shape[0], 1, q_sequence_length, kv_sequence_length
         )
     return base + causal
@@ -103,18 +98,13 @@ def _apply_sliding_window(base, local_window_size, offset):
     allowed = (diff >= 0) & (diff < local_window_size)
     window = np.where(allowed, base.dtype.type(0), base.dtype.type(-np.inf))
     if per_batch:
-        # For 3D (batch, q, kv), insert head axis at dim 1; for 4D, keep as-is.
-        if base.ndim == 3:
-            base_4d = base.reshape(base.shape[0], 1, base.shape[1], base.shape[2])
-        else:
-            base_4d = base.reshape((1,) * (4 - base.ndim) + base.shape)
-        return base_4d + window.reshape(
+        return base + window.reshape(
             window.shape[0], 1, q_sequence_length, kv_sequence_length
         )
     return base + window
 
 
-def _compute_attention(
+def _compute_attention(  # noqa: PLR0913, PLR0917
     Q: np.ndarray,
     K: np.ndarray,
     V: np.ndarray,
@@ -139,6 +129,15 @@ def _compute_attention(
         raise ValueError(
             f"local_window_size must be -1 or positive, got {local_window_size}"
         )
+    if local_window_size is not None and local_window_size > 0 and not is_causal:
+        raise ValueError("local_window_size requires is_causal=1")
+    if local_window_size is not None and local_window_size > 0:
+        if (past_key is None) != (past_value is None):
+            raise ValueError("past_key and past_value must be provided together")
+        if nonpad_kv_seqlen is not None and past_key is not None:
+            raise ValueError(
+                "nonpad_kv_seqlen cannot be combined with past cache tensors"
+            )
     assert len(Q.shape) == len(K.shape) == len(V.shape)
     # Set input tensors (Q, K, V) to the correct shape if input shape is 3D
     # NewShapeQ (batch_size, q_num_heads, q_sequence_length, head_size)
@@ -229,6 +228,12 @@ def _compute_attention(
             if attn_mask is None
             else attn_mask.copy()
         )
+        if local_window_size is not None and local_window_size > 0:
+            # Materialize rank-1 masks to rank 2 while preserving standard
+            # right-aligned broadcasting for all higher-rank masks.
+            base = (
+                np.zeros((q_sequence_length, kv_sequence_length), dtype=Q.dtype) + base
+            )
         if past_key is None and nonpad_kv_seqlen is not None:
             # External/static cache: per-batch bottom-right frontier
             #   j <= i + (nonpad_kv_seqlen[b] - q_len).
@@ -255,14 +260,9 @@ def _compute_attention(
         attn_bias = _apply_sliding_window(attn_bias, local_window_size, win_offset)
 
     if nonpad_kv_seqlen is not None:
-        if attn_bias.ndim == 3:
-            attn_bias = attn_bias.reshape(
-                attn_bias.shape[0], 1, attn_bias.shape[1], attn_bias.shape[2]
-            )
-        else:
-            attn_bias = attn_bias.reshape(
-                (1,) * (4 - attn_bias.ndim) + attn_bias.shape
-            )  # broadcast to 4D
+        attn_bias = attn_bias.reshape(
+            (1,) * (4 - attn_bias.ndim) + attn_bias.shape
+        )  # broadcast to 4D
         padding_mask = np.arange(kv_sequence_length) < nonpad_kv_seqlen[:, np.newaxis]
         padding_mask = padding_mask.reshape(batch_size, 1, 1, kv_sequence_length)
         padding_mask = np.where(padding_mask, 0, -np.inf)
@@ -276,7 +276,7 @@ def _compute_attention(
         q_num_heads = Q.shape[1]
     if kv_num_heads is None:
         k_num_heads = K.shape[1]
-        v_num_heads = V.shape[1]
+        v_num_heads = K.shape[1]
     else:
         k_num_heads = kv_num_heads
         v_num_heads = kv_num_heads
@@ -363,7 +363,7 @@ def _compute_attention(
 
 
 class Attention(OpRun):
-    def _run(
+    def _run(  # noqa: PLR0913, PLR0917
         self,
         Q: np.ndarray,
         K: np.ndarray,

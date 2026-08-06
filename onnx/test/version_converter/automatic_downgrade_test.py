@@ -119,7 +119,7 @@ class TestAutomaticDowngrade(automatic_conversion_test_base.TestAutomaticConvers
             attn (float[2, 3, 4, 8] Q, float[2, 3, 6, 8] K, float[2, 3, 6, 8] V)
                 => (float[2, 3, 4, 8] Y)
             {
-                Y = Attention <local_window_size = 3> (Q, K, V)
+                Y = Attention <is_causal = 1, local_window_size = 3> (Q, K, V)
             }
         """,
         )
