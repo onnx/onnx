@@ -189,6 +189,8 @@ class BitShift(Base):
 
     @staticmethod
     def export_right_int8_negative_input() -> None:
+        # Right shift of a signed value is arithmetic: the sign bit is replicated
+        # into the vacated high bits, so a negative input stays negative.
         node = onnx.helper.make_node(
             "BitShift", inputs=["x", "y"], outputs=["z"], direction="RIGHT"
         )
@@ -221,6 +223,8 @@ class BitShift(Base):
 
     @staticmethod
     def export_left_int8_overflow() -> None:
+        # Bits shifted past the most significant bit are discarded, so the result
+        # wraps within the width of the type rather than being undefined as in C.
         node = onnx.helper.make_node(
             "BitShift", inputs=["x", "y"], outputs=["z"], direction="LEFT"
         )
@@ -247,6 +251,10 @@ class BitShift(Base):
 
     @staticmethod
     def export_right_int8_shift_ge_width() -> None:
+        # NumPy saturates a shift by at least the bit width, giving 0, or -1 for a
+        # right shift of a negative value where the sign bit fills the result. C
+        # and most hardware mask the shift count instead, so this is easy to get
+        # wrong (see pytorch/pytorch#70904).
         node = onnx.helper.make_node(
             "BitShift", inputs=["x", "y"], outputs=["z"], direction="RIGHT"
         )
