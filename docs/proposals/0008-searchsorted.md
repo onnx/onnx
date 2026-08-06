@@ -121,14 +121,14 @@ Lastly, one may implement this operator using Scan.
 The loop body may be given as:
 
 ```
-def body(x1_item):
+def body(x2_item):
     if side == "left":
-        return (x1_item < x2).astype(int64).sum(axis=0)
+        return (x1 < x2_item).astype(int64).sum(axis=0)
     else:
-        return (x1_item <= x2).astype(int64).sum(axis=0)
+        return (x1 <= x2_item).astype(int64).sum(axis=0)
 ```
 
-which would be called for each item in `x1` (capturing `x2`).
+which would be called for each item in `x2` (capturing `x1`).
 This implementation has two drawbacks:
 
   - A dedicated operator can optimize this operation (and required allocations) much better than the generic Scan operator.
