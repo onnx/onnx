@@ -114,7 +114,7 @@ ONNX_API void convPoolShapeInference(
   std::vector<int64_t> effective_kernel_shape = kernel_shape;
   for (size_t i = 0; i < kernel_shape.size(); i++) {
     // accounting for dilation, how big is the kernel in this dimension
-    effective_kernel_shape[i] = (effective_kernel_shape[i] - 1) * dilations[i] + 1;
+    effective_kernel_shape[i] = ((effective_kernel_shape[i] - 1) * dilations[i]) + 1;
   }
 
   std::vector<int64_t> pads;
@@ -190,7 +190,7 @@ ONNX_API void convPoolShapeInference(
     auto ceil_mode = getAttribute(ctx, "ceil_mode", 0);
 
     int64_t output_size =
-        (effective_input_size - effective_kernel_shape[i] + (ceil_mode ? strides[i] - 1 : 0)) / strides[i] + 1;
+        ((effective_input_size - effective_kernel_shape[i] + (ceil_mode ? strides[i] - 1 : 0)) / strides[i]) + 1;
     if (ceil_mode == 1 && (output_size - 1) * strides[i] >= (input_size + pads[i])) {
       // we need to match pytorch's behavior of "Sliding windows that would start in the right padded region are
       // ignored." (https://pytorch.org/docs/stable/generated/torch.nn.MaxPool1d.html#maxpool1d). this code follows the
@@ -1196,7 +1196,7 @@ ONNX_API void convTransposeShapeInference(InferenceContext& ctx) {
   std::vector<int64_t> effective_kernel_shape = kernel_shape;
   for (size_t i = 0; i < kernel_shape.size(); i++) {
     // accounting for dilation, how big is the kernel in this dimension
-    effective_kernel_shape[i] = (effective_kernel_shape[i] - 1) * dilations[i] + 1;
+    effective_kernel_shape[i] = ((effective_kernel_shape[i] - 1) * dilations[i]) + 1;
   }
 
   std::vector<int64_t> pads;
@@ -1281,7 +1281,7 @@ ONNX_API void convTransposeShapeInference(InferenceContext& ctx) {
     size_of_output = input_shape.dim_size() - 2;
     for (int i = 0; i < size_of_output; ++i) {
       if (input_shape.dim(i + 2).has_dim_value()) {
-        int64_t output_shape_dim = strides[i] * (input_shape.dim(i + 2).dim_value() - 1) + output_padding[i] +
+        int64_t output_shape_dim = (strides[i] * (input_shape.dim(i + 2).dim_value() - 1)) + output_padding[i] +
             effective_kernel_shape[i] - pads[i] - pads[i + n_input_dims];
         final_output_shape->add_dim()->set_dim_value(output_shape_dim);
       } else {
