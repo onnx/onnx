@@ -20,6 +20,9 @@ The proposed semantics are identical to the `searchsorted` function defined in t
 ## Motivation
 
 An operation of this kind is common in tensor libraries (see [Prior Art section](#prior-art)), but cannot be expressed efficiently in the ONNX standard today.
+The operation is useful for feature discretization/bucketization in preprocessing steps (e.g., scikit-learn's [KBinsDiscretizer](https://github.com/scikit-learn/scikit-learn/blob/1074736921eecc3ba84743404696bdcaf877c023/sklearn/preprocessing/_discretization.py#L455)).
+`Searchsorted` can also be used to implement a Pandas-like [`merge_asof`](https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.merge_asof.html#pandas-merge-asof) operation: for each key from the left data frame (`x2`), find the index of the closest preceding key in the (sorted) right data frame (`x1`).
+
 Thus, a specialized and standardized operator enables exporting more models into a portable and clean computational graph and more efficient execution.
 
 ## Proposed specification
