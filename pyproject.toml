@@ -54,6 +54,7 @@ sdist.include = [
     "VERSION_NUMBER",
     "sbom.cdx.json",
     "cmake/**",
+    "tests/**",
     "tools/**",
     "onnx/**",
     "pyproject.toml",
