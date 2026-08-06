@@ -5,7 +5,7 @@ Copyright (c) ONNX Project Contributors
 <!--- SPDX-License-Identifier: Apache-2.0 -->
 - Feature Name: Add Searchsorted operator to `ai.onnx`
 - Start Date: 2026-04-02
-- RFC PR: [onnx/onnx#7646](https://github.com/onnx/onnx/pull/7646)
+- RFC PR: [onnx/onnx#8265](https://github.com/onnx/onnx/pull/7646)
 - Status: under discussion
 - Authors:
   - cbourjau
@@ -47,7 +47,7 @@ If an implementation deviates from the IEEE 754's specified total order it **sho
 
 **`side`**: string
 
-Either `"left"` or `"right"`. Controls which index is returned if a value lands exactly on an edge.
+Either `"left"` (default) or `"right"`. Controls which index is returned if a value lands exactly on an edge.
 
 ### Inputs
 
@@ -123,9 +123,9 @@ The loop body may be given as:
 ```
 def body(x1_item):
     if side == "left":
-        return (x1 < x2).astype(int64).sum(axis=0)
+        return (x1_item < x2).astype(int64).sum(axis=0)
     else:
-        return (x1 <= x2).astype(int64).sum(axis=0)
+        return (x1_item <= x2).astype(int64).sum(axis=0)
 ```
 
 which would be called for each item in `x1` (capturing `x2`).
