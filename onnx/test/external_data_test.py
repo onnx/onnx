@@ -25,6 +25,7 @@ from onnx import (
 )
 from onnx.external_data_helper import (
     _ALLOWED_EXTERNAL_DATA_KEYS,
+    _MAX_EXTERNAL_DATA_PADDING,
     ExternalDataInfo,
     convert_model_from_external_data,
     convert_model_to_external_data,
@@ -1063,6 +1064,59 @@ class TestSaveExternalDataAbsolutePathValidation(TestLoadExternalDataBase):
         set_external_data(tensor, location="/etc/passwd")
         with pytest.raises(checker.ValidationError):
             save_external_data(tensor, self.temp_dir)
+
+
+def _tensor_with_offset(offset: int, location: str) -> TensorProto:
+    """Create an in-memory tensor object that references an external 'location'."""
+    tensor = from_array(np.ones((4,), dtype=np.float32), name="weight")
+    set_external_data(tensor, location=location, offset=offset)
+    return tensor
+
+
+class TestSaveExternalDataOffsetBounds:
+    """Test that save_external_data only writes at the end of the external file.
+
+    A legitimate offset lands at the current end of the file, optionally bumped
+    forward by an alignment gap. An offset before the end would overwrite existing
+    bytes; one far past it would pad with an unbounded amount of zeros.
+    """
+
+    # On a fresh directory the external file does not exist yet, so its size is 0
+    # and the padding written equals the offset itself.
+    @pytest.mark.parametrize(
+        "offset", [0, _MAX_EXTERNAL_DATA_PADDING], ids=["no_padding", "max_padding"]
+    )
+    def test_padding_up_to_the_cap_is_accepted(
+        self, offset: int, tmp_path: Path
+    ) -> None:
+        """Padding a fresh file up to (and including) the cap is legitimate."""
+        location = "data.bin"
+        tensor = _tensor_with_offset(offset, location)
+        save_external_data(tensor, str(tmp_path))
+        assert (tmp_path / location).stat().st_size == offset + len(tensor.raw_data)
+
+    @pytest.mark.parametrize(
+        ("existing_data", "offset"),
+        [
+            (b"", _MAX_EXTERNAL_DATA_PADDING + 1),
+            (b"some bytes longer than the offset", 4),
+        ],
+        ids=["padding_over_cap", "offset_inside_existing_file"],
+    )
+    def test_out_of_bounds_offset_rejected_without_writing(
+        self, existing_data: bytes, offset: int, tmp_path: Path
+    ) -> None:
+        """Offsets past the cap or before the file's end are rejected, file untouched.
+
+        Past the cap would pad with an unbounded amount of zeros; before the end
+        would overwrite existing bytes. In both cases nothing must be written.
+        """
+        location = "data.bin"
+        (tmp_path / location).write_bytes(existing_data)
+        tensor = _tensor_with_offset(offset, location)
+        with pytest.raises(checker.ValidationError, match=r"offset.*must be between"):
+            save_external_data(tensor, str(tmp_path))
+        assert (tmp_path / location).read_bytes() == existing_data
 
 
 class TestExternalDataInfoSecurity:

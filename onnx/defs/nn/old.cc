@@ -193,7 +193,7 @@ static void convPoolShapeInference_opset19(
   std::vector<int64_t> effective_kernel_shape = kernel_shape;
   for (size_t i = 0; i < kernel_shape.size(); i++) {
     // accounting for dilation, how big is the kernel in this dimension
-    effective_kernel_shape[i] = (effective_kernel_shape[i] - 1) * dilations[i] + 1;
+    effective_kernel_shape[i] = ((effective_kernel_shape[i] - 1) * dilations[i]) + 1;
   }
 
   std::vector<int64_t> pads;
@@ -276,7 +276,7 @@ static void convPoolShapeInference_opset19(
     const int64_t stride_gap = effective_input_size - effective_kernel_shape[i];
     if (ceil_mode == 1)
       // exact ceil division; (a + b - 1) / b would be wrong for negative a
-      strided_kernel_positions = stride_gap / strides[i] + (stride_gap % strides[i] > 0 ? 1 : 0);
+      strided_kernel_positions = (stride_gap / strides[i]) + (stride_gap % strides[i] > 0 ? 1 : 0);
     else
       strided_kernel_positions = stride_gap / strides[i];
 
@@ -699,7 +699,7 @@ static void convTransposeShapeInference_opset11(InferenceContext& ctx) {
   std::vector<int64_t> effective_kernel_shape = kernel_shape;
   for (size_t i = 0; i < kernel_shape.size(); i++) {
     // accounting for dilation, how big is the kernel in this dimension
-    effective_kernel_shape[i] = (effective_kernel_shape[i] - 1) * dilations[i] + 1;
+    effective_kernel_shape[i] = ((effective_kernel_shape[i] - 1) * dilations[i]) + 1;
   }
 
   std::vector<int64_t> pads;
@@ -784,7 +784,7 @@ static void convTransposeShapeInference_opset11(InferenceContext& ctx) {
     size_of_output = input_shape.dim_size() - 2;
     for (int i = 0; i < size_of_output; ++i) {
       if (input_shape.dim(i + 2).has_dim_value()) {
-        int64_t output_shape_dim = strides[i] * (input_shape.dim(i + 2).dim_value() - 1) + output_padding[i] +
+        int64_t output_shape_dim = (strides[i] * (input_shape.dim(i + 2).dim_value() - 1)) + output_padding[i] +
             effective_kernel_shape[i] - pads[i] - pads[i + n_input_dims];
         final_output_shape->add_dim()->set_dim_value(output_shape_dim);
       } else {
@@ -2040,7 +2040,7 @@ static void convPoolShapeInference_opset1_to_11(
   std::vector<int64_t> effective_kernel_shape = kernel_shape;
   for (size_t i = 0; i < kernel_shape.size(); i++) {
     // accounting for dilation, how big is the kernel in this dimension
-    effective_kernel_shape[i] = (effective_kernel_shape[i] - 1) * dilations[i] + 1;
+    effective_kernel_shape[i] = ((effective_kernel_shape[i] - 1) * dilations[i]) + 1;
   }
 
   std::vector<int64_t> pads;
@@ -2120,7 +2120,7 @@ static void convPoolShapeInference_opset1_to_11(
     const int64_t stride_gap = effective_input_size - effective_kernel_shape[i];
     if (ceil_mode == 1)
       // exact ceil division; (a + b - 1) / b would be wrong for negative a
-      strided_kernel_positions = stride_gap / strides[i] + (stride_gap % strides[i] > 0 ? 1 : 0);
+      strided_kernel_positions = (stride_gap / strides[i]) + (stride_gap % strides[i] > 0 ? 1 : 0);
     else
       strided_kernel_positions = stride_gap / strides[i];
 
@@ -3063,7 +3063,7 @@ static void convTransposeShapeInference_opset1(InferenceContext& ctx) {
   std::vector<int64_t> effective_kernel_shape = kernel_shape;
   for (size_t i = 0; i < kernel_shape.size(); i++) {
     // accounting for dilation, how big is the kernel in this dimension
-    effective_kernel_shape[i] = (effective_kernel_shape[i] - 1) * dilations[i] + 1;
+    effective_kernel_shape[i] = ((effective_kernel_shape[i] - 1) * dilations[i]) + 1;
   }
 
   std::vector<int64_t> pads;
@@ -3144,7 +3144,7 @@ static void convTransposeShapeInference_opset1(InferenceContext& ctx) {
     size_of_output = input_shape.dim_size() - 2;
     for (int i = 0; i < size_of_output; ++i) {
       if (input_shape.dim(i + 2).has_dim_value()) {
-        int64_t output_shape_dim = strides[i] * (input_shape.dim(i + 2).dim_value() - 1) + output_padding[i] +
+        int64_t output_shape_dim = (strides[i] * (input_shape.dim(i + 2).dim_value() - 1)) + output_padding[i] +
             effective_kernel_shape[i] - pads[i] - pads[i + n_input_dims];
         final_output_shape->add_dim()->set_dim_value(output_shape_dim);
       } else {
