@@ -161,6 +161,12 @@ It would be nice to use "**must** follow IEEE 754-2019" regarding the sorting se
  - It may be too restrictive for efficient implementations on all hardware
  - Mandating a "must" for the semantics of `Searchsorted` and coupling it to `Unique` would necessarily require explicit semantics for the `Unique` operator, but its floating point semantics are unspecified today.
 
+### Naming
+
+An alternative name for this operator is `SearchSorted`, which may fit better into the ONNX naming schema.
+It was nonetheless not chosen since the name `searchsorted` (rather than `search_sorted`) is the de facto standard name of this widely used operation in the Python ecosystem.
+
+
 ## Future possibilities
 
 The searchsorted operation appears mature and well-established.
