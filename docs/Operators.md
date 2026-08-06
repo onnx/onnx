@@ -6804,9 +6804,12 @@ expect(
 
 ```python
 # A shift by at least the bit width is a full-width shift, which for a signed
-# right shift leaves the sign bit replicated across the whole result. These
-# values come from the specification, not from the host CPU, which commonly
-# masks the shift count instead.
+# right shift leaves the sign bit replicated across the whole result. The
+# schema does not spell this case out; it defers to numpy.left_shift and
+# numpy.right_shift, which fix it across every integer dtype. The values are
+# therefore written out by hand rather than computed with a shift operator:
+# hardware commonly masks the shift count instead, and an expectation
+# computed on the host would quietly agree with that mistake.
 node = onnx.helper.make_node(
     "BitShift", inputs=["x", "y"], outputs=["z"], direction="RIGHT"
 )
