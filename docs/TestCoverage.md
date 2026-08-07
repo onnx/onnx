@@ -5208,7 +5208,7 @@ expect(node, inputs=[x], outputs=[y], name="test_bitcast_uint32_to_int32")
 
 
 ### BitShift
-There are 24 test cases, listed as following:
+There are 28 test cases, listed as following:
 <details>
 <summary>left_int16</summary>
 
@@ -5236,6 +5236,26 @@ x = np.array([16, 4, 1]).astype(np.int32)
 y = np.array([1, 2, 3]).astype(np.int32)
 z = x << y  # expected output [32, 16, 8]
 expect(node, inputs=[x, y], outputs=[z], name="test_bitshift_left_int32")
+```
+
+</details>
+<details>
+<summary>left_int32_negative_shift</summary>
+
+```python
+node = onnx.helper.make_node(
+    "BitShift", inputs=["x", "y"], outputs=["z"], direction="LEFT"
+)
+
+x = np.array([-8, 4, -1]).astype(np.int32)
+y = np.array([-1, -32, -64]).astype(np.int32)
+z = x << y  # expected output [0, 0, 0]
+expect(
+    node,
+    inputs=[x, y],
+    outputs=[z],
+    name="test_bitshift_left_int32_negative_shift",
+)
 ```
 
 </details>
@@ -5303,6 +5323,26 @@ x = np.array([16, 4, 1]).astype(np.int8)
 y = np.array([1, 2, 3]).astype(np.int8)
 z = x << y  # expected output [32, 16, 8]
 expect(node, inputs=[x, y], outputs=[z], name="test_bitshift_left_int8")
+```
+
+</details>
+<details>
+<summary>left_int8_negative_shift</summary>
+
+```python
+node = onnx.helper.make_node(
+    "BitShift", inputs=["x", "y"], outputs=["z"], direction="LEFT"
+)
+
+x = np.array([-8, 4, -1]).astype(np.int8)
+y = np.array([-1, -8, -16]).astype(np.int8)
+z = x << y  # expected output [0, 0, 0]
+expect(
+    node,
+    inputs=[x, y],
+    outputs=[z],
+    name="test_bitshift_left_int8_negative_shift",
+)
 ```
 
 </details>
@@ -5456,6 +5496,26 @@ expect(
 
 </details>
 <details>
+<summary>right_int32_negative_shift</summary>
+
+```python
+node = onnx.helper.make_node(
+    "BitShift", inputs=["x", "y"], outputs=["z"], direction="RIGHT"
+)
+
+x = np.array([-8, 4, -1]).astype(np.int32)
+y = np.array([-1, -32, -64]).astype(np.int32)
+z = x >> y  # expected output [-1, 0, -1]
+expect(
+    node,
+    inputs=[x, y],
+    outputs=[z],
+    name="test_bitshift_right_int32_negative_shift",
+)
+```
+
+</details>
+<details>
 <summary>right_int32_shift_ge_width</summary>
 
 ```python
@@ -5523,6 +5583,30 @@ expect(
     inputs=[x, y],
     outputs=[z],
     name="test_bitshift_right_int8_negative_input",
+)
+```
+
+</details>
+<details>
+<summary>right_int8_negative_shift</summary>
+
+```python
+# A negative shift amount is out of range just as one at or past the bit
+# width is, and gives the same full-width result: 0, or -1 where an
+# arithmetic right shift fills the result with the sign bit. Y only reaches
+# negative values for a signed type, since it shares the type of X.
+node = onnx.helper.make_node(
+    "BitShift", inputs=["x", "y"], outputs=["z"], direction="RIGHT"
+)
+
+x = np.array([-8, 4, -1]).astype(np.int8)
+y = np.array([-1, -8, -16]).astype(np.int8)
+z = x >> y  # expected output [-1, 0, -1]
+expect(
+    node,
+    inputs=[x, y],
+    outputs=[z],
+    name="test_bitshift_right_int8_negative_shift",
 )
 ```
 

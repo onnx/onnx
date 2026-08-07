@@ -316,3 +316,71 @@ class BitShift(Base):
             outputs=[z],
             name="test_bitshift_left_int32_shift_ge_width",
         )
+
+    @staticmethod
+    def export_right_int8_negative_shift() -> None:
+        # A negative shift amount is out of range just as one at or past the bit
+        # width is, and gives the same full-width result: 0, or -1 where an
+        # arithmetic right shift fills the result with the sign bit. Y only reaches
+        # negative values for a signed type, since it shares the type of X.
+        node = onnx.helper.make_node(
+            "BitShift", inputs=["x", "y"], outputs=["z"], direction="RIGHT"
+        )
+
+        x = np.array([-8, 4, -1]).astype(np.int8)
+        y = np.array([-1, -8, -16]).astype(np.int8)
+        z = x >> y  # expected output [-1, 0, -1]
+        expect(
+            node,
+            inputs=[x, y],
+            outputs=[z],
+            name="test_bitshift_right_int8_negative_shift",
+        )
+
+    @staticmethod
+    def export_left_int8_negative_shift() -> None:
+        node = onnx.helper.make_node(
+            "BitShift", inputs=["x", "y"], outputs=["z"], direction="LEFT"
+        )
+
+        x = np.array([-8, 4, -1]).astype(np.int8)
+        y = np.array([-1, -8, -16]).astype(np.int8)
+        z = x << y  # expected output [0, 0, 0]
+        expect(
+            node,
+            inputs=[x, y],
+            outputs=[z],
+            name="test_bitshift_left_int8_negative_shift",
+        )
+
+    @staticmethod
+    def export_right_int32_negative_shift() -> None:
+        node = onnx.helper.make_node(
+            "BitShift", inputs=["x", "y"], outputs=["z"], direction="RIGHT"
+        )
+
+        x = np.array([-8, 4, -1]).astype(np.int32)
+        y = np.array([-1, -32, -64]).astype(np.int32)
+        z = x >> y  # expected output [-1, 0, -1]
+        expect(
+            node,
+            inputs=[x, y],
+            outputs=[z],
+            name="test_bitshift_right_int32_negative_shift",
+        )
+
+    @staticmethod
+    def export_left_int32_negative_shift() -> None:
+        node = onnx.helper.make_node(
+            "BitShift", inputs=["x", "y"], outputs=["z"], direction="LEFT"
+        )
+
+        x = np.array([-8, 4, -1]).astype(np.int32)
+        y = np.array([-1, -32, -64]).astype(np.int32)
+        z = x << y  # expected output [0, 0, 0]
+        expect(
+            node,
+            inputs=[x, y],
+            outputs=[z],
+            name="test_bitshift_left_int32_negative_shift",
+        )
