@@ -4287,6 +4287,36 @@ class TestShapeInference(TestShapeInferenceHelper):
             graph, [make_tensor_value_info("z", TensorProto.UINT32, (2, 3, 1))]
         )
 
+    @pytest.mark.parametrize(
+        "elem_type",
+        [
+            TensorProto.INT8,
+            TensorProto.INT16,
+            TensorProto.INT32,
+            TensorProto.INT64,
+        ],
+    )
+    @pytest.mark.parametrize("direction", ["LEFT", "RIGHT"])
+    def test_bitshift_signed(self, elem_type, direction) -> None:
+        graph = self._make_graph(
+            [("x", elem_type, (2, 3, 1)), ("y", elem_type, (2, 3, 1))],
+            [make_node("BitShift", ["x", "y"], "z", direction=direction)],
+            [],
+        )
+        self._assert_inferred(
+            graph, [make_tensor_value_info("z", elem_type, (2, 3, 1))]
+        )
+
+    def test_bitshift_signed_broadcast(self) -> None:
+        graph = self._make_graph(
+            [("x", TensorProto.INT32, (16, 4, 1)), ("y", TensorProto.INT32, (1,))],
+            [make_node("BitShift", ["x", "y"], "z", direction="RIGHT")],
+            [],
+        )
+        self._assert_inferred(
+            graph, [make_tensor_value_info("z", TensorProto.INT32, (16, 4, 1))]
+        )
+
     def test_sum_single(self) -> None:
         self._identity_prop("Sum")
 
