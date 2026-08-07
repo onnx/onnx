@@ -191,7 +191,7 @@ int64_t compute_output_dim_for_range(const TensorProto* start, const TensorProto
                                          : static_cast<uint64_t>(start_value) - static_cast<uint64_t>(limit_value);
     const uint64_t step =
         increasing ? static_cast<uint64_t>(delta_value) : uint64_t{0} - static_cast<uint64_t>(delta_value);
-    const uint64_t count = distance / step + static_cast<uint64_t>(distance % step != 0);
+    const uint64_t count = (distance / step) + static_cast<uint64_t>(distance % step != 0);
     if (count > static_cast<uint64_t>(std::numeric_limits<int64_t>::max())) {
       fail_shape_inference("'Range' output size exceeds int64 limits");
     }
