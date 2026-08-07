@@ -1662,7 +1662,7 @@ class TestAutomaticUpgrade(automatic_conversion_test_base.TestAutomaticConversio
             vals=np.random.rand(2, 64).astype(np.float32),
         )
         frame_step = helper.make_tensor(
-            "b", TensorProto.INT64, dims=[1], vals=np.array([8])
+            "b", TensorProto.INT64, dims=[], vals=np.array([8])
         )
         window = helper.make_tensor(
             "c", TensorProto.FLOAT, dims=[16], vals=np.ones(16).astype(np.float32)
@@ -1670,8 +1670,8 @@ class TestAutomaticUpgrade(automatic_conversion_test_base.TestAutomaticConversio
         self._test_op_upgrade(
             operator_name,
             17,
-            [[2, 64], [1], [16]],
-            [[2, 7, 16, 2]],
+            [[2, 64], [], [16]],
+            [[2, 7, 9, 2]],
             [
                 TensorProto.FLOAT,
                 TensorProto.INT64,
@@ -1689,7 +1689,7 @@ class TestAutomaticUpgrade(automatic_conversion_test_base.TestAutomaticConversio
             vals=np.random.rand(2, 64).astype(np.float32),
         )
         frame_step = helper.make_tensor(
-            "b", TensorProto.INT64, dims=[1], vals=np.array([8])
+            "b", TensorProto.INT64, dims=[], vals=np.array([8])
         )
         window = helper.make_tensor(
             "c", TensorProto.FLOAT, dims=[16], vals=np.ones(16).astype(np.float32)
@@ -1697,7 +1697,7 @@ class TestAutomaticUpgrade(automatic_conversion_test_base.TestAutomaticConversio
         self._test_op_upgrade(
             operator_name,
             17,
-            [[2, 64], [1], [16]],
+            [[2, 64], [], [16]],
             [[2, 7, 9, 2]],
             [
                 TensorProto.FLOAT,
@@ -1717,7 +1717,7 @@ class TestAutomaticUpgrade(automatic_conversion_test_base.TestAutomaticConversio
             vals=np.random.rand(2, 64, 2).astype(np.float32),
         )
         frame_step = helper.make_tensor(
-            "b", TensorProto.INT64, dims=[1], vals=np.array([8])
+            "b", TensorProto.INT64, dims=[], vals=np.array([8])
         )
         window = helper.make_tensor(
             "c", TensorProto.FLOAT, dims=[16], vals=np.ones(16).astype(np.float32)
@@ -1725,8 +1725,8 @@ class TestAutomaticUpgrade(automatic_conversion_test_base.TestAutomaticConversio
         self._test_op_upgrade(
             operator_name,
             17,
-            [[2, 64, 2], [1], [16]],
-            [[2, 7, 16, 2]],
+            [[2, 64, 2], [], [16]],
+            [[2, 7, 9, 2]],
             [
                 TensorProto.FLOAT,
                 TensorProto.INT64,
@@ -1744,18 +1744,18 @@ class TestAutomaticUpgrade(automatic_conversion_test_base.TestAutomaticConversio
             vals=np.random.rand(2, 64, 2).astype(np.float32),
         )
         frame_step = helper.make_tensor(
-            "b", TensorProto.INT64, dims=[1], vals=np.array([8])
+            "b", TensorProto.INT64, dims=[], vals=np.array([8])
         )
         window = helper.make_tensor(
             "c", TensorProto.FLOAT, dims=[16], vals=np.ones(16).astype(np.float32)
         )
         frame_length = helper.make_tensor(
-            "e", TensorProto.INT64, dims=[1], vals=np.array([16])
+            "e", TensorProto.INT64, dims=[], vals=np.array([16])
         )
         self._test_op_upgrade(
             operator_name,
             17,
-            [[2, 64, 2], [1], [16]],
+            [[2, 64, 2], [], [16]],
             [[2, 7, 9, 2]],
             [
                 TensorProto.FLOAT,
