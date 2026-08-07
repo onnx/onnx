@@ -4,4 +4,6 @@
 target_sources(onnx PRIVATE
     defs.cc
     old.cc
+    utils.h
+    utils.cc
 )
