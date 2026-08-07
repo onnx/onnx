@@ -193,7 +193,8 @@ static void convPoolShapeInference_opset19(
   std::vector<int64_t> effective_kernel_shape = kernel_shape;
   for (size_t i = 0; i < kernel_shape.size(); i++) {
     // accounting for dilation, how big is the kernel in this dimension
-    effective_kernel_shape[i] = ((effective_kernel_shape[i] - 1) * dilations[i]) + 1;
+    effective_kernel_shape[i] =
+        checkedAdd(checkedMultiply(checkedSubtract(effective_kernel_shape[i], 1), dilations[i]), 1);
   }
 
   std::vector<int64_t> pads;
@@ -225,10 +226,11 @@ static void convPoolShapeInference_opset19(
         if (i >= effective_kernel_shape.size()) {
           fail_shape_inference("kernel shape should have ", input_dims_size, " values in ", ctx.getDisplayName(), ".");
         }
-        int64_t total_pad = residual == 0 ? effective_kernel_shape[i] - stride : effective_kernel_shape[i] - residual;
+        int64_t total_pad = residual == 0 ? checkedSubtract(effective_kernel_shape[i], stride)
+                                          : checkedSubtract(effective_kernel_shape[i], residual);
         total_pad = std::max<int64_t>(total_pad, 0);
         int64_t half_pad_small = total_pad >> 1;
-        int64_t half_pad_big = total_pad - half_pad_small;
+        int64_t half_pad_big = checkedSubtract(total_pad, half_pad_small);
         if (auto_pad_attr->s() == "SAME_UPPER") {
           pads[i] = half_pad_small;
           pads[i + input_dims_size] = half_pad_big;
@@ -263,8 +265,8 @@ static void convPoolShapeInference_opset19(
     }
     // how big is the input, including padding
     int64_t effective_input_size = input_shape.dim(2 + i).dim_value();
-    effective_input_size += pads[i];
-    effective_input_size += pads[i + kernel_shape_size];
+    effective_input_size = checkedAdd(effective_input_size, pads[i]);
+    effective_input_size = checkedAdd(effective_input_size, pads[i + kernel_shape_size]);
 
     // default is floor mode .i.e. ceil_mode is set to 0
     auto ceil_mode = getAttribute(ctx, "ceil_mode", 0);
@@ -273,15 +275,16 @@ static void convPoolShapeInference_opset19(
     // on the stride
     int64_t strided_kernel_positions = 0;
 
-    const int64_t stride_gap = effective_input_size - effective_kernel_shape[i];
+    const int64_t stride_gap = checkedSubtract(effective_input_size, effective_kernel_shape[i]);
     if (ceil_mode == 1)
       // exact ceil division; (a + b - 1) / b would be wrong for negative a
-      strided_kernel_positions = (stride_gap / strides[i]) + (stride_gap % strides[i] > 0 ? 1 : 0);
+      strided_kernel_positions = checkedAdd(
+          checkedDivide(stride_gap, strides[i]), (stride_gap % strides[i] > 0 ? 1 : 0));
     else
-      strided_kernel_positions = stride_gap / strides[i];
+      strided_kernel_positions = checkedDivide(stride_gap, strides[i]);
 
     // add in the initial position
-    newdim->set_dim_value(1 + strided_kernel_positions);
+    newdim->set_dim_value(checkedAdd(1, strided_kernel_positions));
   }
 
   if (ctx.getNumOutputs() > 1) {
@@ -524,10 +527,10 @@ static void maxUnpoolShapeInference_opset11(InferenceContext& ctx) {
       continue;
     }
 
-    int64_t newdim_value = strides[i] * (input_shape.dim(2 + i).dim_value() - 1);
-    newdim_value += kernel_shape[i];
-    newdim_value -= pads[i];
-    newdim_value -= pads[i + kernel_shape_size];
+    int64_t newdim_value = checkedMultiply(strides[i], checkedSubtract(input_shape.dim(2 + i).dim_value(), 1));
+    newdim_value = checkedAdd(newdim_value, kernel_shape[i]);
+    newdim_value = checkedSubtract(newdim_value, pads[i]);
+    newdim_value = checkedSubtract(newdim_value, pads[i + kernel_shape_size]);
 
     // add in the initial position
     newdim->set_dim_value(newdim_value);
@@ -699,7 +702,8 @@ static void convTransposeShapeInference_opset11(InferenceContext& ctx) {
   std::vector<int64_t> effective_kernel_shape = kernel_shape;
   for (size_t i = 0; i < kernel_shape.size(); i++) {
     // accounting for dilation, how big is the kernel in this dimension
-    effective_kernel_shape[i] = ((effective_kernel_shape[i] - 1) * dilations[i]) + 1;
+    effective_kernel_shape[i] =
+        checkedAdd(checkedMultiply(checkedSubtract(effective_kernel_shape[i], 1), dilations[i]), 1);
   }
 
   std::vector<int64_t> pads;
@@ -720,10 +724,10 @@ static void convTransposeShapeInference_opset11(InferenceContext& ctx) {
     if ((nullptr != auto_pad_attr) && (auto_pad_attr->s() != "VALID")) {
       int input_dims_size = static_cast<int>(n_input_dims);
       for (int i = 0; i < input_dims_size; ++i) {
-        int64_t total_pad = effective_kernel_shape[i] - strides[i];
+        int64_t total_pad = checkedSubtract(effective_kernel_shape[i], strides[i]);
         total_pad = std::max<int64_t>(total_pad, 0);
         int64_t half_pad_small = total_pad >> 1;
-        int64_t half_pad_big = total_pad - half_pad_small;
+        int64_t half_pad_big = checkedSubtract(total_pad, half_pad_small);
         if (auto_pad_attr->s() == "SAME_UPPER") {
           pads[i] = half_pad_small;
           pads[i + input_dims_size] = half_pad_big;
@@ -763,7 +767,8 @@ static void convTransposeShapeInference_opset11(InferenceContext& ctx) {
   auto* final_output_shape = ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
 
   *final_output_shape->add_dim() = input_shape.dim(0);
-  *final_output_shape->add_dim() = weight_shape.dim(1) * group; // channels should be the second dim of second input
+  *final_output_shape->add_dim() =
+      checkedMultiply(weight_shape.dim(1), group); // channels should be the second dim of second input
                                                                 // multiply group.
 
   int size_of_output = 0;
@@ -784,8 +789,12 @@ static void convTransposeShapeInference_opset11(InferenceContext& ctx) {
     size_of_output = input_shape.dim_size() - 2;
     for (int i = 0; i < size_of_output; ++i) {
       if (input_shape.dim(i + 2).has_dim_value()) {
-        int64_t output_shape_dim = (strides[i] * (input_shape.dim(i + 2).dim_value() - 1)) + output_padding[i] +
-            effective_kernel_shape[i] - pads[i] - pads[i + n_input_dims];
+        int64_t output_shape_dim =
+            checkedMultiply(strides[i], checkedSubtract(input_shape.dim(i + 2).dim_value(), 1));
+        output_shape_dim = checkedAdd(output_shape_dim, output_padding[i]);
+        output_shape_dim = checkedAdd(output_shape_dim, effective_kernel_shape[i]);
+        output_shape_dim = checkedSubtract(output_shape_dim, pads[i]);
+        output_shape_dim = checkedSubtract(output_shape_dim, pads[i + n_input_dims]);
         final_output_shape->add_dim()->set_dim_value(output_shape_dim);
       } else {
         final_output_shape->add_dim();
@@ -2040,7 +2049,8 @@ static void convPoolShapeInference_opset1_to_11(
   std::vector<int64_t> effective_kernel_shape = kernel_shape;
   for (size_t i = 0; i < kernel_shape.size(); i++) {
     // accounting for dilation, how big is the kernel in this dimension
-    effective_kernel_shape[i] = ((effective_kernel_shape[i] - 1) * dilations[i]) + 1;
+    effective_kernel_shape[i] =
+        checkedAdd(checkedMultiply(checkedSubtract(effective_kernel_shape[i], 1), dilations[i]), 1);
   }
 
   std::vector<int64_t> pads;
@@ -2069,10 +2079,11 @@ static void convPoolShapeInference_opset1_to_11(
           }
           residual %= stride;
         }
-        int64_t total_pad = residual == 0 ? effective_kernel_shape[i] - stride : effective_kernel_shape[i] - residual;
+        int64_t total_pad = residual == 0 ? checkedSubtract(effective_kernel_shape[i], stride)
+                                          : checkedSubtract(effective_kernel_shape[i], residual);
         total_pad = std::max<int64_t>(total_pad, 0);
         int64_t half_pad_small = total_pad >> 1;
-        int64_t half_pad_big = total_pad - half_pad_small;
+        int64_t half_pad_big = checkedSubtract(total_pad, half_pad_small);
         if (auto_pad_attr->s() == "SAME_UPPER") {
           pads[i] = half_pad_small;
           pads[i + input_dims_size] = half_pad_big;
@@ -2107,8 +2118,8 @@ static void convPoolShapeInference_opset1_to_11(
     }
     // how big is the input, including padding
     int64_t effective_input_size = input_shape.dim(2 + i).dim_value();
-    effective_input_size += pads[i];
-    effective_input_size += pads[i + kernel_shape_size];
+    effective_input_size = checkedAdd(effective_input_size, pads[i]);
+    effective_input_size = checkedAdd(effective_input_size, pads[i + kernel_shape_size]);
 
     // default is floor mode .i.e. ceil_mode is set to 0
     auto ceil_mode = getAttribute(ctx, "ceil_mode", 0);
@@ -2117,15 +2128,16 @@ static void convPoolShapeInference_opset1_to_11(
     // on the stride
     int64_t strided_kernel_positions = 0;
 
-    const int64_t stride_gap = effective_input_size - effective_kernel_shape[i];
+    const int64_t stride_gap = checkedSubtract(effective_input_size, effective_kernel_shape[i]);
     if (ceil_mode == 1)
       // exact ceil division; (a + b - 1) / b would be wrong for negative a
-      strided_kernel_positions = (stride_gap / strides[i]) + (stride_gap % strides[i] > 0 ? 1 : 0);
+      strided_kernel_positions = checkedAdd(
+          checkedDivide(stride_gap, strides[i]), (stride_gap % strides[i] > 0 ? 1 : 0));
     else
-      strided_kernel_positions = stride_gap / strides[i];
+      strided_kernel_positions = checkedDivide(stride_gap, strides[i]);
 
     // add in the initial position
-    newdim->set_dim_value(1 + strided_kernel_positions);
+    newdim->set_dim_value(checkedAdd(1, strided_kernel_positions));
   }
 
   if (ctx.getNumOutputs() > 1) {
@@ -2668,10 +2680,10 @@ static void maxUnpoolShapeInference_opset9(InferenceContext& ctx) {
       continue;
     }
 
-    int64_t newdim_value = strides[i] * (input_shape.dim(2 + i).dim_value() - 1);
-    newdim_value += kernel_shape[i];
-    newdim_value -= pads[i];
-    newdim_value -= pads[i + kernel_shape_size];
+    int64_t newdim_value = checkedMultiply(strides[i], checkedSubtract(input_shape.dim(2 + i).dim_value(), 1));
+    newdim_value = checkedAdd(newdim_value, kernel_shape[i]);
+    newdim_value = checkedSubtract(newdim_value, pads[i]);
+    newdim_value = checkedSubtract(newdim_value, pads[i + kernel_shape_size]);
 
     // add in the initial position
     newdim->set_dim_value(newdim_value);
@@ -3063,7 +3075,8 @@ static void convTransposeShapeInference_opset1(InferenceContext& ctx) {
   std::vector<int64_t> effective_kernel_shape = kernel_shape;
   for (size_t i = 0; i < kernel_shape.size(); i++) {
     // accounting for dilation, how big is the kernel in this dimension
-    effective_kernel_shape[i] = ((effective_kernel_shape[i] - 1) * dilations[i]) + 1;
+    effective_kernel_shape[i] =
+        checkedAdd(checkedMultiply(checkedSubtract(effective_kernel_shape[i], 1), dilations[i]), 1);
   }
 
   std::vector<int64_t> pads;
@@ -3080,10 +3093,10 @@ static void convTransposeShapeInference_opset1(InferenceContext& ctx) {
     if ((nullptr != auto_pad_attr) && (auto_pad_attr->s() != "VALID")) {
       int input_dims_size = static_cast<int>(n_input_dims);
       for (int i = 0; i < input_dims_size; ++i) {
-        int64_t total_pad = effective_kernel_shape[i] - strides[i];
+        int64_t total_pad = checkedSubtract(effective_kernel_shape[i], strides[i]);
         total_pad = std::max<int64_t>(total_pad, 0);
         int64_t half_pad_small = total_pad >> 1;
-        int64_t half_pad_big = total_pad - half_pad_small;
+        int64_t half_pad_big = checkedSubtract(total_pad, half_pad_small);
         if (auto_pad_attr->s() == "SAME_UPPER") {
           pads[i] = half_pad_small;
           pads[i + input_dims_size] = half_pad_big;
@@ -3123,7 +3136,8 @@ static void convTransposeShapeInference_opset1(InferenceContext& ctx) {
   auto* final_output_shape = ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
 
   *final_output_shape->add_dim() = input_shape.dim(0);
-  *final_output_shape->add_dim() = weight_shape.dim(1) * group; // channels should be the second dim of second input
+  *final_output_shape->add_dim() =
+      checkedMultiply(weight_shape.dim(1), group); // channels should be the second dim of second input
                                                                 // multiply group.
 
   int size_of_output = 0;
@@ -3144,8 +3158,12 @@ static void convTransposeShapeInference_opset1(InferenceContext& ctx) {
     size_of_output = input_shape.dim_size() - 2;
     for (int i = 0; i < size_of_output; ++i) {
       if (input_shape.dim(i + 2).has_dim_value()) {
-        int64_t output_shape_dim = (strides[i] * (input_shape.dim(i + 2).dim_value() - 1)) + output_padding[i] +
-            effective_kernel_shape[i] - pads[i] - pads[i + n_input_dims];
+        int64_t output_shape_dim =
+            checkedMultiply(strides[i], checkedSubtract(input_shape.dim(i + 2).dim_value(), 1));
+        output_shape_dim = checkedAdd(output_shape_dim, output_padding[i]);
+        output_shape_dim = checkedAdd(output_shape_dim, effective_kernel_shape[i]);
+        output_shape_dim = checkedSubtract(output_shape_dim, pads[i]);
+        output_shape_dim = checkedSubtract(output_shape_dim, pads[i + n_input_dims]);
         final_output_shape->add_dim()->set_dim_value(output_shape_dim);
       } else {
         final_output_shape->add_dim();

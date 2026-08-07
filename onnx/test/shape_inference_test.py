@@ -8234,6 +8234,24 @@ class TestShapeInference(TestShapeInferenceHelper):
             graph, [make_tensor_value_info("output", TensorProto.FLOAT, (2,))]
         )
 
+    def test_range_output_size_overflow(self) -> None:
+        graph = self._make_graph(
+            [
+                ("start", TensorProto.INT64, ()),
+                ("limit", TensorProto.INT64, ()),
+                ("delta", TensorProto.INT64, ()),
+            ],
+            [make_node("Range", ["start", "limit", "delta"], ["output"])],
+            [],
+            initializer=[
+                make_tensor("start", TensorProto.INT64, (), (-(1 << 63),)),
+                make_tensor("limit", TensorProto.INT64, (), ((1 << 63) - 1,)),
+                make_tensor("delta", TensorProto.INT64, (), (1,)),
+            ],
+        )
+        with pytest.raises(onnx.shape_inference.InferenceError, match="exceeds int64"):
+            self._inferred(graph)
+
     def test_range_initializer_invalid(self) -> None:
         # Create a TensorProto with incorrect data type for `delta`.
         # This should lead to an error when ParseData is called during shape inferencing
@@ -13391,3 +13409,61 @@ class TestCustomSchemaShapeInference(TestShapeInferenceHelper):
             assert [d.dim_value for d in sym.dim] == [2, 3]
         finally:
             onnx.defs.deregister_schema(op_type, 1, domain)
+
+    @pytest.mark.parametrize("op_type", ["SpaceToDepth", "DepthToSpace"])
+    def test_space_depth_block_area_overflow(self, op_type: str) -> None:
+        graph = self._make_graph(
+            [("x", TensorProto.FLOAT, (1, 1, 1, 1))],
+            [make_node(op_type, ["x"], ["y"], blocksize=1 << 32)],
+            [],
+        )
+        with pytest.raises(onnx.shape_inference.InferenceError, match="overflow"):
+            self._inferred(graph)
+
+    @pytest.mark.parametrize("version", all_versions_for("Tile"))
+    def test_tile_dimension_overflow(self, version: int) -> None:
+        int64_max = (1 << 63) - 1
+        graph = self._make_graph(
+            [("x", TensorProto.FLOAT, (2,)), ("repeats", TensorProto.INT64, (1,))],
+            [make_node("Tile", ["x", "repeats"], ["y"])],
+            [],
+            initializer=[make_tensor("repeats", TensorProto.INT64, (1,), (int64_max,))],
+        )
+        with pytest.raises(onnx.shape_inference.InferenceError, match="overflow"):
+            self._inferred(
+                graph, opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)]
+            )
+
+    @pytest.mark.parametrize("version", all_versions_for("Conv"))
+    def test_conv_effective_kernel_overflow(self, version: int) -> None:
+        int64_max = (1 << 63) - 1
+        graph = self._make_graph(
+            [("x", TensorProto.FLOAT, (1, 1, 5)), ("w", TensorProto.FLOAT, (1, 1, 2))],
+            [make_node("Conv", ["x", "w"], ["y"], dilations=[int64_max])],
+            [],
+        )
+        with pytest.raises(onnx.shape_inference.InferenceError, match="overflow"):
+            self._inferred(
+                graph, opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)]
+            )
+
+    @pytest.mark.parametrize("version", all_versions_for("Col2Im"))
+    def test_col2im_block_shape_overflow(self, version: int) -> None:
+        int64_max = (1 << 63) - 1
+        graph = self._make_graph(
+            [
+                ("input", TensorProto.FLOAT, (1, 1, 1)),
+                ("output_shape", TensorProto.INT64, (2,)),
+                ("kernel_shape", TensorProto.INT64, (2,)),
+            ],
+            [make_node("Col2Im", ["input", "output_shape", "kernel_shape"], ["output"])],
+            [],
+            initializer=[
+                make_tensor("output_shape", TensorProto.INT64, (2,), (1, 1)),
+                make_tensor("kernel_shape", TensorProto.INT64, (2,), (int64_max, 2)),
+            ],
+        )
+        with pytest.raises(onnx.shape_inference.InferenceError, match="overflow"):
+            self._inferred(
+                graph, opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)]
+            )

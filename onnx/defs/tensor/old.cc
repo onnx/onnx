@@ -4482,6 +4482,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           if (blocksize <= 0) {
             fail_shape_inference("Blocksize must be positive");
           }
+          const auto block_area = checkedMultiply(blocksize, blocksize);
           if (hasInputShape(ctx, 0)) {
             auto& input_shape = getInputShape(ctx, 0);
             if (input_shape.dim_size() == 4) {
@@ -4489,7 +4490,7 @@ ONNX_OPERATOR_SET_SCHEMA(
                   ctx,
                   0,
                   {input_shape.dim(0),
-                   input_shape.dim(1) * (blocksize * blocksize),
+                   input_shape.dim(1) * block_area,
                    input_shape.dim(2) / blocksize,
                    input_shape.dim(3) / blocksize});
             } else {
@@ -4553,6 +4554,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           if (blocksize <= 0) {
             fail_shape_inference("Blocksize must be positive");
           }
+          const auto block_area = checkedMultiply(blocksize, blocksize);
           if (hasInputShape(ctx, 0)) {
             auto& input_shape = getInputShape(ctx, 0);
             if (input_shape.dim_size() == 4) {
@@ -4560,7 +4562,7 @@ ONNX_OPERATOR_SET_SCHEMA(
                   ctx,
                   0,
                   {input_shape.dim(0),
-                   input_shape.dim(1) / (blocksize * blocksize),
+                   input_shape.dim(1) / block_area,
                    input_shape.dim(2) * blocksize,
                    input_shape.dim(3) * blocksize});
             } else {
@@ -4623,10 +4625,13 @@ ONNX_OPERATOR_SET_SCHEMA(
             }
 
             for (int i = 0; i < input_rank; ++i) {
+              if (repeats_data[i] < 0) {
+                fail_shape_inference("'Repeats' input must not contain negative values");
+              }
               const auto& input_dim = input_shape.dim(i);
               auto output_dim = output_shape->add_dim();
               if (input_dim.has_dim_value()) {
-                output_dim->set_dim_value(input_dim.dim_value() * repeats_data[i]);
+                output_dim->set_dim_value(checkedMultiply(input_dim.dim_value(), repeats_data[i]));
               }
             }
           } else {
@@ -5324,7 +5329,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             return;
           }
 
-          const auto last_index_dimension = indices_shape.dim(indices_rank - 1).dim_value() + batch_dims_data;
+          const auto last_index_dimension =
+              checkedAdd(indices_shape.dim(indices_rank - 1).dim_value(), batch_dims_data);
 
           if (last_index_dimension > data_rank) {
             fail_shape_inference(
@@ -5508,7 +5514,8 @@ ONNX_OPERATOR_SET_SCHEMA(
               const auto& input_dim = input_shape.dim(i);
               auto output_dim = output_shape->add_dim();
               if (input_dim.has_dim_value()) {
-                output_dim->set_dim_value(input_dim.dim_value() + pads_data[i] + pads_data[i + input_rank]);
+                output_dim->set_dim_value(
+                    checkedAdd(checkedAdd(input_dim.dim_value(), pads_data[i]), pads_data[i + input_rank]));
               } else if (pads_data[i] + pads_data[i + input_rank] == 0) {
                 *output_dim = input_dim;
               }
@@ -6389,6 +6396,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           if (blocksize <= 0) {
             fail_shape_inference("Blocksize must be positive");
           }
+          const auto block_area = checkedMultiply(blocksize, blocksize);
           if (hasInputShape(ctx, 0)) {
             auto& input_shape = getInputShape(ctx, 0);
             if (input_shape.dim_size() == 4) {
@@ -6396,7 +6404,7 @@ ONNX_OPERATOR_SET_SCHEMA(
                   ctx,
                   0,
                   {input_shape.dim(0),
-                   input_shape.dim(1) / (blocksize * blocksize),
+                   input_shape.dim(1) / block_area,
                    input_shape.dim(2) * blocksize,
                    input_shape.dim(3) * blocksize});
             } else {
@@ -6839,8 +6847,9 @@ ONNX_OPERATOR_SET_SCHEMA(
             auto newdim = ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape()->add_dim();
             if (ctx.getInputType(0)->tensor_type().shape().dim(i).has_dim_value()) {
               newdim->set_dim_value(
-                  ctx.getInputType(0)->tensor_type().shape().dim(i).dim_value() + pads[i] +
-                  pads[input_shape.dim_size() + i]);
+                  checkedAdd(
+                      checkedAdd(ctx.getInputType(0)->tensor_type().shape().dim(i).dim_value(), pads[i]),
+                      pads[input_shape.dim_size() + i]));
             } else if (pads[i] + pads[input_shape.dim_size() + i] == 0) {
               *newdim = input_shape.dim(i);
             }
@@ -7189,7 +7198,8 @@ ONNX_OPERATOR_SET_SCHEMA(
               const auto& input_dim = input_shape.dim(i);
               auto output_dim = output_shape->add_dim();
               if (input_dim.has_dim_value()) {
-                output_dim->set_dim_value(input_dim.dim_value() + pads_data[i] + pads_data[i + input_rank]);
+                output_dim->set_dim_value(
+                    checkedAdd(checkedAdd(input_dim.dim_value(), pads_data[i]), pads_data[i + input_rank]));
               } else if (pads_data[i] + pads_data[i + input_rank] == 0) {
                 *output_dim = input_dim;
               }

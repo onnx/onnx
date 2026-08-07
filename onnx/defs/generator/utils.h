@@ -6,6 +6,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <limits>
 
 #include "onnx/defs/schema.h"
 #include "onnx/defs/tensor_proto_util.h"
@@ -24,11 +25,22 @@ int64_t compute_output_dim_for_range(const TensorProto* start, const TensorProto
   const auto limit_data = ParseData<T>(limit);
   const auto delta_data = ParseData<T>(delta);
 
-  int64_t n = static_cast<int64_t>(ceil((1.0 * (limit_data[0] - start_data[0])) / delta_data[0]));
+  const long double start_value = static_cast<long double>(start_data[0]);
+  const long double limit_value = static_cast<long double>(limit_data[0]);
+  const long double delta_value = static_cast<long double>(delta_data[0]);
+  if (delta_value == 0 || !std::isfinite(start_value) || !std::isfinite(limit_value) ||
+      !std::isfinite(delta_value)) {
+    fail_shape_inference("Inputs to 'Range' must be finite and delta must be non-zero");
+  }
 
-  n = std::max<int64_t>(n, 0);
-
-  return n;
+  const long double count = std::ceil((limit_value - start_value) / delta_value);
+  if (count <= 0) {
+    return 0;
+  }
+  if (count > static_cast<long double>(std::numeric_limits<int64_t>::max())) {
+    fail_shape_inference("'Range' output size exceeds int64 limits");
+  }
+  return static_cast<int64_t>(count);
 }
 
 } // namespace ONNX_NAMESPACE
