@@ -34,10 +34,8 @@ std::string GetValueCaseString(const TypeProto& type) {
       return "map_type";
     case TypeProto::ValueCase::kOptionalType:
       return "optional_type";
-#ifdef ONNX_ML
     case TypeProto::ValueCase::kOpaqueType:
       return "opaque_type";
-#endif
     case TypeProto::ValueCase::kSparseTensorType:
       return "sparse_tensor_type";
     case TypeProto::ValueCase::VALUE_NOT_SET:
