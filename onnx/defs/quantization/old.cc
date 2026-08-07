@@ -667,7 +667,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Constrain 'y_zero_point' and 'y' to 8-bit integer/float tensor.")
         .SetDoc(QuantizeLinear_ver19_doc)
         .TypeAndShapeInferenceFunction([](ONNX_NAMESPACE::InferenceContext& ctx) {
-          if (ctx.hasInput(2)) {
+          if (ctx.hasInput(2) && ctx.getInputType(2) != nullptr) {
             propagateElemTypeFromInputToOutput(ctx, 2, 0);
           } else {
             updateOutputElemType(ctx, 0, TensorProto::UINT8);
@@ -774,7 +774,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint("T2", {types::Int8, types::UInt8}, "Constrain 'y_zero_point' and 'y' to 8-bit integer tensor.")
         .SetDoc(QuantizeLinear_ver13_doc)
         .TypeAndShapeInferenceFunction([](ONNX_NAMESPACE::InferenceContext& ctx) {
-          if (ctx.hasInput(2)) {
+          if (ctx.hasInput(2) && ctx.getInputType(2) != nullptr) {
             propagateElemTypeFromInputToOutput(ctx, 2, 0);
           } else {
             updateOutputElemType(ctx, 0, TensorProto::UINT8);
@@ -863,7 +863,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint("T2", {types::Int8, types::UInt8}, "Constrain 'y_zero_point' and 'y' to 8-bit integer tensor.")
         .SetDoc(QuantizeLinear_ver10_doc)
         .TypeAndShapeInferenceFunction([](ONNX_NAMESPACE::InferenceContext& ctx) {
-          if (ctx.hasInput(2)) {
+          if (ctx.hasInput(2) && ctx.getInputType(2) != nullptr) {
             propagateElemTypeFromInputToOutput(ctx, 2, 0);
           } else {
             updateOutputElemType(ctx, 0, TensorProto::UINT8);
