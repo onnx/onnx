@@ -3813,8 +3813,7 @@ ONNX_OPERATOR_SET_SCHEMA(
                   .Add("WinGe0 = GreaterOrEqual(WinDiff, WinZeroNoDim)")
                   .Add("WinLtW = Less(WinDiff, WindowSizeNoDim)")
                   .Add("WinOk = And(WinGe0, WinLtW)")
-                  .Add("WinMask = Where(WinOk, ScalarZero, FloatNegInf)");
-              builder.Add("AttnBiasCausalWindow = Add(AttnBiasCausalOrNot, WinMask)");
+                  .Add("WinMaskFloat = Where(WinOk, ScalarZero, FloatNegInf)");
             } else {
               // Internal cache (scalar PastKVSeqLen) or no cache: 2D mask [Sq, Skv]
               builder
@@ -3825,9 +3824,10 @@ ONNX_OPERATOR_SET_SCHEMA(
                   .Add("WinGe0 = GreaterOrEqual(WinDiff, WinZeroNoDim)")
                   .Add("WinLtW = Less(WinDiff, WindowSizeNoDim)")
                   .Add("WinOk = And(WinGe0, WinLtW)")
-                  .Add("WinMask = Where(WinOk, ScalarZero, FloatNegInf)")
-                  .Add("AttnBiasCausalWindow = Add(AttnBiasCausalOrNot, WinMask)");
+                  .Add("WinMaskFloat = Where(WinOk, ScalarZero, FloatNegInf)");
             }
+            builder.Add("WinMask = CastLike(WinMaskFloat, AttnBiasCausalOrNot)")
+                .Add("AttnBiasCausalWindow = Add(AttnBiasCausalOrNot, WinMask)");
           } else {
             builder.Add("AttnBiasCausalWindow = Identity(AttnBiasCausalOrNot)");
           }
@@ -3843,7 +3843,8 @@ ONNX_OPERATOR_SET_SCHEMA(
                 .Add("PaddingMaskBool = Less(Range, KVSeqLenExpanded)") // [batch_size, KVSeqLen]
                 .Add("PaddingMaskFloat = Where(PaddingMaskBool, ScalarZero, FloatNegInf)") // [batch_size, KVSeqLen]
                 .Add("PaddingMask3D = Unsqueeze(PaddingMaskFloat, One1D)") // [batch_size, 1, KVSeqLen]
-                .Add("PaddingMask4D = Unsqueeze(PaddingMask3D, One1D)") // [batch_size, 1, 1, KVSeqLen]
+                .Add("PaddingMask4DFloat = Unsqueeze(PaddingMask3D, One1D)") // [batch_size, 1, 1, KVSeqLen]
+                .Add("PaddingMask4D = CastLike(PaddingMask4DFloat, AttnBiasCausalWindow)")
                 .Add("AttnBiasCausalPad = Add(AttnBiasCausalWindow, PaddingMask4D)");
           } else {
             builder.Add("AttnBiasCausalPad = Identity(AttnBiasCausalWindow)");
