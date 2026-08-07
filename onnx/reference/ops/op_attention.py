@@ -8,6 +8,11 @@ import numpy as np
 import onnx
 from onnx.reference.op_run import OpRun
 
+_INPUT_RANK_3D = 3
+_INPUT_RANK_4D = 4
+_QK_MATMUL_OUTPUT_WITH_BIAS = 2
+_QK_MATMUL_OUTPUT_AFTER_SOFTMAX = 3
+
 
 def _softmax(x: np.ndarray, axis: int = -1) -> np.ndarray:
     x_max = np.max(x, axis=axis, keepdims=True)
@@ -131,13 +136,10 @@ def _compute_attention(  # noqa: PLR0913, PLR0917
         )
     if local_window_size is not None and local_window_size > 0 and not is_causal:
         raise ValueError("local_window_size requires is_causal=1")
-    if local_window_size is not None and local_window_size > 0:
-        if (past_key is None) != (past_value is None):
-            raise ValueError("past_key and past_value must be provided together")
-        if nonpad_kv_seqlen is not None and past_key is not None:
-            raise ValueError(
-                "nonpad_kv_seqlen cannot be combined with past cache tensors"
-            )
+    if (past_key is None) != (past_value is None):
+        raise ValueError("past_key and past_value must be provided together")
+    if nonpad_kv_seqlen is not None and past_key is not None:
+        raise ValueError("nonpad_kv_seqlen cannot be combined with past cache tensors")
     assert len(Q.shape) == len(K.shape) == len(V.shape)
     # Set input tensors (Q, K, V) to the correct shape if input shape is 3D
     # NewShapeQ (batch_size, q_num_heads, q_sequence_length, head_size)
@@ -145,7 +147,7 @@ def _compute_attention(  # noqa: PLR0913, PLR0917
     # NewShapeV (value) has shape (batch_size, kv_num_heads, kv_sequence_length, v_head_size)
     input_shape_len = len(Q.shape)
     batch_size = Q.shape[0]
-    if len(Q.shape) == 3:
+    if len(Q.shape) == _INPUT_RANK_3D:
         hidden_size_q = Q.shape[2]
         hidden_size_k = K.shape[2]
         hidden_size_v = V.shape[2]
@@ -171,7 +173,11 @@ def _compute_attention(  # noqa: PLR0913, PLR0917
         V = np.reshape(V, intermediate_shape_v)
         # Then transpose to [batch_size, kv_num_heads, kv_sequence_length, head_size]
         V = np.transpose(V, (0, 2, 1, 3))
-    assert len(Q.shape) == 4 and len(K.shape) == 4 and len(V.shape) == 4
+    assert (
+        len(Q.shape) == _INPUT_RANK_4D
+        and len(K.shape) == _INPUT_RANK_4D
+        and len(V.shape) == _INPUT_RANK_4D
+    )
 
     # Calculate Scaling Factor if not provided
     if scale is None:
@@ -321,7 +327,7 @@ def _compute_attention(  # noqa: PLR0913, PLR0917
     qk_with_bias = qk_matmul_output + attn_bias
     if qk_matmul_output_mode == 1 and softcap is not None:
         pass  # qk_matmul_output already holds the softcapped-only value
-    elif qk_matmul_output_mode == 2:
+    elif qk_matmul_output_mode == _QK_MATMUL_OUTPUT_WITH_BIAS:
         qk_matmul_output = qk_with_bias.copy()
 
     if softmax_precision is not None:
@@ -347,7 +353,7 @@ def _compute_attention(  # noqa: PLR0913, PLR0917
     )  # (..., q, 1)
     qk_softmax = np.where(row_all_masked, 0, qk_softmax)
 
-    if qk_matmul_output_mode == 3:
+    if qk_matmul_output_mode == _QK_MATMUL_OUTPUT_AFTER_SOFTMAX:
         # Mode 3 exposes the post-softmax probabilities; a fully-masked row is
         # zeroed by the guard above, consistent with the primary output Y (both
         # are 0). This matches the function body (Identity of the guarded softmax),
@@ -356,7 +362,7 @@ def _compute_attention(  # noqa: PLR0913, PLR0917
     qk_matmul_output = qk_matmul_output.astype(Q.dtype)
 
     output = np.matmul(qk_softmax, V).astype(Q.dtype)
-    if input_shape_len == 3:
+    if input_shape_len == _INPUT_RANK_3D:
         output = np.transpose(output, (0, 2, 1, 3))
         output = np.reshape(output, (output.shape[0], output.shape[1], -1))
     return output, present_key, present_value, qk_matmul_output

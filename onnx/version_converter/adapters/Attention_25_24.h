@@ -6,7 +6,6 @@
 
 #pragma once
 
-#include <cinttypes>
 #include <cstdint>
 #include <memory>
 
@@ -28,11 +27,11 @@ class Attention_25_24 final : public Adapter {
         ONNX_ASSERTM(
             false,
             "Attention 25->24 downgrade: local_window_size must be -1 (disabled) "
-            "for conversion to opset 24, got %" PRId64
+            "for conversion to opset 24, got ",
+            val,
             ". "
             "Sliding window attention (local_window_size > 0) is not representable "
-            "in opset 24.",
-            val);
+            "in opset 24.");
       }
       node->removeAttribute(klocal_window_size);
     }
