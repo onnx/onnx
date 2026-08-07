@@ -8294,6 +8294,53 @@ class TestShapeInference(TestShapeInferenceHelper):
             graph, [make_tensor_value_info("output", TensorProto.INT64, (2,))]
         )
 
+    def test_range_floating_difference_overflow(self) -> None:
+        max_double = float(np.finfo(np.float64).max)
+        graph = self._make_graph(
+            [
+                ("start", TensorProto.DOUBLE, ()),
+                ("limit", TensorProto.DOUBLE, ()),
+                ("delta", TensorProto.DOUBLE, ()),
+            ],
+            [make_node("Range", ["start", "limit", "delta"], ["output"])],
+            [],
+            initializer=[
+                make_tensor("start", TensorProto.DOUBLE, (), (-max_double,)),
+                make_tensor("limit", TensorProto.DOUBLE, (), (max_double,)),
+                make_tensor("delta", TensorProto.DOUBLE, (), (max_double,)),
+            ],
+        )
+        self._assert_inferred(
+            graph, [make_tensor_value_info("output", TensorProto.DOUBLE, (2,))]
+        )
+
+    def test_range_floating_difference_overflow_preserves_precision(self) -> None:
+        start = -float.fromhex("0x1.0741c7ce42c82p+1023")
+        limit = float.fromhex("0x1.1807235bf992dp+1023")
+        delta = float.fromhex("0x1p+965")
+        graph = self._make_graph(
+            [
+                ("start", TensorProto.DOUBLE, ()),
+                ("limit", TensorProto.DOUBLE, ()),
+                ("delta", TensorProto.DOUBLE, ()),
+            ],
+            [make_node("Range", ["start", "limit", "delta"], ["output"])],
+            [],
+            initializer=[
+                make_tensor("start", TensorProto.DOUBLE, (), (start,)),
+                make_tensor("limit", TensorProto.DOUBLE, (), (limit,)),
+                make_tensor("delta", TensorProto.DOUBLE, (), (delta,)),
+            ],
+        )
+        self._assert_inferred(
+            graph,
+            [
+                make_tensor_value_info(
+                    "output", TensorProto.DOUBLE, (611684348867996608,)
+                )
+            ],
+        )
+
     def test_range_initializer_invalid(self) -> None:
         # Create a TensorProto with incorrect data type for `delta`.
         # This should lead to an error when ParseData is called during shape inferencing

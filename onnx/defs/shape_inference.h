@@ -211,7 +211,7 @@ getAttribute(const InferenceContext& ctx, const std::string& attributeName, cons
 }
 
 inline int64_t checkedMultiply(int64_t lhs, int64_t rhs) {
-  int64_t result;
+  int64_t result = 0;
   if (checked_mul_overflow(lhs, rhs, &result)) {
     fail_shape_inference("Integer overflow while multiplying dimension values ", lhs, " and ", rhs);
   }
@@ -219,7 +219,7 @@ inline int64_t checkedMultiply(int64_t lhs, int64_t rhs) {
 }
 
 inline int64_t checkedAdd(int64_t lhs, int64_t rhs) {
-  int64_t result;
+  int64_t result = 0;
   if (checked_add_overflow(lhs, rhs, &result)) {
     fail_shape_inference("Integer overflow while adding dimension values ", lhs, " and ", rhs);
   }
@@ -227,7 +227,7 @@ inline int64_t checkedAdd(int64_t lhs, int64_t rhs) {
 }
 
 inline int64_t checkedSubtract(int64_t lhs, int64_t rhs) {
-  int64_t result;
+  int64_t result = 0;
   if (checked_sub_overflow(lhs, rhs, &result)) {
     fail_shape_inference("Integer overflow while subtracting dimension values ", rhs, " from ", lhs);
   }
