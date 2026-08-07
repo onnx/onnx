@@ -504,7 +504,6 @@ ONNX_PREVIEW_OPERATOR_SET_SCHEMA(
             OPTIONAL_VALUE)
         .TypeConstraint("T1", OpSchema::all_float_types_ir4(), "Constrain Q, K, V to float tensors.")
         .TypeAndShapeInferenceFunction(FlexAttentionShapeInference)
-        .SetSupportLevel(OpSchema::SupportType::EXPERIMENTAL)
         .SetNodeDeterminism(OpSchema::NodeDeterminism::Deterministic)
         .SetContextDependentFunctionBodyBuilder(BuildFlexAttentionFunctionBody));
 
