@@ -12139,15 +12139,15 @@ This version of the operator has been available since version 11 of the default 
         [4.5, 5.7],
     ]
 
-    pads = [0, 2, 0, 0]
+    pads = [0, 1, 0, 1]
 
     mode = 'reflect'
 
     output =
     [
-        [1.0, 1.2, 1.0, 1.2],
-        [2.3, 3.4, 2.3, 3.4],
-        [4.5, 5.7, 4.5, 5.7],
+        [1.2, 1.0, 1.2, 1.0],
+        [3.4, 2.3, 3.4, 2.3],
+        [5.7, 4.5, 5.7, 4.5],
     ]
 
 
@@ -17091,15 +17091,15 @@ This version of the operator has been available since version 13 of the default 
         [4.5, 5.7],
     ]
 
-    pads = [0, 2, 0, 0]
+    pads = [0, 1, 0, 1]
 
     mode = 'reflect'
 
     output =
     [
-        [1.0, 1.2, 1.0, 1.2],
-        [2.3, 3.4, 2.3, 3.4],
-        [4.5, 5.7, 4.5, 5.7],
+        [1.2, 1.0, 1.2, 1.0],
+        [3.4, 2.3, 3.4, 2.3],
+        [5.7, 4.5, 5.7, 4.5],
     ]
 
 
@@ -21778,14 +21778,14 @@ This version of the operator has been available since version 18 of the default 
       [4.5, 5.7],
   ]
 
-  pads = [0, 2, 0, 0]
+  pads = [0, 1, 0, 1]
 
   mode = 'reflect'
 
   output = [
-      [1.0, 1.2, 1.0, 1.2],
-      [2.3, 3.4, 2.3, 3.4],
-      [4.5, 5.7, 4.5, 5.7],
+      [1.2, 1.0, 1.2, 1.0],
+      [3.4, 2.3, 3.4, 2.3],
+      [5.7, 4.5, 5.7, 4.5],
   ]
   ```
 
@@ -23347,14 +23347,14 @@ This version of the operator has been available since version 19 of the default 
       [4.5, 5.7],
   ]
 
-  pads = [0, 2, 0, 0]
+  pads = [0, 1, 0, 1]
 
   mode = 'reflect'
 
   output = [
-      [1.0, 1.2, 1.0, 1.2],
-      [2.3, 3.4, 2.3, 3.4],
-      [4.5, 5.7, 4.5, 5.7],
+      [1.2, 1.0, 1.2, 1.0],
+      [3.4, 2.3, 3.4, 2.3],
+      [5.7, 4.5, 5.7, 4.5],
   ]
   ```
 
@@ -25249,14 +25249,14 @@ This version of the operator has been available since version 21 of the default 
       [4.5, 5.7],
   ]
 
-  pads = [0, 2, 0, 0]
+  pads = [0, 1, 0, 1]
 
   mode = 'reflect'
 
   output = [
-      [1.0, 1.2, 1.0, 1.2],
-      [2.3, 3.4, 2.3, 3.4],
-      [4.5, 5.7, 4.5, 5.7],
+      [1.2, 1.0, 1.2, 1.0],
+      [3.4, 2.3, 3.4, 2.3],
+      [5.7, 4.5, 5.7, 4.5],
   ]
   ```
 
@@ -29010,14 +29010,14 @@ This version of the operator has been available since version 23 of the default 
       [4.5, 5.7],
   ]
 
-  pads = [0, 2, 0, 0]
+  pads = [0, 1, 0, 1]
 
   mode = 'reflect'
 
   output = [
-      [1.0, 1.2, 1.0, 1.2],
-      [2.3, 3.4, 2.3, 3.4],
-      [4.5, 5.7, 4.5, 5.7],
+      [1.2, 1.0, 1.2, 1.0],
+      [3.4, 2.3, 3.4, 2.3],
+      [5.7, 4.5, 5.7, 4.5],
   ]
   ```
 
@@ -30659,14 +30659,14 @@ This version of the operator has been available since version 24 of the default 
       [4.5, 5.7],
   ]
 
-  pads = [0, 2, 0, 0]
+  pads = [0, 1, 0, 1]
 
   mode = 'reflect'
 
   output = [
-      [1.0, 1.2, 1.0, 1.2],
-      [2.3, 3.4, 2.3, 3.4],
-      [4.5, 5.7, 4.5, 5.7],
+      [1.2, 1.0, 1.2, 1.0],
+      [3.4, 2.3, 3.4, 2.3],
+      [5.7, 4.5, 5.7, 4.5],
   ]
   ```
 
@@ -32145,14 +32145,14 @@ This version of the operator has been available since version 25 of the default 
       [4.5, 5.7],
   ]
 
-  pads = [0, 2, 0, 0]
+  pads = [0, 1, 0, 1]
 
   mode = 'reflect'
 
   output = [
-      [1.0, 1.2, 1.0, 1.2],
-      [2.3, 3.4, 2.3, 3.4],
-      [4.5, 5.7, 4.5, 5.7],
+      [1.2, 1.0, 1.2, 1.0],
+      [3.4, 2.3, 3.4, 2.3],
+      [5.7, 4.5, 5.7, 4.5],
   ]
   ```
 
