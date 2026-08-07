@@ -109,7 +109,7 @@ def _apply_sliding_window(base, local_window_size, offset):
     return base + window
 
 
-def _compute_attention(  # noqa: PLR0913, PLR0917
+def _compute_attention(
     Q: np.ndarray,
     K: np.ndarray,
     V: np.ndarray,
@@ -369,7 +369,7 @@ def _compute_attention(  # noqa: PLR0913, PLR0917
 
 
 class Attention(OpRun):
-    def _run(  # noqa: PLR0913, PLR0917
+    def _run(
         self,
         Q: np.ndarray,
         K: np.ndarray,
