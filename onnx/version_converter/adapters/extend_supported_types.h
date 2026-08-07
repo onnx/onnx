@@ -37,7 +37,15 @@ struct ExtendSupportedTypes final : public Adapter {
   void adapt_type_extension(const std::shared_ptr<Graph>& graph, Node* node) const {
     const ArrayRef<Value*>& inputs = node->inputs();
     const ArrayRef<Value*>& outputs = node->outputs();
-    const std::string original_output_name = node->output()->uniqueName();
+
+    ONNX_ASSERTM(
+        outputs.size() == 1,
+        name(),
+        " in opset 9 must have exactly one output, but found ",
+        outputs.size(),
+        ".")
+
+    const std::string original_output_name = outputs[0]->uniqueName();
 
     const int input_type = !inputs.empty() ? inputs[0]->elemType() : -1;
     const int output_type = outputs[0]->elemType();

@@ -129,6 +129,22 @@ class TestVersionConverter:
         with pytest.raises(onnx.version_converter.ConvertError):
             test()
 
+    def test_extend_supported_types_rejects_missing_output(self) -> None:
+        node = helper.make_node("Flatten", ["X"], [])
+        graph = helper.make_graph(
+            [node],
+            "malformed_flatten",
+            [helper.make_tensor_value_info("X", TensorProto.FLOAT, (2, 3))],
+            [],
+        )
+        model = helper.make_model(
+            graph,
+            opset_imports=[helper.make_operatorsetid("", 9)],
+        )
+
+        with pytest.raises(RuntimeError, match="must have exactly one output"):
+            onnx.version_converter.convert_version(model, 8)
+
     # A nested (subgraph) output that resolves to a value captured from the
     # enclosing scope is handled via a dummy node, not a crash. Exercises the
     # captured-value path of graphProtoToGraph (nested=True).
