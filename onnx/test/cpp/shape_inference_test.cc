@@ -511,26 +511,30 @@ TEST(InferenceContextImplTest, OptionalInputsAndOutputsUseNodeProtoPresence) {
   NodeProto node;
   node.add_input("X");
   node.add_input("");
+  node.add_input("Z");
   node.add_output("Y");
   node.add_output("");
+  node.add_output("W");
 
   TypeProto input_type;
   input_type.mutable_tensor_type()->set_elem_type(TensorProto_DataType::TensorProto_DataType_FLOAT);
 
   std::unordered_map<std::string, TypeProto*> value_types_by_name;
   value_types_by_name["X"] = &input_type;
-  value_types_by_name[""] = &input_type;
+  value_types_by_name["Z"] = &input_type;
 
   ShapeInferenceOptions options;
   shape_inference::InferenceContextImpl ctx(node, value_types_by_name, {}, {}, options);
 
   EXPECT_TRUE(ctx.hasInput(0));
   EXPECT_FALSE(ctx.hasInput(1));
-  EXPECT_FALSE(ctx.hasInput(2));
+  EXPECT_TRUE(ctx.hasInput(2));
+  EXPECT_FALSE(ctx.hasInput(3));
 
   EXPECT_TRUE(ctx.hasOutput(0));
   EXPECT_FALSE(ctx.hasOutput(1));
-  EXPECT_FALSE(ctx.hasOutput(2));
+  EXPECT_TRUE(ctx.hasOutput(2));
+  EXPECT_FALSE(ctx.hasOutput(3));
 }
 
 static void ParseAndInfer(ModelProto& model, const char* modelStr) {
