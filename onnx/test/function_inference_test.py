@@ -103,8 +103,12 @@ class TestFunctionInference(TestShapeInferenceHelper):
         # If the optional third parameter is specified, it determines the output type.
         self._check(code, [float_type_, float_type_, int8_type_], [], [int8_type_])
         self._check(code, [float_type_, float_type_, uint8_type_], [], [uint8_type_])
-        # If the optional third parameter is omitted, the output type is uint8 (default).
-        self._check(code, [float_type_, float_type_, no_type_], [], [uint8_type_])
+        # If the third parameter's type is unknown (e.g., because it is itself an unresolved
+        # optional parameter of an enclosing function), no output type can be inferred. Note that
+        # this test does not represent a fully-supported use case: a real, executable model
+        # requires the type of every input actually used by a node to be known. This test only
+        # checks that type inference does not crash or produce an incorrect type in this scenario.
+        self._check(code, [float_type_, float_type_, no_type_], [], [no_type_])
 
         code = """
             <opset_import: [ "" : 18 ], domain: "local">
