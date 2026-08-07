@@ -1267,8 +1267,7 @@ ONNX_API void convTransposeShapeInference(InferenceContext& ctx) {
   auto* final_output_shape = ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
 
   *final_output_shape->add_dim() = input_shape.dim(0);
-  *final_output_shape->add_dim() =
-      checkedMultiply(weight_shape.dim(1), group); // channels should be the second dim of second input
+  *final_output_shape->add_dim() = weight_shape.dim(1) * group; // channels should be the second dim of second input
                                                                 // multiply group.
 
   int size_of_output = 0;
@@ -1289,8 +1288,7 @@ ONNX_API void convTransposeShapeInference(InferenceContext& ctx) {
     size_of_output = input_shape.dim_size() - 2;
     for (int i = 0; i < size_of_output; ++i) {
       if (input_shape.dim(i + 2).has_dim_value()) {
-        int64_t output_shape_dim =
-            checkedMultiply(strides[i], checkedSubtract(input_shape.dim(i + 2).dim_value(), 1));
+        int64_t output_shape_dim = checkedMultiply(strides[i], checkedSubtract(input_shape.dim(i + 2).dim_value(), 1));
         output_shape_dim = checkedAdd(output_shape_dim, output_padding[i]);
         output_shape_dim = checkedAdd(output_shape_dim, effective_kernel_shape[i]);
         output_shape_dim = checkedSubtract(output_shape_dim, pads[i]);

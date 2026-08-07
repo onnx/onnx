@@ -4,9 +4,7 @@
 from __future__ import annotations
 
 import os
-import shutil
 import tarfile
-import tempfile
 from collections import deque
 from typing import TYPE_CHECKING
 
@@ -260,12 +258,6 @@ def extract_model(
         onnx.checker.check_model(output_path)
 
 
-_MAX_TAR_MEMBERS = 10000
-_MAX_TAR_MEMBER_SIZE = 1 << 30
-_MAX_TAR_TOTAL_SIZE = 4 << 30
-_MAX_TAR_MEMBER_NAME_SIZE = 4096
-
-
 def _tar_members_filter(
     tar: tarfile.TarFile, base: str | os.PathLike
 ) -> list[tarfile.TarInfo]:
@@ -279,57 +271,8 @@ def _tar_members_filter(
         list of tarball members
     """
     result = []
-    total_size = 0
-    seen_paths = set()
-    seen_files = set()
     abs_base = os.path.abspath(base)
     for member in tar:
-        if len(result) >= _MAX_TAR_MEMBERS:
-            raise RuntimeError("The tarball contains too many members.")
-        if len(member.name) > _MAX_TAR_MEMBER_NAME_SIZE:
-            raise RuntimeError(
-                f"The tarball member {member.name} has a name that is too long."
-            )
-        normalized_name = os.path.normcase(
-            os.path.normpath(member.name.replace("/", os.sep))
-        )
-        if normalized_name in seen_paths:
-            raise RuntimeError(
-                f"The tarball contains duplicate member path {member.name}."
-            )
-        parent = os.path.dirname(normalized_name)
-        while parent:
-            if parent in seen_files:
-                raise RuntimeError(
-                    f"The tarball contains conflicting member path {member.name}."
-                )
-            next_parent = os.path.dirname(parent)
-            if next_parent == parent:
-                break
-            parent = next_parent
-        if member.isfile():
-            prefix = normalized_name + os.sep
-            if any(path.startswith(prefix) for path in seen_paths):
-                raise RuntimeError(
-                    f"The tarball contains conflicting member path {member.name}."
-                )
-        seen_paths.add(normalized_name)
-        if member.issym() or member.islnk():
-            raise RuntimeError(
-                f"The tarball member {member.name} contains symbolic links."
-            )
-        if member.isfile():
-            if member.size < 0 or member.size > _MAX_TAR_MEMBER_SIZE:
-                raise RuntimeError(f"The tarball member {member.name} is too large.")
-            if total_size > _MAX_TAR_TOTAL_SIZE - member.size:
-                raise RuntimeError("The tarball expands to too much data.")
-            total_size += member.size
-        elif not member.isdir():
-            raise RuntimeError(
-                f"The tarball member {member.name} is not a regular file or directory."
-            )
-        if member.isfile():
-            seen_files.add(normalized_name)
         member_path = os.path.join(base, member.name)
         abs_member = os.path.abspath(member_path)
         try:
@@ -340,6 +283,11 @@ def _tar_members_filter(
             raise RuntimeError(
                 f"The tarball member {member_path} in downloading model contains "
                 f"directory traversal sequence which may contain harmful payload."
+            )
+        if member.issym() or member.islnk():
+            raise RuntimeError(
+                f"The tarball member {member_path} in downloading model contains "
+                f"symbolic links which may contain harmful payload."
             )
         result.append(member)
     return result
@@ -361,29 +309,16 @@ def _extract_model_safe(
         local_model_with_data_dir_path: The directory path where the tar file
       contents will be extracted to.
     """
-    destination = os.fspath(local_model_with_data_dir_path)
-    if os.path.islink(destination):
-        raise RuntimeError("The extraction destination must not be a symbolic link.")
-    os.makedirs(destination, exist_ok=True)
-    for root, directories, files in os.walk(destination, followlinks=False):
-        if any(
-            os.path.islink(os.path.join(root, name)) for name in [*directories, *files]
-        ):
-            raise RuntimeError("The extraction destination contains symbolic links.")
-    with tempfile.TemporaryDirectory(
-        dir=destination, prefix=".onnx-extract-"
-    ) as temporary_dir:
-        with tarfile.open(model_tar_path) as model_with_data_zipped:
-            members = _tar_members_filter(model_with_data_zipped, temporary_dir)
-            if hasattr(tarfile, "data_filter"):
-                model_with_data_zipped.extractall(
-                    path=temporary_dir, members=members, filter="data"
-                )
-            else:
-                model_with_data_zipped.extractall(  # noqa: S202
-                    path=temporary_dir, members=members
-                )
-
-        # Commit only after the complete archive has passed validation and extraction.
-        # The destination may already contain the model directory created by the caller.
-        shutil.copytree(temporary_dir, destination, dirs_exist_ok=True)
+    with tarfile.open(model_tar_path) as model_with_data_zipped:
+        # Mitigate tarball directory traversal risks
+        if hasattr(tarfile, "data_filter"):
+            model_with_data_zipped.extractall(
+                path=local_model_with_data_dir_path, filter="data"
+            )
+        else:
+            model_with_data_zipped.extractall(  # noqa: S202
+                path=local_model_with_data_dir_path,
+                members=_tar_members_filter(
+                    model_with_data_zipped, local_model_with_data_dir_path
+                ),
+            )

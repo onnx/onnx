@@ -278,8 +278,8 @@ static void convPoolShapeInference_opset19(
     const int64_t stride_gap = checkedSubtract(effective_input_size, effective_kernel_shape[i]);
     if (ceil_mode == 1)
       // exact ceil division; (a + b - 1) / b would be wrong for negative a
-      strided_kernel_positions = checkedAdd(
-          checkedDivide(stride_gap, strides[i]), (stride_gap % strides[i] > 0 ? 1 : 0));
+      strided_kernel_positions =
+          checkedAdd(checkedDivide(stride_gap, strides[i]), (stride_gap % strides[i] > 0 ? 1 : 0));
     else
       strided_kernel_positions = checkedDivide(stride_gap, strides[i]);
 
@@ -767,8 +767,7 @@ static void convTransposeShapeInference_opset11(InferenceContext& ctx) {
   auto* final_output_shape = ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
 
   *final_output_shape->add_dim() = input_shape.dim(0);
-  *final_output_shape->add_dim() =
-      checkedMultiply(weight_shape.dim(1), group); // channels should be the second dim of second input
+  *final_output_shape->add_dim() = weight_shape.dim(1) * group; // channels should be the second dim of second input
                                                                 // multiply group.
 
   int size_of_output = 0;
@@ -789,8 +788,7 @@ static void convTransposeShapeInference_opset11(InferenceContext& ctx) {
     size_of_output = input_shape.dim_size() - 2;
     for (int i = 0; i < size_of_output; ++i) {
       if (input_shape.dim(i + 2).has_dim_value()) {
-        int64_t output_shape_dim =
-            checkedMultiply(strides[i], checkedSubtract(input_shape.dim(i + 2).dim_value(), 1));
+        int64_t output_shape_dim = checkedMultiply(strides[i], checkedSubtract(input_shape.dim(i + 2).dim_value(), 1));
         output_shape_dim = checkedAdd(output_shape_dim, output_padding[i]);
         output_shape_dim = checkedAdd(output_shape_dim, effective_kernel_shape[i]);
         output_shape_dim = checkedSubtract(output_shape_dim, pads[i]);
@@ -2131,8 +2129,8 @@ static void convPoolShapeInference_opset1_to_11(
     const int64_t stride_gap = checkedSubtract(effective_input_size, effective_kernel_shape[i]);
     if (ceil_mode == 1)
       // exact ceil division; (a + b - 1) / b would be wrong for negative a
-      strided_kernel_positions = checkedAdd(
-          checkedDivide(stride_gap, strides[i]), (stride_gap % strides[i] > 0 ? 1 : 0));
+      strided_kernel_positions =
+          checkedAdd(checkedDivide(stride_gap, strides[i]), (stride_gap % strides[i] > 0 ? 1 : 0));
     else
       strided_kernel_positions = checkedDivide(stride_gap, strides[i]);
 
@@ -3136,8 +3134,7 @@ static void convTransposeShapeInference_opset1(InferenceContext& ctx) {
   auto* final_output_shape = ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
 
   *final_output_shape->add_dim() = input_shape.dim(0);
-  *final_output_shape->add_dim() =
-      checkedMultiply(weight_shape.dim(1), group); // channels should be the second dim of second input
+  *final_output_shape->add_dim() = weight_shape.dim(1) * group; // channels should be the second dim of second input
                                                                 // multiply group.
 
   int size_of_output = 0;
@@ -3158,8 +3155,7 @@ static void convTransposeShapeInference_opset1(InferenceContext& ctx) {
     size_of_output = input_shape.dim_size() - 2;
     for (int i = 0; i < size_of_output; ++i) {
       if (input_shape.dim(i + 2).has_dim_value()) {
-        int64_t output_shape_dim =
-            checkedMultiply(strides[i], checkedSubtract(input_shape.dim(i + 2).dim_value(), 1));
+        int64_t output_shape_dim = checkedMultiply(strides[i], checkedSubtract(input_shape.dim(i + 2).dim_value(), 1));
         output_shape_dim = checkedAdd(output_shape_dim, output_padding[i]);
         output_shape_dim = checkedAdd(output_shape_dim, effective_kernel_shape[i]);
         output_shape_dim = checkedSubtract(output_shape_dim, pads[i]);
