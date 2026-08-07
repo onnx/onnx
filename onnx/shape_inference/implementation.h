@@ -214,6 +214,13 @@ struct InferenceContextImpl : public InferenceContext {
     return allInputTypes_[index];
   }
 
+  bool hasInput(size_t index) const override {
+    if (node_ == nullptr || index >= static_cast<size_t>(node_->input_size())) {
+      return false;
+    }
+    return !node_->input(static_cast<int>(index)).empty();
+  }
+
   const TensorProto* getInputData(size_t index) const override {
     if (index >= allInputData_.size()) {
       ONNX_THROW("Input " + ONNX_NAMESPACE::to_string(index) + " is out of bounds.");
@@ -245,6 +252,13 @@ struct InferenceContextImpl : public InferenceContext {
       ONNX_THROW("Output " + ONNX_NAMESPACE::to_string(index) + " is out of bounds.");
     }
     return &allOutputTypes_[index];
+  }
+
+  bool hasOutput(size_t index) override {
+    if (node_ == nullptr || index >= static_cast<size_t>(node_->output_size())) {
+      return false;
+    }
+    return !node_->output(static_cast<int>(index)).empty();
   }
 
   GraphInferencer* getGraphAttributeInferencer(const std::string& attr_name) override {
