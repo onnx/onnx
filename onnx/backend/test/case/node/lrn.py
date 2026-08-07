@@ -28,14 +28,14 @@ class LRN(Base):
             bias=bias,
             size=nsize,
         )
-        x = np.random.randn(5, 5, 5, 5).astype(np.float32)
-        square_sum = np.zeros((5, 5, 5, 5)).astype(np.float32)
+        x = np.random.randn(2, 4, 5, 5).astype(np.float32)
+        square_sum = np.zeros((2, 4, 5, 5)).astype(np.float32)
         for n, c, h, w in np.ndindex(x.shape):
             square_sum[n, c, h, w] = sum(
                 x[
                     n,
                     max(0, c - math.floor((nsize - 1) / 2)) : min(
-                        5, c + math.ceil((nsize - 1) / 2) + 1
+                        4, c + math.ceil((nsize - 1) / 2) + 1
                     ),
                     h,
                     w,
@@ -52,14 +52,14 @@ class LRN(Base):
         bias = 1.0
         nsize = 3
         node = onnx.helper.make_node("LRN", inputs=["x"], outputs=["y"], size=3)
-        x = np.random.randn(5, 5, 5, 5).astype(np.float32)
-        square_sum = np.zeros((5, 5, 5, 5)).astype(np.float32)
+        x = np.random.randn(2, 4, 5, 5).astype(np.float32)
+        square_sum = np.zeros((2, 4, 5, 5)).astype(np.float32)
         for n, c, h, w in np.ndindex(x.shape):
             square_sum[n, c, h, w] = sum(
                 x[
                     n,
                     max(0, c - math.floor((nsize - 1) / 2)) : min(
-                        5, c + math.ceil((nsize - 1) / 2) + 1
+                        4, c + math.ceil((nsize - 1) / 2) + 1
                     ),
                     h,
                     w,
