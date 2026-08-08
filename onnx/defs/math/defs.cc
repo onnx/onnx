@@ -2090,6 +2090,16 @@ static void einsumShapeInference(ONNX_NAMESPACE::InferenceContext& ctx, std::str
             term_size,
             ".");
       }
+      // Every occurrence of an ellipsis must cover the same number of dimensions.
+      // This has to be validated *before* the loop below records or unifies the
+      // ellipsis dimensions: that loop indexes ellipsis_dims_value using this
+      // term's ellipsis size, which is only in bounds while all ellipses agree.
+      if (num_ellipsis == 0) {
+        num_ellipsis_indices = rank - term_size;
+      } else if (num_ellipsis_indices != rank - term_size) {
+        fail_shape_inference("Ellipsis represents incompatible dimensions.");
+      }
+      num_ellipsis++;
     } else {
       // For non-ellipsis case, rank must equal term_size
       if (rank != term_size) {
@@ -2135,19 +2145,6 @@ static void einsumShapeInference(ONNX_NAMESPACE::InferenceContext& ctx, std::str
       }
     }
 
-    if (ellipsis_index != std::string::npos) {
-      // If there is an ellipsis, the number of dimensions it represents
-      // must be total dim - letter dimensions
-      if (num_ellipsis == 0) {
-        num_ellipsis_indices = rank - term_size;
-      } else { // ellipsis has been seen before. Check that if dimensions
-               // are compatible
-        if (num_ellipsis_indices != rank - term_size) {
-          fail_shape_inference("Ellipsis represents incompatible dimensions.");
-        }
-      }
-      num_ellipsis++;
-    }
     num_operands++;
   }
 

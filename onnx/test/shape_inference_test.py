@@ -9534,6 +9534,54 @@ class TestShapeInference(TestShapeInferenceHelper):
             graph, [make_tensor_value_info("z", TensorProto.FLOAT, (32, 3, 5))]
         )
 
+    def test_einsum_ellipsis_mismatched_rank_later_term_wider(self) -> None:
+        # The second ellipsis covers more dimensions than the first. This used to
+        # read past the end of the recorded ellipsis dimensions and segfault.
+        graph = self._make_graph(
+            [("x", TensorProto.FLOAT, ()), ("y", TensorProto.FLOAT, (2, 3))],
+            [make_node("Einsum", ["x", "y"], ["z"], equation="...,...->...")],
+            [],
+        )
+        with pytest.raises(onnx.shape_inference.InferenceError):
+            self._inferred(graph)
+
+    def test_einsum_ellipsis_mismatched_rank_earlier_term_wider(self) -> None:
+        graph = self._make_graph(
+            [("x", TensorProto.FLOAT, (2, 3)), ("y", TensorProto.FLOAT, ())],
+            [make_node("Einsum", ["x", "y"], ["z"], equation="...,...->...")],
+            [],
+        )
+        with pytest.raises(onnx.shape_inference.InferenceError):
+            self._inferred(graph)
+
+    def test_einsum_ellipsis_mismatched_rank_with_labels(self) -> None:
+        graph = self._make_graph(
+            [("x", TensorProto.FLOAT, (3, 4)), ("y", TensorProto.FLOAT, (2, 3, 4))],
+            [make_node("Einsum", ["x", "y"], ["z"], equation="...ij,...ij->...ij")],
+            [],
+        )
+        with pytest.raises(onnx.shape_inference.InferenceError):
+            self._inferred(graph)
+
+    def test_einsum_ellipsis_mismatched_rank_implicit_output(self) -> None:
+        graph = self._make_graph(
+            [("x", TensorProto.FLOAT, ()), ("y", TensorProto.FLOAT, (2, 3))],
+            [make_node("Einsum", ["x", "y"], ["z"], equation="...,...")],
+            [],
+        )
+        with pytest.raises(onnx.shape_inference.InferenceError):
+            self._inferred(graph)
+
+    def test_einsum_ellipsis_matching_rank_zero(self) -> None:
+        graph = self._make_graph(
+            [("x", TensorProto.FLOAT, ()), ("y", TensorProto.FLOAT, ())],
+            [make_node("Einsum", ["x", "y"], ["z"], equation="...,...->...")],
+            [],
+        )
+        self._assert_inferred(
+            graph, [make_tensor_value_info("z", TensorProto.FLOAT, ())]
+        )
+
     def test_einsum_contraction(self) -> None:
         graph = self._make_graph(
             [
