@@ -10,7 +10,7 @@ For an operator input/output's differentiability, it can be differentiable,
 
 # ai.onnx (default)
 ## Version 1 of the default ONNX operator set
-### <a name="Abs-1"></a>**Abs-1**
+### <a name="Abs-1"></a>**Abs-1**</a></a>
 
   Absolute takes one input data (Tensor<T>) and produces one output data
   (Tensor<T>) where the absolute is, y = abs(x), is applied to
@@ -48,7 +48,7 @@ This version of the operator has been available since version 1 of the default O
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
-### <a name="Add-1"></a>**Add-1**
+### <a name="Add-1"></a>**Add-1**</a></a>
 
   Performs element-wise binary addition (with limited broadcast support).
 
@@ -109,7 +109,7 @@ This version of the operator has been available since version 1 of the default O
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
-### <a name="And-1"></a>**And-1**
+### <a name="And-1"></a>**And-1**</a></a>
 
   Returns the tensor resulted from performing the `and` logical operation
   elementwise on the input tensors `A` and `B`.
@@ -156,7 +156,7 @@ This version of the operator has been available since version 1 of the default O
 <dd>Constrain output to boolean tensor.</dd>
 </dl>
 
-### <a name="ArgMax-1"></a>**ArgMax-1**
+### <a name="ArgMax-1"></a>**ArgMax-1**</a></a>
 
   Computes the indices of the max elements of the input tensor's element along the
   provided axis. The resulting tensor has the same rank as the input if keepdims equals 1.
@@ -197,7 +197,7 @@ This version of the operator has been available since version 1 of the default O
 <dd>Constrain input and output types to all numeric tensors.</dd>
 </dl>
 
-### <a name="ArgMin-1"></a>**ArgMin-1**
+### <a name="ArgMin-1"></a>**ArgMin-1**</a>
 
   Computes the indices of the min elements of the input tensor's element along the
   provided axis. The resulting tensor has the same rank as the input if keepdims equals 1.
@@ -238,7 +238,7 @@ This version of the operator has been available since version 1 of the default O
 <dd>Constrain input and output types to all numeric tensors.</dd>
 </dl>
 
-### <a name="AveragePool-1"></a>**AveragePool-1**
+### <a name="AveragePool-1"></a>**AveragePool-1**</a>
 
   AveragePool consumes an input tensor X and applies average pooling across
    the tensor according to kernel sizes, stride sizes, and pad lengths.
@@ -301,7 +301,7 @@ This version of the operator has been available since version 1 of the default O
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
-### <a name="BatchNormalization-1"></a>**BatchNormalization-1**
+### <a name="BatchNormalization-1"></a>**BatchNormalization-1**</a>
 
   Carries out batch normalization as described in the paper
   https://arxiv.org/abs/1502.03167. Depending on the mode it is being run,
@@ -367,7 +367,7 @@ This version of the operator has been available since version 1 of the default O
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
-### <a name="Cast-1"></a>**Cast-1**
+### <a name="Cast-1"></a>**Cast-1**</a>
 
   The operator casts the elements of a given input tensor to a data type
   specified by the 'to' argument and returns an output tensor of the same size in
@@ -409,7 +409,7 @@ This version of the operator has been available since version 1 of the default O
 <dd>Constrain output types. Casting to strings and complex are not supported.</dd>
 </dl>
 
-### <a name="Ceil-1"></a>**Ceil-1**
+### <a name="Ceil-1"></a>**Ceil-1**</a>
 
   Ceil takes one input data (Tensor<T>) and produces one output data
   (Tensor<T>) where the ceil is, y = ceil(x), is applied to
@@ -447,7 +447,7 @@ This version of the operator has been available since version 1 of the default O
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
-### <a name="Clip-1"></a>**Clip-1**
+### <a name="Clip-1"></a>**Clip-1**</a>
 
   Clip operator limits the given input within an interval. The interval is
   specified with arguments 'min' and 'max'. They default to
@@ -489,7 +489,7 @@ This version of the operator has been available since version 1 of the default O
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
-### <a name="Concat-1"></a>**Concat-1**
+### <a name="Concat-1"></a>**Concat-1**</a>
 
   Concatenate a list of tensors into a single tensor
 
@@ -525,7 +525,7 @@ This version of the operator has been available since version 1 of the default O
 <dd>Constrain output types to float tensors.</dd>
 </dl>
 
-### <a name="Constant-1"></a>**Constant-1**
+### <a name="Constant-1"></a>**Constant-1**</a>
 
   A constant tensor.
 
@@ -557,7 +557,7 @@ This version of the operator has been available since version 1 of the default O
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
-### <a name="Conv-1"></a>**Conv-1**
+### <a name="Conv-1"></a>**Conv-1**</a>
 
   The convolution operator consumes an input tensor and a filter, and
   computes the output.
@@ -608,7 +608,7 @@ This version of the operator has been available since version 1 of the default O
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
-### <a name="ConvTranspose-1"></a>**ConvTranspose-1**
+### <a name="ConvTranspose-1"></a>**ConvTranspose-1**</a>
 
   The convolution transpose operator consumes an input tensor and a filter,
   and computes the output.
@@ -675,7 +675,7 @@ This version of the operator has been available since version 1 of the default O
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
-### <a name="DepthToSpace-1"></a>**DepthToSpace-1**
+### <a name="DepthToSpace-1"></a>**DepthToSpace-1**</a>
 
   DepthToSpace rearranges (permutes) data from depth into blocks of spatial data.
   This is the reverse transformation of SpaceToDepth. More specifically, this op outputs a copy of
@@ -714,7 +714,7 @@ This version of the operator has been available since version 1 of the default O
 <dd>Constrain input and output types to all tensor types.</dd>
 </dl>
 
-### <a name="Div-1"></a>**Div-1**
+### <a name="Div-1"></a>**Div-1**</a>
 
   Performs element-wise binary division (with limited broadcast support).
 
@@ -775,7 +775,7 @@ This version of the operator has been available since version 1 of the default O
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
-### <a name="Dropout-1"></a>**Dropout-1**
+### <a name="Dropout-1"></a>**Dropout-1**</a>
 
   Dropout takes one input data (Tensor<float>) and produces two Tensor outputs,
   output (Tensor<float>) and mask (Tensor<bool>). Depending on whether it is in
@@ -821,7 +821,7 @@ This version of the operator has been available since version 1 of the default O
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
-### <a name="Elu-1"></a>**Elu-1**
+### <a name="Elu-1"></a>**Elu-1**</a>
 
   Elu takes one input data (Tensor<T>) and produces one output data
   (Tensor<T>) where the function `f(x) = alpha * (exp(x) - 1.) for x <
@@ -862,7 +862,7 @@ This version of the operator has been available since version 1 of the default O
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
-### <a name="Equal-1"></a>**Equal-1**
+### <a name="Equal-1"></a>**Equal-1**</a>
 
   Returns the tensor resulted from performing the `equal` logical operation
   elementwise on the input tensors `A` and `B`.
@@ -909,7 +909,7 @@ This version of the operator has been available since version 1 of the default O
 <dd>Constrain output to boolean tensor.</dd>
 </dl>
 
-### <a name="Exp-1"></a>**Exp-1**
+### <a name="Exp-1"></a>**Exp-1**</a>
 
   Calculates the exponential of the given input tensor, element-wise.
 
@@ -945,7 +945,7 @@ This version of the operator has been available since version 1 of the default O
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
-### <a name="Flatten-1"></a>**Flatten-1**
+### <a name="Flatten-1"></a>**Flatten-1**</a>
 
   Flattens the input tensor into a 2D matrix. If input tensor has shape
   (d_0, d_1, ... d_n) then the output will have shape
@@ -983,7 +983,7 @@ This version of the operator has been available since version 1 of the default O
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
-### <a name="Floor-1"></a>**Floor-1**
+### <a name="Floor-1"></a>**Floor-1**</a>
 
   Floor takes one input data (Tensor<T>) and produces one output data
   (Tensor<T>) where the floor is, y = floor(x), is applied to
@@ -1021,7 +1021,7 @@ This version of the operator has been available since version 1 of the default O
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
-### <a name="GRU-1"></a>**GRU-1**
+### <a name="GRU-1"></a>**GRU-1**</a>
 
   Computes an one-layer GRU. This operator is usually supported via some custom
   implementation such as CuDNN.
@@ -1154,7 +1154,7 @@ This version of the operator has been available since version 1 of the default O
 <dd>Constrain seq_lens to integer tensor.</dd>
 </dl>
 
-### <a name="Gather-1"></a>**Gather-1**
+### <a name="Gather-1"></a>**Gather-1**</a>
 
   Given `data` tensor of rank r >= 1, and `indices` tensor of rank q, gather
   entries of the axis dimension of `data` (by default outer-most one as axis=0) indexed by `indices`, and concatenates
@@ -1235,7 +1235,7 @@ This version of the operator has been available since version 1 of the default O
 <dd>Constrain indices to integer types</dd>
 </dl>
 
-### <a name="Gemm-1"></a>**Gemm-1**
+### <a name="Gemm-1"></a>**Gemm-1**</a>
 
   General Matrix multiplication:
   https://en.wikipedia.org/wiki/Basic_Linear_Algebra_Subprograms#Level_3
@@ -1290,7 +1290,7 @@ This version of the operator has been available since version 1 of the default O
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
-### <a name="GlobalAveragePool-1"></a>**GlobalAveragePool-1**
+### <a name="GlobalAveragePool-1"></a>**GlobalAveragePool-1**</a>
 
   GlobalAveragePool consumes an input tensor X and applies average pooling across
    the values in the same channel. This is equivalent to AveragePool with kernel size
@@ -1321,7 +1321,7 @@ This version of the operator has been available since version 1 of the default O
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
-### <a name="GlobalLpPool-1"></a>**GlobalLpPool-1**
+### <a name="GlobalLpPool-1"></a>**GlobalLpPool-1**</a>
 
   GlobalLpPool consumes an input tensor X and applies lp pool pooling across the
    the values in the same channel. This is equivalent to LpPool with kernel size
@@ -1359,7 +1359,7 @@ This version of the operator has been available since version 1 of the default O
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
-### <a name="GlobalMaxPool-1"></a>**GlobalMaxPool-1**
+### <a name="GlobalMaxPool-1"></a>**GlobalMaxPool-1**</a>
 
   GlobalMaxPool consumes an input tensor X and applies max pooling across
    the values in the same channel. This is equivalent to MaxPool with kernel size
@@ -1390,7 +1390,7 @@ This version of the operator has been available since version 1 of the default O
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
-### <a name="Greater-1"></a>**Greater-1**
+### <a name="Greater-1"></a>**Greater-1**</a>
 
   Returns the tensor resulted from performing the `greater` logical operation
   elementwise on the input tensors `A` and `B`.
@@ -1437,7 +1437,7 @@ This version of the operator has been available since version 1 of the default O
 <dd>Constrain output to boolean tensor.</dd>
 </dl>
 
-### <a name="HardSigmoid-1"></a>**HardSigmoid-1**
+### <a name="HardSigmoid-1"></a>**HardSigmoid-1**</a>
 
   HardSigmoid takes one input data (Tensor<T>) and produces one output data
   (Tensor<T>) where the HardSigmoid function, y = max(0, min(1, alpha * x + beta)),
@@ -1479,7 +1479,7 @@ This version of the operator has been available since version 1 of the default O
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
-### <a name="Hardmax-1"></a>**Hardmax-1**
+### <a name="Hardmax-1"></a>**Hardmax-1**</a>
 
   The operator computes the hardmax (1 for the first maximum value, and 0 for all others) values for each layer in the batch
    of the given input. The input is a 2-D tensor (Tensor<float>) of size
@@ -1529,7 +1529,7 @@ This version of the operator has been available since version 1 of the default O
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
-### <a name="Identity-1"></a>**Identity-1**
+### <a name="Identity-1"></a>**Identity-1**</a>
 
   Identity operator
 
@@ -1558,7 +1558,7 @@ This version of the operator has been available since version 1 of the default O
 <dd>Constrain input and output types to all tensor types.</dd>
 </dl>
 
-### <a name="If-1"></a>**If-1**
+### <a name="If-1"></a>**If-1**</a>
 
   If conditional
 
@@ -1598,7 +1598,7 @@ This version of the operator has been available since version 1 of the default O
 <dd>Only bool</dd>
 </dl>
 
-### <a name="InstanceNormalization-1"></a>**InstanceNormalization-1**
+### <a name="InstanceNormalization-1"></a>**InstanceNormalization-1**</a>
 
   Carries out instance normalization as described in the paper
   https://arxiv.org/abs/1607.08022.
@@ -1645,7 +1645,7 @@ This version of the operator has been available since version 1 of the default O
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
-### <a name="LRN-1"></a>**LRN-1**
+### <a name="LRN-1"></a>**LRN-1**</a>
 
   Local Response Normalization proposed in the [AlexNet paper](https://papers.nips.cc/paper/4824-imagenet-classification-with-deep-convolutional-neural-networks.pdf).
   It normalizes over local input regions.
@@ -1696,7 +1696,7 @@ This version of the operator has been available since version 1 of the default O
 <dd>Constrain input and output  types to float tensors.</dd>
 </dl>
 
-### <a name="LSTM-1"></a>**LSTM-1**
+### <a name="LSTM-1"></a>**LSTM-1**</a>
 
   Computes an one-layer LSTM. This operator is usually supported via some
   custom implementation such as CuDNN.
@@ -1845,7 +1845,7 @@ This version of the operator has been available since version 1 of the default O
 <dd>Constrain seq_lens to integer tensor.</dd>
 </dl>
 
-### <a name="LeakyRelu-1"></a>**LeakyRelu-1**
+### <a name="LeakyRelu-1"></a>**LeakyRelu-1**</a>
 
   LeakyRelu takes input data (Tensor<T>) and an argument alpha, and produces one
   output data (Tensor<T>) where the function `f(x) = alpha * x for x < 0`,
@@ -1885,7 +1885,7 @@ This version of the operator has been available since version 1 of the default O
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
-### <a name="Less-1"></a>**Less-1**
+### <a name="Less-1"></a>**Less-1**</a>
 
   Returns the tensor resulted from performing the `less` logical operation
   elementwise on the input tensors `A` and `B`.
@@ -1932,7 +1932,7 @@ This version of the operator has been available since version 1 of the default O
 <dd>Constrain output to boolean tensor.</dd>
 </dl>
 
-### <a name="Log-1"></a>**Log-1**
+### <a name="Log-1"></a>**Log-1**</a>
 
   Calculates the natural log of the given input tensor, element-wise.
 
@@ -1968,7 +1968,7 @@ This version of the operator has been available since version 1 of the default O
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
-### <a name="LogSoftmax-1"></a>**LogSoftmax-1**
+### <a name="LogSoftmax-1"></a>**LogSoftmax-1**</a>
 
   The operator computes the logsoftmax (log of softmax) values for each layer in the batch
    of the given input. The input is a 2-D tensor (Tensor<float>) of size
@@ -2018,7 +2018,7 @@ This version of the operator has been available since version 1 of the default O
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
-### <a name="Loop-1"></a>**Loop-1**
+### <a name="Loop-1"></a>**Loop-1**</a>
 
   Generic Looping construct. This loop has multiple termination conditions:
 
@@ -2174,7 +2174,7 @@ This version of the operator has been available since version 1 of the default O
 <dd>tensor of bool, which should be a scalar.</dd>
 </dl>
 
-### <a name="LpNormalization-1"></a>**LpNormalization-1**
+### <a name="LpNormalization-1"></a>**LpNormalization-1**</a>
 
   Given a matrix, apply Lp-normalization along the provided axis.
   The output is computed as: `output = input / Lp_norm(input, axis)`.
@@ -2215,7 +2215,7 @@ This version of the operator has been available since version 1 of the default O
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
-### <a name="LpPool-1"></a>**LpPool-1**
+### <a name="LpPool-1"></a>**LpPool-1**</a>
 
   LpPool consumes an input tensor X and applies Lp pooling across the
    the tensor according to kernel sizes, stride sizes, and pad lengths.
@@ -2263,7 +2263,7 @@ This version of the operator has been available since version 1 of the default O
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
-### <a name="MatMul-1"></a>**MatMul-1**
+### <a name="MatMul-1"></a>**MatMul-1**</a>
 
   Matrix product that behaves like [numpy.matmul](https://numpy.org/doc/stable/reference/generated/numpy.matmul.html).
 
@@ -2294,7 +2294,7 @@ This version of the operator has been available since version 1 of the default O
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
-### <a name="Max-1"></a>**Max-1**
+### <a name="Max-1"></a>**Max-1**</a>
 
   Element-wise max of each of the input tensors. All inputs and outputs must
   have the same shape and data type.
@@ -2331,7 +2331,7 @@ This version of the operator has been available since version 1 of the default O
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
-### <a name="MaxPool-1"></a>**MaxPool-1**
+### <a name="MaxPool-1"></a>**MaxPool-1**</a>
 
   MaxPool consumes an input tensor X and applies max pooling across
    the tensor according to kernel sizes, stride sizes, and pad lengths.
@@ -2394,7 +2394,7 @@ This version of the operator has been available since version 1 of the default O
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
-### <a name="MaxRoiPool-1"></a>**MaxRoiPool-1**
+### <a name="MaxRoiPool-1"></a>**MaxRoiPool-1**</a>
 
   ROI max pool consumes an input tensor X and region of interests (RoIs) to
    apply max pooling across each RoI, to produce output 4-D tensor of shape
@@ -2436,7 +2436,7 @@ This version of the operator has been available since version 1 of the default O
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
-### <a name="Mean-1"></a>**Mean-1**
+### <a name="Mean-1"></a>**Mean-1**</a>
 
   Element-wise mean of each of the input tensors. All inputs and outputs must
   have the same shape and data type.
@@ -2473,7 +2473,7 @@ This version of the operator has been available since version 1 of the default O
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
-### <a name="Min-1"></a>**Min-1**
+### <a name="Min-1"></a>**Min-1**</a>
 
   Element-wise min of each of the input tensors. All inputs and outputs must
   have the same shape and data type.
@@ -2510,7 +2510,7 @@ This version of the operator has been available since version 1 of the default O
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
-### <a name="Mul-1"></a>**Mul-1**
+### <a name="Mul-1"></a>**Mul-1**</a>
 
   Performs element-wise binary multiplication (with limited broadcast support).
 
@@ -2571,7 +2571,7 @@ This version of the operator has been available since version 1 of the default O
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
-### <a name="Neg-1"></a>**Neg-1**
+### <a name="Neg-1"></a>**Neg-1**</a>
 
   Neg takes one input data (Tensor<T>) and produces one output data
   (Tensor<T>) where each element flipped sign, y = -x, is applied to
@@ -2609,7 +2609,7 @@ This version of the operator has been available since version 1 of the default O
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
-### <a name="Not-1"></a>**Not-1**
+### <a name="Not-1"></a>**Not-1**</a>
 
   Returns the negation of the input tensor element-wise.
 
@@ -2638,7 +2638,7 @@ This version of the operator has been available since version 1 of the default O
 <dd>Constrain input/output to boolean tensors.</dd>
 </dl>
 
-### <a name="Or-1"></a>**Or-1**
+### <a name="Or-1"></a>**Or-1**</a>
 
   Returns the tensor resulted from performing the `or` logical operation
   elementwise on the input tensors `A` and `B`.
@@ -2685,7 +2685,7 @@ This version of the operator has been available since version 1 of the default O
 <dd>Constrain output to boolean tensor.</dd>
 </dl>
 
-### <a name="PRelu-1"></a>**PRelu-1**
+### <a name="PRelu-1"></a>**PRelu-1**</a>
 
   PRelu takes input data (Tensor<T>) and slope tensor as input, and produces one
   output data (Tensor<T>) where the function `f(x) = slope * x for x < 0`,
@@ -2726,7 +2726,7 @@ This version of the operator has been available since version 1 of the default O
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
-### <a name="Pad-1"></a>**Pad-1**
+### <a name="Pad-1"></a>**Pad-1**</a>
 
   Given `data` tensor, paddings, mode, and value.
   Example:
@@ -2781,7 +2781,7 @@ This version of the operator has been available since version 1 of the default O
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
-### <a name="Pow-1"></a>**Pow-1**
+### <a name="Pow-1"></a>**Pow-1**</a>
 
   Pow takes input data (Tensor<T>) and exponent Tensor, and
   produces one output data (Tensor<T>) where the function `f(x) = x^exponent`,
@@ -2842,7 +2842,7 @@ This version of the operator has been available since version 1 of the default O
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
-### <a name="RNN-1"></a>**RNN-1**
+### <a name="RNN-1"></a>**RNN-1**</a>
 
   Computes an one-layer simple RNN. This operator is usually supported
   via some custom implementation such as CuDNN.
@@ -2963,7 +2963,7 @@ This version of the operator has been available since version 1 of the default O
 <dd>Constrain seq_lens to integer tensor.</dd>
 </dl>
 
-### <a name="RandomNormal-1"></a>**RandomNormal-1**
+### <a name="RandomNormal-1"></a>**RandomNormal-1**</a>
 
   Generate a tensor with random values drawn from a normal distribution. The shape
   of the tensor is specified by the `shape` argument and the parameter of the normal distribution
@@ -3009,7 +3009,7 @@ This version of the operator has been available since version 1 of the default O
 <dd>Constrain output types to float tensors.</dd>
 </dl>
 
-### <a name="RandomNormalLike-1"></a>**RandomNormalLike-1**
+### <a name="RandomNormalLike-1"></a>**RandomNormalLike-1**</a>
 
   Generate a tensor with random values drawn from a normal distribution.
   The shape of the output tensor is copied from the shape of the input tensor,
@@ -3059,7 +3059,7 @@ This version of the operator has been available since version 1 of the default O
 <dd>Constrain output types to float tensors.</dd>
 </dl>
 
-### <a name="RandomUniform-1"></a>**RandomUniform-1**
+### <a name="RandomUniform-1"></a>**RandomUniform-1**</a>
 
   Generate a tensor with random values drawn from a uniform distribution. The shape
   of the tensor is specified by the `shape` argument and the range by `low` and `high`.
@@ -3104,7 +3104,7 @@ This version of the operator has been available since version 1 of the default O
 <dd>Constrain output types to float tensors.</dd>
 </dl>
 
-### <a name="RandomUniformLike-1"></a>**RandomUniformLike-1**
+### <a name="RandomUniformLike-1"></a>**RandomUniformLike-1**</a>
 
   Generate a tensor with random values drawn from a uniform distribution.
   The shape of the output tensor is copied from the shape of the input tensor,
@@ -3154,7 +3154,7 @@ This version of the operator has been available since version 1 of the default O
 <dd>Constrain output types to float tensors.</dd>
 </dl>
 
-### <a name="Reciprocal-1"></a>**Reciprocal-1**
+### <a name="Reciprocal-1"></a>**Reciprocal-1**</a>
 
   Reciprocal takes one input data (Tensor<T>) and produces one output data
   (Tensor<T>) where the reciprocal is, y = 1/x, is applied to
@@ -3192,7 +3192,7 @@ This version of the operator has been available since version 1 of the default O
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
-### <a name="ReduceL1-1"></a>**ReduceL1-1**
+### <a name="ReduceL1-1"></a>**ReduceL1-1**</a>
 
   Computes the L1 norm of the input tensor's element along the provided axes. The resulting
   tensor has the same rank as the input if keepdims equals 1. If keepdims equal 0, then
@@ -3236,7 +3236,7 @@ This version of the operator has been available since version 1 of the default O
 <dd>Constrain input and output types to high-precision numeric tensors.</dd>
 </dl>
 
-### <a name="ReduceL2-1"></a>**ReduceL2-1**
+### <a name="ReduceL2-1"></a>**ReduceL2-1**</a>
 
   Computes the L2 norm of the input tensor's element along the provided axes. The resulting
   tensor has the same rank as the input if keepdims equals 1. If keepdims equal 0, then
@@ -3280,7 +3280,7 @@ This version of the operator has been available since version 1 of the default O
 <dd>Constrain input and output types to high-precision numeric tensors.</dd>
 </dl>
 
-### <a name="ReduceLogSum-1"></a>**ReduceLogSum-1**
+### <a name="ReduceLogSum-1"></a>**ReduceLogSum-1**</a>
 
   Computes the log sum of the input tensor's element along the provided axes. The resulting
   tensor has the same rank as the input if keepdims equals 1. If keepdims equal 0, then
@@ -3324,7 +3324,7 @@ This version of the operator has been available since version 1 of the default O
 <dd>Constrain input and output types to high-precision numeric tensors.</dd>
 </dl>
 
-### <a name="ReduceLogSumExp-1"></a>**ReduceLogSumExp-1**
+### <a name="ReduceLogSumExp-1"></a>**ReduceLogSumExp-1**</a>
 
   Computes the log sum exponent of the input tensor's element along the provided axes. The resulting
   tensor has the same rank as the input if keepdims equals 1. If keepdims equal 0, then
@@ -3368,7 +3368,7 @@ This version of the operator has been available since version 1 of the default O
 <dd>Constrain input and output types to high-precision numeric tensors.</dd>
 </dl>
 
-### <a name="ReduceMax-1"></a>**ReduceMax-1**
+### <a name="ReduceMax-1"></a>**ReduceMax-1**</a>
 
   Computes the max of the input tensor's element along the provided axes. The resulting
   tensor has the same rank as the input if keepdims equals 1. If keepdims equal 0, then
@@ -3412,7 +3412,7 @@ This version of the operator has been available since version 1 of the default O
 <dd>Constrain input and output types to high-precision numeric tensors.</dd>
 </dl>
 
-### <a name="ReduceMean-1"></a>**ReduceMean-1**
+### <a name="ReduceMean-1"></a>**ReduceMean-1**</a>
 
   Computes the mean of the input tensor's element along the provided axes. The resulting
   tensor has the same rank as the input if keepdims equals 1. If keepdims equal 0, then
@@ -3456,7 +3456,7 @@ This version of the operator has been available since version 1 of the default O
 <dd>Constrain input and output types to high-precision numeric tensors.</dd>
 </dl>
 
-### <a name="ReduceMin-1"></a>**ReduceMin-1**
+### <a name="ReduceMin-1"></a>**ReduceMin-1**</a>
 
   Computes the min of the input tensor's element along the provided axes. The resulting
   tensor has the same rank as the input if keepdims equals 1. If keepdims equal 0, then
@@ -3500,7 +3500,7 @@ This version of the operator has been available since version 1 of the default O
 <dd>Constrain input and output types to high-precision numeric tensors.</dd>
 </dl>
 
-### <a name="ReduceProd-1"></a>**ReduceProd-1**
+### <a name="ReduceProd-1"></a>**ReduceProd-1**</a>
 
   Computes the product of the input tensor's element along the provided axes. The resulting
   tensor has the same rank as the input if keepdims equals 1. If keepdims equal 0, then
@@ -3544,7 +3544,7 @@ This version of the operator has been available since version 1 of the default O
 <dd>Constrain input and output types to high-precision numeric tensors.</dd>
 </dl>
 
-### <a name="ReduceSum-1"></a>**ReduceSum-1**
+### <a name="ReduceSum-1"></a>**ReduceSum-1**</a>
 
   Computes the sum of the input tensor's element along the provided axes. The resulting
   tensor has the same rank as the input if keepdims equals 1. If keepdims equal 0, then
@@ -3588,7 +3588,7 @@ This version of the operator has been available since version 1 of the default O
 <dd>Constrain input and output types to high-precision numeric tensors.</dd>
 </dl>
 
-### <a name="ReduceSumSquare-1"></a>**ReduceSumSquare-1**
+### <a name="ReduceSumSquare-1"></a>**ReduceSumSquare-1**</a>
 
   Computes the sum square of the input tensor's element along the provided axes. The resulting
   tensor has the same rank as the input if keepdims equals 1. If keepdims equal 0, then
@@ -3632,7 +3632,7 @@ This version of the operator has been available since version 1 of the default O
 <dd>Constrain input and output types to high-precision numeric tensors.</dd>
 </dl>
 
-### <a name="Relu-1"></a>**Relu-1**
+### <a name="Relu-1"></a>**Relu-1**</a>
 
   Relu takes one input data (Tensor<T>) and produces one output data
   (Tensor<T>) where the rectified linear function, y = max(0, x), is applied to
@@ -3670,7 +3670,7 @@ This version of the operator has been available since version 1 of the default O
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
-### <a name="Reshape-1"></a>**Reshape-1**
+### <a name="Reshape-1"></a>**Reshape-1**</a>
 
   Reshape the input tensor similar to numpy.reshape.
   It takes a tensor as input and an argument `shape`. It outputs the reshaped tensor.
@@ -3714,7 +3714,7 @@ This version of the operator has been available since version 1 of the default O
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
-### <a name="Selu-1"></a>**Selu-1**
+### <a name="Selu-1"></a>**Selu-1**</a>
 
   Selu takes one input data (Tensor<T>) and produces one output data
   (Tensor<T>) where the scaled exponential linear unit function,
@@ -3757,7 +3757,7 @@ This version of the operator has been available since version 1 of the default O
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
-### <a name="Shape-1"></a>**Shape-1**
+### <a name="Shape-1"></a>**Shape-1**</a>
 
   Takes a tensor as input and outputs an 1D int64 tensor containing the shape of the input tensor.
 
@@ -3788,7 +3788,7 @@ This version of the operator has been available since version 1 of the default O
 <dd>Constrain output to int64 tensor.</dd>
 </dl>
 
-### <a name="Sigmoid-1"></a>**Sigmoid-1**
+### <a name="Sigmoid-1"></a>**Sigmoid-1**</a>
 
   Sigmoid takes one input data (Tensor<T>) and produces one output data
   (Tensor<T>) where the sigmoid function, y = 1 / (1 + exp(-x)), is applied to the
@@ -3826,7 +3826,7 @@ This version of the operator has been available since version 1 of the default O
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
-### <a name="Size-1"></a>**Size-1**
+### <a name="Size-1"></a>**Size-1**</a>
 
   Takes a tensor as input and outputs a int64 scalar that equals to the total number of elements of the input tensor.
 
@@ -3857,7 +3857,7 @@ This version of the operator has been available since version 1 of the default O
 <dd>Constrain output to int64 tensor, which should be a scalar though.</dd>
 </dl>
 
-### <a name="Slice-1"></a>**Slice-1**
+### <a name="Slice-1"></a>**Slice-1**</a>
 
   Produces a slice of the input tensor along multiple axes. Similar to numpy:
   https://numpy.org/doc/stable/reference/routines.indexing.html
@@ -3927,7 +3927,7 @@ This version of the operator has been available since version 1 of the default O
 <dd>Constrain input and output types to all tensor types.</dd>
 </dl>
 
-### <a name="Softmax-1"></a>**Softmax-1**
+### <a name="Softmax-1"></a>**Softmax-1**</a>
 
   The operator computes the softmax (normalized exponential) values for each layer in the batch
    of the given input. The input is a 2-D tensor (Tensor<float>) of size
@@ -3977,7 +3977,7 @@ This version of the operator has been available since version 1 of the default O
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
-### <a name="Softplus-1"></a>**Softplus-1**
+### <a name="Softplus-1"></a>**Softplus-1**</a>
 
   Softplus takes one input data (Tensor<T>) and produces one output data
   (Tensor<T>) where the softplus function, y = ln(exp(x) + 1), is applied to
@@ -4008,7 +4008,7 @@ This version of the operator has been available since version 1 of the default O
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
-### <a name="Softsign-1"></a>**Softsign-1**
+### <a name="Softsign-1"></a>**Softsign-1**</a>
 
   Calculates the softsign (x/(1+|x|)) of the given input tensor element-wise.
 
@@ -4037,7 +4037,7 @@ This version of the operator has been available since version 1 of the default O
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
-### <a name="SpaceToDepth-1"></a>**SpaceToDepth-1**
+### <a name="SpaceToDepth-1"></a>**SpaceToDepth-1**</a>
 
   SpaceToDepth rearranges blocks of spatial data into depth. More specifically,
   this op outputs a copy of the input tensor where values from the height and width dimensions
@@ -4075,7 +4075,7 @@ This version of the operator has been available since version 1 of the default O
 <dd>Constrain input and output types to all tensor types.</dd>
 </dl>
 
-### <a name="Split-1"></a>**Split-1**
+### <a name="Split-1"></a>**Split-1**</a>
 
   Split a tensor into a list of tensors, along the specified
   'axis'. The lengths of the split can be specified using argument 'axis' or
@@ -4118,7 +4118,7 @@ This version of the operator has been available since version 1 of the default O
 <dd>Constrain input types to float tensors.</dd>
 </dl>
 
-### <a name="Sqrt-1"></a>**Sqrt-1**
+### <a name="Sqrt-1"></a>**Sqrt-1**</a>
 
   Square root takes one input data (Tensor<T>) and produces one output data
   (Tensor<T>) where the square root is, y = x^0.5, is applied to
@@ -4156,7 +4156,7 @@ This version of the operator has been available since version 1 of the default O
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
-### <a name="Squeeze-1"></a>**Squeeze-1**
+### <a name="Squeeze-1"></a>**Squeeze-1**</a>
 
   Remove single-dimensional entries from the shape of a tensor.
   Takes a  parameter `axes` with a list of axes to squeeze.
@@ -4195,7 +4195,7 @@ This version of the operator has been available since version 1 of the default O
 <dd>Constrain input and output types to all tensor types.</dd>
 </dl>
 
-### <a name="Sub-1"></a>**Sub-1**
+### <a name="Sub-1"></a>**Sub-1**</a>
 
   Performs element-wise binary subtraction (with limited broadcast support).
 
@@ -4256,7 +4256,7 @@ This version of the operator has been available since version 1 of the default O
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
-### <a name="Sum-1"></a>**Sum-1**
+### <a name="Sum-1"></a>**Sum-1**</a>
 
   Element-wise sum of each of the input tensors. All inputs and outputs must
   have the same shape and data type.
@@ -4293,7 +4293,7 @@ This version of the operator has been available since version 1 of the default O
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
-### <a name="Tanh-1"></a>**Tanh-1**
+### <a name="Tanh-1"></a>**Tanh-1**</a>
 
   Calculates the hyperbolic tangent of the given input tensor element-wise.
 
@@ -4329,7 +4329,7 @@ This version of the operator has been available since version 1 of the default O
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
-### <a name="Tile-1"></a>**Tile-1**
+### <a name="Tile-1"></a>**Tile-1**</a>
 
   Repeat the elements of a tensor along an axis.
 
@@ -4364,7 +4364,7 @@ This version of the operator has been available since version 1 of the default O
 <dd>Constrain tiles and axis's type to int64 tensors.</dd>
 </dl>
 
-### <a name="TopK-1"></a>**TopK-1**
+### <a name="TopK-1"></a>**TopK-1**</a>
 
   Retrieve the top-K elements along a specified axis. Given an input tensor of
   shape [a_0, a_1, ..., a_{n-1}] and integer argument k, return two outputs:
@@ -4414,7 +4414,7 @@ This version of the operator has been available since version 1 of the default O
 <dd>Constrain index tensor to int64</dd>
 </dl>
 
-### <a name="Transpose-1"></a>**Transpose-1**
+### <a name="Transpose-1"></a>**Transpose-1**</a>
 
   Returns a transpose of the input tensor. (Similar to `numpy.transpose`).
   The optional attribute `perm` must be a permutation of the dimensions of
@@ -4459,7 +4459,7 @@ This version of the operator has been available since version 1 of the default O
 <dd>Constrain input and output types to all tensor types.</dd>
 </dl>
 
-### <a name="Unsqueeze-1"></a>**Unsqueeze-1**
+### <a name="Unsqueeze-1"></a>**Unsqueeze-1**</a>
 
   Insert single-dimensional entries to the shape of a tensor.
   Takes one required argument `axes`, a list of dimensions that will be inserted.
@@ -4499,7 +4499,7 @@ This version of the operator has been available since version 1 of the default O
 <dd>Constrain input and output types to all tensor types.</dd>
 </dl>
 
-### <a name="Upsample-1"></a>**Upsample-1**
+### <a name="Upsample-1"></a>**Upsample-1**</a>
 
   Upsample the input tensor.
   The width and height of the output tensor are:
@@ -4557,7 +4557,7 @@ No versioning maintained for experimental ops.
 <dd>Constrain output types to bool, int32, int64, float16, float, double tensors.</dd>
 </dl>
 
-### <a name="Xor-1"></a>**Xor-1**
+### <a name="Xor-1"></a>**Xor-1**</a>
 
   Returns the tensor resulted from performing the `xor` logical operation
   elementwise on the input tensors `A` and `B`.
@@ -4605,7 +4605,7 @@ This version of the operator has been available since version 1 of the default O
 </dl>
 
 ## Version 2 of the default ONNX operator set
-### <a name="GlobalLpPool-2"></a>**GlobalLpPool-2**
+### <a name="GlobalLpPool-2"></a>**GlobalLpPool-2**</a>
 
   GlobalLpPool consumes an input tensor X and applies lp pool pooling across
    the values in the same channel. This is equivalent to LpPool with kernel size
@@ -4643,7 +4643,7 @@ This version of the operator has been available since version 2 of the default O
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
-### <a name="LpPool-2"></a>**LpPool-2**
+### <a name="LpPool-2"></a>**LpPool-2**</a>
 
   LpPool consumes an input tensor X and applies Lp pooling across
    the tensor according to kernel sizes, stride sizes, and pad lengths.
@@ -4691,7 +4691,7 @@ This version of the operator has been available since version 2 of the default O
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
-### <a name="Pad-2"></a>**Pad-2**
+### <a name="Pad-2"></a>**Pad-2**</a>
 
   Given `data` tensor, pads, mode, and value.
   Example:
@@ -4746,7 +4746,7 @@ This version of the operator has been available since version 2 of the default O
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
-### <a name="Split-2"></a>**Split-2**
+### <a name="Split-2"></a>**Split-2**</a>
 
   Split a tensor into a list of tensors, along the specified
   'axis'. Lengths of the parts can be specified using argument 'split'.
@@ -4787,7 +4787,7 @@ This version of the operator has been available since version 2 of the default O
 </dl>
 
 ## Version 3 of the default ONNX operator set
-### <a name="GRU-3"></a>**GRU-3**
+### <a name="GRU-3"></a>**GRU-3**</a>
 
   Computes an one-layer GRU. This operator is usually supported via some custom
   implementation such as CuDNN.
@@ -4923,7 +4923,7 @@ This version of the operator has been available since version 3 of the default O
 </dl>
 
 ## Version 4 of the default ONNX operator set
-### <a name="Concat-4"></a>**Concat-4**
+### <a name="Concat-4"></a>**Concat-4**</a>
 
   Concatenate a list of tensors into a single tensor
 
@@ -4960,7 +4960,7 @@ This version of the operator has been available since version 4 of the default O
 </dl>
 
 ## Version 5 of the default ONNX operator set
-### <a name="Reshape-5"></a>**Reshape-5**
+### <a name="Reshape-5"></a>**Reshape-5**</a>
 
   Reshape the input tensor similar to numpy.reshape.
   First input is the data tensor, second input is a shape tensor which specifies the output shape. It outputs the reshaped tensor.
@@ -4998,7 +4998,7 @@ This version of the operator has been available since version 5 of the default O
 </dl>
 
 ## Version 6 of the default ONNX operator set
-### <a name="Abs-6"></a>**Abs-6**
+### <a name="Abs-6"></a>**Abs-6**</a>
 
   Absolute takes one input data (Tensor<T>) and produces one output data
   (Tensor<T>) where the absolute is, y = abs(x), is applied to
@@ -5029,7 +5029,7 @@ This version of the operator has been available since version 6 of the default O
 <dd>Constrain input and output types to all numeric tensors.</dd>
 </dl>
 
-### <a name="Add-6"></a>**Add-6**
+### <a name="Add-6"></a>**Add-6**</a>
 
   Performs element-wise binary addition (with limited broadcast support).
 
@@ -5088,7 +5088,7 @@ This version of the operator has been available since version 6 of the default O
 <dd>Constrain input and output types to high-precision numeric tensors.</dd>
 </dl>
 
-### <a name="BatchNormalization-6"></a>**BatchNormalization-6**
+### <a name="BatchNormalization-6"></a>**BatchNormalization-6**</a>
 
   Carries out batch normalization as described in the paper
   https://arxiv.org/abs/1502.03167. Depending on the mode it is being run,
@@ -5151,7 +5151,7 @@ This version of the operator has been available since version 6 of the default O
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
-### <a name="Cast-6"></a>**Cast-6**
+### <a name="Cast-6"></a>**Cast-6**</a>
 
   The operator casts the elements of a given input tensor to a data type
   specified by the 'to' argument and returns an output tensor of the same size in
@@ -5193,7 +5193,7 @@ This version of the operator has been available since version 6 of the default O
 <dd>Constrain output types. Casting to strings and complex are not supported.</dd>
 </dl>
 
-### <a name="Ceil-6"></a>**Ceil-6**
+### <a name="Ceil-6"></a>**Ceil-6**</a>
 
   Ceil takes one input data (Tensor<T>) and produces one output data
   (Tensor<T>) where the ceil is, y = ceil(x), is applied to
@@ -5224,7 +5224,7 @@ This version of the operator has been available since version 6 of the default O
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
-### <a name="Clip-6"></a>**Clip-6**
+### <a name="Clip-6"></a>**Clip-6**</a>
 
   Clip operator limits the given input within an interval. The interval is
   specified with arguments 'min' and 'max'. They default to
@@ -5264,7 +5264,7 @@ This version of the operator has been available since version 6 of the default O
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
-### <a name="Div-6"></a>**Div-6**
+### <a name="Div-6"></a>**Div-6**</a>
 
   Performs element-wise binary division (with limited broadcast support).
 
@@ -5326,7 +5326,7 @@ This version of the operator has been available since version 6 of the default O
 <dd>Constrain input and output types to high-precision numeric tensors.</dd>
 </dl>
 
-### <a name="Dropout-6"></a>**Dropout-6**
+### <a name="Dropout-6"></a>**Dropout-6**</a>
 
   Dropout takes one input data (Tensor<float>) and produces two Tensor outputs,
   output (Tensor<float>) and mask (Tensor<bool>). Depending on whether it is in
@@ -5370,7 +5370,7 @@ This version of the operator has been available since version 6 of the default O
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
-### <a name="Elu-6"></a>**Elu-6**
+### <a name="Elu-6"></a>**Elu-6**</a>
 
   Elu takes one input data (Tensor<T>) and produces one output data
   (Tensor<T>) where the function `f(x) = alpha * (exp(x) - 1.) for x <
@@ -5409,7 +5409,7 @@ This version of the operator has been available since version 6 of the default O
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
-### <a name="Exp-6"></a>**Exp-6**
+### <a name="Exp-6"></a>**Exp-6**</a>
 
   Calculates the exponential of the given input tensor, element-wise.
 
@@ -5438,7 +5438,7 @@ This version of the operator has been available since version 6 of the default O
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
-### <a name="Floor-6"></a>**Floor-6**
+### <a name="Floor-6"></a>**Floor-6**</a>
 
   Floor takes one input data (Tensor<T>) and produces one output data
   (Tensor<T>) where the floor is, y = floor(x), is applied to
@@ -5469,7 +5469,7 @@ This version of the operator has been available since version 6 of the default O
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
-### <a name="Gemm-6"></a>**Gemm-6**
+### <a name="Gemm-6"></a>**Gemm-6**</a>
 
   General Matrix multiplication:
   https://en.wikipedia.org/wiki/Basic_Linear_Algebra_Subprograms#Level_3
@@ -5524,7 +5524,7 @@ This version of the operator has been available since version 6 of the default O
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
-### <a name="HardSigmoid-6"></a>**HardSigmoid-6**
+### <a name="HardSigmoid-6"></a>**HardSigmoid-6**</a>
 
   HardSigmoid takes one input data (Tensor<T>) and produces one output data
   (Tensor<T>) where the HardSigmoid function, y = max(0, min(1, alpha * x + beta)),
@@ -5564,7 +5564,7 @@ This version of the operator has been available since version 6 of the default O
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
-### <a name="InstanceNormalization-6"></a>**InstanceNormalization-6**
+### <a name="InstanceNormalization-6"></a>**InstanceNormalization-6**</a>
 
   Carries out instance normalization as described in the paper
   https://arxiv.org/abs/1607.08022.
@@ -5609,7 +5609,7 @@ This version of the operator has been available since version 6 of the default O
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
-### <a name="LeakyRelu-6"></a>**LeakyRelu-6**
+### <a name="LeakyRelu-6"></a>**LeakyRelu-6**</a>
 
   LeakyRelu takes input data (Tensor<T>) and an argument alpha, and produces one
   output data (Tensor<T>) where the function `f(x) = alpha * x for x < 0`,
@@ -5647,7 +5647,7 @@ This version of the operator has been available since version 6 of the default O
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
-### <a name="Log-6"></a>**Log-6**
+### <a name="Log-6"></a>**Log-6**</a>
 
   Calculates the natural log of the given input tensor, element-wise.
 
@@ -5676,7 +5676,7 @@ This version of the operator has been available since version 6 of the default O
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
-### <a name="Max-6"></a>**Max-6**
+### <a name="Max-6"></a>**Max-6**</a>
 
   Element-wise max of each of the input tensors. All inputs and outputs must
   have the same shape and data type.
@@ -5706,7 +5706,7 @@ This version of the operator has been available since version 6 of the default O
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
-### <a name="Mean-6"></a>**Mean-6**
+### <a name="Mean-6"></a>**Mean-6**</a>
 
   Element-wise mean of each of the input tensors. All inputs and outputs must
   have the same shape and data type.
@@ -5736,7 +5736,7 @@ This version of the operator has been available since version 6 of the default O
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
-### <a name="Min-6"></a>**Min-6**
+### <a name="Min-6"></a>**Min-6**</a>
 
   Element-wise min of each of the input tensors. All inputs and outputs must
   have the same shape and data type.
@@ -5766,7 +5766,7 @@ This version of the operator has been available since version 6 of the default O
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
-### <a name="Mul-6"></a>**Mul-6**
+### <a name="Mul-6"></a>**Mul-6**</a>
 
   Performs element-wise binary multiplication (with limited broadcast support).
 
@@ -5825,7 +5825,7 @@ This version of the operator has been available since version 6 of the default O
 <dd>Constrain input and output types to high-precision numeric tensors.</dd>
 </dl>
 
-### <a name="Neg-6"></a>**Neg-6**
+### <a name="Neg-6"></a>**Neg-6**</a>
 
   Neg takes one input data (Tensor<T>) and produces one output data
   (Tensor<T>) where each element flipped sign, y = -x, is applied to
@@ -5856,7 +5856,7 @@ This version of the operator has been available since version 6 of the default O
 <dd>Constrain input and output types to signed numeric tensors.</dd>
 </dl>
 
-### <a name="PRelu-6"></a>**PRelu-6**
+### <a name="PRelu-6"></a>**PRelu-6**</a>
 
   PRelu takes input data (Tensor<T>) and slope tensor as input, and produces one
   output data (Tensor<T>) where the function `f(x) = slope * x for x < 0`,
@@ -5890,7 +5890,7 @@ This version of the operator has been available since version 6 of the default O
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
-### <a name="Reciprocal-6"></a>**Reciprocal-6**
+### <a name="Reciprocal-6"></a>**Reciprocal-6**</a>
 
   Reciprocal takes one input data (Tensor<T>) and produces one output data
   (Tensor<T>) where the reciprocal is, y = 1/x, is applied to
@@ -5921,7 +5921,7 @@ This version of the operator has been available since version 6 of the default O
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
-### <a name="Relu-6"></a>**Relu-6**
+### <a name="Relu-6"></a>**Relu-6**</a>
 
   Relu takes one input data (Tensor<T>) and produces one output data
   (Tensor<T>) where the rectified linear function, y = max(0, x), is applied to
@@ -5952,7 +5952,7 @@ This version of the operator has been available since version 6 of the default O
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
-### <a name="Selu-6"></a>**Selu-6**
+### <a name="Selu-6"></a>**Selu-6**</a>
 
   Selu takes one input data (Tensor<T>) and produces one output data
   (Tensor<T>) where the scaled exponential linear unit function,
@@ -5993,7 +5993,7 @@ This version of the operator has been available since version 6 of the default O
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
-### <a name="Sigmoid-6"></a>**Sigmoid-6**
+### <a name="Sigmoid-6"></a>**Sigmoid-6**</a>
 
   Sigmoid takes one input data (Tensor<T>) and produces one output data
   (Tensor<T>) where the sigmoid function, y = 1 / (1 + exp(-x)), is applied to the
@@ -6024,7 +6024,7 @@ This version of the operator has been available since version 6 of the default O
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
-### <a name="Sqrt-6"></a>**Sqrt-6**
+### <a name="Sqrt-6"></a>**Sqrt-6**</a>
 
   Square root takes one input data (Tensor<T>) and produces one output data
   (Tensor<T>) where the square root is, y = x^0.5, is applied to
@@ -6055,7 +6055,7 @@ This version of the operator has been available since version 6 of the default O
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
-### <a name="Sub-6"></a>**Sub-6**
+### <a name="Sub-6"></a>**Sub-6**</a>
 
   Performs element-wise binary subtraction (with limited broadcast support).
 
@@ -6114,7 +6114,7 @@ This version of the operator has been available since version 6 of the default O
 <dd>Constrain input and output types to high-precision numeric tensors.</dd>
 </dl>
 
-### <a name="Sum-6"></a>**Sum-6**
+### <a name="Sum-6"></a>**Sum-6**</a>
 
   Element-wise sum of each of the input tensors. All inputs and outputs must
   have the same shape and data type.
@@ -6144,7 +6144,7 @@ This version of the operator has been available since version 6 of the default O
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
-### <a name="Tanh-6"></a>**Tanh-6**
+### <a name="Tanh-6"></a>**Tanh-6**</a>
 
   Calculates the hyperbolic tangent of the given input tensor element-wise.
 
@@ -6173,7 +6173,7 @@ This version of the operator has been available since version 6 of the default O
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
-### <a name="Tile-6"></a>**Tile-6**
+### <a name="Tile-6"></a>**Tile-6**</a>
 
   Constructs a tensor by tiling a given tensor.
   This is the same as function `tile` in Numpy, but no broadcast.
@@ -6209,7 +6209,7 @@ This version of the operator has been available since version 6 of the default O
 </dl>
 
 ## Version 7 of the default ONNX operator set
-### <a name="Acos-7"></a>**Acos-7**
+### <a name="Acos-7"></a>**Acos-7**</a>
 
   Calculates the arccosine (inverse of cosine) of the given input tensor, element-wise.
 
@@ -6238,7 +6238,7 @@ This version of the operator has been available since version 7 of the default O
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
-### <a name="Add-7"></a>**Add-7**
+### <a name="Add-7"></a>**Add-7**</a>
 
   Performs element-wise binary addition (with Numpy-style broadcasting support).
 
@@ -6271,7 +6271,7 @@ This version of the operator has been available since version 7 of the default O
 <dd>Constrain input and output types to high-precision numeric tensors.</dd>
 </dl>
 
-### <a name="And-7"></a>**And-7**
+### <a name="And-7"></a>**And-7**</a>
 
   Returns the tensor resulted from performing the `and` logical operation
   elementwise on the input tensors `A` and `B` (with Numpy-style broadcasting support).
@@ -6307,7 +6307,7 @@ This version of the operator has been available since version 7 of the default O
 <dd>Constrain output to boolean tensor.</dd>
 </dl>
 
-### <a name="Asin-7"></a>**Asin-7**
+### <a name="Asin-7"></a>**Asin-7**</a>
 
   Calculates the arcsine (inverse of sine) of the given input tensor, element-wise.
 
@@ -6336,7 +6336,7 @@ This version of the operator has been available since version 7 of the default O
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
-### <a name="Atan-7"></a>**Atan-7**
+### <a name="Atan-7"></a>**Atan-7**</a>
 
   Calculates the arctangent (inverse of tangent) of the given input tensor, element-wise.
 
@@ -6365,7 +6365,7 @@ This version of the operator has been available since version 7 of the default O
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
-### <a name="AveragePool-7"></a>**AveragePool-7**
+### <a name="AveragePool-7"></a>**AveragePool-7**</a>
 
   AveragePool consumes an input tensor X and applies average pooling across
    the tensor according to kernel sizes, stride sizes, and pad lengths.
@@ -6430,7 +6430,7 @@ This version of the operator has been available since version 7 of the default O
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
-### <a name="BatchNormalization-7"></a>**BatchNormalization-7**
+### <a name="BatchNormalization-7"></a>**BatchNormalization-7**</a>
 
   Carries out batch normalization as described in the paper
       https://arxiv.org/abs/1502.03167. Depending on the mode it is being run,
@@ -6492,7 +6492,7 @@ This version of the operator has been available since version 7 of the default O
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
-### <a name="Cos-7"></a>**Cos-7**
+### <a name="Cos-7"></a>**Cos-7**</a>
 
   Calculates the cosine of the given input tensor, element-wise.
 
@@ -6521,7 +6521,7 @@ This version of the operator has been available since version 7 of the default O
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
-### <a name="Div-7"></a>**Div-7**
+### <a name="Div-7"></a>**Div-7**</a>
 
   Performs element-wise binary division (with Numpy-style broadcasting support).
 
@@ -6556,7 +6556,7 @@ This version of the operator has been available since version 7 of the default O
 <dd>Constrain input and output types to high-precision numeric tensors.</dd>
 </dl>
 
-### <a name="Dropout-7"></a>**Dropout-7**
+### <a name="Dropout-7"></a>**Dropout-7**</a>
 
   Dropout takes one input data (Tensor<float>) and produces two Tensor outputs,
   output (Tensor<float>) and mask (Tensor<bool>). Depending on whether it is in
@@ -6599,7 +6599,7 @@ This version of the operator has been available since version 7 of the default O
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
-### <a name="Equal-7"></a>**Equal-7**
+### <a name="Equal-7"></a>**Equal-7**</a>
 
   Returns the tensor resulted from performing the `equal` logical operation
   elementwise on the input tensors `A` and `B` (with Numpy-style broadcasting support).
@@ -6635,7 +6635,7 @@ This version of the operator has been available since version 7 of the default O
 <dd>Constrain output to boolean tensor.</dd>
 </dl>
 
-### <a name="GRU-7"></a>**GRU-7**
+### <a name="GRU-7"></a>**GRU-7**</a>
 
   Computes an one-layer GRU. This operator is usually supported via some custom
   implementation such as CuDNN.
@@ -6769,7 +6769,7 @@ This version of the operator has been available since version 7 of the default O
 <dd>Constrain seq_lens to integer tensor.</dd>
 </dl>
 
-### <a name="Gemm-7"></a>**Gemm-7**
+### <a name="Gemm-7"></a>**Gemm-7**</a>
 
   General Matrix multiplication:
   https://en.wikipedia.org/wiki/Basic_Linear_Algebra_Subprograms#Level_3
@@ -6826,7 +6826,7 @@ This version of the operator has been available since version 7 of the default O
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
-### <a name="Greater-7"></a>**Greater-7**
+### <a name="Greater-7"></a>**Greater-7**</a>
 
   Returns the tensor resulted from performing the `greater` logical operation
   elementwise on the input tensors `A` and `B` (with Numpy-style broadcasting support).
@@ -6862,7 +6862,7 @@ This version of the operator has been available since version 7 of the default O
 <dd>Constrain output to boolean tensor.</dd>
 </dl>
 
-### <a name="LSTM-7"></a>**LSTM-7**
+### <a name="LSTM-7"></a>**LSTM-7**</a>
 
   Computes an one-layer LSTM. This operator is usually supported via some
   custom implementation such as CuDNN.
@@ -7010,7 +7010,7 @@ This version of the operator has been available since version 7 of the default O
 <dd>Constrain seq_lens to integer tensor.</dd>
 </dl>
 
-### <a name="Less-7"></a>**Less-7**
+### <a name="Less-7"></a>**Less-7**</a>
 
   Returns the tensor resulted from performing the `less` logical operation
   elementwise on the input tensors `A` and `B` (with Numpy-style broadcasting support).
@@ -7046,7 +7046,7 @@ This version of the operator has been available since version 7 of the default O
 <dd>Constrain output to boolean tensor.</dd>
 </dl>
 
-### <a name="Mul-7"></a>**Mul-7**
+### <a name="Mul-7"></a>**Mul-7**</a>
 
   Performs element-wise binary multiplication (with Numpy-style broadcasting support).
 
@@ -7079,7 +7079,7 @@ This version of the operator has been available since version 7 of the default O
 <dd>Constrain input and output types to high-precision numeric tensors.</dd>
 </dl>
 
-### <a name="Multinomial-7"></a>**Multinomial-7**
+### <a name="Multinomial-7"></a>**Multinomial-7**</a>
 
   Generate a tensor of samples from a multinomial distribution according to the probabilities
   of each of the possible outcomes.
@@ -7122,7 +7122,7 @@ This version of the operator has been available since version 7 of the default O
 <dd>Constrain output types to integral tensors.</dd>
 </dl>
 
-### <a name="Or-7"></a>**Or-7**
+### <a name="Or-7"></a>**Or-7**</a>
 
   Returns the tensor resulted from performing the `or` logical operation
   elementwise on the input tensors `A` and `B` (with Numpy-style broadcasting support).
@@ -7158,7 +7158,7 @@ This version of the operator has been available since version 7 of the default O
 <dd>Constrain output to boolean tensor.</dd>
 </dl>
 
-### <a name="PRelu-7"></a>**PRelu-7**
+### <a name="PRelu-7"></a>**PRelu-7**</a>
 
   PRelu takes input data (Tensor<T>) and slope tensor as input, and produces one
   output data (Tensor<T>) where the function `f(x) = slope * x for x < 0`,
@@ -7192,7 +7192,7 @@ This version of the operator has been available since version 7 of the default O
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
-### <a name="Pow-7"></a>**Pow-7**
+### <a name="Pow-7"></a>**Pow-7**</a>
 
   Pow takes input data (Tensor<T>) and exponent Tensor, and
   produces one output data (Tensor<T>) where the function `f(x) = x^exponent`,
@@ -7226,7 +7226,7 @@ This version of the operator has been available since version 7 of the default O
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
-### <a name="RNN-7"></a>**RNN-7**
+### <a name="RNN-7"></a>**RNN-7**</a>
 
   Computes an one-layer simple RNN. This operator is usually supported
   via some custom implementation such as CuDNN.
@@ -7346,7 +7346,7 @@ This version of the operator has been available since version 7 of the default O
 <dd>Constrain seq_lens to integer tensor.</dd>
 </dl>
 
-### <a name="Sin-7"></a>**Sin-7**
+### <a name="Sin-7"></a>**Sin-7**</a>
 
   Calculates the sine of the given input tensor, element-wise.
 
@@ -7375,7 +7375,7 @@ This version of the operator has been available since version 7 of the default O
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
-### <a name="Sub-7"></a>**Sub-7**
+### <a name="Sub-7"></a>**Sub-7**</a>
 
   Performs element-wise binary subtraction (with Numpy-style broadcasting support).
 
@@ -7408,7 +7408,7 @@ This version of the operator has been available since version 7 of the default O
 <dd>Constrain input and output types to high-precision numeric tensors.</dd>
 </dl>
 
-### <a name="Tan-7"></a>**Tan-7**
+### <a name="Tan-7"></a>**Tan-7**</a>
 
   Calculates the tangent of the given input tensor, element-wise.
 
@@ -7437,7 +7437,7 @@ This version of the operator has been available since version 7 of the default O
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
-### <a name="Upsample-7"></a>**Upsample-7**
+### <a name="Upsample-7"></a>**Upsample-7**</a>
 
   Upsample the input tensor.
   Each dimension value of the output tensor is:
@@ -7477,7 +7477,7 @@ This version of the operator has been available since version 7 of the default O
 <dd>Constrain input and output types to all tensor types.</dd>
 </dl>
 
-### <a name="Xor-7"></a>**Xor-7**
+### <a name="Xor-7"></a>**Xor-7**</a>
 
   Returns the tensor resulted from performing the `xor` logical operation
   elementwise on the input tensors `A` and `B` (with Numpy-style broadcasting support).
@@ -7514,7 +7514,7 @@ This version of the operator has been available since version 7 of the default O
 </dl>
 
 ## Version 8 of the default ONNX operator set
-### <a name="Expand-8"></a>**Expand-8**
+### <a name="Expand-8"></a>**Expand-8**</a>
 
   Broadcast the input tensor following the given shape and the broadcast rule.
   The broadcast rule is similar to numpy.array(input) * numpy.ones(shape):
@@ -7552,7 +7552,7 @@ This version of the operator has been available since version 8 of the default O
 <dd>Constrain input and output types to all tensors.</dd>
 </dl>
 
-### <a name="Max-8"></a>**Max-8**
+### <a name="Max-8"></a>**Max-8**</a>
 
   Element-wise max of each of the input tensors (with Numpy-style broadcasting support).
   All inputs and outputs must have the same data type.
@@ -7583,7 +7583,7 @@ This version of the operator has been available since version 8 of the default O
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
-### <a name="MaxPool-8"></a>**MaxPool-8**
+### <a name="MaxPool-8"></a>**MaxPool-8**</a>
 
   MaxPool consumes an input tensor X and applies max pooling across
    the tensor according to kernel sizes, stride sizes, and pad lengths.
@@ -7652,7 +7652,7 @@ This version of the operator has been available since version 8 of the default O
 <dd>Constrain index tensor to int64</dd>
 </dl>
 
-### <a name="Mean-8"></a>**Mean-8**
+### <a name="Mean-8"></a>**Mean-8**</a>
 
   Element-wise mean of each of the input tensors (with Numpy-style broadcasting support).
   All inputs and outputs must have the same data type.
@@ -7683,7 +7683,7 @@ This version of the operator has been available since version 8 of the default O
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
-### <a name="Min-8"></a>**Min-8**
+### <a name="Min-8"></a>**Min-8**</a>
 
   Element-wise min of each of the input tensors (with Numpy-style broadcasting support).
   All inputs and outputs must have the same data type.
@@ -7714,7 +7714,7 @@ This version of the operator has been available since version 8 of the default O
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
-### <a name="Scan-8"></a>**Scan-8**
+### <a name="Scan-8"></a>**Scan-8**</a>
 
   Scan can be used to iterate over one or more scan_input tensors,
   constructing zero or more scan_output tensors. It combines ideas from general recurrences,
@@ -7882,7 +7882,7 @@ This version of the operator has been available since version 8 of the default O
 <dd>All Tensor types</dd>
 </dl>
 
-### <a name="Sum-8"></a>**Sum-8**
+### <a name="Sum-8"></a>**Sum-8**</a>
 
   Element-wise sum of each of the input tensors (with Numpy-style broadcasting support).
   All inputs and outputs must have the same data type.
@@ -7914,7 +7914,7 @@ This version of the operator has been available since version 8 of the default O
 </dl>
 
 ## Version 9 of the default ONNX operator set
-### <a name="Acosh-9"></a>**Acosh-9**
+### <a name="Acosh-9"></a>**Acosh-9**</a>
 
   Calculates the hyperbolic arccosine of the given input tensor element-wise.
 
@@ -7943,7 +7943,7 @@ This version of the operator has been available since version 9 of the default O
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
-### <a name="Asinh-9"></a>**Asinh-9**
+### <a name="Asinh-9"></a>**Asinh-9**</a>
 
   Calculates the hyperbolic arcsine of the given input tensor element-wise.
 
@@ -7972,7 +7972,7 @@ This version of the operator has been available since version 9 of the default O
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
-### <a name="Atanh-9"></a>**Atanh-9**
+### <a name="Atanh-9"></a>**Atanh-9**</a>
 
   Calculates the hyperbolic arctangent of the given input tensor element-wise.
 
@@ -8001,7 +8001,7 @@ This version of the operator has been available since version 9 of the default O
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
-### <a name="BatchNormalization-9"></a>**BatchNormalization-9**
+### <a name="BatchNormalization-9"></a>**BatchNormalization-9**</a>
 
   Carries out batch normalization as described in the paper
   https://arxiv.org/abs/1502.03167. Depending on the mode it is being run,
@@ -8064,7 +8064,7 @@ This version of the operator has been available since version 9 of the default O
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
-### <a name="Cast-9"></a>**Cast-9**
+### <a name="Cast-9"></a>**Cast-9**</a>
 
   The operator casts the elements of a given input tensor to a data type
   specified by the 'to' argument and returns an output tensor of the same size in
@@ -8120,7 +8120,7 @@ This version of the operator has been available since version 9 of the default O
 <dd>Constrain output types. Casting to complex is not supported.</dd>
 </dl>
 
-### <a name="Compress-9"></a>**Compress-9**
+### <a name="Compress-9"></a>**Compress-9**</a>
 
   Selects slices from an input tensor along a given axis where condition evaluates to True for each axis index.
       In case axis is not provided, input is flattened before elements are selected.
@@ -8163,7 +8163,7 @@ This version of the operator has been available since version 9 of the default O
 <dd>Constrain to boolean tensors.</dd>
 </dl>
 
-### <a name="Constant-9"></a>**Constant-9**
+### <a name="Constant-9"></a>**Constant-9**</a>
 
   A constant tensor.
 
@@ -8195,7 +8195,7 @@ This version of the operator has been available since version 9 of the default O
 <dd>Constrain input and output types to all tensor types.</dd>
 </dl>
 
-### <a name="ConstantOfShape-9"></a>**ConstantOfShape-9**
+### <a name="ConstantOfShape-9"></a>**ConstantOfShape-9**</a>
 
   Generate a tensor with given value and shape.
 
@@ -8233,7 +8233,7 @@ This version of the operator has been available since version 9 of the default O
 <dd>Constrain output types to be numerics.</dd>
 </dl>
 
-### <a name="Cosh-9"></a>**Cosh-9**
+### <a name="Cosh-9"></a>**Cosh-9**</a>
 
   Calculates the hyperbolic cosine of the given input tensor element-wise.
 
@@ -8262,7 +8262,7 @@ This version of the operator has been available since version 9 of the default O
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
-### <a name="Erf-9"></a>**Erf-9**
+### <a name="Erf-9"></a>**Erf-9**</a>
 
   Computes the error function of the given input tensor element-wise.
 
@@ -8291,7 +8291,7 @@ This version of the operator has been available since version 9 of the default O
 <dd>Constrain input and output types to all numeric tensors.</dd>
 </dl>
 
-### <a name="EyeLike-9"></a>**EyeLike-9**
+### <a name="EyeLike-9"></a>**EyeLike-9**</a>
 
   Generate a 2D tensor (matrix) with ones on the diagonal and zeros everywhere else. Only 2D
   tensors are supported, i.e. input T1 must be of rank 2. The shape of the output tensor is the
@@ -8337,7 +8337,7 @@ This version of the operator has been available since version 9 of the default O
 <dd>Constrain output types. Strings and complex are not supported.</dd>
 </dl>
 
-### <a name="Flatten-9"></a>**Flatten-9**
+### <a name="Flatten-9"></a>**Flatten-9**</a>
 
   Flattens the input tensor into a 2D matrix. If input tensor has shape
   (d_0, d_1, ... d_n) then the output will have shape
@@ -8375,7 +8375,7 @@ This version of the operator has been available since version 9 of the default O
 <dd>Constrain input and output to all tensor types.</dd>
 </dl>
 
-### <a name="Gemm-9"></a>**Gemm-9**
+### <a name="Gemm-9"></a>**Gemm-9**</a>
 
   General Matrix multiplication:
   https://en.wikipedia.org/wiki/Basic_Linear_Algebra_Subprograms#Level_3
@@ -8432,7 +8432,7 @@ This version of the operator has been available since version 9 of the default O
 <dd>Constrain input and output types to float/int tensors.</dd>
 </dl>
 
-### <a name="Greater-9"></a>**Greater-9**
+### <a name="Greater-9"></a>**Greater-9**</a>
 
   Returns the tensor resulted from performing the `greater` logical operation
   elementwise on the input tensors `A` and `B` (with Numpy-style broadcasting support).
@@ -8468,7 +8468,7 @@ This version of the operator has been available since version 9 of the default O
 <dd>Constrain output to boolean tensor.</dd>
 </dl>
 
-### <a name="IsNaN-9"></a>**IsNaN-9**
+### <a name="IsNaN-9"></a>**IsNaN-9**</a>
 
   Returns which elements of the input are NaN.
 
@@ -8499,7 +8499,7 @@ This version of the operator has been available since version 9 of the default O
 <dd>Constrain output types to boolean tensors.</dd>
 </dl>
 
-### <a name="Less-9"></a>**Less-9**
+### <a name="Less-9"></a>**Less-9**</a>
 
   Returns the tensor resulted from performing the `less` logical operation
   elementwise on the input tensors `A` and `B` (with Numpy-style broadcasting support).
@@ -8535,7 +8535,7 @@ This version of the operator has been available since version 9 of the default O
 <dd>Constrain output to boolean tensor.</dd>
 </dl>
 
-### <a name="MatMul-9"></a>**MatMul-9**
+### <a name="MatMul-9"></a>**MatMul-9**</a>
 
   Matrix product that behaves like [numpy.matmul](https://numpy.org/doc/stable/reference/generated/numpy.matmul.html).
 
@@ -8566,7 +8566,7 @@ This version of the operator has been available since version 9 of the default O
 <dd>Constrain input and output types to float/int tensors.</dd>
 </dl>
 
-### <a name="MaxUnpool-9"></a>**MaxUnpool-9**
+### <a name="MaxUnpool-9"></a>**MaxUnpool-9**</a>
 
   MaxUnpool essentially computes the partial inverse of the MaxPool op.
    The input information to this op is typically the output information from a MaxPool op. The first
@@ -8629,7 +8629,7 @@ This version of the operator has been available since version 9 of the default O
 <dd>Constrain index tensor to int64</dd>
 </dl>
 
-### <a name="MeanVarianceNormalization-9"></a>**MeanVarianceNormalization-9**
+### <a name="MeanVarianceNormalization-9"></a>**MeanVarianceNormalization-9**</a>
 
   A MeanVarianceNormalization Function: Perform mean variance normalization
         on the input tensor X using formula: <br/> ``` (X-EX)/sqrt(E(X-EX)^2) ```
@@ -8666,7 +8666,7 @@ This version of the operator has been available since version 9 of the default O
 <dd>Constrain input and output types to all numeric tensors.</dd>
 </dl>
 
-### <a name="NonZero-9"></a>**NonZero-9**
+### <a name="NonZero-9"></a>**NonZero-9**</a>
 
   Returns the indices of the elements that are non-zero
       (in row-major order - by dimension).
@@ -8699,7 +8699,7 @@ This version of the operator has been available since version 9 of the default O
 <dd>Constrain to all tensor types.</dd>
 </dl>
 
-### <a name="OneHot-9"></a>**OneHot-9**
+### <a name="OneHot-9"></a>**OneHot-9**</a>
 
   Produces a one-hot tensor based on inputs.
       The locations represented by the index values in the 'indices' input tensor will have 'on_value'
@@ -8754,7 +8754,7 @@ This version of the operator has been available since version 9 of the default O
 <dd>Constrain to any tensor type.</dd>
 </dl>
 
-### <a name="PRelu-9"></a>**PRelu-9**
+### <a name="PRelu-9"></a>**PRelu-9**</a>
 
   PRelu takes input data (Tensor<T>) and slope tensor as input, and produces one
   output data (Tensor<T>) where the function `f(x) = slope * x for x < 0`,
@@ -8788,7 +8788,7 @@ This version of the operator has been available since version 9 of the default O
 <dd>Constrain input and output types to float/int tensors.</dd>
 </dl>
 
-### <a name="Scan-9"></a>**Scan-9**
+### <a name="Scan-9"></a>**Scan-9**</a>
 
   Scan can be used to iterate over one or more scan_input tensors,
   constructing zero or more scan_output tensors. It combines ideas from general recurrences,
@@ -8954,7 +8954,7 @@ This version of the operator has been available since version 9 of the default O
 <dd>All Tensor types</dd>
 </dl>
 
-### <a name="Scatter-9"></a>**Scatter-9**
+### <a name="Scatter-9"></a>**Scatter-9**</a>
 
   Given `data`, `updates` and `indices` input tensors of rank r >= 1, write the values provided by `updates`
   into the first input, `data`, along `axis` dimension of `data` (by default outer-most one as axis=0) at corresponding `indices`.
@@ -9026,7 +9026,7 @@ This version of the operator has been available since version 9 of the default O
 <dd>Constrain indices to integer types</dd>
 </dl>
 
-### <a name="Shrink-9"></a>**Shrink-9**
+### <a name="Shrink-9"></a>**Shrink-9**</a>
 
   Shrink takes one input data (Tensor<numeric>) and produces one Tensor output,
   having same datatype and shape with input. It has two attributes, lambd and
@@ -9067,7 +9067,7 @@ This version of the operator has been available since version 9 of the default O
 <dd>Constrain input to only numeric types.</dd>
 </dl>
 
-### <a name="Sign-9"></a>**Sign-9**
+### <a name="Sign-9"></a>**Sign-9**</a>
 
   Calculate the sign of the given input tensor element-wise.
   If input > 0, output 1. if input < 0, output -1. if input == 0, output 0.
@@ -9097,7 +9097,7 @@ This version of the operator has been available since version 9 of the default O
 <dd>Constrain input and output types to all numeric tensors.</dd>
 </dl>
 
-### <a name="Sinh-9"></a>**Sinh-9**
+### <a name="Sinh-9"></a>**Sinh-9**</a>
 
   Calculates the hyperbolic sine of the given input tensor element-wise.
 
@@ -9126,7 +9126,7 @@ This version of the operator has been available since version 9 of the default O
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
-### <a name="TfIdfVectorizer-9"></a>**TfIdfVectorizer-9**
+### <a name="TfIdfVectorizer-9"></a>**TfIdfVectorizer-9**</a>
 
   This transform extracts n-grams from the input sequence and save them as a vector. Input can
   be either a 1-D or 2-D tensor. For 1-D input, output is the n-gram representation of that input.
@@ -9206,7 +9206,7 @@ This version of the operator has been available since version 9 of the default O
 <dd>1-D tensor of floats</dd>
 </dl>
 
-### <a name="Upsample-9"></a>**Upsample-9**
+### <a name="Upsample-9"></a>**Upsample-9**</a>
 
   Upsample the input tensor.
   Each dimension value of the output tensor is:
@@ -9246,7 +9246,7 @@ This version of the operator has been available since version 9 of the default O
 <dd>Constrain input 'X' and output 'Y' to all tensor types.</dd>
 </dl>
 
-### <a name="Where-9"></a>**Where-9**
+### <a name="Where-9"></a>**Where-9**</a>
 
   Return elements, either from X or Y, depending on condition.
   Where behaves like
@@ -9287,7 +9287,7 @@ This version of the operator has been available since version 9 of the default O
 </dl>
 
 ## Version 10 of the default ONNX operator set
-### <a name="AveragePool-10"></a>**AveragePool-10**
+### <a name="AveragePool-10"></a>**AveragePool-10**</a>
 
   AveragePool consumes an input tensor X and applies average pooling across
    the tensor according to kernel sizes, stride sizes, and pad lengths.
@@ -9361,7 +9361,7 @@ This version of the operator has been available since version 10 of the default 
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
-### <a name="ConvInteger-10"></a>**ConvInteger-10**
+### <a name="ConvInteger-10"></a>**ConvInteger-10**</a>
 
   The integer convolution operator consumes an input tensor, its zero-point, a filter, and its zero-point,
   and computes the output. The production MUST never overflow. The accumulation may overflow if and only if in 32 bits.
@@ -9418,7 +9418,7 @@ This version of the operator has been available since version 10 of the default 
 <dd>Constrain output y data type to 32-bit integer tensor.</dd>
 </dl>
 
-### <a name="DequantizeLinear-10"></a>**DequantizeLinear-10**
+### <a name="DequantizeLinear-10"></a>**DequantizeLinear-10**</a>
 
   The linear dequantization operator. It consumes a quantized tensor, a scale, a zero point to compute the full precision tensor.
   The dequantization formula is y = (x - x_zero_point) * x_scale. 'x_scale' and 'x_zero_point' are both scalars.
@@ -9454,7 +9454,7 @@ This version of the operator has been available since version 10 of the default 
 <dd>Constrain 'x_zero_point' and 'x' to 8-bit/32-bit integer tensor.</dd>
 </dl>
 
-### <a name="Dropout-10"></a>**Dropout-10**
+### <a name="Dropout-10"></a>**Dropout-10**</a>
 
   Dropout takes one input floating tensor and produces two tensor outputs,
   output (floating tensor) and mask (`Tensor<bool>`). Depending on whether it is
@@ -9499,7 +9499,7 @@ This version of the operator has been available since version 10 of the default 
 <dd>Constrain output mask types to boolean tensors.</dd>
 </dl>
 
-### <a name="IsInf-10"></a>**IsInf-10**
+### <a name="IsInf-10"></a>**IsInf-10**</a>
 
   Map infinity to true and other values to false.
 
@@ -9539,7 +9539,7 @@ This version of the operator has been available since version 10 of the default 
 <dd>Constrain output types to boolean tensors.</dd>
 </dl>
 
-### <a name="MatMulInteger-10"></a>**MatMulInteger-10**
+### <a name="MatMulInteger-10"></a>**MatMulInteger-10**</a>
 
   Matrix product that behaves like [numpy.matmul](https://numpy.org/doc/stable/reference/generated/numpy.matmul.html).
   The production MUST never overflow. The accumulation may overflow if and only if in 32 bits.
@@ -9579,7 +9579,7 @@ This version of the operator has been available since version 10 of the default 
 <dd>Constrain output Y data type as 32-bit integer tensor.</dd>
 </dl>
 
-### <a name="MaxPool-10"></a>**MaxPool-10**
+### <a name="MaxPool-10"></a>**MaxPool-10**</a>
 
   MaxPool consumes an input tensor X and applies max pooling across
    the tensor according to kernel sizes, stride sizes, and pad lengths.
@@ -9659,7 +9659,7 @@ This version of the operator has been available since version 10 of the default 
 <dd>Constrain index tensor to int64</dd>
 </dl>
 
-### <a name="Mod-10"></a>**Mod-10**
+### <a name="Mod-10"></a>**Mod-10**</a>
 
   Performs element-wise binary modulus (with Numpy-style broadcasting support).
       The sign of the remainder is the same as that of the Divisor.
@@ -9709,7 +9709,7 @@ This version of the operator has been available since version 10 of the default 
 <dd>Constrain input and output types to high-precision numeric tensors.</dd>
 </dl>
 
-### <a name="NonMaxSuppression-10"></a>**NonMaxSuppression-10**
+### <a name="NonMaxSuppression-10"></a>**NonMaxSuppression-10**</a>
 
   Filter out boxes that have high intersection-over-union (IOU) overlap with previously selected boxes.
   Bounding boxes with score less than score_threshold are removed. Bounding box format is indicated by attribute center_point_box.
@@ -9756,7 +9756,7 @@ This version of the operator has been available since version 10 of the default 
 #### Type Constraints
 
 
-### <a name="QLinearConv-10"></a>**QLinearConv-10**
+### <a name="QLinearConv-10"></a>**QLinearConv-10**</a>
 
   The convolution operator consumes a quantized input tensor, its scale and zero point,
   a quantized filter, its scale and zero point, and output's scale and zero point,
@@ -9830,7 +9830,7 @@ This version of the operator has been available since version 10 of the default 
 <dd>Constrain bias type to 32-bit integer tensor.</dd>
 </dl>
 
-### <a name="QLinearMatMul-10"></a>**QLinearMatMul-10**
+### <a name="QLinearMatMul-10"></a>**QLinearMatMul-10**</a>
 
   Matrix product that behaves like [numpy.matmul](https://numpy.org/doc/stable/reference/generated/numpy.matmul.html).
   It consumes two quantized input tensors, their scales and zero points, scale and zero point of output,
@@ -9887,7 +9887,7 @@ This version of the operator has been available since version 10 of the default 
 <dd>Constrain output y and its zero point data type to 8-bit integer tensor.</dd>
 </dl>
 
-### <a name="QuantizeLinear-10"></a>**QuantizeLinear-10**
+### <a name="QuantizeLinear-10"></a>**QuantizeLinear-10**</a>
 
   The linear per-tensor/layer quantization operator. It consumes a high precision tensor, a scale, a zero point to compute the low precision / quantized tensor.
   The quantization formula is y = saturate ((x / y_scale) + y_zero_point). For saturation, it saturates to [0, 255] if it's uint8, or [-128, 127] if it's int8.
@@ -9924,7 +9924,7 @@ This version of the operator has been available since version 10 of the default 
 <dd>Constrain 'y_zero_point' and 'y' to 8-bit integer tensor.</dd>
 </dl>
 
-### <a name="Resize-10"></a>**Resize-10**
+### <a name="Resize-10"></a>**Resize-10**</a>
 
   Resize the input tensor.
   Each dimension value of the output tensor is:
@@ -9964,7 +9964,7 @@ This version of the operator has been available since version 10 of the default 
 <dd>Constrain input 'X' and output 'Y' to all tensor types.</dd>
 </dl>
 
-### <a name="ReverseSequence-10"></a>**ReverseSequence-10**
+### <a name="ReverseSequence-10"></a>**ReverseSequence-10**</a>
 
   Reverse batch of sequences having different lengths specified by `sequence_lens`.
 
@@ -10036,7 +10036,7 @@ This version of the operator has been available since version 10 of the default 
 <dd>Input and output types can be of any tensor type.</dd>
 </dl>
 
-### <a name="RoiAlign-10"></a>**RoiAlign-10**
+### <a name="RoiAlign-10"></a>**RoiAlign-10**</a>
 
   Region of Interest (RoI) align operation described in the
   [Mask R-CNN paper](https://arxiv.org/abs/1703.06870).
@@ -10096,7 +10096,7 @@ This version of the operator has been available since version 10 of the default 
 <dd>Constrain types to int tensors.</dd>
 </dl>
 
-### <a name="Slice-10"></a>**Slice-10**
+### <a name="Slice-10"></a>**Slice-10**</a>
 
   Produces a slice of the input tensor along multiple axes. Similar to numpy:
   https://numpy.org/doc/stable/reference/routines.indexing.html
@@ -10168,7 +10168,7 @@ This version of the operator has been available since version 10 of the default 
 <dd>Constrain indices to integer types</dd>
 </dl>
 
-### <a name="StringNormalizer-10"></a>**StringNormalizer-10**
+### <a name="StringNormalizer-10"></a>**StringNormalizer-10**</a>
 
   StringNormalization performs string operations for basic cleaning.
   This operator has only one input (denoted by X) and only one output
@@ -10214,7 +10214,7 @@ This version of the operator has been available since version 10 of the default 
 #### Type Constraints
 
 
-### <a name="ThresholdedRelu-10"></a>**ThresholdedRelu-10**
+### <a name="ThresholdedRelu-10"></a>**ThresholdedRelu-10**</a>
 
   ThresholdedRelu takes one input data (Tensor<T>) and produces one output data
   (Tensor<T>) where the rectified linear function, y = x for x > alpha, y = 0 otherwise,
@@ -10252,7 +10252,7 @@ This version of the operator has been available since version 10 of the default 
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
-### <a name="TopK-10"></a>**TopK-10**
+### <a name="TopK-10"></a>**TopK-10**</a>
 
   Retrieve the top-K elements along a specified axis. Given an input tensor of
   shape [a_0, a_1, ..., a_{n-1}] and integer argument k, return two outputs:
@@ -10303,7 +10303,7 @@ This version of the operator has been available since version 10 of the default 
 <dd>Constrain index tensor to int64</dd>
 </dl>
 
-### <a name="Upsample-10"></a>**Upsample-10** (deprecated)
+### <a name="Upsample-10"></a>**Upsample-10**</a> (deprecated)
 
   Upsample the input tensor.
   Each dimension value of the output tensor is:
@@ -10314,7 +10314,7 @@ This version of the operator has been available since version 10 of the default 
 This version of the operator has been deprecated since version 10 of the default ONNX operator set.
 
 ## Version 11 of the default ONNX operator set
-### <a name="ArgMax-11"></a>**ArgMax-11**
+### <a name="ArgMax-11"></a>**ArgMax-11**</a>
 
   Computes the indices of the max elements of the input tensor's element along the
   provided axis. The resulting tensor has the same rank as the input if keepdims equals 1.
@@ -10356,7 +10356,7 @@ This version of the operator has been available since version 11 of the default 
 <dd>Constrain input and output types to all numeric tensors.</dd>
 </dl>
 
-### <a name="ArgMin-11"></a>**ArgMin-11**
+### <a name="ArgMin-11"></a>**ArgMin-11**</a>
 
   Computes the indices of the min elements of the input tensor's element along the
   provided axis. The resulting tensor has the same rank as the input if keepdims equals 1.
@@ -10398,7 +10398,7 @@ This version of the operator has been available since version 11 of the default 
 <dd>Constrain input and output types to all numeric tensors.</dd>
 </dl>
 
-### <a name="AveragePool-11"></a>**AveragePool-11**
+### <a name="AveragePool-11"></a>**AveragePool-11**</a>
 
   AveragePool consumes an input tensor X and applies average pooling across
    the tensor according to kernel sizes, stride sizes, and pad lengths.
@@ -10478,7 +10478,7 @@ This version of the operator has been available since version 11 of the default 
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
-### <a name="BitShift-11"></a>**BitShift-11**
+### <a name="BitShift-11"></a>**BitShift-11**</a>
 
   Bitwise shift operator performs element-wise operation. For each input element, if the
   attribute "direction" is "RIGHT", this operator moves its binary representation toward
@@ -10527,7 +10527,7 @@ This version of the operator has been available since version 11 of the default 
 <dd>Constrain input and output types to integer tensors.</dd>
 </dl>
 
-### <a name="Clip-11"></a>**Clip-11**
+### <a name="Clip-11"></a>**Clip-11**</a>
 
   Clip operator limits the given input within an interval. The interval is
   specified by the inputs 'min' and 'max'. They default to
@@ -10562,7 +10562,7 @@ This version of the operator has been available since version 11 of the default 
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
-### <a name="Compress-11"></a>**Compress-11**
+### <a name="Compress-11"></a>**Compress-11**</a>
 
   Selects slices from an input tensor along a given axis where condition evaluates to True for each axis index.
       In case axis is not provided, input is flattened before elements are selected.
@@ -10605,7 +10605,7 @@ This version of the operator has been available since version 11 of the default 
 <dd>Constrain to boolean tensors.</dd>
 </dl>
 
-### <a name="Concat-11"></a>**Concat-11**
+### <a name="Concat-11"></a>**Concat-11**</a>
 
   Concatenate a list of tensors into a single tensor. All input tensors must have the same shape, except for the dimension size of the axis to concatenate on.
 
@@ -10641,7 +10641,7 @@ This version of the operator has been available since version 11 of the default 
 <dd>Constrain output types to any tensor type.</dd>
 </dl>
 
-### <a name="ConcatFromSequence-11"></a>**ConcatFromSequence-11**
+### <a name="ConcatFromSequence-11"></a>**ConcatFromSequence-11**</a>
 
   Concatenate a sequence of tensors into a single tensor.
   All input tensors must have the same shape, except for the dimension size of the axis to concatenate on.
@@ -10684,7 +10684,7 @@ This version of the operator has been available since version 11 of the default 
 <dd>Constrain output types to any tensor type.</dd>
 </dl>
 
-### <a name="Constant-11"></a>**Constant-11**
+### <a name="Constant-11"></a>**Constant-11**</a>
 
   A constant tensor. Exactly one of the two attributes, either value or sparse_value,
   must be specified.
@@ -10719,7 +10719,7 @@ This version of the operator has been available since version 11 of the default 
 <dd>Constrain input and output types to all tensor types.</dd>
 </dl>
 
-### <a name="Conv-11"></a>**Conv-11**
+### <a name="Conv-11"></a>**Conv-11**</a>
 
   The convolution operator consumes an input tensor and a filter, and
   computes the output.
@@ -10770,7 +10770,7 @@ This version of the operator has been available since version 11 of the default 
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
-### <a name="ConvTranspose-11"></a>**ConvTranspose-11**
+### <a name="ConvTranspose-11"></a>**ConvTranspose-11**</a>
 
   The convolution transpose operator consumes an input tensor and a filter,
   and computes the output.
@@ -10837,7 +10837,7 @@ This version of the operator has been available since version 11 of the default 
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
-### <a name="CumSum-11"></a>**CumSum-11**
+### <a name="CumSum-11"></a>**CumSum-11**</a>
 
   Performs cumulative sum of the input elements along the given axis.
   By default, it will do the sum inclusively meaning the first element is copied as is.
@@ -10898,7 +10898,7 @@ This version of the operator has been available since version 11 of the default 
 <dd>axis tensor can be int32 or int64 only</dd>
 </dl>
 
-### <a name="DepthToSpace-11"></a>**DepthToSpace-11**
+### <a name="DepthToSpace-11"></a>**DepthToSpace-11**</a>
 
   DepthToSpace rearranges (permutes) data from depth into blocks of spatial data.
   This is the reverse transformation of SpaceToDepth. More specifically, this op outputs a copy of
@@ -10962,7 +10962,7 @@ This version of the operator has been available since version 11 of the default 
 <dd>Constrain input and output types to all tensor types.</dd>
 </dl>
 
-### <a name="Det-11"></a>**Det-11**
+### <a name="Det-11"></a>**Det-11**</a>
 
   Det calculates determinant of a square matrix or batches of square matrices.
   Det takes one input tensor of shape `[*, M, M]`, where `*` is zero or more batch dimensions,
@@ -10995,7 +10995,7 @@ This version of the operator has been available since version 11 of the default 
 <dd>Constrain input and output types to floating-point tensors.</dd>
 </dl>
 
-### <a name="DynamicQuantizeLinear-11"></a>**DynamicQuantizeLinear-11**
+### <a name="DynamicQuantizeLinear-11"></a>**DynamicQuantizeLinear-11**</a>
 
   A Function to fuse calculation for Scale, Zero Point and FP32->8Bit conversion of FP32 Input data.
   Outputs Scale, ZeroPoint and Quantized Input for a given FP32 Input.
@@ -11056,7 +11056,7 @@ This version of the operator has been available since version 11 of the default 
 <dd>Constrain 'y_zero_point' and 'y' to 8-bit unsigned integer tensor.</dd>
 </dl>
 
-### <a name="Equal-11"></a>**Equal-11**
+### <a name="Equal-11"></a>**Equal-11**</a>
 
   Returns the tensor resulted from performing the `equal` logical operation
   elementwise on the input tensors `A` and `B` (with Numpy-style broadcasting support).
@@ -11092,7 +11092,7 @@ This version of the operator has been available since version 11 of the default 
 <dd>Constrain output to boolean tensor.</dd>
 </dl>
 
-### <a name="Flatten-11"></a>**Flatten-11**
+### <a name="Flatten-11"></a>**Flatten-11**</a>
 
   Flattens the input tensor into a 2D matrix. If input tensor has shape
   (d_0, d_1, ... d_n) then the output will have shape
@@ -11130,7 +11130,7 @@ This version of the operator has been available since version 11 of the default 
 <dd>Constrain input and output to all tensor types.</dd>
 </dl>
 
-### <a name="Gather-11"></a>**Gather-11**
+### <a name="Gather-11"></a>**Gather-11**</a>
 
   Given `data` tensor of rank r >= 1, and `indices` tensor of rank q, gather
   entries of the axis dimension of `data` (by default outer-most one as axis=0) indexed by `indices`, and concatenates
@@ -11224,7 +11224,7 @@ This version of the operator has been available since version 11 of the default 
 <dd>Constrain indices to integer types</dd>
 </dl>
 
-### <a name="GatherElements-11"></a>**GatherElements-11**
+### <a name="GatherElements-11"></a>**GatherElements-11**</a>
 
   GatherElements takes two inputs `data` and `indices` of the same rank r >= 1
   and an optional attribute `axis` that identifies an axis of `data`
@@ -11318,7 +11318,7 @@ This version of the operator has been available since version 11 of the default 
 <dd>Constrain indices to integer types</dd>
 </dl>
 
-### <a name="GatherND-11"></a>**GatherND-11**
+### <a name="GatherND-11"></a>**GatherND-11**</a>
 
   Given `data` tensor of rank `r` >= 1, and `indices` tensor of rank `q` >= 1, this operator gathers
   slices of `data` into an output tensor of rank `q + r - indices_shape[-1] - 1`.
@@ -11413,7 +11413,7 @@ This version of the operator has been available since version 11 of the default 
 <dd>Constrain input and output types to any tensor type.</dd>
 </dl>
 
-### <a name="Gemm-11"></a>**Gemm-11**
+### <a name="Gemm-11"></a>**Gemm-11**</a>
 
   General Matrix multiplication:
   https://en.wikipedia.org/wiki/Basic_Linear_Algebra_Subprograms#Level_3
@@ -11471,7 +11471,7 @@ This version of the operator has been available since version 11 of the default 
 <dd>Constrain input and output types to float/int tensors.</dd>
 </dl>
 
-### <a name="Hardmax-11"></a>**Hardmax-11**
+### <a name="Hardmax-11"></a>**Hardmax-11**</a>
 
   The operator computes the hardmax (1 for the first maximum value, and 0 for all others) values for each layer in the batch
    of the given input.
@@ -11520,7 +11520,7 @@ This version of the operator has been available since version 11 of the default 
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
-### <a name="If-11"></a>**If-11**
+### <a name="If-11"></a>**If-11**</a>
 
   If conditional
 
@@ -11560,7 +11560,7 @@ This version of the operator has been available since version 11 of the default 
 <dd>Only bool</dd>
 </dl>
 
-### <a name="LogSoftmax-11"></a>**LogSoftmax-11**
+### <a name="LogSoftmax-11"></a>**LogSoftmax-11**</a>
 
   The operator computes the logsoftmax (log of softmax) values for each layer in the batch
    of the given input.
@@ -11609,7 +11609,7 @@ This version of the operator has been available since version 11 of the default 
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
-### <a name="Loop-11"></a>**Loop-11**
+### <a name="Loop-11"></a>**Loop-11**</a>
 
   Generic Looping construct. This loop has multiple termination conditions:
 
@@ -11785,7 +11785,7 @@ This version of the operator has been available since version 11 of the default 
 <dd>tensor of bool, which should be a scalar.</dd>
 </dl>
 
-### <a name="LpPool-11"></a>**LpPool-11**
+### <a name="LpPool-11"></a>**LpPool-11**</a>
 
   LpPool consumes an input tensor X and applies Lp pooling across
    the tensor according to kernel sizes, stride sizes, and pad lengths.
@@ -11833,7 +11833,7 @@ This version of the operator has been available since version 11 of the default 
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
-### <a name="MaxPool-11"></a>**MaxPool-11**
+### <a name="MaxPool-11"></a>**MaxPool-11**</a>
 
   MaxPool consumes an input tensor X and applies max pooling across
    the tensor according to kernel sizes, stride sizes, and pad lengths.
@@ -11913,7 +11913,7 @@ This version of the operator has been available since version 11 of the default 
 <dd>Constrain index tensor to int64</dd>
 </dl>
 
-### <a name="MaxUnpool-11"></a>**MaxUnpool-11**
+### <a name="MaxUnpool-11"></a>**MaxUnpool-11**</a>
 
   MaxUnpool essentially computes the partial inverse of the MaxPool op.
    The input information to this op is typically the output information from a MaxPool op. The first
@@ -11976,7 +11976,7 @@ This version of the operator has been available since version 11 of the default 
 <dd>Constrain index tensor to int64</dd>
 </dl>
 
-### <a name="NonMaxSuppression-11"></a>**NonMaxSuppression-11**
+### <a name="NonMaxSuppression-11"></a>**NonMaxSuppression-11**</a>
 
   Filter out boxes that have high intersection-over-union (IOU) overlap with previously selected boxes.
   Bounding boxes with score less than score_threshold are removed. Bounding box format is indicated by attribute center_point_box.
@@ -12023,7 +12023,7 @@ This version of the operator has been available since version 11 of the default 
 #### Type Constraints
 
 
-### <a name="OneHot-11"></a>**OneHot-11**
+### <a name="OneHot-11"></a>**OneHot-11**</a>
 
   Produces a one-hot tensor based on inputs.
       The locations represented by the index values in the 'indices' input tensor will have 'on_value'
@@ -12085,7 +12085,7 @@ This version of the operator has been available since version 11 of the default 
 <dd>Constrain to any tensor type.</dd>
 </dl>
 
-### <a name="Pad-11"></a>**Pad-11**
+### <a name="Pad-11"></a>**Pad-11**</a>
 
   Given a tensor containing the data to be padded (`data`), a tensor containing the number of start and end pad values for axis (`pads`), (optionally) a `mode`, and (optionally) `constant_value`,
   a padded tensor (`output`) is generated.
@@ -12199,7 +12199,7 @@ This version of the operator has been available since version 11 of the default 
 <dd>Constrain input and output to only numeric types.</dd>
 </dl>
 
-### <a name="Range-11"></a>**Range-11**
+### <a name="Range-11"></a>**Range-11**</a>
 
   Generate a tensor containing a sequence of numbers that begin at `start` and extends by increments of `delta`
   up to `limit` (exclusive).
@@ -12261,7 +12261,7 @@ This version of the operator has been available since version 11 of the default 
 <dd>Constrain input types to common numeric type tensors.</dd>
 </dl>
 
-### <a name="ReduceL1-11"></a>**ReduceL1-11**
+### <a name="ReduceL1-11"></a>**ReduceL1-11**</a>
 
   Computes the L1 norm of the input tensor's element along the provided axes. The resulting
   tensor has the same rank as the input if keepdims equals 1. If keepdims equal 0, then
@@ -12304,7 +12304,7 @@ This version of the operator has been available since version 11 of the default 
 <dd>Constrain input and output types to high-precision numeric tensors.</dd>
 </dl>
 
-### <a name="ReduceL2-11"></a>**ReduceL2-11**
+### <a name="ReduceL2-11"></a>**ReduceL2-11**</a>
 
   Computes the L2 norm of the input tensor's element along the provided axes. The resulting
   tensor has the same rank as the input if keepdims equals 1. If keepdims equal 0, then
@@ -12347,7 +12347,7 @@ This version of the operator has been available since version 11 of the default 
 <dd>Constrain input and output types to high-precision numeric tensors.</dd>
 </dl>
 
-### <a name="ReduceLogSum-11"></a>**ReduceLogSum-11**
+### <a name="ReduceLogSum-11"></a>**ReduceLogSum-11**</a>
 
   Computes the log sum of the input tensor's element along the provided axes. The resulting
   tensor has the same rank as the input if keepdims equals 1. If keepdims equal 0, then
@@ -12390,7 +12390,7 @@ This version of the operator has been available since version 11 of the default 
 <dd>Constrain input and output types to high-precision numeric tensors.</dd>
 </dl>
 
-### <a name="ReduceLogSumExp-11"></a>**ReduceLogSumExp-11**
+### <a name="ReduceLogSumExp-11"></a>**ReduceLogSumExp-11**</a>
 
   Computes the log sum exponent of the input tensor's element along the provided axes. The resulting
   tensor has the same rank as the input if keepdims equals 1. If keepdims equal 0, then
@@ -12433,7 +12433,7 @@ This version of the operator has been available since version 11 of the default 
 <dd>Constrain input and output types to high-precision numeric tensors.</dd>
 </dl>
 
-### <a name="ReduceMax-11"></a>**ReduceMax-11**
+### <a name="ReduceMax-11"></a>**ReduceMax-11**</a>
 
   Computes the max of the input tensor's element along the provided axes. The resulting
   tensor has the same rank as the input if keepdims equals 1. If keepdims equal 0, then
@@ -12477,7 +12477,7 @@ This version of the operator has been available since version 11 of the default 
 <dd>Constrain input and output types to high-precision numeric tensors.</dd>
 </dl>
 
-### <a name="ReduceMean-11"></a>**ReduceMean-11**
+### <a name="ReduceMean-11"></a>**ReduceMean-11**</a>
 
   Computes the mean of the input tensor's element along the provided axes. The resulting
   tensor has the same rank as the input if keepdims equals 1. If keepdims equal 0, then
@@ -12520,7 +12520,7 @@ This version of the operator has been available since version 11 of the default 
 <dd>Constrain input and output types to high-precision numeric tensors.</dd>
 </dl>
 
-### <a name="ReduceMin-11"></a>**ReduceMin-11**
+### <a name="ReduceMin-11"></a>**ReduceMin-11**</a>
 
   Computes the min of the input tensor's element along the provided axes. The resulting
   tensor has the same rank as the input if keepdims equals 1. If keepdims equal 0, then
@@ -12564,7 +12564,7 @@ This version of the operator has been available since version 11 of the default 
 <dd>Constrain input and output types to high-precision numeric tensors.</dd>
 </dl>
 
-### <a name="ReduceProd-11"></a>**ReduceProd-11**
+### <a name="ReduceProd-11"></a>**ReduceProd-11**</a>
 
   Computes the product of the input tensor's element along the provided axes. The resulting
   tensor has the same rank as the input if keepdims equals 1. If keepdims equal 0, then
@@ -12607,7 +12607,7 @@ This version of the operator has been available since version 11 of the default 
 <dd>Constrain input and output types to high-precision numeric tensors.</dd>
 </dl>
 
-### <a name="ReduceSum-11"></a>**ReduceSum-11**
+### <a name="ReduceSum-11"></a>**ReduceSum-11**</a>
 
   Computes the sum of the input tensor's element along the provided axes. The resulting
   tensor has the same rank as the input if keepdims equals 1. If keepdims equal 0, then
@@ -12650,7 +12650,7 @@ This version of the operator has been available since version 11 of the default 
 <dd>Constrain input and output types to high-precision numeric tensors.</dd>
 </dl>
 
-### <a name="ReduceSumSquare-11"></a>**ReduceSumSquare-11**
+### <a name="ReduceSumSquare-11"></a>**ReduceSumSquare-11**</a>
 
   Computes the sum square of the input tensor's element along the provided axes. The resulting
   tensor has the same rank as the input if keepdims equals 1. If keepdims equal 0, then
@@ -12693,7 +12693,7 @@ This version of the operator has been available since version 11 of the default 
 <dd>Constrain input and output types to high-precision numeric tensors.</dd>
 </dl>
 
-### <a name="Resize-11"></a>**Resize-11**
+### <a name="Resize-11"></a>**Resize-11**</a>
 
   Resize the input tensor. In general, it calculates every value in the output tensor as a weighted average of neighborhood (a.k.a. sampling locations) in the input tensor.
   Each dimension value of the output tensor is:
@@ -12771,7 +12771,7 @@ x_original = length_resized > 1 ? start_x * (length_original - 1) + x_resized * 
 <dd>Constrain roi type to float or double.</dd>
 </dl>
 
-### <a name="Round-11"></a>**Round-11**
+### <a name="Round-11"></a>**Round-11**</a>
 
   Round takes one input Tensor and rounds the values, element-wise, meaning
   it finds the nearest integer for each value.
@@ -12813,7 +12813,7 @@ This version of the operator has been available since version 11 of the default 
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
-### <a name="Scan-11"></a>**Scan-11**
+### <a name="Scan-11"></a>**Scan-11**</a>
 
   Scan can be used to iterate over one or more scan_input tensors,
   constructing zero or more scan_output tensors. It combines ideas from general recurrences,
@@ -12979,7 +12979,7 @@ This version of the operator has been available since version 11 of the default 
 <dd>All Tensor types</dd>
 </dl>
 
-### <a name="Scatter-11"></a>**Scatter-11** (deprecated)
+### <a name="Scatter-11"></a>**Scatter-11**</a> (deprecated)
 
   This operator is deprecated. Please use ScatterElements, which provides the same functionality.
 
@@ -13039,7 +13039,7 @@ This version of the operator has been available since version 11 of the default 
 
 This version of the operator has been deprecated since version 11 of the default ONNX operator set.
 
-### <a name="ScatterElements-11"></a>**ScatterElements-11**
+### <a name="ScatterElements-11"></a>**ScatterElements-11**</a>
 
   ScatterElements takes three inputs `data`, `updates`, and `indices` of the same
   rank r >= 1 and an optional attribute axis that identifies an axis of `data`
@@ -13131,7 +13131,7 @@ This version of the operator has been available since version 11 of the default 
 <dd>Constrain indices to integer types</dd>
 </dl>
 
-### <a name="ScatterND-11"></a>**ScatterND-11**
+### <a name="ScatterND-11"></a>**ScatterND-11**</a>
 
   ScatterND takes three inputs `data` tensor of rank r >= 1, `indices` tensor of rank q >= 1,
   and `updates` tensor of rank q + r - indices.shape[-1] - 1. The output of the operation
@@ -13220,7 +13220,7 @@ This version of the operator has been available since version 11 of the default 
 <dd>Constrain input and output types to any tensor type.</dd>
 </dl>
 
-### <a name="SequenceAt-11"></a>**SequenceAt-11**
+### <a name="SequenceAt-11"></a>**SequenceAt-11**</a>
 
   Outputs a tensor copy from the tensor at 'position' in 'input_sequence'.
   Accepted range for 'position' is in `[-n, n - 1]`, where `n` is the number of tensors in 'input_sequence'.
@@ -13257,7 +13257,7 @@ This version of the operator has been available since version 11 of the default 
 <dd>Constrain position to integral tensor. It must be a scalar(tensor of empty shape).</dd>
 </dl>
 
-### <a name="SequenceConstruct-11"></a>**SequenceConstruct-11**
+### <a name="SequenceConstruct-11"></a>**SequenceConstruct-11**</a>
 
   Construct a tensor sequence containing 'inputs' tensors.
   All tensors in 'inputs' must have the same data type.
@@ -13289,7 +13289,7 @@ This version of the operator has been available since version 11 of the default 
 <dd>Constrain output types to any tensor type.</dd>
 </dl>
 
-### <a name="SequenceEmpty-11"></a>**SequenceEmpty-11**
+### <a name="SequenceEmpty-11"></a>**SequenceEmpty-11**</a>
 
   Construct an empty tensor sequence, with given data type.
 
@@ -13321,7 +13321,7 @@ This version of the operator has been available since version 11 of the default 
 <dd>Constrain output types to any tensor type.</dd>
 </dl>
 
-### <a name="SequenceErase-11"></a>**SequenceErase-11**
+### <a name="SequenceErase-11"></a>**SequenceErase-11**</a>
 
   Outputs a tensor sequence that removes the tensor at 'position' from 'input_sequence'.
   Accepted range for 'position' is in `[-n, n - 1]`, where `n` is the number of tensors in 'input_sequence'.
@@ -13357,7 +13357,7 @@ This version of the operator has been available since version 11 of the default 
 <dd>Constrain position to integral tensor. It must be a scalar(tensor of empty shape).</dd>
 </dl>
 
-### <a name="SequenceInsert-11"></a>**SequenceInsert-11**
+### <a name="SequenceInsert-11"></a>**SequenceInsert-11**</a>
 
   Outputs a tensor sequence that inserts 'tensor' into 'input_sequence' at 'position'.
   'tensor' must have the same data type as 'input_sequence'.
@@ -13398,7 +13398,7 @@ This version of the operator has been available since version 11 of the default 
 <dd>Constrain position to integral tensor. It must be a scalar(tensor of empty shape).</dd>
 </dl>
 
-### <a name="SequenceLength-11"></a>**SequenceLength-11**
+### <a name="SequenceLength-11"></a>**SequenceLength-11**</a>
 
   Produces a scalar(tensor of empty shape) containing the number of tensors in 'input_sequence'.
 
@@ -13429,7 +13429,7 @@ This version of the operator has been available since version 11 of the default 
 <dd>Constrain output to integral tensor. It must be a scalar(tensor of empty shape).</dd>
 </dl>
 
-### <a name="Slice-11"></a>**Slice-11**
+### <a name="Slice-11"></a>**Slice-11**</a>
 
   Produces a slice of the input tensor along multiple axes. Similar to numpy:
   https://numpy.org/doc/stable/reference/routines.indexing.html
@@ -13503,7 +13503,7 @@ This version of the operator has been available since version 11 of the default 
 <dd>Constrain indices to integer types</dd>
 </dl>
 
-### <a name="Softmax-11"></a>**Softmax-11**
+### <a name="Softmax-11"></a>**Softmax-11**</a>
 
   The operator computes the softmax (normalized exponential) values for each layer in the batch
    of the given input.
@@ -13552,7 +13552,7 @@ This version of the operator has been available since version 11 of the default 
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
-### <a name="Split-11"></a>**Split-11**
+### <a name="Split-11"></a>**Split-11**</a>
 
   Split a tensor into a list of tensors, along the specified
   'axis'. Lengths of the parts can be specified using argument 'split'.
@@ -13592,7 +13592,7 @@ This version of the operator has been available since version 11 of the default 
 <dd>Constrain input and output types to all tensor types.</dd>
 </dl>
 
-### <a name="SplitToSequence-11"></a>**SplitToSequence-11**
+### <a name="SplitToSequence-11"></a>**SplitToSequence-11**</a>
 
   Split a tensor into a sequence of tensors, along the specified 'axis'.
   Lengths of the parts can be specified using the optional argument 'split'.
@@ -13647,7 +13647,7 @@ This version of the operator has been available since version 11 of the default 
 <dd>Constrain output types to all tensor types.</dd>
 </dl>
 
-### <a name="Squeeze-11"></a>**Squeeze-11**
+### <a name="Squeeze-11"></a>**Squeeze-11**</a>
 
   Remove single-dimensional entries from the shape of a tensor.
   Takes a  parameter `axes` with a list of axes to squeeze.
@@ -13686,7 +13686,7 @@ This version of the operator has been available since version 11 of the default 
 <dd>Constrain input and output types to all tensor types.</dd>
 </dl>
 
-### <a name="TopK-11"></a>**TopK-11**
+### <a name="TopK-11"></a>**TopK-11**</a>
 
   Retrieve the top-K largest or smallest elements along a specified axis. Given an input tensor of
   shape [a_0, a_1, ..., a_{n-1}] and integer argument k, return two outputs:
@@ -13746,7 +13746,7 @@ This version of the operator has been available since version 11 of the default 
 <dd>Constrain index tensor to int64</dd>
 </dl>
 
-### <a name="Unique-11"></a>**Unique-11**
+### <a name="Unique-11"></a>**Unique-11**</a>
 
   Find the unique elements of a tensor. When an optional attribute 'axis' is provided, unique subtensors sliced along the 'axis' are returned.
   Otherwise the input tensor is flattened and unique values of the flattened tensor are returned.
@@ -13886,7 +13886,7 @@ This version of the operator has been available since version 11 of the default 
 <dd>Input can be of any tensor type.</dd>
 </dl>
 
-### <a name="Unsqueeze-11"></a>**Unsqueeze-11**
+### <a name="Unsqueeze-11"></a>**Unsqueeze-11**</a>
 
   Insert single-dimensional entries to the shape of an input tensor (`data`).
   Takes one required argument `axes` - which contains a list of dimension indices and this operator will insert a dimension of value `1` into the corresponding index of the output tensor (`expanded`).
@@ -13934,7 +13934,7 @@ This version of the operator has been available since version 11 of the default 
 </dl>
 
 ## Version 12 of the default ONNX operator set
-### <a name="ArgMax-12"></a>**ArgMax-12**
+### <a name="ArgMax-12"></a>**ArgMax-12**</a>
 
   Computes the indices of the max elements of the input tensor's element along the
   provided axis. The resulting tensor has the same rank as the input if keepdims equals 1.
@@ -13980,7 +13980,7 @@ This version of the operator has been available since version 12 of the default 
 <dd>Constrain input and output types to all numeric tensors.</dd>
 </dl>
 
-### <a name="ArgMin-12"></a>**ArgMin-12**
+### <a name="ArgMin-12"></a>**ArgMin-12**</a>
 
   Computes the indices of the min elements of the input tensor's element along the
   provided axis. The resulting tensor has the same rank as the input if keepdims equals 1.
@@ -14026,7 +14026,7 @@ This version of the operator has been available since version 12 of the default 
 <dd>Constrain input and output types to all numeric tensors.</dd>
 </dl>
 
-### <a name="Celu-12"></a>**Celu-12**
+### <a name="Celu-12"></a>**Celu-12**</a>
 
   Continuously Differentiable Exponential Linear Units:
   Perform the linear unit element-wise on the input tensor X
@@ -14068,7 +14068,7 @@ This version of the operator has been available since version 12 of the default 
 <dd>Constrain input and output types to float32 tensors.</dd>
 </dl>
 
-### <a name="Clip-12"></a>**Clip-12**
+### <a name="Clip-12"></a>**Clip-12**</a>
 
   Clip operator limits the given input within an interval. The interval is
   specified by the inputs 'min' and 'max'. They default to
@@ -14103,7 +14103,7 @@ This version of the operator has been available since version 12 of the default 
 <dd>Constrain input and output types to all numeric tensors.</dd>
 </dl>
 
-### <a name="Constant-12"></a>**Constant-12**
+### <a name="Constant-12"></a>**Constant-12**</a>
 
   This operator produces a constant tensor. Exactly one of the provided attributes, either value, sparse_value,
   or value_* must be specified.
@@ -14150,7 +14150,7 @@ This version of the operator has been available since version 12 of the default 
 <dd>Constrain input and output types to all tensor types.</dd>
 </dl>
 
-### <a name="Dropout-12"></a>**Dropout-12**
+### <a name="Dropout-12"></a>**Dropout-12**</a>
 
   Dropout takes an input floating-point tensor, an optional input ratio (floating-point scalar) and an optional input training_mode (boolean scalar). It produces two tensor outputs,
   output (floating-point tensor) and mask (optional `Tensor<bool>`). If `training_mode` is true then the output Y will be a random dropout;
@@ -14207,7 +14207,7 @@ This version of the operator has been available since version 12 of the default 
 <dd>Constrain output 'mask' types to boolean tensors.</dd>
 </dl>
 
-### <a name="Einsum-12"></a>**Einsum-12**
+### <a name="Einsum-12"></a>**Einsum-12**</a>
 
   An einsum of the form `term1, term2 -> output-term` produces an output tensor using the following equation
 
@@ -14267,7 +14267,7 @@ This version of the operator has been available since version 12 of the default 
 <dd>Constrain input and output types to all numerical tensor types.</dd>
 </dl>
 
-### <a name="GatherND-12"></a>**GatherND-12**
+### <a name="GatherND-12"></a>**GatherND-12**</a>
 
   Given `data` tensor of rank `r` >= 1, `indices` tensor of rank `q` >= 1, and `batch_dims` integer `b`, this operator gathers
   slices of `data` into an output tensor of rank `q + r - indices_shape[-1] - 1 - b`.
@@ -14395,7 +14395,7 @@ This version of the operator has been available since version 12 of the default 
 <dd>Constrain input and output types to any tensor type.</dd>
 </dl>
 
-### <a name="GreaterOrEqual-12"></a>**GreaterOrEqual-12**
+### <a name="GreaterOrEqual-12"></a>**GreaterOrEqual-12**</a>
 
   Returns the tensor resulted from performing the `greater_equal` logical operation
   elementwise on the input tensors `A` and `B` (with Numpy-style broadcasting support).
@@ -14431,7 +14431,7 @@ This version of the operator has been available since version 12 of the default 
 <dd>Constrain output to boolean tensor.</dd>
 </dl>
 
-### <a name="LessOrEqual-12"></a>**LessOrEqual-12**
+### <a name="LessOrEqual-12"></a>**LessOrEqual-12**</a>
 
   Returns the tensor resulted from performing the `less_equal` logical operation
   elementwise on the input tensors `A` and `B` (with Numpy-style broadcasting support).
@@ -14467,7 +14467,7 @@ This version of the operator has been available since version 12 of the default 
 <dd>Constrain output to boolean tensor.</dd>
 </dl>
 
-### <a name="Max-12"></a>**Max-12**
+### <a name="Max-12"></a>**Max-12**</a>
 
   Element-wise max of each of the input tensors (with Numpy-style broadcasting support).
   All inputs and outputs must have the same data type.
@@ -14498,7 +14498,7 @@ This version of the operator has been available since version 12 of the default 
 <dd>Constrain input and output types to numeric tensors.</dd>
 </dl>
 
-### <a name="MaxPool-12"></a>**MaxPool-12**
+### <a name="MaxPool-12"></a>**MaxPool-12**</a>
 
   MaxPool consumes an input tensor X and applies max pooling across
    the tensor according to kernel sizes, stride sizes, and pad lengths.
@@ -14581,7 +14581,7 @@ This version of the operator has been available since version 12 of the default 
 <dd>Constrain index tensor to int64</dd>
 </dl>
 
-### <a name="Min-12"></a>**Min-12**
+### <a name="Min-12"></a>**Min-12**</a>
 
   Element-wise min of each of the input tensors (with Numpy-style broadcasting support).
   All inputs and outputs must have the same data type.
@@ -14612,7 +14612,7 @@ This version of the operator has been available since version 12 of the default 
 <dd>Constrain input and output types to numeric tensors.</dd>
 </dl>
 
-### <a name="NegativeLogLikelihoodLoss-12"></a>**NegativeLogLikelihoodLoss-12**
+### <a name="NegativeLogLikelihoodLoss-12"></a>**NegativeLogLikelihoodLoss-12**</a>
 
   A NegativeLogLikelihoodLoss operator computes (weighted) negative log likelihood loss.
   Its "input" tensor has the shape of (N, C, d1, d2, ..., dk) where k >= 0.
@@ -14721,7 +14721,7 @@ This version of the operator has been available since version 12 of the default 
 <dd>Constrain target to integer types</dd>
 </dl>
 
-### <a name="Pow-12"></a>**Pow-12**
+### <a name="Pow-12"></a>**Pow-12**</a>
 
   Pow takes input data (Tensor<T>) and exponent Tensor, and
   produces one output data (Tensor<T>) where the function `f(x) = x^exponent`,
@@ -14757,7 +14757,7 @@ This version of the operator has been available since version 12 of the default 
 <dd>Constrain input Y types to float/int tensors.</dd>
 </dl>
 
-### <a name="ReduceMax-12"></a>**ReduceMax-12**
+### <a name="ReduceMax-12"></a>**ReduceMax-12**</a>
 
   Computes the max of the input tensor's element along the provided axes. The resulting
   tensor has the same rank as the input if keepdims equals 1. If keepdims equal 0, then
@@ -14800,7 +14800,7 @@ This version of the operator has been available since version 12 of the default 
 <dd>Constrain input and output types to high-precision and 8 bit numeric tensors.</dd>
 </dl>
 
-### <a name="ReduceMin-12"></a>**ReduceMin-12**
+### <a name="ReduceMin-12"></a>**ReduceMin-12**</a>
 
   Computes the min of the input tensor's element along the provided axes. The resulting
   tensor has the same rank as the input if keepdims equals 1. If keepdims equal 0, then
@@ -14843,7 +14843,7 @@ This version of the operator has been available since version 12 of the default 
 <dd>Constrain input and output types to high-precision and 8 bit numeric tensors.</dd>
 </dl>
 
-### <a name="SoftmaxCrossEntropyLoss-12"></a>**SoftmaxCrossEntropyLoss-12**
+### <a name="SoftmaxCrossEntropyLoss-12"></a>**SoftmaxCrossEntropyLoss-12**</a>
 
   Loss function that measures the softmax cross entropy
   between 'scores' and 'labels'.
@@ -14920,7 +14920,7 @@ This version of the operator has been available since version 12 of the default 
 </dl>
 
 ## Version 13 of the default ONNX operator set
-### <a name="Abs-13"></a>**Abs-13**
+### <a name="Abs-13"></a>**Abs-13**</a>
 
   Absolute takes one input data (Tensor<T>) and produces one output data
   (Tensor<T>) where absolute value, y = abs(x), is applied to
@@ -14951,7 +14951,7 @@ This version of the operator has been available since version 13 of the default 
 <dd>Constrain input and output types to all numeric tensors.</dd>
 </dl>
 
-### <a name="Add-13"></a>**Add-13**
+### <a name="Add-13"></a>**Add-13**</a>
 
   Performs element-wise binary addition (with Numpy-style broadcasting support).
 
@@ -14984,7 +14984,7 @@ This version of the operator has been available since version 13 of the default 
 <dd>Constrain input and output types to high-precision numeric tensors.</dd>
 </dl>
 
-### <a name="ArgMax-13"></a>**ArgMax-13**
+### <a name="ArgMax-13"></a>**ArgMax-13**</a>
 
   Computes the indices of the max elements of the input tensor's element along the
   provided axis. The resulting tensor has the same rank as the input if keepdims equals 1.
@@ -15030,7 +15030,7 @@ This version of the operator has been available since version 13 of the default 
 <dd>Constrain input and output types to all numeric tensors.</dd>
 </dl>
 
-### <a name="ArgMin-13"></a>**ArgMin-13**
+### <a name="ArgMin-13"></a>**ArgMin-13**</a>
 
   Computes the indices of the min elements of the input tensor's element along the
   provided axis. The resulting tensor has the same rank as the input if keepdims equals 1.
@@ -15076,7 +15076,7 @@ This version of the operator has been available since version 13 of the default 
 <dd>Constrain input and output types to all numeric tensors.</dd>
 </dl>
 
-### <a name="Cast-13"></a>**Cast-13**
+### <a name="Cast-13"></a>**Cast-13**</a>
 
   The operator casts the elements of a given input tensor to a data type
   specified by the 'to' argument and returns an output tensor of the same size in
@@ -15148,7 +15148,7 @@ This version of the operator has been available since version 13 of the default 
 <dd>Constrain output types. Casting to complex is not supported.</dd>
 </dl>
 
-### <a name="Ceil-13"></a>**Ceil-13**
+### <a name="Ceil-13"></a>**Ceil-13**</a>
 
   Ceil takes one input data (Tensor<T>) and produces one output data
   (Tensor<T>) where the ceil is, y = ceil(x), is applied to
@@ -15179,7 +15179,7 @@ This version of the operator has been available since version 13 of the default 
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
-### <a name="Clip-13"></a>**Clip-13**
+### <a name="Clip-13"></a>**Clip-13**</a>
 
   Clip operator limits the given input within an interval. The interval is
   specified by the inputs 'min' and 'max'. They default to
@@ -15216,7 +15216,7 @@ This version of the operator has been available since version 13 of the default 
 <dd>Constrain input and output types to all numeric tensors.</dd>
 </dl>
 
-### <a name="Concat-13"></a>**Concat-13**
+### <a name="Concat-13"></a>**Concat-13**</a>
 
   Concatenate a list of tensors into a single tensor. All input tensors must have the same shape, except for the dimension size of the axis to concatenate on.
 
@@ -15252,7 +15252,7 @@ This version of the operator has been available since version 13 of the default 
 <dd>Constrain output types to any tensor type.</dd>
 </dl>
 
-### <a name="Constant-13"></a>**Constant-13**
+### <a name="Constant-13"></a>**Constant-13**</a>
 
   This operator produces a constant tensor. Exactly one of the provided attributes, either value, sparse_value,
   or value_* must be specified.
@@ -15299,7 +15299,7 @@ This version of the operator has been available since version 13 of the default 
 <dd>Constrain input and output types to all tensor types.</dd>
 </dl>
 
-### <a name="DepthToSpace-13"></a>**DepthToSpace-13**
+### <a name="DepthToSpace-13"></a>**DepthToSpace-13**</a>
 
   DepthToSpace rearranges (permutes) data from depth into blocks of spatial data.
   This is the reverse transformation of SpaceToDepth. More specifically, this op outputs a copy of
@@ -15359,7 +15359,7 @@ This version of the operator has been available since version 13 of the default 
 <dd>Constrain input and output types to all tensor types.</dd>
 </dl>
 
-### <a name="DequantizeLinear-13"></a>**DequantizeLinear-13**
+### <a name="DequantizeLinear-13"></a>**DequantizeLinear-13**</a>
 
   The linear dequantization operator. It consumes a quantized tensor, a scale, and a zero point to compute the full precision tensor.
   The dequantization formula is `y = (x - x_zero_point) * x_scale`. `x_scale` and `x_zero_point` must have same shape, and can be either a scalar
@@ -15403,7 +15403,7 @@ This version of the operator has been available since version 13 of the default 
 <dd>Constrain 'x_zero_point' and 'x' to 8-bit/32-bit integer tensor.</dd>
 </dl>
 
-### <a name="Div-13"></a>**Div-13**
+### <a name="Div-13"></a>**Div-13**</a>
 
   Performs element-wise binary division (with Numpy-style broadcasting support).
 
@@ -15438,7 +15438,7 @@ This version of the operator has been available since version 13 of the default 
 <dd>Constrain input and output types to high-precision numeric tensors.</dd>
 </dl>
 
-### <a name="Dropout-13"></a>**Dropout-13**
+### <a name="Dropout-13"></a>**Dropout-13**</a>
 
   Dropout takes an input floating-point tensor, an optional input ratio (floating-point scalar) and an optional input training_mode (boolean scalar). It produces two tensor outputs,
   output (floating-point tensor) and mask (optional `Tensor<bool>`). If `training_mode` is true then the output Y will be a random dropout;
@@ -15495,7 +15495,7 @@ This version of the operator has been available since version 13 of the default 
 <dd>Constrain output 'mask' types to boolean tensors.</dd>
 </dl>
 
-### <a name="Equal-13"></a>**Equal-13**
+### <a name="Equal-13"></a>**Equal-13**</a>
 
   Returns the tensor resulted from performing the `equal` logical operation
   elementwise on the input tensors `A` and `B` (with Numpy-style broadcasting support).
@@ -15531,7 +15531,7 @@ This version of the operator has been available since version 13 of the default 
 <dd>Constrain output to boolean tensor.</dd>
 </dl>
 
-### <a name="Erf-13"></a>**Erf-13**
+### <a name="Erf-13"></a>**Erf-13**</a>
 
   Computes the error function of the given input tensor element-wise.
 
@@ -15560,7 +15560,7 @@ This version of the operator has been available since version 13 of the default 
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
-### <a name="Exp-13"></a>**Exp-13**
+### <a name="Exp-13"></a>**Exp-13**</a>
 
   Calculates the exponential of the given input tensor, element-wise.
 
@@ -15589,7 +15589,7 @@ This version of the operator has been available since version 13 of the default 
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
-### <a name="Expand-13"></a>**Expand-13**
+### <a name="Expand-13"></a>**Expand-13**</a>
 
   Broadcast the input tensor following the given shape and the broadcast rule.
   The broadcast rule is similar to numpy.array(input) * numpy.ones(shape):
@@ -15627,7 +15627,7 @@ This version of the operator has been available since version 13 of the default 
 <dd>Constrain input and output types to all tensors.</dd>
 </dl>
 
-### <a name="Flatten-13"></a>**Flatten-13**
+### <a name="Flatten-13"></a>**Flatten-13**</a>
 
   Flattens the input tensor into a 2D matrix. If input tensor has shape
   (d_0, d_1, ... d_n) then the output will have shape
@@ -15665,7 +15665,7 @@ This version of the operator has been available since version 13 of the default 
 <dd>Constrain input and output to all tensor types.</dd>
 </dl>
 
-### <a name="Floor-13"></a>**Floor-13**
+### <a name="Floor-13"></a>**Floor-13**</a>
 
   Floor takes one input data (Tensor<T>) and produces one output data
   (Tensor<T>) where the floor is, y = floor(x), is applied to
@@ -15696,7 +15696,7 @@ This version of the operator has been available since version 13 of the default 
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
-### <a name="Gather-13"></a>**Gather-13**
+### <a name="Gather-13"></a>**Gather-13**</a>
 
   Given `data` tensor of rank r >= 1, and `indices` tensor of rank q, gather
   entries of the axis dimension of `data` (by default outer-most one as axis=0) indexed by `indices`, and concatenates
@@ -15798,7 +15798,7 @@ This version of the operator has been available since version 13 of the default 
 <dd>Constrain indices to integer types</dd>
 </dl>
 
-### <a name="GatherElements-13"></a>**GatherElements-13**
+### <a name="GatherElements-13"></a>**GatherElements-13**</a>
 
   GatherElements takes two inputs `data` and `indices` of the same rank r >= 1
   and an optional attribute `axis` that identifies an axis of `data`
@@ -15888,7 +15888,7 @@ This version of the operator has been available since version 13 of the default 
 <dd>Constrain indices to integer types</dd>
 </dl>
 
-### <a name="GatherND-13"></a>**GatherND-13**
+### <a name="GatherND-13"></a>**GatherND-13**</a>
 
   Given `data` tensor of rank `r` >= 1, `indices` tensor of rank `q` >= 1, and `batch_dims` integer `b`, this operator gathers
   slices of `data` into an output tensor of rank `q + r - indices_shape[-1] - 1 - b`.
@@ -16009,7 +16009,7 @@ This version of the operator has been available since version 13 of the default 
 <dd>Constrain input and output types to any tensor type.</dd>
 </dl>
 
-### <a name="Gemm-13"></a>**Gemm-13**
+### <a name="Gemm-13"></a>**Gemm-13**</a>
 
   General Matrix multiplication:
   https://en.wikipedia.org/wiki/Basic_Linear_Algebra_Subprograms#Level_3
@@ -16066,7 +16066,7 @@ This version of the operator has been available since version 13 of the default 
 <dd>Constrain input and output types to float/int tensors.</dd>
 </dl>
 
-### <a name="Greater-13"></a>**Greater-13**
+### <a name="Greater-13"></a>**Greater-13**</a>
 
   Returns the tensor resulted from performing the `greater` logical operation
   elementwise on the input tensors `A` and `B` (with Numpy-style broadcasting support).
@@ -16102,7 +16102,7 @@ This version of the operator has been available since version 13 of the default 
 <dd>Constrain output to boolean tensor.</dd>
 </dl>
 
-### <a name="Hardmax-13"></a>**Hardmax-13**
+### <a name="Hardmax-13"></a>**Hardmax-13**</a>
 
   The operator computes the hardmax values for the given input:
 
@@ -16148,7 +16148,7 @@ from the back. Accepted range is [-r, r-1] where r = rank(input).
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
-### <a name="Identity-13"></a>**Identity-13**
+### <a name="Identity-13"></a>**Identity-13**</a>
 
   Identity operator
 
@@ -16177,7 +16177,7 @@ This version of the operator has been available since version 13 of the default 
 <dd>Constrain input and output types to all tensor types.</dd>
 </dl>
 
-### <a name="If-13"></a>**If-13**
+### <a name="If-13"></a>**If-13**</a>
 
   If conditional
 
@@ -16217,7 +16217,7 @@ This version of the operator has been available since version 13 of the default 
 <dd>Only bool</dd>
 </dl>
 
-### <a name="IsNaN-13"></a>**IsNaN-13**
+### <a name="IsNaN-13"></a>**IsNaN-13**</a>
 
   Returns which elements of the input are NaN.
 
@@ -16248,7 +16248,7 @@ This version of the operator has been available since version 13 of the default 
 <dd>Constrain output types to boolean tensors.</dd>
 </dl>
 
-### <a name="LRN-13"></a>**LRN-13**
+### <a name="LRN-13"></a>**LRN-13**</a>
 
   Local Response Normalization proposed in the [AlexNet paper](https://papers.nips.cc/paper/4824-imagenet-classification-with-deep-convolutional-neural-networks.pdf).
   It normalizes over local input regions.
@@ -16299,7 +16299,7 @@ This version of the operator has been available since version 13 of the default 
 <dd>Constrain input and output  types to float tensors.</dd>
 </dl>
 
-### <a name="Less-13"></a>**Less-13**
+### <a name="Less-13"></a>**Less-13**</a>
 
   Returns the tensor resulted from performing the `less` logical operation
   elementwise on the input tensors `A` and `B` (with Numpy-style broadcasting support).
@@ -16335,7 +16335,7 @@ This version of the operator has been available since version 13 of the default 
 <dd>Constrain output to boolean tensor.</dd>
 </dl>
 
-### <a name="Log-13"></a>**Log-13**
+### <a name="Log-13"></a>**Log-13**</a>
 
   Calculates the natural log of the given input tensor, element-wise.
 
@@ -16364,7 +16364,7 @@ This version of the operator has been available since version 13 of the default 
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
-### <a name="LogSoftmax-13"></a>**LogSoftmax-13**
+### <a name="LogSoftmax-13"></a>**LogSoftmax-13**</a>
 
   The operator computes the log of softmax values for the given input:
 
@@ -16410,7 +16410,7 @@ from the back. Accepted range is [-r, r-1] where r = rank(input).
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
-### <a name="Loop-13"></a>**Loop-13**
+### <a name="Loop-13"></a>**Loop-13**</a>
 
   Generic Looping construct. This loop has multiple termination conditions:
 
@@ -16588,7 +16588,7 @@ This version of the operator has been available since version 13 of the default 
 <dd>tensor of bool, which should be a scalar.</dd>
 </dl>
 
-### <a name="MatMul-13"></a>**MatMul-13**
+### <a name="MatMul-13"></a>**MatMul-13**</a>
 
   Matrix product that behaves like [numpy.matmul](https://numpy.org/doc/stable/reference/generated/numpy.matmul.html).
 
@@ -16619,7 +16619,7 @@ This version of the operator has been available since version 13 of the default 
 <dd>Constrain input and output types to float/int tensors.</dd>
 </dl>
 
-### <a name="Max-13"></a>**Max-13**
+### <a name="Max-13"></a>**Max-13**</a>
 
   Element-wise max of each of the input tensors (with Numpy-style broadcasting support).
   All inputs and outputs must have the same data type.
@@ -16650,7 +16650,7 @@ This version of the operator has been available since version 13 of the default 
 <dd>Constrain input and output types to numeric tensors.</dd>
 </dl>
 
-### <a name="Mean-13"></a>**Mean-13**
+### <a name="Mean-13"></a>**Mean-13**</a>
 
   Element-wise mean of each of the input tensors (with Numpy-style broadcasting support).
   All inputs and outputs must have the same data type.
@@ -16681,7 +16681,7 @@ This version of the operator has been available since version 13 of the default 
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
-### <a name="MeanVarianceNormalization-13"></a>**MeanVarianceNormalization-13**
+### <a name="MeanVarianceNormalization-13"></a>**MeanVarianceNormalization-13**</a>
 
   A MeanVarianceNormalization Function: Perform mean variance normalization
         on the input tensor X using formula: `(X-EX)/sqrt(E(X-EX)^2)`
@@ -16718,7 +16718,7 @@ This version of the operator has been available since version 13 of the default 
 <dd>Constrain input and output types to all numeric tensors.</dd>
 </dl>
 
-### <a name="Min-13"></a>**Min-13**
+### <a name="Min-13"></a>**Min-13**</a>
 
   Element-wise min of each of the input tensors (with Numpy-style broadcasting support).
   All inputs and outputs must have the same data type.
@@ -16749,7 +16749,7 @@ This version of the operator has been available since version 13 of the default 
 <dd>Constrain input and output types to numeric tensors.</dd>
 </dl>
 
-### <a name="Mod-13"></a>**Mod-13**
+### <a name="Mod-13"></a>**Mod-13**</a>
 
   Performs an element-wise binary modulo operation.
   The semantics and supported data types depend on the value of the `fmod` attribute which must be `0` (default), or `1`.
@@ -16803,7 +16803,7 @@ This version of the operator has been available since version 13 of the default 
 <dd>Constrain input and output types to high-precision numeric tensors.</dd>
 </dl>
 
-### <a name="Mul-13"></a>**Mul-13**
+### <a name="Mul-13"></a>**Mul-13**</a>
 
   Performs element-wise binary multiplication (with Numpy-style broadcasting support).
 
@@ -16836,7 +16836,7 @@ This version of the operator has been available since version 13 of the default 
 <dd>Constrain input and output types to high-precision numeric tensors.</dd>
 </dl>
 
-### <a name="Neg-13"></a>**Neg-13**
+### <a name="Neg-13"></a>**Neg-13**</a>
 
   Neg takes one input data (Tensor<T>) and produces one output data
   (Tensor<T>) where each element flipped sign, y = -x, is applied to
@@ -16867,7 +16867,7 @@ This version of the operator has been available since version 13 of the default 
 <dd>Constrain input and output types to signed numeric tensors.</dd>
 </dl>
 
-### <a name="NegativeLogLikelihoodLoss-13"></a>**NegativeLogLikelihoodLoss-13**
+### <a name="NegativeLogLikelihoodLoss-13"></a>**NegativeLogLikelihoodLoss-13**</a>
 
   A NegativeLogLikelihoodLoss operator computes (weighted) negative log likelihood loss.
   Its "input" tensor has the shape of (N, C, d1, d2, ..., dk) where k >= 0.
@@ -17011,7 +17011,7 @@ This version of the operator has been available since version 13 of the default 
 <dd>Constrain target to integer types</dd>
 </dl>
 
-### <a name="NonZero-13"></a>**NonZero-13**
+### <a name="NonZero-13"></a>**NonZero-13**</a>
 
   Returns the indices of the elements that are non-zero
       (in row-major order - by dimension).
@@ -17044,7 +17044,7 @@ This version of the operator has been available since version 13 of the default 
 <dd>Constrain to all tensor types.</dd>
 </dl>
 
-### <a name="Pad-13"></a>**Pad-13**
+### <a name="Pad-13"></a>**Pad-13**</a>
 
   Given a tensor containing the data to be padded (`data`), a tensor containing the number of start and end pad values for axis (`pads`), (optionally) a `mode`, and (optionally) `constant_value`,
   a padded tensor (`output`) is generated.
@@ -17158,7 +17158,7 @@ This version of the operator has been available since version 13 of the default 
 <dd>Constrain input and output types to all tensor types.</dd>
 </dl>
 
-### <a name="Pow-13"></a>**Pow-13**
+### <a name="Pow-13"></a>**Pow-13**</a>
 
   Pow takes input data (Tensor<T>) and exponent Tensor, and
   produces one output data (Tensor<T>) where the function `f(x) = x^exponent`,
@@ -17194,7 +17194,7 @@ This version of the operator has been available since version 13 of the default 
 <dd>Constrain input Y types to float/int tensors.</dd>
 </dl>
 
-### <a name="QuantizeLinear-13"></a>**QuantizeLinear-13**
+### <a name="QuantizeLinear-13"></a>**QuantizeLinear-13**</a>
 
   The linear quantization operator. It consumes a high precision tensor, a scale, and a zero point to compute the low precision / quantized tensor.
   The scale factor and zero point must have same shape, and can be either a scalar for per-tensor / per layer quantization, or a 1-D tensor for per-axis quantization.
@@ -17240,7 +17240,7 @@ This version of the operator has been available since version 13 of the default 
 <dd>Constrain 'y_zero_point' and 'y' to 8-bit integer tensor.</dd>
 </dl>
 
-### <a name="Reciprocal-13"></a>**Reciprocal-13**
+### <a name="Reciprocal-13"></a>**Reciprocal-13**</a>
 
   Reciprocal takes one input data (Tensor<T>) and produces one output data
   (Tensor<T>) where the reciprocal is, y = 1/x, is applied to
@@ -17271,7 +17271,7 @@ This version of the operator has been available since version 13 of the default 
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
-### <a name="ReduceL1-13"></a>**ReduceL1-13**
+### <a name="ReduceL1-13"></a>**ReduceL1-13**</a>
 
   Computes the L1 norm of the input tensor's elements along the provided axes. The resulting
   tensor has the same rank as the input if `keepdims` equals 1. If `keepdims` equals 0, then
@@ -17316,7 +17316,7 @@ This version of the operator has been available since version 13 of the default 
 <dd>Constrain input and output types to numeric tensors.</dd>
 </dl>
 
-### <a name="ReduceL2-13"></a>**ReduceL2-13**
+### <a name="ReduceL2-13"></a>**ReduceL2-13**</a>
 
   Computes the L2 norm of the input tensor's elements along the provided axes. The resulting
   tensor has the same rank as the input if `keepdims` equals 1. If `keepdims` equals 0, then
@@ -17361,7 +17361,7 @@ This version of the operator has been available since version 13 of the default 
 <dd>Constrain input and output types to numeric tensors.</dd>
 </dl>
 
-### <a name="ReduceLogSum-13"></a>**ReduceLogSum-13**
+### <a name="ReduceLogSum-13"></a>**ReduceLogSum-13**</a>
 
   Computes the log sum of the input tensor's elements along the provided axes. The resulting
   tensor has the same rank as the input if `keepdims` equals 1. If `keepdims` equals 0, then
@@ -17406,7 +17406,7 @@ This version of the operator has been available since version 13 of the default 
 <dd>Constrain input and output types to numeric tensors.</dd>
 </dl>
 
-### <a name="ReduceLogSumExp-13"></a>**ReduceLogSumExp-13**
+### <a name="ReduceLogSumExp-13"></a>**ReduceLogSumExp-13**</a>
 
   Computes the log sum exponent of the input tensor's elements along the provided axes. The resulting
   tensor has the same rank as the input if `keepdims` equals 1. If `keepdims` equals 0, then
@@ -17451,7 +17451,7 @@ This version of the operator has been available since version 13 of the default 
 <dd>Constrain input and output types to numeric tensors.</dd>
 </dl>
 
-### <a name="ReduceMax-13"></a>**ReduceMax-13**
+### <a name="ReduceMax-13"></a>**ReduceMax-13**</a>
 
   Computes the max of the input tensor's elements along the provided axes. The resulting
   tensor has the same rank as the input if `keepdims` equals 1. If `keepdims` equals 0, then
@@ -17496,7 +17496,7 @@ This version of the operator has been available since version 13 of the default 
 <dd>Constrain input and output types to numeric tensors.</dd>
 </dl>
 
-### <a name="ReduceMean-13"></a>**ReduceMean-13**
+### <a name="ReduceMean-13"></a>**ReduceMean-13**</a>
 
   Computes the mean of the input tensor's elements along the provided axes. The resulting
   tensor has the same rank as the input if `keepdims` equals 1. If `keepdims` equals 0, then
@@ -17541,7 +17541,7 @@ This version of the operator has been available since version 13 of the default 
 <dd>Constrain input and output types to numeric tensors.</dd>
 </dl>
 
-### <a name="ReduceMin-13"></a>**ReduceMin-13**
+### <a name="ReduceMin-13"></a>**ReduceMin-13**</a>
 
   Computes the min of the input tensor's elements along the provided axes. The resulting
   tensor has the same rank as the input if `keepdims` equals 1. If `keepdims` equals 0, then
@@ -17586,7 +17586,7 @@ This version of the operator has been available since version 13 of the default 
 <dd>Constrain input and output types to numeric tensors.</dd>
 </dl>
 
-### <a name="ReduceProd-13"></a>**ReduceProd-13**
+### <a name="ReduceProd-13"></a>**ReduceProd-13**</a>
 
   Computes the product of the input tensor's elements along the provided axes. The resulting
   tensor has the same rank as the input if `keepdims` equals 1. If `keepdims` equals 0, then
@@ -17631,7 +17631,7 @@ This version of the operator has been available since version 13 of the default 
 <dd>Constrain input and output types to numeric tensors.</dd>
 </dl>
 
-### <a name="ReduceSum-13"></a>**ReduceSum-13**
+### <a name="ReduceSum-13"></a>**ReduceSum-13**</a>
 
   Computes the sum of the input tensor's elements along the provided axes. The resulting
   tensor has the same rank as the input if `keepdims` equals 1. If `keepdims` equals 0, then
@@ -17678,7 +17678,7 @@ This version of the operator has been available since version 13 of the default 
 <dd>Constrain input and output types to numeric tensors.</dd>
 </dl>
 
-### <a name="ReduceSumSquare-13"></a>**ReduceSumSquare-13**
+### <a name="ReduceSumSquare-13"></a>**ReduceSumSquare-13**</a>
 
   Computes the sum square of the input tensor's elements along the provided axes. The resulting
   tensor has the same rank as the input if `keepdims` equals 1. If `keepdims` equals 0, then
@@ -17723,7 +17723,7 @@ This version of the operator has been available since version 13 of the default 
 <dd>Constrain input and output types to numeric tensors.</dd>
 </dl>
 
-### <a name="Relu-13"></a>**Relu-13**
+### <a name="Relu-13"></a>**Relu-13**</a>
 
   Relu takes one input data (Tensor<T>) and produces one output data
   (Tensor<T>) where the rectified linear function, y = max(0, x), is applied to
@@ -17754,7 +17754,7 @@ This version of the operator has been available since version 13 of the default 
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
-### <a name="Reshape-13"></a>**Reshape-13**
+### <a name="Reshape-13"></a>**Reshape-13**</a>
 
   Reshape the input tensor similar to numpy.reshape.
   First input is the data tensor, second input is a shape tensor which specifies the output shape. It outputs the reshaped tensor.
@@ -17791,7 +17791,7 @@ This version of the operator has been available since version 13 of the default 
 <dd>Constrain input and output types to all tensor types.</dd>
 </dl>
 
-### <a name="Resize-13"></a>**Resize-13**
+### <a name="Resize-13"></a>**Resize-13**</a>
 
   Resize the input tensor. In general, it calculates every value in the output tensor as a weighted average of neighborhood (a.k.a. sampling locations) in the input tensor.
   Each dimension value of the output tensor is:
@@ -17866,7 +17866,7 @@ x_original = length_resized > 1 ? start_x * (length_original - 1) + x_resized * 
 <dd>Constrain roi type to float or double.</dd>
 </dl>
 
-### <a name="ScatterElements-13"></a>**ScatterElements-13**
+### <a name="ScatterElements-13"></a>**ScatterElements-13**</a>
 
   ScatterElements takes three inputs `data`, `updates`, and `indices` of the same
   rank r >= 1 and an optional attribute axis that identifies an axis of `data`
@@ -17958,7 +17958,7 @@ This version of the operator has been available since version 13 of the default 
 <dd>Constrain indices to integer types</dd>
 </dl>
 
-### <a name="ScatterND-13"></a>**ScatterND-13**
+### <a name="ScatterND-13"></a>**ScatterND-13**</a>
 
   ScatterND takes three inputs `data` tensor of rank r >= 1, `indices` tensor of rank q >= 1,
   and `updates` tensor of rank q + r - indices.shape[-1] - 1. The output of the operation
@@ -18047,7 +18047,7 @@ This version of the operator has been available since version 13 of the default 
 <dd>Constrain input and output types to any tensor type.</dd>
 </dl>
 
-### <a name="Shape-13"></a>**Shape-13**
+### <a name="Shape-13"></a>**Shape-13**</a>
 
   Takes a tensor as input and outputs an 1D int64 tensor containing the shape of the input tensor.
 
@@ -18078,7 +18078,7 @@ This version of the operator has been available since version 13 of the default 
 <dd>Constrain output to int64 tensor.</dd>
 </dl>
 
-### <a name="Sigmoid-13"></a>**Sigmoid-13**
+### <a name="Sigmoid-13"></a>**Sigmoid-13**</a>
 
   Sigmoid takes one input data (Tensor<T>) and produces one output data
   (Tensor<T>) where the sigmoid function, y = 1 / (1 + exp(-x)), is applied to the
@@ -18109,7 +18109,7 @@ This version of the operator has been available since version 13 of the default 
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
-### <a name="Sign-13"></a>**Sign-13**
+### <a name="Sign-13"></a>**Sign-13**</a>
 
   Calculate the sign of the given input tensor element-wise.
   If input > 0, output 1. if input < 0, output -1. if input == 0, output 0.
@@ -18139,7 +18139,7 @@ This version of the operator has been available since version 13 of the default 
 <dd>Constrain input and output types to all numeric tensors.</dd>
 </dl>
 
-### <a name="Size-13"></a>**Size-13**
+### <a name="Size-13"></a>**Size-13**</a>
 
   Takes a tensor as input and outputs a int64 scalar that equals to the total number of elements of the input tensor.
 
@@ -18170,7 +18170,7 @@ This version of the operator has been available since version 13 of the default 
 <dd>Constrain output to int64 tensor, which should be a scalar though.</dd>
 </dl>
 
-### <a name="Slice-13"></a>**Slice-13**
+### <a name="Slice-13"></a>**Slice-13**</a>
 
   Produces a slice of the input tensor along multiple axes. Similar to numpy:
   https://numpy.org/doc/stable/user/basics.indexing.html?highlight=slice#slicing-and-striding
@@ -18270,7 +18270,7 @@ This version of the operator has been available since version 13 of the default 
 <dd>Constrain indices to integer types</dd>
 </dl>
 
-### <a name="Softmax-13"></a>**Softmax-13**
+### <a name="Softmax-13"></a>**Softmax-13**</a>
 
   The operator computes the normalized exponential values for the given input:
 
@@ -18316,7 +18316,7 @@ from the back. Accepted range is [-r, r-1] where r = rank(input).
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
-### <a name="SoftmaxCrossEntropyLoss-13"></a>**SoftmaxCrossEntropyLoss-13**
+### <a name="SoftmaxCrossEntropyLoss-13"></a>**SoftmaxCrossEntropyLoss-13**</a>
 
   Loss function that measures the softmax cross entropy
   between 'scores' and 'labels'.
@@ -18401,7 +18401,7 @@ This version of the operator has been available since version 13 of the default 
 <dd>Constrain target to integer types</dd>
 </dl>
 
-### <a name="SpaceToDepth-13"></a>**SpaceToDepth-13**
+### <a name="SpaceToDepth-13"></a>**SpaceToDepth-13**</a>
 
   SpaceToDepth rearranges blocks of spatial data into depth. More specifically,
   this op outputs a copy of the input tensor where values from the height and width dimensions
@@ -18439,7 +18439,7 @@ This version of the operator has been available since version 13 of the default 
 <dd>Constrain input and output types to all tensor types.</dd>
 </dl>
 
-### <a name="Split-13"></a>**Split-13**
+### <a name="Split-13"></a>**Split-13**</a>
 
   Split a tensor into a list of tensors, along the specified
   'axis'. Lengths of the parts can be specified using input 'split'.
@@ -18479,7 +18479,7 @@ This version of the operator has been available since version 13 of the default 
 <dd>Constrain input and output types to all tensor types.</dd>
 </dl>
 
-### <a name="Sqrt-13"></a>**Sqrt-13**
+### <a name="Sqrt-13"></a>**Sqrt-13**</a>
 
   Square root takes one input data (Tensor<T>) and produces one output data
   (Tensor<T>) where the square root is, y = x^0.5, is applied to
@@ -18510,7 +18510,7 @@ This version of the operator has been available since version 13 of the default 
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
-### <a name="Squeeze-13"></a>**Squeeze-13**
+### <a name="Squeeze-13"></a>**Squeeze-13**</a>
 
   Remove single-dimensional entries from the shape of a tensor.
   Takes an input `axes` with a list of axes to squeeze.
@@ -18544,7 +18544,7 @@ This version of the operator has been available since version 13 of the default 
 <dd>Constrain input and output types to all tensor types.</dd>
 </dl>
 
-### <a name="Sub-13"></a>**Sub-13**
+### <a name="Sub-13"></a>**Sub-13**</a>
 
   Performs element-wise binary subtraction (with Numpy-style broadcasting support).
 
@@ -18577,7 +18577,7 @@ This version of the operator has been available since version 13 of the default 
 <dd>Constrain input and output types to high-precision numeric tensors.</dd>
 </dl>
 
-### <a name="Sum-13"></a>**Sum-13**
+### <a name="Sum-13"></a>**Sum-13**</a>
 
   Element-wise sum of each of the input tensors (with Numpy-style broadcasting support).
   All inputs and outputs must have the same data type.
@@ -18608,7 +18608,7 @@ This version of the operator has been available since version 13 of the default 
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
-### <a name="Tanh-13"></a>**Tanh-13**
+### <a name="Tanh-13"></a>**Tanh-13**</a>
 
   Calculates the hyperbolic tangent of the given input tensor element-wise.
 
@@ -18637,7 +18637,7 @@ This version of the operator has been available since version 13 of the default 
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
-### <a name="Tile-13"></a>**Tile-13**
+### <a name="Tile-13"></a>**Tile-13**</a>
 
   Constructs a tensor by tiling a given tensor.
   This is the same as function `tile` in Numpy, but no broadcast.
@@ -18672,7 +18672,7 @@ This version of the operator has been available since version 13 of the default 
 <dd>Constrain repeat's type to int64 tensors.</dd>
 </dl>
 
-### <a name="Transpose-13"></a>**Transpose-13**
+### <a name="Transpose-13"></a>**Transpose-13**</a>
 
   Returns a transpose of the input tensor. (Similar to `numpy.transpose`).
   The optional attribute `perm` must be a permutation of the dimensions of
@@ -18717,7 +18717,7 @@ This version of the operator has been available since version 13 of the default 
 <dd>Constrain input and output types to all tensor types.</dd>
 </dl>
 
-### <a name="Unsqueeze-13"></a>**Unsqueeze-13**
+### <a name="Unsqueeze-13"></a>**Unsqueeze-13**</a>
 
   Insert single-dimensional entries to the shape of an input tensor (`data`).
   Takes one required input `axes` - which contains a list of dimension indices and this operator will insert a dimension of value `1` into the corresponding index of the output tensor (`expanded`).
@@ -18758,7 +18758,7 @@ This version of the operator has been available since version 13 of the default 
 </dl>
 
 ## Version 14 of the default ONNX operator set
-### <a name="Add-14"></a>**Add-14**
+### <a name="Add-14"></a>**Add-14**</a>
 
   Performs element-wise binary addition (with Numpy-style broadcasting support).
 
@@ -18793,7 +18793,7 @@ This version of the operator has been available since version 14 of the default 
 <dd>Constrain input and output types to all numeric tensors.</dd>
 </dl>
 
-### <a name="BatchNormalization-14"></a>**BatchNormalization-14**
+### <a name="BatchNormalization-14"></a>**BatchNormalization-14**</a>
 
   Carries out batch normalization as described in the paper
   https://arxiv.org/abs/1502.03167. Depending on the mode it is being run,
@@ -18885,7 +18885,7 @@ This version of the operator has been available since version 14 of the default 
 <dd>Constrain mean and variance types to float tensors. It allows all float type for U.</dd>
 </dl>
 
-### <a name="CumSum-14"></a>**CumSum-14**
+### <a name="CumSum-14"></a>**CumSum-14**</a>
 
   Performs cumulative sum of the input elements along the given axis.
   By default, it will do the sum inclusively meaning the first element is copied as is.
@@ -18946,7 +18946,7 @@ This version of the operator has been available since version 14 of the default 
 <dd>axis tensor can be int32 or int64 only</dd>
 </dl>
 
-### <a name="Div-14"></a>**Div-14**
+### <a name="Div-14"></a>**Div-14**</a>
 
   Performs element-wise binary division (with Numpy-style broadcasting support).
 
@@ -18982,7 +18982,7 @@ This version of the operator has been available since version 14 of the default 
 <dd>Constrain input and output types to all numeric tensors.</dd>
 </dl>
 
-### <a name="GRU-14"></a>**GRU-14**
+### <a name="GRU-14"></a>**GRU-14**</a>
 
   Computes an one-layer GRU. This operator is usually supported via some custom
   implementation such as CuDNN.
@@ -19092,7 +19092,7 @@ This version of the operator has been available since version 14 of the default 
 <dd>Constrain seq_lens to integer tensor.</dd>
 </dl>
 
-### <a name="HardSwish-14"></a>**HardSwish-14**
+### <a name="HardSwish-14"></a>**HardSwish-14**</a>
 
   HardSwish takes one input data (Tensor<T>) and produces one output data (Tensor<T>) where
   the HardSwish function, y = x * max(0, min(1, alpha * x + beta)) = x * HardSigmoid<alpha, beta>(x),
@@ -19123,7 +19123,7 @@ This version of the operator has been available since version 14 of the default 
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
-### <a name="Identity-14"></a>**Identity-14**
+### <a name="Identity-14"></a>**Identity-14**</a>
 
   Identity operator
 
@@ -19152,7 +19152,7 @@ This version of the operator has been available since version 14 of the default 
 <dd>Constrain input and output types to all tensor and sequence types.</dd>
 </dl>
 
-### <a name="LSTM-14"></a>**LSTM-14**
+### <a name="LSTM-14"></a>**LSTM-14**</a>
 
   Computes an one-layer LSTM. This operator is usually supported via some
   custom implementation such as CuDNN.
@@ -19271,7 +19271,7 @@ This version of the operator has been available since version 14 of the default 
 <dd>Constrain seq_lens to integer tensor.</dd>
 </dl>
 
-### <a name="Mul-14"></a>**Mul-14**
+### <a name="Mul-14"></a>**Mul-14**</a>
 
   Performs element-wise binary multiplication (with Numpy-style broadcasting support).
 
@@ -19306,7 +19306,7 @@ This version of the operator has been available since version 14 of the default 
 <dd>Constrain input and output types to all numeric tensors.</dd>
 </dl>
 
-### <a name="RNN-14"></a>**RNN-14**
+### <a name="RNN-14"></a>**RNN-14**</a>
 
   Computes an one-layer simple RNN. This operator is usually supported
   via some custom implementation such as CuDNN.
@@ -19407,7 +19407,7 @@ This version of the operator has been available since version 14 of the default 
 <dd>Constrain seq_lens to integer tensor.</dd>
 </dl>
 
-### <a name="Relu-14"></a>**Relu-14**
+### <a name="Relu-14"></a>**Relu-14**</a>
 
   Relu takes one input data (Tensor<T>) and produces one output data
   (Tensor<T>) where the rectified linear function, y = max(0, x), is applied to
@@ -19438,7 +19438,7 @@ This version of the operator has been available since version 14 of the default 
 <dd>Constrain input and output types to signed numeric tensors.</dd>
 </dl>
 
-### <a name="Reshape-14"></a>**Reshape-14**
+### <a name="Reshape-14"></a>**Reshape-14**</a>
 
   Reshape the input tensor similar to numpy.reshape.
   First input is the data tensor, second input is a shape tensor which specifies the output shape. It outputs the reshaped tensor.
@@ -19488,7 +19488,7 @@ This version of the operator has been available since version 14 of the default 
 <dd>Constrain input and output types to all tensor types.</dd>
 </dl>
 
-### <a name="Sub-14"></a>**Sub-14**
+### <a name="Sub-14"></a>**Sub-14**</a>
 
   Performs element-wise binary subtraction (with Numpy-style broadcasting support).
 
@@ -19523,7 +19523,7 @@ This version of the operator has been available since version 14 of the default 
 <dd>Constrain input and output types to all numeric tensors.</dd>
 </dl>
 
-### <a name="Trilu-14"></a>**Trilu-14**
+### <a name="Trilu-14"></a>**Trilu-14**</a>
 
   Given a 2-D matrix or batches of 2-D matrices, returns the upper or lower triangular part of the tensor(s).
   The attribute "upper" determines whether the upper or lower part is retained. If set to true,
@@ -19573,7 +19573,7 @@ This version of the operator has been available since version 14 of the default 
 </dl>
 
 ## Version 15 of the default ONNX operator set
-### <a name="BatchNormalization-15"></a>**BatchNormalization-15**
+### <a name="BatchNormalization-15"></a>**BatchNormalization-15**</a>
 
   Carries out batch normalization as described in the paper
   https://arxiv.org/abs/1502.03167. Depending on the mode it is being run,
@@ -19667,7 +19667,7 @@ This version of the operator has been available since version 15 of the default 
 <dd>Constrain mean and variance types to float tensors.</dd>
 </dl>
 
-### <a name="Bernoulli-15"></a>**Bernoulli-15**
+### <a name="Bernoulli-15"></a>**Bernoulli-15**</a>
 
   Draws binary random numbers (0 or 1) from a Bernoulli distribution. The input tensor should be a tensor
   containing probabilities p (a value in the range [0,1]) to be used for drawing the binary random number,
@@ -19712,7 +19712,7 @@ This version of the operator has been available since version 15 of the default 
 <dd>Constrain output types to all numeric tensors and bool tensors.</dd>
 </dl>
 
-### <a name="CastLike-15"></a>**CastLike-15**
+### <a name="CastLike-15"></a>**CastLike-15**</a>
 
   The operator casts the elements of a given input tensor (the first input) to
   the same data type as the elements of the second input tensor.
@@ -19747,7 +19747,7 @@ This version of the operator has been available since version 15 of the default 
 <dd>Constrain output types. Casting to complex is not supported.</dd>
 </dl>
 
-### <a name="Optional-15"></a>**Optional-15**
+### <a name="Optional-15"></a>**Optional-15**</a>
 
   Constructs an optional-type value containing either an empty optional of a certain type specified by the attribute,
   or a non-empty value containing the input element.
@@ -19786,7 +19786,7 @@ This version of the operator has been available since version 15 of the default 
 <dd>Constrain output type to all optional tensor or optional sequence types.</dd>
 </dl>
 
-### <a name="OptionalGetElement-15"></a>**OptionalGetElement-15**
+### <a name="OptionalGetElement-15"></a>**OptionalGetElement-15**</a>
 
   Outputs the element in the optional-type input. It is an error if the input value does not have an element
   and the behavior is undefined in this case.
@@ -19818,7 +19818,7 @@ This version of the operator has been available since version 15 of the default 
 <dd>Constrain output type to all tensor or sequence types.</dd>
 </dl>
 
-### <a name="OptionalHasElement-15"></a>**OptionalHasElement-15**
+### <a name="OptionalHasElement-15"></a>**OptionalHasElement-15**</a>
 
   Returns true if the optional-type input contains an element. If it is an empty optional-type, this op returns false.
 
@@ -19849,7 +19849,7 @@ This version of the operator has been available since version 15 of the default 
 <dd>Constrain output to a boolean tensor.</dd>
 </dl>
 
-### <a name="Pow-15"></a>**Pow-15**
+### <a name="Pow-15"></a>**Pow-15**</a>
 
   Pow takes input data (Tensor<T>) and exponent Tensor, and
   produces one output data (Tensor<T>) where the function `f(x) = x^exponent`,
@@ -19885,7 +19885,7 @@ This version of the operator has been available since version 15 of the default 
 <dd>Constrain input Y types to float/int tensors.</dd>
 </dl>
 
-### <a name="Shape-15"></a>**Shape-15**
+### <a name="Shape-15"></a>**Shape-15**</a>
 
   Takes a tensor as input and outputs an 1D int64 tensor containing the shape of the input tensor.
   Optional attributes start and end can be used to compute a slice of the input tensor's shape.
@@ -19963,7 +19963,7 @@ This version of the operator has been available since version 15 of the default 
 </dl>
 
 ## Version 16 of the default ONNX operator set
-### <a name="GreaterOrEqual-16"></a>**GreaterOrEqual-16**
+### <a name="GreaterOrEqual-16"></a>**GreaterOrEqual-16**</a>
 
   Returns the tensor resulted from performing the `greater_equal` logical operation
   elementwise on the input tensors `A` and `B` (with Numpy-style broadcasting support).
@@ -19999,7 +19999,7 @@ This version of the operator has been available since version 16 of the default 
 <dd>Constrain output to boolean tensor.</dd>
 </dl>
 
-### <a name="GridSample-16"></a>**GridSample-16**
+### <a name="GridSample-16"></a>**GridSample-16**</a>
 
   Given an input `X` and a flow-field `grid`, computes the output `Y` using `X` values and pixel locations from `grid`.
   Currently, only spatial (4-D) inputs are supported. For input `X` with shape (N, C, H, W) and `grid` with shape (N, H_out, W_out, 2),
@@ -20055,7 +20055,7 @@ This version of the operator has been available since version 16 of the default 
 <dd>Constrain grid types to float tensors.</dd>
 </dl>
 
-### <a name="Identity-16"></a>**Identity-16**
+### <a name="Identity-16"></a>**Identity-16**</a>
 
   Identity operator
 
@@ -20084,7 +20084,7 @@ This version of the operator has been available since version 16 of the default 
 <dd>Constrain input and output types to all tensor, sequence, and optional types.</dd>
 </dl>
 
-### <a name="If-16"></a>**If-16**
+### <a name="If-16"></a>**If-16**</a>
 
   If conditional
 
@@ -20124,7 +20124,7 @@ This version of the operator has been available since version 16 of the default 
 <dd>Only bool</dd>
 </dl>
 
-### <a name="LeakyRelu-16"></a>**LeakyRelu-16**
+### <a name="LeakyRelu-16"></a>**LeakyRelu-16**</a>
 
   LeakyRelu takes input data (Tensor<T>) and an argument alpha, and produces one
   output data (Tensor<T>) where the function `f(x) = alpha * x for x < 0`,
@@ -20162,7 +20162,7 @@ This version of the operator has been available since version 16 of the default 
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
-### <a name="LessOrEqual-16"></a>**LessOrEqual-16**
+### <a name="LessOrEqual-16"></a>**LessOrEqual-16**</a>
 
   Returns the tensor resulted from performing the `less_equal` logical operation
   elementwise on the input tensors `A` and `B` (with Numpy-style broadcasting support).
@@ -20198,7 +20198,7 @@ This version of the operator has been available since version 16 of the default 
 <dd>Constrain output to boolean tensor.</dd>
 </dl>
 
-### <a name="Loop-16"></a>**Loop-16**
+### <a name="Loop-16"></a>**Loop-16**</a>
 
   Generic Looping construct. This loop has multiple termination conditions:
 
@@ -20376,7 +20376,7 @@ This version of the operator has been available since version 16 of the default 
 <dd>tensor of bool, which should be a scalar.</dd>
 </dl>
 
-### <a name="PRelu-16"></a>**PRelu-16**
+### <a name="PRelu-16"></a>**PRelu-16**</a>
 
   PRelu takes input data (Tensor<T>) and slope tensor as input, and produces one
   output data (Tensor<T>) where the function `f(x) = slope * x for x < 0`,
@@ -20410,7 +20410,7 @@ This version of the operator has been available since version 16 of the default 
 <dd>Constrain input and output types to float/int tensors.</dd>
 </dl>
 
-### <a name="RoiAlign-16"></a>**RoiAlign-16**
+### <a name="RoiAlign-16"></a>**RoiAlign-16**</a>
 
   Region of Interest (RoI) align operation described in the
   [Mask R-CNN paper](https://arxiv.org/abs/1703.06870).
@@ -20472,7 +20472,7 @@ This version of the operator has been available since version 16 of the default 
 <dd>Constrain types to int tensors.</dd>
 </dl>
 
-### <a name="Scan-16"></a>**Scan-16**
+### <a name="Scan-16"></a>**Scan-16**</a>
 
   Scan can be used to iterate over one or more scan_input tensors,
   constructing zero or more scan_output tensors. It combines ideas from general recurrences,
@@ -20638,7 +20638,7 @@ This version of the operator has been available since version 16 of the default 
 <dd>All Tensor types up to IRv4.</dd>
 </dl>
 
-### <a name="ScatterElements-16"></a>**ScatterElements-16**
+### <a name="ScatterElements-16"></a>**ScatterElements-16**</a>
 
   ScatterElements takes three inputs `data`, `updates`, and `indices` of the same
   rank r >= 1 and an optional attribute axis that identifies an axis of `data`
@@ -20741,7 +20741,7 @@ This version of the operator has been available since version 16 of the default 
 <dd>Constrain indices to integer types</dd>
 </dl>
 
-### <a name="ScatterND-16"></a>**ScatterND-16**
+### <a name="ScatterND-16"></a>**ScatterND-16**</a>
 
   ScatterND takes three inputs `data` tensor of rank r >= 1, `indices` tensor of rank q >= 1,
   and `updates` tensor of rank q + r - indices.shape[-1] - 1. The output of the operation
@@ -20846,7 +20846,7 @@ This version of the operator has been available since version 16 of the default 
 <dd>Constrain input and output types to any tensor type.</dd>
 </dl>
 
-### <a name="Where-16"></a>**Where-16**
+### <a name="Where-16"></a>**Where-16**</a>
 
   Return elements, either from X or Y, depending on condition.
   Where behaves like
@@ -20887,7 +20887,7 @@ This version of the operator has been available since version 16 of the default 
 </dl>
 
 ## Version 17 of the default ONNX operator set
-### <a name="BlackmanWindow-17"></a>**BlackmanWindow-17**
+### <a name="BlackmanWindow-17"></a>**BlackmanWindow-17**</a>
 
   Generates a Blackman window as described in the paper https://ieeexplore.ieee.org/document/1455106.
 
@@ -20927,7 +20927,7 @@ This version of the operator has been available since version 17 of the default 
 <dd>Constrain output types to numeric tensors.</dd>
 </dl>
 
-### <a name="DFT-17"></a>**DFT-17**
+### <a name="DFT-17"></a>**DFT-17**</a>
 
   Computes the discrete Fourier transform of input.
 
@@ -20971,7 +20971,7 @@ This version of the operator has been available since version 17 of the default 
 <dd>Constrain scalar length types to int64_t.</dd>
 </dl>
 
-### <a name="HammingWindow-17"></a>**HammingWindow-17**
+### <a name="HammingWindow-17"></a>**HammingWindow-17**</a>
 
   Generates a Hamming window as described in the paper https://ieeexplore.ieee.org/document/1455106.
 
@@ -21011,7 +21011,7 @@ This version of the operator has been available since version 17 of the default 
 <dd>Constrain output types to numeric tensors.</dd>
 </dl>
 
-### <a name="HannWindow-17"></a>**HannWindow-17**
+### <a name="HannWindow-17"></a>**HannWindow-17**</a>
 
   Generates a Hann window as described in the paper https://ieeexplore.ieee.org/document/1455106.
 
@@ -21051,7 +21051,7 @@ This version of the operator has been available since version 17 of the default 
 <dd>Constrain output types to numeric tensors.</dd>
 </dl>
 
-### <a name="LayerNormalization-17"></a>**LayerNormalization-17**
+### <a name="LayerNormalization-17"></a>**LayerNormalization-17**</a>
 
   This is layer normalization defined in ONNX as function.
         The overall computation can be split into two stages.
@@ -21141,7 +21141,7 @@ This version of the operator has been available since version 17 of the default 
 <dd>Type of Mean and InvStdDev tensors.</dd>
 </dl>
 
-### <a name="MelWeightMatrix-17"></a>**MelWeightMatrix-17**
+### <a name="MelWeightMatrix-17"></a>**MelWeightMatrix-17**</a>
 
   Generate a MelWeightMatrix that can be used to re-weight a Tensor containing a linearly sampled frequency spectra (from DFT or STFT) into num_mel_bins frequency information based on the [lower_edge_hertz, upper_edge_hertz] range on the mel scale.
   This function defines the mel scale in terms of a frequency in hertz according to the following formula:
@@ -21196,7 +21196,7 @@ This version of the operator has been available since version 17 of the default 
 <dd>Constrain to any numerical types.</dd>
 </dl>
 
-### <a name="STFT-17"></a>**STFT-17**
+### <a name="STFT-17"></a>**STFT-17**</a>
 
   Computes the Short-time Fourier Transform of the signal.
 
@@ -21240,7 +21240,7 @@ This version of the operator has been available since version 17 of the default 
 <dd>Constrain scalar length types to int64_t.</dd>
 </dl>
 
-### <a name="SequenceMap-17"></a>**SequenceMap-17**
+### <a name="SequenceMap-17"></a>**SequenceMap-17**</a>
 
   Applies a sub-graph to each sample in the input sequence(s).
 
@@ -21294,7 +21294,7 @@ This version of the operator has been available since version 17 of the default 
 </dl>
 
 ## Version 18 of the default ONNX operator set
-### <a name="BitwiseAnd-18"></a>**BitwiseAnd-18**
+### <a name="BitwiseAnd-18"></a>**BitwiseAnd-18**</a>
 
   Returns the tensor resulting from performing the bitwise `and` operation
   elementwise on the input tensors `A` and `B` (with Numpy-style broadcasting support).
@@ -21328,7 +21328,7 @@ This version of the operator has been available since version 18 of the default 
 <dd>Constrain input to integer tensors.</dd>
 </dl>
 
-### <a name="BitwiseNot-18"></a>**BitwiseNot-18**
+### <a name="BitwiseNot-18"></a>**BitwiseNot-18**</a>
 
   Returns the bitwise not of the input tensor element-wise.
 
@@ -21357,7 +21357,7 @@ This version of the operator has been available since version 18 of the default 
 <dd>Constrain input/output to integer tensors.</dd>
 </dl>
 
-### <a name="BitwiseOr-18"></a>**BitwiseOr-18**
+### <a name="BitwiseOr-18"></a>**BitwiseOr-18**</a>
 
   Returns the tensor resulting from performing the bitwise `or` operation
   elementwise on the input tensors `A` and `B` (with Numpy-style broadcasting support).
@@ -21391,7 +21391,7 @@ This version of the operator has been available since version 18 of the default 
 <dd>Constrain input to integer tensors.</dd>
 </dl>
 
-### <a name="BitwiseXor-18"></a>**BitwiseXor-18**
+### <a name="BitwiseXor-18"></a>**BitwiseXor-18**</a>
 
   Returns the tensor resulting from performing the bitwise `xor` operation
   elementwise on the input tensors `A` and `B` (with Numpy-style broadcasting support).
@@ -21425,7 +21425,7 @@ This version of the operator has been available since version 18 of the default 
 <dd>Constrain input to integer tensors.</dd>
 </dl>
 
-### <a name="CenterCropPad-18"></a>**CenterCropPad-18**
+### <a name="CenterCropPad-18"></a>**CenterCropPad-18**</a>
 
   Center crop or pad an input to given dimensions.
 
@@ -21478,7 +21478,7 @@ This version of the operator has been available since version 18 of the default 
 <dd>Constrain indices to integer types</dd>
 </dl>
 
-### <a name="Col2Im-18"></a>**Col2Im-18**
+### <a name="Col2Im-18"></a>**Col2Im-18**</a>
 
   The operator rearranges column blocks back into a multidimensional image
 
@@ -21531,7 +21531,7 @@ This version of the operator has been available since version 18 of the default 
 <dd>Constrain input and output types to all numeric tensor types.</dd>
 </dl>
 
-### <a name="GroupNormalization-18"></a>**GroupNormalization-18** (deprecated)
+### <a name="GroupNormalization-18"></a>**GroupNormalization-18**</a> (deprecated)
 
   A GroupNormalization function. Carries out group normalization as described in
   the paper https://arxiv.org/abs/1803.08494
@@ -21553,7 +21553,7 @@ This version of the operator has been available since version 18 of the default 
 
 This version of the operator has been deprecated since version 18 of the default ONNX operator set.
 
-### <a name="LpPool-18"></a>**LpPool-18**
+### <a name="LpPool-18"></a>**LpPool-18**</a>
 
   LpPool consumes an input tensor X and applies Lp pooling across
    the tensor according to kernel sizes, stride sizes, and pad lengths.
@@ -21623,7 +21623,7 @@ This version of the operator has been available since version 18 of the default 
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
-### <a name="Mish-18"></a>**Mish-18**
+### <a name="Mish-18"></a>**Mish-18**</a>
 
   Mish: A Self Regularized Non-Monotonic Neural Activation Function.
 
@@ -21658,7 +21658,7 @@ This version of the operator has been available since version 18 of the default 
 <dd>Constrain input X and output types to float tensors.</dd>
 </dl>
 
-### <a name="OptionalGetElement-18"></a>**OptionalGetElement-18**
+### <a name="OptionalGetElement-18"></a>**OptionalGetElement-18**</a>
 
   If the input is a tensor or sequence type, it returns the input.
   If the input is an optional type, it outputs the element in the input.
@@ -21691,7 +21691,7 @@ This version of the operator has been available since version 18 of the default 
 <dd>Constrain output type to all tensor or sequence types.</dd>
 </dl>
 
-### <a name="OptionalHasElement-18"></a>**OptionalHasElement-18**
+### <a name="OptionalHasElement-18"></a>**OptionalHasElement-18**</a>
 
   Returns true if (1) the input is an optional-type and contains an element,
   or, (2) the input is a tensor or sequence type.
@@ -21724,7 +21724,7 @@ This version of the operator has been available since version 18 of the default 
 <dd>Constrain output to a boolean tensor.</dd>
 </dl>
 
-### <a name="Pad-18"></a>**Pad-18**
+### <a name="Pad-18"></a>**Pad-18**</a>
 
   Given a tensor containing the data to be padded (`data`), a tensor containing the number of start and end pad values for axis (`pads`), (optionally) a `mode`, and (optionally) `constant_value`,
   a padded tensor (`output`) is generated.
@@ -21842,7 +21842,7 @@ This version of the operator has been available since version 18 of the default 
 <dd>Constrain indices to integer types</dd>
 </dl>
 
-### <a name="ReduceL1-18"></a>**ReduceL1-18**
+### <a name="ReduceL1-18"></a>**ReduceL1-18**</a>
 
   Computes the L1 norm of the input tensor's elements along the provided axes. The resulting
   tensor has the same rank as the input if `keepdims` equals 1. If `keepdims` equals 0, then
@@ -21889,7 +21889,7 @@ This version of the operator has been available since version 18 of the default 
 <dd>Constrain input and output types to numeric tensors.</dd>
 </dl>
 
-### <a name="ReduceL2-18"></a>**ReduceL2-18**
+### <a name="ReduceL2-18"></a>**ReduceL2-18**</a>
 
   Computes the L2 norm of the input tensor's elements along the provided axes. The resulting
   tensor has the same rank as the input if `keepdims` equals 1. If `keepdims` equals 0, then
@@ -21936,7 +21936,7 @@ This version of the operator has been available since version 18 of the default 
 <dd>Constrain input and output types to numeric tensors.</dd>
 </dl>
 
-### <a name="ReduceLogSum-18"></a>**ReduceLogSum-18**
+### <a name="ReduceLogSum-18"></a>**ReduceLogSum-18**</a>
 
   Computes the log sum of the input tensor's elements along the provided axes. The resulting
   tensor has the same rank as the input if `keepdims` equals 1. If `keepdims` equals 0, then
@@ -21983,7 +21983,7 @@ This version of the operator has been available since version 18 of the default 
 <dd>Constrain input and output types to numeric tensors.</dd>
 </dl>
 
-### <a name="ReduceLogSumExp-18"></a>**ReduceLogSumExp-18**
+### <a name="ReduceLogSumExp-18"></a>**ReduceLogSumExp-18**</a>
 
   Computes the log sum exponent of the input tensor's elements along the provided axes. The resulting
   tensor has the same rank as the input if `keepdims` equals 1. If `keepdims` equals 0, then
@@ -22030,7 +22030,7 @@ This version of the operator has been available since version 18 of the default 
 <dd>Constrain input and output types to numeric tensors.</dd>
 </dl>
 
-### <a name="ReduceMax-18"></a>**ReduceMax-18**
+### <a name="ReduceMax-18"></a>**ReduceMax-18**</a>
 
   Computes the max of the input tensor's elements along the provided axes. The resulting
   tensor has the same rank as the input if `keepdims` equals 1. If `keepdims` equals 0, then
@@ -22077,7 +22077,7 @@ This version of the operator has been available since version 18 of the default 
 <dd>Constrain input and output types to numeric tensors.</dd>
 </dl>
 
-### <a name="ReduceMean-18"></a>**ReduceMean-18**
+### <a name="ReduceMean-18"></a>**ReduceMean-18**</a>
 
   Computes the mean of the input tensor's elements along the provided axes. The resulting
   tensor has the same rank as the input if `keepdims` equals 1. If `keepdims` equals 0, then
@@ -22124,7 +22124,7 @@ This version of the operator has been available since version 18 of the default 
 <dd>Constrain input and output types to numeric tensors.</dd>
 </dl>
 
-### <a name="ReduceMin-18"></a>**ReduceMin-18**
+### <a name="ReduceMin-18"></a>**ReduceMin-18**</a>
 
   Computes the min of the input tensor's elements along the provided axes. The resulting
   tensor has the same rank as the input if `keepdims` equals 1. If `keepdims` equals 0, then
@@ -22171,7 +22171,7 @@ This version of the operator has been available since version 18 of the default 
 <dd>Constrain input and output types to numeric tensors.</dd>
 </dl>
 
-### <a name="ReduceProd-18"></a>**ReduceProd-18**
+### <a name="ReduceProd-18"></a>**ReduceProd-18**</a>
 
   Computes the product of the input tensor's elements along the provided axes. The resulting
   tensor has the same rank as the input if `keepdims` equals 1. If `keepdims` equals 0, then
@@ -22218,7 +22218,7 @@ This version of the operator has been available since version 18 of the default 
 <dd>Constrain input and output types to numeric tensors.</dd>
 </dl>
 
-### <a name="ReduceSumSquare-18"></a>**ReduceSumSquare-18**
+### <a name="ReduceSumSquare-18"></a>**ReduceSumSquare-18**</a>
 
   Computes the sum square of the input tensor's elements along the provided axes. The resulting
   tensor has the same rank as the input if `keepdims` equals 1. If `keepdims` equals 0, then
@@ -22265,7 +22265,7 @@ This version of the operator has been available since version 18 of the default 
 <dd>Constrain input and output types to numeric tensors.</dd>
 </dl>
 
-### <a name="Resize-18"></a>**Resize-18**
+### <a name="Resize-18"></a>**Resize-18**</a>
 
   Resize the input tensor. In general, it calculates every value in the output tensor as a weighted average of neighborhood (a.k.a. sampling locations) in the input tensor.
   Each dimension value of the output tensor is: <br/>
@@ -22367,7 +22367,7 @@ Note: `round_int` stands for computing the nearest integer value, rounding halfw
 <dd>Constrain roi type to float or double.</dd>
 </dl>
 
-### <a name="ScatterElements-18"></a>**ScatterElements-18**
+### <a name="ScatterElements-18"></a>**ScatterElements-18**</a>
 
   ScatterElements takes three inputs `data`, `updates`, and `indices` of the same
   rank r >= 1 and an optional attribute axis that identifies an axis of `data`
@@ -22472,7 +22472,7 @@ This version of the operator has been available since version 18 of the default 
 <dd>Constrain indices to integer types</dd>
 </dl>
 
-### <a name="ScatterND-18"></a>**ScatterND-18**
+### <a name="ScatterND-18"></a>**ScatterND-18**</a>
 
   ScatterND takes three inputs `data` tensor of rank r >= 1, `indices` tensor of rank q >= 1,
   and `updates` tensor of rank q + r - indices.shape[-1] - 1. The output of the operation
@@ -22586,7 +22586,7 @@ This version of the operator has been available since version 18 of the default 
 <dd>Constrain input and output types to any tensor type.</dd>
 </dl>
 
-### <a name="Split-18"></a>**Split-18**
+### <a name="Split-18"></a>**Split-18**</a>
 
   Split a tensor into a list of tensors, along the specified 'axis'.
   Either input 'split' or the attribute 'num_outputs' should be specified, but not both.
@@ -22631,7 +22631,7 @@ This version of the operator has been available since version 18 of the default 
 </dl>
 
 ## Version 19 of the default ONNX operator set
-### <a name="AveragePool-19"></a>**AveragePool-19**
+### <a name="AveragePool-19"></a>**AveragePool-19**</a>
 
   AveragePool consumes an input tensor X and applies average pooling across
    the tensor according to kernel sizes, stride sizes, and pad lengths.
@@ -22710,7 +22710,7 @@ This version of the operator has been available since version 19 of the default 
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
-### <a name="Cast-19"></a>**Cast-19**
+### <a name="Cast-19"></a>**Cast-19**</a>
 
   The operator casts the elements of a given input tensor to a data type
   specified by the 'to' argument and returns an output tensor of the same size in
@@ -22816,7 +22816,7 @@ This version of the operator has been available since version 19 of the default 
 <dd>Constrain output types. Casting to complex is not supported.</dd>
 </dl>
 
-### <a name="CastLike-19"></a>**CastLike-19**
+### <a name="CastLike-19"></a>**CastLike-19**</a>
 
   The operator casts the elements of a given input tensor (the first input) to
   the same data type as the elements of the second input tensor.
@@ -22858,7 +22858,7 @@ This version of the operator has been available since version 19 of the default 
 <dd>Constrain output types. Casting to complex is not supported.</dd>
 </dl>
 
-### <a name="Constant-19"></a>**Constant-19**
+### <a name="Constant-19"></a>**Constant-19**</a>
 
   This operator produces a constant tensor. Exactly one of the provided attributes, either value, sparse_value,
   or value_* must be specified.
@@ -22905,7 +22905,7 @@ This version of the operator has been available since version 19 of the default 
 <dd>Constrain input and output types to all tensor types.</dd>
 </dl>
 
-### <a name="DeformConv-19"></a>**DeformConv-19**
+### <a name="DeformConv-19"></a>**DeformConv-19**</a>
 
   Performs deformable convolution as described in https://arxiv.org/abs/1703.06211 and https://arxiv.org/abs/1811.11168.
   This operator specification supports the general N-D case. Note that most common use cases have 2D or 3D data.
@@ -22960,7 +22960,7 @@ This version of the operator has been available since version 19 of the default 
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
-### <a name="DequantizeLinear-19"></a>**DequantizeLinear-19**
+### <a name="DequantizeLinear-19"></a>**DequantizeLinear-19**</a>
 
   The linear dequantization operator. It consumes a quantized tensor, a scale, and a zero point to compute the full precision tensor.
   The dequantization formula is `y = (x - x_zero_point) * x_scale`. `x_scale` and `x_zero_point` must have same shape, and can be either a scalar
@@ -23008,7 +23008,7 @@ This version of the operator has been available since version 19 of the default 
 <dd>'x_scale' determines the output type.</dd>
 </dl>
 
-### <a name="Equal-19"></a>**Equal-19**
+### <a name="Equal-19"></a>**Equal-19**</a>
 
   Returns the tensor resulted from performing the `equal` logical operation
   elementwise on the input tensors `A` and `B` (with Numpy-style broadcasting support).
@@ -23044,7 +23044,7 @@ This version of the operator has been available since version 19 of the default 
 <dd>Constrain output to boolean tensor.</dd>
 </dl>
 
-### <a name="Identity-19"></a>**Identity-19**
+### <a name="Identity-19"></a>**Identity-19**</a>
 
   Identity operator
 
@@ -23073,7 +23073,7 @@ This version of the operator has been available since version 19 of the default 
 <dd>Constrain input and output types to all tensor, sequence, and optional types.</dd>
 </dl>
 
-### <a name="If-19"></a>**If-19**
+### <a name="If-19"></a>**If-19**</a>
 
   If conditional
 
@@ -23113,7 +23113,7 @@ This version of the operator has been available since version 19 of the default 
 <dd>Only bool</dd>
 </dl>
 
-### <a name="Loop-19"></a>**Loop-19**
+### <a name="Loop-19"></a>**Loop-19**</a>
 
   Generic Looping construct. This loop has multiple termination conditions:
 
@@ -23291,7 +23291,7 @@ This version of the operator has been available since version 19 of the default 
 <dd>tensor of bool, which should be a scalar.</dd>
 </dl>
 
-### <a name="Pad-19"></a>**Pad-19**
+### <a name="Pad-19"></a>**Pad-19**</a>
 
   Given a tensor containing the data to be padded (`data`), a tensor containing the number of start and end pad values for axis (`pads`), (optionally) a `mode`, and (optionally) `constant_value`,
   a padded tensor (`output`) is generated.
@@ -23434,7 +23434,7 @@ This version of the operator has been available since version 19 of the default 
 <dd>Constrain indices to integer types</dd>
 </dl>
 
-### <a name="QuantizeLinear-19"></a>**QuantizeLinear-19**
+### <a name="QuantizeLinear-19"></a>**QuantizeLinear-19**</a>
 
   The linear quantization operator. It consumes a high precision tensor, a scale, and a zero point to compute the low precision / quantized tensor.
   The scale factor and zero point must have same shape, and can be either a scalar for per-tensor / per layer quantization, or a 1-D tensor for per-axis quantization.
@@ -23486,7 +23486,7 @@ This version of the operator has been available since version 19 of the default 
 <dd>Constrain 'y_zero_point' and 'y' to 8-bit integer/float tensor.</dd>
 </dl>
 
-### <a name="Reshape-19"></a>**Reshape-19**
+### <a name="Reshape-19"></a>**Reshape-19**</a>
 
   Reshape the input tensor similar to numpy.reshape.
   First input is the data tensor, second input is a shape tensor which specifies the output shape. It outputs the reshaped tensor.
@@ -23536,7 +23536,7 @@ This version of the operator has been available since version 19 of the default 
 <dd>Constrain input and output types to all tensor types.</dd>
 </dl>
 
-### <a name="Resize-19"></a>**Resize-19**
+### <a name="Resize-19"></a>**Resize-19**</a>
 
   Resize the input tensor. In general, it calculates every value in the output tensor as a weighted average of neighborhood (a.k.a. sampling locations) in the input tensor.
   Each dimension value of the output tensor is:
@@ -23668,7 +23668,7 @@ Note: `round_int` stands for computing the nearest integer value, rounding halfw
 <dd>Constrain roi type to float or double.</dd>
 </dl>
 
-### <a name="Scan-19"></a>**Scan-19**
+### <a name="Scan-19"></a>**Scan-19**</a>
 
   Scan can be used to iterate over one or more scan_input tensors,
   constructing zero or more scan_output tensors. It combines ideas from general recurrences,
@@ -23834,7 +23834,7 @@ This version of the operator has been available since version 19 of the default 
 <dd>All Tensor types up to IRv9.</dd>
 </dl>
 
-### <a name="Shape-19"></a>**Shape-19**
+### <a name="Shape-19"></a>**Shape-19**</a>
 
   Takes a tensor as input and outputs an 1D int64 tensor containing the shape of the input tensor.
   Optional attributes start and end can be used to compute a slice of the input tensor's shape.
@@ -23911,7 +23911,7 @@ This version of the operator has been available since version 19 of the default 
 <dd>Constrain output to int64 tensor.</dd>
 </dl>
 
-### <a name="Size-19"></a>**Size-19**
+### <a name="Size-19"></a>**Size-19**</a>
 
   Takes a tensor as input and outputs a int64 scalar that equals to the total number of elements of the input tensor.
 
@@ -23943,7 +23943,7 @@ This version of the operator has been available since version 19 of the default 
 </dl>
 
 ## Version 20 of the default ONNX operator set
-### <a name="AffineGrid-20"></a>**AffineGrid-20**
+### <a name="AffineGrid-20"></a>**AffineGrid-20**</a>
 
   Generates a 2D or 3D flow field (sampling grid), given a batch of affine matrices theta
   (https://pytorch.org/docs/stable/generated/torch.nn.functional.affine_grid.html).
@@ -24009,7 +24009,7 @@ This version of the operator has been available since version 20 of the default 
 <dd>Constrain size's type to int64 tensors.</dd>
 </dl>
 
-### <a name="ConstantOfShape-20"></a>**ConstantOfShape-20**
+### <a name="ConstantOfShape-20"></a>**ConstantOfShape-20**</a>
 
   Generate a tensor with given value and shape.
 
@@ -24047,7 +24047,7 @@ This version of the operator has been available since version 20 of the default 
 <dd>Constrain output types to be numerics.</dd>
 </dl>
 
-### <a name="DFT-20"></a>**DFT-20**
+### <a name="DFT-20"></a>**DFT-20**</a>
 
   Computes the discrete Fourier Transform (DFT) of the input.
 
@@ -24107,7 +24107,7 @@ This version of the operator has been available since version 20 of the default 
 <dd>Constrain scalar length types to integers.</dd>
 </dl>
 
-### <a name="Gelu-20"></a>**Gelu-20**
+### <a name="Gelu-20"></a>**Gelu-20**</a>
 
   Gelu takes one input data (Tensor<T>) and produces one
   output data (Tensor<T>) where the gaussian error linear units function,
@@ -24149,7 +24149,7 @@ This version of the operator has been available since version 20 of the default 
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
-### <a name="GridSample-20"></a>**GridSample-20**
+### <a name="GridSample-20"></a>**GridSample-20**</a>
 
   Given an input `X` and a flow-field `grid`, computes the output `Y` using `X` values and pixel locations from the `grid`.
   For spatial input `X` with shape (N, C, H, W), the `grid` will have shape (N, H_out, W_out, 2),
@@ -24210,7 +24210,7 @@ This version of the operator has been available since version 20 of the default 
 <dd>Constrain grid types to float tensors.</dd>
 </dl>
 
-### <a name="ImageDecoder-20"></a>**ImageDecoder-20**
+### <a name="ImageDecoder-20"></a>**ImageDecoder-20**</a>
 
   Loads and decodes and image from a file. If it can't decode for any reason (e.g. corrupted encoded
   stream, invalid format, it will return an empty matrix).
@@ -24270,7 +24270,7 @@ This version of the operator has been available since version 20 of the default 
 <dd>Constrain output types to 8-bit unsigned integer tensor.</dd>
 </dl>
 
-### <a name="IsInf-20"></a>**IsInf-20**
+### <a name="IsInf-20"></a>**IsInf-20**</a>
 
   Map infinity to true and other values to false.
 
@@ -24310,7 +24310,7 @@ This version of the operator has been available since version 20 of the default 
 <dd>Constrain output types to boolean tensors.</dd>
 </dl>
 
-### <a name="IsNaN-20"></a>**IsNaN-20**
+### <a name="IsNaN-20"></a>**IsNaN-20**</a>
 
   Returns which elements of the input are NaN.
 
@@ -24341,7 +24341,7 @@ This version of the operator has been available since version 20 of the default 
 <dd>Constrain output types to boolean tensors.</dd>
 </dl>
 
-### <a name="ReduceMax-20"></a>**ReduceMax-20**
+### <a name="ReduceMax-20"></a>**ReduceMax-20**</a>
 
   Computes the max of the input tensor's elements along the provided axes. The resulting
   tensor has the same rank as the input if `keepdims` equals 1. If `keepdims` equals 0, then
@@ -24390,7 +24390,7 @@ This version of the operator has been available since version 20 of the default 
 <dd>Constrain input and output types to numeric and Boolean tensors.</dd>
 </dl>
 
-### <a name="ReduceMin-20"></a>**ReduceMin-20**
+### <a name="ReduceMin-20"></a>**ReduceMin-20**</a>
 
   Computes the min of the input tensor's elements along the provided axes. The resulting
   tensor has the same rank as the input if `keepdims` equals 1. If `keepdims` equals 0, then
@@ -24439,7 +24439,7 @@ This version of the operator has been available since version 20 of the default 
 <dd>Constrain input and output types to numeric and Boolean tensors.</dd>
 </dl>
 
-### <a name="RegexFullMatch-20"></a>**RegexFullMatch-20**
+### <a name="RegexFullMatch-20"></a>**RegexFullMatch-20**</a>
 
   RegexFullMatch performs a full regex match on each element of the input tensor. If an element fully matches the regex pattern specified as an attribute, the corresponding element in the output is True and it is False otherwise. [RE2](https://github.com/google/re2/wiki/Syntax) regex syntax is used.
 
@@ -24477,7 +24477,7 @@ This version of the operator has been available since version 20 of the default 
 <dd>Outputs are bools and are True where there is a full regex match and False otherwise.</dd>
 </dl>
 
-### <a name="StringConcat-20"></a>**StringConcat-20**
+### <a name="StringConcat-20"></a>**StringConcat-20**</a>
 
   StringConcat concatenates string tensors elementwise (with NumPy-style broadcasting support)
 
@@ -24508,7 +24508,7 @@ This version of the operator has been available since version 20 of the default 
 <dd>Inputs and outputs must be UTF-8 strings</dd>
 </dl>
 
-### <a name="StringSplit-20"></a>**StringSplit-20**
+### <a name="StringSplit-20"></a>**StringSplit-20**</a>
 
   StringSplit splits a string tensor's elements into substrings based on a delimiter attribute and a maxsplit attribute.
 
@@ -24557,7 +24557,7 @@ This version of the operator has been available since version 20 of the default 
 </dl>
 
 ## Version 21 of the default ONNX operator set
-### <a name="Cast-21"></a>**Cast-21**
+### <a name="Cast-21"></a>**Cast-21**</a>
 
   The operator casts the elements of a given input tensor to a data type
   specified by the 'to' argument and returns an output tensor of the same size in
@@ -24663,7 +24663,7 @@ This version of the operator has been available since version 21 of the default 
 <dd>Constrain output types. Casting to complex is not supported.</dd>
 </dl>
 
-### <a name="CastLike-21"></a>**CastLike-21**
+### <a name="CastLike-21"></a>**CastLike-21**</a>
 
   The operator casts the elements of a given input tensor (the first input) to
   the same data type as the elements of the second input tensor.
@@ -24705,7 +24705,7 @@ This version of the operator has been available since version 21 of the default 
 <dd>Constrain output types. Casting to complex is not supported.</dd>
 </dl>
 
-### <a name="Constant-21"></a>**Constant-21**
+### <a name="Constant-21"></a>**Constant-21**</a>
 
   This operator produces a constant tensor. Exactly one of the provided attributes, either value, sparse_value,
   or value_* must be specified.
@@ -24752,7 +24752,7 @@ This version of the operator has been available since version 21 of the default 
 <dd>Constrain input and output types to all tensor types.</dd>
 </dl>
 
-### <a name="ConstantOfShape-21"></a>**ConstantOfShape-21**
+### <a name="ConstantOfShape-21"></a>**ConstantOfShape-21**</a>
 
   Generate a tensor with given value and shape.
 
@@ -24790,7 +24790,7 @@ This version of the operator has been available since version 21 of the default 
 <dd>Constrain output types to be numerics or boolean.</dd>
 </dl>
 
-### <a name="DequantizeLinear-21"></a>**DequantizeLinear-21**
+### <a name="DequantizeLinear-21"></a>**DequantizeLinear-21**</a>
 
   The linear dequantization operator. It consumes a quantized tensor, a scale, and a zero point to compute the
   full-precision tensor. The dequantization formula is `y = (x - x_zero_point) * x_scale`. `x_scale` and `x_zero_point`
@@ -24842,7 +24842,7 @@ This version of the operator has been available since version 21 of the default 
 <dd>'x_scale' determines the output type.</dd>
 </dl>
 
-### <a name="Flatten-21"></a>**Flatten-21**
+### <a name="Flatten-21"></a>**Flatten-21**</a>
 
   Flattens the input tensor into a 2D matrix. If input tensor has shape
   (d_0, d_1, ... d_n) then the output will have shape
@@ -24880,7 +24880,7 @@ This version of the operator has been available since version 21 of the default 
 <dd>Constrain input and output to all tensor types up to IRv10.</dd>
 </dl>
 
-### <a name="GroupNormalization-21"></a>**GroupNormalization-21**
+### <a name="GroupNormalization-21"></a>**GroupNormalization-21**</a>
 
   A GroupNormalization function. Carries out group normalization as described in
   the paper https://arxiv.org/abs/1803.08494
@@ -24946,7 +24946,7 @@ This version of the operator has been available since version 21 of the default 
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
-### <a name="Identity-21"></a>**Identity-21**
+### <a name="Identity-21"></a>**Identity-21**</a>
 
   Identity operator
 
@@ -24975,7 +24975,7 @@ This version of the operator has been available since version 21 of the default 
 <dd>Constrain input and output types to all tensor, sequence, and optional types.</dd>
 </dl>
 
-### <a name="If-21"></a>**If-21**
+### <a name="If-21"></a>**If-21**</a>
 
   If conditional
 
@@ -25015,7 +25015,7 @@ This version of the operator has been available since version 21 of the default 
 <dd>Only bool</dd>
 </dl>
 
-### <a name="Loop-21"></a>**Loop-21**
+### <a name="Loop-21"></a>**Loop-21**</a>
 
   Generic Looping construct. This loop has multiple termination conditions:
 
@@ -25193,7 +25193,7 @@ This version of the operator has been available since version 21 of the default 
 <dd>tensor of bool, which should be a scalar.</dd>
 </dl>
 
-### <a name="Pad-21"></a>**Pad-21**
+### <a name="Pad-21"></a>**Pad-21**</a>
 
   Given a tensor containing the data to be padded (`data`), a tensor containing the number of start and end pad values for axis (`pads`), (optionally) a `mode`, and (optionally) `constant_value`,
   a padded tensor (`output`) is generated.
@@ -25336,7 +25336,7 @@ This version of the operator has been available since version 21 of the default 
 <dd>Constrain indices to integer types</dd>
 </dl>
 
-### <a name="QLinearMatMul-21"></a>**QLinearMatMul-21**
+### <a name="QLinearMatMul-21"></a>**QLinearMatMul-21**</a>
 
   Matrix product that behaves like [numpy.matmul](https://numpy.org/doc/stable/reference/generated/numpy.matmul.html).
   It consumes two quantized input tensors, their scales and zero points, scale and zero point of output,
@@ -25395,7 +25395,7 @@ This version of the operator has been available since version 21 of the default 
 <dd>The type of the output and its zeropoint.</dd>
 </dl>
 
-### <a name="QuantizeLinear-21"></a>**QuantizeLinear-21**
+### <a name="QuantizeLinear-21"></a>**QuantizeLinear-21**</a>
 
   The linear quantization operator consumes a high-precision tensor, a scale, and a zero point to compute the
   low-precision/quantized tensor. The scale factor and zero point must have the same shape, determining the quantization
@@ -25463,7 +25463,7 @@ This version of the operator has been available since version 21 of the default 
 <dd>The type of the input `y_zero_point` and the output `y`.</dd>
 </dl>
 
-### <a name="Reshape-21"></a>**Reshape-21**
+### <a name="Reshape-21"></a>**Reshape-21**</a>
 
   Reshape the input tensor similar to numpy.reshape.
   First input is the data tensor, second input is a shape tensor which specifies the output shape. It outputs the reshaped tensor.
@@ -25513,7 +25513,7 @@ This version of the operator has been available since version 21 of the default 
 <dd>Constrain input and output types to all tensor types.</dd>
 </dl>
 
-### <a name="Scan-21"></a>**Scan-21**
+### <a name="Scan-21"></a>**Scan-21**</a>
 
   Scan can be used to iterate over one or more scan_input tensors,
   constructing zero or more scan_output tensors. It combines ideas from general recurrences,
@@ -25679,7 +25679,7 @@ This version of the operator has been available since version 21 of the default 
 <dd>All Tensor types up to IRv10.</dd>
 </dl>
 
-### <a name="Shape-21"></a>**Shape-21**
+### <a name="Shape-21"></a>**Shape-21**</a>
 
   Takes a tensor as input and outputs an 1D int64 tensor containing the shape of the input tensor.
   Optional attributes start and end can be used to compute a slice of the input tensor's shape.
@@ -25756,7 +25756,7 @@ This version of the operator has been available since version 21 of the default 
 <dd>Constrain output to int64 tensor.</dd>
 </dl>
 
-### <a name="Size-21"></a>**Size-21**
+### <a name="Size-21"></a>**Size-21**</a>
 
   Takes a tensor as input and outputs a int64 scalar that equals to the total number of elements of the input tensor.
 
@@ -25787,7 +25787,7 @@ This version of the operator has been available since version 21 of the default 
 <dd>Constrain output to int64 tensor, which should be a scalar though.</dd>
 </dl>
 
-### <a name="Squeeze-21"></a>**Squeeze-21**
+### <a name="Squeeze-21"></a>**Squeeze-21**</a>
 
   Remove single-dimensional entries from the shape of a tensor.
   Takes an input `axes` with a list of axes to squeeze.
@@ -25821,7 +25821,7 @@ This version of the operator has been available since version 21 of the default 
 <dd>Constrain input and output types to all tensor types up to IRv10.</dd>
 </dl>
 
-### <a name="Transpose-21"></a>**Transpose-21**
+### <a name="Transpose-21"></a>**Transpose-21**</a>
 
   Returns a transpose of the input tensor. (Similar to `numpy.transpose`).
   The optional attribute `perm` must be a permutation of the dimensions of
@@ -25866,7 +25866,7 @@ This version of the operator has been available since version 21 of the default 
 <dd>Constrain input and output types to all tensor types.</dd>
 </dl>
 
-### <a name="Unsqueeze-21"></a>**Unsqueeze-21**
+### <a name="Unsqueeze-21"></a>**Unsqueeze-21**</a>
 
   Insert single-dimensional entries to the shape of an input tensor (`data`).
   Takes one required input `axes` - which contains a list of dimension indices and this operator will insert a dimension of value `1` into the corresponding index of the output tensor (`expanded`).
@@ -25907,7 +25907,7 @@ This version of the operator has been available since version 21 of the default 
 </dl>
 
 ## Version 22 of the default ONNX operator set
-### <a name="Acos-22"></a>**Acos-22**
+### <a name="Acos-22"></a>**Acos-22**</a>
 
   Calculates the arccosine (inverse of cosine) of the given input tensor, element-wise.
 
@@ -25936,7 +25936,7 @@ This version of the operator has been available since version 22 of the default 
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
-### <a name="Acosh-22"></a>**Acosh-22**
+### <a name="Acosh-22"></a>**Acosh-22**</a>
 
   Calculates the hyperbolic arccosine of the given input tensor element-wise.
 
@@ -25965,7 +25965,7 @@ This version of the operator has been available since version 22 of the default 
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
-### <a name="Asin-22"></a>**Asin-22**
+### <a name="Asin-22"></a>**Asin-22**</a>
 
   Calculates the arcsine (inverse of sine) of the given input tensor, element-wise.
 
@@ -25994,7 +25994,7 @@ This version of the operator has been available since version 22 of the default 
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
-### <a name="Asinh-22"></a>**Asinh-22**
+### <a name="Asinh-22"></a>**Asinh-22**</a>
 
   Calculates the hyperbolic arcsine of the given input tensor element-wise.
 
@@ -26023,7 +26023,7 @@ This version of the operator has been available since version 22 of the default 
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
-### <a name="Atan-22"></a>**Atan-22**
+### <a name="Atan-22"></a>**Atan-22**</a>
 
   Calculates the arctangent (inverse of tangent) of the given input tensor, element-wise.
 
@@ -26052,7 +26052,7 @@ This version of the operator has been available since version 22 of the default 
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
-### <a name="Atanh-22"></a>**Atanh-22**
+### <a name="Atanh-22"></a>**Atanh-22**</a>
 
   Calculates the hyperbolic arctangent of the given input tensor element-wise.
 
@@ -26081,7 +26081,7 @@ This version of the operator has been available since version 22 of the default 
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
-### <a name="AveragePool-22"></a>**AveragePool-22**
+### <a name="AveragePool-22"></a>**AveragePool-22**</a>
 
   AveragePool consumes an input tensor X and applies average pooling across
    the tensor according to kernel sizes, stride sizes, and pad lengths.
@@ -26160,7 +26160,7 @@ This version of the operator has been available since version 22 of the default 
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
-### <a name="Bernoulli-22"></a>**Bernoulli-22**
+### <a name="Bernoulli-22"></a>**Bernoulli-22**</a>
 
   Draws binary random numbers (0 or 1) from a Bernoulli distribution. The input tensor should be a tensor
   containing probabilities p (a value in the range [0,1]) to be used for drawing the binary random number,
@@ -26205,7 +26205,7 @@ This version of the operator has been available since version 22 of the default 
 <dd>Constrain output types to all numeric tensors and bool tensors.</dd>
 </dl>
 
-### <a name="Conv-22"></a>**Conv-22**
+### <a name="Conv-22"></a>**Conv-22**</a>
 
   The convolution operator consumes an input tensor and a filter, and
   computes the output.
@@ -26256,7 +26256,7 @@ This version of the operator has been available since version 22 of the default 
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
-### <a name="ConvTranspose-22"></a>**ConvTranspose-22**
+### <a name="ConvTranspose-22"></a>**ConvTranspose-22**</a>
 
   The convolution transpose operator consumes an input tensor and a filter,
   and computes the output.
@@ -26323,7 +26323,7 @@ This version of the operator has been available since version 22 of the default 
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
-### <a name="Cos-22"></a>**Cos-22**
+### <a name="Cos-22"></a>**Cos-22**</a>
 
   Calculates the cosine of the given input tensor, element-wise.
 
@@ -26352,7 +26352,7 @@ This version of the operator has been available since version 22 of the default 
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
-### <a name="Cosh-22"></a>**Cosh-22**
+### <a name="Cosh-22"></a>**Cosh-22**</a>
 
   Calculates the hyperbolic cosine of the given input tensor element-wise.
 
@@ -26381,7 +26381,7 @@ This version of the operator has been available since version 22 of the default 
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
-### <a name="DeformConv-22"></a>**DeformConv-22**
+### <a name="DeformConv-22"></a>**DeformConv-22**</a>
 
   Performs deformable convolution as described in https://arxiv.org/abs/1703.06211 and https://arxiv.org/abs/1811.11168.
   This operator specification supports the general N-D case. Note that most common use cases have 2D or 3D data.
@@ -26436,7 +26436,7 @@ This version of the operator has been available since version 22 of the default 
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
-### <a name="Det-22"></a>**Det-22**
+### <a name="Det-22"></a>**Det-22**</a>
 
   Det calculates determinant of a square matrix or batches of square matrices.
   Det takes one input tensor of shape `[*, M, M]`, where `*` is zero or more batch dimensions,
@@ -26469,7 +26469,7 @@ This version of the operator has been available since version 22 of the default 
 <dd>Constrain input and output types to floating-point tensors.</dd>
 </dl>
 
-### <a name="Dropout-22"></a>**Dropout-22**
+### <a name="Dropout-22"></a>**Dropout-22**</a>
 
   Dropout takes an input floating-point tensor, an optional input ratio (floating-point scalar) and an optional input training_mode (boolean scalar). It produces two tensor outputs,
   output (floating-point tensor) and mask (optional `Tensor<bool>`). If `training_mode` is true then the output Y will be a random dropout;
@@ -26526,7 +26526,7 @@ This version of the operator has been available since version 22 of the default 
 <dd>Constrain output 'mask' types to boolean tensors.</dd>
 </dl>
 
-### <a name="Elu-22"></a>**Elu-22**
+### <a name="Elu-22"></a>**Elu-22**</a>
 
   Elu takes one input data (Tensor<T>) and produces one output data
   (Tensor<T>) where the function `f(x) = alpha * (exp(x) - 1.) for x <
@@ -26565,7 +26565,7 @@ This version of the operator has been available since version 22 of the default 
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
-### <a name="EyeLike-22"></a>**EyeLike-22**
+### <a name="EyeLike-22"></a>**EyeLike-22**</a>
 
   Generate a 2D tensor (matrix) with ones on the diagonal and zeros everywhere else. Only 2D
   tensors are supported, i.e. input T1 must be of rank 2. The shape of the output tensor is the
@@ -26611,7 +26611,7 @@ This version of the operator has been available since version 22 of the default 
 <dd>Constrain output types. Strings and complex are not supported.</dd>
 </dl>
 
-### <a name="GRU-22"></a>**GRU-22**
+### <a name="GRU-22"></a>**GRU-22**</a>
 
   Computes an one-layer GRU. This operator is usually supported via some custom
   implementation such as CuDNN.
@@ -26721,7 +26721,7 @@ This version of the operator has been available since version 22 of the default 
 <dd>Constrain seq_lens to integer tensor.</dd>
 </dl>
 
-### <a name="GlobalAveragePool-22"></a>**GlobalAveragePool-22**
+### <a name="GlobalAveragePool-22"></a>**GlobalAveragePool-22**</a>
 
   GlobalAveragePool consumes an input tensor X and applies average pooling across
    the values in the same channel. This is equivalent to AveragePool with kernel size
@@ -26752,7 +26752,7 @@ This version of the operator has been available since version 22 of the default 
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
-### <a name="GlobalLpPool-22"></a>**GlobalLpPool-22**
+### <a name="GlobalLpPool-22"></a>**GlobalLpPool-22**</a>
 
   GlobalLpPool consumes an input tensor X and applies lp pool pooling across
    the values in the same channel. This is equivalent to LpPool with kernel size
@@ -26790,7 +26790,7 @@ This version of the operator has been available since version 22 of the default 
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
-### <a name="GlobalMaxPool-22"></a>**GlobalMaxPool-22**
+### <a name="GlobalMaxPool-22"></a>**GlobalMaxPool-22**</a>
 
   GlobalMaxPool consumes an input tensor X and applies max pooling across
    the values in the same channel. This is equivalent to MaxPool with kernel size
@@ -26821,7 +26821,7 @@ This version of the operator has been available since version 22 of the default 
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
-### <a name="GridSample-22"></a>**GridSample-22**
+### <a name="GridSample-22"></a>**GridSample-22**</a>
 
   Given an input `X` and a flow-field `grid`, computes the output `Y` using `X` values and pixel locations from the `grid`.
   For spatial input `X` with shape (N, C, H, W), the `grid` will have shape (N, H_out, W_out, 2),
@@ -26882,7 +26882,7 @@ This version of the operator has been available since version 22 of the default 
 <dd>Constrain grid types to float tensors.</dd>
 </dl>
 
-### <a name="HardSigmoid-22"></a>**HardSigmoid-22**
+### <a name="HardSigmoid-22"></a>**HardSigmoid-22**</a>
 
   HardSigmoid takes one input data (Tensor<T>) and produces one output data
   (Tensor<T>) where the HardSigmoid function, y = max(0, min(1, alpha * x + beta)),
@@ -26922,7 +26922,7 @@ This version of the operator has been available since version 22 of the default 
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
-### <a name="HardSwish-22"></a>**HardSwish-22**
+### <a name="HardSwish-22"></a>**HardSwish-22**</a>
 
   HardSwish takes one input data (Tensor<T>) and produces one output data (Tensor<T>) where
   the HardSwish function, y = x * max(0, min(1, alpha * x + beta)) = x * HardSigmoid<alpha, beta>(x),
@@ -26953,7 +26953,7 @@ This version of the operator has been available since version 22 of the default 
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
-### <a name="InstanceNormalization-22"></a>**InstanceNormalization-22**
+### <a name="InstanceNormalization-22"></a>**InstanceNormalization-22**</a>
 
   Carries out instance normalization as described in the paper
   https://arxiv.org/abs/1607.08022.
@@ -26998,7 +26998,7 @@ This version of the operator has been available since version 22 of the default 
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
-### <a name="LSTM-22"></a>**LSTM-22**
+### <a name="LSTM-22"></a>**LSTM-22**</a>
 
   Computes an one-layer LSTM. This operator is usually supported via some
   custom implementation such as CuDNN.
@@ -27117,7 +27117,7 @@ This version of the operator has been available since version 22 of the default 
 <dd>Constrain seq_lens to integer tensor.</dd>
 </dl>
 
-### <a name="LpNormalization-22"></a>**LpNormalization-22**
+### <a name="LpNormalization-22"></a>**LpNormalization-22**</a>
 
   Given a matrix, apply Lp-normalization along the provided axis.
   The output is computed as: `output = input / Lp_norm(input, axis)`.
@@ -27158,7 +27158,7 @@ This version of the operator has been available since version 22 of the default 
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
-### <a name="LpPool-22"></a>**LpPool-22**
+### <a name="LpPool-22"></a>**LpPool-22**</a>
 
   LpPool consumes an input tensor X and applies Lp pooling across
    the tensor according to kernel sizes, stride sizes, and pad lengths.
@@ -27228,7 +27228,7 @@ This version of the operator has been available since version 22 of the default 
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
-### <a name="MaxPool-22"></a>**MaxPool-22**
+### <a name="MaxPool-22"></a>**MaxPool-22**</a>
 
   MaxPool consumes an input tensor X and applies max pooling across
    the tensor according to kernel sizes, stride sizes, and pad lengths.
@@ -27311,7 +27311,7 @@ This version of the operator has been available since version 22 of the default 
 <dd>Constrain index tensor to int64</dd>
 </dl>
 
-### <a name="MaxRoiPool-22"></a>**MaxRoiPool-22**
+### <a name="MaxRoiPool-22"></a>**MaxRoiPool-22**</a>
 
   ROI max pool consumes an input tensor X and region of interests (RoIs) to
    apply max pooling across each RoI, to produce output 4-D tensor of shape
@@ -27353,7 +27353,7 @@ This version of the operator has been available since version 22 of the default 
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
-### <a name="MaxUnpool-22"></a>**MaxUnpool-22**
+### <a name="MaxUnpool-22"></a>**MaxUnpool-22**</a>
 
   MaxUnpool essentially computes the partial inverse of the MaxPool op.
    The input information to this op is typically the output information from a MaxPool op. The first
@@ -27416,7 +27416,7 @@ This version of the operator has been available since version 22 of the default 
 <dd>Constrain index tensor to int64</dd>
 </dl>
 
-### <a name="Mish-22"></a>**Mish-22**
+### <a name="Mish-22"></a>**Mish-22**</a>
 
   Mish: A Self Regularized Non-Monotonic Neural Activation Function.
 
@@ -27451,7 +27451,7 @@ This version of the operator has been available since version 22 of the default 
 <dd>Constrain input X and output types to float tensors.</dd>
 </dl>
 
-### <a name="Multinomial-22"></a>**Multinomial-22**
+### <a name="Multinomial-22"></a>**Multinomial-22**</a>
 
   Generate a tensor of samples from a multinomial distribution according to the probabilities
   of each of the possible outcomes.
@@ -27494,7 +27494,7 @@ This version of the operator has been available since version 22 of the default 
 <dd>Constrain output types to integral tensors.</dd>
 </dl>
 
-### <a name="NegativeLogLikelihoodLoss-22"></a>**NegativeLogLikelihoodLoss-22**
+### <a name="NegativeLogLikelihoodLoss-22"></a>**NegativeLogLikelihoodLoss-22**</a>
 
   A NegativeLogLikelihoodLoss operator computes (weighted) negative log likelihood loss.
   Its "input" tensor has the shape of (N, C, d1, d2, ..., dk) where k >= 0.
@@ -27638,7 +27638,7 @@ This version of the operator has been available since version 22 of the default 
 <dd>Constrain target to integer types</dd>
 </dl>
 
-### <a name="RNN-22"></a>**RNN-22**
+### <a name="RNN-22"></a>**RNN-22**</a>
 
   Computes an one-layer simple RNN. This operator is usually supported
   via some custom implementation such as CuDNN.
@@ -27739,7 +27739,7 @@ This version of the operator has been available since version 22 of the default 
 <dd>Constrain seq_lens to integer tensor.</dd>
 </dl>
 
-### <a name="RandomNormal-22"></a>**RandomNormal-22**
+### <a name="RandomNormal-22"></a>**RandomNormal-22**</a>
 
   Generate a tensor with random values drawn from a normal distribution. The shape
   of the tensor is specified by the `shape` argument and the parameter of the normal distribution
@@ -27785,7 +27785,7 @@ This version of the operator has been available since version 22 of the default 
 <dd>Constrain output types to float tensors.</dd>
 </dl>
 
-### <a name="RandomNormalLike-22"></a>**RandomNormalLike-22**
+### <a name="RandomNormalLike-22"></a>**RandomNormalLike-22**</a>
 
   Generate a tensor with random values drawn from a normal distribution.
   The shape of the output tensor is copied from the shape of the input tensor,
@@ -27835,7 +27835,7 @@ This version of the operator has been available since version 22 of the default 
 <dd>Constrain output types to float tensors.</dd>
 </dl>
 
-### <a name="RandomUniform-22"></a>**RandomUniform-22**
+### <a name="RandomUniform-22"></a>**RandomUniform-22**</a>
 
   Generate a tensor with random values drawn from a uniform distribution. The shape
   of the tensor is specified by the `shape` argument and the range by `low` and `high`.
@@ -27880,7 +27880,7 @@ This version of the operator has been available since version 22 of the default 
 <dd>Constrain output types to float tensors.</dd>
 </dl>
 
-### <a name="RandomUniformLike-22"></a>**RandomUniformLike-22**
+### <a name="RandomUniformLike-22"></a>**RandomUniformLike-22**</a>
 
   Generate a tensor with random values drawn from a uniform distribution.
   The shape of the output tensor is copied from the shape of the input tensor,
@@ -27930,7 +27930,7 @@ This version of the operator has been available since version 22 of the default 
 <dd>Constrain output types to float tensors.</dd>
 </dl>
 
-### <a name="RoiAlign-22"></a>**RoiAlign-22**
+### <a name="RoiAlign-22"></a>**RoiAlign-22**</a>
 
   Region of Interest (RoI) align operation described in the
   [Mask R-CNN paper](https://arxiv.org/abs/1703.06870).
@@ -27992,7 +27992,7 @@ This version of the operator has been available since version 22 of the default 
 <dd>Constrain types to int tensors.</dd>
 </dl>
 
-### <a name="Round-22"></a>**Round-22**
+### <a name="Round-22"></a>**Round-22**</a>
 
   Round takes one input Tensor and rounds the values, element-wise, meaning
   it finds the nearest integer for each value.
@@ -28034,7 +28034,7 @@ This version of the operator has been available since version 22 of the default 
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
-### <a name="Selu-22"></a>**Selu-22**
+### <a name="Selu-22"></a>**Selu-22**</a>
 
   Selu takes one input data (Tensor<T>) and produces one output data
   (Tensor<T>) where the scaled exponential linear unit function,
@@ -28075,7 +28075,7 @@ This version of the operator has been available since version 22 of the default 
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
-### <a name="Sin-22"></a>**Sin-22**
+### <a name="Sin-22"></a>**Sin-22**</a>
 
   Calculates the sine of the given input tensor, element-wise.
 
@@ -28104,7 +28104,7 @@ This version of the operator has been available since version 22 of the default 
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
-### <a name="Sinh-22"></a>**Sinh-22**
+### <a name="Sinh-22"></a>**Sinh-22**</a>
 
   Calculates the hyperbolic sine of the given input tensor element-wise.
 
@@ -28133,7 +28133,7 @@ This version of the operator has been available since version 22 of the default 
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
-### <a name="Softplus-22"></a>**Softplus-22**
+### <a name="Softplus-22"></a>**Softplus-22**</a>
 
   Softplus takes one input data (Tensor<T>) and produces one output data
   (Tensor<T>) where the softplus function, y = ln(exp(x) + 1), is applied to
@@ -28164,7 +28164,7 @@ This version of the operator has been available since version 22 of the default 
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
-### <a name="Softsign-22"></a>**Softsign-22**
+### <a name="Softsign-22"></a>**Softsign-22**</a>
 
   Calculates the softsign (x/(1+|x|)) of the given input tensor element-wise.
 
@@ -28193,7 +28193,7 @@ This version of the operator has been available since version 22 of the default 
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
-### <a name="Tan-22"></a>**Tan-22**
+### <a name="Tan-22"></a>**Tan-22**</a>
 
   Calculates the tangent of the given input tensor, element-wise.
 
@@ -28222,7 +28222,7 @@ This version of the operator has been available since version 22 of the default 
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
-### <a name="ThresholdedRelu-22"></a>**ThresholdedRelu-22**
+### <a name="ThresholdedRelu-22"></a>**ThresholdedRelu-22**</a>
 
   ThresholdedRelu takes one input data (Tensor<T>) and produces one output data
   (Tensor<T>) where the rectified linear function, y = x for x > alpha, y = 0 otherwise,
@@ -28261,7 +28261,7 @@ This version of the operator has been available since version 22 of the default 
 </dl>
 
 ## Version 23 of the default ONNX operator set
-### <a name="Attention-23"></a>**Attention-23**
+### <a name="Attention-23"></a>**Attention-23**</a>
 
   Computes scaled dot product attention on query, key and value tensors, using an optional attention mask if passed.
 
@@ -28369,7 +28369,7 @@ This version of the operator has been available since version 23 of the default 
 <dd>Constrain output 'mask' types to boolean tensors and input types.</dd>
 </dl>
 
-### <a name="Cast-23"></a>**Cast-23**
+### <a name="Cast-23"></a>**Cast-23**</a>
 
   The operator casts the elements of a given input tensor to a data type
   specified by the 'to' argument and returns an output tensor of the same size in
@@ -28475,7 +28475,7 @@ This version of the operator has been available since version 23 of the default 
 <dd>Constrain output types. Casting to complex is not supported.</dd>
 </dl>
 
-### <a name="CastLike-23"></a>**CastLike-23**
+### <a name="CastLike-23"></a>**CastLike-23**</a>
 
   The operator casts the elements of a given input tensor (the first input) to
   the same data type as the elements of the second input tensor.
@@ -28517,7 +28517,7 @@ This version of the operator has been available since version 23 of the default 
 <dd>Constrain output types. Casting to complex is not supported.</dd>
 </dl>
 
-### <a name="Constant-23"></a>**Constant-23**
+### <a name="Constant-23"></a>**Constant-23**</a>
 
   This operator produces a constant tensor. Exactly one of the provided attributes, either value, sparse_value,
   or value_* must be specified.
@@ -28564,7 +28564,7 @@ This version of the operator has been available since version 23 of the default 
 <dd>Constrain input and output types to all tensor types.</dd>
 </dl>
 
-### <a name="ConstantOfShape-23"></a>**ConstantOfShape-23**
+### <a name="ConstantOfShape-23"></a>**ConstantOfShape-23**</a>
 
   Generate a tensor with given value and shape.
 
@@ -28602,7 +28602,7 @@ This version of the operator has been available since version 23 of the default 
 <dd>Constrain output types to be numerics or boolean.</dd>
 </dl>
 
-### <a name="DequantizeLinear-23"></a>**DequantizeLinear-23**
+### <a name="DequantizeLinear-23"></a>**DequantizeLinear-23**</a>
 
   The linear dequantization operator. It consumes a quantized tensor, a scale, and a zero point to compute the
   full-precision tensor. The dequantization formula is `y = (x - x_zero_point) * x_scale`. `x_scale` and `x_zero_point`
@@ -28661,7 +28661,7 @@ This version of the operator has been available since version 23 of the default 
 <dd>The type of the output 'y'.</dd>
 </dl>
 
-### <a name="Flatten-23"></a>**Flatten-23**
+### <a name="Flatten-23"></a>**Flatten-23**</a>
 
   Flattens the input tensor into a 2D matrix. If input tensor has shape
   (d_0, d_1, ... d_n) then the output will have shape
@@ -28699,7 +28699,7 @@ This version of the operator has been available since version 23 of the default 
 <dd>Constrain input and output to all tensor types up to IRv10.</dd>
 </dl>
 
-### <a name="Identity-23"></a>**Identity-23**
+### <a name="Identity-23"></a>**Identity-23**</a>
 
   Identity operator
 
@@ -28728,7 +28728,7 @@ This version of the operator has been available since version 23 of the default 
 <dd>Constrain input and output types to all tensor, sequence, and optional types.</dd>
 </dl>
 
-### <a name="If-23"></a>**If-23**
+### <a name="If-23"></a>**If-23**</a>
 
   If conditional
 
@@ -28768,7 +28768,7 @@ This version of the operator has been available since version 23 of the default 
 <dd>Only bool</dd>
 </dl>
 
-### <a name="Loop-23"></a>**Loop-23**
+### <a name="Loop-23"></a>**Loop-23**</a>
 
   Generic Looping construct. This loop has multiple termination conditions:
 
@@ -28946,7 +28946,7 @@ This version of the operator has been available since version 23 of the default 
 <dd>tensor of bool, which should be a scalar.</dd>
 </dl>
 
-### <a name="Pad-23"></a>**Pad-23**
+### <a name="Pad-23"></a>**Pad-23**</a>
 
   Given a tensor containing the data to be padded (`data`), a tensor containing the number of start and end pad values for axis (`pads`), (optionally) a `mode`, and (optionally) `constant_value`,
   a padded tensor (`output`) is generated.
@@ -29089,7 +29089,7 @@ This version of the operator has been available since version 23 of the default 
 <dd>Constrain indices to integer types</dd>
 </dl>
 
-### <a name="QuantizeLinear-23"></a>**QuantizeLinear-23**
+### <a name="QuantizeLinear-23"></a>**QuantizeLinear-23**</a>
 
   The linear quantization operator consumes a high-precision tensor, a scale, and a zero point to compute the
   low-precision/quantized tensor. The scale factor and zero point must have the same shape, determining the quantization
@@ -29167,7 +29167,7 @@ This version of the operator has been available since version 23 of the default 
 <dd>The type of the input `y_zero_point` and the output `y`.</dd>
 </dl>
 
-### <a name="RMSNormalization-23"></a>**RMSNormalization-23**
+### <a name="RMSNormalization-23"></a>**RMSNormalization-23**</a>
 
   This is RMS normalization defined in ONNX as function as described in the paper https://arxiv.org/pdf/1910.07467.
         The overall computation can be split into two stages. The root mean squared norm is taken over the last D dimensions,
@@ -29238,7 +29238,7 @@ This version of the operator has been available since version 23 of the default 
 <dd>Constrain output Y and scale type to float tensors.</dd>
 </dl>
 
-### <a name="Reshape-23"></a>**Reshape-23**
+### <a name="Reshape-23"></a>**Reshape-23**</a>
 
   Reshape the input tensor similar to numpy.reshape.
   First input is the data tensor, second input is a shape tensor which specifies the output shape. It outputs the reshaped tensor.
@@ -29288,7 +29288,7 @@ This version of the operator has been available since version 23 of the default 
 <dd>Constrain input and output types to all tensor types.</dd>
 </dl>
 
-### <a name="RotaryEmbedding-23"></a>**RotaryEmbedding-23**
+### <a name="RotaryEmbedding-23"></a>**RotaryEmbedding-23**</a>
 
   RotaryEmbedding is the implementation of rotary positional embeddings (RoPE) based on the paper https://arxiv.org/pdf/2104.09864.
   The key advantage of RoPE is that it allows the model to understand both the absolute position of a token and the relative distances
@@ -29435,7 +29435,7 @@ This version of the operator has been available since version 23 of the default 
 <dd>Constrain input and output types to integer tensors.</dd>
 </dl>
 
-### <a name="Scan-23"></a>**Scan-23**
+### <a name="Scan-23"></a>**Scan-23**</a>
 
   Scan can be used to iterate over one or more scan_input tensors,
   constructing zero or more scan_output tensors. It combines ideas from general recurrences,
@@ -29601,7 +29601,7 @@ This version of the operator has been available since version 23 of the default 
 <dd>All Tensor types up to IRv11.</dd>
 </dl>
 
-### <a name="Shape-23"></a>**Shape-23**
+### <a name="Shape-23"></a>**Shape-23**</a>
 
   Takes a tensor as input and outputs an 1D int64 tensor containing the shape of the input tensor.
   Optional attributes start and end can be used to compute a slice of the input tensor's shape.
@@ -29678,7 +29678,7 @@ This version of the operator has been available since version 23 of the default 
 <dd>Constrain output to int64 tensor.</dd>
 </dl>
 
-### <a name="Size-23"></a>**Size-23**
+### <a name="Size-23"></a>**Size-23**</a>
 
   Takes a tensor as input and outputs a int64 scalar that equals to the total number of elements of the input tensor.
 
@@ -29709,7 +29709,7 @@ This version of the operator has been available since version 23 of the default 
 <dd>Constrain output to int64 tensor, which should be a scalar though.</dd>
 </dl>
 
-### <a name="Squeeze-23"></a>**Squeeze-23**
+### <a name="Squeeze-23"></a>**Squeeze-23**</a>
 
   Remove single-dimensional entries from the shape of a tensor.
   Takes an input `axes` with a list of axes to squeeze.
@@ -29743,7 +29743,7 @@ This version of the operator has been available since version 23 of the default 
 <dd>Constrain input and output types to all tensor types up to IRv11.</dd>
 </dl>
 
-### <a name="Transpose-23"></a>**Transpose-23**
+### <a name="Transpose-23"></a>**Transpose-23**</a>
 
   Returns a transpose of the input tensor. (Similar to `numpy.transpose`).
   The optional attribute `perm` must be a permutation of the dimensions of
@@ -29788,7 +29788,7 @@ This version of the operator has been available since version 23 of the default 
 <dd>Constrain input and output types to all tensor types.</dd>
 </dl>
 
-### <a name="Unsqueeze-23"></a>**Unsqueeze-23**
+### <a name="Unsqueeze-23"></a>**Unsqueeze-23**</a>
 
   Insert single-dimensional entries to the shape of an input tensor (`data`).
   Takes one required input `axes` - which contains a list of dimension indices and this operator will insert a dimension of value `1` into the corresponding index of the output tensor (`expanded`).
@@ -29829,7 +29829,7 @@ This version of the operator has been available since version 23 of the default 
 </dl>
 
 ## Version 24 of the default ONNX operator set
-### <a name="Attention-24"></a>**Attention-24**
+### <a name="Attention-24"></a>**Attention-24**</a>
 
   Computes scaled dot product attention on query, key and value tensors, using an optional attention mask if passed.
 
@@ -29953,7 +29953,7 @@ This version of the operator has been available since version 24 of the default 
 <dd>Constrain output 'mask' types to boolean tensors and input types.</dd>
 </dl>
 
-### <a name="Cast-24"></a>**Cast-24**
+### <a name="Cast-24"></a>**Cast-24**</a>
 
   The operator casts the elements of a given input tensor to a data type
   specified by the 'to' argument and returns an output tensor of the same size in
@@ -30076,7 +30076,7 @@ This version of the operator has been available since version 24 of the default 
 <dd>Constrain output types. Casting to complex is not supported.</dd>
 </dl>
 
-### <a name="CastLike-24"></a>**CastLike-24**
+### <a name="CastLike-24"></a>**CastLike-24**</a>
 
   The operator casts the elements of a given input tensor (the first input) to
   the same data type as the elements of the second input tensor.
@@ -30120,7 +30120,7 @@ This version of the operator has been available since version 24 of the default 
 <dd>Constrain output types. Casting to complex is not supported.</dd>
 </dl>
 
-### <a name="Constant-24"></a>**Constant-24**
+### <a name="Constant-24"></a>**Constant-24**</a>
 
   This operator produces a constant tensor. Exactly one of the provided attributes, either value, sparse_value,
   or value_* must be specified.
@@ -30167,7 +30167,7 @@ This version of the operator has been available since version 24 of the default 
 <dd>Constrain input and output types to all tensor types.</dd>
 </dl>
 
-### <a name="ConstantOfShape-24"></a>**ConstantOfShape-24**
+### <a name="ConstantOfShape-24"></a>**ConstantOfShape-24**</a>
 
   Generate a tensor with given value and shape.
 
@@ -30205,7 +30205,7 @@ This version of the operator has been available since version 24 of the default 
 <dd>Constrain output types to be numerics or boolean.</dd>
 </dl>
 
-### <a name="DequantizeLinear-24"></a>**DequantizeLinear-24**
+### <a name="DequantizeLinear-24"></a>**DequantizeLinear-24**</a>
 
   The linear dequantization operator. It consumes a quantized tensor, a scale, and a zero point to compute the
   full-precision tensor. The dequantization formula is `y = (x - x_zero_point) * x_scale`. `x_scale` and `x_zero_point`
@@ -30264,7 +30264,7 @@ This version of the operator has been available since version 24 of the default 
 <dd>The type of the output 'y'.</dd>
 </dl>
 
-### <a name="Flatten-24"></a>**Flatten-24**
+### <a name="Flatten-24"></a>**Flatten-24**</a>
 
   Flattens the input tensor into a 2D matrix. If input tensor has shape
   (d_0, d_1, ... d_n) then the output will have shape
@@ -30302,7 +30302,7 @@ This version of the operator has been available since version 24 of the default 
 <dd>Constrain input and output to all tensor types up to IRv12.</dd>
 </dl>
 
-### <a name="Identity-24"></a>**Identity-24**
+### <a name="Identity-24"></a>**Identity-24**</a>
 
   Identity operator
 
@@ -30331,7 +30331,7 @@ This version of the operator has been available since version 24 of the default 
 <dd>Constrain input and output types to all tensor, sequence, and optional types.</dd>
 </dl>
 
-### <a name="If-24"></a>**If-24**
+### <a name="If-24"></a>**If-24**</a>
 
   If conditional
 
@@ -30371,7 +30371,7 @@ This version of the operator has been available since version 24 of the default 
 <dd>Only bool</dd>
 </dl>
 
-### <a name="Loop-24"></a>**Loop-24**
+### <a name="Loop-24"></a>**Loop-24**</a>
 
   Generic Looping construct. This loop has multiple termination conditions:
 
@@ -30549,7 +30549,7 @@ This version of the operator has been available since version 24 of the default 
 <dd>tensor of bool, which should be a scalar.</dd>
 </dl>
 
-### <a name="Pad-24"></a>**Pad-24**
+### <a name="Pad-24"></a>**Pad-24**</a>
 
   Given a tensor containing the data to be padded (`data`), a tensor containing the number of start and end pad values for axis (`pads`), (optionally) a `mode`, and (optionally) `constant_value`,
   a padded tensor (`output`) is generated.
@@ -30692,7 +30692,7 @@ This version of the operator has been available since version 24 of the default 
 <dd>Constrain indices to integer types</dd>
 </dl>
 
-### <a name="QuantizeLinear-24"></a>**QuantizeLinear-24**
+### <a name="QuantizeLinear-24"></a>**QuantizeLinear-24**</a>
 
   The linear quantization operator consumes a high-precision tensor, a scale, and a zero point to compute the
   low-precision/quantized tensor. The scale factor and zero point must have the same shape, determining the quantization
@@ -30770,7 +30770,7 @@ This version of the operator has been available since version 24 of the default 
 <dd>The type of the input `y_zero_point` and the output `y`.</dd>
 </dl>
 
-### <a name="Reshape-24"></a>**Reshape-24**
+### <a name="Reshape-24"></a>**Reshape-24**</a>
 
   Reshape the input tensor similar to numpy.reshape.
   First input is the data tensor, second input is a shape tensor which specifies the output shape. It outputs the reshaped tensor.
@@ -30820,7 +30820,7 @@ This version of the operator has been available since version 24 of the default 
 <dd>Constrain input and output types to all tensor types.</dd>
 </dl>
 
-### <a name="Scan-24"></a>**Scan-24**
+### <a name="Scan-24"></a>**Scan-24**</a>
 
   Scan can be used to iterate over one or more scan_input tensors,
   constructing zero or more scan_output tensors. It combines ideas from general recurrences,
@@ -30986,7 +30986,7 @@ This version of the operator has been available since version 24 of the default 
 <dd>All Tensor types up to IRv12.</dd>
 </dl>
 
-### <a name="Shape-24"></a>**Shape-24**
+### <a name="Shape-24"></a>**Shape-24**</a>
 
   Takes a tensor as input and outputs an 1D int64 tensor containing the shape of the input tensor.
   Optional attributes start and end can be used to compute a slice of the input tensor's shape.
@@ -31063,7 +31063,7 @@ This version of the operator has been available since version 24 of the default 
 <dd>Constrain output to int64 tensor.</dd>
 </dl>
 
-### <a name="Size-24"></a>**Size-24**
+### <a name="Size-24"></a>**Size-24**</a>
 
   Takes a tensor as input and outputs a int64 scalar that equals to the total number of elements of the input tensor.
 
@@ -31094,7 +31094,7 @@ This version of the operator has been available since version 24 of the default 
 <dd>Constrain output to int64 tensor, which should be a scalar though.</dd>
 </dl>
 
-### <a name="SplitToSequence-24"></a>**SplitToSequence-24**
+### <a name="SplitToSequence-24"></a>**SplitToSequence-24**</a>
 
   Split a tensor into a sequence of tensors, along the specified 'axis'.
   Lengths of the parts can be specified using the optional argument 'split'.
@@ -31149,7 +31149,7 @@ This version of the operator has been available since version 24 of the default 
 <dd>Constrain output types to all tensor types.</dd>
 </dl>
 
-### <a name="Squeeze-24"></a>**Squeeze-24**
+### <a name="Squeeze-24"></a>**Squeeze-24**</a>
 
   Remove single-dimensional entries from the shape of a tensor.
   Takes an input `axes` with a list of axes to squeeze.
@@ -31183,7 +31183,7 @@ This version of the operator has been available since version 24 of the default 
 <dd>Constrain input and output types to all tensor types up to IRv12.</dd>
 </dl>
 
-### <a name="Swish-24"></a>**Swish-24**
+### <a name="Swish-24"></a>**Swish-24**</a>
 
   Swish function takes one input data (Tensor<T>) and produces one output data (Tensor<T>) of the same shape,
   where $Swish(x) = x * sigmoid(alpha * x)$.
@@ -31220,7 +31220,7 @@ This version of the operator has been available since version 24 of the default 
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
-### <a name="TensorScatter-24"></a>**TensorScatter-24**
+### <a name="TensorScatter-24"></a>**TensorScatter-24**</a>
 
   TensorScatter is a generic tensor update operation, motivated by the requirements for KV cache updates for Attention
   ops commonly found in LLMs. It is a functional operation that models an in-place update to a KV cache buffer.
@@ -31287,7 +31287,7 @@ This version of the operator has been available since version 24 of the default 
 <dd>Constrain input and output types to any tensor type.</dd>
 </dl>
 
-### <a name="TopK-24"></a>**TopK-24**
+### <a name="TopK-24"></a>**TopK-24**</a>
 
   Retrieve the top-K largest or smallest elements along a specified axis. Given an input tensor of
   shape [a_0, a_1, ..., a_{n-1}] and integer argument k, return two outputs:
@@ -31347,7 +31347,7 @@ This version of the operator has been available since version 24 of the default 
 <dd>Constrain index tensor to int64</dd>
 </dl>
 
-### <a name="Transpose-24"></a>**Transpose-24**
+### <a name="Transpose-24"></a>**Transpose-24**</a>
 
   Returns a transpose of the input tensor. (Similar to `numpy.transpose`).
   The optional attribute `perm` must be a permutation of the dimensions of
@@ -31392,7 +31392,7 @@ This version of the operator has been available since version 24 of the default 
 <dd>Constrain input and output types to all tensor types.</dd>
 </dl>
 
-### <a name="Unsqueeze-24"></a>**Unsqueeze-24**
+### <a name="Unsqueeze-24"></a>**Unsqueeze-24**</a>
 
   Insert single-dimensional entries to the shape of an input tensor (`data`).
   Takes one required input `axes` - which contains a list of dimension indices and this operator will insert a dimension of value `1` into the corresponding index of the output tensor (`expanded`).
@@ -31433,7 +31433,7 @@ This version of the operator has been available since version 24 of the default 
 </dl>
 
 ## Version 25 of the default ONNX operator set
-### <a name="Cast-25"></a>**Cast-25**
+### <a name="Cast-25"></a>**Cast-25**</a>
 
   The operator casts the elements of a given input tensor to a data type
   specified by the 'to' argument and returns an output tensor of the same size in
@@ -31556,7 +31556,7 @@ This version of the operator has been available since version 25 of the default 
 <dd>Constrain output types. Casting to complex is not supported.</dd>
 </dl>
 
-### <a name="CastLike-25"></a>**CastLike-25**
+### <a name="CastLike-25"></a>**CastLike-25**</a>
 
   The operator casts the elements of a given input tensor (the first input) to
   the same data type as the elements of the second input tensor.
@@ -31600,7 +31600,7 @@ This version of the operator has been available since version 25 of the default 
 <dd>Constrain output types. Casting to complex is not supported.</dd>
 </dl>
 
-### <a name="Constant-25"></a>**Constant-25**
+### <a name="Constant-25"></a>**Constant-25**</a>
 
   This operator produces a constant tensor. Exactly one of the provided attributes, either value, sparse_value,
   or value_* must be specified.
@@ -31647,7 +31647,7 @@ This version of the operator has been available since version 25 of the default 
 <dd>Constrain input and output types to all tensor types.</dd>
 </dl>
 
-### <a name="ConstantOfShape-25"></a>**ConstantOfShape-25**
+### <a name="ConstantOfShape-25"></a>**ConstantOfShape-25**</a>
 
   Generate a tensor with given value and shape.
 
@@ -31685,7 +31685,7 @@ This version of the operator has been available since version 25 of the default 
 <dd>Constrain output types to be numerics or boolean.</dd>
 </dl>
 
-### <a name="DequantizeLinear-25"></a>**DequantizeLinear-25**
+### <a name="DequantizeLinear-25"></a>**DequantizeLinear-25**</a>
 
   The linear dequantization operator. It consumes a quantized tensor, a scale, and a zero point to compute the
   full-precision tensor. The dequantization formula is `y = (x - x_zero_point) * x_scale`. `x_scale` and `x_zero_point`
@@ -31744,7 +31744,7 @@ This version of the operator has been available since version 25 of the default 
 <dd>The type of the output 'y'.</dd>
 </dl>
 
-### <a name="Flatten-25"></a>**Flatten-25**
+### <a name="Flatten-25"></a>**Flatten-25**</a>
 
   Flattens the input tensor into a 2D matrix. If input tensor has shape
   (d_0, d_1, ... d_n) then the output will have shape
@@ -31782,7 +31782,7 @@ This version of the operator has been available since version 25 of the default 
 <dd>Constrain input and output to all tensor types up to IRv13.</dd>
 </dl>
 
-### <a name="Identity-25"></a>**Identity-25**
+### <a name="Identity-25"></a>**Identity-25**</a>
 
   Identity operator
 
@@ -31811,7 +31811,7 @@ This version of the operator has been available since version 25 of the default 
 <dd>Constrain input and output types to all tensor, sequence, and optional types.</dd>
 </dl>
 
-### <a name="If-25"></a>**If-25**
+### <a name="If-25"></a>**If-25**</a>
 
   If conditional
 
@@ -31851,7 +31851,7 @@ This version of the operator has been available since version 25 of the default 
 <dd>Only bool</dd>
 </dl>
 
-### <a name="Loop-25"></a>**Loop-25**
+### <a name="Loop-25"></a>**Loop-25**</a>
 
   Generic Looping construct. This loop has multiple termination conditions:
 
@@ -32029,7 +32029,7 @@ This version of the operator has been available since version 25 of the default 
 <dd>tensor of bool, which should be a scalar.</dd>
 </dl>
 
-### <a name="Pad-25"></a>**Pad-25**
+### <a name="Pad-25"></a>**Pad-25**</a>
 
   Given a tensor containing the data to be padded (`data`), a tensor containing the number of start and end pad values for axis (`pads`), (optionally) a `mode`, and (optionally) `constant_value`,
   a padded tensor (`output`) is generated.
@@ -32172,7 +32172,7 @@ This version of the operator has been available since version 25 of the default 
 <dd>Constrain indices to integer types</dd>
 </dl>
 
-### <a name="QuantizeLinear-25"></a>**QuantizeLinear-25**
+### <a name="QuantizeLinear-25"></a>**QuantizeLinear-25**</a>
 
   The linear quantization operator consumes a high-precision tensor, a scale, and a zero point to compute the
   low-precision/quantized tensor. The scale factor and zero point must have the same shape, determining the quantization
@@ -32252,7 +32252,7 @@ This version of the operator has been available since version 25 of the default 
 <dd>The type of the input `y_zero_point` and the output `y`.</dd>
 </dl>
 
-### <a name="Reshape-25"></a>**Reshape-25**
+### <a name="Reshape-25"></a>**Reshape-25**</a>
 
   Reshape the input tensor similar to numpy.reshape.
   First input is the data tensor, second input is a shape tensor which specifies the output shape. It outputs the reshaped tensor.
@@ -32302,7 +32302,7 @@ This version of the operator has been available since version 25 of the default 
 <dd>Constrain input and output types to all tensor types.</dd>
 </dl>
 
-### <a name="Scan-25"></a>**Scan-25**
+### <a name="Scan-25"></a>**Scan-25**</a>
 
   Scan can be used to iterate over one or more scan_input tensors,
   constructing zero or more scan_output tensors. It combines ideas from general recurrences,
@@ -32468,7 +32468,7 @@ This version of the operator has been available since version 25 of the default 
 <dd>All Tensor types up to IRv13.</dd>
 </dl>
 
-### <a name="Shape-25"></a>**Shape-25**
+### <a name="Shape-25"></a>**Shape-25**</a>
 
   Takes a tensor as input and outputs an 1D int64 tensor containing the shape of the input tensor.
   Optional attributes start and end can be used to compute a slice of the input tensor's shape.
@@ -32545,7 +32545,7 @@ This version of the operator has been available since version 25 of the default 
 <dd>Constrain output to int64 tensor.</dd>
 </dl>
 
-### <a name="Size-25"></a>**Size-25**
+### <a name="Size-25"></a>**Size-25**</a>
 
   Takes a tensor as input and outputs a int64 scalar that equals to the total number of elements of the input tensor.
 
@@ -32576,7 +32576,7 @@ This version of the operator has been available since version 25 of the default 
 <dd>Constrain output to int64 tensor, which should be a scalar though.</dd>
 </dl>
 
-### <a name="Squeeze-25"></a>**Squeeze-25**
+### <a name="Squeeze-25"></a>**Squeeze-25**</a>
 
   Remove single-dimensional entries from the shape of a tensor.
   Takes an input `axes` with a list of axes to squeeze.
@@ -32610,7 +32610,7 @@ This version of the operator has been available since version 25 of the default 
 <dd>Constrain input and output types to all tensor types up to IRv13.</dd>
 </dl>
 
-### <a name="Transpose-25"></a>**Transpose-25**
+### <a name="Transpose-25"></a>**Transpose-25**</a>
 
   Returns a transpose of the input tensor. (Similar to `numpy.transpose`).
   The optional attribute `perm` must be a permutation of the dimensions of
@@ -32655,7 +32655,7 @@ This version of the operator has been available since version 25 of the default 
 <dd>Constrain input and output types to all tensor types.</dd>
 </dl>
 
-### <a name="Unsqueeze-25"></a>**Unsqueeze-25**
+### <a name="Unsqueeze-25"></a>**Unsqueeze-25**</a>
 
   Insert single-dimensional entries to the shape of an input tensor (`data`).
   Takes one required input `axes` - which contains a list of dimension indices and this operator will insert a dimension of value `1` into the corresponding index of the output tensor (`expanded`).
@@ -32696,7 +32696,7 @@ This version of the operator has been available since version 25 of the default 
 </dl>
 
 ## Version 26 of the default ONNX operator set
-### <a name="BitCast-26"></a>**BitCast-26**
+### <a name="BitCast-26"></a>**BitCast-26**</a>
 
   Reinterprets the binary representation of a tensor as a different data type,
   specified by the 'to' attribute. Unlike Cast, BitCast preserves the exact bit
@@ -32741,7 +32741,7 @@ This version of the operator has been available since version 26 of the default 
 <dd>Constrain output types. Bitcasting to string is not supported.</dd>
 </dl>
 
-### <a name="CumProd-26"></a>**CumProd-26**
+### <a name="CumProd-26"></a>**CumProd-26**</a>
 
   Performs cumulative product of the input elements along the given axis.
   By default, it will do the product inclusively meaning the first element is copied as is.
@@ -32803,7 +32803,7 @@ This version of the operator has been available since version 26 of the default 
 </dl>
 
 ## Version 27 of the default ONNX operator set
-### <a name="MeanVarianceNormalization-27"></a>**MeanVarianceNormalization-27**
+### <a name="MeanVarianceNormalization-27"></a>**MeanVarianceNormalization-27**</a>
 
   A MeanVarianceNormalization Function: Perform mean variance normalization
         on the input tensor X using formula: `(X-EX)/(sqrt(E(X-EX)^2) + epsilon)`
@@ -32844,7 +32844,7 @@ This version of the operator has been available since version 27 of the default 
 
 # ai.onnx.preview.training
 ## Version 1 of the 'ai.onnx.preview.training' operator set
-### <a name="ai.onnx.preview.training.Adagrad-1"></a>**ai.onnx.preview.training.Adagrad-1**
+### <a name="ai.onnx.preview.training.Adagrad-1"></a>**ai.onnx.preview.training.Adagrad-1**</a>
 
   Compute one iteration of ADAGRAD, a stochastic gradient based optimization
       algorithm. This operator can conduct the optimization of multiple tensor variables.
@@ -32941,7 +32941,7 @@ This version of the operator has been available since version 1 of the 'ai.onnx.
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
-### <a name="ai.onnx.preview.training.Adam-1"></a>**ai.onnx.preview.training.Adam-1**
+### <a name="ai.onnx.preview.training.Adam-1"></a>**ai.onnx.preview.training.Adam-1**</a>
 
   Compute one iteration of Adam, a stochastic gradient based optimization
       algorithm. This operator can conduct the optimization of multiple tensor variables.
@@ -33053,7 +33053,7 @@ This version of the operator has been available since version 1 of the 'ai.onnx.
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
-### <a name="ai.onnx.preview.training.Gradient-1"></a>**ai.onnx.preview.training.Gradient-1**
+### <a name="ai.onnx.preview.training.Gradient-1"></a>**ai.onnx.preview.training.Gradient-1**</a>
 
   Gradient operator computes the partial derivatives of a specific tensor w.r.t.
   some other tensors. This operator is widely used in gradient-based training
@@ -33217,7 +33217,7 @@ This version of the operator has been available since version 1 of the 'ai.onnx.
 <dd>Allow inputs to be any kind of floating-point tensor.</dd>
 </dl>
 
-### <a name="ai.onnx.preview.training.Momentum-1"></a>**ai.onnx.preview.training.Momentum-1**
+### <a name="ai.onnx.preview.training.Momentum-1"></a>**ai.onnx.preview.training.Momentum-1**</a>
 
   Compute one iteration of stochastic gradient update with momentum.
       This operator can conduct the optimization of multiple tensor variables.
