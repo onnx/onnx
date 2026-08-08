@@ -175,30 +175,42 @@ void check_tensor(const TensorProto& tensor, const CheckerContext& ctx) {
     if (tensor.data_type() == TensorProto::STRING) {
       fail_check("STRING data (tensor name: ", tensor.name(), ") should not be stored in raw_data field");
     }
-    // Validate that raw_data is large enough for the declared packed sub-byte type and shape.
-    int64_t expected_bytes = 0;
-    switch (tensor.data_type()) {
-      case TensorProto::UINT4:
-      case TensorProto::INT4:
-      case TensorProto::FLOAT4E2M1:
-        expected_bytes = (nelem + 1) / 2; // 2 elements per byte, ceiling division
-        break;
-      case TensorProto::UINT2:
-      case TensorProto::INT2:
-        expected_bytes = (nelem + 3) / 4; // 4 elements per byte, ceiling division
-        break;
-      default:
-        break;
+    const int64_t bit_width = ElementBitWidth(tensor.data_type());
+    if (bit_width < 0) {
+      fail_check("Unrecognized data_type (tensor name: ", tensor.name(), "): ", tensor.data_type());
     }
-    if (expected_bytes > 0 && static_cast<int64_t>(tensor.raw_data().size()) < expected_bytes) {
-      fail_check(
-          "TensorProto (tensor name: ",
-          tensor.name(),
-          ") raw_data size (",
-          tensor.raw_data().size(),
-          " bytes) is too small for the declared shape and packed type (",
-          expected_bytes,
-          " bytes required).");
+    // For segmented tensors, dims describe the full tensor; segment describes the stored chunk.
+    int64_t described_elems = nelem;
+    if (tensor.has_segment()) {
+      const auto& seg = tensor.segment();
+      if (!seg.has_begin() || !seg.has_end()) {
+        fail_check("TensorProto segment must set begin and end (tensor name: ", tensor.name(), ")");
+      }
+      const int64_t begin = seg.begin();
+      const int64_t end = seg.end();
+      if (begin < 0 || end < begin || end > nelem) {
+        fail_check(
+            "Invalid TensorProto segment (tensor name: ", tensor.name(), "): [", begin, ", ", end, ") out of [0, ", nelem, ")");
+      }
+      described_elems = end - begin;
+    }
+    if (described_elems > 0) {
+      int64_t total_bits = 0;
+      if (checked_mul_overflow(described_elems, bit_width, &total_bits) ||
+          checked_add_overflow(total_bits, 7, &total_bits)) {
+        fail_check("Tensor byte size overflow (tensor name: ", tensor.name(), ")");
+      }
+      const int64_t expected_bytes = total_bits / 8;
+      const int64_t actual_bytes = static_cast<int64_t>(tensor.raw_data().size());
+      if (actual_bytes < expected_bytes) {
+        fail_check(
+            "raw_data size mismatch for tensor '",
+            tensor.name(),
+            "': expected at least ",
+            expected_bytes,
+            " bytes based on dimensions, got ",
+            actual_bytes);
+      }
     }
     return;
   } else {

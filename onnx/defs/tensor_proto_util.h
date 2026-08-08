@@ -9,6 +9,9 @@
 
 namespace ONNX_NAMESPACE {
 
+// Returns bits per element of a tensor element type, or -1 if unknown.
+ONNX_API int64_t ElementBitWidth(int32_t data_type);
+
 template <typename T>
 ONNX_API TensorProto ToTensor(const T& value);
 
