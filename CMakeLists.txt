@@ -117,8 +117,10 @@ if(MSVC)
   add_compile_options(/MP /utf-8 /nologo)
   add_compile_options(
     /wd5287  # https://developercommunity.visualstudio.com/t/warning-C5287:-operands-are-different-e/10877942?sort=newest
-    /Zc:lambda  # https://developercommunity.visualstudio.com/t/fatal--error-C1001:-Internal-compiler-er/10906076
   )
+  if(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
+    add_compile_options(/Zc:lambda) # https://developercommunity.visualstudio.com/t/fatal--error-C1001:-Internal-compiler-er/10906076
+  endif()
 endif()
 
 if(ONNX_DISABLE_EXCEPTIONS)

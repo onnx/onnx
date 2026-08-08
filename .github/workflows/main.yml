@@ -31,7 +31,7 @@ concurrency:
 
 jobs:
   test:
-    name: Test ${{ matrix.os }}, ${{ matrix.python_version }}, ${{ matrix.protobuf_type }}, debug=${{ matrix.debug_build }}, unity_build=${{ matrix.unity_build }}, onnx_ml=${{ matrix.onnx_ml }}, autogen=${{ matrix.autogenerate_files }}
+    name: Test ${{ matrix.os }}, ${{ matrix.python_version }}, ${{ matrix.protobuf_type }}, debug=${{ matrix.debug_build }}, unity_build=${{ matrix.unity_build }}, onnx_ml=${{ matrix.onnx_ml }}, autogen=${{ matrix.autogenerate_files }}${{ matrix.job_name_suffix }}
     strategy:
       fail-fast: false
       matrix:
@@ -45,6 +45,13 @@ jobs:
         unity_build: [0]
 
         include:
+          # Exercise clang-cl without adding another Windows job. The remaining
+          # Windows matrix entries continue to provide MSVC coverage.
+          - python_version: "3.14"
+            os: "windows-latest"
+            cmake_generator_args: "-T ClangCL"
+            job_name_suffix: ", compiler=clang-cl"
+
           # Ubuntu debug build runs with sanitizer
           - python_version: "3.14"
             autogenerate_files: 0
@@ -202,7 +209,7 @@ jobs:
           DEBUG: ${{ matrix.debug_build }}
           ONNX_ML: ${{ matrix.onnx_ml }}
           ONNX_BUILD_TESTS: 1
-          CMAKE_ARGS: "-DONNX_WERROR=ON -DONNX_USE_PROTOBUF_SHARED_LIBS=OFF -DONNX_USE_LITE_PROTO=ON -DONNX_USE_UNITY_BUILD=${{ matrix.unity_build }} -DONNX_HARDENING=ON"
+          CMAKE_ARGS: "${{ matrix.cmake_generator_args }} -DONNX_WERROR=ON -DONNX_USE_PROTOBUF_SHARED_LIBS=OFF -DONNX_USE_LITE_PROTO=ON -DONNX_USE_UNITY_BUILD=${{ matrix.unity_build }} -DONNX_HARDENING=ON"
 
       - name: pip freeze
         run: |
@@ -276,57 +283,3 @@ jobs:
           sudo apt-get install libjpeg-dev zlib1g-dev libpng-dev
           pip install --prefer-binary "numpy<2.0" pillow
           pytest -s
-
-  test-windows-clang-cl:
-    # MSVC's default (permissive) mode silently accepts some non-conforming
-    # code (e.g. non-standard non-type template arguments) that the main
-    # Windows job above, built with plain cl.exe, would never flag. Building
-    # with the clang-cl toolset instead catches that class of portability bug,
-    # for the cost of one extra Windows job rather than a full second matrix.
-    name: Test windows-latest (clang-cl)
-    runs-on: windows-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
-        with:
-          persist-credentials: false
-
-      - name: Set up Python
-        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
-        with:
-          python-version: '3.14'
-
-      - name: Set up MSBuild (x64)
-        uses: microsoft/setup-msbuild@30375c66a4eea26614e0d39710365f22f8b0af57 # v3.0.0
-        with:
-          msbuild-architecture: x64
-
-      - name: Show versions
-        run: |
-          python --version
-          cmake --version
-          clang-cl --version
-
-      - name: Build and install ONNX - Windows (clang-cl)
-        run: |
-          pip install -e . -v
-        env:
-          ONNX_ML: 1
-          ONNX_BUILD_TESTS: 1
-          CMAKE_ARGS: "-T ClangCL -DONNX_WERROR=ON -DONNX_USE_PROTOBUF_SHARED_LIBS=OFF -DONNX_USE_LITE_PROTO=ON -DONNX_HARDENING=ON"
-
-      - name: pip freeze
-        run: |
-          pip freeze
-
-      - name: Install test dependencies
-        run: |
-          python -m pip install -r requirements-release_test.txt
-
-      - name: Run Python tests
-        run: |
-          pytest -sv -n auto --dist loadscope
-
-      - name: Run C++ tests
-        run: |
-          .setuptools-cmake-build\Release\onnx_gtests.exe
