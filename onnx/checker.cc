@@ -179,10 +179,25 @@ void check_tensor(const TensorProto& tensor, const CheckerContext& ctx) {
     if (bit_width < 0) {
       fail_check("Unrecognized data_type (tensor name: ", tensor.name(), "): ", tensor.data_type());
     }
-    // A segmented tensor holds only one chunk, so dims do not describe raw_data.
-    if (nelem > 0 && !tensor.has_segment()) {
+    // For segmented tensors, dims describe the full tensor; segment describes the stored chunk.
+    int64_t described_elems = nelem;
+    if (tensor.has_segment()) {
+      const auto& seg = tensor.segment();
+      if (!seg.has_begin() || !seg.has_end()) {
+        fail_check("TensorProto segment must set begin and end (tensor name: ", tensor.name(), ")");
+      }
+      const int64_t begin = seg.begin();
+      const int64_t end = seg.end();
+      if (begin < 0 || end < begin || end > nelem) {
+        fail_check(
+            "Invalid TensorProto segment (tensor name: ", tensor.name(), "): [", begin, ", ", end, ") out of [0, ", nelem, ")");
+      }
+      described_elems = end - begin;
+    }
+    if (described_elems > 0) {
       int64_t total_bits = 0;
-      if (checked_mul_overflow(nelem, bit_width, &total_bits) || checked_add_overflow(total_bits, 7, &total_bits)) {
+      if (checked_mul_overflow(described_elems, bit_width, &total_bits) ||
+          checked_add_overflow(total_bits, 7, &total_bits)) {
         fail_check("Tensor byte size overflow (tensor name: ", tensor.name(), ")");
       }
       const int64_t expected_bytes = total_bits / 8;
