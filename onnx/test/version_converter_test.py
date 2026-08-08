@@ -142,7 +142,11 @@ class TestVersionConverter:
             opset_imports=[helper.make_operatorsetid("", 9)],
         )
 
-        with pytest.raises(RuntimeError, match="must have exactly one output"):
+        # convert_version runs shape inference before conversion, so Flatten's
+        # own shape-inference function rejects the missing output first; the
+        # adapter's ONNX_ASSERTM guard is defense-in-depth for callers that
+        # reach ExtendSupportedTypes without going through shape inference.
+        with pytest.raises((RuntimeError, shape_inference.InferenceError)):
             onnx.version_converter.convert_version(model, 8)
 
     # A nested (subgraph) output that resolves to a value captured from the

@@ -41,7 +41,11 @@ struct ExtendSupportedTypes final : public Adapter {
     ONNX_ASSERTM(
         outputs.size() == 1,
         name(),
-        " in opset 9 must have exactly one output, but found ",
+        " being converted from ",
+        static_cast<int64_t>(initial_version().version()),
+        " to ",
+        static_cast<int64_t>(target_version().version()),
+        " must have exactly one output, but found ",
         outputs.size(),
         ".")
 
