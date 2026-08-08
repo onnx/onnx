@@ -238,6 +238,8 @@ void check_tensor(const TensorProto& tensor, const CheckerContext& ctx) {
       case TensorProto::FLOAT8E5M2:
       case TensorProto::FLOAT8E5M2FNUZ:
       case TensorProto::FLOAT8E8M0:
+      case TensorProto::FLOAT6E2M3:
+      case TensorProto::FLOAT6E3M2:
         check_field(int32_data);
         if (nelem > 0) {
           // These types are not packed: each element occupies one int32_data entry.

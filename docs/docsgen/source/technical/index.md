@@ -18,4 +18,5 @@ float8
 int4
 float4
 int2
+float6
 ```
