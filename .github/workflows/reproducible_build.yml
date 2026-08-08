@@ -1,0 +1,125 @@
+# Copyright (c) ONNX Project Contributors
+#
+# SPDX-License-Identifier: Apache-2.0
+
+# Verifies that two successive builds from identical source produce bit-for-bit
+# identical wheels (reproducible builds).  Calls each platform cibw workflow
+# twice with a single target, then compares SHA-256 checksums.
+# A mismatch on any platform fails the workflow.
+
+name: ReproducibleBuild
+
+on:
+  schedule:
+    - cron: '0 6 * * 1'  # every Monday 06:00 UTC
+  workflow_dispatch:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  linux-build1:
+    uses: ./.github/workflows/release_linux_cibw.yml
+    with:
+      build_mode: release
+      build: cp312-manylinux_x86_64
+      artifact_name_prefix: repro-build1
+
+  linux-build2:
+    uses: ./.github/workflows/release_linux_cibw.yml
+    with:
+      build_mode: release
+      build: cp312-manylinux_x86_64
+      artifact_name_prefix: repro-build2
+
+  macos-build1:
+    uses: ./.github/workflows/release_macos_cibw.yml
+    with:
+      build_mode: release
+      build: cp312-macosx_universal2
+      artifact_name_prefix: repro-build1
+
+  macos-build2:
+    uses: ./.github/workflows/release_macos_cibw.yml
+    with:
+      build_mode: release
+      build: cp312-macosx_universal2
+      artifact_name_prefix: repro-build2
+
+  windows-build1:
+    uses: ./.github/workflows/release_windows_cibw.yml
+    with:
+      build_mode: release
+      build: cp312-win_amd64
+      artifact_name_prefix: repro-build1
+
+  windows-build2:
+    uses: ./.github/workflows/release_windows_cibw.yml
+    with:
+      build_mode: release
+      build: cp312-win_amd64
+      artifact_name_prefix: repro-build2
+
+  compare:
+    needs: [linux-build1, linux-build2, macos-build1, macos-build2, windows-build1, windows-build2]
+    runs-on: ubuntu-24.04
+
+    steps:
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: repro-build1-linux-cp312-manylinux_x86_64
+          path: /tmp/linux-build1
+
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: repro-build2-linux-cp312-manylinux_x86_64
+          path: /tmp/linux-build2
+
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: repro-build1-macos-cp312-macosx_universal2
+          path: /tmp/macos-build1
+
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: repro-build2-macos-cp312-macosx_universal2
+          path: /tmp/macos-build2
+
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: repro-build1-windows-cp312-win_amd64
+          path: /tmp/windows-build1
+
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: repro-build2-windows-cp312-win_amd64
+          path: /tmp/windows-build2
+
+      - name: Compare checksums
+        shell: bash
+        run: |
+          fail=0
+          for platform in linux macos windows; do
+            b1=(/tmp/${platform}-build1/*.whl)
+            b2=(/tmp/${platform}-build2/*.whl)
+            if [ ${#b1[@]} -ne 1 ] || [ ! -f "${b1[0]}" ]; then
+              echo "[$platform] ERROR: expected exactly 1 wheel in build1, found ${#b1[@]}"
+              fail=1; continue
+            fi
+            if [ ${#b2[@]} -ne 1 ] || [ ! -f "${b2[0]}" ]; then
+              echo "[$platform] ERROR: expected exactly 1 wheel in build2, found ${#b2[@]}"
+              fail=1; continue
+            fi
+            h1=$(sha256sum "${b1[0]}" | cut -d' ' -f1)
+            h2=$(sha256sum "${b2[0]}" | cut -d' ' -f1)
+            echo "[$platform] build1 $h1  $(basename "${b1[0]}")"
+            echo "[$platform] build2 $h2"
+            if [ "$h1" = "$h2" ]; then
+              echo "[$platform] OK"
+            else
+              echo "[$platform] MISMATCH"
+              fail=1
+            fi
+          done
+          exit $fail

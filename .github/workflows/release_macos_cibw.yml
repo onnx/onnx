@@ -11,13 +11,36 @@ on:
         required: false
         type: string
         default: "preview"
+      artifact_name_prefix:
+        required: false
+        type: string
+        default: "wheels"
+      build:
+        required: false
+        type: string
+        default: ""
+      builds:
+        required: false
+        type: string
+        default: ""
   workflow_dispatch:
+    inputs:
+      build_mode:
+        description: 'Build mode (release or preview)'
+        required: false
+        type: choice
+        options: [release, preview]
+        default: preview
+      builds:
+        description: 'JSON array of cibuildwheel build identifiers'
+        required: false
+        default: '["cp312-macosx_universal2"]'
 
 permissions:
   contents: read
 
 concurrency:
-  group: macos-release-${{ github.workflow }}-${{ github.ref }}
+  group: macos-release-${{ github.workflow }}-${{ github.ref }}-${{ inputs.artifact_name_prefix }}
   cancel-in-progress: true
 
 jobs:
@@ -25,11 +48,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        build:
-          - "cp310-macosx_universal2"
-          - "cp311-macosx_universal2"
-          - "cp312-macosx_universal2"
-          - "cp314t-macosx_universal2"
+        build: ${{ inputs.build != '' && fromJSON(format('["{0}"]', inputs.build)) || fromJSON(inputs.builds) }}
 
     runs-on: macos-14
 
@@ -84,7 +103,7 @@ jobs:
 
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: wheels-macos-${{ matrix.build }}
+          name: ${{ inputs.artifact_name_prefix }}-macos-${{ matrix.build }}
           path: dist/*.whl
 
       - name: Validate wheel

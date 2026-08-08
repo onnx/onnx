@@ -11,13 +11,36 @@ on:
         required: false
         type: string
         default: "preview"
+      artifact_name_prefix:
+        required: false
+        type: string
+        default: "wheels"
+      build:
+        required: false
+        type: string
+        default: ""
+      builds:
+        required: false
+        type: string
+        default: ""
   workflow_dispatch:
+    inputs:
+      build_mode:
+        description: 'Build mode (release or preview)'
+        required: false
+        type: choice
+        options: [release, preview]
+        default: preview
+      builds:
+        description: 'JSON array of cibuildwheel build identifiers'
+        required: false
+        default: '["cp312-manylinux_x86_64"]'
 
 permissions:
   contents: read
 
 concurrency:
-  group: linux-release-${{ github.workflow }}-${{ github.ref }}
+  group: linux-release-${{ github.workflow }}-${{ github.ref }}-${{ inputs.artifact_name_prefix }}
   cancel-in-progress: true
 
 jobs:
@@ -25,15 +48,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        build:
-          - "cp310-manylinux_x86_64"
-          - "cp310-manylinux_aarch64"
-          - "cp311-manylinux_x86_64"
-          - "cp311-manylinux_aarch64"
-          - "cp312-manylinux_x86_64"
-          - "cp312-manylinux_aarch64"
-          - "cp314t-manylinux_x86_64"
-          - "cp314t-manylinux_aarch64"
+        build: ${{ inputs.build != '' && fromJSON(format('["{0}"]', inputs.build)) || fromJSON(inputs.builds) }}
 
     runs-on: ${{ contains(matrix.build, 'aarch64') && 'ubuntu-24.04-arm' || 'ubuntu-24.04' }}
 
@@ -88,7 +103,7 @@ jobs:
 
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: wheels-linux-${{ matrix.build }}
+          name: ${{ inputs.artifact_name_prefix }}-linux-${{ matrix.build }}
           path: dist/*.whl
 
       - name: Validate wheel

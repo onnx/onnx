@@ -27,6 +27,35 @@ SPDX-License-Identifier: Apache-2.0
 | [PyodideRelease](/.github/workflows/release_pyodide_cibw.yml) | Called by Create Releases and on every push | Builds a Pyodide (WebAssembly) wheel on Ubuntu using `cibuildwheel` with a pre-downloaded host `protoc` and protobuf source; runs a basic import test (3) |
 | [sdistRelease](/.github/workflows/release_sdist.yml) | Called by Create Releases | Builds and tests source distribution |
 
+## Reproducible Build Verification
+
+| Workflow | When it runs | What it does |
+|---|---|---|
+| [ReproducibleBuild](/.github/workflows/reproducible_build.yml) | Weekly (Monday 06:00 UTC), workflow\_dispatch, every PR | Calls each platform cibw workflow twice with a single `cp312` target and compares SHA-256 checksums of the resulting wheels. A mismatch on any platform fails the workflow. |
+
+The three cibw workflows (`release_linux_cibw.yml`, `release_macos_cibw.yml`, `release_windows_cibw.yml`) accept an optional `build` input (single target) and an `artifact_name_prefix` input so the two runs can upload to distinct artifact names without colliding.
+
+### Diagnosing a mismatch with diffoscope
+
+When the checksum comparison fails, [`diffoscope`](https://diffoscope.org/) can produce a human-readable diff that identifies _where_ non-determinism crept in — timestamps in zip metadata, embedded build paths, debug info, etc.
+
+```bash
+# Install (Linux)
+pip install diffoscope
+# or: apt install diffoscope  (includes binutils for ELF support)
+
+# Compare two wheels (wheels are zip archives)
+diffoscope build1/onnx-*.whl build2/onnx-*.whl --html diffoscope.html
+```
+
+For **Windows PE** (`.pyd`) files, install `binutils-mingw-w64-x86-64` so diffoscope can disassemble them. For **macOS Mach-O** (`.dylib`), install `llvm` (provides `llvm-objdump`). Common causes of non-determinism on each platform:
+
+| Platform | Typical cause | Fix |
+|---|---|---|
+| Linux | zip timestamp in `.whl` archive | `SOURCE_DATE_EPOCH` (already set in the workflow) |
+| macOS | ad-hoc codesign hash embedding build path | Use `ZERO_AR_DATE=1`; avoid absolute paths in CMake |
+| Windows | PE `TimeDateStamp` header field | `/Brepro` linker flag (already set in `CMakeLists.txt`) |
+
 ## Security and Supply Chain
 
 | Workflow | When it runs | What it does |
