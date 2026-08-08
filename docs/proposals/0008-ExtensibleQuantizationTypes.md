@@ -3,682 +3,739 @@
 | | |
 |---|---|
 | **Authors** | Justin Chu (@justinchuby) |
-| **Status** | Draft |
+| **Status** | Draft — design discussion |
 | **Created** | 2025-07-22 |
 | **ONNX Issue** | TBD |
-| **Spec Impact** | TensorProto, TypeProto, ModelProto (new fields), new IR version |
+| **Spec Impact** | ModelProto, GraphProto, TypeProto, new operator support, new IR version |
 
 ## Abstract
 
-This RFC proposes an open-world quantization type system for ONNX. A model can
-carry an opaque quantized tensor, identify its format with an immutable URI, and
-embed an ONNX function that defines the canonical decoding semantics. Runtimes
-may dispatch optimized kernels by URI or execute the embedded decoder as a
-portable fallback. Formats that cannot be expressed by the safe decoder subset
-may explicitly rely on a runtime codec plugin.
+This RFC explores an open-world quantization type system for ONNX. A model
+should be able to describe new quantized formats without adding a new built-in
+data type or incrementing the IR version for every format.
 
-The IR is extended once to introduce this mechanism. New quantization formats
-thereafter require only a new URI and decoder; they do not require new
-`TensorProto.DataType` values, protobuf fields, or IR-version bumps.
+The current candidate design represents one logical quantized tensor as a
+composite of one or more typed storage tensors. This matches existing model
+formats:
 
-## Motivation
+- GPTQ, AWQ, ONNX Runtime MatMulNBits, MXFP4/NVFP4, AQLM, and SpQR commonly
+  store packed values, scales, zero points, codebooks, or sparse metadata as
+  separate tensors.
+- GGUF/ggml formats, including Sherry STQ1_0, store one self-contained stream
+  of quantized blocks.
 
-### Problem
+Each quantization type embeds a whole-tensor ONNX decoder. Runtime plugins are
+optional accelerators and do not define otherwise-missing model semantics.
 
-ONNX currently represents quantization through:
+This document records the preferred direction and the remaining design
+questions. The protobuf sketches are illustrative, not final.
 
-1. Built-in data types such as INT4, INT8, FLOAT4E2M1, and FLOAT8E4M3FN.
-2. QuantizeLinear and DequantizeLinear (QDQ) operators over supported types.
+## Requirements
 
-Every fundamentally new packed format may require a specification change,
-release, and runtime update before a conformant model can use it. This does not
-scale to formats such as NF4, K-Quants, IQ types, AQLM, Sherry/STQ1_0, and
-vendor-specific hardware layouts.
+### Functional requirements
 
-The logical tensor shape is also insufficient to determine storage size for
-these formats. A payload may contain sub-byte values, multiple interleaved bit
-streams, embedded scales, sparse indices, codebooks, padding, or alignment.
+1. New quantization formats do not require new ONNX element types.
+2. Logical tensor shape is independent of physical storage shape and size.
+3. A format may use one opaque byte stream or multiple typed storage tensors.
+4. Scales, zero points, codebooks, sparse metadata, and permutations can remain
+   separate and share storage where appropriate.
+5. Every declaration contains a deterministic, self-contained ONNX decoder.
+6. Runtime plugins can provide decoding and fused kernels without changing the
+   model.
+7. Existing QDQ models and built-in low-precision types remain unchanged.
+8. Unknown declarations and storage can be preserved and round-tripped.
 
-### Goals
+### Design requirements
 
-Enable a quantization format to be:
+- The IR should add as few new message kinds as practical.
+- Quantization-family enums or closed `oneof` taxonomies must not become the
+  extension boundary.
+- Physical component dtypes remain explicit. A scale tensor remains FLOAT16;
+  a packed word tensor remains UINT8 or INT32.
+- Storage tensors are not ordinary graph values and cannot accidentally be
+  consumed by normal nodes.
+- URI versioning is independent of the ONNX IR version.
 
-1. **Represented** without adding a new ONNX data type for every format.
-2. **Self-contained** through a portable decoder expressed with ONNX operators.
-3. **Accelerated** by runtimes with a native implementation for the exact URI.
-4. **Preserved** by tools that do not recognize the format.
-5. **Validated** structurally without teaching the checker every format.
+### Non-goals for the first revision
 
-### Non-goals
-
-- Replacing QDQ or existing built-in low-precision types.
-- Standardizing optimized kernels or runtime plugin APIs.
+- Defining an encoder or `QuantizeExtensible`.
 - Defining activation-quantization policy annotations.
-- Making existing ONNX operators accept opaque quantized values.
-- Encoding every possible quantization family as a protobuf `oneof`.
+- Guaranteeing optimized execution for every runtime.
+- Standardizing a runtime plugin ABI.
+- Supporting every container or control-flow use of a quantized value.
 
-## Comparison with QDQ
+## Evidence from Existing Formats
 
-QDQ is appropriate for supported element types and quantization equations,
-especially uniform affine quantization:
+| Format | Storage components for one logical weight | Layout |
+|--------|-------------------------------------------|--------|
+| GPTQ | `qweight`, `qzeros`, `scales`, often `g_idx` | Usually grouped along the input/K axis |
+| AWQ | `qweight`, `qzeros`, `scales`; kernel-specific variants | K-axis groups or prepacked tiles |
+| ORT MatMulNBits | packed `B`, `scales`, optional `zero_points` | K-axis blocks, separate operator inputs |
+| MXFP4 | packed blocks and E8M0 scales are often separate tensors | Blocks of 32 values |
+| NVFP4 | packed values, per-block scales, tensor scale | Blocks of 16 values, optional backend swizzles |
+| AQLM | `codes`, shared `codebooks`, `scales` | Multidimensional group grid |
+| SpQR | dense packed core, sparse offsets/values, optional permutation | Tiled dense data plus variable sparse data |
+| GGUF K-quants | One byte stream with embedded scales/mins | Fixed-size row blocks |
+| Sherry STQ1_0 | One byte stream with codes, sign bits, FP16 scale | 42 bytes per 256 logical values |
 
-```text
-DequantizeLinear(x, scale, zero_point) = (x - zero_point) * scale
+A mandatory single payload is lossless in principle but forces copying or
+repacking for most Hugging Face and ONNX Runtime representations. It can also
+destroy useful sharing, such as an AQLM codebook referenced by multiple logical
+tensors.
+
+The candidate design therefore treats one logical quantized value as a
+composite over typed storage tensors. A one-component UINT8 payload remains a
+fully supported fast path.
+
+## Agreed Direction
+
+The following points were agreed during design discussion:
+
+1. Every quantization declaration includes a decoder. Plugins accelerate the
+   declaration; they are not the sole source of semantics.
+2. The decoder is embedded in the quantization declaration and is not added to
+   `ModelProto.functions`.
+3. QuantizedTensorProto and TypeProto shapes always mean decoded logical shape.
+   Component and parameter shapes describe their physical storage.
+4. Declarations are model-global and referenced directly by URI.
+5. The decoder operates on the whole logical tensor, not one block at a time.
+6. No encoder or `QuantizeExtensible` is introduced in this RFC.
+7. Decoder SHA fields and embedded test vectors are not required.
+8. `DequantizeExtensible` has an `output_dtype` attribute.
+9. If quantization-preserving operations are introduced, they rely on
+   runtime/plugin capability rather than per-operator functions embedded in the
+   declaration.
+10. Fixed-block metadata is optional. Formats without it remain decodable but
+    lose generic block-size validation and related optimizations.
+
+## Candidate Data Model
+
+### QuantizationParameterProto
+
+Parameters are compile-time refinements of a quantization type, such as group
+size, bit width, or block axis. Runtime-varying arrays such as scales and
+codebooks are storage components, not parameters.
+
+```protobuf
+message QuantizationParameterProto {
+  optional string name = 1;
+
+  // Restricted to an ordinary dense, non-quantized tensor type.
+  optional TypeProto type = 2;
+
+  // Missing means the parameter is required.
+  // Defaults are small, concrete, inline tensor literals.
+  optional TensorProto default_value = 3;
+
+  optional string doc_string = 4;
+}
 ```
 
-It does not directly describe:
+Instance bindings use named `TensorProto` literals. Their `name` fields identify
+the parameters being bound. External data and symbolic dimensions are not
+allowed for parameter values.
 
-- Codebook mappings such as NF4 and IQ4_NL.
-- Multi-field block payloads such as K-Quants.
-- Non-standard packing and element placement such as STQ1_0.
-- Formats whose storage includes sparse indices or other block metadata.
-
-QDQ remains valid and unchanged. Models may use both QDQ and extensible
-quantized tensors.
-
-## Design Principles
-
-### Open-world identity
-
-Each format has an immutable URI. The URI identifies complete decoding
-semantics, including packing, byte order, blocking, padding, and logical element
-placement. If any semantic aspect changes, the producer uses a new URI.
-
-The URI, rather than an `EncodingFamily` enum, identifies the format.
-Consequently, a new format does not require changing the ONNX IR.
-
-### Decoder is authoritative
-
-Every portable declaration embeds a `FunctionProto` that defines how the opaque
-bytes become a logical FLOAT tensor. The function belongs to the quantization
-type declaration; it is not added to `ModelProto.functions` and does not occupy
-the model-local function namespace.
-
-Optional descriptor attributes support validation, introspection, plugin
-selection, and tooling, but never replace or change the decoder semantics.
-
-### Declaration is separate from implementation
-
-The model declares the format and its decoder. A runtime may:
-
-1. Execute a built-in implementation recognized by URI.
-2. Execute an implementation supplied by an optional runtime plugin.
-3. Invoke the embedded decoder as the portable fallback.
-
-Optimized implementations are runtime concerns. The model does not contain
-native code, WASM, or another executable codec format.
-
-## Proposed IR Additions
-
-The field numbers and the numeric value of `CUSTOM_QUANT` are placeholders
-until implementation.
+Whether component bindings and parameter bindings should instead be unified is
+an open question.
 
 ### QuantizationProto
 
-Only one new message type is required. Declarations are stored in
-`ModelProto.quantizations`.
-
 ```protobuf
 message QuantizationProto {
-  // Immutable identity for the complete decoding semantics.
-  optional string type_uri = 1;
+  // Immutable, globally unique format identity including semantic version.
+  optional string uri = 1;
 
-  // Authoritative portable decoder. This function is scoped to this message
-  // and is not registered as a model-local function. If absent, the type is
-  // opaque and requires a built-in or plugin codec.
-  optional FunctionProto decoder = 2;
+  // Ordered storage-component roles and their physical types. This is the
+  // normative component interface.
+  repeated ValueInfoProto component = 2;
 
-  // Optional open-ended descriptors. Standard attribute names are defined
-  // below, and formats may add namespaced attributes without changing the IR.
-  repeated AttributeProto descriptor = 3;
+  repeated QuantizationParameterProto parameter = 3;
 
-  // Optional reference vector for optimized implementations.
-  optional TensorProto test_payload = 4;  // UINT8, one-dimensional payload
-  optional TensorProto test_output = 5;   // FLOAT, logical decoded shape
-  optional int32 test_block_axis = 6;
+  // Whole-tensor portable decoder.
+  optional FunctionProto decoder = 4;
 
-  optional string doc_string = 7;
+  // The logical element type produced by the decoder.
+  optional int32 logical_elem_type = 5;  // TensorProto.DataType
 
-  // Non-semantic metadata. Decoding correctness MUST NOT depend on it.
-  repeated StringStringEntryProto metadata_props = 8;
-}
-
-message ModelProto {
-  // ... existing fields ...
-  repeated QuantizationProto quantizations = TBD;
+  optional string doc_string = 6;
+  repeated StringStringEntryProto metadata_props = 7;
 }
 ```
 
-The URI includes its semantic version. There is no separate version field that
-could disagree with the URI.
+Component roles are format-defined. Examples include `payload`, `qweight`,
+`scales`, `zero_points`, `codebooks`, `row_offsets`, and `outliers`.
+Each component `ValueInfoProto.type` is restricted to an ordinary dense,
+non-quantized tensor type.
 
-`descriptor` deliberately reuses `AttributeProto` instead of introducing a
-closed hierarchy of layout, field, codebook, sparse, or block messages. The
-decoder remains sufficient when no standardized descriptor applies.
-Descriptor names MUST be unique within a declaration, and every descriptor
-MUST be a concrete attribute with `ref_attr_name` absent.
+The URI identifies the component interface, parameter schema, decoder
+semantics, and logical element type. A semantic change requires a new URI.
 
-The following descriptor names are initially standardized for regular block
-storage:
+The decoder's component inputs and type annotations must agree with this
+normative component interface. They do not define a second component schema.
 
-| Name | Attribute type | Meaning |
-|------|----------------|---------|
-| `values_per_block` | INT | Logical values decoded by one block |
-| `bytes_per_block` | INT | Physical bytes occupied by one block |
-| `field_names` | STRINGS | Names of physical fields |
-| `field_layout` | TENSOR of INT64 `[N, 5]` | Rows are `(bit_offset, bit_width, count, bit_stride, data_type)` |
-
-Bit offset zero is the least-significant bit of payload byte zero. The
-descriptor describes physical storage only. Codebook lookup, scaling,
-sparsity, and output permutation remain in the decoder. Additional attributes
-SHOULD use namespaced names such as `org.example.layout_kind`.
-
-The two test tensors reuse `TensorProto` instead of adding a test-vector message.
-They MUST either both be present or both be absent. `test_payload` MUST be a
-one-dimensional UINT8 tensor, and `test_output` MUST be a FLOAT tensor whose
-dimensions are the logical decoded shape. `test_block_axis` follows the same
-normalization rules as a tensor annotation and MUST be present exactly when the
-test uses regular block descriptors. Test tensors are optional for portable
-declarations and SHOULD be present for opaque plugin-only declarations.
-
-### TensorProto and TypeProto extensions
-
-`TensorProto` remains the storage envelope rather than introducing a parallel
-tensor message. This preserves existing names, metadata, external-data support,
-checksums, and initializer infrastructure.
+### QuantizedTensorProto
 
 ```protobuf
-message TensorProto {
-  enum DataType {
-    // ... existing values ...
-    CUSTOM_QUANT = TBD;
-  }
+message QuantizedTensorProto {
+  optional string name = 1;
+  repeated int64 dims = 2;  // Logical decoded shape.
+  optional string quantization_uri = 3;
 
+  // Component role -> quantization-storage tensor name.
+  repeated StringStringEntryProto component = 4;
+
+  // TensorProto.name is the parameter name.
+  repeated TensorProto parameter = 5;
+
+  optional string doc_string = 6;
+  repeated StringStringEntryProto metadata_props = 7;
+}
+```
+
+Each component role must be bound exactly once unless the declaration defines a
+default for that role in a future revision. Component storage may be shared by
+multiple logical quantized tensors.
+
+### Storage pool and quantized initializers
+
+The preferred placement after architecture review is model-global storage:
+
+```protobuf
+message ModelProto {
   // ... existing fields ...
-  optional string quantization_type_uri = TBD;
-  optional int32 quantization_block_axis = TBD;
+  repeated QuantizationProto quantization = TBD;
+  repeated TensorProto quantization_storage = TBD;
 }
 
+message GraphProto {
+  // ... existing fields ...
+  repeated QuantizedTensorProto quantized_initializer = TBD;
+}
+```
+
+`quantization_storage` is not part of the graph value namespace:
+
+- Every storage tensor has a globally unique name.
+- Storage names are disjoint from all graph value names.
+- A `NodeProto` input cannot reference storage directly.
+- Multiple quantized initializers may share storage.
+- Unreferenced storage is legal; removal is a separate garbage-collection pass.
+- Each storage tensor retains normal TensorProto dtype, shape, raw data, and
+  external-data behavior.
+
+`QuantizedTensorProto.name` participates in the normal graph value namespace and
+must be unique across dense, sparse, and quantized initializers. If v1 is
+restricted to quantized initializers, a quantized initializer cannot also
+appear in `graph.input` as an overridable default.
+
+Model-global placement avoids outer-graph capture rules, cross-subgraph
+duplication, and ambiguous ownership. Graph-local storage remains an
+alternative under consideration.
+
+### TypeProto.QuantizedTensor
+
+If composite quantized values are represented in the graph type system, the
+candidate type is:
+
+```protobuf
 message TypeProto {
-  message Tensor {
+  message QuantizedTensor {
+    optional string quantization_uri = 1;
+    optional int32 elem_type = 2;  // Logical element type.
+    optional TensorShapeProto shape = 3;
+  }
+
+  oneof value {
     // ... existing fields ...
-    optional string quantization_type_uri = TBD;
-    optional int32 quantization_block_axis = TBD;
+    QuantizedTensor quantized_tensor_type = TBD;
   }
 }
 ```
 
-For `CUSTOM_QUANT`:
+A new `oneof` arm fails closed in existing tooling. This is safer than adding
+annotations to `TypeProto.Tensor`, which could cause ordinary tensor operators
+to accept packed storage accidentally.
 
-- `TensorProto.dims` is the logical decoded shape.
-- Payload bytes are stored in `raw_data` or referenced by `external_data`.
-- Typed data fields such as `int32_data` and `float_data` MUST NOT be used.
-- `quantization_type_uri` MUST be present and resolve to exactly one
-  `ModelProto.quantizations` entry.
-- `quantization_type_uri` and `quantization_block_axis` MUST be absent for every
-  other element type.
-- A `TypeProto.Tensor` corresponding to an initializer MUST agree with the
-  initializer fields.
-- `CUSTOM_QUANT` MUST NOT be used as the element type of SparseTensorProto,
-  TypeProto.SparseTensor, sequence elements, map values, or optional values in
-  this initial proposal.
-- Unknown descriptor attributes and declarations MUST round-trip without
-  modification.
+Whether this type arm is required in the first revision is a major open
+question. A smaller variadic-operator alternative is described below.
 
-Adding quantization information to `TypeProto` is necessary because intermediate
-values are not represented by `TensorProto`. Operators cannot infer a format by
-searching for an initializer with the same name.
-
-## Storage Validation
-
-For a declaration with:
-
-```text
-values_per_block = B
-bytes_per_block = P
-block_axis = A
-```
-
-and logical dimensions `D`, blocks do not cross independent sequences along
-other axes:
-
-```text
-sequence_count = product(D[i] for i != A)
-blocks_per_sequence = ceil(D[A] / B)
-expected_payload_bytes = sequence_count * blocks_per_sequence * P
-```
-
-The checker MUST use overflow-checked arithmetic. The payload length comes from
-`len(raw_data)` or the external-data `length` entry. The `length` entry is
-required for external `CUSTOM_QUANT` data. If a declaration omits the
-standardized regular-layout descriptors, payload size is validated only by the
-embedded decoder or runtime codec and external-data bounds.
-
-When `values_per_block` or `bytes_per_block` is present, both MUST be present
-and greater than zero. `quantization_block_axis` MUST normalize to an axis in
-the logical rank and MUST be present; scalar tensors therefore cannot use a
-regular block layout. `quantization_block_axis` MUST be absent when regular
-block descriptors are absent.
-
-`field_names` and `field_layout` MUST either both be present or both be absent,
-and they are valid only when the two block-size descriptors are present. Every
-`field_layout` row MUST have a nonnegative `bit_offset`, positive `bit_width`,
-`count`, and `bit_stride`, and a valid `TensorProto.DataType` value. Its row
-count MUST equal the length of `field_names`.
-
-The decoder defines padding and trimming of a final partial block. Producers
-SHOULD prefer shapes divisible by `values_per_block` when the format does not
-have canonical partial-block semantics.
-
-For each field in a regular storage layout, the checker uses overflow-checked
-arithmetic to validate:
-
-```text
-bit_offset + (count - 1) * bit_stride + bit_width
-    <= bytes_per_block * 8
-```
-
-Fields may overlap when the decoder intentionally gives the same bits multiple
-interpretations. For portable declarations, descriptor metadata MUST agree with
-the authoritative decoder. For opaque declarations, descriptors and codecs
-MUST agree with the URI owner's external format specification.
+Parameter values are intentionally not stored in `TypeProto`. They belong to
+the concrete quantized value; putting TensorProto data inside a type would make
+type equality, printing, and shape merging depend on arbitrary serialized
+values.
 
 ## Decoder Contract
 
-The embedded function has this required signature:
+The candidate decoder ABI is:
 
 ```text
-Decode(payload: uint8[N], logical_shape: int64[rank], block_axis: int64 scalar)
-    -> values: float32[logical_shape]
+Decode(
+    logical_shape: tensor(int64)[rank],
+    component_0,
+    ...,
+    component_N,
+    parameter_0,
+    ...,
+    parameter_M
+) -> values: tensor(logical_elem_type)[logical_shape]
 ```
 
-- `payload` is the exact raw or external byte sequence.
-- `logical_shape` is the tensor's logical shape.
-- `block_axis` is normalized to `[0, rank)`, or is `-1` when no regular storage
-  layout is declared.
-- The output is FLOAT with that shape.
-- Scales, zero points, codebooks, sparse metadata, and padding are either
-  encoded in the payload or represented as constants in the function.
-- The function MUST have exactly three inputs and one output with the types
-  above. Its `value_info` entries MUST provide these types.
-- The function MUST NOT declare required attributes.
-- The function MUST use only standard-domain ONNX operators from its declared
-  opset imports.
-- The function MUST NOT call model-local functions or custom-domain operators.
-- The function MUST NOT contain control-flow, random, nondeterministic, or
-  side-effecting operators.
-- The function MUST be deterministic for valid inputs.
+Rules:
 
-The initial decoder profile uses the standard ONNX domain at opset 26 or later
-and permits only the following deterministic, dataflow operators:
+- The first input is reserved for the logical shape.
+- Component inputs follow `QuantizationProto.component` order.
+- Parameter inputs follow `QuantizationProto.parameter` order after defaults
+  have been applied.
+- Every input and output has mandatory `ValueInfoProto` type information.
+- Decoder component inputs and value information agree with the declaration's
+  normative component list.
+- The output type matches `logical_elem_type`.
+- The output shape at invocation matches the logical shape.
+- The decoder has no captures and does not reference model-local functions or
+  custom-domain operators.
+- The decoder uses only deterministic, self-contained standard ONNX operators
+  from its own `opset_import`.
+- Decoder constants are inline. They do not use external data.
+
+The embedded FunctionProto is scoped only to its QuantizationProto. Its
+`name`, `domain`, and `overload` do not register a callable model-local
+function. Its `opset_import` controls resolution of nodes in the decoder body
+independently of `ModelProto.functions`.
+
+The exact mechanically checkable restriction on decoder operators remains an
+open question. A likely rule is to reject operators with `GRAPH`/`GRAPHS`
+attributes and known random or nondeterministic operators, rather than maintain
+a closed allowlist.
+
+## Runtime Value and Loading
+
+A runtime quantized value consists of:
 
 ```text
-Constant, ConstantOfShape, Identity,
-Cast, CastLike, BitCast,
-Add, Sub, Mul, Div, Mod, Pow, Neg, Abs, Min, Max,
-BitShift, BitwiseAnd, BitwiseOr, BitwiseXor, BitwiseNot,
-Equal, Greater, GreaterOrEqual, Less, LessOrEqual, Where,
-Shape, Size, Range, Reshape, Flatten, Transpose, Squeeze, Unsqueeze,
-Concat, Split, Slice, Expand, Tile, Pad,
-Gather, GatherElements, GatherND, ScatterElements, ScatterND, NonZero,
-ReduceSum, ReduceMin, ReduceMax, MatMul
+{
+  declaration,
+  logical_shape,
+  effective_static_parameters,
+  named_component_tensor_handles
+}
 ```
 
-No operator containing a graph attribute is allowed. Expanding this profile or
-permitting a newer standard opset does not change the IR format, although older
-runtimes may reject a decoder using operators they do not implement.
+### Model load
 
-A runtime invokes the embedded function through the extensible-quantization
-mechanism; the raw byte view is not itself exposed as an ordinary
-reinterpretation of a `CUSTOM_QUANT` tensor in the graph.
+1. Parse declarations and require unique URIs.
+2. Parse and bounds-check model-global storage tensors.
+3. Resolve each quantized initializer's URI.
+4. Apply parameter defaults and validate explicit bindings.
+5. Require component bindings to match declaration roles exactly.
+6. Validate component dtypes and ranks against declaration `ValueInfoProto`s.
+7. Construct immutable component handles without concatenating their buffers.
+8. Ask execution providers/plugins whether they support required operations for
+   the URI, parameters, component shapes/dtypes, and requested output dtype.
 
-### Portability levels
+The URI is a nominal dispatch key, similar to a custom-op domain and name.
+Plugins must inspect the declaration interface and effective parameters before
+accepting it. A serialized decoder digest is not necessary.
 
-A declaration with an embedded decoder is **portable**. Any runtime implementing
-`DequantizeExtensible` and the decoder's standard operators can execute it,
-although a plugin may still provide a faster implementation.
+### External data and zero-copy
 
-A declaration without an embedded decoder is **opaque**. It is useful for
-proprietary formats or codecs that cannot be expressed by the decoder-safe
-operator subset, but it requires a matching built-in implementation or plugin.
-Runtimes without one MUST reject the model. URIs under the `onnx:` namespace
-MUST be portable.
+Each component independently uses existing `TensorProto.external_data`.
 
-## DequantizeExtensible Operator
+- Explicit offsets and lengths are required for external quantization storage.
+- Shared or overlapping external ranges are allowed.
+- Zero-copy loading is possible when the native format matches the component
+  TensorProto dtype and ONNX packing.
+- Formats with different nibble ordering or alignment use UINT8 components
+  rather than pretending to be ONNX INT4/INT2.
+- Tools that save, load, extract, or compose models must traverse
+  `quantization_storage` and preserve sharing.
 
-A new operator bridges opaque quantized tensors to standard tensor values:
+## DequantizeExtensible
 
 ```text
-DequantizeExtensible(X: CUSTOM_QUANT) -> Y: FLOAT
+DequantizeExtensible(X: quantized_tensor(T)) -> Y
+
+attribute:
+  output_dtype: TensorProto.DataType = UNDEFINED
 ```
 
-The operator:
+Semantics:
 
-1. Reads the quantization identity carried by the input type.
-2. Resolves the declaration by exact URI.
-3. Uses a conforming built-in/plugin implementation or invokes the embedded
-   decoder.
+1. Invoke the declaration's decoder to obtain `tensor(logical_elem_type)`.
+2. If `output_dtype` differs, apply the semantics of `Cast`.
 
-Scale, zero point, block size, and output type are not operator inputs or
-attributes because they are format semantics. A model may use `Cast` after
-dequantization when another floating-point output type is desired.
+The output shape equals the logical input shape. When `output_dtype` is
+UNDEFINED, type inference resolves it to the declaration's
+`logical_elem_type`. An explicit value applies Cast semantics.
 
-Execution providers MAY fuse patterns such as:
+Execution providers may fuse decoding, output conversion, and consuming
+operators without materializing the decoded tensor.
+
+## Standard Operators and MoE Gather
+
+The initial design goal was a quantization-preserving Gather:
 
 ```text
-DequantizeExtensible(W) -> MatMul(X, W_float)
+Gather(quantized_tensor, indices) -> quantized_tensor
 ```
 
-into a native quantized MatMul without materializing `W_float`.
+Architecture review found this circular without an encoder or a format-specific
+storage transform. A runtime would have to create new packed components whose
+canonical representation is not defined by the decoder.
 
-Initially, `DequantizeExtensible` is the only standard operator required to
-accept `CUSTOM_QUANT`. Other operators MUST reject it unless their schemas
-explicitly define behavior for opaque quantized values. In particular, this RFC
-does not add implicit `Gather`, slicing, or reshaping semantics for packed
-payloads.
-
-## Runtime Behavior
-
-Expected runtime resolution order:
-
-1. Validate the declaration, tensor annotation, and payload bounds.
-2. Look for an optimized built-in or plugin implementation registered for the
-   exact `type_uri`.
-3. Allow that implementation to inspect the full `QuantizationProto`,
-   standardized descriptors, and test vector before accepting the tensor.
-4. Otherwise invoke the embedded decoder when present.
-5. Reject the model if neither an accepted implementation nor an executable
-   decoder is available.
-
-For portable declarations, optimized implementations conform to the decoder
-under normal ONNX numerical accuracy requirements. For opaque declarations,
-implementations conform to the URI owner's external specification.
-Bit-identical floating-point results are not required unless the format
-specification independently requires them.
-
-### Optional runtime plugins
-
-Runtime-specific plugin APIs are permitted but are outside the ONNX
-specification. A plugin can provide a decoder and fused kernels without changing
-the model or runtime source:
-
-```cpp
-runtime.RegisterQuantizationPlugin(
-    "org.tencent.sherry:stq1_0/v1",
-    {
-        .supports = [](const QuantizationProto& type) {
-            // Inspect descriptors and optionally run the test vector.
-            return supports_stq1_0(type);
-        },
-        .decode = decode_stq1_0,
-        .matmul = matmul_stq1_0,
-    });
-```
-
-For a portable declaration, the embedded function remains the semantics and
-fallback. For an opaque declaration, the plugin or built-in codec defines the
-implementation associated with the URI. A runtime MUST allow a plugin to
-decline a declaration even when the URI matches.
-
-## Checker Behavior and Forward Compatibility
-
-The checker does not need built-in knowledge of every URI. It validates:
-
-- URI presence and uniqueness within the model.
-- Embedded decoder ABI, operator allowlist, and absence of required attributes
-  when a decoder is present.
-- `CUSTOM_QUANT` storage-field restrictions.
-- Tensor/TypeProto annotation consistency.
-- Prohibition of `CUSTOM_QUANT` in unsupported container and sparse types.
-- External-data bounds.
-- Standard descriptor names, types, and regular block bounds when present.
-- Decoder function well-formedness under existing FunctionProto rules.
-
-An unrecognized URI is not an error when its declaration and decoder are
-present. An opaque declaration without a recognized codec is valid as a model
-format but cannot be executed by that runtime. Tools that do not execute the
-model can inspect, copy, rename, and round-trip either kind without
-understanding the format.
-
-## URI Governance and Format Versioning
-
-URI format:
+The recommended portable alternative is:
 
 ```text
-<authority>:<format-name>/v<semantic-version>
+Gather(quantized_tensor(T), indices) -> tensor(T)
 ```
 
-Examples:
+with semantics:
 
-- `onnx:mxfp4-block32/v1`
-- `ggml:q4_k/v1`
-- `org.tencent.sherry:stq1_0/v1`
+```text
+Gather(Decode(X), indices)
+```
 
-Suggested governance:
+This requires no encoder. A plugin can gather only the selected component
+ranges and decode them, or fuse Gather with the following MatMul. The reference
+semantics may decode more data but remain correct.
 
-| Prefix | Authority | Process |
-|--------|-----------|---------|
-| `onnx:` | ONNX project | Specification review |
-| Organization or project namespace | Namespace owner | No ONNX approval required |
+This pattern covers MoE selection when optimized by a capable runtime, but the
+graph no longer carries a quantized value across the Gather boundary.
 
-The complete decoding semantics of a URI are immutable. A change to field
-packing, byte order, scale interpretation, padding, or logical element mapping
-creates a new URI version.
+Whether this is sufficient for MoE, or whether quantization-preserving Gather
+must be deferred until storage-transform semantics exist, is an open question.
 
-The URI is a nominal contract, similar to a custom operator's domain and name.
-Producers MUST ensure an embedded decoder matches the URI owner's definition.
-For `onnx:` URIs, the checker MAY compare the declaration with the registered
-standard definition. For other namespaces, runtimes and plugins decide whether
-to accept the declaration.
+Other operators may adopt the same rule in later opsets: accepting a quantized
+logical input is equivalent to applying the operator to its decoded value.
 
-This versioning is independent of the ONNX IR version. The IR version changes
-only when the extensibility framework itself changes.
+## Plugin Capability Negotiation
+
+The plugin API is runtime-specific and outside the ONNX specification. A
+conceptual query is:
+
+```text
+supports(
+    quantization_uri,
+    declaration,
+    effective_parameters,
+    component_types_and_shapes,
+    operation,
+    output_dtype,
+    device
+)
+```
+
+Plugins may provide:
+
+- dequantization;
+- fused MatMul/Gemm;
+- decoded-output Gather for embeddings or MoE;
+- serialization-preserving operations outside standard ONNX semantics.
+
+The model remains semantically complete without a plugin.
+
+## Checker Requirements
+
+The checker should validate:
+
+- declaration URIs are present and unique;
+- every declaration has a decoder;
+- decoder inputs, component roles, parameters, and output type are consistent;
+- parameter defaults and bindings are concrete and type-correct;
+- storage names are globally unique and disjoint from graph value names;
+- quantized initializer names are unique in the graph value namespace;
+- quantized initializers do not appear in `graph.input` when graph input support
+  is disabled;
+- every component binding resolves to model storage;
+- component dtypes and ranks satisfy declaration constraints;
+- quantized initializer logical shape and URI agree with corresponding type
+  information;
+- external-data offsets and lengths are valid;
+- decoder functions are deterministic and self-contained under the final
+  structural rule.
+- quantized values are not used in Sequence, Optional, Map, Loop/Scan carried
+  values, or graph boundaries when those v1 restrictions are selected.
+
+Model-composition tooling must merge structurally identical declarations with
+the same URI into one declaration. Conflicting declarations for one URI are a
+hard error; a valid resulting model still contains exactly one declaration per
+URI.
+
+The checker cannot generally prove that arbitrary component shapes encode the
+declared logical shape. An optional fixed-block profile can add stronger checks.
+
+## Optional Fixed-Block Profile
+
+Many common formats can expose reserved static parameters:
+
+```text
+__block_axis
+__values_per_block
+__bytes_per_block
+```
+
+The simple profile above is sufficient only for a declaration with one
+component named `payload`. When all are present, the checker can validate that
+stream and runtimes can recognize a common block layout. Multi-component
+formats need component-specific size rules that have not yet been designed.
+Formats with multidimensional tiles, sparse outliers, or variable-length
+components omit the profile and rely on their decoder.
+
+Whether the first revision should standardize only a single-axis profile or
+also support multidimensional tile shapes remains open.
 
 ## Examples
 
-The examples show declarations conceptually; function bodies are abbreviated.
-
-### INT4 symmetric block quantization
-
-```text
-type_uri: "example.org:int4-symmetric-block32/v1"
-decoder: FunctionProto<DecodeInt4Block32>
-descriptor:
-  values_per_block: 32
-  bytes_per_block: 18
-  field_names: ["values", "scale"]
-  field_layout: [
-    [0,   4, 32, 4,  UNDEFINED],
-    [128, 16, 1, 16, FLOAT16],
-  ]
-```
-
-The decoder extracts signed 4-bit values, bitcasts the embedded FP16 scale, and
-multiplies the values by that scale.
-
-### NF4
-
-```text
-type_uri: "example.org:nf4-block64/v1"
-decoder: FunctionProto<DecodeNF4Block64>
-descriptor:
-  values_per_block: 64
-  bytes_per_block: 34
-  field_names: ["indices", "scale"]
-  field_layout: [
-    [0,   4, 64, 4,  UNDEFINED],
-    [256, 16, 1, 16, FLOAT16],
-  ]
-```
-
-The decoder contains the 16-entry NF4 codebook as a Constant, gathers values by
-the unpacked indices, and applies the embedded scale.
-
 ### Sherry STQ1_0
 
-STQ1_0 demonstrates why the decoder, not a closed family enum, must be
-authoritative. One block stores multiple bit streams, an embedded scale, and a
-non-contiguous logical element mapping.
+Declaration:
 
 ```text
-type_uri: "org.tencent.sherry:stq1_0/v1"
-decoder: FunctionProto<DecodeSTQ1_0>
-descriptor:
-  values_per_block: 256
-  bytes_per_block: 42
-  field_names: ["code", "sign", "scale"]
-  field_layout: [
-    [0,   4, 64, 4,  UNDEFINED],
-    [256, 1, 64, 1,  BOOL],
-    [320, 16, 1, 16, FLOAT16],
-  ]
+uri: "urn:org.tencent.sherry:stq1_0:v1"
+logical_elem_type: FLOAT
+components:
+  payload: tensor(uint8)[...]
+parameters:
+  __block_axis: int64
+  __values_per_block: int64 = 256
+  __bytes_per_block: int64 = 42
 ```
 
-For group `g` in `[0, 64)`, the decoder:
+One block contains:
+
+```text
+code:  64 x 4-bit values = 32 bytes
+sign:  64 x 1-bit values = 8 bytes
+scale: 1 x FLOAT16       = 2 bytes
+```
+
+For group `g`:
 
 ```text
 code = extract_4_bits(payload, 4 * g)
 sign = extract_1_bit(payload, 256 + g)
-vector = codebook[16 * sign + code]  // four ternary lanes
+vector = codebook[16 * sign + code]
 
 chunk = g / 16
-lane_in_chunk = g % 16
-output_index(p) = 64 * chunk + lane_in_chunk + 16 * p, p in [0, 4)
-
+lane = g % 16
+output_index(p) = 64 * chunk + lane + 16 * p
 output[output_index(p)] = vector[p] * scale
 ```
 
-The codebook is a constant in the decoder. The placement rule captures the
-stride-16 grouping used within each 64-value chunk. The resulting storage is 42
-bytes for 256 values: 1.25 bits per weight for codes and signs, or 1.3125 bits
-per weight including the FP16 block scale.
+This format uses one UINT8 storage component.
+The fixed 32 x 4 ternary codebook is an inline Constant in the decoder.
 
-No new protobuf case or IR version is needed to introduce STQ1_0. Another
-format with different fields or element placement supplies a different URI and
-decoder.
-
-### Opaque plugin-only format
-
-Some proprietary formats may intentionally omit the decoder:
+### GPTQ
 
 ```text
-type_uri: "vendor.example:accelerator-packed/v3"
-decoder: <absent>
-descriptor:
-  vendor.example.kernel_abi: "matmul-v7"
-test_payload: TensorProto<UINT8>
-test_output: TensorProto<FLOAT>
+uri: "urn:example:gptq:v1"
+components:
+  qweight: tensor(int32)[...]
+  qzeros: tensor(int32)[...]
+  scales: tensor(float16)[...]
+  g_idx: tensor(int32)[...]
+parameters:
+  bits: int64
+  group_size: int64
 ```
 
-The model remains structurally representable and round-trippable, but execution
-requires a built-in implementation or plugin that accepts this declaration.
-This is less portable than the previous examples and MUST NOT use an `onnx:`
-URI.
+The decoder reconstructs the logical weight without concatenating components.
 
-## Backward Compatibility
+### AQLM
 
-- Models without extensible quantized tensors are unaffected.
-- QDQ and built-in low-precision types remain unchanged.
-- A new IR version gates the initial framework.
-- Old runtimes reject models requiring the new IR version.
-- New formats using the established framework do not require later IR bumps.
+```text
+uri: "urn:example:aqlm:v1"
+components:
+  codes: tensor(int32)[...]
+  codebooks: tensor(float16)[...]
+  scales: tensor(float16)[...]
+```
 
-## Impact Assessment
+Multiple quantized tensors may reference the same `codebooks` storage tensor.
 
-### ONNX specification changes
+## Smaller Alternative: Variadic DequantizeExtensible
 
-- One opaque `CUSTOM_QUANT` data-type value.
-- One new `QuantizationProto` message.
-- New fields on ModelProto, TensorProto, and TypeProto.Tensor.
-- A `DequantizeExtensible` operator.
-- One new IR version to gate the framework.
+A substantially smaller design is:
 
-### Runtime implementer burden
+```text
+DequantizeExtensible(
+    component_0,
+    ...,
+    component_N
+) -> tensor(output_dtype)
 
-Minimum support consists of:
+attributes:
+  quantization_uri
+  logical_shape
+  parameters
+  output_dtype
+```
 
-- Parsing and preserving the new fields.
-- Validating payload and declaration structure.
-- Invoking the embedded decoder for `DequantizeExtensible`.
+All components remain ordinary graph initializers. This requires:
 
-Optimized support consists of dispatching built-in or plugin-provided fused
-kernels by URI after accepting the declaration.
+- one quantization declaration message;
+- no `QuantizedTensorProto`;
+- no new TypeProto arm;
+- no storage namespace.
+
+It reuses existing external-data, mmap, composition, and runtime APIs.
+
+The tradeoff is that the logical quantized value is no longer self-describing:
+its identity exists only at the consuming node, intermediate quantized values
+cannot be typed, and tools must recover the relationship from node inputs.
+
+If self-describing quantized values are a hard requirement, the composite type
+design is preferable. Otherwise this alternative has much lower ecosystem cost
+and should be explicitly evaluated before implementation.
 
 ## Alternatives Considered
 
-### Continue adding every format as a built-in type
+### Single opaque payload with CUSTOM_QUANT
 
-This gives standardized operator support but requires an ONNX release and IR
-change for each new storage type. Built-in types remain appropriate for mature,
-widely supported formats, but they are not the only extension mechanism.
+This minimizes IR changes and works naturally for GGUF/STQ. It forces copying,
+repacking, or loss of sharing for common multi-component formats and does not
+solve graph-input buffer sizing cleanly.
 
-### Closed quantization-family protobuf
+### Closed quantization-family protobuf hierarchy
 
-A `oneof` containing affine, codebook, vector-codebook, sparse, logarithmic,
-and block formats is readable for known cases but makes that list the extension
-boundary. Formats combining multiple bit streams, embedded metadata, unusual
-element placement, or future mechanisms would require new protobuf cases.
+A closed hierarchy is readable for known formats but makes protobuf cases the
+extension boundary. New combinations of storage and decoding semantics would
+require IR changes.
 
-This RFC instead uses open-ended `AttributeProto` descriptors plus an
-authoritative decoder. Convenience libraries may provide reusable decoder
-functions for common families without placing those families in the IR.
+### Decoder SHA-256
 
-### Store a decoder SHA-256 in the IR
+A stored digest adds no semantics and requires canonicalization rules. Runtimes
+may compute a local digest for caching, while plugin acceptance remains nominal
+on URI plus structural interface checks.
 
-A stored decoder digest does not add decoding semantics: the decoder is already
-inside `QuantizationProto`, and a runtime can hash it locally if its plugin ABI
-needs a cache or implementation key. Standardizing the digest would also
-require canonicalization rules, would distinguish semantically equivalent
-functions, and would become more complicated if decoder composition is allowed
-later.
+### Embedded test vectors
 
-This RFC therefore does not serialize a decoder hash. Optimized implementations
-match the URI and inspect the declaration before accepting it.
+The decoder is the semantic oracle. Test suites can be maintained by the URI
+owner without adding duplicate expected outputs to every model.
 
-### Dedicated QuantizedTensorProto
+## Open Questions and Recommendations
 
-A separate tensor message clearly distinguishes logical shape from physical
-storage, but it would need to duplicate TensorProto naming, metadata,
-external-data, graph-attribute, and type-propagation integration.
+### 1. Storage pool scope
 
-Extending TensorProto once provides the same logical/storage separation while
-reusing existing infrastructure.
+**Recommendation:** model-global `ModelProto.quantization_storage`.
 
-### Put all metadata on QDQ nodes
+Graph-local storage complicates subgraph capture, cross-graph sharing,
+extraction, and ownership.
 
-Operator attributes are extensible, but an initializer would not be
-self-describing and intermediate quantized values would not carry their format
-identity. Keeping identity in TensorProto and TypeProto makes it structural.
+### 2. Separate component and parameter mechanisms
 
-### Embed native code, WASM, or custom bytecode
+**Current candidate:** `ValueInfoProto` component roles plus
+`QuantizationParameterProto` static parameters.
 
-This would make models executable containers and introduce a substantial
-security and implementation burden. A standard ONNX function is inspectable,
-validated through existing mechanisms, and sufficient as a correctness
-fallback.
+**Reviewer alternative:** one ordered formal parameter list with optional
+defaults, covering payloads, scales, codebooks, and static parameters.
 
-### Opaque vendor operators only
+**Recommendation:** keep the semantic distinction because static parameters are
+part of type compatibility while components are runtime storage, but prototype
+both checker paths before finalizing.
 
-Vendor operators work today but provide no portable fallback semantics and
-lock models to runtimes implementing those operators.
+### 3. Logical element type
 
-## Open Questions
+**Recommendation:** declare `logical_elem_type` on `QuantizationProto` and
+require the decoder output to match it.
 
-1. Should the standardized regular-layout descriptors be required for
-   ONNX-governed URIs even though they remain optional for other formats?
-2. Should test vectors be recommended or required for ONNX-governed URIs?
-3. Should the first revision require the block axis to be the final logical
-   axis to simplify runtime implementations?
-4. Which opset version should the decoder function target to balance bit-level
-   expressiveness and runtime availability?
-5. Should a later proposal define packed-data-preserving operators such as a
-   block-aligned Gather?
+Always decoding to FLOAT can introduce double-rounding differences for formats
+whose reference semantics are FLOAT16 or BFLOAT16.
+
+### 4. DequantizeExtensible default output type
+
+**Recommendation:** give the schema attribute the static default UNDEFINED.
+During type inference, UNDEFINED resolves to `logical_elem_type`, following the
+pattern used by DequantizeLinear. An explicit `output_dtype` has Cast semantics.
+
+### 5. TypeProto.QuantizedTensor in the first revision
+
+**Composite-design recommendation:** include it because self-describing logical
+quantized values are a stated requirement.
+
+**Reviewer concern:** a new type arm affects every checker, parser, printer,
+shape-inference, composition, and runtime API path. SparseTensor demonstrates
+the risk of landing a type with too few consuming operators.
+
+**Alternative:** first ship variadic `DequantizeExtensible`, then add the type
+arm with the second consuming operator.
+
+### 6. Graph inputs, outputs, and control-flow boundaries
+
+**Recommendation for v1:** allow quantized initializers only. Do not permit
+quantized graph inputs/outputs, Sequence/Optional/Map elements, or Loop/Scan
+carried values until a public composite runtime ABI is defined.
+
+FunctionProto has no initializer field, so quantized initializers also cannot
+exist directly inside a model-local function. Extracting a subgraph containing
+one into a FunctionProto would require lifting the quantized value and its
+storage to model scope or adding a later function-storage mechanism.
+
+### 7. Gather semantics
+
+**Recommendation:** if Gather support is included, make its output an ordinary
+decoded tensor with semantics `Gather(Decode(X), indices)`. Plugins may fuse
+selection and decoding.
+
+Quantization-preserving Gather is not well-defined without an encoder or
+format-specific storage-transform semantics.
+
+### 8. Fixed-block profile
+
+**Recommendation:** optional single-axis profile in v1, normatively validated
+when present. Multi-axis tiles remain representable through the decoder but do
+not receive generic block validation.
+
+### 9. Decoder restrictions
+
+**Recommendation:** standard-domain operators only, no custom/model-local
+calls, no graph-valued attributes, no known random/nondeterministic operators.
+
+A fixed allowlist is too rigid; an unrestricted "deterministic" requirement is
+not mechanically checkable.
+
+### 10. URI governance
+
+**Recommendation:** opaque absolute ASCII identifiers, preferably URNs or
+reverse-DNS namespaces. Lookup performs exact byte comparison with no
+normalization.
+
+The URI covers component ABI, parameter schema, decoder, and logical element
+type. Merging models with conflicting declarations for one URI is an error.
+
+### 11. Plugin acceptance without digest or test vectors
+
+**Recommendation:** dispatch nominally by URI, then require structural
+compatibility of component roles/types, parameter schema, and logical element
+type before a plugin accepts the declaration.
+
+### 12. Implementation cost
+
+The RFC should explicitly list required updates to:
+
+- checker and type-constraint grammar;
+- parser and printer;
+- shape inference helpers;
+- external-data traversal;
+- model extraction and composition;
+- function extraction/inlining rules for quantized initializers;
+- version conversion;
+- runtime public value APIs if graph I/O is later enabled.
+
+## Backward Compatibility and Versioning
+
+- Existing models are unchanged.
+- Existing QDQ and built-in data types remain valid.
+- One IR-version bump introduces the framework.
+- New quantization declarations and URIs do not require later IR-version bumps.
+- New operator support may require opset versions without changing the IR.
 
 ## References
 
-- [llama.cpp quantization types](https://github.com/ggml-org/llama.cpp/blob/master/ggml/src/ggml-quants.h)
-- [Sherry: Hardware-Efficient 1.25-Bit Ternary Quantization](https://arxiv.org/abs/2601.07892)
-- [OCP Microscaling (MX) Formats v1.0](https://www.opencompute.org/documents/ocp-microscaling-formats-mx-v1-0-spec-final-pdf)
-- [BitNet: 1.58-bit LLMs](https://arxiv.org/abs/2402.17764)
-- [ONNX IR specification](https://onnx.ai/onnx/repo-docs/IR.html)
-- [ONNX QuantizeLinear](https://onnx.ai/onnx/operators/onnx__QuantizeLinear.html)
+- [AutoGPTQ packed linear storage](https://github.com/AutoGPTQ/AutoGPTQ/blob/main/auto_gptq/nn_modules/qlinear/qlinear_cuda_old.py)
+- [AutoAWQ quantized linear layouts](https://github.com/casper-hansen/AutoAWQ/tree/main/awq/modules/linear)
+- [ONNX Runtime MatMulNBits quantizer](https://github.com/microsoft/onnxruntime/blob/main/onnxruntime/python/tools/quantization/matmul_nbits_quantizer.py)
+- [OCP Microscaling Formats](https://www.opencompute.org/documents/ocp-microscaling-formats-mx-v1-0-spec-final-pdf)
+- [AQLM inference representation](https://github.com/Vahe1994/AQLM/tree/main/inference_lib/src/aqlm)
+- [SpQR inference representation](https://github.com/Vahe1994/SpQR/tree/main/inference_lib/src/spqr_quant)
+- [llama.cpp quantization block definitions](https://github.com/ggml-org/llama.cpp/blob/master/ggml/src/ggml-common.h)
+- [Sherry STQ1_0 implementation PR](https://github.com/ggml-org/llama.cpp/pull/22836)
