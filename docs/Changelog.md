@@ -10,7 +10,7 @@ For an operator input/output's differentiability, it can be differentiable,
 
 # ai.onnx (default)
 ## Version 1 of the default ONNX operator set
-### <a name="Abs-1"></a>**Abs-1**</a></a>
+### <a name="Abs-1"></a>**Abs-1**</a>
 
   Absolute takes one input data (Tensor<T>) and produces one output data
   (Tensor<T>) where the absolute is, y = abs(x), is applied to
@@ -48,7 +48,7 @@ This version of the operator has been available since version 1 of the default O
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
-### <a name="Add-1"></a>**Add-1**</a></a>
+### <a name="Add-1"></a>**Add-1**</a>
 
   Performs element-wise binary addition (with limited broadcast support).
 
@@ -109,7 +109,7 @@ This version of the operator has been available since version 1 of the default O
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
-### <a name="And-1"></a>**And-1**</a></a>
+### <a name="And-1"></a>**And-1**</a>
 
   Returns the tensor resulted from performing the `and` logical operation
   elementwise on the input tensors `A` and `B`.
@@ -156,7 +156,7 @@ This version of the operator has been available since version 1 of the default O
 <dd>Constrain output to boolean tensor.</dd>
 </dl>
 
-### <a name="ArgMax-1"></a>**ArgMax-1**</a></a>
+### <a name="ArgMax-1"></a>**ArgMax-1**</a>
 
   Computes the indices of the max elements of the input tensor's element along the
   provided axis. The resulting tensor has the same rank as the input if keepdims equals 1.
@@ -10303,7 +10303,7 @@ This version of the operator has been available since version 10 of the default 
 <dd>Constrain index tensor to int64</dd>
 </dl>
 
-### <a name="Upsample-10"></a>**Upsample-10**</a> (deprecated)
+### <a name="Upsample-10"></a>**Upsample-10** (deprecated)</a>
 
   Upsample the input tensor.
   Each dimension value of the output tensor is:
@@ -12979,7 +12979,7 @@ This version of the operator has been available since version 11 of the default 
 <dd>All Tensor types</dd>
 </dl>
 
-### <a name="Scatter-11"></a>**Scatter-11**</a> (deprecated)
+### <a name="Scatter-11"></a>**Scatter-11** (deprecated)</a>
 
   This operator is deprecated. Please use ScatterElements, which provides the same functionality.
 
@@ -21531,7 +21531,7 @@ This version of the operator has been available since version 18 of the default 
 <dd>Constrain input and output types to all numeric tensor types.</dd>
 </dl>
 
-### <a name="GroupNormalization-18"></a>**GroupNormalization-18**</a> (deprecated)
+### <a name="GroupNormalization-18"></a>**GroupNormalization-18** (deprecated)</a>
 
   A GroupNormalization function. Carries out group normalization as described in
   the paper https://arxiv.org/abs/1803.08494
