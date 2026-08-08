@@ -8,6 +8,11 @@ import numpy as np
 import onnx
 from onnx.reference.op_run import OpRun
 
+_INPUT_RANK_3D = 3
+_INPUT_RANK_4D = 4
+_QK_MATMUL_OUTPUT_WITH_BIAS = 2
+_QK_MATMUL_OUTPUT_AFTER_SOFTMAX = 3
+
 
 def _softmax(x: np.ndarray, axis: int = -1) -> np.ndarray:
     x_max = np.max(x, axis=axis, keepdims=True)
@@ -76,6 +81,34 @@ def _apply_causal(base, offset):
     return base + causal
 
 
+def _apply_sliding_window(base, local_window_size, offset):
+    """Adds a sliding-window bias to ``base``.
+
+    Window condition: each query at absolute position ``p = offset + i`` attends
+    key ``j`` iff ``0 <= p - j < local_window_size``.  This is a strict subset of
+    the causal condition (``p - j >= 0``), so future positions are always masked.
+
+    ``offset`` semantics match ``_apply_causal``: scalar for internal/no cache,
+    1-D ``(batch,)`` for external cache.
+    """
+    q_sequence_length, kv_sequence_length = base.shape[-2:]
+    i_idx = np.arange(q_sequence_length).reshape(q_sequence_length, 1)  # (q, 1)
+    j_idx = np.arange(kv_sequence_length).reshape(1, kv_sequence_length)  # (1, kv)
+    per_batch = np.ndim(offset) > 0
+    if per_batch:
+        offsets = np.reshape(offset, (-1, 1, 1))  # (batch, 1, 1)
+        diff = (i_idx + offsets) - j_idx  # (batch, q, kv)
+    else:
+        diff = (i_idx + int(offset)) - j_idx  # (q, kv)
+    allowed = (diff >= 0) & (diff < local_window_size)
+    window = np.where(allowed, base.dtype.type(0), base.dtype.type(-np.inf))
+    if per_batch:
+        return base + window.reshape(
+            window.shape[0], 1, q_sequence_length, kv_sequence_length
+        )
+    return base + window
+
+
 def _compute_attention(
     Q: np.ndarray,
     K: np.ndarray,
@@ -91,7 +124,22 @@ def _compute_attention(
     softmax_precision=None,
     softcap=None,
     qk_matmul_output_mode=None,
+    local_window_size=None,
 ) -> np.ndarray:
+    if (
+        local_window_size is not None
+        and local_window_size != -1
+        and local_window_size <= 0
+    ):
+        raise ValueError(
+            f"local_window_size must be -1 or positive, got {local_window_size}"
+        )
+    if local_window_size is not None and local_window_size > 0 and not is_causal:
+        raise ValueError("local_window_size requires is_causal=1")
+    if (past_key is None) != (past_value is None):
+        raise ValueError("past_key and past_value must be provided together")
+    if nonpad_kv_seqlen is not None and past_key is not None:
+        raise ValueError("nonpad_kv_seqlen cannot be combined with past cache tensors")
     assert len(Q.shape) == len(K.shape) == len(V.shape)
     # Set input tensors (Q, K, V) to the correct shape if input shape is 3D
     # NewShapeQ (batch_size, q_num_heads, q_sequence_length, head_size)
@@ -99,7 +147,7 @@ def _compute_attention(
     # NewShapeV (value) has shape (batch_size, kv_num_heads, kv_sequence_length, v_head_size)
     input_shape_len = len(Q.shape)
     batch_size = Q.shape[0]
-    if len(Q.shape) == 3:
+    if len(Q.shape) == _INPUT_RANK_3D:
         hidden_size_q = Q.shape[2]
         hidden_size_k = K.shape[2]
         hidden_size_v = V.shape[2]
@@ -125,7 +173,11 @@ def _compute_attention(
         V = np.reshape(V, intermediate_shape_v)
         # Then transpose to [batch_size, kv_num_heads, kv_sequence_length, head_size]
         V = np.transpose(V, (0, 2, 1, 3))
-    assert len(Q.shape) == 4 and len(K.shape) == 4 and len(V.shape) == 4
+    assert (
+        len(Q.shape) == _INPUT_RANK_4D
+        and len(K.shape) == _INPUT_RANK_4D
+        and len(V.shape) == _INPUT_RANK_4D
+    )
 
     # Calculate Scaling Factor if not provided
     if scale is None:
@@ -182,6 +234,12 @@ def _compute_attention(
             if attn_mask is None
             else attn_mask.copy()
         )
+        if local_window_size is not None and local_window_size > 0:
+            # Materialize rank-1 masks to rank 2 while preserving standard
+            # right-aligned broadcasting for all higher-rank masks.
+            base = (
+                np.zeros((q_sequence_length, kv_sequence_length), dtype=Q.dtype) + base
+            )
         if past_key is None and nonpad_kv_seqlen is not None:
             # External/static cache: per-batch bottom-right frontier
             #   j <= i + (nonpad_kv_seqlen[b] - q_len).
@@ -196,6 +254,16 @@ def _compute_attention(
             attn_mask = (1 - attn_mask).astype(Q.dtype)
             attn_mask[attn_mask == 1] = -np.inf
         attn_bias = attn_bias + attn_mask
+
+    # Apply sliding window mask (layered on top of causal/attn_mask)
+    if local_window_size is not None and local_window_size > 0:
+        if past_key is None and nonpad_kv_seqlen is not None:
+            win_offset = nonpad_kv_seqlen.reshape(-1) - q_sequence_length
+        elif past_key is not None:
+            win_offset = past_key.shape[2]
+        else:
+            win_offset = 0
+        attn_bias = _apply_sliding_window(attn_bias, local_window_size, win_offset)
 
     if nonpad_kv_seqlen is not None:
         attn_bias = attn_bias.reshape(
@@ -259,7 +327,7 @@ def _compute_attention(
     qk_with_bias = qk_matmul_output + attn_bias
     if qk_matmul_output_mode == 1 and softcap is not None:
         pass  # qk_matmul_output already holds the softcapped-only value
-    elif qk_matmul_output_mode == 2:
+    elif qk_matmul_output_mode == _QK_MATMUL_OUTPUT_WITH_BIAS:
         qk_matmul_output = qk_with_bias.copy()
 
     if softmax_precision is not None:
@@ -285,7 +353,7 @@ def _compute_attention(
     )  # (..., q, 1)
     qk_softmax = np.where(row_all_masked, 0, qk_softmax)
 
-    if qk_matmul_output_mode == 3:
+    if qk_matmul_output_mode == _QK_MATMUL_OUTPUT_AFTER_SOFTMAX:
         # Mode 3 exposes the post-softmax probabilities; a fully-masked row is
         # zeroed by the guard above, consistent with the primary output Y (both
         # are 0). This matches the function body (Identity of the guarded softmax),
@@ -294,7 +362,7 @@ def _compute_attention(
     qk_matmul_output = qk_matmul_output.astype(Q.dtype)
 
     output = np.matmul(qk_softmax, V).astype(Q.dtype)
-    if input_shape_len == 3:
+    if input_shape_len == _INPUT_RANK_3D:
         output = np.transpose(output, (0, 2, 1, 3))
         output = np.reshape(output, (output.shape[0], output.shape[1], -1))
     return output, present_key, present_value, qk_matmul_output
@@ -317,6 +385,7 @@ class Attention(OpRun):
         softmax_precision=None,
         softcap=None,
         qk_matmul_output_mode=None,
+        local_window_size=None,
     ) -> np.ndarray:
         return _compute_attention(
             Q,
@@ -333,4 +402,5 @@ class Attention(OpRun):
             softmax_precision=softmax_precision,
             softcap=softcap,
             qk_matmul_output_mode=qk_matmul_output_mode,
+            local_window_size=local_window_size,
         )

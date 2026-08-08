@@ -242,7 +242,8 @@ bool AttentionAppendFunctionCausalMask(const FunctionBodyBuildContext& ctx, Func
       builder.Add("RangeRow2DPast = Add(RangeRow2D, PastKVSeqLen)")
           .Add("BoolMaskTri = Less(RangeRow2DPast, RangeCol2D)");
     }
-    builder.Add("MaskTri = Where(BoolMaskTri, FloatNegInf, ScalarZero)")
+    builder.Add("MaskTriFloat = Where(BoolMaskTri, FloatNegInf, ScalarZero)")
+        .Add("MaskTri = CastLike(MaskTriFloat, AttnBias)")
         .Add("AttnBiasCausalOrNot = Add(AttnBias, MaskTri)");
   } else {
     builder.Add("AttnBiasCausalOrNot = Identity(AttnBias)");
