@@ -40593,7 +40593,7 @@ This version of the operator has been available since version 1 of the 'ai.onnx.
 <dl>
 <dt><tt>decay_factor</tt> : float (default is 0.0)</dt>
 <dd>The decay factor of learning rate after one update.The effective learning rate is computed by r = R / (1 + T * decay_factor). Default to 0 so that increasing update counts doesn't reduce the learning rate.</dd>
-<dt><tt>epsilon</tt> : float (default is (1.000000e-06))</dt>
+<dt><tt>epsilon</tt> : float (default is (1.000000e-09))</dt>
 <dd>Small scalar to avoid dividing by zero.</dd>
 <dt><tt>norm_coefficient</tt> : float (default is 0.0)</dt>
 <dd>Regularization coefficient in 0.5 * norm_coefficient * ||X||_2^2. Default to 0, which means no regularization.</dd>
@@ -40807,7 +40807,7 @@ This version of the operator has been available since version 1 of the 'ai.onnx.
 <dd>Coefficient of previously accumulated gradient in running average. Default to 0.9.</dd>
 <dt><tt>beta</tt> : float (default is 0.999)</dt>
 <dd>Coefficient of previously accumulated squared-gradient in running average. Default to 0.999.</dd>
-<dt><tt>epsilon</tt> : float (default is (1.000000e-06))</dt>
+<dt><tt>epsilon</tt> : float (default is (1.000000e-09))</dt>
 <dd>Small scalar to avoid dividing by zero.</dd>
 <dt><tt>norm_coefficient</tt> : float (default is 0.0)</dt>
 <dd>Regularization coefficient of 0.5 * norm_coefficient * ||X||_2^2. Default to 0, which means no regularization.</dd>
