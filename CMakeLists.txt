@@ -575,6 +575,7 @@ if(ONNX_BUILD_PYTHON)
       GIT_REPOSITORY ${_nanobind_URL}
       GIT_TAG v${_nanobind_VERSION}
       GIT_SHALLOW TRUE
+      PATCH_COMMAND git checkout . && git apply --whitespace=fix --ignore-space-change --ignore-whitespace ${CMAKE_CURRENT_SOURCE_DIR}/cmake/external/nanobind_aix.patch
     )
     FetchContent_MakeAvailable(nanobind)
   endif()
@@ -587,8 +588,34 @@ if(ONNX_BUILD_PYTHON)
   # Force-load the whole (static) archive so the operator schemas' static
   # initializers are not dropped as apparently-unused. $<LINK_LIBRARY:WHOLE_ARCHIVE,...>
   # is the portable --whole-archive / -force_load / /WHOLEARCHIVE spelling.
-  target_link_libraries(onnx_cpp2py_export PRIVATE
-    $<LINK_LIBRARY:WHOLE_ARCHIVE,onnx>)
+if (CMAKE_SYSTEM_NAME STREQUAL "AIX")
+    # 1. Setup a directory to hold the extracted object files
+    set(ONNX_EXTRACT_DIR "${CMAKE_CURRENT_BINARY_DIR}/onnx_objects")
+    file(MAKE_DIRECTORY ${ONNX_EXTRACT_DIR})
+
+    add_custom_command(
+        OUTPUT "${ONNX_EXTRACT_DIR}/extracted.stamp"
+        COMMAND ${CMAKE_AR} x $<TARGET_FILE:onnx>
+        COMMAND ${CMAKE_COMMAND} -E touch "${ONNX_EXTRACT_DIR}/extracted.stamp"
+        WORKING_DIRECTORY ${ONNX_EXTRACT_DIR}
+        DEPENDS onnx
+    )
+
+    # Add a custom target so CMake knows when to run the extraction
+    add_custom_target(extract_onnx_archive DEPENDS "${ONNX_EXTRACT_DIR}/extracted.stamp")
+    add_dependencies(onnx_cpp2py_export extract_onnx_archive)
+
+    # 3. Tell the linker to include all the extracted .o files
+    # (Since we don't know the exact names at configure time, we pass the directory
+    # to the linker using a wildcard, or grab them at build time)
+    target_link_options(onnx_cpp2py_export PRIVATE
+        "LINKER:${ONNX_EXTRACT_DIR}/*.o"
+        # Export all symbols from the shared library on AIX
+        "-Wl,-bexpall"
+    )
+else()
+    target_link_libraries(onnx_cpp2py_export PRIVATE $<LINK_LIBRARY:WHOLE_ARCHIVE,onnx>)
+endif()
 endif()
 
 add_onnx_compile_options(onnx_proto)
