@@ -11,8 +11,7 @@
 #include "onnx/version_converter/adapters/adapter.h"
 #include "onnx/version_converter/adapters/transformers.h"
 
-namespace ONNX_NAMESPACE {
-namespace version_conversion {
+namespace ONNX_NAMESPACE::version_conversion {
 
 class Split_17_18 : public Adapter {
  public:
@@ -32,5 +31,4 @@ class Split_17_18 : public Adapter {
   }
 };
 
-} // namespace version_conversion
-} // namespace ONNX_NAMESPACE
+} // namespace ONNX_NAMESPACE::version_conversion
