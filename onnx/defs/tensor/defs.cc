@@ -724,6 +724,10 @@ ONNX_OPERATOR_SET_SCHEMA(
               fail_shape_inference("Neither 'split' input nor 'num_outputs' attribute has been given");
             }
           }
+          if (split.size() != ctx.getNumOutputs()) {
+            fail_shape_inference(
+                "Mismatch between number of splits (", split.size(), ") and outputs (", ctx.getNumOutputs(), ")");
+          }
           for (size_t i = 0; i < ctx.getNumOutputs(); i++) {
             *ctx.getOutputType(i)->mutable_tensor_type()->mutable_shape() = shape;
             ctx.getOutputType(i)->mutable_tensor_type()->mutable_shape()->mutable_dim(axis)->set_dim_value(split[i]);

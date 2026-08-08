@@ -5201,6 +5201,18 @@ class TestShapeInference(TestShapeInferenceHelper):
             ],
         )
 
+    def test_split_num_outputs_mismatch_with_declared_outputs(self) -> None:
+        # Regression test for ONNX-Split-OOB: a `num_outputs` attribute that
+        # does not match the number of declared node outputs caused an
+        # out-of-bounds read of the `split` vector during shape inference.
+        graph = self._make_graph(
+            [("x", TensorProto.FLOAT, (2, 4))],
+            [make_node("Split", ["x"], ["y", "z", "a"], axis=1, num_outputs=2)],
+            [],
+        )
+        with pytest.raises(onnx.shape_inference.InferenceError):
+            self._inferred(graph)
+
     def test_GLU_partial(self) -> None:
         graph = self._make_graph(
             [("x", TensorProto.FLOAT, (5, 6, 7))],
