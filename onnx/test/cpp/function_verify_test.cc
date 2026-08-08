@@ -19,8 +19,7 @@
 #include "onnx/defs/schema.h"
 #include "onnx/shape_inference/implementation.h"
 
-namespace ONNX_NAMESPACE {
-namespace Test {
+namespace ONNX_NAMESPACE::Test {
 using TENSOR_TYPES_MAP = std::unordered_map<std::string, std::vector<std::string>>;
 
 static void GetFunctionProtoOpsetImport(
@@ -119,6 +118,8 @@ static void VerifyTypeConstraint(const OpSchema& function_op, const FunctionProt
 
 // The set of attribute-values (for testing a function) is represented using a vector.
 using AttributeValues = std::vector<AttributeProto>;
+
+namespace {
 
 // FunctionOpAttributeMap: Used to implement a map from OpSchema to a set of AttributeValues
 // (implemented as a vector). The testing will be done for each attribute-values specified.
@@ -281,6 +282,8 @@ struct FunctionTypeChecker {
     return all_errors;
   }
 };
+
+} // namespace
 
 static void VerifyFunction(const OpSchema& op, const FunctionProto* function_proto, int& counter) {
   // Verify function proto is valid
@@ -560,5 +563,4 @@ foo (x) => (y) {
   ONNX_NAMESPACE::shape_inference::InferShapes(model, OpSchemaRegistry::Instance(), options);
 }
 
-} // namespace Test
-} // namespace ONNX_NAMESPACE
+} // namespace ONNX_NAMESPACE::Test

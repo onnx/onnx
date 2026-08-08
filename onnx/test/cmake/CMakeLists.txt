@@ -5,5 +5,5 @@ project(onnx_test LANGUAGES CXX)
 find_package(ONNX REQUIRED CONFIG)
 
 add_executable(main main.cc)
-find_package(Protobuf REQUIRED CONFIG)
+find_package(Protobuf REQUIRED)
 target_link_libraries(main ONNX::onnx protobuf::libprotobuf)

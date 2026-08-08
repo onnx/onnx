@@ -186,7 +186,7 @@ The function definition for this operator.
 {% endfor %}
 {% endif %}
 {% endfor %}""",
-        autoescape=False,
+        autoescape=jinja2.select_autoescape(),
     )
 
 
@@ -439,13 +439,13 @@ def get_markdown_doc(
         ):
             if attr.type in _attribute_conversion_functions:
                 sval = _attribute_conversion_functions[attr.type](default_value)
-                return f"(default is `{sval!r}`)"
+                return f"(default is `{sval}`)"
 
         if isinstance(default_value, list):
-            sval = [format_default_value(val) for val in default_value]
+            sval = f"[{', '.join(format_default_value(val) for val in default_value)}]"
         else:
             sval = format_default_value(default_value)
-        return f"(default is `{sval!r}`)"
+        return f"(default is `{sval}`)"
 
     def text_indent(text: str, indent: int) -> str:
         s = " " * indent

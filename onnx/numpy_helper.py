@@ -3,6 +3,7 @@
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
+import math
 import sys
 from typing import TYPE_CHECKING, Any
 
@@ -69,7 +70,7 @@ def to_float8e8m0(
         exponent += increment
 
     elif round_mode == "up":
-        has_fraction = (f_bits & 0x4FFFFF) > 0
+        has_fraction = (f_bits & 0x7FFFFF) > 0
         round_up = has_fraction & normal_mask
 
         if saturate:
@@ -110,9 +111,16 @@ def _unpack_4bit(
     array_high >>= np.uint8(4)
     result[0::2] = array_low
     result[1::2] = array_high
-    if result.size == np.prod(dims) + 1:
+    expected_elements = math.prod(dims)
+    if result.size == expected_elements + 1:
         # handle single-element padding due to odd number of elements
         result = result[:-1]
+    if expected_elements > result.size:
+        raise ValueError(
+            f"Packed 4-bit data ({data.size} bytes, {result.size} elements unpacked) "
+            f"is too small for the declared shape {list(dims)} "
+            f"({expected_elements} elements required)."
+        )
     result.resize(dims, refcheck=False)
     return result
 
@@ -147,9 +155,16 @@ def _unpack_2bit(
     result[1::4] = (data >> 2) & 0x03
     result[2::4] = (data >> 4) & 0x03
     result[3::4] = (data >> 6) & 0x03
-    if result.size > np.prod(dims):
+    expected_elements = math.prod(dims)
+    if result.size > expected_elements:
         # handle padding due to non multiple of 4 elements
-        result = result[: np.prod(dims)]
+        result = result[:expected_elements]
+    if expected_elements > result.size:
+        raise ValueError(
+            f"Packed 2-bit data ({data.size} bytes, {result.size} elements unpacked) "
+            f"is too small for the declared shape {list(dims)} "
+            f"({expected_elements} elements required)."
+        )
     result.resize(dims, refcheck=False)
     return result
 
@@ -336,8 +351,7 @@ def from_array(array: np.ndarray, /, name: str | None = None) -> onnx.TensorProt
                 tensor.string_data.append(e)
             else:
                 raise NotImplementedError(
-                    "Unrecognized object in the object array, expect a string, or array of bytes: ",
-                    str(type(e)),
+                    f"Unrecognized object in the object array, expect a string, or array of bytes: {type(e)}"
                 )
         return tensor
 
@@ -401,7 +415,7 @@ def from_list(
     if name:
         sequence.name = name
 
-    if dtype:
+    if dtype is not None:
         elem_type = dtype
     elif len(lst) > 0:
         first_elem = lst[0]
@@ -458,9 +472,7 @@ def to_dict(map_proto: onnx.MapProto) -> dict[Any, Any]:
     value_list = to_list(map_proto.values)
     if len(key_list) != len(value_list):
         raise IndexError(
-            "Length of keys and values for MapProto (map name: ",
-            map_proto.name,
-            ") are not the same.",
+            f"Length of keys and values for MapProto (map name: {map_proto.name}) are not the same."
         )
     return dict(zip(key_list, value_list, strict=False))
 
@@ -478,6 +490,8 @@ def from_dict(dict_: dict[Any, Any], name: str | None = None) -> onnx.MapProto:
     map_proto = onnx.MapProto()
     if name:
         map_proto.name = name
+    if not dict_:
+        raise ValueError("Cannot convert an empty dictionary to MapProto.")
     keys = list(dict_)
     raw_key_type = np.result_type(keys[0])
     key_type = helper.np_dtype_to_tensor_dtype(raw_key_type)
@@ -514,6 +528,8 @@ def from_dict(dict_: dict[Any, Any], name: str | None = None) -> onnx.MapProto:
         map_proto.string_keys.extend(keys)
     elif key_type in valid_key_int_types:
         map_proto.keys.extend(keys)
+    else:
+        raise TypeError(f"Unsupported map key type: {key_type}")
     map_proto.values.CopyFrom(value_seq)
     return map_proto
 
@@ -643,4 +659,4 @@ def saturate_cast(x: np.ndarray, dtype: np.dtype) -> np.ndarray:
     else:
         info = ml_dtypes.finfo(dtype)  # type: ignore[assignment]
 
-    return np.clip(x, info.min, info.max).astype(dtype)
+    return np.clip(x, info.min, info.max).astype(dtype)  # type: ignore[no-any-return]

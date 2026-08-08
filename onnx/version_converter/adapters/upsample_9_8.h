@@ -15,8 +15,7 @@
 #include "onnx/defs/tensor_util.h"
 #include "onnx/version_converter/adapters/adapter.h"
 
-namespace ONNX_NAMESPACE {
-namespace version_conversion {
+namespace ONNX_NAMESPACE::version_conversion {
 
 struct Upsample_9_8 final : public Adapter {
   explicit Upsample_9_8() : Adapter("Upsample", OpSetID(9), OpSetID(8)) {}
@@ -52,7 +51,7 @@ struct Upsample_9_8 final : public Adapter {
     }
 
     for (Node* op : graph->nodes()) {
-      if (op->kind() == kConstant && op->outputs()[0]->uniqueName() == scale_input_name) {
+      if (op->kind() == kConstant && !op->outputs().empty() && op->outputs()[0]->uniqueName() == scale_input_name) {
         std::vector<float> value = ParseData<float>(&op->t(kvalue));
         std::vector<double> d_values;
         d_values.reserve(value.size());
@@ -75,5 +74,4 @@ struct Upsample_9_8 final : public Adapter {
   }
 };
 
-} // namespace version_conversion
-} // namespace ONNX_NAMESPACE
+} // namespace ONNX_NAMESPACE::version_conversion

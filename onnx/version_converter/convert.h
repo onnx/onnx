@@ -39,9 +39,11 @@
 #include "onnx/version_converter/adapters/no_previous_version.h"
 #include "onnx/version_converter/adapters/pad_10_11.h"
 #include "onnx/version_converter/adapters/q_dq_21_20.h"
+#include "onnx/version_converter/adapters/range_27_26.h"
 #include "onnx/version_converter/adapters/reshape_4_5.h"
 #include "onnx/version_converter/adapters/reshape_5_4.h"
 #include "onnx/version_converter/adapters/resize_10_11.h"
+#include "onnx/version_converter/adapters/resize_18_17.h"
 #include "onnx/version_converter/adapters/scan_8_9.h"
 #include "onnx/version_converter/adapters/scan_9_8.h"
 #include "onnx/version_converter/adapters/scatter_10_11.h"
@@ -62,8 +64,7 @@
 #include "onnx/version_converter/adapters/upsample_9_10.h"
 #include "onnx/version_converter/adapters/upsample_9_8.h"
 
-namespace ONNX_NAMESPACE {
-namespace version_conversion {
+namespace ONNX_NAMESPACE::version_conversion {
 
 class DefaultVersionConverter : public BaseVersionConverter {
  private:
@@ -90,9 +91,11 @@ class DefaultVersionConverter : public BaseVersionConverter {
   void assertInVersionRange(int64_t version) const {
     ONNX_ASSERTM(
         version >= version_range.first && version <= version_range.second,
-        "Warning: invalid version (must be between %d and %d)",
+        "Warning: invalid version (must be between ",
         version_range.first,
-        version_range.second)
+        " and ",
+        version_range.second,
+        ")")
   }
 
   void assertDefaultDomain(const std::string& initial_domain, const std::string& target_domain) const {
@@ -578,6 +581,7 @@ class DefaultVersionConverter : public BaseVersionConverter {
     registerAdapter(std::make_unique<AxesInputToAttribute>("ReduceMin", OpSetID(18), OpSetID(17)));
     registerAdapter(std::make_unique<AxesInputToAttribute>("ReduceProd", OpSetID(18), OpSetID(17)));
     registerAdapter(std::make_unique<AxesInputToAttribute>("ReduceSumSquare", OpSetID(18), OpSetID(17)));
+    registerAdapter(std::make_unique<Resize_18_17>());
     registerAdapter(std::make_unique<Scatter_18_17>("ScatterElements"));
     registerAdapter(std::make_unique<Scatter_18_17>("ScatterND"));
 
@@ -968,12 +972,32 @@ class DefaultVersionConverter : public BaseVersionConverter {
     registerAdapter(
         std::make_unique<TypeRestriction>("QuantizeLinear", OpSetID(25), OpSetID(24), ir13_types_not_in_ir12));
 
+<<<<<<< HEAD
     // 26 -> 27
     registerAdapter(
         std::make_unique<CompatibleAdapter>("MeanVarianceNormalization", OpSetID(26), OpSetID(27)));
 
     // 27 -> 26
     registerAdapter(std::make_unique<MeanVarianceNormalization_27_26>());
+=======
+    /******** 26 -> 27 ********/
+    registerAdapter(std::make_unique<CompatibleAdapter>("Range", OpSetID(26), OpSetID(27)));
+
+    /******** 27 -> 26 ********/
+    // Range v27 added FLOAT16/BFLOAT16 and stash_type; Range v11 (opset 26) supports neither.
+    const std::vector<TensorProto_DataType> range_27_unallowed_types = {
+        TensorProto_DataType_FLOAT16, TensorProto_DataType_BFLOAT16};
+    registerAdapter(std::make_unique<Range_27_26>(range_27_unallowed_types));
+
+    /******** 27 -> 28 ********/
+    registerAdapter(std::make_unique<CompatibleAdapter>("Celu", OpSetID(27), OpSetID(28)));
+
+    /******** 28 -> 27 ********/
+    // Celu v28 widened T to all_float_types_ir4(); Celu v12 (opset 27) supports only FLOAT.
+    const std::vector<TensorProto_DataType> celu_28_unallowed_types = {
+        TensorProto_DataType_FLOAT16, TensorProto_DataType_BFLOAT16, TensorProto_DataType_DOUBLE};
+    registerAdapter(std::make_unique<TypeRestriction>("Celu", OpSetID(28), OpSetID(27), celu_28_unallowed_types));
+>>>>>>> upstream/main
   }
 
   ModelProto convert_version(const ModelProto& mp_in, const OpSetID& initial_version, const OpSetID& target_version)
@@ -981,5 +1005,4 @@ class DefaultVersionConverter : public BaseVersionConverter {
 };
 
 ONNX_API ModelProto ConvertVersion(const ModelProto& mp_in, int target_version);
-} // namespace version_conversion
-} // namespace ONNX_NAMESPACE
+} // namespace ONNX_NAMESPACE::version_conversion

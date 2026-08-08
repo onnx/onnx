@@ -16,7 +16,7 @@
 namespace ONNX_NAMESPACE {
 // onnx/defs/controlflow/old.cc
 // NOLINTNEXTLINE(misc-use-internal-linkage)
-void ScanInferenceFunctionOpset8(InferenceContext& ctx);
+void ScanInferenceFunction_opset8(InferenceContext& ctx);
 // onnx/defs/controlflow/defs.cc
 // NOLINTNEXTLINE(misc-use-internal-linkage)
 void ScanInferenceFunction(InferenceContext& ctx);
@@ -73,7 +73,7 @@ static void Dump(const Type& t) {
   }
 }
 
-TEST(ShapeInferenceTest, mergeShapeInfo_HasShape) {
+TEST(ShapeInferenceTest, MergeShapeInfoHasShape) {
   // source has shape, target doesn't
   {
     TypeProto_Tensor source;
@@ -129,7 +129,7 @@ TEST(ShapeInferenceTest, mergeShapeInfo_HasShape) {
     EXPECT_TRUE(shape.dim_size() == 1 && shape.dim(0).dim_value() == 1);
   }
 }
-TEST(ShapeInferenceTest, mergeShapeInfo_PreferValueOverParam) {
+TEST(ShapeInferenceTest, MergeShapeInfoPreferValueOverParam) {
   std::string param = "A";
 
   // source has value, target has param. prefer value
@@ -169,7 +169,7 @@ TEST(ShapeInferenceTest, mergeShapeInfo_PreferValueOverParam) {
   }
 }
 
-TEST(ShapeInferenceTest, mergeShapeInfo_CombineShapes) {
+TEST(ShapeInferenceTest, MergeShapeInfoCombineShapes) {
   // merge from both sides, preferring real value over -1
   {
     TypeProto_Tensor source;
@@ -248,7 +248,7 @@ TEST(ShapeInferenceTest, mergeShapeInfo_CombineShapes) {
   }
 }
 
-TEST(ShapeInferenceTest, mergeShapeInfo_Mismatches) {
+TEST(ShapeInferenceTest, MergeShapeInfoMismatches) {
 #ifndef ONNX_NO_EXCEPTIONS
   // mismatched num dims
   {
@@ -488,7 +488,7 @@ static void doInferencingTest(bool use_scan_opset8) {
 
   shape_inference::InferenceContextImpl ctx(scan, valueTypesByName, {}, {}, options, {}, &graphInfCtx);
   if (use_scan_opset8)
-    ScanInferenceFunctionOpset8(ctx);
+    ScanInferenceFunction_opset8(ctx);
   else
     ScanInferenceFunction(ctx);
 
@@ -498,12 +498,12 @@ static void doInferencingTest(bool use_scan_opset8) {
 }
 
 // Check subgraph inferencing via GraphInferencer using a Scan (from opset 8)
-TEST(GraphInferencerImplTest, Scan8_BasicTest) {
+TEST(GraphInferencerImplTest, Scan8BasicTest) {
   doInferencingTest(true);
 }
 
 // Check subgraph inferencing via GraphInferencer using a Scan (from opset 9)
-TEST(GraphInferencerImplTest, Scan9_BasicTest) {
+TEST(GraphInferencerImplTest, Scan9BasicTest) {
   doInferencingTest(false);
 }
 
@@ -611,7 +611,7 @@ agraph (float[1, 196608] m) => (float[?, ?, ?] z)
 
 TEST(ShapeInferenceTest, CheckShapesAndTypesTest) {
 #ifndef ONNX_NO_EXCEPTIONS
-  // Tensor element types mis-match should cause an exception.
+  // Tensor element types mismatch should cause an exception.
   TypeProto tensor_infer;
   auto* tensor_infer_type = tensor_infer.mutable_tensor_type();
   tensor_infer_type->set_elem_type(TensorProto_DataType_FLOAT);

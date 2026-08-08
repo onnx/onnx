@@ -7,10 +7,9 @@ import contextlib
 import os
 import struct
 import tempfile
-import unittest
 
 import numpy as np
-import parameterized
+import pytest
 
 import onnx.version_converter
 from onnx import (
@@ -20,10 +19,11 @@ from onnx import (
     TensorProto,
     checker,
     helper,
+    shape_inference,
 )
 
 
-class TestVersionConverter(unittest.TestCase):
+class TestVersionConverter:
     def _converted(
         self,
         graph: GraphProto,
@@ -60,7 +60,8 @@ class TestVersionConverter(unittest.TestCase):
             )
             self._converted(graph, helper.make_operatorsetid("", 8), 2)
 
-        self.assertRaises(RuntimeError, test)
+        with pytest.raises(RuntimeError):
+            test()
 
     # Test 2: Backwards Compatible Conversion (No Adaptations): Add: 3 -> 2
     def test_backwards_compatible(self) -> None:
@@ -91,7 +92,80 @@ class TestVersionConverter(unittest.TestCase):
             )
             self._converted(graph, helper.make_operatorsetid("", 8), 6)
 
-        self.assertRaises(RuntimeError, test)
+        with pytest.raises(RuntimeError):
+            test()
+
+    # A graph output that nothing produces must raise (ConvertError), not crash.
+    # Regression test for a SEGV in graphProtoToGraph when a top-level
+    # graph output name was absent from the value map.
+    def test_undefined_output(self) -> None:
+        def test() -> None:
+            nodes = [helper.make_node("Identity", ["X"], ["Y"])]
+            # "Z" is listed as a graph output but nothing produces it.
+            graph = helper.make_graph(
+                nodes,
+                "test",
+                [helper.make_tensor_value_info("X", TensorProto.FLOAT, (1,))],
+                [helper.make_tensor_value_info("Z", TensorProto.FLOAT, (1,))],
+            )
+            self._converted(graph, helper.make_operatorsetid("", 13), 14)
+
+        with pytest.raises(onnx.version_converter.ConvertError):
+            test()
+
+    # A node input that nothing produces must raise, not crash.
+    def test_undefined_input(self) -> None:
+        def test() -> None:
+            # "W" is consumed but is neither a graph input nor an initializer.
+            nodes = [helper.make_node("Add", ["X", "W"], ["Y"])]
+            graph = helper.make_graph(
+                nodes,
+                "test",
+                [helper.make_tensor_value_info("X", TensorProto.FLOAT, (1,))],
+                [helper.make_tensor_value_info("Y", TensorProto.FLOAT, (1,))],
+            )
+            self._converted(graph, helper.make_operatorsetid("", 13), 14)
+
+        with pytest.raises(onnx.version_converter.ConvertError):
+            test()
+
+    # A nested (subgraph) output that resolves to a value captured from the
+    # enclosing scope is handled via a dummy node, not a crash. Exercises the
+    # captured-value path of graphProtoToGraph (nested=True).
+    def test_nested_captured_output(self) -> None:
+        # Each If branch has no nodes and an output ("X") defined only in the
+        # enclosing graph, so the branch import hits the captured-value path.
+        then_branch = helper.make_graph(
+            [],
+            "then",
+            [],
+            [helper.make_tensor_value_info("X", TensorProto.FLOAT, (1,))],
+        )
+        else_branch = helper.make_graph(
+            [],
+            "else",
+            [],
+            [helper.make_tensor_value_info("X", TensorProto.FLOAT, (1,))],
+        )
+        if_node = helper.make_node(
+            "If", ["cond"], ["Y"], then_branch=then_branch, else_branch=else_branch
+        )
+        graph = helper.make_graph(
+            [if_node],
+            "test",
+            [
+                helper.make_tensor_value_info("cond", TensorProto.BOOL, (1,)),
+                helper.make_tensor_value_info("X", TensorProto.FLOAT, (1,)),
+            ],
+            [helper.make_tensor_value_info("Y", TensorProto.FLOAT, (1,))],
+        )
+        orig_model = helper.make_model(
+            graph,
+            producer_name="onnx-test",
+            opset_imports=[helper.make_operatorsetid("", 13)],
+        )
+        converted = onnx.version_converter.convert_version(orig_model, 14)
+        assert [o.name for o in converted.graph.output] == ["Y"]
 
     # Test Add Adapter: 8 -> 5
     def test_add_8_5(self) -> None:
@@ -274,6 +348,82 @@ class TestVersionConverter(unittest.TestCase):
         # Assert equality of graph and converted_model
         assert converted_model.graph.node[0].op_type == "Gemm"
         assert converted_model.opset_import[0].version == 1
+
+    def test_gemm_7_6_rejects_1d_input(self) -> None:
+        # Regression test: heap-buffer-overflow when B has rank < 2 (advisory)
+        def test() -> None:
+            nodes = [helper.make_node("Gemm", ["A", "B", "C"], ["Y"])]
+            graph = helper.make_graph(
+                nodes,
+                "test_gemm_7_6_rejects_1d_input",
+                [
+                    helper.make_tensor_value_info("A", TensorProto.FLOAT, (4, 3)),
+                    helper.make_tensor_value_info("B", TensorProto.FLOAT, (28,)),
+                    helper.make_tensor_value_info("C", TensorProto.FLOAT, (4,)),
+                ],
+                [helper.make_tensor_value_info("Y", TensorProto.FLOAT, None)],
+            )
+            self._converted(graph, helper.make_operatorsetid("", 7), 6)
+
+        with pytest.raises(RuntimeError):
+            test()
+
+    def test_gemm_6_7_rejects_1d_input(self) -> None:
+        # Regression test: heap-buffer-overflow when B has rank < 2 (same pattern, upward)
+        def test() -> None:
+            nodes = [helper.make_node("Gemm", ["A", "B", "C"], ["Y"])]
+            graph = helper.make_graph(
+                nodes,
+                "test_gemm_6_7_rejects_1d_input",
+                [
+                    helper.make_tensor_value_info("A", TensorProto.FLOAT, (4, 3)),
+                    helper.make_tensor_value_info("B", TensorProto.FLOAT, (28,)),
+                    helper.make_tensor_value_info("C", TensorProto.FLOAT, (4,)),
+                ],
+                [helper.make_tensor_value_info("Y", TensorProto.FLOAT, None)],
+            )
+            self._converted(graph, helper.make_operatorsetid("", 6), 7)
+
+        with pytest.raises(RuntimeError):
+            test()
+
+    def test_gemm_7_6_rejects_1d_A(self) -> None:
+        # Exercises the A-rank guard (B is valid rank-2, A is rank-1).
+        def test() -> None:
+            nodes = [helper.make_node("Gemm", ["A", "B", "C"], ["Y"])]
+            graph = helper.make_graph(
+                nodes,
+                "test_gemm_7_6_rejects_1d_A",
+                [
+                    helper.make_tensor_value_info("A", TensorProto.FLOAT, (12,)),
+                    helper.make_tensor_value_info("B", TensorProto.FLOAT, (3, 4)),
+                    helper.make_tensor_value_info("C", TensorProto.FLOAT, (4,)),
+                ],
+                [helper.make_tensor_value_info("Y", TensorProto.FLOAT, None)],
+            )
+            self._converted(graph, helper.make_operatorsetid("", 7), 6)
+
+        with pytest.raises(RuntimeError):
+            test()
+
+    def test_gemm_6_7_rejects_1d_A(self) -> None:
+        # Exercises the A-rank guard (B is valid rank-2, A is rank-1).
+        def test() -> None:
+            nodes = [helper.make_node("Gemm", ["A", "B", "C"], ["Y"])]
+            graph = helper.make_graph(
+                nodes,
+                "test_gemm_6_7_rejects_1d_A",
+                [
+                    helper.make_tensor_value_info("A", TensorProto.FLOAT, (12,)),
+                    helper.make_tensor_value_info("B", TensorProto.FLOAT, (3, 4)),
+                    helper.make_tensor_value_info("C", TensorProto.FLOAT, (4,)),
+                ],
+                [helper.make_tensor_value_info("Y", TensorProto.FLOAT, None)],
+            )
+            self._converted(graph, helper.make_operatorsetid("", 6), 7)
+
+        with pytest.raises(RuntimeError):
+            test()
 
     # Test Relu Adapter: 5 -> 7
     def test_relu_5_7(self) -> None:
@@ -473,10 +623,10 @@ class TestVersionConverter(unittest.TestCase):
             ],
             [helper.make_tensor_value_info("sum", TensorProto.FLOAT, (5,))],
         )
-        converted_model = self._converted(graph, helper.make_operatorsetid("", 5), 7)
+        converted_model = self._converted(graph, helper.make_operatorsetid("", 5), 8)
         # Assert equality of graph and converted_model
         assert converted_model.graph.node[0].op_type == "Sum"
-        assert converted_model.opset_import[0].version == 7
+        assert converted_model.opset_import[0].version == 8
 
     # Test Sum Adapter: 8 -> 5
     def test_sum_8_5(self) -> None:
@@ -1326,7 +1476,7 @@ class TestVersionConverter(unittest.TestCase):
 
     # Test Upsample Adapter: 9 -> 8
     def test_upsample_with_raw_initializer_9_8(self) -> None:
-        self.helper_upsample_with_constant(raw_scale=True)
+        self.helper_upsample_with_initializer(raw_scale=True)
 
     # Test Upsample Adapter: 9 -> 8
     def test_upsample_with_raw_constant_node_9_8(self) -> None:
@@ -2115,11 +2265,81 @@ class TestVersionConverter(unittest.TestCase):
         assert converted_model.graph.node[0].attribute[0].i == 2
         assert converted_model.opset_import[0].version == 12
 
-    @parameterized.parameterized.expand(
+    @pytest.mark.parametrize(
+        "op_type, attrs, from_opset, to_opset, output_type, output_shape",
         [
-            ("per_tensor", (16, 3), (1,), None, None, None, TensorProto.INT8, True),
             (
-                "per_axis_none_block_shape",
+                "Cast",
+                {"to": TensorProto.FLOAT},
+                9,
+                8,
+                TensorProto.FLOAT,
+                (1,),
+            ),
+            (
+                "Softmax",
+                {"axis": 1},
+                12,
+                13,
+                TensorProto.FLOAT,
+                (1,),
+            ),
+            (
+                "Upsample",
+                {"mode": "nearest"},
+                9,
+                10,
+                TensorProto.FLOAT,
+                (1, 1, 2, 2),
+            ),
+        ],
+    )
+    def test_rejects_missing_required_inputs(
+        self,
+        op_type: str,
+        attrs: dict[str, int | str],
+        from_opset: int,
+        to_opset: int,
+        output_type: int,
+        output_shape: tuple[int, ...],
+    ) -> None:
+        def test() -> None:
+            nodes = [helper.make_node(op_type, [], ["Y"], **attrs)]
+            graph = helper.make_graph(
+                nodes,
+                f"test_{op_type.lower()}_{from_opset}_{to_opset}_rejects_missing_input",
+                [],
+                [helper.make_tensor_value_info("Y", output_type, output_shape)],
+            )
+            self._converted(graph, helper.make_operatorsetid("", from_opset), to_opset)
+
+        with pytest.raises((RuntimeError, shape_inference.InferenceError)):
+            test()
+
+    def test_softmax_13_12_rejects_malformed_flatten_input(self) -> None:
+        def test() -> None:
+            nodes = [
+                helper.make_node("Flatten", [], ["F"], axis=1),
+                helper.make_node("Softmax", ["F"], ["Y"], axis=0),
+            ]
+            graph = helper.make_graph(
+                nodes,
+                "test_softmax_13_12_rejects_malformed_flatten_input",
+                [],
+                [helper.make_tensor_value_info("Y", TensorProto.FLOAT, (1,))],
+            )
+            self._converted(graph, helper.make_operatorsetid("", 13), 12)
+
+        with pytest.raises((RuntimeError, shape_inference.InferenceError)):
+            test()
+
+    @pytest.mark.parametrize(
+        "x_shape, scale_shape, axis, block_size, output_dtype, zero_point_dtype, compatible",
+        [
+            pytest.param(
+                (16, 3), (1,), None, None, None, TensorProto.INT8, True, id="per_tensor"
+            ),
+            pytest.param(
                 (16, 3),
                 (16,),
                 1,
@@ -2127,9 +2347,9 @@ class TestVersionConverter(unittest.TestCase):
                 None,
                 TensorProto.INT8,
                 True,
+                id="per_axis_none_block_shape",
             ),
-            (
-                "per_axis_zero_block_shape",
+            pytest.param(
                 (16, 3),
                 (16,),
                 1,
@@ -2137,9 +2357,9 @@ class TestVersionConverter(unittest.TestCase):
                 None,
                 TensorProto.INT8,
                 True,
+                id="per_axis_zero_block_shape",
             ),
-            (
-                "per_tensor_positive_block_shape",
+            pytest.param(
                 (16, 3),
                 (1,),
                 1,
@@ -2147,9 +2367,9 @@ class TestVersionConverter(unittest.TestCase):
                 None,
                 TensorProto.INT8,
                 False,
+                id="per_tensor_positive_block_shape",
             ),
-            (
-                "per_axis_positive_block_shape",
+            pytest.param(
                 (16, 3),
                 (16,),
                 1,
@@ -2157,11 +2377,22 @@ class TestVersionConverter(unittest.TestCase):
                 None,
                 TensorProto.INT8,
                 False,
+                id="per_axis_positive_block_shape",
             ),
-            ("blocked_2d", (16, 3), (4, 3), 0, 4, None, TensorProto.INT8, False),
-            ("blocked_3d", (4, 3, 32), (4, 3, 8), 2, 4, None, TensorProto.INT8, False),
-            (
-                "per_axis_output_dtype",
+            pytest.param(
+                (16, 3), (4, 3), 0, 4, None, TensorProto.INT8, False, id="blocked_2d"
+            ),
+            pytest.param(
+                (4, 3, 32),
+                (4, 3, 8),
+                2,
+                4,
+                None,
+                TensorProto.INT8,
+                False,
+                id="blocked_3d",
+            ),
+            pytest.param(
                 (16, 3),
                 (16,),
                 1,
@@ -2169,9 +2400,9 @@ class TestVersionConverter(unittest.TestCase):
                 TensorProto.FLOAT8E4M3FN,
                 None,
                 False,
+                id="per_axis_output_dtype",
             ),
-            (
-                "per_axis_unsupported_type",
+            pytest.param(
                 (16, 3),
                 (16,),
                 1,
@@ -2179,12 +2410,12 @@ class TestVersionConverter(unittest.TestCase):
                 None,
                 TensorProto.UINT16,
                 False,
+                id="per_axis_unsupported_type",
             ),
-        ]
+        ],
     )
     def test_quantize_21_20(
         self,
-        _: str,
         x_shape: tuple[int, ...],
         scale_shape: tuple[int, ...],
         axis: int,
@@ -2225,25 +2456,29 @@ class TestVersionConverter(unittest.TestCase):
             _ = self._converted(graph, helper.make_operatorsetid("", 21), 20)
 
         context_manager = (
-            contextlib.nullcontext() if compatible else self.assertRaises(RuntimeError)
+            contextlib.nullcontext() if compatible else pytest.raises(RuntimeError)
         )
         with context_manager:
             test(x_shape, scale_shape, axis, block_size, output_dtype, zero_point_dtype)
 
-    @parameterized.parameterized.expand(
+    @pytest.mark.parametrize(
+        "y_shape, scale_shape, axis, block_size, compatible",
         [
-            ("per_tensor", (16, 3), (1,), None, None, True),
-            ("per_axis_none_block_shape", (16, 3), (16,), 1, None, True),
-            ("per_axis_zero_block_shape", (16, 3), (16,), 1, 0, True),
-            ("per_tensor_positive_block_shape", (16, 3), (1,), 1, 2, False),
-            ("per_axis_positive_block_shape", (16, 3), (16,), 1, 2, False),
-            ("blocked_2d", (16, 3), (4, 3), 0, 4, False),
-            ("blocked_3d", (4, 3, 32), (4, 3, 8), 2, 4, False),
-        ]
+            pytest.param((16, 3), (1,), None, None, True, id="per_tensor"),
+            pytest.param((16, 3), (16,), 1, None, True, id="per_axis_none_block_shape"),
+            pytest.param((16, 3), (16,), 1, 0, True, id="per_axis_zero_block_shape"),
+            pytest.param(
+                (16, 3), (1,), 1, 2, False, id="per_tensor_positive_block_shape"
+            ),
+            pytest.param(
+                (16, 3), (16,), 1, 2, False, id="per_axis_positive_block_shape"
+            ),
+            pytest.param((16, 3), (4, 3), 0, 4, False, id="blocked_2d"),
+            pytest.param((4, 3, 32), (4, 3, 8), 2, 4, False, id="blocked_3d"),
+        ],
     )
     def test_dequantize_21_20(
         self,
-        _: str,
         y_shape: tuple[int, ...],
         scale_shape: tuple[int, ...],
         axis: int,
@@ -2273,7 +2508,7 @@ class TestVersionConverter(unittest.TestCase):
             _ = self._converted(graph, helper.make_operatorsetid("", 21), 20)
 
         context_manager = (
-            contextlib.nullcontext() if compatible else self.assertRaises(RuntimeError)
+            contextlib.nullcontext() if compatible else pytest.raises(RuntimeError)
         )
         with context_manager:
             test(y_shape, scale_shape, axis, block_size)
@@ -2336,20 +2571,20 @@ class TestVersionConverter(unittest.TestCase):
             converted_model = onnx.version_converter.convert_version(
                 onnx.load(model_filename, load_external_data=False), 21
             )
-            self.assertEqual(len(converted_model.graph.initializer), 2)
+            assert len(converted_model.graph.initializer) == 2
 
             # Verify the large tensor has external data
             tensors = {init.name: init for init in converted_model.graph.initializer}
-            self.assertIn("initializer_tensor", tensors)
+            assert "initializer_tensor" in tensors
             large_tensor = tensors["initializer_tensor"]
-            self.assertEqual(large_tensor.data_location, TensorProto.EXTERNAL)
-            self.assertEqual(len(large_tensor.external_data), 3)
+            assert large_tensor.data_location == TensorProto.EXTERNAL
+            assert len(large_tensor.external_data) == 3
 
             # Convert external_data to dictionary for order-independent checking
             external_data_dict = {ed.key: ed.value for ed in large_tensor.external_data}
-            self.assertEqual(external_data_dict["location"], data_filename)
-            self.assertEqual(external_data_dict["offset"], "0")
-            self.assertEqual(external_data_dict["length"], "24")
+            assert external_data_dict["location"] == data_filename
+            assert external_data_dict["offset"] == "0"
+            assert external_data_dict["length"] == "24"
 
     # Where 16 -> 15: TypeRestriction rejects bfloat16
     def test_where_16_15_success(self) -> None:
@@ -2382,7 +2617,8 @@ class TestVersionConverter(unittest.TestCase):
             )
             self._converted(graph, helper.make_operatorsetid("", 16), 15)
 
-        self.assertRaises(RuntimeError, test)
+        with pytest.raises(RuntimeError):
+            test()
 
     def _make_scatter_graph(
         self,
@@ -2414,28 +2650,30 @@ class TestVersionConverter(unittest.TestCase):
         )
 
     # Scatter 16 -> 15: TypeRestriction (bfloat16) + RemoveAttribute (reduction)
-    @parameterized.parameterized.expand([("ScatterElements",), ("ScatterND",)])
+    @pytest.mark.parametrize("op_name", ["ScatterElements", "ScatterND"])
     def test_scatter_16_15_success(self, op_name: str) -> None:
         graph = self._make_scatter_graph(op_name, TensorProto.FLOAT, "none")
         converted = self._converted(graph, helper.make_operatorsetid("", 16), 15)
         assert converted.opset_import[0].version == 15
 
-    @parameterized.parameterized.expand([("ScatterElements",), ("ScatterND",)])
+    @pytest.mark.parametrize("op_name", ["ScatterElements", "ScatterND"])
     def test_scatter_16_15_bfloat16_fails(self, op_name: str) -> None:
         def test() -> None:
             graph = self._make_scatter_graph(op_name, TensorProto.BFLOAT16)
             self._converted(graph, helper.make_operatorsetid("", 16), 15)
 
-        self.assertRaises(RuntimeError, test)
+        with pytest.raises(RuntimeError):
+            test()
 
     # Opset 16 added reduction 'add' and 'mul'; 16 -> 15 only allows 'none'
-    @parameterized.parameterized.expand(
+    @pytest.mark.parametrize(
+        "op_name, reduction",
         [
             ("ScatterElements", "add"),
             ("ScatterElements", "mul"),
             ("ScatterND", "add"),
             ("ScatterND", "mul"),
-        ]
+        ],
     )
     def test_scatter_16_15_reduction_add_mul_fails(
         self, op_name: str, reduction: str
@@ -2444,16 +2682,18 @@ class TestVersionConverter(unittest.TestCase):
             graph = self._make_scatter_graph(op_name, TensorProto.FLOAT, reduction)
             self._converted(graph, helper.make_operatorsetid("", 16), 15)
 
-        self.assertRaises(RuntimeError, test)
+        with pytest.raises(RuntimeError):
+            test()
 
     # Scatter 18 -> 17: reject reduction "max" / "min"
-    @parameterized.parameterized.expand(
+    @pytest.mark.parametrize(
+        "op_name, reduction",
         [
             ("ScatterElements", "max"),
             ("ScatterElements", "min"),
             ("ScatterND", "max"),
             ("ScatterND", "min"),
-        ]
+        ],
     )
     def test_scatter_18_17_reduction_max_min_fails(
         self, op_name: str, reduction: str
@@ -2462,9 +2702,11 @@ class TestVersionConverter(unittest.TestCase):
             graph = self._make_scatter_graph(op_name, TensorProto.FLOAT, reduction)
             self._converted(graph, helper.make_operatorsetid("", 18), 17)
 
-        self.assertRaises(RuntimeError, test)
+        with pytest.raises(RuntimeError):
+            test()
 
-    @parameterized.parameterized.expand(
+    @pytest.mark.parametrize(
+        "op_name, reduction",
         [
             ("ScatterElements", None),
             ("ScatterElements", "none"),
@@ -2474,7 +2716,7 @@ class TestVersionConverter(unittest.TestCase):
             ("ScatterND", "none"),
             ("ScatterND", "add"),
             ("ScatterND", "mul"),
-        ]
+        ],
     )
     def test_scatter_18_17_allowed_reductions_success(
         self, op_name: str, reduction: str | None
@@ -2483,6 +2725,492 @@ class TestVersionConverter(unittest.TestCase):
         converted = self._converted(graph, helper.make_operatorsetid("", 18), 17)
         checker.check_model(converted)
 
+    # raw_data INT64 initializers + dims/raw byte-length mismatch guard.
 
-if __name__ == "__main__":
-    unittest.main()
+    def test_split_13_12_raw_data_initializer(self) -> None:
+        split_init = helper.make_tensor(
+            "split", TensorProto.INT64, [2], np.array([1, 3], dtype=np.int64), raw=True
+        )
+        graph = helper.make_graph(
+            [helper.make_node("Split", ["X", "split"], ["Y0", "Y1"], axis=0)],
+            "g",
+            [helper.make_tensor_value_info("X", TensorProto.FLOAT, (4, 2))],
+            [
+                helper.make_tensor_value_info("Y0", TensorProto.FLOAT, (1, 2)),
+                helper.make_tensor_value_info("Y1", TensorProto.FLOAT, (3, 2)),
+            ],
+            initializer=[split_init],
+        )
+        converted = self._converted(graph, helper.make_operatorsetid("", 13), 12)
+        attr = next(a for a in converted.graph.node[0].attribute if a.name == "split")
+        assert list(attr.ints) == [1, 3]
+
+    def test_reshape_5_4_raw_data_initializer(self) -> None:
+        shape_init = helper.make_tensor(
+            "shape", TensorProto.INT64, [2], np.array([2, 5], dtype=np.int64), raw=True
+        )
+        graph = helper.make_graph(
+            [helper.make_node("Reshape", ["X", "shape"], ["Y"])],
+            "g",
+            [helper.make_tensor_value_info("X", TensorProto.FLOAT, (10,))],
+            [helper.make_tensor_value_info("Y", TensorProto.FLOAT, (2, 5))],
+            initializer=[shape_init],
+        )
+        converted = self._converted(graph, helper.make_operatorsetid("", 5), 4)
+        reshape = next(n for n in converted.graph.node if n.op_type == "Reshape")
+        attr = next(a for a in reshape.attribute if a.name == "shape")
+        assert list(attr.ints) == [2, 5]
+
+    def test_axes_input_to_attr_13_12_raw_data(self) -> None:
+        axes_init = helper.make_tensor(
+            "axes", TensorProto.INT64, [1], np.array([0], dtype=np.int64), raw=True
+        )
+        graph = helper.make_graph(
+            [helper.make_node("ReduceSum", ["X", "axes"], ["Y"])],
+            "g",
+            [helper.make_tensor_value_info("X", TensorProto.FLOAT, (5, 5))],
+            [helper.make_tensor_value_info("Y", TensorProto.FLOAT, (1, 5))],
+            initializer=[axes_init],
+        )
+        converted = self._converted(graph, helper.make_operatorsetid("", 13), 12)
+        attr = next(a for a in converted.graph.node[0].attribute if a.name == "axes")
+        assert list(attr.ints) == [0]
+
+    def test_dft_20_19_raw_data_axis(self) -> None:
+        axis_init = helper.make_tensor(
+            "axis", TensorProto.INT64, [], np.array([1], dtype=np.int64), raw=True
+        )
+        graph = helper.make_graph(
+            [helper.make_node("DFT", ["X", "", "axis"], ["Y"])],
+            "g",
+            [helper.make_tensor_value_info("X", TensorProto.FLOAT, (1, 8, 2))],
+            [helper.make_tensor_value_info("Y", TensorProto.FLOAT, (1, 8, 2))],
+            initializer=[axis_init],
+        )
+        converted = self._converted(graph, helper.make_operatorsetid("", 20), 19)
+        attr = next(a for a in converted.graph.node[0].attribute if a.name == "axis")
+        assert attr.i == 1
+
+    def test_split_13_12_raw_data_dims_mismatch_rejected(self) -> None:
+        # dims=[2] vs 8-byte raw_data fed via a Constant node; old code OOB-read.
+        split_value = TensorProto(
+            data_type=TensorProto.INT64,
+            dims=[2],
+            raw_data=struct.pack("<q", 1),
+        )
+        graph = helper.make_graph(
+            [
+                helper.make_node("Constant", [], ["split"], value=split_value),
+                helper.make_node("Split", ["X", "split"], ["Y0", "Y1"], axis=0),
+            ],
+            "g",
+            [helper.make_tensor_value_info("X", TensorProto.FLOAT, (4, 2))],
+            [
+                helper.make_tensor_value_info("Y0", TensorProto.FLOAT, (1, 2)),
+                helper.make_tensor_value_info("Y1", TensorProto.FLOAT, (3, 2)),
+            ],
+        )
+        # Bypass checker to exercise the converter guard directly.
+        model = helper.make_model(
+            graph, opset_imports=[helper.make_operatorsetid("", 13)]
+        )
+        with pytest.raises(RuntimeError):
+            onnx.version_converter.convert_version(model, 12)
+
+    def test_split_13_12_raw_data_constant_node(self) -> None:
+        split_value = helper.make_tensor(
+            "", TensorProto.INT64, [2], np.array([1, 3], dtype=np.int64), raw=True
+        )
+        graph = helper.make_graph(
+            [
+                helper.make_node("Constant", [], ["split"], value=split_value),
+                helper.make_node("Split", ["X", "split"], ["Y0", "Y1"], axis=0),
+            ],
+            "g",
+            [helper.make_tensor_value_info("X", TensorProto.FLOAT, (4, 2))],
+            [
+                helper.make_tensor_value_info("Y0", TensorProto.FLOAT, (1, 2)),
+                helper.make_tensor_value_info("Y1", TensorProto.FLOAT, (3, 2)),
+            ],
+        )
+        converted = self._converted(graph, helper.make_operatorsetid("", 13), 12)
+        split = next(n for n in converted.graph.node if n.op_type == "Split")
+        attr = next(a for a in split.attribute if a.name == "split")
+        assert list(attr.ints) == [1, 3]
+
+    # Range 26 -> 27: CompatibleAdapter (forward upgrade, no attribute changes)
+    def test_range_26_27_float_success(self) -> None:
+        nodes = [helper.make_node("Range", ["start", "limit", "delta"], ["output"])]
+        graph = helper.make_graph(
+            nodes,
+            "range_26_27",
+            [
+                helper.make_tensor_value_info("start", TensorProto.FLOAT, []),
+                helper.make_tensor_value_info("limit", TensorProto.FLOAT, []),
+                helper.make_tensor_value_info("delta", TensorProto.FLOAT, []),
+            ],
+            [helper.make_tensor_value_info("output", TensorProto.FLOAT, None)],
+        )
+        converted = self._converted(graph, helper.make_operatorsetid("", 26), 27)
+        assert converted.opset_import[0].version == 27
+
+    # Range 27 -> 26: stash_type attribute must be removed on downgrade
+    def test_range_27_26_stash_type_removed(self) -> None:
+        nodes = [
+            helper.make_node(
+                "Range", ["start", "limit", "delta"], ["output"], stash_type=1
+            )
+        ]
+        graph = helper.make_graph(
+            nodes,
+            "range_27_26",
+            [
+                helper.make_tensor_value_info("start", TensorProto.FLOAT, []),
+                helper.make_tensor_value_info("limit", TensorProto.FLOAT, []),
+                helper.make_tensor_value_info("delta", TensorProto.FLOAT, []),
+            ],
+            [helper.make_tensor_value_info("output", TensorProto.FLOAT, None)],
+        )
+        converted = self._converted(graph, helper.make_operatorsetid("", 27), 26)
+        assert converted.opset_import[0].version == 26
+        range_node = next(n for n in converted.graph.node if n.op_type == "Range")
+        assert not any(a.name == "stash_type" for a in range_node.attribute)
+
+    # Range 27 -> 26: float16 and bfloat16 inputs must be rejected
+    @pytest.mark.parametrize(
+        "dtype",
+        [TensorProto.FLOAT16, TensorProto.BFLOAT16],
+    )
+    def test_range_27_26_low_precision_fails(self, dtype: int) -> None:
+        def test() -> None:
+            nodes = [helper.make_node("Range", ["start", "limit", "delta"], ["output"])]
+            graph = helper.make_graph(
+                nodes,
+                "range_27_26_fp16",
+                [
+                    helper.make_tensor_value_info("start", dtype, []),
+                    helper.make_tensor_value_info("limit", dtype, []),
+                    helper.make_tensor_value_info("delta", dtype, []),
+                ],
+                [helper.make_tensor_value_info("output", dtype, None)],
+            )
+            self._converted(graph, helper.make_operatorsetid("", 27), 26)
+
+        with pytest.raises(RuntimeError):
+            test()
+
+    def test_scan_8_9_rejects_no_inputs(self) -> None:
+        # Scan in opset 8 must have at least 1 input; zero inputs is UB (inputs[0] OOB).
+        def test() -> None:
+            nodes = [
+                helper.make_node(
+                    "Scan",
+                    inputs=[],
+                    outputs=["y"],
+                    body=helper.make_graph([], "body", [], []),
+                )
+            ]
+            graph = helper.make_graph(
+                nodes,
+                "test_scan_no_inputs",
+                [],
+                [helper.make_tensor_value_info("y", TensorProto.FLOAT, None)],
+            )
+            model = helper.make_model(
+                graph, opset_imports=[helper.make_operatorsetid("", 8)]
+            )
+            onnx.version_converter.convert_version(model, 9)
+
+        with pytest.raises(RuntimeError):
+            test()
+
+    def test_scan_9_8_with_valid_node(self) -> None:
+        data_type = TensorProto.FLOAT
+        node1 = helper.make_node("Add", inputs=["sum_in", "next"], outputs=["sum_out"])
+        node2 = helper.make_node("Identity", inputs=["sum_out"], outputs=["scan_out"])
+        body = helper.make_graph(
+            [node1, node2],
+            "scan_body",
+            [
+                helper.make_tensor_value_info("sum_in", data_type, [2]),
+                helper.make_tensor_value_info("next", data_type, [2]),
+            ],
+            [
+                helper.make_tensor_value_info("sum_out", data_type, [2]),
+                helper.make_tensor_value_info("scan_out", data_type, [2]),
+            ],
+        )
+        nodes = [
+            helper.make_node(
+                "Scan",
+                inputs=["initial", "x"],
+                outputs=["y", "z"],
+                body=body,
+                num_scan_inputs=1,
+            )
+        ]
+        graph = helper.make_graph(
+            nodes,
+            "test_scan_9_8",
+            [
+                helper.make_tensor_value_info("initial", data_type, [2]),
+                helper.make_tensor_value_info("x", data_type, [3, 2]),
+            ],
+            [
+                helper.make_tensor_value_info("y", data_type, [2]),
+                helper.make_tensor_value_info("z", data_type, [3, 2]),
+            ],
+        )
+        converted_model = self._converted(graph, helper.make_operatorsetid("", 9), 8)
+        assert converted_model.graph.node[0].op_type == "Scan"
+        assert converted_model.opset_import[0].version == 8
+
+    def test_scan_8_9_preserves_unshaped_input(self) -> None:
+        """Scan 8 -> 9 removes the batch axis from each input.
+
+        An input whose shape is unknown must still be kept, and will be
+        unedited (the shape is unknown with or without batch axis). Only the
+        sequence_lens input should be removed.
+        """
+        data_type = TensorProto.FLOAT
+        body = helper.make_graph(
+            [
+                helper.make_node("Add", ["sum_in", "next_in"], ["sum_out"]),
+                helper.make_node("Identity", ["sum_out"], ["scan_out"]),
+            ],
+            "scan_body",
+            [
+                helper.make_tensor_value_info("sum_in", data_type, [2]),
+                helper.make_tensor_value_info("next_in", data_type, [2]),
+            ],
+            [
+                helper.make_tensor_value_info("sum_out", data_type, [2]),
+                helper.make_tensor_value_info("scan_out", data_type, [2]),
+            ],
+        )
+        # A custom op produces `x` with no inferable shape, so it reaches the
+        # Scan 8 -> 9 with no shape.
+        my_op = helper.make_node("MyOp", ["raw"], ["x"], domain="my.domain")
+        scan = helper.make_node(
+            "Scan", ["", "initial", "x"], ["y", "z"], body=body, num_scan_inputs=1
+        )
+        graph = helper.make_graph(
+            [my_op, scan],
+            "test_scan_8_9_unshaped_input",
+            [
+                helper.make_tensor_value_info("initial", data_type, [1, 2]),
+                helper.make_tensor_value_info("raw", data_type, [1, 3, 2]),
+            ],
+            [
+                helper.make_tensor_value_info("y", data_type, [1, 2]),
+                helper.make_tensor_value_info("z", data_type, [1, 3, 2]),
+            ],
+        )
+        model = helper.make_model(
+            graph,
+            opset_imports=[
+                helper.make_operatorsetid("", 8),
+                helper.make_operatorsetid("my.domain", 1),
+            ],
+        )
+        checker.check_model(model)
+
+        converted = onnx.version_converter.convert_version(model, 9)
+        checker.check_model(converted, full_check=True)
+
+        scan_node = next(n for n in converted.graph.node if n.op_type == "Scan")
+        # The empty sequence_lens is removed, but the unshaped scan input is kept.
+        assert list(scan_node.input) == ["initial", "x"]
+
+    def test_convert_version_ai_onnx_domain_spelling_preserves_custom_domain(
+        self,
+    ) -> None:
+        # convert_graph's default-domain lookup must match "ai.onnx" (not just ""),
+        # and must only increment that entry -- a custom-domain opset_import must
+        # be left untouched.
+        node = helper.make_node("Add", inputs=["X", "Y"], outputs=["Z"])
+        graph = helper.make_graph(
+            [node],
+            "test_default_domain_ai_onnx_spelling",
+            [
+                helper.make_tensor_value_info("X", TensorProto.FLOAT, [1]),
+                helper.make_tensor_value_info("Y", TensorProto.FLOAT, [1]),
+            ],
+            [helper.make_tensor_value_info("Z", TensorProto.FLOAT, [1])],
+        )
+        model = helper.make_model(
+            graph,
+            opset_imports=[
+                helper.make_operatorsetid("ai.onnx", 9),
+                helper.make_operatorsetid("custom.domain", 1),
+            ],
+        )
+        converted_model = onnx.version_converter.convert_version(model, 8)
+        checker.check_model(converted_model)
+
+        opset_by_domain = {
+            opset.domain: opset.version for opset in converted_model.opset_import
+        }
+        assert opset_by_domain["ai.onnx"] == 8
+        assert opset_by_domain["custom.domain"] == 1
+
+    def _resize_18_17_converted(
+        self,
+        *,
+        initial_version: int = 18,
+        coordinate_transformation_mode: str = "asymmetric",
+        use_sizes: bool = True,
+        antialias: int | None = None,
+        keep_aspect_ratio_policy: str | None = None,
+        axes: list[int] | None = None,
+    ) -> ModelProto:
+        attributes: dict[str, object] = {
+            "mode": "nearest",
+            "coordinate_transformation_mode": coordinate_transformation_mode,
+            "nearest_mode": "floor",
+        }
+
+        if antialias is not None:
+            attributes["antialias"] = antialias
+        if keep_aspect_ratio_policy is not None:
+            attributes["keep_aspect_ratio_policy"] = keep_aspect_ratio_policy
+        if axes is not None:
+            attributes["axes"] = axes
+
+        parameter_shape = (len(axes),) if axes is not None else (4,)
+
+        if use_sizes:
+            resize_inputs = ["X", "", "", "resize_parameter"]
+            parameter_type = TensorProto.INT64
+        else:
+            resize_inputs = ["X", "", "resize_parameter"]
+            parameter_type = TensorProto.FLOAT
+
+        node = helper.make_node(
+            "Resize",
+            resize_inputs,
+            ["Y"],
+            **attributes,
+        )
+        graph = helper.make_graph(
+            [node],
+            "test_resize_18_17",
+            [
+                helper.make_tensor_value_info(
+                    "X",
+                    TensorProto.FLOAT,
+                    (1, 1, 2, 2),
+                ),
+                helper.make_tensor_value_info(
+                    "resize_parameter",
+                    parameter_type,
+                    parameter_shape,
+                ),
+            ],
+            [
+                helper.make_tensor_value_info(
+                    "Y",
+                    TensorProto.FLOAT,
+                    (None, None, None, None),
+                )
+            ],
+        )
+
+        return self._converted(
+            graph,
+            helper.make_operatorsetid("", initial_version),
+            17,
+        )
+
+    @pytest.mark.parametrize("use_sizes", [False, True])
+    def test_resize_18_17_converts_compatible_nodes(
+        self,
+        use_sizes: bool,
+    ) -> None:
+        converted = self._resize_18_17_converted(use_sizes=use_sizes)
+
+        resize = converted.graph.node[0]
+        expected_inputs = (
+            ["X", "", "", "resize_parameter"]
+            if use_sizes
+            else ["X", "", "resize_parameter"]
+        )
+
+        assert converted.opset_import[0].version == 17
+        assert resize.op_type == "Resize"
+        assert list(resize.input) == expected_inputs
+
+    def test_resize_18_17_removes_default_attributes(self) -> None:
+        converted = self._resize_18_17_converted(
+            antialias=0,
+            keep_aspect_ratio_policy="stretch",
+        )
+
+        attributes = {
+            attribute.name: helper.get_attribute_value(attribute)
+            for attribute in converted.graph.node[0].attribute
+        }
+
+        assert "antialias" not in attributes
+        assert "keep_aspect_ratio_policy" not in attributes
+        assert attributes["mode"] == b"nearest"
+        assert attributes["coordinate_transformation_mode"] == b"asymmetric"
+        assert attributes["nearest_mode"] == b"floor"
+
+    def test_resize_18_17_rejects_antialias(self) -> None:
+        with pytest.raises(RuntimeError, match="antialias=1"):
+            self._resize_18_17_converted(antialias=1)
+
+    @pytest.mark.parametrize(
+        "policy",
+        ["not_larger", "not_smaller"],
+    )
+    def test_resize_18_17_rejects_aspect_ratio_policy(
+        self,
+        policy: str,
+    ) -> None:
+        with pytest.raises(
+            RuntimeError,
+            match="keep_aspect_ratio_policy",
+        ):
+            self._resize_18_17_converted(keep_aspect_ratio_policy=policy)
+
+    def test_resize_18_17_rejects_axes(self) -> None:
+        with pytest.raises(RuntimeError, match="axes"):
+            self._resize_18_17_converted(axes=[2, 3])
+
+    def test_resize_19_17_rejects_half_pixel_symmetric(self) -> None:
+        with pytest.raises(RuntimeError, match="half_pixel_symmetric"):
+            self._resize_18_17_converted(
+                initial_version=19,
+                coordinate_transformation_mode="half_pixel_symmetric",
+            )
+
+    def _celu_converted(self, dtype: int, src: int, dst: int) -> ModelProto:
+        node = helper.make_node("Celu", ["X"], ["Y"], alpha=2.0)
+        graph = helper.make_graph(
+            [node],
+            "celu",
+            [helper.make_tensor_value_info("X", dtype, [3, 4])],
+            [helper.make_tensor_value_info("Y", dtype, [3, 4])],
+        )
+        return self._converted(graph, helper.make_operatorsetid("", src), dst)
+
+    def test_celu_float_27_28_and_28_27(self) -> None:
+        assert (
+            self._celu_converted(TensorProto.FLOAT, 27, 28).opset_import[0].version
+            == 28
+        )
+        assert (
+            self._celu_converted(TensorProto.FLOAT, 28, 27).opset_import[0].version
+            == 27
+        )
+
+    # Celu 28 -> 27: types added in v28 must be rejected
+    @pytest.mark.parametrize(
+        "dtype",
+        [TensorProto.FLOAT16, TensorProto.BFLOAT16, TensorProto.DOUBLE],
+    )
+    def test_celu_28_27_unsupported_type_fails(self, dtype: int) -> None:
+        with pytest.raises(RuntimeError):
+            self._celu_converted(dtype, 28, 27)

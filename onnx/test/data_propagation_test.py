@@ -4,8 +4,7 @@
 
 from __future__ import annotations
 
-import unittest
-
+import pytest
 from shape_inference_test import TestShapeInferenceHelper
 
 import onnx.parser
@@ -212,6 +211,94 @@ class TestDataPropagation(TestShapeInferenceHelper):
             data_prop=True,
         )
 
+    def test_add_overflow(self) -> None:
+        # Add with INT64_MAX + 1 must raise InferenceError rather than silently wrapping.
+        # Uses Shape to inject INT64_MAX as a known int64 value, then adds 1 via Shape.
+        INT64_MAX = (1 << 63) - 1
+        graph = self._make_graph(
+            [
+                ("x", TensorProto.FLOAT, (INT64_MAX,)),
+                ("y", TensorProto.FLOAT, (1,)),
+            ],
+            [
+                make_node("Shape", ["x"], ["xshape"]),
+                make_node("Shape", ["y"], ["yshape"]),
+                make_node("Add", ["xshape", "yshape"], ["zshape"]),
+                make_node(
+                    "ConstantOfShape",
+                    ["zshape"],
+                    ["z"],
+                    value=make_tensor("value", TensorProto.INT32, (1,), (0,)),
+                ),
+            ],
+            [],
+        )
+        with pytest.raises(onnx.shape_inference.InferenceError):
+            self._assert_inferred(graph, [], data_prop=True)
+
+    def test_sub_overflow(self) -> None:
+        # Sub with INT64_MIN - 1 must raise InferenceError rather than silently wrapping.
+        # Uses Constant nodes to inject the boundary values directly.
+        INT64_MIN = -(1 << 63)
+        graph = self._make_graph(
+            [],
+            [
+                make_node(
+                    "Constant",
+                    [],
+                    ["a"],
+                    value=make_tensor("a", TensorProto.INT64, (1,), [INT64_MIN]),
+                ),
+                make_node(
+                    "Constant",
+                    [],
+                    ["b"],
+                    value=make_tensor("b", TensorProto.INT64, (1,), [1]),
+                ),
+                make_node("Sub", ["a", "b"], ["zshape"]),
+                make_node(
+                    "ConstantOfShape",
+                    ["zshape"],
+                    ["z"],
+                    value=make_tensor("value", TensorProto.INT32, (1,), (0,)),
+                ),
+            ],
+            [],
+        )
+        with pytest.raises(onnx.shape_inference.InferenceError):
+            self._assert_inferred(graph, [], data_prop=True)
+
+    def test_mul_overflow(self) -> None:
+        # Mul with INT64_MAX * 2 must raise InferenceError rather than silently wrapping.
+        INT64_MAX = (1 << 63) - 1
+        graph = self._make_graph(
+            [],
+            [
+                make_node(
+                    "Constant",
+                    [],
+                    ["a"],
+                    value=make_tensor("a", TensorProto.INT64, (1,), [INT64_MAX]),
+                ),
+                make_node(
+                    "Constant",
+                    [],
+                    ["b"],
+                    value=make_tensor("b", TensorProto.INT64, (1,), [2]),
+                ),
+                make_node("Mul", ["a", "b"], ["zshape"]),
+                make_node(
+                    "ConstantOfShape",
+                    ["zshape"],
+                    ["z"],
+                    value=make_tensor("value", TensorProto.INT32, (1,), (0,)),
+                ),
+            ],
+            [],
+        )
+        with pytest.raises(onnx.shape_inference.InferenceError):
+            self._assert_inferred(graph, [], data_prop=True)
+
     def test_empty_tensor(self) -> None:
         """Test that a Concat with an empty tensor as input is handled correctly by data-propagation."""
         model = onnx.parser.parse_model(
@@ -226,7 +313,7 @@ class TestDataPropagation(TestShapeInferenceHelper):
         )
         inferred_model = onnx.shape_inference.infer_shapes(model, True, True, True)
         output = inferred_model.graph.output[0]
-        self.assertEqual(output.type.tensor_type.shape.dim[0].dim_value, 256)
+        assert output.type.tensor_type.shape.dim[0].dim_value == 256
 
     def test_empty_tensor_negative_axis(self) -> None:
         """Test that a Concat with an empty tensor as input is handled correctly by data-propagation.
@@ -244,8 +331,4 @@ class TestDataPropagation(TestShapeInferenceHelper):
         )
         inferred_model = onnx.shape_inference.infer_shapes(model, True, True, True)
         output = inferred_model.graph.output[0]
-        self.assertEqual(output.type.tensor_type.shape.dim[0].dim_value, 256)
-
-
-if __name__ == "__main__":
-    unittest.main()
+        assert output.type.tensor_type.shape.dim[0].dim_value == 256

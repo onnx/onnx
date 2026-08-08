@@ -10,8 +10,7 @@
 #include "onnx/defs/schema.h"
 #include "onnx/shape_inference/implementation.h"
 
-namespace ONNX_NAMESPACE {
-namespace Test {
+namespace ONNX_NAMESPACE::Test {
 
 static bool CompareShape(
     const TensorShapeProto& inferredShape,
@@ -408,5 +407,4 @@ agraph (int32[1,2,3,4,5,6,7,8] x) => (int32[3] w)
   EXPECT_TRUE(CompareShape(propagated_tsp, expected_tsp));
 }
 
-} // namespace Test
-} // namespace ONNX_NAMESPACE
+} // namespace ONNX_NAMESPACE::Test

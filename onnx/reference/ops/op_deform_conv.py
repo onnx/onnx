@@ -39,7 +39,10 @@ def _deform_conv_implementation(
         raise ValueError("Number of input channels must be divisible by offset_group.")
     ics_per_offset_group = ic // offset_group
 
-    if offset_group * np.prod(kernel_shape) * len(kernel_shape) != offset.shape[1]:
+    if (
+        offset_group * np.prod(kernel_shape, dtype=np.int64) * len(kernel_shape)
+        != offset.shape[1]
+    ):
         raise ValueError(
             f"Offset shape {offset.shape} is inconsistent with offset_group {offset_group} "
             f"and kernel shape {kernel_shape}."
@@ -49,7 +52,9 @@ def _deform_conv_implementation(
     )
 
     if mask is None:
-        mask = np.ones((n, offset_group * np.prod(kernel_shape), *output_shape))
+        mask = np.ones(
+            (n, offset_group * np.prod(kernel_shape, dtype=np.int64), *output_shape)
+        )
     mask = mask.reshape((n, offset_group, *kernel_shape, *output_shape))
 
     if len(X.shape) == 4:

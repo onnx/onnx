@@ -2,18 +2,20 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
+#include <clocale>
+#include <cmath>
 #include <string>
+#include <string_view>
 
 #include "gtest/gtest.h"
 #include "onnx/checker.h"
 #include "onnx/defs/parser.h"
 #include "onnx/defs/printer.h"
 
-namespace ONNX_NAMESPACE {
-namespace Test {
+namespace ONNX_NAMESPACE::Test {
 
 template <typename T>
-static void Parse(T& parsedData, const char* input) {
+static void Parse(T& parsedData, std::string_view input) {
   OnnxParser parser(input);
   auto status = parser.Parse(parsedData);
   EXPECT_TRUE(status.IsOK()) << status.ErrorMessage();
@@ -25,19 +27,20 @@ static void Parse(T& parsedData, const char* input) {
   // We cannot expect equality between text1 and input due to white-space and syntactic sugar,
   // so, we convert it once more, and check for equality.
   T temp;
-  status = OnnxParser::Parse(temp, text1.c_str());
+  // Pass a string_view to exercise the std::string_view overload explicitly.
+  status = OnnxParser::Parse(temp, std::string_view(text1));
   EXPECT_TRUE(status.IsOK()) << status.ErrorMessage();
   std::string text2 = ProtoToString(temp);
   EXPECT_EQ(text1, text2);
 }
 
 template <typename T>
-static void ExpectParseFailure(T& parsedData, const char* input) {
+static void ExpectParseFailure(T& parsedData, std::string_view input) {
   auto status = OnnxParser::Parse(parsedData, input);
   EXPECT_FALSE(status.IsOK());
 }
 
-static void CheckModel(const char* code) {
+static void CheckModel(std::string_view code) {
   ModelProto model;
   Parse(model, code);
 
@@ -54,6 +57,19 @@ TEST(ParserTest, EscapeStringLiteral) {
   EXPECT_TRUE(status.IsOK()) << status.ErrorMessage();
   EXPECT_TRUE(parser.EndOfInput()) << "Extra unparsed input unexpected.";
   EXPECT_EQ(s, std::string("123\"56\\89"));
+}
+
+TEST(ParserTest, NonNulTerminatedStringView) {
+  // The view is just "inf"; the backing buffer continues with a digit. A buffer
+  // over-read past the view would see '9' and reject the valid float literal.
+  std::string backing = "inf9";
+  std::string_view view(backing.data(), 3);
+  OnnxParser parser(view);
+  float val = 0.0f;
+  auto status = parser.ParserBase::Parse(val);
+  EXPECT_TRUE(status.IsOK()) << status.ErrorMessage();
+  EXPECT_TRUE(std::isinf(val));
+  EXPECT_TRUE(parser.EndOfInput()) << "Extra unparsed input unexpected.";
 }
 
 TEST(ParserTest, TypeTest) {
@@ -166,6 +182,12 @@ TEST(ParserTest, AttributeTest) {
   Parse(attr, "x = 0.625");
   EXPECT_EQ(attr.type(), AttributeProto_AttributeType::AttributeProto_AttributeType_FLOAT);
   EXPECT_FLOAT_EQ(attr.f(), 0.625);
+
+  Parse(attr, "x : float = 2");
+  EXPECT_EQ(attr.type(), AttributeProto_AttributeType::AttributeProto_AttributeType_FLOAT);
+  EXPECT_TRUE(attr.has_f());
+  EXPECT_FALSE(attr.has_i());
+  EXPECT_FLOAT_EQ(attr.f(), 2.0);
 
   Parse(attr, "x = [2, 4, 6]");
   EXPECT_EQ(attr.type(), AttributeProto_AttributeType::AttributeProto_AttributeType_INTS);
@@ -764,5 +786,72 @@ TEST(ParserTest, QuotedIdentifierTest2) {
   Parse(fp, code);
 }
 
-} // namespace Test
-} // namespace ONNX_NAMESPACE
+// Test that float parsing works correctly under a locale that uses comma as decimal separator.
+// This is a regression test for https://github.com/onnx/onnx/issues/8111
+namespace {
+// RAII helper to restore locale on scope exit, ensuring no locale leaks to other tests.
+// setlocale is not thread safe, but gtest runs these tests on a single thread.
+class LocaleGuard {
+ public:
+  LocaleGuard() {
+    const char* loc = std::setlocale(LC_NUMERIC, nullptr); // NOLINT(concurrency-mt-unsafe)
+    saved_ = loc ? loc : "C";
+  }
+  ~LocaleGuard() {
+    std::setlocale(LC_NUMERIC, saved_.c_str()); // NOLINT(concurrency-mt-unsafe,cert-err33-c)
+  }
+  LocaleGuard(const LocaleGuard&) = delete;
+  LocaleGuard& operator=(const LocaleGuard&) = delete;
+
+ private:
+  std::string saved_;
+};
+} // namespace
+
+TEST(ParserTest, LocaleIndependentFloatParsing) {
+  LocaleGuard locale_guard; // Restores locale on any exit path
+
+  // Try to set a locale with comma decimal separator.
+  // Different platforms have different locale names.
+  const char* locale_candidates[] = {
+      "de_DE.UTF-8", // Linux/macOS
+      "German_Germany.1252", // Windows
+      "fr_FR.UTF-8", // Linux/macOS alternative
+      "French_France.1252", // Windows alternative
+  };
+
+  bool locale_set = false;
+  for (const auto* candidate : locale_candidates) {
+    if (std::setlocale(LC_NUMERIC, candidate) != nullptr) { // NOLINT(concurrency-mt-unsafe)
+      locale_set = true;
+      break;
+    }
+  }
+
+  if (!locale_set) {
+    GTEST_SKIP() << "No locale with comma decimal separator available on this system";
+  }
+
+  // Parse a model with float literals under the comma-decimal locale.
+  const char* code = R"ONNX(
+    <ir_version: 7, opset_import: ["" : 13]>
+    agraph (float[1, 5] X) => (float[1, 5] Y) {
+        Y = LeakyRelu <alpha = 0.123> (X)
+    }
+  )ONNX";
+
+  ModelProto model;
+  OnnxParser parser(code);
+  auto status = parser.Parse(model);
+  EXPECT_TRUE(status.IsOK()) << status.ErrorMessage();
+
+  // Verify the float attribute was parsed correctly (not truncated at the decimal point).
+  ASSERT_EQ(model.graph().node_size(), 1);
+  const auto& node = model.graph().node(0);
+  ASSERT_EQ(node.attribute_size(), 1);
+  EXPECT_EQ(node.attribute(0).name(), "alpha");
+  float alpha = node.attribute(0).f();
+  EXPECT_NEAR(alpha, 0.123f, 1e-6f) << "Float attribute misparsed under non-US locale";
+}
+
+} // namespace ONNX_NAMESPACE::Test
