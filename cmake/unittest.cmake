@@ -14,8 +14,10 @@ set(test_src
     ${ONNX_ROOT}/onnx/test/cpp/ir_test.cc
     ${ONNX_ROOT}/onnx/test/cpp/op_reg_test.cc
     ${ONNX_ROOT}/onnx/test/cpp/parser_test.cc
+    ${ONNX_ROOT}/onnx/test/cpp/safe_math_test.cc
     ${ONNX_ROOT}/onnx/test/cpp/schema_registration_test.cc
     ${ONNX_ROOT}/onnx/test/cpp/shape_inference_test.cc
+    ${ONNX_ROOT}/onnx/test/cpp/tensor_test.cc
     ${ONNX_ROOT}/onnx/test/cpp/test_main.cc
     ${ONNX_ROOT}/onnx/test/cpp/utf8_conversion_test.cc
 )

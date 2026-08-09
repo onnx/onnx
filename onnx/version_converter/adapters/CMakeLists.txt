@@ -28,6 +28,7 @@ target_sources(onnx PRIVATE
     reshape_4_5.h
     reshape_5_4.h
     resize_10_11.h
+    resize_18_17.h
     scan_8_9.h
     scan_9_8.h
     scatter_10_11.h
