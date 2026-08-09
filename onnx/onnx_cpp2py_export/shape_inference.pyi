@@ -31,6 +31,9 @@ class InferenceContext:
 def infer_shapes(
     b: bytes, check_type: bool, strict_mode: bool, data_prop: bool
 ) -> bytes: ...
+def infer_shapes_and_report(
+    b: bytes, check_type: bool, strict_mode: bool, data_prop: bool
+) -> tuple[bytes, int]: ...
 def infer_shapes_path(
     model_path: str,
     output_path: str,

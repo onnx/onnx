@@ -13078,6 +13078,73 @@ class TestShapeInference(TestShapeInferenceHelper):
         ):
             onnx.shape_inference.infer_shapes(Path("model.onnx"))
 
+    def test_infer_shapes_and_report_counts_inferred_values(self) -> None:
+        # Two chained Adds: "t" is a brand-new value_info and "out" is a graph
+        # output whose shape is unknown before inference. Both are inferred.
+        model = onnx.parser.parse_model(
+            """
+            <ir_version: 8, opset_import: [ "" : 18 ]>
+            g (float[3,4] X, float[3,4] Y) => (out) {
+                t = Add(X, Y)
+                out = Add(t, Y)
+            }
+            """
+        )
+        inferred, num_inferred_values = onnx.shape_inference.infer_shapes_and_report(
+            model, strict_mode=True
+        )
+        assert num_inferred_values == 2
+        # The reported model matches plain infer_shapes exactly.
+        assert (
+            inferred.SerializeToString()
+            == onnx.shape_inference.infer_shapes(
+                model, strict_mode=True
+            ).SerializeToString()
+        )
+
+    def test_infer_shapes_and_report_is_idempotent(self) -> None:
+        # Re-running inference on an already-inferred model reports zero changes,
+        # because no previously-unknown type/shape actually becomes known.
+        model = onnx.parser.parse_model(
+            """
+            <ir_version: 8, opset_import: [ "" : 18 ]>
+            g (float[3,4] X, float[3,4] Y) => (out) {
+                t = Add(X, Y)
+                out = Add(t, Y)
+            }
+            """
+        )
+        inferred, first_count = onnx.shape_inference.infer_shapes_and_report(
+            model, strict_mode=True
+        )
+        assert first_count > 0
+        _, second_count = onnx.shape_inference.infer_shapes_and_report(
+            inferred, strict_mode=True
+        )
+        assert second_count == 0
+
+    def test_infer_shapes_and_report_accepts_bytes(self) -> None:
+        model = onnx.parser.parse_model(
+            """
+            <ir_version: 8, opset_import: [ "" : 18 ]>
+            g (float[3,4] X, float[3,4] Y) => (out) {
+                out = Add(X, Y)
+            }
+            """
+        )
+        inferred, num_inferred_values = onnx.shape_inference.infer_shapes_and_report(
+            model.SerializeToString(), strict_mode=True
+        )
+        assert isinstance(inferred, ModelProto)
+        assert num_inferred_values == 1
+
+    def test_infer_shapes_and_report_pathlike_error(self) -> None:
+        with pytest.raises(
+            TypeError,
+            match=r"For Model paths \(str or os.PathLike\), use infer_shapes_path\(\)\.",
+        ):
+            onnx.shape_inference.infer_shapes_and_report(Path("model.onnx"))
+
 
 class TestCustomSchemaShapeInference(TestShapeInferenceHelper):
     custom_op_type: str = "CustomOp"

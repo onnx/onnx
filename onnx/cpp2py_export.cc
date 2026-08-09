@@ -760,6 +760,28 @@ NB_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) { // NOLINT(cppcoreguidelines-
       nb::arg("strict_mode") = false,
       nb::arg("data_prop") = false);
 
+  // Same as infer_shapes, but also returns the number of graph values (value_info
+  // entries) that were newly inferred or updated during the pass.
+  shape_inference.def(
+      "infer_shapes_and_report",
+      [](const nb::bytes& bytes, bool check_type, bool strict_mode, bool data_prop) {
+        ModelProto proto{};
+        ParseProtoFromPyBytes(&proto, bytes);
+        ShapeInferenceOptions options{check_type, strict_mode ? 1 : 0, data_prop};
+        size_t num_inferred_values = 0;
+        shape_inference::InferShapes(
+            proto,
+            OpSchemaRegistry::Instance(),
+            options,
+            /*generated_shape_data_by_name=*/nullptr,
+            &num_inferred_values);
+        return nb::make_tuple(ProtoToBytes(proto), num_inferred_values);
+      },
+      nb::arg("bytes"),
+      nb::arg("check_type") = false,
+      nb::arg("strict_mode") = false,
+      nb::arg("data_prop") = false);
+
   shape_inference.def(
       "infer_shapes_path",
       [](const std::string& model_path,

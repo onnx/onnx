@@ -70,6 +70,51 @@ def infer_shapes(
     )
 
 
+def infer_shapes_and_report(
+    model: ModelProto | bytes,
+    check_type: bool = False,
+    strict_mode: bool = False,
+    data_prop: bool = False,
+) -> tuple[ModelProto, int]:
+    """Apply shape inference and report how many values were inferred or updated.
+
+    This behaves exactly like :func:`infer_shapes`, but in addition to the
+    inferred model it returns the number of graph values (``value_info``
+    entries of the main graph) that were newly inferred or whose type/shape was
+    updated during the pass. A value counts as modified only when a
+    previously-unknown element type, rank, or dimension actually became known;
+    re-inferring already-known information does not increase the count.
+
+    Arguments:
+        model: ModelProto.
+        check_type: Checks the type-equality for input and output.
+        strict_mode: Stricter shape inference, it will throw errors if any;
+            Otherwise, simply stop if any error.
+        data_prop: Enables data propagation for limited operators to perform shape computation.
+
+    Returns:
+        A tuple ``(model, num_inferred_values)`` where ``model`` is the
+        ModelProto with inferred shape information and ``num_inferred_values``
+        is the number of values that were newly inferred or updated.
+    """
+    if isinstance(model, (ModelProto, bytes)):
+        model_str = model if isinstance(model, bytes) else model.SerializeToString()
+        inferred_model_str, num_inferred_values = C.infer_shapes_and_report(
+            model_str, check_type, strict_mode, data_prop
+        )
+        return onnx.load_from_string(inferred_model_str), num_inferred_values
+    if isinstance(model, (str, os.PathLike)):
+        raise TypeError(
+            "infer_shapes_and_report only accepts ModelProto or bytes,"
+            " For Model paths (str or os.PathLike), use infer_shapes_path()."
+        )
+
+    raise TypeError(
+        "infer_shapes_and_report only accepts ModelProto or bytes,"
+        f" incorrect type: {type(model)}"
+    )
+
+
 def infer_shapes_path(
     model_path: str | os.PathLike,
     output_path: str | os.PathLike = "",
