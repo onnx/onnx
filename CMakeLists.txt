@@ -119,8 +119,9 @@ if(MSVC)
     /wd5287  # https://developercommunity.visualstudio.com/t/warning-C5287:-operands-are-different-e/10877942?sort=newest
     /Zc:lambda  # https://developercommunity.visualstudio.com/t/fatal--error-C1001:-Internal-compiler-er/10906076
   )
-  # Reproducible builds: replace the PE TimeDateStamp with a hash of inputs
-  # so two builds of the same source produce bit-for-bit identical binaries.
+  # Reproducible builds: omit timestamps from object files and replace the PE
+  # TimeDateStamp with a hash of inputs.
+  add_compile_options(/Brepro)
   add_link_options(/Brepro)
 endif()
 

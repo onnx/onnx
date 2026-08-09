@@ -31,9 +31,9 @@ SPDX-License-Identifier: Apache-2.0
 
 | Workflow | When it runs | What it does |
 |---|---|---|
-| [ReproducibleBuild](/.github/workflows/reproducible_build.yml) | Weekly (Monday 06:00 UTC), workflow\_dispatch, every PR | Calls each platform cibw workflow twice with a single `cp312` target and compares SHA-256 checksums of the resulting wheels. A mismatch on any platform fails the workflow. |
+| [ReproducibleBuild](/.github/workflows/reproducible_build.yml) | Weekly (Monday 06:00 UTC), workflow\_dispatch, every PR | Calls each platform cibw workflow once with a single `cp312` target. Each workflow performs two clean builds sequentially on the same runner and compares their SHA-256 checksums. A mismatch on any platform fails the workflow. |
 
-The three cibw workflows (`release_linux_cibw.yml`, `release_macos_cibw.yml`, `release_windows_cibw.yml`) accept an optional `build` input (single target) and an `artifact_name_prefix` input so the two runs can upload to distinct artifact names without colliding.
+The three cibw workflows (`release_linux_cibw.yml`, `release_macos_cibw.yml`, `release_windows_cibw.yml`) accept an optional `build` input (single target), an `artifact_name_prefix` input, and a `reproducibility_check` input that enables the second clean build and local comparison.
 
 ### Diagnosing a mismatch with diffoscope
 
