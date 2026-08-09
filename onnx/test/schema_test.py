@@ -64,6 +64,86 @@ class TestSchema:
         )
         assert if_schema.non_deterministic
 
+    def test_node_determinism_consistent_across_versions(self) -> None:
+        """Regression test: an operator must not contradict its own determinism across versions.
+
+        Every historical schema version of an operator records whether the op is
+        deterministic (set in C++ via ``SetNodeDeterminism``). When a new opset version
+        of an operator is introduced, that classification has to be carried over to the
+        new schema definition. Forgetting to do so produces a *mismatch between old
+        schema definitions* -- for example the latest ``RandomUniform`` reporting
+        ``Deterministic`` while an older definition still reports ``NonDeterministic``.
+        Such a contradiction is always a bug, so guard against it here.
+
+        ``Unknown`` (used when determinism cannot be decided statically, e.g. for
+        context-dependent function bodies) is not a positive claim about determinism, so
+        it is compatible with either classification. Only a hard
+        ``Deterministic``-vs-``NonDeterministic`` disagreement is treated as a failure.
+        """
+        deterministic = defs.OpSchema.NodeDeterminism.Deterministic
+        non_deterministic = defs.OpSchema.NodeDeterminism.NonDeterministic
+
+        versions_by_op: dict[
+            tuple[str, str], list[tuple[int, defs.OpSchema.NodeDeterminism]]
+        ] = {}
+        for schema in defs.get_all_schemas_with_history():
+            key = (schema.domain, schema.name)
+            versions_by_op.setdefault(key, []).append(
+                (schema.since_version, schema.node_determinism)
+            )
+
+        mismatches = []
+        for (domain, name), versions in sorted(versions_by_op.items()):
+            classifications = {determinism for _, determinism in versions}
+            if (
+                deterministic in classifications
+                and non_deterministic in classifications
+            ):
+                detail = ", ".join(
+                    f"v{version}={determinism}"
+                    for version, determinism in sorted(versions)
+                )
+                mismatches.append(f"{domain or 'ai.onnx'}::{name}: {detail}")
+
+        assert not mismatches, (
+            "Operators report contradictory node determinism across opset versions "
+            "(a new schema version likely dropped a SetNodeDeterminism call):\n"
+            + "\n".join(mismatches)
+        )
+
+    def test_non_deterministic_ops_stay_non_deterministic_across_versions(self) -> None:
+        """Regression test: inherently non-deterministic ops keep that flag in every version.
+
+        Operators such as the random generators and ``Dropout`` are non-deterministic by
+        nature; that cannot change between opset versions. This pins the classification
+        of every historical schema definition so that adding a new opset version without
+        re-declaring ``SetNodeDeterminism(NonDeterministic)`` is caught immediately.
+        """
+        non_deterministic_ops = [
+            "RandomUniform",
+            "RandomNormal",
+            "RandomUniformLike",
+            "RandomNormalLike",
+            "Multinomial",
+            "Bernoulli",
+            "Dropout",
+        ]
+
+        schemas_by_op: dict[str, list] = {name: [] for name in non_deterministic_ops}
+        for schema in defs.get_all_schemas_with_history():
+            # Standard ONNX domain is represented by the empty string.
+            if schema.domain == "" and schema.name in schemas_by_op:
+                schemas_by_op[schema.name].append(schema)
+
+        for name in non_deterministic_ops:
+            schemas = schemas_by_op[name]
+            assert schemas, f"expected at least one historical schema for {name}"
+            for schema in schemas:
+                assert schema.non_deterministic, (
+                    f"{name} v{schema.since_version} must be non-deterministic; "
+                    f"got {schema.node_determinism}"
+                )
+
     def test_celu_type_constraints(self) -> None:
         def allowed(schema):
             return next(
