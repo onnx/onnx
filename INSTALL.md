@@ -78,7 +78,7 @@ export CMAKE_ARGS="-DONNX_USE_PROTOBUF_SHARED_LIBS=ON"
 Windows:
 
 ```bat
-set CMAKE_ARGS="-DONNX_USE_PROTOBUF_SHARED_LIBS=ON"
+set "CMAKE_ARGS=-DONNX_USE_PROTOBUF_SHARED_LIBS=ON"
 ```
 
 The ON/OFF depends on what kind of Protobuf library you have. Shared libraries are files ending with \*.dll/\*.so/\*.dylib. Static libraries are files ending with \*.a/\*.lib. This option depends on how you get your Protobuf library and how it was built. Because its default value is OFF, you don't need to run the commands above if you'd prefer to use a static Protobuf library.
@@ -90,7 +90,7 @@ git clone https://github.com/onnx/onnx.git
 cd onnx
 git submodule update --init --recursive
 # prefer lite proto
-set CMAKE_ARGS='-DONNX_USE_LITE_PROTO=ON -DONNX_USE_PROTOBUF_SHARED_LIBS=ON'
+set "CMAKE_ARGS=-DONNX_USE_LITE_PROTO=ON -DONNX_USE_PROTOBUF_SHARED_LIBS=ON"
 pip install -e . -v
 ```
 
@@ -123,7 +123,7 @@ Please note: if your protobuf_install_dir contains spaces, **do not** add quotat
 Alternative: if you have local Protobuf executable and want to use it for ONNX, you can set ONNX_PROTOC_EXECUTABLE instead.
 
 ```bat
-set CMAKE_ARGS=-DONNX_PROTOC_EXECUTABLE=<full_path_to_protoc.exe>
+set "CMAKE_ARGS=-DONNX_PROTOC_EXECUTABLE=<full_path_to_protoc.exe>"
 ```
 
 Then you can build ONNX as:
@@ -133,7 +133,7 @@ git clone https://github.com/onnx/onnx.git
 cd onnx
 git submodule update --init --recursive
 # prefer lite proto
-set CMAKE_ARGS=-DONNX_USE_LITE_PROTO=ON
+set "CMAKE_ARGS=-DONNX_USE_LITE_PROTO=ON"
 pip install -e . -v
 ```
 
@@ -202,7 +202,7 @@ Then you can build ONNX as:
 git clone --recursive https://github.com/onnx/onnx.git
 cd onnx
 # Optional: prefer lite proto
-set CMAKE_ARGS=-DONNX_USE_LITE_PROTO=ON
+export CMAKE_ARGS=-DONNX_USE_LITE_PROTO=ON
 pip install -e . -v
 ```
 
