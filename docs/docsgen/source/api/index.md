@@ -8,9 +8,9 @@ The [ir-py project](https://github.com/onnx/ir-py) provides alternative Pythonic
 
 ## Versioning
 
-The following example shows how to retrieve onnx version,
-the onnx opset, the IR version. Every new major release increments the opset version
-(see {ref}`l-api-opset-version`).
+The following example shows how to retrieve the installed ONNX package version,
+the default ONNX opset version, and the IR version (see
+{ref}`l-api-opset-version`).
 
 ```{eval-rst}
 .. exec_code::
@@ -20,14 +20,13 @@ the onnx opset, the IR version. Every new major release increments the opset ver
     print(f"onnx.__version__={__version__!r}, opset={onnx_opset_version()}, IR_VERSION={IR_VERSION}")
 ```
 
-The intermediate representation (IR) specification is the abstract model for
-graphs and operators and the concrete format that represents them.
-Adding a structure or modifying one of them increases the IR version.
+The intermediate representation (IR) specification defines the abstract model
+for graphs and operators and the concrete format that represents them. The IR
+version increases when that representation changes.
 
-The opset version increases when an operator is added or removed or modified.
-A higher opset means a longer list of operators and more options to
-implement an ONNX functions. An operator is usually modified because it
-supports more input and output type, or an attribute becomes an input.
+An opset version identifies a published set of operator schemas in a domain. It
+increases when an operator is added, removed, or modified, for example to support
+additional input or output types or to replace an attribute with an input.
 
 ## Data Structures
 
@@ -58,7 +57,6 @@ defs
 external_data_helper
 helper
 inliner
-mapping
 model_container
 numpy_helper
 parser

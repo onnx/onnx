@@ -221,8 +221,8 @@ This is used to store metadata in ModelProto.
 
 This defines a tensor. A tensor is fully described with a shape
 (see ShapeProto), the element type (see TypeProto), and the
-elements themselves. All available types are listed in
-{ref}`l-mod-onnx-mapping`.
+elements themselves. The available type conversions are documented in
+{ref}`l-onnx-type-mappings`.
 
 ```{eval-rst}
 .. autoclass:: onnx.TensorProto

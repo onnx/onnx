@@ -112,6 +112,8 @@ All functions used to create an ONNX graph.
 .. autofunction:: onnx.helper.make_value_info
 ```
 
+(l-onnx-type-mappings)=
+
 ## Type Mappings
 
 ```{eval-rst}

@@ -175,9 +175,8 @@ full array with no stride.
 
 ONNX was initially developed to help deploying deep learning model.
 That's why the specifications were initially designed for floats (32 bits).
-The current version supports all common types. Dictionary
-{ref}`l-onnx-types-mapping` gives the correspondence between *ONNX*
-and {mod}`numpy`.
+The current version supports all common types. The functions in
+{ref}`l-onnx-type-mappings` convert between *ONNX* and {mod}`numpy` data types.
 
 ```{eval-rst}
 .. exec_code::
