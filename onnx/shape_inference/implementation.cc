@@ -5,6 +5,7 @@
 #include "onnx/shape_inference/implementation.h"
 
 #include <algorithm>
+#include <cassert>
 #include <fstream>
 #include <list>
 #include <string>
@@ -347,6 +348,14 @@ void BindValuesOnReturn(
   }
 }
 
+// ShapeInferenceImplBase drives type-and-shape inference over a GraphProto or FunctionProto.
+// A single instance is used to process one top-level graph, or one function-body invocation
+// (a "callee" scope): ProcessCall()/InferShapeForFunctionNodeInternal() construct a brand-new
+// ShapeInferenceImplBase for every function call encountered (including nested/recursive calls
+// and repeated calls to the same function), each with its own private copies of instance fields
+// such as value_types_by_name and unbound_value_names. Consequently, these fields are correctly
+// scoped to a single graph/function invocation and are never shared or aliased across distinct
+// (nested, sibling, or recursive) function-body invocations.
 class ShapeInferenceImplBase {
  public:
   void UpdateType(const std::string& name, TypeProto* inferred_type) {
@@ -469,7 +478,8 @@ class ShapeInferenceImplBase {
         input_sparse_data_by_name,
         options,
         generated_shape_data_by_name,
-        &graph_inference_context);
+        &graph_inference_context,
+        &unbound_value_names);
 
     ONNX_TRY {
       if (schema) {
@@ -606,6 +616,12 @@ class ShapeInferenceImplBase {
   }
 
   void Process(const FunctionProto& func_proto, InferenceContext& ctx) {
+    // This method processes a single function-body invocation. Per the class-level comment
+    // above, a fresh ShapeInferenceImplBase instance is created for each such invocation, so
+    // unbound_value_names must still be in its initial, empty state at this point (it is
+    // populated below, exclusively for the formal parameters of this invocation's own callee).
+    assert(unbound_value_names.empty());
+
     // Ensure Constant node tensor-attributes are copied
     bool old_reuse_constant_tensors = reuse_constant_tensors;
     reuse_constant_tensors = false;
@@ -616,8 +632,13 @@ class ShapeInferenceImplBase {
     std::vector<TypeProto> types_cache(num_func_inputs);
     for (int i = 0; i < num_func_inputs; ++i) {
       const auto& parameter_name = func_proto.input().Get(i);
-      const auto* const type_ptr = (i < num_actual_inputs) ? ctx.getInputType(i) : nullptr;
-      // nullptr is valid, and indicates a missing optional input
+      // A formal parameter is considered "provided" by the caller only if the caller's own
+      // hasInput() reports it as present. This correctly distinguishes a genuinely omitted
+      // optional argument (recorded in unbound_value_names, below) from an argument that is
+      // provided but whose type happens to be unknown (nullptr is valid here, and simply
+      // indicates that the type could not be determined).
+      const bool caller_has_input = (i < num_actual_inputs) && ctx.hasInput(i);
+      const auto* const type_ptr = caller_has_input ? ctx.getInputType(i) : nullptr;
       if (type_ptr != nullptr) {
         // Use a temporary copy of original type.
         // TODO(ONNX): investigate whether we can eliminate use of temporary copy
@@ -625,6 +646,11 @@ class ShapeInferenceImplBase {
         value_types_by_name[parameter_name] = &types_cache[i];
       } else {
         value_types_by_name[parameter_name] = nullptr;
+      }
+      if (!caller_has_input) {
+        // unbound_value_names starts out empty (see assert above) and each parameter_name is
+        // visited at most once (function inputs have unique names), so a plain insert suffices.
+        unbound_value_names.insert(parameter_name);
       }
     }
 
@@ -757,6 +783,18 @@ class ShapeInferenceImplBase {
   // reuse_constant_tensors: controls whether we need to copy tensors occurring as attributes
   // in Constant nodes. We avoid it for inference for graphs, but must make a copy for functions.
   bool reuse_constant_tensors = true;
+
+  // Names of function-formal-parameters that were not provided (structurally) by the caller of
+  // the function currently being processed (empty when processing a top-level graph). A function
+  // body's nodes reference formal parameters by name unconditionally, so hasInput()/hasOutput(),
+  // which check structural presence in the NodeProto, cannot by themselves distinguish "argument
+  // genuinely omitted by the caller" from "argument provided but its type happens to be unknown".
+  // This set lets InferenceContextImpl::hasInput() correctly report false for the former case,
+  // while still reporting true (with a null type) for the latter.
+  //
+  // Populated exactly once, by Process(const FunctionProto&, ...), starting from empty -- see the
+  // class-level comment above regarding per-invocation scoping of this and other instance fields.
+  std::unordered_set<std::string> unbound_value_names;
 };
 
 void InferShapesImpl(
@@ -950,6 +988,12 @@ void InferShapeForFunctionNode(
 
 namespace {
 
+// Note: input_types plays a dual role for this context: an entry with
+// value_case() == TypeProto::ValueCase::VALUE_NOT_SET indicates that the corresponding
+// (optional) input is absent, while any other value indicates that the input is present
+// with that type. Consequently, hasInput() (inherited, unmodified, from the base
+// InferenceContext) cannot distinguish an input that is present but has an unknown type
+// from one that is simply absent -- both are represented identically here.
 struct FunctionInferenceContext : public InferenceContext {
   FunctionInferenceContext(
       const FunctionProto& func_proto,
@@ -1048,6 +1092,9 @@ std::vector<TypeProto> InferFunctionOutputTypes(
     const FunctionProto& function_proto,
     const std::vector<TypeProto>& input_types,
     const std::vector<AttributeProto>& attributes) {
+  // See the doc-comment on the declaration (in implementation.h) for a description of the dual
+  // role played by input_types: it indicates both which inputs are present/absent and, for
+  // those that are present, their types.
   // TODO(ONNX): if it is desirable for infer_function_output_types to provide check_type, strict_mode, data_prop,
   // we can add them to the Python API. For now we just assume the default options.
   ShapeInferenceOptions options{true, 1, false};
