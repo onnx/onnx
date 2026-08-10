@@ -78,6 +78,10 @@ cmd = "lintrunner --all-files"
 description = "Build sphinx documentation"
 cmd = "cd docs/docsgen && make html"
 
+[feature.docs.tasks.docs-test]
+description = "Test sphinx documentation tooling"
+cmd = "pytest tests/python/defs_documentation_test.py tests/python/docsgen_test.py"
+
 [dependencies]
 libdate = ">=3.0.1,<4"
 libprotobuf = "<7"  # libprotobuf>=7 has breaking changes which need a dedicated PR

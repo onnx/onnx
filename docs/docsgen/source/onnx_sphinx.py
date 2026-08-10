@@ -24,6 +24,7 @@ from sphinx.util import logging
 import onnx
 from onnx.backend.test.case.base import _Exporter
 from onnx.defs import OpSchema
+from onnx.defs._documentation import generate_formal_parameter_tags
 
 REPO_DOCS_EXCLUDE = {
     "Changelog-ml.md",
@@ -104,10 +105,6 @@ This version of the operator has been {% if
 sch.deprecated %}deprecated{% else %}available{% endif %}
 **since version {{sch.since_version}}{% if
 sch.domain %} of domain {{sch.domain}}{% endif %}**.
-{% if len(sch.versions) > 1 %}
-Other versions of this operator:
-{% for v in sch.version[:-1] %} {{v}} {% endfor %}
-{% endif %}
 {% endif %}
 
 ### Summary
@@ -290,9 +287,6 @@ def get_operator_schemas(op_name, version=None, domain=None):
     :param domain: domain
     :return: list of schemas
     """
-    if version == "last" and op_name is not None:
-        if domain is not None:
-            return [onnx.defs.get_schema(op_name, domain=domain)]
     all_schemas = _get_all_schemas_with_history()
     if domain is None:
         domains = []
@@ -322,6 +316,11 @@ def get_operator_schemas(op_name, version=None, domain=None):
         elif op_name in ops:
             if version is None:
                 sch.extend(ops[op_name].values())
+            elif version == "last":
+                try:
+                    sch.append(onnx.defs.get_schema(op_name, domain=dom))
+                except onnx.defs.SchemaError:
+                    sch.append(ops[op_name][max(ops[op_name])])
             elif version in ops[op_name]:
                 sch.append(ops[op_name][version])
 
@@ -361,18 +360,6 @@ def get_markdown_doc(
         if sch.domain:
             return f"{sch.name} - {sch.since_version} ({sch.domain})"
         return f"{sch.name} - {sch.since_version}"
-
-    def format_option(obj):
-        opts = []
-        if OpSchema.FormalParameterOption.Optional == obj.option:
-            opts.append("optional")
-        elif OpSchema.FormalParameterOption.Variadic == obj.option:
-            opts.append("variadic")
-        if getattr(obj, "is_homogeneous", False):
-            opts.append("heterogeneous")
-        if opts:
-            return f" ({', '.join(opts)})"
-        return ""
 
     def format_example(code):
         return code
@@ -461,7 +448,7 @@ def get_markdown_doc(
         len=len,
         getattr=getattr,
         sorted=sorted,
-        format_option=format_option,
+        format_option=generate_formal_parameter_tags,
         get_constraint=get_constraint,
         getname=getname,
         enumerate=enumerate,
@@ -714,6 +701,13 @@ def is_last_schema(sch: OpSchema) -> bool:
     return last.since_version == sch.since_version
 
 
+def _clean_operator_docs(folder: str | os.PathLike[str]) -> None:
+    output_folder = pathlib.Path(folder)
+    for pattern in ("onnx_*.md", "text_diff_*.rst", "index.rst"):
+        for generated_file in output_folder.glob(pattern):
+            generated_file.unlink()
+
+
 def onnx_documentation_folder(
     folder, title="ONNX Operators", flog=None, max_opsets=None
 ):
@@ -803,6 +797,8 @@ def onnx_documentation_folder(
     if not os.path.exists(folder):
         os.makedirs(folder)
 
+    _clean_operator_docs(folder)
+
     pages = []
     tables = []
 
@@ -877,9 +873,16 @@ def _copy_repo_docs(app):
     # Copy all the markdown files from the folder except for the blocklisted ones
 
     logger.info("Copying Markdown files from '%s' to '%s'", docs_dir, dest_folder)
-    for file in docs_dir.glob("*.md"):
-        if file.name in REPO_DOCS_EXCLUDE:
-            continue
+    source_files = {
+        file.name: file
+        for file in docs_dir.glob("*.md")
+        if file.name not in REPO_DOCS_EXCLUDE
+    }
+    for stale_file in dest_folder.glob("*.md"):
+        if stale_file.name != "index.md" and stale_file.name not in source_files:
+            stale_file.unlink()
+            logger.info("Removing stale Markdown file '%s'", stale_file.name)
+    for file in source_files.values():
         shutil.copy(file, dest_folder)
         logger.info("Copying '%s'", file.name)
 

@@ -31,6 +31,8 @@ jobs:
           environments: docs
       - name: Install repository
         run: pixi run -e docs install
+      - name: Test Docs Tooling
+        run: pixi run -e docs docs-test
       - name: Build Docs
         run: pixi run -e docs docs-build
       - name: Upload artifact
