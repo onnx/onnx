@@ -53,28 +53,32 @@ semantics of the state update) that a real-world stateful-RNG design would
 need to address. Its purpose is just to illustrate how an Opaque type can
 be declared, produced, consumed, and type/shape-inferred.
 
-A model using these ops, expressed using ONNX's text format (see
-[Syntax.md](Syntax.md)), looks like this:
+An Opaque type can be written explicitly in ONNX's text format (see
+[Syntax.md](Syntax.md)) using the syntax `opaque(domain, name)` (or
+`opaque(name)` when no domain is needed, or plain `opaque()` when neither
+is specified). A model using the `CreateRNG` and `RandomTensor` ops above,
+expressed using ONNX's text format, looks like this:
 
 ```
 <
     ir_version: 10,
     opset_import: ["": 21, "test.rng": 1]
 >
-agraph (int64 seed) => (float[2,3] Y, rng2)
+agraph (int64 seed) => (float[2,3] Y, opaque(test.rng, RNG) rng2)
 {
     rng = test.rng.CreateRNG (seed)
     Y, rng2 = test.rng.RandomTensor <shape = [2, 3]> (rng)
 }
 ```
 
-Here, `rng` (the intermediate value produced by `CreateRNG`) and `rng2`
-(the second graph output, produced by `RandomTensor`) are both of the
-Opaque type `test.rng.RNG`. Since Opaque types are not (yet) expressible
-directly in ONNX's text format, they are left untyped in the source text
-above; running shape inference on the parsed model determines (and fills
-in) their types, based on the type/shape-inference functions registered
-for the `CreateRNG` and `RandomTensor` op schemas. See
+Here, `rng2` (the second graph output, produced by `RandomTensor`) is
+explicitly declared with the Opaque type `test.rng.RNG` using the
+`opaque(test.rng, RNG)` syntax. The intermediate value `rng` (produced by
+`CreateRNG`) is left untyped in the source text above; running shape
+inference on the parsed model determines (and fills in) its type, based on
+the type/shape-inference function registered for the `CreateRNG` op
+schema -- intermediate and output values may always be left untyped in
+this way and have their types filled in by shape inference. See
 `tests/python/opaque_type_test.py` for a complete, runnable version of
 this example (including the schema and type/shape-inference-function
 definitions for `CreateRNG` and `RandomTensor`), which also checks that
