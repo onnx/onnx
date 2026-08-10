@@ -9,12 +9,14 @@ producer/consumer of a custom domain's ops (much like custom ops themselves).
 This test illustrates the idea with a toy "random number generator" (RNG)
 type: one custom op creates a stateful RNG (represented via an Opaque type)
 from a seed value, and another custom op consumes the RNG (together with a
-requested shape) to produce a random tensor. The example is deliberately
-simple -- it does not implement an actual RNG algorithm nor address the many
-details (such as how/whether the RNG state is meant to be updated) that a
-real-world stateful-RNG design would need to address -- the goal here is
-just to show how Opaque types can be declared, produced, consumed, and
-type/shape-inferred.
+requested shape) to produce a random tensor, returning both the generated
+tensor and an updated RNG (since ONNX ops are functions and cannot mutate
+their inputs in place: any state update must be reflected as an explicit
+output). The example is deliberately simple -- it does not implement an
+actual RNG algorithm nor address the many details (such as the precise
+semantics of the RNG state update) that a real-world stateful-RNG design
+would need to address -- the goal here is just to show how Opaque types can
+be declared, produced, consumed, and type/shape-inferred.
 """
 
 from __future__ import annotations
@@ -22,8 +24,9 @@ from __future__ import annotations
 import onnx
 import onnx.checker
 import onnx.defs
+import onnx.parser
 import onnx.shape_inference
-from onnx import TensorProto, TypeProto, checker, helper
+from onnx import TensorProto, TypeProto, checker
 from onnx.defs import OpSchema
 
 # Use a dedicated custom domain for the two illustrative ops below.
@@ -61,7 +64,14 @@ def _create_rng_schema() -> OpSchema:
 
 
 def _random_tensor_schema() -> OpSchema:
-    """Schema for a custom op that uses an RNG to produce a random tensor."""
+    """Schema for a custom op that uses an RNG to produce a random tensor.
+
+    ONNX ops are (mathematical) functions and cannot have side effects. Since
+    using an RNG to generate a random value conceptually advances/updates its
+    internal state, that update is made explicit by returning a new/updated
+    RNG as a second output (alongside the generated tensor), rather than
+    mutating the input RNG in place.
+    """
 
     def infer_shape(ctx: onnx.shape_inference.InferenceContext) -> None:
         shape_attr = ctx.get_attribute("shape")
@@ -71,6 +81,9 @@ def _random_tensor_schema() -> OpSchema:
         for dim in shape:
             out.tensor_type.shape.dim.add().dim_value = dim
         ctx.set_output_type(0, out)
+        # The second output is the updated RNG, of the same (opaque) type as
+        # the input RNG.
+        ctx.set_output_type(1, ctx.get_input_type(0))
 
     schema = OpSchema(
         "RandomTensor",
@@ -78,10 +91,15 @@ def _random_tensor_schema() -> OpSchema:
         1,
         doc=(
             "Generates a tensor of the given shape with values drawn from a "
-            "(standard normal) distribution, using the given RNG."
+            "(standard normal) distribution, using the given RNG. Returns "
+            "the generated tensor along with the updated RNG, reflecting "
+            "the state-update side-effect of generating random values."
         ),
         inputs=[OpSchema.FormalParameter("rng", RNG_TYPE_STR)],
-        outputs=[OpSchema.FormalParameter("Y", "tensor(float)")],
+        outputs=[
+            OpSchema.FormalParameter("Y", "tensor(float)"),
+            OpSchema.FormalParameter("rng_out", RNG_TYPE_STR),
+        ],
         attributes=[OpSchema.Attribute("shape", OpSchema.AttrType.INTS)],
     )
     schema.set_type_and_shape_inference_function(infer_shape)
@@ -93,8 +111,13 @@ class TestOpaqueTypeRNGExample:
 
     Two custom ops (in a custom domain) are used together in a single model:
     * ``CreateRNG(seed) -> rng`` produces an opaque ``RNG`` value.
-    * ``RandomTensor(rng) -> Y`` consumes the opaque ``RNG`` value (along
-      with a ``shape`` attribute) to produce a random tensor.
+    * ``RandomTensor(rng) -> Y, rng_out`` consumes the opaque ``RNG`` value
+      (along with a ``shape`` attribute) to produce a random tensor,
+      returning the updated RNG (``rng_out``) alongside the generated
+      tensor (``Y``).
+
+    The model itself is described using ``onnx.parser.parse_model``, ONNX's
+    compact text format, as a single string.
     """
 
     @staticmethod
@@ -114,42 +137,35 @@ class TestOpaqueTypeRNGExample:
         self._deregister_schemas()
 
     @staticmethod
-    def _make_model(shape: list[int]) -> onnx.ModelProto:
-        seed = helper.make_tensor_value_info("seed", TensorProto.INT64, [])
-        y = helper.make_tensor_value_info("Y", TensorProto.FLOAT, shape)
-        rng_value_info = helper.make_value_info("rng", _make_rng_type_proto())
-
-        create_rng = helper.make_node("CreateRNG", ["seed"], ["rng"], domain=DOMAIN)
-        random_tensor = helper.make_node(
-            "RandomTensor", ["rng"], ["Y"], domain=DOMAIN, shape=shape
-        )
-
-        graph = helper.make_graph(
-            [create_rng, random_tensor],
-            "rng-example",
-            [seed],
-            [y],
-            value_info=[rng_value_info],
-        )
-        return helper.make_model(
-            graph,
-            opset_imports=[
-                helper.make_opsetid("", onnx.defs.onnx_opset_version()),
-                helper.make_opsetid(DOMAIN, 1),
-            ],
+    def _make_model() -> onnx.ModelProto:
+        # Note: the intermediate value "rng" and the second graph output
+        # "rng2" are of the opaque RNG type, which is not (yet) expressible
+        # in ONNX's text format. So they are left untyped here; their types
+        # are subsequently determined by shape inference (see below).
+        return onnx.parser.parse_model(
+            f"""
+            <
+                ir_version: 10,
+                opset_import: ["": {onnx.defs.onnx_opset_version()}, "{DOMAIN}": 1]
+            >
+            agraph (int64 seed) => (float[2,3] Y, rng2)
+            {{
+                rng = {DOMAIN}.CreateRNG (seed)
+                Y, rng2 = {DOMAIN}.RandomTensor <shape = [2, 3]> (rng)
+            }}
+            """
         )
 
     def test_opaque_rng_example(self) -> None:
-        shape = [2, 3]
-        model = self._make_model(shape)
-
-        # The model (using the opaque RNG type) should pass checker validation.
-        checker.check_model(model, full_check=True)
+        model = self._make_model()
 
         # Shape inference should successfully infer the opaque RNG type for
-        # the intermediate value, and the tensor type/shape for the final
-        # output.
+        # the intermediate value "rng" and the second output "rng2", as well
+        # as the tensor type/shape for the generated-tensor output "Y".
         inferred = onnx.shape_inference.infer_shapes(model, strict_mode=True)
+
+        # The inferred model should pass checker validation.
+        checker.check_model(inferred, full_check=True)
 
         value_infos = {vi.name: vi for vi in inferred.graph.value_info}
         rng_type = value_infos["rng"].type
@@ -157,6 +173,11 @@ class TestOpaqueTypeRNGExample:
         assert rng_type.opaque_type.domain == DOMAIN
         assert rng_type.opaque_type.name == "RNG"
 
+        rng_out_type = inferred.graph.output[1].type
+        assert rng_out_type.WhichOneof("value") == "opaque_type"
+        assert rng_out_type.opaque_type.domain == DOMAIN
+        assert rng_out_type.opaque_type.name == "RNG"
+
         output_type = inferred.graph.output[0].type
         assert output_type.tensor_type.elem_type == TensorProto.FLOAT
-        assert [d.dim_value for d in output_type.tensor_type.shape.dim] == shape
+        assert [d.dim_value for d in output_type.tensor_type.shape.dim] == [2, 3]

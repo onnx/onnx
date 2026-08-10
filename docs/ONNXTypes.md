@@ -6,6 +6,81 @@ SPDX-License-Identifier: Apache-2.0
 
 # ONNX Types
 
+## Opaque Type
+
+An Opaque type (`TypeProto.Opaque`) represents a value whose internal
+representation is not defined by the ONNX spec. It is identified by a
+`(domain, name)` pair, analogous to how a custom op is identified by a
+`(domain, op_type)` pair: the meaning and internal representation of an
+Opaque type are defined by, and only need to be understood by, the
+producer/consumer of the custom-domain ops that use it. ONNX itself treats
+values of an Opaque type as unstructured/unknown data (with type identified
+solely by `domain` and `name`) that gets passed between nodes.
+
+### Use-cases
+
+Opaque types let a custom domain introduce new kinds of values -- beyond
+tensors, sequences, maps, optionals, and sparse tensors -- that are only
+meaningful to the ops of that domain, without requiring any change to the
+ONNX spec itself. A typical use-case is a stateful *handle* (e.g., a file
+handle, a database connection, or a random-number generator) that is
+created by one custom op and consumed by others.
+
+### Example: a stateful random-number generator (RNG)
+
+The example below illustrates using an Opaque type to represent a stateful
+random-number generator (RNG). It uses two illustrative custom ops (in a
+custom domain `test.rng`, not part of the ONNX spec):
+
+* `CreateRNG(seed) -> rng` creates a new RNG (of Opaque type
+  `test.rng.RNG`) from an integer seed.
+* `RandomTensor(rng) -> Y, rng_out` uses the given RNG to generate a
+  tensor `Y` of a requested shape (with values drawn, say, from a standard
+  normal distribution), and also returns an updated RNG `rng_out`.
+
+Note that since ONNX ops are (side-effect free) functions, `RandomTensor`
+cannot simply mutate its input RNG in place to reflect the fact that
+generating a random value conceptually advances the RNG's internal state.
+Instead, that state update is made explicit: the op returns a new/updated
+RNG as an additional output, alongside the generated tensor. A caller that
+wants to draw a sequence of random tensors would thread the RNG through a
+sequence of calls to `RandomTensor`, using the `rng_out` from one call as
+the `rng` input to the next.
+
+This example is deliberately simple: it does not implement an actual RNG
+algorithm, nor does it pin down all the details (such as the precise
+semantics of the state update) that a real-world stateful-RNG design would
+need to address. Its purpose is just to illustrate how an Opaque type can
+be declared, produced, consumed, and type/shape-inferred.
+
+A model using these ops, expressed using ONNX's text format (see
+[Syntax.md](Syntax.md)), looks like this:
+
+```
+<
+    ir_version: 10,
+    opset_import: ["": 21, "test.rng": 1]
+>
+agraph (int64 seed) => (float[2,3] Y, rng2)
+{
+    rng = test.rng.CreateRNG (seed)
+    Y, rng2 = test.rng.RandomTensor <shape = [2, 3]> (rng)
+}
+```
+
+Here, `rng` (the intermediate value produced by `CreateRNG`) and `rng2`
+(the second graph output, produced by `RandomTensor`) are both of the
+Opaque type `test.rng.RNG`. Since Opaque types are not (yet) expressible
+directly in ONNX's text format, they are left untyped in the source text
+above; running shape inference on the parsed model determines (and fills
+in) their types, based on the type/shape-inference functions registered
+for the `CreateRNG` and `RandomTensor` op schemas. See
+`tests/python/opaque_type_test.py` for a complete, runnable version of
+this example (including the schema and type/shape-inference-function
+definitions for `CreateRNG` and `RandomTensor`), which also checks that
+the resulting model passes both `onnx.checker.check_model` and
+`onnx.shape_inference.infer_shapes`.
+
 ## Optional Type
 
 An optional type represents a reference to either an element (could be Tensor, Sequence, Map, or Sparse Tensor) or a null value. The optional type appears in model inputs, outputs, as well as intermediate values.
