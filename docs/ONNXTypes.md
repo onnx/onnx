@@ -8,23 +8,30 @@ SPDX-License-Identifier: Apache-2.0
 
 ## Opaque Type
 
-An Opaque type (`TypeProto.Opaque`) represents a value whose internal
-representation is not defined by the ONNX spec. It is identified by a
-`(domain, name)` pair, analogous to how a custom op is identified by a
-`(domain, op_type)` pair: the meaning and internal representation of an
-Opaque type are defined by, and only need to be understood by, the
-producer/consumer of the custom-domain ops that use it. ONNX itself treats
-values of an Opaque type as unstructured/unknown data (with type identified
-solely by `domain` and `name`) that gets passed between nodes.
+An Opaque type (`TypeProto.Opaque`) enables the definition of user-defined
+types, beyond the built-in kinds (tensors, sequences, maps, optionals, and
+sparse tensors) that ONNX defines directly in its proto schema. It is
+identified by a `(domain, name)` pair, analogous to how a custom op is
+identified by a `(domain, op_type)` pair: the meaning of an Opaque type is
+defined by, and only needs to be understood by, the producer/consumer of
+the custom-domain ops that use it. As with all ONNX types (including
+Tensor), the ONNX spec does not define how a value of an Opaque type is
+represented internally by a backend -- that is entirely up to the
+implementation. ONNX itself just treats an Opaque-typed value as an opaque
+piece of data (identified solely by its `domain` and `name`) that gets
+passed between nodes.
 
 ### Use-cases
 
-Opaque types let a custom domain introduce new kinds of values -- beyond
-tensors, sequences, maps, optionals, and sparse tensors -- that are only
-meaningful to the ops of that domain, without requiring any change to the
-ONNX spec itself. A typical use-case is a stateful *handle* (e.g., a file
-handle, a database connection, or a random-number generator) that is
-created by one custom op and consumed by others.
+Opaque types let a custom domain introduce new kinds of values -- along
+with custom ops that produce/consume them -- that are only meaningful to
+the ops of that domain, without requiring any change to the ONNX spec
+itself. This is useful, for example, to represent a stateful *handle*
+(e.g., a file handle, a database connection, or a random-number
+generator) that is created by one custom op and consumed by others. More
+generally, the Opaque type also gives the ONNX standard itself a way to
+introduce new built-in types in the future without needing to change the
+`TypeProto` schema.
 
 ### Example: a stateful random-number generator (RNG)
 
