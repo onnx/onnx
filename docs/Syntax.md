@@ -41,7 +41,7 @@ agraph (float[N, 128] X, float[128, 10] W, float[10] B) => (float[N, 10] C)
   checker::check_model(model);
 ```
 
-See the [test-cases](../onnx/test/cpp/parser_test.cc) for more examples illustrating the API and syntax.
+See the [test-cases](../tests/cpp/parser_test.cc) for more examples illustrating the API and syntax.
 
 ## The Syntax
 

@@ -110,7 +110,7 @@ from onnx root dir should work.
   - `helper.py`: tools for graph operation
   - `defs/`: a subfolder that defines the ONNX operators
   - `backend/`: reference implementation and backend test framework
-  - `test/`: test files
+- `tests/`: test files
 
 ### Auto generated files
 
@@ -209,7 +209,7 @@ pytest
 
 #### Cpp tests (googletest)
 
-Some functionalities are tested with googletest. Those tests are listed in `onnx/test/cpp`, and include tests for shape inference, data propagation, parser, and others.
+Some functionalities are tested with googletest. Those tests are listed in `tests/cpp`, and include tests for shape inference, data propagation, parser, and others.
 
 To run them, first build ONNX with `-DONNX_BUILD_TESTS=1` or `ONNX_BUILD_TESTS=1 pip install -e . -v`.
 
