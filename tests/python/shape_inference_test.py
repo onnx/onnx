@@ -9534,39 +9534,27 @@ class TestShapeInference(TestShapeInferenceHelper):
             graph, [make_tensor_value_info("z", TensorProto.FLOAT, (32, 3, 5))]
         )
 
-    def test_einsum_ellipsis_mismatched_rank_later_term_wider(self) -> None:
-        # The second ellipsis covers more dimensions than the first. This used to
-        # read past the end of the recorded ellipsis dimensions and segfault.
+    @pytest.mark.parametrize(
+        ("shape_x", "shape_y", "equation"),
+        [
+            # The second ellipsis covers more dimensions than the first. This
+            # used to read past the end of the recorded ellipsis dimensions and
+            # segfault.
+            ((), (2, 3), "...,...->..."),
+            # Same mismatch, with the wider ellipsis on the earlier term.
+            ((2, 3), (), "...,...->..."),
+            # Mismatch alongside explicit labels.
+            ((3, 4), (2, 3, 4), "...ij,...ij->...ij"),
+            # Mismatch with an implicit (omitted) output term.
+            ((), (2, 3), "...,..."),
+        ],
+    )
+    def test_einsum_ellipsis_mismatched_rank_raises(
+        self, shape_x, shape_y, equation: str
+    ) -> None:
         graph = self._make_graph(
-            [("x", TensorProto.FLOAT, ()), ("y", TensorProto.FLOAT, (2, 3))],
-            [make_node("Einsum", ["x", "y"], ["z"], equation="...,...->...")],
-            [],
-        )
-        with pytest.raises(onnx.shape_inference.InferenceError):
-            self._inferred(graph)
-
-    def test_einsum_ellipsis_mismatched_rank_earlier_term_wider(self) -> None:
-        graph = self._make_graph(
-            [("x", TensorProto.FLOAT, (2, 3)), ("y", TensorProto.FLOAT, ())],
-            [make_node("Einsum", ["x", "y"], ["z"], equation="...,...->...")],
-            [],
-        )
-        with pytest.raises(onnx.shape_inference.InferenceError):
-            self._inferred(graph)
-
-    def test_einsum_ellipsis_mismatched_rank_with_labels(self) -> None:
-        graph = self._make_graph(
-            [("x", TensorProto.FLOAT, (3, 4)), ("y", TensorProto.FLOAT, (2, 3, 4))],
-            [make_node("Einsum", ["x", "y"], ["z"], equation="...ij,...ij->...ij")],
-            [],
-        )
-        with pytest.raises(onnx.shape_inference.InferenceError):
-            self._inferred(graph)
-
-    def test_einsum_ellipsis_mismatched_rank_implicit_output(self) -> None:
-        graph = self._make_graph(
-            [("x", TensorProto.FLOAT, ()), ("y", TensorProto.FLOAT, (2, 3))],
-            [make_node("Einsum", ["x", "y"], ["z"], equation="...,...")],
+            [("x", TensorProto.FLOAT, shape_x), ("y", TensorProto.FLOAT, shape_y)],
+            [make_node("Einsum", ["x", "y"], ["z"], equation=equation)],
             [],
         )
         with pytest.raises(onnx.shape_inference.InferenceError):
