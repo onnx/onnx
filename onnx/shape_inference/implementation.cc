@@ -15,6 +15,7 @@
 
 #include "onnx/checker.h"
 #include "onnx/common/common.h"
+#include "onnx/common/constants.h"
 #include "onnx/common/file_utils.h"
 #include "onnx/common/proto_util.h"
 #include "onnx/common/scoped_resource.h"
@@ -143,7 +144,7 @@ void checkShapesAndTypes(const TypeProto& inferred_type, const TypeProto& existi
     const auto& inferred_opaque = inferred_type.opaque_type();
     const auto& existing_opaque = existing_type.opaque_type();
     if (existing_opaque.has_domain() && inferred_opaque.has_domain() &&
-        existing_opaque.domain() != inferred_opaque.domain()) {
+        NormalizeDomain(existing_opaque.domain()) != NormalizeDomain(inferred_opaque.domain())) {
       fail_type_inference(
           "domain mismatch for opaque type: existing=",
           existing_opaque.domain(),

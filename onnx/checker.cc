@@ -99,8 +99,10 @@ void check_value_info(const ValueInfoProto& value_info, const CheckerContext& ct
       enforce_has_field(type, key_type);
       enforce_has_field(type, value_type);
     } break;
-    case TypeProto::kOpaqueType:
-      break;
+    case TypeProto::kOpaqueType: {
+      const auto& type = value_info.type().opaque_type();
+      enforce_non_empty_field(type, name);
+    } break;
     case TypeProto::kSparseTensorType: {
       const auto& type = value_info.type().sparse_tensor_type();
       enforce_has_field(type, elem_type);

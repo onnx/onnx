@@ -21,6 +21,11 @@ implementation. ONNX itself just treats an Opaque-typed value as an opaque
 piece of data (identified solely by its `domain` and `name`) that gets
 passed between nodes.
 
+The `name` is required (an Opaque type must be named). The `domain`
+follows the same convention used for operator domains: it is optional,
+and an empty/unspecified `domain` is treated as equivalent to the
+standard `"ai.onnx"` domain.
+
 ### Use-cases
 
 Opaque types let a custom domain introduce new kinds of values -- along

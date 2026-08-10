@@ -106,4 +106,8 @@ An `opaque` type is written as `opaque()`, `opaque(name)`, or
 The single-argument form `opaque(name)` (where `name` may itself be a
 dotted `qualified-id`, e.g. `opaque(test.rng.RNG)`) is parsed as `name`
 only, with `domain` left empty -- matching the existing convention used
-for type-constraint strings in operator schemas.
+for type-constraint strings in operator schemas. The grammar itself
+allows `opaque()` with neither `domain` nor `name`, but `onnx.checker`
+requires a non-empty `name` for any Opaque type that is checked; an
+empty/unspecified `domain` is treated as equivalent to the standard
+`"ai.onnx"` domain, matching the convention used for operator domains.
