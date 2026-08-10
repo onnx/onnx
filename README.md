@@ -124,6 +124,15 @@ across different environments. A reproducibility check must also use the same
 source revision, dependency versions, toolchain, target platform, and build
 configuration, and then compare the resulting artifacts.
 
+### Why this matters
+
+A fixed build timestamp removes one known source of nondeterminism. When
+independent builds use the same controlled inputs, their artifacts can be
+compared byte for byte, with cryptographic digests providing a practical
+shortcut. A byte-for-byte match demonstrates identical outputs, while a
+mismatch identifies a difference that needs investigation. This comparison
+complements release provenance attestations; it does not replace them.
+
 Release artifacts are available from [PyPI](https://pypi.org/project/onnx/).
 
 # License
