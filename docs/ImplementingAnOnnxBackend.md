@@ -8,120 +8,91 @@ SPDX-License-Identifier: Apache-2.0
 
 ## What is an ONNX backend
 
-An ONNX backend is a library that can run ONNX models. Since many deep learning frameworks already exist, you likely won't need to create everything from scratch. Rather, you'll likely create a converter that converts ONNX models to the corresponding framework specific representation and then delegate the execution to the framework. For example, [onnx-caffe2 (as part of caffe2)](https://github.com/pytorch/pytorch/tree/v2.3.1/caffe2/python/onnx) , [onnx-coreml](https://github.com/onnx/onnx-coreml), and [onnx-tensorflow](https://github.com/onnx/onnx-tensorflow) are all implemented as converters.
+An ONNX backend is an implementation capable of executing ONNX models. A
+backend may interpret a model, compile or lower it to another representation,
+translate it for an existing framework, execute it directly on hardware, or
+combine these approaches. ONNX does not require a particular implementation
+strategy.
 
-## Unified backend interface
+The ONNX Python package provides an adapter interface for exposing an
+implementation to ONNX's backend-test runner. This Python interface is useful
+for conformance testing, but it is not itself part of the ONNX model or runtime
+specification.
 
-ONNX has defined a unified (Python) backend interface at [onnx/backend/base.py](/onnx/backend/base.py).
+## Python backend adapter interface
 
-There are three core concepts in this interface: `Device`, `Backend` and `BackendRep`.
+The interface is defined in [`onnx/backend/base.py`](/onnx/backend/base.py) and
+has three core concepts:
 
-- `Device` is a lightweight abstraction over various hardware, e.g., CPU, GPU, etc.
+- `Device` describes a device type and optional device identifier, such as
+  `CPU`, `CUDA`, or `CUDA:1`.
+- `Backend` accepts an ONNX model and prepares it for execution. Its
+  `run_model` and `run_node` helpers support one-off execution where the backend
+  implements the corresponding methods.
+- `BackendRep` is the prepared-model handle returned by `Backend.prepare`.
+  Repeated calls to `BackendRep.run` execute the model with new inputs.
 
-- `Backend` is the entity that will take an ONNX model with inputs, perform a computation, and then return the output.
+The adapter may wrap an implementation written in any language. Only the
+Python-facing adapter needs to implement this interface.
 
-  For one-off execution, users can use `run_node` and `run_model` to obtain results quickly.
+The repository's
+[`ReferenceEvaluatorBackend`](/tests/python/backend_reference_test.py) is the
+canonical current example. It adapts `ReferenceEvaluator` to `Backend` and
+`BackendRep`, declares CPU support, and runs the ONNX backend suite. For an
+external integration, [ONNX-TensorRT's backend test](https://github.com/onnx/onnx-tensorrt/blob/main/onnx_backend_test.py)
+uses the same interface and runner. Historical Caffe2, onnx-coreml, and
+onnx-tensorflow integrations are no longer used as current implementation
+examples because those projects or integrations are archived or unmaintained.
 
-  For repeated execution, users should use `prepare`, in which the `Backend` does all of the preparation work for executing the model repeatedly (e.g., loading initializers), and returns a `BackendRep` handle.
+## Integrating ONNX Backend Test
 
-- `BackendRep` is the handle that a `Backend` returns after preparing to execute a model repeatedly. Users will then pass inputs to the `run` function of `BackendRep` to retrieve the corresponding results.
+Create a module containing the backend adapter, construct `BackendTest`, and
+export its generated test cases for pytest or unittest discovery:
 
-Note that even though the ONNX unified backend interface is defined in Python, your backend does not need to be implemented in Python. For example, yours can be created in C++, and tools such as [pybind11](https://github.com/pybind/pybind11) or [cython](http://cython.org/) can be used to fulfill the interface.
+```python
+import onnx.backend.test
 
-## ONNX backend test
+from my_backend import MyBackend
 
-ONNX provides a standard backend test suite to assist backend implementation verification. It's strongly encouraged that each ONNX backend runs this test.
+pytest_plugins = ("onnx.backend.test.report",)
 
-Integrating the ONNX Backend Test suite into your CI is simple. The following are some examples demonstrating how a backend performs the integration:
-
-- [onnx-caffe2 onnx backend test](https://github.com/pytorch/pytorch/blob/v2.3.1/caffe2/python/onnx/tests/onnx_backend_test.py)
-
-- [onnx-tensorflow onnx backend test](https://github.com/onnx/onnx-tensorflow/blob/main/test/backend/test_onnx_backend.py)
-
-- [onnx-coreml onnx backend test](https://github.com/onnx/onnx-coreml/blob/master/tests/onnx_backend_models_test.py)
-
-If you have [pytest](https://docs.pytest.org/en/latest/) installed, you can get a coverage report after running the ONNX backend test to see how well your backend is doing:
-
+backend_test = onnx.backend.test.BackendTest(MyBackend, __name__)
+globals().update(backend_test.enable_report().test_cases)
 ```
+
+Use `include`, `exclude`, or `xfail` patterns to describe the cases supported
+by the implementation. Prefer narrowly scoped patterns with comments that
+explain the unsupported behavior. See the in-repository reference-backend test
+for current examples.
+
+The suite includes individual node cases, small model cases, representative
+lightweight models, and retained converted-model fixtures. See
+[ONNX Backend Test](OnnxBackendTest.md) for their sources, contribution process,
+and the transition from serialized node fixtures to in-memory test cases.
+
+## Coverage report
+
+Calling `enable_report()` and loading the `onnx.backend.test.report` pytest
+plugin adds a summary such as:
+
+```text
 ---------- onnx coverage: ----------
-Operators (passed/loaded/total): 21/21/70
+Operators (passed/loaded/total): <passed>/<loaded>/<total>
 ------------------------------------
-╒════════════════════╤════════════════════╕
-│ Operator           │ Attributes         │
-│                    │ (name: #values)    │
-╞════════════════════╪════════════════════╡
-│ Slice              │ axes: 2            │
-│                    │ ends: 3            │
-│                    │ starts: 3          │
-├────────────────────┼────────────────────┤
-│ Constant           │ value: 1           │
-├────────────────────┼────────────────────┤
-│ Concat             │ axis: 0            │
-├────────────────────┼────────────────────┤
-│ Conv               │ group: 6           │
-│                    │ kernel_shape: 5    │
-│                    │ pads: 4            │
-│                    │ strides: 3         │
-│                    │ auto_pad: 0        │
-│                    │ dilations: 0       │
-├────────────────────┼────────────────────┤
-│ Reshape            │ shape: 9           │
-├────────────────────┼────────────────────┤
-│ BatchNormalization │ consumed_inputs: 1 │
-│                    │ epsilon: 2         │
-│                    │ is_test: 1         │
-│                    │ momentum: 0        │
-│                    │ spatial: 0         │
-├────────────────────┼────────────────────┤
-│ Dropout            │ is_test: 1         │
-│                    │ ratio: 2           │
-├────────────────────┼────────────────────┤
-│ MaxPool            │ kernel_shape: 2    │
-│                    │ pads: 3            │
-│                    │ strides: 2         │
-│                    │ auto_pad: 0        │
-│                    │ dilations: 0       │
-├────────────────────┼────────────────────┤
-│ Transpose          │ perm: 1            │
-├────────────────────┼────────────────────┤
-│ MatMul             │ No attributes      │
-├────────────────────┼────────────────────┤
-│ Relu               │ No attributes      │
-├────────────────────┼────────────────────┤
-│ LRN                │ alpha: 2           │
-│                    │ beta: 1            │
-│                    │ bias: 2            │
-│                    │ size: 1            │
-├────────────────────┼────────────────────┤
-│ Add                │ axis: 1            │
-│                    │ broadcast: 1       │
-├────────────────────┼────────────────────┤
-│ Abs                │ No attributes      │
-├────────────────────┼────────────────────┤
-│ Pad                │ mode: 3            │
-│                    │ paddings: 2        │
-│                    │ value: 1           │
-├────────────────────┼────────────────────┤
-│ Softmax            │ axis: 0            │
-├────────────────────┼────────────────────┤
-│ GlobalAveragePool  │ No attributes      │
-├────────────────────┼────────────────────┤
-│ Mul                │ axis: 1            │
-│                    │ broadcast: 1       │
-├────────────────────┼────────────────────┤
-│ Sum                │ No attributes      │
-├────────────────────┼────────────────────┤
-│ Gemm               │ broadcast: 1       │
-│                    │ transB: 1          │
-│                    │ alpha: 0           │
-│                    │ beta: 0            │
-│                    │ transA: 0          │
-├────────────────────┼────────────────────┤
-│ AveragePool        │ kernel_shape: 3    │
-│                    │ pads: 3            │
-│                    │ strides: 2         │
-│                    │ auto_pad: 0        │
-╘════════════════════╧════════════════════╛
 ```
 
-The numbers in the line `Operators (passed/loaded/total): 21/21/70` indicate 21 operators covered in all test cases of your backend have passed, 21 operators were covered in all test cases of the ONNX backend test, and ONNX has a total of 70 operators.
+- `passed` is the number of operator types whose loaded cases passed.
+- `loaded` is the number of operator types exercised by the selected cases.
+- `total` is calculated from the schema registry in the installed ONNX version.
+
+These values change as schemas and tests are added, so documentation should not
+hard-code a particular operator count. The generated
+[ONNX Core Test Coverage](/docs/TestCoverage.md) and
+[ONNX-ML Test Coverage](/docs/TestCoverage-ml.md) reports contain the current
+repository-wide coverage.
+
+Passing the backend suite measures the implementation against the cases that
+were loaded. It is not a certification of complete ONNX support. The proposed
+wording for the relationship between backend tests and the normative
+specification is being discussed in
+[issue #8287](https://github.com/onnx/onnx/issues/8287).
