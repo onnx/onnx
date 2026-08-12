@@ -49,7 +49,7 @@ from onnx.reference import ReferenceEvaluator
 from onnx.reference.op_run import OpRun, OpRunExpand
 from onnx.reference.ops import load_op
 from onnx.reference.ops._op_common_indices import _get_indices, _is_out
-from onnx.reference.ops._op_list import Cast_19, Celu
+from onnx.reference.ops._op_list import Cast_19, Celu, NonZero
 from onnx.reference.ops.aionnx_preview_training._op_list import Adam
 from onnx.reference.ops.op_attention import _apply_causal, _softmax
 from onnx.reference.ops.op_celu import _vcelu1
@@ -1439,6 +1439,16 @@ class TestReferenceEvaluator:
         dy = Cast_19.eval(y, to=TensorProto.FLOAT)
         expected = x
         assert_allclose(dy, expected)
+
+    def test_eval_nonzero_scalar_true(self):
+        y = NonZero.eval(np.array(True))
+        assert y.shape == (0, 1)
+        assert y.dtype == np.int64
+
+    def test_eval_nonzero_scalar_false(self):
+        y = NonZero.eval(np.array(False))
+        assert y.shape == (0, 0)
+        assert y.dtype == np.int64
 
     def test_eval_celu_load_op(self):
         celu = load_op("", "Celu")
