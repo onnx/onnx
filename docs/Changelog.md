@@ -30040,7 +30040,7 @@ This version of the operator has been available since version 24 of the default 
   if the destination type is not a float 8 type.
 
   * Casting from floating point to:
-    * floating point: +/- infinity if OOR (out of range).
+    * floating point: round to nearest even (RNE) for in-range values; +/- infinity if OOR (out of range).
     * fixed point: undefined if OOR.
     * bool: +/- 0.0 to False; all else to True.
   * Casting from fixed point to:
@@ -31526,7 +31526,7 @@ This version of the operator has been available since version 24 of the default 
   if the destination type is not a float 8 type.
 
   * Casting from floating point to:
-    * floating point: +/- infinity if OOR (out of range).
+    * floating point: round to nearest even (RNE) for in-range values; +/- infinity if OOR (out of range).
     * fixed point: undefined if OOR.
     * bool: +/- 0.0 to False; all else to True.
   * Casting from fixed point to:

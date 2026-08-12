@@ -64,6 +64,43 @@ class TestSchema:
         )
         assert if_schema.non_deterministic
 
+    def test_cast_float_to_float_rounding_mode(self) -> None:
+        """Cast doc must specify round-to-nearest-even for in-range float->float conversion.
+
+        The non-float8 floating-point to floating-point rule must state the
+        rounding mode used for in-range values (e.g. float32 -> bfloat16),
+        not only the out-of-range behavior. The tie rule must be even
+        (round-to-nearest-even, a.k.a. RNE).
+        """
+        import re
+
+        cast_schema = defs.get_schema("Cast", 25)
+        doc = cast_schema.doc
+
+        # Extract the "floating point:" sub-bullet that lives directly under
+        # the "Casting from floating point to:" rule. This is the float -> float
+        # conversion rule (the non-float8 one; float8 has its own tables under a
+        # separate heading and is intentionally not used here).
+        match = re.search(
+            r"Casting from floating point to:[^\n]*\n\s*\*\s*floating point:\s*([^\n]+)",
+            doc,
+        )
+        assert match, "Could not locate the float->float conversion rule in the Cast doc"
+        float_to_float_rule = match.group(1).strip()
+
+        # The rule must specify round-to-nearest-even (RNE) for in-range values.
+        # Plain "round to nearest" without the even tie rule is not sufficient.
+        lowered = float_to_float_rule.lower()
+        assert (
+            "round to nearest even" in lowered
+            or "round-to-nearest-even" in lowered
+            or "RNE" in float_to_float_rule
+        ), (
+            "Cast float->float conversion rule must specify round-to-nearest-even "
+            "(RNE) for in-range values, not only OOR behavior. "
+            f"Found rule: {float_to_float_rule!r}"
+        )
+
     def test_celu_type_constraints(self) -> None:
         def allowed(schema):
             return next(
