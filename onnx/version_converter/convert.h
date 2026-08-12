@@ -972,14 +972,12 @@ class DefaultVersionConverter : public BaseVersionConverter {
     registerAdapter(
         std::make_unique<TypeRestriction>("QuantizeLinear", OpSetID(25), OpSetID(24), ir13_types_not_in_ir12));
 
-<<<<<<< HEAD
     // 26 -> 27
     registerAdapter(
         std::make_unique<CompatibleAdapter>("MeanVarianceNormalization", OpSetID(26), OpSetID(27)));
 
     // 27 -> 26
     registerAdapter(std::make_unique<MeanVarianceNormalization_27_26>());
-=======
     /******** 26 -> 27 ********/
     registerAdapter(std::make_unique<CompatibleAdapter>("Range", OpSetID(26), OpSetID(27)));
 
@@ -997,7 +995,6 @@ class DefaultVersionConverter : public BaseVersionConverter {
     const std::vector<TensorProto_DataType> celu_28_unallowed_types = {
         TensorProto_DataType_FLOAT16, TensorProto_DataType_BFLOAT16, TensorProto_DataType_DOUBLE};
     registerAdapter(std::make_unique<TypeRestriction>("Celu", OpSetID(28), OpSetID(27), celu_28_unallowed_types));
->>>>>>> upstream/main
   }
 
   ModelProto convert_version(const ModelProto& mp_in, const OpSetID& initial_version, const OpSetID& target_version)
