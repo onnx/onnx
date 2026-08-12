@@ -50,7 +50,7 @@ repos:
         language: system
         types: [python]
         files: "^(onnx|tools)/"
-        exclude: '(^onnx/backend/test/|^onnx/reference/ops/|^onnx/test/|^onnx/reference/reference_evaluator\.py)'
+        exclude: '(^onnx/backend/test/|^onnx/reference/ops/|^tests/|^onnx/reference/reference_evaluator\.py)'
         require_serial: true
 
       - id: clang-format
