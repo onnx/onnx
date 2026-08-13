@@ -119,6 +119,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             "The type of the input `y_zero_point` and the output `y`.")
         .SetDoc(QuantizeLinear_ver24_doc)
         .TypeAndShapeInferenceFunction([](ONNX_NAMESPACE::InferenceContext& ctx) {
+          // y_zero_point's type is known only if it is present as an input *and* its type could be inferred
+          // (e.g. it is not simply an unresolved formal parameter of an enclosing function).
           auto const zp_type = ctx.hasInput(2) ? ctx.getInputType(2) : nullptr;
           auto const output_dtype =
               static_cast<TensorProto_DataType>(getAttribute(ctx, "output_dtype", TensorProto::UNDEFINED));
@@ -135,9 +137,12 @@ ONNX_OPERATOR_SET_SCHEMA(
             propagateElemTypeFromInputToOutput(ctx, 2, 0);
           } else if (output_dtype != TensorProto::UNDEFINED) {
             propagateElemTypeFromAttributeToOutput(ctx, "output_dtype", 0);
-          } else {
+          } else if (!ctx.hasInput(2)) {
+            // y_zero_point is not provided: the output type defaults to uint8.
             updateOutputElemType(ctx, 0, TensorProto::UINT8);
           }
+          // Otherwise, y_zero_point is provided but its type could not be inferred, and no output_dtype
+          // attribute was specified: the output type cannot be determined, so it is left uninferred.
           if (!hasInputShape(ctx, 0)) {
             return;
           }
@@ -310,6 +315,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             "The type of the input `y_zero_point` and the output `y`.")
         .SetDoc(QuantizeLinear_ver23_doc)
         .TypeAndShapeInferenceFunction([](ONNX_NAMESPACE::InferenceContext& ctx) {
+          // y_zero_point's type is known only if it is present as an input *and* its type could be inferred
+          // (e.g. it is not simply an unresolved formal parameter of an enclosing function).
           auto const zp_type = ctx.hasInput(2) ? ctx.getInputType(2) : nullptr;
           auto const output_dtype =
               static_cast<TensorProto_DataType>(getAttribute(ctx, "output_dtype", TensorProto::UNDEFINED));
@@ -326,9 +333,12 @@ ONNX_OPERATOR_SET_SCHEMA(
             propagateElemTypeFromInputToOutput(ctx, 2, 0);
           } else if (output_dtype != TensorProto::UNDEFINED) {
             propagateElemTypeFromAttributeToOutput(ctx, "output_dtype", 0);
-          } else {
+          } else if (!ctx.hasInput(2)) {
+            // y_zero_point is not provided: the output type defaults to uint8.
             updateOutputElemType(ctx, 0, TensorProto::UINT8);
           }
+          // Otherwise, y_zero_point is provided but its type could not be inferred, and no output_dtype
+          // attribute was specified: the output type cannot be determined, so it is left uninferred.
           if (!hasInputShape(ctx, 0)) {
             return;
           }
@@ -509,6 +519,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             "The type of the input `y_zero_point` and the output `y`.")
         .SetDoc(QuantizeLinear_ver21_doc)
         .TypeAndShapeInferenceFunction([](ONNX_NAMESPACE::InferenceContext& ctx) {
+          // y_zero_point's type is known only if it is present as an input *and* its type could be inferred
+          // (e.g. it is not simply an unresolved formal parameter of an enclosing function).
           auto const zp_type = ctx.hasInput(2) ? ctx.getInputType(2) : nullptr;
           auto const output_dtype =
               static_cast<TensorProto_DataType>(getAttribute(ctx, "output_dtype", TensorProto::UNDEFINED));
@@ -525,9 +537,12 @@ ONNX_OPERATOR_SET_SCHEMA(
             propagateElemTypeFromInputToOutput(ctx, 2, 0);
           } else if (output_dtype != TensorProto::UNDEFINED) {
             propagateElemTypeFromAttributeToOutput(ctx, "output_dtype", 0);
-          } else {
+          } else if (!ctx.hasInput(2)) {
+            // y_zero_point is not provided: the output type defaults to uint8.
             updateOutputElemType(ctx, 0, TensorProto::UINT8);
           }
+          // Otherwise, y_zero_point is provided but its type could not be inferred, and no output_dtype
+          // attribute was specified: the output type cannot be determined, so it is left uninferred.
           if (!hasInputShape(ctx, 0)) {
             return;
           }
@@ -668,8 +683,13 @@ ONNX_OPERATOR_SET_SCHEMA(
         .SetDoc(QuantizeLinear_ver19_doc)
         .TypeAndShapeInferenceFunction([](ONNX_NAMESPACE::InferenceContext& ctx) {
           if (ctx.hasInput(2)) {
-            propagateElemTypeFromInputToOutput(ctx, 2, 0);
+            if (ctx.getInputType(2) != nullptr) {
+              propagateElemTypeFromInputToOutput(ctx, 2, 0);
+            }
+            // Otherwise, y_zero_point is provided but its type could not be inferred: the output
+            // type cannot be determined, so it is left uninferred.
           } else {
+            // y_zero_point is not provided: the output type defaults to uint8.
             updateOutputElemType(ctx, 0, TensorProto::UINT8);
           }
           if (!hasInputShape(ctx, 0)) {
@@ -775,8 +795,13 @@ ONNX_OPERATOR_SET_SCHEMA(
         .SetDoc(QuantizeLinear_ver13_doc)
         .TypeAndShapeInferenceFunction([](ONNX_NAMESPACE::InferenceContext& ctx) {
           if (ctx.hasInput(2)) {
-            propagateElemTypeFromInputToOutput(ctx, 2, 0);
+            if (ctx.getInputType(2) != nullptr) {
+              propagateElemTypeFromInputToOutput(ctx, 2, 0);
+            }
+            // Otherwise, y_zero_point is provided but its type could not be inferred: the output
+            // type cannot be determined, so it is left uninferred.
           } else {
+            // y_zero_point is not provided: the output type defaults to uint8.
             updateOutputElemType(ctx, 0, TensorProto::UINT8);
           }
           if (!hasInputShape(ctx, 0)) {
@@ -864,8 +889,13 @@ ONNX_OPERATOR_SET_SCHEMA(
         .SetDoc(QuantizeLinear_ver10_doc)
         .TypeAndShapeInferenceFunction([](ONNX_NAMESPACE::InferenceContext& ctx) {
           if (ctx.hasInput(2)) {
-            propagateElemTypeFromInputToOutput(ctx, 2, 0);
+            if (ctx.getInputType(2) != nullptr) {
+              propagateElemTypeFromInputToOutput(ctx, 2, 0);
+            }
+            // Otherwise, y_zero_point is provided but its type could not be inferred: the output
+            // type cannot be determined, so it is left uninferred.
           } else {
+            // y_zero_point is not provided: the output type defaults to uint8.
             updateOutputElemType(ctx, 0, TensorProto::UINT8);
           }
           if (!hasInputShape(ctx, 0)) {
