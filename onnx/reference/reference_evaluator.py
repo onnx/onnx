@@ -20,6 +20,10 @@ from onnx.onnx_pb import (
 )
 from onnx.reference import op_run
 from onnx.reference.ops_optimized import optimized_operators
+from onnx.reference.shape_annotation_checker import (
+    SymbolBindings,
+    check_value_against_type,
+)
 
 
 class ReferenceEvaluator:
@@ -53,6 +57,16 @@ class ReferenceEvaluator:
             added in `new_ops` and are used instead of the inner
             implementation if list *new_ops* does not already contain
             one.
+        check_shape_annotations: if True, every input and computed value is
+            checked, as it becomes available, against its declared static
+            shape annotation (see `docs/ShapeAnnotationSemantics.md
+            <https://github.com/onnx/onnx/blob/main/docs/ShapeAnnotationSemantics.md>`_).
+            A :class:`ShapeAnnotationError
+            <onnx.reference.shape_annotation_checker.ShapeAnnotationError>`
+            is raised on the first violation. This only supports today's
+            single, global namespace of symbolic dimension names, and only
+            validates tensor-typed values; it defaults to False, since it
+            is a diagnostic capability and not part of default execution.
 
     The class maps every node to its associated implementation.
     When a subgraph of a function is met,
@@ -200,7 +214,9 @@ class ReferenceEvaluator:
         verbose: int = 0,
         new_ops: list[type[op_run.OpRun]] | None = None,
         optimized: bool = True,
+        check_shape_annotations: bool = False,
     ) -> None:
+        self.check_shape_annotations_ = check_shape_annotations
         if optimized:
             if new_ops is None:
                 new_ops = optimized_operators.copy()
@@ -553,6 +569,7 @@ class ReferenceEvaluator:
         feed_inputs: dict[str, Any],
         attributes: dict[str, Any] | None = None,
         intermediate: bool = False,
+        check_shape_annotations: bool | None = None,
     ) -> dict[str, Any] | list[Any]:
         """Executes the onnx model.
 
@@ -564,6 +581,9 @@ class ReferenceEvaluator:
             intermediate: if True, the function returns all the results,
                 final ones and intermediates one in a same dictionary,
                 if False, only the final results are returned in a list
+            check_shape_annotations: overrides, for this call only, the
+                `check_shape_annotations` constructor argument; if None
+                (the default), the constructor's setting is used
 
         Returns:
             list of requested outputs if intermediate is False,
@@ -574,6 +594,17 @@ class ReferenceEvaluator:
         if isinstance(self.proto_, FunctionProto) and attributes is None:
             raise TypeError
 
+        do_check_shapes = (
+            self.check_shape_annotations_
+            if check_shape_annotations is None
+            else check_shape_annotations
+        )
+        # A fresh binding map is used for every call to run: a symbolic
+        # dimension name is existentially quantified once per inference
+        # run (see docs/ShapeAnnotationSemantics.md), so distinct calls to
+        # run must not share bindings.
+        bindings = SymbolBindings() if do_check_shapes else None
+
         # step 1: inputs and initializers
         results = {"": None}  # optional input
         results.update(self.rt_inits_)  # type: ignore[arg-type]
@@ -582,6 +613,11 @@ class ReferenceEvaluator:
             self._log(2, " +C %s: %s", k, v)  # type: ignore[arg-type]
         for k, v in feed_inputs.items():
             self._log(2, " +I %s: %s", k, v)  # type: ignore[arg-type]
+
+        if bindings is not None and self.input_types_:
+            input_types = dict(zip(self.input_names_, self.input_types_, strict=False))
+            for name, value in feed_inputs.items():
+                check_value_against_type(input_types.get(name), value, bindings, name)
 
         # step 2: execute nodes
         for node in self.rt_nodes_:
@@ -604,6 +640,20 @@ class ReferenceEvaluator:
             for name, value in zip(node.output, outputs, strict=False):
                 self._log(2, " + %s: %s", name, value)  # type: ignore[arg-type]
                 results[name] = value
+                if bindings is not None and self.all_types_:
+                    check_value_against_type(
+                        self.all_types_.get(name), value, bindings, name
+                    )
+
+        if bindings is not None and self.output_types_:
+            output_types = dict(
+                zip(self.output_names_, self.output_types_, strict=False)
+            )
+            for name in self.output_names_:
+                if name in results:
+                    check_value_against_type(
+                        output_types.get(name), results[name], bindings, name
+                    )
 
         # return the results
         if intermediate:

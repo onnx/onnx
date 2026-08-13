@@ -60,6 +60,7 @@ from onnx.reference.ops.op_col2im import (
 from onnx.reference.ops.op_conv import Conv, _conv_implementation
 from onnx.reference.ops_optimized import Conv as ConvOptimized
 from onnx.reference.ops_optimized.op_conv_optimized import _conv_implementation_im2col
+from onnx.reference.shape_annotation_checker import ShapeAnnotationError
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
@@ -6561,3 +6562,103 @@ class TestReferenceEvaluator:
         b = np.ones((2, 3), dtype=np.float16)
         with pytest.raises(ValueError, match="identical dtypes"):
             ref.run(None, {"A": a, "B": b})
+
+
+class TestReferenceEvaluatorShapeAnnotationChecking:
+    """Tests for the opt-in runtime shape-annotation validation feature
+    (``check_shape_annotations``), which checks executed values against
+    the shape annotations declared in the model (see
+    docs/ShapeAnnotationSemantics.md).
+    """
+
+    @staticmethod
+    def _shared_symbol_model() -> ModelProto:
+        # Add(X, Y) -> Z, all three sharing the symbolic dimension "N".
+        x = make_tensor_value_info("X", TensorProto.FLOAT, ["N"])
+        y = make_tensor_value_info("Y", TensorProto.FLOAT, ["N"])
+        z = make_tensor_value_info("Z", TensorProto.FLOAT, ["N"])
+        node = make_node("Add", ["X", "Y"], ["Z"])
+        graph = make_graph([node], "g", [x, y], [z])
+        return make_model(graph, opset_imports=[make_opsetid("", 18)])
+
+    def test_consistent_shapes_pass(self) -> None:
+        ref = ReferenceEvaluator(
+            self._shared_symbol_model(), check_shape_annotations=True
+        )
+        x = np.zeros((3,), dtype=np.float32)
+        y = np.zeros((3,), dtype=np.float32)
+        (got,) = ref.run(None, {"X": x, "Y": y})
+        assert got.shape == (3,)
+
+    def test_inconsistent_symbolic_dim_raises(self) -> None:
+        ref = ReferenceEvaluator(
+            self._shared_symbol_model(), check_shape_annotations=True
+        )
+        x = np.zeros((3,), dtype=np.float32)
+        y = np.zeros((4,), dtype=np.float32)
+        with pytest.raises(ShapeAnnotationError, match="symbolic dimension 'N'"):
+            ref.run(None, {"X": x, "Y": y})
+
+    def test_check_disabled_by_default(self) -> None:
+        # Without opting in, mismatched symbolic dims are not validated
+        # against each other (though the operator kernel itself may still
+        # raise for unrelated reasons).
+        ref = ReferenceEvaluator(self._shared_symbol_model())
+        x = np.zeros((3,), dtype=np.float32)
+        y = np.zeros((3,), dtype=np.float32)
+        (got,) = ref.run(None, {"X": x, "Y": y})
+        assert got.shape == (3,)
+
+    def test_per_call_override(self) -> None:
+        # check_shape_annotations can be toggled per run() call, overriding
+        # the constructor default.
+        ref = ReferenceEvaluator(
+            self._shared_symbol_model(), check_shape_annotations=False
+        )
+        x = np.zeros((3,), dtype=np.float32)
+        y = np.zeros((4,), dtype=np.float32)
+        with pytest.raises(ShapeAnnotationError):
+            ref.run(None, {"X": x, "Y": y}, check_shape_annotations=True)
+
+    def test_dim_value_mismatch_raises(self) -> None:
+        x = make_tensor_value_info("X", TensorProto.FLOAT, [4])
+        z = make_tensor_value_info("Z", TensorProto.FLOAT, [4])
+        node = make_node("Identity", ["X"], ["Z"])
+        graph = make_graph([node], "g", [x], [z])
+        model = make_model(graph, opset_imports=[make_opsetid("", 18)])
+        ref = ReferenceEvaluator(model, check_shape_annotations=True)
+        with pytest.raises(ShapeAnnotationError, match="declared dimension value"):
+            ref.run(None, {"X": np.zeros((5,), dtype=np.float32)})
+
+    def test_rank_mismatch_raises(self) -> None:
+        x = make_tensor_value_info("X", TensorProto.FLOAT, ["N", "M"])
+        z = make_tensor_value_info("Z", TensorProto.FLOAT, ["N", "M"])
+        node = make_node("Identity", ["X"], ["Z"])
+        graph = make_graph([node], "g", [x], [z])
+        model = make_model(graph, opset_imports=[make_opsetid("", 18)])
+        ref = ReferenceEvaluator(model, check_shape_annotations=True)
+        with pytest.raises(ShapeAnnotationError, match="rank"):
+            ref.run(None, {"X": np.zeros((3,), dtype=np.float32)})
+
+    def test_no_shape_annotations_is_a_noop(self) -> None:
+        x = make_tensor_value_info("X", TensorProto.FLOAT, None)
+        z = make_tensor_value_info("Z", TensorProto.FLOAT, None)
+        node = make_node("Identity", ["X"], ["Z"])
+        graph = make_graph([node], "g", [x], [z])
+        model = make_model(graph, opset_imports=[make_opsetid("", 18)])
+        ref = ReferenceEvaluator(model, check_shape_annotations=True)
+        (got,) = ref.run(None, {"X": np.zeros((7, 9), dtype=np.float32)})
+        assert got.shape == (7, 9)
+
+    def test_graph_output_mismatch_raises(self) -> None:
+        # "W" is only annotated as a graph output (not also listed in
+        # value_info), so this exercises the graph-output-specific check
+        # rather than the per-node-output check.
+        x = make_tensor_value_info("X", TensorProto.FLOAT, [3])
+        w = make_tensor_value_info("W", TensorProto.FLOAT, [4])
+        node = make_node("Identity", ["X"], ["W"])
+        graph = make_graph([node], "g", [x], [w])
+        model = make_model(graph, opset_imports=[make_opsetid("", 18)])
+        ref = ReferenceEvaluator(model, check_shape_annotations=True)
+        with pytest.raises(ShapeAnnotationError, match="declared dimension value"):
+            ref.run(None, {"X": np.zeros((3,), dtype=np.float32)})
