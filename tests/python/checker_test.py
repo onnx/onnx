@@ -192,6 +192,32 @@ class TestChecker:
 
         checker.check_graph(graph)
 
+    def test_check_opaque_type_requires_name(self) -> None:
+        # Opaque types must have a non-empty name (domain is optional and, if
+        # empty, is treated as equivalent to the standard "ai.onnx" domain,
+        # matching the convention used for operator domains).
+        model = onnx.parser.parse_model(
+            """
+            <ir_version: 10, opset_import: ["": 21]>
+            agraph (opaque() x) => (opaque() y) {
+                y = Identity(x)
+            }
+            """
+        )
+        with pytest.raises(checker.ValidationError):
+            checker.check_model(model)
+
+    def test_check_opaque_type_with_name(self) -> None:
+        model = onnx.parser.parse_model(
+            """
+            <ir_version: 10, opset_import: ["": 21]>
+            agraph (opaque(test.domain,MyType) x) => (opaque(test.domain,MyType) y) {
+                y = Identity(x)
+            }
+            """
+        )
+        checker.check_model(model)
+
     def test_check_graph_empty_initializer_name(self) -> None:
         node = helper.make_node("Relu", ["X"], ["Y"], name="test")
         graph = helper.make_graph(

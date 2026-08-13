@@ -41,7 +41,7 @@ agraph (float[N, 128] X, float[128, 10] W, float[10] B) => (float[N, 10] C)
   checker::check_model(model);
 ```
 
-See the [test-cases](../onnx/test/cpp/parser_test.cc) for more examples illustrating the API and syntax.
+See the [test-cases](../tests/cpp/parser_test.cc) for more examples illustrating the API and syntax.
 
 ## The Syntax
 
@@ -49,12 +49,16 @@ The grammar below describes the syntax:
 
 ```bnf
    id-list ::= id (',' id)*
+   qualified-id ::= id ('.' id)*
    quotable-id-list ::= quotable-id (',' quotable-id)*
    tensor-dim ::= '?' | quotable-id | int-constant
    tensor-dims ::= tensor-dim (',' tensor-dim)*
    tensor-type ::= prim-type | prim-type '[' ']' | prim-type '[' tensor-dims ']'
    type ::= tensor-type | 'seq' '(' type ')' | 'map' '(' prim-type ',' type ')'
             | 'optional' '(' type ')' | 'sparse_tensor' '(' tensor-type ')'
+            | opaque-type
+   opaque-type ::= 'opaque' '(' ')' | 'opaque' '(' qualified-id ')'
+                   | 'opaque' '(' qualified-id ',' id ')'
    value-info ::= type quotable-id
    value-infos ::= value-info (',' value-info)*
    value-info-list ::= '(' value-infos? ')
@@ -95,3 +99,15 @@ The grammar below describes the syntax:
    function ::= other-data-list? id fun-attr-list? quotable-id fun-input-list '=>' fun-output-list fun-value-infos node-list
    model ::= other-data-list? graph function*
 ```
+
+An `opaque` type is written as `opaque()`, `opaque(name)`, or
+`opaque(domain, name)`, identifying a `TypeProto.Opaque` value by its
+`(domain, name)` pair (see [ONNXTypes.md](ONNXTypes.md#opaque-type)).
+The single-argument form `opaque(name)` (where `name` may itself be a
+dotted `qualified-id`, e.g. `opaque(test.rng.RNG)`) is parsed as `name`
+only, with `domain` left empty -- matching the existing convention used
+for type-constraint strings in operator schemas. The grammar itself
+allows `opaque()` with neither `domain` nor `name`, but `onnx.checker`
+requires a non-empty `name` for any Opaque type that is checked; an
+empty/unspecified `domain` is treated as equivalent to the standard
+`"ai.onnx"` domain, matching the convention used for operator domains.
