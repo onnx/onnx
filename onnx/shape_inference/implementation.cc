@@ -1126,13 +1126,16 @@ std::vector<TypeProto> InferFunctionOutputTypes(
   ShapeInferenceOptions options{true, 1, false};
   FunctionInferenceContext ctx(function_proto, input_types, attributes, options);
   auto opset_imports = GetOpsetImportsFromProto(function_proto);
+  // ShapeInferenceImplBase stores this map by reference, so bind it to the
+  // function scope instead of passing a temporary that immediately dangles.
+  ModelLocalFunctionsMap model_local_functions_map;
   ShapeInferenceImplBase base(
       nullptr, // no graph
       {}, // outer_scope_value_types_by_name
       opset_imports,
       options,
       /*symbol_table*/ nullptr,
-      /*model_local_functions_map*/ {},
+      model_local_functions_map,
       /*schema_registry*/ OpSchemaRegistry::Instance(),
       /*generated_shape_data_by_name*/ nullptr);
   base.Process(function_proto, ctx);
