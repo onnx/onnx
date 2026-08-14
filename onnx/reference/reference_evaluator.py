@@ -428,10 +428,21 @@ class ReferenceEvaluator:
         }
         if self.input_types_:
             all_types = {i.name: i.type for i in self.onnx_graph_.input}
-            if hasattr(self.proto_, "value_info"):
-                for shape_type in self.proto_.value_info:
-                    all_types[shape_type.name] = shape_type.type
+            # Intermediate value annotations (`value_info`) live on the
+            # graph itself (`graph.value_info`), not on the top-level
+            # ModelProto, so look them up on `self.onnx_graph_`.
+            for shape_type in self.onnx_graph_.value_info:
+                all_types[shape_type.name] = shape_type.type
             self.all_types_ = all_types
+        elif isinstance(self.proto_, FunctionProto):
+            # A FunctionProto's `input`/`output` are plain names with no
+            # type of their own; any type/shape annotation for its
+            # inputs, outputs, or intermediate values is instead recorded
+            # in `value_info` (see the FunctionProto definition).
+            self.all_types_ = {
+                shape_type.name: shape_type.type
+                for shape_type in self.proto_.value_info
+            }
         else:
             self.all_types_ = None
 
@@ -628,16 +639,25 @@ class ReferenceEvaluator:
         for k, v in feed_inputs.items():
             self._log(2, " +I %s: %s", k, v)  # type: ignore[arg-type]
 
-        if bindings is not None and self.input_types_:
-            input_types = dict(zip(self.input_names_, self.input_types_, strict=False))
-            for name in self.input_names_:
-                # Check every declared input, whether its value was
-                # explicitly fed or comes from a same-named initializer
-                # used as a default value.
-                if name in results:
-                    check_value_against_type(
-                        input_types.get(name), results[name], bindings, name
-                    )
+        if bindings is not None:
+            # A FunctionProto's inputs are plain names with no declared
+            # type of their own (see the FunctionProto definition); any
+            # type/shape annotation for them lives in `value_info`
+            # instead, which is folded into `all_types_` (see `_init`).
+            input_types = (
+                dict(zip(self.input_names_, self.input_types_, strict=False))
+                if self.input_types_
+                else self.all_types_
+            )
+            if input_types:
+                for name in self.input_names_:
+                    # Check every declared input, whether its value was
+                    # explicitly fed or comes from a same-named initializer
+                    # used as a default value.
+                    if name in results:
+                        check_value_against_type(
+                            input_types.get(name), results[name], bindings, name
+                        )
 
         # step 2: execute nodes
         for node in self.rt_nodes_:
@@ -657,6 +677,15 @@ class ReferenceEvaluator:
                 outputs = node.run(
                     *inputs, context=results, bindings=bindings, **linked_attributes
                 )
+            elif bindings is not None and isinstance(node, op_run.OpFunction):
+                # OpFunction does not need the outer-scope `context`, but
+                # like If/Loop/Scan it invokes a nested evaluator (the
+                # function body), so the active bindings must still be
+                # forwarded to it. Most other node classes (including
+                # optimized/vectorized ones) override `run()` with a
+                # signature that does not accept `bindings`, so it must
+                # not be passed to them.
+                outputs = node.run(*inputs, bindings=bindings, **linked_attributes)
             else:
                 outputs = node.run(*inputs, **linked_attributes)
             for name, value in zip(node.output, outputs, strict=False):
@@ -667,15 +696,22 @@ class ReferenceEvaluator:
                         self.all_types_.get(name), value, bindings, name
                     )
 
-        if bindings is not None and self.output_types_:
-            output_types = dict(
-                zip(self.output_names_, self.output_types_, strict=False)
+        if bindings is not None:
+            # See the comment above the input check: a FunctionProto's
+            # outputs are plain names, so fall back to `all_types_`
+            # (built from `value_info`) when there is no positional
+            # `output_types_` list (i.e. `self.proto_` is a FunctionProto).
+            output_types = (
+                dict(zip(self.output_names_, self.output_types_, strict=False))
+                if self.output_types_
+                else self.all_types_
             )
-            for name in self.output_names_:
-                if name in results:
-                    check_value_against_type(
-                        output_types.get(name), results[name], bindings, name
-                    )
+            if output_types:
+                for name in self.output_names_:
+                    if name in results:
+                        check_value_against_type(
+                            output_types.get(name), results[name], bindings, name
+                        )
 
         # return the results
         if intermediate:

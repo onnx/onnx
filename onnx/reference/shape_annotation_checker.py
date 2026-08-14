@@ -11,6 +11,13 @@ map from such names to the (non-negative integer) value they were first
 observed to take during a run; every later occurrence of the same name is
 checked against that first binding.
 
+As a convenience, alongside shape checking this module also validates a
+tensor-typed value's element type (``elem_type``) against its declared
+``TensorProto.DataType``, since this is a simple, purely local check (it
+does not involve symbolic dimensions or bindings) that ONNX's static
+checker already performs, but which is otherwise easy to violate
+undetected at runtime (e.g. a kernel producing the wrong dtype).
+
 This module only supports today's single, global namespace of symbolic
 dimension names (a name means the same thing everywhere it occurs in a
 model, including inside nested subgraphs) and only validates tensor-typed
@@ -22,6 +29,8 @@ a ``Loop`` body, or to one element of a ``Sequence``) are not addressed; see
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
+
+from onnx.helper import tensor_dtype_to_np_dtype
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
@@ -139,6 +148,10 @@ def check_value_against_type(
         value: the actual runtime value produced during execution.
         bindings: the :class:`SymbolBindings` for the current inference run.
         name: the name of the value being checked, used only for error messages.
+
+    Raises:
+        ShapeAnnotationError: if the value's shape or element type does not
+            match its declared type.
     """
     if type_proto is None or not type_proto.HasField("tensor_type"):
         return
@@ -148,5 +161,19 @@ def check_value_against_type(
         # match its declared type); nothing to check here.
         return
     tensor_type = type_proto.tensor_type
+    if tensor_type.elem_type:  # 0 means UNDEFINED, i.e. no declared element type.
+        actual_dtype = getattr(value, "dtype", None)
+        if actual_dtype is not None:
+            try:
+                declared_dtype = tensor_dtype_to_np_dtype(tensor_type.elem_type)
+            except KeyError:
+                # No corresponding numpy dtype (e.g. a storage-only element
+                # type); nothing to compare against.
+                declared_dtype = None
+            if declared_dtype is not None and actual_dtype != declared_dtype:
+                raise ShapeAnnotationError(
+                    f"Value {name!r}: declared element type {declared_dtype} does not "
+                    f"match actual element type {actual_dtype}."
+                )
     shape_proto = tensor_type.shape if tensor_type.HasField("shape") else None
     check_shape(shape_proto, shape, bindings, name)

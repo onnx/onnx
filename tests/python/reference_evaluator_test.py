@@ -6775,3 +6775,100 @@ class TestReferenceEvaluatorShapeAnnotationChecking:
         x = np.zeros((3,), dtype=np.float32)
         with pytest.raises(ShapeAnnotationError, match="symbolic dimension 'N'"):
             ref.run(None, {"cond": np.array(False), "X": x})
+
+    def test_elem_type_mismatch_raises(self) -> None:
+        # "Z" is declared FLOAT, but Identity(X) with X as FLOAT16 produces
+        # a FLOAT16 value, exercising the element-type check (as opposed to
+        # the shape check).
+        x = make_tensor_value_info("X", TensorProto.FLOAT16, [3])
+        z = make_tensor_value_info("Z", TensorProto.FLOAT, [3])
+        node = make_node("Identity", ["X"], ["Z"])
+        graph = make_graph([node], "g", [x], [z])
+        model = make_model(graph, opset_imports=[make_opsetid("", 18)])
+        ref = ReferenceEvaluator(model, check_shape_annotations=True)
+        with pytest.raises(ShapeAnnotationError, match="declared element type"):
+            ref.run(None, {"X": np.zeros((3,), dtype=np.float16)})
+
+    def test_intermediate_value_info_mismatch_raises(self) -> None:
+        # "Y" is an intermediate value (not a graph input or output)
+        # annotated via value_info; Cast to INT32 makes it violate its
+        # declared FLOAT type, exercising the intermediate-value check on a
+        # plain ModelProto (not a subgraph or function).
+        x = make_tensor_value_info("X", TensorProto.FLOAT, [3])
+        z = make_tensor_value_info("Z", TensorProto.INT32, [3])
+        y_info = make_tensor_value_info("Y", TensorProto.FLOAT, [3])
+        nodes = [
+            make_node("Cast", ["X"], ["Y"], to=TensorProto.INT32),
+            make_node("Identity", ["Y"], ["Z"]),
+        ]
+        graph = make_graph([nodes[0], nodes[1]], "g", [x], [z], value_info=[y_info])
+        model = make_model(graph, opset_imports=[make_opsetid("", 18)])
+        ref = ReferenceEvaluator(model, check_shape_annotations=True)
+        with pytest.raises(ShapeAnnotationError, match="declared element type"):
+            ref.run(None, {"X": np.zeros((3,), dtype=np.float32)})
+
+    @staticmethod
+    def _function_shared_symbol_model() -> ModelProto:
+        # A local function Identity2(X) = Identity(X), called on "X"
+        # annotated with symbolic dimension "N" at the call site, while the
+        # function body itself declares its input/output as "N" too (via
+        # value_info on the FunctionProto). This exercises that bindings
+        # are shared between the caller and the function body.
+        f_in = make_tensor_value_info("fX", TensorProto.FLOAT, ["N"])
+        f_out = make_tensor_value_info("fY", TensorProto.FLOAT, ["N"])
+        function = make_function(
+            "test_domain",
+            "Identity2",
+            inputs=["fX"],
+            outputs=["fY"],
+            nodes=[make_node("Identity", ["fX"], ["fY"])],
+            opset_imports=[make_opsetid("", 18)],
+            value_info=[f_in, f_out],
+        )
+        x = make_tensor_value_info("X", TensorProto.FLOAT, ["N"])
+        z = make_tensor_value_info("Z", TensorProto.FLOAT, ["N"])
+        node = make_node("Identity2", ["X"], ["Z"], domain="test_domain")
+        graph = make_graph([node], "g", [x], [z])
+        return make_model(
+            graph,
+            opset_imports=[make_opsetid("", 18), make_opsetid("test_domain", 1)],
+            functions=[function],
+        )
+
+    def test_function_body_shares_outer_symbol(self) -> None:
+        ref = ReferenceEvaluator(
+            self._function_shared_symbol_model(), check_shape_annotations=True
+        )
+        x = np.zeros((3,), dtype=np.float32)
+        (got,) = ref.run(None, {"X": x})
+        assert got.shape == (3,)
+
+    def test_function_body_conflicting_symbol_raises(self) -> None:
+        # Same model, but the function body's own value_info claims a
+        # fixed shape for its output that conflicts with the caller's "N"
+        # (bound to 3 by "X"). This should only be caught if the function
+        # body's checks share the caller's SymbolBindings.
+        f_in = make_tensor_value_info("fX", TensorProto.FLOAT, ["N"])
+        f_out = make_tensor_value_info("fY", TensorProto.FLOAT, [7])
+        function = make_function(
+            "test_domain",
+            "Identity2",
+            inputs=["fX"],
+            outputs=["fY"],
+            nodes=[make_node("Identity", ["fX"], ["fY"])],
+            opset_imports=[make_opsetid("", 18)],
+            value_info=[f_in, f_out],
+        )
+        x = make_tensor_value_info("X", TensorProto.FLOAT, ["N"])
+        z = make_tensor_value_info("Z", TensorProto.FLOAT, ["N"])
+        node = make_node("Identity2", ["X"], ["Z"], domain="test_domain")
+        graph = make_graph([node], "g", [x], [z])
+        model = make_model(
+            graph,
+            opset_imports=[make_opsetid("", 18), make_opsetid("test_domain", 1)],
+            functions=[function],
+        )
+        ref = ReferenceEvaluator(model, check_shape_annotations=True)
+        x_val = np.zeros((3,), dtype=np.float32)
+        with pytest.raises(ShapeAnnotationError, match="declared dimension value"):
+            ref.run(None, {"X": x_val})
