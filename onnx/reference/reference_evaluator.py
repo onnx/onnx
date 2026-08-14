@@ -570,6 +570,7 @@ class ReferenceEvaluator:
         attributes: dict[str, Any] | None = None,
         intermediate: bool = False,
         check_shape_annotations: bool | None = None,
+        _bindings: SymbolBindings | None = None,
     ) -> dict[str, Any] | list[Any]:
         """Executes the onnx model.
 
@@ -584,6 +585,13 @@ class ReferenceEvaluator:
             check_shape_annotations: overrides, for this call only, the
                 `check_shape_annotations` constructor argument; if None
                 (the default), the constructor's setting is used
+            _bindings: internal parameter used to propagate the active
+                `SymbolBindings` instance into a nested evaluator run
+                (subgraph body of If/Loop/Scan, or a function body), so
+                that a symbolic dimension shared with the caller is
+                checked against the same bindings (single global
+                namespace, see docs/ShapeAnnotationSemantics.md). Not
+                meant to be supplied directly by external callers.
 
         Returns:
             list of requested outputs if intermediate is False,
@@ -599,11 +607,17 @@ class ReferenceEvaluator:
             if check_shape_annotations is None
             else check_shape_annotations
         )
-        # A fresh binding map is used for every call to run: a symbolic
-        # dimension name is existentially quantified once per inference
-        # run (see docs/ShapeAnnotationSemantics.md), so distinct calls to
-        # run must not share bindings.
-        bindings = SymbolBindings() if do_check_shapes else None
+        # A fresh binding map is used for every top-level call to run: a
+        # symbolic dimension name is existentially quantified once per
+        # inference run (see docs/ShapeAnnotationSemantics.md). Nested
+        # evaluator calls (subgraph/function bodies invoked while
+        # executing this same top-level run) reuse the bindings passed
+        # via `_bindings` instead, so that a symbolic dimension shared
+        # across scopes is checked consistently.
+        if _bindings is not None:
+            bindings = _bindings
+        else:
+            bindings = SymbolBindings() if do_check_shapes else None
 
         # step 1: inputs and initializers
         results = {"": None}  # optional input
@@ -616,8 +630,14 @@ class ReferenceEvaluator:
 
         if bindings is not None and self.input_types_:
             input_types = dict(zip(self.input_names_, self.input_types_, strict=False))
-            for name, value in feed_inputs.items():
-                check_value_against_type(input_types.get(name), value, bindings, name)
+            for name in self.input_names_:
+                # Check every declared input, whether its value was
+                # explicitly fed or comes from a same-named initializer
+                # used as a default value.
+                if name in results:
+                    check_value_against_type(
+                        input_types.get(name), results[name], bindings, name
+                    )
 
         # step 2: execute nodes
         for node in self.rt_nodes_:
@@ -634,7 +654,9 @@ class ReferenceEvaluator:
             if node.has_linked_attribute and attributes:
                 linked_attributes["linked_attributes"] = attributes
             if node.need_context():
-                outputs = node.run(*inputs, context=results, **linked_attributes)
+                outputs = node.run(
+                    *inputs, context=results, bindings=bindings, **linked_attributes
+                )
             else:
                 outputs = node.run(*inputs, **linked_attributes)
             for name, value in zip(node.output, outputs, strict=False):

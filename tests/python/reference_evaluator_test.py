@@ -6600,14 +6600,34 @@ class TestReferenceEvaluatorShapeAnnotationChecking:
             ref.run(None, {"X": x, "Y": y})
 
     def test_check_disabled_by_default(self) -> None:
-        # Without opting in, mismatched symbolic dims are not validated
-        # against each other (though the operator kernel itself may still
-        # raise for unrelated reasons).
-        ref = ReferenceEvaluator(self._shared_symbol_model())
-        x = np.zeros((3,), dtype=np.float32)
-        y = np.zeros((3,), dtype=np.float32)
-        (got,) = ref.run(None, {"X": x, "Y": y})
-        assert got.shape == (3,)
+        # Without opting in, mismatched symbolic dims are not validated.
+        # Use two independent Identity nodes (rather than Add) so the
+        # kernels themselves never compare X and Y: only the annotation
+        # checker would notice that they disagree on "N".
+        x = make_tensor_value_info("X", TensorProto.FLOAT, ["N"])
+        y = make_tensor_value_info("Y", TensorProto.FLOAT, ["N"])
+        a = make_tensor_value_info("A", TensorProto.FLOAT, ["N"])
+        b = make_tensor_value_info("B", TensorProto.FLOAT, ["N"])
+        nodes = [
+            make_node("Identity", ["X"], ["A"]),
+            make_node("Identity", ["Y"], ["B"]),
+        ]
+        graph = make_graph(nodes, "g", [x, y], [a, b])
+        model = make_model(graph, opset_imports=[make_opsetid("", 18)])
+
+        ref = ReferenceEvaluator(model)
+        x_val = np.zeros((3,), dtype=np.float32)
+        y_val = np.zeros((4,), dtype=np.float32)
+        got_a, got_b = ref.run(None, {"X": x_val, "Y": y_val})
+        assert got_a.shape == (3,)
+        assert got_b.shape == (4,)
+
+        # Confirm that enabling the check on the very same model/inputs
+        # does raise, so the test above is actually exercising the
+        # disabled-by-default behavior and not merely a model that always
+        # succeeds.
+        with pytest.raises(ShapeAnnotationError, match="symbolic dimension 'N'"):
+            ref.run(None, {"X": x_val, "Y": y_val}, check_shape_annotations=True)
 
     def test_per_call_override(self) -> None:
         # check_shape_annotations can be toggled per run() call, overriding
@@ -6662,3 +6682,96 @@ class TestReferenceEvaluatorShapeAnnotationChecking:
         ref = ReferenceEvaluator(model, check_shape_annotations=True)
         with pytest.raises(ShapeAnnotationError, match="declared dimension value"):
             ref.run(None, {"X": np.zeros((3,), dtype=np.float32)})
+
+    def test_initializer_default_input_mismatch_raises(self) -> None:
+        # "X" is declared with shape [4] but is not fed; it falls back to
+        # its same-named initializer, whose actual shape is [5]. This
+        # should be caught even though "X" never appears in feed_inputs.
+        x = make_tensor_value_info("X", TensorProto.FLOAT, [4])
+        z = make_tensor_value_info("Z", TensorProto.FLOAT, [4])
+        node = make_node("Identity", ["X"], ["Z"])
+        init = make_tensor(
+            "X", TensorProto.FLOAT, [5], np.zeros((5,), dtype=np.float32)
+        )
+        graph = make_graph([node], "g", [x], [z], initializer=[init])
+        model = make_model(graph, opset_imports=[make_opsetid("", 18)])
+        ref = ReferenceEvaluator(model, check_shape_annotations=True)
+        with pytest.raises(ShapeAnnotationError, match="declared dimension value"):
+            ref.run(None, {})
+
+    @staticmethod
+    def _if_shared_symbol_model() -> ModelProto:
+        # If(cond) selects between two branches, each of which produces
+        # "Z" annotated with the same symbolic dimension "N" as the
+        # outer-scope input "X" (captured lexically, not passed as a
+        # subgraph input). This exercises cross-scope symbol sharing
+        # between the parent graph and an If subgraph.
+        cond = make_tensor_value_info("cond", TensorProto.BOOL, [])
+        x = make_tensor_value_info("X", TensorProto.FLOAT, ["N"])
+        z = make_tensor_value_info("Z", TensorProto.FLOAT, ["N"])
+
+        then_out = make_tensor_value_info("Z", TensorProto.FLOAT, ["N"])
+        then_node = make_node("Identity", ["X"], ["Z"])
+        then_graph = make_graph([then_node], "then", [], [then_out])
+
+        else_out = make_tensor_value_info("Z", TensorProto.FLOAT, ["N"])
+        else_node = make_node("Identity", ["X"], ["Z"])
+        else_graph = make_graph([else_node], "else", [], [else_out])
+
+        if_node = make_node(
+            "If",
+            ["cond"],
+            ["Z"],
+            then_branch=then_graph,
+            else_branch=else_graph,
+        )
+        graph = make_graph([if_node], "g", [cond, x], [z])
+        return make_model(graph, opset_imports=[make_opsetid("", 18)])
+
+    def test_if_subgraph_shares_outer_symbol(self) -> None:
+        ref = ReferenceEvaluator(
+            self._if_shared_symbol_model(), check_shape_annotations=True
+        )
+        x = np.zeros((3,), dtype=np.float32)
+        (got,) = ref.run(None, {"cond": np.array(True), "X": x})
+        assert got.shape == (3,)
+
+    @staticmethod
+    def _if_conflicting_symbol_model() -> ModelProto:
+        # Same as _if_shared_symbol_model, but the branch produces "Z"
+        # with a fixed shape that conflicts with the outer "N" bound by
+        # "X"; this should only be caught if the If subgraph's checks
+        # share the outer scope's SymbolBindings.
+        cond = make_tensor_value_info("cond", TensorProto.BOOL, [])
+        x = make_tensor_value_info("X", TensorProto.FLOAT, ["N"])
+        z = make_tensor_value_info("Z", TensorProto.FLOAT, ["N"])
+
+        then_out = make_tensor_value_info("Z", TensorProto.FLOAT, ["N"])
+        then_node = make_node("Identity", ["X"], ["Z"])
+        then_graph = make_graph([then_node], "then", [], [then_out])
+
+        # Constant with a fixed shape unrelated to "X"'s actual shape.
+        const_value = make_tensor(
+            "const", TensorProto.FLOAT, [7], np.zeros((7,), dtype=np.float32)
+        )
+        else_out = make_tensor_value_info("Z", TensorProto.FLOAT, ["N"])
+        else_node = make_node("Constant", [], ["Z"], value=const_value)
+        else_graph = make_graph([else_node], "else", [], [else_out])
+
+        if_node = make_node(
+            "If",
+            ["cond"],
+            ["Z"],
+            then_branch=then_graph,
+            else_branch=else_graph,
+        )
+        graph = make_graph([if_node], "g", [cond, x], [z])
+        return make_model(graph, opset_imports=[make_opsetid("", 18)])
+
+    def test_if_subgraph_conflicting_symbol_raises(self) -> None:
+        ref = ReferenceEvaluator(
+            self._if_conflicting_symbol_model(), check_shape_annotations=True
+        )
+        x = np.zeros((3,), dtype=np.float32)
+        with pytest.raises(ShapeAnnotationError, match="symbolic dimension 'N'"):
+            ref.run(None, {"cond": np.array(False), "X": x})
