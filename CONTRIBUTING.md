@@ -122,7 +122,7 @@ Operator docs ([Operators.md](docs/Operators.md), [Operators-ml.md](docs/Operato
 
 ```pwsh
 # Windows
-set ONNX_ML=1
+$env:ONNX_ML = "1"
 pip install -e . -v
 python onnx/defs/gen_doc.py
 ```

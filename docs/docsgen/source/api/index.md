@@ -58,7 +58,6 @@ defs
 external_data_helper
 helper
 inliner
-mapping
 model_container
 numpy_helper
 parser
