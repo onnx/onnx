@@ -14,8 +14,6 @@ class Gather(OpRun):
             x = np.ascontiguousarray(x)
         if not indices.flags["C_CONTIGUOUS"]:
             indices = indices.ascontiguousarray()
-        if indices.size == 0:
-            return (np.empty((0,), dtype=x.dtype),)
         try:
             return (np.take(x, indices, axis=axis),)
         except TypeError:
