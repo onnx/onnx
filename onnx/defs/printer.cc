@@ -69,6 +69,8 @@ class ProtoPrinter {
 
   void print(const TypeProto_SparseTensor& sparseType);
 
+  void print(const TypeProto_Opaque& opaqueType);
+
   void print(const TensorProto& tensor, bool is_initializer = false);
 
   void print(const ValueInfoProto& value_info);
@@ -239,6 +241,22 @@ void ProtoPrinter::print(const TypeProto_SparseTensor& sparseType) {
   output_ << ")";
 }
 
+void ProtoPrinter::print(const TypeProto_Opaque& opaqueType) {
+  // Mirrors the grammar accepted by the parser:
+  //   opaque()
+  //   opaque(name)
+  //   opaque(domain,name)
+  output_ << "opaque(";
+  const bool has_domain = opaqueType.has_domain() && !opaqueType.domain().empty();
+  if (has_domain) {
+    output_ << opaqueType.domain() << ",";
+  }
+  if (opaqueType.has_name() && !opaqueType.name().empty()) {
+    output_ << opaqueType.name();
+  }
+  output_ << ")";
+}
+
 void ProtoPrinter::print(const TypeProto& type) {
   if (type.has_tensor_type())
     print(type.tensor_type());
@@ -250,6 +268,8 @@ void ProtoPrinter::print(const TypeProto& type) {
     print(type.optional_type());
   else if (type.has_sparse_tensor_type())
     print(type.sparse_tensor_type());
+  else if (type.has_opaque_type())
+    print(type.opaque_type());
 }
 
 void ProtoPrinter::print(const TensorProto& tensor, bool is_initializer) {
