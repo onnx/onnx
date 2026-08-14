@@ -4,32 +4,50 @@ Copyright (c) ONNX Project Contributors
 SPDX-License-Identifier: Apache-2.0
 -->
 
-# Runtime Semantics of Shape Annotations
+# Semantics of Shape Annotations
 
-This document defines what a static shape annotation (see
-[Static tensor shapes](IR.md#static-tensor-shapes)) *means* at runtime: the
-condition under which the annotation attached to a graph input, graph
-output, or intermediate value (`value_info`) is satisfied by a particular
-execution of a model.
-
-Stating this precisely serves two purposes:
-
-* it gives implementers of runtimes and backends an unambiguous contract to
-  either enforce or safely assume;
-* it gives a ground truth against which the *static* analyses (the checker
-  and shape inference) can be judged: an inference result is sound exactly
-  when it never asserts something that this runtime semantics would not
-  guarantee.
+ONNX models may contain (type and) shape annotations attached to graph inputs, graph
+outputs, or intermediate values.
+* They serve as documentation. Users have a much easier time understanding
+models when they have type and shape annotations.
+* They help catch various runtime errors through the static checker.
+* They enable runtime optimizations. Inference performance for modern large
+(DNN) models largely hinges on statically known shapes of tensors, which are
+the basis for memory allocation, memory reuse, static memory planning, etc.
 
 This document covers only today's representation, in which a
 `TensorShapeProto.Dimension` is either a constant (`dim_value`) or a bare
 symbolic name (`dim_param`), and in which — as [IR.md](IR.md#static-tensor-shapes)
 notes — dimension variables are not scoped: a `dim_param` with a given name
 denotes the same value everywhere it occurs in a model, including inside
-nested subgraphs. Extending this semantics to a model with locally scoped
-dimension variables (for example, a name local to one iteration of a `Loop`
-body, or local to one element of a `Sequence`) is future work and is not
-addressed here.
+nested subgraphs.
+
+Annotations attached to the model's inputs are _preconditions_: it is the
+responsibility of the caller to supply inputs that satisfy the given annotations.
+The annotations attached to intermediate values and output values are _assertions_
+that are expected to hold true in any inference run (assuming that the inputs
+satisfy the preconditions).
+
+The primary complication in treating shape annotations as runtime assertions
+is in handling the symbolic dimensions.
+This document defines what a static shape annotation (see
+[Static tensor shapes](IR.md#static-tensor-shapes)) *means* at runtime: the
+condition under which the annotation attached to a graph input, graph
+output, or intermediate value (`value_info`) is satisfied by a particular
+execution of a model.
+Stating this precisely serves several purposes:
+* it gives a ground truth against which the *static* analyses (the checker
+  and shape inference) can be judged: the checker statically determines if
+  the shape annotations may fail during execution, while inference infers
+  or improves a given annotation without causing any new failure of the
+  annotations.
+* it serves as the foundation for soundly extending the shape annotation
+  mechanism to support locally scoped dimension variables (for example,
+  a name local to one iteration of a `Loop` body, or local to one element
+  of a `Sequence`), which is future work and is not addressed here.
+* it explicates the binding mechanism to identify the values of dimension
+  variables during an inference run, which is helpful in implementing
+  some memory allocation optimizations.
 
 ## Setup
 
@@ -104,62 +122,14 @@ which topological order is chosen, because:
 So whether a model's declared annotations hold for a given run is a
 well-defined property of the run, independent of execution order.
 
-## Relationship to static inference and the checker
-
-This runtime semantics is two-valued: for a given run, an annotation either
-holds or it is violated. Static shape inference and the checker, by
-contrast, must decide — without running the model — whether an annotation
-is guaranteed to hold for *every* run consistent with the declared input
-annotations. That is undecidable in general, so any static analysis is
-necessarily an approximation, and it can either:
-
-* prove an annotation holds for every run (a sound positive result);
-* prove an annotation can never hold for any run, independent of input
-  values (a genuine model inconsistency, distinct from a runtime failure);
-  or
-* fail to decide either way.
-
-An inference or checking implementation should not conflate the third case
-with either of the first two. In particular, failing to *prove* that two
-dimensions are equal is not the same as proving them *unequal*, and a
-sound implementation must not report an error in that case. Conversely, an
-implementation (or a backend consuming its results, e.g. to decide that two
-tensors may safely share a memory buffer) should not treat an *unproven*
-equality as an established fact.
-
-In practice these two conservative choices are in tension, and different
-consumers of shape information want different defaults: the checker
-generally prefers to avoid reporting a mismatch it cannot actually prove
-(to avoid rejecting valid models), while a backend that wants to optimize
-based on inferred shapes needs the opposite bias, treating an unproven
-equality as not yet established. Existing ONNX shape inference mostly
-leans toward the latter (conservative) bias, but does not fully achieve it
-in the presence of conditional branches — particularly inside loops, where
-a branch may not execute on every iteration — which is a known source of
-inference results that do not, in fact, hold for every run. This document
-does not resolve that gap; it defines the semantics against which such gaps
-can be identified and measured.
-
 ## What this does not require of a runtime
 
 An actual runtime or backend is **not** required to perform the checks
-described above. Most production runtimes skip them for performance, and
-instead treat declared annotations (and any inference or checker results
-derived from them) as trusted preconditions — for example, to decide that
-two tensors with the same declared shape and disjoint lifetimes can share a
-memory buffer. If a model or an input violates an annotation that the
-runtime trusted, and the runtime performed such an optimization based on
-that trust, undefined behavior (such as an invalid memory access) can
-result.
-
-It remains the runtime's responsibility to guarantee **safe** execution.
-This does not require performing the checks in this document; a runtime may
-instead perform the checks only in a "safe" or debug mode, establish
-sufficient safety in some other way (for example, bounds-checked buffer
-accesses regardless of the declared shape), or accept the risk for a class
-of trusted, pre-validated models. This document defines what the checks
-would establish if performed; it does not mandate that a runtime perform
-them.
+as described above; it remains the runtime's responsibility to guarantee
+**safe** execution. This does not require performing the checks in this
+document; a runtime may instead perform the checks only in a "safe" or
+debug mode, and establish sufficient safety in some other way (for example,
+bounds-checked buffer accesses regardless of the declared shape).
 
 The ONNX reference implementation, `onnx.reference.ReferenceEvaluator`,
 provides an optional, opt-in implementation of these checks: pass
