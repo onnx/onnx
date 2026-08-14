@@ -113,6 +113,17 @@ class TestAutomaticDowngrade(automatic_conversion_test_base.TestAutomaticConvers
         """,
         )
 
+    def test_BitShift(self) -> None:
+        self._test_op_downgrade(
+            "BitShift",
+            11,
+            [[2, 3], [2, 3]],
+            [[2, 3]],
+            [onnx.TensorProto.UINT8, onnx.TensorProto.UINT8],
+            [onnx.TensorProto.UINT8],
+            attrs={"direction": "RIGHT"},
+        )
+
     def test_BitShift_signed_downgrade_fails(self) -> None:
         # BitShift gained the signed integer types at opset 28. Downgrading a
         # signed BitShift below that must be rejected rather than silently
