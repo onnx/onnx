@@ -29,7 +29,7 @@ from onnx import (
 )
 from onnx.backend.test.case.node.roialign import get_roi_align_input_values
 from onnx.checker import check_model
-from onnx.defs import onnx_opset_version
+from onnx.defs import get_schema, onnx_opset_version
 from onnx.helper import (
     make_function,
     make_graph,
@@ -3125,6 +3125,64 @@ class TestReferenceEvaluator:
                     raise AssertionError(
                         f"Discrepancies (max={diff}) for {reduce_op!r}, {baseline} != {k}\n{a}\n!=\n{b}"
                     )
+
+    @pytest.mark.parametrize("op_type", ["ReduceLogSumExp", "ReduceLogSum"])
+    @pytest.mark.parametrize("opset", [18, 21])
+    @pytest.mark.parametrize(
+        "dtype",
+        [np.int32, np.int64, np.uint32, np.uint64],
+    )
+    def test_reduce_log_integer_input_raises(self, op_type: str, opset: int, dtype):
+        # Log/Exp (the building blocks of these composite operators) do not
+        # support integer types. The reference implementation must raise a
+        # clear error instead of crashing with an OverflowError.
+        # See https://github.com/onnx/onnx/issues/7141.
+        X = make_tensor_value_info("X", TensorProto.FLOAT, [None])
+        Y = make_tensor_value_info("Y", TensorProto.FLOAT, [None])
+        node = make_node(op_type, ["X"], ["Y"], keepdims=1)
+        graph = make_graph([node], "g", [X], [Y])
+        model = make_model(graph, opset_imports=[make_opsetid("", opset)])
+        sess = ReferenceEvaluator(model)
+        data = np.array([1, 2, 3], dtype=dtype)
+        with pytest.raises(TypeError):
+            sess.run(None, {"X": data})
+
+    @pytest.mark.parametrize("op_type", ["ReduceLogSumExp", "ReduceLogSum"])
+    def test_reduce_log_float_input_opset21(self, op_type: str):
+        # Opset 21 keeps float support and must produce correct results.
+        X = make_tensor_value_info("X", TensorProto.FLOAT, [None])
+        Y = make_tensor_value_info("Y", TensorProto.FLOAT, [None])
+        node = make_node(op_type, ["X"], ["Y"], keepdims=1)
+        graph = make_graph([node], "g", [X], [Y])
+        model = make_model(graph, opset_imports=[make_opsetid("", 21)])
+        sess = ReferenceEvaluator(model)
+        data = np.array([1.0, 2.0, 3.0], dtype=np.float32)
+        got = sess.run(None, {"X": data})[0]
+        if op_type == "ReduceLogSumExp":
+            expected = np.log(np.sum(np.exp(data)))
+        else:
+            expected = np.log(np.sum(data))
+        assert_allclose(got.ravel(), np.array([expected], dtype=np.float32), rtol=1e-6)
+
+    @pytest.mark.parametrize("op_type", ["ReduceLogSumExp", "ReduceLogSum"])
+    def test_reduce_log_opset21_schema_float_only(self, op_type: str):
+        # Opset 21 schemas remove integer types from the T constraint: only
+        # float types remain, matching the fact that Log/Exp are float-only.
+        # See https://github.com/onnx/onnx/issues/7141.
+        schema_21 = get_schema(op_type, 21)
+        allowed_21 = set(schema_21.inputs[0].types)
+        float_types = {
+            "tensor(float)",
+            "tensor(double)",
+            "tensor(float16)",
+            "tensor(bfloat16)",
+        }
+        assert allowed_21 == float_types, (op_type, allowed_21)
+
+        # Older opsets still accept integers (unchanged behavior).
+        schema_18 = get_schema(op_type, 18)
+        allowed_18 = set(schema_18.inputs[0].types)
+        assert {"tensor(int32)", "tensor(int64)"} <= allowed_18, (op_type, allowed_18)
 
     @pytest.mark.parametrize("opset", [13, 17, 18])
     def test_mvn(self, opset: int, ref_opset: int = 13):
