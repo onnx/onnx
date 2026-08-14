@@ -6387,14 +6387,15 @@ expect(node, inputs=[x], outputs=[y], name="test_bitcast_uint32_to_int32")
   Bitwise shift operator performs element-wise operation. For each input element, if the
   attribute "direction" is "RIGHT", this operator moves its binary representation toward
   the right side. If the attribute "direction" is "LEFT", bits of binary representation
-  moves toward the left side. The input X is the tensor to be shifted and another input
-  Y specifies the amounts of shifting. For example, if "direction" is "Right", X is [1, 4],
-  and S is [1, 1], the corresponding output Z would be [0, 2]. If "direction" is "LEFT" with
-  X=[1, 2] and S=[1, 2], the corresponding output Y would be [2, 8].
+  move toward the left side. The input X is the tensor to be shifted and another
+  input Y specifies the amounts of shifting. For example, if "direction" is
+  "RIGHT", X is [1, 4], and Y is [1, 1], the corresponding output Z would be
+  [0, 2]. If "direction" is "LEFT" with X=[1, 2] and Y=[1, 2], the corresponding
+  output Z would be [2, 8].
 
   For a signed T the right shift is an arithmetic shift (sign-extending). The
   vacated high bits are filled with copies of the sign bit, so a negative X stays
-  negative. For a signed T a left shift can move bits into and past the sign bit:
+  negative. For a signed T a left shift can move bits into and past the sign bit,
   and bits shifted past the sign bit are discarded.
 
   If Y is negative, or is greater than or equal to the number of bits of T, then
