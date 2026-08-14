@@ -22,10 +22,10 @@ def _check_integer_input(data, op_name):
 
 class ReduceLogSum_1(OpRunReduceNumpy):
     def _run(self, data, axes=None, keepdims=True):
+        _check_integer_input(data, "ReduceLogSum")
         tax = tuple(axes) if axes is not None else None
         if data.size == 0:
             return self.reduce_constant(data, -np.inf, tax, keepdims)
-        _check_integer_input(data, "ReduceLogSum")
         res = np.sum(data, axis=tax, keepdims=keepdims)  # type: ignore[arg-type]
         if len(res.shape) > 0:
             return (np.log(res, out=res),)

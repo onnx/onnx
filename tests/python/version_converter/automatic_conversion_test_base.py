@@ -56,6 +56,7 @@ class TestAutomaticConversion:
         optional_inputs: Sequence[int] = (),
         optional_outputs: Sequence[int] = (),
         is_upgrade: bool = True,
+        should_fail: bool = False,
     ) -> None:
         """Test conversion.
 
@@ -77,6 +78,9 @@ class TestAutomaticConversion:
             is_upgrade: A boolean value indicating whether to run the version converter from from_opset to
                 the most recent opset version (True) or from the most recent opset version to from_opset (False).
                 The default value is True. In both cases, runs checker and shape inference on the final model.
+            should_fail: A boolean value indicating whether the conversion is expected to be rejected
+                (e.g. an incompatible type constraint was introduced). When True, asserts that conversion
+                raises ``RuntimeError`` instead of succeeding.
         """
         if attrs is None:
             attrs = {}
@@ -157,4 +161,7 @@ class TestAutomaticConversion:
             producer_name="test",
             opset_imports=[helper.make_opsetid("", start_opset)],
         )
-        self._test_model_conversion(end_opset, original)
+        if should_fail:
+            self._test_model_conversion_fails(end_opset, original)
+        else:
+            self._test_model_conversion(end_opset, original)

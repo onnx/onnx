@@ -36,11 +36,11 @@ def _check_integer_input(data, op_name):
 
 class ReduceLogSumExp_1(OpRunReduceNumpy):
     def _run(self, data, axes=None, keepdims=None):
+        _check_integer_input(data, "ReduceLogSumExp")
         tax = tuple(axes) if axes is not None else None
 
         if data.size == 0:
             return self.reduce_constant(data, -np.inf, tax, keepdims)
-        _check_integer_input(data, "ReduceLogSumExp")
         return compute_log_sum_exp(data, tax, keepdims)
 
 
