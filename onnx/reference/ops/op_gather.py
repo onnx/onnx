@@ -13,7 +13,7 @@ class Gather(OpRun):
         if not x.flags["C_CONTIGUOUS"]:
             x = np.ascontiguousarray(x)
         if not indices.flags["C_CONTIGUOUS"]:
-            indices = indices.ascontiguousarray()
+            indices = np.ascontiguousarray(indices)
         try:
             return (np.take(x, indices, axis=axis),)
         except TypeError:
