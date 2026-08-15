@@ -103,7 +103,7 @@ class TestAutomaticDowngrade(automatic_conversion_test_base.TestAutomaticConvers
     def test_Einsum(self) -> None:
         self._test_op_downgrade(
             "Einsum",
-            28,
+            12,
             [[3, 4, 5], [3, 5, 6]],
             [[3, 4, 6]],
             attrs={"equation": "bij, bjk -> bik"},
