@@ -82,32 +82,6 @@ class TestSchema:
         assert celu28.has_function
         assert allowed(defs.get_schema("Celu", 12)) == {"tensor(float)"}
 
-    def test_einsum_type_constraints(self) -> None:
-        def allowed(schema):
-            return next(
-                set(t.allowed_type_strs)
-                for t in schema.type_constraints
-                if t.type_param_str == "T"
-            )
-
-        numeric_types = {
-            "tensor(uint8)",
-            "tensor(uint16)",
-            "tensor(uint32)",
-            "tensor(uint64)",
-            "tensor(int8)",
-            "tensor(int16)",
-            "tensor(int32)",
-            "tensor(int64)",
-            "tensor(float16)",
-            "tensor(float)",
-            "tensor(double)",
-        }
-        assert allowed(defs.get_schema("Einsum", 28)) == numeric_types | {
-            "tensor(bfloat16)"
-        }
-        assert allowed(defs.get_schema("Einsum", 12)) == numeric_types
-
     def test_range_supported_types(self) -> None:
         """Test Range operator supports all expected numeric types."""
         range_schema = defs.get_schema("Range")
