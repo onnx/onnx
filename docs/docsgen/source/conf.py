@@ -55,6 +55,7 @@ extensions = [
     "sphinx.ext.viewcode",
 ]
 
+myst_heading_anchors = 6
 myst_enable_extensions = [
     "amsmath",
     "attrs_inline",
