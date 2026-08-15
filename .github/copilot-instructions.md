@@ -16,6 +16,15 @@ When a change could fit more than one type, prefer `ci` for anything under `.git
 
 Individual commits within the PR do not need to follow this format, but each must still carry a DCO sign-off.
 
+## PR labels
+
+Before considering an agent-authored PR complete, add the existing labels that
+accurately describe its scope. Every agent-authored PR must have at least one
+applicable `topic:` or `module:` label, as enforced by
+[`check_pr_label.yml`](workflows/check_pr_label.yml). Do not invent new label
+names. For example, use `topic: documentation` for a documentation-only PR and
+add any other existing labels that materially apply to the change.
+
 We use pixi tasks for installing and linting
 
 ```sh

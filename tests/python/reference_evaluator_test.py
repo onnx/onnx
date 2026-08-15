@@ -49,7 +49,7 @@ from onnx.reference import ReferenceEvaluator
 from onnx.reference.op_run import OpRun, OpRunExpand
 from onnx.reference.ops import load_op
 from onnx.reference.ops._op_common_indices import _get_indices, _is_out
-from onnx.reference.ops._op_list import Cast_19, Celu
+from onnx.reference.ops._op_list import Cast_19, Celu, NonZero
 from onnx.reference.ops.aionnx_preview_training._op_list import Adam
 from onnx.reference.ops.op_attention import _apply_causal, _softmax
 from onnx.reference.ops.op_celu import _vcelu1
@@ -1439,6 +1439,16 @@ class TestReferenceEvaluator:
         dy = Cast_19.eval(y, to=TensorProto.FLOAT)
         expected = x
         assert_allclose(dy, expected)
+
+    def test_eval_nonzero_scalar_true(self):
+        y = NonZero.eval(np.array(True))
+        assert y.shape == (0, 1)
+        assert y.dtype == np.int64
+
+    def test_eval_nonzero_scalar_false(self):
+        y = NonZero.eval(np.array(False))
+        assert y.shape == (0, 0)
+        assert y.dtype == np.int64
 
     def test_eval_celu_load_op(self):
         celu = load_op("", "Celu")
@@ -4270,6 +4280,57 @@ class TestReferenceEvaluator:
         got = ref.run(None, {"X": x, "P": p, "V": value})[0]
         assert got.shape == (11,) * dim
         assert got.dtype == np.float32
+
+    def test_gather_elements_empty_indices(self):
+        data_info = make_tensor_value_info("X", TensorProto.FLOAT, None)
+        indices_info = make_tensor_value_info("I", TensorProto.INT64, None)
+        output_info = make_tensor_value_info("Y", TensorProto.FLOAT, None)
+        node = make_node("GatherElements", ["X", "I"], ["Y"], axis=1)
+        model = make_model(
+            make_graph([node], "g", [data_info, indices_info], [output_info])
+        )
+        ref = ReferenceEvaluator(model)
+        data = np.arange(12, dtype=np.float32).reshape((2, 2, 3))
+        indices = np.empty((2, 0, 3), dtype=np.int64)
+
+        got = ref.run(None, {"X": data, "I": indices})[0]
+
+        assert got.shape == indices.shape
+        assert got.dtype == data.dtype
+
+    def test_gather_empty_indices(self):
+        data_info = make_tensor_value_info("X", TensorProto.FLOAT, None)
+        indices_info = make_tensor_value_info("I", TensorProto.INT64, None)
+        output_info = make_tensor_value_info("Y", TensorProto.FLOAT, None)
+        node = make_node("Gather", ["X", "I"], ["Y"], axis=1)
+        model = make_model(
+            make_graph([node], "g", [data_info, indices_info], [output_info])
+        )
+        ref = ReferenceEvaluator(model)
+        data = np.arange(24, dtype=np.float32).reshape((2, 3, 4))
+        indices = np.empty((2, 0), dtype=np.int64)
+
+        got = ref.run(None, {"X": data, "I": indices})[0]
+
+        assert got.shape == (2, 2, 0, 4)
+        assert got.dtype == data.dtype
+
+    def test_gather_non_contiguous_indices(self):
+        data_info = make_tensor_value_info("X", TensorProto.FLOAT, None)
+        indices_info = make_tensor_value_info("I", TensorProto.INT64, None)
+        output_info = make_tensor_value_info("Y", TensorProto.FLOAT, None)
+        node = make_node("Gather", ["X", "I"], ["Y"], axis=1)
+        model = make_model(
+            make_graph([node], "g", [data_info, indices_info], [output_info])
+        )
+        ref = ReferenceEvaluator(model)
+        data = np.arange(24, dtype=np.float32).reshape((2, 3, 4))
+        indices = np.arange(4, dtype=np.int64)[::2]
+        assert not indices.flags["C_CONTIGUOUS"]
+
+        got = ref.run(None, {"X": data, "I": indices})[0]
+
+        assert_allclose(got, np.take(data, indices, axis=1))
 
     def test_constant_of_shape(self):
         X = make_tensor_value_info("X", TensorProto.FLOAT, None)
