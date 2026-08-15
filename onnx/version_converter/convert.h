@@ -35,7 +35,7 @@
 #include "onnx/version_converter/adapters/gridsample_19_20.h"
 #include "onnx/version_converter/adapters/group_normalization_20_21.h"
 #include "onnx/version_converter/adapters/maxpool_8_7.h"
-#include "onnx/version_converter/adapters/mean_variance_normalization_27_26.h"
+#include "onnx/version_converter/adapters/mean_variance_normalization_28_26.h"
 #include "onnx/version_converter/adapters/no_previous_version.h"
 #include "onnx/version_converter/adapters/pad_10_11.h"
 #include "onnx/version_converter/adapters/q_dq_21_20.h"
@@ -972,12 +972,11 @@ class DefaultVersionConverter : public BaseVersionConverter {
     registerAdapter(
         std::make_unique<TypeRestriction>("QuantizeLinear", OpSetID(25), OpSetID(24), ir13_types_not_in_ir12));
 
-    // 26 -> 27
-    registerAdapter(
-        std::make_unique<CompatibleAdapter>("MeanVarianceNormalization", OpSetID(26), OpSetID(27)));
+    // 26 -> 28
+    registerAdapter(std::make_unique<CompatibleAdapter>("MeanVarianceNormalization", OpSetID(26), OpSetID(28)));
 
-    // 27 -> 26
-    registerAdapter(std::make_unique<MeanVarianceNormalization_27_26>());
+    // 28 -> 26
+    registerAdapter(std::make_unique<MeanVarianceNormalization_28_26>());
     /******** 26 -> 27 ********/
     registerAdapter(std::make_unique<CompatibleAdapter>("Range", OpSetID(26), OpSetID(27)));
 

@@ -2214,7 +2214,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         })
         .SetDoc(TfIdfVectorizer_ver9_doc));
 
-static constexpr const char* mvn_ver27_doc = R"DOC(
+static constexpr const char* mvn_ver28_doc = R"DOC(
       A MeanVarianceNormalization Function: Perform mean variance normalization
       on the input tensor X using formula: `(X-EX)/(sqrt(E(X-EX)^2) + epsilon)`
 )DOC";
@@ -2230,8 +2230,7 @@ static bool BuildContextDependentFunctionBodyMVN(
   float epsilon = (epsilon_attr != nullptr) ? epsilon_attr->f() : 1e-9f;
 
   FunctionBuilder builder(functionProto);
-  builder.Const("Exponent", ToTensor<float>(2.0f))
-      .Const("Epsilon", ToTensor<float>(epsilon));
+  builder.Const("Exponent", ToTensor<float>(2.0f)).Const("Epsilon", ToTensor<float>(epsilon));
 
   if (sinceVersion <= 17) {
     builder.Add("X_RM = ReduceMean <axes : ints = @axes> (X)")
@@ -2256,14 +2255,14 @@ static bool BuildContextDependentFunctionBodyMVN(
   return true;
 }
 
-static bool BuildContextDependentFunctionBodyMVNVer27Pre18(
+static bool BuildContextDependentFunctionBodyMVNVer28Pre18(
     const FunctionBodyBuildContext& ctx,
     const OpSchema& schema,
     FunctionProto& functionProto) {
   return BuildContextDependentFunctionBodyMVN(ctx, schema, functionProto, 17);
 }
 
-static bool BuildContextDependentFunctionBodyMVNVer27Post18(
+static bool BuildContextDependentFunctionBodyMVNVer28Post18(
     const FunctionBodyBuildContext& ctx,
     const OpSchema& schema,
     FunctionProto& functionProto) {
@@ -2272,9 +2271,9 @@ static bool BuildContextDependentFunctionBodyMVNVer27Post18(
 
 ONNX_OPERATOR_SET_SCHEMA(
     MeanVarianceNormalization,
-    27,
+    28,
     OpSchema()
-        .SetDoc(mvn_ver27_doc)
+        .SetDoc(mvn_ver28_doc)
         .Input(0, "X", "Input tensor", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
         .Output(0, "Y", "Output tensor", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
         .Attr(
@@ -2285,17 +2284,13 @@ ONNX_OPERATOR_SET_SCHEMA(
             "are associated with the same mean and variance.",
             AttributeProto::INTS,
             mvn_default_axes)
-        .Attr(
-            "epsilon",
-            "The epsilon value to use to avoid division by zero.",
-            AttributeProto::FLOAT,
-            1e-9f)
+        .Attr("epsilon", "The epsilon value to use to avoid division by zero.", AttributeProto::FLOAT, 1e-9f)
         .TypeConstraint(
             "T",
             {types::Float16, types::Float, types::Double, types::BFloat16},
             "Constrain input and output types to all numeric tensors.")
-        .SetContextDependentFunctionBodyBuilder(BuildContextDependentFunctionBodyMVNVer27Pre18, 17)
-        .SetContextDependentFunctionBodyBuilder(BuildContextDependentFunctionBodyMVNVer27Post18, 18)
+        .SetContextDependentFunctionBodyBuilder(BuildContextDependentFunctionBodyMVNVer28Pre18, 17)
+        .SetContextDependentFunctionBodyBuilder(BuildContextDependentFunctionBodyMVNVer28Post18, 18)
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
 static void col2imShapeInference(InferenceContext& ctx) {

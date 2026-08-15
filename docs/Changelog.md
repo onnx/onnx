@@ -32876,45 +32876,6 @@ This version of the operator has been available since version 26 of the default 
 </dl>
 
 ## Version 27 of the default ONNX operator set
-### <a name="MeanVarianceNormalization-27"></a>**MeanVarianceNormalization-27**</a>
-
-  A MeanVarianceNormalization Function: Perform mean variance normalization
-        on the input tensor X using formula: `(X-EX)/(sqrt(E(X-EX)^2) + epsilon)`
-
-#### Version
-
-This version of the operator has been available since version 27 of the default ONNX operator set.
-
-#### Attributes
-
-<dl>
-<dt><tt>axes</tt> : list of ints (default is ['0', '2', '3'])</dt>
-<dd>A list of integers, along which to reduce. The default is to calculate along axes [0,2,3] for calculating mean and variance along each channel. Two variables with the same C-coordinate are associated with the same mean and variance.</dd>
-<dt><tt>epsilon</tt> : float (default is (1.000000e-09))</dt>
-<dd>The epsilon value to use to avoid division by zero.</dd>
-</dl>
-
-#### Inputs
-
-<dl>
-<dt><tt>X</tt> (differentiable) : T</dt>
-<dd>Input tensor</dd>
-</dl>
-
-#### Outputs
-
-<dl>
-<dt><tt>Y</tt> (differentiable) : T</dt>
-<dd>Output tensor</dd>
-</dl>
-
-#### Type Constraints
-
-<dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
-<dd>Constrain input and output types to all numeric tensors.</dd>
-</dl>
-
 ### <a name="CausalConvWithState-27"></a>**CausalConvWithState-27**</a>
 
   Stateful causal 1D depthwise convolution.
@@ -33126,6 +33087,45 @@ This version of the operator has been available since version 27 of the default 
 </dl>
 
 ## Version 28 of the default ONNX operator set
+### <a name="MeanVarianceNormalization-28"></a>**MeanVarianceNormalization-28**</a>
+
+  A MeanVarianceNormalization Function: Perform mean variance normalization
+        on the input tensor X using formula: `(X-EX)/(sqrt(E(X-EX)^2) + epsilon)`
+
+#### Version
+
+This version of the operator has been available since version 28 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>axes</tt> : list of ints (default is ['0', '2', '3'])</dt>
+<dd>A list of integers, along which to reduce. The default is to calculate along axes [0,2,3] for calculating mean and variance along each channel. Two variables with the same C-coordinate are associated with the same mean and variance.</dd>
+<dt><tt>epsilon</tt> : float (default is (1.000000e-09))</dt>
+<dd>The epsilon value to use to avoid division by zero.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> (differentiable) : T</dt>
+<dd>Input tensor</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> (differentiable) : T</dt>
+<dd>Output tensor</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
+<dd>Constrain input and output types to all numeric tensors.</dd>
+</dl>
+
 ### <a name="Celu-28"></a>**Celu-28**</a>
 
   Continuously Differentiable Exponential Linear Units:

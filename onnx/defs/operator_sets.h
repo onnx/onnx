@@ -1455,7 +1455,6 @@ class OpSet_Onnx_ver26 {
 };
 
 // Forward declarations for ai.onnx version 27
-class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 27, MeanVarianceNormalization);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 27, CausalConvWithState);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 27, LinearAttention);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 27, Range);
@@ -1464,7 +1463,6 @@ class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 27, Range);
 class OpSet_Onnx_ver27 {
  public:
   static void ForEachSchema(const std::function<void(OpSchema&&)>& fn) {
-    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 27, MeanVarianceNormalization)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 27, CausalConvWithState)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 27, LinearAttention)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 27, Range)>());
@@ -1472,6 +1470,7 @@ class OpSet_Onnx_ver27 {
 };
 
 // Forward declarations for ai.onnx version 28
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 28, MeanVarianceNormalization);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 28, Celu);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 28, SwiGLU);
 
@@ -1479,6 +1478,7 @@ class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 28, SwiGLU);
 class OpSet_Onnx_ver28 {
  public:
   static void ForEachSchema(const std::function<void(OpSchema&&)>& fn) {
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 28, MeanVarianceNormalization)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 28, Celu)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 28, SwiGLU)>());
   }
