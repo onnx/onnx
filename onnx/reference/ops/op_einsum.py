@@ -10,7 +10,7 @@ from onnx.reference.op_run import OpRun
 
 # NumPy has no einsum loops for bfloat16: the unoptimized path rejects it outright and
 # the optimized path silently returns float32. Contract in float32 and round once at the
-# end, which also matches how accelerators evaluate bfloat16 einsums.
+# end.
 _ACCUMULATE_IN_FLOAT32 = (np.dtype(ml_dtypes.bfloat16),)
 
 
