@@ -276,7 +276,7 @@ void QLinearMatMulShapeInference(ONNX_NAMESPACE::InferenceContext& ctx) {
   MatMulShapeInference(ctx, 0, 3);
 }
 
-static constexpr const char* Einsum_doc = R"DOC(
+static constexpr const char* Einsum_ver12_doc = R"DOC(
 An einsum of the form `term1, term2 -> output-term` produces an output tensor using the following equation
 
 ```
@@ -304,7 +304,7 @@ The right-hand side may contain exactly one ellipsis. In implicit mode, the elli
 beginning of the output. The equation string may contain space (U+0020) character.
 )DOC";
 
-static void EinsumShapeInference(ONNX_NAMESPACE::InferenceContext& ctx, std::string const& equation) {
+static void einsumShapeInference(ONNX_NAMESPACE::InferenceContext& ctx, std::string const& equation) {
   // Only accept letters for indices
   auto is_letter = [](char c) { return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z'); };
 
@@ -477,7 +477,7 @@ static void EinsumShapeInference(ONNX_NAMESPACE::InferenceContext& ctx, std::str
 
 std::function<void(OpSchema&)> EinsumOpGenerator(std::vector<std::string> allowed_types) {
   return [allowed_types = std::move(allowed_types)](OpSchema& schema) {
-    schema.SetDoc(Einsum_doc)
+    schema.SetDoc(Einsum_ver12_doc)
         .Attr("equation", "Einsum expression string.", AttributeProto::STRING)
         .Input(0, "Inputs", "Operands", "T", OpSchema::Variadic, true, 1, OpSchema::Differentiable)
         .Output(0, "Output", "Output tensor", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
@@ -492,7 +492,7 @@ std::function<void(OpSchema&)> EinsumOpGenerator(std::vector<std::string> allowe
 
           equation.erase(std::remove(equation.begin(), equation.end(), ' '),
                          equation.end()); // Remove space char
-          EinsumShapeInference(ctx, equation);
+          einsumShapeInference(ctx, equation);
         });
   };
 }
