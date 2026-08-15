@@ -4298,6 +4298,40 @@ class TestReferenceEvaluator:
         assert got.shape == indices.shape
         assert got.dtype == data.dtype
 
+    def test_gather_empty_indices(self):
+        data_info = make_tensor_value_info("X", TensorProto.FLOAT, None)
+        indices_info = make_tensor_value_info("I", TensorProto.INT64, None)
+        output_info = make_tensor_value_info("Y", TensorProto.FLOAT, None)
+        node = make_node("Gather", ["X", "I"], ["Y"], axis=1)
+        model = make_model(
+            make_graph([node], "g", [data_info, indices_info], [output_info])
+        )
+        ref = ReferenceEvaluator(model)
+        data = np.arange(24, dtype=np.float32).reshape((2, 3, 4))
+        indices = np.empty((2, 0), dtype=np.int64)
+
+        got = ref.run(None, {"X": data, "I": indices})[0]
+
+        assert got.shape == (2, 2, 0, 4)
+        assert got.dtype == data.dtype
+
+    def test_gather_non_contiguous_indices(self):
+        data_info = make_tensor_value_info("X", TensorProto.FLOAT, None)
+        indices_info = make_tensor_value_info("I", TensorProto.INT64, None)
+        output_info = make_tensor_value_info("Y", TensorProto.FLOAT, None)
+        node = make_node("Gather", ["X", "I"], ["Y"], axis=1)
+        model = make_model(
+            make_graph([node], "g", [data_info, indices_info], [output_info])
+        )
+        ref = ReferenceEvaluator(model)
+        data = np.arange(24, dtype=np.float32).reshape((2, 3, 4))
+        indices = np.arange(4, dtype=np.int64)[::2]
+        assert not indices.flags["C_CONTIGUOUS"]
+
+        got = ref.run(None, {"X": data, "I": indices})[0]
+
+        assert_allclose(got, np.take(data, indices, axis=1))
+
     def test_constant_of_shape(self):
         X = make_tensor_value_info("X", TensorProto.FLOAT, None)
         Y = make_tensor_value_info("Y", TensorProto.FLOAT, None)
