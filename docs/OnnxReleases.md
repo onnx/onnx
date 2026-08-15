@@ -107,7 +107,7 @@ Validation steps must be completed before this point. This is the point of no re
     * DO NOT click `Publish release` until you are sure no more changes are needed.
         * Use `Save Draft` if need to save and update more later.
         * Publishing will create the new git tag
-    * Tag: See top of [Preparation](#Preparation) for tag to create.
+    * Tag: See top of [Preparation](#preparation) for tag to create.
     * Target: The release branch that was just cut
     * Previous tag: Select the previous release.
     * Write:
