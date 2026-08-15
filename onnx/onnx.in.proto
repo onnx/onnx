@@ -121,7 +121,11 @@ enum Version {
 
   // IR VERSION 13 published on November 6, 2025
   // Added UINT2, INT2.
-  IR_VERSION = 0x000000000000000D;
+  IR_VERSION_2025_11_06 = 0x000000000000000D;
+
+  // IR VERSION 14 published on TBD
+  // Made TypeProto.Opaque available in non-ONNX-ML builds.
+  IR_VERSION = 0x000000000000000E;
 }
 
 // Attributes
@@ -874,19 +878,15 @@ message TypeProto {
     optional TensorShapeProto shape = 2;
   }
 
-// #if ONNX-ML
-
   message Opaque {
     // When missing, the domain is the same as the model's.
     optional string domain = 1;
     // The name is optional but significant when provided.
     optional string name = 2;
-    // parameters that help defining the type
-    // DEPRECATED do not use.
-    // repeated TypeProto parameters = 3;
+    // DEPRECATED: parameters that help define the type.
+    reserved 3;
+    reserved "parameters";
   }
-
-// #endif
 
   oneof value {
     // The type of a tensor.
@@ -910,11 +910,8 @@ message TypeProto {
     // Type of the sparse tensor
     SparseTensor sparse_tensor_type = 8;
 
-// #if ONNX-ML
-
     Opaque opaque_type = 7;
 
-// #endif
   }
 
   // An optional denotation can be used to denote the whole
