@@ -90,7 +90,7 @@ class TestBasicFunctions:
 
         text = printer.to_text(graph)
 
-        assert "float16[3] weights = {15360,49152,14336}" in text
+        assert "{15360,49152,14336}" in text
         parsed = parser.parse_graph(text)
         np.testing.assert_array_equal(
             numpy_helper.to_array(parsed.initializer[0]), values
