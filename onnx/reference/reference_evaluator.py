@@ -426,13 +426,15 @@ class ReferenceEvaluator:
             "existing_functions": self.functions_.copy(),
             "evaluator_cls": self.__class__,
         }
-        if self.input_types_:
+        if self.onnx_graph_ is not None:
             all_types = {i.name: i.type for i in self.onnx_graph_.input}
             # Intermediate value annotations (`value_info`) live on the
             # graph itself (`graph.value_info`), not on the top-level
             # ModelProto, so look them up on `self.onnx_graph_`.
             for shape_type in self.onnx_graph_.value_info:
                 all_types[shape_type.name] = shape_type.type
+            for output in self.onnx_graph_.output:
+                all_types[output.name] = output.type
             self.all_types_ = all_types
         elif isinstance(self.proto_, FunctionProto):
             # A FunctionProto's `input`/`output` are plain names with no
@@ -640,23 +642,14 @@ class ReferenceEvaluator:
             self._log(2, " +I %s: %s", k, v)  # type: ignore[arg-type]
 
         if bindings is not None:
-            # A FunctionProto's inputs are plain names with no declared
-            # type of their own (see the FunctionProto definition); any
-            # type/shape annotation for them lives in `value_info`
-            # instead, which is folded into `all_types_` (see `_init`).
-            input_types = (
-                dict(zip(self.input_names_, self.input_types_, strict=False))
-                if self.input_types_
-                else self.all_types_
-            )
-            if input_types:
-                for name in self.input_names_:
-                    # Check every declared input, whether its value was
-                    # explicitly fed or comes from a same-named initializer
-                    # used as a default value.
-                    if name in results:
+            # Check every annotated value already available at entry,
+            # including initializer-only values and values captured from an
+            # enclosing graph.
+            if self.all_types_:
+                for name, value in results.items():
+                    if name in self.all_types_:
                         check_value_against_type(
-                            input_types.get(name), results[name], bindings, name
+                            self.all_types_[name], value, bindings, name
                         )
 
         # step 2: execute nodes

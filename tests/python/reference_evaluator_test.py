@@ -6789,6 +6789,57 @@ class TestReferenceEvaluatorShapeAnnotationChecking:
         with pytest.raises(ShapeAnnotationError, match="declared element type"):
             ref.run(None, {"X": np.zeros((3,), dtype=np.float16)})
 
+    def test_string_unicode_dtype_is_accepted(self) -> None:
+        x = make_tensor_value_info("X", TensorProto.STRING, [2])
+        z = make_tensor_value_info("Z", TensorProto.STRING, [2])
+        node = make_node("Identity", ["X"], ["Z"])
+        graph = make_graph([node], "g", [x], [z])
+        model = make_model(graph, opset_imports=[make_opsetid("", 18)])
+        ref = ReferenceEvaluator(model, check_shape_annotations=True)
+        (got,) = ref.run(None, {"X": np.array(["a", "b"], dtype=np.str_)})
+        assert got.dtype.kind == "U"
+
+    def test_annotated_initializer_is_checked_at_entry(self) -> None:
+        x = make_tensor_value_info("X", TensorProto.FLOAT, [3])
+        z = make_tensor_value_info("Z", TensorProto.FLOAT, [3])
+        init = make_tensor(
+            "X", TensorProto.FLOAT, [5], np.zeros((5,), dtype=np.float32)
+        )
+        node = make_node("Identity", ["X"], ["Z"])
+        graph = make_graph([node], "g", [], [z], initializer=[init], value_info=[x])
+        model = make_model(graph, opset_imports=[make_opsetid("", 18)])
+        ref = ReferenceEvaluator(model, check_shape_annotations=True)
+        with pytest.raises(ShapeAnnotationError, match="declared dimension value"):
+            ref.run(None, {})
+
+    def test_zero_input_graph_checks_intermediate_annotation(self) -> None:
+        y = make_tensor_value_info("Y", TensorProto.FLOAT, [3])
+        z = make_tensor_value_info("Z", TensorProto.FLOAT, [3])
+        init = make_tensor(
+            "X", TensorProto.FLOAT, [5], np.zeros((5,), dtype=np.float32)
+        )
+        nodes = [
+            make_node("Identity", ["X"], ["Y"]),
+            make_node("Identity", ["Y"], ["Z"]),
+        ]
+        graph = make_graph(nodes, "g", [], [z], initializer=[init], value_info=[y])
+        model = make_model(graph, opset_imports=[make_opsetid("", 18)])
+        ref = ReferenceEvaluator(model, check_shape_annotations=True)
+        with pytest.raises(ShapeAnnotationError, match="declared dimension value"):
+            ref.run(None, {})
+
+    def test_zero_input_graph_checks_output_annotation(self) -> None:
+        z = make_tensor_value_info("Z", TensorProto.FLOAT, [3])
+        init = make_tensor(
+            "X", TensorProto.FLOAT, [5], np.zeros((5,), dtype=np.float32)
+        )
+        node = make_node("Identity", ["X"], ["Z"])
+        graph = make_graph([node], "g", [], [z], initializer=[init])
+        model = make_model(graph, opset_imports=[make_opsetid("", 18)])
+        ref = ReferenceEvaluator(model, check_shape_annotations=True)
+        with pytest.raises(ShapeAnnotationError, match="declared dimension value"):
+            ref.run(None, {})
+
     def test_intermediate_value_info_mismatch_raises(self) -> None:
         # "Y" is an intermediate value (not a graph input or output)
         # annotated via value_info; Cast to INT32 makes it violate its

@@ -30,6 +30,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
+import numpy as np
+
 from onnx.helper import tensor_dtype_to_np_dtype
 
 if TYPE_CHECKING:
@@ -170,7 +172,17 @@ def check_value_against_type(
                 # No corresponding numpy dtype (e.g. a storage-only element
                 # type); nothing to compare against.
                 declared_dtype = None
-            if declared_dtype is not None and actual_dtype != declared_dtype:
+            # The reference evaluator represents ONNX STRING tensors as
+            # NumPy Unicode arrays, while the dtype mapping uses object.
+            string_unicode = (
+                declared_dtype == np.dtype(object)
+                and getattr(actual_dtype, "kind", None) == "U"
+            )
+            if (
+                declared_dtype is not None
+                and actual_dtype != declared_dtype
+                and not string_unicode
+            ):
                 raise ShapeAnnotationError(
                     f"Value {name!r}: declared element type {declared_dtype} does not "
                     f"match actual element type {actual_dtype}."
