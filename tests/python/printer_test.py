@@ -3,10 +3,11 @@
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
+import numpy as np
 import pytest
 
 import onnx
-from onnx import parser, printer
+from onnx import helper, numpy_helper, parser, printer
 
 
 class TestBasicFunctions:
@@ -81,6 +82,19 @@ class TestBasicFunctions:
         assert node2.op_type == "Softmax"
         assert list(node2.output) == ["C"]
         assert list(node2.input) == ["S"]
+
+    def test_float16_initializer_roundtrip(self) -> None:
+        values = np.array([1.0, -2.0, 0.5], dtype=np.float16)
+        initializer = numpy_helper.from_array(values, name="weights")
+        graph = helper.make_graph([], "graph", [], [], [initializer])
+
+        text = printer.to_text(graph)
+
+        assert "float16[3] weights = {15360,49152,14336}" in text
+        parsed = parser.parse_graph(text)
+        np.testing.assert_array_equal(
+            numpy_helper.to_array(parsed.initializer[0]), values
+        )
 
     def test_to_text_unsupported_type_raises(self) -> None:
         # to_text dispatches on proto type and raises TypeError for unsupported
