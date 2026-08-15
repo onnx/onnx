@@ -114,7 +114,8 @@ ONNX_API void convPoolShapeInference(
   std::vector<int64_t> effective_kernel_shape = kernel_shape;
   for (size_t i = 0; i < kernel_shape.size(); i++) {
     // accounting for dilation, how big is the kernel in this dimension
-    effective_kernel_shape[i] = (effective_kernel_shape[i] - 1) * dilations[i] + 1;
+    effective_kernel_shape[i] =
+        checkedAdd(checkedMultiply(checkedSubtract(effective_kernel_shape[i], 1), dilations[i]), 1);
   }
 
   std::vector<int64_t> pads;
@@ -146,10 +147,11 @@ ONNX_API void convPoolShapeInference(
         if (i >= static_cast<int>(effective_kernel_shape.size())) {
           fail_shape_inference("kernel shape should have ", input_dims_size, " values in ", ctx.getDisplayName(), ".");
         }
-        int64_t total_pad = residual == 0 ? effective_kernel_shape[i] - stride : effective_kernel_shape[i] - residual;
+        int64_t total_pad = residual == 0 ? checkedSubtract(effective_kernel_shape[i], stride)
+                                          : checkedSubtract(effective_kernel_shape[i], residual);
         total_pad = std::max<int64_t>(total_pad, 0);
         int64_t half_pad_small = total_pad >> 1;
-        int64_t half_pad_big = total_pad - half_pad_small;
+        int64_t half_pad_big = checkedSubtract(total_pad, half_pad_small);
         if (auto_pad_attr->s() == "SAME_UPPER") {
           pads[i] = half_pad_small;
           pads[i + input_dims_size] = half_pad_big;
@@ -184,14 +186,18 @@ ONNX_API void convPoolShapeInference(
     }
     // how big is the input, including padding
     int64_t input_size = input_shape.dim(2 + i).dim_value();
-    int64_t effective_input_size = input_size + pads[i] + pads[i + kernel_shape_size];
+    int64_t effective_input_size = checkedAdd(checkedAdd(input_size, pads[i]), pads[i + kernel_shape_size]);
 
     // default is floor mode .i.e. ceil_mode is set to 0
     auto ceil_mode = getAttribute(ctx, "ceil_mode", 0);
 
-    int64_t output_size =
-        (effective_input_size - effective_kernel_shape[i] + (ceil_mode ? strides[i] - 1 : 0)) / strides[i] + 1;
-    if (ceil_mode == 1 && (output_size - 1) * strides[i] >= (input_size + pads[i])) {
+    int64_t numerator = checkedSubtract(effective_input_size, effective_kernel_shape[i]);
+    if (ceil_mode) {
+      numerator = checkedAdd(numerator, checkedSubtract(strides[i], 1));
+    }
+    int64_t output_size = checkedAdd(checkedDivide(numerator, strides[i]), 1);
+    if (ceil_mode == 1 &&
+        checkedMultiply(checkedSubtract(output_size, 1), strides[i]) >= checkedAdd(input_size, pads[i])) {
       // we need to match pytorch's behavior of "Sliding windows that would start in the right padded region are
       // ignored." (https://pytorch.org/docs/stable/generated/torch.nn.MaxPool1d.html#maxpool1d). this code follows the
       // same logic as PyTorch's C++ implementation:
@@ -470,10 +476,10 @@ static void maxUnpoolShapeInference(InferenceContext& ctx) {
       continue;
     }
 
-    int64_t newdim_value = strides[i] * (input_shape.dim(2 + i).dim_value() - 1);
-    newdim_value += kernel_shape[i];
-    newdim_value -= pads[i];
-    newdim_value -= pads[i + kernel_shape_size];
+    int64_t newdim_value = checkedMultiply(strides[i], checkedSubtract(input_shape.dim(2 + i).dim_value(), 1));
+    newdim_value = checkedAdd(newdim_value, kernel_shape[i]);
+    newdim_value = checkedSubtract(newdim_value, pads[i]);
+    newdim_value = checkedSubtract(newdim_value, pads[i + kernel_shape_size]);
 
     // add in the initial position
     newdim->set_dim_value(newdim_value);
@@ -1196,7 +1202,8 @@ ONNX_API void convTransposeShapeInference(InferenceContext& ctx) {
   std::vector<int64_t> effective_kernel_shape = kernel_shape;
   for (size_t i = 0; i < kernel_shape.size(); i++) {
     // accounting for dilation, how big is the kernel in this dimension
-    effective_kernel_shape[i] = (effective_kernel_shape[i] - 1) * dilations[i] + 1;
+    effective_kernel_shape[i] =
+        checkedAdd(checkedMultiply(checkedSubtract(effective_kernel_shape[i], 1), dilations[i]), 1);
   }
 
   std::vector<int64_t> pads;
@@ -1217,10 +1224,10 @@ ONNX_API void convTransposeShapeInference(InferenceContext& ctx) {
     if ((nullptr != auto_pad_attr) && (auto_pad_attr->s() != "VALID")) {
       int input_dims_size = static_cast<int>(n_input_dims);
       for (int i = 0; i < input_dims_size; ++i) {
-        int64_t total_pad = effective_kernel_shape[i] - strides[i];
+        int64_t total_pad = checkedSubtract(effective_kernel_shape[i], strides[i]);
         total_pad = std::max<int64_t>(total_pad, 0);
         int64_t half_pad_small = total_pad >> 1;
-        int64_t half_pad_big = total_pad - half_pad_small;
+        int64_t half_pad_big = checkedSubtract(total_pad, half_pad_small);
         if (auto_pad_attr->s() == "SAME_UPPER") {
           pads[i] = half_pad_small;
           pads[i + input_dims_size] = half_pad_big;
@@ -1281,8 +1288,11 @@ ONNX_API void convTransposeShapeInference(InferenceContext& ctx) {
     size_of_output = input_shape.dim_size() - 2;
     for (int i = 0; i < size_of_output; ++i) {
       if (input_shape.dim(i + 2).has_dim_value()) {
-        int64_t output_shape_dim = strides[i] * (input_shape.dim(i + 2).dim_value() - 1) + output_padding[i] +
-            effective_kernel_shape[i] - pads[i] - pads[i + n_input_dims];
+        int64_t output_shape_dim = checkedMultiply(strides[i], checkedSubtract(input_shape.dim(i + 2).dim_value(), 1));
+        output_shape_dim = checkedAdd(output_shape_dim, output_padding[i]);
+        output_shape_dim = checkedAdd(output_shape_dim, effective_kernel_shape[i]);
+        output_shape_dim = checkedSubtract(output_shape_dim, pads[i]);
+        output_shape_dim = checkedSubtract(output_shape_dim, pads[i + n_input_dims]);
         final_output_shape->add_dim()->set_dim_value(output_shape_dim);
       } else {
         final_output_shape->add_dim();
@@ -2332,7 +2342,10 @@ static void col2imShapeInference(InferenceContext& ctx) {
   if (!block_shape.empty()) {
     block_shape_size = 1;
     for (const auto& dim : block_shape) {
-      block_shape_size *= dim;
+      if (dim <= 0) {
+        fail_shape_inference("'block_shape' input must contain only positive values");
+      }
+      block_shape_size = checkedMultiply(block_shape_size, dim);
     }
   }
   // If we haven't inferred the number of image dimensions, we can't set inferred shape.
@@ -4701,7 +4714,7 @@ ONNX_OPERATOR_SET_SCHEMA(
                   q_num_heads,
                   ")");
             }
-            unifyDim(Dk, QPack.dim_value() / q_num_heads);
+            unifyDim(Dk, checkedDivide(QPack.dim_value(), q_num_heads));
           }
           if (kv_num_heads > 0 && KPack.has_dim_value()) {
             if (KPack.dim_value() % kv_num_heads != 0) {
@@ -4712,7 +4725,7 @@ ONNX_OPERATOR_SET_SCHEMA(
                   kv_num_heads,
                   ")");
             }
-            unifyDim(Dk, KPack.dim_value() / kv_num_heads);
+            unifyDim(Dk, checkedDivide(KPack.dim_value(), kv_num_heads));
           }
           // Derive d_v from V.
           if (kv_num_heads > 0 && VPack.has_dim_value()) {
@@ -4724,7 +4737,7 @@ ONNX_OPERATOR_SET_SCHEMA(
                   kv_num_heads,
                   ")");
             }
-            unifyDim(Dv, VPack.dim_value() / kv_num_heads);
+            unifyDim(Dv, checkedDivide(VPack.dim_value(), kv_num_heads));
           }
 
           // Strict validation of decay/beta last dims, deferred until d_k and H_kv
@@ -4743,14 +4756,15 @@ ONNX_OPERATOR_SET_SCHEMA(
               const int64_t decay_last = decay_type->tensor_type().shape().dim(2).dim_value();
               if (Dk.has_dim_value()) {
                 const int64_t dk = Dk.dim_value();
-                if (decay_last != kv_num_heads && decay_last != kv_num_heads * dk) {
+                const int64_t kv_dk = checkedMultiply(kv_num_heads, dk);
+                if (decay_last != kv_num_heads && decay_last != kv_dk) {
                   fail_shape_inference(
                       "decay last dim (",
                       decay_last,
                       ") must be kv_num_heads (",
                       kv_num_heads,
                       ") or kv_num_heads * d_k (",
-                      kv_num_heads * dk,
+                      kv_dk,
                       ")");
                 }
               } else if (decay_last != kv_num_heads && decay_last % kv_num_heads != 0) {
@@ -4778,7 +4792,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           // Output 0: (B, T, H_q * d_v) — 3D packed.
           Dim OutLast;
           if (q_num_heads > 0 && Dv.has_dim_value()) {
-            OutLast.set_dim_value(q_num_heads * Dv.dim_value());
+            OutLast.set_dim_value(checkedMultiply(q_num_heads, Dv.dim_value()));
           }
           updateOutputShape(ctx, 0, {B, T, OutLast});
 

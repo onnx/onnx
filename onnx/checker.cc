@@ -99,10 +99,10 @@ void check_value_info(const ValueInfoProto& value_info, const CheckerContext& ct
       enforce_has_field(type, key_type);
       enforce_has_field(type, value_type);
     } break;
-#ifdef ONNX_ML
-    case TypeProto::kOpaqueType:
-      break;
-#endif
+    case TypeProto::kOpaqueType: {
+      const auto& type = value_info.type().opaque_type();
+      enforce_non_empty_field(type, name);
+    } break;
     case TypeProto::kSparseTensorType: {
       const auto& type = value_info.type().sparse_tensor_type();
       enforce_has_field(type, elem_type);
@@ -470,11 +470,11 @@ check_sparse_tensor_indices_2(const TensorProto& indices, const SparseTensorProt
   for (size_t i = 0; i < nnz; ++i) {
     int64_t curr_index = 0; // linearized index of i-th value
     for (int j = 0; j < dense_rank; ++j) {
-      auto index_ij = index_data[i * dense_rank + j];
+      auto index_ij = index_data[(i * dense_rank) + j];
       if ((index_ij < 0) || (index_ij >= sparse_tensor_proto.dims(j))) {
         fail_check("Sparse tensor (", indices.name(), ") index value at position [", i, ",", j, "] out of range.");
       }
-      curr_index = curr_index * sparse_tensor_proto.dims(j) + index_ij;
+      curr_index = (curr_index * sparse_tensor_proto.dims(j)) + index_ij;
     }
     if (curr_index <= prev_index) {
       fail_check(
@@ -962,7 +962,7 @@ void DetectCycleDFS(
           cycle,
           " -> ",
           GetFunctionImplId(*callee),
-          ". Self-referencing or cyclically-referencing functions would cause infinite recursion.");
+          ". Model-local functions must not be recursive.");
     } else if (s == VisitState::Unvisited) {
       push(callee);
     }

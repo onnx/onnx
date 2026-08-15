@@ -69,6 +69,8 @@ class ProtoPrinter {
 
   void print(const TypeProto_SparseTensor& sparseType);
 
+  void print(const TypeProto_Opaque& opaqueType);
+
   void print(const TensorProto& tensor, bool is_initializer = false);
 
   void print(const ValueInfoProto& value_info);
@@ -239,6 +241,22 @@ void ProtoPrinter::print(const TypeProto_SparseTensor& sparseType) {
   output_ << ")";
 }
 
+void ProtoPrinter::print(const TypeProto_Opaque& opaqueType) {
+  // Mirrors the grammar accepted by the parser:
+  //   opaque()
+  //   opaque(name)
+  //   opaque(domain,name)
+  output_ << "opaque(";
+  const bool has_domain = opaqueType.has_domain() && !opaqueType.domain().empty();
+  if (has_domain) {
+    output_ << opaqueType.domain() << ",";
+  }
+  if (opaqueType.has_name() && !opaqueType.name().empty()) {
+    output_ << opaqueType.name();
+  }
+  output_ << ")";
+}
+
 void ProtoPrinter::print(const TypeProto& type) {
   if (type.has_tensor_type())
     print(type.tensor_type());
@@ -250,6 +268,8 @@ void ProtoPrinter::print(const TypeProto& type) {
     print(type.optional_type());
   else if (type.has_sparse_tensor_type())
     print(type.sparse_tensor_type());
+  else if (type.has_opaque_type())
+    print(type.opaque_type());
 }
 
 void ProtoPrinter::print(const TensorProto& tensor, bool is_initializer) {
@@ -518,39 +538,42 @@ void ProtoPrinter::print(const FunctionProto& fn) {
 
 } // namespace
 
-#define DEF_OP(T)                                              \
-  std::ostream& operator<<(std::ostream& os, const T& proto) { \
+// The parameter name must match the declaration in printer.h.
+// NOLINTBEGIN(bugprone-macro-parentheses) `param` is a declarator, it cannot be parenthesized
+#define DEF_OP(T, param)                                       \
+  std::ostream& operator<<(std::ostream& os, const T& param) { \
     ProtoPrinter printer(os);                                  \
-    printer.print(proto);                                      \
+    printer.print(param);                                      \
     return os;                                                 \
   }
+// NOLINTEND(bugprone-macro-parentheses)
 
-DEF_OP(TensorShapeProto_Dimension)
+DEF_OP(TensorShapeProto_Dimension, dim)
 
-DEF_OP(TensorShapeProto)
+DEF_OP(TensorShapeProto, shape)
 
-DEF_OP(TypeProto_Tensor)
+DEF_OP(TypeProto_Tensor, tensortype)
 
-DEF_OP(TypeProto)
+DEF_OP(TypeProto, type)
 
-DEF_OP(TensorProto)
+DEF_OP(TensorProto, tensor)
 
-DEF_OP(ValueInfoProto)
+DEF_OP(ValueInfoProto, value_info)
 
-DEF_OP(ValueInfoList)
+DEF_OP(ValueInfoList, vilist)
 
-DEF_OP(AttributeProto)
+DEF_OP(AttributeProto, attr)
 
-DEF_OP(AttrList)
+DEF_OP(AttrList, attrlist)
 
-DEF_OP(NodeProto)
+DEF_OP(NodeProto, node)
 
-DEF_OP(NodeList)
+DEF_OP(NodeList, nodelist)
 
-DEF_OP(GraphProto)
+DEF_OP(GraphProto, graph)
 
-DEF_OP(FunctionProto)
+DEF_OP(FunctionProto, fn)
 
-DEF_OP(ModelProto)
+DEF_OP(ModelProto, model)
 
 } // namespace ONNX_NAMESPACE

@@ -110,7 +110,7 @@ from onnx root dir should work.
   - `helper.py`: tools for graph operation
   - `defs/`: a subfolder that defines the ONNX operators
   - `backend/`: reference implementation and backend test framework
-  - `test/`: test files
+- `tests/`: test files
 
 ### Auto generated files
 
@@ -122,7 +122,7 @@ Operator docs ([Operators.md](docs/Operators.md), [Operators-ml.md](docs/Operato
 
 ```pwsh
 # Windows
-set ONNX_ML=1
+$env:ONNX_ML = "1"
 pip install -e . -v
 python onnx/defs/gen_doc.py
 ```
@@ -152,17 +152,6 @@ Variants of the `.proto` files are generated for the default and ml opset using 
 python onnx/gen_proto.py -l
 python onnx/gen_proto.py -l --ml
 ```
-
-#### Generate test data
-
-Test ONNX models, their inputs, and expected outputs can be regenerated after updating test cases by running:
-
-```
-python onnx/backend/test/cmd_tools.py generate-data --diff
-```
-
-This will only re-generate test data for test cases that were updated in the current feature branch compared to main.
-
 
 ### Coding style
 
@@ -220,7 +209,7 @@ pytest
 
 #### Cpp tests (googletest)
 
-Some functionalities are tested with googletest. Those tests are listed in `onnx/test/cpp`, and include tests for shape inference, data propagation, parser, and others.
+Some functionalities are tested with googletest. Those tests are listed in `tests/cpp`, and include tests for shape inference, data propagation, parser, and others.
 
 To run them, first build ONNX with `-DONNX_BUILD_TESTS=1` or `ONNX_BUILD_TESTS=1 pip install -e . -v`.
 
