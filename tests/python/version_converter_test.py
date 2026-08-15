@@ -3214,3 +3214,31 @@ class TestVersionConverter:
     def test_celu_28_27_unsupported_type_fails(self, dtype: int) -> None:
         with pytest.raises(RuntimeError):
             self._celu_converted(dtype, 28, 27)
+
+    def _einsum_converted(self, dtype: int, src: int, dst: int) -> ModelProto:
+        node = helper.make_node("Einsum", ["X", "Y"], ["Z"], equation="bij,bjk->bik")
+        graph = helper.make_graph(
+            [node],
+            "einsum",
+            [
+                helper.make_tensor_value_info("X", dtype, [5, 2, 3]),
+                helper.make_tensor_value_info("Y", dtype, [5, 3, 4]),
+            ],
+            [helper.make_tensor_value_info("Z", dtype, [5, 2, 4])],
+        )
+        return self._converted(graph, helper.make_operatorsetid("", src), dst)
+
+    def test_einsum_float_27_28_and_28_27(self) -> None:
+        assert (
+            self._einsum_converted(TensorProto.FLOAT, 27, 28).opset_import[0].version
+            == 28
+        )
+        assert (
+            self._einsum_converted(TensorProto.FLOAT, 28, 27).opset_import[0].version
+            == 27
+        )
+
+    # Einsum 28 -> 27: bfloat16 was added in v28, so it must be rejected
+    def test_einsum_28_27_bfloat16_fails(self) -> None:
+        with pytest.raises(RuntimeError):
+            self._einsum_converted(TensorProto.BFLOAT16, 28, 27)

@@ -982,12 +982,15 @@ class DefaultVersionConverter : public BaseVersionConverter {
 
     /******** 27 -> 28 ********/
     registerAdapter(std::make_unique<CompatibleAdapter>("Celu", OpSetID(27), OpSetID(28)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("Einsum", OpSetID(27), OpSetID(28)));
 
     /******** 28 -> 27 ********/
     // Celu v28 widened T to all_float_types_ir4(); Celu v12 (opset 27) supports only FLOAT.
     const std::vector<TensorProto_DataType> celu_28_unallowed_types = {
         TensorProto_DataType_FLOAT16, TensorProto_DataType_BFLOAT16, TensorProto_DataType_DOUBLE};
     registerAdapter(std::make_unique<TypeRestriction>("Celu", OpSetID(28), OpSetID(27), celu_28_unallowed_types));
+    // Einsum v28 widened T to all_numeric_types_ir4(); Einsum v12 (opset 27) lacks BFLOAT16.
+    registerAdapter(std::make_unique<TypeRestriction>("Einsum", OpSetID(28), OpSetID(27), bfloat16_not_allowed));
   }
 
   ModelProto convert_version(const ModelProto& mp_in, const OpSetID& initial_version, const OpSetID& target_version)
