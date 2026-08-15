@@ -8,8 +8,7 @@ import numpy as np
 
 from onnx.reference.op_run import OpRun
 
-# np.einsum cannot contract bfloat16, and under optimize=True it returns float32 rather
-# than raising, so the TypeError fallback below never fires for it.
+# np.einsum cannot accumulate with bfloat16 output.
 _ACCUMULATE_IN_FLOAT32 = (np.dtype(ml_dtypes.bfloat16),)
 
 
