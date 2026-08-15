@@ -9625,6 +9625,18 @@ class TestShapeInference(TestShapeInferenceHelper):
             graph, [make_tensor_value_info("z", TensorProto.FLOAT, (2, 3, 3, 4))]
         )
 
+    def test_einsum_upper_case_letters(self) -> None:
+        # Upper case letters are distinct symbols from lower case letters, and
+        # implicit output ordering follows ASCII order (upper case before lower case).
+        graph = self._make_graph(
+            [("x", TensorProto.FLOAT, (2, 3)), ("y", TensorProto.FLOAT, (3, 4))],
+            [make_node("Einsum", ["x", "y"], ["z"], equation="Ia,aJ")],
+            [],
+        )
+        self._assert_inferred(
+            graph, [make_tensor_value_info("z", TensorProto.FLOAT, (2, 4))]
+        )
+
     def test_einsum_incorrect_num_inputs(self) -> None:
         graph = self._make_graph(
             [
