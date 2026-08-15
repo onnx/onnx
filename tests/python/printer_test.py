@@ -47,6 +47,27 @@ class TestBasicFunctions:
         # Verify that "M + N" is preserved as a quoted string in the printed output
         assert '"M + N"' in text1
 
+    @pytest.mark.parametrize(
+        "type_text",
+        [
+            "opaque(test.domain,MyType)",
+            "opaque(MyType)",
+            "opaque()",
+        ],
+    )
+    def test_opaque_type_roundtrip(self, type_text: str) -> None:
+        # Test that Opaque types (added, along with this test, to illustrate
+        # producing/consuming custom types not defined by the ONNX spec) can
+        # be parsed and printed, and survive a parse/print round-trip.
+        text0 = f"agraph ({type_text} x) => ({type_text} y) {{ y = Identity(x) }}"
+        graph1 = parser.parse_graph(text0)
+        assert graph1.input[0].type.WhichOneof("value") == "opaque_type"
+        text1 = printer.to_text(graph1)
+        graph2 = parser.parse_graph(text1)
+        text2 = printer.to_text(graph2)
+        assert text1 == text2
+        assert graph2.input[0].type == graph1.input[0].type
+
     def test_parse_node_roundtrip(self) -> None:
         # Regression test for #7944: parse_node accepts NodeProto text but
         # printer.to_text(NodeProto) raised TypeError because NodeProto was
