@@ -27,7 +27,7 @@ The ONNX project, going forward, will plan to release roughly on a four month ca
 ## Create Release Branch
 
 * In `main` branch, before creating the release branch:
-    1. Make sure the release version ([/VERSION_NUMBER](/VERSION_NUMBER)), IR version, ai.onnx opset version, ai.onnx.ml opset version, and ai.onnx.training opset version are correct for the new release in [ONNX proto files](/onnx/onnx.in.proto), [Versioning.md](Versioning.md), [schema.h](/onnx/defs/schema.h), [helper.py](/onnx/helper.py), and [helper_test.py](/onnx/test/helper_test.py).
+    1. Make sure the release version ([/VERSION_NUMBER](/VERSION_NUMBER)), IR version, ai.onnx opset version, ai.onnx.ml opset version, and ai.onnx.training opset version are correct for the new release in [ONNX proto files](/onnx/onnx.in.proto), [Versioning.md](Versioning.md), [schema.h](/onnx/defs/schema.h), [helper.py](/onnx/helper.py), and [helper_test.py](/tests/python/helper_test.py).
 
 * Create a release branch
     1. Click "New branch" from [branches](https://github.com/onnx/onnx/branches) and choose `main` as Source.
@@ -107,7 +107,7 @@ Validation steps must be completed before this point! This is the point of new r
     * DO NOT click `Publish release` until you are sure no more changes are needed.
         * Use `Save Draft` if need to save and update more later.
         * Publishing will create the new git tag
-    * Tag: See top of [Preparation](#Preparation) for tag to create.
+    * Tag: See top of [Preparation](#preparation) for tag to create.
     * Target: The release branch that was just cut
     * Previous tag: Select the previous release.
     * Write:
