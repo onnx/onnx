@@ -177,6 +177,7 @@ struct Attributes {
     for (const auto& i : rhs.values_) {
       values_.push_back(i->clone());
     }
+    This()->onAttributesChanged();
   }
   bool hasAttribute(Symbol name) const {
     return find(name, false) != values_.end();
@@ -186,6 +187,7 @@ struct Attributes {
   }
   Derived* removeAttribute(Symbol name) {
     values_.erase(find(name, true));
+    This()->onAttributesChanged();
     return This();
   }
   bool hasAttributes() const {
@@ -198,6 +200,15 @@ struct Attributes {
     for (const auto& a : values_)
       names.push_back(a->name);
     return names;
+  }
+  // Like attributeNames() followed by kindOf() on each, but without
+  // allocating a names vector -- for callers (e.g. Graph's subgraph walk)
+  // that just need to visit every (name, kind) pair on a hot path.
+  template <typename Fn>
+  void forEachAttributeNameAndKind(const Fn& fn) const {
+    for (const auto& a : values_) {
+      fn(a->name, a->kind());
+    }
   }
 
 #define CREATE_ACCESSOR(Kind, method)                                           \
@@ -235,6 +246,7 @@ struct Attributes {
     } else {
       *it = std::move(nv);
     }
+    This()->onAttributesChanged();
     return This();
   }
   template <typename T>
@@ -500,6 +512,10 @@ struct Node : public Attributes<Node> {
   const Graph* owningGraph() const {
     return graph_;
   }
+  // Called by Attributes<Node> after any attribute add/remove/copy so the
+  // owning Graph can keep its subgraph-bearing-node index in sync. Defined
+  // out-of-line below, after Graph is complete.
+  void onAttributesChanged();
   size_t stage() const {
     return stage_;
   }
@@ -910,6 +926,40 @@ struct Graph final {
 
   std::vector<Tensor> initializers_;
   std::vector<std::string> initializer_names_;
+  // Mirrors every name currently in use by this graph's own initializers and
+  // values (node inputs/outputs, graph inputs), kept in sync at the choke
+  // points that assign/clear a name (Value::setUniqueName, freeValue,
+  // addInitializer/eraseInitializer/clearInitializers) so isNameUnique() can
+  // answer in O(1) instead of scanning every node's inputs/outputs by string
+  // comparison. Deliberately NOT extended to cover names used inside subgraph
+  // attributes (If/Loop/Scan bodies) -- isNameUnique() still recurses into
+  // those explicitly, unchanged from before.
+  std::unordered_set<std::string> used_names_;
+
+  // Nodes that currently carry at least one subgraph-typed attribute (kind g
+  // or gs -- If/Loop/Scan bodies, or any custom op with a graph attribute).
+  // Kept in sync by Node::onAttributesChanged() (called from Attributes<Node>
+  // after set/removeAttribute/copyAttributes) and by freeNode(), so
+  // isNameUnique() can iterate just this handful of nodes instead of every
+  // node in the graph to find subgraphs to recurse into.
+  std::unordered_set<const Node*> subgraph_bearing_nodes_;
+
+  // Recomputes whether `n` currently has any g/gs attribute and updates
+  // subgraph_bearing_nodes_ accordingly. O(n's own attribute count), which is
+  // always small, regardless of graph size.
+  void syncSubgraphAttrTracking(Node* n) {
+    bool has_subgraph_attr = false;
+    n->forEachAttributeNameAndKind([&](Symbol, AttributeKind kind) {
+      if (kind == AttributeKind::g || kind == AttributeKind::gs) {
+        has_subgraph_attr = true;
+      }
+    });
+    if (has_subgraph_attr) {
+      subgraph_bearing_nodes_.insert(n);
+    } else {
+      subgraph_bearing_nodes_.erase(n);
+    }
+  }
 
   bool has_name_{false};
   std::string name_;
@@ -919,36 +969,42 @@ struct Graph final {
   std::vector<OpSetID> opset_versions_;
 
   bool isNameUnique(const std::string& name) const {
-    if (std::find(initializer_names_.cbegin(), initializer_names_.cend(), name) != initializer_names_.cend()) {
+    // O(1) check against this graph's own initializer/value names, replacing
+    // what used to be a linear scan of initializer_names_ plus, per node, two
+    // more linear string-comparison scans over its inputs and outputs.
+    if (used_names_.count(name)) {
       return false;
     }
-    const auto f = [&name](const Value* v) { return v->uniqueName() == name; };
-    for (const auto& node_entry : all_nodes) {
-      const Node* node = node_entry.first;
-      for (const auto& attr : node->attributeNames()) {
-        if (node->kindOf(attr) == AttributeKind::g) {
-          const auto& subgraph = node->g(attr);
-          if (!subgraph->isNameUnique(name)) {
-            return false;
+    // Only nodes that actually carry a subgraph attribute (If/Loop/Scan
+    // bodies, tracked incrementally in subgraph_bearing_nodes_) need to be
+    // recursed into -- typically none, for graphs with no control-flow ops --
+    // instead of scanning every node in the graph on every call.
+    bool conflict = false;
+    for (const Node* node : subgraph_bearing_nodes_) {
+      if (conflict) {
+        break;
+      }
+      node->forEachAttributeNameAndKind([&](Symbol attr, AttributeKind kind) {
+        if (conflict) {
+          return;
+        }
+        if (kind == AttributeKind::g) {
+          if (!node->g(attr)->isNameUnique(name)) {
+            conflict = true;
           }
-        } else if (node->kindOf(attr) == AttributeKind::gs) {
+        } else if (kind == AttributeKind::gs) {
           for (const auto& subgraph : node->gs(attr)) {
+            if (conflict) {
+              break;
+            }
             if (!subgraph->isNameUnique(name)) {
-              return false;
+              conflict = true;
             }
           }
         }
-      }
-      const auto* const found_in = std::find_if(node->inputs().begin(), node->inputs().end(), f);
-      if (found_in != node->inputs().end()) {
-        return false;
-      }
-      const auto* const found_out = std::find_if(node->outputs().begin(), node->outputs().end(), f);
-      if (found_out != node->outputs().end()) {
-        return false;
-      }
+      });
     }
-    return true;
+    return !conflict;
   }
 
  public:
@@ -971,6 +1027,7 @@ struct Graph final {
     }
     initializers_.push_back(initializer);
     initializer_names_.push_back(initializer.name());
+    used_names_.insert(initializer.name());
   }
 
   // For IR >= 4, initializer is not required to exist in input
@@ -994,6 +1051,7 @@ struct Graph final {
         initializers_.end());
     initializer_names_.erase(
         std::remove(initializer_names_.begin(), initializer_names_.end(), name), initializer_names_.end());
+    used_names_.erase(name);
     for (size_t i = 0; i < initializer_node_->outputs().size(); i++) {
       if (initializer_node_->outputs()[i]->uniqueName() == name) {
         initializer_node_->eraseOutput(i);
@@ -1002,6 +1060,9 @@ struct Graph final {
     }
   }
   void clearInitializers() {
+    for (const auto& name : initializer_names_) {
+      used_names_.erase(name);
+    }
     initializers_.clear();
     initializer_names_.clear();
   }
@@ -1224,15 +1285,20 @@ struct Graph final {
     fn(self);
     for (const auto& node_entry : self->all_nodes) {
       const Node* node = node_entry.first;
-      for (const auto& attr : node->attributeNames()) {
-        if (node->kindOf(attr) == AttributeKind::g) {
+      // forEachAttributeNameAndKind(), not attributeNames() + kindOf(): this
+      // runs for every node on every forEachNode() call (e.g. once per
+      // Value::replaceAllUsesWith(), a hot path during rewriting), and
+      // attributeNames() would heap-allocate a vector per node just to find
+      // the (usually zero) g/gs-kind ones.
+      node->forEachAttributeNameAndKind([&](Symbol attr, AttributeKind kind) {
+        if (kind == AttributeKind::g) {
           forSelfAndEachSubGraphImpl(node->g(attr).get(), fn);
-        } else if (node->kindOf(attr) == AttributeKind::gs) {
+        } else if (kind == AttributeKind::gs) {
           for (const auto& subgraph : node->gs(attr)) {
             forSelfAndEachSubGraphImpl(subgraph.get(), fn);
           }
         }
-      }
+      });
     }
   }
 
@@ -1257,8 +1323,12 @@ struct Graph final {
     auto it = all_nodes.find(n);
     ONNX_ASSERT(it != all_nodes.end())
     all_nodes.erase(it);
+    subgraph_bearing_nodes_.erase(n);
   }
   void freeValue(Value* v) {
+    if (v->has_unique_name()) {
+      used_names_.erase(v->uniqueName());
+    }
     auto it = all_values.find(v);
     ONNX_ASSERT(it != all_values.end())
     all_values.erase(it);
@@ -1305,8 +1375,13 @@ inline Value* Value::setUniqueName(const std::string& name, bool update_related_
       }
     });
   }
+  Graph* g = owningGraph();
+  if (has_unique_name_) {
+    g->used_names_.erase(unique_name_);
+  }
   unique_name_ = name;
   has_unique_name_ = true;
+  g->used_names_.insert(name);
   return this;
 }
 
@@ -1350,6 +1425,10 @@ inline void Value::replaceAllUsesWith(Value* newValue) {
 }
 
 inline Node::Node(Graph& graph, NodeKind kind) : kind_(kind), graph_(&graph), stage_(graph.new_node_stage_) {}
+
+inline void Node::onAttributesChanged() {
+  graph_->syncSubgraphAttrTracking(this);
+}
 
 inline Value* Graph::createValue(Node& node, size_t offset) {
   auto value = std::make_unique<Value>(node, offset);
