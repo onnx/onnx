@@ -52,7 +52,7 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#Det">Det</a>|<a href="Changelog.md#Det-22">22</a>, <a href="Changelog.md#Det-11">11</a>|
 |<a href="#Div">Div</a>|<a href="Changelog.md#Div-14">14</a>, <a href="Changelog.md#Div-13">13</a>, <a href="Changelog.md#Div-7">7</a>, <a href="Changelog.md#Div-6">6</a>, <a href="Changelog.md#Div-1">1</a>|
 |<a href="#Dropout">Dropout</a>|<a href="Changelog.md#Dropout-22">22</a>, <a href="Changelog.md#Dropout-13">13</a>, <a href="Changelog.md#Dropout-12">12</a>, <a href="Changelog.md#Dropout-10">10</a>, <a href="Changelog.md#Dropout-7">7</a>, <a href="Changelog.md#Dropout-6">6</a>, <a href="Changelog.md#Dropout-1">1</a>|
-|<a href="#Einsum">Einsum</a>|<a href="Changelog.md#Einsum-12">12</a>|
+|<a href="#Einsum">Einsum</a>|<a href="Changelog.md#Einsum-28">28</a>, <a href="Changelog.md#Einsum-12">12</a>|
 |<a href="#Equal">Equal</a>|<a href="Changelog.md#Equal-19">19</a>, <a href="Changelog.md#Equal-13">13</a>, <a href="Changelog.md#Equal-11">11</a>, <a href="Changelog.md#Equal-7">7</a>, <a href="Changelog.md#Equal-1">1</a>|
 |<a href="#Erf">Erf</a>|<a href="Changelog.md#Erf-13">13</a>, <a href="Changelog.md#Erf-9">9</a>|
 |<a href="#Exp">Exp</a>|<a href="Changelog.md#Exp-13">13</a>, <a href="Changelog.md#Exp-6">6</a>, <a href="Changelog.md#Exp-1">1</a>|
@@ -13310,7 +13310,9 @@ expect(
 
 #### Version
 
-This version of the operator has been available since version 12 of the default ONNX operator set.
+This version of the operator has been available since version 28 of the default ONNX operator set.
+
+Other versions of this operator: <a href="Changelog.md#Einsum-12">12</a>
 
 #### Attributes
 
@@ -13336,7 +13338,7 @@ This version of the operator has been available since version 12 of the default 
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double)</dt>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
 <dd>Constrain input and output types to all numerical tensor types.</dd>
 </dl>
 
@@ -13375,6 +13377,27 @@ Y = np.random.randn(5, 3, 4)
 Z = einsum_reference_implementation(Eqn, (X, Y))
 
 expect(node, inputs=[X, Y], outputs=[Z], name="test_einsum_batch_matmul")
+```
+
+</details>
+
+
+<details>
+<summary>einsum_batch_matmul_bfloat16</summary>
+
+```python
+Eqn = "bij, bjk -> bik"
+node = onnx.helper.make_node(
+    "Einsum", inputs=["x", "y"], outputs=["z"], equation=Eqn
+)
+
+X = np.arange(30).reshape(5, 2, 3).astype(ml_dtypes.bfloat16)
+Y = np.arange(60).reshape(5, 3, 4).astype(ml_dtypes.bfloat16)
+Z = einsum_bfloat16_reference_implementation(Eqn, (X, Y))
+
+expect(
+    node, inputs=[X, Y], outputs=[Z], name="test_einsum_batch_matmul_bfloat16"
+)
 ```
 
 </details>
@@ -13436,6 +13459,26 @@ expect(node, inputs=[X], outputs=[Z], name="test_einsum_sum")
 
 
 <details>
+<summary>einsum_sum_bfloat16</summary>
+
+```python
+# A pure reduction: NumPy raises TypeError on bfloat16 here without the
+# float32 accumulation path.
+Eqn = "ij->i"
+node = onnx.helper.make_node(
+    "Einsum", inputs=["x"], outputs=["y"], equation=Eqn
+)
+
+X = np.arange(12).reshape(3, 4).astype(ml_dtypes.bfloat16)
+Z = einsum_bfloat16_reference_implementation(Eqn, (X,))
+
+expect(node, inputs=[X], outputs=[Z], name="test_einsum_sum_bfloat16")
+```
+
+</details>
+
+
+<details>
 <summary>einsum_transpose</summary>
 
 ```python
@@ -13448,6 +13491,24 @@ X = np.random.randn(3, 4)
 Y = einsum_reference_implementation(Eqn, (X,))
 
 expect(node, inputs=[X], outputs=[Y], name="test_einsum_transpose")
+```
+
+</details>
+
+
+<details>
+<summary>einsum_transpose_bfloat16</summary>
+
+```python
+Eqn = "ij->ji"
+node = onnx.helper.make_node(
+    "Einsum", inputs=["x"], outputs=["y"], equation=Eqn
+)
+
+X = np.arange(12).reshape(3, 4).astype(ml_dtypes.bfloat16)
+Y = einsum_bfloat16_reference_implementation(Eqn, (X,))
+
+expect(node, inputs=[X], outputs=[Y], name="test_einsum_transpose_bfloat16")
 ```
 
 </details>

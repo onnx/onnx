@@ -9490,6 +9490,19 @@ class TestShapeInference(TestShapeInferenceHelper):
             graph, [make_tensor_value_info("y", TensorProto.FLOAT, (4, 3))]
         )
 
+    def test_einsum_batch_matmul_bfloat16(self) -> None:
+        graph = self._make_graph(
+            [
+                ("x", TensorProto.BFLOAT16, (5, 2, 3)),
+                ("y", TensorProto.BFLOAT16, (5, 3, 4)),
+            ],
+            [make_node("Einsum", ["x", "y"], ["z"], equation="bij,bjk->bik")],
+            [],
+        )
+        self._assert_inferred(
+            graph, [make_tensor_value_info("z", TensorProto.BFLOAT16, (5, 2, 4))]
+        )
+
     def test_einsum_dot(self) -> None:
         graph = self._make_graph(
             [("x", TensorProto.FLOAT, (1,)), ("y", TensorProto.FLOAT, (1,))],

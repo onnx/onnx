@@ -168,6 +168,7 @@ if version_utils.numpy_older_than("2.0"):
     # tolerance for the expanded case applies only on NumPy >= 2.0.
     backend_test.exclude(r"test_celu_bfloat16_cpu")
     backend_test.exclude(r"test_celu_bfloat16_expanded_cpu")
+    backend_test.exclude(r"test_einsum_.*_bfloat16")
 
 # The documentation does not explicitly say that is_causal=1 and attn_mask is not None
 # is not allowed. The expansion (based on the function definition in ONNX)
