@@ -670,8 +670,6 @@ class ShapeInferenceImplBase {
         // TODO(ONNX): investigate whether we can eliminate use of temporary copy
         types_cache[i] = *type_ptr;
         value_types_by_name[parameter_name] = &types_cache[i];
-      } else {
-        value_types_by_name[parameter_name] = nullptr;
       }
       if (!caller_has_input) {
         // unbound_value_names starts out empty (see assert above) and each parameter_name is
