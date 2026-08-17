@@ -1576,6 +1576,120 @@ class TestChecker:
             tensor.name = "t"
             checker.check_tensor(tensor)
 
+    def test_check_tensor_float_double_data_too_small(self) -> None:
+        """Reject FLOAT/DOUBLE tensors whose value field has too few entries."""
+        tensor = TensorProto()
+        tensor.data_type = TensorProto.FLOAT
+        tensor.dims.extend([4])
+        tensor.name = "t"
+        tensor.float_data.extend([0.0] * 3)  # 1 short
+        with pytest.raises(checker.ValidationError):
+            checker.check_tensor(tensor)
+        tensor.float_data.append(0.0)
+        checker.check_tensor(tensor)
+
+        tensor = TensorProto()
+        tensor.data_type = TensorProto.DOUBLE
+        tensor.dims.extend([4])
+        tensor.name = "t"
+        tensor.double_data.extend([0.0] * 3)  # 1 short
+        with pytest.raises(checker.ValidationError):
+            checker.check_tensor(tensor)
+        tensor.double_data.append(0.0)
+        checker.check_tensor(tensor)
+
+    def test_check_tensor_complex_data_too_small(self) -> None:
+        """COMPLEX64/COMPLEX128 store 2 value-field entries (real, imag) per element."""
+        tensor = TensorProto()
+        tensor.data_type = TensorProto.COMPLEX64
+        tensor.dims.extend([3])
+        tensor.name = "t"
+        tensor.float_data.extend([0.0] * 5)  # need 3 * 2 = 6
+        with pytest.raises(checker.ValidationError):
+            checker.check_tensor(tensor)
+        tensor.float_data.append(0.0)
+        checker.check_tensor(tensor)
+
+        tensor = TensorProto()
+        tensor.data_type = TensorProto.COMPLEX128
+        tensor.dims.extend([3])
+        tensor.name = "t"
+        tensor.double_data.extend([0.0] * 5)  # need 3 * 2 = 6
+        with pytest.raises(checker.ValidationError):
+            checker.check_tensor(tensor)
+        tensor.double_data.append(0.0)
+        checker.check_tensor(tensor)
+
+    def test_check_tensor_int64_uint64_data_too_small(self) -> None:
+        """Reject INT64/UINT32/UINT64 tensors whose value field has too few entries."""
+        tensor = TensorProto()
+        tensor.data_type = TensorProto.INT64
+        tensor.dims.extend([4])
+        tensor.name = "t"
+        tensor.int64_data.extend([0] * 3)  # 1 short
+        with pytest.raises(checker.ValidationError):
+            checker.check_tensor(tensor)
+        tensor.int64_data.append(0)
+        checker.check_tensor(tensor)
+
+        for dtype in (TensorProto.UINT32, TensorProto.UINT64):
+            tensor = TensorProto()
+            tensor.data_type = dtype
+            tensor.dims.extend([4])
+            tensor.name = "t"
+            tensor.uint64_data.extend([0] * 3)  # 1 short
+            with pytest.raises(checker.ValidationError):
+                checker.check_tensor(tensor)
+            tensor.uint64_data.append(0)
+            checker.check_tensor(tensor)
+
+    def test_check_tensor_string_data_too_small(self) -> None:
+        """Reject STRING tensors whose string_data has too few entries."""
+        tensor = TensorProto()
+        tensor.data_type = TensorProto.STRING
+        tensor.dims.extend([4])
+        tensor.name = "t"
+        tensor.string_data.extend([b"a", b"b", b"c"])  # 1 short
+        with pytest.raises(checker.ValidationError):
+            checker.check_tensor(tensor)
+        tensor.string_data.append(b"d")
+        checker.check_tensor(tensor)
+
+    def test_check_tensor_raw_data_regular_types_too_small(self) -> None:
+        """Reject raw_data payloads too small for regular (non-packed) types."""
+        # FLOAT: 4 bytes/element; 4 elements need 16 bytes.
+        tensor = TensorProto()
+        tensor.data_type = TensorProto.FLOAT
+        tensor.dims.extend([4])
+        tensor.name = "t"
+        tensor.raw_data = b"\x00" * 15  # 1 byte short
+        with pytest.raises(checker.ValidationError):
+            checker.check_tensor(tensor)
+        tensor.raw_data = b"\x00" * 16
+        checker.check_tensor(tensor)
+
+        # INT64: 8 bytes/element; 4 elements need 32 bytes.
+        tensor = TensorProto()
+        tensor.data_type = TensorProto.INT64
+        tensor.dims.extend([4])
+        tensor.name = "t"
+        tensor.raw_data = b"\x00" * 31  # 1 byte short
+        with pytest.raises(checker.ValidationError):
+            checker.check_tensor(tensor)
+        tensor.raw_data = b"\x00" * 32
+        checker.check_tensor(tensor)
+
+        # COMPLEX128: 16 bytes/element; 2 elements need 32 bytes.
+        tensor = TensorProto()
+        tensor.data_type = TensorProto.COMPLEX128
+        tensor.dims.extend([2])
+        tensor.name = "t"
+        tensor.raw_data = b"\x00" * 31  # 1 byte short
+        with pytest.raises(checker.ValidationError):
+            checker.check_tensor(tensor)
+        tensor.raw_data = b"\x00" * 32
+        checker.check_tensor(tensor)
+
     def test_convtranspose_input_channels_must_be_divisible_by_group(self):
         node = helper.make_node("ConvTranspose", ["X", "W"], ["Y"], group=3)
         graph = helper.make_graph(
