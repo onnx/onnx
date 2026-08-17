@@ -333,6 +333,13 @@ class TestChecker:
 
         checker.check_model(model.SerializeToString())
 
+    def test_check_model_malformed_bytes_raises(self) -> None:
+        # Bytes that cannot be parsed as a ModelProto (e.g. truncated or
+        # corrupted data) must raise instead of silently checking whatever
+        # partially-populated proto happened to result from the failed parse.
+        with pytest.raises(ValueError):
+            checker.check_model(b"\xff\xff\xff\xff\xff not a valid protobuf")
+
     def test_check_model_protobuf_size_boundary(
         self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
