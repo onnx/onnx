@@ -109,7 +109,9 @@ class QLinearMatMul(Base):
                 b = b.astype(quant_type)
 
                 b_scale = np.array([0.00705], dtype=dtype)
-                b_zero_point = np.array([114], dtype=quant_type)
+                b_zero_point = np.array(
+                    [114 - 127] if quant_type == np.int8 else [114], dtype=quant_type
+                )
 
                 y_scale = np.array([0.0107], dtype=dtype)
                 y_zero_point = np.array(
@@ -119,8 +121,8 @@ class QLinearMatMul(Base):
                 if quant_type == np.int8:
                     output = np.array(
                         [
-                            [[-86, -128, -128], [115, 39, -121]],
-                            [[-86, -128, -128], [115, 39, -121]],
+                            [[41, -12, -9], [1, -75, -128]],
+                            [[41, -12, -9], [1, -75, -128]],
                         ]
                     )
                 else:

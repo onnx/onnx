@@ -4,8 +4,12 @@
 
 #include "onnx/defs/printer.h"
 
+#include <array>
+#include <charconv>
+#include <cmath>
 #include <iomanip>
 #include <string>
+#include <type_traits>
 
 #include "onnx/defs/tensor_proto_util.h"
 
@@ -14,16 +18,33 @@ namespace {
 
 using StringStringEntryProtos = google::protobuf::RepeatedPtrField<StringStringEntryProto>;
 
+// Format numbers with std::to_chars: locale-independent and, for floating
+// point, the shortest form that round-trips through the parser.
+template <typename T>
+void PrintNumber(std::ostream& os, T value) {
+  if constexpr (std::is_floating_point_v<T>) {
+    // Normalize NaN: MSVC's to_chars emits payload forms like "nan(ind)"
+    // that the parser does not accept.
+    if (std::isnan(value)) {
+      os << (std::signbit(value) ? "-nan" : "nan");
+      return;
+    }
+  }
+  std::array<char, 32> buf{};
+  const auto res = std::to_chars(buf.data(), buf.data() + buf.size(), value);
+  os.write(buf.data(), res.ptr - buf.data());
+}
+
 bool IsValidIdentifier(const std::string& str) {
   // Check if str is a valid identifier
   const char* next_ = str.c_str();
   const char* end_ = next_ + str.size();
   if (next_ == end_)
     return false; // empty string is not a valid identifier
-  if (!isalpha(*next_) && (*next_ != '_'))
+  if (!IsAlpha(*next_) && (*next_ != '_'))
     return false; // first character must be a letter or '_'
   ++next_;
-  while ((next_ < end_) && (isalnum(*next_) || (*next_ == '_')))
+  while ((next_ < end_) && (IsAlnum(*next_) || (*next_ == '_')))
     ++next_;
   return next_ == end_;
 }
@@ -47,6 +68,8 @@ class ProtoPrinter {
   void print(const TypeProto_Optional& optType);
 
   void print(const TypeProto_SparseTensor& sparseType);
+
+  void print(const TypeProto_Opaque& opaqueType);
 
   void print(const TensorProto& tensor, bool is_initializer = false);
 
@@ -92,7 +115,11 @@ class ProtoPrinter {
 
   template <typename T>
   void print(const T& prim) {
-    output_ << prim;
+    if constexpr (std::is_arithmetic_v<T>) {
+      PrintNumber(output_, prim);
+    } else {
+      output_ << prim;
+    }
   }
 
   void printQuoted(const std::string& str) {
@@ -157,7 +184,7 @@ class ProtoPrinter {
 
 void ProtoPrinter::print(const TensorShapeProto_Dimension& dim) {
   if (dim.has_dim_value()) {
-    output_ << dim.dim_value();
+    print(dim.dim_value());
   } else if (dim.has_dim_param()) {
     if (IsValidIdentifier(dim.dim_param()))
       output_ << dim.dim_param();
@@ -214,6 +241,22 @@ void ProtoPrinter::print(const TypeProto_SparseTensor& sparseType) {
   output_ << ")";
 }
 
+void ProtoPrinter::print(const TypeProto_Opaque& opaqueType) {
+  // Mirrors the grammar accepted by the parser:
+  //   opaque()
+  //   opaque(name)
+  //   opaque(domain,name)
+  output_ << "opaque(";
+  const bool has_domain = opaqueType.has_domain() && !opaqueType.domain().empty();
+  if (has_domain) {
+    output_ << opaqueType.domain() << ",";
+  }
+  if (opaqueType.has_name() && !opaqueType.name().empty()) {
+    output_ << opaqueType.name();
+  }
+  output_ << ")";
+}
+
 void ProtoPrinter::print(const TypeProto& type) {
   if (type.has_tensor_type())
     print(type.tensor_type());
@@ -225,6 +268,8 @@ void ProtoPrinter::print(const TypeProto& type) {
     print(type.optional_type());
   else if (type.has_sparse_tensor_type())
     print(type.sparse_tensor_type());
+  else if (type.has_opaque_type())
+    print(type.opaque_type());
 }
 
 void ProtoPrinter::print(const TensorProto& tensor, bool is_initializer) {
@@ -319,13 +364,13 @@ void ProtoPrinter::print(const AttributeProto& attr) {
   output_ << attr.name() << ": " << AttributeTypeNameMap::ToString(attr.type()) << " = ";
   switch (attr.type()) {
     case AttributeProto_AttributeType_INT:
-      output_ << attr.i();
+      print(attr.i());
       break;
     case AttributeProto_AttributeType_INTS:
       printSet("[", ", ", "]", attr.ints());
       break;
     case AttributeProto_AttributeType_FLOAT:
-      output_ << attr.f();
+      print(attr.f());
       break;
     case AttributeProto_AttributeType_FLOATS:
       printSet("[", ", ", "]", attr.floats());
@@ -458,7 +503,8 @@ void ProtoPrinter::print(const ModelProto& model) {
 
 void ProtoPrinter::print(const OperatorSetIdProto& opset) {
   printQuoted(opset.domain());
-  output_ << " : " << opset.version();
+  output_ << " : ";
+  print(opset.version());
 }
 
 void ProtoPrinter::print(const OpsetIdList& opsets) {
@@ -467,19 +513,16 @@ void ProtoPrinter::print(const OpsetIdList& opsets) {
 
 void ProtoPrinter::print(const FunctionProto& fn) {
   output_ << "<\n";
-  output_ << "  "
-          << "domain: ";
+  output_ << "  " << "domain: ";
   printQuoted(fn.domain());
   output_ << ",\n";
   if (!fn.overload().empty()) {
-    output_ << "  "
-            << "overload: ";
+    output_ << "  " << "overload: ";
     printQuoted(fn.overload());
     output_ << ",\n";
   }
 
-  output_ << "  "
-          << "opset_import: ";
+  output_ << "  " << "opset_import: ";
   printSet("[", ",", "]", fn.opset_import());
   output_ << "\n>\n";
   printId(fn.name());
@@ -495,39 +538,42 @@ void ProtoPrinter::print(const FunctionProto& fn) {
 
 } // namespace
 
-#define DEF_OP(T)                                              \
-  std::ostream& operator<<(std::ostream& os, const T& proto) { \
+// The parameter name must match the declaration in printer.h.
+// NOLINTBEGIN(bugprone-macro-parentheses) `param` is a declarator, it cannot be parenthesized
+#define DEF_OP(T, param)                                       \
+  std::ostream& operator<<(std::ostream& os, const T& param) { \
     ProtoPrinter printer(os);                                  \
-    printer.print(proto);                                      \
+    printer.print(param);                                      \
     return os;                                                 \
   }
+// NOLINTEND(bugprone-macro-parentheses)
 
-DEF_OP(TensorShapeProto_Dimension)
+DEF_OP(TensorShapeProto_Dimension, dim)
 
-DEF_OP(TensorShapeProto)
+DEF_OP(TensorShapeProto, shape)
 
-DEF_OP(TypeProto_Tensor)
+DEF_OP(TypeProto_Tensor, tensortype)
 
-DEF_OP(TypeProto)
+DEF_OP(TypeProto, type)
 
-DEF_OP(TensorProto)
+DEF_OP(TensorProto, tensor)
 
-DEF_OP(ValueInfoProto)
+DEF_OP(ValueInfoProto, value_info)
 
-DEF_OP(ValueInfoList)
+DEF_OP(ValueInfoList, vilist)
 
-DEF_OP(AttributeProto)
+DEF_OP(AttributeProto, attr)
 
-DEF_OP(AttrList)
+DEF_OP(AttrList, attrlist)
 
-DEF_OP(NodeProto)
+DEF_OP(NodeProto, node)
 
-DEF_OP(NodeList)
+DEF_OP(NodeList, nodelist)
 
-DEF_OP(GraphProto)
+DEF_OP(GraphProto, graph)
 
-DEF_OP(FunctionProto)
+DEF_OP(FunctionProto, fn)
 
-DEF_OP(ModelProto)
+DEF_OP(ModelProto, model)
 
 } // namespace ONNX_NAMESPACE

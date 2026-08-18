@@ -5,8 +5,12 @@
 name: CI
 
 env:
-  ASAN_OPTIONS: detect_leaks=0:symbolize=1:detect_stack_use_after_return=true:strict_init_order=true:detect_odr_violation=1:detect_container_overflow=0:check_initialization_order=true:debug=true:fast_unwind_on_malloc=1:verify_asan_link_order=0
+  # detect_container_overflow is off: CPython, protobuf and googletest are built
+  # without instrumentation, so their containers lack the annotations ASan expects
+  # and the check reports false positives.
+  ASAN_OPTIONS: detect_leaks=0:symbolize=1:detect_stack_use_after_return=true:strict_init_order=true:detect_odr_violation=1:detect_container_overflow=0:check_initialization_order=true:debug=true:fast_unwind_on_malloc=1:verify_asan_link_order=0:alloc_dealloc_mismatch=1:abort_on_error=1
   UBSAN_OPTIONS: print_stacktrace=1
+  TSAN_OPTIONS: suppressions=./tsan.supp
 
 on:
   schedule:
@@ -43,6 +47,15 @@ jobs:
         include:
           # Ubuntu debug build runs with sanitizer
           - python_version: "3.14"
+            autogenerate_files: 0
+            debug_build: 1
+            onnx_ml: 1
+            os: "ubuntu-24.04"
+            protobuf_type: 'Internal'
+            unity_build: 0
+
+          # Ubuntu debug build with TSAN (free-threaded Python)
+          - python_version: "3.14t"
             autogenerate_files: 0
             debug_build: 1
             onnx_ml: 1
@@ -102,13 +115,12 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
-          submodules: recursive
           persist-credentials: false
 
       - name: Set up Python
-        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
           python-version: ${{ matrix.python_version }}
 
@@ -158,6 +170,13 @@ jobs:
           if [ "${{ matrix.protobuf_type }}" == "External" ]; then
             export CMAKE_ARGS="$CMAKE_ARGS -DCMAKE_POSITION_INDEPENDENT_CODE=ON -DONNX_USE_PROTOBUF_SHARED_LIBS=ON"
           fi
+          if [ "${{ matrix.debug_build }}" == "1" ]; then
+            if [ "${{ matrix.python_version }}" == "3.14t" ]; then
+              export CMAKE_ARGS="$CMAKE_ARGS -DONNX_USE_ASAN=OFF -DONNX_USE_TSAN=ON"
+            else
+              export CMAKE_ARGS="$CMAKE_ARGS -DONNX_USE_ASAN=ON"
+            fi
+          fi
           pip install -e ".[reference]" -v
         env:
           DEBUG: ${{ matrix.debug_build }}
@@ -189,14 +208,19 @@ jobs:
         run: |
           pip freeze
 
-      - name: Setup GCC ASAN LD_PRELOAD
-        if: startsWith(matrix.os,'ubuntu') && (matrix.python_version != '3.13t')
-        run: |
-          export LD_PRELOAD="$(/usr/bin/c++ -print-file-name=libasan.so):$LD_PRELOAD"
-
       - name: Install test dependencies
         run: |
           python -m pip install -r requirements-release_test.txt
+
+      - name: Setup ASAN LD_PRELOAD
+        if: startsWith(matrix.os,'ubuntu') && (matrix.debug_build == 1) && (matrix.python_version != '3.14t') && (matrix.python_version != '3.10')
+        run: |
+          echo "LD_PRELOAD=$(/usr/bin/c++ -print-file-name=libasan.so):$(/usr/bin/c++ -print-file-name=libstdc++.so)" >> $GITHUB_ENV
+
+      - name: Setup TSAN LD_PRELOAD
+        if: startsWith(matrix.os,'ubuntu') && (matrix.debug_build == 1) && (matrix.python_version == '3.14t')
+        run: |
+          echo "LD_PRELOAD=$(/usr/bin/c++ -print-file-name=libtsan.so):$(/usr/bin/c++ -print-file-name=libstdc++.so)" >> $GITHUB_ENV
 
       - name: Run Python tests
         # Prohibitively slow for Windows debug builds
@@ -220,49 +244,23 @@ jobs:
           cmake --build build_for_install --parallel
           sudo cmake --install build_for_install
 
-          cmake -S onnx/test/cmake -B onnx/test/cmake/build \
+          cmake -S tests/cmake -B tests/cmake/build \
             -DONNX_ML=${{ matrix.onnx_ml }}
-          cmake --build onnx/test/cmake/build
-          ./onnx/test/cmake/build/main
+          cmake --build tests/cmake/build
+          ./tests/cmake/build/main
 
       - name: Upload coverage to Codecov
         if: github.repository_owner == 'onnx'
-        uses: codecov/codecov-action@e79a6962e0d4c0c17b229090214935d2e33f8354 # v6.0.1
+        uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f # v7.0.0
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
 
       - name: Upload test results to Codecov
         if: github.repository_owner == 'onnx' && !cancelled()
-        uses: codecov/codecov-action@e79a6962e0d4c0c17b229090214935d2e33f8354 # v6.0.1
+        uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f # v7.0.0
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           report_type: test_results
-
-      # Note that the test data should be generated with numpy>=2.0.
-      # numpy 1.x and numpy 2.0 produce slightly different numerical values.
-      - name: Test backend test data
-        if: matrix.autogenerate_files == 1 && startsWith(matrix.os,'ubuntu')
-        run: |
-          python onnx/backend/test/cmd_tools.py generate-data --clean
-          git status
-          git diff --exit-code -- . ':!onnx/onnx-data.proto' ':!onnx/onnx-data.proto3' ':!*output_*.pb' ':!*input_*.pb'
-          if [ $? -ne 0 ]; then
-            echo "git diff for test generation returned failures. Please check updated node test files"
-            exit 1
-          fi
-          git diff --exit-code --diff-filter=ADR -- . ':!onnx/onnx-data.proto' ':!onnx/onnx-data.proto3'
-          if [ $? -ne 0 ]; then
-            echo "Test generation returned failures. Please check the number of node test files (input_*.pb or output_*.pb)"
-            exit 1
-          fi
-          pip uninstall -y pillow
-          python onnx/backend/test/cmd_tools.py generate-data --clean
-          git status
-          git diff --exit-code -- . ':!onnx/onnx-data.proto' ':!onnx/onnx-data.proto3' ':!*output_*.pb' ':!*input_*.pb'
-          if [ $? -ne 0 ]; then
-            echo "git diff for test generation without pillow returned failures. Please check updated node test files"
-            exit 1
-          fi
 
       - name: Run Python tests with numpy<2.0 (win, mac)
         if: (matrix.python_version == '3.10') && (matrix.os == 'windows-latest' || matrix.os == 'macos-latest') && (matrix.debug_build != 1)

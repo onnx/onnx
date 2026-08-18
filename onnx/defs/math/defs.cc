@@ -433,7 +433,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         )ONNX")
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
-static constexpr const char* celu_ver12_doc = R"DOC(
+static constexpr const char* celu_ver28_doc = R"DOC(
 Continuously Differentiable Exponential Linear Units:
 Perform the linear unit element-wise on the input tensor X
 using formula:
@@ -443,40 +443,32 @@ max(0,x) + min(0,alpha*(exp(x/alpha)-1))
 ```
 )DOC";
 
-static float celu_default_alpha = 1.0;
-
-static bool BuildContextDependentFunctionBodyCelu(
-    const FunctionBodyBuildContext& ctx,
-    const OpSchema& schema,
-    FunctionProto& functionProto) {
-  float alpha = ctx.getAttribute("alpha") != nullptr ? ctx.getAttribute("alpha")->f() : celu_default_alpha;
-  FunctionBuilder builder(functionProto);
-  builder.Const("alpha", std::vector<float>{alpha}).Add(R"(
-            X_alpha = Div (X, alpha)
-            Elu_Result = Elu <alpha = 1.0>(X_alpha)
-            Y = Mul (alpha, Elu_Result)
-        )");
-  schema.BuildFunction(functionProto);
-  return true;
-}
-
 ONNX_OPERATOR_SET_SCHEMA(
     Celu,
-    12,
+    28,
     OpSchema()
-        .SetDoc(celu_ver12_doc)
-        .Input(0, "X", "Input tensor", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
-        .Output(0, "Y", "Output tensor", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
+        .SetDoc(celu_ver28_doc)
         .Attr(
             "alpha",
             "The Alpha value in Celu formula which control the shape of "
             "the unit. The default value is 1.0.",
             AttributeProto::FLOAT,
-            celu_default_alpha)
-        .TypeConstraint("T", {types::Float}, "Constrain input and output types to float32 tensors.")
+            1.0f)
+        .Input(0, "X", "Input tensor", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
+        .Output(0, "Y", "Output tensor", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
+        .TypeConstraint("T", OpSchema::all_float_types_ir4(), "Constrain input and output types to float tensors.")
         .SetNodeDeterminism(OpSchema::NodeDeterminism::Deterministic)
-        .SetContextDependentFunctionBodyBuilder(BuildContextDependentFunctionBodyCelu)
-        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
+        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput)
+        .FunctionBody(
+            R"ONNX(
+          {
+            Alpha = Constant <value_float: float = @alpha>()
+            AlphaCast = CastLike (Alpha, X)
+            XScaled = Div (X, AlphaCast)
+            EluResult = Elu <alpha = 1.0> (XScaled)
+            Y = Mul (AlphaCast, EluResult)
+          }
+        )ONNX"));
 
 static constexpr const char* gelu_ver20_doc = R"DOC(
 Gelu takes one input data (Tensor<T>) and produces one
@@ -591,6 +583,66 @@ ONNX_OPERATOR_SET_SCHEMA(
                 Y = Mul (X, SigmoidAlphaMulX)
             }
             )ONNX"));
+
+static constexpr const char* SwiGLU_ver28_doc = R"DOC(
+SwiGLU is a gated activation that takes two inputs, a gate `A` and a linear (value)
+input `B`, and produces one output `Y`. It applies the Swish activation to the gate
+and multiplies the result elementwise by the linear input:
+
+```
+Y = Swish_alpha(A) * B
+```
+
+The gate activation `Swish_alpha` is exactly the `Swish` operator with the same
+`alpha`, i.e. `Swish_alpha(a) = a * Sigmoid(alpha * a)`. Inputs `A` and `B` must
+have identical shapes; broadcasting is not applied and the output `Y` has the same
+shape as the inputs.
+
+Exporters typically produce `A` and `B` in one of two ways: for the common
+two-projection form (e.g. Llama's `gate_proj`/`up_proj`) wire the two projection
+outputs directly to `A` (gate) and `B` (value); for a fused/packed single
+projection, split it upstream into `A` and `B` with `Split` (contiguous layout)
+or `Slice`/`Gather` (interleaved layout).
+)DOC";
+
+static void SwiGLUShapeInference(InferenceContext& ctx) {
+  propagateElemTypeFromInputToOutput(ctx, 0, 0);
+  if (!hasNInputShapes(ctx, 2)) {
+    return;
+  }
+  // A and B must have identical shapes: no broadcasting, no rank expansion, no
+  // size-1 stretching. Seed the output with A's shape and merge B into it, which
+  // fails on any rank mismatch or conflicting static dimension while merging
+  // symbolic/unknown dimensions toward the more-specified one.
+  auto* output_type = ctx.getOutputType(0)->mutable_tensor_type();
+  *output_type->mutable_shape() = ctx.getInputType(0)->tensor_type().shape();
+  mergeInShapeInfo(ctx.getInputType(1)->tensor_type(), *output_type);
+}
+
+ONNX_OPERATOR_SET_SCHEMA(
+    SwiGLU,
+    28,
+    OpSchema()
+        .SetDoc(SwiGLU_ver28_doc)
+        .Attr(
+            "alpha",
+            "Coefficient that scales the gate input inside the sigmoid of the Swish activation. "
+            "The default value is 1.0.",
+            AttributeProto::FLOAT,
+            1.0f)
+        .Input(0, "A", "Gate input tensor", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
+        .Input(1, "B", "Linear (value) input tensor", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
+        .Output(0, "Y", "Output tensor", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
+        .TypeConstraint("T", OpSchema::all_float_types_ir4(), "Constrain input and output types to float tensors.")
+        .SetNodeDeterminism(OpSchema::NodeDeterminism::Deterministic)
+        .TypeAndShapeInferenceFunction(SwiGLUShapeInference)
+        .FunctionBody(
+            R"ONNX(
+          {
+            SwishGate = Swish <alpha : float = @alpha> (A)
+            Y = Mul (SwishGate, B)
+          }
+        )ONNX"));
 
 ONNX_OPERATOR_SET_SCHEMA(
     Exp,
@@ -2000,10 +2052,10 @@ static void einsumShapeInference(ONNX_NAMESPACE::InferenceContext& ctx, std::str
 
   // Parse the left-hand side
   std::stringstream str(left_equation);
-  std::map<char, size_t> label_maps;
+  std::map<char, int> label_maps;
   std::unordered_set<char> repeated_labels;
   ONNX_NAMESPACE::TensorShapeProto dims_value, ellipsis_dims_value;
-  size_t num_labels = 0;
+  int num_labels = 0;
   bool ellipsis_flag = true;
 
   while (!str.eof()) {
@@ -2053,12 +2105,12 @@ static void einsumShapeInference(ONNX_NAMESPACE::InferenceContext& ctx, std::str
         if (ellipsis_flag) {
           ellipsis_flag = false;
           for (size_t i = 0; i < ellipsis_dims; i++) {
-            *ellipsis_dims_value.add_dim() = shape.dim(index + i - num_illegal_char);
+            *ellipsis_dims_value.add_dim() = shape.dim(static_cast<int>(index + i - num_illegal_char));
           }
         } else {
           for (size_t i = 0; i < ellipsis_dims; i++) {
-            const auto shape_dim = shape.dim(index + i - num_illegal_char);
-            auto* const current_dim = ellipsis_dims_value.mutable_dim(i);
+            const auto shape_dim = shape.dim(static_cast<int>(index + i - num_illegal_char));
+            auto* const current_dim = ellipsis_dims_value.mutable_dim(static_cast<int>(i));
             if (shape_dim.has_dim_value() && current_dim->has_dim_value() &&
                 shape_dim.dim_value() > current_dim->dim_value() && current_dim->dim_value() == 1) {
               current_dim->set_dim_value(shape_dim.dim_value());
@@ -2076,7 +2128,7 @@ static void einsumShapeInference(ONNX_NAMESPACE::InferenceContext& ctx, std::str
 
       const auto inserted = label_maps.emplace(term[index], num_labels).second;
       if (inserted) {
-        *dims_value.add_dim() = shape.dim(index + ellipsis_dims - num_illegal_char);
+        *dims_value.add_dim() = shape.dim(static_cast<int>(index + ellipsis_dims - num_illegal_char));
         ++num_labels;
       } else {
         repeated_labels.insert(term[index]);
@@ -2112,20 +2164,24 @@ static void einsumShapeInference(ONNX_NAMESPACE::InferenceContext& ctx, std::str
       // If there's an ellipsis, add its corresponding dimensions
       if (index == right_ellipsis_index) {
         for (size_t i = 0; i < num_ellipsis_indices; i++) {
-          *output_shape.add_dim() = ellipsis_dims_value.dim(i);
+          *output_shape.add_dim() = ellipsis_dims_value.dim(static_cast<int>(i));
         }
         index += 2; // skip the rest of dots
         continue;
       }
 
       if (is_letter(right_equation[index])) {
-        *output_shape.add_dim() = dims_value.dim(label_maps[right_equation[index]]);
+        auto it = label_maps.find(right_equation[index]);
+        if (it == label_maps.end()) {
+          fail_shape_inference("Equation output contains a label missing from the inputs");
+        }
+        *output_shape.add_dim() = dims_value.dim(it->second);
       }
     }
   } else { // Infer the dimension for right-hand side
     // If there's an ellipsis, add its corresponding dimensions
     for (size_t i = 0; i < num_ellipsis_indices; i++) {
-      *output_shape.add_dim() = ellipsis_dims_value.dim(i);
+      *output_shape.add_dim() = ellipsis_dims_value.dim(static_cast<int>(i));
     }
     // If no explicit output was given, generate an implicit output by ordering all the
     // labels in alphabetic order (by ASCII value consistent with numpy, so Z < a).
@@ -2151,14 +2207,17 @@ where the reduce-sum performs a summation over all the indices occurring in the 
 that do not occur in the output-term.
 
 The Einsum operator evaluates algebraic tensor operations on a sequence of tensors, using the Einstein summation
-convention. The equation string contains a comma-separated sequence of lower case letters. Each term corresponds to
-an operand tensor, and the characters within the terms correspond to operands dimensions.
+convention. The equation string contains a comma-separated sequence of lower case letters and/or upper case letters.
+Each term corresponds to an operand tensor, and the characters within the terms correspond to operands dimensions.
+Lower case letters and upper case letters are treated as distinct symbols, that is, "a" and "A" refer to different
+symbols.
 
 This sequence may be followed by "->" to separate the left and right hand side of the equation.
 If the equation contains "->" followed by the right-hand side, the explicit (not classical) form of the Einstein
 summation is performed, and the right-hand side indices indicate output tensor dimensions. In other cases,
-output indices are (implicitly) set to the alphabetically sorted sequence of indices appearing exactly once in the
-equation.
+output indices are (implicitly) set to the sequence of indices appearing exactly once in the equation, sorted in
+increasing order of their ASCII values (so that all upper case letters precede all lower case letters, e.g.,
+"A" < "Z" < "a" < "z").
 
 When a dimension character is repeated in the left-hand side, it represents summation along the dimension.
 
@@ -2593,7 +2652,7 @@ ONNX_OPERATOR_SET_SCHEMA(
               if (inverse) {
                 // IRFFT without explicit dft_length: cannot reliably infer full signal length
                 // Default to even length: N = 2 * (input_size - 1)
-                auto full_signal_size = 2 * (axis_dimension_value - 1);
+                auto full_signal_size = checkedMultiply(2, checkedSubtract(axis_dimension_value, 1));
                 result_shape_proto.mutable_dim(axis_idx)->set_dim_value(full_signal_size);
               } else {
                 // RFFT without explicit dft_length: infer one-sided output size from input
@@ -2657,7 +2716,7 @@ Generates a {name} window as described in the paper https://ieeexplore.ieee.org/
     schema.TypeAndShapeInferenceFunction([](ONNX_NAMESPACE::InferenceContext& ctx) {
       // Update the output data type to the output_datatype
       auto output_datatype = getAttribute(ctx, "output_datatype", static_cast<int64_t>(TensorProto_DataType_FLOAT));
-      updateOutputElemType(ctx, 0, output_datatype);
+      updateOutputElemType(ctx, 0, narrow<int32_t>(output_datatype));
 
       if (!hasInputShape(ctx, 0)) {
         // If no shape is available for the input, skip shape inference.
@@ -2887,7 +2946,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint("T3", OpSchema::all_numeric_types_ir4(), "Constrain to any numerical types.")
         .TypeAndShapeInferenceFunction([](ONNX_NAMESPACE::InferenceContext& ctx) {
           auto output_datatype = getAttribute(ctx, "output_datatype", static_cast<int64_t>(TensorProto_DataType_FLOAT));
-          updateOutputElemType(ctx, 0, output_datatype);
+          updateOutputElemType(ctx, 0, narrow<int32_t>(output_datatype));
 
           if (!hasInputShape(ctx, 0) || !hasInputShape(ctx, 1)) {
             return;

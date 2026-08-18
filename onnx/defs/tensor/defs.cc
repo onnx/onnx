@@ -5,7 +5,6 @@
 #include <algorithm>
 #include <cmath>
 #include <numeric>
-#include <optional>
 #include <string>
 #include <utility>
 #include <vector>
@@ -547,7 +546,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
 
           bool all_lengths_known = true;
-          int total_length = 0;
+          int64_t total_length = 0;
 
           auto output_shape = ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
 
@@ -564,7 +563,13 @@ ONNX_OPERATOR_SET_SCHEMA(
             for (int j = 0; j < rank; j++) {
               if (j == axis) {
                 if (shape.dim(j).has_dim_value()) {
-                  total_length += static_cast<int>(shape.dim(j).dim_value());
+                  const int64_t dim_val = shape.dim(j).dim_value();
+                  if (dim_val < 0) {
+                    fail_shape_inference("Negative dimension value on Concat axis");
+                  }
+                  if (checked_add_overflow(total_length, dim_val, &total_length)) {
+                    fail_shape_inference("Integer overflow computing Concat output length");
+                  }
                 } else {
                   all_lengths_known = false;
                 }
@@ -1068,15 +1073,21 @@ ONNX_OPERATOR_SET_SCHEMA(
 
 const char* Transpose_doc = R"DOC(
 Returns a transpose of the input tensor. (Similar to `numpy.transpose`).
-The optional attribute `perm` must be a permutation of the dimensions of
-the input tensor. Axis `i` of the output tensor corresponds to the axis
-`perm[i]` of the input tensor.
+The optional attribute `perm` specifies the permutation of the axes of the
+input tensor. `perm` must contain each axis index in `[0, n-1]` exactly once,
+so its length is equal to the rank `n` of the input tensor.
+
+Axis `i` of the output tensor corresponds to axis `perm[i]` of the input tensor.
+
+If the attribute is omitted, its default value is `(n-1, ..., 0)`, where `n`
+is the rank of the input tensor (that is, the dimensions are reversed).
+
 For example, when perm=(1, 0, 2), given an input tensor of shape (1, 2, 3),
 the output shape will be (2, 1, 3).
 When perm=(1, 2, 0), given an input tensor of shape (1, 2, 3),
 the output shape will be (2, 3, 1).
-If the attribute `perm` is omitted, its default value is `(n-1, ..., 0)`,
-where `n` is the rank of the input tensor.
+A 0-D or 1-D input is valid; in those cases the output has the same shape
+as the input.
 )DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
@@ -1086,9 +1097,10 @@ ONNX_OPERATOR_SET_SCHEMA(
         .SetDoc(Transpose_doc)
         .Attr(
             "perm",
-            "A list of integers. By default, reverse the dimensions, "
+            "A list of integers. By default, reverse the dimensions; "
             "otherwise permute the axes according to the values given. "
-            "Its length must be equal to the rank of the input.",
+            "Its length must be equal to the rank of the input, and each "
+            "value must be in the range `[0, rank-1]`.",
             AttributeProto::INTS,
             OPTIONAL_VALUE)
         .Input(0, "data", "An input tensor.", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
@@ -1269,7 +1281,7 @@ first (q-1) dimensions of updates.shape must match the first (q-1) dimensions of
 The remaining dimensions of `updates` correspond to the dimensions of the
 replacement-slice-values. Each replacement-slice-value is a (r-k) dimensional tensor,
 corresponding to the trailing (r-k) dimensions of `data`.  Thus, the shape of `updates`
-must equal indices.shape[0:q-1] ++ data.shape[k:r-1], where ++ denotes the concatenation
+must equal indices.shape[0:q-1] ++ data.shape[k:r], where ++ denotes the concatenation
 of shapes.
 
 The `output` is calculated via the following equation:
@@ -1914,6 +1926,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           if (blocksize <= 0) {
             fail_shape_inference("Blocksize must be positive");
           }
+          const auto block_area = checkedMultiply(blocksize, blocksize);
           if (hasInputShape(ctx, 0)) {
             auto& input_shape = getInputShape(ctx, 0);
             if (input_shape.dim_size() == 4) {
@@ -1921,7 +1934,7 @@ ONNX_OPERATOR_SET_SCHEMA(
                   ctx,
                   0,
                   {input_shape.dim(0),
-                   input_shape.dim(1) * (blocksize * blocksize),
+                   input_shape.dim(1) * block_area,
                    input_shape.dim(2) / blocksize,
                    input_shape.dim(3) / blocksize});
             } else {
@@ -1993,6 +2006,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           if (blocksize <= 0) {
             fail_shape_inference("Blocksize must be positive");
           }
+          const auto block_area = checkedMultiply(blocksize, blocksize);
           if (hasInputShape(ctx, 0)) {
             auto& input_shape = getInputShape(ctx, 0);
             if (input_shape.dim_size() == 4) {
@@ -2000,7 +2014,7 @@ ONNX_OPERATOR_SET_SCHEMA(
                   ctx,
                   0,
                   {input_shape.dim(0),
-                   input_shape.dim(1) / (blocksize * blocksize),
+                   input_shape.dim(1) / block_area,
                    input_shape.dim(2) * blocksize,
                    input_shape.dim(3) * blocksize});
             } else {
@@ -2071,10 +2085,13 @@ ONNX_OPERATOR_SET_SCHEMA(
             }
 
             for (int i = 0; i < input_rank; ++i) {
+              if (repeats_data[i] < 0) {
+                fail_shape_inference("'Repeats' input must not contain negative values");
+              }
               const auto& input_dim = input_shape.dim(i);
               auto output_dim = output_shape->add_dim();
               if (input_dim.has_dim_value()) {
-                output_dim->set_dim_value(input_dim.dim_value() * repeats_data[i]);
+                output_dim->set_dim_value(checkedMultiply(input_dim.dim_value(), repeats_data[i]));
               }
             }
           } else {
@@ -3006,6 +3023,42 @@ ONNX_OPERATOR_SET_SCHEMA(
           updateOutputShape(ctx, 0, output_shape);
         }));
 
+static constexpr const char* ReverseSequence_ver10_doc = R"DOC(
+Reverse batch of sequences having different lengths specified by `sequence_lens`.
+
+For each slice i iterating on batch axis, the operator reverses the first sequence_lens[i] elements on time axis,
+and copies elements whose index's beyond sequence_lens[i] to the output. So the output slice i contains reversed
+sequences on the first sequence_lens[i] elements, then have original values copied for the other elements.
+
+Example 1:
+  input = [[0.0, 4.0, 8.0,  12.0],
+           [1.0, 5.0, 9.0,  13.0],
+           [2.0, 6.0, 10.0, 14.0],
+           [3.0, 7.0, 11.0, 15.0]]
+  sequence_lens = [4, 3, 2, 1]
+  time_axis = 0
+  batch_axis = 1
+
+  output = [[3.0, 6.0, 9.0,  12.0],
+            [2.0, 5.0, 8.0,  13.0],
+            [1.0, 4.0, 10.0, 14.0],
+            [0.0, 7.0, 11.0, 15.0]]
+
+Example 2:
+  input = [[0.0,  1.0,  2.0,  3.0 ],
+           [4.0,  5.0,  6.0,  7.0 ],
+           [8.0,  9.0,  10.0, 11.0],
+           [12.0, 13.0, 14.0, 15.0]]
+  sequence_lens = [1, 2, 3, 4]
+  time_axis = 1
+  batch_axis = 0
+
+  output = [[0.0,  1.0,  2.0,  3.0 ],
+            [5.0,  4.0,  6.0,  7.0 ],
+            [10.0, 9.0,  8.0,  11.0],
+            [15.0, 14.0, 13.0, 12.0]]
+)DOC";
+
 ONNX_OPERATOR_SET_SCHEMA(
     ReverseSequence,
     28,
@@ -3330,7 +3383,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             return;
           }
 
-          const auto last_index_dimension = indices_shape.dim(indices_rank - 1).dim_value() + batch_dims_data;
+          const auto last_index_dimension =
+              checkedAdd(indices_shape.dim(indices_rank - 1).dim_value(), batch_dims_data);
 
           if (last_index_dimension > data_rank) {
             fail_shape_inference(

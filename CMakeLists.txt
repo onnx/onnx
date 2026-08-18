@@ -40,6 +40,8 @@ option(ONNX_WERROR "Build with Werror" OFF)
 option(ONNX_COVERAGE "Build with coverage instrumentation" OFF)
 option(ONNX_BUILD_TESTS "Build ONNX C++ APIs Tests" OFF)
 option(ONNX_USE_ASAN "Build ONNX with ASAN" OFF)
+option(ONNX_USE_TSAN "Build ONNX with TSAN" OFF)
+option(ONNX_USE_TYPESAN "Build ONNX with TypeSAN" OFF)
 option(ONNX_HARDENING "Build with compiler hardening flags (OpenSSF guidelines)" OFF)
 option(ONNX_USE_LITE_PROTO "Use lite protobuf instead of full." OFF)
 option(ONNX_DISABLE_EXCEPTIONS "Disable exception handling." OFF)
@@ -149,6 +151,19 @@ if(CMAKE_CROSSCOMPILING)
   endif()
   find_package(Python REQUIRED COMPONENTS Interpreter)
   set(ONNX_PYTHON_INTERPRETER Python::Interpreter)
+  if(ONNX_BUILD_PYTHON)
+    # nanobind >= 2.13 only auto-runs its own find_package(Python ...) when
+    # neither Python::Interpreter nor Python::Module exist yet. Since
+    # Python::Interpreter is already provided above (host interpreter, while
+    # Python3::Module above is the cross-compilation target's dev libs),
+    # nanobind would otherwise skip that step and fail to find Python::Module.
+    if(NOT TARGET Python::Module)
+      add_library(Python::Module ALIAS Python3::Module)
+    endif()
+    if(TARGET Python3::SABIModule AND NOT TARGET Python::SABIModule)
+      add_library(Python::SABIModule ALIAS Python3::SABIModule)
+    endif()
+  endif()
 else()
   find_package(Python3 REQUIRED COMPONENTS Interpreter ${python_dev_component})
   # Find Python for nanobind
@@ -167,6 +182,10 @@ if(NOT DEFINED CMAKE_POSITION_INDEPENDENT_CODE)
 endif()
 
 list(APPEND CMAKE_MODULE_PATH ${ONNX_ROOT}/cmake/external)
+if(ONNX_USE_ASAN OR ONNX_USE_TSAN OR ONNX_USE_TYPESAN)
+  find_package(Sanitizer REQUIRED)
+endif()
+
 if(NOT ONNX_BUILD_CUSTOM_PROTOBUF)
   if((ONNX_USE_LITE_PROTO AND TARGET protobuf::libprotobuf-lite) OR ((NOT ONNX_USE_LITE_PROTO) AND TARGET protobuf::libprotobuf))
     # Sometimes we need to use protoc compiled for host architecture while linking

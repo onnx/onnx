@@ -1470,18 +1470,22 @@ class OpSet_Onnx_ver27 {
 };
 
 // Forward declarations for ai.onnx version 28
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 28, Celu);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 28, Compress);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 28, OneHot);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 28, ReverseSequence);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 28, SwiGLU);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 28, Unique);
 
 // Iterate over schema from ai.onnx version 28
 class OpSet_Onnx_ver28 {
  public:
   static void ForEachSchema(const std::function<void(OpSchema&&)>& fn) {
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 28, Celu)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 28, Compress)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 28, OneHot)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 28, ReverseSequence)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 28, SwiGLU)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 28, Unique)>());
   }
 };
@@ -1516,7 +1520,7 @@ ONNX_API inline void RegisterOnnxOperatorSetSchema() {
   RegisterOpSetSchema<OpSet_Onnx_ver27>();
   RegisterOpSetSchema<OpSet_Onnx_ver28>();
   // 0 means all versions of ONNX schema have been loaded
-  OpSchemaRegistry::Instance()->SetLoadedSchemaVersion(0);
+  OpSchemaRegistry::SetLoadedSchemaVersion(0);
 }
 
 ONNX_API inline void RegisterOnnxOperatorSetSchema(int target_version, bool fail_duplicate_schema = true) {
@@ -1553,13 +1557,13 @@ ONNX_API inline void RegisterOnnxOperatorSetSchema(int target_version, bool fail
   RegisterOpSetSchema<OpSet_Onnx_ver2>(target_version, fail_duplicate_schema);
   RegisterOpSetSchema<OpSet_Onnx_ver1>(target_version, fail_duplicate_schema);
   // Sets to record the loaded version and prevent the full operator check in Debug mode
-  OpSchemaRegistry::Instance()->SetLoadedSchemaVersion(target_version);
+  OpSchemaRegistry::SetLoadedSchemaVersion(target_version);
 }
 
 ONNX_API inline void DeregisterOnnxOperatorSetSchema() {
-  OpSchemaRegistry::Instance()->OpSchemaDeregisterAll(ONNX_DOMAIN);
+  OpSchemaRegistry::OpSchemaDeregisterAll(ONNX_DOMAIN);
   // -1 means no ONNX schema is loaded
-  OpSchemaRegistry::Instance()->SetLoadedSchemaVersion(-1);
+  OpSchemaRegistry::SetLoadedSchemaVersion(-1);
 }
 
 // Returns true if ONNX was built with static schema registration disabled
