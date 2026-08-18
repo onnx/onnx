@@ -5,7 +5,8 @@ from __future__ import annotations
 
 import pytest
 
-from onnx import checker, inliner, parser
+import onnx
+from onnx import TensorProto, checker, helper, inliner, parser
 
 
 class TestInliner:
@@ -138,3 +139,27 @@ class TestInliner:
         )
         inlined_nodes = inlined.graph.node
         assert "Abs" in [n.op_type for n in inlined_nodes]
+
+    def test_sequence_map_inlining_rejects_missing_input_type(self):
+        body_input = helper.make_tensor_value_info("body_input", TensorProto.FLOAT, ())
+        body_output = helper.make_tensor_value_info(
+            "body_output", TensorProto.FLOAT, ()
+        )
+        body = helper.make_graph(
+            [helper.make_node("Identity", ["body_input"], ["body_output"])],
+            "body",
+            [body_input],
+            [body_output],
+        )
+        graph = helper.make_graph(
+            [helper.make_node("SequenceMap", ["input"], ["output"], body=body)],
+            "missing_sequence_type",
+            [onnx.ValueInfoProto(name="input")],
+            [helper.make_empty_tensor_value_info("output")],
+        )
+        model = helper.make_model(graph, opset_imports=[helper.make_opsetid("", 17)])
+
+        with pytest.raises(ValueError, match="Expected a sequence type"):
+            inliner.inline_selected_functions(
+                model, [], exclude=True, inline_schema_functions=True
+            )
