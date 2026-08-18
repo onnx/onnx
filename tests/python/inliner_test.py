@@ -5,7 +5,7 @@ from __future__ import annotations
 
 import pytest
 
-from onnx import checker, inliner, parser
+from onnx import TensorProto, checker, helper, inliner, parser
 
 
 class TestInliner:
@@ -138,3 +138,37 @@ class TestInliner:
         )
         inlined_nodes = inlined.graph.node
         assert "Abs" in [n.op_type for n in inlined_nodes]
+
+    def test_inline_ignores_constant_without_outputs(self):
+        function = helper.make_function(
+            "local",
+            "identity",
+            ["X"],
+            ["Y"],
+            [helper.make_node("Identity", ["X"], ["Y"])],
+            opset_imports=[helper.make_opsetid("", 12)],
+        )
+        graph = helper.make_graph(
+            [
+                helper.make_node("Constant", [], []),
+                helper.make_node("identity", ["X"], ["Y"], domain="local"),
+            ],
+            "constant_without_outputs",
+            [helper.make_tensor_value_info("X", TensorProto.FLOAT, (1,))],
+            [helper.make_tensor_value_info("Y", TensorProto.FLOAT, (1,))],
+        )
+        model = helper.make_model(
+            graph,
+            functions=[function],
+            opset_imports=[
+                helper.make_opsetid("", 13),
+                helper.make_opsetid("local", 1),
+            ],
+        )
+
+        inlined = inliner.inline_local_functions(model, convert_version=True)
+
+        assert [node.op_type for node in inlined.graph.node] == [
+            "Constant",
+            "Identity",
+        ]
