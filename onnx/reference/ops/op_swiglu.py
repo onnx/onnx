@@ -12,7 +12,7 @@ class SwiGLU(OpRun):
     def _run(self, a, b, alpha=None):
         # SwiGLU requires identical shapes and dtypes for A and B: broadcasting is
         # not applied, matching the equal-shape/no-broadcast contract enforced by
-        # SwiGLUShapeInference at graph-build time.
+        # GatedActivationShapeInference at graph-build time.
         if a.shape != b.shape:
             raise ValueError(
                 "SwiGLU requires inputs A and B to have identical shapes "

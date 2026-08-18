@@ -10336,6 +10336,47 @@ class TestShapeInference(TestShapeInferenceHelper):
         with pytest.raises(onnx.shape_inference.InferenceError):
             self._inferred(graph)
 
+    # GeGLU shares GatedActivationShapeInference with SwiGLU, so the exhaustive
+    # symbolic/failure matrix above is not repeated here. These cover that GeGLU
+    # is wired to it and that the no-broadcast contract holds.
+    def test_geglu_equal_shapes(self) -> None:
+        graph = self._make_graph(
+            [
+                ("A", TensorProto.FLOAT, (2, 3, 8)),
+                ("B", TensorProto.FLOAT, (2, 3, 8)),
+            ],
+            [make_node("GeGLU", ["A", "B"], ["Y"], approximate="tanh")],
+            [],
+        )
+        self._assert_inferred(
+            graph, [make_tensor_value_info("Y", TensorProto.FLOAT, (2, 3, 8))]
+        )
+
+    def test_geglu_symbolic_partial_merge(self) -> None:
+        graph = self._make_graph(
+            [
+                ("A", TensorProto.FLOAT, ("N", 3, "D")),
+                ("B", TensorProto.FLOAT, ("N", "C", 8)),
+            ],
+            [make_node("GeGLU", ["A", "B"], ["Y"])],
+            [],
+        )
+        self._assert_inferred(
+            graph, [make_tensor_value_info("Y", TensorProto.FLOAT, ("N", 3, 8))]
+        )
+
+    def test_geglu_broadcast_size1_fails(self) -> None:
+        graph = self._make_graph(
+            [
+                ("A", TensorProto.FLOAT, (2, 1, 8)),
+                ("B", TensorProto.FLOAT, (2, 3, 8)),
+            ],
+            [make_node("GeGLU", ["A", "B"], ["Y"])],
+            [],
+        )
+        with pytest.raises(onnx.shape_inference.InferenceError):
+            self._inferred(graph)
+
     def prepare_input_initializer_tensors(self, initializer_shape, input_shape):
         nodes = [make_node("Add", ["x", "y"], "z")]
         if initializer_shape is None:
