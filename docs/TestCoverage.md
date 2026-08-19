@@ -19151,7 +19151,9 @@ for quant_type_name in ["uint8", "int8"]:
         b = b.astype(quant_type)
 
         b_scale = np.array([0.00705], dtype=dtype)
-        b_zero_point = np.array([114], dtype=quant_type)
+        b_zero_point = np.array(
+            [114 - 127] if quant_type == np.int8 else [114], dtype=quant_type
+        )
 
         y_scale = np.array([0.0107], dtype=dtype)
         y_zero_point = np.array(
@@ -19161,8 +19163,8 @@ for quant_type_name in ["uint8", "int8"]:
         if quant_type == np.int8:
             output = np.array(
                 [
-                    [[-86, -128, -128], [115, 39, -121]],
-                    [[-86, -128, -128], [115, 39, -121]],
+                    [[41, -12, -9], [1, -75, -128]],
+                    [[41, -12, -9], [1, -75, -128]],
                 ]
             )
         else:
@@ -20942,7 +20944,7 @@ expect(
 
 
 ### ReduceMax
-There are 6 test cases, listed as following:
+There are 7 test cases, listed as following:
 <details>
 <summary>bool_inputs</summary>
 
@@ -21088,6 +21090,34 @@ expect(
     inputs=[data, axes],
     outputs=[reduced],
     name="test_reduce_max_empty_set",
+)
+```
+
+</details>
+<details>
+<summary>empty_set_bool</summary>
+
+```python
+shape = [2, 0, 4]
+keepdims = 1
+reduced_shape = [2, 1, 4]
+
+node = onnx.helper.make_node(
+    "ReduceMax",
+    inputs=["data", "axes"],
+    outputs=["reduced"],
+    keepdims=keepdims,
+)
+
+data = np.empty(shape, dtype=np.bool_)
+axes = np.array([1], dtype=np.int64)
+reduced = np.full(reduced_shape, False, dtype=np.bool_)
+
+expect(
+    node,
+    inputs=[data, axes],
+    outputs=[reduced],
+    name="test_reduce_max_empty_set_bool",
 )
 ```
 

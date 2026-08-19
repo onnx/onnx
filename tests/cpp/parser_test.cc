@@ -138,6 +138,24 @@ TEST(ParserTest, TypeTest) {
   EXPECT_EQ(valtype.tensor_type().elem_type(), float_type);
   EXPECT_EQ(valtype.tensor_type().shape().dim_size(), 1);
 
+  // opaque type, with domain and name:
+  Parse(type, "opaque(test.domain,MyType)");
+  EXPECT_TRUE(type.has_opaque_type());
+  EXPECT_EQ(type.opaque_type().domain(), "test.domain");
+  EXPECT_EQ(type.opaque_type().name(), "MyType");
+
+  // opaque type, with name only (no domain):
+  Parse(type, "opaque(MyType)");
+  EXPECT_TRUE(type.has_opaque_type());
+  EXPECT_FALSE(type.opaque_type().has_domain());
+  EXPECT_EQ(type.opaque_type().name(), "MyType");
+
+  // opaque type, with neither domain nor name:
+  Parse(type, "opaque()");
+  EXPECT_TRUE(type.has_opaque_type());
+  EXPECT_FALSE(type.opaque_type().has_domain());
+  EXPECT_FALSE(type.opaque_type().has_name());
+
   // Quoted string as symbolic dimension (non-identifier dim_param):
   Parse(type, R"(float["M + N"])");
   EXPECT_TRUE(type.has_tensor_type());
@@ -710,7 +728,7 @@ TEST(ParserTest, TypesModelTest2) {
     ir_version: 8,
     opset_import: [ "" : 18 ]
     >
-    agraph (float[N] tensorX, seq(float[N]) seqX, map(int32, float[N]) mapX, optional(float[N]) optionalX, sparse_tensor(float[N]) sparseX) => (float[N] X)
+    agraph (float[N] tensorX, seq(float[N]) seqX, map(int32, float[N]) mapX, optional(float[N]) optionalX, sparse_tensor(float[N]) sparseX, opaque(test.domain,MyType) opaqueX) => (float[N] X)
     {
         X = Identity (tensorX)
     }

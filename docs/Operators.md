@@ -13289,14 +13289,17 @@ expect(
   that do not occur in the output-term.
 
   The Einsum operator evaluates algebraic tensor operations on a sequence of tensors, using the Einstein summation
-  convention. The equation string contains a comma-separated sequence of lower case letters. Each term corresponds to
-  an operand tensor, and the characters within the terms correspond to operands dimensions.
+  convention. The equation string contains a comma-separated sequence of lower case letters and/or upper case letters.
+  Each term corresponds to an operand tensor, and the characters within the terms correspond to operands dimensions.
+  Lower case letters and upper case letters are treated as distinct symbols, that is, "a" and "A" refer to different
+  symbols.
 
   This sequence may be followed by "->" to separate the left and right hand side of the equation.
   If the equation contains "->" followed by the right-hand side, the explicit (not classical) form of the Einstein
   summation is performed, and the right-hand side indices indicate output tensor dimensions. In other cases,
-  output indices are (implicitly) set to the alphabetically sorted sequence of indices appearing exactly once in the
-  equation.
+  output indices are (implicitly) set to the sequence of indices appearing exactly once in the equation, sorted in
+  increasing order of their ASCII values (so that all upper case letters precede all lower case letters, e.g.,
+  "A" < "Z" < "a" < "z").
 
   When a dimension character is repeated in the left-hand side, it represents summation along the dimension.
 
@@ -26423,7 +26426,9 @@ for quant_type_name in ["uint8", "int8"]:
         b = b.astype(quant_type)
 
         b_scale = np.array([0.00705], dtype=dtype)
-        b_zero_point = np.array([114], dtype=quant_type)
+        b_zero_point = np.array(
+            [114 - 127] if quant_type == np.int8 else [114], dtype=quant_type
+        )
 
         y_scale = np.array([0.0107], dtype=dtype)
         y_zero_point = np.array(
@@ -26433,8 +26438,8 @@ for quant_type_name in ["uint8", "int8"]:
         if quant_type == np.int8:
             output = np.array(
                 [
-                    [[-86, -128, -128], [115, 39, -121]],
-                    [[-86, -128, -128], [115, 39, -121]],
+                    [[41, -12, -9], [1, -75, -128]],
+                    [[41, -12, -9], [1, -75, -128]],
                 ]
             )
         else:
@@ -29261,6 +29266,36 @@ expect(
     inputs=[data, axes],
     outputs=[reduced],
     name="test_reduce_max_empty_set",
+)
+```
+
+</details>
+
+
+<details>
+<summary>empty_set_bool</summary>
+
+```python
+shape = [2, 0, 4]
+keepdims = 1
+reduced_shape = [2, 1, 4]
+
+node = onnx.helper.make_node(
+    "ReduceMax",
+    inputs=["data", "axes"],
+    outputs=["reduced"],
+    keepdims=keepdims,
+)
+
+data = np.empty(shape, dtype=np.bool_)
+axes = np.array([1], dtype=np.int64)
+reduced = np.full(reduced_shape, False, dtype=np.bool_)
+
+expect(
+    node,
+    inputs=[data, axes],
+    outputs=[reduced],
+    name="test_reduce_max_empty_set_bool",
 )
 ```
 
