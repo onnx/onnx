@@ -8813,6 +8813,22 @@ class TestShapeInference(TestShapeInferenceHelper):
             ],
         )
 
+    @pytest.mark.parametrize("version", all_versions_for("SplitToSequence"))
+    def test_split_to_sequence_zero_scalar(self, version: int) -> None:
+        graph = self._make_graph(
+            [("input", TensorProto.FLOAT, (6, 4)), ("split", TensorProto.INT32, ())],
+            [make_node("SplitToSequence", ["input", "split"], ["output_sequence"])],
+            [],
+            initializer=[make_tensor("split", TensorProto.INT32, (), (0,))],
+        )
+        with pytest.raises(
+            onnx.shape_inference.InferenceError, match="greater than zero"
+        ):
+            self._inferred(
+                graph,
+                opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
+            )
+
     def test_split_to_sequence_keepdims(self) -> None:
         graph = self._make_graph(
             [("input", TensorProto.FLOAT, (6, 4))],
