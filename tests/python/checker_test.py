@@ -192,6 +192,32 @@ class TestChecker:
 
         checker.check_graph(graph)
 
+    def test_check_opaque_type_requires_name(self) -> None:
+        # Opaque types must have a non-empty name (domain is optional and, if
+        # empty, is treated as equivalent to the standard "ai.onnx" domain,
+        # matching the convention used for operator domains).
+        model = onnx.parser.parse_model(
+            """
+            <ir_version: 10, opset_import: ["": 21]>
+            agraph (opaque() x) => (opaque() y) {
+                y = Identity(x)
+            }
+            """
+        )
+        with pytest.raises(checker.ValidationError):
+            checker.check_model(model)
+
+    def test_check_opaque_type_with_name(self) -> None:
+        model = onnx.parser.parse_model(
+            """
+            <ir_version: 10, opset_import: ["": 21]>
+            agraph (opaque(test.domain,MyType) x) => (opaque(test.domain,MyType) y) {
+                y = Identity(x)
+            }
+            """
+        )
+        checker.check_model(model)
+
     def test_check_graph_empty_initializer_name(self) -> None:
         node = helper.make_node("Relu", ["X"], ["Y"], name="test")
         graph = helper.make_graph(
@@ -306,6 +332,13 @@ class TestChecker:
         model = helper.make_model(graph, producer_name="test")
 
         checker.check_model(model.SerializeToString())
+
+    def test_check_model_malformed_bytes_raises(self) -> None:
+        # Bytes that cannot be parsed as a ModelProto (e.g. truncated or
+        # corrupted data) must raise instead of silently checking whatever
+        # partially-populated proto happened to result from the failed parse.
+        with pytest.raises(ValueError):
+            checker.check_model(b"\xff\xff\xff\xff\xff not a valid protobuf")
 
     def test_check_model_protobuf_size_boundary(
         self, monkeypatch: pytest.MonkeyPatch

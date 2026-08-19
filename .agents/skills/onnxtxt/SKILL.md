@@ -49,10 +49,10 @@ so, xo = Scan (s, x) <
 
 | Test file | Recommendation |
 |---|---|
-| `onnx/test/shape_inference_test.py`, `onnx/test/reference_evaluator_test.py` | Use `onnx.parser.parse_model(...)` for one-off fixtures. |
+| `tests/python/shape_inference_test.py`, `tests/python/reference_evaluator_test.py` | Use `onnx.parser.parse_model(...)` for one-off fixtures. |
 | `onnx/backend/test/case/node/<op>.py` | Keep the outer `helper.make_node` + `expect(...)` (it drives data generation). For body-subgraph ops, build the body with `onnx.parser.parse_graph`. |
-| `onnx/test/cpp/shape_inference_test.cc` | Use `OnnxParser` (`onnx/defs/parser.h`); pair with `shape_inference::InferShapes`. |
-| `onnx/test/version_converter/automatic_upgrade_test.py` and similar harnesses | Keep the established `_test_op_upgrade` / `_test_op_downgrade` style — do not rewrite. |
+| `tests/cpp/shape_inference_test.cc` | Use `OnnxParser` (`onnx/defs/parser.h`); pair with `shape_inference::InferShapes`. |
+| `tests/python/version_converter/automatic_upgrade_test.py` and similar harnesses | Keep the established `_test_op_upgrade` / `_test_op_downgrade` style — do not rewrite. |
 
 Empirical: PR #7962 (ScanVarLen) cut ~58–70% of test LOC by switching to parser-based fixtures.
 
@@ -116,6 +116,6 @@ shape_inference::InferShapes(model);
 | Formal grammar | [docs/Syntax.md](../../../docs/Syntax.md) |
 | C++ parser | `onnx/defs/parser.h`, `onnx/defs/parser.cc` |
 | Python parser | `onnx/parser.py` |
-| C++ parser tests | `onnx/test/cpp/parser_test.cc` |
-| Python parser tests | `onnx/test/parser_test.py` |
+| C++ parser tests | `tests/cpp/parser_test.cc` |
+| Python parser tests | `tests/python/parser_test.py` |
 | Empirical LOC win | PR #7962 (ScanVarLen test rewrite) |
