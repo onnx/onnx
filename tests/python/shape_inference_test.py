@@ -12647,6 +12647,11 @@ class TestShapeInference(TestShapeInferenceHelper):
                 make_tensor("leaf_weights", TensorProto.DOUBLE, (9,), [1] * 9),
                 make_tensor("nodes_splits", TensorProto.FLOAT, (5,), [1] * 5),
             ),
+            (
+                [0] * 5,
+                make_tensor("leaf_weights", TensorProto.DOUBLE, (), [1]),
+                make_tensor("nodes_splits", TensorProto.DOUBLE, (5,), [1] * 5),
+            ),
         ],
     )
     @pytest.mark.skipif(
