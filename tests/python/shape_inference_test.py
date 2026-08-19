@@ -255,6 +255,36 @@ class TestShapeInferenceHelper:
 
 
 class TestShapeInference(TestShapeInferenceHelper):
+    def test_shape_input_excessive_length_leaves_output_rank_unknown(self) -> None:
+        graph = make_graph(
+            [make_node("ConstantOfShape", ["shape"], ["output"])],
+            "excessive_shape_input_length",
+            [make_tensor_value_info("shape", TensorProto.INT64, (2**31,))],
+            [make_empty_tensor_value_info("output")],
+        )
+        inferred = onnx.shape_inference.infer_shapes(make_model(graph))
+        output_type = inferred.graph.output[0].type.tensor_type
+        assert output_type.elem_type == TensorProto.FLOAT
+        assert not output_type.HasField("shape")
+
+    def test_col2im_excessive_spatial_rank_leaves_output_rank_unknown(self) -> None:
+        graph = make_graph(
+            [make_node("Col2Im", ["data", "image_shape", "block_shape"], ["output"])],
+            "excessive_col2im_spatial_rank",
+            [
+                make_tensor_value_info("data", TensorProto.FLOAT, (1, 1, 8)),
+                make_tensor_value_info("image_shape", TensorProto.INT64, (2**63 - 1,)),
+                make_tensor_value_info("block_shape", TensorProto.INT64, (2**63 - 1,)),
+            ],
+            [make_empty_tensor_value_info("output")],
+        )
+        model = make_model(graph, opset_imports=[make_opsetid("", 18)])
+
+        inferred = onnx.shape_inference.infer_shapes(model, strict_mode=True)
+        output_type = inferred.graph.output[0].type.tensor_type
+        assert output_type.elem_type == TensorProto.FLOAT
+        assert not output_type.HasField("shape")
+
     def test_empty_graph(self) -> None:
         graph = self._make_graph(["y"], [], [])
         with pytest.raises(onnx.shape_inference.InferenceError):
