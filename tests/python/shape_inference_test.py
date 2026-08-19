@@ -13119,6 +13119,41 @@ class TestShapeInference(TestShapeInferenceHelper):
         with pytest.raises(onnx.shape_inference.InferenceError):
             onnx.shape_inference.infer_shapes(model, strict_mode=True)
 
+    def test_function_missing_input_used_as_output_does_not_crash(self):
+        model = onnx.parser.parse_model(
+            """
+            <ir_version: 8, opset_import: ["": 25, "local": 1]>
+            g (bool condition) => (float output) { output = local.F(condition) }
+            <opset_import: ["": 25], domain: "local">
+            F (condition, missing) => (missing) { unused = Identity(condition) }
+            """
+        )
+
+        onnx.checker.check_model(model)
+        onnx.shape_inference.infer_shapes(model, strict_mode=True)
+
+    def test_function_subgraph_initializer_replaces_missing_outer_type(self):
+        model = onnx.parser.parse_model(
+            """
+            <ir_version: 8, opset_import: ["": 25, "local": 1]>
+            g (bool condition) => (float output) { output = local.F(condition) }
+            <opset_import: ["": 25], domain: "local">
+            F (condition, missing) => (output) {
+                output = If(condition) <
+                    then_branch = then () => (float output)
+                        <float missing = {1.0}> { output = Identity(missing) },
+                    else_branch = else () => (float output)
+                        <float one = {1.0}> { output = Identity(one) }
+                >
+            }
+            """
+        )
+
+        onnx.checker.check_model(model)
+        inferred = onnx.shape_inference.infer_shapes(model, strict_mode=True)
+        assert inferred.graph.output[0].type.tensor_type.elem_type == TensorProto.FLOAT
+        assert len(inferred.graph.output[0].type.tensor_type.shape.dim) == 0
+
     def test_conv_transpose_undersized_weight_raises(self):
         # Weight rank < 3 violates ConvTranspose spec (C x M/group x k1...kn).
         model = onnx.parser.parse_model(
