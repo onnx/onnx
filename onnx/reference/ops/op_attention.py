@@ -74,19 +74,21 @@ def _apply_causal(base, offset):
         allowed = j_idx <= (i_idx + int(offset))  # (q, kv)
     causal = np.where(allowed, base.dtype.type(0), base.dtype.type(-np.inf))
     if per_batch:
-        # Promote base to (batch, 1, q, kv) and add the per-batch causal bias.
-        return base.reshape((1,) * (4 - base.ndim) + base.shape) + causal.reshape(
+        # Keep the mask's standard right-aligned broadcasting semantics. A rank-3
+        # mask is (heads, q, kv), not (batch, q, kv); the per-batch causal bias
+        # supplies the batch axis explicitly and NumPy broadcasts the mask.
+        return base + causal.reshape(
             causal.shape[0], 1, q_sequence_length, kv_sequence_length
         )
     return base + causal
 
 
-def _apply_sliding_window(base, local_window_size, offset):
-    """Adds a sliding-window bias to ``base``.
+def _apply_sliding_window(base, left_window_size, right_window_size, offset):
+    """Adds an offset-aligned sliding-window bias to ``base``.
 
-    Window condition: each query at absolute position ``p = offset + i`` attends
-    key ``j`` iff ``0 <= p - j < local_window_size``.  This is a strict subset of
-    the causal condition (``p - j >= 0``), so future positions are always masked.
+    A query at absolute position ``p = offset + i`` attends key ``j`` iff
+    ``p - left_window_size <= j <= p + right_window_size`` for each nonnegative
+    bound. A value of ``-1`` leaves that side unbounded.
 
     ``offset`` semantics match ``_apply_causal``: scalar for internal/no cache,
     1-D ``(batch,)`` for external cache.
@@ -100,9 +102,15 @@ def _apply_sliding_window(base, local_window_size, offset):
         diff = (i_idx + offsets) - j_idx  # (batch, q, kv)
     else:
         diff = (i_idx + int(offset)) - j_idx  # (q, kv)
-    allowed = (diff >= 0) & (diff < local_window_size)
+    allowed = np.ones_like(diff, dtype=np.bool_)
+    if left_window_size >= 0:
+        allowed &= diff <= left_window_size
+    if right_window_size >= 0:
+        allowed &= -diff <= right_window_size
     window = np.where(allowed, base.dtype.type(0), base.dtype.type(-np.inf))
     if per_batch:
+        # As in _apply_causal, add the per-batch axis without reshaping base so
+        # rank-3 masks retain their right-aligned (head, q, kv) interpretation.
         return base + window.reshape(
             window.shape[0], 1, q_sequence_length, kv_sequence_length
         )
@@ -124,23 +132,33 @@ def _compute_attention(
     softmax_precision=None,
     softcap=None,
     qk_matmul_output_mode=None,
-    local_window_size=None,
+    left_window_size=None,
+    right_window_size=None,
+    _validate_attention25=True,
 ) -> np.ndarray:
-    if (
-        local_window_size is not None
-        and local_window_size != -1
-        and local_window_size <= 0
-    ):
+    left_window_size = -1 if left_window_size is None else left_window_size
+    right_window_size = -1 if right_window_size is None else right_window_size
+    if left_window_size < -1:
         raise ValueError(
-            f"local_window_size must be -1 or positive, got {local_window_size}"
+            f"left_window_size must be -1 or nonnegative, got {left_window_size}"
         )
-    if local_window_size is not None and local_window_size > 0 and not is_causal:
-        raise ValueError("local_window_size requires is_causal=1")
+    if right_window_size < -1:
+        raise ValueError(
+            f"right_window_size must be -1 or nonnegative, got {right_window_size}"
+        )
     if (past_key is None) != (past_value is None):
         raise ValueError("past_key and past_value must be provided together")
     if nonpad_kv_seqlen is not None and past_key is not None:
         raise ValueError("nonpad_kv_seqlen cannot be combined with past cache tensors")
     assert len(Q.shape) == len(K.shape) == len(V.shape)
+    if (
+        _validate_attention25
+        and Q.ndim == _INPUT_RANK_4D
+        and (q_num_heads is not None or kv_num_heads is not None)
+    ):
+        raise ValueError(
+            "q_num_heads and kv_num_heads must not be specified for 4D inputs"
+        )
     # Set input tensors (Q, K, V) to the correct shape if input shape is 3D
     # NewShapeQ (batch_size, q_num_heads, q_sequence_length, head_size)
     # NewShapeK  (batch_size, kv_num_heads, kv_sequence_length, head_size)
@@ -234,7 +252,7 @@ def _compute_attention(
             if attn_mask is None
             else attn_mask.copy()
         )
-        if local_window_size is not None and local_window_size > 0:
+        if left_window_size >= 0 or right_window_size >= 0:
             # Materialize rank-1 masks to rank 2 while preserving standard
             # right-aligned broadcasting for all higher-rank masks.
             base = (
@@ -255,24 +273,26 @@ def _compute_attention(
             attn_mask[attn_mask == 1] = -np.inf
         attn_bias = attn_bias + attn_mask
 
-    # Apply sliding window mask (layered on top of causal/attn_mask)
-    if local_window_size is not None and local_window_size > 0:
+    # Apply the sliding-window mask independently of the causal/attention masks.
+    if left_window_size >= 0 or right_window_size >= 0:
         if past_key is None and nonpad_kv_seqlen is not None:
             win_offset = nonpad_kv_seqlen.reshape(-1) - q_sequence_length
         elif past_key is not None:
             win_offset = past_key.shape[2]
         else:
             win_offset = 0
-        attn_bias = _apply_sliding_window(attn_bias, local_window_size, win_offset)
+        attn_bias = (
+            np.zeros((q_sequence_length, kv_sequence_length), dtype=Q.dtype) + attn_bias
+        )
+        attn_bias = _apply_sliding_window(
+            attn_bias, left_window_size, right_window_size, win_offset
+        )
 
     if nonpad_kv_seqlen is not None:
-        attn_bias = attn_bias.reshape(
-            (1,) * (4 - attn_bias.ndim) + attn_bias.shape
-        )  # broadcast to 4D
         padding_mask = np.arange(kv_sequence_length) < nonpad_kv_seqlen[:, np.newaxis]
         padding_mask = padding_mask.reshape(batch_size, 1, 1, kv_sequence_length)
         padding_mask = np.where(padding_mask, 0, -np.inf)
-        attn_bias += padding_mask
+        attn_bias = attn_bias + padding_mask
 
     # Group Query Attention is applied if the following are satisfied
     # 1) q_num_heads != kv_num_heads
@@ -369,6 +389,8 @@ def _compute_attention(
 
 
 class Attention(OpRun):
+    _validate_attention25 = True
+
     def _run(
         self,
         Q: np.ndarray,
@@ -385,7 +407,8 @@ class Attention(OpRun):
         softmax_precision=None,
         softcap=None,
         qk_matmul_output_mode=None,
-        local_window_size=None,
+        left_window_size=None,
+        right_window_size=None,
     ) -> np.ndarray:
         return _compute_attention(
             Q,
@@ -402,5 +425,27 @@ class Attention(OpRun):
             softmax_precision=softmax_precision,
             softcap=softcap,
             qk_matmul_output_mode=qk_matmul_output_mode,
-            local_window_size=local_window_size,
+            left_window_size=left_window_size,
+            right_window_size=right_window_size,
+            _validate_attention25=self._validate_attention25,
         )
+
+
+class Attention_1(Attention):
+    # Keep the historical default implementation available to callers that
+    # request an older opset without an Attention schema.
+    _validate_attention25 = False
+
+
+class Attention_23(Attention):
+    # Attention-23 has no window attributes and must retain its historical
+    # reference behavior.
+    _validate_attention25 = False
+
+
+class Attention_24(Attention_23):
+    pass
+
+
+class Attention_25(Attention):
+    _validate_attention25 = True

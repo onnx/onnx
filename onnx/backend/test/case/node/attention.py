@@ -2700,14 +2700,14 @@ class Attention(Base):
 
     @staticmethod
     def export_attention_local_window() -> None:
-        """Causal sliding window attention with local_window_size=3."""
-        local_window_size = 3
+        """Causal sliding window attention with two preceding positions."""
+        left_window_size = 2
         node = onnx.helper.make_node(
             "Attention",
             inputs=["Q", "K", "V"],
             outputs=["Y"],
             is_causal=1,
-            local_window_size=local_window_size,
+            left_window_size=left_window_size,
         )
 
         Q = np.random.rand(2, 3, 4, 8).astype(np.float32)
@@ -2715,7 +2715,7 @@ class Attention(Base):
         V = np.random.rand(2, 3, 6, 8).astype(np.float32)
 
         Y, _, _, _ = _compute_attention(
-            Q, K, V, is_causal=1, local_window_size=local_window_size
+            Q, K, V, is_causal=1, left_window_size=left_window_size
         )
 
         expect(
@@ -2727,20 +2727,56 @@ class Attention(Base):
         )
 
     @staticmethod
-    def export_attention_local_window_default() -> None:
-        """local_window_size=-1 (default/disabled) behaves identically to ver24."""
+    def export_attention_bidirectional_window() -> None:
+        """Asymmetric bidirectional window independent of causal masking."""
         node = onnx.helper.make_node(
             "Attention",
             inputs=["Q", "K", "V"],
             outputs=["Y"],
-            local_window_size=-1,
+            left_window_size=1,
+            right_window_size=2,
+        )
+
+        Q = np.zeros((1, 1, 5, 1), dtype=np.float32)
+        K = np.zeros((1, 1, 5, 1), dtype=np.float32)
+        V = np.arange(5, dtype=np.float32).reshape(1, 1, 5, 1)
+        Y, _, _, _ = _compute_attention(
+            Q,
+            K,
+            V,
+            left_window_size=1,
+            right_window_size=2,
+        )
+
+        np.testing.assert_allclose(
+            Y.reshape(-1), np.array([1.0, 1.5, 2.5, 3.0, 3.5], dtype=np.float32)
+        )
+        expect(
+            node,
+            inputs=[Q, K, V],
+            outputs=[Y],
+            name="test_attention_bidirectional_window",
+            opset_imports=[onnx.helper.make_opsetid("", 25)],
+        )
+
+    @staticmethod
+    def export_attention_local_window_default() -> None:
+        """Disabled window bounds behave identically to version 24."""
+        node = onnx.helper.make_node(
+            "Attention",
+            inputs=["Q", "K", "V"],
+            outputs=["Y"],
+            left_window_size=-1,
+            right_window_size=-1,
         )
 
         Q = np.random.rand(2, 3, 4, 8).astype(np.float32)
         K = np.random.rand(2, 3, 6, 8).astype(np.float32)
         V = np.random.rand(2, 3, 6, 8).astype(np.float32)
 
-        Y, _, _, _ = _compute_attention(Q, K, V, local_window_size=-1)
+        Y, _, _, _ = _compute_attention(
+            Q, K, V, left_window_size=-1, right_window_size=-1
+        )
 
         expect(
             node,
@@ -2753,13 +2789,13 @@ class Attention(Base):
     @staticmethod
     def export_attention_local_window_rank1_boolean_mask() -> None:
         """A rank-1 boolean mask retains standard right-aligned broadcasting."""
-        local_window_size = 3
+        left_window_size = 2
         node = onnx.helper.make_node(
             "Attention",
             inputs=["Q", "K", "V", "attn_mask"],
             outputs=["Y"],
             is_causal=1,
-            local_window_size=local_window_size,
+            left_window_size=left_window_size,
         )
 
         Q = np.random.rand(2, 3, 4, 8).astype(np.float32)
@@ -2773,7 +2809,7 @@ class Attention(Base):
             V,
             attn_mask=attn_mask,
             is_causal=1,
-            local_window_size=local_window_size,
+            left_window_size=left_window_size,
         )
 
         expect(
@@ -2787,14 +2823,14 @@ class Attention(Base):
     @staticmethod
     def export_attention_local_window_with_past() -> None:
         """Sliding window with internal KV cache (past_key/past_value)."""
-        local_window_size = 3
+        left_window_size = 2
         past_sequence_length = 8
         node = onnx.helper.make_node(
             "Attention",
             inputs=["Q", "K", "V", "", "past_key", "past_value"],
             outputs=["Y", "present_key", "present_value"],
             is_causal=1,
-            local_window_size=local_window_size,
+            left_window_size=left_window_size,
         )
 
         Q = np.random.rand(2, 3, 4, 8).astype(np.float32)
@@ -2810,7 +2846,7 @@ class Attention(Base):
             past_key=past_key,
             past_value=past_value,
             is_causal=1,
-            local_window_size=local_window_size,
+            left_window_size=left_window_size,
         )
 
         expect(
@@ -2824,14 +2860,14 @@ class Attention(Base):
     @staticmethod
     def export_attention_local_window_ext_cache_rank3_head_mask() -> None:
         """External cache with a legal rank-3 ``(heads, q, kv)`` mask."""
-        local_window_size = 3
+        left_window_size = 2
         B, H, S_q, S_kv, D = 2, 3, 4, 8, 8
         node = onnx.helper.make_node(
             "Attention",
             inputs=["Q", "K", "V", "attn_mask", "", "", "nonpad_kv_seqlen"],
             outputs=["Y"],
             is_causal=1,
-            local_window_size=local_window_size,
+            left_window_size=left_window_size,
         )
 
         Q = np.random.rand(B, H, S_q, D).astype(np.float32)
@@ -2849,7 +2885,7 @@ class Attention(Base):
             attn_mask=attn_mask,
             nonpad_kv_seqlen=nonpad_kv_seqlen,
             is_causal=1,
-            local_window_size=local_window_size,
+            left_window_size=left_window_size,
         )
 
         expect(
@@ -2863,14 +2899,14 @@ class Attention(Base):
     @staticmethod
     def export_attention_local_window_ext_cache_rank4_batch_mask() -> None:
         """External cache with a batch-specific rank-4 ``(batch, 1, q, kv)`` mask."""
-        local_window_size = 3
+        left_window_size = 2
         B, H, S_q, S_kv, D = 2, 3, 4, 8, 8
         node = onnx.helper.make_node(
             "Attention",
             inputs=["Q", "K", "V", "attn_mask", "", "", "nonpad_kv_seqlen"],
             outputs=["Y"],
             is_causal=1,
-            local_window_size=local_window_size,
+            left_window_size=left_window_size,
         )
 
         Q = np.random.rand(B, H, S_q, D).astype(np.float32)
@@ -2886,7 +2922,7 @@ class Attention(Base):
             attn_mask=attn_mask,
             nonpad_kv_seqlen=nonpad_kv_seqlen,
             is_causal=1,
-            local_window_size=local_window_size,
+            left_window_size=left_window_size,
         )
 
         expect(
@@ -2900,14 +2936,14 @@ class Attention(Base):
     @staticmethod
     def export_attention_local_window_ext_cache_rank2_mask() -> None:
         """External cache with a conventional rank-2 ``(1, kv)`` mask."""
-        local_window_size = 3
+        left_window_size = 2
         B, H, S_q, S_kv, D = 2, 3, 4, 8, 8
         node = onnx.helper.make_node(
             "Attention",
             inputs=["Q", "K", "V", "attn_mask", "", "", "nonpad_kv_seqlen"],
             outputs=["Y"],
             is_causal=1,
-            local_window_size=local_window_size,
+            left_window_size=left_window_size,
         )
 
         Q = np.random.rand(B, H, S_q, D).astype(np.float32)
@@ -2923,7 +2959,7 @@ class Attention(Base):
             attn_mask=attn_mask,
             nonpad_kv_seqlen=nonpad_kv_seqlen,
             is_causal=1,
-            local_window_size=local_window_size,
+            left_window_size=left_window_size,
         )
 
         expect(
@@ -2937,14 +2973,14 @@ class Attention(Base):
     @staticmethod
     def export_attention_local_window_ext_cache_float16_mask() -> None:
         """External cache with a float16 attention mask."""
-        local_window_size = 3
+        left_window_size = 2
         B, H, S_q, S_kv, D = 2, 3, 4, 8, 8
         node = onnx.helper.make_node(
             "Attention",
             inputs=["Q", "K", "V", "attn_mask", "", "", "nonpad_kv_seqlen"],
             outputs=["Y"],
             is_causal=1,
-            local_window_size=local_window_size,
+            left_window_size=left_window_size,
         )
 
         Q = np.zeros((B, H, S_q, D), dtype=np.float16)
@@ -2960,7 +2996,7 @@ class Attention(Base):
             attn_mask=attn_mask,
             nonpad_kv_seqlen=nonpad_kv_seqlen,
             is_causal=1,
-            local_window_size=local_window_size,
+            left_window_size=left_window_size,
         )
 
         expect(
@@ -2974,7 +3010,7 @@ class Attention(Base):
     @staticmethod
     def export_attention_3d_local_window() -> None:
         """Sliding window with 3D MQA inputs and a distinct V head size."""
-        local_window_size = 3
+        left_window_size = 2
         node = onnx.helper.make_node(
             "Attention",
             inputs=["Q", "K", "V"],
@@ -2982,7 +3018,7 @@ class Attention(Base):
             q_num_heads=4,
             kv_num_heads=1,
             is_causal=1,
-            local_window_size=local_window_size,
+            left_window_size=left_window_size,
         )
 
         Q = np.random.rand(2, 4, 32).astype(np.float32)
@@ -2996,7 +3032,7 @@ class Attention(Base):
             q_num_heads=4,
             kv_num_heads=1,
             is_causal=1,
-            local_window_size=local_window_size,
+            left_window_size=left_window_size,
         )
 
         expect(
@@ -3012,14 +3048,14 @@ class Attention(Base):
         """Windowed GQA with distinct V head size and a per-head boolean mask."""
         np.random.seed(25)
         B, H_q, H_kv, S_q, S_kv, D_qk, D_v = 2, 4, 2, 4, 6, 8, 6
-        local_window_size = 3
+        left_window_size = 2
         softmax_precision = int(onnx.TensorProto.DOUBLE)
         node = onnx.helper.make_node(
             "Attention",
             inputs=["Q", "K", "V", "attn_mask"],
             outputs=["Y", "", "", "qk_matmul_output"],
             is_causal=1,
-            local_window_size=local_window_size,
+            left_window_size=left_window_size,
             softcap=2.0,
             softmax_precision=softmax_precision,
             qk_matmul_output_mode=3,
@@ -3037,7 +3073,7 @@ class Attention(Base):
             V,
             attn_mask=attn_mask,
             is_causal=1,
-            local_window_size=local_window_size,
+            left_window_size=left_window_size,
             softcap=2.0,
             softmax_precision=softmax_precision,
             qk_matmul_output_mode=3,

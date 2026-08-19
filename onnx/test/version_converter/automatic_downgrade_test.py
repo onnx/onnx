@@ -101,29 +101,35 @@ class TestAutomaticDowngrade(automatic_conversion_test_base.TestAutomaticConvers
         )
 
     def test_attention_25_to_24_default_window(self) -> None:
-        """Attention with local_window_size=-1 (default/disabled) can be downgraded."""
+        """Attention with disabled window bounds can be downgraded."""
         self._test_op_downgrade(
             "Attention",
             25,
             [[2, 3, 4, 8], [2, 3, 6, 8], [2, 3, 6, 8]],
             [[2, 3, 4, 8]],
-            attrs={"local_window_size": -1},
+            attrs={"left_window_size": -1, "right_window_size": -1},
         )
 
-    def test_attention_25_to_24_positive_window_fails(self) -> None:
-        """Attention with local_window_size > 0 cannot be downgraded to opset 24."""
+    @pytest.mark.parametrize(
+        "window_attribute", ["left_window_size", "right_window_size"]
+    )
+    def test_attention_25_to_24_window_fails(self, window_attribute: str) -> None:
+        """Attention with an enabled window bound cannot be downgraded."""
         model = onnx.parser.parse_model(
-            """
+            f"""
             <ir_version: 10, opset_import: [ "" : 25]>
             attn (float[2, 3, 4, 8] Q, float[2, 3, 6, 8] K, float[2, 3, 6, 8] V)
                 => (float[2, 3, 4, 8] Y)
-            {
-                Y = Attention <is_causal = 1, local_window_size = 3> (Q, K, V)
-            }
+            {{
+                Y = Attention <{window_attribute} = 3> (Q, K, V)
+            }}
             """
         )
         onnx.checker.check_model(model)
-        with pytest.raises(RuntimeError, match=r"got 3\. Sliding window attention"):
+        with pytest.raises(
+            RuntimeError,
+            match=rf"{window_attribute} must be -1 .* got 3.*Windowed attention",
+        ):
             onnx.version_converter.convert_version(model, 24)
 
     def test_LinearAttention_downgrade_fails(self) -> None:

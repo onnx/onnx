@@ -3391,25 +3391,25 @@ With `nonpad_kv_seqlen=4` (offset=0), the mask is the standard lower-triangular.
 
 `offset` is the count of valid keys preceding the current query block: `offset = past_sequence_length` when `past_key` is provided; `offset = nonpad_kv_seqlen - q_sequence_length` (per batch) when an external cache is indicated by `nonpad_kv_seqlen` without `past_key`; `offset = 0` when neither is provided (the no-cache case, which reduces to the standard lower-triangular mask). When `offset < 0` (`nonpad_kv_seqlen < q_sequence_length`, i.e. more query tokens than cached keys) the leading query rows have an empty key set (no key satisfies `j <= i + offset`) and are fully masked. The causal frontier is computed independently of `attn_mask` and is then composed with it additively: a boolean `attn_mask` intersects the allowed set (its disallowed positions contribute `-inf` to the bias), while a float `attn_mask` is added to the attention scores rather than disabling positions. A fully-masked query row (no key attended, including the negative-offset leading rows) produces a zero output row, not `NaN`, for both `Y` and the mode-`3` `qk_matmul_output` debug output; the mode-`3` `qk_matmul_output` is emitted at the operator's output precision (`T1`).
 
-When `local_window_size` is set to a positive integer, `is_causal` must be `1`. The window restricts each query at absolute position `p = offset + query_index` to keys `j` satisfying `0 <= p - j < local_window_size` (equivalently, `p - local_window_size + 1 <= j <= p`), i.e. at most `local_window_size` keys including itself. When `local_window_size` is -1 (default), no sliding window is applied.
+`left_window_size` and `right_window_size` independently restrict the keys visible to each query. A query at absolute position `p = offset + query_index` attends keys `j` satisfying `p - left_window_size <= j <= p + right_window_size` for each nonnegative bound. A value of `-1` leaves that side unbounded. For example, `(left_window_size=2, right_window_size=0)` is a causal left-looking window containing the current key and two preceding keys, while `(left_window_size=2, right_window_size=1)` is an asymmetric bidirectional window. Window bounds are composed with `is_causal` and `attn_mask`; when `is_causal=1`, the causal upper bound still excludes future keys.
 
 ```
   2D sliding-window mask for Attention (opset 25)
-   S_q=4 queries, S_k=6 keys, local_window_size=3, offset=0
+   S_q=4 queries, S_k=6 keys, left_window_size=2, right_window_size=1, offset=0
 
           k0  k1  k2  k3  k4  k5
          +----+----+----+----+----+----+
-    q0   | ## |    |    |    |    |    |
+    q0   | ## | ## |    |    |    |    |
          +----+----+----+----+----+----+
-    q1   | ## | ## |    |    |    |    |
+    q1   | ## | ## | ## |    |    |    |
          +----+----+----+----+----+----+
-    q2   | ## | ## | ## |    |    |    |
+    q2   | ## | ## | ## | ## |    |    |
          +----+----+----+----+----+----+
-    q3   |    | ## | ## | ## |    |    |
+    q3   |    | ## | ## | ## | ## |    |
          +----+----+----+----+----+----+
 
-   q0 attends {k0}, q1 attends {k0,k1}, q2 attends {k0,k1,k2},
-   q3 attends {k1,k2,k3} (window slides, future always masked).
+   q0 attends {k0,k1}, q1 attends {k0,k1,k2}, q2 attends {k0,k1,k2,k3},
+   q3 attends {k1,k2,k3,k4}.
 ```
 
 With respect to KV cache update, this operator allows the following two use cases:
@@ -3455,15 +3455,21 @@ Q*sqrt(scale) K*sqrt(scale) |
 static void Attention25Inference(InferenceContext& ctx) {
   defs::nn::utils::AttentionPropagateElemTypeFromInputToOutput(ctx);
 
-  const auto* const local_window_attr = ctx.getAttribute("local_window_size");
-  const int64_t local_window_size = local_window_attr != nullptr ? local_window_attr->i() : -1;
-  if (local_window_size != -1 && local_window_size <= 0) {
-    fail_shape_inference("local_window_size must be -1 or positive, got ", local_window_size);
+  for (const char* window_attr_name : {"left_window_size", "right_window_size"}) {
+    const auto* const window_attr = ctx.getAttribute(window_attr_name);
+    const int64_t window_size = window_attr != nullptr ? window_attr->i() : -1;
+    if (window_size < -1) {
+      fail_shape_inference(window_attr_name, " must be -1 or nonnegative, got ", window_size);
+    }
   }
-  const auto* const is_causal_attr = ctx.getAttribute("is_causal");
-  const int64_t is_causal = is_causal_attr != nullptr ? is_causal_attr->i() : 0;
-  if (local_window_size > 0 && is_causal != 1) {
-    fail_shape_inference("A positive local_window_size requires is_causal=1.");
+
+  if (hasInputShape(ctx, 0) && getInputShape(ctx, 0).dim_size() == 3) {
+    const auto* const q_num_heads_attr = ctx.getAttribute("q_num_heads");
+    const auto* const kv_num_heads_attr = ctx.getAttribute("kv_num_heads");
+    if (q_num_heads_attr != nullptr && kv_num_heads_attr != nullptr &&
+        (q_num_heads_attr->i() <= 0 || kv_num_heads_attr->i() <= 0)) {
+      fail_shape_inference("q_num_heads and kv_num_heads must be positive for 3D inputs.");
+    }
   }
 
   const bool has_past_key = ctx.hasInput(4);
@@ -3547,11 +3553,17 @@ ONNX_OPERATOR_SET_SCHEMA(
             AttributeProto::INT,
             static_cast<int64_t>(0))
         .Attr(
-            "local_window_size",
-            "Size of the left sliding attention window. A positive value requires `is_causal=1`. Each query at absolute "
-            "position `p` attends only keys `j` satisfying `0 <= p - j < local_window_size`, i.e. at most "
-            "`local_window_size` keys including itself. Default value of `-1` means no sliding window is applied. "
-            "Must be `-1` or a positive integer; a value of `0` or less than `-1` is invalid.",
+            "left_window_size",
+            "Maximum number of positions to the left of the current absolute query position that may be attended. "
+            "A value of `0` allows the current position but no preceding position, while `-1` leaves the left side "
+            "unbounded. This bound is composed with `is_causal` and `attn_mask`.",
+            AttributeProto::INT,
+            static_cast<int64_t>(-1))
+        .Attr(
+            "right_window_size",
+            "Maximum number of positions to the right of the current absolute query position that may be attended. "
+            "A value of `0` allows the current position but no following position, while `-1` leaves the right side "
+            "unbounded. Set `is_causal=0` to use a positive right window.",
             AttributeProto::INT,
             static_cast<int64_t>(-1))
         .Input(
@@ -3616,7 +3628,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Output(
             0,
             "Y",
-            "The output tensor . "
+            "The output tensor. "
             "4D tensor with shape `(batch_size, q_num_heads, q_sequence_length, v_head_size)` or 3D tensor with shape `(batch_size, q_sequence_length, hidden_size)`. "
             "For cases with a 3D input tensor, `hidden_size = q_num_heads * v_head_size`",
             "T1")
@@ -3653,7 +3665,8 @@ ONNX_OPERATOR_SET_SCHEMA(
         .SetContextDependentFunctionBodyBuilder([](const FunctionBodyBuildContext& ctx,
                                                    const OpSchema& schema,
                                                    FunctionProto& functionProto) {
-          // ScaledDotProductAttention <scale, is_causal, q_num_heads, kv_numheads, local_window_size> (Q, K, V,
+          // ScaledDotProductAttention <scale, is_causal, q_num_heads, kv_numheads, left_window_size,
+          // right_window_size> (Q, K, V,
           // attn_mask, past_key, past_value) => (Y, present_key?, present_value?)
           int64_t int_type = ONNX_NAMESPACE::TensorProto_DataType_INT64;
           int64_t float_type = ONNX_NAMESPACE::TensorProto_DataType_FLOAT;
@@ -3682,12 +3695,11 @@ ONNX_OPERATOR_SET_SCHEMA(
           auto is_causal_attr = ctx.getAttribute("is_causal");
           int64_t is_causal = (is_causal_attr != nullptr) ? is_causal_attr->i() : 0;
 
-          // Get local_window_size attribute
-          auto local_window_attr = ctx.getAttribute("local_window_size");
-          int64_t local_window_size = (local_window_attr != nullptr) ? local_window_attr->i() : -1;
-          if (local_window_size != -1 && local_window_size <= 0)
-            return false; // Invalid value (should have been caught by shape inference)
-          if (local_window_size > 0 && is_causal != 1)
+          auto left_window_attr = ctx.getAttribute("left_window_size");
+          int64_t left_window_size = (left_window_attr != nullptr) ? left_window_attr->i() : -1;
+          auto right_window_attr = ctx.getAttribute("right_window_size");
+          int64_t right_window_size = (right_window_attr != nullptr) ? right_window_attr->i() : -1;
+          if (left_window_size < -1 || right_window_size < -1)
             return false;
           if (ctx.hasInput(4) != ctx.hasInput(5) || ctx.hasOutput(1) != ctx.hasOutput(2))
             return false;
@@ -3777,24 +3789,27 @@ ONNX_OPERATOR_SET_SCHEMA(
             builder.Add("present_value = Identity (PresentValue)");
           }
 
-          if (!defs::nn::utils::AttentionAppendFunctionCausalMask(ctx, builder, true))
+          if (!defs::nn::utils::AttentionAppendFunctionCausalMask(ctx, builder, true, true))
             return false;
 
-          // Sliding window mask: applied AFTER causal mask (AttnBiasCausalOrNot) as an
-          // additive overlay. Window condition: 0 <= (offset + row) - col < W, which is
-          // a strict subset of the causal condition (diff >= 0), so -inf + -inf = -inf
-          // is correct when both causal and window masks apply.
-          if (local_window_size > 0) {
-            builder.Const1D("WindowSize", local_window_size)
-                .Const1D("WinZero", static_cast<int64_t>(0))
+          // Window bounds are an additive overlay on the causal and attention masks.
+          if (left_window_size >= 0 || right_window_size >= 0) {
+            builder.Const1D("WinZero", static_cast<int64_t>(0))
                 .Const1D("WinOne", static_cast<int64_t>(1))
                 .Add("WinZeroNoDim = Squeeze(WinZero, WinZero)")
                 .Add("WinOneNoDim = Squeeze(WinOne, WinZero)")
                 .Add("WinSeqLen = Squeeze(QSeqLen, WinZero)")
                 .Add("WinTotalSeqLen = Squeeze(NewKVSeqLen, WinZero)")
                 .Add("WinRangeRow = Range(WinZeroNoDim, WinSeqLen, WinOneNoDim)") // [Sq]
-                .Add("WinRangeCol = Range(WinZeroNoDim, WinTotalSeqLen, WinOneNoDim)") // [Skv]
-                .Add("WindowSizeNoDim = Squeeze(WindowSize, WinZero)");
+                .Add("WinRangeCol = Range(WinZeroNoDim, WinTotalSeqLen, WinOneNoDim)"); // [Skv]
+            if (left_window_size >= 0) {
+              builder.Const1D("LeftWindowSize", left_window_size)
+                  .Add("LeftWindowSizeNoDim = Squeeze(LeftWindowSize, WinZero)");
+            }
+            if (right_window_size >= 0) {
+              builder.Const1D("RightWindowSize", right_window_size)
+                  .Add("RightWindowSizeNoDim = Squeeze(RightWindowSize, WinZero)");
+            }
             bool win_external_cache = ctx.hasInput(6) && !ctx.hasInput(4);
             if (win_external_cache) {
               // External cache: per-batch offset -> 4D mask
@@ -3809,24 +3824,27 @@ ONNX_OPERATOR_SET_SCHEMA(
                   .Add("WinCol2D = Unsqueeze(WinRangeCol, WinZero)") // (1,Skv)
                   .Add("WinCol4D = Unsqueeze(WinCol2D, WinAxes01)") // (1,1,1,Skv)
                   .Add("WinAbsPos = Add(WinRow4D, WinOffset4D)") // (batch,1,Sq,1)
-                  .Add("WinDiff = Sub(WinAbsPos, WinCol4D)") // (batch,1,Sq,Skv)
-                  .Add("WinGe0 = GreaterOrEqual(WinDiff, WinZeroNoDim)")
-                  .Add("WinLtW = Less(WinDiff, WindowSizeNoDim)")
-                  .Add("WinOk = And(WinGe0, WinLtW)")
-                  .Add("WinMaskFloat = Where(WinOk, ScalarZero, FloatNegInf)");
+                  .Add("WinDiff = Sub(WinAbsPos, WinCol4D)"); // (batch,1,Sq,Skv)
             } else {
               // Internal cache (scalar PastKVSeqLen) or no cache: 2D mask [Sq, Skv]
               builder
                   .Add("WinRow2D = Unsqueeze(WinRangeRow, WinOne)") // (Sq,1)
                   .Add("WinCol2D = Unsqueeze(WinRangeCol, WinZero)") // (1,Skv)
                   .Add("WinAbsPos = Add(WinRow2D, PastKVSeqLen)") // (Sq,1)
-                  .Add("WinDiff = Sub(WinAbsPos, WinCol2D)") // (Sq,Skv)
-                  .Add("WinGe0 = GreaterOrEqual(WinDiff, WinZeroNoDim)")
-                  .Add("WinLtW = Less(WinDiff, WindowSizeNoDim)")
-                  .Add("WinOk = And(WinGe0, WinLtW)")
-                  .Add("WinMaskFloat = Where(WinOk, ScalarZero, FloatNegInf)");
+                  .Add("WinDiff = Sub(WinAbsPos, WinCol2D)"); // (Sq,Skv)
             }
-            builder.Add("WinMask = CastLike(WinMaskFloat, AttnBiasCausalOrNot)")
+            if (left_window_size >= 0 && right_window_size >= 0) {
+              builder.Add("WinLeftOk = LessOrEqual(WinDiff, LeftWindowSizeNoDim)")
+                  .Add("WinRightDiff = Neg(WinDiff)")
+                  .Add("WinRightOk = LessOrEqual(WinRightDiff, RightWindowSizeNoDim)")
+                  .Add("WinOk = And(WinLeftOk, WinRightOk)");
+            } else if (left_window_size >= 0) {
+              builder.Add("WinOk = LessOrEqual(WinDiff, LeftWindowSizeNoDim)");
+            } else {
+              builder.Add("WinRightDiff = Neg(WinDiff)").Add("WinOk = LessOrEqual(WinRightDiff, RightWindowSizeNoDim)");
+            }
+            builder.Add("WinMaskFloat = Where(WinOk, ScalarZero, FloatNegInf)")
+                .Add("WinMask = CastLike(WinMaskFloat, AttnBiasCausalOrNot)")
                 .Add("AttnBiasCausalWindow = Add(AttnBiasCausalOrNot, WinMask)");
           } else {
             builder.Add("AttnBiasCausalWindow = Identity(AttnBiasCausalOrNot)");

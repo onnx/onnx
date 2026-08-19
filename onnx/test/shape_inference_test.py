@@ -2984,11 +2984,11 @@ class TestShapeInference(TestShapeInferenceHelper):
         cases = [
             (
                 qkv_inputs,
-                make_node("Attention", ["Q", "K", "V"], ["Y"], local_window_size=0),
+                make_node("Attention", ["Q", "K", "V"], ["Y"], left_window_size=-2),
             ),
             (
                 qkv_inputs,
-                make_node("Attention", ["Q", "K", "V"], ["Y"], local_window_size=3),
+                make_node("Attention", ["Q", "K", "V"], ["Y"], right_window_size=-2),
             ),
             (
                 qkv_inputs + past_inputs[:1],
