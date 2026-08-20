@@ -29273,6 +29273,36 @@ expect(
 
 
 <details>
+<summary>empty_set_bool</summary>
+
+```python
+shape = [2, 0, 4]
+keepdims = 1
+reduced_shape = [2, 1, 4]
+
+node = onnx.helper.make_node(
+    "ReduceMax",
+    inputs=["data", "axes"],
+    outputs=["reduced"],
+    keepdims=keepdims,
+)
+
+data = np.empty(shape, dtype=np.bool_)
+axes = np.array([1], dtype=np.int64)
+reduced = np.full(reduced_shape, False, dtype=np.bool_)
+
+expect(
+    node,
+    inputs=[data, axes],
+    outputs=[reduced],
+    name="test_reduce_max_empty_set_bool",
+)
+```
+
+</details>
+
+
+<details>
 <summary>keepdims</summary>
 
 ```python
@@ -33220,7 +33250,7 @@ x = np.array(
     ],
     dtype=np.float32,
 )
-sequence_lens = np.array([1, 2, 3, 4], dtype=np.int64)
+sequence_lens = np.array([0, 2, 3, 4], dtype=np.int64)
 
 y = np.array(
     [
@@ -36732,16 +36762,16 @@ expect(node, inputs=[x], outputs=[y], name="test_size")
   If `axes` are omitted, they are set to `[0, ..., r-1]`.
   If `steps` are omitted, they are set to `[1, ..., 1]` of length `len(starts)`
 
-  The effective values are initialized as `start[i] = 0`, `ends[i] = dims[i]` where
+  The effective values are initialized as `starts[i] = 0`, `ends[i] = dims[i]` where
   `dims` are the dimensions of `input` and `steps[i] = 1`.
 
   All negative elements of `axes` are made non-negative by adding `r` to them, where
   `r =rank(input)`.
 
   All negative values in `starts[i]` and `ends[i]` have `dims[axes[i]]` added to them,
-  where `dims` are the dimensions of `input`. Then `start[axes[i]]` is the adjusted
-  `starts[i]` is clamped into the range `[0, dims[axes[i]]]` for positive stepping
-  and `[0, dims[axes[i]]-1]` for negative stepping.
+  where `dims` are the dimensions of `input`. Then `starts[axes[i]]` is clamped to
+  range `[0, dims[axes[i]]]` for positive stepping, or to range `[0, dims[axes[i]]-1]`
+  for negative stepping.
 
   The clamping for the adjusted `ends[i]` depends on the sign of `steps[i]` and must
   accommodate copying 0 through `dims[axes[i]]` elements, so for positive stepping
