@@ -9,10 +9,36 @@ from typing import TYPE_CHECKING
 import pytest
 
 import onnx
-from onnx import defs
+from onnx import TensorProto, defs, helper
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
+
+
+_MASK_ELEM_TYPES = [
+    TensorProto.FLOAT,
+    TensorProto.FLOAT16,
+    TensorProto.BFLOAT16,
+    TensorProto.DOUBLE,
+]
+
+
+def _expanded_output_elem_type(
+    op_version: int, node: onnx.NodeProto, input_types: Sequence[onnx.TypeProto]
+) -> int:
+    """Expand Attention's context-dependent function and infer its output type."""
+    schema = defs.get_schema("Attention", op_version)
+    function_proto = onnx.FunctionProto()
+    function_proto.ParseFromString(
+        schema.get_context_dependent_function(
+            node.SerializeToString(),
+            [input_type.SerializeToString() for input_type in input_types],
+        )
+    )
+    output_types = onnx.shape_inference.infer_function_output_types(
+        function_proto, input_types, list(node.attribute)
+    )
+    return output_types[0].tensor_type.elem_type
 
 
 class TestSchema:
@@ -36,6 +62,47 @@ class TestSchema:
         assert (
             selu_schema.node_determinism == defs.OpSchema.NodeDeterminism.Deterministic
         )
+
+    # The generated causal mask is float32 while AttnBias follows attn_mask's
+    # type, so every opset emitting Add(AttnBias, MaskTri) needs the cast.
+    @pytest.mark.parametrize("op_version", [23, 24, 25])
+    @pytest.mark.parametrize("elem_type", _MASK_ELEM_TYPES)
+    def test_attention_causal_mask_preserves_mask_type(
+        self, op_version: int, elem_type: int
+    ) -> None:
+        node = helper.make_node(
+            "Attention",
+            ["Q", "K", "V", "attn_mask"],
+            ["Y"],
+            is_causal=1,
+            q_num_heads=2,
+            kv_num_heads=2,
+        )
+        input_types = [helper.make_tensor_type_proto(elem_type, None)] * 4
+
+        assert _expanded_output_elem_type(op_version, node, input_types) == elem_type
+
+    # nonpad_kv_seqlen arrived in opset 24; its padding mask is float32 too.
+    @pytest.mark.parametrize("op_version", [24, 25])
+    @pytest.mark.parametrize("elem_type", _MASK_ELEM_TYPES)
+    def test_attention_padding_mask_preserves_mask_type(
+        self, op_version: int, elem_type: int
+    ) -> None:
+        node = helper.make_node(
+            "Attention",
+            ["Q", "K", "V", "attn_mask", "", "", "nonpad_kv_seqlen"],
+            ["Y"],
+            q_num_heads=2,
+            kv_num_heads=2,
+        )
+        undefined = helper.make_tensor_type_proto(TensorProto.UNDEFINED, None)
+        input_types = [helper.make_tensor_type_proto(elem_type, None)] * 4 + [
+            undefined,  # past_key
+            undefined,  # past_value
+            helper.make_tensor_type_proto(TensorProto.INT64, None),
+        ]
+
+        assert _expanded_output_elem_type(op_version, node, input_types) == elem_type
 
     def test_node_determinism(self) -> None:
         rand_schema = defs.get_schema("RandomNormalLike")

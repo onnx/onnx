@@ -3807,7 +3807,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             builder.Add("present_value = Identity (PresentValue)");
           }
 
-          if (!defs::nn::utils::AttentionAppendFunctionCausalMask(ctx, builder, true, true))
+          if (!defs::nn::utils::AttentionAppendFunctionCausalMask(ctx, builder, true))
             return false;
 
           // Window bounds are an additive overlay on the causal and attention masks.
