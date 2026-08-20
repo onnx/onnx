@@ -2099,6 +2099,237 @@ class TestAutomaticUpgrade(automatic_conversion_test_base.TestAutomaticConversio
             },
         )
 
+    def test_Optional(self) -> None:
+        t_15 = [
+            TensorProto.FLOAT,
+            TensorProto.UINT8,
+            TensorProto.INT8,
+            TensorProto.UINT16,
+            TensorProto.INT16,
+            TensorProto.INT32,
+            TensorProto.INT64,
+            TensorProto.STRING,
+            TensorProto.BOOL,
+            TensorProto.FLOAT16,
+            TensorProto.DOUBLE,
+            TensorProto.UINT32,
+            TensorProto.UINT64,
+            TensorProto.COMPLEX64,
+            TensorProto.COMPLEX128,
+        ]
+        t_28 = [
+            TensorProto.BFLOAT16,
+            TensorProto.FLOAT8E4M3FN,
+            TensorProto.FLOAT8E4M3FNUZ,
+            TensorProto.FLOAT8E5M2,
+            TensorProto.FLOAT8E5M2FNUZ,
+            TensorProto.UINT4,
+            TensorProto.INT4,
+            TensorProto.FLOAT4E2M1,
+            TensorProto.FLOAT8E8M0,
+            TensorProto.UINT2,
+            TensorProto.INT2,
+        ]
+
+        for v, ts in zip((15, 28), (t_15, t_28), strict=False):
+            for t in ts:
+                self._test_op_upgrade(
+                    "Optional",
+                    v,
+                    input_shapes=(),
+                    output_shapes=((3, 4, 5),),
+                    output_types=[t],
+                    attrs={"type": helper.make_tensor_type_proto(t, (3, 4, 5))},
+                    optional_outputs=(0,),
+                    check_type=True,
+                    full_check=True,
+                )
+                self._test_op_upgrade(
+                    "Optional",
+                    v,
+                    input_shapes=(),
+                    output_shapes=((3, 4, 5),),
+                    output_types=[t],
+                    attrs={
+                        "type": helper.make_sequence_type_proto(
+                            helper.make_tensor_type_proto(t, (3, 4, 5))
+                        )
+                    },
+                    seq_outputs=(0,),
+                    optional_outputs=(0,),
+                    check_type=True,
+                    full_check=True,
+                )
+
+                self._test_op_upgrade(
+                    "Optional",
+                    v,
+                    input_types=[t],
+                    output_types=[t],
+                    optional_outputs=(0,),
+                    check_type=True,
+                    full_check=True,
+                )
+                self._test_op_upgrade(
+                    "Optional",
+                    v,
+                    input_types=[t],
+                    output_types=[t],
+                    seq_inputs=(0,),
+                    seq_outputs=(0,),
+                    optional_outputs=(0,),
+                    check_type=True,
+                    full_check=True,
+                )
+
+    def test_OptionalHasElement(self) -> None:
+        t_15 = [
+            TensorProto.FLOAT,
+            TensorProto.UINT8,
+            TensorProto.INT8,
+            TensorProto.UINT16,
+            TensorProto.INT16,
+            TensorProto.INT32,
+            TensorProto.INT64,
+            TensorProto.STRING,
+            TensorProto.BOOL,
+            TensorProto.FLOAT16,
+            TensorProto.DOUBLE,
+            TensorProto.UINT32,
+            TensorProto.UINT64,
+            TensorProto.COMPLEX64,
+            TensorProto.COMPLEX128,
+        ]
+        t_28 = [
+            TensorProto.BFLOAT16,
+            TensorProto.FLOAT8E4M3FN,
+            TensorProto.FLOAT8E4M3FNUZ,
+            TensorProto.FLOAT8E5M2,
+            TensorProto.FLOAT8E5M2FNUZ,
+            TensorProto.UINT4,
+            TensorProto.INT4,
+            TensorProto.FLOAT4E2M1,
+            TensorProto.FLOAT8E8M0,
+            TensorProto.UINT2,
+            TensorProto.INT2,
+        ]
+        for v, ts in zip((15, 18, 28), (t_15, t_15, t_28), strict=False):
+            for t in ts:
+                if v > 15:
+                    self._test_op_upgrade(
+                        "OptionalHasElement",
+                        v,
+                        output_shapes=[[]],
+                        input_types=[t],
+                        output_types=[TensorProto.BOOL],
+                        check_type=True,
+                        full_check=True,
+                    )
+                    self._test_op_upgrade(
+                        "OptionalHasElement",
+                        v,
+                        output_shapes=[[]],
+                        input_types=[t],
+                        output_types=[TensorProto.BOOL],
+                        seq_inputs=(0,),
+                        check_type=True,
+                        full_check=True,
+                    )
+                self._test_op_upgrade(
+                    "OptionalHasElement",
+                    v,
+                    output_shapes=[[]],
+                    input_types=[t],
+                    output_types=[TensorProto.BOOL],
+                    optional_inputs=(0,),
+                    check_type=True,
+                    full_check=True,
+                )
+                self._test_op_upgrade(
+                    "OptionalHasElement",
+                    v,
+                    output_shapes=[[]],
+                    input_types=[t],
+                    output_types=[TensorProto.BOOL],
+                    seq_inputs=(0,),
+                    optional_inputs=(0,),
+                    check_type=True,
+                    full_check=True,
+                )
+
+    def test_OptionalGetElement(self) -> None:
+        t_15 = [
+            TensorProto.FLOAT,
+            TensorProto.UINT8,
+            TensorProto.INT8,
+            TensorProto.UINT16,
+            TensorProto.INT16,
+            TensorProto.INT32,
+            TensorProto.INT64,
+            TensorProto.STRING,
+            TensorProto.BOOL,
+            TensorProto.FLOAT16,
+            TensorProto.DOUBLE,
+            TensorProto.UINT32,
+            TensorProto.UINT64,
+            TensorProto.COMPLEX64,
+            TensorProto.COMPLEX128,
+        ]
+        t_28 = [
+            TensorProto.BFLOAT16,
+            TensorProto.FLOAT8E4M3FN,
+            TensorProto.FLOAT8E4M3FNUZ,
+            TensorProto.FLOAT8E5M2,
+            TensorProto.FLOAT8E5M2FNUZ,
+            TensorProto.UINT4,
+            TensorProto.INT4,
+            TensorProto.FLOAT4E2M1,
+            TensorProto.FLOAT8E8M0,
+            TensorProto.UINT2,
+            TensorProto.INT2,
+        ]
+        for v, ts in zip((15, 18, 28), (t_15, t_15, t_28), strict=False):
+            for t in ts:
+                if v > 15:
+                    self._test_op_upgrade(
+                        "OptionalGetElement",
+                        v,
+                        input_types=[t],
+                        output_types=[t],
+                        check_type=True,
+                        full_check=True,
+                    )
+                    self._test_op_upgrade(
+                        "OptionalGetElement",
+                        v,
+                        input_types=[t],
+                        output_types=[t],
+                        seq_inputs=(0,),
+                        seq_outputs=(0,),
+                        check_type=True,
+                        full_check=True,
+                    )
+                self._test_op_upgrade(
+                    "OptionalGetElement",
+                    v,
+                    input_types=[t],
+                    output_types=[t],
+                    optional_inputs=(0,),
+                    check_type=True,
+                    full_check=True,
+                )
+                self._test_op_upgrade(
+                    "OptionalGetElement",
+                    v,
+                    input_types=[t],
+                    output_types=[t],
+                    seq_inputs=(0,),
+                    seq_outputs=(0,),
+                    optional_inputs=(0,),
+                    check_type=True,
+                    full_check=True,
+                )
+
     def test_ops_tested(self) -> None:
         # NOTE: This test is order dependent and needs to run last in this class
         all_schemas = onnx.defs.get_all_schemas()
@@ -2115,9 +2346,6 @@ class TestAutomaticUpgrade(automatic_conversion_test_base.TestAutomaticConversio
             "SequenceLength",
             "SequenceMap",
             "SplitToSequence",
-            "Optional",
-            "OptionalGetElement",
-            "OptionalHasElement",
             "StringSplit",
         }
         expected_tested_ops = all_op_names - excluded_ops

@@ -8,7 +8,7 @@ import numpy as np
 import pytest
 
 import onnx
-from onnx import helper
+from onnx import TensorProto, helper
 
 #####################################################################################
 # Every test calls _test_op_conversion to downgrade a model from the most recent opset version
@@ -160,3 +160,253 @@ class TestAutomaticDowngrade(automatic_conversion_test_base.TestAutomaticConvers
             }
         """,
         )
+
+    def test_Optional_downgrade(self) -> None:
+        t_15 = {
+            TensorProto.FLOAT,
+            TensorProto.UINT8,
+            TensorProto.INT8,
+            TensorProto.UINT16,
+            TensorProto.INT16,
+            TensorProto.INT32,
+            TensorProto.INT64,
+            TensorProto.STRING,
+            TensorProto.BOOL,
+            TensorProto.FLOAT16,
+            TensorProto.DOUBLE,
+            TensorProto.UINT32,
+            TensorProto.UINT64,
+            TensorProto.COMPLEX64,
+            TensorProto.COMPLEX128,
+        }
+        t_28 = {
+            TensorProto.BFLOAT16,
+            TensorProto.FLOAT8E4M3FN,
+            TensorProto.FLOAT8E4M3FNUZ,
+            TensorProto.FLOAT8E5M2,
+            TensorProto.FLOAT8E5M2FNUZ,
+            TensorProto.UINT4,
+            TensorProto.INT4,
+            TensorProto.FLOAT4E2M1,
+            TensorProto.FLOAT8E8M0,
+            TensorProto.UINT2,
+            TensorProto.INT2,
+        }
+        supported_dtypes = {15: t_15, 28: t_15 | t_28}
+        all_dtypes = t_15 | t_28
+
+        for version, dtypes in supported_dtypes.items():
+            for t in all_dtypes:
+                self._test_op_downgrade(
+                    "Optional",
+                    version,
+                    input_shapes=(),
+                    output_shapes=((3, 4, 5),),
+                    output_types=[t],
+                    attrs={"type": helper.make_tensor_type_proto(t, (3, 4, 5))},
+                    optional_outputs=(0,),
+                    check_type=True,
+                    full_check=True,
+                    assert_fails=t not in dtypes,
+                )
+                self._test_op_downgrade(
+                    "Optional",
+                    version,
+                    input_shapes=(),
+                    output_shapes=((3, 4, 5),),
+                    output_types=[t],
+                    attrs={
+                        "type": helper.make_sequence_type_proto(
+                            helper.make_tensor_type_proto(t, (3, 4, 5))
+                        )
+                    },
+                    seq_outputs=(0,),
+                    optional_outputs=(0,),
+                    check_type=True,
+                    full_check=True,
+                    assert_fails=t not in dtypes,
+                )
+                self._test_op_downgrade(
+                    "Optional",
+                    version,
+                    input_types=[t],
+                    output_types=[t],
+                    optional_outputs=(0,),
+                    check_type=True,
+                    full_check=True,
+                    assert_fails=t not in dtypes,
+                )
+                self._test_op_downgrade(
+                    "Optional",
+                    version,
+                    input_types=[t],
+                    output_types=[t],
+                    seq_inputs=(0,),
+                    seq_outputs=(0,),
+                    optional_outputs=(0,),
+                    check_type=True,
+                    full_check=True,
+                    assert_fails=t not in dtypes,
+                )
+
+    def test_OptionalHasElement_downgrade(self) -> None:
+        t_15 = {
+            TensorProto.FLOAT,
+            TensorProto.UINT8,
+            TensorProto.INT8,
+            TensorProto.UINT16,
+            TensorProto.INT16,
+            TensorProto.INT32,
+            TensorProto.INT64,
+            TensorProto.STRING,
+            TensorProto.BOOL,
+            TensorProto.FLOAT16,
+            TensorProto.DOUBLE,
+            TensorProto.UINT32,
+            TensorProto.UINT64,
+            TensorProto.COMPLEX64,
+            TensorProto.COMPLEX128,
+        }
+        t_28 = {
+            TensorProto.BFLOAT16,
+            TensorProto.FLOAT8E4M3FN,
+            TensorProto.FLOAT8E4M3FNUZ,
+            TensorProto.FLOAT8E5M2,
+            TensorProto.FLOAT8E5M2FNUZ,
+            TensorProto.UINT4,
+            TensorProto.INT4,
+            TensorProto.FLOAT4E2M1,
+            TensorProto.FLOAT8E8M0,
+            TensorProto.UINT2,
+            TensorProto.INT2,
+        }
+        supported_dtypes = {15: t_15, 18: t_15, 28: t_15 | t_28}
+        all_dtypes = t_15 | t_28
+
+        for version, dtypes in supported_dtypes.items():
+            disallow_nonoptional = version == 15
+            for t in all_dtypes:
+                self._test_op_downgrade(
+                    "OptionalHasElement",
+                    version,
+                    output_shapes=[[]],
+                    input_types=[t],
+                    output_types=[TensorProto.BOOL],
+                    check_type=True,
+                    full_check=True,
+                    assert_fails=disallow_nonoptional or t not in dtypes,
+                )
+                self._test_op_downgrade(
+                    "OptionalHasElement",
+                    version,
+                    output_shapes=[[]],
+                    input_types=[t],
+                    output_types=[TensorProto.BOOL],
+                    seq_inputs=(0,),
+                    check_type=True,
+                    full_check=True,
+                    assert_fails=disallow_nonoptional or t not in dtypes,
+                )
+                self._test_op_downgrade(
+                    "OptionalHasElement",
+                    version,
+                    output_shapes=[[]],
+                    input_types=[t],
+                    output_types=[TensorProto.BOOL],
+                    optional_inputs=(0,),
+                    check_type=True,
+                    full_check=True,
+                    assert_fails=t not in dtypes,
+                )
+                self._test_op_downgrade(
+                    "OptionalHasElement",
+                    version,
+                    output_shapes=[[]],
+                    input_types=[t],
+                    output_types=[TensorProto.BOOL],
+                    optional_inputs=(0,),
+                    seq_inputs=(0,),
+                    check_type=True,
+                    full_check=True,
+                    assert_fails=t not in dtypes,
+                )
+
+    def test_OptionalGetElement_downgrade(self) -> None:
+        t_15 = {
+            TensorProto.FLOAT,
+            TensorProto.UINT8,
+            TensorProto.INT8,
+            TensorProto.UINT16,
+            TensorProto.INT16,
+            TensorProto.INT32,
+            TensorProto.INT64,
+            TensorProto.STRING,
+            TensorProto.BOOL,
+            TensorProto.FLOAT16,
+            TensorProto.DOUBLE,
+            TensorProto.UINT32,
+            TensorProto.UINT64,
+            TensorProto.COMPLEX64,
+            TensorProto.COMPLEX128,
+        }
+        t_28 = {
+            TensorProto.BFLOAT16,
+            TensorProto.FLOAT8E4M3FN,
+            TensorProto.FLOAT8E4M3FNUZ,
+            TensorProto.FLOAT8E5M2,
+            TensorProto.FLOAT8E5M2FNUZ,
+            TensorProto.UINT4,
+            TensorProto.INT4,
+            TensorProto.FLOAT4E2M1,
+            TensorProto.FLOAT8E8M0,
+            TensorProto.UINT2,
+            TensorProto.INT2,
+        }
+        supported_dtypes = {15: t_15, 18: t_15, 28: t_15 | t_28}
+        all_dtypes = t_15 | t_28
+
+        for version, dtypes in supported_dtypes.items():
+            disallow_nonoptional = version == 15
+            for t in all_dtypes:
+                self._test_op_downgrade(
+                    "OptionalGetElement",
+                    version,
+                    input_types=[t],
+                    output_types=[t],
+                    check_type=True,
+                    full_check=True,
+                    assert_fails=disallow_nonoptional or t not in dtypes,
+                )
+                self._test_op_downgrade(
+                    "OptionalGetElement",
+                    version,
+                    input_types=[t],
+                    output_types=[t],
+                    seq_inputs=(0,),
+                    seq_outputs=(0,),
+                    check_type=True,
+                    full_check=True,
+                    assert_fails=disallow_nonoptional or t not in dtypes,
+                )
+                self._test_op_downgrade(
+                    "OptionalGetElement",
+                    version,
+                    input_types=[t],
+                    output_types=[t],
+                    optional_inputs=(0,),
+                    check_type=True,
+                    full_check=True,
+                    assert_fails=t not in dtypes,
+                )
+                self._test_op_downgrade(
+                    "OptionalGetElement",
+                    version,
+                    input_types=[t],
+                    output_types=[t],
+                    optional_inputs=(0,),
+                    seq_inputs=(0,),
+                    seq_outputs=(0,),
+                    check_type=True,
+                    full_check=True,
+                    assert_fails=t not in dtypes,
+                )

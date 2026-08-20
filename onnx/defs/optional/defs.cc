@@ -21,20 +21,20 @@ ONNX_OPERATOR_SET_SCHEMA(
     OpSchema().FillUsing(
         defs::optional::utils::OptionalOpGenerator(
             tensor_and_sequence_types_ir13(),
-            OpSchema::all_optional_types_ir13())));
+            types::Optional(tensor_and_sequence_types_ir13()))));
 
 ONNX_OPERATOR_SET_SCHEMA(
     OptionalHasElement,
     28,
     OpSchema().FillUsing(
         defs::optional::utils::OptionalHasElementOpGenerator(
-            types::Concat(OpSchema::all_optional_types_ir13(), tensor_and_sequence_types_ir13()))));
+            types::Concat(types::Optional(tensor_and_sequence_types_ir13()), tensor_and_sequence_types_ir13()))));
 
 ONNX_OPERATOR_SET_SCHEMA(
     OptionalGetElement,
     28,
     OpSchema().FillUsing(
         defs::optional::utils::OptionalGetElementOpGenerator(
-            OpSchema::all_optional_types_ir13(),
+            types::Optional(tensor_and_sequence_types_ir13()),
             tensor_and_sequence_types_ir13())));
 } // namespace ONNX_NAMESPACE

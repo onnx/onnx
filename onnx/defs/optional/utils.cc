@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "onnx/defs/optional/utils.h"
+
 #include "onnx/defs/type_builders.h"
 
 namespace ONNX_NAMESPACE {
