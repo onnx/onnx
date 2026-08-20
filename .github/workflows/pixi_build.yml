@@ -39,7 +39,16 @@ jobs:
           environments: default reuse
       - name: Install repository
         run: pixi run install
+      # On pull requests, lint only what the branch changed: `prek run -a` means
+      # an unrelated issue on main fails this job on every open PR at once.
+      # Pushes to main still lint everything, so drift is still caught.
+      - name: Lint changed files
+        if: github.event_name == 'pull_request'
+        run: >-
+          pixi run lint-diff --show-diff-on-failure
+          --from-ref ${{ github.event.pull_request.base.sha }} --to-ref HEAD
       - name: Lint
+        if: github.event_name != 'pull_request'
         run: pixi run lint --show-diff-on-failure
 
   xcode-build:

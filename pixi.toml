@@ -68,6 +68,9 @@ cmd = "prek install"
 [feature.lint.tasks.lint]
 description = "Run linters against all files (requires a prior 'install')"
 cmd = "prek run -a"
+[feature.lint.tasks.lint-diff]
+description = "Run linters against a range of commits, e.g. --from-ref main --to-ref HEAD"
+cmd = "prek run"
 
 [feature.lintrunner.tasks.lintrunner-init]
 cmd = "lintrunner init"
