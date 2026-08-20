@@ -396,6 +396,19 @@ struct Value final {
   const Graph* owningGraph() const;
   use_list uses() const;
 
+  // Cheap (O(1)) equivalent of ``!uses().empty()`` that only sees uses from
+  // nodes directly in this value's owning graph, not uses().'s additional
+  // owningGraph()->forEachNode() scan for kCaptured placeholders in nested
+  // If/Loop/Scan subgraph bodies (see uses()'s definition below). Safe to use
+  // in place of ``!uses().empty()`` only when the caller has separately
+  // established that no such capture is possible -- e.g. the whole graph
+  // tree contains no node with a subgraph attribute at all, which a caller
+  // visiting every node in a loop (as DCE/CSE do) can check once up front
+  // instead of paying uses()'s full-graph subgraph scan on every node.
+  bool hasUsesInCurrentGraph() const {
+    return !uses_in_current_graph_.empty();
+  }
+
   // Replaces all uses of this node with 'newValue'.
   //
   // Given:   %3 = f(%1, %2)
@@ -573,6 +586,15 @@ struct Node : public Attributes<Node> {
   bool hasUses() const {
     for (const auto* o : outputs()) {
       if (!o->uses().empty())
+        return true;
+    }
+    return false;
+  }
+  // Cheap equivalent of hasUses() -- see Value::hasUsesInCurrentGraph()'s
+  // comment for exactly what this does and doesn't see.
+  bool hasUsesInCurrentGraph() const {
+    for (const auto* o : outputs()) {
+      if (o->hasUsesInCurrentGraph())
         return true;
     }
     return false;
