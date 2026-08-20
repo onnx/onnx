@@ -2352,6 +2352,11 @@ static void col2imShapeInference(InferenceContext& ctx) {
   if (!n_input_dims.has_dim_value()) {
     return;
   }
+  // Do not materialize an attacker-controlled number of Dimension messages
+  // when only Col2Im's spatial rank is known.
+  if (n_input_dims.dim_value() < 0 || n_input_dims.dim_value() > kMaxMaterializedRank) {
+    return;
+  }
 
   // Final shape will be (N, C, dim_1, ..., dim_N)
   auto* final_image_shape = ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
