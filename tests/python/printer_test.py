@@ -165,7 +165,7 @@ class TestBasicFunctions:
         ],
     )
     def test_raw_data_size_mismatch_raises(self, data_type, dims, raw_data) -> None:
-        # Printing a mis-sized tensor would emit text that re-parses as valid.
+        # Printing a wrongly sized tensor would emit text that re-parses as valid.
         initializer = onnx.TensorProto(name="weights", data_type=data_type)
         initializer.dims.extend(dims)
         initializer.raw_data = raw_data
