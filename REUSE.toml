@@ -32,12 +32,6 @@ SPDX-FileCopyrightText = "Copyright (c) ONNX Project Contributors"
 SPDX-License-Identifier = "Apache-2.0"
 
 [[annotations]]
-path = "onnx/backend/test/data/node/test_attention_*/**"
-precedence = "aggregate"
-SPDX-FileCopyrightText = "Copyright (c) ONNX Project Contributors"
-SPDX-License-Identifier = "Apache-2.0"
-
-[[annotations]]
 path = "onnx/backend/test/data/simple/**/**.onnx"
 precedence = "aggregate"
 SPDX-FileCopyrightText = "Copyright (c) ONNX Project Contributors"
