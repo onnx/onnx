@@ -7,9 +7,11 @@
 #include <array>
 #include <charconv>
 #include <cmath>
+#include <cstdint>
 #include <iomanip>
 #include <string>
 #include <type_traits>
+#include <vector>
 
 #include "onnx/defs/tensor_proto_util.h"
 
@@ -17,6 +19,18 @@ namespace ONNX_NAMESPACE {
 namespace {
 
 using StringStringEntryProtos = google::protobuf::RepeatedPtrField<StringStringEntryProto>;
+
+std::vector<int32_t> Parse16BitRawData(const TensorProto& tensor) {
+  const std::string& raw_data = tensor.raw_data();
+  std::vector<int32_t> values;
+  values.reserve(raw_data.size() / sizeof(uint16_t));
+  for (size_t i = 0; i + 1 < raw_data.size(); i += sizeof(uint16_t)) {
+    const auto low = static_cast<uint8_t>(raw_data[i]);
+    const auto high = static_cast<uint8_t>(raw_data[i + 1]);
+    values.push_back(static_cast<int32_t>(low | (static_cast<uint16_t>(high) << 8)));
+  }
+  return values;
+}
 
 // Format numbers with std::to_chars: locale-independent and, for floating
 // point, the shortest form that round-trips through the parser.
@@ -301,6 +315,10 @@ void ProtoPrinter::print(const TensorProto& tensor, bool is_initializer) {
       case TensorProto::DataType::TensorProto_DataType_DOUBLE:
         printSet(" {", ",", "}", ParseData<double>(&tensor));
         break;
+      case TensorProto::DataType::TensorProto_DataType_FLOAT16:
+      case TensorProto::DataType::TensorProto_DataType_BFLOAT16:
+        printSet(" {", ",", "}", Parse16BitRawData(tensor));
+        break;
       default:
         output_ << "..."; // ParseData not instantiated for other types.
         break;
@@ -313,6 +331,8 @@ void ProtoPrinter::print(const TensorProto& tensor, bool is_initializer) {
       case TensorProto::DataType::TensorProto_DataType_UINT8:
       case TensorProto::DataType::TensorProto_DataType_UINT16:
       case TensorProto::DataType::TensorProto_DataType_BOOL:
+      case TensorProto::DataType::TensorProto_DataType_FLOAT16:
+      case TensorProto::DataType::TensorProto_DataType_BFLOAT16:
         printSet(" {", ",", "}", tensor.int32_data());
         break;
       case TensorProto::DataType::TensorProto_DataType_INT64:
