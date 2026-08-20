@@ -79,7 +79,6 @@ repos:
         language: system
         types: [text]
         require_serial: true
-        exclude: "^docs/docsgen/"
 
       # REUSE license compliance
       - id: reuse
