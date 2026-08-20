@@ -1040,6 +1040,35 @@ struct Graph final {
     return true;
   }
 
+  // Same traversal as isNameUnique() above (initializer_names_, every node's
+  // inputs/outputs via uniqueName() -- which falls back to a derived name for
+  // an unnamed Value, so this must run for every Value, not just named ones
+  // -- recursing into g/gs subgraph attributes), but collecting every name
+  // seen into `out` instead of checking one candidate at a time. Used by
+  // reserveUniqueNames() below to pay this scan once for a whole batch of
+  // names instead of once per name.
+  void collectAllNames(std::unordered_set<std::string>& out) const {
+    out.insert(initializer_names_.cbegin(), initializer_names_.cend());
+    for (const auto& node_entry : all_nodes) {
+      const Node* node = node_entry.first;
+      for (const auto& attr : node->attributeNames()) {
+        if (node->kindOf(attr) == AttributeKind::g) {
+          node->g(attr)->collectAllNames(out);
+        } else if (node->kindOf(attr) == AttributeKind::gs) {
+          for (const auto& subgraph : node->gs(attr)) {
+            subgraph->collectAllNames(out);
+          }
+        }
+      }
+      for (const Value* v : node->inputs()) {
+        out.insert(v->uniqueName());
+      }
+      for (const Value* v : node->outputs()) {
+        out.insert(v->uniqueName());
+      }
+    }
+  }
+
  public:
   Graph() : output_(initOutput(create(kReturn, 0))), input_(create(kParam, 0)), initializer_node_(create(kParam, 0)) {}
 
@@ -1154,6 +1183,35 @@ struct Graph final {
 
   std::string getNextUniqueName() {
     return toVarName(getNextUnique());
+  }
+
+  // Reserves `count` distinct names, each guaranteed unique against every
+  // name currently used anywhere in the graph tree -- matching exactly what
+  // `count` consecutive getNextUniqueName() calls would produce, but paying
+  // isNameUnique()'s full graph (and subgraph) scan once for the whole batch
+  // (via collectAllNames() above) instead of once per name via
+  // getNextUnique() -> isNameUnique(). Intended for passes that mint many
+  // fresh names in one runPass() call (see onnxsim issue #651's follow-up,
+  // where extract_constant_to_initializer's one-getNextUniqueName()-call-
+  // per-match pattern made that pass accidentally quadratic); a single
+  // getNextUniqueName() call remains simplest for the common one-name case.
+  std::vector<std::string> reserveUniqueNames(size_t count) {
+    std::vector<std::string> names;
+    names.reserve(count);
+    if (count == 0) {
+      return names;
+    }
+    std::unordered_set<std::string> used;
+    collectAllNames(used);
+    for (size_t i = 0; i < count; i++) {
+      std::string name = toVarName(++next_unique_);
+      while (used.count(name) != 0) {
+        name = toVarName(++next_unique_);
+      }
+      used.insert(name);
+      names.push_back(std::move(name));
+    }
+    return names;
   }
 
   // These invocations of begin() on output of function are OK
