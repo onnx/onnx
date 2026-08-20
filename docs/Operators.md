@@ -170,7 +170,7 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#Xor">Xor</a>|<a href="Changelog.md#Xor-7">7</a>, <a href="Changelog.md#Xor-1">1</a>|
 |**Function**|**Since version**|**Function version**|
 |<a href="#AffineGrid">AffineGrid</a>|<a href="Changelog.md#AffineGrid-20">20</a>|20|
-|<a href="#Attention">Attention</a>|<a href="Changelog.md#Attention-24">24</a>, <a href="Changelog.md#Attention-23">23</a>|24|
+|<a href="#Attention">Attention</a>|<a href="Changelog.md#Attention-25">25</a>, <a href="Changelog.md#Attention-24">24</a>, <a href="Changelog.md#Attention-23">23</a>|25|
 |<a href="#Bernoulli">Bernoulli</a>|<a href="Changelog.md#Bernoulli-22">22</a>, <a href="Changelog.md#Bernoulli-15">15</a>|22|
 |<a href="#BlackmanWindow">BlackmanWindow</a>|<a href="Changelog.md#BlackmanWindow-17">17</a>|17|
 |<a href="#CastLike">CastLike</a>|<a href="Changelog.md#CastLike-25">25</a>, <a href="Changelog.md#CastLike-24">24</a>, <a href="Changelog.md#CastLike-23">23</a>, <a href="Changelog.md#CastLike-21">21</a>, <a href="Changelog.md#CastLike-19">19</a>, <a href="Changelog.md#CastLike-15">15</a>|25|
@@ -1699,7 +1699,26 @@ expect(node, inputs=[x], outputs=[y], name="test_atanh")
 
   `offset` is the count of valid keys preceding the current query block: `offset = past_sequence_length` when `past_key` is provided; `offset = nonpad_kv_seqlen - q_sequence_length` (per batch) when an external cache is indicated by `nonpad_kv_seqlen` without `past_key`; `offset = 0` when neither is provided (the no-cache case, which reduces to the standard lower-triangular mask). When `offset < 0` (`nonpad_kv_seqlen < q_sequence_length`, i.e. more query tokens than cached keys) the leading query rows have an empty key set (no key satisfies `j <= i + offset`) and are fully masked. The causal frontier is computed independently of `attn_mask` and is then composed with it additively: a boolean `attn_mask` intersects the allowed set (its disallowed positions contribute `-inf` to the bias), while a float `attn_mask` is added to the attention scores rather than disabling positions. A fully-masked query row (no key attended, including the negative-offset leading rows) produces a zero output row, not `NaN`, for both `Y` and the mode-`3` `qk_matmul_output` debug output; the mode-`3` `qk_matmul_output` is emitted at the operator's output precision (`T1`).
 
-  Errata (in-place behavioral correction, no opset bump): the reference implementation and backend tests were incorrect when `nonpad_kv_seqlen != q_sequence_length` (nonzero bottom-right offset, top-left instead of bottom-right causal alignment) and produced `NaN` for fully-masked rows; corrected in version 1.23. This fixed three behaviors described above: external-cache bottom-right causal alignment (`offset = nonpad_kv_seqlen - q_sequence_length`), zero (non-`NaN`) output for fully-masked rows including the mode-`3` `qk_matmul_output`, and the mode-`3` `qk_matmul_output` precision (`T1`).
+  `left_window_size` and `right_window_size` independently restrict the keys visible to each query. A query at absolute position `p = offset + query_index` attends keys `j` satisfying `p - left_window_size <= j <= p + right_window_size` for each nonnegative bound. A value of `-1` leaves that side unbounded. For example, `(left_window_size=2, right_window_size=0)` is a causal left-looking window containing the current key and two preceding keys, while `(left_window_size=2, right_window_size=1)` is an asymmetric bidirectional window. Window bounds are composed with `is_causal` and `attn_mask`; when `is_causal=1`, the causal upper bound still excludes future keys.
+
+  ```
+    2D sliding-window mask for Attention (opset 25)
+     S_q=4 queries, S_k=6 keys, left_window_size=2, right_window_size=1, offset=0
+
+            k0  k1  k2  k3  k4  k5
+           +----+----+----+----+----+----+
+      q0   | ## | ## |    |    |    |    |
+           +----+----+----+----+----+----+
+      q1   | ## | ## | ## |    |    |    |
+           +----+----+----+----+----+----+
+      q2   | ## | ## | ## | ## |    |    |
+           +----+----+----+----+----+----+
+      q3   |    | ## | ## | ## | ## |    |
+           +----+----+----+----+----+----+
+
+     q0 attends {k0,k1}, q1 attends {k0,k1,k2}, q2 attends {k0,k1,k2,k3},
+     q3 attends {k1,k2,k3,k4}.
+  ```
 
   With respect to KV cache update, this operator allows the following two use cases:
 
@@ -1742,9 +1761,9 @@ expect(node, inputs=[x], outputs=[y], name="test_atanh")
 
 #### Version
 
-This version of the operator has been available since version 24 of the default ONNX operator set.
+This version of the operator has been available since version 25 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#Attention-23">23</a>
+Other versions of this operator: <a href="Changelog.md#Attention-23">23</a>, <a href="Changelog.md#Attention-24">24</a>
 
 #### Attributes
 
@@ -1753,16 +1772,20 @@ Other versions of this operator: <a href="Changelog.md#Attention-23">23</a>
 <dd>If set to `1`, causal masking is applied. For a square Q/K (no cache offset) this is a lower-triangular matrix. In general the mask is bottom-right (offset-aware): query in-block index `i` attends key `j` iff `j <= i + offset`, where `offset` is the count of valid keys preceding the query block (`past_sequence_length` for an internal `past_key` cache, or `nonpad_kv_seqlen - q_sequence_length` per batch for an external cache). When `offset = 0` this reduces to the lower-triangular (top-left) mask.</dd>
 <dt><tt>kv_num_heads</tt> : int</dt>
 <dd>Number of heads of key and value. Must be used with 3D inputs of Q, K and V. </dd>
+<dt><tt>left_window_size</tt> : int (default is -1)</dt>
+<dd>Maximum number of positions to the left of the current absolute query position that may be attended. A value of `0` allows the current position but no preceding position, while `-1` leaves the left side unbounded. This bound is composed with `is_causal` and `attn_mask`.</dd>
 <dt><tt>q_num_heads</tt> : int</dt>
 <dd>Number of heads of query. Must be used with 3D inputs of Q, K and V. </dd>
 <dt><tt>qk_matmul_output_mode</tt> : int (default is 0)</dt>
-<dd>If set to `0`, qk_matmul_output is the output of qk matmul. If set to `1`, qk_matmul_output is the output after the softcap operation (before mask addition). If set to `2`, qk_matmul_output includes the attention mask and softcap (if provided) applied to the output of qk matmul. If set to `3`, qk_matmul_output is the output after the softmax operation. In mode `3`, a fully-masked query row (every key disallowed) is a zero row, consistent with the corresponding row of the primary output `Y`: the fully-masked-row guard is applied before this output is produced. The mode-`3` output is emitted at the operator's output precision (`T1`); when `softmax_precision` differs from `T1` this is a cast of the softmax result to `T1`. Default value is 0.</dd>
+<dd>Determines what the optional 4th output contains: `0` (default): raw QK matmul result; `1`: after softcap (before bias addition); `2`: QK + softcap + bias; `3`: post-softmax probabilities (after fully-masked-row guard). In mode `3`, a fully-masked query row (every key disallowed) is a zero row, consistent with the corresponding row of the primary output `Y`. The mode-`3` output is emitted at the operator's output precision (`T1`); when `softmax_precision` differs from `T1` this is a cast of the softmax result to `T1`.</dd>
+<dt><tt>right_window_size</tt> : int (default is -1)</dt>
+<dd>Maximum number of positions to the right of the current absolute query position that may be attended. A value of `0` allows the current position but no following position, while `-1` leaves the right side unbounded. Set `is_causal=0` to use a positive right window.</dd>
 <dt><tt>scale</tt> : float</dt>
 <dd>Scaling factor applied to $Q*K^T$. Default value is `1/sqrt(head_size)`. To prevent [numerical overflow](https://tinyurl.com/sudb9s96), scale `Q`, `K` by `sqrt(scale)` before matmul.</dd>
 <dt><tt>softcap</tt> : float (default is 0.0)</dt>
-<dd>Softcap value for attention weights. Default value is 0.</dd>
+<dd>Soft cap for attention logits, applied as `softcap * tanh(logits / softcap)`. Default value of `0.0` means no soft capping is applied. The soft cap is applied before mask / bias addition and softmax.</dd>
 <dt><tt>softmax_precision</tt> : int</dt>
-<dd>The floating-point precision used in softmax computation. If softmax precision is not provided, the same precision as the input of softmax (Q and K) is used.</dd>
+<dd>Specifies the precision for softmax computation. If provided, the attention weights will be cast to this type before softmax and then cast back to the original type. Supported values are: `1` (FLOAT), `10` (FLOAT16), `11` (DOUBLE), `16` (BFLOAT16).</dd>
 </dl>
 
 #### Inputs (3 - 7)
@@ -1775,20 +1798,20 @@ Other versions of this operator: <a href="Changelog.md#Attention-23">23</a>
 <dt><tt>V</tt> : T2</dt>
 <dd>Value tensor. 4D tensor with shape `(batch_size, kv_num_heads, kv_sequence_length, v_head_size)` or 3D tensor with shape `(batch_size, kv_sequence_length, v_hidden_size)`. For cases with a 3D input tensor, `v_hidden_size = kv_num_heads * v_head_size`</dd>
 <dt><tt>attn_mask</tt> (optional) : U</dt>
-<dd>Attention mask. Shape must be broadcastable to `(batch_size, q_num_heads, q_sequence_length, total_sequence_length)` where `total_sequence_length = past_sequence_length + kv_sequence_length.` The last dimension can also be shorter than `total_sequence_length` and will be padded to `total_sequence_length` with negative infinity. Two types of masks are supported: a boolean mask where a value of `True` indicates that the element should take part in attention, or a float mask of the same type as query, key, value that is added to the attention score.</dd>
+<dd>Attention mask. Shape must be broadcastable to `(batch_size, q_num_heads, q_sequence_length, total_sequence_length)` where `total_sequence_length = past_sequence_length + kv_sequence_length`. The last dimension can also be shorter than `total_sequence_length` and will be padded to `total_sequence_length` with negative infinity. Two types of masks are supported: a boolean mask where a value of `True` indicates that the element should take part in attention, or a float mask of the same type as query, key, value that is added to the attention score.</dd>
 <dt><tt>past_key</tt> (optional) : T1</dt>
-<dd>past state cache for key with shape `(batch_size, kv_num_heads, past_sequence_length, head_size)`</dd>
+<dd>Past state for key with shape `(batch_size, kv_num_heads, past_sequence_length, head_size)`. Must be used together with `past_value` input.</dd>
 <dt><tt>past_value</tt> (optional) : T2</dt>
-<dd>past state cache for value with shape `(batch_size, kv_num_heads, past_sequence_length, v_head_size)`</dd>
+<dd>Past state for value with shape `(batch_size, kv_num_heads, past_sequence_length, v_head_size)`. Must be used together with `past_key` input.</dd>
 <dt><tt>nonpad_kv_seqlen</tt> (optional) : tensor(int64)</dt>
-<dd>A vector of integers of shape `(batch_size,)` that indicates the number of valid (ie, non-padding) tokens in each sample. A padding mask can be derived from this. This should not be used together with `past_key` and `past_value` inputs or `present_key` and `present_value` outputs (See the KV cache use cases in the operator description).</dd>
+<dd>A vector of integers of shape `(batch_size,)` that indicates the number of valid (i.e., non-padding) tokens in each sample. A padding mask can be derived from this. This should not be used together with `past_key` and `past_value` inputs or `present_key` and `present_value` outputs (see the KV cache use cases in the operator description).</dd>
 </dl>
 
 #### Outputs (1 - 4)
 
 <dl>
 <dt><tt>Y</tt> : T1</dt>
-<dd>The output tensor . 4D tensor with shape `(batch_size, q_num_heads, q_sequence_length, v_head_size)` or 3D tensor with shape `(batch_size, q_sequence_length, hidden_size)`. For cases with a 3D input tensor, `hidden_size = q_num_heads * v_head_size`</dd>
+<dd>The output tensor. 4D tensor with shape `(batch_size, q_num_heads, q_sequence_length, v_head_size)` or 3D tensor with shape `(batch_size, q_sequence_length, hidden_size)`. For cases with a 3D input tensor, `hidden_size = q_num_heads * v_head_size`</dd>
 <dt><tt>present_key</tt> (optional) : T1</dt>
 <dd>Updated key cache with shape `(batch_size, kv_num_heads, total_sequence_length, head_size)` where `total_sequence_length = past_sequence_length + kv_sequence_length`.</dd>
 <dt><tt>present_value</tt> (optional) : T2</dt>
@@ -2676,6 +2699,48 @@ expect(
     outputs=[Y, present_key, present_value],
     name="test_attention_3d_gqa_with_past_and_present",
     opset_imports=[onnx.helper.make_opsetid("", 23)],
+)
+```
+
+</details>
+
+
+<details>
+<summary>attention_3d_local_window</summary>
+
+```python
+"""Sliding window with 3D MQA inputs and a distinct V head size."""
+left_window_size = 2
+node = onnx.helper.make_node(
+    "Attention",
+    inputs=["Q", "K", "V"],
+    outputs=["Y"],
+    q_num_heads=4,
+    kv_num_heads=1,
+    is_causal=1,
+    left_window_size=left_window_size,
+)
+
+Q = np.random.rand(2, 4, 32).astype(np.float32)
+K = np.random.rand(2, 6, 8).astype(np.float32)
+V = np.random.rand(2, 6, 6).astype(np.float32)
+
+Y, _, _, _ = _compute_attention(
+    Q,
+    K,
+    V,
+    q_num_heads=4,
+    kv_num_heads=1,
+    is_causal=1,
+    left_window_size=left_window_size,
+)
+
+expect(
+    node,
+    inputs=[Q, K, V],
+    outputs=[Y],
+    name="test_attention_3d_local_window",
+    opset_imports=[onnx.helper.make_opsetid("", 25)],
 )
 ```
 
@@ -3759,6 +3824,45 @@ expect(
 
 
 <details>
+<summary>attention_bidirectional_window</summary>
+
+```python
+"""Asymmetric bidirectional window independent of causal masking."""
+node = onnx.helper.make_node(
+    "Attention",
+    inputs=["Q", "K", "V"],
+    outputs=["Y"],
+    left_window_size=1,
+    right_window_size=2,
+)
+
+Q = np.zeros((1, 1, 5, 1), dtype=np.float32)
+K = np.zeros((1, 1, 5, 1), dtype=np.float32)
+V = np.arange(5, dtype=np.float32).reshape(1, 1, 5, 1)
+Y, _, _, _ = _compute_attention(
+    Q,
+    K,
+    V,
+    left_window_size=1,
+    right_window_size=2,
+)
+
+np.testing.assert_allclose(
+    Y.reshape(-1), np.array([1.0, 1.5, 2.5, 3.0, 3.5], dtype=np.float32)
+)
+expect(
+    node,
+    inputs=[Q, K, V],
+    outputs=[Y],
+    name="test_attention_bidirectional_window",
+    opset_imports=[onnx.helper.make_opsetid("", 25)],
+)
+```
+
+</details>
+
+
+<details>
 <summary>attention_causal</summary>
 
 ```python
@@ -4370,6 +4474,386 @@ expect(
     outputs=[Y, present_key, present_value],
     name="test_attention_4d_gqa_with_past_and_present_fp16",
     opset_imports=[onnx.helper.make_opsetid("", 23)],
+)
+```
+
+</details>
+
+
+<details>
+<summary>attention_local_window</summary>
+
+```python
+"""Causal sliding window attention with two preceding positions."""
+left_window_size = 2
+node = onnx.helper.make_node(
+    "Attention",
+    inputs=["Q", "K", "V"],
+    outputs=["Y"],
+    is_causal=1,
+    left_window_size=left_window_size,
+)
+
+Q = np.random.rand(2, 3, 4, 8).astype(np.float32)
+K = np.random.rand(2, 3, 6, 8).astype(np.float32)
+V = np.random.rand(2, 3, 6, 8).astype(np.float32)
+
+Y, _, _, _ = _compute_attention(
+    Q, K, V, is_causal=1, left_window_size=left_window_size
+)
+
+expect(
+    node,
+    inputs=[Q, K, V],
+    outputs=[Y],
+    name="test_attention_local_window",
+    opset_imports=[onnx.helper.make_opsetid("", 25)],
+)
+```
+
+</details>
+
+
+<details>
+<summary>attention_local_window_default</summary>
+
+```python
+"""Disabled window bounds behave identically to version 24."""
+node = onnx.helper.make_node(
+    "Attention",
+    inputs=["Q", "K", "V"],
+    outputs=["Y"],
+    left_window_size=-1,
+    right_window_size=-1,
+)
+
+Q = np.random.rand(2, 3, 4, 8).astype(np.float32)
+K = np.random.rand(2, 3, 6, 8).astype(np.float32)
+V = np.random.rand(2, 3, 6, 8).astype(np.float32)
+
+Y, _, _, _ = _compute_attention(
+    Q, K, V, left_window_size=-1, right_window_size=-1
+)
+
+expect(
+    node,
+    inputs=[Q, K, V],
+    outputs=[Y],
+    name="test_attention_local_window_default",
+    opset_imports=[onnx.helper.make_opsetid("", 25)],
+)
+```
+
+</details>
+
+
+<details>
+<summary>attention_local_window_ext_cache_float16_mask</summary>
+
+```python
+"""External cache with a float16 attention mask."""
+left_window_size = 2
+B, H, S_q, S_kv, D = 2, 3, 4, 8, 8
+node = onnx.helper.make_node(
+    "Attention",
+    inputs=["Q", "K", "V", "attn_mask", "", "", "nonpad_kv_seqlen"],
+    outputs=["Y"],
+    is_causal=1,
+    left_window_size=left_window_size,
+)
+
+Q = np.zeros((B, H, S_q, D), dtype=np.float16)
+K = np.zeros((B, H, S_kv, D), dtype=np.float16)
+V = np.ones((B, H, S_kv, D), dtype=np.float16)
+attn_mask = np.zeros((1, S_kv), dtype=np.float16)
+nonpad_kv_seqlen = np.array([6, 7], dtype=np.int64)
+
+Y, _, _, _ = _compute_attention(
+    Q,
+    K,
+    V,
+    attn_mask=attn_mask,
+    nonpad_kv_seqlen=nonpad_kv_seqlen,
+    is_causal=1,
+    left_window_size=left_window_size,
+)
+
+expect(
+    node,
+    inputs=[Q, K, V, attn_mask, nonpad_kv_seqlen],
+    outputs=[Y],
+    name="test_attention_local_window_ext_cache_float16_mask",
+    opset_imports=[onnx.helper.make_opsetid("", 25)],
+)
+```
+
+</details>
+
+
+<details>
+<summary>attention_local_window_ext_cache_rank2_mask</summary>
+
+```python
+"""External cache with a conventional rank-2 ``(1, kv)`` mask."""
+left_window_size = 2
+B, H, S_q, S_kv, D = 2, 3, 4, 8, 8
+node = onnx.helper.make_node(
+    "Attention",
+    inputs=["Q", "K", "V", "attn_mask", "", "", "nonpad_kv_seqlen"],
+    outputs=["Y"],
+    is_causal=1,
+    left_window_size=left_window_size,
+)
+
+Q = np.random.rand(B, H, S_q, D).astype(np.float32)
+K = np.random.rand(B, H, S_kv, D).astype(np.float32)
+V = np.random.rand(B, H, S_kv, D).astype(np.float32)
+attn_mask = np.random.rand(1, S_kv).astype(np.float32)
+nonpad_kv_seqlen = np.array([6, 7], dtype=np.int64)
+
+Y, _, _, _ = _compute_attention(
+    Q,
+    K,
+    V,
+    attn_mask=attn_mask,
+    nonpad_kv_seqlen=nonpad_kv_seqlen,
+    is_causal=1,
+    left_window_size=left_window_size,
+)
+
+expect(
+    node,
+    inputs=[Q, K, V, attn_mask, nonpad_kv_seqlen],
+    outputs=[Y],
+    name="test_attention_local_window_ext_cache_rank2_mask",
+    opset_imports=[onnx.helper.make_opsetid("", 25)],
+)
+```
+
+</details>
+
+
+<details>
+<summary>attention_local_window_ext_cache_rank3_head_mask</summary>
+
+```python
+"""External cache with a legal rank-3 ``(heads, q, kv)`` mask."""
+left_window_size = 2
+B, H, S_q, S_kv, D = 2, 3, 4, 8, 8
+node = onnx.helper.make_node(
+    "Attention",
+    inputs=["Q", "K", "V", "attn_mask", "", "", "nonpad_kv_seqlen"],
+    outputs=["Y"],
+    is_causal=1,
+    left_window_size=left_window_size,
+)
+
+Q = np.random.rand(B, H, S_q, D).astype(np.float32)
+K = np.random.rand(B, H, S_kv, D).astype(np.float32)
+V = np.random.rand(B, H, S_kv, D).astype(np.float32)
+# Rank 3 is right-aligned as (heads, q, kv), not (batch, q, kv).
+attn_mask = np.random.rand(H, S_q, S_kv).astype(np.float32)
+# External cache: nonpad_kv_seqlen marks valid key count per batch
+nonpad_kv_seqlen = np.array([6, 7], dtype=np.int64)
+
+Y, _, _, _ = _compute_attention(
+    Q,
+    K,
+    V,
+    attn_mask=attn_mask,
+    nonpad_kv_seqlen=nonpad_kv_seqlen,
+    is_causal=1,
+    left_window_size=left_window_size,
+)
+
+expect(
+    node,
+    inputs=[Q, K, V, attn_mask, nonpad_kv_seqlen],
+    outputs=[Y],
+    name="test_attention_local_window_ext_cache_rank3_head_mask",
+    opset_imports=[onnx.helper.make_opsetid("", 25)],
+)
+```
+
+</details>
+
+
+<details>
+<summary>attention_local_window_ext_cache_rank4_batch_mask</summary>
+
+```python
+"""External cache with a batch-specific rank-4 ``(batch, 1, q, kv)`` mask."""
+left_window_size = 2
+B, H, S_q, S_kv, D = 2, 3, 4, 8, 8
+node = onnx.helper.make_node(
+    "Attention",
+    inputs=["Q", "K", "V", "attn_mask", "", "", "nonpad_kv_seqlen"],
+    outputs=["Y"],
+    is_causal=1,
+    left_window_size=left_window_size,
+)
+
+Q = np.random.rand(B, H, S_q, D).astype(np.float32)
+K = np.random.rand(B, H, S_kv, D).astype(np.float32)
+V = np.random.rand(B, H, S_kv, D).astype(np.float32)
+attn_mask = np.random.rand(B, 1, S_q, S_kv).astype(np.float32)
+nonpad_kv_seqlen = np.array([6, 7], dtype=np.int64)
+
+Y, _, _, _ = _compute_attention(
+    Q,
+    K,
+    V,
+    attn_mask=attn_mask,
+    nonpad_kv_seqlen=nonpad_kv_seqlen,
+    is_causal=1,
+    left_window_size=left_window_size,
+)
+
+expect(
+    node,
+    inputs=[Q, K, V, attn_mask, nonpad_kv_seqlen],
+    outputs=[Y],
+    name="test_attention_local_window_ext_cache_rank4_batch_mask",
+    opset_imports=[onnx.helper.make_opsetid("", 25)],
+)
+```
+
+</details>
+
+
+<details>
+<summary>attention_local_window_gqa_rank4_mask</summary>
+
+```python
+"""Windowed GQA with distinct V head size and a per-head boolean mask."""
+np.random.seed(25)
+B, H_q, H_kv, S_q, S_kv, D_qk, D_v = 2, 4, 2, 4, 6, 8, 6
+left_window_size = 2
+softmax_precision = int(onnx.TensorProto.DOUBLE)
+node = onnx.helper.make_node(
+    "Attention",
+    inputs=["Q", "K", "V", "attn_mask"],
+    outputs=["Y", "", "", "qk_matmul_output"],
+    is_causal=1,
+    left_window_size=left_window_size,
+    softcap=2.0,
+    softmax_precision=softmax_precision,
+    qk_matmul_output_mode=3,
+)
+
+Q = np.random.rand(B, H_q, S_q, D_qk).astype(np.float32)
+K = np.random.rand(B, H_kv, S_kv, D_qk).astype(np.float32)
+V = np.random.rand(B, H_kv, S_kv, D_v).astype(np.float32)
+attn_mask = np.ones((B, H_q, S_q, S_kv), dtype=np.bool_)
+attn_mask[:, :, 0, :] = False
+
+Y, _, _, qk_matmul_output = _compute_attention(
+    Q,
+    K,
+    V,
+    attn_mask=attn_mask,
+    is_causal=1,
+    left_window_size=left_window_size,
+    softcap=2.0,
+    softmax_precision=softmax_precision,
+    qk_matmul_output_mode=3,
+)
+
+assert Y.shape == (B, H_q, S_q, D_v)
+assert np.array_equal(Y[:, :, 0, :], np.zeros_like(Y[:, :, 0, :]))
+assert np.array_equal(
+    qk_matmul_output[:, :, 0, :], np.zeros_like(qk_matmul_output[:, :, 0, :])
+)
+
+expect(
+    node,
+    inputs=[Q, K, V, attn_mask],
+    outputs=[Y, qk_matmul_output],
+    name="test_attention_local_window_gqa_rank4_mask",
+    opset_imports=[onnx.helper.make_opsetid("", 25)],
+)
+```
+
+</details>
+
+
+<details>
+<summary>attention_local_window_rank1_boolean_mask</summary>
+
+```python
+"""A rank-1 boolean mask retains standard right-aligned broadcasting."""
+left_window_size = 2
+node = onnx.helper.make_node(
+    "Attention",
+    inputs=["Q", "K", "V", "attn_mask"],
+    outputs=["Y"],
+    is_causal=1,
+    left_window_size=left_window_size,
+)
+
+Q = np.random.rand(2, 3, 4, 8).astype(np.float32)
+K = np.random.rand(2, 3, 6, 8).astype(np.float32)
+V = np.random.rand(2, 3, 6, 8).astype(np.float32)
+attn_mask = np.array([True, True, True, True, False, False])
+
+Y, _, _, _ = _compute_attention(
+    Q,
+    K,
+    V,
+    attn_mask=attn_mask,
+    is_causal=1,
+    left_window_size=left_window_size,
+)
+
+expect(
+    node,
+    inputs=[Q, K, V, attn_mask],
+    outputs=[Y],
+    name="test_attention_local_window_rank1_boolean_mask",
+    opset_imports=[onnx.helper.make_opsetid("", 25)],
+)
+```
+
+</details>
+
+
+<details>
+<summary>attention_local_window_with_past</summary>
+
+```python
+"""Sliding window with internal KV cache (past_key/past_value)."""
+left_window_size = 2
+past_sequence_length = 8
+node = onnx.helper.make_node(
+    "Attention",
+    inputs=["Q", "K", "V", "", "past_key", "past_value"],
+    outputs=["Y", "present_key", "present_value"],
+    is_causal=1,
+    left_window_size=left_window_size,
+)
+
+Q = np.random.rand(2, 3, 4, 8).astype(np.float32)
+K = np.random.rand(2, 3, 2, 8).astype(np.float32)
+V = np.random.rand(2, 3, 2, 8).astype(np.float32)
+past_key = np.random.rand(2, 3, past_sequence_length, 8).astype(np.float32)
+past_value = np.random.rand(2, 3, past_sequence_length, 8).astype(np.float32)
+
+Y, present_key, present_value, _ = _compute_attention(
+    Q,
+    K,
+    V,
+    past_key=past_key,
+    past_value=past_value,
+    is_causal=1,
+    left_window_size=left_window_size,
+)
+
+expect(
+    node,
+    inputs=[Q, K, V, past_key, past_value],
+    outputs=[Y, present_key, present_value],
+    name="test_attention_local_window_with_past",
+    opset_imports=[onnx.helper.make_opsetid("", 25)],
 )
 ```
 
@@ -42532,6 +43016,7 @@ expect(
     inputs=[x],
     outputs=[y, indices, inverse_indices, counts],
     name="test_unique_length_1",
+    output_type_protos=unique_output_types(x),
 )
 ```
 
@@ -42583,6 +43068,7 @@ expect(
     inputs=[x],
     outputs=[y, indices, inverse_indices, counts],
     name="test_unique_not_sorted_without_axis",
+    output_type_protos=unique_output_types(x),
 )
 ```
 
@@ -42623,6 +43109,7 @@ expect(
     inputs=[x],
     outputs=[y, indices, inverse_indices, counts],
     name="test_unique_sorted_with_axis",
+    output_type_protos=unique_output_types(x, axis=0),
 )
 ```
 
@@ -42672,6 +43159,7 @@ expect(
     inputs=[x],
     outputs=[y, indices, inverse_indices, counts],
     name="test_unique_sorted_with_axis_3d",
+    output_type_protos=unique_output_types(x, axis=1),
 )
 ```
 
@@ -42713,6 +43201,7 @@ expect(
     inputs=[x],
     outputs=[y, indices, inverse_indices, counts],
     name="test_unique_sorted_with_negative_axis",
+    output_type_protos=unique_output_types(x, axis=-1),
 )
 ```
 
@@ -42739,6 +43228,7 @@ expect(
     inputs=[x],
     outputs=[y, indices, inverse_indices, counts],
     name="test_unique_sorted_without_axis",
+    output_type_protos=unique_output_types(x),
 )
 ```
 
