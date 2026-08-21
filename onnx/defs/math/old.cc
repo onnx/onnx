@@ -3484,7 +3484,7 @@ ONNX_OPERATOR_SET_SCHEMA(
               if (inverse) {
                 // IRFFT without explicit dft_length: cannot reliably infer full signal length
                 // Default to even length: N = 2 * (input_size - 1)
-                auto full_signal_size = 2 * (axis_dimension_value - 1);
+                auto full_signal_size = checkedMultiply(2, checkedSubtract(axis_dimension_value, 1));
                 result_shape_proto.mutable_dim(axis_idx)->set_dim_value(full_signal_size);
               } else {
                 // RFFT without explicit dft_length: infer one-sided output size from input

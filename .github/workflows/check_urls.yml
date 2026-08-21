@@ -10,6 +10,7 @@ on:
   pull_request:
     paths:
       - "**/*.md"
+      - ".lycheeignore"
       - ".github/workflows/check_urls.yml"
   schedule:
     # Run every month
