@@ -5245,6 +5245,21 @@ class TestShapeInference(TestShapeInferenceHelper):
             ],
         )
 
+    @pytest.mark.parametrize("version", [2, 11, 13])
+    def test_split_requires_output(self, version: int) -> None:
+        graph = self._make_graph(
+            [("x", TensorProto.FLOAT, (2,))],
+            [make_node("Split", ["x"], [])],
+            [],
+        )
+        with pytest.raises(
+            onnx.shape_inference.InferenceError, match="at least one output"
+        ):
+            self._inferred(
+                graph,
+                opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
+            )
+
     def test_split_from_GLU(self) -> None:
         graph = self._make_graph(
             [("x", TensorProto.FLOAT, (5, 6, 7))],
