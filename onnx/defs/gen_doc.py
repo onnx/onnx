@@ -156,7 +156,12 @@ def display_schema(
 
                 def format_value(value: Any) -> str:
                     if isinstance(value, float):
-                        formatted = str(np.round(value, 5))
+                        rounded = np.round(value, 5)
+                        # If rounding to 5 decimals loses a non-zero value
+                        # (e.g. 1e-9 rounds to 0.0), use scientific notation.
+                        if rounded == 0.0 and value != 0.0:
+                            return str(f"({value:e})")
+                        formatted = str(rounded)
                         # use default formatting, unless too long.
                         if len(formatted) > 10:  # noqa: PLR2004
                             formatted = str(f"({value:e})")
@@ -285,7 +290,7 @@ def main(args: Args) -> None:
                     s += (
                         '### <a name="{}"></a>**{}**'
                         + (" (deprecated)" if schema.deprecated else "")
-                        + "</a>\n"
+                        + "\n"
                     ).format(name_with_ver, name_with_ver)
                     s += display_schema(schema, [schema], args.changelog)
                     s += "\n"
