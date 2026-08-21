@@ -684,6 +684,20 @@ class DefaultVersionConverter : public BaseVersionConverter {
     registerAdapter(std::make_unique<CompatibleAdapter>("Transpose", OpSetID(20), OpSetID(21)));
     registerAdapter(std::make_unique<CompatibleAdapter>("Unsqueeze", OpSetID(20), OpSetID(21)));
     registerAdapter(std::make_unique<CompatibleAdapter>("GroupNormalization", OpSetID(20), OpSetID(21)));
+    // Opset 21 removes integer types from ReduceLogSum/ReduceLogSumExp because
+    // their composite bodies (Log/Exp) are undefined for integers. Upgrading a
+    // model that uses integer inputs is therefore rejected.
+    const std::vector<TensorProto_DataType> reduce_log_integer_unallowed_types = {
+        TensorProto_DataType_UINT32,
+        TensorProto_DataType_UINT64,
+        TensorProto_DataType_INT32,
+        TensorProto_DataType_INT64};
+    registerAdapter(
+        std::make_unique<TypeRestriction>(
+            "ReduceLogSum", OpSetID(20), OpSetID(21), reduce_log_integer_unallowed_types));
+    registerAdapter(
+        std::make_unique<TypeRestriction>(
+            "ReduceLogSumExp", OpSetID(20), OpSetID(21), reduce_log_integer_unallowed_types));
 
     /******** 21 -> 20 ********/
     const std::vector<TensorProto_DataType> q_dqmm_20_unallowed_types = {
@@ -722,6 +736,10 @@ class DefaultVersionConverter : public BaseVersionConverter {
     registerAdapter(std::make_unique<TypeRestriction>("Squeeze", OpSetID(21), OpSetID(20), ir10_types_not_in_ir4));
     registerAdapter(std::make_unique<TypeRestriction>("Transpose", OpSetID(21), OpSetID(20), ir10_types_not_in_ir9));
     registerAdapter(std::make_unique<TypeRestriction>("Unsqueeze", OpSetID(21), OpSetID(20), ir10_types_not_in_ir4));
+    // Downgrading ReduceLogSum/ReduceLogSumExp to opset 20 re-adds integer
+    // support, so no type restriction applies (float inputs remain valid).
+    registerAdapter(std::make_unique<CompatibleAdapter>("ReduceLogSum", OpSetID(21), OpSetID(20)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("ReduceLogSumExp", OpSetID(21), OpSetID(20)));
 
     /******** 21 -> 22 ********/
     registerAdapter(std::make_unique<CompatibleAdapter>("EyeLike", OpSetID(21), OpSetID(22)));

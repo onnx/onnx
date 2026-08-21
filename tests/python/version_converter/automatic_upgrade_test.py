@@ -7,6 +7,7 @@ from typing import ClassVar
 
 import automatic_conversion_test_base
 import numpy as np
+import pytest
 
 import onnx
 from onnx import TensorProto, helper
@@ -1107,6 +1108,22 @@ class TestAutomaticUpgrade(automatic_conversion_test_base.TestAutomaticConversio
 
     def test_ReduceLogSumExp(self) -> None:
         self._test_op_upgrade("ReduceLogSumExp", 1, [[3, 4, 5]], [[1, 1, 1]])
+
+    @pytest.mark.parametrize("op", ["ReduceLogSum", "ReduceLogSumExp"])
+    def test_reduce_log_integer_upgrade_fails(self, op) -> None:
+        # Opset 21 removes integer types from these operators (Log/Exp are
+        # undefined for integers, see onnx/onnx#7141). Upgrading an integer
+        # typed model past opset 20 must therefore be rejected.
+        self._test_op_conversion(
+            op,
+            18,
+            [[3, 4, 5]],
+            [[1, 1, 1]],
+            input_types=[TensorProto.INT64],
+            output_types=[TensorProto.INT64],
+            is_upgrade=True,
+            should_fail=True,
+        )
 
     def test_ReduceMean(self) -> None:
         self._test_op_upgrade("ReduceMean", 1, [[3, 4, 5]], [[1, 1, 1]])

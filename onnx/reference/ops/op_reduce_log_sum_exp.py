@@ -22,8 +22,21 @@ def compute_log_sum_exp(data, axes, keepdims):
     return (res,)
 
 
+def _check_integer_input(data, op_name):
+    # ReduceLogSumExp and ReduceLogSum are composite operators built on Log/Exp,
+    # which do not support integer types. Opsets <= 18 list integers in their
+    # type constraints by mistake (see onnx/onnx#7141); opset 21 removes them.
+    if np.issubdtype(data.dtype, np.integer):
+        raise TypeError(
+            f"{op_name} does not support integer types (got {data.dtype}). "
+            f"Log/Exp are undefined for integers; cast the input to a float type. "
+            f"Integer support was removed from opset 21."
+        )
+
+
 class ReduceLogSumExp_1(OpRunReduceNumpy):
     def _run(self, data, axes=None, keepdims=None):
+        _check_integer_input(data, "ReduceLogSumExp")
         tax = tuple(axes) if axes is not None else None
 
         if data.size == 0:
@@ -33,6 +46,20 @@ class ReduceLogSumExp_1(OpRunReduceNumpy):
 
 class ReduceLogSumExp_18(OpRunReduceNumpy):
     def _run(self, data, axes=None, keepdims=1, noop_with_empty_axes=0):
+        _check_integer_input(data, "ReduceLogSumExp")
+        axes = self.handle_axes(axes, noop_with_empty_axes)
+
+        keepdims = keepdims != 0
+
+        if data.size == 0:
+            return self.reduce_constant(data, -np.inf, axes, keepdims)
+
+        return compute_log_sum_exp(data, axes, keepdims)
+
+
+class ReduceLogSumExp_21(OpRunReduceNumpy):
+    def _run(self, data, axes=None, keepdims=1, noop_with_empty_axes=0):
+        _check_integer_input(data, "ReduceLogSumExp")
         axes = self.handle_axes(axes, noop_with_empty_axes)
 
         keepdims = keepdims != 0

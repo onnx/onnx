@@ -50,6 +50,14 @@ ONNX_OPERATOR_SET_SCHEMA(
     18,
     OpSchema().FillUsing(ReduceFunctionOp("log sum", EMPTY_MINUS_INF, reduce_log_sum_func_body)));
 
+// Opset 21: Remove integer type support. Log does not support integer types, so
+// accepting them was an accidental spec defect. See
+// https://github.com/onnx/onnx/issues/7141.
+ONNX_OPERATOR_SET_SCHEMA(
+    ReduceLogSum,
+    21,
+    OpSchema().FillUsing(ReduceFunctionOpFloatOnly("log sum", EMPTY_MINUS_INF, reduce_log_sum_func_body)));
+
 static constexpr const char* reduce_log_sum_exp_func_body = R"ONNX(
   {
     data_double = Cast<to = 11>(data)
@@ -64,6 +72,14 @@ ONNX_OPERATOR_SET_SCHEMA(
     ReduceLogSumExp,
     18,
     OpSchema().FillUsing(ReduceFunctionOp("log sum exponent", EMPTY_MINUS_INF, reduce_log_sum_exp_func_body)));
+
+// Opset 21: Remove integer type support. Log and Exp (the building blocks of this
+// composite function) do not support integer types, so accepting them was an
+// accidental spec defect. See https://github.com/onnx/onnx/issues/7141.
+ONNX_OPERATOR_SET_SCHEMA(
+    ReduceLogSumExp,
+    21,
+    OpSchema().FillUsing(ReduceFunctionOpFloatOnly("log sum exponent", EMPTY_MINUS_INF, reduce_log_sum_exp_func_body)));
 
 static constexpr const char* reduce_l1_func_body = R"ONNX(
   {
