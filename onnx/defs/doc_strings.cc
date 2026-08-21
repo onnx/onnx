@@ -1312,6 +1312,164 @@ All types except string are supported. Implementations must treat the
 underlying bytes as little endian.
 )DOC";
 
+const char kDoc_OneHot_ver11[] = R"DOC(
+    Produces a one-hot tensor based on inputs.
+    The locations represented by the index values in the 'indices' input tensor will have 'on_value'
+    and the other locations will have 'off_value' in the output tensor, where 'on_value' and 'off_value'
+    are specified as part of required input argument 'values', which is a two-element tensor of format
+    [off_value, on_value]. The rank of the output tensor will be one greater than the rank of the
+    input tensor. The additional dimension is for one-hot representation. The additional dimension will
+    be inserted at the position specified by 'axis'. If 'axis' is not specified then then additional
+    dimension will be inserted as the innermost dimension, i.e. axis=-1. The size of the additional
+    dimension is specified by required scalar input 'depth'. The type of the output tensor is the same
+    as the type of the 'values' input. Any entries in the 'indices' input tensor with values outside
+    the range [-depth, depth-1] will result in one-hot representation with all 'off_value' values in the
+    output tensor.
+
+    when axis = 0:
+    output[input[i, j, k], i, j, k] = 1 for all i, j, k and 0 otherwise.
+
+    when axis = -1:
+    output[i, j, k, input[i, j, k]] = 1 for all i, j, k and 0 otherwise.
+
+)DOC";
+
+const char kDoc_ReverseSequence_ver10[] = R"DOC(
+Reverse batch of sequences having different lengths specified by `sequence_lens`.
+
+For each slice i iterating on batch axis, the operator reverses the first sequence_lens[i] elements on time axis,
+and copies elements whose index's beyond sequence_lens[i] to the output. So the output slice i contains reversed
+sequences on the first sequence_lens[i] elements, then have original values copied for the other elements.
+
+Example 1:
+  input = [[0.0, 4.0, 8.0,  12.0],
+           [1.0, 5.0, 9.0,  13.0],
+           [2.0, 6.0, 10.0, 14.0],
+           [3.0, 7.0, 11.0, 15.0]]
+  sequence_lens = [4, 3, 2, 1]
+  time_axis = 0
+  batch_axis = 1
+
+  output = [[3.0, 6.0, 9.0,  12.0],
+            [2.0, 5.0, 8.0,  13.0],
+            [1.0, 4.0, 10.0, 14.0],
+            [0.0, 7.0, 11.0, 15.0]]
+
+Example 2:
+  input = [[0.0,  1.0,  2.0,  3.0 ],
+           [4.0,  5.0,  6.0,  7.0 ],
+           [8.0,  9.0,  10.0, 11.0],
+           [12.0, 13.0, 14.0, 15.0]]
+  sequence_lens = [1, 2, 3, 4]
+  time_axis = 1
+  batch_axis = 0
+
+  output = [[0.0,  1.0,  2.0,  3.0 ],
+            [5.0,  4.0,  6.0,  7.0 ],
+            [10.0, 9.0,  8.0,  11.0],
+            [15.0, 14.0, 13.0, 12.0]]
+)DOC";
+
+const char kDoc_Unique_ver11[] = R"DOC(
+Find the unique elements of a tensor. When an optional attribute 'axis' is provided, unique subtensors sliced along the 'axis' are returned.
+Otherwise the input tensor is flattened and unique values of the flattened tensor are returned.
+
+This operator returns the unique values or sliced unique subtensors of the input tensor and three optional outputs.
+The first output tensor 'Y' contains all unique values or subtensors of the input.
+The second optional output tensor 'indices' contains indices of 'Y' elements' first occurrence in 'X'.
+The third optional output tensor 'inverse_indices' contains, for elements of 'X', its corresponding indices in 'Y'.
+The fourth optional output tensor 'counts' contains the count of each element of 'Y' in the input.
+
+Outputs are either sorted in ascending order or optionally in the order of the first occurrence of the values in the input.
+
+https://docs.scipy.org/doc/numpy/reference/generated/numpy.unique.html
+
+Example 1:
+```
+input_X = [2, 1, 1, 3, 4, 3]
+attribute_sorted = 0
+attribute_axis = None
+output_Y = [2, 1, 3, 4]
+output_indices = [0, 1, 3, 4]
+output_inverse_indices = [0, 1, 1, 2, 3, 2]
+output_counts = [1, 2, 2, 1]
+```
+
+Example 2:
+```
+input_X = [[1, 3], [2, 3]]
+attribute_sorted = 1
+attribute_axis = None
+output_Y = [1, 2, 3]
+output_indices = [0, 2, 1]
+output_inverse_indices = [0, 2, 1, 2]
+output_counts = [1, 1, 2]
+```
+
+Example 3:
+```
+input_X = [[1, 0, 0], [1, 0, 0], [2, 3, 4]]
+attribute_sorted = 1
+attribute_axis = 0
+output_Y = [[1, 0, 0], [2, 3, 4]]
+output_indices = [0, 2]
+output_inverse_indices = [0, 0, 1]
+output_counts = [2, 1]
+```
+
+Example 4:
+```
+input_x = [[[1., 1.], [0., 1.], [2., 1.], [0., 1.]],
+            [[1., 1.], [0., 1.], [2., 1.], [0., 1.]]]
+attribute_sorted = 1
+attribute_axis = 1
+```
+
+intermediate data are presented below for better understanding:
+there are 4 subtensors sliced along axis 1 of input_x (shape = (2, 4, 2)):
+```
+A: [[1, 1], [1, 1]],
+   [[0, 1], [0, 1]],
+   [[2, 1], [2, 1]],
+   [[0, 1], [0, 1]].
+```
+
+there are 3 unique subtensors:
+```
+[[1, 1], [1, 1]],
+[[0, 1], [0, 1]],
+[[2, 1], [2, 1]].
+```
+
+sorted unique subtensors:
+```
+B: [[0, 1], [0, 1]],
+   [[1, 1], [1, 1]],
+   [[2, 1], [2, 1]].
+```
+
+output_Y is constructed from B:
+```
+[[[0. 1.], [1. 1.], [2. 1.]],
+ [[0. 1.], [1. 1.], [2. 1.]]]
+```
+
+output_indices is to map from B to A:
+```
+[1, 0, 2]
+```
+
+output_inverse_indices is to map from A to B:
+```
+[1, 0, 2, 0]
+```
+
+output_counts:
+```
+[2, 1, 1]
+```
+)DOC";
+
 #else
 const char kDoc_GRU_ver14[] = "";
 const char kDoc_Squeeze_ver24[] = "";
@@ -1384,12 +1542,15 @@ const char kDoc_Sin_ver7[] = "";
 const char kDoc_Loop_ver23[] = "";
 const char kDoc_RNN_ver14[] = "";
 const char kDoc_NonMaxSuppression_ver10[] = "";
+const char kDoc_OneHot_ver11[] = "";
 const char kDoc_Log_ver6[] = "";
 const char kDoc_EyeLike_ver9[] = "";
 const char kDoc_Reshape_ver24[] = "";
+const char kDoc_ReverseSequence_ver10[] = "";
 const char kDoc_Compress_ver9[] = "";
 const char kDoc_PRelu_ver7[] = "";
 const char kDoc_Neg_ver6[] = "";
 const char kDoc_BitCast_ver26[] = "";
+const char kDoc_Unique_ver11[] = "";
 #endif
 } // namespace ONNX_NAMESPACE

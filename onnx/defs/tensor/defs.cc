@@ -2688,7 +2688,7 @@ ONNX_OPERATOR_SET_SCHEMA(
 
 ONNX_OPERATOR_SET_SCHEMA(
     Compress,
-    11,
+    28,
     OpSchema()
         .SetDoc(kDoc_Compress_ver9)
         .Attr(
@@ -2720,7 +2720,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             true,
             1,
             OpSchema::Differentiable)
-        .TypeConstraint("T", OpSchema::all_tensor_types(), "Constrain input and output types to all tensor types.")
+        .TypeConstraint("T", OpSchema::all_tensor_types_ir4(), "Constrain input and output types to all tensor types.")
         .TypeConstraint("T1", {types::Bool}, "Constrain to boolean tensors.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           propagateElemTypeFromInputToOutput(ctx, 0, 0);
@@ -2753,33 +2753,11 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static constexpr const char* OneHot_ver11_doc = R"DOC(
-    Produces a one-hot tensor based on inputs.
-    The locations represented by the index values in the 'indices' input tensor will have 'on_value'
-    and the other locations will have 'off_value' in the output tensor, where 'on_value' and 'off_value'
-    are specified as part of required input argument 'values', which is a two-element tensor of format
-    [off_value, on_value]. The rank of the output tensor will be one greater than the rank of the
-    input tensor. The additional dimension is for one-hot representation. The additional dimension will
-    be inserted at the position specified by 'axis'. If 'axis' is not specified then then additional
-    dimension will be inserted as the innermost dimension, i.e. axis=-1. The size of the additional
-    dimension is specified by required scalar input 'depth'. The type of the output tensor is the same
-    as the type of the 'values' input. Any entries in the 'indices' input tensor with values outside
-    the range [-depth, depth-1] will result in one-hot representation with all 'off_value' values in the
-    output tensor.
-
-    when axis = 0:
-    output[input[i, j, k], i, j, k] = 1 for all i, j, k and 0 otherwise.
-
-    when axis = -1:
-    output[i, j, k, input[i, j, k]] = 1 for all i, j, k and 0 otherwise.
-
-)DOC";
-
 ONNX_OPERATOR_SET_SCHEMA(
     OneHot,
-    11,
+    28,
     OpSchema()
-        .SetDoc(OneHot_ver11_doc)
+        .SetDoc(kDoc_OneHot_ver11)
         .Attr(
             "axis",
             "(Optional) Axis along which one-hot representation in added. Default: axis=-1. "
@@ -2838,8 +2816,88 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::NonDifferentiable)
         .TypeConstraint("T1", OpSchema::all_numeric_types(), "Constrain input to only numeric types.")
         .TypeConstraint("T2", OpSchema::all_numeric_types(), "Constrain input to only numeric types.")
-        .TypeConstraint("T3", OpSchema::all_tensor_types(), "Constrain to any tensor type.")
-        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) { oneHotShapeInference(ctx, 11); }));
+        .TypeConstraint("T3", OpSchema::all_tensor_types_ir4(), "Constrain to any tensor type.")
+        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+          // Check that the node has three inputs.
+          if (ctx.getNumInputs() != 3) {
+            fail_type_inference("OneHot node must have three inputs.");
+          }
+          // Input 'depth' must be a scalar or a single-element vector.
+          // TODO(ONNX): Ideally to match spec for this input only Scalar should
+          // be allowed. Making this change now can affect backward
+          // compatibility for this op. Since this does not seem like a good
+          // justification to update version for this op, allowing both scalar
+          // and 1 element vector for now. In future when version update for
+          // this op is done we should only allow scalar or change the spec to
+          // allow both.
+          std::optional<int64_t> depth_value;
+          if (hasInputShape(ctx, 1)) {
+            auto& depth_shape = getInputShape(ctx, 1);
+            if (const TensorProto* depth_data = ctx.getInputData(1)) {
+              if (depth_data->data_type() == TensorProto::INT64) {
+                depth_value = ParseData<int64_t>(depth_data)[0];
+              } else if (depth_data->data_type() == TensorProto::INT32) {
+                depth_value = ParseData<int32_t>(depth_data)[0];
+              } else if (depth_data->data_type() == TensorProto::FLOAT) {
+                depth_value = static_cast<int64_t>(ParseData<float>(depth_data)[0]);
+              }
+            }
+            if (depth_shape.dim_size() != 0 && depth_shape.dim_size() != 1) {
+              fail_type_inference("Input 'depth' must be a scalar or rank 1 tensor.");
+            }
+            if (depth_shape.dim_size() == 1 && depth_shape.dim(0).has_dim_value() &&
+                depth_shape.dim(0).dim_value() != 1) {
+              fail_type_inference("Input 'depth' must have exactly one element.");
+            }
+          }
+          // Input 'values' must be a two-element vector.
+          if (hasInputShape(ctx, 2)) {
+            auto& values_shape = getInputShape(ctx, 2);
+            if (values_shape.dim_size() != 1) {
+              fail_type_inference("Input 'values' must be rank 1 tensor.");
+            }
+            if (values_shape.dim(0).has_dim_value() && values_shape.dim(0).dim_value() != 2) {
+              fail_type_inference("Input 'values' must have exactly two elements.");
+            }
+          }
+          // Set output type to be the same as the third input, 'values'.
+          propagateElemTypeFromInputToOutput(ctx, 2, 0);
+          // Set the output shape, if input 0 (indices) shape is available.
+          if (hasInputShape(ctx, 0)) {
+            const TensorShapeProto& indices_shape = ctx.getInputType(0)->tensor_type().shape();
+            int r = indices_shape.dim_size();
+            if (r < 1) {
+              fail_shape_inference("Indices tensor must have rank >= 1");
+            }
+            int out_rank = r + 1;
+            int axis = static_cast<int>(getAttribute(ctx, "axis", -1));
+            if (axis < -out_rank || axis >= out_rank) {
+              fail_shape_inference("'axis' must be in [-rank(indices), rank(indices)-1]");
+            }
+            if (axis < 0) {
+              axis += out_rank;
+            }
+            auto output_shape = getOutputShape(ctx, 0);
+            for (int i = 0; i < out_rank; ++i) {
+              auto dim = output_shape->add_dim();
+              if (i < axis) {
+                if (indices_shape.dim(i).has_dim_value()) {
+                  dim->set_dim_value(indices_shape.dim(i).dim_value());
+                } else if (indices_shape.dim(i).has_dim_param()) {
+                  dim->set_dim_param(indices_shape.dim(i).dim_param());
+                }
+              } else if (i > axis) {
+                if (indices_shape.dim(i - 1).has_dim_value()) {
+                  dim->set_dim_value(indices_shape.dim(i - 1).dim_value());
+                } else if (indices_shape.dim(i - 1).has_dim_param()) {
+                  dim->set_dim_param(indices_shape.dim(i - 1).dim_param());
+                }
+              } else if (depth_value) {
+                dim->set_dim_value(*depth_value);
+              }
+            }
+          }
+        }));
 
 ONNX_OPERATOR_SET_SCHEMA(
     IsNaN,
@@ -3003,9 +3061,9 @@ Example 2:
 
 ONNX_OPERATOR_SET_SCHEMA(
     ReverseSequence,
-    10,
+    28,
     OpSchema()
-        .SetDoc(ReverseSequence_ver10_doc)
+        .SetDoc(kDoc_ReverseSequence_ver10)
         .Attr(
             "time_axis",
             "(Optional) Specify which axis is time axis. Must be one of 0 (default), or 1.",
@@ -3024,7 +3082,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "tensor(int64)",
             OpSchema::Single)
         .Output(0, "Y", "Tensor with same shape of input.", "T", OpSchema::Single)
-        .TypeConstraint("T", OpSchema::all_tensor_types(), "Input and output types can be of any tensor type.")
+        .TypeConstraint("T", OpSchema::all_tensor_types_ir4(), "Input and output types can be of any tensor type.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           propagateElemTypeFromInputToOutput(ctx, 0, 0);
           if (!hasNInputShapes(ctx, 2)) {
@@ -3043,111 +3101,11 @@ ONNX_OPERATOR_SET_SCHEMA(
           propagateShapeFromInputToOutput(ctx, 0, 0);
         }));
 
-static constexpr const char* Unique_ver11_doc = R"DOC(
-Find the unique elements of a tensor. When an optional attribute 'axis' is provided, unique subtensors sliced along the 'axis' are returned.
-Otherwise the input tensor is flattened and unique values of the flattened tensor are returned.
-
-This operator returns the unique values or sliced unique subtensors of the input tensor and three optional outputs.
-The first output tensor 'Y' contains all unique values or subtensors of the input.
-The second optional output tensor 'indices' contains indices of 'Y' elements' first occurrence in 'X'.
-The third optional output tensor 'inverse_indices' contains, for elements of 'X', its corresponding indices in 'Y'.
-The fourth optional output tensor 'counts' contains the count of each element of 'Y' in the input.
-
-Outputs are either sorted in ascending order or optionally in the order of the first occurrence of the values in the input.
-
-https://docs.scipy.org/doc/numpy/reference/generated/numpy.unique.html
-
-Example 1:
-```
-input_X = [2, 1, 1, 3, 4, 3]
-attribute_sorted = 0
-attribute_axis = None
-output_Y = [2, 1, 3, 4]
-output_indices = [0, 1, 3, 4]
-output_inverse_indices = [0, 1, 1, 2, 3, 2]
-output_counts = [1, 2, 2, 1]
-```
-
-Example 2:
-```
-input_X = [[1, 3], [2, 3]]
-attribute_sorted = 1
-attribute_axis = None
-output_Y = [1, 2, 3]
-output_indices = [0, 2, 1]
-output_inverse_indices = [0, 2, 1, 2]
-output_counts = [1, 1, 2]
-```
-
-Example 3:
-```
-input_X = [[1, 0, 0], [1, 0, 0], [2, 3, 4]]
-attribute_sorted = 1
-attribute_axis = 0
-output_Y = [[1, 0, 0], [2, 3, 4]]
-output_indices = [0, 2]
-output_inverse_indices = [0, 0, 1]
-output_counts = [2, 1]
-```
-
-Example 4:
-```
-input_x = [[[1., 1.], [0., 1.], [2., 1.], [0., 1.]],
-            [[1., 1.], [0., 1.], [2., 1.], [0., 1.]]]
-attribute_sorted = 1
-attribute_axis = 1
-```
-
-intermediate data are presented below for better understanding:
-there are 4 subtensors sliced along axis 1 of input_x (shape = (2, 4, 2)):
-```
-A: [[1, 1], [1, 1]],
-   [[0, 1], [0, 1]],
-   [[2, 1], [2, 1]],
-   [[0, 1], [0, 1]].
-```
-
-there are 3 unique subtensors:
-```
-[[1, 1], [1, 1]],
-[[0, 1], [0, 1]],
-[[2, 1], [2, 1]].
-```
-
-sorted unique subtensors:
-```
-B: [[0, 1], [0, 1]],
-   [[1, 1], [1, 1]],
-   [[2, 1], [2, 1]].
-```
-
-output_Y is constructed from B:
-```
-[[[0. 1.], [1. 1.], [2. 1.]],
- [[0. 1.], [1. 1.], [2. 1.]]]
-```
-
-output_indices is to map from B to A:
-```
-[1, 0, 2]
-```
-
-output_inverse_indices is to map from A to B:
-```
-[1, 0, 2, 0]
-```
-
-output_counts:
-```
-[2, 1, 1]
-```
-)DOC";
-
 ONNX_OPERATOR_SET_SCHEMA(
     Unique,
-    11,
+    28,
     OpSchema()
-        .SetDoc(Unique_ver11_doc)
+        .SetDoc(kDoc_Unique_ver11)
         .Attr(
             "sorted",
             "(Optional) Whether to sort the unique elements in ascending order before returning as output. "
@@ -3216,7 +3174,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             true,
             1,
             OpSchema::NonDifferentiable)
-        .TypeConstraint("T", OpSchema::all_tensor_types(), "Input can be of any tensor type.")
+        .TypeConstraint("T", OpSchema::all_tensor_types_ir4(), "Input can be of any tensor type.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           // Type inference
           propagateElemTypeFromInputToOutput(ctx, 0, 0);
