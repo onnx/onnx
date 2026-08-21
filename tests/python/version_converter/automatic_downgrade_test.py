@@ -160,3 +160,142 @@ class TestAutomaticDowngrade(automatic_conversion_test_base.TestAutomaticConvers
             }
         """,
         )
+
+    def test_optional_has_element18_downgrade_fails(self) -> None:
+        # non-optional input is not allowed for OptionalHasElement-15
+        self._test_model_conversion_fails(
+            to_opset=15,
+            model="""
+                    <ir_version: 8, opset_import: [ "" : 18]>
+                    optional_has_element (float[3, 4, 5] input)
+                        => (bool output)
+                    {
+                        output = OptionalHasElement (input)
+                    }
+                """,
+        )
+
+    def test_optional_get_element18_downgrade_fails(self) -> None:
+        # non-optional input is not allowed for OptionalGetElement-15
+        self._test_model_conversion_fails(
+            to_opset=15,
+            model="""
+                    <ir_version: 8, opset_import: [ "" : 18]>
+                    optional_has_element (float[3, 4, 5] input)
+                        => (float[3, 4, 5] output)
+                    {
+                        output = OptionalGetElement (input)
+                    }
+                """,
+        )
+
+    # bfloat16 is not supported for OptionalHasElement-18.
+    # Adapter must reject all tensor and its container type:
+    # tensor(bfloat16), seq(tensor(bfloat16)),
+    # optional(tensor(bfloat16)), optional(seq(tensor(bfloat16)))
+    def test_optional_has_element28_downgrade_fails_1(self) -> None:
+        self._test_model_conversion_fails(
+            to_opset=18,
+            model="""
+                <ir_version: 13, opset_import: [ "" : 28]>
+                optional_has_element (bfloat16[3, 4, 5] input) => (bool output)
+                {
+                    output = OptionalHasElement (input)
+                }
+                """,
+        )
+
+    def test_optional_has_element28_downgrade_fails_2(self) -> None:
+        self._test_model_conversion_fails(
+            to_opset=18,
+            model="""
+                <ir_version: 13, opset_import: [ "" : 28]>
+                optional_has_element (optional(bfloat16[3, 4, 5]) input)
+                    => (bool output)
+                {
+                    output = OptionalHasElement (input)
+                }
+                """,
+        )
+
+    def test_optional_has_element28_downgrade_fails_3(self) -> None:
+        self._test_model_conversion_fails(
+            to_opset=18,
+            model="""
+                <ir_version: 13, opset_import: [ "" : 28]>
+                optional_has_element (seq(bfloat16[3, 4, 5]) input)
+                    => (bool output)
+                {
+                    output = OptionalHasElement (input)
+                }
+                """,
+        )
+
+    def test_optional_has_element28_downgrade_fails_4(self) -> None:
+        self._test_model_conversion_fails(
+            to_opset=18,
+            model="""
+                <ir_version: 13, opset_import: [ "" : 28]>
+                optional_has_element (optional(seq(bfloat16[3, 4, 5])) input)
+                    => (bool output)
+                {
+                    output = OptionalHasElement (input)
+                }
+                """,
+        )
+
+    # bfloat16 is not supported for OptionalGetElement-18.
+    # Adapter must reject all tensor and its container type:
+    # tensor(bfloat16), seq(tensor(bfloat16)),
+    # optional(tensor(bfloat16)), optional(seq(tensor(bfloat16)))
+    def test_optional_get_element28_downgrade_fails_1(self) -> None:
+        self._test_model_conversion_fails(
+            to_opset=18,
+            model="""
+                <ir_version: 13, opset_import: [ "" : 28]>
+                optional_has_element (bfloat16[3, 4, 5] input)
+                    => (bfloat16[3, 4, 5] output)
+                {
+                    output = OptionalGetElement (input)
+                }
+                """,
+        )
+
+    def test_optional_get_element28_downgrade_fails_2(self) -> None:
+        self._test_model_conversion_fails(
+            to_opset=18,
+            model="""
+                <ir_version: 13, opset_import: [ "" : 28]>
+                optional_has_element (seq(bfloat16[3, 4, 5]) input)
+                    => (seq(bfloat16[3, 4, 5]) output)
+                {
+                    output = OptionalGetElement (input)
+                }
+                """,
+        )
+
+    def test_optional_get_element28_downgrade_fails_3(self) -> None:
+        self._test_model_conversion_fails(
+            to_opset=18,
+            model="""
+                <ir_version: 13, opset_import: [ "" : 28]>
+                optional_has_element (optional(bfloat16[3, 4, 5]) input)
+                    => (bfloat16[3, 4, 5] output)
+                {
+                    output = OptionalGetElement (input)
+                }
+                """,
+        )
+
+    def test_optional_get_element28_downgrade_fails_4(self) -> None:
+        self._test_model_conversion_fails(
+            to_opset=18,
+            model="""
+                <ir_version: 13, opset_import: [ "" : 28]>
+                optional_has_element (optional(seq(bfloat16[3, 4, 5])) input)
+                    => (seq(bfloat16[3, 4, 5]) output)
+                {
+                    output = OptionalGetElement (input)
+                }
+                """,
+        )

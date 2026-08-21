@@ -19,7 +19,11 @@ LATEST_OPSET = onnx.defs.onnx_opset_version()
 
 class TestAutomaticConversion:
     def _test_model_conversion(
-        self, to_opset: int, model: str | onnx.ModelProto
+        self,
+        to_opset: int,
+        model: str | onnx.ModelProto,
+        check_type: bool = False,
+        full_check: bool = False,
     ) -> None:
         if isinstance(model, str):
             model = onnx.parser.parse_model(model)
@@ -27,11 +31,13 @@ class TestAutomaticConversion:
         shape_inference.infer_shapes(model, strict_mode=True)
 
         converted = version_converter.convert_version(model, to_opset)
-        onnx.checker.check_model(converted)
-        shape_inference.infer_shapes(converted, strict_mode=True)
+        onnx.checker.check_model(converted, full_check=full_check)
+        shape_inference.infer_shapes(converted, check_type=check_type, strict_mode=True)
 
     def _test_model_conversion_fails(
-        self, to_opset: int, model: str | onnx.ModelProto
+        self,
+        to_opset: int,
+        model: str | onnx.ModelProto,
     ) -> None:
         if isinstance(model, str):
             model = onnx.parser.parse_model(model)
@@ -56,6 +62,8 @@ class TestAutomaticConversion:
         optional_inputs: Sequence[int] = (),
         optional_outputs: Sequence[int] = (),
         is_upgrade: bool = True,
+        check_type: bool = False,
+        full_check: bool = False,
     ) -> None:
         """Test conversion.
 
@@ -77,6 +85,8 @@ class TestAutomaticConversion:
             is_upgrade: A boolean value indicating whether to run the version converter from from_opset to
                 the most recent opset version (True) or from the most recent opset version to from_opset (False).
                 The default value is True. In both cases, runs checker and shape inference on the final model.
+            check_type: A boolean value indicating whether to do type check during shape inference.
+            full_check: A boolean value indicating whether to do full check for the converted model.
         """
         if attrs is None:
             attrs = {}
@@ -107,7 +117,14 @@ class TestAutomaticConversion:
             strict=False,
         ):
             if name != "":
-                if is_seq:
+                if is_seq and is_opt:
+                    type_proto = helper.make_tensor_type_proto(ttype, shape)
+                    seq_type_proto = helper.make_sequence_type_proto(type_proto)
+                    optional_type_proto = helper.make_optional_type_proto(
+                        seq_type_proto
+                    )
+                    inputs += [helper.make_value_info(name, optional_type_proto)]
+                elif is_seq:
                     inputs += [
                         helper.make_tensor_sequence_value_info(name, ttype, shape)
                     ]
@@ -139,7 +156,12 @@ class TestAutomaticConversion:
             is_optional,
             strict=True,
         ):
-            if is_seq:
+            if is_seq and is_opt:
+                type_proto = helper.make_tensor_type_proto(ttype, shape)
+                seq_type_proto = helper.make_sequence_type_proto(type_proto)
+                optional_type_proto = helper.make_optional_type_proto(seq_type_proto)
+                outputs += [helper.make_value_info(name, optional_type_proto)]
+            elif is_seq:
                 outputs += [helper.make_tensor_sequence_value_info(name, ttype, shape)]
             elif is_opt:
                 type_proto = helper.make_tensor_type_proto(ttype, shape)
@@ -157,4 +179,4 @@ class TestAutomaticConversion:
             producer_name="test",
             opset_imports=[helper.make_opsetid("", start_opset)],
         )
-        self._test_model_conversion(end_opset, original)
+        self._test_model_conversion(end_opset, original, check_type, full_check)

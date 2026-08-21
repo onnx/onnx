@@ -2099,6 +2099,153 @@ class TestAutomaticUpgrade(automatic_conversion_test_base.TestAutomaticConversio
             },
         )
 
+    def test_Optional_1(self) -> None:
+        # no input, optional(tensor(float))
+        self._test_op_upgrade(
+            "Optional",
+            15,
+            input_shapes=(),
+            output_shapes=((3, 4, 5),),
+            output_types=[TensorProto.FLOAT],
+            attrs={"type": helper.make_tensor_type_proto(TensorProto.FLOAT, (3, 4, 5))},
+            optional_outputs=(0,),
+            check_type=True,
+            full_check=True,
+        )
+
+    def test_Optional_2(self) -> None:
+        # no input, seq(tensor(float))
+        self._test_op_upgrade(
+            "Optional",
+            15,
+            input_shapes=(),
+            output_shapes=((3, 4, 5),),
+            output_types=[TensorProto.FLOAT],
+            attrs={
+                "type": helper.make_sequence_type_proto(
+                    helper.make_tensor_type_proto(TensorProto.FLOAT, (3, 4, 5))
+                )
+            },
+            seq_outputs=(0,),
+            optional_outputs=(0,),
+            check_type=True,
+            full_check=True,
+        )
+
+    def test_Optional_3(self) -> None:
+        # tensor(float)
+        self._test_op_upgrade(
+            "Optional",
+            15,
+            optional_outputs=(0,),
+            check_type=True,
+            full_check=True,
+        )
+
+    def test_Optional_4(self) -> None:
+        # seq(tensor(float))
+        self._test_op_upgrade(
+            "Optional",
+            15,
+            seq_inputs=(0,),
+            seq_outputs=(0,),
+            optional_outputs=(0,),
+            check_type=True,
+            full_check=True,
+        )
+
+    def test_OptionalHasElement_1(self) -> None:
+        # optional(tensor(float))
+        self._test_op_upgrade(
+            "OptionalHasElement",
+            15,
+            output_shapes=[[]],
+            output_types=[TensorProto.BOOL],
+            optional_inputs=(0,),
+            check_type=True,
+            full_check=True,
+        )
+
+    def test_OptionalHasElement_2(self) -> None:
+        # optional(seq(tensor(float)))
+        self._test_op_upgrade(
+            "OptionalHasElement",
+            15,
+            output_shapes=[[]],
+            output_types=[TensorProto.BOOL],
+            seq_inputs=(0,),
+            optional_inputs=(0,),
+            check_type=True,
+            full_check=True,
+        )
+
+    def test_OptionalHasElement_3(self) -> None:
+        # tensor(float)
+        # non-optional input support added in Opset 18
+        self._test_op_upgrade(
+            "OptionalHasElement",
+            18,
+            output_shapes=[[]],
+            output_types=[TensorProto.BOOL],
+            check_type=True,
+            full_check=True,
+        )
+
+    def test_OptionalHasElement_4(self) -> None:
+        # seq(tensor(float))
+        # non-optional input support added in Opset 18
+        self._test_op_upgrade(
+            "OptionalHasElement",
+            18,
+            output_shapes=[[]],
+            output_types=[TensorProto.BOOL],
+            seq_inputs=(0,),
+            check_type=True,
+            full_check=True,
+        )
+
+    def test_OptionalGetElement_1(self) -> None:
+        # optional(tensor(float))
+        self._test_op_upgrade(
+            "OptionalGetElement",
+            15,
+            optional_inputs=(0,),
+            check_type=True,
+            full_check=True,
+        )
+
+    def test_OptionalGetElement_2(self) -> None:
+        # optional(seq(tensor(float)))
+        self._test_op_upgrade(
+            "OptionalGetElement",
+            15,
+            seq_inputs=(0,),
+            seq_outputs=(0,),
+            optional_inputs=(0,),
+            check_type=True,
+            full_check=True,
+        )
+
+    def test_OptionalGetElement_3(self) -> None:
+        # tensor(float)
+        self._test_op_upgrade(
+            "OptionalGetElement",
+            18,
+            check_type=True,
+            full_check=True,
+        )
+
+    def test_OptionalGetElement_4(self) -> None:
+        # seq(tensor(float))
+        self._test_op_upgrade(
+            "OptionalGetElement",
+            18,
+            seq_inputs=(0,),
+            seq_outputs=(0,),
+            check_type=True,
+            full_check=True,
+        )
+
     def test_ops_tested(self) -> None:
         # NOTE: This test is order dependent and needs to run last in this class
         all_schemas = onnx.defs.get_all_schemas()
@@ -2115,9 +2262,6 @@ class TestAutomaticUpgrade(automatic_conversion_test_base.TestAutomaticConversio
             "SequenceLength",
             "SequenceMap",
             "SplitToSequence",
-            "Optional",
-            "OptionalGetElement",
-            "OptionalHasElement",
             "StringSplit",
         }
         expected_tested_ops = all_op_names - excluded_ops

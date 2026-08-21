@@ -2,10 +2,15 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
+#include "onnx/defs/optional/utils.h"
 #include "onnx/defs/schema.h"
 #include "onnx/defs/type_builders.h"
 
 namespace ONNX_NAMESPACE {
+static std::vector<std::string> tensor_and_sequence_types() {
+  return types::Concat(OpSchema::all_tensor_types(), OpSchema::all_tensor_sequence_types());
+}
+
 static constexpr const char* OptionalHasElement_ver1_doc = R"DOC(
 Returns true if the optional-type input contains an element. If it is an empty optional-type, this op returns false.
 )DOC";
@@ -79,5 +84,28 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
           ctx.getOutputType(0)->CopyFrom(input_type->optional_type().elem_type());
         }));
+
+ONNX_OPERATOR_SET_SCHEMA(
+    Optional,
+    15,
+    OpSchema().FillUsing(
+        defs::optional::utils::OptionalOpGenerator(tensor_and_sequence_types(), OpSchema::all_optional_types())));
+
+ONNX_OPERATOR_SET_SCHEMA(
+    OptionalHasElement,
+    18,
+    OpSchema().FillUsing(
+        defs::optional::utils::OptionalHasElementOpGenerator(
+            types::Concat(OpSchema::all_optional_types(), tensor_and_sequence_types()),
+            true)));
+
+ONNX_OPERATOR_SET_SCHEMA(
+    OptionalGetElement,
+    18,
+    OpSchema().FillUsing(
+        defs::optional::utils::OptionalGetElementOpGenerator(
+            OpSchema::all_optional_types(),
+            tensor_and_sequence_types(),
+            true)));
 
 } // namespace ONNX_NAMESPACE
