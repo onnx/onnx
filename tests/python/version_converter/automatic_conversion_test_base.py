@@ -64,7 +64,6 @@ class TestAutomaticConversion:
         is_upgrade: bool = True,
         check_type: bool = False,
         full_check: bool = False,
-        assert_fails: bool = False,
     ) -> None:
         """Test conversion.
 
@@ -88,7 +87,6 @@ class TestAutomaticConversion:
                 The default value is True. In both cases, runs checker and shape inference on the final model.
             check_type: A boolean value indicating whether to do type check during shape inference.
             full_check: A boolean value indicating whether to do full check for the converted model.
-            assert_fails: A boolean value indicating whether to check if model execution succeeded (False) or failed (True).
         """
         if attrs is None:
             attrs = {}
@@ -181,7 +179,4 @@ class TestAutomaticConversion:
             producer_name="test",
             opset_imports=[helper.make_opsetid("", start_opset)],
         )
-        if assert_fails:
-            self._test_model_conversion_fails(end_opset, original)
-        else:
-            self._test_model_conversion(end_opset, original, check_type, full_check)
+        self._test_model_conversion(end_opset, original, check_type, full_check)
