@@ -11,13 +11,40 @@ on:
         required: false
         type: string
         default: "preview"
+      artifact_name_prefix:
+        required: false
+        type: string
+        default: "wheels"
+      build:
+        required: false
+        type: string
+        default: ""
+      builds:
+        required: false
+        type: string
+        default: ""
+      reproducibility_check:
+        required: false
+        type: boolean
+        default: false
   workflow_dispatch:
+    inputs:
+      build_mode:
+        description: 'Build mode (release or preview)'
+        required: false
+        type: choice
+        options: [release, preview]
+        default: preview
+      builds:
+        description: 'JSON array of cibuildwheel build identifiers'
+        required: false
+        default: '["cp312-manylinux_x86_64"]'
 
 permissions:
   contents: read
 
 concurrency:
-  group: linux-release-${{ github.workflow }}-${{ github.ref }}
+  group: linux-release-${{ github.workflow }}-${{ github.ref }}-${{ inputs.artifact_name_prefix }}
   cancel-in-progress: true
 
 jobs:
@@ -25,15 +52,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        build:
-          - "cp310-manylinux_x86_64"
-          - "cp310-manylinux_aarch64"
-          - "cp311-manylinux_x86_64"
-          - "cp311-manylinux_aarch64"
-          - "cp312-manylinux_x86_64"
-          - "cp312-manylinux_aarch64"
-          - "cp314t-manylinux_x86_64"
-          - "cp314t-manylinux_aarch64"
+        build: ${{ inputs.build != '' && fromJSON(format('["{0}"]', inputs.build)) || fromJSON(inputs.builds) }}
 
     runs-on: ${{ contains(matrix.build, 'aarch64') && 'ubuntu-24.04-arm' || 'ubuntu-24.04' }}
 
@@ -86,10 +105,61 @@ jobs:
             -DONNX_WERROR=ON
             "
 
-      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+      - name: Preserve first wheel and clean build artifacts
+        if: inputs.reproducibility_check
+        run: |
+          sudo mkdir -p "$RUNNER_TEMP/repro-build1"
+          sudo mv dist/*.whl "$RUNNER_TEMP/repro-build1/"
+          sudo rm -rf dist build .setuptools-cmake-build
+          sudo find . -maxdepth 2 -name "*.egg-info" -type d -exec rm -rf {} +
+
+      - name: Build wheels again for reproducibility check
+        if: inputs.reproducibility_check
+        uses: pypa/cibuildwheel@4726cd35bb13f7bde50cf2761f2499ac7b3aa32c  # v4.1.1
         with:
-          name: wheels-linux-${{ matrix.build }}
+          output-dir: dist/
+          only: ${{ matrix.build }}
+        env:
+          CIBW_ENVIRONMENT: >-
+            CMAKE_ARGS="
+            -DFETCHCONTENT_SOURCE_DIR_PROTOBUF=/project/protobuf-${{ env.PROTOBUF_VERSION }}
+            -DONNX_CUSTOM_PROTOC_EXECUTABLE=/project/protoc-host/bin/protoc
+            -DONNX_HARDENING=ON
+            -DONNX_USE_LITE_PROTO=ON
+            -DONNX_WERROR=ON
+            "
+
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        if: ${{ !inputs.reproducibility_check }}
+        with:
+          name: ${{ inputs.artifact_name_prefix }}-linux-${{ matrix.build }}
           path: dist/*.whl
+
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        if: inputs.reproducibility_check
+        with:
+          name: ${{ inputs.artifact_name_prefix }}-build1-linux-${{ matrix.build }}
+          path: ${{ runner.temp }}/repro-build1/*.whl
+
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        if: inputs.reproducibility_check
+        with:
+          name: ${{ inputs.artifact_name_prefix }}-build2-linux-${{ matrix.build }}
+          path: dist/*.whl
+
+      - name: Compare wheel checksums
+        if: inputs.reproducibility_check
+        shell: bash
+        run: |
+          shopt -s nullglob
+          build1=("$RUNNER_TEMP"/repro-build1/*.whl)
+          build2=(dist/*.whl)
+          if [ ${#build1[@]} -ne 1 ] || [ ${#build2[@]} -ne 1 ]; then
+            echo "Expected exactly one wheel from each build"
+            exit 1
+          fi
+          sha256sum "${build1[0]}" "${build2[0]}"
+          cmp --silent "${build1[0]}" "${build2[0]}"
 
       - name: Validate wheel
         run: |

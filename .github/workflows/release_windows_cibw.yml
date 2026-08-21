@@ -11,13 +11,40 @@ on:
         required: false
         type: string
         default: "preview"
+      artifact_name_prefix:
+        required: false
+        type: string
+        default: "wheels"
+      build:
+        required: false
+        type: string
+        default: ""
+      builds:
+        required: false
+        type: string
+        default: ""
+      reproducibility_check:
+        required: false
+        type: boolean
+        default: false
   workflow_dispatch:
+    inputs:
+      build_mode:
+        description: 'Build mode (release or preview)'
+        required: false
+        type: choice
+        options: [release, preview]
+        default: preview
+      builds:
+        description: 'JSON array of cibuildwheel build identifiers'
+        required: false
+        default: '["cp312-win_amd64"]'
 
 permissions:
   contents: read
 
 concurrency:
-  group: windows-release-${{ github.workflow }}-${{ github.ref }}
+  group: windows-release-${{ github.workflow }}-${{ github.ref }}-${{ inputs.artifact_name_prefix }}
   cancel-in-progress: true
 
 jobs:
@@ -25,17 +52,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        build:
-          - "cp310-win_amd64"
-          - "cp310-win32"
-          - "cp311-win_amd64"
-          - "cp311-win32"
-          - "cp311-win_arm64"
-          - "cp312-win_amd64"
-          - "cp312-win32"
-          - "cp312-win_arm64"
-          - "cp314t-win_amd64"
-          - "cp314t-win_arm64"
+        build: ${{ inputs.build != '' && fromJSON(format('["{0}"]', inputs.build)) || fromJSON(inputs.builds) }}
     runs-on: ${{ contains(matrix.build, 'arm64') && 'windows-11-arm' || 'windows-2022' }}
 
     steps:
@@ -93,10 +110,64 @@ jobs:
             -DONNX_WERROR=ON
             "
 
-      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+      - name: Preserve first wheel and clean build artifacts
+        if: inputs.reproducibility_check
+        run: |
+          $build1Directory = Join-Path $env:RUNNER_TEMP "repro-build1"
+          New-Item -ItemType Directory -Force $build1Directory | Out-Null
+          Move-Item -Path dist/*.whl -Destination $build1Directory
+          Remove-Item -Recurse -Force dist, build, .setuptools-cmake-build -ErrorAction SilentlyContinue
+          Get-ChildItem -Recurse -Directory -Filter *.egg-info | Remove-Item -Recurse -Force
+
+      - name: Build wheels again for reproducibility check
+        if: inputs.reproducibility_check
+        uses: pypa/cibuildwheel@4726cd35bb13f7bde50cf2761f2499ac7b3aa32c  # v4.1.1
         with:
-          name: wheels-windows-${{ matrix.build }}
+          output-dir: dist/
+          only: ${{ matrix.build }}
+        env:
+          CIBW_ENVIRONMENT: >-
+            CMAKE_ARGS="
+            -DFETCHCONTENT_SOURCE_DIR_PROTOBUF=${{ env.PROTOBUF_SRC }}
+            -DONNX_CUSTOM_PROTOC_EXECUTABLE=${{ env.PROTOC_PATH }}
+            -DONNX_HARDENING=ON
+            -DONNX_USE_LITE_PROTO=ON
+            -DONNX_WERROR=ON
+            "
+
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        if: ${{ !inputs.reproducibility_check }}
+        with:
+          name: ${{ inputs.artifact_name_prefix }}-windows-${{ matrix.build }}
           path: dist/*.whl
+
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        if: inputs.reproducibility_check
+        with:
+          name: ${{ inputs.artifact_name_prefix }}-build1-windows-${{ matrix.build }}
+          path: ${{ runner.temp }}/repro-build1/*.whl
+
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        if: inputs.reproducibility_check
+        with:
+          name: ${{ inputs.artifact_name_prefix }}-build2-windows-${{ matrix.build }}
+          path: dist/*.whl
+
+      - name: Compare wheel checksums
+        if: inputs.reproducibility_check
+        run: |
+          $build1 = @(Get-ChildItem -Path "$env:RUNNER_TEMP/repro-build1/*.whl")
+          $build2 = @(Get-ChildItem -Path dist/*.whl)
+          if ($build1.Count -ne 1 -or $build2.Count -ne 1) {
+            throw "Expected exactly one wheel from each build"
+          }
+          $hash1 = (Get-FileHash $build1[0].FullName -Algorithm SHA256).Hash
+          $hash2 = (Get-FileHash $build2[0].FullName -Algorithm SHA256).Hash
+          Write-Host "build1 $hash1  $($build1[0].Name)"
+          Write-Host "build2 $hash2  $($build2[0].Name)"
+          if ($hash1 -ne $hash2) {
+            throw "Windows wheels are not reproducible"
+          }
 
       - name: Validate wheel
         run: |

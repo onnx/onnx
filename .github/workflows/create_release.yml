@@ -72,18 +72,31 @@ jobs:
     uses: ./.github/workflows/release_linux_cibw.yml
     with:
       build_mode: ${{ github.event.inputs.build_mode || 'preview' }}
+      builds: >-
+        ["cp310-manylinux_x86_64","cp310-manylinux_aarch64",
+         "cp311-manylinux_x86_64","cp311-manylinux_aarch64",
+         "cp312-manylinux_x86_64","cp312-manylinux_aarch64",
+         "cp314t-manylinux_x86_64","cp314t-manylinux_aarch64"]
 
   call-win:
     if: github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'run release CIs') || contains(github.event.pull_request.labels.*.name, 'ci-slsa-provenance')
     uses: ./.github/workflows/release_windows_cibw.yml
     with:
       build_mode: ${{ github.event.inputs.build_mode || 'preview' }}
+      builds: >-
+        ["cp310-win_amd64","cp310-win32",
+         "cp311-win_amd64","cp311-win32","cp311-win_arm64",
+         "cp312-win_amd64","cp312-win32","cp312-win_arm64",
+         "cp314t-win_amd64","cp314t-win_arm64"]
 
   call-mac:
     if: github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'run release CIs') || contains(github.event.pull_request.labels.*.name, 'ci-slsa-provenance')
     uses: ./.github/workflows/release_macos_cibw.yml
     with:
       build_mode: ${{ github.event.inputs.build_mode || 'preview' }}
+      builds: >-
+        ["cp310-macosx_universal2","cp311-macosx_universal2",
+         "cp312-macosx_universal2","cp314t-macosx_universal2"]
 
   call-pyodide:
     if: github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'run release CIs') || contains(github.event.pull_request.labels.*.name, 'ci-slsa-provenance')
