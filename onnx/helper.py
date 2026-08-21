@@ -397,15 +397,26 @@ def make_tensor(
     np_dtype = tensor_dtype_to_np_dtype(data_type)
 
     if raw:
-        # NumPy doesn't have INT2/INT4/FP4. It is packed in couples to UINT8 buffers.
-        if data_type in {TensorProto.UINT4, TensorProto.INT4, TensorProto.FLOAT4E2M1}:
-            expected_size_bytes = 0.5
-        elif data_type in {TensorProto.UINT2, TensorProto.INT2}:
-            expected_size_bytes = 0.25
+        # NumPy doesn't have INT2/INT4/FP4/FP6. It is packed in couples to UINT8 buffers.
+        expected_size_bytes: float
+        if data_type in {TensorProto.FLOAT6E2M3, TensorProto.FLOAT6E3M2}:
+            # raw_data is always the packed 6-bit stream (see numpy_helper.to_array).
+            # Integer ceil(n * 6 / 8): avoids the float-multiplication precision
+            # loss for large n that `math.ceil(0.75 * n)` would be susceptible to.
+            expected_size_bytes = -(-math.prod(dims) * 6 // 8)
         else:
-            expected_size_bytes = np_dtype.itemsize
-        expected_size_bytes *= math.prod(dims)
-        expected_size_bytes = math.ceil(expected_size_bytes)
+            if data_type in {
+                TensorProto.UINT4,
+                TensorProto.INT4,
+                TensorProto.FLOAT4E2M1,
+            }:
+                expected_size_bytes = 0.5
+            elif data_type in {TensorProto.UINT2, TensorProto.INT2}:
+                expected_size_bytes = 0.25
+            else:
+                expected_size_bytes = np_dtype.itemsize
+            expected_size_bytes *= math.prod(dims)
+            expected_size_bytes = math.ceil(expected_size_bytes)
         if isinstance(vals, np.ndarray):
             if data_type in {
                 TensorProto.INT4,
@@ -415,6 +426,8 @@ def make_tensor(
                 vals = onnx.numpy_helper._pack_4bitx2(vals)
             elif data_type in {TensorProto.UINT2, TensorProto.INT2}:
                 vals = onnx.numpy_helper._pack_2bitx4(vals)
+            elif data_type in {TensorProto.FLOAT6E2M3, TensorProto.FLOAT6E3M2}:
+                vals = onnx.numpy_helper._pack_6bit(vals.view(np.uint8))
 
             raw_data = onnx.numpy_helper.tobytes_little_endian(vals)
         elif isinstance(vals, bytes):
@@ -448,6 +461,9 @@ def make_tensor(
         vals = onnx.numpy_helper.to_float8e8m0(
             np.asarray(vals), saturate=True, round_mode="up"
         ).flatten()
+    elif data_type in {TensorProto.FLOAT6E2M3, TensorProto.FLOAT6E3M2}:
+        # For FP6 in non-raw mode, store per-element bytes in int32_data (like float8)
+        vals = np.asarray(vals, dtype=np_dtype).flatten().view(np.uint8)
     else:
         vals = np.asarray(vals, dtype=np_dtype).flatten()
 
