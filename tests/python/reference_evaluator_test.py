@@ -2,13 +2,6 @@
 # SPDX-License-Identifier: Apache-2.0
 # mypy: ignore-errors
 
-"""You can run a specific test by using the following syntax.
-
-::
-
-    python onnx/test/reference_evaluator_test.py TestReferenceEvaluator.test_function_attribute_nested_graph
-"""
-
 from __future__ import annotations
 
 import importlib.util
