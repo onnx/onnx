@@ -2,6 +2,16 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
+# The prek hook filters to text files via `types: [text]`; keep the same
+# exclusions here so a standalone `typos` run over the tree agrees with it.
+[files]
+extend-exclude = [
+  # Vendored, minified third-party library.
+  "docs/docsgen/source/_static/diff2html-ui-slim.min.js",
+  "*.onnx",
+  "*.pb",
+]
+
 [default.extend-words]
 ND = "ND"
 ONNX = "ONNX"
