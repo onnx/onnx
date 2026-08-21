@@ -100,6 +100,38 @@ class TestAutomaticDowngrade(automatic_conversion_test_base.TestAutomaticConvers
         """,
         )
 
+    def test_attention_25_to_24_default_window(self) -> None:
+        """Attention with disabled window bounds can be downgraded."""
+        self._test_op_downgrade(
+            "Attention",
+            25,
+            [[2, 3, 4, 8], [2, 3, 6, 8], [2, 3, 6, 8]],
+            [[2, 3, 4, 8]],
+            attrs={"left_window_size": -1, "right_window_size": -1},
+        )
+
+    @pytest.mark.parametrize(
+        "window_attribute", ["left_window_size", "right_window_size"]
+    )
+    def test_attention_25_to_24_window_fails(self, window_attribute: str) -> None:
+        """Attention with an enabled window bound cannot be downgraded."""
+        model = onnx.parser.parse_model(
+            f"""
+            <ir_version: 10, opset_import: [ "" : 25]>
+            attn (float[2, 3, 4, 8] Q, float[2, 3, 6, 8] K, float[2, 3, 6, 8] V)
+                => (float[2, 3, 4, 8] Y)
+            {{
+                Y = Attention <{window_attribute} = 3> (Q, K, V)
+            }}
+            """
+        )
+        onnx.checker.check_model(model)
+        with pytest.raises(
+            RuntimeError,
+            match=rf"{window_attribute} must be -1 .* got 3.*Windowed attention",
+        ):
+            onnx.version_converter.convert_version(model, 24)
+
     def test_LinearAttention_downgrade_fails(self) -> None:
         self._test_model_conversion_fails(
             to_opset=24,
