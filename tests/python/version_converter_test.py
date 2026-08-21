@@ -3221,3 +3221,35 @@ class TestVersionConverter:
     def test_celu_28_27_unsupported_type_fails(self, dtype: int) -> None:
         with pytest.raises(RuntimeError):
             self._celu_converted(dtype, 28, 27)
+
+    def _bitshift_converted(self, dtype: int, src: int, dst: int) -> ModelProto:
+        node = helper.make_node("BitShift", ["X", "Y"], ["Z"], direction="RIGHT")
+        graph = helper.make_graph(
+            [node],
+            "bitshift",
+            [
+                helper.make_tensor_value_info("X", dtype, [3, 4]),
+                helper.make_tensor_value_info("Y", dtype, [3, 4]),
+            ],
+            [helper.make_tensor_value_info("Z", dtype, [3, 4])],
+        )
+        return self._converted(graph, helper.make_operatorsetid("", src), dst)
+
+    def test_bitshift_uint8_27_28_and_28_27(self) -> None:
+        assert (
+            self._bitshift_converted(TensorProto.UINT8, 27, 28).opset_import[0].version
+            == 28
+        )
+        assert (
+            self._bitshift_converted(TensorProto.UINT8, 28, 27).opset_import[0].version
+            == 27
+        )
+
+    # BitShift 28 -> 27: the signed types added in v28 must be rejected
+    @pytest.mark.parametrize(
+        "dtype",
+        [TensorProto.INT8, TensorProto.INT16, TensorProto.INT32, TensorProto.INT64],
+    )
+    def test_bitshift_28_27_unsupported_type_fails(self, dtype: int) -> None:
+        with pytest.raises(RuntimeError):
+            self._bitshift_converted(dtype, 28, 27)

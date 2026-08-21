@@ -984,9 +984,15 @@ class DefaultVersionConverter : public BaseVersionConverter {
     registerAdapter(std::make_unique<Range_27_26>(range_27_unallowed_types));
 
     /******** 27 -> 28 ********/
+    registerAdapter(std::make_unique<CompatibleAdapter>("BitShift", OpSetID(27), OpSetID(28)));
     registerAdapter(std::make_unique<CompatibleAdapter>("Celu", OpSetID(27), OpSetID(28)));
 
     /******** 28 -> 27 ********/
+    // BitShift v28 widened T with the signed integer types; BitShift v11 (opset 27) is unsigned only.
+    const std::vector<TensorProto_DataType> bitshift_28_unallowed_types = {
+        TensorProto_DataType_INT8, TensorProto_DataType_INT16, TensorProto_DataType_INT32, TensorProto_DataType_INT64};
+    registerAdapter(
+        std::make_unique<TypeRestriction>("BitShift", OpSetID(28), OpSetID(27), bitshift_28_unallowed_types));
     // Celu v28 widened T to all_float_types_ir4(); Celu v12 (opset 27) supports only FLOAT.
     const std::vector<TensorProto_DataType> celu_28_unallowed_types = {
         TensorProto_DataType_FLOAT16, TensorProto_DataType_BFLOAT16, TensorProto_DataType_DOUBLE};
