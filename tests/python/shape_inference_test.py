@@ -9685,6 +9685,42 @@ class TestShapeInference(TestShapeInferenceHelper):
             graph, [make_tensor_value_info("z", TensorProto.FLOAT, (32, 3, 5))]
         )
 
+    @pytest.mark.parametrize(
+        ("shape_x", "shape_y", "equation"),
+        [
+            # The second ellipsis covers more dimensions than the first. This
+            # used to read past the end of the recorded ellipsis dimensions and
+            # segfault.
+            ((), (2, 3), "...,...->..."),
+            # Same mismatch, with the wider ellipsis on the earlier term.
+            ((2, 3), (), "...,...->..."),
+            # Mismatch alongside explicit labels.
+            ((3, 4), (2, 3, 4), "...ij,...ij->...ij"),
+            # Mismatch with an implicit (omitted) output term.
+            ((), (2, 3), "...,..."),
+        ],
+    )
+    def test_einsum_ellipsis_mismatched_rank_raises(
+        self, shape_x, shape_y, equation: str
+    ) -> None:
+        graph = self._make_graph(
+            [("x", TensorProto.FLOAT, shape_x), ("y", TensorProto.FLOAT, shape_y)],
+            [make_node("Einsum", ["x", "y"], ["z"], equation=equation)],
+            [],
+        )
+        with pytest.raises(onnx.shape_inference.InferenceError):
+            self._inferred(graph)
+
+    def test_einsum_ellipsis_matching_rank_zero(self) -> None:
+        graph = self._make_graph(
+            [("x", TensorProto.FLOAT, ()), ("y", TensorProto.FLOAT, ())],
+            [make_node("Einsum", ["x", "y"], ["z"], equation="...,...->...")],
+            [],
+        )
+        self._assert_inferred(
+            graph, [make_tensor_value_info("z", TensorProto.FLOAT, ())]
+        )
+
     def test_einsum_contraction(self) -> None:
         graph = self._make_graph(
             [
