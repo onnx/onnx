@@ -396,6 +396,13 @@ struct Value final {
   const Graph* owningGraph() const;
   use_list uses() const;
 
+  // Cheap (O(1)) equivalent of ``!uses().empty()`` that skips uses()'s scan
+  // for kCaptured placeholders in nested subgraphs -- safe only when the
+  // caller has established the graph tree has no control-flow subgraphs.
+  bool hasUsesInCurrentGraph() const {
+    return !uses_in_current_graph_.empty();
+  }
+
   // Replaces all uses of this node with 'newValue'.
   //
   // Given:   %3 = f(%1, %2)
@@ -578,6 +585,15 @@ struct Node : public Attributes<Node> {
   bool hasUses() const {
     for (const auto* o : outputs()) {
       if (!o->uses().empty())
+        return true;
+    }
+    return false;
+  }
+  // Cheap equivalent of hasUses() -- see Value::hasUsesInCurrentGraph()'s
+  // comment for exactly what this does and doesn't see.
+  bool hasUsesInCurrentGraph() const {
+    for (const auto* o : outputs()) {
+      if (o->hasUsesInCurrentGraph())
         return true;
     }
     return false;
