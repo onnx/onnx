@@ -28,9 +28,11 @@ class _CommonDequantizeLinear(OpRun):
             TensorProto.FLOAT8E5M2,
             TensorProto.FLOAT8E5M2FNUZ,
         }
+        fp6_type = x_type in {TensorProto.FLOAT6E2M3, TensorProto.FLOAT6E3M2}
         if (
             x_zero_point is not None
             and not fp8_type
+            and not fp6_type
             and x_type != TensorProto.FLOAT4E2M1
         ):
             zero_type = np_dtype_to_tensor_dtype(x_zero_point.dtype)
