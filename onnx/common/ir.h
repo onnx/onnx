@@ -409,7 +409,12 @@ struct Value final {
 
   Value* copyMetadata(const Value* from) {
     setElemType(from->elemType());
-    setSizes(from->sizes());
+    if (from->has_sizes()) {
+      setSizes(from->sizes());
+    } else {
+      // Don't let setSizes({}) turn "rank unknown" into "rank 0".
+      wipeSizes();
+    }
     if (from->has_unique_name()) {
       setUniqueName(from->uniqueName());
     }
