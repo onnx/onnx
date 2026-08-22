@@ -59,11 +59,7 @@ TEST(IR, ValidIdentifierTest) {
   }
 }
 
-// Regression: copyMetadata() used to unconditionally call
-// setSizes(from->sizes()), which copies an empty vector when `from` has no
-// known rank and setSizes() then marks that empty vector as a definite,
-// present rank-0 shape. A rank-unknown source must leave the destination
-// rank-unknown, not turn it into a scalar.
+// Regression: copyMetadata() must not turn "rank unknown" into rank 0.
 TEST(IR, CopyMetadataPreservesUnknownRank) {
   Graph g;
   g.setName("test");
