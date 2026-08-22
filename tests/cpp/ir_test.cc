@@ -59,6 +59,40 @@ TEST(IR, ValidIdentifierTest) {
   }
 }
 
+// Regression: copyMetadata() used to unconditionally call
+// setSizes(from->sizes()), which copies an empty vector when `from` has no
+// known rank and setSizes() then marks that empty vector as a definite,
+// present rank-0 shape. A rank-unknown source must leave the destination
+// rank-unknown, not turn it into a scalar.
+TEST(IR, CopyMetadataPreservesUnknownRank) {
+  Graph g;
+  g.setName("test");
+  Value* from = g.addInput();
+  Value* to = g.addInput();
+  to->setSizes({Dimension(1)});
+  ASSERT_FALSE(from->has_sizes());
+  ASSERT_TRUE(to->has_sizes());
+
+  to->copyMetadata(from);
+  EXPECT_FALSE(to->has_sizes());
+}
+
+// copyMetadata() must still copy a known rank/shape over.
+TEST(IR, CopyMetadataCopiesKnownSizes) {
+  Graph g;
+  g.setName("test");
+  Value* from = g.addInput();
+  from->setSizes({Dimension(2), Dimension(3)});
+  Value* to = g.addInput();
+  ASSERT_FALSE(to->has_sizes());
+
+  to->copyMetadata(from);
+  ASSERT_TRUE(to->has_sizes());
+  ASSERT_EQ(to->sizes().size(), 2u);
+  EXPECT_EQ(to->sizes()[0].dim, 2);
+  EXPECT_EQ(to->sizes()[1].dim, 3);
+}
+
 // Regression tests for Graph's name-uniqueness bookkeeping (used_names_ /
 // subgraph_bearing_nodes_, backing isNameUnique()/getNextUniqueName()): a
 // name can have more than one live holder at once (an initializer's Tensor

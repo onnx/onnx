@@ -412,11 +412,7 @@ struct Value final {
     if (from->has_sizes()) {
       setSizes(from->sizes());
     } else {
-      // Unconditionally calling setSizes(from->sizes()) here would copy an
-      // *empty* vector when `from` has no known rank (has_sizes() false),
-      // which setSizes() would then mark as a definite, present rank-0
-      // (scalar) shape -- silently corrupting "rank unknown" into "rank 0"
-      // for any Value copied from one with no shape info yet.
+      // Don't let setSizes({}) turn "rank unknown" into "rank 0".
       wipeSizes();
     }
     if (from->has_unique_name()) {
