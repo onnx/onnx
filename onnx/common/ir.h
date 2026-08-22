@@ -1040,13 +1040,8 @@ struct Graph final {
     return true;
   }
 
-  // Same traversal as isNameUnique() above (initializer_names_, every node's
-  // inputs/outputs via uniqueName() -- which falls back to a derived name for
-  // an unnamed Value, so this must run for every Value, not just named ones
-  // -- recursing into g/gs subgraph attributes), but collecting every name
-  // seen into `out` instead of checking one candidate at a time. Used by
-  // reserveUniqueNames() below to pay this scan once for a whole batch of
-  // names instead of once per name.
+  // Same traversal as isNameUnique(), but collects every name into `out`
+  // instead of checking one candidate at a time.
   void collectAllNames(std::unordered_set<std::string>& out) const {
     out.insert(initializer_names_.cbegin(), initializer_names_.cend());
     for (const auto& node_entry : all_nodes) {
@@ -1185,16 +1180,9 @@ struct Graph final {
     return toVarName(getNextUnique());
   }
 
-  // Reserves `count` distinct names, each guaranteed unique against every
-  // name currently used anywhere in the graph tree -- matching exactly what
-  // `count` consecutive getNextUniqueName() calls would produce, but paying
-  // isNameUnique()'s full graph (and subgraph) scan once for the whole batch
-  // (via collectAllNames() above) instead of once per name via
-  // getNextUnique() -> isNameUnique(). Intended for passes that mint many
-  // fresh names in one runPass() call (see onnxsim issue #651's follow-up,
-  // where extract_constant_to_initializer's one-getNextUniqueName()-call-
-  // per-match pattern made that pass accidentally quadratic); a single
-  // getNextUniqueName() call remains simplest for the common one-name case.
+  // Like `count` consecutive getNextUniqueName() calls, but pays
+  // isNameUnique()'s full graph scan once for the batch instead of once
+  // per name.
   std::vector<std::string> reserveUniqueNames(size_t count) {
     std::vector<std::string> names;
     names.reserve(count);
