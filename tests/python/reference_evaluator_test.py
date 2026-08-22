@@ -4063,13 +4063,14 @@ class TestReferenceEvaluator:
 
     def test_lrn(self):
         def _expected(x, alpha, beta, bias, size):
-            square_sum = np.zeros((5, 5, 5, 5)).astype(np.float32)
+            square_sum = np.zeros_like(x)
+            channel_count = x.shape[1]
             for n, c, h, w in np.ndindex(x.shape):
                 square_sum[n, c, h, w] = sum(
                     x[
                         n,
                         max(0, c - math.floor((size - 1) / 2)) : min(
-                            5, c + math.ceil((size - 1) / 2) + 1
+                            channel_count, c + math.ceil((size - 1) / 2) + 1
                         ),
                         h,
                         w,
@@ -4083,17 +4084,18 @@ class TestReferenceEvaluator:
         beta = 0.5
         bias = 2.0
         size = 3
-        X = make_tensor_value_info("X", TensorProto.FLOAT, [5, 5, 50, 50])
+        shape = (2, 3, 4, 4)
+        X = make_tensor_value_info("X", TensorProto.FLOAT, shape)
         Z = make_tensor_value_info("Z", TensorProto.UNDEFINED, None)
         nodes = [
             make_node("LRN", ["X"], ["Z"], alpha=alpha, beta=beta, bias=bias, size=size)
         ]
         model = make_model(make_graph(nodes, "g", [X], [Z]))
         ref = ReferenceEvaluator(model)
-        data = np.random.rand(5, 5, 5, 5).astype(np.float32)
+        data = np.random.default_rng(0).random(shape, dtype=np.float32)
         got = ref.run(None, {"X": data})
         expected = _expected(data, alpha, beta, bias, size)
-        assert len(got[0]) == len(expected)
+        assert_allclose(got[0], expected)
 
     def test_conv_im2col_1d(self):
         feeds = {
