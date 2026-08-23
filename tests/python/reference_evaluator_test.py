@@ -694,6 +694,16 @@ class TestReferenceEvaluator:
         got = sess.run(None, {"X": x, "Y": y})[0]
         assert_allclose(got, expected)
 
+    @pytest.mark.parametrize("axis", [-2, 1])
+    def test_concat_rejects_axis_out_of_range(self, axis: int):
+        node = make_node("Concat", ["X"], ["Y"], axis=axis)
+        sess = ReferenceEvaluator(node)
+
+        with pytest.raises(
+            ValueError, match=rf"axis {axis} is out of range for input rank 1"
+        ):
+            sess.run(None, {"X": np.ones((1,), dtype=np.float32)})
+
     def test_greater_or_equal(self):
         X = make_tensor_value_info("X", TensorProto.FLOAT, [None, None])
         Y = make_tensor_value_info("Y", TensorProto.FLOAT, [None])
