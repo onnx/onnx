@@ -8,6 +8,7 @@
 #pragma once
 
 #include <cmath>
+#include <cstdint>
 #include <string>
 #include <utility>
 #include <vector>
@@ -18,8 +19,48 @@
 
 namespace ONNX_NAMESPACE {
 
+// Lazily-minted per-Tensor id, reset to "unassigned" on copy/assign (never
+// on move) so tensor_id() is safe to key a cache on instead of &tensor,
+// which can alias a stale entry onto an unrelated tensor reusing a freed
+// address (e.g. via Graph::eraseInitializer). See
+// onnxoptimizer/passes/tensor_content_hash.h's TensorContentDigest cache,
+// the motivating consumer. Wrapped in its own class so Tensor keeps fully
+// compiler-generated special member functions. Not atomic: Tensor
+// construction is single-threaded throughout this codebase.
+class LazyTensorId {
+ public:
+  LazyTensorId() = default;
+  ~LazyTensorId() = default;
+  LazyTensorId(const LazyTensorId& /*unused*/) noexcept {}
+  LazyTensorId(LazyTensorId&& /*unused*/) noexcept {}
+  LazyTensorId& operator=(const LazyTensorId& other) noexcept {
+    if (this != &other) {
+      id_ = 0;
+    }
+    return *this;
+  }
+  LazyTensorId& operator=(LazyTensorId&& other) noexcept {
+    if (this != &other) {
+      id_ = 0;
+    }
+    return *this;
+  }
+  uint64_t Get() const {
+    if (id_ == 0) {
+      static uint64_t counter = 0;
+      id_ = ++counter;
+    }
+    return id_;
+  }
+
+ private:
+  mutable uint64_t id_{0};
+};
+
 struct Tensor final {
  private:
+  LazyTensorId tensor_id_;
+
   bool is_segment_{false};
   int64_t segment_begin_{0};
   int64_t segment_end_{0};
@@ -42,6 +83,14 @@ struct Tensor final {
   ONNX_NAMESPACE::TensorProto_DataLocation data_location_{ONNX_NAMESPACE::TensorProto_DataLocation_DEFAULT};
 
  public:
+  // Special member functions are all implicit: LazyTensorId's own copy/move
+  // constructor and assignment operator already give tensor_id_ the right
+  // behavior.
+
+  uint64_t tensor_id() const {
+    return tensor_id_.Get();
+  }
+
   const std::vector<int64_t>& sizes() const {
     return sizes_;
   }
