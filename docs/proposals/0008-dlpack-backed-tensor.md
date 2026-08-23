@@ -109,11 +109,34 @@ ONNX has no stride concept today — a tensor is always dense row-major, both in
 
 Existing accessor names are preserved as thin views over `buffer_`:
 
-- `data<T>()` — throws if `buffer_.empty()`; otherwise reinterprets, as the raw-data path does today.
+- `data<T>()` — throws if `buffer_.empty()`; otherwise reinterprets, as the raw-data path does today. Const/read-only.
 - `raw()` — returns a `string_view` over `buffer_.data()`/`nbytes()`; no allocation.
 - `floats()`/`doubles()`/`int32s()`/etc. — become typed spans over the same buffer; kept for source compatibility, documented as legacy in favor of `data<T>()`.
 - `set_raw_data(std::string)` — allocates a new owned `TensorBuffer` and moves bytes in once; the one place a real copy still happens, same as today.
 - `has_data() const` — new; the canonical replacement for `data_location_ == TensorProto::EXTERNAL` checks scattered through pass code.
+- `mutable_data<T>()` — new; copy-on-write mutable access. See Mutability below.
+
+### Mutability
+
+`data<T>()` stays const and read-only — no behavior change for the read-only pass code that makes up nearly every call site today. Mutation gets its own explicit entry point, modeled on the `foo()`/`mutable_foo()` split already familiar from protobuf-generated code in this codebase, with copy-on-write underneath:
+
+```cpp
+template <typename T>
+T* Tensor::mutable_data() {
+  if (buffer_.empty()) throw std::runtime_error(/* ... */);
+  if (!buffer_.owned() || buffer_.use_count() > 1) {
+    buffer_ = buffer_.Clone();  // materialize a fresh, uniquely-owned copy
+  }
+  return reinterpret_cast<T*>(buffer_.data());
+}
+```
+
+Two gates, both required — either alone is insufficient:
+
+- **Origin.** A `Borrow()`ed buffer materializes unconditionally on first mutable access, regardless of refcount. `TensorBuffer`'s refcount only tracks `Tensor`-to-`Tensor` sharing through this type; it says nothing about whether the *external* owner (a foreign framework's array, `TensorPool`'s memory-mapped region, another independent `Borrow()` call on the same address) is still reading that memory. Only `Adopt()`/`Allocate()`-sourced buffers are ever candidates for in-place mutation.
+- **Uniqueness.** Even an owned buffer is safe to write in place only when `use_count() == 1`; otherwise another `Tensor` copy is aliasing it, and mutation clones first — ordinary copy-on-write. `TensorBuffer::Clone()` is the same allocate-and-copy operation `Allocate()`/`set_raw_data()` already perform, reused rather than duplicated.
+
+This is the resolution to the mutability question raised in earlier drafts of this proposal (see Drawbacks): aliasing is never silently observable through a write, because there is no unguarded write path — every mutable access either has provably exclusive ownership or pays for a copy first.
 
 ### Migration path
 
@@ -126,7 +149,7 @@ Each step is independently buildable and shippable; this proposal does not requi
 ## Drawbacks
 [drawbacks]: #drawbacks
 
-- **Shared mutable state.** Because copies now alias the same buffer, an in-place mutation through one `Tensor` becomes visible through every other `Tensor` copy that shares it. Today's deep-copy semantics made this impossible by accident, not by design, so no pass should be relying on it — but that needs to be verified across the ecosystem, not assumed, before this ships. See Unresolved questions.
+- **Shared mutable state.** Because copies now alias the same buffer, an unguarded in-place mutation through one `Tensor` could become visible through every other `Tensor` copy that shares it. Today's deep-copy semantics made this impossible by accident, not by design. Resolved by construction rather than by convention: see Reference-level explanation → Mutability. `data<T>()` stays read-only; the only mutable entry point, `mutable_data<T>()`, is copy-on-write and never exposes a shared or borrowed buffer for writing.
 - **DLPack C-ABI surface.** `DLManagedTensor` is a C-ABI struct with a manual `deleter` function pointer. Every construction path (`Borrow`/`Adopt`/`Allocate`) has to get that deleter right, or a borrowed buffer outlives its source and dangles. This is a well-understood but real class of bug to get exactly right in three places.
 - **Narrower dtype support at the buffer boundary.** DLPack's `DLDataType` does not cover every value `TensorProto::DataType` can hold with a clean 1:1 mapping — string types in particular do not fit a flat typed buffer at all (see below). `elem_type_` itself is untouched by this proposal, but any code that goes through `TensorBuffer`'s DLPack shape inherits DLPack's narrower support.
 - **Migration surface.** Even scoped to the internal IR, this is a breaking change to a class that downstream C++ consumers link against directly, not merely an internal implementation detail of this repository — and it touches every pass in at least one known downstream fork. That is real review and testing cost, proportional to how widely `onnx::Tensor` is depended on outside this repository, which this proposal does not have full visibility into (see Unresolved questions).
@@ -153,7 +176,6 @@ Each step is independently buildable and shippable; this proposal does not requi
 ## Unresolved questions
 [unresolved-questions]: #unresolved-questions
 
-- **Copy-on-write, or push mutability out of the type?** Cheap copies plus in-place mutation is a classic aliasing hazard (see Drawbacks). Two options: (a) `Tensor` is logically immutable once `buffer_` is set — "mutation" always means constructing a new `Tensor` — matching how the prior-art DLPack bridge already treats DLPack tensors as effectively immutable views; (b) real copy-on-write, cloning on first mutable access when the refcount is greater than one. This proposal leans toward (a) for simplicity but expects this to be resolved through RFC discussion before implementation.
 - **Does `string_data_` fit this model at all?** String tensors are variable-length per element — DLPack has no native representation for that. It likely stays a distinct `std::vector<std::string>` path outside `TensorBuffer`, meaning `Tensor` keeps one narrow, permanent exception to "single buffer handle." This should be settled by this RFC rather than discovered mid-implementation.
 - **Segmented tensors (`is_segment_`/`segment_begin_`/`segment_end_`)** have not yet been examined against this design. Implementation needs to confirm segments compose cleanly as a sub-view of a parent `TensorBuffer`, or determine they need their own borrowing mechanism — expected to be resolved during implementation rather than blocking RFC acceptance.
 - **Alignment contract.** Memory-mapped external buffers are page-aligned; today's typed-vector storage has no alignment guarantee beyond the standard allocator's. If any consumer wants SIMD-aligned access via `data<T>()`, that needs to be a documented contract of `TensorBuffer::Allocate`, decided as part of this RFC rather than assumed later.
