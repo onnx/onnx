@@ -1138,6 +1138,31 @@ class TestShapeInference(TestShapeInferenceHelper):
                 opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
             )
 
+    @pytest.mark.parametrize("version", all_versions_for("GroupNormalization"))
+    def test_group_normalization(self, version) -> None:
+        self.skipIf(version < 21, "GroupNormalization-18 is deprecated")
+        graph = self._make_graph(
+            [
+                ("X", TensorProto.FLOAT, ("N", 4, "H", "W")),
+                ("scale", TensorProto.FLOAT, (4,)),
+                ("bias", TensorProto.FLOAT, (4,)),
+            ],
+            [
+                make_node(
+                    "GroupNormalization",
+                    ["X", "scale", "bias"],
+                    ["y"],
+                    num_groups=2,
+                )
+            ],
+            [],
+        )
+        self._assert_inferred(
+            graph,
+            [make_tensor_value_info("y", TensorProto.FLOAT, ("N", 4, "H", "W"))],
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
+        )
+
     @pytest.mark.parametrize("version", all_versions_for("RMSNormalization"))
     def test_rms_normalization(self, version) -> None:
         graph = self._make_graph(
