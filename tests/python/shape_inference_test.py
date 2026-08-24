@@ -2998,6 +2998,64 @@ class TestShapeInference(TestShapeInferenceHelper):
             ],
         )
 
+    def test_attention_25_rejects_invalid_attribute_and_cache_combinations(
+        self,
+    ) -> None:
+        qkv_inputs = [
+            ("Q", TensorProto.FLOAT, (2, 4, 3, 8)),
+            ("K", TensorProto.FLOAT, (2, 2, 5, 8)),
+            ("V", TensorProto.FLOAT, (2, 2, 5, 6)),
+        ]
+        past_inputs = [
+            ("past_key", TensorProto.FLOAT, (2, 2, 4, 8)),
+            ("past_value", TensorProto.FLOAT, (2, 2, 4, 6)),
+        ]
+        nonpad_input = [("nonpad", TensorProto.INT64, (2,))]
+        cases = [
+            (
+                qkv_inputs,
+                make_node("Attention", ["Q", "K", "V"], ["Y"], left_window_size=-2),
+            ),
+            (
+                qkv_inputs,
+                make_node("Attention", ["Q", "K", "V"], ["Y"], right_window_size=-2),
+            ),
+            (
+                qkv_inputs + past_inputs[:1],
+                make_node("Attention", ["Q", "K", "V", "", "past_key"], ["Y"]),
+            ),
+            (
+                qkv_inputs,
+                make_node("Attention", ["Q", "K", "V"], ["Y", "present_key"]),
+            ),
+            (
+                qkv_inputs + past_inputs + nonpad_input,
+                make_node(
+                    "Attention",
+                    ["Q", "K", "V", "", "past_key", "past_value", "nonpad"],
+                    ["Y"],
+                ),
+            ),
+            (
+                qkv_inputs,
+                make_node(
+                    "Attention",
+                    ["Q", "K", "V"],
+                    ["Y"],
+                    q_num_heads=4,
+                    kv_num_heads=2,
+                ),
+            ),
+        ]
+
+        for inputs, node in cases:
+            graph = self._make_graph(inputs, [node], [])
+            with pytest.raises(onnx.shape_inference.InferenceError):
+                self._inferred(
+                    graph,
+                    opset_imports=[helper.make_opsetid(ONNX_DOMAIN, 25)],
+                )
+
     def test_linear_attention_basic_mha(self) -> None:
         # update_rule="linear" with no optional inputs: baseline shape/dtype plumbing.
         # H_q == H_kv == 4, d_k == d_v == 16. Output is 3D packed; state is 4D.

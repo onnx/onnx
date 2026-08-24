@@ -6,7 +6,7 @@
 * [Overall Test Coverage](#overall-test-coverage)
 # Node Test Coverage
 ## Summary
-Node tests have covered 190/202 (94.06%, 5 generators excluded) common operators.
+Node tests have covered 192/202 (95.05%, 5 generators excluded) common operators.
 
 Node tests have covered 1/1 (100.00%, 0 generators excluded) experimental operators.
 
@@ -1114,7 +1114,7 @@ expect(node, inputs=[x], outputs=[y], name="test_atanh")
 
 
 ### Attention
-There are 76 test cases, listed as following:
+There are 87 test cases, listed as following:
 <details>
 <summary>attention</summary>
 
@@ -1942,6 +1942,46 @@ expect(
     outputs=[Y, present_key, present_value],
     name="test_attention_3d_gqa_with_past_and_present",
     opset_imports=[onnx.helper.make_opsetid("", 23)],
+)
+```
+
+</details>
+<details>
+<summary>attention_3d_local_window</summary>
+
+```python
+"""Sliding window with 3D MQA inputs and a distinct V head size."""
+left_window_size = 2
+node = onnx.helper.make_node(
+    "Attention",
+    inputs=["Q", "K", "V"],
+    outputs=["Y"],
+    q_num_heads=4,
+    kv_num_heads=1,
+    is_causal=1,
+    left_window_size=left_window_size,
+)
+
+Q = np.random.rand(2, 4, 32).astype(np.float32)
+K = np.random.rand(2, 6, 8).astype(np.float32)
+V = np.random.rand(2, 6, 6).astype(np.float32)
+
+Y, _, _, _ = _compute_attention(
+    Q,
+    K,
+    V,
+    q_num_heads=4,
+    kv_num_heads=1,
+    is_causal=1,
+    left_window_size=left_window_size,
+)
+
+expect(
+    node,
+    inputs=[Q, K, V],
+    outputs=[Y],
+    name="test_attention_3d_local_window",
+    opset_imports=[onnx.helper.make_opsetid("", 25)],
 )
 ```
 
@@ -2977,6 +3017,43 @@ expect(
 
 </details>
 <details>
+<summary>attention_bidirectional_window</summary>
+
+```python
+"""Asymmetric bidirectional window independent of causal masking."""
+node = onnx.helper.make_node(
+    "Attention",
+    inputs=["Q", "K", "V"],
+    outputs=["Y"],
+    left_window_size=1,
+    right_window_size=2,
+)
+
+Q = np.zeros((1, 1, 5, 1), dtype=np.float32)
+K = np.zeros((1, 1, 5, 1), dtype=np.float32)
+V = np.arange(5, dtype=np.float32).reshape(1, 1, 5, 1)
+Y, _, _, _ = _compute_attention(
+    Q,
+    K,
+    V,
+    left_window_size=1,
+    right_window_size=2,
+)
+
+np.testing.assert_allclose(
+    Y.reshape(-1), np.array([1.0, 1.5, 2.5, 3.0, 3.5], dtype=np.float32)
+)
+expect(
+    node,
+    inputs=[Q, K, V],
+    outputs=[Y],
+    name="test_attention_bidirectional_window",
+    opset_imports=[onnx.helper.make_opsetid("", 25)],
+)
+```
+
+</details>
+<details>
 <summary>attention_causal</summary>
 
 ```python
@@ -3554,6 +3631,368 @@ expect(
     outputs=[Y, present_key, present_value],
     name="test_attention_4d_gqa_with_past_and_present_fp16",
     opset_imports=[onnx.helper.make_opsetid("", 23)],
+)
+```
+
+</details>
+<details>
+<summary>attention_local_window</summary>
+
+```python
+"""Causal sliding window attention with two preceding positions."""
+left_window_size = 2
+node = onnx.helper.make_node(
+    "Attention",
+    inputs=["Q", "K", "V"],
+    outputs=["Y"],
+    is_causal=1,
+    left_window_size=left_window_size,
+)
+
+Q = np.random.rand(2, 3, 4, 8).astype(np.float32)
+K = np.random.rand(2, 3, 6, 8).astype(np.float32)
+V = np.random.rand(2, 3, 6, 8).astype(np.float32)
+
+Y, _, _, _ = _compute_attention(
+    Q, K, V, is_causal=1, left_window_size=left_window_size
+)
+
+expect(
+    node,
+    inputs=[Q, K, V],
+    outputs=[Y],
+    name="test_attention_local_window",
+    opset_imports=[onnx.helper.make_opsetid("", 25)],
+)
+```
+
+</details>
+<details>
+<summary>attention_local_window_default</summary>
+
+```python
+"""Disabled window bounds behave identically to version 24."""
+node = onnx.helper.make_node(
+    "Attention",
+    inputs=["Q", "K", "V"],
+    outputs=["Y"],
+    left_window_size=-1,
+    right_window_size=-1,
+)
+
+Q = np.random.rand(2, 3, 4, 8).astype(np.float32)
+K = np.random.rand(2, 3, 6, 8).astype(np.float32)
+V = np.random.rand(2, 3, 6, 8).astype(np.float32)
+
+Y, _, _, _ = _compute_attention(
+    Q, K, V, left_window_size=-1, right_window_size=-1
+)
+
+expect(
+    node,
+    inputs=[Q, K, V],
+    outputs=[Y],
+    name="test_attention_local_window_default",
+    opset_imports=[onnx.helper.make_opsetid("", 25)],
+)
+```
+
+</details>
+<details>
+<summary>attention_local_window_ext_cache_float16_mask</summary>
+
+```python
+"""External cache with a float16 attention mask."""
+left_window_size = 2
+B, H, S_q, S_kv, D = 2, 3, 4, 8, 8
+node = onnx.helper.make_node(
+    "Attention",
+    inputs=["Q", "K", "V", "attn_mask", "", "", "nonpad_kv_seqlen"],
+    outputs=["Y"],
+    is_causal=1,
+    left_window_size=left_window_size,
+)
+
+Q = np.zeros((B, H, S_q, D), dtype=np.float16)
+K = np.zeros((B, H, S_kv, D), dtype=np.float16)
+V = np.ones((B, H, S_kv, D), dtype=np.float16)
+attn_mask = np.zeros((1, S_kv), dtype=np.float16)
+nonpad_kv_seqlen = np.array([6, 7], dtype=np.int64)
+
+Y, _, _, _ = _compute_attention(
+    Q,
+    K,
+    V,
+    attn_mask=attn_mask,
+    nonpad_kv_seqlen=nonpad_kv_seqlen,
+    is_causal=1,
+    left_window_size=left_window_size,
+)
+
+expect(
+    node,
+    inputs=[Q, K, V, attn_mask, nonpad_kv_seqlen],
+    outputs=[Y],
+    name="test_attention_local_window_ext_cache_float16_mask",
+    opset_imports=[onnx.helper.make_opsetid("", 25)],
+)
+```
+
+</details>
+<details>
+<summary>attention_local_window_ext_cache_rank2_mask</summary>
+
+```python
+"""External cache with a conventional rank-2 ``(1, kv)`` mask."""
+left_window_size = 2
+B, H, S_q, S_kv, D = 2, 3, 4, 8, 8
+node = onnx.helper.make_node(
+    "Attention",
+    inputs=["Q", "K", "V", "attn_mask", "", "", "nonpad_kv_seqlen"],
+    outputs=["Y"],
+    is_causal=1,
+    left_window_size=left_window_size,
+)
+
+Q = np.random.rand(B, H, S_q, D).astype(np.float32)
+K = np.random.rand(B, H, S_kv, D).astype(np.float32)
+V = np.random.rand(B, H, S_kv, D).astype(np.float32)
+attn_mask = np.random.rand(1, S_kv).astype(np.float32)
+nonpad_kv_seqlen = np.array([6, 7], dtype=np.int64)
+
+Y, _, _, _ = _compute_attention(
+    Q,
+    K,
+    V,
+    attn_mask=attn_mask,
+    nonpad_kv_seqlen=nonpad_kv_seqlen,
+    is_causal=1,
+    left_window_size=left_window_size,
+)
+
+expect(
+    node,
+    inputs=[Q, K, V, attn_mask, nonpad_kv_seqlen],
+    outputs=[Y],
+    name="test_attention_local_window_ext_cache_rank2_mask",
+    opset_imports=[onnx.helper.make_opsetid("", 25)],
+)
+```
+
+</details>
+<details>
+<summary>attention_local_window_ext_cache_rank3_head_mask</summary>
+
+```python
+"""External cache with a legal rank-3 ``(heads, q, kv)`` mask."""
+left_window_size = 2
+B, H, S_q, S_kv, D = 2, 3, 4, 8, 8
+node = onnx.helper.make_node(
+    "Attention",
+    inputs=["Q", "K", "V", "attn_mask", "", "", "nonpad_kv_seqlen"],
+    outputs=["Y"],
+    is_causal=1,
+    left_window_size=left_window_size,
+)
+
+Q = np.random.rand(B, H, S_q, D).astype(np.float32)
+K = np.random.rand(B, H, S_kv, D).astype(np.float32)
+V = np.random.rand(B, H, S_kv, D).astype(np.float32)
+# Rank 3 is right-aligned as (heads, q, kv), not (batch, q, kv).
+attn_mask = np.random.rand(H, S_q, S_kv).astype(np.float32)
+# External cache: nonpad_kv_seqlen marks valid key count per batch
+nonpad_kv_seqlen = np.array([6, 7], dtype=np.int64)
+
+Y, _, _, _ = _compute_attention(
+    Q,
+    K,
+    V,
+    attn_mask=attn_mask,
+    nonpad_kv_seqlen=nonpad_kv_seqlen,
+    is_causal=1,
+    left_window_size=left_window_size,
+)
+
+expect(
+    node,
+    inputs=[Q, K, V, attn_mask, nonpad_kv_seqlen],
+    outputs=[Y],
+    name="test_attention_local_window_ext_cache_rank3_head_mask",
+    opset_imports=[onnx.helper.make_opsetid("", 25)],
+)
+```
+
+</details>
+<details>
+<summary>attention_local_window_ext_cache_rank4_batch_mask</summary>
+
+```python
+"""External cache with a batch-specific rank-4 ``(batch, 1, q, kv)`` mask."""
+left_window_size = 2
+B, H, S_q, S_kv, D = 2, 3, 4, 8, 8
+node = onnx.helper.make_node(
+    "Attention",
+    inputs=["Q", "K", "V", "attn_mask", "", "", "nonpad_kv_seqlen"],
+    outputs=["Y"],
+    is_causal=1,
+    left_window_size=left_window_size,
+)
+
+Q = np.random.rand(B, H, S_q, D).astype(np.float32)
+K = np.random.rand(B, H, S_kv, D).astype(np.float32)
+V = np.random.rand(B, H, S_kv, D).astype(np.float32)
+attn_mask = np.random.rand(B, 1, S_q, S_kv).astype(np.float32)
+nonpad_kv_seqlen = np.array([6, 7], dtype=np.int64)
+
+Y, _, _, _ = _compute_attention(
+    Q,
+    K,
+    V,
+    attn_mask=attn_mask,
+    nonpad_kv_seqlen=nonpad_kv_seqlen,
+    is_causal=1,
+    left_window_size=left_window_size,
+)
+
+expect(
+    node,
+    inputs=[Q, K, V, attn_mask, nonpad_kv_seqlen],
+    outputs=[Y],
+    name="test_attention_local_window_ext_cache_rank4_batch_mask",
+    opset_imports=[onnx.helper.make_opsetid("", 25)],
+)
+```
+
+</details>
+<details>
+<summary>attention_local_window_gqa_rank4_mask</summary>
+
+```python
+"""Windowed GQA with distinct V head size and a per-head boolean mask."""
+np.random.seed(25)
+B, H_q, H_kv, S_q, S_kv, D_qk, D_v = 2, 4, 2, 4, 6, 8, 6
+left_window_size = 2
+softmax_precision = int(onnx.TensorProto.DOUBLE)
+node = onnx.helper.make_node(
+    "Attention",
+    inputs=["Q", "K", "V", "attn_mask"],
+    outputs=["Y", "", "", "qk_matmul_output"],
+    is_causal=1,
+    left_window_size=left_window_size,
+    softcap=2.0,
+    softmax_precision=softmax_precision,
+    qk_matmul_output_mode=3,
+)
+
+Q = np.random.rand(B, H_q, S_q, D_qk).astype(np.float32)
+K = np.random.rand(B, H_kv, S_kv, D_qk).astype(np.float32)
+V = np.random.rand(B, H_kv, S_kv, D_v).astype(np.float32)
+attn_mask = np.ones((B, H_q, S_q, S_kv), dtype=np.bool_)
+attn_mask[:, :, 0, :] = False
+
+Y, _, _, qk_matmul_output = _compute_attention(
+    Q,
+    K,
+    V,
+    attn_mask=attn_mask,
+    is_causal=1,
+    left_window_size=left_window_size,
+    softcap=2.0,
+    softmax_precision=softmax_precision,
+    qk_matmul_output_mode=3,
+)
+
+assert Y.shape == (B, H_q, S_q, D_v)
+assert np.array_equal(Y[:, :, 0, :], np.zeros_like(Y[:, :, 0, :]))
+assert np.array_equal(
+    qk_matmul_output[:, :, 0, :], np.zeros_like(qk_matmul_output[:, :, 0, :])
+)
+
+expect(
+    node,
+    inputs=[Q, K, V, attn_mask],
+    outputs=[Y, qk_matmul_output],
+    name="test_attention_local_window_gqa_rank4_mask",
+    opset_imports=[onnx.helper.make_opsetid("", 25)],
+)
+```
+
+</details>
+<details>
+<summary>attention_local_window_rank1_boolean_mask</summary>
+
+```python
+"""A rank-1 boolean mask retains standard right-aligned broadcasting."""
+left_window_size = 2
+node = onnx.helper.make_node(
+    "Attention",
+    inputs=["Q", "K", "V", "attn_mask"],
+    outputs=["Y"],
+    is_causal=1,
+    left_window_size=left_window_size,
+)
+
+Q = np.random.rand(2, 3, 4, 8).astype(np.float32)
+K = np.random.rand(2, 3, 6, 8).astype(np.float32)
+V = np.random.rand(2, 3, 6, 8).astype(np.float32)
+attn_mask = np.array([True, True, True, True, False, False])
+
+Y, _, _, _ = _compute_attention(
+    Q,
+    K,
+    V,
+    attn_mask=attn_mask,
+    is_causal=1,
+    left_window_size=left_window_size,
+)
+
+expect(
+    node,
+    inputs=[Q, K, V, attn_mask],
+    outputs=[Y],
+    name="test_attention_local_window_rank1_boolean_mask",
+    opset_imports=[onnx.helper.make_opsetid("", 25)],
+)
+```
+
+</details>
+<details>
+<summary>attention_local_window_with_past</summary>
+
+```python
+"""Sliding window with internal KV cache (past_key/past_value)."""
+left_window_size = 2
+past_sequence_length = 8
+node = onnx.helper.make_node(
+    "Attention",
+    inputs=["Q", "K", "V", "", "past_key", "past_value"],
+    outputs=["Y", "present_key", "present_value"],
+    is_causal=1,
+    left_window_size=left_window_size,
+)
+
+Q = np.random.rand(2, 3, 4, 8).astype(np.float32)
+K = np.random.rand(2, 3, 2, 8).astype(np.float32)
+V = np.random.rand(2, 3, 2, 8).astype(np.float32)
+past_key = np.random.rand(2, 3, past_sequence_length, 8).astype(np.float32)
+past_value = np.random.rand(2, 3, past_sequence_length, 8).astype(np.float32)
+
+Y, present_key, present_value, _ = _compute_attention(
+    Q,
+    K,
+    V,
+    past_key=past_key,
+    past_value=past_value,
+    is_causal=1,
+    left_window_size=left_window_size,
+)
+
+expect(
+    node,
+    inputs=[Q, K, V, past_key, past_value],
+    outputs=[Y, present_key, present_value],
+    name="test_attention_local_window_with_past",
+    opset_imports=[onnx.helper.make_opsetid("", 25)],
 )
 ```
 
@@ -11619,7 +12058,7 @@ expect(
 
 
 ### Greater
-There are 4 test cases, listed as following:
+There are 2 test cases, listed as following:
 <details>
 <summary>greater</summary>
 
@@ -11668,7 +12107,45 @@ expect(node, inputs=[x, y], outputs=[z], name="test_greater_uint64")
 
 </details>
 <details>
-<summary>greater</summary>
+<summary>greater_broadcast</summary>
+
+```python
+node = onnx.helper.make_node(
+    "Greater",
+    inputs=["x", "y"],
+    outputs=["greater"],
+)
+
+x = np.random.randn(3, 4, 5).astype(np.float32)
+y = np.random.randn(5).astype(np.float32)
+z = np.greater(x, y)
+expect(node, inputs=[x, y], outputs=[z], name="test_greater_bcast")
+```
+
+</details>
+
+
+### GreaterOrEqual
+There are 2 test cases, listed as following:
+<details>
+<summary>greater_broadcast</summary>
+
+```python
+node = onnx.helper.make_node(
+    "GreaterOrEqual",
+    inputs=["x", "y"],
+    outputs=["greater_equal"],
+)
+
+x = np.random.randn(3, 4, 5).astype(np.float32)
+y = np.random.randn(5).astype(np.float32)
+z = np.greater_equal(x, y)
+expect(node, inputs=[x, y], outputs=[z], name="test_greater_equal_bcast")
+```
+
+</details>
+<details>
+<summary>greaterorequal</summary>
 
 ```python
 node = onnx.helper.make_node(
@@ -11711,40 +12188,6 @@ x = np.random.randint(24, size=(3, 4, 5), dtype=np.uint64)
 y = np.random.randint(24, size=(3, 4, 5), dtype=np.uint64)
 z = np.greater_equal(x, y)
 expect(node, inputs=[x, y], outputs=[z], name="test_greater_equal_uint64")
-```
-
-</details>
-<details>
-<summary>greater_broadcast</summary>
-
-```python
-node = onnx.helper.make_node(
-    "Greater",
-    inputs=["x", "y"],
-    outputs=["greater"],
-)
-
-x = np.random.randn(3, 4, 5).astype(np.float32)
-y = np.random.randn(5).astype(np.float32)
-z = np.greater(x, y)
-expect(node, inputs=[x, y], outputs=[z], name="test_greater_bcast")
-```
-
-</details>
-<details>
-<summary>greater_broadcast</summary>
-
-```python
-node = onnx.helper.make_node(
-    "GreaterOrEqual",
-    inputs=["x", "y"],
-    outputs=["greater_equal"],
-)
-
-x = np.random.randn(3, 4, 5).astype(np.float32)
-y = np.random.randn(5).astype(np.float32)
-z = np.greater_equal(x, y)
-expect(node, inputs=[x, y], outputs=[z], name="test_greater_equal_bcast")
 ```
 
 </details>
@@ -13816,7 +14259,7 @@ expect(node, inputs=[x], outputs=[y], name="test_leakyrelu_default")
 
 
 ### Less
-There are 4 test cases, listed as following:
+There are 2 test cases, listed as following:
 <details>
 <summary>less</summary>
 
@@ -13865,7 +14308,45 @@ expect(node, inputs=[x, y], outputs=[z], name="test_less_uint64")
 
 </details>
 <details>
-<summary>less</summary>
+<summary>less_broadcast</summary>
+
+```python
+node = onnx.helper.make_node(
+    "Less",
+    inputs=["x", "y"],
+    outputs=["less"],
+)
+
+x = np.random.randn(3, 4, 5).astype(np.float32)
+y = np.random.randn(5).astype(np.float32)
+z = np.less(x, y)
+expect(node, inputs=[x, y], outputs=[z], name="test_less_bcast")
+```
+
+</details>
+
+
+### LessOrEqual
+There are 2 test cases, listed as following:
+<details>
+<summary>less_broadcast</summary>
+
+```python
+node = onnx.helper.make_node(
+    "LessOrEqual",
+    inputs=["x", "y"],
+    outputs=["less_equal"],
+)
+
+x = np.random.randn(3, 4, 5).astype(np.float32)
+y = np.random.randn(5).astype(np.float32)
+z = np.less_equal(x, y)
+expect(node, inputs=[x, y], outputs=[z], name="test_less_equal_bcast")
+```
+
+</details>
+<details>
+<summary>lessorequal</summary>
 
 ```python
 node = onnx.helper.make_node(
@@ -13908,40 +14389,6 @@ x = np.random.randint(24, size=(3, 4, 5), dtype=np.uint64)
 y = np.random.randint(24, size=(3, 4, 5), dtype=np.uint64)
 z = np.less_equal(x, y)
 expect(node, inputs=[x, y], outputs=[z], name="test_less_equal_uint64")
-```
-
-</details>
-<details>
-<summary>less_broadcast</summary>
-
-```python
-node = onnx.helper.make_node(
-    "Less",
-    inputs=["x", "y"],
-    outputs=["less"],
-)
-
-x = np.random.randn(3, 4, 5).astype(np.float32)
-y = np.random.randn(5).astype(np.float32)
-z = np.less(x, y)
-expect(node, inputs=[x, y], outputs=[z], name="test_less_bcast")
-```
-
-</details>
-<details>
-<summary>less_broadcast</summary>
-
-```python
-node = onnx.helper.make_node(
-    "LessOrEqual",
-    inputs=["x", "y"],
-    outputs=["less_equal"],
-)
-
-x = np.random.randn(3, 4, 5).astype(np.float32)
-y = np.random.randn(5).astype(np.float32)
-z = np.less_equal(x, y)
-expect(node, inputs=[x, y], outputs=[z], name="test_less_equal_bcast")
 ```
 
 </details>
@@ -30595,6 +31042,7 @@ expect(
     inputs=[x],
     outputs=[y, indices, inverse_indices, counts],
     name="test_unique_length_1",
+    output_type_protos=unique_output_types(x),
 )
 ```
 
@@ -30644,6 +31092,7 @@ expect(
     inputs=[x],
     outputs=[y, indices, inverse_indices, counts],
     name="test_unique_not_sorted_without_axis",
+    output_type_protos=unique_output_types(x),
 )
 ```
 
@@ -30682,6 +31131,7 @@ expect(
     inputs=[x],
     outputs=[y, indices, inverse_indices, counts],
     name="test_unique_sorted_with_axis",
+    output_type_protos=unique_output_types(x, axis=0),
 )
 ```
 
@@ -30729,6 +31179,7 @@ expect(
     inputs=[x],
     outputs=[y, indices, inverse_indices, counts],
     name="test_unique_sorted_with_axis_3d",
+    output_type_protos=unique_output_types(x, axis=1),
 )
 ```
 
@@ -30768,6 +31219,7 @@ expect(
     inputs=[x],
     outputs=[y, indices, inverse_indices, counts],
     name="test_unique_sorted_with_negative_axis",
+    output_type_protos=unique_output_types(x, axis=-1),
 )
 ```
 
@@ -30792,6 +31244,7 @@ expect(
     inputs=[x],
     outputs=[y, indices, inverse_indices, counts],
     name="test_unique_sorted_without_axis",
+    output_type_protos=unique_output_types(x),
 )
 ```
 
@@ -31079,12 +31532,6 @@ expect(node, inputs=[x, y], outputs=[z], name="test_xor_bcast4v4d")
 
 
 ### GlobalLpPool (call for test cases)
-
-
-### GreaterOrEqual (call for test cases)
-
-
-### LessOrEqual (call for test cases)
 
 
 ### MaxRoiPool (call for test cases)

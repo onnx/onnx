@@ -129,6 +129,26 @@ class TestVersionConverter:
         with pytest.raises(onnx.version_converter.ConvertError):
             test()
 
+    def test_extend_supported_types_rejects_missing_output(self) -> None:
+        node = helper.make_node("Flatten", ["X"], [])
+        graph = helper.make_graph(
+            [node],
+            "malformed_flatten",
+            [helper.make_tensor_value_info("X", TensorProto.FLOAT, (2, 3))],
+            [],
+        )
+        model = helper.make_model(
+            graph,
+            opset_imports=[helper.make_operatorsetid("", 9)],
+        )
+
+        # convert_version runs shape inference before conversion, so Flatten's
+        # own shape-inference function rejects the missing output first; the
+        # adapter's ONNX_ASSERTM guard is defense-in-depth for callers that
+        # reach ExtendSupportedTypes without going through shape inference.
+        with pytest.raises((RuntimeError, shape_inference.InferenceError)):
+            onnx.version_converter.convert_version(model, 8)
+
     # A nested (subgraph) output that resolves to a value captured from the
     # enclosing scope is handled via a dummy node, not a crash. Exercises the
     # captured-value path of graphProtoToGraph (nested=True).
