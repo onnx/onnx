@@ -8,6 +8,11 @@ include(cmake/Utils.cmake)
 cmake_policy(SET CMP0063 NEW)
 # Modules FindPython3 and FindPython use LOCATION for lookup strategy.
 cmake_policy(SET CMP0094 NEW)
+# Allow the protoc-generated proto sources to be added to the built-in
+# `codegen` target (CMake 3.31+); see the CODEGEN option below.
+if(POLICY CMP0171)
+  cmake_policy(SET CMP0171 NEW)
+endif()
 
 # Set default build type
 get_property(isMultiConfig GLOBAL PROPERTY GENERATOR_IS_MULTI_CONFIG)
@@ -400,6 +405,7 @@ function(RELATIVE_PROTOBUF_GENERATE_CPP SRCS)
 
   set(GEN_PROTO_PY "${ONNX_ROOT}/onnx/gen_proto.py")
   set(GENERATED_FILES)
+  set(PROTOC_OUTPUTS)
   foreach(INFILE ${ARGN})
     set(ABS_FILE "${ONNX_ROOT}/${INFILE}")
     get_filename_component(FILE_DIR ${ABS_FILE} DIRECTORY)
@@ -498,11 +504,21 @@ function(RELATIVE_PROTOBUF_GENERATE_CPP SRCS)
       endif()
     endif()
 
+    set(_codegen_option)
+    if(POLICY CMP0171)
+      set(_codegen_option CODEGEN)
+    endif()
     add_custom_command(OUTPUT ${_protoc_outputs}
         COMMAND "${ONNX_PROTOC_EXECUTABLE}" ${PROTOC_ARGS}
         DEPENDS ${GENERATED_FILES}
-        COMMENT "Running C++ protocol buffer compiler on ${GENERATED_PROTO}")
+        COMMENT "Running C++ protocol buffer compiler on ${GENERATED_PROTO}"
+        ${_codegen_option})
+    list(APPEND PROTOC_OUTPUTS ${_protoc_outputs})
   endforeach()
+
+  # A target tooling (clang-tidy, clangd, ...) can build to force generation
+  # of the proto C++ sources/headers without building the rest of ONNX.
+  add_custom_target(onnx_proto_headers DEPENDS ${PROTOC_OUTPUTS})
 
   set(${SRCS} ${${SRCS}} PARENT_SCOPE)
   set(ONNX_PROTO_PY_FILES ${_py_files} PARENT_SCOPE)
