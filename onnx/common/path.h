@@ -14,6 +14,12 @@
 #define NOMINMAX
 #endif
 #include <windows.h>
+// windows.h (via winnt.h) defines OPTIONAL as an empty macro for SAL
+// annotations. onnx-data.pb.h declares enum members literally named
+// OPTIONAL (SequenceProto::DataType::OPTIONAL,
+// OptionalProto::DataType::OPTIONAL), so the macro must be undefined
+// before any header that transitively includes onnx-data.pb.h is parsed.
+#undef OPTIONAL
 
 #include "onnx/checker.h"
 #endif
