@@ -389,7 +389,9 @@ already exercised against real transformer-export graphs.
   `SymbolTable`/`shape_inference.h`? Should it be reachable from the public
   C++ API at all (for a caller who wants the human-readable formula, e.g. for
   diagnostics or a downstream optimizer like onnxsim), or stay a private
-  implementation detail of `implementation.cc`?
+  implementation detail of `implementation.cc`? (This is the in-process
+  question only — whether to *persist* a resolved formula across a
+  save/reload is a separate, larger question; see "Future possibilities.")
 - **Opt-in vs. always-on.** 0005 introduced `enable_data_propagation` as an
   explicit opt-in flag on `ShapeInferenceOptions` precisely because it changes
   what gets folded. Should symbolic-dimension algebra be gated behind that
@@ -424,12 +426,42 @@ already exercised against real transformer-export graphs.
   with `int_max_` heuristics — deliberately left out of this proposal because
   it's a soundness policy question (what may be assumed about a symbol's
   sign/range), not a pure engineering extension of the polynomial algebra.
-- **Exposing formulas for tooling.** A documented, optional way to read back
-  "this dim is `M + N`" (not just its opaque generated symbol name) would let
-  downstream compilers/optimizers (onnxsim among them) make additional
-  folding decisions using `onnx`'s own resolved algebra instead of
-  re-deriving it themselves, closing the loop this proposal's Motivation
-  section opens.
+- **Exposing formulas for tooling, in-process.** Within a single
+  `InferShapes`/`enable_data_propagation` call, a caller can already read
+  "this dim is `M + N`" straight out of the (in-memory, non-serialized)
+  symbol-table side map this proposal's reference-level explanation
+  describes, before the process ends — no spec change needed for that case.
+- **Persisting formulas across a save/reload, as its own follow-on
+  proposal — not part of this one.** The harder version of the previous
+  bullet is making a resolved formula legible to a *different* process that
+  only reads the saved `.onnx` file (a downstream compiler/optimizer like
+  onnxsim, without re-running graph-level symbolic shape inference itself).
+  That needs a genuine wire-format addition, so it should stay out of this
+  proposal's scope and be judged on its own:
+  - It should be shaped as an **additive, optional, per-graph side table**
+    (symbol name → expression, serializing the same `SymbolTable`-keyed map
+    this proposal already builds in memory) rather than a new arm on
+    `TensorShapeProto::Dimension` itself. A sibling field/message is the
+    protobuf-safe kind of change — old readers skip an unrecognized field
+    number, old files simply lack it — where a `dim_param`/`dim_expr`
+    `oneof` would instead force a precedence question (which one is
+    authoritative when both are present) that a purely additive annotation
+    never raises. `dim_param` remains the sole source of dimension
+    *identity*, unchanged; the new table only ever adds detail about a
+    symbol that already exists. A per-graph table also avoids repeating
+    (and risking disagreement among) the same formula at every one of a
+    symbol's occurrences across a graph's `value_info`.
+  - It must be specified as explicitly **advisory, never load-bearing** —
+    the same posture `value_info` and `doc_string` already have. A
+    transform that doesn't understand the annotation, or that changes what
+    a symbol means, is not obligated to update or drop it; a consumer that
+    trusts it without re-verifying accepts that risk, exactly as a consumer
+    that trusts unverified `value_info` shapes does today.
+  - It still needs its own expression grammar decision (plain-string
+    polynomial vs. a small structured message) and its own referential-
+    integrity story (a formula naming `M` is only meaningful if `M` is a
+    real `dim_param` reachable in that graph) — real, separable design work
+    that a follow-on RFC should own rather than inheriting from this one.
 - **Constant folding across dynamic dims** in `onnx`'s own optimizer passes,
   using the same symbol table — today this is exactly the kind of thing a
   downstream tool like onnxsim has to implement entirely outside `onnx`
