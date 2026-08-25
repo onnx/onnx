@@ -111,6 +111,27 @@ anonymous unknown dimension today. The same thing happens one level up in
 between a `dim_param` and a constant, and stalls the instant it is between
 two `dim_param`s.
 
+This is not abstract. Three ops already in this repository hit it today:
+
+- **`Concat`** (`onnx/defs/tensor/defs.cc:499-614`) is `docs/ShapeInference.md`'s
+  own textbook example, pinned to code: `total_length` is accumulated as a
+  plain `int64_t`, and `all_lengths_known` flips `false` the instant any
+  input's axis dim lacks `dim_value` — `Concat((5,2), (N,2))` on axis 0 never
+  computes `N+5`, it just leaves the axis dim unset.
+- **`Flatten`** (`onnx/defs/nn/defs.cc:2044`) —
+  `updateOutputShape(ctx, 0, {multiplyDims(input_shape, 0, axis), ...})`.
+  `multiplyDims` folds a range of dims through the `operator*` above one at a
+  time, so `Flatten([batch, seq, hidden], axis=2)` needs `batch*seq` — exactly
+  the `Dimension*Dimension` case that degrades to an anonymous dim above.
+- **`Attention`** (`onnx/defs/nn/defs.cc:3513`, arithmetic at line 4879) — a
+  first-party `ai.onnx` op, not a contrib op. Its shape inference does
+  `unifyDim(Dk, checkedDivide(QPack.dim_value(), q_num_heads))`, gated behind
+  `QPack.has_dim_value()`: if the packed Q/K/V projection dim is symbolic
+  (plausible whenever it flows from an upstream symbolic `Reshape`/`MatMul`),
+  `Dk`/`Dv` derivation is silently skipped entirely. This changes the framing
+  from "a hypothetical future op would benefit" to "an op `onnx` shipped
+  recently already has this exact gap."
+
 This is exactly the shape every KV-cache transformer decoder export produces
 today (Llama/Mistral/Qwen/GPT-style models via `torch.onnx.export(...,
 dynamo=True)` or `optimum.exporters.onnx`, which is the standard ONNX export
