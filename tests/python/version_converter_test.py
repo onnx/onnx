@@ -95,6 +95,41 @@ class TestVersionConverter:
         with pytest.raises(RuntimeError):
             test()
 
+    def test_rejects_captured_node_without_output(self) -> None:
+        nested_graph = helper.make_graph(
+            [helper.make_node("Captured", ["X"], [], domain="custom")],
+            "nested",
+            [],
+            [],
+        )
+        carrier = helper.make_node(
+            "NestedCarrier",
+            ["X"],
+            [],
+            domain="custom",
+            payload=nested_graph,
+        )
+        graph = helper.make_graph(
+            [helper.make_node("Flatten", ["X"], ["Y"]), carrier],
+            "test",
+            [helper.make_tensor_value_info("X", TensorProto.INT32, (2, 2))],
+            [helper.make_tensor_value_info("Y", TensorProto.INT32, (2, 2))],
+        )
+        model = helper.make_model(
+            graph,
+            opset_imports=[
+                helper.make_operatorsetid("", 9),
+                helper.make_operatorsetid("custom", 1),
+            ],
+        )
+        checker.check_model(model)
+
+        with pytest.raises(
+            onnx.version_converter.ConvertError,
+            match="Captured node must have exactly one output",
+        ):
+            onnx.version_converter.convert_version(model, 8)
+
     # A graph output that nothing produces must raise (ConvertError), not crash.
     # Regression test for a SEGV in graphProtoToGraph when a top-level
     # graph output name was absent from the value map.
