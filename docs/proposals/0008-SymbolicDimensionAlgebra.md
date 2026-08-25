@@ -8,7 +8,7 @@ Copyright (c) ONNX Project Contributors
 - RFC PR: [onnx/onnx#0000](https://github.com/onnx/onnx/pull/0000)
 - Status: under discussion
 - Authors:
-  - take-cheeze
+  - Takeshi Watanabe ( https://github.com/take-cheeze )
 
 ## Summary
 [summary]: #summary
