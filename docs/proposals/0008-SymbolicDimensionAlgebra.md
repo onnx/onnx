@@ -51,7 +51,7 @@ capability explicitly and just as explicitly deferred it:
 Five years on, the gap 0005 deferred has not gone away — it has been
 independently re-solved, outside `onnx` itself, at least four times:
 
-- `onnxruntime`'s [`symbolic_shape_infer.py`](https://github.com/microsoft/onnxruntime/blob/main/onnxruntime/python/tools/symbolic_shape_infer.py)
+- `onnxruntime`'s [`symbolic_shape_infer.py`](https://github.com/microsoft/onnxruntime/blob/e644fd5686ad97b4da939c01ae37ee06bcbcd248/onnxruntime/python/tools/symbolic_shape_infer.py)
   represents every `dim_param` as a `sympy.Symbol` and re-implements ~100
   operator shape-inference rules in Python so it can compute over them.
 - [`justinchuby/onnx-shape-inference`](https://github.com/justinchuby/onnx-shape-inference)
@@ -393,7 +393,7 @@ already exercised against real transformer-export graphs.
   anonymous unknown dims, and `DataPropagationContext`; explicitly deferred
   "add symbolic expressions" as a non-goal for "future iterations." This
   proposal is that future iteration.
-- [`onnxruntime/python/tools/symbolic_shape_infer.py`](https://github.com/microsoft/onnxruntime/blob/main/onnxruntime/python/tools/symbolic_shape_infer.py):
+- [`onnxruntime/python/tools/symbolic_shape_infer.py`](https://github.com/microsoft/onnxruntime/blob/e644fd5686ad97b4da939c01ae37ee06bcbcd248/onnxruntime/python/tools/symbolic_shape_infer.py):
   `sympy`-based, ~100+ per-op `_infer_*` handlers, `sympy_data_` value
   propagation, heuristic dimension merging (`_add_suggested_merge`,
   `auto_merge_` — documented by ORT itself as a soundness tradeoff),
