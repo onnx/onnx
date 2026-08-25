@@ -8,6 +8,45 @@ import numpy as np
 from onnx.reference.op_run import OpRun
 
 
+def _make_ind(dim, shape):
+    m = np.empty(shape, dtype=np.int64)
+    ind = [slice(0, shape[i]) for i in range(len(shape))]
+    new_shape = [1] * len(shape)
+    new_shape[dim] = shape[dim]
+    first = np.arange(shape[dim]).reshape(new_shape)
+    m[tuple(ind)] = first
+    return m
+
+
+def im2col(X, kernel_shape, pads, strides):
+    n_dims = len(kernel_shape)
+    m, n_C = X.shape[:2]
+
+    kernel_size = np.prod(kernel_shape)
+    shape_out = []
+    for i, dim in enumerate(kernel_shape):
+        dx = X.shape[2 + i]
+        shape_out.append((dx + pads[i] + pads[i + n_dims] - dim) // strides[i] + 1)
+
+    indices = []
+    for i in range(len(shape_out)):
+        kind = _make_ind(i, kernel_shape)
+        iind = _make_ind(i, shape_out) * strides[i]
+        index = np.tile(kind.ravel(), n_C).reshape(-1, 1) + iind.reshape(1, -1)
+        indices.append(index)
+
+    d = np.repeat(np.arange(n_C), kernel_size).reshape(-1, 1)
+
+    nc = [(0, 0)] * 2
+    padding = [(pads[i], pads[i + n_dims]) for i in range(n_dims)]
+    X_padded = np.pad(X, tuple(nc) + tuple(padding), mode="constant")
+
+    getitem = (slice(0, m), d, *indices)
+    cols = X_padded[getitem]
+    perm = (1, 0, *range(2, cols.ndim))
+    return cols.transpose(perm).reshape((cols.shape[1], -1)), tuple(shape_out)
+
+
 def _conv_implementation(
     X, W, B, auto_pad, dilations, group, kernel_shape, pads, strides
 ):
@@ -19,62 +58,14 @@ def _conv_implementation(
         pads = [0 for s in X.shape[2:]] * 2
     if strides is None:
         strides = [1 for s in X.shape[2:]]
+    kernel_shape = tuple(kernel_shape)
 
     if X.shape[1] != W.shape[1] * group or W.shape[0] % group != 0:
         raise ValueError(
             f"Shape inconsistencies, X.shape={X.shape}, W.shape={W.shape}, group={group}, "
             f"W should be {(W.shape[0], X.shape[1] // group, np.prod(W.shape[1:]) // X.shape[1] * group)}."
         )
-    if group > 1:
-        res = []
-        td = 0
-        mg = W.shape[0] // group
-        dw = W.shape[1]
-
-        for b in range(X.shape[0]):
-            for g in range(group):
-                gx = X[b : b + 1, g * dw : (g + 1) * dw]
-                gw = W[g * mg : (g + 1) * mg]
-                try:
-                    cv = _conv_implementation(
-                        gx,
-                        gw,
-                        None,
-                        auto_pad,
-                        dilations,
-                        1,
-                        kernel_shape,
-                        pads,
-                        strides,
-                    )
-                except (ValueError, RuntimeError) as e:
-                    raise ValueError(
-                        f"Shape inconsistencies, X.shape={X.shape}, W.shape={W.shape}, group={g}/{group}, "
-                        f"gx.shape={gx.shape}, gw.shape={gw.shape}, auto_pad={auto_pad}, "
-                        f"dilations={dilations}, kernel_shape={kernel_shape}, pads={pads}, "
-                        f"strides={strides}."
-                    ) from e
-                if b == 0:
-                    td += cv.shape[1]
-                res.append((b, cv))
-
-        new_shape = [X.shape[0], *list(res[0][1].shape[1:])]
-        new_shape[1] = td
-        final = np.zeros(tuple(new_shape), dtype=res[0][1].dtype)
-        p = 0
-        for b, cv in res:
-            final[b : b + 1, p : p + cv.shape[1]] = cv
-            p += cv.shape[1]
-            if p >= final.shape[1]:
-                p = 0
-        if B is not None:
-            new_shape = [1 for s in final.shape]
-            new_shape[1] = B.shape[0]
-            b = B.reshape(tuple(new_shape))
-            final += b
-        return final
-
-    if dilations[0] != 1 or min(dilations) != max(dilations):
+    if any(dilation != 1 for dilation in dilations):
         # Let's compute the dilated kernel.
         nd = len(dilations)
         new_kernel_shape = []
@@ -92,13 +83,15 @@ def _conv_implementation(
         W = new_w
         kernel_shape = new_kernel_shape
 
-    if auto_pad in {"SAME_LOWER", "SAME_UPPER", "VALID"}:
+    if auto_pad == "VALID":
+        pads = [0] * (2 * len(kernel_shape))
+    elif auto_pad in {"SAME_LOWER", "SAME_UPPER"}:
         head = []
         tail = []
         for i in range(len(X.shape) - 2):
-            d = X.shape[i]
+            d = X.shape[i + 2]
             target_size = (d + strides[i] - 1) // strides[i]
-            pad_needed = (target_size - 1) * strides[i] + kernel_shape[i] - d
+            pad_needed = max(0, (target_size - 1) * strides[i] + kernel_shape[i] - d)
             if auto_pad == "SAME_LOWER":
                 pad_head = (pad_needed + 1) // 2
             else:
@@ -108,187 +101,22 @@ def _conv_implementation(
             tail.append(pad_tail)
         pads = head + tail
 
-    if len(X.shape) == 3:
-        sN, sC, sH = X.shape
-        # M, C_group, kH, kW = W.shape
-        (kh,) = kernel_shape
-        (sth,) = strides
+    c2, out_shape = im2col(X, kernel_shape, pads, strides)
+    kernel_size = int(np.prod(kernel_shape))
+    c2 = c2.reshape((group, W.shape[1] * kernel_size, -1))
+    w_reshaped = W.reshape((group, W.shape[0] // group, -1))
+    mul = w_reshaped @ c2
+    mul = mul.reshape((group, W.shape[0] // group, X.shape[0], *out_shape))
+    perm = (2, 0, 1, *range(3, mul.ndim))
+    mul = mul.transpose(perm).reshape((X.shape[0], W.shape[0], *out_shape))
 
-        h_out = int(((sH - kh + pads[0] + pads[1]) / sth) + 1)
-
-        h0 = pads[0]
-        oh = -1 * (kh % 2)
-        bh = -h0
-        eh = h_out * sth
-        res = np.zeros((X.shape[0], W.shape[0], h_out))  # type: ignore[assignment]
-        if B is not None:
-            res[:, :, :] += B.reshape((1, -1, 1))
-
-        for n in range(sN):
-            for nw in range(W.shape[0]):
-                for c in range(sC):
-                    w = W[nw : nw + 1, c : c + 1]
-                    for io in range(bh, eh, sth):
-                        hr = (io - bh) // sth
-                        if hr >= h_out:
-                            continue
-                        i = io + kh % 2
-                        ih1, ih2 = max(0, i + oh), min(i + oh + kh, sH)
-                        img = X[n : n + 1, c : c + 1, ih1:ih2]
-                        if img.shape != w.shape:
-                            jh1, jh2 = max(-oh - i, 0), min(kh, kh + sH - (i + oh + kh))
-                            w_ = w[:1, :1, jh1:jh2]
-                            if img.shape != w_.shape:
-                                raise RuntimeError(
-                                    f"Unexpected shape {img.shape} != {w_.shape}, oh={oh}, "
-                                    f"i={i}, kh={kh}, sH={sH}, sth={sth}."
-                                )
-                            s = np.dot(img.reshape((1, -1)), w_.reshape((-1, 1)))[
-                                0, 0
-                            ]  # (img * w_).sum()
-                        else:
-                            s = np.dot(img.reshape((1, -1)), w.reshape((-1, 1)))[
-                                0, 0
-                            ]  # (img * w).sum()
-                        res[n, nw, hr] += s
-
-        return res
-
-    if len(X.shape) == 4:
-        sN, sC, sH, sW = X.shape
-        # M, C_group, kH, kW = W.shape
-        kh, kw = kernel_shape
-        sth, stw = strides
-
-        h_out = int(((sH - kh + pads[0] + pads[2]) / sth) + 1)
-        w_out = int(((sW - kw + pads[1] + pads[3]) / stw) + 1)
-
-        h0, w0 = pads[0], pads[1]
-        oh, ow = -1 * (kh % 2), -1 * (kw % 2)
-        bh, bw = -h0, -w0
-        eh, ew = h_out * sth, w_out * stw
-        res = np.zeros((X.shape[0], W.shape[0], h_out, w_out))  # type: ignore[assignment]
-        if B is not None:
-            res[:, :, :, :] = B.reshape((1, -1, 1, 1))
-
-        for n in range(sN):
-            for nw in range(W.shape[0]):
-                for c in range(sC):
-                    w = W[nw : nw + 1, c : c + 1]
-                    for io in range(bh, eh, sth):
-                        hr = (io - bh) // sth
-                        if hr >= h_out:
-                            continue
-                        i = io + kh % 2
-                        ih1, ih2 = max(0, i + oh), min(i + oh + kh, sH)
-                        for jo in range(bw, ew, stw):
-                            wr = (jo - bw) // stw
-                            if wr >= w_out:
-                                continue
-                            j = jo + kw % 2
-                            iw1, iw2 = max(0, j + ow), min(j + ow + kw, sW)
-                            img = X[n : n + 1, c : c + 1, ih1:ih2, iw1:iw2]
-                            if img.shape != w.shape:
-                                jh1, jh2 = (
-                                    max(-oh - i, 0),
-                                    min(kh, kh + sH - (i + oh + kh)),
-                                )
-                                jw1, jw2 = (
-                                    max(-ow - j, 0),
-                                    min(kw, kw + sW - (j + ow + kw)),
-                                )
-                                w_ = w[:1, :1, jh1:jh2, jw1:jw2]
-                                if img.shape != w_.shape:
-                                    raise RuntimeError(
-                                        f"Unexpected shape {img.shape} != {w_.shape}, oh={oh}, ow={ow}, "
-                                        f"i={i}, j={j}, kh={kh}, kw={kw}, sH={sH}, sW={sW}, sth={sth}, stw={stw}."
-                                    )
-                                s = np.dot(img.reshape((1, -1)), w_.reshape((-1, 1)))[
-                                    0, 0
-                                ]  # (img * w_).sum()
-                            else:
-                                s = np.dot(img.reshape((1, -1)), w.reshape((-1, 1)))[
-                                    0, 0
-                                ]  # (img * w).sum()
-                            res[n, nw, hr, wr] += s
-
-        return res
-
-    if len(X.shape) == 5:
-        sN, sC, sH, sW, sZ = X.shape
-        kh, kw, kz = kernel_shape
-        sth, stw, stz = strides
-
-        h_out = int(((sH - kh + pads[0] + pads[3]) / sth) + 1)
-        w_out = int(((sW - kw + pads[1] + pads[4]) / stw) + 1)
-        z_out = int(((sZ - kz + pads[2] + pads[5]) / stz) + 1)
-
-        h0, w0, z0 = pads[0], pads[1], pads[2]
-        oh, ow, oz = -1 * (kh % 2), -1 * (kw % 2), -1 * (kz % 2)
-        bh, bw, bz = -h0, -w0, -z0
-        eh, ew, ez = h_out * sth, w_out * stw, z_out * stz
-        res = np.zeros((X.shape[0], W.shape[0], h_out, w_out, z_out))  # type: ignore[assignment]
-        if B is not None:
-            res[:, :, :, :, :] = B.reshape((1, -1, 1, 1, 1))
-
-        for n in range(sN):
-            for nw in range(W.shape[0]):
-                for c in range(sC):
-                    w = W[nw : nw + 1, c : c + 1]
-                    for io in range(bh, eh, sth):
-                        hr = (io - bh) // sth
-                        if hr >= h_out:
-                            continue
-                        i = io + kh % 2
-                        ih1, ih2 = max(0, i + oh), min(i + oh + kh, sH)
-                        for jo in range(bw, ew, stw):
-                            wr = (jo - bw) // stw
-                            if wr >= w_out:
-                                continue
-                            j = jo + kw % 2
-                            iw1, iw2 = max(0, j + ow), min(j + ow + kw, sW)
-                            for zo in range(bz, ez, stz):
-                                zr = (zo - bz) // stz
-                                if zr >= z_out:
-                                    continue
-                                z = zo + kz % 2
-                                iz1, iz2 = max(0, z + oz), min(z + oz + kz, sZ)
-                                img = X[n : n + 1, c : c + 1, ih1:ih2, iw1:iw2, iz1:iz2]
-                                if img.shape != w.shape:
-                                    jh1, jh2 = (
-                                        max(-oh - i, 0),
-                                        min(kh, kh + sH - (i + oh + kh)),
-                                    )
-                                    jw1, jw2 = (
-                                        max(-ow - j, 0),
-                                        min(kw, kw + sW - (j + ow + kw)),
-                                    )
-                                    jz1, jz2 = (
-                                        max(-oz - z, 0),
-                                        min(kz, kz + sZ - (z + oz + kz)),
-                                    )
-                                    w_ = w[:1, :1, jh1:jh2, jw1:jw2, jz1:jz2]
-                                    if img.shape != w_.shape:
-                                        raise RuntimeError(
-                                            f"Unexpected shape {img.shape} != {w_.shape}, oh={oh}, ow={ow}, oz={oz}, "
-                                            f"i={i}, j={j}, z={z}, kh={kh}, kw={kw}, kz={kz}, "
-                                            f"sH={sH}, sW={sW}, sZ={sZ}, sth={sth}, stw={stw}, stz={stz}."
-                                        )
-                                    s = np.dot(
-                                        img.reshape((1, -1)), w_.reshape((-1, 1))
-                                    )[0, 0]  # (img * w_).sum()
-                                else:
-                                    s = np.dot(
-                                        img.reshape((1, -1)), w.reshape((-1, 1))
-                                    )[0, 0]  # (img * w).sum()
-                                res[n, nw, hr, wr, zr] += s
-
-        return res
-
-    raise RuntimeError(
-        f"The convolution for X.shape={X.shape}, W.shape={W.shape}, "
-        f"kernel_shape={kernel_shape} is not implemented yet."
-    )
+    if B is not None:
+        if B.size == 1:
+            return mul + B
+        new_shape = [1] * len(mul.shape)
+        new_shape[1] = -1
+        mul += B.reshape(tuple(new_shape))
+    return mul
 
 
 class Conv(OpRun):
@@ -309,7 +137,6 @@ class Conv(OpRun):
                 f"X must have at least 3 dimensions but its shape is {X.shape}."
             )
         return (
-            # _conv_implementation(
             _conv_implementation(
                 X, W, B, auto_pad, dilations, group, kernel_shape, pads, strides
             ).astype(X.dtype),

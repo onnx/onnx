@@ -4095,6 +4095,10 @@ class TestReferenceEvaluator:
         expected = _expected(data, alpha, beta, bias, size)
         assert len(got[0]) == len(expected)
 
+    def test_conv_optimized_uses_reference_implementation(self):
+        assert ConvOptimized is Conv
+        assert _conv_implementation_im2col is _conv_implementation
+
     def test_conv_im2col_1d(self):
         feeds = {
             "X": np.arange(1 * 1 * 11).reshape((1, 1, 11)).astype(np.float32) + 1,
@@ -4171,8 +4175,8 @@ class TestReferenceEvaluator:
 
     def test_conv_im2col_2d_autopad(self):
         feeds = {
-            "X": np.arange(5 * 5).reshape((1, 1, 5, -1)).astype(np.float32) + 1,
-            "W": 2 ** np.arange(3 * 3).reshape((1, 1, 3, 3)).astype(np.float32),
+            "X": np.arange(5 * 5).reshape((1, 1, 5, -1)).astype(np.float32),
+            "W": np.ones((1, 1, 3, 3), dtype=np.float32),
             "B": np.zeros((1,), dtype=np.float32),
         }
         kwargs = dict(
@@ -4183,9 +4187,34 @@ class TestReferenceEvaluator:
             pads=None,
             auto_pad="SAME_LOWER",
         )
-        expected = _conv_implementation(**feeds, **kwargs)
-        got = _conv_implementation_im2col(**feeds, **kwargs)
+        expected = np.array(
+            [[[[12.0, 27.0, 24.0], [63.0, 108.0, 81.0], [72.0, 117.0, 84.0]]]],
+            dtype=np.float32,
+        )
+        got = _conv_implementation(**feeds, **kwargs)
         assert_allclose(got, expected)
+
+    @pytest.mark.parametrize(
+        ("auto_pad", "expected"),
+        [
+            ("SAME_UPPER", [[[3.0, 5.0]], [[15.0, 13.0]]]),
+            ("SAME_LOWER", [[[1.0, 6.0]], [[9.0, 18.0]]]),
+            ("VALID", [[[3.0]], [[15.0]]]),
+        ],
+    )
+    def test_conv_im2col_auto_pad_modes(self, auto_pad, expected):
+        got = _conv_implementation(
+            X=np.arange(8, dtype=np.float32).reshape((2, 1, 4)),
+            W=np.ones((1, 1, 3), dtype=np.float32),
+            B=None,
+            auto_pad=auto_pad,
+            dilations=[1],
+            group=1,
+            kernel_shape=[3],
+            pads=None,
+            strides=[2],
+        )
+        assert_allclose(got, np.array(expected, dtype=np.float32))
 
     def test_conv_im2col_3d(self):
         feeds = {

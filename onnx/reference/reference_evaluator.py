@@ -44,15 +44,9 @@ class ReferenceEvaluator:
             must define the static attribute `domain`, there may be
             multiple implementations for the same operator, the first
             one in the list is used.
-        optimized: some operators have two implementations, a naive one
-            corresponding to definition of the mathematical definition
-            of the operator, another one more efficient. This is the
-            case for operator Conv. The naive version is ten times
-            slower than the optimized one using a decomposition into
-            *Conv = im2col + Gemm*. If True, all optimized kernels are
-            added in `new_ops` and are used instead of the inner
-            implementation if list *new_ops* does not already contain
-            one.
+        optimized: if True, all optimized kernels are added in `new_ops`
+            and are used instead of the inner implementation if list
+            *new_ops* does not already contain one.
 
     The class maps every node to its associated implementation.
     When a subgraph of a function is met,

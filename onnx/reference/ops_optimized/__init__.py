@@ -5,6 +5,6 @@ from __future__ import annotations
 
 from onnx.reference.ops_optimized.op_conv_optimized import Conv
 
-optimized_operators = [Conv]
+optimized_operators = []
 
 __all__ = ["Conv", "optimized_operators"]
