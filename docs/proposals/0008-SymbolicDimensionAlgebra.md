@@ -131,7 +131,7 @@ through the `return result;` branch above and the anonymous-unknown-dim
 branch of data propagation. **This is not a hypothetical reconstruction**: a
 CI-verified regression test built exactly this model, exported it with
 `torch.onnx.export(..., dynamo=True)`, and confirmed the pattern is present in
-the raw export (`onnxsim/onnxsim#693`,
+the raw export ([onnxsim/onnxsim#693](https://github.com/onnxsim/onnxsim/pull/693),
 `tests/test_symexpr_kv_cache_consistency.py`). Two things that test surfaced
 are worth being precise about, since they sharpen rather than weaken the
 motivation:
@@ -416,9 +416,9 @@ already exercised against real transformer-export graphs.
   (integer-coefficient polynomial, `std::map<Monomial, int64_t>`), same
   scope decision (no CAS generality), already shipped and merged. Its
   actual, CI-verified reach is more precisely characterized than "folds
-  every KV-cache graph": `onnxsim/onnxsim#693`
+  every KV-cache graph": [onnxsim/onnxsim#693](https://github.com/onnxsim/onnxsim/pull/693)
   (`tests/test_symexpr_kv_cache_consistency.py`, closing
-  `onnxsim/onnxsim#597`) is a regression test built from exactly the
+  [onnxsim/onnxsim#597](https://github.com/onnxsim/onnxsim/issues/597)) is a regression test built from exactly the
   motivating example above, and it confirms both the capability (the
   pattern is real, present in a live `dynamo=True` export) and the current
   reference implementation's own limit (it does not yet fold a reshape with
@@ -508,7 +508,8 @@ already exercised against real transformer-export graphs.
     real `dim_param` reachable in that graph) — real, separable design work
     that a follow-on RFC should own rather than inheriting from this one.
   - **A working, merged prototype of the low-risk shape already exists**,
-    outside this proposal's own scope. `onnxsim/onnxsim#693`
+    outside this proposal's own scope.
+    [onnxsim/onnxsim#693](https://github.com/onnxsim/onnxsim/pull/693)
     (`test_onnxsim_captures_symbolic_dim_expressions_to_metadata_props` in
     `tests/test_symexpr_kv_cache_consistency.py`) writes a resolved compound
     expression (e.g. `past_len + seq_len`) into the relevant output's
