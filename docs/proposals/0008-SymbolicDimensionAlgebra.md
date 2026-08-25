@@ -66,10 +66,13 @@ independently re-solved, outside `onnx` itself, at least four times:
   dependency (which needs GMP, impractical under Emscripten/WASM) was usable
   from onnxsim's C++/WASM build. It is now wired into onnxsim's constant
   folder (`_EvalPartialShape` in `onnxsim.cpp`) and resolves shape-scaffolding
-  chains that plain ONNX data propagation cannot. The companion RFC
-  describing that implementation is at
-  [onnxsim/onnxsim#597](https://github.com/onnxsim/onnxsim/issues/597) /
-  `docs/symexpr-shape-inference-rfc.md` in that repo.
+  chains that plain ONNX data propagation cannot — within the limits of its
+  current op/pattern coverage; see the worked example below, which is backed
+  by a CI-verified regression test rather than a hand-written illustration.
+  [onnxsim/onnxsim#597](https://github.com/onnxsim/onnxsim/issues/597), the
+  issue asking for this proposal, was closed by
+  [onnxsim/onnxsim#693](https://github.com/onnxsim/onnxsim/pull/693)'s
+  `tests/test_symexpr_kv_cache_consistency.py`.
 
 Every one of these tools is solving the same problem 0005 named five years
 ago, against the same underlying gap in `onnx`'s reference implementation,
@@ -116,25 +119,52 @@ path for autoregressive LLMs):
 ```
 Shape(past_key)              -> [batch, num_heads, past_len, head_dim]
 Gather(..., axis=0, index=2) -> past_len                     (dim_param)
-Shape(k_new)                 -> [batch, num_heads, seq_len, head_dim]
-Gather(..., axis=0, index=2) -> seq_len                      (dim_param)
+Shape(x)                     -> [batch, seq_len, hidden]
+Gather(..., axis=0, index=1) -> seq_len                      (dim_param)
 Add(past_len, seq_len)       -> total_len                    <-- symbol + symbol
+Range(0, total_len, 1)       -> key_pos          # feeds a position-aware causal mask
 Concat(past_key, k_new, axis=2)  -> present_key   # shape [batch, num_heads, total_len, head_dim]
-...
-Reshape(attn_out, [batch, seq_len, num_heads * head_dim])    <-- symbol * const, const
 ```
 
-`Add(past_len, seq_len)` and the `num_heads * head_dim` product are both
-combinations of two non-trivial dims, so both fall through the `return
-result;` branch above and the anonymous-unknown-dim branch of data
-propagation. The `Shape -> Gather -> Add -> Concat` subgraph computing
-`total_len`, and the `Shape -> Gather -> Mul -> Concat` subgraph computing
-`num_heads * head_dim`, both survive in the graph and both are recomputed at
-every inference call, purely because `onnx`'s reference implementation cannot
-represent "the sum/product of two symbols" — even though `num_heads` and
-`head_dim` are almost always static constants once weights are fixed, and
-`total_len` is exactly the quantity a KV-cache-aware runtime needs to know
-symbolically for memory planning.
+`Add(past_len, seq_len)` is a combination of two non-trivial dims, so it falls
+through the `return result;` branch above and the anonymous-unknown-dim
+branch of data propagation. **This is not a hypothetical reconstruction**: a
+CI-verified regression test built exactly this model, exported it with
+`torch.onnx.export(..., dynamo=True)`, and confirmed the pattern is present in
+the raw export (`onnxsim/onnxsim#693`,
+`tests/test_symexpr_kv_cache_consistency.py`). Two things that test surfaced
+are worth being precise about, since they sharpen rather than weaken the
+motivation:
+
+- **The `Add` only appears once the model is made cache-*correct*.** An
+  initial version of that test model used
+  `scaled_dot_product_attention(..., is_causal=True)`, which never needs
+  `total_len` as a concrete value — SDPA handles causality internally without
+  building an explicit mask, so `Concat`'s output shape carries `total_len` as
+  *metadata* only, and nothing in the graph ever computes it as data. But
+  `is_causal=True` is also wrong for cached decoding: it assumes the current
+  chunk's queries start at position `0`, which is false the moment `past_key`
+  is non-empty (a decode-step query sits at absolute position `past_len+i`).
+  Fixing that correctness bug — building an explicit, position-aware causal
+  mask via `torch.arange(total_len)` — is what forces `past_len + seq_len` to
+  be computed as a real graph value. In other words, this pattern isn't an
+  artifact of a contrived example; it's what a *correct* KV-cache model
+  produces, and an *incorrect* one can silently avoid needing.
+- **Even this proposal's own reference implementation doesn't yet fold it.**
+  onnxsim's existing `Reshape -> [-1, ...]` rewrite (the mechanism described
+  in the Prior art section below) only fires when a reshape target has
+  *exactly one* symbolic dimension slot. A realistic model with several
+  independently-dynamic axes at once (`batch`, `seq_len`, `past_len` all
+  varying) generally has two or more symbolic slots in any reshape combining
+  them, so onnxsim's current implementation does not remove this particular
+  `Add` either — confirmed by the same merged test, which asserts non-
+  regression rather than removal for exactly this reason. That is not an
+  argument against this proposal; it is evidence that the underlying
+  algebraic capability is valuable enough that even a from-scratch, purpose-
+  built implementation still has real, tracked follow-up work
+  (multi-symbolic-slot reshapes) ahead of it — work that would benefit every
+  consumer at once if it lived in `onnx` itself rather than being one tool's
+  private backlog item.
 
 ## Guide-level explanation
 [guide-level-explanation]: #guide-level-explanation
@@ -172,14 +202,23 @@ what lets the KV-cache `total_len` in the example above be resolved once
 symbolic and then correctly reused for every consumer of `present_key`'s
 shape.
 
-For partial data propagation, a `Shape -> Gather -> Add -> Concat -> Reshape`
-chain like the KV-cache example now folds all the way through: `Add(past_len,
-seq_len)` produces the value `past_len + seq_len` (not "unknown"), so a
-downstream `Reshape` whose target is `[batch, past_len + seq_len,
-num_heads*head_dim]` can be recognized as having exactly the shape of
-`present_key`, and a constant-folding consumer (such as `onnxsim`, or a
-runtime's own graph optimizer) can eliminate the now-dead scaffolding that
-used to be required to compute it at runtime.
+For partial data propagation, the `Shape -> Gather -> Add` chain in the
+KV-cache example now produces a real value instead of stopping: `Add(past_len,
+seq_len)` resolves to `past_len + seq_len` (not "unknown"), so `present_key`'s
+cache-length axis is known symbolically rather than opaquely, and any
+consumer that asks for it — a `Reshape` target that names only that one
+dimension as unknown, a runtime's memory planner, a downstream compiler —
+gets a real formula instead of `?`. Whether a *node* actually becomes
+eliminable depends on what surrounds it exactly as it does today: a `Reshape`
+whose target has only this one symbolic slot (the common case when just one
+axis, e.g. sequence length, is dynamic) can fold straight to `[-1, ...]` and
+make its producing subgraph dead; a `Reshape` whose target still has more
+than one independently-dynamic slot in it (e.g. `batch` *and*
+`past_len+seq_len` together, as in the fully-dynamic KV-cache example above)
+is not helped by this proposal alone — the dimension is still known, but
+eliminating a multi-unknown reshape is a separate capability this proposal
+does not add (see the Motivation section's note on `onnxsim`'s own current
+`unknown != 1` limit, and Unresolved Questions).
 
 Existing callers who only look at `dim_value`/`dim_param` on the output
 model, without opting into anything new, see no behavior change beyond
@@ -375,11 +414,17 @@ already exercised against real transformer-export graphs.
   `onnxsim/onnxsim#532`, wired into `_EvalPartialShape` in `onnxsim.cpp`):
   this proposal's reference implementation. Same representation
   (integer-coefficient polynomial, `std::map<Monomial, int64_t>`), same
-  scope decision (no CAS generality), already shipped and folding real
-  KV-cache-transformer export graphs in production. The companion
-  onnxsim-side RFC (`onnxsim/onnxsim` `docs/symexpr-shape-inference-rfc.md`,
-  closing `onnxsim/onnxsim#597`) documents that implementation in detail and
-  motivated this proposal's existence.
+  scope decision (no CAS generality), already shipped and merged. Its
+  actual, CI-verified reach is more precisely characterized than "folds
+  every KV-cache graph": `onnxsim/onnxsim#693`
+  (`tests/test_symexpr_kv_cache_consistency.py`, closing
+  `onnxsim/onnxsim#597`) is a regression test built from exactly the
+  motivating example above, and it confirms both the capability (the
+  pattern is real, present in a live `dynamo=True` export) and the current
+  reference implementation's own limit (it does not yet fold a reshape with
+  more than one symbolic slot — see the Motivation section above). That
+  test, not a standalone design doc, is what closed `onnxsim/onnxsim#597`
+  and is what motivated this proposal's existence.
 
 ## Unresolved questions
 [unresolved-questions]: #unresolved-questions
@@ -462,6 +507,21 @@ already exercised against real transformer-export graphs.
     integrity story (a formula naming `M` is only meaningful if `M` is a
     real `dim_param` reachable in that graph) — real, separable design work
     that a follow-on RFC should own rather than inheriting from this one.
+  - **A working, merged prototype of the low-risk shape already exists**,
+    outside this proposal's own scope. `onnxsim/onnxsim#693`
+    (`test_onnxsim_captures_symbolic_dim_expressions_to_metadata_props` in
+    `tests/test_symexpr_kv_cache_consistency.py`) writes a resolved compound
+    expression (e.g. `past_len + seq_len`) into the relevant output's
+    `ValueInfoProto.metadata_props` — a field the spec already has today, so
+    the prototype needed no `onnx` change at all — and asserts the annotated
+    model stays `onnx.checker`-valid and numerically identical. It is
+    explicitly *not* a proposal for that exact key convention (see its own
+    code comment), and it only covers a graph's declared inputs/outputs,
+    where the FX-side and ONNX-side names correlate reliably by position;
+    but it is concrete evidence that this class of annotation is
+    expressible, inert, and spec-compliant with nothing new to standardize
+    — a useful existence proof for whoever picks up the follow-on RFC this
+    bullet describes.
 - **Constant folding across dynamic dims** in `onnx`'s own optimizer passes,
   using the same symbol table — today this is exactly the kind of thing a
   downstream tool like onnxsim has to implement entirely outside `onnx`
