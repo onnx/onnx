@@ -44,7 +44,8 @@ def im2col(X, kernel_shape, pads, strides):
     getitem = (slice(0, m), d, *indices)
     cols = X_padded[getitem]
     perm = (1, 0, *range(2, cols.ndim))
-    return cols.transpose(perm).reshape((cols.shape[1], -1)), tuple(shape_out)
+    output_size = m * int(np.prod(shape_out))
+    return cols.transpose(perm).reshape((cols.shape[1], output_size)), tuple(shape_out)
 
 
 def _conv_implementation(
@@ -103,8 +104,10 @@ def _conv_implementation(
 
     c2, out_shape = im2col(X, kernel_shape, pads, strides)
     kernel_size = int(np.prod(kernel_shape))
-    c2 = c2.reshape((group, W.shape[1] * kernel_size, -1))
-    w_reshaped = W.reshape((group, W.shape[0] // group, -1))
+    flattened_kernel_size = W.shape[1] * kernel_size
+    output_size = X.shape[0] * int(np.prod(out_shape))
+    c2 = c2.reshape((group, flattened_kernel_size, output_size))
+    w_reshaped = W.reshape((group, W.shape[0] // group, flattened_kernel_size))
     mul = w_reshaped @ c2
     mul = mul.reshape((group, W.shape[0] // group, X.shape[0], *out_shape))
     perm = (2, 0, 1, *range(3, mul.ndim))

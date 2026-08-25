@@ -4216,6 +4216,36 @@ class TestReferenceEvaluator:
         )
         assert_allclose(got, np.array(expected, dtype=np.float32))
 
+    @pytest.mark.parametrize(
+        ("X", "W", "expected_shape"),
+        [
+            (
+                np.empty((1, 0, 5), dtype=np.float32),
+                np.empty((1, 0, 3), dtype=np.float32),
+                (1, 1, 3),
+            ),
+            (
+                np.empty((1, 2, 5), dtype=np.float32),
+                np.empty((0, 2, 3), dtype=np.float32),
+                (1, 0, 3),
+            ),
+        ],
+    )
+    def test_conv_im2col_empty_channels(self, X, W, expected_shape):
+        got = _conv_implementation(
+            X=X,
+            W=W,
+            B=None,
+            auto_pad="NOTSET",
+            dilations=[1],
+            group=1,
+            kernel_shape=[3],
+            pads=[0, 0],
+            strides=[1],
+        )
+        assert got.shape == expected_shape
+        assert not np.any(got)
+
     def test_conv_im2col_3d(self):
         feeds = {
             "X": np.arange(1 * 1 * 11 * 5 * 13)
