@@ -19,10 +19,10 @@ algebra for `TensorShapeProto::Dimension`, so that arithmetic combining two
 `dim_param`s — `M + N`, `2 * M`, `M * N`, exact division — produces a real,
 reproducible symbol instead of an anonymous unknown dimension (`?`). This is
 purely a capability upgrade to the *inference-time* engine: the wire format
-(`dim_value` / `dim_param` / unset) is unchanged, no opset bump is required,
-and every existing model, producer, and consumer keeps working exactly as
-today. This proposal is scoped to reference-implementation code only; it does
-not add expression syntax to the ONNX IR itself.
+(`dim_value` / `dim_param` / unset) is unchanged, no IR version bump is
+required, and every existing model, producer, and consumer keeps working
+exactly as today. This proposal is scoped to reference-implementation code
+only; it does not add expression syntax to the ONNX IR itself.
 
 ## Motivation
 [motivation]: #motivation
@@ -303,7 +303,7 @@ already exercised against real transformer-export graphs.
   capability for free — an `Add` between two propagated `dim_param` values in
   a `Shape -> Gather -> Add -> Concat -> Reshape` chain now propagates
   `M + N` instead of stopping.
-- **Backward compatibility**: no protobuf field changes, no opset version
+- **Backward compatibility**: no protobuf field changes, no IR version
   implications — this is exactly the same category of change as 0005 itself,
   which shipped as an ONNX 1.10 capability improvement to `InferShapes`/
   `ShapeInferenceOptions` with no IR version bump. Existing serialized models
