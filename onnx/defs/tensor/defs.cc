@@ -3705,9 +3705,10 @@ The operation can be described using the following pseudocode:
 for prefix_idx in np.ndindex(past_cache.shape[:axis]):
     batch_idx = prefix_idx[0]
     for sequence_idx in range(sequence_length):
-        cache_idx = (*prefix_idx, write_indices[batch_idx] + sequence_idx)
+        cache_sequence_idx = write_indices[batch_idx] + sequence_idx
         if mode == "circular":
-            cache_idx = tuple(np.mod(np.asarray(cache_idx), max_sequence_length))
+            cache_sequence_idx = cache_sequence_idx % max_sequence_length
+        cache_idx = (*prefix_idx, cache_sequence_idx)
         update_idx = (*prefix_idx, sequence_idx)
         present_cache[cache_idx] = update[update_idx]
 ```
