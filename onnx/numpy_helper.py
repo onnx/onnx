@@ -187,7 +187,7 @@ def _pack_2bitx4(array: np.ndarray) -> npt.NDArray[np.uint8]:
 
 def _pack_6bit(values: np.ndarray) -> npt.NDArray[np.uint8]:
     """Pack a flat uint8 array of 6-bit codes 4-at-a-time into 3 bytes (LSB-first bit order)."""
-    flat = values.astype(np.uint8).ravel() & 0x3F
+    flat = values.astype(np.uint8, copy=False).ravel() & 0x3F
     n = flat.size
     packed_size = math.ceil(n * 6 / 8)
     pad = -n % 4
@@ -201,10 +201,9 @@ def _pack_6bit(values: np.ndarray) -> npt.NDArray[np.uint8]:
     return packed.reshape(-1)[:packed_size]
 
 
-def _unpack_6bit(
-    data: np.ndarray, original_size: int, dims: Sequence[int]
-) -> npt.NDArray[np.uint8]:
+def _unpack_6bit(data: np.ndarray, dims: Sequence[int]) -> npt.NDArray[np.uint8]:
     """Unpack a 6-bit packed buffer (see _pack_6bit) back into a uint8 array of given dims."""
+    original_size = math.prod(dims)
     num_groups = -(-original_size // 4)  # ceil division
     needed_bytes = num_groups * 3
     # _pack_6bit trims its output to this minimal size: trailing bytes beyond
@@ -216,18 +215,26 @@ def _unpack_6bit(
             f"Packed 6-bit data ({data.size} bytes) is too small for the declared "
             f"shape {list(dims)} ({min_bytes} bytes required)."
         )
-    if data.size < needed_bytes:
-        data = np.concatenate(
-            [data, np.zeros(needed_bytes - data.size, dtype=np.uint8)]
-        )
-    else:
-        data = data[:needed_bytes]
-    b0, b1, b2 = data[0::3], data[1::3], data[2::3]
+    # Bulk-unpack whole 3-byte groups via strided views (no copy of `data`);
+    # only the possibly-incomplete final group (at most 2 missing bytes) needs
+    # padding, so pad just that instead of copying the whole buffer.
+    bulk_bytes = min(data.size, needed_bytes) // 3 * 3
+    bulk_groups = bulk_bytes // 3
     unpacked = np.empty((num_groups, 4), dtype=np.uint8)
-    unpacked[:, 0] = b0 & 0x3F
-    unpacked[:, 1] = ((b0 >> 6) & 0x03) | ((b1 & 0x0F) << 2)
-    unpacked[:, 2] = ((b1 >> 4) & 0x0F) | ((b2 & 0x03) << 4)
-    unpacked[:, 3] = (b2 >> 2) & 0x3F
+    b0, b1, b2 = data[0:bulk_bytes:3], data[1:bulk_bytes:3], data[2:bulk_bytes:3]
+    unpacked[:bulk_groups, 0] = b0 & 0x3F
+    unpacked[:bulk_groups, 1] = ((b0 >> 6) & 0x03) | ((b1 & 0x0F) << 2)
+    unpacked[:bulk_groups, 2] = ((b1 >> 4) & 0x0F) | ((b2 & 0x03) << 4)
+    unpacked[:bulk_groups, 3] = (b2 >> 2) & 0x3F
+    if bulk_groups < num_groups:
+        tail = np.zeros(3, dtype=np.uint8)
+        rest = data[bulk_bytes:]
+        tail[: rest.size] = rest
+        t0, t1, t2 = tail
+        unpacked[bulk_groups, 0] = t0 & 0x3F
+        unpacked[bulk_groups, 1] = ((t0 >> 6) & 0x03) | ((t1 & 0x0F) << 2)
+        unpacked[bulk_groups, 2] = ((t1 >> 4) & 0x0F) | ((t2 & 0x03) << 4)
+        unpacked[bulk_groups, 3] = (t2 >> 2) & 0x3F
     return unpacked.reshape(-1)[:original_size].reshape(dims)
 
 
@@ -292,9 +299,8 @@ def to_array(tensor: onnx.TensorProto, base_dir: str = "") -> np.ndarray:  # noq
             # single-format convention below). A byte-length-based sniff between
             # "packed" and "one byte per element" would be ambiguous for small
             # tensors -- e.g. 3 elements pack to ceil(3*6/8) = 3 bytes too.
-            num_elems = math.prod(dims)
             data = np.frombuffer(raw_data, dtype=np.uint8)
-            unpacked = _unpack_6bit(data, num_elems, dims)
+            unpacked = _unpack_6bit(data, dims)
             return unpacked.view(np_dtype)
 
         return np.frombuffer(raw_data, dtype=np_dtype).reshape(dims)
