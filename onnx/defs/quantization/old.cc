@@ -139,7 +139,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             propagateElemTypeFromInputToOutput(ctx, 2, 0);
           } else if (output_dtype != TensorProto::UNDEFINED) {
             propagateElemTypeFromAttributeToOutput(ctx, "output_dtype", 0);
-          } else {
+          } else if (!ctx.hasInput(2)) {
             updateOutputElemType(ctx, 0, TensorProto::UINT8);
           }
           if (!hasInputShape(ctx, 0)) {

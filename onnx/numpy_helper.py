@@ -292,7 +292,7 @@ def to_array(tensor: onnx.TensorProto, base_dir: str = "") -> np.ndarray:  # noq
             # single-format convention below). A byte-length-based sniff between
             # "packed" and "one byte per element" would be ambiguous for small
             # tensors -- e.g. 3 elements pack to ceil(3*6/8) = 3 bytes too.
-            num_elems = int(np.prod(dims))
+            num_elems = math.prod(dims)
             data = np.frombuffer(raw_data, dtype=np.uint8)
             unpacked = _unpack_6bit(data, num_elems, dims)
             return unpacked.view(np_dtype)

@@ -76,4 +76,4 @@ Upcasting exact. Downcasting RNE with saturation. Examples:
 ```
 
 ## Packing and Unpacking
-Pack 4 vals (24 bits) into 3 bytes, pad with 0s if not multiple of 4. Little-endian bit order.
+Pack consecutive 6-bit codes into a contiguous LSB-first bit stream. The payload for `N` values is `ceil(6N/8)` bytes; unused high bits of the final byte are zero-padded.
