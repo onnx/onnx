@@ -694,6 +694,16 @@ class TestReferenceEvaluator:
         got = sess.run(None, {"X": x, "Y": y})[0]
         assert_allclose(got, expected)
 
+    @pytest.mark.parametrize("axis", [-2, 1])
+    def test_concat_rejects_axis_out_of_range(self, axis: int):
+        node = make_node("Concat", ["X"], ["Y"], axis=axis)
+        sess = ReferenceEvaluator(node)
+
+        with pytest.raises(
+            ValueError, match=rf"axis {axis} is out of range for input rank 1"
+        ):
+            sess.run(None, {"X": np.ones((1,), dtype=np.float32)})
+
     def test_greater_or_equal(self):
         X = make_tensor_value_info("X", TensorProto.FLOAT, [None, None])
         Y = make_tensor_value_info("Y", TensorProto.FLOAT, [None])
@@ -6271,6 +6281,37 @@ class TestReferenceEvaluator:
         ref = ReferenceEvaluator(model)
         got = ref.run(None, {"data": data, "indices": indices, "updates": updates})
         assert_allclose(got[0], y)
+
+    def test_scatter_elements_higher_rank(self):
+        model = make_model(
+            make_graph(
+                [
+                    make_node(
+                        "ScatterElements",
+                        ["data", "indices", "updates"],
+                        ["Z"],
+                        axis=2,
+                    )
+                ],
+                "name",
+                [
+                    make_tensor_value_info("data", TensorProto.FLOAT, None),
+                    make_tensor_value_info("indices", TensorProto.INT64, None),
+                    make_tensor_value_info("updates", TensorProto.FLOAT, None),
+                ],
+                [make_tensor_value_info("Z", TensorProto.FLOAT, None)],
+            ),
+            opset_imports=[make_opsetid("", 18)],
+        )
+        shape = (1, 1, 2, 1, 1)
+        data = np.zeros(shape, dtype=np.float32)
+        indices = np.array([1, 0], dtype=np.int64).reshape(shape)
+        updates = np.array([3, 4], dtype=np.float32).reshape(shape)
+        expected = np.array([4, 3], dtype=np.float32).reshape(shape)
+
+        ref = ReferenceEvaluator(model)
+        got = ref.run(None, {"data": data, "indices": indices, "updates": updates})
+        assert_allclose(got[0], expected)
 
     def test_sequence_axis(self):
         model = self._load_model(
