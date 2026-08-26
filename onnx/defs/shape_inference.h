@@ -20,6 +20,9 @@ namespace ONNX_NAMESPACE {
 
 using Dim = TensorShapeProto_Dimension;
 
+// Bound optional rank-only inference to prevent unbounded protobuf materialization.
+constexpr int64_t kMaxMaterializedRank = 1024;
+
 struct ShapeInferenceOptions {
   // Checks the type-equality for input and output
   bool check_type;
