@@ -21,7 +21,7 @@ namespace ONNX_NAMESPACE {
 
 ONNX_OPERATOR_SET_SCHEMA(
     Cast,
-    25,
+    29,
     OpSchema()
         .SetDoc(kDoc_Cast_ver24)
         .Attr(
@@ -58,11 +58,11 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::Differentiable)
         .TypeConstraint(
             "T1",
-            OpSchema::all_non_complex_tensor_types_ir13(),
+            OpSchema::all_non_complex_tensor_types_ir14(),
             "Constrain input types. Casting from complex is not supported.")
         .TypeConstraint(
             "T2",
-            OpSchema::all_non_complex_tensor_types_ir13(),
+            OpSchema::all_non_complex_tensor_types_ir14(),
             "Constrain output types. Casting to complex is not supported.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           propagateElemTypeFromAttributeToOutput(ctx, "to", 0);

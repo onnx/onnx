@@ -2608,6 +2608,52 @@ class TestVersionConverter:
         with pytest.raises(RuntimeError):
             self._quantize_linear_converted(dtype, 29, 28)
 
+    @pytest.mark.parametrize("dtype", [TensorProto.FLOAT6E2M3, TensorProto.FLOAT6E3M2])
+    def test_quantize_linear_29_28_untyped_fp6_output_fails(self, dtype: int) -> None:
+        graph = helper.make_graph(
+            [
+                helper.make_node(
+                    "QuantizeLinear",
+                    ["X", "S"],
+                    ["Q"],
+                    output_dtype=dtype,
+                ),
+                helper.make_node("DequantizeLinear", ["Q", "S"], ["Y"]),
+            ],
+            "qdq",
+            [
+                helper.make_tensor_value_info("X", TensorProto.FLOAT, [3, 4]),
+                helper.make_tensor_value_info("S", TensorProto.FLOAT, []),
+            ],
+            [helper.make_tensor_value_info("Y", TensorProto.FLOAT, [3, 4])],
+        )
+        with pytest.raises(RuntimeError):
+            self._converted(graph, helper.make_operatorsetid("", 29), 28)
+
+    def _cast_converted(self, dtype: int, src: int, dst: int) -> ModelProto:
+        graph = helper.make_graph(
+            [helper.make_node("Cast", ["X"], ["Y"], to=dtype)],
+            "cast",
+            [helper.make_tensor_value_info("X", TensorProto.FLOAT, [3, 4])],
+            [helper.make_tensor_value_info("Y", dtype, [3, 4])],
+        )
+        return self._converted(graph, helper.make_operatorsetid("", src), dst)
+
+    def test_cast_float_28_29_and_29_28(self) -> None:
+        assert (
+            self._cast_converted(TensorProto.FLOAT, 28, 29).opset_import[0].version
+            == 29
+        )
+        assert (
+            self._cast_converted(TensorProto.FLOAT, 29, 28).opset_import[0].version
+            == 28
+        )
+
+    @pytest.mark.parametrize("dtype", [TensorProto.FLOAT6E2M3, TensorProto.FLOAT6E3M2])
+    def test_cast_29_28_fp6_type_fails(self, dtype: int) -> None:
+        with pytest.raises(RuntimeError):
+            self._cast_converted(dtype, 29, 28)
+
     def _dequantize_linear_converted(
         self, dtype: int, src: int, dst: int
     ) -> ModelProto:

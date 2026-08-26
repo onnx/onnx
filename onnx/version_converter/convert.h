@@ -26,6 +26,7 @@
 #include "onnx/version_converter/adapters/batch_normalization_13_14.h"
 #include "onnx/version_converter/adapters/broadcast_backward_compatibility.h"
 #include "onnx/version_converter/adapters/broadcast_forward_compatibility.h"
+#include "onnx/version_converter/adapters/cast_29_28.h"
 #include "onnx/version_converter/adapters/cast_9_8.h"
 #include "onnx/version_converter/adapters/clip_10_11.h"
 #include "onnx/version_converter/adapters/compatible.h"
@@ -39,6 +40,7 @@
 #include "onnx/version_converter/adapters/no_previous_version.h"
 #include "onnx/version_converter/adapters/pad_10_11.h"
 #include "onnx/version_converter/adapters/q_dq_21_20.h"
+#include "onnx/version_converter/adapters/quantize_linear_29_28.h"
 #include "onnx/version_converter/adapters/range_27_26.h"
 #include "onnx/version_converter/adapters/reshape_4_5.h"
 #include "onnx/version_converter/adapters/reshape_5_4.h"
@@ -993,14 +995,15 @@ class DefaultVersionConverter : public BaseVersionConverter {
     registerAdapter(std::make_unique<TypeRestriction>("Celu", OpSetID(28), OpSetID(27), celu_28_unallowed_types));
 
     /******** 28 -> 29 ********/
+    registerAdapter(std::make_unique<CompatibleAdapter>("Cast", OpSetID(28), OpSetID(29)));
     registerAdapter(std::make_unique<CompatibleAdapter>("QuantizeLinear", OpSetID(28), OpSetID(29)));
     registerAdapter(std::make_unique<CompatibleAdapter>("DequantizeLinear", OpSetID(28), OpSetID(29)));
 
     /******** 29 -> 28 ********/
     const std::vector<TensorProto_DataType> ir14_types_not_in_ir13 = {
         TensorProto_DataType_FLOAT6E2M3, TensorProto_DataType_FLOAT6E3M2};
-    registerAdapter(
-        std::make_unique<TypeRestriction>("QuantizeLinear", OpSetID(29), OpSetID(28), ir14_types_not_in_ir13));
+    registerAdapter(std::make_unique<Cast_29_28>(ir14_types_not_in_ir13));
+    registerAdapter(std::make_unique<QuantizeLinear_29_28>(ir14_types_not_in_ir13));
     registerAdapter(
         std::make_unique<TypeRestriction>("DequantizeLinear", OpSetID(29), OpSetID(28), ir14_types_not_in_ir13));
   }

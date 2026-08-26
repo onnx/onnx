@@ -74,6 +74,7 @@ class TestFP6(unittest.TestCase):
 
     def test_cast_fp6_e2m3(self):
         m = self._cast_model(onnx.TensorProto.FLOAT6E2M3)
+        onnx.checker.check_model(m)
         ref = ReferenceEvaluator(m)
         x = np.array([0.0, -0.0, 0.125, 0.2, 1.0, 1000.0], dtype=np.float32)
         (y,) = ref.run(None, {"X": x})
@@ -92,6 +93,7 @@ class TestFP6(unittest.TestCase):
 
     def test_cast_fp6_e3m2(self):
         m = self._cast_model(onnx.TensorProto.FLOAT6E3M2)
+        onnx.checker.check_model(m)
         ref = ReferenceEvaluator(m)
         x = np.array([0.0, -0.0, 0.0625, 0.5, 2.0, 1e6], dtype=np.float32)
         (y,) = ref.run(None, {"X": x})
