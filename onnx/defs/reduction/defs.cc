@@ -69,7 +69,7 @@ ONNX_OPERATOR_SET_SCHEMA(
     ReduceLogSumExp,
     21,
     OpSchema()
-        .FillUsing(ReduceFunctionOp("log sum exponent", EMPTY_MINUS_INF, reduce_log_sum_exp_func_body))
+        .FillUsing(ReduceFunctionOp("log sum exp", EMPTY_MINUS_INF, reduce_log_sum_exp_func_body))
         .TypeConstraint(
             "T",
             OpSchema::all_float_types_ir4(),
