@@ -198,7 +198,7 @@ void check_tensor(const TensorProto& tensor, const CheckerContext& ctx) {
               tensor.name(),
               ") has a shape too large to validate against its data type.");
         }
-        expected_bytes = expected_bits / 8 + (expected_bits % 8 != 0);
+        expected_bytes = (expected_bits / 8) + (expected_bits % 8 != 0);
         break;
       }
       case TensorProto::UINT8:
