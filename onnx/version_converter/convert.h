@@ -18,6 +18,7 @@
 
 #include "onnx/version_converter/BaseConverter.h"
 #include "onnx/version_converter/adapters/Attention_24_23.h"
+#include "onnx/version_converter/adapters/Attention_25_24.h"
 #include "onnx/version_converter/adapters/axes_attribute_to_input.h"
 #include "onnx/version_converter/adapters/axes_input_to_attribute.h"
 #include "onnx/version_converter/adapters/axis_attribute_to_input.h"
@@ -42,6 +43,7 @@
 #include "onnx/version_converter/adapters/reshape_4_5.h"
 #include "onnx/version_converter/adapters/reshape_5_4.h"
 #include "onnx/version_converter/adapters/resize_10_11.h"
+#include "onnx/version_converter/adapters/resize_18_17.h"
 #include "onnx/version_converter/adapters/scan_8_9.h"
 #include "onnx/version_converter/adapters/scan_9_8.h"
 #include "onnx/version_converter/adapters/scatter_10_11.h"
@@ -62,8 +64,7 @@
 #include "onnx/version_converter/adapters/upsample_9_10.h"
 #include "onnx/version_converter/adapters/upsample_9_8.h"
 
-namespace ONNX_NAMESPACE {
-namespace version_conversion {
+namespace ONNX_NAMESPACE::version_conversion {
 
 class DefaultVersionConverter : public BaseVersionConverter {
  private:
@@ -580,6 +581,7 @@ class DefaultVersionConverter : public BaseVersionConverter {
     registerAdapter(std::make_unique<AxesInputToAttribute>("ReduceMin", OpSetID(18), OpSetID(17)));
     registerAdapter(std::make_unique<AxesInputToAttribute>("ReduceProd", OpSetID(18), OpSetID(17)));
     registerAdapter(std::make_unique<AxesInputToAttribute>("ReduceSumSquare", OpSetID(18), OpSetID(17)));
+    registerAdapter(std::make_unique<Resize_18_17>());
     registerAdapter(std::make_unique<Scatter_18_17>("ScatterElements"));
     registerAdapter(std::make_unique<Scatter_18_17>("ScatterND"));
 
@@ -926,6 +928,7 @@ class DefaultVersionConverter : public BaseVersionConverter {
         std::make_unique<TypeRestriction>("SplitToSequence", OpSetID(24), OpSetID(23), bfloat16_not_allowed));
 
     /******** 24 -> 25 ********/
+    registerAdapter(std::make_unique<CompatibleAdapter>("Attention", OpSetID(24), OpSetID(25)));
     registerAdapter(std::make_unique<CompatibleAdapter>("Cast", OpSetID(24), OpSetID(25)));
     registerAdapter(std::make_unique<CompatibleAdapter>("CastLike", OpSetID(24), OpSetID(25)));
     registerAdapter(std::make_unique<CompatibleAdapter>("Constant", OpSetID(24), OpSetID(25)));
@@ -946,6 +949,7 @@ class DefaultVersionConverter : public BaseVersionConverter {
     registerAdapter(std::make_unique<CompatibleAdapter>("QuantizeLinear", OpSetID(24), OpSetID(25)));
 
     /******** 25 -> 24 ********/
+    registerAdapter(std::make_unique<Attention_25_24>());
     const std::vector<TensorProto_DataType> ir13_types_not_in_ir12 = {
         TensorProto_DataType_UINT2, TensorProto_DataType_INT2};
     registerAdapter(std::make_unique<TypeRestriction>("Cast", OpSetID(25), OpSetID(24), ir13_types_not_in_ir12));
@@ -994,5 +998,4 @@ class DefaultVersionConverter : public BaseVersionConverter {
 };
 
 ONNX_API ModelProto ConvertVersion(const ModelProto& mp_in, int target_version);
-} // namespace version_conversion
-} // namespace ONNX_NAMESPACE
+} // namespace ONNX_NAMESPACE::version_conversion

@@ -22,8 +22,7 @@
 #include "onnx/shape_inference/implementation.h"
 #include "onnx/version_converter/convert.h"
 
-namespace ONNX_NAMESPACE {
-namespace inliner {
+namespace ONNX_NAMESPACE::inliner {
 
 namespace { // internal/private API
 
@@ -802,5 +801,4 @@ std::string Renamer::BindToUniqueName(const std::string& original_name) {
   return pImpl_->GetRenamer().BindToUniqueName(original_name);
 }
 
-} // namespace inliner
-} // namespace ONNX_NAMESPACE
+} // namespace ONNX_NAMESPACE::inliner
