@@ -84,7 +84,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "T",
             OpSchema::all_float_types_ir4(),
             "Constrain input and output types to float tensors."));
-static const char* reduce_l1_func_body = R"ONNX(
+
 static constexpr const char* reduce_l1_func_body = R"ONNX(
   {
     data_abs = Abs(data)
