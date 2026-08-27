@@ -172,8 +172,10 @@ __all__ = [
     "ReduceL2_18",
     "ReduceLogSum_1",
     "ReduceLogSum_18",
+    "ReduceLogSum_21",
     "ReduceLogSumExp_1",
     "ReduceLogSumExp_18",
+    "ReduceLogSumExp_21",
     "ReduceMax_1",
     "ReduceMax_18",
     "ReduceMean_1",
@@ -426,10 +428,15 @@ from onnx.reference.ops.op_range import Range
 from onnx.reference.ops.op_reciprocal import Reciprocal
 from onnx.reference.ops.op_reduce_l1 import ReduceL1_1, ReduceL1_18
 from onnx.reference.ops.op_reduce_l2 import ReduceL2_1, ReduceL2_18
-from onnx.reference.ops.op_reduce_log_sum import ReduceLogSum_1, ReduceLogSum_18
+from onnx.reference.ops.op_reduce_log_sum import (
+    ReduceLogSum_1,
+    ReduceLogSum_18,
+    ReduceLogSum_21,
+)
 from onnx.reference.ops.op_reduce_log_sum_exp import (
     ReduceLogSumExp_1,
     ReduceLogSumExp_18,
+    ReduceLogSumExp_21,
 )
 from onnx.reference.ops.op_reduce_max import ReduceMax_1, ReduceMax_18
 from onnx.reference.ops.op_reduce_mean import ReduceMean_1, ReduceMean_18

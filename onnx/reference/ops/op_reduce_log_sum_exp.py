@@ -33,14 +33,8 @@ class ReduceLogSumExp_1(OpRunReduceNumpy):
 
 class ReduceLogSumExp_18(OpRunReduceNumpy):
     def _run(self, data, axes=None, keepdims=1, noop_with_empty_axes=0):
-        # Opset 21+: Integer types not supported (Log/Exp don't support integers)
-        if np.issubdtype(data.dtype, np.integer):
-            raise TypeError(
-                f"ReduceLogSumExp does not support integer types (got {data.dtype}). "
-                "Integer support was removed in opset 21. Cast input to float."
-            )
-
         axes = self.handle_axes(axes, noop_with_empty_axes)
+
         keepdims = keepdims != 0
 
         if data.size == 0:
@@ -48,3 +42,21 @@ class ReduceLogSumExp_18(OpRunReduceNumpy):
 
         return compute_log_sum_exp(data, axes, keepdims)
 
+
+class ReduceLogSumExp_21(OpRunReduceNumpy):
+    def _run(self, data, axes=None, keepdims=1, noop_with_empty_axes=0):
+        # Opset 21 dropped integer support: Log/Exp are undefined for integers.
+        if np.issubdtype(data.dtype, np.integer):
+            raise TypeError(
+                f"ReduceLogSumExp does not support integer types (got {data.dtype}). "
+                "Integer support was removed in opset 21. Cast the input to a float type."
+            )
+
+        axes = self.handle_axes(axes, noop_with_empty_axes)
+
+        keepdims = keepdims != 0
+
+        if data.size == 0:
+            return self.reduce_constant(data, -np.inf, axes, keepdims)
+
+        return compute_log_sum_exp(data, axes, keepdims)
