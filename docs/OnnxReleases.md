@@ -6,11 +6,11 @@ SPDX-License-Identifier: Apache-2.0
 
 # ONNX Releases
 
-The ONNX project, going forward, will plan to release roughly on a four month cadence. We follow the [Semver](https://semver.org/) versioning approach and will make decisions as a community on a release by release basis on whether to do a major or minor release.
+The ONNX project plans to release roughly every three months. We follow the [Semver](https://semver.org/) versioning approach and make decisions as a community on a release-by-release basis on whether to produce a major or minor release.
 
 ## Preparation
 
-* Reach out to the SIG Arch/Infra leads to confirm whether the required status checks for the release branches are still valid and up to date, and whether any rely on outdated hardcoded runner image versions that may need updatingCheck whether the 'required checks' for the release branches are still up to date or need to be adjusted: 'Branches' -> 'Branch protection rules'
+* Reach out to the Architecture & Infra SIG leads to confirm whether the required status checks for release branches are current and whether any rely on outdated, hardcoded runner images. Update the checks or branch protection rules as needed.
 * Determine version (X.Y.Z) for the new release
     * Discuss in Slack channel for Releases (https://lfaifoundation.slack.com/archives/C018VGGJUGK)
     * For (v.X.Y.Z), if release is to be 1.16.0,
@@ -92,7 +92,7 @@ RC-Candidates
 
 # Official Release
 
-Validation steps must be completed before this point! This is the point of new return.
+Validation steps must be completed before this point. This is the point of no return.
 
 * git tags should not be changed once published
 * Once pushed to PyPI there is no way to update the release. A new release must be made instead
@@ -125,8 +125,8 @@ Validation steps must be completed before this point! This is the point of new r
 ### NOTES:
 
 * Once the packages are uploaded to PyPI, **you cannot overwrite it on the same PyPI instance**.
-  * Please make sure everything is good on TestPyPI before uploading to PyPI**
-* PyPI has separate logins, passwords, and API tokens from TestPyPI but the process is the same. An ONNX PyPI owner will need to grant access, etc.
+  * Make sure everything is correct on TestPyPI before uploading to PyPI.
+* Publishing uses GitHub Actions, protected deployment environments, and PyPI Trusted Publishing. Release managers do not enter PyPI passwords or API tokens into the workflow. The Architecture & Infra SIG administers the deployment environments and PyPI project access.
 
 ## After PyPI Release
 
@@ -165,18 +165,6 @@ Conda builds of ONNX are done via [conda-forge/onnx-feedstock](https://github.co
    * If urgent changes were made directly into the release branch, merge the release branch back into main branch.
    * If all PRs merged into the release branch (after it was cut) were cherry-picks from main, the merge PR will show as empty and this step is not needed.
 
-**Remove old onnx-weekly packages on PyPI**
-
-* Remove all [onnx-weekly packages](https://pypi.org/project/onnx-weekly/#history) from PyPI for the just released version to save space.
-* Steps:
-    * Go to [PyPI onnx-weekly/releases](https://pypi.org/manage/project/onnx-weekly/releases/)
-        * This is a separate project than the onnx releases so you may need to request access from an owner
-    * Click target package -> Options -> Delete.
-
-**Remove old release-candidate packages on PyPI**
-
-* Remove [onnx-release-candidate packages](https://test.pypi.org/project/onnx/#history) from PyPI up to at least the time specified by the previous release version to save space.
-* Steps:
-    * Go to [PyPI onnx-weekly/releases](https://test.pypi.org/manage/project/onnx/releases/)
-       * This is a separate project than the onnx releases so you may need to request access from an owner
-   * Click target package -> Options -> Delete.
+PyPI storage cleanup is not part of the release manager's responsibilities. It
+is performed separately by Architecture & Infra SIG administrators as described
+in [Release Administration](ReleaseAdministration.md).

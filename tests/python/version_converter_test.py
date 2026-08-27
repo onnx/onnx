@@ -95,6 +95,41 @@ class TestVersionConverter:
         with pytest.raises(RuntimeError):
             test()
 
+    def test_rejects_captured_node_without_output(self) -> None:
+        nested_graph = helper.make_graph(
+            [helper.make_node("Captured", ["X"], [], domain="custom")],
+            "nested",
+            [],
+            [],
+        )
+        carrier = helper.make_node(
+            "NestedCarrier",
+            ["X"],
+            [],
+            domain="custom",
+            payload=nested_graph,
+        )
+        graph = helper.make_graph(
+            [helper.make_node("Flatten", ["X"], ["Y"]), carrier],
+            "test",
+            [helper.make_tensor_value_info("X", TensorProto.INT32, (2, 2))],
+            [helper.make_tensor_value_info("Y", TensorProto.INT32, (2, 2))],
+        )
+        model = helper.make_model(
+            graph,
+            opset_imports=[
+                helper.make_operatorsetid("", 9),
+                helper.make_operatorsetid("custom", 1),
+            ],
+        )
+        checker.check_model(model)
+
+        with pytest.raises(
+            onnx.version_converter.ConvertError,
+            match="Captured node must have exactly one output",
+        ):
+            onnx.version_converter.convert_version(model, 8)
+
     # A graph output that nothing produces must raise (ConvertError), not crash.
     # Regression test for a SEGV in graphProtoToGraph when a top-level
     # graph output name was absent from the value map.
@@ -128,6 +163,26 @@ class TestVersionConverter:
 
         with pytest.raises(onnx.version_converter.ConvertError):
             test()
+
+    def test_extend_supported_types_rejects_missing_output(self) -> None:
+        node = helper.make_node("Flatten", ["X"], [])
+        graph = helper.make_graph(
+            [node],
+            "malformed_flatten",
+            [helper.make_tensor_value_info("X", TensorProto.FLOAT, (2, 3))],
+            [],
+        )
+        model = helper.make_model(
+            graph,
+            opset_imports=[helper.make_operatorsetid("", 9)],
+        )
+
+        # convert_version runs shape inference before conversion, so Flatten's
+        # own shape-inference function rejects the missing output first; the
+        # adapter's ONNX_ASSERTM guard is defense-in-depth for callers that
+        # reach ExtendSupportedTypes without going through shape inference.
+        with pytest.raises((RuntimeError, shape_inference.InferenceError)):
+            onnx.version_converter.convert_version(model, 8)
 
     # A nested (subgraph) output that resolves to a value captured from the
     # enclosing scope is handled via a dummy node, not a crash. Exercises the
@@ -1379,20 +1434,22 @@ class TestVersionConverter:
         assert converted_model.opset_import[0].version == to_opset
 
     # Test Helper for Upsample Adapter: 9 -> 8
-    def helper_upsample_with_initializer(self, raw_scale: bool = False) -> None:
+    def helper_upsample_with_initializer(
+        self, raw_scale: bool = False, scale_name: str = "Scales"
+    ) -> None:
         from_opset = 9
         to_opset = 8
         data_type = TensorProto.FLOAT
 
         nodes = [
             onnx.helper.make_node(
-                "Upsample", inputs=["X", "Scales"], outputs=["Y"], mode="nearest"
+                "Upsample", inputs=["X", scale_name], outputs=["Y"], mode="nearest"
             )
         ]
 
         scale_value = [1.0, 1.0, 2.0, 3.0]
         scale_tensor = onnx.helper.make_tensor(
-            "Scales",
+            scale_name,
             onnx.TensorProto.FLOAT,
             [4],
             bytes(struct.pack("4f", *scale_value)) if raw_scale else scale_value,
@@ -1404,7 +1461,7 @@ class TestVersionConverter:
             "test_upsample",
             [
                 onnx.helper.make_tensor_value_info("X", data_type, [1, 1, 2, 2]),
-                onnx.helper.make_tensor_value_info("Scales", data_type, [4]),
+                onnx.helper.make_tensor_value_info(scale_name, data_type, [4]),
             ],
             [onnx.helper.make_tensor_value_info("Y", data_type, [1, 1, 4, 6])],
             [scale_tensor],
@@ -1473,6 +1530,11 @@ class TestVersionConverter:
     # Test Upsample Adapter: 9 -> 8
     def test_upsample_with_initializer_9_8(self) -> None:
         self.helper_upsample_with_initializer(raw_scale=False)
+
+    def test_upsample_with_long_initializer_name_9_8(self) -> None:
+        self.helper_upsample_with_initializer(
+            raw_scale=False, scale_name="scale_initializer_name_longer_than_sso"
+        )
 
     # Test Upsample Adapter: 9 -> 8
     def test_upsample_with_raw_initializer_9_8(self) -> None:
