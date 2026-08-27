@@ -752,6 +752,11 @@ message TensorProto {
   // uint4 and int4 values must be packed to 4bitx2, the first element is stored in the 4 LSB and the second element is stored in the 4 MSB.
   // uint2 and int2 values must be packed to 2bitx4, with elements packed from LSB to MSB in a single byte as: x0 | (x1 << 2) | (x2 << 4) | (x3 << 6)
   // where x0, x1, x2, x3 are consecutive elements.
+  // float6e2m3 and float6e3m2 values must be packed 4-at-a-time into 3 bytes, as a contiguous
+  // 24-bit LSB-first bitstream (x0 occupying the first 6 bits, x1 the next 6, and so on):
+  // byte0 = x0 | ((x1 & 0x3) << 6); byte1 = (x1 >> 2) | ((x2 & 0xF) << 4); byte2 = (x2 >> 4) | (x3 << 2)
+  // where x0, x1, x2, x3 are consecutive elements. If the element count is not a multiple of 4, the
+  // final group is zero-padded; the packed byte length is ceil(6 * num_elements / 8).
   //
   // Note: the advantage of specific field rather than the raw_data field is
   // that in some cases (e.g. int data), protobuf does a better packing via

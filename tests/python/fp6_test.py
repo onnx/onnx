@@ -135,18 +135,14 @@ class TestFP6(unittest.TestCase):
         self.assertEqual(y.shape, x.shape)
         expected_e2m3 = x.astype(ml_dtypes.float6_e2m3fn).astype(np.float32)
         np.testing.assert_array_equal(y, expected_e2m3)
-        # Note: unlike test_cast_fp6_e2m3/e3m2, this round-trip does not
-        # currently preserve the sign of -0.0 (QuantizeLinear's `x +=
-        # zero_point` turns -0.0 into +0.0 for the default zero_point=0,
-        # a pre-existing issue shared with FLOAT4E2M1) -- see
-        # https://github.com/onnx/onnx/issues/8227. No signbit assertion
-        # here until that's resolved.
+        np.testing.assert_array_equal(np.signbit(y), np.signbit(expected_e2m3))
 
         ref2 = ReferenceEvaluator(self._qdq_model(onnx.TensorProto.FLOAT6E3M2))
         (y2,) = ref2.run(None, {"X": x, "S": scale})
         self.assertEqual(y2.shape, x.shape)
         expected_e3m2 = x.astype(ml_dtypes.float6_e3m2fn).astype(np.float32)
         np.testing.assert_array_equal(y2, expected_e3m2)
+        np.testing.assert_array_equal(np.signbit(y2), np.signbit(expected_e3m2))
 
 
 if __name__ == "__main__":
