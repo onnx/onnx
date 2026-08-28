@@ -5,6 +5,7 @@
 #include <string>
 
 #include "onnx/defs/schema.h"
+#include "onnx/defs/type_builders.h"
 
 namespace ONNX_NAMESPACE {
 
@@ -46,8 +47,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             std::string("RGB"))
         .Input(0, "encoded_stream", "Encoded stream", "T1", OpSchema::Single, true, 1, OpSchema::NonDifferentiable)
         .Output(0, "image", "Decoded image", "T2", OpSchema::Single, true, 1, OpSchema::NonDifferentiable)
-        .TypeConstraint("T1", {"tensor(uint8)"}, "Constrain input types to 8-bit unsigned integer tensor.")
-        .TypeConstraint("T2", {"tensor(uint8)"}, "Constrain output types to 8-bit unsigned integer tensor.")
+        .TypeConstraint("T1", {types::UInt8}, "Constrain input types to 8-bit unsigned integer tensor.")
+        .TypeConstraint("T2", {types::UInt8}, "Constrain output types to 8-bit unsigned integer tensor.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           if (hasInputShape(ctx, 0)) {
             auto& input_shape = getInputShape(ctx, 0);

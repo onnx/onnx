@@ -6,6 +6,7 @@
 #include <vector>
 
 #include "onnx/defs/schema.h"
+#include "onnx/defs/type_builders.h"
 
 namespace ONNX_NAMESPACE {
 static std::vector<std::string> optional_and_tensor_types() {
@@ -90,7 +91,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "O",
             optional_and_tensor_types(),
             "Constrain input type to optional tensor and optional sequence types.")
-        .TypeConstraint("B", {"tensor(bool)"}, "Constrain output to a boolean tensor.")
+        .TypeConstraint("B", {types::Bool}, "Constrain output to a boolean tensor.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           const size_t numInputs = ctx.getNumInputs();
           if (numInputs != 0 && numInputs != 1) {

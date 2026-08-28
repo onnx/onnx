@@ -15,7 +15,7 @@ import sys
 def main() -> int:
     violations = []
     for path in sys.argv[1:]:
-        with open(path) as f:
+        with open(path, encoding="utf-8") as f:
             for line_no, line in enumerate(f, 1):
                 if "namespace onnx" in line or "onnx::" in line:
                     violations.append(f"{path}:{line_no}: {line.rstrip()}")
