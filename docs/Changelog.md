@@ -33278,105 +33278,7 @@ This version of the operator has been available since version 27 of the default 
 </dl>
 
 ## Version 28 of the default ONNX operator set
-### <a name="Celu-28"></a>**Celu-28**</a>
-
-  Continuously Differentiable Exponential Linear Units:
-  Perform the linear unit element-wise on the input tensor X
-  using formula:
-
-  ```
-  max(0,x) + min(0,alpha*(exp(x/alpha)-1))
-  ```
-
-#### Version
-
-This version of the operator has been available since version 28 of the default ONNX operator set.
-
-#### Attributes
-
-<dl>
-<dt><tt>alpha</tt> : float (default is 1.0)</dt>
-<dd>The Alpha value in Celu formula which control the shape of the unit. The default value is 1.0.</dd>
-</dl>
-
-#### Inputs
-
-<dl>
-<dt><tt>X</tt> (differentiable) : T</dt>
-<dd>Input tensor</dd>
-</dl>
-
-#### Outputs
-
-<dl>
-<dt><tt>Y</tt> (differentiable) : T</dt>
-<dd>Output tensor</dd>
-</dl>
-
-#### Type Constraints
-
-<dl>
-<dt><tt>T</tt> : tensor(bfloat16), tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
-</dl>
-
-### <a name="SwiGLU-28"></a>**SwiGLU-28**</a>
-
-  SwiGLU is a gated activation that takes two inputs, a gate `A` and a linear (value)
-  input `B`, and produces one output `Y`. It applies the Swish activation to the gate
-  and multiplies the result elementwise by the linear input:
-
-  ```
-  Y = Swish_alpha(A) * B
-  ```
-
-  The gate activation `Swish_alpha` is exactly the `Swish` operator with the same
-  `alpha`, i.e. `Swish_alpha(a) = a * Sigmoid(alpha * a)`. Inputs `A` and `B` must
-  have identical shapes; broadcasting is not applied and the output `Y` has the same
-  shape as the inputs.
-
-  Exporters typically produce `A` and `B` in one of two ways: for the common
-  two-projection form (e.g. Llama's `gate_proj`/`up_proj`) wire the two projection
-  outputs directly to `A` (gate) and `B` (value); for a fused/packed single
-  projection, split it upstream into `A` and `B` with `Split` (contiguous layout)
-  or `Slice`/`Gather` (interleaved layout).
-
-#### Version
-
-This version of the operator has been available since version 28 of the default ONNX operator set.
-
-#### Attributes
-
-<dl>
-<dt><tt>alpha</tt> : float (default is 1.0)</dt>
-<dd>Coefficient that scales the gate input inside the sigmoid of the Swish activation. The default value is 1.0.</dd>
-</dl>
-
-#### Inputs
-
-<dl>
-<dt><tt>A</tt> (differentiable) : T</dt>
-<dd>Gate input tensor</dd>
-<dt><tt>B</tt> (differentiable) : T</dt>
-<dd>Linear (value) input tensor</dd>
-</dl>
-
-#### Outputs
-
-<dl>
-<dt><tt>Y</tt> (differentiable) : T</dt>
-<dd>Output tensor</dd>
-</dl>
-
-#### Type Constraints
-
-<dl>
-<dt><tt>T</tt> : tensor(bfloat16), tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
-</dl>
-
-## Version 29 of the default ONNX operator set
-### <a name="Cast-29"></a>**Cast-29**</a>
+### <a name="Cast-28"></a>**Cast-28**</a>
 
   The operator casts the elements of a given input tensor to a data type
   specified by the 'to' argument and returns an output tensor of the same size in
@@ -33463,7 +33365,7 @@ This version of the operator has been available since version 28 of the default 
 
 #### Version
 
-This version of the operator has been available since version 29 of the default ONNX operator set.
+This version of the operator has been available since version 28 of the default ONNX operator set.
 
 #### Attributes
 
@@ -33499,7 +33401,49 @@ This version of the operator has been available since version 29 of the default 
 <dd>Constrain output types. Casting to complex is not supported.</dd>
 </dl>
 
-### <a name="DequantizeLinear-29"></a>**DequantizeLinear-29**</a>
+### <a name="Celu-28"></a>**Celu-28**</a>
+
+  Continuously Differentiable Exponential Linear Units:
+  Perform the linear unit element-wise on the input tensor X
+  using formula:
+
+  ```
+  max(0,x) + min(0,alpha*(exp(x/alpha)-1))
+  ```
+
+#### Version
+
+This version of the operator has been available since version 28 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>alpha</tt> : float (default is 1.0)</dt>
+<dd>The Alpha value in Celu formula which control the shape of the unit. The default value is 1.0.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> (differentiable) : T</dt>
+<dd>Input tensor</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> (differentiable) : T</dt>
+<dd>Output tensor</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(bfloat16), tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
+### <a name="DequantizeLinear-28"></a>**DequantizeLinear-28**</a>
 
   The linear dequantization operator. It consumes a quantized tensor, a scale, and a zero point to compute the
   full-precision tensor. The dequantization formula is `y = (x - x_zero_point) * x_scale`. `x_scale` and `x_zero_point`
@@ -33516,7 +33460,7 @@ This version of the operator has been available since version 29 of the default 
 
 #### Version
 
-This version of the operator has been available since version 29 of the default ONNX operator set.
+This version of the operator has been available since version 28 of the default ONNX operator set.
 
 #### Attributes
 
@@ -33558,7 +33502,7 @@ This version of the operator has been available since version 29 of the default 
 <dd>The type of the output 'y'.</dd>
 </dl>
 
-### <a name="QuantizeLinear-29"></a>**QuantizeLinear-29**</a>
+### <a name="QuantizeLinear-28"></a>**QuantizeLinear-28**</a>
 
   The linear quantization operator consumes a high-precision tensor, a scale, and a zero point to compute the
   low-precision/quantized tensor. The scale factor and zero point must have the same shape, determining the quantization
@@ -33592,7 +33536,7 @@ This version of the operator has been available since version 29 of the default 
 
 #### Version
 
-This version of the operator has been available since version 29 of the default ONNX operator set.
+This version of the operator has been available since version 28 of the default ONNX operator set.
 
 #### Attributes
 
@@ -33636,6 +33580,61 @@ This version of the operator has been available since version 29 of the default 
 <dd>The type of the input 'y_scale'.</dd>
 <dt><tt>T3</tt> : tensor(int8), tensor(uint8), tensor(int16), tensor(uint16), tensor(float8e4m3fn), tensor(float8e4m3fnuz), tensor(float8e5m2), tensor(float8e5m2fnuz), tensor(uint4), tensor(int4), tensor(float4e2m1), tensor(uint2), tensor(int2), tensor(float6e2m3), tensor(float6e3m2)</dt>
 <dd>The type of the input `y_zero_point` and the output `y`.</dd>
+</dl>
+
+### <a name="SwiGLU-28"></a>**SwiGLU-28**</a>
+
+  SwiGLU is a gated activation that takes two inputs, a gate `A` and a linear (value)
+  input `B`, and produces one output `Y`. It applies the Swish activation to the gate
+  and multiplies the result elementwise by the linear input:
+
+  ```
+  Y = Swish_alpha(A) * B
+  ```
+
+  The gate activation `Swish_alpha` is exactly the `Swish` operator with the same
+  `alpha`, i.e. `Swish_alpha(a) = a * Sigmoid(alpha * a)`. Inputs `A` and `B` must
+  have identical shapes; broadcasting is not applied and the output `Y` has the same
+  shape as the inputs.
+
+  Exporters typically produce `A` and `B` in one of two ways: for the common
+  two-projection form (e.g. Llama's `gate_proj`/`up_proj`) wire the two projection
+  outputs directly to `A` (gate) and `B` (value); for a fused/packed single
+  projection, split it upstream into `A` and `B` with `Split` (contiguous layout)
+  or `Slice`/`Gather` (interleaved layout).
+
+#### Version
+
+This version of the operator has been available since version 28 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>alpha</tt> : float (default is 1.0)</dt>
+<dd>Coefficient that scales the gate input inside the sigmoid of the Swish activation. The default value is 1.0.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>A</tt> (differentiable) : T</dt>
+<dd>Gate input tensor</dd>
+<dt><tt>B</tt> (differentiable) : T</dt>
+<dd>Linear (value) input tensor</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> (differentiable) : T</dt>
+<dd>Output tensor</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(bfloat16), tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
 # ai.onnx.preview

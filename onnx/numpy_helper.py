@@ -326,13 +326,29 @@ def to_array(tensor: onnx.TensorProto, base_dir: str = "") -> np.ndarray:  # noq
         onnx.TensorProto.FLOAT8E5M2FNUZ,
         onnx.TensorProto.FLOAT8E8M0,
         onnx.TensorProto.BOOL,
-        onnx.TensorProto.FLOAT6E2M3,
-        onnx.TensorProto.FLOAT6E3M2,
     }:
         return (
             np.array(tensor.int32_data, dtype=np.int32)
             .view(np.uint32)
             .astype(np.uint8)
+            .view(np_dtype)
+            .reshape(dims)
+        )
+
+    if tensor_dtype in {
+        onnx.TensorProto.FLOAT6E2M3,
+        onnx.TensorProto.FLOAT6E3M2,
+    }:
+        # Only the low 6 bits of each int32_data entry are meaningful; mask
+        # before reinterpreting, matching _pack_6bit's masking of the packed
+        # raw_data representation.
+        return (
+            (
+                np.array(tensor.int32_data, dtype=np.int32)
+                .view(np.uint32)
+                .astype(np.uint8)
+                & 0x3F
+            )
             .view(np_dtype)
             .reshape(dims)
         )
