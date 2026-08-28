@@ -938,8 +938,8 @@ message OperatorSetIdProto {
 
 // Operator/function status.
 enum OperatorStatus {
-    EXPERIMENTAL = 0;
-    STABLE = 1;
+  EXPERIMENTAL = 0;
+  STABLE = 1;
 }
 
 message FunctionProto {

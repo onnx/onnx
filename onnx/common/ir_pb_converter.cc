@@ -321,7 +321,13 @@ std::unique_ptr<Graph> graphProtoToGraph(const ONNX_NAMESPACE::GraphProto& gp, b
 
   for (int i = 0; i < gp.node_size(); i++) {
     const auto& np = gp.node(i);
-    auto* n = g->create(Symbol(np.op_type()), /* num_outputs = */ np.output_size());
+    const auto kind = Symbol(np.op_type());
+    // IR routines treat this operator name as the internal captured-value
+    // sentinel and require exactly one output.
+    if (kind == kCaptured && np.output_size() != 1) {
+      fail_convert("Captured node must have exactly one output.");
+    }
+    auto* n = g->create(kind, /* num_outputs = */ np.output_size());
     g->appendNode(n);
     for (int j = 0; j < np.output_size(); j++) {
       auto* out = n->outputs()[j];
@@ -477,6 +483,7 @@ static void encodeTensor(ONNX_NAMESPACE::TensorProto& p, const Tensor& tensor) {
     case ONNX_NAMESPACE::TensorProto_DataType_FLOAT8E4M3FNUZ:
     case ONNX_NAMESPACE::TensorProto_DataType_FLOAT8E5M2:
     case ONNX_NAMESPACE::TensorProto_DataType_FLOAT8E5M2FNUZ:
+    case ONNX_NAMESPACE::TensorProto_DataType_FLOAT8E8M0:
     case ONNX_NAMESPACE::TensorProto_DataType_FLOAT4E2M1:
     case ONNX_NAMESPACE::TensorProto_DataType_BOOL:
     case ONNX_NAMESPACE::TensorProto_DataType_UINT2:

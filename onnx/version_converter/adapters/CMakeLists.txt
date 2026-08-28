@@ -4,6 +4,7 @@
 target_sources(onnx PRIVATE
     adapter.h
     Attention_24_23.h
+    Attention_25_24.h
     axes_attribute_to_input.h
     axes_input_to_attribute.h
     axis_attribute_to_input.h
