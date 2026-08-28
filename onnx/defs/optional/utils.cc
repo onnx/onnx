@@ -6,10 +6,7 @@
 
 #include "onnx/defs/type_builders.h"
 
-namespace ONNX_NAMESPACE {
-namespace defs {
-namespace optional {
-namespace utils {
+namespace ONNX_NAMESPACE::defs::optional::utils {
 
 static constexpr const char* Optional_ver15_doc = R"DOC(
 Constructs an optional-type value containing either an empty optional of a certain type specified by the attribute,
@@ -34,7 +31,7 @@ std::function<void(OpSchema&)> OptionalOpGenerator(
           }
 
           const size_t numInputs = ctx.getNumInputs();
-          const auto attr_proto = ctx.getAttribute("type");
+          const auto* attr_proto = ctx.getAttribute("type");
 
           if ((numInputs == 0) && (attr_proto != nullptr)) {
             if (!attr_proto->has_tp())
@@ -43,7 +40,7 @@ std::function<void(OpSchema&)> OptionalOpGenerator(
 
             ctx.getOutputType(0)->mutable_optional_type()->mutable_elem_type()->CopyFrom(attr_tp);
           } else if (numInputs == 1) {
-            auto input_type = ctx.getInputType(0);
+            const auto* input_type = ctx.getInputType(0);
             if (input_type == nullptr) {
               fail_type_inference("Input type is null. Type information is expected for the input.");
             }
@@ -85,7 +82,7 @@ std::function<void(OpSchema&)> OptionalHasElementOpGenerator(std::vector<std::st
           if (numOutputs != 1) {
             fail_type_inference("OptionalHasElement is expected to have 1 output.");
           }
-          auto output_tensor_type = ctx.getOutputType(0)->mutable_tensor_type();
+          auto* output_tensor_type = ctx.getOutputType(0)->mutable_tensor_type();
           output_tensor_type->set_elem_type(TensorProto::BOOL);
           output_tensor_type->mutable_shape()->Clear();
         });
@@ -121,7 +118,7 @@ std::function<void(OpSchema&)> OptionalGetElementOpGenerator(
           if (numInputs != 1) {
             fail_type_inference("OptionalGetElement must have an input element.");
           }
-          auto input_type = ctx.getInputType(0);
+          const auto* input_type = ctx.getInputType(0);
           if (input_type == nullptr) {
             fail_type_inference("Input type is null. Input must have Type information.");
           }
@@ -136,7 +133,4 @@ std::function<void(OpSchema&)> OptionalGetElementOpGenerator(
         });
   };
 }
-} // namespace utils
-} // namespace optional
-} // namespace defs
-} // namespace ONNX_NAMESPACE
+} // namespace ONNX_NAMESPACE::defs::optional::utils

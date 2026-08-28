@@ -8,8 +8,7 @@
 
 #include "onnx/version_converter/adapters/adapter.h"
 
-namespace ONNX_NAMESPACE {
-namespace version_conversion {
+namespace ONNX_NAMESPACE::version_conversion {
 class OptionalOpsAdapter final : public Adapter {
  public:
   OptionalOpsAdapter(
@@ -37,13 +36,14 @@ class OptionalOpsAdapter final : public Adapter {
         name(),
         "' is unallowed for Opset Version ",
         static_cast<int64_t>(target_version().version()));
-    if (allow_noinput_ && (node->inputs().size() == 0)) {
+    if (allow_noinput_ && node->inputs().empty()) {
       Symbol type = Symbol("type");
       // Node must have "type" attribute.
       ONNX_ASSERT(node->hasAttribute(type));
       opt_or_elem_type = &node->tp(type);
-    } else
+    } else {
       opt_or_elem_type = node->input()->type().get();
+    }
 
     int32_t tensor_elem_type = -1;
     if (opt_or_elem_type == nullptr) {
@@ -58,7 +58,7 @@ class OptionalOpsAdapter final : public Adapter {
       ONNX_ASSERTM(
           (allow_optional_input_ && opt_or_elem_type->has_optional_type()) ||
               (allow_nonoptional_input_ && !opt_or_elem_type->has_optional_type()),
-          "Specificed type of Input of operator '",
+          "Specified type of Input of operator '",
           name(),
           "' is unallowed for Opset Version ",
           static_cast<int64_t>(target_version().version()));
@@ -92,5 +92,4 @@ class OptionalOpsAdapter final : public Adapter {
   bool allow_nonoptional_input_;
   bool allow_noinput_;
 };
-} // namespace version_conversion
-} // namespace ONNX_NAMESPACE
+} // namespace ONNX_NAMESPACE::version_conversion
