@@ -14,8 +14,7 @@
 
 #include "onnx/version_converter/adapters/adapter.h"
 
-namespace ONNX_NAMESPACE {
-namespace version_conversion {
+namespace ONNX_NAMESPACE::version_conversion {
 
 class Range_27_26 final : public Adapter {
  public:
@@ -57,5 +56,4 @@ class Range_27_26 final : public Adapter {
   std::vector<TensorProto_DataType> unallowed_types_;
 };
 
-} // namespace version_conversion
-} // namespace ONNX_NAMESPACE
+} // namespace ONNX_NAMESPACE::version_conversion

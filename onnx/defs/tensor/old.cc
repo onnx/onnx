@@ -5,7 +5,6 @@
 #include <algorithm>
 #include <cmath>
 #include <numeric>
-#include <optional>
 #include <string>
 #include <unordered_set>
 #include <utility>
@@ -2193,7 +2192,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
 
           bool all_lengths_known = true;
-          int total_length = 0;
+          int64_t total_length = 0;
 
           auto output_shape = ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
 
@@ -2210,7 +2209,13 @@ ONNX_OPERATOR_SET_SCHEMA(
             for (int j = 0; j < rank; j++) {
               if (j == axis) {
                 if (shape.dim(j).has_dim_value()) {
-                  total_length += static_cast<int>(shape.dim(j).dim_value());
+                  const int64_t dim_val = shape.dim(j).dim_value();
+                  if (dim_val < 0) {
+                    fail_shape_inference("Negative dimension value on Concat axis");
+                  }
+                  if (checked_add_overflow(total_length, dim_val, &total_length)) {
+                    fail_shape_inference("Integer overflow computing Concat output length");
+                  }
                 } else {
                   all_lengths_known = false;
                 }
@@ -2990,7 +2995,7 @@ first (q-1) dimensions of updates.shape must match the first (q-1) dimensions of
 The remaining dimensions of `updates` correspond to the dimensions of the
 replacement-slice-values. Each replacement-slice-value is a (r-k) dimensional tensor,
 corresponding to the trailing (r-k) dimensions of `data`.  Thus, the shape of `updates`
-must equal indices.shape[0:q-1] ++ data.shape[k:r-1], where ++ denotes the concatenation
+must equal indices.shape[0:q-1] ++ data.shape[k:r], where ++ denotes the concatenation
 of shapes.
 
 The `output` is calculated via the following equation:
@@ -3101,7 +3106,7 @@ first (q-1) dimensions of updates.shape must match the first (q-1) dimensions of
 The remaining dimensions of `updates` correspond to the dimensions of the
 replacement-slice-values. Each replacement-slice-value is a (r-k) dimensional tensor,
 corresponding to the trailing (r-k) dimensions of `data`.  Thus, the shape of `updates`
-must equal indices.shape[0:q-1] ++ data.shape[k:r-1], where ++ denotes the concatenation
+must equal indices.shape[0:q-1] ++ data.shape[k:r], where ++ denotes the concatenation
 of shapes.
 
 The `output` is calculated via the following equation:
@@ -4477,6 +4482,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           if (blocksize <= 0) {
             fail_shape_inference("Blocksize must be positive");
           }
+          const auto block_area = checkedMultiply(blocksize, blocksize);
           if (hasInputShape(ctx, 0)) {
             auto& input_shape = getInputShape(ctx, 0);
             if (input_shape.dim_size() == 4) {
@@ -4484,7 +4490,7 @@ ONNX_OPERATOR_SET_SCHEMA(
                   ctx,
                   0,
                   {input_shape.dim(0),
-                   input_shape.dim(1) * (blocksize * blocksize),
+                   input_shape.dim(1) * block_area,
                    input_shape.dim(2) / blocksize,
                    input_shape.dim(3) / blocksize});
             } else {
@@ -4548,6 +4554,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           if (blocksize <= 0) {
             fail_shape_inference("Blocksize must be positive");
           }
+          const auto block_area = checkedMultiply(blocksize, blocksize);
           if (hasInputShape(ctx, 0)) {
             auto& input_shape = getInputShape(ctx, 0);
             if (input_shape.dim_size() == 4) {
@@ -4555,7 +4562,7 @@ ONNX_OPERATOR_SET_SCHEMA(
                   ctx,
                   0,
                   {input_shape.dim(0),
-                   input_shape.dim(1) / (blocksize * blocksize),
+                   input_shape.dim(1) / block_area,
                    input_shape.dim(2) * blocksize,
                    input_shape.dim(3) * blocksize});
             } else {
@@ -4618,10 +4625,13 @@ ONNX_OPERATOR_SET_SCHEMA(
             }
 
             for (int i = 0; i < input_rank; ++i) {
+              if (repeats_data[i] < 0) {
+                fail_shape_inference("'Repeats' input must not contain negative values");
+              }
               const auto& input_dim = input_shape.dim(i);
               auto output_dim = output_shape->add_dim();
               if (input_dim.has_dim_value()) {
-                output_dim->set_dim_value(input_dim.dim_value() * repeats_data[i]);
+                output_dim->set_dim_value(checkedMultiply(input_dim.dim_value(), repeats_data[i]));
               }
             }
           } else {
@@ -5319,7 +5329,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             return;
           }
 
-          const auto last_index_dimension = indices_shape.dim(indices_rank - 1).dim_value() + batch_dims_data;
+          const auto last_index_dimension =
+              checkedAdd(indices_shape.dim(indices_rank - 1).dim_value(), batch_dims_data);
 
           if (last_index_dimension > data_rank) {
             fail_shape_inference(
@@ -5502,9 +5513,10 @@ ONNX_OPERATOR_SET_SCHEMA(
             for (int i = 0; i < input_rank; ++i) {
               const auto& input_dim = input_shape.dim(i);
               auto output_dim = output_shape->add_dim();
+              const auto total_pad = checkedAdd(pads_data[i], pads_data[i + input_rank]);
               if (input_dim.has_dim_value()) {
-                output_dim->set_dim_value(input_dim.dim_value() + pads_data[i] + pads_data[i + input_rank]);
-              } else if (pads_data[i] + pads_data[i + input_rank] == 0) {
+                output_dim->set_dim_value(checkedAdd(input_dim.dim_value(), total_pad));
+              } else if (total_pad == 0) {
                 *output_dim = input_dim;
               }
             }
@@ -5676,7 +5688,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
 
           bool all_lengths_known = true;
-          int total_length = 0;
+          int64_t total_length = 0;
 
           auto output_shape = ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
 
@@ -5692,7 +5704,13 @@ ONNX_OPERATOR_SET_SCHEMA(
             for (int j = 0; j < rank; j++) {
               if (j == axis) {
                 if (shape.dim(j).has_dim_value()) {
-                  total_length += static_cast<int>(shape.dim(j).dim_value());
+                  const int64_t dim_val = shape.dim(j).dim_value();
+                  if (dim_val < 0) {
+                    fail_shape_inference("Negative dimension value on Concat axis");
+                  }
+                  if (checked_add_overflow(total_length, dim_val, &total_length)) {
+                    fail_shape_inference("Integer overflow computing Concat output length");
+                  }
                 } else {
                   all_lengths_known = false;
                 }
@@ -6378,6 +6396,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           if (blocksize <= 0) {
             fail_shape_inference("Blocksize must be positive");
           }
+          const auto block_area = checkedMultiply(blocksize, blocksize);
           if (hasInputShape(ctx, 0)) {
             auto& input_shape = getInputShape(ctx, 0);
             if (input_shape.dim_size() == 4) {
@@ -6385,7 +6404,7 @@ ONNX_OPERATOR_SET_SCHEMA(
                   ctx,
                   0,
                   {input_shape.dim(0),
-                   input_shape.dim(1) / (blocksize * blocksize),
+                   input_shape.dim(1) / block_area,
                    input_shape.dim(2) * blocksize,
                    input_shape.dim(3) * blocksize});
             } else {
@@ -6661,87 +6680,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint("T1", OpSchema::all_numeric_types(), "Constrain input to only numeric types.")
         .TypeConstraint("T2", OpSchema::all_numeric_types(), "Constrain input to only numeric types.")
         .TypeConstraint("T3", OpSchema::all_tensor_types(), "Constrain to any tensor type.")
-        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-          // Check that the node has three inputs.
-          if (ctx.getNumInputs() != 3) {
-            fail_type_inference("OneHot node must have three inputs.");
-          }
-          // Input 'depth' must be a scalar or a single-element vector.
-          // TODO(ONNX): Ideally to match spec for this input only allow Scalar should
-          // be allowed. Making this change now can affect backward
-          // compatibility for this op. Since this does not seem like a good
-          // justification to update version for this op, allowing both scalar
-          // and 1 element vector for now. In future when version update for
-          // this op is done we should only allow scalar or change the spec to
-          // allow both.
-          std::optional<int64_t> depth_value;
-          if (hasInputShape(ctx, 1)) {
-            auto& depth_shape = getInputShape(ctx, 1);
-            if (const TensorProto* depth_data = ctx.getInputData(1)) {
-              if (depth_data->data_type() == TensorProto::INT64) {
-                depth_value = ParseData<int64_t>(depth_data)[0];
-              } else if (depth_data->data_type() == TensorProto::INT32) {
-                depth_value = ParseData<int32_t>(depth_data)[0];
-              } else if (depth_data->data_type() == TensorProto::FLOAT) {
-                depth_value = static_cast<int64_t>(ParseData<float>(depth_data)[0]);
-              }
-            }
-            if (depth_shape.dim_size() != 0 && depth_shape.dim_size() != 1) {
-              fail_type_inference("Input 'depth' must be a scalar or rank 1 tensor.");
-            }
-            if (depth_shape.dim_size() == 1 && depth_shape.dim(0).has_dim_value() &&
-                depth_shape.dim(0).dim_value() != 1) {
-              fail_type_inference("Input 'depth' must have exactly one element.");
-            }
-          }
-          // Input 'values' must be a two-element vector.
-          if (hasInputShape(ctx, 2)) {
-            auto& values_shape = getInputShape(ctx, 2);
-            if (values_shape.dim_size() != 1) {
-              fail_type_inference("Input 'values' must be rank 1 tensor.");
-            }
-            if (values_shape.dim(0).has_dim_value() && values_shape.dim(0).dim_value() != 2) {
-              fail_type_inference("Input 'values' must have exactly two elements.");
-            }
-          }
-          // Set output type to be the same as the third input, 'values'.
-          propagateElemTypeFromInputToOutput(ctx, 2, 0);
-          // Set the output shape, if input 0 (indices) shape is available.
-          if (hasInputShape(ctx, 0)) {
-            const TensorShapeProto& indices_shape = ctx.getInputType(0)->tensor_type().shape();
-            int r = indices_shape.dim_size();
-            if (r < 1) {
-              fail_shape_inference("Indices tensor must have rank >= 1");
-            }
-            int out_rank = r + 1;
-            int axis = static_cast<int>(getAttribute(ctx, "axis", -1));
-            if (axis < -out_rank || axis >= out_rank) {
-              fail_shape_inference("'axis' must be in [-rank(indices)-1, rank(indices)]");
-            }
-            if (axis < 0) {
-              axis += out_rank;
-            }
-            auto output_shape = getOutputShape(ctx, 0);
-            for (int i = 0; i < out_rank; ++i) {
-              auto dim = output_shape->add_dim();
-              if (i < axis) {
-                if (indices_shape.dim(i).has_dim_value()) {
-                  dim->set_dim_value(indices_shape.dim(i).dim_value());
-                } else if (indices_shape.dim(i).has_dim_param()) {
-                  dim->set_dim_param(indices_shape.dim(i).dim_param());
-                }
-              } else if (i > axis) {
-                if (indices_shape.dim(i - 1).has_dim_value()) {
-                  dim->set_dim_value(indices_shape.dim(i - 1).dim_value());
-                } else if (indices_shape.dim(i - 1).has_dim_param()) {
-                  dim->set_dim_param(indices_shape.dim(i - 1).dim_param());
-                }
-              } else if (depth_value) {
-                dim->set_dim_value(*depth_value);
-              }
-            }
-          }
-        }));
+        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) { oneHotShapeInference(ctx, 9); }));
 
 ONNX_OPERATOR_SET_SCHEMA(
     Compress,
@@ -6903,14 +6842,13 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
 
           ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
-
           for (int i = 0; i < input_shape.dim_size(); ++i) {
             auto newdim = ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape()->add_dim();
+            const auto total_pad = checkedAdd(pads[i], pads[input_shape.dim_size() + i]);
             if (ctx.getInputType(0)->tensor_type().shape().dim(i).has_dim_value()) {
               newdim->set_dim_value(
-                  ctx.getInputType(0)->tensor_type().shape().dim(i).dim_value() + pads[i] +
-                  pads[input_shape.dim_size() + i]);
-            } else if (pads[i] + pads[input_shape.dim_size() + i] == 0) {
+                  checkedAdd(ctx.getInputType(0)->tensor_type().shape().dim(i).dim_value(), total_pad));
+            } else if (total_pad == 0) {
               *newdim = input_shape.dim(i);
             }
           }
@@ -7257,9 +7195,10 @@ ONNX_OPERATOR_SET_SCHEMA(
             for (int i = 0; i < input_rank; ++i) {
               const auto& input_dim = input_shape.dim(i);
               auto output_dim = output_shape->add_dim();
+              const auto total_pad = checkedAdd(pads_data[i], pads_data[i + input_rank]);
               if (input_dim.has_dim_value()) {
-                output_dim->set_dim_value(input_dim.dim_value() + pads_data[i] + pads_data[i + input_rank]);
-              } else if (pads_data[i] + pads_data[i + input_rank] == 0) {
+                output_dim->set_dim_value(checkedAdd(input_dim.dim_value(), total_pad));
+              } else if (total_pad == 0) {
                 *output_dim = input_dim;
               }
             }

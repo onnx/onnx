@@ -11,10 +11,7 @@
 
 #include "onnx/defs/type_builders.h"
 
-namespace ONNX_NAMESPACE {
-namespace defs {
-namespace sequence {
-namespace utils {
+namespace ONNX_NAMESPACE::defs::sequence::utils {
 
 // Common documentation for SplitToSequence operator, versions 11 and 24
 static constexpr const char* SplitToSequence_ver11_doc =
@@ -131,6 +128,9 @@ std::function<void(OpSchema&)> SplitToSequenceOpGenerator(
               const auto& splitShape = getInputShape(ctx, 1);
               if (splitShape.dim_size() == 0) {
                 // split is scalar
+                if (splitSizes[0] <= 0) {
+                  fail_shape_inference("Scalar input 'split' must be greater than zero.");
+                }
                 if (splitDimValue % splitSizes[0] == 0) {
                   // all output chunks have the same shape, assign that to output sequence shape.
                   return splitSizes[0];
@@ -188,7 +188,4 @@ std::function<void(OpSchema&)> SplitToSequenceOpGenerator(
   };
 }
 
-} // namespace utils
-} // namespace sequence
-} // namespace defs
-} // namespace ONNX_NAMESPACE
+} // namespace ONNX_NAMESPACE::defs::sequence::utils
