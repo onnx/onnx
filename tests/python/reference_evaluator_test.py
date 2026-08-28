@@ -1990,6 +1990,11 @@ class TestReferenceEvaluator:
             (3, 3), pads=[0, 1, 1, 1], strides=[1, 2], dilations=[1, 1]
         )
 
+    def test_im2col_3x3_dilations(self):
+        self.common_test_im2col(
+            (3, 3), pads=[2, 2, 2, 2], strides=[1, 1], dilations=[2, 2]
+        )
+
     def test_im2col_5x5(self):
         self.common_test_im2col(
             (5, 5), pads=[1, 1, 1, 2], strides=[1, 1], dilations=[1, 1]

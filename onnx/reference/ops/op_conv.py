@@ -18,19 +18,24 @@ def _make_ind(dim, shape):
     return m
 
 
-def im2col(X, kernel_shape, pads, strides):
+def im2col(X, kernel_shape, pads, strides, dilations=None):
     n_dims = len(kernel_shape)
     m, n_C = X.shape[:2]
+    if dilations is None:
+        dilations = [1] * n_dims
 
     kernel_size = np.prod(kernel_shape)
     shape_out = []
     for i, dim in enumerate(kernel_shape):
         dx = X.shape[2 + i]
-        shape_out.append((dx + pads[i] + pads[i + n_dims] - dim) // strides[i] + 1)
+        effective_kernel = (dim - 1) * dilations[i] + 1
+        shape_out.append(
+            (dx + pads[i] + pads[i + n_dims] - effective_kernel) // strides[i] + 1
+        )
 
     indices = []
     for i in range(len(shape_out)):
-        kind = _make_ind(i, kernel_shape)
+        kind = _make_ind(i, kernel_shape) * dilations[i]
         iind = _make_ind(i, shape_out) * strides[i]
         index = np.tile(kind.ravel(), n_C).reshape(-1, 1) + iind.reshape(1, -1)
         indices.append(index)
