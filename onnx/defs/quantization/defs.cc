@@ -8,7 +8,7 @@
 
 namespace ONNX_NAMESPACE {
 
-static constexpr const char* QuantizeLinear_ver29_doc = R"DOC(
+static constexpr const char* QuantizeLinear_ver28_doc = R"DOC(
 The linear quantization operator consumes a high-precision tensor, a scale, and a zero point to compute the
 low-precision/quantized tensor. The scale factor and zero point must have the same shape, determining the quantization
 granularity. The quantization formula is `y = saturate((x / y_scale) + y_zero_point)`.
@@ -42,7 +42,7 @@ In all cases, `y_zero_point` must have the same shape as `y_scale`.
 
 ONNX_OPERATOR_SET_SCHEMA(
     QuantizeLinear,
-    29,
+    28,
     OpSchema()
         .Input(0, "x", "N-D full precision Input tensor to be quantized.", "T1")
         .Input(
@@ -125,7 +125,7 @@ ONNX_OPERATOR_SET_SCHEMA(
              types::Float6E2M3,
              types::Float6E3M2},
             "The type of the input `y_zero_point` and the output `y`.")
-        .SetDoc(QuantizeLinear_ver29_doc)
+        .SetDoc(QuantizeLinear_ver28_doc)
         .TypeAndShapeInferenceFunction([](ONNX_NAMESPACE::InferenceContext& ctx) {
           // y_zero_point's type is known only if it is present as an input *and* its type could be inferred
           // (e.g. it is not simply an unresolved formal parameter of an enclosing function).
@@ -161,7 +161,7 @@ ONNX_OPERATOR_SET_SCHEMA(
 
 ONNX_OPERATOR_SET_SCHEMA(
     DequantizeLinear,
-    29,
+    28,
     OpSchema()
         .Input(0, "x", "N-D quantized input tensor to be de-quantized.", "T1")
         .Input(

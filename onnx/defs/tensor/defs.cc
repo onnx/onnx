@@ -21,7 +21,7 @@ namespace ONNX_NAMESPACE {
 
 ONNX_OPERATOR_SET_SCHEMA(
     Cast,
-    29,
+    28,
     OpSchema()
         .SetDoc(kDoc_Cast_ver24)
         .Attr(

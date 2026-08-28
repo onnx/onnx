@@ -12,10 +12,10 @@
 
 namespace ONNX_NAMESPACE::version_conversion {
 
-class QuantizeLinear_29_28 final : public TypeRestriction {
+class QuantizeLinear_28_27 final : public TypeRestriction {
  public:
-  explicit QuantizeLinear_29_28(const std::vector<TensorProto_DataType>& unallowed_types)
-      : TypeRestriction("QuantizeLinear", OpSetID(29), OpSetID(28), unallowed_types),
+  explicit QuantizeLinear_28_27(const std::vector<TensorProto_DataType>& unallowed_types)
+      : TypeRestriction("QuantizeLinear", OpSetID(28), OpSetID(27), unallowed_types),
         unallowed_types_(unallowed_types) {}
 
   Node* adapt(std::shared_ptr<Graph> graph, Node* node) const override {
