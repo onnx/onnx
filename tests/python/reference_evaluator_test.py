@@ -1506,7 +1506,7 @@ class TestReferenceEvaluator:
         sess1 = run_ort_inference(onnx_model)
         if sess1 is None:
             return
-        sess2 = ReferenceEvaluator(onnx_model, optimized=False)
+        sess2 = ReferenceEvaluator(onnx_model)
         assert isinstance(sess2.rt_nodes_[0], Conv)
 
         sH, sW = 5, 6
