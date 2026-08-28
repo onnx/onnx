@@ -608,6 +608,7 @@ if(ONNX_BUILD_PYTHON)
         "sbom.cdx.json's nanobind entry is missing a pinned commit hash; "
         "refusing to fetch by mutable tag v${_nanobind_VERSION}.")
     endif()
+    message(STATUS "Fetching nanobind v${_nanobind_VERSION} pinned at commit ${_nanobind_SHA256}")
     FetchContent_Declare(
       nanobind
       GIT_REPOSITORY ${_nanobind_URL}
