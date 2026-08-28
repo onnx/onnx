@@ -807,7 +807,7 @@ void check_graph(const GraphProto& graph, const CheckerContext& ctx, const Lexic
     ONNX_CATCH(ValidationError & ex) {
       ONNX_HANDLE_EXCEPTION([&]() {
         ex.AppendContext("Bad input specification for input. Name: " + value_info.name());
-        ONNX_THROW_EX(ex);
+        throw;
       });
     }
   }
@@ -818,7 +818,7 @@ void check_graph(const GraphProto& graph, const CheckerContext& ctx, const Lexic
     ONNX_CATCH(ValidationError & ex) {
       ONNX_HANDLE_EXCEPTION([&]() {
         ex.AppendContext("Bad output specification for output. Name: " + value_info.name());
-        ONNX_THROW_EX(ex);
+        throw;
       });
     }
   }
@@ -859,7 +859,7 @@ void check_graph(const GraphProto& graph, const CheckerContext& ctx, const Lexic
     ONNX_CATCH(ValidationError & ex) {
       ONNX_HANDLE_EXCEPTION([&]() {
         ex.AppendContext("Bad initializer specification for tensor. Name: " + init.name());
-        ONNX_THROW_EX(ex);
+        throw;
       });
     }
 
@@ -891,7 +891,7 @@ void check_graph(const GraphProto& graph, const CheckerContext& ctx, const Lexic
     ONNX_CATCH(ValidationError & ex) {
       ONNX_HANDLE_EXCEPTION([&]() {
         ex.AppendContext("Bad sparse initializer specification for tensor. Name: " + values.name());
-        ONNX_THROW_EX(ex);
+        throw;
       });
     }
     lex_ctx.add(name);
@@ -1206,7 +1206,7 @@ void check_model_local_functions(
     ONNX_CATCH(ValidationError & ex) {
       ONNX_HANDLE_EXCEPTION([&]() {
         ex.AppendContext("Bad function specification for function. Name: " + function_proto.name());
-        ONNX_THROW_EX(ex);
+        throw;
       });
     }
   }
