@@ -44,6 +44,7 @@ extern const char kDoc_LSTM_ver14[];
 extern const char kDoc_MatMul_ver9[];
 extern const char kDoc_MaxUnpool_ver11[];
 extern const char kDoc_mish_ver18[];
+extern const char kDoc_Mod_ver13[];
 extern const char kDoc_Mod_ver28[];
 extern const char kDoc_Multinomial_ver7[];
 extern const char kDoc_Neg_ver6[];
