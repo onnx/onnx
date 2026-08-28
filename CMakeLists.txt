@@ -8,6 +8,11 @@ include(cmake/Utils.cmake)
 cmake_policy(SET CMP0063 NEW)
 # Modules FindPython3 and FindPython use LOCATION for lookup strategy.
 cmake_policy(SET CMP0094 NEW)
+# Allow the protoc-generated proto sources to be added to the built-in
+# `codegen` target (CMake 3.31+); see the CODEGEN option below.
+if(POLICY CMP0171)
+  cmake_policy(SET CMP0171 NEW)
+endif()
 
 # Set default build type
 get_property(isMultiConfig GLOBAL PROPERTY GENERATOR_IS_MULTI_CONFIG)
@@ -404,6 +409,7 @@ function(RELATIVE_PROTOBUF_GENERATE_CPP SRCS)
 
   set(GEN_PROTO_PY "${ONNX_ROOT}/onnx/gen_proto.py")
   set(GENERATED_FILES)
+  set(PROTOC_OUTPUTS)
   foreach(INFILE ${ARGN})
     set(ABS_FILE "${ONNX_ROOT}/${INFILE}")
     get_filename_component(FILE_DIR ${ABS_FILE} DIRECTORY)
@@ -502,11 +508,21 @@ function(RELATIVE_PROTOBUF_GENERATE_CPP SRCS)
       endif()
     endif()
 
+    set(_codegen_option)
+    if(POLICY CMP0171)
+      set(_codegen_option CODEGEN)
+    endif()
     add_custom_command(OUTPUT ${_protoc_outputs}
         COMMAND "${ONNX_PROTOC_EXECUTABLE}" ${PROTOC_ARGS}
         DEPENDS ${GENERATED_FILES}
-        COMMENT "Running C++ protocol buffer compiler on ${GENERATED_PROTO}")
+        COMMENT "Running C++ protocol buffer compiler on ${GENERATED_PROTO}"
+        ${_codegen_option})
+    list(APPEND PROTOC_OUTPUTS ${_protoc_outputs})
   endforeach()
+
+  # A target tooling (clang-tidy, clangd, ...) can build to force generation
+  # of the proto C++ sources/headers without building the rest of ONNX.
+  add_custom_target(onnx_proto_headers DEPENDS ${PROTOC_OUTPUTS})
 
   set(${SRCS} ${${SRCS}} PARENT_SCOPE)
   set(ONNX_PROTO_PY_FILES ${_py_files} PARENT_SCOPE)
@@ -522,6 +538,12 @@ relative_protobuf_generate_cpp(ONNX_PROTO_SRCS
 # generated .proto files; protoc and C++ compilation still overlap afterwards.
 add_custom_target(onnx_proto_gen DEPENDS ${ONNX_GENERATED_PROTO_FILES})
 
+# onnx_proto_headers also needs the generated .proto files (transitively, via
+# the protoc step). Without this, Xcode's build system rejects the shared
+# custom command: it requires that when two independent targets need the same
+# generated file, one be a dependency of the other.
+add_dependencies(onnx_proto_headers onnx_proto_gen)
+
 set(LINKED_PROTOBUF_TARGET protobuf::libprotobuf)
 if(ONNX_USE_LITE_PROTO)
   if(TARGET protobuf::libprotobuf-lite)
@@ -530,10 +552,14 @@ if(ONNX_USE_LITE_PROTO)
 endif()
 
 # Compile the generated .pb.cc sources in exactly one target: Xcode's build
-# system rejects a protoc custom command shared across several targets.
+# system rejects a protoc custom command shared across several targets. Since
+# onnx_proto_headers also depends on those same .pb.cc files (it just doesn't
+# compile them), make onnx_proto depend on onnx_proto_headers so Xcode treats
+# it as the owner of that custom command instead of erroring out.
 add_library(onnx_proto ${ONNX_PROTO_SRCS})
 add_onnx_global_defines(onnx_proto)
 add_dependencies(onnx_proto onnx_proto_gen)
+add_dependencies(onnx_proto onnx_proto_headers)
 
 # Core library. Hand-written sources come from target_sources(onnx ...) in the
 # subdirectories; the protobuf objects are pulled in from onnx_proto.
