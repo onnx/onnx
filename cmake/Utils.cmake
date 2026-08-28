@@ -5,7 +5,7 @@
 #   sbom_get_dep("abseil-cpp" _absl)
 # sets _absl_URL, _absl_SHA256, _absl_VERSION.
 function(sbom_get_dep dep_name prefix)
-  file(READ "${CMAKE_SOURCE_DIR}/sbom.cdx.json" _sbom)
+  file(READ "${CMAKE_CURRENT_SOURCE_DIR}/sbom.cdx.json" _sbom)
   string(JSON _count LENGTH "${_sbom}" "components")
   foreach(_i RANGE 0 ${_count})
     if(_i EQUAL _count)
@@ -166,18 +166,7 @@ endfunction()
 
 function(add_onnx_compile_options target)
   if(MSVC)
-    # For disabling Protobuf related warnings
-    set(protobuf_warnings
-        /wd4146 # unary minus operator applied to unsigned type, result still
-                # unsigned
-        /wd4244 # 'argument': conversion from 'google::protobuf::uint64' to
-                # 'int', possible loss of data
-        /wd4267 # Conversion from 'size_t' to 'int', possible loss of data
-        /wd4141 # 'inline': used more than once
-        /wd4047 # '=': 'uintptr_t' differs in levels of indirection from 'void *'
-    )
     add_msvc_runtime_flag(${target})
-    target_compile_options(${target} PUBLIC ${protobuf_warnings})
     if(ONNX_WERROR)
       target_compile_options(${target} PRIVATE "/WX")
     endif()
@@ -214,6 +203,36 @@ function(add_onnx_compile_options target)
     target_link_libraries(${target} PRIVATE "-lstdc++fs")
   endif()
 
+  if(ONNX_USE_ASAN)
+    if(TARGET Sanitizer::address)
+      target_link_libraries(${target} PUBLIC Sanitizer::address)
+      message(STATUS "Use ASAN for ${target}")
+    else()
+      message(STATUS "No ASAN detected for ${target}")
+    endif()
+    if(TARGET Sanitizer::undefined)
+      target_link_libraries(${target} PUBLIC Sanitizer::undefined)
+      message(STATUS "Use UBSAN for ${target}")
+    else()
+      message(STATUS "No UBSAN detected for ${target}")
+    endif()
+  endif()
+  if(ONNX_USE_TSAN)
+    if(TARGET Sanitizer::thread)
+      target_link_libraries(${target} PUBLIC Sanitizer::thread)
+      message(STATUS "Use TSAN for ${target}")
+    else()
+      message(STATUS "No TSAN detected for ${target}")
+    endif()
+  endif()
+  if(ONNX_USE_TYPESAN)
+    if(TARGET Sanitizer::type)
+      target_link_libraries(${target} PUBLIC Sanitizer::type)
+      message(STATUS "Use TypeSAN for ${target}")
+    else()
+      message(STATUS "No TypeSAN detected for ${target}")
+    endif()
+  endif()
   # Apply hardening flags if enabled
   add_onnx_hardening_flags(${target})
 endfunction()

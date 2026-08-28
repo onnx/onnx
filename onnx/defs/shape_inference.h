@@ -6,17 +6,22 @@
 
 #include <algorithm>
 #include <functional>
+#include <limits>
 #include <string>
 #include <utility>
 #include <vector>
 
 #include "onnx/common/common.h"
+#include "onnx/common/safe_math.h"
 #include "onnx/proto_utils.h"
 #include "onnx/string_utils.h"
 
 namespace ONNX_NAMESPACE {
 
 using Dim = TensorShapeProto_Dimension;
+
+// Bound optional rank-only inference to prevent unbounded protobuf materialization.
+constexpr int64_t kMaxMaterializedRank = 1024;
 
 struct ShapeInferenceOptions {
   // Checks the type-equality for input and output
@@ -112,6 +117,16 @@ struct InferenceContext {
   virtual std::string getDisplayName() const {
     return "";
   }
+
+  // Non-virtual convenience methods for shape inference.
+
+  // unifyInputShape: unifies all dimensions of an input with the given dim references.
+  // Requires the input to have rank exactly equal to the number of dims provided.
+  void unifyInputShape(size_t input_index, std::initializer_list<std::reference_wrapper<Dim>> dims);
+
+  // unifyInputShapePrefix: unifies the first N dimensions of an input with the given dim references.
+  // Requires the input to have rank at least equal to the number of dims provided.
+  void unifyInputShapePrefix(size_t input_index, std::initializer_list<std::reference_wrapper<Dim>> prefix);
 };
 
 // We use data propagation to perform partial evaluation of the model, to compute statically
@@ -175,17 +190,9 @@ inline int64_t getRequiredAttributeInt(const InferenceContext& ctx, const std::s
   return attr.i();
 }
 
-inline int64_t getAttribute(const InferenceContext& ctx, const std::string& attributeName, int64_t defaultValue) {
-  const auto* attr_proto = ctx.getAttribute(attributeName);
-  if ((nullptr != attr_proto) && attr_proto->has_i())
-    return attr_proto->i();
-  else if (nullptr != attr_proto)
-    return 0; // protobuf default for integers
-  else
-    return defaultValue;
-}
-
-inline int64_t getAttribute(const DataPropagationContext& ctx, const std::string& attributeName, int64_t defaultValue) {
+// Works for both InferenceContext and DataPropagationContext.
+template <typename Context>
+int64_t getAttribute(const Context& ctx, const std::string& attributeName, int64_t defaultValue) {
   const auto* attr_proto = ctx.getAttribute(attributeName);
   if ((nullptr != attr_proto) && attr_proto->has_i())
     return attr_proto->i();
@@ -206,12 +213,46 @@ getAttribute(const InferenceContext& ctx, const std::string& attributeName, cons
     return defaultValue;
 }
 
+inline int64_t checkedMultiply(int64_t lhs, int64_t rhs) {
+  int64_t result = 0;
+  if (checked_mul_overflow(lhs, rhs, &result)) {
+    fail_shape_inference("Integer overflow while multiplying dimension values ", lhs, " and ", rhs);
+  }
+  return result;
+}
+
+inline int64_t checkedAdd(int64_t lhs, int64_t rhs) {
+  int64_t result = 0;
+  if (checked_add_overflow(lhs, rhs, &result)) {
+    fail_shape_inference("Integer overflow while adding dimension values ", lhs, " and ", rhs);
+  }
+  return result;
+}
+
+inline int64_t checkedSubtract(int64_t lhs, int64_t rhs) {
+  int64_t result = 0;
+  if (checked_sub_overflow(lhs, rhs, &result)) {
+    fail_shape_inference("Integer overflow while subtracting dimension values ", rhs, " from ", lhs);
+  }
+  return result;
+}
+
+inline int64_t checkedDivide(int64_t dividend, int64_t divisor) {
+  if (divisor == 0) {
+    fail_shape_inference("Division by zero while inferring a dimension");
+  }
+  if (dividend == std::numeric_limits<int64_t>::min() && divisor == -1) {
+    fail_shape_inference("Integer overflow while dividing dimension values ", dividend, " and ", divisor);
+  }
+  return dividend / divisor;
+}
+
 inline TensorShapeProto::Dimension operator*(
     const TensorShapeProto::Dimension& dim1,
     const TensorShapeProto::Dimension& dim2) {
   TensorShapeProto::Dimension result;
   if (dim1.has_dim_value() && dim2.has_dim_value()) {
-    result.set_dim_value(dim1.dim_value() * dim2.dim_value());
+    result.set_dim_value(checkedMultiply(dim1.dim_value(), dim2.dim_value()));
   } else if (dim1.has_dim_value() && (dim1.dim_value() == 1)) {
     return dim2;
   } else if (dim2.has_dim_value() && (dim2.dim_value() == 1)) {
@@ -232,7 +273,7 @@ std::pair<int, int> getAttributeElementTypeAndLength(
 inline TensorShapeProto::Dimension operator*(const TensorShapeProto::Dimension& dim1, int64_t dim2) {
   TensorShapeProto::Dimension result;
   if (dim1.has_dim_value()) {
-    result.set_dim_value(dim1.dim_value() * dim2);
+    result.set_dim_value(checkedMultiply(dim1.dim_value(), dim2));
   } else if (dim2 == 1) {
     return dim1;
   }
@@ -242,8 +283,28 @@ inline TensorShapeProto::Dimension operator*(const TensorShapeProto::Dimension& 
 inline TensorShapeProto::Dimension operator/(const TensorShapeProto::Dimension& dim1, int64_t dim2) {
   TensorShapeProto::Dimension result;
   if (dim1.has_dim_value()) {
-    result.set_dim_value(dim1.dim_value() / dim2);
+    result.set_dim_value(checkedDivide(dim1.dim_value(), dim2));
   } else if (dim2 == 1) {
+    return dim1;
+  }
+  return result;
+}
+
+inline TensorShapeProto::Dimension operator+(const TensorShapeProto::Dimension& dim1, int64_t dim2) {
+  TensorShapeProto::Dimension result;
+  if (dim1.has_dim_value()) {
+    result.set_dim_value(checkedAdd(dim1.dim_value(), dim2));
+  } else if (dim2 == 0) {
+    return dim1;
+  }
+  return result;
+}
+
+inline TensorShapeProto::Dimension operator-(const TensorShapeProto::Dimension& dim1, int64_t dim2) {
+  TensorShapeProto::Dimension result;
+  if (dim1.has_dim_value()) {
+    result.set_dim_value(checkedSubtract(dim1.dim_value(), dim2));
+  } else if (dim2 == 0) {
     return dim1;
   }
   return result;
@@ -290,7 +351,7 @@ inline void propagateElemTypeFromDtypeToOutput(
     InferenceContext& ctx,
     const int data_type,
     size_t outputIndex,
-    TypeProto::ValueCase expected_value_case) {
+    TypeProto::ValueCase expected_value_case = TypeProto::kTensorType) {
   const auto attribute_tensor_datatype = data_type;
   auto* output_type = ctx.getOutputType(outputIndex);
   const auto output_value_case = output_type->value_case();
@@ -309,10 +370,6 @@ inline void propagateElemTypeFromDtypeToOutput(
         ctx.getDisplayName(),
         ".");
   }
-}
-
-inline void propagateElemTypeFromDtypeToOutput(InferenceContext& ctx, const int data_type, size_t outputIndex) {
-  propagateElemTypeFromDtypeToOutput(ctx, data_type, outputIndex, TypeProto::kTensorType);
 }
 
 inline void propagateElemTypeFromDtypeToOutput(InferenceContext& ctx, const AttributeProto* attr, size_t outputIndex) {
@@ -492,8 +549,11 @@ ONNX_API inline void propagateShapeAndTypeFromFirstInput(InferenceContext& ctx) 
   propagateShapeFromInputToOutput(ctx, 0, 0);
 }
 
-inline void
-updateOutputElemType(InferenceContext& ctx, size_t outputIndex, int32_t elemType, TypeProto::ValueCase expected_type) {
+inline void updateOutputElemType(
+    InferenceContext& ctx,
+    size_t outputIndex,
+    int32_t elemType,
+    TypeProto::ValueCase expected_type = TypeProto::kTensorType) {
   auto* output_type = ctx.getOutputType(outputIndex);
   if (output_type == nullptr) {
     fail_type_inference("Output ", outputIndex, " is null");
@@ -511,10 +571,6 @@ updateOutputElemType(InferenceContext& ctx, size_t outputIndex, int32_t elemType
         ctx.getDisplayName(),
         ".");
   }
-}
-
-inline void updateOutputElemType(InferenceContext& ctx, size_t outputIndex, int32_t elemType) {
-  updateOutputElemType(ctx, outputIndex, elemType, TypeProto::kTensorType);
 }
 
 // Infer type of an output from the value of a specified attribute, which is
@@ -815,11 +871,10 @@ inline TypeProto RemoveDimensionsFromShape(const TypeProto& proto, int num_dimen
 // (sign change or truncation). Matches gsl::narrow:
 // https://github.com/microsoft/GSL/blob/main/include/gsl/narrow
 template <class T, class U>
-static constexpr T narrow(U&& u) {
-  const U original = u;
-  const T result = static_cast<T>(std::forward<U>(u));
-  if (static_cast<U>(result) != original || ((result < T{}) != (original < U{}))) {
-    fail_shape_inference("narrow: value ", original, " cannot be represented in target type");
+static constexpr T narrow(U u) {
+  const T result = static_cast<T>(u);
+  if (static_cast<U>(result) != u || ((result < T{}) != (u < U{}))) {
+    fail_shape_inference("narrow: value ", u, " cannot be represented in target type");
   }
   return result;
 }
@@ -904,6 +959,22 @@ inline void unifyInputDim(const InferenceContext& ctx, size_t input_index, int d
     // Now, unify dim and input_dim:
     unifyDim(input_dim, dim);
   }
+}
+
+// unifyInputShape: unifies all dimensions of an input with the given dim references.
+// Requires the input to have rank exactly equal to the number of dims provided.
+inline void
+unifyInputShape(InferenceContext& ctx, size_t input_index, std::initializer_list<std::reference_wrapper<Dim>> dims) {
+  ctx.unifyInputShape(input_index, dims);
+}
+
+// unifyInputShapePrefix: unifies the first N dimensions of an input with the given dim references.
+// Requires the input to have rank at least equal to the number of dims provided.
+inline void unifyInputShapePrefix(
+    InferenceContext& ctx,
+    size_t input_index,
+    std::initializer_list<std::reference_wrapper<Dim>> prefix) {
+  ctx.unifyInputShapePrefix(input_index, prefix);
 }
 
 // unifyDim: unifies a dimension with a constant value. If the dimension

@@ -4,14 +4,18 @@
 
 #include "onnx/defs/data_type_utils.h"
 
-#include <cctype>
 #include <string>
+#include <string_view>
 #include <unordered_map>
 #include <unordered_set>
 
-namespace ONNX_NAMESPACE {
-namespace Utils {
+namespace ONNX_NAMESPACE::Utils {
 namespace {
+
+// ASCII-only whitespace check; isspace is locale-dependent.
+constexpr bool IsAsciiSpace(char c) {
+  return c == ' ' || c == '\t' || c == '\n' || c == '\v' || c == '\f' || c == '\r';
+}
 
 // Singleton wrapper around allowed data types.
 // This implements construct on first use which is needed to ensure
@@ -52,8 +56,7 @@ class StringRange final {
   StringRange(const char* data);
   const char* Data() const;
   size_t Size() const;
-  // Used only when ONNX_ML is enabled; suppress GCC -Wunused-function.
-  [[maybe_unused]] bool Empty() const;
+  bool Empty() const;
   bool StartsWith(const StringRange& str) const;
   bool EndsWith(const StringRange& str) const;
   bool LStrip();
@@ -67,8 +70,7 @@ class StringRange final {
   size_t Find(char ch) const;
 
  private:
-  const char* data_;
-  size_t size_;
+  std::string_view view_;
 };
 
 } // namespace
@@ -128,7 +130,6 @@ std::string DataTypeUtils::ToString(const TypeProto& type_proto, const std::stri
       std::string map_str = "map(" + ToDataTypeString(type_proto.map_type().key_type()) + ",";
       return ToString(type_proto.map_type().value_type(), left + map_str, ")" + right);
     }
-#ifdef ONNX_ML
     case TypeProto::ValueCase::kOpaqueType: {
       std::string result;
       const auto& op_type = type_proto.opaque_type();
@@ -142,7 +143,6 @@ std::string DataTypeUtils::ToString(const TypeProto& type_proto, const std::stri
       result.append(")").append(right);
       return result;
     }
-#endif
     case TypeProto::ValueCase::kSparseTensorType: {
       // Note: We do not distinguish tensors with zero rank (a shape consisting
       // of an empty sequence of dimensions) here.
@@ -187,7 +187,6 @@ void DataTypeUtils::FromString(const std::string& type_str, TypeProto& type_prot
     FromString(std::string(v.Data(), v.Size()), *type_proto.mutable_map_type()->mutable_value_type());
     return;
   }
-#ifdef ONNX_ML
   if (s.LStrip("opaque")) {
     auto* opaque_type = type_proto.mutable_opaque_type();
     s.ParensWhitespaceStrip();
@@ -205,7 +204,6 @@ void DataTypeUtils::FromString(const std::string& type_str, TypeProto& type_prot
     }
     return;
   }
-#endif
   if (s.LStrip("sparse_tensor")) {
     s.ParensWhitespaceStrip();
     auto e = FromDataTypeString(std::string(s.Data(), s.Size()));
@@ -243,47 +241,45 @@ int32_t DataTypeUtils::FromDataTypeString(const std::string& type_str) {
 
 namespace {
 
-StringRange::StringRange(const char* p_data, size_t p_size) : data_(p_data), size_(p_size) {
+StringRange::StringRange(const char* p_data, size_t p_size)
+    : view_(p_data != nullptr ? std::string_view{p_data, p_size} : std::string_view{}) {
   assert(p_data != nullptr);
   LAndRStrip();
 }
 
-StringRange::StringRange(const std::string& p_str) : data_(p_str.data()), size_(p_str.size()) {
+StringRange::StringRange(const std::string& p_str) : view_(p_str) {
   LAndRStrip();
 }
 
-StringRange::StringRange(const char* p_data) : data_(p_data), size_(strlen(p_data)) {
+StringRange::StringRange(const char* p_data) : view_(p_data) {
   LAndRStrip();
 }
 
 const char* StringRange::Data() const {
-  return data_;
+  return view_.data();
 }
 
 size_t StringRange::Size() const {
-  return size_;
+  return view_.size();
 }
 
 bool StringRange::Empty() const {
-  return size_ == 0;
+  return view_.empty();
 }
 
 bool StringRange::StartsWith(const StringRange& str) const {
-  return ((size_ >= str.size_) && (memcmp(data_, str.data_, str.size_) == 0));
+  return view_.substr(0, str.view_.size()) == str.view_;
 }
 
 bool StringRange::EndsWith(const StringRange& str) const {
-  return ((size_ >= str.size_) && (memcmp(data_ + (size_ - str.size_), str.data_, str.size_) == 0));
+  return view_.size() >= str.view_.size() && view_.substr(view_.size() - str.view_.size()) == str.view_;
 }
 
 bool StringRange::LStrip() {
   size_t count = 0;
-  const char* ptr = data_;
-  while (count < size_ && isspace(*ptr)) {
-    count++;
-    ptr++;
+  while (count < view_.size() && IsAsciiSpace(view_[count])) {
+    ++count;
   }
-
   if (count > 0) {
     return LStrip(count);
   }
@@ -291,9 +287,8 @@ bool StringRange::LStrip() {
 }
 
 bool StringRange::LStrip(size_t size) {
-  if (size <= size_) {
-    data_ += size;
-    size_ -= size;
+  if (size <= view_.size()) {
+    view_.remove_prefix(size);
     return true;
   }
   return false;
@@ -301,19 +296,16 @@ bool StringRange::LStrip(size_t size) {
 
 bool StringRange::LStrip(StringRange str) {
   if (StartsWith(str)) {
-    return LStrip(str.size_);
+    return LStrip(str.view_.size());
   }
   return false;
 }
 
 bool StringRange::RStrip() {
   size_t count = 0;
-  const char* ptr = data_ + size_ - 1;
-  while (count < size_ && isspace(*ptr)) {
+  while (count < view_.size() && IsAsciiSpace(view_[view_.size() - 1 - count])) {
     ++count;
-    --ptr;
   }
-
   if (count > 0) {
     return RStrip(count);
   }
@@ -321,8 +313,8 @@ bool StringRange::RStrip() {
 }
 
 bool StringRange::RStrip(size_t size) {
-  if (size_ >= size) {
-    size_ -= size;
+  if (size <= view_.size()) {
+    view_.remove_suffix(size);
     return true;
   }
   return false;
@@ -330,7 +322,7 @@ bool StringRange::RStrip(size_t size) {
 
 bool StringRange::RStrip(StringRange str) {
   if (EndsWith(str)) {
-    return RStrip(str.size_);
+    return RStrip(str.view_.size());
   }
   return false;
 }
@@ -350,14 +342,7 @@ void StringRange::ParensWhitespaceStrip() {
 }
 
 size_t StringRange::Find(const char ch) const {
-  size_t idx = 0;
-  while (idx < size_) {
-    if (data_[idx] == ch) {
-      return idx;
-    }
-    idx++;
-  }
-  return std::string::npos;
+  return view_.find(ch);
 }
 
 TypesWrapper& TypesWrapper::GetTypesWrapper() {
@@ -414,5 +399,4 @@ TypesWrapper::TypesWrapper() {
 
 } // namespace
 
-} // namespace Utils
-} // namespace ONNX_NAMESPACE
+} // namespace ONNX_NAMESPACE::Utils

@@ -32,12 +32,8 @@ cmd = "python onnx/backend/test/stat_coverage.py"
 [tasks.gen-proto]
 cmd = "python onnx/gen_proto.py -l && python onnx/gen_proto.py -l --ml"
 
-[tasks.gen-test-data-feature-branch]
-# Generate test data based on what files changed in the current feature branch
-cmd = "python onnx/backend/test/cmd_tools.py generate-data --diff"
-
 [tasks.gen-all]
-depends-on = ["gen-docs", "gen-operator-coverage", "gen-proto", "gen-test-data-feature-branch"]
+depends-on = ["gen-docs", "gen-operator-coverage", "gen-proto"]
 
 [tasks.gtest]
 cmd = ".setuptools-cmake-build/onnx_gtests"
@@ -84,7 +80,7 @@ cmd = "cd docs/docsgen && make html"
 
 [dependencies]
 libdate = ">=3.0.1,<4"
-libprotobuf = "*"
+libprotobuf = "<7"  # libprotobuf>=7 has breaking changes which need a dedicated PR
 make = "*"
 ml_dtypes = ">=0.5.1"
 nanobind = ">=2.8.0"
@@ -101,22 +97,18 @@ cxx-compiler = ">=1.8.0"
 # follows requirements-dev.txt
 ml_dtypes = ">=0.5.1"
 numpy = ">=1.22.0"
-parameterized = ">=0.9.0"
-protobuf = ">=4.25.1"
+protobuf = ">=6.31.1"
 pytest = ">=8.3.4"
 pytest-cov = ">=6.0.0"
 pytest-xdist = ">=3.6.1"
-setuptools = ">=75.8.0"
-wheel = ">=0.45.1"
-zizmor = ">=1.24.1,<2"
+zizmor = ">=1.24.1,<2,!=1.29.0"  # 1.29.0 has a regression for prek builtins, which is fixed in the next release
+onnxruntime = "*"
 
 [feature.reference.dependencies]
-# follows requirements-reference.txt
-pillow = ">=11.2.1,<12"
+pillow = ">=12.2.0"
 
 [feature.oldies.dependencies]
-# follows requirements-min.txt
-protobuf = "==4.25.1"
+protobuf = "==6.31.1"
 python = "3.10.*"
 numpy = "==1.23.2"
 
@@ -149,13 +141,11 @@ furo = "*"
 markupsafe = "*"
 matplotlib = "*"
 myst-parser = "*"
-onnxruntime = "*"
 pillow = "*"
 pydot = "*"
 sphinx = "<9"  # Seems to be required by sphinx-tabs?
 sphinx-copybutton = "*"
 sphinx-tabs = "*"
-setuptools = "<82"  # sphinx-tabs needs pkg_resources which was removed in 82
 linkify-it-py = "*"
 [feature.docs.pypi-dependencies]
 sphinx-exec-code = "*"
@@ -166,11 +156,46 @@ lychee = ">=0.23.0"
 cmd = "pixi exec lychee --root-dir . ."
 
 [feature.reuse.dependencies]
-# Isolate REUSE since it does not play nice with `pip check` in the
-# default environment.
-reuse = ">=5.1.1,<7"
+python = ">=3.14.5,<3.15"
+reuse = ">=6.2.0,<7"
 [feature.reuse.tasks.reuse]
 cmd = "reuse"
+
+# Toolchain for the onnxruntime downstream integration check
+# (see .github/workflows/downstream_onnxruntime.yml).
+[feature.ort.dependencies]
+c-compiler = ">=1.8.0,<2"
+cmake = ">=3.30.2"
+cxx-compiler = ">=1.8.0,<2"
+eigen = ">=5.0.1,<6"
+git = ">=2.55.0,<3"
+libabseil = "==20250814"  # must match onnxruntime's pinned abseil
+libdate = ">=3.0.1,<4"
+libprotobuf = "<7"
+make = "*"
+ninja = "*"
+numpy = "*"
+packaging = ">=24.1"
+parameterized = ">=0.9.0"
+pip = "*"
+protobuf = "<7"
+pytest = ">=8.4.2"
+re2 = ">=2025.8.12,<2026"
+setuptools = ">=75.6.0"
+sympy = "*"
+wheel = ">=0.47.0"
+
+# FETCHCONTENT_SOURCE_DIR_ONNX builds onnxruntime against the local onnx
+# tree; it must be a -D cache var (CMake ignores it in the environment).
+# FETCHCONTENT_TRY_FIND_PACKAGE_MODE=ALWAYS reuses conda-forge deps;
+# the custom protoc must match the conda-forge libprotobuf headers.
+[feature.ort.tasks.build-onnxruntime]
+args = [{ "arg" = "onnxruntime_dir" }, { "arg" = "onnx_dir" }]
+cmd = 'python {{ onnxruntime_dir }}/tools/ci_build/build.py --update --build --build_wheel --enable_pybind --build_dir build --config Release --parallel --compile_no_warning_as_error --skip_pip_install --cmake_extra_defines FETCHCONTENT_TRY_FIND_PACKAGE_MODE=ALWAYS ONNX_CUSTOM_PROTOC_EXECUTABLE="$CONDA_PREFIX/bin/protoc" FETCHCONTENT_SOURCE_DIR_ONNX="{{ onnx_dir }}"'
+
+# Run onnxruntime's ctest suite against the build produced above.
+[feature.ort.tasks.test-onnxruntime]
+cmd = "ctest -V -C Release --test-dir build/Release/"
 
 [environments]
 default = ["dev", "lint", "reference"]
@@ -182,3 +207,4 @@ clang-tools = {features=["clang-tools"], no-default-feature=true}
 link-checker = {features=["link-checker"], no-default-feature=true}
 lintrunner = ["dev", "reference", "lint", "lintrunner"]
 reuse = {features=["reuse"], no-default-feature=true}
+ort = {features=["ort"], no-default-feature=true}
