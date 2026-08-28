@@ -1003,7 +1003,11 @@ class DefaultVersionConverter : public BaseVersionConverter {
         TensorProto_DataType_FLOAT8E5M2FNUZ,
         TensorProto_DataType_FLOAT4E2M1,
         TensorProto_DataType_FLOAT8E8M0};
-    registerAdapter("Mod", 28, 27, [mod_28_float_types](std::shared_ptr<Graph> /*unused*/, Node* node) {
+    registerAdapter(
+        "Mod",
+        28,
+        27,
+        [mod_28_float_types](const std::shared_ptr<Graph>& /*unused*/, Node* node) {
       const Symbol fmod{"fmod"};
       if ((!node->hasAttribute(fmod) || node->i(fmod) == 0) &&
           std::find(mod_28_float_types.begin(), mod_28_float_types.end(), node->input(0)->elemType()) !=
