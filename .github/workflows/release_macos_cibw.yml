@@ -38,8 +38,10 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Read protobuf version from sbom.cdx.json
-        run: echo "PROTOBUF_VERSION=$(jq -r '.components[] | select(.name=="protobuf") | .version' sbom.cdx.json)" >> $GITHUB_ENV
+      - name: Read protobuf version and hash from sbom.cdx.json
+        run: |
+          echo "PROTOBUF_VERSION=$(jq -r '.components[] | select(.name=="protobuf") | .version' sbom.cdx.json)" >> $GITHUB_ENV
+          echo "PROTOBUF_SHA256=$(jq -r '.components[] | select(.name=="protobuf") | .hashes[0].content' sbom.cdx.json)" >> $GITHUB_ENV
 
       - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
@@ -53,14 +55,21 @@ jobs:
           echo "$(cat VERSION_NUMBER).dev$(date -u +%Y%m%d)" > VERSION_NUMBER
 
       - name: Download protoc
+        # The protoc release zip isn't tracked in sbom.cdx.json (only the protobuf source
+        # tarball is), so this hash must be updated by hand alongside PROTOBUF_VERSION
+        # bumps, e.g.: curl -sSL <protoc zip URL> | shasum -a 256
+        env:
+          PROTOC_SHA256: 99ea004549c139f46da5638187a85bbe422d78939be0fa01af1aa8ab672e395f
         run: |
           curl -sSL "https://github.com/protocolbuffers/protobuf/releases/download/v${PROTOBUF_VERSION}/protoc-${PROTOBUF_VERSION}-osx-universal_binary.zip" -o protoc.zip
+          echo "${PROTOC_SHA256}  protoc.zip" | shasum -a 256 -c -
           unzip -q protoc.zip -d protoc-host
           chmod +x protoc-host/bin/protoc
 
       - name: Download protobuf source
         run: |
           curl -sSL "https://github.com/protocolbuffers/protobuf/releases/download/v${PROTOBUF_VERSION}/protobuf-${PROTOBUF_VERSION}.tar.gz" -o protobuf.tar.gz
+          echo "${PROTOBUF_SHA256}  protobuf.tar.gz" | shasum -a 256 -c -
           tar -xf protobuf.tar.gz
 
       - name: Set SOURCE_DATE_EPOCH for reproducible builds

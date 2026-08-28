@@ -43,9 +43,11 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Read protobuf version from sbom.cdx.json
+      - name: Read protobuf version and hash from sbom.cdx.json
         shell: bash
-        run: echo "PROTOBUF_VERSION=$(jq -r '.components[] | select(.name=="protobuf") | .version' sbom.cdx.json)" >> $GITHUB_ENV
+        run: |
+          echo "PROTOBUF_VERSION=$(jq -r '.components[] | select(.name=="protobuf") | .version' sbom.cdx.json)" >> $GITHUB_ENV
+          echo "PROTOBUF_SHA256=$(jq -r '.components[] | select(.name=="protobuf") | .hashes[0].content' sbom.cdx.json)" >> $GITHUB_ENV
 
       - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
@@ -59,13 +61,24 @@ jobs:
           echo "$(cat VERSION_NUMBER).dev$(date -u +%Y%m%d)" > VERSION_NUMBER
 
       - name: Download protoc
+        # The protoc release zip isn't tracked in sbom.cdx.json (only the protobuf source
+        # tarball is), so this hash must be updated by hand alongside PROTOBUF_VERSION
+        # bumps, e.g.: curl -sSL <protoc zip URL> -o protoc.zip; Get-FileHash protoc.zip -Algorithm SHA256
+        env:
+          PROTOC_SHA256: 70381b116ab0d71cb6a5177d9b17c7c13415866603a0fd40d513dafe32d56c35
         run: |
           curl -sSL "https://github.com/protocolbuffers/protobuf/releases/download/v${env:PROTOBUF_VERSION}/protoc-${env:PROTOBUF_VERSION}-win64.zip" -o protoc.zip
+          if ((Get-FileHash protoc.zip -Algorithm SHA256).Hash -ne $env:PROTOC_SHA256) {
+            throw "protoc.zip checksum mismatch"
+          }
           Expand-Archive protoc.zip -DestinationPath protoc-host
 
       - name: Download protobuf source
         run: |
           curl -sSL "https://github.com/protocolbuffers/protobuf/releases/download/v${env:PROTOBUF_VERSION}/protobuf-${env:PROTOBUF_VERSION}.tar.gz" -o protobuf.tar.gz
+          if ((Get-FileHash protobuf.tar.gz -Algorithm SHA256).Hash -ne $env:PROTOBUF_SHA256) {
+            throw "protobuf.tar.gz checksum mismatch"
+          }
           tar -xf protobuf.tar.gz
 
       - name: Set paths
