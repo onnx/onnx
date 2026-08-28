@@ -3,8 +3,11 @@
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
-from onnx.reference.ops_optimized.op_conv_optimized import Conv
+from typing import TYPE_CHECKING
 
-optimized_operators = [Conv]
+if TYPE_CHECKING:
+    from onnx.reference.op_run import OpRun
 
-__all__ = ["Conv", "optimized_operators"]
+optimized_operators: list[type[OpRun]] = []
+
+__all__ = ["optimized_operators"]
