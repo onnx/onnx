@@ -7,6 +7,7 @@ import numpy as np
 
 import onnx
 from onnx.reference.op_run import OpRun
+from onnx.reference.ops.op_matmul import numpy_matmul
 
 _INPUT_RANK_3D = 3
 _INPUT_RANK_4D = 4
@@ -23,10 +24,12 @@ def _softmax(x: np.ndarray, axis: int = -1) -> np.ndarray:
     # computing NaN and overwriting it), so `_softmax` never emits a NaN/warning
     # and the all-`-inf` case is independently unit-testable.
     row_all_masked = np.isneginf(x_max)
-    safe_max = np.where(row_all_masked, 0, x_max)
+    zero = np.zeros((), dtype=x.dtype)
+    one = np.ones((), dtype=x.dtype)
+    safe_max = np.where(row_all_masked, zero, x_max)
     tmp = np.exp(x - safe_max)
     s = np.sum(tmp, axis=axis, keepdims=True)
-    s = np.where(s == 0, 1, s)  # avoid 0/0 for fully-masked rows (kept at 0)
+    s = np.where(s == zero, one, s)  # avoid 0/0 for fully-masked rows
     return tmp / s
 
 
@@ -202,6 +205,9 @@ def _compute_attention(
         q_head_size = Q.shape[3]
         scale = 1 / np.sqrt(q_head_size)
     scale = np.sqrt(scale)
+    # Cast scale to input type to match the expanded function's
+    # ScaleFactorF = Cast(ScaleFactorSqrt, to=T1)
+    scale = Q.dtype.type(scale)
 
     # Update key and value cache
     if past_key is not None:
@@ -291,7 +297,7 @@ def _compute_attention(
     if nonpad_kv_seqlen is not None:
         padding_mask = np.arange(kv_sequence_length) < nonpad_kv_seqlen[:, np.newaxis]
         padding_mask = padding_mask.reshape(batch_size, 1, 1, kv_sequence_length)
-        padding_mask = np.where(padding_mask, 0, -np.inf)
+        padding_mask = np.where(padding_mask, 0, -np.inf).astype(attn_bias.dtype)
         attn_bias = attn_bias + padding_mask
 
     # Group Query Attention is applied if the following are satisfied
@@ -335,7 +341,7 @@ def _compute_attention(
     #                    |
     #                    Y
     k_transpose = np.transpose(K, (0, 1, 3, 2))
-    qk_matmul_output = np.matmul(Q * scale, k_transpose * scale)
+    qk_matmul_output = numpy_matmul(Q * scale, k_transpose * scale)
 
     # Apply softcap before mask/bias addition.
     # Softcap must be applied before mask so that -inf mask values remain -inf
@@ -371,7 +377,9 @@ def _compute_attention(
     row_all_masked = np.isneginf(
         np.max(attn_bias, axis=-1, keepdims=True)
     )  # (..., q, 1)
-    qk_softmax = np.where(row_all_masked, 0, qk_softmax)
+    qk_softmax = np.where(
+        row_all_masked, np.zeros((), dtype=qk_softmax.dtype), qk_softmax
+    )
 
     if qk_matmul_output_mode == _QK_MATMUL_OUTPUT_AFTER_SOFTMAX:
         # Mode 3 exposes the post-softmax probabilities; a fully-masked row is
@@ -380,8 +388,11 @@ def _compute_attention(
         # preserving primary == _expanded parity for the qk_matmul_output output.
         qk_matmul_output = qk_softmax
     qk_matmul_output = qk_matmul_output.astype(Q.dtype)
+    # Cast softmax output back to input type before final MatMul,
+    # matching the expanded function's SoftmaxOut = Cast(..., to=T1).
+    qk_softmax = qk_softmax.astype(Q.dtype)
 
-    output = np.matmul(qk_softmax, V).astype(Q.dtype)
+    output = numpy_matmul(qk_softmax, V)
     if input_shape_len == _INPUT_RANK_3D:
         output = np.transpose(output, (0, 2, 1, 3))
         output = np.reshape(output, (output.shape[0], output.shape[1], -1))

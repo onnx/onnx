@@ -19,7 +19,10 @@ from onnx.onnx_pb import (
     TypeProto,
 )
 from onnx.reference import op_run
-from onnx.reference.ops_optimized import optimized_operators
+from onnx.reference.shape_annotation_checker import (
+    SymbolBindings,
+    check_value_against_type,
+)
 
 
 class ReferenceEvaluator:
@@ -44,9 +47,16 @@ class ReferenceEvaluator:
             must define the static attribute `domain`, there may be
             multiple implementations for the same operator, the first
             one in the list is used.
-        optimized: if True, all optimized kernels are added in `new_ops`
-            and are used instead of the inner implementation if list
-            *new_ops* does not already contain one.
+        check_shape_annotations: if True, every input and computed value is
+            checked, as it becomes available, against its declared static
+            shape annotation (see `docs/ShapeAnnotationSemantics.md
+            <https://github.com/onnx/onnx/blob/main/docs/ShapeAnnotationSemantics.md>`_).
+            A :class:`ShapeAnnotationError
+            <onnx.reference.shape_annotation_checker.ShapeAnnotationError>`
+            is raised on the first violation. This only supports today's
+            single, global namespace of symbolic dimension names, and only
+            validates tensor-typed values; it defaults to False, since it
+            is a diagnostic capability and not part of default execution.
 
     The class maps every node to its associated implementation.
     When a subgraph of a function is met,
@@ -193,16 +203,9 @@ class ReferenceEvaluator:
         functions: list[ReferenceEvaluator | FunctionProto] | None = None,
         verbose: int = 0,
         new_ops: list[type[op_run.OpRun]] | None = None,
-        optimized: bool = True,
+        check_shape_annotations: bool = False,
     ) -> None:
-        if optimized:
-            if new_ops is None:
-                new_ops = optimized_operators.copy()
-            else:
-                set_new_ops = set(new_ops)
-                for op in optimized_operators:
-                    if op not in set_new_ops:
-                        new_ops.append(op)
+        self.check_shape_annotations_ = check_shape_annotations
         self.output_types_ = None
         self.input_types_ = None
 
@@ -404,12 +407,25 @@ class ReferenceEvaluator:
             "existing_functions": self.functions_.copy(),
             "evaluator_cls": self.__class__,
         }
-        if self.input_types_:
+        if self.onnx_graph_ is not None:
             all_types = {i.name: i.type for i in self.onnx_graph_.input}
-            if hasattr(self.proto_, "value_info"):
-                for shape_type in self.proto_.value_info:
-                    all_types[shape_type.name] = shape_type.type
+            # Intermediate value annotations (`value_info`) live on the
+            # graph itself (`graph.value_info`), not on the top-level
+            # ModelProto, so look them up on `self.onnx_graph_`.
+            for shape_type in self.onnx_graph_.value_info:
+                all_types[shape_type.name] = shape_type.type
+            for output in self.onnx_graph_.output:
+                all_types[output.name] = output.type
             self.all_types_ = all_types
+        elif isinstance(self.proto_, FunctionProto):
+            # A FunctionProto's `input`/`output` are plain names with no
+            # type of their own; any type/shape annotation for its
+            # inputs, outputs, or intermediate values is instead recorded
+            # in `value_info` (see the FunctionProto definition).
+            self.all_types_ = {
+                shape_type.name: shape_type.type
+                for shape_type in self.proto_.value_info
+            }
         else:
             self.all_types_ = None
 
@@ -547,6 +563,8 @@ class ReferenceEvaluator:
         feed_inputs: dict[str, Any],
         attributes: dict[str, Any] | None = None,
         intermediate: bool = False,
+        check_shape_annotations: bool | None = None,
+        _bindings: SymbolBindings | None = None,
     ) -> dict[str, Any] | list[Any]:
         """Executes the onnx model.
 
@@ -558,6 +576,16 @@ class ReferenceEvaluator:
             intermediate: if True, the function returns all the results,
                 final ones and intermediates one in a same dictionary,
                 if False, only the final results are returned in a list
+            check_shape_annotations: overrides, for this call only, the
+                `check_shape_annotations` constructor argument; if None
+                (the default), the constructor's setting is used
+            _bindings: internal parameter used to propagate the active
+                `SymbolBindings` instance into a nested evaluator run
+                (subgraph body of If/Loop/Scan, or a function body), so
+                that a symbolic dimension shared with the caller is
+                checked against the same bindings (single global
+                namespace, see docs/ShapeAnnotationSemantics.md). Not
+                meant to be supplied directly by external callers.
 
         Returns:
             list of requested outputs if intermediate is False,
@@ -568,6 +596,23 @@ class ReferenceEvaluator:
         if isinstance(self.proto_, FunctionProto) and attributes is None:
             raise TypeError
 
+        do_check_shapes = (
+            self.check_shape_annotations_
+            if check_shape_annotations is None
+            else check_shape_annotations
+        )
+        # A fresh binding map is used for every top-level call to run: a
+        # symbolic dimension name is existentially quantified once per
+        # inference run (see docs/ShapeAnnotationSemantics.md). Nested
+        # evaluator calls (subgraph/function bodies invoked while
+        # executing this same top-level run) reuse the bindings passed
+        # via `_bindings` instead, so that a symbolic dimension shared
+        # across scopes is checked consistently.
+        if _bindings is not None:
+            bindings = _bindings
+        else:
+            bindings = SymbolBindings() if do_check_shapes else None
+
         # step 1: inputs and initializers
         results = {"": None}  # optional input
         results.update(self.rt_inits_)  # type: ignore[arg-type]
@@ -576,6 +621,17 @@ class ReferenceEvaluator:
             self._log(2, " +C %s: %s", k, v)  # type: ignore[arg-type]
         for k, v in feed_inputs.items():
             self._log(2, " +I %s: %s", k, v)  # type: ignore[arg-type]
+
+        if bindings is not None:
+            # Check every annotated value already available at entry,
+            # including initializer-only values and values captured from an
+            # enclosing graph.
+            if self.all_types_:
+                for name, value in results.items():
+                    if name in self.all_types_:
+                        check_value_against_type(
+                            self.all_types_[name], value, bindings, name
+                        )
 
         # step 2: execute nodes
         for node in self.rt_nodes_:
@@ -592,12 +648,44 @@ class ReferenceEvaluator:
             if node.has_linked_attribute and attributes:
                 linked_attributes["linked_attributes"] = attributes
             if node.need_context():
-                outputs = node.run(*inputs, context=results, **linked_attributes)
+                outputs = node.run(
+                    *inputs, context=results, bindings=bindings, **linked_attributes
+                )
+            elif bindings is not None and isinstance(node, op_run.OpFunction):
+                # OpFunction does not need the outer-scope `context`, but
+                # like If/Loop/Scan it invokes a nested evaluator (the
+                # function body), so the active bindings must still be
+                # forwarded to it. Most other node classes (including
+                # optimized/vectorized ones) override `run()` with a
+                # signature that does not accept `bindings`, so it must
+                # not be passed to them.
+                outputs = node.run(*inputs, bindings=bindings, **linked_attributes)
             else:
                 outputs = node.run(*inputs, **linked_attributes)
             for name, value in zip(node.output, outputs, strict=False):
                 self._log(2, " + %s: %s", name, value)  # type: ignore[arg-type]
                 results[name] = value
+                if bindings is not None and self.all_types_:
+                    check_value_against_type(
+                        self.all_types_.get(name), value, bindings, name
+                    )
+
+        if bindings is not None:
+            # See the comment above the input check: a FunctionProto's
+            # outputs are plain names, so fall back to `all_types_`
+            # (built from `value_info`) when there is no positional
+            # `output_types_` list (i.e. `self.proto_` is a FunctionProto).
+            output_types = (
+                dict(zip(self.output_names_, self.output_types_, strict=False))
+                if self.output_types_
+                else self.all_types_
+            )
+            if output_types:
+                for name in self.output_names_:
+                    if name in results:
+                        check_value_against_type(
+                            output_types.get(name), results[name], bindings, name
+                        )
 
         # return the results
         if intermediate:
