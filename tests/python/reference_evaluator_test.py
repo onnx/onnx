@@ -4085,6 +4085,56 @@ class TestReferenceEvaluator:
         expected = _expected(data, alpha, beta, bias, size)
         assert len(got[0]) == len(expected)
 
+    def test_conv_implementation_1d(self):
+        got = _conv_implementation(
+            X=np.arange(5, dtype=np.float32).reshape((1, 1, 5)),
+            W=np.arange(3, dtype=np.float32).reshape((1, 1, 3)),
+            B=None,
+            auto_pad="NOTSET",
+            dilations=[1],
+            group=1,
+            kernel_shape=[3],
+            pads=[1, 1],
+            strides=[1],
+        )
+        assert_allclose(got, np.array([[[2, 5, 8, 11, 4]]], dtype=np.float32))
+
+    def test_conv_implementation_3d(self):
+        got = _conv_implementation(
+            X=np.arange(27, dtype=np.float32).reshape((1, 1, 3, 3, 3)),
+            W=np.ones((1, 1, 2, 2, 2), dtype=np.float32),
+            B=None,
+            auto_pad="NOTSET",
+            dilations=[1, 1, 1],
+            group=1,
+            kernel_shape=[2, 2, 2],
+            pads=[0, 0, 0, 0, 0, 0],
+            strides=[1, 1, 1],
+        )
+        expected = np.array(
+            [[[[[52, 60], [76, 84]], [[124, 132], [148, 156]]]]],
+            dtype=np.float32,
+        )
+        assert_allclose(got, expected)
+
+    def test_conv_implementation_dilations(self):
+        got = _conv_implementation(
+            X=np.arange(25, dtype=np.float32).reshape((1, 1, 5, 5)),
+            W=np.array([[[[1, 2], [3, 4]]]], dtype=np.float32),
+            B=None,
+            auto_pad="NOTSET",
+            dilations=[2, 1],
+            group=1,
+            kernel_shape=[2, 2],
+            pads=[1, 0, 1, 0],
+            strides=[1, 2],
+        )
+        expected = np.array(
+            [[[[39, 53], [76, 96], [126, 146], [176, 196], [47, 53]]]],
+            dtype=np.float32,
+        )
+        assert_allclose(got, expected)
+
     def test_conv_im2col_2d_autopad(self):
         feeds = {
             "X": np.arange(5 * 5).reshape((1, 1, 5, -1)).astype(np.float32),
