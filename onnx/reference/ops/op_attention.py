@@ -297,7 +297,7 @@ def _compute_attention(
     if nonpad_kv_seqlen is not None:
         padding_mask = np.arange(kv_sequence_length) < nonpad_kv_seqlen[:, np.newaxis]
         padding_mask = padding_mask.reshape(batch_size, 1, 1, kv_sequence_length)
-        padding_mask = np.where(padding_mask, 0, -np.inf)
+        padding_mask = np.where(padding_mask, 0, -np.inf).astype(attn_bias.dtype)
         attn_bias = attn_bias + padding_mask
 
     # Group Query Attention is applied if the following are satisfied
@@ -377,7 +377,9 @@ def _compute_attention(
     row_all_masked = np.isneginf(
         np.max(attn_bias, axis=-1, keepdims=True)
     )  # (..., q, 1)
-    qk_softmax = np.where(row_all_masked, 0, qk_softmax)
+    qk_softmax = np.where(
+        row_all_masked, np.zeros((), dtype=qk_softmax.dtype), qk_softmax
+    )
 
     if qk_matmul_output_mode == _QK_MATMUL_OUTPUT_AFTER_SOFTMAX:
         # Mode 3 exposes the post-softmax probabilities; a fully-masked row is
