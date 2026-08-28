@@ -24,10 +24,12 @@ def _softmax(x: np.ndarray, axis: int = -1) -> np.ndarray:
     # computing NaN and overwriting it), so `_softmax` never emits a NaN/warning
     # and the all-`-inf` case is independently unit-testable.
     row_all_masked = np.isneginf(x_max)
-    safe_max = np.where(row_all_masked, 0, x_max)
+    zero = np.zeros((), dtype=x.dtype)
+    one = np.ones((), dtype=x.dtype)
+    safe_max = np.where(row_all_masked, zero, x_max)
     tmp = np.exp(x - safe_max)
     s = np.sum(tmp, axis=axis, keepdims=True)
-    s = np.where(s == 0, 1, s)  # avoid 0/0 for fully-masked rows (kept at 0)
+    s = np.where(s == zero, one, s)  # avoid 0/0 for fully-masked rows
     return tmp / s
 
 
