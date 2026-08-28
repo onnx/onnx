@@ -8954,7 +8954,7 @@ input_data = np.array(
 
 # Calculate expected output data
 positive_input = np.maximum(0, input_data)
-negative_input = np.minimum(0, alpha * (np.exp(input_data / alpha) - 1))
+negative_input = np.minimum(0, alpha * np.expm1(input_data / alpha))
 expected_output = positive_input + negative_input
 
 expect(node, inputs=[input_data], outputs=[expected_output], name="test_celu")
@@ -8978,7 +8978,7 @@ node = onnx.helper.make_node(
 input_data = np.array([-3.0, -0.5, 0.0, 0.5, 3.0], dtype=ml_dtypes.bfloat16)
 
 positive_input = np.maximum(0, input_data)
-negative_input = np.minimum(0, alpha * (np.exp(input_data / alpha) - 1))
+negative_input = np.minimum(0, alpha * np.expm1(input_data / alpha))
 expected_output = (positive_input + negative_input).astype(ml_dtypes.bfloat16)
 
 expect(
@@ -9007,7 +9007,7 @@ node = onnx.helper.make_node(
 input_data = np.array([-3.0, -0.5, 0.0, 0.5, 3.0], dtype=np.float16)
 
 positive_input = np.maximum(0, input_data)
-negative_input = np.minimum(0, alpha * (np.exp(input_data / alpha) - 1))
+negative_input = np.minimum(0, alpha * np.expm1(input_data / alpha))
 expected_output = (positive_input + negative_input).astype(np.float16)
 
 expect(
@@ -14014,11 +14014,11 @@ node = onnx.helper.make_node("Elu", inputs=["x"], outputs=["y"], alpha=2.0)
 
 x = np.array([-1, 0, 1]).astype(np.float32)
 # expected output [-1.2642411, 0., 1.]
-y = np.clip(x, 0, np.inf) + (np.exp(np.clip(x, -np.inf, 0)) - 1) * 2.0
+y = np.clip(x, 0, np.inf) + np.expm1(np.clip(x, -np.inf, 0)) * 2.0
 expect(node, inputs=[x], outputs=[y], name="test_elu_example")
 
 x = np.random.randn(3, 4, 5).astype(np.float32)
-y = np.clip(x, 0, np.inf) + (np.exp(np.clip(x, -np.inf, 0)) - 1) * 2.0
+y = np.clip(x, 0, np.inf) + np.expm1(np.clip(x, -np.inf, 0)) * 2.0
 expect(node, inputs=[x], outputs=[y], name="test_elu")
 ```
 
@@ -14036,7 +14036,7 @@ node = onnx.helper.make_node(
     outputs=["y"],
 )
 x = np.random.randn(3, 4, 5).astype(np.float32)
-y = np.clip(x, 0, np.inf) + (np.exp(np.clip(x, -np.inf, 0)) - 1) * default_alpha
+y = np.clip(x, 0, np.inf) + np.expm1(np.clip(x, -np.inf, 0)) * default_alpha
 expect(node, inputs=[x], outputs=[y], name="test_elu_default")
 ```
 
@@ -23334,12 +23334,12 @@ upper_edge_hertz = np.float32(8192 / 2)
 num_spectrogram_bins = dft_length // 2 + 1
 frequency_bins = np.arange(0, num_mel_bins + 2)
 
-low_frequency_mel = 2595 * np.log10(1 + lower_edge_hertz / 700)
-high_frequency_mel = 2595 * np.log10(1 + upper_edge_hertz / 700)
+low_frequency_mel = 2595 * np.log1p(lower_edge_hertz / 700) / np.log(10)
+high_frequency_mel = 2595 * np.log1p(upper_edge_hertz / 700) / np.log(10)
 mel_step = (high_frequency_mel - low_frequency_mel) / frequency_bins.shape[0]
 
 frequency_bins = frequency_bins * mel_step + low_frequency_mel
-frequency_bins = 700 * (np.power(10, (frequency_bins / 2595)) - 1)
+frequency_bins = 700 * np.expm1(frequency_bins / 2595 * np.log(10))
 frequency_bins = ((dft_length + 1) * frequency_bins) // sample_rate
 frequency_bins = frequency_bins.astype(int)
 
@@ -23543,7 +23543,7 @@ node = onnx.helper.make_node("Mish", inputs=["X"], outputs=["Y"])
 input_data = np.linspace(-10, 10, 10000, dtype=np.float32)
 
 # Calculate expected output data
-expected_output = input_data * np.tanh(np.log1p(np.exp(input_data)))
+expected_output = input_data * np.tanh(np.logaddexp(0, input_data))
 
 expect(node, inputs=[input_data], outputs=[expected_output], name="test_mish")
 ```
@@ -36144,17 +36144,11 @@ node = onnx.helper.make_node(
 
 x = np.array([-1, 0, 1]).astype(np.float32)
 # expected output [-3.79272318, 0., 3.]
-y = (
-    np.clip(x, 0, np.inf) * 3.0
-    + (np.exp(np.clip(x, -np.inf, 0)) - 1) * 2.0 * 3.0
-)
+y = np.clip(x, 0, np.inf) * 3.0 + np.expm1(np.clip(x, -np.inf, 0)) * 2.0 * 3.0
 expect(node, inputs=[x], outputs=[y], name="test_selu_example")
 
 x = np.random.randn(3, 4, 5).astype(np.float32)
-y = (
-    np.clip(x, 0, np.inf) * 3.0
-    + (np.exp(np.clip(x, -np.inf, 0)) - 1) * 2.0 * 3.0
-)
+y = np.clip(x, 0, np.inf) * 3.0 + np.expm1(np.clip(x, -np.inf, 0)) * 2.0 * 3.0
 expect(node, inputs=[x], outputs=[y], name="test_selu")
 ```
 
@@ -36175,7 +36169,7 @@ node = onnx.helper.make_node(
 x = np.random.randn(3, 4, 5).astype(np.float32)
 y = (
     np.clip(x, 0, np.inf) * default_gamma
-    + (np.exp(np.clip(x, -np.inf, 0)) - 1) * default_alpha * default_gamma
+    + np.expm1(np.clip(x, -np.inf, 0)) * default_alpha * default_gamma
 )
 expect(node, inputs=[x], outputs=[y], name="test_selu_default")
 ```
@@ -39181,13 +39175,11 @@ node = onnx.helper.make_node(
 )
 
 x = np.array([-1, 0, 1]).astype(np.float32)
-y = np.log(
-    np.exp(x) + 1
-)  # expected output [0.31326166, 0.69314718, 1.31326163]
+y = np.logaddexp(0, x)  # expected output [0.31326166, 0.69314718, 1.31326163]
 expect(node, inputs=[x], outputs=[y], name="test_softplus_example")
 
 x = np.random.randn(3, 4, 5).astype(np.float32)
-y = np.log(np.exp(x) + 1)
+y = np.logaddexp(0, x)
 expect(node, inputs=[x], outputs=[y], name="test_softplus")
 ```
 

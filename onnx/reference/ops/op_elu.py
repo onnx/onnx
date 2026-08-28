@@ -11,4 +11,4 @@ from onnx.reference.ops._op import OpRunUnaryNum
 class Elu(OpRunUnaryNum):
     def _run(self, x, alpha=None):
         alpha = alpha or self.alpha
-        return (np.where(x > 0, x, alpha * (np.exp(x) - 1)).astype(x.dtype),)
+        return (np.where(x > 0, x, alpha * np.expm1(x)).astype(x.dtype),)

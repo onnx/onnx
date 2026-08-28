@@ -1444,6 +1444,20 @@ class TestReferenceEvaluator:
         expected = _vcelu1(x, alpha=0.5)
         assert_allclose(y, expected)
 
+    @pytest.mark.parametrize("op_type", ["Celu", "Elu", "Selu"])
+    def test_eval_exponential_activation_precision(self, op_type):
+        x = np.array([-1e-7], dtype=np.float32)
+        kwargs = {"alpha": 1.0}
+        if op_type == "Selu":
+            kwargs["gamma"] = 1.0
+        y = load_op("", op_type).eval(x, **kwargs)
+        assert_allclose(y, np.expm1(x), rtol=0, atol=0)
+
+    def test_eval_softplus_large_input(self):
+        x = np.array([100], dtype=np.float32)
+        y = load_op("", "Softplus").eval(x)
+        assert_allclose(y, x)
+
     def test_eval_cast(self):
         x = np.array([[0, 1], [-1, 2]], dtype=np.float32)
         y = Cast_19.eval(x, to=TensorProto.FLOAT8E4M3FN)
