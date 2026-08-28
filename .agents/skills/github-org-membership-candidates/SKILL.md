@@ -62,8 +62,16 @@ commits + 2 * issues + 3 * pull_requests
 The score is a sorting aid, not a judgment of contribution quality or eligibility. Candidate
 bands:
 
-- `priority-candidate`: score at or above `--min-score` (default 8)
-- `candidate`: any observable activity below that score
+- `priority-candidate`: score at or above `--min-score` (default 8) **and** an activity span of
+  at least `--min-active-months` (default 6, measured as a 30-day-month day count) between the
+  candidate's first and last observed contribution in the reporting period
+- `candidate`: any observable activity that does not clear both bars
+
+The span requirement exists because a raw contribution count, or even "touches two different
+calendar quarters," rewards a short burst (e.g. a person active only in late March and early
+April crosses a quarter boundary after about a day). Requiring the first and last observed
+contribution to be several months apart is a more reliable signal that someone has been
+contributing steadily rather than in a single sprint.
 
 The default `--months 12` mirrors the "active in the last 12 months" bar used for the Contributor
 rung of the ladder described in the org's (work-in-progress) membership process — see

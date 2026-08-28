@@ -98,8 +98,8 @@ def empty_candidate(login: str) -> dict[str, Any]:
         "issues": 0,
         "pull_requests": 0,
         "commits": 0,
+        "first_activity_at": None,
         "last_activity_at": None,
-        "search_capped": False,
     }
 
 
@@ -111,6 +111,11 @@ def note_activity(
 ) -> None:
     candidate = candidates.setdefault(login, empty_candidate(login))
     candidate[field] += 1
+    if (
+        candidate["first_activity_at"] is None
+        or occurred_at < candidate["first_activity_at"]
+    ):
+        candidate["first_activity_at"] = occurred_at
     if (
         candidate["last_activity_at"] is None
         or occurred_at > candidate["last_activity_at"]
@@ -200,16 +205,31 @@ def candidate_score(candidate: dict[str, Any]) -> int:
     )
 
 
-def candidate_band(score: int, min_score: int) -> str:
-    return "priority-candidate" if score >= min_score else "candidate"
+def activity_span_days(candidate: dict[str, Any]) -> int:
+    first = candidate["first_activity_at"]
+    last = candidate["last_activity_at"]
+    if first is None or last is None:
+        return 0
+    first_date = datetime.fromisoformat(first.replace("Z", "+00:00"))
+    last_date = datetime.fromisoformat(last.replace("Z", "+00:00"))
+    return (last_date - first_date).days
+
+
+def candidate_band(
+    score: int, span_days: int, min_score: int, min_span_days: int
+) -> str:
+    if score >= min_score and span_days >= min_span_days:
+        return "priority-candidate"
+    return "candidate"
 
 
 def summarize(
-    candidates: dict[str, dict[str, Any]], min_score: int
+    candidates: dict[str, dict[str, Any]], min_score: int, min_span_days: int
 ) -> list[dict[str, Any]]:
     rows = []
     for candidate in candidates.values():
         score = candidate_score(candidate)
+        span_days = activity_span_days(candidate)
         rows.append(
             {
                 "login": candidate["login"],
@@ -217,8 +237,10 @@ def summarize(
                 "pull_requests": candidate["pull_requests"],
                 "commits": candidate["commits"],
                 "score": score,
+                "first_activity_at": candidate["first_activity_at"],
                 "last_activity_at": candidate["last_activity_at"],
-                "band": candidate_band(score, min_score),
+                "active_span_days": span_days,
+                "band": candidate_band(score, span_days, min_score, min_span_days),
             }
         )
     rows.sort(
@@ -244,6 +266,7 @@ def write_report(
     start: date,
     end: date,
     min_score: int,
+    min_span_days: int,
     repository_count: int,
     member_count: int,
     rows: list[dict[str, Any]],
@@ -257,7 +280,9 @@ def write_report(
         "pull_requests",
         "commits",
         "score",
+        "first_activity_at",
         "last_activity_at",
+        "active_span_days",
         "band",
     ]
     write_csv(output_dir / "candidate-summary.csv", rows, summary_fields)
@@ -271,6 +296,7 @@ def write_report(
             "member_count": member_count,
             "repository_count": repository_count,
             "min_score": min_score,
+            "min_active_span_days": min_span_days,
             "score": "commits + 2*issues + 3*pull_requests",
             "search_capped": search_capped,
         },
@@ -305,40 +331,46 @@ def write_report(
         [
             "## Priority candidates",
             "",
-            "| Account | Score | Issues | Pull requests | Commits | Last observable activity |",
-            "|---|---:|---:|---:|---:|---|",
+            "| Account | Score | Issues | Pull requests | Commits | Active span (days) | Last observable activity |",
+            "|---|---:|---:|---:|---:|---:|---|",
         ]
     )
     lines.extend(
         f"| {row['login']} | {row['score']} | {row['issues']} | {row['pull_requests']} | "
-        f"{row['commits']} | {row['last_activity_at'] or 'none'} |"
+        f"{row['commits']} | {row['active_span_days']} | {row['last_activity_at'] or 'none'} |"
         for row in priority
     )
     if not priority:
-        lines.append("| _No accounts above the threshold_ | | | | | |")
+        lines.append("| _No accounts above the threshold_ | | | | | | |")
     lines.extend(
         [
             "",
             "## All candidates",
             "",
-            "| Account | Score | Issues | Pull requests | Commits | Last observable activity | Band |",
-            "|---|---:|---:|---:|---:|---|---|",
+            "| Account | Score | Issues | Pull requests | Commits | Active span (days) | Last observable activity | Band |",
+            "|---|---:|---:|---:|---:|---:|---|---|",
         ]
     )
     lines.extend(
         f"| {row['login']} | {row['score']} | {row['issues']} | {row['pull_requests']} | "
-        f"{row['commits']} | {row['last_activity_at'] or 'none'} | {row['band']} |"
+        f"{row['commits']} | {row['active_span_days']} | {row['last_activity_at'] or 'none'} | "
+        f"{row['band']} |"
         for row in rows
     )
     if not rows:
-        lines.append("| _No non-member activity observed_ | | | | | | |")
+        lines.append("| _No non-member activity observed_ | | | | | | | |")
     lines.extend(
         [
             "",
             "## Methodology and limitations",
             "",
-            f"- `priority-candidate`: score at or above {min_score}; `candidate`: any observable",
-            "  activity below that threshold.",
+            f"- `priority-candidate`: score at or above {min_score} **and** activity spanning at",
+            f"  least {min_span_days} days between the first and last observed contribution;",
+            "  `candidate`: any observable activity that does not clear both bars.",
+            "- The active span is deliberately a first-to-last-activity duration, not a count of",
+            "  distinct quarters or months: a contributor active only in late March and early",
+            "  April touches two quarters but has been active for about a day, so a duration",
+            "  threshold is the more reliable signal for sustained engagement.",
             "- The score is `commits + 2*issues + 3*pull requests`.",
             "- Pull request reviews are not counted (no organization-wide search for review",
             "  activity without already knowing the account).",
@@ -378,6 +410,15 @@ def parse_args() -> argparse.Namespace:
         help="Score threshold for the priority-candidate band (default: 8)",
     )
     parser.add_argument(
+        "--min-active-months",
+        type=int,
+        default=6,
+        help=(
+            "Minimum span, in approximate 30-day months, between a candidate's first and "
+            "last observed contribution for the priority-candidate band (default: 6)"
+        ),
+    )
+    parser.add_argument(
         "--output-dir",
         type=Path,
         required=True,
@@ -386,6 +427,12 @@ def parse_args() -> argparse.Namespace:
     arguments = parser.parse_args()
     if arguments.months < 1:
         parser.error("--months must be positive")
+    if arguments.min_active_months < 0:
+        parser.error("--min-active-months must not be negative")
+    if arguments.min_active_months > arguments.months:
+        parser.error(
+            "--min-active-months cannot exceed --months: no candidate could qualify"
+        )
     return arguments
 
 
@@ -423,18 +470,22 @@ def main() -> int:
     )
     collect_commit_activity(repositories, start, end, member_logins, candidates)
 
-    rows = summarize(candidates, arguments.min_score)
+    min_span_days = arguments.min_active_months * 30
+    rows = summarize(candidates, arguments.min_score, min_span_days)
     write_report(
         arguments.output_dir,
         arguments.org,
         start,
         end,
         arguments.min_score,
+        min_span_days,
         len(repositories),
         len(member_logins),
         rows,
         search_capped,
     )
+    message = f"Wrote membership candidate report for {len(rows)} accounts to {arguments.output_dir}"
+    print(message)  # noqa: T201
     return 0
 
 
@@ -447,4 +498,5 @@ if __name__ == "__main__":
         while current is not None:
             messages.append(str(current))
             current = current.__cause__
+        print(f"error: {'; caused by: '.join(messages)}", file=sys.stderr)  # noqa: T201
         sys.exit(1)
