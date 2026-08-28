@@ -49,7 +49,7 @@ from onnx.reference import ReferenceEvaluator
 from onnx.reference.op_run import OpRun, OpRunExpand
 from onnx.reference.ops import load_op
 from onnx.reference.ops._op_common_indices import _get_indices, _is_out
-from onnx.reference.ops._op_list import Cast_19, Celu
+from onnx.reference.ops._op_list import Cast_19, Celu, NonZero
 from onnx.reference.ops.aionnx_preview_training._op_list import Adam
 from onnx.reference.ops.op_attention import _apply_causal, _softmax
 from onnx.reference.ops.op_celu import _vcelu1
@@ -60,6 +60,7 @@ from onnx.reference.ops.op_col2im import (
 from onnx.reference.ops.op_conv import Conv, _conv_implementation
 from onnx.reference.ops_optimized import Conv as ConvOptimized
 from onnx.reference.ops_optimized.op_conv_optimized import _conv_implementation_im2col
+from onnx.reference.shape_annotation_checker import ShapeAnnotationError
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
@@ -693,6 +694,16 @@ class TestReferenceEvaluator:
         sess = ReferenceEvaluator(node1)
         got = sess.run(None, {"X": x, "Y": y})[0]
         assert_allclose(got, expected)
+
+    @pytest.mark.parametrize("axis", [-2, 1])
+    def test_concat_rejects_axis_out_of_range(self, axis: int):
+        node = make_node("Concat", ["X"], ["Y"], axis=axis)
+        sess = ReferenceEvaluator(node)
+
+        with pytest.raises(
+            ValueError, match=rf"axis {axis} is out of range for input rank 1"
+        ):
+            sess.run(None, {"X": np.ones((1,), dtype=np.float32)})
 
     def test_greater_or_equal(self):
         X = make_tensor_value_info("X", TensorProto.FLOAT, [None, None])
@@ -1439,6 +1450,16 @@ class TestReferenceEvaluator:
         dy = Cast_19.eval(y, to=TensorProto.FLOAT)
         expected = x
         assert_allclose(dy, expected)
+
+    def test_eval_nonzero_scalar_true(self):
+        y = NonZero.eval(np.array(True))
+        assert y.shape == (0, 1)
+        assert y.dtype == np.int64
+
+    def test_eval_nonzero_scalar_false(self):
+        y = NonZero.eval(np.array(False))
+        assert y.shape == (0, 0)
+        assert y.dtype == np.int64
 
     def test_eval_celu_load_op(self):
         celu = load_op("", "Celu")
@@ -4329,6 +4350,57 @@ class TestReferenceEvaluator:
         assert got.shape == (11,) * dim
         assert got.dtype == np.float32
 
+    def test_gather_elements_empty_indices(self):
+        data_info = make_tensor_value_info("X", TensorProto.FLOAT, None)
+        indices_info = make_tensor_value_info("I", TensorProto.INT64, None)
+        output_info = make_tensor_value_info("Y", TensorProto.FLOAT, None)
+        node = make_node("GatherElements", ["X", "I"], ["Y"], axis=1)
+        model = make_model(
+            make_graph([node], "g", [data_info, indices_info], [output_info])
+        )
+        ref = ReferenceEvaluator(model)
+        data = np.arange(12, dtype=np.float32).reshape((2, 2, 3))
+        indices = np.empty((2, 0, 3), dtype=np.int64)
+
+        got = ref.run(None, {"X": data, "I": indices})[0]
+
+        assert got.shape == indices.shape
+        assert got.dtype == data.dtype
+
+    def test_gather_empty_indices(self):
+        data_info = make_tensor_value_info("X", TensorProto.FLOAT, None)
+        indices_info = make_tensor_value_info("I", TensorProto.INT64, None)
+        output_info = make_tensor_value_info("Y", TensorProto.FLOAT, None)
+        node = make_node("Gather", ["X", "I"], ["Y"], axis=1)
+        model = make_model(
+            make_graph([node], "g", [data_info, indices_info], [output_info])
+        )
+        ref = ReferenceEvaluator(model)
+        data = np.arange(24, dtype=np.float32).reshape((2, 3, 4))
+        indices = np.empty((2, 0), dtype=np.int64)
+
+        got = ref.run(None, {"X": data, "I": indices})[0]
+
+        assert got.shape == (2, 2, 0, 4)
+        assert got.dtype == data.dtype
+
+    def test_gather_non_contiguous_indices(self):
+        data_info = make_tensor_value_info("X", TensorProto.FLOAT, None)
+        indices_info = make_tensor_value_info("I", TensorProto.INT64, None)
+        output_info = make_tensor_value_info("Y", TensorProto.FLOAT, None)
+        node = make_node("Gather", ["X", "I"], ["Y"], axis=1)
+        model = make_model(
+            make_graph([node], "g", [data_info, indices_info], [output_info])
+        )
+        ref = ReferenceEvaluator(model)
+        data = np.arange(24, dtype=np.float32).reshape((2, 3, 4))
+        indices = np.arange(4, dtype=np.int64)[::2]
+        assert not indices.flags["C_CONTIGUOUS"]
+
+        got = ref.run(None, {"X": data, "I": indices})[0]
+
+        assert_allclose(got, np.take(data, indices, axis=1))
+
     def test_constant_of_shape(self):
         X = make_tensor_value_info("X", TensorProto.FLOAT, None)
         Y = make_tensor_value_info("Y", TensorProto.FLOAT, None)
@@ -6269,6 +6341,37 @@ class TestReferenceEvaluator:
         got = ref.run(None, {"data": data, "indices": indices, "updates": updates})
         assert_allclose(got[0], y)
 
+    def test_scatter_elements_higher_rank(self):
+        model = make_model(
+            make_graph(
+                [
+                    make_node(
+                        "ScatterElements",
+                        ["data", "indices", "updates"],
+                        ["Z"],
+                        axis=2,
+                    )
+                ],
+                "name",
+                [
+                    make_tensor_value_info("data", TensorProto.FLOAT, None),
+                    make_tensor_value_info("indices", TensorProto.INT64, None),
+                    make_tensor_value_info("updates", TensorProto.FLOAT, None),
+                ],
+                [make_tensor_value_info("Z", TensorProto.FLOAT, None)],
+            ),
+            opset_imports=[make_opsetid("", 18)],
+        )
+        shape = (1, 1, 2, 1, 1)
+        data = np.zeros(shape, dtype=np.float32)
+        indices = np.array([1, 0], dtype=np.int64).reshape(shape)
+        updates = np.array([3, 4], dtype=np.float32).reshape(shape)
+        expected = np.array([4, 3], dtype=np.float32).reshape(shape)
+
+        ref = ReferenceEvaluator(model)
+        got = ref.run(None, {"data": data, "indices": indices, "updates": updates})
+        assert_allclose(got[0], expected)
+
     def test_sequence_axis(self):
         model = self._load_model(
             """
@@ -6619,3 +6722,364 @@ class TestReferenceEvaluator:
         b = np.ones((2, 3), dtype=np.float16)
         with pytest.raises(ValueError, match="identical dtypes"):
             ref.run(None, {"A": a, "B": b})
+
+
+class TestReferenceEvaluatorShapeAnnotationChecking:
+    """Tests for the opt-in runtime shape-annotation validation feature
+    (``check_shape_annotations``), which checks executed values against
+    the shape annotations declared in the model (see
+    docs/ShapeAnnotationSemantics.md).
+    """
+
+    @staticmethod
+    def _shared_symbol_model() -> ModelProto:
+        # Add(X, Y) -> Z, all three sharing the symbolic dimension "N".
+        x = make_tensor_value_info("X", TensorProto.FLOAT, ["N"])
+        y = make_tensor_value_info("Y", TensorProto.FLOAT, ["N"])
+        z = make_tensor_value_info("Z", TensorProto.FLOAT, ["N"])
+        node = make_node("Add", ["X", "Y"], ["Z"])
+        graph = make_graph([node], "g", [x, y], [z])
+        return make_model(graph, opset_imports=[make_opsetid("", 18)])
+
+    def test_consistent_shapes_pass(self) -> None:
+        ref = ReferenceEvaluator(
+            self._shared_symbol_model(), check_shape_annotations=True
+        )
+        x = np.zeros((3,), dtype=np.float32)
+        y = np.zeros((3,), dtype=np.float32)
+        (got,) = ref.run(None, {"X": x, "Y": y})
+        assert got.shape == (3,)
+
+    def test_inconsistent_symbolic_dim_raises(self) -> None:
+        ref = ReferenceEvaluator(
+            self._shared_symbol_model(), check_shape_annotations=True
+        )
+        x = np.zeros((3,), dtype=np.float32)
+        y = np.zeros((4,), dtype=np.float32)
+        with pytest.raises(ShapeAnnotationError, match="symbolic dimension 'N'"):
+            ref.run(None, {"X": x, "Y": y})
+
+    def test_check_disabled_by_default(self) -> None:
+        # Without opting in, mismatched symbolic dims are not validated.
+        # Use two independent Identity nodes (rather than Add) so the
+        # kernels themselves never compare X and Y: only the annotation
+        # checker would notice that they disagree on "N".
+        x = make_tensor_value_info("X", TensorProto.FLOAT, ["N"])
+        y = make_tensor_value_info("Y", TensorProto.FLOAT, ["N"])
+        a = make_tensor_value_info("A", TensorProto.FLOAT, ["N"])
+        b = make_tensor_value_info("B", TensorProto.FLOAT, ["N"])
+        nodes = [
+            make_node("Identity", ["X"], ["A"]),
+            make_node("Identity", ["Y"], ["B"]),
+        ]
+        graph = make_graph(nodes, "g", [x, y], [a, b])
+        model = make_model(graph, opset_imports=[make_opsetid("", 18)])
+
+        ref = ReferenceEvaluator(model)
+        x_val = np.zeros((3,), dtype=np.float32)
+        y_val = np.zeros((4,), dtype=np.float32)
+        got_a, got_b = ref.run(None, {"X": x_val, "Y": y_val})
+        assert got_a.shape == (3,)
+        assert got_b.shape == (4,)
+
+        # Confirm that enabling the check on the very same model/inputs
+        # does raise, so the test above is actually exercising the
+        # disabled-by-default behavior and not merely a model that always
+        # succeeds.
+        with pytest.raises(ShapeAnnotationError, match="symbolic dimension 'N'"):
+            ref.run(None, {"X": x_val, "Y": y_val}, check_shape_annotations=True)
+
+    def test_per_call_override(self) -> None:
+        # check_shape_annotations can be toggled per run() call, overriding
+        # the constructor default.
+        ref = ReferenceEvaluator(
+            self._shared_symbol_model(), check_shape_annotations=False
+        )
+        x = np.zeros((3,), dtype=np.float32)
+        y = np.zeros((4,), dtype=np.float32)
+        with pytest.raises(ShapeAnnotationError):
+            ref.run(None, {"X": x, "Y": y}, check_shape_annotations=True)
+
+    def test_dim_value_mismatch_raises(self) -> None:
+        x = make_tensor_value_info("X", TensorProto.FLOAT, [4])
+        z = make_tensor_value_info("Z", TensorProto.FLOAT, [4])
+        node = make_node("Identity", ["X"], ["Z"])
+        graph = make_graph([node], "g", [x], [z])
+        model = make_model(graph, opset_imports=[make_opsetid("", 18)])
+        ref = ReferenceEvaluator(model, check_shape_annotations=True)
+        with pytest.raises(ShapeAnnotationError, match="declared dimension value"):
+            ref.run(None, {"X": np.zeros((5,), dtype=np.float32)})
+
+    def test_rank_mismatch_raises(self) -> None:
+        x = make_tensor_value_info("X", TensorProto.FLOAT, ["N", "M"])
+        z = make_tensor_value_info("Z", TensorProto.FLOAT, ["N", "M"])
+        node = make_node("Identity", ["X"], ["Z"])
+        graph = make_graph([node], "g", [x], [z])
+        model = make_model(graph, opset_imports=[make_opsetid("", 18)])
+        ref = ReferenceEvaluator(model, check_shape_annotations=True)
+        with pytest.raises(ShapeAnnotationError, match="rank"):
+            ref.run(None, {"X": np.zeros((3,), dtype=np.float32)})
+
+    def test_no_shape_annotations_is_a_noop(self) -> None:
+        x = make_tensor_value_info("X", TensorProto.FLOAT, None)
+        z = make_tensor_value_info("Z", TensorProto.FLOAT, None)
+        node = make_node("Identity", ["X"], ["Z"])
+        graph = make_graph([node], "g", [x], [z])
+        model = make_model(graph, opset_imports=[make_opsetid("", 18)])
+        ref = ReferenceEvaluator(model, check_shape_annotations=True)
+        (got,) = ref.run(None, {"X": np.zeros((7, 9), dtype=np.float32)})
+        assert got.shape == (7, 9)
+
+    def test_graph_output_mismatch_raises(self) -> None:
+        # "W" is only annotated as a graph output (not also listed in
+        # value_info), so this exercises the graph-output-specific check
+        # rather than the per-node-output check.
+        x = make_tensor_value_info("X", TensorProto.FLOAT, [3])
+        w = make_tensor_value_info("W", TensorProto.FLOAT, [4])
+        node = make_node("Identity", ["X"], ["W"])
+        graph = make_graph([node], "g", [x], [w])
+        model = make_model(graph, opset_imports=[make_opsetid("", 18)])
+        ref = ReferenceEvaluator(model, check_shape_annotations=True)
+        with pytest.raises(ShapeAnnotationError, match="declared dimension value"):
+            ref.run(None, {"X": np.zeros((3,), dtype=np.float32)})
+
+    def test_initializer_default_input_mismatch_raises(self) -> None:
+        # "X" is declared with shape [4] but is not fed; it falls back to
+        # its same-named initializer, whose actual shape is [5]. This
+        # should be caught even though "X" never appears in feed_inputs.
+        x = make_tensor_value_info("X", TensorProto.FLOAT, [4])
+        z = make_tensor_value_info("Z", TensorProto.FLOAT, [4])
+        node = make_node("Identity", ["X"], ["Z"])
+        init = make_tensor(
+            "X", TensorProto.FLOAT, [5], np.zeros((5,), dtype=np.float32)
+        )
+        graph = make_graph([node], "g", [x], [z], initializer=[init])
+        model = make_model(graph, opset_imports=[make_opsetid("", 18)])
+        ref = ReferenceEvaluator(model, check_shape_annotations=True)
+        with pytest.raises(ShapeAnnotationError, match="declared dimension value"):
+            ref.run(None, {})
+
+    @staticmethod
+    def _if_shared_symbol_model() -> ModelProto:
+        # If(cond) selects between two branches, each of which produces
+        # "Z" annotated with the same symbolic dimension "N" as the
+        # outer-scope input "X" (captured lexically, not passed as a
+        # subgraph input). This exercises cross-scope symbol sharing
+        # between the parent graph and an If subgraph.
+        cond = make_tensor_value_info("cond", TensorProto.BOOL, [])
+        x = make_tensor_value_info("X", TensorProto.FLOAT, ["N"])
+        z = make_tensor_value_info("Z", TensorProto.FLOAT, ["N"])
+
+        then_out = make_tensor_value_info("Z", TensorProto.FLOAT, ["N"])
+        then_node = make_node("Identity", ["X"], ["Z"])
+        then_graph = make_graph([then_node], "then", [], [then_out])
+
+        else_out = make_tensor_value_info("Z", TensorProto.FLOAT, ["N"])
+        else_node = make_node("Identity", ["X"], ["Z"])
+        else_graph = make_graph([else_node], "else", [], [else_out])
+
+        if_node = make_node(
+            "If",
+            ["cond"],
+            ["Z"],
+            then_branch=then_graph,
+            else_branch=else_graph,
+        )
+        graph = make_graph([if_node], "g", [cond, x], [z])
+        return make_model(graph, opset_imports=[make_opsetid("", 18)])
+
+    def test_if_subgraph_shares_outer_symbol(self) -> None:
+        ref = ReferenceEvaluator(
+            self._if_shared_symbol_model(), check_shape_annotations=True
+        )
+        x = np.zeros((3,), dtype=np.float32)
+        (got,) = ref.run(None, {"cond": np.array(True), "X": x})
+        assert got.shape == (3,)
+
+    @staticmethod
+    def _if_conflicting_symbol_model() -> ModelProto:
+        # Same as _if_shared_symbol_model, but the branch produces "Z"
+        # with a fixed shape that conflicts with the outer "N" bound by
+        # "X"; this should only be caught if the If subgraph's checks
+        # share the outer scope's SymbolBindings.
+        cond = make_tensor_value_info("cond", TensorProto.BOOL, [])
+        x = make_tensor_value_info("X", TensorProto.FLOAT, ["N"])
+        z = make_tensor_value_info("Z", TensorProto.FLOAT, ["N"])
+
+        then_out = make_tensor_value_info("Z", TensorProto.FLOAT, ["N"])
+        then_node = make_node("Identity", ["X"], ["Z"])
+        then_graph = make_graph([then_node], "then", [], [then_out])
+
+        # Constant with a fixed shape unrelated to "X"'s actual shape.
+        const_value = make_tensor(
+            "const", TensorProto.FLOAT, [7], np.zeros((7,), dtype=np.float32)
+        )
+        else_out = make_tensor_value_info("Z", TensorProto.FLOAT, ["N"])
+        else_node = make_node("Constant", [], ["Z"], value=const_value)
+        else_graph = make_graph([else_node], "else", [], [else_out])
+
+        if_node = make_node(
+            "If",
+            ["cond"],
+            ["Z"],
+            then_branch=then_graph,
+            else_branch=else_graph,
+        )
+        graph = make_graph([if_node], "g", [cond, x], [z])
+        return make_model(graph, opset_imports=[make_opsetid("", 18)])
+
+    def test_if_subgraph_conflicting_symbol_raises(self) -> None:
+        ref = ReferenceEvaluator(
+            self._if_conflicting_symbol_model(), check_shape_annotations=True
+        )
+        x = np.zeros((3,), dtype=np.float32)
+        with pytest.raises(ShapeAnnotationError, match="symbolic dimension 'N'"):
+            ref.run(None, {"cond": np.array(False), "X": x})
+
+    def test_elem_type_mismatch_raises(self) -> None:
+        # "Z" is declared FLOAT, but Identity(X) with X as FLOAT16 produces
+        # a FLOAT16 value, exercising the element-type check (as opposed to
+        # the shape check).
+        x = make_tensor_value_info("X", TensorProto.FLOAT16, [3])
+        z = make_tensor_value_info("Z", TensorProto.FLOAT, [3])
+        node = make_node("Identity", ["X"], ["Z"])
+        graph = make_graph([node], "g", [x], [z])
+        model = make_model(graph, opset_imports=[make_opsetid("", 18)])
+        ref = ReferenceEvaluator(model, check_shape_annotations=True)
+        with pytest.raises(ShapeAnnotationError, match="declared element type"):
+            ref.run(None, {"X": np.zeros((3,), dtype=np.float16)})
+
+    def test_string_unicode_dtype_is_accepted(self) -> None:
+        x = make_tensor_value_info("X", TensorProto.STRING, [2])
+        z = make_tensor_value_info("Z", TensorProto.STRING, [2])
+        node = make_node("Identity", ["X"], ["Z"])
+        graph = make_graph([node], "g", [x], [z])
+        model = make_model(graph, opset_imports=[make_opsetid("", 18)])
+        ref = ReferenceEvaluator(model, check_shape_annotations=True)
+        (got,) = ref.run(None, {"X": np.array(["a", "b"], dtype=np.str_)})
+        assert got.dtype.kind == "U"
+
+    def test_annotated_initializer_is_checked_at_entry(self) -> None:
+        x = make_tensor_value_info("X", TensorProto.FLOAT, [3])
+        z = make_tensor_value_info("Z", TensorProto.FLOAT, [3])
+        init = make_tensor(
+            "X", TensorProto.FLOAT, [5], np.zeros((5,), dtype=np.float32)
+        )
+        node = make_node("Identity", ["X"], ["Z"])
+        graph = make_graph([node], "g", [], [z], initializer=[init], value_info=[x])
+        model = make_model(graph, opset_imports=[make_opsetid("", 18)])
+        ref = ReferenceEvaluator(model, check_shape_annotations=True)
+        with pytest.raises(ShapeAnnotationError, match="declared dimension value"):
+            ref.run(None, {})
+
+    def test_zero_input_graph_checks_intermediate_annotation(self) -> None:
+        y = make_tensor_value_info("Y", TensorProto.FLOAT, [3])
+        z = make_tensor_value_info("Z", TensorProto.FLOAT, [3])
+        init = make_tensor(
+            "X", TensorProto.FLOAT, [5], np.zeros((5,), dtype=np.float32)
+        )
+        nodes = [
+            make_node("Identity", ["X"], ["Y"]),
+            make_node("Identity", ["Y"], ["Z"]),
+        ]
+        graph = make_graph(nodes, "g", [], [z], initializer=[init], value_info=[y])
+        model = make_model(graph, opset_imports=[make_opsetid("", 18)])
+        ref = ReferenceEvaluator(model, check_shape_annotations=True)
+        with pytest.raises(ShapeAnnotationError, match="declared dimension value"):
+            ref.run(None, {})
+
+    def test_zero_input_graph_checks_output_annotation(self) -> None:
+        z = make_tensor_value_info("Z", TensorProto.FLOAT, [3])
+        init = make_tensor(
+            "X", TensorProto.FLOAT, [5], np.zeros((5,), dtype=np.float32)
+        )
+        node = make_node("Identity", ["X"], ["Z"])
+        graph = make_graph([node], "g", [], [z], initializer=[init])
+        model = make_model(graph, opset_imports=[make_opsetid("", 18)])
+        ref = ReferenceEvaluator(model, check_shape_annotations=True)
+        with pytest.raises(ShapeAnnotationError, match="declared dimension value"):
+            ref.run(None, {})
+
+    def test_intermediate_value_info_mismatch_raises(self) -> None:
+        # "Y" is an intermediate value (not a graph input or output)
+        # annotated via value_info; Cast to INT32 makes it violate its
+        # declared FLOAT type, exercising the intermediate-value check on a
+        # plain ModelProto (not a subgraph or function).
+        x = make_tensor_value_info("X", TensorProto.FLOAT, [3])
+        z = make_tensor_value_info("Z", TensorProto.INT32, [3])
+        y_info = make_tensor_value_info("Y", TensorProto.FLOAT, [3])
+        nodes = [
+            make_node("Cast", ["X"], ["Y"], to=TensorProto.INT32),
+            make_node("Identity", ["Y"], ["Z"]),
+        ]
+        graph = make_graph([nodes[0], nodes[1]], "g", [x], [z], value_info=[y_info])
+        model = make_model(graph, opset_imports=[make_opsetid("", 18)])
+        ref = ReferenceEvaluator(model, check_shape_annotations=True)
+        with pytest.raises(ShapeAnnotationError, match="declared element type"):
+            ref.run(None, {"X": np.zeros((3,), dtype=np.float32)})
+
+    @staticmethod
+    def _function_shared_symbol_model() -> ModelProto:
+        # A local function Identity2(X) = Identity(X), called on "X"
+        # annotated with symbolic dimension "N" at the call site, while the
+        # function body itself declares its input/output as "N" too (via
+        # value_info on the FunctionProto). This exercises that bindings
+        # are shared between the caller and the function body.
+        f_in = make_tensor_value_info("fX", TensorProto.FLOAT, ["N"])
+        f_out = make_tensor_value_info("fY", TensorProto.FLOAT, ["N"])
+        function = make_function(
+            "test_domain",
+            "Identity2",
+            inputs=["fX"],
+            outputs=["fY"],
+            nodes=[make_node("Identity", ["fX"], ["fY"])],
+            opset_imports=[make_opsetid("", 18)],
+            value_info=[f_in, f_out],
+        )
+        x = make_tensor_value_info("X", TensorProto.FLOAT, ["N"])
+        z = make_tensor_value_info("Z", TensorProto.FLOAT, ["N"])
+        node = make_node("Identity2", ["X"], ["Z"], domain="test_domain")
+        graph = make_graph([node], "g", [x], [z])
+        return make_model(
+            graph,
+            opset_imports=[make_opsetid("", 18), make_opsetid("test_domain", 1)],
+            functions=[function],
+        )
+
+    def test_function_body_shares_outer_symbol(self) -> None:
+        ref = ReferenceEvaluator(
+            self._function_shared_symbol_model(), check_shape_annotations=True
+        )
+        x = np.zeros((3,), dtype=np.float32)
+        (got,) = ref.run(None, {"X": x})
+        assert got.shape == (3,)
+
+    def test_function_body_conflicting_symbol_raises(self) -> None:
+        # Same model, but the function body's own value_info claims a
+        # fixed shape for its output that conflicts with the caller's "N"
+        # (bound to 3 by "X"). This should only be caught if the function
+        # body's checks share the caller's SymbolBindings.
+        f_in = make_tensor_value_info("fX", TensorProto.FLOAT, ["N"])
+        f_out = make_tensor_value_info("fY", TensorProto.FLOAT, [7])
+        function = make_function(
+            "test_domain",
+            "Identity2",
+            inputs=["fX"],
+            outputs=["fY"],
+            nodes=[make_node("Identity", ["fX"], ["fY"])],
+            opset_imports=[make_opsetid("", 18)],
+            value_info=[f_in, f_out],
+        )
+        x = make_tensor_value_info("X", TensorProto.FLOAT, ["N"])
+        z = make_tensor_value_info("Z", TensorProto.FLOAT, ["N"])
+        node = make_node("Identity2", ["X"], ["Z"], domain="test_domain")
+        graph = make_graph([node], "g", [x], [z])
+        model = make_model(
+            graph,
+            opset_imports=[make_opsetid("", 18), make_opsetid("test_domain", 1)],
+            functions=[function],
+        )
+        ref = ReferenceEvaluator(model, check_shape_annotations=True)
+        x_val = np.zeros((3,), dtype=np.float32)
+        with pytest.raises(ShapeAnnotationError, match="declared dimension value"):
+            ref.run(None, {"X": x_val})
