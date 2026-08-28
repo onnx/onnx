@@ -28,6 +28,62 @@ query($org: String!, $after: String) {
 SEARCH_PAGE_SIZE = 100
 SEARCH_MAX_PAGES = 10  # GitHub search API caps results at 1,000 per query.
 
+# Best-effort repository -> SIG/WG mapping, sourced from the responsibilities table and
+# per-SIG READMEs in https://github.com/onnx/sigs (no repository is ever assigned to more than
+# one SIG there, but the mapping itself is not published anywhere machine-readable). "onnx/onnx"
+# defaults to Architecture & Infra, its documented defacto owner, but Operators owns the operator
+# schema/spec portion of that same repository — check the changed files for that case.
+REPO_SIG_MAP: dict[str, str] = {
+    "onnx/onnx": "Architecture & Infra (default) / Operators for schema changes",
+    "onnx/wheel-builder": "Architecture & Infra",
+    "onnx/backend-scoreboard": "Architecture & Infra",
+    "onnx/ir-py": "Architecture & Infra",
+    "onnx/landscape": "Architecture & Infra",
+    "onnx/onnx-mlir": "Compilers",
+    "onnx/onnx-xla": "Compilers",
+    "onnx/turnkeyml": "Compilers",
+    "onnx/optimizer": "Optimizations",
+    "onnx/neural-compressor": "Optimizations",
+    "onnx/onnx-caffe2": "Converters",
+    "onnx/onnx-tensorflow": "Converters",
+    "onnx/onnx-coreml": "Converters",
+    "onnx/onnx-mxnet": "Converters",
+    "onnx/onnxmltools": "Converters",
+    "onnx/onnx-r": "Converters",
+    "onnx/tensorflow-onnx": "Converters",
+    "onnx/onnx-cntk": "Converters",
+    "onnx/onnx-tensorrt": "Converters",
+    "onnx/keras-onnx": "Converters",
+    "onnx/sklearn-onnx": "Converters",
+    "onnx/models": "Models and tutorials",
+    "onnx/tutorials": "Models and tutorials",
+    "onnx/onnx.github.io": "Models and tutorials",
+    "onnx/onnx-docker": "Models and tutorials",
+}
+
+# Repositories that are governance/community artifacts rather than SIG-owned code, so a SIG/WG
+# guess would be misleading.
+NON_SIG_REPOS = {
+    "onnx/sigs",
+    "onnx/working-groups",
+    "onnx/steering-committee",
+    "onnx/community-meetups",
+}
+
+
+def guess_sig(repo_full_name: str | None) -> str:
+    if repo_full_name is None:
+        return "unknown"
+    # GitHub Security Advisory temporary private forks (onnx/onnx-ghsa-...) mirror a fix already
+    # landing in the advisory's real repository; attribute them the same way as "onnx/onnx".
+    if repo_full_name.startswith("onnx/onnx-ghsa-"):
+        return REPO_SIG_MAP["onnx/onnx"]
+    if repo_full_name in NON_SIG_REPOS:
+        return "none (governance/community repo)"
+    return REPO_SIG_MAP.get(
+        repo_full_name, f"unknown — check {repo_full_name} manually"
+    )
+
 
 def run_gh(arguments: list[str]) -> Any:
     completed = subprocess.run(  # noqa: S603
@@ -100,6 +156,7 @@ def empty_candidate(login: str) -> dict[str, Any]:
         "commits": 0,
         "first_activity_at": None,
         "last_activity_at": None,
+        "repo_activity": {},
     }
 
 
@@ -108,9 +165,13 @@ def note_activity(
     login: str,
     field: str,
     occurred_at: str,
+    repo_full_name: str,
 ) -> None:
     candidate = candidates.setdefault(login, empty_candidate(login))
     candidate[field] += 1
+    candidate["repo_activity"][repo_full_name] = (
+        candidate["repo_activity"].get(repo_full_name, 0) + 1
+    )
     if (
         candidate["first_activity_at"] is None
         or occurred_at < candidate["first_activity_at"]
@@ -121,6 +182,13 @@ def note_activity(
         or occurred_at > candidate["last_activity_at"]
     ):
         candidate["last_activity_at"] = occurred_at
+
+
+def primary_repo(candidate: dict[str, Any]) -> str | None:
+    repo_activity = candidate["repo_activity"]
+    if not repo_activity:
+        return None
+    return max(repo_activity, key=lambda repo: repo_activity[repo])
 
 
 def search_issues_or_pulls(
@@ -163,7 +231,8 @@ def collect_issue_and_pull_activity(
             login = user.get("login")
             if not login or login in member_logins or user.get("type") == "Bot":
                 continue
-            note_activity(candidates, login, field, item["created_at"])
+            repo_full_name = "/".join(item["repository_url"].rsplit("/", 2)[-2:])
+            note_activity(candidates, login, field, item["created_at"], repo_full_name)
     return candidates, capped
 
 
@@ -195,7 +264,11 @@ def collect_commit_activity(
             if not login or login in member_logins or author.get("type") == "Bot":
                 continue
             note_activity(
-                candidates, login, "commits", commit["commit"]["author"]["date"]
+                candidates,
+                login,
+                "commits",
+                commit["commit"]["author"]["date"],
+                repository["name_with_owner"],
             )
 
 
@@ -230,6 +303,7 @@ def summarize(
     for candidate in candidates.values():
         score = candidate_score(candidate)
         span_days = activity_span_days(candidate)
+        repo = primary_repo(candidate)
         rows.append(
             {
                 "login": candidate["login"],
@@ -240,6 +314,8 @@ def summarize(
                 "first_activity_at": candidate["first_activity_at"],
                 "last_activity_at": candidate["last_activity_at"],
                 "active_span_days": span_days,
+                "primary_repo": repo or "",
+                "likely_sig": guess_sig(repo),
                 "band": candidate_band(score, span_days, min_score, min_span_days),
             }
         )
@@ -283,6 +359,8 @@ def write_report(
         "first_activity_at",
         "last_activity_at",
         "active_span_days",
+        "primary_repo",
+        "likely_sig",
         "band",
     ]
     write_csv(output_dir / "candidate-summary.csv", rows, summary_fields)
@@ -331,34 +409,35 @@ def write_report(
         [
             "## Priority candidates",
             "",
-            "| Account | Score | Issues | Pull requests | Commits | Active span (days) | Last observable activity |",
-            "|---|---:|---:|---:|---:|---:|---|",
-        ]
-    )
-    lines.extend(
-        f"| {row['login']} | {row['score']} | {row['issues']} | {row['pull_requests']} | "
-        f"{row['commits']} | {row['active_span_days']} | {row['last_activity_at'] or 'none'} |"
-        for row in priority
-    )
-    if not priority:
-        lines.append("| _No accounts above the threshold_ | | | | | | |")
-    lines.extend(
-        [
-            "",
-            "## All candidates",
-            "",
-            "| Account | Score | Issues | Pull requests | Commits | Active span (days) | Last observable activity | Band |",
+            "| Account | Score | Issues | Pull requests | Commits | Active span (days) | Last observable activity | Likely SIG/WG |",
             "|---|---:|---:|---:|---:|---:|---|---|",
         ]
     )
     lines.extend(
         f"| {row['login']} | {row['score']} | {row['issues']} | {row['pull_requests']} | "
         f"{row['commits']} | {row['active_span_days']} | {row['last_activity_at'] or 'none'} | "
-        f"{row['band']} |"
+        f"{row['likely_sig']} |"
+        for row in priority
+    )
+    if not priority:
+        lines.append("| _No accounts above the threshold_ | | | | | | | |")
+    lines.extend(
+        [
+            "",
+            "## All candidates",
+            "",
+            "| Account | Score | Issues | Pull requests | Commits | Active span (days) | Last observable activity | Likely SIG/WG | Band |",
+            "|---|---:|---:|---:|---:|---:|---|---|---|",
+        ]
+    )
+    lines.extend(
+        f"| {row['login']} | {row['score']} | {row['issues']} | {row['pull_requests']} | "
+        f"{row['commits']} | {row['active_span_days']} | {row['last_activity_at'] or 'none'} | "
+        f"{row['likely_sig']} | {row['band']} |"
         for row in rows
     )
     if not rows:
-        lines.append("| _No non-member activity observed_ | | | | | | | |")
+        lines.append("| _No non-member activity observed_ | | | | | | | | |")
     lines.extend(
         [
             "",
@@ -380,6 +459,13 @@ def write_report(
             "  not counted.",
             "- Sponsorship, company affiliation, and Code of Conduct standing are not derivable",
             "  from the GitHub API and must be checked manually before any nomination.",
+            "- `Likely SIG/WG` is a best-effort guess from the repository the candidate was most",
+            "  active in, using the responsibilities described in https://github.com/onnx/sigs; no",
+            "  machine-readable repository-to-SIG mapping is published. It is repository-level",
+            "  only: within `onnx/onnx`, Architecture & Infra is the defacto owner, but Operators",
+            "  owns the operator schema/spec portion of the same repository, so a candidate whose",
+            "  activity there concerns operator definitions is likely Operators despite the",
+            "  guess. Confirm with the SIG chairs before assigning a Team.",
             "",
         ]
     )

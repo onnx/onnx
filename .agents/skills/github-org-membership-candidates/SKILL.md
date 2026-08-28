@@ -47,7 +47,7 @@ The generated files are:
 
 | File | Content |
 |---|---|
-| `candidate-summary.csv` | Non-member login, contribution counts, score, last activity, and candidate band |
+| `candidate-summary.csv` | Non-member login, contribution counts, score, activity span, a best-effort primary repository / likely SIG-WG guess, and candidate band |
 | `report.json` | Machine-readable report and metadata |
 | `report.md` | Human-readable candidate queue and methodology |
 
@@ -73,14 +73,18 @@ April crosses a quarter boundary after about a day). Requiring the first and las
 contribution to be several months apart is a more reliable signal that someone has been
 contributing steadily rather than in a single sprint.
 
-The default `--months 12` mirrors the "active in the last 12 months" bar used for the Contributor
-rung of the ladder described in the org's (work-in-progress) membership process — see
-`community/readme.md` on branch/PR
-[onnx/onnx#8222](https://github.com/onnx/onnx/pull/8222). That process currently requires
-sponsorship by two Approvers from different companies and a nomination issue titled
-`Contributor nomination: <handle>`; this script does not check sponsorship or company
-affiliation, since neither is reliably derivable from the GitHub API. Treat its output as a
-shortlist to bring to prospective sponsors, not a nomination itself.
+The default `--months 12` mirrors the "active in the last 12 months" removal bar for Contributors
+in `community/readme.md`'s Community Roles section (long-standing and already ratified, not part
+of any open PR). That same section requires sponsorship by two Approvers from different companies
+to become a governance *Contributor* (voting rights, issue/PR assignment) — but a plain GitHub
+organization seat and the *Contributor* role are not necessarily the same thing today: the 1:1
+mapping between them, and a formal `Contributor nomination: <handle>` issue process, only exist in
+the still-open, explicitly-WIP proposal at
+[onnx/onnx#8222](https://github.com/onnx/onnx/pull/8222). In current practice a SIG chair may add
+someone to the org for practical repository access without the formal Contributor sponsorship
+ceremony. This script does not check sponsorship, company affiliation, or which of these paths
+applies, since none of that is reliably derivable from the GitHub API. Treat its output as a
+shortlist to bring to prospective sponsors or SIG chairs, not a nomination itself.
 
 ## Coverage limitations
 
@@ -95,3 +99,9 @@ shortlist to bring to prospective sponsors, not a nomination itself.
 - Comments, Discussions, draft work, moderation, security work, and activity outside GitHub are
   not counted.
 - Bot accounts (GitHub `type: Bot`) are excluded on a best-effort basis.
+- The `Likely SIG/WG` guess is repository-level only, from a mapping hand-built from
+  [onnx/sigs](https://github.com/onnx/sigs)'s responsibilities table (no machine-readable
+  repository-to-SIG registry exists). For `onnx/onnx` specifically, Architecture & Infra is the
+  defacto owner but Operators owns the operator schema/spec portion of that same repository —
+  the report flags this ambiguity rather than guessing further. Confirm with SIG chairs before
+  assigning a Team.
