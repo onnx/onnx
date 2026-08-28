@@ -93,7 +93,7 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#Mean">Mean</a>|<a href="Changelog.md#Mean-13">13</a>, <a href="Changelog.md#Mean-8">8</a>, <a href="Changelog.md#Mean-6">6</a>, <a href="Changelog.md#Mean-1">1</a>|
 |<a href="#MelWeightMatrix">MelWeightMatrix</a>|<a href="Changelog.md#MelWeightMatrix-17">17</a>|
 |<a href="#Min">Min</a>|<a href="Changelog.md#Min-13">13</a>, <a href="Changelog.md#Min-12">12</a>, <a href="Changelog.md#Min-8">8</a>, <a href="Changelog.md#Min-6">6</a>, <a href="Changelog.md#Min-1">1</a>|
-|<a href="#Mod">Mod</a>|<a href="Changelog.md#Mod-13">13</a>, <a href="Changelog.md#Mod-10">10</a>|
+|<a href="#Mod">Mod</a>|<a href="Changelog.md#Mod-28">28</a>, <a href="Changelog.md#Mod-13">13</a>, <a href="Changelog.md#Mod-10">10</a>|
 |<a href="#Mul">Mul</a>|<a href="Changelog.md#Mul-14">14</a>, <a href="Changelog.md#Mul-13">13</a>, <a href="Changelog.md#Mul-7">7</a>, <a href="Changelog.md#Mul-6">6</a>, <a href="Changelog.md#Mul-1">1</a>|
 |<a href="#Multinomial">Multinomial</a>|<a href="Changelog.md#Multinomial-22">22</a>, <a href="Changelog.md#Multinomial-7">7</a>|
 |<a href="#Neg">Neg</a>|<a href="Changelog.md#Neg-13">13</a>, <a href="Changelog.md#Neg-6">6</a>, <a href="Changelog.md#Neg-1">1</a>|
@@ -23529,15 +23529,16 @@ expect(node, inputs=[input_data], outputs=[expected_output], name="test_mish")
 ### <a name="Mod"></a><a name="mod">**Mod**</a>
 
   Performs an element-wise binary modulo operation.
-  The semantics and supported data types depend on the value of the `fmod` attribute which must be `0` (default), or `1`.
+  The `fmod` attribute determines how the quotient is rounded. Its value must be
+  `0` (default) or `1`.
 
-  If the `fmod` attribute is set to `0`, `T` is constrained to integer data types and the semantics follow that of the Python `%`-operator.
-  The sign of the result is that of the divisor.
+  If `fmod` is `0`, the output is calculated as `A - floor(A / B) * B`.
+  The result has the same sign as `B`.
 
-  If `fmod` is set to `1`, the behavior of this operator follows that of the `fmod` function in C and `T` is constrained to floating point data types.
-  The result of this operator is the remainder of the division operation `x / y` where `x` and `y` are respective elements of `A` and `B`. The result is exactly the value `x - n * y`, where `n` is `x / y` with its fractional part truncated.
-  The returned value has the same sign as `x` (except if `x` is `-0`) and is less or equal to `|y|` in magnitude.
-  The following special cases apply when `fmod` is set to `1`:
+  If `fmod` is `1`, the output is calculated as `A - trunc(A / B) * B`.
+  The result has the same sign as `A`, except that either signed zero may be
+  returned when `A` is `-0` and `B` is positive. For floating-point inputs,
+  the following special cases apply:
   - If `x` is `-0` and `y` is greater than zero, either `+0` or `-0` may be returned.
   - If `x` is `±∞` and `y` is not `NaN`, `NaN` is returned.
   - If `y` is `±0` and `x` is not `NaN`, `NaN` should be returned.
@@ -23548,15 +23549,15 @@ expect(node, inputs=[input_data], outputs=[expected_output], name="test_mish")
 
 #### Version
 
-This version of the operator has been available since version 13 of the default ONNX operator set.
+This version of the operator has been available since version 28 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#Mod-10">10</a>
+Other versions of this operator: <a href="Changelog.md#Mod-10">10</a>, <a href="Changelog.md#Mod-13">13</a>
 
 #### Attributes
 
 <dl>
 <dt><tt>fmod</tt> : int (default is 0)</dt>
-<dd>Whether the operator should behave like fmod (default=0 meaning it will do integer mods); Set this to 1 to force fmod treatment</dd>
+<dd>Whether the operator should use floor (0) or truncation (1) to calculate the quotient.</dd>
 </dl>
 
 #### Inputs
@@ -23579,7 +23580,7 @@ Other versions of this operator: <a href="Changelog.md#Mod-10">10</a>
 
 <dl>
 <dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
-<dd>Constrain input and output types to high-precision numeric tensors.</dd>
+<dd>Constrain input and output types to numeric tensors.</dd>
 </dl>
 
 
@@ -23645,6 +23646,21 @@ expect(node, inputs=[x, y], outputs=[z], name="test_mod_mixed_sign_float16")
 
 
 <details>
+<summary>mod_mixed_sign_float16_fmod</summary>
+
+```python
+node = onnx.helper.make_node("Mod", inputs=["x", "y"], outputs=["z"], fmod=0)
+
+x = np.array([-4.3, 7.2, 5.0, 4.3, -7.2, 8.0]).astype(np.float16)
+y = np.array([2.1, -3.4, 8.0, -2.1, 3.4, 5.0]).astype(np.float16)
+z = np.mod(x, y)
+expect(node, inputs=[x, y], outputs=[z], name="test_mod_float16_mixed_sign_fmod_0")
+```
+
+</details>
+
+
+<details>
 <summary>mod_mixed_sign_float32</summary>
 
 ```python
@@ -23662,6 +23678,21 @@ expect(node, inputs=[x, y], outputs=[z], name="test_mod_mixed_sign_float32")
 
 
 <details>
+<summary>mod_mixed_sign_float32_fmod</summary>
+
+```python
+node = onnx.helper.make_node("Mod", inputs=["x", "y"], outputs=["z"], fmod=0)
+
+x = np.array([-4.3, 7.2, 5.0, 4.3, -7.2, 8.0]).astype(np.float32)
+y = np.array([2.1, -3.4, 8.0, -2.1, 3.4, 5.0]).astype(np.float32)
+z = np.mod(x, y)
+expect(node, inputs=[x, y], outputs=[z], name="test_mod_float32_mixed_sign_fmod_0")
+```
+
+</details>
+
+
+<details>
 <summary>mod_mixed_sign_float64</summary>
 
 ```python
@@ -23671,6 +23702,21 @@ x = np.array([-4.3, 7.2, 5.0, 4.3, -7.2, 8.0]).astype(np.float64)
 y = np.array([2.1, -3.4, 8.0, -2.1, 3.4, 5.0]).astype(np.float64)
 z = np.fmod(x, y)  # expected output [-0.1,  0.4,  5. ,  0.1, -0.4,  3.]
 expect(node, inputs=[x, y], outputs=[z], name="test_mod_mixed_sign_float64")
+```
+
+</details>
+
+
+<details>
+<summary>mod_mixed_sign_float64_fmod</summary>
+
+```python
+node = onnx.helper.make_node("Mod", inputs=["x", "y"], outputs=["z"], fmod=0)
+
+x = np.array([-4.3, 7.2, 5.0, 4.3, -7.2, 8.0]).astype(np.float64)
+y = np.array([2.1, -3.4, 8.0, -2.1, 3.4, 5.0]).astype(np.float64)
+z = np.mod(x, y)  # expected output [ 2.0, -3.0,  5. , -2.0,  3.0,  3.]
+expect(node, inputs=[x, y], outputs=[z], name="test_mod_float64_mixed_sign_fmod_0")
 ```
 
 </details>

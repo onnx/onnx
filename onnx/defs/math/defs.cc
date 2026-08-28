@@ -112,17 +112,18 @@ ONNX_OPERATOR_SET_SCHEMA(
         .FillUsing(MathDocGenerator("subtraction"))
         .PartialDataPropagationFunction([](DataPropagationContext& ctx) { MathOpDataPropagator(ctx, "Sub"); }));
 
-static constexpr const char* Mod_doc = R"DOC(
+static constexpr const char* Mod_ver28_doc = R"DOC(
 Performs an element-wise binary modulo operation.
-The semantics depend on the value of the `fmod` attribute which must be `0` (default), or `1`.
+The `fmod` attribute determines how the quotient is rounded. Its value must be
+`0` (default) or `1`.
 
-If the `fmod` attribute is set to `0`, the semantics follow that of the Python `%`-operator.
-The sign of the result is that of the divisor.
+If `fmod` is `0`, the output is calculated as `A - floor(A / B) * B`.
+The result has the same sign as `B`.
 
-If `fmod` is set to `1`, the behavior of this operator follows that of the `fmod` function in C and `T` is constrained to floating point data types.
-The result of this operator is the remainder of the division operation `x / y` where `x` and `y` are respective elements of `A` and `B`. The result is exactly the value `x - n * y`, where `n` is `x / y` with its fractional part truncated.
-The returned value has the same sign as `x` (except if `x` is `-0`) and is less or equal to `|y|` in magnitude.
-The following special cases apply when `fmod` is set to `1`:
+If `fmod` is `1`, the output is calculated as `A - trunc(A / B) * B`.
+The result has the same sign as `A`, except that either signed zero may be
+returned when `A` is `-0` and `B` is positive. For floating-point inputs,
+the following special cases apply:
 - If `x` is `-0` and `y` is greater than zero, either `+0` or `-0` may be returned.
 - If `x` is `±∞` and `y` is not `NaN`, `NaN` is returned.
 - If `y` is `±0` and `x` is not `NaN`, `NaN` should be returned.
@@ -134,21 +135,18 @@ This operator supports **multidirectional (i.e., NumPy-style) broadcasting**; fo
 
 ONNX_OPERATOR_SET_SCHEMA(
     Mod,
-    13,
+    28,
     OpSchema()
-        .SetDoc(Mod_doc)
+        .SetDoc(Mod_ver28_doc)
         .Attr(
             "fmod",
-            "Whether the operator should behave like fmod (default=0 meaning it will do integer mods); Set this to 1 to force fmod treatment",
+            "Whether the operator should use floor (0) or truncation (1) to calculate the quotient.",
             AttributeProto::INT,
             static_cast<int64_t>(0))
         .Input(0, "A", "Dividend tensor", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
         .Input(1, "B", "Divisor tensor", "T", OpSchema::Single, true, 1, OpSchema::NonDifferentiable)
         .Output(0, "C", "Remainder tensor", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
-        .TypeConstraint(
-            "T",
-            OpSchema::all_numeric_types_ir4(),
-            "Constrain input and output types to high-precision numeric tensors.")
+        .TypeConstraint("T", OpSchema::all_numeric_types_ir4(), "Constrain input and output types to numeric tensors.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           propagateElemTypeFromInputToOutput(ctx, 0, 0);
           if (hasNInputShapes(ctx, 2))

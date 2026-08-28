@@ -13,5 +13,4 @@ class Mod(OpRun):
         fmod = fmod or self.fmod
         if fmod == 1:
             return (np.fmod(a, b),)
-        # When fmod=0, use np.mod (Python % operator) for all types
         return (np.mod(a, b),)
