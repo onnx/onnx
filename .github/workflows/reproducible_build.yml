@@ -1,0 +1,44 @@
+# Copyright (c) ONNX Project Contributors
+#
+# SPDX-License-Identifier: Apache-2.0
+
+# Verifies that two successive builds from identical source produce bit-for-bit
+# identical wheels (reproducible builds). Calls each platform cibw workflow
+# with a single target that is built twice on the same runner.
+# A mismatch on any platform fails the workflow.
+
+name: ReproducibleBuild
+
+on:
+  schedule:
+    - cron: '0 6 * * 1'  # every Monday 06:00 UTC
+  workflow_dispatch:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  linux:
+    uses: ./.github/workflows/release_linux_cibw.yml
+    with:
+      build_mode: release
+      build: cp312-manylinux_x86_64
+      artifact_name_prefix: repro
+      reproducibility_check: true
+
+  macos:
+    uses: ./.github/workflows/release_macos_cibw.yml
+    with:
+      build_mode: release
+      build: cp312-macosx_universal2
+      artifact_name_prefix: repro
+      reproducibility_check: true
+
+  windows:
+    uses: ./.github/workflows/release_windows_cibw.yml
+    with:
+      build_mode: release
+      build: cp312-win_amd64
+      artifact_name_prefix: repro
+      reproducibility_check: true

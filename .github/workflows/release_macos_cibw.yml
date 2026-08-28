@@ -11,13 +11,40 @@ on:
         required: false
         type: string
         default: "preview"
+      artifact_name_prefix:
+        required: false
+        type: string
+        default: "wheels"
+      build:
+        required: false
+        type: string
+        default: ""
+      builds:
+        required: false
+        type: string
+        default: ""
+      reproducibility_check:
+        required: false
+        type: boolean
+        default: false
   workflow_dispatch:
+    inputs:
+      build_mode:
+        description: 'Build mode (release or preview)'
+        required: false
+        type: choice
+        options: [release, preview]
+        default: preview
+      builds:
+        description: 'JSON array of cibuildwheel build identifiers'
+        required: false
+        default: '["cp312-macosx_universal2"]'
 
 permissions:
   contents: read
 
 concurrency:
-  group: macos-release-${{ github.workflow }}-${{ github.ref }}
+  group: macos-release-${{ github.workflow }}-${{ github.ref }}-${{ inputs.artifact_name_prefix }}
   cancel-in-progress: true
 
 jobs:
@@ -25,11 +52,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        build:
-          - "cp310-macosx_universal2"
-          - "cp311-macosx_universal2"
-          - "cp312-macosx_universal2"
-          - "cp314t-macosx_universal2"
+        build: ${{ inputs.build != '' && fromJSON(format('["{0}"]', inputs.build)) || fromJSON(inputs.builds) }}
 
     runs-on: macos-14
 
@@ -82,10 +105,62 @@ jobs:
             -DONNX_WERROR=ON
             "
 
-      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+      - name: Preserve first wheel and clean build artifacts
+        if: inputs.reproducibility_check
+        run: |
+          mkdir -p "$RUNNER_TEMP/repro-build1"
+          mv dist/*.whl "$RUNNER_TEMP/repro-build1/"
+          rm -rf dist build .setuptools-cmake-build
+          find . -maxdepth 2 -name "*.egg-info" -type d -exec rm -rf {} +
+
+      - name: Build wheels again for reproducibility check
+        if: inputs.reproducibility_check
+        uses: pypa/cibuildwheel@4726cd35bb13f7bde50cf2761f2499ac7b3aa32c  # v4.1.1
         with:
-          name: wheels-macos-${{ matrix.build }}
+          output-dir: dist/
+          only: ${{ matrix.build }}
+        env:
+          CIBW_ENVIRONMENT: >-
+            MACOSX_DEPLOYMENT_TARGET=13.3
+            CMAKE_ARGS="
+            -DFETCHCONTENT_SOURCE_DIR_PROTOBUF=${{ github.workspace }}/protobuf-${{ env.PROTOBUF_VERSION }}
+            -DONNX_CUSTOM_PROTOC_EXECUTABLE=${{ github.workspace }}/protoc-host/bin/protoc
+            -DONNX_HARDENING=ON
+            -DONNX_USE_LITE_PROTO=ON
+            -DONNX_WERROR=ON
+            "
+
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        if: ${{ !inputs.reproducibility_check }}
+        with:
+          name: ${{ inputs.artifact_name_prefix }}-macos-${{ matrix.build }}
           path: dist/*.whl
+
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        if: inputs.reproducibility_check
+        with:
+          name: ${{ inputs.artifact_name_prefix }}-build1-macos-${{ matrix.build }}
+          path: ${{ runner.temp }}/repro-build1/*.whl
+
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        if: inputs.reproducibility_check
+        with:
+          name: ${{ inputs.artifact_name_prefix }}-build2-macos-${{ matrix.build }}
+          path: dist/*.whl
+
+      - name: Compare wheel checksums
+        if: inputs.reproducibility_check
+        shell: bash
+        run: |
+          shopt -s nullglob
+          build1=("$RUNNER_TEMP"/repro-build1/*.whl)
+          build2=(dist/*.whl)
+          if [ ${#build1[@]} -ne 1 ] || [ ${#build2[@]} -ne 1 ]; then
+            echo "Expected exactly one wheel from each build"
+            exit 1
+          fi
+          shasum -a 256 "${build1[0]}" "${build2[0]}"
+          cmp -s "${build1[0]}" "${build2[0]}"
 
       - name: Validate wheel
         run: |
