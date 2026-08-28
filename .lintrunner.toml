@@ -74,7 +74,7 @@ include_patterns = [
 exclude_patterns = [
     'onnx/backend/test/**',
     'onnx/reference/ops/**',  # FIXME: Enable this once typing is fixed
-    'onnx/test/**',  # Disable mypy for tests
+    'tests/**',  # Disable mypy for tests
     'onnx/reference/reference_evaluator.py',
 ]
 command = [
@@ -132,7 +132,7 @@ is_formatter = true
 [[linter]]
 code = 'NAMESPACE'
 include_patterns = ['**/*.cc', '**/*.h']
-exclude_patterns = ['third_party/**']
+exclude_patterns = []
 command = [
     'python',
     '-m',

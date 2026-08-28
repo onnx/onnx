@@ -257,5 +257,10 @@ class Coverage:
         ) as metadata_file:
             metadata_writer = csv.writer(metadata_file)
             metadata_writer.writerow(
-                ["Latest Update", datetime.datetime.now().isoformat().replace("T", " ")]
+                [
+                    "Latest Update",
+                    datetime.datetime.now(tz=datetime.timezone.utc)
+                    .isoformat()
+                    .replace("T", " "),
+                ]
             )

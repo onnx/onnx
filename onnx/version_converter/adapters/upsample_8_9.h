@@ -1,8 +1,6 @@
 // Copyright (c) ONNX Project Contributors
-
-/*
- * SPDX-License-Identifier: Apache-2.0
- */
+//
+// SPDX-License-Identifier: Apache-2.0
 
 // Adapter for Upsample in default domain from version 8 to 9
 
@@ -13,8 +11,7 @@
 
 #include "onnx/version_converter/adapters/adapter.h"
 
-namespace ONNX_NAMESPACE {
-namespace version_conversion {
+namespace ONNX_NAMESPACE::version_conversion {
 
 struct Upsample_8_9 final : public Adapter {
   explicit Upsample_8_9() : Adapter("Upsample", OpSetID(8), OpSetID(9)) {}
@@ -46,5 +43,4 @@ struct Upsample_8_9 final : public Adapter {
   }
 };
 
-} // namespace version_conversion
-} // namespace ONNX_NAMESPACE
+} // namespace ONNX_NAMESPACE::version_conversion

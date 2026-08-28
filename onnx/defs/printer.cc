@@ -1,27 +1,59 @@
-/*
- * SPDX-License-Identifier: Apache-2.0
- */
+// Copyright (c) ONNX Project Contributors
+//
+// SPDX-License-Identifier: Apache-2.0
 
 #include "onnx/defs/printer.h"
 
+#include <array>
+#include <charconv>
+#include <cmath>
+#include <cstdint>
 #include <iomanip>
+#include <string>
+#include <type_traits>
+#include <vector>
 
 #include "onnx/defs/tensor_proto_util.h"
 
 namespace ONNX_NAMESPACE {
+namespace {
 
 using StringStringEntryProtos = google::protobuf::RepeatedPtrField<StringStringEntryProto>;
 
-static bool IsValidIdentifier(const std::string& str) {
+// Widen a decoded raw_data element to the field type the printer emits.
+template <typename Element, typename Widened>
+std::vector<Widened> ParseRawIntData(const TensorProto& tensor) {
+  const std::vector<Element> elements = ParseRawData<Element>(tensor, /*exact_fit=*/true);
+  return std::vector<Widened>(elements.begin(), elements.end());
+}
+
+// Format numbers with std::to_chars: locale-independent and, for floating
+// point, the shortest form that round-trips through the parser.
+template <typename T>
+void PrintNumber(std::ostream& os, T value) {
+  if constexpr (std::is_floating_point_v<T>) {
+    // Normalize NaN: MSVC's to_chars emits payload forms like "nan(ind)"
+    // that the parser does not accept.
+    if (std::isnan(value)) {
+      os << (std::signbit(value) ? "-nan" : "nan");
+      return;
+    }
+  }
+  std::array<char, 32> buf{};
+  const auto res = std::to_chars(buf.data(), buf.data() + buf.size(), value);
+  os.write(buf.data(), res.ptr - buf.data());
+}
+
+bool IsValidIdentifier(const std::string& str) {
   // Check if str is a valid identifier
   const char* next_ = str.c_str();
   const char* end_ = next_ + str.size();
   if (next_ == end_)
     return false; // empty string is not a valid identifier
-  if (!isalpha(*next_) && (*next_ != '_'))
+  if (!IsAlpha(*next_) && (*next_ != '_'))
     return false; // first character must be a letter or '_'
   ++next_;
-  while ((next_ < end_) && (isalnum(*next_) || (*next_ == '_')))
+  while ((next_ < end_) && (IsAlnum(*next_) || (*next_ == '_')))
     ++next_;
   return next_ == end_;
 }
@@ -45,6 +77,8 @@ class ProtoPrinter {
   void print(const TypeProto_Optional& optType);
 
   void print(const TypeProto_SparseTensor& sparseType);
+
+  void print(const TypeProto_Opaque& opaqueType);
 
   void print(const TensorProto& tensor, bool is_initializer = false);
 
@@ -90,15 +124,19 @@ class ProtoPrinter {
 
   template <typename T>
   void print(const T& prim) {
-    output_ << prim;
+    if constexpr (std::is_arithmetic_v<T>) {
+      PrintNumber(output_, prim);
+    } else {
+      output_ << prim;
+    }
   }
 
   void printQuoted(const std::string& str) {
     output_ << "\"";
-    for (const char* p = str.c_str(); *p; ++p) {
-      if ((*p == '\\') || (*p == '"'))
+    for (char ch : str) {
+      if ((ch == '\\') || (ch == '"'))
         output_ << '\\';
-      output_ << *p;
+      output_ << ch;
     }
     output_ << "\"";
   }
@@ -154,12 +192,16 @@ class ProtoPrinter {
 };
 
 void ProtoPrinter::print(const TensorShapeProto_Dimension& dim) {
-  if (dim.has_dim_value())
-    output_ << dim.dim_value();
-  else if (dim.has_dim_param())
-    output_ << dim.dim_param();
-  else
+  if (dim.has_dim_value()) {
+    print(dim.dim_value());
+  } else if (dim.has_dim_param()) {
+    if (IsValidIdentifier(dim.dim_param()))
+      output_ << dim.dim_param();
+    else
+      printQuoted(dim.dim_param());
+  } else {
     output_ << "?";
+  }
 }
 
 void ProtoPrinter::print(const TensorShapeProto& shape) {
@@ -169,10 +211,12 @@ void ProtoPrinter::print(const TensorShapeProto& shape) {
 void ProtoPrinter::print(const TypeProto_Tensor& tensortype) {
   output_ << PrimitiveTypeNameMap::ToString(tensortype.elem_type());
   if (tensortype.has_shape()) {
-    if (tensortype.shape().dim_size() > 0)
+    if (tensortype.shape().dim_size() > 0) {
       print(tensortype.shape());
-  } else
+    }
+  } else {
     output_ << "[]";
+  }
 }
 
 void ProtoPrinter::print(const TypeProto_Sequence& seqType) {
@@ -196,11 +240,29 @@ void ProtoPrinter::print(const TypeProto_Optional& optType) {
 void ProtoPrinter::print(const TypeProto_SparseTensor& sparseType) {
   output_ << "sparse_tensor(" << PrimitiveTypeNameMap::ToString(sparseType.elem_type());
   if (sparseType.has_shape()) {
-    if (sparseType.shape().dim_size() > 0)
+    if (sparseType.shape().dim_size() > 0) {
       print(sparseType.shape());
-  } else
+    }
+  } else {
     output_ << "[]";
+  }
 
+  output_ << ")";
+}
+
+void ProtoPrinter::print(const TypeProto_Opaque& opaqueType) {
+  // Mirrors the grammar accepted by the parser:
+  //   opaque()
+  //   opaque(name)
+  //   opaque(domain,name)
+  output_ << "opaque(";
+  const bool has_domain = opaqueType.has_domain() && !opaqueType.domain().empty();
+  if (has_domain) {
+    output_ << opaqueType.domain() << ",";
+  }
+  if (opaqueType.has_name() && !opaqueType.name().empty()) {
+    output_ << opaqueType.name();
+  }
   output_ << ")";
 }
 
@@ -215,6 +277,8 @@ void ProtoPrinter::print(const TypeProto& type) {
     print(type.optional_type());
   else if (type.has_sparse_tensor_type())
     print(type.sparse_tensor_type());
+  else if (type.has_opaque_type())
+    print(type.opaque_type());
 }
 
 void ProtoPrinter::print(const TensorProto& tensor, bool is_initializer) {
@@ -229,25 +293,56 @@ void ProtoPrinter::print(const TensorProto& tensor, bool is_initializer) {
   if (is_initializer) {
     output_ << " = ";
   }
-  // TODO: does not yet handle all types
+  // TODO(ONNX): does not yet handle all types
   if (tensor.has_data_location() && tensor.data_location() == TensorProto_DataLocation_EXTERNAL) {
     print(tensor.external_data());
   } else if (tensor.has_raw_data()) {
     switch (static_cast<TensorProto::DataType>(tensor.data_type())) {
+      case TensorProto::DataType::TensorProto_DataType_INT8:
+        printSet(" {", ",", "}", ParseRawIntData<int8_t, int32_t>(tensor));
+        break;
+      case TensorProto::DataType::TensorProto_DataType_UINT8:
+      case TensorProto::DataType::TensorProto_DataType_BOOL:
+      // FLOAT8 types print their unsigned byte pattern, as FLOAT16 does below.
+      case TensorProto::DataType::TensorProto_DataType_FLOAT8E4M3FN:
+      case TensorProto::DataType::TensorProto_DataType_FLOAT8E4M3FNUZ:
+      case TensorProto::DataType::TensorProto_DataType_FLOAT8E5M2:
+      case TensorProto::DataType::TensorProto_DataType_FLOAT8E5M2FNUZ:
+      case TensorProto::DataType::TensorProto_DataType_FLOAT8E8M0:
+        printSet(" {", ",", "}", ParseRawIntData<uint8_t, int32_t>(tensor));
+        break;
+      case TensorProto::DataType::TensorProto_DataType_INT16:
+        printSet(" {", ",", "}", ParseRawIntData<int16_t, int32_t>(tensor));
+        break;
+      case TensorProto::DataType::TensorProto_DataType_UINT16:
+      // FLOAT16/BFLOAT16 print the unsigned 16-bit pattern, which the parser accepts.
+      case TensorProto::DataType::TensorProto_DataType_FLOAT16:
+      case TensorProto::DataType::TensorProto_DataType_BFLOAT16:
+        printSet(" {", ",", "}", ParseRawIntData<uint16_t, int32_t>(tensor));
+        break;
       case TensorProto::DataType::TensorProto_DataType_INT32:
-        printSet(" {", ",", "}", ParseData<int32_t>(&tensor));
+        printSet(" {", ",", "}", ParseRawData<int32_t>(tensor, /*exact_fit=*/true));
+        break;
+      // UINT32/UINT64 print into uint64_data, matching the non-raw branch.
+      case TensorProto::DataType::TensorProto_DataType_UINT32:
+        printSet(" {", ",", "}", ParseRawIntData<uint32_t, uint64_t>(tensor));
         break;
       case TensorProto::DataType::TensorProto_DataType_INT64:
-        printSet(" {", ",", "}", ParseData<int64_t>(&tensor));
+        printSet(" {", ",", "}", ParseRawData<int64_t>(tensor, /*exact_fit=*/true));
+        break;
+      case TensorProto::DataType::TensorProto_DataType_UINT64:
+        printSet(" {", ",", "}", ParseRawData<uint64_t>(tensor, /*exact_fit=*/true));
         break;
       case TensorProto::DataType::TensorProto_DataType_FLOAT:
-        printSet(" {", ",", "}", ParseData<float>(&tensor));
+        printSet(" {", ",", "}", ParseRawData<float>(tensor, /*exact_fit=*/true));
         break;
       case TensorProto::DataType::TensorProto_DataType_DOUBLE:
-        printSet(" {", ",", "}", ParseData<double>(&tensor));
+        printSet(" {", ",", "}", ParseRawData<double>(tensor, /*exact_fit=*/true));
         break;
       default:
-        output_ << "..."; // ParseData not instantiated for other types.
+        // Sub-byte packed types need an element count sizeof() cannot express;
+        // complex and string need a different element form.
+        output_ << "...";
         break;
     }
   } else {
@@ -258,6 +353,13 @@ void ProtoPrinter::print(const TensorProto& tensor, bool is_initializer) {
       case TensorProto::DataType::TensorProto_DataType_UINT8:
       case TensorProto::DataType::TensorProto_DataType_UINT16:
       case TensorProto::DataType::TensorProto_DataType_BOOL:
+      case TensorProto::DataType::TensorProto_DataType_FLOAT16:
+      case TensorProto::DataType::TensorProto_DataType_BFLOAT16:
+      case TensorProto::DataType::TensorProto_DataType_FLOAT8E4M3FN:
+      case TensorProto::DataType::TensorProto_DataType_FLOAT8E4M3FNUZ:
+      case TensorProto::DataType::TensorProto_DataType_FLOAT8E5M2:
+      case TensorProto::DataType::TensorProto_DataType_FLOAT8E5M2FNUZ:
+      case TensorProto::DataType::TensorProto_DataType_FLOAT8E8M0:
         printSet(" {", ",", "}", tensor.int32_data());
         break;
       case TensorProto::DataType::TensorProto_DataType_INT64:
@@ -284,6 +386,7 @@ void ProtoPrinter::print(const TensorProto& tensor, bool is_initializer) {
         break;
       }
       default:
+        output_ << "...";
         break;
     }
   }
@@ -309,24 +412,25 @@ void ProtoPrinter::print(const AttributeProto& attr) {
   output_ << attr.name() << ": " << AttributeTypeNameMap::ToString(attr.type()) << " = ";
   switch (attr.type()) {
     case AttributeProto_AttributeType_INT:
-      output_ << attr.i();
+      print(attr.i());
       break;
     case AttributeProto_AttributeType_INTS:
       printSet("[", ", ", "]", attr.ints());
       break;
     case AttributeProto_AttributeType_FLOAT:
-      output_ << attr.f();
+      print(attr.f());
       break;
     case AttributeProto_AttributeType_FLOATS:
       printSet("[", ", ", "]", attr.floats());
       break;
     case AttributeProto_AttributeType_STRING:
-      output_ << "\"" << attr.s() << "\"";
+      printQuoted(attr.s());
       break;
     case AttributeProto_AttributeType_STRINGS: {
       const char* sep = "[";
       for (const auto& elt : attr.strings()) {
-        output_ << sep << "\"" << elt << "\"";
+        output_ << sep;
+        printQuoted(elt);
         sep = ", ";
       }
       output_ << "]";
@@ -446,7 +550,9 @@ void ProtoPrinter::print(const ModelProto& model) {
 }
 
 void ProtoPrinter::print(const OperatorSetIdProto& opset) {
-  output_ << "\"" << opset.domain() << "\" : " << opset.version();
+  printQuoted(opset.domain());
+  output_ << " : ";
+  print(opset.version());
 }
 
 void ProtoPrinter::print(const OpsetIdList& opsets) {
@@ -455,14 +561,16 @@ void ProtoPrinter::print(const OpsetIdList& opsets) {
 
 void ProtoPrinter::print(const FunctionProto& fn) {
   output_ << "<\n";
-  output_ << "  "
-          << "domain: \"" << fn.domain() << "\",\n";
-  if (!fn.overload().empty())
-    output_ << "  "
-            << "overload: \"" << fn.overload() << "\",\n";
+  output_ << "  " << "domain: ";
+  printQuoted(fn.domain());
+  output_ << ",\n";
+  if (!fn.overload().empty()) {
+    output_ << "  " << "overload: ";
+    printQuoted(fn.overload());
+    output_ << ",\n";
+  }
 
-  output_ << "  "
-          << "opset_import: ";
+  output_ << "  " << "opset_import: ";
   printSet("[", ",", "]", fn.opset_import());
   output_ << "\n>\n";
   printId(fn.name());
@@ -476,39 +584,44 @@ void ProtoPrinter::print(const FunctionProto& fn) {
   print(fn.node());
 }
 
-#define DEF_OP(T)                                              \
-  std::ostream& operator<<(std::ostream& os, const T& proto) { \
+} // namespace
+
+// The parameter name must match the declaration in printer.h.
+// NOLINTBEGIN(bugprone-macro-parentheses) `param` is a declarator, it cannot be parenthesized
+#define DEF_OP(T, param)                                       \
+  std::ostream& operator<<(std::ostream& os, const T& param) { \
     ProtoPrinter printer(os);                                  \
-    printer.print(proto);                                      \
+    printer.print(param);                                      \
     return os;                                                 \
   }
+// NOLINTEND(bugprone-macro-parentheses)
 
-DEF_OP(TensorShapeProto_Dimension)
+DEF_OP(TensorShapeProto_Dimension, dim)
 
-DEF_OP(TensorShapeProto)
+DEF_OP(TensorShapeProto, shape)
 
-DEF_OP(TypeProto_Tensor)
+DEF_OP(TypeProto_Tensor, tensortype)
 
-DEF_OP(TypeProto)
+DEF_OP(TypeProto, type)
 
-DEF_OP(TensorProto)
+DEF_OP(TensorProto, tensor)
 
-DEF_OP(ValueInfoProto)
+DEF_OP(ValueInfoProto, value_info)
 
-DEF_OP(ValueInfoList)
+DEF_OP(ValueInfoList, vilist)
 
-DEF_OP(AttributeProto)
+DEF_OP(AttributeProto, attr)
 
-DEF_OP(AttrList)
+DEF_OP(AttrList, attrlist)
 
-DEF_OP(NodeProto)
+DEF_OP(NodeProto, node)
 
-DEF_OP(NodeList)
+DEF_OP(NodeList, nodelist)
 
-DEF_OP(GraphProto)
+DEF_OP(GraphProto, graph)
 
-DEF_OP(FunctionProto)
+DEF_OP(FunctionProto, fn)
 
-DEF_OP(ModelProto)
+DEF_OP(ModelProto, model)
 
 } // namespace ONNX_NAMESPACE

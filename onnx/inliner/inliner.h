@@ -1,8 +1,9 @@
 // Copyright (c) ONNX Project Contributors
+//
+// SPDX-License-Identifier: Apache-2.0
 
-/*
- * SPDX-License-Identifier: Apache-2.0
- */
+#ifndef ONNX_INLINER_INLINER_H_
+#define ONNX_INLINER_INLINER_H_
 
 #include <memory>
 #include <string>
@@ -12,8 +13,7 @@
 #include "onnx/defs/schema.h"
 #include "onnx/onnx_pb.h"
 
-namespace ONNX_NAMESPACE {
-namespace inliner {
+namespace ONNX_NAMESPACE::inliner {
 
 // IR version 10 introduces overloaded function names. The following APIs to specify
 // functions to be inlined currently allow only specifying (domain, name). Thus,
@@ -141,5 +141,6 @@ class Renamer {
   std::unique_ptr<Impl> pImpl_;
 };
 
-} // namespace inliner
-} // namespace ONNX_NAMESPACE
+} // namespace ONNX_NAMESPACE::inliner
+
+#endif // ONNX_INLINER_INLINER_H_

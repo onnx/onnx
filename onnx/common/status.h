@@ -1,8 +1,6 @@
 // Copyright (c) ONNX Project Contributors
-
-/*
- * SPDX-License-Identifier: Apache-2.0
- */
+//
+// SPDX-License-Identifier: Apache-2.0
 
 #pragma once
 
@@ -14,8 +12,7 @@
 
 #include "onnx/onnx_pb.h"
 
-namespace ONNX_NAMESPACE {
-namespace Common {
+namespace ONNX_NAMESPACE::Common {
 
 enum class StatusCategory : std::uint8_t {
   NONE = 0,
@@ -97,5 +94,4 @@ inline std::ostream& operator<<(std::ostream& out, const Status& status) {
   return out << status.ToString();
 }
 
-} // namespace Common
-} // namespace ONNX_NAMESPACE
+} // namespace ONNX_NAMESPACE::Common

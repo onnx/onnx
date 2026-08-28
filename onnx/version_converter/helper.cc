@@ -8,8 +8,7 @@
 
 #include <vector>
 
-namespace ONNX_NAMESPACE {
-namespace version_conversion {
+namespace ONNX_NAMESPACE::version_conversion {
 int check_numpy_unibroadcastable_and_require_broadcast(
     const std::vector<Dimension>& input1_sizes,
     const std::vector<Dimension>& input2_sizes) {
@@ -52,32 +51,30 @@ void assert_numpy_multibroadcastable(
   for (size_t i = 0; i < B_sizes.size(); i++) {
     ONNX_ASSERTM(
         B_sizes[i].dim == A_sizes[axis + i].dim || B_sizes[i].dim == 1 || A_sizes[axis + i].dim == 1,
-        "Dimension %d of input %d does not match "
-        "dimension %d of input %d, and neither's value is 1",
+        "Dimension ",
         i,
+        " of input ",
         B,
+        " does not match dimension ",
         axis + i,
-        A)
+        " of input ",
+        A,
+        ", and neither's value is 1")
   }
 }
 
 void assertNotParams(const std::vector<Dimension>& sizes) {
   for (const Dimension& dim : sizes) {
-    ONNX_ASSERTM(dim.is_int, "%s Dimension is a param instead of an int.", dim.param.c_str())
+    ONNX_ASSERTM(dim.is_int, dim.param, " Dimension is a param instead of an int.")
   }
 }
 
 void assertInputsAvailable(const ArrayRef<Value*>& inputs, const char* name, uint64_t num_inputs) {
   ONNX_ASSERTM(
-      inputs.size() == num_inputs,
-      "%s in opset version 6 can only broadcast"
-      " between %d inputs",
-      name,
-      num_inputs)
+      inputs.size() == num_inputs, name, " in opset version 6 can only broadcast between ", num_inputs, " inputs")
   for (size_t i = 0; i < num_inputs; i++) {
-    ONNX_ASSERTM(inputs[i]->has_sizes(), "Shape of input %d is not available.", num_inputs)
+    ONNX_ASSERTM(inputs[i]->has_sizes(), "Shape of input ", i, " is not available.")
     assertNotParams(inputs[i]->sizes());
   }
 }
-} // namespace version_conversion
-} // namespace ONNX_NAMESPACE
+} // namespace ONNX_NAMESPACE::version_conversion

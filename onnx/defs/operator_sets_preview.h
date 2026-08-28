@@ -1,6 +1,6 @@
-/*
- * SPDX-License-Identifier: Apache-2.0
- */
+// Copyright (c) ONNX Project Contributors
+//
+// SPDX-License-Identifier: Apache-2.0
 
 #pragma once
 
@@ -8,14 +8,15 @@
 
 namespace ONNX_NAMESPACE {
 
-// Declare training operators.
+// Declare preview operators.
 
 class ONNX_PREVIEW_OPERATOR_SET_SCHEMA_CLASS_NAME(1, Gradient);
 class ONNX_PREVIEW_OPERATOR_SET_SCHEMA_CLASS_NAME(1, Momentum);
 class ONNX_PREVIEW_OPERATOR_SET_SCHEMA_CLASS_NAME(1, Adagrad);
 class ONNX_PREVIEW_OPERATOR_SET_SCHEMA_CLASS_NAME(1, Adam);
+class ONNX_PREVIEW_OPERATOR_SET_SCHEMA_CLASS_NAME(1, FlexAttention);
 
-// Iterate over schema from ai.onnx.training version 1
+// Iterate over schema from ai.onnx.preview* version 1
 class OpSet_OnnxPreview_ver1 {
  public:
   static void ForEachSchema(const std::function<void(OpSchema&&)>& fn) {
@@ -23,6 +24,7 @@ class OpSet_OnnxPreview_ver1 {
     fn(GetOpSchema<ONNX_PREVIEW_OPERATOR_SET_SCHEMA_CLASS_NAME(1, Momentum)>());
     fn(GetOpSchema<ONNX_PREVIEW_OPERATOR_SET_SCHEMA_CLASS_NAME(1, Adagrad)>());
     fn(GetOpSchema<ONNX_PREVIEW_OPERATOR_SET_SCHEMA_CLASS_NAME(1, Adam)>());
+    fn(GetOpSchema<ONNX_PREVIEW_OPERATOR_SET_SCHEMA_CLASS_NAME(1, FlexAttention)>());
   }
 };
 

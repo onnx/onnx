@@ -1,8 +1,6 @@
 // Copyright (c) ONNX Project Contributors
-
-/*
- * SPDX-License-Identifier: Apache-2.0
- */
+//
+// SPDX-License-Identifier: Apache-2.0
 
 // Adapter for Sum in default domain from version 8 to 7
 
@@ -13,14 +11,13 @@
 
 #include "onnx/version_converter/adapters/adapter.h"
 
-namespace ONNX_NAMESPACE {
-namespace version_conversion {
+namespace ONNX_NAMESPACE::version_conversion {
 
 class Sum_8_7 final : public Adapter {
  public:
   explicit Sum_8_7() : Adapter("Sum", OpSetID(8), OpSetID(7)) {}
 
-  void adapt_sum_8_7(const std::shared_ptr<Graph>&, Node* node) const {
+  void adapt_sum_8_7(const std::shared_ptr<Graph>& /*unused*/, Node* node) const {
     // Throw an exception if any broadcasting occurs
     const ArrayRef<Value*>& inputs = node->inputs();
     // Determine if inputs are of different sizes
@@ -37,5 +34,4 @@ class Sum_8_7 final : public Adapter {
   }
 };
 
-} // namespace version_conversion
-} // namespace ONNX_NAMESPACE
+} // namespace ONNX_NAMESPACE::version_conversion

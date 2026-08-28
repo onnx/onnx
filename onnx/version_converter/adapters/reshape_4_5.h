@@ -1,19 +1,17 @@
 // Copyright (c) ONNX Project Contributors
-
-/*
- * SPDX-License-Identifier: Apache-2.0
- */
+//
+// SPDX-License-Identifier: Apache-2.0
 
 // Adapter for Reshape in default domain from version 4 to 5
 
 #pragma once
 
 #include <memory>
+#include <vector>
 
 #include "onnx/version_converter/adapters/remove_consumed_inputs.h"
 
-namespace ONNX_NAMESPACE {
-namespace version_conversion {
+namespace ONNX_NAMESPACE::version_conversion {
 
 class Reshape_4_5 final : public RemoveConsumedInputs {
  public:
@@ -24,6 +22,7 @@ class Reshape_4_5 final : public RemoveConsumedInputs {
     // Create tensor for value attribute
     Tensor t;
     t.elem_type() = TensorProto_DataType_INT64;
+    t.sizes() = std::vector<int64_t>{static_cast<int64_t>(node->is(kshape).size())};
     auto& data = t.int64s();
     // Turn shapes attribute into tensor
     for (int64_t shape : node->is(kshape)) {
@@ -45,5 +44,4 @@ class Reshape_4_5 final : public RemoveConsumedInputs {
   }
 };
 
-} // namespace version_conversion
-} // namespace ONNX_NAMESPACE
+} // namespace ONNX_NAMESPACE::version_conversion

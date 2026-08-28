@@ -3,10 +3,8 @@
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
-import subprocess
 import sys
 from copy import deepcopy
-from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 import onnx
@@ -30,7 +28,6 @@ if TYPE_CHECKING:
 
 _NodeTestCases = []
 _TargetOpType = None
-_DiffOpTypes = None
 _existing_names: dict[str, onnx.NodeProto] = {}
 
 
@@ -139,26 +136,36 @@ def function_testcase_helper(
         # No opset in the model. We take the most recent definition.
         schema = onnx.defs.get_schema(test_op, domain=node.domain)
     else:
-        # We take the function coming defined in the specific version mentioned
-        # in the model.
-        if len(opset_imports) != 1:
+        # We take the function defined in the specific version mentioned
+        # in the model. Find the opset_import matching the node's domain.
+        node_domain = node.domain or ""
+        matching_opset = None
+        for opset in opset_imports:
+            opset_domain = opset.domain or ""
+            if opset_domain == node_domain or (
+                node_domain in {"", "ai.onnx"} and opset_domain in {"", "ai.onnx"}
+            ):
+                matching_opset = opset
+                break
+        if matching_opset is None:
             raise ValueError(
-                f"Only one domain is allowed but {len(opset_imports)} found."
+                f"No matching opset_import found for domain {node_domain!r} "
+                f"in {[o.domain for o in opset_imports]}."
             )
-        version = opset_imports[0].version
+        version = matching_opset.version
         schema = onnx.defs.get_schema(test_op, version, domain=node.domain)
 
     # an op schema may have several functions, each for one opset version
     # opset versions include the op's since_version and other opset versions
     # if it is needed to define the op for a opset version other than the op's since_version.
     function_protos = []
-    for opset_version in schema.function_opset_versions:  # type: ignore
-        function_proto_str = schema.get_function_with_opset_version(opset_version)  # type: ignore
+    for opset_version in schema.function_opset_versions:  # type: ignore[attr-defined]
+        function_proto_str = schema.get_function_with_opset_version(opset_version)  # type: ignore[attr-defined]
         function_proto = FunctionProto()
         function_proto.ParseFromString(function_proto_str)
         function_protos.append(function_proto)
-    for opset_version in schema.context_dependent_function_opset_versions:  # type: ignore
-        function_proto_str = schema.get_context_dependent_function_with_opset_version(  # type: ignore
+    for opset_version in schema.context_dependent_function_opset_versions:  # type: ignore[attr-defined]
+        function_proto_str = schema.get_context_dependent_function_with_opset_version(  # type: ignore[attr-defined]
             opset_version,
             node.SerializeToString(),
             [t.SerializeToString() for t in input_types],
@@ -214,7 +221,7 @@ def _make_test_model_gen_version(graph: GraphProto, **kwargs: Any) -> ModelProto
         latest_onnx_version,
         latest_ml_version,
         latest_training_version,
-    ) = onnx.helper.VERSION_TABLE[-1][2:5]  # type: ignore
+    ) = onnx.helper.VERSION_TABLE[-1][2:5]  # type: ignore[index]
     if "opset_imports" in kwargs:
         for opset in kwargs["opset_imports"]:
             # If the test model uses an unreleased opset version (latest_version+1),
@@ -260,8 +267,6 @@ def expect(
 ) -> None:
     # skip if the node_op's op_type is not same as the given one
     if _TargetOpType and node_op.op_type != _TargetOpType:
-        return
-    if _DiffOpTypes is not None and node_op.op_type.lower() not in _DiffOpTypes:
         return
     if name in _existing_names:
         raise ValueError(
@@ -397,48 +402,10 @@ def expect(
         )
 
 
-def collect_testcases(op_type: str) -> list[TestCase]:
-    """Collect node test cases"""
-    # only keep those tests related to this operator
+def collect_testcases(op_type: str | None = None) -> list[TestCase]:
+    """Collect node test cases, optionally filtered to a single op_type."""
     global _TargetOpType  # noqa: PLW0603
     _TargetOpType = op_type
 
     import_recursive(sys.modules[__name__])
     return _NodeTestCases
-
-
-def collect_diff_testcases() -> list[TestCase]:
-    """Collect node test cases which are different from the main branch"""
-    global _DiffOpTypes  # noqa: PLW0603
-    _DiffOpTypes = get_diff_op_types()
-
-    import_recursive(sys.modules[__name__])
-    return _NodeTestCases
-
-
-def get_diff_op_types():
-    cwd_path = Path.cwd()
-    # git fetch first for git diff on GitHub Action
-    subprocess.run(
-        ["git", "fetch", "origin", "main:main"],
-        cwd=cwd_path,
-        capture_output=True,
-        check=True,
-    )
-    # obtain list of added or modified files in this PR
-    with subprocess.Popen(
-        ["git", "diff", "--name-only", "--diff-filter=AM", "origin/main", "HEAD"],
-        cwd=cwd_path,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-    ) as obtain_diff:
-        stdoutput, _ = obtain_diff.communicate()
-        diff_list = stdoutput.split()
-        changed_op_types = []
-        for file in diff_list:
-            file_name = file.decode("utf-8")
-            if file_name.startswith(
-                "onnx/backend/test/case/node/"
-            ) and file_name.endswith(".py"):
-                changed_op_types.append(file_name.split("/")[-1].replace(".py", ""))
-        return changed_op_types

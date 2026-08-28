@@ -1,8 +1,6 @@
 // Copyright (c) ONNX Project Contributors
-
-/*
- * SPDX-License-Identifier: Apache-2.0
- */
+//
+// SPDX-License-Identifier: Apache-2.0
 
 // Adapter for broadcasting ops in default domain from version 6 to 7
 
@@ -15,8 +13,7 @@
 
 #include "onnx/version_converter/adapters/adapter.h"
 
-namespace ONNX_NAMESPACE {
-namespace version_conversion {
+namespace ONNX_NAMESPACE::version_conversion {
 
 class BroadcastForwardCompatibility final : public Adapter {
  public:
@@ -74,6 +71,7 @@ class BroadcastForwardCompatibility final : public Adapter {
       node->removeAttribute(kaxis);
     // Assert multi_broadcastable on inputs
     const ArrayRef<Value*>& inputs = node->inputs();
+    assertInputsAvailable(inputs, name().c_str(), 2);
     assert_numpy_multibroadcastable(inputs[0]->sizes(), inputs[1]->sizes());
   }
 
@@ -83,5 +81,4 @@ class BroadcastForwardCompatibility final : public Adapter {
   }
 };
 
-} // namespace version_conversion
-} // namespace ONNX_NAMESPACE
+} // namespace ONNX_NAMESPACE::version_conversion

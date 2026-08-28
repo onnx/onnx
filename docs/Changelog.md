@@ -2177,6 +2177,9 @@ This version of the operator has been available since version 1 of the default O
 ### <a name="LpNormalization-1"></a>**LpNormalization-1**</a>
 
   Given a matrix, apply Lp-normalization along the provided axis.
+  The output is computed as: `output = input / Lp_norm(input, axis)`.
+  When the Lp norm is zero (i.e., all elements along the axis are zero),
+  the output is defined to be zero to avoid division by zero.
 
 #### Version
 
@@ -4414,15 +4417,21 @@ This version of the operator has been available since version 1 of the default O
 ### <a name="Transpose-1"></a>**Transpose-1**</a>
 
   Returns a transpose of the input tensor. (Similar to `numpy.transpose`).
-  The optional attribute `perm` must be a permutation of the dimensions of
-  the input tensor. Axis `i` of the output tensor corresponds to the axis
-  `perm[i]` of the input tensor.
+  The optional attribute `perm` specifies the permutation of the axes of the
+  input tensor. `perm` must contain each axis index in `[0, n-1]` exactly once,
+  so its length is equal to the rank `n` of the input tensor.
+
+  Axis `i` of the output tensor corresponds to axis `perm[i]` of the input tensor.
+
+  If the attribute is omitted, its default value is `(n-1, ..., 0)`, where `n`
+  is the rank of the input tensor (that is, the dimensions are reversed).
+
   For example, when perm=(1, 0, 2), given an input tensor of shape (1, 2, 3),
   the output shape will be (2, 1, 3).
   When perm=(1, 2, 0), given an input tensor of shape (1, 2, 3),
   the output shape will be (2, 3, 1).
-  If the attribute `perm` is omitted, its default value is `(n-1, ..., 0)`,
-  where `n` is the rank of the input tensor.
+  A 0-D or 1-D input is valid; in those cases the output has the same shape
+  as the input.
 
 #### Version
 
@@ -5283,6 +5292,9 @@ This version of the operator has been available since version 6 of the default O
     shape(A) = (2, 3, 4, 5), shape(B) = (2), with axis=0
 
   Attribute `broadcast=1` needs to be passed to enable broadcasting.
+
+
+  For integer inputs, the result is computed using truncating division (rounding toward zero).
 
 #### Version
 
@@ -6521,6 +6533,8 @@ This version of the operator has been available since version 7 of the default O
 
   This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
 
+  For integer inputs, the result is computed using truncating division (rounding toward zero).
+
 #### Version
 
 This version of the operator has been available since version 7 of the default ONNX operator set.
@@ -7155,6 +7169,7 @@ This version of the operator has been available since version 7 of the default O
   PRelu takes input data (Tensor<T>) and slope tensor as input, and produces one
   output data (Tensor<T>) where the function `f(x) = slope * x for x < 0`,
   `f(x) = x for x >= 0`., is applied to the data tensor elementwise.
+
   This operator supports **unidirectional broadcasting** (tensor slope should be unidirectional broadcastable to input tensor X); for more details please check [the doc](Broadcasting.md).
 
 #### Version
@@ -8751,6 +8766,7 @@ This version of the operator has been available since version 9 of the default O
   PRelu takes input data (Tensor<T>) and slope tensor as input, and produces one
   output data (Tensor<T>) where the function `f(x) = slope * x for x < 0`,
   `f(x) = x for x >= 0`., is applied to the data tensor elementwise.
+
   This operator supports **unidirectional broadcasting** (tensor slope should be unidirectional broadcastable to input tensor X); for more details please check [the doc](Broadcasting.md).
 
 #### Version
@@ -9193,7 +9209,7 @@ This version of the operator has been available since version 9 of the default O
 
 <dl>
 <dt><tt>T</tt> : tensor(string), tensor(int32), tensor(int64)</dt>
-<dd>Input is ether string UTF-8 or int32/int64</dd>
+<dd>Input is either string UTF-8 or int32/int64</dd>
 <dt><tt>T1</tt> : tensor(float)</dt>
 <dd>1-D tensor of floats</dd>
 </dl>
@@ -9705,6 +9721,7 @@ This version of the operator has been available since version 10 of the default 
 
   Filter out boxes that have high intersection-over-union (IOU) overlap with previously selected boxes.
   Bounding boxes with score less than score_threshold are removed. Bounding box format is indicated by attribute center_point_box.
+  Boxes are suppressed if their IOU with a previously selected box is strictly greater than iou_threshold (i.e., boxes with IOU exactly equal to the threshold are kept).
   Note that this algorithm is agnostic to where the origin is in the coordinate system and more generally is invariant to
   orthogonal transformations and translations of the coordinate system; thus translating or reflections of the coordinate system
   result in the same boxes being selected by the algorithm.
@@ -10757,7 +10774,7 @@ This version of the operator has been available since version 11 of the default 
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float16), tensor(float), tensor(double)</dt>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
@@ -11971,6 +11988,7 @@ This version of the operator has been available since version 11 of the default 
 
   Filter out boxes that have high intersection-over-union (IOU) overlap with previously selected boxes.
   Bounding boxes with score less than score_threshold are removed. Bounding box format is indicated by attribute center_point_box.
+  Boxes are suppressed if their IOU with a previously selected box is strictly greater than iou_threshold (i.e., boxes with IOU exactly equal to the threshold are kept).
   Note that this algorithm is agnostic to where the origin is in the coordinate system and more generally is invariant to
   orthogonal transformations and translations of the coordinate system; thus translating or reflections of the coordinate system
   result in the same boxes being selected by the algorithm.
@@ -11998,7 +12016,7 @@ This version of the operator has been available since version 11 of the default 
 <dt><tt>max_output_boxes_per_class</tt> (optional) : tensor(int64)</dt>
 <dd>Integer representing the maximum number of boxes to be selected per batch per class. It is a scalar. Default to 0, which means no output.</dd>
 <dt><tt>iou_threshold</tt> (optional) : tensor(float)</dt>
-<dd>Float representing the threshold for deciding whether boxes overlap too much with respect to IOU. It is scalar. Value range [0, 1]. Default to 0.</dd>
+<dd>Float representing the threshold for deciding whether boxes overlap too much with respect to IOU. Boxes with IoU strictly greater than this threshold are suppressed. It is scalar. Value range [0, 1]. Default to 0.</dd>
 <dt><tt>score_threshold</tt> (optional) : tensor(float)</dt>
 <dd>Float representing the threshold for deciding when to remove boxes based on score. It is a scalar.</dd>
 </dl>
@@ -12195,28 +12213,21 @@ This version of the operator has been available since version 11 of the default 
   up to `limit` (exclusive).
 
   The number of elements in the output of range is computed as below:
-
   ```
   number_of_elements = max( ceil( (limit - start) / delta ) , 0 )
   ```
-
   The pseudocode determining the contents of the output is shown below:
-
   ```
   for(int i=0; i<number_of_elements; ++i) {
     output[i] =  start + (i * delta);
   }
   ```
-
-  Example 1
-
+  Example 1:
   ```
   Inputs: start = 3, limit = 9, delta = 3
   Output: [3, 6]
   ```
-
-  Example 2
-
+  Example 2:
   ```
   Inputs: start = 10, limit = 4, delta = -2
   Output: [10, 8, 6]
@@ -13142,7 +13153,7 @@ This version of the operator has been available since version 11 of the default 
   The remaining dimensions of `updates` correspond to the dimensions of the
   replacement-slice-values. Each replacement-slice-value is a (r-k) dimensional tensor,
   corresponding to the trailing (r-k) dimensions of `data`.  Thus, the shape of `updates`
-  must equal indices.shape[0:q-1] ++ data.shape[k:r-1], where ++ denotes the concatenation
+  must equal indices.shape[0:q-1] ++ data.shape[k:r], where ++ denotes the concatenation
   of shapes.
 
   The `output` is calculated via the following equation:
@@ -14209,14 +14220,17 @@ This version of the operator has been available since version 12 of the default 
   that do not occur in the output-term.
 
   The Einsum operator evaluates algebraic tensor operations on a sequence of tensors, using the Einstein summation
-  convention. The equation string contains a comma-separated sequence of lower case letters. Each term corresponds to
-  an operand tensor, and the characters within the terms correspond to operands dimensions.
+  convention. The equation string contains a comma-separated sequence of lower case letters and/or upper case letters.
+  Each term corresponds to an operand tensor, and the characters within the terms correspond to operands dimensions.
+  Lower case letters and upper case letters are treated as distinct symbols, that is, "a" and "A" refer to different
+  symbols.
 
   This sequence may be followed by "->" to separate the left and right hand side of the equation.
   If the equation contains "->" followed by the right-hand side, the explicit (not classical) form of the Einstein
   summation is performed, and the right-hand side indices indicate output tensor dimensions. In other cases,
-  output indices are (implicitly) set to the alphabetically sorted sequence of indices appearing exactly once in the
-  equation.
+  output indices are (implicitly) set to the sequence of indices appearing exactly once in the equation, sorted in
+  increasing order of their ASCII values (so that all upper case letters precede all lower case letters, e.g.,
+  "A" < "Z" < "a" < "z").
 
   When a dimension character is repeated in the left-hand side, it represents summation along the dimension.
 
@@ -15398,6 +15412,8 @@ This version of the operator has been available since version 13 of the default 
   Performs element-wise binary division (with Numpy-style broadcasting support).
 
   This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
+
+  For integer inputs, the result is computed using truncating division (rounding toward zero).
 
 #### Version
 
@@ -17967,7 +17983,7 @@ This version of the operator has been available since version 13 of the default 
   The remaining dimensions of `updates` correspond to the dimensions of the
   replacement-slice-values. Each replacement-slice-value is a (r-k) dimensional tensor,
   corresponding to the trailing (r-k) dimensions of `data`.  Thus, the shape of `updates`
-  must equal indices.shape[0:q-1] ++ data.shape[k:r-1], where ++ denotes the concatenation
+  must equal indices.shape[0:q-1] ++ data.shape[k:r], where ++ denotes the concatenation
   of shapes.
 
   The `output` is calculated via the following equation:
@@ -18172,16 +18188,16 @@ This version of the operator has been available since version 13 of the default 
   If `axes` are omitted, they are set to `[0, ..., r-1]`.
   If `steps` are omitted, they are set to `[1, ..., 1]` of length `len(starts)`
 
-  The effective values are initialized as `start[i] = 0`, `ends[i] = dims[i]` where
+  The effective values are initialized as `starts[i] = 0`, `ends[i] = dims[i]` where
   `dims` are the dimensions of `input` and `steps[i] = 1`.
 
   All negative elements of `axes` are made non-negative by adding `r` to them, where
   `r =rank(input)`.
 
   All negative values in `starts[i]` and `ends[i]` have `dims[axes[i]]` added to them,
-  where `dims` are the dimensions of `input`. Then `start[axes[i]]` is the adjusted
-  `starts[i]` is clamped into the range `[0, dims[axes[i]]]` for positive stepping
-  and `[0, dims[axes[i]]-1]` for negative stepping.
+  where `dims` are the dimensions of `input`. Then `starts[axes[i]]` is clamped to
+  range `[0, dims[axes[i]]]` for positive stepping, or to range `[0, dims[axes[i]]-1]`
+  for negative stepping.
 
   The clamping for the adjusted `ends[i]` depends on the sign of `steps[i]` and must
   accommodate copying 0 through `dims[axes[i]]` elements, so for positive stepping
@@ -18663,15 +18679,21 @@ This version of the operator has been available since version 13 of the default 
 ### <a name="Transpose-13"></a>**Transpose-13**</a>
 
   Returns a transpose of the input tensor. (Similar to `numpy.transpose`).
-  The optional attribute `perm` must be a permutation of the dimensions of
-  the input tensor. Axis `i` of the output tensor corresponds to the axis
-  `perm[i]` of the input tensor.
+  The optional attribute `perm` specifies the permutation of the axes of the
+  input tensor. `perm` must contain each axis index in `[0, n-1]` exactly once,
+  so its length is equal to the rank `n` of the input tensor.
+
+  Axis `i` of the output tensor corresponds to axis `perm[i]` of the input tensor.
+
+  If the attribute is omitted, its default value is `(n-1, ..., 0)`, where `n`
+  is the rank of the input tensor (that is, the dimensions are reversed).
+
   For example, when perm=(1, 0, 2), given an input tensor of shape (1, 2, 3),
   the output shape will be (2, 1, 3).
   When perm=(1, 2, 0), given an input tensor of shape (1, 2, 3),
   the output shape will be (2, 3, 1).
-  If the attribute `perm` is omitted, its default value is `(n-1, ..., 0)`,
-  where `n` is the rank of the input tensor.
+  A 0-D or 1-D input is valid; in those cases the output has the same shape
+  as the input.
 
 #### Version
 
@@ -18929,7 +18951,7 @@ This version of the operator has been available since version 14 of the default 
 
 <dl>
 <dt><tt>T</tt> : tensor(uint32), tensor(uint64), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
-<dd>Constrain input and output types to high-precision numeric tensors.</dd>
+<dd>Constrain input and output types to numeric tensors.</dd>
 <dt><tt>T2</tt> : tensor(int32), tensor(int64)</dt>
 <dd>axis tensor can be int32 or int64 only</dd>
 </dl>
@@ -18940,6 +18962,7 @@ This version of the operator has been available since version 14 of the default 
 
   This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
 
+  For integer inputs, the result is computed using truncating division (rounding toward zero).
   (Opset 14 change): Extend supported types to include uint8, int8, uint16, and int16.
 
 #### Version
@@ -20748,7 +20771,7 @@ This version of the operator has been available since version 16 of the default 
   The remaining dimensions of `updates` correspond to the dimensions of the
   replacement-slice-values. Each replacement-slice-value is a (r-k) dimensional tensor,
   corresponding to the trailing (r-k) dimensions of `data`.  Thus, the shape of `updates`
-  must equal indices.shape[0:q-1] ++ data.shape[k:r-1], where ++ denotes the concatenation
+  must equal indices.shape[0:q-1] ++ data.shape[k:r], where ++ denotes the concatenation
   of shapes.
 
   The `output` is calculated via the following equation:
@@ -20909,7 +20932,7 @@ This version of the operator has been available since version 17 of the default 
 
 <dl>
 <dt><tt>T1</tt> : tensor(int32), tensor(int64)</dt>
-<dd>Constrain the input size to int64_t.</dd>
+<dd>Constrain the input size to int32_t or int64_t.</dd>
 <dt><tt>T2</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
 <dd>Constrain output types to numeric tensors.</dd>
 </dl>
@@ -20930,7 +20953,7 @@ This version of the operator has been available since version 17 of the default 
 <dt><tt>inverse</tt> : int (default is 0)</dt>
 <dd>Whether to perform the inverse discrete fourier transform. By default this value is set to 0, which corresponds to false.</dd>
 <dt><tt>onesided</tt> : int (default is 0)</dt>
-<dd>If onesided is 1, only values for w in [0, 1, 2, ..., floor(n_fft/2) + 1] are returned because the real-to-complex Fourier transform satisfies the conjugate symmetry, i.e., X[m, w] = X[m, n_fft-w]*. Note if the input or window tensors are complex, then onesided output is not possible. Enabling onesided with real inputs performs a Real-valued fast Fourier transform (RFFT). When invoked with real or complex valued input, the default value is 0. Values can be 0 or 1.</dd>
+<dd>If onesided is 1, only values for w in [0, 1, 2, ..., floor(n_fft/2) + 1] are used or returned because the real-to-complex Fourier transform satisfies the conjugate symmetry, i.e., X[m, w] = X[m, n_fft-w]*. When onesided=1 and inverse=0 (forward DFT), only real input is supported and a one-sided complex spectrum is returned (RFFT). When onesided=1 and inverse=1 (inverse DFT), only complex input is supported and a full real signal is returned (IRFFT). When invoked with real or complex valued input, the default value is 0. Values can be 0 or 1.</dd>
 </dl>
 
 #### Inputs (1 - 2)
@@ -20939,14 +20962,14 @@ This version of the operator has been available since version 17 of the default 
 <dt><tt>input</tt> (non-differentiable) : T1</dt>
 <dd>For real input, the following shape is expected: [batch_idx][signal_dim1][signal_dim2]...[signal_dimN][1]. For complex input, the following shape is expected: [batch_idx][signal_dim1][signal_dim2]...[signal_dimN][2]. The first dimension is the batch dimension. The following N dimensions correspond to the signal's dimensions. The final dimension represents the real and imaginary parts of the value in that order.</dd>
 <dt><tt>dft_length</tt> (optional, non-differentiable) : T2</dt>
-<dd>The length of the signal as a scalar. If greater than the axis dimension, the signal will be zero-padded up to dft_length. If less than the axis dimension, only the first dft_length values will be used as the signal. It's an optional value. </dd>
+<dd>The length of the signal as a scalar. If greater than the axis dimension, the signal will be zero-padded up to dft_length. If less than the axis dimension, only the first dft_length values will be used as the signal. If not provided, the default dft_length = signal_dim_axis, except for the IRFFT case (onesided=1, inverse=1), in which case the default dft_length is 2 * (signal_dim_axis - 1). It's an optional value.</dd>
 </dl>
 
 #### Outputs
 
 <dl>
 <dt><tt>output</tt> : T1</dt>
-<dd>The Fourier Transform of the input vector. If onesided is 0, the following shape is expected: [batch_idx][signal_dim1][signal_dim2]...[signal_dimN][2]. If axis=1 and onesided is 1, the following shape is expected: [batch_idx][floor(signal_dim1/2)+1][signal_dim2]...[signal_dimN][2]. If axis=2 and onesided is 1, the following shape is expected: [batch_idx][signal_dim1][floor(signal_dim2/2)+1]...[signal_dimN][2]. If axis=N and onesided is 1, the following shape is expected: [batch_idx][signal_dim1][signal_dim2]...[floor(signal_dimN/2)+1][2]. The signal_dim at the specified axis is equal to the dft_length.</dd>
+<dd>The Fourier Transform of the input vector. For standard DFT (onesided=0), the output shape is: [batch_idx][signal_dim1][signal_dim2]...[signal_dimN][2] (complex), with signal_dim_axis = dft_length. For RFFT (onesided=1, inverse=0), the output shape is: [batch_idx][signal_dim1][signal_dim2]...[signal_dimN][2] (one-sided complex), with signal_dim_axis = floor(dft_length/2) + 1. For IRFFT (onesided=1, inverse=1), the output shape is: [batch_idx][signal_dim1][signal_dim2]...[signal_dimN][1] (real), where signal_dim_axis = dft_length.</dd>
 </dl>
 
 #### Type Constraints
@@ -20993,7 +21016,7 @@ This version of the operator has been available since version 17 of the default 
 
 <dl>
 <dt><tt>T1</tt> : tensor(int32), tensor(int64)</dt>
-<dd>Constrain the input size to int64_t.</dd>
+<dd>Constrain the input size to int32_t or int64_t.</dd>
 <dt><tt>T2</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
 <dd>Constrain output types to numeric tensors.</dd>
 </dl>
@@ -21033,7 +21056,7 @@ This version of the operator has been available since version 17 of the default 
 
 <dl>
 <dt><tt>T1</tt> : tensor(int32), tensor(int64)</dt>
-<dd>Constrain the input size to int64_t.</dd>
+<dd>Constrain the input size to int32_t or int64_t.</dd>
 <dt><tt>T2</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
 <dd>Constrain output types to numeric tensors.</dd>
 </dl>
@@ -22479,7 +22502,7 @@ This version of the operator has been available since version 18 of the default 
   The remaining dimensions of `updates` correspond to the dimensions of the
   replacement-slice-values. Each replacement-slice-value is a (r-k) dimensional tensor,
   corresponding to the trailing (r-k) dimensions of `data`.  Thus, the shape of `updates`
-  must equal indices.shape[0:q-1] ++ data.shape[k:r-1], where ++ denotes the concatenation
+  must equal indices.shape[0:q-1] ++ data.shape[k:r], where ++ denotes the concatenation
   of shapes.
 
   The `output` is calculated via the following equation:
@@ -23283,7 +23306,7 @@ This version of the operator has been available since version 19 of the default 
   Given a tensor containing the data to be padded (`data`), a tensor containing the number of start and end pad values for axis (`pads`), (optionally) a `mode`, and (optionally) `constant_value`,
   a padded tensor (`output`) is generated.
 
-  The three supported `modes` are (similar to corresponding modes supported by `numpy.pad`):
+  The four supported `modes` are (similar to corresponding modes supported by `numpy.pad`):
 
   1) `constant`(default) - pads with a given constant value as specified by `constant_value` (which defaults to 0, empty string, or False)
 
@@ -24064,7 +24087,7 @@ This version of the operator has been available since version 20 of the default 
 <dt><tt>inverse</tt> : int (default is 0)</dt>
 <dd>Whether to perform the inverse discrete Fourier Transform. Default is 0, which corresponds to `false`.</dd>
 <dt><tt>onesided</tt> : int (default is 0)</dt>
-<dd>If `onesided` is `1` and input is real, only values for `k` in `[0, 1, 2, ..., floor(n_fft/2) + 1]` are returned because the real-to-complex Fourier transform satisfies the conjugate symmetry, i.e., `X[m, k] = X[m, n_fft-k]*`, where `m` denotes "all other dimensions" DFT was not applied on. If the input tensor is complex, onesided output is not possible. Value can be `0` or `1`. Default is `0`.</dd>
+<dd>If `onesided` is `1`, only values for `k` in `[0, 1, 2, ..., floor(n_fft/2) + 1]` are used or returned because the real-to-complex Fourier transform satisfies the conjugate symmetry, i.e., `X[m, k] = X[m, n_fft-k]*`, where `m` denotes "all other dimensions" DFT was not applied on. When `onesided=1` and `inverse=0` (forward DFT), only real input is supported and a one-sided complex spectrum is returned (RFFT). When `onesided=1` and `inverse=1` (inverse DFT), only complex input is supported and a full real signal is returned (IRFFT). Value can be `0` or `1`. Default is `0`.</dd>
 </dl>
 
 #### Inputs (1 - 3)
@@ -24073,7 +24096,7 @@ This version of the operator has been available since version 20 of the default 
 <dt><tt>input</tt> (non-differentiable) : T1</dt>
 <dd>For real input, the following shape is expected: `[signal_dim0][signal_dim1][signal_dim2]...[signal_dimN][1]`. For complex input, the following shape is expected: `[signal_dim0][signal_dim1][signal_dim2]...[signal_dimN][2]`. The final dimension represents the real and imaginary parts of the value in that order.</dd>
 <dt><tt>dft_length</tt> (optional, non-differentiable) : T2</dt>
-<dd>The length of the signal as a scalar. If greater than the axis dimension, the signal will be zero-padded up to `dft_length`. If less than the axis dimension, only the first `dft_length` values will be used as the signal. </dd>
+<dd>The length of the signal as a scalar. If greater than the axis dimension, the signal will be zero-padded up to `dft_length`. If less than the axis dimension, only the first `dft_length` values will be used as the signal. If not provided, the default `dft_length = signal_dim_axis`, except for the IRFFT case (`onesided=1`, `inverse=1`), in which case the default dft_length is `2 * (signal_dim_axis - 1)`.</dd>
 <dt><tt>axis</tt> (optional, non-differentiable) : tensor(int64)</dt>
 <dd>The axis as a scalar on which to perform the DFT. Default is `-2` (last signal axis). Negative value means counting dimensions from the back. Accepted range is $[-r, -2] \cup [0, r-2]$ where `r = rank(input)`. The last dimension is for representing complex numbers and thus is an invalid axis.</dd>
 </dl>
@@ -24082,7 +24105,7 @@ This version of the operator has been available since version 20 of the default 
 
 <dl>
 <dt><tt>output</tt> : T1</dt>
-<dd>The Fourier Transform of the input vector. If `onesided` is `0`, the following shape is expected: `[signal_dim0][signal_dim1][signal_dim2]...[signal_dimN][2]`. If `axis=0` and `onesided` is `1`, the following shape is expected: `[floor(signal_dim0/2)+1][signal_dim1][signal_dim2]...[signal_dimN][2]`. If `axis=1` and `onesided` is `1`, the following shape is expected: `[signal_dim0][floor(signal_dim1/2)+1][signal_dim2]...[signal_dimN][2]`. If `axis=N` and `onesided` is `1`, the following shape is expected: `[signal_dim0][signal_dim1][signal_dim2]...[floor(signal_dimN/2)+1][2]`. The `signal_dim` at the specified `axis` is equal to the `dft_length`.</dd>
+<dd>The Fourier Transform of the input vector. For standard DFT (`onesided=0`), the output shape is: `[signal_dim0][signal_dim1][signal_dim2]...[signal_dimN][2]` (complex), with `signal_dim_axis = dft_length`. For RFFT (`onesided=1`, `inverse=0`), the output shape is: `[signal_dim0][signal_dim1][signal_dim2]...[signal_dimN][2]` (one-sided complex), with `signal_dim_axis = floor(dft_length/2) + 1`. For IRFFT (`onesided=1`, `inverse=1`), the output shape is: `[signal_dim0][signal_dim1][signal_dim2]...[signal_dimN][1]` (real), where `signal_dim_axis = dft_length`.</dd>
 </dl>
 
 #### Type Constraints
@@ -25185,7 +25208,7 @@ This version of the operator has been available since version 21 of the default 
   Given a tensor containing the data to be padded (`data`), a tensor containing the number of start and end pad values for axis (`pads`), (optionally) a `mode`, and (optionally) `constant_value`,
   a padded tensor (`output`) is generated.
 
-  The three supported `modes` are (similar to corresponding modes supported by `numpy.pad`):
+  The four supported `modes` are (similar to corresponding modes supported by `numpy.pad`):
 
   1) `constant`(default) - pads with a given constant value as specified by `constant_value` (which defaults to 0, empty string, or False)
 
@@ -25811,15 +25834,21 @@ This version of the operator has been available since version 21 of the default 
 ### <a name="Transpose-21"></a>**Transpose-21**</a>
 
   Returns a transpose of the input tensor. (Similar to `numpy.transpose`).
-  The optional attribute `perm` must be a permutation of the dimensions of
-  the input tensor. Axis `i` of the output tensor corresponds to the axis
-  `perm[i]` of the input tensor.
+  The optional attribute `perm` specifies the permutation of the axes of the
+  input tensor. `perm` must contain each axis index in `[0, n-1]` exactly once,
+  so its length is equal to the rank `n` of the input tensor.
+
+  Axis `i` of the output tensor corresponds to axis `perm[i]` of the input tensor.
+
+  If the attribute is omitted, its default value is `(n-1, ..., 0)`, where `n`
+  is the rank of the input tensor (that is, the dimensions are reversed).
+
   For example, when perm=(1, 0, 2), given an input tensor of shape (1, 2, 3),
   the output shape will be (2, 1, 3).
   When perm=(1, 2, 0), given an input tensor of shape (1, 2, 3),
   the output shape will be (2, 3, 1).
-  If the attribute `perm` is omitted, its default value is `(n-1, ..., 0)`,
-  where `n` is the rank of the input tensor.
+  A 0-D or 1-D input is valid; in those cases the output has the same shape
+  as the input.
 
 #### Version
 
@@ -27081,7 +27110,7 @@ This version of the operator has been available since version 22 of the default 
 <dt><tt>initial_c</tt> (optional, non-differentiable) : T</dt>
 <dd>Optional initial value of the cell. If not specified - assumed to be 0. It has shape `[num_directions, batch_size, hidden_size]`.</dd>
 <dt><tt>P</tt> (optional, differentiable) : T</dt>
-<dd>The weight tensor for peepholes. Concatenation of `P[iof]` and `PB[iof]` (if bidirectional) along dimension 0. It has shape `[num_directions, 3*hidde_size]`. Optional: If not specified - assumed to be 0.</dd>
+<dd>The weight tensor for peepholes. Concatenation of `P[iof]` and `PB[iof]` (if bidirectional) along dimension 0. It has shape `[num_directions, 3*hidden_size]`. Optional: If not specified - assumed to be 0.</dd>
 </dl>
 
 #### Outputs (0 - 3)
@@ -27107,6 +27136,9 @@ This version of the operator has been available since version 22 of the default 
 ### <a name="LpNormalization-22"></a>**LpNormalization-22**</a>
 
   Given a matrix, apply Lp-normalization along the provided axis.
+  The output is computed as: `output = input / Lp_norm(input, axis)`.
+  When the Lp norm is zero (i.e., all elements along the axis are zero),
+  the output is defined to be zero to avoid division by zero.
 
 #### Version
 
@@ -28260,9 +28292,11 @@ This version of the operator has been available since version 22 of the default 
   2) Group-query Attention (GQA): Described in the paper https://arxiv.org/pdf/2305.13245, `q_num_heads > kv_num_heads`, `q_num_heads % kv_num_heads == 0`.
   3) Multi-query Attention (MQA): Described in the paper https://arxiv.org/pdf/1911.02150, `q_num_heads > kv_num_heads`, `kv_num_heads=1`.
 
-  Attention bias to be added is calculated based on `attn_mask` input and `is_causal attribute`, only one of which can be provided.
-  1) If `is_causal` is set to `1`, the attention masking is a lower triangular matrix when the mask is a square matrix. The attention masking has the form of the upper left causal bias due to the alignment.
-  2) `attn_mask`: A boolean mask where a value of `True` indicates that the element should take part in attention or a float mask of the same type as query, key, value that is added to the attention score.
+  Attention bias to be added is calculated based on `attn_mask` input and `is_causal` attribute:
+  1) `attn_mask`: A boolean mask where a value of `True` indicates that the element should take part in attention or a float mask of the same type as query, key, value that is added to the attention score.
+  2) If `is_causal` is set to `1`, causal masking is applied with bottom-right (offset-aware) alignment: query `i` attends key `j` iff `j <= i + past_sequence_length` (the count of cached keys in `past_key`); for a square Q/K this is the standard lower-triangular mask. The causal frontier is computed independently of the `attn_mask` input and is then composed with it additively, by summing their attention biases: a boolean `attn_mask` intersects the allowed set (its disallowed positions contribute `-inf` to the bias), while a float `attn_mask` is added to the attention scores rather than disabling positions. A fully-masked query row (every key's combined additive bias is `-inf`, e.g. an all-`False` boolean `attn_mask` row) produces a zero output row (matching prevailing runtime practice), not `NaN`.
+
+  Errata (in-place behavioral correction, no opset bump): a fully-masked query row (e.g. an all-`False` boolean `attn_mask` row) now produces a zero output row instead of `NaN`, and the same zero-row guard applies to the mode-`3` `qk_matmul_output` debug output; this only replaces previously-`NaN` outputs. The mode-`3` `qk_matmul_output` is also now emitted at the operator's output precision (`T1`), matching the reference implementation, which affects only its dtype and only when `softmax_precision` differs from `T1`. No numerically useful, well-defined result of the released opset is otherwise changed.
 
   Both past and present state key/values are optional. They shall be used together, and not allowed to use only one of them.
   The following pattern is applied to the Q, K and V inputs after appropriate reshaping of K and V inputs based on sequence lengths and num heads provided:
@@ -28277,9 +28311,9 @@ This version of the operator has been available since version 22 of the default 
         |          |          |
         ---MatMul---          |
               |               |
-   at_mask---Add              |
-              |               |
     softcap (if provided)     |
+              |               |
+   at_mask---Add              |
               |               |
            Softmax            |
               |               |
@@ -28297,13 +28331,13 @@ This version of the operator has been available since version 23 of the default 
 
 <dl>
 <dt><tt>is_causal</tt> : int (default is 0)</dt>
-<dd>If set to `1`, the attention masking is a lower triangular matrix when the mask is a square matrix. The attention masking has the form of the upper left causal bias due to the alignment.</dd>
+<dd>If set to `1`, causal masking is applied with bottom-right (offset-aware) alignment: query `i` attends key `j` iff `j <= i + past_sequence_length` (the count of cached keys in `past_key`); for a square Q/K this is the standard lower-triangular mask.</dd>
 <dt><tt>kv_num_heads</tt> : int</dt>
 <dd>Number of heads of key and value. Must be used with 3D inputs of Q, K and V. </dd>
 <dt><tt>q_num_heads</tt> : int</dt>
 <dd>Number of heads of query. Must be used with 3D inputs of Q, K and V. </dd>
 <dt><tt>qk_matmul_output_mode</tt> : int (default is 0)</dt>
-<dd>If set to `0`, qk_matmul_output is the output of qk matmul. If set to `1`, qk_matmul_output includes the addition of the attention mask to the output of qk matmul. If set to `2`, qk_matmul_output is the output after the softcap operation. If set to `3`, qk_matmul_output is the output after the softmax operation. Default value is 0.</dd>
+<dd>If set to `0`, qk_matmul_output is the output of qk matmul. If set to `1`, qk_matmul_output is the output after the softcap operation (before mask addition). If set to `2`, qk_matmul_output includes the attention mask and softcap (if provided) applied to the output of qk matmul. If set to `3`, qk_matmul_output is the output after the softmax operation. In mode `3`, a fully-masked query row (every key disallowed, e.g. an all-`False` boolean `attn_mask` row) is a zero row, consistent with the corresponding row of the primary output `Y`: the fully-masked-row guard is applied before this output is produced. The mode-`3` output is emitted at the operator's output precision (`T1`); when `softmax_precision` differs from `T1` this is a cast of the softmax result to `T1`. Default value is 0.</dd>
 <dt><tt>scale</tt> : float</dt>
 <dd>Scaling factor applied to $Q*K^T$. Default value is `1/sqrt(head_size)`. To prevent [numerical overflow](https://tinyurl.com/sudb9s96), scale `Q`, `K` by `sqrt(scale)` before matmul.</dd>
 <dt><tt>softcap</tt> : float (default is 0.0)</dt>
@@ -28935,7 +28969,7 @@ This version of the operator has been available since version 23 of the default 
   Given a tensor containing the data to be padded (`data`), a tensor containing the number of start and end pad values for axis (`pads`), (optionally) a `mode`, and (optionally) `constant_value`,
   a padded tensor (`output`) is generated.
 
-  The three supported `modes` are (similar to corresponding modes supported by `numpy.pad`):
+  The four supported `modes` are (similar to corresponding modes supported by `numpy.pad`):
 
   1) `constant`(default) - pads with a given constant value as specified by `constant_value` (which defaults to 0, empty string, or False)
 
@@ -29730,15 +29764,21 @@ This version of the operator has been available since version 23 of the default 
 ### <a name="Transpose-23"></a>**Transpose-23**</a>
 
   Returns a transpose of the input tensor. (Similar to `numpy.transpose`).
-  The optional attribute `perm` must be a permutation of the dimensions of
-  the input tensor. Axis `i` of the output tensor corresponds to the axis
-  `perm[i]` of the input tensor.
+  The optional attribute `perm` specifies the permutation of the axes of the
+  input tensor. `perm` must contain each axis index in `[0, n-1]` exactly once,
+  so its length is equal to the rank `n` of the input tensor.
+
+  Axis `i` of the output tensor corresponds to axis `perm[i]` of the input tensor.
+
+  If the attribute is omitted, its default value is `(n-1, ..., 0)`, where `n`
+  is the rank of the input tensor (that is, the dimensions are reversed).
+
   For example, when perm=(1, 0, 2), given an input tensor of shape (1, 2, 3),
   the output shape will be (2, 1, 3).
   When perm=(1, 2, 0), given an input tensor of shape (1, 2, 3),
   the output shape will be (2, 3, 1).
-  If the attribute `perm` is omitted, its default value is `(n-1, ..., 0)`,
-  where `n` is the rank of the input tensor.
+  A 0-D or 1-D input is valid; in those cases the output has the same shape
+  as the input.
 
 #### Version
 
@@ -29830,7 +29870,47 @@ This version of the operator has been available since version 23 of the default 
 
   Attention bias to be added is calculated based on `attn_mask` input and `is_causal` attribute:
   1) `attn_mask`: A boolean mask where a value of `True` indicates that the element should take part in attention or a float mask of the same type as query, key, value that is added to the attention score.
-  2) If `is_causal` is set to `1`, attention scores above the diagonal are masked out, regardless of the `attn_mask` input.
+  2) If `is_causal` is set to `1`, causal masking is applied with bottom-right (offset-aware) alignment: query `i` attends key `j` iff `j <= i + offset`, as illustrated below.
+
+  ```
+    2D causal mask for Attention (PR onnx/onnx#8068)
+     S_q=4 queries, S_k=8 keys
+     Rule: query i attends key j iff j <= i + offset
+           offset = nonpad_kv_seqlen - S_q
+
+     nonpad_kv_seqlen=4, offset=4-4=0
+
+            k0  k1  k2  k3  k4  k5  k6  k7
+           +----+----+----+----+----+----+----+----+
+      q0   | ## |    |    |    |    |    |    |    |
+           +----+----+----+----+----+----+----+----+
+      q1   | ## | ## |    |    |    |    |    |    |
+           +----+----+----+----+----+----+----+----+
+      q2   | ## | ## | ## |    |    |    |    |    |
+           +----+----+----+----+----+----+----+----+
+      q3   | ## | ## | ## | ## |    |    |    |    |
+           +----+----+----+----+----+----+----+----+
+
+
+     nonpad_kv_seqlen=8, offset=8-4=4
+
+            k0  k1  k2  k3  k4  k5  k6  k7
+           +----+----+----+----+----+----+----+----+
+      q0   | ## | ## | ## | ## | ## |    |    |    |
+           +----+----+----+----+----+----+----+----+
+      q1   | ## | ## | ## | ## | ## | ## |    |    |
+           +----+----+----+----+----+----+----+----+
+      q2   | ## | ## | ## | ## | ## | ## | ## |    |
+           +----+----+----+----+----+----+----+----+
+      q3   | ## | ## | ## | ## | ## | ## | ## | ## |
+           +----+----+----+----+----+----+----+----+
+  ```
+
+  With `nonpad_kv_seqlen=4` (offset=0), the mask is the standard lower-triangular. With `nonpad_kv_seqlen=8` (offset=4), the diagonal shifts right by 4, so each query sees the 4 additional valid cached keys.
+
+  `offset` is the count of valid keys preceding the current query block: `offset = past_sequence_length` when `past_key` is provided; `offset = nonpad_kv_seqlen - q_sequence_length` (per batch) when an external cache is indicated by `nonpad_kv_seqlen` without `past_key`; `offset = 0` when neither is provided (the no-cache case, which reduces to the standard lower-triangular mask). When `offset < 0` (`nonpad_kv_seqlen < q_sequence_length`, i.e. more query tokens than cached keys) the leading query rows have an empty key set (no key satisfies `j <= i + offset`) and are fully masked. The causal frontier is computed independently of `attn_mask` and is then composed with it additively: a boolean `attn_mask` intersects the allowed set (its disallowed positions contribute `-inf` to the bias), while a float `attn_mask` is added to the attention scores rather than disabling positions. A fully-masked query row (no key attended, including the negative-offset leading rows) produces a zero output row, not `NaN`, for both `Y` and the mode-`3` `qk_matmul_output` debug output; the mode-`3` `qk_matmul_output` is emitted at the operator's output precision (`T1`).
+
+  Errata (in-place behavioral correction, no opset bump): the reference implementation and backend tests were incorrect when `nonpad_kv_seqlen != q_sequence_length` (nonzero bottom-right offset, top-left instead of bottom-right causal alignment) and produced `NaN` for fully-masked rows; corrected in version 1.23. This fixed three behaviors described above: external-cache bottom-right causal alignment (`offset = nonpad_kv_seqlen - q_sequence_length`), zero (non-`NaN`) output for fully-masked rows including the mode-`3` `qk_matmul_output`, and the mode-`3` `qk_matmul_output` precision (`T1`).
 
   With respect to KV cache update, this operator allows the following two use cases:
 
@@ -29859,9 +29939,9 @@ This version of the operator has been available since version 23 of the default 
         |          |          |
         ---MatMul---          |
               |               |
-   at_mask---Add              |
-              |               |
     softcap (if provided)     |
+              |               |
+   at_mask---Add              |
               |               |
            Softmax            |
               |               |
@@ -29879,13 +29959,13 @@ This version of the operator has been available since version 24 of the default 
 
 <dl>
 <dt><tt>is_causal</tt> : int (default is 0)</dt>
-<dd>If set to `1`, the attention masking is a lower triangular matrix when the mask is a square matrix. The attention masking has the form of the upper left causal bias due to the alignment.</dd>
+<dd>If set to `1`, causal masking is applied. For a square Q/K (no cache offset) this is a lower-triangular matrix. In general the mask is bottom-right (offset-aware): query in-block index `i` attends key `j` iff `j <= i + offset`, where `offset` is the count of valid keys preceding the query block (`past_sequence_length` for an internal `past_key` cache, or `nonpad_kv_seqlen - q_sequence_length` per batch for an external cache). When `offset = 0` this reduces to the lower-triangular (top-left) mask.</dd>
 <dt><tt>kv_num_heads</tt> : int</dt>
 <dd>Number of heads of key and value. Must be used with 3D inputs of Q, K and V. </dd>
 <dt><tt>q_num_heads</tt> : int</dt>
 <dd>Number of heads of query. Must be used with 3D inputs of Q, K and V. </dd>
 <dt><tt>qk_matmul_output_mode</tt> : int (default is 0)</dt>
-<dd>If set to `0`, qk_matmul_output is the output of qk matmul. If set to `1`, qk_matmul_output includes the addition of the attention mask to the output of qk matmul. If set to `2`, qk_matmul_output is the output after the softcap operation. If set to `3`, qk_matmul_output is the output after the softmax operation. Default value is 0.</dd>
+<dd>If set to `0`, qk_matmul_output is the output of qk matmul. If set to `1`, qk_matmul_output is the output after the softcap operation (before mask addition). If set to `2`, qk_matmul_output includes the attention mask and softcap (if provided) applied to the output of qk matmul. If set to `3`, qk_matmul_output is the output after the softmax operation. In mode `3`, a fully-masked query row (every key disallowed) is a zero row, consistent with the corresponding row of the primary output `Y`: the fully-masked-row guard is applied before this output is produced. The mode-`3` output is emitted at the operator's output precision (`T1`); when `softmax_precision` differs from `T1` this is a cast of the softmax result to `T1`. Default value is 0.</dd>
 <dt><tt>scale</tt> : float</dt>
 <dd>Scaling factor applied to $Q*K^T$. Default value is `1/sqrt(head_size)`. To prevent [numerical overflow](https://tinyurl.com/sudb9s96), scale `Q`, `K` by `sqrt(scale)` before matmul.</dd>
 <dt><tt>softcap</tt> : float (default is 0.0)</dt>
@@ -30019,8 +30099,8 @@ This version of the operator has been available since version 24 of the default 
   | NaN               | NaN           | NaN                    |
   | Inf               | E8M0_MAX      | NaN                    |
   | x > E8M0_MAX      | E8M0_MAX      | NaN                    |
-  | x \< E8M0_MIN     | E8M0_MIN      | NaN                    |
-  | x \< 0            | Unspecified   | Unspecified            |
+  | x < E8M0_MIN      | E8M0_MIN      | NaN                    |
+  | x < 0             | Unspecified   | Unspecified            |
 
 #### Version
 
@@ -30538,7 +30618,7 @@ This version of the operator has been available since version 24 of the default 
   Given a tensor containing the data to be padded (`data`), a tensor containing the number of start and end pad values for axis (`pads`), (optionally) a `mode`, and (optionally) `constant_value`,
   a padded tensor (`output`) is generated.
 
-  The three supported `modes` are (similar to corresponding modes supported by `numpy.pad`):
+  The four supported `modes` are (similar to corresponding modes supported by `numpy.pad`):
 
   1) `constant`(default) - pads with a given constant value as specified by `constant_value` (which defaults to 0, empty string, or False)
 
@@ -31222,9 +31302,10 @@ This version of the operator has been available since version 24 of the default 
   for prefix_idx in np.ndindex(past_cache.shape[:axis]):
       batch_idx = prefix_idx[0]
       for sequence_idx in range(sequence_length):
-          cache_idx = (*prefix_idx, write_indices[batch_idx] + sequence_idx)
+          cache_sequence_idx = write_indices[batch_idx] + sequence_idx
           if mode == "circular":
-              cache_idx = tuple(np.mod(np.asarray(cache_idx), max_sequence_length))
+              cache_sequence_idx = cache_sequence_idx % max_sequence_length
+          cache_idx = (*prefix_idx, cache_sequence_idx)
           update_idx = (*prefix_idx, sequence_idx)
           present_cache[cache_idx] = update[update_idx]
   ```
@@ -31334,15 +31415,21 @@ This version of the operator has been available since version 24 of the default 
 ### <a name="Transpose-24"></a>**Transpose-24**</a>
 
   Returns a transpose of the input tensor. (Similar to `numpy.transpose`).
-  The optional attribute `perm` must be a permutation of the dimensions of
-  the input tensor. Axis `i` of the output tensor corresponds to the axis
-  `perm[i]` of the input tensor.
+  The optional attribute `perm` specifies the permutation of the axes of the
+  input tensor. `perm` must contain each axis index in `[0, n-1]` exactly once,
+  so its length is equal to the rank `n` of the input tensor.
+
+  Axis `i` of the output tensor corresponds to axis `perm[i]` of the input tensor.
+
+  If the attribute is omitted, its default value is `(n-1, ..., 0)`, where `n`
+  is the rank of the input tensor (that is, the dimensions are reversed).
+
   For example, when perm=(1, 0, 2), given an input tensor of shape (1, 2, 3),
   the output shape will be (2, 1, 3).
   When perm=(1, 2, 0), given an input tensor of shape (1, 2, 3),
   the output shape will be (2, 3, 1).
-  If the attribute `perm` is omitted, its default value is `(n-1, ..., 0)`,
-  where `n` is the rank of the input tensor.
+  A 0-D or 1-D input is valid; in those cases the output has the same shape
+  as the input.
 
 #### Version
 
@@ -31417,6 +31504,193 @@ This version of the operator has been available since version 24 of the default 
 </dl>
 
 ## Version 25 of the default ONNX operator set
+### <a name="Attention-25"></a>**Attention-25**</a>
+
+  Computes scaled dot product attention on query, key and value tensors, using an optional attention mask if passed.
+
+  This operator covers self and cross variants of the attention operation based on sequence lengths of K, Q and V.
+
+  For self attention, `kv_sequence_length` equals to `q_sequence_length`.
+
+  For cross attention, query and key might have different lengths.
+
+  This operator also covers the 3 following variants based on the number of heads:
+  1) Multi-headed Attention (MHA): Described in the paper https://arxiv.org/pdf/1706.03762, `q_num_heads = kv_num_heads`.
+  2) Group-query Attention (GQA): Described in the paper https://arxiv.org/pdf/2305.13245, `q_num_heads > kv_num_heads`, `q_num_heads % kv_num_heads == 0`.
+  3) Multi-query Attention (MQA): Described in the paper https://arxiv.org/pdf/1911.02150, `q_num_heads > kv_num_heads`, `kv_num_heads=1`.
+
+  Attention bias to be added is calculated based on `attn_mask` input and `is_causal` attribute:
+  1) `attn_mask`: A boolean mask where a value of `True` indicates that the element should take part in attention or a float mask of the same type as query, key, value that is added to the attention score.
+  2) If `is_causal` is set to `1`, causal masking is applied with bottom-right (offset-aware) alignment: query `i` attends key `j` iff `j <= i + offset`, as illustrated below.
+
+  ```
+    2D causal mask for Attention (PR onnx/onnx#8068)
+     S_q=4 queries, S_k=8 keys
+     Rule: query i attends key j iff j <= i + offset
+           offset = nonpad_kv_seqlen - S_q
+
+     nonpad_kv_seqlen=4, offset=4-4=0
+
+            k0  k1  k2  k3  k4  k5  k6  k7
+           +----+----+----+----+----+----+----+----+
+      q0   | ## |    |    |    |    |    |    |    |
+           +----+----+----+----+----+----+----+----+
+      q1   | ## | ## |    |    |    |    |    |    |
+           +----+----+----+----+----+----+----+----+
+      q2   | ## | ## | ## |    |    |    |    |    |
+           +----+----+----+----+----+----+----+----+
+      q3   | ## | ## | ## | ## |    |    |    |    |
+           +----+----+----+----+----+----+----+----+
+
+
+     nonpad_kv_seqlen=8, offset=8-4=4
+
+            k0  k1  k2  k3  k4  k5  k6  k7
+           +----+----+----+----+----+----+----+----+
+      q0   | ## | ## | ## | ## | ## |    |    |    |
+           +----+----+----+----+----+----+----+----+
+      q1   | ## | ## | ## | ## | ## | ## |    |    |
+           +----+----+----+----+----+----+----+----+
+      q2   | ## | ## | ## | ## | ## | ## | ## |    |
+           +----+----+----+----+----+----+----+----+
+      q3   | ## | ## | ## | ## | ## | ## | ## | ## |
+           +----+----+----+----+----+----+----+----+
+  ```
+
+  With `nonpad_kv_seqlen=4` (offset=0), the mask is the standard lower-triangular. With `nonpad_kv_seqlen=8` (offset=4), the diagonal shifts right by 4, so each query sees the 4 additional valid cached keys.
+
+  `offset` is the count of valid keys preceding the current query block: `offset = past_sequence_length` when `past_key` is provided; `offset = nonpad_kv_seqlen - q_sequence_length` (per batch) when an external cache is indicated by `nonpad_kv_seqlen` without `past_key`; `offset = 0` when neither is provided (the no-cache case, which reduces to the standard lower-triangular mask). When `offset < 0` (`nonpad_kv_seqlen < q_sequence_length`, i.e. more query tokens than cached keys) the leading query rows have an empty key set (no key satisfies `j <= i + offset`) and are fully masked. The causal frontier is computed independently of `attn_mask` and is then composed with it additively: a boolean `attn_mask` intersects the allowed set (its disallowed positions contribute `-inf` to the bias), while a float `attn_mask` is added to the attention scores rather than disabling positions. A fully-masked query row (no key attended, including the negative-offset leading rows) produces a zero output row, not `NaN`, for both `Y` and the mode-`3` `qk_matmul_output` debug output; the mode-`3` `qk_matmul_output` is emitted at the operator's output precision (`T1`).
+
+  `left_window_size` and `right_window_size` independently restrict the keys visible to each query. A query at absolute position `p = offset + query_index` attends keys `j` satisfying `p - left_window_size <= j <= p + right_window_size` for each nonnegative bound. A value of `-1` leaves that side unbounded. For example, `(left_window_size=2, right_window_size=0)` is a causal left-looking window containing the current key and two preceding keys, while `(left_window_size=2, right_window_size=1)` is an asymmetric bidirectional window. Window bounds are composed with `is_causal` and `attn_mask`; when `is_causal=1`, the causal upper bound still excludes future keys.
+
+  ```
+    2D sliding-window mask for Attention (opset 25)
+     S_q=4 queries, S_k=6 keys, left_window_size=2, right_window_size=1, offset=0
+
+            k0  k1  k2  k3  k4  k5
+           +----+----+----+----+----+----+
+      q0   | ## | ## |    |    |    |    |
+           +----+----+----+----+----+----+
+      q1   | ## | ## | ## |    |    |    |
+           +----+----+----+----+----+----+
+      q2   | ## | ## | ## | ## |    |    |
+           +----+----+----+----+----+----+
+      q3   |    | ## | ## | ## | ## |    |
+           +----+----+----+----+----+----+
+
+     q0 attends {k0,k1}, q1 attends {k0,k1,k2}, q2 attends {k0,k1,k2,k3},
+     q3 attends {k1,k2,k3,k4}.
+  ```
+
+  With respect to KV cache update, this operator allows the following two use cases:
+
+  1) Cache update happens inside the Attention operator. In this case, the `K` and `V` inputs contain only the incoming
+  tokens for the current autoregressive step, and the four optional inputs/outputs past and present key and value are
+  all needed. The Attention op performs a Concat operation on the past and incoming key and value to form the present
+  key and value, respectively. Note that this only works correctly for the special case where the past key and value
+  do not contain padded tokens.
+  2) Cache update happens outside the Attention operator (for example, through the `TensorScatter` operator). In this
+  case, the `K` and `V` inputs correspond to the entire cache tensor, so the four optional inputs/outputs past and
+  present key and value should not be used. An additional input `nonpad_kv_seqlen` of shape (batch_size,) may be
+  provided to indicate the number of non-padding tokens in each sample of the batch to save unnecessary computation.
+  Here, the kv_sequence dimension of `attn_mask` can be shorter than `K` and `V`, but still needs to be at least as long
+  as the maximum value of `nonpad_kv_seqlen`.
+
+  Both past and present state key/values are optional. They shall be used together, and not allowed to use only one of them.
+  The following pattern is applied to the Q, K and V inputs after appropriate reshaping of K and V inputs based on sequence lengths and num heads provided:
+
+  ```
+    The following pattern is applied by this operator:
+        Q          K          V
+        |          |          |
+  Q*sqrt(scale) K*sqrt(scale) |
+        |          |          |
+        |       Transpose     |
+        |          |          |
+        ---MatMul---          |
+              |               |
+    softcap (if provided)     |
+              |               |
+   at_mask---Add              |
+              |               |
+           Softmax            |
+              |               |
+              -----MatMul------
+                     |
+                     Y
+  ```
+
+
+#### Version
+
+This version of the operator has been available since version 25 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>is_causal</tt> : int (default is 0)</dt>
+<dd>If set to `1`, causal masking is applied. For a square Q/K (no cache offset) this is a lower-triangular matrix. In general the mask is bottom-right (offset-aware): query in-block index `i` attends key `j` iff `j <= i + offset`, where `offset` is the count of valid keys preceding the query block (`past_sequence_length` for an internal `past_key` cache, or `nonpad_kv_seqlen - q_sequence_length` per batch for an external cache). When `offset = 0` this reduces to the lower-triangular (top-left) mask.</dd>
+<dt><tt>kv_num_heads</tt> : int</dt>
+<dd>Number of heads of key and value. Must be used with 3D inputs of Q, K and V. </dd>
+<dt><tt>left_window_size</tt> : int (default is -1)</dt>
+<dd>Maximum number of positions to the left of the current absolute query position that may be attended. A value of `0` allows the current position but no preceding position, while `-1` leaves the left side unbounded. This bound is composed with `is_causal` and `attn_mask`.</dd>
+<dt><tt>q_num_heads</tt> : int</dt>
+<dd>Number of heads of query. Must be used with 3D inputs of Q, K and V. </dd>
+<dt><tt>qk_matmul_output_mode</tt> : int (default is 0)</dt>
+<dd>Determines what the optional 4th output contains: `0` (default): raw QK matmul result; `1`: after softcap (before bias addition); `2`: QK + softcap + bias; `3`: post-softmax probabilities (after fully-masked-row guard). In mode `3`, a fully-masked query row (every key disallowed) is a zero row, consistent with the corresponding row of the primary output `Y`. The mode-`3` output is emitted at the operator's output precision (`T1`); when `softmax_precision` differs from `T1` this is a cast of the softmax result to `T1`.</dd>
+<dt><tt>right_window_size</tt> : int (default is -1)</dt>
+<dd>Maximum number of positions to the right of the current absolute query position that may be attended. A value of `0` allows the current position but no following position, while `-1` leaves the right side unbounded. Set `is_causal=0` to use a positive right window.</dd>
+<dt><tt>scale</tt> : float</dt>
+<dd>Scaling factor applied to $Q*K^T$. Default value is `1/sqrt(head_size)`. To prevent [numerical overflow](https://tinyurl.com/sudb9s96), scale `Q`, `K` by `sqrt(scale)` before matmul.</dd>
+<dt><tt>softcap</tt> : float (default is 0.0)</dt>
+<dd>Soft cap for attention logits, applied as `softcap * tanh(logits / softcap)`. Default value of `0.0` means no soft capping is applied. The soft cap is applied before mask / bias addition and softmax.</dd>
+<dt><tt>softmax_precision</tt> : int</dt>
+<dd>Specifies the precision for softmax computation. If provided, the attention weights will be cast to this type before softmax and then cast back to the original type. Supported values are: `1` (FLOAT), `10` (FLOAT16), `11` (DOUBLE), `16` (BFLOAT16).</dd>
+</dl>
+
+#### Inputs (3 - 7)
+
+<dl>
+<dt><tt>Q</tt> : T1</dt>
+<dd>Query tensor. 4D tensor with shape `(batch_size, q_num_heads, q_sequence_length, head_size)` or 3D tensor with shape `(batch_size, q_sequence_length, q_hidden_size)`. For cases with a 3D input tensor, `q_hidden_size = q_num_heads * head_size`</dd>
+<dt><tt>K</tt> : T1</dt>
+<dd>Key tensor. 4D tensor with shape `(batch_size, kv_num_heads, kv_sequence_length, head_size)` or 3D tensor with shape `(batch_size, kv_sequence_length, k_hidden_size)`. For cases with a 3D input tensor, `k_hidden_size = kv_num_heads * head_size`</dd>
+<dt><tt>V</tt> : T2</dt>
+<dd>Value tensor. 4D tensor with shape `(batch_size, kv_num_heads, kv_sequence_length, v_head_size)` or 3D tensor with shape `(batch_size, kv_sequence_length, v_hidden_size)`. For cases with a 3D input tensor, `v_hidden_size = kv_num_heads * v_head_size`</dd>
+<dt><tt>attn_mask</tt> (optional) : U</dt>
+<dd>Attention mask. Shape must be broadcastable to `(batch_size, q_num_heads, q_sequence_length, total_sequence_length)` where `total_sequence_length = past_sequence_length + kv_sequence_length`. The last dimension can also be shorter than `total_sequence_length` and will be padded to `total_sequence_length` with negative infinity. Two types of masks are supported: a boolean mask where a value of `True` indicates that the element should take part in attention, or a float mask of the same type as query, key, value that is added to the attention score.</dd>
+<dt><tt>past_key</tt> (optional) : T1</dt>
+<dd>Past state for key with shape `(batch_size, kv_num_heads, past_sequence_length, head_size)`. Must be used together with `past_value` input.</dd>
+<dt><tt>past_value</tt> (optional) : T2</dt>
+<dd>Past state for value with shape `(batch_size, kv_num_heads, past_sequence_length, v_head_size)`. Must be used together with `past_key` input.</dd>
+<dt><tt>nonpad_kv_seqlen</tt> (optional) : tensor(int64)</dt>
+<dd>A vector of integers of shape `(batch_size,)` that indicates the number of valid (i.e., non-padding) tokens in each sample. A padding mask can be derived from this. This should not be used together with `past_key` and `past_value` inputs or `present_key` and `present_value` outputs (see the KV cache use cases in the operator description).</dd>
+</dl>
+
+#### Outputs (1 - 4)
+
+<dl>
+<dt><tt>Y</tt> : T1</dt>
+<dd>The output tensor. 4D tensor with shape `(batch_size, q_num_heads, q_sequence_length, v_head_size)` or 3D tensor with shape `(batch_size, q_sequence_length, hidden_size)`. For cases with a 3D input tensor, `hidden_size = q_num_heads * v_head_size`</dd>
+<dt><tt>present_key</tt> (optional) : T1</dt>
+<dd>Updated key cache with shape `(batch_size, kv_num_heads, total_sequence_length, head_size)` where `total_sequence_length = past_sequence_length + kv_sequence_length`.</dd>
+<dt><tt>present_value</tt> (optional) : T2</dt>
+<dd>Updated value cache with shape `(batch_size, kv_num_heads, total_sequence_length, v_head_size)` where `total_sequence_length = past_sequence_length + kv_sequence_length`.</dd>
+<dt><tt>qk_matmul_output</tt> (optional) : T1</dt>
+<dd>The output of QK matmul. 4D tensor with shape `(batch_size, q_num_heads, q_sequence_length, total_sequence_length)` where `total_sequence_length = past_sequence_length + kv_sequence_length`.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T1</tt> : tensor(bfloat16), tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain Q and K inputs types to float tensors.</dd>
+<dt><tt>T2</tt> : tensor(bfloat16), tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain V input types to float tensors.</dd>
+<dt><tt>U</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(bool)</dt>
+<dd>Constrain output 'mask' types to boolean tensors and input types.</dd>
+</dl>
+
 ### <a name="Cast-25"></a>**Cast-25**</a>
 
   The operator casts the elements of a given input tensor to a data type
@@ -31499,8 +31773,8 @@ This version of the operator has been available since version 24 of the default 
   | NaN               | NaN           | NaN                    |
   | Inf               | E8M0_MAX      | NaN                    |
   | x > E8M0_MAX      | E8M0_MAX      | NaN                    |
-  | x \< E8M0_MIN     | E8M0_MIN      | NaN                    |
-  | x \< 0            | Unspecified   | Unspecified            |
+  | x < E8M0_MIN      | E8M0_MIN      | NaN                    |
+  | x < 0             | Unspecified   | Unspecified            |
 
 #### Version
 
@@ -32018,7 +32292,7 @@ This version of the operator has been available since version 25 of the default 
   Given a tensor containing the data to be padded (`data`), a tensor containing the number of start and end pad values for axis (`pads`), (optionally) a `mode`, and (optionally) `constant_value`,
   a padded tensor (`output`) is generated.
 
-  The three supported `modes` are (similar to corresponding modes supported by `numpy.pad`):
+  The four supported `modes` are (similar to corresponding modes supported by `numpy.pad`):
 
   1) `constant`(default) - pads with a given constant value as specified by `constant_value` (which defaults to 0, empty string, or False)
 
@@ -32597,15 +32871,21 @@ This version of the operator has been available since version 25 of the default 
 ### <a name="Transpose-25"></a>**Transpose-25**</a>
 
   Returns a transpose of the input tensor. (Similar to `numpy.transpose`).
-  The optional attribute `perm` must be a permutation of the dimensions of
-  the input tensor. Axis `i` of the output tensor corresponds to the axis
-  `perm[i]` of the input tensor.
+  The optional attribute `perm` specifies the permutation of the axes of the
+  input tensor. `perm` must contain each axis index in `[0, n-1]` exactly once,
+  so its length is equal to the rank `n` of the input tensor.
+
+  Axis `i` of the output tensor corresponds to axis `perm[i]` of the input tensor.
+
+  If the attribute is omitted, its default value is `(n-1, ..., 0)`, where `n`
+  is the rank of the input tensor (that is, the dimensions are reversed).
+
   For example, when perm=(1, 0, 2), given an input tensor of shape (1, 2, 3),
   the output shape will be (2, 1, 3).
   When perm=(1, 2, 0), given an input tensor of shape (1, 2, 3),
   the output shape will be (2, 3, 1).
-  If the attribute `perm` is omitted, its default value is `(n-1, ..., 0)`,
-  where `n` is the rank of the input tensor.
+  A 0-D or 1-D input is valid; in those cases the output has the same shape
+  as the input.
 
 #### Version
 
@@ -32615,7 +32895,7 @@ This version of the operator has been available since version 25 of the default 
 
 <dl>
 <dt><tt>perm</tt> : list of ints</dt>
-<dd>A list of integers. By default, reverse the dimensions, otherwise permute the axes according to the values given. Its length must be equal to the rank of the input.</dd>
+<dd>A list of integers. By default, reverse the dimensions; otherwise permute the axes according to the values given. Its length must be equal to the rank of the input, and each value must be in the range `[0, rank-1]`.</dd>
 </dl>
 
 #### Inputs
@@ -32677,6 +32957,511 @@ This version of the operator has been available since version 25 of the default 
 <dl>
 <dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128), tensor(float8e4m3fn), tensor(float8e4m3fnuz), tensor(float8e5m2), tensor(float8e5m2fnuz), tensor(uint4), tensor(int4), tensor(float4e2m1), tensor(float8e8m0), tensor(uint2), tensor(int2)</dt>
 <dd>Constrain input and output types to all tensor types up to IRv13.</dd>
+</dl>
+
+## Version 26 of the default ONNX operator set
+### <a name="BitCast-26"></a>**BitCast-26**</a>
+
+  Reinterprets the binary representation of a tensor as a different data type,
+  specified by the 'to' attribute. Unlike Cast, BitCast preserves the exact bit
+  pattern without any value conversion.
+
+  The target data type must have the same bit-width as the input data type.
+  The output tensor has the same shape as the input tensor.
+  All types except string are supported. Implementations must treat the
+  underlying bytes as little endian.
+
+#### Version
+
+This version of the operator has been available since version 26 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>to</tt> : int (required)</dt>
+<dd>The data type to which the input tensor is bitwise reinterpreted. Must be one of the non-string types from DataType enum in TensorProto. The target type must have the same bit-width as the input type.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>input</tt> (non-differentiable) : T1</dt>
+<dd>Input tensor to be bitcast.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> (non-differentiable) : T2</dt>
+<dd>Output tensor with the same shape as the input.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T1</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(bool), tensor(complex64), tensor(complex128), tensor(float8e4m3fn), tensor(float8e4m3fnuz), tensor(float8e5m2), tensor(float8e5m2fnuz), tensor(uint4), tensor(int4), tensor(float4e2m1), tensor(float8e8m0), tensor(uint2), tensor(int2)</dt>
+<dd>Constrain input types. Bitcasting from string is not supported.</dd>
+<dt><tt>T2</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(bool), tensor(complex64), tensor(complex128), tensor(float8e4m3fn), tensor(float8e4m3fnuz), tensor(float8e5m2), tensor(float8e5m2fnuz), tensor(uint4), tensor(int4), tensor(float4e2m1), tensor(float8e8m0), tensor(uint2), tensor(int2)</dt>
+<dd>Constrain output types. Bitcasting to string is not supported.</dd>
+</dl>
+
+### <a name="CumProd-26"></a>**CumProd-26**</a>
+
+  Performs cumulative product of the input elements along the given axis.
+  By default, it will do the product inclusively meaning the first element is copied as is.
+  Through an `exclusive` attribute, this behavior can change to exclude the first element.
+  It can also perform product in the opposite direction of the axis. For that, set `reverse` attribute to 1.
+
+  Example:
+  ```
+  input_x = [1, 2, 3]
+  axis=0
+  output = [1, 2, 6]
+  exclusive=1
+  output = [1, 1, 2]
+  exclusive=0
+  reverse=1
+  output = [6, 6, 3]
+  exclusive=1
+  reverse=1
+  output = [6, 3, 1]
+  ```
+
+
+#### Version
+
+This version of the operator has been available since version 26 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>exclusive</tt> : int (default is 0)</dt>
+<dd>If set to 1 will return exclusive product in which the top element is not included. In other terms, if set to 1, the j-th output element would be the product of the first (j-1) elements. Otherwise, it would be the product of the first j elements.</dd>
+<dt><tt>reverse</tt> : int (default is 0)</dt>
+<dd>If set to 1 will perform the products in reverse direction.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>x</tt> (differentiable) : T</dt>
+<dd>An input tensor that is to be processed.</dd>
+<dt><tt>axis</tt> (non-differentiable) : T2</dt>
+<dd>A 0-D tensor. Must be in the range [-rank(x), rank(x)-1]. Negative value means counting dimensions from the back.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>y</tt> (differentiable) : T</dt>
+<dd>Output tensor of the same type as 'x' with cumulative products of the x's elements</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(uint32), tensor(uint64), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
+<dd>Constrain input and output types to numeric tensors.</dd>
+<dt><tt>T2</tt> : tensor(int32), tensor(int64)</dt>
+<dd>axis tensor can be int32 or int64 only</dd>
+</dl>
+
+## Version 27 of the default ONNX operator set
+### <a name="CausalConvWithState-27"></a>**CausalConvWithState-27**</a>
+
+  Stateful causal 1D depthwise convolution.
+
+  Used by Gated DeltaNet (Qwen3.5) and Mamba (Jamba, FalconMamba) as a preprocessing step.
+  Replaces the 3-op pattern (Concat + Conv + Slice) with a single fused operation.
+
+  The convolution is causal (looks only at current and past positions) and depthwise
+  (each channel is convolved independently with its own kernel).
+
+  The input, weight, past_state, output, and present_state tensors are rank-3 with
+  shape (batch_size, channels, length). The optional bias input is rank-1 with
+  shape (channels). For higher-dimensional data, use Reshape nodes before and
+  after this operator to pack extra dimensions into the batch or channel axis.
+
+  Weight layout: (channels, 1, k) for depthwise convolution.
+  The carry state stores the last (k-1) positions for incremental decode.
+
+  The optional activation attribute supports fused SiLU/Swish activation.
+
+
+#### Version
+
+This version of the operator has been available since version 27 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>activation</tt> : string (default is none)</dt>
+<dd>Fused activation function. One of: 'silu', 'swish', 'none'. Default is 'none'.</dd>
+</dl>
+
+#### Inputs (2 - 4)
+
+<dl>
+<dt><tt>input</tt> (differentiable) : T</dt>
+<dd>Input tensor with shape (batch_size, channels, length). Channels-first layout.</dd>
+<dt><tt>weight</tt> (differentiable) : T</dt>
+<dd>Depthwise convolution kernel with shape (channels, 1, k) where k is the kernel size. The middle dim of size 1 follows the ONNX `Conv` weight layout `(M, C/group, k1, ..., kn)`: since this op is always depthwise, `group = channels`, so `C/group = 1`. Keeping this layout makes the weight tensor a drop-in for a depthwise `Conv(group=channels)` weight, so `Conv` <-> `CausalConvWithState` rewrites require no reshape.</dd>
+<dt><tt>bias</tt> (optional, differentiable) : T</dt>
+<dd>Optional per-channel bias with shape (channels).</dd>
+<dt><tt>past_state</tt> (optional, non-differentiable) : T</dt>
+<dd>Carry state from previous step with shape (batch_size, channels, k - 1). If not provided, padding is zero.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> (differentiable) : T</dt>
+<dd>Convolution output with same shape as input.</dd>
+<dt><tt>present_state</tt> (non-differentiable) : T</dt>
+<dd>Updated carry state with shape (batch_size, channels, k - 1). Contains the last (k - 1) values of the effective padded/concatenated sequence along the causal axis, including any values from past_state or zero-padding when the current input is shorter than k - 1.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float), tensor(float16), tensor(bfloat16)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
+### <a name="LinearAttention-27"></a>**LinearAttention-27**</a>
+
+  Unified linear attention operator for autoregressive decoding (T=1) and prefill (T>1).
+
+  The query, key, value, and (where applicable) decay/beta inputs use 3D packed format
+  [B, T, H*D], where heads are flattened into the last dimension; q_num_heads and
+  kv_num_heads are always required and are used to unpack to 4D internally for computation.
+  The optional past_state and present_state are 4D with shape (B, H_kv, d_k, d_v).
+
+  Group-query attention (GQA) is supported: q_num_heads must be a positive multiple of
+  kv_num_heads. When q_num_heads == kv_num_heads this reduces to multi-headed linear
+  attention; when q_num_heads > kv_num_heads each KV head (and its recurrent state) is
+  shared by `q_num_heads / kv_num_heads` query heads (multi-query attention is the
+  special case kv_num_heads == 1).
+
+  The update_rule attribute selects the recurrence type:
+  - "linear": S_t = S_{t-1} + k_t ⊗ v_t; o_t = scale * q_t^T S_t
+  - "gated": S_t = exp(g_t) * S_{t-1} + k_t ⊗ v_t; o_t = scale * q_t^T S_t
+  - "delta": S_t = S_{t-1} + β_t * k_t ⊗ (v_t - S_{t-1}^T k_t); o_t = scale * q_t^T S_t
+  - "gated_delta": S_t = exp(g_t) * S_{t-1} + β_t * k_t ⊗ (v_t - exp(g_t) * S_{t-1}^T k_t); o_t = scale * q_t^T S_t
+
+  where g_t is the decay (in log-space), β_t is the update rate, and ⊗ denotes outer product.
+
+  Semantics: Equivalent to running the recurrent update sequentially for each token,
+  but may be implemented using chunk-parallel algorithms for GPU efficiency.
+
+
+#### Version
+
+This version of the operator has been available since version 27 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>chunk_size</tt> : int (default is 64)</dt>
+<dd>Chunk size for the chunk-parallel WY decomposition during prefill (T>1). Tuning hint; does not affect output correctness.</dd>
+<dt><tt>kv_num_heads</tt> : int (required)</dt>
+<dd>Number of key/value heads. Always required.</dd>
+<dt><tt>q_num_heads</tt> : int (required)</dt>
+<dd>Number of query heads. Always required.</dd>
+<dt><tt>scale</tt> : float (default is 0.0)</dt>
+<dd>Output scaling factor. When 0.0 (default), derives d_k = query.shape[-1] / q_num_heads and uses 1/sqrt(d_k). Set explicitly to override.</dd>
+<dt><tt>update_rule</tt> : string (default is gated_delta)</dt>
+<dd>The update rule for the linear attention recurrence. One of: 'linear', 'gated', 'delta', 'gated_delta'. Default is 'gated_delta'.</dd>
+</dl>
+
+#### Inputs (3 - 6)
+
+<dl>
+<dt><tt>query</tt> (differentiable) : T</dt>
+<dd>Query vectors with 3D packed shape (B, T, H_q * d_k). Heads are packed into the last dimension.</dd>
+<dt><tt>key</tt> (differentiable) : T</dt>
+<dd>Key vectors with 3D packed shape (B, T, H_kv * d_k). Should be L2-normalized for delta/gated_delta modes.</dd>
+<dt><tt>value</tt> (differentiable) : T</dt>
+<dd>Value vectors with 3D packed shape (B, T, H_kv * d_v).</dd>
+<dt><tt>past_state</tt> (optional, non-differentiable) : S</dt>
+<dd>Recurrent state from previous step with shape (B, H_kv, d_k, d_v). Always 4D. If not provided, defaults to zeros.</dd>
+<dt><tt>decay</tt> (optional, differentiable) : T</dt>
+<dd>Exponential decay gate in log-space. 3D packed shape: (B, T, H_kv * d_k) for per-key-dimension decay (GLA/RWKV-6), or (B, T, H_kv) for per-head scalar decay (DeltaNet/RetNet). Required for 'gated' and 'gated_delta' modes.</dd>
+<dt><tt>beta</tt> (optional, differentiable) : T</dt>
+<dd>Update rate (sigmoid output). 3D packed shape: (B, T, H_kv) or (B, T, 1). Required for 'delta' and 'gated_delta' modes.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> (differentiable) : T</dt>
+<dd>Attention output with 3D packed shape (B, T, H_q * d_v).</dd>
+<dt><tt>present_state</tt> (non-differentiable) : S</dt>
+<dd>Updated recurrent state with shape (B, H_kv, d_k, d_v). Always 4D.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(bfloat16), tensor(float)</dt>
+<dd>Constrain activation input and output types to float16, bfloat16, or float32 tensors.</dd>
+<dt><tt>S</tt> : tensor(float16), tensor(bfloat16), tensor(float)</dt>
+<dd>Constrain state types to float16, bfloat16, or float32 tensors. Should be float32 or the same as T for numerical stability on long sequences.</dd>
+</dl>
+
+### <a name="Range-27"></a>**Range-27**</a>
+
+  Generate a tensor containing a sequence of numbers that begin at `start` and extends by increments of `delta`
+  up to `limit` (exclusive).
+
+  The number of elements in the output of range is computed as below:
+  ```
+  number_of_elements = max( ceil( (limit - start) / delta ) , 0 )
+  ```
+  The pseudocode determining the contents of the output is shown below:
+  ```
+  for(int i=0; i<number_of_elements; ++i) {
+    output[i] =  start + (i * delta);
+  }
+  ```
+  Example 1:
+  ```
+  Inputs: start = 3, limit = 9, delta = 3
+  Output: [3, 6]
+  ```
+  Example 2:
+  ```
+  Inputs: start = 10, limit = 4, delta = -2
+  Output: [10, 8, 6]
+  ```
+
+  For `float16` and `bfloat16` inputs, the `stash_type` attribute controls the precision used for
+  intermediate accumulation. Setting `stash_type` to `1` (float) causes `start`, `limit`, and
+  `delta` to be cast to 32-bit float before the loop, with the output cast back to the original
+  type. This avoids precision loss for large ranges where successive additions in float16 or
+  bfloat16 would otherwise be inexact (e.g. `x + 1 == x` for large `x`).
+
+#### Version
+
+This version of the operator has been available since version 27 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>stash_type</tt> : int (default is 1)</dt>
+<dd>The data type used for intermediate computation when T is float16 or bfloat16. Defaults to 1 (float). Has no effect for other types.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>start</tt> : T</dt>
+<dd>Scalar. First entry for the range of output values.</dd>
+<dt><tt>limit</tt> : T</dt>
+<dd>Scalar. Exclusive upper limit for the range of output values.</dd>
+<dt><tt>delta</tt> : T</dt>
+<dd>Scalar. Value to step by.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> : T</dt>
+<dd>A 1-D tensor with same type as the inputs containing generated range of values.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float), tensor(double), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(bfloat16)</dt>
+<dd>Constrain input types to common numeric type tensors.</dd>
+</dl>
+
+## Version 28 of the default ONNX operator set
+### <a name="Celu-28"></a>**Celu-28**</a>
+
+  Continuously Differentiable Exponential Linear Units:
+  Perform the linear unit element-wise on the input tensor X
+  using formula:
+
+  ```
+  max(0,x) + min(0,alpha*(exp(x/alpha)-1))
+  ```
+
+#### Version
+
+This version of the operator has been available since version 28 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>alpha</tt> : float (default is 1.0)</dt>
+<dd>The Alpha value in Celu formula which control the shape of the unit. The default value is 1.0.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> (differentiable) : T</dt>
+<dd>Input tensor</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> (differentiable) : T</dt>
+<dd>Output tensor</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(bfloat16), tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
+### <a name="SwiGLU-28"></a>**SwiGLU-28**</a>
+
+  SwiGLU is a gated activation that takes two inputs, a gate `A` and a linear (value)
+  input `B`, and produces one output `Y`. It applies the Swish activation to the gate
+  and multiplies the result elementwise by the linear input:
+
+  ```
+  Y = Swish_alpha(A) * B
+  ```
+
+  The gate activation `Swish_alpha` is exactly the `Swish` operator with the same
+  `alpha`, i.e. `Swish_alpha(a) = a * Sigmoid(alpha * a)`. Inputs `A` and `B` must
+  have identical shapes; broadcasting is not applied and the output `Y` has the same
+  shape as the inputs.
+
+  Exporters typically produce `A` and `B` in one of two ways: for the common
+  two-projection form (e.g. Llama's `gate_proj`/`up_proj`) wire the two projection
+  outputs directly to `A` (gate) and `B` (value); for a fused/packed single
+  projection, split it upstream into `A` and `B` with `Split` (contiguous layout)
+  or `Slice`/`Gather` (interleaved layout).
+
+#### Version
+
+This version of the operator has been available since version 28 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>alpha</tt> : float (default is 1.0)</dt>
+<dd>Coefficient that scales the gate input inside the sigmoid of the Swish activation. The default value is 1.0.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>A</tt> (differentiable) : T</dt>
+<dd>Gate input tensor</dd>
+<dt><tt>B</tt> (differentiable) : T</dt>
+<dd>Linear (value) input tensor</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> (differentiable) : T</dt>
+<dd>Output tensor</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(bfloat16), tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
+# ai.onnx.preview
+## Version 1 of the 'ai.onnx.preview' operator set
+### <a name="ai.onnx.preview.FlexAttention-1"></a>**ai.onnx.preview.FlexAttention-1**</a>
+
+  Computes scaled dot-product attention over rank-4 (batched, multi-head) inputs,
+  with optional user-provided customization subgraphs at two stages:
+
+  1. score_mod: Modify the attention score tensor after Q·K^T
+  2. prob_mod: Modify the probability tensor after Softmax
+
+  This operator mirrors the capabilities of PyTorch's flex_attention:
+  https://docs.pytorch.org/docs/stable/nn.attention.flex_attention.html
+
+  Input Shapes (MUST be rank-4 tensors):
+  - Q: `(batch_size, q_num_heads, q_sequence_length, head_size)`
+  - K: `(batch_size, kv_num_heads, kv_sequence_length, head_size)`
+  - V: `(batch_size, kv_num_heads, kv_sequence_length, v_head_size)`
+
+  Output Shape:
+  - Y: `(batch_size, q_num_heads, q_sequence_length, v_head_size)`
+
+  FlexAttention Computation:
+  ```
+  Scores = (Q @ K^T) * scale
+  Scores = score_mod(Scores)             # if 'score_mod' is provided
+  Probs = Softmax(Scores, axis=-1)
+  Probs = prob_mod(Probs)                # if 'prob_mod' is provided
+  Y = Probs @ V
+  ```
+
+  Grouped Query Attention (GQA):
+  When `q_num_heads != kv_num_heads`, each K/V head is shared by a contiguous
+  group of query heads in head-index order. Let
+  `group_size = q_num_heads / kv_num_heads`; then query head `h` uses K/V head
+  `floor(h / group_size)`. `q_num_heads` must be a multiple of
+  `kv_num_heads`.
+
+  Modifier Subgraphs (score_mod, prob_mod):
+  Each modifier subgraph takes exactly one rank-4 tensor input and must produce
+  exactly one rank-4 tensor output of the same shape and element type.
+  - score_mod input/output shape: `(batch_size, q_num_heads, q_sequence_length, kv_sequence_length)`
+  - prob_mod  input/output shape: `(batch_size, q_num_heads, q_sequence_length, kv_sequence_length)`
+  The element type is determined by softmax_precision (defaults to float32 for
+  non-double inputs, otherwise double).
+
+  Masking can be expressed in score_mod by writing masked positions as -inf (or a
+  large negative value appropriate for the target precision).
+
+#### Version
+
+No versioning maintained for experimental ops.
+#### Attributes
+
+<dl>
+<dt><tt>prob_mod</tt> : graph</dt>
+<dd>Optional probability modifier subgraph with 1 rank-4 tensor input and 1 rank-4 tensor output of the same shape and element type: (probs) -> probs_out. probs has softmax_precision element type and shape (B, Hq, L, S). The output must preserve the input shape.</dd>
+<dt><tt>scale</tt> : float</dt>
+<dd>Scaling factor for Q*K^T. Defaults to 1/sqrt(head_size).</dd>
+<dt><tt>score_mod</tt> : graph</dt>
+<dd>Optional score modifier subgraph with 1 rank-4 tensor input and 1 rank-4 tensor output of the same shape and element type: (scores) -> scores_out. scores has softmax_precision element type and shape (B, Hq, L, S). The output must preserve the input shape.</dd>
+<dt><tt>softmax_precision</tt> : int</dt>
+<dd>Floating-point precision for softmax computation. Defaults to float32 for non-double inputs, otherwise uses double. Must be explicitly specified for non-float types.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>Q</tt> : T1</dt>
+<dd>Query tensor with shape `(batch_size, q_num_heads, q_seq_len, head_size)`.</dd>
+<dt><tt>K</tt> : T1</dt>
+<dd>Key tensor with shape `(batch_size, kv_num_heads, kv_seq_len, head_size)`.</dd>
+<dt><tt>V</tt> : T1</dt>
+<dd>Value tensor with shape `(batch_size, kv_num_heads, kv_seq_len, v_head_size)`.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> : T1</dt>
+<dd>Output tensor with shape `(batch_size, q_num_heads, q_seq_len, v_head_size)`.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T1</tt> : tensor(bfloat16), tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain Q, K, V to float tensors.</dd>
 </dl>
 
 # ai.onnx.preview.training

@@ -1,8 +1,12 @@
-/*
- * SPDX-License-Identifier: Apache-2.0
- */
+// Copyright (c) ONNX Project Contributors
+//
+// SPDX-License-Identifier: Apache-2.0
+
+#include <string>
+#include <vector>
 
 #include "onnx/defs/schema.h"
+#include "onnx/defs/type_builders.h"
 
 #ifdef ONNX_ML
 namespace ONNX_NAMESPACE {
@@ -28,11 +32,11 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
         .Output(0, "Y", "Output data. If strings are input, the output values are integers, and vice versa.", "T2")
         .TypeConstraint(
             "T1",
-            {"tensor(string)", "tensor(int64)"},
+            {types::String, types::Int64},
             "The input type must be a tensor of integers or strings, of any shape.")
         .TypeConstraint(
             "T2",
-            {"tensor(string)", "tensor(int64)"},
+            {types::String, types::Int64},
             "The output type will be a tensor of strings or integers, and will have the same shape as the input.")
         .Attr("classes_strings", "A list of labels.", AttributeProto::STRINGS, OPTIONAL_VALUE)
         .Attr(
@@ -79,11 +83,11 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
         .Output(1, "Z", "The class score for each class, for each point, a tensor of shape [N,E].", "tensor(float)")
         .TypeConstraint(
             "T1",
-            {"tensor(float)", "tensor(double)", "tensor(int64)", "tensor(int32)"},
+            {types::Float, types::Double, types::Int64, types::Int32},
             "The input type must be a tensor of a numeric type.")
         .TypeConstraint(
             "T2",
-            {"tensor(string)", "tensor(int64)"},
+            {types::String, types::Int64},
             "The output type will be a tensor of strings or integers, depending on which of the classlabels_* "
             "attributes is used.")
         .Attr("nodes_treeids", "Tree id for each node.", AttributeProto::INTS, OPTIONAL_VALUE)
@@ -182,11 +186,11 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
         .Output(1, "Z", "The class score for each class, for each point, a tensor of shape [N,E].", "tensor(float)")
         .TypeConstraint(
             "T1",
-            {"tensor(float)", "tensor(double)", "tensor(int64)", "tensor(int32)"},
+            {types::Float, types::Double, types::Int64, types::Int32},
             "The input type must be a tensor of a numeric type.")
         .TypeConstraint(
             "T2",
-            {"tensor(string)", "tensor(int64)"},
+            {types::String, types::Int64},
             "The output type will be a tensor of strings or integers, depending on which of the classlabels_* "
             "attributes is used.")
         .Attr("nodes_treeids", "Tree id for each node.", AttributeProto::INTS, OPTIONAL_VALUE)
@@ -347,7 +351,7 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
         .Output(0, "Y", "N classes", "tensor(float)")
         .TypeConstraint(
             "T",
-            {"tensor(float)", "tensor(double)", "tensor(int64)", "tensor(int32)"},
+            {types::Float, types::Double, types::Int64, types::Int32},
             "The input type must be a tensor of a numeric type.")
         .Attr("nodes_treeids", "Tree id for each node.", AttributeProto::INTS, OPTIONAL_VALUE)
         .Attr(
@@ -428,7 +432,7 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
         .Output(0, "Y", "N classes", "tensor(float)")
         .TypeConstraint(
             "T",
-            {"tensor(float)", "tensor(double)", "tensor(int64)", "tensor(int32)"},
+            {types::Float, types::Double, types::Int64, types::Int32},
             "The input type must be a tensor of a numeric type.")
         .Attr("nodes_treeids", "Tree id for each node.", AttributeProto::INTS, OPTIONAL_VALUE)
         .Attr(
@@ -565,13 +569,10 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
         .SetDoc(LabelEncoder_ver2_doc)
         .Input(0, "X", "Input data. It can be either tensor or scalar.", "T1")
         .Output(0, "Y", "Output data.", "T2")
-        .TypeConstraint(
-            "T1",
-            {"tensor(string)", "tensor(int64)", "tensor(float)"},
-            "The input type is a tensor of any shape.")
+        .TypeConstraint("T1", {types::String, types::Int64, types::Float}, "The input type is a tensor of any shape.")
         .TypeConstraint(
             "T2",
-            {"tensor(string)", "tensor(int64)", "tensor(float)"},
+            {types::String, types::Int64, types::Float},
             "Output type is determined by the specified 'values_*' attribute.")
         .Attr(
             "keys_strings",

@@ -1,10 +1,11 @@
-/*
- * SPDX-License-Identifier: Apache-2.0
- */
+// Copyright (c) ONNX Project Contributors
+//
+// SPDX-License-Identifier: Apache-2.0
 
 #pragma once
 
 #include <cmath>
+#include <string>
 #include <vector>
 
 #include "onnx/defs/schema.h"
@@ -14,6 +15,11 @@ namespace ONNX_NAMESPACE {
 void resizeShapeInference(InferenceContext& ctx);
 
 void gridSampleShapeInference(InferenceContext& ctx);
+
+// Shared type/shape inference for the OneHot operator. 'version' is the opset
+// version of the calling schema; before opset 11 'indices' were required to be
+// non-negative, which is enforced when 'indices' is a constant.
+void oneHotShapeInference(InferenceContext& ctx, int version);
 
 void resizeShapeInferenceHelper(
     const TensorShapeProto& input_shape,
@@ -25,7 +31,7 @@ void resizeShapeInferenceHelper(
     const std::vector<int64_t>& sizes_data,
     TensorShapeProto* output_shape);
 
-// Belows are called by ops between opset versions in the name inclusively.
+// Functions called by ops between opset versions in the name inclusively:
 void resizeShapeInference_opset7_to_10(InferenceContext& ctx);
 void resizeShapeInference_opset11_to_12(InferenceContext& ctx);
 void resizeShapeInference_opset13_to_18(InferenceContext& ctx);
@@ -54,6 +60,6 @@ extern const char* Transpose_doc;
 std::function<void(OpSchema&)> PadDocGenerator(
     const char* description,
     const char* mode_description,
-    const std::vector<std::string>& op_schema = OpSchema::all_tensor_types_ir4(),
-    const std::string& op_schema_description = "Constrain input and output types to all tensor types.");
+    std::vector<std::string> op_schema = OpSchema::all_tensor_types_ir4(),
+    std::string op_schema_description = "Constrain input and output types to all tensor types.");
 } // namespace ONNX_NAMESPACE

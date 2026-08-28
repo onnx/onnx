@@ -1,12 +1,16 @@
-/*
- * SPDX-License-Identifier: Apache-2.0
- */
+// Copyright (c) ONNX Project Contributors
+//
+// SPDX-License-Identifier: Apache-2.0
 
 #include <algorithm>
+#include <string>
+#include <utility>
+#include <vector>
 
 #include "onnx/defs/function.h"
 #include "onnx/defs/schema.h"
 #include "onnx/defs/sequence/utils.h"
+#include "onnx/defs/type_builders.h"
 
 namespace ONNX_NAMESPACE {
 
@@ -125,7 +129,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint("S", OpSchema::all_tensor_sequence_types(), "Constrain to any tensor type.")
         .TypeConstraint(
             "I",
-            {"tensor(int32)", "tensor(int64)"},
+            {types::Int32, types::Int64},
             "Constrain position to integral tensor. It must be a scalar(tensor of empty shape).")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           const auto input0_type = ctx.getInputType(0);
@@ -183,7 +187,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint("T", OpSchema::all_tensor_types(), "Constrain to any tensor type.")
         .TypeConstraint(
             "I",
-            {"tensor(int32)", "tensor(int64)"},
+            {types::Int32, types::Int64},
             "Constrain position to integral tensor. It must be a scalar(tensor of empty shape).")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           const auto input0_type = ctx.getInputType(0);
@@ -221,7 +225,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint("S", OpSchema::all_tensor_sequence_types(), "Constrain to any tensor type.")
         .TypeConstraint(
             "I",
-            {"tensor(int32)", "tensor(int64)"},
+            {types::Int32, types::Int64},
             "Constrain position to integral tensor. It must be a scalar(tensor of empty shape).")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           const auto input0_type = ctx.getInputType(0);
@@ -245,7 +249,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint("S", OpSchema::all_tensor_sequence_types(), "Constrain to any tensor type.")
         .TypeConstraint(
             "I",
-            {"tensor(int64)"},
+            {types::Int64},
             "Constrain output to integral tensor. It must be a scalar(tensor of empty shape).")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           auto output_tensor_type = ctx.getOutputType(0)->mutable_tensor_type();
@@ -561,7 +565,7 @@ BuildSequenceMapBodyFunc(const FunctionBodyBuildContext& ctx, const OpSchema& sc
 
   std::vector<FunctionBodyHelper::NodeDef> nodes;
 
-  // TODO: figure out a way to prevent name collisions?
+  // TODO(ONNX): figure out a way to prevent name collisions?
   auto first_input_name = functionProto.input(0);
   std::string prefix = MakeString("SequenceMap_", first_input_name);
   std::string seqlen = prefix + "_seqlen";

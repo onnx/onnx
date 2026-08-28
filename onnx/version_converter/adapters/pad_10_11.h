@@ -1,8 +1,6 @@
 // Copyright (c) ONNX Project Contributors
-
-/*
- * SPDX-License-Identifier: Apache-2.0
- */
+//
+// SPDX-License-Identifier: Apache-2.0
 
 // Adapter for Pad in default domain from version 10 to 11
 
@@ -13,8 +11,7 @@
 
 #include "onnx/version_converter/adapters/adapter.h"
 
-namespace ONNX_NAMESPACE {
-namespace version_conversion {
+namespace ONNX_NAMESPACE::version_conversion {
 
 class Pad_10_11 final : public Adapter {
  public:
@@ -39,7 +36,7 @@ class Pad_10_11 final : public Adapter {
       Tensor t_value;
       t_value.elem_type() = TensorProto_DataType_FLOAT;
       auto& data_value = t_value.floats();
-      data_value.emplace_back(node->f(kvalue));
+      data_value.emplace_back(static_cast<float>(node->f(kvalue)));
       Node* constant = graph->create(kConstant);
       constant->insertBefore(node);
       constant->t_(kvalue, t_value);
@@ -54,5 +51,4 @@ class Pad_10_11 final : public Adapter {
   }
 };
 
-} // namespace version_conversion
-} // namespace ONNX_NAMESPACE
+} // namespace ONNX_NAMESPACE::version_conversion

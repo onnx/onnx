@@ -1,16 +1,17 @@
-/*
- * SPDX-License-Identifier: Apache-2.0
- */
+// Copyright (c) ONNX Project Contributors
+//
+// SPDX-License-Identifier: Apache-2.0
 #include "onnx/defs/sequence/utils.h"
 
 #include <algorithm>
 #include <numeric>
 #include <string>
+#include <utility>
+#include <vector>
 
-namespace ONNX_NAMESPACE {
-namespace defs {
-namespace sequence {
-namespace utils {
+#include "onnx/defs/type_builders.h"
+
+namespace ONNX_NAMESPACE::defs::sequence::utils {
 
 // Common documentation for SplitToSequence operator, versions 11 and 24
 static constexpr const char* SplitToSequence_ver11_doc =
@@ -30,9 +31,9 @@ in 'split' must be equal to the dimension size of input tensor on 'axis'.
 )DOC";
 
 std::function<void(OpSchema&)> SplitToSequenceOpGenerator(
-    const std::vector<std::string>& input_types,
-    const std::vector<std::string>& output_types) {
-  return [=](OpSchema& schema) {
+    std::vector<std::string> input_types,
+    std::vector<std::string> output_types) {
+  return [input_types = std::move(input_types), output_types = std::move(output_types)](OpSchema& schema) {
     schema.Input(0, "input", "The tensor to split", "T")
         .Input(
             1,
@@ -43,7 +44,7 @@ std::function<void(OpSchema&)> SplitToSequenceOpGenerator(
             OpSchema::Optional)
         .Output(0, "output_sequence", "One or more outputs forming a sequence of tensors after splitting", "S")
         .TypeConstraint("T", input_types, "Constrain input types to all tensor types.")
-        .TypeConstraint("I", {"tensor(int32)", "tensor(int64)"}, "Constrain split size to integral tensor.")
+        .TypeConstraint("I", {types::Int32, types::Int64}, "Constrain split size to integral tensor.")
         .TypeConstraint("S", output_types, "Constrain output types to all tensor types.")
         .Attr(
             "axis",
@@ -127,6 +128,9 @@ std::function<void(OpSchema&)> SplitToSequenceOpGenerator(
               const auto& splitShape = getInputShape(ctx, 1);
               if (splitShape.dim_size() == 0) {
                 // split is scalar
+                if (splitSizes[0] <= 0) {
+                  fail_shape_inference("Scalar input 'split' must be greater than zero.");
+                }
                 if (splitDimValue % splitSizes[0] == 0) {
                   // all output chunks have the same shape, assign that to output sequence shape.
                   return splitSizes[0];
@@ -184,7 +188,4 @@ std::function<void(OpSchema&)> SplitToSequenceOpGenerator(
   };
 }
 
-} // namespace utils
-} // namespace sequence
-} // namespace defs
-} // namespace ONNX_NAMESPACE
+} // namespace ONNX_NAMESPACE::defs::sequence::utils
