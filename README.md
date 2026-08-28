@@ -10,9 +10,10 @@ SPDX-License-Identifier: Apache-2.0
 [![CI](https://github.com/onnx/onnx/actions/workflows/main.yml/badge.svg)](https://github.com/onnx/onnx/actions/workflows/main.yml)
 [![CII Best Practices](https://bestpractices.coreinfrastructure.org/projects/3313/badge)](https://bestpractices.coreinfrastructure.org/projects/3313)
 [![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/onnx/onnx/badge)](https://api.securityscorecards.dev/projects/github.com/onnx/onnx)
+[![SLSA 2](https://slsa.dev/images/gh-badge-level2.svg)](https://slsa.dev)
 [![REUSE compliant](https://api.reuse.software/badge/github.com/onnx/onnx)](https://api.reuse.software/info/github.com/onnx/onnx)
 [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
-[![Black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
+[![abi3 compatible](https://img.shields.io/badge/abi3-compatible-brightgreen)](https://docs.python.org/3/c-api/stable.html)
 
 [Open Neural Network Exchange (ONNX)](https://onnx.ai) is an open ecosystem that empowers AI developers
 to choose the right tools as their project evolves. ONNX provides an open source format for AI models, both deep learning and traditional ML. It defines an extensible computation graph model, as well as definitions of built-in operators and standard
@@ -20,11 +21,12 @@ data types. Currently we focus on the capabilities needed for inferencing (scori
 
 ONNX is [widely supported](http://onnx.ai/supported-tools) and can be found in many frameworks, tools, and hardware. Enabling interoperability between different frameworks and streamlining the path from research to production helps increase the speed of innovation in the AI community. We invite the community to join us and further evolve ONNX.
 
+
 # Use ONNX
 
 * [Documentation of ONNX Python Package](https://onnx.ai/onnx/)
 * [Tutorials for creating ONNX models](https://github.com/onnx/tutorials)
-* [Pre-trained ONNX models](https://github.com/onnx/models)
+* [Pre-trained ONNX models](https://huggingface.co/onnx-community)
 
 # Learn about the ONNX spec
 
@@ -63,19 +65,17 @@ Community Meetups are held at least once a year. Content from previous community
 * 2022.06.24 <https://lf-aidata.atlassian.net/wiki/spaces/DL/pages/14093969/ONNX+Community+Day+-+2022+June+24>
 * 2023.06.28 <https://lf-aidata.atlassian.net/wiki/spaces/DL/pages/14094507/ONNX+Community+Day+2023+-+June+28>
 
-
-
 # Discuss
 
-We encourage you to open [Issues](https://github.com/onnx/onnx/issues), or use [Slack](https://lfaifoundation.slack.com/) (If you have not joined yet, please use this [link](https://join.slack.com/t/lfaifoundation/shared_invite/zt-o65errpw-gMTbwNr7FnNbVXNVFkmyNA) to join the group) for more real-time discussion.
+We encourage you to open [Issues](https://github.com/onnx/onnx/issues), or use [Slack](https://lfaifoundation.slack.com/) (If you have not joined yet, please use this [link](https://join.slack.com/t/lfaifoundation/shared_invite/zt-3wx5vohc3-MeSYi3_dscb~u~cqs7zlPg) to join the group) for more real-time discussion.
 
 # Follow Us
 
-Stay up to date with the latest ONNX news. [[Facebook](https://www.facebook.com/onnxai/)] [[Twitter](https://twitter.com/onnxai)]
+Stay up to date with the latest ONNX news. [[Facebook](https://www.facebook.com/onnxai/)] [[Twitter/X](https://twitter.com/onnxai)]
 
 # Roadmap
 
-A roadmap process takes place every year. More details can be found [here](https://github.com/onnx/steering-committee/tree/main/roadmap)
+A roadmap process takes place every year. More details can be found in [ROADMAP.md](ROADMAP.md).
 
 # Installation
 
@@ -88,6 +88,11 @@ pip install onnx # or pip install onnx[reference] for optional reference impleme
 [ONNX weekly packages](https://pypi.org/project/onnx-weekly/) are published in PyPI to enable experimentation and early testing.
 
 Detailed install instructions, including Common Build Options and Common Errors can be found [here](https://github.com/onnx/onnx/blob/main/INSTALL.md)
+
+# Python ABI3 Compatibility
+
+This package provides [abi3](https://docs.python.org/3/c-api/stable.html)-compatible wheels, allowing a single binary wheel to work across multiple Python versions (from 3.12 onwards).
+
 
 # Testing
 
@@ -107,9 +112,37 @@ pytest
 
 Check out the [contributor guide](https://github.com/onnx/onnx/blob/main/CONTRIBUTING.md) for instructions.
 
+# Reproducible Build Support
+
+ONNX build and release workflows set
+[`SOURCE_DATE_EPOCH`](https://reproducible-builds.org/docs/source-date-epoch/)
+to the source commit timestamp. This removes timestamp-dependent variation from
+supported build steps and makes independent build comparison easier.
+
+`SOURCE_DATE_EPOCH` alone does not guarantee byte-for-byte identical artifacts
+across different environments. A reproducibility check must also use the same
+source revision, dependency versions, toolchain, target platform, and build
+configuration, and then compare the resulting artifacts.
+
+### Why this matters
+
+A fixed build timestamp removes one known source of nondeterminism. When
+independent builds use the same controlled inputs, their artifacts can be
+compared byte for byte, with cryptographic digests providing a practical
+shortcut. A byte-for-byte match demonstrates identical outputs, while a
+mismatch identifies a difference that needs investigation. This comparison
+complements release provenance attestations; it does not replace them.
+
+Release artifacts are available from [PyPI](https://pypi.org/project/onnx/).
+
 # License
 
 [Apache License v2.0](LICENSE)
+
+# Trademark
+Checkout [https://trademarks.justia.com](https://trademarks.justia.com/877/25/onnx-87725026.html) for the trademark.
+
+[General rules of the Linux Foundation on Trademark usage](https://www.linuxfoundation.org/legal/trademark-usage)
 
 # Code of Conduct
 

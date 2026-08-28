@@ -16,7 +16,6 @@ import numpy as np
 import onnx
 import onnx.external_data_helper as ext_data
 import onnx.helper
-import onnx.onnx_cpp2py_export.checker as c_checker
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
@@ -48,9 +47,12 @@ def _set_external_data(
 def _enumerate_subgraphs(graph):
     for node in graph.node:
         for att in node.attribute:
-            if att.g:
+            if att.HasField("g"):
                 yield att.g
                 yield from _enumerate_subgraphs(att.g)
+            for sub_g in att.graphs:
+                yield sub_g
+                yield from _enumerate_subgraphs(sub_g)
 
 
 def make_large_tensor_proto(
@@ -214,11 +216,8 @@ class ModelContainer:
                 )
             np_tensor = self.large_initializers[prop.value]
 
-            if sys.byteorder == "big":
-                # Convert endian from little to big
-                tensor_bytes = np_tensor.byteswap().tobytes()
-            else:
-                tensor_bytes = np_tensor.tobytes()
+            tensor_bytes = onnx.numpy_helper.tobytes_little_endian(np_tensor)
+
             if all_tensors_to_one_file:
                 _set_external_data(
                     tensor,
@@ -293,18 +292,15 @@ class ModelContainer:
                 continue
 
             info = ext_data.ExternalDataInfo(tensor)
-            external_data_file_path = c_checker._resolve_external_data_location(  # type: ignore[attr-defined]
-                base_dir, info.location, tensor.name
-            )
             key = f"#t{i}"
             _set_external_data(tensor, location=key)
 
-            with open(external_data_file_path, "rb") as data_file:
-                if info.offset:
-                    data_file.seek(info.offset)
-
-                raw_data = (
-                    data_file.read(info.length) if info.length else data_file.read()
+            fd = ext_data._open_external_data_fd(
+                base_dir, info.location, tensor.name, True
+            )
+            with os.fdopen(fd, "rb") as data_file:
+                raw_data = ext_data._validate_external_data_file_bounds(
+                    data_file, info, tensor.name
                 )
 
                 dtype = onnx.helper.tensor_dtype_to_np_dtype(tensor.data_type)

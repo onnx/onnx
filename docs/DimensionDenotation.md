@@ -23,6 +23,7 @@ This proposal consists of three key components: Denotation Definition, Denotatio
 ## Denotation Definition
 
 To begin with, we define a set of types for tensor types. Such types are defined based on the following principles:
+
 1. Be fine grain enough to eliminate potential pitfalls. For instance, the above example illustrated in the motivation section mandates that we distinguish between a channel dimension and a spatial feature dimension to ensure the correctness of execution of the AveragePool op.
 2. Be coarse grain enough to alleviate the mental burden of users. For instance, in the above example, there is significantly less need to distinguish between a width dimension and a height dimension because operations like pooling and convolution often do not draw a distinction between various spatial dimensions. Thus, we summarize all the spatial dimensions as feature dimensions.
 3. As an important corollary of 2, be model agnostic. For instance, the semantics of feature dimensions in recurrent neural networks (RNN) and the semantics of spatial dimensions in convolutional neural network (CNN) are almost indistinguishable and therefore we permit users and developers to describe either as a feature dimension.

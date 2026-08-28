@@ -21,25 +21,29 @@
 namespace ONNX_NAMESPACE {
 
 #ifdef ONNX_USE_LITE_PROTO
-using ::google::protobuf::MessageLite;
-inline std::string ProtoDebugString(const MessageLite& proto) {
+inline std::string ProtoDebugString(const ::google::protobuf::MessageLite& proto) {
   // Since the MessageLite interface does not support reflection, there is very
   // little information that this and similar methods can provide.
   // But when using lite proto this is the best we can provide.
   return proto.ShortDebugString();
 }
 #else
-using ::google::protobuf::Message;
-inline std::string ProtoDebugString(const Message& proto) {
+inline std::string ProtoDebugString(const ::google::protobuf::Message& proto) {
   return proto.ShortDebugString();
 }
 #endif
 
 template <typename Proto>
 bool ParseProtoFromBytes(Proto* proto, const char* buffer, size_t length) {
+  // Reject inputs larger than the 2 GB proto limit before casting to int.
+  // ArrayInputStream takes an int size, so passing a truncated value would
+  // silently parse fewer bytes than requested.
+  constexpr int total_bytes_limit = (2048LL << 20) - 1;
+  if (length > static_cast<size_t>(total_bytes_limit)) {
+    return false;
+  }
   ::google::protobuf::io::ArrayInputStream input_stream(buffer, static_cast<int>(length));
   ::google::protobuf::io::CodedInputStream coded_stream(&input_stream);
-  int total_bytes_limit = (2048LL << 20) - 1;
 #if GOOGLE_PROTOBUF_VERSION >= 3011000
   // Only take one parameter since protobuf 3.11
   coded_stream.SetTotalBytesLimit(total_bytes_limit);

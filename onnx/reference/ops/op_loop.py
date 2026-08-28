@@ -27,7 +27,9 @@ class Loop(OpRun):
         """
         return True
 
-    def _run(self, M, cond, *args, context=None, body=None, attributes=None):
+    def _run(
+        self, M, cond, *args, context=None, body=None, attributes=None, bindings=None
+    ):
         if args:
             v_initial = args[0]
             args = args[1:]
@@ -44,7 +46,7 @@ class Loop(OpRun):
         if args:
             begin = len(loop_inputs) - len(args)
             all_inputs = loop_inputs[begin:]
-            for name, val in zip(all_inputs, args):
+            for name, val in zip(all_inputs, args, strict=False):
                 inputs[name] = val
         if context is not None:
             for a in context:
@@ -60,7 +62,7 @@ class Loop(OpRun):
                 )
             if len(body.input_names) > 1 and body.input_names[1] is not None:
                 inputs[body.input_names[1]] = cond
-            outputs = self._run_body(inputs, attributes=attributes)
+            outputs = self._run_body(inputs, attributes=attributes, bindings=bindings)
             if self.K > 0:
                 for k in range(self.K):
                     k_carried_away[k].append(outputs[-self.K + k])
@@ -70,7 +72,7 @@ class Loop(OpRun):
                 raise RuntimeError(
                     f"Condition {cond_name!r} returned by the subgraph cannot be None."
                 )
-            for i, o in zip(body.input_names[2:], body.output_names[1:]):
+            for i, o in zip(body.input_names[2:], body.output_names[1:], strict=False):
                 inputs[i] = outputs[self.output_index[o]]
             it += 1
             self._log("  -- loop<")

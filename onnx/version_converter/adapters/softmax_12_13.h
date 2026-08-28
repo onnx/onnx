@@ -1,8 +1,6 @@
 // Copyright (c) ONNX Project Contributors
-
-/*
- * SPDX-License-Identifier: Apache-2.0
- */
+//
+// SPDX-License-Identifier: Apache-2.0
 
 // Adapter for Softmax amd LogSoftmax in default domain from version 12 to 13
 
@@ -13,23 +11,23 @@
 
 #include "onnx/version_converter/adapters/adapter.h"
 
-namespace ONNX_NAMESPACE {
-namespace version_conversion {
+namespace ONNX_NAMESPACE::version_conversion {
 
 class Softmax_12_13 final : public Adapter {
  public:
   explicit Softmax_12_13(const std::string& op_name) : Adapter(op_name, OpSetID(12), OpSetID(13)) {}
 
   void adapt_softmax_12_13(const std::shared_ptr<Graph>& graph, Node* node) const {
-    int old_axis = node->hasAttribute(kaxis) ? node->i(kaxis) : 1;
-    int input_rank = node->inputs()[0]->sizes().size();
+    ONNX_ASSERTM(node->inputs().size() >= 1, "Softmax node must have at least 1 input")
+    int old_axis = node->hasAttribute(kaxis) ? static_cast<int>(node->i(kaxis)) : 1;
+    int input_rank = static_cast<int>(node->inputs()[0]->sizes().size());
 
     if (old_axis < 0)
       old_axis = input_rank + old_axis;
 
-    if (old_axis == input_rank - 1)
+    if (old_axis == input_rank - 1) {
       node->i_(kaxis, -1);
-    else {
+    } else {
       //    -- shape ------------------
       //   /                           |
       // ----- flatten -- softmax -- reshape
@@ -83,5 +81,4 @@ class Softmax_12_13 final : public Adapter {
   }
 };
 
-} // namespace version_conversion
-} // namespace ONNX_NAMESPACE
+} // namespace ONNX_NAMESPACE::version_conversion

@@ -1,11 +1,12 @@
-/*
- * SPDX-License-Identifier: Apache-2.0
- */
+// Copyright (c) ONNX Project Contributors
+//
+// SPDX-License-Identifier: Apache-2.0
 
 #include "onnx/defs/schema.h"
+#include "onnx/defs/type_builders.h"
 
 namespace ONNX_NAMESPACE {
-static const char* OptionalHasElement_ver1_doc = R"DOC(
+static constexpr const char* OptionalHasElement_ver1_doc = R"DOC(
 Returns true if the optional-type input contains an element. If it is an empty optional-type, this op returns false.
 )DOC";
 
@@ -24,7 +25,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "O",
             OpSchema::all_optional_types(),
             "Constrain input type to optional tensor and optional sequence types.")
-        .TypeConstraint("B", {"tensor(bool)"}, "Constrain output to a boolean tensor.")
+        .TypeConstraint("B", {types::Bool}, "Constrain output to a boolean tensor.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           const size_t numInputs = ctx.getNumInputs();
           if (numInputs != 1) {
@@ -34,12 +35,12 @@ ONNX_OPERATOR_SET_SCHEMA(
           if (numOutputs != 1) {
             fail_type_inference("OptionalHasElement is expected to have 1 output.");
           }
-          auto* output_tensor_type = ctx.getOutputType(0)->mutable_tensor_type();
+          auto output_tensor_type = ctx.getOutputType(0)->mutable_tensor_type();
           output_tensor_type->set_elem_type(TensorProto::BOOL);
           output_tensor_type->mutable_shape()->Clear();
         }));
 
-static const char* OptionalGetElement_ver1_doc = R"DOC(
+static constexpr const char* OptionalGetElement_ver1_doc = R"DOC(
 Outputs the element in the optional-type input. It is an error if the input value does not have an element
 and the behavior is undefined in this case.
 )DOC";

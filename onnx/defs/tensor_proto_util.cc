@@ -1,17 +1,38 @@
-/*
- * SPDX-License-Identifier: Apache-2.0
- */
+// Copyright (c) ONNX Project Contributors
+//
+// SPDX-License-Identifier: Apache-2.0
 
-#include "tensor_proto_util.h"
+#include "onnx/defs/tensor_proto_util.h"
 
 #include <string>
 #include <vector>
 
-#include "onnx/common/platform_helpers.h"
+#include "onnx/common/safe_math.h"
 #include "onnx/defs/data_type_utils.h"
 #include "onnx/defs/shape_inference.h"
 
 namespace ONNX_NAMESPACE {
+
+int64_t RawDataElementCount(const TensorProto& tensor, size_t element_size, bool exact_fit) {
+  const int64_t num_elements = safe_dim_product(
+      tensor.dims(), [&](const char* msg) { fail_shape_inference(msg, " for tensor: ", tensor.name()); });
+  const size_t size = tensor.raw_data().size();
+  // Divide rather than multiply so no product can overflow.
+  const auto available = static_cast<uint64_t>(size / element_size);
+  const auto required = static_cast<uint64_t>(num_elements);
+  if (exact_fit ? (available != required || size % element_size != 0) : available < required) {
+    fail_shape_inference(
+        "Data size mismatch. Tensor: ",
+        tensor.name(),
+        " has ",
+        size,
+        " bytes of raw_data for ",
+        num_elements,
+        " elements of size ",
+        element_size);
+  }
+  return num_elements;
+}
 
 #define DEFINE_TO_TENSOR_ONE(type, enumType, field) \
   template <>                                       \
@@ -28,7 +49,7 @@ namespace ONNX_NAMESPACE {
     TensorProto t;                                              \
     t.clear_##field##_data();                                   \
     t.set_data_type(enumType);                                  \
-    for (const type& val : values) {                            \
+    for (const auto& val : values) {                            \
       t.add_##field##_data(val);                                \
     }                                                           \
     return t;                                                   \
@@ -39,7 +60,7 @@ namespace ONNX_NAMESPACE {
   std::vector<type> ParseData(const TensorProto* tensor_proto) {                                                   \
     if (!tensor_proto->has_data_type() || tensor_proto->data_type() == TensorProto_DataType_UNDEFINED) {           \
       fail_shape_inference("The type of tensor: ", tensor_proto->name(), " is undefined so it cannot be parsed."); \
-    } else if (tensor_proto->data_type() != tensorproto_datatype) {                                                \
+    } else if (tensor_proto->data_type() != (tensorproto_datatype)) {                                              \
       fail_shape_inference(                                                                                        \
           "ParseData type mismatch for tensor: ",                                                                  \
           tensor_proto->name(),                                                                                    \
@@ -48,25 +69,24 @@ namespace ONNX_NAMESPACE {
           " Actual:",                                                                                              \
           Utils::DataTypeUtils::ToDataTypeString(tensor_proto->data_type()));                                      \
     }                                                                                                              \
-    std::vector<type> res;                                                                                         \
     if (tensor_proto->has_data_location() && tensor_proto->data_location() == TensorProto_DataLocation_EXTERNAL) { \
       fail_shape_inference(                                                                                        \
           "Cannot parse data from external tensors. Please ",                                                      \
           "load external data into raw data for tensor: ",                                                         \
           tensor_proto->name());                                                                                   \
     } else if (!tensor_proto->has_raw_data()) {                                                                    \
+      const int64_t num_elements = safe_dim_product(tensor_proto->dims(), [&](const char* msg) {                   \
+        fail_shape_inference(msg, " for tensor: ", tensor_proto->name());                                          \
+      });                                                                                                          \
+      std::vector<type> res;                                                                                       \
       const auto& data = tensor_proto->typed_data_fetch();                                                         \
-      int expected_size = 1;                                                                                       \
-      for (int i = 0; i < tensor_proto->dims_size(); ++i) {                                                        \
-        expected_size *= tensor_proto->dims(i);                                                                    \
-      }                                                                                                            \
-      if (tensor_proto->dims_size() != 0 && data.size() != expected_size) {                                        \
+      if (data.size() != num_elements) {                                                                           \
         fail_shape_inference(                                                                                      \
             "Data size mismatch. Tensor: ",                                                                        \
             tensor_proto->name(),                                                                                  \
-            " expected size ",                                                                                     \
-            expected_size,                                                                                         \
-            " does not match the actual size",                                                                     \
+            " expected num elements ",                                                                             \
+            num_elements,                                                                                          \
+            " does not match the actual num elements ",                                                            \
             data.size());                                                                                          \
       }                                                                                                            \
       res.insert(res.end(), data.begin(), data.end());                                                             \
@@ -79,40 +99,7 @@ namespace ONNX_NAMESPACE {
           " content is required to be stored in repeated bytes string_data field.",                                \
           " raw_data type cannot be string.");                                                                     \
     }                                                                                                              \
-    /* The given tensor does have raw_data itself so parse it by given type */                                     \
-    /* make copy as we may have to reverse bytes */                                                                \
-    std::string raw_data = tensor_proto->raw_data();                                                               \
-    if (raw_data.empty()) {                                                                                        \
-      return res;                                                                                                  \
-    }                                                                                                              \
-    /* okay to remove const qualifier as we have already made a copy */                                            \
-    char* bytes = raw_data.data();                                                                                 \
-    /* onnx is little endian serialized always-tweak byte order if needed */                                       \
-    if (!is_processor_little_endian()) {                                                                           \
-      const size_t element_size = sizeof(type);                                                                    \
-      const size_t num_elements = raw_data.size() / element_size;                                                  \
-      for (size_t i = 0; i < num_elements; ++i) {                                                                  \
-        char* start_byte = bytes + i * element_size;                                                               \
-        char* end_byte = start_byte + element_size - 1;                                                            \
-        /* keep swapping */                                                                                        \
-        for (size_t count = 0; count < element_size / 2; ++count) {                                                \
-          char temp = *start_byte;                                                                                 \
-          *start_byte = *end_byte;                                                                                 \
-          *end_byte = temp;                                                                                        \
-          ++start_byte;                                                                                            \
-          --end_byte;                                                                                              \
-        }                                                                                                          \
-      }                                                                                                            \
-    }                                                                                                              \
-    /* raw_data.c_str()/bytes is a byte array and may not be properly  */                                          \
-    /* aligned for the underlying type */                                                                          \
-    /* We need to copy the raw_data.c_str()/bytes as byte instead of  */                                           \
-    /* copying as the underlying type, otherwise we may hit memory   */                                            \
-    /* misalignment issues on certain platforms, such as arm32-v7a */                                              \
-    const size_t raw_data_size = raw_data.size();                                                                  \
-    res.resize(raw_data_size / sizeof(type));                                                                      \
-    memcpy(reinterpret_cast<char*>(res.data()), bytes, raw_data_size);                                             \
-    return res;                                                                                                    \
+    return ParseRawData<type>(*tensor_proto);                                                                      \
   }
 
 DEFINE_TO_TENSOR_ONE(float, TensorProto_DataType_FLOAT, float)

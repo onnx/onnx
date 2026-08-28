@@ -45,7 +45,7 @@ class GridSample(OpRun):
 
     def _gs_denormalize_coordinates(self, n, dims, align_corners: bool):
         x = np.zeros(len(n), dtype=np.float32)
-        for i, (v, dim) in enumerate(zip(n, dims)):
+        for i, (v, dim) in enumerate(zip(n, dims, strict=False)):
             x[i] = self._gs_denormalize(n=v, length=dim, align_corners=align_corners)
         return x
 
@@ -273,18 +273,15 @@ class GridSample(OpRun):
         def round_single_value(v):
             if v >= 0.0:
                 return np.floor(v + 0.5)
-            else:
-                return np.ceil(v - 0.5)
+            return np.ceil(v - 0.5)
 
         if isinstance(x, numbers.Number):
             return round_single_value(x)
-        else:
-            assert x.ndim == 1
-            x_rounded = np.zeros_like(x)
-            for i in range(x.shape[0]):
-                x_rounded[i] = round_single_value(x[i])
-            x_rounded = x_rounded.astype(np.int32)
-            return x_rounded
+        assert x.ndim == 1
+        x_rounded = np.zeros_like(x)
+        for i in range(x.shape[0]):
+            x_rounded[i] = round_single_value(x[i])
+        return x_rounded.astype(np.int32)
 
     def _run(self, X, grid, mode=None, padding_mode=None, align_corners=None):
         # This implementation supports GridSample arbitrary dimensions.

@@ -26,7 +26,7 @@ def cast_to(
         }
         and saturate
     ):
-        return onnx.numpy_helper.saturating_cast(x, dtype)
+        return onnx.numpy_helper.saturate_cast(x, dtype)
 
     if to == onnx.TensorProto.FLOAT8E8M0:
         return onnx.numpy_helper.to_float8e8m0(x, saturate, round_mode).astype(dtype)
@@ -45,5 +45,10 @@ class Cast_19(OpRun):
 
 
 class Cast_24(OpRun):
+    def _run(self, x, to=None, saturate=None, round_mode=None):
+        return (cast_to(x, to, saturate, round_mode),)
+
+
+class Cast_25(OpRun):
     def _run(self, x, to=None, saturate=None, round_mode=None):
         return (cast_to(x, to, saturate, round_mode),)

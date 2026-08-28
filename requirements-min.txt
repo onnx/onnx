@@ -1,8 +1,0 @@
-# Minimum package versions that ONNX supports
-# https://endoflife.date/numpy
-protobuf==4.25.1
-numpy==1.22.0; python_version=="3.9"
-numpy==1.23.2; python_version=="3.10"
-numpy==1.23.2; python_version=="3.11"
-numpy==1.26.0; python_version=="3.12"
-numpy==2.1.0; python_version>="3.13"

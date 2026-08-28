@@ -32,7 +32,7 @@ changelog:
     - title: Build, CI and Tests
       labels:
         - "topic: build"
-        - "topic: CI pipelines"
+        - "module: CI pipelines"
         - "topic: test"
         - "topic: compiler warning"
     - title: Documentation

@@ -33,21 +33,18 @@ def pad_impl(data, raw_pads, mode, constant_values=0.0, axes=None):
         pad_width[axis] = [raw_pads[i], raw_pads[i + num_axes]]
 
     if mode == "constant":
-        y = np.pad(
+        return np.pad(
             data,
             pad_width=pad_width,
             mode=mode,
             constant_values=constant_values,
         )
-        return y
 
-    y = np.pad(
+    return np.pad(
         data,
         pad_width=pad_width,
         mode=mode,
     )
-
-    return y
 
 
 class Pad(Base):

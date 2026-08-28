@@ -10,7 +10,4 @@ from onnx.reference.ops._op import OpRunUnaryNum
 
 class Softplus(OpRunUnaryNum):
     def _run(self, X):
-        tmp = np.exp(X).astype(X.dtype)
-        tmp += 1
-        np.log(tmp, out=tmp)
-        return (tmp,)
+        return (np.logaddexp(0, X).astype(X.dtype),)

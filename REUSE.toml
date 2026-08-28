@@ -32,12 +32,6 @@ SPDX-FileCopyrightText = "Copyright (c) ONNX Project Contributors"
 SPDX-License-Identifier = "Apache-2.0"
 
 [[annotations]]
-path = "onnx/backend/test/data/node/**/test_data_set_0/**.pb"
-precedence = "aggregate"
-SPDX-FileCopyrightText = "Copyright (c) ONNX Project Contributors"
-SPDX-License-Identifier = "Apache-2.0"
-
-[[annotations]]
 path = "onnx/backend/test/data/simple/**/**.onnx"
 precedence = "aggregate"
 SPDX-FileCopyrightText = "Copyright (c) ONNX Project Contributors"
@@ -57,12 +51,6 @@ SPDX-License-Identifier = "Apache-2.0"
 
 [[annotations]]
 path = "onnx/backend/test/data/pytorch-operator/**/**.pb"
-precedence = "aggregate"
-SPDX-FileCopyrightText = "Copyright (c) ONNX Project Contributors"
-SPDX-License-Identifier = "Apache-2.0"
-
-[[annotations]]
-path = "onnx/backend/test/data/node/**/**.onnx"
 precedence = "aggregate"
 SPDX-FileCopyrightText = "Copyright (c) ONNX Project Contributors"
 SPDX-License-Identifier = "Apache-2.0"
@@ -110,7 +98,13 @@ SPDX-FileCopyrightText = "Copyright (c) ONNX Project Contributors"
 SPDX-License-Identifier = "Apache-2.0"
 
 [[annotations]]
-path = ["docs/docsgen/source/api/**md", "docs/docsgen/source/_static/**", "docs/docsgen/source/requirements.txt", "docs/docsgen/source/onnx-favicon.png"]
+path = ["docs/docsgen/source/api/**md", "docs/docsgen/source/_static/**", "docs/docsgen/source/onnx-favicon.png"]
+precedence = "aggregate"
+SPDX-FileCopyrightText = "Copyright (c) ONNX Project Contributors"
+SPDX-License-Identifier = "Apache-2.0"
+
+[[annotations]]
+path = ["onnx/backend/test/stat_coverage.py", "onnx/defs/gen_doc.py"]
 precedence = "aggregate"
 SPDX-FileCopyrightText = "Copyright (c) ONNX Project Contributors"
 SPDX-License-Identifier = "Apache-2.0"
@@ -146,13 +140,7 @@ SPDX-FileCopyrightText = "Copyright (c) ONNX Project Contributors"
 SPDX-License-Identifier = "Apache-2.0"
 
 [[annotations]]
-path = ["examples/**ipynb", "examples/resources/**"]
-precedence = "aggregate"
-SPDX-FileCopyrightText = "Copyright (c) ONNX Project Contributors"
-SPDX-License-Identifier = "Apache-2.0"
-
-[[annotations]]
-path = ["MANIFEST.in", "VERSION_NUMBER", "CODE_OF_CONDUCT.md", "CODEOWNERS", "pyproject**.toml", "requirements**.txt"]
+path = ["MANIFEST.in", "VERSION_NUMBER", "CODE_OF_CONDUCT.md", "CODEOWNERS", "NOTICE", "pyproject**.toml", "requirements**.txt"]
 precedence = "aggregate"
 SPDX-FileCopyrightText = "Copyright (c) ONNX Project Contributors"
 SPDX-License-Identifier = "Apache-2.0"
@@ -182,7 +170,7 @@ SPDX-FileCopyrightText = "Copyright (c) ONNX Project Contributors"
 SPDX-License-Identifier = "Apache-2.0"
 
 [[annotations]]
-path = ["cmake/ONNXConfig**.in", "CMakeLists.txt", "cmake/**cmake", "cmake/"]
+path = ["cmake/ONNXConfig**.in", "CMakeLists.txt", "cmake/**cmake", "cmake/", "tests/cmake/CMakeLists.txt"]
 precedence = "aggregate"
 SPDX-FileCopyrightText = "Copyright (c) ONNX Project Contributors"
 SPDX-License-Identifier = "Apache-2.0"
@@ -201,7 +189,7 @@ SPDX-License-Identifier = "Apache-2.0"
 
 [[annotations]]
 path = ["onnx/backend/sample/ops/abs.py", "onnx/gen_proto.py"]
-precedence = "aggregate"
+precedence = "override"
 SPDX-FileCopyrightText = "Copyright (c) ONNX Project Contributors"
 SPDX-License-Identifier = "Apache-2.0"
 
@@ -213,6 +201,30 @@ SPDX-License-Identifier = "Apache-2.0"
 
 [[annotations]]
 path = ["pixi.lock"]
+precedence = "aggregate"
+SPDX-FileCopyrightText = "Copyright (c) ONNX Project Contributors"
+SPDX-License-Identifier = "Apache-2.0"
+
+[[annotations]]
+path = "docs/docsgen/source/technical/**.png"
+precedence = "aggregate"
+SPDX-FileCopyrightText = "Copyright (c) ONNX Project Contributors"
+SPDX-License-Identifier = "Apache-2.0"
+
+[[annotations]]
+path = [".agents/**", ".claude/**", "uv.lock", "tsan.supp"]
+precedence = "aggregate"
+SPDX-FileCopyrightText = "Copyright (c) ONNX Project Contributors"
+SPDX-License-Identifier = "Apache-2.0"
+
+[[annotations]]
+path = "sbom.cdx.json"
+precedence = "aggregate"
+SPDX-FileCopyrightText = "Copyright (c) ONNX Project Contributors"
+SPDX-License-Identifier = "Apache-2.0"
+
+[[annotations]]
+path = "AGENTS.md"
 precedence = "aggregate"
 SPDX-FileCopyrightText = "Copyright (c) ONNX Project Contributors"
 SPDX-License-Identifier = "Apache-2.0"

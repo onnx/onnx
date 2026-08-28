@@ -1,8 +1,6 @@
 // Copyright (c) ONNX Project Contributors
-
-/*
- * SPDX-License-Identifier: Apache-2.0
- */
+//
+// SPDX-License-Identifier: Apache-2.0
 
 // ATTENTION: The code in this file is highly EXPERIMENTAL.
 // Adventurous users should note that the APIs will probably change.
@@ -188,7 +186,9 @@ namespace ONNX_NAMESPACE {
   _(num_groups)                     \
   _(stash_type)                     \
   _(block_size)                     \
-  _(output_dtype)
+  _(output_dtype)                   \
+  _(left_window_size)               \
+  _(right_window_size)
 
 enum BuiltinSymbol : std::uint8_t {
 #define DEFINE_SYMBOL(s) k##s,
@@ -199,7 +199,7 @@ enum BuiltinSymbol : std::uint8_t {
 
 struct Symbol {
   Symbol() = default;
-  // NOLINTNEXTLINE(google-explicit-constructor)
+  // NOLINTNEXTLINE(google-explicit-constructor, runtime/explicit)
   /*implicit*/ Symbol(BuiltinSymbol value) : value(value) {}
   explicit Symbol(const std::string& s);
   explicit Symbol(uint32_t value) : value(value) {}
@@ -231,7 +231,7 @@ operator"" _sym // gcc 4.8.5 insists on having a space (hard error).
 #else
 operator""_sym // clang 17 generates a deprecation warning if there is a space.
 #endif
-    (const char* s, size_t) {
+    (const char* s, size_t /*unused*/) {
   return Symbol(s);
 }
 

@@ -1,8 +1,6 @@
 // Copyright (c) ONNX Project Contributors
-
-/*
- * SPDX-License-Identifier: Apache-2.0
- */
+//
+// SPDX-License-Identifier: Apache-2.0
 
 // Adapter for all ops that remove consumed_inputs
 
@@ -13,8 +11,7 @@
 
 #include "onnx/version_converter/adapters/adapter.h"
 
-namespace ONNX_NAMESPACE {
-namespace version_conversion {
+namespace ONNX_NAMESPACE::version_conversion {
 
 class Split_12_13 : public Adapter {
  public:
@@ -43,5 +40,4 @@ class Split_12_13 : public Adapter {
   }
 };
 
-} // namespace version_conversion
-} // namespace ONNX_NAMESPACE
+} // namespace ONNX_NAMESPACE::version_conversion

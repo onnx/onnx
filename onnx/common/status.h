@@ -1,8 +1,6 @@
 // Copyright (c) ONNX Project Contributors
-
-/*
- * SPDX-License-Identifier: Apache-2.0
- */
+//
+// SPDX-License-Identifier: Apache-2.0
 
 #pragma once
 
@@ -12,8 +10,9 @@
 #include <string>
 #include <utility>
 
-namespace ONNX_NAMESPACE {
-namespace Common {
+#include "onnx/onnx_pb.h"
+
+namespace ONNX_NAMESPACE::Common {
 
 enum class StatusCategory : std::uint8_t {
   NONE = 0,
@@ -55,15 +54,15 @@ class Status {
   Status& operator=(Status&&) = default;
   ~Status() = default;
 
-  bool IsOK() const noexcept;
+  ONNX_API bool IsOK() const noexcept;
 
-  StatusCode Code() const noexcept;
+  ONNX_API StatusCode Code() const noexcept;
 
-  StatusCategory Category() const noexcept;
+  ONNX_API StatusCategory Category() const noexcept;
 
-  const std::string& ErrorMessage() const;
+  ONNX_API const std::string& ErrorMessage() const;
 
-  std::string ToString() const;
+  ONNX_API std::string ToString() const;
 
   bool operator==(const Status& other) const {
     return (this->state_ == other.state_) || (ToString() == other.ToString());
@@ -73,7 +72,7 @@ class Status {
     return !(*this == other);
   }
 
-  static const Status& OK() noexcept;
+  ONNX_API static const Status& OK() noexcept;
 
  private:
   struct State {
@@ -95,5 +94,4 @@ inline std::ostream& operator<<(std::ostream& out, const Status& status) {
   return out << status.ToString();
 }
 
-} // namespace Common
-} // namespace ONNX_NAMESPACE
+} // namespace ONNX_NAMESPACE::Common

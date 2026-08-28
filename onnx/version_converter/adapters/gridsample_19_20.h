@@ -1,8 +1,6 @@
 // Copyright (c) ONNX Project Contributors
-
-/*
- * SPDX-License-Identifier: Apache-2.0
- */
+//
+// SPDX-License-Identifier: Apache-2.0
 
 // Adapter for GridSample in default domain from version 19 to 20
 
@@ -12,14 +10,13 @@
 
 #include "onnx/version_converter/adapters/adapter.h"
 
-namespace ONNX_NAMESPACE {
-namespace version_conversion {
+namespace ONNX_NAMESPACE::version_conversion {
 
 class GridSample_19_20 final : public Adapter {
  public:
   explicit GridSample_19_20() : Adapter("GridSample", OpSetID(19), OpSetID(20)) {}
 
-  void adapt_gridsample_19_20(const std::shared_ptr<Graph>&, Node* node) const {
+  void adapt_gridsample_19_20(const std::shared_ptr<Graph>& /*unused*/, Node* node) const {
     if (node->hasAttribute(kmode) && (node->s(kmode) == "bilinear")) {
       node->s_(kmode, "linear");
     }
@@ -34,5 +31,4 @@ class GridSample_19_20 final : public Adapter {
   }
 };
 
-} // namespace version_conversion
-} // namespace ONNX_NAMESPACE
+} // namespace ONNX_NAMESPACE::version_conversion

@@ -1,6 +1,6 @@
-/*
- * SPDX-License-Identifier: Apache-2.0
- */
+// Copyright (c) ONNX Project Contributors
+//
+// SPDX-License-Identifier: Apache-2.0
 
 #pragma once
 
@@ -17,7 +17,7 @@ class OpSet_OnnxTraining_ver1 {
 };
 
 // Register training operators.
-inline void RegisterOnnxTrainingOperatorSetSchema() {
+ONNX_API inline void RegisterOnnxTrainingOperatorSetSchema() {
   RegisterOpSetSchema<OpSet_OnnxTraining_ver1>();
 }
 
