@@ -2817,87 +2817,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint("T1", OpSchema::all_numeric_types(), "Constrain input to only numeric types.")
         .TypeConstraint("T2", OpSchema::all_numeric_types(), "Constrain input to only numeric types.")
         .TypeConstraint("T3", OpSchema::all_tensor_types_ir4(), "Constrain to any tensor type.")
-        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-          // Check that the node has three inputs.
-          if (ctx.getNumInputs() != 3) {
-            fail_type_inference("OneHot node must have three inputs.");
-          }
-          // Input 'depth' must be a scalar or a single-element vector.
-          // TODO(ONNX): Ideally to match spec for this input only Scalar should
-          // be allowed. Making this change now can affect backward
-          // compatibility for this op. Since this does not seem like a good
-          // justification to update version for this op, allowing both scalar
-          // and 1 element vector for now. In future when version update for
-          // this op is done we should only allow scalar or change the spec to
-          // allow both.
-          std::optional<int64_t> depth_value;
-          if (hasInputShape(ctx, 1)) {
-            auto& depth_shape = getInputShape(ctx, 1);
-            if (const TensorProto* depth_data = ctx.getInputData(1)) {
-              if (depth_data->data_type() == TensorProto::INT64) {
-                depth_value = ParseData<int64_t>(depth_data)[0];
-              } else if (depth_data->data_type() == TensorProto::INT32) {
-                depth_value = ParseData<int32_t>(depth_data)[0];
-              } else if (depth_data->data_type() == TensorProto::FLOAT) {
-                depth_value = static_cast<int64_t>(ParseData<float>(depth_data)[0]);
-              }
-            }
-            if (depth_shape.dim_size() != 0 && depth_shape.dim_size() != 1) {
-              fail_type_inference("Input 'depth' must be a scalar or rank 1 tensor.");
-            }
-            if (depth_shape.dim_size() == 1 && depth_shape.dim(0).has_dim_value() &&
-                depth_shape.dim(0).dim_value() != 1) {
-              fail_type_inference("Input 'depth' must have exactly one element.");
-            }
-          }
-          // Input 'values' must be a two-element vector.
-          if (hasInputShape(ctx, 2)) {
-            auto& values_shape = getInputShape(ctx, 2);
-            if (values_shape.dim_size() != 1) {
-              fail_type_inference("Input 'values' must be rank 1 tensor.");
-            }
-            if (values_shape.dim(0).has_dim_value() && values_shape.dim(0).dim_value() != 2) {
-              fail_type_inference("Input 'values' must have exactly two elements.");
-            }
-          }
-          // Set output type to be the same as the third input, 'values'.
-          propagateElemTypeFromInputToOutput(ctx, 2, 0);
-          // Set the output shape, if input 0 (indices) shape is available.
-          if (hasInputShape(ctx, 0)) {
-            const TensorShapeProto& indices_shape = ctx.getInputType(0)->tensor_type().shape();
-            int r = indices_shape.dim_size();
-            if (r < 1) {
-              fail_shape_inference("Indices tensor must have rank >= 1");
-            }
-            int out_rank = r + 1;
-            int axis = static_cast<int>(getAttribute(ctx, "axis", -1));
-            if (axis < -out_rank || axis >= out_rank) {
-              fail_shape_inference("'axis' must be in [-rank(indices), rank(indices)-1]");
-            }
-            if (axis < 0) {
-              axis += out_rank;
-            }
-            auto output_shape = getOutputShape(ctx, 0);
-            for (int i = 0; i < out_rank; ++i) {
-              auto dim = output_shape->add_dim();
-              if (i < axis) {
-                if (indices_shape.dim(i).has_dim_value()) {
-                  dim->set_dim_value(indices_shape.dim(i).dim_value());
-                } else if (indices_shape.dim(i).has_dim_param()) {
-                  dim->set_dim_param(indices_shape.dim(i).dim_param());
-                }
-              } else if (i > axis) {
-                if (indices_shape.dim(i - 1).has_dim_value()) {
-                  dim->set_dim_value(indices_shape.dim(i - 1).dim_value());
-                } else if (indices_shape.dim(i - 1).has_dim_param()) {
-                  dim->set_dim_param(indices_shape.dim(i - 1).dim_param());
-                }
-              } else if (depth_value) {
-                dim->set_dim_value(*depth_value);
-              }
-            }
-          }
-        }));
+        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) { oneHotShapeInference(ctx, 11); }));
 
 ONNX_OPERATOR_SET_SCHEMA(
     IsNaN,
@@ -3022,42 +2942,6 @@ ONNX_OPERATOR_SET_SCHEMA(
           output_shape.add_dim();
           updateOutputShape(ctx, 0, output_shape);
         }));
-
-static constexpr const char* ReverseSequence_ver10_doc = R"DOC(
-Reverse batch of sequences having different lengths specified by `sequence_lens`.
-
-For each slice i iterating on batch axis, the operator reverses the first sequence_lens[i] elements on time axis,
-and copies elements whose index's beyond sequence_lens[i] to the output. So the output slice i contains reversed
-sequences on the first sequence_lens[i] elements, then have original values copied for the other elements.
-
-Example 1:
-  input = [[0.0, 4.0, 8.0,  12.0],
-           [1.0, 5.0, 9.0,  13.0],
-           [2.0, 6.0, 10.0, 14.0],
-           [3.0, 7.0, 11.0, 15.0]]
-  sequence_lens = [4, 3, 2, 1]
-  time_axis = 0
-  batch_axis = 1
-
-  output = [[3.0, 6.0, 9.0,  12.0],
-            [2.0, 5.0, 8.0,  13.0],
-            [1.0, 4.0, 10.0, 14.0],
-            [0.0, 7.0, 11.0, 15.0]]
-
-Example 2:
-  input = [[0.0,  1.0,  2.0,  3.0 ],
-           [4.0,  5.0,  6.0,  7.0 ],
-           [8.0,  9.0,  10.0, 11.0],
-           [12.0, 13.0, 14.0, 15.0]]
-  sequence_lens = [1, 2, 3, 4]
-  time_axis = 1
-  batch_axis = 0
-
-  output = [[0.0,  1.0,  2.0,  3.0 ],
-            [5.0,  4.0,  6.0,  7.0 ],
-            [10.0, 9.0,  8.0,  11.0],
-            [15.0, 14.0, 13.0, 12.0]]
-)DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
     ReverseSequence,
