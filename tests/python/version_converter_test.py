@@ -95,6 +95,41 @@ class TestVersionConverter:
         with pytest.raises(RuntimeError):
             test()
 
+    def test_rejects_captured_node_without_output(self) -> None:
+        nested_graph = helper.make_graph(
+            [helper.make_node("Captured", ["X"], [], domain="custom")],
+            "nested",
+            [],
+            [],
+        )
+        carrier = helper.make_node(
+            "NestedCarrier",
+            ["X"],
+            [],
+            domain="custom",
+            payload=nested_graph,
+        )
+        graph = helper.make_graph(
+            [helper.make_node("Flatten", ["X"], ["Y"]), carrier],
+            "test",
+            [helper.make_tensor_value_info("X", TensorProto.INT32, (2, 2))],
+            [helper.make_tensor_value_info("Y", TensorProto.INT32, (2, 2))],
+        )
+        model = helper.make_model(
+            graph,
+            opset_imports=[
+                helper.make_operatorsetid("", 9),
+                helper.make_operatorsetid("custom", 1),
+            ],
+        )
+        checker.check_model(model)
+
+        with pytest.raises(
+            onnx.version_converter.ConvertError,
+            match="Captured node must have exactly one output",
+        ):
+            onnx.version_converter.convert_version(model, 8)
+
     # A graph output that nothing produces must raise (ConvertError), not crash.
     # Regression test for a SEGV in graphProtoToGraph when a top-level
     # graph output name was absent from the value map.
@@ -128,6 +163,26 @@ class TestVersionConverter:
 
         with pytest.raises(onnx.version_converter.ConvertError):
             test()
+
+    def test_extend_supported_types_rejects_missing_output(self) -> None:
+        node = helper.make_node("Flatten", ["X"], [])
+        graph = helper.make_graph(
+            [node],
+            "malformed_flatten",
+            [helper.make_tensor_value_info("X", TensorProto.FLOAT, (2, 3))],
+            [],
+        )
+        model = helper.make_model(
+            graph,
+            opset_imports=[helper.make_operatorsetid("", 9)],
+        )
+
+        # convert_version runs shape inference before conversion, so Flatten's
+        # own shape-inference function rejects the missing output first; the
+        # adapter's ONNX_ASSERTM guard is defense-in-depth for callers that
+        # reach ExtendSupportedTypes without going through shape inference.
+        with pytest.raises((RuntimeError, shape_inference.InferenceError)):
+            onnx.version_converter.convert_version(model, 8)
 
     # A nested (subgraph) output that resolves to a value captured from the
     # enclosing scope is handled via a dummy node, not a crash. Exercises the
