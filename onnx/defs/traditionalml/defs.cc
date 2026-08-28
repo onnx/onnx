@@ -1186,6 +1186,10 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
           auto leaf_targetids = ctx.getAttribute("leaf_targetids");
           auto leaf_weights = ctx.getAttribute("leaf_weights");
           if (nullptr != leaf_targetids && nullptr != leaf_weights) {
+            // dims(0) is only valid for the required 1-D tensor attribute.
+            if (leaf_weights->t().dims_size() != 1) {
+              fail_shape_inference("Attribute 'leaf_weights' must be 1D.");
+            }
             if (leaf_targetids->ints_size() != leaf_weights->t().dims(0)) {
               fail_shape_inference(
                   "Attribute 'leaf_targetids' must have same length as attribute 'leaf_weights'. 'leaf_targetids' "
