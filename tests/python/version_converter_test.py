@@ -2398,6 +2398,30 @@ class TestVersionConverter:
         with pytest.raises((RuntimeError, shape_inference.InferenceError)):
             test()
 
+    def test_softmax_13_12_rejects_reshape_without_output(self) -> None:
+        graph = helper.make_graph(
+            [
+                helper.make_node("Softmax", ["X"], ["Y"], axis=-1),
+                helper.make_node("Reshape", ["Y"], [], domain="local.test"),
+            ],
+            "test_softmax_13_12_rejects_reshape_without_output",
+            [helper.make_tensor_value_info("X", TensorProto.FLOAT, (1, 2))],
+            [helper.make_tensor_value_info("Y", TensorProto.FLOAT, (1, 2))],
+        )
+        model = helper.make_model(
+            graph,
+            opset_imports=[
+                helper.make_operatorsetid("", 13),
+                helper.make_operatorsetid("local.test", 1),
+            ],
+        )
+        checker.check_model(model)
+
+        with pytest.raises(
+            RuntimeError, match="Reshape node must have at least 1 output"
+        ):
+            onnx.version_converter.convert_version(model, 12)
+
     @pytest.mark.parametrize(
         "x_shape, scale_shape, axis, block_size, output_dtype, zero_point_dtype, compatible",
         [

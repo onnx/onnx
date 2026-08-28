@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING
 import pytest
 
 import onnx
-from onnx import defs
+from onnx import TensorProto, defs, helper
 
 MOD_OPSET_13 = 13
 MOD_OPSET_28 = 28
@@ -19,6 +19,12 @@ if TYPE_CHECKING:
 
 
 class TestSchema:
+    @staticmethod
+    def _tensor_type_proto(elem_type: int) -> onnx.TypeProto:
+        type_proto = onnx.TypeProto()
+        type_proto.tensor_type.elem_type = elem_type
+        return type_proto
+
     def test_get_schema(self) -> None:
         relu_schema = defs.get_schema("Relu")
         assert (
@@ -39,6 +45,86 @@ class TestSchema:
         assert (
             selu_schema.node_determinism == defs.OpSchema.NodeDeterminism.Deterministic
         )
+
+    @pytest.mark.parametrize("op_version", [23, 24])
+    @pytest.mark.parametrize(
+        "elem_type",
+        [TensorProto.BFLOAT16, TensorProto.FLOAT16, TensorProto.DOUBLE],
+    )
+    def test_attention_context_dependent_function_with_typed_causal_mask(
+        self, op_version: int, elem_type: int
+    ) -> None:
+        schema = defs.get_schema("Attention", op_version)
+        assert schema.has_context_dependent_function
+        node = helper.make_node(
+            "Attention",
+            ["Q", "K", "V", "attn_mask"],
+            ["Y"],
+            is_causal=1,
+            q_num_heads=2,
+            kv_num_heads=2,
+        )
+
+        input_types = [self._tensor_type_proto(elem_type)] * 4
+        function_proto = onnx.FunctionProto()
+        function_proto.ParseFromString(
+            schema.get_context_dependent_function(
+                node.SerializeToString(),
+                [input_type.SerializeToString() for input_type in input_types],
+            )
+        )
+
+        assert any(
+            n.op_type == "CastLike"
+            and tuple(n.input) == ("MaskTriFloat", "AttnBias")
+            and tuple(n.output) == ("MaskTri",)
+            for n in function_proto.node
+        )
+        output_types = onnx.shape_inference.infer_function_output_types(
+            function_proto, input_types, list(node.attribute)
+        )
+        assert output_types[0].tensor_type.elem_type == elem_type
+
+    @pytest.mark.parametrize(
+        "elem_type",
+        [TensorProto.BFLOAT16, TensorProto.FLOAT16, TensorProto.DOUBLE],
+    )
+    def test_attention_context_dependent_function_with_typed_padding_mask(
+        self, elem_type: int
+    ) -> None:
+        schema = defs.get_schema("Attention", 24)
+        assert schema.has_context_dependent_function
+        node = helper.make_node(
+            "Attention",
+            ["Q", "K", "V", "attn_mask", "", "", "nonpad_kv_seqlen"],
+            ["Y"],
+            q_num_heads=2,
+            kv_num_heads=2,
+        )
+
+        input_types = [self._tensor_type_proto(elem_type)] * 4 + [
+            self._tensor_type_proto(TensorProto.UNDEFINED),
+            self._tensor_type_proto(TensorProto.UNDEFINED),
+            self._tensor_type_proto(TensorProto.INT64),
+        ]
+        function_proto = onnx.FunctionProto()
+        function_proto.ParseFromString(
+            schema.get_context_dependent_function(
+                node.SerializeToString(),
+                [input_type.SerializeToString() for input_type in input_types],
+            )
+        )
+
+        assert any(
+            n.op_type == "CastLike"
+            and tuple(n.input) == ("PaddingMask4DFloat", "AttnBiasCausalOrNot")
+            and tuple(n.output) == ("PaddingMask4D",)
+            for n in function_proto.node
+        )
+        output_types = onnx.shape_inference.infer_function_output_types(
+            function_proto, input_types, list(node.attribute)
+        )
+        assert output_types[0].tensor_type.elem_type == elem_type
 
     def test_node_determinism(self) -> None:
         rand_schema = defs.get_schema("RandomNormalLike")
