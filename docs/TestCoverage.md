@@ -18860,7 +18860,9 @@ indices = np.array([0, 2], dtype=np.int64)
 depth = np.float32(4)
 values = np.array([off_value, on_value], dtype=output_type)
 y = one_hot(indices, int(depth), axis=axisValue, dtype=output_type)
-y = (y * output_type(on_value - off_value) + output_type(off_value)).astype(output_type)
+y = (y * output_type(on_value - off_value) + output_type(off_value)).astype(
+    output_type
+)
 expect(
     node,
     inputs=[indices, depth, values],
