@@ -66,7 +66,7 @@ class ReverseSequence(Base):
             ],
             dtype=np.float32,
         )
-        sequence_lens = np.array([1, 2, 3, 4], dtype=np.int64)
+        sequence_lens = np.array([0, 2, 3, 4], dtype=np.int64)
 
         y = np.array(
             [

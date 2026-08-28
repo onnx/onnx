@@ -128,6 +128,9 @@ std::function<void(OpSchema&)> SplitToSequenceOpGenerator(
               const auto& splitShape = getInputShape(ctx, 1);
               if (splitShape.dim_size() == 0) {
                 // split is scalar
+                if (splitSizes[0] <= 0) {
+                  fail_shape_inference("Scalar input 'split' must be greater than zero.");
+                }
                 if (splitDimValue % splitSizes[0] == 0) {
                   // all output chunks have the same shape, assign that to output sequence shape.
                   return splitSizes[0];
