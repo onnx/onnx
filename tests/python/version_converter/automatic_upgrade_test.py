@@ -7,6 +7,7 @@ from typing import ClassVar
 
 import automatic_conversion_test_base
 import numpy as np
+import pytest
 
 import onnx
 from onnx import TensorProto, helper
@@ -1107,6 +1108,37 @@ class TestAutomaticUpgrade(automatic_conversion_test_base.TestAutomaticConversio
 
     def test_ReduceLogSumExp(self) -> None:
         self._test_op_upgrade("ReduceLogSumExp", 1, [[3, 4, 5]], [[1, 1, 1]])
+
+    @pytest.mark.parametrize("op", ["ReduceLogSum", "ReduceLogSumExp"])
+    def test_reduce_log_sum_ops_float_with_axes_input_upgrade(self, op: str) -> None:
+        # The axes input is int64 even though T is float only from opset 28.
+        # Upgrading a valid float model must not be blocked by it.
+        self._test_model_conversion(
+            to_opset=onnx.defs.onnx_opset_version(),
+            model=f"""
+            <ir_version: 9, opset_import: [ "" : 18]>
+            g (float[3, 4, 5] data) => (float[1, 1, 1] reduced)
+            {{
+                axes = Constant <value = int64[3] {{0, 1, 2}}>()
+                reduced = {op} (data, axes)
+            }}
+        """,
+        )
+
+    @pytest.mark.parametrize("op", ["ReduceLogSum", "ReduceLogSumExp"])
+    def test_reduce_log_sum_ops_int_upgrade_fails(self, op: str) -> None:
+        # Integer support was removed in opset 28; upgrading an int model must fail.
+        self._test_model_conversion_fails(
+            to_opset=onnx.defs.onnx_opset_version(),
+            model=f"""
+            <ir_version: 9, opset_import: [ "" : 18]>
+            g (int64[3, 4, 5] data) => (int64[1, 1, 1] reduced)
+            {{
+                axes = Constant <value = int64[3] {{0, 1, 2}}>()
+                reduced = {op} (data, axes)
+            }}
+        """,
+        )
 
     def test_ReduceMean(self) -> None:
         self._test_op_upgrade("ReduceMean", 1, [[3, 4, 5]], [[1, 1, 1]])
