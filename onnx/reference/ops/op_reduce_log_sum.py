@@ -32,3 +32,19 @@ class ReduceLogSum_18(OpRunReduceNumpy):
         if len(res.shape) > 0:
             return (np.log(res, out=res),)
         return (np.log(res),)
+
+
+class ReduceLogSum_28(ReduceLogSum_18):
+    def _run(self, data, axes=None, keepdims=1, noop_with_empty_axes=0):
+        if np.issubdtype(data.dtype, np.integer):
+            raise TypeError(
+                f"ReduceLogSum does not support integer input (got {data.dtype}). "
+                "Integer support was removed in opset 28 because Log and Exp are only "
+                "defined for float types. Cast the input to a float type."
+            )
+        return super()._run(
+            data,
+            axes=axes,
+            keepdims=keepdims,
+            noop_with_empty_axes=noop_with_empty_axes,
+        )
