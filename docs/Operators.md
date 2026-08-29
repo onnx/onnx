@@ -23853,7 +23853,7 @@ expect(node, inputs=[x, y], outputs=[z], name="test_mod_mixed_sign_float16")
 
 
 <details>
-<summary>mod_mixed_sign_float16_fmod</summary>
+<summary>mod_mixed_sign_float16_fmod_0</summary>
 
 ```python
 node = onnx.helper.make_node("Mod", inputs=["x", "y"], outputs=["z"], fmod=0)
@@ -23861,7 +23861,9 @@ node = onnx.helper.make_node("Mod", inputs=["x", "y"], outputs=["z"], fmod=0)
 x = np.array([-4.3, 7.2, 5.0, 4.3, -7.2, 8.0]).astype(np.float16)
 y = np.array([2.1, -3.4, 8.0, -2.1, 3.4, 5.0]).astype(np.float16)
 z = np.mod(x, y)
-expect(node, inputs=[x, y], outputs=[z], name="test_mod_float16_mixed_sign_fmod_0")
+expect(
+    node, inputs=[x, y], outputs=[z], name="test_mod_float16_mixed_sign_fmod_0"
+)
 ```
 
 </details>
@@ -23885,7 +23887,7 @@ expect(node, inputs=[x, y], outputs=[z], name="test_mod_mixed_sign_float32")
 
 
 <details>
-<summary>mod_mixed_sign_float32_fmod</summary>
+<summary>mod_mixed_sign_float32_fmod_0</summary>
 
 ```python
 node = onnx.helper.make_node("Mod", inputs=["x", "y"], outputs=["z"], fmod=0)
@@ -23893,7 +23895,9 @@ node = onnx.helper.make_node("Mod", inputs=["x", "y"], outputs=["z"], fmod=0)
 x = np.array([-4.3, 7.2, 5.0, 4.3, -7.2, 8.0]).astype(np.float32)
 y = np.array([2.1, -3.4, 8.0, -2.1, 3.4, 5.0]).astype(np.float32)
 z = np.mod(x, y)
-expect(node, inputs=[x, y], outputs=[z], name="test_mod_float32_mixed_sign_fmod_0")
+expect(
+    node, inputs=[x, y], outputs=[z], name="test_mod_float32_mixed_sign_fmod_0"
+)
 ```
 
 </details>
@@ -23915,7 +23919,7 @@ expect(node, inputs=[x, y], outputs=[z], name="test_mod_mixed_sign_float64")
 
 
 <details>
-<summary>mod_mixed_sign_float64_fmod</summary>
+<summary>mod_mixed_sign_float64_fmod_0</summary>
 
 ```python
 node = onnx.helper.make_node("Mod", inputs=["x", "y"], outputs=["z"], fmod=0)
@@ -23923,7 +23927,9 @@ node = onnx.helper.make_node("Mod", inputs=["x", "y"], outputs=["z"], fmod=0)
 x = np.array([-4.3, 7.2, 5.0, 4.3, -7.2, 8.0]).astype(np.float64)
 y = np.array([2.1, -3.4, 8.0, -2.1, 3.4, 5.0]).astype(np.float64)
 z = np.mod(x, y)  # expected output [ 2.0, -3.0,  5. , -2.0,  3.0,  3.]
-expect(node, inputs=[x, y], outputs=[z], name="test_mod_float64_mixed_sign_fmod_0")
+expect(
+    node, inputs=[x, y], outputs=[z], name="test_mod_float64_mixed_sign_fmod_0"
+)
 ```
 
 </details>
@@ -45410,5 +45416,4 @@ expect(
 ```
 
 </details>
-
 
