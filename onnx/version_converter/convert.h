@@ -1003,16 +1003,17 @@ class DefaultVersionConverter : public BaseVersionConverter {
         TensorProto_DataType_FLOAT8E5M2FNUZ,
         TensorProto_DataType_FLOAT4E2M1,
         TensorProto_DataType_FLOAT8E8M0};
-    registerAdapter(
-        "Mod",
-        28,
-        27,
-        [mod_28_float_types](const std::shared_ptr<Graph>& /*unused*/, Node* node) {
+    registerAdapter("Mod", 28, 27, [mod_28_float_types](const std::shared_ptr<Graph>& /*unused*/, Node* node) {
       const Symbol fmod{"fmod"};
-      if ((!node->hasAttribute(fmod) || node->i(fmod) == 0) &&
-          std::find(mod_28_float_types.begin(), mod_28_float_types.end(), node->input(0)->elemType()) !=
-              mod_28_float_types.end()) {
-        ONNX_ASSERTM(false, "Mod with floating-point inputs and fmod=0 cannot be downgraded to opset 27.")
+      if (!node->hasAttribute(fmod) || node->i(fmod) == 0) {
+        const int input_type = node->input(0)->elemType();
+        ONNX_ASSERTM(
+            input_type != TensorProto_DataType_UNDEFINED,
+            "Mod with fmod=0 and unknown input type cannot be downgraded to opset 27. "
+            "Run shape inference or add value_info with the input type.")
+        ONNX_ASSERTM(
+            std::find(mod_28_float_types.begin(), mod_28_float_types.end(), input_type) == mod_28_float_types.end(),
+            "Mod with floating-point inputs and fmod=0 cannot be downgraded to opset 27.")
       }
       return node;
     });

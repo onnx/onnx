@@ -10,7 +10,7 @@ from onnx.reference.op_run import OpRun
 
 class Mod(OpRun):
     def _run(self, a, b, fmod=None):
-        fmod = fmod or self.fmod
+        fmod = self.fmod if fmod is None else fmod
         if fmod == 1:
             return (np.fmod(a, b),)
         return (np.mod(a, b),)

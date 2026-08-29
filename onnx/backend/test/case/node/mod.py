@@ -43,7 +43,7 @@ class Mod(Base):
         expect(node, inputs=[x, y], outputs=[z], name="test_mod_mixed_sign_float16")
 
     @staticmethod
-    def export_mod_mixed_sign_float64_fmod() -> None:
+    def export_mod_mixed_sign_float64_fmod_0() -> None:
         node = onnx.helper.make_node("Mod", inputs=["x", "y"], outputs=["z"], fmod=0)
 
         x = np.array([-4.3, 7.2, 5.0, 4.3, -7.2, 8.0]).astype(np.float64)
@@ -54,7 +54,7 @@ class Mod(Base):
         )
 
     @staticmethod
-    def export_mod_mixed_sign_float32_fmod() -> None:
+    def export_mod_mixed_sign_float32_fmod_0() -> None:
         node = onnx.helper.make_node("Mod", inputs=["x", "y"], outputs=["z"], fmod=0)
 
         x = np.array([-4.3, 7.2, 5.0, 4.3, -7.2, 8.0]).astype(np.float32)
@@ -65,7 +65,7 @@ class Mod(Base):
         )
 
     @staticmethod
-    def export_mod_mixed_sign_float16_fmod() -> None:
+    def export_mod_mixed_sign_float16_fmod_0() -> None:
         node = onnx.helper.make_node("Mod", inputs=["x", "y"], outputs=["z"], fmod=0)
 
         x = np.array([-4.3, 7.2, 5.0, 4.3, -7.2, 8.0]).astype(np.float16)

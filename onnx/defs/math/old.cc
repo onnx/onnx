@@ -3639,6 +3639,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .SetContextDependentFunctionBodyBuilder(BuildContextDependentFunctionBodyCelu)
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
+// codeql[cpp/unused-static-variable]: The schema macro defines a debug counter used by static-opset validation.
 ONNX_OPERATOR_SET_SCHEMA(
     Mod,
     13,
