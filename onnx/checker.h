@@ -15,8 +15,9 @@
 #include "onnx/onnx-data.pb.h"
 #include "onnx/string_utils.h"
 
-namespace ONNX_NAMESPACE {
-namespace checker {
+namespace ONNX_NAMESPACE::checker {
+// std::string member means copy may throw when allocation fails
+// NOLINTNEXTLINE(bugprone-exception-copy-constructor-throws)
 class ValidationError final : public std::runtime_error {
  public:
   using std::runtime_error::runtime_error;
@@ -34,8 +35,7 @@ class ValidationError final : public std::runtime_error {
   std::string expanded_message_;
 };
 
-#define fail_check(...) \
-  ONNX_THROW_EX(ONNX_NAMESPACE::checker::ValidationError(ONNX_NAMESPACE::MakeString(__VA_ARGS__)));
+#define fail_check(...) ONNX_THROW_EX(ONNX_NAMESPACE::checker::ValidationError(ONNX_NAMESPACE::MakeString(__VA_ARGS__)))
 
 class CheckerContext final {
  public:
@@ -70,7 +70,7 @@ class CheckerContext final {
     model_dir_ = model_dir;
   }
 
-  std::string get_model_dir() const {
+  const std::string& get_model_dir() const {
     return model_dir_;
   }
 
@@ -172,6 +172,10 @@ ONNX_API void check_opset_compatibility(
 ONNX_API void
 check_model_local_functions(const ModelProto& model, const CheckerContext& ctx, const LexicalScopeContext& parent_lex);
 
+// Checks for cycles in model-local function call graph.
+// Throws ValidationError if any function directly or indirectly references itself.
+ONNX_API void check_function_call_cycles(const ModelProto& model);
+
 ONNX_API void check_model(
     const ModelProto& model,
     bool full_check = false,
@@ -195,5 +199,4 @@ int64_t open_external_data(
     bool read_only);
 ONNX_API bool check_is_experimental_op(const NodeProto& node);
 
-} // namespace checker
-} // namespace ONNX_NAMESPACE
+} // namespace ONNX_NAMESPACE::checker

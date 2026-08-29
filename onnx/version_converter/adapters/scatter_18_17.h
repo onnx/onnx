@@ -12,8 +12,7 @@
 #include "onnx/common/interned_strings.h"
 #include "onnx/version_converter/adapters/adapter.h"
 
-namespace ONNX_NAMESPACE {
-namespace version_conversion {
+namespace ONNX_NAMESPACE::version_conversion {
 
 class Scatter_18_17 : public Adapter {
  public:
@@ -23,11 +22,10 @@ class Scatter_18_17 : public Adapter {
     if (node->hasAttribute(Symbol("reduction"))) {
       const std::string& r = node->s(Symbol("reduction"));
       ONNX_ASSERTM(
-          r != "max" && r != "min", "Scatter reduction 'max' and 'min' are not supported when downgrading to opset 17");
+          r != "max" && r != "min", "Scatter reduction 'max' and 'min' are not supported when downgrading to opset 17")
     }
     return node;
   }
 };
 
-} // namespace version_conversion
-} // namespace ONNX_NAMESPACE
+} // namespace ONNX_NAMESPACE::version_conversion

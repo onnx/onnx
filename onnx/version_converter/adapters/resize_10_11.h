@@ -11,8 +11,7 @@
 
 #include "onnx/version_converter/adapters/adapter.h"
 
-namespace ONNX_NAMESPACE {
-namespace version_conversion {
+namespace ONNX_NAMESPACE::version_conversion {
 
 class Resize_10_11 final : public Adapter {
  public:
@@ -22,7 +21,7 @@ class Resize_10_11 final : public Adapter {
     const ArrayRef<Value*>& inputs = node->inputs();
     ONNX_ASSERTM(inputs.size() >= 2, "Resize in opset 10 needs to have at least 2 inputs.")
 
-    int64_t input_rank = inputs[0]->sizes().size();
+    int64_t input_rank = static_cast<int64_t>(inputs[0]->sizes().size());
 
     Value* scales_input = inputs[1];
     node->addInput(scales_input);
@@ -33,9 +32,9 @@ class Resize_10_11 final : public Adapter {
     auto& data = t.floats();
 
     for (int i = 0; i < input_rank; i++)
-      data.emplace_back(0);
+      data.emplace_back(0.0f);
     for (int i = 0; i < input_rank; i++)
-      data.emplace_back(1);
+      data.emplace_back(1.0f);
 
     Node* constant = graph->create(kConstant);
     constant->insertBefore(node);
@@ -49,5 +48,4 @@ class Resize_10_11 final : public Adapter {
   }
 };
 
-} // namespace version_conversion
-} // namespace ONNX_NAMESPACE
+} // namespace ONNX_NAMESPACE::version_conversion

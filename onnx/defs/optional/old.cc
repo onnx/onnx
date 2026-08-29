@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "onnx/defs/schema.h"
+#include "onnx/defs/type_builders.h"
 
 namespace ONNX_NAMESPACE {
 static constexpr const char* OptionalHasElement_ver1_doc = R"DOC(
@@ -24,7 +25,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "O",
             OpSchema::all_optional_types(),
             "Constrain input type to optional tensor and optional sequence types.")
-        .TypeConstraint("B", {"tensor(bool)"}, "Constrain output to a boolean tensor.")
+        .TypeConstraint("B", {types::Bool}, "Constrain output to a boolean tensor.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           const size_t numInputs = ctx.getNumInputs();
           if (numInputs != 1) {

@@ -24,9 +24,10 @@ class SpaceToDepth(OpRun):
         reshaped = np.reshape(data, tmpshape)
         if mode is None or mode == "DCR":
             transposed = np.transpose(reshaped, [0, 3, 5, 1, 2, 4])
-        else:
-            # CRD mode
+        elif mode == "CRD":
             transposed = np.transpose(reshaped, [0, 1, 3, 5, 2, 4])
+        else:
+            raise ValueError(f"Unsupported mode {mode!r}. Expected 'DCR' or 'CRD'.")
         finalshape = (
             b,
             C * blocksize * blocksize,

@@ -5,26 +5,25 @@
 #include <algorithm>
 #include <cmath>
 #include <numeric>
-#include <optional>
 #include <string>
 #include <utility>
 #include <vector>
 
+#include "onnx/common/safe_math.h"
 #include "onnx/defs/data_propagators.h"
 #include "onnx/defs/doc_strings.h"
 #include "onnx/defs/function.h"
 #include "onnx/defs/tensor/utils.h"
 #include "onnx/defs/tensor_proto_util.h"
+#include "onnx/defs/type_builders.h"
 
 namespace ONNX_NAMESPACE {
-
-static const char* const Cast_ver25_doc = kDoc_Cast_ver24;
 
 ONNX_OPERATOR_SET_SCHEMA(
     Cast,
     25,
     OpSchema()
-        .SetDoc(Cast_ver25_doc)
+        .SetDoc(kDoc_Cast_ver24)
         .Attr(
             "to",
             "The data type to which the elements of the input tensor are cast. "
@@ -75,13 +74,11 @@ ONNX_OPERATOR_SET_SCHEMA(
           PropagateShapeDataFromInputToOutput(ctx, 0);
         }));
 
-static const char* const CastLike_ver25_doc = kDoc_CastLike_ver24;
-
 ONNX_OPERATOR_SET_SCHEMA(
     CastLike,
     25,
     OpSchema()
-        .SetDoc(CastLike_ver25_doc)
+        .SetDoc(kDoc_CastLike_ver24)
         .Attr(
             "saturate",
             "The parameter defines how the conversion behaves if an input value is out of "
@@ -250,13 +247,11 @@ ONNX_OPERATOR_SET_SCHEMA(
         })
         .SetNodeDeterminism(OpSchema::NodeDeterminism::Deterministic));
 
-static const char* const Reshape_ver25_doc = kDoc_Reshape_ver24;
-
 ONNX_OPERATOR_SET_SCHEMA(
     Reshape,
     25,
     OpSchema()
-        .SetDoc(Reshape_ver25_doc)
+        .SetDoc(kDoc_Reshape_ver24)
         .Attr(
             "allowzero",
             "(Optional) By default, when any value in the 'shape' input is equal to zero "
@@ -346,7 +341,9 @@ ONNX_OPERATOR_SET_SCHEMA(
                     if (dataInputTensorType.shape().dim(i).has_dim_value()) {
                       const auto& input_dim_value = dataInputTensorType.shape().dim(i).dim_value();
                       new_dim->set_dim_value(input_dim_value);
-                      outputProduct *= input_dim_value;
+                      if (checked_mul_overflow(outputProduct, input_dim_value, &outputProduct)) {
+                        fail_shape_inference("Dimension product overflow in Reshape");
+                      }
                       unresolvedZeros[i] = false;
                     } else if (dataInputTensorType.shape().dim(i).has_dim_param()) {
                       new_dim->set_dim_param(dataInputTensorType.shape().dim(i).dim_param());
@@ -354,12 +351,16 @@ ONNX_OPERATOR_SET_SCHEMA(
                   }
                 } else {
                   new_dim->set_dim_value(dim_value);
-                  outputProduct *= dim_value;
+                  if (checked_mul_overflow(outputProduct, dim_value, &outputProduct)) {
+                    fail_shape_inference("Dimension product overflow in Reshape");
+                  }
                 }
               } else if (dim_value > 0) {
                 // Set the dimension value to dim_value
                 new_dim->set_dim_value(dim_value);
-                outputProduct *= dim_value;
+                if (checked_mul_overflow(outputProduct, dim_value, &outputProduct)) {
+                  fail_shape_inference("Dimension product overflow in Reshape");
+                }
               } else {
                 // Check if value is less than -1; fail if so
                 fail_shape_inference("Invalid dimension value: ", dim_value);
@@ -384,7 +385,10 @@ ONNX_OPERATOR_SET_SCHEMA(
             } else {
               for (int i = 0; i < dataInputTensorType.shape().dim_size(); ++i) {
                 if (dataInputTensorType.shape().dim(i).has_dim_value()) {
-                  inputProduct *= dataInputTensorType.shape().dim(i).dim_value();
+                  if (checked_mul_overflow(
+                          inputProduct, dataInputTensorType.shape().dim(i).dim_value(), &inputProduct)) {
+                    fail_shape_inference("Dimension product overflow in Reshape");
+                  }
                 } else if (i >= static_cast<int>(unresolvedZeros.size()) || !unresolvedZeros[i]) {
                   inputProductValid = false;
                   break;
@@ -400,13 +404,11 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static const char* const Shape_ver25_doc = kDoc_Shape_ver24;
-
 ONNX_OPERATOR_SET_SCHEMA(
     Shape,
     25,
     OpSchema()
-        .SetDoc(Shape_ver25_doc)
+        .SetDoc(kDoc_Shape_ver24)
         .Input(0, "data", "An input tensor.", "T", OpSchema::Single, true, 1, OpSchema::NonDifferentiable)
         .Output(0, "shape", "Shape of the input tensor", "T1", OpSchema::Single, true, 1, OpSchema::NonDifferentiable)
         .Attr(
@@ -423,7 +425,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             AttributeProto::INT,
             OPTIONAL_VALUE)
         .TypeConstraint("T", OpSchema::all_tensor_types_ir13(), "Input tensor can be of arbitrary type.")
-        .TypeConstraint("T1", {"tensor(int64)"}, "Constrain output to int64 tensor.")
+        .TypeConstraint("T1", {types::Int64}, "Constrain output to int64 tensor.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           ctx.getOutputType(0)->mutable_tensor_type()->set_elem_type(TensorProto::INT64);
           auto output_shape = ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
@@ -464,13 +466,11 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static const char* const Size_ver25_doc = kDoc_Size_ver24;
-
 ONNX_OPERATOR_SET_SCHEMA(
     Size,
     25,
     OpSchema()
-        .SetDoc(Size_ver25_doc)
+        .SetDoc(kDoc_Size_ver24)
         .Input(0, "data", "An input tensor.", "T", OpSchema::Single, true, 1, OpSchema::NonDifferentiable)
         .Output(
             0,
@@ -482,7 +482,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             1,
             OpSchema::NonDifferentiable)
         .TypeConstraint("T", OpSchema::all_tensor_types_ir13(), "Input tensor can be of arbitrary type.")
-        .TypeConstraint("T1", {"tensor(int64)"}, "Constrain output to int64 tensor, which should be a scalar though.")
+        .TypeConstraint("T1", {types::Int64}, "Constrain output to int64 tensor, which should be a scalar though.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           ctx.getOutputType(0)->mutable_tensor_type()->set_elem_type(TensorProto::INT64);
           ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
@@ -546,7 +546,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
 
           bool all_lengths_known = true;
-          int total_length = 0;
+          int64_t total_length = 0;
 
           auto output_shape = ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
 
@@ -563,7 +563,13 @@ ONNX_OPERATOR_SET_SCHEMA(
             for (int j = 0; j < rank; j++) {
               if (j == axis) {
                 if (shape.dim(j).has_dim_value()) {
-                  total_length += static_cast<int>(shape.dim(j).dim_value());
+                  const int64_t dim_val = shape.dim(j).dim_value();
+                  if (dim_val < 0) {
+                    fail_shape_inference("Negative dimension value on Concat axis");
+                  }
+                  if (checked_add_overflow(total_length, dim_val, &total_length)) {
+                    fail_shape_inference("Integer overflow computing Concat output length");
+                  }
                 } else {
                   all_lengths_known = false;
                 }
@@ -737,16 +743,16 @@ in `[0, ... r-1]` where `r = rank(input)` as follows:
 If `axes` are omitted, they are set to `[0, ..., r-1]`.
 If `steps` are omitted, they are set to `[1, ..., 1]` of length `len(starts)`
 
-The effective values are initialized as `start[i] = 0`, `ends[i] = dims[i]` where
+The effective values are initialized as `starts[i] = 0`, `ends[i] = dims[i]` where
 `dims` are the dimensions of `input` and `steps[i] = 1`.
 
 All negative elements of `axes` are made non-negative by adding `r` to them, where
 `r =rank(input)`.
 
 All negative values in `starts[i]` and `ends[i]` have `dims[axes[i]]` added to them,
-where `dims` are the dimensions of `input`. Then `start[axes[i]]` is the adjusted
-`starts[i]` is clamped into the range `[0, dims[axes[i]]]` for positive stepping
-and `[0, dims[axes[i]]-1]` for negative stepping.
+where `dims` are the dimensions of `input`. Then `starts[axes[i]]` is clamped to
+range `[0, dims[axes[i]]]` for positive stepping, or to range `[0, dims[axes[i]]-1]`
+for negative stepping.
 
 The clamping for the adjusted `ends[i]` depends on the sign of `steps[i]` and must
 accommodate copying 0 through `dims[axes[i]]` elements, so for positive stepping
@@ -873,7 +879,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::NonDifferentiable)
         .Output(0, "output", "Sliced data tensor.", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
         .TypeConstraint("T", OpSchema::all_tensor_types_ir4(), "Constrain input and output types to all tensor types.")
-        .TypeConstraint("Tind", {"tensor(int32)", "tensor(int64)"}, "Constrain indices to integer types")
+        .TypeConstraint("Tind", {types::Int32, types::Int64}, "Constrain indices to integer types")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           size_t num_inputs = ctx.getNumInputs();
           if (num_inputs != 3 && num_inputs != 4 && num_inputs != 5) {
@@ -1067,15 +1073,21 @@ ONNX_OPERATOR_SET_SCHEMA(
 
 const char* Transpose_doc = R"DOC(
 Returns a transpose of the input tensor. (Similar to `numpy.transpose`).
-The optional attribute `perm` must be a permutation of the dimensions of
-the input tensor. Axis `i` of the output tensor corresponds to the axis
-`perm[i]` of the input tensor.
+The optional attribute `perm` specifies the permutation of the axes of the
+input tensor. `perm` must contain each axis index in `[0, n-1]` exactly once,
+so its length is equal to the rank `n` of the input tensor.
+
+Axis `i` of the output tensor corresponds to axis `perm[i]` of the input tensor.
+
+If the attribute is omitted, its default value is `(n-1, ..., 0)`, where `n`
+is the rank of the input tensor (that is, the dimensions are reversed).
+
 For example, when perm=(1, 0, 2), given an input tensor of shape (1, 2, 3),
 the output shape will be (2, 1, 3).
 When perm=(1, 2, 0), given an input tensor of shape (1, 2, 3),
 the output shape will be (2, 3, 1).
-If the attribute `perm` is omitted, its default value is `(n-1, ..., 0)`,
-where `n` is the rank of the input tensor.
+A 0-D or 1-D input is valid; in those cases the output has the same shape
+as the input.
 )DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
@@ -1085,9 +1097,10 @@ ONNX_OPERATOR_SET_SCHEMA(
         .SetDoc(Transpose_doc)
         .Attr(
             "perm",
-            "A list of integers. By default, reverse the dimensions, "
+            "A list of integers. By default, reverse the dimensions; "
             "otherwise permute the axes according to the values given. "
-            "Its length must be equal to the rank of the input.",
+            "Its length must be equal to the rank of the input, and each "
+            "value must be in the range `[0, rank-1]`.",
             AttributeProto::INTS,
             OPTIONAL_VALUE)
         .Input(0, "data", "An input tensor.", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
@@ -1110,7 +1123,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             // check if every index is valid
             std::vector<bool> seen(shape.dim_size(), false);
             for (int64_t fromDimIndex : perm) {
-              if (!(0 <= fromDimIndex && fromDimIndex < shape.dim_size())) {
+              if (fromDimIndex < 0 || fromDimIndex >= shape.dim_size()) {
                 std::ostringstream oss;
                 oss << "Invalid attribute perm {" << perm[0];
                 for (size_t i = 1; i != perm.size(); ++i) {
@@ -1241,7 +1254,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             1,
             OpSchema::Differentiable)
         .TypeConstraint("T", OpSchema::all_tensor_types(), "Input and output types can be of any tensor type.")
-        .TypeConstraint("Tind", {"tensor(int32)", "tensor(int64)"}, "Constrain indices to integer types")
+        .TypeConstraint("Tind", {types::Int32, types::Int64}, "Constrain indices to integer types")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           propagateElemTypeFromInputToOutput(ctx, 0, 0);
           if (hasNInputShapes(ctx, 1)) {
@@ -1268,7 +1281,7 @@ first (q-1) dimensions of updates.shape must match the first (q-1) dimensions of
 The remaining dimensions of `updates` correspond to the dimensions of the
 replacement-slice-values. Each replacement-slice-value is a (r-k) dimensional tensor,
 corresponding to the trailing (r-k) dimensions of `data`.  Thus, the shape of `updates`
-must equal indices.shape[0:q-1] ++ data.shape[k:r-1], where ++ denotes the concatenation
+must equal indices.shape[0:q-1] ++ data.shape[k:r], where ++ denotes the concatenation
 of shapes.
 
 The `output` is calculated via the following equation:
@@ -1486,7 +1499,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             1,
             OpSchema::Differentiable)
         .TypeConstraint("T", OpSchema::all_tensor_types_ir4(), "Input and output types can be of any tensor type.")
-        .TypeConstraint("Tind", {"tensor(int32)", "tensor(int64)"}, "Constrain indices to integer types")
+        .TypeConstraint("Tind", {types::Int32, types::Int64}, "Constrain indices to integer types")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           propagateElemTypeFromInputToOutput(ctx, 0, 0);
           if (hasNInputShapes(ctx, 1)) {
@@ -1584,7 +1597,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::NonDifferentiable)
         .Output(0, "output", "Tensor of rank q + (r - 1).", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
         .TypeConstraint("T", OpSchema::all_tensor_types_ir4(), "Constrain input and output types to any tensor type.")
-        .TypeConstraint("Tind", {"tensor(int32)", "tensor(int64)"}, "Constrain indices to integer types")
+        .TypeConstraint("Tind", {types::Int32, types::Int64}, "Constrain indices to integer types")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           propagateElemTypeFromInputToOutput(ctx, 0, 0);
           if (!hasNInputShapes(ctx, 2)) {
@@ -1705,7 +1718,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             1,
             OpSchema::Differentiable)
         .TypeConstraint("T", OpSchema::all_tensor_types_ir4(), "Constrain input and output types to any tensor type.")
-        .TypeConstraint("Tind", {"tensor(int32)", "tensor(int64)"}, "Constrain indices to integer types")
+        .TypeConstraint("Tind", {types::Int32, types::Int64}, "Constrain indices to integer types")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           propagateElemTypeFromInputToOutput(ctx, 0, 0);
           // propagate indices' shape to output if it exists
@@ -1714,13 +1727,11 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static const char* const Squeeze_ver25_doc = kDoc_Squeeze_ver24;
-
 ONNX_OPERATOR_SET_SCHEMA(
     Squeeze,
     25,
     OpSchema()
-        .SetDoc(Squeeze_ver25_doc)
+        .SetDoc(kDoc_Squeeze_ver24)
         .Input(
             0,
             "data",
@@ -1812,13 +1823,11 @@ ONNX_OPERATOR_SET_SCHEMA(
           PropagateShapeDataFromInputToOutput(ctx, 0);
         }));
 
-static const char* const Unsqueeze_ver25_doc = kDoc_Unsqueeze_ver24;
-
 ONNX_OPERATOR_SET_SCHEMA(
     Unsqueeze,
     25,
     OpSchema()
-        .SetDoc(Unsqueeze_ver25_doc)
+        .SetDoc(kDoc_Unsqueeze_ver24)
         .Input(0, "data", "Original tensor", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
         .Input(
             1,
@@ -1885,9 +1894,107 @@ ONNX_OPERATOR_SET_SCHEMA(
           PropagateShapeDataFromInputToOutput(ctx, 0);
         }));
 
+static bool BuildContextDependentFunctionBodySpaceToDepth(
+    const FunctionBodyBuildContext& ctx,
+    const OpSchema& schema,
+    FunctionProto& functionProto) {
+  const auto* blocksize_attr = ctx.getAttribute("blocksize");
+  if (blocksize_attr == nullptr || !blocksize_attr->has_i() || blocksize_attr->i() <= 0) {
+    return false;
+  }
+  const auto blocksize = blocksize_attr->i();
+  const auto block_area = checkedMultiply(blocksize, blocksize);
+  const auto* mode_attr = ctx.getAttribute("mode");
+  const std::string mode = (mode_attr != nullptr && mode_attr->has_s()) ? mode_attr->s() : "DCR";
+  if (mode != "DCR" && mode != "CRD") {
+    return false;
+  }
+
+  FunctionBuilder builder(functionProto);
+  builder.Const1D("blocksize", blocksize)
+      .Const1D("block_area", block_area)
+      .Const1D("zero", int64_t{0})
+      .Const1D("one", int64_t{1})
+      .Const1D("two", int64_t{2})
+      .Const1D("three", int64_t{3})
+      .Const1D("four", int64_t{4})
+      .Add("input_shape = Shape (input)")
+      .Add("N = Slice (input_shape, zero, one)")
+      .Add("C = Slice (input_shape, one, two)")
+      .Add("H = Slice (input_shape, two, three)")
+      .Add("W = Slice (input_shape, three, four)")
+      .Add("H_block = Div (H, blocksize)")
+      .Add("W_block = Div (W, blocksize)")
+      .Add("C_block = Mul (C, block_area)")
+      .Add("tmp_shape = Concat <axis = 0> (N, C, H_block, blocksize, W_block, blocksize)")
+      .Add("tmp = Reshape (input, tmp_shape)");
+  if (mode == "DCR") {
+    builder.Add("tmp_transposed = Transpose <perm = [0, 3, 5, 1, 2, 4]> (tmp)");
+  } else {
+    builder.Add("tmp_transposed = Transpose <perm = [0, 1, 3, 5, 2, 4]> (tmp)");
+  }
+  builder.Add("output_shape = Concat <axis = 0> (N, C_block, H_block, W_block)")
+      .Add("output = Reshape (tmp_transposed, output_shape)");
+  schema.BuildFunction(functionProto);
+  return true;
+}
+
+static bool BuildContextDependentFunctionBodyDepthToSpace(
+    const FunctionBodyBuildContext& ctx,
+    const OpSchema& schema,
+    FunctionProto& functionProto) {
+  const auto* blocksize_attr = ctx.getAttribute("blocksize");
+  if (blocksize_attr == nullptr || !blocksize_attr->has_i() || blocksize_attr->i() <= 0) {
+    return false;
+  }
+  const auto blocksize = blocksize_attr->i();
+  const auto block_area = checkedMultiply(blocksize, blocksize);
+  const auto* mode_attr = ctx.getAttribute("mode");
+  const std::string mode = (mode_attr != nullptr && mode_attr->has_s()) ? mode_attr->s() : "DCR";
+  if (mode != "DCR" && mode != "CRD") {
+    return false;
+  }
+
+  FunctionBuilder builder(functionProto);
+  builder.Const1D("blocksize", blocksize)
+      .Const1D("block_area", block_area)
+      .Const1D("zero", int64_t{0})
+      .Const1D("one", int64_t{1})
+      .Const1D("two", int64_t{2})
+      .Const1D("three", int64_t{3})
+      .Const1D("four", int64_t{4})
+      .Add("input_shape = Shape (input)")
+      .Add("N = Slice (input_shape, zero, one)")
+      .Add("C = Slice (input_shape, one, two)")
+      .Add("H = Slice (input_shape, two, three)")
+      .Add("W = Slice (input_shape, three, four)")
+      .Add("H_block = Mul (H, blocksize)")
+      .Add("W_block = Mul (W, blocksize)")
+      .Add("C_block = Div (C, block_area)");
+  if (mode == "DCR") {
+    builder.Add("tmp_shape = Concat <axis = 0> (N, blocksize, blocksize, C_block, H, W)")
+        .Add("tmp = Reshape (input, tmp_shape)")
+        .Add("tmp_transposed = Transpose <perm = [0, 3, 4, 1, 5, 2]> (tmp)");
+  } else {
+    builder.Add("tmp_shape = Concat <axis = 0> (N, C_block, blocksize, blocksize, H, W)")
+        .Add("tmp = Reshape (input, tmp_shape)")
+        .Add("tmp_transposed = Transpose <perm = [0, 1, 4, 2, 5, 3]> (tmp)");
+  }
+  builder.Add("output_shape = Concat <axis = 0> (N, C_block, H_block, W_block)")
+      .Add("output = Reshape (tmp_transposed, output_shape)");
+  schema.BuildFunction(functionProto);
+  return true;
+}
+
+static constexpr const char* SpaceToDepth_ver28_doc =
+    R"DOC(SpaceToDepth rearranges blocks of spatial data into depth. More specifically,
+this op outputs a copy of the input tensor where values from the height and width dimensions
+are moved to the depth dimension. `mode` determines whether blocks are ordered depth-column-row
+(`DCR`, the default) or column-row-depth (`CRD`).)DOC";
+
 ONNX_OPERATOR_SET_SCHEMA(
     SpaceToDepth,
-    27,
+    28,
     OpSchema()
         .Attr("blocksize", "Blocks of [blocksize, blocksize] are moved.", AttributeProto::INT)
         .Attr(
@@ -1895,7 +2002,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "DCR (default) for depth-column-row order re-arrangement. Use CRD for column-row-depth order.",
             AttributeProto::STRING,
             std::string("DCR"))
-        .SetDoc(kDoc_SpaceToDepth_ver27)
+        .SetDoc(SpaceToDepth_ver28_doc)
         .Input(
             0,
             "input",
@@ -1922,6 +2029,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           if (blocksize <= 0) {
             fail_shape_inference("Blocksize must be positive");
           }
+          const auto block_area = checkedMultiply(blocksize, blocksize);
           if (hasInputShape(ctx, 0)) {
             auto& input_shape = getInputShape(ctx, 0);
             if (input_shape.dim_size() == 4) {
@@ -1929,7 +2037,7 @@ ONNX_OPERATOR_SET_SCHEMA(
                   ctx,
                   0,
                   {input_shape.dim(0),
-                   input_shape.dim(1) * (blocksize * blocksize),
+                   input_shape.dim(1) * block_area,
                    input_shape.dim(2) / blocksize,
                    input_shape.dim(3) / blocksize});
             } else {
@@ -1937,51 +2045,9 @@ ONNX_OPERATOR_SET_SCHEMA(
             }
           }
         })
-        .SetContextDependentFunctionBodyBuilder(
-            [](const FunctionBodyBuildContext& ctx, const OpSchema& schema, FunctionProto& functionProto) -> bool {
-              auto blocksize_attr = ctx.getAttribute("blocksize");
-              if (!blocksize_attr || !blocksize_attr->has_i()) {
-                return false;
-              }
-              int64_t bs = blocksize_attr->i();
-              if (bs <= 0) {
-                return false;
-              }
-              const auto* mode_attr = ctx.getAttribute("mode");
-              std::string mode = (mode_attr != nullptr && mode_attr->has_s()) ? mode_attr->s() : "DCR";
+        .SetContextDependentFunctionBodyBuilder(BuildContextDependentFunctionBodySpaceToDepth));
 
-              FunctionBuilder builder(functionProto);
-              builder.Const("bs_1d", std::vector<int64_t>{bs})
-                  .Const("bs2_1d", std::vector<int64_t>{bs * bs})
-                  .Const("zero_1d", std::vector<int64_t>{0LL})
-                  .Const("one_1d", std::vector<int64_t>{1LL})
-                  .Const("two_1d", std::vector<int64_t>{2LL})
-                  .Const("three_1d", std::vector<int64_t>{3LL})
-                  .Const("four_1d", std::vector<int64_t>{4LL})
-                  .Add("input_shape = Shape (input)")
-                  .Add("N = Slice (input_shape, zero_1d, one_1d)")
-                  .Add("C = Slice (input_shape, one_1d, two_1d)")
-                  .Add("H = Slice (input_shape, two_1d, three_1d)")
-                  .Add("W = Slice (input_shape, three_1d, four_1d)")
-                  .Add("H_bs = Div (H, bs_1d)")
-                  .Add("W_bs = Div (W, bs_1d)")
-                  .Add("C_bs2 = Mul (C, bs2_1d)")
-                  .Add("tmp_shape = Concat <axis = 0> (N, C, H_bs, bs_1d, W_bs, bs_1d)")
-                  .Add("tmp = Reshape (input, tmp_shape)");
-              if (mode == "DCR") {
-                builder.Add("tmp2 = Transpose <perm = [0, 3, 5, 1, 2, 4]> (tmp)");
-              } else {
-                // CRD mode
-                builder.Add("tmp2 = Transpose <perm = [0, 1, 3, 5, 2, 4]> (tmp)");
-              }
-              builder.Add("out_shape = Concat <axis = 0> (N, C_bs2, H_bs, W_bs)")
-                  .Add("output = Reshape (tmp2, out_shape)");
-
-              schema.BuildFunction(functionProto);
-              return true;
-            }));
-
-static constexpr const char* DepthToSpace_ver27_doc =
+static constexpr const char* DepthToSpace_ver13_doc =
     R"DOC(DepthToSpace rearranges (permutes) data from depth into blocks of spatial data.
 This is the reverse transformation of SpaceToDepth. More specifically, this op outputs a copy of
 the input tensor where values from the depth dimension are moved in spatial blocks to the height
@@ -2009,7 +2075,7 @@ y = np.reshape(tmp, [b, c // (blocksize ** 2), h * blocksize, w * blocksize])
 
 ONNX_OPERATOR_SET_SCHEMA(
     DepthToSpace,
-    27,
+    28,
     OpSchema()
         .Attr("blocksize", "Blocks of [blocksize, blocksize] are moved.", AttributeProto::INT)
         .Attr(
@@ -2017,7 +2083,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "DCR (default) for depth-column-row order re-arrangement. Use CRD for column-row-depth order.",
             AttributeProto::STRING,
             std::string("DCR"))
-        .SetDoc(DepthToSpace_ver27_doc)
+        .SetDoc(DepthToSpace_ver13_doc)
         .Input(
             0,
             "input",
@@ -2044,6 +2110,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           if (blocksize <= 0) {
             fail_shape_inference("Blocksize must be positive");
           }
+          const auto block_area = checkedMultiply(blocksize, blocksize);
           if (hasInputShape(ctx, 0)) {
             auto& input_shape = getInputShape(ctx, 0);
             if (input_shape.dim_size() == 4) {
@@ -2051,7 +2118,7 @@ ONNX_OPERATOR_SET_SCHEMA(
                   ctx,
                   0,
                   {input_shape.dim(0),
-                   input_shape.dim(1) / (blocksize * blocksize),
+                   input_shape.dim(1) / block_area,
                    input_shape.dim(2) * blocksize,
                    input_shape.dim(3) * blocksize});
             } else {
@@ -2059,59 +2126,13 @@ ONNX_OPERATOR_SET_SCHEMA(
             }
           }
         })
-        .SetContextDependentFunctionBodyBuilder(
-            [](const FunctionBodyBuildContext& ctx, const OpSchema& schema, FunctionProto& functionProto) -> bool {
-              auto blocksize_attr = ctx.getAttribute("blocksize");
-              if (!blocksize_attr || !blocksize_attr->has_i()) {
-                return false;
-              }
-              int64_t bs = blocksize_attr->i();
-              if (bs <= 0) {
-                return false;
-              }
-              const auto* mode_attr = ctx.getAttribute("mode");
-              std::string mode = (mode_attr != nullptr && mode_attr->has_s()) ? mode_attr->s() : "DCR";
-
-              FunctionBuilder builder(functionProto);
-              builder.Const("bs_1d", std::vector<int64_t>{bs})
-                  .Const("bs2_1d", std::vector<int64_t>{bs * bs})
-                  .Const("zero_1d", std::vector<int64_t>{0LL})
-                  .Const("one_1d", std::vector<int64_t>{1LL})
-                  .Const("two_1d", std::vector<int64_t>{2LL})
-                  .Const("three_1d", std::vector<int64_t>{3LL})
-                  .Const("four_1d", std::vector<int64_t>{4LL})
-                  .Add("input_shape = Shape (input)")
-                  .Add("N = Slice (input_shape, zero_1d, one_1d)")
-                  .Add("C = Slice (input_shape, one_1d, two_1d)")
-                  .Add("H = Slice (input_shape, two_1d, three_1d)")
-                  .Add("W = Slice (input_shape, three_1d, four_1d)")
-                  .Add("H_bs = Mul (H, bs_1d)")
-                  .Add("W_bs = Mul (W, bs_1d)")
-                  .Add("C_bs2 = Div (C, bs2_1d)");
-              if (mode == "DCR") {
-                builder.Add("tmp_shape = Concat <axis = 0> (N, bs_1d, bs_1d, C_bs2, H, W)")
-                    .Add("tmp = Reshape (input, tmp_shape)")
-                    .Add("tmp2 = Transpose <perm = [0, 3, 4, 1, 5, 2]> (tmp)");
-              } else {
-                // CRD mode
-                builder.Add("tmp_shape = Concat <axis = 0> (N, C_bs2, bs_1d, bs_1d, H, W)")
-                    .Add("tmp = Reshape (input, tmp_shape)")
-                    .Add("tmp2 = Transpose <perm = [0, 1, 4, 2, 5, 3]> (tmp)");
-              }
-              builder.Add("out_shape = Concat <axis = 0> (N, C_bs2, H_bs, W_bs)")
-                  .Add("output = Reshape (tmp2, out_shape)");
-
-              schema.BuildFunction(functionProto);
-              return true;
-            }));
-
-static const char* const Tile_ver13_doc = kDoc_Tile_ver6;
+        .SetContextDependentFunctionBodyBuilder(BuildContextDependentFunctionBodyDepthToSpace));
 
 ONNX_OPERATOR_SET_SCHEMA(
     Tile,
     13,
     OpSchema()
-        .SetDoc(Tile_ver13_doc)
+        .SetDoc(kDoc_Tile_ver6)
         .Input(0, "input", "Input tensor of any shape.", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
         .Input(
             1,
@@ -2134,7 +2155,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             1,
             OpSchema::Differentiable)
         .TypeConstraint("T", OpSchema::all_tensor_types_ir4(), "Constrain input and output types to all tensor types.")
-        .TypeConstraint("T1", {"tensor(int64)"}, "Constrain repeat's type to int64 tensors.")
+        .TypeConstraint("T1", {types::Int64}, "Constrain repeat's type to int64 tensors.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           // Type inference
           propagateElemTypeFromInputToOutput(ctx, 0, 0);
@@ -2169,10 +2190,13 @@ ONNX_OPERATOR_SET_SCHEMA(
             }
 
             for (int i = 0; i < input_rank; ++i) {
+              if (repeats_data[i] < 0) {
+                fail_shape_inference("'Repeats' input must not contain negative values");
+              }
               const auto& input_dim = input_shape.dim(i);
               auto output_dim = output_shape->add_dim();
               if (input_dim.has_dim_value()) {
-                output_dim->set_dim_value(input_dim.dim_value() * repeats_data[i]);
+                output_dim->set_dim_value(checkedMultiply(input_dim.dim_value(), repeats_data[i]));
               }
             }
           } else {
@@ -2185,8 +2209,6 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
           return;
         }));
-
-static const char* const Upsample_ver10_doc = kDoc_Upsample_ver7;
 
 ONNX_OPERATOR_SET_SCHEMA(
     Upsample,
@@ -2208,7 +2230,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::Single)
         .Output(0, "Y", "N-D tensor after resizing", "T", OpSchema::Single)
         .TypeConstraint("T", OpSchema::all_tensor_types(), "Constrain input 'X' and output 'Y' to all tensor types.")
-        .SetDoc(Upsample_ver10_doc)
+        .SetDoc(kDoc_Upsample_ver7)
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) { resizeShapeInference_opset7_to_10(ctx); }));
 
 static constexpr const char* Resize_ver19_doc = R"DOC(
@@ -2389,14 +2411,9 @@ ONNX_OPERATOR_SET_SCHEMA(
             "T1",
             OpSchema::all_tensor_types_ir4(),
             "Constrain input 'X' and output 'Y' to all tensor types.")
-        .TypeConstraint(
-            "T2",
-            {"tensor(float16)", "tensor(float)", "tensor(double)"},
-            "Constrain roi type to float or double.")
+        .TypeConstraint("T2", {types::Float16, types::Float, types::Double}, "Constrain roi type to float or double.")
         .SetDoc(Resize_ver19_doc)
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) { resizeShapeInference_opset18_to_19(ctx); }));
-
-static const char* const GridSample_ver22_doc = kDoc_GridSample_ver20;
 
 ONNX_OPERATOR_SET_SCHEMA(
     GridSample,
@@ -2469,7 +2486,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::all_tensor_types_ir4(),
             "Constrain input `X` and output `Y` types to all tensor types.")
         .TypeConstraint("T2", OpSchema::all_float_types_ir4(), "Constrain grid types to float tensors.")
-        .SetDoc(GridSample_ver22_doc)
+        .SetDoc(kDoc_GridSample_ver20)
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) { gridSampleShapeInference(ctx); }));
 
 static constexpr const char* AffineGrid_ver20_doc = R"DOC(
@@ -2540,7 +2557,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             1,
             OpSchema::Differentiable)
         .TypeConstraint("T1", OpSchema::all_float_types_ir4(), "Constrain grid types to float tensors.")
-        .TypeConstraint("T2", {"tensor(int64)"}, "Constrain size's type to int64 tensors.")
+        .TypeConstraint("T2", {types::Int64}, "Constrain size's type to int64 tensors.")
         .SetDoc(AffineGrid_ver20_doc)
         .FunctionBody(R"ONNX(
         {
@@ -2774,13 +2791,11 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Constrain input and output types to all tensor, sequence, and optional types.")
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
-static const char* const Compress_ver11_doc = kDoc_Compress_ver9;
-
 ONNX_OPERATOR_SET_SCHEMA(
     Compress,
     11,
     OpSchema()
-        .SetDoc(Compress_ver11_doc)
+        .SetDoc(kDoc_Compress_ver9)
         .Attr(
             "axis",
             "(Optional) Axis along which to take slices. If not specified, "
@@ -2811,7 +2826,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             1,
             OpSchema::Differentiable)
         .TypeConstraint("T", OpSchema::all_tensor_types(), "Constrain input and output types to all tensor types.")
-        .TypeConstraint("T1", {"tensor(bool)"}, "Constrain to boolean tensors.")
+        .TypeConstraint("T1", {types::Bool}, "Constrain to boolean tensors.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           propagateElemTypeFromInputToOutput(ctx, 0, 0);
           auto axisAttr = ctx.getAttribute("axis");
@@ -2929,87 +2944,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint("T1", OpSchema::all_numeric_types(), "Constrain input to only numeric types.")
         .TypeConstraint("T2", OpSchema::all_numeric_types(), "Constrain input to only numeric types.")
         .TypeConstraint("T3", OpSchema::all_tensor_types(), "Constrain to any tensor type.")
-        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-          // Check that the node has three inputs.
-          if (ctx.getNumInputs() != 3) {
-            fail_type_inference("OneHot node must have three inputs.");
-          }
-          // Input 'depth' must be a scalar or a single-element vector.
-          // TODO(ONNX): Ideally to match spec for this input only Scalar should
-          // be allowed. Making this change now can affect backward
-          // compatibility for this op. Since this does not seem like a good
-          // justification to update version for this op, allowing both scalar
-          // and 1 element vector for now. In future when version update for
-          // this op is done we should only allow scalar or change the spec to
-          // allow both.
-          std::optional<int64_t> depth_value;
-          if (hasInputShape(ctx, 1)) {
-            auto& depth_shape = getInputShape(ctx, 1);
-            if (const TensorProto* depth_data = ctx.getInputData(1)) {
-              if (depth_data->data_type() == TensorProto::INT64) {
-                depth_value = ParseData<int64_t>(depth_data)[0];
-              } else if (depth_data->data_type() == TensorProto::INT32) {
-                depth_value = ParseData<int32_t>(depth_data)[0];
-              } else if (depth_data->data_type() == TensorProto::FLOAT) {
-                depth_value = static_cast<int64_t>(ParseData<float>(depth_data)[0]);
-              }
-            }
-            if (depth_shape.dim_size() != 0 && depth_shape.dim_size() != 1) {
-              fail_type_inference("Input 'depth' must be a scalar or rank 1 tensor.");
-            }
-            if (depth_shape.dim_size() == 1 && depth_shape.dim(0).has_dim_value() &&
-                depth_shape.dim(0).dim_value() != 1) {
-              fail_type_inference("Input 'depth' must have exactly one element.");
-            }
-          }
-          // Input 'values' must be a two-element vector.
-          if (hasInputShape(ctx, 2)) {
-            auto& values_shape = getInputShape(ctx, 2);
-            if (values_shape.dim_size() != 1) {
-              fail_type_inference("Input 'values' must be rank 1 tensor.");
-            }
-            if (values_shape.dim(0).has_dim_value() && values_shape.dim(0).dim_value() != 2) {
-              fail_type_inference("Input 'values' must have exactly two elements.");
-            }
-          }
-          // Set output type to be the same as the third input, 'values'.
-          propagateElemTypeFromInputToOutput(ctx, 2, 0);
-          // Set the output shape, if input 0 (indices) shape is available.
-          if (hasInputShape(ctx, 0)) {
-            const TensorShapeProto& indices_shape = ctx.getInputType(0)->tensor_type().shape();
-            int r = indices_shape.dim_size();
-            if (r < 1) {
-              fail_shape_inference("Indices tensor must have rank >= 1");
-            }
-            int out_rank = r + 1;
-            int axis = static_cast<int>(getAttribute(ctx, "axis", -1));
-            if (axis < -out_rank || axis >= out_rank) {
-              fail_shape_inference("'axis' must be in [-rank(indices), rank(indices)-1]");
-            }
-            if (axis < 0) {
-              axis += out_rank;
-            }
-            auto output_shape = getOutputShape(ctx, 0);
-            for (int i = 0; i < out_rank; ++i) {
-              auto dim = output_shape->add_dim();
-              if (i < axis) {
-                if (indices_shape.dim(i).has_dim_value()) {
-                  dim->set_dim_value(indices_shape.dim(i).dim_value());
-                } else if (indices_shape.dim(i).has_dim_param()) {
-                  dim->set_dim_param(indices_shape.dim(i).dim_param());
-                }
-              } else if (i > axis) {
-                if (indices_shape.dim(i - 1).has_dim_value()) {
-                  dim->set_dim_value(indices_shape.dim(i - 1).dim_value());
-                } else if (indices_shape.dim(i - 1).has_dim_param()) {
-                  dim->set_dim_param(indices_shape.dim(i - 1).dim_param());
-                }
-              } else if (depth_value) {
-                dim->set_dim_value(*depth_value);
-              }
-            }
-          }
-        }));
+        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) { oneHotShapeInference(ctx, 11); }));
 
 ONNX_OPERATOR_SET_SCHEMA(
     IsNaN,
@@ -3019,7 +2954,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Input(0, "X", "input", "T1", OpSchema::Single, true, 1, OpSchema::NonDifferentiable)
         .Output(0, "Y", "output", "T2", OpSchema::Single, true, 1, OpSchema::NonDifferentiable)
         .TypeConstraint("T1", OpSchema::all_float_types_ir9(), "Constrain input types to float tensors.")
-        .TypeConstraint("T2", {"tensor(bool)"}, "Constrain output types to boolean tensors.")
+        .TypeConstraint("T2", {types::Bool}, "Constrain output types to boolean tensors.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           updateOutputElemType(ctx, 0, TensorProto::BOOL);
           if (hasInputShape(ctx, 0)) {
@@ -3049,7 +2984,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             AttributeProto::INT,
             static_cast<int64_t>(1))
         .TypeConstraint("T1", OpSchema::all_float_types_ir9(), "Constrain input types to float tensors.")
-        .TypeConstraint("T2", {"tensor(bool)"}, "Constrain output types to boolean tensors.")
+        .TypeConstraint("T2", {types::Bool}, "Constrain output types to boolean tensors.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           updateOutputElemType(ctx, 0, TensorProto::BOOL);
           if (hasInputShape(ctx, 0)) {
@@ -3057,13 +2992,11 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static const char* const Where_ver16_doc = kDoc_Where_ver9;
-
 ONNX_OPERATOR_SET_SCHEMA(
     Where,
     16,
     OpSchema()
-        .SetDoc(GET_OP_DOC_STR(std::string(Where_ver16_doc) + GenerateBroadcastingDocMul()))
+        .SetDoc(GET_OP_DOC_STR(std::string(kDoc_Where_ver9) + GenerateBroadcastingDocMul()))
         .Input(
             0,
             "condition",
@@ -3100,7 +3033,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             true,
             1,
             OpSchema::Differentiable)
-        .TypeConstraint("B", {"tensor(bool)"}, "Constrain to boolean tensors.")
+        .TypeConstraint("B", {types::Bool}, "Constrain to boolean tensors.")
         .TypeConstraint(
             "T",
             OpSchema::all_tensor_types_ir4(),
@@ -3597,7 +3530,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             return;
           }
 
-          const auto last_index_dimension = indices_shape.dim(indices_rank - 1).dim_value() + batch_dims_data;
+          const auto last_index_dimension =
+              checkedAdd(indices_shape.dim(indices_rank - 1).dim_value(), batch_dims_data);
 
           if (last_index_dimension > data_rank) {
             fail_shape_inference(
@@ -3614,13 +3548,11 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static const char* const Pad_ver25_doc = kDoc_Pad_ver24;
-
 ONNX_OPERATOR_SET_SCHEMA(
     Pad,
     25,
     OpSchema().FillUsing(PadDocGenerator(
-        Pad_ver25_doc,
+        kDoc_Pad_ver24,
         "Supported modes: `constant`(default), `reflect`, `edge`, `wrap`",
         OpSchema::all_tensor_types_ir13(),
         "Constrain input and output types to all tensor types up to IRv13.")));
@@ -3743,7 +3675,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             AttributeProto::INTS,
             OPTIONAL_VALUE)
         .TypeConstraint("T", OpSchema::all_tensor_types_ir4(), "Constrain input and output types to all tensor types.")
-        .TypeConstraint("Tind", {"tensor(int32)", "tensor(int64)"}, "Constrain indices to integer types")
+        .TypeConstraint("Tind", {types::Int32, types::Int64}, "Constrain indices to integer types")
         .SetNodeDeterminism(OpSchema::NodeDeterminism::Deterministic)
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           if (ctx.getNumInputs() != 2) {
@@ -3878,9 +3810,10 @@ The operation can be described using the following pseudocode:
 for prefix_idx in np.ndindex(past_cache.shape[:axis]):
     batch_idx = prefix_idx[0]
     for sequence_idx in range(sequence_length):
-        cache_idx = (*prefix_idx, write_indices[batch_idx] + sequence_idx)
+        cache_sequence_idx = write_indices[batch_idx] + sequence_idx
         if mode == "circular":
-            cache_idx = tuple(np.mod(np.asarray(cache_idx), max_sequence_length))
+            cache_sequence_idx = cache_sequence_idx % max_sequence_length
+        cache_idx = (*prefix_idx, cache_sequence_idx)
         update_idx = (*prefix_idx, sequence_idx)
         present_cache[cache_idx] = update[update_idx]
 ```

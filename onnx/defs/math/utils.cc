@@ -5,12 +5,13 @@
 #include "onnx/defs/math/utils.h"
 
 #include <string>
+#include <utility>
 #include <vector>
 
-namespace ONNX_NAMESPACE {
-namespace defs {
-namespace math {
-namespace utils {
+#include "onnx/common/safe_math.h"
+#include "onnx/defs/type_builders.h"
+
+namespace ONNX_NAMESPACE::defs::math::utils {
 
 static constexpr const char* TopK_ver11_doc = R"DOC(
 Retrieve the top-K largest or smallest elements along a specified axis. Given an input tensor of
@@ -30,8 +31,8 @@ Given two equivalent values, this operator uses the indices along the axis as
 a tiebreaker. That is, the element with the lower index will appear first.
 )DOC";
 
-std::function<void(OpSchema&)> TopKOpGenerator(const std::vector<std::string>& allowed_types) {
-  return [=](OpSchema& schema) {
+std::function<void(OpSchema&)> TopKOpGenerator(std::vector<std::string> allowed_types) {
+  return [allowed_types = std::move(allowed_types)](OpSchema& schema) {
     schema.SetDoc(TopK_ver11_doc)
         .Input(
             0,
@@ -73,7 +74,7 @@ std::function<void(OpSchema&)> TopKOpGenerator(const std::vector<std::string>& a
             1,
             OpSchema::NonDifferentiable)
         .TypeConstraint("T", allowed_types, "Constrain input and output types to numeric tensors.")
-        .TypeConstraint("I", {"tensor(int64)"}, "Constrain index tensor to int64")
+        .TypeConstraint("I", {types::Int64}, "Constrain index tensor to int64")
         .Attr(
             "axis",
             "Dimension on which to do the sort. Negative value means counting dimensions "
@@ -148,15 +149,34 @@ std::function<void(OpSchema&)> TopKOpGenerator(const std::vector<std::string>& a
   };
 }
 
-int MathOpTwoIntegers(const std::string& op_type, int a, int b) {
+std::function<void(OpSchema&)>
+UnaryFloatMathOpGenerator(const char* doc, const char* output_description, std::vector<std::string> allowed_types) {
+  return [doc, output_description, allowed_types = std::move(allowed_types)](OpSchema& schema) {
+    schema.SetDoc(doc)
+        .Input(0, "input", "Input tensor", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
+        .Output(0, "output", output_description, "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
+        .TypeConstraint("T", allowed_types, "Constrain input and output types to float tensors.")
+        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput);
+  };
+}
+
+int64_t MathOpTwoIntegers(const std::string& op_type, int64_t a, int64_t b) {
+  bool (*checked_op)(int64_t, int64_t, int64_t*) = nullptr;
   if (op_type == "Add") {
-    return a + b;
+    checked_op = checked_add_overflow;
   } else if (op_type == "Sub") {
-    return a - b;
+    checked_op = checked_sub_overflow;
   } else if (op_type == "Mul") {
-    return a * b;
+    checked_op = checked_mul_overflow;
+  } else {
+    fail_shape_inference("Wrong op_type name for running propagation: ", op_type);
   }
-  fail_shape_inference("Wrong op_type name for running propagation: ", op_type);
+
+  int64_t result = 0;
+  if (checked_op(a, b, &result)) {
+    fail_shape_inference("Integer overflow in ", op_type, " during data propagation");
+  }
+  return result;
 }
 
 void MatMulShapeInference(ONNX_NAMESPACE::InferenceContext& ctx, int input1Idx, int input2Idx) {
@@ -269,7 +289,4 @@ Production must never overflow, and accumulation may overflow if and only if in 
   return QLinearMatMul_doc;
 }
 
-} // namespace utils
-} // namespace math
-} // namespace defs
-} // namespace ONNX_NAMESPACE
+} // namespace ONNX_NAMESPACE::defs::math::utils

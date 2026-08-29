@@ -15,6 +15,7 @@
 #include "onnx/common/assertions.h"
 
 namespace ONNX_NAMESPACE {
+namespace {
 
 struct InternedStrings {
   InternedStrings() {
@@ -63,10 +64,12 @@ struct InternedStrings {
   std::mutex mutex_;
 };
 
-static InternedStrings& globalStrings() {
+InternedStrings& globalStrings() {
   static InternedStrings s;
   return s;
 }
+
+} // namespace
 
 const char* Symbol::toString() const {
   return globalStrings().string(*this);

@@ -55,6 +55,7 @@ extensions = [
     "sphinx.ext.viewcode",
 ]
 
+myst_heading_anchors = 6
 myst_enable_extensions = [
     "amsmath",
     "attrs_inline",
@@ -76,6 +77,7 @@ coverage_show_missing_items = True
 exclude_patterns = []
 graphviz_output_format = "svg"
 html_css_files = ["css/custom.css"]
+html_extra_path = ["extra"]
 html_favicon = "onnx-favicon.png"
 html_sidebars = {}
 html_static_path = ["_static"]
@@ -102,21 +104,6 @@ intersphinx_mapping = {
     "python": (f"https://docs.python.org/{sys.version_info.major}/", None),
     "scipy": ("https://docs.scipy.org/doc/scipy/", None),
     "torch": ("https://pytorch.org/docs/stable/", None),
-}
-
-sphinx_gallery_conf = {
-    "examples_dirs": ["examples"],
-    "gallery_dirs": ["auto_examples", "auto_tutorial"],
-    "capture_repr": ("_repr_html_", "__repr__"),
-    "ignore_repr_types": r"matplotlib.text|matplotlib.axes",
-    "binder": {
-        "org": "onnx",
-        "repo": ".",
-        "notebooks_dir": "auto_examples",
-        "binderhub_url": "https://mybinder.org",
-        "branch": "master",
-        "dependencies": "./requirements.txt",
-    },
 }
 
 warnings.filterwarnings("ignore", category=FutureWarning)
