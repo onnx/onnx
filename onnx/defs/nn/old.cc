@@ -4515,7 +4515,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             builder.Add("present_value = Identity (PresentValue)");
           }
 
-          if (!defs::nn::utils::AttentionAppendFunctionCausalMask(ctx, builder, false))
+          if (!defs::nn::utils::AttentionAppendFunctionCausalMask(ctx, builder, false, true))
             return false;
           builder.Add("AttnBiasT = Cast (AttnBiasCausalOrNot)", "to", T1);
 
@@ -5004,7 +5004,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             builder.Add("present_value = Identity (PresentValue)");
           }
 
-          if (!defs::nn::utils::AttentionAppendFunctionCausalMask(ctx, builder, true))
+          if (!defs::nn::utils::AttentionAppendFunctionCausalMask(ctx, builder, true, true))
             return false;
 
           // Add padding mask if kv_nonpad_seqlen is provided
@@ -5018,7 +5018,8 @@ ONNX_OPERATOR_SET_SCHEMA(
                 .Add("PaddingMaskBool = Less(Range, KVSeqLenExpanded)") // [batch_size, KVSeqLen]
                 .Add("PaddingMaskFloat = Where(PaddingMaskBool, ScalarZero, FloatNegInf)") // [batch_size, KVSeqLen]
                 .Add("PaddingMask3D = Unsqueeze(PaddingMaskFloat, One1D)") // [batch_size, 1, KVSeqLen]
-                .Add("PaddingMask4D = Unsqueeze(PaddingMask3D, One1D)") // [batch_size, 1, 1, KVSeqLen]
+                .Add("PaddingMask4DFloat = Unsqueeze(PaddingMask3D, One1D)") // [batch_size, 1, 1, KVSeqLen]
+                .Add("PaddingMask4D = CastLike(PaddingMask4DFloat, AttnBiasCausalOrNot)")
                 .Add("AttnBiasCausalPad = Add(AttnBiasCausalOrNot, PaddingMask4D)");
           } else {
             builder.Add("AttnBiasCausalPad = Identity(AttnBiasCausalOrNot)");
