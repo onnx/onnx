@@ -1986,12 +1986,6 @@ static bool BuildContextDependentFunctionBodyDepthToSpace(
   return true;
 }
 
-static constexpr const char* SpaceToDepth_ver28_doc =
-    R"DOC(SpaceToDepth rearranges blocks of spatial data into depth. More specifically,
-this op outputs a copy of the input tensor where values from the height and width dimensions
-are moved to the depth dimension. `mode` determines whether blocks are ordered depth-column-row
-(`DCR`, the default) or column-row-depth (`CRD`).)DOC";
-
 ONNX_OPERATOR_SET_SCHEMA(
     SpaceToDepth,
     28,
@@ -2002,7 +1996,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "DCR (default) for depth-column-row order re-arrangement. Use CRD for column-row-depth order.",
             AttributeProto::STRING,
             std::string("DCR"))
-        .SetDoc(SpaceToDepth_ver28_doc)
+        .SetDoc(kDoc_SpaceToDepth_ver28)
         .Input(
             0,
             "input",
@@ -2047,32 +2041,6 @@ ONNX_OPERATOR_SET_SCHEMA(
         })
         .SetContextDependentFunctionBodyBuilder(BuildContextDependentFunctionBodySpaceToDepth));
 
-static constexpr const char* DepthToSpace_ver13_doc =
-    R"DOC(DepthToSpace rearranges (permutes) data from depth into blocks of spatial data.
-This is the reverse transformation of SpaceToDepth. More specifically, this op outputs a copy of
-the input tensor where values from the depth dimension are moved in spatial blocks to the height
-and width dimensions. By default, `mode` = `DCR`.
-In the DCR mode, elements along the depth dimension from the input tensor are rearranged in the
-following order: depth, column, and then row. The output y is computed from the input x as below:
-
-```
-b, c, h, w = x.shape
-tmp = np.reshape(x, [b, blocksize, blocksize, c // (blocksize**2), h, w])
-tmp = np.transpose(tmp, [0, 3, 4, 1, 5, 2])
-y = np.reshape(tmp, [b, c // (blocksize**2), h * blocksize, w * blocksize])
-```
-
-In the CRD mode, elements along the depth dimension from the input tensor are rearranged in the
-following order: column, row, and the depth. The output y is computed from the input x as below:
-
-```
-b, c, h, w = x.shape
-tmp = np.reshape(x, [b, c // (blocksize ** 2), blocksize, blocksize, h, w])
-tmp = np.transpose(tmp, [0, 1, 4, 2, 5, 3])
-y = np.reshape(tmp, [b, c // (blocksize ** 2), h * blocksize, w * blocksize])
-```
-)DOC";
-
 ONNX_OPERATOR_SET_SCHEMA(
     DepthToSpace,
     28,
@@ -2083,7 +2051,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "DCR (default) for depth-column-row order re-arrangement. Use CRD for column-row-depth order.",
             AttributeProto::STRING,
             std::string("DCR"))
-        .SetDoc(DepthToSpace_ver13_doc)
+        .SetDoc(kDoc_DepthToSpace_ver28)
         .Input(
             0,
             "input",
