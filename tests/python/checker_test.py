@@ -1490,6 +1490,18 @@ class TestChecker:
             tensor2.raw_data = b"\x00" * 3  # ceil(10/4) = 3 bytes
             checker.check_tensor(tensor2)
 
+        # 6-bit types: 10 elements need ceil(10*6/8) = 8 bytes.
+        for dtype in (TensorProto.FLOAT6E2M3, TensorProto.FLOAT6E3M2):
+            tensor = TensorProto()
+            tensor.data_type = dtype
+            tensor.dims.extend([10])
+            tensor.name = "t"
+            tensor.raw_data = b"\x00" * 7
+            with pytest.raises(checker.ValidationError):
+                checker.check_tensor(tensor)
+            tensor.raw_data = b"\x00" * 8
+            checker.check_tensor(tensor)
+
     def test_check_tensor_packed_subbyte_int32_data(self) -> None:
         """Reject packed sub-byte tensors whose int32_data payload is too small."""
         # 4-bit types: 8 elements per int32.
