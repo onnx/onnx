@@ -95,7 +95,7 @@ this way and have their types filled in by shape inference. See
 this example (including the schema and type/shape-inference-function
 definitions for `CreateRNG` and `RandomTensor`), which also checks that
 the resulting model passes both `onnx.checker.check_model` and
-`onnx.shape_inference.infer_shapes`.
+`unable`.
 
 ## Optional Type
 
