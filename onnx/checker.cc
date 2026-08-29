@@ -189,6 +189,18 @@ void check_tensor(const TensorProto& tensor, const CheckerContext& ctx) {
       case TensorProto::INT2:
         expected_bytes = (nelem + 3) / 4; // 4 elements per byte, ceiling division
         break;
+      case TensorProto::FLOAT6E2M3:
+      case TensorProto::FLOAT6E3M2: {
+        int64_t expected_bits = 0;
+        if (checked_mul_overflow(nelem, 6, &expected_bits)) {
+          fail_check(
+              "TensorProto (tensor name: ",
+              tensor.name(),
+              ") has a shape too large to validate against its data type.");
+        }
+        expected_bytes = (expected_bits / 8) + (expected_bits % 8 != 0);
+        break;
+      }
       case TensorProto::UINT8:
       case TensorProto::INT8:
       case TensorProto::BOOL:
@@ -314,6 +326,8 @@ void check_tensor(const TensorProto& tensor, const CheckerContext& ctx) {
       case TensorProto::FLOAT8E5M2:
       case TensorProto::FLOAT8E5M2FNUZ:
       case TensorProto::FLOAT8E8M0:
+      case TensorProto::FLOAT6E2M3:
+      case TensorProto::FLOAT6E3M2:
         check_field(int32_data);
         if (nelem > 0) {
           // These types are not packed: each element occupies one int32_data entry.
