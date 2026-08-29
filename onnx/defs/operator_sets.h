@@ -1477,6 +1477,8 @@ class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 28, SwiGLU);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 28, Cast);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 28, QuantizeLinear);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 28, DequantizeLinear);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 28, ReduceLogSum);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 28, ReduceLogSumExp);
 
 // Iterate over schema from ai.onnx version 28
 class OpSet_Onnx_ver28 {
@@ -1487,6 +1489,8 @@ class OpSet_Onnx_ver28 {
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 28, Cast)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 28, QuantizeLinear)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 28, DequantizeLinear)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 28, ReduceLogSum)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 28, ReduceLogSumExp)>());
   }
 };
 
