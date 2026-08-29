@@ -27,6 +27,7 @@ from onnx import (
 )
 from onnx.numpy_helper import _pack_2bitx4 as _pack_2bit
 from onnx.numpy_helper import _pack_4bitx2 as _pack_4bit
+from onnx.numpy_helper import _pack_6bit
 
 
 class TestHelperAttributeFunctions:
@@ -1079,6 +1080,11 @@ def test_make_tensor_raw(tensor_dtype: int, vals_as_bytes: bool) -> None:
             TensorProto.UINT2,
         }:
             np_array_intermediate = _pack_2bit(np_array)
+        if tensor_dtype in {
+            TensorProto.FLOAT6E2M3,
+            TensorProto.FLOAT6E3M2,
+        }:
+            np_array_intermediate = _pack_6bit(np_array.view(np.uint8))
 
         vals = numpy_helper.tobytes_little_endian(np_array_intermediate)
     else:
