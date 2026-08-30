@@ -4282,6 +4282,34 @@ class TestReferenceEvaluator:
         assert isinstance(r, np.ndarray)
         assert r.shape == ()
 
+    @pytest.mark.parametrize("op", ["ReduceLogSum", "ReduceLogSumExp"])
+    @pytest.mark.parametrize("opset", [13, 18, onnx_opset_version()])
+    def test_reduce_log_sum_ops_reject_integer_input(self, op, opset):
+        # Log and Exp are only defined for float types, so these operators cannot
+        # accept integer input at any opset. Before this guard the failure was an
+        # OverflowError from inside numpy. See onnx/onnx#7141.
+        X = make_tensor_value_info("X", TensorProto.INT64, None)
+        Y = make_tensor_value_info("Y", TensorProto.INT64, None)
+        feeds = {"X": np.array([1, 2, 3], dtype=np.int64)}
+        if opset >= 18:
+            A = make_tensor_value_info("A", TensorProto.INT64, None)
+            node = make_node(op, ["X", "A"], ["Y"], keepdims=0)
+            inputs = [X, A]
+            feeds["A"] = np.array([0], dtype=np.int64)
+        else:
+            node = make_node(op, ["X"], ["Y"], axes=[0], keepdims=0)
+            inputs = [X]
+        model = make_model(
+            make_graph([node], "g", inputs, [Y]),
+            opset_imports=[make_opsetid("", opset)],
+        )
+        ref = ReferenceEvaluator(model)
+        with pytest.raises(TypeError) as exc_info:
+            ref.run(None, feeds)
+        # OpRun.run re-raises operator errors wrapped in a generic TypeError, so the
+        # specific message is on the chained cause rather than the exception itself.
+        assert "does not support integer input" in str(exc_info.value.__cause__)
+
     @pytest.mark.parametrize("dim", [1, 2, 3, 4, 5, 6])
     def test_pad(self, dim):
         X = make_tensor_value_info("X", TensorProto.FLOAT, None)

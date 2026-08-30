@@ -22,8 +22,19 @@ def compute_log_sum_exp(data, axes, keepdims):
     return (res,)
 
 
+def _check_integer_input(data):
+    if np.issubdtype(data.dtype, np.integer):
+        raise TypeError(
+            f"ReduceLogSumExp does not support integer input (got {data.dtype}). "
+            "The operator is defined in terms of Exp and Log, which are only defined "
+            "for float types. Integer types were removed from the schema in opset 28. "
+            "Cast the input to a float type."
+        )
+
+
 class ReduceLogSumExp_1(OpRunReduceNumpy):
     def _run(self, data, axes=None, keepdims=None):
+        _check_integer_input(data)
         tax = tuple(axes) if axes is not None else None
 
         if data.size == 0:
@@ -33,6 +44,7 @@ class ReduceLogSumExp_1(OpRunReduceNumpy):
 
 class ReduceLogSumExp_18(OpRunReduceNumpy):
     def _run(self, data, axes=None, keepdims=1, noop_with_empty_axes=0):
+        _check_integer_input(data)
         axes = self.handle_axes(axes, noop_with_empty_axes)
 
         keepdims = keepdims != 0
@@ -41,19 +53,3 @@ class ReduceLogSumExp_18(OpRunReduceNumpy):
             return self.reduce_constant(data, -np.inf, axes, keepdims)
 
         return compute_log_sum_exp(data, axes, keepdims)
-
-
-class ReduceLogSumExp_28(ReduceLogSumExp_18):
-    def _run(self, data, axes=None, keepdims=1, noop_with_empty_axes=0):
-        if np.issubdtype(data.dtype, np.integer):
-            raise TypeError(
-                f"ReduceLogSumExp does not support integer input (got {data.dtype}). "
-                "Integer support was removed in opset 28 because Log and Exp are only "
-                "defined for float types. Cast the input to a float type."
-            )
-        return super()._run(
-            data,
-            axes=axes,
-            keepdims=keepdims,
-            noop_with_empty_axes=noop_with_empty_axes,
-        )
