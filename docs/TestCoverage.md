@@ -21381,7 +21381,7 @@ expect(
 
 
 ### ReduceLogSumExp
-There are 5 test cases, listed as following:
+There are 6 test cases, listed as following:
 <details>
 <summary>default_axes_keepdims</summary>
 
@@ -21491,6 +21491,32 @@ expect(
     inputs=[data, axes],
     outputs=[reduced],
     name="test_reduce_log_sum_exp_empty_set",
+)
+```
+
+</details>
+<details>
+<summary>integer_input</summary>
+
+```python
+axes = np.array([], dtype=np.int64)
+keepdims = 1
+
+node = onnx.helper.make_node(
+    "ReduceLogSumExp",
+    inputs=["data", "axes"],
+    outputs=["reduced"],
+    keepdims=keepdims,
+)
+
+data = np.array([1, 2, 3], dtype=np.int64)
+reduced = np.log(np.sum(np.exp(data.astype(np.float64)), axis=None, keepdims=True))
+
+expect(
+    node,
+    inputs=[data, axes],
+    outputs=[reduced],
+    name="test_reduce_log_sum_exp_integer_input",
 )
 ```
 

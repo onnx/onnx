@@ -8,7 +8,20 @@ import numpy as np
 from onnx.reference.ops._op import OpRunReduceNumpy
 
 
+def _cast_integer_to_float(data):
+    """Cast integer tensors to float64.
+
+    ``log``/``exp`` are undefined for integer dtypes and the ``-np.inf``
+    constant cannot be stored in an integer array, so the reference
+    implementation works in floating point for integer inputs.
+    """
+    if np.issubdtype(data.dtype, np.integer):
+        return data.astype(np.float64)
+    return data
+
+
 def compute_log_sum_exp(data, axes, keepdims):
+    data = _cast_integer_to_float(data)
     data_max = data.copy()
     ind = np.isinf(data_max)
     data_max[ind] = -np.inf
@@ -26,6 +39,7 @@ class ReduceLogSumExp_1(OpRunReduceNumpy):
     def _run(self, data, axes=None, keepdims=None):
         tax = tuple(axes) if axes is not None else None
 
+        data = _cast_integer_to_float(data)
         if data.size == 0:
             return self.reduce_constant(data, -np.inf, tax, keepdims)
         return compute_log_sum_exp(data, tax, keepdims)
@@ -37,6 +51,7 @@ class ReduceLogSumExp_18(OpRunReduceNumpy):
 
         keepdims = keepdims != 0
 
+        data = _cast_integer_to_float(data)
         if data.size == 0:
             return self.reduce_constant(data, -np.inf, axes, keepdims)
 
