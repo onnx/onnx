@@ -19,6 +19,61 @@
 
 namespace ONNX_NAMESPACE {
 
+ONNX_OPERATOR_SET_SCHEMA(
+    Cast,
+    25,
+    OpSchema()
+        .SetDoc(kDoc_Cast_ver24)
+        .Attr(
+            "to",
+            "The data type to which the elements of the input tensor are cast. "
+            "Strictly must be one of the types from DataType enum in TensorProto",
+            AttributeProto::INT)
+        .Attr(
+            "saturate",
+            "The parameter defines how the conversion behaves if an input value is out of "
+            "range of the destination type. It only applies for float 8 conversion "
+            "(float8e4m3fn, float8e4m3fnuz, float8e5m2, float8e5m2fnuz, float8e8m0). It is true by default. "
+            "All cases are fully described in the tables inserted in the operator description.",
+            AttributeProto::INT,
+            static_cast<int64_t>(1))
+        .Attr(
+            "round_mode",
+            "Rounding mode for conversion to float8e8m0. It only applies to casting to float8e8m0 and is `up` by default. "
+            "`up`: round to nearest value away from zero, "
+            "`down`: round to nearest value towards zero, "
+            "`nearest`: round to nearest value and ties round up.",
+            AttributeProto::STRING,
+            std::string("up"))
+        .Input(0, "input", "Input tensor to be cast.", "T1", OpSchema::Single, true, 1, OpSchema::Differentiable)
+        .Output(
+            0,
+            "output",
+            "Output tensor with the same shape as input with type "
+            "specified by the 'to' argument",
+            "T2",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::Differentiable)
+        .TypeConstraint(
+            "T1",
+            OpSchema::all_non_complex_tensor_types_ir13(),
+            "Constrain input types. Casting from complex is not supported.")
+        .TypeConstraint(
+            "T2",
+            OpSchema::all_non_complex_tensor_types_ir13(),
+            "Constrain output types. Casting to complex is not supported.")
+        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+          propagateElemTypeFromAttributeToOutput(ctx, "to", 0);
+          if (hasNInputShapes(ctx, 1)) {
+            propagateShapeFromInputToOutput(ctx, 0, 0);
+          }
+        })
+        .PartialDataPropagationFunction([](DataPropagationContext& ctx) {
+          PropagateShapeDataFromInputToOutput(ctx, 0);
+        }));
+
 static void checked_mul_into(int64_t& accumulator, int64_t value) {
   if (checked_mul_overflow(accumulator, value, &accumulator)) {
     fail_shape_inference("Dimension product overflow in Reshape");
@@ -4482,6 +4537,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           if (blocksize <= 0) {
             fail_shape_inference("Blocksize must be positive");
           }
+          const auto block_area = checkedMultiply(blocksize, blocksize);
           if (hasInputShape(ctx, 0)) {
             auto& input_shape = getInputShape(ctx, 0);
             if (input_shape.dim_size() == 4) {
@@ -4489,7 +4545,7 @@ ONNX_OPERATOR_SET_SCHEMA(
                   ctx,
                   0,
                   {input_shape.dim(0),
-                   input_shape.dim(1) * (blocksize * blocksize),
+                   input_shape.dim(1) * block_area,
                    input_shape.dim(2) / blocksize,
                    input_shape.dim(3) / blocksize});
             } else {
@@ -4553,6 +4609,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           if (blocksize <= 0) {
             fail_shape_inference("Blocksize must be positive");
           }
+          const auto block_area = checkedMultiply(blocksize, blocksize);
           if (hasInputShape(ctx, 0)) {
             auto& input_shape = getInputShape(ctx, 0);
             if (input_shape.dim_size() == 4) {
@@ -4560,7 +4617,7 @@ ONNX_OPERATOR_SET_SCHEMA(
                   ctx,
                   0,
                   {input_shape.dim(0),
-                   input_shape.dim(1) / (blocksize * blocksize),
+                   input_shape.dim(1) / block_area,
                    input_shape.dim(2) * blocksize,
                    input_shape.dim(3) * blocksize});
             } else {
@@ -4623,10 +4680,13 @@ ONNX_OPERATOR_SET_SCHEMA(
             }
 
             for (int i = 0; i < input_rank; ++i) {
+              if (repeats_data[i] < 0) {
+                fail_shape_inference("'Repeats' input must not contain negative values");
+              }
               const auto& input_dim = input_shape.dim(i);
               auto output_dim = output_shape->add_dim();
               if (input_dim.has_dim_value()) {
-                output_dim->set_dim_value(input_dim.dim_value() * repeats_data[i]);
+                output_dim->set_dim_value(checkedMultiply(input_dim.dim_value(), repeats_data[i]));
               }
             }
           } else {
@@ -5324,7 +5384,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             return;
           }
 
-          const auto last_index_dimension = indices_shape.dim(indices_rank - 1).dim_value() + batch_dims_data;
+          const auto last_index_dimension =
+              checkedAdd(indices_shape.dim(indices_rank - 1).dim_value(), batch_dims_data);
 
           if (last_index_dimension > data_rank) {
             fail_shape_inference(
@@ -5507,9 +5568,10 @@ ONNX_OPERATOR_SET_SCHEMA(
             for (int i = 0; i < input_rank; ++i) {
               const auto& input_dim = input_shape.dim(i);
               auto output_dim = output_shape->add_dim();
+              const auto total_pad = checkedAdd(pads_data[i], pads_data[i + input_rank]);
               if (input_dim.has_dim_value()) {
-                output_dim->set_dim_value(input_dim.dim_value() + pads_data[i] + pads_data[i + input_rank]);
-              } else if (pads_data[i] + pads_data[i + input_rank] == 0) {
+                output_dim->set_dim_value(checkedAdd(input_dim.dim_value(), total_pad));
+              } else if (total_pad == 0) {
                 *output_dim = input_dim;
               }
             }
@@ -6389,6 +6451,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           if (blocksize <= 0) {
             fail_shape_inference("Blocksize must be positive");
           }
+          const auto block_area = checkedMultiply(blocksize, blocksize);
           if (hasInputShape(ctx, 0)) {
             auto& input_shape = getInputShape(ctx, 0);
             if (input_shape.dim_size() == 4) {
@@ -6396,7 +6459,7 @@ ONNX_OPERATOR_SET_SCHEMA(
                   ctx,
                   0,
                   {input_shape.dim(0),
-                   input_shape.dim(1) / (blocksize * blocksize),
+                   input_shape.dim(1) / block_area,
                    input_shape.dim(2) * blocksize,
                    input_shape.dim(3) * blocksize});
             } else {
@@ -6834,14 +6897,13 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
 
           ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
-
           for (int i = 0; i < input_shape.dim_size(); ++i) {
             auto newdim = ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape()->add_dim();
+            const auto total_pad = checkedAdd(pads[i], pads[input_shape.dim_size() + i]);
             if (ctx.getInputType(0)->tensor_type().shape().dim(i).has_dim_value()) {
               newdim->set_dim_value(
-                  ctx.getInputType(0)->tensor_type().shape().dim(i).dim_value() + pads[i] +
-                  pads[input_shape.dim_size() + i]);
-            } else if (pads[i] + pads[input_shape.dim_size() + i] == 0) {
+                  checkedAdd(ctx.getInputType(0)->tensor_type().shape().dim(i).dim_value(), total_pad));
+            } else if (total_pad == 0) {
               *newdim = input_shape.dim(i);
             }
           }
@@ -7188,9 +7250,10 @@ ONNX_OPERATOR_SET_SCHEMA(
             for (int i = 0; i < input_rank; ++i) {
               const auto& input_dim = input_shape.dim(i);
               auto output_dim = output_shape->add_dim();
+              const auto total_pad = checkedAdd(pads_data[i], pads_data[i + input_rank]);
               if (input_dim.has_dim_value()) {
-                output_dim->set_dim_value(input_dim.dim_value() + pads_data[i] + pads_data[i + input_rank]);
-              } else if (pads_data[i] + pads_data[i + input_rank] == 0) {
+                output_dim->set_dim_value(checkedAdd(input_dim.dim_value(), total_pad));
+              } else if (total_pad == 0) {
                 *output_dim = input_dim;
               }
             }
