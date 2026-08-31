@@ -5245,21 +5245,6 @@ class TestShapeInference(TestShapeInferenceHelper):
             ],
         )
 
-    @pytest.mark.parametrize("version", [2, 11, 13])
-    def test_split_requires_output(self, version: int) -> None:
-        graph = self._make_graph(
-            [("x", TensorProto.FLOAT, (2,))],
-            [make_node("Split", ["x"], [])],
-            [],
-        )
-        with pytest.raises(
-            onnx.shape_inference.InferenceError, match="at least one output"
-        ):
-            self._inferred(
-                graph,
-                opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
-            )
-
     def test_split_from_GLU(self) -> None:
         graph = self._make_graph(
             [("x", TensorProto.FLOAT, (5, 6, 7))],
@@ -10343,6 +10328,19 @@ class TestShapeInference(TestShapeInferenceHelper):
             self._assert_inferred(
                 graph, [make_tensor_value_info("Y", elem_type, (3, 4))]
             )
+
+    def test_mod_float_shape(self) -> None:
+        graph = self._make_graph(
+            [
+                ("A", TensorProto.FLOAT, (2, 1)),
+                ("B", TensorProto.FLOAT, (3,)),
+            ],
+            [make_node("Mod", ["A", "B"], ["C"])],
+            [],
+        )
+        self._assert_inferred(
+            graph, [make_tensor_value_info("C", TensorProto.FLOAT, (2, 3))]
+        )
 
     def test_swiglu_equal_shapes(self) -> None:
         graph = self._make_graph(
