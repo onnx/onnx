@@ -8,7 +8,6 @@
 #pragma once
 
 #include <algorithm>
-#include <cctype>
 #include <string>
 #include <string_view>
 #include <unordered_map>
@@ -103,6 +102,8 @@ class PrimitiveTypeNameMap : public StringIntMap<PrimitiveTypeNameMap> {
     map_["float4e2m1"] = TensorProto_DataType_FLOAT4E2M1;
     map_["uint2"] = TensorProto_DataType_UINT2;
     map_["int2"] = TensorProto_DataType_INT2;
+    map_["float6e2m3"] = TensorProto_DataType_FLOAT6E2M3;
+    map_["float6e3m2"] = TensorProto_DataType_FLOAT6E3M2;
   }
 
   static bool IsTypeName(const std::string& dtype) {
@@ -146,6 +147,7 @@ class KeyWordMap {
     MAP_TYPE,
     OPTIONAL_TYPE,
     SPARSE_TENSOR_TYPE,
+    OPAQUE_TYPE,
     OVERLOAD_KW
   };
 
@@ -162,6 +164,7 @@ class KeyWordMap {
     map_["map"] = KeyWord::MAP_TYPE;
     map_["optional"] = KeyWord::OPTIONAL_TYPE;
     map_["sparse_tensor"] = KeyWord::SPARSE_TENSOR_TYPE;
+    map_["opaque"] = KeyWord::OPAQUE_TYPE;
     map_["overload"] = KeyWord::OVERLOAD_KW;
   }
 
@@ -179,6 +182,25 @@ class KeyWordMap {
  private:
   std::unordered_map<std::string, KeyWord> map_;
 };
+
+// Locale-independent ASCII classification, so that the text format does not
+// vary with the process locale. Accepts char or the int returned by
+// ParserBase::NextChar; non-ASCII bytes classify as false either way.
+constexpr bool IsSpace(int c) {
+  return c == ' ' || c == '\t' || c == '\n' || c == '\v' || c == '\f' || c == '\r';
+}
+
+constexpr bool IsAlpha(int c) {
+  return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z');
+}
+
+constexpr bool IsDigit(int c) {
+  return c >= '0' && c <= '9';
+}
+
+constexpr bool IsAlnum(int c) {
+  return IsAlpha(c) || IsDigit(c);
+}
 
 class ParserBase {
  public:
@@ -247,7 +269,7 @@ class ParserBase {
   int NextChar(bool skipspace = true) {
     if (skipspace)
       SkipWhiteSpace();
-    // Return as unsigned char so the value is safe to pass to ctype functions.
+    // Return as unsigned char so byte values are non-negative.
     return AtEnd() ? 0 : static_cast<unsigned char>(Cur());
   }
 
@@ -418,20 +440,6 @@ class ParserBase {
   char Cur() const {
     return input_[pos_];
   }
-  // ctype wrappers that pass the character as unsigned char (UB otherwise for bytes > 127).
-  static bool IsSpace(char c) {
-    return std::isspace(static_cast<unsigned char>(c));
-  }
-  static bool IsAlpha(char c) {
-    return std::isalpha(static_cast<unsigned char>(c));
-  }
-  static bool IsAlnum(char c) {
-    return std::isalnum(static_cast<unsigned char>(c));
-  }
-  static bool IsDigit(char c) {
-    return std::isdigit(static_cast<unsigned char>(c));
-  }
-
   std::string_view input_;
   size_t pos_ = 0;
   size_t saved_pos_ = 0;

@@ -8,12 +8,10 @@
 #include <utility>
 #include <vector>
 
+#include "onnx/common/safe_math.h"
 #include "onnx/defs/type_builders.h"
 
-namespace ONNX_NAMESPACE {
-namespace defs {
-namespace math {
-namespace utils {
+namespace ONNX_NAMESPACE::defs::math::utils {
 
 static constexpr const char* TopK_ver11_doc = R"DOC(
 Retrieve the top-K largest or smallest elements along a specified axis. Given an input tensor of
@@ -162,15 +160,23 @@ UnaryFloatMathOpGenerator(const char* doc, const char* output_description, std::
   };
 }
 
-int MathOpTwoIntegers(const std::string& op_type, int a, int b) {
+int64_t MathOpTwoIntegers(const std::string& op_type, int64_t a, int64_t b) {
+  bool (*checked_op)(int64_t, int64_t, int64_t*) = nullptr;
   if (op_type == "Add") {
-    return a + b;
+    checked_op = checked_add_overflow;
   } else if (op_type == "Sub") {
-    return a - b;
+    checked_op = checked_sub_overflow;
   } else if (op_type == "Mul") {
-    return a * b;
+    checked_op = checked_mul_overflow;
+  } else {
+    fail_shape_inference("Wrong op_type name for running propagation: ", op_type);
   }
-  fail_shape_inference("Wrong op_type name for running propagation: ", op_type);
+
+  int64_t result = 0;
+  if (checked_op(a, b, &result)) {
+    fail_shape_inference("Integer overflow in ", op_type, " during data propagation");
+  }
+  return result;
 }
 
 void MatMulShapeInference(ONNX_NAMESPACE::InferenceContext& ctx, int input1Idx, int input2Idx) {
@@ -283,7 +289,4 @@ Production must never overflow, and accumulation may overflow if and only if in 
   return QLinearMatMul_doc;
 }
 
-} // namespace utils
-} // namespace math
-} // namespace defs
-} // namespace ONNX_NAMESPACE
+} // namespace ONNX_NAMESPACE::defs::math::utils

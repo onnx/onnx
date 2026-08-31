@@ -1,0 +1,60 @@
+# Copyright (c) ONNX Project Contributors
+#
+# SPDX-License-Identifier: Apache-2.0
+
+# Downstream integration check: build onnxruntime against the onnx
+# revision of this branch/PR.
+name: Integration test onnxruntime
+
+on:
+  schedule:
+    # Run weekly on Monday 00:00 UTC
+    - cron:  '0 0 * * MON'
+  workflow_dispatch:
+  pull_request:
+    types:
+      - labeled
+      - synchronize
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-onnxruntime:
+    name: Build onnxruntime against this onnx
+    # Building onnxruntime is expensive, so on pull requests only run
+    # when the 'run onnxruntime CI' label is set (akin to 'run release CIs').
+    if: github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'run onnxruntime CI')
+    runs-on: ubuntu-24.04-arm
+    steps:
+      - name: Checkout onnx (this PR branch)
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          path: onnx
+          persist-credentials: false
+
+      - name: Checkout onnxruntime main
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          repository: microsoft/onnxruntime
+          ref: main
+          path: onnxruntime
+          persist-credentials: false
+
+      - name: Set up pixi
+        uses: prefix-dev/setup-pixi@a09b6247153796b190642a2b53fac4241043cf6f # v0.10.0
+        with:
+          manifest-path: onnx/pixi.toml
+          environments: ort
+
+      - name: Build onnxruntime against this onnx
+        working-directory: onnx
+        run: pixi run -e ort build-onnxruntime ${{ github.workspace }}/onnxruntime ${{ github.workspace }}/onnx
+
+      - name: Test onnxruntime
+        working-directory: onnx
+        run: pixi run -e ort test-onnxruntime

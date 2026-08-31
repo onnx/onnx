@@ -54,6 +54,8 @@ static Tensor tensorProtoToTensor(const ONNX_NAMESPACE::TensorProto& tp) {
     case ONNX_NAMESPACE::TensorProto_DataType_FLOAT8E5M2:
     case ONNX_NAMESPACE::TensorProto_DataType_FLOAT8E5M2FNUZ:
     case ONNX_NAMESPACE::TensorProto_DataType_FLOAT8E8M0:
+    case ONNX_NAMESPACE::TensorProto_DataType_FLOAT6E2M3:
+    case ONNX_NAMESPACE::TensorProto_DataType_FLOAT6E3M2:
     case ONNX_NAMESPACE::TensorProto_DataType_FLOAT4E2M1: {
       ret.int32s().reserve(tp.int32_data_size());
       for (int i = 0; i < tp.int32_data_size(); i++) {
@@ -295,6 +297,9 @@ std::unique_ptr<Graph> graphProtoToGraph(const ONNX_NAMESPACE::GraphProto& gp, b
     if (!vip.type().has_tensor_type()) {
       v->type() = std::make_unique<TypeProto>(vip.type());
     }
+    if (vip.has_doc_string()) {
+      v->setDocString(vip.doc_string());
+    }
     v->setUniqueName(vip.name());
     value_by_name_of[vip.name()] = v;
   }
@@ -318,7 +323,13 @@ std::unique_ptr<Graph> graphProtoToGraph(const ONNX_NAMESPACE::GraphProto& gp, b
 
   for (int i = 0; i < gp.node_size(); i++) {
     const auto& np = gp.node(i);
-    auto* n = g->create(Symbol(np.op_type()), /* num_outputs = */ np.output_size());
+    const auto kind = Symbol(np.op_type());
+    // IR routines treat this operator name as the internal captured-value
+    // sentinel and require exactly one output.
+    if (kind == kCaptured && np.output_size() != 1) {
+      fail_convert("Captured node must have exactly one output.");
+    }
+    auto* n = g->create(kind, /* num_outputs = */ np.output_size());
     g->appendNode(n);
     for (int j = 0; j < np.output_size(); j++) {
       auto* out = n->outputs()[j];
@@ -390,6 +401,9 @@ std::unique_ptr<Graph> graphProtoToGraph(const ONNX_NAMESPACE::GraphProto& gp, b
     if (!output.type().has_tensor_type()) {
       output_value->type() = std::make_unique<TypeProto>(output.type());
     }
+    if (output.has_doc_string()) {
+      output_value->setDocString(output.doc_string());
+    }
     g->registerOutput(output_value);
   }
 
@@ -409,6 +423,9 @@ std::unique_ptr<Graph> graphProtoToGraph(const ONNX_NAMESPACE::GraphProto& gp, b
     }
     if (!gp.value_info(i).type().has_tensor_type()) {
       v->type() = std::make_unique<TypeProto>(gp.value_info(i).type());
+    }
+    if (gp.value_info(i).has_doc_string()) {
+      v->setDocString(gp.value_info(i).doc_string());
     }
   }
 
@@ -468,6 +485,7 @@ static void encodeTensor(ONNX_NAMESPACE::TensorProto& p, const Tensor& tensor) {
     case ONNX_NAMESPACE::TensorProto_DataType_FLOAT8E4M3FNUZ:
     case ONNX_NAMESPACE::TensorProto_DataType_FLOAT8E5M2:
     case ONNX_NAMESPACE::TensorProto_DataType_FLOAT8E5M2FNUZ:
+    case ONNX_NAMESPACE::TensorProto_DataType_FLOAT8E8M0:
     case ONNX_NAMESPACE::TensorProto_DataType_FLOAT4E2M1:
     case ONNX_NAMESPACE::TensorProto_DataType_BOOL:
     case ONNX_NAMESPACE::TensorProto_DataType_UINT2:
@@ -478,7 +496,9 @@ static void encodeTensor(ONNX_NAMESPACE::TensorProto& p, const Tensor& tensor) {
     case ONNX_NAMESPACE::TensorProto_DataType_INT16:
     case ONNX_NAMESPACE::TensorProto_DataType_INT32:
     case ONNX_NAMESPACE::TensorProto_DataType_UINT8:
-    case ONNX_NAMESPACE::TensorProto_DataType_UINT16: {
+    case ONNX_NAMESPACE::TensorProto_DataType_UINT16:
+    case ONNX_NAMESPACE::TensorProto_DataType_FLOAT6E2M3:
+    case ONNX_NAMESPACE::TensorProto_DataType_FLOAT6E3M2: {
       for (int32_t x : tensor.int32s()) {
         p.add_int32_data(x);
       }
@@ -627,6 +647,9 @@ static void encodeValueInfo(ONNX_NAMESPACE::ValueInfoProto& v, Value& n) {
     encodeTypeProtoTensorType(*tensor_type, n);
   } else if (n.type()) {
     v.mutable_type()->CopyFrom(*n.type());
+  }
+  if (n.has_doc_string()) {
+    v.set_doc_string(n.docString());
   }
 }
 

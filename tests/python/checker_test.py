@@ -1,0 +1,1779 @@
+# Copyright (c) ONNX Project Contributors
+
+# SPDX-License-Identifier: Apache-2.0
+from __future__ import annotations
+
+import os
+import tempfile
+from typing import TYPE_CHECKING
+
+import numpy as np
+import pytest
+
+import onnx.defs
+import onnx.parser
+from onnx import (
+    GraphProto,
+    SparseTensorProto,
+    TensorProto,
+    checker,
+    helper,
+    numpy_helper,
+    shape_inference,
+)
+
+if TYPE_CHECKING:
+    from collections.abc import Sequence
+
+
+class TestChecker:
+    @property
+    def _sample_float_tensor(self) -> TensorProto:
+        np_array = np.random.randn(2, 3).astype(np.float32)
+        return helper.make_tensor(
+            name="test",
+            data_type=TensorProto.FLOAT,
+            dims=(2, 3),
+            vals=np_array.reshape(6).tolist(),
+        )
+
+    def make_sparse(
+        self,
+        shape: Sequence[int],
+        values: Sequence[int],
+        indices_shape: Sequence[int],
+        indices: Sequence[int],
+        name: str = "spval",
+    ) -> SparseTensorProto:
+        sparse = SparseTensorProto()
+        sparse.dims.extend(shape)
+        nnz = len(values)
+
+        sparse.values.CopyFrom(
+            helper.make_tensor(name, TensorProto.INT64, (nnz,), values)
+        )
+        sparse.indices.CopyFrom(
+            helper.make_tensor("spind", TensorProto.INT64, indices_shape, indices)
+        )
+        return sparse
+
+    def test_check_node(self) -> None:
+        node = helper.make_node("Relu", ["X"], ["Y"], name="test")
+
+        checker.check_node(node)
+
+    def test_check_node_input_marked_optional(self) -> None:
+        # GivenTensorFill's input is marked optional, hence it is used in this test.
+        node = helper.make_node("GivenTensorFill", [], ["Y"], name="test")
+        checker.check_node(node)
+
+        # Explicitly pass the empty string as optional
+        node = helper.make_node("GivenTensorFill", [""], ["Y"], name="test")
+        checker.check_node(node)
+
+        # Input of RELU is not optional
+        node = helper.make_node("Relu", [""], ["Y"], name="test")
+        with pytest.raises(checker.ValidationError):
+            checker.check_node(node)
+
+    def test_check_function_nested(self) -> None:
+        func_domain = "local"
+        func_nested_opset_imports = [
+            helper.make_opsetid("", 14),
+            helper.make_opsetid(func_domain, 1),
+        ]
+        # nested identity/add function
+        func_nested_identity_add_name = "func_nested_identity_add"
+        func_nested_identity_add_inputs = ["a", "b"]
+        func_nested_identity_add_outputs = ["c"]
+        func_nested_identity_add_nodes = [
+            helper.make_node("func_identity", ["a"], ["a1"], domain=func_domain),
+            helper.make_node("func_identity", ["b"], ["b1"], domain=func_domain),
+            helper.make_node("func_add", ["a1", "b1"], ["c"], domain=func_domain),
+        ]
+        func_nested_identity_add = helper.make_function(
+            func_domain,
+            func_nested_identity_add_name,
+            func_nested_identity_add_inputs,
+            func_nested_identity_add_outputs,
+            func_nested_identity_add_nodes,
+            func_nested_opset_imports,
+        )
+        checker.check_function(func_nested_identity_add)
+
+    def test_check_graph_ir_version_3(self) -> None:
+        ctx = checker.C.CheckerContext()
+        ctx.ir_version = 3
+        ctx.opset_imports = {"": onnx.defs.onnx_opset_version()}
+
+        lex_ctx = checker.C.LexicalScopeContext()
+
+        def check_ir_version_3(g: GraphProto) -> None:
+            checker.check_graph(g, ctx, lex_ctx)
+
+        node = helper.make_node("Relu", ["X"], ["Y"], name="test")
+        graph = helper.make_graph(
+            [node],
+            "test",
+            [helper.make_tensor_value_info("X", TensorProto.FLOAT, [1, 2])],
+            [helper.make_tensor_value_info("Y", TensorProto.FLOAT, [1, 2])],
+        )
+        check_ir_version_3(graph)
+
+        graph.initializer.extend([self._sample_float_tensor])
+
+        graph.initializer[0].name = "no-exist"
+
+        with pytest.raises(checker.ValidationError):
+            check_ir_version_3(graph)
+
+        graph.initializer[0].name = "X"
+        check_ir_version_3(graph)
+
+    def test_check_graph(self) -> None:
+        node = helper.make_node("Relu", ["X"], ["Y"], name="test")
+        graph = helper.make_graph(
+            [node],
+            "test",
+            [helper.make_tensor_value_info("X", TensorProto.FLOAT, [1, 2])],
+            [helper.make_tensor_value_info("Y", TensorProto.FLOAT, [1, 2])],
+        )
+        checker.check_graph(graph)
+
+        graph.initializer.extend([self._sample_float_tensor])
+
+        graph.initializer[0].name = "no-exist"
+        checker.check_graph(graph)
+
+        graph.initializer[0].name = "X"
+        checker.check_graph(graph)
+
+    def test_check_graph_types(self) -> None:
+        # This is for https://github.com/onnx/onnx/issues/3849.
+        # It confirms that type checking is performed
+        # when checker.check_model is called with full_check=True
+
+        node_div = helper.make_node("Div", ["X", "Y"], ["Z"], name="test_div")
+        node_identity = helper.make_node("Identity", ["Z"], ["W"], name="test_identity")
+
+        graph = helper.make_graph(
+            [node_div, node_identity],
+            "test",
+            [
+                helper.make_tensor_value_info("X", TensorProto.FLOAT, [1, 2]),
+                # intentionally use a BOOL type which is not supported by the Div op.
+                helper.make_tensor_value_info("Y", TensorProto.BOOL, [1, 2]),
+            ],
+            [helper.make_tensor_value_info("W", TensorProto.FLOAT, [1, 2])],
+        )
+
+        model = helper.make_model(graph, producer_name="test")
+
+        with pytest.raises(shape_inference.InferenceError):
+            checker.check_model(model, True)
+
+        checker.check_graph(graph)
+
+        graph = helper.make_graph(
+            [node_div, node_identity],
+            "test",
+            [
+                helper.make_tensor_value_info("X", TensorProto.FLOAT, [1, 2]),
+                # intentionally use a Int32 type which is in conflict with Div's other input X.
+                helper.make_tensor_value_info("Y", TensorProto.INT32, [1, 2]),
+            ],
+            [helper.make_tensor_value_info("W", TensorProto.FLOAT, [1, 2])],
+        )
+
+        model = helper.make_model(graph, producer_name="test")
+
+        with pytest.raises(shape_inference.InferenceError):
+            checker.check_model(model, True)
+
+        checker.check_graph(graph)
+
+    def test_check_opaque_type_requires_name(self) -> None:
+        # Opaque types must have a non-empty name (domain is optional and, if
+        # empty, is treated as equivalent to the standard "ai.onnx" domain,
+        # matching the convention used for operator domains).
+        model = onnx.parser.parse_model(
+            """
+            <ir_version: 10, opset_import: ["": 21]>
+            agraph (opaque() x) => (opaque() y) {
+                y = Identity(x)
+            }
+            """
+        )
+        with pytest.raises(checker.ValidationError):
+            checker.check_model(model)
+
+    def test_check_opaque_type_with_name(self) -> None:
+        model = onnx.parser.parse_model(
+            """
+            <ir_version: 10, opset_import: ["": 21]>
+            agraph (opaque(test.domain,MyType) x) => (opaque(test.domain,MyType) y) {
+                y = Identity(x)
+            }
+            """
+        )
+        checker.check_model(model)
+
+    def test_check_graph_empty_initializer_name(self) -> None:
+        node = helper.make_node("Relu", ["X"], ["Y"], name="test")
+        graph = helper.make_graph(
+            [node],
+            "test",
+            [helper.make_tensor_value_info("X", TensorProto.FLOAT, [1, 2])],
+            [helper.make_tensor_value_info("Y", TensorProto.FLOAT, [1, 2])],
+        )
+        checker.check_graph(graph)
+
+        # Supply no name for the initializer
+        graph.initializer.extend([self._sample_float_tensor])
+        graph.initializer[0].name = ""
+        with pytest.raises(checker.ValidationError):
+            checker.check_graph(graph)
+
+    def test_check_graph_empty_sparse_initializer_name(self) -> None:
+        node = helper.make_node("Relu", ["X"], ["Y"], name="test")
+        graph = helper.make_graph(
+            [node],
+            "test",
+            [helper.make_tensor_value_info("X", TensorProto.FLOAT, [1, 2])],
+            [helper.make_tensor_value_info("Y", TensorProto.FLOAT, [1, 2])],
+        )
+        checker.check_graph(graph)
+
+        # Supply no name for the sparse_initializer
+        sparse = self.make_sparse([100], [13, 17, 19], [3], [9, 27, 81], "")
+        graph.sparse_initializer.extend([sparse])
+        with pytest.raises(checker.ValidationError):
+            checker.check_graph(graph)
+
+    def test_check_graph_duplicate_init_names(self) -> None:
+        node = helper.make_node("Relu", ["X"], ["Y"], name="test")
+        graph = helper.make_graph(
+            [node],
+            "test",
+            [helper.make_tensor_value_info("X", TensorProto.FLOAT, [1, 2])],
+            [helper.make_tensor_value_info("Y", TensorProto.FLOAT, [1, 2])],
+        )
+        checker.check_graph(graph)
+
+        graph.initializer.extend([self._sample_float_tensor])
+        graph.initializer[0].name = "X"
+
+        # Add sparse initializer with the same name as above
+        sparse = self.make_sparse([100], [13, 17, 19], [3], [9, 27, 81], "X")
+        graph.sparse_initializer.extend([sparse])
+        with pytest.raises(checker.ValidationError):
+            checker.check_graph(graph)
+
+    def test_check_graph_optional_input(self) -> None:
+        # GivenTensorFill's input is marked optional, hence it is used in this test.
+        node = helper.make_node("GivenTensorFill", [""], ["Y"], name="test")
+        graph = helper.make_graph(
+            [node],
+            "test",
+            [],
+            [helper.make_tensor_value_info("Y", TensorProto.FLOAT, [1, 2])],
+        )
+        checker.check_graph(graph)
+
+    def test_check_graph_ssa(self) -> None:
+        relu1 = helper.make_node("Relu", ["X"], ["Z"], name="relu1")
+        relu2 = helper.make_node("Relu", ["Y"], ["Z"], name="relu2")
+
+        graph = helper.make_graph(
+            [relu1, relu2],
+            "test",
+            inputs=[
+                helper.make_tensor_value_info("X", TensorProto.FLOAT, [1, 2]),
+                helper.make_tensor_value_info("Y", TensorProto.FLOAT, [1, 2]),
+            ],
+            outputs=[helper.make_tensor_value_info("Z", TensorProto.FLOAT, [1, 2])],
+        )
+        with pytest.raises(checker.ValidationError):
+            checker.check_graph(graph)
+
+    def test_check_graph_topologically_sorted(self) -> None:
+        n1 = helper.make_node("Scale", ["X"], ["Y"], scale=2.0, name="n1")
+        n2 = helper.make_node("Scale", ["Y"], ["Z"], scale=3.0, name="n2")
+
+        graph = helper.make_graph(
+            [n2, n1],
+            "test",
+            inputs=[helper.make_tensor_value_info("X", TensorProto.FLOAT, [1, 2])],
+            outputs=[helper.make_tensor_value_info("Z", TensorProto.FLOAT, [1, 2])],
+        )
+        with pytest.raises(checker.ValidationError):
+            checker.check_graph(graph)
+
+    def test_check_model(self) -> None:
+        node = helper.make_node("Relu", ["X"], ["Y"], name="test")
+        graph = helper.make_graph(
+            [node],
+            "test",
+            [helper.make_tensor_value_info("X", TensorProto.FLOAT, [1, 2])],
+            [helper.make_tensor_value_info("Y", TensorProto.FLOAT, [1, 2])],
+        )
+        model = helper.make_model(graph, producer_name="test")
+
+        checker.check_model(model)
+
+    def test_check_serialized_model(self) -> None:
+        node = helper.make_node("Relu", ["X"], ["Y"], name="test")
+        graph = helper.make_graph(
+            [node],
+            "test",
+            [helper.make_tensor_value_info("X", TensorProto.FLOAT, [1, 2])],
+            [helper.make_tensor_value_info("Y", TensorProto.FLOAT, [1, 2])],
+        )
+        model = helper.make_model(graph, producer_name="test")
+
+        checker.check_model(model.SerializeToString())
+
+    def test_check_model_malformed_bytes_raises(self) -> None:
+        # Bytes that cannot be parsed as a ModelProto (e.g. truncated or
+        # corrupted data) must raise instead of silently checking whatever
+        # partially-populated proto happened to result from the failed parse.
+        with pytest.raises(ValueError):
+            checker.check_model(b"\xff\xff\xff\xff\xff not a valid protobuf")
+
+    def test_check_model_protobuf_size_boundary(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        node = helper.make_node("Relu", ["X"], ["Y"], name="test")
+        graph = helper.make_graph(
+            [node],
+            "test",
+            [helper.make_tensor_value_info("X", TensorProto.FLOAT, [1, 2])],
+            [helper.make_tensor_value_info("Y", TensorProto.FLOAT, [1, 2])],
+        )
+        model = helper.make_model(graph, producer_name="test")
+        serialized = model.SerializeToString()
+
+        monkeypatch.setattr(checker, "MAXIMUM_PROTOBUF", len(serialized))
+        checker.check_model(serialized)
+
+    def test_check_model_protobuf_size_over_limit_raises(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        node = helper.make_node("Relu", ["X"], ["Y"], name="test")
+        graph = helper.make_graph(
+            [node],
+            "test",
+            [helper.make_tensor_value_info("X", TensorProto.FLOAT, [1, 2])],
+            [helper.make_tensor_value_info("Y", TensorProto.FLOAT, [1, 2])],
+        )
+        model = helper.make_model(graph, producer_name="test")
+        serialized = model.SerializeToString()
+
+        monkeypatch.setattr(checker, "MAXIMUM_PROTOBUF", len(serialized) - 1)
+        with pytest.raises(ValueError):
+            checker.check_model(serialized)
+
+    def test_check_old_model(self) -> None:
+        node = helper.make_node("Pad", ["X"], ["Y"], paddings=(0, 0, 0, 0))
+        graph = helper.make_graph(
+            [node],
+            "test",
+            [helper.make_tensor_value_info("X", TensorProto.FLOAT, [1, 2])],
+            [helper.make_tensor_value_info("Y", TensorProto.FLOAT, [1, 2])],
+        )
+        onnx_id = helper.make_opsetid("", 1)
+        model = helper.make_model(graph, producer_name="test", opset_imports=[onnx_id])
+
+        checker.check_model(model)
+
+    def test_check_tensor(self) -> None:
+        tensor = self._sample_float_tensor
+        checker.check_tensor(tensor)
+
+        input_np = np.random.randn(2, 3).astype(np.float32)
+
+        tensor.raw_data = onnx.numpy_helper.tobytes_little_endian(input_np)
+        with pytest.raises(checker.ValidationError):
+            checker.check_tensor(tensor)
+
+    def test_check_string_tensor(self) -> None:
+        tensor = TensorProto()
+        tensor.data_type = TensorProto.STRING
+        tensor.dims.append(1)
+        tensor.string_data.append(b"Test")
+        checker.check_tensor(tensor)
+
+        del tensor.string_data[:]
+        tensor.raw_data = b"Test"
+        # string data should not be stored in raw_data field
+        with pytest.raises(checker.ValidationError):
+            checker.check_tensor(tensor)
+
+    def test_check_tensor_mismatched_field(self) -> None:
+        tensor = self._sample_float_tensor
+        tensor.data_type = TensorProto.INT32
+        with pytest.raises(checker.ValidationError):
+            checker.check_tensor(tensor)
+
+    def test_nested_graph(self) -> None:
+        n1 = helper.make_node("Scale", ["X"], ["Y"], scale=2.0, name="n1")
+        n2 = helper.make_node("Scale", ["Y"], ["Z"], scale=3.0, name="n2")
+
+        graph = helper.make_graph(
+            [n1, n2],
+            "nested",
+            inputs=[],
+            outputs=[helper.make_tensor_value_info("Z", TensorProto.FLOAT, [1, 2])],
+        )
+
+        i1 = helper.make_node(
+            "If", ["cond"], ["Z"], then_branch=graph, else_branch=graph
+        )
+
+        graph = helper.make_graph(
+            [i1],
+            "test",
+            inputs=[
+                helper.make_tensor_value_info("cond", TensorProto.BOOL, [1]),
+                helper.make_tensor_value_info("X", TensorProto.FLOAT, [1, 2]),
+            ],
+            outputs=[helper.make_tensor_value_info("Z", TensorProto.FLOAT, [1, 2])],
+        )
+
+        checker.check_graph(graph)
+
+    def test_nested_graph_without_subgraph_input_shape(self) -> None:
+        n1 = helper.make_node("Scale", ["X"], ["Y"], scale=2.0, name="n1")
+        n2 = helper.make_node("Scale", ["Y"], ["Z"], scale=3.0, name="n2")
+
+        input_x = onnx.ValueInfoProto()
+        input_x.name = "X"
+        graph = helper.make_graph(
+            [n1, n2],
+            "nested",
+            inputs=[],
+            outputs=[helper.make_tensor_value_info("Z", TensorProto.FLOAT, [1, 2])],
+        )
+
+        i1 = helper.make_node(
+            "If", ["cond"], ["Z"], then_branch=graph, else_branch=graph
+        )
+
+        graph = helper.make_graph(
+            [i1],
+            "test",
+            inputs=[
+                helper.make_tensor_value_info("cond", TensorProto.BOOL, [1]),
+                helper.make_tensor_value_info("X", TensorProto.FLOAT, [1, 2]),
+            ],
+            outputs=[helper.make_tensor_value_info("Z", TensorProto.FLOAT, [1, 2])],
+        )
+
+        checker.check_graph(graph)
+
+    @property
+    def _sample_0_elem_tensor(self) -> TensorProto:
+        np_array = np.random.randn(0, 3).astype(np.float32)
+        return helper.make_tensor(
+            name="test",
+            data_type=TensorProto.FLOAT,
+            dims=(0, 3),
+            vals=np_array.reshape(0).tolist(),
+        )
+
+    def test_check_tensor_zero_elem(self) -> None:
+        tensor = self._sample_0_elem_tensor
+        checker.check_tensor(tensor)
+
+    def test_check_removed_experimental_op(self) -> None:
+        node = helper.make_node("ConstantFill", [], ["Y"], name="test", shape=[1, 2])
+        checker.check_node(node)
+
+    def test_skip_schema_check_on_non_standard_domain(self) -> None:
+        node = helper.make_node(
+            "NonExistOp", ["X"], ["Y"], name="test", domain="test.domain"
+        )
+        graph = helper.make_graph(
+            [node],
+            "test",
+            [helper.make_tensor_value_info("X", TensorProto.FLOAT, [1, 2])],
+            [helper.make_tensor_value_info("Y", TensorProto.FLOAT, [1, 2])],
+        )
+        onnx_id = helper.make_opsetid("test.domain", 1)
+        model = helper.make_model(graph, producer_name="test", opset_imports=[onnx_id])
+        checker.check_model(model)
+
+    def test_check_sparse_tensor(self) -> None:
+        sparse = self.make_sparse([100], [13, 17, 19], [3], [9, 27, 81])
+        checker.check_sparse_tensor(sparse)
+
+    def test_check_sparse_tensor_invalid_index(self) -> None:
+        # index value 181 is out-of-range
+        sparse = self.make_sparse([100], [13, 17, 19], [3], [9, 27, 181])
+        with pytest.raises(checker.ValidationError):
+            checker.check_sparse_tensor(sparse)
+
+    def test_check_sparse_tensor_unordered(self) -> None:
+        # index values are not in sorted order
+        sparse = self.make_sparse([100], [13, 17, 19], [3], [27, 9, 81])
+        with pytest.raises(checker.ValidationError):
+            checker.check_sparse_tensor(sparse)
+
+    def test_check_sparse_tensor_coo_format(self) -> None:
+        sparse = self.make_sparse([10, 10], [13, 17, 19], [3, 2], [0, 9, 2, 7, 8, 1])
+        checker.check_sparse_tensor(sparse)
+
+    def test_check_sparse_tensor_coo_format_invalid_index(self) -> None:
+        sparse = self.make_sparse([10, 10], [13, 17, 19], [3, 2], [0, 9, 0, 27, 8, 1])
+        with pytest.raises(checker.ValidationError):
+            checker.check_sparse_tensor(sparse)
+
+    def test_check_sparse_tensor_coo_format_invalid_shape(self) -> None:
+        sparse = self.make_sparse([10, 10], [13, 17, 19], [2, 3], [0, 9, 2, 7, 8, 1])
+        with pytest.raises(checker.ValidationError):
+            checker.check_sparse_tensor(sparse)
+
+    def test_check_sparse_tensor_coo_format_invalid_dim2(self) -> None:
+        sparse = self.make_sparse([10, 10], [13, 17, 19], [3, 1], [0, 1, 2])
+        with pytest.raises(checker.ValidationError):
+            checker.check_sparse_tensor(sparse)
+
+    def test_check_sparse_matmul(self) -> None:
+        M = 5
+        N = 10
+        # Create ValueInfoProto for input X of shape [N]
+        X = helper.make_tensor_value_info("X", TensorProto.FLOAT, [N])
+        # Create a [M,N] sparse-matrix constant C
+        sparse_tensor = self.make_sparse([M, N], [2, 3, 1], [3], [3, 11, 37])
+        node1 = helper.make_node("Constant", [], ["C"], sparse_value=sparse_tensor)
+        # Create ValueInfoProto for output Y of shape [M]
+        Y = helper.make_tensor_value_info("Y", TensorProto.FLOAT, [M])
+        # Compute Y = C X
+        node2 = helper.make_node("MatMul", ["C", "X"], ["Y"])
+        # create graph
+        graph = helper.make_graph([node1, node2], "sparse_matmul", [X], [Y])
+        # check graph
+        checker.check_graph(graph)
+
+    def test_check_model_unsupported_input_type(self) -> None:
+        N = 10
+        X = helper.make_tensor_value_info("X", TensorProto.BOOL, [N])
+        Y = helper.make_tensor_value_info("Y", TensorProto.FLOAT, [N])
+        Z = helper.make_tensor_value_info("Z", TensorProto.FLOAT, [N])
+        onnx_id = helper.make_opsetid("", 6)
+        node = helper.make_node("Add", ["X", "Y"], ["Z"])
+        graph = helper.make_graph([node], "test_add_input", [X, Y], [Z])
+        model = helper.make_model(graph, producer_name="test", opset_imports=[onnx_id])
+        with pytest.raises(shape_inference.InferenceError):
+            checker.check_model(model, True)
+
+    def test_check_model_inconsistent_type(self) -> None:
+        N = 10
+        X = helper.make_tensor_value_info("X", TensorProto.FLOAT, [N])
+        Y = helper.make_tensor_value_info("Y", TensorProto.INT32, [N])
+        Z = helper.make_tensor_value_info("Z", TensorProto.FLOAT, [N])
+        onnx_id = helper.make_opsetid("", 6)
+        node = helper.make_node("Add", ["X", "Y"], ["Z"])
+        graph = helper.make_graph([node], "test_add_input", [X, Y], [Z])
+        model = helper.make_model(graph, producer_name="test", opset_imports=[onnx_id])
+        with pytest.raises(shape_inference.InferenceError):
+            checker.check_model(model, True)
+
+    def test_check_model_unsupported_output_type(self) -> None:
+        N = 10
+        X = helper.make_tensor_value_info("X", TensorProto.FLOAT, [N])
+        Y = helper.make_tensor_value_info("Y", TensorProto.FLOAT, [N])
+        Z = helper.make_tensor_value_info("Z", TensorProto.BOOL, [N])
+        onnx_id = helper.make_opsetid("", 6)
+        node = helper.make_node("Add", ["X", "Y"], ["Z"])
+        graph = helper.make_graph([node], "test_add_input", [X, Y], [Z])
+        model = helper.make_model(graph, producer_name="test", opset_imports=[onnx_id])
+        with pytest.raises(shape_inference.InferenceError):
+            checker.check_model(model, True)
+
+    def test_loop_with_same_initializer_input_below_ir4(self) -> None:
+        # This is for testing IR<4: tensors must exist both in initializer and input
+        # shape_inference should allow different number of graph input and node input for Loop
+        # Comes from a tf2onnx model
+
+        model = helper.make_model(
+            opset_imports=[helper.make_operatorsetid("", 8)],
+            ir_version=3,
+            graph=helper.make_graph(
+                name="test-loop",
+                inputs=[
+                    helper.make_tensor_value_info(
+                        "input_0", TensorProto.INT32, shape=[1]
+                    ),
+                    helper.make_tensor_value_info(
+                        "while_maximum_iterations_0", TensorProto.INT64, shape=[]
+                    ),
+                    helper.make_tensor_value_info(
+                        "const_fold_opt__18", TensorProto.INT64, shape=[1]
+                    ),
+                    helper.make_tensor_value_info(
+                        "const_fold_opt__17", TensorProto.FLOAT, shape=[]
+                    ),
+                    helper.make_tensor_value_info(
+                        "Const_0", TensorProto.INT32, shape=[1]
+                    ),
+                ],
+                outputs=[
+                    helper.make_tensor_value_info(
+                        "output_0", TensorProto.INT32, shape=[1]
+                    )
+                ],
+                initializer=[
+                    numpy_helper.from_array(
+                        np.array(9223372036854775807, dtype=np.int64),
+                        name="while_maximum_iterations_0",
+                    ),
+                    numpy_helper.from_array(
+                        np.array([-1], dtype=np.int64), name="const_fold_opt__18"
+                    ),
+                    numpy_helper.from_array(
+                        np.array(10.0, dtype=np.float32), name="const_fold_opt__17"
+                    ),
+                    numpy_helper.from_array(
+                        np.array([1], dtype=np.int32), name="Const_0"
+                    ),
+                ],
+                nodes=[
+                    helper.make_node(
+                        "Cast",
+                        inputs=["input_0"],
+                        outputs=["while_cond_158_while_Less__13_0"],
+                        name="while_cond_158_while_Less__13",
+                        domain="",
+                        to=TensorProto.FLOAT,
+                    ),
+                    helper.make_node(
+                        "Less",
+                        inputs=[
+                            "while_cond_158_while_Less__13_0",
+                            "const_fold_opt__17",
+                        ],
+                        outputs=["while_cond_158_while_Less_0"],
+                        name="while_cond_158_while_Less",
+                        domain="",
+                    ),
+                    helper.make_node(
+                        "Squeeze",
+                        inputs=["while_cond_158_while_Less_0"],
+                        outputs=["while_cond_158_while_Squeeze_0"],
+                        name="while_cond_158_while_Squeeze",
+                        domain="",
+                    ),
+                    helper.make_node(
+                        "Loop",
+                        inputs=[
+                            "while_maximum_iterations_0",
+                            "while_cond_158_while_Squeeze_0",
+                            "input_0",
+                            "Const_0",
+                        ],
+                        outputs=["while_loop_0", "while_loop_1"],
+                        name="while_loop",
+                        body=helper.make_graph(
+                            name="while_body",
+                            inputs=[
+                                helper.make_tensor_value_info(
+                                    "while_while_loop_counter_0",
+                                    TensorProto.INT64,
+                                    shape=[],
+                                ),
+                                helper.make_tensor_value_info(
+                                    "cond__15_0", TensorProto.BOOL, shape=[]
+                                ),
+                                helper.make_tensor_value_info(
+                                    "while_placeholder_0", TensorProto.INT32, shape=[1]
+                                ),
+                                helper.make_tensor_value_info(
+                                    "while_add_const_0_0", TensorProto.INT32, shape=[1]
+                                ),
+                                helper.make_tensor_value_info(
+                                    "const_fold_opt__19", TensorProto.FLOAT, shape=[]
+                                ),
+                            ],
+                            outputs=[
+                                helper.make_tensor_value_info(
+                                    "cond___while_Identity_graph_outputs_Identity__3_0",
+                                    TensorProto.BOOL,
+                                    shape=[],
+                                ),
+                                helper.make_tensor_value_info(
+                                    "while_Identity_2_0", TensorProto.INT32, shape=[1]
+                                ),
+                                helper.make_tensor_value_info(
+                                    "while_add_const_0_0", TensorProto.INT32, shape=[1]
+                                ),
+                            ],
+                            initializer=[
+                                numpy_helper.from_array(
+                                    np.array(10.0, dtype=np.float32),
+                                    name="const_fold_opt__19",
+                                )
+                            ],
+                            nodes=[
+                                helper.make_node(
+                                    "Add",
+                                    inputs=[
+                                        "while_placeholder_0",
+                                        "while_add_const_0_0",
+                                    ],
+                                    outputs=["while_Identity_2_0"],
+                                    name="while_Add",
+                                ),
+                                helper.make_node(
+                                    "Cast",
+                                    inputs=["while_Identity_2_0"],
+                                    outputs=["cond___while_Less__13_0"],
+                                    name="cond___while_Less__13",
+                                    domain="",
+                                    to=TensorProto.FLOAT,
+                                ),
+                                helper.make_node(
+                                    "Less",
+                                    inputs=[
+                                        "cond___while_Less__13_0",
+                                        "const_fold_opt__19",
+                                    ],
+                                    outputs=["cond___while_Less_0"],
+                                    name="cond___while_Less",
+                                    domain="",
+                                ),
+                                helper.make_node(
+                                    "Squeeze",
+                                    inputs=["cond___while_Less_0"],
+                                    outputs=[
+                                        "cond___while_Identity_graph_outputs_Identity__3_0"
+                                    ],
+                                    name="cond___while_Squeeze",
+                                    domain="",
+                                ),
+                            ],
+                        ),
+                    ),
+                    helper.make_node(
+                        "Unsqueeze",
+                        inputs=["while_loop_0"],
+                        outputs=["Reshape_tensor_0"],
+                        name="Reshape_tensor",
+                        axes=[0],
+                    ),
+                    helper.make_node(
+                        "Reshape",
+                        inputs=["Reshape_tensor_0", "const_fold_opt__18"],
+                        outputs=["output_0"],
+                        name="Reshape",
+                    ),
+                ],
+            ),
+        )
+        # Should not throw an error
+        checker.check_model(model, full_check=True)
+
+    def test_loop_with_different_initializer_input_below_ir4(self) -> None:
+        # This is for testing IR<4: tensors must exist both in initializer and input
+        # Testing an optional input which does not exist in initializers
+        # Checker should throw an error said the missing input is not in initializers
+
+        model = helper.make_model(
+            opset_imports=[helper.make_operatorsetid("", 8)],
+            ir_version=3,
+            graph=helper.make_graph(
+                name="test-loop",
+                inputs=[
+                    helper.make_tensor_value_info(
+                        "input_0", TensorProto.INT32, shape=[1]
+                    ),
+                    helper.make_tensor_value_info(
+                        "while_maximum_iterations_0", TensorProto.INT64, shape=[]
+                    ),
+                    helper.make_tensor_value_info(
+                        "const_fold_opt__18", TensorProto.INT64, shape=[1]
+                    ),
+                    helper.make_tensor_value_info(
+                        "const_fold_opt__17", TensorProto.FLOAT, shape=[]
+                    ),
+                    helper.make_tensor_value_info(
+                        "Const_0", TensorProto.INT32, shape=[1]
+                    ),
+                ],
+                outputs=[
+                    helper.make_tensor_value_info(
+                        "output_0", TensorProto.INT32, shape=[1]
+                    )
+                ],
+                initializer=[
+                    numpy_helper.from_array(
+                        np.array(9223372036854775807, dtype=np.int64),
+                        name="while_maximum_iterations_0",
+                    ),
+                    numpy_helper.from_array(
+                        np.array([-1], dtype=np.int64), name="const_fold_opt__18"
+                    ),
+                    numpy_helper.from_array(
+                        np.array(10.0, dtype=np.float32), name="const_fold_opt__17"
+                    ),
+                    numpy_helper.from_array(
+                        np.array([1], dtype=np.int32), name="Const_0"
+                    ),
+                ],
+                nodes=[
+                    helper.make_node(
+                        "Cast",
+                        inputs=["input_0"],
+                        outputs=["while_cond_158_while_Less__13_0"],
+                        name="while_cond_158_while_Less__13",
+                        domain="",
+                        to=TensorProto.FLOAT,
+                    ),
+                    helper.make_node(
+                        "Less",
+                        inputs=[
+                            "while_cond_158_while_Less__13_0",
+                            "const_fold_opt__17",
+                        ],
+                        outputs=["while_cond_158_while_Less_0"],
+                        name="while_cond_158_while_Less",
+                        domain="",
+                    ),
+                    helper.make_node(
+                        "Squeeze",
+                        inputs=["while_cond_158_while_Less_0"],
+                        outputs=["while_cond_158_while_Squeeze_0"],
+                        name="while_cond_158_while_Squeeze",
+                        domain="",
+                    ),
+                    helper.make_node(
+                        "Loop",
+                        inputs=[
+                            "while_maximum_iterations_0",
+                            "while_cond_158_while_Squeeze_0",
+                            "input_0",
+                            "Const_0",
+                        ],
+                        outputs=["while_loop_0", "while_loop_1"],
+                        name="while_loop",
+                        body=helper.make_graph(
+                            name="while_body",
+                            inputs=[
+                                helper.make_tensor_value_info(
+                                    "while_while_loop_counter_0",
+                                    TensorProto.INT64,
+                                    shape=[],
+                                ),
+                                helper.make_tensor_value_info(
+                                    "cond__15_0", TensorProto.BOOL, shape=[]
+                                ),
+                                helper.make_tensor_value_info(
+                                    "while_placeholder_0", TensorProto.INT32, shape=[1]
+                                ),
+                                helper.make_tensor_value_info(
+                                    "while_add_const_0_0", TensorProto.INT32, shape=[1]
+                                ),
+                                # The following input cannot be found in initializer and checker should throw an error
+                                helper.make_tensor_value_info(
+                                    "const_fold_opt__18", TensorProto.FLOAT, shape=[]
+                                ),
+                            ],
+                            outputs=[
+                                helper.make_tensor_value_info(
+                                    "cond___while_Less__13_0",
+                                    TensorProto.BOOL,
+                                    shape=[],
+                                ),
+                                helper.make_tensor_value_info(
+                                    "while_Identity_2_0", TensorProto.INT32, shape=[1]
+                                ),
+                                helper.make_tensor_value_info(
+                                    "while_add_const_0_0", TensorProto.INT32, shape=[1]
+                                ),
+                            ],
+                            initializer=[],
+                            nodes=[
+                                helper.make_node(
+                                    "Add",
+                                    inputs=[
+                                        "while_placeholder_0",
+                                        "while_add_const_0_0",
+                                    ],
+                                    outputs=["while_Identity_2_0"],
+                                    name="while_Add",
+                                ),
+                                helper.make_node(
+                                    "Cast",
+                                    inputs=["while_Identity_2_0"],
+                                    outputs=["cond___while_Less__13_0"],
+                                    name="cond___while_Less__13",
+                                    domain="",
+                                    to=TensorProto.BOOL,
+                                ),
+                            ],
+                        ),
+                    ),
+                    helper.make_node(
+                        "Unsqueeze",
+                        inputs=["while_loop_0"],
+                        outputs=["Reshape_tensor_0"],
+                        name="Reshape_tensor",
+                        axes=[0],
+                    ),
+                    helper.make_node(
+                        "Reshape",
+                        inputs=["Reshape_tensor_0", "const_fold_opt__18"],
+                        outputs=["output_0"],
+                        name="Reshape",
+                    ),
+                ],
+            ),
+        )
+        with pytest.raises(shape_inference.InferenceError):
+            checker.check_model(model, True)
+
+    def test_loop_with_same_initializer_input_above_ir4(self) -> None:
+        # This is for testing IR>=4:
+        # Cannot use the same name as both a subgraph initializer and subgraph input
+
+        model = helper.make_model(
+            opset_imports=[helper.make_operatorsetid("", 11)],
+            ir_version=6,
+            graph=helper.make_graph(
+                name="test-loop",
+                inputs=[
+                    helper.make_tensor_value_info(
+                        "input_0", TensorProto.INT32, shape=[1]
+                    ),
+                    helper.make_tensor_value_info(
+                        "while_maximum_iterations_0", TensorProto.INT64, shape=[]
+                    ),
+                    helper.make_tensor_value_info(
+                        "const_fold_opt__18", TensorProto.INT64, shape=[1]
+                    ),
+                    helper.make_tensor_value_info(
+                        "const_fold_opt__17", TensorProto.FLOAT, shape=[]
+                    ),
+                    helper.make_tensor_value_info(
+                        "Const_0", TensorProto.INT32, shape=[1]
+                    ),
+                ],
+                outputs=[
+                    helper.make_tensor_value_info(
+                        "output_0", TensorProto.INT32, shape=[1]
+                    )
+                ],
+                initializer=[
+                    numpy_helper.from_array(
+                        np.array(9223372036854775807, dtype=np.int64),
+                        name="while_maximum_iterations_0",
+                    ),
+                    numpy_helper.from_array(
+                        np.array([-1], dtype=np.int64), name="const_fold_opt__18"
+                    ),
+                    numpy_helper.from_array(
+                        np.array(10.0, dtype=np.float32), name="const_fold_opt__17"
+                    ),
+                    numpy_helper.from_array(
+                        np.array([1], dtype=np.int32), name="Const_0"
+                    ),
+                ],
+                nodes=[
+                    helper.make_node(
+                        "Cast",
+                        inputs=["input_0"],
+                        outputs=["while_cond_158_while_Less__13_0"],
+                        name="while_cond_158_while_Less__13",
+                        domain="",
+                        to=TensorProto.FLOAT,
+                    ),
+                    helper.make_node(
+                        "Less",
+                        inputs=[
+                            "while_cond_158_while_Less__13_0",
+                            "const_fold_opt__17",
+                        ],
+                        outputs=["while_cond_158_while_Less_0"],
+                        name="while_cond_158_while_Less",
+                        domain="",
+                    ),
+                    helper.make_node(
+                        "Squeeze",
+                        inputs=["while_cond_158_while_Less_0"],
+                        outputs=["while_cond_158_while_Squeeze_0"],
+                        name="while_cond_158_while_Squeeze",
+                        domain="",
+                    ),
+                    helper.make_node(
+                        "Loop",
+                        inputs=[
+                            "while_maximum_iterations_0",
+                            "while_cond_158_while_Squeeze_0",
+                            "input_0",
+                            "Const_0",
+                        ],
+                        outputs=["while_loop_0", "while_loop_1"],
+                        name="while_loop",
+                        body=helper.make_graph(
+                            name="while_body",
+                            inputs=[
+                                helper.make_tensor_value_info(
+                                    "while_while_loop_counter_0",
+                                    TensorProto.INT64,
+                                    shape=[],
+                                ),
+                                helper.make_tensor_value_info(
+                                    "cond__15_0", TensorProto.BOOL, shape=[]
+                                ),
+                                helper.make_tensor_value_info(
+                                    "while_placeholder_0", TensorProto.INT32, shape=[1]
+                                ),
+                                helper.make_tensor_value_info(
+                                    "while_add_const_0_0", TensorProto.INT32, shape=[1]
+                                ),
+                            ],
+                            outputs=[
+                                helper.make_tensor_value_info(
+                                    "cond___while_Identity_graph_outputs_Identity__3_0",
+                                    TensorProto.BOOL,
+                                    shape=[],
+                                ),
+                                helper.make_tensor_value_info(
+                                    "while_Identity_2_0", TensorProto.INT32, shape=[1]
+                                ),
+                                helper.make_tensor_value_info(
+                                    "while_add_const_0_0", TensorProto.INT32, shape=[1]
+                                ),
+                            ],
+                            # Cannot use the same name as both a subgraph initializer and subgraph input: while_while_loop_counter_0
+                            initializer=[
+                                numpy_helper.from_array(
+                                    np.array(10, dtype=np.int64),
+                                    name="while_while_loop_counter_0",
+                                )
+                            ],
+                            nodes=[
+                                helper.make_node(
+                                    "Add",
+                                    inputs=[
+                                        "while_placeholder_0",
+                                        "while_add_const_0_0",
+                                    ],
+                                    outputs=["while_Identity_2_0"],
+                                    name="while_Add",
+                                ),
+                                helper.make_node(
+                                    "Cast",
+                                    inputs=["while_Identity_2_0"],
+                                    outputs=["cond___while_Less__13_0"],
+                                    name="cond___while_Less__13",
+                                    domain="",
+                                    to=TensorProto.FLOAT,
+                                ),
+                                helper.make_node(
+                                    "Less",
+                                    inputs=[
+                                        "cond___while_Less__13_0",
+                                        "while_while_loop_counter_0",
+                                    ],
+                                    outputs=["cond___while_Less_0"],
+                                    name="cond___while_Less",
+                                    domain="",
+                                ),
+                                helper.make_node(
+                                    "Squeeze",
+                                    inputs=["cond___while_Less_0"],
+                                    outputs=[
+                                        "cond___while_Identity_graph_outputs_Identity__3_0"
+                                    ],
+                                    name="cond___while_Squeeze",
+                                    domain="",
+                                ),
+                            ],
+                        ),
+                    ),
+                    helper.make_node(
+                        "Unsqueeze",
+                        inputs=["while_loop_0"],
+                        outputs=["Reshape_tensor_0"],
+                        name="Reshape_tensor",
+                        axes=[0],
+                    ),
+                    helper.make_node(
+                        "Reshape",
+                        inputs=["Reshape_tensor_0", "const_fold_opt__18"],
+                        outputs=["output_0"],
+                        name="Reshape",
+                    ),
+                ],
+            ),
+        )
+        with pytest.raises(shape_inference.InferenceError):
+            checker.check_model(model, True)
+
+    def test_empty_list_attribute(self):
+        model = onnx.parser.parse_model(
+            """
+            <
+                ir_version: 7,
+                opset_import: [ "" : 17]
+            >
+            agraph (float[N] x) => (int64[M] y)
+            {
+                y = Constant <value_ints: ints = []>()
+            }
+        """
+        )
+        # Should not throw an error
+        checker.check_model(model, full_check=True)
+        model = onnx.parser.parse_model(
+            """
+            <
+                ir_version: 7,
+                opset_import: [ "" : 17]
+            >
+            agraph (float[N] x) => (float[M] y)
+            {
+                y = Constant <value_floats: floats = []>()
+            }
+        """
+        )
+        # Should not throw an error
+        checker.check_model(model, full_check=True)
+
+    def test_check_model_supports_unicode_path(self):
+        input_tensor = helper.make_tensor_value_info(
+            "input", onnx.TensorProto.FLOAT, [1]
+        )
+        output_tensor = helper.make_tensor_value_info(
+            "output", onnx.TensorProto.FLOAT, [1]
+        )
+        node = helper.make_node("Identity", ["input"], ["output"])
+        graph = helper.make_graph([node], "test", [input_tensor], [output_tensor])
+        model = helper.make_model(graph, producer_name="test")
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            unicode_model_path = os.path.join(temp_dir, "模型モデル모델✨.onnx")
+            onnx.save(model, unicode_model_path)
+            checker.check_model(unicode_model_path, full_check=True)
+
+    def test_graph_output_is_defined(self):
+        model = onnx.parser.parse_model(
+            """
+            <ir_version: 7, opset_import: [ "" : 17]>
+            agraph (float[N] x) => (float[N] y, float[N] z)
+            {
+                y = Add(x, x)
+            }
+            # Error: z is not defined
+        """
+        )
+        with pytest.raises(checker.ValidationError):
+            checker.check_model(model)
+
+    def test_graph_output_is_defined_within_sub_graph(self):
+        model = onnx.parser.parse_model(
+            """
+            <ir_version: 7, opset_import: [ "" : 17]>
+            agraph (float[N] x, bool cond) => (float[N] y)
+            {
+                sum = Add (x, x)
+                prod = Mul (x, x)
+                y = If (cond) <
+                    then_branch = then_graph () => (sum) {},
+                    else_branch = else_graph () => (prod) {}
+                >
+            }
+            # Error: sum/prod are accessible inside if-then-else branches, but cannot
+            # be used as outputs of the then/else branch implicitly.
+            # An explicit "Identity(sum)" must be used to return sum as output.
+        """
+        )
+        with pytest.raises(checker.ValidationError):
+            checker.check_model(model)
+
+    def test_check_model_rejects_self_recursive_function(self) -> None:
+        model = onnx.parser.parse_model(
+            """
+            <ir_version: 8, opset_import: [ "" : 17, "local" : 1 ]>
+            agraph (float[N] X) => (float[N] Y) {
+                Y = local.foo (X)
+            }
+            <opset_import: [ "" : 17, "local" : 1 ], domain: "local">
+            foo (x) => (y) { y = local.foo (x) }
+        """
+        )
+        with pytest.raises(checker.ValidationError):
+            checker.check_model(model)
+
+    def test_check_model_rejects_indirect_cycle(self) -> None:
+        model = onnx.parser.parse_model(
+            """
+            <ir_version: 8, opset_import: [ "" : 17, "local" : 1 ]>
+            agraph (float[N] X) => (float[N] Y) {
+                Y = local.foo (X)
+            }
+            <opset_import: [ "" : 17, "local" : 1 ], domain: "local">
+            foo (x) => (y) { y = local.bar (x) }
+            <opset_import: [ "" : 17, "local" : 1 ], domain: "local">
+            bar (x) => (y) { y = local.foo (x) }
+        """
+        )
+        with pytest.raises(checker.ValidationError):
+            checker.check_model(model)
+
+    def test_check_model_rejects_self_recursion_in_subgraph(self) -> None:
+        # Cycle reachable only through an If-branch subgraph nested in the function body.
+        model = onnx.parser.parse_model(
+            """
+            <ir_version: 8, opset_import: [ "" : 17, "local" : 1 ]>
+            agraph (float[N] X) => (float[N] Y) {
+                Y = local.foo (X)
+            }
+            <opset_import: [ "" : 17, "local" : 1 ], domain: "local">
+            foo (x) => (y) {
+                cond = Constant <value = bool {1}> ()
+                y = If (cond) <
+                    then_branch = g_then () => (yt) { yt = local.foo (x) },
+                    else_branch = g_else () => (ye) { ye = Identity (x) }
+                >
+            }
+        """
+        )
+        with pytest.raises(
+            checker.ValidationError,
+            match="Cycle detected in model-local function references",
+        ):
+            checker.check_model(model)
+
+    def test_check_model_rejects_mutual_recursion_in_subgraph(self) -> None:
+        # Mutual A<->B cycle where each edge lives inside an If-branch subgraph.
+        model = onnx.parser.parse_model(
+            """
+            <ir_version: 8, opset_import: [ "" : 17, "local" : 1 ]>
+            agraph (float[N] X) => (float[N] Y) {
+                Y = local.foo (X)
+            }
+            <opset_import: [ "" : 17, "local" : 1 ], domain: "local">
+            foo (x) => (y) {
+                cond = Constant <value = bool {1}> ()
+                y = If (cond) <
+                    then_branch = foo_then () => (yt) { yt = local.bar (x) },
+                    else_branch = foo_else () => (ye) { ye = Identity (x) }
+                >
+            }
+            <opset_import: [ "" : 17, "local" : 1 ], domain: "local">
+            bar (x) => (y) {
+                cond = Constant <value = bool {1}> ()
+                y = If (cond) <
+                    then_branch = bar_then () => (yt) { yt = local.foo (x) },
+                    else_branch = bar_else () => (ye) { ye = Identity (x) }
+                >
+            }
+        """
+        )
+        with pytest.raises(
+            checker.ValidationError,
+            match="Cycle detected in model-local function references",
+        ):
+            checker.check_model(model)
+
+    def test_check_model_rejects_indirect_cycle_through_subgraph(self) -> None:
+        # Three-function indirect cycle foo -> foo2 -> foo3 -> foo where every call
+        # edge lives inside an If-branch subgraph, so the cycle is only discoverable
+        # through the recursive subgraph descent (not the top-level function bodies).
+        model = onnx.parser.parse_model(
+            """
+            <ir_version: 8, opset_import: [ "" : 17, "local" : 1 ]>
+            agraph (float[N] X) => (float[N] Y) {
+                Y = local.foo (X)
+            }
+            <opset_import: [ "" : 17, "local" : 1 ], domain: "local">
+            foo (x) => (y) {
+                cond = Constant <value = bool {1}> ()
+                y = If (cond) <
+                    then_branch = foo_then () => (yt) { yt = local.foo2 (x) },
+                    else_branch = foo_else () => (ye) { ye = Identity (x) }
+                >
+            }
+            <opset_import: [ "" : 17, "local" : 1 ], domain: "local">
+            foo2 (x) => (y) {
+                cond = Constant <value = bool {1}> ()
+                y = If (cond) <
+                    then_branch = foo2_then () => (yt) { yt = local.foo3 (x) },
+                    else_branch = foo2_else () => (ye) { ye = Identity (x) }
+                >
+            }
+            <opset_import: [ "" : 17, "local" : 1 ], domain: "local">
+            foo3 (x) => (y) {
+                cond = Constant <value = bool {1}> ()
+                y = If (cond) <
+                    then_branch = foo3_then () => (yt) { yt = local.foo (x) },
+                    else_branch = foo3_else () => (ye) { ye = Identity (x) }
+                >
+            }
+        """
+        )
+        with pytest.raises(
+            checker.ValidationError,
+            match="Cycle detected in model-local function references",
+        ):
+            checker.check_model(model)
+
+    def test_check_model_rejects_cycle_in_loop_body(self) -> None:
+        # Cycle edge hidden inside a Loop body subgraph rather than an If branch.
+        model = onnx.parser.parse_model(
+            """
+            <ir_version: 8, opset_import: [ "" : 17, "local" : 1 ]>
+            agraph (float[N] X) => (float[N] Y) {
+                Y = local.foo (X)
+            }
+            <opset_import: [ "" : 17, "local" : 1 ], domain: "local">
+            foo (x) => (y) {
+                trip = Constant <value = int64 {1}> ()
+                cond = Constant <value = bool {1}> ()
+                y = Loop (trip, cond, x) <
+                    body = loop_body (iter, keep, x_in) => (keep_out, x_out) {
+                        keep_out = Identity (keep)
+                        x_out = local.foo (x_in)
+                    }
+                >
+            }
+        """
+        )
+        with pytest.raises(
+            checker.ValidationError,
+            match="Cycle detected in model-local function references",
+        ):
+            checker.check_model(model)
+
+    def test_check_model_rejects_cycle_in_scan_body(self) -> None:
+        # Cycle edge hidden inside a Scan body subgraph, mirroring the Loop-body case.
+        model = onnx.parser.parse_model(
+            """
+            <ir_version: 8, opset_import: [ "" : 17, "local" : 1 ]>
+            agraph (float[N] X) => (float[N] Y) {
+                Y = local.foo (X)
+            }
+            <opset_import: [ "" : 17, "local" : 1 ], domain: "local">
+            foo (x) => (y) {
+                y = Scan (x) <
+                    num_scan_inputs = 1,
+                    body = scan_body (x_in) => (x_out) {
+                        x_out = local.foo (x_in)
+                    }
+                >
+            }
+        """
+        )
+        with pytest.raises(
+            checker.ValidationError,
+            match="Cycle detected in model-local function references",
+        ):
+            checker.check_model(model)
+
+    def test_check_model_rejects_deeply_nested_cycle(self) -> None:
+        # Cycle reachable only through If -> Loop -> self, exercising arbitrary-depth descent.
+        model = onnx.parser.parse_model(
+            """
+            <ir_version: 8, opset_import: [ "" : 17, "local" : 1 ]>
+            agraph (float[N] X) => (float[N] Y) {
+                Y = local.foo (X)
+            }
+            <opset_import: [ "" : 17, "local" : 1 ], domain: "local">
+            foo (x) => (y) {
+                cond = Constant <value = bool {1}> ()
+                y = If (cond) <
+                    then_branch = g_then () => (yt) {
+                        trip = Constant <value = int64 {1}> ()
+                        loop_cond = Constant <value = bool {1}> ()
+                        yt = Loop (trip, loop_cond, x) <
+                            body = loop_body (iter, keep, x_in) => (keep_out, x_out) {
+                                keep_out = Identity (keep)
+                                x_out = local.foo (x_in)
+                            }
+                        >
+                    },
+                    else_branch = g_else () => (ye) { ye = Identity (x) }
+                >
+            }
+        """
+        )
+        with pytest.raises(
+            checker.ValidationError,
+            match="Cycle detected in model-local function references",
+        ):
+            checker.check_model(model)
+
+    def test_check_model_accepts_noncyclic_call_from_subgraph(self) -> None:
+        # A function whose subgraph calls a DIFFERENT non-cyclic local function must pass.
+        model = onnx.parser.parse_model(
+            """
+            <ir_version: 8, opset_import: [ "" : 17, "local" : 1 ]>
+            agraph (float[N] X) => (float[N] Y) {
+                Y = local.foo (X)
+            }
+            <opset_import: [ "" : 17, "local" : 1 ], domain: "local">
+            foo (x) => (y) {
+                cond = Constant <value = bool {1}> ()
+                y = If (cond) <
+                    then_branch = g_then () => (yt) { yt = local.bar (x) },
+                    else_branch = g_else () => (ye) { ye = Identity (x) }
+                >
+            }
+            <opset_import: [ "" : 17, "local" : 1 ], domain: "local">
+            bar (x) => (y) { y = Identity (x) }
+        """
+        )
+        checker.check_model(model)
+
+    def test_check_tensor_invalid_dims(self) -> None:
+        """Reject tensors with overflowing or negative dimensions."""
+        # Overflow: 2^62 * 2^62 exceeds int64
+        tensor = TensorProto()
+        tensor.data_type = TensorProto.FLOAT
+        tensor.dims.extend([2**62, 2**62])
+        tensor.name = "t"
+        tensor.raw_data = b"\x00"
+        with pytest.raises(checker.ValidationError):
+            checker.check_tensor(tensor)
+        # Negative dim
+        tensor2 = TensorProto()
+        tensor2.data_type = TensorProto.FLOAT
+        tensor2.dims.extend([-1, 4])
+        tensor2.name = "t"
+        tensor2.raw_data = b"\x00" * 16
+        with pytest.raises(checker.ValidationError):
+            checker.check_tensor(tensor2)
+        # Zero dim: empty tensors are valid and must be accepted.
+        tensor3 = TensorProto()
+        tensor3.data_type = TensorProto.FLOAT
+        tensor3.dims.extend([0])
+        tensor3.name = "t"
+        checker.check_tensor(tensor3)
+
+    def test_check_tensor_packed_subbyte_raw_data(self) -> None:
+        """Reject packed sub-byte tensors whose raw_data payload is too small."""
+        # 4-bit types (INT4, UINT4, FLOAT4E2M1): 2 elements per byte.
+        # 10 elements need ceil(10/2) = 5 bytes; 4 bytes is too small.
+        for dtype in (TensorProto.INT4, TensorProto.UINT4, TensorProto.FLOAT4E2M1):
+            tensor = TensorProto()
+            tensor.data_type = dtype
+            tensor.dims.extend([10])
+            tensor.name = "t"
+            tensor.raw_data = b"\x00" * 4  # 1 byte too short
+            with pytest.raises(checker.ValidationError):
+                checker.check_tensor(tensor)
+            # Exactly enough bytes must pass.
+            tensor2 = TensorProto()
+            tensor2.data_type = dtype
+            tensor2.dims.extend([10])
+            tensor2.name = "t"
+            tensor2.raw_data = b"\x00" * 5  # ceil(10/2) = 5 bytes
+            checker.check_tensor(tensor2)
+
+        # 2-bit types (INT2, UINT2): 4 elements per byte.
+        # 10 elements need ceil(10/4) = 3 bytes; 2 bytes is too small.
+        for dtype in (TensorProto.INT2, TensorProto.UINT2):
+            tensor = TensorProto()
+            tensor.data_type = dtype
+            tensor.dims.extend([10])
+            tensor.name = "t"
+            tensor.raw_data = b"\x00" * 2  # 1 byte too short
+            with pytest.raises(checker.ValidationError):
+                checker.check_tensor(tensor)
+            # Exactly enough bytes must pass.
+            tensor2 = TensorProto()
+            tensor2.data_type = dtype
+            tensor2.dims.extend([10])
+            tensor2.name = "t"
+            tensor2.raw_data = b"\x00" * 3  # ceil(10/4) = 3 bytes
+            checker.check_tensor(tensor2)
+
+        # 6-bit types: 10 elements need ceil(10*6/8) = 8 bytes.
+        for dtype in (TensorProto.FLOAT6E2M3, TensorProto.FLOAT6E3M2):
+            tensor = TensorProto()
+            tensor.data_type = dtype
+            tensor.dims.extend([10])
+            tensor.name = "t"
+            tensor.raw_data = b"\x00" * 7
+            with pytest.raises(checker.ValidationError):
+                checker.check_tensor(tensor)
+            tensor.raw_data = b"\x00" * 8
+            checker.check_tensor(tensor)
+
+    @pytest.mark.parametrize("dtype", (TensorProto.FLOAT6E2M3, TensorProto.FLOAT6E3M2))
+    @pytest.mark.parametrize(
+        ("num_elements", "invalid_last_byte"),
+        ((1, 0x40), (2, 0x10), (3, 0x04)),
+    )
+    def test_check_tensor_float6_raw_data_padding(
+        self, dtype: int, num_elements: int, invalid_last_byte: int
+    ) -> None:
+        tensor = TensorProto()
+        tensor.data_type = dtype
+        tensor.dims.extend([num_elements])
+        tensor.name = "t"
+        tensor.raw_data = bytes((num_elements * 6 + 7) // 8 - 1) + bytes(
+            [invalid_last_byte]
+        )
+        with pytest.raises(checker.ValidationError, match="non-zero padding bits"):
+            checker.check_tensor(tensor)
+
+        tensor.raw_data = bytes((num_elements * 6 + 7) // 8)
+        checker.check_tensor(tensor)
+
+    @pytest.mark.parametrize("dtype", (TensorProto.FLOAT6E2M3, TensorProto.FLOAT6E3M2))
+    @pytest.mark.parametrize("invalid_value", (-1, 64))
+    def test_check_tensor_float6_int32_data_high_bits(
+        self, dtype: int, invalid_value: int
+    ) -> None:
+        int32_tensor = helper.make_tensor(
+            "int32", TensorProto.INT32, [1], [invalid_value]
+        )
+        checker.check_tensor(int32_tensor)
+
+        tensor = TensorProto()
+        tensor.data_type = dtype
+        tensor.dims.extend([1])
+        tensor.name = "t"
+        tensor.int32_data.append(invalid_value)
+        with pytest.raises(checker.ValidationError, match="must use only bits 0-5"):
+            checker.check_tensor(tensor)
+
+        tensor.int32_data[0] = 63
+        checker.check_tensor(tensor)
+
+    def test_check_tensor_packed_subbyte_int32_data(self) -> None:
+        """Reject packed sub-byte tensors whose int32_data payload is too small."""
+        # 4-bit types: 8 elements per int32.
+        # 10 elements need ceil(10/8) = 2 int32 values; 1 is too small.
+        for dtype in (TensorProto.INT4, TensorProto.UINT4, TensorProto.FLOAT4E2M1):
+            tensor = TensorProto()
+            tensor.data_type = dtype
+            tensor.dims.extend([10])
+            tensor.name = "t"
+            tensor.int32_data.extend([0])  # 1 int32, need 2
+            with pytest.raises(checker.ValidationError):
+                checker.check_tensor(tensor)
+            # Exactly enough int32 values must pass.
+            tensor2 = TensorProto()
+            tensor2.data_type = dtype
+            tensor2.dims.extend([10])
+            tensor2.name = "t"
+            tensor2.int32_data.extend([0, 0])  # ceil(10/8) = 2
+            checker.check_tensor(tensor2)
+
+        # 2-bit types: 16 elements per int32.
+        # 20 elements need ceil(20/16) = 2 int32 values; 1 is too small.
+        for dtype in (TensorProto.INT2, TensorProto.UINT2):
+            tensor = TensorProto()
+            tensor.data_type = dtype
+            tensor.dims.extend([20])
+            tensor.name = "t"
+            tensor.int32_data.extend([0])  # 1 int32, need 2
+            with pytest.raises(checker.ValidationError):
+                checker.check_tensor(tensor)
+            # Exactly enough int32 values must pass.
+            tensor2 = TensorProto()
+            tensor2.data_type = dtype
+            tensor2.dims.extend([20])
+            tensor2.name = "t"
+            tensor2.int32_data.extend([0, 0])  # ceil(20/16) = 2
+            checker.check_tensor(tensor2)
+
+    def test_check_tensor_unpacked_int32_data(self) -> None:
+        """Reject non-packed int32_data-stored tensors whose payload is too small.
+
+        BOOL, INT8, UINT8, INT16, UINT16, FLOAT16, BFLOAT16, and FLOAT8* types are
+        stored one element per int32_data entry (they are not bit-packed), unlike
+        INT4/UINT4/FLOAT4E2M1. Regression test for a checker/runtime discrepancy
+        where check_model() incorrectly accepted these types using the packed
+        ceil(nelem/8) formula instead of requiring nelem entries.
+        """
+        for dtype in (
+            TensorProto.BOOL,
+            TensorProto.INT8,
+            TensorProto.UINT8,
+            TensorProto.INT16,
+            TensorProto.UINT16,
+            TensorProto.FLOAT16,
+            TensorProto.BFLOAT16,
+            TensorProto.FLOAT8E4M3FN,
+            TensorProto.FLOAT8E4M3FNUZ,
+            TensorProto.FLOAT8E5M2,
+            TensorProto.FLOAT8E5M2FNUZ,
+            TensorProto.FLOAT8E8M0,
+        ):
+            tensor = TensorProto()
+            tensor.data_type = dtype
+            tensor.dims.extend([32])
+            tensor.name = "t"
+            # Only 4 int32_data entries; the packed formula ceil(32/8) = 4 would
+            # incorrectly accept this, but 32 entries (one per element) are needed.
+            tensor.int32_data.extend([0] * 4)
+            with pytest.raises(checker.ValidationError):
+                checker.check_tensor(tensor)
+            # Exactly enough (unpacked) int32 values must pass.
+            tensor2 = TensorProto()
+            tensor2.data_type = dtype
+            tensor2.dims.extend([32])
+            tensor2.name = "t"
+            tensor2.int32_data.extend([0] * 32)
+            checker.check_tensor(tensor2)
+
+    def test_check_tensor_packed_subbyte_zero_elems(self) -> None:
+        """Zero-element packed tensors with empty payload must be valid."""
+        for dtype in (
+            TensorProto.INT4,
+            TensorProto.UINT4,
+            TensorProto.FLOAT4E2M1,
+            TensorProto.INT2,
+            TensorProto.UINT2,
+        ):
+            tensor = TensorProto()
+            tensor.data_type = dtype
+            tensor.dims.extend([0])
+            tensor.name = "t"
+            checker.check_tensor(tensor)
+
+    def test_check_tensor_float_double_data_too_small(self) -> None:
+        """Reject FLOAT/DOUBLE tensors whose value field has too few entries."""
+        tensor = TensorProto()
+        tensor.data_type = TensorProto.FLOAT
+        tensor.dims.extend([4])
+        tensor.name = "t"
+        tensor.float_data.extend([0.0] * 3)  # 1 short
+        with pytest.raises(checker.ValidationError):
+            checker.check_tensor(tensor)
+        tensor.float_data.append(0.0)
+        checker.check_tensor(tensor)
+
+        tensor = TensorProto()
+        tensor.data_type = TensorProto.DOUBLE
+        tensor.dims.extend([4])
+        tensor.name = "t"
+        tensor.double_data.extend([0.0] * 3)  # 1 short
+        with pytest.raises(checker.ValidationError):
+            checker.check_tensor(tensor)
+        tensor.double_data.append(0.0)
+        checker.check_tensor(tensor)
+
+    def test_check_tensor_complex_data_too_small(self) -> None:
+        """COMPLEX64/COMPLEX128 store 2 value-field entries (real, imag) per element."""
+        tensor = TensorProto()
+        tensor.data_type = TensorProto.COMPLEX64
+        tensor.dims.extend([3])
+        tensor.name = "t"
+        tensor.float_data.extend([0.0] * 5)  # need 3 * 2 = 6
+        with pytest.raises(checker.ValidationError):
+            checker.check_tensor(tensor)
+        tensor.float_data.append(0.0)
+        checker.check_tensor(tensor)
+
+        tensor = TensorProto()
+        tensor.data_type = TensorProto.COMPLEX128
+        tensor.dims.extend([3])
+        tensor.name = "t"
+        tensor.double_data.extend([0.0] * 5)  # need 3 * 2 = 6
+        with pytest.raises(checker.ValidationError):
+            checker.check_tensor(tensor)
+        tensor.double_data.append(0.0)
+        checker.check_tensor(tensor)
+
+    def test_check_tensor_int64_uint64_data_too_small(self) -> None:
+        """Reject INT64/UINT32/UINT64 tensors whose value field has too few entries."""
+        tensor = TensorProto()
+        tensor.data_type = TensorProto.INT64
+        tensor.dims.extend([4])
+        tensor.name = "t"
+        tensor.int64_data.extend([0] * 3)  # 1 short
+        with pytest.raises(checker.ValidationError):
+            checker.check_tensor(tensor)
+        tensor.int64_data.append(0)
+        checker.check_tensor(tensor)
+
+        for dtype in (TensorProto.UINT32, TensorProto.UINT64):
+            tensor = TensorProto()
+            tensor.data_type = dtype
+            tensor.dims.extend([4])
+            tensor.name = "t"
+            tensor.uint64_data.extend([0] * 3)  # 1 short
+            with pytest.raises(checker.ValidationError):
+                checker.check_tensor(tensor)
+            tensor.uint64_data.append(0)
+            checker.check_tensor(tensor)
+
+    def test_check_tensor_string_data_too_small(self) -> None:
+        """Reject STRING tensors whose string_data has too few entries."""
+        tensor = TensorProto()
+        tensor.data_type = TensorProto.STRING
+        tensor.dims.extend([4])
+        tensor.name = "t"
+        tensor.string_data.extend([b"a", b"b", b"c"])  # 1 short
+        with pytest.raises(checker.ValidationError):
+            checker.check_tensor(tensor)
+        tensor.string_data.append(b"d")
+        checker.check_tensor(tensor)
+
+    def test_check_tensor_raw_data_regular_types_too_small(self) -> None:
+        """Reject raw_data payloads too small for regular (non-packed) types."""
+        # FLOAT: 4 bytes/element; 4 elements need 16 bytes.
+        tensor = TensorProto()
+        tensor.data_type = TensorProto.FLOAT
+        tensor.dims.extend([4])
+        tensor.name = "t"
+        tensor.raw_data = b"\x00" * 15  # 1 byte short
+        with pytest.raises(checker.ValidationError):
+            checker.check_tensor(tensor)
+        tensor.raw_data = b"\x00" * 16
+        checker.check_tensor(tensor)
+
+        # INT64: 8 bytes/element; 4 elements need 32 bytes.
+        tensor = TensorProto()
+        tensor.data_type = TensorProto.INT64
+        tensor.dims.extend([4])
+        tensor.name = "t"
+        tensor.raw_data = b"\x00" * 31  # 1 byte short
+        with pytest.raises(checker.ValidationError):
+            checker.check_tensor(tensor)
+        tensor.raw_data = b"\x00" * 32
+        checker.check_tensor(tensor)
+
+        # COMPLEX128: 16 bytes/element; 2 elements need 32 bytes.
+        tensor = TensorProto()
+        tensor.data_type = TensorProto.COMPLEX128
+        tensor.dims.extend([2])
+        tensor.name = "t"
+        tensor.raw_data = b"\x00" * 31  # 1 byte short
+        with pytest.raises(checker.ValidationError):
+            checker.check_tensor(tensor)
+        tensor.raw_data = b"\x00" * 32
+        checker.check_tensor(tensor)
+
+    def test_convtranspose_input_channels_must_be_divisible_by_group(self):
+        node = helper.make_node("ConvTranspose", ["X", "W"], ["Y"], group=3)
+        graph = helper.make_graph(
+            [node],
+            "test",
+            [
+                helper.make_tensor_value_info(
+                    "X", TensorProto.FLOAT, ["N", 32, 14, 14]
+                ),
+                helper.make_tensor_value_info("W", TensorProto.FLOAT, [32, 64, 3, 3]),
+            ],
+            [
+                helper.make_tensor_value_info(
+                    "Y", TensorProto.FLOAT, ["N", None, None, None]
+                )
+            ],
+        )
+        model = helper.make_model(
+            graph, opset_imports=[helper.make_opsetid("", 17)], ir_version=7
+        )
+
+        with pytest.raises(
+            shape_inference.InferenceError,
+            match=r"Input channels C must be divisible by group for ConvTranspose",
+        ):
+            checker.check_model(model, full_check=True)
