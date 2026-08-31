@@ -14,6 +14,7 @@ import onnx.defs
 import onnx.parser
 from onnx import (
     GraphProto,
+    ModelProto,
     SparseTensorProto,
     TensorProto,
     checker,
@@ -147,6 +148,34 @@ class TestChecker:
 
         graph.initializer[0].name = "X"
         checker.check_graph(graph)
+
+    def test_check_einsum_bfloat16(self) -> None:
+        # Einsum gained bfloat16 at opset 28; opset 12 predates it. Only
+        # full_check reaches the type constraint, so the accept/reject pair
+        # has to go through check_model rather than shape inference alone.
+        def model(opset: int) -> ModelProto:
+            node = helper.make_node(
+                "Einsum", ["X", "Y"], ["Z"], equation="bij,bjk->bik"
+            )
+            graph = helper.make_graph(
+                [node],
+                "test",
+                [
+                    helper.make_tensor_value_info("X", TensorProto.BFLOAT16, [5, 2, 3]),
+                    helper.make_tensor_value_info("Y", TensorProto.BFLOAT16, [5, 3, 4]),
+                ],
+                [helper.make_tensor_value_info("Z", TensorProto.BFLOAT16, [5, 2, 4])],
+            )
+            return helper.make_model(
+                graph,
+                producer_name="test",
+                opset_imports=[helper.make_opsetid("", opset)],
+            )
+
+        checker.check_model(model(28), full_check=True)
+
+        with pytest.raises(shape_inference.InferenceError):
+            checker.check_model(model(12), full_check=True)
 
     def test_check_graph_types(self) -> None:
         # This is for https://github.com/onnx/onnx/issues/3849.
