@@ -345,6 +345,28 @@ class TestSchema:
             assert len(types) == len(tc["O"])
             assert all(t in tc["O"] for t in optional(types))
 
+    def test_optional_docstrings(self) -> None:
+        optional15 = defs.get_schema("Optional", 15).doc
+        optional28 = defs.get_schema("Optional", 28).doc
+        assert optional15
+        assert optional15 == optional28
+
+        has_element15 = defs.get_schema("OptionalHasElement", 15).doc
+        has_element18 = defs.get_schema("OptionalHasElement", 18).doc
+        has_element28 = defs.get_schema("OptionalHasElement", 28).doc
+        assert has_element15 != has_element18
+        assert has_element18 == has_element28
+        assert "tensor or sequence type" not in has_element15
+        assert "tensor or sequence type" in has_element18
+
+        get_element15 = defs.get_schema("OptionalGetElement", 15).doc
+        get_element18 = defs.get_schema("OptionalGetElement", 18).doc
+        get_element28 = defs.get_schema("OptionalGetElement", 28).doc
+        assert get_element15 != get_element18
+        assert get_element18 == get_element28
+        assert "returns the input" not in get_element15
+        assert "returns the input" in get_element18
+
     def test_optional_has_element_type_constraints(self) -> None:
         def tensor(ts):
             return {f"tensor({t})" for t in ts}
