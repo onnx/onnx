@@ -148,6 +148,68 @@ class TestChecker:
         graph.initializer[0].name = "X"
         checker.check_graph(graph)
 
+    def test_check_graph_error_context(self) -> None:
+        graph = helper.make_graph([], "test", [], [])
+
+        bad_input = helper.make_tensor_value_info("bad_input", TensorProto.FLOAT, None)
+        graph.input.append(bad_input)
+        with pytest.raises(checker.ValidationError) as exc_info:
+            checker.check_graph(graph)
+        assert "Bad input specification for input. Name: bad_input" in str(
+            exc_info.value
+        )
+
+        graph.input.clear()
+        bad_output = helper.make_tensor_value_info(
+            "bad_output", TensorProto.FLOAT, None
+        )
+        graph.output.append(bad_output)
+        with pytest.raises(checker.ValidationError) as exc_info:
+            checker.check_graph(graph)
+        assert "Bad output specification for output. Name: bad_output" in str(
+            exc_info.value
+        )
+
+        graph.output.clear()
+        bad_initializer = TensorProto(name="bad_initializer", dims=[1])
+        graph.initializer.append(bad_initializer)
+        with pytest.raises(checker.ValidationError) as exc_info:
+            checker.check_graph(graph)
+        assert "Bad initializer specification for tensor. Name: bad_initializer" in str(
+            exc_info.value
+        )
+
+        graph.initializer.clear()
+        bad_sparse_initializer = self.make_sparse(
+            [1], [1], [1], [1], "bad_sparse_initializer"
+        )
+        graph.sparse_initializer.append(bad_sparse_initializer)
+        with pytest.raises(checker.ValidationError) as exc_info:
+            checker.check_graph(graph)
+        assert (
+            "Bad sparse initializer specification for tensor. "
+            "Name: bad_sparse_initializer" in str(exc_info.value)
+        )
+
+    def test_check_function_error_context(self) -> None:
+        graph = helper.make_graph([], "test", [], [])
+        model = helper.make_model(graph)
+        bad_function = helper.make_function(
+            "local",
+            "bad_function",
+            ["X"],
+            ["Y", "Y"],
+            [],
+            [helper.make_opsetid("", 14)],
+        )
+        model.functions.append(bad_function)
+
+        with pytest.raises(checker.ValidationError) as exc_info:
+            checker.check_model(model)
+        assert "Bad function specification for function. Name: bad_function" in str(
+            exc_info.value
+        )
+
     def test_check_graph_types(self) -> None:
         # This is for https://github.com/onnx/onnx/issues/3849.
         # It confirms that type checking is performed
