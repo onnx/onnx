@@ -4,7 +4,11 @@
 
 #include "onnx/defs/math/utils.h"
 
+#include <algorithm>
+#include <map>
+#include <sstream>
 #include <string>
+#include <unordered_set>
 #include <utility>
 #include <vector>
 
@@ -14,9 +18,27 @@
 
 namespace ONNX_NAMESPACE::defs::math::utils {
 
+static constexpr const char* TopK_ver11_doc = R"DOC(
+Retrieve the top-K largest or smallest elements along a specified axis. Given an input tensor of
+shape [a_0, a_1, ..., a_{n-1}] and integer argument k, return two outputs:
+
+* Value tensor of shape [a_0, a_1, ..., a_{axis-1}, k, a_{axis+1}, ... a_{n-1}]
+  which contains the values of the top k elements along the specified axis
+* Index tensor of shape [a_0, a_1, ..., a_{axis-1}, k, a_{axis+1}, ... a_{n-1}] which
+  contains the indices of the top k elements (original indices from the input
+  tensor).
+
+* If "largest" is 1 (the default value) then the k largest elements are returned.
+* If "sorted" is 1 (the default value) then the resulting k elements will be sorted.
+* If "sorted" is 0, order of returned 'Values' and 'Indices' are undefined.
+
+Given two equivalent values, this operator uses the indices along the axis as
+a tiebreaker. That is, the element with the lower index will appear first.
+)DOC";
+
 std::function<void(OpSchema&)> TopKOpGenerator(std::vector<std::string> allowed_types) {
   return [allowed_types = std::move(allowed_types)](OpSchema& schema) {
-    schema.SetDoc(kDoc_TopK_ver11)
+    schema.SetDoc(TopK_ver11_doc)
         .Input(
             0,
             "X",
@@ -253,6 +275,201 @@ void QLinearMatMulShapeInference(ONNX_NAMESPACE::InferenceContext& ctx) {
   propagateElemTypeFromInputToOutput(ctx, 7, 0);
 
   MatMulShapeInference(ctx, 0, 3);
+}
+
+static void einsumShapeInference(ONNX_NAMESPACE::InferenceContext& ctx, std::string const& equation) {
+  // Only accept letters for indices
+  auto is_letter = [](char c) { return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z'); };
+
+  const size_t num_inputs = ctx.getNumInputs();
+  if (num_inputs < 1 || !hasNInputShapes(ctx, num_inputs)) {
+    return;
+  }
+  ONNX_NAMESPACE::TensorShapeProto output_shape;
+  std::string left_equation;
+
+  auto mid_index = equation.find("->");
+  if (mid_index != std::string::npos) {
+    // Separate right and left hand sides of the equation
+    left_equation = equation.substr(0, mid_index);
+  } else {
+    // No right hand side
+    left_equation = equation;
+  }
+
+  std::string term;
+  size_t num_operands = 0;
+  size_t num_ellipsis = 0;
+  size_t num_ellipsis_indices = 0;
+
+  // Parse the left-hand side
+  std::stringstream str(left_equation);
+  std::map<char, int> label_maps;
+  std::unordered_set<char> repeated_labels;
+  ONNX_NAMESPACE::TensorShapeProto dims_value, ellipsis_dims_value;
+  int num_labels = 0;
+  bool ellipsis_flag = true;
+
+  while (!str.eof()) {
+    std::getline(str, term, ',');
+    auto ellipsis_index = term.find("...");
+    if (num_inputs <= num_operands) {
+      fail_shape_inference("Number of input tensors does not match the operands in the equation.");
+    }
+    const auto& shape = ctx.getInputType(num_operands)->tensor_type().shape();
+    size_t rank = shape.dim_size();
+    size_t ellipsis_dims = 0;
+
+    size_t term_size = 0; // number of legal indices for the current term
+    size_t num_illegal_char = 0; // number of illegal char before the current 'index' in the current term
+
+    for (char index : term) {
+      if (is_letter(index)) {
+        term_size += 1;
+      }
+    }
+
+    // Validate that term_size is compatible with rank before accessing dimensions
+    if (ellipsis_index != std::string::npos) {
+      // For ellipsis case, rank must be at least term_size
+      if (rank < term_size) {
+        fail_shape_inference(
+            "Ellipsis represents incompatible dimensions for input ",
+            num_operands,
+            ". Rank ",
+            rank,
+            " is less than term size ",
+            term_size,
+            ".");
+      }
+    } else {
+      // For non-ellipsis case, rank must equal term_size
+      if (rank != term_size) {
+        fail_shape_inference(
+            "Rank of input ", num_operands, " (", rank, ") does not match the equation indices (", term_size, ").");
+      }
+    }
+
+    for (size_t index = 0; index < term.size();) {
+      if (index == ellipsis_index) {
+        // find ellipsis and record the dims represented by ellipsis
+        ellipsis_dims = rank - term_size;
+        if (ellipsis_flag) {
+          ellipsis_flag = false;
+          for (size_t i = 0; i < ellipsis_dims; i++) {
+            *ellipsis_dims_value.add_dim() = shape.dim(static_cast<int>(index + i - num_illegal_char));
+          }
+        } else {
+          for (size_t i = 0; i < ellipsis_dims; i++) {
+            const auto shape_dim = shape.dim(static_cast<int>(index + i - num_illegal_char));
+            auto* const current_dim = ellipsis_dims_value.mutable_dim(static_cast<int>(i));
+            if (shape_dim.has_dim_value() && current_dim->has_dim_value() &&
+                shape_dim.dim_value() > current_dim->dim_value() && current_dim->dim_value() == 1) {
+              current_dim->set_dim_value(shape_dim.dim_value());
+            }
+          }
+        }
+        index += 3; // skip the ellipsis
+        num_illegal_char += 3;
+        continue;
+
+      } else if (!is_letter(term[index])) {
+        num_illegal_char += 1;
+        continue;
+      }
+
+      const auto inserted = label_maps.emplace(term[index], num_labels).second;
+      if (inserted) {
+        *dims_value.add_dim() = shape.dim(static_cast<int>(index + ellipsis_dims - num_illegal_char));
+        ++num_labels;
+      } else {
+        repeated_labels.insert(term[index]);
+      }
+      ++index;
+    }
+
+    if (ellipsis_index != std::string::npos) {
+      // If there is an ellipsis, the number of dimensions it represents
+      // must be total dim - letter dimensions
+      if (num_ellipsis == 0) {
+        num_ellipsis_indices = rank - term_size;
+      } else { // ellipsis has been seen before. Check that if dimensions
+               // are compatible
+        if (num_ellipsis_indices != rank - term_size) {
+          fail_shape_inference("Ellipsis represents incompatible dimensions.");
+        }
+      }
+      num_ellipsis++;
+    }
+    num_operands++;
+  }
+
+  if (num_inputs != num_operands) {
+    fail_shape_inference("Number of input tensors does not match the operands in the equation.");
+  }
+
+  // Parse the provided right-hand side
+  if (mid_index != std::string::npos) {
+    std::string right_equation = equation.substr(mid_index + 2);
+    auto right_ellipsis_index = right_equation.find("...");
+
+    for (size_t index = 0; index < right_equation.size();) {
+      // If there's an ellipsis, add its corresponding dimensions
+      if (index == right_ellipsis_index) {
+        for (size_t i = 0; i < num_ellipsis_indices; i++) {
+          *output_shape.add_dim() = ellipsis_dims_value.dim(static_cast<int>(i));
+        }
+        index += 3; // skip the ellipsis
+        continue;
+      }
+
+      if (is_letter(right_equation[index])) {
+        auto it = label_maps.find(right_equation[index]);
+        if (it == label_maps.end()) {
+          fail_shape_inference("Equation output contains a label missing from the inputs");
+        }
+        *output_shape.add_dim() = dims_value.dim(it->second);
+      }
+      ++index;
+    }
+  } else { // Infer the dimension for right-hand side
+    // If there's an ellipsis, add its corresponding dimensions
+    for (size_t i = 0; i < num_ellipsis_indices; i++) {
+      *output_shape.add_dim() = ellipsis_dims_value.dim(static_cast<int>(i));
+    }
+    // If no explicit output was given, generate an implicit output by ordering all the
+    // labels in alphabetic order (by ASCII value consistent with numpy, so Z < a).
+    // Exclude any labels that occurred more than once, as these cancel out.
+    for (const auto& [label, dim_idx] : label_maps) {
+      if (repeated_labels.count(label) == 0) {
+        *output_shape.add_dim() = dims_value.dim(dim_idx);
+      }
+    }
+  }
+
+  updateOutputShape(ctx, 0, output_shape);
+}
+
+std::function<void(OpSchema&)> EinsumOpGenerator(std::vector<std::string> allowed_types) {
+  return [allowed_types = std::move(allowed_types)](OpSchema& schema) {
+    schema.SetDoc(kDoc_Einsum_ver12)
+        .Attr("equation", "Einsum expression string.", AttributeProto::STRING)
+        .Input(0, "Inputs", "Operands", "T", OpSchema::Variadic, true, 1, OpSchema::Differentiable)
+        .Output(0, "Output", "Output tensor", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
+        .TypeConstraint("T", allowed_types, "Constrain input and output types to all numerical tensor types.")
+        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+          // Type inference
+          propagateElemTypeFromInputToOutput(ctx, 0, 0);
+          std::string equation = getAttribute(ctx, "equation", "");
+          if (equation.empty()) {
+            return;
+          }
+
+          equation.erase(std::remove(equation.begin(), equation.end(), ' '),
+                         equation.end()); // Remove space char
+          einsumShapeInference(ctx, equation);
+        });
+  };
 }
 
 } // namespace ONNX_NAMESPACE::defs::math::utils

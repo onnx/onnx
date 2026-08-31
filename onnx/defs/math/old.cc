@@ -3639,6 +3639,10 @@ ONNX_OPERATOR_SET_SCHEMA(
         .SetContextDependentFunctionBodyBuilder(BuildContextDependentFunctionBodyCelu)
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
+ONNX_OPERATOR_SET_SCHEMA(
+    Einsum,
+    12,
+    OpSchema().FillUsing(defs::math::utils::EinsumOpGenerator(OpSchema::all_numeric_types())));
 // codeql[cpp/unused-static-variable]: The schema macro defines a debug counter used by static-opset validation.
 ONNX_OPERATOR_SET_SCHEMA(
     Mod,
