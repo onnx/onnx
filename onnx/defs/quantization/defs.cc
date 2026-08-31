@@ -8,7 +8,7 @@
 
 namespace ONNX_NAMESPACE {
 
-static constexpr const char* QuantizeLinear_ver25_doc = R"DOC(
+static constexpr const char* QuantizeLinear_ver28_doc = R"DOC(
 The linear quantization operator consumes a high-precision tensor, a scale, and a zero point to compute the
 low-precision/quantized tensor. The scale factor and zero point must have the same shape, determining the quantization
 granularity. The quantization formula is `y = saturate((x / y_scale) + y_zero_point)`.
@@ -42,7 +42,7 @@ In all cases, `y_zero_point` must have the same shape as `y_scale`.
 
 ONNX_OPERATOR_SET_SCHEMA(
     QuantizeLinear,
-    25,
+    28,
     OpSchema()
         .Input(0, "x", "N-D full precision Input tensor to be quantized.", "T1")
         .Input(
@@ -73,7 +73,9 @@ ONNX_OPERATOR_SET_SCHEMA(
             "The parameter defines how the conversion behaves if an input value is out of "
             "range of the destination type. It only applies for float 8 quantization "
             "(float8e4m3fn, float8e4m3fnuz, float8e5m2, float8e5m2fnuz). It is true by default. "
-            "All cases are fully described in two tables inserted in the operator description.",
+            "All cases are fully described in two tables inserted in the operator description. "
+            "It has no effect for float4e2m1, float6e2m3, or float6e3m2, since those types have no "
+            "non-saturating (infinity-representable) encoding to fall back to.",
             AttributeProto::INT,
             static_cast<int64_t>(1))
         .Attr(
@@ -119,9 +121,11 @@ ONNX_OPERATOR_SET_SCHEMA(
              types::Int4,
              types::Float4E2M1,
              types::UInt2,
-             types::Int2},
+             types::Int2,
+             types::Float6E2M3,
+             types::Float6E3M2},
             "The type of the input `y_zero_point` and the output `y`.")
-        .SetDoc(QuantizeLinear_ver25_doc)
+        .SetDoc(QuantizeLinear_ver28_doc)
         .TypeAndShapeInferenceFunction([](ONNX_NAMESPACE::InferenceContext& ctx) {
           // y_zero_point's type is known only if it is present as an input *and* its type could be inferred
           // (e.g. it is not simply an unresolved formal parameter of an enclosing function).
@@ -157,7 +161,7 @@ ONNX_OPERATOR_SET_SCHEMA(
 
 ONNX_OPERATOR_SET_SCHEMA(
     DequantizeLinear,
-    25,
+    28,
     OpSchema()
         .Input(0, "x", "N-D quantized input tensor to be de-quantized.", "T1")
         .Input(
@@ -215,7 +219,9 @@ ONNX_OPERATOR_SET_SCHEMA(
              types::Int4,
              types::Float4E2M1,
              types::UInt2,
-             types::Int2},
+             types::Int2,
+             types::Float6E2M3,
+             types::Float6E3M2},
             "The type of the inputs 'x_zero_point' and 'x'.")
         .TypeConstraint(
             "T2",
