@@ -987,6 +987,7 @@ class DefaultVersionConverter : public BaseVersionConverter {
 
     /******** 27 -> 28 ********/
     registerAdapter(std::make_unique<CompatibleAdapter>("Celu", OpSetID(27), OpSetID(28)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("Einsum", OpSetID(27), OpSetID(28)));
     registerAdapter(std::make_unique<CompatibleAdapter>("Mod", OpSetID(27), OpSetID(28)));
     registerAdapter(std::make_unique<CompatibleAdapter>("DepthToSpace", OpSetID(27), OpSetID(28)));
     registerAdapter(std::make_unique<CompatibleAdapter>("SpaceToDepth", OpSetID(27), OpSetID(28)));
@@ -1003,6 +1004,8 @@ class DefaultVersionConverter : public BaseVersionConverter {
     const std::vector<TensorProto_DataType> celu_28_unallowed_types = {
         TensorProto_DataType_FLOAT16, TensorProto_DataType_BFLOAT16, TensorProto_DataType_DOUBLE};
     registerAdapter(std::make_unique<TypeRestriction>("Celu", OpSetID(28), OpSetID(27), celu_28_unallowed_types));
+    // Einsum v28 widened T to all_numeric_types_ir4(); Einsum v12 (opset 27) lacks BFLOAT16.
+    registerAdapter(std::make_unique<TypeRestriction>("Einsum", OpSetID(28), OpSetID(27), bfloat16_not_allowed));
     const std::vector<TensorProto_DataType> mod_28_float_types = {
         TensorProto_DataType_FLOAT16,
         TensorProto_DataType_FLOAT,
