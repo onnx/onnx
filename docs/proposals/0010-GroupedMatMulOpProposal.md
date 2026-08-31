@@ -157,7 +157,7 @@ table records the resulting behaviour for clarity.
 | `k == 1` | One expert per token, output of shape `[M, 1, N]`. |
 | `G == 1`, all indices 0 | Equivalent to `MatMul(input, weights[0])` (+ optional bias). |
 | `M == 0` | Zero-token input; output shape is `[0, k, N]`; no compute required. |
-| Index outside `[-G, G)` | Invalid input (the `Gather` operation raises an error). Negative indices in `[-G, -1]` select from the end, following `Gather` semantics. |
+| Out-of-range index | Invalid input (implementations must raise an error). |
 
 ### Operator Specification
 
@@ -176,7 +176,7 @@ table records the resulting behaviour for clarity.
 |---|---|---|---|---|---|
 | 0 | `input` | T | **Required** | `[M, K]` | Row-major token matrix. `M` tokens, `K` is the contraction (hidden) dimension. |
 | 1 | `weights` | T | **Required** | `[G, K, N]` | Stack of `G` expert weight matrices, each `K × N`. All experts share the same `K` and `N`. |
-| 2 | `group_indices` | tensor(int64) | **Required** | `[M, k]` | Group (expert) index per token per slot. Each of the `M` tokens selects `k` experts. Values must be in `[-G, G)`; negative values select from the end, following `Gather` semantics. Use `k=1` for the dense (single-expert) case. |
+| 2 | `group_indices` | tensor(int64) | **Required** | `[M, k]` | Group (expert) index per token per slot. Each of the `M` tokens selects `k` experts. Values must be in `[0, G)`. Use `k=1` for the dense (single-expert) case. |
 | 3 | `bias` | T | **Optional** | `[G, N]` | Per-group bias vector. Added to each expert's result. |
 
 **Notes:**
