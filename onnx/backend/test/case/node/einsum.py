@@ -21,9 +21,6 @@ def einsum_bfloat16_reference_implementation(
     Eqn: str, Operands: tuple[np.ndarray, ...]
 ) -> np.ndarray:
     # NumPy cannot contract bfloat16 directly; accumulate in float32 and round once.
-    # The bfloat16 cases below use small integer operands so that the float32
-    # accumulation is exact regardless of contraction order, leaving the final
-    # rounding as the only source of error and keeping the expected values exact.
     promoted = [operand.astype(np.float32) for operand in Operands]
     return np.asarray(np.einsum(Eqn, *promoted)).astype(ml_dtypes.bfloat16)
 
@@ -98,8 +95,10 @@ class Einsum(Base):
             "Einsum", inputs=["x", "y"], outputs=["z"], equation=Eqn
         )
 
-        X = np.arange(30).reshape(5, 2, 3).astype(ml_dtypes.bfloat16)
-        Y = np.arange(60).reshape(5, 3, 4).astype(ml_dtypes.bfloat16)
+        # Binary operands ensure products and the three-term reductions are
+        # exactly representable in bfloat16, independent of accumulation order.
+        X = (np.arange(30).reshape(5, 2, 3) % 2).astype(ml_dtypes.bfloat16)
+        Y = (np.arange(60).reshape(5, 3, 4) % 2).astype(ml_dtypes.bfloat16)
         Z = einsum_bfloat16_reference_implementation(Eqn, (X, Y))
 
         expect(

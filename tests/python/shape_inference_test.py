@@ -9592,19 +9592,6 @@ class TestShapeInference(TestShapeInferenceHelper):
             graph, [make_tensor_value_info("y", TensorProto.FLOAT, (4, 3))]
         )
 
-    def test_einsum_batch_matmul_bfloat16(self) -> None:
-        graph = self._make_graph(
-            [
-                ("x", TensorProto.BFLOAT16, (5, 2, 3)),
-                ("y", TensorProto.BFLOAT16, (5, 3, 4)),
-            ],
-            [make_node("Einsum", ["x", "y"], ["z"], equation="bij,bjk->bik")],
-            [],
-        )
-        self._assert_inferred(
-            graph, [make_tensor_value_info("z", TensorProto.BFLOAT16, (5, 2, 4))]
-        )
-
     def test_einsum_dot(self) -> None:
         graph = self._make_graph(
             [("x", TensorProto.FLOAT, (1,)), ("y", TensorProto.FLOAT, (1,))],
@@ -9720,14 +9707,15 @@ class TestShapeInference(TestShapeInferenceHelper):
             graph, [make_tensor_value_info("z", TensorProto.FLOAT, (4, 5))]
         )
 
-    def test_einsum_batch_matmul(self) -> None:
+    @pytest.mark.parametrize("data_type", [TensorProto.FLOAT, TensorProto.BFLOAT16])
+    def test_einsum_batch_matmul(self, data_type: int) -> None:
         graph = self._make_graph(
-            [("x", TensorProto.FLOAT, (5, 2, 3)), ("y", TensorProto.FLOAT, (5, 3, 4))],
+            [("x", data_type, (5, 2, 3)), ("y", data_type, (5, 3, 4))],
             [make_node("Einsum", ["x", "y"], ["z"], equation="bij , b jk-> bik")],
             [],
         )
         self._assert_inferred(
-            graph, [make_tensor_value_info("z", TensorProto.FLOAT, (5, 2, 4))]
+            graph, [make_tensor_value_info("z", data_type, (5, 2, 4))]
         )
 
     def test_einsum_left_hand_eqn(self) -> None:

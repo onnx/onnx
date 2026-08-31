@@ -380,7 +380,7 @@ static void einsumShapeInference(ONNX_NAMESPACE::InferenceContext& ctx, std::str
       }
     }
 
-    for (size_t index = 0; index < term.size(); ++index) {
+    for (size_t index = 0; index < term.size();) {
       if (index == ellipsis_index) {
         // find ellipsis and record the dims represented by ellipsis
         ellipsis_dims = rank - term_size;
@@ -399,7 +399,7 @@ static void einsumShapeInference(ONNX_NAMESPACE::InferenceContext& ctx, std::str
             }
           }
         }
-        index += 2; // skip the rest of dots
+        index += 3; // skip the ellipsis
         num_illegal_char += 3;
         continue;
 
@@ -415,6 +415,7 @@ static void einsumShapeInference(ONNX_NAMESPACE::InferenceContext& ctx, std::str
       } else {
         repeated_labels.insert(term[index]);
       }
+      ++index;
     }
 
     if (ellipsis_index != std::string::npos) {
@@ -442,13 +443,13 @@ static void einsumShapeInference(ONNX_NAMESPACE::InferenceContext& ctx, std::str
     std::string right_equation = equation.substr(mid_index + 2);
     auto right_ellipsis_index = right_equation.find("...");
 
-    for (size_t index = 0; index < right_equation.size(); ++index) {
+    for (size_t index = 0; index < right_equation.size();) {
       // If there's an ellipsis, add its corresponding dimensions
       if (index == right_ellipsis_index) {
         for (size_t i = 0; i < num_ellipsis_indices; i++) {
           *output_shape.add_dim() = ellipsis_dims_value.dim(static_cast<int>(i));
         }
-        index += 2; // skip the rest of dots
+        index += 3; // skip the ellipsis
         continue;
       }
 
@@ -459,6 +460,7 @@ static void einsumShapeInference(ONNX_NAMESPACE::InferenceContext& ctx, std::str
         }
         *output_shape.add_dim() = dims_value.dim(it->second);
       }
+      ++index;
     }
   } else { // Infer the dimension for right-hand side
     // If there's an ellipsis, add its corresponding dimensions
