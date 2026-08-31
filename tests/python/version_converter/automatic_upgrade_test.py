@@ -22,7 +22,9 @@ class TestAutomaticUpgrade(automatic_conversion_test_base.TestAutomaticConversio
 
     def _test_op_upgrade(self, op, *args, **kwargs):
         self.tested_ops.append(op)
-        self._test_op_conversion(op, *args, **kwargs, is_upgrade=True)
+        strict_check = kwargs.pop("strict_check", False)
+        mode = "strict_upgrade" if strict_check else "upgrade"
+        self._test_op_conversion(op, *args, **kwargs, mode=mode)
 
     def test_Abs(self) -> None:
         self._test_op_upgrade("Abs", 1, attrs={"consumed_inputs": [0]})
@@ -2109,8 +2111,7 @@ class TestAutomaticUpgrade(automatic_conversion_test_base.TestAutomaticConversio
             output_types=[TensorProto.FLOAT],
             attrs={"type": helper.make_tensor_type_proto(TensorProto.FLOAT, (3, 4, 5))},
             optional_outputs=(0,),
-            check_type=True,
-            full_check=True,
+            strict_check=True,
         )
 
     def test_Optional_2(self) -> None:
@@ -2128,8 +2129,7 @@ class TestAutomaticUpgrade(automatic_conversion_test_base.TestAutomaticConversio
             },
             seq_outputs=(0,),
             optional_outputs=(0,),
-            check_type=True,
-            full_check=True,
+            strict_check=True,
         )
 
     def test_Optional_3(self) -> None:
@@ -2138,8 +2138,7 @@ class TestAutomaticUpgrade(automatic_conversion_test_base.TestAutomaticConversio
             "Optional",
             15,
             optional_outputs=(0,),
-            check_type=True,
-            full_check=True,
+            strict_check=True,
         )
 
     def test_Optional_4(self) -> None:
@@ -2150,8 +2149,7 @@ class TestAutomaticUpgrade(automatic_conversion_test_base.TestAutomaticConversio
             seq_inputs=(0,),
             seq_outputs=(0,),
             optional_outputs=(0,),
-            check_type=True,
-            full_check=True,
+            strict_check=True,
         )
 
     def test_OptionalHasElement_1(self) -> None:
@@ -2162,8 +2160,7 @@ class TestAutomaticUpgrade(automatic_conversion_test_base.TestAutomaticConversio
             output_shapes=[[]],
             output_types=[TensorProto.BOOL],
             optional_inputs=(0,),
-            check_type=True,
-            full_check=True,
+            strict_check=True,
         )
 
     def test_OptionalHasElement_2(self) -> None:
@@ -2175,8 +2172,7 @@ class TestAutomaticUpgrade(automatic_conversion_test_base.TestAutomaticConversio
             output_types=[TensorProto.BOOL],
             seq_inputs=(0,),
             optional_inputs=(0,),
-            check_type=True,
-            full_check=True,
+            strict_check=True,
         )
 
     def test_OptionalHasElement_3(self) -> None:
@@ -2187,8 +2183,7 @@ class TestAutomaticUpgrade(automatic_conversion_test_base.TestAutomaticConversio
             18,
             output_shapes=[[]],
             output_types=[TensorProto.BOOL],
-            check_type=True,
-            full_check=True,
+            strict_check=True,
         )
 
     def test_OptionalHasElement_4(self) -> None:
@@ -2200,8 +2195,7 @@ class TestAutomaticUpgrade(automatic_conversion_test_base.TestAutomaticConversio
             output_shapes=[[]],
             output_types=[TensorProto.BOOL],
             seq_inputs=(0,),
-            check_type=True,
-            full_check=True,
+            strict_check=True,
         )
 
     def test_OptionalGetElement_1(self) -> None:
@@ -2210,8 +2204,7 @@ class TestAutomaticUpgrade(automatic_conversion_test_base.TestAutomaticConversio
             "OptionalGetElement",
             15,
             optional_inputs=(0,),
-            check_type=True,
-            full_check=True,
+            strict_check=True,
         )
 
     def test_OptionalGetElement_2(self) -> None:
@@ -2222,8 +2215,7 @@ class TestAutomaticUpgrade(automatic_conversion_test_base.TestAutomaticConversio
             seq_inputs=(0,),
             seq_outputs=(0,),
             optional_inputs=(0,),
-            check_type=True,
-            full_check=True,
+            strict_check=True,
         )
 
     def test_OptionalGetElement_3(self) -> None:
@@ -2231,8 +2223,7 @@ class TestAutomaticUpgrade(automatic_conversion_test_base.TestAutomaticConversio
         self._test_op_upgrade(
             "OptionalGetElement",
             18,
-            check_type=True,
-            full_check=True,
+            strict_check=True,
         )
 
     def test_OptionalGetElement_4(self) -> None:
@@ -2242,8 +2233,7 @@ class TestAutomaticUpgrade(automatic_conversion_test_base.TestAutomaticConversio
             18,
             seq_inputs=(0,),
             seq_outputs=(0,),
-            check_type=True,
-            full_check=True,
+            strict_check=True,
         )
 
     def test_ops_tested(self) -> None:

@@ -4,7 +4,7 @@
 from __future__ import annotations
 
 import string
-from typing import TYPE_CHECKING, Any, cast
+from typing import TYPE_CHECKING, Any, Literal, cast
 
 import pytest
 
@@ -22,8 +22,7 @@ class TestAutomaticConversion:
         self,
         to_opset: int,
         model: str | onnx.ModelProto,
-        check_type: bool = False,
-        full_check: bool = False,
+        strict_check: bool = False,
     ) -> None:
         if isinstance(model, str):
             model = onnx.parser.parse_model(model)
@@ -31,8 +30,10 @@ class TestAutomaticConversion:
         shape_inference.infer_shapes(model, strict_mode=True)
 
         converted = version_converter.convert_version(model, to_opset)
-        onnx.checker.check_model(converted, full_check=full_check)
-        shape_inference.infer_shapes(converted, check_type=check_type, strict_mode=True)
+        onnx.checker.check_model(converted, full_check=strict_check)
+        shape_inference.infer_shapes(
+            converted, check_type=strict_check, strict_mode=True
+        )
 
     def _test_model_conversion_fails(
         self,
@@ -47,7 +48,7 @@ class TestAutomaticConversion:
         with pytest.raises(RuntimeError):
             version_converter.convert_version(model, to_opset)
 
-    def _test_op_conversion(  # noqa: PLR0913, PLR0917
+    def _test_op_conversion(
         self,
         op: str,
         from_opset: int,
@@ -61,9 +62,9 @@ class TestAutomaticConversion:
         seq_outputs: Sequence[int] = (),
         optional_inputs: Sequence[int] = (),
         optional_outputs: Sequence[int] = (),
-        is_upgrade: bool = True,
-        check_type: bool = False,
-        full_check: bool = False,
+        mode: Literal[
+            "upgrade", "downgrade", "strict_upgrade", "strict_downgrade"
+        ] = "upgrade",
     ) -> None:
         """Test conversion.
 
@@ -82,11 +83,7 @@ class TestAutomaticConversion:
             seq_outputs: A sequence of integers representing the indices of the output tensors that are sequences.
             optional_inputs: A sequence of integers representing the indices of the input tensors that are optional.
             optional_outputs: A sequence of integers representing the indices of the output tensors that are optional.
-            is_upgrade: A boolean value indicating whether to run the version converter from from_opset to
-                the most recent opset version (True) or from the most recent opset version to from_opset (False).
-                The default value is True. In both cases, runs checker and shape inference on the final model.
-            check_type: A boolean value indicating whether to do type check during shape inference.
-            full_check: A boolean value indicating whether to do full check for the converted model.
+            mode: Conversion direction and whether to enable full type checking.
         """
         if attrs is None:
             attrs = {}
@@ -172,6 +169,8 @@ class TestAutomaticConversion:
 
         node = helper.make_node(op, input_names, output_names, **attrs)
         graph = helper.make_graph([node], op, inputs, outputs, initializer)
+        is_upgrade = mode in {"upgrade", "strict_upgrade"}
+        strict_check = mode in {"strict_upgrade", "strict_downgrade"}
         start_opset = from_opset if is_upgrade else LATEST_OPSET
         end_opset = LATEST_OPSET if is_upgrade else from_opset
         original = helper.make_model(
@@ -179,4 +178,4 @@ class TestAutomaticConversion:
             producer_name="test",
             opset_imports=[helper.make_opsetid("", start_opset)],
         )
-        self._test_model_conversion(end_opset, original, check_type, full_check)
+        self._test_model_conversion(end_opset, original, strict_check)

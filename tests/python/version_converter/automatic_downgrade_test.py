@@ -18,7 +18,9 @@ from onnx import helper
 
 class TestAutomaticDowngrade(automatic_conversion_test_base.TestAutomaticConversion):
     def _test_op_downgrade(self, op: str, *args, **kwargs):
-        self._test_op_conversion(op, *args, **kwargs, is_upgrade=False)
+        strict_check = kwargs.pop("strict_check", False)
+        mode = "strict_downgrade" if strict_check else "downgrade"
+        self._test_op_conversion(op, *args, **kwargs, mode=mode)
 
     @pytest.mark.parametrize(
         "op",
@@ -166,8 +168,7 @@ class TestAutomaticDowngrade(automatic_conversion_test_base.TestAutomaticConvers
             "Optional",
             15,
             optional_outputs=(0,),
-            check_type=True,
-            full_check=True,
+            strict_check=True,
         )
 
     def test_optional_has_element_downgrade_without_input(self) -> None:
@@ -177,16 +178,14 @@ class TestAutomaticDowngrade(automatic_conversion_test_base.TestAutomaticConvers
             input_shapes=(),
             output_shapes=((),),
             output_types=(onnx.TensorProto.BOOL,),
-            check_type=True,
-            full_check=True,
+            strict_check=True,
         )
 
     def test_optional_get_element_downgrade(self) -> None:
         self._test_op_downgrade(
             "OptionalGetElement",
             18,
-            check_type=True,
-            full_check=True,
+            strict_check=True,
         )
 
     def test_optional28_float6_attribute_downgrade_fails(self) -> None:
