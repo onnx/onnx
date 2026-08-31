@@ -4560,6 +4560,55 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
+ONNX_OPERATOR_SET_SCHEMA(
+    SpaceToDepth,
+    13,
+    OpSchema()
+        .Attr("blocksize", "Blocks of [blocksize, blocksize] are moved.", AttributeProto::INT)
+        .SetDoc(kDoc_SpaceToDepth_ver1)
+        .Input(
+            0,
+            "input",
+            "Input tensor of [N,C,H,W], where N is the batch axis, C is the channel or depth"
+            ", H is the height and W is the width.",
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::Differentiable)
+        .Output(
+            0,
+            "output",
+            "Output tensor of [N, C * blocksize * blocksize, H/blocksize, W/blocksize].",
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::Differentiable)
+        .TypeConstraint("T", OpSchema::all_tensor_types_ir4(), "Constrain input and output types to all tensor types.")
+        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+          propagateElemTypeFromInputToOutput(ctx, 0, 0);
+          auto blocksize = getAttribute(ctx, "blocksize", 0);
+          if (blocksize <= 0) {
+            fail_shape_inference("Blocksize must be positive");
+          }
+          const auto block_area = checkedMultiply(blocksize, blocksize);
+          if (hasInputShape(ctx, 0)) {
+            auto& input_shape = getInputShape(ctx, 0);
+            if (input_shape.dim_size() == 4) {
+              updateOutputShape(
+                  ctx,
+                  0,
+                  {input_shape.dim(0),
+                   input_shape.dim(1) * block_area,
+                   input_shape.dim(2) / blocksize,
+                   input_shape.dim(3) / blocksize});
+            } else {
+              fail_shape_inference("Input tensor must be 4-dimensional");
+            }
+          }
+        }));
+
 static constexpr const char* DepthToSpace_ver11_doc =
     R"DOC(DepthToSpace rearranges (permutes) data from depth into blocks of spatial data.
 This is the reverse transformation of SpaceToDepth. More specifically, this op outputs a copy of
@@ -4609,6 +4658,86 @@ ONNX_OPERATOR_SET_SCHEMA(
             "T")
         .Output(0, "output", "Output tensor of [N, C/(blocksize * blocksize), H * blocksize, W * blocksize].", "T")
         .TypeConstraint("T", OpSchema::all_tensor_types(), "Constrain input and output types to all tensor types.")
+        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+          propagateElemTypeFromInputToOutput(ctx, 0, 0);
+          auto blocksize = getAttribute(ctx, "blocksize", 0);
+          if (blocksize <= 0) {
+            fail_shape_inference("Blocksize must be positive");
+          }
+          const auto block_area = checkedMultiply(blocksize, blocksize);
+          if (hasInputShape(ctx, 0)) {
+            auto& input_shape = getInputShape(ctx, 0);
+            if (input_shape.dim_size() == 4) {
+              updateOutputShape(
+                  ctx,
+                  0,
+                  {input_shape.dim(0),
+                   input_shape.dim(1) / block_area,
+                   input_shape.dim(2) * blocksize,
+                   input_shape.dim(3) * blocksize});
+            } else {
+              fail_shape_inference("Input tensor must be 4-dimensional");
+            }
+          }
+        }));
+
+static constexpr const char* DepthToSpace_ver13_doc =
+    R"DOC(DepthToSpace rearranges (permutes) data from depth into blocks of spatial data.
+This is the reverse transformation of SpaceToDepth. More specifically, this op outputs a copy of
+the input tensor where values from the depth dimension are moved in spatial blocks to the height
+and width dimensions. By default, `mode` = `DCR`.
+In the DCR mode, elements along the depth dimension from the input tensor are rearranged in the
+following order: depth, column, and then row. The output y is computed from the input x as below:
+
+```
+b, c, h, w = x.shape
+tmp = np.reshape(x, [b, blocksize, blocksize, c // (blocksize**2), h, w])
+tmp = np.transpose(tmp, [0, 3, 4, 1, 5, 2])
+y = np.reshape(tmp, [b, c // (blocksize**2), h * blocksize, w * blocksize])
+```
+
+In the CRD mode, elements along the depth dimension from the input tensor are rearranged in the
+following order: column, row, and the depth. The output y is computed from the input x as below:
+
+```
+b, c, h, w = x.shape
+tmp = np.reshape(x, [b, c // (blocksize ** 2), blocksize, blocksize, h, w])
+tmp = np.transpose(tmp, [0, 1, 4, 2, 5, 3])
+y = np.reshape(tmp, [b, c // (blocksize ** 2), h * blocksize, w * blocksize])
+```
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(
+    DepthToSpace,
+    13,
+    OpSchema()
+        .Attr("blocksize", "Blocks of [blocksize, blocksize] are moved.", AttributeProto::INT)
+        .Attr(
+            "mode",
+            "DCR (default) for depth-column-row order re-arrangement. Use CRD for column-row-depth order.",
+            AttributeProto::STRING,
+            std::string("DCR"))
+        .SetDoc(DepthToSpace_ver13_doc)
+        .Input(
+            0,
+            "input",
+            "Input tensor of [N,C,H,W], where N is the batch axis, C is the channel or depth"
+            ", H is the height and W is the width.",
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::Differentiable)
+        .Output(
+            0,
+            "output",
+            "Output tensor of [N, C/(blocksize * blocksize), H * blocksize, W * blocksize].",
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::Differentiable)
+        .TypeConstraint("T", OpSchema::all_tensor_types_ir4(), "Constrain input and output types to all tensor types.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           propagateElemTypeFromInputToOutput(ctx, 0, 0);
           auto blocksize = getAttribute(ctx, "blocksize", 0);
@@ -7800,6 +7929,307 @@ ONNX_OPERATOR_SET_SCHEMA(
             TensorShapeProto tsp;
             tsp.mutable_dim()->Add()->set_dim_value(input_data->dim_size());
             ctx.addOutputData(0, std::move(tsp));
+          }
+        }));
+
+ONNX_OPERATOR_SET_SCHEMA(
+    Compress,
+    11,
+    OpSchema()
+        .SetDoc(kDoc_Compress_ver9)
+        .Attr(
+            "axis",
+            "(Optional) Axis along which to take slices. If not specified, "
+            "input is flattened before elements being selected. Negative value means counting dimensions "
+            "from the back. Accepted range is [-r, r-1] where r = rank(input).",
+            AttributeProto::INT,
+            OPTIONAL_VALUE)
+        .Input(0, "input", "Tensor of rank r >= 1.", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
+        .Input(
+            1,
+            "condition",
+            "Rank 1 tensor of booleans to indicate which slices or data elements to be selected. "
+            "Its length can be less than the input length along the axis "
+            "or the flattened input size if axis is not specified. "
+            "In such cases data slices or elements exceeding the condition length are discarded.",
+            "T1",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::NonDifferentiable)
+        .Output(
+            0,
+            "output",
+            "Tensor of rank r if axis is specified. Otherwise output is a Tensor of rank 1.",
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::Differentiable)
+        .TypeConstraint("T", OpSchema::all_tensor_types(), "Constrain input and output types to all tensor types.")
+        .TypeConstraint("T1", {types::Bool}, "Constrain to boolean tensors.")
+        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+          propagateElemTypeFromInputToOutput(ctx, 0, 0);
+          auto axisAttr = ctx.getAttribute("axis");
+          if (hasInputShape(ctx, 0)) {
+            const TensorShapeProto& indices_shape = ctx.getInputType(0)->tensor_type().shape();
+            int r = indices_shape.dim_size();
+            if (r < 1) {
+              fail_shape_inference("Indices tensor must have rank >= 1");
+            }
+            if (axisAttr) {
+              int axis = static_cast<int>(axisAttr->i());
+              if (axis < -r || axis >= r) {
+                fail_shape_inference("'axis' must be in [-rank(indices), rank(indices)-1]");
+              }
+              if (axis < 0) {
+                axis += r;
+              }
+              TensorShapeProto* shape = ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
+              for (int i = 0; i < indices_shape.dim_size(); i++) {
+                auto dim = shape->add_dim();
+                if (i != axis) {
+                  *dim = indices_shape.dim(i);
+                }
+              }
+            }
+          }
+          if (!axisAttr) {
+            updateOutputShape(ctx, 0, {Dim()});
+          }
+        }));
+
+ONNX_OPERATOR_SET_SCHEMA(
+    OneHot,
+    11,
+    OpSchema()
+        .SetDoc(kDoc_OneHot_ver11)
+        .Attr(
+            "axis",
+            "(Optional) Axis along which one-hot representation in added. Default: axis=-1. "
+            "axis=-1 means that the additional dimension will be inserted as the "
+            "innermost/last dimension in the output tensor. Negative value means counting dimensions "
+            "from the back. Accepted range is [-r-1, r] where r = rank(indices).",
+            AttributeProto::INT,
+            static_cast<int64_t>(-1))
+        .Input(
+            0,
+            "indices",
+            "Input tensor containing indices. Any entries in the 'indices' input tensor with "
+            "values outside the range [-depth, depth-1] will result in one-hot representation with all "
+            "'off_value' values in the output tensor."
+            "In case 'indices' is of non-integer type, the values will be casted to int64 before use.",
+            "T1",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::NonDifferentiable)
+        .Input(
+            1,
+            "depth",
+            "Scalar or Rank 1 tensor containing exactly one element, specifying the number of classes "
+            "in one-hot tensor. This is also the size of the one-hot dimension (specified by 'axis' attribute) "
+            "added on in the output tensor. The values in the 'indices' input tensor are expected to be "
+            "in the range [-depth, depth-1]. "
+            "In case 'depth' is of non-integer type, it will be casted to int64 before use.",
+            "T2",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::NonDifferentiable)
+        .Input(
+            2,
+            "values",
+            "Rank 1 tensor containing exactly two elements, in the format [off_value, on_value], "
+            "where 'on_value' is the value used for filling locations specified in 'indices' input "
+            "tensor, and 'off_value' is the value used for filling locations other than those specified "
+            "in 'indices' input tensor. ",
+            "T3",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::NonDifferentiable)
+        .Output(
+            0,
+            "output",
+            "Tensor of rank one greater than input tensor 'indices', i.e. rank(output) = rank(indices) + 1. "
+            "The data type for the elements of the output tensor is the same as the type of input 'values' "
+            "is used.",
+            "T3",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::NonDifferentiable)
+        .TypeConstraint("T1", OpSchema::all_numeric_types(), "Constrain input to only numeric types.")
+        .TypeConstraint("T2", OpSchema::all_numeric_types(), "Constrain input to only numeric types.")
+        .TypeConstraint("T3", OpSchema::all_tensor_types(), "Constrain to any tensor type.")
+        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) { oneHotShapeInference(ctx, 11); }));
+
+ONNX_OPERATOR_SET_SCHEMA(
+    ReverseSequence,
+    10,
+    OpSchema()
+        .SetDoc(kDoc_ReverseSequence_ver10)
+        .Attr(
+            "time_axis",
+            "(Optional) Specify which axis is time axis. Must be one of 0 (default), or 1.",
+            AttributeProto::INT,
+            static_cast<int64_t>(0))
+        .Attr(
+            "batch_axis",
+            "(Optional) Specify which axis is batch axis. Must be one of 1 (default), or 0.",
+            AttributeProto::INT,
+            static_cast<int64_t>(1))
+        .Input(0, "input", "Tensor of rank r >= 2.", "T", OpSchema::Single)
+        .Input(
+            1,
+            "sequence_lens",
+            "Tensor specifying lengths of the sequences in a batch. It has shape `[batch_size]`.",
+            "tensor(int64)",
+            OpSchema::Single)
+        .Output(0, "Y", "Tensor with same shape of input.", "T", OpSchema::Single)
+        .TypeConstraint("T", OpSchema::all_tensor_types(), "Input and output types can be of any tensor type.")
+        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+          propagateElemTypeFromInputToOutput(ctx, 0, 0);
+          if (!hasNInputShapes(ctx, 2)) {
+            return;
+          }
+
+          auto& first_input_shape = getInputShape(ctx, 0);
+          if (first_input_shape.dim_size() < 2) {
+            fail_shape_inference("'input' must have rank >= 2");
+          }
+          auto& seq_len_input_shape = getInputShape(ctx, 1);
+          if (seq_len_input_shape.dim_size() != 1) {
+            fail_shape_inference("'sequence_lens' must have rank of 1");
+          }
+
+          propagateShapeFromInputToOutput(ctx, 0, 0);
+        }));
+
+ONNX_OPERATOR_SET_SCHEMA(
+    Unique,
+    11,
+    OpSchema()
+        .SetDoc(kDoc_Unique_ver11)
+        .Attr(
+            "sorted",
+            "(Optional) Whether to sort the unique elements in ascending order before returning as output. "
+            "Must be one of 0, or 1 (default).",
+            AttributeProto::INT,
+            static_cast<int64_t>(1))
+        .Attr(
+            "axis",
+            "(Optional) The dimension to apply unique. If not specified, the unique elements of the "
+            "flattened input are returned. Negative value means counting dimensions "
+            "from the back. Accepted range is [-r, r-1] where r = rank(input).",
+            AttributeProto::INT,
+            OPTIONAL_VALUE)
+        .Input(
+            0,
+            "X",
+            "A N-D input tensor that is to be processed.",
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::NonDifferentiable)
+        .Output(
+            0,
+            "Y",
+            "A tensor of the same type as 'X' "
+            "containing all the unique values or subtensors sliced along a provided 'axis' in 'X', either sorted "
+            "or maintained in the same order they occur in input 'X'",
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::NonDifferentiable)
+        .Output(
+            1,
+            "indices",
+            "A 1-D INT64 tensor "
+            "containing indices of 'Y' elements' first occurrence in 'X'. "
+            "When 'axis' is provided, it contains indices to subtensors in input 'X' on the 'axis'. "
+            "When 'axis' is not provided, it contains indices to values in the flattened input tensor. ",
+            "tensor(int64)",
+            OpSchema::Optional,
+            true,
+            1,
+            OpSchema::NonDifferentiable)
+        .Output(
+            2,
+            "inverse_indices",
+            "A 1-D INT64 tensor "
+            "containing, for elements of 'X', its corresponding indices in 'Y'. "
+            "When 'axis' is provided, it contains indices to subtensors in output 'Y' on the 'axis'. "
+            "When 'axis' is not provided, it contains indices to values in output 'Y'. ",
+            "tensor(int64)",
+            OpSchema::Optional,
+            true,
+            1,
+            OpSchema::NonDifferentiable)
+        .Output(
+            3,
+            "counts",
+            "A 1-D INT64 tensor containing "
+            "the count of each element "
+            "of 'Y' in input 'X'",
+            "tensor(int64)",
+            OpSchema::Optional,
+            true,
+            1,
+            OpSchema::NonDifferentiable)
+        .TypeConstraint("T", OpSchema::all_tensor_types(), "Input can be of any tensor type.")
+        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+          // Type inference
+          propagateElemTypeFromInputToOutput(ctx, 0, 0);
+          const TypeProto* xTensorProto = ctx.getInputType(0);
+          TypeProto* yTensorProto = ctx.getOutputType(0);
+          TypeProto* indicesTensorProto = nullptr;
+          TypeProto* inverseIndicesTensorProto = nullptr;
+          TypeProto* countsTensorProto = nullptr;
+
+          auto num_outputs = ctx.getNumOutputs();
+          if (num_outputs >= 2) {
+            indicesTensorProto = ctx.getOutputType(1);
+            updateOutputElemType(ctx, 1, TensorProto::INT64);
+            indicesTensorProto->mutable_tensor_type()->mutable_shape()->add_dim();
+          }
+
+          if (num_outputs >= 3) {
+            inverseIndicesTensorProto = ctx.getOutputType(2);
+            updateOutputElemType(ctx, 2, TensorProto::INT64);
+            inverseIndicesTensorProto->mutable_tensor_type()->mutable_shape()->add_dim();
+          }
+
+          if (num_outputs >= 4) {
+            countsTensorProto = ctx.getOutputType(3);
+            updateOutputElemType(ctx, 3, TensorProto::INT64);
+            countsTensorProto->mutable_tensor_type()->mutable_shape()->add_dim();
+          }
+
+          auto axisAttr = ctx.getAttribute("axis");
+          if (!axisAttr) {
+            yTensorProto->mutable_tensor_type()->mutable_shape()->add_dim();
+          } else {
+            int axis = static_cast<int>(axisAttr->i());
+            if (!xTensorProto->tensor_type().has_shape()) {
+              return;
+            }
+            const TensorShapeProto& input_shape = xTensorProto->tensor_type().shape();
+            int rank = input_shape.dim_size();
+            if (axis < 0)
+              axis += rank;
+            if (axis < 0 || axis >= rank) {
+              fail_shape_inference("Invalid value for attribute axis");
+            }
+            for (int i = 0; i < input_shape.dim_size(); i++) {
+              auto dim = yTensorProto->mutable_tensor_type()->mutable_shape()->add_dim();
+              if (i != axis) {
+                *dim = input_shape.dim(i);
+              }
+            }
           }
         }));
 
