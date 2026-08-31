@@ -987,6 +987,7 @@ class DefaultVersionConverter : public BaseVersionConverter {
 
     /******** 27 -> 28 ********/
     registerAdapter(std::make_unique<CompatibleAdapter>("Celu", OpSetID(27), OpSetID(28)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("Mod", OpSetID(27), OpSetID(28)));
     registerAdapter(std::make_unique<CompatibleAdapter>("DepthToSpace", OpSetID(27), OpSetID(28)));
     registerAdapter(std::make_unique<CompatibleAdapter>("SpaceToDepth", OpSetID(27), OpSetID(28)));
     registerAdapter(std::make_unique<CompatibleAdapter>("Compress", OpSetID(27), OpSetID(28)));
@@ -1002,6 +1003,31 @@ class DefaultVersionConverter : public BaseVersionConverter {
     const std::vector<TensorProto_DataType> celu_28_unallowed_types = {
         TensorProto_DataType_FLOAT16, TensorProto_DataType_BFLOAT16, TensorProto_DataType_DOUBLE};
     registerAdapter(std::make_unique<TypeRestriction>("Celu", OpSetID(28), OpSetID(27), celu_28_unallowed_types));
+    const std::vector<TensorProto_DataType> mod_28_float_types = {
+        TensorProto_DataType_FLOAT16,
+        TensorProto_DataType_FLOAT,
+        TensorProto_DataType_DOUBLE,
+        TensorProto_DataType_BFLOAT16,
+        TensorProto_DataType_FLOAT8E4M3FN,
+        TensorProto_DataType_FLOAT8E4M3FNUZ,
+        TensorProto_DataType_FLOAT8E5M2,
+        TensorProto_DataType_FLOAT8E5M2FNUZ,
+        TensorProto_DataType_FLOAT4E2M1,
+        TensorProto_DataType_FLOAT8E8M0};
+    registerAdapter("Mod", 28, 27, [mod_28_float_types](const std::shared_ptr<Graph>& /*unused*/, Node* node) {
+      const Symbol fmod{"fmod"};
+      if (!node->hasAttribute(fmod) || node->i(fmod) == 0) {
+        const int input_type = node->input(0)->elemType();
+        ONNX_ASSERTM(
+            input_type != TensorProto_DataType_UNDEFINED,
+            "Mod with fmod=0 and unknown input type cannot be downgraded to opset 27. "
+            "Run shape inference or add value_info with the input type.")
+        ONNX_ASSERTM(
+            std::find(mod_28_float_types.begin(), mod_28_float_types.end(), input_type) == mod_28_float_types.end(),
+            "Mod with floating-point inputs and fmod=0 cannot be downgraded to opset 27.")
+      }
+      return node;
+    });
     registerAdapter(std::make_unique<CompatibleAdapter>("DepthToSpace", OpSetID(28), OpSetID(27)));
     registerAdapter("SpaceToDepth", 28, 27, RemoveAttribute(Symbol("mode"), std::string("DCR")));
     // Compress, OneHot, ReverseSequence, Unique v28 added BFLOAT16 support.
