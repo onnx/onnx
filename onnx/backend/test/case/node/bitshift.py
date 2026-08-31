@@ -261,7 +261,7 @@ class BitShift(Base):
 
         x = np.array([-8, 4, -1]).astype(np.int8)
         y = np.array([8, 9, 127]).astype(np.int8)
-        z = x >> y  # expected output [-1, 0, -1]
+        z = np.array([-1, 0, -1]).astype(np.int8)
         expect(
             node,
             inputs=[x, y],
@@ -277,7 +277,7 @@ class BitShift(Base):
 
         x = np.array([-8, 4, -1]).astype(np.int8)
         y = np.array([8, 9, 127]).astype(np.int8)
-        z = x << y  # expected output [0, 0, 0]
+        z = np.array([0, 0, 0]).astype(np.int8)
         expect(
             node,
             inputs=[x, y],
@@ -293,7 +293,7 @@ class BitShift(Base):
 
         x = np.array([-8, 4, -1]).astype(np.int32)
         y = np.array([32, 33, 100]).astype(np.int32)
-        z = x >> y  # expected output [-1, 0, -1]
+        z = np.array([-1, 0, -1]).astype(np.int32)
         expect(
             node,
             inputs=[x, y],
@@ -309,7 +309,7 @@ class BitShift(Base):
 
         x = np.array([-8, 4, -1]).astype(np.int32)
         y = np.array([32, 33, 100]).astype(np.int32)
-        z = x << y  # expected output [0, 0, 0]
+        z = np.array([0, 0, 0]).astype(np.int32)
         expect(
             node,
             inputs=[x, y],
@@ -329,7 +329,7 @@ class BitShift(Base):
 
         x = np.array([-8, 4, -1]).astype(np.int8)
         y = np.array([-1, -8, -16]).astype(np.int8)
-        z = x >> y  # expected output [-1, 0, -1]
+        z = np.array([-1, 0, -1]).astype(np.int8)
         expect(
             node,
             inputs=[x, y],
@@ -345,7 +345,7 @@ class BitShift(Base):
 
         x = np.array([-8, 4, -1]).astype(np.int8)
         y = np.array([-1, -8, -16]).astype(np.int8)
-        z = x << y  # expected output [0, 0, 0]
+        z = np.array([0, 0, 0]).astype(np.int8)
         expect(
             node,
             inputs=[x, y],
@@ -361,7 +361,7 @@ class BitShift(Base):
 
         x = np.array([-8, 4, -1]).astype(np.int32)
         y = np.array([-1, -32, -64]).astype(np.int32)
-        z = x >> y  # expected output [-1, 0, -1]
+        z = np.array([-1, 0, -1]).astype(np.int32)
         expect(
             node,
             inputs=[x, y],
@@ -377,7 +377,7 @@ class BitShift(Base):
 
         x = np.array([-8, 4, -1]).astype(np.int32)
         y = np.array([-1, -32, -64]).astype(np.int32)
-        z = x << y  # expected output [0, 0, 0]
+        z = np.array([0, 0, 0]).astype(np.int32)
         expect(
             node,
             inputs=[x, y],

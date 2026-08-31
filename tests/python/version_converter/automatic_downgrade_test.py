@@ -100,6 +100,47 @@ class TestAutomaticDowngrade(automatic_conversion_test_base.TestAutomaticConvers
         """,
         )
 
+    def test_Einsum(self) -> None:
+        self._test_op_downgrade(
+            "Einsum",
+            12,
+            [[3, 4, 5], [3, 5, 6]],
+            [[3, 4, 6]],
+            attrs={"equation": "bij, bjk -> bik"},
+        )
+
+    def test_attention_25_to_24_default_window(self) -> None:
+        """Attention with disabled window bounds can be downgraded."""
+        self._test_op_downgrade(
+            "Attention",
+            25,
+            [[2, 3, 4, 8], [2, 3, 6, 8], [2, 3, 6, 8]],
+            [[2, 3, 4, 8]],
+            attrs={"left_window_size": -1, "right_window_size": -1},
+        )
+
+    @pytest.mark.parametrize(
+        "window_attribute", ["left_window_size", "right_window_size"]
+    )
+    def test_attention_25_to_24_window_fails(self, window_attribute: str) -> None:
+        """Attention with an enabled window bound cannot be downgraded."""
+        model = onnx.parser.parse_model(
+            f"""
+            <ir_version: 10, opset_import: [ "" : 25]>
+            attn (float[2, 3, 4, 8] Q, float[2, 3, 6, 8] K, float[2, 3, 6, 8] V)
+                => (float[2, 3, 4, 8] Y)
+            {{
+                Y = Attention <{window_attribute} = 3> (Q, K, V)
+            }}
+            """
+        )
+        onnx.checker.check_model(model)
+        with pytest.raises(
+            RuntimeError,
+            match=rf"{window_attribute} must be -1 .* got 3.*Windowed attention",
+        ):
+            onnx.version_converter.convert_version(model, 24)
+
     def test_LinearAttention_downgrade_fails(self) -> None:
         self._test_model_conversion_fails(
             to_opset=24,
@@ -154,3 +195,35 @@ class TestAutomaticDowngrade(automatic_conversion_test_base.TestAutomaticConvers
             }
         """,
         )
+
+    def test_depth_to_space(self) -> None:
+        self._test_op_downgrade(
+            "DepthToSpace",
+            28,
+            [[1, 8, 3, 3]],
+            [[1, 2, 6, 6]],
+            attrs={"blocksize": 2, "mode": "CRD"},
+        )
+
+    def test_space_to_depth_dcr(self) -> None:
+        self._test_op_downgrade(
+            "SpaceToDepth",
+            28,
+            [[1, 2, 6, 6]],
+            [[1, 8, 3, 3]],
+            attrs={"blocksize": 2, "mode": "DCR"},
+        )
+
+    def test_space_to_depth_crd_downgrade_fails(self) -> None:
+        model = onnx.parser.parse_model(
+            """
+            <ir_version: 10, opset_import: [ "" : 28]>
+            space_to_depth_crd (float[1, 2, 6, 6] input) => (float[1, 8, 3, 3] output)
+            {
+                output = SpaceToDepth <blocksize = 2, mode = "CRD"> (input)
+            }
+            """
+        )
+        onnx.checker.check_model(model)
+        with pytest.raises(RuntimeError, match="mode must have value DCR"):
+            onnx.version_converter.convert_version(model, 27)
