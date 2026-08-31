@@ -22,6 +22,9 @@ from onnx import (
     shape_inference,
 )
 
+MOD_OPSET_27 = 27
+MOD_OPSET_28 = 28
+
 
 class TestVersionConverter:
     def _converted(
@@ -3414,3 +3417,37 @@ class TestVersionConverter:
     def test_celu_28_27_unsupported_type_fails(self, dtype: int) -> None:
         with pytest.raises(RuntimeError):
             self._celu_converted(dtype, 28, 27)
+
+    def _mod_converted(self, dtype: int, fmod: int, src: int, dst: int) -> ModelProto:
+        node = helper.make_node("Mod", ["A", "B"], ["C"], fmod=fmod)
+        graph = helper.make_graph(
+            [node],
+            "mod",
+            [
+                helper.make_tensor_value_info("A", dtype, [2, 1]),
+                helper.make_tensor_value_info("B", dtype, [3]),
+            ],
+            [helper.make_tensor_value_info("C", dtype, [2, 3])],
+        )
+        return self._converted(graph, helper.make_operatorsetid("", src), dst)
+
+    def test_mod_27_28_and_28_27(self) -> None:
+        assert (
+            self._mod_converted(TensorProto.INT64, 0, MOD_OPSET_27, MOD_OPSET_28)
+            .opset_import[0]
+            .version
+            == MOD_OPSET_28
+        )
+        assert (
+            self._mod_converted(TensorProto.INT64, 0, MOD_OPSET_28, MOD_OPSET_27)
+            .opset_import[0]
+            .version
+            == MOD_OPSET_27
+        )
+
+    @pytest.mark.parametrize(
+        "dtype", [TensorProto.FLOAT16, TensorProto.FLOAT, TensorProto.DOUBLE]
+    )
+    def test_mod_float_fmod_0_28_27_fails(self, dtype: int) -> None:
+        with pytest.raises(RuntimeError):
+            self._mod_converted(dtype, 0, MOD_OPSET_28, MOD_OPSET_27)
