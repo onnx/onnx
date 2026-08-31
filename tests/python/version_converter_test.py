@@ -3435,15 +3435,15 @@ class TestVersionConverter:
 
     def test_einsum_float_27_28_and_28_27(self) -> None:
         assert (
-            self._einsum_converted(
-                TensorProto.FLOAT, EINSUM_OPSET_27, EINSUM_OPSET_28
-            ).opset_import[0].version
+            self._einsum_converted(TensorProto.FLOAT, EINSUM_OPSET_27, EINSUM_OPSET_28)
+            .opset_import[0]
+            .version
             == EINSUM_OPSET_28
         )
         assert (
-            self._einsum_converted(
-                TensorProto.FLOAT, EINSUM_OPSET_28, EINSUM_OPSET_27
-            ).opset_import[0].version
+            self._einsum_converted(TensorProto.FLOAT, EINSUM_OPSET_28, EINSUM_OPSET_27)
+            .opset_import[0]
+            .version
             == EINSUM_OPSET_27
         )
 
