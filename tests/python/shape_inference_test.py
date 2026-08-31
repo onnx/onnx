@@ -10330,6 +10330,19 @@ class TestShapeInference(TestShapeInferenceHelper):
                 graph, [make_tensor_value_info("Y", elem_type, (3, 4))]
             )
 
+    def test_mod_float_shape(self) -> None:
+        graph = self._make_graph(
+            [
+                ("A", TensorProto.FLOAT, (2, 1)),
+                ("B", TensorProto.FLOAT, (3,)),
+            ],
+            [make_node("Mod", ["A", "B"], ["C"])],
+            [],
+        )
+        self._assert_inferred(
+            graph, [make_tensor_value_info("C", TensorProto.FLOAT, (2, 3))]
+        )
+
     def test_swiglu_equal_shapes(self) -> None:
         graph = self._make_graph(
             [
