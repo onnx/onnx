@@ -161,6 +161,54 @@ class TestAutomaticDowngrade(automatic_conversion_test_base.TestAutomaticConvers
         """,
         )
 
+    def test_optional_downgrade(self) -> None:
+        self._test_op_downgrade(
+            "Optional",
+            15,
+            optional_outputs=(0,),
+            check_type=True,
+            full_check=True,
+        )
+
+    def test_optional_has_element_downgrade_without_input(self) -> None:
+        self._test_op_downgrade(
+            "OptionalHasElement",
+            18,
+            input_shapes=(),
+            output_shapes=((),),
+            output_types=(onnx.TensorProto.BOOL,),
+            check_type=True,
+            full_check=True,
+        )
+
+    def test_optional_get_element_downgrade(self) -> None:
+        self._test_op_downgrade(
+            "OptionalGetElement",
+            18,
+            check_type=True,
+            full_check=True,
+        )
+
+    def test_optional28_float6_attribute_downgrade_fails(self) -> None:
+        element_type = helper.make_tensor_type_proto(
+            onnx.TensorProto.FLOAT6E2M3, (3, 4, 5)
+        )
+        model = helper.make_model(
+            helper.make_graph(
+                [helper.make_node("Optional", [], ["output"], type=element_type)],
+                "optional_float6",
+                [],
+                [
+                    helper.make_value_info(
+                        "output", helper.make_optional_type_proto(element_type)
+                    )
+                ],
+            ),
+            ir_version=14,
+            opset_imports=[helper.make_opsetid("", 28)],
+        )
+        self._test_model_conversion_fails(to_opset=18, model=model)
+
     def test_optional_has_element18_downgrade_fails(self) -> None:
         # non-optional input is not allowed for OptionalHasElement-15
         self._test_model_conversion_fails(
@@ -299,3 +347,35 @@ class TestAutomaticDowngrade(automatic_conversion_test_base.TestAutomaticConvers
                 }
                 """,
         )
+
+    def test_depth_to_space(self) -> None:
+        self._test_op_downgrade(
+            "DepthToSpace",
+            28,
+            [[1, 8, 3, 3]],
+            [[1, 2, 6, 6]],
+            attrs={"blocksize": 2, "mode": "CRD"},
+        )
+
+    def test_space_to_depth_dcr(self) -> None:
+        self._test_op_downgrade(
+            "SpaceToDepth",
+            28,
+            [[1, 2, 6, 6]],
+            [[1, 8, 3, 3]],
+            attrs={"blocksize": 2, "mode": "DCR"},
+        )
+
+    def test_space_to_depth_crd_downgrade_fails(self) -> None:
+        model = onnx.parser.parse_model(
+            """
+            <ir_version: 10, opset_import: [ "" : 28]>
+            space_to_depth_crd (float[1, 2, 6, 6] input) => (float[1, 8, 3, 3] output)
+            {
+                output = SpaceToDepth <blocksize = 2, mode = "CRD"> (input)
+            }
+            """
+        )
+        onnx.checker.check_model(model)
+        with pytest.raises(RuntimeError, match="mode must have value DCR"):
+            onnx.version_converter.convert_version(model, 27)

@@ -96,8 +96,7 @@ ONNX_OPERATOR_SET_SCHEMA(
     18,
     OpSchema().FillUsing(
         defs::optional::utils::OptionalHasElementOpGenerator(
-            types::Concat(OpSchema::all_optional_types(), tensor_and_sequence_types()),
-            true)));
+            types::Concat(OpSchema::all_optional_types(), tensor_and_sequence_types()))));
 
 ONNX_OPERATOR_SET_SCHEMA(
     OptionalGetElement,
@@ -105,7 +104,6 @@ ONNX_OPERATOR_SET_SCHEMA(
     OpSchema().FillUsing(
         defs::optional::utils::OptionalGetElementOpGenerator(
             OpSchema::all_optional_types(),
-            tensor_and_sequence_types(),
-            true)));
+            tensor_and_sequence_types())));
 
 } // namespace ONNX_NAMESPACE

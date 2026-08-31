@@ -9,18 +9,16 @@
 #include "onnx/defs/schema.h"
 
 namespace ONNX_NAMESPACE::defs::optional::utils {
-// Using types::Optional(tensor_and_sequence_types) may not equal to optional_types.
-// See OpSchema::all_optional_types_ir13().
-// This is the reason Optional and OptionalGetElement generator takes both optional and element data type arrays.
+// Optional and OptionalGetElement accept separate element and optional type sets
+// because historical schemas do not wrap the same element type set.
 
 std::function<void(OpSchema&)> OptionalOpGenerator(
     std::vector<std::string> tensor_and_sequence_types,
     std::vector<std::string> optional_types);
 
-std::function<void(OpSchema&)> OptionalHasElementOpGenerator(std::vector<std::string> o_types, bool is_opset18 = false);
+std::function<void(OpSchema&)> OptionalHasElementOpGenerator(std::vector<std::string> o_types);
 
 std::function<void(OpSchema&)> OptionalGetElementOpGenerator(
     std::vector<std::string> optional_types,
-    std::vector<std::string> tensor_and_sequence_types,
-    bool is_opset18 = false);
+    std::vector<std::string> tensor_and_sequence_types);
 } // namespace ONNX_NAMESPACE::defs::optional::utils

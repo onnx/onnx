@@ -1114,7 +1114,7 @@ expect(node, inputs=[x], outputs=[y], name="test_atanh")
 
 
 ### Attention
-There are 87 test cases, listed as following:
+There are 93 test cases, listed as following:
 <details>
 <summary>attention</summary>
 
@@ -1489,6 +1489,38 @@ expect(
     inputs=[Q, K, V],
     outputs=[Y],
     name="test_attention_3d_causal",
+    opset_imports=[onnx.helper.make_opsetid("", 23)],
+)
+```
+
+</details>
+<details>
+<summary>attention_3d_causal_bf16</summary>
+
+```python
+"""3D input with is_causal=1 and bfloat16."""
+node = onnx.helper.make_node(
+    "Attention",
+    inputs=["Q", "K", "V"],
+    outputs=["Y"],
+    is_causal=1,
+    q_num_heads=3,
+    kv_num_heads=3,
+)
+
+Q = np.random.rand(2, 4, 24).astype(ml_dtypes.bfloat16)
+K = np.random.rand(2, 6, 24).astype(ml_dtypes.bfloat16)
+V = np.random.rand(2, 6, 24).astype(ml_dtypes.bfloat16)
+
+Y, _, _, _ = _compute_attention(
+    Q, K, V, is_causal=1, q_num_heads=3, kv_num_heads=3
+)
+
+expect(
+    node,
+    inputs=[Q, K, V],
+    outputs=[Y],
+    name="test_attention_3d_causal_bf16",
     opset_imports=[onnx.helper.make_opsetid("", 23)],
 )
 ```
@@ -3017,6 +3049,41 @@ expect(
 
 </details>
 <details>
+<summary>attention_attn_mask_causal_bf16</summary>
+
+```python
+"""Float attn_mask + is_causal with bfloat16 — mask is bf16, causal mask must be cast."""
+node = onnx.helper.make_node(
+    "Attention",
+    inputs=["Q", "K", "V", "attn_mask"],
+    outputs=["Y"],
+    is_causal=1,
+)
+
+Q = np.random.rand(2, 3, 4, 8).astype(ml_dtypes.bfloat16)
+K = np.random.rand(2, 3, 6, 8).astype(ml_dtypes.bfloat16)
+V = np.random.rand(2, 3, 6, 8).astype(ml_dtypes.bfloat16)
+attn_mask = np.random.rand(2, 1, 4, 6).astype(ml_dtypes.bfloat16)
+
+Y, _, _, _ = _compute_attention(
+    Q,
+    K,
+    V,
+    attn_mask=attn_mask,
+    is_causal=1,
+)
+
+expect(
+    node,
+    inputs=[Q, K, V, attn_mask],
+    outputs=[Y],
+    name="test_attention_4d_attn_mask_causal_bf16",
+    opset_imports=[onnx.helper.make_opsetid("", 23)],
+)
+```
+
+</details>
+<details>
 <summary>attention_bidirectional_window</summary>
 
 ```python
@@ -3075,6 +3142,34 @@ expect(
     inputs=[Q, K, V],
     outputs=[Y],
     name="test_attention_4d_causal",
+    opset_imports=[onnx.helper.make_opsetid("", 23)],
+)
+```
+
+</details>
+<details>
+<summary>attention_causal_bf16</summary>
+
+```python
+"""is_causal=1 with bfloat16 inputs exercises causal mask CastLike fix."""
+node = onnx.helper.make_node(
+    "Attention",
+    inputs=["Q", "K", "V"],
+    outputs=["Y"],
+    is_causal=1,
+)
+
+Q = np.random.rand(2, 3, 4, 8).astype(ml_dtypes.bfloat16)
+K = np.random.rand(2, 3, 6, 8).astype(ml_dtypes.bfloat16)
+V = np.random.rand(2, 3, 6, 8).astype(ml_dtypes.bfloat16)
+
+Y, _, _, _ = _compute_attention(Q, K, V, is_causal=1)
+
+expect(
+    node,
+    inputs=[Q, K, V],
+    outputs=[Y],
+    name="test_attention_4d_causal_bf16",
     opset_imports=[onnx.helper.make_opsetid("", 23)],
 )
 ```
@@ -3141,6 +3236,71 @@ expect(
     inputs=[Q, K, V, attn_mask],
     outputs=[Y],
     name="test_attention_causal_boolmask_nan_robustness",
+    opset_imports=[onnx.helper.make_opsetid("", 24)],
+)
+```
+
+</details>
+<details>
+<summary>attention_causal_fp16</summary>
+
+```python
+"""is_causal=1 with float16 inputs."""
+node = onnx.helper.make_node(
+    "Attention",
+    inputs=["Q", "K", "V"],
+    outputs=["Y"],
+    is_causal=1,
+)
+
+Q = np.random.rand(2, 3, 4, 8).astype(np.float16)
+K = np.random.rand(2, 3, 6, 8).astype(np.float16)
+V = np.random.rand(2, 3, 6, 8).astype(np.float16)
+
+Y, _, _, _ = _compute_attention(Q, K, V, is_causal=1)
+
+expect(
+    node,
+    inputs=[Q, K, V],
+    outputs=[Y],
+    name="test_attention_4d_causal_fp16",
+    opset_imports=[onnx.helper.make_opsetid("", 23)],
+)
+```
+
+</details>
+<details>
+<summary>attention_causal_padded_kv_bf16</summary>
+
+```python
+"""is_causal=1 + nonpad_kv_seqlen with bfloat16 exercises both CastLike fixes."""
+node = onnx.helper.make_node(
+    "Attention",
+    inputs=["Q", "K", "V", "attn_mask", "", "", "nonpad_kv_seqlen"],
+    outputs=["Y"],
+    is_causal=1,
+)
+
+Q = np.random.rand(2, 3, 4, 8).astype(ml_dtypes.bfloat16)
+K = np.random.rand(2, 3, 6, 8).astype(ml_dtypes.bfloat16)
+V = np.random.rand(2, 3, 6, 8).astype(ml_dtypes.bfloat16)
+attn_mask = np.random.rand(2, 3, 4, 4).astype(ml_dtypes.bfloat16)
+nonpad_kv_seqlen = np.array([3, 4], dtype=np.int64)
+
+Y, _, _, _ = _compute_attention(
+    Q,
+    K,
+    V,
+    attn_mask=attn_mask,
+    is_causal=1,
+    nonpad_kv_seqlen=nonpad_kv_seqlen,
+)
+
+expect(
+    node,
+    inputs=[Q, K, V, attn_mask, nonpad_kv_seqlen],
+    outputs=[Y],
+    name="test_attention_4d_causal_padded_kv_bf16",
     opset_imports=[onnx.helper.make_opsetid("", 24)],
 )
 ```
@@ -3993,6 +4153,41 @@ expect(
     outputs=[Y, present_key, present_value],
     name="test_attention_local_window_with_past",
     opset_imports=[onnx.helper.make_opsetid("", 25)],
+)
+```
+
+</details>
+<details>
+<summary>attention_padded_kv_bf16</summary>
+
+```python
+"""nonpad_kv_seqlen with bfloat16 inputs exercises padding mask CastLike fix."""
+node = onnx.helper.make_node(
+    "Attention",
+    inputs=["Q", "K", "V", "attn_mask", "", "", "nonpad_kv_seqlen"],
+    outputs=["Y"],
+)
+
+Q = np.random.rand(2, 3, 4, 8).astype(ml_dtypes.bfloat16)
+K = np.random.rand(2, 3, 6, 8).astype(ml_dtypes.bfloat16)
+V = np.random.rand(2, 3, 6, 8).astype(ml_dtypes.bfloat16)
+attn_mask = np.random.rand(2, 3, 4, 4).astype(ml_dtypes.bfloat16)
+nonpad_kv_seqlen = np.array([3, 4], dtype=np.int64)
+
+Y, _, _, _ = _compute_attention(
+    Q,
+    K,
+    V,
+    attn_mask=attn_mask,
+    nonpad_kv_seqlen=nonpad_kv_seqlen,
+)
+
+expect(
+    node,
+    inputs=[Q, K, V, attn_mask, nonpad_kv_seqlen],
+    outputs=[Y],
+    name="test_attention_4d_padded_kv_bf16",
+    opset_imports=[onnx.helper.make_opsetid("", 24)],
 )
 ```
 
@@ -7144,7 +7339,7 @@ input_data = np.array(
 
 # Calculate expected output data
 positive_input = np.maximum(0, input_data)
-negative_input = np.minimum(0, alpha * (np.exp(input_data / alpha) - 1))
+negative_input = np.minimum(0, alpha * np.expm1(input_data / alpha))
 expected_output = positive_input + negative_input
 
 expect(node, inputs=[input_data], outputs=[expected_output], name="test_celu")
@@ -7166,7 +7361,7 @@ node = onnx.helper.make_node(
 input_data = np.array([-3.0, -0.5, 0.0, 0.5, 3.0], dtype=ml_dtypes.bfloat16)
 
 positive_input = np.maximum(0, input_data)
-negative_input = np.minimum(0, alpha * (np.exp(input_data / alpha) - 1))
+negative_input = np.minimum(0, alpha * np.expm1(input_data / alpha))
 expected_output = (positive_input + negative_input).astype(ml_dtypes.bfloat16)
 
 expect(
@@ -7193,7 +7388,7 @@ node = onnx.helper.make_node(
 input_data = np.array([-3.0, -0.5, 0.0, 0.5, 3.0], dtype=np.float16)
 
 positive_input = np.maximum(0, input_data)
-negative_input = np.minimum(0, alpha * (np.exp(input_data / alpha) - 1))
+negative_input = np.minimum(0, alpha * np.expm1(input_data / alpha))
 expected_output = (positive_input + negative_input).astype(np.float16)
 
 expect(
@@ -7858,7 +8053,7 @@ expect(
 
 
 ### Compress
-There are 4 test cases, listed as following:
+There are 5 test cases, listed as following:
 <details>
 <summary>compress_0</summary>
 
@@ -7908,6 +8103,29 @@ expect(
     inputs=[input, condition.astype(bool)],
     outputs=[output],
     name="test_compress_1",
+)
+```
+
+</details>
+<details>
+<summary>compress_bfloat16</summary>
+
+```python
+node = onnx.helper.make_node(
+    "Compress",
+    inputs=["input", "condition"],
+    outputs=["output"],
+    axis=0,
+)
+input = np.array([[1, 2], [3, 4], [5, 6]]).astype(ml_dtypes.bfloat16)
+condition = np.array([0, 1, 1])
+output = np.compress(condition, input, axis=0)
+
+expect(
+    node,
+    inputs=[input, condition.astype(bool)],
+    outputs=[output],
+    name="test_compress_bfloat16",
 )
 ```
 
@@ -10730,11 +10948,11 @@ node = onnx.helper.make_node("Elu", inputs=["x"], outputs=["y"], alpha=2.0)
 
 x = np.array([-1, 0, 1]).astype(np.float32)
 # expected output [-1.2642411, 0., 1.]
-y = np.clip(x, 0, np.inf) + (np.exp(np.clip(x, -np.inf, 0)) - 1) * 2.0
+y = np.clip(x, 0, np.inf) + np.expm1(np.clip(x, -np.inf, 0)) * 2.0
 expect(node, inputs=[x], outputs=[y], name="test_elu_example")
 
 x = np.random.randn(3, 4, 5).astype(np.float32)
-y = np.clip(x, 0, np.inf) + (np.exp(np.clip(x, -np.inf, 0)) - 1) * 2.0
+y = np.clip(x, 0, np.inf) + np.expm1(np.clip(x, -np.inf, 0)) * 2.0
 expect(node, inputs=[x], outputs=[y], name="test_elu")
 ```
 
@@ -10750,7 +10968,7 @@ node = onnx.helper.make_node(
     outputs=["y"],
 )
 x = np.random.randn(3, 4, 5).astype(np.float32)
-y = np.clip(x, 0, np.inf) + (np.exp(np.clip(x, -np.inf, 0)) - 1) * default_alpha
+y = np.clip(x, 0, np.inf) + np.expm1(np.clip(x, -np.inf, 0)) * default_alpha
 expect(node, inputs=[x], outputs=[y], name="test_elu_default")
 ```
 
@@ -17045,12 +17263,12 @@ upper_edge_hertz = np.float32(8192 / 2)
 num_spectrogram_bins = dft_length // 2 + 1
 frequency_bins = np.arange(0, num_mel_bins + 2)
 
-low_frequency_mel = 2595 * np.log10(1 + lower_edge_hertz / 700)
-high_frequency_mel = 2595 * np.log10(1 + upper_edge_hertz / 700)
+low_frequency_mel = 2595 * np.log1p(lower_edge_hertz / 700) / np.log(10)
+high_frequency_mel = 2595 * np.log1p(upper_edge_hertz / 700) / np.log(10)
 mel_step = (high_frequency_mel - low_frequency_mel) / frequency_bins.shape[0]
 
 frequency_bins = frequency_bins * mel_step + low_frequency_mel
-frequency_bins = 700 * (np.power(10, (frequency_bins / 2595)) - 1)
+frequency_bins = 700 * np.expm1(frequency_bins / 2595 * np.log(10))
 frequency_bins = ((dft_length + 1) * frequency_bins) // sample_rate
 frequency_bins = frequency_bins.astype(int)
 
@@ -17180,7 +17398,7 @@ node = onnx.helper.make_node("Mish", inputs=["X"], outputs=["Y"])
 input_data = np.linspace(-10, 10, 10000, dtype=np.float32)
 
 # Calculate expected output data
-expected_output = input_data * np.tanh(np.log1p(np.exp(input_data)))
+expected_output = input_data * np.tanh(np.logaddexp(0, input_data))
 
 expect(node, inputs=[input_data], outputs=[expected_output], name="test_mish")
 ```
@@ -18790,7 +19008,7 @@ expect(node, inputs=[x], outputs=[np.logical_not(x)], name="test_not_4d")
 
 
 ### OneHot
-There are 5 test cases, listed as following:
+There are 6 test cases, listed as following:
 <details>
 <summary>with_axis</summary>
 
@@ -18815,6 +19033,36 @@ expect(
     inputs=[indices, depth, values],
     outputs=[y],
     name="test_onehot_with_axis",
+)
+```
+
+</details>
+<details>
+<summary>with_bfloat16_values</summary>
+
+```python
+axisValue = 1
+on_value = 3.0
+off_value = 1.0
+output_type = ml_dtypes.bfloat16
+node = onnx.helper.make_node(
+    "OneHot",
+    inputs=["indices", "depth", "values"],
+    outputs=["y"],
+    axis=axisValue,
+)
+indices = np.array([0, 2], dtype=np.int64)
+depth = np.float32(4)
+values = np.array([off_value, on_value], dtype=output_type)
+y = one_hot(indices, int(depth), axis=axisValue, dtype=output_type)
+y = (y * output_type(on_value - off_value) + output_type(off_value)).astype(
+    output_type
+)
+expect(
+    node,
+    inputs=[indices, depth, values],
+    outputs=[y],
+    name="test_onehot_with_bfloat16_values",
 )
 ```
 
@@ -24782,7 +25030,7 @@ expect(
 
 
 ### ReverseSequence
-There are 2 test cases, listed as following:
+There are 3 test cases, listed as following:
 <details>
 <summary>reversesequence_batch</summary>
 
@@ -24820,6 +25068,35 @@ expect(
     inputs=[x, sequence_lens],
     outputs=[y],
     name="test_reversesequence_batch",
+)
+```
+
+</details>
+<details>
+<summary>reversesequence_bfloat16</summary>
+
+```python
+node = onnx.helper.make_node(
+    "ReverseSequence",
+    inputs=["x", "sequence_lens"],
+    outputs=["y"],
+    time_axis=1,
+    batch_axis=0,
+)
+
+x = np.array(
+    [[1.0, 2.0, 3.0, 4.0], [5.0, 6.0, 7.0, 8.0]], dtype=ml_dtypes.bfloat16
+)
+sequence_lens = np.array([4, 3], dtype=np.int64)
+y = np.array(
+    [[4.0, 3.0, 2.0, 1.0], [7.0, 6.0, 5.0, 8.0]], dtype=ml_dtypes.bfloat16
+)
+
+expect(
+    node,
+    inputs=[x, sequence_lens],
+    outputs=[y],
+    name="test_reversesequence_bfloat16",
 )
 ```
 
@@ -26263,17 +26540,11 @@ node = onnx.helper.make_node(
 
 x = np.array([-1, 0, 1]).astype(np.float32)
 # expected output [-3.79272318, 0., 3.]
-y = (
-    np.clip(x, 0, np.inf) * 3.0
-    + (np.exp(np.clip(x, -np.inf, 0)) - 1) * 2.0 * 3.0
-)
+y = np.clip(x, 0, np.inf) * 3.0 + np.expm1(np.clip(x, -np.inf, 0)) * 2.0 * 3.0
 expect(node, inputs=[x], outputs=[y], name="test_selu_example")
 
 x = np.random.randn(3, 4, 5).astype(np.float32)
-y = (
-    np.clip(x, 0, np.inf) * 3.0
-    + (np.exp(np.clip(x, -np.inf, 0)) - 1) * 2.0 * 3.0
-)
+y = np.clip(x, 0, np.inf) * 3.0 + np.expm1(np.clip(x, -np.inf, 0)) * 2.0 * 3.0
 expect(node, inputs=[x], outputs=[y], name="test_selu")
 ```
 
@@ -26292,7 +26563,7 @@ node = onnx.helper.make_node(
 x = np.random.randn(3, 4, 5).astype(np.float32)
 y = (
     np.clip(x, 0, np.inf) * default_gamma
-    + (np.exp(np.clip(x, -np.inf, 0)) - 1) * default_alpha * default_gamma
+    + np.expm1(np.clip(x, -np.inf, 0)) * default_alpha * default_gamma
 )
 expect(node, inputs=[x], outputs=[y], name="test_selu_default")
 ```
@@ -28374,13 +28645,11 @@ node = onnx.helper.make_node(
 )
 
 x = np.array([-1, 0, 1]).astype(np.float32)
-y = np.log(
-    np.exp(x) + 1
-)  # expected output [0.31326166, 0.69314718, 1.31326163]
+y = np.logaddexp(0, x)  # expected output [0.31326166, 0.69314718, 1.31326163]
 expect(node, inputs=[x], outputs=[y], name="test_softplus_example")
 
 x = np.random.randn(3, 4, 5).astype(np.float32)
-y = np.log(np.exp(x) + 1)
+y = np.logaddexp(0, x)
 expect(node, inputs=[x], outputs=[y], name="test_softplus")
 ```
 
@@ -28412,7 +28681,109 @@ expect(node, inputs=[x], outputs=[y], name="test_softsign")
 
 
 ### SpaceToDepth
-There are 2 test cases, listed as following:
+There are 4 test cases, listed as following:
+<details>
+<summary>crd_mode_example</summary>
+
+```python
+node = onnx.helper.make_node(
+    "SpaceToDepth",
+    inputs=["x"],
+    outputs=["y"],
+    blocksize=2,
+    mode="CRD",
+)
+
+# (1, 2, 4, 6) input tensor
+x = np.array(
+    [
+        [
+            [
+                [0.0, 9.0, 1.0, 10.0, 2.0, 11.0],
+                [18.0, 27.0, 19.0, 28.0, 20.0, 29.0],
+                [3.0, 12.0, 4.0, 13.0, 5.0, 14.0],
+                [21.0, 30.0, 22.0, 31.0, 23.0, 32.0],
+            ],
+            [
+                [36.0, 45.0, 37.0, 46.0, 38.0, 47.0],
+                [54.0, 63.0, 55.0, 64.0, 56.0, 65.0],
+                [39.0, 48.0, 40.0, 49.0, 41.0, 50.0],
+                [57.0, 66.0, 58.0, 67.0, 59.0, 68.0],
+            ],
+        ]
+    ]
+).astype(np.float32)
+
+# (1, 8, 2, 3) output tensor
+y = np.array(
+    [
+        [
+            [[0.0, 1.0, 2.0], [3.0, 4.0, 5.0]],
+            [[9.0, 10.0, 11.0], [12.0, 13.0, 14.0]],
+            [[18.0, 19.0, 20.0], [21.0, 22.0, 23.0]],
+            [[27.0, 28.0, 29.0], [30.0, 31.0, 32.0]],
+            [[36.0, 37.0, 38.0], [39.0, 40.0, 41.0]],
+            [[45.0, 46.0, 47.0], [48.0, 49.0, 50.0]],
+            [[54.0, 55.0, 56.0], [57.0, 58.0, 59.0]],
+            [[63.0, 64.0, 65.0], [66.0, 67.0, 68.0]],
+        ]
+    ]
+).astype(np.float32)
+expect(node, inputs=[x], outputs=[y], name="test_spacetodepth_crd_mode_example")
+```
+
+</details>
+<details>
+<summary>dcr_mode_example</summary>
+
+```python
+node = onnx.helper.make_node(
+    "SpaceToDepth",
+    inputs=["x"],
+    outputs=["y"],
+    blocksize=2,
+    mode="DCR",
+)
+
+# (1, 2, 4, 6) input tensor
+x = np.array(
+    [
+        [
+            [
+                [0.0, 18.0, 1.0, 19.0, 2.0, 20.0],
+                [36.0, 54.0, 37.0, 55.0, 38.0, 56.0],
+                [3.0, 21.0, 4.0, 22.0, 5.0, 23.0],
+                [39.0, 57.0, 40.0, 58.0, 41.0, 59.0],
+            ],
+            [
+                [9.0, 27.0, 10.0, 28.0, 11.0, 29.0],
+                [45.0, 63.0, 46.0, 64.0, 47.0, 65.0],
+                [12.0, 30.0, 13.0, 31.0, 14.0, 32.0],
+                [48.0, 66.0, 49.0, 67.0, 50.0, 68.0],
+            ],
+        ]
+    ]
+).astype(np.float32)
+
+# (1, 8, 2, 3) output tensor
+y = np.array(
+    [
+        [
+            [[0.0, 1.0, 2.0], [3.0, 4.0, 5.0]],
+            [[9.0, 10.0, 11.0], [12.0, 13.0, 14.0]],
+            [[18.0, 19.0, 20.0], [21.0, 22.0, 23.0]],
+            [[27.0, 28.0, 29.0], [30.0, 31.0, 32.0]],
+            [[36.0, 37.0, 38.0], [39.0, 40.0, 41.0]],
+            [[45.0, 46.0, 47.0], [48.0, 49.0, 50.0]],
+            [[54.0, 55.0, 56.0], [57.0, 58.0, 59.0]],
+            [[63.0, 64.0, 65.0], [66.0, 67.0, 68.0]],
+        ]
+    ]
+).astype(np.float32)
+expect(node, inputs=[x], outputs=[y], name="test_spacetodepth_dcr_mode_example")
+```
+
+</details>
 <details>
 <summary>example</summary>
 
@@ -31009,7 +31380,7 @@ expect(node, inputs=[x, k], outputs=[y], name="test_triu_zero")
 
 
 ### Unique
-There are 6 test cases, listed as following:
+There are 7 test cases, listed as following:
 <details>
 <summary>length_1</summary>
 
@@ -31245,6 +31616,32 @@ expect(
     outputs=[y, indices, inverse_indices, counts],
     name="test_unique_sorted_without_axis",
     output_type_protos=unique_output_types(x),
+)
+```
+
+</details>
+<details>
+<summary>unique_bfloat16_sorted_without_axis</summary>
+
+```python
+node_sorted = onnx.helper.make_node(
+    "Unique",
+    inputs=["X"],
+    outputs=["Y", "indices", "inverse_indices", "counts"],
+    sorted=1,
+)
+x = np.array([2.0, 1.0, 1.0, 3.0, 4.0, 3.0], dtype=ml_dtypes.bfloat16)
+y, indices, inverse_indices, counts = np.unique(
+    x, return_index=True, return_inverse=True, return_counts=True
+)
+indices, inverse_indices, counts = specify_int64(
+    indices, inverse_indices, counts
+)
+expect(
+    node_sorted,
+    inputs=[x],
+    outputs=[y, indices, inverse_indices, counts],
+    name="test_unique_bfloat16_sorted_without_axis",
 )
 ```
 

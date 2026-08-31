@@ -6,6 +6,12 @@
 
 #pragma once
 
+#include <algorithm>
+#include <cstdint>
+#include <memory>
+#include <string>
+#include <vector>
+
 #include "onnx/version_converter/adapters/adapter.h"
 
 namespace ONNX_NAMESPACE::version_conversion {
@@ -18,28 +24,29 @@ class OptionalOpsAdapter final : public Adapter {
       const std::vector<TensorProto_DataType>& unallowed_types,
       bool allow_optional_input = true,
       bool allow_nonoptional_input = true,
-      bool allow_noinput = false)
+      bool allow_no_input = false)
       : Adapter(name, initial_version, target_version),
         unallowed_types_(unallowed_types),
         allow_optional_input_(allow_optional_input),
         allow_nonoptional_input_(allow_nonoptional_input),
-        allow_noinput_(allow_noinput) {}
+        allow_no_input_(allow_no_input) {}
 
   // This adapter checks only input because it's sufficient for existing ops, Optional, OptionalHasElement and
   // OptionalGetElement. Also, assume valid types are optional<seq<tensor<*>>>, optional<tensor<*>>, seq<tensor<*>>, and
   // tensor<*> and uses ONNX_ASSERT to validate type.
-  void adapt_optional_ops(const std::shared_ptr<Graph>& /*unused*/, Node* node) const {
+  void adaptOptionalOps(const std::shared_ptr<Graph>& /*unused*/, Node* node) const {
     const TypeProto* opt_or_elem_type = nullptr;
     ONNX_ASSERTM(
-        allow_noinput_ || (node->inputs().size() > 0),
+        allow_no_input_ || !node->inputs().empty(),
         "No input to operator '",
         name(),
         "' is unallowed for Opset Version ",
         static_cast<int64_t>(target_version().version()));
-    if (allow_noinput_ && node->inputs().empty()) {
-      Symbol type = Symbol("type");
-      // Node must have "type" attribute.
-      ONNX_ASSERT(node->hasAttribute(type));
+    if (node->inputs().empty()) {
+      const Symbol type("type");
+      if (!node->hasAttribute(type)) {
+        return;
+      }
       opt_or_elem_type = &node->tp(type);
     } else {
       opt_or_elem_type = node->input()->type().get();
@@ -82,7 +89,7 @@ class OptionalOpsAdapter final : public Adapter {
   }
 
   Node* adapt(std::shared_ptr<Graph> graph, Node* node) const override {
-    adapt_optional_ops(graph, node);
+    adaptOptionalOps(graph, node);
     return node;
   }
 
@@ -90,6 +97,6 @@ class OptionalOpsAdapter final : public Adapter {
   std::vector<TensorProto_DataType> unallowed_types_;
   bool allow_optional_input_;
   bool allow_nonoptional_input_;
-  bool allow_noinput_;
+  bool allow_no_input_;
 };
 } // namespace ONNX_NAMESPACE::version_conversion

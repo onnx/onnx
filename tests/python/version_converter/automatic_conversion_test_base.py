@@ -47,7 +47,7 @@ class TestAutomaticConversion:
         with pytest.raises(RuntimeError):
             version_converter.convert_version(model, to_opset)
 
-    def _test_op_conversion(
+    def _test_op_conversion(  # noqa: PLR0913, PLR0917
         self,
         op: str,
         from_opset: int,
