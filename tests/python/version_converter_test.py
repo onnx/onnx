@@ -24,6 +24,8 @@ from onnx import (
 
 MOD_OPSET_27 = 27
 MOD_OPSET_28 = 28
+EINSUM_OPSET_27 = 27
+EINSUM_OPSET_28 = 28
 
 
 class TestVersionConverter:
@@ -3433,18 +3435,24 @@ class TestVersionConverter:
 
     def test_einsum_float_27_28_and_28_27(self) -> None:
         assert (
-            self._einsum_converted(TensorProto.FLOAT, 27, 28).opset_import[0].version
-            == 28
+            self._einsum_converted(
+                TensorProto.FLOAT, EINSUM_OPSET_27, EINSUM_OPSET_28
+            ).opset_import[0].version
+            == EINSUM_OPSET_28
         )
         assert (
-            self._einsum_converted(TensorProto.FLOAT, 28, 27).opset_import[0].version
-            == 27
+            self._einsum_converted(
+                TensorProto.FLOAT, EINSUM_OPSET_28, EINSUM_OPSET_27
+            ).opset_import[0].version
+            == EINSUM_OPSET_27
         )
 
     # Einsum 28 -> 27: bfloat16 was added in v28, so it must be rejected
     def test_einsum_28_27_bfloat16_fails(self) -> None:
         with pytest.raises(RuntimeError):
-            self._einsum_converted(TensorProto.BFLOAT16, 28, 27)
+            self._einsum_converted(
+                TensorProto.BFLOAT16, EINSUM_OPSET_28, EINSUM_OPSET_27
+            )
 
     def _mod_converted(self, dtype: int, fmod: int, src: int, dst: int) -> ModelProto:
         node = helper.make_node("Mod", ["A", "B"], ["C"], fmod=fmod)
