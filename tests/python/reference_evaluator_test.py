@@ -6644,6 +6644,46 @@ class TestReferenceEvaluator:
         assert_allclose(got_state, expected_state)
         assert_allclose(got_output, expected_output)
 
+    @pytest.mark.parametrize(
+        ("op_type", "input_shape", "output_shape"),
+        [
+            ("SpaceToDepth", [1, 1, 2, 0], [1, 4, 1, 0]),
+            ("SpaceToDepth", [1, 0, 2, 2], [1, 0, 1, 1]),
+            ("DepthToSpace", [1, 4, 2, 0], [1, 1, 4, 0]),
+            ("DepthToSpace", [1, 0, 2, 2], [1, 0, 4, 4]),
+        ],
+    )
+    @pytest.mark.parametrize("mode", ["DCR", "CRD"])
+    def test_space_depth_function_bodies_preserve_zero_dimensions(
+        self, op_type, input_shape, output_shape, mode
+    ):
+        input_vi = make_tensor_value_info("input", TensorProto.FLOAT, input_shape)
+        output_vi = make_tensor_value_info("output", TensorProto.FLOAT, output_shape)
+        node = make_node(
+            op_type,
+            ["input"],
+            ["output"],
+            blocksize=2,
+            mode=mode,
+        )
+        model = make_model(
+            make_graph([node], "g", [input_vi], [output_vi]),
+            opset_imports=[make_opsetid("", 28)],
+        )
+        check_model(model)
+
+        input_ = np.empty(input_shape, dtype=np.float32)
+        expected_output = ReferenceEvaluator(model).run(None, {"input": input_})[0]
+
+        expanded_op = type(op_type, (OpRunExpand,), {"op_domain": ""})
+        output = ReferenceEvaluator(model, new_ops=[expanded_op]).run(
+            None, {"input": input_}
+        )[0]
+
+        assert output.dtype == expected_output.dtype
+        assert output.shape == tuple(output_shape)
+        assert_allclose(output, expected_output)
+
     @staticmethod
     def _swiglu_model() -> ModelProto:
         # Dynamic shapes so model-level shape inference does not reject the

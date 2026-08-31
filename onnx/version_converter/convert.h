@@ -989,6 +989,10 @@ class DefaultVersionConverter : public BaseVersionConverter {
     registerAdapter(std::make_unique<CompatibleAdapter>("Celu", OpSetID(27), OpSetID(28)));
     registerAdapter(std::make_unique<CompatibleAdapter>("DepthToSpace", OpSetID(27), OpSetID(28)));
     registerAdapter(std::make_unique<CompatibleAdapter>("SpaceToDepth", OpSetID(27), OpSetID(28)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("Compress", OpSetID(27), OpSetID(28)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("OneHot", OpSetID(27), OpSetID(28)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("ReverseSequence", OpSetID(27), OpSetID(28)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("Unique", OpSetID(27), OpSetID(28)));
     registerAdapter(std::make_unique<CompatibleAdapter>("Cast", OpSetID(27), OpSetID(28)));
     registerAdapter(std::make_unique<CompatibleAdapter>("QuantizeLinear", OpSetID(27), OpSetID(28)));
     registerAdapter(std::make_unique<CompatibleAdapter>("DequantizeLinear", OpSetID(27), OpSetID(28)));
@@ -1000,6 +1004,12 @@ class DefaultVersionConverter : public BaseVersionConverter {
     registerAdapter(std::make_unique<TypeRestriction>("Celu", OpSetID(28), OpSetID(27), celu_28_unallowed_types));
     registerAdapter(std::make_unique<CompatibleAdapter>("DepthToSpace", OpSetID(28), OpSetID(27)));
     registerAdapter("SpaceToDepth", 28, 27, RemoveAttribute(Symbol("mode"), std::string("DCR")));
+    // Compress, OneHot, ReverseSequence, Unique v28 added BFLOAT16 support.
+    registerAdapter(std::make_unique<TypeRestriction>("Compress", OpSetID(28), OpSetID(27), bfloat16_not_allowed));
+    registerAdapter(std::make_unique<TypeRestriction>("OneHot", OpSetID(28), OpSetID(27), bfloat16_not_allowed));
+    registerAdapter(
+        std::make_unique<TypeRestriction>("ReverseSequence", OpSetID(28), OpSetID(27), bfloat16_not_allowed));
+    registerAdapter(std::make_unique<TypeRestriction>("Unique", OpSetID(28), OpSetID(27), bfloat16_not_allowed));
     // Cast/QuantizeLinear/DequantizeLinear v28 widened their type constraints to ir14 types;
     // opset 27 (ir13) lacks FLOAT6E2M3/FLOAT6E3M2.
     const std::vector<TensorProto_DataType> ir14_types_not_in_ir13 = {

@@ -1475,7 +1475,11 @@ class OpSet_Onnx_ver27 {
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 28, Celu);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 28, DepthToSpace);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 28, SpaceToDepth);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 28, Compress);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 28, OneHot);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 28, ReverseSequence);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 28, SwiGLU);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 28, Unique);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 28, Cast);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 28, QuantizeLinear);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 28, DequantizeLinear);
@@ -1487,7 +1491,11 @@ class OpSet_Onnx_ver28 {
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 28, Celu)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 28, DepthToSpace)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 28, SpaceToDepth)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 28, Compress)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 28, OneHot)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 28, ReverseSequence)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 28, SwiGLU)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 28, Unique)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 28, Cast)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 28, QuantizeLinear)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 28, DequantizeLinear)>());
