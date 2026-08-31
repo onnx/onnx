@@ -2599,6 +2599,120 @@ class TestVersionConverter:
         with context_manager:
             test(y_shape, scale_shape, axis, block_size)
 
+    def _quantize_linear_converted(self, dtype: int, src: int, dst: int) -> ModelProto:
+        node = helper.make_node("QuantizeLinear", ["X", "S"], ["Y"], output_dtype=dtype)
+        graph = helper.make_graph(
+            [node],
+            "quantize",
+            [
+                helper.make_tensor_value_info("X", TensorProto.FLOAT, [3, 4]),
+                helper.make_tensor_value_info("S", TensorProto.FLOAT, []),
+            ],
+            [helper.make_tensor_value_info("Y", dtype, [3, 4])],
+        )
+        return self._converted(graph, helper.make_operatorsetid("", src), dst)
+
+    def test_quantize_linear_uint8_27_28_and_28_27(self) -> None:
+        assert (
+            self._quantize_linear_converted(TensorProto.UINT8, 27, 28)
+            .opset_import[0]
+            .version
+            == 28
+        )
+        assert (
+            self._quantize_linear_converted(TensorProto.UINT8, 28, 27)
+            .opset_import[0]
+            .version
+            == 27
+        )
+
+    # QuantizeLinear 28 -> 27: FP6 types added in v28 must be rejected
+    @pytest.mark.parametrize("dtype", [TensorProto.FLOAT6E2M3, TensorProto.FLOAT6E3M2])
+    def test_quantize_linear_28_27_fp6_type_fails(self, dtype: int) -> None:
+        with pytest.raises(RuntimeError):
+            self._quantize_linear_converted(dtype, 28, 27)
+
+    @pytest.mark.parametrize("dtype", [TensorProto.FLOAT6E2M3, TensorProto.FLOAT6E3M2])
+    def test_quantize_linear_28_27_untyped_fp6_output_fails(self, dtype: int) -> None:
+        graph = helper.make_graph(
+            [
+                helper.make_node(
+                    "QuantizeLinear",
+                    ["X", "S"],
+                    ["Q"],
+                    output_dtype=dtype,
+                ),
+                helper.make_node("DequantizeLinear", ["Q", "S"], ["Y"]),
+            ],
+            "qdq",
+            [
+                helper.make_tensor_value_info("X", TensorProto.FLOAT, [3, 4]),
+                helper.make_tensor_value_info("S", TensorProto.FLOAT, []),
+            ],
+            [helper.make_tensor_value_info("Y", TensorProto.FLOAT, [3, 4])],
+        )
+        with pytest.raises(RuntimeError):
+            self._converted(graph, helper.make_operatorsetid("", 28), 27)
+
+    def _cast_converted(self, dtype: int, src: int, dst: int) -> ModelProto:
+        graph = helper.make_graph(
+            [helper.make_node("Cast", ["X"], ["Y"], to=dtype)],
+            "cast",
+            [helper.make_tensor_value_info("X", TensorProto.FLOAT, [3, 4])],
+            [helper.make_tensor_value_info("Y", dtype, [3, 4])],
+        )
+        return self._converted(graph, helper.make_operatorsetid("", src), dst)
+
+    def test_cast_float_27_28_and_28_27(self) -> None:
+        assert (
+            self._cast_converted(TensorProto.FLOAT, 27, 28).opset_import[0].version
+            == 28
+        )
+        assert (
+            self._cast_converted(TensorProto.FLOAT, 28, 27).opset_import[0].version
+            == 27
+        )
+
+    @pytest.mark.parametrize("dtype", [TensorProto.FLOAT6E2M3, TensorProto.FLOAT6E3M2])
+    def test_cast_28_27_fp6_type_fails(self, dtype: int) -> None:
+        with pytest.raises(RuntimeError):
+            self._cast_converted(dtype, 28, 27)
+
+    def _dequantize_linear_converted(
+        self, dtype: int, src: int, dst: int
+    ) -> ModelProto:
+        node = helper.make_node("DequantizeLinear", ["X", "S"], ["Y"])
+        graph = helper.make_graph(
+            [node],
+            "dequantize",
+            [
+                helper.make_tensor_value_info("X", dtype, [3, 4]),
+                helper.make_tensor_value_info("S", TensorProto.FLOAT, []),
+            ],
+            [helper.make_tensor_value_info("Y", TensorProto.FLOAT, [3, 4])],
+        )
+        return self._converted(graph, helper.make_operatorsetid("", src), dst)
+
+    def test_dequantize_linear_uint8_27_28_and_28_27(self) -> None:
+        assert (
+            self._dequantize_linear_converted(TensorProto.UINT8, 27, 28)
+            .opset_import[0]
+            .version
+            == 28
+        )
+        assert (
+            self._dequantize_linear_converted(TensorProto.UINT8, 28, 27)
+            .opset_import[0]
+            .version
+            == 27
+        )
+
+    # DequantizeLinear 28 -> 27: FP6 types added in v28 must be rejected
+    @pytest.mark.parametrize("dtype", [TensorProto.FLOAT6E2M3, TensorProto.FLOAT6E3M2])
+    def test_dequantize_linear_28_27_fp6_type_fails(self, dtype: int) -> None:
+        with pytest.raises(RuntimeError):
+            self._dequantize_linear_converted(dtype, 28, 27)
+
     def test_external_data_version_conversion(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
             # Create a model with external data

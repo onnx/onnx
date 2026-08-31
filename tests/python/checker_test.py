@@ -1490,6 +1490,60 @@ class TestChecker:
             tensor2.raw_data = b"\x00" * 3  # ceil(10/4) = 3 bytes
             checker.check_tensor(tensor2)
 
+        # 6-bit types: 10 elements need ceil(10*6/8) = 8 bytes.
+        for dtype in (TensorProto.FLOAT6E2M3, TensorProto.FLOAT6E3M2):
+            tensor = TensorProto()
+            tensor.data_type = dtype
+            tensor.dims.extend([10])
+            tensor.name = "t"
+            tensor.raw_data = b"\x00" * 7
+            with pytest.raises(checker.ValidationError):
+                checker.check_tensor(tensor)
+            tensor.raw_data = b"\x00" * 8
+            checker.check_tensor(tensor)
+
+    @pytest.mark.parametrize("dtype", (TensorProto.FLOAT6E2M3, TensorProto.FLOAT6E3M2))
+    @pytest.mark.parametrize(
+        ("num_elements", "invalid_last_byte"),
+        ((1, 0x40), (2, 0x10), (3, 0x04)),
+    )
+    def test_check_tensor_float6_raw_data_padding(
+        self, dtype: int, num_elements: int, invalid_last_byte: int
+    ) -> None:
+        tensor = TensorProto()
+        tensor.data_type = dtype
+        tensor.dims.extend([num_elements])
+        tensor.name = "t"
+        tensor.raw_data = bytes((num_elements * 6 + 7) // 8 - 1) + bytes(
+            [invalid_last_byte]
+        )
+        with pytest.raises(checker.ValidationError, match="non-zero padding bits"):
+            checker.check_tensor(tensor)
+
+        tensor.raw_data = bytes((num_elements * 6 + 7) // 8)
+        checker.check_tensor(tensor)
+
+    @pytest.mark.parametrize("dtype", (TensorProto.FLOAT6E2M3, TensorProto.FLOAT6E3M2))
+    @pytest.mark.parametrize("invalid_value", (-1, 64))
+    def test_check_tensor_float6_int32_data_high_bits(
+        self, dtype: int, invalid_value: int
+    ) -> None:
+        int32_tensor = helper.make_tensor(
+            "int32", TensorProto.INT32, [1], [invalid_value]
+        )
+        checker.check_tensor(int32_tensor)
+
+        tensor = TensorProto()
+        tensor.data_type = dtype
+        tensor.dims.extend([1])
+        tensor.name = "t"
+        tensor.int32_data.append(invalid_value)
+        with pytest.raises(checker.ValidationError, match="must use only bits 0-5"):
+            checker.check_tensor(tensor)
+
+        tensor.int32_data[0] = 63
+        checker.check_tensor(tensor)
+
     def test_check_tensor_packed_subbyte_int32_data(self) -> None:
         """Reject packed sub-byte tensors whose int32_data payload is too small."""
         # 4-bit types: 8 elements per int32.
