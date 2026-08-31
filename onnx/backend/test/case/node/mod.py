@@ -76,6 +76,32 @@ class Mod(Base):
         )
 
     @staticmethod
+    def export_mod_float_edge_cases_fmod_0() -> None:
+        for dtype in (np.float16, np.float32, np.float64):
+            node = onnx.helper.make_node(
+                "Mod", inputs=["x", "y"], outputs=["z"], fmod=0
+            )
+            x = np.array(
+                [0.0, -0.0, -3.0, 3.0, -1.0, 1.0, np.inf, -np.inf, np.nan, 1.0],
+                dtype=dtype,
+            )
+            y = np.array(
+                [-2.0, 2.0, np.inf, np.inf, -np.inf, -np.inf, 2.0, 2.0, 2.0, 0.0],
+                dtype=dtype,
+            )
+            with np.errstate(divide="ignore", invalid="ignore"):
+                z = np.mod(x, y)
+
+            np.testing.assert_array_equal(np.signbit(z[:2]), [True, False])
+            np.testing.assert_array_equal(np.isnan(z[6:]), [True, True, True, True])
+            expect(
+                node,
+                inputs=[x, y],
+                outputs=[z],
+                name=f"test_mod_float_edge_cases_fmod_0_{np.dtype(dtype).name}",
+            )
+
+    @staticmethod
     def export_mod_mixed_sign_int64() -> None:
         node = onnx.helper.make_node(
             "Mod",
