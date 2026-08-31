@@ -1465,7 +1465,7 @@ ONNX_OPERATOR_SET_SCHEMA(
     QLinearMatMul,
     21,
     OpSchema()
-        .SetDoc(defs::math::utils::QLinearMatMulDoc())
+        .SetDoc(kDoc_QLinearMatMul_ver10)
         .Input(0, "a", "N-dimensional quantized matrix a", "T1", OpSchema::Single, true, 1, OpSchema::NonDifferentiable)
         .Input(1, "a_scale", "scale of quantized input a", "TS", OpSchema::Single, true, 1, OpSchema::NonDifferentiable)
         .Input(
@@ -2173,42 +2173,11 @@ static void einsumShapeInference(ONNX_NAMESPACE::InferenceContext& ctx, std::str
   updateOutputShape(ctx, 0, output_shape);
 }
 
-static constexpr const char* Einsum_ver12_doc = R"DOC(
-An einsum of the form `term1, term2 -> output-term` produces an output tensor using the following equation
-
-```
-output[output-term] = reduce-sum( input1[term1] * input2[term2] )
-```
-
-where the reduce-sum performs a summation over all the indices occurring in the input terms (term1, term2)
-that do not occur in the output-term.
-
-The Einsum operator evaluates algebraic tensor operations on a sequence of tensors, using the Einstein summation
-convention. The equation string contains a comma-separated sequence of lower case letters and/or upper case letters.
-Each term corresponds to an operand tensor, and the characters within the terms correspond to operands dimensions.
-Lower case letters and upper case letters are treated as distinct symbols, that is, "a" and "A" refer to different
-symbols.
-
-This sequence may be followed by "->" to separate the left and right hand side of the equation.
-If the equation contains "->" followed by the right-hand side, the explicit (not classical) form of the Einstein
-summation is performed, and the right-hand side indices indicate output tensor dimensions. In other cases,
-output indices are (implicitly) set to the sequence of indices appearing exactly once in the equation, sorted in
-increasing order of their ASCII values (so that all upper case letters precede all lower case letters, e.g.,
-"A" < "Z" < "a" < "z").
-
-When a dimension character is repeated in the left-hand side, it represents summation along the dimension.
-
-The equation may contain ellipsis ("...") to enable broadcasting. Ellipsis must indicate a fixed number of dimensions.
-Specifically, every occurrence of ellipsis in the equation must represent the same number of dimensions.
-The right-hand side may contain exactly one ellipsis. In implicit mode, the ellipsis dimensions are set to the
-beginning of the output. The equation string may contain space (U+0020) character.
-)DOC";
-
 ONNX_OPERATOR_SET_SCHEMA(
     Einsum,
     12,
     OpSchema()
-        .SetDoc(Einsum_ver12_doc)
+        .SetDoc(kDoc_Einsum_ver12)
         .Attr("equation", "Einsum expression string.", AttributeProto::STRING)
         .Input(0, "Inputs", "Operands", "T", OpSchema::Variadic, true, 1, OpSchema::Differentiable)
         .Output(0, "Output", "Output tensor", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)

@@ -9,31 +9,14 @@
 #include <vector>
 
 #include "onnx/common/safe_math.h"
+#include "onnx/defs/doc_strings.h"
 #include "onnx/defs/type_builders.h"
 
 namespace ONNX_NAMESPACE::defs::math::utils {
 
-static constexpr const char* TopK_ver11_doc = R"DOC(
-Retrieve the top-K largest or smallest elements along a specified axis. Given an input tensor of
-shape [a_0, a_1, ..., a_{n-1}] and integer argument k, return two outputs:
-
-* Value tensor of shape [a_0, a_1, ..., a_{axis-1}, k, a_{axis+1}, ... a_{n-1}]
-  which contains the values of the top k elements along the specified axis
-* Index tensor of shape [a_0, a_1, ..., a_{axis-1}, k, a_{axis+1}, ... a_{n-1}] which
-  contains the indices of the top k elements (original indices from the input
-  tensor).
-
-* If "largest" is 1 (the default value) then the k largest elements are returned.
-* If "sorted" is 1 (the default value) then the resulting k elements will be sorted.
-* If "sorted" is 0, order of returned 'Values' and 'Indices' are undefined.
-
-Given two equivalent values, this operator uses the indices along the axis as
-a tiebreaker. That is, the element with the lower index will appear first.
-)DOC";
-
 std::function<void(OpSchema&)> TopKOpGenerator(std::vector<std::string> allowed_types) {
   return [allowed_types = std::move(allowed_types)](OpSchema& schema) {
-    schema.SetDoc(TopK_ver11_doc)
+    schema.SetDoc(kDoc_TopK_ver11)
         .Input(
             0,
             "X",
@@ -270,23 +253,6 @@ void QLinearMatMulShapeInference(ONNX_NAMESPACE::InferenceContext& ctx) {
   propagateElemTypeFromInputToOutput(ctx, 7, 0);
 
   MatMulShapeInference(ctx, 0, 3);
-}
-
-const char* QLinearMatMulDoc() {
-  static constexpr const char* QLinearMatMul_doc = R"DOC(
-Matrix product that behaves like [numpy.matmul](https://numpy.org/doc/stable/reference/generated/numpy.matmul.html).
-It consumes two quantized input tensors, their scales and zero points, scale and zero point of output,
-and computes the quantized output. The quantization formula is y = saturate((x / y_scale) + y_zero_point).
-For (x / y_scale), it is rounding to nearest ties to even. Refer to https://en.wikipedia.org/wiki/Rounding for details.
-Scale and zero point must have same shape. They must be either scalar (per tensor) or N-D tensor
-(per row for 'a' and per column for 'b'). Scalar refers to per tensor quantization whereas N-D refers to per row
-or per column quantization. If the input is 2D of shape [M, K] then zero point and scale tensor may be
-an M element vector [v_1, v_2, ..., v_M] for per row quantization and K element vector of shape [v_1, v_2, ..., v_K]
-for per column quantization. If the input is N-D tensor with shape [D1, D2, M, K] then zero point and scale tensor may
-have shape [D1, D2, M, 1] for per row quantization and shape [D1, D2, 1, K] for per column quantization.
-Production must never overflow, and accumulation may overflow if and only if in 32 bits.
-)DOC";
-  return QLinearMatMul_doc;
 }
 
 } // namespace ONNX_NAMESPACE::defs::math::utils

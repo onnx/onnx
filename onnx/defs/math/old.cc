@@ -3514,7 +3514,7 @@ ONNX_OPERATOR_SET_SCHEMA(
     QLinearMatMul,
     10,
     OpSchema()
-        .SetDoc(defs::math::utils::QLinearMatMulDoc())
+        .SetDoc(kDoc_QLinearMatMul_ver10)
         .Input(0, "a", "N-dimensional quantized matrix a", "T1", OpSchema::Single, true, 1, OpSchema::NonDifferentiable)
         .Input(
             1,
