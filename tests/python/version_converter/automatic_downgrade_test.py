@@ -231,6 +231,18 @@ class TestAutomaticDowngrade(automatic_conversion_test_base.TestAutomaticConvers
                 """,
         )
 
+    def test_optional_has_element18_without_input_downgrade_fails(self) -> None:
+        self._test_model_conversion_fails(
+            to_opset=15,
+            model="""
+                <ir_version: 8, opset_import: [ "" : 18]>
+                optional_has_element () => (bool output)
+                {
+                    output = OptionalHasElement ()
+                }
+            """,
+        )
+
     def test_optional_get_element18_downgrade_fails(self) -> None:
         # non-optional input is not allowed for OptionalGetElement-15
         self._test_model_conversion_fails(

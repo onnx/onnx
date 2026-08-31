@@ -580,7 +580,7 @@ class DefaultVersionConverter : public BaseVersionConverter {
             "OptionalGetElement", OpSetID(18), OpSetID(17), std::vector<TensorProto_DataType>{}, true, false));
     registerAdapter(
         std::make_unique<OptionalOpsAdapter>(
-            "OptionalHasElement", OpSetID(18), OpSetID(17), std::vector<TensorProto_DataType>{}, true, false, true));
+            "OptionalHasElement", OpSetID(18), OpSetID(17), std::vector<TensorProto_DataType>{}, true, false));
     registerAdapter(std::make_unique<AxesInputToAttribute>("ReduceL1", OpSetID(18), OpSetID(17)));
     registerAdapter(std::make_unique<AxesInputToAttribute>("ReduceL2", OpSetID(18), OpSetID(17)));
     registerAdapter(std::make_unique<AxesInputToAttribute>("ReduceLogSum", OpSetID(18), OpSetID(17)));
