@@ -160,3 +160,35 @@ class TestAutomaticDowngrade(automatic_conversion_test_base.TestAutomaticConvers
             }
         """,
         )
+
+    def test_depth_to_space(self) -> None:
+        self._test_op_downgrade(
+            "DepthToSpace",
+            28,
+            [[1, 8, 3, 3]],
+            [[1, 2, 6, 6]],
+            attrs={"blocksize": 2, "mode": "CRD"},
+        )
+
+    def test_space_to_depth_dcr(self) -> None:
+        self._test_op_downgrade(
+            "SpaceToDepth",
+            28,
+            [[1, 2, 6, 6]],
+            [[1, 8, 3, 3]],
+            attrs={"blocksize": 2, "mode": "DCR"},
+        )
+
+    def test_space_to_depth_crd_downgrade_fails(self) -> None:
+        model = onnx.parser.parse_model(
+            """
+            <ir_version: 10, opset_import: [ "" : 28]>
+            space_to_depth_crd (float[1, 2, 6, 6] input) => (float[1, 8, 3, 3] output)
+            {
+                output = SpaceToDepth <blocksize = 2, mode = "CRD"> (input)
+            }
+            """
+        )
+        onnx.checker.check_model(model)
+        with pytest.raises(RuntimeError, match="mode must have value DCR"):
+            onnx.version_converter.convert_version(model, 27)

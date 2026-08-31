@@ -17442,18 +17442,48 @@ for dtype in (np.float16, np.float32, np.float64):
         "Mod", inputs=["x", "y"], outputs=["z"], fmod=0
     )
     x = np.array(
-        [0.0, -0.0, -3.0, 3.0, -1.0, 1.0, np.inf, -np.inf, np.nan, 1.0],
+        [
+            0.0,
+            -0.0,
+            0.0,
+            -0.0,
+            -3.0,
+            3.0,
+            -1.0,
+            1.0,
+            np.inf,
+            -np.inf,
+            1.0,
+            1.0,
+            np.nan,
+            1.0,
+        ],
         dtype=dtype,
     )
     y = np.array(
-        [-2.0, 2.0, np.inf, np.inf, -np.inf, -np.inf, 2.0, 2.0, 2.0, 0.0],
+        [
+            -2.0,
+            2.0,
+            2.0,
+            -2.0,
+            np.inf,
+            np.inf,
+            -np.inf,
+            -np.inf,
+            2.0,
+            2.0,
+            0.0,
+            -0.0,
+            2.0,
+            np.nan,
+        ],
         dtype=dtype,
     )
     with np.errstate(divide="ignore", invalid="ignore"):
         z = np.mod(x, y)
 
-    np.testing.assert_array_equal(np.signbit(z[:2]), [True, False])
-    np.testing.assert_array_equal(np.isnan(z[6:]), [True, True, True, True])
+    np.testing.assert_array_equal(np.signbit(z[:4]), [True, False, False, True])
+    np.testing.assert_array_equal(np.isnan(z[8:]), [True, True, True, True, True, True])
     expect(
         node,
         inputs=[x, y],
@@ -28756,7 +28786,109 @@ expect(node, inputs=[x], outputs=[y], name="test_softsign")
 
 
 ### SpaceToDepth
-There are 2 test cases, listed as following:
+There are 4 test cases, listed as following:
+<details>
+<summary>crd_mode_example</summary>
+
+```python
+node = onnx.helper.make_node(
+    "SpaceToDepth",
+    inputs=["x"],
+    outputs=["y"],
+    blocksize=2,
+    mode="CRD",
+)
+
+# (1, 2, 4, 6) input tensor
+x = np.array(
+    [
+        [
+            [
+                [0.0, 9.0, 1.0, 10.0, 2.0, 11.0],
+                [18.0, 27.0, 19.0, 28.0, 20.0, 29.0],
+                [3.0, 12.0, 4.0, 13.0, 5.0, 14.0],
+                [21.0, 30.0, 22.0, 31.0, 23.0, 32.0],
+            ],
+            [
+                [36.0, 45.0, 37.0, 46.0, 38.0, 47.0],
+                [54.0, 63.0, 55.0, 64.0, 56.0, 65.0],
+                [39.0, 48.0, 40.0, 49.0, 41.0, 50.0],
+                [57.0, 66.0, 58.0, 67.0, 59.0, 68.0],
+            ],
+        ]
+    ]
+).astype(np.float32)
+
+# (1, 8, 2, 3) output tensor
+y = np.array(
+    [
+        [
+            [[0.0, 1.0, 2.0], [3.0, 4.0, 5.0]],
+            [[9.0, 10.0, 11.0], [12.0, 13.0, 14.0]],
+            [[18.0, 19.0, 20.0], [21.0, 22.0, 23.0]],
+            [[27.0, 28.0, 29.0], [30.0, 31.0, 32.0]],
+            [[36.0, 37.0, 38.0], [39.0, 40.0, 41.0]],
+            [[45.0, 46.0, 47.0], [48.0, 49.0, 50.0]],
+            [[54.0, 55.0, 56.0], [57.0, 58.0, 59.0]],
+            [[63.0, 64.0, 65.0], [66.0, 67.0, 68.0]],
+        ]
+    ]
+).astype(np.float32)
+expect(node, inputs=[x], outputs=[y], name="test_spacetodepth_crd_mode_example")
+```
+
+</details>
+<details>
+<summary>dcr_mode_example</summary>
+
+```python
+node = onnx.helper.make_node(
+    "SpaceToDepth",
+    inputs=["x"],
+    outputs=["y"],
+    blocksize=2,
+    mode="DCR",
+)
+
+# (1, 2, 4, 6) input tensor
+x = np.array(
+    [
+        [
+            [
+                [0.0, 18.0, 1.0, 19.0, 2.0, 20.0],
+                [36.0, 54.0, 37.0, 55.0, 38.0, 56.0],
+                [3.0, 21.0, 4.0, 22.0, 5.0, 23.0],
+                [39.0, 57.0, 40.0, 58.0, 41.0, 59.0],
+            ],
+            [
+                [9.0, 27.0, 10.0, 28.0, 11.0, 29.0],
+                [45.0, 63.0, 46.0, 64.0, 47.0, 65.0],
+                [12.0, 30.0, 13.0, 31.0, 14.0, 32.0],
+                [48.0, 66.0, 49.0, 67.0, 50.0, 68.0],
+            ],
+        ]
+    ]
+).astype(np.float32)
+
+# (1, 8, 2, 3) output tensor
+y = np.array(
+    [
+        [
+            [[0.0, 1.0, 2.0], [3.0, 4.0, 5.0]],
+            [[9.0, 10.0, 11.0], [12.0, 13.0, 14.0]],
+            [[18.0, 19.0, 20.0], [21.0, 22.0, 23.0]],
+            [[27.0, 28.0, 29.0], [30.0, 31.0, 32.0]],
+            [[36.0, 37.0, 38.0], [39.0, 40.0, 41.0]],
+            [[45.0, 46.0, 47.0], [48.0, 49.0, 50.0]],
+            [[54.0, 55.0, 56.0], [57.0, 58.0, 59.0]],
+            [[63.0, 64.0, 65.0], [66.0, 67.0, 68.0]],
+        ]
+    ]
+).astype(np.float32)
+expect(node, inputs=[x], outputs=[y], name="test_spacetodepth_dcr_mode_example")
+```
+
+</details>
 <details>
 <summary>example</summary>
 

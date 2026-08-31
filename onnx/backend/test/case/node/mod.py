@@ -82,18 +82,50 @@ class Mod(Base):
                 "Mod", inputs=["x", "y"], outputs=["z"], fmod=0
             )
             x = np.array(
-                [0.0, -0.0, -3.0, 3.0, -1.0, 1.0, np.inf, -np.inf, np.nan, 1.0],
+                [
+                    0.0,
+                    -0.0,
+                    0.0,
+                    -0.0,
+                    -3.0,
+                    3.0,
+                    -1.0,
+                    1.0,
+                    np.inf,
+                    -np.inf,
+                    1.0,
+                    1.0,
+                    np.nan,
+                    1.0,
+                ],
                 dtype=dtype,
             )
             y = np.array(
-                [-2.0, 2.0, np.inf, np.inf, -np.inf, -np.inf, 2.0, 2.0, 2.0, 0.0],
+                [
+                    -2.0,
+                    2.0,
+                    2.0,
+                    -2.0,
+                    np.inf,
+                    np.inf,
+                    -np.inf,
+                    -np.inf,
+                    2.0,
+                    2.0,
+                    0.0,
+                    -0.0,
+                    2.0,
+                    np.nan,
+                ],
                 dtype=dtype,
             )
             with np.errstate(divide="ignore", invalid="ignore"):
                 z = np.mod(x, y)
 
-            np.testing.assert_array_equal(np.signbit(z[:2]), [True, False])
-            np.testing.assert_array_equal(np.isnan(z[6:]), [True, True, True, True])
+            np.testing.assert_array_equal(np.signbit(z[:4]), [True, False, False, True])
+            np.testing.assert_array_equal(
+                np.isnan(z[8:]), [True, True, True, True, True, True]
+            )
             expect(
                 node,
                 inputs=[x, y],

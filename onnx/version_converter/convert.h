@@ -988,6 +988,8 @@ class DefaultVersionConverter : public BaseVersionConverter {
     /******** 27 -> 28 ********/
     registerAdapter(std::make_unique<CompatibleAdapter>("Celu", OpSetID(27), OpSetID(28)));
     registerAdapter(std::make_unique<CompatibleAdapter>("Mod", OpSetID(27), OpSetID(28)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("DepthToSpace", OpSetID(27), OpSetID(28)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("SpaceToDepth", OpSetID(27), OpSetID(28)));
     registerAdapter(std::make_unique<CompatibleAdapter>("Compress", OpSetID(27), OpSetID(28)));
     registerAdapter(std::make_unique<CompatibleAdapter>("OneHot", OpSetID(27), OpSetID(28)));
     registerAdapter(std::make_unique<CompatibleAdapter>("ReverseSequence", OpSetID(27), OpSetID(28)));
@@ -1026,6 +1028,8 @@ class DefaultVersionConverter : public BaseVersionConverter {
       }
       return node;
     });
+    registerAdapter(std::make_unique<CompatibleAdapter>("DepthToSpace", OpSetID(28), OpSetID(27)));
+    registerAdapter("SpaceToDepth", 28, 27, RemoveAttribute(Symbol("mode"), std::string("DCR")));
     // Compress, OneHot, ReverseSequence, Unique v28 added BFLOAT16 support.
     registerAdapter(std::make_unique<TypeRestriction>("Compress", OpSetID(28), OpSetID(27), bfloat16_not_allowed));
     registerAdapter(std::make_unique<TypeRestriction>("OneHot", OpSetID(28), OpSetID(27), bfloat16_not_allowed));

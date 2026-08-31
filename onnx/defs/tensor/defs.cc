@@ -1894,12 +1894,109 @@ ONNX_OPERATOR_SET_SCHEMA(
           PropagateShapeDataFromInputToOutput(ctx, 0);
         }));
 
+static bool BuildContextDependentFunctionBodySpaceToDepth(
+    const FunctionBodyBuildContext& ctx,
+    const OpSchema& schema,
+    FunctionProto& functionProto) {
+  const auto* blocksize_attr = ctx.getAttribute("blocksize");
+  if (blocksize_attr == nullptr || !blocksize_attr->has_i() || blocksize_attr->i() <= 0) {
+    return false;
+  }
+  const auto blocksize = blocksize_attr->i();
+  const auto block_area = checkedMultiply(blocksize, blocksize);
+  const auto* mode_attr = ctx.getAttribute("mode");
+  const std::string mode = (mode_attr != nullptr && mode_attr->has_s()) ? mode_attr->s() : "DCR";
+  if (mode != "DCR" && mode != "CRD") {
+    return false;
+  }
+
+  FunctionBuilder builder(functionProto);
+  builder.Const1D("blocksize", blocksize)
+      .Const1D("block_area", block_area)
+      .Const1D("zero", int64_t{0})
+      .Const1D("one", int64_t{1})
+      .Const1D("two", int64_t{2})
+      .Const1D("three", int64_t{3})
+      .Const1D("four", int64_t{4})
+      .Add("input_shape = Shape (input)")
+      .Add("N = Slice (input_shape, zero, one)")
+      .Add("C = Slice (input_shape, one, two)")
+      .Add("H = Slice (input_shape, two, three)")
+      .Add("W = Slice (input_shape, three, four)")
+      .Add("H_block = Div (H, blocksize)")
+      .Add("W_block = Div (W, blocksize)")
+      .Add("C_block = Mul (C, block_area)")
+      .Add("tmp_shape = Concat <axis = 0> (N, C, H_block, blocksize, W_block, blocksize)")
+      .Add("tmp = Reshape <allowzero = 1> (input, tmp_shape)");
+  if (mode == "DCR") {
+    builder.Add("tmp_transposed = Transpose <perm = [0, 3, 5, 1, 2, 4]> (tmp)");
+  } else {
+    builder.Add("tmp_transposed = Transpose <perm = [0, 1, 3, 5, 2, 4]> (tmp)");
+  }
+  builder.Add("output_shape = Concat <axis = 0> (N, C_block, H_block, W_block)")
+      .Add("output = Reshape <allowzero = 1> (tmp_transposed, output_shape)");
+  schema.BuildFunction(functionProto);
+  return true;
+}
+
+static bool BuildContextDependentFunctionBodyDepthToSpace(
+    const FunctionBodyBuildContext& ctx,
+    const OpSchema& schema,
+    FunctionProto& functionProto) {
+  const auto* blocksize_attr = ctx.getAttribute("blocksize");
+  if (blocksize_attr == nullptr || !blocksize_attr->has_i() || blocksize_attr->i() <= 0) {
+    return false;
+  }
+  const auto blocksize = blocksize_attr->i();
+  const auto block_area = checkedMultiply(blocksize, blocksize);
+  const auto* mode_attr = ctx.getAttribute("mode");
+  const std::string mode = (mode_attr != nullptr && mode_attr->has_s()) ? mode_attr->s() : "DCR";
+  if (mode != "DCR" && mode != "CRD") {
+    return false;
+  }
+
+  FunctionBuilder builder(functionProto);
+  builder.Const1D("blocksize", blocksize)
+      .Const1D("block_area", block_area)
+      .Const1D("zero", int64_t{0})
+      .Const1D("one", int64_t{1})
+      .Const1D("two", int64_t{2})
+      .Const1D("three", int64_t{3})
+      .Const1D("four", int64_t{4})
+      .Add("input_shape = Shape (input)")
+      .Add("N = Slice (input_shape, zero, one)")
+      .Add("C = Slice (input_shape, one, two)")
+      .Add("H = Slice (input_shape, two, three)")
+      .Add("W = Slice (input_shape, three, four)")
+      .Add("H_block = Mul (H, blocksize)")
+      .Add("W_block = Mul (W, blocksize)")
+      .Add("C_block = Div (C, block_area)");
+  if (mode == "DCR") {
+    builder.Add("tmp_shape = Concat <axis = 0> (N, blocksize, blocksize, C_block, H, W)")
+        .Add("tmp = Reshape <allowzero = 1> (input, tmp_shape)")
+        .Add("tmp_transposed = Transpose <perm = [0, 3, 4, 1, 5, 2]> (tmp)");
+  } else {
+    builder.Add("tmp_shape = Concat <axis = 0> (N, C_block, blocksize, blocksize, H, W)")
+        .Add("tmp = Reshape <allowzero = 1> (input, tmp_shape)")
+        .Add("tmp_transposed = Transpose <perm = [0, 1, 4, 2, 5, 3]> (tmp)");
+  }
+  builder.Add("output_shape = Concat <axis = 0> (N, C_block, H_block, W_block)")
+      .Add("output = Reshape <allowzero = 1> (tmp_transposed, output_shape)");
+  schema.BuildFunction(functionProto);
+  return true;
+}
+
 ONNX_OPERATOR_SET_SCHEMA(
     SpaceToDepth,
-    13,
+    28,
     OpSchema()
         .Attr("blocksize", "Blocks of [blocksize, blocksize] are moved.", AttributeProto::INT)
-        .SetDoc(kDoc_SpaceToDepth_ver1)
+        .Attr(
+            "mode",
+            "DCR (default) for depth-column-row order re-arrangement. Use CRD for column-row-depth order.",
+            AttributeProto::STRING,
+            std::string("DCR"))
+        .SetDoc(kDoc_SpaceToDepth_ver28)
         .Input(
             0,
             "input",
@@ -1941,37 +2038,12 @@ ONNX_OPERATOR_SET_SCHEMA(
               fail_shape_inference("Input tensor must be 4-dimensional");
             }
           }
-        }));
-
-static constexpr const char* DepthToSpace_ver13_doc =
-    R"DOC(DepthToSpace rearranges (permutes) data from depth into blocks of spatial data.
-This is the reverse transformation of SpaceToDepth. More specifically, this op outputs a copy of
-the input tensor where values from the depth dimension are moved in spatial blocks to the height
-and width dimensions. By default, `mode` = `DCR`.
-In the DCR mode, elements along the depth dimension from the input tensor are rearranged in the
-following order: depth, column, and then row. The output y is computed from the input x as below:
-
-```
-b, c, h, w = x.shape
-tmp = np.reshape(x, [b, blocksize, blocksize, c // (blocksize**2), h, w])
-tmp = np.transpose(tmp, [0, 3, 4, 1, 5, 2])
-y = np.reshape(tmp, [b, c // (blocksize**2), h * blocksize, w * blocksize])
-```
-
-In the CRD mode, elements along the depth dimension from the input tensor are rearranged in the
-following order: column, row, and the depth. The output y is computed from the input x as below:
-
-```
-b, c, h, w = x.shape
-tmp = np.reshape(x, [b, c // (blocksize ** 2), blocksize, blocksize, h, w])
-tmp = np.transpose(tmp, [0, 1, 4, 2, 5, 3])
-y = np.reshape(tmp, [b, c // (blocksize ** 2), h * blocksize, w * blocksize])
-```
-)DOC";
+        })
+        .SetContextDependentFunctionBodyBuilder(BuildContextDependentFunctionBodySpaceToDepth));
 
 ONNX_OPERATOR_SET_SCHEMA(
     DepthToSpace,
-    13,
+    28,
     OpSchema()
         .Attr("blocksize", "Blocks of [blocksize, blocksize] are moved.", AttributeProto::INT)
         .Attr(
@@ -1979,7 +2051,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "DCR (default) for depth-column-row order re-arrangement. Use CRD for column-row-depth order.",
             AttributeProto::STRING,
             std::string("DCR"))
-        .SetDoc(DepthToSpace_ver13_doc)
+        .SetDoc(kDoc_DepthToSpace_ver28)
         .Input(
             0,
             "input",
@@ -2021,7 +2093,8 @@ ONNX_OPERATOR_SET_SCHEMA(
               fail_shape_inference("Input tensor must be 4-dimensional");
             }
           }
-        }));
+        })
+        .SetContextDependentFunctionBodyBuilder(BuildContextDependentFunctionBodyDepthToSpace));
 
 ONNX_OPERATOR_SET_SCHEMA(
     Tile,
