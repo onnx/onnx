@@ -283,6 +283,7 @@ static void einsumShapeInference(ONNX_NAMESPACE::InferenceContext& ctx, std::str
   size_t num_operands = 0;
   size_t num_ellipsis = 0;
   size_t num_ellipsis_indices = 0;
+  size_t first_ellipsis_operand = 0;
 
   // Parse the left-hand side
   std::stringstream str(left_equation);
@@ -324,6 +325,25 @@ static void einsumShapeInference(ONNX_NAMESPACE::InferenceContext& ctx, std::str
             term_size,
             ".");
       }
+      // Every occurrence of an ellipsis must cover the same number of dimensions.
+      // This has to be validated before the loop below records or unifies the
+      // ellipsis dimensions, so its indexing remains in bounds.
+      if (num_ellipsis == 0) {
+        num_ellipsis_indices = rank - term_size;
+        first_ellipsis_operand = num_operands;
+      } else if (num_ellipsis_indices != rank - term_size) {
+        fail_shape_inference(
+            "Ellipsis for input ",
+            num_operands,
+            " represents ",
+            rank - term_size,
+            " dimensions, but ellipsis for input ",
+            first_ellipsis_operand,
+            " represents ",
+            num_ellipsis_indices,
+            " dimensions.");
+      }
+      num_ellipsis++;
     } else {
       // For non-ellipsis case, rank must equal term_size
       if (rank != term_size) {
@@ -370,19 +390,6 @@ static void einsumShapeInference(ONNX_NAMESPACE::InferenceContext& ctx, std::str
       ++index;
     }
 
-    if (ellipsis_index != std::string::npos) {
-      // If there is an ellipsis, the number of dimensions it represents
-      // must be total dim - letter dimensions
-      if (num_ellipsis == 0) {
-        num_ellipsis_indices = rank - term_size;
-      } else { // ellipsis has been seen before. Check that if dimensions
-               // are compatible
-        if (num_ellipsis_indices != rank - term_size) {
-          fail_shape_inference("Ellipsis represents incompatible dimensions.");
-        }
-      }
-      num_ellipsis++;
-    }
     num_operands++;
   }
 
