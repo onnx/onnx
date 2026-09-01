@@ -5,6 +5,7 @@
 #include <string>
 #include <vector>
 
+#include "onnx/defs/doc_strings.h"
 #include "onnx/defs/schema.h"
 #include "onnx/defs/type_builders.h"
 
@@ -18,16 +19,11 @@ static std::vector<std::string> optional_and_tensor_types() {
   return optional_types;
 }
 
-static constexpr const char* Optional_ver15_doc = R"DOC(
-Constructs an optional-type value containing either an empty optional of a certain type specified by the attribute,
-or a non-empty value containing the input element.
-)DOC";
-
 ONNX_OPERATOR_SET_SCHEMA(
     Optional,
     15,
     OpSchema()
-        .SetDoc(Optional_ver15_doc)
+        .SetDoc(kDoc_Optional_ver15)
         .Input(0, "input", "The input element.", "V", OpSchema::Optional)
         .Attr("type", "Type of the element in the optional output", AttributeProto::TYPE_PROTO, OPTIONAL_VALUE)
         .Output(0, "output", "The optional output enclosing the input element.", "O")
@@ -70,17 +66,11 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static constexpr const char* OptionalHasElement_ver18_doc = R"DOC(
-Returns true if (1) the input is an optional-type and contains an element,
-or, (2) the input is a tensor or sequence type.
-If the input is not provided or is an empty optional-type, this op returns false.
-)DOC";
-
 ONNX_OPERATOR_SET_SCHEMA(
     OptionalHasElement,
     18,
     OpSchema()
-        .SetDoc(OptionalHasElement_ver18_doc)
+        .SetDoc(kDoc_OptionalHasElement_ver18)
         .Input(0, "input", "The optional input.", "O", OpSchema::Optional)
         .Output(
             0,
@@ -106,17 +96,11 @@ ONNX_OPERATOR_SET_SCHEMA(
           output_tensor_type->mutable_shape()->Clear();
         }));
 
-static constexpr const char* OptionalGetElement_ver18_doc = R"DOC(
-If the input is a tensor or sequence type, it returns the input.
-If the input is an optional type, it outputs the element in the input.
-It is an error if the input is an empty optional-type (i.e. does not have an element) and the behavior is undefined in this case.
-)DOC";
-
 ONNX_OPERATOR_SET_SCHEMA(
     OptionalGetElement,
     18,
     OpSchema()
-        .SetDoc(OptionalGetElement_ver18_doc)
+        .SetDoc(kDoc_OptionalGetElement_ver18)
         .Input(0, "input", "The optional input.", "O")
         .Output(0, "output", "Output element in the optional input.", "V")
         .TypeConstraint(
