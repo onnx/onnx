@@ -110,7 +110,7 @@ from onnx root dir should work.
   - `helper.py`: tools for graph operation
   - `defs/`: a subfolder that defines the ONNX operators
   - `backend/`: reference implementation and backend test framework
-  - `test/`: test files
+- `tests/`: test files
 
 ### Auto generated files
 
@@ -122,7 +122,7 @@ Operator docs ([Operators.md](docs/Operators.md), [Operators-ml.md](docs/Operato
 
 ```pwsh
 # Windows
-set ONNX_ML=1
+$env:ONNX_ML = "1"
 pip install -e . -v
 python onnx/defs/gen_doc.py
 ```
@@ -155,7 +155,7 @@ python onnx/gen_proto.py -l --ml
 
 ### Coding style
 
-We adopted the [Google Python Style Guide](https://google.github.io/styleguide/pyguide.html) and [Google C++ Style Guide](https://google.github.io/styleguide/cppguide.html) for this project.
+We adopted the [Google Python Style Guide](https://google.github.io/styleguide/pyguide.html) and [Google C++ Style Guide](https://google.github.io/styleguide/cppguide.html) for this project. `.proto`/`.in.proto` files follow the [Google Protocol Buffer Style Guide](https://protobuf.dev/programming-guides/style/) (2-space indentation, no tabs).
 
 We use `lintrunner` to drive multiple linters defined in `.lintrunner.toml` to lint the codebase.
 
@@ -209,7 +209,7 @@ pytest
 
 #### Cpp tests (googletest)
 
-Some functionalities are tested with googletest. Those tests are listed in `onnx/test/cpp`, and include tests for shape inference, data propagation, parser, and others.
+Some functionalities are tested with googletest. Those tests are listed in `tests/cpp`, and include tests for shape inference, data propagation, parser, and others.
 
 To run them, first build ONNX with `-DONNX_BUILD_TESTS=1` or `ONNX_BUILD_TESTS=1 pip install -e . -v`.
 

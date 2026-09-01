@@ -4,6 +4,7 @@
 target_sources(onnx PRIVATE
     adapter.h
     Attention_24_23.h
+    Attention_25_24.h
     axes_attribute_to_input.h
     axes_input_to_attribute.h
     axis_attribute_to_input.h
@@ -48,4 +49,5 @@ target_sources(onnx PRIVATE
     upsample_8_9.h
     upsample_9_10.h
     upsample_9_8.h
+    optional_ops.h
 )

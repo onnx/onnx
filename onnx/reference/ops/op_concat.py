@@ -10,11 +10,13 @@ from onnx.reference.op_run import OpRun
 
 class Concat(OpRun):
     def _preprocess(self, a: np.ndarray, axis: int) -> np.ndarray:
-        if len(a.shape) == 0:
+        rank = len(a.shape)
+        if rank == 0:
             raise RuntimeError(f"Concat: one input has an empty shape: {a!r}.")
-        if axis >= len(a.shape):
-            new_shape = a.shape + (1,) * (axis + 1 - len(a.shape))
-            return a.reshape(new_shape)
+        if not -rank <= axis < rank:
+            raise ValueError(
+                f"Concat: axis {axis} is out of range for input rank {rank}."
+            )
         return a
 
     def _run(self, *args, axis=None):
