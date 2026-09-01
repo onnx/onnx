@@ -130,14 +130,15 @@ The symbols used below are `M`, `K`, `N`, `G` (= `weights.shape[0]`) and `k` (=
 #### Function Decomposition
 
 ```
-idx_flat  = Reshape(group_indices, [M*k])
+idx_flat  = Reshape<allowzero = 1>(group_indices, [M*k])
 W_sel     = Gather(weights, idx_flat, axis=0)            # [M*k, K, N] — duplicates weights!
-X         = Reshape(Expand(Unsqueeze(input, 1), [M, k, K]),
-                    [M*k, 1, K])                         # [M*k, 1, K] — copies tokens!
-r         = Reshape(MatMul(X, W_sel), [M, k, N])         # [M, k, N]
+X         = Reshape<allowzero = 1>(Expand(Unsqueeze(input, 1), [M, k, K]),
+                                   [M*k, 1, K])          # [M*k, 1, K] — copies tokens!
+r         = Reshape<allowzero = 1>(MatMul(X, W_sel), [M, k, N])  # [M, k, N]
 
 # If `bias` is present, add the per-group bias to each selected expert result:
-bias_sel  = Reshape(Gather(bias, idx_flat, axis=0), [M, k, N])   # [M, k, N]
+bias_sel  = Reshape<allowzero = 1>(Gather(bias, idx_flat, axis=0),
+                                   [M, k, N])                     # [M, k, N]
 r         = r + bias_sel                                          # (only when bias present)
 
 output    = r                                                    # [M, k, N]
@@ -198,6 +199,31 @@ table records the resulting behaviour for clarity.
 | `T` | `tensor(float)`, `tensor(float16)`, `tensor(bfloat16)` |
 
 `group_indices` is always `tensor(int64)`.
+
+#### Quantization
+
+`GroupedMatMul` composes directly with the standard ONNX quantize/dequantize
+(QDQ) representation. Quantized activations, weights, and an optional bias are
+dequantized before the operator, and its output may be quantized afterward:
+
+```
+DequantizeLinear(input_q)   ─┐
+                              ├─ GroupedMatMul ─ QuantizeLinear (optional)
+DequantizeLinear(weights_q) ─┘
+```
+
+For expert weights of shape `[G, K, N]`, blocked `DequantizeLinear` along
+`axis=1` supports scales of shape `[G, ceil(K/B), N]`. This permits independent
+scales per expert, block of `K`, and output channel. Per-expert,
+per-output-channel quantization is the special case `[G, 1, N]` with one
+K-sized block.
+
+No quantization parameters or quantized tensor types are needed in the
+`GroupedMatMul` schema. For efficient execution, runtimes should recognize and
+fuse the surrounding QDQ pattern so that the full dequantized expert-weight
+tensor is not materialized. If explicitly specified integer accumulation,
+requantization, or packed-weight formats are needed in the future, they should
+be considered in a separate `QLinearGroupedMatMul`-style operator.
 
 #### Attributes
 
