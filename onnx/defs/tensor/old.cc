@@ -2310,6 +2310,9 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Attr("split", "length of each output. Values should be >= 0.", AttributeProto::INTS, OPTIONAL_VALUE)
         .SetDoc(Split_ver11_doc)
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+          if (ctx.getNumOutputs() == 0) {
+            fail_shape_inference("Split must have at least one output");
+          }
           for (int i = 0; i < static_cast<int>(ctx.getNumOutputs()); ++i) {
             propagateElemTypeFromInputToOutput(ctx, 0, i);
           }
@@ -2410,6 +2413,9 @@ ONNX_OPERATOR_SET_SCHEMA(
             static_cast<int64_t>(0))
         .SetDoc(Split_ver13_doc)
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+          if (ctx.getNumOutputs() == 0) {
+            fail_shape_inference("Split must have at least one output");
+          }
           for (int i = 0; i < static_cast<int>(ctx.getNumOutputs()); ++i) {
             propagateElemTypeFromInputToOutput(ctx, 0, i);
           }
@@ -6903,6 +6909,9 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Attr("split", "length of each output", AttributeProto::INTS, OPTIONAL_VALUE)
         .SetDoc(Split_ver2_doc)
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+          if (ctx.getNumOutputs() == 0) {
+            fail_shape_inference("Split must have at least one output");
+          }
           for (int i = 0; i < static_cast<int>(ctx.getNumOutputs()); ++i) {
             propagateElemTypeFromInputToOutput(ctx, 0, i);
           }

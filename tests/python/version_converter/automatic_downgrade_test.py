@@ -100,6 +100,15 @@ class TestAutomaticDowngrade(automatic_conversion_test_base.TestAutomaticConvers
         """,
         )
 
+    def test_Einsum(self) -> None:
+        self._test_op_downgrade(
+            "Einsum",
+            12,
+            [[3, 4, 5], [3, 5, 6]],
+            [[3, 4, 6]],
+            attrs={"equation": "bij, bjk -> bik"},
+        )
+
     def test_attention_25_to_24_default_window(self) -> None:
         """Attention with disabled window bounds can be downgraded."""
         self._test_op_downgrade(
@@ -141,6 +150,32 @@ class TestAutomaticDowngrade(automatic_conversion_test_base.TestAutomaticConvers
                 => (float[2, 4, 64] output, float[2, 4, 16, 16] present_state)
             {
                 output, present_state = LinearAttention <q_num_heads = 4, kv_num_heads = 4, update_rule = "linear"> (Q, K, V)
+            }
+        """,
+        )
+
+    def test_BitShift(self) -> None:
+        self._test_op_downgrade(
+            "BitShift",
+            11,
+            [[2, 3], [2, 3]],
+            [[2, 3]],
+            [onnx.TensorProto.UINT8, onnx.TensorProto.UINT8],
+            [onnx.TensorProto.UINT8],
+            attrs={"direction": "RIGHT"},
+        )
+
+    def test_BitShift_signed_downgrade_fails(self) -> None:
+        # BitShift gained the signed integer types at opset 28. Downgrading a
+        # signed BitShift below that must be rejected rather than silently
+        # reinterpreted as an unsigned (logical) shift.
+        self._test_model_conversion_fails(
+            to_opset=27,
+            model="""
+            <ir_version: 10, opset_import: [ "" : 28]>
+            bitshift (int32[2, 3] X, int32[2, 3] Y) => (int32[2, 3] Z)
+            {
+                Z = BitShift <direction = "RIGHT"> (X, Y)
             }
         """,
         )

@@ -6,6 +6,41 @@
 
 namespace ONNX_NAMESPACE {
 #ifndef __ONNX_NO_DOC_STRINGS
+const char kDoc_BitShift_ver11[] = R"DOC(
+Bitwise shift operator performs element-wise operation. For each input element, if the
+attribute "direction" is "RIGHT", this operator moves its binary representation toward
+the right side so that the input value is effectively decreased. If the attribute "direction"
+is "LEFT", bits of binary representation moves toward the left side, which results the
+increase of its actual value. The input X is the tensor to be shifted and another input
+Y specifies the amounts of shifting. For example, if "direction" is "Right", X is [1, 4],
+and S is [1, 1], the corresponding output Z would be [0, 2]. If "direction" is "LEFT" with
+X=[1, 2] and S=[1, 2], the corresponding output Y would be [2, 8].
+
+Because this operator supports Numpy-style broadcasting, X's and Y's shapes are
+not necessarily identical.
+)DOC";
+
+const char kDoc_BitShift_ver28[] = R"DOC(
+Bitwise shift operator performs element-wise operation. For each input element, if the
+attribute "direction" is "RIGHT", this operator moves its binary representation toward
+the right side. If the attribute "direction" is "LEFT", bits of binary representation
+move toward the left side. The input X is the tensor to be shifted and another
+input Y specifies the amounts of shifting. For example, if "direction" is
+"RIGHT", X is [1, 4], and Y is [1, 1], the corresponding output Z would be
+[0, 2]. If "direction" is "LEFT" with X=[1, 2] and Y=[1, 2], the corresponding
+output Z would be [2, 8].
+
+For a signed T the right shift is an arithmetic shift (sign-extending). The
+vacated high bits are filled with copies of the sign bit, so a negative X stays
+negative. For a signed T a left shift can move bits into and past the sign bit,
+and bits shifted past the sign bit are discarded.
+
+If Y is negative, or is greater than or equal to the number of bits of T, then
+the result is whatever the sign bit extension alone produces: -1 for a right
+shift on a negative X, where the fill is a sign bit of 1, and 0 in every other
+case.
+)DOC";
+
 const char kDoc_GRU_ver14[] = R"DOC(
 Computes an one-layer GRU. This operator is usually supported via some custom
 implementation such as CuDNN.
@@ -143,6 +178,54 @@ intermediate accumulation. Setting `stash_type` to `1` (float) causes `start`, `
 `delta` to be cast to 32-bit float before the loop, with the output cast back to the original
 type. This avoids precision loss for large ranges where successive additions in float16 or
 bfloat16 would otherwise be inexact (e.g. `x + 1 == x` for large `x`).
+)DOC";
+
+const char kDoc_Mod_ver28[] = R"DOC(
+Performs an element-wise binary modulo operation.
+The `fmod` attribute determines how the quotient is rounded. Its value must be
+`0` (default) or `1`.
+
+If `fmod` is `0`, the output is calculated as `A - floor(A / B) * B`.
+The result has the same sign as `B`.
+For floating-point inputs, the following special cases apply:
+- If `x` is `±0` and `y` is nonzero, `±0` with the sign of `y` is returned.
+- If `x` is `±∞` and `y` is not `NaN`, `NaN` is returned.
+- If `y` is `±0` and `x` is not `NaN`, `NaN` is returned.
+- If `y` is `±∞` and `x` is finite and nonzero, `x` is returned when `x` and
+  `y` have the same sign; otherwise, `y` is returned.
+- If either argument is `NaN`, `NaN` is returned.
+
+If `fmod` is `1`, the output is calculated as `A - trunc(A / B) * B`.
+The result has the same sign as `A`, except that either signed zero may be
+returned when `A` is `-0` and `B` is positive. For floating-point inputs,
+the following special cases apply:
+- If `x` is `-0` and `y` is greater than zero, either `+0` or `-0` may be returned.
+- If `x` is `±∞` and `y` is not `NaN`, `NaN` is returned.
+- If `y` is `±0` and `x` is not `NaN`, `NaN` should be returned.
+- If `y` is `±∞` and `x` is finite, `x` is returned.
+- If either argument is `NaN`, `NaN` is returned.
+
+This operator supports **multidirectional (i.e., NumPy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
+)DOC";
+
+const char kDoc_Mod_ver13[] = R"DOC(
+Performs an element-wise binary modulo operation.
+The semantics and supported data types depend on the value of the `fmod` attribute which must be `0` (default), or `1`.
+
+If the `fmod` attribute is set to `0`, `T` is constrained to integer data types and the semantics follow that of the Python `%`-operator.
+The sign of the result is that of the divisor.
+
+If `fmod` is set to `1`, the behavior of this operator follows that of the `fmod` function in C and `T` is constrained to floating point data types.
+The result of this operator is the remainder of the division operation `x / y` where `x` and `y` are respective elements of `A` and `B`. The result is exactly the value `x - n * y`, where `n` is `x / y` with its fractional part truncated.
+The returned value has the same sign as `x` (except if `x` is `-0`) and is less or equal to `|y|` in magnitude.
+The following special cases apply when `fmod` is set to `1`:
+- If `x` is `-0` and `y` is greater than zero, either `+0` or `-0` may be returned.
+- If `x` is `±∞` and `y` is not `NaN`, `NaN` is returned.
+- If `y` is `±0` and `x` is not `NaN`, `NaN` should be returned.
+- If `y` is `±∞` and `x` is finite, `x` is returned.
+- If either argument is `NaN`, `NaN` is returned.
+
+This operator supports **multidirectional (i.e., NumPy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
 )DOC";
 
 const char kDoc_RandomUniform_ver1[] = R"DOC(
@@ -1502,7 +1585,87 @@ output_counts:
 ```
 )DOC";
 
+const char kDoc_Einsum_ver12[] = R"DOC(
+An einsum of the form `term1, term2 -> output-term` produces an output tensor using the following equation
+
+```
+output[output-term] = reduce-sum( input1[term1] * input2[term2] )
+```
+
+where the reduce-sum performs a summation over all the indices occurring in the input terms (term1, term2)
+that do not occur in the output-term.
+
+The Einsum operator evaluates algebraic tensor operations on a sequence of tensors, using the Einstein summation
+convention. The equation string contains a comma-separated sequence of lower case letters and/or upper case letters.
+Each term corresponds to an operand tensor, and the characters within the terms correspond to operands dimensions.
+Lower case letters and upper case letters are treated as distinct symbols, that is, "a" and "A" refer to different
+symbols.
+
+This sequence may be followed by "->" to separate the left and right hand side of the equation.
+If the equation contains "->" followed by the right-hand side, the explicit (not classical) form of the Einstein
+summation is performed, and the right-hand side indices indicate output tensor dimensions. In other cases,
+output indices are (implicitly) set to the sequence of indices appearing exactly once in the equation, sorted in
+increasing order of their ASCII values (so that all upper case letters precede all lower case letters, e.g.,
+"A" < "Z" < "a" < "z").
+
+When a dimension character is repeated in the left-hand side, it represents summation along the dimension.
+
+The equation may contain ellipsis ("...") to enable broadcasting. Ellipsis must indicate a fixed number of dimensions.
+Specifically, every occurrence of ellipsis in the equation must represent the same number of dimensions.
+The right-hand side may contain exactly one ellipsis. In implicit mode, the ellipsis dimensions are set to the
+beginning of the output. The equation string may contain space (U+0020) character.
+)DOC";
+
+const char kDoc_QLinearMatMul_ver10[] = R"DOC(
+Matrix product that behaves like [numpy.matmul](https://numpy.org/doc/stable/reference/generated/numpy.matmul.html).
+It consumes two quantized input tensors, their scales and zero points, scale and zero point of output,
+and computes the quantized output. The quantization formula is y = saturate((x / y_scale) + y_zero_point).
+For (x / y_scale), it is rounding to nearest ties to even. Refer to https://en.wikipedia.org/wiki/Rounding for details.
+Scale and zero point must have same shape. They must be either scalar (per tensor) or N-D tensor
+(per row for 'a' and per column for 'b'). Scalar refers to per tensor quantization whereas N-D refers to per row
+or per column quantization. If the input is 2D of shape [M, K] then zero point and scale tensor may be
+an M element vector [v_1, v_2, ..., v_M] for per row quantization and K element vector of shape [v_1, v_2, ..., v_K]
+for per column quantization. If the input is N-D tensor with shape [D1, D2, M, K] then zero point and scale tensor may
+have shape [D1, D2, M, 1] for per row quantization and shape [D1, D2, 1, K] for per column quantization.
+Production must never overflow, and accumulation may overflow if and only if in 32 bits.
+)DOC";
+
+const char kDoc_SplitToSequence_ver11[] = R"DOC(
+Split a tensor into a sequence of tensors, along the specified 'axis'.
+Lengths of the parts can be specified using the optional argument 'split'.
+If the argument `split' is not specified, a default scalar value of 1
+is used as the value of `split'.
+'split' must contain only positive numbers.
+'split' is either a scalar (tensor of empty shape), or a 1-D tensor.
+If 'split' is a scalar, then 'input' will be split into chunks all of size 'split'
+if possible. The last chunk alone may be smaller than 'split' if the 'input' size
+along the given axis 'axis' is not divisible by 'split'.
+If 'split' is a 1-dimensional tensor, the input tensor is split into 'size(split)' chunks,
+with lengths of the parts on 'axis' specified in 'split'. In this scenario, the sum of entries
+in 'split' must be equal to the dimension size of input tensor on 'axis'.
+)DOC";
+
+const char kDoc_TopK_ver11[] = R"DOC(
+Retrieve the top-K largest or smallest elements along a specified axis. Given an input tensor of
+shape [a_0, a_1, ..., a_{n-1}] and integer argument k, return two outputs:
+
+* Value tensor of shape [a_0, a_1, ..., a_{axis-1}, k, a_{axis+1}, ... a_{n-1}]
+  which contains the values of the top k elements along the specified axis
+* Index tensor of shape [a_0, a_1, ..., a_{axis-1}, k, a_{axis+1}, ... a_{n-1}] which
+  contains the indices of the top k elements (original indices from the input
+  tensor).
+
+* If "largest" is 1 (the default value) then the k largest elements are returned.
+* If "sorted" is 1 (the default value) then the resulting k elements will be sorted.
+* If "sorted" is 0, order of returned 'Values' and 'Indices' are undefined.
+
+Given two equivalent values, this operator uses the indices along the axis as
+a tiebreaker. That is, the element with the lower index will appear first.
+)DOC";
+
 #else
+const char kDoc_BitShift_ver11[] = "";
+const char kDoc_BitShift_ver28[] = "";
 const char kDoc_GRU_ver14[] = "";
 const char kDoc_Squeeze_ver24[] = "";
 const char kDoc_MaxUnpool_ver11[] = "";
@@ -1510,6 +1673,8 @@ const char kDoc_Size_ver24[] = "";
 const char kDoc_RandomUniform_ver1[] = "";
 const char kDoc_Range_ver11[] = "";
 const char kDoc_Range_ver27[] = "";
+const char kDoc_Mod_ver13[] = "";
+const char kDoc_Mod_ver28[] = "";
 const char kDoc_DequantizeLinear_ver24[] = "";
 const char kDoc_RandomNormal_ver1[] = "";
 const char kDoc_Round_ver11[] = "";
@@ -1584,5 +1749,9 @@ const char kDoc_PRelu_ver7[] = "";
 const char kDoc_Neg_ver6[] = "";
 const char kDoc_BitCast_ver26[] = "";
 const char kDoc_Unique_ver11[] = "";
+const char kDoc_Einsum_ver12[] = "";
+const char kDoc_QLinearMatMul_ver10[] = "";
+const char kDoc_SplitToSequence_ver11[] = "";
+const char kDoc_TopK_ver11[] = "";
 #endif
 } // namespace ONNX_NAMESPACE

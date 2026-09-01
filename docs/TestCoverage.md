@@ -5842,7 +5842,183 @@ expect(node, inputs=[x], outputs=[y], name="test_bitcast_uint32_to_int32")
 
 
 ### BitShift
-There are 8 test cases, listed as following:
+There are 28 test cases, listed as following:
+<details>
+<summary>left_int16</summary>
+
+```python
+node = onnx.helper.make_node(
+    "BitShift", inputs=["x", "y"], outputs=["z"], direction="LEFT"
+)
+
+x = np.array([16, 4, 1]).astype(np.int16)
+y = np.array([1, 2, 3]).astype(np.int16)
+z = x << y  # expected output [32, 16, 8]
+expect(node, inputs=[x, y], outputs=[z], name="test_bitshift_left_int16")
+```
+
+</details>
+<details>
+<summary>left_int32</summary>
+
+```python
+node = onnx.helper.make_node(
+    "BitShift", inputs=["x", "y"], outputs=["z"], direction="LEFT"
+)
+
+x = np.array([16, 4, 1]).astype(np.int32)
+y = np.array([1, 2, 3]).astype(np.int32)
+z = x << y  # expected output [32, 16, 8]
+expect(node, inputs=[x, y], outputs=[z], name="test_bitshift_left_int32")
+```
+
+</details>
+<details>
+<summary>left_int32_negative_shift</summary>
+
+```python
+node = onnx.helper.make_node(
+    "BitShift", inputs=["x", "y"], outputs=["z"], direction="LEFT"
+)
+
+x = np.array([-8, 4, -1]).astype(np.int32)
+y = np.array([-1, -32, -64]).astype(np.int32)
+z = np.array([0, 0, 0]).astype(np.int32)
+expect(
+    node,
+    inputs=[x, y],
+    outputs=[z],
+    name="test_bitshift_left_int32_negative_shift",
+)
+```
+
+</details>
+<details>
+<summary>left_int32_overflow</summary>
+
+```python
+node = onnx.helper.make_node(
+    "BitShift", inputs=["x", "y"], outputs=["z"], direction="LEFT"
+)
+
+x = np.array([1073741824, 1, -1073741824]).astype(np.int32)
+y = np.array([1, 31, 1]).astype(np.int32)
+z = x << y  # expected output [-2147483648, -2147483648, -2147483648]
+expect(
+    node, inputs=[x, y], outputs=[z], name="test_bitshift_left_int32_overflow"
+)
+```
+
+</details>
+<details>
+<summary>left_int32_shift_ge_width</summary>
+
+```python
+node = onnx.helper.make_node(
+    "BitShift", inputs=["x", "y"], outputs=["z"], direction="LEFT"
+)
+
+x = np.array([-8, 4, -1]).astype(np.int32)
+y = np.array([32, 33, 100]).astype(np.int32)
+z = np.array([0, 0, 0]).astype(np.int32)
+expect(
+    node,
+    inputs=[x, y],
+    outputs=[z],
+    name="test_bitshift_left_int32_shift_ge_width",
+)
+```
+
+</details>
+<details>
+<summary>left_int64</summary>
+
+```python
+node = onnx.helper.make_node(
+    "BitShift", inputs=["x", "y"], outputs=["z"], direction="LEFT"
+)
+
+x = np.array([16, 4, 1]).astype(np.int64)
+y = np.array([1, 2, 3]).astype(np.int64)
+z = x << y  # expected output [32, 16, 8]
+expect(node, inputs=[x, y], outputs=[z], name="test_bitshift_left_int64")
+```
+
+</details>
+<details>
+<summary>left_int8</summary>
+
+```python
+node = onnx.helper.make_node(
+    "BitShift", inputs=["x", "y"], outputs=["z"], direction="LEFT"
+)
+
+x = np.array([16, 4, 1]).astype(np.int8)
+y = np.array([1, 2, 3]).astype(np.int8)
+z = x << y  # expected output [32, 16, 8]
+expect(node, inputs=[x, y], outputs=[z], name="test_bitshift_left_int8")
+```
+
+</details>
+<details>
+<summary>left_int8_negative_shift</summary>
+
+```python
+node = onnx.helper.make_node(
+    "BitShift", inputs=["x", "y"], outputs=["z"], direction="LEFT"
+)
+
+x = np.array([-8, 4, -1]).astype(np.int8)
+y = np.array([-1, -8, -16]).astype(np.int8)
+z = np.array([0, 0, 0]).astype(np.int8)
+expect(
+    node,
+    inputs=[x, y],
+    outputs=[z],
+    name="test_bitshift_left_int8_negative_shift",
+)
+```
+
+</details>
+<details>
+<summary>left_int8_overflow</summary>
+
+```python
+# Bits shifted past the most significant bit are discarded, so the result
+# wraps within the width of the type rather than being undefined as in C.
+node = onnx.helper.make_node(
+    "BitShift", inputs=["x", "y"], outputs=["z"], direction="LEFT"
+)
+
+x = np.array([64, 1, -64]).astype(np.int8)
+y = np.array([1, 7, 1]).astype(np.int8)
+z = x << y  # expected output [-128, -128, -128]
+expect(
+    node, inputs=[x, y], outputs=[z], name="test_bitshift_left_int8_overflow"
+)
+```
+
+</details>
+<details>
+<summary>left_int8_shift_ge_width</summary>
+
+```python
+node = onnx.helper.make_node(
+    "BitShift", inputs=["x", "y"], outputs=["z"], direction="LEFT"
+)
+
+x = np.array([-8, 4, -1]).astype(np.int8)
+y = np.array([8, 9, 127]).astype(np.int8)
+z = np.array([0, 0, 0]).astype(np.int8)
+expect(
+    node,
+    inputs=[x, y],
+    outputs=[z],
+    name="test_bitshift_left_int8_shift_ge_width",
+)
+```
+
+</details>
 <details>
 <summary>left_unit16</summary>
 
@@ -5900,6 +6076,196 @@ x = np.array([16, 4, 1]).astype(np.uint8)
 y = np.array([1, 2, 3]).astype(np.uint8)
 z = x << y  # expected output [32, 16, 8]
 expect(node, inputs=[x, y], outputs=[z], name="test_bitshift_left_uint8")
+```
+
+</details>
+<details>
+<summary>right_int16</summary>
+
+```python
+node = onnx.helper.make_node(
+    "BitShift", inputs=["x", "y"], outputs=["z"], direction="RIGHT"
+)
+
+x = np.array([16, 4, 1]).astype(np.int16)
+y = np.array([1, 2, 3]).astype(np.int16)
+z = x >> y  # expected output [8, 1, 0]
+expect(node, inputs=[x, y], outputs=[z], name="test_bitshift_right_int16")
+```
+
+</details>
+<details>
+<summary>right_int32</summary>
+
+```python
+node = onnx.helper.make_node(
+    "BitShift", inputs=["x", "y"], outputs=["z"], direction="RIGHT"
+)
+
+x = np.array([16, 4, 1]).astype(np.int32)
+y = np.array([1, 2, 3]).astype(np.int32)
+z = x >> y  # expected output [8, 1, 0]
+expect(node, inputs=[x, y], outputs=[z], name="test_bitshift_right_int32")
+```
+
+</details>
+<details>
+<summary>right_int32_negative_input</summary>
+
+```python
+node = onnx.helper.make_node(
+    "BitShift", inputs=["x", "y"], outputs=["z"], direction="RIGHT"
+)
+
+x = np.array([-8, -1, -2147483648]).astype(np.int32)
+y = np.array([1, 1, 1]).astype(np.int32)
+z = x >> y  # expected output [-4, -1, -1073741824]
+expect(
+    node,
+    inputs=[x, y],
+    outputs=[z],
+    name="test_bitshift_right_int32_negative_input",
+)
+```
+
+</details>
+<details>
+<summary>right_int32_negative_shift</summary>
+
+```python
+node = onnx.helper.make_node(
+    "BitShift", inputs=["x", "y"], outputs=["z"], direction="RIGHT"
+)
+
+x = np.array([-8, 4, -1]).astype(np.int32)
+y = np.array([-1, -32, -64]).astype(np.int32)
+z = np.array([-1, 0, -1]).astype(np.int32)
+expect(
+    node,
+    inputs=[x, y],
+    outputs=[z],
+    name="test_bitshift_right_int32_negative_shift",
+)
+```
+
+</details>
+<details>
+<summary>right_int32_shift_ge_width</summary>
+
+```python
+node = onnx.helper.make_node(
+    "BitShift", inputs=["x", "y"], outputs=["z"], direction="RIGHT"
+)
+
+x = np.array([-8, 4, -1]).astype(np.int32)
+y = np.array([32, 33, 100]).astype(np.int32)
+z = np.array([-1, 0, -1]).astype(np.int32)
+expect(
+    node,
+    inputs=[x, y],
+    outputs=[z],
+    name="test_bitshift_right_int32_shift_ge_width",
+)
+```
+
+</details>
+<details>
+<summary>right_int64</summary>
+
+```python
+node = onnx.helper.make_node(
+    "BitShift", inputs=["x", "y"], outputs=["z"], direction="RIGHT"
+)
+
+x = np.array([16, 4, 1]).astype(np.int64)
+y = np.array([1, 2, 3]).astype(np.int64)
+z = x >> y  # expected output [8, 1, 0]
+expect(node, inputs=[x, y], outputs=[z], name="test_bitshift_right_int64")
+```
+
+</details>
+<details>
+<summary>right_int8</summary>
+
+```python
+node = onnx.helper.make_node(
+    "BitShift", inputs=["x", "y"], outputs=["z"], direction="RIGHT"
+)
+
+x = np.array([16, 4, 1]).astype(np.int8)
+y = np.array([1, 2, 3]).astype(np.int8)
+z = x >> y  # expected output [8, 1, 0]
+expect(node, inputs=[x, y], outputs=[z], name="test_bitshift_right_int8")
+```
+
+</details>
+<details>
+<summary>right_int8_negative_input</summary>
+
+```python
+# Right shift of a signed value is an arithmetic shift: the sign bit is
+# replicated into the vacated high bits, so a negative input stays negative.
+node = onnx.helper.make_node(
+    "BitShift", inputs=["x", "y"], outputs=["z"], direction="RIGHT"
+)
+
+x = np.array([-8, -1, -128]).astype(np.int8)
+y = np.array([1, 1, 1]).astype(np.int8)
+z = x >> y  # expected output [-4, -1, -64]
+expect(
+    node,
+    inputs=[x, y],
+    outputs=[z],
+    name="test_bitshift_right_int8_negative_input",
+)
+```
+
+</details>
+<details>
+<summary>right_int8_negative_shift</summary>
+
+```python
+# A negative shift amount is out of range just as one at or past the bit
+# width is, and gives the same full-width result: 0, or -1 where an
+# arithmetic right shift fills the result with the sign bit. Y only reaches
+# negative values for a signed type, since it shares the type of X.
+node = onnx.helper.make_node(
+    "BitShift", inputs=["x", "y"], outputs=["z"], direction="RIGHT"
+)
+
+x = np.array([-8, 4, -1]).astype(np.int8)
+y = np.array([-1, -8, -16]).astype(np.int8)
+z = np.array([-1, 0, -1]).astype(np.int8)
+expect(
+    node,
+    inputs=[x, y],
+    outputs=[z],
+    name="test_bitshift_right_int8_negative_shift",
+)
+```
+
+</details>
+<details>
+<summary>right_int8_shift_ge_width</summary>
+
+```python
+# NumPy saturates a shift by at least the bit width, giving 0, or -1 for a
+# right shift of a negative value where the sign bit fills the result. C
+# and most hardware mask the shift count instead, so this is easy to get
+# wrong (see pytorch/pytorch#70904).
+node = onnx.helper.make_node(
+    "BitShift", inputs=["x", "y"], outputs=["z"], direction="RIGHT"
+)
+
+x = np.array([-8, 4, -1]).astype(np.int8)
+y = np.array([8, 9, 127]).astype(np.int8)
+z = np.array([-1, 0, -1]).astype(np.int8)
+expect(
+    node,
+    inputs=[x, y],
+    outputs=[z],
+    name="test_bitshift_right_int8_shift_ge_width",
+)
 ```
 
 </details>
@@ -10837,7 +11203,7 @@ expect(
 
 
 ### Einsum
-There are 6 test cases, listed as following:
+There are 9 test cases, listed as following:
 <details>
 <summary>einsum_batch_diagonal</summary>
 
@@ -10868,6 +11234,27 @@ Y = np.random.randn(5, 3, 4)
 Z = einsum_reference_implementation(Eqn, (X, Y))
 
 expect(node, inputs=[X, Y], outputs=[Z], name="test_einsum_batch_matmul")
+```
+
+</details>
+<details>
+<summary>einsum_batch_matmul_bfloat16</summary>
+
+```python
+Eqn = "bij, bjk -> bik"
+node = onnx.helper.make_node(
+    "Einsum", inputs=["x", "y"], outputs=["z"], equation=Eqn
+)
+
+# Binary operands ensure products and the three-term reductions are
+# exactly representable in bfloat16, independent of accumulation order.
+X = (np.arange(30).reshape(5, 2, 3) % 2).astype(ml_dtypes.bfloat16)
+Y = (np.arange(60).reshape(5, 3, 4) % 2).astype(ml_dtypes.bfloat16)
+Z = einsum_bfloat16_reference_implementation(Eqn, (X, Y))
+
+expect(
+    node, inputs=[X, Y], outputs=[Z], name="test_einsum_batch_matmul_bfloat16"
+)
 ```
 
 </details>
@@ -10921,6 +11308,24 @@ expect(node, inputs=[X], outputs=[Z], name="test_einsum_sum")
 
 </details>
 <details>
+<summary>einsum_sum_bfloat16</summary>
+
+```python
+# A pure reduction: NumPy raises TypeError on bfloat16 here without the
+# float32 accumulation path.
+Eqn = "ij->i"
+node = onnx.helper.make_node(
+    "Einsum", inputs=["x"], outputs=["y"], equation=Eqn
+)
+
+X = np.arange(12).reshape(3, 4).astype(ml_dtypes.bfloat16)
+Z = einsum_bfloat16_reference_implementation(Eqn, (X,))
+
+expect(node, inputs=[X], outputs=[Z], name="test_einsum_sum_bfloat16")
+```
+
+</details>
+<details>
 <summary>einsum_transpose</summary>
 
 ```python
@@ -10933,6 +11338,22 @@ X = np.random.randn(3, 4)
 Y = einsum_reference_implementation(Eqn, (X,))
 
 expect(node, inputs=[X], outputs=[Y], name="test_einsum_transpose")
+```
+
+</details>
+<details>
+<summary>einsum_transpose_bfloat16</summary>
+
+```python
+Eqn = "ij->ji"
+node = onnx.helper.make_node(
+    "Einsum", inputs=["x"], outputs=["y"], equation=Eqn
+)
+
+X = np.arange(12).reshape(3, 4).astype(ml_dtypes.bfloat16)
+Y = einsum_bfloat16_reference_implementation(Eqn, (X,))
+
+expect(node, inputs=[X], outputs=[Y], name="test_einsum_transpose_bfloat16")
 ```
 
 </details>
@@ -17407,7 +17828,44 @@ expect(node, inputs=[input_data], outputs=[expected_output], name="test_mish")
 
 
 ### Mod
-There are 13 test cases, listed as following:
+There are 18 test cases, listed as following:
+<details>
+<summary>fmod_0_signed_zero</summary>
+
+```python
+for dtype in (np.float16, np.float32, np.float64):
+    tensor_type = onnx.helper.np_dtype_to_tensor_dtype(np.dtype(dtype))
+    mod = onnx.helper.make_node("Mod", ["x", "y"], ["remainder"], fmod=0)
+    # Sign maps both signed zeros to zero; Reciprocal exposes them as signed infinities.
+    reciprocal = onnx.helper.make_node("Reciprocal", ["remainder"], ["z"])
+    graph = onnx.helper.make_graph(
+        [mod, reciprocal],
+        f"ModFmod0SignedZero{np.dtype(dtype).name}",
+        [
+            onnx.helper.make_tensor_value_info("x", tensor_type, [4]),
+            onnx.helper.make_tensor_value_info("y", tensor_type, [4]),
+        ],
+        [
+            onnx.helper.make_tensor_value_info("z", tensor_type, [4]),
+        ],
+    )
+    model = onnx.helper.make_model_gen_version(
+        graph,
+        producer_name="backend-test",
+        opset_imports=[onnx.helper.make_opsetid("", 28)],
+    )
+    x = np.array([0.0, -0.0, 0.0, -0.0], dtype=dtype)
+    y = np.array([-2.0, 2.0, 2.0, -2.0], dtype=dtype)
+    z = np.array([-np.inf, np.inf, np.inf, -np.inf], dtype=dtype)
+    expect(
+        model,
+        inputs=[x, y],
+        outputs=[z],
+        name=f"test_mod_fmod_0_signed_zero_{np.dtype(dtype).name}",
+    )
+```
+
+</details>
 <details>
 <summary>mod_broadcast</summary>
 
@@ -17430,6 +17888,68 @@ z = np.mod(x, y)
 #    [[6, 0, 1, 2, 3],
 #     [4, 5, 6, 0, 1]]], dtype=int32)
 expect(node, inputs=[x, y], outputs=[z], name="test_mod_broadcast")
+```
+
+</details>
+<details>
+<summary>mod_float_edge_cases_fmod_0</summary>
+
+```python
+for dtype in (np.float16, np.float32, np.float64):
+    node = onnx.helper.make_node(
+        "Mod", inputs=["x", "y"], outputs=["z"], fmod=0
+    )
+    x = np.array(
+        [
+            0.0,
+            -0.0,
+            0.0,
+            -0.0,
+            -3.0,
+            3.0,
+            -1.0,
+            1.0,
+            np.inf,
+            -np.inf,
+            1.0,
+            1.0,
+            np.nan,
+            1.0,
+        ],
+        dtype=dtype,
+    )
+    y = np.array(
+        [
+            -2.0,
+            2.0,
+            2.0,
+            -2.0,
+            np.inf,
+            np.inf,
+            -np.inf,
+            -np.inf,
+            2.0,
+            2.0,
+            0.0,
+            -0.0,
+            2.0,
+            np.nan,
+        ],
+        dtype=dtype,
+    )
+    with np.errstate(divide="ignore", invalid="ignore"):
+        z = np.mod(x, y)
+
+    np.testing.assert_array_equal(np.signbit(z[:4]), [True, False, False, True])
+    np.testing.assert_array_equal(
+        np.isnan(z[8:]), [True, True, True, True, True, True]
+    )
+    expect(
+        node,
+        inputs=[x, y],
+        outputs=[z],
+        name=f"test_mod_float_edge_cases_fmod_0_{np.dtype(dtype).name}",
+    )
 ```
 
 </details>
@@ -17462,6 +17982,21 @@ expect(node, inputs=[x, y], outputs=[z], name="test_mod_mixed_sign_float16")
 
 </details>
 <details>
+<summary>mod_mixed_sign_float16_fmod_0</summary>
+
+```python
+node = onnx.helper.make_node("Mod", inputs=["x", "y"], outputs=["z"], fmod=0)
+
+x = np.array([-4.3, 7.2, 5.0, 4.3, -7.2, 8.0]).astype(np.float16)
+y = np.array([2.1, -3.4, 8.0, -2.1, 3.4, 5.0]).astype(np.float16)
+z = np.mod(x, y)
+expect(
+    node, inputs=[x, y], outputs=[z], name="test_mod_float16_mixed_sign_fmod_0"
+)
+```
+
+</details>
+<details>
 <summary>mod_mixed_sign_float32</summary>
 
 ```python
@@ -17477,6 +18012,21 @@ expect(node, inputs=[x, y], outputs=[z], name="test_mod_mixed_sign_float32")
 
 </details>
 <details>
+<summary>mod_mixed_sign_float32_fmod_0</summary>
+
+```python
+node = onnx.helper.make_node("Mod", inputs=["x", "y"], outputs=["z"], fmod=0)
+
+x = np.array([-4.3, 7.2, 5.0, 4.3, -7.2, 8.0]).astype(np.float32)
+y = np.array([2.1, -3.4, 8.0, -2.1, 3.4, 5.0]).astype(np.float32)
+z = np.mod(x, y)
+expect(
+    node, inputs=[x, y], outputs=[z], name="test_mod_float32_mixed_sign_fmod_0"
+)
+```
+
+</details>
+<details>
 <summary>mod_mixed_sign_float64</summary>
 
 ```python
@@ -17486,6 +18036,21 @@ x = np.array([-4.3, 7.2, 5.0, 4.3, -7.2, 8.0]).astype(np.float64)
 y = np.array([2.1, -3.4, 8.0, -2.1, 3.4, 5.0]).astype(np.float64)
 z = np.fmod(x, y)  # expected output [-0.1,  0.4,  5. ,  0.1, -0.4,  3.]
 expect(node, inputs=[x, y], outputs=[z], name="test_mod_mixed_sign_float64")
+```
+
+</details>
+<details>
+<summary>mod_mixed_sign_float64_fmod_0</summary>
+
+```python
+node = onnx.helper.make_node("Mod", inputs=["x", "y"], outputs=["z"], fmod=0)
+
+x = np.array([-4.3, 7.2, 5.0, 4.3, -7.2, 8.0]).astype(np.float64)
+y = np.array([2.1, -3.4, 8.0, -2.1, 3.4, 5.0]).astype(np.float64)
+z = np.mod(x, y)  # expected output [ 2.0, -3.0,  5. , -2.0,  3.0,  3.]
+expect(
+    node, inputs=[x, y], outputs=[z], name="test_mod_float64_mixed_sign_fmod_0"
+)
 ```
 
 </details>

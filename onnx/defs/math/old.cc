@@ -3514,7 +3514,7 @@ ONNX_OPERATOR_SET_SCHEMA(
     QLinearMatMul,
     10,
     OpSchema()
-        .SetDoc(defs::math::utils::QLinearMatMulDoc())
+        .SetDoc(kDoc_QLinearMatMul_ver10)
         .Input(0, "a", "N-dimensional quantized matrix a", "T1", OpSchema::Single, true, 1, OpSchema::NonDifferentiable)
         .Input(
             1,
@@ -3638,5 +3638,36 @@ ONNX_OPERATOR_SET_SCHEMA(
         .SetNodeDeterminism(OpSchema::NodeDeterminism::Deterministic)
         .SetContextDependentFunctionBodyBuilder(BuildContextDependentFunctionBodyCelu)
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
+
+ONNX_OPERATOR_SET_SCHEMA(
+    Einsum,
+    12,
+    OpSchema().FillUsing(defs::math::utils::EinsumOpGenerator(OpSchema::all_numeric_types())));
+// codeql[cpp/unused-static-variable]: The schema macro defines a debug counter used by static-opset validation.
+ONNX_OPERATOR_SET_SCHEMA(
+    Mod,
+    13,
+    OpSchema()
+        .SetDoc(kDoc_Mod_ver13)
+        .Attr(
+            "fmod",
+            "Whether the operator should behave like fmod (default=0 meaning it will do integer mods); Set this to 1 to force fmod treatment",
+            AttributeProto::INT,
+            static_cast<int64_t>(0))
+        .Input(0, "A", "Dividend tensor", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
+        .Input(1, "B", "Divisor tensor", "T", OpSchema::Single, true, 1, OpSchema::NonDifferentiable)
+        .Output(0, "C", "Remainder tensor", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
+        .TypeConstraint(
+            "T",
+            OpSchema::all_numeric_types_ir4(),
+            "Constrain input and output types to high-precision numeric tensors.")
+        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+          propagateElemTypeFromInputToOutput(ctx, 0, 0);
+          if (hasNInputShapes(ctx, 2))
+            bidirectionalBroadcastShapeInference(
+                ctx.getInputType(0)->tensor_type().shape(),
+                ctx.getInputType(1)->tensor_type().shape(),
+                *ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape());
+        }));
 
 } // namespace ONNX_NAMESPACE

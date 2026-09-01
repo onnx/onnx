@@ -21210,6 +21210,22 @@ This version of the operator has been available since version 17 of the default 
 
   Computes the Short-time Fourier Transform of the signal.
 
+  The STFT is computed by sliding a window of length `frame_length` over the signal with a
+  step size of `frame_step`, computing a DFT of each windowed frame.
+
+  The number of frames in the output is computed as:
+
+    `frames = floor((signal_length - frame_length) / frame_step) + 1`
+
+  Constraints on inputs:
+  - `frame_step` must be a scalar.
+  - `frame_length` must be a scalar. When omitted and `window` is provided, `frame_length`
+    is inferred from `window.shape[0]`. When both `window` and `frame_length` are omitted,
+    `frame_length` defaults to `signal_length`.
+  - `window` must be a 1-D tensor. When omitted, a rectangular (all-ones) window of length
+    `frame_length` is used. When both `window` and `frame_length` are provided, the length
+    of the `window` tensor must equal `frame_length`.
+
 #### Version
 
 This version of the operator has been available since version 17 of the default ONNX operator set.
@@ -21218,27 +21234,27 @@ This version of the operator has been available since version 17 of the default 
 
 <dl>
 <dt><tt>onesided</tt> : int (default is 1)</dt>
-<dd>If onesided is 1, only values for w in [0, 1, 2, ..., floor(n_fft/2) + 1] are returned because the real-to-complex Fourier transform satisfies the conjugate symmetry, i.e., X[m, w] = X[m,w]=X[m,n_fft-w]*. Note if the input or window tensors are complex, then onesided output is not possible. Enabling onesided with real inputs performs a Real-valued fast Fourier transform (RFFT).When invoked with real or complex valued input, the default value is 1. Values can be 0 or 1.</dd>
+<dd>If onesided is 1, only values for w in [0, 1, 2, ..., floor(n_fft/2) + 1] are returned because the real-to-complex Fourier transform satisfies the conjugate symmetry, i.e., X[m, w] = X[m, n_fft-w]*. Note if the input or window tensors are complex, then onesided output is not possible. Enabling onesided with real inputs performs a Real-valued fast Fourier transform (RFFT). When invoked with real or complex valued input, the default value is 1. Values can be 0 or 1.</dd>
 </dl>
 
 #### Inputs (2 - 4)
 
 <dl>
 <dt><tt>signal</tt> (non-differentiable) : T1</dt>
-<dd>Input tensor representing a real or complex valued signal. For real input, the following shape is expected: [batch_size][signal_length][1]. For complex input, the following shape is expected: [batch_size][signal_length][2], where [batch_size][signal_length][0] represents the real component and [batch_size][signal_length][1] represents the imaginary component of the signal.</dd>
+<dd>Input tensor representing a real or complex valued signal. For real input, the following shape is expected: [batch_size][signal_length][1]. For complex input, the following shape is expected: [batch_size][signal_length][2], where [batch_size][signal_length][0] represents the real component and [batch_size][signal_length][1] represents the imaginary component of the signal. The tensor is expected to have rank 3.</dd>
 <dt><tt>frame_step</tt> (non-differentiable) : T2</dt>
-<dd>The number of samples to step between successive DFTs.</dd>
+<dd>A scalar representing the number of samples to step between successive DFTs.</dd>
 <dt><tt>window</tt> (optional, non-differentiable) : T1</dt>
-<dd>A tensor representing the window that will be slid over the signal.The window must have rank 1 with shape: [window_shape]. It's an optional value. </dd>
+<dd>An optional 1-D tensor representing the window function to be applied to each frame of the signal before computing the DFT. The length of the window (window.shape[0]) determines the frame length when `frame_length` is not specified. If both `window` and `frame_length` are provided, the length of the `window` must equal `frame_length`. When omitted, a rectangular (all-ones) window of length `frame_length` is used.</dd>
 <dt><tt>frame_length</tt> (optional, non-differentiable) : T2</dt>
-<dd>A scalar representing the size of the DFT. It's an optional value.</dd>
+<dd>An optional scalar representing the length of each frame (i.e., the DFT size). When omitted and `window` is provided, `frame_length` is inferred from `window.shape[0]`. When both `window` and `frame_length` are omitted, `frame_length` defaults to `signal_length`. If both `frame_length` and `window` are provided, the length of the `window` must equal `frame_length`.</dd>
 </dl>
 
 #### Outputs
 
 <dl>
 <dt><tt>output</tt> (non-differentiable) : T1</dt>
-<dd>The Short-time Fourier Transform of the signals.If onesided is 1, the output has the shape: [batch_size][frames][dft_unique_bins][2], where dft_unique_bins is frame_length // 2 + 1 (the unique components of the DFT) If onesided is 0, the output has the shape: [batch_size][frames][frame_length][2], where frame_length is the length of the DFT.</dd>
+<dd>The Short-time Fourier Transform of the signal. The number of frames in the output is `frames = floor((signal_length - frame_length) / frame_step) + 1`. If onesided is 1, the output has the shape: [batch_size][frames][dft_unique_bins][2], where dft_unique_bins is frame_length // 2 + 1 (the unique components of the DFT). If onesided is 0, the output has the shape: [batch_size][frames][frame_length][2], where frame_length is the length of the DFT. The last dimension of size 2 represents the real and imaginary parts of each complex value.</dd>
 </dl>
 
 #### Type Constraints
@@ -33278,6 +33294,62 @@ This version of the operator has been available since version 27 of the default 
 </dl>
 
 ## Version 28 of the default ONNX operator set
+### <a name="BitShift-28"></a>**BitShift-28**</a>
+
+  Bitwise shift operator performs element-wise operation. For each input element, if the
+  attribute "direction" is "RIGHT", this operator moves its binary representation toward
+  the right side. If the attribute "direction" is "LEFT", bits of binary representation
+  move toward the left side. The input X is the tensor to be shifted and another
+  input Y specifies the amounts of shifting. For example, if "direction" is
+  "RIGHT", X is [1, 4], and Y is [1, 1], the corresponding output Z would be
+  [0, 2]. If "direction" is "LEFT" with X=[1, 2] and Y=[1, 2], the corresponding
+  output Z would be [2, 8].
+
+  For a signed T the right shift is an arithmetic shift (sign-extending). The
+  vacated high bits are filled with copies of the sign bit, so a negative X stays
+  negative. For a signed T a left shift can move bits into and past the sign bit,
+  and bits shifted past the sign bit are discarded.
+
+  If Y is negative, or is greater than or equal to the number of bits of T, then
+  the result is whatever the sign bit extension alone produces: -1 for a right
+  shift on a negative X, where the fill is a sign bit of 1, and 0 in every other
+  case.
+  This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
+
+#### Version
+
+This version of the operator has been available since version 28 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>direction</tt> : string (required)</dt>
+<dd>Direction of moving bits. It can be either "RIGHT" (for right shift) or "LEFT" (for left shift).</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> (non-differentiable) : T</dt>
+<dd>First operand, input to be shifted.</dd>
+<dt><tt>Y</tt> (non-differentiable) : T</dt>
+<dd>Second operand, amounts of shift.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Z</tt> (non-differentiable) : T</dt>
+<dd>Output tensor</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64)</dt>
+<dd>Constrain input and output types to integer tensors.</dd>
+</dl>
+
 ### <a name="Cast-28"></a>**Cast-28**</a>
 
   The operator casts the elements of a given input tensor to a data type
@@ -33603,6 +33675,131 @@ This version of the operator has been available since version 28 of the default 
 <dd>The type of the input 'x_scale'.</dd>
 <dt><tt>T3</tt> : tensor(float), tensor(float16), tensor(bfloat16)</dt>
 <dd>The type of the output 'y'.</dd>
+</dl>
+
+### <a name="Einsum-28"></a>**Einsum-28**</a>
+
+  An einsum of the form `term1, term2 -> output-term` produces an output tensor using the following equation
+
+  ```
+  output[output-term] = reduce-sum( input1[term1] * input2[term2] )
+  ```
+
+  where the reduce-sum performs a summation over all the indices occurring in the input terms (term1, term2)
+  that do not occur in the output-term.
+
+  The Einsum operator evaluates algebraic tensor operations on a sequence of tensors, using the Einstein summation
+  convention. The equation string contains a comma-separated sequence of lower case letters and/or upper case letters.
+  Each term corresponds to an operand tensor, and the characters within the terms correspond to operands dimensions.
+  Lower case letters and upper case letters are treated as distinct symbols, that is, "a" and "A" refer to different
+  symbols.
+
+  This sequence may be followed by "->" to separate the left and right hand side of the equation.
+  If the equation contains "->" followed by the right-hand side, the explicit (not classical) form of the Einstein
+  summation is performed, and the right-hand side indices indicate output tensor dimensions. In other cases,
+  output indices are (implicitly) set to the sequence of indices appearing exactly once in the equation, sorted in
+  increasing order of their ASCII values (so that all upper case letters precede all lower case letters, e.g.,
+  "A" < "Z" < "a" < "z").
+
+  When a dimension character is repeated in the left-hand side, it represents summation along the dimension.
+
+  The equation may contain ellipsis ("...") to enable broadcasting. Ellipsis must indicate a fixed number of dimensions.
+  Specifically, every occurrence of ellipsis in the equation must represent the same number of dimensions.
+  The right-hand side may contain exactly one ellipsis. In implicit mode, the ellipsis dimensions are set to the
+  beginning of the output. The equation string may contain space (U+0020) character.
+
+#### Version
+
+This version of the operator has been available since version 28 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>equation</tt> : string (required)</dt>
+<dd>Einsum expression string.</dd>
+</dl>
+
+#### Inputs (1 - &#8734;)
+
+<dl>
+<dt><tt>Inputs</tt> (variadic, differentiable) : T</dt>
+<dd>Operands</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Output</tt> (differentiable) : T</dt>
+<dd>Output tensor</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
+<dd>Constrain input and output types to all numerical tensor types.</dd>
+</dl>
+
+### <a name="Mod-28"></a>**Mod-28**</a>
+
+  Performs an element-wise binary modulo operation.
+  The `fmod` attribute determines how the quotient is rounded. Its value must be
+  `0` (default) or `1`.
+
+  If `fmod` is `0`, the output is calculated as `A - floor(A / B) * B`.
+  The result has the same sign as `B`.
+  For floating-point inputs, the following special cases apply:
+  - If `x` is `±0` and `y` is nonzero, `±0` with the sign of `y` is returned.
+  - If `x` is `±∞` and `y` is not `NaN`, `NaN` is returned.
+  - If `y` is `±0` and `x` is not `NaN`, `NaN` is returned.
+  - If `y` is `±∞` and `x` is finite and nonzero, `x` is returned when `x` and
+    `y` have the same sign; otherwise, `y` is returned.
+  - If either argument is `NaN`, `NaN` is returned.
+
+  If `fmod` is `1`, the output is calculated as `A - trunc(A / B) * B`.
+  The result has the same sign as `A`, except that either signed zero may be
+  returned when `A` is `-0` and `B` is positive. For floating-point inputs,
+  the following special cases apply:
+  - If `x` is `-0` and `y` is greater than zero, either `+0` or `-0` may be returned.
+  - If `x` is `±∞` and `y` is not `NaN`, `NaN` is returned.
+  - If `y` is `±0` and `x` is not `NaN`, `NaN` should be returned.
+  - If `y` is `±∞` and `x` is finite, `x` is returned.
+  - If either argument is `NaN`, `NaN` is returned.
+
+  This operator supports **multidirectional (i.e., NumPy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
+
+#### Version
+
+This version of the operator has been available since version 28 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>fmod</tt> : int (default is 0)</dt>
+<dd>Whether the operator should use floor (0) or truncation (1) to calculate the quotient.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>A</tt> (differentiable) : T</dt>
+<dd>Dividend tensor</dd>
+<dt><tt>B</tt> (non-differentiable) : T</dt>
+<dd>Divisor tensor</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>C</tt> (differentiable) : T</dt>
+<dd>Remainder tensor</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
+<dd>Constrain input and output types to numeric tensors.</dd>
 </dl>
 
 ### <a name="OneHot-28"></a>**OneHot-28**</a>

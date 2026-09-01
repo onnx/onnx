@@ -201,6 +201,42 @@ class TestReferenceEvaluator:
         checker.check_model(m)
         return m
 
+    @pytest.mark.parametrize(
+        "np_dtype,tensor_dtype",
+        [
+            (np.int8, TensorProto.INT8),
+            (np.int16, TensorProto.INT16),
+            (np.int32, TensorProto.INT32),
+            (np.int64, TensorProto.INT64),
+        ],
+    )
+    @pytest.mark.parametrize(
+        "direction,expected",
+        [
+            ("LEFT", [[0, 0, -2, 0], [0, 0, 2, 0]]),
+            ("RIGHT", [[-1, 0, -1, 0], [0, -1, 0, -1]]),
+        ],
+    )
+    def test_bitshift_out_of_range_counts(
+        self, np_dtype, tensor_dtype: int, direction: str, expected
+    ) -> None:
+        bit_width = np.iinfo(np_dtype).bits
+        x = np.array([[-8, 4, -1, 7], [8, -4, 1, -7]], dtype=np_dtype)
+        y = np.array([np.iinfo(np_dtype).min, -1, 1, bit_width], dtype=np_dtype)
+        graph = make_graph(
+            [make_node("BitShift", ["X", "Y"], ["Z"], direction=direction)],
+            "bitshift",
+            [
+                make_tensor_value_info("X", tensor_dtype, [2, 4]),
+                make_tensor_value_info("Y", tensor_dtype, [4]),
+            ],
+            [make_tensor_value_info("Z", tensor_dtype, [2, 4])],
+        )
+        model = make_model(graph, opset_imports=[make_opsetid("", 28)])
+
+        got = ReferenceEvaluator(model).run(None, {"X": x, "Y": y})[0]
+        np.testing.assert_array_equal(got, np.array(expected, dtype=np_dtype))
+
     @staticmethod
     def _linear_regression(clip=False, opset=None, min_value=-1.0, max_value=1.0):
         X = make_tensor_value_info("X", TensorProto.FLOAT, [None, None])

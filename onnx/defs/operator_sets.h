@@ -1472,7 +1472,10 @@ class OpSet_Onnx_ver27 {
 };
 
 // Forward declarations for ai.onnx version 28
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 28, BitShift);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 28, Celu);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 28, Einsum);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 28, Mod);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 28, DepthToSpace);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 28, SpaceToDepth);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 28, Compress);
@@ -1488,7 +1491,10 @@ class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 28, DequantizeLinear);
 class OpSet_Onnx_ver28 {
  public:
   static void ForEachSchema(const std::function<void(OpSchema&&)>& fn) {
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 28, BitShift)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 28, Celu)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 28, Einsum)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 28, Mod)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 28, DepthToSpace)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 28, SpaceToDepth)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 28, Compress)>());
