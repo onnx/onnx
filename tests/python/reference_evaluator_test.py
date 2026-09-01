@@ -239,6 +239,7 @@ class TestReferenceEvaluator:
 
     @staticmethod
     def _linear_regression(clip=False, opset=None, min_value=-1.0, max_value=1.0):
+        clip_input_opset = 11
         X = make_tensor_value_info("X", TensorProto.FLOAT, [None, None])
         A = make_tensor_value_info("A", TensorProto.FLOAT, [None, None])
         B = make_tensor_value_info("B", TensorProto.FLOAT, [None, None])
@@ -246,7 +247,7 @@ class TestReferenceEvaluator:
         node1 = make_node("MatMul", ["X", "A"], ["XA"])
         if clip:
             node2 = make_node("Add", ["XA", "B"], ["Y_clip"])
-            if opset is not None and opset < 11:
+            if opset is not None and opset < clip_input_opset:
                 if min_value:
                     if max_value:
                         node3 = make_node(
@@ -1406,6 +1407,7 @@ class TestReferenceEvaluator:
         assert_allclose(got[0], expected)
 
     def test_onnxt_runtime_bernoulli(self):
+        tolerance = 1e-5
         X = make_tensor_value_info("X", TensorProto.FLOAT, [None])
         Y = make_tensor_value_info("Y", TensorProto.FLOAT, [None])
         node1 = make_node("Bernoulli", ["X"], ["Y"], seed=0.0)
@@ -1416,8 +1418,8 @@ class TestReferenceEvaluator:
         got = sess.run(None, {"X": np.zeros((2, 4), dtype=np.float32) + 0.5})[0]
         assert got.shape == (2, 4)
         assert got.dtype == np.float32
-        assert got.min() > -1e-5
-        assert got.max() < 1 + 1e-5
+        assert got.min() > -tolerance
+        assert got.max() < 1 + tolerance
 
     def test_onnxt_runtime_random_uniform(self):
         Y = make_tensor_value_info("Y", TensorProto.FLOAT, [None])
@@ -1470,11 +1472,12 @@ class TestReferenceEvaluator:
         assert got.dtype == np.float32
 
     def test_eval_celu(self):
-        inst = Celu.create(alpha=0.5)
-        assert inst.alpha == 0.5
+        alpha = 0.5
+        inst = Celu.create(alpha=alpha)
+        assert inst.alpha == alpha
         x = np.array([[0, 1], [-1, 2]], dtype=np.float32)
-        y = Celu.eval(x, alpha=0.5)
-        expected = _vcelu1(x, alpha=0.5)
+        y = Celu.eval(x, alpha=alpha)
+        expected = _vcelu1(x, alpha=alpha)
         assert_allclose(y, expected)
 
     @pytest.mark.parametrize("op_type", ["Celu", "Elu", "Selu"])
@@ -1509,18 +1512,20 @@ class TestReferenceEvaluator:
         assert y.dtype == np.int64
 
     def test_eval_celu_load_op(self):
+        alpha = 0.5
         celu = load_op("", "Celu")
         assert celu.op_domain == ""
-        inst = celu.create(alpha=0.5)
-        assert inst.alpha == 0.5
+        inst = celu.create(alpha=alpha)
+        assert inst.alpha == alpha
         x = np.array([[0, 1], [-1, 2]], dtype=np.float32)
-        y = celu.eval(x, alpha=0.5)
-        expected = _vcelu1(x, alpha=0.5)
+        y = celu.eval(x, alpha=alpha)
+        expected = _vcelu1(x, alpha=alpha)
         assert_allclose(y, expected)
 
     def test_create_adam(self):
-        inst = Adam.create(alpha=0.5)
-        assert inst.alpha == 0.5
+        alpha = 0.5
+        inst = Adam.create(alpha=alpha)
+        assert inst.alpha == alpha
 
     @skip_if_no_onnxruntime
     def test_conv(self):
@@ -2891,7 +2896,8 @@ class TestReferenceEvaluator:
             make_tensor_value_info("scan_out", TensorProto.FLOAT, [None]),
         ]
 
-        if opset >= 18:
+        axes_input_opset = 18
+        if opset >= axes_input_opset:
             initializers.append(
                 from_array(np.array([1], dtype=np.int64), name="axis_red")
             )
@@ -3185,8 +3191,9 @@ class TestReferenceEvaluator:
                     raise AssertionError(
                         f"Shape mismatch for {reduce_op!r}, {baseline}:{a.shape} != {k}:{b.shape}."
                     )
+                tolerance = 1e-6
                 diff = np.abs(a - b).max()
-                if diff > 1e-6:
+                if diff > tolerance:
                     raise AssertionError(
                         f"Discrepancies (max={diff}) for {reduce_op!r}, {baseline} != {k}\n{a}\n!=\n{b}"
                     )
@@ -3238,9 +3245,7 @@ class TestReferenceEvaluator:
         compute_x = x.astype(np.float32) if dtype == np.float16 else x
         mean = np.mean(compute_x, axis=(1, -1), keepdims=True)
         mean_squared = np.square(mean)
-        squared_mean = np.mean(
-            np.square(compute_x), axis=(1, -1), keepdims=True
-        )
+        squared_mean = np.mean(np.square(compute_x), axis=(1, -1), keepdims=True)
         expected = (
             (compute_x - mean) / (np.sqrt(squared_mean - mean_squared) + 1e-5)
         ).astype(dtype)
@@ -3255,9 +3260,9 @@ class TestReferenceEvaluator:
         graph = make_graph([node], "g", [x_info], [y_info])
         model = make_model(graph, opset_imports=[make_opsetid("", 28)])
 
-        got = ReferenceEvaluator(model).run(
-            None, {"X": np.ones(2, dtype=np.float16)}
-        )[0]
+        got = ReferenceEvaluator(model).run(None, {"X": np.ones(2, dtype=np.float16)})[
+            0
+        ]
 
         assert_allclose(got, np.zeros(2, dtype=np.float16), rtol=0, atol=0)
 
@@ -4253,14 +4258,14 @@ class TestReferenceEvaluator:
             "W": np.ones((1, 1, 3, 3), dtype=np.float32),
             "B": np.zeros((1,), dtype=np.float32),
         }
-        kwargs = dict(
-            group=1,
-            dilations=[1, 1],
-            kernel_shape=[3, 3],
-            strides=[2, 2],
-            pads=None,
-            auto_pad="SAME_LOWER",
-        )
+        kwargs = {
+            "group": 1,
+            "dilations": [1, 1],
+            "kernel_shape": [3, 3],
+            "strides": [2, 2],
+            "pads": None,
+            "auto_pad": "SAME_LOWER",
+        }
         expected = np.array(
             [[[[12.0, 27.0, 24.0], [63.0, 108.0, 81.0], [72.0, 117.0, 84.0]]]],
             dtype=np.float32,
@@ -5553,7 +5558,8 @@ class TestReferenceEvaluator:
         )
         ref = ReferenceEvaluator(model)
         got = ref.run(None, feeds)
-        assert len(got) == 3
+        expected_output_count = 3
+        assert len(got) == expected_output_count
         for i in range(2, -1, -1):
             assert_allclose(got[i], expected[i])
 

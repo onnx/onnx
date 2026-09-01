@@ -40,16 +40,15 @@ class TestSchema:
         assert v.type == onnx.AttributeProto.FLOAT
 
     def test_mean_variance_normalization_opset28_schema(self) -> None:
-        schema = defs.get_schema("MeanVarianceNormalization", 28)
-        old_schema = defs.get_schema("MeanVarianceNormalization", 27)
+        opset = 28
+        schema = defs.get_schema("MeanVarianceNormalization", opset)
+        old_schema = defs.get_schema("MeanVarianceNormalization", opset - 1)
 
-        assert schema.since_version == 28
+        assert schema.since_version == opset
         assert schema.attributes["epsilon"].default_value.f == pytest.approx(1e-9)
         assert tuple(schema.attributes["axes"].default_value.ints) == (0, 2, 3)
         assert schema.has_context_dependent_function
-        assert (
-            schema.node_determinism == defs.OpSchema.NodeDeterminism.Deterministic
-        )
+        assert schema.node_determinism == defs.OpSchema.NodeDeterminism.Deterministic
         assert "epsilon" not in old_schema.attributes
 
         node = helper.make_node(

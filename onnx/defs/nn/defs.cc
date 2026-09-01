@@ -2235,7 +2235,8 @@ static bool BuildMeanVarianceNormalizationFunctionBody(
     return false;
   }
   const int32_t elem_type = input_type->tensor_type().elem_type();
-  const bool use_float_compute = elem_type == TensorProto_DataType_FLOAT16 || elem_type == TensorProto_DataType_BFLOAT16;
+  const bool use_float_compute =
+      elem_type == TensorProto_DataType_FLOAT16 || elem_type == TensorProto_DataType_BFLOAT16;
 
   const auto* const epsilon_attr = ctx.getAttribute("epsilon");
   float epsilon = (epsilon_attr != nullptr) ? epsilon_attr->f() : 1e-9f;

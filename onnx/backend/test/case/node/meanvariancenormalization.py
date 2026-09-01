@@ -65,9 +65,7 @@ class MeanVarianceNormalization(Base):
         # Calculate expected output with custom epsilon
         data_mean = np.mean(input_data, axis=(1, -1), keepdims=True)
         data_mean_squared = np.square(data_mean)
-        data_squared_mean = np.mean(
-            np.square(input_data), axis=(1, -1), keepdims=True
-        )
+        data_squared_mean = np.mean(np.square(input_data), axis=(1, -1), keepdims=True)
         std = np.sqrt(data_squared_mean - data_mean_squared)
         expected_output = (input_data - data_mean) / (std + epsilon)
 

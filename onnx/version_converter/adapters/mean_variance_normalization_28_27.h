@@ -29,4 +29,4 @@ class MeanVarianceNormalization_28_27 final : public Adapter {
   }
 };
 
-} // namespace onnx::version_conversion
+} // namespace ONNX_NAMESPACE::version_conversion
