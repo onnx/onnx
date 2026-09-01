@@ -4375,6 +4375,36 @@ class TestShapeInference(TestShapeInferenceHelper):
             graph, [make_tensor_value_info("z", TensorProto.UINT32, (2, 3, 1))]
         )
 
+    @pytest.mark.parametrize(
+        "elem_type",
+        [
+            TensorProto.INT8,
+            TensorProto.INT16,
+            TensorProto.INT32,
+            TensorProto.INT64,
+        ],
+    )
+    @pytest.mark.parametrize("direction", ["LEFT", "RIGHT"])
+    def test_bitshift_signed(self, elem_type, direction) -> None:
+        graph = self._make_graph(
+            [("x", elem_type, (2, 3, 1)), ("y", elem_type, (2, 3, 1))],
+            [make_node("BitShift", ["x", "y"], "z", direction=direction)],
+            [],
+        )
+        self._assert_inferred(
+            graph, [make_tensor_value_info("z", elem_type, (2, 3, 1))]
+        )
+
+    def test_bitshift_signed_broadcast(self) -> None:
+        graph = self._make_graph(
+            [("x", TensorProto.INT32, (16, 4, 1)), ("y", TensorProto.INT32, (1,))],
+            [make_node("BitShift", ["x", "y"], "z", direction="RIGHT")],
+            [],
+        )
+        self._assert_inferred(
+            graph, [make_tensor_value_info("z", TensorProto.INT32, (16, 4, 1))]
+        )
+
     def test_sum_single(self) -> None:
         self._identity_prop("Sum")
 
@@ -9707,14 +9737,15 @@ class TestShapeInference(TestShapeInferenceHelper):
             graph, [make_tensor_value_info("z", TensorProto.FLOAT, (4, 5))]
         )
 
-    def test_einsum_batch_matmul(self) -> None:
+    @pytest.mark.parametrize("data_type", [TensorProto.FLOAT, TensorProto.BFLOAT16])
+    def test_einsum_batch_matmul(self, data_type: int) -> None:
         graph = self._make_graph(
-            [("x", TensorProto.FLOAT, (5, 2, 3)), ("y", TensorProto.FLOAT, (5, 3, 4))],
+            [("x", data_type, (5, 2, 3)), ("y", data_type, (5, 3, 4))],
             [make_node("Einsum", ["x", "y"], ["z"], equation="bij , b jk-> bik")],
             [],
         )
         self._assert_inferred(
-            graph, [make_tensor_value_info("z", TensorProto.FLOAT, (5, 2, 4))]
+            graph, [make_tensor_value_info("z", data_type, (5, 2, 4))]
         )
 
     def test_einsum_left_hand_eqn(self) -> None:
@@ -10328,6 +10359,19 @@ class TestShapeInference(TestShapeInferenceHelper):
             self._assert_inferred(
                 graph, [make_tensor_value_info("Y", elem_type, (3, 4))]
             )
+
+    def test_mod_float_shape(self) -> None:
+        graph = self._make_graph(
+            [
+                ("A", TensorProto.FLOAT, (2, 1)),
+                ("B", TensorProto.FLOAT, (3,)),
+            ],
+            [make_node("Mod", ["A", "B"], ["C"])],
+            [],
+        )
+        self._assert_inferred(
+            graph, [make_tensor_value_info("C", TensorProto.FLOAT, (2, 3))]
+        )
 
     def test_swiglu_equal_shapes(self) -> None:
         graph = self._make_graph(

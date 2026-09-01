@@ -203,6 +203,42 @@ class TestReferenceEvaluator:
         checker.check_model(m)
         return m
 
+    @pytest.mark.parametrize(
+        "np_dtype,tensor_dtype",
+        [
+            (np.int8, TensorProto.INT8),
+            (np.int16, TensorProto.INT16),
+            (np.int32, TensorProto.INT32),
+            (np.int64, TensorProto.INT64),
+        ],
+    )
+    @pytest.mark.parametrize(
+        "direction,expected",
+        [
+            ("LEFT", [[0, 0, -2, 0], [0, 0, 2, 0]]),
+            ("RIGHT", [[-1, 0, -1, 0], [0, -1, 0, -1]]),
+        ],
+    )
+    def test_bitshift_out_of_range_counts(
+        self, np_dtype, tensor_dtype: int, direction: str, expected
+    ) -> None:
+        bit_width = np.iinfo(np_dtype).bits
+        x = np.array([[-8, 4, -1, 7], [8, -4, 1, -7]], dtype=np_dtype)
+        y = np.array([np.iinfo(np_dtype).min, -1, 1, bit_width], dtype=np_dtype)
+        graph = make_graph(
+            [make_node("BitShift", ["X", "Y"], ["Z"], direction=direction)],
+            "bitshift",
+            [
+                make_tensor_value_info("X", tensor_dtype, [2, 4]),
+                make_tensor_value_info("Y", tensor_dtype, [4]),
+            ],
+            [make_tensor_value_info("Z", tensor_dtype, [2, 4])],
+        )
+        model = make_model(graph, opset_imports=[make_opsetid("", 28)])
+
+        got = ReferenceEvaluator(model).run(None, {"X": x, "Y": y})[0]
+        np.testing.assert_array_equal(got, np.array(expected, dtype=np_dtype))
+
     @staticmethod
     def _linear_regression(clip=False, opset=None, min_value=-1.0, max_value=1.0):
         X = make_tensor_value_info("X", TensorProto.FLOAT, [None, None])
@@ -6671,6 +6707,46 @@ class TestReferenceEvaluator:
 
         assert_allclose(got_state, expected_state)
         assert_allclose(got_output, expected_output)
+
+    @pytest.mark.parametrize(
+        ("op_type", "input_shape", "output_shape"),
+        [
+            ("SpaceToDepth", [1, 1, 2, 0], [1, 4, 1, 0]),
+            ("SpaceToDepth", [1, 0, 2, 2], [1, 0, 1, 1]),
+            ("DepthToSpace", [1, 4, 2, 0], [1, 1, 4, 0]),
+            ("DepthToSpace", [1, 0, 2, 2], [1, 0, 4, 4]),
+        ],
+    )
+    @pytest.mark.parametrize("mode", ["DCR", "CRD"])
+    def test_space_depth_function_bodies_preserve_zero_dimensions(
+        self, op_type, input_shape, output_shape, mode
+    ):
+        input_vi = make_tensor_value_info("input", TensorProto.FLOAT, input_shape)
+        output_vi = make_tensor_value_info("output", TensorProto.FLOAT, output_shape)
+        node = make_node(
+            op_type,
+            ["input"],
+            ["output"],
+            blocksize=2,
+            mode=mode,
+        )
+        model = make_model(
+            make_graph([node], "g", [input_vi], [output_vi]),
+            opset_imports=[make_opsetid("", 28)],
+        )
+        check_model(model)
+
+        input_ = np.empty(input_shape, dtype=np.float32)
+        expected_output = ReferenceEvaluator(model).run(None, {"input": input_})[0]
+
+        expanded_op = type(op_type, (OpRunExpand,), {"op_domain": ""})
+        output = ReferenceEvaluator(model, new_ops=[expanded_op]).run(
+            None, {"input": input_}
+        )[0]
+
+        assert output.dtype == expected_output.dtype
+        assert output.shape == tuple(output_shape)
+        assert_allclose(output, expected_output)
 
     @staticmethod
     def _swiglu_model() -> ModelProto:

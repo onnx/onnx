@@ -4,6 +4,7 @@
 
 #include <string>
 
+#include "onnx/defs/doc_strings.h"
 #include "onnx/defs/schema.h"
 #include "onnx/defs/type_builders.h"
 
@@ -144,25 +145,11 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint("T", {types::Bool}, "Constrain input/output to boolean tensors.")
         .TypeAndShapeInferenceFunction(unaryLogicalOpInference));
 
-static constexpr const char* BitShift_ver11_doc = R"DOC(
-Bitwise shift operator performs element-wise operation. For each input element, if the
-attribute "direction" is "RIGHT", this operator moves its binary representation toward
-the right side so that the input value is effectively decreased. If the attribute "direction"
-is "LEFT", bits of binary representation moves toward the left side, which results the
-increase of its actual value. The input X is the tensor to be shifted and another input
-Y specifies the amounts of shifting. For example, if "direction" is "Right", X is [1, 4],
-and S is [1, 1], the corresponding output Z would be [0, 2]. If "direction" is "LEFT" with
-X=[1, 2] and S=[1, 2], the corresponding output Y would be [2, 8].
-
-Because this operator supports Numpy-style broadcasting, X's and Y's shapes are
-not necessarily identical.
-)DOC";
-
 ONNX_OPERATOR_SET_SCHEMA(
     BitShift,
-    11,
+    28,
     OpSchema()
-        .SetDoc(GET_OP_DOC_STR(std::string(BitShift_ver11_doc) + GenerateBroadcastingDocMul()))
+        .SetDoc(GET_OP_DOC_STR(std::string(kDoc_BitShift_ver28) + GenerateBroadcastingDocMul()))
         .Input(
             0,
             "X",
@@ -176,7 +163,14 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Output(0, "Z", "Output tensor", "T", OpSchema::Single, true, 1, OpSchema::NonDifferentiable)
         .TypeConstraint(
             "T",
-            {types::UInt8, types::UInt16, types::UInt32, types::UInt64},
+            {types::UInt8,
+             types::UInt16,
+             types::UInt32,
+             types::UInt64,
+             types::Int8,
+             types::Int16,
+             types::Int32,
+             types::Int64},
             "Constrain input and output types to integer tensors.")
         .Attr(
             "direction",

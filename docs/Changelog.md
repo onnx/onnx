@@ -12039,7 +12039,7 @@ This version of the operator has been available since version 11 of the default 
       are specified as part of required input argument 'values', which is a two-element tensor of format
       [off_value, on_value]. The rank of the output tensor will be one greater than the rank of the
       input tensor. The additional dimension is for one-hot representation. The additional dimension will
-      be inserted at the position specified by 'axis'. If 'axis' is not specified then then additional
+      be inserted at the position specified by 'axis'. If 'axis' is not specified then the additional
       dimension will be inserted as the innermost dimension, i.e. axis=-1. The size of the additional
       dimension is specified by required scalar input 'depth'. The type of the output tensor is the same
       as the type of the 'values' input. Any entries in the 'indices' input tensor with values outside
@@ -21210,6 +21210,22 @@ This version of the operator has been available since version 17 of the default 
 
   Computes the Short-time Fourier Transform of the signal.
 
+  The STFT is computed by sliding a window of length `frame_length` over the signal with a
+  step size of `frame_step`, computing a DFT of each windowed frame.
+
+  The number of frames in the output is computed as:
+
+    `frames = floor((signal_length - frame_length) / frame_step) + 1`
+
+  Constraints on inputs:
+  - `frame_step` must be a scalar.
+  - `frame_length` must be a scalar. When omitted and `window` is provided, `frame_length`
+    is inferred from `window.shape[0]`. When both `window` and `frame_length` are omitted,
+    `frame_length` defaults to `signal_length`.
+  - `window` must be a 1-D tensor. When omitted, a rectangular (all-ones) window of length
+    `frame_length` is used. When both `window` and `frame_length` are provided, the length
+    of the `window` tensor must equal `frame_length`.
+
 #### Version
 
 This version of the operator has been available since version 17 of the default ONNX operator set.
@@ -21218,27 +21234,27 @@ This version of the operator has been available since version 17 of the default 
 
 <dl>
 <dt><tt>onesided</tt> : int (default is 1)</dt>
-<dd>If onesided is 1, only values for w in [0, 1, 2, ..., floor(n_fft/2) + 1] are returned because the real-to-complex Fourier transform satisfies the conjugate symmetry, i.e., X[m, w] = X[m,w]=X[m,n_fft-w]*. Note if the input or window tensors are complex, then onesided output is not possible. Enabling onesided with real inputs performs a Real-valued fast Fourier transform (RFFT).When invoked with real or complex valued input, the default value is 1. Values can be 0 or 1.</dd>
+<dd>If onesided is 1, only values for w in [0, 1, 2, ..., floor(n_fft/2) + 1] are returned because the real-to-complex Fourier transform satisfies the conjugate symmetry, i.e., X[m, w] = X[m, n_fft-w]*. Note if the input or window tensors are complex, then onesided output is not possible. Enabling onesided with real inputs performs a Real-valued fast Fourier transform (RFFT). When invoked with real or complex valued input, the default value is 1. Values can be 0 or 1.</dd>
 </dl>
 
 #### Inputs (2 - 4)
 
 <dl>
 <dt><tt>signal</tt> (non-differentiable) : T1</dt>
-<dd>Input tensor representing a real or complex valued signal. For real input, the following shape is expected: [batch_size][signal_length][1]. For complex input, the following shape is expected: [batch_size][signal_length][2], where [batch_size][signal_length][0] represents the real component and [batch_size][signal_length][1] represents the imaginary component of the signal.</dd>
+<dd>Input tensor representing a real or complex valued signal. For real input, the following shape is expected: [batch_size][signal_length][1]. For complex input, the following shape is expected: [batch_size][signal_length][2], where [batch_size][signal_length][0] represents the real component and [batch_size][signal_length][1] represents the imaginary component of the signal. The tensor is expected to have rank 3.</dd>
 <dt><tt>frame_step</tt> (non-differentiable) : T2</dt>
-<dd>The number of samples to step between successive DFTs.</dd>
+<dd>A scalar representing the number of samples to step between successive DFTs.</dd>
 <dt><tt>window</tt> (optional, non-differentiable) : T1</dt>
-<dd>A tensor representing the window that will be slid over the signal.The window must have rank 1 with shape: [window_shape]. It's an optional value. </dd>
+<dd>An optional 1-D tensor representing the window function to be applied to each frame of the signal before computing the DFT. The length of the window (window.shape[0]) determines the frame length when `frame_length` is not specified. If both `window` and `frame_length` are provided, the length of the `window` must equal `frame_length`. When omitted, a rectangular (all-ones) window of length `frame_length` is used.</dd>
 <dt><tt>frame_length</tt> (optional, non-differentiable) : T2</dt>
-<dd>A scalar representing the size of the DFT. It's an optional value.</dd>
+<dd>An optional scalar representing the length of each frame (i.e., the DFT size). When omitted and `window` is provided, `frame_length` is inferred from `window.shape[0]`. When both `window` and `frame_length` are omitted, `frame_length` defaults to `signal_length`. If both `frame_length` and `window` are provided, the length of the `window` must equal `frame_length`.</dd>
 </dl>
 
 #### Outputs
 
 <dl>
 <dt><tt>output</tt> (non-differentiable) : T1</dt>
-<dd>The Short-time Fourier Transform of the signals.If onesided is 1, the output has the shape: [batch_size][frames][dft_unique_bins][2], where dft_unique_bins is frame_length // 2 + 1 (the unique components of the DFT) If onesided is 0, the output has the shape: [batch_size][frames][frame_length][2], where frame_length is the length of the DFT.</dd>
+<dd>The Short-time Fourier Transform of the signal. The number of frames in the output is `frames = floor((signal_length - frame_length) / frame_step) + 1`. If onesided is 1, the output has the shape: [batch_size][frames][dft_unique_bins][2], where dft_unique_bins is frame_length // 2 + 1 (the unique components of the DFT). If onesided is 0, the output has the shape: [batch_size][frames][frame_length][2], where frame_length is the length of the DFT. The last dimension of size 2 represents the real and imaginary parts of each complex value.</dd>
 </dl>
 
 #### Type Constraints
@@ -33278,6 +33294,62 @@ This version of the operator has been available since version 27 of the default 
 </dl>
 
 ## Version 28 of the default ONNX operator set
+### <a name="BitShift-28"></a>**BitShift-28**</a>
+
+  Bitwise shift operator performs element-wise operation. For each input element, if the
+  attribute "direction" is "RIGHT", this operator moves its binary representation toward
+  the right side. If the attribute "direction" is "LEFT", bits of binary representation
+  move toward the left side. The input X is the tensor to be shifted and another
+  input Y specifies the amounts of shifting. For example, if "direction" is
+  "RIGHT", X is [1, 4], and Y is [1, 1], the corresponding output Z would be
+  [0, 2]. If "direction" is "LEFT" with X=[1, 2] and Y=[1, 2], the corresponding
+  output Z would be [2, 8].
+
+  For a signed T the right shift is an arithmetic shift (sign-extending). The
+  vacated high bits are filled with copies of the sign bit, so a negative X stays
+  negative. For a signed T a left shift can move bits into and past the sign bit,
+  and bits shifted past the sign bit are discarded.
+
+  If Y is negative, or is greater than or equal to the number of bits of T, then
+  the result is whatever the sign bit extension alone produces: -1 for a right
+  shift on a negative X, where the fill is a sign bit of 1, and 0 in every other
+  case.
+  This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
+
+#### Version
+
+This version of the operator has been available since version 28 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>direction</tt> : string (required)</dt>
+<dd>Direction of moving bits. It can be either "RIGHT" (for right shift) or "LEFT" (for left shift).</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> (non-differentiable) : T</dt>
+<dd>First operand, input to be shifted.</dd>
+<dt><tt>Y</tt> (non-differentiable) : T</dt>
+<dd>Second operand, amounts of shift.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Z</tt> (non-differentiable) : T</dt>
+<dd>Output tensor</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64)</dt>
+<dd>Constrain input and output types to integer tensors.</dd>
+</dl>
+
 ### <a name="Cast-28"></a>**Cast-28**</a>
 
   The operator casts the elements of a given input tensor to a data type
@@ -33443,6 +33515,109 @@ This version of the operator has been available since version 28 of the default 
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
+### <a name="Compress-28"></a>**Compress-28**</a>
+
+  Selects slices from an input tensor along a given axis where condition evaluates to True for each axis index.
+      In case axis is not provided, input is flattened before elements are selected.
+      Compress behaves like numpy.compress: https://docs.scipy.org/doc/numpy/reference/generated/numpy.compress.html
+
+
+#### Version
+
+This version of the operator has been available since version 28 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>axis</tt> : int</dt>
+<dd>(Optional) Axis along which to take slices. If not specified, input is flattened before elements being selected. Negative value means counting dimensions from the back. Accepted range is [-r, r-1] where r = rank(input).</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>input</tt> (differentiable) : T</dt>
+<dd>Tensor of rank r >= 1.</dd>
+<dt><tt>condition</tt> (non-differentiable) : T1</dt>
+<dd>Rank 1 tensor of booleans to indicate which slices or data elements to be selected. Its length can be less than the input length along the axis or the flattened input size if axis is not specified. In such cases data slices or elements exceeding the condition length are discarded.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> (differentiable) : T</dt>
+<dd>Tensor of rank r if axis is specified. Otherwise output is a Tensor of rank 1.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
+<dd>Constrain input and output types to all tensor types.</dd>
+<dt><tt>T1</tt> : tensor(bool)</dt>
+<dd>Constrain to boolean tensors.</dd>
+</dl>
+
+### <a name="DepthToSpace-28"></a>**DepthToSpace-28**</a>
+
+  DepthToSpace rearranges (permutes) data from depth into blocks of spatial data.
+  This is the reverse transformation of SpaceToDepth. More specifically, this op outputs a copy of
+  the input tensor where values from the depth dimension are moved in spatial blocks to the height
+  and width dimensions. By default, `mode` = `DCR`.
+  In the DCR mode, elements along the depth dimension from the input tensor are rearranged in the
+  following order: depth, column, and then row. The output y is computed from the input x as below:
+
+  ```
+  b, c, h, w = x.shape
+  tmp = np.reshape(x, [b, blocksize, blocksize, c // (blocksize**2), h, w])
+  tmp = np.transpose(tmp, [0, 3, 4, 1, 5, 2])
+  y = np.reshape(tmp, [b, c // (blocksize**2), h * blocksize, w * blocksize])
+  ```
+
+  In the CRD mode, elements along the depth dimension from the input tensor are rearranged in the
+  following order: column, row, and the depth. The output y is computed from the input x as below:
+
+  ```
+  b, c, h, w = x.shape
+  tmp = np.reshape(x, [b, c // (blocksize ** 2), blocksize, blocksize, h, w])
+  tmp = np.transpose(tmp, [0, 1, 4, 2, 5, 3])
+  y = np.reshape(tmp, [b, c // (blocksize ** 2), h * blocksize, w * blocksize])
+  ```
+
+#### Version
+
+This version of the operator has been available since version 28 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>blocksize</tt> : int (required)</dt>
+<dd>Blocks of [blocksize, blocksize] are moved.</dd>
+<dt><tt>mode</tt> : string (default is DCR)</dt>
+<dd>DCR (default) for depth-column-row order re-arrangement. Use CRD for column-row-depth order.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>input</tt> (differentiable) : T</dt>
+<dd>Input tensor of [N,C,H,W], where N is the batch axis, C is the channel or depth, H is the height and W is the width.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> (differentiable) : T</dt>
+<dd>Output tensor of [N, C/(blocksize * blocksize), H * blocksize, W * blocksize].</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
+<dd>Constrain input and output types to all tensor types.</dd>
+</dl>
+
 ### <a name="DequantizeLinear-28"></a>**DequantizeLinear-28**</a>
 
   The linear dequantization operator. It consumes a quantized tensor, a scale, and a zero point to compute the
@@ -33500,6 +33675,193 @@ This version of the operator has been available since version 28 of the default 
 <dd>The type of the input 'x_scale'.</dd>
 <dt><tt>T3</tt> : tensor(float), tensor(float16), tensor(bfloat16)</dt>
 <dd>The type of the output 'y'.</dd>
+</dl>
+
+### <a name="Einsum-28"></a>**Einsum-28**</a>
+
+  An einsum of the form `term1, term2 -> output-term` produces an output tensor using the following equation
+
+  ```
+  output[output-term] = reduce-sum( input1[term1] * input2[term2] )
+  ```
+
+  where the reduce-sum performs a summation over all the indices occurring in the input terms (term1, term2)
+  that do not occur in the output-term.
+
+  The Einsum operator evaluates algebraic tensor operations on a sequence of tensors, using the Einstein summation
+  convention. The equation string contains a comma-separated sequence of lower case letters and/or upper case letters.
+  Each term corresponds to an operand tensor, and the characters within the terms correspond to operands dimensions.
+  Lower case letters and upper case letters are treated as distinct symbols, that is, "a" and "A" refer to different
+  symbols.
+
+  This sequence may be followed by "->" to separate the left and right hand side of the equation.
+  If the equation contains "->" followed by the right-hand side, the explicit (not classical) form of the Einstein
+  summation is performed, and the right-hand side indices indicate output tensor dimensions. In other cases,
+  output indices are (implicitly) set to the sequence of indices appearing exactly once in the equation, sorted in
+  increasing order of their ASCII values (so that all upper case letters precede all lower case letters, e.g.,
+  "A" < "Z" < "a" < "z").
+
+  When a dimension character is repeated in the left-hand side, it represents summation along the dimension.
+
+  The equation may contain ellipsis ("...") to enable broadcasting. Ellipsis must indicate a fixed number of dimensions.
+  Specifically, every occurrence of ellipsis in the equation must represent the same number of dimensions.
+  The right-hand side may contain exactly one ellipsis. In implicit mode, the ellipsis dimensions are set to the
+  beginning of the output. The equation string may contain space (U+0020) character.
+
+#### Version
+
+This version of the operator has been available since version 28 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>equation</tt> : string (required)</dt>
+<dd>Einsum expression string.</dd>
+</dl>
+
+#### Inputs (1 - &#8734;)
+
+<dl>
+<dt><tt>Inputs</tt> (variadic, differentiable) : T</dt>
+<dd>Operands</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Output</tt> (differentiable) : T</dt>
+<dd>Output tensor</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
+<dd>Constrain input and output types to all numerical tensor types.</dd>
+</dl>
+
+### <a name="Mod-28"></a>**Mod-28**</a>
+
+  Performs an element-wise binary modulo operation.
+  The `fmod` attribute determines how the quotient is rounded. Its value must be
+  `0` (default) or `1`.
+
+  If `fmod` is `0`, the output is calculated as `A - floor(A / B) * B`.
+  The result has the same sign as `B`.
+  For floating-point inputs, the following special cases apply:
+  - If `x` is `±0` and `y` is nonzero, `±0` with the sign of `y` is returned.
+  - If `x` is `±∞` and `y` is not `NaN`, `NaN` is returned.
+  - If `y` is `±0` and `x` is not `NaN`, `NaN` is returned.
+  - If `y` is `±∞` and `x` is finite and nonzero, `x` is returned when `x` and
+    `y` have the same sign; otherwise, `y` is returned.
+  - If either argument is `NaN`, `NaN` is returned.
+
+  If `fmod` is `1`, the output is calculated as `A - trunc(A / B) * B`.
+  The result has the same sign as `A`, except that either signed zero may be
+  returned when `A` is `-0` and `B` is positive. For floating-point inputs,
+  the following special cases apply:
+  - If `x` is `-0` and `y` is greater than zero, either `+0` or `-0` may be returned.
+  - If `x` is `±∞` and `y` is not `NaN`, `NaN` is returned.
+  - If `y` is `±0` and `x` is not `NaN`, `NaN` should be returned.
+  - If `y` is `±∞` and `x` is finite, `x` is returned.
+  - If either argument is `NaN`, `NaN` is returned.
+
+  This operator supports **multidirectional (i.e., NumPy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
+
+#### Version
+
+This version of the operator has been available since version 28 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>fmod</tt> : int (default is 0)</dt>
+<dd>Whether the operator should use floor (0) or truncation (1) to calculate the quotient.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>A</tt> (differentiable) : T</dt>
+<dd>Dividend tensor</dd>
+<dt><tt>B</tt> (non-differentiable) : T</dt>
+<dd>Divisor tensor</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>C</tt> (differentiable) : T</dt>
+<dd>Remainder tensor</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
+<dd>Constrain input and output types to numeric tensors.</dd>
+</dl>
+
+### <a name="OneHot-28"></a>**OneHot-28**</a>
+
+  Produces a one-hot tensor based on inputs.
+      The locations represented by the index values in the 'indices' input tensor will have 'on_value'
+      and the other locations will have 'off_value' in the output tensor, where 'on_value' and 'off_value'
+      are specified as part of required input argument 'values', which is a two-element tensor of format
+      [off_value, on_value]. The rank of the output tensor will be one greater than the rank of the
+      input tensor. The additional dimension is for one-hot representation. The additional dimension will
+      be inserted at the position specified by 'axis'. If 'axis' is not specified then the additional
+      dimension will be inserted as the innermost dimension, i.e. axis=-1. The size of the additional
+      dimension is specified by required scalar input 'depth'. The type of the output tensor is the same
+      as the type of the 'values' input. Any entries in the 'indices' input tensor with values outside
+      the range [-depth, depth-1] will result in one-hot representation with all 'off_value' values in the
+      output tensor.
+
+      when axis = 0:
+      output[input[i, j, k], i, j, k] = 1 for all i, j, k and 0 otherwise.
+
+      when axis = -1:
+      output[i, j, k, input[i, j, k]] = 1 for all i, j, k and 0 otherwise.
+
+
+#### Version
+
+This version of the operator has been available since version 28 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>axis</tt> : int (default is -1)</dt>
+<dd>(Optional) Axis along which one-hot representation in added. Default: axis=-1. axis=-1 means that the additional dimension will be inserted as the innermost/last dimension in the output tensor. Negative value means counting dimensions from the back. Accepted range is [-r-1, r] where r = rank(indices).</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>indices</tt> (non-differentiable) : T1</dt>
+<dd>Input tensor containing indices. Any entries in the 'indices' input tensor with values outside the range [-depth, depth-1] will result in one-hot representation with all 'off_value' values in the output tensor.In case 'indices' is of non-integer type, the values will be casted to int64 before use.</dd>
+<dt><tt>depth</tt> (non-differentiable) : T2</dt>
+<dd>Scalar or Rank 1 tensor containing exactly one element, specifying the number of classes in one-hot tensor. This is also the size of the one-hot dimension (specified by 'axis' attribute) added on in the output tensor. The values in the 'indices' input tensor are expected to be in the range [-depth, depth-1]. In case 'depth' is of non-integer type, it will be casted to int64 before use.</dd>
+<dt><tt>values</tt> (non-differentiable) : T3</dt>
+<dd>Rank 1 tensor containing exactly two elements, in the format [off_value, on_value], where 'on_value' is the value used for filling locations specified in 'indices' input tensor, and 'off_value' is the value used for filling locations other than those specified in 'indices' input tensor. </dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> (non-differentiable) : T3</dt>
+<dd>Tensor of rank one greater than input tensor 'indices', i.e. rank(output) = rank(indices) + 1. The data type for the elements of the output tensor is the same as the type of input 'values' is used.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T1</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input to only numeric types.</dd>
+<dt><tt>T2</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input to only numeric types.</dd>
+<dt><tt>T3</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
+<dd>Constrain to any tensor type.</dd>
 </dl>
 
 ### <a name="QuantizeLinear-28"></a>**QuantizeLinear-28**</a>
@@ -33676,6 +34038,119 @@ This version of the operator has been available since version 28 of the default 
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
+### <a name="ReverseSequence-28"></a>**ReverseSequence-28**</a>
+
+  Reverse batch of sequences having different lengths specified by `sequence_lens`.
+
+  For each slice i iterating on batch axis, the operator reverses the first sequence_lens[i] elements on time axis,
+  and copies elements whose index's beyond sequence_lens[i] to the output. So the output slice i contains reversed
+  sequences on the first sequence_lens[i] elements, then have original values copied for the other elements.
+
+  Example 1:
+    input = [[0.0, 4.0, 8.0,  12.0],
+             [1.0, 5.0, 9.0,  13.0],
+             [2.0, 6.0, 10.0, 14.0],
+             [3.0, 7.0, 11.0, 15.0]]
+    sequence_lens = [4, 3, 2, 1]
+    time_axis = 0
+    batch_axis = 1
+
+    output = [[3.0, 6.0, 9.0,  12.0],
+              [2.0, 5.0, 8.0,  13.0],
+              [1.0, 4.0, 10.0, 14.0],
+              [0.0, 7.0, 11.0, 15.0]]
+
+  Example 2:
+    input = [[0.0,  1.0,  2.0,  3.0 ],
+             [4.0,  5.0,  6.0,  7.0 ],
+             [8.0,  9.0,  10.0, 11.0],
+             [12.0, 13.0, 14.0, 15.0]]
+    sequence_lens = [1, 2, 3, 4]
+    time_axis = 1
+    batch_axis = 0
+
+    output = [[0.0,  1.0,  2.0,  3.0 ],
+              [5.0,  4.0,  6.0,  7.0 ],
+              [10.0, 9.0,  8.0,  11.0],
+              [15.0, 14.0, 13.0, 12.0]]
+
+#### Version
+
+This version of the operator has been available since version 28 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>batch_axis</tt> : int (default is 1)</dt>
+<dd>(Optional) Specify which axis is batch axis. Must be one of 1 (default), or 0.</dd>
+<dt><tt>time_axis</tt> : int (default is 0)</dt>
+<dd>(Optional) Specify which axis is time axis. Must be one of 0 (default), or 1.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>input</tt> : T</dt>
+<dd>Tensor of rank r >= 2.</dd>
+<dt><tt>sequence_lens</tt> : tensor(int64)</dt>
+<dd>Tensor specifying lengths of the sequences in a batch. It has shape `[batch_size]`.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> : T</dt>
+<dd>Tensor with same shape of input.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
+<dd>Input and output types can be of any tensor type.</dd>
+</dl>
+
+### <a name="SpaceToDepth-28"></a>**SpaceToDepth-28**</a>
+
+  SpaceToDepth rearranges blocks of spatial data into depth. More specifically,
+  this op outputs a copy of the input tensor where values from the height and width dimensions
+  are moved to the depth dimension. `mode` determines whether blocks are ordered depth-column-row
+  (`DCR`, the default) or column-row-depth (`CRD`).
+
+#### Version
+
+This version of the operator has been available since version 28 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>blocksize</tt> : int (required)</dt>
+<dd>Blocks of [blocksize, blocksize] are moved.</dd>
+<dt><tt>mode</tt> : string (default is DCR)</dt>
+<dd>DCR (default) for depth-column-row order re-arrangement. Use CRD for column-row-depth order.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>input</tt> (differentiable) : T</dt>
+<dd>Input tensor of [N,C,H,W], where N is the batch axis, C is the channel or depth, H is the height and W is the width.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> (differentiable) : T</dt>
+<dd>Output tensor of [N, C * blocksize * blocksize, H/blocksize, W/blocksize].</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
+<dd>Constrain input and output types to all tensor types.</dd>
+</dl>
+
 ### <a name="SwiGLU-28"></a>**SwiGLU-28**</a>
 
   SwiGLU is a gated activation that takes two inputs, a gate `A` and a linear (value)
@@ -33729,6 +34204,146 @@ This version of the operator has been available since version 28 of the default 
 <dl>
 <dt><tt>T</tt> : tensor(bfloat16), tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
+### <a name="Unique-28"></a>**Unique-28**</a>
+
+  Find the unique elements of a tensor. When an optional attribute 'axis' is provided, unique subtensors sliced along the 'axis' are returned.
+  Otherwise the input tensor is flattened and unique values of the flattened tensor are returned.
+
+  This operator returns the unique values or sliced unique subtensors of the input tensor and three optional outputs.
+  The first output tensor 'Y' contains all unique values or subtensors of the input.
+  The second optional output tensor 'indices' contains indices of 'Y' elements' first occurrence in 'X'.
+  The third optional output tensor 'inverse_indices' contains, for elements of 'X', its corresponding indices in 'Y'.
+  The fourth optional output tensor 'counts' contains the count of each element of 'Y' in the input.
+
+  Outputs are either sorted in ascending order or optionally in the order of the first occurrence of the values in the input.
+
+  https://docs.scipy.org/doc/numpy/reference/generated/numpy.unique.html
+
+  Example 1:
+  ```
+  input_X = [2, 1, 1, 3, 4, 3]
+  attribute_sorted = 0
+  attribute_axis = None
+  output_Y = [2, 1, 3, 4]
+  output_indices = [0, 1, 3, 4]
+  output_inverse_indices = [0, 1, 1, 2, 3, 2]
+  output_counts = [1, 2, 2, 1]
+  ```
+
+  Example 2:
+  ```
+  input_X = [[1, 3], [2, 3]]
+  attribute_sorted = 1
+  attribute_axis = None
+  output_Y = [1, 2, 3]
+  output_indices = [0, 2, 1]
+  output_inverse_indices = [0, 2, 1, 2]
+  output_counts = [1, 1, 2]
+  ```
+
+  Example 3:
+  ```
+  input_X = [[1, 0, 0], [1, 0, 0], [2, 3, 4]]
+  attribute_sorted = 1
+  attribute_axis = 0
+  output_Y = [[1, 0, 0], [2, 3, 4]]
+  output_indices = [0, 2]
+  output_inverse_indices = [0, 0, 1]
+  output_counts = [2, 1]
+  ```
+
+  Example 4:
+  ```
+  input_x = [[[1., 1.], [0., 1.], [2., 1.], [0., 1.]],
+              [[1., 1.], [0., 1.], [2., 1.], [0., 1.]]]
+  attribute_sorted = 1
+  attribute_axis = 1
+  ```
+
+  intermediate data are presented below for better understanding:
+  there are 4 subtensors sliced along axis 1 of input_x (shape = (2, 4, 2)):
+  ```
+  A: [[1, 1], [1, 1]],
+     [[0, 1], [0, 1]],
+     [[2, 1], [2, 1]],
+     [[0, 1], [0, 1]].
+  ```
+
+  there are 3 unique subtensors:
+  ```
+  [[1, 1], [1, 1]],
+  [[0, 1], [0, 1]],
+  [[2, 1], [2, 1]].
+  ```
+
+  sorted unique subtensors:
+  ```
+  B: [[0, 1], [0, 1]],
+     [[1, 1], [1, 1]],
+     [[2, 1], [2, 1]].
+  ```
+
+  output_Y is constructed from B:
+  ```
+  [[[0. 1.], [1. 1.], [2. 1.]],
+   [[0. 1.], [1. 1.], [2. 1.]]]
+  ```
+
+  output_indices is to map from B to A:
+  ```
+  [1, 0, 2]
+  ```
+
+  output_inverse_indices is to map from A to B:
+  ```
+  [1, 0, 2, 0]
+  ```
+
+  output_counts:
+  ```
+  [2, 1, 1]
+  ```
+
+#### Version
+
+This version of the operator has been available since version 28 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>axis</tt> : int</dt>
+<dd>(Optional) The dimension to apply unique. If not specified, the unique elements of the flattened input are returned. Negative value means counting dimensions from the back. Accepted range is [-r, r-1] where r = rank(input).</dd>
+<dt><tt>sorted</tt> : int (default is 1)</dt>
+<dd>(Optional) Whether to sort the unique elements in ascending order before returning as output. Must be one of 0, or 1 (default).</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> (non-differentiable) : T</dt>
+<dd>A N-D input tensor that is to be processed.</dd>
+</dl>
+
+#### Outputs (1 - 4)
+
+<dl>
+<dt><tt>Y</tt> (non-differentiable) : T</dt>
+<dd>A tensor of the same type as 'X' containing all the unique values or subtensors sliced along a provided 'axis' in 'X', either sorted or maintained in the same order they occur in input 'X'</dd>
+<dt><tt>indices</tt> (optional, non-differentiable) : tensor(int64)</dt>
+<dd>A 1-D INT64 tensor containing indices of 'Y' elements' first occurrence in 'X'. When 'axis' is provided, it contains indices to subtensors in input 'X' on the 'axis'. When 'axis' is not provided, it contains indices to values in the flattened input tensor. </dd>
+<dt><tt>inverse_indices</tt> (optional, non-differentiable) : tensor(int64)</dt>
+<dd>A 1-D INT64 tensor containing, for elements of 'X', its corresponding indices in 'Y'. When 'axis' is provided, it contains indices to subtensors in output 'Y' on the 'axis'. When 'axis' is not provided, it contains indices to values in output 'Y'. </dd>
+<dt><tt>counts</tt> (optional, non-differentiable) : tensor(int64)</dt>
+<dd>A 1-D INT64 tensor containing the count of each element of 'Y' in input 'X'</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
+<dd>Input can be of any tensor type.</dd>
 </dl>
 
 # ai.onnx.preview

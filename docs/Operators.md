@@ -25,7 +25,7 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#AveragePool">AveragePool</a>|<a href="Changelog.md#AveragePool-22">22</a>, <a href="Changelog.md#AveragePool-19">19</a>, <a href="Changelog.md#AveragePool-11">11</a>, <a href="Changelog.md#AveragePool-10">10</a>, <a href="Changelog.md#AveragePool-7">7</a>, <a href="Changelog.md#AveragePool-1">1</a>|
 |<a href="#BatchNormalization">BatchNormalization</a>|<a href="Changelog.md#BatchNormalization-15">15</a>, <a href="Changelog.md#BatchNormalization-14">14</a>, <a href="Changelog.md#BatchNormalization-9">9</a>, <a href="Changelog.md#BatchNormalization-7">7</a>, <a href="Changelog.md#BatchNormalization-6">6</a>, <a href="Changelog.md#BatchNormalization-1">1</a>|
 |<a href="#BitCast">BitCast</a>|<a href="Changelog.md#BitCast-26">26</a>|
-|<a href="#BitShift">BitShift</a>|<a href="Changelog.md#BitShift-11">11</a>|
+|<a href="#BitShift">BitShift</a>|<a href="Changelog.md#BitShift-28">28</a>, <a href="Changelog.md#BitShift-11">11</a>|
 |<a href="#BitwiseAnd">BitwiseAnd</a>|<a href="Changelog.md#BitwiseAnd-18">18</a>|
 |<a href="#BitwiseNot">BitwiseNot</a>|<a href="Changelog.md#BitwiseNot-18">18</a>|
 |<a href="#BitwiseOr">BitwiseOr</a>|<a href="Changelog.md#BitwiseOr-18">18</a>|
@@ -33,7 +33,7 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#Cast">Cast</a>|<a href="Changelog.md#Cast-28">28</a>, <a href="Changelog.md#Cast-25">25</a>, <a href="Changelog.md#Cast-24">24</a>, <a href="Changelog.md#Cast-23">23</a>, <a href="Changelog.md#Cast-21">21</a>, <a href="Changelog.md#Cast-19">19</a>, <a href="Changelog.md#Cast-13">13</a>, <a href="Changelog.md#Cast-9">9</a>, <a href="Changelog.md#Cast-6">6</a>, <a href="Changelog.md#Cast-1">1</a>|
 |<a href="#Ceil">Ceil</a>|<a href="Changelog.md#Ceil-13">13</a>, <a href="Changelog.md#Ceil-6">6</a>, <a href="Changelog.md#Ceil-1">1</a>|
 |<a href="#Col2Im">Col2Im</a>|<a href="Changelog.md#Col2Im-18">18</a>|
-|<a href="#Compress">Compress</a>|<a href="Changelog.md#Compress-11">11</a>, <a href="Changelog.md#Compress-9">9</a>|
+|<a href="#Compress">Compress</a>|<a href="Changelog.md#Compress-28">28</a>, <a href="Changelog.md#Compress-11">11</a>, <a href="Changelog.md#Compress-9">9</a>|
 |<a href="#Concat">Concat</a>|<a href="Changelog.md#Concat-13">13</a>, <a href="Changelog.md#Concat-11">11</a>, <a href="Changelog.md#Concat-4">4</a>, <a href="Changelog.md#Concat-1">1</a>|
 |<a href="#ConcatFromSequence">ConcatFromSequence</a>|<a href="Changelog.md#ConcatFromSequence-11">11</a>|
 |<a href="#Constant">Constant</a>|<a href="Changelog.md#Constant-25">25</a>, <a href="Changelog.md#Constant-24">24</a>, <a href="Changelog.md#Constant-23">23</a>, <a href="Changelog.md#Constant-21">21</a>, <a href="Changelog.md#Constant-19">19</a>, <a href="Changelog.md#Constant-13">13</a>, <a href="Changelog.md#Constant-12">12</a>, <a href="Changelog.md#Constant-11">11</a>, <a href="Changelog.md#Constant-9">9</a>, <a href="Changelog.md#Constant-1">1</a>|
@@ -47,12 +47,11 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#CumSum">CumSum</a>|<a href="Changelog.md#CumSum-14">14</a>, <a href="Changelog.md#CumSum-11">11</a>|
 |<a href="#DFT">DFT</a>|<a href="Changelog.md#DFT-20">20</a>, <a href="Changelog.md#DFT-17">17</a>|
 |<a href="#DeformConv">DeformConv</a>|<a href="Changelog.md#DeformConv-22">22</a>, <a href="Changelog.md#DeformConv-19">19</a>|
-|<a href="#DepthToSpace">DepthToSpace</a>|<a href="Changelog.md#DepthToSpace-13">13</a>, <a href="Changelog.md#DepthToSpace-11">11</a>, <a href="Changelog.md#DepthToSpace-1">1</a>|
 |<a href="#DequantizeLinear">DequantizeLinear</a>|<a href="Changelog.md#DequantizeLinear-28">28</a>, <a href="Changelog.md#DequantizeLinear-25">25</a>, <a href="Changelog.md#DequantizeLinear-24">24</a>, <a href="Changelog.md#DequantizeLinear-23">23</a>, <a href="Changelog.md#DequantizeLinear-21">21</a>, <a href="Changelog.md#DequantizeLinear-19">19</a>, <a href="Changelog.md#DequantizeLinear-13">13</a>, <a href="Changelog.md#DequantizeLinear-10">10</a>|
 |<a href="#Det">Det</a>|<a href="Changelog.md#Det-22">22</a>, <a href="Changelog.md#Det-11">11</a>|
 |<a href="#Div">Div</a>|<a href="Changelog.md#Div-14">14</a>, <a href="Changelog.md#Div-13">13</a>, <a href="Changelog.md#Div-7">7</a>, <a href="Changelog.md#Div-6">6</a>, <a href="Changelog.md#Div-1">1</a>|
 |<a href="#Dropout">Dropout</a>|<a href="Changelog.md#Dropout-22">22</a>, <a href="Changelog.md#Dropout-13">13</a>, <a href="Changelog.md#Dropout-12">12</a>, <a href="Changelog.md#Dropout-10">10</a>, <a href="Changelog.md#Dropout-7">7</a>, <a href="Changelog.md#Dropout-6">6</a>, <a href="Changelog.md#Dropout-1">1</a>|
-|<a href="#Einsum">Einsum</a>|<a href="Changelog.md#Einsum-12">12</a>|
+|<a href="#Einsum">Einsum</a>|<a href="Changelog.md#Einsum-28">28</a>, <a href="Changelog.md#Einsum-12">12</a>|
 |<a href="#Equal">Equal</a>|<a href="Changelog.md#Equal-19">19</a>, <a href="Changelog.md#Equal-13">13</a>, <a href="Changelog.md#Equal-11">11</a>, <a href="Changelog.md#Equal-7">7</a>, <a href="Changelog.md#Equal-1">1</a>|
 |<a href="#Erf">Erf</a>|<a href="Changelog.md#Erf-13">13</a>, <a href="Changelog.md#Erf-9">9</a>|
 |<a href="#Exp">Exp</a>|<a href="Changelog.md#Exp-13">13</a>, <a href="Changelog.md#Exp-6">6</a>, <a href="Changelog.md#Exp-1">1</a>|
@@ -93,14 +92,14 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#Mean">Mean</a>|<a href="Changelog.md#Mean-13">13</a>, <a href="Changelog.md#Mean-8">8</a>, <a href="Changelog.md#Mean-6">6</a>, <a href="Changelog.md#Mean-1">1</a>|
 |<a href="#MelWeightMatrix">MelWeightMatrix</a>|<a href="Changelog.md#MelWeightMatrix-17">17</a>|
 |<a href="#Min">Min</a>|<a href="Changelog.md#Min-13">13</a>, <a href="Changelog.md#Min-12">12</a>, <a href="Changelog.md#Min-8">8</a>, <a href="Changelog.md#Min-6">6</a>, <a href="Changelog.md#Min-1">1</a>|
-|<a href="#Mod">Mod</a>|<a href="Changelog.md#Mod-13">13</a>, <a href="Changelog.md#Mod-10">10</a>|
+|<a href="#Mod">Mod</a>|<a href="Changelog.md#Mod-28">28</a>, <a href="Changelog.md#Mod-13">13</a>, <a href="Changelog.md#Mod-10">10</a>|
 |<a href="#Mul">Mul</a>|<a href="Changelog.md#Mul-14">14</a>, <a href="Changelog.md#Mul-13">13</a>, <a href="Changelog.md#Mul-7">7</a>, <a href="Changelog.md#Mul-6">6</a>, <a href="Changelog.md#Mul-1">1</a>|
 |<a href="#Multinomial">Multinomial</a>|<a href="Changelog.md#Multinomial-22">22</a>, <a href="Changelog.md#Multinomial-7">7</a>|
 |<a href="#Neg">Neg</a>|<a href="Changelog.md#Neg-13">13</a>, <a href="Changelog.md#Neg-6">6</a>, <a href="Changelog.md#Neg-1">1</a>|
 |<a href="#NonMaxSuppression">NonMaxSuppression</a>|<a href="Changelog.md#NonMaxSuppression-11">11</a>, <a href="Changelog.md#NonMaxSuppression-10">10</a>|
 |<a href="#NonZero">NonZero</a>|<a href="Changelog.md#NonZero-13">13</a>, <a href="Changelog.md#NonZero-9">9</a>|
 |<a href="#Not">Not</a>|<a href="Changelog.md#Not-1">1</a>|
-|<a href="#OneHot">OneHot</a>|<a href="Changelog.md#OneHot-11">11</a>, <a href="Changelog.md#OneHot-9">9</a>|
+|<a href="#OneHot">OneHot</a>|<a href="Changelog.md#OneHot-28">28</a>, <a href="Changelog.md#OneHot-11">11</a>, <a href="Changelog.md#OneHot-9">9</a>|
 |<a href="#Optional">Optional</a>|<a href="Changelog.md#Optional-15">15</a>|
 |<a href="#OptionalGetElement">OptionalGetElement</a>|<a href="Changelog.md#OptionalGetElement-18">18</a>, <a href="Changelog.md#OptionalGetElement-15">15</a>|
 |<a href="#OptionalHasElement">OptionalHasElement</a>|<a href="Changelog.md#OptionalHasElement-18">18</a>, <a href="Changelog.md#OptionalHasElement-15">15</a>|
@@ -124,7 +123,7 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#RegexFullMatch">RegexFullMatch</a>|<a href="Changelog.md#RegexFullMatch-20">20</a>|
 |<a href="#Reshape">Reshape</a>|<a href="Changelog.md#Reshape-25">25</a>, <a href="Changelog.md#Reshape-24">24</a>, <a href="Changelog.md#Reshape-23">23</a>, <a href="Changelog.md#Reshape-21">21</a>, <a href="Changelog.md#Reshape-19">19</a>, <a href="Changelog.md#Reshape-14">14</a>, <a href="Changelog.md#Reshape-13">13</a>, <a href="Changelog.md#Reshape-5">5</a>, <a href="Changelog.md#Reshape-1">1</a>|
 |<a href="#Resize">Resize</a>|<a href="Changelog.md#Resize-19">19</a>, <a href="Changelog.md#Resize-18">18</a>, <a href="Changelog.md#Resize-13">13</a>, <a href="Changelog.md#Resize-11">11</a>, <a href="Changelog.md#Resize-10">10</a>|
-|<a href="#ReverseSequence">ReverseSequence</a>|<a href="Changelog.md#ReverseSequence-10">10</a>|
+|<a href="#ReverseSequence">ReverseSequence</a>|<a href="Changelog.md#ReverseSequence-28">28</a>, <a href="Changelog.md#ReverseSequence-10">10</a>|
 |<a href="#RoiAlign">RoiAlign</a>|<a href="Changelog.md#RoiAlign-22">22</a>, <a href="Changelog.md#RoiAlign-16">16</a>, <a href="Changelog.md#RoiAlign-10">10</a>|
 |<a href="#Round">Round</a>|<a href="Changelog.md#Round-22">22</a>, <a href="Changelog.md#Round-11">11</a>|
 |<a href="#STFT">STFT</a>|<a href="Changelog.md#STFT-17">17</a>|
@@ -145,7 +144,6 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#Sinh">Sinh</a>|<a href="Changelog.md#Sinh-22">22</a>, <a href="Changelog.md#Sinh-9">9</a>|
 |<a href="#Size">Size</a>|<a href="Changelog.md#Size-25">25</a>, <a href="Changelog.md#Size-24">24</a>, <a href="Changelog.md#Size-23">23</a>, <a href="Changelog.md#Size-21">21</a>, <a href="Changelog.md#Size-19">19</a>, <a href="Changelog.md#Size-13">13</a>, <a href="Changelog.md#Size-1">1</a>|
 |<a href="#Slice">Slice</a>|<a href="Changelog.md#Slice-13">13</a>, <a href="Changelog.md#Slice-11">11</a>, <a href="Changelog.md#Slice-10">10</a>, <a href="Changelog.md#Slice-1">1</a>|
-|<a href="#SpaceToDepth">SpaceToDepth</a>|<a href="Changelog.md#SpaceToDepth-13">13</a>, <a href="Changelog.md#SpaceToDepth-1">1</a>|
 |<a href="#Split">Split</a>|<a href="Changelog.md#Split-18">18</a>, <a href="Changelog.md#Split-13">13</a>, <a href="Changelog.md#Split-11">11</a>, <a href="Changelog.md#Split-2">2</a>, <a href="Changelog.md#Split-1">1</a>|
 |<a href="#SplitToSequence">SplitToSequence</a>|<a href="Changelog.md#SplitToSequence-24">24</a>, <a href="Changelog.md#SplitToSequence-11">11</a>|
 |<a href="#Sqrt">Sqrt</a>|<a href="Changelog.md#Sqrt-13">13</a>, <a href="Changelog.md#Sqrt-6">6</a>, <a href="Changelog.md#Sqrt-1">1</a>|
@@ -163,7 +161,7 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#TopK">TopK</a>|<a href="Changelog.md#TopK-24">24</a>, <a href="Changelog.md#TopK-11">11</a>, <a href="Changelog.md#TopK-10">10</a>, <a href="Changelog.md#TopK-1">1</a>|
 |<a href="#Transpose">Transpose</a>|<a href="Changelog.md#Transpose-25">25</a>, <a href="Changelog.md#Transpose-24">24</a>, <a href="Changelog.md#Transpose-23">23</a>, <a href="Changelog.md#Transpose-21">21</a>, <a href="Changelog.md#Transpose-13">13</a>, <a href="Changelog.md#Transpose-1">1</a>|
 |<a href="#Trilu">Trilu</a>|<a href="Changelog.md#Trilu-14">14</a>|
-|<a href="#Unique">Unique</a>|<a href="Changelog.md#Unique-11">11</a>|
+|<a href="#Unique">Unique</a>|<a href="Changelog.md#Unique-28">28</a>, <a href="Changelog.md#Unique-11">11</a>|
 |<a href="#Unsqueeze">Unsqueeze</a>|<a href="Changelog.md#Unsqueeze-25">25</a>, <a href="Changelog.md#Unsqueeze-24">24</a>, <a href="Changelog.md#Unsqueeze-23">23</a>, <a href="Changelog.md#Unsqueeze-21">21</a>, <a href="Changelog.md#Unsqueeze-13">13</a>, <a href="Changelog.md#Unsqueeze-11">11</a>, <a href="Changelog.md#Unsqueeze-1">1</a>|
 |<a href="#Upsample">Upsample</a> (deprecated)|<a href="Changelog.md#Upsample-10">10</a>, <a href="Changelog.md#Upsample-9">9</a>, <a href="Changelog.md#Upsample-7">7</a>|
 |<a href="#Where">Where</a>|<a href="Changelog.md#Where-16">16</a>, <a href="Changelog.md#Where-9">9</a>|
@@ -178,6 +176,7 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#Celu">Celu</a>|<a href="Changelog.md#Celu-28">28</a>, <a href="Changelog.md#Celu-12">12</a>|28|
 |<a href="#CenterCropPad">CenterCropPad</a>|<a href="Changelog.md#CenterCropPad-18">18</a>|18|
 |<a href="#Clip">Clip</a>|<a href="Changelog.md#Clip-13">13</a>, <a href="Changelog.md#Clip-12">12</a>, <a href="Changelog.md#Clip-11">11</a>, <a href="Changelog.md#Clip-6">6</a>, <a href="Changelog.md#Clip-1">1</a>|13|
+|<a href="#DepthToSpace">DepthToSpace</a>|<a href="Changelog.md#DepthToSpace-28">28</a>, <a href="Changelog.md#DepthToSpace-13">13</a>, <a href="Changelog.md#DepthToSpace-11">11</a>, <a href="Changelog.md#DepthToSpace-1">1</a>|28|
 |<a href="#DynamicQuantizeLinear">DynamicQuantizeLinear</a>|<a href="Changelog.md#DynamicQuantizeLinear-11">11</a>|11|
 |<a href="#Elu">Elu</a>|<a href="Changelog.md#Elu-22">22</a>, <a href="Changelog.md#Elu-6">6</a>, <a href="Changelog.md#Elu-1">1</a>|18|
 |<a href="#Gelu">Gelu</a>|<a href="Changelog.md#Gelu-20">20</a>|20|
@@ -212,6 +211,7 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#SoftmaxCrossEntropyLoss">SoftmaxCrossEntropyLoss</a>|<a href="Changelog.md#SoftmaxCrossEntropyLoss-13">13</a>, <a href="Changelog.md#SoftmaxCrossEntropyLoss-12">12</a>|13|
 |<a href="#Softplus">Softplus</a>|<a href="Changelog.md#Softplus-22">22</a>, <a href="Changelog.md#Softplus-1">1</a>|18|
 |<a href="#Softsign">Softsign</a>|<a href="Changelog.md#Softsign-22">22</a>, <a href="Changelog.md#Softsign-1">1</a>|18|
+|<a href="#SpaceToDepth">SpaceToDepth</a>|<a href="Changelog.md#SpaceToDepth-28">28</a>, <a href="Changelog.md#SpaceToDepth-13">13</a>, <a href="Changelog.md#SpaceToDepth-1">1</a>|28|
 |<a href="#SwiGLU">SwiGLU</a>|<a href="Changelog.md#SwiGLU-28">28</a>|28|
 |<a href="#Swish">Swish</a>|<a href="Changelog.md#Swish-24">24</a>|24|
 |<a href="#ThresholdedRelu">ThresholdedRelu</a>|<a href="Changelog.md#ThresholdedRelu-22">22</a>, <a href="Changelog.md#ThresholdedRelu-10">10</a>|18|
@@ -7077,20 +7077,29 @@ expect(node, inputs=[x], outputs=[y], name="test_bitcast_uint32_to_int32")
 
   Bitwise shift operator performs element-wise operation. For each input element, if the
   attribute "direction" is "RIGHT", this operator moves its binary representation toward
-  the right side so that the input value is effectively decreased. If the attribute "direction"
-  is "LEFT", bits of binary representation moves toward the left side, which results the
-  increase of its actual value. The input X is the tensor to be shifted and another input
-  Y specifies the amounts of shifting. For example, if "direction" is "Right", X is [1, 4],
-  and S is [1, 1], the corresponding output Z would be [0, 2]. If "direction" is "LEFT" with
-  X=[1, 2] and S=[1, 2], the corresponding output Y would be [2, 8].
+  the right side. If the attribute "direction" is "LEFT", bits of binary representation
+  move toward the left side. The input X is the tensor to be shifted and another
+  input Y specifies the amounts of shifting. For example, if "direction" is
+  "RIGHT", X is [1, 4], and Y is [1, 1], the corresponding output Z would be
+  [0, 2]. If "direction" is "LEFT" with X=[1, 2] and Y=[1, 2], the corresponding
+  output Z would be [2, 8].
 
-  Because this operator supports Numpy-style broadcasting, X's and Y's shapes are
-  not necessarily identical.
+  For a signed T the right shift is an arithmetic shift (sign-extending). The
+  vacated high bits are filled with copies of the sign bit, so a negative X stays
+  negative. For a signed T a left shift can move bits into and past the sign bit,
+  and bits shifted past the sign bit are discarded.
+
+  If Y is negative, or is greater than or equal to the number of bits of T, then
+  the result is whatever the sign bit extension alone produces: -1 for a right
+  shift on a negative X, where the fill is a sign bit of 1, and 0 in every other
+  case.
   This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
 
 #### Version
 
-This version of the operator has been available since version 11 of the default ONNX operator set.
+This version of the operator has been available since version 28 of the default ONNX operator set.
+
+Other versions of this operator: <a href="Changelog.md#BitShift-11">11</a>
 
 #### Attributes
 
@@ -7118,12 +7127,208 @@ This version of the operator has been available since version 11 of the default 
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64)</dt>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64)</dt>
 <dd>Constrain input and output types to integer tensors.</dd>
 </dl>
 
 
 #### Examples
+
+<details>
+<summary>left_int16</summary>
+
+```python
+node = onnx.helper.make_node(
+    "BitShift", inputs=["x", "y"], outputs=["z"], direction="LEFT"
+)
+
+x = np.array([16, 4, 1]).astype(np.int16)
+y = np.array([1, 2, 3]).astype(np.int16)
+z = x << y  # expected output [32, 16, 8]
+expect(node, inputs=[x, y], outputs=[z], name="test_bitshift_left_int16")
+```
+
+</details>
+
+
+<details>
+<summary>left_int32</summary>
+
+```python
+node = onnx.helper.make_node(
+    "BitShift", inputs=["x", "y"], outputs=["z"], direction="LEFT"
+)
+
+x = np.array([16, 4, 1]).astype(np.int32)
+y = np.array([1, 2, 3]).astype(np.int32)
+z = x << y  # expected output [32, 16, 8]
+expect(node, inputs=[x, y], outputs=[z], name="test_bitshift_left_int32")
+```
+
+</details>
+
+
+<details>
+<summary>left_int32_negative_shift</summary>
+
+```python
+node = onnx.helper.make_node(
+    "BitShift", inputs=["x", "y"], outputs=["z"], direction="LEFT"
+)
+
+x = np.array([-8, 4, -1]).astype(np.int32)
+y = np.array([-1, -32, -64]).astype(np.int32)
+z = np.array([0, 0, 0]).astype(np.int32)
+expect(
+    node,
+    inputs=[x, y],
+    outputs=[z],
+    name="test_bitshift_left_int32_negative_shift",
+)
+```
+
+</details>
+
+
+<details>
+<summary>left_int32_overflow</summary>
+
+```python
+node = onnx.helper.make_node(
+    "BitShift", inputs=["x", "y"], outputs=["z"], direction="LEFT"
+)
+
+x = np.array([1073741824, 1, -1073741824]).astype(np.int32)
+y = np.array([1, 31, 1]).astype(np.int32)
+z = x << y  # expected output [-2147483648, -2147483648, -2147483648]
+expect(
+    node, inputs=[x, y], outputs=[z], name="test_bitshift_left_int32_overflow"
+)
+```
+
+</details>
+
+
+<details>
+<summary>left_int32_shift_ge_width</summary>
+
+```python
+node = onnx.helper.make_node(
+    "BitShift", inputs=["x", "y"], outputs=["z"], direction="LEFT"
+)
+
+x = np.array([-8, 4, -1]).astype(np.int32)
+y = np.array([32, 33, 100]).astype(np.int32)
+z = np.array([0, 0, 0]).astype(np.int32)
+expect(
+    node,
+    inputs=[x, y],
+    outputs=[z],
+    name="test_bitshift_left_int32_shift_ge_width",
+)
+```
+
+</details>
+
+
+<details>
+<summary>left_int64</summary>
+
+```python
+node = onnx.helper.make_node(
+    "BitShift", inputs=["x", "y"], outputs=["z"], direction="LEFT"
+)
+
+x = np.array([16, 4, 1]).astype(np.int64)
+y = np.array([1, 2, 3]).astype(np.int64)
+z = x << y  # expected output [32, 16, 8]
+expect(node, inputs=[x, y], outputs=[z], name="test_bitshift_left_int64")
+```
+
+</details>
+
+
+<details>
+<summary>left_int8</summary>
+
+```python
+node = onnx.helper.make_node(
+    "BitShift", inputs=["x", "y"], outputs=["z"], direction="LEFT"
+)
+
+x = np.array([16, 4, 1]).astype(np.int8)
+y = np.array([1, 2, 3]).astype(np.int8)
+z = x << y  # expected output [32, 16, 8]
+expect(node, inputs=[x, y], outputs=[z], name="test_bitshift_left_int8")
+```
+
+</details>
+
+
+<details>
+<summary>left_int8_negative_shift</summary>
+
+```python
+node = onnx.helper.make_node(
+    "BitShift", inputs=["x", "y"], outputs=["z"], direction="LEFT"
+)
+
+x = np.array([-8, 4, -1]).astype(np.int8)
+y = np.array([-1, -8, -16]).astype(np.int8)
+z = np.array([0, 0, 0]).astype(np.int8)
+expect(
+    node,
+    inputs=[x, y],
+    outputs=[z],
+    name="test_bitshift_left_int8_negative_shift",
+)
+```
+
+</details>
+
+
+<details>
+<summary>left_int8_overflow</summary>
+
+```python
+# Bits shifted past the most significant bit are discarded, so the result
+# wraps within the width of the type rather than being undefined as in C.
+node = onnx.helper.make_node(
+    "BitShift", inputs=["x", "y"], outputs=["z"], direction="LEFT"
+)
+
+x = np.array([64, 1, -64]).astype(np.int8)
+y = np.array([1, 7, 1]).astype(np.int8)
+z = x << y  # expected output [-128, -128, -128]
+expect(
+    node, inputs=[x, y], outputs=[z], name="test_bitshift_left_int8_overflow"
+)
+```
+
+</details>
+
+
+<details>
+<summary>left_int8_shift_ge_width</summary>
+
+```python
+node = onnx.helper.make_node(
+    "BitShift", inputs=["x", "y"], outputs=["z"], direction="LEFT"
+)
+
+x = np.array([-8, 4, -1]).astype(np.int8)
+y = np.array([8, 9, 127]).astype(np.int8)
+z = np.array([0, 0, 0]).astype(np.int8)
+expect(
+    node,
+    inputs=[x, y],
+    outputs=[z],
+    name="test_bitshift_left_int8_shift_ge_width",
+)
+```
+
+</details>
+
 
 <details>
 <summary>left_unit16</summary>
@@ -7188,6 +7393,216 @@ x = np.array([16, 4, 1]).astype(np.uint8)
 y = np.array([1, 2, 3]).astype(np.uint8)
 z = x << y  # expected output [32, 16, 8]
 expect(node, inputs=[x, y], outputs=[z], name="test_bitshift_left_uint8")
+```
+
+</details>
+
+
+<details>
+<summary>right_int16</summary>
+
+```python
+node = onnx.helper.make_node(
+    "BitShift", inputs=["x", "y"], outputs=["z"], direction="RIGHT"
+)
+
+x = np.array([16, 4, 1]).astype(np.int16)
+y = np.array([1, 2, 3]).astype(np.int16)
+z = x >> y  # expected output [8, 1, 0]
+expect(node, inputs=[x, y], outputs=[z], name="test_bitshift_right_int16")
+```
+
+</details>
+
+
+<details>
+<summary>right_int32</summary>
+
+```python
+node = onnx.helper.make_node(
+    "BitShift", inputs=["x", "y"], outputs=["z"], direction="RIGHT"
+)
+
+x = np.array([16, 4, 1]).astype(np.int32)
+y = np.array([1, 2, 3]).astype(np.int32)
+z = x >> y  # expected output [8, 1, 0]
+expect(node, inputs=[x, y], outputs=[z], name="test_bitshift_right_int32")
+```
+
+</details>
+
+
+<details>
+<summary>right_int32_negative_input</summary>
+
+```python
+node = onnx.helper.make_node(
+    "BitShift", inputs=["x", "y"], outputs=["z"], direction="RIGHT"
+)
+
+x = np.array([-8, -1, -2147483648]).astype(np.int32)
+y = np.array([1, 1, 1]).astype(np.int32)
+z = x >> y  # expected output [-4, -1, -1073741824]
+expect(
+    node,
+    inputs=[x, y],
+    outputs=[z],
+    name="test_bitshift_right_int32_negative_input",
+)
+```
+
+</details>
+
+
+<details>
+<summary>right_int32_negative_shift</summary>
+
+```python
+node = onnx.helper.make_node(
+    "BitShift", inputs=["x", "y"], outputs=["z"], direction="RIGHT"
+)
+
+x = np.array([-8, 4, -1]).astype(np.int32)
+y = np.array([-1, -32, -64]).astype(np.int32)
+z = np.array([-1, 0, -1]).astype(np.int32)
+expect(
+    node,
+    inputs=[x, y],
+    outputs=[z],
+    name="test_bitshift_right_int32_negative_shift",
+)
+```
+
+</details>
+
+
+<details>
+<summary>right_int32_shift_ge_width</summary>
+
+```python
+node = onnx.helper.make_node(
+    "BitShift", inputs=["x", "y"], outputs=["z"], direction="RIGHT"
+)
+
+x = np.array([-8, 4, -1]).astype(np.int32)
+y = np.array([32, 33, 100]).astype(np.int32)
+z = np.array([-1, 0, -1]).astype(np.int32)
+expect(
+    node,
+    inputs=[x, y],
+    outputs=[z],
+    name="test_bitshift_right_int32_shift_ge_width",
+)
+```
+
+</details>
+
+
+<details>
+<summary>right_int64</summary>
+
+```python
+node = onnx.helper.make_node(
+    "BitShift", inputs=["x", "y"], outputs=["z"], direction="RIGHT"
+)
+
+x = np.array([16, 4, 1]).astype(np.int64)
+y = np.array([1, 2, 3]).astype(np.int64)
+z = x >> y  # expected output [8, 1, 0]
+expect(node, inputs=[x, y], outputs=[z], name="test_bitshift_right_int64")
+```
+
+</details>
+
+
+<details>
+<summary>right_int8</summary>
+
+```python
+node = onnx.helper.make_node(
+    "BitShift", inputs=["x", "y"], outputs=["z"], direction="RIGHT"
+)
+
+x = np.array([16, 4, 1]).astype(np.int8)
+y = np.array([1, 2, 3]).astype(np.int8)
+z = x >> y  # expected output [8, 1, 0]
+expect(node, inputs=[x, y], outputs=[z], name="test_bitshift_right_int8")
+```
+
+</details>
+
+
+<details>
+<summary>right_int8_negative_input</summary>
+
+```python
+# Right shift of a signed value is an arithmetic shift: the sign bit is
+# replicated into the vacated high bits, so a negative input stays negative.
+node = onnx.helper.make_node(
+    "BitShift", inputs=["x", "y"], outputs=["z"], direction="RIGHT"
+)
+
+x = np.array([-8, -1, -128]).astype(np.int8)
+y = np.array([1, 1, 1]).astype(np.int8)
+z = x >> y  # expected output [-4, -1, -64]
+expect(
+    node,
+    inputs=[x, y],
+    outputs=[z],
+    name="test_bitshift_right_int8_negative_input",
+)
+```
+
+</details>
+
+
+<details>
+<summary>right_int8_negative_shift</summary>
+
+```python
+# A negative shift amount is out of range just as one at or past the bit
+# width is, and gives the same full-width result: 0, or -1 where an
+# arithmetic right shift fills the result with the sign bit. Y only reaches
+# negative values for a signed type, since it shares the type of X.
+node = onnx.helper.make_node(
+    "BitShift", inputs=["x", "y"], outputs=["z"], direction="RIGHT"
+)
+
+x = np.array([-8, 4, -1]).astype(np.int8)
+y = np.array([-1, -8, -16]).astype(np.int8)
+z = np.array([-1, 0, -1]).astype(np.int8)
+expect(
+    node,
+    inputs=[x, y],
+    outputs=[z],
+    name="test_bitshift_right_int8_negative_shift",
+)
+```
+
+</details>
+
+
+<details>
+<summary>right_int8_shift_ge_width</summary>
+
+```python
+# NumPy saturates a shift by at least the bit width, giving 0, or -1 for a
+# right shift of a negative value where the sign bit fills the result. C
+# and most hardware mask the shift count instead, so this is easy to get
+# wrong (see pytorch/pytorch#70904).
+node = onnx.helper.make_node(
+    "BitShift", inputs=["x", "y"], outputs=["z"], direction="RIGHT"
+)
+
+x = np.array([-8, 4, -1]).astype(np.int8)
+y = np.array([8, 9, 127]).astype(np.int8)
+z = np.array([-1, 0, -1]).astype(np.int8)
+expect(
+    node,
+    inputs=[x, y],
+    outputs=[z],
+    name="test_bitshift_right_int8_shift_ge_width",
+)
 ```
 
 </details>
@@ -10057,9 +10472,9 @@ expect(
 
 #### Version
 
-This version of the operator has been available since version 11 of the default ONNX operator set.
+This version of the operator has been available since version 28 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#Compress-9">9</a>
+Other versions of this operator: <a href="Changelog.md#Compress-9">9</a>, <a href="Changelog.md#Compress-11">11</a>
 
 #### Attributes
 
@@ -10087,7 +10502,7 @@ Other versions of this operator: <a href="Changelog.md#Compress-9">9</a>
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
 <dd>Constrain input and output types to all tensor types.</dd>
 <dt><tt>T1</tt> : tensor(bool)</dt>
 <dd>Constrain to boolean tensors.</dd>
@@ -10147,6 +10562,31 @@ expect(
     inputs=[input, condition.astype(bool)],
     outputs=[output],
     name="test_compress_1",
+)
+```
+
+</details>
+
+
+<details>
+<summary>compress_bfloat16</summary>
+
+```python
+node = onnx.helper.make_node(
+    "Compress",
+    inputs=["input", "condition"],
+    outputs=["output"],
+    axis=0,
+)
+input = np.array([[1, 2], [3, 4], [5, 6]]).astype(ml_dtypes.bfloat16)
+condition = np.array([0, 1, 1])
+output = np.compress(condition, input, axis=0)
+
+expect(
+    node,
+    inputs=[input, condition.astype(bool)],
+    outputs=[output],
+    name="test_compress_bfloat16",
 )
 ```
 
@@ -12692,9 +13132,9 @@ expect(
 
 #### Version
 
-This version of the operator has been available since version 13 of the default ONNX operator set.
+This version of the operator has been available since version 28 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#DepthToSpace-1">1</a>, <a href="Changelog.md#DepthToSpace-11">11</a>
+Other versions of this operator: <a href="Changelog.md#DepthToSpace-1">1</a>, <a href="Changelog.md#DepthToSpace-11">11</a>, <a href="Changelog.md#DepthToSpace-13">13</a>
 
 #### Attributes
 
@@ -14001,7 +14441,9 @@ expect(
 
 #### Version
 
-This version of the operator has been available since version 12 of the default ONNX operator set.
+This version of the operator has been available since version 28 of the default ONNX operator set.
+
+Other versions of this operator: <a href="Changelog.md#Einsum-12">12</a>
 
 #### Attributes
 
@@ -14027,7 +14469,7 @@ This version of the operator has been available since version 12 of the default 
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double)</dt>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
 <dd>Constrain input and output types to all numerical tensor types.</dd>
 </dl>
 
@@ -14066,6 +14508,29 @@ Y = np.random.randn(5, 3, 4)
 Z = einsum_reference_implementation(Eqn, (X, Y))
 
 expect(node, inputs=[X, Y], outputs=[Z], name="test_einsum_batch_matmul")
+```
+
+</details>
+
+
+<details>
+<summary>einsum_batch_matmul_bfloat16</summary>
+
+```python
+Eqn = "bij, bjk -> bik"
+node = onnx.helper.make_node(
+    "Einsum", inputs=["x", "y"], outputs=["z"], equation=Eqn
+)
+
+# Binary operands ensure products and the three-term reductions are
+# exactly representable in bfloat16, independent of accumulation order.
+X = (np.arange(30).reshape(5, 2, 3) % 2).astype(ml_dtypes.bfloat16)
+Y = (np.arange(60).reshape(5, 3, 4) % 2).astype(ml_dtypes.bfloat16)
+Z = einsum_bfloat16_reference_implementation(Eqn, (X, Y))
+
+expect(
+    node, inputs=[X, Y], outputs=[Z], name="test_einsum_batch_matmul_bfloat16"
+)
 ```
 
 </details>
@@ -14127,6 +14592,26 @@ expect(node, inputs=[X], outputs=[Z], name="test_einsum_sum")
 
 
 <details>
+<summary>einsum_sum_bfloat16</summary>
+
+```python
+# A pure reduction: NumPy raises TypeError on bfloat16 here without the
+# float32 accumulation path.
+Eqn = "ij->i"
+node = onnx.helper.make_node(
+    "Einsum", inputs=["x"], outputs=["y"], equation=Eqn
+)
+
+X = np.arange(12).reshape(3, 4).astype(ml_dtypes.bfloat16)
+Z = einsum_bfloat16_reference_implementation(Eqn, (X,))
+
+expect(node, inputs=[X], outputs=[Z], name="test_einsum_sum_bfloat16")
+```
+
+</details>
+
+
+<details>
 <summary>einsum_transpose</summary>
 
 ```python
@@ -14139,6 +14624,24 @@ X = np.random.randn(3, 4)
 Y = einsum_reference_implementation(Eqn, (X,))
 
 expect(node, inputs=[X], outputs=[Y], name="test_einsum_transpose")
+```
+
+</details>
+
+
+<details>
+<summary>einsum_transpose_bfloat16</summary>
+
+```python
+Eqn = "ij->ji"
+node = onnx.helper.make_node(
+    "Einsum", inputs=["x"], outputs=["y"], equation=Eqn
+)
+
+X = np.arange(12).reshape(3, 4).astype(ml_dtypes.bfloat16)
+Y = einsum_bfloat16_reference_implementation(Eqn, (X,))
+
+expect(node, inputs=[X], outputs=[Y], name="test_einsum_transpose_bfloat16")
 ```
 
 </details>
@@ -23736,15 +24239,23 @@ expect(node, inputs=[input_data], outputs=[expected_output], name="test_mish")
 ### <a name="Mod"></a><a name="mod">**Mod**</a>
 
   Performs an element-wise binary modulo operation.
-  The semantics and supported data types depend on the value of the `fmod` attribute which must be `0` (default), or `1`.
+  The `fmod` attribute determines how the quotient is rounded. Its value must be
+  `0` (default) or `1`.
 
-  If the `fmod` attribute is set to `0`, `T` is constrained to integer data types and the semantics follow that of the Python `%`-operator.
-  The sign of the result is that of the divisor.
+  If `fmod` is `0`, the output is calculated as `A - floor(A / B) * B`.
+  The result has the same sign as `B`.
+  For floating-point inputs, the following special cases apply:
+  - If `x` is `±0` and `y` is nonzero, `±0` with the sign of `y` is returned.
+  - If `x` is `±∞` and `y` is not `NaN`, `NaN` is returned.
+  - If `y` is `±0` and `x` is not `NaN`, `NaN` is returned.
+  - If `y` is `±∞` and `x` is finite and nonzero, `x` is returned when `x` and
+    `y` have the same sign; otherwise, `y` is returned.
+  - If either argument is `NaN`, `NaN` is returned.
 
-  If `fmod` is set to `1`, the behavior of this operator follows that of the `fmod` function in C and `T` is constrained to floating point data types.
-  The result of this operator is the remainder of the division operation `x / y` where `x` and `y` are respective elements of `A` and `B`. The result is exactly the value `x - n * y`, where `n` is `x / y` with its fractional part truncated.
-  The returned value has the same sign as `x` (except if `x` is `-0`) and is less or equal to `|y|` in magnitude.
-  The following special cases apply when `fmod` is set to `1`:
+  If `fmod` is `1`, the output is calculated as `A - trunc(A / B) * B`.
+  The result has the same sign as `A`, except that either signed zero may be
+  returned when `A` is `-0` and `B` is positive. For floating-point inputs,
+  the following special cases apply:
   - If `x` is `-0` and `y` is greater than zero, either `+0` or `-0` may be returned.
   - If `x` is `±∞` and `y` is not `NaN`, `NaN` is returned.
   - If `y` is `±0` and `x` is not `NaN`, `NaN` should be returned.
@@ -23755,15 +24266,15 @@ expect(node, inputs=[input_data], outputs=[expected_output], name="test_mish")
 
 #### Version
 
-This version of the operator has been available since version 13 of the default ONNX operator set.
+This version of the operator has been available since version 28 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#Mod-10">10</a>
+Other versions of this operator: <a href="Changelog.md#Mod-10">10</a>, <a href="Changelog.md#Mod-13">13</a>
 
 #### Attributes
 
 <dl>
 <dt><tt>fmod</tt> : int (default is 0)</dt>
-<dd>Whether the operator should behave like fmod (default=0 meaning it will do integer mods); Set this to 1 to force fmod treatment</dd>
+<dd>Whether the operator should use floor (0) or truncation (1) to calculate the quotient.</dd>
 </dl>
 
 #### Inputs
@@ -23786,11 +24297,50 @@ Other versions of this operator: <a href="Changelog.md#Mod-10">10</a>
 
 <dl>
 <dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
-<dd>Constrain input and output types to high-precision numeric tensors.</dd>
+<dd>Constrain input and output types to numeric tensors.</dd>
 </dl>
 
 
 #### Examples
+
+<details>
+<summary>fmod_0_signed_zero</summary>
+
+```python
+for dtype in (np.float16, np.float32, np.float64):
+    tensor_type = onnx.helper.np_dtype_to_tensor_dtype(np.dtype(dtype))
+    mod = onnx.helper.make_node("Mod", ["x", "y"], ["remainder"], fmod=0)
+    # Sign maps both signed zeros to zero; Reciprocal exposes them as signed infinities.
+    reciprocal = onnx.helper.make_node("Reciprocal", ["remainder"], ["z"])
+    graph = onnx.helper.make_graph(
+        [mod, reciprocal],
+        f"ModFmod0SignedZero{np.dtype(dtype).name}",
+        [
+            onnx.helper.make_tensor_value_info("x", tensor_type, [4]),
+            onnx.helper.make_tensor_value_info("y", tensor_type, [4]),
+        ],
+        [
+            onnx.helper.make_tensor_value_info("z", tensor_type, [4]),
+        ],
+    )
+    model = onnx.helper.make_model_gen_version(
+        graph,
+        producer_name="backend-test",
+        opset_imports=[onnx.helper.make_opsetid("", 28)],
+    )
+    x = np.array([0.0, -0.0, 0.0, -0.0], dtype=dtype)
+    y = np.array([-2.0, 2.0, 2.0, -2.0], dtype=dtype)
+    z = np.array([-np.inf, np.inf, np.inf, -np.inf], dtype=dtype)
+    expect(
+        model,
+        inputs=[x, y],
+        outputs=[z],
+        name=f"test_mod_fmod_0_signed_zero_{np.dtype(dtype).name}",
+    )
+```
+
+</details>
+
 
 <details>
 <summary>mod_broadcast</summary>
@@ -23814,6 +24364,70 @@ z = np.mod(x, y)
 #    [[6, 0, 1, 2, 3],
 #     [4, 5, 6, 0, 1]]], dtype=int32)
 expect(node, inputs=[x, y], outputs=[z], name="test_mod_broadcast")
+```
+
+</details>
+
+
+<details>
+<summary>mod_float_edge_cases_fmod_0</summary>
+
+```python
+for dtype in (np.float16, np.float32, np.float64):
+    node = onnx.helper.make_node(
+        "Mod", inputs=["x", "y"], outputs=["z"], fmod=0
+    )
+    x = np.array(
+        [
+            0.0,
+            -0.0,
+            0.0,
+            -0.0,
+            -3.0,
+            3.0,
+            -1.0,
+            1.0,
+            np.inf,
+            -np.inf,
+            1.0,
+            1.0,
+            np.nan,
+            1.0,
+        ],
+        dtype=dtype,
+    )
+    y = np.array(
+        [
+            -2.0,
+            2.0,
+            2.0,
+            -2.0,
+            np.inf,
+            np.inf,
+            -np.inf,
+            -np.inf,
+            2.0,
+            2.0,
+            0.0,
+            -0.0,
+            2.0,
+            np.nan,
+        ],
+        dtype=dtype,
+    )
+    with np.errstate(divide="ignore", invalid="ignore"):
+        z = np.mod(x, y)
+
+    np.testing.assert_array_equal(np.signbit(z[:4]), [True, False, False, True])
+    np.testing.assert_array_equal(
+        np.isnan(z[8:]), [True, True, True, True, True, True]
+    )
+    expect(
+        node,
+        inputs=[x, y],
+        outputs=[z],
+        name=f"test_mod_float_edge_cases_fmod_0_{np.dtype(dtype).name}",
+    )
 ```
 
 </details>
@@ -23852,6 +24466,23 @@ expect(node, inputs=[x, y], outputs=[z], name="test_mod_mixed_sign_float16")
 
 
 <details>
+<summary>mod_mixed_sign_float16_fmod_0</summary>
+
+```python
+node = onnx.helper.make_node("Mod", inputs=["x", "y"], outputs=["z"], fmod=0)
+
+x = np.array([-4.3, 7.2, 5.0, 4.3, -7.2, 8.0]).astype(np.float16)
+y = np.array([2.1, -3.4, 8.0, -2.1, 3.4, 5.0]).astype(np.float16)
+z = np.mod(x, y)
+expect(
+    node, inputs=[x, y], outputs=[z], name="test_mod_float16_mixed_sign_fmod_0"
+)
+```
+
+</details>
+
+
+<details>
 <summary>mod_mixed_sign_float32</summary>
 
 ```python
@@ -23869,6 +24500,23 @@ expect(node, inputs=[x, y], outputs=[z], name="test_mod_mixed_sign_float32")
 
 
 <details>
+<summary>mod_mixed_sign_float32_fmod_0</summary>
+
+```python
+node = onnx.helper.make_node("Mod", inputs=["x", "y"], outputs=["z"], fmod=0)
+
+x = np.array([-4.3, 7.2, 5.0, 4.3, -7.2, 8.0]).astype(np.float32)
+y = np.array([2.1, -3.4, 8.0, -2.1, 3.4, 5.0]).astype(np.float32)
+z = np.mod(x, y)
+expect(
+    node, inputs=[x, y], outputs=[z], name="test_mod_float32_mixed_sign_fmod_0"
+)
+```
+
+</details>
+
+
+<details>
 <summary>mod_mixed_sign_float64</summary>
 
 ```python
@@ -23878,6 +24526,23 @@ x = np.array([-4.3, 7.2, 5.0, 4.3, -7.2, 8.0]).astype(np.float64)
 y = np.array([2.1, -3.4, 8.0, -2.1, 3.4, 5.0]).astype(np.float64)
 z = np.fmod(x, y)  # expected output [-0.1,  0.4,  5. ,  0.1, -0.4,  3.]
 expect(node, inputs=[x, y], outputs=[z], name="test_mod_mixed_sign_float64")
+```
+
+</details>
+
+
+<details>
+<summary>mod_mixed_sign_float64_fmod_0</summary>
+
+```python
+node = onnx.helper.make_node("Mod", inputs=["x", "y"], outputs=["z"], fmod=0)
+
+x = np.array([-4.3, 7.2, 5.0, 4.3, -7.2, 8.0]).astype(np.float64)
+y = np.array([2.1, -3.4, 8.0, -2.1, 3.4, 5.0]).astype(np.float64)
+z = np.mod(x, y)  # expected output [ 2.0, -3.0,  5. , -2.0,  3.0,  3.]
+expect(
+    node, inputs=[x, y], outputs=[z], name="test_mod_float64_mixed_sign_fmod_0"
+)
 ```
 
 </details>
@@ -25717,7 +26382,7 @@ expect(node, inputs=[x], outputs=[np.logical_not(x)], name="test_not_4d")
       are specified as part of required input argument 'values', which is a two-element tensor of format
       [off_value, on_value]. The rank of the output tensor will be one greater than the rank of the
       input tensor. The additional dimension is for one-hot representation. The additional dimension will
-      be inserted at the position specified by 'axis'. If 'axis' is not specified then then additional
+      be inserted at the position specified by 'axis'. If 'axis' is not specified then the additional
       dimension will be inserted as the innermost dimension, i.e. axis=-1. The size of the additional
       dimension is specified by required scalar input 'depth'. The type of the output tensor is the same
       as the type of the 'values' input. Any entries in the 'indices' input tensor with values outside
@@ -25733,9 +26398,9 @@ expect(node, inputs=[x], outputs=[np.logical_not(x)], name="test_not_4d")
 
 #### Version
 
-This version of the operator has been available since version 11 of the default ONNX operator set.
+This version of the operator has been available since version 28 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#OneHot-9">9</a>
+Other versions of this operator: <a href="Changelog.md#OneHot-9">9</a>, <a href="Changelog.md#OneHot-11">11</a>
 
 #### Attributes
 
@@ -25769,7 +26434,7 @@ Other versions of this operator: <a href="Changelog.md#OneHot-9">9</a>
 <dd>Constrain input to only numeric types.</dd>
 <dt><tt>T2</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input to only numeric types.</dd>
-<dt><tt>T3</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
+<dt><tt>T3</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
 <dd>Constrain to any tensor type.</dd>
 </dl>
 
@@ -25800,6 +26465,38 @@ expect(
     inputs=[indices, depth, values],
     outputs=[y],
     name="test_onehot_with_axis",
+)
+```
+
+</details>
+
+
+<details>
+<summary>with_bfloat16_values</summary>
+
+```python
+axisValue = 1
+on_value = 3.0
+off_value = 1.0
+output_type = ml_dtypes.bfloat16
+node = onnx.helper.make_node(
+    "OneHot",
+    inputs=["indices", "depth", "values"],
+    outputs=["y"],
+    axis=axisValue,
+)
+indices = np.array([0, 2], dtype=np.int64)
+depth = np.float32(4)
+values = np.array([off_value, on_value], dtype=output_type)
+y = one_hot(indices, int(depth), axis=axisValue, dtype=output_type)
+y = (y * output_type(on_value - off_value) + output_type(off_value)).astype(
+    output_type
+)
+expect(
+    node,
+    inputs=[indices, depth, values],
+    outputs=[y],
+    name="test_onehot_with_bfloat16_values",
 )
 ```
 
@@ -33888,7 +34585,9 @@ expect(
 
 #### Version
 
-This version of the operator has been available since version 10 of the default ONNX operator set.
+This version of the operator has been available since version 28 of the default ONNX operator set.
+
+Other versions of this operator: <a href="Changelog.md#ReverseSequence-10">10</a>
 
 #### Attributes
 
@@ -33918,7 +34617,7 @@ This version of the operator has been available since version 10 of the default 
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
 <dd>Input and output types can be of any tensor type.</dd>
 </dl>
 
@@ -33962,6 +34661,37 @@ expect(
     inputs=[x, sequence_lens],
     outputs=[y],
     name="test_reversesequence_batch",
+)
+```
+
+</details>
+
+
+<details>
+<summary>reversesequence_bfloat16</summary>
+
+```python
+node = onnx.helper.make_node(
+    "ReverseSequence",
+    inputs=["x", "sequence_lens"],
+    outputs=["y"],
+    time_axis=1,
+    batch_axis=0,
+)
+
+x = np.array(
+    [[1.0, 2.0, 3.0, 4.0], [5.0, 6.0, 7.0, 8.0]], dtype=ml_dtypes.bfloat16
+)
+sequence_lens = np.array([4, 3], dtype=np.int64)
+y = np.array(
+    [[4.0, 3.0, 2.0, 1.0], [7.0, 6.0, 5.0, 8.0]], dtype=ml_dtypes.bfloat16
+)
+
+expect(
+    node,
+    inputs=[x, sequence_lens],
+    outputs=[y],
+    name="test_reversesequence_bfloat16",
 )
 ```
 
@@ -34918,6 +35648,22 @@ expect(node, inputs=[x], outputs=[y], name="test_round")
 
   Computes the Short-time Fourier Transform of the signal.
 
+  The STFT is computed by sliding a window of length `frame_length` over the signal with a
+  step size of `frame_step`, computing a DFT of each windowed frame.
+
+  The number of frames in the output is computed as:
+
+    `frames = floor((signal_length - frame_length) / frame_step) + 1`
+
+  Constraints on inputs:
+  - `frame_step` must be a scalar.
+  - `frame_length` must be a scalar. When omitted and `window` is provided, `frame_length`
+    is inferred from `window.shape[0]`. When both `window` and `frame_length` are omitted,
+    `frame_length` defaults to `signal_length`.
+  - `window` must be a 1-D tensor. When omitted, a rectangular (all-ones) window of length
+    `frame_length` is used. When both `window` and `frame_length` are provided, the length
+    of the `window` tensor must equal `frame_length`.
+
 #### Version
 
 This version of the operator has been available since version 17 of the default ONNX operator set.
@@ -34926,27 +35672,27 @@ This version of the operator has been available since version 17 of the default 
 
 <dl>
 <dt><tt>onesided</tt> : int (default is 1)</dt>
-<dd>If onesided is 1, only values for w in [0, 1, 2, ..., floor(n_fft/2) + 1] are returned because the real-to-complex Fourier transform satisfies the conjugate symmetry, i.e., X[m, w] = X[m,w]=X[m,n_fft-w]*. Note if the input or window tensors are complex, then onesided output is not possible. Enabling onesided with real inputs performs a Real-valued fast Fourier transform (RFFT).When invoked with real or complex valued input, the default value is 1. Values can be 0 or 1.</dd>
+<dd>If onesided is 1, only values for w in [0, 1, 2, ..., floor(n_fft/2) + 1] are returned because the real-to-complex Fourier transform satisfies the conjugate symmetry, i.e., X[m, w] = X[m, n_fft-w]*. Note if the input or window tensors are complex, then onesided output is not possible. Enabling onesided with real inputs performs a Real-valued fast Fourier transform (RFFT). When invoked with real or complex valued input, the default value is 1. Values can be 0 or 1.</dd>
 </dl>
 
 #### Inputs (2 - 4)
 
 <dl>
 <dt><tt>signal</tt> (non-differentiable) : T1</dt>
-<dd>Input tensor representing a real or complex valued signal. For real input, the following shape is expected: [batch_size][signal_length][1]. For complex input, the following shape is expected: [batch_size][signal_length][2], where [batch_size][signal_length][0] represents the real component and [batch_size][signal_length][1] represents the imaginary component of the signal.</dd>
+<dd>Input tensor representing a real or complex valued signal. For real input, the following shape is expected: [batch_size][signal_length][1]. For complex input, the following shape is expected: [batch_size][signal_length][2], where [batch_size][signal_length][0] represents the real component and [batch_size][signal_length][1] represents the imaginary component of the signal. The tensor is expected to have rank 3.</dd>
 <dt><tt>frame_step</tt> (non-differentiable) : T2</dt>
-<dd>The number of samples to step between successive DFTs.</dd>
+<dd>A scalar representing the number of samples to step between successive DFTs.</dd>
 <dt><tt>window</tt> (optional, non-differentiable) : T1</dt>
-<dd>A tensor representing the window that will be slid over the signal.The window must have rank 1 with shape: [window_shape]. It's an optional value. </dd>
+<dd>An optional 1-D tensor representing the window function to be applied to each frame of the signal before computing the DFT. The length of the window (window.shape[0]) determines the frame length when `frame_length` is not specified. If both `window` and `frame_length` are provided, the length of the `window` must equal `frame_length`. When omitted, a rectangular (all-ones) window of length `frame_length` is used.</dd>
 <dt><tt>frame_length</tt> (optional, non-differentiable) : T2</dt>
-<dd>A scalar representing the size of the DFT. It's an optional value.</dd>
+<dd>An optional scalar representing the length of each frame (i.e., the DFT size). When omitted and `window` is provided, `frame_length` is inferred from `window.shape[0]`. When both `window` and `frame_length` are omitted, `frame_length` defaults to `signal_length`. If both `frame_length` and `window` are provided, the length of the `window` must equal `frame_length`.</dd>
 </dl>
 
 #### Outputs
 
 <dl>
 <dt><tt>output</tt> (non-differentiable) : T1</dt>
-<dd>The Short-time Fourier Transform of the signals.If onesided is 1, the output has the shape: [batch_size][frames][dft_unique_bins][2], where dft_unique_bins is frame_length // 2 + 1 (the unique components of the DFT) If onesided is 0, the output has the shape: [batch_size][frames][frame_length][2], where frame_length is the length of the DFT.</dd>
+<dd>The Short-time Fourier Transform of the signal. The number of frames in the output is `frames = floor((signal_length - frame_length) / frame_step) + 1`. If onesided is 1, the output has the shape: [batch_size][frames][dft_unique_bins][2], where dft_unique_bins is frame_length // 2 + 1 (the unique components of the DFT). If onesided is 0, the output has the shape: [batch_size][frames][frame_length][2], where frame_length is the length of the DFT. The last dimension of size 2 represents the real and imaginary parts of each complex value.</dd>
 </dl>
 
 #### Type Constraints
@@ -39363,19 +40109,22 @@ expect(node, inputs=[x], outputs=[y], name="test_softsign")
 
   SpaceToDepth rearranges blocks of spatial data into depth. More specifically,
   this op outputs a copy of the input tensor where values from the height and width dimensions
-  are moved to the depth dimension.
+  are moved to the depth dimension. `mode` determines whether blocks are ordered depth-column-row
+  (`DCR`, the default) or column-row-depth (`CRD`).
 
 #### Version
 
-This version of the operator has been available since version 13 of the default ONNX operator set.
+This version of the operator has been available since version 28 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#SpaceToDepth-1">1</a>
+Other versions of this operator: <a href="Changelog.md#SpaceToDepth-1">1</a>, <a href="Changelog.md#SpaceToDepth-13">13</a>
 
 #### Attributes
 
 <dl>
 <dt><tt>blocksize</tt> : int (required)</dt>
 <dd>Blocks of [blocksize, blocksize] are moved.</dd>
+<dt><tt>mode</tt> : string (default is DCR)</dt>
+<dd>DCR (default) for depth-column-row order re-arrangement. Use CRD for column-row-depth order.</dd>
 </dl>
 
 #### Inputs
@@ -39401,6 +40150,112 @@ Other versions of this operator: <a href="Changelog.md#SpaceToDepth-1">1</a>
 
 
 #### Examples
+
+<details>
+<summary>crd_mode_example</summary>
+
+```python
+node = onnx.helper.make_node(
+    "SpaceToDepth",
+    inputs=["x"],
+    outputs=["y"],
+    blocksize=2,
+    mode="CRD",
+)
+
+# (1, 2, 4, 6) input tensor
+x = np.array(
+    [
+        [
+            [
+                [0.0, 9.0, 1.0, 10.0, 2.0, 11.0],
+                [18.0, 27.0, 19.0, 28.0, 20.0, 29.0],
+                [3.0, 12.0, 4.0, 13.0, 5.0, 14.0],
+                [21.0, 30.0, 22.0, 31.0, 23.0, 32.0],
+            ],
+            [
+                [36.0, 45.0, 37.0, 46.0, 38.0, 47.0],
+                [54.0, 63.0, 55.0, 64.0, 56.0, 65.0],
+                [39.0, 48.0, 40.0, 49.0, 41.0, 50.0],
+                [57.0, 66.0, 58.0, 67.0, 59.0, 68.0],
+            ],
+        ]
+    ]
+).astype(np.float32)
+
+# (1, 8, 2, 3) output tensor
+y = np.array(
+    [
+        [
+            [[0.0, 1.0, 2.0], [3.0, 4.0, 5.0]],
+            [[9.0, 10.0, 11.0], [12.0, 13.0, 14.0]],
+            [[18.0, 19.0, 20.0], [21.0, 22.0, 23.0]],
+            [[27.0, 28.0, 29.0], [30.0, 31.0, 32.0]],
+            [[36.0, 37.0, 38.0], [39.0, 40.0, 41.0]],
+            [[45.0, 46.0, 47.0], [48.0, 49.0, 50.0]],
+            [[54.0, 55.0, 56.0], [57.0, 58.0, 59.0]],
+            [[63.0, 64.0, 65.0], [66.0, 67.0, 68.0]],
+        ]
+    ]
+).astype(np.float32)
+expect(node, inputs=[x], outputs=[y], name="test_spacetodepth_crd_mode_example")
+```
+
+</details>
+
+
+<details>
+<summary>dcr_mode_example</summary>
+
+```python
+node = onnx.helper.make_node(
+    "SpaceToDepth",
+    inputs=["x"],
+    outputs=["y"],
+    blocksize=2,
+    mode="DCR",
+)
+
+# (1, 2, 4, 6) input tensor
+x = np.array(
+    [
+        [
+            [
+                [0.0, 18.0, 1.0, 19.0, 2.0, 20.0],
+                [36.0, 54.0, 37.0, 55.0, 38.0, 56.0],
+                [3.0, 21.0, 4.0, 22.0, 5.0, 23.0],
+                [39.0, 57.0, 40.0, 58.0, 41.0, 59.0],
+            ],
+            [
+                [9.0, 27.0, 10.0, 28.0, 11.0, 29.0],
+                [45.0, 63.0, 46.0, 64.0, 47.0, 65.0],
+                [12.0, 30.0, 13.0, 31.0, 14.0, 32.0],
+                [48.0, 66.0, 49.0, 67.0, 50.0, 68.0],
+            ],
+        ]
+    ]
+).astype(np.float32)
+
+# (1, 8, 2, 3) output tensor
+y = np.array(
+    [
+        [
+            [[0.0, 1.0, 2.0], [3.0, 4.0, 5.0]],
+            [[9.0, 10.0, 11.0], [12.0, 13.0, 14.0]],
+            [[18.0, 19.0, 20.0], [21.0, 22.0, 23.0]],
+            [[27.0, 28.0, 29.0], [30.0, 31.0, 32.0]],
+            [[36.0, 37.0, 38.0], [39.0, 40.0, 41.0]],
+            [[45.0, 46.0, 47.0], [48.0, 49.0, 50.0]],
+            [[54.0, 55.0, 56.0], [57.0, 58.0, 59.0]],
+            [[63.0, 64.0, 65.0], [66.0, 67.0, 68.0]],
+        ]
+    ]
+).astype(np.float32)
+expect(node, inputs=[x], outputs=[y], name="test_spacetodepth_dcr_mode_example")
+```
+
+</details>
+
 
 <details>
 <summary>example</summary>
@@ -43147,7 +44002,9 @@ expect(node, inputs=[x, k], outputs=[y], name="test_triu_zero")
 
 #### Version
 
-This version of the operator has been available since version 11 of the default ONNX operator set.
+This version of the operator has been available since version 28 of the default ONNX operator set.
+
+Other versions of this operator: <a href="Changelog.md#Unique-11">11</a>
 
 #### Attributes
 
@@ -43181,7 +44038,7 @@ This version of the operator has been available since version 11 of the default 
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
 <dd>Input can be of any tensor type.</dd>
 </dl>
 
@@ -43433,6 +44290,34 @@ expect(
     outputs=[y, indices, inverse_indices, counts],
     name="test_unique_sorted_without_axis",
     output_type_protos=unique_output_types(x),
+)
+```
+
+</details>
+
+
+<details>
+<summary>unique_bfloat16_sorted_without_axis</summary>
+
+```python
+node_sorted = onnx.helper.make_node(
+    "Unique",
+    inputs=["X"],
+    outputs=["Y", "indices", "inverse_indices", "counts"],
+    sorted=1,
+)
+x = np.array([2.0, 1.0, 1.0, 3.0, 4.0, 3.0], dtype=ml_dtypes.bfloat16)
+y, indices, inverse_indices, counts = np.unique(
+    x, return_index=True, return_inverse=True, return_counts=True
+)
+indices, inverse_indices, counts = specify_int64(
+    indices, inverse_indices, counts
+)
+expect(
+    node_sorted,
+    inputs=[x],
+    outputs=[y, indices, inverse_indices, counts],
+    name="test_unique_bfloat16_sorted_without_axis",
 )
 ```
 

@@ -32,9 +32,9 @@ static constexpr const char* reduce_log_sum_func_body = R"ONNX(
 static constexpr const char* reduce_log_sum_exp_func_body = R"ONNX(
   {
     data_double = Cast<to = 11>(data)
-    data_exp = Exp (data_double)
+    data_exp = Exp(data_double)
     reduced_sum = ReduceSum<keepdims: int = @keepdims, noop_with_empty_axes: int = @noop_with_empty_axes>(data_exp, axes)
-    reduced_double = Log (reduced_sum)
+    reduced_double = Log(reduced_sum)
     reduced = CastLike(reduced_double, data)
   }
   )ONNX";

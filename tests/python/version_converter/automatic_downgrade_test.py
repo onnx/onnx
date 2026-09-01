@@ -100,6 +100,15 @@ class TestAutomaticDowngrade(automatic_conversion_test_base.TestAutomaticConvers
         """,
         )
 
+    def test_Einsum(self) -> None:
+        self._test_op_downgrade(
+            "Einsum",
+            12,
+            [[3, 4, 5], [3, 5, 6]],
+            [[3, 4, 6]],
+            attrs={"equation": "bij, bjk -> bik"},
+        )
+
     def test_attention_25_to_24_default_window(self) -> None:
         """Attention with disabled window bounds can be downgraded."""
         self._test_op_downgrade(
@@ -145,6 +154,32 @@ class TestAutomaticDowngrade(automatic_conversion_test_base.TestAutomaticConvers
         """,
         )
 
+    def test_BitShift(self) -> None:
+        self._test_op_downgrade(
+            "BitShift",
+            11,
+            [[2, 3], [2, 3]],
+            [[2, 3]],
+            [onnx.TensorProto.UINT8, onnx.TensorProto.UINT8],
+            [onnx.TensorProto.UINT8],
+            attrs={"direction": "RIGHT"},
+        )
+
+    def test_BitShift_signed_downgrade_fails(self) -> None:
+        # BitShift gained the signed integer types at opset 28. Downgrading a
+        # signed BitShift below that must be rejected rather than silently
+        # reinterpreted as an unsigned (logical) shift.
+        self._test_model_conversion_fails(
+            to_opset=27,
+            model="""
+            <ir_version: 10, opset_import: [ "" : 28]>
+            bitshift (int32[2, 3] X, int32[2, 3] Y) => (int32[2, 3] Z)
+            {
+                Z = BitShift <direction = "RIGHT"> (X, Y)
+            }
+        """,
+        )
+
     def test_CausalConvWithState_downgrade_fails(self) -> None:
         # CausalConvWithState was introduced at opset 27; no decomposition
         # adapter exists for downgrading to opset 24. The version converter
@@ -160,3 +195,35 @@ class TestAutomaticDowngrade(automatic_conversion_test_base.TestAutomaticConvers
             }
         """,
         )
+
+    def test_depth_to_space(self) -> None:
+        self._test_op_downgrade(
+            "DepthToSpace",
+            28,
+            [[1, 8, 3, 3]],
+            [[1, 2, 6, 6]],
+            attrs={"blocksize": 2, "mode": "CRD"},
+        )
+
+    def test_space_to_depth_dcr(self) -> None:
+        self._test_op_downgrade(
+            "SpaceToDepth",
+            28,
+            [[1, 2, 6, 6]],
+            [[1, 8, 3, 3]],
+            attrs={"blocksize": 2, "mode": "DCR"},
+        )
+
+    def test_space_to_depth_crd_downgrade_fails(self) -> None:
+        model = onnx.parser.parse_model(
+            """
+            <ir_version: 10, opset_import: [ "" : 28]>
+            space_to_depth_crd (float[1, 2, 6, 6] input) => (float[1, 8, 3, 3] output)
+            {
+                output = SpaceToDepth <blocksize = 2, mode = "CRD"> (input)
+            }
+            """
+        )
+        onnx.checker.check_model(model)
+        with pytest.raises(RuntimeError, match="mode must have value DCR"):
+            onnx.version_converter.convert_version(model, 27)
