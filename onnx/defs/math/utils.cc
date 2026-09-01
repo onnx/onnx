@@ -283,6 +283,7 @@ static void einsumShapeInference(ONNX_NAMESPACE::InferenceContext& ctx, std::str
   size_t num_operands = 0;
   size_t num_ellipsis = 0;
   size_t num_ellipsis_indices = 0;
+  size_t first_ellipsis_operand = 0;
 
   // Parse the left-hand side
   std::stringstream str(left_equation);
@@ -329,8 +330,18 @@ static void einsumShapeInference(ONNX_NAMESPACE::InferenceContext& ctx, std::str
       // ellipsis dimensions, so its indexing remains in bounds.
       if (num_ellipsis == 0) {
         num_ellipsis_indices = rank - term_size;
+        first_ellipsis_operand = num_operands;
       } else if (num_ellipsis_indices != rank - term_size) {
-        fail_shape_inference("Ellipsis represents incompatible dimensions.");
+        fail_shape_inference(
+            "Ellipsis for input ",
+            num_operands,
+            " represents ",
+            rank - term_size,
+            " dimensions, but ellipsis for input ",
+            first_ellipsis_operand,
+            " represents ",
+            num_ellipsis_indices,
+            " dimensions.");
       }
       num_ellipsis++;
     } else {
