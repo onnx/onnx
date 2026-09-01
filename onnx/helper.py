@@ -76,6 +76,8 @@ VERSION_TABLE: VersionTableType = [
     ("1.20.0", 13, 25, 5, 1),
     ("1.20.1", 13, 25, 5, 1),
     ("1.21.0", 13, 26, 5, 1),
+    ("1.22.0", 13, 27, 5, 1),
+    ("1.23.0", 14, 28, 5, 1),
 ]
 
 VersionMapType = dict[tuple[str, int], int]
@@ -395,15 +397,19 @@ def make_tensor(
     np_dtype = tensor_dtype_to_np_dtype(data_type)
 
     if raw:
-        # NumPy doesn't have INT2/INT4/FP4. It is packed in couples to UINT8 buffers.
-        if data_type in {TensorProto.UINT4, TensorProto.INT4, TensorProto.FLOAT4E2M1}:
-            expected_size_bytes = 0.5
+        # NumPy doesn't have INT2/INT4/FP4/FP6. It is packed in couples to UINT8 buffers.
+        if data_type in {TensorProto.FLOAT6E2M3, TensorProto.FLOAT6E3M2}:
+            bits_per_element = 6
+        elif data_type in {TensorProto.UINT4, TensorProto.INT4, TensorProto.FLOAT4E2M1}:
+            bits_per_element = 4
         elif data_type in {TensorProto.UINT2, TensorProto.INT2}:
-            expected_size_bytes = 0.25
+            bits_per_element = 2
         else:
-            expected_size_bytes = np_dtype.itemsize
-        expected_size_bytes *= math.prod(dims)
-        expected_size_bytes = math.ceil(expected_size_bytes)
+            bits_per_element = np_dtype.itemsize * 8
+        # Integer ceil(n * bits_per_element / 8): avoids the float-multiplication
+        # precision loss for large n that a `math.ceil(fraction * n)` formula
+        # would be susceptible to.
+        expected_size_bytes = -(-math.prod(dims) * bits_per_element // 8)
         if isinstance(vals, np.ndarray):
             if data_type in {
                 TensorProto.INT4,
@@ -413,6 +419,8 @@ def make_tensor(
                 vals = onnx.numpy_helper._pack_4bitx2(vals)
             elif data_type in {TensorProto.UINT2, TensorProto.INT2}:
                 vals = onnx.numpy_helper._pack_2bitx4(vals)
+            elif data_type in {TensorProto.FLOAT6E2M3, TensorProto.FLOAT6E3M2}:
+                vals = onnx.numpy_helper._pack_6bit(vals.view(np.uint8))
 
             raw_data = onnx.numpy_helper.tobytes_little_endian(vals)
         elif isinstance(vals, bytes):
@@ -446,6 +454,9 @@ def make_tensor(
         vals = onnx.numpy_helper.to_float8e8m0(
             np.asarray(vals), saturate=True, round_mode="up"
         ).flatten()
+    elif data_type in {TensorProto.FLOAT6E2M3, TensorProto.FLOAT6E3M2}:
+        # For FP6 in non-raw mode, store per-element bytes in int32_data (like float8)
+        vals = np.asarray(vals, dtype=np_dtype).flatten().view(np.uint8)
     else:
         vals = np.asarray(vals, dtype=np_dtype).flatten()
 
@@ -698,12 +709,34 @@ def make_attribute(
 
 
 def make_attribute_ref(
-    name: str, attr_type: AttributeProto.AttributeType, doc_string: str | None = None
+    name: str,
+    attr_type: AttributeProto.AttributeType,
+    doc_string: str | None = None,
+    *,
+    ref_attr_name: str | None = None,
 ) -> AttributeProto:
-    """Make an AttributeProto holding a reference to the parent function's attribute of given name and type."""
+    """Make an AttributeProto holding a reference to the parent function's attribute.
+
+    The returned attribute carries no value of its own; at instantiation time its
+    value is supplied by the parent function's attribute named ``ref_attr_name``.
+    When ``ref_attr_name`` is not provided, it defaults to ``name``. Reference
+    attributes are only valid inside a function (sub-graph).
+
+    Args:
+        name: The name of this attribute as used inside the function body.
+        attr_type: The type of the attribute.
+        doc_string: Optional human-readable documentation for the attribute.
+        ref_attr_name: The name of the parent function's attribute being referenced.
+    """
+    if ref_attr_name is None:
+        ref_attr_name = name
+    if not ref_attr_name:
+        raise ValueError("ref_attr_name must be non-empty")
+
     attr = AttributeProto()
     attr.name = name
     attr.type = attr_type  # type: ignore[assignment]
+    attr.ref_attr_name = ref_attr_name
     if doc_string:
         attr.doc_string = doc_string
     return attr

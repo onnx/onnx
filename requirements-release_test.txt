@@ -1,6 +1,5 @@
 abi3audit
 check-wheel-contents
-parameterized
 pytest
 pytest-cov
 pytest-xdist
@@ -11,5 +10,4 @@ numpy==2.3.2; python_version >= "3.14"
 protobuf==6.33.6
 
 # Dependencies for the reference implementation
-ruamel.yaml
 Pillow

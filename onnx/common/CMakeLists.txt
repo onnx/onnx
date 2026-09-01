@@ -7,7 +7,7 @@ configure_file(
     @ONLY
 )
 
-target_sources(onnx_core PRIVATE
+target_sources(onnx PRIVATE
     array_ref.h
     assertions.cc
     assertions.h

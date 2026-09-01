@@ -31,8 +31,8 @@ from onnx.onnx_pb import IR_VERSION
 if TYPE_CHECKING:
     from google.protobuf.message import Message
 
-# Limitation of single protobuf file is 2GiB
-MAXIMUM_PROTOBUF = 2147483648
+# Maximum single-protobuf size; matches the C++ parser limit in proto_utils.h (2 GiB - 1 byte)
+MAXIMUM_PROTOBUF = 2147483647
 
 
 # NB: Please don't edit this context!
