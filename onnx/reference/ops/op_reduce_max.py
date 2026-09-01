@@ -32,11 +32,12 @@ class ReduceMax_18(OpRunReduceNumpy):
 
         keepdims = keepdims != 0
         if data.size == 0:
-            minvalue = (
-                np.iinfo(data.dtype).min
-                if np.issubdtype(data.dtype, np.integer)
-                else -np.inf
-            )
+            if np.issubdtype(data.dtype, np.bool_):
+                minvalue = False
+            elif np.issubdtype(data.dtype, np.integer):
+                minvalue = np.iinfo(data.dtype).min
+            else:
+                minvalue = -np.inf
             return self.reduce_constant(data, minvalue, axes, keepdims)
 
         res = np.maximum.reduce(data, axis=axes, keepdims=keepdims)

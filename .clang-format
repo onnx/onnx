@@ -89,6 +89,6 @@ SpacesInContainerLiterals: true
 SpacesInCStyleCastParentheses: false
 SpacesInParentheses: false
 SpacesInSquareBrackets: false
-StatementMacros:    [define_data]
+StatementMacros:    [define_data, ONNX_ASSERT, ONNX_ASSERTM, TENSOR_ASSERTM]
 TabWidth:        8
 UseTab:          Never

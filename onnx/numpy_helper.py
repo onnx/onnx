@@ -3,7 +3,9 @@
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
+import math
 import sys
+from collections.abc import Sequence
 from typing import TYPE_CHECKING, Any
 
 import ml_dtypes
@@ -69,7 +71,7 @@ def to_float8e8m0(
         exponent += increment
 
     elif round_mode == "up":
-        has_fraction = (f_bits & 0x4FFFFF) > 0
+        has_fraction = (f_bits & 0x7FFFFF) > 0
         round_up = has_fraction & normal_mask
 
         if saturate:
@@ -110,9 +112,16 @@ def _unpack_4bit(
     array_high >>= np.uint8(4)
     result[0::2] = array_low
     result[1::2] = array_high
-    if result.size == np.prod(dims, dtype=np.int64) + 1:
+    expected_elements = math.prod(dims)
+    if result.size == expected_elements + 1:
         # handle single-element padding due to odd number of elements
         result = result[:-1]
+    if expected_elements > result.size:
+        raise ValueError(
+            f"Packed 4-bit data ({data.size} bytes, {result.size} elements unpacked) "
+            f"is too small for the declared shape {list(dims)} "
+            f"({expected_elements} elements required)."
+        )
     result.resize(dims, refcheck=False)
     return result
 
@@ -147,9 +156,16 @@ def _unpack_2bit(
     result[1::4] = (data >> 2) & 0x03
     result[2::4] = (data >> 4) & 0x03
     result[3::4] = (data >> 6) & 0x03
-    if result.size > np.prod(dims, dtype=np.int64):
+    expected_elements = math.prod(dims)
+    if result.size > expected_elements:
         # handle padding due to non multiple of 4 elements
-        result = result[: np.prod(dims, dtype=np.int64)]
+        result = result[:expected_elements]
+    if expected_elements > result.size:
+        raise ValueError(
+            f"Packed 2-bit data ({data.size} bytes, {result.size} elements unpacked) "
+            f"is too small for the declared shape {list(dims)} "
+            f"({expected_elements} elements required)."
+        )
     result.resize(dims, refcheck=False)
     return result
 
@@ -167,6 +183,59 @@ def _pack_2bitx4(array: np.ndarray) -> npt.NDArray[np.uint8]:
     array_flat[2::4] <<= 4
     array_flat[3::4] <<= 6
     return array_flat[0::4] | array_flat[1::4] | array_flat[2::4] | array_flat[3::4]
+
+
+def _pack_6bit(values: np.ndarray) -> npt.NDArray[np.uint8]:
+    """Pack a flat uint8 array of 6-bit codes 4-at-a-time into 3 bytes (LSB-first bit order)."""
+    flat = values.astype(np.uint8, copy=False).ravel() & 0x3F
+    n = flat.size
+    packed_size = math.ceil(n * 6 / 8)
+    pad = -n % 4
+    if pad:
+        flat = np.concatenate([flat, np.zeros(pad, dtype=np.uint8)])
+    v0, v1, v2, v3 = flat[0::4], flat[1::4], flat[2::4], flat[3::4]
+    packed = np.empty((v0.size, 3), dtype=np.uint8)
+    packed[:, 0] = v0 | ((v1 & 0x03) << 6)
+    packed[:, 1] = (v1 >> 2) | ((v2 & 0x0F) << 4)
+    packed[:, 2] = (v2 >> 4) | (v3 << 2)
+    return packed.reshape(-1)[:packed_size]
+
+
+def _unpack_6bit(data: np.ndarray, dims: Sequence[int]) -> npt.NDArray[np.uint8]:
+    """Unpack a 6-bit packed buffer (see _pack_6bit) back into a uint8 array of given dims."""
+    original_size = math.prod(dims)
+    num_groups = -(-original_size // 4)  # ceil division
+    needed_bytes = num_groups * 3
+    # _pack_6bit trims its output to this minimal size: trailing bytes beyond
+    # it would only ever encode a partial final group's zero-padding bits.
+    min_bytes = -(-original_size * 6 // 8)  # ceil division
+    data = data.astype(np.uint8, copy=False)
+    if data.size < min_bytes:
+        raise ValueError(
+            f"Packed 6-bit data ({data.size} bytes) is too small for the declared "
+            f"shape {list(dims)} ({min_bytes} bytes required)."
+        )
+    # Bulk-unpack whole 3-byte groups via strided views (no copy of `data`);
+    # only the possibly-incomplete final group (at most 2 missing bytes) needs
+    # padding, so pad just that instead of copying the whole buffer.
+    bulk_bytes = min(data.size, needed_bytes) // 3 * 3
+    bulk_groups = bulk_bytes // 3
+    unpacked = np.empty((num_groups, 4), dtype=np.uint8)
+    b0, b1, b2 = data[0:bulk_bytes:3], data[1:bulk_bytes:3], data[2:bulk_bytes:3]
+    unpacked[:bulk_groups, 0] = b0 & 0x3F
+    unpacked[:bulk_groups, 1] = ((b0 >> 6) & 0x03) | ((b1 & 0x0F) << 2)
+    unpacked[:bulk_groups, 2] = ((b1 >> 4) & 0x0F) | ((b2 & 0x03) << 4)
+    unpacked[:bulk_groups, 3] = (b2 >> 2) & 0x3F
+    if bulk_groups < num_groups:
+        tail = np.zeros(3, dtype=np.uint8)
+        rest = data[bulk_bytes:]
+        tail[: rest.size] = rest
+        t0, t1, t2 = tail
+        unpacked[bulk_groups, 0] = t0 & 0x3F
+        unpacked[bulk_groups, 1] = ((t0 >> 6) & 0x03) | ((t1 & 0x0F) << 2)
+        unpacked[bulk_groups, 2] = ((t1 >> 4) & 0x0F) | ((t2 & 0x03) << 4)
+        unpacked[bulk_groups, 3] = (t2 >> 2) & 0x3F
+    return unpacked.reshape(-1)[:original_size].reshape(dims)
 
 
 def to_array(tensor: onnx.TensorProto, base_dir: str = "") -> np.ndarray:  # noqa: PLR0911
@@ -225,6 +294,15 @@ def to_array(tensor: onnx.TensorProto, base_dir: str = "") -> np.ndarray:  # noq
             data = np.frombuffer(raw_data, dtype=np.uint8)
             return _unpack_2bit(data, dims).view(np_dtype)
 
+        if tensor_dtype in {onnx.TensorProto.FLOAT6E2M3, onnx.TensorProto.FLOAT6E3M2}:
+            # raw_data is always the packed 6-bit stream (matching UINT4/UINT2's
+            # single-format convention below). A byte-length-based sniff between
+            # "packed" and "one byte per element" would be ambiguous for small
+            # tensors -- e.g. 3 elements pack to ceil(3*6/8) = 3 bytes too.
+            data = np.frombuffer(raw_data, dtype=np.uint8)
+            unpacked = _unpack_6bit(data, dims)
+            return unpacked.view(np_dtype)
+
         return np.frombuffer(raw_data, dtype=np_dtype).reshape(dims)
 
     if tensor_dtype in {
@@ -253,6 +331,24 @@ def to_array(tensor: onnx.TensorProto, base_dir: str = "") -> np.ndarray:  # noq
             np.array(tensor.int32_data, dtype=np.int32)
             .view(np.uint32)
             .astype(np.uint8)
+            .view(np_dtype)
+            .reshape(dims)
+        )
+
+    if tensor_dtype in {
+        onnx.TensorProto.FLOAT6E2M3,
+        onnx.TensorProto.FLOAT6E3M2,
+    }:
+        # Only the low 6 bits of each int32_data entry are meaningful; mask
+        # before reinterpreting, matching _pack_6bit's masking of the packed
+        # raw_data representation.
+        return (
+            (
+                np.array(tensor.int32_data, dtype=np.int32)
+                .view(np.uint32)
+                .astype(np.uint8)
+                & 0x3F
+            )
             .view(np_dtype)
             .reshape(dims)
         )
@@ -336,8 +432,7 @@ def from_array(array: np.ndarray, /, name: str | None = None) -> onnx.TensorProt
                 tensor.string_data.append(e)
             else:
                 raise NotImplementedError(
-                    "Unrecognized object in the object array, expect a string, or array of bytes: ",
-                    str(type(e)),
+                    f"Unrecognized object in the object array, expect a string, or array of bytes: {type(e)}"
                 )
         return tensor
 
@@ -356,6 +451,13 @@ def from_array(array: np.ndarray, /, name: str | None = None) -> onnx.TensorProt
     }:
         # Pack the array into int2
         array = _pack_2bitx4(array)
+
+    if dtype in {
+        onnx.TensorProto.FLOAT6E2M3,
+        onnx.TensorProto.FLOAT6E3M2,
+    }:
+        # Pack the array into 6-bit codes
+        array = _pack_6bit(array.view(np.uint8))
 
     tensor.raw_data = tobytes_little_endian(array)
     tensor.data_type = dtype  # type: ignore[assignment]
@@ -401,7 +503,7 @@ def from_list(
     if name:
         sequence.name = name
 
-    if dtype:
+    if dtype is not None:
         elem_type = dtype
     elif len(lst) > 0:
         first_elem = lst[0]
@@ -458,9 +560,7 @@ def to_dict(map_proto: onnx.MapProto) -> dict[Any, Any]:
     value_list = to_list(map_proto.values)
     if len(key_list) != len(value_list):
         raise IndexError(
-            "Length of keys and values for MapProto (map name: ",
-            map_proto.name,
-            ") are not the same.",
+            f"Length of keys and values for MapProto (map name: {map_proto.name}) are not the same."
         )
     return dict(zip(key_list, value_list, strict=False))
 
@@ -478,6 +578,8 @@ def from_dict(dict_: dict[Any, Any], name: str | None = None) -> onnx.MapProto:
     map_proto = onnx.MapProto()
     if name:
         map_proto.name = name
+    if not dict_:
+        raise ValueError("Cannot convert an empty dictionary to MapProto.")
     keys = list(dict_)
     raw_key_type = np.result_type(keys[0])
     key_type = helper.np_dtype_to_tensor_dtype(raw_key_type)
@@ -514,6 +616,8 @@ def from_dict(dict_: dict[Any, Any], name: str | None = None) -> onnx.MapProto:
         map_proto.string_keys.extend(keys)
     elif key_type in valid_key_int_types:
         map_proto.keys.extend(keys)
+    else:
+        raise TypeError(f"Unsupported map key type: {key_type}")
     map_proto.values.CopyFrom(value_seq)
     return map_proto
 
@@ -643,4 +747,4 @@ def saturate_cast(x: np.ndarray, dtype: np.dtype) -> np.ndarray:
     else:
         info = ml_dtypes.finfo(dtype)  # type: ignore[assignment]
 
-    return np.clip(x, info.min, info.max).astype(dtype)
+    return np.clip(x, info.min, info.max).astype(dtype)  # type: ignore[no-any-return]

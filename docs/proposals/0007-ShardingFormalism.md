@@ -232,7 +232,7 @@ reduction (the first option).
 
 ### MatMul-like ops
 
-List of operations: MatMul, Gemm, quantized variations of these ops, special cases of EinSum
+List of operations: MatMul, Gemm, quantized variations of these ops, special cases of Einsum
 
 The constraints for these ops follow analogous cases above. Consider the simple case of matrix multiplication
 of two matrices of dimensions `[M, K]` and `[K, N]` producing an output matrix of dimension `[M, N]`.

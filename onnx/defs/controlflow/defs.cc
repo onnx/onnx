@@ -9,6 +9,7 @@
 #include "onnx/defs/controlflow/utils.h"
 #include "onnx/defs/doc_strings.h"
 #include "onnx/defs/schema.h"
+#include "onnx/defs/type_builders.h"
 
 namespace ONNX_NAMESPACE {
 using SupportType = OpSchema::SupportType;
@@ -66,16 +67,14 @@ ONNX_OPERATOR_SET_SCHEMA(
             "V",
             control_flow_types_ir13(),
             "All Tensor, Sequence(Tensor), Optional(Tensor), and Optional(Sequence(Tensor)) types up to IRv13.")
-        .TypeConstraint("B", {"tensor(bool)"}, "Only bool")
+        .TypeConstraint("B", {types::Bool}, "Only bool")
         .TypeAndShapeInferenceFunction(IfInferenceFunction));
-
-static const char* const Loop_ver25_doc = kDoc_Loop_ver23;
 
 ONNX_OPERATOR_SET_SCHEMA(
     Loop,
     25,
     OpSchema()
-        .SetDoc(Loop_ver25_doc)
+        .SetDoc(kDoc_Loop_ver23)
         .Input(
             0,
             "M",
@@ -120,17 +119,15 @@ ONNX_OPERATOR_SET_SCHEMA(
             "V",
             control_flow_types_ir13(),
             "All Tensor, Sequence(Tensor), Optional(Tensor), and Optional(Sequence(Tensor)) types up to IRv13.")
-        .TypeConstraint("I", {"tensor(int64)"}, "tensor of int64, which should be a scalar.")
-        .TypeConstraint("B", {"tensor(bool)"}, "tensor of bool, which should be a scalar.")
+        .TypeConstraint("I", {types::Int64}, "tensor of int64, which should be a scalar.")
+        .TypeConstraint("B", {types::Bool}, "tensor of bool, which should be a scalar.")
         .TypeAndShapeInferenceFunction(LoopInferenceFunction));
-
-static const char* const scan_25_doc = kDoc_scan_24;
 
 ONNX_OPERATOR_SET_SCHEMA(
     Scan,
     25,
     OpSchema()
-        .SetDoc(scan_25_doc)
+        .SetDoc(kDoc_scan_24)
         .Input(
             0,
             "initial_state_and_scan_inputs",

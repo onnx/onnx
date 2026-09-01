@@ -25,15 +25,15 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#AveragePool">AveragePool</a>|<a href="Changelog.md#AveragePool-22">22</a>, <a href="Changelog.md#AveragePool-19">19</a>, <a href="Changelog.md#AveragePool-11">11</a>, <a href="Changelog.md#AveragePool-10">10</a>, <a href="Changelog.md#AveragePool-7">7</a>, <a href="Changelog.md#AveragePool-1">1</a>|
 |<a href="#BatchNormalization">BatchNormalization</a>|<a href="Changelog.md#BatchNormalization-15">15</a>, <a href="Changelog.md#BatchNormalization-14">14</a>, <a href="Changelog.md#BatchNormalization-9">9</a>, <a href="Changelog.md#BatchNormalization-7">7</a>, <a href="Changelog.md#BatchNormalization-6">6</a>, <a href="Changelog.md#BatchNormalization-1">1</a>|
 |<a href="#BitCast">BitCast</a>|<a href="Changelog.md#BitCast-26">26</a>|
-|<a href="#BitShift">BitShift</a>|<a href="Changelog.md#BitShift-11">11</a>|
+|<a href="#BitShift">BitShift</a>|<a href="Changelog.md#BitShift-28">28</a>, <a href="Changelog.md#BitShift-11">11</a>|
 |<a href="#BitwiseAnd">BitwiseAnd</a>|<a href="Changelog.md#BitwiseAnd-18">18</a>|
 |<a href="#BitwiseNot">BitwiseNot</a>|<a href="Changelog.md#BitwiseNot-18">18</a>|
 |<a href="#BitwiseOr">BitwiseOr</a>|<a href="Changelog.md#BitwiseOr-18">18</a>|
 |<a href="#BitwiseXor">BitwiseXor</a>|<a href="Changelog.md#BitwiseXor-18">18</a>|
-|<a href="#Cast">Cast</a>|<a href="Changelog.md#Cast-25">25</a>, <a href="Changelog.md#Cast-24">24</a>, <a href="Changelog.md#Cast-23">23</a>, <a href="Changelog.md#Cast-21">21</a>, <a href="Changelog.md#Cast-19">19</a>, <a href="Changelog.md#Cast-13">13</a>, <a href="Changelog.md#Cast-9">9</a>, <a href="Changelog.md#Cast-6">6</a>, <a href="Changelog.md#Cast-1">1</a>|
+|<a href="#Cast">Cast</a>|<a href="Changelog.md#Cast-28">28</a>, <a href="Changelog.md#Cast-25">25</a>, <a href="Changelog.md#Cast-24">24</a>, <a href="Changelog.md#Cast-23">23</a>, <a href="Changelog.md#Cast-21">21</a>, <a href="Changelog.md#Cast-19">19</a>, <a href="Changelog.md#Cast-13">13</a>, <a href="Changelog.md#Cast-9">9</a>, <a href="Changelog.md#Cast-6">6</a>, <a href="Changelog.md#Cast-1">1</a>|
 |<a href="#Ceil">Ceil</a>|<a href="Changelog.md#Ceil-13">13</a>, <a href="Changelog.md#Ceil-6">6</a>, <a href="Changelog.md#Ceil-1">1</a>|
 |<a href="#Col2Im">Col2Im</a>|<a href="Changelog.md#Col2Im-18">18</a>|
-|<a href="#Compress">Compress</a>|<a href="Changelog.md#Compress-11">11</a>, <a href="Changelog.md#Compress-9">9</a>|
+|<a href="#Compress">Compress</a>|<a href="Changelog.md#Compress-28">28</a>, <a href="Changelog.md#Compress-11">11</a>, <a href="Changelog.md#Compress-9">9</a>|
 |<a href="#Concat">Concat</a>|<a href="Changelog.md#Concat-13">13</a>, <a href="Changelog.md#Concat-11">11</a>, <a href="Changelog.md#Concat-4">4</a>, <a href="Changelog.md#Concat-1">1</a>|
 |<a href="#ConcatFromSequence">ConcatFromSequence</a>|<a href="Changelog.md#ConcatFromSequence-11">11</a>|
 |<a href="#Constant">Constant</a>|<a href="Changelog.md#Constant-25">25</a>, <a href="Changelog.md#Constant-24">24</a>, <a href="Changelog.md#Constant-23">23</a>, <a href="Changelog.md#Constant-21">21</a>, <a href="Changelog.md#Constant-19">19</a>, <a href="Changelog.md#Constant-13">13</a>, <a href="Changelog.md#Constant-12">12</a>, <a href="Changelog.md#Constant-11">11</a>, <a href="Changelog.md#Constant-9">9</a>, <a href="Changelog.md#Constant-1">1</a>|
@@ -47,12 +47,11 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#CumSum">CumSum</a>|<a href="Changelog.md#CumSum-14">14</a>, <a href="Changelog.md#CumSum-11">11</a>|
 |<a href="#DFT">DFT</a>|<a href="Changelog.md#DFT-20">20</a>, <a href="Changelog.md#DFT-17">17</a>|
 |<a href="#DeformConv">DeformConv</a>|<a href="Changelog.md#DeformConv-22">22</a>, <a href="Changelog.md#DeformConv-19">19</a>|
-|<a href="#DepthToSpace">DepthToSpace</a>|<a href="Changelog.md#DepthToSpace-13">13</a>, <a href="Changelog.md#DepthToSpace-11">11</a>, <a href="Changelog.md#DepthToSpace-1">1</a>|
-|<a href="#DequantizeLinear">DequantizeLinear</a>|<a href="Changelog.md#DequantizeLinear-25">25</a>, <a href="Changelog.md#DequantizeLinear-24">24</a>, <a href="Changelog.md#DequantizeLinear-23">23</a>, <a href="Changelog.md#DequantizeLinear-21">21</a>, <a href="Changelog.md#DequantizeLinear-19">19</a>, <a href="Changelog.md#DequantizeLinear-13">13</a>, <a href="Changelog.md#DequantizeLinear-10">10</a>|
+|<a href="#DequantizeLinear">DequantizeLinear</a>|<a href="Changelog.md#DequantizeLinear-28">28</a>, <a href="Changelog.md#DequantizeLinear-25">25</a>, <a href="Changelog.md#DequantizeLinear-24">24</a>, <a href="Changelog.md#DequantizeLinear-23">23</a>, <a href="Changelog.md#DequantizeLinear-21">21</a>, <a href="Changelog.md#DequantizeLinear-19">19</a>, <a href="Changelog.md#DequantizeLinear-13">13</a>, <a href="Changelog.md#DequantizeLinear-10">10</a>|
 |<a href="#Det">Det</a>|<a href="Changelog.md#Det-22">22</a>, <a href="Changelog.md#Det-11">11</a>|
 |<a href="#Div">Div</a>|<a href="Changelog.md#Div-14">14</a>, <a href="Changelog.md#Div-13">13</a>, <a href="Changelog.md#Div-7">7</a>, <a href="Changelog.md#Div-6">6</a>, <a href="Changelog.md#Div-1">1</a>|
 |<a href="#Dropout">Dropout</a>|<a href="Changelog.md#Dropout-22">22</a>, <a href="Changelog.md#Dropout-13">13</a>, <a href="Changelog.md#Dropout-12">12</a>, <a href="Changelog.md#Dropout-10">10</a>, <a href="Changelog.md#Dropout-7">7</a>, <a href="Changelog.md#Dropout-6">6</a>, <a href="Changelog.md#Dropout-1">1</a>|
-|<a href="#Einsum">Einsum</a>|<a href="Changelog.md#Einsum-12">12</a>|
+|<a href="#Einsum">Einsum</a>|<a href="Changelog.md#Einsum-28">28</a>, <a href="Changelog.md#Einsum-12">12</a>|
 |<a href="#Equal">Equal</a>|<a href="Changelog.md#Equal-19">19</a>, <a href="Changelog.md#Equal-13">13</a>, <a href="Changelog.md#Equal-11">11</a>, <a href="Changelog.md#Equal-7">7</a>, <a href="Changelog.md#Equal-1">1</a>|
 |<a href="#Erf">Erf</a>|<a href="Changelog.md#Erf-13">13</a>, <a href="Changelog.md#Erf-9">9</a>|
 |<a href="#Exp">Exp</a>|<a href="Changelog.md#Exp-13">13</a>, <a href="Changelog.md#Exp-6">6</a>, <a href="Changelog.md#Exp-1">1</a>|
@@ -93,23 +92,23 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#Mean">Mean</a>|<a href="Changelog.md#Mean-13">13</a>, <a href="Changelog.md#Mean-8">8</a>, <a href="Changelog.md#Mean-6">6</a>, <a href="Changelog.md#Mean-1">1</a>|
 |<a href="#MelWeightMatrix">MelWeightMatrix</a>|<a href="Changelog.md#MelWeightMatrix-17">17</a>|
 |<a href="#Min">Min</a>|<a href="Changelog.md#Min-13">13</a>, <a href="Changelog.md#Min-12">12</a>, <a href="Changelog.md#Min-8">8</a>, <a href="Changelog.md#Min-6">6</a>, <a href="Changelog.md#Min-1">1</a>|
-|<a href="#Mod">Mod</a>|<a href="Changelog.md#Mod-13">13</a>, <a href="Changelog.md#Mod-10">10</a>|
+|<a href="#Mod">Mod</a>|<a href="Changelog.md#Mod-28">28</a>, <a href="Changelog.md#Mod-13">13</a>, <a href="Changelog.md#Mod-10">10</a>|
 |<a href="#Mul">Mul</a>|<a href="Changelog.md#Mul-14">14</a>, <a href="Changelog.md#Mul-13">13</a>, <a href="Changelog.md#Mul-7">7</a>, <a href="Changelog.md#Mul-6">6</a>, <a href="Changelog.md#Mul-1">1</a>|
 |<a href="#Multinomial">Multinomial</a>|<a href="Changelog.md#Multinomial-22">22</a>, <a href="Changelog.md#Multinomial-7">7</a>|
 |<a href="#Neg">Neg</a>|<a href="Changelog.md#Neg-13">13</a>, <a href="Changelog.md#Neg-6">6</a>, <a href="Changelog.md#Neg-1">1</a>|
 |<a href="#NonMaxSuppression">NonMaxSuppression</a>|<a href="Changelog.md#NonMaxSuppression-11">11</a>, <a href="Changelog.md#NonMaxSuppression-10">10</a>|
 |<a href="#NonZero">NonZero</a>|<a href="Changelog.md#NonZero-13">13</a>, <a href="Changelog.md#NonZero-9">9</a>|
 |<a href="#Not">Not</a>|<a href="Changelog.md#Not-1">1</a>|
-|<a href="#OneHot">OneHot</a>|<a href="Changelog.md#OneHot-11">11</a>, <a href="Changelog.md#OneHot-9">9</a>|
-|<a href="#Optional">Optional</a>|<a href="Changelog.md#Optional-15">15</a>|
-|<a href="#OptionalGetElement">OptionalGetElement</a>|<a href="Changelog.md#OptionalGetElement-18">18</a>, <a href="Changelog.md#OptionalGetElement-15">15</a>|
-|<a href="#OptionalHasElement">OptionalHasElement</a>|<a href="Changelog.md#OptionalHasElement-18">18</a>, <a href="Changelog.md#OptionalHasElement-15">15</a>|
+|<a href="#OneHot">OneHot</a>|<a href="Changelog.md#OneHot-28">28</a>, <a href="Changelog.md#OneHot-11">11</a>, <a href="Changelog.md#OneHot-9">9</a>|
+|<a href="#Optional">Optional</a>|<a href="Changelog.md#Optional-28">28</a>, <a href="Changelog.md#Optional-15">15</a>|
+|<a href="#OptionalGetElement">OptionalGetElement</a>|<a href="Changelog.md#OptionalGetElement-28">28</a>, <a href="Changelog.md#OptionalGetElement-18">18</a>, <a href="Changelog.md#OptionalGetElement-15">15</a>|
+|<a href="#OptionalHasElement">OptionalHasElement</a>|<a href="Changelog.md#OptionalHasElement-28">28</a>, <a href="Changelog.md#OptionalHasElement-18">18</a>, <a href="Changelog.md#OptionalHasElement-15">15</a>|
 |<a href="#Or">Or</a>|<a href="Changelog.md#Or-7">7</a>, <a href="Changelog.md#Or-1">1</a>|
 |<a href="#Pad">Pad</a>|<a href="Changelog.md#Pad-25">25</a>, <a href="Changelog.md#Pad-24">24</a>, <a href="Changelog.md#Pad-23">23</a>, <a href="Changelog.md#Pad-21">21</a>, <a href="Changelog.md#Pad-19">19</a>, <a href="Changelog.md#Pad-18">18</a>, <a href="Changelog.md#Pad-13">13</a>, <a href="Changelog.md#Pad-11">11</a>, <a href="Changelog.md#Pad-2">2</a>, <a href="Changelog.md#Pad-1">1</a>|
 |<a href="#Pow">Pow</a>|<a href="Changelog.md#Pow-15">15</a>, <a href="Changelog.md#Pow-13">13</a>, <a href="Changelog.md#Pow-12">12</a>, <a href="Changelog.md#Pow-7">7</a>, <a href="Changelog.md#Pow-1">1</a>|
 |<a href="#QLinearConv">QLinearConv</a>|<a href="Changelog.md#QLinearConv-10">10</a>|
 |<a href="#QLinearMatMul">QLinearMatMul</a>|<a href="Changelog.md#QLinearMatMul-21">21</a>, <a href="Changelog.md#QLinearMatMul-10">10</a>|
-|<a href="#QuantizeLinear">QuantizeLinear</a>|<a href="Changelog.md#QuantizeLinear-25">25</a>, <a href="Changelog.md#QuantizeLinear-24">24</a>, <a href="Changelog.md#QuantizeLinear-23">23</a>, <a href="Changelog.md#QuantizeLinear-21">21</a>, <a href="Changelog.md#QuantizeLinear-19">19</a>, <a href="Changelog.md#QuantizeLinear-13">13</a>, <a href="Changelog.md#QuantizeLinear-10">10</a>|
+|<a href="#QuantizeLinear">QuantizeLinear</a>|<a href="Changelog.md#QuantizeLinear-28">28</a>, <a href="Changelog.md#QuantizeLinear-25">25</a>, <a href="Changelog.md#QuantizeLinear-24">24</a>, <a href="Changelog.md#QuantizeLinear-23">23</a>, <a href="Changelog.md#QuantizeLinear-21">21</a>, <a href="Changelog.md#QuantizeLinear-19">19</a>, <a href="Changelog.md#QuantizeLinear-13">13</a>, <a href="Changelog.md#QuantizeLinear-10">10</a>|
 |<a href="#RNN">RNN</a>|<a href="Changelog.md#RNN-22">22</a>, <a href="Changelog.md#RNN-14">14</a>, <a href="Changelog.md#RNN-7">7</a>, <a href="Changelog.md#RNN-1">1</a>|
 |<a href="#RandomNormal">RandomNormal</a>|<a href="Changelog.md#RandomNormal-22">22</a>, <a href="Changelog.md#RandomNormal-1">1</a>|
 |<a href="#RandomNormalLike">RandomNormalLike</a>|<a href="Changelog.md#RandomNormalLike-22">22</a>, <a href="Changelog.md#RandomNormalLike-1">1</a>|
@@ -124,7 +123,7 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#RegexFullMatch">RegexFullMatch</a>|<a href="Changelog.md#RegexFullMatch-20">20</a>|
 |<a href="#Reshape">Reshape</a>|<a href="Changelog.md#Reshape-25">25</a>, <a href="Changelog.md#Reshape-24">24</a>, <a href="Changelog.md#Reshape-23">23</a>, <a href="Changelog.md#Reshape-21">21</a>, <a href="Changelog.md#Reshape-19">19</a>, <a href="Changelog.md#Reshape-14">14</a>, <a href="Changelog.md#Reshape-13">13</a>, <a href="Changelog.md#Reshape-5">5</a>, <a href="Changelog.md#Reshape-1">1</a>|
 |<a href="#Resize">Resize</a>|<a href="Changelog.md#Resize-19">19</a>, <a href="Changelog.md#Resize-18">18</a>, <a href="Changelog.md#Resize-13">13</a>, <a href="Changelog.md#Resize-11">11</a>, <a href="Changelog.md#Resize-10">10</a>|
-|<a href="#ReverseSequence">ReverseSequence</a>|<a href="Changelog.md#ReverseSequence-10">10</a>|
+|<a href="#ReverseSequence">ReverseSequence</a>|<a href="Changelog.md#ReverseSequence-28">28</a>, <a href="Changelog.md#ReverseSequence-10">10</a>|
 |<a href="#RoiAlign">RoiAlign</a>|<a href="Changelog.md#RoiAlign-22">22</a>, <a href="Changelog.md#RoiAlign-16">16</a>, <a href="Changelog.md#RoiAlign-10">10</a>|
 |<a href="#Round">Round</a>|<a href="Changelog.md#Round-22">22</a>, <a href="Changelog.md#Round-11">11</a>|
 |<a href="#STFT">STFT</a>|<a href="Changelog.md#STFT-17">17</a>|
@@ -145,7 +144,6 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#Sinh">Sinh</a>|<a href="Changelog.md#Sinh-22">22</a>, <a href="Changelog.md#Sinh-9">9</a>|
 |<a href="#Size">Size</a>|<a href="Changelog.md#Size-25">25</a>, <a href="Changelog.md#Size-24">24</a>, <a href="Changelog.md#Size-23">23</a>, <a href="Changelog.md#Size-21">21</a>, <a href="Changelog.md#Size-19">19</a>, <a href="Changelog.md#Size-13">13</a>, <a href="Changelog.md#Size-1">1</a>|
 |<a href="#Slice">Slice</a>|<a href="Changelog.md#Slice-13">13</a>, <a href="Changelog.md#Slice-11">11</a>, <a href="Changelog.md#Slice-10">10</a>, <a href="Changelog.md#Slice-1">1</a>|
-|<a href="#SpaceToDepth">SpaceToDepth</a>|<a href="Changelog.md#SpaceToDepth-13">13</a>, <a href="Changelog.md#SpaceToDepth-1">1</a>|
 |<a href="#Split">Split</a>|<a href="Changelog.md#Split-18">18</a>, <a href="Changelog.md#Split-13">13</a>, <a href="Changelog.md#Split-11">11</a>, <a href="Changelog.md#Split-2">2</a>, <a href="Changelog.md#Split-1">1</a>|
 |<a href="#SplitToSequence">SplitToSequence</a>|<a href="Changelog.md#SplitToSequence-24">24</a>, <a href="Changelog.md#SplitToSequence-11">11</a>|
 |<a href="#Sqrt">Sqrt</a>|<a href="Changelog.md#Sqrt-13">13</a>, <a href="Changelog.md#Sqrt-6">6</a>, <a href="Changelog.md#Sqrt-1">1</a>|
@@ -163,20 +161,22 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#TopK">TopK</a>|<a href="Changelog.md#TopK-24">24</a>, <a href="Changelog.md#TopK-11">11</a>, <a href="Changelog.md#TopK-10">10</a>, <a href="Changelog.md#TopK-1">1</a>|
 |<a href="#Transpose">Transpose</a>|<a href="Changelog.md#Transpose-25">25</a>, <a href="Changelog.md#Transpose-24">24</a>, <a href="Changelog.md#Transpose-23">23</a>, <a href="Changelog.md#Transpose-21">21</a>, <a href="Changelog.md#Transpose-13">13</a>, <a href="Changelog.md#Transpose-1">1</a>|
 |<a href="#Trilu">Trilu</a>|<a href="Changelog.md#Trilu-14">14</a>|
-|<a href="#Unique">Unique</a>|<a href="Changelog.md#Unique-11">11</a>|
+|<a href="#Unique">Unique</a>|<a href="Changelog.md#Unique-28">28</a>, <a href="Changelog.md#Unique-11">11</a>|
 |<a href="#Unsqueeze">Unsqueeze</a>|<a href="Changelog.md#Unsqueeze-25">25</a>, <a href="Changelog.md#Unsqueeze-24">24</a>, <a href="Changelog.md#Unsqueeze-23">23</a>, <a href="Changelog.md#Unsqueeze-21">21</a>, <a href="Changelog.md#Unsqueeze-13">13</a>, <a href="Changelog.md#Unsqueeze-11">11</a>, <a href="Changelog.md#Unsqueeze-1">1</a>|
 |<a href="#Upsample">Upsample</a> (deprecated)|<a href="Changelog.md#Upsample-10">10</a>, <a href="Changelog.md#Upsample-9">9</a>, <a href="Changelog.md#Upsample-7">7</a>|
 |<a href="#Where">Where</a>|<a href="Changelog.md#Where-16">16</a>, <a href="Changelog.md#Where-9">9</a>|
 |<a href="#Xor">Xor</a>|<a href="Changelog.md#Xor-7">7</a>, <a href="Changelog.md#Xor-1">1</a>|
 |**Function**|**Since version**|**Function version**|
 |<a href="#AffineGrid">AffineGrid</a>|<a href="Changelog.md#AffineGrid-20">20</a>|20|
-|<a href="#Attention">Attention</a>|<a href="Changelog.md#Attention-24">24</a>, <a href="Changelog.md#Attention-23">23</a>|24|
+|<a href="#Attention">Attention</a>|<a href="Changelog.md#Attention-25">25</a>, <a href="Changelog.md#Attention-24">24</a>, <a href="Changelog.md#Attention-23">23</a>|25|
 |<a href="#Bernoulli">Bernoulli</a>|<a href="Changelog.md#Bernoulli-22">22</a>, <a href="Changelog.md#Bernoulli-15">15</a>|22|
 |<a href="#BlackmanWindow">BlackmanWindow</a>|<a href="Changelog.md#BlackmanWindow-17">17</a>|17|
 |<a href="#CastLike">CastLike</a>|<a href="Changelog.md#CastLike-25">25</a>, <a href="Changelog.md#CastLike-24">24</a>, <a href="Changelog.md#CastLike-23">23</a>, <a href="Changelog.md#CastLike-21">21</a>, <a href="Changelog.md#CastLike-19">19</a>, <a href="Changelog.md#CastLike-15">15</a>|25|
-|<a href="#Celu">Celu</a>|<a href="Changelog.md#Celu-12">12</a>|12|
+|<a href="#CausalConvWithState">CausalConvWithState</a>|<a href="Changelog.md#CausalConvWithState-27">27</a>|27|
+|<a href="#Celu">Celu</a>|<a href="Changelog.md#Celu-28">28</a>, <a href="Changelog.md#Celu-12">12</a>|28|
 |<a href="#CenterCropPad">CenterCropPad</a>|<a href="Changelog.md#CenterCropPad-18">18</a>|18|
 |<a href="#Clip">Clip</a>|<a href="Changelog.md#Clip-13">13</a>, <a href="Changelog.md#Clip-12">12</a>, <a href="Changelog.md#Clip-11">11</a>, <a href="Changelog.md#Clip-6">6</a>, <a href="Changelog.md#Clip-1">1</a>|13|
+|<a href="#DepthToSpace">DepthToSpace</a>|<a href="Changelog.md#DepthToSpace-28">28</a>, <a href="Changelog.md#DepthToSpace-13">13</a>, <a href="Changelog.md#DepthToSpace-11">11</a>, <a href="Changelog.md#DepthToSpace-1">1</a>|28|
 |<a href="#DynamicQuantizeLinear">DynamicQuantizeLinear</a>|<a href="Changelog.md#DynamicQuantizeLinear-11">11</a>|11|
 |<a href="#Elu">Elu</a>|<a href="Changelog.md#Elu-22">22</a>, <a href="Changelog.md#Elu-6">6</a>, <a href="Changelog.md#Elu-1">1</a>|18|
 |<a href="#Gelu">Gelu</a>|<a href="Changelog.md#Gelu-20">20</a>|20|
@@ -189,17 +189,18 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#LayerNormalization">LayerNormalization</a>|<a href="Changelog.md#LayerNormalization-17">17</a>|17, 18|
 |<a href="#LeakyRelu">LeakyRelu</a>|<a href="Changelog.md#LeakyRelu-16">16</a>, <a href="Changelog.md#LeakyRelu-6">6</a>, <a href="Changelog.md#LeakyRelu-1">1</a>|16|
 |<a href="#LessOrEqual">LessOrEqual</a>|<a href="Changelog.md#LessOrEqual-16">16</a>, <a href="Changelog.md#LessOrEqual-12">12</a>|16|
+|<a href="#LinearAttention">LinearAttention</a>|<a href="Changelog.md#LinearAttention-27">27</a>|27|
 |<a href="#LogSoftmax">LogSoftmax</a>|<a href="Changelog.md#LogSoftmax-13">13</a>, <a href="Changelog.md#LogSoftmax-11">11</a>, <a href="Changelog.md#LogSoftmax-1">1</a>|13, 18|
 |<a href="#MeanVarianceNormalization">MeanVarianceNormalization</a>|<a href="Changelog.md#MeanVarianceNormalization-13">13</a>, <a href="Changelog.md#MeanVarianceNormalization-9">9</a>|13, 18|
 |<a href="#Mish">Mish</a>|<a href="Changelog.md#Mish-22">22</a>, <a href="Changelog.md#Mish-18">18</a>|22|
 |<a href="#NegativeLogLikelihoodLoss">NegativeLogLikelihoodLoss</a>|<a href="Changelog.md#NegativeLogLikelihoodLoss-22">22</a>, <a href="Changelog.md#NegativeLogLikelihoodLoss-13">13</a>, <a href="Changelog.md#NegativeLogLikelihoodLoss-12">12</a>|22|
 |<a href="#PRelu">PRelu</a>|<a href="Changelog.md#PRelu-16">16</a>, <a href="Changelog.md#PRelu-9">9</a>, <a href="Changelog.md#PRelu-7">7</a>, <a href="Changelog.md#PRelu-6">6</a>, <a href="Changelog.md#PRelu-1">1</a>|16|
 |<a href="#RMSNormalization">RMSNormalization</a>|<a href="Changelog.md#RMSNormalization-23">23</a>|23|
-|<a href="#Range">Range</a>|<a href="Changelog.md#Range-11">11</a>|11|
+|<a href="#Range">Range</a>|<a href="Changelog.md#Range-27">27</a>, <a href="Changelog.md#Range-11">11</a>|27|
 |<a href="#ReduceL1">ReduceL1</a>|<a href="Changelog.md#ReduceL1-18">18</a>, <a href="Changelog.md#ReduceL1-13">13</a>, <a href="Changelog.md#ReduceL1-11">11</a>, <a href="Changelog.md#ReduceL1-1">1</a>|18|
 |<a href="#ReduceL2">ReduceL2</a>|<a href="Changelog.md#ReduceL2-18">18</a>, <a href="Changelog.md#ReduceL2-13">13</a>, <a href="Changelog.md#ReduceL2-11">11</a>, <a href="Changelog.md#ReduceL2-1">1</a>|18|
-|<a href="#ReduceLogSum">ReduceLogSum</a>|<a href="Changelog.md#ReduceLogSum-18">18</a>, <a href="Changelog.md#ReduceLogSum-13">13</a>, <a href="Changelog.md#ReduceLogSum-11">11</a>, <a href="Changelog.md#ReduceLogSum-1">1</a>|18|
-|<a href="#ReduceLogSumExp">ReduceLogSumExp</a>|<a href="Changelog.md#ReduceLogSumExp-18">18</a>, <a href="Changelog.md#ReduceLogSumExp-13">13</a>, <a href="Changelog.md#ReduceLogSumExp-11">11</a>, <a href="Changelog.md#ReduceLogSumExp-1">1</a>|18|
+|<a href="#ReduceLogSum">ReduceLogSum</a>|<a href="Changelog.md#ReduceLogSum-28">28</a>, <a href="Changelog.md#ReduceLogSum-18">18</a>, <a href="Changelog.md#ReduceLogSum-13">13</a>, <a href="Changelog.md#ReduceLogSum-11">11</a>, <a href="Changelog.md#ReduceLogSum-1">1</a>|28|
+|<a href="#ReduceLogSumExp">ReduceLogSumExp</a>|<a href="Changelog.md#ReduceLogSumExp-28">28</a>, <a href="Changelog.md#ReduceLogSumExp-18">18</a>, <a href="Changelog.md#ReduceLogSumExp-13">13</a>, <a href="Changelog.md#ReduceLogSumExp-11">11</a>, <a href="Changelog.md#ReduceLogSumExp-1">1</a>|28|
 |<a href="#ReduceSumSquare">ReduceSumSquare</a>|<a href="Changelog.md#ReduceSumSquare-18">18</a>, <a href="Changelog.md#ReduceSumSquare-13">13</a>, <a href="Changelog.md#ReduceSumSquare-11">11</a>, <a href="Changelog.md#ReduceSumSquare-1">1</a>|18|
 |<a href="#Relu">Relu</a>|<a href="Changelog.md#Relu-14">14</a>, <a href="Changelog.md#Relu-13">13</a>, <a href="Changelog.md#Relu-6">6</a>, <a href="Changelog.md#Relu-1">1</a>|18|
 |<a href="#RotaryEmbedding">RotaryEmbedding</a>|<a href="Changelog.md#RotaryEmbedding-23">23</a>|23|
@@ -210,8 +211,16 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#SoftmaxCrossEntropyLoss">SoftmaxCrossEntropyLoss</a>|<a href="Changelog.md#SoftmaxCrossEntropyLoss-13">13</a>, <a href="Changelog.md#SoftmaxCrossEntropyLoss-12">12</a>|13|
 |<a href="#Softplus">Softplus</a>|<a href="Changelog.md#Softplus-22">22</a>, <a href="Changelog.md#Softplus-1">1</a>|18|
 |<a href="#Softsign">Softsign</a>|<a href="Changelog.md#Softsign-22">22</a>, <a href="Changelog.md#Softsign-1">1</a>|18|
+|<a href="#SpaceToDepth">SpaceToDepth</a>|<a href="Changelog.md#SpaceToDepth-28">28</a>, <a href="Changelog.md#SpaceToDepth-13">13</a>, <a href="Changelog.md#SpaceToDepth-1">1</a>|28|
+|<a href="#SwiGLU">SwiGLU</a>|<a href="Changelog.md#SwiGLU-28">28</a>|28|
 |<a href="#Swish">Swish</a>|<a href="Changelog.md#Swish-24">24</a>|24|
 |<a href="#ThresholdedRelu">ThresholdedRelu</a>|<a href="Changelog.md#ThresholdedRelu-22">22</a>, <a href="Changelog.md#ThresholdedRelu-10">10</a>|18|
+
+### ai.onnx.preview
+|**Operator**|**Since version**||
+|-|-|-|
+|**Function**|**Since version**|**Function version**|
+|<sub>experimental</sub> <a href="#ai.onnx.preview.FlexAttention">ai.onnx.preview.FlexAttention</a>|<a href="Changelog.md#ai.onnx.preview.FlexAttention-1">1</a>|1|
 
 ### ai.onnx.preview.training
 |**Operator**|**Since version**||
@@ -1650,7 +1659,66 @@ expect(node, inputs=[x], outputs=[y], name="test_atanh")
 
   Attention bias to be added is calculated based on `attn_mask` input and `is_causal` attribute:
   1) `attn_mask`: A boolean mask where a value of `True` indicates that the element should take part in attention or a float mask of the same type as query, key, value that is added to the attention score.
-  2) If `is_causal` is set to `1`, attention scores above the diagonal are masked out, regardless of the `attn_mask` input.
+  2) If `is_causal` is set to `1`, causal masking is applied with bottom-right (offset-aware) alignment: query `i` attends key `j` iff `j <= i + offset`, as illustrated below.
+
+  ```
+    2D causal mask for Attention (PR onnx/onnx#8068)
+     S_q=4 queries, S_k=8 keys
+     Rule: query i attends key j iff j <= i + offset
+           offset = nonpad_kv_seqlen - S_q
+
+     nonpad_kv_seqlen=4, offset=4-4=0
+
+            k0  k1  k2  k3  k4  k5  k6  k7
+           +----+----+----+----+----+----+----+----+
+      q0   | ## |    |    |    |    |    |    |    |
+           +----+----+----+----+----+----+----+----+
+      q1   | ## | ## |    |    |    |    |    |    |
+           +----+----+----+----+----+----+----+----+
+      q2   | ## | ## | ## |    |    |    |    |    |
+           +----+----+----+----+----+----+----+----+
+      q3   | ## | ## | ## | ## |    |    |    |    |
+           +----+----+----+----+----+----+----+----+
+
+
+     nonpad_kv_seqlen=8, offset=8-4=4
+
+            k0  k1  k2  k3  k4  k5  k6  k7
+           +----+----+----+----+----+----+----+----+
+      q0   | ## | ## | ## | ## | ## |    |    |    |
+           +----+----+----+----+----+----+----+----+
+      q1   | ## | ## | ## | ## | ## | ## |    |    |
+           +----+----+----+----+----+----+----+----+
+      q2   | ## | ## | ## | ## | ## | ## | ## |    |
+           +----+----+----+----+----+----+----+----+
+      q3   | ## | ## | ## | ## | ## | ## | ## | ## |
+           +----+----+----+----+----+----+----+----+
+  ```
+
+  With `nonpad_kv_seqlen=4` (offset=0), the mask is the standard lower-triangular. With `nonpad_kv_seqlen=8` (offset=4), the diagonal shifts right by 4, so each query sees the 4 additional valid cached keys.
+
+  `offset` is the count of valid keys preceding the current query block: `offset = past_sequence_length` when `past_key` is provided; `offset = nonpad_kv_seqlen - q_sequence_length` (per batch) when an external cache is indicated by `nonpad_kv_seqlen` without `past_key`; `offset = 0` when neither is provided (the no-cache case, which reduces to the standard lower-triangular mask). When `offset < 0` (`nonpad_kv_seqlen < q_sequence_length`, i.e. more query tokens than cached keys) the leading query rows have an empty key set (no key satisfies `j <= i + offset`) and are fully masked. The causal frontier is computed independently of `attn_mask` and is then composed with it additively: a boolean `attn_mask` intersects the allowed set (its disallowed positions contribute `-inf` to the bias), while a float `attn_mask` is added to the attention scores rather than disabling positions. A fully-masked query row (no key attended, including the negative-offset leading rows) produces a zero output row, not `NaN`, for both `Y` and the mode-`3` `qk_matmul_output` debug output; the mode-`3` `qk_matmul_output` is emitted at the operator's output precision (`T1`).
+
+  `left_window_size` and `right_window_size` independently restrict the keys visible to each query. A query at absolute position `p = offset + query_index` attends keys `j` satisfying `p - left_window_size <= j <= p + right_window_size` for each nonnegative bound. A value of `-1` leaves that side unbounded. For example, `(left_window_size=2, right_window_size=0)` is a causal left-looking window containing the current key and two preceding keys, while `(left_window_size=2, right_window_size=1)` is an asymmetric bidirectional window. Window bounds are composed with `is_causal` and `attn_mask`; when `is_causal=1`, the causal upper bound still excludes future keys.
+
+  ```
+    2D sliding-window mask for Attention (opset 25)
+     S_q=4 queries, S_k=6 keys, left_window_size=2, right_window_size=1, offset=0
+
+            k0  k1  k2  k3  k4  k5
+           +----+----+----+----+----+----+
+      q0   | ## | ## |    |    |    |    |
+           +----+----+----+----+----+----+
+      q1   | ## | ## | ## |    |    |    |
+           +----+----+----+----+----+----+
+      q2   | ## | ## | ## | ## |    |    |
+           +----+----+----+----+----+----+
+      q3   |    | ## | ## | ## | ## |    |
+           +----+----+----+----+----+----+
+
+     q0 attends {k0,k1}, q1 attends {k0,k1,k2}, q2 attends {k0,k1,k2,k3},
+     q3 attends {k1,k2,k3,k4}.
+  ```
 
   With respect to KV cache update, this operator allows the following two use cases:
 
@@ -1679,9 +1747,9 @@ expect(node, inputs=[x], outputs=[y], name="test_atanh")
         |          |          |
         ---MatMul---          |
               |               |
-   at_mask---Add              |
-              |               |
     softcap (if provided)     |
+              |               |
+   at_mask---Add              |
               |               |
            Softmax            |
               |               |
@@ -1693,27 +1761,31 @@ expect(node, inputs=[x], outputs=[y], name="test_atanh")
 
 #### Version
 
-This version of the operator has been available since version 24 of the default ONNX operator set.
+This version of the operator has been available since version 25 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#Attention-23">23</a>
+Other versions of this operator: <a href="Changelog.md#Attention-23">23</a>, <a href="Changelog.md#Attention-24">24</a>
 
 #### Attributes
 
 <dl>
 <dt><tt>is_causal</tt> : int (default is 0)</dt>
-<dd>If set to `1`, the attention masking is a lower triangular matrix when the mask is a square matrix. The attention masking has the form of the upper left causal bias due to the alignment.</dd>
+<dd>If set to `1`, causal masking is applied. For a square Q/K (no cache offset) this is a lower-triangular matrix. In general the mask is bottom-right (offset-aware): query in-block index `i` attends key `j` iff `j <= i + offset`, where `offset` is the count of valid keys preceding the query block (`past_sequence_length` for an internal `past_key` cache, or `nonpad_kv_seqlen - q_sequence_length` per batch for an external cache). When `offset = 0` this reduces to the lower-triangular (top-left) mask.</dd>
 <dt><tt>kv_num_heads</tt> : int</dt>
 <dd>Number of heads of key and value. Must be used with 3D inputs of Q, K and V. </dd>
+<dt><tt>left_window_size</tt> : int (default is -1)</dt>
+<dd>Maximum number of positions to the left of the current absolute query position that may be attended. A value of `0` allows the current position but no preceding position, while `-1` leaves the left side unbounded. This bound is composed with `is_causal` and `attn_mask`.</dd>
 <dt><tt>q_num_heads</tt> : int</dt>
 <dd>Number of heads of query. Must be used with 3D inputs of Q, K and V. </dd>
 <dt><tt>qk_matmul_output_mode</tt> : int (default is 0)</dt>
-<dd>If set to `0`, qk_matmul_output is the output of qk matmul. If set to `1`, qk_matmul_output includes the addition of the attention mask to the output of qk matmul. If set to `2`, qk_matmul_output is the output after the softcap operation. If set to `3`, qk_matmul_output is the output after the softmax operation. Default value is 0.</dd>
+<dd>Determines what the optional 4th output contains: `0` (default): raw QK matmul result; `1`: after softcap (before bias addition); `2`: QK + softcap + bias; `3`: post-softmax probabilities (after fully-masked-row guard). In mode `3`, a fully-masked query row (every key disallowed) is a zero row, consistent with the corresponding row of the primary output `Y`. The mode-`3` output is emitted at the operator's output precision (`T1`); when `softmax_precision` differs from `T1` this is a cast of the softmax result to `T1`.</dd>
+<dt><tt>right_window_size</tt> : int (default is -1)</dt>
+<dd>Maximum number of positions to the right of the current absolute query position that may be attended. A value of `0` allows the current position but no following position, while `-1` leaves the right side unbounded. Set `is_causal=0` to use a positive right window.</dd>
 <dt><tt>scale</tt> : float</dt>
 <dd>Scaling factor applied to $Q*K^T$. Default value is `1/sqrt(head_size)`. To prevent [numerical overflow](https://tinyurl.com/sudb9s96), scale `Q`, `K` by `sqrt(scale)` before matmul.</dd>
 <dt><tt>softcap</tt> : float (default is 0.0)</dt>
-<dd>Softcap value for attention weights. Default value is 0.</dd>
+<dd>Soft cap for attention logits, applied as `softcap * tanh(logits / softcap)`. Default value of `0.0` means no soft capping is applied. The soft cap is applied before mask / bias addition and softmax.</dd>
 <dt><tt>softmax_precision</tt> : int</dt>
-<dd>The floating-point precision used in softmax computation. If softmax precision is not provided, the same precision as the input of softmax (Q and K) is used.</dd>
+<dd>Specifies the precision for softmax computation. If provided, the attention weights will be cast to this type before softmax and then cast back to the original type. Supported values are: `1` (FLOAT), `10` (FLOAT16), `11` (DOUBLE), `16` (BFLOAT16).</dd>
 </dl>
 
 #### Inputs (3 - 7)
@@ -1726,20 +1798,20 @@ Other versions of this operator: <a href="Changelog.md#Attention-23">23</a>
 <dt><tt>V</tt> : T2</dt>
 <dd>Value tensor. 4D tensor with shape `(batch_size, kv_num_heads, kv_sequence_length, v_head_size)` or 3D tensor with shape `(batch_size, kv_sequence_length, v_hidden_size)`. For cases with a 3D input tensor, `v_hidden_size = kv_num_heads * v_head_size`</dd>
 <dt><tt>attn_mask</tt> (optional) : U</dt>
-<dd>Attention mask. Shape must be broadcastable to `(batch_size, q_num_heads, q_sequence_length, total_sequence_length)` where `total_sequence_length = past_sequence_length + kv_sequence_length.` The last dimension can also be shorter than `total_sequence_length` and will be padded to `total_sequence_length` with negative infinity. Two types of masks are supported: a boolean mask where a value of `True` indicates that the element should take part in attention, or a float mask of the same type as query, key, value that is added to the attention score.</dd>
+<dd>Attention mask. Shape must be broadcastable to `(batch_size, q_num_heads, q_sequence_length, total_sequence_length)` where `total_sequence_length = past_sequence_length + kv_sequence_length`. The last dimension can also be shorter than `total_sequence_length` and will be padded to `total_sequence_length` with negative infinity. Two types of masks are supported: a boolean mask where a value of `True` indicates that the element should take part in attention, or a float mask of the same type as query, key, value that is added to the attention score.</dd>
 <dt><tt>past_key</tt> (optional) : T1</dt>
-<dd>past state cache for key with shape `(batch_size, kv_num_heads, past_sequence_length, head_size)`</dd>
+<dd>Past state for key with shape `(batch_size, kv_num_heads, past_sequence_length, head_size)`. Must be used together with `past_value` input.</dd>
 <dt><tt>past_value</tt> (optional) : T2</dt>
-<dd>past state cache for value with shape `(batch_size, kv_num_heads, past_sequence_length, v_head_size)`</dd>
+<dd>Past state for value with shape `(batch_size, kv_num_heads, past_sequence_length, v_head_size)`. Must be used together with `past_key` input.</dd>
 <dt><tt>nonpad_kv_seqlen</tt> (optional) : tensor(int64)</dt>
-<dd>A vector of integers of shape `(batch_size,)` that indicates the number of valid (ie, non-padding) tokens in each sample. A padding mask can be derived from this. This should not be used together with `past_key` and `past_value` inputs or `present_key` and `present_value` outputs (See the KV cache use cases in the operator description).</dd>
+<dd>A vector of integers of shape `(batch_size,)` that indicates the number of valid (i.e., non-padding) tokens in each sample. A padding mask can be derived from this. This should not be used together with `past_key` and `past_value` inputs or `present_key` and `present_value` outputs (see the KV cache use cases in the operator description).</dd>
 </dl>
 
 #### Outputs (1 - 4)
 
 <dl>
 <dt><tt>Y</tt> : T1</dt>
-<dd>The output tensor . 4D tensor with shape `(batch_size, q_num_heads, q_sequence_length, v_head_size)` or 3D tensor with shape `(batch_size, q_sequence_length, hidden_size)`. For cases with a 3D input tensor, `hidden_size = q_num_heads * v_head_size`</dd>
+<dd>The output tensor. 4D tensor with shape `(batch_size, q_num_heads, q_sequence_length, v_head_size)` or 3D tensor with shape `(batch_size, q_sequence_length, hidden_size)`. For cases with a 3D input tensor, `hidden_size = q_num_heads * v_head_size`</dd>
 <dt><tt>present_key</tt> (optional) : T1</dt>
 <dd>Updated key cache with shape `(batch_size, kv_num_heads, total_sequence_length, head_size)` where `total_sequence_length = past_sequence_length + kv_sequence_length`.</dd>
 <dt><tt>present_value</tt> (optional) : T2</dt>
@@ -1780,6 +1852,262 @@ expect(
     outputs=[Y],
     name="test_attention_4d",
     opset_imports=[onnx.helper.make_opsetid("", 23)],
+)
+```
+
+</details>
+
+
+<details>
+<summary>attention_23_boolmask_fullymasked_row_nan_robustness</summary>
+
+```python
+"""Opset-23 fully-masked boolean ``attn_mask`` row -> zero (not ``NaN``).
+
+This locks the opset-23 / ``old.cc`` function-body fully-masked-row guard
+against future regressions. In opset 23 the only in-contract fully-masked
+row comes from an all-``False`` boolean ``attn_mask`` row (``is_causal`` is
+not set here): every key for that query is disallowed, so ``softmax`` over an
+all-``-inf`` bias row is ``NaN``. The guard zeros that row's probabilities
+before the ``P @ V`` contraction so the output row is exactly ``0``, while
+rows with at least one allowed key are unchanged.
+
+4D Q/K/V is used so ``q_num_heads``/``kv_num_heads`` are omitted (passing
+them would make the function body treat the input as 3D).
+"""
+np.random.seed(4)
+B, H, S, D = 1, 2, 2, 8
+
+node = onnx.helper.make_node(
+    "Attention",
+    inputs=["Q", "K", "V", "attn_mask"],
+    outputs=["Y"],
+)
+
+Q = np.random.rand(B, H, S, D).astype(np.float32)
+K = np.random.rand(B, H, S, D).astype(np.float32)
+V = np.random.rand(B, H, S, D).astype(np.float32)
+# Row 0: no key allowed -> fully masked (Bug-2 empty row). Row 1: both keys
+# allowed -> finite, unchanged by the guard.
+attn_mask = np.array([[False, False], [True, True]], dtype=np.bool_)
+
+Y, _, _, _ = _compute_attention(Q, K, V, attn_mask=attn_mask)
+
+# Fully-masked row 0 is exactly zero (not NaN); every other cell is finite.
+assert np.all(np.isfinite(Y)), "non-masked rows must be finite"
+assert np.array_equal(Y[:, :, 0, :], np.zeros_like(Y[:, :, 0, :])), (
+    "fully-masked row must be zero (Bug-2)"
+)
+
+expect(
+    node,
+    inputs=[Q, K, V, attn_mask],
+    outputs=[Y],
+    name="test_attention_23_boolmask_fullymasked_row_nan_robustness",
+    opset_imports=[onnx.helper.make_opsetid("", 23)],
+)
+```
+
+</details>
+
+
+<details>
+<summary>attention_23_fullymasked_qk_matmul_output_mode3_zero</summary>
+
+```python
+"""Opset-23 ``qk_matmul_output_mode=3`` fully-masked row is a zero row.
+
+Mode ``3`` exposes the post-softmax matrix as the optional
+``qk_matmul_output``.  For a fully-masked query row (all-``False`` boolean
+``attn_mask`` row), the fully-masked-row guard is applied before this output
+is produced, so the mode-3 row is zeroed, consistent with the primary output
+``Y`` row (both are ``0``).  This pins the mandated agreement between the
+guarded primary output and the mode-3 output at opset 23.
+
+4D Q/K/V is used so ``q_num_heads``/``kv_num_heads`` are omitted (passing
+them would make the function body treat the input as 3D).
+"""
+np.random.seed(13)
+B, H, S, D = 1, 2, 2, 8
+
+node = onnx.helper.make_node(
+    "Attention",
+    inputs=["Q", "K", "V", "attn_mask"],
+    outputs=["Y", "", "", "qk_matmul_output"],
+    qk_matmul_output_mode=3,
+)
+
+Q = np.random.rand(B, H, S, D).astype(np.float32)
+K = np.random.rand(B, H, S, D).astype(np.float32)
+V = np.random.rand(B, H, S, D).astype(np.float32)
+# Row 0: no key allowed -> fully masked. Row 1: both keys allowed -> finite.
+attn_mask = np.array([[False, False], [True, True]], dtype=np.bool_)
+
+Y, _, _, qk_matmul_output = _compute_attention(
+    Q,
+    K,
+    V,
+    attn_mask=attn_mask,
+    qk_matmul_output_mode=3,
+)
+
+# Primary output row 0 and the mode-3 row 0 are both guarded to zero.
+assert np.array_equal(Y[:, :, 0, :], np.zeros_like(Y[:, :, 0, :])), (
+    "fully-masked primary output row must be zero"
+)
+assert np.array_equal(
+    qk_matmul_output[:, :, 0, :], np.zeros_like(qk_matmul_output[:, :, 0, :])
+), "mode-3 output row for a fully-masked query must be zero (consistent with Y)"
+assert np.all(np.isfinite(qk_matmul_output)), (
+    "all mode-3 rows are finite (the fully-masked row is guarded to 0.0)"
+)
+assert np.all(np.isfinite(Y)), (
+    "all Y rows are finite (the fully-masked row is guarded to 0.0)"
+)
+
+expect(
+    node,
+    inputs=[Q, K, V, attn_mask],
+    outputs=[Y, qk_matmul_output],
+    name="test_attention_23_fullymasked_qk_matmul_output_mode3_zero",
+    opset_imports=[onnx.helper.make_opsetid("", 23)],
+)
+```
+
+</details>
+
+
+<details>
+<summary>attention_24_fullymasked_qk_matmul_output_mode3_zero</summary>
+
+```python
+"""Opset-24 ``qk_matmul_output_mode=3`` fully-masked row is a zero row.
+
+The opset-24 twin of
+``export_attention_23_fullymasked_qk_matmul_output_mode3_zero``.  Mode ``3``
+exposes the post-softmax matrix as the optional ``qk_matmul_output``.  For a
+fully-masked query row (all-``False`` boolean ``attn_mask`` row), the
+fully-masked-row guard is applied before this output is produced, so the
+mode-3 row is zeroed, consistent with the primary output ``Y`` row (both are
+``0``).  This pins the mandated agreement between the guarded primary output
+and the mode-3 output at opset 24.
+
+4D Q/K/V is used so ``q_num_heads``/``kv_num_heads`` are omitted (passing
+them would make the function body treat the input as 3D).
+"""
+np.random.seed(13)
+B, H, S, D = 1, 2, 2, 8
+
+node = onnx.helper.make_node(
+    "Attention",
+    inputs=["Q", "K", "V", "attn_mask"],
+    outputs=["Y", "", "", "qk_matmul_output"],
+    qk_matmul_output_mode=3,
+)
+
+Q = np.random.rand(B, H, S, D).astype(np.float32)
+K = np.random.rand(B, H, S, D).astype(np.float32)
+V = np.random.rand(B, H, S, D).astype(np.float32)
+# Row 0: no key allowed -> fully masked. Row 1: both keys allowed -> finite.
+attn_mask = np.array([[False, False], [True, True]], dtype=np.bool_)
+
+Y, _, _, qk_matmul_output = _compute_attention(
+    Q,
+    K,
+    V,
+    attn_mask=attn_mask,
+    qk_matmul_output_mode=3,
+)
+
+# Primary output row 0 and the mode-3 row 0 are both guarded to zero.
+assert np.array_equal(Y[:, :, 0, :], np.zeros_like(Y[:, :, 0, :])), (
+    "fully-masked primary output row must be zero"
+)
+assert np.array_equal(
+    qk_matmul_output[:, :, 0, :], np.zeros_like(qk_matmul_output[:, :, 0, :])
+), "mode-3 output row for a fully-masked query must be zero (consistent with Y)"
+assert np.all(np.isfinite(qk_matmul_output)), (
+    "all mode-3 rows are finite (the fully-masked row is guarded to 0.0)"
+)
+assert np.all(np.isfinite(Y)), (
+    "all Y rows are finite (the fully-masked row is guarded to 0.0)"
+)
+
+expect(
+    node,
+    inputs=[Q, K, V, attn_mask],
+    outputs=[Y, qk_matmul_output],
+    name="test_attention_24_fullymasked_qk_matmul_output_mode3_zero",
+    opset_imports=[onnx.helper.make_opsetid("", 24)],
+)
+```
+
+</details>
+
+
+<details>
+<summary>attention_24_qk_matmul_output_mode3_softmax_precision</summary>
+
+```python
+"""Mode-3 ``qk_matmul_output`` is emitted at the output precision ``T1``.
+
+``qk_matmul_output_mode=3`` exposes the post-softmax probabilities.  When
+``softmax_precision`` differs from the operator's output type ``T1`` (here
+``T1 = float16`` with softmax computed in ``float32``), the mode-3 output is
+cast back to ``T1`` -- matching the reference implementation, which casts the
+exposed matrix to ``Q.dtype``.  This locks both the dtype contract and the
+fully-masked-row zeroing under a non-default ``softmax_precision``.
+
+4D Q/K/V is used so ``q_num_heads``/``kv_num_heads`` are omitted (passing
+them would make the function body treat the input as 3D).
+"""
+np.random.seed(17)
+B, H, S, D = 1, 2, 2, 8
+
+node = onnx.helper.make_node(
+    "Attention",
+    inputs=["Q", "K", "V", "attn_mask"],
+    outputs=["Y", "", "", "qk_matmul_output"],
+    qk_matmul_output_mode=3,
+    softmax_precision=int(onnx.TensorProto.FLOAT),
+)
+
+# T1 = float16; softmax runs in float32, so the mode-3 output is cast back to
+# float16 on emission.
+Q = np.random.rand(B, H, S, D).astype(np.float16)
+K = np.random.rand(B, H, S, D).astype(np.float16)
+V = np.random.rand(B, H, S, D).astype(np.float16)
+# Row 0: fully masked. Row 1: both keys allowed -> finite.
+attn_mask = np.array([[False, False], [True, True]], dtype=np.bool_)
+
+Y, _, _, qk_matmul_output = _compute_attention(
+    Q,
+    K,
+    V,
+    attn_mask=attn_mask,
+    qk_matmul_output_mode=3,
+    softmax_precision=int(onnx.TensorProto.FLOAT),
+)
+
+# The mode-3 output is emitted at T1 (float16), not the float32 softmax
+# precision, matching the operator's output type.
+assert qk_matmul_output.dtype == np.float16, (
+    "mode-3 qk_matmul_output must be emitted at the output precision T1 (float16)"
+)
+# The fully-masked row is still guarded to zero, consistent with Y.
+assert np.array_equal(
+    qk_matmul_output[:, :, 0, :], np.zeros_like(qk_matmul_output[:, :, 0, :])
+), "mode-3 output row for a fully-masked query must be zero (consistent with Y)"
+assert np.all(np.isfinite(qk_matmul_output)), (
+    "all mode-3 rows are finite (the fully-masked row is guarded to 0.0)"
+)
+
+expect(
+    node,
+    inputs=[Q, K, V, attn_mask],
+    outputs=[Y, qk_matmul_output],
+    name="test_attention_24_qk_matmul_output_mode3_softmax_precision",
+    opset_imports=[onnx.helper.make_opsetid("", 24)],
 )
 ```
 
@@ -1894,6 +2222,40 @@ expect(
     inputs=[Q, K, V],
     outputs=[Y],
     name="test_attention_3d_causal",
+    opset_imports=[onnx.helper.make_opsetid("", 23)],
+)
+```
+
+</details>
+
+
+<details>
+<summary>attention_3d_causal_bf16</summary>
+
+```python
+"""3D input with is_causal=1 and bfloat16."""
+node = onnx.helper.make_node(
+    "Attention",
+    inputs=["Q", "K", "V"],
+    outputs=["Y"],
+    is_causal=1,
+    q_num_heads=3,
+    kv_num_heads=3,
+)
+
+Q = np.random.rand(2, 4, 24).astype(ml_dtypes.bfloat16)
+K = np.random.rand(2, 6, 24).astype(ml_dtypes.bfloat16)
+V = np.random.rand(2, 6, 24).astype(ml_dtypes.bfloat16)
+
+Y, _, _, _ = _compute_attention(
+    Q, K, V, is_causal=1, q_num_heads=3, kv_num_heads=3
+)
+
+expect(
+    node,
+    inputs=[Q, K, V],
+    outputs=[Y],
+    name="test_attention_3d_causal_bf16",
     opset_imports=[onnx.helper.make_opsetid("", 23)],
 )
 ```
@@ -2378,6 +2740,48 @@ expect(
 
 
 <details>
+<summary>attention_3d_local_window</summary>
+
+```python
+"""Sliding window with 3D MQA inputs and a distinct V head size."""
+left_window_size = 2
+node = onnx.helper.make_node(
+    "Attention",
+    inputs=["Q", "K", "V"],
+    outputs=["Y"],
+    q_num_heads=4,
+    kv_num_heads=1,
+    is_causal=1,
+    left_window_size=left_window_size,
+)
+
+Q = np.random.rand(2, 4, 32).astype(np.float32)
+K = np.random.rand(2, 6, 8).astype(np.float32)
+V = np.random.rand(2, 6, 6).astype(np.float32)
+
+Y, _, _, _ = _compute_attention(
+    Q,
+    K,
+    V,
+    q_num_heads=4,
+    kv_num_heads=1,
+    is_causal=1,
+    left_window_size=left_window_size,
+)
+
+expect(
+    node,
+    inputs=[Q, K, V],
+    outputs=[Y],
+    name="test_attention_3d_local_window",
+    opset_imports=[onnx.helper.make_opsetid("", 25)],
+)
+```
+
+</details>
+
+
+<details>
 <summary>attention_3d_scaled</summary>
 
 ```python
@@ -2616,7 +3020,7 @@ node = onnx.helper.make_node(
     outputs=["Y", "present_key", "present_value", "qk_matmul_output"],
     q_num_heads=q_num_heads,
     kv_num_heads=kv_num_heads,
-    qk_matmul_output_mode=1,
+    qk_matmul_output_mode=2,
 )
 
 past_sequence_length = 12
@@ -2636,7 +3040,7 @@ Y, present_key, present_value, qk_matmul_output = _compute_attention(
     past_value=past_value,
     q_num_heads=q_num_heads,
     kv_num_heads=kv_num_heads,
-    qk_matmul_output_mode=1,
+    qk_matmul_output_mode=2,
 )
 
 expect(
@@ -2663,7 +3067,7 @@ node = onnx.helper.make_node(
     q_num_heads=q_num_heads,
     kv_num_heads=kv_num_heads,
     softcap=2.0,
-    qk_matmul_output_mode=2,
+    qk_matmul_output_mode=1,
 )
 
 past_sequence_length = 12
@@ -2684,7 +3088,7 @@ Y, present_key, present_value, qk_matmul_output = _compute_attention(
     q_num_heads=q_num_heads,
     kv_num_heads=kv_num_heads,
     softcap=2.0,
-    qk_matmul_output_mode=2,
+    qk_matmul_output_mode=1,
 )
 
 expect(
@@ -2746,6 +3150,348 @@ expect(
 
 
 <details>
+<summary>attention_4d_causal_nonpad_attn_mask_composition</summary>
+
+```python
+"""Compose ``is_causal`` + ``nonpad_kv_seqlen`` + boolean ``attn_mask``.
+
+The existing nonpad tests use no ``attn_mask`` and the existing mask tests
+use no ``nonpad_kv_seqlen``; this is the first to activate all three
+constraints together on the external-cache path with ``batch > 1``.  The
+three biases are summed additively and a key is attended only if allowed by
+all three.  Crucially the inputs are designed so that **each constraint is
+independently necessary** -- removing any one changes the golden -- to avoid a
+degenerate test that a backend ignoring ``is_causal`` and/or
+``nonpad_kv_seqlen`` could still pass:
+
+* **``is_causal`` binds.**  Each batch has a key that the boolean mask allows
+  (``True``) but the bottom-right causal frontier disallows
+  (``j > i + offset``); only ``is_causal`` masks it (batch 0 row 0 key 2,
+  batch 1 row 0 key 3).
+* **``attn_mask`` binds.**  Each batch has a key the causal frontier and the
+  padding bound both allow but the boolean mask sets ``False`` (batch 0 row 2
+  key 1, batch 1 row 2 key 2); only the mask masks it.
+* **``nonpad_kv_seqlen`` binds.**  ``nonpad_kv_seqlen`` sets the per-batch
+  causal *offset* (``offset = nonpad_kv_seqlen - q_sequence_length``), so
+  dropping it collapses the frontier to top-left (``offset = 0``) and shifts
+  which keys are attended.  (Under ``is_causal=1`` the causal frontier already
+  subsumes the ``j < nonpad`` padding bound, so ``nonpad_kv_seqlen`` binds
+  through the offset it induces rather than through a redundant padding cut.)
+
+The mask is chosen to leave at least one allowed key on every query row, so
+this exercises the *intersection* of the three constraints with finite outputs
+(the fully-masked-row guard is covered by
+``test_attention_4d_causal_nonpad_negative_offset_structural_empty`` and
+``test_attention_24_fullymasked_qk_matmul_output_mode3_zero``).
+
+4D Q/K/V is used so ``q_num_heads``/``kv_num_heads`` are omitted (passing
+them would make the function body treat the input as 3D).
+"""
+np.random.seed(11)
+B, H, L, D = 2, 2, 6, 8
+S_q = 3
+
+node = onnx.helper.make_node(
+    "Attention",
+    inputs=["Q", "K", "V", "attn_mask", "", "", "nonpad_kv_seqlen"],
+    outputs=["Y"],
+    is_causal=1,
+)
+
+Q = np.random.rand(B, H, S_q, D).astype(np.float32)
+K = np.random.rand(B, H, L, D).astype(np.float32)
+V = np.random.rand(B, H, L, D).astype(np.float32)
+nonpad_kv_seqlen = np.array([4, 5], dtype=np.int64)  # offsets [1, 2]
+# Per-batch (B, 1, S_q, L) bool mask. Each batch is laid out so all three
+# constraints uniquely bind (see the docstring): a causal-only-masked key
+# (mask True, j > i + offset), a mask-only-masked key (mask False, causal +
+# nonpad allow it), and >=1 allowed key per row.
+attn_mask = np.array(
+    [
+        [
+            [
+                [True, True, True, False, False, False],
+                [True, True, True, False, False, False],
+                [True, False, True, True, False, False],
+            ]
+        ],
+        [
+            [
+                [True, True, True, True, False, False],
+                [True, True, True, True, False, False],
+                [True, True, False, True, True, False],
+            ]
+        ],
+    ],
+    dtype=np.bool_,
+)
+
+Y, _, _, _ = _compute_attention(
+    Q,
+    K,
+    V,
+    attn_mask=attn_mask,
+    nonpad_kv_seqlen=nonpad_kv_seqlen,
+    is_causal=1,
+)
+
+# The chosen mask leaves >=1 allowed key per row, so the composition stays
+# finite (no fully-masked row in this case).
+assert np.all(np.isfinite(Y)), "composed-constraint output must be finite"
+
+# Non-degeneracy: each constraint is independently necessary. Removing any one
+# of the three (is_causal, attn_mask, nonpad_kv_seqlen) must change the result,
+# so a backend that ignores is_causal or nonpad_kv_seqlen cannot reproduce the
+# golden by applying only the most restrictive mask.
+y_no_causal, _, _, _ = _compute_attention(
+    Q, K, V, attn_mask=attn_mask, nonpad_kv_seqlen=nonpad_kv_seqlen, is_causal=0
+)
+y_no_mask, _, _, _ = _compute_attention(
+    Q, K, V, nonpad_kv_seqlen=nonpad_kv_seqlen, is_causal=1
+)
+y_no_nonpad, _, _, _ = _compute_attention(
+    Q, K, V, attn_mask=attn_mask, is_causal=1
+)
+assert not np.allclose(Y, y_no_causal, equal_nan=True), (
+    "is_causal must bind: dropping it changes the result"
+)
+assert not np.allclose(Y, y_no_mask, equal_nan=True), (
+    "attn_mask must bind: dropping it changes the result"
+)
+assert not np.allclose(Y, y_no_nonpad, equal_nan=True), (
+    "nonpad_kv_seqlen must bind (via the causal offset): dropping it changes the result"
+)
+
+expect(
+    node,
+    inputs=[Q, K, V, attn_mask, nonpad_kv_seqlen],
+    outputs=[Y],
+    name="test_attention_4d_causal_nonpad_attn_mask_composition",
+    opset_imports=[onnx.helper.make_opsetid("", 24)],
+)
+```
+
+</details>
+
+
+<details>
+<summary>attention_4d_causal_nonpad_batch_prefill</summary>
+
+```python
+"""Batch>1 continued prefill with distinct per-batch bottom-right offsets.
+
+The batched generalization of the ``batch == 1`` continued-prefill case: with
+``nonpad_kv_seqlen = [4, 5, 6]`` and ``S_q = 2`` the per-batch bottom-right
+offsets are ``[2, 3, 4]`` (all ``>= 0``), so each batch realigns its causal
+frontier to its own valid-key prefix.  This pins that the per-batch offset is
+applied independently across the batch dimension.
+
+4D Q/K/V is used so ``q_num_heads``/``kv_num_heads`` are omitted (passing
+them would make the function body treat the input as 3D).
+"""
+np.random.seed(12)
+B, H, L, D = 3, 2, 6, 8
+S_q = 2
+
+node = onnx.helper.make_node(
+    "Attention",
+    inputs=["Q", "K", "V", "", "", "", "nonpad_kv_seqlen"],
+    outputs=["Y"],
+    is_causal=1,
+)
+
+Q = np.random.rand(B, H, S_q, D).astype(np.float32)
+K = np.random.rand(B, H, L, D).astype(np.float32)
+V = np.random.rand(B, H, L, D).astype(np.float32)
+nonpad_kv_seqlen = np.array([4, 5, 6], dtype=np.int64)  # offsets [2, 3, 4]
+
+Y, _, _, _ = _compute_attention(
+    Q,
+    K,
+    V,
+    nonpad_kv_seqlen=nonpad_kv_seqlen,
+    is_causal=1,
+)
+
+assert np.all(np.isfinite(Y)), "per-batch prefill output must be finite"
+
+expect(
+    node,
+    inputs=[Q, K, V, nonpad_kv_seqlen],
+    outputs=[Y],
+    name="test_attention_4d_causal_nonpad_batch_prefill",
+    opset_imports=[onnx.helper.make_opsetid("", 24)],
+)
+```
+
+</details>
+
+
+<details>
+<summary>attention_4d_causal_nonpad_continued_prefill</summary>
+
+```python
+"""Continued / chunked prefill (S_q=2) into a partially-filled static cache.
+
+With ``nonpad_kv_seqlen = [4]`` and ``S_q = 2`` the bottom-right offset is
+``4 - 2 = 2``: query 0 attends keys ``{0,1,2}`` and query 1 attends
+``{0,1,2,3}``.  The old top-left alignment would mask everything past the
+diagonal (``{0}`` and ``{0,1}``), so this test fails pre-fix.
+"""
+np.random.seed(1)
+B, H, L, D = 1, 2, 4, 8
+S_q = 2
+
+node = onnx.helper.make_node(
+    "Attention",
+    inputs=["Q", "K", "V", "", "", "", "nonpad_kv_seqlen"],
+    outputs=["Y"],
+    is_causal=1,
+)
+
+Q = np.random.rand(B, H, S_q, D).astype(np.float32)
+K = np.random.rand(B, H, L, D).astype(np.float32)
+V = np.random.rand(B, H, L, D).astype(np.float32)
+nonpad_kv_seqlen = np.array([4], dtype=np.int64)
+
+Y, _, _, _ = _compute_attention(
+    Q,
+    K,
+    V,
+    nonpad_kv_seqlen=nonpad_kv_seqlen,
+    is_causal=1,
+)
+
+expect(
+    node,
+    inputs=[Q, K, V, nonpad_kv_seqlen],
+    outputs=[Y],
+    name="test_attention_4d_causal_nonpad_continued_prefill",
+    opset_imports=[onnx.helper.make_opsetid("", 24)],
+)
+```
+
+</details>
+
+
+<details>
+<summary>attention_4d_causal_nonpad_negative_offset_structural_empty</summary>
+
+```python
+"""Negative bottom-right offset: structurally-empty early query rows -> zero.
+
+This is the onnx-node twin of the ORT gtest
+``Attention_Causal_NonPadKVSeqLen_StructuralEmptyRow_Zero`` /
+``StructuralEmptyRows_Zero_CUDA``.  With ``nonpad_kv_seqlen = [2]`` and
+``S_q = 4`` the bottom-right offset is ``2 - 4 = -2``: query row ``sq``
+attends keys ``0..(sq - 2)``, so rows 0 and 1 have an empty key set.  Their
+``softmax`` over an all-``-inf`` bias row is ``NaN``; the fully-masked-row
+guard zeros those rows before the ``P @ V`` contraction so the output rows are
+exactly ``0``, while rows 2 and 3 (attending keys ``{0}`` and ``{0,1}``) stay finite
+and nonzero.  A ``nonpad_kv_seqlen[b] < q_sequence_length`` input is out of
+the contract's intended use, but its result is still well-defined (zeroed
+rows) rather than ``NaN``; this test pins that defined behavior.
+
+4D Q/K/V is used so ``q_num_heads``/``kv_num_heads`` are omitted (passing
+them would make the function body treat the input as 3D).
+"""
+np.random.seed(7)
+B, H, L, D = 1, 2, 4, 8
+S_q = 4
+
+node = onnx.helper.make_node(
+    "Attention",
+    inputs=["Q", "K", "V", "", "", "", "nonpad_kv_seqlen"],
+    outputs=["Y"],
+    is_causal=1,
+)
+
+Q = np.random.rand(B, H, S_q, D).astype(np.float32)
+K = np.random.rand(B, H, L, D).astype(np.float32)
+V = np.random.rand(B, H, L, D).astype(np.float32)
+# offset = nonpad - S_q = 2 - 4 = -2 -> rows 0,1 structurally empty.
+nonpad_kv_seqlen = np.array([2], dtype=np.int64)
+
+Y, _, _, _ = _compute_attention(
+    Q,
+    K,
+    V,
+    nonpad_kv_seqlen=nonpad_kv_seqlen,
+    is_causal=1,
+)
+
+# Structurally-empty early rows are exactly zero (not NaN); later rows finite.
+assert np.all(np.isfinite(Y)), "all output rows must be finite"
+assert np.array_equal(Y[:, :, 0, :], np.zeros_like(Y[:, :, 0, :])), (
+    "structurally-empty row 0 must be zero"
+)
+assert np.array_equal(Y[:, :, 1, :], np.zeros_like(Y[:, :, 1, :])), (
+    "structurally-empty row 1 must be zero"
+)
+assert np.any(Y[:, :, 2, :] != 0) and np.any(Y[:, :, 3, :] != 0), (
+    "rows with a non-empty key set must be nonzero"
+)
+
+expect(
+    node,
+    inputs=[Q, K, V, nonpad_kv_seqlen],
+    outputs=[Y],
+    name="test_attention_4d_causal_nonpad_negative_offset_structural_empty",
+    opset_imports=[onnx.helper.make_opsetid("", 24)],
+)
+```
+
+</details>
+
+
+<details>
+<summary>attention_4d_causal_with_past_and_present</summary>
+
+```python
+"""Regression guard: internal (past_key) cache + is_causal.
+
+This exercises the unchanged scalar bottom-right path (offset =
+past_sequence_length).  Its golden output must remain identical to the
+pre-fix behavior, proving the external-cache change does not touch the
+past_key path.
+"""
+np.random.seed(2)
+node = onnx.helper.make_node(
+    "Attention",
+    inputs=["Q", "K", "V", "", "past_key", "past_value"],
+    outputs=["Y", "present_key", "present_value"],
+    is_causal=1,
+)
+
+past_sequence_length = 3
+Q = np.random.rand(2, 3, 4, 8).astype(np.float32)
+K = np.random.rand(2, 3, 4, 8).astype(np.float32)
+V = np.random.rand(2, 3, 4, 8).astype(np.float32)
+past_key = np.random.rand(2, 3, past_sequence_length, 8).astype(np.float32)
+past_value = np.random.rand(2, 3, past_sequence_length, 8).astype(np.float32)
+
+Y, present_key, present_value, _ = _compute_attention(
+    Q,
+    K,
+    V,
+    past_key=past_key,
+    past_value=past_value,
+    is_causal=1,
+)
+
+expect(
+    node,
+    inputs=[Q, K, V, past_key, past_value],
+    outputs=[Y, present_key, present_value],
+    name="test_attention_4d_causal_with_past_and_present",
+    opset_imports=[onnx.helper.make_opsetid("", 24)],
+)
+```
+
+</details>
+
+
+<details>
 <summary>attention_4d_diff_heads_mask4d_padded_kv</summary>
 
 ```python
@@ -2774,6 +3520,94 @@ expect(
     inputs=[Q, K, V, attn_mask, nonpad_kv_seqlen],
     outputs=[Y],
     name="test_attention_4d_diff_heads_mask4d_padded_kv",
+    opset_imports=[onnx.helper.make_opsetid("", 24)],
+)
+```
+
+</details>
+
+
+<details>
+<summary>attention_4d_gqa_causal_nonpad_decode</summary>
+
+```python
+"""External/static-cache decode (S_q=1) with per-batch valid lengths.
+
+K/V are the full static cache buffer; ``nonpad_kv_seqlen`` marks how many
+leading keys are valid per batch.  With bottom-right (offset-aware) causal
+masking the single decode query attends keys ``0..nonpad[b]-1``.  Under the
+old top-left alignment it would attend only key 0, so this test fails
+pre-fix and passes post-fix.
+"""
+np.random.seed(0)
+B, H_q, H_kv, L, D = 2, 4, 2, 8, 8
+
+node = onnx.helper.make_node(
+    "Attention",
+    inputs=["Q", "K", "V", "", "", "", "nonpad_kv_seqlen"],
+    outputs=["Y"],
+    is_causal=1,
+)
+
+Q = np.random.rand(B, H_q, 1, D).astype(np.float32)
+K = np.random.rand(B, H_kv, L, D).astype(np.float32)
+V = np.random.rand(B, H_kv, L, D).astype(np.float32)
+# Batch 0 has all 8 keys valid, batch 1 only the first 5.
+nonpad_kv_seqlen = np.array([8, 5], dtype=np.int64)
+
+Y, _, _, _ = _compute_attention(
+    Q,
+    K,
+    V,
+    nonpad_kv_seqlen=nonpad_kv_seqlen,
+    is_causal=1,
+)
+
+expect(
+    node,
+    inputs=[Q, K, V, nonpad_kv_seqlen],
+    outputs=[Y],
+    name="test_attention_4d_gqa_causal_nonpad_decode",
+    opset_imports=[onnx.helper.make_opsetid("", 24)],
+)
+```
+
+</details>
+
+
+<details>
+<summary>attention_4d_gqa_causal_nonpad_decode_fp16</summary>
+
+```python
+"""fp16 variant of the external-cache decode case (locks -inf dtype handling)."""
+np.random.seed(0)
+B, H_q, H_kv, L, D = 2, 4, 2, 8, 8
+
+node = onnx.helper.make_node(
+    "Attention",
+    inputs=["Q", "K", "V", "", "", "", "nonpad_kv_seqlen"],
+    outputs=["Y"],
+    is_causal=1,
+)
+
+Q = np.random.rand(B, H_q, 1, D).astype(np.float16)
+K = np.random.rand(B, H_kv, L, D).astype(np.float16)
+V = np.random.rand(B, H_kv, L, D).astype(np.float16)
+nonpad_kv_seqlen = np.array([8, 5], dtype=np.int64)
+
+Y, _, _, _ = _compute_attention(
+    Q,
+    K,
+    V,
+    nonpad_kv_seqlen=nonpad_kv_seqlen,
+    is_causal=1,
+)
+
+expect(
+    node,
+    inputs=[Q, K, V, nonpad_kv_seqlen],
+    outputs=[Y],
+    name="test_attention_4d_gqa_causal_nonpad_decode_fp16",
     opset_imports=[onnx.helper.make_opsetid("", 24)],
 )
 ```
@@ -3024,6 +3858,82 @@ expect(
 
 
 <details>
+<summary>attention_attn_mask_causal_bf16</summary>
+
+```python
+"""Float attn_mask + is_causal with bfloat16 — mask is bf16, causal mask must be cast."""
+node = onnx.helper.make_node(
+    "Attention",
+    inputs=["Q", "K", "V", "attn_mask"],
+    outputs=["Y"],
+    is_causal=1,
+)
+
+Q = np.random.rand(2, 3, 4, 8).astype(ml_dtypes.bfloat16)
+K = np.random.rand(2, 3, 6, 8).astype(ml_dtypes.bfloat16)
+V = np.random.rand(2, 3, 6, 8).astype(ml_dtypes.bfloat16)
+attn_mask = np.random.rand(2, 1, 4, 6).astype(ml_dtypes.bfloat16)
+
+Y, _, _, _ = _compute_attention(
+    Q,
+    K,
+    V,
+    attn_mask=attn_mask,
+    is_causal=1,
+)
+
+expect(
+    node,
+    inputs=[Q, K, V, attn_mask],
+    outputs=[Y],
+    name="test_attention_4d_attn_mask_causal_bf16",
+    opset_imports=[onnx.helper.make_opsetid("", 23)],
+)
+```
+
+</details>
+
+
+<details>
+<summary>attention_bidirectional_window</summary>
+
+```python
+"""Asymmetric bidirectional window independent of causal masking."""
+node = onnx.helper.make_node(
+    "Attention",
+    inputs=["Q", "K", "V"],
+    outputs=["Y"],
+    left_window_size=1,
+    right_window_size=2,
+)
+
+Q = np.zeros((1, 1, 5, 1), dtype=np.float32)
+K = np.zeros((1, 1, 5, 1), dtype=np.float32)
+V = np.arange(5, dtype=np.float32).reshape(1, 1, 5, 1)
+Y, _, _, _ = _compute_attention(
+    Q,
+    K,
+    V,
+    left_window_size=1,
+    right_window_size=2,
+)
+
+np.testing.assert_allclose(
+    Y.reshape(-1), np.array([1.0, 1.5, 2.5, 3.0, 3.5], dtype=np.float32)
+)
+expect(
+    node,
+    inputs=[Q, K, V],
+    outputs=[Y],
+    name="test_attention_bidirectional_window",
+    opset_imports=[onnx.helper.make_opsetid("", 25)],
+)
+```
+
+</details>
+
+
+<details>
 <summary>attention_causal</summary>
 
 ```python
@@ -3046,6 +3956,173 @@ expect(
     outputs=[Y],
     name="test_attention_4d_causal",
     opset_imports=[onnx.helper.make_opsetid("", 23)],
+)
+```
+
+</details>
+
+
+<details>
+<summary>attention_causal_bf16</summary>
+
+```python
+"""is_causal=1 with bfloat16 inputs exercises causal mask CastLike fix."""
+node = onnx.helper.make_node(
+    "Attention",
+    inputs=["Q", "K", "V"],
+    outputs=["Y"],
+    is_causal=1,
+)
+
+Q = np.random.rand(2, 3, 4, 8).astype(ml_dtypes.bfloat16)
+K = np.random.rand(2, 3, 6, 8).astype(ml_dtypes.bfloat16)
+V = np.random.rand(2, 3, 6, 8).astype(ml_dtypes.bfloat16)
+
+Y, _, _, _ = _compute_attention(Q, K, V, is_causal=1)
+
+expect(
+    node,
+    inputs=[Q, K, V],
+    outputs=[Y],
+    name="test_attention_4d_causal_bf16",
+    opset_imports=[onnx.helper.make_opsetid("", 23)],
+)
+```
+
+</details>
+
+
+<details>
+<summary>attention_causal_boolmask_nan_robustness</summary>
+
+```python
+"""Composed ``is_causal`` + boolean ``attn_mask`` NaN-robustness.
+
+The causal frontier (lower-triangular here, offset 0) and the boolean
+``attn_mask`` are intersected: a key is attended only if allowed by both.
+This exercises two pre-fix NaN sources on the same forward pass:
+
+* **Bug-1 (allowed cells stay finite).**  Query 0 is allowed key 0 by both
+  the causal frontier (``{0}``) and the mask (``True`` at key 0).  The old
+  ``(1 - attn_mask) * -inf`` conversion computes ``0 * -inf = NaN`` at that
+  allowed cell, poisoning the row.  The select conversion
+  ``where(attn_mask, 0, -inf)`` keeps it finite.
+* **Bug-2 (fully-masked row -> 0).**  Query 1 is allowed keys ``{0, 1}`` by
+  the causal frontier but the mask is ``False`` at both, so the combined
+  constraint allows no key.  ``softmax`` of an all-``-inf`` row is ``NaN``;
+  the fully-masked-row guard zeros it before the ``P @ V`` contraction so
+  the output row is ``0``.
+
+4D Q/K/V is used so ``q_num_heads``/``kv_num_heads`` are omitted (passing
+them would make the function body treat the input as 3D).
+"""
+np.random.seed(3)
+B, H, S, D = 1, 2, 2, 8
+
+node = onnx.helper.make_node(
+    "Attention",
+    inputs=["Q", "K", "V", "attn_mask"],
+    outputs=["Y"],
+    is_causal=1,
+)
+
+Q = np.random.rand(B, H, S, D).astype(np.float32)
+K = np.random.rand(B, H, S, D).astype(np.float32)
+V = np.random.rand(B, H, S, D).astype(np.float32)
+# Row 0: key 0 allowed (Bug-1 allowed cell). Row 1: no key allowed -> fully
+# masked once intersected with the causal frontier (Bug-2 empty row).
+attn_mask = np.array([[True, False], [False, False]], dtype=np.bool_)
+
+Y, _, _, _ = _compute_attention(
+    Q,
+    K,
+    V,
+    attn_mask=attn_mask,
+    is_causal=1,
+)
+
+# Bug-1: allowed cells are finite (no NaN anywhere). Bug-2: the fully-masked
+# query row is exactly zero, not NaN.
+assert np.all(np.isfinite(Y)), "allowed cells must be finite (Bug-1)"
+assert np.array_equal(Y[:, :, 1, :], np.zeros_like(Y[:, :, 1, :])), (
+    "fully-masked row must be zero (Bug-2)"
+)
+
+expect(
+    node,
+    inputs=[Q, K, V, attn_mask],
+    outputs=[Y],
+    name="test_attention_causal_boolmask_nan_robustness",
+    opset_imports=[onnx.helper.make_opsetid("", 24)],
+)
+```
+
+</details>
+
+
+<details>
+<summary>attention_causal_fp16</summary>
+
+```python
+"""is_causal=1 with float16 inputs."""
+node = onnx.helper.make_node(
+    "Attention",
+    inputs=["Q", "K", "V"],
+    outputs=["Y"],
+    is_causal=1,
+)
+
+Q = np.random.rand(2, 3, 4, 8).astype(np.float16)
+K = np.random.rand(2, 3, 6, 8).astype(np.float16)
+V = np.random.rand(2, 3, 6, 8).astype(np.float16)
+
+Y, _, _, _ = _compute_attention(Q, K, V, is_causal=1)
+
+expect(
+    node,
+    inputs=[Q, K, V],
+    outputs=[Y],
+    name="test_attention_4d_causal_fp16",
+    opset_imports=[onnx.helper.make_opsetid("", 23)],
+)
+```
+
+</details>
+
+
+<details>
+<summary>attention_causal_padded_kv_bf16</summary>
+
+```python
+"""is_causal=1 + nonpad_kv_seqlen with bfloat16 exercises both CastLike fixes."""
+node = onnx.helper.make_node(
+    "Attention",
+    inputs=["Q", "K", "V", "attn_mask", "", "", "nonpad_kv_seqlen"],
+    outputs=["Y"],
+    is_causal=1,
+)
+
+Q = np.random.rand(2, 3, 4, 8).astype(ml_dtypes.bfloat16)
+K = np.random.rand(2, 3, 6, 8).astype(ml_dtypes.bfloat16)
+V = np.random.rand(2, 3, 6, 8).astype(ml_dtypes.bfloat16)
+attn_mask = np.random.rand(2, 3, 4, 4).astype(ml_dtypes.bfloat16)
+nonpad_kv_seqlen = np.array([3, 4], dtype=np.int64)
+
+Y, _, _, _ = _compute_attention(
+    Q,
+    K,
+    V,
+    attn_mask=attn_mask,
+    is_causal=1,
+    nonpad_kv_seqlen=nonpad_kv_seqlen,
+)
+
+expect(
+    node,
+    inputs=[Q, K, V, attn_mask, nonpad_kv_seqlen],
+    outputs=[Y],
+    name="test_attention_4d_causal_padded_kv_bf16",
+    opset_imports=[onnx.helper.make_opsetid("", 24)],
 )
 ```
 
@@ -3574,6 +4651,423 @@ expect(
 
 
 <details>
+<summary>attention_local_window</summary>
+
+```python
+"""Causal sliding window attention with two preceding positions."""
+left_window_size = 2
+node = onnx.helper.make_node(
+    "Attention",
+    inputs=["Q", "K", "V"],
+    outputs=["Y"],
+    is_causal=1,
+    left_window_size=left_window_size,
+)
+
+Q = np.random.rand(2, 3, 4, 8).astype(np.float32)
+K = np.random.rand(2, 3, 6, 8).astype(np.float32)
+V = np.random.rand(2, 3, 6, 8).astype(np.float32)
+
+Y, _, _, _ = _compute_attention(
+    Q, K, V, is_causal=1, left_window_size=left_window_size
+)
+
+expect(
+    node,
+    inputs=[Q, K, V],
+    outputs=[Y],
+    name="test_attention_local_window",
+    opset_imports=[onnx.helper.make_opsetid("", 25)],
+)
+```
+
+</details>
+
+
+<details>
+<summary>attention_local_window_default</summary>
+
+```python
+"""Disabled window bounds behave identically to version 24."""
+node = onnx.helper.make_node(
+    "Attention",
+    inputs=["Q", "K", "V"],
+    outputs=["Y"],
+    left_window_size=-1,
+    right_window_size=-1,
+)
+
+Q = np.random.rand(2, 3, 4, 8).astype(np.float32)
+K = np.random.rand(2, 3, 6, 8).astype(np.float32)
+V = np.random.rand(2, 3, 6, 8).astype(np.float32)
+
+Y, _, _, _ = _compute_attention(
+    Q, K, V, left_window_size=-1, right_window_size=-1
+)
+
+expect(
+    node,
+    inputs=[Q, K, V],
+    outputs=[Y],
+    name="test_attention_local_window_default",
+    opset_imports=[onnx.helper.make_opsetid("", 25)],
+)
+```
+
+</details>
+
+
+<details>
+<summary>attention_local_window_ext_cache_float16_mask</summary>
+
+```python
+"""External cache with a float16 attention mask."""
+left_window_size = 2
+B, H, S_q, S_kv, D = 2, 3, 4, 8, 8
+node = onnx.helper.make_node(
+    "Attention",
+    inputs=["Q", "K", "V", "attn_mask", "", "", "nonpad_kv_seqlen"],
+    outputs=["Y"],
+    is_causal=1,
+    left_window_size=left_window_size,
+)
+
+Q = np.zeros((B, H, S_q, D), dtype=np.float16)
+K = np.zeros((B, H, S_kv, D), dtype=np.float16)
+V = np.ones((B, H, S_kv, D), dtype=np.float16)
+attn_mask = np.zeros((1, S_kv), dtype=np.float16)
+nonpad_kv_seqlen = np.array([6, 7], dtype=np.int64)
+
+Y, _, _, _ = _compute_attention(
+    Q,
+    K,
+    V,
+    attn_mask=attn_mask,
+    nonpad_kv_seqlen=nonpad_kv_seqlen,
+    is_causal=1,
+    left_window_size=left_window_size,
+)
+
+expect(
+    node,
+    inputs=[Q, K, V, attn_mask, nonpad_kv_seqlen],
+    outputs=[Y],
+    name="test_attention_local_window_ext_cache_float16_mask",
+    opset_imports=[onnx.helper.make_opsetid("", 25)],
+)
+```
+
+</details>
+
+
+<details>
+<summary>attention_local_window_ext_cache_rank2_mask</summary>
+
+```python
+"""External cache with a conventional rank-2 ``(1, kv)`` mask."""
+left_window_size = 2
+B, H, S_q, S_kv, D = 2, 3, 4, 8, 8
+node = onnx.helper.make_node(
+    "Attention",
+    inputs=["Q", "K", "V", "attn_mask", "", "", "nonpad_kv_seqlen"],
+    outputs=["Y"],
+    is_causal=1,
+    left_window_size=left_window_size,
+)
+
+Q = np.random.rand(B, H, S_q, D).astype(np.float32)
+K = np.random.rand(B, H, S_kv, D).astype(np.float32)
+V = np.random.rand(B, H, S_kv, D).astype(np.float32)
+attn_mask = np.random.rand(1, S_kv).astype(np.float32)
+nonpad_kv_seqlen = np.array([6, 7], dtype=np.int64)
+
+Y, _, _, _ = _compute_attention(
+    Q,
+    K,
+    V,
+    attn_mask=attn_mask,
+    nonpad_kv_seqlen=nonpad_kv_seqlen,
+    is_causal=1,
+    left_window_size=left_window_size,
+)
+
+expect(
+    node,
+    inputs=[Q, K, V, attn_mask, nonpad_kv_seqlen],
+    outputs=[Y],
+    name="test_attention_local_window_ext_cache_rank2_mask",
+    opset_imports=[onnx.helper.make_opsetid("", 25)],
+)
+```
+
+</details>
+
+
+<details>
+<summary>attention_local_window_ext_cache_rank3_head_mask</summary>
+
+```python
+"""External cache with a legal rank-3 ``(heads, q, kv)`` mask."""
+left_window_size = 2
+B, H, S_q, S_kv, D = 2, 3, 4, 8, 8
+node = onnx.helper.make_node(
+    "Attention",
+    inputs=["Q", "K", "V", "attn_mask", "", "", "nonpad_kv_seqlen"],
+    outputs=["Y"],
+    is_causal=1,
+    left_window_size=left_window_size,
+)
+
+Q = np.random.rand(B, H, S_q, D).astype(np.float32)
+K = np.random.rand(B, H, S_kv, D).astype(np.float32)
+V = np.random.rand(B, H, S_kv, D).astype(np.float32)
+# Rank 3 is right-aligned as (heads, q, kv), not (batch, q, kv).
+attn_mask = np.random.rand(H, S_q, S_kv).astype(np.float32)
+# External cache: nonpad_kv_seqlen marks valid key count per batch
+nonpad_kv_seqlen = np.array([6, 7], dtype=np.int64)
+
+Y, _, _, _ = _compute_attention(
+    Q,
+    K,
+    V,
+    attn_mask=attn_mask,
+    nonpad_kv_seqlen=nonpad_kv_seqlen,
+    is_causal=1,
+    left_window_size=left_window_size,
+)
+
+expect(
+    node,
+    inputs=[Q, K, V, attn_mask, nonpad_kv_seqlen],
+    outputs=[Y],
+    name="test_attention_local_window_ext_cache_rank3_head_mask",
+    opset_imports=[onnx.helper.make_opsetid("", 25)],
+)
+```
+
+</details>
+
+
+<details>
+<summary>attention_local_window_ext_cache_rank4_batch_mask</summary>
+
+```python
+"""External cache with a batch-specific rank-4 ``(batch, 1, q, kv)`` mask."""
+left_window_size = 2
+B, H, S_q, S_kv, D = 2, 3, 4, 8, 8
+node = onnx.helper.make_node(
+    "Attention",
+    inputs=["Q", "K", "V", "attn_mask", "", "", "nonpad_kv_seqlen"],
+    outputs=["Y"],
+    is_causal=1,
+    left_window_size=left_window_size,
+)
+
+Q = np.random.rand(B, H, S_q, D).astype(np.float32)
+K = np.random.rand(B, H, S_kv, D).astype(np.float32)
+V = np.random.rand(B, H, S_kv, D).astype(np.float32)
+attn_mask = np.random.rand(B, 1, S_q, S_kv).astype(np.float32)
+nonpad_kv_seqlen = np.array([6, 7], dtype=np.int64)
+
+Y, _, _, _ = _compute_attention(
+    Q,
+    K,
+    V,
+    attn_mask=attn_mask,
+    nonpad_kv_seqlen=nonpad_kv_seqlen,
+    is_causal=1,
+    left_window_size=left_window_size,
+)
+
+expect(
+    node,
+    inputs=[Q, K, V, attn_mask, nonpad_kv_seqlen],
+    outputs=[Y],
+    name="test_attention_local_window_ext_cache_rank4_batch_mask",
+    opset_imports=[onnx.helper.make_opsetid("", 25)],
+)
+```
+
+</details>
+
+
+<details>
+<summary>attention_local_window_gqa_rank4_mask</summary>
+
+```python
+"""Windowed GQA with distinct V head size and a per-head boolean mask."""
+np.random.seed(25)
+B, H_q, H_kv, S_q, S_kv, D_qk, D_v = 2, 4, 2, 4, 6, 8, 6
+left_window_size = 2
+softmax_precision = int(onnx.TensorProto.DOUBLE)
+node = onnx.helper.make_node(
+    "Attention",
+    inputs=["Q", "K", "V", "attn_mask"],
+    outputs=["Y", "", "", "qk_matmul_output"],
+    is_causal=1,
+    left_window_size=left_window_size,
+    softcap=2.0,
+    softmax_precision=softmax_precision,
+    qk_matmul_output_mode=3,
+)
+
+Q = np.random.rand(B, H_q, S_q, D_qk).astype(np.float32)
+K = np.random.rand(B, H_kv, S_kv, D_qk).astype(np.float32)
+V = np.random.rand(B, H_kv, S_kv, D_v).astype(np.float32)
+attn_mask = np.ones((B, H_q, S_q, S_kv), dtype=np.bool_)
+attn_mask[:, :, 0, :] = False
+
+Y, _, _, qk_matmul_output = _compute_attention(
+    Q,
+    K,
+    V,
+    attn_mask=attn_mask,
+    is_causal=1,
+    left_window_size=left_window_size,
+    softcap=2.0,
+    softmax_precision=softmax_precision,
+    qk_matmul_output_mode=3,
+)
+
+assert Y.shape == (B, H_q, S_q, D_v)
+assert np.array_equal(Y[:, :, 0, :], np.zeros_like(Y[:, :, 0, :]))
+assert np.array_equal(
+    qk_matmul_output[:, :, 0, :], np.zeros_like(qk_matmul_output[:, :, 0, :])
+)
+
+expect(
+    node,
+    inputs=[Q, K, V, attn_mask],
+    outputs=[Y, qk_matmul_output],
+    name="test_attention_local_window_gqa_rank4_mask",
+    opset_imports=[onnx.helper.make_opsetid("", 25)],
+)
+```
+
+</details>
+
+
+<details>
+<summary>attention_local_window_rank1_boolean_mask</summary>
+
+```python
+"""A rank-1 boolean mask retains standard right-aligned broadcasting."""
+left_window_size = 2
+node = onnx.helper.make_node(
+    "Attention",
+    inputs=["Q", "K", "V", "attn_mask"],
+    outputs=["Y"],
+    is_causal=1,
+    left_window_size=left_window_size,
+)
+
+Q = np.random.rand(2, 3, 4, 8).astype(np.float32)
+K = np.random.rand(2, 3, 6, 8).astype(np.float32)
+V = np.random.rand(2, 3, 6, 8).astype(np.float32)
+attn_mask = np.array([True, True, True, True, False, False])
+
+Y, _, _, _ = _compute_attention(
+    Q,
+    K,
+    V,
+    attn_mask=attn_mask,
+    is_causal=1,
+    left_window_size=left_window_size,
+)
+
+expect(
+    node,
+    inputs=[Q, K, V, attn_mask],
+    outputs=[Y],
+    name="test_attention_local_window_rank1_boolean_mask",
+    opset_imports=[onnx.helper.make_opsetid("", 25)],
+)
+```
+
+</details>
+
+
+<details>
+<summary>attention_local_window_with_past</summary>
+
+```python
+"""Sliding window with internal KV cache (past_key/past_value)."""
+left_window_size = 2
+past_sequence_length = 8
+node = onnx.helper.make_node(
+    "Attention",
+    inputs=["Q", "K", "V", "", "past_key", "past_value"],
+    outputs=["Y", "present_key", "present_value"],
+    is_causal=1,
+    left_window_size=left_window_size,
+)
+
+Q = np.random.rand(2, 3, 4, 8).astype(np.float32)
+K = np.random.rand(2, 3, 2, 8).astype(np.float32)
+V = np.random.rand(2, 3, 2, 8).astype(np.float32)
+past_key = np.random.rand(2, 3, past_sequence_length, 8).astype(np.float32)
+past_value = np.random.rand(2, 3, past_sequence_length, 8).astype(np.float32)
+
+Y, present_key, present_value, _ = _compute_attention(
+    Q,
+    K,
+    V,
+    past_key=past_key,
+    past_value=past_value,
+    is_causal=1,
+    left_window_size=left_window_size,
+)
+
+expect(
+    node,
+    inputs=[Q, K, V, past_key, past_value],
+    outputs=[Y, present_key, present_value],
+    name="test_attention_local_window_with_past",
+    opset_imports=[onnx.helper.make_opsetid("", 25)],
+)
+```
+
+</details>
+
+
+<details>
+<summary>attention_padded_kv_bf16</summary>
+
+```python
+"""nonpad_kv_seqlen with bfloat16 inputs exercises padding mask CastLike fix."""
+node = onnx.helper.make_node(
+    "Attention",
+    inputs=["Q", "K", "V", "attn_mask", "", "", "nonpad_kv_seqlen"],
+    outputs=["Y"],
+)
+
+Q = np.random.rand(2, 3, 4, 8).astype(ml_dtypes.bfloat16)
+K = np.random.rand(2, 3, 6, 8).astype(ml_dtypes.bfloat16)
+V = np.random.rand(2, 3, 6, 8).astype(ml_dtypes.bfloat16)
+attn_mask = np.random.rand(2, 3, 4, 4).astype(ml_dtypes.bfloat16)
+nonpad_kv_seqlen = np.array([3, 4], dtype=np.int64)
+
+Y, _, _, _ = _compute_attention(
+    Q,
+    K,
+    V,
+    attn_mask=attn_mask,
+    nonpad_kv_seqlen=nonpad_kv_seqlen,
+)
+
+expect(
+    node,
+    inputs=[Q, K, V, attn_mask, nonpad_kv_seqlen],
+    outputs=[Y],
+    name="test_attention_4d_padded_kv_bf16",
+    opset_imports=[onnx.helper.make_opsetid("", 24)],
+)
+```
+
+</details>
+
+
+<details>
 <summary>attention_scaled</summary>
 
 ```python
@@ -3625,6 +5119,99 @@ expect(
     inputs=[Q, K, V],
     outputs=[Y],
     name="test_attention_4d_softcap",
+    opset_imports=[onnx.helper.make_opsetid("", 23)],
+)
+```
+
+</details>
+
+
+<details>
+<summary>attention_softcap_with_neginf_mask</summary>
+
+```python
+"""Softcap + -inf mask: verifies softcap is applied BEFORE mask/bias.
+
+If ordering were wrong (mask then softcap), tanh(-inf/softcap) = -1,
+so softcap * tanh(-inf/softcap) = -softcap (finite).  That leaks
+probability to masked positions.  With correct ordering (softcap then
+mask), the -inf mask values survive to softmax and yield zero weight.
+"""
+np.random.seed(42)
+B, H, S_q, S_kv, D = 1, 1, 4, 6, 8
+
+Q = np.random.rand(B, H, S_q, D).astype(np.float32)
+K = np.random.rand(B, H, S_kv, D).astype(np.float32)
+V = np.random.rand(B, H, S_kv, D).astype(np.float32)
+
+# All Q positions are blocked from KV positions 4 and 5.
+attn_mask = np.zeros((S_q, S_kv), dtype=np.float32)
+attn_mask[:, 4:] = -np.inf
+
+softcap = 0.5
+
+node = onnx.helper.make_node(
+    "Attention",
+    inputs=["Q", "K", "V", "attn_mask"],
+    outputs=["Y"],
+    softcap=softcap,
+)
+
+Y, _, _, _ = _compute_attention(Q, K, V, attn_mask=attn_mask, softcap=softcap)
+
+expect(
+    node,
+    inputs=[Q, K, V, attn_mask],
+    outputs=[Y],
+    name="test_attention_4d_softcap_neginf_mask",
+    opset_imports=[onnx.helper.make_opsetid("", 23)],
+)
+```
+
+</details>
+
+
+<details>
+<summary>attention_softcap_with_neginf_mask_poison</summary>
+
+```python
+"""Softcap + -inf mask + poison values at masked KV positions.
+
+V has value 1000 at the masked positions (4 and 5).  With correct
+ordering the output stays in [0, 1] because the mask zeros out those
+positions.  With wrong ordering the output explodes (> 50), making
+the failure obvious even with loose tolerances.
+"""
+np.random.seed(42)
+B, H, S_q, S_kv, D = 1, 1, 4, 6, 8
+
+Q = np.random.rand(B, H, S_q, D).astype(np.float32)
+K = np.random.rand(B, H, S_kv, D).astype(np.float32)
+V = np.random.rand(B, H, S_kv, D).astype(np.float32)
+
+# Block all Q positions from KV positions 4 and 5.
+attn_mask = np.zeros((S_q, S_kv), dtype=np.float32)
+attn_mask[:, 4:] = -np.inf
+
+# Poison: if attention leaks to masked positions, output >> 1.
+V[:, :, 4:, :] = 1000.0
+
+softcap = 0.5
+
+node = onnx.helper.make_node(
+    "Attention",
+    inputs=["Q", "K", "V", "attn_mask"],
+    outputs=["Y"],
+    softcap=softcap,
+)
+
+Y, _, _, _ = _compute_attention(Q, K, V, attn_mask=attn_mask, softcap=softcap)
+
+expect(
+    node,
+    inputs=[Q, K, V, attn_mask],
+    outputs=[Y],
+    name="test_attention_4d_softcap_neginf_mask_poison",
     opset_imports=[onnx.helper.make_opsetid("", 23)],
 )
 ```
@@ -3718,7 +5305,7 @@ node = onnx.helper.make_node(
     "Attention",
     inputs=["Q", "K", "V", "attn_mask", "past_key", "past_value"],
     outputs=["Y", "present_key", "present_value", "qk_matmul_output"],
-    qk_matmul_output_mode=1,
+    qk_matmul_output_mode=2,
 )
 
 past_sequence_length = 12
@@ -3736,7 +5323,7 @@ Y, present_key, present_value, qk_matmul_output = _compute_attention(
     attn_mask=attn_mask,
     past_key=past_key,
     past_value=past_value,
-    qk_matmul_output_mode=1,
+    qk_matmul_output_mode=2,
 )
 
 expect(
@@ -3759,7 +5346,7 @@ node = onnx.helper.make_node(
     "Attention",
     inputs=["Q", "K", "V", "attn_mask", "past_key", "past_value"],
     outputs=["Y", "present_key", "present_value", "qk_matmul_output"],
-    qk_matmul_output_mode=1,
+    qk_matmul_output_mode=2,
 )
 
 past_sequence_length = 12
@@ -3777,7 +5364,7 @@ Y, present_key, present_value, qk_matmul_output = _compute_attention(
     attn_mask=attn_mask,
     past_key=past_key,
     past_value=past_value,
-    qk_matmul_output_mode=1,
+    qk_matmul_output_mode=2,
 )
 
 expect(
@@ -3800,7 +5387,7 @@ node = onnx.helper.make_node(
     "Attention",
     inputs=["Q", "K", "V", "attn_mask", "past_key", "past_value"],
     outputs=["Y", "present_key", "present_value", "qk_matmul_output"],
-    qk_matmul_output_mode=1,
+    qk_matmul_output_mode=2,
     is_causal=1,
 )
 
@@ -3819,7 +5406,7 @@ Y, present_key, present_value, qk_matmul_output = _compute_attention(
     attn_mask=attn_mask,
     past_key=past_key,
     past_value=past_value,
-    qk_matmul_output_mode=1,
+    qk_matmul_output_mode=2,
     is_causal=1,
 )
 
@@ -3843,7 +5430,7 @@ node = onnx.helper.make_node(
     "Attention",
     inputs=["Q", "K", "V", "attn_mask", "past_key", "past_value"],
     outputs=["Y", "present_key", "present_value", "qk_matmul_output"],
-    qk_matmul_output_mode=1,
+    qk_matmul_output_mode=2,
 )
 
 past_sequence_length = 12
@@ -3861,7 +5448,7 @@ Y, present_key, present_value, qk_matmul_output = _compute_attention(
     attn_mask=attn_mask,
     past_key=past_key,
     past_value=past_value,
-    qk_matmul_output_mode=1,
+    qk_matmul_output_mode=2,
 )
 
 expect(
@@ -3884,7 +5471,7 @@ node = onnx.helper.make_node(
     "Attention",
     inputs=["Q", "K", "V", "attn_mask", "past_key", "past_value"],
     outputs=["Y", "present_key", "present_value", "qk_matmul_output"],
-    qk_matmul_output_mode=1,
+    qk_matmul_output_mode=2,
     is_causal=1,
 )
 
@@ -3903,7 +5490,7 @@ Y, present_key, present_value, qk_matmul_output = _compute_attention(
     attn_mask=attn_mask,
     past_key=past_key,
     past_value=past_value,
-    qk_matmul_output_mode=1,
+    qk_matmul_output_mode=2,
     is_causal=1,
 )
 
@@ -3955,7 +5542,7 @@ node = onnx.helper.make_node(
     "Attention",
     inputs=["Q", "K", "V", "attn_mask"],
     outputs=["Y", "", "", "qk_matmul_output"],
-    qk_matmul_output_mode=1,
+    qk_matmul_output_mode=2,
 )
 
 Q = np.random.rand(2, 3, 4, 8).astype(np.float32)
@@ -3968,7 +5555,7 @@ Y, _, _, qk_matmul_output = _compute_attention(
     K,
     V,
     attn_mask=attn_mask,
-    qk_matmul_output_mode=1,
+    qk_matmul_output_mode=2,
 )
 
 expect(
@@ -3992,7 +5579,7 @@ node = onnx.helper.make_node(
     inputs=["Q", "K", "V", "attn_mask"],
     outputs=["Y", "", "", "qk_matmul_output"],
     softcap=2.0,
-    qk_matmul_output_mode=2,
+    qk_matmul_output_mode=1,
 )
 
 Q = np.random.rand(2, 3, 4, 8).astype(np.float32)
@@ -4006,7 +5593,7 @@ Y, _, _, qk_matmul_output = _compute_attention(
     V,
     attn_mask=attn_mask,
     softcap=2.0,
-    qk_matmul_output_mode=2,
+    qk_matmul_output_mode=1,
 )
 
 expect(
@@ -5490,20 +7077,29 @@ expect(node, inputs=[x], outputs=[y], name="test_bitcast_uint32_to_int32")
 
   Bitwise shift operator performs element-wise operation. For each input element, if the
   attribute "direction" is "RIGHT", this operator moves its binary representation toward
-  the right side so that the input value is effectively decreased. If the attribute "direction"
-  is "LEFT", bits of binary representation moves toward the left side, which results the
-  increase of its actual value. The input X is the tensor to be shifted and another input
-  Y specifies the amounts of shifting. For example, if "direction" is "Right", X is [1, 4],
-  and S is [1, 1], the corresponding output Z would be [0, 2]. If "direction" is "LEFT" with
-  X=[1, 2] and S=[1, 2], the corresponding output Y would be [2, 8].
+  the right side. If the attribute "direction" is "LEFT", bits of binary representation
+  move toward the left side. The input X is the tensor to be shifted and another
+  input Y specifies the amounts of shifting. For example, if "direction" is
+  "RIGHT", X is [1, 4], and Y is [1, 1], the corresponding output Z would be
+  [0, 2]. If "direction" is "LEFT" with X=[1, 2] and Y=[1, 2], the corresponding
+  output Z would be [2, 8].
 
-  Because this operator supports Numpy-style broadcasting, X's and Y's shapes are
-  not necessarily identical.
+  For a signed T the right shift is an arithmetic shift (sign-extending). The
+  vacated high bits are filled with copies of the sign bit, so a negative X stays
+  negative. For a signed T a left shift can move bits into and past the sign bit,
+  and bits shifted past the sign bit are discarded.
+
+  If Y is negative, or is greater than or equal to the number of bits of T, then
+  the result is whatever the sign bit extension alone produces: -1 for a right
+  shift on a negative X, where the fill is a sign bit of 1, and 0 in every other
+  case.
   This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
 
 #### Version
 
-This version of the operator has been available since version 11 of the default ONNX operator set.
+This version of the operator has been available since version 28 of the default ONNX operator set.
+
+Other versions of this operator: <a href="Changelog.md#BitShift-11">11</a>
 
 #### Attributes
 
@@ -5531,12 +7127,208 @@ This version of the operator has been available since version 11 of the default 
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64)</dt>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64)</dt>
 <dd>Constrain input and output types to integer tensors.</dd>
 </dl>
 
 
 #### Examples
+
+<details>
+<summary>left_int16</summary>
+
+```python
+node = onnx.helper.make_node(
+    "BitShift", inputs=["x", "y"], outputs=["z"], direction="LEFT"
+)
+
+x = np.array([16, 4, 1]).astype(np.int16)
+y = np.array([1, 2, 3]).astype(np.int16)
+z = x << y  # expected output [32, 16, 8]
+expect(node, inputs=[x, y], outputs=[z], name="test_bitshift_left_int16")
+```
+
+</details>
+
+
+<details>
+<summary>left_int32</summary>
+
+```python
+node = onnx.helper.make_node(
+    "BitShift", inputs=["x", "y"], outputs=["z"], direction="LEFT"
+)
+
+x = np.array([16, 4, 1]).astype(np.int32)
+y = np.array([1, 2, 3]).astype(np.int32)
+z = x << y  # expected output [32, 16, 8]
+expect(node, inputs=[x, y], outputs=[z], name="test_bitshift_left_int32")
+```
+
+</details>
+
+
+<details>
+<summary>left_int32_negative_shift</summary>
+
+```python
+node = onnx.helper.make_node(
+    "BitShift", inputs=["x", "y"], outputs=["z"], direction="LEFT"
+)
+
+x = np.array([-8, 4, -1]).astype(np.int32)
+y = np.array([-1, -32, -64]).astype(np.int32)
+z = np.array([0, 0, 0]).astype(np.int32)
+expect(
+    node,
+    inputs=[x, y],
+    outputs=[z],
+    name="test_bitshift_left_int32_negative_shift",
+)
+```
+
+</details>
+
+
+<details>
+<summary>left_int32_overflow</summary>
+
+```python
+node = onnx.helper.make_node(
+    "BitShift", inputs=["x", "y"], outputs=["z"], direction="LEFT"
+)
+
+x = np.array([1073741824, 1, -1073741824]).astype(np.int32)
+y = np.array([1, 31, 1]).astype(np.int32)
+z = x << y  # expected output [-2147483648, -2147483648, -2147483648]
+expect(
+    node, inputs=[x, y], outputs=[z], name="test_bitshift_left_int32_overflow"
+)
+```
+
+</details>
+
+
+<details>
+<summary>left_int32_shift_ge_width</summary>
+
+```python
+node = onnx.helper.make_node(
+    "BitShift", inputs=["x", "y"], outputs=["z"], direction="LEFT"
+)
+
+x = np.array([-8, 4, -1]).astype(np.int32)
+y = np.array([32, 33, 100]).astype(np.int32)
+z = np.array([0, 0, 0]).astype(np.int32)
+expect(
+    node,
+    inputs=[x, y],
+    outputs=[z],
+    name="test_bitshift_left_int32_shift_ge_width",
+)
+```
+
+</details>
+
+
+<details>
+<summary>left_int64</summary>
+
+```python
+node = onnx.helper.make_node(
+    "BitShift", inputs=["x", "y"], outputs=["z"], direction="LEFT"
+)
+
+x = np.array([16, 4, 1]).astype(np.int64)
+y = np.array([1, 2, 3]).astype(np.int64)
+z = x << y  # expected output [32, 16, 8]
+expect(node, inputs=[x, y], outputs=[z], name="test_bitshift_left_int64")
+```
+
+</details>
+
+
+<details>
+<summary>left_int8</summary>
+
+```python
+node = onnx.helper.make_node(
+    "BitShift", inputs=["x", "y"], outputs=["z"], direction="LEFT"
+)
+
+x = np.array([16, 4, 1]).astype(np.int8)
+y = np.array([1, 2, 3]).astype(np.int8)
+z = x << y  # expected output [32, 16, 8]
+expect(node, inputs=[x, y], outputs=[z], name="test_bitshift_left_int8")
+```
+
+</details>
+
+
+<details>
+<summary>left_int8_negative_shift</summary>
+
+```python
+node = onnx.helper.make_node(
+    "BitShift", inputs=["x", "y"], outputs=["z"], direction="LEFT"
+)
+
+x = np.array([-8, 4, -1]).astype(np.int8)
+y = np.array([-1, -8, -16]).astype(np.int8)
+z = np.array([0, 0, 0]).astype(np.int8)
+expect(
+    node,
+    inputs=[x, y],
+    outputs=[z],
+    name="test_bitshift_left_int8_negative_shift",
+)
+```
+
+</details>
+
+
+<details>
+<summary>left_int8_overflow</summary>
+
+```python
+# Bits shifted past the most significant bit are discarded, so the result
+# wraps within the width of the type rather than being undefined as in C.
+node = onnx.helper.make_node(
+    "BitShift", inputs=["x", "y"], outputs=["z"], direction="LEFT"
+)
+
+x = np.array([64, 1, -64]).astype(np.int8)
+y = np.array([1, 7, 1]).astype(np.int8)
+z = x << y  # expected output [-128, -128, -128]
+expect(
+    node, inputs=[x, y], outputs=[z], name="test_bitshift_left_int8_overflow"
+)
+```
+
+</details>
+
+
+<details>
+<summary>left_int8_shift_ge_width</summary>
+
+```python
+node = onnx.helper.make_node(
+    "BitShift", inputs=["x", "y"], outputs=["z"], direction="LEFT"
+)
+
+x = np.array([-8, 4, -1]).astype(np.int8)
+y = np.array([8, 9, 127]).astype(np.int8)
+z = np.array([0, 0, 0]).astype(np.int8)
+expect(
+    node,
+    inputs=[x, y],
+    outputs=[z],
+    name="test_bitshift_left_int8_shift_ge_width",
+)
+```
+
+</details>
+
 
 <details>
 <summary>left_unit16</summary>
@@ -5601,6 +7393,216 @@ x = np.array([16, 4, 1]).astype(np.uint8)
 y = np.array([1, 2, 3]).astype(np.uint8)
 z = x << y  # expected output [32, 16, 8]
 expect(node, inputs=[x, y], outputs=[z], name="test_bitshift_left_uint8")
+```
+
+</details>
+
+
+<details>
+<summary>right_int16</summary>
+
+```python
+node = onnx.helper.make_node(
+    "BitShift", inputs=["x", "y"], outputs=["z"], direction="RIGHT"
+)
+
+x = np.array([16, 4, 1]).astype(np.int16)
+y = np.array([1, 2, 3]).astype(np.int16)
+z = x >> y  # expected output [8, 1, 0]
+expect(node, inputs=[x, y], outputs=[z], name="test_bitshift_right_int16")
+```
+
+</details>
+
+
+<details>
+<summary>right_int32</summary>
+
+```python
+node = onnx.helper.make_node(
+    "BitShift", inputs=["x", "y"], outputs=["z"], direction="RIGHT"
+)
+
+x = np.array([16, 4, 1]).astype(np.int32)
+y = np.array([1, 2, 3]).astype(np.int32)
+z = x >> y  # expected output [8, 1, 0]
+expect(node, inputs=[x, y], outputs=[z], name="test_bitshift_right_int32")
+```
+
+</details>
+
+
+<details>
+<summary>right_int32_negative_input</summary>
+
+```python
+node = onnx.helper.make_node(
+    "BitShift", inputs=["x", "y"], outputs=["z"], direction="RIGHT"
+)
+
+x = np.array([-8, -1, -2147483648]).astype(np.int32)
+y = np.array([1, 1, 1]).astype(np.int32)
+z = x >> y  # expected output [-4, -1, -1073741824]
+expect(
+    node,
+    inputs=[x, y],
+    outputs=[z],
+    name="test_bitshift_right_int32_negative_input",
+)
+```
+
+</details>
+
+
+<details>
+<summary>right_int32_negative_shift</summary>
+
+```python
+node = onnx.helper.make_node(
+    "BitShift", inputs=["x", "y"], outputs=["z"], direction="RIGHT"
+)
+
+x = np.array([-8, 4, -1]).astype(np.int32)
+y = np.array([-1, -32, -64]).astype(np.int32)
+z = np.array([-1, 0, -1]).astype(np.int32)
+expect(
+    node,
+    inputs=[x, y],
+    outputs=[z],
+    name="test_bitshift_right_int32_negative_shift",
+)
+```
+
+</details>
+
+
+<details>
+<summary>right_int32_shift_ge_width</summary>
+
+```python
+node = onnx.helper.make_node(
+    "BitShift", inputs=["x", "y"], outputs=["z"], direction="RIGHT"
+)
+
+x = np.array([-8, 4, -1]).astype(np.int32)
+y = np.array([32, 33, 100]).astype(np.int32)
+z = np.array([-1, 0, -1]).astype(np.int32)
+expect(
+    node,
+    inputs=[x, y],
+    outputs=[z],
+    name="test_bitshift_right_int32_shift_ge_width",
+)
+```
+
+</details>
+
+
+<details>
+<summary>right_int64</summary>
+
+```python
+node = onnx.helper.make_node(
+    "BitShift", inputs=["x", "y"], outputs=["z"], direction="RIGHT"
+)
+
+x = np.array([16, 4, 1]).astype(np.int64)
+y = np.array([1, 2, 3]).astype(np.int64)
+z = x >> y  # expected output [8, 1, 0]
+expect(node, inputs=[x, y], outputs=[z], name="test_bitshift_right_int64")
+```
+
+</details>
+
+
+<details>
+<summary>right_int8</summary>
+
+```python
+node = onnx.helper.make_node(
+    "BitShift", inputs=["x", "y"], outputs=["z"], direction="RIGHT"
+)
+
+x = np.array([16, 4, 1]).astype(np.int8)
+y = np.array([1, 2, 3]).astype(np.int8)
+z = x >> y  # expected output [8, 1, 0]
+expect(node, inputs=[x, y], outputs=[z], name="test_bitshift_right_int8")
+```
+
+</details>
+
+
+<details>
+<summary>right_int8_negative_input</summary>
+
+```python
+# Right shift of a signed value is an arithmetic shift: the sign bit is
+# replicated into the vacated high bits, so a negative input stays negative.
+node = onnx.helper.make_node(
+    "BitShift", inputs=["x", "y"], outputs=["z"], direction="RIGHT"
+)
+
+x = np.array([-8, -1, -128]).astype(np.int8)
+y = np.array([1, 1, 1]).astype(np.int8)
+z = x >> y  # expected output [-4, -1, -64]
+expect(
+    node,
+    inputs=[x, y],
+    outputs=[z],
+    name="test_bitshift_right_int8_negative_input",
+)
+```
+
+</details>
+
+
+<details>
+<summary>right_int8_negative_shift</summary>
+
+```python
+# A negative shift amount is out of range just as one at or past the bit
+# width is, and gives the same full-width result: 0, or -1 where an
+# arithmetic right shift fills the result with the sign bit. Y only reaches
+# negative values for a signed type, since it shares the type of X.
+node = onnx.helper.make_node(
+    "BitShift", inputs=["x", "y"], outputs=["z"], direction="RIGHT"
+)
+
+x = np.array([-8, 4, -1]).astype(np.int8)
+y = np.array([-1, -8, -16]).astype(np.int8)
+z = np.array([-1, 0, -1]).astype(np.int8)
+expect(
+    node,
+    inputs=[x, y],
+    outputs=[z],
+    name="test_bitshift_right_int8_negative_shift",
+)
+```
+
+</details>
+
+
+<details>
+<summary>right_int8_shift_ge_width</summary>
+
+```python
+# NumPy saturates a shift by at least the bit width, giving 0, or -1 for a
+# right shift of a negative value where the sign bit fills the result. C
+# and most hardware mask the shift count instead, so this is easy to get
+# wrong (see pytorch/pytorch#70904).
+node = onnx.helper.make_node(
+    "BitShift", inputs=["x", "y"], outputs=["z"], direction="RIGHT"
+)
+
+x = np.array([-8, 4, -1]).astype(np.int8)
+y = np.array([8, 9, 127]).astype(np.int8)
+z = np.array([-1, 0, -1]).astype(np.int8)
+expect(
+    node,
+    inputs=[x, y],
+    outputs=[z],
+    name="test_bitshift_right_int8_shift_ge_width",
+)
 ```
 
 </details>
@@ -6180,14 +8182,14 @@ expect(
   | NaN               | NaN           | NaN                    |
   | Inf               | E8M0_MAX      | NaN                    |
   | x > E8M0_MAX      | E8M0_MAX      | NaN                    |
-  | x \< E8M0_MIN     | E8M0_MIN      | NaN                    |
-  | x \< 0            | Unspecified   | Unspecified            |
+  | x < E8M0_MIN      | E8M0_MIN      | NaN                    |
+  | x < 0             | Unspecified   | Unspecified            |
 
 #### Version
 
-This version of the operator has been available since version 25 of the default ONNX operator set.
+This version of the operator has been available since version 28 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#Cast-1">1</a>, <a href="Changelog.md#Cast-6">6</a>, <a href="Changelog.md#Cast-9">9</a>, <a href="Changelog.md#Cast-13">13</a>, <a href="Changelog.md#Cast-19">19</a>, <a href="Changelog.md#Cast-21">21</a>, <a href="Changelog.md#Cast-23">23</a>, <a href="Changelog.md#Cast-24">24</a>
+Other versions of this operator: <a href="Changelog.md#Cast-1">1</a>, <a href="Changelog.md#Cast-6">6</a>, <a href="Changelog.md#Cast-9">9</a>, <a href="Changelog.md#Cast-13">13</a>, <a href="Changelog.md#Cast-19">19</a>, <a href="Changelog.md#Cast-21">21</a>, <a href="Changelog.md#Cast-23">23</a>, <a href="Changelog.md#Cast-24">24</a>, <a href="Changelog.md#Cast-25">25</a>
 
 #### Attributes
 
@@ -6217,9 +8219,9 @@ Other versions of this operator: <a href="Changelog.md#Cast-1">1</a>, <a href="C
 #### Type Constraints
 
 <dl>
-<dt><tt>T1</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(float8e4m3fn), tensor(float8e4m3fnuz), tensor(float8e5m2), tensor(float8e5m2fnuz), tensor(uint4), tensor(int4), tensor(float4e2m1), tensor(float8e8m0), tensor(uint2), tensor(int2)</dt>
+<dt><tt>T1</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(float8e4m3fn), tensor(float8e4m3fnuz), tensor(float8e5m2), tensor(float8e5m2fnuz), tensor(uint4), tensor(int4), tensor(float4e2m1), tensor(float8e8m0), tensor(uint2), tensor(int2), tensor(float6e2m3), tensor(float6e3m2)</dt>
 <dd>Constrain input types. Casting from complex is not supported.</dd>
-<dt><tt>T2</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(float8e4m3fn), tensor(float8e4m3fnuz), tensor(float8e5m2), tensor(float8e5m2fnuz), tensor(uint4), tensor(int4), tensor(float4e2m1), tensor(float8e8m0), tensor(uint2), tensor(int2)</dt>
+<dt><tt>T2</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(float8e4m3fn), tensor(float8e4m3fnuz), tensor(float8e5m2), tensor(float8e5m2fnuz), tensor(uint4), tensor(int4), tensor(float4e2m1), tensor(float8e8m0), tensor(uint2), tensor(int2), tensor(float6e2m3), tensor(float6e3m2)</dt>
 <dd>Constrain output types. Casting to complex is not supported.</dd>
 </dl>
 
@@ -6983,6 +8985,457 @@ for from_type, to_type in test_cases:
 </details>
 
 
+### <a name="CausalConvWithState"></a><a name="causalconvwithstate">**CausalConvWithState**</a>
+
+  Stateful causal 1D depthwise convolution.
+
+  Used by Gated DeltaNet (Qwen3.5) and Mamba (Jamba, FalconMamba) as a preprocessing step.
+  Replaces the 3-op pattern (Concat + Conv + Slice) with a single fused operation.
+
+  The convolution is causal (looks only at current and past positions) and depthwise
+  (each channel is convolved independently with its own kernel).
+
+  The input, weight, past_state, output, and present_state tensors are rank-3 with
+  shape (batch_size, channels, length). The optional bias input is rank-1 with
+  shape (channels). For higher-dimensional data, use Reshape nodes before and
+  after this operator to pack extra dimensions into the batch or channel axis.
+
+  Weight layout: (channels, 1, k) for depthwise convolution.
+  The carry state stores the last (k-1) positions for incremental decode.
+
+  The optional activation attribute supports fused SiLU/Swish activation.
+
+
+#### Version
+
+This version of the operator has been available since version 27 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>activation</tt> : string (default is none)</dt>
+<dd>Fused activation function. One of: 'silu', 'swish', 'none'. Default is 'none'.</dd>
+</dl>
+
+#### Inputs (2 - 4)
+
+<dl>
+<dt><tt>input</tt> (differentiable) : T</dt>
+<dd>Input tensor with shape (batch_size, channels, length). Channels-first layout.</dd>
+<dt><tt>weight</tt> (differentiable) : T</dt>
+<dd>Depthwise convolution kernel with shape (channels, 1, k) where k is the kernel size. The middle dim of size 1 follows the ONNX `Conv` weight layout `(M, C/group, k1, ..., kn)`: since this op is always depthwise, `group = channels`, so `C/group = 1`. Keeping this layout makes the weight tensor a drop-in for a depthwise `Conv(group=channels)` weight, so `Conv` <-> `CausalConvWithState` rewrites require no reshape.</dd>
+<dt><tt>bias</tt> (optional, differentiable) : T</dt>
+<dd>Optional per-channel bias with shape (channels).</dd>
+<dt><tt>past_state</tt> (optional, non-differentiable) : T</dt>
+<dd>Carry state from previous step with shape (batch_size, channels, k - 1). If not provided, padding is zero.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> (differentiable) : T</dt>
+<dd>Convolution output with same shape as input.</dd>
+<dt><tt>present_state</tt> (non-differentiable) : T</dt>
+<dd>Updated carry state with shape (batch_size, channels, k - 1). Contains the last (k - 1) values of the effective padded/concatenated sequence along the causal axis, including any values from past_state or zero-padding when the current input is shorter than k - 1.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float), tensor(float16), tensor(bfloat16)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>b1_c1_degenerate</summary>
+
+```python
+# Mamba/GDN inner-head edge case: B=1, C=1.
+node = onnx.helper.make_node(
+    "CausalConvWithState",
+    inputs=["input", "weight"],
+    outputs=["output", "present_state"],
+)
+
+batch_size, channels, length, k = 1, 1, 6, 4
+input_ = np.random.randn(batch_size, channels, length).astype(np.float32)
+weight = np.random.randn(channels, 1, k).astype(np.float32)
+
+output, present_state = _compute(input_, weight)
+
+expect(
+    node,
+    inputs=[input_, weight],
+    outputs=[output, present_state],
+    name="test_causal_conv_with_state_b1_c1_degenerate",
+    opset_imports=[onnx.helper.make_opsetid("", 27)],
+)
+```
+
+</details>
+
+
+<details>
+<summary>basic</summary>
+
+```python
+node = onnx.helper.make_node(
+    "CausalConvWithState",
+    inputs=["input", "weight"],
+    outputs=["output", "present_state"],
+)
+
+batch_size, channels, length, k = 2, 4, 8, 4
+input_ = np.random.randn(batch_size, channels, length).astype(np.float32)
+weight = np.random.randn(channels, 1, k).astype(np.float32)
+
+output, present_state = _compute(input_, weight)
+
+expect(
+    node,
+    inputs=[input_, weight],
+    outputs=[output, present_state],
+    name="test_causal_conv_with_state_basic",
+    opset_imports=[onnx.helper.make_opsetid("", 27)],
+)
+```
+
+</details>
+
+
+<details>
+<summary>decode_step</summary>
+
+```python
+node = onnx.helper.make_node(
+    "CausalConvWithState",
+    inputs=["input", "weight", "bias", "past_state"],
+    outputs=["output", "present_state"],
+)
+
+batch_size, channels, length, k = 2, 4, 1, 4
+input_ = np.random.randn(batch_size, channels, length).astype(np.float32)
+weight = np.random.randn(channels, 1, k).astype(np.float32)
+bias = np.random.randn(channels).astype(np.float32)
+past_state = np.random.randn(batch_size, channels, k - 1).astype(np.float32)
+
+output, present_state = _compute(
+    input_, weight, bias=bias, past_state=past_state
+)
+
+expect(
+    node,
+    inputs=[input_, weight, bias, past_state],
+    outputs=[output, present_state],
+    name="test_causal_conv_with_state_decode_step",
+    opset_imports=[onnx.helper.make_opsetid("", 27)],
+)
+```
+
+</details>
+
+
+<details>
+<summary>fp16</summary>
+
+```python
+node = onnx.helper.make_node(
+    "CausalConvWithState",
+    inputs=["input", "weight"],
+    outputs=["output", "present_state"],
+)
+
+batch_size, channels, length, k = 2, 4, 8, 4
+input_ = np.random.rand(batch_size, channels, length).astype(np.float16)
+weight = np.random.rand(channels, 1, k).astype(np.float16)
+
+output, present_state = _compute(input_, weight)
+
+expect(
+    node,
+    inputs=[input_, weight],
+    outputs=[output, present_state],
+    name="test_causal_conv_with_state_fp16",
+    opset_imports=[onnx.helper.make_opsetid("", 27)],
+)
+```
+
+</details>
+
+
+<details>
+<summary>kernel_size_one</summary>
+
+```python
+node = onnx.helper.make_node(
+    "CausalConvWithState",
+    inputs=["input", "weight"],
+    outputs=["output", "present_state"],
+)
+
+batch_size, channels, length, k = 2, 4, 8, 1
+input_ = np.random.randn(batch_size, channels, length).astype(np.float32)
+weight = np.random.randn(channels, 1, k).astype(np.float32)
+
+output, present_state = _compute(input_, weight)
+
+expect(
+    node,
+    inputs=[input_, weight],
+    outputs=[output, present_state],
+    name="test_causal_conv_with_state_kernel_size_one",
+    opset_imports=[onnx.helper.make_opsetid("", 27)],
+)
+```
+
+</details>
+
+
+<details>
+<summary>short_input_no_past_state</summary>
+
+```python
+# L < k-1 with no past_state: zero-pad is wider than the input.
+node = onnx.helper.make_node(
+    "CausalConvWithState",
+    inputs=["input", "weight"],
+    outputs=["output", "present_state"],
+)
+
+batch_size, channels, length, k = 2, 4, 2, 5
+input_ = np.random.randn(batch_size, channels, length).astype(np.float32)
+weight = np.random.randn(channels, 1, k).astype(np.float32)
+
+output, present_state = _compute(input_, weight)
+
+expect(
+    node,
+    inputs=[input_, weight],
+    outputs=[output, present_state],
+    name="test_causal_conv_with_state_short_input_no_past_state",
+    opset_imports=[onnx.helper.make_opsetid("", 27)],
+)
+```
+
+</details>
+
+
+<details>
+<summary>silu</summary>
+
+```python
+node = onnx.helper.make_node(
+    "CausalConvWithState",
+    inputs=["input", "weight"],
+    outputs=["output", "present_state"],
+    activation="silu",
+)
+
+batch_size, channels, length, k = 2, 4, 8, 4
+input_ = np.random.randn(batch_size, channels, length).astype(np.float32)
+weight = np.random.randn(channels, 1, k).astype(np.float32)
+
+output, present_state = _compute(input_, weight, activation="silu")
+
+expect(
+    node,
+    inputs=[input_, weight],
+    outputs=[output, present_state],
+    name="test_causal_conv_with_state_silu",
+    opset_imports=[onnx.helper.make_opsetid("", 27)],
+)
+```
+
+</details>
+
+
+<details>
+<summary>silu_fp16</summary>
+
+```python
+# fp16 + SiLU: the reference upcasts Sigmoid/Mul to float32, so the
+# function-body expansion must do the same to stay numerically faithful.
+node = onnx.helper.make_node(
+    "CausalConvWithState",
+    inputs=["input", "weight"],
+    outputs=["output", "present_state"],
+    activation="silu",
+)
+
+batch_size, channels, length, k = 2, 4, 8, 4
+input_ = np.random.rand(batch_size, channels, length).astype(np.float16)
+weight = np.random.rand(channels, 1, k).astype(np.float16)
+
+output, present_state = _compute(input_, weight, activation="silu")
+
+expect(
+    node,
+    inputs=[input_, weight],
+    outputs=[output, present_state],
+    name="test_causal_conv_with_state_silu_fp16",
+    opset_imports=[onnx.helper.make_opsetid("", 27)],
+)
+```
+
+</details>
+
+
+<details>
+<summary>silu_with_past_state</summary>
+
+```python
+# Fused activation combined with concat-from-past variant of PaddedInput.
+node = onnx.helper.make_node(
+    "CausalConvWithState",
+    inputs=["input", "weight", "", "past_state"],
+    outputs=["output", "present_state"],
+    activation="silu",
+)
+
+batch_size, channels, length, k = 2, 4, 8, 4
+input_ = np.random.randn(batch_size, channels, length).astype(np.float32)
+weight = np.random.randn(channels, 1, k).astype(np.float32)
+past_state = np.random.randn(batch_size, channels, k - 1).astype(np.float32)
+
+output, present_state = _compute(
+    input_, weight, past_state=past_state, activation="silu"
+)
+
+expect(
+    node,
+    inputs=[input_, weight, past_state],
+    outputs=[output, present_state],
+    name="test_causal_conv_with_state_silu_with_past_state",
+    opset_imports=[onnx.helper.make_opsetid("", 27)],
+)
+```
+
+</details>
+
+
+<details>
+<summary>swish_alias</summary>
+
+```python
+node = onnx.helper.make_node(
+    "CausalConvWithState",
+    inputs=["input", "weight"],
+    outputs=["output", "present_state"],
+    activation="swish",
+)
+
+batch_size, channels, length, k = 2, 4, 8, 4
+input_ = np.random.randn(batch_size, channels, length).astype(np.float32)
+weight = np.random.randn(channels, 1, k).astype(np.float32)
+
+output, present_state = _compute(input_, weight, activation="swish")
+
+expect(
+    node,
+    inputs=[input_, weight],
+    outputs=[output, present_state],
+    name="test_causal_conv_with_state_swish_alias",
+    opset_imports=[onnx.helper.make_opsetid("", 27)],
+)
+```
+
+</details>
+
+
+<details>
+<summary>with_bias</summary>
+
+```python
+node = onnx.helper.make_node(
+    "CausalConvWithState",
+    inputs=["input", "weight", "bias"],
+    outputs=["output", "present_state"],
+)
+
+batch_size, channels, length, k = 2, 4, 8, 4
+input_ = np.random.randn(batch_size, channels, length).astype(np.float32)
+weight = np.random.randn(channels, 1, k).astype(np.float32)
+bias = np.random.randn(channels).astype(np.float32)
+
+output, present_state = _compute(input_, weight, bias=bias)
+
+expect(
+    node,
+    inputs=[input_, weight, bias],
+    outputs=[output, present_state],
+    name="test_causal_conv_with_state_with_bias",
+    opset_imports=[onnx.helper.make_opsetid("", 27)],
+)
+```
+
+</details>
+
+
+<details>
+<summary>with_bias_and_past_state</summary>
+
+```python
+# Multi-token (T>1) path through Concat(past, input) -> Conv(+bias).
+node = onnx.helper.make_node(
+    "CausalConvWithState",
+    inputs=["input", "weight", "bias", "past_state"],
+    outputs=["output", "present_state"],
+)
+
+batch_size, channels, length, k = 2, 4, 8, 4
+input_ = np.random.randn(batch_size, channels, length).astype(np.float32)
+weight = np.random.randn(channels, 1, k).astype(np.float32)
+bias = np.random.randn(channels).astype(np.float32)
+past_state = np.random.randn(batch_size, channels, k - 1).astype(np.float32)
+
+output, present_state = _compute(
+    input_, weight, bias=bias, past_state=past_state
+)
+
+expect(
+    node,
+    inputs=[input_, weight, bias, past_state],
+    outputs=[output, present_state],
+    name="test_causal_conv_with_state_with_bias_and_past_state",
+    opset_imports=[onnx.helper.make_opsetid("", 27)],
+)
+```
+
+</details>
+
+
+<details>
+<summary>with_past_state</summary>
+
+```python
+node = onnx.helper.make_node(
+    "CausalConvWithState",
+    inputs=["input", "weight", "", "past_state"],
+    outputs=["output", "present_state"],
+)
+
+batch_size, channels, length, k = 2, 4, 8, 4
+input_ = np.random.randn(batch_size, channels, length).astype(np.float32)
+weight = np.random.randn(channels, 1, k).astype(np.float32)
+past_state = np.random.randn(batch_size, channels, k - 1).astype(np.float32)
+
+output, present_state = _compute(input_, weight, past_state=past_state)
+
+expect(
+    node,
+    inputs=[input_, weight, past_state],
+    outputs=[output, present_state],
+    name="test_causal_conv_with_state_with_past_state",
+    opset_imports=[onnx.helper.make_opsetid("", 27)],
+)
+```
+
+</details>
+
+
 ### <a name="Ceil"></a><a name="ceil">**Ceil**</a>
 
   Ceil takes one input data (Tensor<T>) and produces one output data
@@ -7053,7 +9506,9 @@ expect(node, inputs=[x], outputs=[y], name="test_ceil")
 
 #### Version
 
-This version of the operator has been available since version 12 of the default ONNX operator set.
+This version of the operator has been available since version 28 of the default ONNX operator set.
+
+Other versions of this operator: <a href="Changelog.md#Celu-12">12</a>
 
 #### Attributes
 
@@ -7079,8 +9534,8 @@ This version of the operator has been available since version 12 of the default 
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float)</dt>
-<dd>Constrain input and output types to float32 tensors.</dd>
+<dt><tt>T</tt> : tensor(bfloat16), tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
 
@@ -7121,10 +9576,68 @@ input_data = np.array(
 
 # Calculate expected output data
 positive_input = np.maximum(0, input_data)
-negative_input = np.minimum(0, alpha * (np.exp(input_data / alpha) - 1))
+negative_input = np.minimum(0, alpha * np.expm1(input_data / alpha))
 expected_output = positive_input + negative_input
 
 expect(node, inputs=[input_data], outputs=[expected_output], name="test_celu")
+```
+
+</details>
+
+
+<details>
+<summary>celu_bfloat16</summary>
+
+```python
+alpha = 2.0
+node = onnx.helper.make_node(
+    "Celu",
+    inputs=["X"],
+    outputs=["Y"],
+    alpha=alpha,
+)
+
+input_data = np.array([-3.0, -0.5, 0.0, 0.5, 3.0], dtype=ml_dtypes.bfloat16)
+
+positive_input = np.maximum(0, input_data)
+negative_input = np.minimum(0, alpha * np.expm1(input_data / alpha))
+expected_output = (positive_input + negative_input).astype(ml_dtypes.bfloat16)
+
+expect(
+    node,
+    inputs=[input_data],
+    outputs=[expected_output],
+    name="test_celu_bfloat16",
+)
+```
+
+</details>
+
+
+<details>
+<summary>celu_float16</summary>
+
+```python
+alpha = 2.0
+node = onnx.helper.make_node(
+    "Celu",
+    inputs=["X"],
+    outputs=["Y"],
+    alpha=alpha,
+)
+
+input_data = np.array([-3.0, -0.5, 0.0, 0.5, 3.0], dtype=np.float16)
+
+positive_input = np.maximum(0, input_data)
+negative_input = np.minimum(0, alpha * np.expm1(input_data / alpha))
+expected_output = (positive_input + negative_input).astype(np.float16)
+
+expect(
+    node,
+    inputs=[input_data],
+    outputs=[expected_output],
+    name="test_celu_float16",
+)
 ```
 
 </details>
@@ -7959,9 +10472,9 @@ expect(
 
 #### Version
 
-This version of the operator has been available since version 11 of the default ONNX operator set.
+This version of the operator has been available since version 28 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#Compress-9">9</a>
+Other versions of this operator: <a href="Changelog.md#Compress-9">9</a>, <a href="Changelog.md#Compress-11">11</a>
 
 #### Attributes
 
@@ -7989,7 +10502,7 @@ Other versions of this operator: <a href="Changelog.md#Compress-9">9</a>
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
 <dd>Constrain input and output types to all tensor types.</dd>
 <dt><tt>T1</tt> : tensor(bool)</dt>
 <dd>Constrain to boolean tensors.</dd>
@@ -8049,6 +10562,31 @@ expect(
     inputs=[input, condition.astype(bool)],
     outputs=[output],
     name="test_compress_1",
+)
+```
+
+</details>
+
+
+<details>
+<summary>compress_bfloat16</summary>
+
+```python
+node = onnx.helper.make_node(
+    "Compress",
+    inputs=["input", "condition"],
+    outputs=["output"],
+    axis=0,
+)
+input = np.array([[1, 2], [3, 4], [5, 6]]).astype(ml_dtypes.bfloat16)
+condition = np.array([0, 1, 1])
+output = np.compress(condition, input, axis=0)
+
+expect(
+    node,
+    inputs=[input, condition.astype(bool)],
+    outputs=[output],
+    name="test_compress_bfloat16",
 )
 ```
 
@@ -10594,9 +13132,9 @@ expect(
 
 #### Version
 
-This version of the operator has been available since version 13 of the default ONNX operator set.
+This version of the operator has been available since version 28 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#DepthToSpace-1">1</a>, <a href="Changelog.md#DepthToSpace-11">11</a>
+Other versions of this operator: <a href="Changelog.md#DepthToSpace-1">1</a>, <a href="Changelog.md#DepthToSpace-11">11</a>, <a href="Changelog.md#DepthToSpace-13">13</a>
 
 #### Attributes
 
@@ -10746,9 +13284,9 @@ expect(node, inputs=[x], outputs=[y], name="test_depthtospace_example")
 
 #### Version
 
-This version of the operator has been available since version 25 of the default ONNX operator set.
+This version of the operator has been available since version 28 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#DequantizeLinear-10">10</a>, <a href="Changelog.md#DequantizeLinear-13">13</a>, <a href="Changelog.md#DequantizeLinear-19">19</a>, <a href="Changelog.md#DequantizeLinear-21">21</a>, <a href="Changelog.md#DequantizeLinear-23">23</a>, <a href="Changelog.md#DequantizeLinear-24">24</a>
+Other versions of this operator: <a href="Changelog.md#DequantizeLinear-10">10</a>, <a href="Changelog.md#DequantizeLinear-13">13</a>, <a href="Changelog.md#DequantizeLinear-19">19</a>, <a href="Changelog.md#DequantizeLinear-21">21</a>, <a href="Changelog.md#DequantizeLinear-23">23</a>, <a href="Changelog.md#DequantizeLinear-24">24</a>, <a href="Changelog.md#DequantizeLinear-25">25</a>
 
 #### Attributes
 
@@ -10782,7 +13320,7 @@ Other versions of this operator: <a href="Changelog.md#DequantizeLinear-10">10</
 #### Type Constraints
 
 <dl>
-<dt><tt>T1</tt> : tensor(int8), tensor(uint8), tensor(int16), tensor(uint16), tensor(int32), tensor(float8e4m3fn), tensor(float8e4m3fnuz), tensor(float8e5m2), tensor(float8e5m2fnuz), tensor(uint4), tensor(int4), tensor(float4e2m1), tensor(uint2), tensor(int2)</dt>
+<dt><tt>T1</tt> : tensor(int8), tensor(uint8), tensor(int16), tensor(uint16), tensor(int32), tensor(float8e4m3fn), tensor(float8e4m3fnuz), tensor(float8e5m2), tensor(float8e5m2fnuz), tensor(uint4), tensor(int4), tensor(float4e2m1), tensor(uint2), tensor(int2), tensor(float6e2m3), tensor(float6e3m2)</dt>
 <dd>The type of the inputs 'x_zero_point' and 'x'.</dd>
 <dt><tt>T2</tt> : tensor(float), tensor(float16), tensor(bfloat16), tensor(float8e8m0)</dt>
 <dd>The type of the input 'x_scale'.</dd>
@@ -11882,14 +14420,17 @@ expect(
   that do not occur in the output-term.
 
   The Einsum operator evaluates algebraic tensor operations on a sequence of tensors, using the Einstein summation
-  convention. The equation string contains a comma-separated sequence of lower case letters. Each term corresponds to
-  an operand tensor, and the characters within the terms correspond to operands dimensions.
+  convention. The equation string contains a comma-separated sequence of lower case letters and/or upper case letters.
+  Each term corresponds to an operand tensor, and the characters within the terms correspond to operands dimensions.
+  Lower case letters and upper case letters are treated as distinct symbols, that is, "a" and "A" refer to different
+  symbols.
 
   This sequence may be followed by "->" to separate the left and right hand side of the equation.
   If the equation contains "->" followed by the right-hand side, the explicit (not classical) form of the Einstein
   summation is performed, and the right-hand side indices indicate output tensor dimensions. In other cases,
-  output indices are (implicitly) set to the alphabetically sorted sequence of indices appearing exactly once in the
-  equation.
+  output indices are (implicitly) set to the sequence of indices appearing exactly once in the equation, sorted in
+  increasing order of their ASCII values (so that all upper case letters precede all lower case letters, e.g.,
+  "A" < "Z" < "a" < "z").
 
   When a dimension character is repeated in the left-hand side, it represents summation along the dimension.
 
@@ -11900,7 +14441,9 @@ expect(
 
 #### Version
 
-This version of the operator has been available since version 12 of the default ONNX operator set.
+This version of the operator has been available since version 28 of the default ONNX operator set.
+
+Other versions of this operator: <a href="Changelog.md#Einsum-12">12</a>
 
 #### Attributes
 
@@ -11926,7 +14469,7 @@ This version of the operator has been available since version 12 of the default 
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double)</dt>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
 <dd>Constrain input and output types to all numerical tensor types.</dd>
 </dl>
 
@@ -11965,6 +14508,29 @@ Y = np.random.randn(5, 3, 4)
 Z = einsum_reference_implementation(Eqn, (X, Y))
 
 expect(node, inputs=[X, Y], outputs=[Z], name="test_einsum_batch_matmul")
+```
+
+</details>
+
+
+<details>
+<summary>einsum_batch_matmul_bfloat16</summary>
+
+```python
+Eqn = "bij, bjk -> bik"
+node = onnx.helper.make_node(
+    "Einsum", inputs=["x", "y"], outputs=["z"], equation=Eqn
+)
+
+# Binary operands ensure products and the three-term reductions are
+# exactly representable in bfloat16, independent of accumulation order.
+X = (np.arange(30).reshape(5, 2, 3) % 2).astype(ml_dtypes.bfloat16)
+Y = (np.arange(60).reshape(5, 3, 4) % 2).astype(ml_dtypes.bfloat16)
+Z = einsum_bfloat16_reference_implementation(Eqn, (X, Y))
+
+expect(
+    node, inputs=[X, Y], outputs=[Z], name="test_einsum_batch_matmul_bfloat16"
+)
 ```
 
 </details>
@@ -12026,6 +14592,26 @@ expect(node, inputs=[X], outputs=[Z], name="test_einsum_sum")
 
 
 <details>
+<summary>einsum_sum_bfloat16</summary>
+
+```python
+# A pure reduction: NumPy raises TypeError on bfloat16 here without the
+# float32 accumulation path.
+Eqn = "ij->i"
+node = onnx.helper.make_node(
+    "Einsum", inputs=["x"], outputs=["y"], equation=Eqn
+)
+
+X = np.arange(12).reshape(3, 4).astype(ml_dtypes.bfloat16)
+Z = einsum_bfloat16_reference_implementation(Eqn, (X,))
+
+expect(node, inputs=[X], outputs=[Z], name="test_einsum_sum_bfloat16")
+```
+
+</details>
+
+
+<details>
 <summary>einsum_transpose</summary>
 
 ```python
@@ -12038,6 +14624,24 @@ X = np.random.randn(3, 4)
 Y = einsum_reference_implementation(Eqn, (X,))
 
 expect(node, inputs=[X], outputs=[Y], name="test_einsum_transpose")
+```
+
+</details>
+
+
+<details>
+<summary>einsum_transpose_bfloat16</summary>
+
+```python
+Eqn = "ij->ji"
+node = onnx.helper.make_node(
+    "Einsum", inputs=["x"], outputs=["y"], equation=Eqn
+)
+
+X = np.arange(12).reshape(3, 4).astype(ml_dtypes.bfloat16)
+Y = einsum_bfloat16_reference_implementation(Eqn, (X,))
+
+expect(node, inputs=[X], outputs=[Y], name="test_einsum_transpose_bfloat16")
 ```
 
 </details>
@@ -12095,11 +14699,11 @@ node = onnx.helper.make_node("Elu", inputs=["x"], outputs=["y"], alpha=2.0)
 
 x = np.array([-1, 0, 1]).astype(np.float32)
 # expected output [-1.2642411, 0., 1.]
-y = np.clip(x, 0, np.inf) + (np.exp(np.clip(x, -np.inf, 0)) - 1) * 2.0
+y = np.clip(x, 0, np.inf) + np.expm1(np.clip(x, -np.inf, 0)) * 2.0
 expect(node, inputs=[x], outputs=[y], name="test_elu_example")
 
 x = np.random.randn(3, 4, 5).astype(np.float32)
-y = np.clip(x, 0, np.inf) + (np.exp(np.clip(x, -np.inf, 0)) - 1) * 2.0
+y = np.clip(x, 0, np.inf) + np.expm1(np.clip(x, -np.inf, 0)) * 2.0
 expect(node, inputs=[x], outputs=[y], name="test_elu")
 ```
 
@@ -12117,7 +14721,7 @@ node = onnx.helper.make_node(
     outputs=["y"],
 )
 x = np.random.randn(3, 4, 5).astype(np.float32)
-y = np.clip(x, 0, np.inf) + (np.exp(np.clip(x, -np.inf, 0)) - 1) * default_alpha
+y = np.clip(x, 0, np.inf) + np.expm1(np.clip(x, -np.inf, 0)) * default_alpha
 expect(node, inputs=[x], outputs=[y], name="test_elu_default")
 ```
 
@@ -12931,6 +15535,49 @@ expect(
 
 
 <details>
+<summary>bidirectional</summary>
+
+```python
+"""Test case for direction=bidirectional attribute."""
+# seq_length=3, batch=1, input_size=2
+input = np.array([[[1.0, 2.0]], [[3.0, 4.0]], [[5.0, 6.0]]]).astype(np.float32)
+
+input_size = 2
+hidden_size = 5
+weight_scales = np.array([[[0.5]], [[2.0]]], dtype=np.float32)
+number_of_gates = 3
+
+node = onnx.helper.make_node(
+    "GRU",
+    inputs=["X", "W", "R"],
+    outputs=["Y", "Y_h"],
+    hidden_size=hidden_size,
+    direction="bidirectional",
+)
+
+# Multiply broadcasts in num_directions axis, to have different W & R
+# in each direction
+W = weight_scales * np.ones(
+    (1, number_of_gates * hidden_size, input_size)
+).astype(np.float32)
+R = weight_scales * np.ones(
+    (1, number_of_gates * hidden_size, hidden_size)
+).astype(np.float32)
+
+gru = GRUHelper(X=input, W=W, R=R, direction="bidirectional")
+Y, Y_h = gru.step()
+expect(
+    node,
+    inputs=[input, W, R],
+    outputs=[Y.astype(np.float32), Y_h.astype(np.float32)],
+    name="test_gru_bidirectional",
+)
+```
+
+</details>
+
+
+<details>
 <summary>defaults</summary>
 
 ```python
@@ -13007,6 +15654,48 @@ expect(
     inputs=[input, W, R, B],
     outputs=[Y_h.astype(np.float32)],
     name="test_gru_with_initial_bias",
+)
+```
+
+</details>
+
+
+<details>
+<summary>reverse</summary>
+
+```python
+"""Test case for direction=reverse attribute."""
+# seq_length=3, batch=1, input_size=2
+input = np.array([[[1.0, 2.0]], [[3.0, 4.0]], [[5.0, 6.0]]]).astype(np.float32)
+
+input_size = 2
+hidden_size = 5
+weight_scale = 0.1
+number_of_gates = 3
+
+node = onnx.helper.make_node(
+    "GRU",
+    inputs=["X", "W", "R"],
+    # Output Y to check ordering.
+    outputs=["Y", "Y_h"],
+    hidden_size=hidden_size,
+    direction="reverse",
+)
+
+W = weight_scale * np.ones(
+    (1, number_of_gates * hidden_size, input_size)
+).astype(np.float32)
+R = weight_scale * np.ones(
+    (1, number_of_gates * hidden_size, hidden_size)
+).astype(np.float32)
+
+gru = GRUHelper(X=input, W=W, R=R, direction="reverse")
+Y, Y_h = gru.step()
+expect(
+    node,
+    inputs=[input, W, R],
+    outputs=[Y.astype(np.float32), Y_h.astype(np.float32)],
+    name="test_gru_reverse",
 )
 ```
 
@@ -14302,7 +16991,86 @@ expect(node, inputs=[x, y], outputs=[z], name="test_greater_uint64")
 
 
 <details>
-<summary>greater</summary>
+<summary>greater_broadcast</summary>
+
+```python
+node = onnx.helper.make_node(
+    "Greater",
+    inputs=["x", "y"],
+    outputs=["greater"],
+)
+
+x = np.random.randn(3, 4, 5).astype(np.float32)
+y = np.random.randn(5).astype(np.float32)
+z = np.greater(x, y)
+expect(node, inputs=[x, y], outputs=[z], name="test_greater_bcast")
+```
+
+</details>
+
+
+### <a name="GreaterOrEqual"></a><a name="greaterorequal">**GreaterOrEqual**</a>
+
+  Returns the tensor resulted from performing the `greater_equal` logical operation
+  elementwise on the input tensors `A` and `B` (with Numpy-style broadcasting support).
+
+  This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
+
+#### Version
+
+This version of the operator has been available since version 16 of the default ONNX operator set.
+
+Other versions of this operator: <a href="Changelog.md#GreaterOrEqual-12">12</a>
+
+#### Inputs
+
+<dl>
+<dt><tt>A</tt> (non-differentiable) : T</dt>
+<dd>First input operand for the logical operator.</dd>
+<dt><tt>B</tt> (non-differentiable) : T</dt>
+<dd>Second input operand for the logical operator.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>C</tt> (non-differentiable) : T1</dt>
+<dd>Result tensor.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
+<dd>Constrain input types to all numeric tensors.</dd>
+<dt><tt>T1</tt> : tensor(bool)</dt>
+<dd>Constrain output to boolean tensor.</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>greater_broadcast</summary>
+
+```python
+node = onnx.helper.make_node(
+    "GreaterOrEqual",
+    inputs=["x", "y"],
+    outputs=["greater_equal"],
+)
+
+x = np.random.randn(3, 4, 5).astype(np.float32)
+y = np.random.randn(5).astype(np.float32)
+z = np.greater_equal(x, y)
+expect(node, inputs=[x, y], outputs=[z], name="test_greater_equal_bcast")
+```
+
+</details>
+
+
+<details>
+<summary>greaterorequal</summary>
 
 ```python
 node = onnx.helper.make_node(
@@ -14348,83 +17116,6 @@ expect(node, inputs=[x, y], outputs=[z], name="test_greater_equal_uint64")
 ```
 
 </details>
-
-
-<details>
-<summary>greater_broadcast</summary>
-
-```python
-node = onnx.helper.make_node(
-    "Greater",
-    inputs=["x", "y"],
-    outputs=["greater"],
-)
-
-x = np.random.randn(3, 4, 5).astype(np.float32)
-y = np.random.randn(5).astype(np.float32)
-z = np.greater(x, y)
-expect(node, inputs=[x, y], outputs=[z], name="test_greater_bcast")
-```
-
-</details>
-
-
-<details>
-<summary>greater_broadcast</summary>
-
-```python
-node = onnx.helper.make_node(
-    "GreaterOrEqual",
-    inputs=["x", "y"],
-    outputs=["greater_equal"],
-)
-
-x = np.random.randn(3, 4, 5).astype(np.float32)
-y = np.random.randn(5).astype(np.float32)
-z = np.greater_equal(x, y)
-expect(node, inputs=[x, y], outputs=[z], name="test_greater_equal_bcast")
-```
-
-</details>
-
-
-### <a name="GreaterOrEqual"></a><a name="greaterorequal">**GreaterOrEqual**</a>
-
-  Returns the tensor resulted from performing the `greater_equal` logical operation
-  elementwise on the input tensors `A` and `B` (with Numpy-style broadcasting support).
-
-  This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
-
-#### Version
-
-This version of the operator has been available since version 16 of the default ONNX operator set.
-
-Other versions of this operator: <a href="Changelog.md#GreaterOrEqual-12">12</a>
-
-#### Inputs
-
-<dl>
-<dt><tt>A</tt> (non-differentiable) : T</dt>
-<dd>First input operand for the logical operator.</dd>
-<dt><tt>B</tt> (non-differentiable) : T</dt>
-<dd>Second input operand for the logical operator.</dd>
-</dl>
-
-#### Outputs
-
-<dl>
-<dt><tt>C</tt> (non-differentiable) : T1</dt>
-<dd>Result tensor.</dd>
-</dl>
-
-#### Type Constraints
-
-<dl>
-<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
-<dd>Constrain input types to all numeric tensors.</dd>
-<dt><tt>T1</tt> : tensor(bool)</dt>
-<dd>Constrain output to boolean tensor.</dd>
-</dl>
 
 
 ### <a name="GridSample"></a><a name="gridsample">**GridSample**</a>
@@ -16875,7 +19566,7 @@ Other versions of this operator: <a href="Changelog.md#LSTM-1">1</a>, <a href="C
 <dt><tt>initial_c</tt> (optional, non-differentiable) : T</dt>
 <dd>Optional initial value of the cell. If not specified - assumed to be 0. It has shape `[num_directions, batch_size, hidden_size]`.</dd>
 <dt><tt>P</tt> (optional, differentiable) : T</dt>
-<dd>The weight tensor for peepholes. Concatenation of `P[iof]` and `PB[iof]` (if bidirectional) along dimension 0. It has shape `[num_directions, 3*hidde_size]`. Optional: If not specified - assumed to be 0.</dd>
+<dd>The weight tensor for peepholes. Concatenation of `P[iof]` and `PB[iof]` (if bidirectional) along dimension 0. It has shape `[num_directions, 3*hidden_size]`. Optional: If not specified - assumed to be 0.</dd>
 </dl>
 
 #### Outputs (0 - 3)
@@ -16929,12 +19620,54 @@ R = weight_scale * np.ones(
 ).astype(np.float32)
 
 lstm = LSTMHelper(X=input, W=W, R=R, layout=layout)
-Y, Y_h = lstm.step()
+Y, Y_h, _ = lstm.step()
 expect(
     node,
     inputs=[input, W, R],
     outputs=[Y.astype(np.float32), Y_h.astype(np.float32)],
     name="test_lstm_batchwise",
+)
+```
+
+</details>
+
+
+<details>
+<summary>bidirectional</summary>
+
+```python
+# seq_length = 3, batch_size=1, input_size=2
+input = np.array([[[1.0, 2.0]], [[3.0, 4.0]], [[5.0, 6.0]]]).astype(np.float32)
+
+input_size = 2
+hidden_size = 3
+weight_scales = np.array([[[0.5]], [[2.0]]], dtype=np.float32)
+number_of_gates = 4
+
+node = onnx.helper.make_node(
+    "LSTM",
+    inputs=["X", "W", "R"],
+    outputs=["", "Y_h", "Y_c"],
+    hidden_size=hidden_size,
+    direction="bidirectional",
+)
+
+# Multiply broadcasts in num_directions axis, to have different W & R
+# in each direction
+W = weight_scales * np.ones(
+    (1, number_of_gates * hidden_size, input_size)
+).astype(np.float32)
+R = weight_scales * np.ones(
+    (1, number_of_gates * hidden_size, hidden_size)
+).astype(np.float32)
+
+lstm = LSTMHelper(X=input, W=W, R=R, direction="bidirectional")
+_, Y_h, Y_c = lstm.step()
+expect(
+    node,
+    inputs=[input, W, R],
+    outputs=[Y_h.astype(np.float32), Y_c.astype(np.float32)],
+    name="test_lstm_bidirectional",
 )
 ```
 
@@ -16964,7 +19697,7 @@ R = weight_scale * np.ones(
 ).astype(np.float32)
 
 lstm = LSTMHelper(X=input, W=W, R=R)
-_, Y_h = lstm.step()
+_, Y_h, _ = lstm.step()
 expect(
     node,
     inputs=[input, W, R],
@@ -17012,7 +19745,7 @@ R_B = np.zeros((1, number_of_gates * hidden_size)).astype(np.float32)
 B = np.concatenate((W_B, R_B), 1)
 
 lstm = LSTMHelper(X=input, W=W, R=R, B=B)
-_, Y_h = lstm.step()
+_, Y_h, _ = lstm.step()
 expect(
     node,
     inputs=[input, W, R, B],
@@ -17063,12 +19796,52 @@ P = weight_scale * np.ones((1, number_of_peepholes * hidden_size)).astype(
 lstm = LSTMHelper(
     X=input, W=W, R=R, B=B, P=P, initial_c=init_c, initial_h=init_h
 )
-_, Y_h = lstm.step()
+_, Y_h, _ = lstm.step()
 expect(
     node,
     inputs=[input, W, R, B, seq_lens, init_h, init_c, P],
     outputs=[Y_h.astype(np.float32)],
     name="test_lstm_with_peepholes",
+)
+```
+
+</details>
+
+
+<details>
+<summary>reverse</summary>
+
+```python
+# seq_length = 3, batch_size=1, input_size=2
+input = np.array([[[1.0, 2.0]], [[3.0, 4.0]], [[5.0, 6.0]]]).astype(np.float32)
+
+input_size = 2
+hidden_size = 3
+weight_scale = 0.1
+number_of_gates = 4
+
+node = onnx.helper.make_node(
+    "LSTM",
+    inputs=["X", "W", "R"],
+    outputs=["", "Y_h", "Y_c"],
+    hidden_size=hidden_size,
+    direction="reverse",
+)
+
+W = weight_scale * np.ones(
+    (1, number_of_gates * hidden_size, input_size)
+).astype(np.float32)
+R = weight_scale * np.ones(
+    (1, number_of_gates * hidden_size, hidden_size)
+).astype(np.float32)
+
+lstm = LSTMHelper(X=input, W=W, R=R, direction="reverse")
+_, Y_h, Y_c = lstm.step()
+expect(
+    node,
+    inputs=[input, W, R],
+    outputs=[Y_h.astype(np.float32), Y_c.astype(np.float32)],
+    name="test_lstm_reverse",
 )
 ```
 
@@ -17475,7 +20248,86 @@ expect(node, inputs=[x, y], outputs=[z], name="test_less_uint64")
 
 
 <details>
-<summary>less</summary>
+<summary>less_broadcast</summary>
+
+```python
+node = onnx.helper.make_node(
+    "Less",
+    inputs=["x", "y"],
+    outputs=["less"],
+)
+
+x = np.random.randn(3, 4, 5).astype(np.float32)
+y = np.random.randn(5).astype(np.float32)
+z = np.less(x, y)
+expect(node, inputs=[x, y], outputs=[z], name="test_less_bcast")
+```
+
+</details>
+
+
+### <a name="LessOrEqual"></a><a name="lessorequal">**LessOrEqual**</a>
+
+  Returns the tensor resulted from performing the `less_equal` logical operation
+  elementwise on the input tensors `A` and `B` (with Numpy-style broadcasting support).
+
+  This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
+
+#### Version
+
+This version of the operator has been available since version 16 of the default ONNX operator set.
+
+Other versions of this operator: <a href="Changelog.md#LessOrEqual-12">12</a>
+
+#### Inputs
+
+<dl>
+<dt><tt>A</tt> (non-differentiable) : T</dt>
+<dd>First input operand for the logical operator.</dd>
+<dt><tt>B</tt> (non-differentiable) : T</dt>
+<dd>Second input operand for the logical operator.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>C</tt> (non-differentiable) : T1</dt>
+<dd>Result tensor.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
+<dd>Constrain input types to all numeric tensors.</dd>
+<dt><tt>T1</tt> : tensor(bool)</dt>
+<dd>Constrain output to boolean tensor.</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>less_broadcast</summary>
+
+```python
+node = onnx.helper.make_node(
+    "LessOrEqual",
+    inputs=["x", "y"],
+    outputs=["less_equal"],
+)
+
+x = np.random.randn(3, 4, 5).astype(np.float32)
+y = np.random.randn(5).astype(np.float32)
+z = np.less_equal(x, y)
+expect(node, inputs=[x, y], outputs=[z], name="test_less_equal_bcast")
+```
+
+</details>
+
+
+<details>
+<summary>lessorequal</summary>
 
 ```python
 node = onnx.helper.make_node(
@@ -17523,81 +20375,641 @@ expect(node, inputs=[x, y], outputs=[z], name="test_less_equal_uint64")
 </details>
 
 
-<details>
-<summary>less_broadcast</summary>
+### <a name="LinearAttention"></a><a name="linearattention">**LinearAttention**</a>
 
-```python
-node = onnx.helper.make_node(
-    "Less",
-    inputs=["x", "y"],
-    outputs=["less"],
-)
+  Unified linear attention operator for autoregressive decoding (T=1) and prefill (T>1).
 
-x = np.random.randn(3, 4, 5).astype(np.float32)
-y = np.random.randn(5).astype(np.float32)
-z = np.less(x, y)
-expect(node, inputs=[x, y], outputs=[z], name="test_less_bcast")
-```
+  The query, key, value, and (where applicable) decay/beta inputs use 3D packed format
+  [B, T, H*D], where heads are flattened into the last dimension; q_num_heads and
+  kv_num_heads are always required and are used to unpack to 4D internally for computation.
+  The optional past_state and present_state are 4D with shape (B, H_kv, d_k, d_v).
 
-</details>
+  Group-query attention (GQA) is supported: q_num_heads must be a positive multiple of
+  kv_num_heads. When q_num_heads == kv_num_heads this reduces to multi-headed linear
+  attention; when q_num_heads > kv_num_heads each KV head (and its recurrent state) is
+  shared by `q_num_heads / kv_num_heads` query heads (multi-query attention is the
+  special case kv_num_heads == 1).
 
+  The update_rule attribute selects the recurrence type:
+  - "linear": S_t = S_{t-1} + k_t ⊗ v_t; o_t = scale * q_t^T S_t
+  - "gated": S_t = exp(g_t) * S_{t-1} + k_t ⊗ v_t; o_t = scale * q_t^T S_t
+  - "delta": S_t = S_{t-1} + β_t * k_t ⊗ (v_t - S_{t-1}^T k_t); o_t = scale * q_t^T S_t
+  - "gated_delta": S_t = exp(g_t) * S_{t-1} + β_t * k_t ⊗ (v_t - exp(g_t) * S_{t-1}^T k_t); o_t = scale * q_t^T S_t
 
-<details>
-<summary>less_broadcast</summary>
+  where g_t is the decay (in log-space), β_t is the update rate, and ⊗ denotes outer product.
 
-```python
-node = onnx.helper.make_node(
-    "LessOrEqual",
-    inputs=["x", "y"],
-    outputs=["less_equal"],
-)
+  Semantics: Equivalent to running the recurrent update sequentially for each token,
+  but may be implemented using chunk-parallel algorithms for GPU efficiency.
 
-x = np.random.randn(3, 4, 5).astype(np.float32)
-y = np.random.randn(5).astype(np.float32)
-z = np.less_equal(x, y)
-expect(node, inputs=[x, y], outputs=[z], name="test_less_equal_bcast")
-```
-
-</details>
-
-
-### <a name="LessOrEqual"></a><a name="lessorequal">**LessOrEqual**</a>
-
-  Returns the tensor resulted from performing the `less_equal` logical operation
-  elementwise on the input tensors `A` and `B` (with Numpy-style broadcasting support).
-
-  This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
 
 #### Version
 
-This version of the operator has been available since version 16 of the default ONNX operator set.
+This version of the operator has been available since version 27 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#LessOrEqual-12">12</a>
-
-#### Inputs
+#### Attributes
 
 <dl>
-<dt><tt>A</tt> (non-differentiable) : T</dt>
-<dd>First input operand for the logical operator.</dd>
-<dt><tt>B</tt> (non-differentiable) : T</dt>
-<dd>Second input operand for the logical operator.</dd>
+<dt><tt>chunk_size</tt> : int (default is 64)</dt>
+<dd>Chunk size for the chunk-parallel WY decomposition during prefill (T>1). Tuning hint; does not affect output correctness.</dd>
+<dt><tt>kv_num_heads</tt> : int (required)</dt>
+<dd>Number of key/value heads. Always required.</dd>
+<dt><tt>q_num_heads</tt> : int (required)</dt>
+<dd>Number of query heads. Always required.</dd>
+<dt><tt>scale</tt> : float (default is 0.0)</dt>
+<dd>Output scaling factor. When 0.0 (default), derives d_k = query.shape[-1] / q_num_heads and uses 1/sqrt(d_k). Set explicitly to override.</dd>
+<dt><tt>update_rule</tt> : string (default is gated_delta)</dt>
+<dd>The update rule for the linear attention recurrence. One of: 'linear', 'gated', 'delta', 'gated_delta'. Default is 'gated_delta'.</dd>
+</dl>
+
+#### Inputs (3 - 6)
+
+<dl>
+<dt><tt>query</tt> (differentiable) : T</dt>
+<dd>Query vectors with 3D packed shape (B, T, H_q * d_k). Heads are packed into the last dimension.</dd>
+<dt><tt>key</tt> (differentiable) : T</dt>
+<dd>Key vectors with 3D packed shape (B, T, H_kv * d_k). Should be L2-normalized for delta/gated_delta modes.</dd>
+<dt><tt>value</tt> (differentiable) : T</dt>
+<dd>Value vectors with 3D packed shape (B, T, H_kv * d_v).</dd>
+<dt><tt>past_state</tt> (optional, non-differentiable) : S</dt>
+<dd>Recurrent state from previous step with shape (B, H_kv, d_k, d_v). Always 4D. If not provided, defaults to zeros.</dd>
+<dt><tt>decay</tt> (optional, differentiable) : T</dt>
+<dd>Exponential decay gate in log-space. 3D packed shape: (B, T, H_kv * d_k) for per-key-dimension decay (GLA/RWKV-6), or (B, T, H_kv) for per-head scalar decay (DeltaNet/RetNet). Required for 'gated' and 'gated_delta' modes.</dd>
+<dt><tt>beta</tt> (optional, differentiable) : T</dt>
+<dd>Update rate (sigmoid output). 3D packed shape: (B, T, H_kv) or (B, T, 1). Required for 'delta' and 'gated_delta' modes.</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>C</tt> (non-differentiable) : T1</dt>
-<dd>Result tensor.</dd>
+<dt><tt>output</tt> (differentiable) : T</dt>
+<dd>Attention output with 3D packed shape (B, T, H_q * d_v).</dd>
+<dt><tt>present_state</tt> (non-differentiable) : S</dt>
+<dd>Updated recurrent state with shape (B, H_kv, d_k, d_v). Always 4D.</dd>
 </dl>
 
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
-<dd>Constrain input types to all numeric tensors.</dd>
-<dt><tt>T1</tt> : tensor(bool)</dt>
-<dd>Constrain output to boolean tensor.</dd>
+<dt><tt>T</tt> : tensor(float16), tensor(bfloat16), tensor(float)</dt>
+<dd>Constrain activation input and output types to float16, bfloat16, or float32 tensors.</dd>
+<dt><tt>S</tt> : tensor(float16), tensor(bfloat16), tensor(float)</dt>
+<dd>Constrain state types to float16, bfloat16, or float32 tensors. Should be float32 or the same as T for numerical stability on long sequences.</dd>
 </dl>
+
+
+#### Examples
+
+<details>
+<summary>decode_step</summary>
+
+```python
+node = onnx.helper.make_node(
+    "LinearAttention",
+    inputs=["query", "key", "value", "past_state", "decay", "beta"],
+    outputs=["output", "present_state"],
+    q_num_heads=4,
+    kv_num_heads=4,
+)
+b, t, h_q, h_kv, d_k, d_v = 2, 1, 4, 4, 8, 8
+query = np.random.randn(b, t, h_q * d_k).astype(np.float32)
+key = _l2_normalize(np.random.randn(b, t, h_kv * d_k).astype(np.float32), h_kv)
+value = np.random.randn(b, t, h_kv * d_v).astype(np.float32)
+past_state = np.random.randn(b, h_kv, d_k, d_v).astype(np.float32) * 0.1
+decay = -np.abs(np.random.randn(b, t, h_kv * d_k)).astype(np.float32) * 0.1
+beta = np.random.rand(b, t, h_kv).astype(np.float32)
+
+output, present_state = _compute(
+    query,
+    key,
+    value,
+    past_state=past_state,
+    decay=decay,
+    beta=beta,
+    q_num_heads=h_q,
+    kv_num_heads=h_kv,
+)
+expect(
+    node,
+    inputs=[query, key, value, past_state, decay, beta],
+    outputs=[output, present_state],
+    name="test_linear_attention_decode_step",
+    opset_imports=_OPSET,
+)
+```
+
+</details>
+
+
+<details>
+<summary>delta</summary>
+
+```python
+node = onnx.helper.make_node(
+    "LinearAttention",
+    inputs=["query", "key", "value", "", "", "beta"],
+    outputs=["output", "present_state"],
+    update_rule="delta",
+    q_num_heads=4,
+    kv_num_heads=4,
+)
+b, t, h_q, h_kv, d_k, d_v = 2, 4, 4, 4, 8, 8
+query = np.random.randn(b, t, h_q * d_k).astype(np.float32)
+key = _l2_normalize(np.random.randn(b, t, h_kv * d_k).astype(np.float32), h_kv)
+value = np.random.randn(b, t, h_kv * d_v).astype(np.float32)
+beta = np.random.rand(b, t, h_kv).astype(np.float32)
+
+output, present_state = _compute(
+    query,
+    key,
+    value,
+    beta=beta,
+    q_num_heads=h_q,
+    kv_num_heads=h_kv,
+    update_rule="delta",
+)
+expect(
+    node,
+    inputs=[query, key, value, beta],
+    outputs=[output, present_state],
+    name="test_linear_attention_delta",
+    opset_imports=_OPSET,
+)
+```
+
+</details>
+
+
+<details>
+<summary>explicit_scale</summary>
+
+```python
+scale = 0.25
+node = onnx.helper.make_node(
+    "LinearAttention",
+    inputs=["query", "key", "value", "", "decay", "beta"],
+    outputs=["output", "present_state"],
+    q_num_heads=4,
+    kv_num_heads=4,
+    scale=scale,
+)
+b, t, h_q, h_kv, d_k, d_v = 2, 4, 4, 4, 8, 8
+query = np.random.randn(b, t, h_q * d_k).astype(np.float32)
+key = _l2_normalize(np.random.randn(b, t, h_kv * d_k).astype(np.float32), h_kv)
+value = np.random.randn(b, t, h_kv * d_v).astype(np.float32)
+decay = -np.abs(np.random.randn(b, t, h_kv * d_k)).astype(np.float32) * 0.1
+beta = np.random.rand(b, t, h_kv).astype(np.float32)
+
+output, present_state = _compute(
+    query,
+    key,
+    value,
+    decay=decay,
+    beta=beta,
+    q_num_heads=h_q,
+    kv_num_heads=h_kv,
+    scale=scale,
+)
+expect(
+    node,
+    inputs=[query, key, value, decay, beta],
+    outputs=[output, present_state],
+    name="test_linear_attention_explicit_scale",
+    opset_imports=_OPSET,
+)
+```
+
+</details>
+
+
+<details>
+<summary>fp16</summary>
+
+```python
+node = onnx.helper.make_node(
+    "LinearAttention",
+    inputs=["query", "key", "value", "", "decay", "beta"],
+    outputs=["output", "present_state"],
+    q_num_heads=8,
+    kv_num_heads=4,
+)
+b, t, h_q, h_kv, d_k, d_v = 2, 4, 8, 4, 8, 8
+query = np.random.randn(b, t, h_q * d_k).astype(np.float16)
+key = _l2_normalize(np.random.randn(b, t, h_kv * d_k).astype(np.float16), h_kv)
+value = np.random.randn(b, t, h_kv * d_v).astype(np.float16)
+decay = (-np.abs(np.random.randn(b, t, h_kv * d_k)) * 0.1).astype(np.float16)
+beta = np.random.rand(b, t, h_kv).astype(np.float16)
+
+output, present_state = _compute(
+    query,
+    key,
+    value,
+    decay=decay,
+    beta=beta,
+    q_num_heads=h_q,
+    kv_num_heads=h_kv,
+)
+expect(
+    node,
+    inputs=[query, key, value, decay, beta],
+    outputs=[output, present_state],
+    name="test_linear_attention_fp16",
+    opset_imports=_OPSET,
+)
+```
+
+</details>
+
+
+<details>
+<summary>gated</summary>
+
+```python
+node = onnx.helper.make_node(
+    "LinearAttention",
+    inputs=["query", "key", "value", "", "decay"],
+    outputs=["output", "present_state"],
+    update_rule="gated",
+    q_num_heads=4,
+    kv_num_heads=4,
+)
+b, t, h_q, h_kv, d_k, d_v = 2, 4, 4, 4, 8, 8
+query = np.random.randn(b, t, h_q * d_k).astype(np.float32)
+key = np.random.randn(b, t, h_kv * d_k).astype(np.float32)
+value = np.random.randn(b, t, h_kv * d_v).astype(np.float32)
+# Per-key-dim decay in log-space (negative -> decay).
+decay = -np.abs(np.random.randn(b, t, h_kv * d_k)).astype(np.float32) * 0.1
+
+output, present_state = _compute(
+    query,
+    key,
+    value,
+    decay=decay,
+    q_num_heads=h_q,
+    kv_num_heads=h_kv,
+    update_rule="gated",
+)
+expect(
+    node,
+    inputs=[query, key, value, decay],
+    outputs=[output, present_state],
+    name="test_linear_attention_gated",
+    opset_imports=_OPSET,
+)
+```
+
+</details>
+
+
+<details>
+<summary>gated_delta</summary>
+
+```python
+node = onnx.helper.make_node(
+    "LinearAttention",
+    inputs=["query", "key", "value", "", "decay", "beta"],
+    outputs=["output", "present_state"],
+    q_num_heads=4,
+    kv_num_heads=4,
+)
+b, t, h_q, h_kv, d_k, d_v = 2, 4, 4, 4, 8, 8
+query = np.random.randn(b, t, h_q * d_k).astype(np.float32)
+key = _l2_normalize(np.random.randn(b, t, h_kv * d_k).astype(np.float32), h_kv)
+value = np.random.randn(b, t, h_kv * d_v).astype(np.float32)
+decay = -np.abs(np.random.randn(b, t, h_kv * d_k)).astype(np.float32) * 0.1
+beta = np.random.rand(b, t, h_kv).astype(np.float32)
+
+output, present_state = _compute(
+    query,
+    key,
+    value,
+    decay=decay,
+    beta=beta,
+    q_num_heads=h_q,
+    kv_num_heads=h_kv,
+)
+expect(
+    node,
+    inputs=[query, key, value, decay, beta],
+    outputs=[output, present_state],
+    name="test_linear_attention_gated_delta",
+    opset_imports=_OPSET,
+)
+```
+
+</details>
+
+
+<details>
+<summary>gated_delta_beta_scalar</summary>
+
+```python
+node = onnx.helper.make_node(
+    "LinearAttention",
+    inputs=["query", "key", "value", "", "decay", "beta"],
+    outputs=["output", "present_state"],
+    q_num_heads=4,
+    kv_num_heads=4,
+)
+b, t, h_q, h_kv, d_k, d_v = 2, 4, 4, 4, 8, 8
+query = np.random.randn(b, t, h_q * d_k).astype(np.float32)
+key = _l2_normalize(np.random.randn(b, t, h_kv * d_k).astype(np.float32), h_kv)
+value = np.random.randn(b, t, h_kv * d_v).astype(np.float32)
+decay = -np.abs(np.random.randn(b, t, h_kv * d_k)).astype(np.float32) * 0.1
+beta = np.random.rand(b, t, 1).astype(np.float32)
+
+output, present_state = _compute(
+    query,
+    key,
+    value,
+    decay=decay,
+    beta=beta,
+    q_num_heads=h_q,
+    kv_num_heads=h_kv,
+)
+expect(
+    node,
+    inputs=[query, key, value, decay, beta],
+    outputs=[output, present_state],
+    name="test_linear_attention_gated_delta_beta_scalar",
+    opset_imports=_OPSET,
+)
+```
+
+</details>
+
+
+<details>
+<summary>gated_delta_gqa</summary>
+
+```python
+node = onnx.helper.make_node(
+    "LinearAttention",
+    inputs=["query", "key", "value", "", "decay", "beta"],
+    outputs=["output", "present_state"],
+    q_num_heads=8,
+    kv_num_heads=4,
+)
+b, t, h_q, h_kv, d_k, d_v = 2, 4, 8, 4, 8, 8
+query = np.random.randn(b, t, h_q * d_k).astype(np.float32)
+key = _l2_normalize(np.random.randn(b, t, h_kv * d_k).astype(np.float32), h_kv)
+value = np.random.randn(b, t, h_kv * d_v).astype(np.float32)
+decay = -np.abs(np.random.randn(b, t, h_kv * d_k)).astype(np.float32) * 0.1
+beta = np.random.rand(b, t, h_kv).astype(np.float32)
+
+output, present_state = _compute(
+    query,
+    key,
+    value,
+    decay=decay,
+    beta=beta,
+    q_num_heads=h_q,
+    kv_num_heads=h_kv,
+)
+expect(
+    node,
+    inputs=[query, key, value, decay, beta],
+    outputs=[output, present_state],
+    name="test_linear_attention_gated_delta_gqa",
+    opset_imports=_OPSET,
+)
+```
+
+</details>
+
+
+<details>
+<summary>gated_delta_mqa</summary>
+
+```python
+node = onnx.helper.make_node(
+    "LinearAttention",
+    inputs=["query", "key", "value", "", "decay", "beta"],
+    outputs=["output", "present_state"],
+    q_num_heads=8,
+    kv_num_heads=1,
+)
+b, t, h_q, h_kv, d_k, d_v = 2, 4, 8, 1, 8, 8
+query = np.random.randn(b, t, h_q * d_k).astype(np.float32)
+key = _l2_normalize(np.random.randn(b, t, h_kv * d_k).astype(np.float32), h_kv)
+value = np.random.randn(b, t, h_kv * d_v).astype(np.float32)
+decay = -np.abs(np.random.randn(b, t, h_kv * d_k)).astype(np.float32) * 0.1
+beta = np.random.rand(b, t, h_kv).astype(np.float32)
+
+output, present_state = _compute(
+    query,
+    key,
+    value,
+    decay=decay,
+    beta=beta,
+    q_num_heads=h_q,
+    kv_num_heads=h_kv,
+)
+expect(
+    node,
+    inputs=[query, key, value, decay, beta],
+    outputs=[output, present_state],
+    name="test_linear_attention_gated_delta_mqa",
+    opset_imports=_OPSET,
+)
+```
+
+</details>
+
+
+<details>
+<summary>gated_per_head_decay</summary>
+
+```python
+node = onnx.helper.make_node(
+    "LinearAttention",
+    inputs=["query", "key", "value", "", "decay"],
+    outputs=["output", "present_state"],
+    update_rule="gated",
+    q_num_heads=4,
+    kv_num_heads=4,
+)
+b, t, h_q, h_kv, d_k, d_v = 2, 4, 4, 4, 8, 8
+query = np.random.randn(b, t, h_q * d_k).astype(np.float32)
+key = np.random.randn(b, t, h_kv * d_k).astype(np.float32)
+value = np.random.randn(b, t, h_kv * d_v).astype(np.float32)
+# Per-head scalar decay.
+decay = -np.abs(np.random.randn(b, t, h_kv)).astype(np.float32) * 0.1
+
+output, present_state = _compute(
+    query,
+    key,
+    value,
+    decay=decay,
+    q_num_heads=h_q,
+    kv_num_heads=h_kv,
+    update_rule="gated",
+)
+expect(
+    node,
+    inputs=[query, key, value, decay],
+    outputs=[output, present_state],
+    name="test_linear_attention_gated_per_head_decay",
+    opset_imports=_OPSET,
+)
+```
+
+</details>
+
+
+<details>
+<summary>linear</summary>
+
+```python
+node = onnx.helper.make_node(
+    "LinearAttention",
+    inputs=["query", "key", "value"],
+    outputs=["output", "present_state"],
+    update_rule="linear",
+    q_num_heads=4,
+    kv_num_heads=4,
+)
+b, t, h_q, h_kv, d_k, d_v = 2, 4, 4, 4, 8, 8
+query = np.random.randn(b, t, h_q * d_k).astype(np.float32)
+key = np.random.randn(b, t, h_kv * d_k).astype(np.float32)
+value = np.random.randn(b, t, h_kv * d_v).astype(np.float32)
+
+output, present_state = _compute(
+    query,
+    key,
+    value,
+    q_num_heads=h_q,
+    kv_num_heads=h_kv,
+    update_rule="linear",
+)
+expect(
+    node,
+    inputs=[query, key, value],
+    outputs=[output, present_state],
+    name="test_linear_attention_linear",
+    opset_imports=_OPSET,
+)
+```
+
+</details>
+
+
+<details>
+<summary>linear_t1_no_past</summary>
+
+```python
+node = onnx.helper.make_node(
+    "LinearAttention",
+    inputs=["query", "key", "value"],
+    outputs=["output", "present_state"],
+    update_rule="linear",
+    q_num_heads=4,
+    kv_num_heads=4,
+)
+b, t, h_q, h_kv, d_k, d_v = 2, 1, 4, 4, 8, 8
+query = np.random.randn(b, t, h_q * d_k).astype(np.float32)
+key = np.random.randn(b, t, h_kv * d_k).astype(np.float32)
+value = np.random.randn(b, t, h_kv * d_v).astype(np.float32)
+
+output, present_state = _compute(
+    query,
+    key,
+    value,
+    q_num_heads=h_q,
+    kv_num_heads=h_kv,
+    update_rule="linear",
+)
+expect(
+    node,
+    inputs=[query, key, value],
+    outputs=[output, present_state],
+    name="test_linear_attention_linear_t1_no_past",
+    opset_imports=_OPSET,
+)
+```
+
+</details>
+
+
+<details>
+<summary>no_past_explicit_zeros</summary>
+
+```python
+node = onnx.helper.make_node(
+    "LinearAttention",
+    inputs=["query", "key", "value", "past_state", "decay", "beta"],
+    outputs=["output", "present_state"],
+    q_num_heads=4,
+    kv_num_heads=4,
+)
+b, t, h_q, h_kv, d_k, d_v = 2, 4, 4, 4, 8, 8
+query = np.random.randn(b, t, h_q * d_k).astype(np.float32)
+key = _l2_normalize(np.random.randn(b, t, h_kv * d_k).astype(np.float32), h_kv)
+value = np.random.randn(b, t, h_kv * d_v).astype(np.float32)
+past_state = np.zeros((b, h_kv, d_k, d_v), dtype=np.float32)
+decay = -np.abs(np.random.randn(b, t, h_kv * d_k)).astype(np.float32) * 0.1
+beta = np.random.rand(b, t, h_kv).astype(np.float32)
+
+output, present_state = _compute(
+    query,
+    key,
+    value,
+    past_state=past_state,
+    decay=decay,
+    beta=beta,
+    q_num_heads=h_q,
+    kv_num_heads=h_kv,
+)
+expect(
+    node,
+    inputs=[query, key, value, past_state, decay, beta],
+    outputs=[output, present_state],
+    name="test_linear_attention_no_past_explicit_zeros",
+    opset_imports=_OPSET,
+)
+```
+
+</details>
+
+
+<details>
+<summary>prefill_with_past</summary>
+
+```python
+node = onnx.helper.make_node(
+    "LinearAttention",
+    inputs=["query", "key", "value", "past_state", "decay", "beta"],
+    outputs=["output", "present_state"],
+    q_num_heads=4,
+    kv_num_heads=4,
+)
+b, t, h_q, h_kv, d_k, d_v = 2, 4, 4, 4, 8, 8
+query = np.random.randn(b, t, h_q * d_k).astype(np.float32)
+key = _l2_normalize(np.random.randn(b, t, h_kv * d_k).astype(np.float32), h_kv)
+value = np.random.randn(b, t, h_kv * d_v).astype(np.float32)
+past_state = np.random.randn(b, h_kv, d_k, d_v).astype(np.float32) * 0.1
+decay = -np.abs(np.random.randn(b, t, h_kv * d_k)).astype(np.float32) * 0.1
+beta = np.random.rand(b, t, h_kv).astype(np.float32)
+
+output, present_state = _compute(
+    query,
+    key,
+    value,
+    past_state=past_state,
+    decay=decay,
+    beta=beta,
+    q_num_heads=h_q,
+    kv_num_heads=h_kv,
+)
+expect(
+    node,
+    inputs=[query, key, value, past_state, decay, beta],
+    outputs=[output, present_state],
+    name="test_linear_attention_prefill_with_past",
+    opset_imports=_OPSET,
+)
+```
+
+</details>
 
 
 ### <a name="Log"></a><a name="log">**Log**</a>
@@ -20607,12 +24019,12 @@ upper_edge_hertz = np.float32(8192 / 2)
 num_spectrogram_bins = dft_length // 2 + 1
 frequency_bins = np.arange(0, num_mel_bins + 2)
 
-low_frequency_mel = 2595 * np.log10(1 + lower_edge_hertz / 700)
-high_frequency_mel = 2595 * np.log10(1 + upper_edge_hertz / 700)
+low_frequency_mel = 2595 * np.log1p(lower_edge_hertz / 700) / np.log(10)
+high_frequency_mel = 2595 * np.log1p(upper_edge_hertz / 700) / np.log(10)
 mel_step = (high_frequency_mel - low_frequency_mel) / frequency_bins.shape[0]
 
 frequency_bins = frequency_bins * mel_step + low_frequency_mel
-frequency_bins = 700 * (np.power(10, (frequency_bins / 2595)) - 1)
+frequency_bins = 700 * np.expm1(frequency_bins / 2595 * np.log(10))
 frequency_bins = ((dft_length + 1) * frequency_bins) // sample_rate
 frequency_bins = frequency_bins.astype(int)
 
@@ -20816,7 +24228,7 @@ node = onnx.helper.make_node("Mish", inputs=["X"], outputs=["Y"])
 input_data = np.linspace(-10, 10, 10000, dtype=np.float32)
 
 # Calculate expected output data
-expected_output = input_data * np.tanh(np.log1p(np.exp(input_data)))
+expected_output = input_data * np.tanh(np.logaddexp(0, input_data))
 
 expect(node, inputs=[input_data], outputs=[expected_output], name="test_mish")
 ```
@@ -20827,15 +24239,23 @@ expect(node, inputs=[input_data], outputs=[expected_output], name="test_mish")
 ### <a name="Mod"></a><a name="mod">**Mod**</a>
 
   Performs an element-wise binary modulo operation.
-  The semantics and supported data types depend on the value of the `fmod` attribute which must be `0` (default), or `1`.
+  The `fmod` attribute determines how the quotient is rounded. Its value must be
+  `0` (default) or `1`.
 
-  If the `fmod` attribute is set to `0`, `T` is constrained to integer data types and the semantics follow that of the Python `%`-operator.
-  The sign of the result is that of the divisor.
+  If `fmod` is `0`, the output is calculated as `A - floor(A / B) * B`.
+  The result has the same sign as `B`.
+  For floating-point inputs, the following special cases apply:
+  - If `x` is `±0` and `y` is nonzero, `±0` with the sign of `y` is returned.
+  - If `x` is `±∞` and `y` is not `NaN`, `NaN` is returned.
+  - If `y` is `±0` and `x` is not `NaN`, `NaN` is returned.
+  - If `y` is `±∞` and `x` is finite and nonzero, `x` is returned when `x` and
+    `y` have the same sign; otherwise, `y` is returned.
+  - If either argument is `NaN`, `NaN` is returned.
 
-  If `fmod` is set to `1`, the behavior of this operator follows that of the `fmod` function in C and `T` is constrained to floating point data types.
-  The result of this operator is the remainder of the division operation `x / y` where `x` and `y` are respective elements of `A` and `B`. The result is exactly the value `x - n * y`, where `n` is `x / y` with its fractional part truncated.
-  The returned value has the same sign as `x` (except if `x` is `-0`) and is less or equal to `|y|` in magnitude.
-  The following special cases apply when `fmod` is set to `1`:
+  If `fmod` is `1`, the output is calculated as `A - trunc(A / B) * B`.
+  The result has the same sign as `A`, except that either signed zero may be
+  returned when `A` is `-0` and `B` is positive. For floating-point inputs,
+  the following special cases apply:
   - If `x` is `-0` and `y` is greater than zero, either `+0` or `-0` may be returned.
   - If `x` is `±∞` and `y` is not `NaN`, `NaN` is returned.
   - If `y` is `±0` and `x` is not `NaN`, `NaN` should be returned.
@@ -20846,15 +24266,15 @@ expect(node, inputs=[input_data], outputs=[expected_output], name="test_mish")
 
 #### Version
 
-This version of the operator has been available since version 13 of the default ONNX operator set.
+This version of the operator has been available since version 28 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#Mod-10">10</a>
+Other versions of this operator: <a href="Changelog.md#Mod-10">10</a>, <a href="Changelog.md#Mod-13">13</a>
 
 #### Attributes
 
 <dl>
 <dt><tt>fmod</tt> : int (default is 0)</dt>
-<dd>Whether the operator should behave like fmod (default=0 meaning it will do integer mods); Set this to 1 to force fmod treatment</dd>
+<dd>Whether the operator should use floor (0) or truncation (1) to calculate the quotient.</dd>
 </dl>
 
 #### Inputs
@@ -20877,11 +24297,50 @@ Other versions of this operator: <a href="Changelog.md#Mod-10">10</a>
 
 <dl>
 <dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
-<dd>Constrain input and output types to high-precision numeric tensors.</dd>
+<dd>Constrain input and output types to numeric tensors.</dd>
 </dl>
 
 
 #### Examples
+
+<details>
+<summary>fmod_0_signed_zero</summary>
+
+```python
+for dtype in (np.float16, np.float32, np.float64):
+    tensor_type = onnx.helper.np_dtype_to_tensor_dtype(np.dtype(dtype))
+    mod = onnx.helper.make_node("Mod", ["x", "y"], ["remainder"], fmod=0)
+    # Sign maps both signed zeros to zero; Reciprocal exposes them as signed infinities.
+    reciprocal = onnx.helper.make_node("Reciprocal", ["remainder"], ["z"])
+    graph = onnx.helper.make_graph(
+        [mod, reciprocal],
+        f"ModFmod0SignedZero{np.dtype(dtype).name}",
+        [
+            onnx.helper.make_tensor_value_info("x", tensor_type, [4]),
+            onnx.helper.make_tensor_value_info("y", tensor_type, [4]),
+        ],
+        [
+            onnx.helper.make_tensor_value_info("z", tensor_type, [4]),
+        ],
+    )
+    model = onnx.helper.make_model_gen_version(
+        graph,
+        producer_name="backend-test",
+        opset_imports=[onnx.helper.make_opsetid("", 28)],
+    )
+    x = np.array([0.0, -0.0, 0.0, -0.0], dtype=dtype)
+    y = np.array([-2.0, 2.0, 2.0, -2.0], dtype=dtype)
+    z = np.array([-np.inf, np.inf, np.inf, -np.inf], dtype=dtype)
+    expect(
+        model,
+        inputs=[x, y],
+        outputs=[z],
+        name=f"test_mod_fmod_0_signed_zero_{np.dtype(dtype).name}",
+    )
+```
+
+</details>
+
 
 <details>
 <summary>mod_broadcast</summary>
@@ -20905,6 +24364,70 @@ z = np.mod(x, y)
 #    [[6, 0, 1, 2, 3],
 #     [4, 5, 6, 0, 1]]], dtype=int32)
 expect(node, inputs=[x, y], outputs=[z], name="test_mod_broadcast")
+```
+
+</details>
+
+
+<details>
+<summary>mod_float_edge_cases_fmod_0</summary>
+
+```python
+for dtype in (np.float16, np.float32, np.float64):
+    node = onnx.helper.make_node(
+        "Mod", inputs=["x", "y"], outputs=["z"], fmod=0
+    )
+    x = np.array(
+        [
+            0.0,
+            -0.0,
+            0.0,
+            -0.0,
+            -3.0,
+            3.0,
+            -1.0,
+            1.0,
+            np.inf,
+            -np.inf,
+            1.0,
+            1.0,
+            np.nan,
+            1.0,
+        ],
+        dtype=dtype,
+    )
+    y = np.array(
+        [
+            -2.0,
+            2.0,
+            2.0,
+            -2.0,
+            np.inf,
+            np.inf,
+            -np.inf,
+            -np.inf,
+            2.0,
+            2.0,
+            0.0,
+            -0.0,
+            2.0,
+            np.nan,
+        ],
+        dtype=dtype,
+    )
+    with np.errstate(divide="ignore", invalid="ignore"):
+        z = np.mod(x, y)
+
+    np.testing.assert_array_equal(np.signbit(z[:4]), [True, False, False, True])
+    np.testing.assert_array_equal(
+        np.isnan(z[8:]), [True, True, True, True, True, True]
+    )
+    expect(
+        node,
+        inputs=[x, y],
+        outputs=[z],
+        name=f"test_mod_float_edge_cases_fmod_0_{np.dtype(dtype).name}",
+    )
 ```
 
 </details>
@@ -20943,6 +24466,23 @@ expect(node, inputs=[x, y], outputs=[z], name="test_mod_mixed_sign_float16")
 
 
 <details>
+<summary>mod_mixed_sign_float16_fmod_0</summary>
+
+```python
+node = onnx.helper.make_node("Mod", inputs=["x", "y"], outputs=["z"], fmod=0)
+
+x = np.array([-4.3, 7.2, 5.0, 4.3, -7.2, 8.0]).astype(np.float16)
+y = np.array([2.1, -3.4, 8.0, -2.1, 3.4, 5.0]).astype(np.float16)
+z = np.mod(x, y)
+expect(
+    node, inputs=[x, y], outputs=[z], name="test_mod_float16_mixed_sign_fmod_0"
+)
+```
+
+</details>
+
+
+<details>
 <summary>mod_mixed_sign_float32</summary>
 
 ```python
@@ -20960,6 +24500,23 @@ expect(node, inputs=[x, y], outputs=[z], name="test_mod_mixed_sign_float32")
 
 
 <details>
+<summary>mod_mixed_sign_float32_fmod_0</summary>
+
+```python
+node = onnx.helper.make_node("Mod", inputs=["x", "y"], outputs=["z"], fmod=0)
+
+x = np.array([-4.3, 7.2, 5.0, 4.3, -7.2, 8.0]).astype(np.float32)
+y = np.array([2.1, -3.4, 8.0, -2.1, 3.4, 5.0]).astype(np.float32)
+z = np.mod(x, y)
+expect(
+    node, inputs=[x, y], outputs=[z], name="test_mod_float32_mixed_sign_fmod_0"
+)
+```
+
+</details>
+
+
+<details>
 <summary>mod_mixed_sign_float64</summary>
 
 ```python
@@ -20969,6 +24526,23 @@ x = np.array([-4.3, 7.2, 5.0, 4.3, -7.2, 8.0]).astype(np.float64)
 y = np.array([2.1, -3.4, 8.0, -2.1, 3.4, 5.0]).astype(np.float64)
 z = np.fmod(x, y)  # expected output [-0.1,  0.4,  5. ,  0.1, -0.4,  3.]
 expect(node, inputs=[x, y], outputs=[z], name="test_mod_mixed_sign_float64")
+```
+
+</details>
+
+
+<details>
+<summary>mod_mixed_sign_float64_fmod_0</summary>
+
+```python
+node = onnx.helper.make_node("Mod", inputs=["x", "y"], outputs=["z"], fmod=0)
+
+x = np.array([-4.3, 7.2, 5.0, 4.3, -7.2, 8.0]).astype(np.float64)
+y = np.array([2.1, -3.4, 8.0, -2.1, 3.4, 5.0]).astype(np.float64)
+z = np.mod(x, y)  # expected output [ 2.0, -3.0,  5. , -2.0,  3.0,  3.]
+expect(
+    node, inputs=[x, y], outputs=[z], name="test_mod_float64_mixed_sign_fmod_0"
+)
 ```
 
 </details>
@@ -22808,7 +26382,7 @@ expect(node, inputs=[x], outputs=[np.logical_not(x)], name="test_not_4d")
       are specified as part of required input argument 'values', which is a two-element tensor of format
       [off_value, on_value]. The rank of the output tensor will be one greater than the rank of the
       input tensor. The additional dimension is for one-hot representation. The additional dimension will
-      be inserted at the position specified by 'axis'. If 'axis' is not specified then then additional
+      be inserted at the position specified by 'axis'. If 'axis' is not specified then the additional
       dimension will be inserted as the innermost dimension, i.e. axis=-1. The size of the additional
       dimension is specified by required scalar input 'depth'. The type of the output tensor is the same
       as the type of the 'values' input. Any entries in the 'indices' input tensor with values outside
@@ -22824,9 +26398,9 @@ expect(node, inputs=[x], outputs=[np.logical_not(x)], name="test_not_4d")
 
 #### Version
 
-This version of the operator has been available since version 11 of the default ONNX operator set.
+This version of the operator has been available since version 28 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#OneHot-9">9</a>
+Other versions of this operator: <a href="Changelog.md#OneHot-9">9</a>, <a href="Changelog.md#OneHot-11">11</a>
 
 #### Attributes
 
@@ -22860,7 +26434,7 @@ Other versions of this operator: <a href="Changelog.md#OneHot-9">9</a>
 <dd>Constrain input to only numeric types.</dd>
 <dt><tt>T2</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input to only numeric types.</dd>
-<dt><tt>T3</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
+<dt><tt>T3</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
 <dd>Constrain to any tensor type.</dd>
 </dl>
 
@@ -22891,6 +26465,38 @@ expect(
     inputs=[indices, depth, values],
     outputs=[y],
     name="test_onehot_with_axis",
+)
+```
+
+</details>
+
+
+<details>
+<summary>with_bfloat16_values</summary>
+
+```python
+axisValue = 1
+on_value = 3.0
+off_value = 1.0
+output_type = ml_dtypes.bfloat16
+node = onnx.helper.make_node(
+    "OneHot",
+    inputs=["indices", "depth", "values"],
+    outputs=["y"],
+    axis=axisValue,
+)
+indices = np.array([0, 2], dtype=np.int64)
+depth = np.float32(4)
+values = np.array([off_value, on_value], dtype=output_type)
+y = one_hot(indices, int(depth), axis=axisValue, dtype=output_type)
+y = (y * output_type(on_value - off_value) + output_type(off_value)).astype(
+    output_type
+)
+expect(
+    node,
+    inputs=[indices, depth, values],
+    outputs=[y],
+    name="test_onehot_with_bfloat16_values",
 )
 ```
 
@@ -22964,6 +26570,43 @@ expect(
 
 
 <details>
+<summary>with_out_of_range_indices</summary>
+
+```python
+axisValue = 1
+on_value = 3
+off_value = 1
+output_type = np.float32
+node = onnx.helper.make_node(
+    "OneHot",
+    inputs=["indices", "depth", "values"],
+    outputs=["y"],
+    axis=axisValue,
+)
+# Indices outside [-depth, depth-1] map to an all-off_value row.
+indices = np.array([5, -6, -1], dtype=np.int64)
+
+# print(y)
+# [[1. 1. 1. 1. 1.]
+#  [1. 1. 1. 1. 1.]
+#  [1. 1. 1. 1. 3.]]
+
+depth = np.float32(5)
+values = np.array([off_value, on_value], dtype=output_type)
+y = one_hot(indices, depth, axis=axisValue, dtype=output_type)
+y = y * (on_value - off_value) + off_value
+expect(
+    node,
+    inputs=[indices, depth, values],
+    outputs=[y],
+    name="test_onehot_out_of_range_indices",
+)
+```
+
+</details>
+
+
+<details>
 <summary>without_axis</summary>
 
 ```python
@@ -22996,7 +26639,9 @@ expect(
 
 #### Version
 
-This version of the operator has been available since version 15 of the default ONNX operator set.
+This version of the operator has been available since version 28 of the default ONNX operator set.
+
+Other versions of this operator: <a href="Changelog.md#Optional-15">15</a>
 
 #### Attributes
 
@@ -23022,9 +26667,9 @@ This version of the operator has been available since version 15 of the default 
 #### Type Constraints
 
 <dl>
-<dt><tt>V</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128), seq(tensor(uint8)), seq(tensor(uint16)), seq(tensor(uint32)), seq(tensor(uint64)), seq(tensor(int8)), seq(tensor(int16)), seq(tensor(int32)), seq(tensor(int64)), seq(tensor(float16)), seq(tensor(float)), seq(tensor(double)), seq(tensor(string)), seq(tensor(bool)), seq(tensor(complex64)), seq(tensor(complex128))</dt>
+<dt><tt>V</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128), tensor(float8e4m3fn), tensor(float8e4m3fnuz), tensor(float8e5m2), tensor(float8e5m2fnuz), tensor(uint4), tensor(int4), tensor(float4e2m1), tensor(float8e8m0), tensor(uint2), tensor(int2), tensor(float6e2m3), tensor(float6e3m2), seq(tensor(uint8)), seq(tensor(uint16)), seq(tensor(uint32)), seq(tensor(uint64)), seq(tensor(int8)), seq(tensor(int16)), seq(tensor(int32)), seq(tensor(int64)), seq(tensor(bfloat16)), seq(tensor(float16)), seq(tensor(float)), seq(tensor(double)), seq(tensor(string)), seq(tensor(bool)), seq(tensor(complex64)), seq(tensor(complex128)), seq(tensor(float8e4m3fn)), seq(tensor(float8e4m3fnuz)), seq(tensor(float8e5m2)), seq(tensor(float8e5m2fnuz)), seq(tensor(uint4)), seq(tensor(int4)), seq(tensor(float4e2m1)), seq(tensor(float8e8m0)), seq(tensor(uint2)), seq(tensor(int2)), seq(tensor(float6e2m3)), seq(tensor(float6e3m2))</dt>
 <dd>Constrain input type to all tensor and sequence types.</dd>
-<dt><tt>O</tt> : optional(seq(tensor(uint8))), optional(seq(tensor(uint16))), optional(seq(tensor(uint32))), optional(seq(tensor(uint64))), optional(seq(tensor(int8))), optional(seq(tensor(int16))), optional(seq(tensor(int32))), optional(seq(tensor(int64))), optional(seq(tensor(float16))), optional(seq(tensor(float))), optional(seq(tensor(double))), optional(seq(tensor(string))), optional(seq(tensor(bool))), optional(seq(tensor(complex64))), optional(seq(tensor(complex128))), optional(tensor(uint8)), optional(tensor(uint16)), optional(tensor(uint32)), optional(tensor(uint64)), optional(tensor(int8)), optional(tensor(int16)), optional(tensor(int32)), optional(tensor(int64)), optional(tensor(float16)), optional(tensor(float)), optional(tensor(double)), optional(tensor(string)), optional(tensor(bool)), optional(tensor(complex64)), optional(tensor(complex128))</dt>
+<dt><tt>O</tt> : optional(tensor(uint8)), optional(tensor(uint16)), optional(tensor(uint32)), optional(tensor(uint64)), optional(tensor(int8)), optional(tensor(int16)), optional(tensor(int32)), optional(tensor(int64)), optional(tensor(bfloat16)), optional(tensor(float16)), optional(tensor(float)), optional(tensor(double)), optional(tensor(string)), optional(tensor(bool)), optional(tensor(complex64)), optional(tensor(complex128)), optional(tensor(float8e4m3fn)), optional(tensor(float8e4m3fnuz)), optional(tensor(float8e5m2)), optional(tensor(float8e5m2fnuz)), optional(tensor(uint4)), optional(tensor(int4)), optional(tensor(float4e2m1)), optional(tensor(float8e8m0)), optional(tensor(uint2)), optional(tensor(int2)), optional(tensor(float6e2m3)), optional(tensor(float6e3m2)), optional(seq(tensor(uint8))), optional(seq(tensor(uint16))), optional(seq(tensor(uint32))), optional(seq(tensor(uint64))), optional(seq(tensor(int8))), optional(seq(tensor(int16))), optional(seq(tensor(int32))), optional(seq(tensor(int64))), optional(seq(tensor(bfloat16))), optional(seq(tensor(float16))), optional(seq(tensor(float))), optional(seq(tensor(double))), optional(seq(tensor(string))), optional(seq(tensor(bool))), optional(seq(tensor(complex64))), optional(seq(tensor(complex128))), optional(seq(tensor(float8e4m3fn))), optional(seq(tensor(float8e4m3fnuz))), optional(seq(tensor(float8e5m2))), optional(seq(tensor(float8e5m2fnuz))), optional(seq(tensor(uint4))), optional(seq(tensor(int4))), optional(seq(tensor(float4e2m1))), optional(seq(tensor(float8e8m0))), optional(seq(tensor(uint2))), optional(seq(tensor(int2))), optional(seq(tensor(float6e2m3))), optional(seq(tensor(float6e3m2)))</dt>
 <dd>Constrain output type to all optional tensor or optional sequence types.</dd>
 </dl>
 
@@ -23037,9 +26682,9 @@ This version of the operator has been available since version 15 of the default 
 
 #### Version
 
-This version of the operator has been available since version 18 of the default ONNX operator set.
+This version of the operator has been available since version 28 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#OptionalGetElement-15">15</a>
+Other versions of this operator: <a href="Changelog.md#OptionalGetElement-15">15</a>, <a href="Changelog.md#OptionalGetElement-18">18</a>
 
 #### Inputs
 
@@ -23058,9 +26703,9 @@ Other versions of this operator: <a href="Changelog.md#OptionalGetElement-15">15
 #### Type Constraints
 
 <dl>
-<dt><tt>O</tt> : optional(seq(tensor(uint8))), optional(seq(tensor(uint16))), optional(seq(tensor(uint32))), optional(seq(tensor(uint64))), optional(seq(tensor(int8))), optional(seq(tensor(int16))), optional(seq(tensor(int32))), optional(seq(tensor(int64))), optional(seq(tensor(float16))), optional(seq(tensor(float))), optional(seq(tensor(double))), optional(seq(tensor(string))), optional(seq(tensor(bool))), optional(seq(tensor(complex64))), optional(seq(tensor(complex128))), optional(tensor(uint8)), optional(tensor(uint16)), optional(tensor(uint32)), optional(tensor(uint64)), optional(tensor(int8)), optional(tensor(int16)), optional(tensor(int32)), optional(tensor(int64)), optional(tensor(float16)), optional(tensor(float)), optional(tensor(double)), optional(tensor(string)), optional(tensor(bool)), optional(tensor(complex64)), optional(tensor(complex128)), tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128), seq(tensor(uint8)), seq(tensor(uint16)), seq(tensor(uint32)), seq(tensor(uint64)), seq(tensor(int8)), seq(tensor(int16)), seq(tensor(int32)), seq(tensor(int64)), seq(tensor(float16)), seq(tensor(float)), seq(tensor(double)), seq(tensor(string)), seq(tensor(bool)), seq(tensor(complex64)), seq(tensor(complex128))</dt>
-<dd>Constrain input type to optional tensor and optional sequence types.</dd>
-<dt><tt>V</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128), seq(tensor(uint8)), seq(tensor(uint16)), seq(tensor(uint32)), seq(tensor(uint64)), seq(tensor(int8)), seq(tensor(int16)), seq(tensor(int32)), seq(tensor(int64)), seq(tensor(float16)), seq(tensor(float)), seq(tensor(double)), seq(tensor(string)), seq(tensor(bool)), seq(tensor(complex64)), seq(tensor(complex128))</dt>
+<dt><tt>O</tt> : optional(tensor(uint8)), optional(tensor(uint16)), optional(tensor(uint32)), optional(tensor(uint64)), optional(tensor(int8)), optional(tensor(int16)), optional(tensor(int32)), optional(tensor(int64)), optional(tensor(bfloat16)), optional(tensor(float16)), optional(tensor(float)), optional(tensor(double)), optional(tensor(string)), optional(tensor(bool)), optional(tensor(complex64)), optional(tensor(complex128)), optional(tensor(float8e4m3fn)), optional(tensor(float8e4m3fnuz)), optional(tensor(float8e5m2)), optional(tensor(float8e5m2fnuz)), optional(tensor(uint4)), optional(tensor(int4)), optional(tensor(float4e2m1)), optional(tensor(float8e8m0)), optional(tensor(uint2)), optional(tensor(int2)), optional(tensor(float6e2m3)), optional(tensor(float6e3m2)), optional(seq(tensor(uint8))), optional(seq(tensor(uint16))), optional(seq(tensor(uint32))), optional(seq(tensor(uint64))), optional(seq(tensor(int8))), optional(seq(tensor(int16))), optional(seq(tensor(int32))), optional(seq(tensor(int64))), optional(seq(tensor(bfloat16))), optional(seq(tensor(float16))), optional(seq(tensor(float))), optional(seq(tensor(double))), optional(seq(tensor(string))), optional(seq(tensor(bool))), optional(seq(tensor(complex64))), optional(seq(tensor(complex128))), optional(seq(tensor(float8e4m3fn))), optional(seq(tensor(float8e4m3fnuz))), optional(seq(tensor(float8e5m2))), optional(seq(tensor(float8e5m2fnuz))), optional(seq(tensor(uint4))), optional(seq(tensor(int4))), optional(seq(tensor(float4e2m1))), optional(seq(tensor(float8e8m0))), optional(seq(tensor(uint2))), optional(seq(tensor(int2))), optional(seq(tensor(float6e2m3))), optional(seq(tensor(float6e3m2))), tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128), tensor(float8e4m3fn), tensor(float8e4m3fnuz), tensor(float8e5m2), tensor(float8e5m2fnuz), tensor(uint4), tensor(int4), tensor(float4e2m1), tensor(float8e8m0), tensor(uint2), tensor(int2), tensor(float6e2m3), tensor(float6e3m2), seq(tensor(uint8)), seq(tensor(uint16)), seq(tensor(uint32)), seq(tensor(uint64)), seq(tensor(int8)), seq(tensor(int16)), seq(tensor(int32)), seq(tensor(int64)), seq(tensor(bfloat16)), seq(tensor(float16)), seq(tensor(float)), seq(tensor(double)), seq(tensor(string)), seq(tensor(bool)), seq(tensor(complex64)), seq(tensor(complex128)), seq(tensor(float8e4m3fn)), seq(tensor(float8e4m3fnuz)), seq(tensor(float8e5m2)), seq(tensor(float8e5m2fnuz)), seq(tensor(uint4)), seq(tensor(int4)), seq(tensor(float4e2m1)), seq(tensor(float8e8m0)), seq(tensor(uint2)), seq(tensor(int2)), seq(tensor(float6e2m3)), seq(tensor(float6e3m2))</dt>
+<dd>Constrain input type to optional, tensor and sequence types.</dd>
+<dt><tt>V</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128), tensor(float8e4m3fn), tensor(float8e4m3fnuz), tensor(float8e5m2), tensor(float8e5m2fnuz), tensor(uint4), tensor(int4), tensor(float4e2m1), tensor(float8e8m0), tensor(uint2), tensor(int2), tensor(float6e2m3), tensor(float6e3m2), seq(tensor(uint8)), seq(tensor(uint16)), seq(tensor(uint32)), seq(tensor(uint64)), seq(tensor(int8)), seq(tensor(int16)), seq(tensor(int32)), seq(tensor(int64)), seq(tensor(bfloat16)), seq(tensor(float16)), seq(tensor(float)), seq(tensor(double)), seq(tensor(string)), seq(tensor(bool)), seq(tensor(complex64)), seq(tensor(complex128)), seq(tensor(float8e4m3fn)), seq(tensor(float8e4m3fnuz)), seq(tensor(float8e5m2)), seq(tensor(float8e5m2fnuz)), seq(tensor(uint4)), seq(tensor(int4)), seq(tensor(float4e2m1)), seq(tensor(float8e8m0)), seq(tensor(uint2)), seq(tensor(int2)), seq(tensor(float6e2m3)), seq(tensor(float6e3m2))</dt>
 <dd>Constrain output type to all tensor or sequence types.</dd>
 </dl>
 
@@ -23073,9 +26718,9 @@ Other versions of this operator: <a href="Changelog.md#OptionalGetElement-15">15
 
 #### Version
 
-This version of the operator has been available since version 18 of the default ONNX operator set.
+This version of the operator has been available since version 28 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#OptionalHasElement-15">15</a>
+Other versions of this operator: <a href="Changelog.md#OptionalHasElement-15">15</a>, <a href="Changelog.md#OptionalHasElement-18">18</a>
 
 #### Inputs (0 - 1)
 
@@ -23094,8 +26739,8 @@ Other versions of this operator: <a href="Changelog.md#OptionalHasElement-15">15
 #### Type Constraints
 
 <dl>
-<dt><tt>O</tt> : optional(seq(tensor(uint8))), optional(seq(tensor(uint16))), optional(seq(tensor(uint32))), optional(seq(tensor(uint64))), optional(seq(tensor(int8))), optional(seq(tensor(int16))), optional(seq(tensor(int32))), optional(seq(tensor(int64))), optional(seq(tensor(float16))), optional(seq(tensor(float))), optional(seq(tensor(double))), optional(seq(tensor(string))), optional(seq(tensor(bool))), optional(seq(tensor(complex64))), optional(seq(tensor(complex128))), optional(tensor(uint8)), optional(tensor(uint16)), optional(tensor(uint32)), optional(tensor(uint64)), optional(tensor(int8)), optional(tensor(int16)), optional(tensor(int32)), optional(tensor(int64)), optional(tensor(float16)), optional(tensor(float)), optional(tensor(double)), optional(tensor(string)), optional(tensor(bool)), optional(tensor(complex64)), optional(tensor(complex128)), tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128), seq(tensor(uint8)), seq(tensor(uint16)), seq(tensor(uint32)), seq(tensor(uint64)), seq(tensor(int8)), seq(tensor(int16)), seq(tensor(int32)), seq(tensor(int64)), seq(tensor(float16)), seq(tensor(float)), seq(tensor(double)), seq(tensor(string)), seq(tensor(bool)), seq(tensor(complex64)), seq(tensor(complex128))</dt>
-<dd>Constrain input type to optional tensor and optional sequence types.</dd>
+<dt><tt>O</tt> : optional(tensor(uint8)), optional(tensor(uint16)), optional(tensor(uint32)), optional(tensor(uint64)), optional(tensor(int8)), optional(tensor(int16)), optional(tensor(int32)), optional(tensor(int64)), optional(tensor(bfloat16)), optional(tensor(float16)), optional(tensor(float)), optional(tensor(double)), optional(tensor(string)), optional(tensor(bool)), optional(tensor(complex64)), optional(tensor(complex128)), optional(tensor(float8e4m3fn)), optional(tensor(float8e4m3fnuz)), optional(tensor(float8e5m2)), optional(tensor(float8e5m2fnuz)), optional(tensor(uint4)), optional(tensor(int4)), optional(tensor(float4e2m1)), optional(tensor(float8e8m0)), optional(tensor(uint2)), optional(tensor(int2)), optional(tensor(float6e2m3)), optional(tensor(float6e3m2)), optional(seq(tensor(uint8))), optional(seq(tensor(uint16))), optional(seq(tensor(uint32))), optional(seq(tensor(uint64))), optional(seq(tensor(int8))), optional(seq(tensor(int16))), optional(seq(tensor(int32))), optional(seq(tensor(int64))), optional(seq(tensor(bfloat16))), optional(seq(tensor(float16))), optional(seq(tensor(float))), optional(seq(tensor(double))), optional(seq(tensor(string))), optional(seq(tensor(bool))), optional(seq(tensor(complex64))), optional(seq(tensor(complex128))), optional(seq(tensor(float8e4m3fn))), optional(seq(tensor(float8e4m3fnuz))), optional(seq(tensor(float8e5m2))), optional(seq(tensor(float8e5m2fnuz))), optional(seq(tensor(uint4))), optional(seq(tensor(int4))), optional(seq(tensor(float4e2m1))), optional(seq(tensor(float8e8m0))), optional(seq(tensor(uint2))), optional(seq(tensor(int2))), optional(seq(tensor(float6e2m3))), optional(seq(tensor(float6e3m2))), tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128), tensor(float8e4m3fn), tensor(float8e4m3fnuz), tensor(float8e5m2), tensor(float8e5m2fnuz), tensor(uint4), tensor(int4), tensor(float4e2m1), tensor(float8e8m0), tensor(uint2), tensor(int2), tensor(float6e2m3), tensor(float6e3m2), seq(tensor(uint8)), seq(tensor(uint16)), seq(tensor(uint32)), seq(tensor(uint64)), seq(tensor(int8)), seq(tensor(int16)), seq(tensor(int32)), seq(tensor(int64)), seq(tensor(bfloat16)), seq(tensor(float16)), seq(tensor(float)), seq(tensor(double)), seq(tensor(string)), seq(tensor(bool)), seq(tensor(complex64)), seq(tensor(complex128)), seq(tensor(float8e4m3fn)), seq(tensor(float8e4m3fnuz)), seq(tensor(float8e5m2)), seq(tensor(float8e5m2fnuz)), seq(tensor(uint4)), seq(tensor(int4)), seq(tensor(float4e2m1)), seq(tensor(float8e8m0)), seq(tensor(uint2)), seq(tensor(int2)), seq(tensor(float6e2m3)), seq(tensor(float6e3m2))</dt>
+<dd>Constrain input type to optional, tensor and sequence types.</dd>
 <dt><tt>B</tt> : tensor(bool)</dt>
 <dd>Constrain output to a boolean tensor.</dd>
 </dl>
@@ -23462,7 +27107,7 @@ expect(node, inputs=[x, slope], outputs=[y], name="test_prelu_broadcast")
   Given a tensor containing the data to be padded (`data`), a tensor containing the number of start and end pad values for axis (`pads`), (optionally) a `mode`, and (optionally) `constant_value`,
   a padded tensor (`output`) is generated.
 
-  The three supported `modes` are (similar to corresponding modes supported by `numpy.pad`):
+  The four supported `modes` are (similar to corresponding modes supported by `numpy.pad`):
 
   1) `constant`(default) - pads with a given constant value as specified by `constant_value` (which defaults to 0, empty string, or False)
 
@@ -24127,7 +27772,7 @@ for quant_type_name in ["uint8", "int8"]:
         )
 
         if quant_type == np.int8:
-            output = np.array([[41, -12, -9], [1, -75, 20]])
+            output = np.array([[41, -12, -9], [1, -75, -128]])
         else:
             output = np.array([[168, 115, 255], [1, 66, 151]])
         output = output.astype(quant_type)
@@ -24175,7 +27820,9 @@ for quant_type_name in ["uint8", "int8"]:
         b = b.astype(quant_type)
 
         b_scale = np.array([0.00705], dtype=dtype)
-        b_zero_point = np.array([114], dtype=quant_type)
+        b_zero_point = np.array(
+            [114 - 127] if quant_type == np.int8 else [114], dtype=quant_type
+        )
 
         y_scale = np.array([0.0107], dtype=dtype)
         y_zero_point = np.array(
@@ -24183,20 +27830,12 @@ for quant_type_name in ["uint8", "int8"]:
         )
 
         if quant_type == np.int8:
-            if dtype == np.float32:
-                output = np.array(
-                    [
-                        [[-86, 117, 120], [115, 39, -121]],
-                        [[-86, 117, 120], [115, 39, -121]],
-                    ]
-                )
-            else:
-                output = np.array(
-                    [
-                        [[-86, 116, 119], [115, 39, -121]],
-                        [[-86, 116, 119], [115, 39, -121]],
-                    ]
-                )
+            output = np.array(
+                [
+                    [[41, -12, -9], [1, -75, -128]],
+                    [[41, -12, -9], [1, -75, -128]],
+                ]
+            )
         else:
             output = np.array(
                 [
@@ -24260,9 +27899,9 @@ for quant_type_name in ["uint8", "int8"]:
 
 #### Version
 
-This version of the operator has been available since version 25 of the default ONNX operator set.
+This version of the operator has been available since version 28 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#QuantizeLinear-10">10</a>, <a href="Changelog.md#QuantizeLinear-13">13</a>, <a href="Changelog.md#QuantizeLinear-19">19</a>, <a href="Changelog.md#QuantizeLinear-21">21</a>, <a href="Changelog.md#QuantizeLinear-23">23</a>, <a href="Changelog.md#QuantizeLinear-24">24</a>
+Other versions of this operator: <a href="Changelog.md#QuantizeLinear-10">10</a>, <a href="Changelog.md#QuantizeLinear-13">13</a>, <a href="Changelog.md#QuantizeLinear-19">19</a>, <a href="Changelog.md#QuantizeLinear-21">21</a>, <a href="Changelog.md#QuantizeLinear-23">23</a>, <a href="Changelog.md#QuantizeLinear-24">24</a>, <a href="Changelog.md#QuantizeLinear-25">25</a>
 
 #### Attributes
 
@@ -24276,7 +27915,7 @@ Other versions of this operator: <a href="Changelog.md#QuantizeLinear-10">10</a>
 <dt><tt>precision</tt> : int (default is 0)</dt>
 <dd>(Optional) The precision of the division operation between `x` and `y_scale`. If not provided, it will be the same as the type of `y_scale`.</dd>
 <dt><tt>saturate</tt> : int (default is 1)</dt>
-<dd>The parameter defines how the conversion behaves if an input value is out of range of the destination type. It only applies for float 8 quantization (float8e4m3fn, float8e4m3fnuz, float8e5m2, float8e5m2fnuz). It is true by default. All cases are fully described in two tables inserted in the operator description.</dd>
+<dd>The parameter defines how the conversion behaves if an input value is out of range of the destination type. It only applies for float 8 quantization (float8e4m3fn, float8e4m3fnuz, float8e5m2, float8e5m2fnuz). It is true by default. All cases are fully described in two tables inserted in the operator description. It has no effect for float4e2m1, float6e2m3, or float6e3m2, since those types have no non-saturating (infinity-representable) encoding to fall back to.</dd>
 </dl>
 
 #### Inputs (2 - 3)
@@ -24304,7 +27943,7 @@ Other versions of this operator: <a href="Changelog.md#QuantizeLinear-10">10</a>
 <dd>The type of the input 'x'.</dd>
 <dt><tt>T2</tt> : tensor(float), tensor(float16), tensor(bfloat16), tensor(int32), tensor(float8e8m0)</dt>
 <dd>The type of the input 'y_scale'.</dd>
-<dt><tt>T3</tt> : tensor(int8), tensor(uint8), tensor(int16), tensor(uint16), tensor(float8e4m3fn), tensor(float8e4m3fnuz), tensor(float8e5m2), tensor(float8e5m2fnuz), tensor(uint4), tensor(int4), tensor(float4e2m1), tensor(uint2), tensor(int2)</dt>
+<dt><tt>T3</tt> : tensor(int8), tensor(uint8), tensor(int16), tensor(uint16), tensor(float8e4m3fn), tensor(float8e4m3fnuz), tensor(float8e5m2), tensor(float8e5m2fnuz), tensor(uint4), tensor(int4), tensor(float4e2m1), tensor(uint2), tensor(int2), tensor(float6e2m3), tensor(float6e3m2)</dt>
 <dd>The type of the input `y_zero_point` and the output `y`.</dd>
 </dl>
 
@@ -25220,6 +28859,42 @@ expect(
 
 
 <details>
+<summary>bidirectional</summary>
+
+```python
+input = np.array([[[1.0, 2.0]], [[3.0, 4.0]], [[5.0, 6.0]]]).astype(np.float32)
+
+input_size = 2
+hidden_size = 4
+weight_scales = np.array([[[0.5]], [[2.0]]], dtype=np.float32)
+
+node = onnx.helper.make_node(
+    "RNN",
+    inputs=["X", "W", "R"],
+    outputs=["", "Y_h"],
+    hidden_size=hidden_size,
+    direction="bidirectional",
+)
+
+# Multiply broadcasts in num_directions axis, to have different W & R
+# in each direction
+W = weight_scales * np.ones((1, hidden_size, input_size)).astype(np.float32)
+R = weight_scales * np.ones((1, hidden_size, hidden_size)).astype(np.float32)
+
+rnn = RNNHelper(X=input, W=W, R=R, direction="bidirectional")
+_, Y_h = rnn.step()
+expect(
+    node,
+    inputs=[input, W, R],
+    outputs=[Y_h.astype(np.float32)],
+    name="test_simple_rnn_bidirectional",
+)
+```
+
+</details>
+
+
+<details>
 <summary>defaults</summary>
 
 ```python
@@ -25284,6 +28959,40 @@ expect(
     inputs=[input, W, R, B],
     outputs=[Y_h.astype(np.float32)],
     name="test_simple_rnn_with_initial_bias",
+)
+```
+
+</details>
+
+
+<details>
+<summary>reverse</summary>
+
+```python
+input = np.array([[[1.0, 2.0]], [[3.0, 4.0]], [[5.0, 6.0]]]).astype(np.float32)
+
+input_size = 2
+hidden_size = 4
+weight_scale = 0.1
+
+node = onnx.helper.make_node(
+    "RNN",
+    inputs=["X", "W", "R"],
+    outputs=["", "Y_h"],
+    hidden_size=hidden_size,
+    direction="reverse",
+)
+
+W = weight_scale * np.ones((1, hidden_size, input_size)).astype(np.float32)
+R = weight_scale * np.ones((1, hidden_size, hidden_size)).astype(np.float32)
+
+rnn = RNNHelper(X=input, W=W, R=R, direction="reverse")
+_, Y_h = rnn.step()
+expect(
+    node,
+    inputs=[input, W, R],
+    outputs=[Y_h.astype(np.float32)],
+    name="test_simple_rnn_reverse",
 )
 ```
 
@@ -25541,36 +29250,44 @@ Other versions of this operator: <a href="Changelog.md#RandomUniformLike-1">1</a
   up to `limit` (exclusive).
 
   The number of elements in the output of range is computed as below:
-
   ```
   number_of_elements = max( ceil( (limit - start) / delta ) , 0 )
   ```
-
   The pseudocode determining the contents of the output is shown below:
-
   ```
   for(int i=0; i<number_of_elements; ++i) {
     output[i] =  start + (i * delta);
   }
   ```
-
-  Example 1
-
+  Example 1:
   ```
   Inputs: start = 3, limit = 9, delta = 3
   Output: [3, 6]
   ```
-
-  Example 2
-
+  Example 2:
   ```
   Inputs: start = 10, limit = 4, delta = -2
   Output: [10, 8, 6]
   ```
 
+  For `float16` and `bfloat16` inputs, the `stash_type` attribute controls the precision used for
+  intermediate accumulation. Setting `stash_type` to `1` (float) causes `start`, `limit`, and
+  `delta` to be cast to 32-bit float before the loop, with the output cast back to the original
+  type. This avoids precision loss for large ranges where successive additions in float16 or
+  bfloat16 would otherwise be inexact (e.g. `x + 1 == x` for large `x`).
+
 #### Version
 
-This version of the operator has been available since version 11 of the default ONNX operator set.
+This version of the operator has been available since version 27 of the default ONNX operator set.
+
+Other versions of this operator: <a href="Changelog.md#Range-11">11</a>
+
+#### Attributes
+
+<dl>
+<dt><tt>stash_type</tt> : int (default is 1)</dt>
+<dd>The data type used for intermediate computation when T is float16 or bfloat16. Defaults to 1 (float). Has no effect for other types.</dd>
+</dl>
 
 #### Inputs
 
@@ -25593,12 +29310,69 @@ This version of the operator has been available since version 11 of the default 
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float), tensor(double), tensor(int16), tensor(int32), tensor(int64)</dt>
+<dt><tt>T</tt> : tensor(float), tensor(double), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(bfloat16)</dt>
 <dd>Constrain input types to common numeric type tensors.</dd>
 </dl>
 
 
 #### Examples
+
+<details>
+<summary>range_bfloat16_type_positive_delta</summary>
+
+```python
+node = onnx.helper.make_node(
+    "Range",
+    inputs=["start", "limit", "delta"],
+    outputs=["output"],
+)
+
+start = np.array(1.0, dtype=ml_dtypes.bfloat16)
+limit = np.array(5.0, dtype=ml_dtypes.bfloat16)
+delta = np.array(2.0, dtype=ml_dtypes.bfloat16)
+
+output = np.arange(1.0, 5.0, 2.0, dtype=np.float32).astype(
+    ml_dtypes.bfloat16
+)  # expected output [1.0, 3.0] as bfloat16
+
+expect(
+    node,
+    inputs=[start, limit, delta],
+    outputs=[output],
+    name="test_range_bfloat16_type_positive_delta",
+)
+```
+
+</details>
+
+
+<details>
+<summary>range_float16_type_positive_delta</summary>
+
+```python
+node = onnx.helper.make_node(
+    "Range",
+    inputs=["start", "limit", "delta"],
+    outputs=["output"],
+)
+
+start = np.float16(1)
+limit = np.float16(5)
+delta = np.float16(2)
+
+output = np.arange(
+    start, limit, delta, dtype=np.float16
+)  # expected output [1.0, 3.0]
+expect(
+    node,
+    inputs=[start, limit, delta],
+    outputs=[output],
+    name="test_range_float16_type_positive_delta",
+)
+```
+
+</details>
+
 
 <details>
 <summary>range_float_type_positive_delta</summary>
@@ -26263,9 +30037,9 @@ expect(
 
 #### Version
 
-This version of the operator has been available since version 18 of the default ONNX operator set.
+This version of the operator has been available since version 28 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#ReduceLogSum-1">1</a>, <a href="Changelog.md#ReduceLogSum-11">11</a>, <a href="Changelog.md#ReduceLogSum-13">13</a>
+Other versions of this operator: <a href="Changelog.md#ReduceLogSum-1">1</a>, <a href="Changelog.md#ReduceLogSum-11">11</a>, <a href="Changelog.md#ReduceLogSum-13">13</a>, <a href="Changelog.md#ReduceLogSum-18">18</a>
 
 #### Attributes
 
@@ -26295,8 +30069,8 @@ Other versions of this operator: <a href="Changelog.md#ReduceLogSum-1">1</a>, <a
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(uint32), tensor(uint64), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
-<dd>Constrain input and output types to numeric tensors.</dd>
+<dt><tt>T</tt> : tensor(bfloat16), tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
 
@@ -26431,9 +30205,9 @@ expect(
 
 #### Version
 
-This version of the operator has been available since version 18 of the default ONNX operator set.
+This version of the operator has been available since version 28 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#ReduceLogSumExp-1">1</a>, <a href="Changelog.md#ReduceLogSumExp-11">11</a>, <a href="Changelog.md#ReduceLogSumExp-13">13</a>
+Other versions of this operator: <a href="Changelog.md#ReduceLogSumExp-1">1</a>, <a href="Changelog.md#ReduceLogSumExp-11">11</a>, <a href="Changelog.md#ReduceLogSumExp-13">13</a>, <a href="Changelog.md#ReduceLogSumExp-18">18</a>
 
 #### Attributes
 
@@ -26463,8 +30237,8 @@ Other versions of this operator: <a href="Changelog.md#ReduceLogSumExp-1">1</a>,
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(uint32), tensor(uint64), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
-<dd>Constrain input and output types to numeric tensors.</dd>
+<dt><tt>T</tt> : tensor(bfloat16), tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
 
@@ -26886,6 +30660,36 @@ expect(
     inputs=[data, axes],
     outputs=[reduced],
     name="test_reduce_max_empty_set",
+)
+```
+
+</details>
+
+
+<details>
+<summary>empty_set_bool</summary>
+
+```python
+shape = [2, 0, 4]
+keepdims = 1
+reduced_shape = [2, 1, 4]
+
+node = onnx.helper.make_node(
+    "ReduceMax",
+    inputs=["data", "axes"],
+    outputs=["reduced"],
+    keepdims=keepdims,
+)
+
+data = np.empty(shape, dtype=np.bool_)
+axes = np.array([1], dtype=np.int64)
+reduced = np.full(reduced_shape, False, dtype=np.bool_)
+
+expect(
+    node,
+    inputs=[data, axes],
+    outputs=[reduced],
+    name="test_reduce_max_empty_set_bool",
 )
 ```
 
@@ -30783,7 +34587,9 @@ expect(
 
 #### Version
 
-This version of the operator has been available since version 10 of the default ONNX operator set.
+This version of the operator has been available since version 28 of the default ONNX operator set.
+
+Other versions of this operator: <a href="Changelog.md#ReverseSequence-10">10</a>
 
 #### Attributes
 
@@ -30813,7 +34619,7 @@ This version of the operator has been available since version 10 of the default 
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
 <dd>Input and output types can be of any tensor type.</dd>
 </dl>
 
@@ -30840,7 +34646,7 @@ x = np.array(
     ],
     dtype=np.float32,
 )
-sequence_lens = np.array([1, 2, 3, 4], dtype=np.int64)
+sequence_lens = np.array([0, 2, 3, 4], dtype=np.int64)
 
 y = np.array(
     [
@@ -30857,6 +34663,37 @@ expect(
     inputs=[x, sequence_lens],
     outputs=[y],
     name="test_reversesequence_batch",
+)
+```
+
+</details>
+
+
+<details>
+<summary>reversesequence_bfloat16</summary>
+
+```python
+node = onnx.helper.make_node(
+    "ReverseSequence",
+    inputs=["x", "sequence_lens"],
+    outputs=["y"],
+    time_axis=1,
+    batch_axis=0,
+)
+
+x = np.array(
+    [[1.0, 2.0, 3.0, 4.0], [5.0, 6.0, 7.0, 8.0]], dtype=ml_dtypes.bfloat16
+)
+sequence_lens = np.array([4, 3], dtype=np.int64)
+y = np.array(
+    [[4.0, 3.0, 2.0, 1.0], [7.0, 6.0, 5.0, 8.0]], dtype=ml_dtypes.bfloat16
+)
+
+expect(
+    node,
+    inputs=[x, sequence_lens],
+    outputs=[y],
+    name="test_reversesequence_bfloat16",
 )
 ```
 
@@ -31813,6 +35650,22 @@ expect(node, inputs=[x], outputs=[y], name="test_round")
 
   Computes the Short-time Fourier Transform of the signal.
 
+  The STFT is computed by sliding a window of length `frame_length` over the signal with a
+  step size of `frame_step`, computing a DFT of each windowed frame.
+
+  The number of frames in the output is computed as:
+
+    `frames = floor((signal_length - frame_length) / frame_step) + 1`
+
+  Constraints on inputs:
+  - `frame_step` must be a scalar.
+  - `frame_length` must be a scalar. When omitted and `window` is provided, `frame_length`
+    is inferred from `window.shape[0]`. When both `window` and `frame_length` are omitted,
+    `frame_length` defaults to `signal_length`.
+  - `window` must be a 1-D tensor. When omitted, a rectangular (all-ones) window of length
+    `frame_length` is used. When both `window` and `frame_length` are provided, the length
+    of the `window` tensor must equal `frame_length`.
+
 #### Version
 
 This version of the operator has been available since version 17 of the default ONNX operator set.
@@ -31821,27 +35674,27 @@ This version of the operator has been available since version 17 of the default 
 
 <dl>
 <dt><tt>onesided</tt> : int (default is 1)</dt>
-<dd>If onesided is 1, only values for w in [0, 1, 2, ..., floor(n_fft/2) + 1] are returned because the real-to-complex Fourier transform satisfies the conjugate symmetry, i.e., X[m, w] = X[m,w]=X[m,n_fft-w]*. Note if the input or window tensors are complex, then onesided output is not possible. Enabling onesided with real inputs performs a Real-valued fast Fourier transform (RFFT).When invoked with real or complex valued input, the default value is 1. Values can be 0 or 1.</dd>
+<dd>If onesided is 1, only values for w in [0, 1, 2, ..., floor(n_fft/2) + 1] are returned because the real-to-complex Fourier transform satisfies the conjugate symmetry, i.e., X[m, w] = X[m, n_fft-w]*. Note if the input or window tensors are complex, then onesided output is not possible. Enabling onesided with real inputs performs a Real-valued fast Fourier transform (RFFT). When invoked with real or complex valued input, the default value is 1. Values can be 0 or 1.</dd>
 </dl>
 
 #### Inputs (2 - 4)
 
 <dl>
 <dt><tt>signal</tt> (non-differentiable) : T1</dt>
-<dd>Input tensor representing a real or complex valued signal. For real input, the following shape is expected: [batch_size][signal_length][1]. For complex input, the following shape is expected: [batch_size][signal_length][2], where [batch_size][signal_length][0] represents the real component and [batch_size][signal_length][1] represents the imaginary component of the signal.</dd>
+<dd>Input tensor representing a real or complex valued signal. For real input, the following shape is expected: [batch_size][signal_length][1]. For complex input, the following shape is expected: [batch_size][signal_length][2], where [batch_size][signal_length][0] represents the real component and [batch_size][signal_length][1] represents the imaginary component of the signal. The tensor is expected to have rank 3.</dd>
 <dt><tt>frame_step</tt> (non-differentiable) : T2</dt>
-<dd>The number of samples to step between successive DFTs.</dd>
+<dd>A scalar representing the number of samples to step between successive DFTs.</dd>
 <dt><tt>window</tt> (optional, non-differentiable) : T1</dt>
-<dd>A tensor representing the window that will be slid over the signal.The window must have rank 1 with shape: [window_shape]. It's an optional value. </dd>
+<dd>An optional 1-D tensor representing the window function to be applied to each frame of the signal before computing the DFT. The length of the window (window.shape[0]) determines the frame length when `frame_length` is not specified. If both `window` and `frame_length` are provided, the length of the `window` must equal `frame_length`. When omitted, a rectangular (all-ones) window of length `frame_length` is used.</dd>
 <dt><tt>frame_length</tt> (optional, non-differentiable) : T2</dt>
-<dd>A scalar representing the size of the DFT. It's an optional value.</dd>
+<dd>An optional scalar representing the length of each frame (i.e., the DFT size). When omitted and `window` is provided, `frame_length` is inferred from `window.shape[0]`. When both `window` and `frame_length` are omitted, `frame_length` defaults to `signal_length`. If both `frame_length` and `window` are provided, the length of the `window` must equal `frame_length`.</dd>
 </dl>
 
 #### Outputs
 
 <dl>
 <dt><tt>output</tt> (non-differentiable) : T1</dt>
-<dd>The Short-time Fourier Transform of the signals.If onesided is 1, the output has the shape: [batch_size][frames][dft_unique_bins][2], where dft_unique_bins is frame_length // 2 + 1 (the unique components of the DFT) If onesided is 0, the output has the shape: [batch_size][frames][frame_length][2], where frame_length is the length of the DFT.</dd>
+<dd>The Short-time Fourier Transform of the signal. The number of frames in the output is `frames = floor((signal_length - frame_length) / frame_step) + 1`. If onesided is 1, the output has the shape: [batch_size][frames][dft_unique_bins][2], where dft_unique_bins is frame_length // 2 + 1 (the unique components of the DFT). If onesided is 0, the output has the shape: [batch_size][frames][frame_length][2], where frame_length is the length of the DFT. The last dimension of size 2 represents the real and imaginary parts of each complex value.</dd>
 </dl>
 
 #### Type Constraints
@@ -32098,35 +35951,19 @@ Other versions of this operator: <a href="Changelog.md#Scan-8">8</a>, <a href="C
 # Given an input sequence [x1, ..., xN], sum up its elements using a scan
 # returning the final state (x1+x2+...+xN) as well the scan_output
 # [x1, x1+x2, ..., x1+x2+...+xN]
-#
-# create graph to represent scan body
-sum_in = onnx.helper.make_tensor_value_info(
-    "sum_in", onnx.TensorProto.FLOAT, [2]
-)
-next_ = onnx.helper.make_tensor_value_info("next", onnx.TensorProto.FLOAT, [2])
-sum_out = onnx.helper.make_tensor_value_info(
-    "sum_out", onnx.TensorProto.FLOAT, [2]
-)
-scan_out = onnx.helper.make_tensor_value_info(
-    "scan_out", onnx.TensorProto.FLOAT, [2]
-)
-add_node = onnx.helper.make_node(
-    "Add", inputs=["sum_in", "next"], outputs=["sum_out"]
-)
-id_node = onnx.helper.make_node(
-    "Identity", inputs=["sum_out"], outputs=["scan_out"]
-)
-scan_body = onnx.helper.make_graph(
-    [add_node, id_node], "scan_body", [sum_in, next_], [sum_out, scan_out]
-)
-# create scan op node
-no_sequence_lens = ""  # optional input, not supplied
-node = onnx.helper.make_node(
-    "Scan",
-    inputs=[no_sequence_lens, "initial", "x"],
-    outputs=["y", "z"],
-    num_scan_inputs=1,
-    body=scan_body,
+# Note: the first input (sequence_lens) is optional and omitted via "".
+node = onnx.parser.parse_node(
+    """
+    y, z = Scan ("", initial, x) <
+        num_scan_inputs = 1,
+        body = scan_body (float[2] sum_in, float[2] next)
+            => (float[2] sum_out, float[2] scan_out)
+        {
+            sum_out  = Add(sum_in, next)
+            scan_out = Identity(sum_out)
+        }
+    >
+    """
 )
 # create inputs for batch-size 1, sequence-length 3, inner dimension 2
 initial = np.array([0, 0]).astype(np.float32).reshape((1, 2))
@@ -32155,34 +35992,18 @@ expect(
 # Given an input sequence [x1, ..., xN], sum up its elements using a scan
 # returning the final state (x1+x2+...+xN) as well the scan_output
 # [x1, x1+x2, ..., x1+x2+...+xN]
-#
-# create graph to represent scan body
-sum_in = onnx.helper.make_tensor_value_info(
-    "sum_in", onnx.TensorProto.FLOAT, [2]
-)
-next_ = onnx.helper.make_tensor_value_info("next", onnx.TensorProto.FLOAT, [2])
-sum_out = onnx.helper.make_tensor_value_info(
-    "sum_out", onnx.TensorProto.FLOAT, [2]
-)
-scan_out = onnx.helper.make_tensor_value_info(
-    "scan_out", onnx.TensorProto.FLOAT, [2]
-)
-add_node = onnx.helper.make_node(
-    "Add", inputs=["sum_in", "next"], outputs=["sum_out"]
-)
-id_node = onnx.helper.make_node(
-    "Identity", inputs=["sum_out"], outputs=["scan_out"]
-)
-scan_body = onnx.helper.make_graph(
-    [add_node, id_node], "scan_body", [sum_in, next_], [sum_out, scan_out]
-)
-# create scan op node
-node = onnx.helper.make_node(
-    "Scan",
-    inputs=["initial", "x"],
-    outputs=["y", "z"],
-    num_scan_inputs=1,
-    body=scan_body,
+node = onnx.parser.parse_node(
+    """
+    y, z = Scan (initial, x) <
+        num_scan_inputs = 1,
+        body = scan_body (float[2] sum_in, float[2] next)
+            => (float[2] sum_out, float[2] scan_out)
+        {
+            sum_out  = Add(sum_in, next)
+            scan_out = Identity(sum_out)
+        }
+    >
+    """
 )
 # create inputs for sequence-length 3, inner dimension 2
 initial = np.array([0, 0]).astype(np.float32).reshape((2,))
@@ -32197,6 +36018,91 @@ expect(
     inputs=[initial, x],
     outputs=[y, z],
     name="test_scan9_sum",
+    opset_imports=[onnx.helper.make_opsetid("", 9)],
+)
+```
+
+</details>
+
+
+<details>
+<summary>scan_9_multi_state</summary>
+
+```python
+# Scan with two state variables: running sum and running product.
+# This exercises the case where num_loop_state_vars (2) differs from
+# num_scan_inputs (1).
+#
+# Body inputs:  sum_in (state), prod_in (state), next (scan)
+# Body outputs: sum_out (state), prod_out (state), scan_out (scan)
+node = onnx.parser.parse_node(
+    """
+    y_sum, y_prod, z = Scan (initial_sum, initial_prod, x) <
+        num_scan_inputs = 1,
+        body = scan_body (float[2] sum_in, float[2] prod_in, float[2] next)
+            => (float[2] sum_out, float[2] prod_out, float[2] scan_out)
+        {
+            sum_out  = Add(sum_in, next)
+            prod_out = Mul(prod_in, next)
+            scan_out = Identity(sum_out)
+        }
+    >
+    """
+)
+# x = [[1, 2], [3, 4], [5, 6]]
+initial_sum = np.array([0, 0]).astype(np.float32)
+initial_prod = np.array([1, 1]).astype(np.float32)
+x = np.array([1, 2, 3, 4, 5, 6]).astype(np.float32).reshape((3, 2))
+# final sum = [1+3+5, 2+4+6] = [9, 12]
+y_sum = np.array([9, 12]).astype(np.float32)
+# final product = [1*3*5, 2*4*6] = [15, 48]
+y_prod = np.array([15, 48]).astype(np.float32)
+# scan output (running sum) = [[1,2], [4,6], [9,12]]
+z = np.array([1, 2, 4, 6, 9, 12]).astype(np.float32).reshape((3, 2))
+
+expect(
+    node,
+    inputs=[initial_sum, initial_prod, x],
+    outputs=[y_sum, y_prod, z],
+    name="test_scan9_multi_state",
+    opset_imports=[onnx.helper.make_opsetid("", 9)],
+)
+```
+
+</details>
+
+
+<details>
+<summary>scan_9_scalar</summary>
+
+```python
+# Scan with scalar state and scan output to verify that output
+# shapes are not distorted (e.g. (T,) not (T, 1)).
+node = onnx.parser.parse_node(
+    """
+    y, z = Scan (initial, x) <
+        num_scan_inputs = 1,
+        body = scan_body (float sum_in, float next)
+            => (float sum_out, float scan_out)
+        {
+            sum_out  = Add(sum_in, next)
+            scan_out = Identity(sum_out)
+        }
+    >
+    """
+)
+initial = np.float32(0.0)
+x = np.array([1, 2, 3, 4, 5]).astype(np.float32)
+# final state = 1+2+3+4+5 = 15
+y = np.float32(15.0)
+# scan output = [1, 3, 6, 10, 15], shape (5,)
+z = np.array([1, 3, 6, 10, 15]).astype(np.float32)
+
+expect(
+    node,
+    inputs=[initial, x],
+    outputs=[y, z],
+    name="test_scan9_scalar",
     opset_imports=[onnx.helper.make_opsetid("", 9)],
 )
 ```
@@ -32595,6 +36501,37 @@ expect(
 
 
 <details>
+<summary>scatter_elements_with_reduction_mul</summary>
+
+```python
+axis = 1
+node = onnx.helper.make_node(
+    "ScatterElements",
+    inputs=["data", "indices", "updates"],
+    outputs=["y"],
+    axis=axis,
+    reduction="mul",
+)
+data = np.array([[1.0, 2.0, 3.0, 4.0, 5.0]], dtype=np.float32)
+indices = np.array([[1, 1]], dtype=np.int64)
+updates = np.array([[1.1, 2.1]], dtype=np.float32)
+
+y = scatter_elements(data, indices, updates, axis, reduction="mul")
+# print(y) produces
+# [[1.0, 4.62, 3.0, 4.0, 5.0]]
+
+expect(
+    node,
+    inputs=[data, indices, updates],
+    outputs=[y],
+    name="test_scatter_elements_with_reduction_mul",
+)
+```
+
+</details>
+
+
+<details>
 <summary>scatter_elements_without_axis</summary>
 
 ```python
@@ -32644,7 +36581,7 @@ expect(
   The remaining dimensions of `updates` correspond to the dimensions of the
   replacement-slice-values. Each replacement-slice-value is a (r-k) dimensional tensor,
   corresponding to the trailing (r-k) dimensions of `data`.  Thus, the shape of `updates`
-  must equal indices.shape[0:q-1] ++ data.shape[k:r-1], where ++ denotes the concatenation
+  must equal indices.shape[0:q-1] ++ data.shape[k:r], where ++ denotes the concatenation
   of shapes.
 
   The `output` is calculated via the following equation:
@@ -32875,6 +36812,34 @@ expect(
 
 
 <details>
+<summary>scatternd_max_with_element_indices</summary>
+
+```python
+node = onnx.helper.make_node(
+    "ScatterND",
+    inputs=["data", "indices", "updates"],
+    outputs=["y"],
+    reduction="max",
+)
+data = np.array([[1, 2], [3, 4]], dtype=np.float32)
+# Indices address individual elements (index rank == data rank),
+# which exercises the reduction at the element level.
+indices = np.array([[0, 0], [1, 1]], dtype=np.int64)
+updates = np.array([5, 1], dtype=np.float32)
+# Expecting output as np.array([[5, 2], [3, 4]], dtype=np.float32)
+output = scatter_nd_impl(data, indices, updates, reduction="max")
+expect(
+    node,
+    inputs=[data, indices, updates],
+    outputs=[output],
+    name="test_scatternd_max_with_element_indices",
+)
+```
+
+</details>
+
+
+<details>
 <summary>scatternd_min</summary>
 
 ```python
@@ -32912,6 +36877,32 @@ expect(
     inputs=[data, indices, updates],
     outputs=[output],
     name="test_scatternd_min",
+)
+```
+
+</details>
+
+
+<details>
+<summary>scatternd_min_with_element_indices</summary>
+
+```python
+node = onnx.helper.make_node(
+    "ScatterND",
+    inputs=["data", "indices", "updates"],
+    outputs=["y"],
+    reduction="min",
+)
+data = np.array([[1, 2], [3, 4]], dtype=np.float32)
+indices = np.array([[0, 0], [1, 1]], dtype=np.int64)
+updates = np.array([5, 1], dtype=np.float32)
+# Expecting output as np.array([[1, 2], [3, 1]], dtype=np.float32)
+output = scatter_nd_impl(data, indices, updates, reduction="min")
+expect(
+    node,
+    inputs=[data, indices, updates],
+    outputs=[output],
+    name="test_scatternd_min_with_element_indices",
 )
 ```
 
@@ -33018,17 +37009,11 @@ node = onnx.helper.make_node(
 
 x = np.array([-1, 0, 1]).astype(np.float32)
 # expected output [-3.79272318, 0., 3.]
-y = (
-    np.clip(x, 0, np.inf) * 3.0
-    + (np.exp(np.clip(x, -np.inf, 0)) - 1) * 2.0 * 3.0
-)
+y = np.clip(x, 0, np.inf) * 3.0 + np.expm1(np.clip(x, -np.inf, 0)) * 2.0 * 3.0
 expect(node, inputs=[x], outputs=[y], name="test_selu_example")
 
 x = np.random.randn(3, 4, 5).astype(np.float32)
-y = (
-    np.clip(x, 0, np.inf) * 3.0
-    + (np.exp(np.clip(x, -np.inf, 0)) - 1) * 2.0 * 3.0
-)
+y = np.clip(x, 0, np.inf) * 3.0 + np.expm1(np.clip(x, -np.inf, 0)) * 2.0 * 3.0
 expect(node, inputs=[x], outputs=[y], name="test_selu")
 ```
 
@@ -33049,7 +37034,7 @@ node = onnx.helper.make_node(
 x = np.random.randn(3, 4, 5).astype(np.float32)
 y = (
     np.clip(x, 0, np.inf) * default_gamma
-    + (np.exp(np.clip(x, -np.inf, 0)) - 1) * default_alpha * default_gamma
+    + np.expm1(np.clip(x, -np.inf, 0)) * default_alpha * default_gamma
 )
 expect(node, inputs=[x], outputs=[y], name="test_selu_default")
 ```
@@ -34214,16 +38199,16 @@ expect(node, inputs=[x], outputs=[y], name="test_size")
   If `axes` are omitted, they are set to `[0, ..., r-1]`.
   If `steps` are omitted, they are set to `[1, ..., 1]` of length `len(starts)`
 
-  The effective values are initialized as `start[i] = 0`, `ends[i] = dims[i]` where
+  The effective values are initialized as `starts[i] = 0`, `ends[i] = dims[i]` where
   `dims` are the dimensions of `input` and `steps[i] = 1`.
 
   All negative elements of `axes` are made non-negative by adding `r` to them, where
   `r =rank(input)`.
 
   All negative values in `starts[i]` and `ends[i]` have `dims[axes[i]]` added to them,
-  where `dims` are the dimensions of `input`. Then `start[axes[i]]` is the adjusted
-  `starts[i]` is clamped into the range `[0, dims[axes[i]]]` for positive stepping
-  and `[0, dims[axes[i]]-1]` for negative stepping.
+  where `dims` are the dimensions of `input`. Then `starts[axes[i]]` is clamped to
+  range `[0, dims[axes[i]]]` for positive stepping, or to range `[0, dims[axes[i]]-1]`
+  for negative stepping.
 
   The clamping for the adjusted `ends[i]` depends on the sign of `steps[i]` and must
   accommodate copying 0 through `dims[axes[i]]` elements, so for positive stepping
@@ -36055,13 +40040,11 @@ node = onnx.helper.make_node(
 )
 
 x = np.array([-1, 0, 1]).astype(np.float32)
-y = np.log(
-    np.exp(x) + 1
-)  # expected output [0.31326166, 0.69314718, 1.31326163]
+y = np.logaddexp(0, x)  # expected output [0.31326166, 0.69314718, 1.31326163]
 expect(node, inputs=[x], outputs=[y], name="test_softplus_example")
 
 x = np.random.randn(3, 4, 5).astype(np.float32)
-y = np.log(np.exp(x) + 1)
+y = np.logaddexp(0, x)
 expect(node, inputs=[x], outputs=[y], name="test_softplus")
 ```
 
@@ -36128,19 +40111,22 @@ expect(node, inputs=[x], outputs=[y], name="test_softsign")
 
   SpaceToDepth rearranges blocks of spatial data into depth. More specifically,
   this op outputs a copy of the input tensor where values from the height and width dimensions
-  are moved to the depth dimension.
+  are moved to the depth dimension. `mode` determines whether blocks are ordered depth-column-row
+  (`DCR`, the default) or column-row-depth (`CRD`).
 
 #### Version
 
-This version of the operator has been available since version 13 of the default ONNX operator set.
+This version of the operator has been available since version 28 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#SpaceToDepth-1">1</a>
+Other versions of this operator: <a href="Changelog.md#SpaceToDepth-1">1</a>, <a href="Changelog.md#SpaceToDepth-13">13</a>
 
 #### Attributes
 
 <dl>
 <dt><tt>blocksize</tt> : int (required)</dt>
 <dd>Blocks of [blocksize, blocksize] are moved.</dd>
+<dt><tt>mode</tt> : string (default is DCR)</dt>
+<dd>DCR (default) for depth-column-row order re-arrangement. Use CRD for column-row-depth order.</dd>
 </dl>
 
 #### Inputs
@@ -36166,6 +40152,112 @@ Other versions of this operator: <a href="Changelog.md#SpaceToDepth-1">1</a>
 
 
 #### Examples
+
+<details>
+<summary>crd_mode_example</summary>
+
+```python
+node = onnx.helper.make_node(
+    "SpaceToDepth",
+    inputs=["x"],
+    outputs=["y"],
+    blocksize=2,
+    mode="CRD",
+)
+
+# (1, 2, 4, 6) input tensor
+x = np.array(
+    [
+        [
+            [
+                [0.0, 9.0, 1.0, 10.0, 2.0, 11.0],
+                [18.0, 27.0, 19.0, 28.0, 20.0, 29.0],
+                [3.0, 12.0, 4.0, 13.0, 5.0, 14.0],
+                [21.0, 30.0, 22.0, 31.0, 23.0, 32.0],
+            ],
+            [
+                [36.0, 45.0, 37.0, 46.0, 38.0, 47.0],
+                [54.0, 63.0, 55.0, 64.0, 56.0, 65.0],
+                [39.0, 48.0, 40.0, 49.0, 41.0, 50.0],
+                [57.0, 66.0, 58.0, 67.0, 59.0, 68.0],
+            ],
+        ]
+    ]
+).astype(np.float32)
+
+# (1, 8, 2, 3) output tensor
+y = np.array(
+    [
+        [
+            [[0.0, 1.0, 2.0], [3.0, 4.0, 5.0]],
+            [[9.0, 10.0, 11.0], [12.0, 13.0, 14.0]],
+            [[18.0, 19.0, 20.0], [21.0, 22.0, 23.0]],
+            [[27.0, 28.0, 29.0], [30.0, 31.0, 32.0]],
+            [[36.0, 37.0, 38.0], [39.0, 40.0, 41.0]],
+            [[45.0, 46.0, 47.0], [48.0, 49.0, 50.0]],
+            [[54.0, 55.0, 56.0], [57.0, 58.0, 59.0]],
+            [[63.0, 64.0, 65.0], [66.0, 67.0, 68.0]],
+        ]
+    ]
+).astype(np.float32)
+expect(node, inputs=[x], outputs=[y], name="test_spacetodepth_crd_mode_example")
+```
+
+</details>
+
+
+<details>
+<summary>dcr_mode_example</summary>
+
+```python
+node = onnx.helper.make_node(
+    "SpaceToDepth",
+    inputs=["x"],
+    outputs=["y"],
+    blocksize=2,
+    mode="DCR",
+)
+
+# (1, 2, 4, 6) input tensor
+x = np.array(
+    [
+        [
+            [
+                [0.0, 18.0, 1.0, 19.0, 2.0, 20.0],
+                [36.0, 54.0, 37.0, 55.0, 38.0, 56.0],
+                [3.0, 21.0, 4.0, 22.0, 5.0, 23.0],
+                [39.0, 57.0, 40.0, 58.0, 41.0, 59.0],
+            ],
+            [
+                [9.0, 27.0, 10.0, 28.0, 11.0, 29.0],
+                [45.0, 63.0, 46.0, 64.0, 47.0, 65.0],
+                [12.0, 30.0, 13.0, 31.0, 14.0, 32.0],
+                [48.0, 66.0, 49.0, 67.0, 50.0, 68.0],
+            ],
+        ]
+    ]
+).astype(np.float32)
+
+# (1, 8, 2, 3) output tensor
+y = np.array(
+    [
+        [
+            [[0.0, 1.0, 2.0], [3.0, 4.0, 5.0]],
+            [[9.0, 10.0, 11.0], [12.0, 13.0, 14.0]],
+            [[18.0, 19.0, 20.0], [21.0, 22.0, 23.0]],
+            [[27.0, 28.0, 29.0], [30.0, 31.0, 32.0]],
+            [[36.0, 37.0, 38.0], [39.0, 40.0, 41.0]],
+            [[45.0, 46.0, 47.0], [48.0, 49.0, 50.0]],
+            [[54.0, 55.0, 56.0], [57.0, 58.0, 59.0]],
+            [[63.0, 64.0, 65.0], [66.0, 67.0, 68.0]],
+        ]
+    ]
+).astype(np.float32)
+expect(node, inputs=[x], outputs=[y], name="test_spacetodepth_dcr_mode_example")
+```
+
+</details>
+
 
 <details>
 <summary>example</summary>
@@ -37716,6 +41808,145 @@ expect(
 </details>
 
 
+### <a name="SwiGLU"></a><a name="swiglu">**SwiGLU**</a>
+
+  SwiGLU is a gated activation that takes two inputs, a gate `A` and a linear (value)
+  input `B`, and produces one output `Y`. It applies the Swish activation to the gate
+  and multiplies the result elementwise by the linear input:
+
+  ```
+  Y = Swish_alpha(A) * B
+  ```
+
+  The gate activation `Swish_alpha` is exactly the `Swish` operator with the same
+  `alpha`, i.e. `Swish_alpha(a) = a * Sigmoid(alpha * a)`. Inputs `A` and `B` must
+  have identical shapes; broadcasting is not applied and the output `Y` has the same
+  shape as the inputs.
+
+  Exporters typically produce `A` and `B` in one of two ways: for the common
+  two-projection form (e.g. Llama's `gate_proj`/`up_proj`) wire the two projection
+  outputs directly to `A` (gate) and `B` (value); for a fused/packed single
+  projection, split it upstream into `A` and `B` with `Split` (contiguous layout)
+  or `Slice`/`Gather` (interleaved layout).
+
+#### Version
+
+This version of the operator has been available since version 28 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>alpha</tt> : float (default is 1.0)</dt>
+<dd>Coefficient that scales the gate input inside the sigmoid of the Swish activation. The default value is 1.0.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>A</tt> (differentiable) : T</dt>
+<dd>Gate input tensor</dd>
+<dt><tt>B</tt> (differentiable) : T</dt>
+<dd>Linear (value) input tensor</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> (differentiable) : T</dt>
+<dd>Output tensor</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(bfloat16), tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>alpha</summary>
+
+```python
+node = onnx.helper.make_node(
+    "SwiGLU",
+    inputs=["a", "b"],
+    outputs=["y"],
+    alpha=0.5,  # pass alpha as attribute
+)
+
+a = np.array([[1.0, -2.0, 3.0, 4.0], [-1.0, 2.0, -3.0, 0.5]], dtype=np.float32)
+b = np.array([[0.5, 1.0, -1.0, 2.0], [2.0, -1.0, 0.5, 1.0]], dtype=np.float32)
+y = swiglu(a, b, alpha=0.5)
+
+expect(
+    node,
+    inputs=[a, b],
+    outputs=[y],
+    name="test_swiglu_alpha",
+    opset_imports=[onnx.helper.make_opsetid("", 28)],
+)
+```
+
+</details>
+
+
+<details>
+<summary>float16</summary>
+
+```python
+node = onnx.helper.make_node(
+    "SwiGLU",
+    inputs=["a", "b"],
+    outputs=["y"],
+)
+
+a = np.array([[1.0, -2.0, 3.0, 4.0], [-1.0, 2.0, -3.0, 0.5]], dtype=np.float16)
+b = np.array([[0.5, 1.0, -1.0, 2.0], [2.0, -1.0, 0.5, 1.0]], dtype=np.float16)
+y = swiglu(a.astype(np.float32), b.astype(np.float32), alpha=1.0).astype(
+    np.float16
+)
+
+expect(
+    node,
+    inputs=[a, b],
+    outputs=[y],
+    name="test_swiglu_float16",
+    opset_imports=[onnx.helper.make_opsetid("", 28)],
+)
+```
+
+</details>
+
+
+<details>
+<summary>swiglu</summary>
+
+```python
+node = onnx.helper.make_node(
+    "SwiGLU",
+    inputs=["a", "b"],
+    outputs=["y"],
+)
+
+a = np.array([[1.0, -2.0, 3.0, 4.0], [-1.0, 2.0, -3.0, 0.5]], dtype=np.float32)
+b = np.array([[0.5, 1.0, -1.0, 2.0], [2.0, -1.0, 0.5, 1.0]], dtype=np.float32)
+y = swiglu(a, b, alpha=1.0)
+
+expect(
+    node,
+    inputs=[a, b],
+    outputs=[y],
+    name="test_swiglu",
+    opset_imports=[onnx.helper.make_opsetid("", 28)],
+)
+```
+
+</details>
+
+
 ### <a name="Swish"></a><a name="swish">**Swish**</a>
 
   Swish function takes one input data (Tensor<T>) and produces one output data (Tensor<T>) of the same shape,
@@ -37912,9 +42143,10 @@ expect(node, inputs=[x], outputs=[y], name="test_tanh")
   for prefix_idx in np.ndindex(past_cache.shape[:axis]):
       batch_idx = prefix_idx[0]
       for sequence_idx in range(sequence_length):
-          cache_idx = (*prefix_idx, write_indices[batch_idx] + sequence_idx)
+          cache_sequence_idx = write_indices[batch_idx] + sequence_idx
           if mode == "circular":
-              cache_idx = tuple(np.mod(np.asarray(cache_idx), max_sequence_length))
+              cache_sequence_idx = cache_sequence_idx % max_sequence_length
+          cache_idx = (*prefix_idx, cache_sequence_idx)
           update_idx = (*prefix_idx, sequence_idx)
           present_cache[cache_idx] = update[update_idx]
   ```
@@ -38219,7 +42451,7 @@ This version of the operator has been available since version 9 of the default O
 
 <dl>
 <dt><tt>T</tt> : tensor(string), tensor(int32), tensor(int64)</dt>
-<dd>Input is ether string UTF-8 or int32/int64</dd>
+<dd>Input is either string UTF-8 or int32/int64</dd>
 <dt><tt>T1</tt> : tensor(float)</dt>
 <dd>1-D tensor of floats</dd>
 </dl>
@@ -38979,15 +43211,21 @@ expect(
 ### <a name="Transpose"></a><a name="transpose">**Transpose**</a>
 
   Returns a transpose of the input tensor. (Similar to `numpy.transpose`).
-  The optional attribute `perm` must be a permutation of the dimensions of
-  the input tensor. Axis `i` of the output tensor corresponds to the axis
-  `perm[i]` of the input tensor.
+  The optional attribute `perm` specifies the permutation of the axes of the
+  input tensor. `perm` must contain each axis index in `[0, n-1]` exactly once,
+  so its length is equal to the rank `n` of the input tensor.
+
+  Axis `i` of the output tensor corresponds to axis `perm[i]` of the input tensor.
+
+  If the attribute is omitted, its default value is `(n-1, ..., 0)`, where `n`
+  is the rank of the input tensor (that is, the dimensions are reversed).
+
   For example, when perm=(1, 0, 2), given an input tensor of shape (1, 2, 3),
   the output shape will be (2, 1, 3).
   When perm=(1, 2, 0), given an input tensor of shape (1, 2, 3),
   the output shape will be (2, 3, 1).
-  If the attribute `perm` is omitted, its default value is `(n-1, ..., 0)`,
-  where `n` is the rank of the input tensor.
+  A 0-D or 1-D input is valid; in those cases the output has the same shape
+  as the input.
 
 #### Version
 
@@ -38999,7 +43237,7 @@ Other versions of this operator: <a href="Changelog.md#Transpose-1">1</a>, <a hr
 
 <dl>
 <dt><tt>perm</tt> : list of ints</dt>
-<dd>A list of integers. By default, reverse the dimensions, otherwise permute the axes according to the values given. Its length must be equal to the rank of the input.</dd>
+<dd>A list of integers. By default, reverse the dimensions; otherwise permute the axes according to the values given. Its length must be equal to the rank of the input, and each value must be in the range `[0, rank-1]`.</dd>
 </dl>
 
 #### Inputs
@@ -39766,7 +44004,9 @@ expect(node, inputs=[x, k], outputs=[y], name="test_triu_zero")
 
 #### Version
 
-This version of the operator has been available since version 11 of the default ONNX operator set.
+This version of the operator has been available since version 28 of the default ONNX operator set.
+
+Other versions of this operator: <a href="Changelog.md#Unique-11">11</a>
 
 #### Attributes
 
@@ -39800,7 +44040,7 @@ This version of the operator has been available since version 11 of the default 
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
 <dd>Input can be of any tensor type.</dd>
 </dl>
 
@@ -39839,6 +44079,7 @@ expect(
     inputs=[x],
     outputs=[y, indices, inverse_indices, counts],
     name="test_unique_length_1",
+    output_type_protos=unique_output_types(x),
 )
 ```
 
@@ -39890,6 +44131,7 @@ expect(
     inputs=[x],
     outputs=[y, indices, inverse_indices, counts],
     name="test_unique_not_sorted_without_axis",
+    output_type_protos=unique_output_types(x),
 )
 ```
 
@@ -39930,6 +44172,7 @@ expect(
     inputs=[x],
     outputs=[y, indices, inverse_indices, counts],
     name="test_unique_sorted_with_axis",
+    output_type_protos=unique_output_types(x, axis=0),
 )
 ```
 
@@ -39979,6 +44222,7 @@ expect(
     inputs=[x],
     outputs=[y, indices, inverse_indices, counts],
     name="test_unique_sorted_with_axis_3d",
+    output_type_protos=unique_output_types(x, axis=1),
 )
 ```
 
@@ -40020,6 +44264,7 @@ expect(
     inputs=[x],
     outputs=[y, indices, inverse_indices, counts],
     name="test_unique_sorted_with_negative_axis",
+    output_type_protos=unique_output_types(x, axis=-1),
 )
 ```
 
@@ -40046,6 +44291,35 @@ expect(
     inputs=[x],
     outputs=[y, indices, inverse_indices, counts],
     name="test_unique_sorted_without_axis",
+    output_type_protos=unique_output_types(x),
+)
+```
+
+</details>
+
+
+<details>
+<summary>unique_bfloat16_sorted_without_axis</summary>
+
+```python
+node_sorted = onnx.helper.make_node(
+    "Unique",
+    inputs=["X"],
+    outputs=["Y", "indices", "inverse_indices", "counts"],
+    sorted=1,
+)
+x = np.array([2.0, 1.0, 1.0, 3.0, 4.0, 3.0], dtype=ml_dtypes.bfloat16)
+y, indices, inverse_indices, counts = np.unique(
+    x, return_index=True, return_inverse=True, return_counts=True
+)
+indices, inverse_indices, counts = specify_int64(
+    indices, inverse_indices, counts
+)
+expect(
+    node_sorted,
+    inputs=[x],
+    outputs=[y, indices, inverse_indices, counts],
+    name="test_unique_bfloat16_sorted_without_axis",
 )
 ```
 
@@ -40471,6 +44745,553 @@ x = (np.random.randn(1, 4, 1, 6) > 0).astype(bool)
 y = (np.random.randn(3, 1, 5, 6) > 0).astype(bool)
 z = np.logical_xor(x, y)
 expect(node, inputs=[x, y], outputs=[z], name="test_xor_bcast4v4d")
+```
+
+</details>
+
+
+## ai.onnx.preview
+### <sub>experimental</sub> <a name="ai.onnx.preview.FlexAttention"></a><a name="ai.onnx.preview.flexattention">**ai.onnx.preview.FlexAttention**</a>
+
+  Computes scaled dot-product attention over rank-4 (batched, multi-head) inputs,
+  with optional user-provided customization subgraphs at two stages:
+
+  1. score_mod: Modify the attention score tensor after Q·K^T
+  2. prob_mod: Modify the probability tensor after Softmax
+
+  This operator mirrors the capabilities of PyTorch's flex_attention:
+  https://docs.pytorch.org/docs/stable/nn.attention.flex_attention.html
+
+  Input Shapes (MUST be rank-4 tensors):
+  - Q: `(batch_size, q_num_heads, q_sequence_length, head_size)`
+  - K: `(batch_size, kv_num_heads, kv_sequence_length, head_size)`
+  - V: `(batch_size, kv_num_heads, kv_sequence_length, v_head_size)`
+
+  Output Shape:
+  - Y: `(batch_size, q_num_heads, q_sequence_length, v_head_size)`
+
+  FlexAttention Computation:
+  ```
+  Scores = (Q @ K^T) * scale
+  Scores = score_mod(Scores)             # if 'score_mod' is provided
+  Probs = Softmax(Scores, axis=-1)
+  Probs = prob_mod(Probs)                # if 'prob_mod' is provided
+  Y = Probs @ V
+  ```
+
+  Grouped Query Attention (GQA):
+  When `q_num_heads != kv_num_heads`, each K/V head is shared by a contiguous
+  group of query heads in head-index order. Let
+  `group_size = q_num_heads / kv_num_heads`; then query head `h` uses K/V head
+  `floor(h / group_size)`. `q_num_heads` must be a multiple of
+  `kv_num_heads`.
+
+  Modifier Subgraphs (score_mod, prob_mod):
+  Each modifier subgraph takes exactly one rank-4 tensor input and must produce
+  exactly one rank-4 tensor output of the same shape and element type.
+  - score_mod input/output shape: `(batch_size, q_num_heads, q_sequence_length, kv_sequence_length)`
+  - prob_mod  input/output shape: `(batch_size, q_num_heads, q_sequence_length, kv_sequence_length)`
+  The element type is determined by softmax_precision (defaults to float32 for
+  non-double inputs, otherwise double).
+
+  Masking can be expressed in score_mod by writing masked positions as -inf (or a
+  large negative value appropriate for the target precision).
+
+#### Version
+
+No versioning maintained for experimental ops.
+#### Attributes
+
+<dl>
+<dt><tt>prob_mod</tt> : graph</dt>
+<dd>Optional probability modifier subgraph with 1 rank-4 tensor input and 1 rank-4 tensor output of the same shape and element type: (probs) -> probs_out. probs has softmax_precision element type and shape (B, Hq, L, S). The output must preserve the input shape.</dd>
+<dt><tt>scale</tt> : float</dt>
+<dd>Scaling factor for Q*K^T. Defaults to 1/sqrt(head_size).</dd>
+<dt><tt>score_mod</tt> : graph</dt>
+<dd>Optional score modifier subgraph with 1 rank-4 tensor input and 1 rank-4 tensor output of the same shape and element type: (scores) -> scores_out. scores has softmax_precision element type and shape (B, Hq, L, S). The output must preserve the input shape.</dd>
+<dt><tt>softmax_precision</tt> : int</dt>
+<dd>Floating-point precision for softmax computation. Defaults to float32 for non-double inputs, otherwise uses double. Must be explicitly specified for non-float types.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>Q</tt> : T1</dt>
+<dd>Query tensor with shape `(batch_size, q_num_heads, q_seq_len, head_size)`.</dd>
+<dt><tt>K</tt> : T1</dt>
+<dd>Key tensor with shape `(batch_size, kv_num_heads, kv_seq_len, head_size)`.</dd>
+<dt><tt>V</tt> : T1</dt>
+<dd>Value tensor with shape `(batch_size, kv_num_heads, kv_seq_len, v_head_size)`.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> : T1</dt>
+<dd>Output tensor with shape `(batch_size, q_num_heads, q_seq_len, v_head_size)`.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T1</tt> : tensor(bfloat16), tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain Q, K, V to float tensors.</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>flexattention</summary>
+
+```python
+"""Basic FlexAttention test with default settings."""
+node = helper.make_node(
+    "FlexAttention",
+    inputs=["Q", "K", "V"],
+    outputs=["Y"],
+    domain=AI_ONNX_PREVIEW_DOMAIN,
+)
+
+B, Hq, L, E = 2, 4, 8, 16
+S, Ev = 6, 16
+
+Q = np.random.rand(B, Hq, L, E).astype(np.float32)
+K = np.random.rand(B, Hq, S, E).astype(np.float32)
+V = np.random.rand(B, Hq, S, Ev).astype(np.float32)
+
+(Y,) = _compute_flex_attention(Q, K, V)
+
+expect(
+    node,
+    inputs=[Q, K, V],
+    outputs=[Y],
+    name="test_flexattention",
+    opset_imports=[
+        helper.make_opsetid("", 26),
+        helper.make_opsetid(AI_ONNX_PREVIEW_DOMAIN, 1),
+    ],
+)
+```
+
+</details>
+
+
+<details>
+<summary>flexattention_causal_mask</summary>
+
+```python
+"""FlexAttention with causal masking score_mod (Qwen-3, Gemma-3, Llama-3 pattern)."""
+score_mod_graph = _make_score_mod_causal_mask_graph(TensorProto.FLOAT)
+
+node = helper.make_node(
+    "FlexAttention",
+    inputs=["Q", "K", "V"],
+    outputs=["Y"],
+    domain=AI_ONNX_PREVIEW_DOMAIN,
+)
+score_mod_attr = helper.make_attribute("score_mod", score_mod_graph)
+node.attribute.append(score_mod_attr)
+
+B, Hq, L, E = 1, 2, 4, 8
+S, Ev = 4, 8
+
+Q = np.random.rand(B, Hq, L, E).astype(np.float32)
+K = np.random.rand(B, Hq, S, E).astype(np.float32)
+V = np.random.rand(B, Hq, S, Ev).astype(np.float32)
+
+# Manually compute expected output with causal masking
+scale = 1.0 / np.sqrt(E)
+scores = np.einsum("bhle,bhse->bhls", Q, K) * scale
+# Apply causal mask: set future positions to -inf
+q_idx = np.arange(L).reshape(1, 1, L, 1)
+k_idx = np.arange(S).reshape(1, 1, 1, S)
+mask = q_idx >= k_idx
+scores = np.where(mask, scores, -np.inf)
+probs = np.exp(scores - scores.max(axis=-1, keepdims=True))
+probs = probs / probs.sum(axis=-1, keepdims=True)
+Y = np.einsum("bhls,bhsv->bhlv", probs, V).astype(np.float32)
+
+expect(
+    node,
+    inputs=[Q, K, V],
+    outputs=[Y],
+    name="test_flexattention_causal_mask",
+    opset_imports=[
+        helper.make_opsetid("", 26),
+        helper.make_opsetid(AI_ONNX_PREVIEW_DOMAIN, 1),
+    ],
+)
+```
+
+</details>
+
+
+<details>
+<summary>flexattention_diff_head_sizes</summary>
+
+```python
+"""FlexAttention with different head sizes for Q/K vs V."""
+node = helper.make_node(
+    "FlexAttention",
+    inputs=["Q", "K", "V"],
+    outputs=["Y"],
+    domain=AI_ONNX_PREVIEW_DOMAIN,
+)
+
+B, Hq, L, E = 2, 4, 8, 16
+S, Ev = 6, 32  # V has different head size
+
+Q = np.random.rand(B, Hq, L, E).astype(np.float32)
+K = np.random.rand(B, Hq, S, E).astype(np.float32)
+V = np.random.rand(B, Hq, S, Ev).astype(np.float32)
+
+(Y,) = _compute_flex_attention(Q, K, V)
+
+expect(
+    node,
+    inputs=[Q, K, V],
+    outputs=[Y],
+    name="test_flexattention_diff_head_sizes",
+    opset_imports=[
+        helper.make_opsetid("", 26),
+        helper.make_opsetid(AI_ONNX_PREVIEW_DOMAIN, 1),
+    ],
+)
+```
+
+</details>
+
+
+<details>
+<summary>flexattention_double</summary>
+
+```python
+"""FlexAttention with double precision inputs."""
+node = helper.make_node(
+    "FlexAttention",
+    inputs=["Q", "K", "V"],
+    outputs=["Y"],
+    domain=AI_ONNX_PREVIEW_DOMAIN,
+)
+
+B, Hq, L, E = 2, 4, 8, 16
+S, Ev = 6, 16
+
+Q = np.random.rand(B, Hq, L, E).astype(np.float64)
+K = np.random.rand(B, Hq, S, E).astype(np.float64)
+V = np.random.rand(B, Hq, S, Ev).astype(np.float64)
+
+(Y,) = _compute_flex_attention(Q, K, V)
+
+expect(
+    node,
+    inputs=[Q, K, V],
+    outputs=[Y],
+    name="test_flexattention_double",
+    opset_imports=[
+        helper.make_opsetid("", 26),
+        helper.make_opsetid(AI_ONNX_PREVIEW_DOMAIN, 1),
+    ],
+)
+```
+
+</details>
+
+
+<details>
+<summary>flexattention_fp16</summary>
+
+```python
+"""FlexAttention with float16 inputs."""
+node = helper.make_node(
+    "FlexAttention",
+    inputs=["Q", "K", "V"],
+    outputs=["Y"],
+    domain=AI_ONNX_PREVIEW_DOMAIN,
+)
+
+B, Hq, L, E = 2, 4, 8, 16
+S, Ev = 6, 16
+
+Q = np.random.rand(B, Hq, L, E).astype(np.float16)
+K = np.random.rand(B, Hq, S, E).astype(np.float16)
+V = np.random.rand(B, Hq, S, Ev).astype(np.float16)
+
+(Y,) = _compute_flex_attention(Q, K, V)
+
+expect(
+    node,
+    inputs=[Q, K, V],
+    outputs=[Y],
+    name="test_flexattention_fp16",
+    opset_imports=[
+        helper.make_opsetid("", 26),
+        helper.make_opsetid(AI_ONNX_PREVIEW_DOMAIN, 1),
+    ],
+)
+```
+
+</details>
+
+
+<details>
+<summary>flexattention_gqa</summary>
+
+```python
+"""FlexAttention with Grouped Query Attention (GQA)."""
+node = helper.make_node(
+    "FlexAttention",
+    inputs=["Q", "K", "V"],
+    outputs=["Y"],
+    domain=AI_ONNX_PREVIEW_DOMAIN,
+)
+
+B, Hq, Hkv, L, S, E, Ev = 2, 8, 2, 4, 6, 16, 16
+
+Q = np.random.rand(B, Hq, L, E).astype(np.float32)
+K = np.random.rand(B, Hkv, S, E).astype(np.float32)
+V = np.random.rand(B, Hkv, S, Ev).astype(np.float32)
+
+(Y,) = _compute_flex_attention(Q, K, V)
+
+expect(
+    node,
+    inputs=[Q, K, V],
+    outputs=[Y],
+    name="test_flexattention_gqa",
+    opset_imports=[
+        helper.make_opsetid("", 26),
+        helper.make_opsetid(AI_ONNX_PREVIEW_DOMAIN, 1),
+    ],
+)
+```
+
+</details>
+
+
+<details>
+<summary>flexattention_prob_mod</summary>
+
+```python
+"""FlexAttention with prob_mod subgraph (scales probabilities)."""
+scale_value = 0.5
+prob_mod_graph = _make_prob_mod_scale_graph(scale_value, TensorProto.FLOAT)
+
+node = helper.make_node(
+    "FlexAttention",
+    inputs=["Q", "K", "V"],
+    outputs=["Y"],
+    domain=AI_ONNX_PREVIEW_DOMAIN,
+)
+prob_mod_attr = helper.make_attribute("prob_mod", prob_mod_graph)
+node.attribute.append(prob_mod_attr)
+
+B, Hq, L, E = 1, 2, 3, 4
+S, Ev = 3, 4
+
+Q = np.random.rand(B, Hq, L, E).astype(np.float32)
+K = np.random.rand(B, Hq, S, E).astype(np.float32)
+V = np.random.rand(B, Hq, S, Ev).astype(np.float32)
+
+scale = 1.0 / np.sqrt(E)
+scores = np.einsum("bhle,bhse->bhls", Q, K) * scale
+probs = np.exp(scores - scores.max(axis=-1, keepdims=True))
+probs = probs / probs.sum(axis=-1, keepdims=True)
+probs = probs * scale_value
+Y = np.einsum("bhls,bhsv->bhlv", probs, V).astype(np.float32)
+
+expect(
+    node,
+    inputs=[Q, K, V],
+    outputs=[Y],
+    name="test_flexattention_prob_mod",
+    opset_imports=[
+        helper.make_opsetid("", 26),
+        helper.make_opsetid(AI_ONNX_PREVIEW_DOMAIN, 1),
+    ],
+)
+```
+
+</details>
+
+
+<details>
+<summary>flexattention_relative_positional</summary>
+
+```python
+"""FlexAttention with relative positional bias score_mod."""
+score_mod_graph = _make_score_mod_relative_positional_graph(TensorProto.FLOAT)
+
+node = helper.make_node(
+    "FlexAttention",
+    inputs=["Q", "K", "V"],
+    outputs=["Y"],
+    domain=AI_ONNX_PREVIEW_DOMAIN,
+)
+score_mod_attr = helper.make_attribute("score_mod", score_mod_graph)
+node.attribute.append(score_mod_attr)
+
+B, Hq, L, E = 1, 2, 4, 8
+S, Ev = 4, 8
+
+Q = np.random.rand(B, Hq, L, E).astype(np.float32)
+K = np.random.rand(B, Hq, S, E).astype(np.float32)
+V = np.random.rand(B, Hq, S, Ev).astype(np.float32)
+
+# Manually compute expected output with relative positional bias
+scale = 1.0 / np.sqrt(E)
+scores = np.einsum("bhle,bhse->bhls", Q, K) * scale
+q_idx = np.arange(L).reshape(-1, 1)
+k_idx = np.arange(S).reshape(1, -1)
+rel_pos = (q_idx - k_idx).astype(np.float32)
+scores = scores + rel_pos
+probs = np.exp(scores - scores.max(axis=-1, keepdims=True))
+probs = probs / probs.sum(axis=-1, keepdims=True)
+Y = np.einsum("bhls,bhsv->bhlv", probs, V).astype(np.float32)
+
+expect(
+    node,
+    inputs=[Q, K, V],
+    outputs=[Y],
+    name="test_flexattention_relative_positional",
+    opset_imports=[
+        helper.make_opsetid("", 26),
+        helper.make_opsetid(AI_ONNX_PREVIEW_DOMAIN, 1),
+    ],
+)
+```
+
+</details>
+
+
+<details>
+<summary>flexattention_scaled</summary>
+
+```python
+"""FlexAttention with explicit scale attribute."""
+scale = 0.1
+node = helper.make_node(
+    "FlexAttention",
+    inputs=["Q", "K", "V"],
+    outputs=["Y"],
+    scale=scale,
+    domain=AI_ONNX_PREVIEW_DOMAIN,
+)
+
+B, Hq, L, E = 2, 4, 8, 16
+S, Ev = 6, 16
+
+Q = np.random.rand(B, Hq, L, E).astype(np.float32)
+K = np.random.rand(B, Hq, S, E).astype(np.float32)
+V = np.random.rand(B, Hq, S, Ev).astype(np.float32)
+
+(Y,) = _compute_flex_attention(Q, K, V, scale=scale)
+
+expect(
+    node,
+    inputs=[Q, K, V],
+    outputs=[Y],
+    name="test_flexattention_scaled",
+    opset_imports=[
+        helper.make_opsetid("", 26),
+        helper.make_opsetid(AI_ONNX_PREVIEW_DOMAIN, 1),
+    ],
+)
+```
+
+</details>
+
+
+<details>
+<summary>flexattention_score_mod</summary>
+
+```python
+"""FlexAttention with score_mod subgraph (adds bias to scores)."""
+bias_value = 0.5
+score_mod_graph = _make_score_mod_bias_graph(bias_value, TensorProto.FLOAT)
+
+node = helper.make_node(
+    "FlexAttention",
+    inputs=["Q", "K", "V"],
+    outputs=["Y"],
+    domain=AI_ONNX_PREVIEW_DOMAIN,
+)
+# Add score_mod as a graph attribute
+score_mod_attr = helper.make_attribute("score_mod", score_mod_graph)
+node.attribute.append(score_mod_attr)
+
+B, Hq, L, E = 1, 2, 3, 4
+S, Ev = 3, 4
+
+Q = np.random.rand(B, Hq, L, E).astype(np.float32)
+K = np.random.rand(B, Hq, S, E).astype(np.float32)
+V = np.random.rand(B, Hq, S, Ev).astype(np.float32)
+
+scale = 1.0 / np.sqrt(E)
+scores = np.einsum("bhle,bhse->bhls", Q, K) * scale
+scores = scores + bias_value  # score_mod: add bias
+probs = np.exp(scores - scores.max(axis=-1, keepdims=True))
+probs = probs / probs.sum(axis=-1, keepdims=True)
+Y = np.einsum("bhls,bhsv->bhlv", probs, V).astype(np.float32)
+
+expect(
+    node,
+    inputs=[Q, K, V],
+    outputs=[Y],
+    name="test_flexattention_score_mod",
+    opset_imports=[
+        helper.make_opsetid("", 26),
+        helper.make_opsetid(AI_ONNX_PREVIEW_DOMAIN, 1),
+    ],
+)
+```
+
+</details>
+
+
+<details>
+<summary>flexattention_soft_cap</summary>
+
+```python
+"""FlexAttention with soft capping score_mod (Gemma-2 pattern)."""
+cap_value = 20.0
+score_mod_graph = _make_score_mod_soft_cap_graph(cap_value, TensorProto.FLOAT)
+
+node = helper.make_node(
+    "FlexAttention",
+    inputs=["Q", "K", "V"],
+    outputs=["Y"],
+    domain=AI_ONNX_PREVIEW_DOMAIN,
+)
+score_mod_attr = helper.make_attribute("score_mod", score_mod_graph)
+node.attribute.append(score_mod_attr)
+
+B, Hq, L, E = 1, 2, 4, 8
+S, Ev = 4, 8
+
+Q = np.random.rand(B, Hq, L, E).astype(np.float32)
+K = np.random.rand(B, Hq, S, E).astype(np.float32)
+V = np.random.rand(B, Hq, S, Ev).astype(np.float32)
+
+# Manually compute expected output with soft capping
+scale = 1.0 / np.sqrt(E)
+scores = np.einsum("bhle,bhse->bhls", Q, K) * scale
+scores = np.tanh(scores / cap_value) * cap_value
+probs = np.exp(scores - scores.max(axis=-1, keepdims=True))
+probs = probs / probs.sum(axis=-1, keepdims=True)
+Y = np.einsum("bhls,bhsv->bhlv", probs, V).astype(np.float32)
+
+expect(
+    node,
+    inputs=[Q, K, V],
+    outputs=[Y],
+    name="test_flexattention_soft_cap",
+    opset_imports=[
+        helper.make_opsetid("", 26),
+        helper.make_opsetid(AI_ONNX_PREVIEW_DOMAIN, 1),
+    ],
+)
 ```
 
 </details>
