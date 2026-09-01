@@ -1522,11 +1522,10 @@ class OpSet_Onnx_ver28 {
 class OpSet_Onnx_ver29 {
  public:
   static void ForEachSchema(const std::function<void(OpSchema&&)>& fn) {
-   // TODO: Remove after introducing the first schema to opset 29
-   (void)fn;
+    // TODO: Remove after introducing the first schema to opset 29
+    (void)fn;
   }
 };
-
 
 ONNX_API inline void RegisterOnnxOperatorSetSchema() {
   RegisterOpSetSchema<OpSet_Onnx_ver1>();
@@ -1567,6 +1566,7 @@ ONNX_API inline void RegisterOnnxOperatorSetSchema(int target_version, bool fail
   // These calls for schema registration here are required to be in descending order for this to work correctly
   //
   // Version-specific registration sees duplicate schema version request as error if fail_duplicate_schema
+  RegisterOpSetSchema<OpSet_Onnx_ver29>(target_version, fail_duplicate_schema);
   RegisterOpSetSchema<OpSet_Onnx_ver28>(target_version, fail_duplicate_schema);
   RegisterOpSetSchema<OpSet_Onnx_ver27>(target_version, fail_duplicate_schema);
   RegisterOpSetSchema<OpSet_Onnx_ver26>(target_version, fail_duplicate_schema);
