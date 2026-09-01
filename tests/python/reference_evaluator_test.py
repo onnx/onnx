@@ -4142,7 +4142,11 @@ class TestReferenceEvaluator:
         data = data.reshape(shape)
         got = ref.run(None, {"X": data})
         expected = _expected(data, alpha, beta, bias, size).astype(dtype)
-        assert_allclose(got[0], expected)
+        assert got[0].dtype == np.dtype(dtype)
+        if dtype is ml_dtypes.bfloat16:
+            assert_allclose(got[0].astype(np.float32), expected.astype(np.float32))
+        else:
+            assert_allclose(got[0], expected)
 
     def test_conv_implementation_1d(self):
         got = _conv_implementation(
