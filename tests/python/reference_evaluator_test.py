@@ -202,6 +202,101 @@ class TestReferenceEvaluator:
         return m
 
     @pytest.mark.parametrize(
+        "direction,num_directions",
+        [("forward", 1), ("reverse", 1), ("bidirectional", 2)],
+    )
+    @pytest.mark.parametrize("layout", [0, 1])
+    @pytest.mark.parametrize("dtype", [np.float32, np.float64])
+    def test_lstm_y_c(
+        self, direction: str, num_directions: int, layout: int, dtype
+    ) -> None:
+        sequence_length = 3
+        batch_size = 2
+        hidden_size = 1
+        X = np.zeros((sequence_length, batch_size, 1), dtype=dtype)
+        W = np.zeros((num_directions, 4 * hidden_size, 1), dtype=dtype)
+        R = np.zeros((num_directions, 4 * hidden_size, hidden_size), dtype=dtype)
+        B = np.zeros((num_directions, 8 * hidden_size), dtype=dtype)
+        B[:, :4] = np.array(
+            [[0.2, 0.4, -0.1, 0.3], [0.5, 0.1, 0.2, -0.4]][:num_directions],
+            dtype=dtype,
+        )
+        initial_c = np.array(
+            [[[0.1], [0.2]], [[0.3], [0.4]]][:num_directions], dtype=dtype
+        )
+        initial_h = np.zeros_like(initial_c)
+
+        if layout:
+            X = np.swapaxes(X, 0, 1)
+            initial_h = np.swapaxes(initial_h, 0, 1)
+            initial_c = np.swapaxes(initial_c, 0, 1)
+
+        tensor_type = TensorProto.DOUBLE if dtype is np.float64 else TensorProto.FLOAT
+        graph = make_graph(
+            [
+                make_node(
+                    "LSTM",
+                    ["X", "W", "R", "B", "", "initial_h", "initial_c"],
+                    ["Y", "Y_h", "Y_c"],
+                    direction=direction,
+                    hidden_size=hidden_size,
+                    layout=layout,
+                )
+            ],
+            "lstm_y_c",
+            [
+                make_tensor_value_info("X", tensor_type, list(X.shape)),
+                make_tensor_value_info("W", tensor_type, list(W.shape)),
+                make_tensor_value_info("R", tensor_type, list(R.shape)),
+                make_tensor_value_info("B", tensor_type, list(B.shape)),
+                make_tensor_value_info("initial_h", tensor_type, list(initial_h.shape)),
+                make_tensor_value_info("initial_c", tensor_type, list(initial_c.shape)),
+            ],
+            [
+                make_tensor_value_info("Y", tensor_type, None),
+                make_tensor_value_info("Y_h", tensor_type, None),
+                make_tensor_value_info("Y_c", tensor_type, None),
+            ],
+        )
+        model = make_model(graph, opset_imports=[make_opsetid("", 14)])
+        Y, Y_h, Y_c = ReferenceEvaluator(model).run(
+            None,
+            {
+                "X": X,
+                "W": W,
+                "R": R,
+                "B": B,
+                "initial_h": initial_h,
+                "initial_c": initial_c,
+            },
+        )
+
+        expected_c = np.empty((num_directions, batch_size, hidden_size), dtype=dtype)
+        expected_h = np.empty_like(expected_c)
+        for direction_index in range(num_directions):
+            input_gate, output_gate, forget_gate, cell_gate = B[direction_index, :4]
+            c = (
+                np.swapaxes(initial_c, 0, 1)[direction_index]
+                if layout
+                else initial_c[direction_index]
+            )
+            for _ in range(sequence_length):
+                c = 1 / (1 + np.exp(-forget_gate)) * c + 1 / (
+                    1 + np.exp(-input_gate)
+                ) * np.tanh(cell_gate)
+            expected_c[direction_index] = c
+            expected_h[direction_index] = 1 / (1 + np.exp(-output_gate)) * np.tanh(c)
+
+        if layout:
+            expected_c = np.swapaxes(expected_c, 0, 1)
+            expected_h = np.swapaxes(expected_h, 0, 1)
+            assert Y.shape == (batch_size, sequence_length, num_directions, hidden_size)
+        else:
+            assert Y.shape == (sequence_length, num_directions, batch_size, hidden_size)
+        np.testing.assert_allclose(Y_c, expected_c)
+        np.testing.assert_allclose(Y_h, expected_h)
+
+    @pytest.mark.parametrize(
         "np_dtype,tensor_dtype",
         [
             (np.int8, TensorProto.INT8),
