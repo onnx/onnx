@@ -43,6 +43,7 @@
 #include "onnx/version_converter/adapters/q_dq_21_20.h"
 #include "onnx/version_converter/adapters/quantize_linear_28_27.h"
 #include "onnx/version_converter/adapters/range_27_26.h"
+#include "onnx/version_converter/adapters/reduce_log_sum_27_28.h"
 #include "onnx/version_converter/adapters/reshape_4_5.h"
 #include "onnx/version_converter/adapters/reshape_5_4.h"
 #include "onnx/version_converter/adapters/resize_10_11.h"
@@ -1009,6 +1010,15 @@ class DefaultVersionConverter : public BaseVersionConverter {
     registerAdapter(std::make_unique<CompatibleAdapter>("Cast", OpSetID(27), OpSetID(28)));
     registerAdapter(std::make_unique<CompatibleAdapter>("QuantizeLinear", OpSetID(27), OpSetID(28)));
     registerAdapter(std::make_unique<CompatibleAdapter>("DequantizeLinear", OpSetID(27), OpSetID(28)));
+    // ReduceLogSum/ReduceLogSumExp v28 dropped integer support from T.
+    // Only the data input and the output carry T; the axes input is always int64.
+    const std::vector<TensorProto_DataType> reduce_log_sum_28_unallowed_types = {
+        TensorProto_DataType_UINT32,
+        TensorProto_DataType_UINT64,
+        TensorProto_DataType_INT32,
+        TensorProto_DataType_INT64};
+    registerAdapter(std::make_unique<ReduceLogSum_27_28>("ReduceLogSum", reduce_log_sum_28_unallowed_types));
+    registerAdapter(std::make_unique<ReduceLogSum_27_28>("ReduceLogSumExp", reduce_log_sum_28_unallowed_types));
 
     /******** 28 -> 27 ********/
     // BitShift v28 widened T with the signed integer types; BitShift v11 (opset 27) is unsigned only.
@@ -1088,6 +1098,9 @@ class DefaultVersionConverter : public BaseVersionConverter {
     registerAdapter(std::make_unique<QuantizeLinear_28_27>(ir14_types_not_in_ir13));
     registerAdapter(
         std::make_unique<TypeRestriction>("DequantizeLinear", OpSetID(28), OpSetID(27), ir14_types_not_in_ir13));
+    // Downgrading needs no restriction: opset 27 accepts a superset of the v28 float-only types.
+    registerAdapter(std::make_unique<CompatibleAdapter>("ReduceLogSum", OpSetID(28), OpSetID(27)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("ReduceLogSumExp", OpSetID(28), OpSetID(27)));
   }
 
   ModelProto convert_version(const ModelProto& mp_in, const OpSetID& initial_version, const OpSetID& target_version)
