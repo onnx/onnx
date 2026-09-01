@@ -6,17 +6,22 @@
 
 #include <algorithm>
 #include <functional>
+#include <limits>
 #include <string>
 #include <utility>
 #include <vector>
 
 #include "onnx/common/common.h"
+#include "onnx/common/safe_math.h"
 #include "onnx/proto_utils.h"
 #include "onnx/string_utils.h"
 
 namespace ONNX_NAMESPACE {
 
 using Dim = TensorShapeProto_Dimension;
+
+// Bound optional rank-only inference to prevent unbounded protobuf materialization.
+constexpr int64_t kMaxMaterializedRank = 1024;
 
 struct ShapeInferenceOptions {
   // Checks the type-equality for input and output
@@ -208,12 +213,46 @@ getAttribute(const InferenceContext& ctx, const std::string& attributeName, cons
     return defaultValue;
 }
 
+inline int64_t checkedMultiply(int64_t lhs, int64_t rhs) {
+  int64_t result = 0;
+  if (checked_mul_overflow(lhs, rhs, &result)) {
+    fail_shape_inference("Integer overflow while multiplying dimension values ", lhs, " and ", rhs);
+  }
+  return result;
+}
+
+inline int64_t checkedAdd(int64_t lhs, int64_t rhs) {
+  int64_t result = 0;
+  if (checked_add_overflow(lhs, rhs, &result)) {
+    fail_shape_inference("Integer overflow while adding dimension values ", lhs, " and ", rhs);
+  }
+  return result;
+}
+
+inline int64_t checkedSubtract(int64_t lhs, int64_t rhs) {
+  int64_t result = 0;
+  if (checked_sub_overflow(lhs, rhs, &result)) {
+    fail_shape_inference("Integer overflow while subtracting dimension values ", rhs, " from ", lhs);
+  }
+  return result;
+}
+
+inline int64_t checkedDivide(int64_t dividend, int64_t divisor) {
+  if (divisor == 0) {
+    fail_shape_inference("Division by zero while inferring a dimension");
+  }
+  if (dividend == std::numeric_limits<int64_t>::min() && divisor == -1) {
+    fail_shape_inference("Integer overflow while dividing dimension values ", dividend, " and ", divisor);
+  }
+  return dividend / divisor;
+}
+
 inline TensorShapeProto::Dimension operator*(
     const TensorShapeProto::Dimension& dim1,
     const TensorShapeProto::Dimension& dim2) {
   TensorShapeProto::Dimension result;
   if (dim1.has_dim_value() && dim2.has_dim_value()) {
-    result.set_dim_value(dim1.dim_value() * dim2.dim_value());
+    result.set_dim_value(checkedMultiply(dim1.dim_value(), dim2.dim_value()));
   } else if (dim1.has_dim_value() && (dim1.dim_value() == 1)) {
     return dim2;
   } else if (dim2.has_dim_value() && (dim2.dim_value() == 1)) {
@@ -234,7 +273,7 @@ std::pair<int, int> getAttributeElementTypeAndLength(
 inline TensorShapeProto::Dimension operator*(const TensorShapeProto::Dimension& dim1, int64_t dim2) {
   TensorShapeProto::Dimension result;
   if (dim1.has_dim_value()) {
-    result.set_dim_value(dim1.dim_value() * dim2);
+    result.set_dim_value(checkedMultiply(dim1.dim_value(), dim2));
   } else if (dim2 == 1) {
     return dim1;
   }
@@ -244,7 +283,7 @@ inline TensorShapeProto::Dimension operator*(const TensorShapeProto::Dimension& 
 inline TensorShapeProto::Dimension operator/(const TensorShapeProto::Dimension& dim1, int64_t dim2) {
   TensorShapeProto::Dimension result;
   if (dim1.has_dim_value()) {
-    result.set_dim_value(dim1.dim_value() / dim2);
+    result.set_dim_value(checkedDivide(dim1.dim_value(), dim2));
   } else if (dim2 == 1) {
     return dim1;
   }
@@ -254,7 +293,7 @@ inline TensorShapeProto::Dimension operator/(const TensorShapeProto::Dimension& 
 inline TensorShapeProto::Dimension operator+(const TensorShapeProto::Dimension& dim1, int64_t dim2) {
   TensorShapeProto::Dimension result;
   if (dim1.has_dim_value()) {
-    result.set_dim_value(dim1.dim_value() + dim2);
+    result.set_dim_value(checkedAdd(dim1.dim_value(), dim2));
   } else if (dim2 == 0) {
     return dim1;
   }
@@ -264,7 +303,7 @@ inline TensorShapeProto::Dimension operator+(const TensorShapeProto::Dimension& 
 inline TensorShapeProto::Dimension operator-(const TensorShapeProto::Dimension& dim1, int64_t dim2) {
   TensorShapeProto::Dimension result;
   if (dim1.has_dim_value()) {
-    result.set_dim_value(dim1.dim_value() - dim2);
+    result.set_dim_value(checkedSubtract(dim1.dim_value(), dim2));
   } else if (dim2 == 0) {
     return dim1;
   }
@@ -832,11 +871,10 @@ inline TypeProto RemoveDimensionsFromShape(const TypeProto& proto, int num_dimen
 // (sign change or truncation). Matches gsl::narrow:
 // https://github.com/microsoft/GSL/blob/main/include/gsl/narrow
 template <class T, class U>
-static constexpr T narrow(U&& u) {
-  const U original = u;
-  const T result = static_cast<T>(std::forward<U>(u));
-  if (static_cast<U>(result) != original || ((result < T{}) != (original < U{}))) {
-    fail_shape_inference("narrow: value ", original, " cannot be represented in target type");
+static constexpr T narrow(U u) {
+  const T result = static_cast<T>(u);
+  if (static_cast<U>(result) != u || ((result < T{}) != (u < U{}))) {
+    fail_shape_inference("narrow: value ", u, " cannot be represented in target type");
   }
   return result;
 }

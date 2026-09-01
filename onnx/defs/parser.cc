@@ -454,6 +454,40 @@ Common::Status OnnxParser::Parse(TypeProto& typeProto) {
         MATCH(')');
         break;
       }
+      case KeyWordMap::KeyWord::OPAQUE_TYPE: {
+        // Grammar: opaque ( )
+        //          opaque ( name )
+        //          opaque ( domain , name )
+        // The optional domain (like a node's domain) may itself be a
+        // dot-separated identifier (e.g., "ai.onnx.ml"). To avoid requiring
+        // unbounded look-ahead, a single dot-separated identifier before
+        // ')' is treated as the (domain-less) name -- matching the
+        // convention used by Utils::DataTypeUtils::FromString/ToString.
+        MATCH('(');
+        auto* opaquetype = typeProto.mutable_opaque_type();
+        opaquetype->clear_domain();
+        opaquetype->clear_name();
+        if (!Matches(')')) {
+          std::string domain_or_name;
+          CHECK_PARSER_STATUS(ParseIdentifier(domain_or_name));
+          while (Matches('.')) {
+            std::string next_component;
+            CHECK_PARSER_STATUS(ParseIdentifier(next_component));
+            domain_or_name += ".";
+            domain_or_name += next_component;
+          }
+          if (Matches(',')) {
+            opaquetype->set_domain(domain_or_name);
+            std::string name;
+            CHECK_PARSER_STATUS(ParseIdentifier(name));
+            opaquetype->set_name(name);
+          } else {
+            opaquetype->set_name(domain_or_name);
+          }
+          MATCH(')');
+        }
+        break;
+      }
       default:
         return ParseError("Unexpected type.");
     }
@@ -628,6 +662,8 @@ Common::Status OnnxParser::Parse(TensorProto& tensorProto, const TypeProto& tens
           case TensorProto::DataType::TensorProto_DataType_FLOAT8E4M3FNUZ:
           case TensorProto::DataType::TensorProto_DataType_FLOAT8E5M2:
           case TensorProto::DataType::TensorProto_DataType_FLOAT8E5M2FNUZ:
+          case TensorProto::DataType::TensorProto_DataType_FLOAT6E2M3:
+          case TensorProto::DataType::TensorProto_DataType_FLOAT6E3M2:
           case TensorProto::DataType::TensorProto_DataType_FLOAT8E8M0:
           case TensorProto::DataType::TensorProto_DataType_BOOL:
           case TensorProto::DataType::TensorProto_DataType_FLOAT4E2M1:
@@ -635,8 +671,7 @@ Common::Status OnnxParser::Parse(TensorProto& tensorProto, const TypeProto& tens
             if (intval > std::numeric_limits<int32_t>::max() || intval < std::numeric_limits<int32_t>::min()) {
               return ParseError("Mismatch between data type and value: %d, %d", elem_type, intval);
             }
-            // NOLINTNEXTLINE(bugprone-narrowing-conversions)
-            tensorProto.add_int32_data(intval);
+            tensorProto.add_int32_data(static_cast<int32_t>(intval));
             break;
           case TensorProto::DataType::TensorProto_DataType_INT64:
             PARSE_TOKEN(intval);
@@ -690,6 +725,7 @@ bool OnnxParser::NextIsType() {
     case KeyWordMap::KeyWord::MAP_TYPE:
     case KeyWordMap::KeyWord::OPTIONAL_TYPE:
     case KeyWordMap::KeyWord::SPARSE_TENSOR_TYPE:
+    case KeyWordMap::KeyWord::OPAQUE_TYPE:
       return true;
     default:
       return false;

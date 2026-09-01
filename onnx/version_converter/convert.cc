@@ -9,14 +9,17 @@
 #include <string>
 
 #include "onnx/common/ir_pb_converter.h"
+#include "onnx/shape_inference/implementation.h"
 
-namespace ONNX_NAMESPACE {
-namespace version_conversion {
+namespace ONNX_NAMESPACE::version_conversion {
 
 ModelProto ConvertVersion(const ModelProto& mp_in, int target_version) {
+  ModelProto inferred_model = mp_in;
+  shape_inference::InferShapes(inferred_model);
+
   // Get initial_opsetid from mp_in
   OpSetID initial_struct(0);
-  for (const auto& it : mp_in.opset_import()) {
+  for (const auto& it : inferred_model.opset_import()) {
     if (it.domain().empty() || it.domain() == "ai.onnx") {
       initial_struct.setVersion(it.version());
       break;
@@ -24,7 +27,7 @@ ModelProto ConvertVersion(const ModelProto& mp_in, int target_version) {
   }
   OpSetID target_struct = OpSetID(target_version);
   DefaultVersionConverter v;
-  return v.convert_version(mp_in, initial_struct, target_struct);
+  return v.convert_version(inferred_model, initial_struct, target_struct);
 }
 
 void DefaultVersionConverter::convert_graph(
@@ -157,5 +160,4 @@ ModelProto DefaultVersionConverter::convert_version(
   return mp_out;
 }
 
-} // namespace version_conversion
-} // namespace ONNX_NAMESPACE
+} // namespace ONNX_NAMESPACE::version_conversion
