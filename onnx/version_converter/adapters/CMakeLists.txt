@@ -49,4 +49,5 @@ target_sources(onnx PRIVATE
     upsample_8_9.h
     upsample_9_10.h
     upsample_9_8.h
+    optional_ops.h
 )

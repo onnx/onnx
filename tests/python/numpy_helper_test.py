@@ -166,6 +166,8 @@ class TestNumpyHelper:
             onnx.TensorProto.UINT2,
             onnx.TensorProto.INT2,
             onnx.TensorProto.FLOAT4E2M1,
+            onnx.TensorProto.FLOAT6E2M3,
+            onnx.TensorProto.FLOAT6E3M2,
         ],
     )
     def test_to_array_from_array(self, data_type: onnx.TensorProto.DataType):

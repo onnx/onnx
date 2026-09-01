@@ -175,7 +175,11 @@ void AttentionPropagateElemTypeFromInputToOutput(InferenceContext& ctx) {
   }
 }
 
-bool AttentionAppendFunctionCausalMask(const FunctionBodyBuildContext& ctx, FunctionBuilder& builder, bool padding) {
+bool AttentionAppendFunctionCausalMask(
+    const FunctionBodyBuildContext& ctx,
+    FunctionBuilder& builder,
+    bool padding,
+    bool cast_mask_to_bias) {
   builder.Add("NewKVSeqLen =  Shape <start = -2, end = -1> (PresentKey)")
       .Add("AttnBiasShape = Concat <axis = 0> (QSeqLen, NewKVSeqLen)");
   float neg_inf = -std::numeric_limits<float>::infinity();
@@ -245,10 +249,15 @@ bool AttentionAppendFunctionCausalMask(const FunctionBodyBuildContext& ctx, Func
       builder.Add("RangeRow2DPast = Add(RangeRow2D, PastKVSeqLen)")
           .Add("BoolMaskTri = Less(RangeRow2DPast, RangeCol2D)");
     }
-    // The generated mask is always float32 while AttnBias follows attn_mask's
-    // type, so cast before Add. For a float32 mask the cast is a no-op.
-    builder.Add("MaskTriFloat = Where(BoolMaskTri, FloatNegInf, ScalarZero)")
-        .Add("MaskTri = CastLike(MaskTriFloat, AttnBias)");
+    if (cast_mask_to_bias) {
+      // Cast the generated float mask before Add so non-float32 bias inputs
+      // remain valid.
+      builder.Add("MaskTriFloat = Where(BoolMaskTri, FloatNegInf, ScalarZero)")
+          .Add("MaskTri = CastLike(MaskTriFloat, AttnBias)");
+    } else {
+      // Preserve the exact function body emitted for frozen Attention-24.
+      builder.Add("MaskTri = Where(BoolMaskTri, FloatNegInf, ScalarZero)");
+    }
     builder.Add("AttnBiasCausalOrNot = Add(AttnBias, MaskTri)");
   } else {
     builder.Add("AttnBiasCausalOrNot = Identity(AttnBias)");
