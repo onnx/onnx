@@ -2833,123 +2833,115 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint("T2", {types::Int32, types::Int64}, "Constrain scalar length types to int64_t.")
         .TypeAndShapeInferenceFunction([](ONNX_NAMESPACE::InferenceContext& ctx) {
           propagateElemTypeFromInputToOutput(ctx, 0, 0);
-
-          // Get signal size
-          // The signal size is needed to perform inference because the size of the signal
-          // is needed to compute the number of DFTs in the output.
-          //
-          // Check if shape exists, return if not
           if (!hasInputShape(ctx, 0)) {
             return;
           }
 
           auto& input_shape = getInputShape(ctx, 0);
-          if (input_shape.dim_size() < 2) {
-            fail_shape_inference("First input should have at least 2 dimensions in ", ctx.getDisplayName(), ".");
+          if (input_shape.dim_size() != 3) {
+            fail_shape_inference("Input 0 (signal) must have rank 3.");
           }
-          auto signal_dim = input_shape.dim(1);
-          int64_t signal_size = signal_dim.has_dim_value() ? signal_dim.dim_value() : -1;
-          // The frame step is a required input.
-          // Its value is needed to compute the number output nDFTs, so return early is missing.
-          const auto frame_step = ctx.getInputData(1);
-          bool frame_step_known = (frame_step != nullptr);
+
+          const auto& complex_dim = input_shape.dim(2);
+          if (complex_dim.has_dim_value() && complex_dim.dim_value() != 1 && complex_dim.dim_value() != 2) {
+            fail_shape_inference("The last dimension of signal must have size 1 (real) or 2 (complex).");
+          }
+
+          const int64_t onesided = getAttribute(ctx, "onesided", 1);
+          if (onesided != 0 && onesided != 1) {
+            fail_shape_inference("Attribute onesided must be 0 or 1.");
+          }
+          if (onesided == 1 && complex_dim.has_dim_value() && complex_dim.dim_value() != 1) {
+            fail_shape_inference("One-sided STFT requires real input (signal's last dimension must be 1).");
+          }
+
+          const auto& signal_dim = input_shape.dim(1);
+          const int64_t signal_size = signal_dim.has_dim_value() ? signal_dim.dim_value() : -1;
+
+          // Preserve compatibility with existing models that use a single-element vector.
+          if (hasInputShape(ctx, 1)) {
+            const auto& frame_step_shape = getInputShape(ctx, 1);
+            if (frame_step_shape.dim_size() > 1 ||
+                (frame_step_shape.dim_size() == 1 && frame_step_shape.dim(0).has_dim_value() &&
+                 frame_step_shape.dim(0).dim_value() != 1)) {
+              fail_shape_inference("Input 1 (frame_step) must be a scalar or a single-element vector.");
+            }
+          }
+
+          const auto* frame_step = ctx.getInputData(1);
           int64_t frame_step_value = -1;
-          if (frame_step_known) {
-            if (frame_step->dims_size() != 0) {
-              fail_shape_inference("Input 1 (frame_step) must be a scalar.");
+          if (frame_step != nullptr) {
+            if (frame_step->dims_size() > 1 || (frame_step->dims_size() == 1 && frame_step->dims(0) != 1)) {
+              fail_shape_inference("Input 1 (frame_step) must be a scalar or a single-element vector.");
             }
             frame_step_value = defs::math::utils::GetScalarValueFromTensor<int64_t>(frame_step);
-          }
-          if (frame_step_known && frame_step_value <= 0) {
-            fail_shape_inference("frame_step must be greater than 0.");
-          }
-          // Determine the size of the DFT based on the 2 optional inputs window and frame_length.
-          // One must be set.
-          int64_t dft_size = -1;
-          const TensorProto* frame_length = nullptr;
-          if (ctx.hasInput(3)) {
-            frame_length = ctx.getInputData(3);
-          }
-
-          const TensorShapeProto* window_shape = nullptr;
-          if (ctx.getNumInputs() >= 3) {
-            window_shape = getOptionalInputShape(ctx, 2);
-          } else {
-            window_shape = nullptr;
-          }
-
-          if (window_shape == nullptr && frame_length == nullptr) {
-            // STFT expects to have at least one of these inputs set: [window, frame_length],
-            // but they may not be available at shape inference time
-            return;
-          } else if (window_shape != nullptr && frame_length != nullptr) {
-            if (frame_length->dims_size() != 0) {
-              fail_shape_inference("frame_length input must be scalar.");
+            if (frame_step_value <= 0) {
+              fail_shape_inference("frame_step must be greater than 0.");
             }
-            auto frame_length_value = defs::math::utils::GetScalarValueFromTensor<int64_t>(frame_length);
+          }
 
-            // Ensure that the window length and the dft_length match.
+          const bool has_window = ctx.hasInput(2);
+          const auto* window_shape = has_window ? getOptionalInputShape(ctx, 2) : nullptr;
+          int64_t window_length = -1;
+          if (window_shape != nullptr) {
             if (window_shape->dim_size() != 1) {
-              fail_shape_inference("window input must have rank = 1.");
+              fail_shape_inference("Input 2 (window) must have rank 1.");
             }
             if (window_shape->dim(0).has_dim_value()) {
-              auto window_length = window_shape->dim(0).dim_value();
-              if (window_length != frame_length_value) {
-                fail_type_inference(
-                    "If STFT has both a window input and frame_length specified, the dimension of the window must match the frame_length specified!");
+              window_length = window_shape->dim(0).dim_value();
+              if (window_length <= 0) {
+                fail_shape_inference("window must have a positive length.");
               }
             }
+          }
 
-            dft_size = frame_length_value;
-          } else if (window_shape != nullptr) {
-            // Ensure that the window length and the dft_length match.
-            if (window_shape->dim_size() != 1) {
-              fail_shape_inference("window input must have rank = 1.");
-            }
-            if (window_shape->dim(0).has_dim_value()) {
-              dft_size = window_shape->dim(0).dim_value();
-            } else {
-              // Cannot determine the window size, and there is no frame_length,
-              // So shape inference cannot proceed.
-              return;
-            }
-          } else if (frame_length != nullptr) {
+          const bool has_frame_length = ctx.hasInput(3);
+          if (has_frame_length && hasInputShape(ctx, 3) && getInputShape(ctx, 3).dim_size() != 0) {
+            fail_shape_inference("Input 3 (frame_length) must be a scalar.");
+          }
+
+          const auto* frame_length = has_frame_length ? ctx.getInputData(3) : nullptr;
+          int64_t frame_length_value = -1;
+          if (frame_length != nullptr) {
             if (frame_length->dims_size() != 0) {
-              fail_shape_inference("frame_length input must be scalar.");
+              fail_shape_inference("Input 3 (frame_length) must be a scalar.");
             }
-            dft_size = defs::math::utils::GetScalarValueFromTensor<int64_t>(frame_length);
+            frame_length_value = defs::math::utils::GetScalarValueFromTensor<int64_t>(frame_length);
+            if (frame_length_value <= 0) {
+              fail_shape_inference("frame_length must be greater than 0.");
+            }
+            if (window_length >= 0 && window_length != frame_length_value) {
+              fail_type_inference(
+                  "If STFT has both a window input and frame_length specified, the dimension of the window "
+                  "must match the frame_length specified.");
+            }
           }
 
-          // Fail inference if dft_size<=0
-          if (dft_size <= 0) {
-            fail_shape_inference("STFT requires a positive dft_size, but got ", dft_size, ".");
+          const bool frame_length_defaults_to_signal = !has_window && !has_frame_length;
+          int64_t dft_size = frame_length_value;
+          if (dft_size < 0 && window_length >= 0) {
+            dft_size = window_length;
+          } else if (dft_size < 0 && frame_length_defaults_to_signal) {
+            dft_size = signal_size;
           }
-
-          bool is_onesided = static_cast<bool>(getAttribute(ctx, "onesided", 1));
-          int64_t dft_unique_bins = is_onesided ? ((dft_size >> 1) + 1) : dft_size;
 
           // The output has the following shape: [batch_size][frames][dft_unique_bins][2]
           ONNX_NAMESPACE::TensorShapeProto result_shape_proto;
-          auto batch_dim = result_shape_proto.add_dim();
+          *result_shape_proto.add_dim() = input_shape.dim(0);
 
-          if (input_shape.dim(0).has_dim_value()) {
-            batch_dim->set_dim_value(input_shape.dim(0).dim_value()); // batch size
-          }
-
-          if (frame_step_value > 0 && signal_size >= dft_size) {
-            const int64_t n_dfts = ((signal_size - dft_size) / frame_step_value) + 1;
-            if (n_dfts > 0) {
-              result_shape_proto.add_dim()->set_dim_value(n_dfts);
-            } else {
-              // Cannot determine a valid number of DFTs; leave dimension unknown.
-              result_shape_proto.add_dim();
-            }
+          if (frame_length_defaults_to_signal) {
+            result_shape_proto.add_dim()->set_dim_value(1);
+          } else if (frame_step_value > 0 && signal_size >= dft_size && dft_size > 0) {
+            result_shape_proto.add_dim()->set_dim_value(((signal_size - dft_size) / frame_step_value) + 1);
           } else {
-            // Signal size, frame step, or DFT size are not suitable to infer this dimension.
             result_shape_proto.add_dim();
           }
 
-          result_shape_proto.add_dim()->set_dim_value(dft_unique_bins);
+          if (dft_size > 0) {
+            result_shape_proto.add_dim()->set_dim_value(onesided == 1 ? ((dft_size >> 1) + 1) : dft_size);
+          } else {
+            result_shape_proto.add_dim();
+          }
           result_shape_proto.add_dim()->set_dim_value(2);
           updateOutputShape(ctx, 0, result_shape_proto);
         }));
