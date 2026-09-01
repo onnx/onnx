@@ -4327,7 +4327,8 @@ class TestReferenceEvaluator:
         X = make_tensor_value_info("X", TensorProto.INT64, None)
         Y = make_tensor_value_info("Y", TensorProto.INT64, None)
         feeds = {"X": np.array([1, 2, 3], dtype=np.int64)}
-        if opset >= 18:
+        opset_with_axes_input = 18
+        if opset >= opset_with_axes_input:
             A = make_tensor_value_info("A", TensorProto.INT64, None)
             node = make_node(op, ["X", "A"], ["Y"], keepdims=0)
             inputs = [X, A]
