@@ -12,7 +12,8 @@ from onnx.reference.op_run import OpRun
 
 class LRN(OpRun):
     def _run(self, x, alpha=None, beta=None, bias=None, size=None):
-        if len(x.shape) < 2:
+        minimum_rank = 2
+        if len(x.shape) < minimum_rank:
             raise RuntimeError(
                 f"LRN expects an input with at least 2 dimensions but shape is {x.shape!r}."
             )
