@@ -1949,18 +1949,11 @@ ONNX_OPERATOR_SET_SCHEMA(
                  {{"Processed_STD"}, "Add", {"STD", "Epsilon"}},
                  {{"Y"}, "Div", {"X_variance", "Processed_STD"}}})));
 
-static constexpr const char* mvn_ver13_doc = R"DOC(
-      A MeanVarianceNormalization Function: Perform mean variance normalization
-      on the input tensor X using formula: `(X-EX)/sqrt(E(X-EX)^2)`
-)DOC";
-
-static const std::vector<int64_t> old_mvn_ver13_default_axes = {0, 2, 3};
-
 ONNX_OPERATOR_SET_SCHEMA(
     MeanVarianceNormalization,
     13,
     OpSchema()
-        .SetDoc(mvn_ver13_doc)
+        .SetDoc(kDoc_MeanVarianceNormalization_ver13)
         .Input(0, "X", "Input tensor", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
         .Output(0, "Y", "Output tensor", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
         .Attr(
@@ -1970,7 +1963,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "along each channel. Two variables with the same C-coordinate "
             "are associated with the same mean and variance.",
             AttributeProto::INTS,
-            old_mvn_ver13_default_axes)
+            defs::nn::utils::kMeanVarianceNormalizationDefaultAxes)
         .TypeConstraint(
             "T",
             {"tensor(float16)", "tensor(float)", "tensor(double)", "tensor(bfloat16)"},

@@ -167,6 +167,30 @@ class TestAutomaticDowngrade(automatic_conversion_test_base.TestAutomaticConvers
             attrs={"direction": "RIGHT"},
         )
 
+    def test_mean_variance_normalization_default_epsilon(self) -> None:
+        self._test_op_downgrade(
+            "MeanVarianceNormalization",
+            27,
+            attrs={"axes": [1, 2], "epsilon": 1e-9},
+        )
+
+    def test_mean_variance_normalization_custom_epsilon_fails(self) -> None:
+        model = onnx.parser.parse_model(
+            """
+            <ir_version: 13, opset_import: [ "" : 28]>
+            mvn (float[2, 3, 4] X) => (float[2, 3, 4] Y)
+            {
+                Y = MeanVarianceNormalization <axes = [1, 2], epsilon = 1e-5> (X)
+            }
+            """
+        )
+        onnx.checker.check_model(model)
+        with pytest.raises(
+            RuntimeError,
+            match="custom epsilon is not representable in opset 27",
+        ):
+            onnx.version_converter.convert_version(model, 27)
+
     def test_BitShift_signed_downgrade_fails(self) -> None:
         # BitShift gained the signed integer types at opset 28. Downgrading a
         # signed BitShift below that must be rejected rather than silently

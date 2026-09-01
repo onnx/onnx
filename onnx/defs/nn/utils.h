@@ -11,6 +11,8 @@
 
 namespace ONNX_NAMESPACE::defs::nn::utils {
 
+extern const std::vector<int64_t> kMeanVarianceNormalizationDefaultAxes;
+
 /**
  * Reads and validates the 'strides' attribute for Conv/Pool shape inference.
  * Returns the attribute value or a default value if the attribute is not present.

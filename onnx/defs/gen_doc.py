@@ -290,7 +290,7 @@ def main(args: Args) -> None:
                     s += (
                         '### <a name="{}"></a>**{}**'
                         + (" (deprecated)" if schema.deprecated else "")
-                        + "\n"
+                        + "</a>\n"
                     ).format(name_with_ver, name_with_ver)
                     s += display_schema(schema, [schema], args.changelog)
                     s += "\n"

@@ -14423,14 +14423,14 @@ beta = 0.75
 bias = 1.0
 nsize = 3
 node = onnx.helper.make_node("LRN", inputs=["x"], outputs=["y"], size=3)
-x = np.random.randn(5, 5, 5, 5).astype(np.float32)
-square_sum = np.zeros((5, 5, 5, 5)).astype(np.float32)
+x = np.random.randn(1, 5, 5, 5).astype(np.float32)
+square_sum = np.zeros_like(x)
 for n, c, h, w in np.ndindex(x.shape):
     square_sum[n, c, h, w] = sum(
         x[
             n,
             max(0, c - math.floor((nsize - 1) / 2)) : min(
-                5, c + math.ceil((nsize - 1) / 2) + 1
+                x.shape[1], c + math.ceil((nsize - 1) / 2) + 1
             ),
             h,
             w,
@@ -14459,14 +14459,14 @@ node = onnx.helper.make_node(
     bias=bias,
     size=nsize,
 )
-x = np.random.randn(5, 5, 5, 5).astype(np.float32)
-square_sum = np.zeros((5, 5, 5, 5)).astype(np.float32)
+x = np.random.randn(1, 5, 5, 5).astype(np.float32)
+square_sum = np.zeros_like(x)
 for n, c, h, w in np.ndindex(x.shape):
     square_sum[n, c, h, w] = sum(
         x[
             n,
             max(0, c - math.floor((nsize - 1) / 2)) : min(
-                5, c + math.ceil((nsize - 1) / 2) + 1
+                x.shape[1], c + math.ceil((nsize - 1) / 2) + 1
             ),
             h,
             w,
@@ -17613,7 +17613,7 @@ expect(
 
 
 ### MeanVarianceNormalization
-There are 2 test cases, listed as following:
+There are 3 test cases, listed as following:
 <details>
 <summary>epsilon</summary>
 
@@ -17623,36 +17623,16 @@ node = onnx.helper.make_node(
     "MeanVarianceNormalization",
     inputs=["X"],
     outputs=["Y"],
+    axes=[1, -1],
     epsilon=epsilon,
 )
 
-input_data = np.array(
-    [
-        [
-            [[0.8439683], [0.5665144], [0.05836735]],
-            [[0.02916367], [0.12964272], [0.5060197]],
-            [[0.79538304], [0.9411346], [0.9546573]],
-        ],
-        [
-            [[0.17730942], [0.46192095], [0.26480448]],
-            [[0.6746842], [0.01665257], [0.62473077]],
-            [[0.9240844], [0.9722341], [0.11965699]],
-        ],
-        [
-            [[0.41356155], [0.9129373], [0.59330076]],
-            [[0.81929934], [0.7862604], [0.11799799]],
-            [[0.69248444], [0.54119414], [0.07513223]],
-        ],
-    ],
-    dtype=np.float32,
-)
+input_data = np.arange(24, dtype=np.float64).reshape(2, 3, 4)
 
 # Calculate expected output with custom epsilon
-data_mean = np.mean(input_data, axis=(0, 2, 3), keepdims=1)
-data_mean_squared = np.power(data_mean, 2)
-data_squared = np.power(input_data, 2)
-data_squared_mean = np.mean(data_squared, axis=(0, 2, 3), keepdims=1)
-std = np.sqrt(data_squared_mean - data_mean_squared)
+data_mean = np.mean(input_data, axis=(1, -1), keepdims=True)
+variance = np.mean(np.square(input_data - data_mean), axis=(1, -1), keepdims=True)
+std = np.sqrt(variance)
 expected_output = (input_data - data_mean) / (std + epsilon)
 
 expect(
@@ -17695,13 +17675,37 @@ input_data = np.array(
 
 # Calculate expected output data
 data_mean = np.mean(input_data, axis=(0, 2, 3), keepdims=1)
-data_mean_squared = np.power(data_mean, 2)
-data_squared = np.power(input_data, 2)
-data_squared_mean = np.mean(data_squared, axis=(0, 2, 3), keepdims=1)
-std = np.sqrt(data_squared_mean - data_mean_squared)
+variance = np.mean(
+    np.square(input_data - data_mean), axis=(0, 2, 3), keepdims=True
+)
+std = np.sqrt(variance)
 expected_output = (input_data - data_mean) / (std + 1e-9)
 
 expect(node, inputs=[input_data], outputs=[expected_output], name="test_mvn")
+```
+
+</details>
+<details>
+<summary>numerical_stability</summary>
+
+```python
+node = onnx.helper.make_node(
+    "MeanVarianceNormalization",
+    inputs=["X"],
+    outputs=["Y"],
+    axes=[0],
+)
+input_data = np.array([10000.0, 10000.01], dtype=np.float32)
+mean = np.mean(input_data, axis=0, keepdims=True)
+variance = np.mean(np.square(input_data - mean), axis=0, keepdims=True)
+expected_output = (input_data - mean) / (np.sqrt(variance) + 1e-9)
+
+expect(
+    node,
+    inputs=[input_data],
+    outputs=[expected_output],
+    name="test_mvn_numerical_stability",
+)
 ```
 
 </details>

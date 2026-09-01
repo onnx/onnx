@@ -39,6 +39,41 @@ class TestSchema:
         assert type(v) is onnx.AttributeProto
         assert v.type == onnx.AttributeProto.FLOAT
 
+    def test_mean_variance_normalization_opset28_schema(self) -> None:
+        schema = defs.get_schema("MeanVarianceNormalization", 28)
+        old_schema = defs.get_schema("MeanVarianceNormalization", 27)
+
+        assert schema.since_version == 28
+        assert schema.attributes["epsilon"].default_value.f == pytest.approx(1e-9)
+        assert tuple(schema.attributes["axes"].default_value.ints) == (0, 2, 3)
+        assert schema.has_context_dependent_function
+        assert (
+            schema.node_determinism == defs.OpSchema.NodeDeterminism.Deterministic
+        )
+        assert "epsilon" not in old_schema.attributes
+
+        node = helper.make_node(
+            "MeanVarianceNormalization",
+            ["X"],
+            ["Y"],
+            axes=[1, -1],
+            epsilon=1e-5,
+        )
+        function_proto = onnx.FunctionProto()
+        function_proto.ParseFromString(
+            schema.get_context_dependent_function(
+                node.SerializeToString(),
+                [self._tensor_type_proto(TensorProto.DOUBLE).SerializeToString()],
+            )
+        )
+        cast_like_outputs = {
+            output
+            for n in function_proto.node
+            if n.op_type == "CastLike"
+            for output in n.output
+        }
+        assert cast_like_outputs == {"Exponent", "Epsilon", "Y"}
+
     def test_function_body(self) -> None:
         selu_schema = defs.get_schema("Selu")
         assert type(selu_schema.function_body) is onnx.FunctionProto

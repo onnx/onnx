@@ -22,6 +22,7 @@ target_sources(onnx PRIVATE
     gridsample_19_20.h
     group_normalization_20_21.h
     maxpool_8_7.h
+    mean_variance_normalization_28_27.h
     no_previous_version.h
     pad_10_11.h
     q_dq_21_20.h

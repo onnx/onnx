@@ -40,9 +40,10 @@ class MeanVarianceNormalization(Base):
 
         # Calculate expected output data
         data_mean = np.mean(input_data, axis=(0, 2, 3), keepdims=1)
-        data_mean_squared = np.power(data_mean, 2)
-        data_squared = np.power(input_data, 2)
-        data_squared_mean = np.mean(data_squared, axis=(0, 2, 3), keepdims=1)
+        data_mean_squared = np.square(data_mean)
+        data_squared_mean = np.mean(
+            np.square(input_data), axis=(0, 2, 3), keepdims=True
+        )
         std = np.sqrt(data_squared_mean - data_mean_squared)
         expected_output = (input_data - data_mean) / (std + 1e-9)
 
@@ -55,35 +56,18 @@ class MeanVarianceNormalization(Base):
             "MeanVarianceNormalization",
             inputs=["X"],
             outputs=["Y"],
+            axes=[1, -1],
             epsilon=epsilon,
         )
 
-        input_data = np.array(
-            [
-                [
-                    [[0.8439683], [0.5665144], [0.05836735]],
-                    [[0.02916367], [0.12964272], [0.5060197]],
-                    [[0.79538304], [0.9411346], [0.9546573]],
-                ],
-                [
-                    [[0.17730942], [0.46192095], [0.26480448]],
-                    [[0.6746842], [0.01665257], [0.62473077]],
-                    [[0.9240844], [0.9722341], [0.11965699]],
-                ],
-                [
-                    [[0.41356155], [0.9129373], [0.59330076]],
-                    [[0.81929934], [0.7862604], [0.11799799]],
-                    [[0.69248444], [0.54119414], [0.07513223]],
-                ],
-            ],
-            dtype=np.float32,
-        )
+        input_data = np.arange(24, dtype=np.float64).reshape(2, 3, 4)
 
         # Calculate expected output with custom epsilon
-        data_mean = np.mean(input_data, axis=(0, 2, 3), keepdims=1)
-        data_mean_squared = np.power(data_mean, 2)
-        data_squared = np.power(input_data, 2)
-        data_squared_mean = np.mean(data_squared, axis=(0, 2, 3), keepdims=1)
+        data_mean = np.mean(input_data, axis=(1, -1), keepdims=True)
+        data_mean_squared = np.square(data_mean)
+        data_squared_mean = np.mean(
+            np.square(input_data), axis=(1, -1), keepdims=True
+        )
         std = np.sqrt(data_squared_mean - data_mean_squared)
         expected_output = (input_data - data_mean) / (std + epsilon)
 
@@ -92,4 +76,27 @@ class MeanVarianceNormalization(Base):
             inputs=[input_data],
             outputs=[expected_output],
             name="test_mvn_epsilon",
+        )
+
+    @staticmethod
+    def export_zero_variance() -> None:
+        node = onnx.helper.make_node(
+            "MeanVarianceNormalization",
+            inputs=["X"],
+            outputs=["Y"],
+            axes=[0],
+        )
+        input_data = np.ones(2, dtype=np.float32)
+        mean = np.mean(input_data, axis=0, keepdims=True)
+        mean_squared = np.square(mean)
+        squared_mean = np.mean(np.square(input_data), axis=0, keepdims=True)
+        expected_output = (input_data - mean) / (
+            np.sqrt(squared_mean - mean_squared) + 1e-9
+        )
+
+        expect(
+            node,
+            inputs=[input_data],
+            outputs=[expected_output],
+            name="test_mvn_zero_variance",
         )

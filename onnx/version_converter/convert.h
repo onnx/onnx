@@ -37,7 +37,7 @@
 #include "onnx/version_converter/adapters/gridsample_19_20.h"
 #include "onnx/version_converter/adapters/group_normalization_20_21.h"
 #include "onnx/version_converter/adapters/maxpool_8_7.h"
-#include "onnx/version_converter/adapters/mean_variance_normalization_28_26.h"
+#include "onnx/version_converter/adapters/mean_variance_normalization_28_27.h"
 #include "onnx/version_converter/adapters/no_previous_version.h"
 #include "onnx/version_converter/adapters/optional_ops.h"
 #include "onnx/version_converter/adapters/pad_10_11.h"
@@ -985,11 +985,6 @@ class DefaultVersionConverter : public BaseVersionConverter {
     registerAdapter(
         std::make_unique<TypeRestriction>("QuantizeLinear", OpSetID(25), OpSetID(24), ir13_types_not_in_ir12));
 
-    // 26 -> 28
-    registerAdapter(std::make_unique<CompatibleAdapter>("MeanVarianceNormalization", OpSetID(26), OpSetID(28)));
-
-    // 28 -> 26
-    registerAdapter(std::make_unique<MeanVarianceNormalization_28_26>());
     /******** 26 -> 27 ********/
     registerAdapter(std::make_unique<CompatibleAdapter>("Range", OpSetID(26), OpSetID(27)));
 
@@ -1000,6 +995,7 @@ class DefaultVersionConverter : public BaseVersionConverter {
     registerAdapter(std::make_unique<Range_27_26>(range_27_unallowed_types));
 
     /******** 27 -> 28 ********/
+    registerAdapter(std::make_unique<CompatibleAdapter>("MeanVarianceNormalization", OpSetID(27), OpSetID(28)));
     registerAdapter(std::make_unique<CompatibleAdapter>("BitShift", OpSetID(27), OpSetID(28)));
     registerAdapter(std::make_unique<CompatibleAdapter>("Celu", OpSetID(27), OpSetID(28)));
     registerAdapter(std::make_unique<CompatibleAdapter>("Optional", OpSetID(27), OpSetID(28)));
@@ -1027,6 +1023,7 @@ class DefaultVersionConverter : public BaseVersionConverter {
     registerAdapter(std::make_unique<ReduceLogSum_27_28>("ReduceLogSumExp", reduce_log_sum_28_unallowed_types));
 
     /******** 28 -> 27 ********/
+    registerAdapter(std::make_unique<MeanVarianceNormalization_28_27>());
     // BitShift v28 widened T with the signed integer types; BitShift v11 (opset 27) is unsigned only.
     const std::vector<TensorProto_DataType> bitshift_28_unallowed_types = {
         TensorProto_DataType_INT8, TensorProto_DataType_INT16, TensorProto_DataType_INT32, TensorProto_DataType_INT64};
