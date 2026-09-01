@@ -21,7 +21,7 @@ namespace ONNX_NAMESPACE {
 
 ONNX_OPERATOR_SET_SCHEMA(
     Cast,
-    25,
+    28,
     OpSchema()
         .SetDoc(kDoc_Cast_ver24)
         .Attr(
@@ -58,11 +58,11 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::Differentiable)
         .TypeConstraint(
             "T1",
-            OpSchema::all_non_complex_tensor_types_ir13(),
+            OpSchema::all_non_complex_tensor_types_ir14(),
             "Constrain input types. Casting from complex is not supported.")
         .TypeConstraint(
             "T2",
-            OpSchema::all_non_complex_tensor_types_ir13(),
+            OpSchema::all_non_complex_tensor_types_ir14(),
             "Constrain output types. Casting to complex is not supported.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           propagateElemTypeFromAttributeToOutput(ctx, "to", 0);
@@ -743,16 +743,16 @@ in `[0, ... r-1]` where `r = rank(input)` as follows:
 If `axes` are omitted, they are set to `[0, ..., r-1]`.
 If `steps` are omitted, they are set to `[1, ..., 1]` of length `len(starts)`
 
-The effective values are initialized as `start[i] = 0`, `ends[i] = dims[i]` where
+The effective values are initialized as `starts[i] = 0`, `ends[i] = dims[i]` where
 `dims` are the dimensions of `input` and `steps[i] = 1`.
 
 All negative elements of `axes` are made non-negative by adding `r` to them, where
 `r =rank(input)`.
 
 All negative values in `starts[i]` and `ends[i]` have `dims[axes[i]]` added to them,
-where `dims` are the dimensions of `input`. Then `start[axes[i]]` is the adjusted
-`starts[i]` is clamped into the range `[0, dims[axes[i]]]` for positive stepping
-and `[0, dims[axes[i]]-1]` for negative stepping.
+where `dims` are the dimensions of `input`. Then `starts[axes[i]]` is clamped to
+range `[0, dims[axes[i]]]` for positive stepping, or to range `[0, dims[axes[i]]-1]`
+for negative stepping.
 
 The clamping for the adjusted `ends[i]` depends on the sign of `steps[i]` and must
 accommodate copying 0 through `dims[axes[i]]` elements, so for positive stepping
@@ -1894,12 +1894,109 @@ ONNX_OPERATOR_SET_SCHEMA(
           PropagateShapeDataFromInputToOutput(ctx, 0);
         }));
 
+static bool BuildContextDependentFunctionBodySpaceToDepth(
+    const FunctionBodyBuildContext& ctx,
+    const OpSchema& schema,
+    FunctionProto& functionProto) {
+  const auto* blocksize_attr = ctx.getAttribute("blocksize");
+  if (blocksize_attr == nullptr || !blocksize_attr->has_i() || blocksize_attr->i() <= 0) {
+    return false;
+  }
+  const auto blocksize = blocksize_attr->i();
+  const auto block_area = checkedMultiply(blocksize, blocksize);
+  const auto* mode_attr = ctx.getAttribute("mode");
+  const std::string mode = (mode_attr != nullptr && mode_attr->has_s()) ? mode_attr->s() : "DCR";
+  if (mode != "DCR" && mode != "CRD") {
+    return false;
+  }
+
+  FunctionBuilder builder(functionProto);
+  builder.Const1D("blocksize", blocksize)
+      .Const1D("block_area", block_area)
+      .Const1D("zero", int64_t{0})
+      .Const1D("one", int64_t{1})
+      .Const1D("two", int64_t{2})
+      .Const1D("three", int64_t{3})
+      .Const1D("four", int64_t{4})
+      .Add("input_shape = Shape (input)")
+      .Add("N = Slice (input_shape, zero, one)")
+      .Add("C = Slice (input_shape, one, two)")
+      .Add("H = Slice (input_shape, two, three)")
+      .Add("W = Slice (input_shape, three, four)")
+      .Add("H_block = Div (H, blocksize)")
+      .Add("W_block = Div (W, blocksize)")
+      .Add("C_block = Mul (C, block_area)")
+      .Add("tmp_shape = Concat <axis = 0> (N, C, H_block, blocksize, W_block, blocksize)")
+      .Add("tmp = Reshape <allowzero = 1> (input, tmp_shape)");
+  if (mode == "DCR") {
+    builder.Add("tmp_transposed = Transpose <perm = [0, 3, 5, 1, 2, 4]> (tmp)");
+  } else {
+    builder.Add("tmp_transposed = Transpose <perm = [0, 1, 3, 5, 2, 4]> (tmp)");
+  }
+  builder.Add("output_shape = Concat <axis = 0> (N, C_block, H_block, W_block)")
+      .Add("output = Reshape <allowzero = 1> (tmp_transposed, output_shape)");
+  schema.BuildFunction(functionProto);
+  return true;
+}
+
+static bool BuildContextDependentFunctionBodyDepthToSpace(
+    const FunctionBodyBuildContext& ctx,
+    const OpSchema& schema,
+    FunctionProto& functionProto) {
+  const auto* blocksize_attr = ctx.getAttribute("blocksize");
+  if (blocksize_attr == nullptr || !blocksize_attr->has_i() || blocksize_attr->i() <= 0) {
+    return false;
+  }
+  const auto blocksize = blocksize_attr->i();
+  const auto block_area = checkedMultiply(blocksize, blocksize);
+  const auto* mode_attr = ctx.getAttribute("mode");
+  const std::string mode = (mode_attr != nullptr && mode_attr->has_s()) ? mode_attr->s() : "DCR";
+  if (mode != "DCR" && mode != "CRD") {
+    return false;
+  }
+
+  FunctionBuilder builder(functionProto);
+  builder.Const1D("blocksize", blocksize)
+      .Const1D("block_area", block_area)
+      .Const1D("zero", int64_t{0})
+      .Const1D("one", int64_t{1})
+      .Const1D("two", int64_t{2})
+      .Const1D("three", int64_t{3})
+      .Const1D("four", int64_t{4})
+      .Add("input_shape = Shape (input)")
+      .Add("N = Slice (input_shape, zero, one)")
+      .Add("C = Slice (input_shape, one, two)")
+      .Add("H = Slice (input_shape, two, three)")
+      .Add("W = Slice (input_shape, three, four)")
+      .Add("H_block = Mul (H, blocksize)")
+      .Add("W_block = Mul (W, blocksize)")
+      .Add("C_block = Div (C, block_area)");
+  if (mode == "DCR") {
+    builder.Add("tmp_shape = Concat <axis = 0> (N, blocksize, blocksize, C_block, H, W)")
+        .Add("tmp = Reshape <allowzero = 1> (input, tmp_shape)")
+        .Add("tmp_transposed = Transpose <perm = [0, 3, 4, 1, 5, 2]> (tmp)");
+  } else {
+    builder.Add("tmp_shape = Concat <axis = 0> (N, C_block, blocksize, blocksize, H, W)")
+        .Add("tmp = Reshape <allowzero = 1> (input, tmp_shape)")
+        .Add("tmp_transposed = Transpose <perm = [0, 1, 4, 2, 5, 3]> (tmp)");
+  }
+  builder.Add("output_shape = Concat <axis = 0> (N, C_block, H_block, W_block)")
+      .Add("output = Reshape <allowzero = 1> (tmp_transposed, output_shape)");
+  schema.BuildFunction(functionProto);
+  return true;
+}
+
 ONNX_OPERATOR_SET_SCHEMA(
     SpaceToDepth,
-    13,
+    28,
     OpSchema()
         .Attr("blocksize", "Blocks of [blocksize, blocksize] are moved.", AttributeProto::INT)
-        .SetDoc(kDoc_SpaceToDepth_ver1)
+        .Attr(
+            "mode",
+            "DCR (default) for depth-column-row order re-arrangement. Use CRD for column-row-depth order.",
+            AttributeProto::STRING,
+            std::string("DCR"))
+        .SetDoc(kDoc_SpaceToDepth_ver28)
         .Input(
             0,
             "input",
@@ -1926,6 +2023,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           if (blocksize <= 0) {
             fail_shape_inference("Blocksize must be positive");
           }
+          const auto block_area = checkedMultiply(blocksize, blocksize);
           if (hasInputShape(ctx, 0)) {
             auto& input_shape = getInputShape(ctx, 0);
             if (input_shape.dim_size() == 4) {
@@ -1933,44 +2031,19 @@ ONNX_OPERATOR_SET_SCHEMA(
                   ctx,
                   0,
                   {input_shape.dim(0),
-                   input_shape.dim(1) * (blocksize * blocksize),
+                   input_shape.dim(1) * block_area,
                    input_shape.dim(2) / blocksize,
                    input_shape.dim(3) / blocksize});
             } else {
               fail_shape_inference("Input tensor must be 4-dimensional");
             }
           }
-        }));
-
-static constexpr const char* DepthToSpace_ver13_doc =
-    R"DOC(DepthToSpace rearranges (permutes) data from depth into blocks of spatial data.
-This is the reverse transformation of SpaceToDepth. More specifically, this op outputs a copy of
-the input tensor where values from the depth dimension are moved in spatial blocks to the height
-and width dimensions. By default, `mode` = `DCR`.
-In the DCR mode, elements along the depth dimension from the input tensor are rearranged in the
-following order: depth, column, and then row. The output y is computed from the input x as below:
-
-```
-b, c, h, w = x.shape
-tmp = np.reshape(x, [b, blocksize, blocksize, c // (blocksize**2), h, w])
-tmp = np.transpose(tmp, [0, 3, 4, 1, 5, 2])
-y = np.reshape(tmp, [b, c // (blocksize**2), h * blocksize, w * blocksize])
-```
-
-In the CRD mode, elements along the depth dimension from the input tensor are rearranged in the
-following order: column, row, and the depth. The output y is computed from the input x as below:
-
-```
-b, c, h, w = x.shape
-tmp = np.reshape(x, [b, c // (blocksize ** 2), blocksize, blocksize, h, w])
-tmp = np.transpose(tmp, [0, 1, 4, 2, 5, 3])
-y = np.reshape(tmp, [b, c // (blocksize ** 2), h * blocksize, w * blocksize])
-```
-)DOC";
+        })
+        .SetContextDependentFunctionBodyBuilder(BuildContextDependentFunctionBodySpaceToDepth));
 
 ONNX_OPERATOR_SET_SCHEMA(
     DepthToSpace,
-    13,
+    28,
     OpSchema()
         .Attr("blocksize", "Blocks of [blocksize, blocksize] are moved.", AttributeProto::INT)
         .Attr(
@@ -1978,7 +2051,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "DCR (default) for depth-column-row order re-arrangement. Use CRD for column-row-depth order.",
             AttributeProto::STRING,
             std::string("DCR"))
-        .SetDoc(DepthToSpace_ver13_doc)
+        .SetDoc(kDoc_DepthToSpace_ver28)
         .Input(
             0,
             "input",
@@ -2005,6 +2078,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           if (blocksize <= 0) {
             fail_shape_inference("Blocksize must be positive");
           }
+          const auto block_area = checkedMultiply(blocksize, blocksize);
           if (hasInputShape(ctx, 0)) {
             auto& input_shape = getInputShape(ctx, 0);
             if (input_shape.dim_size() == 4) {
@@ -2012,14 +2086,15 @@ ONNX_OPERATOR_SET_SCHEMA(
                   ctx,
                   0,
                   {input_shape.dim(0),
-                   input_shape.dim(1) / (blocksize * blocksize),
+                   input_shape.dim(1) / block_area,
                    input_shape.dim(2) * blocksize,
                    input_shape.dim(3) * blocksize});
             } else {
               fail_shape_inference("Input tensor must be 4-dimensional");
             }
           }
-        }));
+        })
+        .SetContextDependentFunctionBodyBuilder(BuildContextDependentFunctionBodyDepthToSpace));
 
 ONNX_OPERATOR_SET_SCHEMA(
     Tile,
@@ -2083,10 +2158,13 @@ ONNX_OPERATOR_SET_SCHEMA(
             }
 
             for (int i = 0; i < input_rank; ++i) {
+              if (repeats_data[i] < 0) {
+                fail_shape_inference("'Repeats' input must not contain negative values");
+              }
               const auto& input_dim = input_shape.dim(i);
               auto output_dim = output_shape->add_dim();
               if (input_dim.has_dim_value()) {
-                output_dim->set_dim_value(input_dim.dim_value() * repeats_data[i]);
+                output_dim->set_dim_value(checkedMultiply(input_dim.dim_value(), repeats_data[i]));
               }
             }
           } else {
@@ -2683,7 +2761,7 @@ ONNX_OPERATOR_SET_SCHEMA(
 
 ONNX_OPERATOR_SET_SCHEMA(
     Compress,
-    11,
+    28,
     OpSchema()
         .SetDoc(kDoc_Compress_ver9)
         .Attr(
@@ -2715,7 +2793,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             true,
             1,
             OpSchema::Differentiable)
-        .TypeConstraint("T", OpSchema::all_tensor_types(), "Constrain input and output types to all tensor types.")
+        .TypeConstraint("T", OpSchema::all_tensor_types_ir4(), "Constrain input and output types to all tensor types.")
         .TypeConstraint("T1", {types::Bool}, "Constrain to boolean tensors.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           propagateElemTypeFromInputToOutput(ctx, 0, 0);
@@ -2748,33 +2826,11 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static constexpr const char* OneHot_ver11_doc = R"DOC(
-    Produces a one-hot tensor based on inputs.
-    The locations represented by the index values in the 'indices' input tensor will have 'on_value'
-    and the other locations will have 'off_value' in the output tensor, where 'on_value' and 'off_value'
-    are specified as part of required input argument 'values', which is a two-element tensor of format
-    [off_value, on_value]. The rank of the output tensor will be one greater than the rank of the
-    input tensor. The additional dimension is for one-hot representation. The additional dimension will
-    be inserted at the position specified by 'axis'. If 'axis' is not specified then then additional
-    dimension will be inserted as the innermost dimension, i.e. axis=-1. The size of the additional
-    dimension is specified by required scalar input 'depth'. The type of the output tensor is the same
-    as the type of the 'values' input. Any entries in the 'indices' input tensor with values outside
-    the range [-depth, depth-1] will result in one-hot representation with all 'off_value' values in the
-    output tensor.
-
-    when axis = 0:
-    output[input[i, j, k], i, j, k] = 1 for all i, j, k and 0 otherwise.
-
-    when axis = -1:
-    output[i, j, k, input[i, j, k]] = 1 for all i, j, k and 0 otherwise.
-
-)DOC";
-
 ONNX_OPERATOR_SET_SCHEMA(
     OneHot,
-    11,
+    28,
     OpSchema()
-        .SetDoc(OneHot_ver11_doc)
+        .SetDoc(kDoc_OneHot_ver11)
         .Attr(
             "axis",
             "(Optional) Axis along which one-hot representation in added. Default: axis=-1. "
@@ -2833,7 +2889,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::NonDifferentiable)
         .TypeConstraint("T1", OpSchema::all_numeric_types(), "Constrain input to only numeric types.")
         .TypeConstraint("T2", OpSchema::all_numeric_types(), "Constrain input to only numeric types.")
-        .TypeConstraint("T3", OpSchema::all_tensor_types(), "Constrain to any tensor type.")
+        .TypeConstraint("T3", OpSchema::all_tensor_types_ir4(), "Constrain to any tensor type.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) { oneHotShapeInference(ctx, 11); }));
 
 ONNX_OPERATOR_SET_SCHEMA(
@@ -2960,47 +3016,11 @@ ONNX_OPERATOR_SET_SCHEMA(
           updateOutputShape(ctx, 0, output_shape);
         }));
 
-static constexpr const char* ReverseSequence_ver10_doc = R"DOC(
-Reverse batch of sequences having different lengths specified by `sequence_lens`.
-
-For each slice i iterating on batch axis, the operator reverses the first sequence_lens[i] elements on time axis,
-and copies elements whose index's beyond sequence_lens[i] to the output. So the output slice i contains reversed
-sequences on the first sequence_lens[i] elements, then have original values copied for the other elements.
-
-Example 1:
-  input = [[0.0, 4.0, 8.0,  12.0],
-           [1.0, 5.0, 9.0,  13.0],
-           [2.0, 6.0, 10.0, 14.0],
-           [3.0, 7.0, 11.0, 15.0]]
-  sequence_lens = [4, 3, 2, 1]
-  time_axis = 0
-  batch_axis = 1
-
-  output = [[3.0, 6.0, 9.0,  12.0],
-            [2.0, 5.0, 8.0,  13.0],
-            [1.0, 4.0, 10.0, 14.0],
-            [0.0, 7.0, 11.0, 15.0]]
-
-Example 2:
-  input = [[0.0,  1.0,  2.0,  3.0 ],
-           [4.0,  5.0,  6.0,  7.0 ],
-           [8.0,  9.0,  10.0, 11.0],
-           [12.0, 13.0, 14.0, 15.0]]
-  sequence_lens = [1, 2, 3, 4]
-  time_axis = 1
-  batch_axis = 0
-
-  output = [[0.0,  1.0,  2.0,  3.0 ],
-            [5.0,  4.0,  6.0,  7.0 ],
-            [10.0, 9.0,  8.0,  11.0],
-            [15.0, 14.0, 13.0, 12.0]]
-)DOC";
-
 ONNX_OPERATOR_SET_SCHEMA(
     ReverseSequence,
-    10,
+    28,
     OpSchema()
-        .SetDoc(ReverseSequence_ver10_doc)
+        .SetDoc(kDoc_ReverseSequence_ver10)
         .Attr(
             "time_axis",
             "(Optional) Specify which axis is time axis. Must be one of 0 (default), or 1.",
@@ -3019,7 +3039,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "tensor(int64)",
             OpSchema::Single)
         .Output(0, "Y", "Tensor with same shape of input.", "T", OpSchema::Single)
-        .TypeConstraint("T", OpSchema::all_tensor_types(), "Input and output types can be of any tensor type.")
+        .TypeConstraint("T", OpSchema::all_tensor_types_ir4(), "Input and output types can be of any tensor type.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           propagateElemTypeFromInputToOutput(ctx, 0, 0);
           if (!hasNInputShapes(ctx, 2)) {
@@ -3038,111 +3058,11 @@ ONNX_OPERATOR_SET_SCHEMA(
           propagateShapeFromInputToOutput(ctx, 0, 0);
         }));
 
-static constexpr const char* Unique_ver11_doc = R"DOC(
-Find the unique elements of a tensor. When an optional attribute 'axis' is provided, unique subtensors sliced along the 'axis' are returned.
-Otherwise the input tensor is flattened and unique values of the flattened tensor are returned.
-
-This operator returns the unique values or sliced unique subtensors of the input tensor and three optional outputs.
-The first output tensor 'Y' contains all unique values or subtensors of the input.
-The second optional output tensor 'indices' contains indices of 'Y' elements' first occurrence in 'X'.
-The third optional output tensor 'inverse_indices' contains, for elements of 'X', its corresponding indices in 'Y'.
-The fourth optional output tensor 'counts' contains the count of each element of 'Y' in the input.
-
-Outputs are either sorted in ascending order or optionally in the order of the first occurrence of the values in the input.
-
-https://docs.scipy.org/doc/numpy/reference/generated/numpy.unique.html
-
-Example 1:
-```
-input_X = [2, 1, 1, 3, 4, 3]
-attribute_sorted = 0
-attribute_axis = None
-output_Y = [2, 1, 3, 4]
-output_indices = [0, 1, 3, 4]
-output_inverse_indices = [0, 1, 1, 2, 3, 2]
-output_counts = [1, 2, 2, 1]
-```
-
-Example 2:
-```
-input_X = [[1, 3], [2, 3]]
-attribute_sorted = 1
-attribute_axis = None
-output_Y = [1, 2, 3]
-output_indices = [0, 2, 1]
-output_inverse_indices = [0, 2, 1, 2]
-output_counts = [1, 1, 2]
-```
-
-Example 3:
-```
-input_X = [[1, 0, 0], [1, 0, 0], [2, 3, 4]]
-attribute_sorted = 1
-attribute_axis = 0
-output_Y = [[1, 0, 0], [2, 3, 4]]
-output_indices = [0, 2]
-output_inverse_indices = [0, 0, 1]
-output_counts = [2, 1]
-```
-
-Example 4:
-```
-input_x = [[[1., 1.], [0., 1.], [2., 1.], [0., 1.]],
-            [[1., 1.], [0., 1.], [2., 1.], [0., 1.]]]
-attribute_sorted = 1
-attribute_axis = 1
-```
-
-intermediate data are presented below for better understanding:
-there are 4 subtensors sliced along axis 1 of input_x (shape = (2, 4, 2)):
-```
-A: [[1, 1], [1, 1]],
-   [[0, 1], [0, 1]],
-   [[2, 1], [2, 1]],
-   [[0, 1], [0, 1]].
-```
-
-there are 3 unique subtensors:
-```
-[[1, 1], [1, 1]],
-[[0, 1], [0, 1]],
-[[2, 1], [2, 1]].
-```
-
-sorted unique subtensors:
-```
-B: [[0, 1], [0, 1]],
-   [[1, 1], [1, 1]],
-   [[2, 1], [2, 1]].
-```
-
-output_Y is constructed from B:
-```
-[[[0. 1.], [1. 1.], [2. 1.]],
- [[0. 1.], [1. 1.], [2. 1.]]]
-```
-
-output_indices is to map from B to A:
-```
-[1, 0, 2]
-```
-
-output_inverse_indices is to map from A to B:
-```
-[1, 0, 2, 0]
-```
-
-output_counts:
-```
-[2, 1, 1]
-```
-)DOC";
-
 ONNX_OPERATOR_SET_SCHEMA(
     Unique,
-    11,
+    28,
     OpSchema()
-        .SetDoc(Unique_ver11_doc)
+        .SetDoc(kDoc_Unique_ver11)
         .Attr(
             "sorted",
             "(Optional) Whether to sort the unique elements in ascending order before returning as output. "
@@ -3211,7 +3131,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             true,
             1,
             OpSchema::NonDifferentiable)
-        .TypeConstraint("T", OpSchema::all_tensor_types(), "Input can be of any tensor type.")
+        .TypeConstraint("T", OpSchema::all_tensor_types_ir4(), "Input can be of any tensor type.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           // Type inference
           propagateElemTypeFromInputToOutput(ctx, 0, 0);
@@ -3420,7 +3340,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             return;
           }
 
-          const auto last_index_dimension = indices_shape.dim(indices_rank - 1).dim_value() + batch_dims_data;
+          const auto last_index_dimension =
+              checkedAdd(indices_shape.dim(indices_rank - 1).dim_value(), batch_dims_data);
 
           if (last_index_dimension > data_rank) {
             fail_shape_inference(
@@ -3699,9 +3620,10 @@ The operation can be described using the following pseudocode:
 for prefix_idx in np.ndindex(past_cache.shape[:axis]):
     batch_idx = prefix_idx[0]
     for sequence_idx in range(sequence_length):
-        cache_idx = (*prefix_idx, write_indices[batch_idx] + sequence_idx)
+        cache_sequence_idx = write_indices[batch_idx] + sequence_idx
         if mode == "circular":
-            cache_idx = tuple(np.mod(np.asarray(cache_idx), max_sequence_length))
+            cache_sequence_idx = cache_sequence_idx % max_sequence_length
+        cache_idx = (*prefix_idx, cache_sequence_idx)
         update_idx = (*prefix_idx, sequence_idx)
         present_cache[cache_idx] = update[update_idx]
 ```

@@ -507,6 +507,71 @@ TEST(GraphInferencerImplTest, Scan9BasicTest) {
   doInferencingTest(false);
 }
 
+TEST(InferenceContextImplTest, OptionalInputsAndOutputsUseNodeProtoPresence) {
+  NodeProto node;
+  node.add_input("X");
+  node.add_input("");
+  node.add_input("Z");
+  node.add_output("Y");
+  node.add_output("");
+  node.add_output("W");
+
+  TypeProto input_type;
+  input_type.mutable_tensor_type()->set_elem_type(TensorProto_DataType::TensorProto_DataType_FLOAT);
+
+  std::unordered_map<std::string, TypeProto*> value_types_by_name;
+  value_types_by_name["X"] = &input_type;
+  value_types_by_name["Z"] = &input_type;
+
+  ShapeInferenceOptions options;
+  shape_inference::InferenceContextImpl ctx(node, value_types_by_name, {}, {}, options);
+
+  EXPECT_TRUE(ctx.hasInput(0));
+  EXPECT_FALSE(ctx.hasInput(1));
+  EXPECT_TRUE(ctx.hasInput(2));
+  EXPECT_FALSE(ctx.hasInput(3));
+
+  EXPECT_TRUE(ctx.hasOutput(0));
+  EXPECT_FALSE(ctx.hasOutput(1));
+  EXPECT_TRUE(ctx.hasOutput(2));
+  EXPECT_FALSE(ctx.hasOutput(3));
+}
+
+TEST(GraphInferencerImplTest, OuterScopeMapLifetimeTest) {
+  TypeProto outer_type;
+  outer_type.mutable_tensor_type()->set_elem_type(TensorProto_DataType_FLOAT);
+  outer_type.mutable_tensor_type()->mutable_shape();
+
+  auto make_subgraph = []() {
+    GraphProto graph;
+    auto* node = graph.add_node();
+    node->set_op_type("Identity");
+    node->add_input("outer");
+    node->add_output("result");
+    graph.add_output()->set_name("result");
+    return graph;
+  };
+  auto infer_and_check = [](GraphProto& graph, shape_inference::GraphInferenceContext& graph_context) {
+    shape_inference::GraphInferencerImpl graph_inferencer(graph, graph_context);
+    const auto output_types = graph_inferencer.doInferencing({}, {});
+    ASSERT_EQ(output_types.size(), 1);
+    ASSERT_NE(output_types[0], nullptr);
+    EXPECT_EQ(output_types[0]->tensor_type().elem_type(), TensorProto_DataType_FLOAT);
+  };
+
+  std::unordered_map<std::string, int> opset_imports{{ONNX_DOMAIN, 25}};
+  shape_inference::GraphInferenceContext::OuterScopeValueTypesMap live_outer_scope;
+  shape_inference::GraphInferenceContext borrowed_context(live_outer_scope, opset_imports);
+  live_outer_scope.emplace("outer", &outer_type);
+  auto borrowed_graph = make_subgraph();
+  infer_and_check(borrowed_graph, borrowed_context);
+
+  auto owned_graph = make_subgraph();
+  shape_inference::GraphInferenceContext owned_context(
+      shape_inference::GraphInferenceContext::OuterScopeValueTypesMap{{"outer", &outer_type}}, opset_imports);
+  infer_and_check(owned_graph, owned_context);
+}
+
 static void ParseAndInfer(ModelProto& model, const char* modelStr) {
   OnnxParser parser(modelStr);
   auto status = parser.Parse(model);

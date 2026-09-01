@@ -3,6 +3,7 @@
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
+import ml_dtypes
 import numpy as np
 
 import onnx
@@ -16,6 +17,20 @@ def specify_int64(indices, inverse_indices, counts):
         np.array(inverse_indices, dtype=np.int64),
         np.array(counts, dtype=np.int64),
     )
+
+
+def unique_output_types(x: np.ndarray, axis: int | None = None) -> list[onnx.TypeProto]:
+    y_shape: list[int | None] = [None] if axis is None else list(x.shape)
+    if axis is not None:
+        y_shape[axis] = None
+    element_type = onnx.helper.np_dtype_to_tensor_dtype(x.dtype)
+    return [
+        onnx.helper.make_tensor_type_proto(element_type, y_shape),
+        *[
+            onnx.helper.make_tensor_type_proto(onnx.TensorProto.INT64, [None])
+            for _ in range(3)
+        ],
+    ]
 
 
 class Unique(Base):
@@ -37,6 +52,7 @@ class Unique(Base):
             inputs=[x],
             outputs=[y, indices, inverse_indices, counts],
             name="test_unique_sorted_without_axis",
+            output_type_protos=unique_output_types(x),
         )
 
     @staticmethod
@@ -82,6 +98,7 @@ class Unique(Base):
             inputs=[x],
             outputs=[y, indices, inverse_indices, counts],
             name="test_unique_not_sorted_without_axis",
+            output_type_protos=unique_output_types(x),
         )
 
     @staticmethod
@@ -116,6 +133,7 @@ class Unique(Base):
             inputs=[x],
             outputs=[y, indices, inverse_indices, counts],
             name="test_unique_sorted_with_axis",
+            output_type_protos=unique_output_types(x, axis=0),
         )
 
     @staticmethod
@@ -159,6 +177,7 @@ class Unique(Base):
             inputs=[x],
             outputs=[y, indices, inverse_indices, counts],
             name="test_unique_sorted_with_axis_3d",
+            output_type_protos=unique_output_types(x, axis=1),
         )
 
     @staticmethod
@@ -194,6 +213,7 @@ class Unique(Base):
             inputs=[x],
             outputs=[y, indices, inverse_indices, counts],
             name="test_unique_sorted_with_negative_axis",
+            output_type_protos=unique_output_types(x, axis=-1),
         )
 
     @staticmethod
@@ -226,4 +246,27 @@ class Unique(Base):
             inputs=[x],
             outputs=[y, indices, inverse_indices, counts],
             name="test_unique_length_1",
+            output_type_protos=unique_output_types(x),
+        )
+
+    @staticmethod
+    def export_unique_bfloat16_sorted_without_axis() -> None:
+        node_sorted = onnx.helper.make_node(
+            "Unique",
+            inputs=["X"],
+            outputs=["Y", "indices", "inverse_indices", "counts"],
+            sorted=1,
+        )
+        x = np.array([2.0, 1.0, 1.0, 3.0, 4.0, 3.0], dtype=ml_dtypes.bfloat16)
+        y, indices, inverse_indices, counts = np.unique(
+            x, return_index=True, return_inverse=True, return_counts=True
+        )
+        indices, inverse_indices, counts = specify_int64(
+            indices, inverse_indices, counts
+        )
+        expect(
+            node_sorted,
+            inputs=[x],
+            outputs=[y, indices, inverse_indices, counts],
+            name="test_unique_bfloat16_sorted_without_axis",
         )

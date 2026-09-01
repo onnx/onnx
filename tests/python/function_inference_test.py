@@ -103,7 +103,9 @@ class TestFunctionInference(TestShapeInferenceHelper):
         # If the optional third parameter is specified, it determines the output type.
         self._check(code, [float_type_, float_type_, int8_type_], [], [int8_type_])
         self._check(code, [float_type_, float_type_, uint8_type_], [], [uint8_type_])
-        # If the optional third parameter is omitted, the output type is uint8 (default).
+        # If the optional third parameter is omitted (represented by no_type_, following the
+        # same convention used above for DoReduce's optional second parameter), the output type
+        # defaults to uint8.
         self._check(code, [float_type_, float_type_, no_type_], [], [uint8_type_])
 
         code = """
@@ -117,3 +119,12 @@ class TestFunctionInference(TestShapeInferenceHelper):
 
         # A failing test-case with a non-trailing missing optional parameter
         self._check_fails(code, [float_type_, no_type_, int8_type_], [])
+
+    def test_fi_unsupported_op(self):
+        code = """
+            <opset_import: [ "" : 26, "unknown" : 1 ], domain: "local">
+            Unsupported (x) => (y) {
+                y = unknown.Op (x)
+            }
+        """
+        self._check(code, [float_type_], [], [no_type_])
