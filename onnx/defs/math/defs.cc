@@ -2002,7 +2002,6 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
->>>>>>> origin/main
 ONNX_OPERATOR_SET_SCHEMA(
     Einsum,
     28,
