@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0
 #include <string>
 
+#include "onnx/defs/doc_strings.h"
 #include "onnx/defs/schema.h"
 #include "onnx/defs/type_builders.h"
 
@@ -262,25 +263,11 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Constrain input types to all numeric tensors.")
         .TypeConstraint("T1", {types::Bool}, "Constrain output to boolean tensor."));
 
-static constexpr const char* BitShift_ver11_doc = R"DOC(
-Bitwise shift operator performs element-wise operation. For each input element, if the
-attribute "direction" is "RIGHT", this operator moves its binary representation toward
-the right side so that the input value is effectively decreased. If the attribute "direction"
-is "LEFT", bits of binary representation moves toward the left side, which results the
-increase of its actual value. The input X is the tensor to be shifted and another input
-Y specifies the amounts of shifting. For example, if "direction" is "Right", X is [1, 4],
-and S is [1, 1], the corresponding output Z would be [0, 2]. If "direction" is "LEFT" with
-X=[1, 2] and S=[1, 2], the corresponding output Y would be [2, 8].
-
-Because this operator supports Numpy-style broadcasting, X's and Y's shapes are
-not necessarily identical.
-)DOC";
-
 ONNX_OPERATOR_SET_SCHEMA(
     BitShift,
     11,
     OpSchema()
-        .SetDoc(GET_OP_DOC_STR(std::string(BitShift_ver11_doc) + GenerateBroadcastingDocMul()))
+        .SetDoc(GET_OP_DOC_STR(std::string(kDoc_BitShift_ver11) + GenerateBroadcastingDocMul()))
         .Input(
             0,
             "X",

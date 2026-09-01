@@ -187,8 +187,13 @@ class TestSchema:
         }
         signed = {"tensor(int8)", "tensor(int16)", "tensor(int32)", "tensor(int64)"}
 
-        assert allowed(defs.get_schema("BitShift", 28)) == unsigned | signed
-        assert allowed(defs.get_schema("BitShift", 11)) == unsigned
+        bitshift28 = defs.get_schema("BitShift", 28)
+        bitshift11 = defs.get_schema("BitShift", 11)
+        assert allowed(bitshift28) == unsigned | signed
+        assert allowed(bitshift11) == unsigned
+        assert "right shift is an arithmetic shift" in bitshift28.doc
+        assert "Y is negative" in bitshift28.doc
+        assert "effectively decreased" in bitshift11.doc
 
     def test_mod_opset28_schema(self) -> None:
         mod13 = defs.get_schema("Mod", MOD_OPSET_13)
