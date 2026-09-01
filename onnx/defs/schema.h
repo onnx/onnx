@@ -646,6 +646,12 @@ class OpSchema final {
 
   ONNX_API static const std::vector<std::string>& all_non_string_tensor_types_ir13();
 
+  ONNX_API static const std::vector<std::string>& all_tensor_types_ir14();
+
+  ONNX_API static const std::vector<std::string>& all_non_complex_tensor_types_ir14();
+
+  ONNX_API static const std::vector<std::string>& all_non_string_tensor_types_ir14();
+
   ONNX_API static const std::vector<std::string>& all_tensor_sequence_types();
 
   ONNX_API static const std::vector<std::string>& all_tensor_sequence_types_ir4();
@@ -659,6 +665,8 @@ class OpSchema final {
   ONNX_API static const std::vector<std::string>& all_tensor_sequence_types_ir12();
 
   ONNX_API static const std::vector<std::string>& all_tensor_sequence_types_ir13();
+
+  ONNX_API static const std::vector<std::string>& all_tensor_sequence_types_ir14();
 
   ONNX_API static const std::vector<std::string>& all_optional_types();
 
@@ -1303,8 +1311,7 @@ ONNX_API OpSchema GetOpSchema();
 
 #ifdef NDEBUG
 #define ONNX_DBG_INCREMENT_COUNT_IN_OPSETS() 0
-#define ONNX_OPERATOR_SET_SCHEMA_DEBUG_VARIABLE(name, domain, ver, dbg_included_in_static_opset) \
-  static size_t dbg_count_check_##name##_##domain##_ver##ver [[maybe_unused]] = 0
+#define ONNX_OPERATOR_SET_SCHEMA_DEBUG_VARIABLE(name, domain, ver, dbg_included_in_static_opset)
 #else
 class DbgOperatorSetTracker {
  public:
@@ -1394,7 +1401,7 @@ ONNX_API inline std::string GenerateBroadcastingDocUni(const char* from, const c
  * SetDoc(GET_OP_DOC_STR(doc_str))
  *
  * SetDoc(GET_OP_DOC_STR(
-            std::string(BitShift_ver11_doc) + GenerateBroadcastingDocMul()))
+            std::string(kDoc_BitShift_ver11) + GenerateBroadcastingDocMul()))
  */
 #ifndef __ONNX_NO_DOC_STRINGS
 #define GET_OP_DOC_STR(doc_str) (doc_str)
