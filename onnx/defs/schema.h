@@ -1401,7 +1401,7 @@ ONNX_API inline std::string GenerateBroadcastingDocUni(const char* from, const c
  * SetDoc(GET_OP_DOC_STR(doc_str))
  *
  * SetDoc(GET_OP_DOC_STR(
-            std::string(BitShift_ver11_doc) + GenerateBroadcastingDocMul()))
+            std::string(kDoc_BitShift_ver11) + GenerateBroadcastingDocMul()))
  */
 #ifndef __ONNX_NO_DOC_STRINGS
 #define GET_OP_DOC_STR(doc_str) (doc_str)

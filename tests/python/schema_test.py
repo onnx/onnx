@@ -171,6 +171,30 @@ class TestSchema:
         assert celu28.has_function
         assert allowed(defs.get_schema("Celu", 12)) == {"tensor(float)"}
 
+    def test_bitshift_type_constraints(self) -> None:
+        def allowed(schema):
+            return next(
+                set(t.allowed_type_strs)
+                for t in schema.type_constraints
+                if t.type_param_str == "T"
+            )
+
+        unsigned = {
+            "tensor(uint8)",
+            "tensor(uint16)",
+            "tensor(uint32)",
+            "tensor(uint64)",
+        }
+        signed = {"tensor(int8)", "tensor(int16)", "tensor(int32)", "tensor(int64)"}
+
+        bitshift28 = defs.get_schema("BitShift", 28)
+        bitshift11 = defs.get_schema("BitShift", 11)
+        assert allowed(bitshift28) == unsigned | signed
+        assert allowed(bitshift11) == unsigned
+        assert "right shift is an arithmetic shift" in bitshift28.doc
+        assert "Y is negative" in bitshift28.doc
+        assert "effectively decreased" in bitshift11.doc
+
     def test_mod_opset28_schema(self) -> None:
         mod13 = defs.get_schema("Mod", MOD_OPSET_13)
         mod28 = defs.get_schema("Mod", MOD_OPSET_28)

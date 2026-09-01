@@ -154,6 +154,32 @@ class TestAutomaticDowngrade(automatic_conversion_test_base.TestAutomaticConvers
         """,
         )
 
+    def test_BitShift(self) -> None:
+        self._test_op_downgrade(
+            "BitShift",
+            11,
+            [[2, 3], [2, 3]],
+            [[2, 3]],
+            [onnx.TensorProto.UINT8, onnx.TensorProto.UINT8],
+            [onnx.TensorProto.UINT8],
+            attrs={"direction": "RIGHT"},
+        )
+
+    def test_BitShift_signed_downgrade_fails(self) -> None:
+        # BitShift gained the signed integer types at opset 28. Downgrading a
+        # signed BitShift below that must be rejected rather than silently
+        # reinterpreted as an unsigned (logical) shift.
+        self._test_model_conversion_fails(
+            to_opset=27,
+            model="""
+            <ir_version: 10, opset_import: [ "" : 28]>
+            bitshift (int32[2, 3] X, int32[2, 3] Y) => (int32[2, 3] Z)
+            {
+                Z = BitShift <direction = "RIGHT"> (X, Y)
+            }
+        """,
+        )
+
     def test_CausalConvWithState_downgrade_fails(self) -> None:
         # CausalConvWithState was introduced at opset 27; no decomposition
         # adapter exists for downgrading to opset 24. The version converter
