@@ -4151,14 +4151,14 @@ class TestReferenceEvaluator:
             "W": np.arange(3).reshape((1, 1, 3)).astype(np.float32),
             "B": np.zeros((1,), dtype=np.float32),
         }
-        kwargs = dict(
-            group=1,
-            dilations=[1],
-            kernel_shape=[3],
-            pads=[1, 1],
-            strides=[1],
-            auto_pad="NOTSET",
-        )
+        kwargs = {
+            "group": 1,
+            "dilations": [1],
+            "kernel_shape": [3],
+            "pads": [1, 1],
+            "strides": [1],
+            "auto_pad": "NOTSET",
+        }
         expected = _conv_implementation(**feeds, **kwargs)
         got = _conv_implementation_im2col(**feeds, **kwargs)
         assert_allclose(got, expected)
@@ -4169,14 +4169,14 @@ class TestReferenceEvaluator:
             "W": np.arange(2 * 4 * 3).reshape((-1, 4, 3)).astype(np.float32),
             "B": np.zeros((1,), dtype=np.float32),
         }
-        kwargs = dict(
-            group=1,
-            dilations=[1],
-            kernel_shape=[3],
-            pads=[0, 0],
-            strides=[1],
-            auto_pad="NOTSET",
-        )
+        kwargs = {
+            "group": 1,
+            "dilations": [1],
+            "kernel_shape": [3],
+            "pads": [0, 0],
+            "strides": [1],
+            "auto_pad": "NOTSET",
+        }
         expected = _conv_implementation(**feeds, **kwargs)
         got = _conv_implementation_im2col(**feeds, **kwargs)
         assert_allclose(got, expected)
@@ -4188,14 +4188,14 @@ class TestReferenceEvaluator:
             "W": np.arange(9).reshape((1, 1, 3, 3)).astype(np.float32),
             "B": np.zeros((1,), dtype=np.float32),
         }
-        kwargs = dict(
-            group=1,
-            dilations=[1, 1],
-            kernel_shape=[3, 3],
-            pads=[1, 1, 1, 1],
-            strides=[1, 1],
-            auto_pad="NOTSET",
-        )
+        kwargs = {
+            "group": 1,
+            "dilations": [1, 1],
+            "kernel_shape": [3, 3],
+            "pads": [1, 1, 1, 1],
+            "strides": [1, 1],
+            "auto_pad": "NOTSET",
+        }
         expected = _conv_implementation(**feeds, **kwargs)
         got = _conv_implementation_im2col(**feeds, **kwargs)
         assert_allclose(got, expected)
@@ -4207,14 +4207,14 @@ class TestReferenceEvaluator:
             ** np.arange(3 * 3 * 1 * 2).reshape((-1, 3, 1, 2)).astype(np.float32),
             "B": np.zeros((1,), dtype=np.float32),
         }
-        kwargs = dict(
-            group=1,
-            dilations=[1, 1],
-            kernel_shape=[1, 2],
-            pads=[0, 0, 0, 0],
-            strides=[1, 1],
-            auto_pad="NOTSET",
-        )
+        kwargs = {
+            "group": 1,
+            "dilations": [1, 1],
+            "kernel_shape": [1, 2],
+            "pads": [0, 0, 0, 0],
+            "strides": [1, 1],
+            "auto_pad": "NOTSET",
+        }
         expected = _conv_implementation(**feeds, **kwargs)
         got = _conv_implementation_im2col(**feeds, **kwargs)
         assert_allclose(got, expected)
@@ -4225,14 +4225,14 @@ class TestReferenceEvaluator:
             "W": 2 ** np.arange(3 * 3).reshape((1, 1, 3, 3)).astype(np.float32),
             "B": np.zeros((1,), dtype=np.float32),
         }
-        kwargs = dict(
-            group=1,
-            dilations=[1, 1],
-            kernel_shape=[3, 3],
-            strides=[2, 2],
-            pads=None,
-            auto_pad="SAME_LOWER",
-        )
+        kwargs = {
+            "group": 1,
+            "dilations": [1, 1],
+            "kernel_shape": [3, 3],
+            "strides": [2, 2],
+            "pads": None,
+            "auto_pad": "SAME_LOWER",
+        }
         expected = _conv_implementation(**feeds, **kwargs)
         got = _conv_implementation_im2col(**feeds, **kwargs)
         assert_allclose(got, expected)
@@ -4246,14 +4246,14 @@ class TestReferenceEvaluator:
             "W": np.arange(27).reshape((1, 1, 3, 3, 3)).astype(np.float32),
             "B": np.zeros((1,), dtype=np.float32),
         }
-        kwargs = dict(
-            group=1,
-            dilations=[1, 1, 1],
-            kernel_shape=[3, 3, 3],
-            pads=[1, 1, 1, 1, 1, 1],
-            strides=[1, 1, 1],
-            auto_pad="NOTSET",
-        )
+        kwargs = {
+            "group": 1,
+            "dilations": [1, 1, 1],
+            "kernel_shape": [3, 3, 3],
+            "pads": [1, 1, 1, 1, 1, 1],
+            "strides": [1, 1, 1],
+            "auto_pad": "NOTSET",
+        }
         expected = _conv_implementation(**feeds, **kwargs)
         got = _conv_implementation_im2col(**feeds, **kwargs)
         assert_allclose(got, expected)
@@ -4264,14 +4264,14 @@ class TestReferenceEvaluator:
             "W": np.arange(2 * 3 * 3 * 3).reshape((2, 3, 3, 3)).astype(np.float32),
             "B": np.zeros((2,), dtype=np.float32),
         }
-        kwargs = dict(
-            group=1,
-            dilations=[1, 1],
-            kernel_shape=[3, 3],
-            pads=[1, 1, 1, 1],
-            strides=[2, 2],
-            auto_pad="NOTSET",
-        )
+        kwargs = {
+            "group": 1,
+            "dilations": [1, 1],
+            "kernel_shape": [3, 3],
+            "pads": [1, 1, 1, 1],
+            "strides": [2, 2],
+            "auto_pad": "NOTSET",
+        }
         expected = _conv_implementation(**feeds, **kwargs)
         got = _conv_implementation_im2col(**feeds, **kwargs)
         assert_allclose(got, expected)
@@ -4282,14 +4282,14 @@ class TestReferenceEvaluator:
             "W": np.arange(2 * 3 * 3 * 3).reshape((2, 3, 3, 3)).astype(np.float32),
             "B": np.zeros((2,), dtype=np.float32),
         }
-        kwargs = dict(
-            group=1,
-            dilations=[2, 1],
-            kernel_shape=[3, 3],
-            pads=[1, 1, 1, 1],
-            strides=[2, 2],
-            auto_pad="NOTSET",
-        )
+        kwargs = {
+            "group": 1,
+            "dilations": [2, 1],
+            "kernel_shape": [3, 3],
+            "pads": [1, 1, 1, 1],
+            "strides": [2, 2],
+            "auto_pad": "NOTSET",
+        }
         expected = _conv_implementation(**feeds, **kwargs)
         got = _conv_implementation_im2col(**feeds, **kwargs)
         assert_allclose(got, expected)
@@ -6276,7 +6276,7 @@ class TestReferenceEvaluator:
 
         x = (np.arange(18) / 6).reshape((2, 3, 3)).astype(np.float32)
         y = (np.arange(18) / 9).reshape((2, 3, 3)).astype(np.float32)
-        feeds = dict(X=x, Y=y)
+        feeds = {"X": x, "Y": y}
         expected = x + y
         got = ref.run(None, feeds)[0]
         assert_allclose(got, expected, atol=atol)
@@ -6323,7 +6323,7 @@ class TestReferenceEvaluator:
 
         x = (np.arange(18) / 18).reshape((2, 3, 3)).astype(np.float32)
         y = ((np.arange(18) - 9) / 18).reshape((2, 3, 3)).astype(np.float32)
-        feeds = dict(X=x, Y=y)
+        feeds = {"X": x, "Y": y}
         expected = x >= y
         got = ref.run(None, feeds)[0]
         np.testing.assert_equal(got, expected)

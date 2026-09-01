@@ -32,7 +32,7 @@ def _check_integer_input(data):
         )
 
 
-class ReduceLogSumExp_1(OpRunReduceNumpy):
+class ReduceLogSumExp_1(OpRunReduceNumpy):  # noqa: N801
     def _run(self, data, axes=None, keepdims=None):
         _check_integer_input(data)
         tax = tuple(axes) if axes is not None else None
@@ -42,7 +42,7 @@ class ReduceLogSumExp_1(OpRunReduceNumpy):
         return compute_log_sum_exp(data, tax, keepdims)
 
 
-class ReduceLogSumExp_18(OpRunReduceNumpy):
+class ReduceLogSumExp_18(OpRunReduceNumpy):  # noqa: N801
     def _run(self, data, axes=None, keepdims=1, noop_with_empty_axes=0):
         _check_integer_input(data)
         axes = self.handle_axes(axes, noop_with_empty_axes)
