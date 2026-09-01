@@ -4106,39 +4106,47 @@ class TestReferenceEvaluator:
             with pytest.raises(ValueError):
                 ref.run(None, {"X": data})
 
-    def test_lrn(self):
+    @pytest.mark.parametrize(
+        ("shape", "size", "dtype", "elem_type"),
+        [
+            ((2, 3, 2, 2), 3, np.float32, TensorProto.FLOAT),
+            ((1, 4, 3), 2, np.float64, TensorProto.DOUBLE),
+            ((1, 5, 1, 2, 1), 4, np.float16, TensorProto.FLOAT16),
+            ((1, 3, 2), 3, ml_dtypes.bfloat16, TensorProto.BFLOAT16),
+            ((2, 0, 3), 3, np.float32, TensorProto.FLOAT),
+        ],
+    )
+    def test_lrn(self, shape, size, dtype, elem_type):
         def _expected(x, alpha, beta, bias, size):
-            square_sum = np.zeros((5, 5, 5, 5)).astype(np.float32)
-            for n, c, h, w in np.ndindex(x.shape):
-                square_sum[n, c, h, w] = sum(
-                    x[
-                        n,
-                        max(0, c - math.floor((size - 1) / 2)) : min(
-                            5, c + math.ceil((size - 1) / 2) + 1
-                        ),
-                        h,
-                        w,
-                    ]
-                    ** 2
-                )
+            square_sum = np.zeros_like(x)
+            channel_count = x.shape[1]
+            for index in np.ndindex(x.shape):
+                n, c, *spatial_index = index
+                begin = max(0, c - math.floor((size - 1) / 2))
+                end = min(channel_count, c + math.ceil((size - 1) / 2) + 1)
+                values = x[(n, slice(begin, end), *spatial_index)]
+                square_sum[index] = sum(float(value) ** 2 for value in values)
             return x / ((bias + (alpha / size) * square_sum) ** beta)
 
-        # keepdims is ignored in that case
         alpha = 0.0002
         beta = 0.5
         bias = 2.0
-        size = 3
-        X = make_tensor_value_info("X", TensorProto.FLOAT, [5, 5, 50, 50])
-        Z = make_tensor_value_info("Z", TensorProto.UNDEFINED, None)
+        X = make_tensor_value_info("X", elem_type, shape)
+        Z = make_tensor_value_info("Z", elem_type, shape)
         nodes = [
             make_node("LRN", ["X"], ["Z"], alpha=alpha, beta=beta, bias=bias, size=size)
         ]
         model = make_model(make_graph(nodes, "g", [X], [Z]))
         ref = ReferenceEvaluator(model)
-        data = np.random.rand(5, 5, 5, 5).astype(np.float32)
+        data = (np.arange(math.prod(shape), dtype=np.float32) / 10).astype(dtype)
+        data = data.reshape(shape)
         got = ref.run(None, {"X": data})
-        expected = _expected(data, alpha, beta, bias, size)
-        assert len(got[0]) == len(expected)
+        expected = _expected(data, alpha, beta, bias, size).astype(dtype)
+        assert got[0].dtype == np.dtype(dtype)
+        if dtype is ml_dtypes.bfloat16:
+            assert_allclose(got[0].astype(np.float32), expected.astype(np.float32))
+        else:
+            assert_allclose(got[0], expected)
 
     def test_conv_implementation_1d(self):
         got = _conv_implementation(
