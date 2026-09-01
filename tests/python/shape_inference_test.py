@@ -1143,7 +1143,7 @@ class TestShapeInference(TestShapeInferenceHelper):
         self.skipIf(version < 21, "GroupNormalization-18 is deprecated")
         graph = self._make_graph(
             [
-                ("X", TensorProto.FLOAT, ("N", 4, "H", "W")),
+                ("X", TensorProto.FLOAT, ("N", 4, 0, "W")),
                 ("scale", TensorProto.FLOAT, (4,)),
                 ("bias", TensorProto.FLOAT, (4,)),
             ],
@@ -1159,9 +1159,68 @@ class TestShapeInference(TestShapeInferenceHelper):
         )
         self._assert_inferred(
             graph,
-            [make_tensor_value_info("y", TensorProto.FLOAT, ("N", 4, "H", "W"))],
+            [make_tensor_value_info("y", TensorProto.FLOAT, ("N", 4, 0, "W"))],
             opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
         )
+
+    def test_group_normalization_unknown_channel(self) -> None:
+        graph = self._make_graph(
+            [
+                ("X", TensorProto.FLOAT, ("N", None, "W")),
+                ("scale", TensorProto.FLOAT, (None,)),
+                ("bias", TensorProto.FLOAT, (None,)),
+            ],
+            [
+                make_node(
+                    "GroupNormalization",
+                    ["X", "scale", "bias"],
+                    ["y"],
+                    num_groups=2,
+                )
+            ],
+            [],
+        )
+        self._assert_inferred(
+            graph,
+            [make_tensor_value_info("y", TensorProto.FLOAT, ("N", None, "W"))],
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, 21)],
+        )
+
+    @pytest.mark.parametrize(
+        ("x_shape", "scale_shape", "bias_shape", "num_groups"),
+        [
+            ((2,), (2,), (2,), 1),
+            ((2, 4), (4, 1), (4,), 2),
+            ((2, 4), (3,), (4,), 2),
+            ((2, 4), (4,), (3,), 2),
+            ((2, 5), (5,), (5,), 2),
+            ((2, 4), (4,), (4,), 0),
+        ],
+    )
+    def test_group_normalization_invalid_shapes(
+        self, x_shape, scale_shape, bias_shape, num_groups
+    ) -> None:
+        graph = self._make_graph(
+            [
+                ("X", TensorProto.FLOAT, x_shape),
+                ("scale", TensorProto.FLOAT, scale_shape),
+                ("bias", TensorProto.FLOAT, bias_shape),
+            ],
+            [
+                make_node(
+                    "GroupNormalization",
+                    ["X", "scale", "bias"],
+                    ["y"],
+                    num_groups=num_groups,
+                )
+            ],
+            [],
+        )
+        with pytest.raises(onnx.shape_inference.InferenceError):
+            self._inferred(
+                graph,
+                opset_imports=[helper.make_opsetid(ONNX_DOMAIN, 21)],
+            )
 
     @pytest.mark.parametrize("version", all_versions_for("RMSNormalization"))
     def test_rms_normalization(self, version) -> None:
