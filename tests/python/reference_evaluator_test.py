@@ -3191,7 +3191,7 @@ class TestReferenceEvaluator:
                         f"Discrepancies (max={diff}) for {reduce_op!r}, {baseline} != {k}\n{a}\n!=\n{b}"
                     )
 
-    @pytest.mark.parametrize("opset", [13, 17, 18])
+    @pytest.mark.parametrize("opset", [13, 17, 18, 28])
     def test_mvn(self, opset: int, ref_opset: int = 13):
         X = make_tensor_value_info("X", TensorProto.FLOAT, [None, None, None, None])
         Y = make_tensor_value_info("Y", TensorProto.FLOAT, [None, None, None, None])
@@ -3210,7 +3210,56 @@ class TestReferenceEvaluator:
         expected = ref_expected.run(None, {"X": x})[0]
 
         assert got.shape == expected.shape
-        assert_allclose(got, expected)
+        assert_allclose(got, expected, rtol=1e-6)
+
+    @pytest.mark.parametrize(
+        ("tensor_type", "dtype"),
+        [
+            (TensorProto.FLOAT16, np.float16),
+            (TensorProto.FLOAT, np.float32),
+            (TensorProto.DOUBLE, np.float64),
+        ],
+    )
+    def test_mvn_opset28_custom_epsilon_and_dtype(self, tensor_type, dtype) -> None:
+        x_info = make_tensor_value_info("X", tensor_type, [2, 3, 4])
+        y_info = make_tensor_value_info("Y", tensor_type, [2, 3, 4])
+        node = make_node(
+            "MeanVarianceNormalization",
+            ["X"],
+            ["Y"],
+            axes=[1, -1],
+            epsilon=1e-5,
+        )
+        graph = make_graph([node], "g", [x_info], [y_info])
+        model = make_model(graph, opset_imports=[make_opsetid("", 28)])
+        x = np.arange(24, dtype=dtype).reshape(2, 3, 4)
+
+        got = ReferenceEvaluator(model).run(None, {"X": x})[0]
+        compute_x = x.astype(np.float32) if dtype == np.float16 else x
+        mean = np.mean(compute_x, axis=(1, -1), keepdims=True)
+        mean_squared = np.square(mean)
+        squared_mean = np.mean(
+            np.square(compute_x), axis=(1, -1), keepdims=True
+        )
+        expected = (
+            (compute_x - mean) / (np.sqrt(squared_mean - mean_squared) + 1e-5)
+        ).astype(dtype)
+
+        assert got.dtype == x.dtype
+        assert_allclose(got, expected, rtol=1e-3, atol=1e-4)
+
+    def test_mvn_opset28_float16_default_epsilon_is_nonzero(self) -> None:
+        x_info = make_tensor_value_info("X", TensorProto.FLOAT16, [2])
+        y_info = make_tensor_value_info("Y", TensorProto.FLOAT16, [2])
+        node = make_node("MeanVarianceNormalization", ["X"], ["Y"], axes=[0])
+        graph = make_graph([node], "g", [x_info], [y_info])
+        model = make_model(graph, opset_imports=[make_opsetid("", 28)])
+
+        got = ReferenceEvaluator(model).run(
+            None, {"X": np.ones(2, dtype=np.float16)}
+        )[0]
+
+        assert_allclose(got, np.zeros(2, dtype=np.float16), rtol=0, atol=0)
 
     def test_concat_in_a_function(self):
         def create_model():

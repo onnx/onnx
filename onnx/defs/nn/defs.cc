@@ -2224,18 +2224,76 @@ ONNX_OPERATOR_SET_SCHEMA(
         })
         .SetDoc(TfIdfVectorizer_ver9_doc));
 
-static constexpr const char* mvn_ver13_doc = R"DOC(
-      A MeanVarianceNormalization Function: Perform mean variance normalization
-      on the input tensor X using formula: `(X-EX)/sqrt(E(X-EX)^2)`
-)DOC";
+static bool BuildMeanVarianceNormalizationFunctionBody(
+    const FunctionBodyBuildContext& ctx,
+    const OpSchema& schema,
+    FunctionProto& functionProto,
+    int functionOpsetVersion) {
+  ONNX_ASSERT(functionOpsetVersion == 17 || functionOpsetVersion == 18)
+  const auto* const input_type = ctx.getInputType(0);
+  if ((input_type == nullptr) || !input_type->has_tensor_type()) {
+    return false;
+  }
+  const int32_t elem_type = input_type->tensor_type().elem_type();
+  const bool use_float_compute = elem_type == TensorProto_DataType_FLOAT16 || elem_type == TensorProto_DataType_BFLOAT16;
 
-static const std::vector<int64_t> mvn_default_axes = {0, 2, 3};
+  const auto* const epsilon_attr = ctx.getAttribute("epsilon");
+  float epsilon = (epsilon_attr != nullptr) ? epsilon_attr->f() : 1e-9f;
+
+  FunctionBuilder builder(functionProto);
+  if (use_float_compute) {
+    builder.Add("XCompute = Cast (X)", "to", static_cast<int64_t>(TensorProto_DataType_FLOAT));
+  } else {
+    builder.Add("XCompute = Identity (X)");
+  }
+  builder.Const("ExponentFloat", ToTensor<float>(2.0f))
+      .Const("EpsilonFloat", ToTensor<float>(epsilon))
+      .Add("Exponent = CastLike (ExponentFloat, XCompute)")
+      .Add("Epsilon = CastLike (EpsilonFloat, XCompute)");
+
+  if (functionOpsetVersion == 17) {
+    builder.Add("X_RM = ReduceMean <axes : ints = @axes> (XCompute)")
+        .Add("EX_squared = Pow (X_RM, Exponent)")
+        .Add("X_squared = Pow (XCompute, Exponent)")
+        .Add("E_Xsquared = ReduceMean <axes : ints = @axes> (X_squared)");
+  } else {
+    builder.Add("axes = Constant <value_ints: ints = @axes>()")
+        .Add("X_RM = ReduceMean (XCompute, axes)")
+        .Add("EX_squared = Pow (X_RM, Exponent)")
+        .Add("X_squared = Pow (XCompute, Exponent)")
+        .Add("E_Xsquared = ReduceMean (X_squared, axes)");
+  }
+
+  builder.Add("Variance = Sub (E_Xsquared, EX_squared)")
+      .Add("STD = Sqrt (Variance)")
+      .Add("X_variance = Sub (XCompute, X_RM)")
+      .Add("Processed_STD = Add (STD, Epsilon)")
+      .Add("YCompute = Div (X_variance, Processed_STD)")
+      .Add("Y = CastLike (YCompute, X)");
+
+  schema.BuildFunction(functionProto);
+  return true;
+}
+
+static bool BuildMeanVarianceNormalizationFunctionBody_opset17(
+    const FunctionBodyBuildContext& ctx,
+    const OpSchema& schema,
+    FunctionProto& functionProto) {
+  return BuildMeanVarianceNormalizationFunctionBody(ctx, schema, functionProto, 17);
+}
+
+static bool BuildMeanVarianceNormalizationFunctionBody_opset18(
+    const FunctionBodyBuildContext& ctx,
+    const OpSchema& schema,
+    FunctionProto& functionProto) {
+  return BuildMeanVarianceNormalizationFunctionBody(ctx, schema, functionProto, 18);
+}
 
 ONNX_OPERATOR_SET_SCHEMA(
     MeanVarianceNormalization,
-    13,
+    28,
     OpSchema()
-        .SetDoc(mvn_ver13_doc)
+        .SetDoc(kDoc_MeanVarianceNormalization_ver28)
         .Input(0, "X", "Input tensor", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
         .Output(0, "Y", "Output tensor", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
         .Attr(
@@ -2245,44 +2303,16 @@ ONNX_OPERATOR_SET_SCHEMA(
             "along each channel. Two variables with the same C-coordinate "
             "are associated with the same mean and variance.",
             AttributeProto::INTS,
-            mvn_default_axes)
+            defs::nn::utils::kMeanVarianceNormalizationDefaultAxes)
+        .Attr("epsilon", "The epsilon value to use to avoid division by zero.", AttributeProto::FLOAT, 1e-9f)
         .TypeConstraint(
             "T",
             {types::Float16, types::Float, types::Double, types::BFloat16},
-            "Constrain input and output types to all numeric tensors.")
-        .FunctionBody(R"ONNX(
-        {
-          Exponent = Constant <value = float {2.0}>()
-          Epsilon = Constant <value = float {1e-9}>()
-          X_RM = ReduceMean <axes : ints = @axes> (X)
-          EX_squared = Pow (X_RM, Exponent)
-          X_squared = Pow (X, Exponent)
-          E_Xsquared = ReduceMean <axes : ints = @axes> (X_squared)
-          Variance = Sub (E_Xsquared, EX_squared)
-          STD = Sqrt (Variance)
-          X_variance = Sub (X, X_RM)
-          Processed_STD = Add (STD, Epsilon)
-          Y = Div (X_variance, Processed_STD)
-        }
-        )ONNX")
-        .FunctionBody(
-            R"ONNX(
-        {
-          Exponent = Constant <value = float {2.0}>()
-          Epsilon = Constant <value = float {1e-9}>()
-          axes = Constant <value_ints: ints = @axes>()
-          X_RM = ReduceMean (X, axes)
-          EX_squared = Pow (X_RM, Exponent)
-          X_squared = Pow (X, Exponent)
-          E_Xsquared = ReduceMean (X_squared, axes)
-          Variance = Sub (E_Xsquared, EX_squared)
-          STD = Sqrt (Variance)
-          X_variance = Sub (X, X_RM)
-          Processed_STD = Add (STD, Epsilon)
-          Y = Div (X_variance, Processed_STD)
-        }
-        )ONNX",
-            18));
+            "Constrain input and output types to floating-point tensors.")
+        .SetNodeDeterminism(OpSchema::NodeDeterminism::Deterministic)
+        .SetContextDependentFunctionBodyBuilder(BuildMeanVarianceNormalizationFunctionBody_opset17, 17)
+        .SetContextDependentFunctionBodyBuilder(BuildMeanVarianceNormalizationFunctionBody_opset18, 18)
+        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
 static void col2imShapeInference(InferenceContext& ctx) {
   propagateElemTypeFromInputToOutput(ctx, 0, 0);

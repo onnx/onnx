@@ -8,6 +8,8 @@
 
 namespace ONNX_NAMESPACE::defs::nn::utils {
 
+const std::vector<int64_t> kMeanVarianceNormalizationDefaultAxes = {0, 2, 3};
+
 std::vector<int64_t> getConvPoolStrides(InferenceContext& ctx, size_t n_input_dims) {
   std::vector<int64_t> strides;
   if (getRepeatedAttribute(ctx, "strides", strides)) {

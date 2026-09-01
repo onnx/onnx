@@ -47,6 +47,8 @@ extern const char kDoc_LpNormalization_ver1[];
 extern const char kDoc_LSTM_ver14[];
 extern const char kDoc_MatMul_ver9[];
 extern const char kDoc_MaxUnpool_ver11[];
+extern const char kDoc_MeanVarianceNormalization_ver13[];
+extern const char kDoc_MeanVarianceNormalization_ver28[];
 extern const char kDoc_mish_ver18[];
 extern const char kDoc_Mod_ver13[];
 extern const char kDoc_Mod_ver28[];
