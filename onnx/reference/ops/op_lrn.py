@@ -20,7 +20,7 @@ class LRN(OpRun):
         minc = x.shape[1]
         c1 = math.floor((size - 1) / 2)
         c2 = math.ceil((size - 1) / 2) + 1
-        for c in range(x.shape[0]):
+        for c in range(x.shape[1]):
             begin = max(0, c - c1)
             end = min(minc, c + c2)
             square_sum[:, c, :, :] = np.sum(x[:, begin:end, :, :] ** 2, axis=1)
