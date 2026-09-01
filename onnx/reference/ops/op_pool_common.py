@@ -21,15 +21,18 @@ def get_pad_shape(
     kernel_spatial_shape: Sequence[int],
     strides_spatial: Sequence[int],
     output_spatial_shape: Sequence[int],
+    dilations: Sequence[int] | None = None,
 ) -> Sequence[int]:
     spatial_dims = len(input_spatial_shape)
     pad_shape = [0] * spatial_dims
     strides_spatial = strides_spatial or [1] * spatial_dims
+    dilations = dilations or [1] * spatial_dims
     if auto_pad in ("SAME_UPPER", "SAME_LOWER"):
         for i in range(spatial_dims):
             pad_shape[i] = (
                 (output_spatial_shape[i] - 1) * strides_spatial[i]
-                + kernel_spatial_shape[i]
+                + (kernel_spatial_shape[i] - 1) * dilations[i]
+                + 1
                 - input_spatial_shape[i]
             )
     elif auto_pad == "VALID":
@@ -128,6 +131,7 @@ def get_output_shape_auto_pad(
     input_spatial_shape: Sequence[int],
     kernel_spatial_shape: Sequence[int],
     strides_spatial: Sequence[int],
+    dilations: Sequence[int] | None = None,
 ) -> Sequence[int]:
     """https://www.tensorflow.org/api_docs/python/tf/keras/layers/AveragePooling2D
     output_shape = math.floor((input_shape - 1) / strides) + 1  (SAME)
@@ -136,6 +140,7 @@ def get_output_shape_auto_pad(
     However, ONNX spec allow ceil_mode to be True because ORT does handle the case.
     """
     strides_spatial = strides_spatial or [1] * len(input_spatial_shape)
+    dilations = dilations or [1] * len(input_spatial_shape)
     out_shape = [0] * len(input_spatial_shape)
     for i in range(len(input_spatial_shape)):
         if auto_pad in ("SAME_UPPER", "SAME_LOWER"):
@@ -145,7 +150,10 @@ def get_output_shape_auto_pad(
         elif auto_pad == "VALID":
             out_shape[i] = (
                 math.floor(
-                    (input_spatial_shape[i] - kernel_spatial_shape[i])
+                    (
+                        input_spatial_shape[i]
+                        - ((kernel_spatial_shape[i] - 1) * dilations[i] + 1)
+                    )
                     / strides_spatial[i]
                 )
                 + 1
@@ -289,10 +297,10 @@ class CommonPool(OpRun):
                 "ceil_mode is not supported with auto_pad"
             )
             out_shape = get_output_shape_auto_pad(
-                auto_pad, x.shape[2:], kernel_shape, strides
+                auto_pad, x.shape[2:], kernel_shape, strides, dilations
             )
             pads_shape = get_pad_shape(
-                auto_pad, x_shape[2:], kernel_shape, strides, out_shape
+                auto_pad, x_shape[2:], kernel_shape, strides, out_shape, dilations
             )
             pads = get_pad_with_auto_pad(auto_pad, pads_shape)
             n_dims = len(pads) // 2
