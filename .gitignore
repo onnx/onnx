@@ -79,7 +79,6 @@ onnx.egg-info
 compile_commands.json
 
 # generated files
-onnx/version.py
 compile_commands.json
 
 # test generated files
@@ -116,3 +115,4 @@ docs/docsgen/**/*.pb
 =0.*
 _codeql_build_dir/
 _codeql_detected_source_root
+/.lycheecache

@@ -12,7 +12,6 @@ from typing import TYPE_CHECKING, Any, TypeVar
 
 import google.protobuf.message
 import numpy as np
-import numpy.typing as npt
 import typing_extensions
 
 import onnx
@@ -77,6 +76,8 @@ VERSION_TABLE: VersionTableType = [
     ("1.20.0", 13, 25, 5, 1),
     ("1.20.1", 13, 25, 5, 1),
     ("1.21.0", 13, 26, 5, 1),
+    ("1.22.0", 13, 27, 5, 1),
+    ("1.23.0", 14, 28, 5, 1),
 ]
 
 VersionMapType = dict[tuple[str, int], int]
@@ -85,19 +86,19 @@ VersionMapType = dict[tuple[str, int], int]
 def _create_op_set_id_version_map(table: VersionTableType) -> VersionMapType:
     """Create a map from (opset-domain, opset-version) to ir-version from above table."""
     result: VersionMapType = {}
-
-    def process(release_version: str, ir_version: int, *args: Any) -> None:
-        del release_version  # Unused
+    for row in table:
+        ir_version = row[1]
         for pair in zip(
-            ["ai.onnx", "ai.onnx.ml", "ai.onnx.training"], args, strict=False
+            ["ai.onnx", "ai.onnx.ml", "ai.onnx.training"],
+            row[2:],
+            strict=False,
         ):
             if pair not in result:
                 result[pair] = ir_version
+                if pair[0] == "ai.onnx":
+                    result["ai.onnx.preview", pair[1]] = ir_version
                 if pair[0] == "ai.onnx.training":
                     result["ai.onnx.preview.training", pair[1]] = ir_version
-
-    for row in table:
-        process(*row)
     return result
 
 
@@ -361,34 +362,6 @@ def set_model_props(model: ModelProto, dict_value: dict[str, str]) -> None:
     set_metadata_props(model, dict_value)
 
 
-def _pack_4bitx2(array: np.ndarray) -> npt.NDArray[np.uint8]:
-    """Convert a numpy array to flatten, packed int4/uint4. Elements must be in the correct range."""
-    # Create a 1D copy
-    array_flat = array.ravel().view(np.uint8).copy()
-    size = array.size
-    odd_sized = size % 2 == 1
-    if odd_sized:
-        array_flat.resize([size + 1], refcheck=False)
-    array_flat &= 0x0F
-    array_flat[1::2] <<= 4
-    return array_flat[0::2] | array_flat[1::2]
-
-
-def _pack_2bitx4(array: np.ndarray) -> npt.NDArray[np.uint8]:
-    """Convert a numpy array to flatten, packed int2/uint2. Elements must be in the correct range."""
-    # Create a 1D copy
-    array_flat = array.ravel().view(np.uint8).copy()
-    size = array.size
-    pad_len = size % 4
-    if pad_len:
-        array_flat.resize([size + (4 - pad_len)], refcheck=False)
-    array_flat &= 0x03
-    array_flat[1::4] <<= 2
-    array_flat[2::4] <<= 4
-    array_flat[3::4] <<= 6
-    return array_flat[0::4] | array_flat[1::4] | array_flat[2::4] | array_flat[3::4]
-
-
 def make_tensor(
     name: str,
     data_type: int,
@@ -424,15 +397,19 @@ def make_tensor(
     np_dtype = tensor_dtype_to_np_dtype(data_type)
 
     if raw:
-        # NumPy doesn't have INT2/INT4/FP4. It is packed in couples to UINT8 buffers.
-        if data_type in {TensorProto.UINT4, TensorProto.INT4, TensorProto.FLOAT4E2M1}:
-            expected_size_bytes = 0.5
+        # NumPy doesn't have INT2/INT4/FP4/FP6. It is packed in couples to UINT8 buffers.
+        if data_type in {TensorProto.FLOAT6E2M3, TensorProto.FLOAT6E3M2}:
+            bits_per_element = 6
+        elif data_type in {TensorProto.UINT4, TensorProto.INT4, TensorProto.FLOAT4E2M1}:
+            bits_per_element = 4
         elif data_type in {TensorProto.UINT2, TensorProto.INT2}:
-            expected_size_bytes = 0.25
+            bits_per_element = 2
         else:
-            expected_size_bytes = np_dtype.itemsize
-        expected_size_bytes *= math.prod(dims)
-        expected_size_bytes = math.ceil(expected_size_bytes)
+            bits_per_element = np_dtype.itemsize * 8
+        # Integer ceil(n * bits_per_element / 8): avoids the float-multiplication
+        # precision loss for large n that a `math.ceil(fraction * n)` formula
+        # would be susceptible to.
+        expected_size_bytes = -(-math.prod(dims) * bits_per_element // 8)
         if isinstance(vals, np.ndarray):
             if data_type in {
                 TensorProto.INT4,
@@ -442,6 +419,8 @@ def make_tensor(
                 vals = onnx.numpy_helper._pack_4bitx2(vals)
             elif data_type in {TensorProto.UINT2, TensorProto.INT2}:
                 vals = onnx.numpy_helper._pack_2bitx4(vals)
+            elif data_type in {TensorProto.FLOAT6E2M3, TensorProto.FLOAT6E3M2}:
+                vals = onnx.numpy_helper._pack_6bit(vals.view(np.uint8))
 
             raw_data = onnx.numpy_helper.tobytes_little_endian(vals)
         elif isinstance(vals, bytes):
@@ -475,9 +454,18 @@ def make_tensor(
         vals = onnx.numpy_helper.to_float8e8m0(
             np.asarray(vals), saturate=True, round_mode="up"
         ).flatten()
+    elif data_type in {TensorProto.FLOAT6E2M3, TensorProto.FLOAT6E3M2}:
+        # For FP6 in non-raw mode, store per-element bytes in int32_data (like float8)
+        vals = np.asarray(vals, dtype=np_dtype).flatten().view(np.uint8)
     else:
         vals = np.asarray(vals, dtype=np_dtype).flatten()
 
+    expected_elements = math.prod(dims)
+    if len(vals) != expected_elements:
+        raise ValueError(
+            f"Number of values ({len(vals)}) does not match tensor "
+            f"dimensions requiring {expected_elements} elements."
+        )
     if data_type == TensorProto.COMPLEX128:
         vals = vals.view(np.float64)  # type: ignore[union-attr]
     elif data_type == TensorProto.COMPLEX64:
@@ -494,10 +482,10 @@ def make_tensor(
         vals = vals.view(np.uint8)  # type: ignore[union-attr]
     elif data_type in {TensorProto.UINT4, TensorProto.INT4, TensorProto.FLOAT4E2M1}:
         # Convert to packed 4-bit representation
-        vals = _pack_4bitx2(vals)  # type: ignore[arg-type]
+        vals = onnx.numpy_helper._pack_4bitx2(vals)  # type: ignore[arg-type]
     elif data_type in {TensorProto.UINT2, TensorProto.INT2}:
         # Convert to packed 2-bit representation
-        vals = _pack_2bitx4(vals)  # type: ignore[arg-type]
+        vals = onnx.numpy_helper._pack_2bitx4(vals)  # type: ignore[arg-type]
     elif data_type == TensorProto.BOOL:
         vals = vals.astype(np.uint8)  # type: ignore[union-attr]
 
@@ -721,12 +709,34 @@ def make_attribute(
 
 
 def make_attribute_ref(
-    name: str, attr_type: AttributeProto.AttributeType, doc_string: str | None = None
+    name: str,
+    attr_type: AttributeProto.AttributeType,
+    doc_string: str | None = None,
+    *,
+    ref_attr_name: str | None = None,
 ) -> AttributeProto:
-    """Make an AttributeProto holding a reference to the parent function's attribute of given name and type."""
+    """Make an AttributeProto holding a reference to the parent function's attribute.
+
+    The returned attribute carries no value of its own; at instantiation time its
+    value is supplied by the parent function's attribute named ``ref_attr_name``.
+    When ``ref_attr_name`` is not provided, it defaults to ``name``. Reference
+    attributes are only valid inside a function (sub-graph).
+
+    Args:
+        name: The name of this attribute as used inside the function body.
+        attr_type: The type of the attribute.
+        doc_string: Optional human-readable documentation for the attribute.
+        ref_attr_name: The name of the parent function's attribute being referenced.
+    """
+    if ref_attr_name is None:
+        ref_attr_name = name
+    if not ref_attr_name:
+        raise ValueError("ref_attr_name must be non-empty")
+
     attr = AttributeProto()
     attr.name = name
     attr.type = attr_type  # type: ignore[assignment]
+    attr.ref_attr_name = ref_attr_name
     if doc_string:
         attr.doc_string = doc_string
     return attr
@@ -1036,6 +1046,8 @@ def printable_attribute(
         graphs.append(attr.g)
     elif attr.HasField("tp"):
         content.append(f"<Type Proto {attr.tp}>")
+    elif attr.HasField("sparse_tensor"):
+        content.append("<Sparse Tensor>")
     elif attr.floats:
         content.append(str_list(str_float, attr.floats))
     elif attr.ints:
@@ -1045,6 +1057,8 @@ def printable_attribute(
         content.append(str(list(map(_sanitize_str, attr.strings))))
     elif attr.tensors:
         content.append("[<Tensor>, ...]")
+    elif attr.sparse_tensors:
+        content.append("[<Sparse Tensor>, ...]")
     elif attr.type_protos:
         content.append("[")
         for i, tp in enumerate(attr.type_protos):

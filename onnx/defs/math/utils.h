@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include <cstdint>
 #include <string>
 #include <vector>
 
@@ -12,12 +13,17 @@
 #include "onnx/defs/tensor_proto_util.h"
 #include "onnx/onnx_pb.h"
 
-namespace ONNX_NAMESPACE {
-namespace defs {
-namespace math {
-namespace utils {
+namespace ONNX_NAMESPACE::defs::math::utils {
 
-std::function<void(OpSchema&)> TopKOpGenerator(const std::vector<std::string>& allowed_types);
+std::function<void(OpSchema&)> TopKOpGenerator(std::vector<std::string> allowed_types);
+
+std::function<void(OpSchema&)> EinsumOpGenerator(std::vector<std::string> allowed_types);
+
+// Unary elementwise ops on float types: T input -> T output, no attrs, no function body.
+std::function<void(OpSchema&)> UnaryFloatMathOpGenerator(
+    const char* doc,
+    const char* output_description,
+    std::vector<std::string> allowed_types = OpSchema::all_float_types_ir4());
 
 template <typename T>
 T GetScalarValueFromTensor(const ONNX_NAMESPACE::TensorProto* t) {
@@ -44,11 +50,6 @@ void MatMulShapeInference(ONNX_NAMESPACE::InferenceContext& ctx, int input1Idx, 
 
 void QLinearMatMulShapeInference(ONNX_NAMESPACE::InferenceContext& ctx);
 
-const char* QLinearMatMulDoc();
+int64_t MathOpTwoIntegers(const std::string& op_type, int64_t a, int64_t b);
 
-int MathOpTwoIntegers(const std::string& op_type, int a, int b);
-
-} // namespace utils
-} // namespace math
-} // namespace defs
-} // namespace ONNX_NAMESPACE
+} // namespace ONNX_NAMESPACE::defs::math::utils

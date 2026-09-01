@@ -10,6 +10,7 @@
 #include "onnx/defs/function.h"
 #include "onnx/defs/schema.h"
 #include "onnx/defs/sequence/utils.h"
+#include "onnx/defs/type_builders.h"
 
 namespace ONNX_NAMESPACE {
 
@@ -128,7 +129,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint("S", OpSchema::all_tensor_sequence_types(), "Constrain to any tensor type.")
         .TypeConstraint(
             "I",
-            {"tensor(int32)", "tensor(int64)"},
+            {types::Int32, types::Int64},
             "Constrain position to integral tensor. It must be a scalar(tensor of empty shape).")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           const auto input0_type = ctx.getInputType(0);
@@ -186,7 +187,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint("T", OpSchema::all_tensor_types(), "Constrain to any tensor type.")
         .TypeConstraint(
             "I",
-            {"tensor(int32)", "tensor(int64)"},
+            {types::Int32, types::Int64},
             "Constrain position to integral tensor. It must be a scalar(tensor of empty shape).")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           const auto input0_type = ctx.getInputType(0);
@@ -224,7 +225,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint("S", OpSchema::all_tensor_sequence_types(), "Constrain to any tensor type.")
         .TypeConstraint(
             "I",
-            {"tensor(int32)", "tensor(int64)"},
+            {types::Int32, types::Int64},
             "Constrain position to integral tensor. It must be a scalar(tensor of empty shape).")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           const auto input0_type = ctx.getInputType(0);
@@ -248,7 +249,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint("S", OpSchema::all_tensor_sequence_types(), "Constrain to any tensor type.")
         .TypeConstraint(
             "I",
-            {"tensor(int64)"},
+            {types::Int64},
             "Constrain output to integral tensor. It must be a scalar(tensor of empty shape).")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           auto output_tensor_type = ctx.getOutputType(0)->mutable_tensor_type();

@@ -226,8 +226,16 @@ class OpRun(abc.ABC):
         )
 
     @staticmethod
-    def _evaluate_subgraph(context, value, attributes):
-        return value.run(None, context or {}, attributes=attributes)
+    def _evaluate_subgraph(context, value, attributes, bindings=None):
+        run_kwargs: dict[str, Any] = {}
+        if bindings is not None:
+            # Reuse the parent's SymbolBindings so a symbolic dimension
+            # (single global namespace, see docs/ShapeAnnotationSemantics.md)
+            # is checked consistently between the parent graph and this
+            # subgraph (If/Loop/Scan body).
+            run_kwargs["check_shape_annotations"] = True
+            run_kwargs["_bindings"] = bindings
+        return value.run(None, context or {}, attributes=attributes, **run_kwargs)
 
     def _load_attributes(self) -> None:
         """Checks and loads attributes."""
@@ -248,8 +256,8 @@ class OpRun(abc.ABC):
                 setattr(
                     self,
                     f"_run_{att.name}",
-                    lambda context, value=value, attributes=None: (
-                        OpRun._evaluate_subgraph(context, value, attributes)
+                    lambda context, value=value, attributes=None, bindings=None: (
+                        OpRun._evaluate_subgraph(context, value, attributes, bindings)
                     ),
                 )
 
@@ -384,7 +392,7 @@ class OpRun(abc.ABC):
             )
         return res
 
-    def run(self, *args, linked_attributes=None, context=None):
+    def run(self, *args, linked_attributes=None, context=None, bindings=None):
         """Calls method ``_run``, catches exceptions,
         displays a longer error message.
 
@@ -394,6 +402,12 @@ class OpRun(abc.ABC):
                 the attribute of the function it belongs to
             context: if this node is part of the subgraph, `context` is
                 a dictionary with the values this node may use
+            bindings: if not None, the active `SymbolBindings` instance
+                (see `onnx.reference.shape_annotation_checker`) used to
+                check shape annotations; propagated to any subgraph this
+                node may invoke (If, Loop, Scan) so a symbolic dimension
+                shared between the parent graph and the subgraph is
+                checked consistently
 
         Returns:
             tuple of results
@@ -451,6 +465,8 @@ class OpRun(abc.ABC):
             kwargs["attributes"] = linked_attributes
         if context is not None:
             kwargs["context"] = context
+        if bindings is not None and (self.has_subgraph or isinstance(self, OpFunction)):
+            kwargs["bindings"] = bindings
         try:
             if overridden_attributes:
                 res = self._run(*args, **overridden_attributes, **kwargs)
@@ -593,9 +609,9 @@ class OpRun(abc.ABC):
 class OpRunExpand(OpRun):
     """Class any operator to avoid must inherit from."""
 
-    def __init__(self, *args, **kwargs):  # noqa: ARG002
+    def __new__(cls, *args, **kwargs):  # noqa: ARG004
         raise RuntimeError(
-            f"The reference implementation must not use this node ({type(self)})."
+            f"The reference implementation must not use this node ({cls})."
         )
 
     def _run(self, *inputs, **kwargs):  # noqa: ARG002
@@ -638,10 +654,18 @@ class OpFunction(OpRun):
                 f"and the expected number of inputs {len(impl.input_names)} "
                 f"for node {self.op_type!r} from domain {self.domain!r}."
             )
+        bindings = kwargs.pop("bindings", None)
         feeds = dict(zip(impl.input_names, inputs, strict=False))
         attributes = self.attributes_.copy()
         attributes.update(kwargs)
-        results = impl.run(None, feeds, attributes=attributes)
+        run_kwargs: dict[str, Any] = {}
+        if bindings is not None:
+            # Propagate the parent's active SymbolBindings so a symbolic
+            # dimension shared between the caller and the function body is
+            # checked consistently (single global namespace).
+            run_kwargs["check_shape_annotations"] = True
+            run_kwargs["_bindings"] = bindings
+        results = impl.run(None, feeds, attributes=attributes, **run_kwargs)
         if len(impl.output_names) != len(results):
             raise RuntimeError(
                 f"Mismatch lengths between the number of outputs {len(results)} "

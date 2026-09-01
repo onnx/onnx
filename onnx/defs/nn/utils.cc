@@ -1,12 +1,27 @@
 // Copyright (c) ONNX Project Contributors
 //
 // SPDX-License-Identifier: Apache-2.0
+
 #include "onnx/defs/nn/utils.h"
 
-namespace ONNX_NAMESPACE {
-namespace defs {
-namespace nn {
-namespace utils {
+#include <algorithm>
+
+namespace ONNX_NAMESPACE::defs::nn::utils {
+
+std::vector<int64_t> getConvPoolStrides(InferenceContext& ctx, size_t n_input_dims) {
+  std::vector<int64_t> strides;
+  if (getRepeatedAttribute(ctx, "strides", strides)) {
+    if (strides.size() != n_input_dims) {
+      fail_shape_inference("Attribute strides has incorrect size");
+    }
+    if (std::any_of(strides.begin(), strides.end(), [](int64_t s) { return s <= 0; })) {
+      fail_shape_inference("Attribute strides must only contain positive values");
+    }
+  } else {
+    strides.assign(n_input_dims, 1);
+  }
+  return strides;
+}
 
 void AttentionPropagateElemTypeFromInputToOutput(InferenceContext& ctx) {
   propagateElemTypeFromInputToOutput(ctx, 0, 0);
@@ -28,7 +43,7 @@ void AttentionPropagateElemTypeFromInputToOutput(InferenceContext& ctx) {
       }
       const auto* const kv_num_heads_attr = ctx.getAttribute("kv_num_heads");
       if (kv_num_heads_attr == nullptr) {
-        fail_type_inference("3D inputs expected to have q_num_heads attribute.");
+        fail_type_inference("3D inputs expected to have kv_num_heads attribute.");
       }
     }
 
@@ -89,9 +104,12 @@ void AttentionPropagateElemTypeFromInputToOutput(InferenceContext& ctx) {
         }
         int64_t q_num_heads = q_num_heads_attr->i();
         int64_t kv_num_heads = kv_num_heads_attr->i();
+        if (q_num_heads <= 0 || kv_num_heads <= 0) {
+          fail_type_inference("q_num_heads and kv_num_heads must be positive.");
+        }
         // Calculate v_head_size
-        int64_t v_head_size = value_dims[2].dim_value() / kv_num_heads;
-        output_shape.add_dim()->set_dim_value(v_head_size * q_num_heads);
+        int64_t v_head_size = checkedDivide(value_dims[2].dim_value(), kv_num_heads);
+        output_shape.add_dim()->set_dim_value(checkedMultiply(v_head_size, q_num_heads));
         updateOutputShape(ctx, 0, output_shape);
         // Update qk_matmul_shape
         qk_matmul_shape.add_dim()->set_dim_value(q_num_heads);
@@ -128,7 +146,7 @@ void AttentionPropagateElemTypeFromInputToOutput(InferenceContext& ctx) {
         }
 
         if (kv_sequence_length > 0 && past_key_dims[2].has_dim_value()) {
-          int64_t total_sequence_length = kv_sequence_length + past_key_dims[2].dim_value();
+          int64_t total_sequence_length = checkedAdd(kv_sequence_length, past_key_dims[2].dim_value());
 
           ONNX_NAMESPACE::TensorShapeProto present_key_shape;
           for (const auto& dim : past_key_dims) {
@@ -157,7 +175,11 @@ void AttentionPropagateElemTypeFromInputToOutput(InferenceContext& ctx) {
   }
 }
 
-bool AttentionAppendFunctionCausalMask(const FunctionBodyBuildContext& ctx, FunctionBuilder& builder, bool padding) {
+bool AttentionAppendFunctionCausalMask(
+    const FunctionBodyBuildContext& ctx,
+    FunctionBuilder& builder,
+    bool padding,
+    bool cast_mask_to_bias) {
   builder.Add("NewKVSeqLen =  Shape <start = -2, end = -1> (PresentKey)")
       .Add("AttnBiasShape = Concat <axis = 0> (QSeqLen, NewKVSeqLen)");
   float neg_inf = -std::numeric_limits<float>::infinity();
@@ -187,12 +209,19 @@ bool AttentionAppendFunctionCausalMask(const FunctionBodyBuildContext& ctx, Func
     builder.Add("AttnBias = ConstantOfShape(AttnBiasShape)");
   }
 
-  // If is_causal set to true, the attention masking is a lower triangular matrix when the mask
-  // is a square matrix. The attention masking has the form of the upper left causal bias due to
-  // the alignment when the mask is a non-square matrix.
-  // An error is thrown if both attn_mask and is_causal are set.
+  // If is_causal is set to true, causal masking is applied with bottom-right
+  // (offset-aware) alignment: a query at in-block index i attends key j iff
+  // j <= i + offset, where offset is the number of valid keys preceding the query block.
+  // For an internal past_key cache offset is the scalar PastKVSeqLen; for an external
+  // (static) cache (nonpad_kv_seqlen present, no past_key) offset is per batch and the
+  // builder scope holds CausalOffsetPerBatch (= nonpad_kv_seqlen - q_len).
+  // When both attn_mask and is_causal are set, the two are combined: a boolean
+  // attn_mask intersects with the causal frontier (a position is attended only if
+  // allowed by both), while a float attn_mask is added as a bias to the causal
+  // bias rather than strictly disabling positions (matching defs.cc).
   const auto* const is_causal_attr = ctx.getAttribute("is_causal");
   int64_t is_causal = (is_causal_attr != nullptr) ? is_causal_attr->i() : 0;
+  const bool external_cache_offset = (is_causal == 1) && ctx.hasInput(6) && !ctx.hasInput(4);
   if (is_causal == 1) {
     builder.Const1D("Zero", static_cast<int64_t>(0))
         .Const1D("One", static_cast<int64_t>(1))
@@ -203,18 +232,37 @@ bool AttentionAppendFunctionCausalMask(const FunctionBodyBuildContext& ctx, Func
         .Add("RangeRow = Range(ZeroNoDim, SequenceLength, OneNoDim)")
         .Add("RangeRow2D = Unsqueeze(RangeRow, One)")
         .Add("RangeCol = Range(ZeroNoDim, TotalSequenceLength, OneNoDim)")
-        .Add("RangeCol2D = Unsqueeze(RangeCol, Zero)")
-        .Add("RangeRow2DPast = Add(RangeRow2D, PastKVSeqLen)")
-        .Add("BoolMaskTri = Less(RangeRow2DPast, RangeCol2D)")
-        .Add("MaskTri = Where(BoolMaskTri, FloatNegInf, ScalarZero)")
-        .Add("AttnBiasCausalOrNot = Add(AttnBias, MaskTri)");
+        .Add("RangeCol2D = Unsqueeze(RangeCol, Zero)");
+    if (external_cache_offset) {
+      // Per-batch bottom-right frontier: broadcast the (batch,) offset into a 4D
+      // (batch, 1, q, total) boolean mask so it composes with the (batch,1,1,kv)
+      // padding mask added by the caller.
+      builder.Const("Axes01", std::vector<int64_t>{0, 1})
+          .Const("Axes123", std::vector<int64_t>{1, 2, 3})
+          .Add("RangeRow4D = Unsqueeze(RangeRow2D, Axes01)") // (1, 1, q, 1)
+          .Add("RangeCol4D = Unsqueeze(RangeCol2D, Axes01)") // (1, 1, 1, total)
+          .Add("OffsetB4D = Unsqueeze(CausalOffsetPerBatch, Axes123)") // (batch, 1, 1, 1)
+          .Add("RowPlusOff = Add(RangeRow4D, OffsetB4D)") // (batch, 1, q, 1)
+          .Add("BoolMaskTri = Less(RowPlusOff, RangeCol4D)"); // (batch, 1, q, total)
+    } else {
+      // Internal cache / no cache: scalar offset (PastKVSeqLen), 2D (q, total) mask.
+      builder.Add("RangeRow2DPast = Add(RangeRow2D, PastKVSeqLen)")
+          .Add("BoolMaskTri = Less(RangeRow2DPast, RangeCol2D)");
+    }
+    if (cast_mask_to_bias) {
+      // Cast the generated float mask before Add so non-float32 bias inputs
+      // remain valid.
+      builder.Add("MaskTriFloat = Where(BoolMaskTri, FloatNegInf, ScalarZero)")
+          .Add("MaskTri = CastLike(MaskTriFloat, AttnBias)");
+    } else {
+      // Preserve the exact function body emitted for frozen Attention-24.
+      builder.Add("MaskTri = Where(BoolMaskTri, FloatNegInf, ScalarZero)");
+    }
+    builder.Add("AttnBiasCausalOrNot = Add(AttnBias, MaskTri)");
   } else {
     builder.Add("AttnBiasCausalOrNot = Identity(AttnBias)");
   }
   return true;
 }
 
-} // namespace utils
-} // namespace nn
-} // namespace defs
-} // namespace ONNX_NAMESPACE
+} // namespace ONNX_NAMESPACE::defs::nn::utils

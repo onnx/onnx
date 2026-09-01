@@ -260,7 +260,7 @@ Graphs SHOULD be populated with documentation strings, which MAY be interpreted 
 
 ### Names Within a Graph
 
-All names SHOULD adhere to [C90 identifier syntax rules](https://en.cppreference.com/w/c/language/identifier).
+All names SHOULD adhere to [C90 identifier syntax rules](https://en.cppreference.com/c/language/identifier).
 
 Names of nodes, inputs, outputs, initializers, and attributes are organized into several namespaces. Within a namespace, each name MUST be unique for each given graph. Please see below for further clarification in the case where a graph contains nested subgraphs (as attribute values).
 
@@ -421,7 +421,7 @@ It is common to represent a tensor as a nested list. This generally works fine, 
 
 |Group|Types|Description|
 |---|---|---|
-Floating Point Types|float16, float32, float64, bfloat16, float8e4m3fn, float8e5m2, float8e4m3fnuz, float8e5m2fnuz, float4e2m1|Values adhering to the IEEE 754-2008 standard representation of floating-point data or defined in papers [FP8 Formats for Deep Learning](https://arxiv.org/abs/2209.05433), [8-bit Numerical Formats for Deep Neural Networks](https://arxiv.org/abs/2206.02915), and the [Open Compute Project](https://www.opencompute.org/documents/ocp-microscaling-formats-mx-v1-0-spec-final-pdf)
+Floating Point Types|float16, float32, float64, bfloat16, float8e4m3fn, float8e5m2, float8e4m3fnuz, float8e5m2fnuz, float4e2m1, float6e2m3, float6e3m2|Values adhering to the IEEE 754-2008 standard representation of floating-point data or defined in papers [FP8 Formats for Deep Learning](https://arxiv.org/abs/2209.05433), [8-bit Numerical Formats for Deep Neural Networks](https://arxiv.org/abs/2206.02915), and the [Open Compute Project](https://www.opencompute.org/documents/ocp-microscaling-formats-mx-v1-0-spec-final-pdf)
 Signed Integer Types|int2, int4, int8, int16, int32, int64|Signed integers are supported for 2-64 bit widths.
 Unsigned Integer Types|uint2, uint4, uint8, uint16, uint32, uint64|Unsigned integers are supported for 2-64 bit widths.
 Complex Types|complex64, complex128|A complex number with either 32- or 64-bit real and imaginary parts.
@@ -475,9 +475,9 @@ Each size in the list MAY be expressed as an integral value or as a "dimension v
 
 For example, a NxM matrix would have the shape list [N,M].
 
-The name of each dimension variable SHOULD adhere to [C90 identifier syntax rules](https://en.cppreference.com/w/c/language/identifier).
+The name of each dimension variable SHOULD adhere to [C90 identifier syntax rules](https://en.cppreference.com/c/language/identifier).
 
-Currently, dimension variables are not scoped. A dimension variable "N" represents the same value across the entire graph in a model. For example, if the graph has two inputs X and Y each with shape ["N"], then at runtime the values passed in for X and Y MUST be tensors of rank 1 with the same dimension. Nested sub-graphs currently share the same scope for dimension variables as the main-graph. This allows a model to relate the dimensions of tensors inside the subgraph to the dimensions of tensors in the outer graph.
+Currently, dimension variables are not scoped. A dimension variable "N" represents the same value across the entire graph in a model. For example, if the graph has two inputs X and Y each with shape ["N"], then at runtime the values passed in for X and Y MUST be tensors of rank 1 with the same dimension. Nested sub-graphs currently share the same scope for dimension variables as the main-graph. This allows a model to relate the dimensions of tensors inside the subgraph to the dimensions of tensors in the outer graph. See [Runtime Semantics of Shape Annotations](ShapeAnnotationSemantics.md) for a precise definition of what it means for a shape annotation to be satisfied at runtime.
 
 ONNX supports types such as Sequences of Tensors. The global scoping of dimension variables means that a variable with type "Sequence<Tensor<float, [M,N]>" represents a sequence of tensors that *all have the same shape*. The dimension variables M or N must be omitted from the above type if that dimension does not have a fixed size across all tensors in the sequence. The entire shape must be omitted from the type if different tensors in the sequence may have different ranks.
 
@@ -591,7 +591,7 @@ For tensor parallelism, tensors can be:
 
 Pipeline parallelism is indicated through optional pipeline stage identifiers that suggest how to distribute subgraphs across devices for pipelined execution.
 
-For more detailed information about multi-device execution patterns and examples, see the [Multi-Device Proposal](proposals/ONNXMultiDeviceProposal.md).
+For more detailed information about multi-device execution patterns and examples, see the [Multi-Device Proposal](proposals/0006-ONNXMultiDeviceProposal.md).
 
 ## Other Specification Documents
 

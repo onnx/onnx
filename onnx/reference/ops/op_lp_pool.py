@@ -37,7 +37,7 @@ class LpPool(CommonPool):
             strides=strides,
         )
 
-        kernel_element_count = np.prod(kernel_shape)
+        kernel_element_count = np.prod(kernel_shape, dtype=np.int64)
         return (
             np.power(kernel_element_count * power_average[0], 1.0 / p).astype(x.dtype),
         )

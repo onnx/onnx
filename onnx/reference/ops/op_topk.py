@@ -92,7 +92,7 @@ class TopK_11(_CommonTopK):
         ink,
         axis=None,
         largest=None,
-        sorted=None,  # noqa: A002
+        sorted=None,  # noqa: A002, ARG002
     ):
         """Runtime for operator *TopK*.
 
@@ -106,6 +106,5 @@ class TopK_11(_CommonTopK):
             does in `top_k.cc
             <https://github.com/Microsoft/onnxruntime/blob/main/onnxruntime/core/providers/cpu/math/top_k.cc#L63>`_.
         """
-        if sorted not in (True, 1):
-            raise RuntimeError("TopK does not implement anything for sorted=0.")
+        # sorted=0 means undefined order, so returning sorted output is conformant.
         return _CommonTopK._common_run(self, data, ink, axis=axis, largest=largest)
