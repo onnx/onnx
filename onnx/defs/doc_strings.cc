@@ -6,6 +6,41 @@
 
 namespace ONNX_NAMESPACE {
 #ifndef __ONNX_NO_DOC_STRINGS
+const char kDoc_BitShift_ver11[] = R"DOC(
+Bitwise shift operator performs element-wise operation. For each input element, if the
+attribute "direction" is "RIGHT", this operator moves its binary representation toward
+the right side so that the input value is effectively decreased. If the attribute "direction"
+is "LEFT", bits of binary representation moves toward the left side, which results the
+increase of its actual value. The input X is the tensor to be shifted and another input
+Y specifies the amounts of shifting. For example, if "direction" is "Right", X is [1, 4],
+and S is [1, 1], the corresponding output Z would be [0, 2]. If "direction" is "LEFT" with
+X=[1, 2] and S=[1, 2], the corresponding output Y would be [2, 8].
+
+Because this operator supports Numpy-style broadcasting, X's and Y's shapes are
+not necessarily identical.
+)DOC";
+
+const char kDoc_BitShift_ver28[] = R"DOC(
+Bitwise shift operator performs element-wise operation. For each input element, if the
+attribute "direction" is "RIGHT", this operator moves its binary representation toward
+the right side. If the attribute "direction" is "LEFT", bits of binary representation
+move toward the left side. The input X is the tensor to be shifted and another
+input Y specifies the amounts of shifting. For example, if "direction" is
+"RIGHT", X is [1, 4], and Y is [1, 1], the corresponding output Z would be
+[0, 2]. If "direction" is "LEFT" with X=[1, 2] and Y=[1, 2], the corresponding
+output Z would be [2, 8].
+
+For a signed T the right shift is an arithmetic shift (sign-extending). The
+vacated high bits are filled with copies of the sign bit, so a negative X stays
+negative. For a signed T a left shift can move bits into and past the sign bit,
+and bits shifted past the sign bit are discarded.
+
+If Y is negative, or is greater than or equal to the number of bits of T, then
+the result is whatever the sign bit extension alone produces: -1 for a right
+shift on a negative X, where the fill is a sign bit of 1, and 0 in every other
+case.
+)DOC";
+
 const char kDoc_GRU_ver14[] = R"DOC(
 Computes an one-layer GRU. This operator is usually supported via some custom
 implementation such as CuDNN.
@@ -1655,6 +1690,8 @@ a tiebreaker. That is, the element with the lower index will appear first.
 )DOC";
 
 #else
+const char kDoc_BitShift_ver11[] = "";
+const char kDoc_BitShift_ver28[] = "";
 const char kDoc_GRU_ver14[] = "";
 const char kDoc_Squeeze_ver24[] = "";
 const char kDoc_MaxUnpool_ver11[] = "";

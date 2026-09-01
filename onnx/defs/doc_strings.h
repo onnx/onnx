@@ -13,6 +13,8 @@ extern const char kDoc_Atan_ver7[];
 extern const char kDoc_Atanh_ver9[];
 extern const char kDoc_Bernoulli_ver15[];
 extern const char kDoc_BitCast_ver26[];
+extern const char kDoc_BitShift_ver11[];
+extern const char kDoc_BitShift_ver28[];
 extern const char kDoc_Cast_ver24[];
 extern const char kDoc_CastLike_ver24[];
 extern const char kDoc_Compress_ver9[];
