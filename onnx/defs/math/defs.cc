@@ -112,43 +112,20 @@ ONNX_OPERATOR_SET_SCHEMA(
         .FillUsing(MathDocGenerator("subtraction"))
         .PartialDataPropagationFunction([](DataPropagationContext& ctx) { MathOpDataPropagator(ctx, "Sub"); }));
 
-static constexpr const char* Mod_doc = R"DOC(
-Performs an element-wise binary modulo operation.
-The semantics and supported data types depend on the value of the `fmod` attribute which must be `0` (default), or `1`.
-
-If the `fmod` attribute is set to `0`, `T` is constrained to integer data types and the semantics follow that of the Python `%`-operator.
-The sign of the result is that of the divisor.
-
-If `fmod` is set to `1`, the behavior of this operator follows that of the `fmod` function in C and `T` is constrained to floating point data types.
-The result of this operator is the remainder of the division operation `x / y` where `x` and `y` are respective elements of `A` and `B`. The result is exactly the value `x - n * y`, where `n` is `x / y` with its fractional part truncated.
-The returned value has the same sign as `x` (except if `x` is `-0`) and is less or equal to `|y|` in magnitude.
-The following special cases apply when `fmod` is set to `1`:
-- If `x` is `-0` and `y` is greater than zero, either `+0` or `-0` may be returned.
-- If `x` is `±∞` and `y` is not `NaN`, `NaN` is returned.
-- If `y` is `±0` and `x` is not `NaN`, `NaN` should be returned.
-- If `y` is `±∞` and `x` is finite, `x` is returned.
-- If either argument is `NaN`, `NaN` is returned.
-
-This operator supports **multidirectional (i.e., NumPy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
-)DOC";
-
 ONNX_OPERATOR_SET_SCHEMA(
     Mod,
-    13,
+    28,
     OpSchema()
-        .SetDoc(Mod_doc)
+        .SetDoc(kDoc_Mod_ver28)
         .Attr(
             "fmod",
-            "Whether the operator should behave like fmod (default=0 meaning it will do integer mods); Set this to 1 to force fmod treatment",
+            "Whether the operator should use floor (0) or truncation (1) to calculate the quotient.",
             AttributeProto::INT,
             static_cast<int64_t>(0))
         .Input(0, "A", "Dividend tensor", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
         .Input(1, "B", "Divisor tensor", "T", OpSchema::Single, true, 1, OpSchema::NonDifferentiable)
         .Output(0, "C", "Remainder tensor", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
-        .TypeConstraint(
-            "T",
-            OpSchema::all_numeric_types_ir4(),
-            "Constrain input and output types to high-precision numeric tensors.")
+        .TypeConstraint("T", OpSchema::all_numeric_types_ir4(), "Constrain input and output types to numeric tensors.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           propagateElemTypeFromInputToOutput(ctx, 0, 0);
           if (hasNInputShapes(ctx, 2))
@@ -1488,7 +1465,7 @@ ONNX_OPERATOR_SET_SCHEMA(
     QLinearMatMul,
     21,
     OpSchema()
-        .SetDoc(defs::math::utils::QLinearMatMulDoc())
+        .SetDoc(kDoc_QLinearMatMul_ver10)
         .Input(0, "a", "N-dimensional quantized matrix a", "T1", OpSchema::Single, true, 1, OpSchema::NonDifferentiable)
         .Input(1, "a_scale", "scale of quantized input a", "TS", OpSchema::Single, true, 1, OpSchema::NonDifferentiable)
         .Input(
@@ -2025,232 +2002,10 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static void einsumShapeInference(ONNX_NAMESPACE::InferenceContext& ctx, std::string const& equation) {
-  // Only accept letters for indices
-  auto is_letter = [](char c) { return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z'); };
-
-  const size_t num_inputs = ctx.getNumInputs();
-  if (num_inputs < 1 || !hasNInputShapes(ctx, num_inputs)) {
-    return;
-  }
-  ONNX_NAMESPACE::TensorShapeProto output_shape;
-  std::string left_equation;
-
-  auto mid_index = equation.find("->");
-  if (mid_index != std::string::npos) {
-    // Separate right and left hand sides of the equation
-    left_equation = equation.substr(0, mid_index);
-  } else {
-    // No right hand side
-    left_equation = equation;
-  }
-
-  std::string term;
-  size_t num_operands = 0;
-  size_t num_ellipsis = 0;
-  size_t num_ellipsis_indices = 0;
-
-  // Parse the left-hand side
-  std::stringstream str(left_equation);
-  std::map<char, int> label_maps;
-  std::unordered_set<char> repeated_labels;
-  ONNX_NAMESPACE::TensorShapeProto dims_value, ellipsis_dims_value;
-  int num_labels = 0;
-  bool ellipsis_flag = true;
-
-  while (!str.eof()) {
-    std::getline(str, term, ',');
-    auto ellipsis_index = term.find("...");
-    if (num_inputs <= num_operands) {
-      fail_shape_inference("Number of input tensors does not match the operands in the equation.");
-    }
-    const auto& shape = ctx.getInputType(num_operands)->tensor_type().shape();
-    size_t rank = shape.dim_size();
-    size_t ellipsis_dims = 0;
-
-    size_t term_size = 0; // number of legal indices for the current term
-    size_t num_illegal_char = 0; // number of illegal char before the current 'index' in the current term
-
-    for (char index : term) {
-      if (is_letter(index)) {
-        term_size += 1;
-      }
-    }
-
-    // Validate that term_size is compatible with rank before accessing dimensions
-    if (ellipsis_index != std::string::npos) {
-      // For ellipsis case, rank must be at least term_size
-      if (rank < term_size) {
-        fail_shape_inference(
-            "Ellipsis represents incompatible dimensions for input ",
-            num_operands,
-            ". Rank ",
-            rank,
-            " is less than term size ",
-            term_size,
-            ".");
-      }
-    } else {
-      // For non-ellipsis case, rank must equal term_size
-      if (rank != term_size) {
-        fail_shape_inference(
-            "Rank of input ", num_operands, " (", rank, ") does not match the equation indices (", term_size, ").");
-      }
-    }
-
-    for (size_t index = 0; index < term.size(); ++index) {
-      if (index == ellipsis_index) {
-        // find ellipsis and record the dims represented by ellipsis
-        ellipsis_dims = rank - term_size;
-        if (ellipsis_flag) {
-          ellipsis_flag = false;
-          for (size_t i = 0; i < ellipsis_dims; i++) {
-            *ellipsis_dims_value.add_dim() = shape.dim(static_cast<int>(index + i - num_illegal_char));
-          }
-        } else {
-          for (size_t i = 0; i < ellipsis_dims; i++) {
-            const auto shape_dim = shape.dim(static_cast<int>(index + i - num_illegal_char));
-            auto* const current_dim = ellipsis_dims_value.mutable_dim(static_cast<int>(i));
-            if (shape_dim.has_dim_value() && current_dim->has_dim_value() &&
-                shape_dim.dim_value() > current_dim->dim_value() && current_dim->dim_value() == 1) {
-              current_dim->set_dim_value(shape_dim.dim_value());
-            }
-          }
-        }
-        index += 2; // skip the rest of dots
-        num_illegal_char += 3;
-        continue;
-
-      } else if (!is_letter(term[index])) {
-        num_illegal_char += 1;
-        continue;
-      }
-
-      const auto inserted = label_maps.emplace(term[index], num_labels).second;
-      if (inserted) {
-        *dims_value.add_dim() = shape.dim(static_cast<int>(index + ellipsis_dims - num_illegal_char));
-        ++num_labels;
-      } else {
-        repeated_labels.insert(term[index]);
-      }
-    }
-
-    if (ellipsis_index != std::string::npos) {
-      // If there is an ellipsis, the number of dimensions it represents
-      // must be total dim - letter dimensions
-      if (num_ellipsis == 0) {
-        num_ellipsis_indices = rank - term_size;
-      } else { // ellipsis has been seen before. Check that if dimensions
-               // are compatible
-        if (num_ellipsis_indices != rank - term_size) {
-          fail_shape_inference("Ellipsis represents incompatible dimensions.");
-        }
-      }
-      num_ellipsis++;
-    }
-    num_operands++;
-  }
-
-  if (num_inputs != num_operands) {
-    fail_shape_inference("Number of input tensors does not match the operands in the equation.");
-  }
-
-  // Parse the provided right-hand side
-  if (mid_index != std::string::npos) {
-    std::string right_equation = equation.substr(mid_index + 2);
-    auto right_ellipsis_index = right_equation.find("...");
-
-    for (size_t index = 0; index < right_equation.size(); ++index) {
-      // If there's an ellipsis, add its corresponding dimensions
-      if (index == right_ellipsis_index) {
-        for (size_t i = 0; i < num_ellipsis_indices; i++) {
-          *output_shape.add_dim() = ellipsis_dims_value.dim(static_cast<int>(i));
-        }
-        index += 2; // skip the rest of dots
-        continue;
-      }
-
-      if (is_letter(right_equation[index])) {
-        auto it = label_maps.find(right_equation[index]);
-        if (it == label_maps.end()) {
-          fail_shape_inference("Equation output contains a label missing from the inputs");
-        }
-        *output_shape.add_dim() = dims_value.dim(it->second);
-      }
-    }
-  } else { // Infer the dimension for right-hand side
-    // If there's an ellipsis, add its corresponding dimensions
-    for (size_t i = 0; i < num_ellipsis_indices; i++) {
-      *output_shape.add_dim() = ellipsis_dims_value.dim(static_cast<int>(i));
-    }
-    // If no explicit output was given, generate an implicit output by ordering all the
-    // labels in alphabetic order (by ASCII value consistent with numpy, so Z < a).
-    // Exclude any labels that occurred more than once, as these cancel out.
-    for (const auto& [label, dim_idx] : label_maps) {
-      if (repeated_labels.count(label) == 0) {
-        *output_shape.add_dim() = dims_value.dim(dim_idx);
-      }
-    }
-  }
-
-  updateOutputShape(ctx, 0, output_shape);
-}
-
-static constexpr const char* Einsum_ver12_doc = R"DOC(
-An einsum of the form `term1, term2 -> output-term` produces an output tensor using the following equation
-
-```
-output[output-term] = reduce-sum( input1[term1] * input2[term2] )
-```
-
-where the reduce-sum performs a summation over all the indices occurring in the input terms (term1, term2)
-that do not occur in the output-term.
-
-The Einsum operator evaluates algebraic tensor operations on a sequence of tensors, using the Einstein summation
-convention. The equation string contains a comma-separated sequence of lower case letters and/or upper case letters.
-Each term corresponds to an operand tensor, and the characters within the terms correspond to operands dimensions.
-Lower case letters and upper case letters are treated as distinct symbols, that is, "a" and "A" refer to different
-symbols.
-
-This sequence may be followed by "->" to separate the left and right hand side of the equation.
-If the equation contains "->" followed by the right-hand side, the explicit (not classical) form of the Einstein
-summation is performed, and the right-hand side indices indicate output tensor dimensions. In other cases,
-output indices are (implicitly) set to the sequence of indices appearing exactly once in the equation, sorted in
-increasing order of their ASCII values (so that all upper case letters precede all lower case letters, e.g.,
-"A" < "Z" < "a" < "z").
-
-When a dimension character is repeated in the left-hand side, it represents summation along the dimension.
-
-The equation may contain ellipsis ("...") to enable broadcasting. Ellipsis must indicate a fixed number of dimensions.
-Specifically, every occurrence of ellipsis in the equation must represent the same number of dimensions.
-The right-hand side may contain exactly one ellipsis. In implicit mode, the ellipsis dimensions are set to the
-beginning of the output. The equation string may contain space (U+0020) character.
-)DOC";
-
 ONNX_OPERATOR_SET_SCHEMA(
     Einsum,
-    12,
-    OpSchema()
-        .SetDoc(Einsum_ver12_doc)
-        .Attr("equation", "Einsum expression string.", AttributeProto::STRING)
-        .Input(0, "Inputs", "Operands", "T", OpSchema::Variadic, true, 1, OpSchema::Differentiable)
-        .Output(0, "Output", "Output tensor", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
-        .TypeConstraint(
-            "T",
-            OpSchema::all_numeric_types(),
-            "Constrain input and output types to all numerical tensor types.")
-        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-          // Type inference
-          propagateElemTypeFromInputToOutput(ctx, 0, 0);
-          std::string equation = getAttribute(ctx, "equation", "");
-          if (equation.empty()) {
-            return;
-          }
-
-          equation.erase(std::remove(equation.begin(), equation.end(), ' '),
-                         equation.end()); // Remove space char
-          einsumShapeInference(ctx, equation);
-        }));
+    28,
+    OpSchema().FillUsing(defs::math::utils::EinsumOpGenerator(OpSchema::all_numeric_types_ir4())));
 
 static constexpr const char* reduction_doc_sce =
     "Type of reduction to apply to loss: none, sum, mean(default). "
@@ -2978,7 +2733,24 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static constexpr const char* STFT_ver17_doc = R"DOC(Computes the Short-time Fourier Transform of the signal.)DOC";
+static constexpr const char* STFT_ver17_doc = R"DOC(Computes the Short-time Fourier Transform of the signal.
+
+The STFT is computed by sliding a window of length `frame_length` over the signal with a
+step size of `frame_step`, computing a DFT of each windowed frame.
+
+The number of frames in the output is computed as:
+
+  `frames = floor((signal_length - frame_length) / frame_step) + 1`
+
+Constraints on inputs:
+- `frame_step` must be a scalar.
+- `frame_length` must be a scalar. When omitted and `window` is provided, `frame_length`
+  is inferred from `window.shape[0]`. When both `window` and `frame_length` are omitted,
+  `frame_length` defaults to `signal_length`.
+- `window` must be a 1-D tensor. When omitted, a rectangular (all-ones) window of length
+  `frame_length` is used. When both `window` and `frame_length` are provided, the length
+  of the `window` tensor must equal `frame_length`.
+)DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
     STFT,
@@ -2988,9 +2760,9 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Attr(
             "onesided",
             "If onesided is 1, only values for w in [0, 1, 2, ..., floor(n_fft/2) + 1] are returned because "
-            "the real-to-complex Fourier transform satisfies the conjugate symmetry, i.e., X[m, w] = X[m,w]=X[m,n_fft-w]*. "
+            "the real-to-complex Fourier transform satisfies the conjugate symmetry, i.e., X[m, w] = X[m, n_fft-w]*. "
             "Note if the input or window tensors are complex, then onesided output is not possible. "
-            "Enabling onesided with real inputs performs a Real-valued fast Fourier transform (RFFT)."
+            "Enabling onesided with real inputs performs a Real-valued fast Fourier transform (RFFT). "
             "When invoked with real or complex valued input, the default value is 1. "
             "Values can be 0 or 1.",
             AttributeProto::INT,
@@ -3001,7 +2773,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Input tensor representing a real or complex valued signal. "
             "For real input, the following shape is expected: [batch_size][signal_length][1]. "
             "For complex input, the following shape is expected: [batch_size][signal_length][2], where "
-            "[batch_size][signal_length][0] represents the real component and [batch_size][signal_length][1] represents the imaginary component of the signal.",
+            "[batch_size][signal_length][0] represents the real component and [batch_size][signal_length][1] represents the imaginary component of the signal. "
+            "The tensor is expected to have rank 3.",
             "T1",
             OpSchema::Single,
             true,
@@ -3010,7 +2783,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Input(
             1,
             "frame_step",
-            "The number of samples to step between successive DFTs.",
+            "A scalar representing the number of samples to step between successive DFTs.",
             "T2",
             OpSchema::Single,
             true,
@@ -3019,9 +2792,10 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Input(
             2,
             "window",
-            "A tensor representing the window that will be slid over the signal."
-            "The window must have rank 1 with shape: [window_shape]. "
-            "It's an optional value. ",
+            "An optional 1-D tensor representing the window function to be applied to each frame of the signal before computing the DFT. "
+            "The length of the window (window.shape[0]) determines the frame length when `frame_length` is not specified. "
+            "If both `window` and `frame_length` are provided, the length of the `window` must equal `frame_length`. "
+            "When omitted, a rectangular (all-ones) window of length `frame_length` is used.",
             "T1",
             OpSchema::Optional,
             true,
@@ -3030,8 +2804,10 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Input(
             3,
             "frame_length",
-            "A scalar representing the size of the DFT. "
-            "It's an optional value.",
+            "An optional scalar representing the length of each frame (i.e., the DFT size). "
+            "When omitted and `window` is provided, `frame_length` is inferred from `window.shape[0]`. "
+            "When both `window` and `frame_length` are omitted, `frame_length` defaults to `signal_length`. "
+            "If both `frame_length` and `window` are provided, the length of the `window` must equal `frame_length`.",
             "T2",
             OpSchema::Optional,
             true,
@@ -3040,9 +2816,11 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Output(
             0,
             "output",
-            "The Short-time Fourier Transform of the signals."
-            "If onesided is 1, the output has the shape: [batch_size][frames][dft_unique_bins][2], where dft_unique_bins is frame_length // 2 + 1 (the unique components of the DFT) "
-            "If onesided is 0, the output has the shape: [batch_size][frames][frame_length][2], where frame_length is the length of the DFT.",
+            "The Short-time Fourier Transform of the signal. "
+            "The number of frames in the output is `frames = floor((signal_length - frame_length) / frame_step) + 1`. "
+            "If onesided is 1, the output has the shape: [batch_size][frames][dft_unique_bins][2], where dft_unique_bins is frame_length // 2 + 1 (the unique components of the DFT). "
+            "If onesided is 0, the output has the shape: [batch_size][frames][frame_length][2], where frame_length is the length of the DFT. "
+            "The last dimension of size 2 represents the real and imaginary parts of each complex value.",
             "T1",
             OpSchema::Single,
             true,
@@ -3055,113 +2833,115 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint("T2", {types::Int32, types::Int64}, "Constrain scalar length types to int64_t.")
         .TypeAndShapeInferenceFunction([](ONNX_NAMESPACE::InferenceContext& ctx) {
           propagateElemTypeFromInputToOutput(ctx, 0, 0);
-
-          // Get signal size
-          // The signal size is needed to perform inference because the size of the signal
-          // is needed to compute the number of DFTs in the output.
-          //
-          // 1) Check if shape exists, return if not
-          // 2) Get the shape
-          // 3) Check if signal dim value exists, return if not
           if (!hasInputShape(ctx, 0)) {
             return;
           }
 
           auto& input_shape = getInputShape(ctx, 0);
-          if (input_shape.dim_size() < 2) {
-            fail_shape_inference("First input should have at least 2 dimensions in ", ctx.getDisplayName(), ".");
+          if (input_shape.dim_size() != 3) {
+            fail_shape_inference("Input 0 (signal) must have rank 3.");
           }
-          auto signal_dim = input_shape.dim(1);
-          if (!signal_dim.has_dim_value()) {
-            return;
-          }
-          auto signal_size = signal_dim.dim_value();
 
-          // The frame step is a required input.
-          // Its value is needed to compute the number output nDFTs, so return early is missing.
-          const auto frame_step = ctx.getInputData(1);
-          if (nullptr == frame_step) {
-            return;
+          const auto& complex_dim = input_shape.dim(2);
+          if (complex_dim.has_dim_value() && complex_dim.dim_value() != 1 && complex_dim.dim_value() != 2) {
+            fail_shape_inference("The last dimension of signal must have size 1 (real) or 2 (complex).");
           }
-          auto frame_step_value = defs::math::utils::GetScalarValueFromTensor<int64_t>(frame_step);
 
-          // Determine the size of the DFT based on the 2 optional inputs window and frame_length.
-          // One must be set.
-          int64_t dft_size = -1;
-          const TensorProto* frame_length = nullptr;
-          if (ctx.hasInput(3)) {
-            frame_length = ctx.getInputData(3);
-            if (frame_length == nullptr) {
-              // If we cannot read the frame_length, we cannot infer shape
-              // return...
-              return;
+          const int64_t onesided = getAttribute(ctx, "onesided", 1);
+          if (onesided != 0 && onesided != 1) {
+            fail_shape_inference("Attribute onesided must be 0 or 1.");
+          }
+          if (onesided == 1 && complex_dim.has_dim_value() && complex_dim.dim_value() != 1) {
+            fail_shape_inference("One-sided STFT requires real input (signal's last dimension must be 1).");
+          }
+
+          const auto& signal_dim = input_shape.dim(1);
+          const int64_t signal_size = signal_dim.has_dim_value() ? signal_dim.dim_value() : -1;
+
+          // Preserve compatibility with existing models that use a single-element vector.
+          if (hasInputShape(ctx, 1)) {
+            const auto& frame_step_shape = getInputShape(ctx, 1);
+            if (frame_step_shape.dim_size() > 1 ||
+                (frame_step_shape.dim_size() == 1 && frame_step_shape.dim(0).has_dim_value() &&
+                 frame_step_shape.dim(0).dim_value() != 1)) {
+              fail_shape_inference("Input 1 (frame_step) must be a scalar or a single-element vector.");
             }
           }
 
-          const TensorShapeProto* window_shape = nullptr;
-          if (ctx.getNumInputs() >= 3) {
-            window_shape = getOptionalInputShape(ctx, 2);
-          } else {
-            window_shape = nullptr;
+          const auto* frame_step = ctx.getInputData(1);
+          int64_t frame_step_value = -1;
+          if (frame_step != nullptr) {
+            if (frame_step->dims_size() > 1 || (frame_step->dims_size() == 1 && frame_step->dims(0) != 1)) {
+              fail_shape_inference("Input 1 (frame_step) must be a scalar or a single-element vector.");
+            }
+            frame_step_value = defs::math::utils::GetScalarValueFromTensor<int64_t>(frame_step);
+            if (frame_step_value <= 0) {
+              fail_shape_inference("frame_step must be greater than 0.");
+            }
           }
 
-          if (window_shape == nullptr && frame_length == nullptr) {
-            // STFT expects to have at least one of these inputs set: [window, frame_length],
-            // but they may not be available at shape inference time
-            return;
-          } else if (window_shape != nullptr && frame_length != nullptr) {
-            if (frame_length->dims_size() != 0) {
-              fail_shape_inference("frame_length input must be scalar.");
-            }
-            auto frame_length_value = defs::math::utils::GetScalarValueFromTensor<int64_t>(frame_length);
-
-            // Ensure that the window length and the dft_length match.
+          const bool has_window = ctx.hasInput(2);
+          const auto* window_shape = has_window ? getOptionalInputShape(ctx, 2) : nullptr;
+          int64_t window_length = -1;
+          if (window_shape != nullptr) {
             if (window_shape->dim_size() != 1) {
-              fail_shape_inference("window input must have rank = 1.");
+              fail_shape_inference("Input 2 (window) must have rank 1.");
             }
             if (window_shape->dim(0).has_dim_value()) {
-              auto window_length = window_shape->dim(0).dim_value();
-              if (window_length != frame_length_value) {
-                fail_type_inference(
-                    "If STFT has both a window input and frame_length specified, the dimension of the window must match the frame_length specified!");
+              window_length = window_shape->dim(0).dim_value();
+              if (window_length <= 0) {
+                fail_shape_inference("window must have a positive length.");
               }
             }
-
-            dft_size = frame_length_value;
-          } else if (window_shape != nullptr) {
-            // Ensure that the window length and the dft_length match.
-            if (window_shape->dim_size() != 1) {
-              fail_shape_inference("window input must have rank = 1.");
-            }
-            if (window_shape->dim(0).has_dim_value()) {
-              dft_size = window_shape->dim(0).dim_value();
-            } else {
-              // Cannot determine the window size, and there is no frame_length,
-              // So shape inference cannot proceed.
-              return;
-            }
-          } else if (frame_length != nullptr) {
-            if (frame_length->dims_size() != 0) {
-              fail_shape_inference("frame_length input must be scalar.");
-            }
-            dft_size = defs::math::utils::GetScalarValueFromTensor<int64_t>(frame_length);
           }
 
-          bool is_onesided = static_cast<bool>(getAttribute(ctx, "onesided", 0));
-          int64_t dft_unique_bins = is_onesided ? ((dft_size >> 1) + 1) : dft_size;
+          const bool has_frame_length = ctx.hasInput(3);
+          if (has_frame_length && hasInputShape(ctx, 3) && getInputShape(ctx, 3).dim_size() != 0) {
+            fail_shape_inference("Input 3 (frame_length) must be a scalar.");
+          }
 
-          auto n_dfts = static_cast<int64_t>((signal_size - dft_size) / static_cast<float>(frame_step_value)) + 1;
+          const auto* frame_length = has_frame_length ? ctx.getInputData(3) : nullptr;
+          int64_t frame_length_value = -1;
+          if (frame_length != nullptr) {
+            if (frame_length->dims_size() != 0) {
+              fail_shape_inference("Input 3 (frame_length) must be a scalar.");
+            }
+            frame_length_value = defs::math::utils::GetScalarValueFromTensor<int64_t>(frame_length);
+            if (frame_length_value <= 0) {
+              fail_shape_inference("frame_length must be greater than 0.");
+            }
+            if (window_length >= 0 && window_length != frame_length_value) {
+              fail_type_inference(
+                  "If STFT has both a window input and frame_length specified, the dimension of the window "
+                  "must match the frame_length specified.");
+            }
+          }
+
+          const bool frame_length_defaults_to_signal = !has_window && !has_frame_length;
+          int64_t dft_size = frame_length_value;
+          if (dft_size < 0 && window_length >= 0) {
+            dft_size = window_length;
+          } else if (dft_size < 0 && frame_length_defaults_to_signal) {
+            dft_size = signal_size;
+          }
 
           // The output has the following shape: [batch_size][frames][dft_unique_bins][2]
           ONNX_NAMESPACE::TensorShapeProto result_shape_proto;
-          auto batch_dim = result_shape_proto.add_dim();
+          *result_shape_proto.add_dim() = input_shape.dim(0);
 
-          if (input_shape.dim(0).has_dim_value()) {
-            batch_dim->set_dim_value(input_shape.dim(0).dim_value()); // batch size
+          if (frame_length_defaults_to_signal) {
+            result_shape_proto.add_dim()->set_dim_value(1);
+          } else if (frame_step_value > 0 && signal_size >= dft_size && dft_size > 0) {
+            result_shape_proto.add_dim()->set_dim_value(((signal_size - dft_size) / frame_step_value) + 1);
+          } else {
+            result_shape_proto.add_dim();
           }
 
-          result_shape_proto.add_dim()->set_dim_value(n_dfts);
-          result_shape_proto.add_dim()->set_dim_value(dft_unique_bins);
+          if (dft_size > 0) {
+            result_shape_proto.add_dim()->set_dim_value(onesided == 1 ? ((dft_size >> 1) + 1) : dft_size);
+          } else {
+            result_shape_proto.add_dim();
+          }
           result_shape_proto.add_dim()->set_dim_value(2);
           updateOutputShape(ctx, 0, result_shape_proto);
         }));
