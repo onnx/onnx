@@ -706,7 +706,13 @@ class Resize(OpRun):
             )
             return (output,)
 
+        if any(axis < -X.ndim or axis >= X.ndim for axis in axes):
+            raise ValueError(
+                f"All axes must be in the range [{-X.ndim}, {X.ndim - 1}]."
+            )
         normalized_axes = [axis + X.ndim if axis < 0 else axis for axis in axes]
+        if len(set(normalized_axes)) != len(normalized_axes):
+            raise ValueError("The axes must not contain duplicates.")
         not_axes = [axis for axis in range(X.ndim) if axis not in normalized_axes]
         permutation = tuple(not_axes + normalized_axes)
         batch_shape = tuple(X.shape[axis] for axis in not_axes)
@@ -734,13 +740,9 @@ class Resize(OpRun):
             return (output,)
 
         permuted = np.transpose(X, permutation)
-        batch_dimensions_contiguous = all(
-            X.strides[index] == X.shape[index + 1] * X.strides[index + 1]
-            for index in range(len(not_axes) - 1)
-        )
         batch_view = (
             X.reshape((batch_size, *(X.shape[axis] for axis in normalized_axes)))
-            if permutation == tuple(range(X.ndim)) and batch_dimensions_contiguous
+            if permutation == tuple(range(X.ndim)) and X.flags.c_contiguous
             else None
         )
         chunk_size = _axes_chunk_size(

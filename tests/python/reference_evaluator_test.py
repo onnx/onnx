@@ -6732,6 +6732,13 @@ class TestReferenceEvaluator:
         )
         assert_allclose(actual, expected)
 
+    @pytest.mark.parametrize("axes", [[-4], [3], [1, -2]])
+    def test_resize_rejects_invalid_axes(self, axes):
+        data = np.arange(24, dtype=np.float32).reshape(2, 3, 4)
+        sizes = np.full(len(axes), 5, dtype=np.int64)
+        with pytest.raises(ValueError):
+            self._run_resize(data, axes=axes, sizes=sizes, mode="linear")
+
     @pytest.mark.parametrize("policy", ["not_larger", "not_smaller"])
     def test_resize_partial_axes_keep_aspect_ratio(self, policy):
         data = np.arange(2 * 3 * 5, dtype=np.float32).reshape(2, 3, 5)
