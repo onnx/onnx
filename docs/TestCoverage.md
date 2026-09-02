@@ -20085,7 +20085,7 @@ expect(node, inputs=[x, slope], outputs=[y], name="test_prelu_broadcast")
 
 
 ### Pad
-There are 4 test cases, listed as following:
+There are 8 test cases, listed as following:
 <details>
 <summary>constant_pad</summary>
 
@@ -20161,6 +20161,95 @@ expect(
     outputs=[y],
     name="test_constant_pad_negative_axes",
 )
+```
+
+</details>
+<details>
+<summary>constant_pad_negative_pads</summary>
+
+```python
+node = onnx.helper.make_node(
+    "Pad", inputs=["x", "pads", "value"], outputs=["y"], mode="constant"
+)
+x = np.array([1, 2, 3], dtype=np.int32)
+pads = np.array([-4, 2], dtype=np.int64)
+value = np.int32(-1)
+y = np.array([-1], dtype=np.int32)
+
+expect(
+    node,
+    inputs=[x, pads, value],
+    outputs=[y],
+    name="test_constant_pad_negative_pads",
+)
+```
+
+</details>
+<details>
+<summary>constant_pad_to_empty</summary>
+
+```python
+node = onnx.helper.make_node(
+    "Pad", inputs=["x", "pads"], outputs=["y"], mode="constant"
+)
+x = np.array([1, 2, 3], dtype=np.float32)
+pads = np.array([-3, 0], dtype=np.int64)
+y = np.empty((0,), dtype=np.float32)
+
+expect(
+    node,
+    inputs=[x, pads],
+    outputs=[y],
+    name="test_constant_pad_to_empty",
+)
+```
+
+</details>
+<details>
+<summary>negative_pad_axes</summary>
+
+```python
+node = onnx.helper.make_node(
+    "Pad", inputs=["x", "pads", "", "axes"], outputs=["y"], mode="edge"
+)
+x = np.array([[0, 1, 2, 3], [4, 5, 6, 7]], dtype=np.int64)
+pads = np.array([-1, 2], dtype=np.int64)
+axes = np.array([-1], dtype=np.int32)
+y = np.array(
+    [[1, 2, 3, 3, 3], [5, 6, 7, 7, 7]],
+    dtype=np.int64,
+)
+
+expect(
+    node,
+    inputs=[x, pads, axes],
+    outputs=[y],
+    name="test_negative_pad_axes",
+)
+```
+
+</details>
+<details>
+<summary>negative_pad_reflect_and_wrap</summary>
+
+```python
+x = np.array([0, 1, 2, 3], dtype=np.float32)
+pads = np.array([-1, 2], dtype=np.int64)
+expected = {
+    "reflect": np.array([1, 2, 3, 2, 1], dtype=np.float32),
+    "wrap": np.array([1, 2, 3, 1, 2], dtype=np.float32),
+}
+
+for mode, y in expected.items():
+    node = onnx.helper.make_node(
+        "Pad", inputs=["x", "pads"], outputs=["y"], mode=mode
+    )
+    expect(
+        node,
+        inputs=[x, pads],
+        outputs=[y],
+        name=f"test_negative_pad_{mode}",
+    )
 ```
 
 </details>

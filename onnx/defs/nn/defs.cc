@@ -2748,6 +2748,36 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
+static void GroupNormalizationShapeInference(InferenceContext& ctx) {
+  propagateShapeAndTypeFromFirstInput(ctx);
+
+  const int64_t num_groups = getAttribute(ctx, "num_groups", 0);
+  if (num_groups <= 0) {
+    fail_shape_inference("Attribute num_groups must be > 0. num_groups=", num_groups, ".");
+  }
+
+  if (hasInputShape(ctx, 0) && getInputShape(ctx, 0).dim_size() < 2) {
+    fail_shape_inference("Input X must have rank >= 2.");
+  }
+
+  checkInputRank(ctx, 1, 1);
+  checkInputRank(ctx, 2, 1);
+
+  Dim num_channels;
+  unifyInputDim(ctx, 0, 1, num_channels);
+  unifyInputDim(ctx, 1, 0, num_channels);
+  unifyInputDim(ctx, 2, 0, num_channels);
+
+  if (num_channels.has_dim_value() && num_channels.dim_value() % num_groups != 0) {
+    fail_shape_inference(
+        "The number of channels must be divisible by num_groups. channels=",
+        num_channels.dim_value(),
+        " num_groups=",
+        num_groups,
+        ".");
+  }
+}
+
 static constexpr const char* GroupNormalization_ver21_doc = R"DOC(
 A GroupNormalization function. Carries out group normalization as described in
 the paper https://arxiv.org/abs/1803.08494
@@ -2815,6 +2845,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::Differentiable)
         .TypeConstraint("T", OpSchema::all_float_types_ir4(), "Constrain input and output types to float tensors.")
         .SetNodeDeterminism(OpSchema::NodeDeterminism::Deterministic)
+        .TypeAndShapeInferenceFunction(GroupNormalizationShapeInference)
         .SetContextDependentFunctionBodyBuilder(
             [](const FunctionBodyBuildContext& ctx, const OpSchema& schema, FunctionProto& functionProto) {
               // GroupNormalization <epsilon, num_groups> (X, scale, bias) => (Y)
