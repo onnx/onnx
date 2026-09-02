@@ -16942,6 +16942,67 @@ Other versions of this operator: <a href="Changelog.md#GlobalLpPool-1">1</a>, <a
 </dl>
 
 
+#### Examples
+
+<details>
+<summary>globallppool_1d_p3</summary>
+
+```python
+node = onnx.helper.make_node(
+    "GlobalLpPool",
+    inputs=["x"],
+    outputs=["y"],
+    p=3,
+)
+x = np.array([[[-1.0, 2.0], [-3.0, 4.0]]], dtype=np.float32)
+y = np.array([[[2.080084], [4.4979415]]], dtype=np.float32)
+expect(node, inputs=[x], outputs=[y], name="test_globallppool_1d_p3")
+```
+
+</details>
+
+
+<details>
+<summary>globallppool_3d</summary>
+
+```python
+node = onnx.helper.make_node(
+    "GlobalLpPool",
+    inputs=["x"],
+    outputs=["y"],
+    p=1,
+)
+x = np.array(
+    [[[[[-1.0, 2.0]], [[-3.0, 4.0]]]]],
+    dtype=np.float32,
+)
+y = np.array([[[[[10.0]]]]], dtype=np.float32)
+expect(node, inputs=[x], outputs=[y], name="test_globallppool_3d")
+```
+
+</details>
+
+
+<details>
+<summary>globallppool_default</summary>
+
+```python
+node = onnx.helper.make_node(
+    "GlobalLpPool",
+    inputs=["x"],
+    outputs=["y"],
+)
+x = np.array(
+    [[[[1.0, -2.0], [3.0, -4.0]], [[5.0, -6.0], [7.0, -8.0]]]],
+    dtype=np.float32,
+)
+y = np.array([[[[5.477226]], [[13.190906]]]], dtype=np.float32)
+expect(node, inputs=[x], outputs=[y], name="test_globallppool_default")
+```
+
+</details>
+
+
 ### <a name="GlobalMaxPool"></a><a name="globalmaxpool">**GlobalMaxPool**</a>
 
   GlobalMaxPool consumes an input tensor X and applies max pooling across
