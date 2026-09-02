@@ -1000,14 +1000,14 @@ data = [
     [4.5, 5.7],
 ]
 
-pads = [0, 2, 0, 0]
+pads = [0, 1, 0, 1]
 
 mode = 'reflect'
 
 output = [
-    [1.0, 1.2, 1.0, 1.2],
-    [2.3, 3.4, 2.3, 3.4],
-    [4.5, 5.7, 4.5, 5.7],
+    [1.2, 1.0, 1.2, 1.0],
+    [3.4, 2.3, 3.4, 2.3],
+    [5.7, 4.5, 5.7, 4.5],
 ]
 ```
 
@@ -1427,6 +1427,32 @@ All types except string are supported. Implementations must treat the
 underlying bytes as little endian.
 )DOC";
 
+const char kDoc_Optional_ver15[] = R"DOC(
+Constructs an optional-type value containing either an empty optional of a certain type specified by the attribute,
+or a non-empty value containing the input element.
+)DOC";
+
+const char kDoc_OptionalHasElement_ver15[] = R"DOC(
+Returns true if the optional-type input contains an element. If it is an empty optional-type, this op returns false.
+)DOC";
+
+const char kDoc_OptionalHasElement_ver18[] = R"DOC(
+Returns true if (1) the input is an optional-type and contains an element,
+or, (2) the input is a tensor or sequence type.
+If the input is not provided or is an empty optional-type, this op returns false.
+)DOC";
+
+const char kDoc_OptionalGetElement_ver15[] = R"DOC(
+Outputs the element in the optional-type input. It is an error if the input value does not have an element
+and the behavior is undefined in this case.
+)DOC";
+
+const char kDoc_OptionalGetElement_ver18[] = R"DOC(
+If the input is a tensor or sequence type, it returns the input.
+If the input is an optional type, it outputs the element in the input.
+It is an error if the input is an empty optional-type (i.e. does not have an element) and the behavior is undefined in this case.
+)DOC";
+
 const char kDoc_OneHot_ver11[] = R"DOC(
     Produces a one-hot tensor based on inputs.
     The locations represented by the index values in the 'indices' input tensor will have 'on_value'
@@ -1740,6 +1766,11 @@ const char kDoc_Loop_ver23[] = "";
 const char kDoc_RNN_ver14[] = "";
 const char kDoc_NonMaxSuppression_ver10[] = "";
 const char kDoc_OneHot_ver11[] = "";
+const char kDoc_Optional_ver15[] = "";
+const char kDoc_OptionalGetElement_ver15[] = "";
+const char kDoc_OptionalGetElement_ver18[] = "";
+const char kDoc_OptionalHasElement_ver15[] = "";
+const char kDoc_OptionalHasElement_ver18[] = "";
 const char kDoc_Log_ver6[] = "";
 const char kDoc_EyeLike_ver9[] = "";
 const char kDoc_Reshape_ver24[] = "";

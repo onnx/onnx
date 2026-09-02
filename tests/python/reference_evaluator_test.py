@@ -57,8 +57,6 @@ from onnx.reference.ops.op_col2im import (
     col2im_naive_implementation,
 )
 from onnx.reference.ops.op_conv import Conv, _conv_implementation
-from onnx.reference.ops_optimized import Conv as ConvOptimized
-from onnx.reference.ops_optimized.op_conv_optimized import _conv_implementation_im2col
 from onnx.reference.shape_annotation_checker import ShapeAnnotationError
 
 if TYPE_CHECKING:
@@ -1543,12 +1541,8 @@ class TestReferenceEvaluator:
         sess1 = run_ort_inference(onnx_model)
         if sess1 is None:
             return
-        sess2 = ReferenceEvaluator(onnx_model, optimized=False)
+        sess2 = ReferenceEvaluator(onnx_model)
         assert isinstance(sess2.rt_nodes_[0], Conv)
-        sess3 = ReferenceEvaluator(onnx_model, new_ops=[ConvOptimized], optimized=False)
-        assert isinstance(sess3.rt_nodes_[0], ConvOptimized)
-        sess4 = ReferenceEvaluator(onnx_model, optimized=True)
-        assert isinstance(sess4.rt_nodes_[0], ConvOptimized)
 
         sH, sW = 5, 6
         for i in range(sH):
@@ -1562,10 +1556,6 @@ class TestReferenceEvaluator:
                 expected = sess1.run(None, {"X": X, "W": W, "B": B})[0]
                 got = sess2.run(None, {"X": X, "W": W, "B": B})[0]
                 assert_allclose(got, expected)
-                got3 = sess3.run(None, {"X": X, "W": W, "B": B})[0]
-                assert_allclose(got3, expected)
-                got4 = sess4.run(None, {"X": X, "W": W, "B": B})[0]
-                assert_allclose(got4, expected)
 
     @skip_if_no_onnxruntime
     def test_qlinearconv(self):
@@ -2033,6 +2023,11 @@ class TestReferenceEvaluator:
     def test_im2col_3x3_strides(self):
         self.common_test_im2col(
             (3, 3), pads=[0, 1, 1, 1], strides=[1, 2], dilations=[1, 1]
+        )
+
+    def test_im2col_3x3_dilations(self):
+        self.common_test_im2col(
+            (3, 3), pads=[2, 2, 2, 2], strides=[1, 1], dilations=[2, 2]
         )
 
     def test_im2col_5x5(self):
@@ -4111,118 +4106,102 @@ class TestReferenceEvaluator:
             with pytest.raises(ValueError):
                 ref.run(None, {"X": data})
 
-    def test_lrn(self):
+    @pytest.mark.parametrize(
+        ("shape", "size", "dtype", "elem_type"),
+        [
+            ((2, 3, 2, 2), 3, np.float32, TensorProto.FLOAT),
+            ((1, 4, 3), 2, np.float64, TensorProto.DOUBLE),
+            ((1, 5, 1, 2, 1), 4, np.float16, TensorProto.FLOAT16),
+            ((1, 3, 2), 3, ml_dtypes.bfloat16, TensorProto.BFLOAT16),
+            ((2, 0, 3), 3, np.float32, TensorProto.FLOAT),
+        ],
+    )
+    def test_lrn(self, shape, size, dtype, elem_type):
         def _expected(x, alpha, beta, bias, size):
-            square_sum = np.zeros((5, 5, 5, 5)).astype(np.float32)
-            for n, c, h, w in np.ndindex(x.shape):
-                square_sum[n, c, h, w] = sum(
-                    x[
-                        n,
-                        max(0, c - math.floor((size - 1) / 2)) : min(
-                            5, c + math.ceil((size - 1) / 2) + 1
-                        ),
-                        h,
-                        w,
-                    ]
-                    ** 2
-                )
+            square_sum = np.zeros_like(x)
+            channel_count = x.shape[1]
+            for index in np.ndindex(x.shape):
+                n, c, *spatial_index = index
+                begin = max(0, c - math.floor((size - 1) / 2))
+                end = min(channel_count, c + math.ceil((size - 1) / 2) + 1)
+                values = x[(n, slice(begin, end), *spatial_index)]
+                square_sum[index] = sum(float(value) ** 2 for value in values)
             return x / ((bias + (alpha / size) * square_sum) ** beta)
 
-        # keepdims is ignored in that case
         alpha = 0.0002
         beta = 0.5
         bias = 2.0
-        size = 3
-        X = make_tensor_value_info("X", TensorProto.FLOAT, [5, 5, 50, 50])
-        Z = make_tensor_value_info("Z", TensorProto.UNDEFINED, None)
+        X = make_tensor_value_info("X", elem_type, shape)
+        Z = make_tensor_value_info("Z", elem_type, shape)
         nodes = [
             make_node("LRN", ["X"], ["Z"], alpha=alpha, beta=beta, bias=bias, size=size)
         ]
         model = make_model(make_graph(nodes, "g", [X], [Z]))
         ref = ReferenceEvaluator(model)
-        data = np.random.rand(5, 5, 5, 5).astype(np.float32)
+        data = (np.arange(math.prod(shape), dtype=np.float32) / 10).astype(dtype)
+        data = data.reshape(shape)
         got = ref.run(None, {"X": data})
-        expected = _expected(data, alpha, beta, bias, size)
-        assert len(got[0]) == len(expected)
+        expected = _expected(data, alpha, beta, bias, size).astype(dtype)
+        assert got[0].dtype == np.dtype(dtype)
+        if dtype is ml_dtypes.bfloat16:
+            assert_allclose(got[0].astype(np.float32), expected.astype(np.float32))
+        else:
+            assert_allclose(got[0], expected)
 
-    def test_conv_im2col_1d(self):
-        feeds = {
-            "X": np.arange(1 * 1 * 11).reshape((1, 1, 11)).astype(np.float32) + 1,
-            "W": np.arange(3).reshape((1, 1, 3)).astype(np.float32),
-            "B": np.zeros((1,), dtype=np.float32),
-        }
-        kwargs = dict(
-            group=1,
+    def test_conv_implementation_1d(self):
+        got = _conv_implementation(
+            X=np.arange(5, dtype=np.float32).reshape((1, 1, 5)),
+            W=np.arange(3, dtype=np.float32).reshape((1, 1, 3)),
+            B=None,
+            auto_pad="NOTSET",
             dilations=[1],
+            group=1,
             kernel_shape=[3],
             pads=[1, 1],
             strides=[1],
-            auto_pad="NOTSET",
         )
-        expected = _conv_implementation(**feeds, **kwargs)
-        got = _conv_implementation_im2col(**feeds, **kwargs)
+        assert_allclose(got, np.array([[[2, 5, 8, 11, 4]]], dtype=np.float32))
+
+    def test_conv_implementation_3d(self):
+        got = _conv_implementation(
+            X=np.arange(27, dtype=np.float32).reshape((1, 1, 3, 3, 3)),
+            W=np.ones((1, 1, 2, 2, 2), dtype=np.float32),
+            B=None,
+            auto_pad="NOTSET",
+            dilations=[1, 1, 1],
+            group=1,
+            kernel_shape=[2, 2, 2],
+            pads=[0, 0, 0, 0, 0, 0],
+            strides=[1, 1, 1],
+        )
+        expected = np.array(
+            [[[[[52, 60], [76, 84]], [[124, 132], [148, 156]]]]],
+            dtype=np.float32,
+        )
         assert_allclose(got, expected)
 
-    def test_conv_im2col_1d_pad0(self):
-        feeds = {
-            "X": np.arange(2 * 4 * 3).reshape((2, 4, -1)).astype(np.float32) + 1,
-            "W": np.arange(2 * 4 * 3).reshape((-1, 4, 3)).astype(np.float32),
-            "B": np.zeros((1,), dtype=np.float32),
-        }
-        kwargs = dict(
-            group=1,
-            dilations=[1],
-            kernel_shape=[3],
-            pads=[0, 0],
-            strides=[1],
+    def test_conv_implementation_dilations(self):
+        got = _conv_implementation(
+            X=np.arange(25, dtype=np.float32).reshape((1, 1, 5, 5)),
+            W=np.array([[[[1, 2], [3, 4]]]], dtype=np.float32),
+            B=None,
             auto_pad="NOTSET",
-        )
-        expected = _conv_implementation(**feeds, **kwargs)
-        got = _conv_implementation_im2col(**feeds, **kwargs)
-        assert_allclose(got, expected)
-
-    def test_conv_im2col_2d(self):
-        feeds = {
-            "X": np.arange(1 * 1 * 11 * 23).reshape((1, 1, 11, 23)).astype(np.float32)
-            + 1,
-            "W": np.arange(9).reshape((1, 1, 3, 3)).astype(np.float32),
-            "B": np.zeros((1,), dtype=np.float32),
-        }
-        kwargs = dict(
+            dilations=[2, 1],
             group=1,
-            dilations=[1, 1],
-            kernel_shape=[3, 3],
-            pads=[1, 1, 1, 1],
-            strides=[1, 1],
-            auto_pad="NOTSET",
+            kernel_shape=[2, 2],
+            pads=[1, 0, 1, 0],
+            strides=[1, 2],
         )
-        expected = _conv_implementation(**feeds, **kwargs)
-        got = _conv_implementation_im2col(**feeds, **kwargs)
-        assert_allclose(got, expected)
-
-    def test_conv_im2col_2d_pad0(self):
-        feeds = {
-            "X": np.arange(2 * 3 * 5 * 2).reshape((2, 3, 5, -1)).astype(np.float32) + 1,
-            "W": 2
-            ** np.arange(3 * 3 * 1 * 2).reshape((-1, 3, 1, 2)).astype(np.float32),
-            "B": np.zeros((1,), dtype=np.float32),
-        }
-        kwargs = dict(
-            group=1,
-            dilations=[1, 1],
-            kernel_shape=[1, 2],
-            pads=[0, 0, 0, 0],
-            strides=[1, 1],
-            auto_pad="NOTSET",
+        expected = np.array(
+            [[[[39, 53], [76, 96], [126, 146], [176, 196], [47, 53]]]],
+            dtype=np.float32,
         )
-        expected = _conv_implementation(**feeds, **kwargs)
-        got = _conv_implementation_im2col(**feeds, **kwargs)
         assert_allclose(got, expected)
 
     def test_conv_im2col_2d_autopad(self):
         feeds = {
-            "X": np.arange(5 * 5).reshape((1, 1, 5, -1)).astype(np.float32) + 1,
-            "W": 2 ** np.arange(3 * 3).reshape((1, 1, 3, 3)).astype(np.float32),
+            "X": np.arange(5 * 5).reshape((1, 1, 5, -1)).astype(np.float32),
+            "W": np.ones((1, 1, 3, 3), dtype=np.float32),
             "B": np.zeros((1,), dtype=np.float32),
         }
         kwargs = dict(
@@ -4233,66 +4212,64 @@ class TestReferenceEvaluator:
             pads=None,
             auto_pad="SAME_LOWER",
         )
-        expected = _conv_implementation(**feeds, **kwargs)
-        got = _conv_implementation_im2col(**feeds, **kwargs)
+        expected = np.array(
+            [[[[12.0, 27.0, 24.0], [63.0, 108.0, 81.0], [72.0, 117.0, 84.0]]]],
+            dtype=np.float32,
+        )
+        got = _conv_implementation(**feeds, **kwargs)
         assert_allclose(got, expected)
 
-    def test_conv_im2col_3d(self):
-        feeds = {
-            "X": np.arange(1 * 1 * 11 * 5 * 13)
-            .reshape((1, 1, 11, 5, 13))
-            .astype(np.float32)
-            + 1,
-            "W": np.arange(27).reshape((1, 1, 3, 3, 3)).astype(np.float32),
-            "B": np.zeros((1,), dtype=np.float32),
-        }
-        kwargs = dict(
+    @pytest.mark.parametrize(
+        ("auto_pad", "expected"),
+        [
+            ("SAME_UPPER", [[[3.0, 5.0]], [[15.0, 13.0]]]),
+            ("SAME_LOWER", [[[1.0, 6.0]], [[9.0, 18.0]]]),
+            ("VALID", [[[3.0]], [[15.0]]]),
+        ],
+    )
+    def test_conv_im2col_auto_pad_modes(self, auto_pad, expected):
+        got = _conv_implementation(
+            X=np.arange(8, dtype=np.float32).reshape((2, 1, 4)),
+            W=np.ones((1, 1, 3), dtype=np.float32),
+            B=None,
+            auto_pad=auto_pad,
+            dilations=[1],
             group=1,
-            dilations=[1, 1, 1],
-            kernel_shape=[3, 3, 3],
-            pads=[1, 1, 1, 1, 1, 1],
-            strides=[1, 1, 1],
-            auto_pad="NOTSET",
+            kernel_shape=[3],
+            pads=None,
+            strides=[2],
         )
-        expected = _conv_implementation(**feeds, **kwargs)
-        got = _conv_implementation_im2col(**feeds, **kwargs)
-        assert_allclose(got, expected)
+        assert_allclose(got, np.array(expected, dtype=np.float32))
 
-    def test_conv_im2col_2d_strides(self):
-        feeds = {
-            "X": np.arange(1 * 3 * 6 * 6).reshape((1, 3, 6, 6)).astype(np.float32) + 1,
-            "W": np.arange(2 * 3 * 3 * 3).reshape((2, 3, 3, 3)).astype(np.float32),
-            "B": np.zeros((2,), dtype=np.float32),
-        }
-        kwargs = dict(
-            group=1,
-            dilations=[1, 1],
-            kernel_shape=[3, 3],
-            pads=[1, 1, 1, 1],
-            strides=[2, 2],
+    @pytest.mark.parametrize(
+        ("X", "W", "expected_shape"),
+        [
+            (
+                np.empty((1, 0, 5), dtype=np.float32),
+                np.empty((1, 0, 3), dtype=np.float32),
+                (1, 1, 3),
+            ),
+            (
+                np.empty((1, 2, 5), dtype=np.float32),
+                np.empty((0, 2, 3), dtype=np.float32),
+                (1, 0, 3),
+            ),
+        ],
+    )
+    def test_conv_im2col_empty_channels(self, X, W, expected_shape):
+        got = _conv_implementation(
+            X=X,
+            W=W,
+            B=None,
             auto_pad="NOTSET",
-        )
-        expected = _conv_implementation(**feeds, **kwargs)
-        got = _conv_implementation_im2col(**feeds, **kwargs)
-        assert_allclose(got, expected)
-
-    def test_conv_im2col_2d_dilations(self):
-        feeds = {
-            "X": np.arange(1 * 3 * 6 * 6).reshape((1, 3, 6, 6)).astype(np.float32) + 1,
-            "W": np.arange(2 * 3 * 3 * 3).reshape((2, 3, 3, 3)).astype(np.float32),
-            "B": np.zeros((2,), dtype=np.float32),
-        }
-        kwargs = dict(
+            dilations=[1],
             group=1,
-            dilations=[2, 1],
-            kernel_shape=[3, 3],
-            pads=[1, 1, 1, 1],
-            strides=[2, 2],
-            auto_pad="NOTSET",
+            kernel_shape=[3],
+            pads=[0, 0],
+            strides=[1],
         )
-        expected = _conv_implementation(**feeds, **kwargs)
-        got = _conv_implementation_im2col(**feeds, **kwargs)
-        assert_allclose(got, expected)
+        assert got.shape == expected_shape
+        assert not np.any(got)
 
     @pytest.mark.parametrize(
         "op",
@@ -4317,6 +4294,35 @@ class TestReferenceEvaluator:
         r = got[0]
         assert isinstance(r, np.ndarray)
         assert r.shape == ()
+
+    @pytest.mark.parametrize("op", ["ReduceLogSum", "ReduceLogSumExp"])
+    @pytest.mark.parametrize("opset", [13, 18, onnx_opset_version()])
+    def test_reduce_log_sum_ops_reject_integer_input(self, op, opset):
+        # Log and Exp are only defined for float types, so these operators cannot
+        # accept integer input at any opset. Before this guard the failure was an
+        # OverflowError from inside numpy. See onnx/onnx#7141.
+        X = make_tensor_value_info("X", TensorProto.INT64, None)
+        Y = make_tensor_value_info("Y", TensorProto.INT64, None)
+        feeds = {"X": np.array([1, 2, 3], dtype=np.int64)}
+        opset_with_axes_input = 18
+        if opset >= opset_with_axes_input:
+            A = make_tensor_value_info("A", TensorProto.INT64, None)
+            node = make_node(op, ["X", "A"], ["Y"], keepdims=0)
+            inputs = [X, A]
+            feeds["A"] = np.array([0], dtype=np.int64)
+        else:
+            node = make_node(op, ["X"], ["Y"], axes=[0], keepdims=0)
+            inputs = [X]
+        model = make_model(
+            make_graph([node], "g", inputs, [Y]),
+            opset_imports=[make_opsetid("", opset)],
+        )
+        ref = ReferenceEvaluator(model)
+        with pytest.raises(TypeError) as exc_info:
+            ref.run(None, feeds)
+        # OpRun.run re-raises operator errors wrapped in a generic TypeError, so the
+        # specific message is on the chained cause rather than the exception itself.
+        assert "does not support integer input" in str(exc_info.value.__cause__)
 
     @pytest.mark.parametrize("dim", [1, 2, 3, 4, 5, 6])
     def test_pad(self, dim):
@@ -6248,7 +6254,7 @@ class TestReferenceEvaluator:
 
         x = (np.arange(18) / 6).reshape((2, 3, 3)).astype(np.float32)
         y = (np.arange(18) / 9).reshape((2, 3, 3)).astype(np.float32)
-        feeds = dict(X=x, Y=y)
+        feeds = {"X": x, "Y": y}
         expected = x + y
         got = ref.run(None, feeds)[0]
         assert_allclose(got, expected, atol=atol)
@@ -6295,7 +6301,7 @@ class TestReferenceEvaluator:
 
         x = (np.arange(18) / 18).reshape((2, 3, 3)).astype(np.float32)
         y = ((np.arange(18) - 9) / 18).reshape((2, 3, 3)).astype(np.float32)
-        feeds = dict(X=x, Y=y)
+        feeds = {"X": x, "Y": y}
         expected = x >= y
         got = ref.run(None, feeds)[0]
         np.testing.assert_equal(got, expected)

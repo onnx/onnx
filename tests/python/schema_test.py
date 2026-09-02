@@ -315,6 +315,232 @@ class TestSchema:
                 "int64",
             ], f"Range type {base_type} should be a supported numeric type"
 
+    def test_optional_type_constraints(self) -> None:
+        def tensor(ts):
+            return {f"tensor({t})" for t in ts}
+
+        def seq(ts):
+            return {f"seq({t})" for t in ts}
+
+        def optional(ts):
+            return {f"optional({t})" for t in ts}
+
+        dtype15 = {
+            "float",
+            "uint8",
+            "int8",
+            "uint16",
+            "int16",
+            "int32",
+            "int64",
+            "string",
+            "bool",
+            "float16",
+            "double",
+            "uint32",
+            "uint64",
+            "complex64",
+            "complex128",
+        }
+        dtype28 = dtype15 | {
+            "bfloat16",
+            "float8e4m3fn",
+            "float8e4m3fnuz",
+            "float8e5m2",
+            "float8e5m2fnuz",
+            "uint4",
+            "int4",
+            "float4e2m1",
+            "float8e8m0",
+            "uint2",
+            "int2",
+            "float6e2m3",
+            "float6e3m2",
+        }
+        allowed_types = {
+            15: tensor(dtype15) | seq(tensor(dtype15)),
+            28: tensor(dtype28) | seq(tensor(dtype28)),
+        }
+        for version, types in allowed_types.items():
+            op = defs.get_schema("Optional", version)
+            tc = {t.type_param_str: t.allowed_type_strs for t in op.type_constraints}
+            assert len(types) == len(tc["V"])
+            assert all(t in tc["V"] for t in types)
+            assert len(types) == len(tc["O"])
+            assert all(t in tc["O"] for t in optional(types))
+
+    def test_optional_docstrings(self) -> None:
+        optional15 = defs.get_schema("Optional", 15).doc
+        optional28 = defs.get_schema("Optional", 28).doc
+        assert optional15
+        assert optional15 == optional28
+
+        has_element15 = defs.get_schema("OptionalHasElement", 15).doc
+        has_element18 = defs.get_schema("OptionalHasElement", 18).doc
+        has_element28 = defs.get_schema("OptionalHasElement", 28).doc
+        assert has_element15 != has_element18
+        assert has_element18 == has_element28
+        assert "tensor or sequence type" not in has_element15
+        assert "tensor or sequence type" in has_element18
+
+        get_element15 = defs.get_schema("OptionalGetElement", 15).doc
+        get_element18 = defs.get_schema("OptionalGetElement", 18).doc
+        get_element28 = defs.get_schema("OptionalGetElement", 28).doc
+        assert get_element15 != get_element18
+        assert get_element18 == get_element28
+        assert "returns the input" not in get_element15
+        assert "returns the input" in get_element18
+
+    def test_optional_has_element_type_constraints(self) -> None:
+        def tensor(ts):
+            return {f"tensor({t})" for t in ts}
+
+        def seq(ts):
+            return {f"seq({t})" for t in ts}
+
+        def optional(ts):
+            return {f"optional({t})" for t in ts}
+
+        dtype15 = {
+            "float",
+            "uint8",
+            "int8",
+            "uint16",
+            "int16",
+            "int32",
+            "int64",
+            "string",
+            "bool",
+            "float16",
+            "double",
+            "uint32",
+            "uint64",
+            "complex64",
+            "complex128",
+        }
+        dtype28 = dtype15 | {
+            "bfloat16",
+            "float8e4m3fn",
+            "float8e4m3fnuz",
+            "float8e5m2",
+            "float8e5m2fnuz",
+            "uint4",
+            "int4",
+            "float4e2m1",
+            "float8e8m0",
+            "uint2",
+            "int2",
+            "float6e2m3",
+            "float6e3m2",
+        }
+        allowed_types = {
+            15: tensor(dtype15) | seq(tensor(dtype15)),
+            18: tensor(dtype15) | seq(tensor(dtype15)),
+            28: tensor(dtype28) | seq(tensor(dtype28)),
+        }
+        for version, types in allowed_types.items():
+            op = defs.get_schema("OptionalHasElement", version)
+            tc = {
+                t.type_param_str: set(t.allowed_type_strs) for t in op.type_constraints
+            }
+            o_allowed = optional(types)
+            if version > min(allowed_types):
+                o_allowed = o_allowed | types
+            assert len(o_allowed) == len(tc["O"])
+            assert all(t in tc["O"] for t in o_allowed)
+            assert tc["B"] == {"tensor(bool)"}
+
+    def test_optional_get_element_type_constraints(self) -> None:
+        def tensor(ts):
+            return {f"tensor({t})" for t in ts}
+
+        def seq(ts):
+            return {f"seq({t})" for t in ts}
+
+        def optional(ts):
+            return {f"optional({t})" for t in ts}
+
+        dtype15 = {
+            "float",
+            "uint8",
+            "int8",
+            "uint16",
+            "int16",
+            "int32",
+            "int64",
+            "string",
+            "bool",
+            "float16",
+            "double",
+            "uint32",
+            "uint64",
+            "complex64",
+            "complex128",
+        }
+        dtype28 = dtype15 | {
+            "bfloat16",
+            "float8e4m3fn",
+            "float8e4m3fnuz",
+            "float8e5m2",
+            "float8e5m2fnuz",
+            "uint4",
+            "int4",
+            "float4e2m1",
+            "float8e8m0",
+            "uint2",
+            "int2",
+            "float6e2m3",
+            "float6e3m2",
+        }
+        allowed_types = {
+            15: tensor(dtype15) | seq(tensor(dtype15)),
+            18: tensor(dtype15) | seq(tensor(dtype15)),
+            28: tensor(dtype28) | seq(tensor(dtype28)),
+        }
+        for version, types in allowed_types.items():
+            op = defs.get_schema("OptionalGetElement", version)
+            tc = {
+                t.type_param_str: set(t.allowed_type_strs) for t in op.type_constraints
+            }
+            o_allowed = optional(types)
+            if version > min(allowed_types):
+                o_allowed = o_allowed | types
+            assert len(o_allowed) == len(tc["O"])
+            assert all(t in tc["O"] for t in o_allowed)
+            assert len(types) == len(tc["V"])
+            assert all(t in tc["V"] for t in types)
+
+    def test_optional_ops_accept_ir14_sequence_type(self) -> None:
+        sequence_input = helper.make_tensor_sequence_value_info(
+            "sequence_input", TensorProto.FLOAT6E2M3, [2, 3]
+        )
+        sequence_output = helper.make_tensor_sequence_value_info(
+            "sequence_output", TensorProto.FLOAT6E2M3, [2, 3]
+        )
+        has_element = helper.make_tensor_value_info("has_element", TensorProto.BOOL, [])
+        graph = helper.make_graph(
+            [
+                helper.make_node("Optional", ["sequence_input"], ["optional_value"]),
+                helper.make_node(
+                    "OptionalHasElement", ["optional_value"], ["has_element"]
+                ),
+                helper.make_node(
+                    "OptionalGetElement", ["optional_value"], ["sequence_output"]
+                ),
+            ],
+            "optional_ir14_sequence",
+            [sequence_input],
+            [has_element, sequence_output],
+        )
+        model = helper.make_model(
+            graph,
+            ir_version=14,
+            opset_imports=[helper.make_opsetid("", 28)],
+        )
+
+        onnx.checker.check_model(model, full_check=True)
+        onnx.shape_inference.infer_shapes(model, check_type=True, strict_mode=True)
+
 
 class TestOpSchema:
     def test_init(self):
@@ -342,6 +568,7 @@ class TestOpSchema:
         assert op_schema.type_constraints[0].allowed_type_strs == ["tensor(int64)"]
 
     def test_init_creates_multi_input_output_schema(self) -> None:
+        expected_parameter_count = 2
         op_schema = defs.OpSchema(
             "test_op",
             "test_domain",
@@ -361,12 +588,12 @@ class TestOpSchema:
                 )
             ],
         )
-        assert len(op_schema.inputs) == 2
+        assert len(op_schema.inputs) == expected_parameter_count
         assert op_schema.inputs[0].name == "input1"
         assert op_schema.inputs[0].type_str == "T"
         assert op_schema.inputs[1].name == "input2"
         assert op_schema.inputs[1].type_str == "T"
-        assert len(op_schema.outputs) == 2
+        assert len(op_schema.outputs) == expected_parameter_count
         assert op_schema.outputs[0].name == "output1"
         assert op_schema.outputs[0].type_str == "T"
         assert op_schema.outputs[1].name == "output2"
