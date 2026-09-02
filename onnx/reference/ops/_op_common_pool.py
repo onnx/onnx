@@ -10,6 +10,8 @@ import numpy as np
 from onnx.reference.op_run import OpRun
 from onnx.reference.ops._op_common_indices import _get_index, _get_indices
 
+_NUM_2D_PADS = 4
+
 
 def _get_pad_shape(
     auto_pad: str,
@@ -235,7 +237,7 @@ class CommonPool(OpRun):
             pad_shape = [0] * (len(x.shape) - 2)
             x_shape = x.shape[2:]
             padded = x
-        elif len(pads) == 4:  # noqa: PLR2004
+        elif len(pads) == _NUM_2D_PADS:
             pad_top, pad_bottom, pad_left, pad_right = pads
             pad_shape = [pad_top + pad_bottom, pad_left + pad_right]
             x_shape = np.array(x.shape[2:]) + np.array(pad_shape)
