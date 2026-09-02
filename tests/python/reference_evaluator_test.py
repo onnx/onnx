@@ -6704,6 +6704,16 @@ class TestReferenceEvaluator:
         expected = self._run_resize(data, roi=full_roi, sizes=full_sizes, **attributes)
         assert_allclose(actual, expected)
 
+    def test_resize_partial_axes_chunked_matches_full_rank(self):
+        data = np.arange(16 * 8 * 32 * 40, dtype=np.float32).reshape(16, 8, 32, 40)
+        axes = [2, 3]
+        scales = np.array([1.5, 1.25], dtype=np.float32)
+        full_scales = np.array([1.0, 1.0, 1.5, 1.25], dtype=np.float32)
+
+        actual = self._run_resize(data, axes=axes, scales=scales, mode="linear")
+        expected = self._run_resize(data, scales=full_scales, mode="linear")
+        assert_allclose(actual, expected)
+
     @pytest.mark.parametrize("axes", [[-1], [-1, -3]])
     def test_resize_normalizes_negative_axes(self, axes):
         data = np.arange(24, dtype=np.float32).reshape(2, 3, 4)
@@ -6742,12 +6752,20 @@ class TestReferenceEvaluator:
 
     def test_resize_partial_axes_zero_dimensions(self):
         data = np.arange(24, dtype=np.float32).reshape(2, 3, 4)
-        output = self._run_resize(data, axes=[1], sizes=np.array([0]), mode="linear")
+        output = self._run_resize(
+            data, axes=[1], sizes=np.array([0]), mode="linear", antialias=1
+        )
         assert output.shape == (2, 0, 4)
 
         empty = np.empty((0, 3, 4), dtype=np.float32)
         output = self._run_resize(empty, axes=[2], sizes=np.array([5]), mode="linear")
         assert output.shape == (0, 3, 5)
+
+        empty = np.empty((2, 0, 4), dtype=np.float32)
+        output = self._run_resize(
+            empty, axes=[1], scales=np.array([1.5]), mode="linear"
+        )
+        assert output.shape == (2, 0, 4)
 
     def test_sequence_axis(self):
         model = self._load_model(

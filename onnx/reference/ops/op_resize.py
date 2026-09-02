@@ -578,6 +578,76 @@ def _interpolate_nd(
     return result
 
 
+_AXES_INTERPOLATION_MEMORY_BUDGET = 4 * 1024 * 1024
+_MIN_AXES_INTERPOLATION_CHUNK_SIZE = 12
+
+
+def _axes_chunk_size(
+    data: np.ndarray,
+    axes: list[int],
+    get_coeffs: Callable[[float, float], np.ndarray],
+    output_size: np.ndarray | None,
+    scale_factors: np.ndarray | None,
+    keep_aspect_ratio_policy: str,
+    coordinate_transformation_mode: str,
+    batch_size: int,
+) -> int:
+    input_size = np.array([data.shape[axis] for axis in axes], dtype=np.int64)
+    if output_size is not None:
+        axis_output = np.asarray(output_size, dtype=np.int64)
+        axis_scales = axis_output / input_size
+        if keep_aspect_ratio_policy != "stretch":
+            if keep_aspect_ratio_policy == "not_larger":
+                scale = axis_scales.min()
+            elif keep_aspect_ratio_policy == "not_smaller":
+                scale = axis_scales.max()
+            else:
+                raise ValueError(
+                    f"Invalid keep_aspect_ratio_policy={keep_aspect_ratio_policy!r}"
+                )
+            axis_scales = np.full(len(axes), scale)
+            axis_output = (axis_scales * input_size + 0.5).astype(np.int64)
+    elif scale_factors is not None:
+        axis_scales = np.asarray(scale_factors)
+        axis_output = (axis_scales * input_size).astype(np.int64)
+    else:
+        raise ValueError("output_size and scale_factors are both None.")
+
+    # During one axis pass, the previous result, gathered neighbors, and
+    # weighted neighbors coexist. Bound those buffers, the copied input, and
+    # the coordinate, coefficient, and index workspace for that axis.
+    current_size = input_size.copy()
+    input_bytes_per_slice = int(np.prod(input_size)) * data.dtype.itemsize + 8 * (
+        data.ndim - len(axes) + 1
+    )
+    chunk_size = batch_size
+    for index, (axis_scale, axis_output_size) in enumerate(
+        zip(axis_scales, axis_output, strict=False)
+    ):
+        previous_elements = int(np.prod(current_size))
+        current_size[index] = axis_output_size
+        output_elements = int(np.prod(current_size))
+        if output_elements == 0:
+            bytes_per_slice = input_bytes_per_slice + 8 * previous_elements
+            workspace_bytes = 0
+        else:
+            kernel_width = len(np.asarray(get_coeffs(1.0, float(axis_scale))))
+            bytes_per_slice = input_bytes_per_slice + 8 * (
+                previous_elements + (2 * kernel_width + 1) * output_elements
+            )
+            if coordinate_transformation_mode == "tf_crop_and_resize":
+                bytes_per_slice += 8 * output_elements
+            workspace_bytes = int(axis_output_size) * (64 + 32 * kernel_width)
+        available_bytes = _AXES_INTERPOLATION_MEMORY_BUDGET - workspace_bytes
+        axis_chunk_size = max(1, available_bytes // max(1, bytes_per_slice))
+        chunk_size = min(chunk_size, axis_chunk_size)
+
+    # Small vector batches cost more memory bandwidth than they save in dispatch.
+    if chunk_size < batch_size and chunk_size < _MIN_AXES_INTERPOLATION_CHUNK_SIZE:
+        return 1
+    return chunk_size
+
+
 class Resize(OpRun):
     def _run(
         self,
@@ -637,19 +707,112 @@ class Resize(OpRun):
             return (output,)
 
         normalized_axes = [axis + X.ndim if axis < 0 else axis for axis in axes]
-        output = onnx.numpy_helper.saturate_cast(
-            _interpolate_nd(
-                X,
-                fct,
-                scale_factors=scales,
-                output_size=sizes,
-                axes=normalized_axes,
-                roi=roi,
-                keep_aspect_ratio_policy=keep_aspect_ratio_policy,
-                exclude_outside=exclude_outside,
-                coordinate_transformation_mode=coordinate_transformation_mode,
-                extrapolation_value=extrapolation_value,
-            ),
-            X.dtype,
+        not_axes = [axis for axis in range(X.ndim) if axis not in normalized_axes]
+        permutation = tuple(not_axes + normalized_axes)
+        batch_shape = tuple(X.shape[axis] for axis in not_axes)
+        batch_size = int(np.prod(batch_shape))
+        if (
+            not not_axes
+            or batch_size == 0
+            or any(X.shape[axis] == 0 for axis in normalized_axes)
+        ):
+            output = onnx.numpy_helper.saturate_cast(
+                _interpolate_nd(
+                    X,
+                    fct,
+                    scale_factors=scales,
+                    output_size=sizes,
+                    axes=normalized_axes,
+                    roi=roi,
+                    keep_aspect_ratio_policy=keep_aspect_ratio_policy,
+                    exclude_outside=exclude_outside,
+                    coordinate_transformation_mode=coordinate_transformation_mode,
+                    extrapolation_value=extrapolation_value,
+                ),
+                X.dtype,
+            )
+            return (output,)
+
+        permuted = np.transpose(X, permutation)
+        batch_dimensions_contiguous = all(
+            X.strides[index] == X.shape[index + 1] * X.strides[index + 1]
+            for index in range(len(not_axes) - 1)
         )
+        batch_view = (
+            X.reshape((batch_size, *(X.shape[axis] for axis in normalized_axes)))
+            if permutation == tuple(range(X.ndim)) and batch_dimensions_contiguous
+            else None
+        )
+        chunk_size = _axes_chunk_size(
+            X,
+            normalized_axes,
+            fct,
+            sizes,
+            scales,
+            keep_aspect_ratio_policy,
+            coordinate_transformation_mode,
+            batch_size,
+        )
+        chunk_axes = list(range(1, len(normalized_axes) + 1))
+        result = None
+        if chunk_size == 1:
+            for index in range(batch_size):
+                chunk_input = (
+                    batch_view[index]
+                    if batch_view is not None
+                    else permuted[np.unravel_index(index, batch_shape)]
+                )
+                chunk = onnx.numpy_helper.saturate_cast(
+                    _interpolate_nd(
+                        chunk_input,
+                        fct,
+                        scale_factors=scales,
+                        output_size=sizes,
+                        roi=roi,
+                        keep_aspect_ratio_policy=keep_aspect_ratio_policy,
+                        exclude_outside=exclude_outside,
+                        coordinate_transformation_mode=coordinate_transformation_mode,
+                        extrapolation_value=extrapolation_value,
+                    ),
+                    X.dtype,
+                )
+                if result is None:
+                    result = np.empty((batch_size, *chunk.shape), dtype=X.dtype)
+                result[index] = chunk
+        else:
+            for start in range(0, batch_size, chunk_size):
+                chunk_input = (
+                    batch_view[start : start + chunk_size]
+                    if batch_view is not None
+                    else permuted[
+                        np.unravel_index(
+                            np.arange(start, min(start + chunk_size, batch_size)),
+                            batch_shape,
+                        )
+                    ]
+                )
+                chunk = onnx.numpy_helper.saturate_cast(
+                    _interpolate_nd(
+                        chunk_input,
+                        fct,
+                        scale_factors=scales,
+                        output_size=sizes,
+                        axes=chunk_axes,
+                        roi=roi,
+                        keep_aspect_ratio_policy=keep_aspect_ratio_policy,
+                        exclude_outside=exclude_outside,
+                        coordinate_transformation_mode=coordinate_transformation_mode,
+                        extrapolation_value=extrapolation_value,
+                    ),
+                    X.dtype,
+                )
+                if result is None:
+                    result = np.empty((batch_size, *chunk.shape[1:]), dtype=X.dtype)
+                result[start : start + chunk_size] = chunk
+
+        if result is None:
+            raise RuntimeError("Resize axes interpolation produced no chunks.")
+        reshaped_result = result.reshape(batch_shape + result.shape[1:])
+        inverse_permutation = np.argsort(permutation)
+        output = np.transpose(reshaped_result, tuple(inverse_permutation))
         return (output,)
