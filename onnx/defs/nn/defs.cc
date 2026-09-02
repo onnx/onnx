@@ -2352,6 +2352,11 @@ static void col2imShapeInference(InferenceContext& ctx) {
   if (!n_input_dims.has_dim_value()) {
     return;
   }
+  // Do not materialize an attacker-controlled number of Dimension messages
+  // when only Col2Im's spatial rank is known.
+  if (n_input_dims.dim_value() < 0 || n_input_dims.dim_value() > kMaxMaterializedRank) {
+    return;
+  }
 
   // Final shape will be (N, C, dim_1, ..., dim_N)
   auto* final_image_shape = ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
@@ -2712,6 +2717,36 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
+static void GroupNormalizationShapeInference(InferenceContext& ctx) {
+  propagateShapeAndTypeFromFirstInput(ctx);
+
+  const int64_t num_groups = getAttribute(ctx, "num_groups", 0);
+  if (num_groups <= 0) {
+    fail_shape_inference("Attribute num_groups must be > 0. num_groups=", num_groups, ".");
+  }
+
+  if (hasInputShape(ctx, 0) && getInputShape(ctx, 0).dim_size() < 2) {
+    fail_shape_inference("Input X must have rank >= 2.");
+  }
+
+  checkInputRank(ctx, 1, 1);
+  checkInputRank(ctx, 2, 1);
+
+  Dim num_channels;
+  unifyInputDim(ctx, 0, 1, num_channels);
+  unifyInputDim(ctx, 1, 0, num_channels);
+  unifyInputDim(ctx, 2, 0, num_channels);
+
+  if (num_channels.has_dim_value() && num_channels.dim_value() % num_groups != 0) {
+    fail_shape_inference(
+        "The number of channels must be divisible by num_groups. channels=",
+        num_channels.dim_value(),
+        " num_groups=",
+        num_groups,
+        ".");
+  }
+}
+
 static constexpr const char* GroupNormalization_ver21_doc = R"DOC(
 A GroupNormalization function. Carries out group normalization as described in
 the paper https://arxiv.org/abs/1803.08494
@@ -2779,6 +2814,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::Differentiable)
         .TypeConstraint("T", OpSchema::all_float_types_ir4(), "Constrain input and output types to float tensors.")
         .SetNodeDeterminism(OpSchema::NodeDeterminism::Deterministic)
+        .TypeAndShapeInferenceFunction(GroupNormalizationShapeInference)
         .SetContextDependentFunctionBodyBuilder(
             [](const FunctionBodyBuildContext& ctx, const OpSchema& schema, FunctionProto& functionProto) {
               // GroupNormalization <epsilon, num_groups> (X, scale, bias) => (Y)
@@ -3347,7 +3383,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           return true;
         }));
 
-static constexpr const char* Attention_ver24_doc = R"DOC(
+static constexpr const char* Attention_ver25_doc = R"DOC(
 
 Computes scaled dot product attention on query, key and value tensors, using an optional attention mask if passed.
 
@@ -3404,7 +3440,26 @@ With `nonpad_kv_seqlen=4` (offset=0), the mask is the standard lower-triangular.
 
 `offset` is the count of valid keys preceding the current query block: `offset = past_sequence_length` when `past_key` is provided; `offset = nonpad_kv_seqlen - q_sequence_length` (per batch) when an external cache is indicated by `nonpad_kv_seqlen` without `past_key`; `offset = 0` when neither is provided (the no-cache case, which reduces to the standard lower-triangular mask). When `offset < 0` (`nonpad_kv_seqlen < q_sequence_length`, i.e. more query tokens than cached keys) the leading query rows have an empty key set (no key satisfies `j <= i + offset`) and are fully masked. The causal frontier is computed independently of `attn_mask` and is then composed with it additively: a boolean `attn_mask` intersects the allowed set (its disallowed positions contribute `-inf` to the bias), while a float `attn_mask` is added to the attention scores rather than disabling positions. A fully-masked query row (no key attended, including the negative-offset leading rows) produces a zero output row, not `NaN`, for both `Y` and the mode-`3` `qk_matmul_output` debug output; the mode-`3` `qk_matmul_output` is emitted at the operator's output precision (`T1`).
 
-Errata (in-place behavioral correction, no opset bump): the reference implementation and backend tests were incorrect when `nonpad_kv_seqlen != q_sequence_length` (nonzero bottom-right offset, top-left instead of bottom-right causal alignment) and produced `NaN` for fully-masked rows; corrected in version 1.23. This fixed three behaviors described above: external-cache bottom-right causal alignment (`offset = nonpad_kv_seqlen - q_sequence_length`), zero (non-`NaN`) output for fully-masked rows including the mode-`3` `qk_matmul_output`, and the mode-`3` `qk_matmul_output` precision (`T1`).
+`left_window_size` and `right_window_size` independently restrict the keys visible to each query. A query at absolute position `p = offset + query_index` attends keys `j` satisfying `p - left_window_size <= j <= p + right_window_size` for each nonnegative bound. A value of `-1` leaves that side unbounded. For example, `(left_window_size=2, right_window_size=0)` is a causal left-looking window containing the current key and two preceding keys, while `(left_window_size=2, right_window_size=1)` is an asymmetric bidirectional window. Window bounds are composed with `is_causal` and `attn_mask`; when `is_causal=1`, the causal upper bound still excludes future keys.
+
+```
+  2D sliding-window mask for Attention (opset 25)
+   S_q=4 queries, S_k=6 keys, left_window_size=2, right_window_size=1, offset=0
+
+          k0  k1  k2  k3  k4  k5
+         +----+----+----+----+----+----+
+    q0   | ## | ## |    |    |    |    |
+         +----+----+----+----+----+----+
+    q1   | ## | ## | ## |    |    |    |
+         +----+----+----+----+----+----+
+    q2   | ## | ## | ## | ## |    |    |
+         +----+----+----+----+----+----+
+    q3   |    | ## | ## | ## | ## |    |
+         +----+----+----+----+----+----+
+
+   q0 attends {k0,k1}, q1 attends {k0,k1,k2}, q2 attends {k0,k1,k2,k3},
+   q3 attends {k1,k2,k3,k4}.
+```
 
 With respect to KV cache update, this operator allows the following two use cases:
 
@@ -3446,11 +3501,51 @@ Q*sqrt(scale) K*sqrt(scale) |
 
 )DOC";
 
+static void Attention25Inference(InferenceContext& ctx) {
+  defs::nn::utils::AttentionPropagateElemTypeFromInputToOutput(ctx);
+
+  for (const char* window_attr_name : {"left_window_size", "right_window_size"}) {
+    const auto* const window_attr = ctx.getAttribute(window_attr_name);
+    const int64_t window_size = window_attr != nullptr ? window_attr->i() : -1;
+    if (window_size < -1) {
+      fail_shape_inference(window_attr_name, " must be -1 or nonnegative, got ", window_size);
+    }
+  }
+
+  if (hasInputShape(ctx, 0) && getInputShape(ctx, 0).dim_size() == 3) {
+    const auto* const q_num_heads_attr = ctx.getAttribute("q_num_heads");
+    const auto* const kv_num_heads_attr = ctx.getAttribute("kv_num_heads");
+    if (q_num_heads_attr != nullptr && kv_num_heads_attr != nullptr &&
+        (q_num_heads_attr->i() <= 0 || kv_num_heads_attr->i() <= 0)) {
+      fail_shape_inference("q_num_heads and kv_num_heads must be positive for 3D inputs.");
+    }
+  }
+
+  const bool has_past_key = ctx.hasInput(4);
+  const bool has_past_value = ctx.hasInput(5);
+  if (has_past_key != has_past_value) {
+    fail_shape_inference("past_key and past_value must be provided together.");
+  }
+  const bool has_present_key = ctx.hasOutput(1);
+  const bool has_present_value = ctx.hasOutput(2);
+  if (has_present_key != has_present_value) {
+    fail_shape_inference("present_key and present_value must be requested together.");
+  }
+  if (ctx.hasInput(6) && (has_past_key || has_present_key)) {
+    fail_shape_inference("nonpad_kv_seqlen cannot be combined with past or present cache tensors.");
+  }
+
+  if (hasInputShape(ctx, 0) && getInputShape(ctx, 0).dim_size() == 4 &&
+      (ctx.getAttribute("q_num_heads") != nullptr || ctx.getAttribute("kv_num_heads") != nullptr)) {
+    fail_shape_inference("q_num_heads and kv_num_heads must not be specified for 4D inputs.");
+  }
+}
+
 ONNX_OPERATOR_SET_SCHEMA(
     Attention,
-    24,
+    25,
     OpSchema()
-        .SetDoc(Attention_ver24_doc)
+        .SetDoc(Attention_ver25_doc)
         .Attr(
             "is_causal",
             "If set to `1`, causal masking is applied. For a square Q/K (no cache offset) this is a "
@@ -3479,29 +3574,47 @@ ONNX_OPERATOR_SET_SCHEMA(
             OPTIONAL_VALUE)
         .Attr(
             "softmax_precision",
-            "The floating-point precision used in softmax computation. "
-            "If softmax precision is not provided, the same precision as the input of softmax (Q and K) is used.",
+            "Specifies the precision for softmax computation. If provided, "
+            "the attention weights will be cast to this type before softmax "
+            "and then cast back to the original type. "
+            "Supported values are: `1` (FLOAT), `10` (FLOAT16), `11` (DOUBLE), "
+            "`16` (BFLOAT16).",
             AttributeProto::INT,
             OPTIONAL_VALUE)
         .Attr(
             "softcap",
-            "Softcap value for attention weights. Default value is 0.",
+            "Soft cap for attention logits, applied as `softcap * tanh(logits / softcap)`. "
+            "Default value of `0.0` means no soft capping is applied. "
+            "The soft cap is applied before mask / bias addition and softmax.",
             AttributeProto::FLOAT,
             static_cast<float>(0))
         .Attr(
             "qk_matmul_output_mode",
-            "If set to `0`, qk_matmul_output is the output of qk matmul. "
-            "If set to `1`, qk_matmul_output is the output after the softcap operation (before mask addition). "
-            "If set to `2`, qk_matmul_output includes the attention mask and softcap (if provided) applied to the output of qk matmul. "
-            "If set to `3`, qk_matmul_output is the output after the softmax operation. "
-            "In mode `3`, a fully-masked query row (every key disallowed) is a zero row, "
-            "consistent with the corresponding row of the primary output `Y`: the "
-            "fully-masked-row guard is applied before this output is produced. "
+            "Determines what the optional 4th output contains: "
+            "`0` (default): raw QK matmul result; "
+            "`1`: after softcap (before bias addition); "
+            "`2`: QK + softcap + bias; "
+            "`3`: post-softmax probabilities (after fully-masked-row guard). "
+            "In mode `3`, a fully-masked query row (every key disallowed) "
+            "is a zero row, consistent with the corresponding row of the primary output `Y`. "
             "The mode-`3` output is emitted at the operator's output precision (`T1`); when "
-            "`softmax_precision` differs from `T1` this is a cast of the softmax result to `T1`. "
-            "Default value is 0.",
+            "`softmax_precision` differs from `T1` this is a cast of the softmax result to `T1`.",
             AttributeProto::INT,
             static_cast<int64_t>(0))
+        .Attr(
+            "left_window_size",
+            "Maximum number of positions to the left of the current absolute query position that may be attended. "
+            "A value of `0` allows the current position but no preceding position, while `-1` leaves the left side "
+            "unbounded. This bound is composed with `is_causal` and `attn_mask`.",
+            AttributeProto::INT,
+            static_cast<int64_t>(-1))
+        .Attr(
+            "right_window_size",
+            "Maximum number of positions to the right of the current absolute query position that may be attended. "
+            "A value of `0` allows the current position but no following position, while `-1` leaves the right side "
+            "unbounded. Set `is_causal=0` to use a positive right window.",
+            AttributeProto::INT,
+            static_cast<int64_t>(-1))
         .Input(
             0,
             "Q",
@@ -3527,38 +3640,44 @@ ONNX_OPERATOR_SET_SCHEMA(
             3,
             "attn_mask",
             "Attention mask. "
-            "Shape must be broadcastable to `(batch_size, q_num_heads, q_sequence_length, total_sequence_length)` "
-            "where `total_sequence_length = past_sequence_length + kv_sequence_length.` "
-            "The last dimension can also be shorter than `total_sequence_length` and will be padded to `total_sequence_length` with negative infinity. "
-            "Two types of masks are supported: a boolean mask where a value of `True` indicates that the element should take part in attention, "
+            "Shape must be broadcastable to "
+            "`(batch_size, q_num_heads, q_sequence_length, total_sequence_length)` "
+            "where `total_sequence_length = past_sequence_length + kv_sequence_length`. "
+            "The last dimension can also be shorter than `total_sequence_length` and will be "
+            "padded to `total_sequence_length` with negative infinity. "
+            "Two types of masks are supported: a boolean mask where a value of `True` indicates "
+            "that the element should take part in attention, "
             "or a float mask of the same type as query, key, value that is added to the attention score.",
             "U",
             OpSchema::Optional)
         .Input(
             4,
             "past_key",
-            "past state cache for key with shape `(batch_size, kv_num_heads, past_sequence_length, head_size)`",
+            "Past state for key with shape `(batch_size, kv_num_heads, past_sequence_length, head_size)`. "
+            "Must be used together with `past_value` input.",
             "T1",
             OpSchema::Optional)
         .Input(
             5,
             "past_value",
-            "past state cache for value with shape `(batch_size, kv_num_heads, past_sequence_length, v_head_size)`",
+            "Past state for value with shape `(batch_size, kv_num_heads, past_sequence_length, v_head_size)`. "
+            "Must be used together with `past_key` input.",
             "T2",
             OpSchema::Optional)
         .Input(
             6,
             "nonpad_kv_seqlen",
-            "A vector of integers of shape `(batch_size,)` that indicates the number of valid (ie, non-padding) "
-            "tokens in each sample. A padding mask can be derived from this. This should not be used together with "
-            "`past_key` and `past_value` inputs or `present_key` and `present_value` outputs "
-            "(See the KV cache use cases in the operator description).",
+            "A vector of integers of shape `(batch_size,)` that indicates the number of valid "
+            "(i.e., non-padding) tokens in each sample. A padding mask can be derived from this. "
+            "This should not be used together with `past_key` and `past_value` inputs or "
+            "`present_key` and `present_value` outputs "
+            "(see the KV cache use cases in the operator description).",
             "tensor(int64)",
             OpSchema::Optional)
         .Output(
             0,
             "Y",
-            "The output tensor . "
+            "The output tensor. "
             "4D tensor with shape `(batch_size, q_num_heads, q_sequence_length, v_head_size)` or 3D tensor with shape `(batch_size, q_sequence_length, hidden_size)`. "
             "For cases with a 3D input tensor, `hidden_size = q_num_heads * v_head_size`",
             "T1")
@@ -3590,13 +3709,14 @@ ONNX_OPERATOR_SET_SCHEMA(
             "U",
             OpSchema::all_non_complex_numeric_types_plus_bool_ir4(),
             "Constrain output 'mask' types to boolean tensors and input types.")
-        .TypeAndShapeInferenceFunction(defs::nn::utils::AttentionPropagateElemTypeFromInputToOutput)
+        .TypeAndShapeInferenceFunction(Attention25Inference)
         .SetNodeDeterminism(OpSchema::NodeDeterminism::Deterministic)
         .SetContextDependentFunctionBodyBuilder([](const FunctionBodyBuildContext& ctx,
                                                    const OpSchema& schema,
                                                    FunctionProto& functionProto) {
-          // ScaledDotProductAttention <scale, is_causal, q_num_heads, kv_numheads> (Q, K, V, attn_mask, past_key,
-          // past_value) => (Y, present_key?, present_value?)
+          // ScaledDotProductAttention <scale, is_causal, q_num_heads, kv_numheads, left_window_size,
+          // right_window_size> (Q, K, V,
+          // attn_mask, past_key, past_value) => (Y, present_key?, present_value?)
           int64_t int_type = ONNX_NAMESPACE::TensorProto_DataType_INT64;
           int64_t float_type = ONNX_NAMESPACE::TensorProto_DataType_FLOAT;
 
@@ -3623,6 +3743,20 @@ ONNX_OPERATOR_SET_SCHEMA(
           int64_t kv_num_heads = (kv_num_heads_attr != nullptr) ? kv_num_heads_attr->i() : 0;
           auto is_causal_attr = ctx.getAttribute("is_causal");
           int64_t is_causal = (is_causal_attr != nullptr) ? is_causal_attr->i() : 0;
+
+          auto left_window_attr = ctx.getAttribute("left_window_size");
+          int64_t left_window_size = (left_window_attr != nullptr) ? left_window_attr->i() : -1;
+          auto right_window_attr = ctx.getAttribute("right_window_size");
+          int64_t right_window_size = (right_window_attr != nullptr) ? right_window_attr->i() : -1;
+          if (left_window_size < -1 || right_window_size < -1)
+            return false;
+          if (ctx.hasInput(4) != ctx.hasInput(5) || ctx.hasOutput(1) != ctx.hasOutput(2))
+            return false;
+          if (ctx.hasInput(6) && (ctx.hasInput(4) || ctx.hasOutput(1)))
+            return false;
+          if (t_qk->tensor_type().has_shape() && t_qk->tensor_type().shape().dim_size() == 4 &&
+              (q_num_heads_attr != nullptr || kv_num_heads_attr != nullptr))
+            return false;
 
           // Determine if input is 3D (requires reshape and transpose) or 4D (direct reshape)
           bool is_3d_input = (q_num_heads > 0 && kv_num_heads > 0);
@@ -3704,8 +3838,66 @@ ONNX_OPERATOR_SET_SCHEMA(
             builder.Add("present_value = Identity (PresentValue)");
           }
 
-          if (!defs::nn::utils::AttentionAppendFunctionCausalMask(ctx, builder, true))
+          if (!defs::nn::utils::AttentionAppendFunctionCausalMask(ctx, builder, true, true))
             return false;
+
+          // Window bounds are an additive overlay on the causal and attention masks.
+          if (left_window_size >= 0 || right_window_size >= 0) {
+            builder.Const1D("WinZero", static_cast<int64_t>(0))
+                .Const1D("WinOne", static_cast<int64_t>(1))
+                .Add("WinZeroNoDim = Squeeze(WinZero, WinZero)")
+                .Add("WinOneNoDim = Squeeze(WinOne, WinZero)")
+                .Add("WinSeqLen = Squeeze(QSeqLen, WinZero)")
+                .Add("WinTotalSeqLen = Squeeze(NewKVSeqLen, WinZero)")
+                .Add("WinRangeRow = Range(WinZeroNoDim, WinSeqLen, WinOneNoDim)") // [Sq]
+                .Add("WinRangeCol = Range(WinZeroNoDim, WinTotalSeqLen, WinOneNoDim)"); // [Skv]
+            if (left_window_size >= 0) {
+              builder.Const1D("LeftWindowSize", left_window_size)
+                  .Add("LeftWindowSizeNoDim = Squeeze(LeftWindowSize, WinZero)");
+            }
+            if (right_window_size >= 0) {
+              builder.Const1D("RightWindowSize", right_window_size)
+                  .Add("RightWindowSizeNoDim = Squeeze(RightWindowSize, WinZero)");
+            }
+            bool win_external_cache = ctx.hasInput(6) && !ctx.hasInput(4);
+            if (win_external_cache) {
+              // External cache: per-batch offset -> 4D mask
+              // [batch, 1, Sq, Skv]
+              builder
+                  .Add("WinOffset = Sub(nonpad_kv_seqlen, QSeqLen)") // (batch,)
+                  .Const("WinAxes123", std::vector<int64_t>{1, 2, 3})
+                  .Const("WinAxes01", std::vector<int64_t>{0, 1})
+                  .Add("WinOffset4D = Unsqueeze(WinOffset, WinAxes123)") // (batch,1,1,1)
+                  .Add("WinRow2D = Unsqueeze(WinRangeRow, WinOne)") // (Sq,1)
+                  .Add("WinRow4D = Unsqueeze(WinRow2D, WinAxes01)") // (1,1,Sq,1)
+                  .Add("WinCol2D = Unsqueeze(WinRangeCol, WinZero)") // (1,Skv)
+                  .Add("WinCol4D = Unsqueeze(WinCol2D, WinAxes01)") // (1,1,1,Skv)
+                  .Add("WinAbsPos = Add(WinRow4D, WinOffset4D)") // (batch,1,Sq,1)
+                  .Add("WinDiff = Sub(WinAbsPos, WinCol4D)"); // (batch,1,Sq,Skv)
+            } else {
+              // Internal cache (scalar PastKVSeqLen) or no cache: 2D mask [Sq, Skv]
+              builder
+                  .Add("WinRow2D = Unsqueeze(WinRangeRow, WinOne)") // (Sq,1)
+                  .Add("WinCol2D = Unsqueeze(WinRangeCol, WinZero)") // (1,Skv)
+                  .Add("WinAbsPos = Add(WinRow2D, PastKVSeqLen)") // (Sq,1)
+                  .Add("WinDiff = Sub(WinAbsPos, WinCol2D)"); // (Sq,Skv)
+            }
+            if (left_window_size >= 0 && right_window_size >= 0) {
+              builder.Add("WinLeftOk = LessOrEqual(WinDiff, LeftWindowSizeNoDim)")
+                  .Add("WinRightDiff = Neg(WinDiff)")
+                  .Add("WinRightOk = LessOrEqual(WinRightDiff, RightWindowSizeNoDim)")
+                  .Add("WinOk = And(WinLeftOk, WinRightOk)");
+            } else if (left_window_size >= 0) {
+              builder.Add("WinOk = LessOrEqual(WinDiff, LeftWindowSizeNoDim)");
+            } else {
+              builder.Add("WinRightDiff = Neg(WinDiff)").Add("WinOk = LessOrEqual(WinRightDiff, RightWindowSizeNoDim)");
+            }
+            builder.Add("WinMaskFloat = Where(WinOk, ScalarZero, FloatNegInf)")
+                .Add("WinMask = CastLike(WinMaskFloat, AttnBiasCausalOrNot)")
+                .Add("AttnBiasCausalWindow = Add(AttnBiasCausalOrNot, WinMask)");
+          } else {
+            builder.Add("AttnBiasCausalWindow = Identity(AttnBiasCausalOrNot)");
+          }
 
           // Add padding mask if kv_nonpad_seqlen is provided
           if (ctx.hasInput(6)) {
@@ -3718,10 +3910,11 @@ ONNX_OPERATOR_SET_SCHEMA(
                 .Add("PaddingMaskBool = Less(Range, KVSeqLenExpanded)") // [batch_size, KVSeqLen]
                 .Add("PaddingMaskFloat = Where(PaddingMaskBool, ScalarZero, FloatNegInf)") // [batch_size, KVSeqLen]
                 .Add("PaddingMask3D = Unsqueeze(PaddingMaskFloat, One1D)") // [batch_size, 1, KVSeqLen]
-                .Add("PaddingMask4D = Unsqueeze(PaddingMask3D, One1D)") // [batch_size, 1, 1, KVSeqLen]
-                .Add("AttnBiasCausalPad = Add(AttnBiasCausalOrNot, PaddingMask4D)");
+                .Add("PaddingMask4DFloat = Unsqueeze(PaddingMask3D, One1D)") // [batch_size, 1, 1, KVSeqLen]
+                .Add("PaddingMask4D = CastLike(PaddingMask4DFloat, AttnBiasCausalWindow)")
+                .Add("AttnBiasCausalPad = Add(AttnBiasCausalWindow, PaddingMask4D)");
           } else {
-            builder.Add("AttnBiasCausalPad = Identity(AttnBiasCausalOrNot)");
+            builder.Add("AttnBiasCausalPad = Identity(AttnBiasCausalWindow)");
           }
           builder.Add("AttnBiasT = Cast (AttnBiasCausalPad)", "to", T1);
 

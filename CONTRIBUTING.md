@@ -155,7 +155,7 @@ python onnx/gen_proto.py -l --ml
 
 ### Coding style
 
-We adopted the [Google Python Style Guide](https://google.github.io/styleguide/pyguide.html) and [Google C++ Style Guide](https://google.github.io/styleguide/cppguide.html) for this project.
+We adopted the [Google Python Style Guide](https://google.github.io/styleguide/pyguide.html) and [Google C++ Style Guide](https://google.github.io/styleguide/cppguide.html) for this project. `.proto`/`.in.proto` files follow the [Google Protocol Buffer Style Guide](https://protobuf.dev/programming-guides/style/) (2-space indentation, no tabs).
 
 We use `lintrunner` to drive multiple linters defined in `.lintrunner.toml` to lint the codebase.
 
