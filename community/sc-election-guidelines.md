@@ -10,7 +10,7 @@ SPDX-License-Identifier: Apache-2.0
 
 To encourage community participation and wider adoption in the industry, ONNX has introduced [open governance](https://github.com/onnx/onnx/wiki/Expanded-ONNX-Steering-Committee-Announced!) in March 2018. The governance has three defined structures to propel the development of ONNX project forward: [Steering Committee](/community/readme.md#steering-committee), [Special Interest Groups (SIGs)](/community/readme.md#sig---special-interest-groups), and [Working Groups (WGs)](/community/readme.md#wg---working-groups). While SIGs and WGs primarily focus on the technical roadmap of ONNX, the Steering Committee is responsible for setting the vision and governance process of the ONNX community.
 
-For the first year of its ONNX open governance, representatives from Facebook, Microsoft, AWS, Intel and Nvidia are chosen to serve as the ONNX Steering Committee to help guide the project. The Steering Committee will be elected by the [Contributors](/community/readme.md#community-roles) in its second year and will be re-elected every year.
+For the first year of ONNX open governance, representatives from Facebook, Microsoft, AWS, Intel and Nvidia were chosen to serve as the founding ONNX Steering Committee to help guide the project. Starting in its second year, the Steering Committee has been elected by the [Contributors](/community/readme.md#community-roles) and re-elected every year since. See the [History](/community/readme.md#history) section of the governance doc and the [steering-committee repository](https://github.com/onnx/steering-committee) for past terms and members.
 
 This document is created to provide guidelines for the election process to ensure maximum transparency and fairness.
 
@@ -22,7 +22,7 @@ Candidate applications will be accepted in April, and the election will be held 
 | Schedule     | Event               |
 |:-------------|:--------------------|
 | 1st Monday of April| Application for Steering Committee candidates open. |
-| 3rd Monday of April| Candidates and their applications posted on github. Campaigning session held over video conference with an option to pre-record.|
+| 3rd Monday of April| Candidates and their applications posted on github.|
 | 1st Monday of May| Election begins.     |
 | 2nd Monday of May| Election closes, and votes counted. Election results announced in the same week.|
 | 3rd Monday of May| Previous Steering Committee to meet the newly elected Committee for official transition.|
@@ -39,9 +39,13 @@ Candidates will be self-nominated, and they do not necessarily need to be a [Con
 
 To participate in the Steering committee election, you must be a Contributor to the ONNX project. As defined in the community guideline, Contributor is sponsored by 2 approvers from different companies.
 
-Contributors are further required to submit their github handle, email address, and affiliated company name to be eligible for voting. Any Contributor who has not submitted their information by before April 31st will not be able to participate in the election. The Steering Committee is currently reviewing options for collecting contributor information, and the best option will be notified to the Contributors shortly.
+Contributors are further required to submit their github handle, email address, and affiliated company name to be eligible for voting. Any Contributor who has not submitted their information by before April 31st will not be able to participate in the election.
 
 ## Candidacy process
+
+Candidates self-nominate during the application window in the Timeline above (see [Eligibility for Steering Committee candidacy](#eligibility-for-steering-committee-candidacy)). A nomination consists of the candidate's name, company/institution, and a short statement of interest.
+
+Each year's nomination form and the resulting public candidate list are published in that year's folder in the [steering-committee repository](https://github.com/onnx/steering-committee/tree/main/elections), which is the source of truth for the current cycle's exact submission process.
 
 ## Voting process
 
@@ -55,7 +59,7 @@ The election will use [Condorcet ranking](https://en.wikipedia.org/wiki/Condorce
 For ONNX Steering Committee election, the Condorcet ranking with Schulze method will be performed twice. The individual Contributor votes gets tallied first to Member Companies, and the results of the Member Company votes are ranked again using the same method.
 
 ### Voting platform
-We will use Condorcet Internet Voting Service ([civs.cs.cornell.edu](https://civs.cs.cornell.edu/)) to collect votes from Contributors.
+We will use Condorcet Internet Voting Service ([civs.cs.cornell.edu](http://civs1.civs.us/)) to collect votes from Contributors.
 
 After votes are casted, the results of individual votes will be uploaded to ONNX Github election directory to ensure transparency.
 

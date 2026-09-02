@@ -1,23 +1,32 @@
-/*
- * SPDX-License-Identifier: Apache-2.0
- */
+// Copyright (c) ONNX Project Contributors
+//
+// SPDX-License-Identifier: Apache-2.0
 
 #include "onnx/defs/schema.h"
 
+#include <limits>
+#include <memory>
 #include <stdexcept>
+#include <string>
+#include <string_view>
+#include <unordered_map>
 #include <unordered_set>
 #include <utility>
+#include <vector>
 
 #include "onnx/checker.h"
 #include "onnx/defs/operator_sets.h"
 #include "onnx/defs/operator_sets_preview.h"
 #include "onnx/defs/operator_sets_training.h"
+#include "onnx/defs/type_builders.h"
 
 #ifdef ONNX_ML
 #include "onnx/defs/operator_sets_ml.h"
 #endif
 
+#ifndef NDEBUG
 #include "onnx/common/assertions.h"
+#endif
 #include "onnx/defs/parser.h"
 
 namespace ONNX_NAMESPACE {
@@ -26,12 +35,33 @@ namespace ONNX_NAMESPACE {
 // Other positive integer means the ONNX schemas for the specified version have been loaded
 int OpSchemaRegistry::loaded_schema_version = -1;
 
-constexpr int OpSchema::kUninitializedSinceVersion;
-
 // By default if opset_version_to_load=0, it registers all opset schema for all opset versions
 // Otherwise, it only registers the latest schema according to opset_version_to_load
-void RegisterSchema(OpSchema schema, int opset_version_to_load, bool fail_duplicate_schema) {
-  OpSchemaRegistry::OpSchemaRegisterOnce ONNX_UNUSED registration(schema, opset_version_to_load, fail_duplicate_schema);
+void RegisterSchema(
+    const OpSchema& schema,
+    int opset_version_to_load,
+    bool fail_duplicate_schema,
+    bool fail_with_exception) {
+  RegisterSchema(OpSchema(schema), opset_version_to_load, fail_duplicate_schema, fail_with_exception);
+}
+void RegisterSchema(
+    OpSchema&& schema,
+    int opset_version_to_load,
+    bool fail_duplicate_schema,
+    bool fail_with_exception) {
+  if (fail_with_exception) {
+    OpSchemaRegistry::OpSchemaRegisterOnce::OpSchemaRegisterImpl(
+        std::move(schema), opset_version_to_load, fail_duplicate_schema);
+  } else {
+    OpSchemaRegistry::OpSchemaRegisterOnce::OpSchemaRegisterNoExcept(
+        std::move(schema), opset_version_to_load, fail_duplicate_schema);
+  }
+}
+
+// The (name, version, domain) must match the target exactly
+// Otherwise will raise an SchemaError
+void DeregisterSchema(const std::string& op_type, int version, const std::string& domain) {
+  OpSchemaRegistry::OpSchemaDeregister(op_type, version, domain);
 }
 
 #ifndef NDEBUG
@@ -84,6 +114,10 @@ OpSchemaRegistry* OpSchemaRegistry::Instance() {
 
 void OpSchema::CheckInputOutputType(struct InferenceContext& ctx) const {
   std::unordered_map<std::string, std::string> type_constraints;
+  // Check the number of inputs / output.
+  VerifyInputNum(static_cast<int>(ctx.getNumInputs()));
+  VerifyOutputNum(static_cast<int>(ctx.getNumOutputs()));
+
   // check all input types
   for (size_t in_idx = 0; in_idx < ctx.getNumInputs(); ++in_idx) {
     // If the last input is Variadic by definition, checker still needs to check the rest of actual input's type
@@ -103,10 +137,10 @@ void OpSchema::CheckInputOutputType(struct InferenceContext& ctx) const {
     }
     if (param.GetIsHomogeneous()) {
       const auto& type_proto = Utils::DataTypeUtils::ToType(*param_type);
-      auto p = type_constraints.emplace(type_str, *type_proto);
-      if (!p.second) {
+      auto [it, inserted] = type_constraints.emplace(type_str, *type_proto);
+      if (!inserted) {
         // failed to insert a new element due to a duplication, now check consistency
-        if (p.first->second != *type_proto) {
+        if (it->second != *type_proto) {
           fail_check(param.GetName(), " has inconsistent type ", *Utils::DataTypeUtils::ToType(*param_type));
         }
       }
@@ -125,7 +159,7 @@ void OpSchema::CheckInputOutputType(struct InferenceContext& ctx) const {
       if (all_types.size() == 1) {
         *param_type = Utils::DataTypeUtils::ToTypeProto(*all_types.begin());
       } else if (type_constraints.find(type_str) != type_constraints.end()) {
-        auto data_type = Utils::DataTypeUtils::ToType(type_constraints[type_str]);
+        const auto* const data_type = Utils::DataTypeUtils::ToType(type_constraints[type_str]);
         *param_type = Utils::DataTypeUtils::ToTypeProto(data_type);
       } else {
         output_type_found = false;
@@ -153,41 +187,8 @@ void OpSchema::Verify(const NodeProto& node) const {
     fail_check("Operator '", name_, "' has been deprecated since version ", since_version_);
   }
 
-  // Check the number of inputs.
-  if (node.input_size() < min_input_ || node.input_size() > max_input_) {
-    fail_check(
-        "Node (",
-        node.name(),
-        ") has input size ",
-        node.input_size(),
-        " not in range [min=",
-        min_input_,
-        ", max=",
-        max_input_,
-        "].");
-  }
-
-  if (!num_inputs_allowed_(node.input_size())) {
-    fail_check("Node (", node.name(), ") has input size ", node.input_size(), " not in allowed input sizes.");
-  }
-
-  // Check the number of outputs.
-  if (node.output_size() < min_output_ || node.output_size() > max_output_) {
-    fail_check(
-        "Node (",
-        node.name(),
-        ") has output size ",
-        node.output_size(),
-        " not in range [min=",
-        min_output_,
-        ", max=",
-        max_output_,
-        "].");
-  }
-
-  if (!num_outputs_allowed_(node.output_size())) {
-    fail_check("Node (", node.name(), "has output size ", node.output_size(), " not in allowed output sizes.");
-  }
+  VerifyInputNum(node.input_size(), node.name());
+  VerifyOutputNum(node.output_size(), node.name());
 
   // Check the values of inputs / outputs
   for (int in_idx = 0; in_idx < node.input_size(); ++in_idx) {
@@ -248,10 +249,10 @@ void OpSchema::Verify(const NodeProto& node) const {
 
     if (!seen_attr_names.insert(name).second) {
       fail_check("Attribute '", name, "' appeared multiple times.");
-    };
+    }
 
-    const auto& search = attributes_.find(name);
-    AttributeProto::AttributeType expected_type;
+    const auto search = attributes_.find(name);
+    AttributeProto::AttributeType expected_type{};
     if (search != attributes_.end()) {
       expected_type = search->second.type;
     } else if (allows_unchecked_attributes_ || isInternalSymbol(name)) {
@@ -262,7 +263,14 @@ void OpSchema::Verify(const NodeProto& node) const {
 
     // Type would be UNDEFINED if not set
     if (attr_proto.type() != expected_type) {
-      fail_check("Mismatched attribute type in '", node.name() + " : " + name, "'");
+      fail_check(
+          "Mismatched attribute type in '",
+          node.name() + " : " + name,
+          "'. Expected: '",
+          AttributeProto_AttributeType_Name(expected_type),
+          "', actual: '",
+          AttributeProto_AttributeType_Name(attr_proto.type()),
+          "'");
     }
 
     // ref_attr_name is only valid when non-empty
@@ -314,8 +322,7 @@ void OpSchema::Verify(const NodeProto& node) const {
         fail_check("Attribute '", name, " has unknown expected type");
     }
   }
-  for (const auto& pair : attributes_) {
-    const auto& attr = pair.second;
+  for (const auto& [_, attr] : attributes_) {
     if (!attr.required) {
       continue;
     }
@@ -325,6 +332,51 @@ void OpSchema::Verify(const NodeProto& node) const {
   }
 
   // Phew. All verifications passed.
+}
+
+std::string OpSchema::VerifyFailPrefix(std::string_view node_name) const {
+  std::string str = "Node";
+  if (!node_name.empty()) {
+    str = str + "(" + std::string(node_name) + ")";
+  }
+  str = str + " with schema(" + domain() + "::" + Name() + ":" + std::to_string(since_version()) + ")";
+  return str;
+}
+
+void OpSchema::VerifyInputNum(int input_num, std::string_view node_name) const {
+  if (input_num < min_input_ || input_num > max_input_) {
+    fail_check(
+        VerifyFailPrefix(node_name),
+        " has input size ",
+        input_num,
+        " not in range [min=",
+        min_input_,
+        ", max=",
+        max_input_,
+        "].");
+  }
+
+  if (!num_inputs_allowed_(input_num)) {
+    fail_check(VerifyFailPrefix(node_name), " has input size ", input_num, " not in allowed input sizes.");
+  }
+}
+
+void OpSchema::VerifyOutputNum(int output_num, std::string_view node_name) const {
+  if (output_num < min_output_ || output_num > max_output_) {
+    fail_check(
+        VerifyFailPrefix(node_name),
+        " has output size ",
+        output_num,
+        " not in range [min=",
+        min_output_,
+        ", max=",
+        max_output_,
+        "].");
+  }
+
+  if (!num_outputs_allowed_(output_num)) {
+    fail_check(VerifyFailPrefix(node_name), " has output size ", output_num, " not in allowed output sizes.");
+  }
 }
 
 OpSchema& OpSchema::SinceVersion(OperatorSetVersion v) {
@@ -344,17 +396,14 @@ OpSchema& OpSchema::SinceVersion(OperatorSetVersion v) {
   // however, if a runtime needs to inline LayerNormalization, the inlined model has a ReduceMean op.
   // ReduceMean in opset 18 is different from opset 17.
   // This requires us to define more than one function body
-  std::map<int, ContextDependentFunctionBodyBuilder>::const_iterator it =
-      opset_version_to_function_builder_.find(OpSchema::kUninitializedSinceVersion);
-
-  if (it != opset_version_to_function_builder_.cend()) {
+  auto it = opset_version_to_function_builder_.find(OpSchema::kUninitializedSinceVersion);
+  if (it != opset_version_to_function_builder_.end()) {
     opset_version_to_function_builder_[since_version_] = it->second;
     opset_version_to_function_builder_.erase(it);
   }
 
-  std::map<int, std::shared_ptr<FunctionProto>>::const_iterator it_function_body =
-      opset_version_to_function_body_.find(OpSchema::kUninitializedSinceVersion);
-  if (it_function_body != opset_version_to_function_body_.cend()) {
+  auto it_function_body = opset_version_to_function_body_.find(OpSchema::kUninitializedSinceVersion);
+  if (it_function_body != opset_version_to_function_body_.end()) {
     opset_version_to_function_body_[since_version_] = it_function_body->second;
     UpdateFunctionProtoOpsetImportVersion(*opset_version_to_function_body_[since_version_], since_version_);
     opset_version_to_function_body_.erase(it_function_body);
@@ -368,14 +417,14 @@ OpSchema& OpSchema::Deprecate() {
   return *this;
 }
 
-OpSchema& OpSchema::NumInputs(std::set<int> allowed_input_nums) {
+OpSchema& OpSchema::NumInputs(std::unordered_set<int> allowed_input_nums) {
   num_inputs_allowed_ = [allowed_input_nums = std::move(allowed_input_nums)](int n) -> bool {
     return allowed_input_nums.count(n);
   };
   return *this;
 }
 
-OpSchema& OpSchema::NumOutputs(std::set<int> allowed_output_nums) {
+OpSchema& OpSchema::NumOutputs(std::unordered_set<int> allowed_output_nums) {
   num_outputs_allowed_ = [allowed_output_nums = std::move(allowed_output_nums)](int n) -> bool {
     return allowed_output_nums.count(n) > 0;
   };
@@ -429,7 +478,7 @@ OpSchema& OpSchema::SetDomain(const char* domain) {
 
 OpSchema& OpSchema::Attr(Attribute attr) {
   auto name = attr.name; // copy name so we can move attr in the next line
-  attributes_.insert(std::make_pair(std::move(name), std::move(attr)));
+  attributes_.emplace(std::move(name), std::move(attr));
   return *this;
 }
 
@@ -438,29 +487,22 @@ OpSchema& OpSchema::Attr(std::string name, std::string description, AttributePro
   return *this;
 }
 
-OpSchema& OpSchema::Attr(
-    std::string name,
-    std::string description,
-    std::string conditionExplanation,
-    AttributeProto::AttributeType attr_type) {
-  AttributeProto a;
-  a.set_name(name);
-  a.set_type(attr_type);
-  if (attr_type == AttributeProto_AttributeType_UNDEFINED) {
-    a.mutable_t()->set_data_type(TensorProto_DataType_UNDEFINED);
-  }
-  a.mutable_doc_string()->assign(std::move(conditionExplanation));
-  return Attr(Attribute{std::move(name), std::move(description), std::move(a)});
-}
-
 OpSchema& OpSchema::Attr(const char* name, const char* description, AttributeProto::AttributeType type, bool required) {
   return Attr(std::string(name), std::string(description), type, required);
+}
+
+OpSchema& OpSchema::Attr(
+    const char* name,
+    const char* description,
+    AttributeProto::AttributeType type,
+    const char* defaultValue) {
+  return Attr(std::string(name), std::string(description), type, std::string(defaultValue));
 }
 
 #define ATTR_SETTER_WITH_SINGLE_VALUE(type, field, attrtype)                                                           \
   OpSchema& OpSchema::Attr(                                                                                            \
       std::string name, std::string description, AttributeProto::AttributeType attr_type, const type& default_value) { \
-    if (attrtype != attr_type) {                                                                                       \
+    if ((attrtype) != attr_type) {                                                                                     \
       fail_schema("Attribute specification type mismatch.");                                                           \
     }                                                                                                                  \
     AttributeProto a;                                                                                                  \
@@ -481,7 +523,7 @@ OpSchema& OpSchema::Attr(const char* name, const char* description, AttributePro
       std::string description,                                              \
       AttributeProto::AttributeType attr_type,                              \
       const std::vector<type>& default_value) {                             \
-    if (attrtype != attr_type) {                                            \
+    if ((attrtype) != attr_type) {                                          \
       fail_schema("Attribute specification type mismatch.");                \
     }                                                                       \
     AttributeProto a;                                                       \
@@ -497,7 +539,7 @@ OpSchema& OpSchema::Attr(const char* name, const char* description, AttributePro
 #define ATTR_SETTER_WITH_SINGLE_COMPLEXVALUE(type, field, attrtype)                                                    \
   OpSchema& OpSchema::Attr(                                                                                            \
       std::string name, std::string description, AttributeProto::AttributeType attr_type, const type& default_value) { \
-    if (attrtype != attr_type) {                                                                                       \
+    if ((attrtype) != attr_type) {                                                                                     \
       fail_schema("Attribute specification type mismatch.");                                                           \
     }                                                                                                                  \
     AttributeProto a;                                                                                                  \
@@ -514,7 +556,7 @@ OpSchema& OpSchema::Attr(const char* name, const char* description, AttributePro
       std::string description,                                              \
       AttributeProto::AttributeType attr_type,                              \
       const std::vector<type>& default_value) {                             \
-    if (attrtype != attr_type) {                                            \
+    if ((attrtype) != attr_type) {                                          \
       fail_schema("Attribute specification type mismatch.");                \
     }                                                                       \
     AttributeProto a;                                                       \
@@ -669,9 +711,8 @@ OpSchema::TypeConstraint(std::string type_str, std::vector<std::string> constrai
   for (const auto& t : constraints) {
     d.insert(Utils::DataTypeUtils::ToType(t));
   }
-  type_constraints_.insert(std::make_pair(type_str, std::make_pair(d, description)));
-  type_constraint_params_.push_back(
-      TypeConstraintParam(std::move(type_str), std::move(constraints), std::move(description)));
+  type_constraints_.emplace(type_str, std::make_pair(d, description));
+  type_constraint_params_.emplace_back(std::move(type_str), std::move(constraints), std::move(description));
   return *this;
 }
 
@@ -681,8 +722,8 @@ OpSchema& OpSchema::TypeConstraint(
     const char* description) {
   std::vector<std::string> constraints_vector;
   constraints_vector.reserve(constraints.size());
-  for (auto iter = constraints.begin(); iter != constraints.end(); ++iter) {
-    constraints_vector.push_back(*iter);
+  for (const auto* const constraint : constraints) {
+    constraints_vector.emplace_back(constraint);
   }
 
   return TypeConstraint(std::string(type_str), constraints_vector, std::string(description));
@@ -691,11 +732,11 @@ OpSchema& OpSchema::TypeConstraint(
 void OpSchema::ParseAndSetTypes(
     /*out*/ std::vector<OpSchema::FormalParameter>* formal_parameters) {
   for (auto& formal_parameter : *formal_parameters) {
-    auto& type = formal_parameter.GetTypeStr();
+    const auto& type = formal_parameter.GetTypeStr();
     DataTypeSet allowed_types;
-    auto it = type_constraints_.find(type);
-    if (it != type_constraints_.end()) {
-      allowed_types = it->second.first;
+    if (auto it = type_constraints_.find(type); it != type_constraints_.end()) {
+      auto& [types, description] = it->second;
+      allowed_types = types;
     } else {
       allowed_types.emplace(Utils::DataTypeUtils::ToType(type));
     }
@@ -722,12 +763,12 @@ bool OpSchema::BuildContextDependentFunction(
   if (requested_opset_version == OpSchema::kUninitializedSinceVersion)
     requested_opset_version = since_version_;
 
-  std::map<int, ContextDependentFunctionBodyBuilder>::const_iterator it =
-      opset_version_to_function_builder_.upper_bound(requested_opset_version);
+  auto it = opset_version_to_function_builder_.upper_bound(requested_opset_version);
   if (opset_version_to_function_builder_.empty() || it == opset_version_to_function_builder_.begin()) {
-    ONNX_THROW_EX(std::out_of_range(
-        std::string("Cannot find a function builder that satisfies the requested opset version: op_type = ") +
-        this->name_ + ", opset_version = " + std::to_string(requested_opset_version) + "."));
+    ONNX_THROW_EX(
+        std::out_of_range(
+            std::string("Cannot find a function builder that satisfies the requested opset version: op_type = ") +
+            this->name_ + ", opset_version = " + std::to_string(requested_opset_version) + "."));
   } else {
     --it;
     const ContextDependentFunctionBodyBuilder& body_builder = it->second;
@@ -737,7 +778,7 @@ bool OpSchema::BuildContextDependentFunction(
     //// default opset import may have been added to function_proto by OpSchema::BuildFunction
     //// we need to update its version with the specified opset_version
     UpdateFunctionProtoOpsetImportVersion(function_proto, requested_opset_version);
-    ValidateReferencedOpsInFuncton(&function_proto, requested_opset_version, it->first);
+    ValidateReferencedOpsInFunction(&function_proto, requested_opset_version, it->first);
     return true;
   }
 }
@@ -746,7 +787,7 @@ bool OpSchema::BuildContextDependentFunction(
 // in opset_version_to_function_builder_) has predefined opset_imports. Before returning the function, we shall
 // update the predefined opset_imports so that it is consistent with the requested version.
 // Note that this call only update opset_import of the default domain.
-// TODO: extend this call to work for no-default domains.
+// TODO(ONNX): extend this call to work for no-default domains.
 void OpSchema::UpdateFunctionProtoOpsetImportVersion(FunctionProto& function_proto, int requested_opset_version) const {
   bool opset_import_exist = false;
   for (int i = 0; i < function_proto.opset_import_size(); i++) {
@@ -770,7 +811,7 @@ OpSchema& OpSchema::FunctionBody(const char* func_body, int opset_version) {
   if (opset_version == OpSchema::kUninitializedSinceVersion && since_version_ != OpSchema::kUninitializedSinceVersion) {
     opset_version = since_version_;
   }
-  std::shared_ptr<FunctionProto> function_proto(new FunctionProto());
+  auto function_proto = std::make_shared<FunctionProto>();
   OnnxParser parser(func_body);
   auto status = parser.Parse(*function_proto->mutable_node());
   if (!status.IsOK())
@@ -782,7 +823,7 @@ OpSchema& OpSchema::FunctionBody(const char* func_body, int opset_version) {
   // we may need to update its version with the specified opset_version
   UpdateFunctionProtoOpsetImportVersion(*function_proto, opset_version);
 
-  opset_version_to_function_body_.insert(std::make_pair(opset_version, function_proto));
+  opset_version_to_function_body_.emplace(opset_version, function_proto);
   return *this;
 }
 
@@ -790,16 +831,16 @@ OpSchema& OpSchema::FunctionBody(const std::vector<NodeProto>& func_nodes, int o
   if (opset_version == OpSchema::kUninitializedSinceVersion && since_version_ != OpSchema::kUninitializedSinceVersion) {
     opset_version = since_version_;
   }
-  std::shared_ptr<FunctionProto> function_proto(new FunctionProto());
+  auto function_proto = std::make_shared<FunctionProto>();
   for (const auto& node : func_nodes) {
-    auto new_node = function_proto->add_node();
+    auto* new_node = function_proto->add_node();
     new_node->CopyFrom(node);
   }
 
   // opset import may have been set
   // we may need to update its version with the specified opset_version
   UpdateFunctionProtoOpsetImportVersion(*function_proto, opset_version);
-  opset_version_to_function_body_.insert(std::make_pair(opset_version, function_proto));
+  opset_version_to_function_body_.emplace(opset_version, std::move(function_proto));
   return *this;
 }
 
@@ -811,19 +852,19 @@ OpSchema& OpSchema::FunctionBody(
     opset_version = since_version_;
   }
 
-  std::shared_ptr<FunctionProto> function_proto(new FunctionProto());
-  for (auto& relied_opset : relied_opsets) {
+  auto function_proto = std::make_shared<FunctionProto>();
+  for (const auto& relied_opset : relied_opsets) {
     *(function_proto->mutable_opset_import()->Add()) = relied_opset;
   }
 
   for (const auto& node : func_nodes) {
-    auto new_node = function_proto->add_node();
+    auto* new_node = function_proto->add_node();
     new_node->CopyFrom(node);
   }
   // opset import may have been set
   // we may need to update its version with the specified opset_version
   UpdateFunctionProtoOpsetImportVersion(*function_proto, opset_version);
-  opset_version_to_function_body_.insert(std::make_pair(opset_version, function_proto));
+  opset_version_to_function_body_.emplace(opset_version, std::move(function_proto));
   return *this;
 }
 
@@ -834,13 +875,12 @@ const FunctionProto* OpSchema::GetFunction(int requested_opset_version, bool val
   if (requested_opset_version == OpSchema::kUninitializedSinceVersion) {
     return opset_version_to_function_body_.rbegin()->second.get();
   }
-  std::map<int, std::shared_ptr<FunctionProto>>::const_iterator it =
-      opset_version_to_function_body_.upper_bound(requested_opset_version);
+  auto it = opset_version_to_function_body_.upper_bound(requested_opset_version);
   if (it != opset_version_to_function_body_.begin()) {
     --it;
-    int function_since_version = it->first;
-    const FunctionProto* function = it->second.get();
-    if (!validate || ValidateReferencedOpsInFuncton(function, requested_opset_version, function_since_version)) {
+    const auto& [function_since_version, func_ptr] = *it;
+    const FunctionProto* function = func_ptr.get();
+    if (!validate || ValidateReferencedOpsInFunction(function, requested_opset_version, function_since_version)) {
       return function;
     }
   }
@@ -852,18 +892,18 @@ const FunctionProto* OpSchema::GetFunction(int requested_opset_version, bool val
 // When they are not the same, it is necessary to verify that ops used to define the function
 // are not updated between function_since_version and requested_opset_version (include requested_opset_version).
 // this call only validate ops in the default domain.
-// TODO: validate ops in other domains.
-bool OpSchema::ValidateReferencedOpsInFuncton(
+// TODO(ONNX): validate ops in other domains.
+bool OpSchema::ValidateReferencedOpsInFunction(
     const FunctionProto* function,
     int requested_opset_version,
     int function_since_version,
-    std::set<std::string>* updated_ops) const {
+    std::unordered_set<std::string>* updated_ops) const {
   bool all_ops_are_invalid = true;
   if (requested_opset_version == function_since_version) {
     return all_ops_are_invalid;
   }
-  for (auto& node : function->node()) {
-    if (node.domain() == "" || node.domain() == "ai.onnx") {
+  for (const auto& node : function->node()) {
+    if (node.domain().empty() || node.domain() == "ai.onnx") {
       const OpSchema* op1 =
           OpSchemaRegistry::Instance()->GetSchema(node.op_type(), requested_opset_version, node.domain());
       const OpSchema* op2 =
@@ -891,27 +931,552 @@ void OpSchema::BuildFunction(FunctionProto& function_body) const {
   function_body.set_name(this->name_);
   function_body.set_doc_string(this->doc_);
   function_body.set_domain(this->domain_);
-  for (auto& i : inputs_) {
+  for (const auto& i : inputs_) {
     function_body.add_input(i.GetName());
   }
-  for (auto& o : outputs_) {
+  for (const auto& o : outputs_) {
     function_body.add_output(o.GetName());
   }
-  for (auto& a : attributes_) {
+  for (const auto& a : attributes_) {
     function_body.add_attribute(a.first);
   }
 
   // In a typical onnx function where the function and all the
   // ops in function body belong to the same domain we implicitly add
-  // {domain_, since_version_} to funciton opset imports if it is not already added.
+  // {domain_, since_version_} to function opset imports if it is not already added.
   // This is simply for convienince. If any of the function body ops do not belong to same
   // domain as function itself, then the function author needs to explicitly add all the relevant
   // opset imports.
-  if (function_body.opset_import().size() == 0) {
+  if (function_body.opset_import().empty()) {
     auto* schema_opset = function_body.mutable_opset_import()->Add();
     schema_opset->set_domain(domain_);
     schema_opset->set_version(since_version_);
   }
+}
+
+const std::vector<std::string>& OpSchema::numeric_types_for_math_reduction_ir9() {
+  static const auto v = types::Tensors(
+      {TensorProto::UINT32,
+       TensorProto::UINT64,
+       TensorProto::INT32,
+       TensorProto::INT64,
+       TensorProto::FLOAT16,
+       TensorProto::FLOAT,
+       TensorProto::DOUBLE,
+       TensorProto::BFLOAT16,
+       TensorProto::FLOAT8E4M3FN,
+       TensorProto::FLOAT8E4M3FNUZ,
+       TensorProto::FLOAT8E5M2,
+       TensorProto::FLOAT8E5M2FNUZ});
+  return v;
+}
+
+const std::vector<std::string>& OpSchema::numeric_types_for_math_reduction_ir4() {
+  static const auto v = types::Tensors(
+      {TensorProto::UINT32,
+       TensorProto::UINT64,
+       TensorProto::INT32,
+       TensorProto::INT64,
+       TensorProto::FLOAT16,
+       TensorProto::FLOAT,
+       TensorProto::DOUBLE,
+       TensorProto::BFLOAT16});
+  return v;
+}
+
+const std::vector<std::string>& OpSchema::numeric_types_for_math_reduction() {
+  static const auto v = types::Tensors(
+      {TensorProto::UINT32,
+       TensorProto::UINT64,
+       TensorProto::INT32,
+       TensorProto::INT64,
+       TensorProto::FLOAT16,
+       TensorProto::FLOAT,
+       TensorProto::DOUBLE});
+  return v;
+}
+
+const std::vector<std::string>& OpSchema::all_numeric_types_ir12() {
+  static const auto v = types::Tensors(
+      {TensorProto::UINT8,        TensorProto::UINT16,         TensorProto::UINT32,     TensorProto::UINT64,
+       TensorProto::INT8,         TensorProto::INT16,          TensorProto::INT32,      TensorProto::INT64,
+       TensorProto::FLOAT16,      TensorProto::FLOAT,          TensorProto::DOUBLE,     TensorProto::BFLOAT16,
+       TensorProto::FLOAT8E4M3FN, TensorProto::FLOAT8E4M3FNUZ, TensorProto::FLOAT8E5M2, TensorProto::FLOAT8E5M2FNUZ,
+       TensorProto::UINT4,        TensorProto::INT4,           TensorProto::FLOAT4E2M1, TensorProto::FLOAT8E8M0});
+  return v;
+}
+
+const std::vector<std::string>& OpSchema::all_numeric_types_ir13() {
+  static const auto v = types::Tensors({TensorProto::UINT8,        TensorProto::UINT16,
+                                        TensorProto::UINT32,       TensorProto::UINT64,
+                                        TensorProto::INT8,         TensorProto::INT16,
+                                        TensorProto::INT32,        TensorProto::INT64,
+                                        TensorProto::FLOAT16,      TensorProto::FLOAT,
+                                        TensorProto::DOUBLE,       TensorProto::BFLOAT16,
+                                        TensorProto::FLOAT8E4M3FN, TensorProto::FLOAT8E4M3FNUZ,
+                                        TensorProto::FLOAT8E5M2,   TensorProto::FLOAT8E5M2FNUZ,
+                                        TensorProto::UINT4,        TensorProto::INT4,
+                                        TensorProto::FLOAT4E2M1,   TensorProto::FLOAT8E8M0,
+                                        TensorProto::UINT2,        TensorProto::INT2});
+  return v;
+}
+
+const std::vector<std::string>& OpSchema::all_numeric_types_ir11() {
+  static const auto v = types::Tensors(
+      {TensorProto::UINT8,
+       TensorProto::UINT16,
+       TensorProto::UINT32,
+       TensorProto::UINT64,
+       TensorProto::INT8,
+       TensorProto::INT16,
+       TensorProto::INT32,
+       TensorProto::INT64,
+       TensorProto::FLOAT16,
+       TensorProto::FLOAT,
+       TensorProto::DOUBLE,
+       TensorProto::BFLOAT16,
+       TensorProto::FLOAT8E4M3FN,
+       TensorProto::FLOAT8E4M3FNUZ,
+       TensorProto::FLOAT8E5M2,
+       TensorProto::FLOAT8E5M2FNUZ,
+       TensorProto::UINT4,
+       TensorProto::INT4,
+       TensorProto::FLOAT4E2M1});
+  return v;
+}
+
+const std::vector<std::string>& OpSchema::all_numeric_types_ir10() {
+  static const auto v = types::Tensors(
+      {TensorProto::UINT8,
+       TensorProto::UINT16,
+       TensorProto::UINT32,
+       TensorProto::UINT64,
+       TensorProto::INT8,
+       TensorProto::INT16,
+       TensorProto::INT32,
+       TensorProto::INT64,
+       TensorProto::FLOAT16,
+       TensorProto::FLOAT,
+       TensorProto::DOUBLE,
+       TensorProto::BFLOAT16,
+       TensorProto::FLOAT8E4M3FN,
+       TensorProto::FLOAT8E4M3FNUZ,
+       TensorProto::FLOAT8E5M2,
+       TensorProto::FLOAT8E5M2FNUZ,
+       TensorProto::UINT4,
+       TensorProto::INT4});
+  return v;
+}
+
+const std::vector<std::string>& OpSchema::all_numeric_types_ir9() {
+  static const auto v = types::Tensors(
+      {TensorProto::UINT8,
+       TensorProto::UINT16,
+       TensorProto::UINT32,
+       TensorProto::UINT64,
+       TensorProto::INT8,
+       TensorProto::INT16,
+       TensorProto::INT32,
+       TensorProto::INT64,
+       TensorProto::FLOAT16,
+       TensorProto::FLOAT,
+       TensorProto::DOUBLE,
+       TensorProto::BFLOAT16,
+       TensorProto::FLOAT8E4M3FN,
+       TensorProto::FLOAT8E4M3FNUZ,
+       TensorProto::FLOAT8E5M2,
+       TensorProto::FLOAT8E5M2FNUZ});
+  return v;
+}
+
+const std::vector<std::string>& OpSchema::all_numeric_types_ir4() {
+  static const auto v = types::Tensors(
+      {TensorProto::UINT8,
+       TensorProto::UINT16,
+       TensorProto::UINT32,
+       TensorProto::UINT64,
+       TensorProto::INT8,
+       TensorProto::INT16,
+       TensorProto::INT32,
+       TensorProto::INT64,
+       TensorProto::FLOAT16,
+       TensorProto::FLOAT,
+       TensorProto::DOUBLE,
+       TensorProto::BFLOAT16});
+  return v;
+}
+
+const std::vector<std::string>& OpSchema::all_numeric_types() {
+  static const auto v = types::Tensors(
+      {TensorProto::UINT8,
+       TensorProto::UINT16,
+       TensorProto::UINT32,
+       TensorProto::UINT64,
+       TensorProto::INT8,
+       TensorProto::INT16,
+       TensorProto::INT32,
+       TensorProto::INT64,
+       TensorProto::FLOAT16,
+       TensorProto::FLOAT,
+       TensorProto::DOUBLE});
+  return v;
+}
+
+const std::vector<std::string>& OpSchema::all_numeric_sequence_types() {
+  static const auto v = types::Sequence(
+      types::Tensors(
+          {TensorProto::UINT8,
+           TensorProto::UINT16,
+           TensorProto::UINT32,
+           TensorProto::UINT64,
+           TensorProto::INT8,
+           TensorProto::INT16,
+           TensorProto::INT32,
+           TensorProto::INT64,
+           TensorProto::FLOAT16,
+           TensorProto::FLOAT,
+           TensorProto::DOUBLE}));
+  return v;
+}
+
+const std::vector<std::string>& OpSchema::all_tensor_types() {
+  static const auto v = types::Tensors(
+      {TensorProto::UINT8,
+       TensorProto::UINT16,
+       TensorProto::UINT32,
+       TensorProto::UINT64,
+       TensorProto::INT8,
+       TensorProto::INT16,
+       TensorProto::INT32,
+       TensorProto::INT64,
+       TensorProto::FLOAT16,
+       TensorProto::FLOAT,
+       TensorProto::DOUBLE,
+       TensorProto::STRING,
+       TensorProto::BOOL,
+       TensorProto::COMPLEX64,
+       TensorProto::COMPLEX128});
+  return v;
+}
+
+const std::vector<std::string>& OpSchema::all_tensor_types_ir4() {
+  static const auto v = types::Tensors(
+      {TensorProto::UINT8,
+       TensorProto::UINT16,
+       TensorProto::UINT32,
+       TensorProto::UINT64,
+       TensorProto::INT8,
+       TensorProto::INT16,
+       TensorProto::INT32,
+       TensorProto::INT64,
+       TensorProto::BFLOAT16,
+       TensorProto::FLOAT16,
+       TensorProto::FLOAT,
+       TensorProto::DOUBLE,
+       TensorProto::STRING,
+       TensorProto::BOOL,
+       TensorProto::COMPLEX64,
+       TensorProto::COMPLEX128});
+  return v;
+}
+
+const std::vector<std::string>& OpSchema::all_non_complex_numeric_types_plus_bool_ir4() {
+  static const auto v = types::Tensors(
+      {TensorProto::UINT8,
+       TensorProto::UINT16,
+       TensorProto::UINT32,
+       TensorProto::UINT64,
+       TensorProto::INT8,
+       TensorProto::INT16,
+       TensorProto::INT32,
+       TensorProto::INT64,
+       TensorProto::BFLOAT16,
+       TensorProto::FLOAT16,
+       TensorProto::FLOAT,
+       TensorProto::DOUBLE,
+       TensorProto::BOOL});
+  return v;
+}
+
+const std::vector<std::string>& OpSchema::all_float_types_ir4() {
+  static const auto v =
+      types::Tensors({TensorProto::BFLOAT16, TensorProto::FLOAT16, TensorProto::FLOAT, TensorProto::DOUBLE});
+  return v;
+}
+
+const std::vector<std::string>& OpSchema::all_float_types_plus_Xint8_ir4() {
+  static const auto v = types::Tensors(
+      {TensorProto::BFLOAT16,
+       TensorProto::FLOAT16,
+       TensorProto::FLOAT,
+       TensorProto::DOUBLE,
+       TensorProto::INT8,
+       TensorProto::UINT8});
+  return v;
+}
+
+const std::vector<std::string>& OpSchema::all_float_types_ir9() {
+  static const auto v = types::Tensors(
+      {TensorProto::BFLOAT16,
+       TensorProto::FLOAT16,
+       TensorProto::FLOAT,
+       TensorProto::DOUBLE,
+       TensorProto::FLOAT8E4M3FN,
+       TensorProto::FLOAT8E4M3FNUZ,
+       TensorProto::FLOAT8E5M2,
+       TensorProto::FLOAT8E5M2FNUZ});
+  return v;
+}
+
+const std::vector<std::string>& OpSchema::all_tensor_types_ir9() {
+  static const auto v = types::Tensors(
+      {TensorProto::UINT8,        TensorProto::UINT16,         TensorProto::UINT32,     TensorProto::UINT64,
+       TensorProto::INT8,         TensorProto::INT16,          TensorProto::INT32,      TensorProto::INT64,
+       TensorProto::BFLOAT16,     TensorProto::FLOAT16,        TensorProto::FLOAT,      TensorProto::DOUBLE,
+       TensorProto::STRING,       TensorProto::BOOL,           TensorProto::COMPLEX64,  TensorProto::COMPLEX128,
+       TensorProto::FLOAT8E4M3FN, TensorProto::FLOAT8E4M3FNUZ, TensorProto::FLOAT8E5M2, TensorProto::FLOAT8E5M2FNUZ});
+  return v;
+}
+
+const std::vector<std::string>& OpSchema::all_tensor_types_ir10() {
+  static const auto v =
+      types::Tensors({TensorProto::UINT8,      TensorProto::UINT16,         TensorProto::UINT32,
+                      TensorProto::UINT64,     TensorProto::INT8,           TensorProto::INT16,
+                      TensorProto::INT32,      TensorProto::INT64,          TensorProto::BFLOAT16,
+                      TensorProto::FLOAT16,    TensorProto::FLOAT,          TensorProto::DOUBLE,
+                      TensorProto::STRING,     TensorProto::BOOL,           TensorProto::COMPLEX64,
+                      TensorProto::COMPLEX128, TensorProto::FLOAT8E4M3FN,   TensorProto::FLOAT8E4M3FNUZ,
+                      TensorProto::FLOAT8E5M2, TensorProto::FLOAT8E5M2FNUZ, TensorProto::UINT4,
+                      TensorProto::INT4});
+  return v;
+}
+
+const std::vector<std::string>& OpSchema::all_non_complex_tensor_types_ir10() {
+  static const auto v = types::Tensors(
+      {TensorProto::UINT8,      TensorProto::UINT16,         TensorProto::UINT32,       TensorProto::UINT64,
+       TensorProto::INT8,       TensorProto::INT16,          TensorProto::INT32,        TensorProto::INT64,
+       TensorProto::BFLOAT16,   TensorProto::FLOAT16,        TensorProto::FLOAT,        TensorProto::DOUBLE,
+       TensorProto::STRING,     TensorProto::BOOL,           TensorProto::FLOAT8E4M3FN, TensorProto::FLOAT8E4M3FNUZ,
+       TensorProto::FLOAT8E5M2, TensorProto::FLOAT8E5M2FNUZ, TensorProto::UINT4,        TensorProto::INT4});
+  return v;
+}
+
+const std::vector<std::string>& OpSchema::all_tensor_types_ir11() {
+  static const auto v = types::Tensors(
+      {TensorProto::UINT8,        TensorProto::UINT16,         TensorProto::UINT32,     TensorProto::UINT64,
+       TensorProto::INT8,         TensorProto::INT16,          TensorProto::INT32,      TensorProto::INT64,
+       TensorProto::BFLOAT16,     TensorProto::FLOAT16,        TensorProto::FLOAT,      TensorProto::DOUBLE,
+       TensorProto::STRING,       TensorProto::BOOL,           TensorProto::COMPLEX64,  TensorProto::COMPLEX128,
+       TensorProto::FLOAT8E4M3FN, TensorProto::FLOAT8E4M3FNUZ, TensorProto::FLOAT8E5M2, TensorProto::FLOAT8E5M2FNUZ,
+       TensorProto::UINT4,        TensorProto::INT4,           TensorProto::FLOAT4E2M1});
+  return v;
+}
+
+const std::vector<std::string>& OpSchema::all_non_complex_tensor_types_ir11() {
+  static const auto v = types::Tensors(
+      {TensorProto::UINT8,      TensorProto::UINT16,         TensorProto::UINT32,       TensorProto::UINT64,
+       TensorProto::INT8,       TensorProto::INT16,          TensorProto::INT32,        TensorProto::INT64,
+       TensorProto::BFLOAT16,   TensorProto::FLOAT16,        TensorProto::FLOAT,        TensorProto::DOUBLE,
+       TensorProto::STRING,     TensorProto::BOOL,           TensorProto::FLOAT8E4M3FN, TensorProto::FLOAT8E4M3FNUZ,
+       TensorProto::FLOAT8E5M2, TensorProto::FLOAT8E5M2FNUZ, TensorProto::UINT4,        TensorProto::INT4,
+       TensorProto::FLOAT4E2M1});
+  return v;
+}
+
+const std::vector<std::string>& OpSchema::all_tensor_types_ir12() {
+  static const auto v = types::Tensors(
+      {TensorProto::UINT8,        TensorProto::UINT16,         TensorProto::UINT32,     TensorProto::UINT64,
+       TensorProto::INT8,         TensorProto::INT16,          TensorProto::INT32,      TensorProto::INT64,
+       TensorProto::BFLOAT16,     TensorProto::FLOAT16,        TensorProto::FLOAT,      TensorProto::DOUBLE,
+       TensorProto::STRING,       TensorProto::BOOL,           TensorProto::COMPLEX64,  TensorProto::COMPLEX128,
+       TensorProto::FLOAT8E4M3FN, TensorProto::FLOAT8E4M3FNUZ, TensorProto::FLOAT8E5M2, TensorProto::FLOAT8E5M2FNUZ,
+       TensorProto::UINT4,        TensorProto::INT4,           TensorProto::FLOAT4E2M1, TensorProto::FLOAT8E8M0});
+  return v;
+}
+
+const std::vector<std::string>& OpSchema::all_non_complex_tensor_types_ir12() {
+  static const auto v = types::Tensors(
+      {TensorProto::UINT8,      TensorProto::UINT16,         TensorProto::UINT32,       TensorProto::UINT64,
+       TensorProto::INT8,       TensorProto::INT16,          TensorProto::INT32,        TensorProto::INT64,
+       TensorProto::BFLOAT16,   TensorProto::FLOAT16,        TensorProto::FLOAT,        TensorProto::DOUBLE,
+       TensorProto::STRING,     TensorProto::BOOL,           TensorProto::FLOAT8E4M3FN, TensorProto::FLOAT8E4M3FNUZ,
+       TensorProto::FLOAT8E5M2, TensorProto::FLOAT8E5M2FNUZ, TensorProto::UINT4,        TensorProto::INT4,
+       TensorProto::FLOAT4E2M1, TensorProto::FLOAT8E8M0});
+  return v;
+}
+
+const std::vector<std::string>& OpSchema::all_tensor_types_ir13() {
+  static const auto v = types::Tensors({TensorProto::UINT8,        TensorProto::UINT16,
+                                        TensorProto::UINT32,       TensorProto::UINT64,
+                                        TensorProto::INT8,         TensorProto::INT16,
+                                        TensorProto::INT32,        TensorProto::INT64,
+                                        TensorProto::BFLOAT16,     TensorProto::FLOAT16,
+                                        TensorProto::FLOAT,        TensorProto::DOUBLE,
+                                        TensorProto::STRING,       TensorProto::BOOL,
+                                        TensorProto::COMPLEX64,    TensorProto::COMPLEX128,
+                                        TensorProto::FLOAT8E4M3FN, TensorProto::FLOAT8E4M3FNUZ,
+                                        TensorProto::FLOAT8E5M2,   TensorProto::FLOAT8E5M2FNUZ,
+                                        TensorProto::UINT4,        TensorProto::INT4,
+                                        TensorProto::FLOAT4E2M1,   TensorProto::FLOAT8E8M0,
+                                        TensorProto::UINT2,        TensorProto::INT2});
+  return v;
+}
+
+const std::vector<std::string>& OpSchema::all_non_complex_tensor_types_ir13() {
+  static const auto v = types::Tensors(
+      {TensorProto::UINT8,      TensorProto::UINT16,         TensorProto::UINT32,       TensorProto::UINT64,
+       TensorProto::INT8,       TensorProto::INT16,          TensorProto::INT32,        TensorProto::INT64,
+       TensorProto::BFLOAT16,   TensorProto::FLOAT16,        TensorProto::FLOAT,        TensorProto::DOUBLE,
+       TensorProto::STRING,     TensorProto::BOOL,           TensorProto::FLOAT8E4M3FN, TensorProto::FLOAT8E4M3FNUZ,
+       TensorProto::FLOAT8E5M2, TensorProto::FLOAT8E5M2FNUZ, TensorProto::UINT4,        TensorProto::INT4,
+       TensorProto::FLOAT4E2M1, TensorProto::FLOAT8E8M0,     TensorProto::UINT2,        TensorProto::INT2});
+  return v;
+}
+
+const std::vector<std::string>& OpSchema::all_non_string_tensor_types_ir13() {
+  static const auto v = types::Tensors(
+      {TensorProto::UINT8,
+       TensorProto::UINT16,
+       TensorProto::UINT32,
+       TensorProto::UINT64,
+       TensorProto::INT8,
+       TensorProto::INT16,
+       TensorProto::INT32,
+       TensorProto::INT64,
+       TensorProto::BFLOAT16,
+       TensorProto::FLOAT16,
+       TensorProto::FLOAT,
+       TensorProto::DOUBLE,
+       TensorProto::BOOL,
+       TensorProto::COMPLEX64,
+       TensorProto::COMPLEX128,
+       TensorProto::FLOAT8E4M3FN,
+       TensorProto::FLOAT8E4M3FNUZ,
+       TensorProto::FLOAT8E5M2,
+       TensorProto::FLOAT8E5M2FNUZ,
+       TensorProto::UINT4,
+       TensorProto::INT4,
+       TensorProto::FLOAT4E2M1,
+       TensorProto::FLOAT8E8M0,
+       TensorProto::UINT2,
+       TensorProto::INT2});
+  return v;
+}
+
+const std::vector<std::string>& OpSchema::all_tensor_types_ir14() {
+  static const auto v = types::Tensors(
+      {TensorProto::UINT8,        TensorProto::UINT16,         TensorProto::UINT32,     TensorProto::UINT64,
+       TensorProto::INT8,         TensorProto::INT16,          TensorProto::INT32,      TensorProto::INT64,
+       TensorProto::BFLOAT16,     TensorProto::FLOAT16,        TensorProto::FLOAT,      TensorProto::DOUBLE,
+       TensorProto::STRING,       TensorProto::BOOL,           TensorProto::COMPLEX64,  TensorProto::COMPLEX128,
+       TensorProto::FLOAT8E4M3FN, TensorProto::FLOAT8E4M3FNUZ, TensorProto::FLOAT8E5M2, TensorProto::FLOAT8E5M2FNUZ,
+       TensorProto::UINT4,        TensorProto::INT4,           TensorProto::FLOAT4E2M1, TensorProto::FLOAT8E8M0,
+       TensorProto::UINT2,        TensorProto::INT2,           TensorProto::FLOAT6E2M3, TensorProto::FLOAT6E3M2});
+  return v;
+}
+
+const std::vector<std::string>& OpSchema::all_non_complex_tensor_types_ir14() {
+  static const auto v = types::Tensors(
+      {TensorProto::UINT8,      TensorProto::UINT16,         TensorProto::UINT32,       TensorProto::UINT64,
+       TensorProto::INT8,       TensorProto::INT16,          TensorProto::INT32,        TensorProto::INT64,
+       TensorProto::BFLOAT16,   TensorProto::FLOAT16,        TensorProto::FLOAT,        TensorProto::DOUBLE,
+       TensorProto::STRING,     TensorProto::BOOL,           TensorProto::FLOAT8E4M3FN, TensorProto::FLOAT8E4M3FNUZ,
+       TensorProto::FLOAT8E5M2, TensorProto::FLOAT8E5M2FNUZ, TensorProto::UINT4,        TensorProto::INT4,
+       TensorProto::FLOAT4E2M1, TensorProto::FLOAT8E8M0,     TensorProto::UINT2,        TensorProto::INT2,
+       TensorProto::FLOAT6E2M3, TensorProto::FLOAT6E3M2});
+  return v;
+}
+
+const std::vector<std::string>& OpSchema::all_non_string_tensor_types_ir14() {
+  static const auto v = [] {
+    auto result = all_tensor_types_ir14();
+    const auto string_type = types::Tensor(TensorProto::STRING);
+    result.erase(std::find(result.begin(), result.end(), string_type));
+    return result;
+  }();
+  return v;
+}
+
+const std::vector<std::string>& OpSchema::all_tensor_sequence_types() {
+  static const auto v = types::Sequence(all_tensor_types());
+  return v;
+}
+
+const std::vector<std::string>& OpSchema::all_tensor_sequence_types_ir4() {
+  static const auto v = types::Sequence(all_tensor_types_ir4());
+  return v;
+}
+
+const std::vector<std::string>& OpSchema::all_tensor_sequence_types_ir9() {
+  static const auto v = types::Sequence(all_tensor_types_ir9());
+  return v;
+}
+
+const std::vector<std::string>& OpSchema::all_tensor_sequence_types_ir10() {
+  static const auto v = types::Sequence(all_tensor_types_ir10());
+  return v;
+}
+
+const std::vector<std::string>& OpSchema::all_tensor_sequence_types_ir11() {
+  static const auto v = types::Sequence(all_tensor_types_ir11());
+  return v;
+}
+
+const std::vector<std::string>& OpSchema::all_tensor_sequence_types_ir12() {
+  static const auto v = types::Sequence(all_tensor_types_ir12());
+  return v;
+}
+
+const std::vector<std::string>& OpSchema::all_tensor_sequence_types_ir13() {
+  static const auto v = types::Sequence(all_tensor_types_ir13());
+  return v;
+}
+
+const std::vector<std::string>& OpSchema::all_tensor_sequence_types_ir14() {
+  static const auto v = types::Sequence(all_tensor_types_ir14());
+  return v;
+}
+
+const std::vector<std::string>& OpSchema::all_optional_types() {
+  static const auto v =
+      types::Concat(types::Optional(all_tensor_sequence_types()), types::Optional(all_tensor_types()));
+  return v;
+}
+
+const std::vector<std::string>& OpSchema::all_optional_types_ir4() {
+  static const auto v =
+      types::Concat(types::Optional(all_tensor_sequence_types_ir4()), types::Optional(all_tensor_types_ir4()));
+  return v;
+}
+
+const std::vector<std::string>& OpSchema::all_optional_types_ir9() {
+  static const auto v =
+      types::Concat(types::Optional(all_tensor_sequence_types_ir4()), types::Optional(all_tensor_types_ir9()));
+  return v;
+}
+
+const std::vector<std::string>& OpSchema::all_optional_types_ir10() {
+  static const auto v =
+      types::Concat(types::Optional(all_tensor_sequence_types_ir4()), types::Optional(all_tensor_types_ir10()));
+  return v;
+}
+
+const std::vector<std::string>& OpSchema::all_optional_types_ir11() {
+  static const auto v =
+      types::Concat(types::Optional(all_tensor_sequence_types_ir4()), types::Optional(all_tensor_types_ir11()));
+  return v;
+}
+
+const std::vector<std::string>& OpSchema::all_optional_types_ir12() {
+  static const auto v =
+      types::Concat(types::Optional(all_tensor_sequence_types_ir4()), types::Optional(all_tensor_types_ir12()));
+  return v;
+}
+
+const std::vector<std::string>& OpSchema::all_optional_types_ir13() {
+  static const auto v =
+      types::Concat(types::Optional(all_tensor_sequence_types_ir4()), types::Optional(all_tensor_types_ir13()));
+  return v;
 }
 
 void OpSchema::Finalize() {
@@ -926,6 +1491,11 @@ void OpSchema::Finalize() {
   // "optional" but not trailing inputs>. <Max number of inputs> = <number of
   // all inputs or std::numeric_limits<int>::max() (if the last input is
   // variadic).
+
+  max_input_ = 0;
+  min_input_ = 0;
+  min_output_ = 0;
+  max_output_ = 0;
 
   // Flag indicates whether an optional input is trailing one (there's no single
   // or variadic input behind).
@@ -977,20 +1547,66 @@ void OpSchema::Finalize() {
   ParseAndSetTypes(&inputs_);
   ParseAndSetTypes(&outputs_);
 
-  for (auto& func : opset_version_to_function_body_) {
-    BuildFunction(*func.second);
+  for (auto& [_, func_body] : opset_version_to_function_body_) {
+    BuildFunction(*func_body);
   }
+}
+
+OpSchema::NodeDeterminism OpSchema::GetNodeDeterminism() const {
+  if (node_determinism_ == NodeDeterminism::Unknown) {
+    for (const auto& [_, attr] : attributes()) {
+      switch (attr.type) {
+        case AttributeProto::GRAPH:
+        case AttributeProto::GRAPHS:
+          return NodeDeterminism::NonDeterministic;
+        default:
+          break;
+      }
+    }
+
+    if (HasContextDependentFunction()) {
+      return NodeDeterminism::Unknown;
+    } else if (const FunctionProto* func_proto = GetFunction(); func_proto) {
+      const OpSchemaRegistry& reg = *OpSchemaRegistry::Instance();
+      std::unordered_map<std::string, int64_t> domain_to_opset_version;
+      for (const auto& opset : func_proto->opset_import()) {
+        domain_to_opset_version[opset.domain()] = opset.version();
+      }
+      for (const NodeProto& n : func_proto->node()) {
+        const int64_t opset = domain_to_opset_version[n.domain()];
+        const OpSchema* sch = reg.GetSchema(n.op_type(), static_cast<int>(opset), n.domain());
+        if (!sch) {
+          return NodeDeterminism::Unknown;
+        }
+        switch (sch->GetNodeDeterminism()) {
+          case NodeDeterminism::NonDeterministic:
+            return NodeDeterminism::NonDeterministic;
+          case NodeDeterminism::Unknown:
+            return NodeDeterminism::Unknown;
+          default:
+            break;
+        }
+      }
+    }
+    return NodeDeterminism::Deterministic;
+  }
+  return node_determinism_;
+}
+
+OpSchema& OpSchema::SetNodeDeterminism(NodeDeterminism node_determinism) {
+  this->node_determinism_ = node_determinism;
+  return *this;
 }
 
 std::ostream& operator<<(std::ostream& out, const OpSchema& schema) {
   if (!schema.attributes_.empty()) {
-    out << "Attributes:" << std::endl;
-    for (const auto& pair : schema.attributes_) {
-      out << "  " << pair.second.name << " : " << pair.second.description << std::endl;
+    out << "Attributes:" << '\n';
+    for (const auto& [_, attr] : schema.attributes_) {
+      out << "  " << attr.name << " : " << attr.description << '\n';
     }
   }
   if (schema.max_input_ > 0) {
-    out << "Inputs:" << std::endl;
+    out << "Inputs:" << '\n';
     if (!schema.inputs_.empty()) {
       for (size_t i = 0; i < schema.inputs_.size(); ++i) {
         const auto& p = schema.inputs_[i];
@@ -999,14 +1615,14 @@ std::ostream& operator<<(std::ostream& out, const OpSchema& schema) {
         const auto& type_str = p.GetTypeStr();
         out << "  " << i << ", " << (!name.empty() ? name : "(unnamed)") << " : "
             << (!description.empty() ? description : "(no doc)") << " : "
-            << (!type_str.empty() ? type_str : "(no type)") << std::endl;
+            << (!type_str.empty() ? type_str : "(no type)") << '\n';
       }
     } else {
-      out << "  (no explicit description available)" << std::endl;
+      out << "  (no explicit description available)" << '\n';
     }
   }
   if (schema.max_output_ > 0) {
-    out << "Outputs:" << std::endl;
+    out << "Outputs:" << '\n';
     if (!schema.outputs_.empty()) {
       for (size_t i = 0; i < schema.outputs_.size(); ++i) {
         const auto& p = schema.outputs_[i];
@@ -1015,21 +1631,21 @@ std::ostream& operator<<(std::ostream& out, const OpSchema& schema) {
         const auto& type_str = p.GetTypeStr();
         out << "  " << i << ", " << (!name.empty() ? name : "(unnamed)") << " : "
             << (!description.empty() ? description : "(no doc)") << " : "
-            << (!type_str.empty() ? type_str : "(no type)") << std::endl;
+            << (!type_str.empty() ? type_str : "(no type)") << '\n';
       }
     } else {
-      out << "  (no explicit description available)" << std::endl;
+      out << "  (no explicit description available)" << '\n';
     }
   }
-  out << std::endl;
+  out << '\n';
   if (schema.doc()) {
     out << schema.doc();
   } else {
-    out << "(no documentation yet)" << std::endl;
+    out << "(no documentation yet)" << '\n';
   }
-  out << std::endl;
+  out << '\n';
   if (schema.line_) {
-    out << "Defined at " << schema.file_ << ":" << schema.line_ << std::endl;
+    out << "Defined at " << schema.file_ << ":" << schema.line_ << '\n';
   }
   return out;
 }
@@ -1037,7 +1653,7 @@ std::ostream& operator<<(std::ostream& out, const OpSchema& schema) {
 OpSchemaRegistry::DomainToVersionRange& OpSchemaRegistry::DomainToVersionRange::Instance() {
   static DomainToVersionRange domain_to_version_range;
   return domain_to_version_range;
-};
+}
 
 // Private method used by OpSchemaRegisterOnce and OpSchemaRegistry::map()
 OpName_Domain_Version_Schema_Map& OpSchemaRegistry::GetMapWithoutEnsuringRegistration() {
@@ -1077,15 +1693,16 @@ OpName_Domain_Version_Schema_Map& OpSchemaRegistry::map() {
       if (OpSchemaRegistry::Instance()->GetLoadedSchemaVersion() == 0) {
         ONNX_ASSERTM(
             dbg_registered_schema_count == ONNX_DBG_GET_COUNT_IN_OPSETS(),
-            "%u schema were exposed from operator sets and automatically placed into the static registry.  "
-            "%u were expected based on calls to registration macros. Operator set functions may need to be updated.",
             dbg_registered_schema_count,
-            ONNX_DBG_GET_COUNT_IN_OPSETS());
+            " schema were exposed from operator sets and automatically placed into the static registry.  ",
+            ONNX_DBG_GET_COUNT_IN_OPSETS(),
+            " were expected based on calls to registration macros. Operator set functions may need to be updated.")
       }
 #endif
     }
 
    private:
+#ifndef NDEBUG
     static size_t GetRegisteredSchemaCount() {
       size_t count = 0;
       for (auto& x : GetMapWithoutEnsuringRegistration()) {
@@ -1095,6 +1712,7 @@ OpName_Domain_Version_Schema_Map& OpSchemaRegistry::map() {
       }
       return count;
     }
+#endif
   };
 
 #ifndef __ONNX_DISABLE_STATIC_REGISTRATION
@@ -1113,6 +1731,14 @@ size_t ReplaceAll(std::string& s, const char* from, const char* to) {
     numReplaced++;
   }
   return numReplaced;
+}
+
+bool IsOnnxStaticRegistrationDisabled() {
+#ifdef __ONNX_DISABLE_STATIC_REGISTRATION
+  return true;
+#else
+  return false;
+#endif
 }
 
 } // namespace ONNX_NAMESPACE

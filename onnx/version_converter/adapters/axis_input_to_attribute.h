@@ -1,20 +1,16 @@
 // Copyright (c) ONNX Project Contributors
-
-/*
- * SPDX-License-Identifier: Apache-2.0
- */
+//
+// SPDX-License-Identifier: Apache-2.0
 
 #pragma once
 
 #include <memory>
 #include <string>
-#include <utility>
 #include <vector>
 
 #include "onnx/version_converter/adapters/adapter.h"
 
-namespace ONNX_NAMESPACE {
-namespace version_conversion {
+namespace ONNX_NAMESPACE::version_conversion {
 class AxisInputToAttribute : public Adapter {
  public:
   explicit AxisInputToAttribute(
@@ -45,7 +41,7 @@ class AxisInputToAttribute : public Adapter {
       return EnsureAndReturnNode(node);
     }
 
-    ONNX_ASSERTM(false, "Axis input must be a constant or initializer for promotion to attribute.");
+    ONNX_ASSERTM(false, "Axis input must be a constant or initializer for promotion to attribute.")
   }
 
  private:
@@ -58,42 +54,35 @@ class AxisInputToAttribute : public Adapter {
   }
 
   void HandleConstantNode(Node* node, Node* axis_node, Value* axis_val) const {
-    const std::vector<int64_t>& int64s = axis_node->t(kvalue).int64s();
-    if (int64s.empty()) {
-      std::string raw_data = axis_node->t(kvalue).raw();
-      ONNX_ASSERTM(
-          raw_data.size() != 0 && raw_data.size() % 8 == 0,
-          "Raw Data must be non-empty and size must be a multiple of 8");
-      const int64_t* raw = reinterpret_cast<const int64_t*>(raw_data.c_str());
-      node->i_(kaxis, raw[0]);
-    } else {
-      node->i_(kaxis, int64s.at(0));
-    }
+    const std::vector<int64_t> values = ReadInt64Tensor(axis_node->t(kvalue));
+    ONNX_ASSERTM(!values.empty(), "Axis tensor must contain at least one element.")
+    node->i_(kaxis, values[0]);
     node->removeInput(this->axis_index);
-    if (axis_val->uses().size() < 1) {
+    if (axis_val->uses().empty()) {
       axis_node->destroy();
     }
   }
 
-  void HandleInitializerNode(std::shared_ptr<Graph> graph, Node* node, Value* axis_val) const {
+  void HandleInitializerNode(const std::shared_ptr<Graph>& graph, Node* node, Value* axis_val) const {
     const std::string initializer_name = axis_val->uniqueName();
     for (const auto& initializer : graph->initializers()) {
       if (initializer.name() == initializer_name) {
-        node->i_(kaxis, initializer.int64s().at(0));
+        const std::vector<int64_t> values = ReadInt64Tensor(initializer);
+        ONNX_ASSERTM(!values.empty(), "Axis tensor must contain at least one element.")
+        node->i_(kaxis, values[0]);
         node->removeInput(this->axis_index);
         // Remove initializer
-        if (axis_val->uses().size() < 1)
+        if (axis_val->uses().empty())
           graph->eraseInitializer(initializer_name);
         break;
       }
     }
   }
 
-  inline Node* EnsureAndReturnNode(Node* node) const {
-    ONNX_ASSERTM(node->hasAttribute(kaxis), "Axis attribute not created. This may be a bug.");
+  Node* EnsureAndReturnNode(Node* node) const {
+    ONNX_ASSERTM(node->hasAttribute(kaxis), "Axis attribute not created. This may be a bug.")
     return node;
   }
 };
 
-} // namespace version_conversion
-} // namespace ONNX_NAMESPACE
+} // namespace ONNX_NAMESPACE::version_conversion

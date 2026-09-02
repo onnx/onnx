@@ -1,6 +1,7 @@
 # Copyright (c) ONNX Project Contributors
 #
 # SPDX-License-Identifier: Apache-2.0
+from __future__ import annotations
 
 import numpy as np
 
@@ -144,7 +145,7 @@ class Split(Base):
         # 1-dimensional tensor with dimension_size=0
         node_input = np.array([]).astype(np.float32)
 
-        # Split emtpy tensor to tensors of size zero
+        # Split empty tensor to tensors of size zero
         split = np.array([0, 0, 0]).astype(np.int64)
         node = onnx.helper.make_node(
             "Split",
@@ -301,7 +302,7 @@ class Split(Base):
         # 1-dimensional tensor with dimension_size=0
         node_input = np.array([]).astype(np.float32)
 
-        # Split emtpy tensor to tensors of size zero
+        # Split empty tensor to tensors of size zero
         split = np.array([0, 0, 0]).astype(np.int64)
         node = onnx.helper.make_node(
             "Split",

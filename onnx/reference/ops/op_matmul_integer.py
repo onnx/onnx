@@ -1,7 +1,7 @@
 # Copyright (c) ONNX Project Contributors
 
 # SPDX-License-Identifier: Apache-2.0
-
+from __future__ import annotations
 
 import numpy as np
 
@@ -9,7 +9,7 @@ from onnx.reference.op_run import OpRun
 
 
 class MatMulInteger(OpRun):
-    def _run(self, A, B, a_zero_point=None, b_zero_point=None):  # type: ignore
+    def _run(self, A, B, a_zero_point=None, b_zero_point=None):
         A32 = A.astype(np.int32)
         if a_zero_point is not None:
             A32 -= a_zero_point

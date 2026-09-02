@@ -1,7 +1,7 @@
 # Copyright (c) ONNX Project Contributors
 
 # SPDX-License-Identifier: Apache-2.0
-
+from __future__ import annotations
 
 import numpy as np
 
@@ -9,5 +9,5 @@ from onnx.reference.ops._op import OpRunUnaryNum
 
 
 class Exp(OpRunUnaryNum):
-    def _run(self, x):  # type: ignore
+    def _run(self, x):
         return (np.exp(x).astype(x.dtype),)

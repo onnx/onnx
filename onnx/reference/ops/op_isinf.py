@@ -1,7 +1,7 @@
 # Copyright (c) ONNX Project Contributors
 
 # SPDX-License-Identifier: Apache-2.0
-
+from __future__ import annotations
 
 import numpy as np
 
@@ -9,7 +9,7 @@ from onnx.reference.op_run import OpRun
 
 
 class IsInf(OpRun):
-    def _run(self, data, detect_negative=None, detect_positive=None):  # type: ignore
+    def _run(self, data, detect_negative=None, detect_positive=None):
         if detect_negative:
             if detect_positive:
                 return (np.isinf(data),)

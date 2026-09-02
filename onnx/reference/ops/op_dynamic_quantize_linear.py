@@ -1,7 +1,7 @@
 # Copyright (c) ONNX Project Contributors
 
 # SPDX-License-Identifier: Apache-2.0
-
+from __future__ import annotations
 
 import numpy as np
 
@@ -9,7 +9,7 @@ from onnx.reference.op_run import OpRun
 
 
 class DynamicQuantizeLinear(OpRun):
-    def _run(self, x):  # type: ignore
+    def _run(self, x):
         # args: x, y_scale, zero_point
         dtype, qmin, qmax = np.uint8, 0, 255
         maxx = np.float32(np.maximum(0, np.max(x)))
@@ -27,6 +27,6 @@ class DynamicQuantizeLinear(OpRun):
         y = np.clip(np.rint(x / y_scale) + zpi, qmin, qmax)
         return (
             y.astype(dtype),
-            y_scale.astype(x.dtype),
-            zpi.astype(dtype),
+            np.array(y_scale.astype(x.dtype)),
+            np.array(zpi.astype(dtype)),
         )

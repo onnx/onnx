@@ -1,13 +1,17 @@
 # Copyright (c) ONNX Project Contributors
 #
 # SPDX-License-Identifier: Apache-2.0
+from __future__ import annotations
 
 __all__ = [
     "C",
     "ONNX_DOMAIN",
     "ONNX_ML_DOMAIN",
+    "AI_ONNX_PREVIEW_DOMAIN",
     "AI_ONNX_PREVIEW_TRAINING_DOMAIN",
     "has",
+    "register_schema",
+    "deregister_schema",
     "get_schema",
     "get_all_schemas",
     "get_all_schemas_with_history",
@@ -17,13 +21,12 @@ __all__ = [
     "SchemaError",
 ]
 
-from typing import List
-
+import onnx
 import onnx.onnx_cpp2py_export.defs as C  # noqa: N812
-from onnx import AttributeProto, FunctionProto
 
 ONNX_DOMAIN = ""
 ONNX_ML_DOMAIN = "ai.onnx.ml"
+AI_ONNX_PREVIEW_DOMAIN = "ai.onnx.preview"
 AI_ONNX_PREVIEW_TRAINING_DOMAIN = "ai.onnx.preview.training"
 
 
@@ -31,35 +34,47 @@ has = C.has_schema
 get_schema = C.get_schema
 get_all_schemas = C.get_all_schemas
 get_all_schemas_with_history = C.get_all_schemas_with_history
+deregister_schema = C.deregister_schema
 
 
 def onnx_opset_version() -> int:
-    """
-    Return current opset for domain `ai.onnx`.
-    """
-
+    """Return current opset for domain `ai.onnx`."""
     return C.schema_version_map()[ONNX_DOMAIN][1]
 
 
-@property  # type: ignore
-def _function_proto(self):  # type: ignore
-    func_proto = FunctionProto()
+def onnx_ml_opset_version() -> int:
+    """Return current opset for domain `ai.onnx.ml`."""
+    return C.schema_version_map()[ONNX_ML_DOMAIN][1]
+
+
+@property  # type: ignore[misc]
+def _function_proto(self):
+    func_proto = onnx.FunctionProto()
     func_proto.ParseFromString(self._function_body)
     return func_proto
 
 
-OpSchema = C.OpSchema  # type: ignore
-OpSchema.function_body = _function_proto  # type: ignore
+OpSchema = C.OpSchema
+OpSchema.function_body = _function_proto  # type: ignore[method-assign]
 
 
-@property  # type: ignore
-def _attribute_default_value(self):  # type: ignore
-    attr = AttributeProto()
+@property  # type: ignore[misc]
+def _non_deterministic(self):
+    """Check if the operator is non-deterministic."""
+    return self.node_determinism != OpSchema.NodeDeterminism.Deterministic
+
+
+OpSchema.non_deterministic = _non_deterministic  # type: ignore[attr-defined]
+
+
+@property  # type: ignore[misc]
+def _attribute_default_value(self):
+    attr = onnx.AttributeProto()
     attr.ParseFromString(self._default_value)
     return attr
 
 
-OpSchema.Attribute.default_value = _attribute_default_value  # type: ignore
+OpSchema.Attribute.default_value = _attribute_default_value  # type: ignore[method-assign]
 
 
 def _op_schema_repr(self) -> str:
@@ -76,7 +91,7 @@ OpSchema(
 )"""
 
 
-OpSchema.__repr__ = _op_schema_repr  # type: ignore
+OpSchema.__repr__ = _op_schema_repr  # type: ignore[method-assign]
 
 
 def _op_schema_formal_parameter_repr(self) -> str:
@@ -88,7 +103,7 @@ def _op_schema_formal_parameter_repr(self) -> str:
     )
 
 
-OpSchema.FormalParameter.__repr__ = _op_schema_formal_parameter_repr  # type: ignore
+OpSchema.FormalParameter.__repr__ = _op_schema_formal_parameter_repr  # type: ignore[method-assign]
 
 
 def _op_schema_type_constraint_param_repr(self) -> str:
@@ -98,7 +113,7 @@ def _op_schema_type_constraint_param_repr(self) -> str:
     )
 
 
-OpSchema.TypeConstraintParam.__repr__ = _op_schema_type_constraint_param_repr  # type: ignore
+OpSchema.TypeConstraintParam.__repr__ = _op_schema_type_constraint_param_repr  # type: ignore[method-assign]
 
 
 def _op_schema_attribute_repr(self) -> str:
@@ -108,16 +123,36 @@ def _op_schema_attribute_repr(self) -> str:
     )
 
 
-OpSchema.Attribute.__repr__ = _op_schema_attribute_repr  # type: ignore
+OpSchema.Attribute.__repr__ = _op_schema_attribute_repr  # type: ignore[method-assign]
 
 
-def get_function_ops() -> List[OpSchema]:
-    """
-    Return operators defined as functions.
-    """
-
+def get_function_ops() -> list[OpSchema]:
+    """Return operators defined as functions."""
     schemas = C.get_all_schemas()
-    return [schema for schema in schemas if schema.has_function or schema.has_context_dependent_function]  # type: ignore
+    return [
+        schema
+        for schema in schemas
+        if schema.has_function or schema.has_context_dependent_function  # type: ignore[attr-defined]
+    ]
 
 
 SchemaError = C.SchemaError
+
+
+def register_schema(schema: OpSchema) -> None:
+    """Register a user provided OpSchema.
+
+    The function extends available operator set versions for the provided domain if necessary.
+
+    Args:
+        schema: The OpSchema to register.
+    """
+    version_map = C.schema_version_map()
+    domain = schema.domain
+    version = schema.since_version
+    min_version, max_version = version_map.get(domain, (version, version))
+    if domain not in version_map or not (min_version <= version <= max_version):
+        min_version = min(min_version, version)
+        max_version = max(max_version, version)
+        C.set_domain_to_version(schema.domain, min_version, max_version)
+    C.register_schema(schema)

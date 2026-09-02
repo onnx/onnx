@@ -1,11 +1,15 @@
-/*
- * SPDX-License-Identifier: Apache-2.0
- */
+// Copyright (c) ONNX Project Contributors
+//
+// SPDX-License-Identifier: Apache-2.0
 
-#include "shape_inference.h"
+#include "onnx/defs/shape_inference.h"
 
+#include <limits>
+#include <string>
+#include <utility>
 #include <vector>
 
+#include "onnx/defs/data_type_utils.h"
 #include "onnx/defs/tensor_proto_util.h"
 
 namespace ONNX_NAMESPACE {
@@ -15,7 +19,7 @@ namespace ONNX_NAMESPACE {
 // index value is less than NumInputs/NumOutputs.
 // Supports mixed tensor and sparse tensor
 void propagateElemTypeFromTensorInputToOutput(InferenceContext& ctx, size_t inputIndex, size_t outputIndex) {
-  auto input_type = ctx.getInputType(inputIndex);
+  const auto* const input_type = ctx.getInputType(inputIndex);
   if (nullptr == input_type) {
     fail_type_inference("Input type was null");
   }
@@ -30,7 +34,7 @@ void propagateElemTypeFromTensorInputToOutput(InferenceContext& ctx, size_t inpu
   if (input_elem_type == TensorProto::UNDEFINED) {
     fail_type_inference("Element type of input ", inputIndex, " unknown");
   }
-  auto output_type = ctx.getOutputType(outputIndex);
+  auto* output_type = ctx.getOutputType(outputIndex);
   const auto output_value_case = output_type->value_case();
   if (output_value_case == TypeProto::kTensorType || output_value_case == TypeProto::kSparseTensorType) {
     setTensorElementType(input_elem_type, output_value_case, *output_type);
@@ -44,8 +48,8 @@ void propagateElemTypeFromTensorInputToOutput(InferenceContext& ctx, size_t inpu
   }
 }
 
-void propagateElemTypeFromSequenceInputToOutput(InferenceContext& ctx, size_t inputIndex, size_t outputIndex) {
-  auto input_type = ctx.getInputType(inputIndex);
+static void propagateElemTypeFromSequenceInputToOutput(InferenceContext& ctx, size_t inputIndex, size_t outputIndex) {
+  const auto* const input_type = ctx.getInputType(inputIndex);
   if (nullptr == input_type || input_type->value_case() != TypeProto::kSequenceType) {
     fail_type_inference("Input ", inputIndex, " expected to have sequence type");
   }
@@ -54,12 +58,12 @@ void propagateElemTypeFromSequenceInputToOutput(InferenceContext& ctx, size_t in
     fail_type_inference("Element type of sequence input ", inputIndex, " unknown");
   }
 
-  auto output_type = ctx.getOutputType(outputIndex);
+  auto* output_type = ctx.getOutputType(outputIndex);
   output_type->mutable_sequence_type()->mutable_elem_type()->CopyFrom(input_seq_type.elem_type());
 }
 
-void propagateElemTypeFromOptionalInputToOutput(InferenceContext& ctx, size_t inputIndex, size_t outputIndex) {
-  auto input_type = ctx.getInputType(inputIndex);
+static void propagateElemTypeFromOptionalInputToOutput(InferenceContext& ctx, size_t inputIndex, size_t outputIndex) {
+  const auto* const input_type = ctx.getInputType(inputIndex);
   if (nullptr == input_type || input_type->value_case() != TypeProto::kOptionalType) {
     fail_type_inference("Input ", inputIndex, " expected to have optional type");
   }
@@ -68,12 +72,12 @@ void propagateElemTypeFromOptionalInputToOutput(InferenceContext& ctx, size_t in
     fail_type_inference("Element type of optional input ", inputIndex, " unknown");
   }
 
-  auto output_type = ctx.getOutputType(outputIndex);
+  auto* output_type = ctx.getOutputType(outputIndex);
   output_type->mutable_optional_type()->mutable_elem_type()->CopyFrom(input_opt_type.elem_type());
 }
 
-void propagateElemTypeFromMapInputToOutput(InferenceContext& ctx, size_t inputIndex, size_t outputIndex) {
-  auto input_type = ctx.getInputType(inputIndex);
+static void propagateElemTypeFromMapInputToOutput(InferenceContext& ctx, size_t inputIndex, size_t outputIndex) {
+  const auto* const input_type = ctx.getInputType(inputIndex);
   if (nullptr == input_type || input_type->value_case() != TypeProto::kMapType) {
     fail_type_inference("Input ", inputIndex, " expected to have map type");
   }
@@ -85,13 +89,13 @@ void propagateElemTypeFromMapInputToOutput(InferenceContext& ctx, size_t inputIn
     fail_type_inference("Value type of map input ", inputIndex, " unknown");
   }
 
-  auto output_type = ctx.getOutputType(outputIndex);
+  auto* output_type = ctx.getOutputType(outputIndex);
   output_type->mutable_map_type()->set_key_type(input_map_type.key_type());
   output_type->mutable_map_type()->mutable_value_type()->CopyFrom(input_map_type.value_type());
 }
 
 void propagateElemTypeFromInputToOutput(InferenceContext& ctx, size_t inputIndex, size_t outputIndex) {
-  auto input_type = ctx.getInputType(inputIndex);
+  const auto* const input_type = ctx.getInputType(inputIndex);
   if (nullptr == input_type) {
     fail_type_inference("Input ", inputIndex, " expected to have type but instead is null");
   }
@@ -115,7 +119,7 @@ Merge shape information from a source shape into a target shape.
 * prefer target param over source param if mismatched.
 * Fail if there are mismatches in number of dimensions or dimension values.
 */
-void mergeInShapeInfo(const TensorShapeProto& source, TensorShapeProto& target) {
+static void mergeInShapeInfo(const TensorShapeProto& source, TensorShapeProto& target) {
   auto num_source_dims = source.dim_size();
   auto num_target_dims = target.dim_size();
   if (num_source_dims != num_target_dims) {
@@ -126,11 +130,11 @@ void mergeInShapeInfo(const TensorShapeProto& source, TensorShapeProto& target) 
         num_target_dims);
   }
 
-  auto& source_dims = source.dim();
+  const auto& source_dims = source.dim();
   auto* target_dims = target.mutable_dim();
 
   for (int i = 0, end = source_dims.size(); i < end; ++i) {
-    auto& source_dim = source_dims.Get(i);
+    const auto& source_dim = source_dims.Get(i);
     auto& target_dim = *target_dims->Mutable(i);
     mergeInDimensionInfo(source_dim, target_dim, i);
   }
@@ -183,30 +187,24 @@ void mergeInShapeInfo(const TypeProto_SparseTensor& source, TypeProto_SparseTens
 /// </summary>
 /// <param name="source_shape"></param>
 /// <param name="target_shape">destination shape</param>
-void UnionShapeInfo(const TensorShapeProto& source_shape, TensorShapeProto& target_shape) {
+static void UnionShapeInfo(const TensorShapeProto& source_shape, TensorShapeProto& target_shape) {
   auto source_rank = source_shape.dim_size();
   for (int i = 0; i < source_rank; ++i) {
-    const auto source_dim = source_shape.dim(i);
+    const auto& source_dim = source_shape.dim(i);
     const auto target_dim = target_shape.dim(i);
     bool is_dims_conflict = [&]() {
       if (source_dim.has_dim_value()) {
-        if (target_dim.has_dim_value() && target_dim.dim_value() == source_dim.dim_value()) {
-          return false;
-        }
-        return true;
+        return !target_dim.has_dim_value() || target_dim.dim_value() != source_dim.dim_value();
       }
 
       if (source_dim.has_dim_param()) {
-        if (target_dim.has_dim_param() && target_dim.dim_param() == source_dim.dim_param()) {
-          return false;
-        }
-        return true;
+        return !(target_dim.has_dim_param() && target_dim.dim_param() == source_dim.dim_param());
       }
 
       return (target_dim.has_dim_value() || target_dim.has_dim_param());
     }();
     if (is_dims_conflict && (target_dim.has_dim_value() || target_dim.has_dim_param())) {
-      auto dim = target_shape.mutable_dim(i);
+      auto* dim = target_shape.mutable_dim(i);
       dim->clear_dim_value();
       dim->clear_dim_param();
     }
@@ -214,7 +212,7 @@ void UnionShapeInfo(const TensorShapeProto& source_shape, TensorShapeProto& targ
 }
 
 template <typename TENSOR_TYPE>
-void UnionShapeInfoForTensor(const TensorShapeProto& source_shape, TENSOR_TYPE& target_type) {
+static void UnionShapeInfoForTensor(const TensorShapeProto& source_shape, TENSOR_TYPE& target_type) {
   if (target_type.has_shape()) {
     TensorShapeProto* target_shape = target_type.mutable_shape();
 
@@ -233,7 +231,7 @@ void UnionShapeInfo(const TensorShapeProto& source_shape, TypeProto_Tensor& targ
   UnionShapeInfoForTensor(source_shape, target_type);
 }
 
-void UnionShapeInfo(const TypeProto_Tensor& source_type, TypeProto_Tensor& target_type) {
+static void UnionShapeInfo(const TypeProto_Tensor& source_type, TypeProto_Tensor& target_type) {
   // The union of a tensor of unknown rank and a tensor of known rank is a tensor of unknown rank.
   // Hence, if the source_type had unknown rank, we clear the shape of the target_type.
   // Otherwise, UnionShapeInfoForTensor handles the rest.
@@ -244,7 +242,7 @@ void UnionShapeInfo(const TypeProto_Tensor& source_type, TypeProto_Tensor& targe
   }
 }
 
-void UnionShapeInfo(const TypeProto_SparseTensor& source_type, TypeProto_SparseTensor& target_type) {
+static void UnionShapeInfo(const TypeProto_SparseTensor& source_type, TypeProto_SparseTensor& target_type) {
   // The union of a tensor of unknown rank and a tensor of known rank is a tensor of unknown rank.
   // Hence, if the source_type had unknown rank, we clear the shape of the target_type.
   // Otherwise, UnionShapeInfoForTensor handles the rest.
@@ -272,7 +270,11 @@ void UnionTypeInfo(const TypeProto& source_type, TypeProto& target_type) {
 
     if (source_elem_type != target_elem_type) {
       fail_type_inference(
-          "Mismatched tensor element type:", " inferred=", source_elem_type, " declared=", target_elem_type);
+          "Mismatched tensor element type:",
+          " inferred=",
+          Utils::DataTypeUtils::ToDataTypeString(source_elem_type),
+          " declared=",
+          Utils::DataTypeUtils::ToDataTypeString(target_elem_type));
     }
 
     UnionShapeInfo(source_type.tensor_type(), *target_type.mutable_tensor_type());
@@ -281,7 +283,11 @@ void UnionTypeInfo(const TypeProto& source_type, TypeProto& target_type) {
     auto target_elem_type = target_type.sparse_tensor_type().elem_type();
     if (source_elem_type != target_elem_type) {
       fail_type_inference(
-          "Mismatched sparse tensor element type:", " inferred=", source_elem_type, " declared=", target_elem_type);
+          "Mismatched sparse tensor element type:",
+          " inferred=",
+          Utils::DataTypeUtils::ToDataTypeString(source_elem_type),
+          " declared=",
+          Utils::DataTypeUtils::ToDataTypeString(target_elem_type));
     }
     UnionShapeInfo(source_type.sparse_tensor_type(), *target_type.mutable_sparse_tensor_type());
   } else if (target_case == TypeProto::ValueCase::kSequenceType) {
@@ -334,15 +340,11 @@ void UnionTypeInfo(const TypeProto& source_type, TypeProto& target_type) {
 // sparse input and outputs dense or vice-versa.
 // If the output value_case is not set, then
 // the input value_case is propagated.
-void propagateTensorElemTypeWithValidation(const TypeProto* input_type, TypeProto* output_type) {
-  if (nullptr == input_type) {
-    fail_type_inference("Input type was null");
-  }
-
+static void propagateTensorElemTypeWithValidation(const TypeProto& input_type, TypeProto& output_type) {
   int32_t input_elem_type = TensorProto::UNDEFINED;
-  const auto input_value_case = input_type->value_case();
+  const auto input_value_case = input_type.value_case();
   if (input_value_case == TypeProto::kTensorType || input_value_case == TypeProto::kSparseTensorType) {
-    input_elem_type = getTensorElementType(*input_type);
+    input_elem_type = getTensorElementType(input_type);
     if (input_elem_type == TensorProto::UNDEFINED) {
       fail_type_inference("Element type of tensor or sparse tensor input was unknown");
     }
@@ -350,18 +352,18 @@ void propagateTensorElemTypeWithValidation(const TypeProto* input_type, TypeProt
     fail_type_inference("Input was expected to have tensor or sparse tensor type. Got ", input_value_case);
   }
 
-  const auto output_value_case = output_type->value_case();
+  const auto output_value_case = output_type.value_case();
   if (output_value_case == TypeProto::VALUE_NOT_SET) {
-    setTensorElementType(input_elem_type, input_value_case, *output_type);
+    setTensorElementType(input_elem_type, input_value_case, output_type);
   } else if (output_value_case == TypeProto::kTensorType || output_value_case == TypeProto::kSparseTensorType) {
-    const auto output_elem_type = getTensorElementType(*output_type);
+    const auto output_elem_type = getTensorElementType(output_type);
     if (output_elem_type != TensorProto::UNDEFINED) {
       if (input_elem_type != output_elem_type) {
         fail_type_inference(
             "Input element type of ", input_elem_type, " does not match existing output type of ", output_elem_type);
       }
     } else {
-      setTensorElementType(input_elem_type, output_value_case, *output_type);
+      setTensorElementType(input_elem_type, output_value_case, output_type);
     }
   } else {
     // This is not expected to happen
@@ -369,54 +371,42 @@ void propagateTensorElemTypeWithValidation(const TypeProto* input_type, TypeProt
   }
 }
 
-void propagateSequenceElemTypeWithValidation(const TypeProto* input_type, TypeProto* output_type) {
-  if (nullptr == input_type) {
-    fail_type_inference("Input type was null");
+static void propagateSequenceElemTypeWithValidation(const TypeProto& input_type, TypeProto& output_type) {
+  if (input_type.value_case() != TypeProto::kSequenceType) {
+    fail_type_inference("Input was expected to have sequence type. Got ", input_type.value_case());
   }
 
-  if (input_type->value_case() != TypeProto::kSequenceType) {
-    fail_type_inference("Input was expected to have sequence type. Got ", input_type->value_case());
-  }
-
-  auto input_seq_type = input_type->sequence_type();
+  const auto& input_seq_type = input_type.sequence_type();
 
   if (input_seq_type.has_elem_type()) {
     propagateElemTypeWithValidation(
-        &input_seq_type.elem_type(), output_type->mutable_sequence_type()->mutable_elem_type());
+        &input_seq_type.elem_type(), output_type.mutable_sequence_type()->mutable_elem_type());
   } else {
     fail_type_inference("Element type of sequence input was unknown");
   }
 }
 
-void propagateOptionalElemTypeWithValidation(const TypeProto* input_type, TypeProto* output_type) {
-  if (nullptr == input_type) {
-    fail_type_inference("Input type was null");
+static void propagateOptionalElemTypeWithValidation(const TypeProto& input_type, TypeProto& output_type) {
+  if (input_type.value_case() != TypeProto::kOptionalType) {
+    fail_type_inference("Input was expected to have optional type. Got ", input_type.value_case());
   }
 
-  if (input_type->value_case() != TypeProto::kOptionalType) {
-    fail_type_inference("Input was expected to have optional type. Got ", input_type->value_case());
-  }
-
-  auto input_opt_type = input_type->optional_type();
+  const auto& input_opt_type = input_type.optional_type();
 
   if (input_opt_type.has_elem_type()) {
     propagateElemTypeWithValidation(
-        &input_opt_type.elem_type(), output_type->mutable_optional_type()->mutable_elem_type());
+        &input_opt_type.elem_type(), output_type.mutable_optional_type()->mutable_elem_type());
   } else {
     fail_type_inference("Element type of optional input was unknown");
   }
 }
 
-void propagateMapElemTypeWithValidation(const TypeProto* input_type, TypeProto* output_type) {
-  if (nullptr == input_type) {
-    fail_type_inference("Input type was null");
+static void propagateMapElemTypeWithValidation(const TypeProto& input_type, TypeProto& output_type) {
+  if (input_type.value_case() != TypeProto::kMapType) {
+    fail_type_inference("Input was expected to have map type. Got ", input_type.value_case());
   }
 
-  if (input_type->value_case() != TypeProto::kMapType) {
-    fail_type_inference("Input was expected to have map type. Got ", input_type->value_case());
-  }
-
-  auto input_map_type = input_type->map_type();
+  const auto& input_map_type = input_type.map_type();
 
   if (!input_map_type.has_key_type()) {
     fail_type_inference("Key type of map input was unknown");
@@ -424,8 +414,8 @@ void propagateMapElemTypeWithValidation(const TypeProto* input_type, TypeProto* 
   if (!input_map_type.has_value_type()) {
     fail_type_inference("Value type of map input was unknown");
   }
-  output_type->mutable_map_type()->set_key_type(input_map_type.key_type());
-  propagateElemTypeWithValidation(&input_map_type.value_type(), output_type->mutable_map_type()->mutable_value_type());
+  output_type.mutable_map_type()->set_key_type(input_map_type.key_type());
+  propagateElemTypeWithValidation(&input_map_type.value_type(), output_type.mutable_map_type()->mutable_value_type());
 }
 
 // propagate the element type from an input type to an output type.
@@ -434,16 +424,19 @@ void propagateElemTypeWithValidation(const TypeProto* input_type, TypeProto* out
   if (nullptr == input_type) {
     fail_type_inference("Input type was null");
   }
+  if (nullptr == output_type) {
+    fail_type_inference("Output type was null");
+  }
 
   const auto input_value_case = input_type->value_case();
   if (input_value_case == TypeProto::kTensorType || input_value_case == TypeProto::kSparseTensorType) {
-    propagateTensorElemTypeWithValidation(input_type, output_type);
+    propagateTensorElemTypeWithValidation(*input_type, *output_type);
   } else if (input_value_case == TypeProto::kSequenceType) {
-    propagateSequenceElemTypeWithValidation(input_type, output_type);
+    propagateSequenceElemTypeWithValidation(*input_type, *output_type);
   } else if (input_value_case == TypeProto::kOptionalType) {
-    propagateOptionalElemTypeWithValidation(input_type, output_type);
+    propagateOptionalElemTypeWithValidation(*input_type, *output_type);
   } else if (input_value_case == TypeProto::kMapType) {
-    propagateMapElemTypeWithValidation(input_type, output_type);
+    propagateMapElemTypeWithValidation(*input_type, *output_type);
   } else {
     fail_type_inference(
         "Input was expected to have either tensor, sequence, optional or map type. Got ", input_value_case);
@@ -451,46 +444,63 @@ void propagateElemTypeWithValidation(const TypeProto* input_type, TypeProto* out
 }
 
 TensorShapeProto getShapeInput(const InferenceContext& ctx, size_t input_index, bool& found) {
+  return getShapeInput(ctx, input_index, false, found);
+}
+
+TensorShapeProto
+getShapeInput(const InferenceContext& ctx, size_t input_index, bool fail_if_negative_value, bool& found) {
   TensorShapeProto shape_input;
+
+  found = false;
 
   // First, check initializer.
   const TensorProto* shape_initializer = ctx.getInputData(input_index);
   if (shape_initializer) {
-    const std::vector<int64_t>& shape_data = ParseData<int64_t>(shape_initializer);
+    const std::vector<int64_t> shape_data = ParseData<int64_t>(shape_initializer);
     for (const int64_t& e : shape_data) {
       shape_input.add_dim()->set_dim_value(e);
     }
     found = true;
-    return shape_input;
   }
 
   // Then, check symbolic input.
   const TensorShapeProto* symbolic_input = ctx.getSymbolicInput(input_index);
-  if (symbolic_input) {
+  if (!found && symbolic_input) {
     shape_input.CopyFrom(*symbolic_input);
     found = true;
-    return shape_input;
   }
 
   // Try rank inference.
-  if (hasInputShape(ctx, input_index)) {
+  if (!found && hasInputShape(ctx, input_index)) {
     const TensorShapeProto& shape_input_shape = getInputShape(ctx, input_index);
     if (shape_input_shape.dim_size() != 1) {
       fail_shape_inference("shape input must be 1D tensor");
     }
     if (shape_input_shape.dim(0).has_dim_value()) {
       // Attempt rank inference using shape of shape input
-      int64_t dim_value = shape_input_shape.dim(0).dim_value();
+      const int64_t dim_value = shape_input_shape.dim(0).dim_value();
+      // Rank-only inference is optional. Avoid materializing an attacker-controlled
+      // number of empty Dimension messages when the shape values are unavailable.
+      if (dim_value < 0 || dim_value > kMaxMaterializedRank) {
+        return shape_input;
+      }
       for (int64_t i = 0; i < dim_value; ++i) {
         shape_input.add_dim();
       }
       found = true;
-      return shape_input;
     }
   }
 
-  // Shape input was not found.
-  found = false;
+  if (found && fail_if_negative_value) {
+    int dims_size = shape_input.dim_size();
+    for (int i = 0; i < dims_size; ++i) {
+      const auto& dim = shape_input.dim(i);
+      if (dim.has_dim_value() && dim.dim_value() < 0) {
+        fail_shape_inference("shape input tensor must have non-negative elements");
+      }
+    }
+  }
+
   return shape_input;
 }
 
@@ -501,6 +511,32 @@ std::string stringify(const Container& elements) {
     ss << element << ", ";
   }
   return ss.str();
+}
+
+std::pair<int, int> getAttributeProtoElemTypeAndLength(const AttributeProto* attr_proto) {
+  if (attr_proto->ints_size()) {
+    return {TensorProto_DataType_INT64, attr_proto->ints_size()};
+  } else if (attr_proto->floats_size()) {
+    return {TensorProto_DataType_FLOAT, attr_proto->floats_size()};
+  } else if (attr_proto->strings_size()) {
+    return {TensorProto_DataType_STRING, attr_proto->strings_size()};
+  } else if (attr_proto->has_t()) {
+    if (attr_proto->t().dims_size() != 1) {
+      fail_type_inference(
+          "Attribute ", attr_proto->name(), " expected to be a 1D tensor but was ", attr_proto->t().dims_size(), "D");
+    }
+    const int64_t dim0 = attr_proto->t().dims(0);
+    if (dim0 < 0 || dim0 > static_cast<int64_t>(std::numeric_limits<int>::max())) {
+      fail_type_inference(
+          "Attribute ",
+          attr_proto->name(),
+          " has tensor dimension ",
+          dim0,
+          " which is out of valid range [0, INT_MAX]");
+    }
+    return {attr_proto->t().data_type(), static_cast<int>(dim0)};
+  }
+  return {TensorProto::UNDEFINED, 0};
 }
 
 std::pair<int, int> getAttributeElementTypeAndLength(
@@ -516,26 +552,64 @@ std::pair<int, int> getAttributeElementTypeAndLength(
         // Another attribute was already set
         fail_shape_inference("One and only one attribute must be set out of ", stringify(attribute_names));
       }
-      if (attr_proto->ints_size()) {
-        elem_type = TensorProto_DataType_INT64;
-        length = attr_proto->ints_size();
-      } else if (attr_proto->floats_size()) {
-        elem_type = TensorProto_DataType_FLOAT;
-        length = attr_proto->floats_size();
-      } else if (attr_proto->strings_size()) {
-        elem_type = TensorProto_DataType_STRING;
-        length = attr_proto->strings_size();
-      } else if (attr_proto->has_t()) {
-        if (attr_proto->t().dims_size() != 1) {
-          fail_type_inference(
-              "Attribute ", attribute, " expected to be a 1D tensor but was ", attr_proto->t().dims_size(), "D");
-        }
-        elem_type = attr_proto->t().data_type();
-        length = attr_proto->t().dims(0);
-      }
+      std::tie(elem_type, length) = getAttributeProtoElemTypeAndLength(attr_proto);
     }
   }
   return {elem_type, length};
+}
+
+// NOLINTNEXTLINE(readability-make-member-function-const)
+void InferenceContext::unifyInputShape(size_t input_index, std::initializer_list<std::reference_wrapper<Dim>> dims) {
+  if (!hasInputShape(*this, input_index)) {
+    return;
+  }
+  const auto& input_shape = getInputShape(*this, input_index);
+  if (static_cast<size_t>(input_shape.dim_size()) != dims.size()) {
+    fail_shape_inference(
+        "Input ",
+        input_index,
+        " expected to have rank ",
+        dims.size(),
+        " but has rank ",
+        input_shape.dim_size(),
+        " in ",
+        getDisplayName(),
+        ".");
+  }
+  int i = 0;
+  for (const auto& dim_ref : dims) {
+    const Dim& input_dim = input_shape.dim(i);
+    unifyDim(input_dim, dim_ref.get());
+    ++i;
+  }
+}
+
+// NOLINTNEXTLINE(readability-make-member-function-const)
+void InferenceContext::unifyInputShapePrefix(
+    size_t input_index,
+    std::initializer_list<std::reference_wrapper<Dim>> prefix) {
+  if (!hasInputShape(*this, input_index)) {
+    return;
+  }
+  const auto& input_shape = getInputShape(*this, input_index);
+  if (static_cast<size_t>(input_shape.dim_size()) < prefix.size()) {
+    fail_shape_inference(
+        "Input ",
+        input_index,
+        " expected to have rank >= ",
+        prefix.size(),
+        " but has rank ",
+        input_shape.dim_size(),
+        " in ",
+        getDisplayName(),
+        ".");
+  }
+  int i = 0;
+  for (const auto& dim_ref : prefix) {
+    const Dim& input_dim = input_shape.dim(i);
+    unifyDim(input_dim, dim_ref.get());
+    ++i;
+  }
 }
 
 } // namespace ONNX_NAMESPACE

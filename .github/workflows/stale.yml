@@ -1,3 +1,7 @@
+# Copyright (c) ONNX Project Contributors
+#
+# SPDX-License-Identifier: Apache-2.0
+
 # This workflow warns and then closes issues and PRs that have had no activity for a specified amount of time.
 #
 # You can adjust the behavior by modifying this file.
@@ -21,9 +25,14 @@ jobs:
       pull-requests: write
 
     steps:
-    - uses: actions/stale@1160a2240286f5da8ec72b1c0816ce2481aabf84 # v8.0.0
+    - uses: actions/stale@4391f3da665fdf50b6810c1a66712fb9ba21aa93 # v11.0.0
       with:
         repo-token: ${{ secrets.GITHUB_TOKEN }}
         days-before-stale: 365
         days-before-close: 21
         ascending: true
+        exempt-issue-labels: bug,no-stale
+        exempt-pr-labels: no-stale,contributions welcome
+        remove-issue-stale-when-updated: true
+        remove-pr-stale-when-updated: true
+        exempt-all-milestones: true

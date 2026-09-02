@@ -48,6 +48,12 @@
 .. autofunction:: onnx.external_data_helper.set_external_data
 ```
 
+## uses_external_data
+
+```{eval-rst}
+.. autofunction:: onnx.external_data_helper.uses_external_data
+```
+
 ## write_external_data_tensors
 
 ```{eval-rst}

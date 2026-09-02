@@ -1,7 +1,9 @@
 # Copyright (c) ONNX Project Contributors
 #
 # SPDX-License-Identifier: Apache-2.0
+from __future__ import annotations
 
+import ml_dtypes
 import numpy as np
 
 import onnx
@@ -43,7 +45,53 @@ class Celu(Base):
 
         # Calculate expected output data
         positive_input = np.maximum(0, input_data)
-        negative_input = np.minimum(0, alpha * (np.exp(input_data / alpha) - 1))
+        negative_input = np.minimum(0, alpha * np.expm1(input_data / alpha))
         expected_output = positive_input + negative_input
 
         expect(node, inputs=[input_data], outputs=[expected_output], name="test_celu")
+
+    @staticmethod
+    def export_celu_float16() -> None:
+        alpha = 2.0
+        node = onnx.helper.make_node(
+            "Celu",
+            inputs=["X"],
+            outputs=["Y"],
+            alpha=alpha,
+        )
+
+        input_data = np.array([-3.0, -0.5, 0.0, 0.5, 3.0], dtype=np.float16)
+
+        positive_input = np.maximum(0, input_data)
+        negative_input = np.minimum(0, alpha * np.expm1(input_data / alpha))
+        expected_output = (positive_input + negative_input).astype(np.float16)
+
+        expect(
+            node,
+            inputs=[input_data],
+            outputs=[expected_output],
+            name="test_celu_float16",
+        )
+
+    @staticmethod
+    def export_celu_bfloat16() -> None:
+        alpha = 2.0
+        node = onnx.helper.make_node(
+            "Celu",
+            inputs=["X"],
+            outputs=["Y"],
+            alpha=alpha,
+        )
+
+        input_data = np.array([-3.0, -0.5, 0.0, 0.5, 3.0], dtype=ml_dtypes.bfloat16)
+
+        positive_input = np.maximum(0, input_data)
+        negative_input = np.minimum(0, alpha * np.expm1(input_data / alpha))
+        expected_output = (positive_input + negative_input).astype(ml_dtypes.bfloat16)
+
+        expect(
+            node,
+            inputs=[input_data],
+            outputs=[expected_output],
+            name="test_celu_bfloat16",
+        )

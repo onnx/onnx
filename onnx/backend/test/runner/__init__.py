@@ -10,12 +10,12 @@ import os
 import re
 import shutil
 import sys
-import tarfile
 import tempfile
 import time
 import unittest
 from collections import defaultdict
-from typing import Any, Callable, Iterable, Pattern, Sequence
+from re import Pattern
+from typing import TYPE_CHECKING, Any
 from urllib.request import urlretrieve
 
 import numpy as np
@@ -23,10 +23,14 @@ import numpy as np
 import onnx
 import onnx.reference
 from onnx import ONNX_ML, ModelProto, NodeProto, TypeProto, ValueInfoProto, numpy_helper
-from onnx.backend.base import Backend
-from onnx.backend.test.case.test_case import TestCase
 from onnx.backend.test.loader import load_model_tests
 from onnx.backend.test.runner.item import TestItem
+
+if TYPE_CHECKING:
+    from collections.abc import Callable, Iterable, Sequence
+
+    from onnx.backend.base import Backend
+    from onnx.backend.test.case.test_case import TestCase
 
 
 class BackendIsNotSupposedToImplementIt(unittest.SkipTest):
@@ -42,11 +46,12 @@ def retry_execute(times: int) -> Callable[[Callable[..., Any]], Callable[..., An
             for i in range(1, times + 1):
                 try:
                     return func(*args, **kwargs)
-                except Exception:
+                except Exception:  # noqa: PERF203
                     print(f"{i} times tried")
                     if i == times:
                         raise
                     time.sleep(5 * i)
+            return None
 
         return wrapped
 
@@ -85,8 +90,8 @@ class Runner:
         for ct in load_model_tests(kind="pytorch-converted"):
             self._add_model_test(ct, "PyTorchConverted")
 
-        for ot in load_model_tests(kind="pytorch-operator"):
-            self._add_model_test(ot, "PyTorchOperator")
+        for test_case in load_model_tests(kind="pytorch-operator"):
+            self._add_model_test(test_case, "PyTorchOperator")
 
     def _get_test_case(self, name: str) -> type[unittest.TestCase]:
         test_case = type(str(name), (unittest.TestCase,), {})
@@ -107,7 +112,7 @@ class Runner:
         return self
 
     def enable_report(self) -> Runner:
-        import pytest
+        import pytest  # noqa: PLC0415
 
         for category, items_map in self._test_items.items():
             for item in items_map.values():
@@ -137,8 +142,7 @@ class Runner:
 
     @property
     def test_cases(self) -> dict[str, type[unittest.TestCase]]:
-        """
-        List of test cases to be applied on the parent scope
+        """List of test cases to be applied on the parent scope
         Example usage:
             globals().update(BackendTest(backend).test_cases)
         """
@@ -153,8 +157,7 @@ class Runner:
 
     @property
     def test_suite(self) -> unittest.TestSuite:
-        """
-        TestSuite that can be run by TestRunner
+        """TestSuite that can be run by TestRunner
         Example usage:
             unittest.TextTestRunner().run(BackendTest(backend).test_suite)
         """
@@ -168,8 +171,7 @@ class Runner:
     # For backward compatibility (we used to expose `.tests`)
     @property
     def tests(self) -> type[unittest.TestCase]:
-        """
-        One single unittest.TestCase that hosts all the test functions
+        """One single unittest.TestCase that hosts all the test functions
         Example usage:
             onnx_backend_tests = BackendTest(backend).tests
         """
@@ -188,46 +190,75 @@ class Runner:
         outputs: Sequence[Any],
         rtol: float,
         atol: float,
+        model_dir: str | None = None,
     ) -> None:
-        np.testing.assert_equal(len(outputs), len(ref_outputs))
+        try:
+            np.testing.assert_equal(len(outputs), len(ref_outputs))
+        except TypeError as e:
+            raise TypeError(
+                f"Unable to compare expected type {type(ref_outputs)} "
+                f"and runtime type {type(outputs)} (known test={model_dir or '?'!r})"
+            ) from e
         for i in range(len(outputs)):
             if isinstance(outputs[i], (list, tuple)):
+                if not isinstance(ref_outputs[i], (list, tuple)):
+                    raise AssertionError(  # noqa: TRY004
+                        f"Unexpected type {type(outputs[i])} for outputs[{i}]. Expected "
+                        f"type is {type(ref_outputs[i])} (known test={model_dir or '?'!r})."
+                    )
                 for j in range(len(outputs[i])):
                     cls.assert_similar_outputs(
-                        ref_outputs[i][j], outputs[i][j], rtol, atol
+                        ref_outputs[i][j],
+                        outputs[i][j],
+                        rtol,
+                        atol,
+                        model_dir=model_dir,
                     )
             else:
-                np.testing.assert_equal(outputs[i].dtype, ref_outputs[i].dtype)
-                if ref_outputs[i].dtype == object:  # type: ignore[attr-defined]
+                np.testing.assert_array_equal(
+                    outputs[i].shape,
+                    ref_outputs[i].shape,
+                    err_msg=f"Output {i} has incorrect shape",
+                )
+                if ref_outputs[i].dtype == object:
+                    # Strings
                     np.testing.assert_array_equal(outputs[i], ref_outputs[i])
                 else:
-                    np.testing.assert_allclose(
-                        outputs[i], ref_outputs[i], rtol=rtol, atol=atol
-                    )
+                    np.testing.assert_equal(outputs[i].dtype, ref_outputs[i].dtype)
+                    out = outputs[i]
+                    ref = ref_outputs[i]
+                    # np.testing.assert_allclose uses np.isclose which calls
+                    # result_type(y, 1.) internally.  This fails for dtypes
+                    # that NumPy cannot promote with Python float, such as
+                    # bfloat16 from ml_dtypes. Cast to float32 to work around
+                    # and use a tolerance appropriate for bfloat16 precision.
+                    output_rtol = rtol
+                    if out.dtype.name == "bfloat16":
+                        output_rtol = max(rtol, 2**-6)  # Two bfloat16 ULPs.
+                        out = out.astype(np.float32)
+                        ref = ref.astype(np.float32)
+                    np.testing.assert_allclose(out, ref, rtol=output_rtol, atol=atol)
 
     @classmethod
     @retry_execute(3)
     def download_model(
-        cls, model_test: TestCase, model_dir: str, models_dir: str
+        cls,
+        model_test: TestCase,
+        models_dir: str,
     ) -> None:
-        # On Windows, NamedTemporaryFile can not be opened for a
-        # second time
-        download_file = tempfile.NamedTemporaryFile(delete=False)
-        try:
-            download_file.close()
-            assert model_test.url
-            print(
-                f"Start downloading model {model_test.model_name} from {model_test.url}"
-            )
-            urlretrieve(model_test.url, download_file.name)
-            print("Done")
-            with tarfile.open(download_file.name) as t:
-                t.extractall(models_dir)
-        except Exception as e:
-            print(f"Failed to prepare data for model {model_test.model_name}: {e}")
-            raise
-        finally:
-            os.remove(download_file.name)
+        with tempfile.TemporaryDirectory() as tmpdir:
+            try:
+                assert model_test.url
+                print(
+                    f"Start downloading model {model_test.model_name} from {model_test.url}"
+                )
+                filename = os.path.join(tmpdir, "file")
+                urlretrieve(model_test.url, filename)
+                print("Done")
+                onnx.utils._extract_model_safe(filename, models_dir)
+            except Exception as e:
+                print(f"Failed to prepare data for model {model_test.model_name}: {e}")
+                raise
 
     @classmethod
     def prepare_model_data(cls, model_test: TestCase) -> str:
@@ -248,9 +279,7 @@ class Runner:
                     break
             os.makedirs(model_dir)
 
-            cls.download_model(
-                model_test=model_test, model_dir=model_dir, models_dir=models_dir
-            )
+            cls.download_model(model_test=model_test, models_dir=models_dir)
         return model_dir
 
     def _add_test(
@@ -273,7 +302,7 @@ class Runner:
                     f'Duplicated test name "{device_test_name}" in category "{category}"'
                 )
 
-            @unittest.skipIf(  # type: ignore
+            @unittest.skipIf(
                 not self.backend.supports_device(device),
                 f"Backend doesn't support device {device}",
             )
@@ -298,9 +327,7 @@ class Runner:
     def generate_dummy_data(
         x: ValueInfoProto, seed: int = 0, name: str = "", random: bool = False
     ) -> np.ndarray:
-        """
-        Generates a random tensor based on the input definition.
-        """
+        """Generates a random tensor based on the input definition."""
         if not x.type.tensor_type:
             raise NotImplementedError(
                 f"Input expected to have tensor type. "
@@ -326,7 +353,28 @@ class Runner:
         # never loaded if the test skipped
         model_marker: list[ModelProto | NodeProto | None] = [None]
 
-        def run(test_self: Any, device: str, **kwargs) -> None:
+        def run_node(_: Any, device: str, **kwargs: Any) -> None:
+            assert model_test.data_sets is not None
+            assert model_test.model is not None
+
+            model_marker[0] = model_test.model
+            candidate_rt = self.backend.prepare(model_test.model, device, **kwargs)
+            assert candidate_rt is not None
+            for inputs, ref_outputs in model_test.data_sets:
+                # TestCase type hints are a lie; may contain TensorProto objects
+                inputs_ = [_normalize_tensor(item) for item in inputs]
+                ref_outputs_ = [_normalize_tensor(item) for item in ref_outputs]
+
+                candidate_outputs = candidate_rt.run(inputs_)
+                self.assert_similar_outputs(
+                    ref_outputs=ref_outputs_,
+                    outputs=candidate_outputs,
+                    rtol=kwargs.get("rtol", model_test.rtol),
+                    atol=kwargs.get("atol", model_test.atol),
+                    model_dir=model_test.model_dir,
+                )
+
+        def run(test_self: Any, device: str, **kwargs) -> None:  # noqa: ARG001
             if model_test.url is not None and model_test.url.startswith(
                 "onnx/backend/test/data/light/"
             ):
@@ -429,18 +477,6 @@ class Runner:
                     for i, o in enumerate(expected_outputs):
                         name = os.path.join(test_data_set, f"output_{i}.pb")
                         shutil.copy(o, name)
-            else:
-                # TODO after converting all npz files to protobuf, we can delete this.
-                for test_data_npz in glob.glob(
-                    os.path.join(model_dir, "test_data_*.npz")
-                ):
-                    test_data = np.load(test_data_npz, encoding="bytes")
-                    inputs = list(test_data["inputs"])
-                    outputs = list(prepared_model.run(inputs))
-                    ref_outputs = test_data["outputs"]
-                    self.assert_similar_outputs(
-                        ref_outputs, outputs, rtol=model_test.rtol, atol=model_test.atol
-                    )
 
             for test_data_dir in glob.glob(os.path.join(model_dir, "test_data_set*")):
                 inputs = []
@@ -459,10 +495,25 @@ class Runner:
                     )
                 outputs = list(prepared_model.run(inputs))
                 self.assert_similar_outputs(
-                    ref_outputs, outputs, rtol=model_test.rtol, atol=model_test.atol
+                    ref_outputs,
+                    outputs,
+                    rtol=kwargs.get("rtol", model_test.rtol),
+                    atol=kwargs.get("atol", model_test.atol),
+                    model_dir=model_dir,
                 )
 
-        if model_test.name in self._test_kwargs:
+        if kind == "Node" and model_test.model_dir is None:
+            if model_test.name in self._test_kwargs:
+                self._add_test(
+                    kind + "Model",
+                    model_test.name,
+                    run_node,
+                    model_marker,
+                    **self._test_kwargs[model_test.name],
+                )
+            else:
+                self._add_test(kind + "Model", model_test.name, run_node, model_marker)
+        elif model_test.name in self._test_kwargs:
             self._add_test(
                 kind + "Model",
                 model_test.name,
@@ -488,7 +539,9 @@ class Runner:
             elif model_type_proto.HasField("tensor_type"):
                 tensor = onnx.TensorProto()
                 tensor.ParseFromString(protobuf_content)
-                target_list.append(numpy_helper.to_array(tensor))
+                t = numpy_helper.to_array(tensor)
+                assert isinstance(t, np.ndarray)
+                target_list.append(t)
             elif model_type_proto.HasField("optional_type"):
                 optional = onnx.OptionalProto()
                 optional.ParseFromString(protobuf_content)
@@ -497,3 +550,9 @@ class Runner:
                 print(
                     "Loading proto of that specific type (Map/Sparse Tensor) is currently not supported"
                 )
+
+
+def _normalize_tensor(tensor: np.ndarray | onnx.TensorProto) -> np.ndarray:
+    if isinstance(tensor, onnx.TensorProto):
+        return onnx.numpy_helper.to_array(tensor)
+    return tensor

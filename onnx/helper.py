@@ -1,52 +1,44 @@
 # Copyright (c) ONNX Project Contributors
 #
 # SPDX-License-Identifier: Apache-2.0
+from __future__ import annotations
 
 import collections.abc
+import functools
+import math
 import numbers
-import struct
-from cmath import isnan
-from typing import (
-    Any,
-    Callable,
-    Dict,
-    KeysView,
-    List,
-    Optional,
-    Sequence,
-    Tuple,
-    TypeVar,
-    Union,
-    cast,
-)
+import typing
+from typing import TYPE_CHECKING, Any, TypeVar
 
 import google.protobuf.message
 import numpy as np
+import typing_extensions
 
-from onnx import (
-    IR_VERSION,
+import onnx
+from onnx import _mapping, defs
+from onnx.onnx_data_pb import MapProto, OptionalProto, SequenceProto
+from onnx.onnx_pb import (
     AttributeProto,
     FunctionProto,
     GraphProto,
-    MapProto,
     ModelProto,
     NodeProto,
     OperatorSetIdProto,
-    OptionalProto,
-    SequenceProto,
-    SparseTensorProto,
     TensorProto,
     TensorShapeProto,
     TrainingInfoProto,
     TypeProto,
     ValueInfoProto,
-    defs,
-    mapping,
 )
 
-VersionRowType = Union[Tuple[str, int, int, int], Tuple[str, int, int, int, int]]
-VersionTableType = List[VersionRowType]
-AssignmentBindingType = List[Tuple[str, str]]
+if TYPE_CHECKING:
+    from collections.abc import Callable, KeysView, Sequence
+
+    from google.protobuf.internal.containers import RepeatedCompositeFieldContainer
+
+VersionRowType = tuple[str, int, int, int] | tuple[str, int, int, int, int]
+VersionTableType = list[VersionRowType]
+AssignmentBindingType = list[tuple[str, str]]
 
 # This is a copy of the documented version in https://github.com/onnx/onnx/blob/main/docs/Versioning.md#released-versions
 # Both must be updated whenever a new version of ONNX is released.
@@ -74,45 +66,61 @@ VERSION_TABLE: VersionTableType = [
     ("1.14.0", 9, 19, 3, 1),
     ("1.14.1", 9, 19, 3, 1),
     ("1.15.0", 9, 20, 4, 1),
+    ("1.16.0", 10, 21, 5, 1),
+    ("1.16.1", 10, 21, 5, 1),
+    ("1.16.2", 10, 21, 5, 1),
+    ("1.17.0", 10, 22, 5, 1),
+    ("1.18.0", 11, 23, 5, 1),
+    ("1.19.0", 12, 24, 5, 1),
+    ("1.19.1", 12, 24, 5, 1),
+    ("1.20.0", 13, 25, 5, 1),
+    ("1.20.1", 13, 25, 5, 1),
+    ("1.21.0", 13, 26, 5, 1),
+    ("1.22.0", 13, 27, 5, 1),
+    ("1.23.0", 14, 28, 5, 1),
 ]
 
-VersionMapType = Dict[Tuple[str, int], int]
+VersionMapType = dict[tuple[str, int], int]
 
 
-def create_op_set_id_version_map(table: VersionTableType) -> VersionMapType:
-    """create a map from (opset-domain, opset-version) to ir-version from above table"""
+def _create_op_set_id_version_map(table: VersionTableType) -> VersionMapType:
+    """Create a map from (opset-domain, opset-version) to ir-version from above table."""
     result: VersionMapType = {}
-
-    def process(release_version: str, ir_version: int, *args: Any) -> None:
-        del release_version  # Unused
-        for pair in zip(["ai.onnx", "ai.onnx.ml", "ai.onnx.training"], args):
+    for row in table:
+        ir_version = row[1]
+        for pair in zip(
+            ["ai.onnx", "ai.onnx.ml", "ai.onnx.training"],
+            row[2:],
+            strict=False,
+        ):
             if pair not in result:
                 result[pair] = ir_version
+                if pair[0] == "ai.onnx":
+                    result["ai.onnx.preview", pair[1]] = ir_version
                 if pair[0] == "ai.onnx.training":
                     result["ai.onnx.preview.training", pair[1]] = ir_version
-
-    for row in table:
-        process(*row)
     return result
 
 
-OP_SET_ID_VERSION_MAP = create_op_set_id_version_map(VERSION_TABLE)
+OP_SET_ID_VERSION_MAP = _create_op_set_id_version_map(VERSION_TABLE)
 
 
 def find_min_ir_version_for(
-    opsetidlist: List[OperatorSetIdProto], ignore_unknown: bool = False
+    opsetidlist: Sequence[OperatorSetIdProto], ignore_unknown: bool = False
 ) -> int:
     """Given list of opset ids, determine minimum IR version required.
 
-    Arguments:
-        opsetidlist (List[OperatorSetIdProto]): The list of OperatorSetIdProto
-        ignore_unknown (bool): If True, ignore unknown domain and return default min version for that domain.
+    Args:
+        opsetidlist: A sequence of OperatorSetIdProto.
+        ignore_unknown: If True, ignore unknown domain and return default minimum
+            version for that domain.
+
     Returns:
         The minimum IR version required (integer)
     """
     default_min_version = 3
 
-    def find_min(domain: Union[str, None], version: int) -> int:
+    def find_min(domain: str | None, version: int) -> int:
         key = (domain or "ai.onnx", version)
         if key in OP_SET_ID_VERSION_MAP:
             return OP_SET_ID_VERSION_MAP[key]
@@ -129,14 +137,15 @@ def make_node(
     op_type: str,
     inputs: Sequence[str],
     outputs: Sequence[str],
-    name: Optional[str] = None,
-    doc_string: Optional[str] = None,
-    domain: Optional[str] = None,
+    name: str | None = None,
+    doc_string: str | None = None,
+    domain: str | None = None,
+    overload: str | None = None,
     **kwargs: Any,
 ) -> NodeProto:
     """Construct a NodeProto.
 
-    Arguments:
+    Args:
         op_type (string): The name of the operator to construct
         inputs (list of string): list of input names
         outputs (list of string): list of output names
@@ -144,12 +153,14 @@ def make_node(
         doc_string (string, default None): optional documentation string for NodeProto
         domain (string, default None): optional domain for NodeProto.
             If it's None, we will just use default domain (which is empty)
+        overload (string, default None): optional field, used to
+            resolve calls to model-local functions
         **kwargs (dict): the attributes of the node.  The acceptable values
             are documented in :func:`make_attribute`.
+
     Returns:
         NodeProto
     """
-
     node = NodeProto()
     node.op_type = op_type
     node.input.extend(inputs)
@@ -160,6 +171,8 @@ def make_node(
         node.doc_string = doc_string
     if domain is not None:
         node.domain = domain
+    if overload is not None:
+        node.overload = overload
     if kwargs:
         node.attribute.extend(
             make_attribute(key, value)
@@ -175,7 +188,7 @@ def make_operatorsetid(
 ) -> OperatorSetIdProto:
     """Construct an OperatorSetIdProto.
 
-    Arguments:
+    Args:
         domain (string): The domain of the operator set id
         version (integer): Version of operator set id
     Returns:
@@ -192,14 +205,14 @@ def make_graph(
     name: str,
     inputs: Sequence[ValueInfoProto],
     outputs: Sequence[ValueInfoProto],
-    initializer: Optional[Sequence[TensorProto]] = None,
-    doc_string: Optional[str] = None,
-    value_info: Optional[Sequence[ValueInfoProto]] = None,
-    sparse_initializer: Optional[Sequence[SparseTensorProto]] = None,
+    initializer: Sequence[TensorProto] | None = None,
+    doc_string: str | None = None,
+    value_info: Sequence[ValueInfoProto] | None = None,
+    sparse_initializer: Sequence[onnx.SparseTensorProto] | None = None,
 ) -> GraphProto:
     """Construct a GraphProto
 
-    Arguments:
+    Args:
         nodes: list of NodeProto
         name (string): graph name
         inputs: list of ValueInfoProto
@@ -207,7 +220,7 @@ def make_graph(
         initializer: list of TensorProto
         doc_string (string): graph documentation
         value_info: list of ValueInfoProto
-        sparse_initializer: list of SparseTensorProto
+        sparse_initializer: list of onnx.SparseTensorProto
     Returns:
         GraphProto
     """
@@ -233,7 +246,7 @@ def make_graph(
 def make_opsetid(domain: str, version: int) -> OperatorSetIdProto:
     """Construct an OperatorSetIdProto.
 
-    Arguments:
+    Args:
         domain (string): The domain of the operator set id
         version (integer): Version of operator set id
     Returns:
@@ -252,14 +265,18 @@ def make_function(
     outputs: Sequence[str],
     nodes: Sequence[NodeProto],
     opset_imports: Sequence[OperatorSetIdProto],
-    attributes: Optional[Sequence[str]] = None,
-    attribute_protos: Optional[Sequence[AttributeProto]] = None,
-    doc_string: Optional[str] = None,
+    attributes: Sequence[str] | None = None,
+    attribute_protos: Sequence[AttributeProto] | None = None,
+    doc_string: str | None = None,
+    overload: str | None = None,
+    value_info: Sequence[ValueInfoProto] | None = None,
 ) -> FunctionProto:
     if attributes is None:
         attributes = []
     if attribute_protos is None:
         attribute_protos = []
+    if value_info is None:
+        value_info = []
     f = FunctionProto()
     f.domain = domain
     f.name = fname
@@ -271,13 +288,16 @@ def make_function(
     f.attribute_proto.extend(attribute_protos)
     if doc_string:
         f.doc_string = doc_string
+    if overload is not None:
+        f.overload = overload
+    f.value_info.extend(value_info)
     return f
 
 
 def make_model(graph: GraphProto, **kwargs: Any) -> ModelProto:
     """Construct a ModelProto
 
-    Arguments:
+    Args:
         graph (GraphProto): *make_graph* returns
         **kwargs: any attribute to add to the returned instance
     Returns:
@@ -286,11 +306,12 @@ def make_model(graph: GraphProto, **kwargs: Any) -> ModelProto:
     model = ModelProto()
     # Touch model.ir_version so it is stored as the version from which it is
     # generated.
-    model.ir_version = IR_VERSION
+    model.ir_version = onnx.IR_VERSION
     model.graph.CopyFrom(graph)
 
-    opset_imports: Optional[Sequence[OperatorSetIdProto]] = None
-    opset_imports = kwargs.pop("opset_imports", None)  # type: ignore
+    opset_imports: Sequence[OperatorSetIdProto] | None = kwargs.pop(
+        "opset_imports", None
+    )
     if opset_imports is not None:
         model.opset_import.extend(opset_imports)
     else:
@@ -298,8 +319,7 @@ def make_model(graph: GraphProto, **kwargs: Any) -> ModelProto:
         imp = model.opset_import.add()
         imp.version = defs.onnx_opset_version()
 
-    functions: Optional[Sequence[FunctionProto]] = None
-    functions = kwargs.pop("functions", None)  # type: ignore
+    functions: Sequence[FunctionProto] | None = kwargs.pop("functions", None)
     if functions is not None:
         model.functions.extend(functions)
 
@@ -315,321 +335,53 @@ def make_model_gen_version(graph: GraphProto, **kwargs: Any) -> ModelProto:
     ir_version_field = "ir_version"
     if ir_version_field not in kwargs:
         opset_imports_field = "opset_imports"
-        imports = kwargs[opset_imports_field] if opset_imports_field in kwargs else []
+        imports = kwargs.get(opset_imports_field, [])
         kwargs[ir_version_field] = find_min_ir_version_for(imports)
     return make_model(graph, **kwargs)
 
 
-def set_model_props(model: ModelProto, dict_value: Dict[str, str]) -> None:
-    del model.metadata_props[:]
+def set_metadata_props(
+    proto: (
+        ModelProto
+        | GraphProto
+        | FunctionProto
+        | NodeProto
+        | TensorProto
+        | ValueInfoProto
+    ),
+    dict_value: dict[str, str],
+) -> None:
+    del proto.metadata_props[:]
     for k, v in dict_value.items():
-        entry = model.metadata_props.add()
+        entry = proto.metadata_props.add()
         entry.key = k
         entry.value = v
-        # model.metadata_properties.append(entry)
 
 
-def split_complex_to_pairs(ca: Sequence[np.complex64]) -> Sequence[int]:
-    return [
-        (ca[i // 2].real if (i % 2 == 0) else ca[i // 2].imag)  # type: ignore[misc]
-        for i in range(len(ca) * 2)
-    ]
-
-
-# convert a float32 value to a bfloat16 (as int)
-# By default, this conversion rounds-to-nearest-even and supports NaN
-# Setting `truncate` to True enables a simpler conversion. In this mode the
-# conversion is performed by simply dropping the 2 least significant bytes of
-# the significand. In this mode an error of up to 1 bit may be introduced and
-# preservation of NaN values is not be guaranteed.
-def float32_to_bfloat16(fval: float, truncate: bool = False) -> int:
-    ival = int.from_bytes(struct.pack("<f", fval), "little")
-    if truncate:
-        return ival >> 16
-    # NaN requires at least 1 significand bit set
-    if isnan(fval):
-        return 0x7FC0  # sign=0, exp=all-ones, sig=0b1000000
-    # drop bottom 16-bits
-    # round remaining bits using round-to-nearest-even
-    rounded = ((ival >> 16) & 1) + 0x7FFF
-    return (ival + rounded) >> 16
-
-
-def float32_to_float8e4m3(  # noqa: PLR0911
-    fval: float,
-    scale: float = 1.0,
-    fn: bool = True,
-    uz: bool = False,
-    saturate: bool = True,
-) -> int:
-    """
-    Convert a float32 value to a float8, e4m3 (as int).
-
-    :param fval: float to convert
-    :param scale: scale, divide *fval* by *scale* before casting it
-    :param fn: no infinite values
-    :param uz: no negative zero
-    :param saturate: if True, any value out of range included inf becomes the maximum value,
-        otherwise, it becomes NaN. The description of operator Cast fully describes the
-        differences.
-    :return: converted float
-
-    See :ref:`onnx-detail-float8` for technical details.
-    """
-    if not fn:
-        raise NotImplementedError(
-            "float32_to_float8e4m3 not implemented with fn=False."
-        )
-    x = fval / scale
-    b = int.from_bytes(struct.pack("<f", np.float32(x)), "little")
-    ret = (b & 0x80000000) >> 24  # sign
-    if uz:
-        if (b & 0x7FC00000) == 0x7FC00000:  # noqa: PLR2004
-            return 0x80
-        if np.isinf(x):
-            if saturate:
-                return ret | 127
-            return 0x80
-        e = (b & 0x7F800000) >> 23  # exponent
-        m = b & 0x007FFFFF  # mantissa
-
-        if e != 0:
-            if e < 116:  # noqa: PLR2004
-                pass
-            elif e < 120:  # noqa: PLR2004
-                # denormalized number
-                ex = e - 119
-                if ex >= -2:  # noqa: PLR2004
-                    ret |= 1 << (2 + ex)
-                    ret |= m >> (21 - ex)
-                elif m > 0:
-                    ret |= 1
-                mask = 1 << (20 - ex)
-                if m & mask and (
-                    ret & 1
-                    or m & (mask - 1) > 0
-                    or (m & mask and m & (mask << 1) and m & (mask - 1) == 0)
-                ):
-                    # rounding
-                    ret += 1
-            elif e < 135:  # noqa: PLR2004
-                # normalized number
-                ex = e - 119  # 127 - 8
-                if ex == 0:
-                    ret |= 0x4
-                    ret |= m >> 21
-                else:
-                    ret |= ex << 3
-                    ret |= m >> 20
-                if m & 0x80000 and ((m & 0x100000) or (m & 0x7FFFF)):
-                    if (ret & 0x7F) < 0x7F:  # noqa: PLR2004
-                        # rounding
-                        ret += 1
-                    elif not saturate:
-                        return 0x80
-            elif saturate:
-                ret |= 0x7F  # 01111110
-            else:
-                ret = 0x80
-        elif m == 0:
-            # -0
-            ret = 0
-        return int(ret)
-    else:
-        if (b & 0x7FC00000) == 0x7FC00000:  # noqa: PLR2004
-            return 0x7F | ret
-        if np.isinf(x):
-            if saturate:
-                return ret | 126
-            return 0x7F | ret
-        e = (b & 0x7F800000) >> 23  # exponent
-        m = b & 0x007FFFFF  # mantissa
-
-        if e != 0:
-            if e < 117:  # noqa: PLR2004
-                pass
-            elif e < 121:  # noqa: PLR2004
-                # denormalized number
-                ex = e - 120
-                if ex >= -2:  # noqa: PLR2004
-                    ret |= 1 << (2 + ex)
-                    ret |= m >> (21 - ex)
-                elif m > 0:
-                    ret |= 1
-                mask = 1 << (20 - ex)
-                if m & mask and (
-                    ret & 1
-                    or m & (mask - 1) > 0
-                    or (m & mask and m & (mask << 1) and m & (mask - 1) == 0)
-                ):
-                    # rounding
-                    ret += 1
-            elif e < 136:  # noqa: PLR2004
-                # normalized number
-                ex = e - 120
-                if ex == 0:
-                    ret |= 0x4
-                    ret |= m >> 21
-                else:
-                    ret |= ex << 3
-                    ret |= m >> 20
-                    if (ret & 0x7F) == 0x7F:  # noqa: PLR2004
-                        ret &= 0xFE
-                if (m & 0x80000) and ((m & 0x100000) or (m & 0x7FFFF)):
-                    if (ret & 0x7F) < 0x7E:  # noqa: PLR2004
-                        # rounding
-                        ret += 1
-                    elif not saturate:
-                        ret |= 0x7F
-            elif saturate:
-                ret |= 126  # 01111110
-            else:
-                ret |= 0x7F
-        return int(ret)
-
-
-def float32_to_float8e5m2(  # noqa: PLR0911
-    fval: float,
-    scale: float = 1.0,
-    fn: bool = False,
-    uz: bool = False,
-    saturate: bool = True,
-) -> int:
-    """
-    Convert a float32 value to a float8, e5m2 (as int).
-
-    :param fval: float to convert
-    :param scale: scale, divide *fval* by *scale* before casting it
-    :param fn: no infinite values
-    :param uz: no negative zero
-    :param saturate: if True, any value out of range included inf becomes the maximum value,
-        otherwise, it becomes NaN. The description of operator Cast fully describes the
-        differences.
-    :return: converted float
-    """
-    x = fval / scale
-    b = int.from_bytes(struct.pack("<f", np.float32(x)), "little")
-    ret = (b & 0x80000000) >> 24  # sign
-
-    if fn and uz:
-        if (b & 0x7FC00000) == 0x7FC00000:  # noqa: PLR2004
-            return 0x80
-        if (b & 0x7FFFFFFF) == 0x7F800000:  # noqa: PLR2004
-            # inf
-            if saturate:
-                return ret | 0x7F
-            return 0x80
-        e = (b & 0x7F800000) >> 23  # exponent
-        m = b & 0x007FFFFF  # mantissa
-
-        if e != 0:
-            if e < 109:  # noqa: PLR2004
-                pass
-            elif e < 112:  # noqa: PLR2004
-                # denormalized number
-                ex = e - 111
-                if ex >= -1:
-                    ret |= 1 << (1 + ex)
-                    ret |= m >> (22 - ex)
-                elif m > 0:
-                    ret |= 1
-                mask = 1 << (21 - ex)
-                if m & mask and (
-                    ret & 1
-                    or m & (mask - 1) > 0
-                    or (m & mask and m & (mask << 1) and m & (mask - 1) == 0)
-                ):
-                    # rounding
-                    ret += 1
-            elif e < 143:  # noqa: PLR2004
-                # normalized number
-                ex = e - 111
-                ret |= ex << 2
-                ret |= m >> 21
-                if m & 0x100000 and ((m & 0xFFFFF) or (m & 0x200000)):
-                    if (ret & 0x7F) < 0x7F:  # noqa: PLR2004
-                        # rounding
-                        ret += 1
-                    elif not saturate:
-                        ret = 0x80
-            elif e == 255 and m == 0:  # inf  # noqa: PLR2004
-                ret = 0x80
-            elif saturate:
-                ret |= 0x7F  # last possible number
-            else:
-                ret = 0x80
-        elif m == 0:
-            # -0
-            ret = 0
-        return int(ret)
-    elif not fn and not uz:
-        if (b & 0x7FC00000) == 0x7FC00000:  # noqa: PLR2004
-            return 0x7F | ret
-        if np.isinf(x):
-            if saturate:
-                return 0x7B | ret
-            return 0x7C | ret
-        e = (b & 0x7F800000) >> 23  # exponent
-        m = b & 0x007FFFFF  # mantissa
-
-        if e != 0:
-            if e < 110:  # noqa: PLR2004
-                pass
-            elif e < 113:  # noqa: PLR2004
-                # denormalized number
-                ex = e - 112
-                if ex >= -1:
-                    ret |= 1 << (1 + ex)
-                    ret |= m >> (22 - ex)
-                elif m > 0:
-                    ret |= 1
-                mask = 1 << (21 - ex)
-                if m & mask and (
-                    ret & 1
-                    or m & (mask - 1) > 0
-                    or (m & mask and m & (mask << 1) and m & (mask - 1) == 0)
-                ):
-                    # rounding
-                    ret += 1
-            elif e < 143:  # noqa: PLR2004
-                # normalized number
-                ex = e - 112
-                ret |= ex << 2
-                ret |= m >> 21
-                if m & 0x100000 and ((m & 0xFFFFF) or (m & 0x200000)):
-                    if (ret & 0x7F) < 0x7B:  # noqa: PLR2004
-                        # rounding
-                        ret += 1
-                    elif saturate:
-                        ret |= 0x7B
-                    else:
-                        ret |= 0x7C
-            elif saturate:
-                ret |= 0x7B
-            else:
-                ret |= 0x7C
-        return int(ret)
-    else:
-        raise NotImplementedError("fn and uz must be both False or True.")
+def set_model_props(model: ModelProto, dict_value: dict[str, str]) -> None:
+    set_metadata_props(model, dict_value)
 
 
 def make_tensor(
-    name: str, data_type: int, dims: Sequence[int], vals: Any, raw: bool = False
+    name: str,
+    data_type: int,
+    dims: Sequence[int],
+    vals: Sequence[int | float] | bytes | np.ndarray,
+    raw: bool = False,
 ) -> TensorProto:
-    """
-    Make a TensorProto with specified arguments.  If raw is False, this
+    """Make a TensorProto with specified arguments.  If raw is False, this
     function will choose the corresponding proto field to store the
     values based on data_type. If raw is True, use "raw_data" proto
     field to store the values, and values should be of type bytes in
     this case.
 
-    Arguments:
-        name (string): tensor name
-        data_type (int): a value such as onnx.TensorProto.FLOAT
-        dims (List[int]): shape
+    Args:
+        name: tensor name
+        data_type: a value such as onnx.TensorProto.FLOAT
+        dims: shape
         vals: values
-        raw (bool): if True, vals contains the serialized content of the tensor,
-            otherwise, vals should be a list of values of the type defined by *data_type*
+        raw: if True, vals contains the serialized content of the tensor,
+            otherwise, vals should be a list of values of the type defined by ``data_type``.
 
     Returns:
         TensorProto
@@ -637,90 +389,117 @@ def make_tensor(
     tensor = TensorProto()
     tensor.data_type = data_type
     tensor.name = name
+    tensor.dims.extend(dims)
 
     if data_type == TensorProto.STRING and raw:
         raise TypeError("Can not use raw_data to store string type.")
 
     np_dtype = tensor_dtype_to_np_dtype(data_type)
 
-    # Check number of vals specified equals tensor size
-    expected_size = 1
     if raw:
-        # NumPy doesn't have BFLOAT16. TENSOR_TYPE_TO_NP_TYPE maps it to float32,
-        # which has the wrong itemsize.
-        if data_type == TensorProto.BFLOAT16:
-            expected_size = 2
-        elif data_type in (
-            TensorProto.FLOAT8E4M3FN,
-            TensorProto.FLOAT8E4M3FNUZ,
-            TensorProto.FLOAT8E5M2,
-            TensorProto.FLOAT8E5M2FNUZ,
-        ):
-            expected_size = 1
+        # NumPy doesn't have INT2/INT4/FP4/FP6. It is packed in couples to UINT8 buffers.
+        if data_type in {TensorProto.FLOAT6E2M3, TensorProto.FLOAT6E3M2}:
+            bits_per_element = 6
+        elif data_type in {TensorProto.UINT4, TensorProto.INT4, TensorProto.FLOAT4E2M1}:
+            bits_per_element = 4
+        elif data_type in {TensorProto.UINT2, TensorProto.INT2}:
+            bits_per_element = 2
         else:
-            expected_size = np_dtype.itemsize
+            bits_per_element = np_dtype.itemsize * 8
+        # Integer ceil(n * bits_per_element / 8): avoids the float-multiplication
+        # precision loss for large n that a `math.ceil(fraction * n)` formula
+        # would be susceptible to.
+        expected_size_bytes = -(-math.prod(dims) * bits_per_element // 8)
+        if isinstance(vals, np.ndarray):
+            if data_type in {
+                TensorProto.INT4,
+                TensorProto.UINT4,
+                TensorProto.FLOAT4E2M1,
+            }:
+                vals = onnx.numpy_helper._pack_4bitx2(vals)
+            elif data_type in {TensorProto.UINT2, TensorProto.INT2}:
+                vals = onnx.numpy_helper._pack_2bitx4(vals)
+            elif data_type in {TensorProto.FLOAT6E2M3, TensorProto.FLOAT6E3M2}:
+                vals = onnx.numpy_helper._pack_6bit(vals.view(np.uint8))
 
-    if type(vals) is np.ndarray and len(vals.shape) > 1:
-        vals = vals.flatten()
-    for d in dims:
-        expected_size *= d
+            raw_data = onnx.numpy_helper.tobytes_little_endian(vals)
+        elif isinstance(vals, bytes):
+            raw_data = vals
+        else:
+            raise TypeError(
+                f"Raw data must be bytes or numpy.ndarray, but got {type(vals)}."
+            )
+        if len(raw_data) != expected_size_bytes:
+            raise ValueError(
+                f"Raw data size does not match tensor's size. Expected {expected_size_bytes} bytes, but got {len(raw_data)} bytes."
+            )
+        tensor.raw_data = raw_data
+        return tensor
 
-    if len(vals) != expected_size:
-        raise ValueError(
-            f"Number of values does not match tensor's size. Expected {expected_size}, but it is {len(vals)}. "
-        )
+    assert not raw, "Bug: raw should be False at this point."
 
-    if raw:
-        tensor.raw_data = vals
+    if data_type == TensorProto.STRING:
+        vals = np.array(vals).flatten()
+        if len(vals) != 0:
+            vals = np.vectorize(_to_bytes)(vals)  # Convert to bytes
+    elif data_type in {
+        TensorProto.FLOAT8E4M3FN,
+        TensorProto.FLOAT8E4M3FNUZ,
+        TensorProto.FLOAT8E5M2,
+        TensorProto.FLOAT8E5M2FNUZ,
+    }:
+        # Float8 values are by default casted using saturating cast.
+        vals = onnx.numpy_helper.saturate_cast(np.asarray(vals), np_dtype).flatten()
+    elif data_type == TensorProto.FLOAT8E8M0:
+        vals = onnx.numpy_helper.to_float8e8m0(
+            np.asarray(vals), saturate=True, round_mode="up"
+        ).flatten()
+    elif data_type in {TensorProto.FLOAT6E2M3, TensorProto.FLOAT6E3M2}:
+        # For FP6 in non-raw mode, store per-element bytes in int32_data (like float8)
+        vals = np.asarray(vals, dtype=np_dtype).flatten().view(np.uint8)
     else:
-        if data_type in (TensorProto.COMPLEX64, TensorProto.COMPLEX128):
-            vals = split_complex_to_pairs(vals)
-        elif data_type == TensorProto.FLOAT16:
-            vals = (
-                np.array(vals).astype(np_dtype).view(dtype=np.uint16).flatten().tolist()
-            )
-        elif data_type in (
-            TensorProto.BFLOAT16,
-            TensorProto.FLOAT8E4M3FN,
-            TensorProto.FLOAT8E4M3FNUZ,
-            TensorProto.FLOAT8E5M2,
-            TensorProto.FLOAT8E5M2FNUZ,
-        ):
-            fcast = {
-                TensorProto.BFLOAT16: float32_to_bfloat16,
-                TensorProto.FLOAT8E4M3FN: float32_to_float8e4m3,
-                TensorProto.FLOAT8E4M3FNUZ: lambda *args: float32_to_float8e4m3(  # type: ignore[misc]
-                    *args, uz=True
-                ),
-                TensorProto.FLOAT8E5M2: float32_to_float8e5m2,
-                TensorProto.FLOAT8E5M2FNUZ: lambda *args: float32_to_float8e5m2(  # type: ignore[misc]
-                    *args, fn=True, uz=True
-                ),
-            }[
-                data_type  # type: ignore[index]
-            ]
-            vals = list(
-                map(  # type: ignore[call-overload]
-                    fcast,
-                    np.array(vals).astype(np_dtype).flatten().tolist(),
-                )
-            )
-        elif data_type == TensorProto.BOOL:
-            vals = np.array(vals).astype(int)
-        elif data_type == TensorProto.STRING:
-            vals = np.array(vals).astype(bytes)
-        field = tensor_dtype_to_field(data_type)
-        getattr(tensor, field).extend(vals)
-    tensor.dims.extend(dims)
+        vals = np.asarray(vals, dtype=np_dtype).flatten()
+
+    expected_elements = math.prod(dims)
+    if len(vals) != expected_elements:
+        raise ValueError(
+            f"Number of values ({len(vals)}) does not match tensor "
+            f"dimensions requiring {expected_elements} elements."
+        )
+    if data_type == TensorProto.COMPLEX128:
+        vals = vals.view(np.float64)  # type: ignore[union-attr]
+    elif data_type == TensorProto.COMPLEX64:
+        vals = vals.view(np.float32)  # type: ignore[union-attr]
+    elif data_type in {TensorProto.BFLOAT16, TensorProto.FLOAT16}:
+        vals = vals.view(np.uint16)  # type: ignore[union-attr]
+    elif data_type in {
+        TensorProto.FLOAT8E4M3FN,
+        TensorProto.FLOAT8E4M3FNUZ,
+        TensorProto.FLOAT8E5M2,
+        TensorProto.FLOAT8E5M2FNUZ,
+        TensorProto.FLOAT8E8M0,
+    }:
+        vals = vals.view(np.uint8)  # type: ignore[union-attr]
+    elif data_type in {TensorProto.UINT4, TensorProto.INT4, TensorProto.FLOAT4E2M1}:
+        # Convert to packed 4-bit representation
+        vals = onnx.numpy_helper._pack_4bitx2(vals)  # type: ignore[arg-type]
+    elif data_type in {TensorProto.UINT2, TensorProto.INT2}:
+        # Convert to packed 2-bit representation
+        vals = onnx.numpy_helper._pack_2bitx4(vals)  # type: ignore[arg-type]
+    elif data_type == TensorProto.BOOL:
+        vals = vals.astype(np.uint8)  # type: ignore[union-attr]
+
+    field = tensor_dtype_to_field(data_type)
+    getattr(tensor, field).extend(vals)
     return tensor
 
 
 def make_sparse_tensor(
     values: TensorProto, indices: TensorProto, dims: Sequence[int]
-) -> SparseTensorProto:
+) -> onnx.SparseTensorProto:
     """Construct a SparseTensorProto
 
-    Arguments:
+    Args:
         values (TensorProto): the values
         indices (TensorProto): the indices
         dims: the shape
@@ -728,7 +507,7 @@ def make_sparse_tensor(
     Returns:
         SparseTensorProto
     """
-    sparse = SparseTensorProto()
+    sparse = onnx.SparseTensorProto()
     sparse.values.CopyFrom(values)
     sparse.indices.CopyFrom(indices)
     sparse.dims.extend(dims)
@@ -740,25 +519,25 @@ def make_sequence(
     elem_type: SequenceProto.DataType,
     values: Sequence[Any],
 ) -> SequenceProto:
-    """
-    Make a Sequence with specified value arguments.
-    """
+    """Make a Sequence with specified value arguments."""
     sequence = SequenceProto()
     sequence.name = name
-    sequence.elem_type = elem_type
+    sequence.elem_type = elem_type  # type: ignore[assignment]
 
     if elem_type == SequenceProto.UNDEFINED:
         return sequence
+
+    attribute: RepeatedCompositeFieldContainer | None = None
     if elem_type == SequenceProto.TENSOR:
         attribute = sequence.tensor_values
     elif elem_type == SequenceProto.SPARSE_TENSOR:
-        attribute = sequence.sparse_tensor_values  # type: ignore[assignment]
+        attribute = sequence.sparse_tensor_values
     elif elem_type == SequenceProto.SEQUENCE:
-        attribute = sequence.sequence_values  # type: ignore[assignment]
+        attribute = sequence.sequence_values
     elif elem_type == SequenceProto.MAP:
-        attribute = sequence.map_values  # type: ignore[assignment]
+        attribute = sequence.map_values
     elif elem_type == OptionalProto.OPTIONAL:
-        attribute = sequence.optional_values  # type: ignore[assignment]
+        attribute = sequence.optional_values
     else:
         raise TypeError("The element type in the input sequence is not supported.")
 
@@ -767,10 +546,9 @@ def make_sequence(
 
 
 def make_map(
-    name: str, key_type: int, keys: List[Any], values: SequenceProto
+    name: str, key_type: int, keys: list[Any], values: SequenceProto
 ) -> MapProto:
-    """
-    Make a Map with specified key-value pair arguments.
+    """Make a Map with specified key-value pair arguments.
 
     Criteria for conversion:
     - Keys and Values must have the same number of elements
@@ -801,44 +579,46 @@ def make_map(
 def make_optional(
     name: str,
     elem_type: OptionalProto.DataType,
-    value: Optional[Any],
+    value: google.protobuf.message.Message | None,
 ) -> OptionalProto:
-    """
-    Make an Optional with specified value arguments.
-    """
+    """Make an Optional with specified value arguments."""
     optional = OptionalProto()
     optional.name = name
-    optional.elem_type = elem_type
+    optional.elem_type = elem_type  # type: ignore[assignment]
 
     if elem_type == OptionalProto.UNDEFINED:
         return optional
+    attribute: google.protobuf.message.Message | None = None
     if elem_type == OptionalProto.TENSOR:
         attribute = optional.tensor_value
     elif elem_type == OptionalProto.SPARSE_TENSOR:
-        attribute = optional.sparse_tensor_value  # type: ignore[assignment]
+        attribute = optional.sparse_tensor_value
     elif elem_type == OptionalProto.SEQUENCE:
-        attribute = optional.sequence_value  # type: ignore[assignment]
+        attribute = optional.sequence_value
     elif elem_type == OptionalProto.MAP:
-        attribute = optional.map_value  # type: ignore[assignment]
+        attribute = optional.map_value
     elif elem_type == OptionalProto.OPTIONAL:
-        attribute = optional.optional_value  # type: ignore[assignment]
+        attribute = optional.optional_value
     else:
         raise TypeError("The element type in the input optional is not supported.")
 
+    assert value is not None
     attribute.CopyFrom(value)  # type: ignore[arg-type]
     return optional
 
 
-def _to_bytes(value: Union[str, bytes]) -> bytes:
+def _to_bytes(value: str | bytes) -> bytes:
     """Coerce a string (or bytes) value into UTF-8 bytes."""
-    return value if isinstance(value, bytes) else value.encode("utf-8")
+    if isinstance(value, str):
+        return value.encode("utf-8")
+    return value
 
 
 def make_attribute(
     key: str,
     value: Any,
-    doc_string: Optional[str] = None,
-    attr_type: Optional[int] = None,
+    doc_string: str | None = None,
+    attr_type: int | None = None,
 ) -> AttributeProto:
     """Makes an AttributeProto based on the value type."""
     attr = AttributeProto()
@@ -860,7 +640,7 @@ def make_attribute(
     elif isinstance(value, TensorProto):
         attr.t.CopyFrom(value)
         attr.type = AttributeProto.TENSOR
-    elif isinstance(value, SparseTensorProto):
+    elif isinstance(value, onnx.SparseTensorProto):
         attr.sparse_tensor.CopyFrom(value)
         attr.type = AttributeProto.SPARSE_TENSOR
     elif isinstance(value, GraphProto):
@@ -883,11 +663,11 @@ def make_attribute(
                 (numbers.Real, AttributeProto.FLOATS),
                 ((str, bytes), AttributeProto.STRINGS),
                 (TensorProto, AttributeProto.TENSORS),
-                (SparseTensorProto, AttributeProto.SPARSE_TENSORS),
+                (onnx.SparseTensorProto, AttributeProto.SPARSE_TENSORS),
                 (GraphProto, AttributeProto.GRAPHS),
                 (TypeProto, AttributeProto.TYPE_PROTOS),
             ):
-                if all(issubclass(t, exp_t) for t in types):  # type: ignore[arg-type]
+                if all(issubclass(t, exp_t) for t in types):
                     attr_type = exp_enum
                     break
             if attr_type is None:
@@ -917,7 +697,7 @@ def make_attribute(
             attr.type_protos.extend(value)
             attr.type = AttributeProto.TYPE_PROTOS
         else:
-            raise AssertionError()  # Should not reach since `ValueError` must be raised in attr_type checking
+            raise AssertionError  # Should not reach since `ValueError` must be raised in attr_type checking
     else:
         raise TypeError(f"'{value}' is not an accepted attribute value.")
 
@@ -929,12 +709,34 @@ def make_attribute(
 
 
 def make_attribute_ref(
-    name: str, attr_type: AttributeProto.AttributeType, doc_string: Optional[str] = None
+    name: str,
+    attr_type: AttributeProto.AttributeType,
+    doc_string: str | None = None,
+    *,
+    ref_attr_name: str | None = None,
 ) -> AttributeProto:
-    """Make an AttributeProto holding a reference to the parent function's attribute of given name and type."""
+    """Make an AttributeProto holding a reference to the parent function's attribute.
+
+    The returned attribute carries no value of its own; at instantiation time its
+    value is supplied by the parent function's attribute named ``ref_attr_name``.
+    When ``ref_attr_name`` is not provided, it defaults to ``name``. Reference
+    attributes are only valid inside a function (sub-graph).
+
+    Args:
+        name: The name of this attribute as used inside the function body.
+        attr_type: The type of the attribute.
+        doc_string: Optional human-readable documentation for the attribute.
+        ref_attr_name: The name of the parent function's attribute being referenced.
+    """
+    if ref_attr_name is None:
+        ref_attr_name = name
+    if not ref_attr_name:
+        raise ValueError("ref_attr_name must be non-empty")
+
     attr = AttributeProto()
     attr.name = name
-    attr.type = attr_type
+    attr.type = attr_type  # type: ignore[assignment]
+    attr.ref_attr_name = ref_attr_name
     if doc_string:
         attr.doc_string = doc_string
     return attr
@@ -993,11 +795,10 @@ def make_empty_tensor_value_info(name: str) -> ValueInfoProto:
 
 def make_tensor_type_proto(
     elem_type: int,
-    shape: Optional[Sequence[Union[str, int, None]]],
-    shape_denotation: Optional[List[str]] = None,
+    shape: Sequence[str | int | None] | None,
+    shape_denotation: list[str] | None = None,
 ) -> TypeProto:
     """Makes a Tensor TypeProto based on the data type and shape."""
-
     type_proto = TypeProto()
     tensor_type_proto = type_proto.tensor_type
     tensor_type_proto.elem_type = elem_type
@@ -1040,9 +841,9 @@ def make_tensor_type_proto(
 def make_tensor_value_info(
     name: str,
     elem_type: int,
-    shape: Optional[Sequence[Union[str, int, None]]],
+    shape: Sequence[str | int | None] | None,
     doc_string: str = "",
-    shape_denotation: Optional[List[str]] = None,
+    shape_denotation: list[str] | None = None,
 ) -> ValueInfoProto:
     """Makes a ValueInfoProto based on the data type and shape."""
     value_info_proto = ValueInfoProto()
@@ -1057,11 +858,10 @@ def make_tensor_value_info(
 
 def make_sparse_tensor_type_proto(
     elem_type: int,
-    shape: Optional[Sequence[Union[str, int, None]]],
-    shape_denotation: Optional[List[str]] = None,
+    shape: Sequence[str | int | None] | None,
+    shape_denotation: list[str] | None = None,
 ) -> TypeProto:
     """Makes a SparseTensor TypeProto based on the data type and shape."""
-
     type_proto = TypeProto()
     sparse_tensor_type_proto = type_proto.sparse_tensor_type
     sparse_tensor_type_proto.elem_type = elem_type
@@ -1104,9 +904,9 @@ def make_sparse_tensor_type_proto(
 def make_sparse_tensor_value_info(
     name: str,
     elem_type: int,
-    shape: Optional[Sequence[Union[str, int, None]]],
+    shape: Sequence[str | int | None] | None,
     doc_string: str = "",
-    shape_denotation: Optional[List[str]] = None,
+    shape_denotation: list[str] | None = None,
 ) -> ValueInfoProto:
     """Makes a SparseTensor ValueInfoProto based on the data type and shape."""
     value_info_proto = ValueInfoProto()
@@ -1167,7 +967,7 @@ def make_value_info(
     return value_info_proto
 
 
-def _sanitize_str(s: Union[str, bytes]) -> str:
+def _sanitize_str(s: str | bytes) -> str:
     if isinstance(s, str):
         sanitized = s
     elif isinstance(s, bytes):
@@ -1182,9 +982,9 @@ def _sanitize_str(s: Union[str, bytes]) -> str:
 def make_tensor_sequence_value_info(
     name: str,
     elem_type: int,
-    shape: Optional[Sequence[Union[str, int, None]]],
+    shape: Sequence[str | int | None] | None,
     doc_string: str = "",
-    elem_shape_denotation: Optional[List[str]] = None,
+    elem_shape_denotation: list[str] | None = None,
 ) -> ValueInfoProto:
     """Makes a Sequence[Tensors] ValueInfoProto based on the data type and shape."""
     value_info_proto = ValueInfoProto()
@@ -1201,7 +1001,7 @@ def make_tensor_sequence_value_info(
 
 def printable_attribute(
     attr: AttributeProto, subgraphs: bool = False
-) -> Union[str, Tuple[str, List[GraphProto]]]:
+) -> str | tuple[str, list[GraphProto]]:
     content = []
     content.append(attr.name)
     content.append("=")
@@ -1246,6 +1046,8 @@ def printable_attribute(
         graphs.append(attr.g)
     elif attr.HasField("tp"):
         content.append(f"<Type Proto {attr.tp}>")
+    elif attr.HasField("sparse_tensor"):
+        content.append("<Sparse Tensor>")
     elif attr.floats:
         content.append(str_list(str_float, attr.floats))
     elif attr.ints:
@@ -1255,6 +1057,8 @@ def printable_attribute(
         content.append(str(list(map(_sanitize_str, attr.strings))))
     elif attr.tensors:
         content.append("[<Tensor>, ...]")
+    elif attr.sparse_tensors:
+        content.append("[<Sparse Tensor>, ...]")
     elif attr.type_protos:
         content.append("[")
         for i, tp in enumerate(attr.type_protos):
@@ -1284,7 +1088,7 @@ def printable_dim(dim: TensorShapeProto.Dimension) -> str:
 
 def printable_type(t: TypeProto) -> str:
     if t.WhichOneof("value") == "tensor_type":
-        s = TensorProto.DataType.Name(t.tensor_type.elem_type)
+        s: str = TensorProto.DataType.Name(t.tensor_type.elem_type)  # type: ignore[arg-type]
         if t.tensor_type.HasField("shape"):
             if len(t.tensor_type.shape.dim):
                 s += str(", " + "x".join(map(printable_dim, t.tensor_type.shape.dim)))
@@ -1305,7 +1109,7 @@ def printable_value_info(v: ValueInfoProto) -> str:
 
 def printable_tensor_proto(t: TensorProto) -> str:
     s = f"%{t.name}["
-    s += TensorProto.DataType.Name(t.data_type)
+    s += TensorProto.DataType.Name(t.data_type)  # type: ignore[arg-type]
     if t.dims is not None:
         if len(t.dims):
             s += str(", " + "x".join(map(str, t.dims)))
@@ -1317,13 +1121,13 @@ def printable_tensor_proto(t: TensorProto) -> str:
 
 def printable_node(
     node: NodeProto, prefix: str = "", subgraphs: bool = False
-) -> Union[str, Tuple[str, List[GraphProto]]]:
+) -> str | tuple[str, list[GraphProto]]:
     content = []
     if len(node.output):
         content.append(", ".join([f"%{name}" for name in node.output]))
         content.append("=")
     # To deal with nested graphs
-    graphs: List[GraphProto] = []
+    graphs: list[GraphProto] = []
     printed_attrs = []
     for attr in node.attribute:
         if subgraphs:
@@ -1350,11 +1154,16 @@ def printable_node(
     return prefix + " ".join(content)
 
 
+@typing_extensions.deprecated(
+    "Deprecated since 1.19. Consider using onnx.printer.to_text() instead."
+)
 def printable_graph(graph: GraphProto, prefix: str = "") -> str:
-    """
-    Display a GraphProto as a string.
+    """Display a GraphProto as a string.
 
-    Arguments:
+    .. deprecated:: 1.19
+        Consider using :func:`onnx.printer.to_text` instead.
+
+    Args:
         graph (GraphProto): the graph to display
         prefix (string): prefix of every line
 
@@ -1369,9 +1178,7 @@ def printable_graph(graph: GraphProto, prefix: str = "") -> str:
     if len(graph.input):
         header.append("(")
         in_strs = []  # required inputs
-        in_with_init_strs = (
-            []
-        )  # optional inputs with initializer providing default value
+        in_with_init_strs: list = []  # optional inputs with initializer providing default value
         for inp in graph.input:
             if inp.name not in initializers:
                 in_strs.append(printable_value_info(inp))
@@ -1381,7 +1188,7 @@ def printable_graph(graph: GraphProto, prefix: str = "") -> str:
             content.append(prefix + " ".join(header))
             header = []
             for line in in_strs:
-                content.append(prefix + "  " + line)
+                content.append(prefix + "  " + line)  # noqa: PERF401
         header.append(")")
 
         if in_with_init_strs:
@@ -1389,7 +1196,7 @@ def printable_graph(graph: GraphProto, prefix: str = "") -> str:
             content.append(prefix + " ".join(header))
             header = []
             for line in in_with_init_strs:
-                content.append(prefix + "  " + line)
+                content.append(prefix + "  " + line)  # noqa: PERF401
             header.append(")")
 
         # from IR 4 onwards an initializer is not required to have a matching graph input
@@ -1405,12 +1212,12 @@ def printable_graph(graph: GraphProto, prefix: str = "") -> str:
             content.append(prefix + " ".join(header))
             header = []
             for line in init_strs:
-                content.append(prefix + "  " + line)
+                content.append(prefix + "  " + line)  # noqa: PERF401
             header.append(")")
 
     header.append("{")
     content.append(prefix + " ".join(header))
-    graphs: List[GraphProto] = []
+    graphs: list[GraphProto] = []
     # body
     for node in graph.node:
         contents_subgraphs = printable_node(node, indent, subgraphs=True)
@@ -1426,14 +1233,12 @@ def printable_graph(graph: GraphProto, prefix: str = "") -> str:
     # closing bracket
     content.append(prefix + "}")
     for g in graphs:
-        content.append("\n" + printable_graph(g))
+        content.append("\n" + printable_graph(g))  # noqa: PERF401
     return "\n".join(content)
 
 
 def strip_doc_string(proto: google.protobuf.message.Message) -> None:
-    """
-    Empties `doc_string` field on any nested protobuf messages
-    """
+    """Empties `doc_string` field on any nested protobuf messages"""
     if not isinstance(proto, google.protobuf.message.Message):
         raise TypeError(
             f"proto must be an instance of {google.protobuf.message.Message}."
@@ -1452,8 +1257,8 @@ def strip_doc_string(proto: google.protobuf.message.Message) -> None:
 def make_training_info(
     algorithm: GraphProto,
     algorithm_bindings: AssignmentBindingType,
-    initialization: Optional[GraphProto],
-    initialization_bindings: Optional[AssignmentBindingType],
+    initialization: GraphProto | None,
+    initialization_bindings: AssignmentBindingType | None,
 ) -> TrainingInfoProto:
     training_info = TrainingInfoProto()
     training_info.algorithm.CopyFrom(algorithm)
@@ -1475,78 +1280,110 @@ def make_training_info(
 
 # Following functions are used for mapping
 def tensor_dtype_to_np_dtype(tensor_dtype: int) -> np.dtype:
-    """
-    Convert a TensorProto's data_type to corresponding numpy dtype. It can be used while making tensor.
+    """Convert a TensorProto's data_type to corresponding numpy dtype. It can be used while making tensor.
 
-    :param tensor_dtype: TensorProto's data_type
-    :return: numpy's data_type
+    Args:
+        tensor_dtype: TensorProto's data_type
+
+    Returns:
+        numpy's data_type
     """
-    return mapping.TENSOR_TYPE_MAP[tensor_dtype].np_dtype
+    return _mapping.TENSOR_TYPE_MAP[tensor_dtype].np_dtype
 
 
 def tensor_dtype_to_storage_tensor_dtype(tensor_dtype: int) -> int:
-    """
-    Convert a TensorProto's data_type to corresponding data_type for storage.
+    """Convert a TensorProto's data_type to corresponding data_type for storage.
 
-    :param tensor_dtype: TensorProto's data_type
-    :return: data_type for storage
+    Args:
+        tensor_dtype: TensorProto's data_type
+
+    Returns:
+        data_type for storage
     """
-    return mapping.TENSOR_TYPE_MAP[tensor_dtype].storage_dtype
+    return _mapping.TENSOR_TYPE_MAP[tensor_dtype].storage_dtype
 
 
 def tensor_dtype_to_string(tensor_dtype: int) -> str:
+    """Get the name of given TensorProto's data_type.
+
+    Args:
+        tensor_dtype: TensorProto's data_type
+
+    Returns:
+        the name of data_type
     """
-    Get the name of given TensorProto's data_type.
-
-    :param tensor_dtype: TensorProto's data_type
-    :return: the name of data_type
-    """
-    return mapping.TENSOR_TYPE_MAP[tensor_dtype].name
+    return _mapping.TENSOR_TYPE_MAP[tensor_dtype].name
 
 
+@functools.lru_cache(None)
 def tensor_dtype_to_field(tensor_dtype: int) -> str:
-    """
-    Convert a TensorProto's data_type to corresponding field name for storage. It can be used while making tensors.
+    """Convert a TensorProto's data_type to corresponding field name for storage. It can be used while making tensors.
 
-    :param tensor_dtype: TensorProto's data_type
-    :return: field name
+    Args:
+        tensor_dtype: TensorProto's data_type
+
+    Returns:
+        field name
     """
-    return mapping._STORAGE_TENSOR_TYPE_TO_FIELD[
-        mapping.TENSOR_TYPE_MAP[tensor_dtype].storage_dtype
+    storage_tensor_type_to_field = {
+        int(TensorProto.FLOAT): "float_data",
+        int(TensorProto.INT32): "int32_data",
+        int(TensorProto.INT64): "int64_data",
+        int(TensorProto.DOUBLE): "double_data",
+        int(TensorProto.UINT32): "uint64_data",
+        int(TensorProto.UINT64): "uint64_data",
+        int(TensorProto.STRING): "string_data",
+    }
+    return storage_tensor_type_to_field[
+        _mapping.TENSOR_TYPE_MAP[tensor_dtype].storage_dtype
     ]
 
 
-def np_dtype_to_tensor_dtype(np_dtype: np.dtype) -> int:
-    """
-    Convert a numpy's dtype to corresponding tensor type. It can be used while converting numpy arrays to tensors.
+@functools.lru_cache(None)
+def np_dtype_to_tensor_dtype(np_dtype: np.dtype) -> TensorProto.DataType:
+    """Convert a numpy's dtype to corresponding tensor type. It can be used while converting numpy arrays to tensors.
 
-    :param np_dtype: numpy's data_type
-    :return: TensorsProto's data_type
+    Args:
+        np_dtype: numpy's data_type
+
+    Returns:
+        TensorsProto's data_type
     """
-    return cast(
-        int,
-        mapping._NP_TYPE_TO_TENSOR_TYPE[np_dtype],
+    _np_dtype_to_tensor_dtype = {
+        v.np_dtype: k for k, v in _mapping.TENSOR_TYPE_MAP.items()
+    }
+    if np_dtype in _np_dtype_to_tensor_dtype:
+        return typing.cast("TensorProto.DataType", _np_dtype_to_tensor_dtype[np_dtype])
+    if np.issubdtype(np_dtype, np.str_):
+        return TensorProto.STRING  # type: ignore[return-value]
+
+    raise ValueError(
+        f"Unable to convert type {np_dtype!r} into TensorProto element type."
     )
 
 
 def get_all_tensor_dtypes() -> KeysView[int]:
+    """Get all tensor types from TensorProto.
+
+    Returns:
+        all tensor types from TensorProto
     """
-    Get all tensor types from TensorProto.
-
-    :return: all tensor types from TensorProto
-    """
-    return mapping.TENSOR_TYPE_MAP.keys()
+    return _mapping.TENSOR_TYPE_MAP.keys()
 
 
-_ATTRIBUTE_TYPE_TO_STR = {k: v for v, k in AttributeProto.AttributeType.items()}
+_ATTRIBUTE_TYPE_TO_STR: dict[int, str] = {
+    k: v for v, k in AttributeProto.AttributeType.items()
+}
 
 
 def _attr_type_to_str(attr_type: int) -> str:
-    """
-    Convert AttributeProto type to string.
+    """Convert AttributeProto type to string.
 
-    :param attr_type: AttributeProto type.
-    :return: String representing the supplied attr_type.
+    Args:
+        attr_type: AttributeProto type.
+
+    Returns:
+        String representing the supplied attr_type.
     """
     if attr_type in AttributeProto.AttributeType.values():
         return _ATTRIBUTE_TYPE_TO_STR[attr_type]

@@ -1,20 +1,22 @@
-/*
- * SPDX-License-Identifier: Apache-2.0
- */
+// Copyright (c) ONNX Project Contributors
+//
+// SPDX-License-Identifier: Apache-2.0
 
 #include "onnx/defs/function.h"
 
-#include <map>
+#include <string>
+#include <unordered_map>
+#include <vector>
 
 #include "onnx/defs/schema.h"
-#include "onnx/string_utils.h"
+#include "onnx/inliner/inliner.h"
 
-namespace ONNX_NAMESPACE {
-std::string InteralTensorNameGenerator(const std::string& node_name, const std::string& internal_name) {
+static std::string InternalTensorNameGenerator(const std::string& node_name, const std::string& internal_name) {
   std::string new_name = "Func_" + node_name + internal_name;
   return new_name;
 }
 
+namespace ONNX_NAMESPACE {
 void FunctionExpandHelper(
     const NodeProto& node,
     const FunctionProto& func,
@@ -45,13 +47,13 @@ void FunctionExpandHelper(
     // If the node output is missing, the corresponding function output should
     // be treated as an internal value (not as missing) because it could also be
     // an intermediate value.
-    if (node.output().Get(idx) == "") {
+    if (node.output().Get(idx).empty()) {
       continue;
     }
     io_names_map[func.output().Get(idx)] = node.output().Get(idx);
   }
 
-  for (auto& attr : node.attribute()) {
+  for (const auto& attr : node.attribute()) {
     attr_map[attr.name()] = attr;
   }
 
@@ -69,38 +71,41 @@ void FunctionExpandHelper(
   }
 
   const OpSchemaRegistry* schema_registry = OpSchemaRegistry::Instance();
-  const auto schema = schema_registry->GetSchema(node.op_type(), domain_version, node.domain());
-  std::map<std::string, OpSchema::Attribute> default_attrs = schema->attributes();
+  const auto* const schema = schema_registry->GetSchema(node.op_type(), domain_version, node.domain());
+  if (schema == nullptr) {
+    ONNX_THROW(
+        "No schema registered for op '" + node.op_type() + "' in domain '" + node.domain() + "' at version " +
+        std::to_string(domain_version) + " while expanding function node " + node_name);
+  }
+  const auto& default_attrs = schema->attributes();
 
-  for (const auto& pair : default_attrs) {
-    const auto& attr_name = pair.first;
-    const auto& attr = pair.second;
+  for (const auto& [attr_name, attr] : default_attrs) {
     if (!attr_map.count(attr_name)) {
       attr_map[attr_name] = attr.default_value;
     }
   }
 
-  for (auto& function_node : func.node()) {
+  for (const auto& function_node : func.node()) {
     NodeProto* new_node = g.add_node();
     new_node->CopyFrom(function_node);
     new_node->clear_input();
     new_node->clear_output();
     new_node->clear_attribute();
-    for (auto& input : function_node.input()) {
+    for (const auto& input : function_node.input()) {
       if (io_names_map.count(input)) {
         new_node->add_input(io_names_map[input]);
       } else {
-        new_node->add_input(InteralTensorNameGenerator(node_name, input));
+        new_node->add_input(InternalTensorNameGenerator(node_name, input));
       }
     }
-    for (auto& output : function_node.output()) {
+    for (const auto& output : function_node.output()) {
       if (io_names_map.count(output)) {
         new_node->add_output(io_names_map[output]);
       } else {
-        new_node->add_output(InteralTensorNameGenerator(node_name, output));
+        new_node->add_output(InternalTensorNameGenerator(node_name, output));
       }
     }
-    for (auto& attr : function_node.attribute()) {
+    for (const auto& attr : function_node.attribute()) {
       if (attr.has_ref_attr_name()) {
         if (attr_map.count(attr.ref_attr_name())) {
           AttributeProto* new_attr = new_node->add_attribute();
@@ -139,8 +144,7 @@ std::vector<NodeProto> FunctionBodyHelper::BuildNodes(const std::vector<NodeDef>
 }
 
 void FunctionBodyHelper::BuildNodes(FunctionProto& functionProto, const std::vector<NodeDef>& node_defs) {
-  for (size_t i = 0; i < node_defs.size(); i++) {
-    const NodeDef& node = node_defs[i];
+  for (const auto& node : node_defs) {
     auto* np = functionProto.add_node();
 
     np->set_op_type(node.op_type);
@@ -164,12 +168,59 @@ bool FunctionBodyHelper::BuildFunctionProto(
     const std::vector<OperatorSetIdProto>& relied_opsets) {
   BuildNodes(functionProto, node_defs);
 
-  for (auto& relied_opset : relied_opsets) {
+  for (const auto& relied_opset : relied_opsets) {
     *(functionProto.mutable_opset_import()->Add()) = relied_opset;
   }
 
   schema.BuildFunction(functionProto);
   return true;
+}
+
+FunctionBuilder& FunctionBuilder::AddInlinedCall(
+    std::initializer_list<std::string_view> outputs,
+    const GraphProto& graph,
+    std::initializer_list<std::string_view> inputs,
+    std::string_view prefix) {
+  // Create a renamer with the given prefix
+  inliner::Renamer renamer(std::string(prefix), graph);
+
+  // Bind formal inputs to actual inputs
+  const auto* input_it = inputs.begin();
+  for (const auto& graph_input : graph.input()) {
+    if (input_it != inputs.end()) {
+      renamer.BindName(graph_input.name(), std::string(*input_it));
+      ++input_it;
+    }
+  }
+
+  // Bind formal outputs to actual outputs
+  const auto* output_it = outputs.begin();
+  for (const auto& graph_output : graph.output()) {
+    if (output_it != outputs.end()) {
+      renamer.BindName(graph_output.name(), std::string(*output_it));
+      ++output_it;
+    }
+  }
+
+  // Add Constant nodes for every initializer in the graph
+  for (const auto& initializer : graph.initializer()) {
+    std::string const_name = renamer.BindToUniqueName(initializer.name());
+    Const(const_name, initializer);
+  }
+
+  // Add a copy of every node in the graph with renamed variables
+  for (const auto& node : graph.node()) {
+    NodeProto new_node;
+    new_node.CopyFrom(node);
+
+    // Rename the node using the renamer
+    renamer.RenameNode(new_node);
+
+    // Add the node to the function
+    *funProto.add_node() = new_node;
+  }
+
+  return *this;
 }
 
 } // namespace ONNX_NAMESPACE

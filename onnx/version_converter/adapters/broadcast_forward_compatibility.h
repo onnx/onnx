@@ -1,8 +1,6 @@
 // Copyright (c) ONNX Project Contributors
-
-/*
- * SPDX-License-Identifier: Apache-2.0
- */
+//
+// SPDX-License-Identifier: Apache-2.0
 
 // Adapter for broadcasting ops in default domain from version 6 to 7
 
@@ -15,15 +13,14 @@
 
 #include "onnx/version_converter/adapters/adapter.h"
 
-namespace ONNX_NAMESPACE {
-namespace version_conversion {
+namespace ONNX_NAMESPACE::version_conversion {
 
 class BroadcastForwardCompatibility final : public Adapter {
  public:
   explicit BroadcastForwardCompatibility(const std::string& op_name, const OpSetID& initial, const OpSetID& target)
       : Adapter(op_name, initial, target) {}
 
-  void adapt_broadcast_forward_compatibility(std::shared_ptr<Graph> graph, Node* node) const {
+  void adapt_broadcast_forward_compatibility(const std::shared_ptr<Graph>& graph, Node* node) const {
     // Remove axis and broadcast attributes
     // Assess whether axis requires reshaping
     if (node->hasAttribute(kbroadcast)) {
@@ -33,7 +30,7 @@ class BroadcastForwardCompatibility final : public Adapter {
       const std::vector<Dimension>& B_sizes = inputs[1]->sizes();
       // Also assert that broadcasting syntax are correct if axis is not present
       if (node->hasAttribute(kaxis)) {
-        if (node->i(kaxis) != (int)(A_sizes.size() - B_sizes.size())) {
+        if (node->i(kaxis) != static_cast<int>(A_sizes.size() - B_sizes.size())) {
           // Add a Reshape node before input B
           Node* n = graph->create(kUnsqueeze);
           n->addInput(inputs[1]);
@@ -44,7 +41,7 @@ class BroadcastForwardCompatibility final : public Adapter {
           new_sizes.reserve(new_sizes.size() + size);
           for (size_t i = 0; i < size; i++) {
             axes.emplace_back(B_sizes.size() + i);
-            new_sizes.emplace_back(Dimension(1));
+            new_sizes.emplace_back(1);
           }
           if (target_version().version() >= 13) { // Unsqueeze takes 'axes' input
             Tensor t;
@@ -74,6 +71,7 @@ class BroadcastForwardCompatibility final : public Adapter {
       node->removeAttribute(kaxis);
     // Assert multi_broadcastable on inputs
     const ArrayRef<Value*>& inputs = node->inputs();
+    assertInputsAvailable(inputs, name().c_str(), 2);
     assert_numpy_multibroadcastable(inputs[0]->sizes(), inputs[1]->sizes());
   }
 
@@ -83,5 +81,4 @@ class BroadcastForwardCompatibility final : public Adapter {
   }
 };
 
-} // namespace version_conversion
-} // namespace ONNX_NAMESPACE
+} // namespace ONNX_NAMESPACE::version_conversion

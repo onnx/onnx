@@ -1,6 +1,6 @@
-/*
- * SPDX-License-Identifier: Apache-2.0
- */
+// Copyright (c) ONNX Project Contributors
+//
+// SPDX-License-Identifier: Apache-2.0
 
 #pragma once
 
@@ -108,7 +108,7 @@ class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 1, Xor);
 // Iterate over schema from ai.onnx version 1
 class OpSet_Onnx_ver1 {
  public:
-  static void ForEachSchema(std::function<void(OpSchema&&)> fn) {
+  ONNX_API static void ForEachSchema(const std::function<void(OpSchema&&)>& fn) {
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 1, Abs)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 1, Add)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 1, And)>());
@@ -216,7 +216,7 @@ class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 2, Split);
 // Iterate over schema from ai.onnx version 2
 class OpSet_Onnx_ver2 {
  public:
-  static void ForEachSchema(std::function<void(OpSchema&&)> fn) {
+  static void ForEachSchema(const std::function<void(OpSchema&&)>& fn) {
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 2, GlobalLpPool)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 2, LpPool)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 2, Pad)>());
@@ -230,7 +230,7 @@ class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 3, GRU);
 // Iterate over schema from ai.onnx version 3
 class OpSet_Onnx_ver3 {
  public:
-  static void ForEachSchema(std::function<void(OpSchema&&)> fn) {
+  static void ForEachSchema(const std::function<void(OpSchema&&)>& fn) {
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 3, GRU)>());
   }
 };
@@ -241,7 +241,7 @@ class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 4, Concat);
 // Iterate over schema from ai.onnx version 4
 class OpSet_Onnx_ver4 {
  public:
-  static void ForEachSchema(std::function<void(OpSchema&&)> fn) {
+  static void ForEachSchema(const std::function<void(OpSchema&&)>& fn) {
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 4, Concat)>());
   }
 };
@@ -252,7 +252,7 @@ class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 5, Reshape);
 // Iterate over schema from ai.onnx version 5
 class OpSet_Onnx_ver5 {
  public:
-  static void ForEachSchema(std::function<void(OpSchema&&)> fn) {
+  static void ForEachSchema(const std::function<void(OpSchema&&)>& fn) {
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 5, Reshape)>());
   }
 };
@@ -293,7 +293,7 @@ class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 6, Tile);
 // Iterate over schema from ai.onnx version 6
 class OpSet_Onnx_ver6 {
  public:
-  static void ForEachSchema(std::function<void(OpSchema&&)> fn) {
+  static void ForEachSchema(const std::function<void(OpSchema&&)>& fn) {
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 6, Abs)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 6, Add)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 6, BatchNormalization)>());
@@ -360,7 +360,7 @@ class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 7, PRelu);
 // Iterate over schema from ai.onnx version 7
 class OpSet_Onnx_ver7 {
  public:
-  static void ForEachSchema(std::function<void(OpSchema&&)> fn) {
+  static void ForEachSchema(const std::function<void(OpSchema&&)>& fn) {
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 7, Acos)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 7, Add)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 7, And)>());
@@ -403,7 +403,7 @@ class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 8, Scan);
 // Iterate over schema from ai.onnx version 8
 class OpSet_Onnx_ver8 {
  public:
-  static void ForEachSchema(std::function<void(OpSchema&&)> fn) {
+  static void ForEachSchema(const std::function<void(OpSchema&&)>& fn) {
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 8, Expand)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 8, Min)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 8, Max)>());
@@ -449,7 +449,7 @@ class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 9, MeanVarianceNormalization);
 // Iterate over schema from ai.onnx version 9
 class OpSet_Onnx_ver9 {
  public:
-  static void ForEachSchema(std::function<void(OpSchema&&)> fn) {
+  static void ForEachSchema(const std::function<void(OpSchema&&)>& fn) {
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 9, BatchNormalization)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 9, Compress)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 9, ConstantOfShape)>());
@@ -509,7 +509,7 @@ class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 10, RoiAlign);
 // Iterate over schema from ai.onnx version 10
 class OpSet_Onnx_ver10 {
  public:
-  static void ForEachSchema(std::function<void(OpSchema&&)> fn) {
+  static void ForEachSchema(const std::function<void(OpSchema&&)>& fn) {
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 10, Upsample)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 10, Resize)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 10, StringNormalizer)>());
@@ -600,7 +600,7 @@ class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 11, NonMaxSuppression);
 // Iterate over schema from ai.onnx version 11
 class OpSet_Onnx_ver11 {
  public:
-  static void ForEachSchema(std::function<void(OpSchema&&)> fn) {
+  static void ForEachSchema(const std::function<void(OpSchema&&)>& fn) {
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 11, Loop)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 11, BitShift)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 11, Unique)>());
@@ -689,7 +689,7 @@ class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 12, Pow);
 // Iterate over schema from ai.onnx version 12
 class OpSet_Onnx_ver12 {
  public:
-  static void ForEachSchema(std::function<void(OpSchema&&)> fn) {
+  static void ForEachSchema(const std::function<void(OpSchema&&)>& fn) {
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 12, ArgMax)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 12, ArgMin)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 12, Clip)>());
@@ -794,7 +794,7 @@ class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 13, If);
 // Iterate over schema from ai.onnx version 13
 class OpSet_Onnx_ver13 {
  public:
-  static void ForEachSchema(std::function<void(OpSchema&&)> fn) {
+  static void ForEachSchema(const std::function<void(OpSchema&&)>& fn) {
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 13, Constant)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 13, Greater)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 13, Less)>());
@@ -896,7 +896,7 @@ class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 14, Identity);
 // Iterate over schema from ai.onnx version 14
 class OpSet_Onnx_ver14 {
  public:
-  static void ForEachSchema(std::function<void(OpSchema&&)> fn) {
+  static void ForEachSchema(const std::function<void(OpSchema&&)>& fn) {
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 14, CumSum)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 14, Relu)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 14, Reshape)>());
@@ -927,7 +927,7 @@ class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 15, Shape);
 // Iterate over schema from ai.onnx version 15
 class OpSet_Onnx_ver15 {
  public:
-  static void ForEachSchema(std::function<void(OpSchema&&)> fn) {
+  static void ForEachSchema(const std::function<void(OpSchema&&)>& fn) {
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 15, BatchNormalization)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 15, Bernoulli)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 15, Pow)>());
@@ -957,7 +957,7 @@ class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 16, PRelu);
 // Iterate over schema from ai.onnx version 16
 class OpSet_Onnx_ver16 {
  public:
-  static void ForEachSchema(std::function<void(OpSchema&&)> fn) {
+  static void ForEachSchema(const std::function<void(OpSchema&&)>& fn) {
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 16, RoiAlign)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 16, ScatterND)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 16, ScatterElements)>());
@@ -987,7 +987,7 @@ class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 17, STFT);
 // Iterate over schema from ai.onnx version 17
 class OpSet_Onnx_ver17 {
  public:
-  static void ForEachSchema(std::function<void(OpSchema&&)> fn) {
+  static void ForEachSchema(const std::function<void(OpSchema&&)>& fn) {
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 17, LayerNormalization)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 17, SequenceMap)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 17, DFT)>());
@@ -1029,7 +1029,7 @@ class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, LpPool);
 // Iterate over schema from ai.onnx version 18
 class OpSet_Onnx_ver18 {
  public:
-  static void ForEachSchema(std::function<void(OpSchema&&)> fn) {
+  static void ForEachSchema(const std::function<void(OpSchema&&)>& fn) {
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, Pad)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, CenterCropPad)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 18, Resize)>());
@@ -1080,7 +1080,7 @@ class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 19, Size);
 // Iterate over schema from ai.onnx version 19
 class OpSet_Onnx_ver19 {
  public:
-  static void ForEachSchema(std::function<void(OpSchema&&)> fn) {
+  static void ForEachSchema(const std::function<void(OpSchema&&)>& fn) {
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 19, Equal)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 19, AveragePool)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 19, Cast)>());
@@ -1119,7 +1119,7 @@ class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 20, StringSplit);
 // Iterate over schema from ai.onnx version 20
 class OpSet_Onnx_ver20 {
  public:
-  static void ForEachSchema(std::function<void(OpSchema&&)> fn) {
+  static void ForEachSchema(const std::function<void(OpSchema&&)>& fn) {
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 20, AffineGrid)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 20, ConstantOfShape)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 20, DFT)>());
@@ -1136,7 +1136,398 @@ class OpSet_Onnx_ver20 {
   }
 };
 
-inline void RegisterOnnxOperatorSetSchema() {
+// Forward declarations for ai.onnx version 21
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 21, Cast);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 21, CastLike);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 21, Constant);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 21, ConstantOfShape);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 21, DequantizeLinear);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 21, Flatten);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 21, GroupNormalization);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 21, Identity);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 21, If);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 21, Loop);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 21, Pad);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 21, QLinearMatMul);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 21, QuantizeLinear);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 21, Reshape);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 21, Scan);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 21, Shape);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 21, Size);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 21, Squeeze);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 21, Transpose);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 21, Unsqueeze);
+
+// Iterate over schema from ai.onnx version 21
+class OpSet_Onnx_ver21 {
+ public:
+  static void ForEachSchema(const std::function<void(OpSchema&&)>& fn) {
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 21, Cast)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 21, CastLike)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 21, Constant)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 21, ConstantOfShape)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 21, DequantizeLinear)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 21, Flatten)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 21, GroupNormalization)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 21, Identity)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 21, If)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 21, Loop)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 21, Pad)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 21, QLinearMatMul)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 21, QuantizeLinear)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 21, Reshape)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 21, Scan)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 21, Shape)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 21, Size)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 21, Squeeze)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 21, Transpose)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 21, Unsqueeze)>());
+  }
+};
+
+// Forward declarations for ai.onnx version 22
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 22, EyeLike);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 22, RandomUniform);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 22, RandomNormal);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 22, RandomUniformLike);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 22, RandomNormalLike);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 22, Multinomial);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 22, Bernoulli);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 22, ThresholdedRelu);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 22, Selu);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 22, Elu);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 22, Mish);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 22, HardSigmoid);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 22, HardSwish);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 22, Softsign);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 22, Softplus);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 22, Sin);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 22, Cos);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 22, Tan);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 22, Asin);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 22, Acos);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 22, Atan);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 22, Sinh);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 22, Cosh);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 22, Asinh);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 22, Acosh);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 22, Atanh);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 22, Round);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 22, Det);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 22, NegativeLogLikelihoodLoss);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 22, AveragePool);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 22, MaxPool);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 22, MaxUnpool);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 22, LpPool);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 22, MaxRoiPool);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 22, Conv);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 22, ConvTranspose);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 22, DeformConv);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 22, GlobalAveragePool);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 22, GlobalMaxPool);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 22, GlobalLpPool);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 22, InstanceNormalization);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 22, LpNormalization);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 22, Dropout);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 22, RoiAlign);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 22, RNN);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 22, GRU);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 22, LSTM);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 22, GridSample);
+
+// Iterate over schema from ai.onnx version 22
+class OpSet_Onnx_ver22 {
+ public:
+  static void ForEachSchema(const std::function<void(OpSchema&&)>& fn) {
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 22, EyeLike)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 22, RandomUniform)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 22, RandomNormal)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 22, RandomUniformLike)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 22, RandomNormalLike)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 22, Multinomial)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 22, Bernoulli)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 22, ThresholdedRelu)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 22, Selu)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 22, Elu)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 22, Mish)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 22, HardSigmoid)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 22, HardSwish)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 22, Softsign)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 22, Softplus)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 22, Sin)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 22, Cos)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 22, Tan)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 22, Asin)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 22, Acos)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 22, Atan)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 22, Sinh)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 22, Cosh)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 22, Asinh)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 22, Acosh)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 22, Atanh)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 22, Round)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 22, Det)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 22, NegativeLogLikelihoodLoss)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 22, AveragePool)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 22, MaxPool)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 22, MaxUnpool)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 22, LpPool)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 22, MaxRoiPool)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 22, Conv)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 22, ConvTranspose)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 22, DeformConv)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 22, GlobalAveragePool)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 22, GlobalMaxPool)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 22, GlobalLpPool)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 22, InstanceNormalization)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 22, LpNormalization)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 22, Dropout)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 22, RoiAlign)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 22, RNN)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 22, GRU)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 22, LSTM)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 22, GridSample)>());
+  }
+};
+
+// Forward declarations for ai.onnx version 23
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 23, Attention);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 23, Cast);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 23, CastLike);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 23, Constant);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 23, ConstantOfShape);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 23, DequantizeLinear);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 23, Flatten);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 23, Identity);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 23, If);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 23, Loop);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 23, Pad);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 23, QuantizeLinear);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 23, Reshape);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 23, RMSNormalization);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 23, RotaryEmbedding);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 23, Scan);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 23, Shape);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 23, Size);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 23, Squeeze);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 23, Transpose);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 23, Unsqueeze);
+
+// Iterate over schema from ai.onnx version 23
+class OpSet_Onnx_ver23 {
+ public:
+  static void ForEachSchema(const std::function<void(OpSchema&&)>& fn) {
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 23, Attention)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 23, Cast)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 23, CastLike)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 23, Constant)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 23, ConstantOfShape)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 23, DequantizeLinear)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 23, Flatten)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 23, Identity)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 23, If)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 23, Loop)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 23, Pad)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 23, QuantizeLinear)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 23, Reshape)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 23, RMSNormalization)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 23, RotaryEmbedding)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 23, Scan)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 23, Shape)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 23, Size)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 23, Squeeze)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 23, Transpose)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 23, Unsqueeze)>());
+  }
+};
+
+// Forward declarations for ai.onnx version 24
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 24, Attention);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 24, Cast);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 24, CastLike);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 24, Constant);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 24, ConstantOfShape);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 24, DequantizeLinear);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 24, Flatten);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 24, Identity);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 24, If);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 24, Loop);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 24, Pad);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 24, QuantizeLinear);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 24, Reshape);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 24, Scan);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 24, Shape);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 24, Size);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 24, Swish);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 24, SplitToSequence);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 24, Squeeze);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 24, TopK);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 24, Transpose);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 24, Unsqueeze);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 24, TensorScatter);
+
+// Iterate over schema from ai.onnx version 24
+class OpSet_Onnx_ver24 {
+ public:
+  static void ForEachSchema(const std::function<void(OpSchema&&)>& fn) {
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 24, Attention)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 24, Cast)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 24, CastLike)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 24, Constant)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 24, ConstantOfShape)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 24, DequantizeLinear)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 24, Flatten)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 24, Identity)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 24, If)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 24, Loop)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 24, Pad)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 24, QuantizeLinear)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 24, Reshape)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 24, Scan)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 24, Shape)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 24, Size)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 24, Swish)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 24, SplitToSequence)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 24, Squeeze)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 24, TopK)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 24, Transpose)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 24, Unsqueeze)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 24, TensorScatter)>());
+  }
+};
+
+// Forward declarations for ai.onnx version 25
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 25, Attention);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 25, Cast);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 25, CastLike);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 25, Constant);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 25, ConstantOfShape);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 25, DequantizeLinear);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 25, Flatten);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 25, Identity);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 25, Reshape);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 25, Shape);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 25, Size);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 25, If);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 25, Loop);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 25, Scan);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 25, Pad);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 25, Squeeze);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 25, Transpose);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 25, Unsqueeze);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 25, QuantizeLinear);
+
+// Iterate over schema from ai.onnx version 25
+class OpSet_Onnx_ver25 {
+ public:
+  static void ForEachSchema(const std::function<void(OpSchema&&)>& fn) {
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 25, Attention)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 25, Cast)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 25, CastLike)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 25, Constant)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 25, ConstantOfShape)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 25, DequantizeLinear)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 25, Flatten)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 25, Identity)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 25, Reshape)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 25, Shape)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 25, Size)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 25, If)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 25, Loop)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 25, Scan)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 25, Pad)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 25, Squeeze)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 25, Transpose)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 25, Unsqueeze)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 25, QuantizeLinear)>());
+  }
+};
+
+// Forward declarations for ai.onnx version 26
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 26, BitCast);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 26, CumProd);
+
+// Iterate over schema from ai.onnx version 26
+class OpSet_Onnx_ver26 {
+ public:
+  static void ForEachSchema(const std::function<void(OpSchema&&)>& fn) {
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 26, BitCast)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 26, CumProd)>());
+  }
+};
+
+// Forward declarations for ai.onnx version 27
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 27, CausalConvWithState);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 27, LinearAttention);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 27, Range);
+
+// Iterate over schema from ai.onnx version 27
+class OpSet_Onnx_ver27 {
+ public:
+  static void ForEachSchema(const std::function<void(OpSchema&&)>& fn) {
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 27, CausalConvWithState)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 27, LinearAttention)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 27, Range)>());
+  }
+};
+
+// Forward declarations for ai.onnx version 28
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 28, BitShift);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 28, Celu);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 28, Einsum);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 28, Mod);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 28, DepthToSpace);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 28, SpaceToDepth);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 28, Compress);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 28, OneHot);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 28, ReverseSequence);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 28, SwiGLU);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 28, Optional);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 28, OptionalHasElement);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 28, OptionalGetElement);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 28, Unique);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 28, Cast);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 28, QuantizeLinear);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 28, DequantizeLinear);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 28, ReduceLogSum);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 28, ReduceLogSumExp);
+
+// Iterate over schema from ai.onnx version 28
+class OpSet_Onnx_ver28 {
+ public:
+  static void ForEachSchema(const std::function<void(OpSchema&&)>& fn) {
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 28, BitShift)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 28, Celu)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 28, Einsum)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 28, Mod)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 28, DepthToSpace)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 28, SpaceToDepth)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 28, Compress)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 28, OneHot)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 28, ReverseSequence)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 28, SwiGLU)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 28, Optional)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 28, OptionalHasElement)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 28, OptionalGetElement)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 28, Unique)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 28, Cast)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 28, QuantizeLinear)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 28, DequantizeLinear)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 28, ReduceLogSum)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 28, ReduceLogSumExp)>());
+  }
+};
+
+// Iterate over schema from ai.onnx version 29
+class OpSet_Onnx_ver29 {
+ public:
+  static void ForEachSchema(const std::function<void(OpSchema&&)>& fn) {
+    // TODO: Remove after introducing the first schema to opset 29
+    (void)fn;
+  }
+};
+
+ONNX_API inline void RegisterOnnxOperatorSetSchema() {
   RegisterOpSetSchema<OpSet_Onnx_ver1>();
   RegisterOpSetSchema<OpSet_Onnx_ver2>();
   RegisterOpSetSchema<OpSet_Onnx_ver3>();
@@ -1157,15 +1548,33 @@ inline void RegisterOnnxOperatorSetSchema() {
   RegisterOpSetSchema<OpSet_Onnx_ver18>();
   RegisterOpSetSchema<OpSet_Onnx_ver19>();
   RegisterOpSetSchema<OpSet_Onnx_ver20>();
+  RegisterOpSetSchema<OpSet_Onnx_ver21>();
+  RegisterOpSetSchema<OpSet_Onnx_ver22>();
+  RegisterOpSetSchema<OpSet_Onnx_ver23>();
+  RegisterOpSetSchema<OpSet_Onnx_ver24>();
+  RegisterOpSetSchema<OpSet_Onnx_ver25>();
+  RegisterOpSetSchema<OpSet_Onnx_ver26>();
+  RegisterOpSetSchema<OpSet_Onnx_ver27>();
+  RegisterOpSetSchema<OpSet_Onnx_ver28>();
+  RegisterOpSetSchema<OpSet_Onnx_ver29>();
   // 0 means all versions of ONNX schema have been loaded
-  OpSchemaRegistry::Instance()->SetLoadedSchemaVersion(0);
+  OpSchemaRegistry::SetLoadedSchemaVersion(0);
 }
 
-inline void RegisterOnnxOperatorSetSchema(int target_version, bool fail_duplicate_schema = true) {
+ONNX_API inline void RegisterOnnxOperatorSetSchema(int target_version, bool fail_duplicate_schema = true) {
   // Update here if opset_version bumps
   // These calls for schema registration here are required to be in descending order for this to work correctly
   //
-  // Version-sepcific registration sees duplicate schema version request as error if fail_duplicate_schema
+  // Version-specific registration sees duplicate schema version request as error if fail_duplicate_schema
+  RegisterOpSetSchema<OpSet_Onnx_ver29>(target_version, fail_duplicate_schema);
+  RegisterOpSetSchema<OpSet_Onnx_ver28>(target_version, fail_duplicate_schema);
+  RegisterOpSetSchema<OpSet_Onnx_ver27>(target_version, fail_duplicate_schema);
+  RegisterOpSetSchema<OpSet_Onnx_ver26>(target_version, fail_duplicate_schema);
+  RegisterOpSetSchema<OpSet_Onnx_ver25>(target_version, fail_duplicate_schema);
+  RegisterOpSetSchema<OpSet_Onnx_ver24>(target_version, fail_duplicate_schema);
+  RegisterOpSetSchema<OpSet_Onnx_ver23>(target_version, fail_duplicate_schema);
+  RegisterOpSetSchema<OpSet_Onnx_ver22>(target_version, fail_duplicate_schema);
+  RegisterOpSetSchema<OpSet_Onnx_ver21>(target_version, fail_duplicate_schema);
   RegisterOpSetSchema<OpSet_Onnx_ver20>(target_version, fail_duplicate_schema);
   RegisterOpSetSchema<OpSet_Onnx_ver19>(target_version, fail_duplicate_schema);
   RegisterOpSetSchema<OpSet_Onnx_ver18>(target_version, fail_duplicate_schema);
@@ -1187,21 +1596,29 @@ inline void RegisterOnnxOperatorSetSchema(int target_version, bool fail_duplicat
   RegisterOpSetSchema<OpSet_Onnx_ver2>(target_version, fail_duplicate_schema);
   RegisterOpSetSchema<OpSet_Onnx_ver1>(target_version, fail_duplicate_schema);
   // Sets to record the loaded version and prevent the full operator check in Debug mode
-  OpSchemaRegistry::Instance()->SetLoadedSchemaVersion(target_version);
+  OpSchemaRegistry::SetLoadedSchemaVersion(target_version);
 }
 
-inline void DeregisterOnnxOperatorSetSchema() {
-  OpSchemaRegistry::Instance()->OpSchemaDeregisterAll(ONNX_DOMAIN);
+ONNX_API inline void DeregisterOnnxOperatorSetSchema() {
+  OpSchemaRegistry::OpSchemaDeregisterAll(ONNX_DOMAIN);
   // -1 means no ONNX schema is loaded
-  OpSchemaRegistry::Instance()->SetLoadedSchemaVersion(-1);
+  OpSchemaRegistry::SetLoadedSchemaVersion(-1);
 }
 
-inline bool IsOnnxStaticRegistrationDisabled() {
-#ifdef __ONNX_DISABLE_STATIC_REGISTRATION
-  return true;
-#else
-  return false;
-#endif
-}
+// Returns true if ONNX was built with static schema registration disabled
+// (i.e., with __ONNX_DISABLE_STATIC_REGISTRATION defined).
+//
+// When static registration is disabled, the linking module is responsible for
+// calling the desired registration methods to register the required opsets:
+//   - RegisterOnnxOperatorSetSchema() for ai.onnx domain operators
+//   - RegisterOnnxMLOperatorSetSchema() for ai.onnx.ml domain operators (if ONNX_ML is enabled)
+//   - RegisterOnnxTrainingOperatorSetSchema() for ai.onnx.training domain operators
+//   - RegisterOnnxPreviewOperatorSetSchema() for ai.onnx.preview domain operators
+//
+// When static registration is enabled (this function returns false), the above
+// opsets are automatically registered during ONNX library initialization, and
+// the linking module should not call the registration methods again to avoid
+// duplicate schema registration errors.
+ONNX_API bool IsOnnxStaticRegistrationDisabled();
 
 } // namespace ONNX_NAMESPACE

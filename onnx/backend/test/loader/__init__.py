@@ -1,23 +1,34 @@
 # Copyright (c) ONNX Project Contributors
 
 # SPDX-License-Identifier: Apache-2.0
+from __future__ import annotations
 
 import json
 import os
-from typing import List, Optional
 
+import onnx.backend.test.case.node
 from onnx.backend.test.case.test_case import TestCase
+from onnx.backend.test.case.utils import import_recursive
 
 DATA_DIR = os.path.join(
     os.path.dirname(os.path.realpath(os.path.dirname(__file__))), "data"
 )
 
 
+def load_node_model_tests() -> list[TestCase]:
+    import_recursive(onnx.backend.test.case.node)
+    from onnx.backend.test.case.node import _NodeTestCases  # noqa: PLC0415
+
+    return _NodeTestCases
+
+
 def load_model_tests(
     data_dir: str = DATA_DIR,
-    kind: Optional[str] = None,
-) -> List[TestCase]:
+    kind: str | None = None,
+) -> list[TestCase]:
     """Load model test cases from on-disk data files."""
+    if kind == "node":
+        return load_node_model_tests()
 
     supported_kinds = os.listdir(data_dir)
     if kind not in supported_kinds:
@@ -36,14 +47,19 @@ def load_model_tests(
         if os.path.exists(os.path.join(case_dir, "model.onnx")):
             url = None
             model_name = test_name[len("test_")]
-            model_dir: Optional[str] = case_dir
+            model_dir: str | None = case_dir
+            if os.path.exists(os.path.join(case_dir, "data.json")):
+                with open(os.path.join(case_dir, "data.json")) as f:
+                    data = json.load(f)
+                    rtol = data.get("rtol", rtol)
+                    atol = data.get("atol", atol)
         else:
             with open(os.path.join(case_dir, "data.json")) as f:
                 data = json.load(f)
                 url = data["url"]
                 model_name = data["model_name"]
-                rtol = data.get("rtol", 1e-3)
-                atol = data.get("atol", 1e-7)
+                rtol = data.get("rtol", rtol)
+                atol = data.get("atol", atol)
                 model_dir = None
         testcases.append(
             TestCase(

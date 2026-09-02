@@ -1,6 +1,7 @@
 # Copyright (c) ONNX Project Contributors
 #
 # SPDX-License-Identifier: Apache-2.0
+from __future__ import annotations
 
 import numpy as np
 
@@ -18,8 +19,7 @@ from onnx.reference.ops.op_pool_common import (
 class LpPool(Base):
     @staticmethod
     def export_lppool_1d_default() -> None:
-        """
-        input_shape: [1, 3, 32]
+        """input_shape: [1, 3, 32]
         output_shape: [1, 3, 31]
         """
         p = 3
@@ -46,8 +46,7 @@ class LpPool(Base):
 
     @staticmethod
     def export_lppool_2d_default() -> None:
-        """
-        input_shape: [1, 3, 32, 32]
+        """input_shape: [1, 3, 32, 32]
         output_shape: [1, 3, 31, 31]
         """
         p = 4
@@ -73,8 +72,7 @@ class LpPool(Base):
 
     @staticmethod
     def export_lppool_3d_default() -> None:
-        """
-        input_shape: [1, 3, 32, 32, 32]
+        """input_shape: [1, 3, 32, 32, 32]
         output_shape: [1, 3, 31, 31, 31]
         """
         p = 3
@@ -100,8 +98,7 @@ class LpPool(Base):
 
     @staticmethod
     def export_lppool_2d_same_upper() -> None:
-        """
-        input_shape: [1, 3, 32, 32]
+        """input_shape: [1, 3, 32, 32]
         output_shape: [1, 3, 32, 32]
         pad_shape: [1, 1] -> [0, 1, 0, 1] by axis
         """
@@ -135,14 +132,15 @@ class LpPool(Base):
             constant_values=0,
         )
         pads = [pad_top, pad_left, pad_bottom, pad_right]
-        y = pool(padded, x_shape, kernel_shape, strides, out_shape, "LPPOOL", pads, p=p)
+        y = pool(
+            padded, x_shape, kernel_shape, strides, out_shape, "LPPOOL", pads, pads, p=p
+        )
 
         expect(node, inputs=[x], outputs=[y], name="test_lppool_2d_same_upper")
 
     @staticmethod
     def export_lppool_2d_same_lower() -> None:
-        """
-        input_shape: [1, 3, 32, 32]
+        """input_shape: [1, 3, 32, 32]
         output_shape: [1, 3, 32, 32]
         pad_shape: [1, 1] -> [1, 0, 1, 0] by axis
         """
@@ -176,14 +174,15 @@ class LpPool(Base):
             constant_values=0,
         )
         pads = [pad_top, pad_left, pad_bottom, pad_right]
-        y = pool(padded, x_shape, kernel_shape, strides, out_shape, "LPPOOL", pads, p=p)
+        y = pool(
+            padded, x_shape, kernel_shape, strides, out_shape, "LPPOOL", pads, pads, p=p
+        )
 
         expect(node, inputs=[x], outputs=[y], name="test_lppool_2d_same_lower")
 
     @staticmethod
     def export_lppool_2d_pads() -> None:
-        """
-        input_shape: [1, 3, 28, 28]
+        """input_shape: [1, 3, 28, 28]
         output_shape: [1, 3, 30, 30]
         pad_shape: [4, 4] -> [2, 2, 2, 2] by axis
         """
@@ -202,23 +201,37 @@ class LpPool(Base):
         strides = (1, 1)
         pad_bottom = pad_top = pad_right = pad_left = 2
         pads = [pad_top, pad_left, pad_bottom, pad_right]
-        out_shape, pads = get_output_shape_explicit_padding(
+        out_shape, extra_pads = get_output_shape_explicit_padding(
             pads, x_shape[2:], kernel_shape, strides
         )
         padded = np.pad(
             x,
-            ((0, 0), (0, 0), (pad_top, pad_bottom), (pad_left, pad_right)),
+            (
+                (0, 0),
+                (0, 0),
+                (extra_pads[0], extra_pads[2]),
+                (extra_pads[1], extra_pads[3]),
+            ),
             mode="constant",
             constant_values=0,
         )
-        y = pool(padded, x_shape, kernel_shape, strides, out_shape, "LPPOOL", pads, p=p)
+        y = pool(
+            padded,
+            x_shape,
+            kernel_shape,
+            strides,
+            out_shape,
+            "LPPOOL",
+            pads_required=extra_pads,
+            pads=pads,
+            p=p,
+        )
 
         expect(node, inputs=[x], outputs=[y], name="test_lppool_2d_pads")
 
     @staticmethod
     def export_lppool_2d_strides() -> None:
-        """
-        input_shape: [1, 3, 32, 32]
+        """input_shape: [1, 3, 32, 32]
         output_shape: [1, 3, 10, 10]
         """
         p = 2
@@ -245,8 +258,7 @@ class LpPool(Base):
 
     @staticmethod
     def export_lppool_2d_dilations() -> None:
-        """
-        input_shape: [1, 1, 4, 4]
+        """input_shape: [1, 1, 4, 4]
         output_shape: [1, 1, 2, 2]
         """
         p = 2

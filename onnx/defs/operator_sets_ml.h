@@ -1,6 +1,6 @@
-/*
- * SPDX-License-Identifier: Apache-2.0
- */
+// Copyright (c) ONNX Project Contributors
+//
+// SPDX-License-Identifier: Apache-2.0
 
 #pragma once
 
@@ -33,7 +33,7 @@ class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(OnnxML, 1, ZipMap);
 // Iterate over schema from ai.onnx.ml version 1
 class OpSet_OnnxML_ver1 {
  public:
-  static void ForEachSchema(std::function<void(OpSchema&&)> fn) {
+  static void ForEachSchema(const std::function<void(OpSchema&&)>& fn) {
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(OnnxML, 1, ArrayFeatureExtractor)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(OnnxML, 1, Binarizer)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(OnnxML, 1, CastMap)>());
@@ -59,7 +59,7 @@ class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(OnnxML, 2, LabelEncoder);
 
 class OpSet_OnnxML_ver2 {
  public:
-  static void ForEachSchema(std::function<void(OpSchema&&)> fn) {
+  static void ForEachSchema(const std::function<void(OpSchema&&)>& fn) {
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(OnnxML, 2, LabelEncoder)>());
   }
 };
@@ -69,7 +69,7 @@ class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(OnnxML, 3, TreeEnsembleRegressor);
 
 class OpSet_OnnxML_ver3 {
  public:
-  static void ForEachSchema(std::function<void(OpSchema&&)> fn) {
+  static void ForEachSchema(const std::function<void(OpSchema&&)>& fn) {
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(OnnxML, 3, TreeEnsembleClassifier)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(OnnxML, 3, TreeEnsembleRegressor)>());
   }
@@ -79,16 +79,30 @@ class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(OnnxML, 4, LabelEncoder);
 
 class OpSet_OnnxML_ver4 {
  public:
-  static void ForEachSchema(std::function<void(OpSchema&&)> fn) {
+  static void ForEachSchema(const std::function<void(OpSchema&&)>& fn) {
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(OnnxML, 4, LabelEncoder)>());
   }
 };
 
-inline void RegisterOnnxMLOperatorSetSchema() {
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(OnnxML, 5, TreeEnsemble);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(OnnxML, 5, TreeEnsembleRegressor);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(OnnxML, 5, TreeEnsembleClassifier);
+
+class OpSet_OnnxML_ver5 {
+ public:
+  static void ForEachSchema(const std::function<void(OpSchema&&)>& fn) {
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(OnnxML, 5, TreeEnsemble)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(OnnxML, 5, TreeEnsembleRegressor)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(OnnxML, 5, TreeEnsembleClassifier)>());
+  }
+};
+
+ONNX_API inline void RegisterOnnxMLOperatorSetSchema() {
   RegisterOpSetSchema<OpSet_OnnxML_ver1>();
   RegisterOpSetSchema<OpSet_OnnxML_ver2>();
   RegisterOpSetSchema<OpSet_OnnxML_ver3>();
   RegisterOpSetSchema<OpSet_OnnxML_ver4>();
+  RegisterOpSetSchema<OpSet_OnnxML_ver5>();
 }
 } // namespace ONNX_NAMESPACE
 

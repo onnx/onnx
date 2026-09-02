@@ -1,7 +1,7 @@
 # Copyright (c) ONNX Project Contributors
 
 # SPDX-License-Identifier: Apache-2.0
-
+from __future__ import annotations
 
 import numpy as np
 
@@ -15,23 +15,22 @@ from onnx.reference.ops.aionnxml._op_run_aionnxml import OpRunAiOnnxMl
 
 class LinearClassifier(OpRunAiOnnxMl):
     @staticmethod
-    def _post_process_predicted_label(label, scores, classlabels_ints_string):  # type: ignore
-        """
-        Replaces int64 predicted labels by the corresponding
+    def _post_process_predicted_label(label, scores, classlabels_ints_string):
+        """Replaces int64 predicted labels by the corresponding
         strings.
         """
         if classlabels_ints_string is not None:
             label = np.array([classlabels_ints_string[i] for i in label])
         return label, scores
 
-    def _run(  # type: ignore
+    def _run(
         self,
         x,
         classlabels_ints=None,
         classlabels_strings=None,
         coefficients=None,
         intercepts=None,
-        multi_class=None,
+        multi_class=None,  # noqa: ARG002
         post_transform=None,
     ):
         # multi_class is unused

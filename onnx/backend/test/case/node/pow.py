@@ -1,6 +1,7 @@
 # Copyright (c) ONNX Project Contributors
 #
 # SPDX-License-Identifier: Apache-2.0
+from __future__ import annotations
 
 import numpy as np
 
@@ -9,9 +10,8 @@ from onnx.backend.test.case.base import Base
 from onnx.backend.test.case.node import expect
 
 
-def pow(x, y):  # type: ignore
-    z = np.power(x, y).astype(x.dtype)
-    return z
+def pow(x: np.ndarray, y: np.ndarray) -> np.ndarray:  # noqa: A001
+    return np.power(x, y).astype(x.dtype)
 
 
 class Pow(Base):

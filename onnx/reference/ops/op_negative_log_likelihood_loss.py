@@ -1,14 +1,16 @@
 # Copyright (c) ONNX Project Contributors
 
 # SPDX-License-Identifier: Apache-2.0
-
+from __future__ import annotations
 
 import numpy as np
 
 from onnx.reference.op_run import OpRun
 
 
-def _compute_negative_log_likelihood_loss(x, target, weight=None, reduction="mean", ignore_index=None):  # type: ignore
+def _compute_negative_log_likelihood_loss(
+    x, target, weight=None, reduction="mean", ignore_index=None
+):
     input_shape = x.shape
     if len(input_shape) == 1:
         raise RuntimeError(f"Unsupported shape {input_shape!r}.")
@@ -27,7 +29,7 @@ def _compute_negative_log_likelihood_loss(x, target, weight=None, reduction="mea
         gather_weight = np.take(weight, np.array(target, dtype=np.int32), mode="clip")
         # set `ignore_index`'s loss weight to 0.
         # The loss tensor will be multiplied by this weight tensor,
-        # so `ingore_index`'s loss value will be eliminated.
+        # so `ignore_index`'s loss value will be eliminated.
         if ignore_index is not None:
             gather_weight = np.where(target == ignore_index, 0, gather_weight).astype(
                 dtype=x.dtype
@@ -72,7 +74,7 @@ def _compute_negative_log_likelihood_loss(x, target, weight=None, reduction="mea
 
 
 class NegativeLogLikelihoodLoss(OpRun):
-    def _run(self, x, target, weight=None, ignore_index=None, reduction=None):  # type: ignore
+    def _run(self, x, target, weight=None, ignore_index=None, reduction=None):
         return _compute_negative_log_likelihood_loss(
             x,
             target,

@@ -1,6 +1,7 @@
 # Copyright (c) ONNX Project Contributors
 #
 # SPDX-License-Identifier: Apache-2.0
+from __future__ import annotations
 
 import numpy as np
 
@@ -16,11 +17,11 @@ class Elu(Base):
 
         x = np.array([-1, 0, 1]).astype(np.float32)
         # expected output [-1.2642411, 0., 1.]
-        y = np.clip(x, 0, np.inf) + (np.exp(np.clip(x, -np.inf, 0)) - 1) * 2.0
+        y = np.clip(x, 0, np.inf) + np.expm1(np.clip(x, -np.inf, 0)) * 2.0
         expect(node, inputs=[x], outputs=[y], name="test_elu_example")
 
         x = np.random.randn(3, 4, 5).astype(np.float32)
-        y = np.clip(x, 0, np.inf) + (np.exp(np.clip(x, -np.inf, 0)) - 1) * 2.0
+        y = np.clip(x, 0, np.inf) + np.expm1(np.clip(x, -np.inf, 0)) * 2.0
         expect(node, inputs=[x], outputs=[y], name="test_elu")
 
     @staticmethod
@@ -32,5 +33,5 @@ class Elu(Base):
             outputs=["y"],
         )
         x = np.random.randn(3, 4, 5).astype(np.float32)
-        y = np.clip(x, 0, np.inf) + (np.exp(np.clip(x, -np.inf, 0)) - 1) * default_alpha
+        y = np.clip(x, 0, np.inf) + np.expm1(np.clip(x, -np.inf, 0)) * default_alpha
         expect(node, inputs=[x], outputs=[y], name="test_elu_default")

@@ -1,8 +1,9 @@
 # Copyright (c) ONNX Project Contributors
 
 # SPDX-License-Identifier: Apache-2.0
+from __future__ import annotations
 
-from typing import Any, Dict, List, Set
+from typing import Any
 
 import onnx.checker
 from onnx import ModelProto, ValueInfoProto
@@ -10,11 +11,10 @@ from onnx import ModelProto, ValueInfoProto
 
 def update_inputs_outputs_dims(
     model: ModelProto,
-    input_dims: Dict[str, List[Any]],
-    output_dims: Dict[str, List[Any]],
+    input_dims: dict[str, list[Any]],
+    output_dims: dict[str, list[Any]],
 ) -> ModelProto:
-    """
-    This function updates the dimension sizes of the model's inputs and outputs to the values
+    """This function updates the dimension sizes of the model's inputs and outputs to the values
     provided in input_dims and output_dims. if the dim value provided is negative, a unique dim_param
     will be set for that dimension.
 
@@ -44,20 +44,20 @@ def update_inputs_outputs_dims(
         updated_model = update_inputs_outputs_dims(model, input_dims, output_dims)
         onnx.save(updated_model, 'model.onnx')
     """
-    dim_param_set: Set[str] = set()
+    dim_param_set: set[str] = set()
 
     def init_dim_param_set(
-        dim_param_set: Set[str], value_infos: List[ValueInfoProto]
+        dim_param_set: set[str], value_infos: list[ValueInfoProto]
     ) -> None:
         for info in value_infos:
             shape = info.type.tensor_type.shape
             for dim in shape.dim:
                 if dim.HasField("dim_param"):
-                    dim_param_set.add(dim.dim_param)  # type: ignore
+                    dim_param_set.add(dim.dim_param)
 
-    init_dim_param_set(dim_param_set, model.graph.input)  # type: ignore
-    init_dim_param_set(dim_param_set, model.graph.output)  # type: ignore
-    init_dim_param_set(dim_param_set, model.graph.value_info)  # type: ignore
+    init_dim_param_set(dim_param_set, model.graph.input)  # type: ignore[arg-type]
+    init_dim_param_set(dim_param_set, model.graph.output)  # type: ignore[arg-type]
+    init_dim_param_set(dim_param_set, model.graph.value_info)  # type: ignore[arg-type]
 
     def update_dim(tensor: ValueInfoProto, dim: Any, j: int, name: str) -> None:
         dim_proto = tensor.type.tensor_type.shape.dim[j]
@@ -78,7 +78,7 @@ def update_inputs_outputs_dims(
         elif isinstance(dim, str):
             dim_proto.dim_param = dim
         else:
-            raise ValueError(
+            raise TypeError(
                 f"Only int or str is accepted as dimension value, incorrect type: {type(dim)}"
             )
 

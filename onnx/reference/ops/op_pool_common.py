@@ -1,14 +1,18 @@
 # Copyright (c) ONNX Project Contributors
 #
 # SPDX-License-Identifier: Apache-2.0
+from __future__ import annotations
 
 import itertools
 import math
-from typing import Sequence, Tuple, Union
+from typing import TYPE_CHECKING
 
 import numpy as np
 
 from onnx.reference.op_run import OpRun
+
+if TYPE_CHECKING:
+    from collections.abc import Sequence
 
 
 def get_pad_shape(
@@ -17,15 +21,18 @@ def get_pad_shape(
     kernel_spatial_shape: Sequence[int],
     strides_spatial: Sequence[int],
     output_spatial_shape: Sequence[int],
+    dilations: Sequence[int] | None = None,
 ) -> Sequence[int]:
     spatial_dims = len(input_spatial_shape)
     pad_shape = [0] * spatial_dims
     strides_spatial = strides_spatial or [1] * spatial_dims
+    dilations = dilations or [1] * spatial_dims
     if auto_pad in ("SAME_UPPER", "SAME_LOWER"):
         for i in range(spatial_dims):
             pad_shape[i] = (
                 (output_spatial_shape[i] - 1) * strides_spatial[i]
-                + kernel_spatial_shape[i]
+                + (kernel_spatial_shape[i] - 1) * dilations[i]
+                + 1
                 - input_spatial_shape[i]
             )
     elif auto_pad == "VALID":
@@ -50,15 +57,14 @@ def get_pad_with_auto_pad(auto_pad: str, pad_shape: Sequence[int]) -> Sequence[i
 
 
 def get_output_shape_explicit_padding(
-    pads: Sequence[int],
+    pads: Sequence[int] | None,
     input_spatial_shape: Sequence[int],
     kernel_spatial_shape: Sequence[int],
     strides_spatial: Sequence[int],
-    dilations: Union[Sequence[int], None] = None,
+    dilations: Sequence[int] | None = None,
     ceil_mode: bool = False,
-) -> Tuple[Sequence[int], Sequence[int]]:
-    """
-    compute output shape according to:
+) -> tuple[Sequence[int], Sequence[int]]:
+    """Compute output shape according to:
     https://pytorch.org/docs/stable/generated/torch.nn.MaxPool1d.html?highlight=max+pool#torch.nn.MaxPool1d
     Pads are used to calculate output shape. Use output shape in turn to calculate the actual pads
     that are used to pad the input tensor so that computation in pool() will not cause out of bound error.
@@ -93,6 +99,11 @@ def get_output_shape_explicit_padding(
 
         if ceil_mode:
             output_spatial_shape[dim] = int(np.ceil(dim_size))
+            # NOTE: ensure that the last pooling starts inside the image
+            if (output_spatial_shape[dim] - 1) * strides_spatial[
+                dim
+            ] >= input_spatial_shape[dim] + pads[dim]:
+                output_spatial_shape[dim] -= 1
         else:
             output_spatial_shape[dim] = int(np.floor(dim_size))
 
@@ -120,15 +131,16 @@ def get_output_shape_auto_pad(
     input_spatial_shape: Sequence[int],
     kernel_spatial_shape: Sequence[int],
     strides_spatial: Sequence[int],
+    dilations: Sequence[int] | None = None,
 ) -> Sequence[int]:
-    """
-    https://www.tensorflow.org/api_docs/python/tf/keras/layers/AveragePooling2D
+    """https://www.tensorflow.org/api_docs/python/tf/keras/layers/AveragePooling2D
     output_shape = math.floor((input_shape - 1) / strides) + 1  (SAME)
     output_shape = math.floor((input_shape - pool_size) / strides) + 1 (VALID)
     IMPORTANT: this function assumes ceil_mode is False. In tenforflow, ceil_mode is always False.
     However, ONNX spec allow ceil_mode to be True because ORT does handle the case.
     """
     strides_spatial = strides_spatial or [1] * len(input_spatial_shape)
+    dilations = dilations or [1] * len(input_spatial_shape)
     out_shape = [0] * len(input_spatial_shape)
     for i in range(len(input_spatial_shape)):
         if auto_pad in ("SAME_UPPER", "SAME_LOWER"):
@@ -138,12 +150,15 @@ def get_output_shape_auto_pad(
         elif auto_pad == "VALID":
             out_shape[i] = (
                 math.floor(
-                    (input_spatial_shape[i] - kernel_spatial_shape[i])
+                    (
+                        input_spatial_shape[i]
+                        - ((kernel_spatial_shape[i] - 1) * dilations[i] + 1)
+                    )
                     / strides_spatial[i]
                 )
                 + 1
             )
-        # if auto_pad is NOTSET, explicite padding should be used
+        # if auto_pad is NOTSET, explicit padding should be used
         else:
             raise ValueError(
                 "auto_pad can only be NOTSET, SAME_UPPER, SAME_LOWER, or VALID"
@@ -153,13 +168,6 @@ def get_output_shape_auto_pad(
     return out_shape
 
 
-def lp_pool(x: np.array, p: int) -> float:
-    y = 0
-    for v in np.nditer(x):
-        y += abs(v) ** p
-    return y ** (1.0 / p)
-
-
 def pool(
     padded: np.ndarray,
     x_shape: Sequence[int],
@@ -167,19 +175,20 @@ def pool(
     strides: Sequence[int],
     out_shape: Sequence[int],
     pooling_type: str,
-    pads: Union[Sequence[int], None] = None,
-    dilations: Union[Sequence[int], None] = None,
+    pads_required: Sequence[int] | None = None,
+    pads: Sequence[int] | None = None,
+    dilations: Sequence[int] | None = None,
     count_include_pad: int = 0,
     p: int = 1,
 ) -> np.ndarray:
-    """
-    this function is used to calculate the pooling result of a padded tensor
+    """This function is used to calculate the pooling result of a padded tensor
     padded: the padded tensor
     x_shape: the shape of the original tensor in [N, C, *spatial_shape]
     kernel: the pooling kernel
     strides: the strides
     out_shape: the shape of the output tensor
     pooling_type: the pooling type, can be "AVG", "LPPOOL", or "MAX"
+    pads_required: the required padding to make sure the sliding window does not go out-of-bound
     pads: the padding in an order of head_pad_1, head_pad_2, ..., tail_pad_1, tail_pad_2, ...
     dilations: the dilation
     count_include_pad: whether to include the padding in the calculation of average and lp pooling
@@ -189,25 +198,61 @@ def pool(
     y = np.zeros([x_shape[0], x_shape[1], *list(out_shape)], dtype=padded.dtype)
     if dilations is None:
         dilations = np.ones([spatial_size], dtype=np.int64)
+    if pads_required is None:
+        pads_required = np.zeros([spatial_size * 2], dtype=np.int64)
+    elif len(pads_required) == 1:
+        pads_required = pads_required * spatial_size * 2
     if pads is None:
         pads = np.zeros([spatial_size * 2], dtype=np.int64)
     elif len(pads) == 1:
         pads = pads * spatial_size * 2
     strides = strides or [1] * spatial_size
 
-    def lp_pool_p(x):
-        return lp_pool(x, p)
+    if pooling_type == "AVG":
+        effective_kernel = tuple(
+            (kernel[i] - 1) * dilations[i] + 1 for i in range(spatial_size)
+        )
+        spatial_axes = tuple(range(2, padded.ndim))
 
+        def sliding_windows(values: np.ndarray) -> np.ndarray:
+            windows = np.lib.stride_tricks.sliding_window_view(
+                values, effective_kernel, axis=spatial_axes
+            )
+            slices = (
+                slice(None),
+                slice(None),
+                *(
+                    slice(0, out_shape[i] * strides[i], strides[i])
+                    for i in range(spatial_size)
+                ),
+                *(slice(0, None, dilations[i]) for i in range(spatial_size)),
+            )
+            return windows[slices]
+
+        kernel_axes = tuple(range(-spatial_size, 0))
+        if count_include_pad == 1:
+            return np.mean(sliding_windows(padded), axis=kernel_axes).astype(
+                padded.dtype
+            )
+
+        valid = ~np.isnan(padded)
+        sums = np.sum(sliding_windows(np.where(valid, padded, 0)), axis=kernel_axes)
+        counts = np.sum(sliding_windows(valid), axis=kernel_axes)
+        averages = np.full_like(sums, np.nan)
+        np.divide(sums, counts, out=averages, where=counts != 0)
+        return averages.astype(padded.dtype)
+
+    # Iterate all the possible sliding windows
     for shape in itertools.product(
-        range(x_shape[0]),
-        range(x_shape[1]),
+        range(x_shape[0]),  # e.g. dim=0: [0]
+        range(x_shape[1]),  # e.g. dim=1: [0, 1]
         *[
             range(
                 int(
                     (
                         x_shape[i + 2]
-                        + pads[i]
-                        + pads[i + spatial_size]
+                        + pads_required[i]
+                        + pads_required[i + spatial_size]
                         - (1 + (kernel[i] - 1) * dilations[i])
                     )
                     / strides[i]
@@ -224,24 +269,34 @@ def pool(
                 for i in list(
                     itertools.product(
                         *[
-                            range(
-                                strides[i] * shape[i + 2],
-                                strides[i] * shape[i + 2]
-                                + (1 + (kernel[i] - 1) * dilations[i]),
-                                dilations[i],
-                            )
+                            [
+                                pixel
+                                for pixel in range(
+                                    strides[i] * shape[i + 2],
+                                    strides[i] * shape[i + 2]
+                                    + (1 + (kernel[i] - 1) * dilations[i]),
+                                    dilations[i],
+                                )
+                                if pixel
+                                < x_shape[i + 2] + pads[i] + pads[spatial_size + i]
+                            ]
                             for i in range(spatial_size)
                         ]
                     )
                 )
             ]
         )
+
         if pooling_type == "AVG":
             f = np.average
         elif pooling_type == "MAX":
             f = np.max
         elif pooling_type == "LPPOOL":
-            f = lp_pool_p
+
+            def lp_pool(x: np.array, p: int = p) -> float:
+                return np.sum(np.abs(x) ** p) ** (1.0 / p)
+
+            f = lp_pool
         else:
             raise NotImplementedError(
                 f"Pooling type {pooling_type} does not support. Should be AVG, MAX"
@@ -251,7 +306,7 @@ def pool(
             y[shape] = f(window_vals)
         else:
             y[shape] = f(window_vals[np.where(~np.isnan(window_vals))])
-    return y
+    return y.astype(padded.dtype)
 
 
 class CommonPool(OpRun):
@@ -269,17 +324,17 @@ class CommonPool(OpRun):
         p=None,
     ):
         x_shape = np.shape(x)
-        pading_value = np.nan if pooling_type == "MAX" or count_include_pad == 0 else 0
+        padding_value = np.nan if pooling_type == "MAX" or count_include_pad == 0 else 0
 
         if auto_pad in ["SAME_UPPER", "SAME_LOWER", "VALID"]:
-            assert (
-                ceil_mode is None or ceil_mode == 0
-            ), "ceil_mode is not supported with auto_pad"
+            assert ceil_mode is None or ceil_mode == 0, (
+                "ceil_mode is not supported with auto_pad"
+            )
             out_shape = get_output_shape_auto_pad(
-                auto_pad, x.shape[2:], kernel_shape, strides
+                auto_pad, x.shape[2:], kernel_shape, strides, dilations
             )
             pads_shape = get_pad_shape(
-                auto_pad, x_shape[2:], kernel_shape, strides, out_shape
+                auto_pad, x_shape[2:], kernel_shape, strides, out_shape, dilations
             )
             pads = get_pad_with_auto_pad(auto_pad, pads_shape)
             n_dims = len(pads) // 2
@@ -288,7 +343,7 @@ class CommonPool(OpRun):
                 x,
                 ((0, 0), (0, 0), *pads_np),
                 mode="constant",
-                constant_values=pading_value,
+                constant_values=padding_value,
             )
             y = pool(
                 padded,
@@ -298,34 +353,35 @@ class CommonPool(OpRun):
                 out_shape,
                 pooling_type,
                 pads,
-                dilations,
-                count_include_pad,
-                p,
-            )
-            return (y,)
-        else:
-            out_shape, pads = get_output_shape_explicit_padding(
-                pads, x_shape[2:], kernel_shape, strides, dilations, ceil_mode
-            )
-            # convert pads from [x1_begin, x2_begin,...,x1_end, x2_end,...] to [(x1_begin, x1_end), (x2_begin, x2_end),...]
-            n_dims = len(pads) // 2
-            pads_np = [(pads[i], pads[i + n_dims]) for i in range(n_dims)]
-            padded = np.pad(
-                x,
-                ((0, 0), (0, 0), *pads_np),
-                mode="constant",
-                constant_values=pading_value,
-            )
-            y = pool(
-                padded,
-                x_shape,
-                kernel_shape,
-                strides,
-                out_shape,
-                pooling_type,
                 pads,
                 dilations,
                 count_include_pad,
                 p,
             )
             return (y,)
+        out_shape, extra_pads = get_output_shape_explicit_padding(
+            pads, x_shape[2:], kernel_shape, strides, dilations, ceil_mode
+        )
+        # convert pads from [x1_begin, x2_begin,...,x1_end, x2_end,...] to [(x1_begin, x1_end), (x2_begin, x2_end),...]
+        n_dims = len(extra_pads) // 2
+        pads_np = [(extra_pads[i], extra_pads[i + n_dims]) for i in range(n_dims)]
+        padded = np.pad(
+            x,
+            ((0, 0), (0, 0), *pads_np),
+            mode="constant",
+            constant_values=padding_value,
+        )
+        y = pool(
+            padded,
+            x_shape,
+            kernel_shape,
+            strides,
+            out_shape,
+            pooling_type,
+            extra_pads,
+            pads,
+            dilations,
+            count_include_pad,
+            p,
+        )
+        return (y,)

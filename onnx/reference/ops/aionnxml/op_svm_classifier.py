@@ -1,7 +1,7 @@
 # Copyright (c) ONNX Project Contributors
 
 # SPDX-License-Identifier: Apache-2.0
-
+from __future__ import annotations
 
 import numpy as np
 
@@ -24,7 +24,7 @@ def multiclass_probability(k, R):
     P = np.empty((k,), dtype=R.dtype)
     eps = 0.005 / k
 
-    for t in range(0, k):
+    for t in range(k):
         P[t] = 1.0 / k
         Q[t, t] = (R[:t, t] ** 2).sum()
         Q[t, :t] = Q[:t, t]
@@ -38,10 +38,9 @@ def multiclass_probability(k, R):
         pQp = (P * Qp).sum()
 
         max_error = 0
-        for t in range(0, k):
+        for t in range(k):
             error = np.abs(Qp[t] - pQp)
-            if error > max_error:
-                max_error = error
+            max_error = max(error, max_error)
         if max_error < eps:
             break
 
@@ -126,7 +125,7 @@ class SVMClassifier(OpRunAiOnnxMl):
         scores = []
         for j in range(class_count_):
             d = self._svm.kernel_dot(X, coefs[j], kernel_type_)
-            score = self._svm.atts.rho[0] + d  # type: ignore
+            score = self._svm.atts.rho[0] + d
             scores.append(score)
         return np.array(scores, dtype=X.dtype)
 
@@ -135,20 +134,20 @@ class SVMClassifier(OpRunAiOnnxMl):
     ):
         evals = 0
 
-        kernels_list = []
-        for j in range(vector_count_):
-            kernels_list.append(self._svm.kernel_dot(X, sv[j], kernel_type_))
+        kernels_list = [
+            self._svm.kernel_dot(X, sv[j], kernel_type_) for j in range(vector_count_)
+        ]
         kernels = np.array(kernels_list)
 
         votes = np.zeros((class_count_,), dtype=X.dtype)
         scores = []
         for i in range(class_count_):
             si_i = starting_vector_[i]
-            class_i_sc = self._svm.atts.vectors_per_class[i]  # type: ignore
+            class_i_sc = self._svm.atts.vectors_per_class[i]
 
             for j in range(i + 1, class_count_):
                 si_j = starting_vector_[j]
-                class_j_sc = self._svm.atts.vectors_per_class[j]  # type: ignore
+                class_j_sc = self._svm.atts.vectors_per_class[j]
 
                 s1 = np.dot(
                     coefs[j - 1, si_i : si_i + class_i_sc],
@@ -159,7 +158,7 @@ class SVMClassifier(OpRunAiOnnxMl):
                     kernels[si_j : si_j + class_j_sc],
                 )
 
-                s = self._svm.atts.rho[evals] + s1 + s2  # type: ignore
+                s = self._svm.atts.rho[evals] + s1 + s2
                 scores.append(s)
                 if s > 0:
                     votes[i] += 1
@@ -176,8 +175,8 @@ class SVMClassifier(OpRunAiOnnxMl):
             for j in range(i + 1, class_count_):
                 val1 = sigmoid_probability(
                     scores[index],
-                    self._svm.atts.prob_a[index],  # type: ignore
-                    self._svm.atts.prob_b[index],  # type: ignore
+                    self._svm.atts.prob_a[index],
+                    self._svm.atts.prob_b[index],
                 )
                 val2 = max(val1, 1.0e-7)
                 val2 = min(val2, (1 - 1.0e-7))
@@ -198,7 +197,7 @@ class SVMClassifier(OpRunAiOnnxMl):
             max_weight = scores[max_class]
 
         write_additional_scores = -1
-        if self._svm.atts.rho.size == 1:  # type: ignore
+        if self._svm.atts.rho.size == 1:
             label, write_additional_scores = set_score_svm(
                 max_weight,
                 max_class,
@@ -214,11 +213,14 @@ class SVMClassifier(OpRunAiOnnxMl):
             label = max_class
 
         new_scores = write_scores(
-            scores.size, scores, self._svm.atts.post_transform, write_additional_scores  # type: ignore
+            scores.size,
+            scores,
+            self._svm.atts.post_transform,
+            write_additional_scores,
         )
         return label, new_scores
 
-    def _run(  # type: ignore
+    def _run(
         self,
         X,
         classlabels_ints=None,
@@ -250,24 +252,24 @@ class SVMClassifier(OpRunAiOnnxMl):
         vector_count_ = 0
         class_count_ = max(len(classlabels_ints or classlabels_strings or []), 1)
         starting_vector_ = []
-        if svm.atts.vectors_per_class is not None:  # type: ignore
-            for vc in svm.atts.vectors_per_class:  # type: ignore
+        if svm.atts.vectors_per_class is not None:
+            for vc in svm.atts.vectors_per_class:
                 starting_vector_.append(vector_count_)
                 vector_count_ += vc
 
         if vector_count_ > 0:
             # length of each support vector
             mode = "SVM_SVC"
-            sv = svm.atts.support_vectors.reshape((vector_count_, -1))  # type: ignore
-            kernel_type_ = svm.atts.kernel_type  # type: ignore
-            coefs = svm.atts.coefficients.reshape((-1, vector_count_))  # type: ignore
+            sv = svm.atts.support_vectors.reshape((vector_count_, -1))
+            kernel_type_ = svm.atts.kernel_type
+            coefs = svm.atts.coefficients.reshape((-1, vector_count_))
         else:
             # liblinear mode
             mode = "SVM_LINEAR"
             kernel_type_ = "LINEAR"
-            coefs = svm.atts.coefficients.reshape((class_count_, -1))  # type: ignore
+            coefs = svm.atts.coefficients.reshape((class_count_, -1))
 
-        weights_are_all_positive_ = min(svm.atts.coefficients) >= 0  # type: ignore
+        weights_are_all_positive_ = min(svm.atts.coefficients) >= 0
 
         # SVM part
         if vector_count_ == 0 and mode == "SVM_LINEAR":
@@ -296,8 +298,8 @@ class SVMClassifier(OpRunAiOnnxMl):
 
         # proba
         if (
-            svm.atts.prob_a is not None  # type: ignore
-            and len(svm.atts.prob_a) > 0  # type: ignore
+            svm.atts.prob_a is not None
+            and len(svm.atts.prob_a) > 0
             and mode == "SVM_SVC"
         ):
             scores = np.empty((res.shape[0], class_count_), dtype=X.dtype)

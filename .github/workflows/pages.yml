@@ -1,6 +1,12 @@
+# Copyright (c) ONNX Project Contributors
+#
+# SPDX-License-Identifier: Apache-2.0
+
 name: Generate and publish ONNX docs
 
 on:
+  pull_request:
+    branches: ["main"]
   # Runs on pushes targeting the default branch
   push:
     branches: ["main"]
@@ -10,47 +16,40 @@ on:
 # Sets permissions of the GITHUB_TOKEN to allow deployment to GitHub Pages
 permissions:
   contents: read
-  pages: write
-  id-token: write
 
 jobs:
-  # Single deploy job since we're just deploying
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Set up pixi
+        uses: prefix-dev/setup-pixi@f00437f565399d418b0acc85936d12c1fb668347 # v0.10.1
+        with:
+          environments: docs
+      - name: Install repository
+        run: pixi run -e docs install
+      - name: Build Docs
+        run: pixi run -e docs docs-build
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
+        with:
+          path: 'docs/docsgen/build/html'
   deploy:
+    needs: 'build'
+    if: github.event_name != 'pull_request'
+    permissions:
+      pages: write
+      id-token: write
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@8ade135a41bc03ea155e62e844d188df1ea18608 # v4.1.0
-      - name: Setup Python
-        uses: actions/setup-python@61a6322f88396a6271a6ee3565807d608ecaddd1 # v4.7.0
-        with:
-          python-version: '3.10'
       - name: Setup Pages
-        uses: actions/configure-pages@f156874f8191504dae5b037505266ed5dda6c382 # v3.0.6
-      - name: Install Dependencies
-        run: |
-          python -m pip install --quiet --upgrade pip setuptools wheel
-          python -m pip install -r docs/docsgen/source/requirements.txt
-          python -m pip install protobuf==3.20.2
-      - name: Uninstall onnx
-        run: python -m pip uninstall -y onnx
-      - name: Install onnx development version
-        run: |
-          sudo apt-get install libprotobuf-dev protobuf-compiler
-          git submodule update --init --recursive
-          export CMAKE_ARGS="-DONNX_USE_PROTOBUF_SHARED_LIBS=ON"
-          export ONNX_ML=1
-          pip install .
-      - name: Build Docs
-        run: |
-          cd docs/docsgen
-          make html
-      - name: Upload artifact
-        uses: actions/upload-pages-artifact@a753861a5debcf57bf8b404356158c8e1e33150c # v2.0.0
-        with:
-          path: 'docs/docsgen/build/html'
+        uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d # v6.0.0
       - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@9dbe3824824f8a1377b8e298bafde1a50ede43e5 # v2.0.4
+        uses: actions/deploy-pages@cd2ce8fcbc39b97be8ca5fce6e763baed58fa128 # v5.0.0

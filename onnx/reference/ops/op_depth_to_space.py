@@ -1,7 +1,7 @@
 # Copyright (c) ONNX Project Contributors
 
 # SPDX-License-Identifier: Apache-2.0
-
+from __future__ import annotations
 
 import numpy as np
 
@@ -9,7 +9,7 @@ from onnx.reference.op_run import OpRun
 
 
 class DepthToSpace(OpRun):
-    def _run(self, data, blocksize=None, mode=None):  # type: ignore
+    def _run(self, data, blocksize=None, mode=None):
         if len(data.shape) != 4:
             raise RuntimeError(f"Unexpected shape {data.shape!r}.")
         b, c, h, w = data.shape

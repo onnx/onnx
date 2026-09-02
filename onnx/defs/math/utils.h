@@ -1,17 +1,30 @@
-/*
- * SPDX-License-Identifier: Apache-2.0
- */
+// Copyright (c) ONNX Project Contributors
+//
+// SPDX-License-Identifier: Apache-2.0
 
 #pragma once
 
+#include <cstdint>
+#include <string>
+#include <vector>
+
+#include "onnx/defs/schema.h"
 #include "onnx/defs/shape_inference.h"
 #include "onnx/defs/tensor_proto_util.h"
 #include "onnx/onnx_pb.h"
 
-namespace ONNX_NAMESPACE {
-namespace defs {
-namespace math {
-namespace utils {
+namespace ONNX_NAMESPACE::defs::math::utils {
+
+std::function<void(OpSchema&)> TopKOpGenerator(std::vector<std::string> allowed_types);
+
+std::function<void(OpSchema&)> EinsumOpGenerator(std::vector<std::string> allowed_types);
+
+// Unary elementwise ops on float types: T input -> T output, no attrs, no function body.
+std::function<void(OpSchema&)> UnaryFloatMathOpGenerator(
+    const char* doc,
+    const char* output_description,
+    std::vector<std::string> allowed_types = OpSchema::all_float_types_ir4());
+
 template <typename T>
 T GetScalarValueFromTensor(const ONNX_NAMESPACE::TensorProto* t) {
   if (t == nullptr) {
@@ -32,7 +45,11 @@ T GetScalarValueFromTensor(const ONNX_NAMESPACE::TensorProto* t) {
       fail_shape_inference("Unsupported input data type of ", data_type);
   }
 }
-} // namespace utils
-} // namespace math
-} // namespace defs
-} // namespace ONNX_NAMESPACE
+
+void MatMulShapeInference(ONNX_NAMESPACE::InferenceContext& ctx, int input1Idx, int input2Idx);
+
+void QLinearMatMulShapeInference(ONNX_NAMESPACE::InferenceContext& ctx);
+
+int64_t MathOpTwoIntegers(const std::string& op_type, int64_t a, int64_t b);
+
+} // namespace ONNX_NAMESPACE::defs::math::utils

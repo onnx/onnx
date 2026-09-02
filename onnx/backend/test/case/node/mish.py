@@ -1,6 +1,7 @@
 # Copyright (c) ONNX Project Contributors
 #
 # SPDX-License-Identifier: Apache-2.0
+from __future__ import annotations
 
 import numpy as np
 
@@ -17,6 +18,6 @@ class Mish(Base):
         input_data = np.linspace(-10, 10, 10000, dtype=np.float32)
 
         # Calculate expected output data
-        expected_output = input_data * np.tanh(np.log1p(np.exp(input_data)))
+        expected_output = input_data * np.tanh(np.logaddexp(0, input_data))
 
         expect(node, inputs=[input_data], outputs=[expected_output], name="test_mish")

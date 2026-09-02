@@ -1,7 +1,7 @@
 # Copyright (c) ONNX Project Contributors
 
 # SPDX-License-Identifier: Apache-2.0
-
+from __future__ import annotations
 
 import numpy as np
 
@@ -11,11 +11,11 @@ from onnx.reference.ops.op_dft import _cfft as _dft
 from onnx.reference.ops.op_slice import _slice
 
 
-def _concat(*args, axis=0):  # type: ignore
+def _concat(*args, axis=0):
     return np.concatenate(args, axis=axis)
 
 
-def _unsqueeze(a, axis):  # type: ignore
+def _unsqueeze(a, axis):
     try:
         return np.expand_dims(a, axis=axis)
     except TypeError:
@@ -27,9 +27,9 @@ def _unsqueeze(a, axis):  # type: ignore
         return a
 
 
-def _stft(x, fft_length: int, hop_length, n_frames, window, onesided=False):  # type: ignore
-    """
-    Applies one dimensional FFT with window weights.
+def _stft(x, fft_length: int, hop_length, n_frames, window, onesided=False):
+    """Applies one dimensional FFT with window weights.
+
     torch defines the number of frames as:
     `n_frames = 1 + (len - n_fft) // hop_length`.
     """
@@ -43,7 +43,7 @@ def _stft(x, fft_length: int, hop_length, n_frames, window, onesided=False):  # 
     for fs in range(n_frames):
         begin = fs * hop_length
         end = begin + window_size
-        sliced_x = _slice(x, np.array([begin]), np.array([end]), axis)  # type: ignore
+        sliced_x = _slice(x, np.array([begin]), np.array([end]), axis)
 
         # sliced_x may be smaller
         new_dim = sliced_x.shape[-2:-1]
@@ -67,17 +67,13 @@ def _stft(x, fft_length: int, hop_length, n_frames, window, onesided=False):  # 
     weights = np.reshape(window, window_shape)
     weighted_new_x = new_x * weights
 
-    result = _dft(
+    return _dft(
         weighted_new_x, fft_length, last_axis, onesided=onesided, normalize=False
     )
 
-    return result
 
-
-def _istft(x, fft_length: int, hop_length, window, onesided=False):  # type: ignore
-    """
-    Reverses of `stft`.
-    """
+def _istft(x, fft_length: int, hop_length, window, onesided=False):
+    """Reverses of `stft`."""
     zero = [0]
     one = [1]
     two = [2]
@@ -93,7 +89,8 @@ def _istft(x, fft_length: int, hop_length, window, onesided=False):  # type: ign
         begin = fs
         end = fs + 1
         frame_x = np.squeeze(
-            _slice(x, np.array([begin]), np.array([end]), axisf), axis=axisf[0]  # type: ignore
+            _slice(x, np.array([begin]), np.array([end]), axisf),
+            axis=axisf[0],
         )
 
         # ifft
@@ -102,7 +99,7 @@ def _istft(x, fft_length: int, hop_length, window, onesided=False):  # type: ign
 
         # real part
         n_dims_1 = n_dims - 1
-        sliced = _slice(ift, np.array(zero), np.array(one), [n_dims_1])  # type: ignore
+        sliced = _slice(ift, np.array(zero), np.array(one), [n_dims_1])
         ytmp = np.squeeze(sliced, axis=n_dims_1)
         ctmp = np.full(ytmp.shape, fill_value=1, dtype=x.dtype) * window
 
@@ -120,7 +117,7 @@ def _istft(x, fft_length: int, hop_length, window, onesided=False):  # type: ign
         yc = _concat(left, ctmp, right, axis=-1)
 
         # imaginary part
-        sliced = _slice(ift, np.array(one), np.array(two), [n_dims_1])  # type: ignore
+        sliced = _slice(ift, np.array(one), np.array(two), [n_dims_1])
         itmp = np.squeeze(sliced, axis=n_dims_1)
         yi = _concat(left, itmp, right, axis=-1)
 
@@ -135,9 +132,9 @@ def _istft(x, fft_length: int, hop_length, window, onesided=False):  # type: ign
     redc = _concat_from_sequence(seqc, axis=-1, new_axis=0)
 
     # unweight
-    resr = redr.sum(axis=-1, keepdims=0)  # type: ignore
-    resi = redi.sum(axis=-1, keepdims=0)  # type: ignore
-    resc = redc.sum(axis=-1, keepdims=0)  # type: ignore
+    resr = redr.sum(axis=-1, keepdims=0)
+    resi = redi.sum(axis=-1, keepdims=0)
+    resc = redc.sum(axis=-1, keepdims=0)
     rr = resr / resc
     ri = resi / resc
 
@@ -152,12 +149,11 @@ def _istft(x, fft_length: int, hop_length, window, onesided=False):  # type: ign
     transposed = np.transpose(reshaped_result, (1, 0))
     other_dimensions = result_shape[1:]
     final_shape = _concat(other_dimensions, two, axis=0)
-    final = transposed.reshape(final_shape)
-    return final
+    return transposed.reshape(final_shape)
 
 
 class STFT(OpRun):
-    def _run(self, x, frame_step, window=None, frame_length=None, onesided=None):  # type: ignore
+    def _run(self, x, frame_step, window=None, frame_length=None, onesided=None):
         if frame_length is None:
             if window is None:
                 frame_length = x.shape[-2]

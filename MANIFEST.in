@@ -1,8 +1,0 @@
-recursive-include third_party *
-include LICENSE
-recursive-include cmake *
-recursive-include tools *
-include VERSION_NUMBER
-include CMakeLists.txt
-include requirements.txt
-include requirements-reference.txt

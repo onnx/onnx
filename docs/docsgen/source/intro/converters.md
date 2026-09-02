@@ -31,6 +31,8 @@ Here is a short list:
   converts models from [scikit-learn](https://scikit-learn.org/stable/),
 - [tensorflow-onnx](https://github.com/onnx/tensorflow-onnx):
   converts models from [tensorflow](https://www.tensorflow.org/),
+- [jax2onnx](https://github.com/enpasos/jax2onnx):
+  converts models from [JAX](https://docs.jax.dev/),
 - [onnxmltools](https://github.com/onnx/onnxmltools):
   converts models from [lightgbm](https://lightgbm.readthedocs.io/),
   [xgboost](https://xgboost.readthedocs.io/en/stable/),
@@ -63,6 +65,10 @@ does not have its own addition or multiplication, it relies
 on numpy or scipy. The user must implement
 its transformer or predictor with ONNX primitives, whether or
 not it was implemented with numpy.
+
+## Alternatives
+
+One alternative for implementing ONNX export capability is to leverage standard protocols such as the [Array API standard](https://data-apis.org/array-api/latest/), which standardizes a common set of array operations. It enables code reuse across libraries like NumPy, JAX, PyTorch, CuPy and more. [ndonnx](https://github.com/Quantco/ndonnx) enables execution with an ONNX backend and instant ONNX export for Array API compliant code. This diminishes the need for dedicated converter library code since the same code used to implement most of a library can reused in ONNX conversion. It also provides a convenient primitive for converter authors looking for a NumPy-like experience when constructing ONNX graphs.
 
 ## Opsets
 
@@ -189,8 +195,8 @@ ONNX only implements a {ref}`TreeEnsembleRegressor
 <l-onnx-docai-onnx-ml-TreeEnsembleRegressor>` but
 it does not offer the possibility to retrieve any information
 about the path the decision followed or statistics to the graph.
-The trick is to used one forest to predict the leave index and map
-this leave index one or multiple times with the information needed.
+The trick is to used one forest to predict the leaf index and map
+this leaf index one or multiple times with the information needed.
 
 ```{image} images/iff.png
 ```
@@ -210,7 +216,7 @@ implements: [Converter for WOE](https://onnx.ai/sklearn-onnx/auto_tutorial/plot_
 ### Build
 
 The windows build requires conda. The following steps might not be up to date.
-Folder [onnx/.azure-pipelines](https://github.com/onnx/onnx/tree/main/.azure-pipelines)
+Folder [onnx/.github/workflows](https://github.com/onnx/onnx/tree/main/.github/workflows)
 contains the latest instructions.
 
 **Windows**
@@ -256,7 +262,6 @@ set CMAKE_ARGS=-DONNX_USE_PROTOBUF_SHARED_LIBS=ON -DONNX_USE_LITE_PROTO=ON -DONN
 python onnx\gen_proto.py -l
 python onnx\gen_proto.py -l --ml
 pip install -e .
-python onnx\backend\test\cmd_tools.py generate-data
 python onnx\backend\test\stat_coverage.py
 python onnx\defs\gen_doc.py
 set ONNX_ML=0

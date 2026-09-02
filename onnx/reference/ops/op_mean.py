@@ -1,13 +1,13 @@
 # Copyright (c) ONNX Project Contributors
 
 # SPDX-License-Identifier: Apache-2.0
-
+from __future__ import annotations
 
 from onnx.reference.op_run import OpRun
 
 
 class Mean(OpRun):
-    def _run(self, *args):  # type: ignore
+    def _run(self, *args):
         res = args[0].copy()
         for m in args[1:]:
             res += m

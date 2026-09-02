@@ -1,5 +1,9 @@
 # ONNX with Python
 
+```{tip}
+Check out the [ir-py project](https://github.com/onnx/ir-py) for an alternative set of Python APIs for creating and manipulating ONNX models. The ir-py project provides a more modern and ergonomic interface compared to the ONNX Protobuf APIs described here.
+```
+
 Next sections highlight the main functions used to build
 an ONNX graph with the {ref}`Python API <l-python-onnx-api>`
 *onnx* offers.
@@ -12,7 +16,7 @@ The linear regression is the most simple model
 in machine learning described by the following expression
 $Y = XA + B$. We can see it as a function of three
 variables $Y = f(X, A, B)$ decomposed into
-`y = Add(MatMul(X, A), B)`. That what's we need to represent
+`y = Add(MatMul(X, A), B)`. That's what we need to represent
 with ONNX operators. The first thing is to implement a function
 with {ref}`ONNX operators <l-onnx-operators>`.
 ONNX is strongly typed. Shape and type must be defined for both
@@ -25,7 +29,7 @@ to build the graph among the {ref}`l-onnx-make-function`:
   (an operator type), its inputs and outputs
 - `make_graph`: a function to create an ONNX graph with
   the objects created by the two previous functions
-- `make_model`: a last function with merges the graph and
+- `make_model`: a last function which merges the graph and
   additional metadata
 
 All along the creation, we need to give a name to every input,
@@ -148,8 +152,8 @@ of each object of the graph.
             node.name, node.op_type, node.input, node.output))
 ```
 
-The tensor type is an integer (= 1). The helper function {func}`onnx.helper.tensor_dtype_to_np_dtype` gives the
-corresponding type with numpy.
+The tensor type is an integer value (=1 for `FLOAT`). The helper function {func}`onnx.helper.tensor_dtype_to_np_dtype` converts
+the integer to its corresponding numpy data type (float32 for 1).
 
 ```{eval-rst}
 .. exec_code::
@@ -228,7 +232,7 @@ overcome that limit.
 
 ### Data Serialization
 
-The serialization of tensor usually happens like the following:
+The serialization of tensors usually happens like the following:
 
 ```{eval-rst}
 .. exec_code::
@@ -378,7 +382,7 @@ how the initializers look like.
 The type is defined as integer as well with the same meaning.
 In this second example, there is only one input left.
 Input `A` and `B` were removed. They could be kept. In that case,
-they are optional: every initiliazer sharing the same name as input
+they are optional: every initializer sharing the same name as input
 is considered as a default value. It replaces the input if this one
 is not given.
 
@@ -528,7 +532,7 @@ number.
 ```
 
 Field `training_info` can be used to store additional graphs.
-See [training_tool_test.py](https://github.com/onnx/onnx/blob/main/onnx/test/training_tool_test.py)
+See [training_tool_test.py](/tests/python/training_tool_test.py)
 to see how it works.
 
 ## Subgraph: test and loops
@@ -1500,7 +1504,7 @@ object of type `ModelProto`. But it is not. According to
 [Protobuf 4, changes](https://developers.google.com/protocol-buffers/docs/news/2022-05-06),
 this is no longer possible after version 4 and it is safer to assume the
 only way to get a hold on the content is to serialize the model
-into bytes, give it the C function, then deserialize it.
+into bytes, give it to the C function, then deserialize it.
 Functions like `check_model` or
 `shape_inference` are calling `SerializeToString` then
 `ParseFromString` before checking the model with a C code.

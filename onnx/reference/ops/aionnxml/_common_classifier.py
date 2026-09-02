@@ -1,25 +1,23 @@
 # SPDX-License-Identifier: Apache-2.0
+from __future__ import annotations
 
 import numpy as np
 
 
 def compute_logistic(val: float) -> float:
     v = 1.0 / (1.0 + np.exp(-np.abs(val)))
-    return (1.0 - v) if val < 0 else v  # type: ignore
+    return (1.0 - v) if val < 0 else v
 
 
 logistic = np.vectorize(compute_logistic)
 
 
 def compute_softmax_zero(values: np.ndarray) -> np.ndarray:
-    """
-    The function modifies the input inplace.
-    """
+    """The function modifies the input inplace."""
     v_max = values.max()
     exp_neg_v_max = np.exp(-v_max)
     s = 0
-    for i in range(len(values)):
-        v = values[i]
+    for i, v in enumerate(values):
         if v > 0.0000001 or v < -0.0000001:
             values[i] = np.exp(v - v_max)
         else:
@@ -33,7 +31,7 @@ def compute_softmax_zero(values: np.ndarray) -> np.ndarray:
 
 
 def softmax_zero(values: np.ndarray) -> np.ndarray:
-    "Modifications in place."
+    """Modifications in place."""
     if len(values.shape) == 1:
         compute_softmax_zero(values)
         return values
@@ -43,12 +41,12 @@ def softmax_zero(values: np.ndarray) -> np.ndarray:
 
 
 def softmax(values: np.ndarray) -> np.ndarray:
-    "Modifications in place."
+    """Modifications in place."""
     if len(values.shape) == 2:
-        v_max = values.max(axis=1, keepdims=1)  # type: ignore
+        v_max = values.max(axis=1, keepdims=1)
         values -= v_max
         np.exp(values, out=values)
-        s = values.sum(axis=1, keepdims=1)  # type: ignore
+        s = values.sum(axis=1, keepdims=1)
         values /= s
         return values
     v_max = values.max()
@@ -67,8 +65,7 @@ def erf_inv(x: float) -> float:
     v = 2.0 / (np.pi * 0.147) + 0.5 * log
     v2 = 1.0 / 0.147 * log
     v3 = -v + np.sqrt(v * v - v2)
-    x = sgn * np.sqrt(v3)
-    return x
+    return sgn * np.sqrt(v3)
 
 
 def compute_probit(val: float) -> float:

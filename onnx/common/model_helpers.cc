@@ -4,9 +4,8 @@
 
 #include "onnx/common/model_helpers.h"
 
-#include "onnx/checker.h"
-#include "onnx/defs/schema.h"
-#include "onnx/string_utils.h"
+#include <string>
+#include <vector>
 
 namespace ONNX_NAMESPACE {
 
@@ -18,17 +17,18 @@ Common::Status BuildNode(
     std::vector<std::string> const& inputs,
     std::vector<std::string> const& outputs,
     NodeProto* node) {
-  if (node == NULL) {
-    return Common::Status(Common::CHECKER, Common::INVALID_ARGUMENT, "node_proto should not be nullptr.");
+  if (node == nullptr) {
+    return Common::Status(
+        Common::StatusCategory::CHECKER, Common::StatusCode::INVALID_ARGUMENT, "node_proto should not be nullptr.");
   }
   node->set_name(name);
   node->set_domain(domain);
   node->set_doc_string(doc_string);
   node->set_op_type(op_type);
-  for (auto& input : inputs) {
+  for (const auto& input : inputs) {
     node->add_input(input);
   }
-  for (auto& output : outputs) {
+  for (const auto& output : outputs) {
     node->add_output(output);
   }
 

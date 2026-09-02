@@ -1,6 +1,7 @@
 # Copyright (c) ONNX Project Contributors
 #
 # SPDX-License-Identifier: Apache-2.0
+from __future__ import annotations
 
 import numpy as np
 
@@ -22,7 +23,12 @@ class HammingWindow(Base):
         a0 = 25 / 46
         a1 = 1 - a0
         y = a0 - a1 * np.cos(2 * np.pi * np.arange(0, size, 1, dtype=np.float32) / size)
-        expect(node, inputs=[size], outputs=[y], name="test_hammingwindow")
+        expect(
+            node,
+            inputs=[size],
+            outputs=[y.astype(np.float32)],
+            name="test_hammingwindow",
+        )
 
         # Test symmetric window
         node = onnx.helper.make_node(
@@ -34,4 +40,9 @@ class HammingWindow(Base):
         y = a0 - a1 * np.cos(
             2 * np.pi * np.arange(0, size, 1, dtype=np.float32) / (size - 1)
         )
-        expect(node, inputs=[size], outputs=[y], name="test_hammingwindow_symmetric")
+        expect(
+            node,
+            inputs=[size],
+            outputs=[y.astype(np.float32)],
+            name="test_hammingwindow_symmetric",
+        )

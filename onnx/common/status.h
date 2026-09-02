@@ -1,26 +1,26 @@
 // Copyright (c) ONNX Project Contributors
-
-/*
- * SPDX-License-Identifier: Apache-2.0
- */
+//
+// SPDX-License-Identifier: Apache-2.0
 
 #pragma once
 
+#include <cstdint>
 #include <memory>
 #include <ostream>
 #include <string>
 #include <utility>
 
-namespace ONNX_NAMESPACE {
-namespace Common {
+#include "onnx/onnx_pb.h"
 
-enum StatusCategory {
+namespace ONNX_NAMESPACE::Common {
+
+enum class StatusCategory : std::uint8_t {
   NONE = 0,
   CHECKER = 1,
   OPTIMIZER = 2,
 };
 
-enum StatusCode {
+enum class StatusCode : std::uint8_t {
   OK = 0,
   FAIL = 1,
   INVALID_ARGUMENT = 2,
@@ -29,39 +29,40 @@ enum StatusCode {
 
 class Status {
  public:
-  Status() noexcept {}
+  Status() noexcept = default;
 
-  Status(StatusCategory category, int code, const std::string& msg);
+  Status(StatusCategory category, StatusCode code, const std::string& msg);
 
-  Status(StatusCategory category, int code);
+  Status(StatusCategory category, StatusCode code);
 
   Status(const Status& other) {
     *this = other;
   }
 
-  void operator=(const Status& other) {
+  Status& operator=(const Status& other) {
     if (&other != this) {
       if (nullptr == other.state_) {
         state_.reset();
       } else if (state_ != other.state_) {
-        state_.reset(new State(*other.state_));
+        state_ = std::make_unique<State>(*other.state_);
       }
     }
+    return *this;
   }
 
   Status(Status&&) = default;
   Status& operator=(Status&&) = default;
   ~Status() = default;
 
-  bool IsOK() const noexcept;
+  ONNX_API bool IsOK() const noexcept;
 
-  int Code() const noexcept;
+  ONNX_API StatusCode Code() const noexcept;
 
-  StatusCategory Category() const noexcept;
+  ONNX_API StatusCategory Category() const noexcept;
 
-  const std::string& ErrorMessage() const;
+  ONNX_API const std::string& ErrorMessage() const;
 
-  std::string ToString() const;
+  ONNX_API std::string ToString() const;
 
   bool operator==(const Status& other) const {
     return (this->state_ == other.state_) || (ToString() == other.ToString());
@@ -71,14 +72,15 @@ class Status {
     return !(*this == other);
   }
 
-  static const Status& OK() noexcept;
+  ONNX_API static const Status& OK() noexcept;
 
  private:
   struct State {
-    State(StatusCategory cat_, int code_, std::string msg_) : category(cat_), code(code_), msg(std::move(msg_)) {}
+    State(StatusCategory cat_, StatusCode code_, std::string msg_)
+        : category(cat_), code(code_), msg(std::move(msg_)) {}
 
     StatusCategory category = StatusCategory::NONE;
-    int code = 0;
+    StatusCode code{};
     std::string msg;
   };
 
@@ -92,5 +94,4 @@ inline std::ostream& operator<<(std::ostream& out, const Status& status) {
   return out << status.ToString();
 }
 
-} // namespace Common
-} // namespace ONNX_NAMESPACE
+} // namespace ONNX_NAMESPACE::Common

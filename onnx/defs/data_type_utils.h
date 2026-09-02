@@ -1,14 +1,13 @@
-/*
- * SPDX-License-Identifier: Apache-2.0
- */
+// Copyright (c) ONNX Project Contributors
+//
+// SPDX-License-Identifier: Apache-2.0
 
-#ifndef ONNX_DATA_TYPE_UTILS_H
-#define ONNX_DATA_TYPE_UTILS_H
+#ifndef ONNX_DEFS_DATA_TYPE_UTILS_H_
+#define ONNX_DEFS_DATA_TYPE_UTILS_H_
 
 #include <mutex>
 #include <string>
 #include <unordered_map>
-#include <unordered_set>
 
 #include "onnx/common/common.h"
 #include "onnx/onnx_pb.h"
@@ -53,7 +52,7 @@ class DataTypeUtils final {
  private:
   static void FromString(const std::string& type_str, TypeProto& type_proto);
 
-  static void FromDataTypeString(const std::string& type_str, int32_t& tensor_data_type);
+  static int32_t FromDataTypeString(const std::string& type_str);
 
   static std::string ToString(const TypeProto& type_proto, const std::string& left = "", const std::string& right = "");
 
@@ -70,4 +69,4 @@ class DataTypeUtils final {
 } // namespace Utils
 } // namespace ONNX_NAMESPACE
 
-#endif // ! ONNX_DATA_TYPE_UTILS_H
+#endif // ONNX_DEFS_DATA_TYPE_UTILS_H_

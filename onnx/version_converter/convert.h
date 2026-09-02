@@ -1,14 +1,14 @@
 // Copyright (c) ONNX Project Contributors
-
-/*
- * SPDX-License-Identifier: Apache-2.0
- */
+//
+// SPDX-License-Identifier: Apache-2.0
 
 // Default converter for ONNX models between different opset versions
 // in the default domain ("" or "ai.onnx").
 
 #pragma once
 
+#include <algorithm>
+#include <iostream>
 #include <map>
 #include <memory>
 #include <string>
@@ -17,6 +17,8 @@
 #include <vector>
 
 #include "onnx/version_converter/BaseConverter.h"
+#include "onnx/version_converter/adapters/Attention_24_23.h"
+#include "onnx/version_converter/adapters/Attention_25_24.h"
 #include "onnx/version_converter/adapters/axes_attribute_to_input.h"
 #include "onnx/version_converter/adapters/axes_input_to_attribute.h"
 #include "onnx/version_converter/adapters/axis_attribute_to_input.h"
@@ -24,6 +26,7 @@
 #include "onnx/version_converter/adapters/batch_normalization_13_14.h"
 #include "onnx/version_converter/adapters/broadcast_backward_compatibility.h"
 #include "onnx/version_converter/adapters/broadcast_forward_compatibility.h"
+#include "onnx/version_converter/adapters/cast_28_27.h"
 #include "onnx/version_converter/adapters/cast_9_8.h"
 #include "onnx/version_converter/adapters/clip_10_11.h"
 #include "onnx/version_converter/adapters/compatible.h"
@@ -32,17 +35,27 @@
 #include "onnx/version_converter/adapters/gemm_6_7.h"
 #include "onnx/version_converter/adapters/gemm_7_6.h"
 #include "onnx/version_converter/adapters/gridsample_19_20.h"
+#include "onnx/version_converter/adapters/group_normalization_20_21.h"
 #include "onnx/version_converter/adapters/maxpool_8_7.h"
 #include "onnx/version_converter/adapters/no_previous_version.h"
+#include "onnx/version_converter/adapters/optional_ops.h"
 #include "onnx/version_converter/adapters/pad_10_11.h"
+#include "onnx/version_converter/adapters/q_dq_21_20.h"
+#include "onnx/version_converter/adapters/quantize_linear_28_27.h"
+#include "onnx/version_converter/adapters/range_27_26.h"
+#include "onnx/version_converter/adapters/reduce_log_sum_27_28.h"
 #include "onnx/version_converter/adapters/reshape_4_5.h"
 #include "onnx/version_converter/adapters/reshape_5_4.h"
 #include "onnx/version_converter/adapters/resize_10_11.h"
+#include "onnx/version_converter/adapters/resize_18_17.h"
 #include "onnx/version_converter/adapters/scan_8_9.h"
 #include "onnx/version_converter/adapters/scan_9_8.h"
 #include "onnx/version_converter/adapters/scatter_10_11.h"
+#include "onnx/version_converter/adapters/scatter_16_15.h"
+#include "onnx/version_converter/adapters/scatter_18_17.h"
 #include "onnx/version_converter/adapters/slice_9_10.h"
 #include "onnx/version_converter/adapters/softmax_12_13.h"
+#include "onnx/version_converter/adapters/softmax_13_12.h"
 #include "onnx/version_converter/adapters/split_12_13.h"
 #include "onnx/version_converter/adapters/split_13_12.h"
 #include "onnx/version_converter/adapters/split_17_18.h"
@@ -55,8 +68,7 @@
 #include "onnx/version_converter/adapters/upsample_9_10.h"
 #include "onnx/version_converter/adapters/upsample_9_8.h"
 
-namespace ONNX_NAMESPACE {
-namespace version_conversion {
+namespace ONNX_NAMESPACE::version_conversion {
 
 class DefaultVersionConverter : public BaseVersionConverter {
  private:
@@ -77,26 +89,30 @@ class DefaultVersionConverter : public BaseVersionConverter {
 
   void debug(const std::string& str) const {
     if (DEBUG)
-      std::cerr << str << std::endl;
+      std::cerr << str << '\n';
   }
 
   void assertInVersionRange(int64_t version) const {
     ONNX_ASSERTM(
         version >= version_range.first && version <= version_range.second,
-        "Warning: invalid version (must be between %d and %d)",
+        "Warning: invalid version (must be between ",
         version_range.first,
-        version_range.second);
+        " and ",
+        version_range.second,
+        ")")
   }
 
   void assertDefaultDomain(const std::string& initial_domain, const std::string& target_domain) const {
     ONNX_ASSERTM(
-        (initial_domain == "" || initial_domain == "ai.onnx") && (target_domain == "" || target_domain == "ai.onnx"),
+        (initial_domain.empty() || initial_domain == "ai.onnx") &&
+            (target_domain.empty() || target_domain == "ai.onnx"),
         "Warning: default onnx version converter can only convert "
-        " between default domain opset versions ('' or 'ai.onnx')\n");
-    ONNX_ASSERTM(initial_domain == target_domain, "initial_version and target_version must have the same domains");
+        " between default domain opset versions ('' or 'ai.onnx')\n")
+    ONNX_ASSERTM(initial_domain == target_domain, "initial_version and target_version must have the same domains")
   }
 
-  void convert_graph(std::shared_ptr<Graph> g, const OpSetID& initial_version, const OpSetID& target_version) const;
+  void convert_graph(const std::shared_ptr<Graph>& g, const OpSetID& initial_version, const OpSetID& target_version)
+      const;
 
  public:
   DefaultVersionConverter() {
@@ -107,22 +123,20 @@ class DefaultVersionConverter : public BaseVersionConverter {
     const std::vector<OpSchema> all_opschemas = OpSchemaRegistry::get_all_schemas_with_history();
 
     for (const OpSchema& schema : all_opschemas) {
-      all_schemas[schema.Name()][schema.domain()][(int64_t)schema.since_version()] = &schema;
+      all_schemas[schema.Name()][schema.domain()][schema.since_version()] = &schema;
     }
 
     // Iterate through all_schemas to determine NoPreviousVersionAdapters
-    for (auto& op_pair : all_schemas) {
-      const auto default_versions = op_pair.second.find("");
-      if (default_versions != op_pair.second.end()) {
+    for (auto& [op_name, domain_map] : all_schemas) {
+      const auto default_versions = domain_map.find("");
+      if (default_versions != domain_map.end()) {
         int64_t min_version = version_range.second;
-        for (auto& version_pair : default_versions->second) {
-          if (version_pair.first < min_version) {
-            min_version = version_pair.first;
-          }
+        for (auto& [version, _] : default_versions->second) {
+          min_version = std::min(version, min_version);
         }
         if (min_version > 1) {
-          registerAdapter(std::make_unique<NoPreviousVersionAdapter>(
-              op_pair.first, OpSetID(min_version), OpSetID(min_version - 1)));
+          registerAdapter(
+              std::make_unique<NoPreviousVersionAdapter>(op_name, OpSetID(min_version), OpSetID(min_version - 1)));
         }
       }
     }
@@ -489,6 +503,8 @@ class DefaultVersionConverter : public BaseVersionConverter {
     registerAdapter(std::make_unique<AxesInputToAttribute>("Squeeze", OpSetID(13), OpSetID(12)));
     registerAdapter(std::make_unique<AxesInputToAttribute>("Unsqueeze", OpSetID(13), OpSetID(12)));
     registerAdapter(std::make_unique<Split_13_12>());
+    registerAdapter(std::make_unique<Softmax_13_12>("Softmax"));
+    registerAdapter(std::make_unique<Softmax_13_12>("LogSoftmax"));
 
     /******** 13 -> 14 ********/
     registerAdapter(std::make_unique<CompatibleAdapter>("Add", OpSetID(13), OpSetID(14)));
@@ -528,6 +544,18 @@ class DefaultVersionConverter : public BaseVersionConverter {
     registerAdapter(std::make_unique<CompatibleAdapter>("LeakyRelu", OpSetID(15), OpSetID(16)));
     registerAdapter(std::make_unique<CompatibleAdapter>("PRelu", OpSetID(15), OpSetID(16)));
 
+    /******** 16 -> 15 ********/
+    const std::vector<TensorProto_DataType> bfloat16_not_allowed = {TensorProto_DataType_BFLOAT16};
+    registerAdapter(std::make_unique<TypeRestriction>("Where", OpSetID(16), OpSetID(15), bfloat16_not_allowed));
+    registerAdapter(std::make_unique<Scatter_16_15>("ScatterElements", OpSetID(16), OpSetID(15), bfloat16_not_allowed));
+    registerAdapter(std::make_unique<Scatter_16_15>("ScatterND", OpSetID(16), OpSetID(15), bfloat16_not_allowed));
+    registerAdapter(std::make_unique<TypeRestriction>("Scan", OpSetID(16), OpSetID(15), bfloat16_not_allowed));
+    registerAdapter(std::make_unique<TypeRestriction>("LessOrEqual", OpSetID(16), OpSetID(15), bfloat16_not_allowed));
+    registerAdapter(
+        std::make_unique<TypeRestriction>("GreaterOrEqual", OpSetID(16), OpSetID(15), bfloat16_not_allowed));
+    registerAdapter(std::make_unique<TypeRestriction>("LeakyRelu", OpSetID(16), OpSetID(15), bfloat16_not_allowed));
+    registerAdapter(std::make_unique<TypeRestriction>("PRelu", OpSetID(16), OpSetID(15), bfloat16_not_allowed));
+
     /******** 17 -> 18 ********/
     registerAdapter(std::make_unique<CompatibleAdapter>("Pad", OpSetID(17), OpSetID(18)));
     registerAdapter(std::make_unique<CompatibleAdapter>("Resize", OpSetID(17), OpSetID(18)));
@@ -548,6 +576,12 @@ class DefaultVersionConverter : public BaseVersionConverter {
     registerAdapter(std::make_unique<AxesAttributeToInput>("ReduceSumSquare", OpSetID(17), OpSetID(18)));
 
     /******** 18 -> 17 ********/
+    registerAdapter(
+        std::make_unique<OptionalOpsAdapter>(
+            "OptionalGetElement", OpSetID(18), OpSetID(17), std::vector<TensorProto_DataType>{}, true, false));
+    registerAdapter(
+        std::make_unique<OptionalOpsAdapter>(
+            "OptionalHasElement", OpSetID(18), OpSetID(17), std::vector<TensorProto_DataType>{}, true, false));
     registerAdapter(std::make_unique<AxesInputToAttribute>("ReduceL1", OpSetID(18), OpSetID(17)));
     registerAdapter(std::make_unique<AxesInputToAttribute>("ReduceL2", OpSetID(18), OpSetID(17)));
     registerAdapter(std::make_unique<AxesInputToAttribute>("ReduceLogSum", OpSetID(18), OpSetID(17)));
@@ -557,6 +591,9 @@ class DefaultVersionConverter : public BaseVersionConverter {
     registerAdapter(std::make_unique<AxesInputToAttribute>("ReduceMin", OpSetID(18), OpSetID(17)));
     registerAdapter(std::make_unique<AxesInputToAttribute>("ReduceProd", OpSetID(18), OpSetID(17)));
     registerAdapter(std::make_unique<AxesInputToAttribute>("ReduceSumSquare", OpSetID(18), OpSetID(17)));
+    registerAdapter(std::make_unique<Resize_18_17>());
+    registerAdapter(std::make_unique<Scatter_18_17>("ScatterElements"));
+    registerAdapter(std::make_unique<Scatter_18_17>("ScatterND"));
 
     /******** 18 -> 19 ********/
     registerAdapter(std::make_unique<CompatibleAdapter>("Equal", OpSetID(18), OpSetID(19)));
@@ -576,6 +613,34 @@ class DefaultVersionConverter : public BaseVersionConverter {
     registerAdapter(std::make_unique<CompatibleAdapter>("Shape", OpSetID(18), OpSetID(19)));
     registerAdapter(std::make_unique<CompatibleAdapter>("Size", OpSetID(18), OpSetID(19)));
 
+    /******** 19 -> 18 ********/
+    const std::vector<TensorProto_DataType> float8_unallowed_types = {
+        TensorProto_DataType_FLOAT8E4M3FN,
+        TensorProto_DataType_FLOAT8E4M3FNUZ,
+        TensorProto_DataType_FLOAT8E5M2,
+        TensorProto_DataType_FLOAT8E5M2FNUZ};
+    const std::vector<TensorProto_DataType> string_unallowed_types = {TensorProto_DataType_STRING};
+    // Opset 19 introduced float8 support across a number of ops. When downgrading
+    // to 18 we must reject models that actually use those new element types.
+    registerAdapter(std::make_unique<CompatibleAdapter>("AveragePool", OpSetID(19), OpSetID(18)));
+    registerAdapter(std::make_unique<TypeRestriction>("Constant", OpSetID(19), OpSetID(18), float8_unallowed_types));
+    registerAdapter(std::make_unique<TypeRestriction>("Cast", OpSetID(19), OpSetID(18), float8_unallowed_types));
+    registerAdapter(std::make_unique<TypeRestriction>("CastLike", OpSetID(19), OpSetID(18), float8_unallowed_types));
+    registerAdapter(
+        std::make_unique<TypeRestriction>("DequantizeLinear", OpSetID(19), OpSetID(18), float8_unallowed_types));
+    registerAdapter(
+        std::make_unique<TypeRestriction>("QuantizeLinear", OpSetID(19), OpSetID(18), float8_unallowed_types));
+    registerAdapter(std::make_unique<TypeRestriction>("Equal", OpSetID(19), OpSetID(18), string_unallowed_types));
+    registerAdapter(std::make_unique<TypeRestriction>("Identity", OpSetID(19), OpSetID(18), float8_unallowed_types));
+    registerAdapter(std::make_unique<TypeRestriction>("If", OpSetID(19), OpSetID(18), float8_unallowed_types));
+    registerAdapter(std::make_unique<TypeRestriction>("Loop", OpSetID(19), OpSetID(18), float8_unallowed_types));
+    registerAdapter(std::make_unique<CompatibleAdapter>("Pad", OpSetID(19), OpSetID(18)));
+    registerAdapter(std::make_unique<TypeRestriction>("Reshape", OpSetID(19), OpSetID(18), float8_unallowed_types));
+    registerAdapter(std::make_unique<CompatibleAdapter>("Resize", OpSetID(19), OpSetID(18)));
+    registerAdapter(std::make_unique<TypeRestriction>("Scan", OpSetID(19), OpSetID(18), float8_unallowed_types));
+    registerAdapter(std::make_unique<TypeRestriction>("Shape", OpSetID(19), OpSetID(18), float8_unallowed_types));
+    registerAdapter(std::make_unique<TypeRestriction>("Size", OpSetID(19), OpSetID(18), float8_unallowed_types));
+
     /******** 19 -> 20 ********/
     registerAdapter(std::make_unique<AxisAttributeToInput>("DFT", OpSetID(19), OpSetID(20), 2, 1));
     registerAdapter(std::make_unique<CompatibleAdapter>("ConstantOfShape", OpSetID(19), OpSetID(20)));
@@ -591,7 +656,7 @@ class DefaultVersionConverter : public BaseVersionConverter {
         TensorProto_DataType_FLOAT8E4M3FNUZ,
         TensorProto_DataType_FLOAT8E5M2,
         TensorProto_DataType_FLOAT8E5M2FNUZ};
-    registerAdapter(std::make_unique<TypeRestriction>("IsNaN", OpSetID(19), OpSetID(20), is_nan_13_unallowed_types));
+    registerAdapter(std::make_unique<TypeRestriction>("IsNaN", OpSetID(20), OpSetID(19), is_nan_13_unallowed_types));
     const std::vector<TensorProto_DataType> is_inf_10_unallowed_types = {
         TensorProto_DataType_FLOAT16,
         TensorProto_DataType_BFLOAT16,
@@ -599,19 +664,448 @@ class DefaultVersionConverter : public BaseVersionConverter {
         TensorProto_DataType_FLOAT8E4M3FNUZ,
         TensorProto_DataType_FLOAT8E5M2,
         TensorProto_DataType_FLOAT8E5M2FNUZ};
-    registerAdapter(std::make_unique<TypeRestriction>("IsInf", OpSetID(19), OpSetID(20), is_inf_10_unallowed_types));
+    registerAdapter(std::make_unique<TypeRestriction>("IsInf", OpSetID(20), OpSetID(19), is_inf_10_unallowed_types));
     registerAdapter(std::make_unique<AxisInputToAttribute>("DFT", OpSetID(20), OpSetID(19), 2, -2));
     const std::vector<TensorProto_DataType> reduce_min_max_18_unallowed_types = {TensorProto_DataType_BOOL};
     registerAdapter(
         std::make_unique<TypeRestriction>("ReduceMax", OpSetID(20), OpSetID(19), reduce_min_max_18_unallowed_types));
     registerAdapter(
         std::make_unique<TypeRestriction>("ReduceMin", OpSetID(20), OpSetID(19), reduce_min_max_18_unallowed_types));
+
+    /******** 20 -> 21 ********/
+    registerAdapter(std::make_unique<CompatibleAdapter>("Cast", OpSetID(20), OpSetID(21)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("CastLike", OpSetID(20), OpSetID(21)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("Constant", OpSetID(20), OpSetID(21)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("ConstantOfShape", OpSetID(20), OpSetID(21)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("DequantizeLinear", OpSetID(20), OpSetID(21)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("Flatten", OpSetID(20), OpSetID(21)));
+    registerAdapter(std::make_unique<GroupNormalization_20_21>());
+    registerAdapter(std::make_unique<CompatibleAdapter>("Identity", OpSetID(20), OpSetID(21)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("If", OpSetID(20), OpSetID(21)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("Loop", OpSetID(20), OpSetID(21)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("Pad", OpSetID(20), OpSetID(21)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("QLinearMatMul", OpSetID(20), OpSetID(21)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("QuantizeLinear", OpSetID(20), OpSetID(21)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("Reshape", OpSetID(20), OpSetID(21)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("Scan", OpSetID(20), OpSetID(21)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("Shape", OpSetID(20), OpSetID(21)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("Size", OpSetID(20), OpSetID(21)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("Squeeze", OpSetID(20), OpSetID(21)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("Transpose", OpSetID(20), OpSetID(21)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("Unsqueeze", OpSetID(20), OpSetID(21)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("GroupNormalization", OpSetID(20), OpSetID(21)));
+
+    /******** 21 -> 20 ********/
+    const std::vector<TensorProto_DataType> q_dqmm_20_unallowed_types = {
+        TensorProto_DataType_BFLOAT16,
+        TensorProto_DataType_FLOAT16,
+        TensorProto_DataType_UINT4,
+        TensorProto_DataType_INT4};
+    const std::vector<TensorProto_DataType> ir10_types_not_in_ir9 = {
+        TensorProto_DataType_UINT4, TensorProto_DataType_INT4};
+    const std::vector<TensorProto_DataType> ir10_types_not_in_ir4 = {
+        TensorProto_DataType_FLOAT8E4M3FN,
+        TensorProto_DataType_FLOAT8E4M3FNUZ,
+        TensorProto_DataType_FLOAT8E5M2,
+        TensorProto_DataType_FLOAT8E5M2FNUZ,
+        TensorProto_DataType_UINT4,
+        TensorProto_DataType_INT4};
+
+    registerAdapter(std::make_unique<TypeRestriction>("Cast", OpSetID(21), OpSetID(20), ir10_types_not_in_ir9));
+    registerAdapter(std::make_unique<TypeRestriction>("CastLike", OpSetID(21), OpSetID(20), ir10_types_not_in_ir9));
+    registerAdapter(std::make_unique<TypeRestriction>("Constant", OpSetID(21), OpSetID(20), ir10_types_not_in_ir9));
+    registerAdapter(
+        std::make_unique<TypeRestriction>("ConstantOfShape", OpSetID(21), OpSetID(20), ir10_types_not_in_ir9));
+    registerAdapter(std::make_unique<DequantizeLinear_21_20>());
+    registerAdapter(std::make_unique<TypeRestriction>("Flatten", OpSetID(21), OpSetID(20), ir10_types_not_in_ir4));
+    registerAdapter(std::make_unique<TypeRestriction>("Identity", OpSetID(21), OpSetID(20), ir10_types_not_in_ir9));
+    registerAdapter(std::make_unique<TypeRestriction>("If", OpSetID(21), OpSetID(20), ir10_types_not_in_ir9));
+    registerAdapter(std::make_unique<TypeRestriction>("Loop", OpSetID(21), OpSetID(20), ir10_types_not_in_ir9));
+    registerAdapter(std::make_unique<TypeRestriction>("Pad", OpSetID(21), OpSetID(20), ir10_types_not_in_ir4));
+    registerAdapter(
+        std::make_unique<TypeRestriction>("QLinearMatMul", OpSetID(21), OpSetID(20), q_dqmm_20_unallowed_types));
+    registerAdapter(std::make_unique<QuantizeLinear_21_20>());
+    registerAdapter(std::make_unique<TypeRestriction>("Reshape", OpSetID(21), OpSetID(20), ir10_types_not_in_ir9));
+    registerAdapter(std::make_unique<TypeRestriction>("Scan", OpSetID(21), OpSetID(20), ir10_types_not_in_ir9));
+    registerAdapter(std::make_unique<TypeRestriction>("Shape", OpSetID(21), OpSetID(20), ir10_types_not_in_ir9));
+    registerAdapter(std::make_unique<TypeRestriction>("Size", OpSetID(21), OpSetID(20), ir10_types_not_in_ir9));
+    registerAdapter(std::make_unique<TypeRestriction>("Squeeze", OpSetID(21), OpSetID(20), ir10_types_not_in_ir4));
+    registerAdapter(std::make_unique<TypeRestriction>("Transpose", OpSetID(21), OpSetID(20), ir10_types_not_in_ir9));
+    registerAdapter(std::make_unique<TypeRestriction>("Unsqueeze", OpSetID(21), OpSetID(20), ir10_types_not_in_ir4));
+
+    /******** 21 -> 22 ********/
+    registerAdapter(std::make_unique<CompatibleAdapter>("EyeLike", OpSetID(21), OpSetID(22)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("RandomUniform", OpSetID(21), OpSetID(22)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("RandomNormal", OpSetID(21), OpSetID(22)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("RandomUniformLike", OpSetID(21), OpSetID(22)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("RandomNormalLike", OpSetID(21), OpSetID(22)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("Multinomial", OpSetID(21), OpSetID(22)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("Bernoulli", OpSetID(21), OpSetID(22)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("ThresholdedRelu", OpSetID(21), OpSetID(22)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("Selu", OpSetID(21), OpSetID(22)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("Elu", OpSetID(21), OpSetID(22)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("Mish", OpSetID(21), OpSetID(22)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("HardSigmoid", OpSetID(21), OpSetID(22)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("HardSwish", OpSetID(21), OpSetID(22)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("Softsign", OpSetID(21), OpSetID(22)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("Softplus", OpSetID(21), OpSetID(22)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("Sin", OpSetID(21), OpSetID(22)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("Cos", OpSetID(21), OpSetID(22)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("Tan", OpSetID(21), OpSetID(22)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("Asin", OpSetID(21), OpSetID(22)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("Acos", OpSetID(21), OpSetID(22)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("Atan", OpSetID(21), OpSetID(22)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("Sinh", OpSetID(21), OpSetID(22)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("Cosh", OpSetID(21), OpSetID(22)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("Asinh", OpSetID(21), OpSetID(22)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("Acosh", OpSetID(21), OpSetID(22)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("Atanh", OpSetID(21), OpSetID(22)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("Round", OpSetID(21), OpSetID(22)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("Det", OpSetID(21), OpSetID(22)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("NegativeLogLikelihoodLoss", OpSetID(21), OpSetID(22)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("AveragePool", OpSetID(21), OpSetID(22)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("MaxPool", OpSetID(21), OpSetID(22)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("MaxUnpool", OpSetID(21), OpSetID(22)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("LpPool", OpSetID(21), OpSetID(22)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("MaxRoiPool", OpSetID(21), OpSetID(22)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("Conv", OpSetID(21), OpSetID(22)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("ConvTranspose", OpSetID(21), OpSetID(22)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("DeformConv", OpSetID(21), OpSetID(22)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("GlobalAveragePool", OpSetID(21), OpSetID(22)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("GlobalMaxPool", OpSetID(21), OpSetID(22)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("GlobalLpPool", OpSetID(21), OpSetID(22)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("InstanceNormalization", OpSetID(21), OpSetID(22)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("LpNormalization", OpSetID(21), OpSetID(22)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("Dropout", OpSetID(21), OpSetID(22)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("RoiAlign", OpSetID(21), OpSetID(22)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("RNN", OpSetID(21), OpSetID(22)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("GRU", OpSetID(21), OpSetID(22)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("LSTM", OpSetID(21), OpSetID(22)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("GridSample", OpSetID(21), OpSetID(22)));
+
+    /******** 22 -> 21 ********/
+    registerAdapter(std::make_unique<TypeRestriction>("EyeLike", OpSetID(22), OpSetID(21), bfloat16_not_allowed));
+    registerAdapter(std::make_unique<TypeRestriction>("AveragePool", OpSetID(22), OpSetID(21), bfloat16_not_allowed));
+    registerAdapter(std::make_unique<TypeRestriction>("MaxPool", OpSetID(22), OpSetID(21), bfloat16_not_allowed));
+    registerAdapter(std::make_unique<TypeRestriction>("RandomUniform", OpSetID(22), OpSetID(21), bfloat16_not_allowed));
+    registerAdapter(std::make_unique<TypeRestriction>("RandomNormal", OpSetID(22), OpSetID(21), bfloat16_not_allowed));
+    registerAdapter(
+        std::make_unique<TypeRestriction>("RandomNormalLike", OpSetID(22), OpSetID(21), bfloat16_not_allowed));
+    registerAdapter(
+        std::make_unique<TypeRestriction>("RandomUniformLike", OpSetID(22), OpSetID(21), bfloat16_not_allowed));
+    registerAdapter(std::make_unique<TypeRestriction>("Multinomial", OpSetID(22), OpSetID(21), bfloat16_not_allowed));
+    registerAdapter(std::make_unique<TypeRestriction>("Bernoulli", OpSetID(22), OpSetID(21), bfloat16_not_allowed));
+    registerAdapter(
+        std::make_unique<TypeRestriction>("ThresholdedRelu", OpSetID(22), OpSetID(21), bfloat16_not_allowed));
+    registerAdapter(std::make_unique<TypeRestriction>("Selu", OpSetID(22), OpSetID(21), bfloat16_not_allowed));
+    registerAdapter(std::make_unique<TypeRestriction>("Elu", OpSetID(22), OpSetID(21), bfloat16_not_allowed));
+    registerAdapter(std::make_unique<TypeRestriction>("Mish", OpSetID(22), OpSetID(21), bfloat16_not_allowed));
+    registerAdapter(std::make_unique<TypeRestriction>("HardSigmoid", OpSetID(22), OpSetID(21), bfloat16_not_allowed));
+    registerAdapter(std::make_unique<TypeRestriction>("HardSwish", OpSetID(22), OpSetID(21), bfloat16_not_allowed));
+    registerAdapter(std::make_unique<TypeRestriction>("Softsign", OpSetID(22), OpSetID(21), bfloat16_not_allowed));
+    registerAdapter(std::make_unique<TypeRestriction>("Softplus", OpSetID(22), OpSetID(21), bfloat16_not_allowed));
+    registerAdapter(std::make_unique<TypeRestriction>("Sin", OpSetID(22), OpSetID(21), bfloat16_not_allowed));
+    registerAdapter(std::make_unique<TypeRestriction>("Cos", OpSetID(22), OpSetID(21), bfloat16_not_allowed));
+    registerAdapter(std::make_unique<TypeRestriction>("Tan", OpSetID(22), OpSetID(21), bfloat16_not_allowed));
+    registerAdapter(std::make_unique<TypeRestriction>("Asin", OpSetID(22), OpSetID(21), bfloat16_not_allowed));
+    registerAdapter(std::make_unique<TypeRestriction>("Acos", OpSetID(22), OpSetID(21), bfloat16_not_allowed));
+    registerAdapter(std::make_unique<TypeRestriction>("Atan", OpSetID(22), OpSetID(21), bfloat16_not_allowed));
+    registerAdapter(std::make_unique<TypeRestriction>("Sinh", OpSetID(22), OpSetID(21), bfloat16_not_allowed));
+    registerAdapter(std::make_unique<TypeRestriction>("Cosh", OpSetID(22), OpSetID(21), bfloat16_not_allowed));
+    registerAdapter(std::make_unique<TypeRestriction>("Asinh", OpSetID(22), OpSetID(21), bfloat16_not_allowed));
+    registerAdapter(std::make_unique<TypeRestriction>("Acosh", OpSetID(22), OpSetID(21), bfloat16_not_allowed));
+    registerAdapter(std::make_unique<TypeRestriction>("Atanh", OpSetID(22), OpSetID(21), bfloat16_not_allowed));
+    registerAdapter(std::make_unique<TypeRestriction>("Round", OpSetID(22), OpSetID(21), bfloat16_not_allowed));
+    registerAdapter(std::make_unique<TypeRestriction>("Det", OpSetID(22), OpSetID(21), bfloat16_not_allowed));
+    registerAdapter(
+        std::make_unique<TypeRestriction>("NegativeLogLikelihoodLoss", OpSetID(22), OpSetID(21), bfloat16_not_allowed));
+    registerAdapter(std::make_unique<TypeRestriction>("MaxUnpool", OpSetID(22), OpSetID(21), bfloat16_not_allowed));
+    registerAdapter(std::make_unique<TypeRestriction>("LpPool", OpSetID(22), OpSetID(21), bfloat16_not_allowed));
+    registerAdapter(std::make_unique<TypeRestriction>("MaxRoiPool", OpSetID(22), OpSetID(21), bfloat16_not_allowed));
+    registerAdapter(std::make_unique<TypeRestriction>("Conv", OpSetID(22), OpSetID(21), bfloat16_not_allowed));
+    registerAdapter(std::make_unique<TypeRestriction>("ConvTranspose", OpSetID(22), OpSetID(21), bfloat16_not_allowed));
+    registerAdapter(std::make_unique<TypeRestriction>("DeformConv", OpSetID(22), OpSetID(21), bfloat16_not_allowed));
+    registerAdapter(
+        std::make_unique<TypeRestriction>("GlobalAveragePool", OpSetID(22), OpSetID(21), bfloat16_not_allowed));
+    registerAdapter(std::make_unique<TypeRestriction>("GlobalLpPool", OpSetID(22), OpSetID(21), bfloat16_not_allowed));
+    registerAdapter(
+        std::make_unique<TypeRestriction>("InstanceNormalization", OpSetID(22), OpSetID(21), bfloat16_not_allowed));
+    registerAdapter(
+        std::make_unique<TypeRestriction>("LpNormalization", OpSetID(22), OpSetID(21), bfloat16_not_allowed));
+    registerAdapter(std::make_unique<TypeRestriction>("Dropout", OpSetID(22), OpSetID(21), bfloat16_not_allowed));
+    registerAdapter(std::make_unique<TypeRestriction>("RoiAlign", OpSetID(22), OpSetID(21), bfloat16_not_allowed));
+    registerAdapter(std::make_unique<TypeRestriction>("RNN", OpSetID(22), OpSetID(21), bfloat16_not_allowed));
+    registerAdapter(std::make_unique<TypeRestriction>("GRU", OpSetID(22), OpSetID(21), bfloat16_not_allowed));
+    registerAdapter(std::make_unique<TypeRestriction>("LSTM", OpSetID(22), OpSetID(21), bfloat16_not_allowed));
+    registerAdapter(std::make_unique<TypeRestriction>("GridSample", OpSetID(22), OpSetID(21), bfloat16_not_allowed));
+
+    /******** 22 -> 23 ********/
+    registerAdapter(std::make_unique<CompatibleAdapter>("Cast", OpSetID(22), OpSetID(23)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("CastLike", OpSetID(22), OpSetID(23)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("Constant", OpSetID(22), OpSetID(23)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("ConstantOfShape", OpSetID(22), OpSetID(23)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("DequantizeLinear", OpSetID(22), OpSetID(23)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("Flatten", OpSetID(22), OpSetID(23)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("Identity", OpSetID(22), OpSetID(23)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("If", OpSetID(22), OpSetID(23)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("Loop", OpSetID(22), OpSetID(23)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("Pad", OpSetID(22), OpSetID(23)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("QuantizeLinear", OpSetID(22), OpSetID(23)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("Reshape", OpSetID(22), OpSetID(23)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("Scan", OpSetID(22), OpSetID(23)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("Shape", OpSetID(22), OpSetID(23)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("Size", OpSetID(22), OpSetID(23)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("Squeeze", OpSetID(22), OpSetID(23)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("Transpose", OpSetID(22), OpSetID(23)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("Unsqueeze", OpSetID(22), OpSetID(23)));
+
+    /******** 23 -> 22 ********/
+    const std::vector<TensorProto_DataType> ir11_types_not_in_ir10 = {TensorProto_DataType_FLOAT4E2M1};
+    registerAdapter(std::make_unique<TypeRestriction>("Cast", OpSetID(23), OpSetID(22), ir11_types_not_in_ir10));
+    registerAdapter(std::make_unique<TypeRestriction>("CastLike", OpSetID(23), OpSetID(22), ir11_types_not_in_ir10));
+    registerAdapter(std::make_unique<TypeRestriction>("Constant", OpSetID(23), OpSetID(22), ir11_types_not_in_ir10));
+    registerAdapter(
+        std::make_unique<TypeRestriction>("ConstantOfShape", OpSetID(23), OpSetID(22), ir11_types_not_in_ir10));
+    registerAdapter(
+        std::make_unique<TypeRestriction>("DequantizeLinear", OpSetID(23), OpSetID(22), ir11_types_not_in_ir10));
+    registerAdapter(std::make_unique<TypeRestriction>("Flatten", OpSetID(23), OpSetID(22), ir11_types_not_in_ir10));
+    registerAdapter(std::make_unique<TypeRestriction>("Identity", OpSetID(23), OpSetID(22), ir11_types_not_in_ir10));
+    registerAdapter(std::make_unique<TypeRestriction>("If", OpSetID(23), OpSetID(22), ir11_types_not_in_ir10));
+    registerAdapter(std::make_unique<TypeRestriction>("Loop", OpSetID(23), OpSetID(22), ir11_types_not_in_ir10));
+    registerAdapter(std::make_unique<TypeRestriction>("Pad", OpSetID(23), OpSetID(22), ir11_types_not_in_ir10));
+    registerAdapter(
+        std::make_unique<TypeRestriction>("QuantizeLinear", OpSetID(23), OpSetID(22), ir11_types_not_in_ir10));
+    registerAdapter(std::make_unique<TypeRestriction>("Reshape", OpSetID(23), OpSetID(22), ir11_types_not_in_ir10));
+    registerAdapter(std::make_unique<TypeRestriction>("Scan", OpSetID(23), OpSetID(22), ir11_types_not_in_ir10));
+    registerAdapter(std::make_unique<TypeRestriction>("Shape", OpSetID(23), OpSetID(22), ir11_types_not_in_ir10));
+    registerAdapter(std::make_unique<TypeRestriction>("Size", OpSetID(23), OpSetID(22), ir11_types_not_in_ir10));
+    registerAdapter(std::make_unique<TypeRestriction>("Squeeze", OpSetID(23), OpSetID(22), ir11_types_not_in_ir10));
+    registerAdapter(std::make_unique<TypeRestriction>("Transpose", OpSetID(23), OpSetID(22), ir11_types_not_in_ir10));
+    registerAdapter(std::make_unique<TypeRestriction>("Unsqueeze", OpSetID(23), OpSetID(22), ir11_types_not_in_ir10));
+
+    /******** 23 -> 24 ********/
+    registerAdapter(std::make_unique<CompatibleAdapter>("Attention", OpSetID(23), OpSetID(24)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("Cast", OpSetID(23), OpSetID(24)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("CastLike", OpSetID(23), OpSetID(24)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("Constant", OpSetID(23), OpSetID(24)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("ConstantOfShape", OpSetID(23), OpSetID(24)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("DequantizeLinear", OpSetID(23), OpSetID(24)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("Flatten", OpSetID(23), OpSetID(24)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("Identity", OpSetID(23), OpSetID(24)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("If", OpSetID(23), OpSetID(24)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("Loop", OpSetID(23), OpSetID(24)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("Pad", OpSetID(23), OpSetID(24)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("QuantizeLinear", OpSetID(23), OpSetID(24)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("Reshape", OpSetID(23), OpSetID(24)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("Scan", OpSetID(23), OpSetID(24)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("Shape", OpSetID(23), OpSetID(24)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("Size", OpSetID(23), OpSetID(24)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("Squeeze", OpSetID(23), OpSetID(24)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("Transpose", OpSetID(23), OpSetID(24)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("Unsqueeze", OpSetID(23), OpSetID(24)));
+
+    // TopK and SplitToSequence 23=>24 update adds bfloat16 support
+    registerAdapter(std::make_unique<CompatibleAdapter>("TopK", OpSetID(23), OpSetID(24)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("SplitToSequence", OpSetID(23), OpSetID(24)));
+
+    /******** 24 -> 23 ********/
+    registerAdapter(std::make_unique<Attention_24_23>());
+    const std::vector<TensorProto_DataType> ir12_types_not_in_ir11 = {TensorProto_DataType_FLOAT8E8M0};
+    registerAdapter(std::make_unique<TypeRestriction>("Cast", OpSetID(24), OpSetID(23), ir12_types_not_in_ir11));
+    registerAdapter(std::make_unique<TypeRestriction>("CastLike", OpSetID(24), OpSetID(23), ir12_types_not_in_ir11));
+    registerAdapter(std::make_unique<TypeRestriction>("Constant", OpSetID(24), OpSetID(23), ir12_types_not_in_ir11));
+    registerAdapter(
+        std::make_unique<TypeRestriction>("ConstantOfShape", OpSetID(24), OpSetID(23), ir12_types_not_in_ir11));
+    registerAdapter(
+        std::make_unique<TypeRestriction>("DequantizeLinear", OpSetID(24), OpSetID(23), ir12_types_not_in_ir11));
+    registerAdapter(std::make_unique<TypeRestriction>("Flatten", OpSetID(24), OpSetID(23), ir12_types_not_in_ir11));
+    registerAdapter(std::make_unique<TypeRestriction>("Identity", OpSetID(24), OpSetID(23), ir12_types_not_in_ir11));
+    registerAdapter(std::make_unique<TypeRestriction>("If", OpSetID(24), OpSetID(23), ir12_types_not_in_ir11));
+    registerAdapter(std::make_unique<TypeRestriction>("Loop", OpSetID(24), OpSetID(23), ir12_types_not_in_ir11));
+    registerAdapter(std::make_unique<TypeRestriction>("Pad", OpSetID(24), OpSetID(23), ir12_types_not_in_ir11));
+    registerAdapter(
+        std::make_unique<TypeRestriction>("QuantizeLinear", OpSetID(24), OpSetID(23), ir12_types_not_in_ir11));
+    registerAdapter(std::make_unique<TypeRestriction>("Reshape", OpSetID(24), OpSetID(23), ir12_types_not_in_ir11));
+    registerAdapter(std::make_unique<TypeRestriction>("Scan", OpSetID(24), OpSetID(23), ir12_types_not_in_ir11));
+    registerAdapter(std::make_unique<TypeRestriction>("Shape", OpSetID(24), OpSetID(23), ir12_types_not_in_ir11));
+    registerAdapter(std::make_unique<TypeRestriction>("Size", OpSetID(24), OpSetID(23), ir12_types_not_in_ir11));
+    registerAdapter(std::make_unique<TypeRestriction>("Squeeze", OpSetID(24), OpSetID(23), ir12_types_not_in_ir11));
+    registerAdapter(std::make_unique<TypeRestriction>("Transpose", OpSetID(24), OpSetID(23), ir12_types_not_in_ir11));
+    registerAdapter(std::make_unique<TypeRestriction>("Unsqueeze", OpSetID(24), OpSetID(23), ir12_types_not_in_ir11));
+
+    registerAdapter(std::make_unique<TypeRestriction>("TopK", OpSetID(24), OpSetID(23), bfloat16_not_allowed));
+    registerAdapter(
+        std::make_unique<TypeRestriction>("SplitToSequence", OpSetID(24), OpSetID(23), bfloat16_not_allowed));
+
+    /******** 24 -> 25 ********/
+    registerAdapter(std::make_unique<CompatibleAdapter>("Attention", OpSetID(24), OpSetID(25)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("Cast", OpSetID(24), OpSetID(25)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("CastLike", OpSetID(24), OpSetID(25)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("Constant", OpSetID(24), OpSetID(25)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("ConstantOfShape", OpSetID(24), OpSetID(25)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("DequantizeLinear", OpSetID(24), OpSetID(25)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("Flatten", OpSetID(24), OpSetID(25)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("Identity", OpSetID(24), OpSetID(25)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("Reshape", OpSetID(24), OpSetID(25)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("Shape", OpSetID(24), OpSetID(25)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("Size", OpSetID(24), OpSetID(25)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("If", OpSetID(24), OpSetID(25)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("Loop", OpSetID(24), OpSetID(25)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("Scan", OpSetID(24), OpSetID(25)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("Pad", OpSetID(24), OpSetID(25)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("Squeeze", OpSetID(24), OpSetID(25)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("Transpose", OpSetID(24), OpSetID(25)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("Unsqueeze", OpSetID(24), OpSetID(25)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("QuantizeLinear", OpSetID(24), OpSetID(25)));
+
+    /******** 25 -> 24 ********/
+    registerAdapter(std::make_unique<Attention_25_24>());
+    const std::vector<TensorProto_DataType> ir13_types_not_in_ir12 = {
+        TensorProto_DataType_UINT2, TensorProto_DataType_INT2};
+    registerAdapter(std::make_unique<TypeRestriction>("Cast", OpSetID(25), OpSetID(24), ir13_types_not_in_ir12));
+    registerAdapter(std::make_unique<TypeRestriction>("CastLike", OpSetID(25), OpSetID(24), ir13_types_not_in_ir12));
+    registerAdapter(std::make_unique<TypeRestriction>("Constant", OpSetID(25), OpSetID(24), ir13_types_not_in_ir12));
+    registerAdapter(
+        std::make_unique<TypeRestriction>("ConstantOfShape", OpSetID(25), OpSetID(24), ir13_types_not_in_ir12));
+    registerAdapter(
+        std::make_unique<TypeRestriction>("DequantizeLinear", OpSetID(25), OpSetID(24), ir13_types_not_in_ir12));
+    registerAdapter(std::make_unique<TypeRestriction>("Flatten", OpSetID(25), OpSetID(24), ir13_types_not_in_ir12));
+    registerAdapter(std::make_unique<TypeRestriction>("Identity", OpSetID(25), OpSetID(24), ir13_types_not_in_ir12));
+    registerAdapter(std::make_unique<TypeRestriction>("Reshape", OpSetID(25), OpSetID(24), ir13_types_not_in_ir12));
+    registerAdapter(std::make_unique<TypeRestriction>("Shape", OpSetID(25), OpSetID(24), ir13_types_not_in_ir12));
+    registerAdapter(std::make_unique<TypeRestriction>("Size", OpSetID(25), OpSetID(24), ir13_types_not_in_ir12));
+    registerAdapter(std::make_unique<TypeRestriction>("If", OpSetID(25), OpSetID(24), ir13_types_not_in_ir12));
+    registerAdapter(std::make_unique<TypeRestriction>("Loop", OpSetID(25), OpSetID(24), ir13_types_not_in_ir12));
+    registerAdapter(std::make_unique<TypeRestriction>("Scan", OpSetID(25), OpSetID(24), ir13_types_not_in_ir12));
+    registerAdapter(std::make_unique<TypeRestriction>("Pad", OpSetID(25), OpSetID(24), ir13_types_not_in_ir12));
+    registerAdapter(std::make_unique<TypeRestriction>("Squeeze", OpSetID(25), OpSetID(24), ir13_types_not_in_ir12));
+    registerAdapter(std::make_unique<TypeRestriction>("Transpose", OpSetID(25), OpSetID(24), ir13_types_not_in_ir12));
+    registerAdapter(std::make_unique<TypeRestriction>("Unsqueeze", OpSetID(25), OpSetID(24), ir13_types_not_in_ir12));
+    registerAdapter(
+        std::make_unique<TypeRestriction>("QuantizeLinear", OpSetID(25), OpSetID(24), ir13_types_not_in_ir12));
+
+    /******** 26 -> 27 ********/
+    registerAdapter(std::make_unique<CompatibleAdapter>("Range", OpSetID(26), OpSetID(27)));
+
+    /******** 27 -> 26 ********/
+    // Range v27 added FLOAT16/BFLOAT16 and stash_type; Range v11 (opset 26) supports neither.
+    const std::vector<TensorProto_DataType> range_27_unallowed_types = {
+        TensorProto_DataType_FLOAT16, TensorProto_DataType_BFLOAT16};
+    registerAdapter(std::make_unique<Range_27_26>(range_27_unallowed_types));
+
+    /******** 27 -> 28 ********/
+    registerAdapter(std::make_unique<CompatibleAdapter>("BitShift", OpSetID(27), OpSetID(28)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("Celu", OpSetID(27), OpSetID(28)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("Optional", OpSetID(27), OpSetID(28)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("OptionalHasElement", OpSetID(27), OpSetID(28)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("OptionalGetElement", OpSetID(27), OpSetID(28)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("Einsum", OpSetID(27), OpSetID(28)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("Mod", OpSetID(27), OpSetID(28)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("DepthToSpace", OpSetID(27), OpSetID(28)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("SpaceToDepth", OpSetID(27), OpSetID(28)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("Compress", OpSetID(27), OpSetID(28)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("OneHot", OpSetID(27), OpSetID(28)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("ReverseSequence", OpSetID(27), OpSetID(28)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("Unique", OpSetID(27), OpSetID(28)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("Cast", OpSetID(27), OpSetID(28)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("QuantizeLinear", OpSetID(27), OpSetID(28)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("DequantizeLinear", OpSetID(27), OpSetID(28)));
+    // ReduceLogSum/ReduceLogSumExp v28 dropped integer support from T.
+    // Only the data input and the output carry T; the axes input is always int64.
+    const std::vector<TensorProto_DataType> reduce_log_sum_28_unallowed_types = {
+        TensorProto_DataType_UINT32,
+        TensorProto_DataType_UINT64,
+        TensorProto_DataType_INT32,
+        TensorProto_DataType_INT64};
+    registerAdapter(std::make_unique<ReduceLogSum_27_28>("ReduceLogSum", reduce_log_sum_28_unallowed_types));
+    registerAdapter(std::make_unique<ReduceLogSum_27_28>("ReduceLogSumExp", reduce_log_sum_28_unallowed_types));
+
+    /******** 28 -> 27 ********/
+    // BitShift v28 widened T with the signed integer types; BitShift v11 (opset 27) is unsigned only.
+    const std::vector<TensorProto_DataType> bitshift_28_unallowed_types = {
+        TensorProto_DataType_INT8, TensorProto_DataType_INT16, TensorProto_DataType_INT32, TensorProto_DataType_INT64};
+    registerAdapter(
+        std::make_unique<TypeRestriction>("BitShift", OpSetID(28), OpSetID(27), bitshift_28_unallowed_types));
+    // Celu v28 widened T to all_float_types_ir4(); Celu v12 (opset 27) supports only FLOAT.
+    const std::vector<TensorProto_DataType> celu_28_unallowed_types = {
+        TensorProto_DataType_FLOAT16, TensorProto_DataType_BFLOAT16, TensorProto_DataType_DOUBLE};
+    registerAdapter(std::make_unique<TypeRestriction>("Celu", OpSetID(28), OpSetID(27), celu_28_unallowed_types));
+    // Einsum v28 widened T to all_numeric_types_ir4(); Einsum v12 (opset 27) lacks BFLOAT16.
+    registerAdapter(std::make_unique<TypeRestriction>("Einsum", OpSetID(28), OpSetID(27), bfloat16_not_allowed));
+    const std::vector<TensorProto_DataType> mod_28_float_types = {
+        TensorProto_DataType_FLOAT16,
+        TensorProto_DataType_FLOAT,
+        TensorProto_DataType_DOUBLE,
+        TensorProto_DataType_BFLOAT16,
+        TensorProto_DataType_FLOAT8E4M3FN,
+        TensorProto_DataType_FLOAT8E4M3FNUZ,
+        TensorProto_DataType_FLOAT8E5M2,
+        TensorProto_DataType_FLOAT8E5M2FNUZ,
+        TensorProto_DataType_FLOAT4E2M1,
+        TensorProto_DataType_FLOAT8E8M0};
+    registerAdapter("Mod", 28, 27, [mod_28_float_types](const std::shared_ptr<Graph>& /*unused*/, Node* node) {
+      const Symbol fmod{"fmod"};
+      if (!node->hasAttribute(fmod) || node->i(fmod) == 0) {
+        const int input_type = node->input(0)->elemType();
+        ONNX_ASSERTM(
+            input_type != TensorProto_DataType_UNDEFINED,
+            "Mod with fmod=0 and unknown input type cannot be downgraded to opset 27. "
+            "Run shape inference or add value_info with the input type.")
+        ONNX_ASSERTM(
+            std::find(mod_28_float_types.begin(), mod_28_float_types.end(), input_type) == mod_28_float_types.end(),
+            "Mod with floating-point inputs and fmod=0 cannot be downgraded to opset 27.")
+      }
+      return node;
+    });
+
+    const std::vector<TensorProto_DataType> optionals_28_unallowed_types = {
+        TensorProto_DataType_BFLOAT16,
+        TensorProto_DataType_FLOAT8E4M3FN,
+        TensorProto_DataType_FLOAT8E4M3FNUZ,
+        TensorProto_DataType_FLOAT8E5M2,
+        TensorProto_DataType_FLOAT8E5M2FNUZ,
+        TensorProto_DataType_UINT4,
+        TensorProto_DataType_INT4,
+        TensorProto_DataType_FLOAT4E2M1,
+        TensorProto_DataType_FLOAT8E8M0,
+        TensorProto_DataType_UINT2,
+        TensorProto_DataType_INT2,
+        TensorProto_DataType_FLOAT6E2M3,
+        TensorProto_DataType_FLOAT6E3M2};
+
+    registerAdapter(
+        std::make_unique<OptionalOpsAdapter>(
+            "Optional", OpSetID(28), OpSetID(27), optionals_28_unallowed_types, false, true, true));
+    registerAdapter(
+        std::make_unique<OptionalOpsAdapter>(
+            "OptionalHasElement", OpSetID(28), OpSetID(27), optionals_28_unallowed_types, true, true, true));
+    registerAdapter(
+        std::make_unique<OptionalOpsAdapter>(
+            "OptionalGetElement", OpSetID(28), OpSetID(27), optionals_28_unallowed_types));
+    registerAdapter(std::make_unique<CompatibleAdapter>("DepthToSpace", OpSetID(28), OpSetID(27)));
+    registerAdapter("SpaceToDepth", 28, 27, RemoveAttribute(Symbol("mode"), std::string("DCR")));
+    // Compress, OneHot, ReverseSequence, Unique v28 added BFLOAT16 support.
+    registerAdapter(std::make_unique<TypeRestriction>("Compress", OpSetID(28), OpSetID(27), bfloat16_not_allowed));
+    registerAdapter(std::make_unique<TypeRestriction>("OneHot", OpSetID(28), OpSetID(27), bfloat16_not_allowed));
+    registerAdapter(
+        std::make_unique<TypeRestriction>("ReverseSequence", OpSetID(28), OpSetID(27), bfloat16_not_allowed));
+    registerAdapter(std::make_unique<TypeRestriction>("Unique", OpSetID(28), OpSetID(27), bfloat16_not_allowed));
+    // Cast/QuantizeLinear/DequantizeLinear v28 widened their type constraints to ir14 types;
+    // opset 27 (ir13) lacks FLOAT6E2M3/FLOAT6E3M2.
+    const std::vector<TensorProto_DataType> ir14_types_not_in_ir13 = {
+        TensorProto_DataType_FLOAT6E2M3, TensorProto_DataType_FLOAT6E3M2};
+    registerAdapter(std::make_unique<Cast_28_27>(ir14_types_not_in_ir13));
+    registerAdapter(std::make_unique<QuantizeLinear_28_27>(ir14_types_not_in_ir13));
+    registerAdapter(
+        std::make_unique<TypeRestriction>("DequantizeLinear", OpSetID(28), OpSetID(27), ir14_types_not_in_ir13));
+    // Downgrading needs no restriction: opset 27 accepts a superset of the v28 float-only types.
+    registerAdapter(std::make_unique<CompatibleAdapter>("ReduceLogSum", OpSetID(28), OpSetID(27)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("ReduceLogSumExp", OpSetID(28), OpSetID(27)));
   }
 
   ModelProto convert_version(const ModelProto& mp_in, const OpSetID& initial_version, const OpSetID& target_version)
       const override;
 };
 
-ModelProto ConvertVersion(const ModelProto& mp_in, int target_version);
-} // namespace version_conversion
-} // namespace ONNX_NAMESPACE
+ONNX_API ModelProto ConvertVersion(const ModelProto& mp_in, int target_version);
+} // namespace ONNX_NAMESPACE::version_conversion

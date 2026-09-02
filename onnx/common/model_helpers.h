@@ -8,7 +8,7 @@
 #include <vector>
 
 #include "onnx/common/status.h"
-#include "onnx/onnx-operators_pb.h"
+#include "onnx/onnx_pb.h"
 
 namespace ONNX_NAMESPACE {
 

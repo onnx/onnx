@@ -1,178 +1,247 @@
 # Copyright (c) ONNX Project Contributors
 #
 # SPDX-License-Identifier: Apache-2.0
+from __future__ import annotations
 
-
+import math
 import sys
-from typing import Any, Dict, List, Optional, Sequence, Tuple, Union
+from collections.abc import Sequence
+from typing import TYPE_CHECKING, Any
 
+import ml_dtypes
 import numpy as np
+import numpy.typing as npt
 
-from onnx import MapProto, OptionalProto, SequenceProto, TensorProto, helper
-from onnx.external_data_helper import load_external_data_for_tensor, uses_external_data
+import onnx.external_data_helper
+from onnx import helper
+
+if TYPE_CHECKING:
+    from collections.abc import Sequence
 
 
-def combine_pairs_to_complex(fa: Sequence[int]) -> List[complex]:
-    return [complex(fa[i * 2], fa[i * 2 + 1]) for i in range(len(fa) // 2)]
-
-
-def bfloat16_to_float32(
-    data: Union[np.int16, np.int32, np.ndarray],
-    dims: Optional[Union[int, Sequence[int]]] = None,
+def to_float8e8m0(
+    x: np.ndarray,
+    saturate: bool = True,
+    round_mode: str = "up",
 ) -> np.ndarray:
-    """Converts ndarray of bf16 (as uint32) to f32 (as uint32).
+    """Convert float32 NumPy array to float8e8m0 representation. If the input
+    is not a float32 array, it will be cast to one first.
 
-    :param data: a numpy array, empty dimensions are allowed if dims is None
-    :param dims: if specified, the function reshapes the results
-    :return: a numpy array of float32 with the same dimension if dims is None,
-        or reshaped to dims if specified"""
-    shift = lambda x: x << 16  # noqa: E731
-    if dims is None:
-        if len(data.shape) == 0:
-            return shift(np.array([data]).astype(np.int32)).view(np.float32)[0]  # type: ignore[no-any-return]
-        return shift(data.astype(np.int32)).view(np.float32)  # type: ignore[no-any-return]
-    return shift(data.astype(np.int32)).reshape(dims).view(np.float32)  # type: ignore[no-any-return]
+    Args:
+        x: Input array to convert.
+        saturate: Whether to saturate at max/min float8e8m0 value.
+        round_mode: "nearest", "up", or "down".
 
-
-def _float8e4m3_to_float32_scalar(ival: int, fn: bool, uz: bool) -> np.float32:
-    if not fn:
-        raise NotImplementedError("fn=False is not implemented.")
-    if ival < 0 or ival > 255:  # noqa: PLR2004
-        raise ValueError(f"{ival} is not a float8.")
-    if uz:
-        exponent_bias = 8
-        if ival == 0x80:  # noqa: PLR2004
-            return np.nan  # type: ignore[return-value]
-    else:
-        exponent_bias = 7
-        if ival == 255:  # noqa: PLR2004
-            return np.float32(-np.nan)
-        if ival == 127:  # noqa: PLR2004
-            return np.float32(np.nan)
-
-    expo = (ival & 0x78) >> 3
-    mant = ival & 0x07
-    sign = ival & 0x80
-    res = sign << 24
-    if expo == 0:
-        if mant > 0:
-            expo = 0x7F - exponent_bias
-            if mant & 0x4 == 0:
-                mant &= 0x3
-                mant <<= 1
-                expo -= 1
-            if mant & 0x4 == 0:
-                mant &= 0x3
-                mant <<= 1
-                expo -= 1
-            res |= (mant & 0x3) << 21
-            res |= expo << 23
-    else:
-        res |= mant << 20
-        expo += 0x7F - exponent_bias
-        res |= expo << 23
-    f = np.uint32(res).view(np.float32)
-    return f
-
-
-_float8e4m3_to_float32 = np.vectorize(
-    _float8e4m3_to_float32_scalar, excluded=["fn", "uz"]
-)
-
-
-def float8e4m3_to_float32(
-    data: Union[np.int16, np.int32, np.ndarray],
-    dims: Optional[Union[int, Sequence[int]]] = None,
-    fn: bool = True,
-    uz: bool = False,
-) -> np.ndarray:
-    """Converts ndarray of float8, e4m3 (as uint32) to f32 (as uint32).
-
-    :param data: a numpy array, empty dimensions are allowed if dims is None
-    :param dims: if specified, the function reshapes the results
-    :param fn: no infinite values
-    :param uz: no negative zero
-    :return: a numpy array of float32 with the same dimension if dims is None,
-        or reshaped to dims if specified.
-
-    See :ref:`onnx-detail-float8` for technical details.
+    Returns:
+        np.ndarray: Array of ml_dtypes.float8_e8m0fnu values.
     """
-    if not fn:
-        raise NotImplementedError(
-            "float32_to_float8e4m3 not implemented with fn=False."
+    x_f32 = np.asarray(x, dtype=np.float32)
+    f_bits = x_f32.view(np.uint32)
+
+    # Extract exponent bits
+    exponent = (f_bits >> 23) & 0xFF
+    exponent = exponent.astype(
+        np.uint16
+    )  # use uint16 to prevent overflow during computation
+
+    # Identify NaN or Inf
+    special_mask = exponent == 0xFF  # noqa: PLR2004
+    output = np.zeros_like(exponent, dtype=np.uint8)
+    output[special_mask] = 0xFF  # Preserve NaN/Inf as max exponent
+
+    # Process normal numbers
+    normal_mask = ~special_mask
+
+    if round_mode == "nearest":
+        # Get guard, round, sticky, and least significant bits
+        g = ((f_bits & 0x400000) > 0).astype(np.uint8)
+        r = ((f_bits & 0x200000) > 0).astype(np.uint8)
+        s = ((f_bits & 0x1FFFFF) > 0).astype(np.uint8)
+        lsb = (exponent > 0).astype(np.uint8)
+
+        round_up = (g == 1) & ((r == 1) | (s == 1) | (lsb == 1))
+
+        increment = np.zeros_like(exponent)
+        increment[round_up & normal_mask] = 1
+
+        if saturate:
+            max_mask = (exponent == 0xFE) & round_up & normal_mask  # noqa: PLR2004
+            increment[max_mask] = 0  # Don't overflow past max value
+
+        exponent += increment
+
+    elif round_mode == "up":
+        has_fraction = (f_bits & 0x7FFFFF) > 0
+        round_up = has_fraction & normal_mask
+
+        if saturate:
+            max_mask = (exponent == 0xFE) & round_up  # noqa: PLR2004
+            round_up[max_mask] = False
+
+        exponent += round_up.astype(np.uint16)
+
+    elif round_mode == "down":
+        pass  # No rounding needed
+
+    else:
+        raise ValueError(f"Unsupported rounding mode: {round_mode}")
+
+    # Clip exponent to uint8 range
+    exponent = exponent.astype(np.uint8)
+
+    output[normal_mask] = exponent[normal_mask]
+
+    return output.view(ml_dtypes.float8_e8m0fnu)
+
+
+def _unpack_4bit(
+    data: npt.NDArray[np.uint8], dims: Sequence[int]
+) -> npt.NDArray[np.uint8]:
+    """Convert a packed uint4 array to unpacked uint4 array represented as uint8.
+
+    Args:
+        data: A numpy array.
+        dims: The dimensions are used to reshape the unpacked buffer.
+
+    Returns:
+        A numpy array of int8/uint8 reshaped to dims.
+    """
+    result = np.empty([data.size * 2], dtype=data.dtype)
+    array_low = data & np.uint8(0x0F)
+    array_high = data & np.uint8(0xF0)
+    array_high >>= np.uint8(4)
+    result[0::2] = array_low
+    result[1::2] = array_high
+    expected_elements = math.prod(dims)
+    if result.size == expected_elements + 1:
+        # handle single-element padding due to odd number of elements
+        result = result[:-1]
+    if expected_elements > result.size:
+        raise ValueError(
+            f"Packed 4-bit data ({data.size} bytes, {result.size} elements unpacked) "
+            f"is too small for the declared shape {list(dims)} "
+            f"({expected_elements} elements required)."
         )
-    res = _float8e4m3_to_float32(data, fn=fn, uz=uz)
-    if dims is None:
-        return res  # type: ignore[no-any-return]
-    return res.reshape(dims)  # type: ignore[no-any-return]
+    result.resize(dims, refcheck=False)
+    return result
 
 
-def _float8e5m2_to_float32_scalar(ival: int, fn: bool, uz: bool) -> np.float32:
-    if fn and uz:
-        if ival == 0x80:  # noqa: PLR2004
-            return np.float32(np.nan)
-        exponent_bias = 16
-    elif not fn and not uz:
-        if ival in {253, 254, 255}:
-            return np.float32(-np.nan)
-        if ival in {125, 126, 127}:
-            return np.float32(np.nan)
-        if ival == 252:  # noqa: PLR2004
-            return np.float32(-np.inf)
-        if ival == 124:  # noqa: PLR2004
-            return np.float32(np.inf)
-        exponent_bias = 15
-    else:
-        raise NotImplementedError("fn and uz must be both False or True.")
-
-    expo = (ival & 0x7C) >> 2
-    mant = ival & 0x03
-    sign = ival & 0x80
-    res = sign << 24
-    if expo == 0:
-        if mant > 0:
-            expo = 0x7F - exponent_bias
-            if mant & 0x2 == 0:
-                mant &= 0x1
-                mant <<= 1
-                expo -= 1
-            res |= (mant & 0x1) << 22
-            res |= expo << 23
-    else:
-        res |= mant << 21
-        expo += 0x7F - exponent_bias
-        res |= expo << 23
-    f = np.uint32(res).view(np.float32)
-    return f
+def _pack_4bitx2(array: np.ndarray) -> npt.NDArray[np.uint8]:
+    """Convert a numpy array to flatten, packed int4/uint4. Elements must be in the correct range."""
+    # Create a 1D copy
+    array_flat = array.ravel().view(np.uint8).copy()
+    size = array.size
+    odd_sized = size % 2 == 1
+    if odd_sized:
+        array_flat.resize([size + 1], refcheck=False)
+    array_flat &= 0x0F
+    array_flat[1::2] <<= 4
+    return array_flat[0::2] | array_flat[1::2]
 
 
-_float8e5m2_to_float32 = np.vectorize(
-    _float8e5m2_to_float32_scalar, excluded=["fn", "uz"]
-)
+def _unpack_2bit(
+    data: npt.NDArray[np.uint8], dims: Sequence[int]
+) -> npt.NDArray[np.uint8]:
+    """Convert a packed uint2 array to unpacked uint2 array represented as uint8.
+
+    Args:
+        data: A numpy array.
+        dims: The dimensions are used to reshape the unpacked buffer.
+
+    Returns:
+        A numpy array of int8/uint8 reshaped to dims.
+    """
+    result = np.empty([data.size * 4], dtype=data.dtype)
+    result[0::4] = data & 0x03
+    result[1::4] = (data >> 2) & 0x03
+    result[2::4] = (data >> 4) & 0x03
+    result[3::4] = (data >> 6) & 0x03
+    expected_elements = math.prod(dims)
+    if result.size > expected_elements:
+        # handle padding due to non multiple of 4 elements
+        result = result[:expected_elements]
+    if expected_elements > result.size:
+        raise ValueError(
+            f"Packed 2-bit data ({data.size} bytes, {result.size} elements unpacked) "
+            f"is too small for the declared shape {list(dims)} "
+            f"({expected_elements} elements required)."
+        )
+    result.resize(dims, refcheck=False)
+    return result
 
 
-def float8e5m2_to_float32(
-    data: Union[np.int16, np.int32, np.ndarray],
-    dims: Optional[Union[int, Sequence[int]]] = None,
-    fn: bool = False,
-    uz: bool = False,
-) -> np.ndarray:
-    """Converts ndarray of float8, e5m2 (as uint32) to f32 (as uint32).
-
-    :param data: a numpy array, empty dimensions are allowed if dims is None
-    :param dims: if specified, the function reshapes the results
-    :param fn: no infinite values
-    :param uz: no negative zero
-    :return: a numpy array of float32 with the same dimension if dims is None,
-        or reshaped to dims if specified"""
-    res = _float8e5m2_to_float32(data, fn=fn, uz=uz)
-    if dims is None:
-        return res  # type: ignore[no-any-return]
-    return res.reshape(dims)  # type: ignore[no-any-return]
+def _pack_2bitx4(array: np.ndarray) -> npt.NDArray[np.uint8]:
+    """Convert a numpy array to flatten, packed int2/uint2. Elements must be in the correct range."""
+    # Create a 1D copy
+    array_flat = array.ravel().view(np.uint8).copy()
+    size = array.size
+    pad_len = size % 4
+    if pad_len:
+        array_flat.resize([size + (4 - pad_len)], refcheck=False)
+    array_flat &= 0x03
+    array_flat[1::4] <<= 2
+    array_flat[2::4] <<= 4
+    array_flat[3::4] <<= 6
+    return array_flat[0::4] | array_flat[1::4] | array_flat[2::4] | array_flat[3::4]
 
 
-def to_array(tensor: TensorProto, base_dir: str = "") -> np.ndarray:  # noqa: PLR0911
+def _pack_6bit(values: np.ndarray) -> npt.NDArray[np.uint8]:
+    """Pack a flat uint8 array of 6-bit codes 4-at-a-time into 3 bytes (LSB-first bit order)."""
+    flat = values.astype(np.uint8, copy=False).ravel() & 0x3F
+    n = flat.size
+    packed_size = math.ceil(n * 6 / 8)
+    pad = -n % 4
+    if pad:
+        flat = np.concatenate([flat, np.zeros(pad, dtype=np.uint8)])
+    v0, v1, v2, v3 = flat[0::4], flat[1::4], flat[2::4], flat[3::4]
+    packed = np.empty((v0.size, 3), dtype=np.uint8)
+    packed[:, 0] = v0 | ((v1 & 0x03) << 6)
+    packed[:, 1] = (v1 >> 2) | ((v2 & 0x0F) << 4)
+    packed[:, 2] = (v2 >> 4) | (v3 << 2)
+    return packed.reshape(-1)[:packed_size]
+
+
+def _unpack_6bit(data: np.ndarray, dims: Sequence[int]) -> npt.NDArray[np.uint8]:
+    """Unpack a 6-bit packed buffer (see _pack_6bit) back into a uint8 array of given dims."""
+    original_size = math.prod(dims)
+    num_groups = -(-original_size // 4)  # ceil division
+    needed_bytes = num_groups * 3
+    # _pack_6bit trims its output to this minimal size: trailing bytes beyond
+    # it would only ever encode a partial final group's zero-padding bits.
+    min_bytes = -(-original_size * 6 // 8)  # ceil division
+    data = data.astype(np.uint8, copy=False)
+    if data.size < min_bytes:
+        raise ValueError(
+            f"Packed 6-bit data ({data.size} bytes) is too small for the declared "
+            f"shape {list(dims)} ({min_bytes} bytes required)."
+        )
+    # Bulk-unpack whole 3-byte groups via strided views (no copy of `data`);
+    # only the possibly-incomplete final group (at most 2 missing bytes) needs
+    # padding, so pad just that instead of copying the whole buffer.
+    bulk_bytes = min(data.size, needed_bytes) // 3 * 3
+    bulk_groups = bulk_bytes // 3
+    unpacked = np.empty((num_groups, 4), dtype=np.uint8)
+    b0, b1, b2 = data[0:bulk_bytes:3], data[1:bulk_bytes:3], data[2:bulk_bytes:3]
+    unpacked[:bulk_groups, 0] = b0 & 0x3F
+    unpacked[:bulk_groups, 1] = ((b0 >> 6) & 0x03) | ((b1 & 0x0F) << 2)
+    unpacked[:bulk_groups, 2] = ((b1 >> 4) & 0x0F) | ((b2 & 0x03) << 4)
+    unpacked[:bulk_groups, 3] = (b2 >> 2) & 0x3F
+    if bulk_groups < num_groups:
+        tail = np.zeros(3, dtype=np.uint8)
+        rest = data[bulk_bytes:]
+        tail[: rest.size] = rest
+        t0, t1, t2 = tail
+        unpacked[bulk_groups, 0] = t0 & 0x3F
+        unpacked[bulk_groups, 1] = ((t0 >> 6) & 0x03) | ((t1 & 0x0F) << 2)
+        unpacked[bulk_groups, 2] = ((t1 >> 4) & 0x0F) | ((t2 & 0x03) << 4)
+        unpacked[bulk_groups, 3] = (t2 >> 2) & 0x3F
+    return unpacked.reshape(-1)[:original_size].reshape(dims)
+
+
+def to_array(tensor: onnx.TensorProto, base_dir: str = "") -> np.ndarray:  # noqa: PLR0911
     """Converts a tensor def object to a numpy array.
+
+    This function uses ml_dtypes if the dtype is not a native numpy dtype.
 
     Args:
         tensor: a TensorProto object.
@@ -183,8 +252,8 @@ def to_array(tensor: TensorProto, base_dir: str = "") -> np.ndarray:  # noqa: PL
     """
     if tensor.HasField("segment"):
         raise ValueError("Currently not supporting loading segments.")
-    if tensor.data_type == TensorProto.UNDEFINED:
-        raise TypeError("The element type in the input tensor is not defined.")
+    if tensor.data_type == onnx.TensorProto.UNDEFINED:
+        raise TypeError("The element type in the input tensor is UNDEFINED.")
 
     tensor_dtype = tensor.data_type
     np_dtype = helper.tensor_dtype_to_np_dtype(tensor_dtype)
@@ -194,146 +263,208 @@ def to_array(tensor: TensorProto, base_dir: str = "") -> np.ndarray:  # noqa: PL
     storage_field = helper.tensor_dtype_to_field(tensor_dtype)
     dims = tensor.dims
 
-    if tensor.data_type == TensorProto.STRING:
+    if tensor.data_type == onnx.TensorProto.STRING:
         utf8_strings = getattr(tensor, storage_field)
         ss = [s.decode("utf-8") for s in utf8_strings]
         return np.asarray(ss).astype(np_dtype).reshape(dims)
 
     # Load raw data from external tensor if it exists
-    if uses_external_data(tensor):
-        load_external_data_for_tensor(tensor, base_dir)
+    if onnx.external_data_helper.uses_external_data(tensor):
+        onnx.external_data_helper.load_external_data_for_tensor(tensor, base_dir)
 
     if tensor.HasField("raw_data"):
         # Raw_bytes support: using frombuffer.
+        raw_data = tensor.raw_data
         if sys.byteorder == "big":
             # Convert endian from little to big
-            convert_endian(tensor)
+            raw_data = np.frombuffer(raw_data, dtype=np_dtype).byteswap().tobytes()
 
-        # manually convert bf16 since there's no numpy support
-        if tensor_dtype == TensorProto.BFLOAT16:
-            data = np.frombuffer(tensor.raw_data, dtype=np.int16)
-            return bfloat16_to_float32(data, dims)
+        if tensor_dtype in {
+            onnx.TensorProto.INT4,
+            onnx.TensorProto.UINT4,
+            onnx.TensorProto.FLOAT4E2M1,
+        }:
+            data = np.frombuffer(raw_data, dtype=np.uint8)
+            return _unpack_4bit(data, dims).view(np_dtype)
 
-        if tensor_dtype == TensorProto.FLOAT8E4M3FN:
-            data = np.frombuffer(tensor.raw_data, dtype=np.int8)
-            return float8e4m3_to_float32(data, dims)
+        if tensor_dtype in {
+            onnx.TensorProto.UINT2,
+            onnx.TensorProto.INT2,
+        }:
+            data = np.frombuffer(raw_data, dtype=np.uint8)
+            return _unpack_2bit(data, dims).view(np_dtype)
 
-        if tensor_dtype == TensorProto.FLOAT8E4M3FNUZ:
-            data = np.frombuffer(tensor.raw_data, dtype=np.int8)
-            return float8e4m3_to_float32(data, dims, uz=True)
+        if tensor_dtype in {onnx.TensorProto.FLOAT6E2M3, onnx.TensorProto.FLOAT6E3M2}:
+            # raw_data is always the packed 6-bit stream (matching UINT4/UINT2's
+            # single-format convention below). A byte-length-based sniff between
+            # "packed" and "one byte per element" would be ambiguous for small
+            # tensors -- e.g. 3 elements pack to ceil(3*6/8) = 3 bytes too.
+            data = np.frombuffer(raw_data, dtype=np.uint8)
+            unpacked = _unpack_6bit(data, dims)
+            return unpacked.view(np_dtype)
 
-        if tensor_dtype == TensorProto.FLOAT8E5M2:
-            data = np.frombuffer(tensor.raw_data, dtype=np.int8)
-            return float8e5m2_to_float32(data, dims)
+        return np.frombuffer(raw_data, dtype=np_dtype).reshape(dims)
 
-        if tensor_dtype == TensorProto.FLOAT8E5M2FNUZ:
-            data = np.frombuffer(tensor.raw_data, dtype=np.int8)
-            return float8e5m2_to_float32(data, dims, fn=True, uz=True)
-
-        return np.frombuffer(tensor.raw_data, dtype=np_dtype).reshape(dims)  # type: ignore[no-any-return]
-
-    # float16 is stored as int32 (uint16 type); Need view to get the original value
-    if tensor_dtype == TensorProto.FLOAT16:
+    if tensor_dtype in {
+        onnx.TensorProto.BFLOAT16,
+        onnx.TensorProto.FLOAT16,
+        onnx.TensorProto.INT16,
+        onnx.TensorProto.UINT16,
+    }:
         return (
-            np.asarray(tensor.int32_data, dtype=np.uint16)
+            np.array(tensor.int32_data, dtype=np.int32)
+            .view(np.uint32)
+            .astype(np.uint16)
             .reshape(dims)
-            .view(np.float16)
+            .view(np_dtype)
         )
 
-    # bfloat16 is stored as int32 (uint16 type); no numpy support for bf16
-    if tensor_dtype == TensorProto.BFLOAT16:
-        data = np.asarray(tensor.int32_data, dtype=np.int32)
-        return bfloat16_to_float32(data, dims)
+    if tensor_dtype in {
+        onnx.TensorProto.FLOAT8E4M3FN,
+        onnx.TensorProto.FLOAT8E4M3FNUZ,
+        onnx.TensorProto.FLOAT8E5M2,
+        onnx.TensorProto.FLOAT8E5M2FNUZ,
+        onnx.TensorProto.FLOAT8E8M0,
+        onnx.TensorProto.BOOL,
+    }:
+        return (
+            np.array(tensor.int32_data, dtype=np.int32)
+            .view(np.uint32)
+            .astype(np.uint8)
+            .view(np_dtype)
+            .reshape(dims)
+        )
 
-    if tensor_dtype == TensorProto.FLOAT8E4M3FN:
-        data = np.asarray(tensor.int32_data, dtype=np.int32)
-        return float8e4m3_to_float32(data, dims)
+    if tensor_dtype in {
+        onnx.TensorProto.FLOAT6E2M3,
+        onnx.TensorProto.FLOAT6E3M2,
+    }:
+        # Only the low 6 bits of each int32_data entry are meaningful; mask
+        # before reinterpreting, matching _pack_6bit's masking of the packed
+        # raw_data representation.
+        return (
+            (
+                np.array(tensor.int32_data, dtype=np.int32)
+                .view(np.uint32)
+                .astype(np.uint8)
+                & 0x3F
+            )
+            .view(np_dtype)
+            .reshape(dims)
+        )
 
-    if tensor_dtype == TensorProto.FLOAT8E4M3FNUZ:
-        data = np.asarray(tensor.int32_data, dtype=np.int32)
-        return float8e4m3_to_float32(data, dims, uz=True)
+    if tensor_dtype in {
+        onnx.TensorProto.UINT4,
+        onnx.TensorProto.INT4,
+        onnx.TensorProto.FLOAT4E2M1,
+    }:
+        data = (
+            np.array(tensor.int32_data, dtype=np.int32).view(np.uint32).astype(np.uint8)
+        )
+        return _unpack_4bit(data, dims).view(np_dtype)
 
-    if tensor_dtype == TensorProto.FLOAT8E5M2:
-        data = np.asarray(tensor.int32_data, dtype=np.int32)
-        return float8e5m2_to_float32(data, dims)
-
-    if tensor_dtype == TensorProto.FLOAT8E5M2FNUZ:
-        data = np.asarray(tensor.int32_data, dtype=np.int32)
-        return float8e5m2_to_float32(data, dims, fn=True, uz=True)
+    if tensor_dtype in {
+        onnx.TensorProto.UINT2,
+        onnx.TensorProto.INT2,
+    }:
+        data = (
+            np.array(tensor.int32_data, dtype=np.int32).view(np.uint32).astype(np.uint8)
+        )
+        return _unpack_2bit(data, dims).view(np_dtype)
 
     data = getattr(tensor, storage_field)
-    if tensor_dtype in (TensorProto.COMPLEX64, TensorProto.COMPLEX128):
-        data = combine_pairs_to_complex(data)  # type: ignore[assignment,arg-type]
+    if tensor_dtype in (onnx.TensorProto.COMPLEX64, onnx.TensorProto.COMPLEX128):
+        return np.array(data, dtype=storage_np_dtype).view(dtype=np_dtype).reshape(dims)
 
     return np.asarray(data, dtype=storage_np_dtype).astype(np_dtype).reshape(dims)
 
 
-def from_array(arr: np.ndarray, name: Optional[str] = None) -> TensorProto:
-    """Converts a numpy array to a tensor def.
+def tobytes_little_endian(array: np.ndarray) -> bytes:
+    """Converts an array into bytes in little endian byte order.
 
     Args:
-        arr: a numpy array.
+        array: a numpy array.
+
+    Returns:
+        bytes: Byte representation of passed array in little endian byte order.
+
+    .. versionadded:: 1.20
+    """
+    if array.dtype.byteorder == ">" or (
+        sys.byteorder == "big" and array.dtype.byteorder == "="
+    ):
+        # Ensure that the bytes will be in little-endian byte-order.
+        array = array.astype(array.dtype.newbyteorder("<"))
+
+    return array.tobytes()
+
+
+def from_array(array: np.ndarray, /, name: str | None = None) -> onnx.TensorProto:
+    """Converts an array into a TensorProto including
+
+    Args:
+        array: a numpy array.
         name: (optional) the name of the tensor.
 
     Returns:
         TensorProto: the converted tensor def.
     """
-    if not isinstance(arr, (np.ndarray, np.generic)):
-        raise TypeError(
-            f"arr must be of type np.generic or np.ndarray, got {type(arr)}"
-        )
-
-    tensor = TensorProto()
-    tensor.dims.extend(arr.shape)
+    tensor = onnx.TensorProto()
+    tensor.dims.extend(array.shape)
     if name:
         tensor.name = name
-
-    if arr.dtype == object:
+    if array.dtype == object or np.issubdtype(array.dtype, np.str_):
         # Special care for strings.
-        tensor.data_type = helper.np_dtype_to_tensor_dtype(arr.dtype)
+        tensor.data_type = onnx.TensorProto.STRING
         # TODO: Introduce full string support.
-        # We flatten the array in case there are 2-D arrays are specified
-        # We throw the error below if we have a 3-D array or some kind of other
-        # object. If you want more complex shapes then follow the below instructions.
+        # We flatten the array in case there are n-D arrays are specified
+        # If you want more complex shapes then follow the below instructions.
         # Unlike other types where the shape is automatically inferred from
         # nested arrays of values, the only reliable way now to feed strings
         # is to put them into a flat array then specify type astype(object)
         # (otherwise all strings may have different types depending on their length)
         # and then specify shape .reshape([x, y, z])
-        flat_array = arr.flatten()
+        flat_array = array.flatten()
         for e in flat_array:
             if isinstance(e, str):
                 tensor.string_data.append(e.encode("utf-8"))
-            elif isinstance(e, np.ndarray):
-                for s in e:
-                    if isinstance(s, str):
-                        tensor.string_data.append(s.encode("utf-8"))
-                    elif isinstance(s, bytes):
-                        tensor.string_data.append(s)
             elif isinstance(e, bytes):
                 tensor.string_data.append(e)
             else:
                 raise NotImplementedError(
-                    "Unrecognized object in the object array, expect a string, or array of bytes: ",
-                    str(type(e)),
+                    f"Unrecognized object in the object array, expect a string, or array of bytes: {type(e)}"
                 )
         return tensor
 
-    # For numerical types, directly use numpy raw bytes.
-    try:
-        dtype = helper.np_dtype_to_tensor_dtype(arr.dtype)
-    except KeyError as e:
-        raise RuntimeError(f"Numpy data type not understood yet: {arr.dtype!r}") from e
-    tensor.data_type = dtype
-    tensor.raw_data = arr.tobytes()  # note: tobytes() is only after 1.9.
-    if sys.byteorder == "big":
-        # Convert endian from big to little
-        convert_endian(tensor)
+    dtype = helper.np_dtype_to_tensor_dtype(array.dtype)
+    if dtype in {
+        onnx.TensorProto.INT4,
+        onnx.TensorProto.UINT4,
+        onnx.TensorProto.FLOAT4E2M1,
+    }:
+        # Pack the array into int4
+        array = _pack_4bitx2(array)
 
+    if dtype in {
+        onnx.TensorProto.UINT2,
+        onnx.TensorProto.INT2,
+    }:
+        # Pack the array into int2
+        array = _pack_2bitx4(array)
+
+    if dtype in {
+        onnx.TensorProto.FLOAT6E2M3,
+        onnx.TensorProto.FLOAT6E3M2,
+    }:
+        # Pack the array into 6-bit codes
+        array = _pack_6bit(array.view(np.uint8))
+
+    tensor.raw_data = tobytes_little_endian(array)
+    tensor.data_type = dtype  # type: ignore[assignment]
     return tensor
 
 
-def to_list(sequence: SequenceProto) -> List[Any]:
+def to_list(sequence: onnx.SequenceProto) -> list[Any]:
     """Converts a sequence def to a Python list.
 
     Args:
@@ -343,20 +474,20 @@ def to_list(sequence: SequenceProto) -> List[Any]:
         list: the converted list.
     """
     elem_type = sequence.elem_type
-    if elem_type == SequenceProto.TENSOR:
-        return [to_array(v) for v in sequence.tensor_values]  # type: ignore[arg-type]
-    if elem_type == SequenceProto.SPARSE_TENSOR:
+    if elem_type == onnx.SequenceProto.TENSOR:
+        return [to_array(v) for v in sequence.tensor_values]
+    if elem_type == onnx.SequenceProto.SPARSE_TENSOR:
         return [to_array(v) for v in sequence.sparse_tensor_values]  # type: ignore[arg-type]
-    if elem_type == SequenceProto.SEQUENCE:
+    if elem_type == onnx.SequenceProto.SEQUENCE:
         return [to_list(v) for v in sequence.sequence_values]
-    if elem_type == SequenceProto.MAP:
+    if elem_type == onnx.SequenceProto.MAP:
         return [to_dict(v) for v in sequence.map_values]
     raise TypeError("The element type in the input sequence is not supported.")
 
 
 def from_list(
-    lst: List[Any], name: Optional[str] = None, dtype: Optional[int] = None
-) -> SequenceProto:
+    lst: list[Any], name: str | None = None, dtype: int | None = None
+) -> onnx.SequenceProto:
     """Converts a list into a sequence def.
 
     Args:
@@ -368,24 +499,24 @@ def from_list(
     Returns:
         SequenceProto: the converted sequence def.
     """
-    sequence = SequenceProto()
+    sequence = onnx.SequenceProto()
     if name:
         sequence.name = name
 
-    if dtype:
+    if dtype is not None:
         elem_type = dtype
     elif len(lst) > 0:
         first_elem = lst[0]
         if isinstance(first_elem, dict):
-            elem_type = SequenceProto.MAP
+            elem_type = onnx.SequenceProto.MAP
         elif isinstance(first_elem, list):
-            elem_type = SequenceProto.SEQUENCE
+            elem_type = onnx.SequenceProto.SEQUENCE
         else:
-            elem_type = SequenceProto.TENSOR
+            elem_type = onnx.SequenceProto.TENSOR
     else:
         # if empty input list and no dtype specified
         # choose sequence of tensors on default
-        elem_type = SequenceProto.TENSOR
+        elem_type = onnx.SequenceProto.TENSOR
     sequence.elem_type = elem_type
 
     if (len(lst) > 0) and not all(isinstance(elem, type(lst[0])) for elem in lst):
@@ -394,13 +525,13 @@ def from_list(
             "for all elements and therefore is not supported as a sequence."
         )
 
-    if elem_type == SequenceProto.TENSOR:
+    if elem_type == onnx.SequenceProto.TENSOR:
         for tensor in lst:
-            sequence.tensor_values.extend([from_array(tensor)])
-    elif elem_type == SequenceProto.SEQUENCE:
+            sequence.tensor_values.extend([from_array(np.asarray(tensor))])
+    elif elem_type == onnx.SequenceProto.SEQUENCE:
         for seq in lst:
             sequence.sequence_values.extend([from_list(seq)])
-    elif elem_type == SequenceProto.MAP:
+    elif elem_type == onnx.SequenceProto.MAP:
         for mapping in lst:
             sequence.map_values.extend([from_dict(mapping)])
     else:
@@ -411,17 +542,17 @@ def from_list(
     return sequence
 
 
-def to_dict(map_proto: MapProto) -> Dict[Any, Any]:
+def to_dict(map_proto: onnx.MapProto) -> dict[Any, Any]:
     """Converts a map def to a Python dictionary.
 
     Args:
-        map: a MapProto object.
+        map_proto: a MapProto object.
 
     Returns:
-        dict: the converted dictionary.
+        The converted dictionary.
     """
-    key_list: List[Any] = []
-    if map_proto.key_type == TensorProto.STRING:
+    key_list: list[Any] = []
+    if map_proto.key_type == onnx.TensorProto.STRING:
         key_list = list(map_proto.string_keys)
     else:
         key_list = list(map_proto.keys)
@@ -429,48 +560,42 @@ def to_dict(map_proto: MapProto) -> Dict[Any, Any]:
     value_list = to_list(map_proto.values)
     if len(key_list) != len(value_list):
         raise IndexError(
-            "Length of keys and values for MapProto (map name: ",
-            map_proto.name,
-            ") are not the same.",
+            f"Length of keys and values for MapProto (map name: {map_proto.name}) are not the same."
         )
-    dictionary = dict(zip(key_list, value_list))
-    return dictionary
+    return dict(zip(key_list, value_list, strict=False))
 
 
-def from_dict(dict_: Dict[Any, Any], name: Optional[str] = None) -> MapProto:
+def from_dict(dict_: dict[Any, Any], name: str | None = None) -> onnx.MapProto:
     """Converts a Python dictionary into a map def.
 
     Args:
-        dict: Python dictionary
+        dict_: Python dictionary
         name: (optional) the name of the map.
 
     Returns:
         MapProto: the converted map def.
     """
-    map_proto = MapProto()
+    map_proto = onnx.MapProto()
     if name:
         map_proto.name = name
+    if not dict_:
+        raise ValueError("Cannot convert an empty dictionary to MapProto.")
     keys = list(dict_)
     raw_key_type = np.result_type(keys[0])
     key_type = helper.np_dtype_to_tensor_dtype(raw_key_type)
 
-    valid_key_int_types = [
-        TensorProto.INT8,
-        TensorProto.INT16,
-        TensorProto.INT32,
-        TensorProto.INT64,
-        TensorProto.UINT8,
-        TensorProto.UINT16,
-        TensorProto.UINT32,
-        TensorProto.UINT64,
-    ]
+    valid_key_int_types = {
+        onnx.TensorProto.INT8,
+        onnx.TensorProto.INT16,
+        onnx.TensorProto.INT32,
+        onnx.TensorProto.INT64,
+        onnx.TensorProto.UINT8,
+        onnx.TensorProto.UINT16,
+        onnx.TensorProto.UINT32,
+        onnx.TensorProto.UINT64,
+    }
 
-    if not (
-        all(
-            np.result_type(key) == raw_key_type  # type: ignore[arg-type]
-            for key in keys
-        )
-    ):
+    if not (all(np.result_type(key) == raw_key_type for key in keys)):
         raise TypeError(
             "The key type in the input dictionary is not the same "
             "for all keys and therefore is not valid as a map."
@@ -486,16 +611,18 @@ def from_dict(dict_: Dict[Any, Any], name: Optional[str] = None) -> MapProto:
 
     value_seq = from_list(values)
 
-    map_proto.key_type = key_type
-    if key_type == TensorProto.STRING:
+    map_proto.key_type = key_type  # type: ignore[assignment]
+    if key_type == onnx.TensorProto.STRING:
         map_proto.string_keys.extend(keys)
     elif key_type in valid_key_int_types:
         map_proto.keys.extend(keys)
+    else:
+        raise TypeError(f"Unsupported map key type: {key_type}")
     map_proto.values.CopyFrom(value_seq)
     return map_proto
 
 
-def to_optional(optional: OptionalProto) -> Optional[Any]:
+def to_optional(optional: onnx.OptionalProto) -> Any | None:
     """Converts an optional def to a Python optional.
 
     Args:
@@ -505,24 +632,24 @@ def to_optional(optional: OptionalProto) -> Optional[Any]:
         opt: the converted optional.
     """
     elem_type = optional.elem_type
-    if elem_type == OptionalProto.UNDEFINED:
+    if elem_type == onnx.OptionalProto.UNDEFINED:
         return None
-    if elem_type == OptionalProto.TENSOR:
+    if elem_type == onnx.OptionalProto.TENSOR:
         return to_array(optional.tensor_value)
-    if elem_type == OptionalProto.SPARSE_TENSOR:
+    if elem_type == onnx.OptionalProto.SPARSE_TENSOR:
         return to_array(optional.sparse_tensor_value)  # type: ignore[arg-type]
-    if elem_type == OptionalProto.SEQUENCE:
+    if elem_type == onnx.OptionalProto.SEQUENCE:
         return to_list(optional.sequence_value)
-    if elem_type == OptionalProto.MAP:
+    if elem_type == onnx.OptionalProto.MAP:
         return to_dict(optional.map_value)
-    if elem_type == OptionalProto.OPTIONAL:
+    if elem_type == onnx.OptionalProto.OPTIONAL:
         return to_optional(optional.optional_value)
     raise TypeError("The element type in the input optional is not supported.")
 
 
 def from_optional(
-    opt: Optional[Any], name: Optional[str] = None, dtype: Optional[int] = None
-) -> OptionalProto:
+    opt: Any | None, name: str | None = None, dtype: int | None = None
+) -> onnx.OptionalProto:
     """Converts an optional value into a Optional def.
 
     Args:
@@ -536,33 +663,32 @@ def from_optional(
         optional: the converted optional def.
     """
     # TODO: create a map and replace conditional branches
-    optional = OptionalProto()
+    optional = onnx.OptionalProto()
     if name:
         optional.name = name
 
-    if dtype:
-        # dtype must be a valid OptionalProto.DataType
-        valid_dtypes = list(OptionalProto.DataType.values())
-        if dtype not in valid_dtypes:
+    if dtype is not None:
+        # dtype must be a valid onnx.OptionalProto.DataType
+        if dtype not in onnx.OptionalProto.DataType.values():
             raise TypeError(f"{dtype} must be a valid OptionalProto.DataType.")
         elem_type = dtype
     elif isinstance(opt, dict):
-        elem_type = OptionalProto.MAP
+        elem_type = onnx.OptionalProto.MAP
     elif isinstance(opt, list):
-        elem_type = OptionalProto.SEQUENCE
+        elem_type = onnx.OptionalProto.SEQUENCE
     elif opt is None:
-        elem_type = OptionalProto.UNDEFINED
+        elem_type = onnx.OptionalProto.UNDEFINED
     else:
-        elem_type = OptionalProto.TENSOR
+        elem_type = onnx.OptionalProto.TENSOR
 
     optional.elem_type = elem_type
 
     if opt is not None:
-        if elem_type == OptionalProto.TENSOR:
+        if elem_type == onnx.OptionalProto.TENSOR:
             optional.tensor_value.CopyFrom(from_array(opt))
-        elif elem_type == OptionalProto.SEQUENCE:
+        elif elem_type == onnx.OptionalProto.SEQUENCE:
             optional.sequence_value.CopyFrom(from_list(opt))
-        elif elem_type == OptionalProto.MAP:
+        elif elem_type == onnx.OptionalProto.MAP:
             optional.map_value.CopyFrom(from_dict(opt))
         else:
             raise TypeError(
@@ -572,33 +698,18 @@ def from_optional(
     return optional
 
 
-def convert_endian(tensor: TensorProto) -> None:
-    """
-    Call to convert endianess of raw data in tensor.
-
-    Arguments:
-        tensor (TensorProto): TensorProto to be converted.
-    """
-    tensor_dtype = tensor.data_type
-    np_dtype = helper.tensor_dtype_to_np_dtype(tensor_dtype)
-    tensor.raw_data = (
-        np.frombuffer(tensor.raw_data, dtype=np_dtype).byteswap().tobytes()
-    )
-
-
 def create_random_int(
-    input_shape: Tuple[int], dtype: np.dtype, seed: int = 1
+    input_shape: tuple[int], dtype: np.dtype, seed: int = 1
 ) -> np.ndarray:
-    """
-    Create random integer array for backend/test/case/node.
+    """Create random integer array for backend/test/case/node.
 
     Args:
-        input_shape: specify the shape for the returned integer array.
-        dtype: specify the NumPy data type for the returned integer array.
-        seed: (optional) the seed for np.random.
+        input_shape: The shape for the returned integer array.
+        dtype: The NumPy data type for the returned integer array.
+        seed: The seed for np.random.
 
     Returns:
-        np.ndarray: the created random integer array.
+        np.ndarray: Random integer array.
     """
     np.random.seed(seed)
     if dtype in (
@@ -615,5 +726,25 @@ def create_random_int(
         end = min(np.iinfo(dtype).max, np.iinfo(np.int32).max)
         start = max(np.iinfo(dtype).min, np.iinfo(np.int32).min)
         return np.random.randint(start, end, size=input_shape).astype(dtype)
+    raise TypeError(f"{dtype} is not supported by create_random_int.")
+
+
+def saturate_cast(x: np.ndarray, dtype: np.dtype) -> np.ndarray:
+    """Saturate cast for numeric types.
+
+    This function ensures that values outside the representable range
+    of the target dtype are clamped to the maximum or minimum representable
+    value of that dtype.
+    """
+    if np.issubdtype(dtype, np.integer) or dtype in (
+        ml_dtypes.int4,
+        ml_dtypes.uint4,
+        ml_dtypes.int2,
+        ml_dtypes.uint2,
+    ):
+        info = ml_dtypes.iinfo(dtype)
+        x = np.round(x)
     else:
-        raise TypeError(f"{dtype} is not supported by create_random_int.")
+        info = ml_dtypes.finfo(dtype)  # type: ignore[assignment]
+
+    return np.clip(x, info.min, info.max).astype(dtype)  # type: ignore[no-any-return]

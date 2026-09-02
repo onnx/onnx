@@ -1,7 +1,7 @@
 # Copyright (c) ONNX Project Contributors
 
 # SPDX-License-Identifier: Apache-2.0
-
+from __future__ import annotations
 
 import numpy as np
 
@@ -9,7 +9,5 @@ from onnx.reference.op_run import OpRun
 
 
 class Selu(OpRun):
-    def _run(self, x, alpha=None, gamma=None):  # type: ignore
-        return (
-            (np.where(x > 0, x, np.exp(x) * alpha - alpha) * gamma).astype(x.dtype),
-        )
+    def _run(self, x, alpha=None, gamma=None):
+        return ((np.where(x > 0, x, alpha * np.expm1(x)) * gamma).astype(x.dtype),)

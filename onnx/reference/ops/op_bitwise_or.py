@@ -1,7 +1,7 @@
 # Copyright (c) ONNX Project Contributors
 
 # SPDX-License-Identifier: Apache-2.0
-
+from __future__ import annotations
 
 import numpy as np
 
@@ -9,5 +9,5 @@ from onnx.reference.ops._op import OpRunBinary
 
 
 class BitwiseOr(OpRunBinary):
-    def _run(self, x, y):  # type: ignore
+    def _run(self, x, y):
         return (np.bitwise_or(x, y),)

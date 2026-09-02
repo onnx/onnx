@@ -1,18 +1,13 @@
 // Copyright (c) ONNX Project Contributors
-
-/*
- * SPDX-License-Identifier: Apache-2.0
- */
+//
+// SPDX-License-Identifier: Apache-2.0
 
 // ATTENTION: The code in this file is highly EXPERIMENTAL.
 // Adventurous users should note that the APIs will probably change.
 
 #pragma once
-#include <stdint.h>
-
+#include <cstdint>
 #include <string>
-#include <unordered_map>
-#include <vector>
 
 namespace ONNX_NAMESPACE {
 
@@ -185,9 +180,17 @@ namespace ONNX_NAMESPACE {
   _(ScatterElements)                \
   _(Resize)                         \
   _(ceil_mode)                      \
-  _(num_outputs)
+  _(num_outputs)                    \
+  _(start)                          \
+  _(end)                            \
+  _(num_groups)                     \
+  _(stash_type)                     \
+  _(block_size)                     \
+  _(output_dtype)                   \
+  _(left_window_size)               \
+  _(right_window_size)
 
-enum BuiltinSymbol {
+enum BuiltinSymbol : std::uint8_t {
 #define DEFINE_SYMBOL(s) k##s,
   FORALL_BUILTIN_SYMBOLS(DEFINE_SYMBOL)
 #undef DEFINE_SYMBOL
@@ -195,18 +198,20 @@ enum BuiltinSymbol {
 };
 
 struct Symbol {
-  Symbol() {}
+  Symbol() = default;
+  // NOLINTNEXTLINE(google-explicit-constructor, runtime/explicit)
   /*implicit*/ Symbol(BuiltinSymbol value) : value(value) {}
   explicit Symbol(const std::string& s);
   explicit Symbol(uint32_t value) : value(value) {}
 
+  // NOLINTNEXTLINE(google-explicit-constructor)
   operator uint32_t() const {
     return value;
   }
   const char* toString() const;
 
  private:
-  uint32_t value;
+  uint32_t value{0};
 };
 
 static inline bool operator==(Symbol lhs, Symbol rhs) {
@@ -220,7 +225,13 @@ static inline bool operator==(Symbol lhs, BuiltinSymbol rhs) {
   return static_cast<uint32_t>(lhs) == static_cast<uint32_t>(rhs);
 }
 
-inline Symbol operator"" _sym(const char* s, size_t) {
+inline Symbol
+#if !defined(__clang__) && defined(__GNUC__) && __GNUC__ < 5
+operator"" _sym // gcc 4.8.5 insists on having a space (hard error).
+#else
+operator""_sym // clang 17 generates a deprecation warning if there is a space.
+#endif
+    (const char* s, size_t /*unused*/) {
   return Symbol(s);
 }
 

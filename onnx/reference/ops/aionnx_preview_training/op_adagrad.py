@@ -1,14 +1,14 @@
 # Copyright (c) ONNX Project Contributors
 
 # SPDX-License-Identifier: Apache-2.0
-
+from __future__ import annotations
 
 import numpy as np
 
 from onnx.reference.ops.aionnx_preview_training._op_run_training import OpRunTraining
 
 
-def _apply_adagrad(r, t, x, g, h, norm_coefficient, epsilon, decay_factor):  # type: ignore
+def _apply_adagrad(r, t, x, g, h, norm_coefficient, epsilon, decay_factor):
     # Compute adjusted learning-rate.
     r_ = r / (1 + t * decay_factor)
     # Add gradient of regularization term.
@@ -19,13 +19,13 @@ def _apply_adagrad(r, t, x, g, h, norm_coefficient, epsilon, decay_factor):  # t
     h_sqrt = np.sqrt(h_new) + epsilon
     # Apply ADAGRAD update rule.
     x_new = x - r_ * g_regularized / h_sqrt
-    return (x_new, h_new)
+    return (x_new.astype(x.dtype), h_new.astype(h.dtype))
 
 
 class Adagrad(OpRunTraining):
-    def _run(self, *data, decay_factor=None, epsilon=None, norm_coefficient=None):  # type: ignore
+    def _run(self, *data, decay_factor=None, epsilon=None, norm_coefficient=None):
         if len(data) == 5:
-            return self._run1(  # type: ignore
+            return self._run1(
                 *data,
                 decay_factor=decay_factor,
                 epsilon=epsilon,
@@ -34,8 +34,8 @@ class Adagrad(OpRunTraining):
         n = (len(data) - 2) // 3
         xs = []
         hs = []
-        for i in range(0, n):
-            a, b = self._run1(  # type: ignore
+        for i in range(n):
+            a, b = self._run1(
                 *data[:2],
                 data[2 + i],
                 data[2 + n + i],
@@ -48,8 +48,17 @@ class Adagrad(OpRunTraining):
             hs.append(b)
         return tuple(xs + hs)
 
-    def _run1(self, r, t, x, g, h, decay_factor=None, epsilon=None, norm_coefficient=None):  # type: ignore
+    def _run1(
+        self, r, t, x, g, h, decay_factor=None, epsilon=None, norm_coefficient=None
+    ):
         x_new, h_new = _apply_adagrad(
-            r, t, x, g, h, norm_coefficient, epsilon, decay_factor  # type: ignore
+            r,
+            t,
+            x,
+            g,
+            h,
+            norm_coefficient,
+            epsilon,
+            decay_factor,
         )
         return x_new, h_new

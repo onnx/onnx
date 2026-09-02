@@ -10,11 +10,23 @@ complete.
 from __future__ import annotations
 
 import os
-from typing import Sequence
+from typing import TYPE_CHECKING
 
 import onnx
 import onnx.onnx_cpp2py_export.shape_inference as C  # noqa: N812
-from onnx import AttributeProto, FunctionProto, ModelProto, TypeProto
+from onnx.onnx_pb import (
+    IR_VERSION,
+    AttributeProto,
+    FunctionProto,
+    ModelProto,
+    TypeProto,
+)
+
+if TYPE_CHECKING:
+    from collections.abc import Sequence
+
+GraphInferencer = C.GraphInferencer
+InferenceContext = C.InferenceContext
 
 
 def infer_shapes(
@@ -32,11 +44,11 @@ def infer_shapes(
     bug in shape inference), and the result is unspecified.
 
     Arguments:
-        model (Union[ModelProto, bytes], bool, bool, bool) -> ModelProto
-        check_type (bool): Checks the type-equality for input and output
-        strict_mode (bool): Stricter shape inference, it will throw errors if any;
-            Otherwise, simply stop if any error
-        data_prop (bool): Enables data propagation for limited operators to perform shape computation
+        model: ModelProto.
+        check_type: Checks the type-equality for input and output.
+        strict_mode: Stricter shape inference, it will throw errors if any;
+            Otherwise, simply stop if any error.
+        data_prop: Enables data propagation for limited operators to perform shape computation.
 
     Returns:
         (ModelProto) model with inferred shape information
@@ -47,10 +59,10 @@ def infer_shapes(
             model_str, check_type, strict_mode, data_prop
         )
         return onnx.load_from_string(inferred_model_str)
-    if isinstance(model, str):
+    if isinstance(model, (str, os.PathLike)):
         raise TypeError(
             "infer_shapes only accepts ModelProto or bytes,"
-            "you can use infer_shapes_path for the model path (String)."
+            " For Model paths (str or os.PathLike), use infer_shapes_path()."
         )
 
     raise TypeError(
@@ -65,9 +77,11 @@ def infer_shapes_path(
     strict_mode: bool = False,
     data_prop: bool = False,
 ) -> None:
-    """
-    Take model path for shape_inference same as infer_shape; it support >2GB models
-    Directly output the inferred model to the output_path; Default is the original model path
+    """Take model path for shape_inference.
+
+    This function is the same as :func:`infer_shape` but supports >2GB models.
+    The function outputs the inferred model to the `output_path`. The original model path
+    is used if not specified.
     """
     if isinstance(model_path, ModelProto):
         raise TypeError(
@@ -101,10 +115,8 @@ def infer_node_outputs(
     input_data: dict[str, onnx.TensorProto] | None = None,
     input_sparse_data: dict[str, onnx.SparseTensorProto] | None = None,
     opset_imports: list[onnx.OperatorSetIdProto] | None = None,
-    ir_version: int = onnx.IR_VERSION,
+    ir_version: int = IR_VERSION,
 ) -> dict[str, onnx.TypeProto]:
-    if not schema.has_type_and_shape_inference_function:  # type: ignore
-        return {}
     if input_data is None:
         input_data = {}
     if input_sparse_data is None:
@@ -116,12 +128,12 @@ def infer_node_outputs(
 
     # catch KeyError if node's input does not exist in input_types
     passed_input_types = {
-        key: input_types[key].SerializeToString() for key in node.input
+        key: input_types[key].SerializeToString() for key in node.input if key != ""
     }
     # input_types will also be used as outer_scope_value_types so do not filter by node's input here
-    for key in input_types:
+    for key, value in input_types.items():
         if key not in passed_input_types:
-            passed_input_types[key] = input_types[key].SerializeToString()
+            passed_input_types[key] = value.SerializeToString()
     passed_input_data = {
         key: input_data[key].SerializeToString()
         for key in node.input
@@ -149,8 +161,7 @@ def infer_function_output_types(
     input_types: Sequence[TypeProto],
     attributes: Sequence[AttributeProto],
 ) -> list[TypeProto]:
-    """
-    Apply type-and-shape-inference to given function body, with given input types
+    """Apply type-and-shape-inference to given function body, with given input types
     and given input attribute values.
     """
     result = C.infer_function_output_types(

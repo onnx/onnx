@@ -1,8 +1,6 @@
 // Copyright (c) ONNX Project Contributors
-
-/*
- * SPDX-License-Identifier: Apache-2.0
- */
+//
+// SPDX-License-Identifier: Apache-2.0
 
 // ATTENTION: The code in this file is highly EXPERIMENTAL.
 // Adventurous users should note that the APIs will probably change.
@@ -23,9 +21,8 @@
 // removed a bunch of slice variants for simplicity...
 
 #pragma once
-#include <assert.h>
-
 #include <array>
+#include <cassert>
 #include <vector>
 
 namespace ONNX_NAMESPACE {
@@ -43,11 +40,11 @@ namespace ONNX_NAMESPACE {
 template <typename T>
 class ArrayRef {
  public:
-  typedef const T* iterator;
-  typedef const T* const_iterator;
-  typedef size_t size_type;
+  using iterator = const T*;
+  using const_iterator = const T*;
+  using size_type = size_t;
 
-  typedef std::reverse_iterator<iterator> reverse_iterator;
+  using reverse_iterator = std::reverse_iterator<iterator>;
 
  private:
   /// The start of the array, in an external buffer.
@@ -64,6 +61,7 @@ class ArrayRef {
   /*implicit*/ ArrayRef() : Data(nullptr), Length(0) {}
 
   /// Construct an ArrayRef from a single element.
+  // NOLINTNEXTLINE(google-explicit-constructor, runtime/explicit)
   /*implicit*/ ArrayRef(const T& OneElt) : Data(&OneElt), Length(1) {}
 
   /// Construct an ArrayRef from a pointer and length.
@@ -74,19 +72,22 @@ class ArrayRef {
 
   /// Construct an ArrayRef from a std::vector.
   template <typename A>
+  // NOLINTNEXTLINE(google-explicit-constructor, runtime/explicit)
   /*implicit*/ ArrayRef(const std::vector<T, A>& Vec) : Data(Vec.data()), Length(Vec.size()) {}
 
   /// Construct an ArrayRef from a std::array
   template <size_t N>
+  // NOLINTNEXTLINE(google-explicit-constructor, runtime/explicit)
   /*implicit*/ constexpr ArrayRef(const std::array<T, N>& Arr) : Data(Arr.data()), Length(N) {}
 
   /// Construct an ArrayRef from a C array.
   template <size_t N>
+  // NOLINTNEXTLINE(google-explicit-constructor, runtime/explicit)
   /*implicit*/ constexpr ArrayRef(const T (&Arr)[N]) : Data(Arr), Length(N) {}
 
   /// Construct an ArrayRef from a std::initializer_list.
   /*implicit*/ ArrayRef(const std::initializer_list<T>& Vec)
-      : Data(Vec.begin() == Vec.end() ? (T*)nullptr : Vec.begin()), Length(Vec.size()) {}
+      : Data(Vec.begin() == Vec.end() ? static_cast<T*>(nullptr) : Vec.begin()), Length(Vec.size()) {}
 
   /// @}
   /// @name Simple Operations
@@ -170,14 +171,14 @@ class ArrayRef {
   /// The declaration here is extra complicated so that "arrayRef = {}"
   /// continues to select the move assignment operator.
   template <typename U>
-  typename std::enable_if<std::is_same<U, T>::value, ArrayRef<T>>::type& operator=(U&& Temporary) = delete;
+  std::enable_if_t<std::is_same_v<U, T>, ArrayRef<T>>& operator=(U&& Temporary) = delete;
 
   /// Disallow accidental assignment from a temporary.
   ///
   /// The declaration here is extra complicated so that "arrayRef = {}"
   /// continues to select the move assignment operator.
   template <typename U>
-  typename std::enable_if<std::is_same<U, T>::value, ArrayRef<T>>::type& operator=(std::initializer_list<U>) = delete;
+  std::enable_if_t<std::is_same_v<U, T>, ArrayRef<T>>& operator=(std::initializer_list<U>) = delete;
 
   /// @}
   /// @name Expensive Operations
@@ -189,6 +190,7 @@ class ArrayRef {
   /// @}
   /// @name Conversion operators
   /// @{
+  /// NOLINTNEXTLINE(google-explicit-constructor)
   operator std::vector<T>() const {
     return std::vector<T>(Data, Data + Length);
   }

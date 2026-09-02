@@ -1,6 +1,7 @@
 # Copyright (c) ONNX Project Contributors
 #
 # SPDX-License-Identifier: Apache-2.0
+from __future__ import annotations
 
 import numpy as np
 
@@ -18,8 +19,7 @@ from onnx.reference.ops.op_pool_common import (
 class MaxPool(Base):
     @staticmethod
     def export_maxpool_2d_uint8() -> None:
-        """
-        input_shape: [1, 1, 5, 5]
+        """input_shape: [1, 1, 5, 5]
         output_shape: [1, 1, 5, 5]
         pad_shape: [4, 4] -> [2, 2, 2, 2] by axis
         """
@@ -61,8 +61,7 @@ class MaxPool(Base):
 
     @staticmethod
     def export_maxpool_2d_precomputed_pads() -> None:
-        """
-        input_shape: [1, 1, 5, 5]
+        """input_shape: [1, 1, 5, 5]
         output_shape: [1, 1, 5, 5]
         pad_shape: [4, 4] -> [2, 2, 2, 2] by axis
         """
@@ -104,8 +103,7 @@ class MaxPool(Base):
 
     @staticmethod
     def export_maxpool_with_argmax_2d_precomputed_pads() -> None:
-        """
-        input_shape: [1, 1, 5, 5]
+        """input_shape: [1, 1, 5, 5]
         output_shape: [1, 1, 5, 5]
         pad_shape: [4, 4] -> [2, 2, 2, 2] by axis
         """
@@ -165,8 +163,7 @@ class MaxPool(Base):
 
     @staticmethod
     def export_maxpool_2d_precomputed_strides() -> None:
-        """
-        input_shape: [1, 1, 5, 5]
+        """input_shape: [1, 1, 5, 5]
         output_shape: [1, 1, 2, 2]
         """
         node = onnx.helper.make_node(
@@ -193,8 +190,7 @@ class MaxPool(Base):
 
     @staticmethod
     def export_maxpool_with_argmax_2d_precomputed_strides() -> None:
-        """
-        input_shape: [1, 1, 5, 5]
+        """input_shape: [1, 1, 5, 5]
         output_shape: [1, 1, 2, 2]
         """
         node = onnx.helper.make_node(
@@ -230,8 +226,7 @@ class MaxPool(Base):
 
     @staticmethod
     def export_maxpool_2d_precomputed_same_upper() -> None:
-        """
-        input_shape: [1, 1, 5, 5]
+        """input_shape: [1, 1, 5, 5]
         output_shape: [1, 1, 3, 3]
         pad_shape: [2, 2] -> [1, 1, 1, 1] by axis
         """
@@ -264,8 +259,7 @@ class MaxPool(Base):
 
     @staticmethod
     def export_maxpool_1d_default() -> None:
-        """
-        input_shape: [1, 3, 32]
+        """input_shape: [1, 3, 32]
         output_shape: [1, 3, 31]
         """
         node = onnx.helper.make_node(
@@ -289,8 +283,7 @@ class MaxPool(Base):
 
     @staticmethod
     def export_maxpool_2d_default() -> None:
-        """
-        input_shape: [1, 3, 32, 32]
+        """input_shape: [1, 3, 32, 32]
         output_shape: [1, 3, 31, 31]
         """
         node = onnx.helper.make_node(
@@ -314,8 +307,7 @@ class MaxPool(Base):
 
     @staticmethod
     def export_maxpool_3d_default() -> None:
-        """
-        input_shape: [1, 3, 32, 32, 32]
+        """input_shape: [1, 3, 32, 32, 32]
         output_shape: [1, 3, 31, 31, 31]
         """
         node = onnx.helper.make_node(
@@ -339,8 +331,7 @@ class MaxPool(Base):
 
     @staticmethod
     def export_maxpool_2d_same_upper() -> None:
-        """
-        input_shape: [1, 3, 32, 32]
+        """input_shape: [1, 3, 32, 32]
         output_shape: [1, 3, 32, 32]
         pad_shape: [1, 1] -> [0, 1, 0, 1] by axis
         """
@@ -372,14 +363,13 @@ class MaxPool(Base):
             constant_values=np.nan,
         )
         pads = [pad_top, pad_left, pad_bottom, pad_right]
-        y = pool(padded, x_shape, kernel_shape, strides, out_shape, "MAX", pads)
+        y = pool(padded, x_shape, kernel_shape, strides, out_shape, "MAX", pads, pads)
 
         expect(node, inputs=[x], outputs=[y], name="test_maxpool_2d_same_upper")
 
     @staticmethod
     def export_maxpool_2d_same_lower() -> None:
-        """
-        input_shape: [1, 3, 32, 32]
+        """input_shape: [1, 3, 32, 32]
         output_shape: [1, 3, 32, 32]
         pad_shape: [1, 1] -> [1, 0, 1, 0] by axis
         """
@@ -411,14 +401,13 @@ class MaxPool(Base):
             constant_values=np.nan,
         )
         pads = [pad_top, pad_left, pad_bottom, pad_right]
-        y = pool(padded, x_shape, kernel_shape, strides, out_shape, "MAX", pads)
+        y = pool(padded, x_shape, kernel_shape, strides, out_shape, "MAX", pads, pads)
 
         expect(node, inputs=[x], outputs=[y], name="test_maxpool_2d_same_lower")
 
     @staticmethod
     def export_maxpool_2d_pads() -> None:
-        """
-        input_shape: [1, 3, 28, 28]
+        """input_shape: [1, 3, 28, 28]
         output_shape: [1, 3, 30, 30]
         pad_shape: [4, 4] -> [2, 2, 2, 2] by axis
         """
@@ -435,7 +424,7 @@ class MaxPool(Base):
         strides = (1, 1)
         pad_bottom = pad_top = pad_right = pad_left = 2
         pads = [pad_top, pad_left, pad_bottom, pad_right]
-        out_shape, pads = get_output_shape_explicit_padding(
+        out_shape, extra_pads = get_output_shape_explicit_padding(
             pads, x_shape[2:], kernel_shape, strides
         )
         padded = np.pad(
@@ -445,14 +434,22 @@ class MaxPool(Base):
             constant_values=np.nan,
         )
 
-        y = pool(padded, x_shape, kernel_shape, strides, out_shape, "MAX", pads)
+        y = pool(
+            padded,
+            x_shape,
+            kernel_shape,
+            strides,
+            out_shape,
+            "MAX",
+            pads_required=extra_pads,
+            pads=pads,
+        )
 
         expect(node, inputs=[x], outputs=[y], name="test_maxpool_2d_pads")
 
     @staticmethod
     def export_maxpool_2d_strides() -> None:
-        """
-        input_shape: [1, 3, 32, 32]
+        """input_shape: [1, 3, 32, 32]
         output_shape: [1, 3, 10, 10]
         """
         node = onnx.helper.make_node(
@@ -473,8 +470,7 @@ class MaxPool(Base):
 
     @staticmethod
     def export_maxpool_2d_ceil() -> None:
-        """
-        input_shape: [1, 1, 4, 4]
+        """input_shape: [1, 1, 4, 4]
         output_shape: [1, 1, 2, 2]
         """
         node = onnx.helper.make_node(
@@ -502,9 +498,31 @@ class MaxPool(Base):
         expect(node, inputs=[x], outputs=[y], name="test_maxpool_2d_ceil")
 
     @staticmethod
-    def export_maxpool_2d_dilations() -> None:
+    def export_maxpool_2d_ceil_output_size_reduce_by_one() -> None:
+        """input_shape: [1, 1, 2, 2]
+        output_shape: [1, 1, 1, 1]
         """
-        input_shape: [1, 1, 4, 4]
+        node = onnx.helper.make_node(
+            "MaxPool",
+            inputs=["x"],
+            outputs=["y"],
+            kernel_shape=[1, 1],
+            strides=[2, 2],
+            ceil_mode=True,
+        )
+        x = np.array([[[[1, 2], [3, 4]]]]).astype(np.float32)
+        y = np.array([[[[1]]]]).astype(np.float32)
+
+        expect(
+            node,
+            inputs=[x],
+            outputs=[y],
+            name="test_maxpool_2d_ceil_output_size_reduce_by_one",
+        )
+
+    @staticmethod
+    def export_maxpool_2d_dilations() -> None:
+        """input_shape: [1, 1, 4, 4]
         output_shape: [1, 1, 2, 2]
         """
         node = onnx.helper.make_node(
@@ -533,8 +551,7 @@ class MaxPool(Base):
 
     @staticmethod
     def export_maxpool_3d_dilations() -> None:
-        """
-        input_shape: [1, 1, 4, 4, 4]
+        """input_shape: [1, 1, 4, 4, 4]
         output_shape: [1, 1, 2, 2, 2]
         """
         node = onnx.helper.make_node(
@@ -585,8 +602,7 @@ class MaxPool(Base):
 
     @staticmethod
     def export_maxpool_3d_dilations_use_ref_impl() -> None:
-        """
-        input_shape: [1, 1, 4, 4, 4]
+        """input_shape: [1, 1, 4, 4, 4]
         output_shape: [1, 1, 2, 2, 2]
         """
         dilations = [2, 2, 2]
@@ -646,7 +662,8 @@ class MaxPool(Base):
             strides,
             out_shape,
             "MAX",
-            pads,
+            pads_required=pads,
+            pads=None,
             dilations=dilations,
         )
 
@@ -695,7 +712,8 @@ class MaxPool(Base):
             strides,
             out_shape,
             "MAX",
-            pads,
+            pads_required=pads,
+            pads=None,
             dilations=dilations,
         )
 

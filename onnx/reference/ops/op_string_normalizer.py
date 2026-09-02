@@ -1,7 +1,7 @@
 # Copyright (c) ONNX Project Contributors
 
 # SPDX-License-Identifier: Apache-2.0
-
+from __future__ import annotations
 
 import locale as pylocale
 import unicodedata
@@ -13,14 +13,13 @@ from onnx.reference.op_run import OpRun, RuntimeTypeError
 
 
 class StringNormalizer(OpRun):
-    """
-    The operator is not really threadsafe as python cannot
+    """The operator is not really threadsafe as python cannot
     play with two locales at the same time. stop words
     should not be implemented here as the tokenization
     usually happens after this steps.
     """
 
-    def _run(  # type: ignore
+    def _run(
         self,
         x,
         case_change_action=None,
@@ -42,7 +41,7 @@ class StringNormalizer(OpRun):
                 stops = set(stopwords)
         res = np.empty(x.shape, dtype=x.dtype)
         if len(x.shape) == 2:
-            for i in range(0, x.shape[1]):
+            for i in range(x.shape[1]):
                 self._run_column(
                     x[:, i],
                     res[:, i],
@@ -75,7 +74,7 @@ class StringNormalizer(OpRun):
         return (res,)
 
     @staticmethod
-    def _run_column(  # type: ignore
+    def _run_column(
         cin,
         cout,
         slocale=None,
@@ -94,7 +93,7 @@ class StringNormalizer(OpRun):
                 )
         cout[:] = cin[:]
 
-        for i in range(0, cin.shape[0]):
+        for i in range(cin.shape[0]):
             if isinstance(cout[i], float):
                 # nan
                 cout[i] = ""
@@ -102,14 +101,14 @@ class StringNormalizer(OpRun):
                 cout[i] = StringNormalizer.strip_accents_unicode(cout[i])
 
         if is_case_sensitive and len(stops) > 0:
-            for i in range(0, cin.shape[0]):
+            for i in range(cin.shape[0]):
                 cout[i] = StringNormalizer._remove_stopwords(cout[i], raw_stops)
 
         if case_change_action == "LOWER":
-            for i in range(0, cin.shape[0]):
+            for i in range(cin.shape[0]):
                 cout[i] = cout[i].lower()
         elif case_change_action == "UPPER":
-            for i in range(0, cin.shape[0]):
+            for i in range(cin.shape[0]):
                 cout[i] = cout[i].upper()
         elif case_change_action != "NONE":
             raise RuntimeError(
@@ -117,34 +116,34 @@ class StringNormalizer(OpRun):
             )
 
         if not is_case_sensitive and len(stops) > 0:
-            for i in range(0, cin.shape[0]):
+            for i in range(cin.shape[0]):
                 cout[i] = StringNormalizer._remove_stopwords(cout[i], stops)
 
         return cout
 
     @staticmethod
-    def _remove_stopwords(text, stops):  # type: ignore
+    def _remove_stopwords(text, stops):
         spl = text.split(" ")
         return " ".join(filter(lambda s: s not in stops, spl))
 
     @staticmethod
-    def strip_accents_unicode(s):  # type: ignore
-        """
-        Transforms accentuated unicode symbols into their simple counterpart.
+    def strip_accents_unicode(s):
+        """Transforms accentuated unicode symbols into their simple counterpart.
         Source: `sklearn/feature_extraction/text.py
         <https://github.com/scikit-learn/scikit-learn/blob/main/sklearn/
         feature_extraction/text.py#L115>`_.
 
-        :param s: string
-            The string to strip
-        :return: the cleaned string
+        Args:
+            s: string The string to strip
+
+        Returns:
+            the cleaned string
         """
         try:
             # If `s` is ASCII-compatible, then it does not contain any accented
             # characters and we can avoid an expensive list comprehension
             s.encode("ASCII", errors="strict")
-            return s
+            return s  # noqa: TRY300
         except UnicodeEncodeError:
             normalized = unicodedata.normalize("NFKD", s)
-            s = "".join([c for c in normalized if not unicodedata.combining(c)])
-            return s
+            return "".join([c for c in normalized if not unicodedata.combining(c)])

@@ -1,8 +1,6 @@
 // Copyright (c) ONNX Project Contributors
-
-/*
- * SPDX-License-Identifier: Apache-2.0
- */
+//
+// SPDX-License-Identifier: Apache-2.0
 
 // Adapter for Resize in default domain from version 10 to 11
 
@@ -11,17 +9,21 @@
 #include <memory>
 #include <vector>
 
-namespace ONNX_NAMESPACE {
-namespace version_conversion {
+#include "onnx/version_converter/adapters/adapter.h"
+
+namespace ONNX_NAMESPACE::version_conversion {
 
 class Resize_10_11 final : public Adapter {
  public:
   explicit Resize_10_11() : Adapter("Resize", OpSetID(10), OpSetID(11)) {}
 
-  void adapt_resize_10_11(std::shared_ptr<Graph> graph, Node* node) const {
-    int input_rank = node->inputs()[0]->sizes().size();
+  void adapt_resize_10_11(const std::shared_ptr<Graph>& graph, Node* node) const {
+    const ArrayRef<Value*>& inputs = node->inputs();
+    ONNX_ASSERTM(inputs.size() >= 2, "Resize in opset 10 needs to have at least 2 inputs.")
 
-    Value* scales_input = node->inputs()[1];
+    int64_t input_rank = static_cast<int64_t>(inputs[0]->sizes().size());
+
+    Value* scales_input = inputs[1];
     node->addInput(scales_input);
 
     Tensor t;
@@ -30,9 +32,9 @@ class Resize_10_11 final : public Adapter {
     auto& data = t.floats();
 
     for (int i = 0; i < input_rank; i++)
-      data.emplace_back(0);
+      data.emplace_back(0.0f);
     for (int i = 0; i < input_rank; i++)
-      data.emplace_back(1);
+      data.emplace_back(1.0f);
 
     Node* constant = graph->create(kConstant);
     constant->insertBefore(node);
@@ -46,5 +48,4 @@ class Resize_10_11 final : public Adapter {
   }
 };
 
-} // namespace version_conversion
-} // namespace ONNX_NAMESPACE
+} // namespace ONNX_NAMESPACE::version_conversion

@@ -1,7 +1,7 @@
 # Copyright (c) ONNX Project Contributors
 
 # SPDX-License-Identifier: Apache-2.0
-
+from __future__ import annotations
 
 import numpy as np
 
@@ -9,7 +9,7 @@ from onnx.reference.ops.op_pool_common import CommonPool
 
 
 class LpPool(CommonPool):
-    def _run(  # type: ignore
+    def _run(
         self,
         x,
         auto_pad=None,
@@ -37,5 +37,7 @@ class LpPool(CommonPool):
             strides=strides,
         )
 
-        kernel_element_count = np.prod(kernel_shape)
-        return (np.power(kernel_element_count * power_average[0], 1.0 / p),)
+        kernel_element_count = np.prod(kernel_shape, dtype=np.int64)
+        return (
+            np.power(kernel_element_count * power_average[0], 1.0 / p).astype(x.dtype),
+        )

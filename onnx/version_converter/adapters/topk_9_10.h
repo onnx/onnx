@@ -1,8 +1,6 @@
 // Copyright (c) ONNX Project Contributors
-
-/*
- * SPDX-License-Identifier: Apache-2.0
- */
+//
+// SPDX-License-Identifier: Apache-2.0
 
 // Adapter for TopK in default domain from version 9 to 10
 
@@ -11,14 +9,15 @@
 #include <memory>
 #include <vector>
 
-namespace ONNX_NAMESPACE {
-namespace version_conversion {
+#include "onnx/version_converter/adapters/adapter.h"
+
+namespace ONNX_NAMESPACE::version_conversion {
 
 class TopK_9_10 final : public Adapter {
  public:
   explicit TopK_9_10() : Adapter("TopK", OpSetID(9), OpSetID(10)) {}
 
-  void adapt_topk_9_10(std::shared_ptr<Graph> graph, Node* node) const {
+  void adapt_topk_9_10(const std::shared_ptr<Graph>& graph, Node* node) const {
     Tensor t;
     t.elem_type() = TensorProto_DataType_INT64;
     t.sizes() = std::vector<int64_t>{1};
@@ -39,5 +38,4 @@ class TopK_9_10 final : public Adapter {
   }
 };
 
-} // namespace version_conversion
-} // namespace ONNX_NAMESPACE
+} // namespace ONNX_NAMESPACE::version_conversion

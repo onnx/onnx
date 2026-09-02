@@ -1,7 +1,7 @@
 # Copyright (c) ONNX Project Contributors
 
 # SPDX-License-Identifier: Apache-2.0
-
+from __future__ import annotations
 
 from warnings import catch_warnings, simplefilter
 
@@ -11,7 +11,7 @@ from onnx.reference.ops._op import OpRunUnaryNum
 
 
 class Sqrt(OpRunUnaryNum):
-    def _run(self, x):  # type: ignore
+    def _run(self, x):
         with catch_warnings():
             simplefilter("ignore")
             return (np.sqrt(x).astype(x.dtype),)

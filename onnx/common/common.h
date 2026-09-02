@@ -1,9 +1,6 @@
 // Copyright (c) ONNX Project Contributors
-
-/*
- * SPDX-License-Identifier: Apache-2.0
- */
-
+//
+// SPDX-License-Identifier: Apache-2.0
 #pragma once
 
 #define ONNX_UNUSED_PARAMETER(x) (void)(x)
@@ -16,10 +13,10 @@
     abort();                                              \
   } while (false)
 
-#define ONNX_THROW_EX(ex)                \
-  do {                                   \
-    std::cerr << ex.what() << std::endl; \
-    abort();                             \
+#define ONNX_THROW_EX(ex)                             \
+  do {                                                \
+    std::cerr << ex.what() << std::endl; /* NOLINT */ \
+    abort();                                          \
   } while (false)
 
 #define ONNX_TRY if (true)
@@ -46,9 +43,11 @@
   ONNX_DISALLOW_COPY(TypeName);                     \
   ONNX_DISALLOW_ASSIGNMENT(TypeName)
 
+// NOLINTBEGIN(bugprone-macro-parentheses)
 #define ONNX_DISALLOW_MOVE(TypeName) \
   TypeName(TypeName&&) = delete;     \
   TypeName& operator=(TypeName&&) = delete
+// NOLINTEND(bugprone-macro-parentheses)
 
 #define ONNX_DISALLOW_COPY_ASSIGNMENT_AND_MOVE(TypeName) \
   ONNX_DISALLOW_COPY_AND_ASSIGNMENT(TypeName);           \

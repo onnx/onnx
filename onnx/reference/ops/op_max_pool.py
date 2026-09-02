@@ -1,7 +1,7 @@
 # Copyright (c) ONNX Project Contributors
 
 # SPDX-License-Identifier: Apache-2.0
-
+from __future__ import annotations
 
 import numpy as np
 
@@ -9,7 +9,7 @@ from onnx.reference.ops._op_common_pool import CommonPool
 
 
 class MaxPool(CommonPool):
-    def _run(  # type: ignore
+    def _run(
         self,
         x,
         auto_pad=None,
@@ -51,7 +51,7 @@ class MaxPool(CommonPool):
             strides=strides,
         )
 
-    def _max_pool(  # type: ignore
+    def _max_pool(
         self,
         x,
         auto_pad,
@@ -87,6 +87,11 @@ class MaxPool(CommonPool):
                         + 1
                     )
                 )
+                need_to_reduce_out_size_in_ceil_mode = (
+                    output_spatial_shape[i] - 1
+                ) * strides[i] >= input_spatial_shape[i] + new_pads[i][0]
+                if need_to_reduce_out_size_in_ceil_mode:
+                    output_spatial_shape[i] -= 1
         else:
             for i in range(len(input_spatial_shape)):
                 output_spatial_shape[i] = int(
@@ -174,15 +179,15 @@ class MaxPool(CommonPool):
 
         raise RuntimeError(f"Not implemented yet for shape {x.shape}.")
 
-    def _max_pool_1d(  # type: ignore
+    def _max_pool_1d(
         self,
         x,
-        auto_pad,
-        ceil_mode,
+        auto_pad,  # noqa: ARG002
+        ceil_mode,  # noqa: ARG002
         dilations,
         kernel_shape,
         new_pads,
-        storage_order,
+        storage_order,  # noqa: ARG002
         strides,
         output_spatial_shape,
     ):
@@ -226,15 +231,15 @@ class MaxPool(CommonPool):
         for c in range(total_channels):
             iteration(c)
 
-        if len(self.output) == 1:  # type: ignore
+        if len(self.output) == 1:
             return (Y_data.reshape(y_dims),)
         return (Y_data.reshape(y_dims), I_data.reshape(y_dims))
 
-    def _max_pool_2d(  # type: ignore
+    def _max_pool_2d(
         self,
         x,
-        auto_pad,
-        ceil_mode,
+        auto_pad,  # noqa: ARG002
+        ceil_mode,  # noqa: ARG002
         dilations,
         kernel_shape,
         new_pads,
@@ -265,7 +270,7 @@ class MaxPool(CommonPool):
         Y_data = y.ravel()
         I_data = indices.ravel()
 
-        def iteration(c):  # type: ignore
+        def iteration(c):
             x_d = c * x_step  # X_data
             y_d = c * y_step  # Y_data
             for ph in range(pooled_height):
@@ -303,15 +308,15 @@ class MaxPool(CommonPool):
         for c in range(total_channels):
             iteration(c)
 
-        if len(self.output) == 1:  # type: ignore
+        if len(self.output) == 1:
             return (Y_data.reshape(y_dims),)
         return (Y_data.reshape(y_dims), I_data.reshape(y_dims))
 
-    def _max_pool_3d(  # type: ignore
+    def _max_pool_3d(
         self,
         x,
-        auto_pad,
-        ceil_mode,
+        auto_pad,  # noqa: ARG002
+        ceil_mode,  # noqa: ARG002
         dilations,
         kernel_shape,
         new_pads,
@@ -403,6 +408,6 @@ class MaxPool(CommonPool):
         for c in range(total_channels):
             iteration(c)
 
-        if len(self.output) == 1:  # type: ignore
+        if len(self.output) == 1:
             return (Y_data.reshape(y_dims),)
         return (Y_data.reshape(y_dims), I_data.reshape(y_dims))

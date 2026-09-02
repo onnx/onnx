@@ -1,7 +1,7 @@
 # Copyright (c) ONNX Project Contributors
 
 # SPDX-License-Identifier: Apache-2.0
-
+from __future__ import annotations
 
 import numpy as np
 
@@ -9,7 +9,7 @@ from onnx.reference.op_run import OpRun
 
 
 class InstanceNormalization(OpRun):
-    def _run(self, x, s, bias, epsilon=None):  # type: ignore
+    def _run(self, x, s, bias, epsilon=None):
         dims_x = len(x.shape)
         axis = tuple(range(2, dims_x))
         mean = np.mean(x, axis=axis, keepdims=True)

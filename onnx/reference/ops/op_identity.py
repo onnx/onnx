@@ -1,13 +1,13 @@
 # Copyright (c) ONNX Project Contributors
 
 # SPDX-License-Identifier: Apache-2.0
+from __future__ import annotations
+
+from onnx.reference.op_run import OpRun
 
 
-from onnx.reference.ops._op import OpRunUnaryNum
-
-
-class Identity(OpRunUnaryNum):
-    def _run(self, a):  # type: ignore
+class Identity(OpRun):
+    def _run(self, a):
         if a is None:
             return (None,)
         return (a.copy(),)

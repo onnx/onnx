@@ -1,6 +1,7 @@
 # Copyright (c) ONNX Project Contributors
 #
 # SPDX-License-Identifier: Apache-2.0
+from __future__ import annotations
 
 import numpy as np
 
@@ -226,5 +227,29 @@ class ReduceMax(Base):
             node,
             inputs=[data, axes],
             outputs=[reduced],
-            name="test_reduce_min_empty_set",
+            name="test_reduce_max_empty_set",
+        )
+
+    @staticmethod
+    def export_empty_set_bool() -> None:
+        shape = [2, 0, 4]
+        keepdims = 1
+        reduced_shape = [2, 1, 4]
+
+        node = onnx.helper.make_node(
+            "ReduceMax",
+            inputs=["data", "axes"],
+            outputs=["reduced"],
+            keepdims=keepdims,
+        )
+
+        data = np.empty(shape, dtype=np.bool_)
+        axes = np.array([1], dtype=np.int64)
+        reduced = np.full(reduced_shape, False, dtype=np.bool_)
+
+        expect(
+            node,
+            inputs=[data, axes],
+            outputs=[reduced],
+            name="test_reduce_max_empty_set_bool",
         )

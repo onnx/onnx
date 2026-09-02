@@ -10,8 +10,9 @@ on:
       - main
   pull_request:
   merge_group:
+  workflow_dispatch:
 
-permissions:  # set top-level default permissions as security best practice
+permissions:
   contents: read
 
 concurrency:
@@ -19,37 +20,19 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  optional-lint:
-    name: Optional Lint
+  validate-sbom:
+    name: Validate SBOM
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@8ade135a41bc03ea155e62e844d188df1ea18608 # v4.1.0
-      - name: misspell # Check spellings as well
-        uses: reviewdog/action-misspell@cc799b020b057600b66eedf2b6e97ca26137de21 # v1.14.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          github_token: ${{ secrets.github_token }}
-          locale: "US"
-          reporter: github-pr-check
-          level: info
-          filter_mode: diff_context
-          exclude: |
-            ./docs/docsgen/source/_static/*
-      - name: shellcheck # Static check shell scripts
-        uses: reviewdog/action-shellcheck@96fa305c16b0f9cc9b093af22dcd09de1c8f1c2d # v1.19.0
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
-          github_token: ${{ secrets.github_token }}
-          reporter: github-pr-check
-          level: info
-          filter_mode: diff_context
-      - name: cpplint # Static check C++ code
-        uses: reviewdog/action-cpplint@b6c13159b10435813edfddea9e1cd02157544f45 # v1.1.0
-        with:
-          github_token: ${{ secrets.github_token }}
-          reporter: github-pr-check
-          level: warning
-          flags: --linelength=120
-          filter: "-runtime/references"
-
+          python-version: '3.12'
+      - run: |
+          pip install -q check-jsonschema
+          python -m check_jsonschema --schemafile "https://cyclonedx.org/schema/bom-1.7.schema.json" sbom.cdx.json
 
   enforce-style:
     name: Enforce style
@@ -57,29 +40,31 @@ jobs:
     permissions:
       security-events: write
     steps:
-      - uses: actions/checkout@8ade135a41bc03ea155e62e844d188df1ea18608 # v4.1.0
-      - name: Setup Python
-        uses: actions/setup-python@61a6322f88396a6271a6ee3565807d608ecaddd1 # v4.7.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          # Version range or exact version of Python to use, using SemVer's version range syntax. Reads from .python-version if unset.
-          python-version: "3.10"
+          persist-credentials: false
+      - name: Setup Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.13"
       - name: Install ONNX
         run: |
           source workflow_scripts/protobuf/build_protobuf_unix.sh $(nproc)
 
           python -m pip install --quiet --upgrade pip setuptools wheel
-          python -m pip install --quiet -r requirements-release.txt
 
-          git submodule update --init --recursive
           export ONNX_BUILD_TESTS=0
           export ONNX_ML=1
           export CMAKE_ARGS="-DONNXIFI_DUMMY_BACKEND=ON -DONNX_WERROR=ON"
           export ONNX_NAMESPACE=ONNX_NAMESPACE_FOO_BAR_FOR_CI
 
-          python setup.py install
+          python -m pip install .
       - name: Install dependencies
         run: |
-          python -m pip install -r requirements-dev.txt
+          python -m pip install lintrunner>=0.10.7
+          # Use release_test to pin package versions
+          python -m pip install -r requirements-release_test.txt
+          python -m pip install -r requirements-lintrunner.txt
           lintrunner init
       - name: Run lintrunner on all files
         run: |
@@ -99,12 +84,21 @@ jobs:
         # To toggle linter comments in the files page, press `i` on the keyboard
         if: always()
         continue-on-error: true
-        uses: github/codeql-action/upload-sarif@cdcdbb579706841c47f7063dda365e292e5cad7a # v2.13.4
+        uses: github/codeql-action/upload-sarif@db488ddef3bf6cb639b32c2e9a7c0a7ea8271d28
         with:
           # Path to SARIF file relative to the root of the repository
           sarif_file: lintrunner.sarif
           category: lintrunner
           checkout_path: ${{ github.workspace }}
+      - name: Upload lint results as artifacts
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: lint-results
+          path: |
+            lint.json
+            lintrunner.sarif
+          retention-days: 30
       - name: Check auto-gen files are up-to-date
         run: |
           echo -e "\n::group:: ===> check auto-gen files are up-to-date..."

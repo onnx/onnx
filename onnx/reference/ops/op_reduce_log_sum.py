@@ -1,15 +1,26 @@
 # Copyright (c) ONNX Project Contributors
 
 # SPDX-License-Identifier: Apache-2.0
-
+from __future__ import annotations
 
 import numpy as np
 
 from onnx.reference.ops._op import OpRunReduceNumpy
 
 
+def _check_integer_input(data):
+    if np.issubdtype(data.dtype, np.integer):
+        raise TypeError(
+            f"ReduceLogSum does not support integer input (got {data.dtype}). "
+            "The operator is defined in terms of Log, which is only defined for "
+            "float types. Integer types were removed from the schema in opset 28. "
+            "Cast the input to a float type."
+        )
+
+
 class ReduceLogSum_1(OpRunReduceNumpy):
-    def _run(self, data, axes=None, keepdims=True):  # type: ignore
+    def _run(self, data, axes=None, keepdims=True):
+        _check_integer_input(data)
         tax = tuple(axes) if axes is not None else None
         if data.size == 0:
             return self.reduce_constant(data, -np.inf, tax, keepdims)
@@ -20,12 +31,11 @@ class ReduceLogSum_1(OpRunReduceNumpy):
 
 
 class ReduceLogSum_18(OpRunReduceNumpy):
-    def _run(self, data, axes=None, keepdims=1, noop_with_empty_axes=0):  # type: ignore
-        if self.is_axes_empty(axes) and noop_with_empty_axes:  # type: ignore
-            return (data,)
+    def _run(self, data, axes=None, keepdims=1, noop_with_empty_axes=0):
+        _check_integer_input(data)
+        axes = self.handle_axes(axes, noop_with_empty_axes)
 
-        axes = self.handle_axes(axes)
-        keepdims = keepdims != 0  # type: ignore
+        keepdims = keepdims != 0
 
         if data.size == 0:
             return self.reduce_constant(data, -np.inf, axes, keepdims)

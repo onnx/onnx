@@ -1,9 +1,7 @@
 # Copyright (c) ONNX Project Contributors
 
 # SPDX-License-Identifier: Apache-2.0
-
-
-from typing import Tuple
+from __future__ import annotations
 
 import numpy as np
 
@@ -12,7 +10,7 @@ from onnx.reference.op_run import OpRun
 
 def _gather_nd_impl(
     data: np.ndarray, indices: np.ndarray, batch_dims: int
-) -> Tuple[np.ndarray]:
+) -> tuple[np.ndarray]:
     # Note the data rank - will be reused multiple times later
     data_rank = len(data.shape)
 
@@ -45,7 +43,7 @@ def _gather_nd_impl(
 
     # Flatten 'data' to array of shape
     # (batch_dim_size, data.shape[batch_dimes:]).
-    reshaped_data = data.reshape((batch_dims_size,) + data.shape[batch_dims:])
+    reshaped_data = data.reshape((batch_dims_size, *data.shape[batch_dims:]))
 
     # Gather each scalar value from 'data'.
     for batch_dim in range(reshaped_indices.shape[0]):
@@ -56,5 +54,5 @@ def _gather_nd_impl(
 
 
 class GatherND(OpRun):
-    def _run(self, data, indices, batch_dims=None):  # type: ignore
-        return _gather_nd_impl(data, indices, batch_dims)  # type: ignore
+    def _run(self, data, indices, batch_dims=None):
+        return _gather_nd_impl(data, indices, batch_dims)

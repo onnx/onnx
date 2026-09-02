@@ -1,15 +1,13 @@
 # Copyright (c) ONNX Project Contributors
 
 # SPDX-License-Identifier: Apache-2.0
-
+from __future__ import annotations
 
 from onnx.reference.ops.aionnxml._op_run_aionnxml import OpRunAiOnnxMl
 
 
-def _array_feature_extrator(data, indices):  # type: ignore
-    """
-    Implementation of operator *ArrayFeatureExtractor*.
-    """
+def _array_feature_extractor(data, indices):
+    """Implementation of operator *ArrayFeatureExtractor*."""
     if len(indices.shape) == 2 and indices.shape[0] == 1:
         index = indices.ravel().tolist()
         add = len(index)
@@ -29,15 +27,14 @@ def _array_feature_extrator(data, indices):  # type: ignore
         tem = data[..., index]
     except IndexError as e:
         raise RuntimeError(f"data.shape={data.shape}, indices={indices}") from e
-    res = tem.reshape(new_shape)
-    return res
+    return tem.reshape(new_shape)
 
 
 class ArrayFeatureExtractor(OpRunAiOnnxMl):
-    def _run(self, data, indices):  # type: ignore
-        """
-        Runtime for operator *ArrayFeatureExtractor*.
-        .. warning::
+    def _run(self, data, indices):
+        """Runtime for operator *ArrayFeatureExtractor*.
+
+        Warning:
             ONNX specifications may be imprecise in some cases.
             When the input data is a vector (one dimension),
             the output has still two like a matrix with one row.
@@ -46,5 +43,5 @@ class ArrayFeatureExtractor(OpRunAiOnnxMl):
             <https://github.com/microsoft/onnxruntime/blob/main/
             onnxruntime/core/providers/cpu/ml/array_feature_extractor.cc#L84>`_.
         """
-        res = _array_feature_extrator(data, indices)
+        res = _array_feature_extractor(data, indices)
         return (res,)

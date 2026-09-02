@@ -4,92 +4,62 @@
 from __future__ import annotations
 
 import abc
-from typing import Any, ClassVar, Iterable
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 
-from onnx import TensorProto
-from onnx.defs import get_all_schemas_with_history, get_schema, onnx_opset_version
-from onnx.helper import make_node, make_tensor_type_proto, np_dtype_to_tensor_dtype
-from onnx.numpy_helper import to_array
-from onnx.onnx_pb import AttributeProto, GraphProto, NodeProto, TypeProto
-from onnx.reference.custom_element_types import (
-    bfloat16,
-    float8e4m3fn,
-    float8e4m3fnuz,
-    float8e5m2,
-    float8e5m2fnuz,
-)
+import onnx
 
-
-def _split_class_name(name):  # type: ignore
-    if "_" in name:
-        prefix, vers = name.rsplit("_", maxsplit=1)
-        try:
-            v = int(vers)
-        except ValueError:
-            return name, None
-        return prefix, v
-    return name, None
+if TYPE_CHECKING:
+    from collections.abc import Sequence
 
 
 class RuntimeTypeError(RuntimeError):
-    """
-    Raised when a type of a variable is unexpected.
-    """
+    """Raised when a type of a variable is unexpected."""
 
 
 class RuntimeContextError(RuntimeError):
-    """
-    Raised when the context is missing but an context dependent implementation is defined for an operator.
-    """
+    """Raised when the context is missing but an context dependent implementation is defined for an operator."""
 
 
 class RuntimeImplementationError(NotImplementedError):
-    """
-    Raised when no implementation was found for an operator.
-    """
+    """Raised when no implementation was found for an operator."""
 
 
 class DefaultNone:
-    """
-    Default value for parameters when the parameter is not set
-    but the operator has a default behavior for it.
-    """
+    """Default value for parameters when the parameter is not set but the operator has a default behavior for it."""
 
 
 class RefAttrName:
-    """
-    Implements a link between a parameter of a function
-    and an attribute in node.
+    """Implements a link between a parameter of a function and an attribute in node.
 
-    :param name: name of the input
+    Args:
+        name: name of the input
     """
 
     def __init__(self, name: str):
         self.name = name
 
     def __repr__(self) -> str:
-        "usual"
         return f"{self.__class__.__name__}({self.name!r})"
 
 
-def _build_schemas() -> dict[str, type]:
-    res: dict[str, type] = {}
-    for schema in get_all_schemas_with_history():
+def _build_schemas() -> dict[str, onnx.defs.OpSchema]:
+    res: dict[str, onnx.defs.OpSchema] = {}
+    for schema in onnx.defs.onnx.defs.get_all_schemas_with_history():
         # Multiple version can coexist. The last one is kept.
         if schema.name in res:
-            if schema.domain != res[schema.name].domain:  # type: ignore
+            if schema.domain != res[schema.name].domain:
                 raise NotImplementedError(
-                    f"This function assumes every operator has a unique name {schema.name!r} "  # type: ignore
-                    f"even accross multiple domains {schema.domain!r} and {res[schema.name].domain!r}."  # type: ignore
+                    f"This function assumes every operator has a unique name {schema.name!r} "
+                    f"even across multiple domains {schema.domain!r} and {res[schema.name].domain!r}."
                 )
-            if schema.since_version > res[schema.name].since_version:  # type: ignore
+            if schema.since_version > res[schema.name].since_version:
                 # We keep the most recent one.
-                res[schema.name] = schema  # type: ignore
+                res[schema.name] = schema
         else:
-            res[schema.name] = schema  # type: ignore
-        res[schema.name + "_" + str(schema.since_version)] = schema  # type: ignore
+            res[schema.name] = schema
+        res[schema.name + "_" + str(schema.since_version)] = schema
     return res
 
 
@@ -97,9 +67,11 @@ _schemas = _build_schemas()
 
 
 class OnnxType:
-    def __init__(self, type_proto: TypeProto):
-        if not isinstance(type_proto, TypeProto):
-            raise TypeError(f"type_proto {type(type_proto)} must be of type TypeProto.")
+    def __init__(self, type_proto: onnx.TypeProto):
+        if not isinstance(type_proto, onnx.TypeProto):
+            raise TypeError(
+                f"type_proto {type(type_proto)} must be of type onnx.TypeProto."
+            )
         self.type_proto = type_proto
 
     def __repr__(self) -> str:
@@ -107,8 +79,7 @@ class OnnxType:
 
 
 class SparseTensor:
-    """
-    Simple representation of a sparse tensor.
+    """Simple representation of a sparse tensor.
     It is based on numpy but does not require scipy.
     """
 
@@ -124,94 +95,67 @@ class SparseTensor:
         return self.values.dtype
 
 
-def to_sparse_tensor(att: AttributeProto) -> SparseTensor:
-    """
-    Hosts a sparse tensor.
-    """
+def to_sparse_tensor(att: onnx.AttributeProto) -> SparseTensor:
+    """Hosts a sparse tensor."""
     shape = tuple(d for d in att.dims)  # type: ignore[attr-defined]
-    return SparseTensor(to_array(att.values), to_array(att.indices), shape)  # type: ignore
+    return SparseTensor(
+        onnx.numpy_helper.to_array(att.values),  # type: ignore[attr-defined]
+        onnx.numpy_helper.to_array(att.indices),  # type: ignore[attr-defined]
+        shape,
+    )
 
 
-def to_array_extended(tensor: TensorProto) -> np.ndarray:
-    """
-    Similar to :func:`to_array` but deals with bfloat16,
-    float8e4m3fn, float8e4m3fnuz, float8e5m2, float8e5m2fnuz.
-    """
-    elem_type = tensor.data_type
-    if elem_type == TensorProto.BFLOAT16:
-        data = tensor.int32_data
-        shape = tuple(tensor.dims)
-        y = np.empty(shape, dtype=bfloat16).ravel()
-        for i, d in enumerate(data):
-            y[i] = d
-        return y.reshape(shape)
-
-    if elem_type in (
-        TensorProto.FLOAT8E4M3FN,
-        TensorProto.FLOAT8E4M3FNUZ,
-        TensorProto.FLOAT8E5M2,
-        TensorProto.FLOAT8E5M2FNUZ,
-    ):
-        m = {
-            TensorProto.FLOAT8E4M3FN: float8e4m3fn,
-            TensorProto.FLOAT8E4M3FNUZ: float8e4m3fnuz,
-            TensorProto.FLOAT8E5M2: float8e5m2,
-            TensorProto.FLOAT8E5M2FNUZ: float8e5m2fnuz,
-        }
-
-        if tensor.HasField("raw_data"):
-            data = tensor.raw_data  # type: ignore[assignment]
-        else:
-            data = tensor.int32_data
-        shape = tuple(tensor.dims)
-        y = np.empty(shape, dtype=m[elem_type]).ravel()  # type: ignore[index]
-        for i, d in enumerate(data):
-            y[i] = d
-        return y.reshape(shape)
-    return to_array(tensor)
+def _attribute_conversion_function(attr_type: onnx.AttributeProto.AttributeType):
+    return {
+        onnx.AttributeProto.FLOAT: lambda att: np.float32(att.f),
+        onnx.AttributeProto.FLOATS: lambda att: [np.float32(f) for f in att.floats],
+        onnx.AttributeProto.GRAPH: lambda att: Graph(att.g),
+        onnx.AttributeProto.GRAPHS: lambda att: [Graph(g) for g in att.graphs],
+        onnx.AttributeProto.INT: lambda att: int(att.i),
+        onnx.AttributeProto.INTS: lambda att: [int(i) for i in att.ints],
+        onnx.AttributeProto.SPARSE_TENSOR: lambda att: to_sparse_tensor(
+            att.sparse_tensor
+        ),
+        onnx.AttributeProto.SPARSE_TENSORS: lambda att: [
+            to_sparse_tensor(t) for t in att.sparse_tensors
+        ],
+        onnx.AttributeProto.STRING: lambda att: att.s.decode("utf-8"),
+        onnx.AttributeProto.STRINGS: lambda att: [
+            s.decode("utf-8") for s in att.strings
+        ],
+        onnx.AttributeProto.TENSOR: lambda att: onnx.numpy_helper.to_array(att.t),
+        onnx.AttributeProto.TENSORS: lambda att: [
+            onnx.numpy_helper.to_array(t) for t in att.tensors
+        ],
+        onnx.AttributeProto.TYPE_PROTO: lambda att: OnnxType(att.tp),
+        onnx.AttributeProto.TYPE_PROTOS: lambda att: [
+            OnnxType(t) for t in att.type_protos
+        ],
+    }[attr_type]  # type: ignore[index]
 
 
 class Graph:
     __slots__ = ("g",)
 
-    def __init__(self, g: GraphProto) -> None:
+    def __init__(self, g: onnx.GraphProto) -> None:
         self.g = g
 
 
 class OpRun(abc.ABC):
-    """
-    Ancestor to all operators in this subfolder.
+    """Ancestor to all operators in this subfolder.
 
-    :param onnx_node: `onnx` node
-    :param run_params: additional parameters such as `verbose`, `opsets`
-        (it can be more than one if the operator has a subgraph),
-        `log` for a logging function
-    :param schema: operator schema
+    Args:
+        onnx_node: `onnx` node
+        run_params: additional parameters such as `verbose`, `opsets`
+            (it can be more than one if the operator has a subgraph),
+            `log` for a logging function
+        schema: operator schema
     """
 
     op_domain = ""
 
-    _attribute_conversion_functions: ClassVar[dict[Any, Any]] = {
-        AttributeProto.FLOAT: lambda att: np.float32(att.f),
-        AttributeProto.FLOATS: lambda att: [np.float32(f) for f in att.floats],
-        AttributeProto.GRAPH: lambda att: Graph(att.g),
-        AttributeProto.GRAPHS: lambda att: [Graph(g) for g in att.graphs],
-        AttributeProto.INT: lambda att: int(att.i),
-        AttributeProto.INTS: lambda att: [int(i) for i in att.ints],
-        AttributeProto.SPARSE_TENSOR: lambda att: to_sparse_tensor(att.sparse_tensor),
-        AttributeProto.SPARSE_TENSORS: lambda att: [
-            to_sparse_tensor(t) for t in att.sparse_tensors
-        ],
-        AttributeProto.STRING: lambda att: att.s.decode("utf-8"),
-        AttributeProto.STRINGS: lambda att: [s.decode("utf-8") for s in att.strings],
-        AttributeProto.TENSOR: lambda att: to_array_extended(att.t),
-        AttributeProto.TENSORS: lambda att: [to_array_extended(t) for t in att.tensors],
-        AttributeProto.TYPE_PROTO: lambda att: OnnxType(att.tp),
-        AttributeProto.TYPE_PROTOS: lambda att: [OnnxType(t) for t in att.type_protos],
-    }
-
     def __init__(
-        self, onnx_node: NodeProto, run_params: dict[str, Any], schema: Any = None
+        self, onnx_node: onnx.NodeProto, run_params: dict[str, Any], schema: Any = None
     ):
         if not isinstance(run_params, dict):
             raise TypeError(f"run_params must be a dictionary not {type(run_params)}.")
@@ -233,41 +177,48 @@ class OpRun(abc.ABC):
             elif onnx_node.op_type in _schemas:
                 self._schema = _schemas[onnx_node.op_type]
             else:
-                self._schema = None  # type: ignore
+                self._schema = None
         else:
             self._schema = schema
         self.has_subgraph = False
         self._load_attributes()
 
-    def _log(self, pattern, *args):  # type: ignore
+    def _log(self, pattern, *args):
         self.run_params["log"](pattern, *args)
 
     def _extract_attribute_value(
-        self, att: AttributeProto, ref_att: AttributeProto | None = None
+        self, att: onnx.AttributeProto, ref_att: onnx.AttributeProto | None = None
     ) -> Any:
-        """
-        Converts an attribute value into a python value.
-        """
-        if att.type == AttributeProto.GRAPH:
-            from onnx.reference.reference_evaluator import (
-                ReferenceEvaluator,  # type: ignore
-            )
-
+        """Converts an attribute value into a python value."""
+        if att.type == onnx.AttributeProto.GRAPH:
             new_ops = self.run_params.get("new_ops", None)
-            return ReferenceEvaluator(
+            if "existing_functions" in self.run_params:
+                functions = list(self.run_params["existing_functions"].values())
+            else:
+                functions = None
+            evaluator_cls = self.run_params.get("evaluator_cls", None)
+            assert evaluator_cls is not None, (
+                f"evaluator_cls must be specified to evaluate att={att}"
+            )
+            return evaluator_cls(
                 att.g,
                 opsets=self.run_params["opsets"],
                 verbose=max(0, self.run_params.get("verbose", 0) - 2),
                 new_ops=None if new_ops is None else list(new_ops.values()),
+                functions=functions,
             )
-        if att.type in OpRun._attribute_conversion_functions:
-            return OpRun._attribute_conversion_functions[att.type](att)  # type: ignore
+
+        conversion_function = _attribute_conversion_function(att.type)  # type: ignore[arg-type]
+        if conversion_function is not None:
+            return conversion_function(att)
+
         if ref_att is None:
             raise AttributeError(
                 f"Unable to convert attribute {att.name!r} type {att.type!r} "
                 f"from node type {self.onnx_node.op_type!r}, "
                 f"domain {self.onnx_node.domain!r}\n{att}."
             )
+
         raise AttributeError(
             f"Unable to convert default value for {ref_att.name!r} type {att.type!r} "
             f"from node type {self.onnx_node.op_type!r}, "
@@ -275,11 +226,19 @@ class OpRun(abc.ABC):
         )
 
     @staticmethod
-    def _evaluate_subgraph(context, value, attributes):
-        return value.run(None, context or {}, attributes=attributes)
+    def _evaluate_subgraph(context, value, attributes, bindings=None):
+        run_kwargs: dict[str, Any] = {}
+        if bindings is not None:
+            # Reuse the parent's SymbolBindings so a symbolic dimension
+            # (single global namespace, see docs/ShapeAnnotationSemantics.md)
+            # is checked consistently between the parent graph and this
+            # subgraph (If/Loop/Scan body).
+            run_kwargs["check_shape_annotations"] = True
+            run_kwargs["_bindings"] = bindings
+        return value.run(None, context or {}, attributes=attributes, **run_kwargs)
 
     def _load_attributes(self) -> None:
-        "Checks and loads attributes."
+        """Checks and loads attributes."""
         self.has_linked_attribute = False
         added_attributes = []
         for att in self.onnx_node.attribute:
@@ -291,19 +250,19 @@ class OpRun(abc.ABC):
                 value = self._extract_attribute_value(att)
             setattr(self, name, value)
             added_attributes.append(name)
-            if att.type == AttributeProto.GRAPH:
+            if att.type == onnx.AttributeProto.GRAPH:
                 self.has_subgraph = True
-                self.has_linked_attribute |= value.has_linked_attribute  # type: ignore
+                self.has_linked_attribute |= value.has_linked_attribute  # type: ignore[attr-defined]
                 setattr(
                     self,
                     f"_run_{att.name}",
-                    lambda context, value=value, attributes=None: OpRun._evaluate_subgraph(
-                        context, value, attributes
+                    lambda context, value=value, attributes=None, bindings=None: (
+                        OpRun._evaluate_subgraph(context, value, attributes, bindings)
                     ),
                 )
 
-        if self._schema and self.onnx_node.op_type not in {"Constant"}:
-            for k, v in self._schema.attributes.items():  # type: ignore
+        if self._schema and self.onnx_node.op_type != "Constant":
+            for k, v in self._schema.attributes.items():
                 if not hasattr(self, k):
                     if getattr(v, "required", True):
                         raise RuntimeError(
@@ -316,7 +275,7 @@ class OpRun(abc.ABC):
                             and v.default_value.t.data_type == 0
                         ):
                             # default value is undefined, it depends on the inputs
-                            value = None  # type: ignore
+                            value = None  # type: ignore[assignment]
                         else:
                             value = self._extract_attribute_value(v.default_value, v)
                         setattr(self, k, value)
@@ -324,20 +283,19 @@ class OpRun(abc.ABC):
         self.attributes_names_ = set(added_attributes)
 
     @staticmethod
-    def implicit_inputs(graph: GraphProto) -> list[str]:
-        """
-        Returns all varibles not registered as inputs and not produced by
+    def implicit_inputs(graph: onnx.GraphProto) -> list[str]:
+        """Returns all variables not registered as inputs and not produced by
         an node inside the graph. This inputs are part of the context
         existing in the graph calling this one.
         """
-        if not isinstance(graph, GraphProto):
+        if not isinstance(graph, onnx.GraphProto):
             raise TypeError(f"Unexpected type {type(graph)!r}.")
         local = set()
         known = set()
         for init in graph.initializer:
             known.add(init.name)
         for sparse_init in graph.sparse_initializer:
-            known.add(sparse_init.name)  # type: ignore
+            known.add(sparse_init.name)  # type: ignore[attr-defined]
         for inp in graph.input:
             known.add(inp.name)
         for node in graph.node:
@@ -349,28 +307,27 @@ class OpRun(abc.ABC):
         return list(local)
 
     @property
-    def input(self) -> Iterable[str]:
-        "Returns node attribute `input`."
-        return self.onnx_node.input  # type: ignore
+    def input(self) -> Sequence[str]:
+        """Returns node attribute `input`."""
+        return self.onnx_node.input
 
     @property
-    def output(self) -> Iterable[str]:
-        "Returns node attribute `output`."
-        return self.onnx_node.output  # type: ignore
+    def output(self) -> Sequence[str]:
+        """Returns node attribute `output`."""
+        return self.onnx_node.output
 
     @property
     def op_type(self) -> str:
-        "Returns node attribute `op_type`."
-        return self.onnx_node.op_type  # type: ignore
+        """Returns node attribute `op_type`."""
+        return self.onnx_node.op_type
 
     @property
     def domain(self) -> str:
-        "Returns node attribute `domain`."
-        return self.onnx_node.domain  # type: ignore
+        """Returns node attribute `domain`."""
+        return self.onnx_node.domain
 
     def need_context(self) -> bool:
-        """
-        Tells the runtime if this node needs the context
+        """Tells the runtime if this node needs the context
         (all the results produced so far) as it may silently access
         one of them (operator Scan, If, Loop).
         The default answer is `False`.
@@ -388,32 +345,72 @@ class OpRun(abc.ABC):
         return "\n".join(atts)
 
     @abc.abstractmethod
-    def _run(self, *args, **kwargs):  # type: ignore
-        """
-        Should be overwritten.
+    def _run(self, *args, **kwargs):
+        """Should be overwritten.
 
-        :param args: operator inputs
-        :param kwargs: optional inputs and overriden attributes,
-            an attribute may be overridden if it belongs to a function,
-            in this case, the same instance of OpRun can be called
-            with different values of the same attribute.
-        :return: outputs
+        Args:
+            *args: operator inputs
+            **kwargs: optional inputs and overridden attributes, an
+                attribute may be overridden if it belongs to a function,
+                in this case, the same instance of OpRun can be called
+                with different values of the same attribute.
+
+        Returns:
+            outputs
         """
         raise NotImplementedError(
             f"Method '_run' must be overwritten for operator {self.__class__.__name__!r}."
         )
 
-    def run(self, *args, linked_attributes=None, context=None):  # type: ignore
-        """
-        Calls method ``_run``, catches exceptions,
+    def _check_and_fix_outputs(self, res: tuple[Any, ...]) -> tuple[Any, ...]:
+        """Checks the output are from the expected type."""
+        if not isinstance(res, tuple):
+            raise TypeError(
+                f"Method '_run' of class {self.__class__.__name__!r} does not return a tuple but '{type(res)}'."
+            )
+        if not res:
+            raise ValueError(
+                f"Method '_run' of class {self.__class__.__name__!r} does not return any result."
+            )
+        if any(isinstance(t, tuple) for t in res):
+            dtypes = [type(t) for t in res]
+            raise TypeError(
+                f"One of the results returned by method '_run' of class {self.__class__.__name__!r} "
+                f"is a tuple, this is no ONNX corresponding type (Map, List, Tensor, SparseTensor). "
+                f"All returned types: {dtypes!r}."
+            )
+        res = tuple((np.array(x) if np.isscalar(x) else x) for x in res)
+        if any(
+            not (isinstance(t, (np.ndarray, list, dict)) or hasattr(t, "todense"))
+            for t in res
+        ):
+            dtypes = [type(t) for t in res]
+            raise TypeError(
+                f"One of the results returned by method '_run' of class {self.__class__.__name__!r} "
+                f"has an unexpected type, this is no ONNX corresponding type (Map, List, Tensor, SparseTensor). "
+                f"All returned types: {dtypes!r}."
+            )
+        return res
+
+    def run(self, *args, linked_attributes=None, context=None, bindings=None):
+        """Calls method ``_run``, catches exceptions,
         displays a longer error message.
 
-        :param args: inputs
-        :param linked_attributes: used if this has an attriute linked
-            to the attribute of the function it belongs to
-        :param context: if this node is part of the subgraph, `context`
-            is a dictionary with the values this node may use
-        :return: tuple of results
+        Args:
+            *args: inputs
+            linked_attributes: used if this has an attribute linked to
+                the attribute of the function it belongs to
+            context: if this node is part of the subgraph, `context` is
+                a dictionary with the values this node may use
+            bindings: if not None, the active `SymbolBindings` instance
+                (see `onnx.reference.shape_annotation_checker`) used to
+                check shape annotations; propagated to any subgraph this
+                node may invoke (If, Loop, Scan) so a symbolic dimension
+                shared between the parent graph and the subgraph is
+                checked consistently
+
+        Returns:
+            tuple of results
         """
         if self.need_context():
             if context is None:
@@ -468,6 +465,8 @@ class OpRun(abc.ABC):
             kwargs["attributes"] = linked_attributes
         if context is not None:
             kwargs["context"] = context
+        if bindings is not None and (self.has_subgraph or isinstance(self, OpFunction)):
+            kwargs["bindings"] = bindings
         try:
             if overridden_attributes:
                 res = self._run(*args, **overridden_attributes, **kwargs)
@@ -479,34 +478,23 @@ class OpRun(abc.ABC):
                 f"{sorted(kwargs)} and linked attributes={sorted(overridden_attributes)} "
                 f"(operator {self.__class__.__name__!r})."
             ) from e
-        self._log("-- done %s.run -> %d outputs", self.__class__.__name__, len(res))
-        if not isinstance(res, tuple):
-            raise TypeError(
-                f"Method '_run' of class {self.__class__.__name__!r} does not return a tuple but {type(res)}."
-            )
-        if len(res) == 0:
-            raise ValueError(
-                f"Method '_run' of class {self.__class__.__name__!r} does not return any result."
-            )
-        if any(isinstance(t, tuple) for t in res):
-            dtypes = [type(t) for t in res]
-            raise TypeError(
-                f"One of the results returned by method '_run' of class {self.__class__.__name__!r} "
-                f"is a tuple, this is no onnx correponding type (Map, List, Tensor, SparseTensor). "
-                f"All returned types: {dtypes!r}."
-            )
-        return res
+        self._log(
+            "-- done %s.run -> %d outputs",
+            self.__class__.__name__,
+            len(res) if res is not None else 0,
+        )
+        return self._check_and_fix_outputs(res)
 
     @classmethod
     def infer_name(cls):
         name = cls.__name__
         if "_" not in name:
-            return name, onnx_opset_version()
+            return name, onnx.defs.onnx_opset_version()
         name, vers = name.rsplit("_", 1)
         try:
             i_vers = int(vers)
         except ValueError:
-            return cls.__name__, onnx_opset_version()
+            return cls.__name__, onnx.defs.onnx_opset_version()
         return name, i_vers
 
     @classmethod
@@ -515,15 +503,19 @@ class OpRun(abc.ABC):
         n_inputs: int | None = None,
         n_outputs: int | None = None,
         **kwargs: Any,
-    ) -> NodeProto:  # type: ignore
-        """
-        Creates an ONNX node for this class based on the given information.
+    ) -> onnx.NodeProto:
+        """Creates an ONNX node for this class based on the given information.
 
-        :param n_inputs: number of inputs (default is defined by the operator schema)
-        :param n_outputs: number of outputs (default is defined by the operator schema)
-        :param verbose: verbosity
-        :param kwargs: node attributes
-        :return: NodeProto
+        Args:
+            n_inputs: number of inputs (default is defined by the
+                operator schema)
+            n_outputs: number of outputs (default is defined by the
+                operator schema)
+            verbose: verbosity
+            **kwargs: node attributes
+
+        Returns:
+            NodeProto
 
         Method :meth:`eval <onnx.reference.op_run.OpRun.eval>` creates an onnx node
         returned by method :meth:`make_node <onnx.reference.op_run.OpRun.make_node>`.
@@ -541,17 +533,16 @@ class OpRun(abc.ABC):
         schema = None
         if n_inputs is None:
             if schema is None:
-                schema = get_schema(op_type, opset, domain)
+                schema = onnx.defs.get_schema(op_type, opset, domain)
             n_inputs = schema.min_input
         if n_outputs is None:
             if schema is None:
-                schema = get_schema(op_type, opset, domain)
+                schema = onnx.defs.get_schema(op_type, opset, domain)
             n_outputs = schema.min_output
 
         names_in = [f"x{i}" for i in range(n_inputs)]
         names_out = [f"y{i}" for i in range(n_outputs)]
-        node = make_node(op_type, names_in, names_out, **kwargs)
-        return node
+        return onnx.helper.make_node(op_type, names_in, names_out, **kwargs)
 
     @classmethod
     def create(
@@ -561,29 +552,32 @@ class OpRun(abc.ABC):
         verbose: int = 0,
         **kwargs: Any,
     ) -> Any:
-        """
-        Instantiates this class based on the given information.
+        """Instantiates this class based on the given information.
 
-        :param n_inputs: number of inputs (default is defined by the operator schema)
-        :param n_outputs: number of outputs (default is defined by the operator schema)
-        :param verbose: verbosity
-        :param kwargs: node attributes
-        :return: NodeProto
+        Args:
+            n_inputs: number of inputs (default is defined by the
+                operator schema)
+            n_outputs: number of outputs (default is defined by the
+                operator schema)
+            verbose: verbosity
+            **kwargs: node attributes
+
+        Returns:
+            NodeProto
         """
 
         def log_function(pattern: str, *args: Any) -> None:
             if verbose > 1:
-                print(pattern % tuple(args))
+                print(pattern % tuple(args))  # noqa: T201
 
         node = cls.make_node(n_inputs, n_outputs, **kwargs)
         run_params = {
             "verbose": verbose,
             "log": log_function,
             "new_ops": None,
-            "opsets": {"": onnx_opset_version()},
+            "opsets": {"": onnx.defs.onnx_opset_version()},
         }
-        cl = cls(node, run_params)
-        return cl
+        return cls(node, run_params)
 
     @classmethod
     def eval(
@@ -592,15 +586,18 @@ class OpRun(abc.ABC):
         n_outputs: int | None = None,
         verbose: int = 0,
         **kwargs: Any,
-    ) -> Any:  # type: ignore
-        """
-        Evaluates this operator.
+    ) -> Any:
+        """Evaluates this operator.
 
-        :param args: inputs
-        :param n_outputs: number of outputs (default is defined by the operator schema)
-        :param verbose: verbosity
-        :param kwargs: node attributes
-        :return: NodeProto
+        Args:
+            *args: inputs
+            n_outputs: number of outputs (default is defined by the
+                operator schema)
+            verbose: verbosity
+            **kwargs: node attributes
+
+        Returns:
+            NodeProto
         """
         inst = cls.create(len(args), n_outputs=n_outputs, verbose=verbose, **kwargs)
         res = inst.run(*args)
@@ -610,39 +607,35 @@ class OpRun(abc.ABC):
 
 
 class OpRunExpand(OpRun):
-    """
-    Class any operator to avoid must inherit from.
-    """
+    """Class any operator to avoid must inherit from."""
 
-    def __init__(self, onnx_node: NodeProto, log_function: Any, impl: Any = None):
+    def __new__(cls, *args, **kwargs):  # noqa: ARG004
         raise RuntimeError(
-            f"The reference implementation must not use this node ({type(self)})."
+            f"The reference implementation must not use this node ({cls})."
         )
 
-    def _run(self, *inputs, **kwargs):
+    def _run(self, *inputs, **kwargs):  # noqa: ARG002
         raise RuntimeError(
             f"The reference implementation must not use this node ({type(self)})."
         )
 
 
 class OpFunction(OpRun):
-    """
-    Runs a custom function.
-    """
+    """Runs a custom function."""
 
     def __init__(
         self,
-        onnx_node: NodeProto,
-        log_function: Any,
+        onnx_node: onnx.NodeProto,
+        run_params: dict[str, Any] | None,
         impl: Any = None,
         attributes: dict[str, Any] | None = None,
-    ):
+    ) -> None:
         if impl is None:
             raise RuntimeError(
                 f"impl cannot be None for node type {onnx_node.op_type!r} "
                 f"from domain {onnx_node.domain!r}."
             )
-        OpRun.__init__(self, onnx_node, log_function)
+        OpRun.__init__(self, onnx_node, run_params)  # type: ignore[arg-type]
         self.impl_ = impl
         # The function implementation is the same whenever the function is called
         # but the attributes may be different at every call.
@@ -651,20 +644,28 @@ class OpFunction(OpRun):
             for name in getattr(self.impl_, "attributes_", attributes)  # type: ignore[union-attr]
         }
 
-    def _run(self, *inputs, **kwargs):  # type: ignore
+    def _run(self, *inputs, **kwargs):
         return self._run_impl(self.impl_, *inputs, **kwargs)
 
-    def _run_impl(self, impl, *inputs, **kwargs):  # type: ignore
+    def _run_impl(self, impl, *inputs, **kwargs):
         if len(impl.input_names) != len(inputs):
             raise RuntimeError(
                 f"Mismatch lengths between the number of inputs {len(inputs)} "
-                f"and the expected number of inputs {len(impl.inputs)} "
+                f"and the expected number of inputs {len(impl.input_names)} "
                 f"for node {self.op_type!r} from domain {self.domain!r}."
             )
-        feeds = dict(zip(impl.input_names, inputs))
+        bindings = kwargs.pop("bindings", None)
+        feeds = dict(zip(impl.input_names, inputs, strict=False))
         attributes = self.attributes_.copy()
         attributes.update(kwargs)
-        results = impl.run(None, feeds, attributes=attributes)
+        run_kwargs: dict[str, Any] = {}
+        if bindings is not None:
+            # Propagate the parent's active SymbolBindings so a symbolic
+            # dimension shared between the caller and the function body is
+            # checked consistently (single global namespace).
+            run_kwargs["check_shape_annotations"] = True
+            run_kwargs["_bindings"] = bindings
+        results = impl.run(None, feeds, attributes=attributes, **run_kwargs)
         if len(impl.output_names) != len(results):
             raise RuntimeError(
                 f"Mismatch lengths between the number of outputs {len(results)} "
@@ -675,39 +676,31 @@ class OpFunction(OpRun):
 
 
 class OpFunctionContextDependant(OpFunction):
-    """
-    The function can be instantiated but only at execution time.
+    """The function can be instantiated but only at execution time.
     An instance of OpFunction is created everytime to node is executed.
-    This is needed when the schema of an operator defines a context dependant function.
+    This is needed when the schema of an operator defines a context dependent function.
     """
 
-    def __init__(self, onnx_node: NodeProto, log_function: Any, parent: Any = None):
-        OpFunction.__init__(self, onnx_node, log_function, impl=self, attributes={})
+    def __init__(
+        self,
+        onnx_node: onnx.NodeProto,
+        run_params: dict[str, Any] | None,
+        parent: Any = None,
+    ):
+        OpFunction.__init__(self, onnx_node, run_params, impl=self, attributes={})
         self.parent = parent
         version = parent.opsets[onnx_node.domain]
-        self.schema_ = get_schema(onnx_node.op_type, version, onnx_node.domain)
+        self.schema_ = onnx.defs.get_schema(
+            onnx_node.op_type, version, onnx_node.domain
+        )
 
     def _run(self, *inputs, **kwargs):
         # Input types are known. They are used to properly
         # created the body for this operator.
         types = []
         for t in inputs:
-            try:
-                ttype = np_dtype_to_tensor_dtype(t.dtype)
-            except KeyError as e:
-                if t.dtype == float8e4m3fn:
-                    ttype = TensorProto.FLOAT8E4M3FN  # type: ignore[attr-defined]
-                elif t.dtype == float8e4m3fnuz:
-                    ttype = TensorProto.FLOAT8E4M3FNUZ  # type: ignore[attr-defined]
-                elif t.dtype == float8e5m2:
-                    ttype = TensorProto.FLOAT8E5M2  # type: ignore[attr-defined]
-                elif t.dtype == float8e5m2fnuz:
-                    ttype = TensorProto.FLOAT8E5M2FNUZ  # type: ignore[attr-defined]
-                elif t.dtype == bfloat16:
-                    ttype = TensorProto.BLOFAT16  # type: ignore[attr-defined]
-                else:
-                    raise e
-            types.append(make_tensor_type_proto(ttype, t.shape))
+            dtype = onnx.helper.np_dtype_to_tensor_dtype(t.dtype)
+            types.append(onnx.helper.make_tensor_type_proto(dtype, t.shape))  # type: ignore[arg-type]
         cl = self.parent._load_impl(self.onnx_node, types)
         inst = cl(self.onnx_node, self.run_params)
         return self._run_impl(inst.impl_, *inputs, **kwargs)

@@ -1,28 +1,27 @@
 # Copyright (c) ONNX Project Contributors
 
 # SPDX-License-Identifier: Apache-2.0
+from __future__ import annotations
 
-from typing import Any, Dict
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 
-from onnx.onnx_pb import NodeProto
 from onnx.reference.op_run import OpRun, RuntimeTypeError
+
+if TYPE_CHECKING:
+    from onnx.onnx_pb import NodeProto
 
 
 class OpRunUnary(OpRun):
-    """
-    Ancestor to all unary operators in this subfolder.
+    """Ancestor to all unary operators in this subfolder.
+
     Checks that input and output types are the same.
     """
 
-    def __init__(self, onnx_node: NodeProto, run_params: Dict[str, Any]):
-        OpRun.__init__(self, onnx_node, run_params)
+    def run(self, x):
+        """Calls method ``_run``, catches exceptions, displays a longer error message.
 
-    def run(self, x):  # type: ignore
-        """
-        Calls method ``_run``, catches exceptions,
-        displays a longer error message.
         Supports only unary operators.
         """
         self._log("-- begin %s.run(1 input)", self.__class__.__name__)
@@ -34,23 +33,19 @@ class OpRunUnary(OpRun):
                 f"(unary operator {self.__class__.__name__!r})."
             ) from e
         self._log("-- done %s.run -> %d outputs", self.__class__.__name__, len(res))
-        return res
+        return self._check_and_fix_outputs(res)
 
 
 class OpRunUnaryNum(OpRunUnary):
-    """
-    Ancestor to all unary and numerical operators
-    in this subfolder. Checks that input and output types
-    are the same.
+    """Ancestor to all unary and numerical operators in this subfolder.
+
+    Checks that input and output types are the same.
     """
 
-    def __init__(self, onnx_node: NodeProto, run_params: Dict[str, Any]):
-        OpRunUnary.__init__(self, onnx_node, run_params)
+    def run(self, x):
+        """Calls method ``OpRunUnary.run``.
 
-    def run(self, x):  # type: ignore
-        """
-        Calls method ``OpRunUnary.run``, catches exceptions,
-        displays a longer error message.
+        Catches exceptions, displays a longer error message.
         Checks that the result is not empty.
         """
         res = OpRunUnary.run(self, x)
@@ -61,22 +56,18 @@ class OpRunUnaryNum(OpRunUnary):
                 f"Output type mismatch: input '{x.dtype}' != output '{res[0].dtype}' "
                 f"(operator {self.__class__.__name__!r})."
             )
-        return res
+        return self._check_and_fix_outputs(res)
 
 
 class OpRunBinary(OpRun):
-    """
-    Ancestor to all binary operators in this subfolder.
+    """Ancestor to all binary operators in this subfolder.
+
     Checks that input and output types are the same.
     """
 
-    def __init__(self, onnx_node: NodeProto, run_params: Dict[str, Any]):
-        OpRun.__init__(self, onnx_node, run_params)
+    def run(self, x, y):
+        """Calls method ``_run``, catches exceptions, displays a longer error message.
 
-    def run(self, x, y):  # type: ignore
-        """
-        Calls method ``_run``, catches exceptions,
-        displays a longer error message.
         Supports only binary operators.
         """
         self._log("-- begin %s.run(2 inputs)", self.__class__.__name__)
@@ -98,33 +89,21 @@ class OpRunBinary(OpRun):
                 f"(binary operator {self.__class__.__name__!r})."
             ) from e
         self._log("-- done %s.run -> %d outputs", self.__class__.__name__, len(res))
-        return res
+        return self._check_and_fix_outputs(res)
 
 
 class OpRunBinaryComparison(OpRunBinary):
-    """
-    Ancestor to all binary operators in this subfolder
-    comparing tensors.
-    """
-
-    def __init__(self, onnx_node: NodeProto, run_params: Dict[str, Any]):
-        OpRunBinary.__init__(self, onnx_node, run_params)
+    """Ancestor to all binary operators in this subfolder comparing tensors."""
 
 
 class OpRunBinaryNum(OpRunBinary):
-    """
-    Ancestor to all binary operators in this subfolder.
+    """Ancestor to all binary operators in this subfolder.
+
     Checks that input oud output types are the same.
     """
 
-    def __init__(self, onnx_node: NodeProto, run_params: Dict[str, Any]):
-        OpRunBinary.__init__(self, onnx_node, run_params)
-
-    def run(self, x, y):  # type: ignore
-        """
-        Calls method ``OpRunBinary.run``, catches exceptions,
-        displays a longer error message.
-        """
+    def run(self, x, y):
+        """Calls method ``OpRunBinary.run``, catches exceptions, displays a longer error message."""
         res = OpRunBinary.run(self, x, y)
         if res[0].dtype != x.dtype:
             raise RuntimeTypeError(
@@ -132,36 +111,35 @@ class OpRunBinaryNum(OpRunBinary):
                 f"(operator {self.__class__.__name__!r})"
                 f" type(x)={type(x)} type(y)={type(y)}"
             )
-        return res
+        return self._check_and_fix_outputs(res)
 
 
 class OpRunBinaryNumpy(OpRunBinaryNum):
-    """
-    *numpy_fct* is a binary numpy function which
+    """*numpy_fct* is a binary numpy function which
     takes two matrices.
     """
 
     def __init__(
-        self, numpy_fct: Any, onnx_node: NodeProto, run_params: Dict[str, Any]
+        self, numpy_fct: Any, onnx_node: NodeProto, run_params: dict[str, Any]
     ):
         OpRunBinaryNum.__init__(self, onnx_node, run_params)
         self.numpy_fct = numpy_fct
 
-    def _run(self, a, b):  # type: ignore
-        return (self.numpy_fct(a, b),)
+    def _run(self, a, b):
+        res = (self.numpy_fct(a, b),)
+        return self._check_and_fix_outputs(res)
 
 
-class OpRunReduceNumpy(OpRun):  # type: ignore
-    """
-    Implements the reduce logic.
+class OpRunReduceNumpy(OpRun):
+    """Implements the reduce logic.
     It must have a parameter *axes*.
     """
 
-    def __init__(self, onnx_node: NodeProto, run_params: Dict[str, Any]):
+    def __init__(self, onnx_node: NodeProto, run_params: dict[str, Any]):
         OpRun.__init__(self, onnx_node, run_params)
         if hasattr(self, "axes"):
-            if isinstance(self.axes, np.ndarray):  # type: ignore
-                if len(self.axes.shape) == 0 or self.axes.shape[0] == 0:  # type: ignore
+            if isinstance(self.axes, np.ndarray):
+                if len(self.axes.shape) == 0 or self.axes.shape[0] == 0:
                     self.axes = None
                 else:
                     self.axes = tuple(self.axes)
@@ -171,14 +149,16 @@ class OpRunReduceNumpy(OpRun):  # type: ignore
                 self.axes = tuple(self.axes)
 
     def is_axes_empty(self, axes):
-        return axes is None
+        return axes is None or axes.shape == (0,)
 
-    def handle_axes(self, axes):  # noqa: PLR0911
+    def handle_axes(self, axes, noop_with_empty_axes=False):  # noqa: PLR0911
         if isinstance(axes, tuple):
-            if len(axes) == 0:
+            if len(axes) == 0 and not noop_with_empty_axes:
                 return None
             return axes
         if axes is None:
+            if noop_with_empty_axes:
+                return ()
             return None
         if isinstance(axes, (int, tuple)):
             return axes
@@ -186,7 +166,10 @@ class OpRunReduceNumpy(OpRun):  # type: ignore
             raise TypeError(f"axes must be an array, not {type(axes)}.")
         if len(axes.shape) == 0:
             return int(axes)
+        # np.array of shape (0,)
         if 0 in axes.shape:
+            if noop_with_empty_axes:
+                return ()
             return None
         return tuple(axes.ravel().tolist())
 

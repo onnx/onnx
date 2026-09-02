@@ -1,8 +1,6 @@
 // Copyright (c) ONNX Project Contributors
-
-/*
- * SPDX-License-Identifier: Apache-2.0
- */
+//
+// SPDX-License-Identifier: Apache-2.0
 
 // Interface for Op Version Adapters
 
@@ -11,12 +9,12 @@
 #include <functional>
 #include <memory>
 #include <string>
+#include <utility>
 
 #include "onnx/onnx_pb.h"
 #include "onnx/version_converter/helper.h"
 
-namespace ONNX_NAMESPACE {
-namespace version_conversion {
+namespace ONNX_NAMESPACE::version_conversion {
 
 class Adapter {
  private:
@@ -27,8 +25,10 @@ class Adapter {
  public:
   virtual ~Adapter() noexcept = default;
 
-  explicit Adapter(const std::string& name, const OpSetID& initial_version, const OpSetID& target_version)
-      : name_(name), initial_version_(initial_version), target_version_(target_version) {}
+  Adapter(std::string name, OpSetID initial_version, OpSetID target_version)
+      : name_(std::move(name)),
+        initial_version_(std::move(initial_version)),
+        target_version_(std::move(target_version)) {}
 
   // This will almost always return its own node argument after modifying it in place.
   // The only exception are adapters for deprecated operators: in this case the input
@@ -54,7 +54,7 @@ using NodeTransformerFunction = std::function<Node*(std::shared_ptr<Graph>, Node
 class GenericAdapter final : public Adapter {
  public:
   GenericAdapter(const char* op, int64_t from, int64_t to, NodeTransformerFunction transformer)
-      : Adapter(op, OpSetID(from), OpSetID(to)), transformer_(transformer) {}
+      : Adapter(op, OpSetID(from), OpSetID(to)), transformer_(std::move(transformer)) {}
 
   Node* adapt(std::shared_ptr<Graph> graph, Node* node) const override {
     return transformer_(graph, node);
@@ -64,5 +64,4 @@ class GenericAdapter final : public Adapter {
   NodeTransformerFunction transformer_;
 };
 
-} // namespace version_conversion
-} // namespace ONNX_NAMESPACE
+} // namespace ONNX_NAMESPACE::version_conversion

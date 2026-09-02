@@ -4,21 +4,20 @@
 
 #pragma once
 
+#include <filesystem>
 #include <stdexcept>
 #include <string>
 #include <unordered_map>
 #include <unordered_set>
 #include <utility>
 
-#include "onnx/defs/function.h"
 #include "onnx/defs/schema.h"
-#include "onnx/onnx-data_pb.h"
-#include "onnx/onnx-operators_pb.h"
-#include "onnx/onnx_pb.h"
+#include "onnx/onnx-data.pb.h"
 #include "onnx/string_utils.h"
 
-namespace ONNX_NAMESPACE {
-namespace checker {
+namespace ONNX_NAMESPACE::checker {
+// std::string member means copy may throw when allocation fails
+// NOLINTNEXTLINE(bugprone-exception-copy-constructor-throws)
 class ValidationError final : public std::runtime_error {
  public:
   using std::runtime_error::runtime_error;
@@ -36,8 +35,7 @@ class ValidationError final : public std::runtime_error {
   std::string expanded_message_;
 };
 
-#define fail_check(...) \
-  ONNX_THROW_EX(ONNX_NAMESPACE::checker::ValidationError(ONNX_NAMESPACE::MakeString(__VA_ARGS__)));
+#define fail_check(...) ONNX_THROW_EX(ONNX_NAMESPACE::checker::ValidationError(ONNX_NAMESPACE::MakeString(__VA_ARGS__)))
 
 class CheckerContext final {
  public:
@@ -72,7 +70,7 @@ class CheckerContext final {
     model_dir_ = model_dir;
   }
 
-  std::string get_model_dir() const {
+  const std::string& get_model_dir() const {
     return model_dir_;
   }
 
@@ -84,20 +82,30 @@ class CheckerContext final {
     skip_opset_compatibility_check_ = value;
   }
 
-  explicit CheckerContext() : ir_version_(-1) {}
+  bool check_custom_domain() const {
+    return check_custom_domain_;
+  }
+
+  void set_check_custom_domain(bool value) {
+    check_custom_domain_ = value;
+  }
+
+  explicit CheckerContext() = default;
 
  private:
-  int ir_version_;
+  int ir_version_{-1};
   std::unordered_map<std::string, int> opset_imports_;
   bool is_main_graph_ = true;
   const ISchemaRegistry* schema_registry_ = OpSchemaRegistry::Instance();
   std::string model_dir_;
   bool skip_opset_compatibility_check_ = false;
+  bool check_custom_domain_ = false;
 };
 
 class LexicalScopeContext final {
  public:
   LexicalScopeContext() = default;
+  ~LexicalScopeContext() = default;
 
   // Construct an instance with the lexical scope from the parent graph to allow
   // lookup of names from that scope via this_or_ancestor_graph_has.
@@ -107,16 +115,21 @@ class LexicalScopeContext final {
   // values from the parent scope so the values are copied instead.
   LexicalScopeContext(const LexicalScopeContext& parent_context) : parent_context_{&parent_context} {}
   LexicalScopeContext& operator=(const LexicalScopeContext& parent_context) {
+    if (this == &parent_context) {
+      return *this;
+    }
     parent_context_ = &parent_context;
     return *this;
   }
+  LexicalScopeContext(LexicalScopeContext&&) = delete;
+  LexicalScopeContext& operator=(LexicalScopeContext&&) = delete;
 
   void add(const std::string& name) {
     output_names.insert(name);
   }
 
   bool this_graph_has(const std::string& name) const {
-    return output_names.find(name) != output_names.cend();
+    return output_names.count(name) > 0;
   }
 
   bool this_or_ancestor_graph_has(const std::string& name) const {
@@ -132,36 +145,58 @@ class LexicalScopeContext final {
 };
 
 using IR_VERSION_TYPE = decltype(Version::IR_VERSION);
-void check_value_info(const ValueInfoProto& value_info, const CheckerContext&);
-void check_tensor(const TensorProto& tensor, const CheckerContext&);
-void check_sparse_tensor(const SparseTensorProto& sparse_tensor, const CheckerContext&);
-void check_sequence(const SequenceProto& sequence, const CheckerContext&);
-void check_map(const MapProto& map, const CheckerContext&);
-void check_optional(const OptionalProto& opt, const CheckerContext&);
-void check_attribute(const AttributeProto& attr, const CheckerContext&, const LexicalScopeContext&);
-void check_node(const NodeProto& node, const CheckerContext&, const LexicalScopeContext&);
-void check_graph(const GraphProto& graph, const CheckerContext&, const LexicalScopeContext&);
-void check_function(const FunctionProto& function, const CheckerContext&, const LexicalScopeContext&);
+void check_value_info(const ValueInfoProto& value_info, const CheckerContext& /*ctx*/);
+void check_tensor(const TensorProto& tensor, const CheckerContext& /*ctx*/);
+void check_sparse_tensor(const SparseTensorProto& sparse_tensor, const CheckerContext& /*ctx*/);
+void check_sequence(const SequenceProto& sequence, const CheckerContext& /*ctx*/);
+void check_map(const MapProto& map, const CheckerContext& /*ctx*/);
+void check_optional(const OptionalProto& opt, const CheckerContext& /*ctx*/);
+void check_attribute(const AttributeProto& attr, const CheckerContext& /*ctx*/, const LexicalScopeContext& /*lex_ctx*/);
+void check_node(const NodeProto& node, const CheckerContext& /*ctx*/, const LexicalScopeContext& /*lex_ctx*/);
+void check_graph(const GraphProto& graph, const CheckerContext& /*ctx*/, const LexicalScopeContext& /*parent_lex*/);
+void check_function(
+    const FunctionProto& function,
+    const CheckerContext& /*ctx*/,
+    const LexicalScopeContext& /*parent_lex*/);
 
 // Check schema compatibility for 2 opset versions for a given node.
 // Checks whether the schema for 2 versions is same, this is true when the opschema
 // does not change between versions.
-void check_opset_compatibility(
+ONNX_API void check_opset_compatibility(
     const NodeProto& node,
     const CheckerContext& ctx,
     const std::unordered_map<std::string, int>& func_opset_imports,
     const std::unordered_map<std::string, int>& model_opset_imports);
 
 // Checks all model local functions present in ModelProto
-void check_model_local_functions(
+ONNX_API void
+check_model_local_functions(const ModelProto& model, const CheckerContext& ctx, const LexicalScopeContext& parent_lex);
+
+// Checks for cycles in model-local function call graph.
+// Throws ValidationError if any function directly or indirectly references itself.
+ONNX_API void check_function_call_cycles(const ModelProto& model);
+
+ONNX_API void check_model(
     const ModelProto& model,
-    const CheckerContext& ctx,
-    const LexicalScopeContext& parent_lex);
+    bool full_check = false,
+    bool skip_opset_compatibility_check = false,
+    bool check_custom_domain = false);
+ONNX_API void check_model(
+    const std::string& model_path,
+    bool full_check = false,
+    bool skip_opset_compatibility_check = false,
+    bool check_custom_domain = false);
+std::filesystem::path resolve_external_data_location(
+    const std::string& base_dir,
+    const std::string& location,
+    const std::string& tensor_name);
+// Returns a CRT file descriptor on all platforms.
+// The caller owns the fd and must close it.
+int64_t open_external_data(
+    const std::string& base_dir,
+    const std::string& location,
+    const std::string& tensor_name,
+    bool read_only);
+ONNX_API bool check_is_experimental_op(const NodeProto& node);
 
-void check_model(const ModelProto& model, bool full_check = false, bool skip_opset_compatibility_check = false);
-void check_model(const std::string& model_path, bool full_check = false, bool skip_opset_compatibility_check = false);
-
-bool check_is_experimental_op(const NodeProto& node);
-
-} // namespace checker
-} // namespace ONNX_NAMESPACE
+} // namespace ONNX_NAMESPACE::checker

@@ -7,9 +7,6 @@
 ```{eval-rst}
 .. autosummary::
 
-    bfloat16_to_float32
-    float8e4m3_to_float32
-    float8e5m2_to_float32
     from_array
     from_dict
     from_list
@@ -32,6 +29,8 @@
 ```{eval-rst}
 .. autofunction:: onnx.numpy_helper.to_array
 ```
+
+Arrays with data types not supported natively by NumPy will be return with ``ml_dtypes`` dtypes.
 
 ## sequence
 
@@ -61,32 +60,4 @@
 
 ```{eval-rst}
 .. autofunction:: onnx.numpy_helper.from_optional
-```
-
-## tools
-
-```{eval-rst}
-.. autofunction:: onnx.numpy_helper.convert_endian
-```
-
-```{eval-rst}
-.. autofunction:: onnx.numpy_helper.combine_pairs_to_complex
-```
-
-```{eval-rst}
-.. autofunction:: onnx.numpy_helper.create_random_int
-```
-
-## cast
-
-```{eval-rst}
-.. autofunction:: onnx.numpy_helper.bfloat16_to_float32
-```
-
-```{eval-rst}
-.. autofunction:: onnx.numpy_helper.float8e4m3_to_float32
-```
-
-```{eval-rst}
-.. autofunction:: onnx.numpy_helper.float8e5m2_to_float32
 ```

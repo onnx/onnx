@@ -1,16 +1,21 @@
-/*
- * SPDX-License-Identifier: Apache-2.0
- */
-
-// Copyright (c) ONNX Project Contributors.
+// Copyright (c) ONNX Project Contributors
+//
+// SPDX-License-Identifier: Apache-2.0
 
 #pragma once
 
-#include <string>
-#ifdef _WIN32
-#include <windows.h>
-
 #include <filesystem>
+#include <string>
+
+#ifdef _WIN32
+// windows.h has preproc definitions for min and max, which prevents from using std::min and std::max.
+//  defining NOMINMAX disables the preproc macro.
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
+#include <windows.h>
+// windows.h defines OPTIONAL, which clashes with enum members of the same name in onnx-data.pb.h.
+#undef OPTIONAL
 
 #include "onnx/checker.h"
 #endif
@@ -18,31 +23,68 @@
 namespace ONNX_NAMESPACE {
 
 #ifdef _WIN32
-constexpr const char k_preferred_path_separator = '\\';
-#else // POSIX
-constexpr const char k_preferred_path_separator = '/';
-#endif
-
-#ifdef _WIN32
-inline std::wstring path_join(const std::wstring& origin, const std::wstring& append) {
-  return (std::filesystem::path(origin) / std::filesystem::path(append)).wstring();
-}
 inline std::wstring utf8str_to_wstring(const std::string& utf8str) {
-  if (utf8str.size() > INT_MAX) {
-    fail_check("utf8str_to_wstring: string is too long for converting to wstring.");
+  if (utf8str.empty()) {
+    return std::wstring();
   }
-  int size_required = MultiByteToWideChar(CP_UTF8, 0, utf8str.c_str(), (int)utf8str.size(), NULL, 0);
+  int len = static_cast<int>(utf8str.size());
+  auto size_required =
+      MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS | MB_PRECOMPOSED, utf8str.data(), len, nullptr, 0);
+  if (size_required == 0) {
+    auto last_error = GetLastError();
+    fail_check("MultiByteToWideChar in utf8str_to_wstring returned error:", last_error);
+  }
   std::wstring ws_str(size_required, 0);
-  MultiByteToWideChar(CP_UTF8, 0, utf8str.c_str(), (int)utf8str.size(), &ws_str[0], size_required);
+  auto converted_size = MultiByteToWideChar(
+      CP_UTF8, MB_ERR_INVALID_CHARS | MB_PRECOMPOSED, utf8str.data(), len, &ws_str[0], size_required);
+  if (converted_size == 0) {
+    auto last_error = GetLastError();
+    fail_check("MultiByteToWideChar in utf8str_to_wstring returned error:", last_error);
+  }
   return ws_str;
 }
 
-#else
-std::string path_join(const std::string& origin, const std::string& append);
-// TODO: also use std::filesystem::path for clean_relative_path after ONNX has supported C++17 for POSIX
-// Clean up relative path when there is ".." in the path, e.g.: a/b/../c -> a/c
-// It cannot work with absolute path
-std::string clean_relative_path(const std::string& path);
+inline std::string wstring_to_utf8str(const std::wstring& ws_str) {
+  if (ws_str.empty()) {
+    return std::string();
+  }
+  int len = static_cast<int>(ws_str.size());
+  auto size_required =
+      WideCharToMultiByte(CP_UTF8, WC_ERR_INVALID_CHARS, ws_str.data(), len, nullptr, 0, nullptr, nullptr);
+  if (size_required == 0) {
+    auto last_error = GetLastError();
+    fail_check("WideCharToMultiByte in wstring_to_utf8str returned error:", last_error);
+  }
+  std::string utf8str(size_required, 0);
+  auto converted_size = WideCharToMultiByte(
+      CP_UTF8, WC_ERR_INVALID_CHARS, ws_str.data(), len, &utf8str[0], size_required, nullptr, nullptr);
+  if (converted_size == 0) {
+    auto last_error = GetLastError();
+    fail_check("WideCharToMultiByte in wstring_to_utf8str returned error:", last_error);
+  }
+  return utf8str;
+}
+
 #endif
+
+// Construct a std::filesystem::path from a UTF-8 string.
+// On Windows, converts via wide-char so the result is independent of the
+// active code page.  On POSIX, UTF-8 is the native encoding.
+inline std::filesystem::path utf8_to_path(const std::string& utf8) {
+#ifdef _WIN32
+  return std::filesystem::path(utf8str_to_wstring(utf8));
+#else
+  return std::filesystem::path(utf8);
+#endif
+}
+
+// Return the UTF-8 representation of a filesystem path.
+inline std::string path_to_utf8(const std::filesystem::path& p) {
+#ifdef _WIN32
+  return wstring_to_utf8str(p.wstring());
+#else
+  return p.string();
+#endif
+}
 
 } // namespace ONNX_NAMESPACE

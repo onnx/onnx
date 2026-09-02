@@ -2,6 +2,9 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 """Automates the generation of ONNX operators."""
+
+from __future__ import annotations
+
 import difflib
 import importlib
 import inspect
@@ -12,11 +15,14 @@ import re
 import shutil
 import sys
 import textwrap
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import jinja2
 import numpy as np
 from sphinx.util import logging
+
+if TYPE_CHECKING:
+    from sphinx.application import Sphinx
 
 import onnx
 from onnx.backend.test.case.base import _Exporter
@@ -76,100 +82,114 @@ def _get_diff_template():
 
 def _get_ops_template():
     return jinja2.Template(
-        textwrap.dedent(
-            """
-        {% for sch in schemas %}
+        """\
+{% for sch in schemas %}
 
-        .. tag-diff-insert.
+.. tag-diff-insert.
 
-        (l-onnx-op{{sch.domain.lower().replace(".", "-")}}-{{sch.name.lower()}}-{{str(sch.since_version)}})=
+(l-onnx-op{{sch.domain.lower().replace(".", "-")}}-{{sch.name.lower()}}-{{str(sch.since_version)}})=
 
-        ## {{format_name_with_domain(sch)}}
+## {{format_name_with_domain(sch)}}
 
-        ### Version
+### Version
 
-        - **name**: [{{sch.name}} (GitHub)]({{build_doc_url(sch)}}{{sch.name}})
-        - **domain**: `{% if sch.domain == '' %}main{% else %}{{sch.domain}}{% endif %}`
-        - **since_version**: `{{sch.since_version}}`
-        - **function**: `{{sch.has_function or sch.has_context_dependent_function}}`
-        - **support_level**: `{{sch.support_level}}`
-        - **shape inference**: `{{sch.has_type_and_shape_inference_function}}`
+- **name**: [{{sch.name}} (GitHub)]({{build_doc_url(sch)}}{{sch.name}})
+- **domain**: `{% if sch.domain == '' %}main{% else %}{{sch.domain}}{% endif %}`
+- **since_version**: `{{sch.since_version}}`
+- **function**: `{{sch.has_function or sch.has_context_dependent_function}}`
+- **support_level**: `{{sch.support_level}}`
+- **shape inference**: `{{sch.has_type_and_shape_inference_function}}`
 
-        {% if sch.support_level == OpSchema.SupportType.EXPERIMENTAL %}
-        No versioning maintained for experimental ops.
-        {% else %}
-        This version of the operator has been {% if
-        sch.deprecated %}deprecated{% else %}available{% endif %}
-        **since version {{sch.since_version}}{% if
-        sch.domain %} of domain {{sch.domain}}{% endif %}**.
-        {% if len(sch.versions) > 1 %}
-        Other versions of this operator:
-        {% for v in sch.version[:-1] %} {{v}} {% endfor %}
-        {% endif %}
-        {% endif %}
+{% if sch.support_level == OpSchema.SupportType.EXPERIMENTAL %}
+No versioning maintained for experimental ops.
+{% else %}
+This version of the operator has been {% if
+sch.deprecated %}deprecated{% else %}available{% endif %}
+**since version {{sch.since_version}}{% if
+sch.domain %} of domain {{sch.domain}}{% endif %}**.
+{% if len(sch.versions) > 1 %}
+Other versions of this operator:
+{% for v in sch.version[:-1] %} {{v}} {% endfor %}
+{% endif %}
+{% endif %}
 
-        ### Summary
+### Summary
 
-        {{process_documentation(sch.doc)}}
-        {% if sch.attributes %}
+{{process_documentation(sch.doc)}}
 
-        ### Attributes
+{% if sch.has_function %}
 
-        {% for _, attr in sorted(sch.attributes.items())
-        %}* **{{attr.name}} - {{str(attr.type).split('.')[-1]}}**{%
-          if attr.required %} (required){% endif %} {%
-          if attr.default_value %}{{clean_default_value(attr)}}{%
-          endif %}: {{text_wrap(attr.description, 2)}}
-        {% endfor %}
-        {% endif %}
-        {% if sch.inputs %}
+#### Function Body
 
-        ### Inputs
+The function definition for this operator.
 
-        {% if sch.min_input != sch.max_input %}Between {{sch.min_input
-        }} and {{sch.max_input}} inputs.
-        {% endif %}
-        {% for ii, inp in enumerate(sch.inputs) %}
-        - **{{getname(inp, ii)}}**{{format_option(inp)}} - **{{inp.type_str}}**:
-        {{text_wrap(inp.description, 2)}}{% endfor %}
-        {% endif %}
-        {% if sch.outputs %}
+```
+{{get_function_body(sch)}}
+```
+{% endif %}
+{% if sch.attributes %}
 
-        ### Outputs
+### Attributes
 
-        {% if sch.min_output != sch.max_output %}Between {{sch.min_output
-        }} and {{sch.max_output}} outputs.
-        {% endif %}
-        {% for ii, out in enumerate(sch.outputs) %}
-        - **{{getname(out, ii)}}**{{format_option(out)}} - **{{out.type_str}}**:
-        {{text_wrap(out.description, 2)}}{% endfor %}
-        {% endif %}
-        {% if sch.type_constraints %}
+{% for _, attr in sorted(sch.attributes.items())
+%}* **{{attr.name}} - {{str(attr.type).split('.')[-1]}}**{%
+  if attr.required %} (required){% endif %} {%
+  if attr.default_value %}{{clean_default_value(attr)}}{%
+  endif %}:
 
-        ### Type Constraints
+{{text_indent(attr.description, 2)}}
 
-        {% for ii, type_constraint in enumerate(sch.type_constraints)
-        %}* {{get_constraint(type_constraint, ii)}}:
-        {{text_wrap(type_constraint.description, 2)}}
-        {% endfor %}
-        {% endif %}
-        {% if examples and is_last_schema(sch): %}
+{% endfor %}
+{% endif %}
+{% if sch.inputs %}
 
-        ### Examples
+### Inputs
 
-        {% for example, code in examples.items(): %}
+{% if sch.min_input != sch.max_input %}Between {{sch.min_input
+}} and {{sch.max_input}} inputs.
+{% endif %}
+{% for ii, inp in enumerate(sch.inputs) %}
+- **{{getname(inp, ii)}}**{{format_option(inp)}} - **{{inp.type_str}}**:
 
-        #### {{ example }}
+{{text_indent(inp.description, 2)}}{% endfor %}
+{% endif %}
+{% if sch.outputs %}
 
-        ```python
-        {{ format_example(code) }}
-        ```
-        {% endfor %}
-        {% endif %}
-        {% endfor %}
-        """
-        ),
-        autoescape=False,
+### Outputs
+
+{% if sch.min_output != sch.max_output %}Between {{sch.min_output
+}} and {{sch.max_output}} outputs.
+{% endif %}
+{% for ii, out in enumerate(sch.outputs) %}
+- **{{getname(out, ii)}}**{{format_option(out)}} - **{{out.type_str}}**:
+
+{{text_indent(out.description, 2)}}{% endfor %}
+{% endif %}
+{% if sch.type_constraints %}
+
+### Type Constraints
+
+{% for ii, type_constraint in enumerate(sch.type_constraints)
+%}* {{get_constraint(type_constraint, ii)}}:
+
+{{text_indent(type_constraint.description, 2)}}
+{% endfor %}
+{% endif %}
+{% if examples and is_last_schema(sch): %}
+
+### Examples
+
+{% for example, code in examples.items(): %}
+
+#### {{ example }}
+
+```python
+{{ format_example(code) | safe }}
+```
+{% endfor %}
+{% endif %}
+{% endfor %}""",
+        autoescape=jinja2.select_autoescape(),
     )
 
 
@@ -217,8 +237,7 @@ def _clean_unicode(text):
     text = text.replace("&#160;", " ")
     text = text.replace("&#39;", "'")
     text = text.replace("&gt;", ">")
-    text = text.replace("&lt;", "<")
-    return text
+    return text.replace("&lt;", "<")
 
 
 _template_diff = _get_diff_template()
@@ -261,15 +280,14 @@ def _populate_all_schemas_with_history():
 
 
 def _get_all_schemas_with_history():
-    global _all_schemas_with_history
+    global _all_schemas_with_history  # noqa: PLW0603
     if _all_schemas_with_history is None:
         _all_schemas_with_history = _populate_all_schemas_with_history()
     return _all_schemas_with_history
 
 
 def get_operator_schemas(op_name, version=None, domain=None):
-    """
-    Returns all schemas mapped to an operator name.
+    """Returns all schemas mapped to an operator name.
     :param op_name: name of the operator
     :param version: version
     :param domain: domain
@@ -325,8 +343,7 @@ def get_markdown_doc(
     diff=False,
     example=False,
 ):
-    """
-    Returns a documentation in Markdown format
+    """Returns a documentation in Markdown format
     for all :class:`OnnxOperator`.
 
     :param op_name: operator name of None for all
@@ -409,7 +426,7 @@ def get_markdown_doc(
         if isinstance(value, float):
             formatted = str(np.round(value, 5))
             # use default formatting, unless too long.
-            if len(formatted) > 10:
+            if len(formatted) > 10:  # noqa: PLR2004
                 formatted = f"({value:e})"
             return formatted
         if isinstance(value, (bytes, bytearray)):
@@ -425,18 +442,20 @@ def get_markdown_doc(
         ):
             if attr.type in _attribute_conversion_functions:
                 sval = _attribute_conversion_functions[attr.type](default_value)
-                return f"(default is `{sval!r}`)"
+                return f"(default is `{sval}`)"
 
         if isinstance(default_value, list):
-            sval = [format_default_value(val) for val in default_value]
+            sval = f"[{', '.join(format_default_value(val) for val in default_value)}]"
         else:
             sval = format_default_value(default_value)
-        return f"(default is `{sval!r}`)"
+        return f"(default is `{sval}`)"
 
-    def text_wrap(text, indent):
+    def text_indent(text: str, indent: int) -> str:
         s = " " * indent
-        lines = textwrap.wrap(text, initial_indent=s, subsequent_indent=s)
-        return "\n".join(lines)
+        return textwrap.indent(text, s)
+
+    def get_function_body(schema: OpSchema) -> str:
+        return onnx.printer.to_text(schema.function_body)
 
     examples = get_onnx_example(op_name, domain) if example else {}
     docs = _template_operator.render(
@@ -452,26 +471,27 @@ def get_markdown_doc(
         format_name_with_domain=format_name_with_domain,
         process_documentation=process_documentation,
         build_doc_url=build_doc_url,
-        text_wrap=text_wrap,
+        text_indent=text_indent,
         str=str,
         clean_default_value=clean_default_value,
         examples=examples,
         format_example=format_example,
         is_last_schema=is_last_schema,
+        get_function_body=get_function_body,
     )
 
     d_links = {}
     for schema in schemas:
         sdom = schema.domain.replace(".", "-")
-        d_links[
-            schema.since_version
-        ] = f"l-onnx-op{sdom}-{schema.name.lower()}-{schema.since_version}"
+        d_links[schema.since_version] = (
+            f"l-onnx-op{sdom}-{schema.name.lower()}-{schema.since_version}"
+        )
 
     if diff:
         lines = docs.split("\n")
         new_lines = [""]
         for line in lines:
-            line = line.rstrip("\r\t ")
+            line = line.rstrip("\r\t ")  # noqa: PLW2901
             if len(line) == 0 and len(new_lines[-1]) == 0:
                 continue
             new_lines.append(line)
@@ -490,7 +510,7 @@ def get_markdown_doc(
         lines = docs.split("\n")
         new_lines = [""]
         for line in lines:
-            line = line.rstrip("\r\t ")
+            line = line.rstrip("\r\t ")  # noqa: PLW2901
             if len(line) == 0 and len(new_lines[-1]) == 0:
                 continue
             new_lines.append(line)
@@ -502,8 +522,7 @@ def get_markdown_doc(
 def _insert_diff(
     folder, docs, split=".. tag-diff-insert.", op_name=None, version=None, domain=None
 ):
-    """
-    Splits a using `split`, insert HTML differences between pieces.
+    """Splits a using `split`, insert HTML differences between pieces.
     The function relies on package `pyquickhelper`.
     """
     doc_parts = docs.split(split)
@@ -525,7 +544,7 @@ def _insert_diff(
         spl2 = spl2.split("### Examples")[0].replace("`", "")
         spl1 = spl1.split("### Summary")[-1].strip("\n ")
         spl2 = spl2.split("### Summary")[-1].strip("\n ")
-        if len(spl1) < 5 or len(spl2) < 5:
+        if len(spl1) < 5 or len(spl2) < 5:  # noqa: PLR2004
             pieces.append(doc_parts[i])
             continue
         if not vers1:
@@ -608,8 +627,7 @@ def _insert_diff(
 
 
 def pascal_to_snake_case(name: str) -> str:
-    """
-    Switches from *AaBb* into *aa_bb*.
+    """Switches from *AaBb* into *aa_bb*.
     :param name: name to convert
     :return: converted name
     """
@@ -619,42 +637,60 @@ def pascal_to_snake_case(name: str) -> str:
 
 
 def _process_example(code: str) -> str:
-    """
-    Add necessary imports to make the example work.
-    """
+    """Add necessary imports to make the example work."""
     code = code.replace("", "")
     missing_imports = ["import numpy as np", "import onnx"]
     elements = [*missing_imports, "", "", code.strip("\n")]
     return "\n".join(elements)
 
 
+_EXAMPLE_MODULE_ALIASES = {"Range": "rangeop"}
+_TOP_LEVEL_EXAMPLE_DOMAINS = {"ai.onnx.preview", "ai.onnx.preview.training"}
+
+
 def get_onnx_example(op_name, domain):
-    """
-    Retrieves examples associated to one operator
+    """Retrieves examples associated to one operator
     stored in onnx packages.
     :param op_name: operator name
     :param domain: operator domain
     :param fmt: rendering format
     :return: dictionary
     """
-    if domain in (None, "ai.onnx"):
+    fallback_modules = []
+    if domain in (None, "", "ai.onnx"):
         modules = [
             f"onnx.backend.test.case.node.{op_name.lower()}",
             f"onnx.backend.test.case.node.{pascal_to_snake_case(op_name)}",
         ]
+        if op_name in _EXAMPLE_MODULE_ALIASES:
+            modules.append(
+                f"onnx.backend.test.case.node.{_EXAMPLE_MODULE_ALIASES[op_name]}"
+            )
     else:
         domain_ = domain.replace(".", "_")
         modules = [
             f"onnx.backend.test.case.node.{domain_}.{op_name.lower()}",
             f"onnx.backend.test.case.node.{domain_}.{pascal_to_snake_case(op_name)}",
         ]
+        if domain in _TOP_LEVEL_EXAMPLE_DOMAINS:
+            fallback_modules = [
+                f"onnx.backend.test.case.node.{op_name.lower()}",
+                f"onnx.backend.test.case.node.{pascal_to_snake_case(op_name)}",
+            ]
     module = None
     for m in modules:
         try:
             mod = importlib.import_module(m)
             module = m
-        except ImportError:
+        except ImportError:  # noqa: PERF203
             continue
+    if module is None:
+        for m in fallback_modules:
+            try:
+                mod = importlib.import_module(m)
+                module = m
+            except ImportError:  # noqa: PERF203
+                continue
     if module is None:
         # Unable to find an example for 'op_name'.
         return {}
@@ -691,8 +727,7 @@ def get_onnx_example(op_name, domain):
 
 
 def is_last_schema(sch: OpSchema) -> bool:
-    """
-    Tells if this is the most recent schema for this operator.
+    """Tells if this is the most recent schema for this operator.
     :param sch: schema
     :return: True
     """
@@ -706,8 +741,7 @@ def is_last_schema(sch: OpSchema) -> bool:
 def onnx_documentation_folder(
     folder, title="ONNX Operators", flog=None, max_opsets=None
 ):
-    """
-    Creates documentation in a folder for all known
+    """Creates documentation in a folder for all known
     ONNX operators or a subset.
     :param folder: folder where to write the documentation
     :param title: index title
@@ -763,11 +797,10 @@ def onnx_documentation_folder(
             if indent != "":
                 for i in range(len(table_dom)):
                     table_dom[i] = indent + table_dom[i]
-            res = "\n".join(table_dom)
-            return res
+            return "\n".join(table_dom)
 
     all_schemas_available = _get_all_schemas_with_history()
-    if len(all_schemas_available) < 3:
+    if len(all_schemas_available) < 3:  # noqa: PLR2004
         raise RuntimeError(
             f"At least three domains are expected, found {list(all_schemas_available)}."
         )
@@ -786,9 +819,9 @@ def onnx_documentation_folder(
             d[op] = vers
         all_schemas[domain] = d
 
-    if len(all_schemas) < 3:
+    if len(all_schemas) < 3:  # noqa: PLR2004
         raise RuntimeError(
-            f"At leat three domains are expected, found {list(all_schemas)} in all_schemas."
+            f"At least three domains are expected, found {list(all_schemas)} in all_schemas."
         )
 
     if not os.path.exists(folder):
@@ -815,7 +848,7 @@ def onnx_documentation_folder(
                 folder, op, domain=dom, version=None, example=True, diff=True
             )
             if flog is not None and n_examples == 0:
-                flog(f"{' '* 14}no_example for {op} from domain {domain}")
+                flog(f"{' ' * 14}no_example for {op} from domain {domain}")
             if dom == "":
                 main = op
             else:
@@ -841,7 +874,7 @@ def onnx_documentation_folder(
         tables.append(_Table(dom_pages, dom, sdom))
 
     # final
-    if len(tables) < 3:
+    if len(tables) < 3:  # noqa: PLR2004
         raise RuntimeError(f"At least three domain are expected not {len(tables)}.")
     index = _template_main.render(pages=pages, tabs=tables, os=os, len=len, title=title)
     index = _clean_unicode(index)
@@ -858,17 +891,102 @@ def _generate_op_doc(app):
     onnx_documentation_folder(folder, flog=logger.info, max_opsets=max_opsets)
 
 
-def _copy_repo_docs(app):
+_MD_LINK_RE = re.compile(r"(?<=\]\()([^)\s]+)(?=\))")
+_GITHUB_BLOB = "https://github.com/onnx/onnx/blob/main/"
+# Repository directory (``docs``), the root of the ``repo-docs`` copies.
+_DOCS_DIR = pathlib.Path(__file__).parent.parent.parent
+_REPO_ROOT = _DOCS_DIR.parent
+_SOURCE_DIR = pathlib.Path(__file__).parent
+
+
+def _doc_dirs(docname: str) -> tuple[pathlib.Path, pathlib.Path]:
+    """Return the ``(resolve_dir, tree_dir)`` for ``docname``.
+
+    ``resolve_dir`` is the directory relative links were authored against;
+    ``tree_dir`` is the document's actual directory in the Sphinx source tree.
+    They differ for ``repo-docs`` documents, which are verbatim copies of the
+    repository's ``docs/*.md`` files: their links were authored against the
+    repository ``docs`` directory, but the copies live under ``repo-docs``.
+    """
+    tree_dir = (_SOURCE_DIR / docname).parent
+    if docname.startswith("repo-docs/"):
+        return _DOCS_DIR, tree_dir
+    return tree_dir, tree_dir
+
+
+def _intree_location(abspath: pathlib.Path) -> pathlib.Path | None:
+    """Return the Sphinx-tree path for ``abspath``, or ``None`` if external.
+
+    A resolved link target is internal to the documentation when it already
+    lives under the source tree, or when it is one of the ``docs/*.md`` files
+    copied into ``repo-docs`` (see ``_copy_repo_docs`` / ``REPO_DOCS_EXCLUDE``).
+    """
+    if abspath.is_relative_to(_SOURCE_DIR):
+        return abspath
+    if (
+        abspath.parent == _DOCS_DIR
+        and abspath.suffix == ".md"
+        and abspath.name not in REPO_DOCS_EXCLUDE
+    ):
+        return _SOURCE_DIR / "repo-docs" / abspath.name
+    return None
+
+
+def _rewrite_repo_links(
+    text: str, resolve_dir: pathlib.Path, tree_dir: pathlib.Path
+) -> str:
+    """Rewrite links to repository files as absolute GitHub URLs.
+
+    The Markdown files are authored to render on GitHub, where links such as
+    ``/onnx/onnx.proto`` or ``../onnx/checker.py`` point at repository sources.
+    Those targets are absent from the Sphinx document tree, so they are turned
+    into absolute GitHub URLs. Links whose target is internal to the
+    documentation are rewritten to a path relative to ``tree_dir`` so Sphinx
+    resolves them internally. Fragment suffixes are preserved.
+    """
+
+    def replace(match: re.Match[str]) -> str:
+        target = match.group(1)
+        if target.startswith(("#", "http://", "https://", "mailto:")):
+            return target
+        path, _, fragment = target.partition("#")
+        if not path:
+            return target
+        if path.startswith("/"):
+            abspath = pathlib.Path(os.path.normpath(_REPO_ROOT / path.lstrip("/")))
+        else:
+            abspath = pathlib.Path(os.path.normpath(resolve_dir / path))
+        if not abspath.exists():
+            return target
+        intree = _intree_location(abspath)
+        if intree is not None:
+            rel = os.path.relpath(intree, tree_dir)
+            return f"{rel}#{fragment}" if fragment else rel
+        repo_rel = abspath.relative_to(_REPO_ROOT).as_posix()
+        url = _GITHUB_BLOB + repo_rel
+        return f"{url}#{fragment}" if fragment else url
+
+    return _MD_LINK_RE.sub(replace, text)
+
+
+def _rewrite_source_links(app: Sphinx, docname: str, source: list[str]) -> None:
+    """Rewrite repository links in every Markdown document as it is read."""
+    if not source:
+        return
+    resolve_dir, tree_dir = _doc_dirs(docname)
+    source[0] = _rewrite_repo_links(source[0], resolve_dir, tree_dir)
+
+
+def _copy_repo_docs(app: Sphinx) -> None:
     logger = logging.getLogger(__name__)
     dest_name = app.config.onnx_md_folder
 
-    docs_dir = pathlib.Path(__file__).parent.parent.parent  # docs
-    dest_folder = docs_dir / "docsgen" / "source" / dest_name
+    dest_folder = _DOCS_DIR / "docsgen" / "source" / dest_name
     dest_folder.mkdir(parents=True, exist_ok=True)
     # Copy all the markdown files from the folder except for the blocklisted ones
 
-    logger.info("Copying Markdown files from '%s' to '%s'", docs_dir, dest_folder)
-    for file in docs_dir.glob("*.md"):
+    logger.info("Copying Markdown files from '%s' to '%s'", _DOCS_DIR, dest_folder)
+    for file in _DOCS_DIR.glob("*.md"):
         if file.name in REPO_DOCS_EXCLUDE:
             continue
         shutil.copy(file, dest_folder)
@@ -876,11 +994,10 @@ def _copy_repo_docs(app):
 
 
 def setup(app):
+    """Sphinx extension `onnx_sphinx` displays documentation
+    on ONNX Operators.
     """
-    Sphinx extension `onnx_sphinx` displays documentation
-    on ONN Operators.
-    """
-    import sphinx
+    import sphinx  # noqa: PLC0415
 
     app.add_config_value("onnx_doc_folder", "operators", "env")
     # Folder for storing the Markdown documentation from the repository
@@ -888,6 +1005,7 @@ def setup(app):
     app.add_config_value("max_opsets", {}, "env")
     app.connect("builder-inited", _generate_op_doc)
     app.connect("builder-inited", _copy_repo_docs)
+    app.connect("source-read", _rewrite_source_links)
     return {"version": sphinx.__display_version__, "parallel_read_safe": True}
 
 
