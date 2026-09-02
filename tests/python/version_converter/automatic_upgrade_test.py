@@ -1703,8 +1703,8 @@ class TestAutomaticUpgrade(automatic_conversion_test_base.TestAutomaticConversio
         signal = helper.make_tensor(
             "a",
             TensorProto.FLOAT,
-            dims=[2, 64],
-            vals=np.random.rand(2, 64).astype(np.float32),
+            dims=[2, 64, 1],
+            vals=np.random.rand(2, 64, 1).astype(np.float32),
         )
         frame_step = helper.make_tensor(
             "b", TensorProto.INT64, dims=[1], vals=np.array([8])
@@ -1715,8 +1715,8 @@ class TestAutomaticUpgrade(automatic_conversion_test_base.TestAutomaticConversio
         self._test_op_upgrade(
             operator_name,
             17,
-            [[2, 64], [1], [16]],
-            [[2, 7, 16, 2]],
+            [[2, 64, 1], [1], [16]],
+            [[2, 7, 9, 2]],
             [
                 TensorProto.FLOAT,
                 TensorProto.INT64,
@@ -1730,8 +1730,8 @@ class TestAutomaticUpgrade(automatic_conversion_test_base.TestAutomaticConversio
         signal = helper.make_tensor(
             "a",
             TensorProto.FLOAT,
-            dims=[2, 64],
-            vals=np.random.rand(2, 64).astype(np.float32),
+            dims=[2, 64, 1],
+            vals=np.random.rand(2, 64, 1).astype(np.float32),
         )
         frame_step = helper.make_tensor(
             "b", TensorProto.INT64, dims=[1], vals=np.array([8])
@@ -1742,7 +1742,7 @@ class TestAutomaticUpgrade(automatic_conversion_test_base.TestAutomaticConversio
         self._test_op_upgrade(
             operator_name,
             17,
-            [[2, 64], [1], [16]],
+            [[2, 64, 1], [1], [16]],
             [[2, 7, 9, 2]],
             [
                 TensorProto.FLOAT,
@@ -1778,10 +1778,11 @@ class TestAutomaticUpgrade(automatic_conversion_test_base.TestAutomaticConversio
                 TensorProto.FLOAT,
                 TensorProto.INT64,
             ],
+            attrs={"onesided": 0},
             initializer=[signal, frame_step, window],
         )
 
-        # Complex Onesided
+        # Complex with explicit frame length
         signal = helper.make_tensor(
             "a",
             TensorProto.FLOAT,
@@ -1795,20 +1796,20 @@ class TestAutomaticUpgrade(automatic_conversion_test_base.TestAutomaticConversio
             "c", TensorProto.FLOAT, dims=[16], vals=np.ones(16).astype(np.float32)
         )
         frame_length = helper.make_tensor(
-            "e", TensorProto.INT64, dims=[1], vals=np.array([16])
+            "d", TensorProto.INT64, dims=[], vals=np.array([16])
         )
         self._test_op_upgrade(
             operator_name,
             17,
-            [[2, 64, 2], [1], [16]],
-            [[2, 7, 9, 2]],
+            [[2, 64, 2], [1], [16], []],
+            [[2, 7, 16, 2]],
             [
                 TensorProto.FLOAT,
                 TensorProto.INT64,
                 TensorProto.FLOAT,
                 TensorProto.INT64,
             ],
-            attrs={"onesided": 1},
+            attrs={"onesided": 0},
             initializer=[signal, frame_step, window, frame_length],
         )
 
