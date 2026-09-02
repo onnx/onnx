@@ -602,6 +602,34 @@ class AveragePool(Base):
         )
 
     @staticmethod
+    def export_averagepool_2d_dilations_count_include_pad() -> None:
+        """input_shape: [1, 1, 3, 3]
+        output_shape: [1, 1, 3, 3]
+        """
+        node = onnx.helper.make_node(
+            "AveragePool",
+            inputs=["x"],
+            outputs=["y"],
+            kernel_shape=[2, 2],
+            dilations=[2, 2],
+            pads=[1, 1, 1, 1],
+            count_include_pad=1,
+        )
+
+        x = np.arange(1, 10, dtype=np.float32).reshape(1, 1, 3, 3)
+        y = np.array(
+            [[[[1.25, 2.5, 1.25], [2.5, 5.0, 2.5], [1.25, 2.5, 1.25]]]],
+            dtype=np.float32,
+        )
+
+        expect(
+            node,
+            inputs=[x],
+            outputs=[y],
+            name="test_averagepool_2d_dilations_count_include_pad",
+        )
+
+    @staticmethod
     def export_averagepool_1d_dilations_same_upper() -> None:
         """input_shape: [1, 1, 6]
         output_shape: [1, 1, 3]

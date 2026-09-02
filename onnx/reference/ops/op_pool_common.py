@@ -208,6 +208,40 @@ def pool(
         pads = pads * spatial_size * 2
     strides = strides or [1] * spatial_size
 
+    if pooling_type == "AVG":
+        effective_kernel = tuple(
+            (kernel[i] - 1) * dilations[i] + 1 for i in range(spatial_size)
+        )
+        spatial_axes = tuple(range(2, padded.ndim))
+
+        def sliding_windows(values: np.ndarray) -> np.ndarray:
+            windows = np.lib.stride_tricks.sliding_window_view(
+                values, effective_kernel, axis=spatial_axes
+            )
+            slices = (
+                slice(None),
+                slice(None),
+                *(
+                    slice(0, out_shape[i] * strides[i], strides[i])
+                    for i in range(spatial_size)
+                ),
+                *(slice(0, None, dilations[i]) for i in range(spatial_size)),
+            )
+            return windows[slices]
+
+        kernel_axes = tuple(range(-spatial_size, 0))
+        if count_include_pad == 1:
+            return np.mean(sliding_windows(padded), axis=kernel_axes).astype(
+                padded.dtype
+            )
+
+        valid = ~np.isnan(padded)
+        sums = np.sum(sliding_windows(np.where(valid, padded, 0)), axis=kernel_axes)
+        counts = np.sum(sliding_windows(valid), axis=kernel_axes)
+        averages = np.full_like(sums, np.nan)
+        np.divide(sums, counts, out=averages, where=counts != 0)
+        return averages.astype(padded.dtype)
+
     # Iterate all the possible sliding windows
     for shape in itertools.product(
         range(x_shape[0]),  # e.g. dim=0: [0]

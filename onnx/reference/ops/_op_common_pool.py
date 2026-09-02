@@ -235,7 +235,7 @@ class CommonPool(OpRun):
             pad_shape = [0] * (len(x.shape) - 2)
             x_shape = x.shape[2:]
             padded = x
-        elif len(pads) == 4:
+        elif len(pads) == 4:  # noqa: PLR2004
             pad_top, pad_bottom, pad_left, pad_right = pads
             pad_shape = [pad_top + pad_bottom, pad_left + pad_right]
             x_shape = np.array(x.shape[2:]) + np.array(pad_shape)
