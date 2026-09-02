@@ -19409,14 +19409,14 @@ beta = 0.75
 bias = 1.0
 nsize = 3
 node = onnx.helper.make_node("LRN", inputs=["x"], outputs=["y"], size=3)
-x = np.random.randn(5, 5, 5, 5).astype(np.float32)
-square_sum = np.zeros((5, 5, 5, 5)).astype(np.float32)
+x = np.random.randn(1, 5, 5, 5).astype(np.float32)
+square_sum = np.zeros_like(x)
 for n, c, h, w in np.ndindex(x.shape):
     square_sum[n, c, h, w] = sum(
         x[
             n,
             max(0, c - math.floor((nsize - 1) / 2)) : min(
-                5, c + math.ceil((nsize - 1) / 2) + 1
+                x.shape[1], c + math.ceil((nsize - 1) / 2) + 1
             ),
             h,
             w,
@@ -19447,14 +19447,14 @@ node = onnx.helper.make_node(
     bias=bias,
     size=nsize,
 )
-x = np.random.randn(5, 5, 5, 5).astype(np.float32)
-square_sum = np.zeros((5, 5, 5, 5)).astype(np.float32)
+x = np.random.randn(1, 5, 5, 5).astype(np.float32)
+square_sum = np.zeros_like(x)
 for n, c, h, w in np.ndindex(x.shape):
     square_sum[n, c, h, w] = sum(
         x[
             n,
             max(0, c - math.floor((nsize - 1) / 2)) : min(
-                5, c + math.ceil((nsize - 1) / 2) + 1
+                x.shape[1], c + math.ceil((nsize - 1) / 2) + 1
             ),
             h,
             w,
@@ -27151,14 +27151,14 @@ expect(node, inputs=[x, slope], outputs=[y], name="test_prelu_broadcast")
       [4.5, 5.7],
   ]
 
-  pads = [0, 2, 0, 0]
+  pads = [0, 1, 0, 1]
 
   mode = 'reflect'
 
   output = [
-      [1.0, 1.2, 1.0, 1.2],
-      [2.3, 3.4, 2.3, 3.4],
-      [4.5, 5.7, 4.5, 5.7],
+      [1.2, 1.0, 1.2, 1.0],
+      [3.4, 2.3, 3.4, 2.3],
+      [5.7, 4.5, 5.7, 4.5],
   ]
   ```
 
@@ -27329,6 +27329,103 @@ expect(
     outputs=[y],
     name="test_constant_pad_negative_axes",
 )
+```
+
+</details>
+
+
+<details>
+<summary>constant_pad_negative_pads</summary>
+
+```python
+node = onnx.helper.make_node(
+    "Pad", inputs=["x", "pads", "value"], outputs=["y"], mode="constant"
+)
+x = np.array([1, 2, 3], dtype=np.int32)
+pads = np.array([-4, 2], dtype=np.int64)
+value = np.int32(-1)
+y = np.array([-1], dtype=np.int32)
+
+expect(
+    node,
+    inputs=[x, pads, value],
+    outputs=[y],
+    name="test_constant_pad_negative_pads",
+)
+```
+
+</details>
+
+
+<details>
+<summary>constant_pad_to_empty</summary>
+
+```python
+node = onnx.helper.make_node(
+    "Pad", inputs=["x", "pads"], outputs=["y"], mode="constant"
+)
+x = np.array([1, 2, 3], dtype=np.float32)
+pads = np.array([-3, 0], dtype=np.int64)
+y = np.empty((0,), dtype=np.float32)
+
+expect(
+    node,
+    inputs=[x, pads],
+    outputs=[y],
+    name="test_constant_pad_to_empty",
+)
+```
+
+</details>
+
+
+<details>
+<summary>negative_pad_axes</summary>
+
+```python
+node = onnx.helper.make_node(
+    "Pad", inputs=["x", "pads", "", "axes"], outputs=["y"], mode="edge"
+)
+x = np.array([[0, 1, 2, 3], [4, 5, 6, 7]], dtype=np.int64)
+pads = np.array([-1, 2], dtype=np.int64)
+axes = np.array([-1], dtype=np.int32)
+y = np.array(
+    [[1, 2, 3, 3, 3], [5, 6, 7, 7, 7]],
+    dtype=np.int64,
+)
+
+expect(
+    node,
+    inputs=[x, pads, axes],
+    outputs=[y],
+    name="test_negative_pad_axes",
+)
+```
+
+</details>
+
+
+<details>
+<summary>negative_pad_reflect_and_wrap</summary>
+
+```python
+x = np.array([0, 1, 2, 3], dtype=np.float32)
+pads = np.array([-1, 2], dtype=np.int64)
+expected = {
+    "reflect": np.array([1, 2, 3, 2, 1], dtype=np.float32),
+    "wrap": np.array([1, 2, 3, 1, 2], dtype=np.float32),
+}
+
+for mode, y in expected.items():
+    node = onnx.helper.make_node(
+        "Pad", inputs=["x", "pads"], outputs=["y"], mode=mode
+    )
+    expect(
+        node,
+        inputs=[x, pads],
+        outputs=[y],
+        name=f"test_negative_pad_{mode}",
+    )
 ```
 
 </details>

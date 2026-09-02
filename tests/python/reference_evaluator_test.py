@@ -202,6 +202,102 @@ class TestReferenceEvaluator:
         return m
 
     @pytest.mark.parametrize(
+        "direction,num_directions",
+        [("forward", 1), ("reverse", 1), ("bidirectional", 2)],
+    )
+    @pytest.mark.parametrize("layout", [0, 1])
+    @pytest.mark.parametrize("dtype", [np.float32, np.float64])
+    def test_lstm_y_c(
+        self, direction: str, num_directions: int, layout: int, dtype
+    ) -> None:
+        sequence_length = 3
+        batch_size = 2
+        hidden_size = 1
+        X = np.zeros((sequence_length, batch_size, 1), dtype=dtype)
+        W = np.zeros((num_directions, 4 * hidden_size, 1), dtype=dtype)
+        R = np.zeros((num_directions, 4 * hidden_size, hidden_size), dtype=dtype)
+        B = np.zeros((num_directions, 8 * hidden_size), dtype=dtype)
+        B[:, :4] = np.array(
+            [[0.2, 0.4, -0.1, 0.3], [0.5, 0.1, 0.2, -0.4]][:num_directions],
+            dtype=dtype,
+        )
+        initial_c = np.array(
+            [[[0.1], [0.2]], [[0.3], [0.4]]][:num_directions], dtype=dtype
+        )
+        initial_h = np.zeros_like(initial_c)
+
+        if layout:
+            X = np.swapaxes(X, 0, 1)
+            initial_h = np.swapaxes(initial_h, 0, 1)
+            initial_c = np.swapaxes(initial_c, 0, 1)
+
+        tensor_type = TensorProto.DOUBLE if dtype is np.float64 else TensorProto.FLOAT
+        graph = make_graph(
+            [
+                make_node(
+                    "LSTM",
+                    ["X", "W", "R", "B", "", "initial_h", "initial_c"],
+                    ["Y", "Y_h", "Y_c"],
+                    direction=direction,
+                    hidden_size=hidden_size,
+                    layout=layout,
+                )
+            ],
+            "lstm_y_c",
+            [
+                make_tensor_value_info("X", tensor_type, list(X.shape)),
+                make_tensor_value_info("W", tensor_type, list(W.shape)),
+                make_tensor_value_info("R", tensor_type, list(R.shape)),
+                make_tensor_value_info("B", tensor_type, list(B.shape)),
+                make_tensor_value_info("initial_h", tensor_type, list(initial_h.shape)),
+                make_tensor_value_info("initial_c", tensor_type, list(initial_c.shape)),
+            ],
+            [
+                make_tensor_value_info("Y", tensor_type, None),
+                make_tensor_value_info("Y_h", tensor_type, None),
+                make_tensor_value_info("Y_c", tensor_type, None),
+            ],
+        )
+        model = make_model(graph, opset_imports=[make_opsetid("", 14)])
+        Y, Y_h, Y_c = ReferenceEvaluator(model).run(
+            None,
+            {
+                "X": X,
+                "W": W,
+                "R": R,
+                "B": B,
+                "initial_h": initial_h,
+                "initial_c": initial_c,
+            },
+        )
+
+        expected_c = np.empty((num_directions, batch_size, hidden_size), dtype=dtype)
+        expected_h = np.empty_like(expected_c)
+        for direction_index in range(num_directions):
+            input_gate, output_gate, forget_gate, cell_gate = B[direction_index, :4]
+            c = (
+                np.swapaxes(initial_c, 0, 1)[direction_index]
+                if layout
+                else initial_c[direction_index]
+            )
+            for _ in range(sequence_length):
+                c = 1 / (1 + np.exp(-forget_gate)) * c + 1 / (
+                    1 + np.exp(-input_gate)
+                ) * np.tanh(cell_gate)
+            expected_c[direction_index] = c
+            expected_h[direction_index] = 1 / (1 + np.exp(-output_gate)) * np.tanh(c)
+
+        if layout:
+            expected_c = np.swapaxes(expected_c, 0, 1)
+            expected_h = np.swapaxes(expected_h, 0, 1)
+            assert Y.shape == (batch_size, sequence_length, num_directions, hidden_size)
+        else:
+            assert Y.shape == (sequence_length, num_directions, batch_size, hidden_size)
+        rtol, atol = (1e-6, 1e-7) if dtype is np.float32 else (1e-7, 0)
+        np.testing.assert_allclose(Y_c, expected_c, rtol=rtol, atol=atol)
+        np.testing.assert_allclose(Y_h, expected_h, rtol=rtol, atol=atol)
+
+    @pytest.mark.parametrize(
         "np_dtype,tensor_dtype",
         [
             (np.int8, TensorProto.INT8),
@@ -4106,39 +4202,47 @@ class TestReferenceEvaluator:
             with pytest.raises(ValueError):
                 ref.run(None, {"X": data})
 
-    def test_lrn(self):
+    @pytest.mark.parametrize(
+        ("shape", "size", "dtype", "elem_type"),
+        [
+            ((2, 3, 2, 2), 3, np.float32, TensorProto.FLOAT),
+            ((1, 4, 3), 2, np.float64, TensorProto.DOUBLE),
+            ((1, 5, 1, 2, 1), 4, np.float16, TensorProto.FLOAT16),
+            ((1, 3, 2), 3, ml_dtypes.bfloat16, TensorProto.BFLOAT16),
+            ((2, 0, 3), 3, np.float32, TensorProto.FLOAT),
+        ],
+    )
+    def test_lrn(self, shape, size, dtype, elem_type):
         def _expected(x, alpha, beta, bias, size):
-            square_sum = np.zeros((5, 5, 5, 5)).astype(np.float32)
-            for n, c, h, w in np.ndindex(x.shape):
-                square_sum[n, c, h, w] = sum(
-                    x[
-                        n,
-                        max(0, c - math.floor((size - 1) / 2)) : min(
-                            5, c + math.ceil((size - 1) / 2) + 1
-                        ),
-                        h,
-                        w,
-                    ]
-                    ** 2
-                )
+            square_sum = np.zeros_like(x)
+            channel_count = x.shape[1]
+            for index in np.ndindex(x.shape):
+                n, c, *spatial_index = index
+                begin = max(0, c - math.floor((size - 1) / 2))
+                end = min(channel_count, c + math.ceil((size - 1) / 2) + 1)
+                values = x[(n, slice(begin, end), *spatial_index)]
+                square_sum[index] = sum(float(value) ** 2 for value in values)
             return x / ((bias + (alpha / size) * square_sum) ** beta)
 
-        # keepdims is ignored in that case
         alpha = 0.0002
         beta = 0.5
         bias = 2.0
-        size = 3
-        X = make_tensor_value_info("X", TensorProto.FLOAT, [5, 5, 50, 50])
-        Z = make_tensor_value_info("Z", TensorProto.UNDEFINED, None)
+        X = make_tensor_value_info("X", elem_type, shape)
+        Z = make_tensor_value_info("Z", elem_type, shape)
         nodes = [
             make_node("LRN", ["X"], ["Z"], alpha=alpha, beta=beta, bias=bias, size=size)
         ]
         model = make_model(make_graph(nodes, "g", [X], [Z]))
         ref = ReferenceEvaluator(model)
-        data = np.random.rand(5, 5, 5, 5).astype(np.float32)
+        data = (np.arange(math.prod(shape), dtype=np.float32) / 10).astype(dtype)
+        data = data.reshape(shape)
         got = ref.run(None, {"X": data})
-        expected = _expected(data, alpha, beta, bias, size)
-        assert len(got[0]) == len(expected)
+        expected = _expected(data, alpha, beta, bias, size).astype(dtype)
+        assert got[0].dtype == np.dtype(dtype)
+        if dtype is ml_dtypes.bfloat16:
+            assert_allclose(got[0].astype(np.float32), expected.astype(np.float32))
+        else:
+            assert_allclose(got[0], expected)
 
     def test_conv_implementation_1d(self):
         got = _conv_implementation(
@@ -4196,14 +4300,14 @@ class TestReferenceEvaluator:
             "W": np.ones((1, 1, 3, 3), dtype=np.float32),
             "B": np.zeros((1,), dtype=np.float32),
         }
-        kwargs = dict(
-            group=1,
-            dilations=[1, 1],
-            kernel_shape=[3, 3],
-            strides=[2, 2],
-            pads=None,
-            auto_pad="SAME_LOWER",
-        )
+        kwargs = {
+            "group": 1,
+            "dilations": [1, 1],
+            "kernel_shape": [3, 3],
+            "strides": [2, 2],
+            "pads": None,
+            "auto_pad": "SAME_LOWER",
+        }
         expected = np.array(
             [[[[12.0, 27.0, 24.0], [63.0, 108.0, 81.0], [72.0, 117.0, 84.0]]]],
             dtype=np.float32,
@@ -4338,6 +4442,92 @@ class TestReferenceEvaluator:
         got = ref.run(None, {"X": x, "P": p, "V": value})[0]
         assert got.shape == (11,) * dim
         assert got.dtype == np.float32
+
+    def test_pad_negative_pads_constant(self):
+        X = make_tensor_value_info("X", TensorProto.FLOAT, None)
+        P = make_tensor_value_info("P", TensorProto.INT64, None)
+        V = make_tensor_value_info("V", TensorProto.FLOAT, None)
+        Y = make_tensor_value_info("Y", TensorProto.FLOAT, None)
+
+        node = make_node("Pad", inputs=["X", "P", "V"], outputs=["Y"], mode="constant")
+        model = make_model(make_graph([node], "g", [X, P, V], [Y]))
+        ref = ReferenceEvaluator(model)
+        x = np.arange(20, dtype=np.float32).reshape((4, 5))
+        value = np.array(-5, dtype=np.float32)
+
+        # pure cropping
+        p = np.array([-1, -1, -1, -2], dtype=np.int64)
+        got = ref.run(None, {"X": x, "P": p, "V": value})[0]
+        assert_allclose(x[1:-1, 1:-2], got)
+
+        # mixed cropping and padding on the same axis
+        p = np.array([-2, 1, 1, -1], dtype=np.int64)
+        expected = np.array(
+            [
+                [-5, 10, 11, 12, 13],
+                [-5, 15, 16, 17, 18],
+                [-5, -5, -5, -5, -5],
+            ],
+            dtype=np.float32,
+        )
+        got = ref.run(None, {"X": x, "P": p, "V": value})[0]
+        assert_allclose(expected, got)
+
+        # A crop beyond the input is offset by padding to preserve the inferred shape.
+        x = np.array([1, 2, 3], dtype=np.float32)
+        p = np.array([-4, 2], dtype=np.int64)
+        got = ref.run(None, {"X": x, "P": p, "V": value})[0]
+        assert_allclose(np.array([-5], dtype=np.float32), got)
+
+        # Cropping the complete input without padding produces an empty tensor.
+        p = np.array([-3, 0], dtype=np.int64)
+        got = ref.run(None, {"X": x, "P": p, "V": value})[0]
+        assert got.shape == (0,)
+        assert got.dtype == np.float32
+
+    @pytest.mark.parametrize(
+        ("mode", "expected"),
+        [
+            ("edge", [1, 2, 3, 3, 3]),
+            ("reflect", [1, 2, 3, 2, 1]),
+            ("wrap", [1, 2, 3, 1, 2]),
+        ],
+    )
+    def test_pad_negative_pads_non_constant_modes(self, mode, expected):
+        X = make_tensor_value_info("X", TensorProto.INT64, None)
+        P = make_tensor_value_info("P", TensorProto.INT64, None)
+        A = make_tensor_value_info("A", TensorProto.INT32, None)
+        Y = make_tensor_value_info("Y", TensorProto.INT64, None)
+
+        node = make_node("Pad", inputs=["X", "P", "", "A"], outputs=["Y"], mode=mode)
+        model = make_model(make_graph([node], "g", [X, P, A], [Y]))
+        ref = ReferenceEvaluator(model)
+        x = np.array([0, 1, 2, 3], dtype=np.int64)
+
+        # Crop first, then pad using values from the cropped data.
+        p = np.array([-1, 2], dtype=np.int64)
+        axes = np.array([-1], dtype=np.int32)
+        got = ref.run(None, {"X": x, "P": p, "A": axes})[0]
+        assert_allclose(np.array(expected, dtype=np.int64), got)
+        assert got.dtype == np.int64
+
+    def test_pad_negative_pads_reflect_limit_after_crop(self):
+        X = make_tensor_value_info("X", TensorProto.FLOAT, None)
+        P = make_tensor_value_info("P", TensorProto.INT64, None)
+        Y = make_tensor_value_info("Y", TensorProto.FLOAT, None)
+
+        node = make_node("Pad", inputs=["X", "P"], outputs=["Y"], mode="reflect")
+        model = make_model(make_graph([node], "g", [X, P], [Y]))
+        ref = ReferenceEvaluator(model)
+
+        with pytest.raises(ValueError, match="cropped axis length minus 1"):
+            ref.run(
+                None,
+                {
+                    "X": np.arange(4, dtype=np.float32),
+                    "P": np.array([-2, 2], dtype=np.int64),
+                },
+            )
 
     def test_gather_elements_empty_indices(self):
         data_info = make_tensor_value_info("X", TensorProto.FLOAT, None)

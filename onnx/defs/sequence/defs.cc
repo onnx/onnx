@@ -445,8 +445,8 @@ BuildSequenceMapBodyFunc(const FunctionBodyBuildContext& ctx, const OpSchema& sc
     ONNX_THROW_EX(std::invalid_argument("Input 0 expected but not provided"));
 
   const auto* const first_input_type = ctx.getInputType(0);
-  assert(first_input_type);
-  if (!first_input_type->has_sequence_type())
+  // A serialized input may be present without type metadata.
+  if (first_input_type == nullptr || !first_input_type->has_sequence_type())
     ONNX_THROW_EX(std::invalid_argument("Expected a sequence type for input 0"));
 
   auto const& schema_inputs = schema.inputs();
