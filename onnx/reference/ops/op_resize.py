@@ -513,7 +513,9 @@ def _interpolate_nd(
         axes = list(range(r))
 
     if output_size is not None:
-        scale_factors = [output_size[i] / data.shape[i] for i in range(r)]
+        scale_factors = [
+            output_size[i] / data.shape[i] if i in axes else 1.0 for i in range(r)
+        ]
         if keep_aspect_ratio_policy != "stretch":
             if keep_aspect_ratio_policy == "not_larger":
                 scale = np.array(scale_factors)[axes].min()
@@ -634,32 +636,20 @@ class Resize(OpRun):
             )
             return (output,)
 
-        # axes is not None
-        not_axes = [a for a in range(len(X.shape)) if a not in axes]
-        perm = tuple(not_axes + axes)
-        permuted = np.transpose(X, perm)
-        new_shape = (-1, *tuple(X.shape[a] for a in axes))
-        reshaped = permuted.reshape(new_shape)
-        res = None
-        for i in range(reshaped.shape[0]):
-            output = _interpolate_nd(
-                reshaped[i],
+        normalized_axes = [axis + X.ndim if axis < 0 else axis for axis in axes]
+        output = onnx.numpy_helper.saturate_cast(
+            _interpolate_nd(
+                X,
                 fct,
                 scale_factors=scales,
                 output_size=sizes,
+                axes=normalized_axes,
                 roi=roi,
                 keep_aspect_ratio_policy=keep_aspect_ratio_policy,
                 exclude_outside=exclude_outside,
                 coordinate_transformation_mode=coordinate_transformation_mode,
                 extrapolation_value=extrapolation_value,
-            )
-            if res is None:
-                res = np.empty((reshaped.shape[0], *output.shape), dtype=X.dtype)
-            res[i] = onnx.numpy_helper.saturate_cast(output, X.dtype)
-
-        res_reshaped = res.reshape(tuple(X.shape[a] for a in not_axes) + res[0].shape)
-        new_perm = list(perm)
-        for i, a in enumerate(perm):
-            new_perm[a] = i
-        final = np.transpose(res_reshaped, tuple(new_perm))
-        return (final,)
+            ),
+            X.dtype,
+        )
+        return (output,)
