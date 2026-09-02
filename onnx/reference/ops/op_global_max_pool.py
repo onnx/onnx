@@ -3,16 +3,17 @@
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+import numpy as np
 
 from onnx.reference.op_run import OpRun
 
-if TYPE_CHECKING:
-    import numpy as np
-
 
 def _global_max_pool(x: np.ndarray) -> np.ndarray:
-    return x.max(axis=tuple(range(2, x.ndim)), keepdims=True)
+    axis = tuple(range(2, np.ndim(x)))
+    y = x.max(axis=axis)
+    for _ in axis:
+        y = np.expand_dims(y, -1)
+    return y
 
 
 class GlobalMaxPool(OpRun):
