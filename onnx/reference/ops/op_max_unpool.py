@@ -103,8 +103,10 @@ class MaxUnpool(OpRun):
             )
 
         result = np.zeros(inferred_shape, dtype=X.dtype)
-        # Advanced assignment preserves the scalar implementation's C-order last-write behavior.
-        result.reshape(-1)[flat_indices] = X.reshape(-1)
+        last_positions = np.full(output_size, -1, dtype=np.intp)
+        np.maximum.at(last_positions, flat_indices, np.arange(X.size))
+        written = last_positions >= 0
+        result.reshape(-1)[written] = X.reshape(-1)[last_positions[written]]
         if output_shape is not None:
             output = np.zeros(shape, dtype=X.dtype)
             output[tuple(slice(dim) for dim in inferred_shape)] = result

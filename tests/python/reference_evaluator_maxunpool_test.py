@@ -8,7 +8,13 @@ import pytest
 from numpy.testing import assert_array_equal
 
 from onnx import TensorProto
-from onnx.helper import make_graph, make_model, make_node, make_opsetid, make_tensor_value_info
+from onnx.helper import (
+    make_graph,
+    make_model,
+    make_node,
+    make_opsetid,
+    make_tensor_value_info,
+)
 from onnx.reference import ReferenceEvaluator
 
 
@@ -91,7 +97,9 @@ def test_max_unpool_inferred_shape_uses_default_strides_and_pads() -> None:
     x = np.array([[[3, 4]]], dtype=np.float32)
     indices = np.array([[[0, 2]]], dtype=np.int64)
 
-    result = _make_model(TensorProto.FLOAT, x.shape).run(None, {"X": x, "I": indices})[0]
+    result = _make_model(TensorProto.FLOAT, x.shape).run(None, {"X": x, "I": indices})[
+        0
+    ]
 
     assert_array_equal(result, np.array([[[3, 0, 4]]], dtype=np.float32))
 
@@ -100,7 +108,9 @@ def test_max_unpool_empty_input() -> None:
     x = np.empty((1, 1, 0), dtype=np.float32)
     indices = np.empty_like(x, dtype=np.int64)
 
-    result = _make_model(TensorProto.FLOAT, x.shape).run(None, {"X": x, "I": indices})[0]
+    result = _make_model(TensorProto.FLOAT, x.shape).run(None, {"X": x, "I": indices})[
+        0
+    ]
 
     assert_array_equal(result, np.zeros((1, 1, 1), dtype=np.float32))
 
@@ -109,7 +119,9 @@ def test_max_unpool_duplicate_indices_use_last_value() -> None:
     x = np.array([[[3, 4]]], dtype=np.float32)
     indices = np.array([[[1, 1]]], dtype=np.int64)
 
-    result = _make_model(TensorProto.FLOAT, x.shape).run(None, {"X": x, "I": indices})[0]
+    result = _make_model(TensorProto.FLOAT, x.shape).run(None, {"X": x, "I": indices})[
+        0
+    ]
 
     assert_array_equal(result, np.array([[[0, 4, 0]]], dtype=np.float32))
 

@@ -23830,6 +23830,47 @@ Other versions of this operator: <a href="Changelog.md#MaxUnpool-9">9</a>, <a hr
 #### Examples
 
 <details>
+<summary>1d</summary>
+
+```python
+node = onnx.helper.make_node(
+    "MaxUnpool",
+    inputs=["xT", "xI"],
+    outputs=["y"],
+    kernel_shape=[2],
+    strides=[2],
+)
+xT = np.array([[[1, 2]]], dtype=np.float32)
+xI = np.array([[[1, 3]]], dtype=np.int64)
+y = np.array([[[0, 1, 0, 2]]], dtype=np.float32)
+expect(node, inputs=[xT, xI], outputs=[y], name="test_maxunpool_export_1d")
+```
+
+</details>
+
+
+<details>
+<summary>4d</summary>
+
+```python
+node = onnx.helper.make_node(
+    "MaxUnpool",
+    inputs=["xT", "xI"],
+    outputs=["y"],
+    kernel_shape=[2, 2, 2, 2],
+    strides=[2, 2, 2, 2],
+)
+xT = np.array([[[[[[1, 2]]]]]], dtype=np.float32)
+xI = np.array([[[[[[0, 31]]]]]], dtype=np.int64)
+y = np.zeros((1, 1, 2, 2, 2, 4), dtype=np.float32)
+y.flat[[0, 31]] = xT.flat
+expect(node, inputs=[xT, xI], outputs=[y], name="test_maxunpool_export_4d")
+```
+
+</details>
+
+
+<details>
 <summary>with_output_shape</summary>
 
 ```python
