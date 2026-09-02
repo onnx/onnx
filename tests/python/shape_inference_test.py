@@ -1138,6 +1138,90 @@ class TestShapeInference(TestShapeInferenceHelper):
                 opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
             )
 
+    @pytest.mark.parametrize("version", all_versions_for("GroupNormalization"))
+    def test_group_normalization(self, version) -> None:
+        self.skipIf(version < 21, "GroupNormalization-18 is deprecated")
+        graph = self._make_graph(
+            [
+                ("X", TensorProto.FLOAT, ("N", 4, 0, "W")),
+                ("scale", TensorProto.FLOAT, (4,)),
+                ("bias", TensorProto.FLOAT, (4,)),
+            ],
+            [
+                make_node(
+                    "GroupNormalization",
+                    ["X", "scale", "bias"],
+                    ["y"],
+                    num_groups=2,
+                )
+            ],
+            [],
+        )
+        self._assert_inferred(
+            graph,
+            [make_tensor_value_info("y", TensorProto.FLOAT, ("N", 4, 0, "W"))],
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
+        )
+
+    def test_group_normalization_unknown_channel(self) -> None:
+        graph = self._make_graph(
+            [
+                ("X", TensorProto.FLOAT, ("N", None, "W")),
+                ("scale", TensorProto.FLOAT, (None,)),
+                ("bias", TensorProto.FLOAT, (None,)),
+            ],
+            [
+                make_node(
+                    "GroupNormalization",
+                    ["X", "scale", "bias"],
+                    ["y"],
+                    num_groups=2,
+                )
+            ],
+            [],
+        )
+        self._assert_inferred(
+            graph,
+            [make_tensor_value_info("y", TensorProto.FLOAT, ("N", None, "W"))],
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, 21)],
+        )
+
+    @pytest.mark.parametrize(
+        ("x_shape", "scale_shape", "bias_shape", "num_groups"),
+        [
+            ((2,), (2,), (2,), 1),
+            ((2, 4), (4, 1), (4,), 2),
+            ((2, 4), (3,), (4,), 2),
+            ((2, 4), (4,), (3,), 2),
+            ((2, 5), (5,), (5,), 2),
+            ((2, 4), (4,), (4,), 0),
+        ],
+    )
+    def test_group_normalization_invalid_shapes(
+        self, x_shape, scale_shape, bias_shape, num_groups
+    ) -> None:
+        graph = self._make_graph(
+            [
+                ("X", TensorProto.FLOAT, x_shape),
+                ("scale", TensorProto.FLOAT, scale_shape),
+                ("bias", TensorProto.FLOAT, bias_shape),
+            ],
+            [
+                make_node(
+                    "GroupNormalization",
+                    ["X", "scale", "bias"],
+                    ["y"],
+                    num_groups=num_groups,
+                )
+            ],
+            [],
+        )
+        with pytest.raises(onnx.shape_inference.InferenceError):
+            self._inferred(
+                graph,
+                opset_imports=[helper.make_opsetid(ONNX_DOMAIN, 21)],
+            )
+
     @pytest.mark.parametrize("version", all_versions_for("RMSNormalization"))
     def test_rms_normalization(self, version) -> None:
         graph = self._make_graph(
@@ -12356,7 +12440,7 @@ class TestShapeInference(TestShapeInferenceHelper):
                 make_tensor_value_info("signal", TensorProto.FLOAT, (2, 10, 1)),
                 make_tensor_value_info("frame_step", TensorProto.INT64, ()),
                 make_tensor_value_info("window", TensorProto.FLOAT, (5,)),
-                make_tensor_value_info("output", TensorProto.FLOAT, (2, 3, 5, 2)),
+                make_tensor_value_info("output", TensorProto.FLOAT, (2, 3, 3, 2)),
             ],
         )
 
@@ -12394,7 +12478,9 @@ class TestShapeInference(TestShapeInferenceHelper):
                     ["frame_length"],
                     value=make_tensor("frame_length", TensorProto.INT64, (), (5,)),
                 ),
-                make_node("STFT", ["signal", "frame_step", "window"], ["output"]),
+                make_node(
+                    "STFT", ["signal", "frame_step", "window"], ["output"], onesided=0
+                ),
             ],
             [],
         )
@@ -12449,9 +12535,368 @@ class TestShapeInference(TestShapeInferenceHelper):
                 make_tensor_value_info("signal", TensorProto.FLOAT, (2, 10, 1)),
                 make_tensor_value_info("frame_step", TensorProto.INT64, ()),
                 make_tensor_value_info("frame_length", TensorProto.INT64, ()),
-                make_tensor_value_info("output", TensorProto.FLOAT, (2, 3, 5, 2)),
+                make_tensor_value_info("output", TensorProto.FLOAT, (2, 3, 3, 2)),
             ],
         )
+
+    def test_stft_partial_shape_dynamic_signal(self):
+        graph = self._make_graph(
+            [("signal", TensorProto.FLOAT, ("batch", "signal_length", 1))],
+            [
+                make_node(
+                    "Constant",
+                    [],
+                    ["frame_step"],
+                    value=make_tensor("frame_step", TensorProto.INT64, (), (2,)),
+                ),
+                make_node(
+                    "Constant",
+                    [],
+                    ["window"],
+                    value=make_tensor(
+                        "window", TensorProto.FLOAT, (5,), (1, 2, 3, 4, 5)
+                    ),
+                ),
+                make_node("STFT", ["signal", "frame_step", "window"], ["output"]),
+            ],
+            [],
+        )
+
+        self._assert_inferred(
+            graph,
+            [
+                make_tensor_value_info("frame_step", TensorProto.INT64, ()),
+                make_tensor_value_info("window", TensorProto.FLOAT, (5,)),
+                make_tensor_value_info(
+                    "output", TensorProto.FLOAT, ("batch", None, 3, 2)
+                ),
+            ],
+        )
+
+    def test_stft_partial_shape_dynamic_signal_with_frame_length(self):
+        graph = self._make_graph(
+            [("signal", TensorProto.FLOAT, (1, "signal_length", 1))],
+            [
+                make_node(
+                    "Constant",
+                    [],
+                    ["frame_step"],
+                    value=make_tensor("frame_step", TensorProto.INT64, (), (2,)),
+                ),
+                make_node(
+                    "Constant",
+                    [],
+                    ["frame_length"],
+                    value=make_tensor("frame_length", TensorProto.INT64, (), (5,)),
+                ),
+                make_node(
+                    "STFT", ["signal", "frame_step", "", "frame_length"], ["output"]
+                ),
+            ],
+            [],
+        )
+
+        self._assert_inferred(
+            graph,
+            [
+                make_tensor_value_info("frame_step", TensorProto.INT64, ()),
+                make_tensor_value_info("frame_length", TensorProto.INT64, ()),
+                make_tensor_value_info("output", TensorProto.FLOAT, (1, None, 3, 2)),
+            ],
+        )
+
+    def test_stft_partial_shape_dynamic_signal_full_spectrum(self):
+        graph = self._make_graph(
+            [("signal", TensorProto.FLOAT, (1, "signal_length", 1))],
+            [
+                make_node(
+                    "Constant",
+                    [],
+                    ["frame_step"],
+                    value=make_tensor("frame_step", TensorProto.INT64, (), (2,)),
+                ),
+                make_node(
+                    "Constant",
+                    [],
+                    ["frame_length"],
+                    value=make_tensor("frame_length", TensorProto.INT64, (), (5,)),
+                ),
+                make_node(
+                    "STFT",
+                    ["signal", "frame_step", "", "frame_length"],
+                    ["output"],
+                    onesided=0,
+                ),
+            ],
+            [],
+        )
+        self._assert_inferred(
+            graph,
+            [
+                make_tensor_value_info("frame_step", TensorProto.INT64, ()),
+                make_tensor_value_info("frame_length", TensorProto.INT64, ()),
+                make_tensor_value_info("output", TensorProto.FLOAT, (1, None, 5, 2)),
+            ],
+        )
+
+    def test_stft_partial_shape_dynamic_frame_step(self):
+        graph = self._make_graph(
+            [
+                ("signal", TensorProto.FLOAT, (1, 10, 1)),
+                ("frame_step", TensorProto.INT64, ()),
+            ],
+            [
+                make_node(
+                    "Constant",
+                    [],
+                    ["window"],
+                    value=make_tensor(
+                        "window", TensorProto.FLOAT, (5,), (1, 2, 3, 4, 5)
+                    ),
+                ),
+                make_node("STFT", ["signal", "frame_step", "window"], ["output"]),
+            ],
+            [],
+        )
+        self._assert_inferred(
+            graph,
+            [
+                make_tensor_value_info("window", TensorProto.FLOAT, (5,)),
+                make_tensor_value_info("output", TensorProto.FLOAT, (1, None, 3, 2)),
+            ],
+        )
+
+    def test_stft_partial_shape_single_element_frame_step(self):
+        graph = self._make_graph(
+            [("signal", TensorProto.FLOAT, (1, 10, 1))],
+            [
+                make_node(
+                    "Constant",
+                    [],
+                    ["frame_step"],
+                    value=make_tensor("frame_step", TensorProto.INT64, (1,), (2,)),
+                ),
+                make_node(
+                    "Constant",
+                    [],
+                    ["window"],
+                    value=make_tensor(
+                        "window", TensorProto.FLOAT, (5,), (1, 2, 3, 4, 5)
+                    ),
+                ),
+                make_node("STFT", ["signal", "frame_step", "window"], ["output"]),
+            ],
+            [],
+        )
+        self._assert_inferred(
+            graph,
+            [
+                make_tensor_value_info("frame_step", TensorProto.INT64, (1,)),
+                make_tensor_value_info("window", TensorProto.FLOAT, (5,)),
+                make_tensor_value_info("output", TensorProto.FLOAT, (1, 3, 3, 2)),
+            ],
+        )
+
+    def test_stft_partial_shape_dynamic_frame_length(self):
+        graph = self._make_graph(
+            [
+                ("signal", TensorProto.FLOAT, ("batch", 10, 1)),
+                ("frame_length", TensorProto.INT64, ()),
+            ],
+            [
+                make_node(
+                    "Constant",
+                    [],
+                    ["frame_step"],
+                    value=make_tensor("frame_step", TensorProto.INT64, (), (2,)),
+                ),
+                make_node(
+                    "STFT",
+                    ["signal", "frame_step", "", "frame_length"],
+                    ["output"],
+                ),
+            ],
+            [],
+        )
+        self._assert_inferred(
+            graph,
+            [
+                make_tensor_value_info("frame_step", TensorProto.INT64, ()),
+                make_tensor_value_info(
+                    "output", TensorProto.FLOAT, ("batch", None, None, 2)
+                ),
+            ],
+        )
+
+    def test_stft_partial_shape_dynamic_window_length(self):
+        graph = self._make_graph(
+            [
+                ("signal", TensorProto.FLOAT, ("batch", 10, 1)),
+                ("window", TensorProto.FLOAT, (None,)),
+            ],
+            [
+                make_node(
+                    "Constant",
+                    [],
+                    ["frame_step"],
+                    value=make_tensor("frame_step", TensorProto.INT64, (), (2,)),
+                ),
+                make_node("STFT", ["signal", "frame_step", "window"], ["output"]),
+            ],
+            [],
+        )
+        self._assert_inferred(
+            graph,
+            [
+                make_tensor_value_info("frame_step", TensorProto.INT64, ()),
+                make_tensor_value_info(
+                    "output", TensorProto.FLOAT, ("batch", None, None, 2)
+                ),
+            ],
+        )
+
+    def test_stft_partial_shape_default_frame_length(self):
+        graph = self._make_graph(
+            [("signal", TensorProto.FLOAT, ("batch", "signal_length", 1))],
+            [
+                make_node(
+                    "Constant",
+                    [],
+                    ["frame_step"],
+                    value=make_tensor("frame_step", TensorProto.INT64, (), (2,)),
+                ),
+                make_node("STFT", ["signal", "frame_step"], ["output"]),
+            ],
+            [],
+        )
+        self._assert_inferred(
+            graph,
+            [
+                make_tensor_value_info("frame_step", TensorProto.INT64, ()),
+                make_tensor_value_info(
+                    "output", TensorProto.FLOAT, ("batch", 1, None, 2)
+                ),
+            ],
+        )
+
+    def test_stft_complex_signal_full_spectrum(self):
+        graph = self._make_graph(
+            [("signal", TensorProto.FLOAT, ("batch", 10, 2))],
+            [
+                make_node(
+                    "Constant",
+                    [],
+                    ["frame_step"],
+                    value=make_tensor("frame_step", TensorProto.INT64, (), (2,)),
+                ),
+                make_node(
+                    "Constant",
+                    [],
+                    ["window"],
+                    value=make_tensor(
+                        "window", TensorProto.FLOAT, (5,), (1, 2, 3, 4, 5)
+                    ),
+                ),
+                make_node(
+                    "STFT",
+                    ["signal", "frame_step", "window"],
+                    ["output"],
+                    onesided=0,
+                ),
+            ],
+            [],
+        )
+        self._assert_inferred(
+            graph,
+            [
+                make_tensor_value_info("frame_step", TensorProto.INT64, ()),
+                make_tensor_value_info("window", TensorProto.FLOAT, (5,)),
+                make_tensor_value_info("output", TensorProto.FLOAT, ("batch", 3, 5, 2)),
+            ],
+        )
+
+    def test_stft_complex_signal_rejects_onesided(self):
+        graph = self._make_graph(
+            [("signal", TensorProto.FLOAT, (1, 10, 2))],
+            [
+                make_node(
+                    "Constant",
+                    [],
+                    ["frame_step"],
+                    value=make_tensor("frame_step", TensorProto.INT64, (), (2,)),
+                ),
+                make_node(
+                    "Constant",
+                    [],
+                    ["window"],
+                    value=make_tensor(
+                        "window", TensorProto.FLOAT, (5,), (1, 2, 3, 4, 5)
+                    ),
+                ),
+                make_node("STFT", ["signal", "frame_step", "window"], ["output"]),
+            ],
+            [],
+        )
+        with pytest.raises(onnx.shape_inference.InferenceError):
+            self._inferred(graph)
+
+    @pytest.mark.parametrize("signal_shape", [(1, 10), (1, 10, 1, 1)])
+    def test_stft_rejects_invalid_signal_rank(self, signal_shape):
+        graph = self._make_graph(
+            [("signal", TensorProto.FLOAT, signal_shape)],
+            [
+                make_node(
+                    "Constant",
+                    [],
+                    ["frame_step"],
+                    value=make_tensor("frame_step", TensorProto.INT64, (), (2,)),
+                ),
+                make_node(
+                    "Constant",
+                    [],
+                    ["window"],
+                    value=make_tensor(
+                        "window", TensorProto.FLOAT, (5,), (1, 2, 3, 4, 5)
+                    ),
+                ),
+                make_node("STFT", ["signal", "frame_step", "window"], ["output"]),
+            ],
+            [],
+        )
+        with pytest.raises(onnx.shape_inference.InferenceError):
+            self._inferred(graph)
+
+    @pytest.mark.parametrize(
+        ("input_name", "input_shape", "node_inputs"),
+        [
+            ("frame_step", (2,), ["signal", "frame_step", "window"]),
+            (
+                "frame_length",
+                (1,),
+                ["signal", "frame_step", "window", "frame_length"],
+            ),
+            ("window", (2, 3), ["signal", "frame_step", "window"]),
+        ],
+    )
+    def test_stft_rejects_invalid_input_rank(
+        self, input_name, input_shape, node_inputs
+    ):
+        input_type = TensorProto.FLOAT if input_name == "window" else TensorProto.INT64
+        seed_values = [
+            ("signal", TensorProto.FLOAT, (1, 10, 1)),
+            (input_name, input_type, input_shape),
+        ]
+        if input_name != "window":
+            seed_values.append(("window", TensorProto.FLOAT, (5,)))
+        if input_name != "frame_step":
+            seed_values.append(("frame_step", TensorProto.INT64, ()))
+        graph = self._make_graph(
+            seed_values,
+            [make_node("STFT", node_inputs, ["output"])],
+            [],
+        )
+        with pytest.raises(onnx.shape_inference.InferenceError):
+            self._inferred(graph)
 
     def test_melweightmatrix(self):
         graph = self._make_graph(

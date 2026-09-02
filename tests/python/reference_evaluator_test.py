@@ -4300,14 +4300,14 @@ class TestReferenceEvaluator:
             "W": np.ones((1, 1, 3, 3), dtype=np.float32),
             "B": np.zeros((1,), dtype=np.float32),
         }
-        kwargs = dict(
-            group=1,
-            dilations=[1, 1],
-            kernel_shape=[3, 3],
-            strides=[2, 2],
-            pads=None,
-            auto_pad="SAME_LOWER",
-        )
+        kwargs = {
+            "group": 1,
+            "dilations": [1, 1],
+            "kernel_shape": [3, 3],
+            "strides": [2, 2],
+            "pads": None,
+            "auto_pad": "SAME_LOWER",
+        }
         expected = np.array(
             [[[[12.0, 27.0, 24.0], [63.0, 108.0, 81.0], [72.0, 117.0, 84.0]]]],
             dtype=np.float32,
@@ -4442,6 +4442,92 @@ class TestReferenceEvaluator:
         got = ref.run(None, {"X": x, "P": p, "V": value})[0]
         assert got.shape == (11,) * dim
         assert got.dtype == np.float32
+
+    def test_pad_negative_pads_constant(self):
+        X = make_tensor_value_info("X", TensorProto.FLOAT, None)
+        P = make_tensor_value_info("P", TensorProto.INT64, None)
+        V = make_tensor_value_info("V", TensorProto.FLOAT, None)
+        Y = make_tensor_value_info("Y", TensorProto.FLOAT, None)
+
+        node = make_node("Pad", inputs=["X", "P", "V"], outputs=["Y"], mode="constant")
+        model = make_model(make_graph([node], "g", [X, P, V], [Y]))
+        ref = ReferenceEvaluator(model)
+        x = np.arange(20, dtype=np.float32).reshape((4, 5))
+        value = np.array(-5, dtype=np.float32)
+
+        # pure cropping
+        p = np.array([-1, -1, -1, -2], dtype=np.int64)
+        got = ref.run(None, {"X": x, "P": p, "V": value})[0]
+        assert_allclose(x[1:-1, 1:-2], got)
+
+        # mixed cropping and padding on the same axis
+        p = np.array([-2, 1, 1, -1], dtype=np.int64)
+        expected = np.array(
+            [
+                [-5, 10, 11, 12, 13],
+                [-5, 15, 16, 17, 18],
+                [-5, -5, -5, -5, -5],
+            ],
+            dtype=np.float32,
+        )
+        got = ref.run(None, {"X": x, "P": p, "V": value})[0]
+        assert_allclose(expected, got)
+
+        # A crop beyond the input is offset by padding to preserve the inferred shape.
+        x = np.array([1, 2, 3], dtype=np.float32)
+        p = np.array([-4, 2], dtype=np.int64)
+        got = ref.run(None, {"X": x, "P": p, "V": value})[0]
+        assert_allclose(np.array([-5], dtype=np.float32), got)
+
+        # Cropping the complete input without padding produces an empty tensor.
+        p = np.array([-3, 0], dtype=np.int64)
+        got = ref.run(None, {"X": x, "P": p, "V": value})[0]
+        assert got.shape == (0,)
+        assert got.dtype == np.float32
+
+    @pytest.mark.parametrize(
+        ("mode", "expected"),
+        [
+            ("edge", [1, 2, 3, 3, 3]),
+            ("reflect", [1, 2, 3, 2, 1]),
+            ("wrap", [1, 2, 3, 1, 2]),
+        ],
+    )
+    def test_pad_negative_pads_non_constant_modes(self, mode, expected):
+        X = make_tensor_value_info("X", TensorProto.INT64, None)
+        P = make_tensor_value_info("P", TensorProto.INT64, None)
+        A = make_tensor_value_info("A", TensorProto.INT32, None)
+        Y = make_tensor_value_info("Y", TensorProto.INT64, None)
+
+        node = make_node("Pad", inputs=["X", "P", "", "A"], outputs=["Y"], mode=mode)
+        model = make_model(make_graph([node], "g", [X, P, A], [Y]))
+        ref = ReferenceEvaluator(model)
+        x = np.array([0, 1, 2, 3], dtype=np.int64)
+
+        # Crop first, then pad using values from the cropped data.
+        p = np.array([-1, 2], dtype=np.int64)
+        axes = np.array([-1], dtype=np.int32)
+        got = ref.run(None, {"X": x, "P": p, "A": axes})[0]
+        assert_allclose(np.array(expected, dtype=np.int64), got)
+        assert got.dtype == np.int64
+
+    def test_pad_negative_pads_reflect_limit_after_crop(self):
+        X = make_tensor_value_info("X", TensorProto.FLOAT, None)
+        P = make_tensor_value_info("P", TensorProto.INT64, None)
+        Y = make_tensor_value_info("Y", TensorProto.FLOAT, None)
+
+        node = make_node("Pad", inputs=["X", "P"], outputs=["Y"], mode="reflect")
+        model = make_model(make_graph([node], "g", [X, P], [Y]))
+        ref = ReferenceEvaluator(model)
+
+        with pytest.raises(ValueError, match="cropped axis length minus 1"):
+            ref.run(
+                None,
+                {
+                    "X": np.arange(4, dtype=np.float32),
+                    "P": np.array([-2, 2], dtype=np.int64),
+                },
+            )
 
     def test_gather_elements_empty_indices(self):
         data_info = make_tensor_value_info("X", TensorProto.FLOAT, None)
