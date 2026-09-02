@@ -47,9 +47,12 @@ def _set_external_data(
 def _enumerate_subgraphs(graph):
     for node in graph.node:
         for att in node.attribute:
-            if att.g:
+            if att.HasField("g"):
                 yield att.g
                 yield from _enumerate_subgraphs(att.g)
+            for sub_g in att.graphs:
+                yield sub_g
+                yield from _enumerate_subgraphs(sub_g)
 
 
 def make_large_tensor_proto(

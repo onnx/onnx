@@ -71,6 +71,46 @@ These limitations are a property of the current implementation, not
 fundamental constraints - if you are in need of something more
 advanced, do let us know!
 
+## Type Inference vs. Shape Inference
+
+**Type inference** (determining the element type of outputs) is typically handled
+automatically by the schema's type constraints. When a type constraint variable
+(e.g., `"T"`) is shared between an input and an output in the schema definition,
+the framework propagates the element type from the input to the output without
+any explicit inference code.
+
+However, many existing ops still explicitly call `propagateElemTypeFromInputToOutput`
+as a best practice for robustness. This is harmless when type constraints already
+cover the case, and ensures correct behavior regardless of how shape inference
+is invoked.
+
+Explicit type inference logic in `TypeAndShapeInferenceFunction` is only needed when:
+- The output type is determined by an **attribute** rather than an input type
+  (e.g., `Cast`, where the `to` attribute specifies the output element type)
+- The output type differs from all input types in a way that cannot be expressed
+  via shared type constraint variables
+- The operator uses **heterogeneous** variadic inputs/outputs (see below)
+
+### Homogeneous vs. Heterogeneous variadic inputs/outputs
+
+The homogeneous/heterogeneous flag applies only to variadic (repeated) inputs or
+outputs in the schema definition:
+
+- **Homogeneous** (the default): All repeated arguments must have the same type.
+  The type constraint variable constrains them to be identical, and the framework
+  enforces and propagates this automatically.
+- **Heterogeneous**: Each repeated argument may have a distinct type. The type
+  constraint variable only describes the set of *allowed* types — it does not
+  constrain different arguments to have the same type. This is used by operators
+  like `Loop` and `Scan`, whose carried state variables can have mixed types.
+
+When using heterogeneous variadic arguments, the operator's
+`TypeAndShapeInferenceFunction` must explicitly propagate types for each
+individual argument, since the framework cannot do it automatically.
+
+**Shape inference**, on the other hand, almost always requires explicit logic,
+since output shapes typically depend on input shapes, attributes, or both.
+
 ## Implementing Shape Inference For Operators
 
 You can add a shape inference function to your operator's Schema with
@@ -116,6 +156,12 @@ when multiple input dims are expected to be the same, and when input
 dimensions are propagated to specific output dimensions. (See the inference
 for `RoiAlign` for an example.)
 
+* `unifyInputShape` and `unifyInputShapePrefix` are higher-level utilities
+built on `unifyInputDim`. They unify all dimensions (or a prefix of dimensions)
+of an input in one call, enabling a more declarative style. `unifyInputDim`
+remains useful for more complex scenarios where individual dimensions are
+accessed selectively.
+
 * Overloaded operators `*` and `/` can be used on symbolic dimensions when output
 dimensions are computed from input dimensions using arithmetic. (See the inference
 for `SpaceToDepth` for an example.)
@@ -137,5 +183,15 @@ up as below:
    unifyInputDim(ctx, 0, 1, K);
    unifyInputDim(ctx, 1, 0, K);
    unifyInputDim(ctx, 1, 1, N);
-   updateOutputShape(ctx, 0, {M. N});
+   updateOutputShape(ctx, 0, {M, N});
+```
+
+The same example can be written more concisely using `unifyInputShape`, which
+checks rank and unifies all dimensions in one call:
+
+```cpp
+   Dim M, K, N;
+   unifyInputShape(ctx, 0, {M, K});
+   unifyInputShape(ctx, 1, {K, N});
+   updateOutputShape(ctx, 0, {M, N});
 ```

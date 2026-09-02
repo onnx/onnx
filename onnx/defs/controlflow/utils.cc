@@ -198,11 +198,29 @@ int handle_negative_axis_validate(const std::string& attrib, int axis, int rank)
   return (axis >= 0 ? axis : axis + rank);
 }
 
+size_t ValidateScanCountsAndGetNumLoopStateVars(size_t num_inputs, size_t num_scan_inputs, size_t num_outputs) {
+  // Guard the subtractions below against underflow.
+  if (num_scan_inputs > num_inputs) {
+    fail_shape_inference(
+        "num_scan_inputs (", num_scan_inputs, ") cannot exceed the number of Scan inputs (", num_inputs, ").");
+  }
+  size_t num_loop_state_vars = num_inputs - num_scan_inputs;
+  if (num_loop_state_vars > num_outputs) {
+    fail_shape_inference(
+        "The number of outputs of the Scan (",
+        num_outputs,
+        ") should equal the sum of the number of loop state variables (",
+        num_loop_state_vars,
+        ") and the number of scan-outputs.");
+  }
+  return num_loop_state_vars;
+}
+
 void ScanInferenceFunction(InferenceContext& ctx) {
   auto num_inputs = ctx.getNumInputs();
-  auto num_scan_inputs = narrow_cast<size_t>(ctx.getAttribute("num_scan_inputs")->i());
-  auto num_loop_state_vars = num_inputs - num_scan_inputs;
+  auto num_scan_inputs = narrow<size_t>(getRequiredAttributeInt(ctx, "num_scan_inputs"));
   auto num_outputs = ctx.getNumOutputs();
+  auto num_loop_state_vars = ValidateScanCountsAndGetNumLoopStateVars(num_inputs, num_scan_inputs, num_outputs);
   auto num_scan_outputs = num_outputs - num_loop_state_vars;
 
   std::vector<int64_t> axes, output_axes;

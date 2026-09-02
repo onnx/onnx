@@ -21,10 +21,7 @@ fi
 set -e
 
 echo -e "===> recompile onnx"
-python setup.py develop --user
-
-echo -e "\n===> regenerate test data from node test"
-python onnx/backend/test/cmd_tools.py generate-data
+python -m pip install -e . --no-build-isolation
 
 echo -e "\n===> regenerate stats of test data"
 python onnx/backend/test/stat_coverage.py

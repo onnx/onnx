@@ -17,8 +17,7 @@
 #include "onnx/defs/schema.h"
 #include "onnx/version_converter/adapters/adapter.h"
 
-namespace ONNX_NAMESPACE {
-namespace version_conversion {
+namespace ONNX_NAMESPACE::version_conversion {
 
 // TODO(ONNX): Consider creating interface for this class.
 class BaseVersionConverter {
@@ -61,14 +60,14 @@ class BaseVersionConverter {
         if (adapter_ptr != target_map->second.end()) {
           return *(adapter_ptr->second);
         } else {
-          ONNX_ASSERTM(false, "No Adapter To Version %s for %s", target.c_str(), op_name.c_str())
+          ONNX_ASSERTM(false, "No Adapter To Version ", target, " for ", op_name)
         }
       } else {
-        ONNX_ASSERTM(false, "No Adapter From Version %s for %s", initial.c_str(), op_name.c_str())
+        ONNX_ASSERTM(false, "No Adapter From Version ", initial, " for ", op_name)
       }
     } else {
       // No adapters exist for the given op
-      ONNX_ASSERTM(false, "No Adapter For %s", op_name.c_str())
+      ONNX_ASSERTM(false, "No Adapter For ", op_name)
     }
   }
 
@@ -86,5 +85,4 @@ class BaseVersionConverter {
   }
 };
 
-} // namespace version_conversion
-} // namespace ONNX_NAMESPACE
+} // namespace ONNX_NAMESPACE::version_conversion
