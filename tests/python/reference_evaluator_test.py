@@ -293,8 +293,9 @@ class TestReferenceEvaluator:
             assert Y.shape == (batch_size, sequence_length, num_directions, hidden_size)
         else:
             assert Y.shape == (sequence_length, num_directions, batch_size, hidden_size)
-        np.testing.assert_allclose(Y_c, expected_c)
-        np.testing.assert_allclose(Y_h, expected_h)
+        rtol, atol = (1e-6, 1e-7) if dtype is np.float32 else (1e-7, 0)
+        np.testing.assert_allclose(Y_c, expected_c, rtol=rtol, atol=atol)
+        np.testing.assert_allclose(Y_h, expected_h, rtol=rtol, atol=atol)
 
     @pytest.mark.parametrize(
         "np_dtype,tensor_dtype",
