@@ -324,3 +324,15 @@ class TestNumpyHelper:
         tensor.int32_data.append(0)  # encodes 16 elements, not 1000
         with pytest.raises(ValueError):
             numpy_helper.to_array(tensor)
+
+    def test_to_array_reshape_mismatch_hints_wrong_message_type(self) -> None:
+        # A TensorProto whose dims/data disagree can arise from parsing bytes
+        # that are not actually a TensorProto (e.g. an OptionalProto whose
+        # "name" field is misread as TensorProto's "dims" field, since
+        # protobuf does not encode message-type information). The error
+        # should hint at this rather than surface a bare numpy reshape error.
+        tensor = onnx.TensorProto()
+        tensor.data_type = onnx.TensorProto.FLOAT
+        tensor.dims.extend([111, 112, 116, 95, 105, 110])  # ASCII for "opt_in"
+        with pytest.raises(ValueError, match="not actually a TensorProto"):
+            numpy_helper.to_array(tensor)
