@@ -55,15 +55,25 @@ _DEFINITION_RE = re.compile(
     + "|".join(_MACRO_DOMAIN_AND_HEADER)
     + r")\(\s*([A-Za-z0-9_]+)\s*,\s*(\d+)\s*,"
 )
-# Registered via the usual GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(domain, ver, name)>
+# Registered via the usual fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(domain, ver, name)>())
+# Anchored on the full fn(...) call, not just GetOpSchema<...>, so a stray reference to the
+# class name elsewhere in the file (e.g. left over in a comment) isn't mistaken for registration.
 _REGISTRATION_RE = re.compile(
-    r"GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME\(\s*([A-Za-z0-9_]+)\s*,\s*(\d+)\s*,\s*([A-Za-z0-9_]+)\s*\)>"
+    r"fn\(\s*GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME\(\s*([A-Za-z0-9_]+)\s*,\s*(\d+)\s*,\s*([A-Za-z0-9_]+)\s*\)>\(\)\)"
 )
 # Preview headers alternatively use an alias with (ver, name) instead of (domain, ver, name);
 # see ONNX_PREVIEW_OPERATOR_SET_SCHEMA_CLASS_NAME in onnx/defs/schema.h.
 _PREVIEW_REGISTRATION_RE = re.compile(
-    r"GetOpSchema<ONNX_PREVIEW_OPERATOR_SET_SCHEMA_CLASS_NAME\(\s*(\d+)\s*,\s*([A-Za-z0-9_]+)\s*\)>"
+    r"fn\(\s*GetOpSchema<ONNX_PREVIEW_OPERATOR_SET_SCHEMA_CLASS_NAME\(\s*(\d+)\s*,\s*([A-Za-z0-9_]+)\s*\)>\(\)\)"
 )
+
+# Matches C++ // line comments and /* */ block comments, so a commented-out fn(...) call
+# doesn't get mistaken for a live registration.
+_COMMENT_RE = re.compile(r"//[^\n]*|/\*.*?\*/", re.DOTALL)
+
+
+def _strip_comments(text: str) -> str:
+    return _COMMENT_RE.sub("", text)
 
 
 def _defined_schemas() -> dict[str, set[tuple[str, int]]]:
@@ -81,7 +91,7 @@ def _defined_schemas() -> dict[str, set[tuple[str, int]]]:
 
 def _registered_schemas(header: Path, domain: str) -> set[tuple[str, int]]:
     """Returns the (name, version) pairs actually wired into `header`'s ForEachSchema for `domain`."""
-    text = header.read_text(encoding="utf-8")
+    text = _strip_comments(header.read_text(encoding="utf-8"))
     registered = set()
     for match in _REGISTRATION_RE.finditer(text):
         dom, version, name = match.group(1), int(match.group(2)), match.group(3)
