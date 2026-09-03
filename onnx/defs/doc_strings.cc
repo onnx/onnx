@@ -46,7 +46,7 @@ A MeanVarianceNormalization Function: Perform mean variance normalization
 on the input tensor X using formula: `(X-EX)/(sqrt(E((X-EX)^2)) + 1e-9)`.
 )DOC";
 
-const char kDoc_MeanVarianceNormalization_ver28[] = R"DOC(
+const char kDoc_MeanVarianceNormalization_ver29[] = R"DOC(
 A MeanVarianceNormalization Function: Perform mean variance normalization
 on the input tensor X using formula: `(X-EX)/(sqrt(E((X-EX)^2)) + epsilon)`.
 For float16 and bfloat16 inputs, the intermediate calculations are performed in
@@ -1719,7 +1719,7 @@ const char kDoc_Round_ver11[] = "";
 const char kDoc_SpaceToDepth_ver1[] = "";
 const char kDoc_InstanceNormalization_ver6[] = "";
 const char kDoc_MeanVarianceNormalization_ver13[] = "";
-const char kDoc_MeanVarianceNormalization_ver28[] = "";
+const char kDoc_MeanVarianceNormalization_ver29[] = "";
 const char kDoc_ThresholdedRelu_ver10[] = "";
 const char kDoc_Acosh_ver9[] = "";
 const char kDoc_Dropout_ver13[] = "";

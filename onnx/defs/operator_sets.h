@@ -1472,7 +1472,6 @@ class OpSet_Onnx_ver27 {
 };
 
 // Forward declarations for ai.onnx version 28
-class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 28, MeanVarianceNormalization);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 28, BitShift);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 28, Celu);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 28, Einsum);
@@ -1497,7 +1496,6 @@ class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 28, ReduceLogSumExp);
 class OpSet_Onnx_ver28 {
  public:
   static void ForEachSchema(const std::function<void(OpSchema&&)>& fn) {
-    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 28, MeanVarianceNormalization)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 28, BitShift)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 28, Celu)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 28, Einsum)>());
@@ -1520,12 +1518,14 @@ class OpSet_Onnx_ver28 {
   }
 };
 
+// Forward declarations for ai.onnx version 29
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 29, MeanVarianceNormalization);
+
 // Iterate over schema from ai.onnx version 29
 class OpSet_Onnx_ver29 {
  public:
   static void ForEachSchema(const std::function<void(OpSchema&&)>& fn) {
-    // TODO: Remove after introducing the first schema to opset 29
-    (void)fn;
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 29, MeanVarianceNormalization)>());
   }
 };
 

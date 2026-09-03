@@ -33740,47 +33740,6 @@ This version of the operator has been available since version 28 of the default 
 <dd>Constrain input and output types to all numerical tensor types.</dd>
 </dl>
 
-### <a name="MeanVarianceNormalization-28"></a>**MeanVarianceNormalization-28**</a>
-
-  A MeanVarianceNormalization Function: Perform mean variance normalization
-  on the input tensor X using formula: `(X-EX)/(sqrt(E((X-EX)^2)) + epsilon)`.
-  For float16 and bfloat16 inputs, the intermediate calculations are performed in
-  float32 to preserve numerical stability and keep the default epsilon nonzero.
-
-#### Version
-
-This version of the operator has been available since version 28 of the default ONNX operator set.
-
-#### Attributes
-
-<dl>
-<dt><tt>axes</tt> : list of ints (default is ['0', '2', '3'])</dt>
-<dd>A list of integers, along which to reduce. The default is to calculate along axes [0,2,3] for calculating mean and variance along each channel. Two variables with the same C-coordinate are associated with the same mean and variance.</dd>
-<dt><tt>epsilon</tt> : float (default is (1.000000e-09))</dt>
-<dd>The epsilon value to use to avoid division by zero.</dd>
-</dl>
-
-#### Inputs
-
-<dl>
-<dt><tt>X</tt> (differentiable) : T</dt>
-<dd>Input tensor</dd>
-</dl>
-
-#### Outputs
-
-<dl>
-<dt><tt>Y</tt> (differentiable) : T</dt>
-<dd>Output tensor</dd>
-</dl>
-
-#### Type Constraints
-
-<dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
-<dd>Constrain input and output types to floating-point tensors.</dd>
-</dl>
-
 ### <a name="Mod-28"></a>**Mod-28**</a>
 
   Performs an element-wise binary modulo operation.
@@ -34490,6 +34449,48 @@ This version of the operator has been available since version 28 of the default 
 <dl>
 <dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
 <dd>Input can be of any tensor type.</dd>
+</dl>
+
+## Version 29 of the default ONNX operator set
+### <a name="MeanVarianceNormalization-29"></a>**MeanVarianceNormalization-29**</a>
+
+  A MeanVarianceNormalization Function: Perform mean variance normalization
+  on the input tensor X using formula: `(X-EX)/(sqrt(E((X-EX)^2)) + epsilon)`.
+  For float16 and bfloat16 inputs, the intermediate calculations are performed in
+  float32 to reduce rounding error and keep the default epsilon nonzero.
+
+#### Version
+
+This version of the operator has been available since version 29 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>axes</tt> : list of ints (default is ['0', '2', '3'])</dt>
+<dd>A list of integers, along which to reduce. The default is to calculate along axes [0,2,3] for calculating mean and variance along each channel. Two variables with the same C-coordinate are associated with the same mean and variance.</dd>
+<dt><tt>epsilon</tt> : float (default is (1.000000e-09))</dt>
+<dd>The epsilon value to use to avoid division by zero.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> (differentiable) : T</dt>
+<dd>Input tensor</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> (differentiable) : T</dt>
+<dd>Output tensor</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
+<dd>Constrain input and output types to floating-point tensors.</dd>
 </dl>
 
 # ai.onnx.preview

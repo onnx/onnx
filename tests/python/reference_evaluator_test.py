@@ -3346,7 +3346,7 @@ class TestReferenceEvaluator:
                         f"Discrepancies (max={diff}) for {reduce_op!r}, {baseline} != {k}\n{a}\n!=\n{b}"
                     )
 
-    @pytest.mark.parametrize("opset", [13, 17, 18, 28])
+    @pytest.mark.parametrize("opset", [13, 17, 18, 28, 29])
     def test_mvn(self, opset: int, ref_opset: int = 13):
         X = make_tensor_value_info("X", TensorProto.FLOAT, [None, None, None, None])
         Y = make_tensor_value_info("Y", TensorProto.FLOAT, [None, None, None, None])
@@ -3375,7 +3375,7 @@ class TestReferenceEvaluator:
             (TensorProto.DOUBLE, np.float64),
         ],
     )
-    def test_mvn_opset28_custom_epsilon_and_dtype(self, tensor_type, dtype) -> None:
+    def test_mvn_opset29_custom_epsilon_and_dtype(self, tensor_type, dtype) -> None:
         x_info = make_tensor_value_info("X", tensor_type, [2, 3, 4])
         y_info = make_tensor_value_info("Y", tensor_type, [2, 3, 4])
         node = make_node(
@@ -3386,7 +3386,7 @@ class TestReferenceEvaluator:
             epsilon=1e-5,
         )
         graph = make_graph([node], "g", [x_info], [y_info])
-        model = make_model(graph, opset_imports=[make_opsetid("", 28)])
+        model = make_model(graph, opset_imports=[make_opsetid("", 29)])
         x = np.arange(24, dtype=dtype).reshape(2, 3, 4)
 
         got = ReferenceEvaluator(model).run(None, {"X": x})[0]
@@ -3401,12 +3401,12 @@ class TestReferenceEvaluator:
         assert got.dtype == x.dtype
         assert_allclose(got, expected, rtol=1e-3, atol=1e-4)
 
-    def test_mvn_opset28_float16_default_epsilon_is_nonzero(self) -> None:
+    def test_mvn_opset29_float16_default_epsilon_is_nonzero(self) -> None:
         x_info = make_tensor_value_info("X", TensorProto.FLOAT16, [2])
         y_info = make_tensor_value_info("Y", TensorProto.FLOAT16, [2])
         node = make_node("MeanVarianceNormalization", ["X"], ["Y"], axes=[0])
         graph = make_graph([node], "g", [x_info], [y_info])
-        model = make_model(graph, opset_imports=[make_opsetid("", 28)])
+        model = make_model(graph, opset_imports=[make_opsetid("", 29)])
 
         got = ReferenceEvaluator(model).run(None, {"X": np.ones(2, dtype=np.float16)})[
             0
