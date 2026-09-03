@@ -491,7 +491,7 @@ def _interpolate_nd(
     r = len(data.shape)
     if axes is not None:
         if scale_factors is not None:
-            new_scale_factors = [1.0] * r
+            new_scale_factors = np.ones(r, dtype=np.asarray(scale_factors).dtype)
             for i, d in enumerate(axes):
                 new_scale_factors[d] = scale_factors[i]
             scale_factors = new_scale_factors
