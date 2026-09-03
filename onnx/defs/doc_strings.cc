@@ -2236,19 +2236,6 @@ also referred as "smooth" or "fancy" upsampling.
 const char kDoc_BitwiseNot_ver18[] = R"DOC(
 Returns the bitwise not of the input tensor element-wise.
 )DOC";
-const char kDoc_BitShift_ver11[] = R"DOC(
-Bitwise shift operator performs element-wise operation. For each input element, if the
-attribute "direction" is "RIGHT", this operator moves its binary representation toward
-the right side so that the input value is effectively decreased. If the attribute "direction"
-is "LEFT", bits of binary representation moves toward the left side, which results the
-increase of its actual value. The input X is the tensor to be shifted and another input
-Y specifies the amounts of shifting. For example, if "direction" is "Right", X is [1, 4],
-and S is [1, 1], the corresponding output Z would be [0, 2]. If "direction" is "LEFT" with
-X=[1, 2] and S=[1, 2], the corresponding output Y would be [2, 8].
-
-Because this operator supports Numpy-style broadcasting, X's and Y's shapes are
-not necessarily identical.
-)DOC";
 const char kDoc_Not_ver1[] = R"DOC(
 Returns the negation of the input tensor element-wise.
 )DOC";
@@ -3404,20 +3391,6 @@ square_sum[n, c, d1, ..., dk] = sum(X[n, i, d1, ..., dk] ^ 2),
 where max(0, c - floor((size - 1) / 2)) <= i <= min(C - 1, c + ceil((size - 1) / 2)).
 
 Y[n, c, d1, ..., dk] = X[n, c, d1, ..., dk] / (bias + alpha / size * square_sum[n, c, d1, ..., dk] ) ^ beta
-)DOC";
-const char kDoc_OptionalGetElement_ver18[] = R"DOC(
-If the input is a tensor or sequence type, it returns the input.
-If the input is an optional type, it outputs the element in the input.
-It is an error if the input is an empty optional-type (i.e. does not have an element) and the behavior is undefined in this case.
-)DOC";
-const char kDoc_OptionalHasElement_ver18[] = R"DOC(
-Returns true if (1) the input is an optional-type and contains an element,
-or, (2) the input is a tensor or sequence type.
-If the input is not provided or is an empty optional-type, this op returns false.
-)DOC";
-const char kDoc_Optional_ver15[] = R"DOC(
-Constructs an optional-type value containing either an empty optional of a certain type specified by the attribute,
-or a non-empty value containing the input element.
 )DOC";
 const char kDoc_OptionalGetElement_ver1[] = R"DOC(
 Outputs the element in the optional-type input. It is an error if the input value does not have an element
@@ -6646,6 +6619,8 @@ const char kDoc_NonZero_ver9[] = R"DOC(
 #else
 const char kDoc_BitShift_ver11[] = "";
 const char kDoc_BitShift_ver28[] = "";
+const char kDoc_SpaceToDepth_ver28[] = "";
+const char kDoc_DepthToSpace_ver28[] = "";
 const char kDoc_GRU_ver14[] = "";
 const char kDoc_Squeeze_ver24[] = "";
 const char kDoc_MaxUnpool_ver11[] = "";
@@ -6746,7 +6721,6 @@ const char kDoc_Constant_ver11[] = "";
 const char kDoc_Constant_ver1[] = "";
 const char kDoc_ImageDecoder_ver20[] = "";
 const char kDoc_BitwiseNot_ver18[] = "";
-const char kDoc_BitShift_ver11[] = "";
 const char kDoc_Not_ver1[] = "";
 const char kDoc_STFT_ver17[] = "";
 const char kDoc_MelWeightMatrix_ver17[] = "";
@@ -6810,9 +6784,6 @@ const char kDoc_BatchNormalization_ver1[] = "";
 const char kDoc_GlobalLpPool_ver1[] = "";
 const char kDoc_mvn_ver9[] = "";
 const char kDoc_LRN_ver1[] = "";
-const char kDoc_OptionalGetElement_ver18[] = "";
-const char kDoc_OptionalHasElement_ver18[] = "";
-const char kDoc_Optional_ver15[] = "";
 const char kDoc_OptionalGetElement_ver1[] = "";
 const char kDoc_OptionalHasElement_ver1[] = "";
 const char kDoc_FlexAttention_ver1[] = "";
