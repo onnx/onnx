@@ -15,6 +15,15 @@
 
 namespace ONNX_NAMESPACE::Test {
 
+static GraphProto ParseGraph(const char* input) {
+  GraphProto graph;
+  OnnxParser parser(input);
+  auto status = parser.Parse(graph);
+  EXPECT_TRUE(status.IsOK()) << status.ErrorMessage();
+  EXPECT_TRUE(parser.EndOfInput()) << "Extra unparsed input unexpected.";
+  return graph;
+}
+
 static void InlineFunctions(
     ModelProto& model,
     const char* input,
@@ -44,36 +53,25 @@ static void InlineFunctions(
 
 TEST(FunctionInliner, BasicTest) {
   const char* code = R"ONNX(
-<
-  ir_version: 8,
-  opset_import: [ "" : 10, "local" : 1 ]
->
-agraph (float[N, 128] X, float[128,10] W, float[10] B) => (float[N, 10] C)
-{
-  T = local.foo (X, W, B)
-  C = local.square(T)
-}
+  <ir_version: 8, opset_import: [ "" : 10, "local" : 1 ]>
+  agraph (float[N, 128] X, float[128,10] W, float[10] B) => (float[N, 10] C)
+  {
+    T = local.foo (X, W, B)
+    C = local.square(T)
+  }
 
-<
-  opset_import: [ "" : 10 ],
-  domain: "local",
-  doc_string: "Function foo."
->
-foo (x, w, b) => (c) {
-  T = MatMul(x, w)
-  S = Add(T, b)
-  c = Softmax(S)
-}
+  <opset_import: [ "" : 10 ], domain: "local", doc_string: "Function foo.">
+  foo (x, w, b) => (c) {
+    T = MatMul(x, w)
+    S = Add(T, b)
+    c = Softmax(S)
+  }
 
-<
-  opset_import: [ "" : 10 ],
-  domain: "local",
-  doc_string: "Function square."
->
-square (x) => (y) {
-  y = Mul (x, x)
-}
-)ONNX";
+  <opset_import: [ "" : 10 ], domain: "local", doc_string: "Function square.">
+  square (x) => (y) {
+    y = Mul (x, x)
+  }
+  )ONNX";
 
   ModelProto model;
   InlineFunctions(model, code);
@@ -86,31 +84,24 @@ square (x) => (y) {
 // Test that inlining processes subgraphs.
 TEST(FunctionInliner, SubgraphTest) {
   const char* code = R"ONNX(
-<
-  ir_version: 8,
-  opset_import: [ "" : 10, "local" : 1 ]
->
-agraph (bool cond, float[N] X) => (float[N] Y)
-{
-  Y = If (cond) <
-    then_branch = then_graph () => (y) {
-        y = local.square (X)
-    },
-    else_branch = else_graph () => (y) {
-        y = local.square (X)
-    }
-  >
-}
+  <ir_version: 8, opset_import: [ "" : 10, "local" : 1 ]>
+  agraph (bool cond, float[N] X) => (float[N] Y)
+  {
+    Y = If (cond) <
+      then_branch = then_graph () => (y) {
+          y = local.square (X)
+      },
+      else_branch = else_graph () => (y) {
+          y = local.square (X)
+      }
+    >
+  }
 
-<
-  opset_import: [ "" : 10 ],
-  domain: "local",
-  doc_string: "Function square."
->
-square (x) => (y) {
-  y = Mul (x, x)
-}
-)ONNX";
+  <opset_import: [ "" : 10 ], domain: "local", doc_string: "Function square.">
+  square (x) => (y) {
+    y = Mul (x, x)
+  }
+  )ONNX";
 
   ModelProto model;
   InlineFunctions(model, code);
@@ -125,23 +116,23 @@ square (x) => (y) {
 
 TEST(FunctionInliner, Nested) {
   const char* code = R"ONNX(
-<ir_version: 8, opset_import: [ "" : 17, "local" : 1 ]>
-agraph (float[N] X) => (float[N] Y)
-{
-  Y = local.foo (X)
-}
+  <ir_version: 8, opset_import: [ "" : 17, "local" : 1 ]>
+  agraph (float[N] X) => (float[N] Y)
+  {
+    Y = local.foo (X)
+  }
 
-<opset_import: [ "" : 17, "local" : 1 ], domain: "local">
-foo (x) => (y) {
-  temp = Add(x, x)
-  y = local.bar(temp)
-}
+  <opset_import: [ "" : 17, "local" : 1 ], domain: "local">
+  foo (x) => (y) {
+    temp = Add(x, x)
+    y = local.bar(temp)
+  }
 
-<opset_import: [ "" : 17 ], domain: "local">
-bar (x) => (y) {
-  y = Mul (x, x)
-}
-)ONNX";
+  <opset_import: [ "" : 17 ], domain: "local">
+  bar (x) => (y) {
+    y = Mul (x, x)
+  }
+  )ONNX";
 
   ModelProto model;
   InlineFunctions(model, code);
@@ -153,20 +144,20 @@ bar (x) => (y) {
 
 TEST(FunctionInliner, Renaming) {
   const char* code = R"ONNX(
-<ir_version: 8, opset_import: [ "" : 17, "local" : 1 ]>
-agraph (float[N] X) => (float[N] Y)
-{
-  temp = local.foo (X)
-  temp__1 = Mul (temp, temp)
-  Y = Abs (temp__1)
-}
+  <ir_version: 8, opset_import: [ "" : 17, "local" : 1 ]>
+  agraph (float[N] X) => (float[N] Y)
+  {
+    temp = local.foo (X)
+    temp__1 = Mul (temp, temp)
+    Y = Abs (temp__1)
+  }
 
-<opset_import: [ "" : 17, "local" : 1 ], domain: "local">
-foo (x) => (y) {
-  temp = Add(x, x)
-  y = Neg (temp)
-}
-)ONNX";
+  <opset_import: [ "" : 17, "local" : 1 ], domain: "local">
+  foo (x) => (y) {
+    temp = Add(x, x)
+    y = Neg (temp)
+  }
+  )ONNX";
 
   ModelProto model;
   // Check that renaming handles accidental collision of names: when "temp" in "foo" is
@@ -177,20 +168,20 @@ foo (x) => (y) {
 
 TEST(FunctionInliner, ValueInfoPropagation) {
   const char* code = R"ONNX(
-<ir_version: 10, opset_import: [ "" : 17, "local" : 1 ]>
-agraph (float[N] X) => (float[N] Y)
-{
-  result = local.foo (X)
-  Y = Abs (result)
-}
+  <ir_version: 10, opset_import: [ "" : 17, "local" : 1 ]>
+  agraph (float[N] X) => (float[N] Y)
+  {
+    result = local.foo (X)
+    Y = Abs (result)
+  }
 
-<opset_import: [ "" : 17, "local" : 1 ], domain: "local">
-foo (x) => (y)
-<float[N] temp> {
-  temp = Add(x, x)
-  y = Neg (temp)
-}
-)ONNX";
+  <opset_import: [ "" : 17, "local" : 1 ], domain: "local">
+  foo (x) => (y)
+  <float[N] temp> {
+    temp = Add(x, x)
+    y = Neg (temp)
+  }
+  )ONNX";
 
   ModelProto model;
   InlineFunctions(model, code);
@@ -212,19 +203,19 @@ foo (x) => (y)
 
 TEST(FunctionInliner, TwoCallsToSameFunction) {
   const char* code = R"ONNX(
-<ir_version: 8, opset_import: [ "" : 17, "local" : 1 ]>
-agraph (float[N] X) => (float[N] Y)
-{
-  temp = local.foo (X)
-  Y = local.foo (temp)
-}
+  <ir_version: 8, opset_import: [ "" : 17, "local" : 1 ]>
+  agraph (float[N] X) => (float[N] Y)
+  {
+    temp = local.foo (X)
+    Y = local.foo (temp)
+  }
 
-<opset_import: [ "" : 17, "local" : 1 ], domain: "local">
-foo (x) => (y) {
-  temp = Add(x, x)
-  y = Neg (temp)
-}
-)ONNX";
+  <opset_import: [ "" : 17, "local" : 1 ], domain: "local">
+  foo (x) => (y) {
+    temp = Add(x, x)
+    y = Neg (temp)
+  }
+  )ONNX";
 
   ModelProto model;
   // The call below will check that multiple assignments to same name does not happen
@@ -234,23 +225,23 @@ foo (x) => (y) {
 
 TEST(FunctionInliner, OpsetMismatch) {
   const char* code = R"ONNX(
-<ir_version: 8, opset_import: [ "" : 17, "local" : 1 ]>
-agraph (float[N] X) => (float[N] Y)
-{
-  temp = local.foo (X)
-  Y = local.bar (temp)
-}
+  <ir_version: 8, opset_import: [ "" : 17, "local" : 1 ]>
+  agraph (float[N] X) => (float[N] Y)
+  {
+    temp = local.foo (X)
+    Y = local.bar (temp)
+  }
 
-<opset_import: [ "" : 18], domain: "local">
-foo (x) => (y) {
-  y = Add(x, x)
-}
+  <opset_import: [ "" : 18], domain: "local">
+  foo (x) => (y) {
+    y = Add(x, x)
+  }
 
-<opset_import: [ "" : 17], domain: "local">
-bar (x) => (y) {
-  y = Add(x, x)
-}
-)ONNX";
+  <opset_import: [ "" : 17], domain: "local">
+  bar (x) => (y) {
+    y = Add(x, x)
+  }
+  )ONNX";
 
   ModelProto model;
   InlineFunctions(model, code);
@@ -270,23 +261,23 @@ bar (x) => (y) {
 
 TEST(FunctionInliner, SelectiveInlining) {
   const char* code = R"ONNX(
-<ir_version: 8, opset_import: [ "" : 17, "local" : 1 ]>
-agraph (float[N] X) => (float[N] Y)
-{
-  temp = local.foo (X)
-  Y = local.bar (temp)
-}
+  <ir_version: 8, opset_import: [ "" : 17, "local" : 1 ]>
+  agraph (float[N] X) => (float[N] Y)
+  {
+    temp = local.foo (X)
+    Y = local.bar (temp)
+  }
 
-<opset_import: [ "" : 17], domain: "local">
-foo (x) => (y) {
-  y = Add(x, x)
-}
+  <opset_import: [ "" : 17], domain: "local">
+  foo (x) => (y) {
+    y = Add(x, x)
+  }
 
-<opset_import: [ "" : 17, "local" : 1], domain: "local">
-bar (x) => (y) {
-  y = local.foo(x)
-}
-)ONNX";
+  <opset_import: [ "" : 17, "local" : 1], domain: "local">
+  bar (x) => (y) {
+    y = local.foo(x)
+  }
+  )ONNX";
 
   ModelProto model;
   inliner::FunctionIdVector to_inline = {{"local", "foo"}};
@@ -314,17 +305,17 @@ bar (x) => (y) {
 
 TEST(FunctionInliner, VersionConversion) {
   const char* code = R"ONNX(
-<ir_version: 8, opset_import: [ "" : 18, "local" : 1 ]>
-agraph (float[N,M] X) => (float[N,M] Y)
-{
-  Y = local.foo (X)
-}
+  <ir_version: 8, opset_import: [ "" : 18, "local" : 1 ]>
+  agraph (float[N,M] X) => (float[N,M] Y)
+  {
+    Y = local.foo (X)
+  }
 
-<opset_import: [ "" : 17], domain: "local">
-foo (x) => (y) {
-  y = ReduceLogSum <axes = [0]> (x)
-}
-)ONNX";
+  <opset_import: [ "" : 17], domain: "local">
+  foo (x) => (y) {
+    y = ReduceLogSum <axes = [0]> (x)
+  }
+  )ONNX";
 
   ModelProto model;
   InlineFunctions(model, code);
@@ -338,23 +329,23 @@ foo (x) => (y) {
 
 TEST(FunctionInliner, NestedVersionConversion) {
   const char* code = R"ONNX(
-<ir_version: 8, opset_import: [ "" : 18, "local" : 1 ]>
-agraph (float[N,M] X) => (float[N,M] Y)
-{
-  Y = local.foo (X)
-}
+  <ir_version: 8, opset_import: [ "" : 18, "local" : 1 ]>
+  agraph (float[N,M] X) => (float[N,M] Y)
+  {
+    Y = local.foo (X)
+  }
 
-<opset_import: [ "" : 17, "local" : 1], domain: "local">
-foo (x) => (y) {
-  t = ReduceLogSum <axes = [0]> (x)
-  y = local.bar (t)
-}
+  <opset_import: [ "" : 17, "local" : 1], domain: "local">
+  foo (x) => (y) {
+    t = ReduceLogSum <axes = [0]> (x)
+    y = local.bar (t)
+  }
 
-<opset_import: [ "" : 17], domain: "local">
-bar (x) => (y) {
-  y = ReduceLogSum <axes = [1]> (x)
-}
-)ONNX";
+  <opset_import: [ "" : 17], domain: "local">
+  bar (x) => (y) {
+    y = ReduceLogSum <axes = [1]> (x)
+  }
+  )ONNX";
 
   ModelProto model;
   InlineFunctions(model, code);
@@ -377,12 +368,12 @@ bar (x) => (y) {
 
 TEST(SchemaFunctionInliner, BasicTest) {
   const char* code = R"ONNX(
-<ir_version: 8, opset_import: ["" : 18]>
-agraph (float[N, 128] X) => (float[N, 128] Y)
-{
-  Y = Softmax (X)
-}
-)ONNX";
+  <ir_version: 8, opset_import: ["" : 18]>
+  agraph (float[N, 128] X) => (float[N, 128] Y)
+  {
+    Y = Softmax (X)
+  }
+  )ONNX";
 
   ModelProto model;
   inliner::FunctionIdVector to_inline = {{"", "Softmax"}};
@@ -403,12 +394,12 @@ static bool ContainsOp(const ModelProto& model, const char* op_type) {
 
 TEST(SchemaFunctionInliner, NestedTest) {
   const char* code = R"ONNX(
-<ir_version: 8, opset_import: ["" : 18]>
-agraph (float[N, C] X, int32[N] expected) => (float Y)
-{
-  Y, log_prob = SoftmaxCrossEntropyLoss (X, expected)
-}
-)ONNX";
+  <ir_version: 8, opset_import: ["" : 18]>
+  agraph (float[N, C] X, int32[N] expected) => (float Y)
+  {
+    Y, log_prob = SoftmaxCrossEntropyLoss (X, expected)
+  }
+  )ONNX";
 
   ModelProto model;
   inliner::FunctionIdVector to_inline = {{"", "SoftmaxCrossEntropyLoss"}};
@@ -429,72 +420,49 @@ agraph (float[N, C] X, int32[N] expected) => (float Y)
 }
 
 TEST(FunctionBuilder, AddInlinedCallBasic) {
-  // Test the AddInlinedCall functionality
-  GraphProto graph;
-
-  // Create a simple graph using parser for better readability
-  const char* graph_text = R"ONNX(
-test_graph (float x) => (float y)
-<float const_val = {2.0}>
-{
+  auto graph = ParseGraph(R"ONNX(
+  test_graph (float x) => (float y) <float const_val = {2.0}> {
     y = Add(x, const_val)
-}
-)ONNX";
+  }
+  )ONNX");
 
-  auto status = OnnxParser::Parse(graph, graph_text);
-  EXPECT_TRUE(status.IsOK()) << status.ErrorMessage();
-
-  // Create a function and use AddInlinedCall
   FunctionProto function;
   FunctionBuilder builder(function);
 
   builder.AddInlinedCall({"result"}, graph, {"input_x"}, "test");
 
-  // Verify the function has the expected structure
   ASSERT_EQ(function.node_size(), 2); // One Constant node + one Add node
 
-  // Check the first node is a Constant
   ASSERT_EQ(function.node(0).op_type(), "Constant");
   ASSERT_EQ(function.node(0).output_size(), 1);
   ASSERT_TRUE(function.node(0).output(0).find("test") != std::string::npos);
 
-  // Check the second node is an Add
   ASSERT_EQ(function.node(1).op_type(), "Add");
   ASSERT_EQ(function.node(1).input_size(), 2);
   ASSERT_EQ(function.node(1).output_size(), 1);
-  ASSERT_EQ(function.node(1).input(0), "input_x"); // Should be renamed to actual input
-  ASSERT_EQ(function.node(1).output(0), "result"); // Should be renamed to actual output
+  ASSERT_EQ(function.node(1).input(0), "input_x");
+  ASSERT_EQ(function.node(1).output(0), "result");
 }
 
 TEST(Renamer, BasicFunctionality) {
-  // Test the Renamer class functionality
-  GraphProto graph;
+  auto graph = ParseGraph(R"ONNX(
+  test_graph (float input, float formal_input) => (float temp_output) {
+    temp_output = Identity(formal_input)
+  }
+  )ONNX");
 
-  // Add input to graph
-  auto* input = graph.add_input();
-  input->set_name("input");
-
-  // Create a Renamer instance
   inliner::Renamer renamer("test", graph);
 
-  // Test binding names
   renamer.BindName("formal_input", "actual_input");
 
-  // Test creating unique names and binding
   std::string unique_name = renamer.BindToUniqueName("temp");
   ASSERT_TRUE(unique_name.find("test") != std::string::npos);
 
-  // Test renaming a node
-  NodeProto node;
-  node.set_op_type("Add");
-  node.add_input("formal_input");
-  node.add_output("temp_output");
-
+  NodeProto node = graph.node(0);
   renamer.RenameNode(node);
 
-  // Verify renaming worked correctly
-  ASSERT_EQ(node.input(0), "actual_input"); // Should be bound to actual name
-  ASSERT_TRUE(node.output(0).find("test") != std::string::npos); // Should have prefix
+  ASSERT_EQ(node.input(0), "actual_input");
+  ASSERT_TRUE(node.output(0).find("test") != std::string::npos);
 }
 
 } // namespace ONNX_NAMESPACE::Test
