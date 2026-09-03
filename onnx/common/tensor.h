@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include <atomic>
 #include <cmath>
 #include <cstdint>
 #include <string>
@@ -28,19 +29,21 @@ namespace ONNX_NAMESPACE {
 // Graph::eraseInitializer). See
 // onnxoptimizer/passes/tensor_content_hash.h's TensorContentDigest cache,
 // the motivating consumer. Wrapped in its own class so Tensor keeps fully
-// compiler-generated special member functions. Not atomic: Tensor
-// construction is single-threaded throughout this codebase.
+// compiler-generated special member functions. Minting is atomic, so IDs
+// stay globally unique even if Get() races across threads on the same or
+// different Tensors; this says nothing about the thread safety of Graph or
+// Tensor mutation in general, which callers must still serialize themselves.
 class LazyTensorId {
  public:
   LazyTensorId() = default;
   ~LazyTensorId() = default;
   LazyTensorId(const LazyTensorId& /*unused*/) noexcept {}
   LazyTensorId(LazyTensorId&& other) noexcept {
-    other.id_ = 0;
+    other.id_.store(0, std::memory_order_relaxed);
   }
   LazyTensorId& operator=(const LazyTensorId& other) noexcept {
     if (this != &other) {
-      id_ = 0;
+      id_.store(0, std::memory_order_relaxed);
     }
     return *this;
   }
@@ -48,20 +51,26 @@ class LazyTensorId {
     // Unconditional, even for self-move (this == &other): the moved-from
     // side must never keep stale content paired with a live id, and a
     // self-move-assignment is exactly that case with this == &other.
-    id_ = 0;
-    other.id_ = 0;
+    id_.store(0, std::memory_order_relaxed);
+    other.id_.store(0, std::memory_order_relaxed);
     return *this;
   }
   uint64_t Get() const {
-    if (id_ == 0) {
-      static uint64_t counter = 0;
-      id_ = ++counter;
+    uint64_t current = id_.load(std::memory_order_relaxed);
+    if (current == 0) {
+      static std::atomic<uint64_t> counter{0};
+      const uint64_t minted = counter.fetch_add(1, std::memory_order_relaxed) + 1;
+      // Another thread may have minted an id for this same object first;
+      // defer to whichever id actually landed rather than overwrite it.
+      if (id_.compare_exchange_strong(current, minted, std::memory_order_relaxed)) {
+        current = minted;
+      }
     }
-    return id_;
+    return current;
   }
 
  private:
-  mutable uint64_t id_{0};
+  mutable std::atomic<uint64_t> id_{0};
 };
 
 struct Tensor final {
