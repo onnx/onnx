@@ -1863,19 +1863,6 @@ ONNX_OPERATOR_SET_SCHEMA(
           updateOutputShape(ctx, 0, {multiplyDims(input_shape, 0, axis), multiplyDims(input_shape, axis, rank)});
         }));
 
-static constexpr const char* LRN_ver1_doc = R"DOC(
-Local Response Normalization proposed in the [AlexNet paper](https://papers.nips.cc/paper/4824-imagenet-classification-with-deep-convolutional-neural-networks.pdf).
-It normalizes over local input regions.
-The local region is defined across the channels. For an element X[n, c, d1, ..., dk] in a tensor
-of shape (N x C x D1 x D2, ..., Dk), its region is
-{X[n, i, d1, ..., dk] | max(0, c - floor((size - 1) / 2)) <= i <= min(C - 1, c + ceil((size - 1) / 2))}.
-
-square_sum[n, c, d1, ..., dk] = sum(X[n, i, d1, ..., dk] ^ 2),
-where max(0, c - floor((size - 1) / 2)) <= i <= min(C - 1, c + ceil((size - 1) / 2)).
-
-Y[n, c, d1, ..., dk] = X[n, c, d1, ..., dk] / (bias + alpha / size * square_sum[n, c, d1, ..., dk] ) ^ beta
-)DOC";
-
 ONNX_OPERATOR_SET_SCHEMA(
     LRN,
     1,
@@ -1905,13 +1892,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             {types::Float16, types::Float, types::Double},
             "Constrain input and output "
             " types to float tensors.")
-        .SetDoc(LRN_ver1_doc)
+        .SetDoc(kDoc_LRN_ver1)
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
-
-static constexpr const char* mvn_ver9_doc = R"DOC(
-      A MeanVarianceNormalization Function: Perform mean variance normalization
-      on the input tensor X using formula: <br/> ``` (X-EX)/sqrt(E(X-EX)^2) ```
-)DOC";
 
 static const std::vector<int64_t> old_mvn_default_axes = {0, 2, 3};
 
@@ -1919,7 +1901,7 @@ ONNX_OPERATOR_SET_SCHEMA(
     MeanVarianceNormalization,
     9,
     OpSchema()
-        .SetDoc(mvn_ver9_doc)
+        .SetDoc(kDoc_mvn_ver9)
         .Input(0, "X", "Input tensor", "T")
         .Output(0, "Y", "Output tensor", "T")
         .Attr(
@@ -2778,18 +2760,11 @@ constexpr const char* auto_pad_doc1 =
     "only intended to support legacy uses, and for framework authors, one is explicitly "
     "encouraged to use explicit padding specified in the pads attribute.";
 
-constexpr const char* LpPool_ver1_doc = R"DOC(
- LpPool consumes an input tensor X and applies Lp pooling across the
- the tensor according to kernel sizes, stride sizes, and pad lengths.
- Lp pooling consisting of computing the Lp norm on all values of a subset
- of the input tensor according to the kernel size and downsampling the
- data into the output tensor Y for further processing.)DOC";
-
 ONNX_OPERATOR_SET_SCHEMA(
     LpPool,
     1,
     OpSchema()
-        .SetDoc(LpPool_ver1_doc)
+        .SetDoc(kDoc_LpPool_ver1)
         .Attr("kernel_shape", "The size of the kernel along each axis.", AttributeProto::INTS, OPTIONAL_VALUE)
         .Attr("strides", "Stride along each axis.", AttributeProto::INTS, OPTIONAL_VALUE)
         .Attr("auto_pad", auto_pad_doc1, AttributeProto::STRING, std::string("NOTSET"))
@@ -2870,11 +2845,6 @@ static std::function<void(OpSchema&)> LpPoolOpSchemaGenerator_opset2(const char*
 }
 
 ONNX_OPERATOR_SET_SCHEMA(LpPool, 2, OpSchema().FillUsing(LpPoolOpSchemaGenerator_opset2("LpPool")));
-
-static constexpr const char* GlobalLpPool_ver1_doc = R"DOC(
- GlobalLpPool consumes an input tensor X and applies lp pool pooling across the
- the values in the same channel. This is equivalent to LpPool with kernel size
- equal to the spatial dimension of input tensor.)DOC";
 
 static std::function<void(OpSchema&)> LpPoolOpSchemaGenerator_opset11(const char* name) {
   return [=](OpSchema& schema) {
@@ -3283,7 +3253,7 @@ ONNX_OPERATOR_SET_SCHEMA(
     GlobalLpPool,
     1,
     OpSchema()
-        .SetDoc(GlobalLpPool_ver1_doc)
+        .SetDoc(kDoc_GlobalLpPool_ver1)
         .Attr(
             "p",
             "p value of the Lp norm used to pool over the input data, default is 2.0.",
@@ -3311,21 +3281,12 @@ ONNX_OPERATOR_SET_SCHEMA(
             {types::Float16, types::Float, types::Double},
             "Constrain input and output types to float tensors."));
 
-static constexpr const char* BatchNormalization_ver1_doc = R"DOC(
-Carries out batch normalization as described in the paper
-https://arxiv.org/abs/1502.03167. Depending on the mode it is being run,
-there are multiple cases for the number of outputs, which we list below:
-
-Output case #1: Y, mean, var, saved_mean, saved_var (training mode)
-Output case #2: Y (test mode)
-    )DOC";
-
 ONNX_OPERATOR_SET_SCHEMA(
     BatchNormalization,
     1,
     OpSchema()
         .NumOutputs({1, 5})
-        .SetDoc(BatchNormalization_ver1_doc)
+        .SetDoc(kDoc_BatchNormalization_ver1)
         .Attr(
             "spatial",
             "If true, compute the mean and variance across all spatial elements "
@@ -3412,24 +3373,12 @@ ONNX_OPERATOR_SET_SCHEMA(
             {types::Float16, types::Float, types::Double},
             "Constrain input and output types to float tensors."));
 
-static constexpr const char* BatchNormalization_ver9_doc = R"DOC(
-Carries out batch normalization as described in the paper
-https://arxiv.org/abs/1502.03167. Depending on the mode it is being run,
-there are multiple cases for the number of outputs, which we list below:
-
-Output case #1: Y, mean, var, saved_mean, saved_var (training mode)
-Output case #2: Y (test mode)
-
-For previous (depreciated) non-spatial cases, implementors are suggested
-to flatten the input shape to (N x C*D1*D2 ..*Dn) before a BatchNormalization Op.
-)DOC";
-
 ONNX_OPERATOR_SET_SCHEMA(
     BatchNormalization,
     9,
     OpSchema()
         .NumOutputs({1, 5})
-        .SetDoc(BatchNormalization_ver9_doc + GenerateOptionalArgumentsDoc())
+        .SetDoc(kDoc_BatchNormalization_ver9 + GenerateOptionalArgumentsDoc())
         .Attr("epsilon", "The epsilon value to use to avoid division by zero.", AttributeProto::FLOAT, 1e-5f)
         .Attr(
             "momentum",
@@ -3524,53 +3473,12 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Constrain input and output types to float tensors.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) { propagateShapeAndTypeFromFirstInput(ctx); }));
 
-static constexpr const char* BatchNormalization_ver14_doc = R"DOC(
-Carries out batch normalization as described in the paper
-https://arxiv.org/abs/1502.03167. Depending on the mode it is being run,
-There are five required inputs 'X', 'scale', 'B', 'input_mean' and
-'input_var'.
-Note that 'input_mean' and 'input_var' are expected to be the estimated
-statistics in inference mode (training_mode=False, default),
-and the running statistics in training mode (training_mode=True).
-There are multiple cases for the number of outputs, which we list below:
-
-Output case #1: Y, running_mean, running_var (training_mode=True)
-Output case #2: Y (training_mode=False)
-
-When training_mode=False, extra outputs are invalid.
-The outputs are updated as follows when training_mode=True:
-```
-running_mean = input_mean * momentum + current_mean * (1 - momentum)
-running_var = input_var * momentum + current_var * (1 - momentum)
-
-Y = (X - current_mean) / sqrt(current_var + epsilon) * scale + B
-
-where:
-
-current_mean = ReduceMean(X, axis=all_except_channel_index)
-current_var =  ReduceVar(X, axis=all_except_channel_index)
-
-Notice that ReduceVar refers to the population variance, and it equals to
-sum(sqrd(x_i - x_avg)) / N
-where N is the population size (this formula does not use sample size N - 1).
-
-```
-
-When training_mode=False:
-```
-Y = (X - input_mean) / sqrt(input_var + epsilon) * scale + B
-```
-
-For previous (depreciated) non-spatial cases, implementors are suggested
-to flatten the input shape to (N x C * D1 * D2 * ... * Dn) before a BatchNormalization Op.
-)DOC";
-
 ONNX_OPERATOR_SET_SCHEMA(
     BatchNormalization,
     14,
     OpSchema()
         .NumOutputs({1, 3})
-        .SetDoc(BatchNormalization_ver14_doc + GenerateOptionalArgumentsDoc())
+        .SetDoc(kDoc_BatchNormalization_ver14 + GenerateOptionalArgumentsDoc())
         .Attr("epsilon", "The epsilon value to use to avoid division by zero.", AttributeProto::FLOAT, 1e-5f)
         .Attr(
             "momentum",
@@ -3723,19 +3631,11 @@ ONNX_OPERATOR_SET_SCHEMA(
             {types::Float16, types::Float, types::Double},
             "Constrain input and output types to float tensors."));
 
-static constexpr const char* Dropout_old_doc = R"DOC(
-Dropout takes one input data (Tensor<float>) and produces two Tensor outputs,
-output (Tensor<float>) and mask (Tensor<bool>). Depending on whether it is in
-test mode or not, the output Y will either be a random dropout, or a simple
-copy of the input. Note that our implementation of Dropout does scaling in
-the training phase, so during testing nothing needs to be done.
-)DOC";
-
 ONNX_OPERATOR_SET_SCHEMA(
     Dropout,
     1,
     OpSchema()
-        .SetDoc(Dropout_old_doc)
+        .SetDoc(kDoc_Dropout_ver1)
         .SetNodeDeterminism(OpSchema::NodeDeterminism::NonDeterministic)
         .Attr("ratio", "(float, default 0.5) the ratio of random dropout", AttributeProto::FLOAT, 0.5f)
         // This attribute was added via AllowConsumed API in OpSchema.
@@ -3766,7 +3666,7 @@ ONNX_OPERATOR_SET_SCHEMA(
     6,
     OpSchema()
         .SetNodeDeterminism(OpSchema::NodeDeterminism::NonDeterministic)
-        .SetDoc(Dropout_old_doc)
+        .SetDoc(kDoc_Dropout_ver1)
         .Attr("ratio", "(float, default 0.5) the ratio of random dropout", AttributeProto::FLOAT, 0.5f)
         .Attr(
             "is_test",
@@ -3788,13 +3688,11 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Constrain input and output types to float tensors.")
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
-static const char* const Dropout_ver7_doc = Dropout_old_doc;
-
 ONNX_OPERATOR_SET_SCHEMA(
     Dropout,
     7,
     OpSchema()
-        .SetDoc(GET_OP_DOC_STR(std::string(Dropout_ver7_doc) + GenerateOptionalArgumentsDoc()))
+        .SetDoc(GET_OP_DOC_STR(std::string(kDoc_Dropout_ver1) + GenerateOptionalArgumentsDoc()))
         .Attr("ratio", "The ratio of random dropout", AttributeProto::FLOAT, 0.5f)
         .Input(0, "data", "The input data as Tensor.", "T")
         .Output(0, "output", "The output.", "T")
@@ -3806,19 +3704,11 @@ ONNX_OPERATOR_SET_SCHEMA(
         .SetNodeDeterminism(OpSchema::NodeDeterminism::NonDeterministic)
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
-static constexpr const char* Dropout_ver10_doc = R"DOC(
-Dropout takes one input floating tensor and produces two tensor outputs,
-output (floating tensor) and mask (`Tensor<bool>`). Depending on whether it is
-in test mode or not, the output Y will either be a random dropout, or a simple
-copy of the input. Note that our implementation of Dropout does scaling in
-the training phase, so during testing nothing needs to be done.
-)DOC";
-
 ONNX_OPERATOR_SET_SCHEMA(
     Dropout,
     10,
     OpSchema()
-        .SetDoc(GET_OP_DOC_STR(std::string(Dropout_ver10_doc) + GenerateOptionalArgumentsDoc()))
+        .SetDoc(GET_OP_DOC_STR(std::string(kDoc_Dropout_ver10) + GenerateOptionalArgumentsDoc()))
         .Attr("ratio", "The ratio of random dropout", AttributeProto::FLOAT, 0.5f)
         .Input(0, "data", "The input data as Tensor.", "T")
         .Output(0, "output", "The output.", "T")
@@ -3839,21 +3729,12 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static constexpr const char* BatchNorm_ver6_doc = R"DOC(
-Carries out batch normalization as described in the paper
-https://arxiv.org/abs/1502.03167. Depending on the mode it is being run,
-there are multiple cases for the number of outputs, which we list below:
-
-Output case #1: Y, mean, var, saved_mean, saved_var (training mode)
-Output case #2: Y (test mode)
-)DOC";
-
 ONNX_OPERATOR_SET_SCHEMA(
     BatchNormalization,
     6,
     OpSchema()
         .NumOutputs({1, 5})
-        .SetDoc(BatchNorm_ver6_doc)
+        .SetDoc(kDoc_BatchNorm_ver6)
         .Attr(
             "spatial",
             "If true, compute the mean and variance across all spatial elements "
@@ -4025,20 +3906,11 @@ ONNX_OPERATOR_SET_SCHEMA(
           updateOutputShape(ctx, 0, {multiplyDims(input_shape, 0, axis), multiplyDims(input_shape, axis, rank)});
         }));
 
-static constexpr const char* BatchNormalization_ver7_doc = R"DOC(
-    Carries out batch normalization as described in the paper
-    https://arxiv.org/abs/1502.03167. Depending on the mode it is being run,
-    there are multiple cases for the number of outputs, which we list below:
-
-    Output case #1: Y, mean, var, saved_mean, saved_var (training mode)
-    Output case #2: Y (test mode)
-        )DOC";
-
 ONNX_OPERATOR_SET_SCHEMA(
     BatchNormalization,
     7,
     OpSchema()
-        .SetDoc(GET_OP_DOC_STR(std::string(BatchNormalization_ver7_doc) + GenerateOptionalArgumentsDoc()))
+        .SetDoc(GET_OP_DOC_STR(std::string(kDoc_BatchNormalization_ver7) + GenerateOptionalArgumentsDoc()))
         .NumOutputs({1, 5})
         .Attr(
             "spatial",
@@ -4119,30 +3991,12 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Constrain input and output types to float tensors.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) { propagateShapeAndTypeFromFirstInput(ctx); }));
 
-static constexpr const char* GroupNormalization_ver18_doc = R"DOC(
-A GroupNormalization function. Carries out group normalization as described in
-the paper https://arxiv.org/abs/1803.08494
-
-This operator transforms input according to
-```
-y = scale * (x - mean) / sqrt(variance + epsilon) + bias,
-```
-where the mean and variance are computed per instance per group of channels, and
-`scale` and `bias` should be specified for each group of channels. The number of
-groups `num_groups` should be divisible by the number of channels so that there are
-an equal number of channels per group.
-
-When the number of groups is the same as the number of channels, this operator is
-equivalent to InstanceNormalization. When there is only one group, this operator
-is equivalent to LayerNormalization.
-)DOC";
-
 ONNX_OPERATOR_SET_SCHEMA(
     GroupNormalization,
     18,
     OpSchema()
         .Deprecate()
-        .SetDoc(GroupNormalization_ver18_doc)
+        .SetDoc(kDoc_GroupNormalization_ver18)
         .Attr("epsilon", "The epsilon value to use to avoid division by zero.", AttributeProto::FLOAT, 1e-5f)
         .Attr(
             "num_groups",
@@ -4254,58 +4108,11 @@ ONNX_OPERATOR_SET_SCHEMA(
               return true;
             }));
 
-static constexpr const char* Attention_ver23_doc = R"DOC(
-
-Computes scaled dot product attention on query, key and value tensors, using an optional attention mask if passed.
-
-This operator covers self and cross variants of the attention operation based on sequence lengths of K, Q and V.
-
-For self attention, `kv_sequence_length` equals to `q_sequence_length`.
-
-For cross attention, query and key might have different lengths.
-
-This operator also covers the 3 following variants based on the number of heads:
-1) Multi-headed Attention (MHA): Described in the paper https://arxiv.org/pdf/1706.03762, `q_num_heads = kv_num_heads`.
-2) Group-query Attention (GQA): Described in the paper https://arxiv.org/pdf/2305.13245, `q_num_heads > kv_num_heads`, `q_num_heads % kv_num_heads == 0`.
-3) Multi-query Attention (MQA): Described in the paper https://arxiv.org/pdf/1911.02150, `q_num_heads > kv_num_heads`, `kv_num_heads=1`.
-
-Attention bias to be added is calculated based on `attn_mask` input and `is_causal` attribute:
-1) `attn_mask`: A boolean mask where a value of `True` indicates that the element should take part in attention or a float mask of the same type as query, key, value that is added to the attention score.
-2) If `is_causal` is set to `1`, causal masking is applied with bottom-right (offset-aware) alignment: query `i` attends key `j` iff `j <= i + past_sequence_length` (the count of cached keys in `past_key`); for a square Q/K this is the standard lower-triangular mask. The causal frontier is computed independently of the `attn_mask` input and is then composed with it additively, by summing their attention biases: a boolean `attn_mask` intersects the allowed set (its disallowed positions contribute `-inf` to the bias), while a float `attn_mask` is added to the attention scores rather than disabling positions. A fully-masked query row (every key's combined additive bias is `-inf`, e.g. an all-`False` boolean `attn_mask` row) produces a zero output row (matching prevailing runtime practice), not `NaN`.
-
-Errata (in-place behavioral correction, no opset bump): a fully-masked query row (e.g. an all-`False` boolean `attn_mask` row) now produces a zero output row instead of `NaN`, and the same zero-row guard applies to the mode-`3` `qk_matmul_output` debug output; this only replaces previously-`NaN` outputs. The mode-`3` `qk_matmul_output` is also now emitted at the operator's output precision (`T1`), matching the reference implementation, which affects only its dtype and only when `softmax_precision` differs from `T1`. No numerically useful, well-defined result of the released opset is otherwise changed.
-
-Both past and present state key/values are optional. They shall be used together, and not allowed to use only one of them.
-The following pattern is applied to the Q, K and V inputs after appropriate reshaping of K and V inputs based on sequence lengths and num heads provided:
-
-```
-  The following pattern is applied by this operator:
-      Q          K          V
-      |          |          |
-Q*sqrt(scale) K*sqrt(scale) |
-      |          |          |
-      |       Transpose     |
-      |          |          |
-      ---MatMul---          |
-            |               |
-  softcap (if provided)     |
-            |               |
- at_mask---Add              |
-            |               |
-         Softmax            |
-            |               |
-            -----MatMul------
-                   |
-                   Y
-```
-
-)DOC";
-
 ONNX_OPERATOR_SET_SCHEMA(
     Attention,
     23,
     OpSchema()
-        .SetDoc(Attention_ver23_doc)
+        .SetDoc(kDoc_Attention_ver23)
         .Attr(
             "is_causal",
             "If set to `1`, causal masking is applied with bottom-right (offset-aware) alignment: "
@@ -4670,110 +4477,11 @@ ONNX_OPERATOR_SET_SCHEMA(
           return true;
         }));
 
-static constexpr const char* Attention_ver24_doc = R"DOC(
-
-Computes scaled dot product attention on query, key and value tensors, using an optional attention mask if passed.
-
-This operator covers self and cross variants of the attention operation based on sequence lengths of K, Q and V.
-
-For self attention, `kv_sequence_length` equals to `q_sequence_length`.
-
-For cross attention, query and key might have different lengths.
-
-This operator also covers the 3 following variants based on the number of heads:
-1) Multi-headed Attention (MHA): Described in the paper https://arxiv.org/pdf/1706.03762, `q_num_heads = kv_num_heads`.
-2) Group-query Attention (GQA): Described in the paper https://arxiv.org/pdf/2305.13245, `q_num_heads > kv_num_heads`, `q_num_heads % kv_num_heads == 0`.
-3) Multi-query Attention (MQA): Described in the paper https://arxiv.org/pdf/1911.02150, `q_num_heads > kv_num_heads`, `kv_num_heads=1`.
-
-Attention bias to be added is calculated based on `attn_mask` input and `is_causal` attribute:
-1) `attn_mask`: A boolean mask where a value of `True` indicates that the element should take part in attention or a float mask of the same type as query, key, value that is added to the attention score.
-2) If `is_causal` is set to `1`, causal masking is applied with bottom-right (offset-aware) alignment: query `i` attends key `j` iff `j <= i + offset`, as illustrated below.
-
-```
-  2D causal mask for Attention (PR onnx/onnx#8068)
-   S_q=4 queries, S_k=8 keys
-   Rule: query i attends key j iff j <= i + offset
-         offset = nonpad_kv_seqlen - S_q
-
-   nonpad_kv_seqlen=4, offset=4-4=0
-
-          k0  k1  k2  k3  k4  k5  k6  k7
-         +----+----+----+----+----+----+----+----+
-    q0   | ## |    |    |    |    |    |    |    |
-         +----+----+----+----+----+----+----+----+
-    q1   | ## | ## |    |    |    |    |    |    |
-         +----+----+----+----+----+----+----+----+
-    q2   | ## | ## | ## |    |    |    |    |    |
-         +----+----+----+----+----+----+----+----+
-    q3   | ## | ## | ## | ## |    |    |    |    |
-         +----+----+----+----+----+----+----+----+
-
-
-   nonpad_kv_seqlen=8, offset=8-4=4
-
-          k0  k1  k2  k3  k4  k5  k6  k7
-         +----+----+----+----+----+----+----+----+
-    q0   | ## | ## | ## | ## | ## |    |    |    |
-         +----+----+----+----+----+----+----+----+
-    q1   | ## | ## | ## | ## | ## | ## |    |    |
-         +----+----+----+----+----+----+----+----+
-    q2   | ## | ## | ## | ## | ## | ## | ## |    |
-         +----+----+----+----+----+----+----+----+
-    q3   | ## | ## | ## | ## | ## | ## | ## | ## |
-         +----+----+----+----+----+----+----+----+
-```
-
-With `nonpad_kv_seqlen=4` (offset=0), the mask is the standard lower-triangular. With `nonpad_kv_seqlen=8` (offset=4), the diagonal shifts right by 4, so each query sees the 4 additional valid cached keys.
-
-`offset` is the count of valid keys preceding the current query block: `offset = past_sequence_length` when `past_key` is provided; `offset = nonpad_kv_seqlen - q_sequence_length` (per batch) when an external cache is indicated by `nonpad_kv_seqlen` without `past_key`; `offset = 0` when neither is provided (the no-cache case, which reduces to the standard lower-triangular mask). When `offset < 0` (`nonpad_kv_seqlen < q_sequence_length`, i.e. more query tokens than cached keys) the leading query rows have an empty key set (no key satisfies `j <= i + offset`) and are fully masked. The causal frontier is computed independently of `attn_mask` and is then composed with it additively: a boolean `attn_mask` intersects the allowed set (its disallowed positions contribute `-inf` to the bias), while a float `attn_mask` is added to the attention scores rather than disabling positions. A fully-masked query row (no key attended, including the negative-offset leading rows) produces a zero output row, not `NaN`, for both `Y` and the mode-`3` `qk_matmul_output` debug output; the mode-`3` `qk_matmul_output` is emitted at the operator's output precision (`T1`).
-
-Errata (in-place behavioral correction, no opset bump): the reference implementation and backend tests were incorrect when `nonpad_kv_seqlen != q_sequence_length` (nonzero bottom-right offset, top-left instead of bottom-right causal alignment) and produced `NaN` for fully-masked rows; corrected in version 1.23. This fixed three behaviors described above: external-cache bottom-right causal alignment (`offset = nonpad_kv_seqlen - q_sequence_length`), zero (non-`NaN`) output for fully-masked rows including the mode-`3` `qk_matmul_output`, and the mode-`3` `qk_matmul_output` precision (`T1`).
-
-With respect to KV cache update, this operator allows the following two use cases:
-
-1) Cache update happens inside the Attention operator. In this case, the `K` and `V` inputs contain only the incoming
-tokens for the current autoregressive step, and the four optional inputs/outputs past and present key and value are
-all needed. The Attention op performs a Concat operation on the past and incoming key and value to form the present
-key and value, respectively. Note that this only works correctly for the special case where the past key and value
-do not contain padded tokens.
-2) Cache update happens outside the Attention operator (for example, through the `TensorScatter` operator). In this
-case, the `K` and `V` inputs correspond to the entire cache tensor, so the four optional inputs/outputs past and
-present key and value should not be used. An additional input `nonpad_kv_seqlen` of shape (batch_size,) may be
-provided to indicate the number of non-padding tokens in each sample of the batch to save unnecessary computation.
-Here, the kv_sequence dimension of `attn_mask` can be shorter than `K` and `V`, but still needs to be at least as long
-as the maximum value of `nonpad_kv_seqlen`.
-
-Both past and present state key/values are optional. They shall be used together, and not allowed to use only one of them.
-The following pattern is applied to the Q, K and V inputs after appropriate reshaping of K and V inputs based on sequence lengths and num heads provided:
-
-```
-  The following pattern is applied by this operator:
-      Q          K          V
-      |          |          |
-Q*sqrt(scale) K*sqrt(scale) |
-      |          |          |
-      |       Transpose     |
-      |          |          |
-      ---MatMul---          |
-            |               |
-  softcap (if provided)     |
-            |               |
- at_mask---Add              |
-            |               |
-         Softmax            |
-            |               |
-            -----MatMul------
-                   |
-                   Y
-```
-
-)DOC";
-
 ONNX_OPERATOR_SET_SCHEMA(
     Attention,
     24,
     OpSchema()
-        .SetDoc(Attention_ver24_doc)
+        .SetDoc(kDoc_Attention_ver24)
         .Attr(
             "is_causal",
             "If set to `1`, causal masking is applied. For a square Q/K (no cache offset) this is a "
