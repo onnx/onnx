@@ -651,7 +651,6 @@ NB_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) { // NOLINT(cppcoreguidelines-
   version_converter.def("convert_version", [](const nb::bytes& bytes, int target) {
     ModelProto proto{};
     ParseProtoFromPyBytesOrThrow(&proto, bytes);
-    shape_inference::InferShapes(proto);
     return ProtoToBytes(version_conversion::ConvertVersion(proto, target));
   });
 
