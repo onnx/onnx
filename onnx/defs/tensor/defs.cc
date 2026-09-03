@@ -505,9 +505,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Which axis to concat on. A negative value means counting dimensions from the back. "
             "Accepted range is [-r, r-1] where r = rank(inputs)..",
             AttributeProto::INT)
-        .SetDoc(
-            "Concatenate a list of tensors into a single tensor. "
-            "All input tensors must have the same shape, except for the dimension size of the axis to concatenate on.")
+        .SetDoc(kDoc_Concat_ver13)
         .Input(
             0,
             "inputs",
@@ -604,14 +602,6 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static constexpr const char* Split_ver18_doc =
-    R"DOC(Split a tensor into a list of tensors, along the specified 'axis'.
-Either input 'split' or the attribute 'num_outputs' should be specified, but not both.
-If the attribute 'num_outputs' is specified, then the tensor is split into equal sized parts.
-If the tensor is not evenly splittable into `num_outputs`, the last chunk will be smaller.
-If the input 'split' is specified, it indicates the sizes of each output in the split.
-)DOC";
-
 ONNX_OPERATOR_SET_SCHEMA(
     Split,
     18,
@@ -650,7 +640,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "If the tensor is not evenly splittable the last chunk will be smaller.",
             AttributeProto::INT,
             false)
-        .SetDoc(Split_ver18_doc)
+        .SetDoc(kDoc_Split_ver18)
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           for (size_t i = 0; i < ctx.getNumOutputs(); ++i) {
             propagateElemTypeFromInputToOutput(ctx, 0, i);
@@ -730,71 +720,6 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static constexpr const char* Slice_ver13_doc = R"DOC(
-Produces a slice of the input tensor along multiple axes. Similar to numpy:
-https://numpy.org/doc/stable/user/basics.indexing.html?highlight=slice#slicing-and-striding
-
-Slice uses the `starts`, `ends`, `axes` and `steps` inputs to select a sub-tensor
-of its input `data` tensor.
-
-An effective `starts[i]`, `ends[i]`, and `steps[i]` must be computed for each `i`
-in `[0, ... r-1]` where `r = rank(input)` as follows:
-
-If `axes` are omitted, they are set to `[0, ..., r-1]`.
-If `steps` are omitted, they are set to `[1, ..., 1]` of length `len(starts)`
-
-The effective values are initialized as `starts[i] = 0`, `ends[i] = dims[i]` where
-`dims` are the dimensions of `input` and `steps[i] = 1`.
-
-All negative elements of `axes` are made non-negative by adding `r` to them, where
-`r =rank(input)`.
-
-All negative values in `starts[i]` and `ends[i]` have `dims[axes[i]]` added to them,
-where `dims` are the dimensions of `input`. Then `starts[axes[i]]` is clamped to
-range `[0, dims[axes[i]]]` for positive stepping, or to range `[0, dims[axes[i]]-1]`
-for negative stepping.
-
-The clamping for the adjusted `ends[i]` depends on the sign of `steps[i]` and must
-accommodate copying 0 through `dims[axes[i]]` elements, so for positive stepping
-`ends[axes[i]]` is clamped to `[0, dims[axes[i]]]`, while for negative stepping it
-is clamped to `[-1, dims[axes[i]]-1]`.
-
-Finally, `steps[axes[i]] = steps[i]`.
-
-For slicing to the end of a dimension with unknown size, it is recommended to pass
-in `INT_MAX` when slicing forward and 'INT_MIN' when slicing backward.
-
-Example 1:
-
-```
-data = [
-    [1, 2, 3, 4],
-    [5, 6, 7, 8],
-]
-axes = [0, 1]
-starts = [1, 0]
-ends = [2, 3]
-steps = [1, 2]
-result = [
-    [5, 7],
-]
-```
-
-Example 2:
-
-```
-data = [
-    [1, 2, 3, 4],
-    [5, 6, 7, 8],
-]
-starts = [0, 1]
-ends = [-1, 1000]
-result = [
-    [2, 3, 4],
-]
-```
-)DOC";
-
 static void processSliceInputs(const int64_t input_dim_size_or_value, int64_t& start, int64_t& end, int64_t step) {
   // process step
   if (step == 0) {
@@ -827,7 +752,7 @@ ONNX_OPERATOR_SET_SCHEMA(
     Slice,
     13,
     OpSchema()
-        .SetDoc(Slice_ver13_doc)
+        .SetDoc(kDoc_Slice_ver13)
         .Input(
             0,
             "data",
@@ -1071,30 +996,11 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-const char* Transpose_doc = R"DOC(
-Returns a transpose of the input tensor. (Similar to `numpy.transpose`).
-The optional attribute `perm` specifies the permutation of the axes of the
-input tensor. `perm` must contain each axis index in `[0, n-1]` exactly once,
-so its length is equal to the rank `n` of the input tensor.
-
-Axis `i` of the output tensor corresponds to axis `perm[i]` of the input tensor.
-
-If the attribute is omitted, its default value is `(n-1, ..., 0)`, where `n`
-is the rank of the input tensor (that is, the dimensions are reversed).
-
-For example, when perm=(1, 0, 2), given an input tensor of shape (1, 2, 3),
-the output shape will be (2, 1, 3).
-When perm=(1, 2, 0), given an input tensor of shape (1, 2, 3),
-the output shape will be (2, 3, 1).
-A 0-D or 1-D input is valid; in those cases the output has the same shape
-as the input.
-)DOC";
-
 ONNX_OPERATOR_SET_SCHEMA(
     Transpose,
     25,
     OpSchema()
-        .SetDoc(Transpose_doc)
+        .SetDoc(kDoc_Transpose_ver13)
         .Attr(
             "perm",
             "A list of integers. By default, reverse the dimensions; "
@@ -1156,68 +1062,12 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static constexpr const char* Scatter_ver11_doc = R"DOC(
-This operator is deprecated. Please use ScatterElements, which provides the same functionality.
-
-Scatter takes three inputs `data`, `updates`, and `indices` of the same
-rank r >= 1 and an optional attribute axis that identifies an axis of `data`
-(by default, the outer-most axis, that is axis 0). The output of the operation
-is produced by creating a copy of the input `data`, and then updating its value
-to values specified by `updates` at specific index positions specified by
-`indices`. Its output shape is the same as the shape of `data`.
-
-For each entry in `updates`, the target index in `data` is obtained by combining
-the corresponding entry in `indices` with the index of the entry itself: the
-index-value for dimension = axis is obtained from the value of the corresponding
-entry in `indices` and the index-value for dimension != axis is obtained from the
-index of the entry itself.
-
-For instance, in a 2-D tensor case, the update corresponding to the [i][j] entry
-is performed as below:
-```
-  output[indices[i][j]][j] = updates[i][j] if axis = 0,
-  output[i][indices[i][j]] = updates[i][j] if axis = 1,
-```
-
-This operator is the inverse of GatherElements. It is similar to Torch's Scatter operation.
-
-Example 1:
-```
-  data = [
-      [0.0, 0.0, 0.0],
-      [0.0, 0.0, 0.0],
-      [0.0, 0.0, 0.0],
-  ]
-  indices = [
-      [1, 0, 2],
-      [0, 2, 1],
-  ]
-  updates = [
-      [1.0, 1.1, 1.2],
-      [2.0, 2.1, 2.2],
-  ]
-  output = [
-      [2.0, 1.1, 0.0]
-      [1.0, 0.0, 2.2]
-      [0.0, 2.1, 1.2]
-  ]
-```
-Example 2:
-```
-  data = [[1.0, 2.0, 3.0, 4.0, 5.0]]
-  indices = [[1, 3]]
-  updates = [[1.1, 2.1]]
-  axis = 1
-  output = [[1.0, 1.1, 3.0, 2.1, 5.0]]
-```
-)DOC";
-
 ONNX_OPERATOR_SET_SCHEMA(
     Scatter,
     11,
     OpSchema()
         .Deprecate()
-        .SetDoc(Scatter_ver11_doc)
+        .SetDoc(kDoc_Scatter_ver11)
         .Attr(
             "axis",
             "Which axis to scatter on. Negative value means "
@@ -1262,89 +1112,11 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static constexpr const char* ScatterND_ver18_doc = R"DOC(
-ScatterND takes three inputs `data` tensor of rank r >= 1, `indices` tensor of rank q >= 1,
-and `updates` tensor of rank q + r - indices.shape[-1] - 1. The output of the operation
-is produced by creating a copy of the input `data`, and then updating its value to values
-specified by `updates` at specific index positions specified by `indices`. Its output shape
-is the same as the shape of `data`.
-
-`indices` is an integer tensor. Let k denote indices.shape[-1], the last dimension in the shape of `indices`.
-`indices` is treated as a (q-1)-dimensional tensor of k-tuples, where each k-tuple is a partial-index into `data`.
-Hence, k can be a value at most the rank of `data`. When k equals rank(data), each update entry specifies an
-update to a single element of the tensor. When k is less than rank(data) each update entry specifies an
-update to a slice of the tensor. Index values are allowed to be negative, as per the usual
-convention for counting backwards from the end, but are expected in the valid range.
-
-`updates` is treated as a (q-1)-dimensional tensor of replacement-slice-values. Thus, the
-first (q-1) dimensions of updates.shape must match the first (q-1) dimensions of indices.shape.
-The remaining dimensions of `updates` correspond to the dimensions of the
-replacement-slice-values. Each replacement-slice-value is a (r-k) dimensional tensor,
-corresponding to the trailing (r-k) dimensions of `data`.  Thus, the shape of `updates`
-must equal indices.shape[0:q-1] ++ data.shape[k:r], where ++ denotes the concatenation
-of shapes.
-
-The `output` is calculated via the following equation:
-
-```
-output = np.copy(data)
-update_indices = indices.shape[:-1]
-for idx in np.ndindex(update_indices):
-    output[tuple(indices[idx])] = updates[idx]
-```
-
-The order of iteration in the above loop is not specified.
-In particular, indices should not have duplicate entries: that is, if idx1 != idx2, then indices[idx1] != indices[idx2].
-This ensures that the output value does not depend on the iteration order.
-
-`reduction` allows specification of an optional reduction operation, which is applied to all values in `updates`
-tensor into `output` at the specified `indices`.
-In cases where `reduction` is set to "none", indices should not have duplicate entries: that is, if idx1 != idx2,
-then indices[idx1] != indices[idx2]. This ensures that the output value does not depend on the iteration order.
-When `reduction` is set to some reduction function `f`, `output` is calculated as follows:
-
-```
-output = np.copy(data)
-update_indices = indices.shape[:-1]
-for idx in np.ndindex(update_indices):
-    output[tuple(indices[idx])] = f(output[tuple(indices[idx])], updates[idx])
-```
-
-where the `f` is `+`, `*`, `max` or `min` as specified.
-
-This operator is the inverse of GatherND.
-
-(Opset 18 change): Adds max/min to the set of allowed reduction ops.
-
-Example 1:
-```
-data    = [1, 2, 3, 4, 5, 6, 7, 8]
-indices = [[4], [3], [1], [7]]
-updates = [9, 10, 11, 12]
-output  = [1, 11, 3, 10, 9, 6, 7, 12]
-```
-
-Example 2:
-```
-data    = [[[1, 2, 3, 4], [5, 6, 7, 8], [8, 7, 6, 5], [4, 3, 2, 1]],
-            [[1, 2, 3, 4], [5, 6, 7, 8], [8, 7, 6, 5], [4, 3, 2, 1]],
-            [[8, 7, 6, 5], [4, 3, 2, 1], [1, 2, 3, 4], [5, 6, 7, 8]],
-            [[8, 7, 6, 5], [4, 3, 2, 1], [1, 2, 3, 4], [5, 6, 7, 8]]]
-indices = [[0], [2]]
-updates = [[[5, 5, 5, 5], [6, 6, 6, 6], [7, 7, 7, 7], [8, 8, 8, 8]],
-            [[1, 1, 1, 1], [2, 2, 2, 2], [3, 3, 3, 3], [4, 4, 4, 4]]]
-output  = [[[5, 5, 5, 5], [6, 6, 6, 6], [7, 7, 7, 7], [8, 8, 8, 8]],
-            [[1, 2, 3, 4], [5, 6, 7, 8], [8, 7, 6, 5], [4, 3, 2, 1]],
-            [[1, 1, 1, 1], [2, 2, 2, 2], [3, 3, 3, 3], [4, 4, 4, 4]],
-            [[8, 7, 6, 5], [4, 3, 2, 1], [1, 2, 3, 4], [5, 6, 7, 8]]]
-```
-)DOC";
-
 ONNX_OPERATOR_SET_SCHEMA(
     ScatterND,
     18,
     OpSchema()
-        .SetDoc(ScatterND_ver18_doc)
+        .SetDoc(kDoc_ScatterND_ver18)
         .Attr(
             "reduction",
             "Type of reduction to apply: none (default), add, mul, max, min. "
@@ -1383,76 +1155,11 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static constexpr const char* ScatterElements_ver18_doc = R"DOC(
-ScatterElements takes three inputs `data`, `updates`, and `indices` of the same
-rank r >= 1 and an optional attribute axis that identifies an axis of `data`
-(by default, the outer-most axis, that is axis 0). The output of the operation
-is produced by creating a copy of the input `data`, and then updating its value
-to values specified by `updates` at specific index positions specified by
-`indices`. Its output shape is the same as the shape of `data`.
-
-For each entry in `updates`, the target index in `data` is obtained by combining
-the corresponding entry in `indices` with the index of the entry itself: the
-index-value for dimension = axis is obtained from the value of the corresponding
-entry in `indices` and the index-value for dimension != axis is obtained from the
-index of the entry itself.
-
-`reduction` allows specification of an optional reduction operation, which is applied to all values in `updates`
-tensor into `output` at the specified `indices`.
-In cases where `reduction` is set to "none", indices should not have duplicate entries: that is, if idx1 != idx2,
-then indices[idx1] != indices[idx2]. For instance, in a 2-D tensor case, the update
-corresponding to the [i][j] entry is performed as below:
-```
-output[indices[i][j]][j] = updates[i][j] if axis = 0,
-output[i][indices[i][j]] = updates[i][j] if axis = 1,
-```
-When `reduction` is set to some reduction function `f`, the update corresponding to the [i][j] entry is performed as below:
-```
-output[indices[i][j]][j] = f(output[indices[i][j]][j], updates[i][j]) if axis = 0,
-output[i][indices[i][j]] = f(output[i][indices[i][j]], updates[i][j]) if axis = 1,
-```
-where the `f` is `+`, `*`, `max` or `min` as specified.
-
-This operator is the inverse of GatherElements. It is similar to Torch's Scatter operation.
-
-(Opset 18 change): Adds max/min to the set of allowed reduction ops.
-
-Example 1:
-```
-data = [
-    [0.0, 0.0, 0.0],
-    [0.0, 0.0, 0.0],
-    [0.0, 0.0, 0.0],
-]
-indices = [
-    [1, 0, 2],
-    [0, 2, 1],
-]
-updates = [
-    [1.0, 1.1, 1.2],
-    [2.0, 2.1, 2.2],
-]
-output = [
-    [2.0, 1.1, 0.0]
-    [1.0, 0.0, 2.2]
-    [0.0, 2.1, 1.2]
-]
-```
-Example 2:
-```
-data = [[1.0, 2.0, 3.0, 4.0, 5.0]]
-indices = [[1, 3]]
-updates = [[1.1, 2.1]]
-axis = 1
-output = [[1.0, 1.1, 3.0, 2.1, 5.0]]
-```
-)DOC";
-
 ONNX_OPERATOR_SET_SCHEMA(
     ScatterElements,
     18,
     OpSchema()
-        .SetDoc(ScatterElements_ver18_doc)
+        .SetDoc(kDoc_ScatterElements_ver18)
         .Attr(
             "axis",
             "Which axis to scatter on. Negative value means "
@@ -1507,77 +1214,11 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static constexpr const char* Gather_ver13_doc = R"DOC(
-Given `data` tensor of rank r >= 1, and `indices` tensor of rank q, gather
-entries of the axis dimension of `data` (by default outer-most one as axis=0) indexed by `indices`, and concatenates
-them in an output tensor of rank q + (r - 1).
-
-It is an indexing operation that indexes into the input `data` along a single (specified) axis.
-Each entry in `indices` produces a `r-1` dimensional slice of the input tensor.
-The entire operation produces, conceptually, a `q`-dimensional tensor of `r-1` dimensional slices,
-which is arranged into a `q + (r-1)`-dimensional tensor, with the `q` dimensions taking the
-place of the original `axis` that is being indexed into.
-
-The following few examples illustrate how `Gather` works for specific shapes of `data`,
-`indices`, and given value of `axis`:
-| data shape | indices shape | axis | output shape | output equation |
-| --- | --- | --- | --- | --- |
-| (P, Q) | ( )  (a scalar)   | 0 | (Q)       | output[q] = data[indices, q] |
-| (P, Q, R) | ( )  (a scalar)   | 1 | (P, R)       | output[p, r] = data[p, indices, r] |
-| (P, Q) | (R, S) | 0 | (R, S, Q) | output[r, s, q] = data[ [indices[r, s], q] |
-| (P, Q) | (R, S) | 1 | (P, R, S) | output[p, r, s] = data[ p, indices[r, s]] |
-
-More generally, if `axis = 0`, let `k = indices[i_{0}, ..., i_{q-1}]`
-then `output[i_{0}, ..., i_{q-1}, j_{0}, ..., j_{r-2}] = input[k , j_{0}, ..., j_{r-2}]`:
-
-```
-data = [
-    [1.0, 1.2],
-    [2.3, 3.4],
-    [4.5, 5.7],
-]
-indices = [
-    [0, 1],
-    [1, 2],
-]
-output = [
-    [
-        [1.0, 1.2],
-        [2.3, 3.4],
-    ],
-    [
-        [2.3, 3.4],
-        [4.5, 5.7],
-    ],
-]
-```
-
-If `axis = 1`, let `k = indices[i_{0}, ..., i_{q-1}]`
-then `output[j_{0}, i_{0}, ..., i_{q-1}, j_{1}, ..., j_{r-2}] = input[j_{0}, k, j_{1}, ..., j_{r-2}]`:
-
-```
-data = [
-    [1.0, 1.2, 1.9],
-    [2.3, 3.4, 3.9],
-    [4.5, 5.7, 5.9],
-]
-indices = [
-    [0, 2],
-]
-axis = 1,
-output = [
-        [[1.0, 1.9]],
-        [[2.3, 3.9]],
-        [[4.5, 5.9]],
-]
-```
-)DOC";
-
 ONNX_OPERATOR_SET_SCHEMA(
     Gather,
     13,
     OpSchema()
-        .SetDoc(Gather_ver13_doc)
+        .SetDoc(kDoc_Gather_ver13)
         .Attr(
             "axis",
             "Which axis to gather on. Negative value means "
@@ -1631,66 +1272,11 @@ ONNX_OPERATOR_SET_SCHEMA(
         })
         .PartialDataPropagationFunction([](DataPropagationContext& ctx) { GatherOp13DataPropagator(ctx); }));
 
-static constexpr const char* GatherElements_ver13_doc = R"DOC(
-
-GatherElements takes two inputs `data` and `indices` of the same rank r >= 1
-and an optional attribute `axis` that identifies an axis of `data`
-(by default, the outer-most axis, that is axis 0). It is an indexing operation
-that produces its output by indexing into the input data tensor at index
-positions determined by elements of the `indices` tensor.
-Its output shape is the same as the shape of `indices` and consists of one value
-(gathered from the `data`) for each element in `indices`.
-
-For instance, in the 3-D case (r = 3), the output produced is determined
-by the following equations:
-```
-out[i][j][k] = input[index[i][j][k]][j][k] if axis = 0,
-out[i][j][k] = input[i][index[i][j][k]][k] if axis = 1,
-out[i][j][k] = input[i][j][index[i][j][k]] if axis = 2,
-```
-
-This operator is also the inverse of ScatterElements. It is similar to Torch's gather operation.
-
-Example 1:
-```
-data = [
-    [1, 2],
-    [3, 4],
-]
-indices = [
-    [0, 0],
-    [1, 0],
-]
-axis = 1
-output = [
-    [1, 1],
-    [4, 3],
-]
-```
-Example 2:
-```
-data = [
-    [1, 2, 3],
-    [4, 5, 6],
-    [7, 8, 9],
-]
-indices = [
-    [1, 2, 0],
-    [2, 0, 0],
-]
-axis = 0
-output = [
-    [4, 8, 3],
-    [7, 2, 3],
-]
-```
-)DOC";
-
 ONNX_OPERATOR_SET_SCHEMA(
     GatherElements,
     13,
     OpSchema()
-        .SetDoc(GatherElements_ver13_doc)
+        .SetDoc(kDoc_GatherElements_ver13)
         .Attr(
             "axis",
             "Which axis to gather on. Negative value means "
@@ -2201,15 +1787,6 @@ ONNX_OPERATOR_SET_SCHEMA(
         .SetDoc(kDoc_Upsample_ver7)
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) { resizeShapeInference_opset7_to_10(ctx); }));
 
-static constexpr const char* Resize_ver19_doc = R"DOC(
-Resize the input tensor. In general, it calculates every value in the output tensor as a weighted average of neighborhood (a.k.a. sampling locations) in the input tensor.
-Each dimension value of the output tensor is:
-```
-output_dimension = floor(input_dimension * (roi_end - roi_start) * scale)
-```
-if input \"sizes\" is not specified.
-)DOC";
-
 static constexpr const char* Resize_ver19_attr_coordinate_transformation_mode_doc = R"DOC(
 This attribute describes how to transform the coordinate in the resized tensor to the coordinate in the original tensor.
 
@@ -2380,7 +1957,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::all_tensor_types_ir4(),
             "Constrain input 'X' and output 'Y' to all tensor types.")
         .TypeConstraint("T2", {types::Float16, types::Float, types::Double}, "Constrain roi type to float or double.")
-        .SetDoc(Resize_ver19_doc)
+        .SetDoc(kDoc_Resize_ver19)
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) { resizeShapeInference_opset18_to_19(ctx); }));
 
 ONNX_OPERATOR_SET_SCHEMA(
@@ -2457,36 +2034,6 @@ ONNX_OPERATOR_SET_SCHEMA(
         .SetDoc(kDoc_GridSample_ver20)
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) { gridSampleShapeInference(ctx); }));
 
-static constexpr const char* AffineGrid_ver20_doc = R"DOC(
-Generates a 2D or 3D flow field (sampling grid), given a batch of affine matrices theta
-(https://pytorch.org/docs/stable/generated/torch.nn.functional.affine_grid.html).
-An affine matrix `theta` is applied to a position tensor represented in its homogeneous expression. Here is an example in 3D:
-```
-[r00, r01, r02, t0]   [x]   [x']
-[r10, r11, r12, t1] * [y] = [y']
-[r20, r21, r22, t2]   [z]   [z']
-[0,   0,   0,   1 ]   [1]   [1 ]
-```
-where `(x, y, z)` is the position in the original space, `(x', y', z')` is the position in the output space.
-The last row is always `[0, 0, 0, 1]` and is not stored in the affine matrix. Therefore we have `theta` of shape `(N, 2, 3)` for 2D or `(N, 3, 4)` for 3D.
-
-Input `size` is used to define grid of positions evenly spaced in the original 2D or 3D space, with dimensions ranging from `-1` to `1`.
-The output `grid` contains positions in the output space.
-
-When `align_corners=1`, consider `-1` and `1` to refer to the centers of the corner pixels (mark `v` in illustration).
-```
-v            v            v            v
-|-------------------|------------------|
--1                  0                  1
-```
-When `align_corners=0`, consider `-1` and `1` to refer to the outer edge of the corner pixels.
-```
-    v        v         v         v
-|------------------|-------------------|
--1                 0                   1
-```
-)DOC";
-
 ONNX_OPERATOR_SET_SCHEMA(
     AffineGrid,
     20,
@@ -2526,7 +2073,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::Differentiable)
         .TypeConstraint("T1", OpSchema::all_float_types_ir4(), "Constrain grid types to float tensors.")
         .TypeConstraint("T2", {types::Int64}, "Constrain size's type to int64 tensors.")
-        .SetDoc(AffineGrid_ver20_doc)
+        .SetDoc(kDoc_AffineGrid_ver20)
         .FunctionBody(R"ONNX(
         {
           # naming one: 1, one_f: 1.0, one_1d: [1], one_f_1d: [1.0]
@@ -2743,7 +2290,7 @@ ONNX_OPERATOR_SET_SCHEMA(
     Identity,
     25,
     OpSchema()
-        .SetDoc("Identity operator")
+        .SetDoc(kDoc_Identity_ver25)
         .Input(0, "input", "Input tensor", "V", OpSchema::Single, true, 1, OpSchema::Differentiable)
         .Output(0, "output", "Tensor to copy input into.", "V", OpSchema::Single, true, 1, OpSchema::Differentiable)
         .TypeConstraint(
@@ -2896,7 +2443,7 @@ ONNX_OPERATOR_SET_SCHEMA(
     IsNaN,
     20,
     OpSchema()
-        .SetDoc(R"DOC(Returns which elements of the input are NaN.)DOC")
+        .SetDoc(kDoc_IsNaN_ver20)
         .Input(0, "X", "input", "T1", OpSchema::Single, true, 1, OpSchema::NonDifferentiable)
         .Output(0, "Y", "output", "T2", OpSchema::Single, true, 1, OpSchema::NonDifferentiable)
         .TypeConstraint("T1", OpSchema::all_float_types_ir9(), "Constrain input types to float tensors.")
@@ -2912,7 +2459,7 @@ ONNX_OPERATOR_SET_SCHEMA(
     IsInf,
     20,
     OpSchema()
-        .SetDoc(R"DOC(Map infinity to true and other values to false.)DOC")
+        .SetDoc(kDoc_IsInf_ver20)
         .Input(0, "X", "input", "T1", OpSchema::Single, true, 1, OpSchema::NonDifferentiable)
         .Output(0, "Y", "output", "T2", OpSchema::Single, true, 1, OpSchema::NonDifferentiable)
         .Attr(
@@ -3000,7 +2547,7 @@ ONNX_OPERATOR_SET_SCHEMA(
     NonZero,
     13,
     OpSchema()
-        .SetDoc(NonZero_ver9_doc)
+        .SetDoc(kDoc_NonZero_ver9)
         .Input(0, "X", "input", "T", OpSchema::Single, true, 1, OpSchema::NonDifferentiable)
         .Output(0, "Y", "output", "tensor(int64)", OpSchema::Single, true, 1, OpSchema::NonDifferentiable)
         .TypeConstraint("T", OpSchema::all_tensor_types_ir4(), "Constrain to all tensor types.")
@@ -3193,98 +2740,11 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static constexpr const char* GatherND_ver13_doc = R"DOC(
-Given `data` tensor of rank `r` >= 1, `indices` tensor of rank `q` >= 1, and `batch_dims` integer `b`, this operator gathers
-slices of `data` into an output tensor of rank `q + r - indices_shape[-1] - 1 - b`.
-
-`indices` is an q-dimensional integer tensor, best thought of as a `(q-1)`-dimensional tensor of index-tuples into `data`,
-where each element defines a slice of `data`
-
-`batch_dims` (denoted as `b`) is an integer indicating the number of batch dimensions, i.e the leading `b` number of dimensions of
-`data` tensor and `indices` are representing the batches, and the gather starts from the `b+1` dimension.
-
-Some salient points about the inputs' rank and shape:
-
-1) r >= 1 and q >= 1 are to be honored. There is no dependency condition to be met between ranks `r` and `q`
-
-2) The first `b` dimensions of the shape of `indices` tensor and `data` tensor must be equal.
-
-3) b < min(q, r) is to be honored.
-
-4) The `indices_shape[-1]` should have a value between 1 (inclusive) and rank `r-b` (inclusive)
-
-5) All values in `indices` are expected to be within bounds [-s, s-1] along axis of size `s` (i.e.) `-data_shape[i] <= indices[...,i] <= data_shape[i] - 1`.
-   It is an error if any of the index values are out of bounds.
-
-The output is computed as follows:
-
-The output tensor is obtained by mapping each index-tuple in the `indices` tensor to the corresponding slice of the input `data`.
-
-1) If `indices_shape[-1] > r-b` => error condition
-
-2) If `indices_shape[-1] == r-b`, since the rank of `indices` is `q`, `indices` can be thought of as `N` `(q-b-1)`-dimensional tensors
-   containing 1-D tensors of dimension `r-b`, where `N` is an integer equals to the product of 1 and all the elements in the batch dimensions
-   of the indices_shape. Let us think of each such `r-b` ranked tensor as `indices_slice`. Each *scalar value* corresponding to `data[0:b-1,indices_slice]`
-   is filled into the corresponding location of the `(q-b-1)`-dimensional tensor to form the `output` tensor (Example 1 below)
-
-3) If `indices_shape[-1] < r-b`, since the rank of `indices` is `q`, `indices` can be thought of as `N` `(q-b-1)`-dimensional tensor
-   containing 1-D tensors of dimension `< r-b`. Let us think of each such tensors as `indices_slice`. Each *tensor slice* corresponding
-   to `data[0:b-1, indices_slice , :]` is filled into the corresponding location of the `(q-b-1)`-dimensional tensor
-   to form the `output` tensor (Examples 2, 3, 4 and 5 below)
-
-This operator is the inverse of `ScatterND`.
-
-**Example 1**
-
-```
-batch_dims = 0
-data    = [[0,1],[2,3]]   # data_shape    = [2, 2]
-indices = [[0,0],[1,1]]   # indices_shape = [2, 2]
-output  = [0,3]           # output_shape  = [2]
-```
-
-**Example 2**
-
-```
-batch_dims = 0
-data    = [[0,1],[2,3]]  # data_shape    = [2, 2]
-indices = [[1],[0]]      # indices_shape = [2, 1]
-output  = [[2,3],[0,1]]  # output_shape  = [2, 2]
-```
-
-**Example 3**
-
-```
-batch_dims = 0
-data    = [[[0,1],[2,3]],[[4,5],[6,7]]] # data_shape    = [2, 2, 2]
-indices = [[0,1],[1,0]]                 # indices_shape = [2, 2]
-output  = [[2,3],[4,5]]                 # output_shape  = [2, 2]
-```
-
-**Example 4**
-
-```
-batch_dims = 0
-data    = [[[0,1],[2,3]],[[4,5],[6,7]]] # data_shape    = [2, 2, 2]
-indices = [[[0,1]],[[1,0]]]             # indices_shape = [2, 1, 2]
-output  = [[[2,3]],[[4,5]]]             # output_shape  = [2, 1, 2]
-```
-
-**Example 5**
-
-```
-batch_dims = 1
-data    = [[[0,1],[2,3]],[[4,5],[6,7]]] # data_shape    = [2, 2, 2]
-indices = [[1],[0]]                     # indices_shape = [2, 1]
-output  = [[2,3],[4,5]]                 # output_shape  = [2, 2]
-```
-)DOC";
-
 ONNX_OPERATOR_SET_SCHEMA(
     GatherND,
     13,
     OpSchema()
-        .SetDoc(GatherND_ver13_doc)
+        .SetDoc(kDoc_GatherND_ver13)
         .Attr(
             "batch_dims",
             "The number of batch dimensions. The gather of indexing starts from dimension of data[batch_dims:]",
@@ -3367,26 +2827,11 @@ ONNX_OPERATOR_SET_SCHEMA(
         OpSchema::all_tensor_types_ir13(),
         "Constrain input and output types to all tensor types up to IRv13.")));
 
-static constexpr const char* Trilu_ver14_doc = R"DOC(
-Given a 2-D matrix or batches of 2-D matrices, returns the upper or lower triangular part of the tensor(s).
-The attribute "upper" determines whether the upper or lower part is retained. If set to true,
-the upper triangular matrix is retained. Lower triangular matrix is retained otherwise.
-Default value for the "upper" attribute is true.
-Trilu takes one input tensor of shape [*, N, M], where * is zero or more batch dimensions. The upper triangular part consists
-of the elements on and above the given diagonal (k). The lower triangular part consists of elements on and below the diagonal.
-All other elements in the matrix are set to zero.
-If k = 0, the triangular part on and above/below the main diagonal is retained.
-If upper is set to true, a positive k retains the upper triangular matrix excluding the main diagonal and (k-1) diagonals above it.
-A negative k value retains the main diagonal and |k| diagonals below it.
-If upper is set to false, a positive k retains the lower triangular matrix including the main diagonal and k diagonals above it.
-A negative k value excludes the main diagonal and (|k|-1) diagonals below it.
-)DOC";
-
 ONNX_OPERATOR_SET_SCHEMA(
     Trilu,
     14,
     OpSchema()
-        .SetDoc(Trilu_ver14_doc)
+        .SetDoc(kDoc_Trilu_ver14)
         .Attr(
             "upper",
             "Boolean. Indicates whether upper or lower part of matrix is retained. Default is true.",
@@ -3435,28 +2880,11 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static constexpr const char* CenterCropPad_ver18_doc = R"DOC(
-Center crop or pad an input to given dimensions.
-
-The crop/pad dimensions can be specified for a subset of the `axes`; unspecified dimensions will remain unchanged.
-
-If the input dimensions are larger than the target crop dimensions, a centered cropping window will be extracted
-from the input. The starting value for the cropping window is rounded down, which means that if the difference
-between the input shape and the crop shape is odd, the cropping window will be shifted half a pixel to the left
-of the input center.
-
-If the input dimensions are smaller than the target crop dimensions, the input will be padded equally on both sides
-to center it in the output. In cases where the total number of padding pixels is odd, an additional pixel will be
-added to the right side.
-
-The padding value used is zero.
-)DOC";
-
 ONNX_OPERATOR_SET_SCHEMA(
     CenterCropPad,
     18,
     OpSchema()
-        .SetDoc(CenterCropPad_ver18_doc)
+        .SetDoc(kDoc_CenterCropPad_ver18)
         .Input(
             0,
             "input_data",
@@ -3603,41 +3031,11 @@ ONNX_OPERATOR_SET_SCHEMA(
           return true;
         }));
 
-static constexpr const char* TensorScatter_ver24_doc = R"DOC(
-TensorScatter is a generic tensor update operation, motivated by the requirements for KV cache updates for Attention
-ops commonly found in LLMs. It is a functional operation that models an in-place update to a KV cache buffer.
-
-The past and present cache tensors have the same shape (batch_size, D1, D2, ..., max_sequence_length, ..., Dn), with
-the sequence dimension (indicated by the `axis` attribute) being max_sequence_length, so the sizes of these tensors do
-not need to grow between iterations. The `update` tensor's shape only differs from the cache tensors in the sequence
-dimension: (batch_size, D1, D2, ..., sequence_length, ..., Dn), where sequence_length <= max_sequence_length.
-
-The optional `write_indices` input indicates the write index for each sample in the batch, assumed to be zero
-if not provided. When the `mode` attribute is set to "circular", the write index is modulo max_sequence_length.
-The operation can be described using the following pseudocode:
-
-```
-for prefix_idx in np.ndindex(past_cache.shape[:axis]):
-    batch_idx = prefix_idx[0]
-    for sequence_idx in range(sequence_length):
-        cache_sequence_idx = write_indices[batch_idx] + sequence_idx
-        if mode == "circular":
-            cache_sequence_idx = cache_sequence_idx % max_sequence_length
-        cache_idx = (*prefix_idx, cache_sequence_idx)
-        update_idx = (*prefix_idx, sequence_idx)
-        present_cache[cache_idx] = update[update_idx]
-```
-
-During the prefill phase of attention, only the first two inputs are needed. During the decode phase, `write_indices`
-is also needed so that the incoming key or value update can be appended after the last valid token for each sample
-in the batch.
-)DOC";
-
 ONNX_OPERATOR_SET_SCHEMA(
     TensorScatter,
     24,
     OpSchema()
-        .SetDoc(TensorScatter_ver24_doc)
+        .SetDoc(kDoc_TensorScatter_ver24)
         .Attr(
             "axis",
             "Sequence dimension of the `past_cache` and `update` tensors. It cannot be 0 (the batch dimension). Default is -2.",
