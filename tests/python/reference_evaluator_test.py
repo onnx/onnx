@@ -2473,7 +2473,7 @@ class TestReferenceEvaluator:
         ).run(None, {"X": x, "I": indices})[0]
 
         expected = np.zeros(output_shape, dtype=dtype)
-        expected.flat[indices.flat] = x.flat
+        expected.reshape(-1)[indices.reshape(-1)] = x.reshape(-1)
         assert_array_equal(result, expected)
 
     def test_max_unpool_provided_output_shape_ignores_pads(self):
