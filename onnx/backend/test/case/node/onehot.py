@@ -3,6 +3,7 @@
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
+import ml_dtypes
 import numpy as np
 
 import onnx
@@ -156,4 +157,30 @@ class OneHot(Base):
             inputs=[indices, depth, values],
             outputs=[y],
             name="test_onehot_with_negative_axis",
+        )
+
+    @staticmethod
+    def export_with_bfloat16_values() -> None:
+        axisValue = 1
+        on_value = 3.0
+        off_value = 1.0
+        output_type = ml_dtypes.bfloat16
+        node = onnx.helper.make_node(
+            "OneHot",
+            inputs=["indices", "depth", "values"],
+            outputs=["y"],
+            axis=axisValue,
+        )
+        indices = np.array([0, 2], dtype=np.int64)
+        depth = np.float32(4)
+        values = np.array([off_value, on_value], dtype=output_type)
+        y = one_hot(indices, int(depth), axis=axisValue, dtype=output_type)
+        y = (y * output_type(on_value - off_value) + output_type(off_value)).astype(
+            output_type
+        )
+        expect(
+            node,
+            inputs=[indices, depth, values],
+            outputs=[y],
+            name="test_onehot_with_bfloat16_values",
         )
