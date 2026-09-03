@@ -143,9 +143,9 @@ ONNX_OPERATOR_SET_SCHEMA(
 
 ONNX_OPERATOR_SET_SCHEMA(
     BitShift,
-    11,
+    28,
     OpSchema()
-        .SetDoc(GET_OP_DOC_STR(std::string(kDoc_BitShift_ver11) + GenerateBroadcastingDocMul()))
+        .SetDoc(GET_OP_DOC_STR(std::string(kDoc_BitShift_ver28) + GenerateBroadcastingDocMul()))
         .Input(
             0,
             "X",
@@ -159,7 +159,14 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Output(0, "Z", "Output tensor", "T", OpSchema::Single, true, 1, OpSchema::NonDifferentiable)
         .TypeConstraint(
             "T",
-            {types::UInt8, types::UInt16, types::UInt32, types::UInt64},
+            {types::UInt8,
+             types::UInt16,
+             types::UInt32,
+             types::UInt64,
+             types::Int8,
+             types::Int16,
+             types::Int32,
+             types::Int64},
             "Constrain input and output types to integer tensors.")
         .Attr(
             "direction",

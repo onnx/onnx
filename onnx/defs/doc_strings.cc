@@ -6,6 +6,41 @@
 
 namespace ONNX_NAMESPACE {
 #ifndef __ONNX_NO_DOC_STRINGS
+const char kDoc_BitShift_ver11[] = R"DOC(
+Bitwise shift operator performs element-wise operation. For each input element, if the
+attribute "direction" is "RIGHT", this operator moves its binary representation toward
+the right side so that the input value is effectively decreased. If the attribute "direction"
+is "LEFT", bits of binary representation moves toward the left side, which results the
+increase of its actual value. The input X is the tensor to be shifted and another input
+Y specifies the amounts of shifting. For example, if "direction" is "Right", X is [1, 4],
+and S is [1, 1], the corresponding output Z would be [0, 2]. If "direction" is "LEFT" with
+X=[1, 2] and S=[1, 2], the corresponding output Y would be [2, 8].
+
+Because this operator supports Numpy-style broadcasting, X's and Y's shapes are
+not necessarily identical.
+)DOC";
+
+const char kDoc_BitShift_ver28[] = R"DOC(
+Bitwise shift operator performs element-wise operation. For each input element, if the
+attribute "direction" is "RIGHT", this operator moves its binary representation toward
+the right side. If the attribute "direction" is "LEFT", bits of binary representation
+move toward the left side. The input X is the tensor to be shifted and another
+input Y specifies the amounts of shifting. For example, if "direction" is
+"RIGHT", X is [1, 4], and Y is [1, 1], the corresponding output Z would be
+[0, 2]. If "direction" is "LEFT" with X=[1, 2] and Y=[1, 2], the corresponding
+output Z would be [2, 8].
+
+For a signed T the right shift is an arithmetic shift (sign-extending). The
+vacated high bits are filled with copies of the sign bit, so a negative X stays
+negative. For a signed T a left shift can move bits into and past the sign bit,
+and bits shifted past the sign bit are discarded.
+
+If Y is negative, or is greater than or equal to the number of bits of T, then
+the result is whatever the sign bit extension alone produces: -1 for a right
+shift on a negative X, where the fill is a sign bit of 1, and 0 in every other
+case.
+)DOC";
+
 const char kDoc_GRU_ver14[] = R"DOC(
 Computes an one-layer GRU. This operator is usually supported via some custom
 implementation such as CuDNN.
@@ -965,14 +1000,14 @@ data = [
     [4.5, 5.7],
 ]
 
-pads = [0, 2, 0, 0]
+pads = [0, 1, 0, 1]
 
 mode = 'reflect'
 
 output = [
-    [1.0, 1.2, 1.0, 1.2],
-    [2.3, 3.4, 2.3, 3.4],
-    [4.5, 5.7, 4.5, 5.7],
+    [1.2, 1.0, 1.2, 1.0],
+    [3.4, 2.3, 3.4, 2.3],
+    [5.7, 4.5, 5.7, 4.5],
 ]
 ```
 
@@ -1390,6 +1425,32 @@ The target data type must have the same bit-width as the input data type.
 The output tensor has the same shape as the input tensor.
 All types except string are supported. Implementations must treat the
 underlying bytes as little endian.
+)DOC";
+
+const char kDoc_Optional_ver15[] = R"DOC(
+Constructs an optional-type value containing either an empty optional of a certain type specified by the attribute,
+or a non-empty value containing the input element.
+)DOC";
+
+const char kDoc_OptionalHasElement_ver15[] = R"DOC(
+Returns true if the optional-type input contains an element. If it is an empty optional-type, this op returns false.
+)DOC";
+
+const char kDoc_OptionalHasElement_ver18[] = R"DOC(
+Returns true if (1) the input is an optional-type and contains an element,
+or, (2) the input is a tensor or sequence type.
+If the input is not provided or is an empty optional-type, this op returns false.
+)DOC";
+
+const char kDoc_OptionalGetElement_ver15[] = R"DOC(
+Outputs the element in the optional-type input. It is an error if the input value does not have an element
+and the behavior is undefined in this case.
+)DOC";
+
+const char kDoc_OptionalGetElement_ver18[] = R"DOC(
+If the input is a tensor or sequence type, it returns the input.
+If the input is an optional type, it outputs the element in the input.
+It is an error if the input is an empty optional-type (i.e. does not have an element) and the behavior is undefined in this case.
 )DOC";
 
 const char kDoc_OneHot_ver11[] = R"DOC(
@@ -6583,6 +6644,8 @@ const char kDoc_NonZero_ver9[] = R"DOC(
     but for scalar input, NonZero produces output shape (0, N) instead of (1, N), which is different from Numpy's behavior.
 )DOC";
 #else
+const char kDoc_BitShift_ver11[] = "";
+const char kDoc_BitShift_ver28[] = "";
 const char kDoc_GRU_ver14[] = "";
 const char kDoc_Squeeze_ver24[] = "";
 const char kDoc_MaxUnpool_ver11[] = "";
@@ -6657,6 +6720,11 @@ const char kDoc_Loop_ver23[] = "";
 const char kDoc_RNN_ver14[] = "";
 const char kDoc_NonMaxSuppression_ver10[] = "";
 const char kDoc_OneHot_ver11[] = "";
+const char kDoc_Optional_ver15[] = "";
+const char kDoc_OptionalGetElement_ver15[] = "";
+const char kDoc_OptionalGetElement_ver18[] = "";
+const char kDoc_OptionalHasElement_ver15[] = "";
+const char kDoc_OptionalHasElement_ver18[] = "";
 const char kDoc_Log_ver6[] = "";
 const char kDoc_EyeLike_ver9[] = "";
 const char kDoc_Reshape_ver24[] = "";

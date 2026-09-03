@@ -3,16 +3,20 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "onnx/defs/doc_strings.h"
+#include "onnx/defs/optional/utils.h"
 #include "onnx/defs/schema.h"
 #include "onnx/defs/type_builders.h"
 
 namespace ONNX_NAMESPACE {
+static std::vector<std::string> tensor_and_sequence_types() {
+  return types::Concat(OpSchema::all_tensor_types(), OpSchema::all_tensor_sequence_types());
+}
 
 ONNX_OPERATOR_SET_SCHEMA(
     OptionalHasElement,
     15,
     OpSchema()
-        .SetDoc(kDoc_OptionalHasElement_ver1)
+        .SetDoc(kDoc_OptionalHasElement_ver15)
         .Input(0, "input", "The optional input.", "O")
         .Output(
             0,
@@ -42,7 +46,7 @@ ONNX_OPERATOR_SET_SCHEMA(
     OptionalGetElement,
     15,
     OpSchema()
-        .SetDoc(kDoc_OptionalGetElement_ver1)
+        .SetDoc(kDoc_OptionalGetElement_ver15)
         .Input(0, "input", "The optional input.", "O")
         .Output(0, "output", "Output element in the optional input.", "V")
         .TypeConstraint(
@@ -72,5 +76,26 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
           ctx.getOutputType(0)->CopyFrom(input_type->optional_type().elem_type());
         }));
+
+ONNX_OPERATOR_SET_SCHEMA(
+    Optional,
+    15,
+    OpSchema().FillUsing(
+        defs::optional::utils::OptionalOpGenerator(tensor_and_sequence_types(), OpSchema::all_optional_types())));
+
+ONNX_OPERATOR_SET_SCHEMA(
+    OptionalHasElement,
+    18,
+    OpSchema().FillUsing(
+        defs::optional::utils::OptionalHasElementOpGenerator(
+            types::Concat(OpSchema::all_optional_types(), tensor_and_sequence_types()))));
+
+ONNX_OPERATOR_SET_SCHEMA(
+    OptionalGetElement,
+    18,
+    OpSchema().FillUsing(
+        defs::optional::utils::OptionalGetElementOpGenerator(
+            OpSchema::all_optional_types(),
+            tensor_and_sequence_types())));
 
 } // namespace ONNX_NAMESPACE
