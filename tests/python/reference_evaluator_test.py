@@ -2571,6 +2571,13 @@ class TestReferenceEvaluator:
                 22,
             ),
             (
+                np.array([[[300, 300], [1e-4, 1e-4]]], dtype=np.float16),
+                np.array([[[424.25], [1.415e-4]]], dtype=np.float16),
+                2,
+                TensorProto.FLOAT16,
+                22,
+            ),
+            (
                 np.arange(1, 9, dtype=np.float64).reshape(1, 1, 2, 2, 2),
                 np.array([[[[[10.90272461]]]]], dtype=np.float64),
                 3,
@@ -2585,10 +2592,24 @@ class TestReferenceEvaluator:
                 22,
             ),
             (
+                np.array([[[3e19, 3e19]]], dtype=ml_dtypes.bfloat16),
+                np.array([[[4.237e19]]], dtype=ml_dtypes.bfloat16),
+                2,
+                TensorProto.BFLOAT16,
+                22,
+            ),
+            (
                 np.array([[[1, 4, 9]]], dtype=np.float32),
                 np.array([[[36]]], dtype=np.float32),
                 0.5,
                 TensorProto.FLOAT,
+                1,
+            ),
+            (
+                np.array([[[1e100, 1e-300]]], dtype=np.float64),
+                np.array([[[3.47096941e245]]], dtype=np.float64),
+                0.001,
+                TensorProto.DOUBLE,
                 1,
             ),
         ],
