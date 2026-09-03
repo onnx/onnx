@@ -2476,20 +2476,37 @@ class TestReferenceEvaluator:
         expected.reshape(-1)[indices.reshape(-1)] = x.reshape(-1)
         assert_array_equal(result, expected)
 
-    def test_max_unpool_provided_output_shape_ignores_pads(self):
-        x = np.array([[[3, 4]]], dtype=np.float32)
-        indices = np.array([[[0, 3]]], dtype=np.int64)
-        output_shape = np.array([1, 1, 5], dtype=np.int64)
+    def test_max_unpool_provided_output_shape_uses_its_index_space(self):
+        x = np.array([[[[1, 2], [3, 4]]]], dtype=np.float32)
+        indices = np.array([[[[6, 8], [16, 18]]]], dtype=np.int64)
+        output_shape = np.array([1, 1, 5, 5], dtype=np.int64)
 
         result = make_max_unpool_reference_evaluator(
             TensorProto.FLOAT,
             x.shape,
             output_shape=True,
-            pads=[5, 5],
+            pads=[5, 5, 5, 5],
+            strides=[2, 2],
+        ).run(None, {"X": x, "I": indices, "S": output_shape})[0]
+
+        expected = np.zeros((1, 1, 5, 5), dtype=np.float32)
+        expected.reshape(-1)[indices.reshape(-1)] = x.reshape(-1)
+        assert_array_equal(result, expected)
+
+    def test_max_unpool_provided_output_shape_allows_smaller_shape(self):
+        x = np.array([[[3, 4]]], dtype=np.float32)
+        indices = np.array([[[0, 2]]], dtype=np.int64)
+        output_shape = np.array([1, 1, 3], dtype=np.int64)
+
+        result = make_max_unpool_reference_evaluator(
+            TensorProto.FLOAT,
+            x.shape,
+            output_shape=True,
+            pads=[1, 1],
             strides=[2],
         ).run(None, {"X": x, "I": indices, "S": output_shape})[0]
 
-        assert_array_equal(result, np.array([[[3, 0, 0, 4, 0]]], dtype=np.float32))
+        assert_array_equal(result, np.array([[[3, 0, 4]]], dtype=np.float32))
 
     def test_max_unpool_inferred_shape_uses_default_strides_and_pads(self):
         x = np.array([[[3, 4]]], dtype=np.float32)

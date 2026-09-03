@@ -71,44 +71,33 @@ class MaxUnpool(OpRun):
                     "output_shape must have the same number of elements as the rank of X."
                 )
             shape = tuple(int(dim) for dim in output_shape)
-            # output_shape disambiguates the output size, so pads are ignored.
-            effective_pads = [0] * (pooling_dims * 2)
+            if any(dim < 0 for dim in shape):
+                raise ValueError(
+                    f"output_shape must have non-negative dimensions, but is {shape}."
+                )
         else:
-            effective_pads = pads
-        inferred_shape = X.shape[:batch_and_channel_dims] + tuple(
-            (X.shape[dim + batch_and_channel_dims] - 1) * strides[dim]
-            - effective_pads[dim]
-            - effective_pads[pooling_dims + dim]
-            + kernel_shape[dim]
-            for dim in range(pooling_dims)
-        )
-        if any(dim < 0 for dim in inferred_shape):
-            raise ValueError(
-                f"Inferred output shape must be non-negative, but is {inferred_shape}."
+            shape = X.shape[:batch_and_channel_dims] + tuple(
+                (X.shape[dim + batch_and_channel_dims] - 1) * strides[dim]
+                - pads[dim]
+                - pads[pooling_dims + dim]
+                + kernel_shape[dim]
+                for dim in range(pooling_dims)
             )
-        if output_shape is None:
-            shape = inferred_shape
-        elif any(
-            dim < inferred for dim, inferred in zip(shape, inferred_shape, strict=True)
-        ):
-            raise ValueError(
-                f"output_shape {shape} must not be smaller than inferred shape {inferred_shape}."
-            )
+            if any(dim < 0 for dim in shape):
+                raise ValueError(
+                    f"Inferred output shape must be non-negative, but is {shape}."
+                )
 
-        output_size = math.prod(inferred_shape)
+        output_size = math.prod(shape)
         flat_indices = indices.reshape(-1)
         if np.any(flat_indices < 0) or np.any(flat_indices >= output_size):
             raise ValueError(
                 f"Indices must be in [0, {output_size}), but received values outside that range."
             )
 
-        result = np.zeros(inferred_shape, dtype=X.dtype)
+        result = np.zeros(shape, dtype=X.dtype)
         last_positions = np.full(output_size, -1, dtype=np.intp)
         np.maximum.at(last_positions, flat_indices, np.arange(X.size))
         written = last_positions >= 0
         result.reshape(-1)[written] = X.reshape(-1)[last_positions[written]]
-        if output_shape is not None:
-            output = np.zeros(shape, dtype=X.dtype)
-            output[tuple(slice(dim) for dim in inferred_shape)] = result
-            result = output
         return (result,)
