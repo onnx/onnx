@@ -19,10 +19,13 @@
 
 namespace ONNX_NAMESPACE {
 
-// Lazily-minted per-Tensor id, reset to "unassigned" on copy/assign (never
-// on move) so tensor_id() is safe to key a cache on instead of &tensor,
-// which can alias a stale entry onto an unrelated tensor reusing a freed
-// address (e.g. via Graph::eraseInitializer). See
+// Lazily-minted per-Tensor id. A newly constructed or assigned-to object
+// always starts (or resets to) unassigned; a move additionally invalidates
+// the moved-from source, self-move included, since it may go on to hold
+// different content under the same id otherwise. This makes tensor_id()
+// safe to key a cache on instead of &tensor, which can alias a stale entry
+// onto an unrelated tensor reusing a freed address (e.g. via
+// Graph::eraseInitializer). See
 // onnxoptimizer/passes/tensor_content_hash.h's TensorContentDigest cache,
 // the motivating consumer. Wrapped in its own class so Tensor keeps fully
 // compiler-generated special member functions. Not atomic: Tensor
@@ -42,9 +45,11 @@ class LazyTensorId {
     return *this;
   }
   LazyTensorId& operator=(LazyTensorId&& other) noexcept {
-    if (this != &other) {
-      id_ = 0;
-    }
+    // Unconditional, even for self-move (this == &other): the moved-from
+    // side must never keep stale content paired with a live id, and a
+    // self-move-assignment is exactly that case with this == &other.
+    id_ = 0;
+    other.id_ = 0;
     return *this;
   }
   uint64_t Get() const {

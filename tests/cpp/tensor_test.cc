@@ -106,6 +106,34 @@ TEST(TensorTest, TensorIdRefreshedByMoveAssignment) {
   EXPECT_NE(a_id, b.tensor_id());
 }
 
+TEST(TensorTest, TensorIdInvalidatedOnMoveAssignmentSource) {
+  Tensor a;
+  Tensor b;
+  const uint64_t a_id = a.tensor_id();
+  b = std::move(a);
+  // a is left in a valid but unspecified state and may go on to be reused
+  // for different content; it must not silently keep its pre-move id, or a
+  // cache keyed on tensor_id() could conflate the new content with the old.
+  EXPECT_NE(a_id, a.tensor_id());
+}
+
+TEST(TensorTest, TensorIdSelfMoveAssignmentInvalidatesId) {
+  Tensor a;
+  a.sizes() = {5};
+  const uint64_t id_before = a.tensor_id();
+#if defined(__clang__)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wself-move"
+#endif
+  a = std::move(a);
+#if defined(__clang__)
+#pragma clang diagnostic pop
+#endif
+  // Self-move-assignment can still alter the object's other members while
+  // leaving `this == &other`; the id must not be preserved through that.
+  EXPECT_NE(id_before, a.tensor_id());
+}
+
 TEST(TensorTest, TensorIdSelfAssignmentIsANoop) {
   Tensor a;
   a.sizes() = {5};
