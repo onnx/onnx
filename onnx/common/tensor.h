@@ -32,7 +32,9 @@ class LazyTensorId {
   LazyTensorId() = default;
   ~LazyTensorId() = default;
   LazyTensorId(const LazyTensorId& /*unused*/) noexcept {}
-  LazyTensorId(LazyTensorId&& /*unused*/) noexcept {}
+  LazyTensorId(LazyTensorId&& other) noexcept {
+    other.id_ = 0;
+  }
   LazyTensorId& operator=(const LazyTensorId& other) noexcept {
     if (this != &other) {
       id_ = 0;
