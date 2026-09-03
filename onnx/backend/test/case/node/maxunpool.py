@@ -72,7 +72,7 @@ class MaxUnpool(Base):
             strides=[2, 2],
         )
         xT = np.array([[[[5, 6], [7, 8]]]], dtype=np.float32)
-        xI = np.array([[[[5, 7], [13, 15]]]], dtype=np.int64)
+        xI = np.array([[[[6, 8], [16, 18]]]], dtype=np.int64)
         output_shape = np.array((1, 1, 5, 5), dtype=np.int64)
         y = np.array(
             [
