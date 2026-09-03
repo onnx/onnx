@@ -12715,7 +12715,7 @@ expect(node, inputs=[x], outputs=[y], name="test_globallppool_default")
 
 
 ### GlobalMaxPool
-There are 2 test cases, listed as following:
+There are 3 test cases, listed as following:
 <details>
 <summary>globalmaxpool</summary>
 
@@ -12728,6 +12728,21 @@ node = onnx.helper.make_node(
 x = np.random.randn(1, 3, 5, 5).astype(np.float32)
 y = np.max(x, axis=tuple(range(2, np.ndim(x))), keepdims=True)
 expect(node, inputs=[x], outputs=[y], name="test_globalmaxpool")
+```
+
+</details>
+<details>
+<summary>globalmaxpool_3d</summary>
+
+```python
+node = onnx.helper.make_node(
+    "GlobalMaxPool",
+    inputs=["x"],
+    outputs=["y"],
+)
+x = np.random.randn(2, 4, 10).astype(np.float32)
+y = np.max(x, axis=tuple(range(2, np.ndim(x))), keepdims=True)
+expect(node, inputs=[x], outputs=[y], name="test_globalmaxpool_3d")
 ```
 
 </details>
