@@ -9,6 +9,72 @@
 #include "onnx/defs/type_builders.h"
 
 namespace ONNX_NAMESPACE {
+
+static void InitPRNGInference(InferenceContext& ctx) {
+  if (hasInputShape(ctx, 0) && getInputShape(ctx, 0).dim_size() != 0) {
+    fail_shape_inference("The 'seed' input must be a scalar.");
+  }
+  updateOutputElemType(ctx, 0, TensorProto::INT64);
+  appendDim(getOutputShape(ctx, 0), 2);
+}
+
+static void SplitPRNGInference(InferenceContext& ctx) {
+  if (hasInputShape(ctx, 0)) {
+    const auto& state_shape = getInputShape(ctx, 0);
+    if (state_shape.dim_size() != 1 || (state_shape.dim(0).has_dim_value() && state_shape.dim(0).dim_value() != 2)) {
+      fail_shape_inference("The 'prng_state' input must have shape [2].");
+    }
+  }
+  if (hasInputShape(ctx, 1)) {
+    const auto& data_shape = getInputShape(ctx, 1);
+    if (data_shape.dim_size() != 1) {
+      fail_shape_inference("The optional 'data' input must be a rank-1 tensor.");
+    }
+    if (data_shape.dim(0).has_dim_value() &&
+        data_shape.dim(0).dim_value() != static_cast<int64_t>(ctx.getNumOutputs())) {
+      fail_shape_inference("The optional 'data' input must contain one element for each output PRNG state.");
+    }
+  }
+
+  for (size_t i = 0; i < ctx.getNumOutputs(); ++i) {
+    updateOutputElemType(ctx, i, TensorProto::INT64);
+    appendDim(getOutputShape(ctx, i), 2);
+  }
+}
+
+ONNX_OPERATOR_SET_SCHEMA(
+    InitPRNG,
+    29,
+    OpSchema()
+        .SetDoc(kDoc_InitPRNG_ver29)
+        .Input(0, "seed", "Input seed value.", "tensor(int64)")
+        .Output(0, "prng_state", "Initial PRNG state.", "tensor(int64)")
+        .SetNodeDeterminism(OpSchema::NodeDeterminism::Deterministic)
+        .TypeAndShapeInferenceFunction(InitPRNGInference));
+
+ONNX_OPERATOR_SET_SCHEMA(
+    SplitPRNG,
+    29,
+    OpSchema()
+        .SetDoc(kDoc_SplitPRNG_ver29)
+        .Input(0, "prng_state", "Input PRNG state.", "tensor(int64)")
+        .Input(
+            1,
+            "data",
+            "Optional rank-1 tensor used to derive structured PRNG states.",
+            "tensor(int64)",
+            OpSchema::Optional)
+        .Output(
+            0,
+            "split_prng_states",
+            "One or more deterministically derived PRNG states.",
+            "tensor(int64)",
+            OpSchema::Variadic,
+            true,
+            1)
+        .SetNodeDeterminism(OpSchema::NodeDeterminism::Deterministic)
+        .TypeAndShapeInferenceFunction(SplitPRNGInference));
+
 ONNX_OPERATOR_SET_SCHEMA(
     Constant,
     25,
