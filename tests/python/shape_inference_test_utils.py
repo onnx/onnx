@@ -182,7 +182,7 @@ class TestShapeInferenceHelper:
             self._compare_value_infos(vi, inferred_vi)
         elif vi_type.HasField("map_type"):
             assert inferred_vi_type.HasField("map_type")
-            assert vi_type.map_type.key_type == vi_type.map_type.key_type
+            assert vi_type.map_type.key_type == inferred_vi_type.map_type.key_type
             self._compare_value_infos(
                 vi_type.map_type.value_type, inferred_vi_type.map_type.value_type
             )
