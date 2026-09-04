@@ -6,7 +6,7 @@
 * [Overall Test Coverage](#overall-test-coverage)
 # Node Test Coverage
 ## Summary
-Node tests have covered 192/202 (95.05%, 5 generators excluded) common operators.
+Node tests have covered 194/204 (95.10%, 5 generators excluded) common operators.
 
 Node tests have covered 1/1 (100.00%, 0 generators excluded) experimental operators.
 
@@ -14382,6 +14382,32 @@ expect(
     outputs=[output],
     name="test_image_decoder_decode_webp_rgb",
 )
+```
+
+</details>
+
+
+### InitPRNG
+There are 2 test cases, listed as following:
+<details>
+<summary>initprng</summary>
+
+```python
+node = helper.make_node("InitPRNG", inputs=["seed"], outputs=["state"])
+seed = np.array(0x123456789ABCDEF, dtype=np.int64)
+state = np.array([0x01234567, 0x89ABCDEF], dtype=np.int64)
+expect(node, inputs=[seed], outputs=[state], name="test_init_prng")
+```
+
+</details>
+<details>
+<summary>negative_seed</summary>
+
+```python
+node = helper.make_node("InitPRNG", inputs=["seed"], outputs=["state"])
+seed = np.array(-1, dtype=np.int64)
+state = np.array([0xFFFFFFFF, 0xFFFFFFFF], dtype=np.int64)
+expect(node, inputs=[seed], outputs=[state], name="test_init_prng_negative_seed")
 ```
 
 </details>
@@ -30035,6 +30061,51 @@ expect(
     inputs=[node_input, split],
     outputs=expected_outputs,
     name="test_split_zero_size_splits_opset18",
+)
+```
+
+</details>
+
+
+### SplitPRNG
+There are 2 test cases, listed as following:
+<details>
+<summary>splitprng</summary>
+
+```python
+node = helper.make_node(
+    "SplitPRNG", inputs=["state"], outputs=["state0", "state1"]
+)
+state = np.array([0, 0], dtype=np.int64)
+state0 = np.array([1797259609, 2579123966], dtype=np.int64)
+state1 = np.array([928981903, 3453687069], dtype=np.int64)
+expect(
+    node,
+    inputs=[state],
+    outputs=[state0, state1],
+    name="test_split_prng",
+)
+```
+
+</details>
+<details>
+<summary>with_data</summary>
+
+```python
+node = helper.make_node(
+    "SplitPRNG",
+    inputs=["state", "data"],
+    outputs=["state0", "state1"],
+)
+state = np.array([0, 0], dtype=np.int64)
+data = np.array([42, -1], dtype=np.int64)
+state0 = np.array([2814562516, 111458285], dtype=np.int64)
+state1 = np.array([145227835, 1976240827], dtype=np.int64)
+expect(
+    node,
+    inputs=[state, data],
+    outputs=[state0, state1],
+    name="test_split_prng_with_data",
 )
 ```
 

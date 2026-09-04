@@ -4551,6 +4551,53 @@ class TestShapeInference(TestShapeInferenceHelper):
             graph, [make_tensor_value_info("out", TensorProto.DOUBLE, (3, 4, 5))]
         )
 
+    def test_init_prng(self) -> None:
+        graph = self._make_graph(
+            [("seed", TensorProto.INT64, ())],
+            [make_node("InitPRNG", ["seed"], ["state"])],
+            [],
+        )
+        self._assert_inferred(
+            graph,
+            [make_tensor_value_info("state", TensorProto.INT64, (2,))],
+            opset_imports=[helper.make_opsetid("", 29)],
+        )
+
+    def test_split_prng(self) -> None:
+        graph = self._make_graph(
+            [
+                ("state", TensorProto.INT64, (None,)),
+                ("data", TensorProto.INT64, (2,)),
+            ],
+            [make_node("SplitPRNG", ["state", "data"], ["state1", "state2"])],
+            [],
+        )
+        self._assert_inferred(
+            graph,
+            [
+                make_tensor_value_info("state1", TensorProto.INT64, (2,)),
+                make_tensor_value_info("state2", TensorProto.INT64, (2,)),
+            ],
+            opset_imports=[helper.make_opsetid("", 29)],
+        )
+
+    def test_split_prng_data_length_must_match_outputs(self) -> None:
+        graph = helper.make_graph(
+            [make_node("SplitPRNG", ["state", "data"], ["state1", "state2"])],
+            "split_prng_invalid_data_length",
+            [
+                make_tensor_value_info("state", TensorProto.INT64, (2,)),
+                make_tensor_value_info("data", TensorProto.INT64, (3,)),
+            ],
+            [
+                make_empty_tensor_value_info("state1"),
+                make_empty_tensor_value_info("state2"),
+            ],
+        )
+        model = helper.make_model(graph, opset_imports=[helper.make_opsetid("", 29)])
+        with pytest.raises(onnx.shape_inference.InferenceError):
+            onnx.shape_inference.infer_shapes(model, strict_mode=True)
+
     def test_random_normal_like(self) -> None:
         graph = self._make_graph(
             [("X", TensorProto.FLOAT, (2, 3, 4))],
