@@ -4797,6 +4797,25 @@ class TestReferenceEvaluator:
 
         assert_allclose(got, np.take(data, indices, axis=1))
 
+    def test_non_max_suppression_default_inputs(self):
+        boxes_info = make_tensor_value_info("boxes", TensorProto.FLOAT, None)
+        scores_info = make_tensor_value_info("scores", TensorProto.FLOAT, None)
+        output_info = make_tensor_value_info(
+            "selected_indices", TensorProto.INT64, None
+        )
+        node = make_node("NonMaxSuppression", ["boxes", "scores"], ["selected_indices"])
+        model = make_model(
+            make_graph([node], "g", [boxes_info, scores_info], [output_info])
+        )
+        ref = ReferenceEvaluator(model)
+        boxes = np.array([[[0.0, 0.0, 1.0, 1.0]]], dtype=np.float32)
+        scores = np.array([[[0.9]]], dtype=np.float32)
+
+        got = ref.run(None, {"boxes": boxes, "scores": scores})[0]
+
+        assert got.shape == (0, 3)
+        assert got.dtype == np.int64
+
     def test_constant_of_shape(self):
         X = make_tensor_value_info("X", TensorProto.FLOAT, None)
         Y = make_tensor_value_info("Y", TensorProto.FLOAT, None)
