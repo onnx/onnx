@@ -10,13 +10,11 @@
 // Internal helpers shared between ir_pb_converter.cc and other onnx-internal
 // translation units that need small, single-value conversions between the
 // protobuf types and ir.h's Graph/Node/Value/Tensor -- as opposed to
-// ir_pb_converter.h's public, whole-Graph/whole-ModelProto entry points
-// (ImportModelProto/ExportModelProto). Not part of onnx's public API.
-//
-// Added for Graph-native shape inference (onnx/common/graph_shape_inference.h),
-// which needs to build a single node's NodeProto (for its attributes) and a
-// single value's TypeProto/TensorProto on the fly, without converting the
-// whole surrounding graph.
+// ir_pb_converter.h's public, whole-Graph/whole-ModelProto entry points. Not
+// part of onnx's public API. Added for Graph-native shape inference
+// (onnx/common/graph_shape_inference.h), which builds a single node's
+// NodeProto and a single value's TypeProto/TensorProto on the fly, without
+// converting the whole surrounding graph.
 
 #include "onnx/common/ir.h"
 #include "onnx/onnx_pb.h"
@@ -35,10 +33,9 @@ void encodeTypeProtoTensorType(TypeProto_Tensor& tensor_type, const Value& n);
 // in ir_pb_converter.cc.
 void addAttribute(NodeProto& n_p, const Node& n, Symbol name);
 
-// Encodes a Tensor's contents into a TensorProto (always copying; there is
-// no consuming/moving overload since callers of this internal helper build
-// small, ephemeral TensorProtos that are not part of a ModelProto export).
-// Defined in ir_pb_converter.cc.
+// Encodes a Tensor's contents into a TensorProto (always copying -- callers
+// build small, ephemeral TensorProtos, not a ModelProto export). Defined in
+// ir_pb_converter.cc.
 void encodeTensor(TensorProto& p, const Tensor& tensor);
 
 } // namespace ONNX_NAMESPACE

@@ -1159,10 +1159,7 @@ struct Graph final {
   const std::vector<std::string>& initializer_names() const {
     return initializer_names_;
   }
-  // Returns nullptr if no initializer named `name` exists (previously an
-  // iterator sentinel; every caller only ever unconditionally dereferenced
-  // it, so a nullable pointer is both simpler and a closer match for how
-  // it's actually used).
+  // Returns nullptr if no initializer named `name` exists.
   const Tensor* getInitializer(const std::string& name) const {
     for (const auto& initializer : initializers_) {
       if (name == initializer.name()) {
