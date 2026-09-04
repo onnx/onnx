@@ -23,4 +23,6 @@ class InitPRNG(Base):
         node = helper.make_node("InitPRNG", inputs=["seed"], outputs=["state"])
         seed = np.array(-1, dtype=np.int64)
         state = np.array([0xFFFFFFFF, 0xFFFFFFFF], dtype=np.int64)
-        expect(node, inputs=[seed], outputs=[state], name="test_init_prng_negative_seed")
+        expect(
+            node, inputs=[seed], outputs=[state], name="test_init_prng_negative_seed"
+        )

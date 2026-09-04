@@ -30,9 +30,7 @@ def threefry_seed(seed: np.ndarray) -> np.ndarray:
             f"with shape {seed.shape}."
         )
     seed_bits = int(seed) & ((1 << 64) - 1)
-    return np.array(
-        [seed_bits >> 32, seed_bits & _UINT32_MASK], dtype=np.int64
-    )
+    return np.array([seed_bits >> 32, seed_bits & _UINT32_MASK], dtype=np.int64)
 
 
 def _rotate_left(value: np.ndarray, distance: int) -> np.ndarray:
@@ -51,9 +49,7 @@ def _threefry2x32_words(
             value0 = (value0 + value1) & _UINT32_MASK
             value1 = _rotate_left(value1, rotation) ^ value0
         value0 = (value0 + keys[(injection + 1) % 3]) & _UINT32_MASK
-        value1 = (
-            value1 + keys[(injection + 2) % 3] + injection + 1
-        ) & _UINT32_MASK
+        value1 = (value1 + keys[(injection + 2) % 3] + injection + 1) & _UINT32_MASK
 
     return value0, value1
 
