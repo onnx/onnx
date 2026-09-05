@@ -2,7 +2,7 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
-name: Test source dist of preview build at onnx-weekly
+name: Test source distribution build
 
 on:
   schedule:
@@ -15,7 +15,7 @@ permissions:
 
 jobs:
 
-  test_sdist_preview:
+  test_sdist:
 
     strategy:
       matrix:
@@ -36,8 +36,14 @@ jobs:
           with:
             python-version: ${{ matrix.python-version }}
 
-        - name: Test preview build source distribution from PyPI
+        - name: Build and install source distribution from this checkout
+          shell: bash
           run: |
-            python -m pip install --no-binary onnx-weekly onnx-weekly
+            python -m pip install --upgrade pip
+            python -m pip install build
+            python -m build --sdist
+            python -m pip install dist/*.tar.gz
             python -m pip install pytest ml_dtypes pillow
-            pytest
+
+        - name: Run tests
+          run: pytest
