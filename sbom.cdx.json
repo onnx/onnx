@@ -60,6 +60,12 @@
           "url": "https://github.com/wjakob/nanobind.git"
         }
       ],
+      "hashes": [
+        {
+          "alg": "SHA-1",
+          "content": "a47983000e9dda68177fc1fd426f7147d785c2c0"
+        }
+      ],
       "licenses": [{"license": {"id": "BSD-3-Clause"}}]
     }
   ],

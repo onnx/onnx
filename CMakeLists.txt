@@ -598,10 +598,21 @@ if(ONNX_BUILD_PYTHON)
     endif()
     include(FetchContent)
     sbom_get_dep("nanobind" _nanobind)
+    # nanobind pulls in a git submodule (ext/robin_map), so it is fetched via
+    # GIT_REPOSITORY rather than a URL_HASH-verified tarball like the other
+    # dependencies above. A plain tag is a mutable ref that whoever controls
+    # the upstream repo can retarget, so pin to the tag's resolved commit
+    # (recorded as sbom.cdx.json's nanobind "hashes" entry) instead.
+    if(NOT _nanobind_SHA256)
+      message(FATAL_ERROR
+        "sbom.cdx.json's nanobind entry is missing a pinned commit hash; "
+        "refusing to fetch by mutable tag v${_nanobind_VERSION}.")
+    endif()
+    message(STATUS "Fetching nanobind v${_nanobind_VERSION} pinned at commit ${_nanobind_SHA256}")
     FetchContent_Declare(
       nanobind
       GIT_REPOSITORY ${_nanobind_URL}
-      GIT_TAG v${_nanobind_VERSION}
+      GIT_TAG ${_nanobind_SHA256} # commit for tag v${_nanobind_VERSION}
       GIT_SHALLOW TRUE
     )
     FetchContent_MakeAvailable(nanobind)
