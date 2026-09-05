@@ -17779,7 +17779,38 @@ expect(
 
 
 ### MeanVarianceNormalization
-There are 1 test cases, listed as following:
+There are 3 test cases, listed as following:
+<details>
+<summary>epsilon</summary>
+
+```python
+epsilon = 1e-5
+node = onnx.helper.make_node(
+    "MeanVarianceNormalization",
+    inputs=["X"],
+    outputs=["Y"],
+    axes=[1, -1],
+    epsilon=epsilon,
+)
+
+input_data = np.arange(24, dtype=np.float64).reshape(2, 3, 4)
+
+# Calculate expected output with custom epsilon
+data_mean = np.mean(input_data, axis=(1, -1), keepdims=True)
+data_mean_squared = np.square(data_mean)
+data_squared_mean = np.mean(np.square(input_data), axis=(1, -1), keepdims=True)
+std = np.sqrt(data_squared_mean - data_mean_squared)
+expected_output = (input_data - data_mean) / (std + epsilon)
+
+expect(
+    node,
+    inputs=[input_data],
+    outputs=[expected_output],
+    name="test_mvn_epsilon",
+)
+```
+
+</details>
 <details>
 <summary>meanvariancenormalization</summary>
 
@@ -17811,13 +17842,41 @@ input_data = np.array(
 
 # Calculate expected output data
 data_mean = np.mean(input_data, axis=(0, 2, 3), keepdims=1)
-data_mean_squared = np.power(data_mean, 2)
-data_squared = np.power(input_data, 2)
-data_squared_mean = np.mean(data_squared, axis=(0, 2, 3), keepdims=1)
+data_mean_squared = np.square(data_mean)
+data_squared_mean = np.mean(
+    np.square(input_data), axis=(0, 2, 3), keepdims=True
+)
 std = np.sqrt(data_squared_mean - data_mean_squared)
 expected_output = (input_data - data_mean) / (std + 1e-9)
 
 expect(node, inputs=[input_data], outputs=[expected_output], name="test_mvn")
+```
+
+</details>
+<details>
+<summary>zero_variance</summary>
+
+```python
+node = onnx.helper.make_node(
+    "MeanVarianceNormalization",
+    inputs=["X"],
+    outputs=["Y"],
+    axes=[0],
+)
+input_data = np.ones(2, dtype=np.float32)
+mean = np.mean(input_data, axis=0, keepdims=True)
+mean_squared = np.square(mean)
+squared_mean = np.mean(np.square(input_data), axis=0, keepdims=True)
+expected_output = (input_data - mean) / (
+    np.sqrt(squared_mean - mean_squared) + 1e-9
+)
+
+expect(
+    node,
+    inputs=[input_data],
+    outputs=[expected_output],
+    name="test_mvn_zero_variance",
+)
 ```
 
 </details>
