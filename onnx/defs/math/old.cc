@@ -820,27 +820,11 @@ ONNX_OPERATOR_SET_SCHEMA(
     OpSchema().FillUsing(
         SoftmaxFamilyDocGenerator_opset_11("hardmax", "1 for the first maximum value, and 0 for all others")));
 
-static constexpr const char* Mod_doc_10 = R"DOC(
-  Performs element-wise binary modulus (with Numpy-style broadcasting support).
-    The sign of the remainder is the same as that of the Divisor.
-
-    Mod operator can also behave like C fmod() or numpy.fmod. In this case, the sign of the remainder however, will be the same as the Dividend
-    (in contrast to integer mod). To force a behavior like numpy.fmod() an 'fmod' Attribute is provided.
-    This attribute is set to 0 by default causing the behavior to be like integer mod.
-    Setting this attribute to 1 causes the remainder to be calculated similar to that of numpy.fmod().
-
-    If the input type is floating point, then `fmod` attribute must be set to 1.
-
-    In case of dividend being zero, the results will be platform dependent.
-
-  This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
-)DOC";
-
 ONNX_OPERATOR_SET_SCHEMA(
     Mod,
     10,
     OpSchema()
-        .SetDoc(Mod_doc_10)
+        .SetDoc(kDoc_Mod_ver10)
         .Attr(
             "fmod",
             "Whether the operator should behave like fmod (default=0 meaning it will do integer mods); Set this to 1 to force fmod treatment",
@@ -875,17 +859,11 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Constrain input and output types to signed numeric tensors.")
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
-static constexpr const char* Abs_ver6_doc = R"DOC(
-Absolute takes one input data (Tensor<T>) and produces one output data
-(Tensor<T>) where the absolute is, y = abs(x), is applied to
-the tensor elementwise.
-)DOC";
-
 ONNX_OPERATOR_SET_SCHEMA(
     Abs,
     6,
     OpSchema()
-        .SetDoc(Abs_ver6_doc)
+        .SetDoc(kDoc_Abs_ver6)
         .Input(0, "X", "Input tensor", "T")
         .Output(0, "Y", "Output tensor", "T")
         .TypeConstraint("T", OpSchema::all_numeric_types(), "Constrain input and output types to all numeric tensors.")
@@ -904,17 +882,11 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Constrain input and output types to float tensors.")
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
-static constexpr const char* Floor_ver6_doc = R"DOC(
-Floor takes one input data (Tensor<T>) and produces one output data
-(Tensor<T>) where the floor is, y = floor(x), is applied to
-the tensor elementwise.
-)DOC";
-
 ONNX_OPERATOR_SET_SCHEMA(
     Floor,
     6,
     OpSchema()
-        .SetDoc(Floor_ver6_doc)
+        .SetDoc(kDoc_Floor_ver6)
         .Input(0, "X", "Input tensor", "T")
         .Output(0, "Y", "Output tensor", "T")
         .TypeConstraint(
@@ -923,17 +895,11 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Constrain input and output types to float tensors.")
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
-static constexpr const char* Ceil_ver6_doc = R"DOC(
-Ceil takes one input data (Tensor<T>) and produces one output data
-(Tensor<T>) where the ceil is, y = ceil(x), is applied to
-the tensor elementwise.
-)DOC";
-
 ONNX_OPERATOR_SET_SCHEMA(
     Ceil,
     6,
     OpSchema()
-        .SetDoc(Ceil_ver6_doc)
+        .SetDoc(kDoc_Ceil_ver6)
         .Input(0, "X", "Input tensor", "T")
         .Output(0, "Y", "Output tensor", "T")
         .TypeConstraint(
@@ -1193,17 +1159,11 @@ ONNX_OPERATOR_SET_SCHEMA(
             {types::Float16, types::Float, types::Double},
             "Constrain input and output types to float tensors."));
 
-static constexpr const char* Clip_ver12_doc = R"DOC(
-Clip operator limits the given input within an interval. The interval is
-specified by the inputs 'min' and 'max'. They default to
-numeric_limits::lowest() and numeric_limits::max(), respectively.
-)DOC";
-
 ONNX_OPERATOR_SET_SCHEMA(
     Clip,
     12,
     OpSchema()
-        .SetDoc(Clip_ver12_doc)
+        .SetDoc(kDoc_Clip_ver12)
         .Input(0, "input", "Input tensor whose elements to be clipped", "T")
         .Input(
             1,
@@ -1223,25 +1183,12 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint("T", OpSchema::all_numeric_types(), "Constrain input and output types to all numeric tensors.")
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
-static constexpr const char* Gemm_ver11_doc = R"DOC(General Matrix multiplication:
-https://en.wikipedia.org/wiki/Basic_Linear_Algebra_Subprograms#Level_3
-
-A' = transpose(A) if transA else A
-
-B' = transpose(B) if transB else B
-
-Compute Y = alpha * A' * B' + beta * C, where input tensor A has shape (M, K) or (K, M),
-input tensor B has shape (K, N) or (N, K), input tensor C is broadcastable to shape (M, N),
-and output tensor Y has shape (M, N). A will be transposed before doing the
-computation if attribute transA is non-zero, same for B and transB.
-)DOC";
-
 ONNX_OPERATOR_SET_SCHEMA(
     Gemm,
     11,
     OpSchema()
         .SetDoc(GET_OP_DOC_STR(
-            std::string(Gemm_ver11_doc) + GenerateBroadcastingDocUni("tensor C", "tensor A * B") + "\n" +
+            std::string(kDoc_Gemm_ver11) + GenerateBroadcastingDocUni("tensor C", "tensor A * B") + "\n" +
             GenerateOptionalArgumentsDoc()))
         .Input(
             0,
@@ -1508,75 +1455,6 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint("T2", {types::Int32, types::Int64}, "axis tensor can be int32 or int64 only")
         .TypeAndShapeInferenceFunction(ONNX_NAMESPACE::propagateShapeAndTypeFromFirstInput));
 
-static constexpr const char* NegativeLogLikelihoodLoss_ver12_doc = R"DOC(
-A NegativeLogLikelihoodLoss operator computes (weighted) negative log likelihood loss.
-Its "input" tensor has the shape of (N, C, d1, d2, ..., dk) where k >= 0.
-The "input" tensor contains log-probabilities for input[n, :, d_1, d_2,..., d_k] being in a class of [0, C).
-The operator's "target" input tensor has the shape of (N, d1, d2, ..., dk). It encodes class labels (one of C classes)
-or it may contain a special value (indicated by an attribute ignore_index) for N x d1 x d2 x ... x dk samples.
-The loss value for input[n, :, d_1, d_2,...d_k] being classified as class c = target[n][d_1][d_2]...[d_k] is computed as:
-    loss[n][d_1][d_2]...[d_k] = -input[n][c][d_1][d_2]...[d_k].
-When an optional "weight" is provided, the sample loss is calculated as:
-    loss[n][d_1][d_2]...[d_k] = -input[n][c][d_1][d_2]...[d_k] * weight[c].
-loss is zero for the case when target-value equals ignore_index.
-
-    loss[n][d_1][d_2]...[d_k] = 0, when target[n][d_1][d_2]...[d_k] = ignore_index
-If "reduction" attribute is set to "none", the operator's output will be the above loss with shape (N, d1, d2, ..., dk).
-If "reduction" attribute is set to "mean" (the default attribute value), the output loss is (weight) averaged:
-    mean(loss), if "weight" is not provided,
-or if weight is provided,
-    sum(loss) / sum(weight[target[n][d_1][d_2]...[d_k]]]), for all samples.
-If "reduction" attribute is set to "sum", the output is a scalar:
-    sum(loss).
-See also https://pytorch.org/docs/stable/nn.html#torch.nn.NLLLoss.
-Example 1:
-    // negative log likelihood loss, "none" reduction
-    N, C, d1 = 2, 3, 2
-    input = [[[1.0, 2.0], [2.0, 2.0], [3.0, 2.0]],
-             [[0.0, 1.0], [2.0, 2.0], [1.0, 2]]]
-    target = [[2, 1], [0, 2]]
-    loss = np.zeros((N, d1))
-    for n in range(N):
-        for d_1 in range(d1):
-            c = target[n][d_1]
-            loss[n][d_1] = -input[n][c][d_1]
-    // print(loss)
-    // [[-3. -2.]
-    //  [-0. -2.]]
-Example 2:
-    // weighted negative log likelihood loss, sum reduction
-    N, C, d1 = 2, 3, 2
-    input = [[[1.0, 2.0], [2.0, 2.0], [3.0, 2.0]],
-            [[0.0, 1.0], [2.0, 2.0], [1.0, 2]]]
-    target = [[2, 1], [0, 2]]
-    weight = [0.2, 0.3, 0.1]
-    loss = np.zeros((N, d1))
-    for n in range(N):
-        for d_1 in range(d1):
-            c = target[n][d_1]
-            loss[n][d_1] = -input[n][c][d_1] * weight[c]
-    loss = np.sum(loss)
-    // print(loss)
-    // -1.1
-Example 3:
-    // weighted negative log likelihood loss, mean reduction
-    N, C, d1 = 2, 3, 2
-    input = [[[1.0, 2.0], [2.0, 2.0], [3.0, 2.0]],
-            [[0.0, 1.0], [2.0, 2.0], [1.0, 2]]]
-    target = [[2, 1], [0, 2]]
-    weight = [0.2, 0.3, 0.1]
-    loss = np.zeros((N, d1))
-    weight_total = 0
-    for n in range(N):
-        for d_1 in range(d1):
-            c = target[n][d_1]
-            loss[n][d_1] = -input[n][c][d_1] * weight[c]
-            weight_total = weight_total + weight[c]
-    loss = np.sum(loss) / weight_total
-    // print(loss)
-    // -1.57
-)DOC";
-
 static TensorProto ToDimensionOneFloatTensor_old(float value) {
   auto t = ToTensor(std::vector<float>({value}));
   t.add_dims(1);
@@ -1767,7 +1645,7 @@ ONNX_OPERATOR_SET_SCHEMA(
     NegativeLogLikelihoodLoss,
     12,
     OpSchema()
-        .SetDoc(NegativeLogLikelihoodLoss_ver12_doc)
+        .SetDoc(kDoc_NegativeLogLikelihoodLoss_ver12)
         .Input(0, "input", "Input tensor of shape (N, C) or (N, C, d1, d2, ..., dk).", "T")
         .Input(
             1,
@@ -1872,40 +1750,6 @@ static constexpr const char* reduction_doc_sce_opset12 =
     "'mean': the sum of the output will be divided by the number of "
     "elements in the output.";
 
-static constexpr const char* SoftmaxCrossEntropyLoss_ver12_doc =
-    R"DOC(Loss function that measures the softmax cross entropy
-between 'scores' and 'labels'.
-This operator first computes a loss tensor whose shape is identical to the labels input.
-If the input is 2-D with shape (N, C), the loss tensor may be a N-element vector L = (l_1, l_2, ..., l_N).
-If the input is N-D tensor with shape (N, C, D1, D2, ..., Dk),
-the loss tensor L may have (N, D1, D2, ..., Dk) as its shape and L[i,][j_1][j_2]...[j_k] denotes a scalar element in L.
-After L is available, this operator can optionally do a reduction operator.
-
-shape(scores): (N, C) where C is the number of classes, or (N, C, D1, D2,..., Dk),
-        with K >= 1 in case of K-dimensional loss.
-shape(labels): (N) where each value is 0 <= labels[i] <= C-1, or (N, D1, D2,..., Dk),
-        with K >= 1 in case of K-dimensional loss.
-
-The loss for one sample, l_i, can calculated as follows:
-    l[i][d1][d2]...[dk] = -y[i][c][d1][d2]..[dk], where i is the index of classes.
-or
-    l[i][d1][d2]...[dk] = -y[i][c][d1][d2]..[dk] * weights[c], if 'weights' is provided.
-
-loss is zero for the case when label-value equals ignore_index.
-    l[i][d1][d2]...[dk]  = 0, when labels[n][d1][d2]...[dk] = ignore_index
-
-where:
-    p = Softmax(scores)
-    y = Log(p)
-    c = labels[i][d1][d2]...[dk]
-
-Finally, L is optionally reduced:
-If reduction = 'none', the output is L with shape (N, D1, D2, ..., Dk).
-If reduction = 'sum', the output is scalar: Sum(L).
-If reduction = 'mean', the output is scalar: ReduceMean(L), or if weight is provided: ReduceSum(L) / ReduceSum(W),
-where tensor W is of shape (N, D1, D2, ..., Dk) and W[n][d1][d2]...[dk] = weights[labels[i][d1][d2]...[dk]].
-)DOC";
-
 static bool BuildContextDependentFunctionBodySCE_opset12(
     const FunctionBodyBuildContext& ctx,
     const OpSchema& schema,
@@ -1962,7 +1806,7 @@ ONNX_OPERATOR_SET_SCHEMA(
     SoftmaxCrossEntropyLoss,
     12,
     OpSchema()
-        .SetDoc(SoftmaxCrossEntropyLoss_ver12_doc)
+        .SetDoc(kDoc_SoftmaxCrossEntropyLoss_ver12)
         .Attr("reduction", reduction_doc_sce_opset12, AttributeProto::STRING, std::string("mean"))
         .Attr(
             "ignore_index",
@@ -2094,27 +1938,6 @@ ONNX_OPERATOR_SET_SCHEMA(
     OpSchema().FillUsing(
         SoftmaxFamilyDocGenerator_opset1("hardmax", "1 for the first maximum value, and 0 for all others")));
 
-static constexpr const char* kBroadcastDoc_old = R"DOC(
-If necessary the right-hand-side argument will be broadcasted to match the
-shape of left-hand-side argument. When broadcasting is specified, the second
-tensor can either be of element size 1 (including a scalar tensor and any
-tensor with rank equal to or smaller than the first tensor), or having its
-shape as a contiguous subset of the first tensor's shape. The starting of the
-mutually equal shape is specified by the argument "axis", and if it is not set,
-suffix matching is assumed. 1-dim expansion doesn't work yet.
-
-For example, the following tensor shapes are supported (with broadcast=1):
-
-  shape(A) = (2, 3, 4, 5), shape(B) = (,), i.e. B is a scalar tensor
-  shape(A) = (2, 3, 4, 5), shape(B) = (1, 1), i.e. B is an 1-element tensor
-  shape(A) = (2, 3, 4, 5), shape(B) = (5,)
-  shape(A) = (2, 3, 4, 5), shape(B) = (4, 5)
-  shape(A) = (2, 3, 4, 5), shape(B) = (3, 4), with axis=1
-  shape(A) = (2, 3, 4, 5), shape(B) = (2), with axis=0
-
-Attribute `broadcast=1` needs to be passed to enable broadcasting.
-)DOC";
-
 static std::function<void(OpSchema&)> MathDocGenerator_old(const char* name) {
   return [=](OpSchema& schema) {
     std::string doc;
@@ -2123,7 +1946,7 @@ static std::function<void(OpSchema&)> MathDocGenerator_old(const char* name) {
 Performs element-wise binary {name} (with limited broadcast support).
 {broadcast_doc})DOC";
         ReplaceAll(doc, "{name}", name);
-        ReplaceAll(doc, "{broadcast_doc}", kBroadcastDoc_old););
+        ReplaceAll(doc, "{broadcast_doc}", kDoc_Pow_ver1););
     schema.SetDoc(doc);
     schema.Attr("broadcast", "Pass 1 to enable broadcasting", AttributeProto::INT, static_cast<int64_t>(0));
 
@@ -2158,14 +1981,14 @@ Performs element-wise binary {name} (with limited broadcast support).
 For integer inputs, the result is computed using truncating division (rounding toward zero).
 )DOC";
           ReplaceAll(doc, "{name}", name);
-          ReplaceAll(doc, "{broadcast_doc}", kBroadcastDoc_old););
+          ReplaceAll(doc, "{broadcast_doc}", kDoc_Pow_ver1););
     } else {
       POPULATE_OP_DOC_STR(
           doc = R"DOC(
 Performs element-wise binary {name} (with limited broadcast support).
 {broadcast_doc})DOC";
           ReplaceAll(doc, "{name}", name);
-          ReplaceAll(doc, "{broadcast_doc}", kBroadcastDoc_old););
+          ReplaceAll(doc, "{broadcast_doc}", kDoc_Pow_ver1););
     }
     schema.SetDoc(doc);
     schema.Attr("broadcast", "Pass 1 to enable broadcasting", AttributeProto::INT, static_cast<int64_t>(0));
@@ -2207,7 +2030,7 @@ ONNX_OPERATOR_SET_SCHEMA(
     Pow,
     1,
     OpSchema()
-        .SetDoc(kDoc_Pow_ver13 + std::string(kBroadcastDoc_old))
+        .SetDoc(kDoc_Pow_ver13 + std::string(kDoc_Pow_ver1))
         .Input(0, "X", "Input tensor of any shape, base of the exponent.", "T")
         .Input(
             1,
@@ -2265,13 +2088,11 @@ ONNX_OPERATOR_SET_SCHEMA(
             {types::Float16, types::Float, types::Double},
             "Constrain input and output types to float tensors."));
 
-static const char* const Abs_ver1_doc = Abs_ver6_doc;
-
 ONNX_OPERATOR_SET_SCHEMA(
     Abs,
     1,
     OpSchema()
-        .SetDoc(Abs_ver1_doc)
+        .SetDoc(kDoc_Abs_ver6)
         .Input(0, "X", "Input tensor", "T")
         .Output(0, "Y", "Output tensor", "T")
         // This attribute was added via AllowConsumed API in OpSchema.
@@ -2299,13 +2120,11 @@ ONNX_OPERATOR_SET_SCHEMA(
             {types::Float16, types::Float, types::Double},
             "Constrain input and output types to float tensors."));
 
-static const char* const Floor_ver1_doc = Floor_ver6_doc;
-
 ONNX_OPERATOR_SET_SCHEMA(
     Floor,
     1,
     OpSchema()
-        .SetDoc(Floor_ver1_doc)
+        .SetDoc(kDoc_Floor_ver6)
         .Input(0, "X", "Input tensor", "T")
         .Output(0, "Y", "Output tensor", "T")
         // This attribute was added via AllowConsumed API in OpSchema.
@@ -2317,13 +2136,11 @@ ONNX_OPERATOR_SET_SCHEMA(
             {types::Float16, types::Float, types::Double},
             "Constrain input and output types to float tensors."));
 
-static const char* const Ceil_ver1_doc = Ceil_ver6_doc;
-
 ONNX_OPERATOR_SET_SCHEMA(
     Ceil,
     1,
     OpSchema()
-        .SetDoc(Ceil_ver1_doc)
+        .SetDoc(kDoc_Ceil_ver6)
         .Input(0, "X", "Input tensor", "T")
         .Output(0, "Y", "Output tensor", "T")
         // This attribute was added via AllowConsumed API in OpSchema.
@@ -2482,19 +2299,11 @@ ONNX_OPERATOR_SET_SCHEMA(
             {types::Float16, types::Float, types::Double},
             "Constrain input and output types to float tensors."));
 
-static constexpr const char* PRelu_ver1_doc = R"DOC(
-
-PRelu takes input data (Tensor<T>) and slope tensor as input, and produces one
-output data (Tensor<T>) where the function `f(x) = slope * x for x < 0`,
-`f(x) = x for x >= 0`., is applied to the data tensor elementwise.
-
-)DOC";
-
 ONNX_OPERATOR_SET_SCHEMA(
     PRelu,
     1,
     OpSchema()
-        .SetDoc(PRelu_ver1_doc)
+        .SetDoc(kDoc_PRelu_ver1)
         .Input(0, "X", "Input tensor", "T")
         .Input(
             1,
@@ -2516,7 +2325,7 @@ ONNX_OPERATOR_SET_SCHEMA(
     PRelu,
     6,
     OpSchema()
-        .SetDoc(PRelu_ver1_doc)
+        .SetDoc(kDoc_PRelu_ver1)
         .Input(0, "X", "Input tensor", "T")
         .Input(
             1,
@@ -2536,7 +2345,7 @@ ONNX_OPERATOR_SET_SCHEMA(
     7,
     OpSchema()
         .SetDoc(
-            GET_OP_DOC_STR(std::string(PRelu_ver1_doc) + GenerateBroadcastingDocUni("tensor slope", "input tensor X")))
+            GET_OP_DOC_STR(std::string(kDoc_PRelu_ver1) + GenerateBroadcastingDocUni("tensor slope", "input tensor X")))
         .Input(0, "X", "Input tensor", "T")
         .Input(
             1,
@@ -2585,16 +2394,11 @@ ONNX_OPERATOR_SET_SCHEMA(
             {types::Float16, types::Float, types::Double},
             "Constrain input and output types to float tensors."));
 
-static constexpr const char* Max_ver1_doc = R"DOC(
-Element-wise max of each of the input tensors. All inputs and outputs must
-have the same shape and data type.
-)DOC";
-
 ONNX_OPERATOR_SET_SCHEMA(
     Max,
     1,
     OpSchema()
-        .SetDoc(Max_ver1_doc)
+        .SetDoc(kDoc_Max_ver1)
         .Input(0, "data_0", "List of tensors for Max.", "T", OpSchema::Variadic)
         .Output(0, "max", "Output tensor. Same dimension as inputs.", "T")
         // This attribute was added via AllowConsumed API in OpSchema.
@@ -2606,16 +2410,11 @@ ONNX_OPERATOR_SET_SCHEMA(
             {types::Float16, types::Float, types::Double},
             "Constrain input and output types to float tensors."));
 
-static constexpr const char* Min_ver1_doc = R"DOC(
-Element-wise min of each of the input tensors. All inputs and outputs must
-have the same shape and data type.
-)DOC";
-
 ONNX_OPERATOR_SET_SCHEMA(
     Min,
     1,
     OpSchema()
-        .SetDoc(Min_ver1_doc)
+        .SetDoc(kDoc_Min_ver1)
         .Input(0, "data_0", "List of tensors for Min", "T", OpSchema::Variadic)
         .Output(0, "min", "Output tensor. Same dimension as inputs.", "T")
         // This attribute was added via AllowConsumed API in OpSchema.
@@ -2627,16 +2426,11 @@ ONNX_OPERATOR_SET_SCHEMA(
             {types::Float16, types::Float, types::Double},
             "Constrain input and output types to float tensors."));
 
-static constexpr const char* Sum_ver1_doc = R"DOC(
-Element-wise sum of each of the input tensors. All inputs and outputs must
-have the same shape and data type.
-)DOC";
-
 ONNX_OPERATOR_SET_SCHEMA(
     Sum,
     1,
     OpSchema()
-        .SetDoc(Sum_ver1_doc)
+        .SetDoc(kDoc_Sum_ver1)
         .Input(0, "data_0", "List of tensors for Sum.", "T", OpSchema::Variadic)
         .Output(0, "sum", "Output tensor. Same dimension as inputs.", "T")
         // This attribute was added via AllowConsumed API in OpSchema.
@@ -2648,16 +2442,11 @@ ONNX_OPERATOR_SET_SCHEMA(
             {types::Float16, types::Float, types::Double},
             "Constrain input and output types to float tensors."));
 
-static constexpr const char* Mean_ver1_doc = R"DOC(
-Element-wise mean of each of the input tensors. All inputs and outputs must
-have the same shape and data type.
-)DOC";
-
 ONNX_OPERATOR_SET_SCHEMA(
     Mean,
     1,
     OpSchema()
-        .SetDoc(Mean_ver1_doc)
+        .SetDoc(kDoc_Mean_ver1)
         .Input(0, "data_0", "List of tensors for Mean.", "T", OpSchema::Variadic)
         .Output(0, "mean", "Output tensor. Same dimension as inputs.", "T")
         // This attribute was added via AllowConsumed API in OpSchema.
@@ -2669,17 +2458,11 @@ ONNX_OPERATOR_SET_SCHEMA(
             {types::Float16, types::Float, types::Double},
             "Constrain input and output types to float tensors."));
 
-static constexpr const char* Clip_ver1_doc = R"DOC(
-Clip operator limits the given input within an interval. The interval is
-specified with arguments 'min' and 'max'. They default to
-numeric_limits::lowest() and numeric_limits::max() respectively.
-)DOC";
-
 ONNX_OPERATOR_SET_SCHEMA(
     Clip,
     1,
     OpSchema()
-        .SetDoc(Clip_ver1_doc)
+        .SetDoc(kDoc_Clip_ver1)
         .Attr("min", "Minimum value, under which element is replaced by min", AttributeProto::FLOAT, OPTIONAL_VALUE)
         .Attr("max", "Maximum value, above which element is replaced by max", AttributeProto::FLOAT, OPTIONAL_VALUE)
         // This attribute was added via AllowConsumed API in OpSchema.
@@ -2693,21 +2476,11 @@ ONNX_OPERATOR_SET_SCHEMA(
             {types::Float16, types::Float, types::Double},
             "Constrain input and output types to float tensors."));
 
-static constexpr const char* Gemm_ver1_doc = R"DOC(General Matrix multiplication:
-https://en.wikipedia.org/wiki/Basic_Linear_Algebra_Subprograms#Level_3
-Compute Y = alpha * A * B + beta * C, where input tensor A has
-dimension (M X K), input tensor B has dimension (K X N), input tensor C and
-output tensor Y have dimension (M X N).
-If attribute broadcast is non-zero, input tensor C will be broadcasted to match
-the dimension requirement. A will be transposed before doing the computation
-if attribute transA is non-zero, same for B and transB.
-)DOC";
-
 ONNX_OPERATOR_SET_SCHEMA(
     Gemm,
     1,
     OpSchema()
-        .SetDoc(Gemm_ver1_doc)
+        .SetDoc(kDoc_Gemm_ver1)
         .Input(0, "A", "Input tensor A", "T")
         .Input(1, "B", "Input tensor B", "T")
         .Input(2, "C", "Input tensor C, can be inplace.", "T")
@@ -2729,13 +2502,11 @@ ONNX_OPERATOR_SET_SCHEMA(
             1.0f)
         .Attr("beta", "Scalar multiplier for input tensor C, the default value is 1.0.", AttributeProto::FLOAT, 1.0f));
 
-static const char* const Gemm_ver6_doc = Gemm_ver1_doc;
-
 ONNX_OPERATOR_SET_SCHEMA(
     Gemm,
     6,
     OpSchema()
-        .SetDoc(Gemm_ver6_doc)
+        .SetDoc(kDoc_Gemm_ver1)
         .Input(0, "A", "Input tensor A", "T")
         .Input(1, "B", "Input tensor B", "T")
         .Input(2, "C", "Input tensor C", "T")
@@ -2777,13 +2548,11 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static const char* const Gemm_ver7_doc = Gemm_ver11_doc;
-
 ONNX_OPERATOR_SET_SCHEMA(
     Gemm,
     7,
     OpSchema()
-        .SetDoc(GET_OP_DOC_STR(std::string(Gemm_ver7_doc) + GenerateBroadcastingDocUni("tensor C", "tensor A * B")))
+        .SetDoc(GET_OP_DOC_STR(std::string(kDoc_Gemm_ver11) + GenerateBroadcastingDocUni("tensor C", "tensor A * B")))
         .Input(
             0,
             "A",
@@ -2832,13 +2601,11 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static const char* const Gemm_ver9_doc = Gemm_ver11_doc;
-
 ONNX_OPERATOR_SET_SCHEMA(
     Gemm,
     9,
     OpSchema()
-        .SetDoc(GET_OP_DOC_STR(std::string(Gemm_ver9_doc) + GenerateBroadcastingDocUni("tensor C", "tensor A * B")))
+        .SetDoc(GET_OP_DOC_STR(std::string(kDoc_Gemm_ver11) + GenerateBroadcastingDocUni("tensor C", "tensor A * B")))
         .Input(
             0,
             "A",
@@ -2887,13 +2654,11 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static const char* const Max_ver6_doc = Max_ver1_doc;
-
 ONNX_OPERATOR_SET_SCHEMA(
     Max,
     6,
     OpSchema()
-        .SetDoc(Max_ver6_doc)
+        .SetDoc(kDoc_Max_ver1)
         .Input(0, "data_0", "List of tensors for Max.", "T", OpSchema::Variadic)
         .Output(0, "max", "Output tensor. Same dimension as inputs.", "T")
         .TypeConstraint(
@@ -2902,13 +2667,11 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Constrain input and output types to float tensors.")
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
-static const char* const Min_ver6_doc = Min_ver1_doc;
-
 ONNX_OPERATOR_SET_SCHEMA(
     Min,
     6,
     OpSchema()
-        .SetDoc(Min_ver6_doc)
+        .SetDoc(kDoc_Min_ver1)
         .Input(0, "data_0", "List of tensors for Min", "T", OpSchema::Variadic)
         .Output(0, "min", "Output tensor. Same dimension as inputs.", "T")
         .TypeConstraint(
@@ -2917,13 +2680,11 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Constrain input and output types to float tensors.")
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
-static const char* const Sum_ver6_doc = Sum_ver1_doc;
-
 ONNX_OPERATOR_SET_SCHEMA(
     Sum,
     6,
     OpSchema()
-        .SetDoc(Sum_ver6_doc)
+        .SetDoc(kDoc_Sum_ver1)
         .Input(0, "data_0", "List of tensors for Sum.", "T", OpSchema::Variadic)
         .Output(0, "sum", "Output tensor. Same dimension as inputs.", "T")
         .TypeConstraint(
@@ -2932,13 +2693,11 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Constrain input and output types to float tensors.")
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
-static const char* const Mean_ver6_doc = Mean_ver1_doc;
-
 ONNX_OPERATOR_SET_SCHEMA(
     Mean,
     6,
     OpSchema()
-        .SetDoc(Mean_ver6_doc)
+        .SetDoc(kDoc_Mean_ver1)
         .Input(0, "data_0", "List of tensors for Mean.", "T", OpSchema::Variadic)
         .Output(0, "mean", "Output tensor. Same dimension as inputs.", "T")
         .TypeConstraint(
@@ -3029,23 +2788,11 @@ ONNX_OPERATOR_SET_SCHEMA(
           *ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape() = resultShape;
         }));
 
-static constexpr const char* TopK_ver1_doc = R"DOC(
-Retrieve the top-K elements along a specified axis. Given an input tensor of
-shape [a_0, a_1, ..., a_{n-1}] and integer argument k, return two outputs:
-  -Value tensor of shape [a_0, a_1, ..., a_{axis-1}, k, a_{axis+1}, ... a_{n-1}]
-    which contains the values of the top k elements along the specified axis
-  -Index tensor of shape [a_0, a_1, ..., a_{axis-1}, k, a_{axis+1}, ... a_{n-1}] which
-   contains the indices of the top k elements (original indices from the input
-   tensor).
-Given two equivalent values, this operator uses the indices along the axis  as
- a tiebreaker. That is, the element with the lower index will appear first.
-)DOC";
-
 ONNX_OPERATOR_SET_SCHEMA(
     TopK,
     1,
     OpSchema()
-        .SetDoc(TopK_ver1_doc)
+        .SetDoc(kDoc_TopK_ver1)
         .Input(0, "X", "Tensor of shape [a_0, a_1, ..., a_{n-1}]", "T")
         .Output(
             0,
@@ -3093,24 +2840,11 @@ ONNX_OPERATOR_SET_SCHEMA(
           updateOutputShape(ctx, 1, result_shape);
         }));
 
-static constexpr const char* TopK_ver10_doc = R"DOC(
-Retrieve the top-K elements along a specified axis. Given an input tensor of
-shape [a_0, a_1, ..., a_{n-1}] and integer argument k, return two outputs:
-  -Value tensor of shape [a_0, a_1, ..., a_{axis-1}, k, a_{axis+1}, ... a_{n-1}]
-    which contains the values of the top k elements along the specified axis
-  -Index tensor of shape [a_0, a_1, ..., a_{axis-1}, k, a_{axis+1}, ... a_{n-1}] which
-   contains the indices of the top k elements (original indices from the input
-   tensor).
-
-Given two equivalent values, this operator uses the indices along the axis  as
- a tiebreaker. That is, the element with the lower index will appear first.
-)DOC";
-
 ONNX_OPERATOR_SET_SCHEMA(
     TopK,
     10,
     OpSchema()
-        .SetDoc(TopK_ver10_doc)
+        .SetDoc(kDoc_TopK_ver10)
         .Input(0, "X", "Tensor of shape [a_0, a_1, ..., a_{n-1}]", "T")
         .Input(
             1,
@@ -3203,13 +2937,11 @@ ONNX_OPERATOR_SET_SCHEMA(
     11,
     OpSchema().FillUsing(defs::math::utils::TopKOpGenerator(OpSchema::all_numeric_types())));
 
-static const char* const Clip_ver6_doc = Clip_ver1_doc;
-
 ONNX_OPERATOR_SET_SCHEMA(
     Clip,
     6,
     OpSchema()
-        .SetDoc(Clip_ver6_doc)
+        .SetDoc(kDoc_Clip_ver1)
         .Attr(
             "min",
             "Minimum value, under which element is replaced by min",
@@ -3228,13 +2960,11 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Constrain input and output types to float tensors.")
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
-static const char* const Clip_ver11_doc = Clip_ver12_doc;
-
 ONNX_OPERATOR_SET_SCHEMA(
     Clip,
     11,
     OpSchema()
-        .SetDoc(Clip_ver11_doc)
+        .SetDoc(kDoc_Clip_ver12)
         .Input(0, "input", "Input tensor whose elements to be clipped", "T")
         .Input(
             1,
@@ -3313,7 +3043,7 @@ ONNX_OPERATOR_SET_SCHEMA(
     9,
     OpSchema()
         .SetDoc(
-            GET_OP_DOC_STR(std::string(PRelu_ver1_doc) + GenerateBroadcastingDocUni("tensor slope", "input tensor X")))
+            GET_OP_DOC_STR(std::string(kDoc_PRelu_ver1) + GenerateBroadcastingDocUni("tensor slope", "input tensor X")))
         .Input(0, "X", "Input tensor", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
         .Input(
             1,
@@ -3332,13 +3062,11 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Constrain input and output types to float/int tensors.")
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
-static constexpr const char* DFT_ver17_doc = R"DOC(Computes the discrete Fourier transform of input.)DOC";
-
 ONNX_OPERATOR_SET_SCHEMA(
     DFT,
     17,
     OpSchema()
-        .SetDoc(DFT_ver17_doc)
+        .SetDoc(kDoc_DFT_ver17)
         .Attr(
             "onesided",
             "If onesided is 1, only values for w in [0, 1, 2, ..., floor(n_fft/2) + 1] are used or returned because "
@@ -3514,7 +3242,7 @@ ONNX_OPERATOR_SET_SCHEMA(
     QLinearMatMul,
     10,
     OpSchema()
-        .SetDoc(defs::math::utils::QLinearMatMulDoc())
+        .SetDoc(kDoc_QLinearMatMul_ver10)
         .Input(0, "a", "N-dimensional quantized matrix a", "T1", OpSchema::Single, true, 1, OpSchema::NonDifferentiable)
         .Input(
             1,
@@ -3594,16 +3322,6 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Constrain output y and its zero point data type to 8-bit integer tensor.")
         .TypeAndShapeInferenceFunction(defs::math::utils::QLinearMatMulShapeInference));
 
-static constexpr const char* celu_ver12_doc = R"DOC(
-Continuously Differentiable Exponential Linear Units:
-Perform the linear unit element-wise on the input tensor X
-using formula:
-
-```
-max(0,x) + min(0,alpha*(exp(x/alpha)-1))
-```
-)DOC";
-
 static float celu_ver12_default_alpha = 1.0;
 
 static bool BuildContextDependentFunctionBodyCelu(
@@ -3625,7 +3343,7 @@ ONNX_OPERATOR_SET_SCHEMA(
     Celu,
     12,
     OpSchema()
-        .SetDoc(celu_ver12_doc)
+        .SetDoc(kDoc_celu_ver12)
         .Input(0, "X", "Input tensor", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
         .Output(0, "Y", "Output tensor", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
         .Attr(
@@ -3638,5 +3356,36 @@ ONNX_OPERATOR_SET_SCHEMA(
         .SetNodeDeterminism(OpSchema::NodeDeterminism::Deterministic)
         .SetContextDependentFunctionBodyBuilder(BuildContextDependentFunctionBodyCelu)
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
+
+ONNX_OPERATOR_SET_SCHEMA(
+    Einsum,
+    12,
+    OpSchema().FillUsing(defs::math::utils::EinsumOpGenerator(OpSchema::all_numeric_types())));
+// codeql[cpp/unused-static-variable]: The schema macro defines a debug counter used by static-opset validation.
+ONNX_OPERATOR_SET_SCHEMA(
+    Mod,
+    13,
+    OpSchema()
+        .SetDoc(kDoc_Mod_ver13)
+        .Attr(
+            "fmod",
+            "Whether the operator should behave like fmod (default=0 meaning it will do integer mods); Set this to 1 to force fmod treatment",
+            AttributeProto::INT,
+            static_cast<int64_t>(0))
+        .Input(0, "A", "Dividend tensor", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
+        .Input(1, "B", "Divisor tensor", "T", OpSchema::Single, true, 1, OpSchema::NonDifferentiable)
+        .Output(0, "C", "Remainder tensor", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
+        .TypeConstraint(
+            "T",
+            OpSchema::all_numeric_types_ir4(),
+            "Constrain input and output types to high-precision numeric tensors.")
+        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+          propagateElemTypeFromInputToOutput(ctx, 0, 0);
+          if (hasNInputShapes(ctx, 2))
+            bidirectionalBroadcastShapeInference(
+                ctx.getInputType(0)->tensor_type().shape(),
+                ctx.getInputType(1)->tensor_type().shape(),
+                *ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape());
+        }));
 
 } // namespace ONNX_NAMESPACE
