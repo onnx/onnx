@@ -22,6 +22,24 @@ class TestAutomaticDowngrade(automatic_conversion_test_base.TestAutomaticConvers
         mode = "strict_downgrade" if strict_check else "downgrade"
         self._test_op_conversion(op, *args, **kwargs, mode=mode)
 
+    def test_prng_state_ops(self) -> None:
+        self._test_op_downgrade(
+            "InitPRNG",
+            29,
+            [[]],
+            [[2]],
+            [onnx.TensorProto.INT64],
+            [onnx.TensorProto.INT64],
+        )
+        self._test_op_downgrade(
+            "SplitPRNG",
+            29,
+            [[2]],
+            [[2], [2]],
+            [onnx.TensorProto.INT64],
+            [onnx.TensorProto.INT64, onnx.TensorProto.INT64],
+        )
+
     @pytest.mark.parametrize(
         "op",
         [

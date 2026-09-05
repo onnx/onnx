@@ -73,6 +73,7 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#Identity">Identity</a>|<a href="Changelog.md#Identity-25">25</a>, <a href="Changelog.md#Identity-24">24</a>, <a href="Changelog.md#Identity-23">23</a>, <a href="Changelog.md#Identity-21">21</a>, <a href="Changelog.md#Identity-19">19</a>, <a href="Changelog.md#Identity-16">16</a>, <a href="Changelog.md#Identity-14">14</a>, <a href="Changelog.md#Identity-13">13</a>, <a href="Changelog.md#Identity-1">1</a>|
 |<a href="#If">If</a>|<a href="Changelog.md#If-25">25</a>, <a href="Changelog.md#If-24">24</a>, <a href="Changelog.md#If-23">23</a>, <a href="Changelog.md#If-21">21</a>, <a href="Changelog.md#If-19">19</a>, <a href="Changelog.md#If-16">16</a>, <a href="Changelog.md#If-13">13</a>, <a href="Changelog.md#If-11">11</a>, <a href="Changelog.md#If-1">1</a>|
 |<a href="#ImageDecoder">ImageDecoder</a>|<a href="Changelog.md#ImageDecoder-20">20</a>|
+|<a href="#InitPRNG">InitPRNG</a>|<a href="Changelog.md#InitPRNG-29">29</a>|
 |<a href="#InstanceNormalization">InstanceNormalization</a>|<a href="Changelog.md#InstanceNormalization-22">22</a>, <a href="Changelog.md#InstanceNormalization-6">6</a>, <a href="Changelog.md#InstanceNormalization-1">1</a>|
 |<a href="#IsInf">IsInf</a>|<a href="Changelog.md#IsInf-20">20</a>, <a href="Changelog.md#IsInf-10">10</a>|
 |<a href="#IsNaN">IsNaN</a>|<a href="Changelog.md#IsNaN-20">20</a>, <a href="Changelog.md#IsNaN-13">13</a>, <a href="Changelog.md#IsNaN-9">9</a>|
@@ -145,6 +146,7 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#Size">Size</a>|<a href="Changelog.md#Size-25">25</a>, <a href="Changelog.md#Size-24">24</a>, <a href="Changelog.md#Size-23">23</a>, <a href="Changelog.md#Size-21">21</a>, <a href="Changelog.md#Size-19">19</a>, <a href="Changelog.md#Size-13">13</a>, <a href="Changelog.md#Size-1">1</a>|
 |<a href="#Slice">Slice</a>|<a href="Changelog.md#Slice-13">13</a>, <a href="Changelog.md#Slice-11">11</a>, <a href="Changelog.md#Slice-10">10</a>, <a href="Changelog.md#Slice-1">1</a>|
 |<a href="#Split">Split</a>|<a href="Changelog.md#Split-18">18</a>, <a href="Changelog.md#Split-13">13</a>, <a href="Changelog.md#Split-11">11</a>, <a href="Changelog.md#Split-2">2</a>, <a href="Changelog.md#Split-1">1</a>|
+|<a href="#SplitPRNG">SplitPRNG</a>|<a href="Changelog.md#SplitPRNG-29">29</a>|
 |<a href="#SplitToSequence">SplitToSequence</a>|<a href="Changelog.md#SplitToSequence-24">24</a>, <a href="Changelog.md#SplitToSequence-11">11</a>|
 |<a href="#Sqrt">Sqrt</a>|<a href="Changelog.md#Sqrt-13">13</a>, <a href="Changelog.md#Sqrt-6">6</a>, <a href="Changelog.md#Sqrt-1">1</a>|
 |<a href="#Squeeze">Squeeze</a>|<a href="Changelog.md#Squeeze-25">25</a>, <a href="Changelog.md#Squeeze-24">24</a>, <a href="Changelog.md#Squeeze-23">23</a>, <a href="Changelog.md#Squeeze-21">21</a>, <a href="Changelog.md#Squeeze-13">13</a>, <a href="Changelog.md#Squeeze-11">11</a>, <a href="Changelog.md#Squeeze-1">1</a>|
@@ -19191,6 +19193,67 @@ expect(
     outputs=[output],
     name="test_image_decoder_decode_webp_rgb",
 )
+```
+
+</details>
+
+
+### <a name="InitPRNG"></a><a name="initprng">**InitPRNG**</a>
+
+  Creates an initial pseudo-random number generator (PRNG) state from a
+  user-supplied seed. Given the same seed, this operator produces the same PRNG
+  state. It is a pure function and does not read or modify hidden random state.
+
+  The PRNG algorithm is Threefry2x32 with 20 rounds. A state is represented as a
+  rank-1 `tensor(int64)` of shape `[2]`. Each element stores one unsigned 32-bit
+  key word as a nonnegative int64 value. The first word contains the high 32 bits
+  of the seed and the second word contains the low 32 bits.
+
+#### Version
+
+This version of the operator has been available since version 29 of the default ONNX operator set.
+
+#### Inputs
+
+<dl>
+<dt><tt>seed</tt> : tensor(int64)</dt>
+<dd>Input seed value.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>prng_state</tt> : tensor(int64)</dt>
+<dd>Initial PRNG state.</dd>
+</dl>
+
+#### Type Constraints
+
+
+
+#### Examples
+
+<details>
+<summary>initprng</summary>
+
+```python
+node = helper.make_node("InitPRNG", inputs=["seed"], outputs=["state"])
+seed = np.array(0x123456789ABCDEF, dtype=np.int64)
+state = np.array([0x01234567, 0x89ABCDEF], dtype=np.int64)
+expect(node, inputs=[seed], outputs=[state], name="test_init_prng")
+```
+
+</details>
+
+
+<details>
+<summary>negative_seed</summary>
+
+```python
+node = helper.make_node("InitPRNG", inputs=["seed"], outputs=["state"])
+seed = np.array(-1, dtype=np.int64)
+state = np.array([0xFFFFFFFF, 0xFFFFFFFF], dtype=np.int64)
+expect(node, inputs=[seed], outputs=[state], name="test_init_prng_negative_seed")
 ```
 
 </details>
@@ -41071,6 +41134,98 @@ expect(
     inputs=[node_input, split],
     outputs=expected_outputs,
     name="test_split_zero_size_splits_opset18",
+)
+```
+
+</details>
+
+
+### <a name="SplitPRNG"></a><a name="splitprng">**SplitPRNG**</a>
+
+  Splits a PRNG state into one or more deterministic PRNG states. The outputs are
+  an ordered sequence of derived states suitable for independent downstream
+  random computations. Given the same inputs and number of outputs, this operator
+  produces the same output states. It is a pure function and does not read or
+  modify hidden random state.
+
+  When `data` is supplied, it must be a rank-1 tensor with one element for each
+  output. Element i is used to derive output state i. Values should be unique;
+  distinct values must produce distinct states for a fixed input state.
+
+  Each output state should normally be consumed at most once unless reproducing a
+  random stream is intentional.
+
+  The PRNG algorithm is Threefry2x32 with 20 rounds. Each input and output state
+  is a rank-1 `tensor(int64)` of shape `[2]`, with each element representing one
+  unsigned 32-bit key word. Without `data`, output i is derived by applying
+  Threefry2x32 to the input state and the 64-bit counter i. With `data`, output i
+  is produced by folding `data[i]` into the input state.
+
+#### Version
+
+This version of the operator has been available since version 29 of the default ONNX operator set.
+
+#### Inputs (1 - 2)
+
+<dl>
+<dt><tt>prng_state</tt> : tensor(int64)</dt>
+<dd>Input PRNG state.</dd>
+<dt><tt>data</tt> (optional) : tensor(int64)</dt>
+<dd>Optional rank-1 tensor used to derive structured PRNG states.</dd>
+</dl>
+
+#### Outputs (1 - &#8734;)
+
+<dl>
+<dt><tt>split_prng_states</tt> (variadic) : tensor(int64)</dt>
+<dd>One or more deterministically derived PRNG states.</dd>
+</dl>
+
+#### Type Constraints
+
+
+
+#### Examples
+
+<details>
+<summary>splitprng</summary>
+
+```python
+node = helper.make_node(
+    "SplitPRNG", inputs=["state"], outputs=["state0", "state1"]
+)
+state = np.array([0, 0], dtype=np.int64)
+state0 = np.array([1797259609, 2579123966], dtype=np.int64)
+state1 = np.array([928981903, 3453687069], dtype=np.int64)
+expect(
+    node,
+    inputs=[state],
+    outputs=[state0, state1],
+    name="test_split_prng",
+)
+```
+
+</details>
+
+
+<details>
+<summary>with_data</summary>
+
+```python
+node = helper.make_node(
+    "SplitPRNG",
+    inputs=["state", "data"],
+    outputs=["state0", "state1"],
+)
+state = np.array([0, 0], dtype=np.int64)
+data = np.array([42, -1], dtype=np.int64)
+state0 = np.array([2814562516, 111458285], dtype=np.int64)
+state1 = np.array([145227835, 1976240827], dtype=np.int64)
+expect(
+    node,
+    inputs=[state, data],
+    outputs=[state0, state1],
+    name="test_split_prng_with_data",
 )
 ```
 
