@@ -54,13 +54,26 @@ jobs:
 
       - name: Download protoc
         run: |
-          curl -sSL "https://github.com/protocolbuffers/protobuf/releases/download/v${PROTOBUF_VERSION}/protoc-${PROTOBUF_VERSION}-osx-universal_binary.zip" -o protoc.zip
+          PROTOC_ZIP="protoc-${PROTOBUF_VERSION}-osx-universal_binary.zip"
+          curl --fail --silent --show-error --location "https://github.com/protocolbuffers/protobuf/releases/download/v${PROTOBUF_VERSION}/${PROTOC_ZIP}" -o protoc.zip
+          EXPECTED_SHA256=$(jq -er --arg f "$PROTOC_ZIP" '.[$f]' .github/workflows/protobuf-checksums.json)
+          ACTUAL_SHA256=$(shasum -a 256 protoc.zip | awk '{print $1}')
+          if [ "$ACTUAL_SHA256" != "$EXPECTED_SHA256" ]; then
+            echo "::error::SHA-256 mismatch for ${PROTOC_ZIP}: expected ${EXPECTED_SHA256}, got ${ACTUAL_SHA256}" >&2
+            exit 1
+          fi
           unzip -q protoc.zip -d protoc-host
           chmod +x protoc-host/bin/protoc
 
       - name: Download protobuf source
         run: |
-          curl -sSL "https://github.com/protocolbuffers/protobuf/releases/download/v${PROTOBUF_VERSION}/protobuf-${PROTOBUF_VERSION}.tar.gz" -o protobuf.tar.gz
+          curl --fail --silent --show-error --location "https://github.com/protocolbuffers/protobuf/releases/download/v${PROTOBUF_VERSION}/protobuf-${PROTOBUF_VERSION}.tar.gz" -o protobuf.tar.gz
+          EXPECTED_SHA256=$(jq -er '.components[] | select(.name=="protobuf") | .hashes[] | select(.alg=="SHA-256") | .content' sbom.cdx.json)
+          ACTUAL_SHA256=$(shasum -a 256 protobuf.tar.gz | awk '{print $1}')
+          if [ "$ACTUAL_SHA256" != "$EXPECTED_SHA256" ]; then
+            echo "::error::SHA-256 mismatch for protobuf-${PROTOBUF_VERSION}.tar.gz: expected ${EXPECTED_SHA256}, got ${ACTUAL_SHA256}" >&2
+            exit 1
+          fi
           tar -xf protobuf.tar.gz
 
       - name: Set SOURCE_DATE_EPOCH for reproducible builds

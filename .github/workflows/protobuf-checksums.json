@@ -1,0 +1,7 @@
+{
+  "_comment": "Reviewed SHA-256 digests for protoc release archives downloaded by the release_*_cibw.yml workflows. Update this file whenever the protobuf version in sbom.cdx.json changes.",
+  "protoc-31.1-linux-x86_64.zip": "96553041f1a91ea0efee963cb16f462f5985b4d65365f3907414c360044d8065",
+  "protoc-31.1-linux-aarch_64.zip": "6c554de11cea04c56ebf8e45b54434019b1cd85223d4bbd25c282425e306ecc2",
+  "protoc-31.1-osx-universal_binary.zip": "99ea004549c139f46da5638187a85bbe422d78939be0fa01af1aa8ab672e395f",
+  "protoc-31.1-win64.zip": "70381b116ab0d71cb6a5177d9b17c7c13415866603a0fd40d513dafe32d56c35"
+}

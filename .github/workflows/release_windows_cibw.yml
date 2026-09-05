@@ -60,12 +60,32 @@ jobs:
 
       - name: Download protoc
         run: |
-          curl -sSL "https://github.com/protocolbuffers/protobuf/releases/download/v${env:PROTOBUF_VERSION}/protoc-${env:PROTOBUF_VERSION}-win64.zip" -o protoc.zip
+          $protocZip = "protoc-${env:PROTOBUF_VERSION}-win64.zip"
+          curl --fail --silent --show-error --location "https://github.com/protocolbuffers/protobuf/releases/download/v${env:PROTOBUF_VERSION}/$protocZip" -o protoc.zip
+          $checksums = Get-Content .github/workflows/protobuf-checksums.json -Raw | ConvertFrom-Json
+          $expected = $checksums.$protocZip
+          if (-not $expected) {
+            Write-Error "No pinned SHA-256 for $protocZip"
+            exit 1
+          }
+          $actual = (Get-FileHash protoc.zip -Algorithm SHA256).Hash.ToLower()
+          if ($actual -ne $expected) {
+            Write-Error "SHA-256 mismatch for ${protocZip}: expected $expected, got $actual"
+            exit 1
+          }
           Expand-Archive protoc.zip -DestinationPath protoc-host
 
       - name: Download protobuf source
         run: |
-          curl -sSL "https://github.com/protocolbuffers/protobuf/releases/download/v${env:PROTOBUF_VERSION}/protobuf-${env:PROTOBUF_VERSION}.tar.gz" -o protobuf.tar.gz
+          curl --fail --silent --show-error --location "https://github.com/protocolbuffers/protobuf/releases/download/v${env:PROTOBUF_VERSION}/protobuf-${env:PROTOBUF_VERSION}.tar.gz" -o protobuf.tar.gz
+          $sbom = Get-Content sbom.cdx.json -Raw | ConvertFrom-Json
+          $protobufComponent = $sbom.components | Where-Object { $_.name -eq "protobuf" }
+          $expected = ($protobufComponent.hashes | Where-Object { $_.alg -eq "SHA-256" }).content
+          $actual = (Get-FileHash protobuf.tar.gz -Algorithm SHA256).Hash.ToLower()
+          if ($actual -ne $expected) {
+            Write-Error "SHA-256 mismatch for protobuf-${env:PROTOBUF_VERSION}.tar.gz: expected $expected, got $actual"
+            exit 1
+          }
           tar -xf protobuf.tar.gz
 
       - name: Set paths
