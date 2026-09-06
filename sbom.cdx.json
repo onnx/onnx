@@ -142,6 +142,10 @@
     },
     {"ref": "abseil-cpp"},
     {"ref": "protobuf"},
+    {"ref": "protoc-linux-x86_64"},
+    {"ref": "protoc-linux-aarch_64"},
+    {"ref": "protoc-osx-universal_binary"},
+    {"ref": "protoc-win64"},
     {"ref": "nanobind"}
   ]
 }
