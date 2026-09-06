@@ -609,11 +609,14 @@ if(ONNX_BUILD_PYTHON)
         "refusing to fetch by mutable tag v${_nanobind_VERSION}.")
     endif()
     message(STATUS "Fetching nanobind v${_nanobind_VERSION} pinned at commit ${_nanobind_SHA256}")
+    # GIT_SHALLOW is deliberately omitted: shallow-fetching an arbitrary commit (rather
+    # than a branch/tag ref) relies on the remote allowing an unadvertised-object
+    # request (e.g. GitHub's uploadpack.allowReachableSHA1InWant), which is not
+    # universally supported. A full clone works against any git host.
     FetchContent_Declare(
       nanobind
       GIT_REPOSITORY ${_nanobind_URL}
       GIT_TAG ${_nanobind_SHA256} # commit for tag v${_nanobind_VERSION}
-      GIT_SHALLOW TRUE
     )
     FetchContent_MakeAvailable(nanobind)
   endif()
