@@ -3,9 +3,13 @@
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
+import ml_dtypes
 import numpy as np
 
 from onnx.reference.op_run import OpRun
+
+# np.einsum cannot accumulate with bfloat16 output.
+_ACCUMULATE_IN_FLOAT32 = (np.dtype(ml_dtypes.bfloat16),)
 
 
 class Einsum(OpRun):
@@ -15,6 +19,12 @@ class Einsum(OpRun):
         equation = equation.strip()
         if not equation:
             raise TypeError("equation is empty.")
+        dtype = args[0].dtype
+        if dtype in _ACCUMULATE_IN_FLOAT32:
+            promoted = [arg.astype(np.float32) for arg in args]
+            return (
+                np.asarray(np.einsum(equation, *promoted, optimize=True)).astype(dtype),
+            )
         try:
             return (np.einsum(equation, *args, optimize=True),)
         except TypeError:

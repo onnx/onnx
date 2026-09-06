@@ -250,8 +250,8 @@ bool AttentionAppendFunctionCausalMask(
           .Add("BoolMaskTri = Less(RangeRow2DPast, RangeCol2D)");
     }
     if (cast_mask_to_bias) {
-      // Attention-25 accepts masks with the same type as Q/K/V. Cast the
-      // generated float mask before Add so float16/bfloat16 inputs remain valid.
+      // Cast the generated float mask before Add so non-float32 bias inputs
+      // remain valid.
       builder.Add("MaskTriFloat = Where(BoolMaskTri, FloatNegInf, ScalarZero)")
           .Add("MaskTri = CastLike(MaskTriFloat, AttnBias)");
     } else {

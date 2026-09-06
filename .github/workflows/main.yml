@@ -272,7 +272,8 @@ jobs:
       - name: Run Python tests with numpy<2.0 (win, mac)
         if: (matrix.python_version == '3.10') && (matrix.os == 'windows-latest' || matrix.os == 'macos-latest') && (matrix.debug_build != 1)
         run: |
-          pip install "numpy<2.0" pillow
+          # ml_dtypes 0.6.0 dropped numpy 1 support, so pin the last version that supports it.
+          pip install "numpy<2.0" "ml_dtypes==0.5.4" pillow
           pytest -s
 
       - name: Run Python tests with numpy<2.0 (ubuntu, python<3.13)
@@ -281,5 +282,6 @@ jobs:
           # 2024.10.15: Error message: The headers or library files could not be found for jpeg, a required dependency when compiling Pillow from source.
           sudo apt-get update
           sudo apt-get install libjpeg-dev zlib1g-dev libpng-dev
-          pip install --prefer-binary "numpy<2.0" pillow
+          # ml_dtypes 0.6.0 dropped numpy 1 support, so pin the last version that supports it.
+          pip install --prefer-binary "numpy<2.0" "ml_dtypes==0.5.4" pillow
           pytest -s
