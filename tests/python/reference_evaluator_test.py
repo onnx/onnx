@@ -7330,6 +7330,47 @@ class TestReferenceEvaluator:
         with pytest.raises(ValueError, match="identical dtypes"):
             ref.run(None, {"A": a, "B": b})
 
+    def test_unique_not_sorted_single_output(self) -> None:
+        # Y follows the order of first occurrence even when the optional
+        # outputs are not requested (spec example 1).
+        node = make_node("Unique", ["X"], ["Y"], sorted=0)
+        x = np.array([2.0, 1.0, 1.0, 3.0, 4.0, 3.0], dtype=np.float32)
+        (y,) = ReferenceEvaluator(node).run(None, {"X": x})
+        assert_array_equal(y, np.array([2.0, 1.0, 3.0, 4.0], dtype=np.float32))
+
+    def test_unique_not_sorted_without_axis_2d(self) -> None:
+        node = make_node(
+            "Unique", ["X"], ["Y", "indices", "inverse", "counts"], sorted=0
+        )
+        x = np.array([[2.0, 1.0], [1.0, 3.0]], dtype=np.float32)
+        y, indices, inverse, counts = ReferenceEvaluator(node).run(None, {"X": x})
+        assert_array_equal(y, np.array([2.0, 1.0, 3.0], dtype=np.float32))
+        assert_array_equal(indices, np.array([0, 1, 3], dtype=np.int64))
+        assert_array_equal(inverse, np.array([0, 1, 1, 2], dtype=np.int64))
+        assert_array_equal(counts, np.array([1, 2, 1], dtype=np.int64))
+
+    def test_unique_not_sorted_with_axis(self) -> None:
+        node = make_node(
+            "Unique", ["X"], ["Y", "indices", "inverse", "counts"], sorted=0, axis=1
+        )
+        x = np.array([[3.0, 1.0, 3.0], [4.0, 2.0, 4.0]], dtype=np.float32)
+        y, indices, inverse, counts = ReferenceEvaluator(node).run(None, {"X": x})
+        assert_array_equal(y, np.array([[3.0, 1.0], [4.0, 2.0]], dtype=np.float32))
+        assert_array_equal(indices, np.array([0, 1], dtype=np.int64))
+        assert_array_equal(inverse, np.array([0, 1, 0], dtype=np.int64))
+        assert_array_equal(counts, np.array([2, 1], dtype=np.int64))
+
+    def test_unique_sorted_with_negative_axis(self) -> None:
+        node = make_node(
+            "Unique", ["X"], ["Y", "indices", "inverse", "counts"], sorted=1, axis=-1
+        )
+        x = np.array([[3.0, 1.0, 3.0], [4.0, 2.0, 4.0]], dtype=np.float32)
+        y, indices, inverse, counts = ReferenceEvaluator(node).run(None, {"X": x})
+        assert_array_equal(y, np.array([[1.0, 3.0], [2.0, 4.0]], dtype=np.float32))
+        assert_array_equal(indices, np.array([1, 0], dtype=np.int64))
+        assert_array_equal(inverse, np.array([1, 0, 1], dtype=np.int64))
+        assert_array_equal(counts, np.array([1, 2], dtype=np.int64))
+
 
 class TestReferenceEvaluatorShapeAnnotationChecking:
     """Tests for the opt-in runtime shape-annotation validation feature
