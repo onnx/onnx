@@ -62,18 +62,23 @@ jobs:
         run: |
           $protocZip = "protoc-${env:PROTOBUF_VERSION}-win64.zip"
           curl --fail --silent --show-error --location "https://github.com/protocolbuffers/protobuf/releases/download/v${env:PROTOBUF_VERSION}/$protocZip" -o protoc.zip
-          $checksums = Get-Content .github/workflows/protobuf-checksums.json -Raw | ConvertFrom-Json
-          $expected = $checksums.$protocZip
-          if (-not $expected) {
-            Write-Error "No pinned SHA-256 for $protocZip"
-            exit 1
-          }
+          $sbom = Get-Content sbom.cdx.json -Raw | ConvertFrom-Json
+          $protocComponent = $sbom.components | Where-Object { $_.name -eq "protoc-win64" }
+          $expected = ($protocComponent.hashes | Where-Object { $_.alg -eq "SHA-256" }).content
           $actual = (Get-FileHash protoc.zip -Algorithm SHA256).Hash.ToLower()
-          if ($actual -ne $expected) {
-            Write-Error "SHA-256 mismatch for ${protocZip}: expected $expected, got $actual"
-            exit 1
-          }
-          Expand-Archive protoc.zip -DestinationPath protoc-host
+          Add-Content -Path $env:GITHUB_ENV -Value "PROTOC_ZIP=$protocZip"
+          Add-Content -Path $env:GITHUB_ENV -Value "PROTOC_EXPECTED_SHA256=$expected"
+          Add-Content -Path $env:GITHUB_ENV -Value "PROTOC_ACTUAL_SHA256=$actual"
+
+      - name: Verify protoc checksum
+        uses: ./.github/actions/verify-sha256
+        with:
+          file: ${{ env.PROTOC_ZIP }}
+          expected-sha256: ${{ env.PROTOC_EXPECTED_SHA256 }}
+          actual-sha256: ${{ env.PROTOC_ACTUAL_SHA256 }}
+
+      - name: Extract protoc
+        run: Expand-Archive protoc.zip -DestinationPath protoc-host
 
       - name: Download protobuf source
         run: |
@@ -82,11 +87,18 @@ jobs:
           $protobufComponent = $sbom.components | Where-Object { $_.name -eq "protobuf" }
           $expected = ($protobufComponent.hashes | Where-Object { $_.alg -eq "SHA-256" }).content
           $actual = (Get-FileHash protobuf.tar.gz -Algorithm SHA256).Hash.ToLower()
-          if ($actual -ne $expected) {
-            Write-Error "SHA-256 mismatch for protobuf-${env:PROTOBUF_VERSION}.tar.gz: expected $expected, got $actual"
-            exit 1
-          }
-          tar -xf protobuf.tar.gz
+          Add-Content -Path $env:GITHUB_ENV -Value "PROTOBUF_EXPECTED_SHA256=$expected"
+          Add-Content -Path $env:GITHUB_ENV -Value "PROTOBUF_ACTUAL_SHA256=$actual"
+
+      - name: Verify protobuf source checksum
+        uses: ./.github/actions/verify-sha256
+        with:
+          file: protobuf-${{ env.PROTOBUF_VERSION }}.tar.gz
+          expected-sha256: ${{ env.PROTOBUF_EXPECTED_SHA256 }}
+          actual-sha256: ${{ env.PROTOBUF_ACTUAL_SHA256 }}
+
+      - name: Extract protobuf source
+        run: tar -xf protobuf.tar.gz
 
       - name: Set paths
         shell: bash

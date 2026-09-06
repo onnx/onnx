@@ -47,26 +47,38 @@ jobs:
       - name: Download protoc for host
         run: |
           PROTOC_ZIP="protoc-${PROTOBUF_VERSION}-linux-x86_64.zip"
+          echo "PROTOC_ZIP=${PROTOC_ZIP}" >> $GITHUB_ENV
           curl --fail --silent --show-error --location "https://github.com/protocolbuffers/protobuf/releases/download/v${PROTOBUF_VERSION}/${PROTOC_ZIP}" -o protoc.zip
-          EXPECTED_SHA256=$(jq -er --arg f "$PROTOC_ZIP" '.[$f]' .github/workflows/protobuf-checksums.json)
-          ACTUAL_SHA256=$(shasum -a 256 protoc.zip | awk '{print $1}')
-          if [ "$ACTUAL_SHA256" != "$EXPECTED_SHA256" ]; then
-            echo "::error::SHA-256 mismatch for ${PROTOC_ZIP}: expected ${EXPECTED_SHA256}, got ${ACTUAL_SHA256}" >&2
-            exit 1
-          fi
+          echo "PROTOC_EXPECTED_SHA256=$(jq -er '.components[] | select(.name=="protoc-linux-x86_64") | .hashes[] | select(.alg=="SHA-256") | .content // empty' sbom.cdx.json)" >> $GITHUB_ENV
+          echo "PROTOC_ACTUAL_SHA256=$(shasum -a 256 protoc.zip | awk '{print $1}')" >> $GITHUB_ENV
+
+      - name: Verify protoc checksum
+        uses: ./.github/actions/verify-sha256
+        with:
+          file: ${{ env.PROTOC_ZIP }}
+          expected-sha256: ${{ env.PROTOC_EXPECTED_SHA256 }}
+          actual-sha256: ${{ env.PROTOC_ACTUAL_SHA256 }}
+
+      - name: Extract protoc
+        run: |
           unzip -q protoc.zip -d protoc-host
           chmod +x protoc-host/bin/protoc
 
       - name: Download protobuf source
         run: |
           curl --fail --silent --show-error --location "https://github.com/protocolbuffers/protobuf/releases/download/v${PROTOBUF_VERSION}/protobuf-${PROTOBUF_VERSION}.tar.gz" -o protobuf.tar.gz
-          EXPECTED_SHA256=$(jq -er '.components[] | select(.name=="protobuf") | .hashes[] | select(.alg=="SHA-256") | .content' sbom.cdx.json)
-          ACTUAL_SHA256=$(shasum -a 256 protobuf.tar.gz | awk '{print $1}')
-          if [ "$ACTUAL_SHA256" != "$EXPECTED_SHA256" ]; then
-            echo "::error::SHA-256 mismatch for protobuf-${PROTOBUF_VERSION}.tar.gz: expected ${EXPECTED_SHA256}, got ${ACTUAL_SHA256}" >&2
-            exit 1
-          fi
-          tar -xf protobuf.tar.gz
+          echo "PROTOBUF_EXPECTED_SHA256=$(jq -er '.components[] | select(.name=="protobuf") | .hashes[] | select(.alg=="SHA-256") | .content // empty' sbom.cdx.json)" >> $GITHUB_ENV
+          echo "PROTOBUF_ACTUAL_SHA256=$(shasum -a 256 protobuf.tar.gz | awk '{print $1}')" >> $GITHUB_ENV
+
+      - name: Verify protobuf source checksum
+        uses: ./.github/actions/verify-sha256
+        with:
+          file: protobuf-${{ env.PROTOBUF_VERSION }}.tar.gz
+          expected-sha256: ${{ env.PROTOBUF_EXPECTED_SHA256 }}
+          actual-sha256: ${{ env.PROTOBUF_ACTUAL_SHA256 }}
+
+      - name: Extract protobuf source
+        run: tar -xf protobuf.tar.gz
 
       - name: Set SOURCE_DATE_EPOCH for reproducible builds
         run: echo "SOURCE_DATE_EPOCH=$(git log -1 --pretty=%ct)" >> $GITHUB_ENV
