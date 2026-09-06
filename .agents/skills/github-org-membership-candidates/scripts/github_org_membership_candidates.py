@@ -9,6 +9,7 @@ import csv
 import json
 import subprocess
 import sys
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import UTC, date, datetime
 from pathlib import Path
 from typing import Any
@@ -197,7 +198,7 @@ def search_issues_or_pulls(
     start: date,
     end: date,
 ) -> tuple[list[dict[str, Any]], bool]:
-    query = f"org:{org} type:{item_type} created:{start.isoformat()}..{end.isoformat()}"
+    query = f"org:{org} is:{item_type} created:{start.isoformat()}..{end.isoformat()}"
     items: list[dict[str, Any]] = []
     for page in range(1, SEARCH_MAX_PAGES + 1):
         params = {
@@ -231,9 +232,26 @@ def collect_issue_and_pull_activity(
             login = user.get("login")
             if not login or login in member_logins or user.get("type") == "Bot":
                 continue
-            repo_full_name = "/".join(item["repository_url"].rsplit("/", 2)[-2:])
-            note_activity(candidates, login, field, item["created_at"], repo_full_name)
+            repository_url = item.get("repository_url")
+            created_at = item.get("created_at")
+            if not repository_url or not created_at:
+                continue
+            repo_full_name = "/".join(repository_url.rsplit("/", 2)[-2:])
+            note_activity(candidates, login, field, created_at, repo_full_name)
     return candidates, capped
+
+
+def fetch_repository_commits(
+    name_with_owner: str, since: str, until: str
+) -> list[dict[str, Any]]:
+    params = {"since": since, "until": until, "per_page": 100}
+    try:
+        return rest_pages(f"/repos/{name_with_owner}/commits?{urlencode(params)}")
+    except RuntimeError as error:
+        if "HTTP 409" in str(error):
+            # Empty repositories and repositories without a default branch return 409.
+            return []
+        raise
 
 
 def collect_commit_activity(
@@ -242,34 +260,38 @@ def collect_commit_activity(
     end: date,
     member_logins: set[str],
     candidates: dict[str, dict[str, Any]],
+    workers: int,
 ) -> None:
     since = f"{start.isoformat()}T00:00:00Z"
     until = f"{end.isoformat()}T23:59:59Z"
-    for repository in repositories:
-        if repository["fork"] or repository["archived"]:
-            continue
-        params = {"since": since, "until": until, "per_page": 100}
-        try:
-            commits = rest_pages(
-                f"/repos/{repository['name_with_owner']}/commits?{urlencode(params)}"
-            )
-        except RuntimeError:
-            # Empty repositories and repositories without a default branch return an error.
-            continue
-        for commit in commits:
-            author = commit.get("author")
-            if not author:
-                continue
-            login = author.get("login")
-            if not login or login in member_logins or author.get("type") == "Bot":
-                continue
-            note_activity(
-                candidates,
-                login,
-                "commits",
-                commit["commit"]["author"]["date"],
-                repository["name_with_owner"],
-            )
+    with ThreadPoolExecutor(max_workers=workers) as executor:
+        futures = {
+            executor.submit(
+                fetch_repository_commits, repository["name_with_owner"], since, until
+            ): repository["name_with_owner"]
+            for repository in repositories
+        }
+        for future in as_completed(futures):
+            name_with_owner = futures[future]
+            try:
+                commits = future.result()
+            except RuntimeError as error:
+                raise RuntimeError(
+                    f"Failed to collect commits for {name_with_owner!r}"
+                ) from error
+            for commit in commits:
+                author = commit.get("author")
+                if not author:
+                    continue
+                login = author.get("login")
+                if not login or login in member_logins or author.get("type") == "Bot":
+                    continue
+                commit_date = commit.get("commit", {}).get("author", {}).get("date")
+                if not commit_date:
+                    continue
+                note_activity(
+                    candidates, login, "commits", commit_date, name_with_owner
+                )
 
 
 def candidate_score(candidate: dict[str, Any]) -> int:
@@ -286,14 +308,6 @@ def activity_span_days(candidate: dict[str, Any]) -> int:
     first_date = datetime.fromisoformat(first.replace("Z", "+00:00"))
     last_date = datetime.fromisoformat(last.replace("Z", "+00:00"))
     return (last_date - first_date).days
-
-
-def candidate_band(
-    score: int, span_days: int, min_score: int, min_span_days: int
-) -> str:
-    if score >= min_score and span_days >= min_span_days:
-        return "priority-candidate"
-    return "candidate"
 
 
 def summarize(
@@ -316,7 +330,11 @@ def summarize(
                 "active_span_days": span_days,
                 "primary_repo": repo or "",
                 "likely_sig": guess_sig(repo),
-                "band": candidate_band(score, span_days, min_score, min_span_days),
+                "band": (
+                    "priority-candidate"
+                    if score >= min_score and span_days >= min_span_days
+                    else "candidate"
+                ),
             }
         )
     rows.sort(
@@ -500,8 +518,8 @@ def parse_args() -> argparse.Namespace:
         type=int,
         default=6,
         help=(
-            "Minimum span, in approximate 30-day months, between a candidate's first and "
-            "last observed contribution for the priority-candidate band (default: 6)"
+            "Minimum span, in calendar months, between a candidate's first and last "
+            "observed contribution for the priority-candidate band (default: 6)"
         ),
     )
     parser.add_argument(
@@ -509,6 +527,12 @@ def parse_args() -> argparse.Namespace:
         type=Path,
         required=True,
         help="Directory for private report files",
+    )
+    parser.add_argument(
+        "--workers",
+        type=int,
+        default=4,
+        help="Concurrent per-repository commit requests (default: 4)",
     )
     arguments = parser.parse_args()
     if arguments.months < 1:
@@ -519,6 +543,8 @@ def parse_args() -> argparse.Namespace:
         parser.error(
             "--min-active-months cannot exceed --months: no candidate could qualify"
         )
+    if arguments.workers < 1:
+        parser.error("--workers must be positive")
     return arguments
 
 
@@ -526,9 +552,10 @@ def subtract_months(value: date, months: int) -> date:
     month_index = value.year * 12 + value.month - 1 - months
     year, zero_based_month = divmod(month_index, 12)
     month = zero_based_month + 1
+    is_leap_year = year % 4 == 0 and (year % 100 != 0 or year % 400 == 0)
     month_lengths = (
         31,
-        29 if year % 4 == 0 else 28,
+        29 if is_leap_year else 28,
         31,
         30,
         31,
@@ -550,13 +577,21 @@ def main() -> int:
 
     member_logins = list_member_logins(arguments.org)
     repositories = list_repositories(arguments.org)
+    scanned_repositories = [
+        repository
+        for repository in repositories
+        if not repository["fork"] and not repository["archived"]
+    ]
 
     candidates, search_capped = collect_issue_and_pull_activity(
         arguments.org, start, end, member_logins
     )
-    collect_commit_activity(repositories, start, end, member_logins, candidates)
+    collect_commit_activity(
+        scanned_repositories, start, end, member_logins, candidates, arguments.workers
+    )
 
-    min_span_days = arguments.min_active_months * 30
+    min_span_start = subtract_months(arguments.end_date, arguments.min_active_months)
+    min_span_days = (end - min_span_start).days
     rows = summarize(candidates, arguments.min_score, min_span_days)
     write_report(
         arguments.output_dir,
@@ -565,7 +600,7 @@ def main() -> int:
         end,
         arguments.min_score,
         min_span_days,
-        len(repositories),
+        len(scanned_repositories),
         len(member_logins),
         rows,
         search_capped,
