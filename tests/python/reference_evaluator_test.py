@@ -7018,6 +7018,65 @@ class TestReferenceEvaluator:
         assert_allclose(got[0].sum(), 1.0)
         assert_allclose(got[0], _softmax(x[:1])[0])
 
+    def test_logsoftmax_large_finite_gap_stays_finite(self):
+        x_info = make_tensor_value_info("X", TensorProto.FLOAT, [1, 2])
+        y_info = make_tensor_value_info("Y", TensorProto.FLOAT, [1, 2])
+        model = make_model(
+            make_graph(
+                [make_node("LogSoftmax", ["X"], ["Y"], axis=-1)],
+                "logsoftmax_large_finite_gap",
+                [x_info],
+                [y_info],
+            ),
+            opset_imports=[make_opsetid("", 23)],
+        )
+        x = np.array([[0.0, -104.0]], dtype=np.float32)
+
+        (got,) = ReferenceEvaluator(model).run(None, {"X": x})
+
+        assert np.isfinite(got).all()
+        assert got.dtype == np.float32
+        assert_allclose(got, x, rtol=0, atol=0)
+
+    def test_softmax_cross_entropy_large_finite_gap_stays_finite(self):
+        x_info = make_tensor_value_info("X", TensorProto.FLOAT, [1, 2])
+        label_info = make_tensor_value_info("label", TensorProto.INT64, [1])
+        loss_info = make_tensor_value_info("loss", TensorProto.FLOAT, [1])
+        log_prob_info = make_tensor_value_info(
+            "log_prob", TensorProto.FLOAT, [1, 2]
+        )
+        model = make_model(
+            make_graph(
+                [
+                    make_node(
+                        "SoftmaxCrossEntropyLoss",
+                        ["X", "label"],
+                        ["loss", "log_prob"],
+                        reduction="none",
+                    )
+                ],
+                "softmax_cross_entropy_large_finite_gap",
+                [x_info, label_info],
+                [loss_info, log_prob_info],
+            ),
+            opset_imports=[make_opsetid("", 23)],
+        )
+        x = np.array([[0.0, -104.0]], dtype=np.float32)
+        label = np.array([1], dtype=np.int64)
+
+        loss, log_prob = ReferenceEvaluator(model).run(
+            None, {"X": x, "label": label}
+        )
+
+        assert np.isfinite(loss).all()
+        assert np.isfinite(log_prob).all()
+        assert loss.dtype == np.float32
+        assert log_prob.dtype == np.float32
+        assert_allclose(
+            loss, np.array([104.0], dtype=np.float32), rtol=0, atol=0
+        )
+        assert_allclose(log_prob, x, rtol=0, atol=0)
+
     def test_center_crop_pad_no_change_when_shape_equals_dim(self):
         """Test CenterCropPad when target shape equals current dimension.
 

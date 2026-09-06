@@ -10,6 +10,9 @@ from onnx.reference.ops.op_softmax import Softmax
 
 class LogSoftmax(Softmax):
     def _run(self, X):
-        Y = Softmax._run(self, X)[0]
-        np.log(Y, out=Y)
+        if X.size == 0:
+            return (X,)
+        tmp = X - X.max(axis=self.axis, keepdims=True)
+        Y = tmp - np.log(np.exp(tmp).sum(axis=self.axis, keepdims=True))
+        Y = Y.astype(X.dtype)
         return (Y,)
