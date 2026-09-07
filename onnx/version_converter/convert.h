@@ -651,6 +651,15 @@ class DefaultVersionConverter : public BaseVersionConverter {
     registerAdapter(std::make_unique<GridSample_19_20>());
 
     /******** 20 -> 19 ********/
+    const std::vector<TensorProto_DataType> constant_of_shape_9_unallowed_types = {
+        TensorProto_DataType_BFLOAT16,
+        TensorProto_DataType_FLOAT8E4M3FN,
+        TensorProto_DataType_FLOAT8E4M3FNUZ,
+        TensorProto_DataType_FLOAT8E5M2,
+        TensorProto_DataType_FLOAT8E5M2FNUZ};
+    registerAdapter(
+        std::make_unique<TypeRestriction>(
+            "ConstantOfShape", OpSetID(20), OpSetID(19), constant_of_shape_9_unallowed_types));
     const std::vector<TensorProto_DataType> is_nan_13_unallowed_types = {
         TensorProto_DataType_FLOAT8E4M3FN,
         TensorProto_DataType_FLOAT8E4M3FNUZ,

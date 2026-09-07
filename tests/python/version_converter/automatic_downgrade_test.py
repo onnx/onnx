@@ -52,6 +52,30 @@ class TestAutomaticDowngrade(automatic_conversion_test_base.TestAutomaticConvers
             initializer=[axes],
         )
 
+    def test_constant_of_shape_20_to_19(self) -> None:
+        self._test_model_conversion(
+            to_opset=19,
+            model="""
+                <ir_version: 9, opset_import: [ "" : 20]>
+                constant_of_shape (int64[2] shape) => (float[2, 3] output)
+                {
+                    output = ConstantOfShape (shape)
+                }
+            """,
+        )
+
+    def test_constant_of_shape_20_to_19_bfloat16_fails(self) -> None:
+        self._test_model_conversion_fails(
+            to_opset=19,
+            model="""
+                <ir_version: 9, opset_import: [ "" : 20]>
+                constant_of_shape (int64[2] shape) => (bfloat16[2, 3] output)
+                {
+                    output = ConstantOfShape <value = bfloat16[1] {0}> (shape)
+                }
+            """,
+        )
+
     def test_dft20_no_axis(self) -> None:
         self._test_model_conversion(
             to_opset=19,
