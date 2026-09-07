@@ -7415,6 +7415,77 @@ class TestReferenceEvaluator:
         with pytest.raises(ValueError, match="identical dtypes"):
             ref.run(None, {"A": a, "B": b})
 
+    @staticmethod
+    def _grid_sample_model(opset: int, mode: str | None):
+        X = make_tensor_value_info("X", TensorProto.FLOAT, [None, None, None, None])
+        grid = make_tensor_value_info(
+            "grid", TensorProto.FLOAT, [None, None, None, None]
+        )
+        Y = make_tensor_value_info("Y", TensorProto.FLOAT, [None, None, None, None])
+        kwargs = {} if mode is None else {"mode": mode}
+        node = make_node(
+            "GridSample",
+            ["X", "grid"],
+            ["Y"],
+            padding_mode="border",
+            align_corners=0,
+            **kwargs,
+        )
+        graph = make_graph([node], "gs", [X, grid], [Y])
+        return make_model(graph, opset_imports=[make_opsetid("", opset)])
+
+    @staticmethod
+    def _grid_sample_inputs():
+        x = np.arange(1, 17, dtype=np.float32).reshape((1, 1, 4, 4))
+        grid = np.array(
+            [
+                [
+                    [[-1.0, -1.0], [-0.4, -0.7], [0.3, 0.15]],
+                    [[0.55, 0.9], [1.2, -1.3], [0.0, 0.0]],
+                ]
+            ],
+            dtype=np.float32,
+        )
+        return x, grid
+
+    @pytest.mark.parametrize(
+        ("mode_16", "mode_20"),
+        [("bilinear", "linear"), ("nearest", "nearest"), ("bicubic", "cubic")],
+    )
+    def test_grid_sample_16_mode_names(self, mode_16: str, mode_20: str) -> None:
+        x, grid = self._grid_sample_inputs()
+        model_16 = self._grid_sample_model(16, mode_16)
+        check_model(model_16)
+        got = ReferenceEvaluator(model_16).run(None, {"X": x, "grid": grid})[0]
+        expected = ReferenceEvaluator(self._grid_sample_model(20, mode_20)).run(
+            None, {"X": x, "grid": grid}
+        )[0]
+        assert_allclose(got, expected, atol=1e-6)
+
+    def test_grid_sample_16_default_mode(self) -> None:
+        x, grid = self._grid_sample_inputs()
+        got = ReferenceEvaluator(self._grid_sample_model(16, None)).run(
+            None, {"X": x, "grid": grid}
+        )[0]
+        expected = ReferenceEvaluator(self._grid_sample_model(16, "bilinear")).run(
+            None, {"X": x, "grid": grid}
+        )[0]
+        assert_allclose(got, expected, atol=1e-6)
+
+    @pytest.mark.parametrize("mode", ["linear", "cubic"])
+    def test_grid_sample_16_rejects_opset_20_mode_names(self, mode: str) -> None:
+        x, grid = self._grid_sample_inputs()
+        sess = ReferenceEvaluator(self._grid_sample_model(16, mode))
+        with pytest.raises(ValueError, match="attribute 'mode'"):
+            sess.run(None, {"X": x, "grid": grid})
+
+    @pytest.mark.parametrize("mode", ["bilinear", "bicubic"])
+    def test_grid_sample_20_rejects_opset_16_mode_names(self, mode: str) -> None:
+        x, grid = self._grid_sample_inputs()
+        sess = ReferenceEvaluator(self._grid_sample_model(20, mode))
+        with pytest.raises(ValueError, match="attribute 'mode'"):
+            sess.run(None, {"X": x, "grid": grid})
+
 
 class TestReferenceEvaluatorShapeAnnotationChecking:
     """Tests for the opt-in runtime shape-annotation validation feature
