@@ -59,14 +59,39 @@ jobs:
       - name: Download protoc
         run: |
           ARCH=${{ contains(matrix.build, 'aarch64') && 'aarch_64' || 'x86_64' }}
-          curl -sSL "https://github.com/protocolbuffers/protobuf/releases/download/v${PROTOBUF_VERSION}/protoc-${PROTOBUF_VERSION}-linux-${ARCH}.zip" -o protoc.zip
+          PROTOC_ZIP="protoc-${PROTOBUF_VERSION}-linux-${ARCH}.zip"
+          echo "PROTOC_ZIP=${PROTOC_ZIP}" >> $GITHUB_ENV
+          curl --fail --silent --show-error --location "https://github.com/protocolbuffers/protobuf/releases/download/v${PROTOBUF_VERSION}/${PROTOC_ZIP}" -o protoc.zip
+          echo "PROTOC_EXPECTED_SHA256=$(jq -er --arg key "protoc-linux-${ARCH}" '.components[] | select(.name==$key) | .hashes[] | select(.alg=="SHA-256") | .content // empty' sbom.cdx.json)" >> $GITHUB_ENV
+          echo "PROTOC_ACTUAL_SHA256=$(shasum -a 256 protoc.zip | awk '{print $1}')" >> $GITHUB_ENV
+
+      - name: Verify protoc checksum
+        uses: ./.github/actions/verify-sha256
+        with:
+          file: ${{ env.PROTOC_ZIP }}
+          expected-sha256: ${{ env.PROTOC_EXPECTED_SHA256 }}
+          actual-sha256: ${{ env.PROTOC_ACTUAL_SHA256 }}
+
+      - name: Extract protoc
+        run: |
           unzip -q protoc.zip -d protoc-host
           chmod +x protoc-host/bin/protoc
 
       - name: Download protobuf source
         run: |
-          curl -sSL "https://github.com/protocolbuffers/protobuf/releases/download/v${PROTOBUF_VERSION}/protobuf-${PROTOBUF_VERSION}.tar.gz" -o protobuf.tar.gz
-          tar -xf protobuf.tar.gz
+          curl --fail --silent --show-error --location "https://github.com/protocolbuffers/protobuf/releases/download/v${PROTOBUF_VERSION}/protobuf-${PROTOBUF_VERSION}.tar.gz" -o protobuf.tar.gz
+          echo "PROTOBUF_EXPECTED_SHA256=$(jq -er '.components[] | select(.name=="protobuf") | .hashes[] | select(.alg=="SHA-256") | .content // empty' sbom.cdx.json)" >> $GITHUB_ENV
+          echo "PROTOBUF_ACTUAL_SHA256=$(shasum -a 256 protobuf.tar.gz | awk '{print $1}')" >> $GITHUB_ENV
+
+      - name: Verify protobuf source checksum
+        uses: ./.github/actions/verify-sha256
+        with:
+          file: protobuf-${{ env.PROTOBUF_VERSION }}.tar.gz
+          expected-sha256: ${{ env.PROTOBUF_EXPECTED_SHA256 }}
+          actual-sha256: ${{ env.PROTOBUF_ACTUAL_SHA256 }}
+
+      - name: Extract protobuf source
+        run: tar -xf protobuf.tar.gz
 
       - name: Set SOURCE_DATE_EPOCH for reproducible builds
         run: echo "SOURCE_DATE_EPOCH=$(git log -1 --pretty=%ct)" >> $GITHUB_ENV
