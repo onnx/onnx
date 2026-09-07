@@ -6,7 +6,7 @@
 * [Overall Test Coverage](#overall-test-coverage)
 # Node Test Coverage
 ## Summary
-Node tests have covered 192/202 (95.05%, 5 generators excluded) common operators.
+Node tests have covered 193/202 (95.54%, 5 generators excluded) common operators.
 
 Node tests have covered 1/1 (100.00%, 0 generators excluded) experimental operators.
 
@@ -12652,6 +12652,63 @@ x = np.array(
 ).astype(np.float32)
 y = np.array([[[[5]]]]).astype(np.float32)
 expect(node, inputs=[x], outputs=[y], name="test_globalaveragepool_precomputed")
+```
+
+</details>
+
+
+### GlobalLpPool
+There are 3 test cases, listed as following:
+<details>
+<summary>globallppool_1d_p3</summary>
+
+```python
+node = onnx.helper.make_node(
+    "GlobalLpPool",
+    inputs=["x"],
+    outputs=["y"],
+    p=3,
+)
+x = np.array([[[-1.0, 2.0], [-3.0, 4.0]]], dtype=np.float32)
+y = np.array([[[2.080084], [4.4979415]]], dtype=np.float32)
+expect(node, inputs=[x], outputs=[y], name="test_globallppool_1d_p3")
+```
+
+</details>
+<details>
+<summary>globallppool_3d</summary>
+
+```python
+node = onnx.helper.make_node(
+    "GlobalLpPool",
+    inputs=["x"],
+    outputs=["y"],
+    p=1,
+)
+x = np.array(
+    [[[[[-1.0, 2.0]], [[-3.0, 4.0]]]]],
+    dtype=np.float32,
+)
+y = np.array([[[[[10.0]]]]], dtype=np.float32)
+expect(node, inputs=[x], outputs=[y], name="test_globallppool_3d")
+```
+
+</details>
+<details>
+<summary>globallppool_default</summary>
+
+```python
+node = onnx.helper.make_node(
+    "GlobalLpPool",
+    inputs=["x"],
+    outputs=["y"],
+)
+x = np.array(
+    [[[[1.0, -2.0], [3.0, -4.0]], [[5.0, -6.0], [7.0, -8.0]]]],
+    dtype=np.float32,
+)
+y = np.array([[[[5.477226]], [[13.190906]]]], dtype=np.float32)
+expect(node, inputs=[x], outputs=[y], name="test_globallppool_default")
 ```
 
 </details>
@@ -32746,9 +32803,6 @@ expect(node, inputs=[x, y], outputs=[z], name="test_xor_bcast4v4d")
 
 ## &#x1F494;No Cover Common Operators
 ### ConcatFromSequence (call for test cases)
-
-
-### GlobalLpPool (call for test cases)
 
 
 ### MaxRoiPool (call for test cases)
