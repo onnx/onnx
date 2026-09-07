@@ -7042,9 +7042,7 @@ class TestReferenceEvaluator:
         x_info = make_tensor_value_info("X", TensorProto.FLOAT, [1, 2])
         label_info = make_tensor_value_info("label", TensorProto.INT64, [1])
         loss_info = make_tensor_value_info("loss", TensorProto.FLOAT, [1])
-        log_prob_info = make_tensor_value_info(
-            "log_prob", TensorProto.FLOAT, [1, 2]
-        )
+        log_prob_info = make_tensor_value_info("log_prob", TensorProto.FLOAT, [1, 2])
         model = make_model(
             make_graph(
                 [
@@ -7064,17 +7062,13 @@ class TestReferenceEvaluator:
         x = np.array([[0.0, -104.0]], dtype=np.float32)
         label = np.array([1], dtype=np.int64)
 
-        loss, log_prob = ReferenceEvaluator(model).run(
-            None, {"X": x, "label": label}
-        )
+        loss, log_prob = ReferenceEvaluator(model).run(None, {"X": x, "label": label})
 
         assert np.isfinite(loss).all()
         assert np.isfinite(log_prob).all()
         assert loss.dtype == np.float32
         assert log_prob.dtype == np.float32
-        assert_allclose(
-            loss, np.array([104.0], dtype=np.float32), rtol=0, atol=0
-        )
+        assert_allclose(loss, np.array([104.0], dtype=np.float32), rtol=0, atol=0)
         assert_allclose(log_prob, x, rtol=0, atol=0)
 
     def test_center_crop_pad_no_change_when_shape_equals_dim(self):

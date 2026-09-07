@@ -22,9 +22,7 @@ def softmaxcrossentropy(
     # compute log_softmax
     max_x = np.max(x, axis=1, keepdims=True)
     shifted_x = x - max_x
-    inp = shifted_x - np.log(
-        np.sum(np.exp(shifted_x), axis=1, keepdims=True)
-    )
+    inp = shifted_x - np.log(np.sum(np.exp(shifted_x), axis=1, keepdims=True))
     log_prob = None
     if get_log_prob is True:
         log_prob = np.copy(inp)
