@@ -11,25 +11,22 @@
 namespace ONNX_NAMESPACE {
 
 static void InitPRNGInference(InferenceContext& ctx) {
-  if (hasInputShape(ctx, 0) && getInputShape(ctx, 0).dim_size() != 0) {
-    fail_shape_inference("The 'seed' input must be a scalar.");
-  }
+  checkInputRank(ctx, 0, 0);
   updateOutputElemType(ctx, 0, TensorProto::INT64);
   appendDim(getOutputShape(ctx, 0), 2);
 }
 
 static void SplitPRNGInference(InferenceContext& ctx) {
+  checkInputRank(ctx, 0, 1);
   if (hasInputShape(ctx, 0)) {
     const auto& state_shape = getInputShape(ctx, 0);
-    if (state_shape.dim_size() != 1 || (state_shape.dim(0).has_dim_value() && state_shape.dim(0).dim_value() != 2)) {
+    if (state_shape.dim(0).has_dim_value() && state_shape.dim(0).dim_value() != 2) {
       fail_shape_inference("The 'prng_state' input must have shape [2].");
     }
   }
+  checkInputRank(ctx, 1, 1);
   if (hasInputShape(ctx, 1)) {
     const auto& data_shape = getInputShape(ctx, 1);
-    if (data_shape.dim_size() != 1) {
-      fail_shape_inference("The optional 'data' input must be a rank-1 tensor.");
-    }
     if (data_shape.dim(0).has_dim_value() &&
         data_shape.dim(0).dim_value() != static_cast<int64_t>(ctx.getNumOutputs())) {
       fail_shape_inference("The optional 'data' input must contain one element for each output PRNG state.");
