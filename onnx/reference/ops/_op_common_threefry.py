@@ -72,6 +72,5 @@ def threefry_split(state: np.ndarray, count: int) -> tuple[np.ndarray, ...]:
     output0, output1 = _threefry2x32_words(
         key0, key1, counters >> 32, counters & _UINT32_MASK
     )
-    return tuple(
-        np.array([output0[i], output1[i]], dtype=np.int64) for i in range(count)
-    )
+    states = np.stack((output0, output1), axis=1).astype(np.int64, copy=False)
+    return tuple(states)
