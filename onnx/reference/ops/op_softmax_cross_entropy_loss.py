@@ -25,7 +25,7 @@ def softmaxcrossentropy(
     inp = shifted_x - np.log(np.sum(np.exp(shifted_x), axis=1, keepdims=True))
     log_prob = None
     if get_log_prob is True:
-        log_prob = np.copy(inp)
+        log_prob = np.copy(inp).astype(x.dtype)
 
     # initialize the positional weights when required
     gather_weight = None

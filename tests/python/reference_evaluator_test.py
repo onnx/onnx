@@ -7071,6 +7071,41 @@ class TestReferenceEvaluator:
         assert_allclose(loss, np.array([104.0], dtype=np.float32), rtol=0, atol=0)
         assert_allclose(log_prob, x, rtol=0, atol=0)
 
+    def test_softmax_cross_entropy_weighted_mean_preserves_float16_dtype(self):
+        x_info = make_tensor_value_info("X", TensorProto.FLOAT16, [1, 2])
+        label_info = make_tensor_value_info("label", TensorProto.INT64, [1])
+        weight_info = make_tensor_value_info("weight", TensorProto.FLOAT16, [2])
+        loss_info = make_tensor_value_info("loss", TensorProto.FLOAT16, [])
+        log_prob_info = make_tensor_value_info("log_prob", TensorProto.FLOAT16, [1, 2])
+        model = make_model(
+            make_graph(
+                [
+                    make_node(
+                        "SoftmaxCrossEntropyLoss",
+                        ["X", "label", "weight"],
+                        ["loss", "log_prob"],
+                        reduction="mean",
+                    )
+                ],
+                "softmax_cross_entropy_weighted_mean_float16",
+                [x_info, label_info, weight_info],
+                [loss_info, log_prob_info],
+            ),
+            opset_imports=[make_opsetid("", 23)],
+        )
+        x = np.array([[0.0, -10.0]], dtype=np.float16)
+        label = np.array([1], dtype=np.int64)
+        weight = np.ones(2, dtype=np.float16)
+
+        loss, log_prob = ReferenceEvaluator(model).run(
+            None, {"X": x, "label": label, "weight": weight}
+        )
+
+        assert loss.dtype == np.float16
+        assert log_prob.dtype == np.float16
+        assert np.isfinite(loss).all()
+        assert np.isfinite(log_prob).all()
+
     def test_center_crop_pad_no_change_when_shape_equals_dim(self):
         """Test CenterCropPad when target shape equals current dimension.
 
