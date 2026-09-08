@@ -3,8 +3,12 @@
 # Copyright (c) ONNX Project Contributors
 from __future__ import annotations
 
+import numpy as np
+import pytest
+
 import onnx
-from onnx import checker, utils
+from onnx import checker, inliner, utils
+from onnx.reference import ReferenceEvaluator
 
 
 class TestFunction:
@@ -219,3 +223,80 @@ class TestFunction:
             {func_add_name, func_identity_name, func_nested_identity_add_name},
             func_domain,
         )
+
+    @pytest.mark.parametrize("in_function", [False, True])
+    def test_extract_model_with_local_function_in_subgraph(
+        self, in_function: bool
+    ) -> None:
+        opsets = [
+            onnx.helper.make_opsetid("", 18),
+            onnx.helper.make_opsetid("local", 1),
+        ]
+        double = onnx.helper.make_function(
+            "local",
+            "Double",
+            ["x"],
+            ["y"],
+            [onnx.helper.make_node("Add", ["x", "x"], ["y"])],
+            opsets,
+        )
+        unused = onnx.helper.make_function(
+            "local",
+            "Unused",
+            ["x"],
+            ["y"],
+            [onnx.helper.make_node("Identity", ["x"], ["y"])],
+            opsets,
+        )
+        then_branch = onnx.helper.make_graph(
+            [onnx.helper.make_node("Double", ["X"], ["then_y"], domain="local")],
+            "then_branch",
+            [],
+            [onnx.helper.make_tensor_value_info("then_y", onnx.TensorProto.FLOAT, [2])],
+        )
+        else_branch = onnx.helper.make_graph(
+            [
+                onnx.helper.make_node("Neg", ["X"], ["neg_x"]),
+                onnx.helper.make_node("Double", ["neg_x"], ["else_y"], domain="local"),
+            ],
+            "else_branch",
+            [],
+            [onnx.helper.make_tensor_value_info("else_y", onnx.TensorProto.FLOAT, [2])],
+        )
+        node = onnx.helper.make_node(
+            "If", ["cond"], ["Y"], then_branch=then_branch, else_branch=else_branch
+        )
+        functions = [double, unused]
+        expected_functions = {"Double"}
+        if in_function:
+            functions.append(
+                onnx.helper.make_function(
+                    "local", "Wrapper", ["X", "cond"], ["Y"], [node], opsets
+                )
+            )
+            node = onnx.helper.make_node(
+                "Wrapper", ["X", "cond"], ["Y"], domain="local"
+            )
+            expected_functions.add("Wrapper")
+        graph = onnx.helper.make_graph(
+            [node],
+            "subgraph_local_function",
+            [
+                onnx.helper.make_tensor_value_info("X", onnx.TensorProto.FLOAT, [2]),
+                onnx.helper.make_tensor_value_info("cond", onnx.TensorProto.BOOL, []),
+            ],
+            [onnx.helper.make_tensor_value_info("Y", onnx.TensorProto.FLOAT, [2])],
+        )
+        model = onnx.helper.make_model(
+            graph, functions=functions, opset_imports=opsets, ir_version=9
+        )
+        checker.check_model(model)
+        extracted = utils.Extractor(model).extract_model(["X", "cond"], ["Y"])
+        self._verify_function_set(extracted, expected_functions, "local")
+        runner = ReferenceEvaluator(inliner.inline_local_functions(extracted))
+        x = np.array([1.0, -2.0], dtype=np.float32)
+        for condition in (True, False):
+            expected = x * 2 if condition else -x * 2
+            np.testing.assert_array_equal(
+                runner.run(None, {"X": x, "cond": np.array(condition)})[0], expected
+            )
