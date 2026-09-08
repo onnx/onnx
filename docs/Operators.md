@@ -22157,6 +22157,27 @@ expect(node, inputs=[x], outputs=[y], name="test_l1normalization_axis_last")
 
 
 <details>
+<summary>l1normalization_negative_values</summary>
+
+```python
+node = onnx.helper.make_node(
+    "LpNormalization", inputs=["x"], outputs=["y"], axis=0, p=1
+)
+x = np.array([1.0, -1.0], dtype=np.float32)
+l1_norm = np.sum(abs(x), axis=0, keepdims=True)
+y = x / l1_norm
+expect(
+    node,
+    inputs=[x],
+    outputs=[y],
+    name="test_l1normalization_negative_values",
+)
+```
+
+</details>
+
+
+<details>
 <summary>l2normalization_axis_0</summary>
 
 ```python
@@ -46589,5 +46610,4 @@ expect(
 ```
 
 </details>
-
 
