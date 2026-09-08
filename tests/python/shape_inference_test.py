@@ -4598,6 +4598,20 @@ class TestShapeInference(TestShapeInferenceHelper):
         with pytest.raises(onnx.shape_inference.InferenceError):
             onnx.shape_inference.infer_shapes(model, strict_mode=True)
 
+    def test_split_prng_state_shape_must_be_two(self) -> None:
+        graph = helper.make_graph(
+            [make_node("SplitPRNG", ["state"], ["state1", "state2"])],
+            "split_prng_invalid_state_shape",
+            [make_tensor_value_info("state", TensorProto.INT64, (3,))],
+            [
+                make_empty_tensor_value_info("state1"),
+                make_empty_tensor_value_info("state2"),
+            ],
+        )
+        model = helper.make_model(graph, opset_imports=[helper.make_opsetid("", 29)])
+        with pytest.raises(onnx.shape_inference.InferenceError):
+            onnx.shape_inference.infer_shapes(model, strict_mode=True)
+
     def test_random_normal_like(self) -> None:
         graph = self._make_graph(
             [("X", TensorProto.FLOAT, (2, 3, 4))],
