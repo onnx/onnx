@@ -4722,6 +4722,57 @@ class TestReferenceEvaluator:
         # specific message is on the chained cause rather than the exception itself.
         assert "does not support integer input" in str(exc_info.value.__cause__)
 
+    @pytest.mark.parametrize(
+        ("data", "indices", "axis", "expected"),
+        [
+            (
+                np.array([[10, 11, 12], [20, 21, 22]], dtype=np.int64),
+                np.array([[2, 0]], dtype=np.int64),
+                1,
+                np.array([[12, 10]], dtype=np.int64),
+            ),
+            (
+                np.array([[10, 11], [20, 21], [30, 31]], dtype=np.int64),
+                np.array([[2], [0]], dtype=np.int64),
+                0,
+                np.array([[30], [10]], dtype=np.int64),
+            ),
+            (
+                np.arange(12, dtype=np.int64).reshape(2, 2, 3),
+                np.array([[[2, 0], [1, 2]]], dtype=np.int64),
+                -1,
+                np.array([[[2, 0], [4, 5]]], dtype=np.int64),
+            ),
+        ],
+    )
+    def test_gather_elements_accepts_smaller_non_axis_dimensions(
+        self, data, indices, axis, expected
+    ):
+        node = make_node("GatherElements", ["data", "indices"], ["output"], axis=axis)
+        model = make_model(
+            make_graph(
+                [node],
+                "g",
+                [
+                    make_tensor_value_info("data", TensorProto.INT64, list(data.shape)),
+                    make_tensor_value_info(
+                        "indices", TensorProto.INT64, list(indices.shape)
+                    ),
+                ],
+                [
+                    make_tensor_value_info(
+                        "output", TensorProto.INT64, list(indices.shape)
+                    )
+                ],
+            ),
+            opset_imports=[make_opsetid("", 13)],
+        )
+
+        actual = ReferenceEvaluator(model).run(
+            None, {"data": data, "indices": indices}
+        )[0]
+        np.testing.assert_array_equal(actual, expected)
+
     @pytest.mark.parametrize("dim", [1, 2, 3, 4, 5, 6])
     def test_pad(self, dim):
         X = make_tensor_value_info("X", TensorProto.FLOAT, None)
@@ -7103,6 +7154,76 @@ class TestReferenceEvaluator:
         assert_allclose(got[0].sum(), 1.0)
         assert_allclose(got[0], _softmax(x[:1])[0])
 
+    def test_rms_normalization_float16_uses_float32_stash(self):
+        model = make_model(
+            make_graph(
+                [
+                    make_node(
+                        "RMSNormalization",
+                        ["X", "Scale"],
+                        ["Y"],
+                        epsilon=0.0,
+                        stash_type=TensorProto.FLOAT,
+                    )
+                ],
+                "rms_normalization_float32_stash",
+                [
+                    make_tensor_value_info("X", TensorProto.FLOAT16, [1, 2]),
+                    make_tensor_value_info("Scale", TensorProto.FLOAT16, [2]),
+                ],
+                [make_tensor_value_info("Y", TensorProto.FLOAT16, [1, 2])],
+            ),
+            opset_imports=[make_opsetid("", 23)],
+        )
+        x = np.array([[256.0, 256.0]], dtype=np.float16)
+        scale = np.ones(2, dtype=np.float16)
+
+        (actual,) = ReferenceEvaluator(model).run(None, {"X": x, "Scale": scale})
+
+        assert actual.dtype == np.float16
+        assert_array_equal(actual, np.ones((1, 2), dtype=np.float16))
+
+    def test_layer_normalization_float16_uses_float32_stash(self):
+        model = make_model(
+            make_graph(
+                [
+                    make_node(
+                        "LayerNormalization",
+                        ["X", "Scale", "B"],
+                        ["Y", "Mean", "InvStdDev"],
+                        epsilon=0.0,
+                        stash_type=TensorProto.FLOAT,
+                    )
+                ],
+                "layer_normalization_float32_stash",
+                [
+                    make_tensor_value_info("X", TensorProto.FLOAT16, [1, 2]),
+                    make_tensor_value_info("Scale", TensorProto.FLOAT16, [2]),
+                    make_tensor_value_info("B", TensorProto.FLOAT16, [2]),
+                ],
+                [
+                    make_tensor_value_info("Y", TensorProto.FLOAT16, [1, 2]),
+                    make_tensor_value_info("Mean", TensorProto.FLOAT, [1, 1]),
+                    make_tensor_value_info("InvStdDev", TensorProto.FLOAT, [1, 1]),
+                ],
+            ),
+            opset_imports=[make_opsetid("", 23)],
+        )
+        x = np.array([[256.0, -256.0]], dtype=np.float16)
+        scale = np.ones(2, dtype=np.float16)
+        bias = np.zeros(2, dtype=np.float16)
+
+        actual, mean, inv_std_dev = ReferenceEvaluator(model).run(
+            None, {"X": x, "Scale": scale, "B": bias}
+        )
+
+        assert actual.dtype == np.float16
+        assert mean.dtype == np.float32
+        assert inv_std_dev.dtype == np.float32
+        assert_array_equal(actual, np.array([[1.0, -1.0]], dtype=np.float16))
+        assert_array_equal(mean, np.zeros((1, 1), dtype=np.float32))
+        assert_array_equal(inv_std_dev, np.array([[1.0 / 256.0]], dtype=np.float32))
+
     def test_center_crop_pad_no_change_when_shape_equals_dim(self):
         """Test CenterCropPad when target shape equals current dimension.
 
@@ -7485,6 +7606,47 @@ class TestReferenceEvaluator:
         sess = ReferenceEvaluator(self._grid_sample_model(20, mode))
         with pytest.raises(ValueError, match="attribute 'mode'"):
             sess.run(None, {"X": x, "grid": grid})
+
+    def test_unique_not_sorted_single_output(self) -> None:
+        # Y follows the order of first occurrence even when the optional
+        # outputs are not requested (spec example 1).
+        node = make_node("Unique", ["X"], ["Y"], sorted=0)
+        x = np.array([2.0, 1.0, 1.0, 3.0, 4.0, 3.0], dtype=np.float32)
+        (y,) = ReferenceEvaluator(node).run(None, {"X": x})
+        assert_array_equal(y, np.array([2.0, 1.0, 3.0, 4.0], dtype=np.float32))
+
+    def test_unique_not_sorted_without_axis_2d(self) -> None:
+        node = make_node(
+            "Unique", ["X"], ["Y", "indices", "inverse", "counts"], sorted=0
+        )
+        x = np.array([[2.0, 1.0], [1.0, 3.0]], dtype=np.float32)
+        y, indices, inverse, counts = ReferenceEvaluator(node).run(None, {"X": x})
+        assert_array_equal(y, np.array([2.0, 1.0, 3.0], dtype=np.float32))
+        assert_array_equal(indices, np.array([0, 1, 3], dtype=np.int64))
+        assert_array_equal(inverse, np.array([0, 1, 1, 2], dtype=np.int64))
+        assert_array_equal(counts, np.array([1, 2, 1], dtype=np.int64))
+
+    def test_unique_not_sorted_with_axis(self) -> None:
+        node = make_node(
+            "Unique", ["X"], ["Y", "indices", "inverse", "counts"], sorted=0, axis=1
+        )
+        x = np.array([[3.0, 1.0, 3.0], [4.0, 2.0, 4.0]], dtype=np.float32)
+        y, indices, inverse, counts = ReferenceEvaluator(node).run(None, {"X": x})
+        assert_array_equal(y, np.array([[3.0, 1.0], [4.0, 2.0]], dtype=np.float32))
+        assert_array_equal(indices, np.array([0, 1], dtype=np.int64))
+        assert_array_equal(inverse, np.array([0, 1, 0], dtype=np.int64))
+        assert_array_equal(counts, np.array([2, 1], dtype=np.int64))
+
+    def test_unique_sorted_with_negative_axis(self) -> None:
+        node = make_node(
+            "Unique", ["X"], ["Y", "indices", "inverse", "counts"], sorted=1, axis=-1
+        )
+        x = np.array([[3.0, 1.0, 3.0], [4.0, 2.0, 4.0]], dtype=np.float32)
+        y, indices, inverse, counts = ReferenceEvaluator(node).run(None, {"X": x})
+        assert_array_equal(y, np.array([[1.0, 3.0], [2.0, 4.0]], dtype=np.float32))
+        assert_array_equal(indices, np.array([1, 0], dtype=np.int64))
+        assert_array_equal(inverse, np.array([1, 0, 1], dtype=np.int64))
+        assert_array_equal(counts, np.array([1, 2], dtype=np.int64))
 
 
 class TestReferenceEvaluatorShapeAnnotationChecking:
