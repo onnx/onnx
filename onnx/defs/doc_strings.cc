@@ -2948,8 +2948,8 @@ y = scale * (x - mean) / sqrt(variance + epsilon) + bias,
 ```
 where the mean and variance are computed per instance per group of channels, and
 `scale` and `bias` should be specified for each channel. The number of
-groups `num_groups` should be divisible by the number of channels so that there are
-an equal number of channels per group.
+channels should be divisible by `num_groups` so that there are an equal number of
+channels per group.
 
 The overall computation has two stages: the first stage normalizes the elements to
 have zero mean and unit variance for each instance in each group, and the second
@@ -3276,8 +3276,8 @@ y = scale * (x - mean) / sqrt(variance + epsilon) + bias,
 ```
 where the mean and variance are computed per instance per group of channels, and
 `scale` and `bias` should be specified for each group of channels. The number of
-groups `num_groups` should be divisible by the number of channels so that there are
-an equal number of channels per group.
+channels should be divisible by `num_groups` so that there are an equal number of
+channels per group.
 
 When the number of groups is the same as the number of channels, this operator is
 equivalent to InstanceNormalization. When there is only one group, this operator

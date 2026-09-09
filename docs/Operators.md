@@ -18020,8 +18020,8 @@ expect(
   ```
   where the mean and variance are computed per instance per group of channels, and
   `scale` and `bias` should be specified for each channel. The number of
-  groups `num_groups` should be divisible by the number of channels so that there are
-  an equal number of channels per group.
+  channels should be divisible by `num_groups` so that there are an equal number of
+  channels per group.
 
   The overall computation has two stages: the first stage normalizes the elements to
   have zero mean and unit variance for each instance in each group, and the second
