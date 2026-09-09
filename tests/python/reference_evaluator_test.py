@@ -7103,6 +7103,76 @@ class TestReferenceEvaluator:
         assert_allclose(got[0].sum(), 1.0)
         assert_allclose(got[0], _softmax(x[:1])[0])
 
+    def test_rms_normalization_float16_uses_float32_stash(self):
+        model = make_model(
+            make_graph(
+                [
+                    make_node(
+                        "RMSNormalization",
+                        ["X", "Scale"],
+                        ["Y"],
+                        epsilon=0.0,
+                        stash_type=TensorProto.FLOAT,
+                    )
+                ],
+                "rms_normalization_float32_stash",
+                [
+                    make_tensor_value_info("X", TensorProto.FLOAT16, [1, 2]),
+                    make_tensor_value_info("Scale", TensorProto.FLOAT16, [2]),
+                ],
+                [make_tensor_value_info("Y", TensorProto.FLOAT16, [1, 2])],
+            ),
+            opset_imports=[make_opsetid("", 23)],
+        )
+        x = np.array([[256.0, 256.0]], dtype=np.float16)
+        scale = np.ones(2, dtype=np.float16)
+
+        (actual,) = ReferenceEvaluator(model).run(None, {"X": x, "Scale": scale})
+
+        assert actual.dtype == np.float16
+        assert_array_equal(actual, np.ones((1, 2), dtype=np.float16))
+
+    def test_layer_normalization_float16_uses_float32_stash(self):
+        model = make_model(
+            make_graph(
+                [
+                    make_node(
+                        "LayerNormalization",
+                        ["X", "Scale", "B"],
+                        ["Y", "Mean", "InvStdDev"],
+                        epsilon=0.0,
+                        stash_type=TensorProto.FLOAT,
+                    )
+                ],
+                "layer_normalization_float32_stash",
+                [
+                    make_tensor_value_info("X", TensorProto.FLOAT16, [1, 2]),
+                    make_tensor_value_info("Scale", TensorProto.FLOAT16, [2]),
+                    make_tensor_value_info("B", TensorProto.FLOAT16, [2]),
+                ],
+                [
+                    make_tensor_value_info("Y", TensorProto.FLOAT16, [1, 2]),
+                    make_tensor_value_info("Mean", TensorProto.FLOAT, [1, 1]),
+                    make_tensor_value_info("InvStdDev", TensorProto.FLOAT, [1, 1]),
+                ],
+            ),
+            opset_imports=[make_opsetid("", 23)],
+        )
+        x = np.array([[256.0, -256.0]], dtype=np.float16)
+        scale = np.ones(2, dtype=np.float16)
+        bias = np.zeros(2, dtype=np.float16)
+
+        actual, mean, inv_std_dev = ReferenceEvaluator(model).run(
+            None, {"X": x, "Scale": scale, "B": bias}
+        )
+
+        assert actual.dtype == np.float16
+        assert mean.dtype == np.float32
+        assert inv_std_dev.dtype == np.float32
+        assert_array_equal(actual, np.array([[1.0, -1.0]], dtype=np.float16))
+        assert_array_equal(mean, np.zeros((1, 1), dtype=np.float32))
+        assert_array_equal(inv_std_dev, np.array([[1.0 / 256.0]], dtype=np.float32))
+
     def test_center_crop_pad_no_change_when_shape_equals_dim(self):
         """Test CenterCropPad when target shape equals current dimension.
 
