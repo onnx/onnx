@@ -4722,6 +4722,57 @@ class TestReferenceEvaluator:
         # specific message is on the chained cause rather than the exception itself.
         assert "does not support integer input" in str(exc_info.value.__cause__)
 
+    @pytest.mark.parametrize(
+        ("data", "indices", "axis", "expected"),
+        [
+            (
+                np.array([[10, 11, 12], [20, 21, 22]], dtype=np.int64),
+                np.array([[2, 0]], dtype=np.int64),
+                1,
+                np.array([[12, 10]], dtype=np.int64),
+            ),
+            (
+                np.array([[10, 11], [20, 21], [30, 31]], dtype=np.int64),
+                np.array([[2], [0]], dtype=np.int64),
+                0,
+                np.array([[30], [10]], dtype=np.int64),
+            ),
+            (
+                np.arange(12, dtype=np.int64).reshape(2, 2, 3),
+                np.array([[[2, 0], [1, 2]]], dtype=np.int64),
+                -1,
+                np.array([[[2, 0], [4, 5]]], dtype=np.int64),
+            ),
+        ],
+    )
+    def test_gather_elements_accepts_smaller_non_axis_dimensions(
+        self, data, indices, axis, expected
+    ):
+        node = make_node("GatherElements", ["data", "indices"], ["output"], axis=axis)
+        model = make_model(
+            make_graph(
+                [node],
+                "g",
+                [
+                    make_tensor_value_info("data", TensorProto.INT64, list(data.shape)),
+                    make_tensor_value_info(
+                        "indices", TensorProto.INT64, list(indices.shape)
+                    ),
+                ],
+                [
+                    make_tensor_value_info(
+                        "output", TensorProto.INT64, list(indices.shape)
+                    )
+                ],
+            ),
+            opset_imports=[make_opsetid("", 13)],
+        )
+
+        actual = ReferenceEvaluator(model).run(
+            None, {"data": data, "indices": indices}
+        )[0]
+        np.testing.assert_array_equal(actual, expected)
+
     @pytest.mark.parametrize("dim", [1, 2, 3, 4, 5, 6])
     def test_pad(self, dim):
         X = make_tensor_value_info("X", TensorProto.FLOAT, None)
