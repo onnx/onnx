@@ -129,10 +129,13 @@ class ConvTranspose(OpRun):
                 group_output = np.array(group_output[0])
                 output_array.append(group_output)
 
+            channels_per_group = num_output_channels // group
             for image_id in range(X.shape[0]):
                 for group_id in range(group):
                     group_output = output_array[group_id]
-                    final[image_id, group_id : (group_id + 1), ...] = group_output[
+                    start_ch = group_id * channels_per_group
+                    end_ch = start_ch + channels_per_group
+                    final[image_id, start_ch:end_ch, ...] = group_output[
                         image_id, ...
                     ]
 
