@@ -247,14 +247,14 @@ def convert_model_to_external_data(
         for tensor in tensors:
             if (
                 tensor.HasField("raw_data")
-                and sys.getsizeof(tensor.raw_data) >= size_threshold
+                and len(tensor.raw_data) >= size_threshold
             ):
                 set_external_data(tensor, file_name)
     else:
         for tensor in tensors:
             if (
                 tensor.HasField("raw_data")
-                and sys.getsizeof(tensor.raw_data) >= size_threshold
+                and len(tensor.raw_data) >= size_threshold
             ):
                 tensor_location = tensor.name
                 if not _is_valid_filename(tensor_location):
