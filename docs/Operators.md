@@ -16942,6 +16942,67 @@ Other versions of this operator: <a href="Changelog.md#GlobalLpPool-1">1</a>, <a
 </dl>
 
 
+#### Examples
+
+<details>
+<summary>globallppool_1d_p3</summary>
+
+```python
+node = onnx.helper.make_node(
+    "GlobalLpPool",
+    inputs=["x"],
+    outputs=["y"],
+    p=3,
+)
+x = np.array([[[-1.0, 2.0], [-3.0, 4.0]]], dtype=np.float32)
+y = np.array([[[2.080084], [4.4979415]]], dtype=np.float32)
+expect(node, inputs=[x], outputs=[y], name="test_globallppool_1d_p3")
+```
+
+</details>
+
+
+<details>
+<summary>globallppool_3d</summary>
+
+```python
+node = onnx.helper.make_node(
+    "GlobalLpPool",
+    inputs=["x"],
+    outputs=["y"],
+    p=1,
+)
+x = np.array(
+    [[[[[-1.0, 2.0]], [[-3.0, 4.0]]]]],
+    dtype=np.float32,
+)
+y = np.array([[[[[10.0]]]]], dtype=np.float32)
+expect(node, inputs=[x], outputs=[y], name="test_globallppool_3d")
+```
+
+</details>
+
+
+<details>
+<summary>globallppool_default</summary>
+
+```python
+node = onnx.helper.make_node(
+    "GlobalLpPool",
+    inputs=["x"],
+    outputs=["y"],
+)
+x = np.array(
+    [[[[1.0, -2.0], [3.0, -4.0]], [[5.0, -6.0], [7.0, -8.0]]]],
+    dtype=np.float32,
+)
+y = np.array([[[[5.477226]], [[13.190906]]]], dtype=np.float32)
+expect(node, inputs=[x], outputs=[y], name="test_globallppool_default")
+```
+
+</details>
+
+
 ### <a name="GlobalMaxPool"></a><a name="globalmaxpool">**GlobalMaxPool**</a>
 
   GlobalMaxPool consumes an input tensor X and applies max pooling across
@@ -22090,6 +22151,27 @@ x = np.array(
 l1_norm_axis_last = np.sum(abs(x), axis=-1, keepdims=True)
 y = x / l1_norm_axis_last
 expect(node, inputs=[x], outputs=[y], name="test_l1normalization_axis_last")
+```
+
+</details>
+
+
+<details>
+<summary>l1normalization_negative_values</summary>
+
+```python
+node = onnx.helper.make_node(
+    "LpNormalization", inputs=["x"], outputs=["y"], axis=0, p=1
+)
+x = np.array([1.0, -1.0], dtype=np.float32)
+l1_norm = np.sum(abs(x), axis=0, keepdims=True)
+y = x / l1_norm
+expect(
+    node,
+    inputs=[x],
+    outputs=[y],
+    name="test_l1normalization_negative_values",
+)
 ```
 
 </details>
@@ -44364,6 +44446,67 @@ expect(
 
 
 <details>
+<summary>not_sorted_single_output</summary>
+
+```python
+node_not_sorted = onnx.helper.make_node(
+    "Unique",
+    inputs=["X"],
+    outputs=["Y"],
+    sorted=0,
+)
+
+# Y keeps the order of first occurrence even when the optional outputs
+# are not requested.
+x = np.array([2.0, 1.0, 1.0, 3.0, 4.0, 3.0], dtype=np.float32)
+y = np.array([2.0, 1.0, 3.0, 4.0], dtype=np.float32)
+
+expect(
+    node_not_sorted,
+    inputs=[x],
+    outputs=[y],
+    name="test_unique_not_sorted_single_output",
+    output_type_protos=unique_output_types(x)[:1],
+)
+```
+
+</details>
+
+
+<details>
+<summary>not_sorted_with_axis</summary>
+
+```python
+node_not_sorted = onnx.helper.make_node(
+    "Unique",
+    inputs=["X"],
+    outputs=["Y", "indices", "inverse_indices", "counts"],
+    sorted=0,
+    axis=1,
+)
+
+# The unique columns are [3.0, 4.0] and [1.0, 2.0], kept in the order
+# they first appear in X instead of ascending order. indices point into
+# the columns of X, inverse_indices and counts follow the order of Y.
+x = np.array([[3.0, 1.0, 3.0], [4.0, 2.0, 4.0]], dtype=np.float32)
+y = np.array([[3.0, 1.0], [4.0, 2.0]], dtype=np.float32)
+indices = np.array([0, 1], dtype=np.int64)
+inverse_indices = np.array([0, 1, 0], dtype=np.int64)
+counts = np.array([2, 1], dtype=np.int64)
+
+expect(
+    node_not_sorted,
+    inputs=[x],
+    outputs=[y, indices, inverse_indices, counts],
+    name="test_unique_not_sorted_with_axis",
+    output_type_protos=unique_output_types(x, axis=1),
+)
+```
+
+</details>
+
+
+<details>
 <summary>not_sorted_without_axis</summary>
 
 ```python
@@ -44408,6 +44551,38 @@ expect(
     inputs=[x],
     outputs=[y, indices, inverse_indices, counts],
     name="test_unique_not_sorted_without_axis",
+    output_type_protos=unique_output_types(x),
+)
+```
+
+</details>
+
+
+<details>
+<summary>not_sorted_without_axis_2d</summary>
+
+```python
+node_not_sorted = onnx.helper.make_node(
+    "Unique",
+    inputs=["X"],
+    outputs=["Y", "indices", "inverse_indices", "counts"],
+    sorted=0,
+)
+
+# X is flattened to [2.0, 1.0, 1.0, 3.0] because axis is not set, and Y
+# holds its unique values in order of first occurrence. indices point
+# into the flattened X, inverse_indices and counts follow the order of Y.
+x = np.array([[2.0, 1.0], [1.0, 3.0]], dtype=np.float32)
+y = np.array([2.0, 1.0, 3.0], dtype=np.float32)
+indices = np.array([0, 1, 3], dtype=np.int64)
+inverse_indices = np.array([0, 1, 1, 2], dtype=np.int64)
+counts = np.array([1, 2, 1], dtype=np.int64)
+
+expect(
+    node_not_sorted,
+    inputs=[x],
+    outputs=[y, indices, inverse_indices, counts],
+    name="test_unique_not_sorted_without_axis_2d",
     output_type_protos=unique_output_types(x),
 )
 ```
