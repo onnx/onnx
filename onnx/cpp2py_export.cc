@@ -501,7 +501,10 @@ NB_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) { // NOLINT(cppcoreguidelines-
           })
       .def(
           "set_type_and_shape_inference_function",
-          [](OpSchema& op, const std::function<void(InferenceContext*)>& func) -> OpSchema& {
+          // Keep the Python callable alive in the registered C++ inference
+          // function instead of converting it through nanobind's std::function
+          // caster. See https://github.com/onnx/onnx/issues/7508.
+          [](OpSchema& op, const nb::callable& func) -> OpSchema& {
             auto wrapper = [=](InferenceContext& ctx) { func(&ctx); };
             return op.TypeAndShapeInferenceFunction(wrapper);
           },
