@@ -245,17 +245,11 @@ def convert_model_to_external_data(
                 raise FileExistsError(f"External data file exists in {location}.")
             file_name = location
         for tensor in tensors:
-            if (
-                tensor.HasField("raw_data")
-                and len(tensor.raw_data) >= size_threshold
-            ):
+            if tensor.HasField("raw_data") and len(tensor.raw_data) >= size_threshold:
                 set_external_data(tensor, file_name)
     else:
         for tensor in tensors:
-            if (
-                tensor.HasField("raw_data")
-                and len(tensor.raw_data) >= size_threshold
-            ):
+            if tensor.HasField("raw_data") and len(tensor.raw_data) >= size_threshold:
                 tensor_location = tensor.name
                 if not _is_valid_filename(tensor_location):
                     tensor_location = str(uuid.uuid1())
