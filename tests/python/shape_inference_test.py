@@ -9031,10 +9031,12 @@ class TestShapeInference(TestShapeInferenceHelper):
                 opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
             )
 
-    def test_split_to_sequence_keepdims(self) -> None:
+    @pytest.mark.parametrize("inputs", [["input"], ["input", ""]])
+    @pytest.mark.parametrize("version", all_versions_for("SplitToSequence"))
+    def test_split_to_sequence_keepdims(self, inputs: list[str], version: int) -> None:
         graph = self._make_graph(
             [("input", TensorProto.FLOAT, (6, 4))],
-            [make_node("SplitToSequence", ["input"], ["output_sequence"], keepdims=1)],
+            [make_node("SplitToSequence", inputs, ["output_sequence"], keepdims=1)],
             [],
         )
         self._assert_inferred(
@@ -9044,12 +9046,17 @@ class TestShapeInference(TestShapeInferenceHelper):
                     "output_sequence", TensorProto.FLOAT, (1, 4)
                 )
             ],
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
         )
 
-    def test_split_to_sequence_not_keepdims(self) -> None:
+    @pytest.mark.parametrize("inputs", [["input"], ["input", ""]])
+    @pytest.mark.parametrize("version", all_versions_for("SplitToSequence"))
+    def test_split_to_sequence_not_keepdims(
+        self, inputs: list[str], version: int
+    ) -> None:
         graph = self._make_graph(
             [("input", TensorProto.FLOAT, (6, 4))],
-            [make_node("SplitToSequence", ["input"], ["output_sequence"], keepdims=0)],
+            [make_node("SplitToSequence", inputs, ["output_sequence"], keepdims=0)],
             [],
         )
         self._assert_inferred(
@@ -9059,6 +9066,7 @@ class TestShapeInference(TestShapeInferenceHelper):
                     "output_sequence", TensorProto.FLOAT, (4,)
                 )
             ],
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
         )
 
     def test_split_to_sequence_ignore_keepdims(self) -> None:
