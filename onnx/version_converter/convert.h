@@ -521,6 +521,9 @@ class DefaultVersionConverter : public BaseVersionConverter {
     registerAdapter(std::make_unique<BatchNormalization_13_14>());
 
     /******** 14 -> 13 ********/
+    const std::vector<TensorProto_DataType> mul_14_unallowed_types = {
+        TensorProto_DataType_UINT8, TensorProto_DataType_INT8, TensorProto_DataType_UINT16, TensorProto_DataType_INT16};
+    registerAdapter(std::make_unique<TypeRestriction>("Mul", OpSetID(14), OpSetID(13), mul_14_unallowed_types));
     registerAdapter("GRU", 14, 13, RemoveAttribute(klayout, 0));
     registerAdapter("LSTM", 14, 13, RemoveAttribute(klayout, 0));
     registerAdapter("RNN", 14, 13, RemoveAttribute(klayout, 0));
