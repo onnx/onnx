@@ -314,6 +314,53 @@ class TestVersionConverter:
         assert converted_model.graph.node[0].op_type == "Mul"
         assert converted_model.opset_import[0].version == 8
 
+    def test_mul_14_13_float(self) -> None:
+        nodes = [helper.make_node("Mul", ["X1", "X2"], ["Y"])]
+        graph = helper.make_graph(
+            nodes,
+            "test",
+            [
+                helper.make_tensor_value_info("X1", TensorProto.FLOAT, (5,)),
+                helper.make_tensor_value_info("X2", TensorProto.FLOAT, (5,)),
+            ],
+            [helper.make_tensor_value_info("Y", TensorProto.FLOAT, (5,))],
+        )
+
+        converted_model = self._converted(graph, helper.make_operatorsetid("", 14), 13)
+
+        assert converted_model.graph.node[0].op_type == "Mul"
+        assert (
+            converted_model.graph.output[0].type.tensor_type.elem_type
+            == TensorProto.FLOAT
+        )
+        assert converted_model.opset_import[0].version == 13
+
+    @pytest.mark.parametrize(
+        "data_type",
+        [
+            TensorProto.UINT8,
+            TensorProto.INT8,
+            TensorProto.UINT16,
+            TensorProto.INT16,
+        ],
+    )
+    def test_mul_14_13_rejects_opset14_only_types(self, data_type: int) -> None:
+        nodes = [helper.make_node("Mul", ["X1", "X2"], ["Y"])]
+        graph = helper.make_graph(
+            nodes,
+            "test",
+            [
+                helper.make_tensor_value_info("X1", data_type, (5,)),
+                helper.make_tensor_value_info("X2", data_type, (5,)),
+            ],
+            [helper.make_tensor_value_info("Y", data_type, (5,))],
+        )
+
+        with pytest.raises(
+            RuntimeError, match=r"operator 'Mul' is unallowed for Opset Version 13"
+        ):
+            self._converted(graph, helper.make_operatorsetid("", 14), 13)
+
     # Test Gemm Adapter: 1 -> 8
     def test_gemm_up(self) -> None:
         nodes = [helper.make_node("Gemm", ["A", "B", "C"], ["Y"])]
