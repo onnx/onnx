@@ -4773,6 +4773,68 @@ class TestReferenceEvaluator:
         )[0]
         np.testing.assert_array_equal(actual, expected)
 
+    @pytest.mark.parametrize("momentum", [None, 0.5])
+    @pytest.mark.parametrize("training", [False, True])
+    def test_batch_normalization_opset9_modes(self, momentum, training):
+        x = np.array([[[1.0, 3.0]], [[5.0, 7.0]]], dtype=np.float32)
+        scale = np.array([2.0], dtype=np.float32)
+        bias = np.array([0.5], dtype=np.float32)
+        mean = np.array([10.0], dtype=np.float32)
+        var = np.array([4.0], dtype=np.float32)
+        feeds = {"X": x, "scale": scale, "B": bias, "mean": mean, "var": var}
+        inputs = [
+            make_tensor_value_info(name, TensorProto.FLOAT, list(value.shape))
+            for name, value in feeds.items()
+        ]
+        output_names = ["Y"]
+        outputs = [make_tensor_value_info("Y", TensorProto.FLOAT, list(x.shape))]
+        if training:
+            output_names.extend(
+                ["output_mean", "output_var", "saved_mean", "saved_var"]
+            )
+            outputs.extend(
+                make_tensor_value_info(name, TensorProto.FLOAT, [1])
+                for name in output_names[1:]
+            )
+        attributes = {"epsilon": 1e-5}
+        if momentum is not None:
+            attributes["momentum"] = momentum
+        node = make_node(
+            "BatchNormalization",
+            list(feeds),
+            output_names,
+            **attributes,
+        )
+        model = make_model(
+            make_graph([node], "g", inputs, outputs),
+            opset_imports=[make_opsetid("", 9)],
+        )
+
+        actual = ReferenceEvaluator(model).run(None, feeds)
+        if not training:
+            expected = scale.reshape(1, 1, 1) * (x - mean.reshape(1, 1, 1)) / np.sqrt(
+                var.reshape(1, 1, 1) + 1e-5
+            ) + bias.reshape(1, 1, 1)
+            np.testing.assert_allclose(actual[0], expected, rtol=1e-6, atol=1e-6)
+            return
+
+        batch_mean = x.mean(axis=(0, 2))
+        batch_var = x.var(axis=(0, 2))
+        expected_y = scale.reshape(1, 1, 1) * (
+            x - batch_mean.reshape(1, 1, 1)
+        ) / np.sqrt(batch_var.reshape(1, 1, 1) + 1e-5) + bias.reshape(1, 1, 1)
+        effective_momentum = 0.9 if momentum is None else momentum
+        expected = (
+            expected_y,
+            mean * effective_momentum + batch_mean * (1 - effective_momentum),
+            var * effective_momentum + batch_var * (1 - effective_momentum),
+            batch_mean,
+            # The legacy fifth output is the saved inverse standard deviation.
+            np.reciprocal(np.sqrt(batch_var + 1e-5)),
+        )
+        for got, want in zip(actual, expected, strict=True):
+            np.testing.assert_allclose(got, want, rtol=1e-6, atol=1e-6)
+
     @pytest.mark.parametrize("dim", [1, 2, 3, 4, 5, 6])
     def test_pad(self, dim):
         X = make_tensor_value_info("X", TensorProto.FLOAT, None)
