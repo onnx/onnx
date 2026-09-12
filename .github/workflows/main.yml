@@ -240,6 +240,19 @@ jobs:
           export LD_LIBRARY_PATH="./.setuptools-cmake-build/:$LD_LIBRARY_PATH"
           ./.setuptools-cmake-build/onnx_gtests
 
+      - name: Check that the generated protobuf objects are not duplicated
+        # The generated *.pb.cc objects must live in onnx_proto only. A second
+        # copy inside onnx makes any process that loads both libraries register
+        # onnx/onnx-ml.proto twice, which aborts protobuf with
+        # "File already exists in database" (issue #6094).
+        if: startsWith(matrix.os,'ubuntu') || matrix.os == 'macos-latest'
+        run: |
+          ar t .setuptools-cmake-build/libonnx.a > onnx_members.txt
+          if grep '\.pb\.cc\.o$' onnx_members.txt; then
+            echo "::error::libonnx contains a second copy of the generated protobuf objects; it must link onnx_proto instead"
+            exit 1
+          fi
+
       - name: Run C++ extension test
         if: (startsWith(matrix.os,'ubuntu') || matrix.os == 'macos-latest') && matrix.debug_build == 0 && matrix.protobuf_type == 'External'
         run: |
