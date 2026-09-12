@@ -193,7 +193,6 @@ class ModelContainer:
         if all_tensors_to_one_file:
             file_weight = f"{os.path.split(file_path)[1]}.weight"
             full_file_weight = f"{file_path}.weight"
-            offset = 0
             with open(full_file_weight, "wb") as f:
                 pass
 
@@ -219,22 +218,21 @@ class ModelContainer:
             tensor_bytes = onnx.numpy_helper.tobytes_little_endian(np_tensor)
 
             if all_tensors_to_one_file:
-                _set_external_data(
-                    tensor,
-                    location=file_weight,
-                    offset=offset,
-                    length=len(tensor_bytes),
-                )
-                offset += len(tensor_bytes)
-                with open(full_file_weight, "ab") as f:
-                    f.write(tensor_bytes)
+                location = file_weight
             else:
-                name = f"{_clean_name(prefix, prop.value, unique_names)}.weight"
-                _set_external_data(tensor, location=name)
-                full_name = os.path.join(folder, name)
-                prop.value = name
-                with open(full_name, "wb") as f:
-                    f.write(tensor_bytes)
+                location = f"{_clean_name(prefix, prop.value, unique_names)}.weight"
+                prop.value = location
+                # Each tensor owns its file; start it fresh (save_external_data appends).
+                with open(os.path.join(folder, location), "wb") as f:
+                    pass
+
+            # Route the actual write through the hardened primitive shared with
+            # write_external_data_tensors, which validates offsets/padding bounds
+            # (see save_external_data) instead of writing at a self-computed offset.
+            tensor.raw_data = tensor_bytes
+            _set_external_data(tensor, location=location)
+            ext_data.save_external_data(tensor, folder)
+            tensor.ClearField("raw_data")
 
         with open(file_path, "wb") as f:
             f.write(copy.SerializeToString())

@@ -112,6 +112,34 @@ class TestLargeOnnx:
             loaded_model = onnx.load_model(filename, load_external_data=True)
             onnx.checker.check_model(loaded_model)
 
+    @pytest.mark.parametrize("all_tensors_to_one_file", [True, False])
+    def test_large_model_values_roundtrip(self, all_tensors_to_one_file):
+        # Regression test: writes now go through the same hardened
+        # save_external_data primitive as write_external_data_tensors,
+        # rather than the container computing/writing offsets itself.
+        # Verify the actual tensor values still round-trip correctly,
+        # including with multiple large tensors sharing one file.
+        large_model = _large_linear_regression()
+        expected = {
+            "A": large_model["#loc0"],
+            "C": large_model["#loc1"],
+        }
+        with tempfile.TemporaryDirectory() as temp:
+            filename = os.path.join(temp, "model.onnx")
+            large_model.save(filename, all_tensors_to_one_file)
+
+            copy = onnx.model_container.ModelContainer()
+            copy.load(filename)
+            copy.check_model()
+
+            for tensor in copy.model_proto.graph.initializer:
+                if tensor.name in expected:
+                    for ext in tensor.external_data:
+                        if ext.key == "location":
+                            np.testing.assert_array_equal(
+                                copy[ext.value], expected[tensor.name]
+                            )
+
     def test_large_multi_files(self):
         large_model = _large_linear_regression()
         assert isinstance(large_model, onnx.model_container.ModelContainer)
