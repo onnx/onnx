@@ -39,7 +39,7 @@ jobs:
     runs-on: ${{ contains(matrix.build, 'arm64') && 'windows-11-arm' || 'windows-2022' }}
 
     steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
 
@@ -47,7 +47,7 @@ jobs:
         shell: bash
         run: echo "PROTOBUF_VERSION=$(jq -r '.components[] | select(.name=="protobuf") | .version' sbom.cdx.json)" >> $GITHUB_ENV
 
-      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
           python-version: "3.12"
 
@@ -60,13 +60,45 @@ jobs:
 
       - name: Download protoc
         run: |
-          curl -sSL "https://github.com/protocolbuffers/protobuf/releases/download/v${env:PROTOBUF_VERSION}/protoc-${env:PROTOBUF_VERSION}-win64.zip" -o protoc.zip
-          Expand-Archive protoc.zip -DestinationPath protoc-host
+          $protocZip = "protoc-${env:PROTOBUF_VERSION}-win64.zip"
+          curl --fail --silent --show-error --location "https://github.com/protocolbuffers/protobuf/releases/download/v${env:PROTOBUF_VERSION}/$protocZip" -o protoc.zip
+          $sbom = Get-Content sbom.cdx.json -Raw | ConvertFrom-Json
+          $protocComponent = $sbom.components | Where-Object { $_.name -eq "protoc-win64" }
+          $expected = ($protocComponent.hashes | Where-Object { $_.alg -eq "SHA-256" }).content
+          $actual = (Get-FileHash protoc.zip -Algorithm SHA256).Hash.ToLower()
+          Add-Content -Path $env:GITHUB_ENV -Value "PROTOC_ZIP=$protocZip"
+          Add-Content -Path $env:GITHUB_ENV -Value "PROTOC_EXPECTED_SHA256=$expected"
+          Add-Content -Path $env:GITHUB_ENV -Value "PROTOC_ACTUAL_SHA256=$actual"
+
+      - name: Verify protoc checksum
+        uses: ./.github/actions/verify-sha256
+        with:
+          file: ${{ env.PROTOC_ZIP }}
+          expected-sha256: ${{ env.PROTOC_EXPECTED_SHA256 }}
+          actual-sha256: ${{ env.PROTOC_ACTUAL_SHA256 }}
+
+      - name: Extract protoc
+        run: Expand-Archive protoc.zip -DestinationPath protoc-host
 
       - name: Download protobuf source
         run: |
-          curl -sSL "https://github.com/protocolbuffers/protobuf/releases/download/v${env:PROTOBUF_VERSION}/protobuf-${env:PROTOBUF_VERSION}.tar.gz" -o protobuf.tar.gz
-          tar -xf protobuf.tar.gz
+          curl --fail --silent --show-error --location "https://github.com/protocolbuffers/protobuf/releases/download/v${env:PROTOBUF_VERSION}/protobuf-${env:PROTOBUF_VERSION}.tar.gz" -o protobuf.tar.gz
+          $sbom = Get-Content sbom.cdx.json -Raw | ConvertFrom-Json
+          $protobufComponent = $sbom.components | Where-Object { $_.name -eq "protobuf" }
+          $expected = ($protobufComponent.hashes | Where-Object { $_.alg -eq "SHA-256" }).content
+          $actual = (Get-FileHash protobuf.tar.gz -Algorithm SHA256).Hash.ToLower()
+          Add-Content -Path $env:GITHUB_ENV -Value "PROTOBUF_EXPECTED_SHA256=$expected"
+          Add-Content -Path $env:GITHUB_ENV -Value "PROTOBUF_ACTUAL_SHA256=$actual"
+
+      - name: Verify protobuf source checksum
+        uses: ./.github/actions/verify-sha256
+        with:
+          file: protobuf-${{ env.PROTOBUF_VERSION }}.tar.gz
+          expected-sha256: ${{ env.PROTOBUF_EXPECTED_SHA256 }}
+          actual-sha256: ${{ env.PROTOBUF_ACTUAL_SHA256 }}
+
+      - name: Extract protobuf source
+        run: tar -xf protobuf.tar.gz
 
       - name: Set paths
         shell: bash
@@ -79,7 +111,7 @@ jobs:
         run: echo "SOURCE_DATE_EPOCH=$(git log -1 --pretty=%ct)" >> $GITHUB_ENV
 
       - name: Build wheels
-        uses: pypa/cibuildwheel@294735312765b09d24a2fbec22660ce817587d55  # v4.1.0
+        uses: pypa/cibuildwheel@1828c10ab37f080699c7b81cea34097c684a7074  # v4.2.0
         with:
           output-dir: dist/
           only: ${{ matrix.build }}

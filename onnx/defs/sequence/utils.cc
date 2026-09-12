@@ -9,29 +9,10 @@
 #include <utility>
 #include <vector>
 
+#include "onnx/defs/doc_strings.h"
 #include "onnx/defs/type_builders.h"
 
-namespace ONNX_NAMESPACE {
-namespace defs {
-namespace sequence {
-namespace utils {
-
-// Common documentation for SplitToSequence operator, versions 11 and 24
-static constexpr const char* SplitToSequence_ver11_doc =
-    R"DOC(
-Split a tensor into a sequence of tensors, along the specified 'axis'.
-Lengths of the parts can be specified using the optional argument 'split'.
-If the argument `split' is not specified, a default scalar value of 1
-is used as the value of `split'.
-'split' must contain only positive numbers.
-'split' is either a scalar (tensor of empty shape), or a 1-D tensor.
-If 'split' is a scalar, then 'input' will be split into chunks all of size 'split'
-if possible. The last chunk alone may be smaller than 'split' if the 'input' size
-along the given axis 'axis' is not divisible by 'split'.
-If 'split' is a 1-dimensional tensor, the input tensor is split into 'size(split)' chunks,
-with lengths of the parts on 'axis' specified in 'split'. In this scenario, the sum of entries
-in 'split' must be equal to the dimension size of input tensor on 'axis'.
-)DOC";
+namespace ONNX_NAMESPACE::defs::sequence::utils {
 
 std::function<void(OpSchema&)> SplitToSequenceOpGenerator(
     std::vector<std::string> input_types,
@@ -61,7 +42,7 @@ std::function<void(OpSchema&)> SplitToSequenceOpGenerator(
             "If input 'split' is specified, this attribute is ignored.",
             AttributeProto::INT,
             static_cast<int64_t>(1))
-        .SetDoc(SplitToSequence_ver11_doc)
+        .SetDoc(kDoc_SplitToSequence_ver11)
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           const auto* const input0_type = ctx.getInputType(0);
           if (nullptr == input0_type) {
@@ -131,6 +112,9 @@ std::function<void(OpSchema&)> SplitToSequenceOpGenerator(
               const auto& splitShape = getInputShape(ctx, 1);
               if (splitShape.dim_size() == 0) {
                 // split is scalar
+                if (splitSizes[0] <= 0) {
+                  fail_shape_inference("Scalar input 'split' must be greater than zero.");
+                }
                 if (splitDimValue % splitSizes[0] == 0) {
                   // all output chunks have the same shape, assign that to output sequence shape.
                   return splitSizes[0];
@@ -188,7 +172,4 @@ std::function<void(OpSchema&)> SplitToSequenceOpGenerator(
   };
 }
 
-} // namespace utils
-} // namespace sequence
-} // namespace defs
-} // namespace ONNX_NAMESPACE
+} // namespace ONNX_NAMESPACE::defs::sequence::utils

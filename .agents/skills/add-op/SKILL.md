@@ -15,9 +15,9 @@ Follow the full procedure in [docs/AddNewOp.md](../../../docs/AddNewOp.md).
 | Function body (if applicable) | Inline in schema via `.FunctionBody(...)` |
 | Reference implementation | `onnx/reference/ops/op_<lowercase_name>.py` |
 | Node tests | `onnx/backend/test/case/node/<lowercase_name>.py` |
-| Shape inference tests | `onnx/test/shape_inference_test.py` |
+| Shape inference tests | `tests/python/shape_inference_test.py` |
 | Version converter adapter (if behavior changed) | `onnx/version_converter/adapters/<name>_<from>_<to>.h` |
-| Upgrade/downgrade tests | `onnx/test/version_converter/automatic_upgrade_test.py` and `automatic_downgrade_test.py` |
+| Upgrade/downgrade tests | `tests/python/version_converter/automatic_upgrade_test.py` and `automatic_downgrade_test.py` |
 
 Domain subdirectories under `onnx/defs/`: `math/`, `nn/`, `tensor/`, `logical/`, `reduction/`, `rnn/`, `sequence/`, `image/`, `text/`, `quantization/`, `controlflow/`, `optional/`, `traditionalml/`, `training/`
 

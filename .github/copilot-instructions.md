@@ -16,20 +16,20 @@ When a change could fit more than one type, prefer `ci` for anything under `.git
 
 Individual commits within the PR do not need to follow this format, but each must still carry a DCO sign-off.
 
-We use lintrunner as the linter:
+## PR labels
+
+Before considering an agent-authored PR complete, add the existing labels that
+accurately describe its scope. Every agent-authored PR must have at least one
+applicable `topic:` or `module:` label, as enforced by
+[`check_pr_label.yml`](workflows/check_pr_label.yml). Do not invent new label
+names. For example, use `topic: documentation` for a documentation-only PR and
+add any other existing labels that materially apply to the change.
+
+We use pixi tasks for installing and linting
 
 ```sh
-# Display all lints and apply the fixes
-lintrunner -a --output oneline
-# Or apply fixes only (faster)
-lintrunner f --output oneline
-```
-
-To build ONNX:
-
-```sh
-python -m pip install --quiet --upgrade pip setuptools wheel
-export ONNX_BUILD_TESTS=0
-export ONNX_ML=1
-python -m pip install .
+# Compile and install the project
+pixi run install
+# Run lints and apply fixes
+pixi run lint
 ```

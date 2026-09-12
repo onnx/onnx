@@ -11,7 +11,7 @@ Follow the full guide in [docs/AddFunctionBody.md](../../../docs/AddFunctionBody
 |-----------|------|
 | Function body definition | `onnx/defs/<domain>/defs.cc` (inline with schema) |
 | FunctionBuilder utilities | `onnx/defs/function.h` |
-| Function tests | `onnx/test/cpp/function_get_test.cc`, `onnx/test/cpp/function_verify_test.cc` |
+| Function tests | `tests/cpp/function_get_test.cc`, `tests/cpp/function_verify_test.cc` |
 
 ## Method 1: Simple String-Based Function Body
 

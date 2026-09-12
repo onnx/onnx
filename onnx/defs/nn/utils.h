@@ -9,10 +9,7 @@
 #include "onnx/defs/function.h"
 #include "onnx/defs/schema.h"
 
-namespace ONNX_NAMESPACE {
-namespace defs {
-namespace nn {
-namespace utils {
+namespace ONNX_NAMESPACE::defs::nn::utils {
 
 /**
  * Reads and validates the 'strides' attribute for Conv/Pool shape inference.
@@ -24,9 +21,10 @@ std::vector<int64_t> getConvPoolStrides(InferenceContext& ctx, size_t n_input_di
 void AttentionPropagateElemTypeFromInputToOutput(InferenceContext& ctx);
 
 /** Implements CausalMask for Attention. */
-bool AttentionAppendFunctionCausalMask(const FunctionBodyBuildContext& ctx, FunctionBuilder& builder, bool padding);
+bool AttentionAppendFunctionCausalMask(
+    const FunctionBodyBuildContext& ctx,
+    FunctionBuilder& builder,
+    bool padding,
+    bool cast_mask_to_bias = false);
 
-} // namespace utils
-} // namespace nn
-} // namespace defs
-} // namespace ONNX_NAMESPACE
+} // namespace ONNX_NAMESPACE::defs::nn::utils

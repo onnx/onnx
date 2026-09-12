@@ -193,7 +193,8 @@ static void convPoolShapeInference_opset19(
   std::vector<int64_t> effective_kernel_shape = kernel_shape;
   for (size_t i = 0; i < kernel_shape.size(); i++) {
     // accounting for dilation, how big is the kernel in this dimension
-    effective_kernel_shape[i] = (effective_kernel_shape[i] - 1) * dilations[i] + 1;
+    effective_kernel_shape[i] =
+        checkedAdd(checkedMultiply(checkedSubtract(effective_kernel_shape[i], 1), dilations[i]), 1);
   }
 
   std::vector<int64_t> pads;
@@ -225,10 +226,11 @@ static void convPoolShapeInference_opset19(
         if (i >= effective_kernel_shape.size()) {
           fail_shape_inference("kernel shape should have ", input_dims_size, " values in ", ctx.getDisplayName(), ".");
         }
-        int64_t total_pad = residual == 0 ? effective_kernel_shape[i] - stride : effective_kernel_shape[i] - residual;
+        int64_t total_pad = residual == 0 ? checkedSubtract(effective_kernel_shape[i], stride)
+                                          : checkedSubtract(effective_kernel_shape[i], residual);
         total_pad = std::max<int64_t>(total_pad, 0);
         int64_t half_pad_small = total_pad >> 1;
-        int64_t half_pad_big = total_pad - half_pad_small;
+        int64_t half_pad_big = checkedSubtract(total_pad, half_pad_small);
         if (auto_pad_attr->s() == "SAME_UPPER") {
           pads[i] = half_pad_small;
           pads[i + input_dims_size] = half_pad_big;
@@ -263,8 +265,8 @@ static void convPoolShapeInference_opset19(
     }
     // how big is the input, including padding
     int64_t effective_input_size = input_shape.dim(2 + i).dim_value();
-    effective_input_size += pads[i];
-    effective_input_size += pads[i + kernel_shape_size];
+    effective_input_size = checkedAdd(effective_input_size, pads[i]);
+    effective_input_size = checkedAdd(effective_input_size, pads[i + kernel_shape_size]);
 
     // default is floor mode .i.e. ceil_mode is set to 0
     auto ceil_mode = getAttribute(ctx, "ceil_mode", 0);
@@ -273,15 +275,16 @@ static void convPoolShapeInference_opset19(
     // on the stride
     int64_t strided_kernel_positions = 0;
 
-    const int64_t stride_gap = effective_input_size - effective_kernel_shape[i];
+    const int64_t stride_gap = checkedSubtract(effective_input_size, effective_kernel_shape[i]);
     if (ceil_mode == 1)
       // exact ceil division; (a + b - 1) / b would be wrong for negative a
-      strided_kernel_positions = stride_gap / strides[i] + (stride_gap % strides[i] > 0 ? 1 : 0);
+      strided_kernel_positions =
+          checkedAdd(checkedDivide(stride_gap, strides[i]), (stride_gap % strides[i] > 0 ? 1 : 0));
     else
-      strided_kernel_positions = stride_gap / strides[i];
+      strided_kernel_positions = checkedDivide(stride_gap, strides[i]);
 
     // add in the initial position
-    newdim->set_dim_value(1 + strided_kernel_positions);
+    newdim->set_dim_value(checkedAdd(1, strided_kernel_positions));
   }
 
   if (ctx.getNumOutputs() > 1) {
@@ -524,10 +527,10 @@ static void maxUnpoolShapeInference_opset11(InferenceContext& ctx) {
       continue;
     }
 
-    int64_t newdim_value = strides[i] * (input_shape.dim(2 + i).dim_value() - 1);
-    newdim_value += kernel_shape[i];
-    newdim_value -= pads[i];
-    newdim_value -= pads[i + kernel_shape_size];
+    int64_t newdim_value = checkedMultiply(strides[i], checkedSubtract(input_shape.dim(2 + i).dim_value(), 1));
+    newdim_value = checkedAdd(newdim_value, kernel_shape[i]);
+    newdim_value = checkedSubtract(newdim_value, pads[i]);
+    newdim_value = checkedSubtract(newdim_value, pads[i + kernel_shape_size]);
 
     // add in the initial position
     newdim->set_dim_value(newdim_value);
@@ -699,7 +702,8 @@ static void convTransposeShapeInference_opset11(InferenceContext& ctx) {
   std::vector<int64_t> effective_kernel_shape = kernel_shape;
   for (size_t i = 0; i < kernel_shape.size(); i++) {
     // accounting for dilation, how big is the kernel in this dimension
-    effective_kernel_shape[i] = (effective_kernel_shape[i] - 1) * dilations[i] + 1;
+    effective_kernel_shape[i] =
+        checkedAdd(checkedMultiply(checkedSubtract(effective_kernel_shape[i], 1), dilations[i]), 1);
   }
 
   std::vector<int64_t> pads;
@@ -720,10 +724,10 @@ static void convTransposeShapeInference_opset11(InferenceContext& ctx) {
     if ((nullptr != auto_pad_attr) && (auto_pad_attr->s() != "VALID")) {
       int input_dims_size = static_cast<int>(n_input_dims);
       for (int i = 0; i < input_dims_size; ++i) {
-        int64_t total_pad = effective_kernel_shape[i] - strides[i];
+        int64_t total_pad = checkedSubtract(effective_kernel_shape[i], strides[i]);
         total_pad = std::max<int64_t>(total_pad, 0);
         int64_t half_pad_small = total_pad >> 1;
-        int64_t half_pad_big = total_pad - half_pad_small;
+        int64_t half_pad_big = checkedSubtract(total_pad, half_pad_small);
         if (auto_pad_attr->s() == "SAME_UPPER") {
           pads[i] = half_pad_small;
           pads[i + input_dims_size] = half_pad_big;
@@ -784,8 +788,11 @@ static void convTransposeShapeInference_opset11(InferenceContext& ctx) {
     size_of_output = input_shape.dim_size() - 2;
     for (int i = 0; i < size_of_output; ++i) {
       if (input_shape.dim(i + 2).has_dim_value()) {
-        int64_t output_shape_dim = strides[i] * (input_shape.dim(i + 2).dim_value() - 1) + output_padding[i] +
-            effective_kernel_shape[i] - pads[i] - pads[i + n_input_dims];
+        int64_t output_shape_dim = checkedMultiply(strides[i], checkedSubtract(input_shape.dim(i + 2).dim_value(), 1));
+        output_shape_dim = checkedAdd(output_shape_dim, output_padding[i]);
+        output_shape_dim = checkedAdd(output_shape_dim, effective_kernel_shape[i]);
+        output_shape_dim = checkedSubtract(output_shape_dim, pads[i]);
+        output_shape_dim = checkedSubtract(output_shape_dim, pads[i + n_input_dims]);
         final_output_shape->add_dim()->set_dim_value(output_shape_dim);
       } else {
         final_output_shape->add_dim();
@@ -1856,19 +1863,6 @@ ONNX_OPERATOR_SET_SCHEMA(
           updateOutputShape(ctx, 0, {multiplyDims(input_shape, 0, axis), multiplyDims(input_shape, axis, rank)});
         }));
 
-static constexpr const char* LRN_ver1_doc = R"DOC(
-Local Response Normalization proposed in the [AlexNet paper](https://papers.nips.cc/paper/4824-imagenet-classification-with-deep-convolutional-neural-networks.pdf).
-It normalizes over local input regions.
-The local region is defined across the channels. For an element X[n, c, d1, ..., dk] in a tensor
-of shape (N x C x D1 x D2, ..., Dk), its region is
-{X[n, i, d1, ..., dk] | max(0, c - floor((size - 1) / 2)) <= i <= min(C - 1, c + ceil((size - 1) / 2))}.
-
-square_sum[n, c, d1, ..., dk] = sum(X[n, i, d1, ..., dk] ^ 2),
-where max(0, c - floor((size - 1) / 2)) <= i <= min(C - 1, c + ceil((size - 1) / 2)).
-
-Y[n, c, d1, ..., dk] = X[n, c, d1, ..., dk] / (bias + alpha / size * square_sum[n, c, d1, ..., dk] ) ^ beta
-)DOC";
-
 ONNX_OPERATOR_SET_SCHEMA(
     LRN,
     1,
@@ -1898,13 +1892,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             {types::Float16, types::Float, types::Double},
             "Constrain input and output "
             " types to float tensors.")
-        .SetDoc(LRN_ver1_doc)
+        .SetDoc(kDoc_LRN_ver1)
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
-
-static constexpr const char* mvn_ver9_doc = R"DOC(
-      A MeanVarianceNormalization Function: Perform mean variance normalization
-      on the input tensor X using formula: <br/> ``` (X-EX)/sqrt(E(X-EX)^2) ```
-)DOC";
 
 static const std::vector<int64_t> old_mvn_default_axes = {0, 2, 3};
 
@@ -1912,7 +1901,7 @@ ONNX_OPERATOR_SET_SCHEMA(
     MeanVarianceNormalization,
     9,
     OpSchema()
-        .SetDoc(mvn_ver9_doc)
+        .SetDoc(kDoc_mvn_ver9)
         .Input(0, "X", "Input tensor", "T")
         .Output(0, "Y", "Output tensor", "T")
         .Attr(
@@ -2040,7 +2029,8 @@ static void convPoolShapeInference_opset1_to_11(
   std::vector<int64_t> effective_kernel_shape = kernel_shape;
   for (size_t i = 0; i < kernel_shape.size(); i++) {
     // accounting for dilation, how big is the kernel in this dimension
-    effective_kernel_shape[i] = (effective_kernel_shape[i] - 1) * dilations[i] + 1;
+    effective_kernel_shape[i] =
+        checkedAdd(checkedMultiply(checkedSubtract(effective_kernel_shape[i], 1), dilations[i]), 1);
   }
 
   std::vector<int64_t> pads;
@@ -2069,10 +2059,11 @@ static void convPoolShapeInference_opset1_to_11(
           }
           residual %= stride;
         }
-        int64_t total_pad = residual == 0 ? effective_kernel_shape[i] - stride : effective_kernel_shape[i] - residual;
+        int64_t total_pad = residual == 0 ? checkedSubtract(effective_kernel_shape[i], stride)
+                                          : checkedSubtract(effective_kernel_shape[i], residual);
         total_pad = std::max<int64_t>(total_pad, 0);
         int64_t half_pad_small = total_pad >> 1;
-        int64_t half_pad_big = total_pad - half_pad_small;
+        int64_t half_pad_big = checkedSubtract(total_pad, half_pad_small);
         if (auto_pad_attr->s() == "SAME_UPPER") {
           pads[i] = half_pad_small;
           pads[i + input_dims_size] = half_pad_big;
@@ -2107,8 +2098,8 @@ static void convPoolShapeInference_opset1_to_11(
     }
     // how big is the input, including padding
     int64_t effective_input_size = input_shape.dim(2 + i).dim_value();
-    effective_input_size += pads[i];
-    effective_input_size += pads[i + kernel_shape_size];
+    effective_input_size = checkedAdd(effective_input_size, pads[i]);
+    effective_input_size = checkedAdd(effective_input_size, pads[i + kernel_shape_size]);
 
     // default is floor mode .i.e. ceil_mode is set to 0
     auto ceil_mode = getAttribute(ctx, "ceil_mode", 0);
@@ -2117,15 +2108,16 @@ static void convPoolShapeInference_opset1_to_11(
     // on the stride
     int64_t strided_kernel_positions = 0;
 
-    const int64_t stride_gap = effective_input_size - effective_kernel_shape[i];
+    const int64_t stride_gap = checkedSubtract(effective_input_size, effective_kernel_shape[i]);
     if (ceil_mode == 1)
       // exact ceil division; (a + b - 1) / b would be wrong for negative a
-      strided_kernel_positions = stride_gap / strides[i] + (stride_gap % strides[i] > 0 ? 1 : 0);
+      strided_kernel_positions =
+          checkedAdd(checkedDivide(stride_gap, strides[i]), (stride_gap % strides[i] > 0 ? 1 : 0));
     else
-      strided_kernel_positions = stride_gap / strides[i];
+      strided_kernel_positions = checkedDivide(stride_gap, strides[i]);
 
     // add in the initial position
-    newdim->set_dim_value(1 + strided_kernel_positions);
+    newdim->set_dim_value(checkedAdd(1, strided_kernel_positions));
   }
 
   if (ctx.getNumOutputs() > 1) {
@@ -2668,10 +2660,10 @@ static void maxUnpoolShapeInference_opset9(InferenceContext& ctx) {
       continue;
     }
 
-    int64_t newdim_value = strides[i] * (input_shape.dim(2 + i).dim_value() - 1);
-    newdim_value += kernel_shape[i];
-    newdim_value -= pads[i];
-    newdim_value -= pads[i + kernel_shape_size];
+    int64_t newdim_value = checkedMultiply(strides[i], checkedSubtract(input_shape.dim(2 + i).dim_value(), 1));
+    newdim_value = checkedAdd(newdim_value, kernel_shape[i]);
+    newdim_value = checkedSubtract(newdim_value, pads[i]);
+    newdim_value = checkedSubtract(newdim_value, pads[i + kernel_shape_size]);
 
     // add in the initial position
     newdim->set_dim_value(newdim_value);
@@ -2745,18 +2737,11 @@ constexpr const char* auto_pad_doc1 =
     "only intended to support legacy uses, and for framework authors, one is explicitly "
     "encouraged to use explicit padding specified in the pads attribute.";
 
-constexpr const char* LpPool_ver1_doc = R"DOC(
- LpPool consumes an input tensor X and applies Lp pooling across the
- the tensor according to kernel sizes, stride sizes, and pad lengths.
- Lp pooling consisting of computing the Lp norm on all values of a subset
- of the input tensor according to the kernel size and downsampling the
- data into the output tensor Y for further processing.)DOC";
-
 ONNX_OPERATOR_SET_SCHEMA(
     LpPool,
     1,
     OpSchema()
-        .SetDoc(LpPool_ver1_doc)
+        .SetDoc(kDoc_LpPool_ver1)
         .Attr("kernel_shape", "The size of the kernel along each axis.", AttributeProto::INTS, OPTIONAL_VALUE)
         .Attr("strides", "Stride along each axis.", AttributeProto::INTS, OPTIONAL_VALUE)
         .Attr("auto_pad", auto_pad_doc1, AttributeProto::STRING, std::string("NOTSET"))
@@ -2837,11 +2822,6 @@ static std::function<void(OpSchema&)> LpPoolOpSchemaGenerator_opset2(const char*
 }
 
 ONNX_OPERATOR_SET_SCHEMA(LpPool, 2, OpSchema().FillUsing(LpPoolOpSchemaGenerator_opset2("LpPool")));
-
-static constexpr const char* GlobalLpPool_ver1_doc = R"DOC(
- GlobalLpPool consumes an input tensor X and applies lp pool pooling across the
- the values in the same channel. This is equivalent to LpPool with kernel size
- equal to the spatial dimension of input tensor.)DOC";
 
 static std::function<void(OpSchema&)> LpPoolOpSchemaGenerator_opset11(const char* name) {
   return [=](OpSchema& schema) {
@@ -3063,7 +3043,8 @@ static void convTransposeShapeInference_opset1(InferenceContext& ctx) {
   std::vector<int64_t> effective_kernel_shape = kernel_shape;
   for (size_t i = 0; i < kernel_shape.size(); i++) {
     // accounting for dilation, how big is the kernel in this dimension
-    effective_kernel_shape[i] = (effective_kernel_shape[i] - 1) * dilations[i] + 1;
+    effective_kernel_shape[i] =
+        checkedAdd(checkedMultiply(checkedSubtract(effective_kernel_shape[i], 1), dilations[i]), 1);
   }
 
   std::vector<int64_t> pads;
@@ -3080,10 +3061,10 @@ static void convTransposeShapeInference_opset1(InferenceContext& ctx) {
     if ((nullptr != auto_pad_attr) && (auto_pad_attr->s() != "VALID")) {
       int input_dims_size = static_cast<int>(n_input_dims);
       for (int i = 0; i < input_dims_size; ++i) {
-        int64_t total_pad = effective_kernel_shape[i] - strides[i];
+        int64_t total_pad = checkedSubtract(effective_kernel_shape[i], strides[i]);
         total_pad = std::max<int64_t>(total_pad, 0);
         int64_t half_pad_small = total_pad >> 1;
-        int64_t half_pad_big = total_pad - half_pad_small;
+        int64_t half_pad_big = checkedSubtract(total_pad, half_pad_small);
         if (auto_pad_attr->s() == "SAME_UPPER") {
           pads[i] = half_pad_small;
           pads[i + input_dims_size] = half_pad_big;
@@ -3144,8 +3125,11 @@ static void convTransposeShapeInference_opset1(InferenceContext& ctx) {
     size_of_output = input_shape.dim_size() - 2;
     for (int i = 0; i < size_of_output; ++i) {
       if (input_shape.dim(i + 2).has_dim_value()) {
-        int64_t output_shape_dim = strides[i] * (input_shape.dim(i + 2).dim_value() - 1) + output_padding[i] +
-            effective_kernel_shape[i] - pads[i] - pads[i + n_input_dims];
+        int64_t output_shape_dim = checkedMultiply(strides[i], checkedSubtract(input_shape.dim(i + 2).dim_value(), 1));
+        output_shape_dim = checkedAdd(output_shape_dim, output_padding[i]);
+        output_shape_dim = checkedAdd(output_shape_dim, effective_kernel_shape[i]);
+        output_shape_dim = checkedSubtract(output_shape_dim, pads[i]);
+        output_shape_dim = checkedSubtract(output_shape_dim, pads[i + n_input_dims]);
         final_output_shape->add_dim()->set_dim_value(output_shape_dim);
       } else {
         final_output_shape->add_dim();
@@ -3246,7 +3230,7 @@ ONNX_OPERATOR_SET_SCHEMA(
     GlobalLpPool,
     1,
     OpSchema()
-        .SetDoc(GlobalLpPool_ver1_doc)
+        .SetDoc(kDoc_GlobalLpPool_ver1)
         .Attr(
             "p",
             "p value of the Lp norm used to pool over the input data, default is 2.0.",
@@ -3274,21 +3258,12 @@ ONNX_OPERATOR_SET_SCHEMA(
             {types::Float16, types::Float, types::Double},
             "Constrain input and output types to float tensors."));
 
-static constexpr const char* BatchNormalization_ver1_doc = R"DOC(
-Carries out batch normalization as described in the paper
-https://arxiv.org/abs/1502.03167. Depending on the mode it is being run,
-there are multiple cases for the number of outputs, which we list below:
-
-Output case #1: Y, mean, var, saved_mean, saved_var (training mode)
-Output case #2: Y (test mode)
-    )DOC";
-
 ONNX_OPERATOR_SET_SCHEMA(
     BatchNormalization,
     1,
     OpSchema()
         .NumOutputs({1, 5})
-        .SetDoc(BatchNormalization_ver1_doc)
+        .SetDoc(kDoc_BatchNormalization_ver1)
         .Attr(
             "spatial",
             "If true, compute the mean and variance across all spatial elements "
@@ -3375,24 +3350,12 @@ ONNX_OPERATOR_SET_SCHEMA(
             {types::Float16, types::Float, types::Double},
             "Constrain input and output types to float tensors."));
 
-static constexpr const char* BatchNormalization_ver9_doc = R"DOC(
-Carries out batch normalization as described in the paper
-https://arxiv.org/abs/1502.03167. Depending on the mode it is being run,
-there are multiple cases for the number of outputs, which we list below:
-
-Output case #1: Y, mean, var, saved_mean, saved_var (training mode)
-Output case #2: Y (test mode)
-
-For previous (depreciated) non-spatial cases, implementors are suggested
-to flatten the input shape to (N x C*D1*D2 ..*Dn) before a BatchNormalization Op.
-)DOC";
-
 ONNX_OPERATOR_SET_SCHEMA(
     BatchNormalization,
     9,
     OpSchema()
         .NumOutputs({1, 5})
-        .SetDoc(BatchNormalization_ver9_doc + GenerateOptionalArgumentsDoc())
+        .SetDoc(kDoc_BatchNormalization_ver9 + GenerateOptionalArgumentsDoc())
         .Attr("epsilon", "The epsilon value to use to avoid division by zero.", AttributeProto::FLOAT, 1e-5f)
         .Attr(
             "momentum",
@@ -3487,53 +3450,12 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Constrain input and output types to float tensors.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) { propagateShapeAndTypeFromFirstInput(ctx); }));
 
-static constexpr const char* BatchNormalization_ver14_doc = R"DOC(
-Carries out batch normalization as described in the paper
-https://arxiv.org/abs/1502.03167. Depending on the mode it is being run,
-There are five required inputs 'X', 'scale', 'B', 'input_mean' and
-'input_var'.
-Note that 'input_mean' and 'input_var' are expected to be the estimated
-statistics in inference mode (training_mode=False, default),
-and the running statistics in training mode (training_mode=True).
-There are multiple cases for the number of outputs, which we list below:
-
-Output case #1: Y, running_mean, running_var (training_mode=True)
-Output case #2: Y (training_mode=False)
-
-When training_mode=False, extra outputs are invalid.
-The outputs are updated as follows when training_mode=True:
-```
-running_mean = input_mean * momentum + current_mean * (1 - momentum)
-running_var = input_var * momentum + current_var * (1 - momentum)
-
-Y = (X - current_mean) / sqrt(current_var + epsilon) * scale + B
-
-where:
-
-current_mean = ReduceMean(X, axis=all_except_channel_index)
-current_var =  ReduceVar(X, axis=all_except_channel_index)
-
-Notice that ReduceVar refers to the population variance, and it equals to
-sum(sqrd(x_i - x_avg)) / N
-where N is the population size (this formula does not use sample size N - 1).
-
-```
-
-When training_mode=False:
-```
-Y = (X - input_mean) / sqrt(input_var + epsilon) * scale + B
-```
-
-For previous (depreciated) non-spatial cases, implementors are suggested
-to flatten the input shape to (N x C * D1 * D2 * ... * Dn) before a BatchNormalization Op.
-)DOC";
-
 ONNX_OPERATOR_SET_SCHEMA(
     BatchNormalization,
     14,
     OpSchema()
         .NumOutputs({1, 3})
-        .SetDoc(BatchNormalization_ver14_doc + GenerateOptionalArgumentsDoc())
+        .SetDoc(kDoc_BatchNormalization_ver14 + GenerateOptionalArgumentsDoc())
         .Attr("epsilon", "The epsilon value to use to avoid division by zero.", AttributeProto::FLOAT, 1e-5f)
         .Attr(
             "momentum",
@@ -3686,19 +3608,11 @@ ONNX_OPERATOR_SET_SCHEMA(
             {types::Float16, types::Float, types::Double},
             "Constrain input and output types to float tensors."));
 
-static constexpr const char* Dropout_old_doc = R"DOC(
-Dropout takes one input data (Tensor<float>) and produces two Tensor outputs,
-output (Tensor<float>) and mask (Tensor<bool>). Depending on whether it is in
-test mode or not, the output Y will either be a random dropout, or a simple
-copy of the input. Note that our implementation of Dropout does scaling in
-the training phase, so during testing nothing needs to be done.
-)DOC";
-
 ONNX_OPERATOR_SET_SCHEMA(
     Dropout,
     1,
     OpSchema()
-        .SetDoc(Dropout_old_doc)
+        .SetDoc(kDoc_Dropout_ver1)
         .SetNodeDeterminism(OpSchema::NodeDeterminism::NonDeterministic)
         .Attr("ratio", "(float, default 0.5) the ratio of random dropout", AttributeProto::FLOAT, 0.5f)
         // This attribute was added via AllowConsumed API in OpSchema.
@@ -3729,7 +3643,7 @@ ONNX_OPERATOR_SET_SCHEMA(
     6,
     OpSchema()
         .SetNodeDeterminism(OpSchema::NodeDeterminism::NonDeterministic)
-        .SetDoc(Dropout_old_doc)
+        .SetDoc(kDoc_Dropout_ver1)
         .Attr("ratio", "(float, default 0.5) the ratio of random dropout", AttributeProto::FLOAT, 0.5f)
         .Attr(
             "is_test",
@@ -3751,13 +3665,11 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Constrain input and output types to float tensors.")
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
-static const char* const Dropout_ver7_doc = Dropout_old_doc;
-
 ONNX_OPERATOR_SET_SCHEMA(
     Dropout,
     7,
     OpSchema()
-        .SetDoc(GET_OP_DOC_STR(std::string(Dropout_ver7_doc) + GenerateOptionalArgumentsDoc()))
+        .SetDoc(GET_OP_DOC_STR(std::string(kDoc_Dropout_ver1) + GenerateOptionalArgumentsDoc()))
         .Attr("ratio", "The ratio of random dropout", AttributeProto::FLOAT, 0.5f)
         .Input(0, "data", "The input data as Tensor.", "T")
         .Output(0, "output", "The output.", "T")
@@ -3769,19 +3681,11 @@ ONNX_OPERATOR_SET_SCHEMA(
         .SetNodeDeterminism(OpSchema::NodeDeterminism::NonDeterministic)
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
-static constexpr const char* Dropout_ver10_doc = R"DOC(
-Dropout takes one input floating tensor and produces two tensor outputs,
-output (floating tensor) and mask (`Tensor<bool>`). Depending on whether it is
-in test mode or not, the output Y will either be a random dropout, or a simple
-copy of the input. Note that our implementation of Dropout does scaling in
-the training phase, so during testing nothing needs to be done.
-)DOC";
-
 ONNX_OPERATOR_SET_SCHEMA(
     Dropout,
     10,
     OpSchema()
-        .SetDoc(GET_OP_DOC_STR(std::string(Dropout_ver10_doc) + GenerateOptionalArgumentsDoc()))
+        .SetDoc(GET_OP_DOC_STR(std::string(kDoc_Dropout_ver10) + GenerateOptionalArgumentsDoc()))
         .Attr("ratio", "The ratio of random dropout", AttributeProto::FLOAT, 0.5f)
         .Input(0, "data", "The input data as Tensor.", "T")
         .Output(0, "output", "The output.", "T")
@@ -3802,21 +3706,12 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static constexpr const char* BatchNorm_ver6_doc = R"DOC(
-Carries out batch normalization as described in the paper
-https://arxiv.org/abs/1502.03167. Depending on the mode it is being run,
-there are multiple cases for the number of outputs, which we list below:
-
-Output case #1: Y, mean, var, saved_mean, saved_var (training mode)
-Output case #2: Y (test mode)
-)DOC";
-
 ONNX_OPERATOR_SET_SCHEMA(
     BatchNormalization,
     6,
     OpSchema()
         .NumOutputs({1, 5})
-        .SetDoc(BatchNorm_ver6_doc)
+        .SetDoc(kDoc_BatchNorm_ver6)
         .Attr(
             "spatial",
             "If true, compute the mean and variance across all spatial elements "
@@ -3988,20 +3883,11 @@ ONNX_OPERATOR_SET_SCHEMA(
           updateOutputShape(ctx, 0, {multiplyDims(input_shape, 0, axis), multiplyDims(input_shape, axis, rank)});
         }));
 
-static constexpr const char* BatchNormalization_ver7_doc = R"DOC(
-    Carries out batch normalization as described in the paper
-    https://arxiv.org/abs/1502.03167. Depending on the mode it is being run,
-    there are multiple cases for the number of outputs, which we list below:
-
-    Output case #1: Y, mean, var, saved_mean, saved_var (training mode)
-    Output case #2: Y (test mode)
-        )DOC";
-
 ONNX_OPERATOR_SET_SCHEMA(
     BatchNormalization,
     7,
     OpSchema()
-        .SetDoc(GET_OP_DOC_STR(std::string(BatchNormalization_ver7_doc) + GenerateOptionalArgumentsDoc()))
+        .SetDoc(GET_OP_DOC_STR(std::string(kDoc_BatchNormalization_ver7) + GenerateOptionalArgumentsDoc()))
         .NumOutputs({1, 5})
         .Attr(
             "spatial",
@@ -4082,30 +3968,12 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Constrain input and output types to float tensors.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) { propagateShapeAndTypeFromFirstInput(ctx); }));
 
-static constexpr const char* GroupNormalization_ver18_doc = R"DOC(
-A GroupNormalization function. Carries out group normalization as described in
-the paper https://arxiv.org/abs/1803.08494
-
-This operator transforms input according to
-```
-y = scale * (x - mean) / sqrt(variance + epsilon) + bias,
-```
-where the mean and variance are computed per instance per group of channels, and
-`scale` and `bias` should be specified for each group of channels. The number of
-groups `num_groups` should be divisible by the number of channels so that there are
-an equal number of channels per group.
-
-When the number of groups is the same as the number of channels, this operator is
-equivalent to InstanceNormalization. When there is only one group, this operator
-is equivalent to LayerNormalization.
-)DOC";
-
 ONNX_OPERATOR_SET_SCHEMA(
     GroupNormalization,
     18,
     OpSchema()
         .Deprecate()
-        .SetDoc(GroupNormalization_ver18_doc)
+        .SetDoc(kDoc_GroupNormalization_ver18)
         .Attr("epsilon", "The epsilon value to use to avoid division by zero.", AttributeProto::FLOAT, 1e-5f)
         .Attr(
             "num_groups",
@@ -4217,58 +4085,11 @@ ONNX_OPERATOR_SET_SCHEMA(
               return true;
             }));
 
-static constexpr const char* Attention_ver23_doc = R"DOC(
-
-Computes scaled dot product attention on query, key and value tensors, using an optional attention mask if passed.
-
-This operator covers self and cross variants of the attention operation based on sequence lengths of K, Q and V.
-
-For self attention, `kv_sequence_length` equals to `q_sequence_length`.
-
-For cross attention, query and key might have different lengths.
-
-This operator also covers the 3 following variants based on the number of heads:
-1) Multi-headed Attention (MHA): Described in the paper https://arxiv.org/pdf/1706.03762, `q_num_heads = kv_num_heads`.
-2) Group-query Attention (GQA): Described in the paper https://arxiv.org/pdf/2305.13245, `q_num_heads > kv_num_heads`, `q_num_heads % kv_num_heads == 0`.
-3) Multi-query Attention (MQA): Described in the paper https://arxiv.org/pdf/1911.02150, `q_num_heads > kv_num_heads`, `kv_num_heads=1`.
-
-Attention bias to be added is calculated based on `attn_mask` input and `is_causal` attribute:
-1) `attn_mask`: A boolean mask where a value of `True` indicates that the element should take part in attention or a float mask of the same type as query, key, value that is added to the attention score.
-2) If `is_causal` is set to `1`, causal masking is applied with bottom-right (offset-aware) alignment: query `i` attends key `j` iff `j <= i + past_sequence_length` (the count of cached keys in `past_key`); for a square Q/K this is the standard lower-triangular mask. The causal frontier is computed independently of the `attn_mask` input and is then composed with it additively, by summing their attention biases: a boolean `attn_mask` intersects the allowed set (its disallowed positions contribute `-inf` to the bias), while a float `attn_mask` is added to the attention scores rather than disabling positions. A fully-masked query row (every key's combined additive bias is `-inf`, e.g. an all-`False` boolean `attn_mask` row) produces a zero output row (matching prevailing runtime practice), not `NaN`.
-
-Errata (in-place behavioral correction, no opset bump): a fully-masked query row (e.g. an all-`False` boolean `attn_mask` row) now produces a zero output row instead of `NaN`, and the same zero-row guard applies to the mode-`3` `qk_matmul_output` debug output; this only replaces previously-`NaN` outputs. The mode-`3` `qk_matmul_output` is also now emitted at the operator's output precision (`T1`), matching the reference implementation, which affects only its dtype and only when `softmax_precision` differs from `T1`. No numerically useful, well-defined result of the released opset is otherwise changed.
-
-Both past and present state key/values are optional. They shall be used together, and not allowed to use only one of them.
-The following pattern is applied to the Q, K and V inputs after appropriate reshaping of K and V inputs based on sequence lengths and num heads provided:
-
-```
-  The following pattern is applied by this operator:
-      Q          K          V
-      |          |          |
-Q*sqrt(scale) K*sqrt(scale) |
-      |          |          |
-      |       Transpose     |
-      |          |          |
-      ---MatMul---          |
-            |               |
-  softcap (if provided)     |
-            |               |
- at_mask---Add              |
-            |               |
-         Softmax            |
-            |               |
-            -----MatMul------
-                   |
-                   Y
-```
-
-)DOC";
-
 ONNX_OPERATOR_SET_SCHEMA(
     Attention,
     23,
     OpSchema()
-        .SetDoc(Attention_ver23_doc)
+        .SetDoc(kDoc_Attention_ver23)
         .Attr(
             "is_causal",
             "If set to `1`, causal masking is applied with bottom-right (offset-aware) alignment: "
@@ -4501,7 +4322,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             builder.Add("present_value = Identity (PresentValue)");
           }
 
-          if (!defs::nn::utils::AttentionAppendFunctionCausalMask(ctx, builder, false))
+          if (!defs::nn::utils::AttentionAppendFunctionCausalMask(ctx, builder, false, true))
             return false;
           builder.Add("AttnBiasT = Cast (AttnBiasCausalOrNot)", "to", T1);
 
@@ -4632,4 +4453,413 @@ ONNX_OPERATOR_SET_SCHEMA(
           schema.BuildFunction(functionProto);
           return true;
         }));
+
+ONNX_OPERATOR_SET_SCHEMA(
+    Attention,
+    24,
+    OpSchema()
+        .SetDoc(kDoc_Attention_ver24)
+        .Attr(
+            "is_causal",
+            "If set to `1`, causal masking is applied. For a square Q/K (no cache offset) this is a "
+            "lower-triangular matrix. In general the mask is bottom-right (offset-aware): query in-block "
+            "index `i` attends key `j` iff `j <= i + offset`, where `offset` is the count of valid keys "
+            "preceding the query block (`past_sequence_length` for an internal `past_key` cache, or "
+            "`nonpad_kv_seqlen - q_sequence_length` per batch for an external cache). When `offset = 0` "
+            "this reduces to the lower-triangular (top-left) mask.",
+            AttributeProto::INT,
+            static_cast<int64_t>(0))
+        .Attr(
+            "scale",
+            "Scaling factor applied to $Q*K^T$. Default value is `1/sqrt(head_size)`. To prevent "
+            "[numerical overflow](https://tinyurl.com/sudb9s96), scale `Q`, `K` by `sqrt(scale)` before matmul.",
+            AttributeProto::FLOAT,
+            OPTIONAL_VALUE)
+        .Attr(
+            "q_num_heads",
+            "Number of heads of query. Must be used with 3D inputs of Q, K and V. ",
+            AttributeProto::INT,
+            OPTIONAL_VALUE)
+        .Attr(
+            "kv_num_heads",
+            "Number of heads of key and value. Must be used with 3D inputs of Q, K and V. ",
+            AttributeProto::INT,
+            OPTIONAL_VALUE)
+        .Attr(
+            "softmax_precision",
+            "The floating-point precision used in softmax computation. "
+            "If softmax precision is not provided, the same precision as the input of softmax (Q and K) is used.",
+            AttributeProto::INT,
+            OPTIONAL_VALUE)
+        .Attr(
+            "softcap",
+            "Softcap value for attention weights. Default value is 0.",
+            AttributeProto::FLOAT,
+            static_cast<float>(0))
+        .Attr(
+            "qk_matmul_output_mode",
+            "If set to `0`, qk_matmul_output is the output of qk matmul. "
+            "If set to `1`, qk_matmul_output is the output after the softcap operation (before mask addition). "
+            "If set to `2`, qk_matmul_output includes the attention mask and softcap (if provided) applied to the output of qk matmul. "
+            "If set to `3`, qk_matmul_output is the output after the softmax operation. "
+            "In mode `3`, a fully-masked query row (every key disallowed) is a zero row, "
+            "consistent with the corresponding row of the primary output `Y`: the "
+            "fully-masked-row guard is applied before this output is produced. "
+            "The mode-`3` output is emitted at the operator's output precision (`T1`); when "
+            "`softmax_precision` differs from `T1` this is a cast of the softmax result to `T1`. "
+            "Default value is 0.",
+            AttributeProto::INT,
+            static_cast<int64_t>(0))
+        .Input(
+            0,
+            "Q",
+            "Query tensor. "
+            "4D tensor with shape `(batch_size, q_num_heads, q_sequence_length, head_size)` or 3D tensor with shape `(batch_size, q_sequence_length, q_hidden_size)`. "
+            "For cases with a 3D input tensor, `q_hidden_size = q_num_heads * head_size`",
+            "T1")
+        .Input(
+            1,
+            "K",
+            "Key tensor. "
+            "4D tensor with shape `(batch_size, kv_num_heads, kv_sequence_length, head_size)` or 3D tensor with shape `(batch_size, kv_sequence_length, k_hidden_size)`. "
+            "For cases with a 3D input tensor, `k_hidden_size = kv_num_heads * head_size`",
+            "T1")
+        .Input(
+            2,
+            "V",
+            "Value tensor. "
+            "4D tensor with shape `(batch_size, kv_num_heads, kv_sequence_length, v_head_size)` or 3D tensor with shape `(batch_size, kv_sequence_length, v_hidden_size)`. "
+            "For cases with a 3D input tensor, `v_hidden_size = kv_num_heads * v_head_size`",
+            "T2")
+        .Input(
+            3,
+            "attn_mask",
+            "Attention mask. "
+            "Shape must be broadcastable to `(batch_size, q_num_heads, q_sequence_length, total_sequence_length)` "
+            "where `total_sequence_length = past_sequence_length + kv_sequence_length.` "
+            "The last dimension can also be shorter than `total_sequence_length` and will be padded to `total_sequence_length` with negative infinity. "
+            "Two types of masks are supported: a boolean mask where a value of `True` indicates that the element should take part in attention, "
+            "or a float mask of the same type as query, key, value that is added to the attention score.",
+            "U",
+            OpSchema::Optional)
+        .Input(
+            4,
+            "past_key",
+            "past state cache for key with shape `(batch_size, kv_num_heads, past_sequence_length, head_size)`",
+            "T1",
+            OpSchema::Optional)
+        .Input(
+            5,
+            "past_value",
+            "past state cache for value with shape `(batch_size, kv_num_heads, past_sequence_length, v_head_size)`",
+            "T2",
+            OpSchema::Optional)
+        .Input(
+            6,
+            "nonpad_kv_seqlen",
+            "A vector of integers of shape `(batch_size,)` that indicates the number of valid (ie, non-padding) "
+            "tokens in each sample. A padding mask can be derived from this. This should not be used together with "
+            "`past_key` and `past_value` inputs or `present_key` and `present_value` outputs "
+            "(See the KV cache use cases in the operator description).",
+            "tensor(int64)",
+            OpSchema::Optional)
+        .Output(
+            0,
+            "Y",
+            "The output tensor . "
+            "4D tensor with shape `(batch_size, q_num_heads, q_sequence_length, v_head_size)` or 3D tensor with shape `(batch_size, q_sequence_length, hidden_size)`. "
+            "For cases with a 3D input tensor, `hidden_size = q_num_heads * v_head_size`",
+            "T1")
+        .Output(
+            1,
+            "present_key",
+            "Updated key cache with shape `(batch_size, kv_num_heads, total_sequence_length, head_size)` "
+            "where `total_sequence_length = past_sequence_length + kv_sequence_length`.",
+            "T1",
+            OpSchema::Optional)
+        .Output(
+            2,
+            "present_value",
+            "Updated value cache with shape `(batch_size, kv_num_heads, total_sequence_length, v_head_size)` "
+            "where `total_sequence_length = past_sequence_length + kv_sequence_length`.",
+            "T2",
+            OpSchema::Optional)
+        .Output(
+            3,
+            "qk_matmul_output",
+            "The output of QK matmul. "
+            "4D tensor with shape `(batch_size, q_num_heads, q_sequence_length, total_sequence_length)` "
+            "where `total_sequence_length = past_sequence_length + kv_sequence_length`.",
+            "T1",
+            OpSchema::Optional)
+        .TypeConstraint("T1", OpSchema::all_float_types_ir4(), "Constrain Q and K inputs types to float tensors.")
+        .TypeConstraint("T2", OpSchema::all_float_types_ir4(), "Constrain V input types to float tensors.")
+        .TypeConstraint(
+            "U",
+            OpSchema::all_non_complex_numeric_types_plus_bool_ir4(),
+            "Constrain output 'mask' types to boolean tensors and input types.")
+        .TypeAndShapeInferenceFunction(defs::nn::utils::AttentionPropagateElemTypeFromInputToOutput)
+        .SetNodeDeterminism(OpSchema::NodeDeterminism::Deterministic)
+        .SetContextDependentFunctionBodyBuilder([](const FunctionBodyBuildContext& ctx,
+                                                   const OpSchema& schema,
+                                                   FunctionProto& functionProto) {
+          // ScaledDotProductAttention <scale, is_causal, q_num_heads, kv_numheads> (Q, K, V, attn_mask, past_key,
+          // past_value) => (Y, present_key?, present_value?)
+          int64_t int_type = ONNX_NAMESPACE::TensorProto_DataType_INT64;
+          int64_t float_type = ONNX_NAMESPACE::TensorProto_DataType_FLOAT;
+
+          // Get input types
+          auto t_qk = ctx.getInputType(0);
+          if ((t_qk == nullptr) || (!t_qk->has_tensor_type()))
+            return false;
+          int64_t T1 = t_qk->tensor_type().elem_type();
+
+          // Determine precision types for Softmax
+          auto softmax_precision_attr = ctx.getAttribute("softmax_precision");
+          int64_t softmax_precision = (softmax_precision_attr != nullptr) ? softmax_precision_attr->i() : T1;
+          if ((softmax_precision != ONNX_NAMESPACE::TensorProto_DataType_FLOAT) &&
+              (softmax_precision != ONNX_NAMESPACE::TensorProto_DataType_BFLOAT16) &&
+              (softmax_precision != ONNX_NAMESPACE::TensorProto_DataType_FLOAT16) &&
+              (softmax_precision != ONNX_NAMESPACE::TensorProto_DataType_DOUBLE))
+            return false; // Error
+
+          // If shape is 3D, q_num_heads and kv_num_heads is provided,
+          // for 4D cases, set num_heads to zero for reshape purposes
+          auto q_num_heads_attr = ctx.getAttribute("q_num_heads");
+          int64_t q_num_heads = (q_num_heads_attr != nullptr) ? q_num_heads_attr->i() : 0;
+          auto kv_num_heads_attr = ctx.getAttribute("kv_num_heads");
+          int64_t kv_num_heads = (kv_num_heads_attr != nullptr) ? kv_num_heads_attr->i() : 0;
+          auto is_causal_attr = ctx.getAttribute("is_causal");
+          int64_t is_causal = (is_causal_attr != nullptr) ? is_causal_attr->i() : 0;
+
+          // Determine if input is 3D (requires reshape and transpose) or 4D (direct reshape)
+          bool is_3d_input = (q_num_heads > 0 && kv_num_heads > 0);
+
+          FunctionBuilder builder(functionProto);
+          builder
+              .Add("BatchSize = Shape <start = 0, end = 1> (Q)") // batch size
+              .Add("QSeqLen = Shape <start = -2, end = -1> (Q)") // q_sequence_length
+              .Add("KVSeqLen = Shape <start = -2, end = -1> (K)"); // kv_sequence_length
+
+          if (is_3d_input) {
+            // For 3D inputs: First reshape to [batch_size, seq_length, num_heads, head_size]
+            // then transpose to [batch_size, num_heads, seq_length, head_size]
+            builder
+                .Const1D("QNumHeadsAttr", q_num_heads) // q_num_heads from attrs
+                .Const1D("KVNumHeadsAttr", kv_num_heads) // kv_num_heads from attrs
+                .Const1D("NegOne", static_cast<int64_t>(-1)); // head_size, inferred from other dimensions
+
+            builder.Add("QIntermediateShape = Concat <axis = 0> (BatchSize, QSeqLen, QNumHeadsAttr, NegOne)")
+                .Add("KVIntermediateShape = Concat <axis = 0> (BatchSize, KVSeqLen, KVNumHeadsAttr, NegOne)")
+                .Add("QIntermediate = Reshape (Q, QIntermediateShape)")
+                .Add("KIntermediate = Reshape (K, KVIntermediateShape)")
+                .Add("VIntermediate = Reshape (V, KVIntermediateShape)")
+                // Then transpose to [batch_size, num_heads, seq_length, head_size]
+                .Add("QReshaped = Transpose <perm = [0, 2, 1, 3]> (QIntermediate)")
+                .Add("KReshaped = Transpose <perm = [0, 2, 1, 3]> (KIntermediate)")
+                .Add("VReshaped = Transpose <perm = [0, 2, 1, 3]> (VIntermediate)");
+          } else {
+            // For 4D inputs: Already in desired shape [batch_size, num_heads, seq_length, head_size]
+            builder.Add("QReshaped = Identity(Q)").Add("KReshaped = Identity(K)").Add("VReshaped = Identity(V)");
+          }
+
+          builder
+              .Add("QNumHeads = Shape <start = 1, end = 2> (QReshaped)") // q_num_heads
+              .Add("KVNumHeads = Shape <start = 1, end = 2> (KReshaped)"); // kv_num_heads
+
+          // Calculate scaling factor if scale attribute not provided
+          auto scale_attr = ctx.getAttribute("scale");
+          float scale = (scale_attr != nullptr) ? scale_attr->f() : static_cast<float>(1);
+          builder
+              .Add("QKHeadSize = Shape <start = 3, end = 4> (QReshaped)") // head_size for Q and K
+              .Add("QKHeadSizeF = Cast (QKHeadSize)", "to", float_type)
+              .Add("VHeadSize = Shape <start = 3, end = 4> (VReshaped)") // head_size for V
+              .Add("SqrtHeadSize = Sqrt(QKHeadSizeF)")
+              .Const1D("One1D", static_cast<int64_t>(1))
+              .Const1D("NegOne1D", static_cast<int64_t>(-1))
+              .Const1D("One1DF", static_cast<float>(1))
+              .Const1D("Zero1D", static_cast<int64_t>(0))
+              .Add("CalculatedScale = Div(One1DF, SqrtHeadSize)")
+              .Const("ScaleF", ToTensor<float>(scale))
+              .Add(scale_attr != nullptr ? "ScaleFactor = Identity(ScaleF)" : "ScaleFactor = Identity(CalculatedScale)")
+              .Add("ScaleFactorSqrt = Sqrt(ScaleFactor)")
+              .Add("ScaleFactorF = Cast (ScaleFactorSqrt)", "to", T1);
+
+          // Update key and value caches for past and present states
+
+          if (ctx.hasInput(4)) {
+            builder.Add("PresentKey = Concat <axis = 2> (past_key, KReshaped)");
+            builder.Add("PastKVSeqLen =  Shape <start = -2, end = -1> (past_key)");
+          } else {
+            builder.Add("PresentKey = Identity (KReshaped)");
+            builder.Const1D("PastKVSeqLen", static_cast<int64_t>(0));
+          }
+          // External/static cache bottom-right offset (per batch): nonpad_kv_seqlen - q_len.
+          // Only meaningful when is_causal=1, nonpad present (input 6), and no past_key (input 4).
+          if (is_causal == 1 && ctx.hasInput(6) && !ctx.hasInput(4)) {
+            builder.Add("CausalOffsetPerBatch = Sub(nonpad_kv_seqlen, QSeqLen)"); // (batch,)
+          }
+          if (ctx.hasOutput(1)) {
+            builder.Add("present_key = Identity (PresentKey)");
+          }
+
+          if (ctx.hasInput(5)) {
+            builder.Add("PresentValue = Concat <axis = 2> (past_value, VReshaped)");
+          } else {
+            builder.Add("PresentValue = Identity (VReshaped)");
+          }
+          if (ctx.hasOutput(2)) {
+            builder.Add("present_value = Identity (PresentValue)");
+          }
+
+          if (!defs::nn::utils::AttentionAppendFunctionCausalMask(ctx, builder, true, true))
+            return false;
+
+          // Add padding mask if kv_nonpad_seqlen is provided
+          if (ctx.hasInput(6)) {
+            builder
+                .Add("KVSeqLenExpanded = Unsqueeze(nonpad_kv_seqlen, One1D)") // [batch_size, 1]
+                .Add("KVSeqLen0D = Squeeze(KVSeqLen)")
+                .Const("Zero0D", static_cast<int64_t>(0))
+                .Const("One0D", static_cast<int64_t>(1))
+                .Add("Range = Range(Zero0D, KVSeqLen0D, One0D)") // [KVSeqLen,]
+                .Add("PaddingMaskBool = Less(Range, KVSeqLenExpanded)") // [batch_size, KVSeqLen]
+                .Add("PaddingMaskFloat = Where(PaddingMaskBool, ScalarZero, FloatNegInf)") // [batch_size, KVSeqLen]
+                .Add("PaddingMask3D = Unsqueeze(PaddingMaskFloat, One1D)") // [batch_size, 1, KVSeqLen]
+                .Add("PaddingMask4DFloat = Unsqueeze(PaddingMask3D, One1D)") // [batch_size, 1, 1, KVSeqLen]
+                .Add("PaddingMask4D = CastLike(PaddingMask4DFloat, AttnBiasCausalOrNot)")
+                .Add("AttnBiasCausalPad = Add(AttnBiasCausalOrNot, PaddingMask4D)");
+          } else {
+            builder.Add("AttnBiasCausalPad = Identity(AttnBiasCausalOrNot)");
+          }
+          builder.Add("AttnBiasT = Cast (AttnBiasCausalPad)", "to", T1);
+
+          // Group Query Attention is applied if the following are satisfied
+          // 1) q_num_heads != kv_num_heads
+          // 2) q_num_heads % kv_num_heads == 0
+          // 3) kv_num_heads == k_num_heads == v_num_heads
+          builder.Add("NGQACond1 = Equal(QNumHeads, KVNumHeads)")
+              .Add("GQACond1 = Not(NGQACond1)")
+              .Add("DivNumHeads = Div(QNumHeads, KVNumHeads)")
+              .Add("IDivNumHeads = Cast(DivNumHeads)", "to", int_type)
+              .Add("RemainderNumHeads = Mod(QNumHeads, KVNumHeads)")
+              .Add("GQACond2 = Equal(RemainderNumHeads, Zero1D)")
+              .Add("GQACond = And(GQACond1, GQACond2)")
+              .Add("InterleaveDim = Where(GQACond, IDivNumHeads, One1D)");
+
+          // repeat kv (repeat_interleave)
+          builder.Const1D("Two1D", static_cast<int64_t>(2))
+              .Add("KUnsqueezed = Unsqueeze(PresentKey, Two1D)") // [B, Hk, 1, T, Dk]
+              .Add("VUnsqueezed = Unsqueeze(PresentValue, Two1D)"); // [B, Hk, 1, T, Dv]
+
+          // Build expand shape: [B, Hk, repeats, T, Dk]
+          builder
+              .Add("KExpandShape = Concat <axis = 0> (BatchSize, KVNumHeads, InterleaveDim, NewKVSeqLen, QKHeadSize)")
+              .Add("KExpanded = Expand(KUnsqueezed, KExpandShape)");
+          builder.Add("VExpandShape = Concat <axis = 0> (BatchSize, KVNumHeads, InterleaveDim, NewKVSeqLen, VHeadSize)")
+              .Add("VExpanded = Expand(VUnsqueezed, VExpandShape)");
+
+          // Reshape to [B, Hq, T, Dk] where Hq = Hk * repeats
+          builder.Add("KAttentionShape = Concat <axis = 0> (BatchSize, QNumHeads, NewKVSeqLen, QKHeadSize)")
+              .Add("VAttentionShape = Concat <axis = 0> (BatchSize, QNumHeads, NewKVSeqLen, VHeadSize)")
+              .Add("KAttentionInput = Reshape(KExpanded, KAttentionShape)")
+              .Add("VAttentionInput = Reshape(VExpanded, VAttentionShape)");
+
+          // The following pattern is applied
+          //      Q          K          V
+          //      |          |          |
+          //     Q*scale    K*scale     |
+          //      |          |          |
+          //      |       Transpose     |
+          //      |          |          |
+          //      ---MatMul---          |
+          //            |               |
+          //  softcap (if provided)     |
+          //            |               |
+          // at_mask---Add              |
+          //            |               |
+          //         Softmax            |
+          //            |               |
+          //            -----MatMul------
+          //                    |
+          //                    Y
+          builder.Add("KTranspose = Transpose <perm = [0, 1, 3, 2]> (KAttentionInput)")
+              .Add("QScaled = Mul(QReshaped, ScaleFactorF)")
+              .Add("KScaled = Mul(KTranspose, ScaleFactorF)")
+              .Add("QKAttnWeight = MatMul(QScaled, KScaled)")
+              .Add("QKAttnCast = Cast (QKAttnWeight)", "to", T1);
+
+          // Apply softcap before bias/mask addition.
+          // Softcap must come before mask so that -inf mask values remain -inf
+          // (zero probability in softmax). If applied after, -inf maps to
+          // -softcap (finite), leaking probability to masked positions.
+          auto softcap_attr = ctx.getAttribute("softcap");
+          float softcap_val = (softcap_attr != nullptr) ? softcap_attr->f() : static_cast<float>(0);
+          if (softcap_val != 0) {
+            builder.Const1D("Softcap", softcap_val)
+                .Add("SoftcapF = Cast (Softcap)", "to", T1)
+                .Add("SoftcapDiv = Div(QKAttnCast, SoftcapF)")
+                .Add("SoftcapTanh = Tanh(SoftcapDiv)")
+                .Add("QKAttnSoftcapped = Mul(SoftcapTanh, SoftcapF)")
+                .Add("QKAttnWeightSoftcap = Add(QKAttnSoftcapped, AttnBiasT)");
+          } else {
+            builder.Add("QKAttnWeightSoftcap = Add(QKAttnCast, AttnBiasT)");
+          }
+          builder.Add("SoftmaxCast = Cast (QKAttnWeightSoftcap)", "to", softmax_precision)
+              .Add("AttnWeightSoftmax = Softmax (SoftmaxCast)")
+              .Add("SoftmaxOut = Cast (AttnWeightSoftmax)", "to", T1);
+
+          // Fully-masked-row guard: a query row whose additive bias (AttnBiasT) is
+          // entirely -inf (every key disallowed by the combined causal + attn_mask
+          // constraints) softmaxes to NaN. Detect such rows on the additive bias
+          // row-max and zero their probabilities with Where (not Mul; NaN * 0 = NaN)
+          // BEFORE the P @ V contraction so 0 @ V = 0. The guard runs before the
+          // mode-3 output capture so the exposed qk_matmul_output row is also zeroed,
+          // consistent with Y. Mirrors the reference impl so primary == _expanded
+          // bit-for-bit; a no-op for rows with any allowed key.
+          builder.Add("BiasRowMaxAxes = Constant <value = int64[1] {-1}> ()")
+              .Add("BiasRowMax = ReduceMax(AttnBiasT, BiasRowMaxAxes)") // keepdims=1 (default)
+              .Add("FloatNegInfT = CastLike(FloatNegInf, AttnBiasT)")
+              .Add("RowAllMasked = Equal(BiasRowMax, FloatNegInfT)")
+              .Add("ZeroProbT = CastLike(ScalarZero, SoftmaxOut)")
+              .Add("SoftmaxOutSafe = Where(RowAllMasked, ZeroProbT, SoftmaxOut)");
+
+          // QK MatMul output if required
+          auto qk_matmul_output_mode_attr = ctx.getAttribute("qk_matmul_output_mode");
+          int64_t qk_matmul_output_mode = (qk_matmul_output_mode_attr != nullptr) ? qk_matmul_output_mode_attr->i() : 0;
+          if (ctx.hasOutput(3)) {
+            if (qk_matmul_output_mode == 1) {
+              // Mode 1: after softcap (before bias addition)
+              if (softcap_val != 0) {
+                builder.Add("qk_matmul_output = Identity(QKAttnSoftcapped)");
+              } else {
+                // No softcap applied, same as raw QK
+                builder.Add("qk_matmul_output = Identity(QKAttnCast)");
+              }
+            } else if (qk_matmul_output_mode == 2) {
+              // Mode 2: QK + softcap + bias (after softcap + bias addition)
+              builder.Add("qk_matmul_output = Identity(QKAttnWeightSoftcap)");
+            } else if (qk_matmul_output_mode == 3) {
+              // Mode 3: post-softmax, after the fully-masked-row guard (a fully-masked
+              // row is zeroed, consistent with the primary output Y).
+              builder.Add("qk_matmul_output = Identity(SoftmaxOutSafe)");
+            } else {
+              builder.Add("qk_matmul_output = Identity(QKAttnWeight)");
+            }
+          }
+
+          builder.Add("YPreReshape = MatMul(SoftmaxOutSafe, VAttentionInput)");
+          // Reshape Y to 3D if input is a 3D tensor
+          if (is_3d_input) {
+            builder.Add("YTranspose = Transpose <perm = [0, 2, 1, 3]> (YPreReshape)")
+                .Add("YNewShape = Concat <axis = 0> (Zero1D, Zero1D, NegOne)")
+                .Add("Y = Reshape(YTranspose, YNewShape)");
+          } else {
+            builder.Add("Y = Identity(YPreReshape)");
+          }
+
+          schema.BuildFunction(functionProto);
+          return true;
+        }));
+
 } // namespace ONNX_NAMESPACE

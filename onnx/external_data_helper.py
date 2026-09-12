@@ -53,6 +53,9 @@ _SORTED_ALLOWED_KEYS = sorted(_ALLOWED_EXTERNAL_DATA_KEYS)
 _MAX_UNKNOWN_KEYS_IN_WARNING = 10
 _MAX_KEY_DISPLAY_LENGTH = 100
 
+# Largest alignment boundary offsets may use; see `ExternalData.md`
+_MAX_EXTERNAL_DATA_PADDING = 64 * 1024
+
 
 class ExternalDataInfo:
     def __init__(self, tensor: TensorProto) -> None:
@@ -295,10 +298,21 @@ def save_external_data(tensor: TensorProto, base_path: str) -> None:
     with os.fdopen(fd, "r+b") as data_file:
         data_file.seek(0, 2)
         if info.offset is not None:
-            # Pad file to required offset if needed
+            # A tensor is written at the end of the file, optionally bumped forward by
+            # an alignment gap. The gap only aligns tensors that share a file, so it is
+            # always under one boundary. An offset before the end would overwrite data
+            # already in the file; one far past it would pad with an unbounded, untrusted
+            # amount of zeros. Reject both instead of writing.
             file_size = data_file.tell()
-            if info.offset > file_size:
-                data_file.write(b"\0" * (info.offset - file_size))
+            padding = info.offset - file_size
+            if not 0 <= padding <= _MAX_EXTERNAL_DATA_PADDING:
+                raise onnx_checker.ValidationError(
+                    f"External data offset ({info.offset}) for tensor {tensor.name!r} "
+                    f"must be between the current file size ({file_size}) and "
+                    f"{file_size + _MAX_EXTERNAL_DATA_PADDING}."
+                )
+            if padding > 0:
+                data_file.write(b"\0" * padding)
 
             data_file.seek(info.offset)
         offset = data_file.tell()

@@ -23,16 +23,15 @@ def _rms_normalization(
         axis = axis + rank
 
     # This computes RMS for every x_mat's column.
-    x_squared = np.power(X, 2)
+    x_float = X.astype(np.float32)
+    x_squared = np.power(x_float, 2)
     x_squared_mean = np.mean(
         x_squared, axis=tuple(range(axis, len(shape))), keepdims=True
     )
     # epsilon adjustment to avoid divide-by-zero.
     rmseps = x_squared_mean + epsilon
     rms = np.sqrt(rmseps)
-    rms_reciprocal = np.reciprocal(rms)
-
-    y_mat = X * rms_reciprocal
+    y_mat = (x_float / rms).astype(X.dtype)
     # W is linear coefficient.
     Y = y_mat * W
 

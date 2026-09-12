@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0
 #include <string>
 
+#include "onnx/defs/doc_strings.h"
 #include "onnx/defs/schema.h"
 #include "onnx/defs/type_builders.h"
 
@@ -261,5 +262,41 @@ ONNX_OPERATOR_SET_SCHEMA(
              types::BFloat16},
             "Constrain input types to all numeric tensors.")
         .TypeConstraint("T1", {types::Bool}, "Constrain output to boolean tensor."));
+
+ONNX_OPERATOR_SET_SCHEMA(
+    BitShift,
+    11,
+    OpSchema()
+        .SetDoc(GET_OP_DOC_STR(std::string(kDoc_BitShift_ver11) + GenerateBroadcastingDocMul()))
+        .Input(
+            0,
+            "X",
+            "First operand, input to be shifted.",
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::NonDifferentiable)
+        .Input(1, "Y", "Second operand, amounts of shift.", "T", OpSchema::Single, true, 1, OpSchema::NonDifferentiable)
+        .Output(0, "Z", "Output tensor", "T", OpSchema::Single, true, 1, OpSchema::NonDifferentiable)
+        .TypeConstraint(
+            "T",
+            {types::UInt8, types::UInt16, types::UInt32, types::UInt64},
+            "Constrain input and output types to integer tensors.")
+        .Attr(
+            "direction",
+            "Direction of moving bits. It can be either \"RIGHT\" (for right shift) "
+            "or \"LEFT\" (for left shift).",
+            AttributeProto::STRING)
+        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+          // Type inference
+          propagateElemTypeFromInputToOutput(ctx, 0, 0);
+          // Shape inference
+          if (hasNInputShapes(ctx, 2))
+            bidirectionalBroadcastShapeInference(
+                ctx.getInputType(0)->tensor_type().shape(),
+                ctx.getInputType(1)->tensor_type().shape(),
+                *ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape());
+        }));
 
 } // namespace ONNX_NAMESPACE

@@ -13,8 +13,7 @@
 #include "onnx/common/ir.h"
 #include "onnx/defs/tensor_util.h"
 
-namespace ONNX_NAMESPACE {
-namespace version_conversion {
+namespace ONNX_NAMESPACE::version_conversion {
 int check_numpy_unibroadcastable_and_require_broadcast(
     const std::vector<Dimension>& input1_sizes,
     const std::vector<Dimension>& input2_sizes);
@@ -46,5 +45,4 @@ inline std::vector<int64_t> ReadInt64Tensor(const Tensor& tensor) {
   }
   return ParseData<int64_t>(&tensor);
 }
-} // namespace version_conversion
-} // namespace ONNX_NAMESPACE
+} // namespace ONNX_NAMESPACE::version_conversion

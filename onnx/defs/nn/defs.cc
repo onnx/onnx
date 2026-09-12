@@ -114,7 +114,8 @@ ONNX_API void convPoolShapeInference(
   std::vector<int64_t> effective_kernel_shape = kernel_shape;
   for (size_t i = 0; i < kernel_shape.size(); i++) {
     // accounting for dilation, how big is the kernel in this dimension
-    effective_kernel_shape[i] = (effective_kernel_shape[i] - 1) * dilations[i] + 1;
+    effective_kernel_shape[i] =
+        checkedAdd(checkedMultiply(checkedSubtract(effective_kernel_shape[i], 1), dilations[i]), 1);
   }
 
   std::vector<int64_t> pads;
@@ -146,10 +147,11 @@ ONNX_API void convPoolShapeInference(
         if (i >= static_cast<int>(effective_kernel_shape.size())) {
           fail_shape_inference("kernel shape should have ", input_dims_size, " values in ", ctx.getDisplayName(), ".");
         }
-        int64_t total_pad = residual == 0 ? effective_kernel_shape[i] - stride : effective_kernel_shape[i] - residual;
+        int64_t total_pad = residual == 0 ? checkedSubtract(effective_kernel_shape[i], stride)
+                                          : checkedSubtract(effective_kernel_shape[i], residual);
         total_pad = std::max<int64_t>(total_pad, 0);
         int64_t half_pad_small = total_pad >> 1;
-        int64_t half_pad_big = total_pad - half_pad_small;
+        int64_t half_pad_big = checkedSubtract(total_pad, half_pad_small);
         if (auto_pad_attr->s() == "SAME_UPPER") {
           pads[i] = half_pad_small;
           pads[i + input_dims_size] = half_pad_big;
@@ -184,14 +186,18 @@ ONNX_API void convPoolShapeInference(
     }
     // how big is the input, including padding
     int64_t input_size = input_shape.dim(2 + i).dim_value();
-    int64_t effective_input_size = input_size + pads[i] + pads[i + kernel_shape_size];
+    int64_t effective_input_size = checkedAdd(checkedAdd(input_size, pads[i]), pads[i + kernel_shape_size]);
 
     // default is floor mode .i.e. ceil_mode is set to 0
     auto ceil_mode = getAttribute(ctx, "ceil_mode", 0);
 
-    int64_t output_size =
-        (effective_input_size - effective_kernel_shape[i] + (ceil_mode ? strides[i] - 1 : 0)) / strides[i] + 1;
-    if (ceil_mode == 1 && (output_size - 1) * strides[i] >= (input_size + pads[i])) {
+    int64_t numerator = checkedSubtract(effective_input_size, effective_kernel_shape[i]);
+    if (ceil_mode) {
+      numerator = checkedAdd(numerator, checkedSubtract(strides[i], 1));
+    }
+    int64_t output_size = checkedAdd(checkedDivide(numerator, strides[i]), 1);
+    if (ceil_mode == 1 &&
+        checkedMultiply(checkedSubtract(output_size, 1), strides[i]) >= checkedAdd(input_size, pads[i])) {
       // we need to match pytorch's behavior of "Sliding windows that would start in the right padded region are
       // ignored." (https://pytorch.org/docs/stable/generated/torch.nn.MaxPool1d.html#maxpool1d). this code follows the
       // same logic as PyTorch's C++ implementation:
@@ -470,10 +476,10 @@ static void maxUnpoolShapeInference(InferenceContext& ctx) {
       continue;
     }
 
-    int64_t newdim_value = strides[i] * (input_shape.dim(2 + i).dim_value() - 1);
-    newdim_value += kernel_shape[i];
-    newdim_value -= pads[i];
-    newdim_value -= pads[i + kernel_shape_size];
+    int64_t newdim_value = checkedMultiply(strides[i], checkedSubtract(input_shape.dim(2 + i).dim_value(), 1));
+    newdim_value = checkedAdd(newdim_value, kernel_shape[i]);
+    newdim_value = checkedSubtract(newdim_value, pads[i]);
+    newdim_value = checkedSubtract(newdim_value, pads[i + kernel_shape_size]);
 
     // add in the initial position
     newdim->set_dim_value(newdim_value);
@@ -833,21 +839,11 @@ computes the output.)DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(Conv, 22, OpSchema().FillUsing(ConvOpSchemaGenerator("a filter")));
 
-static constexpr const char* QLinearConv_ver10_doc = R"DOC(
-The convolution operator consumes a quantized input tensor, its scale and zero point,
-a quantized filter, its scale and zero point, and output's scale and zero point,
-and computes the quantized output. Each scale and zero-point pair must have same shape.
-It means they must be either scalars (per tensor) or 1-D tensors (per output channel).
-Each input or output and its related zero point must have same type.
-When bias is present it must be quantized using scale = input scale * weight scale and
-zero point as 0.
-)DOC";
-
 ONNX_OPERATOR_SET_SCHEMA(
     QLinearConv,
     10,
     OpSchema()
-        .SetDoc(QLinearConv_ver10_doc)
+        .SetDoc(kDoc_QLinearConv_ver10)
         .Input(
             0,
             "x",
@@ -985,16 +981,11 @@ ONNX_OPERATOR_SET_SCHEMA(
           convPoolShapeInference(ctx, true, false, 0, 3);
         }));
 
-static constexpr const char* ConvInteger_ver10_doc = R"DOC(
-The integer convolution operator consumes an input tensor, its zero-point, a filter, and its zero-point,
-and computes the output. The production MUST never overflow. The accumulation may overflow if and only if in 32 bits.
-)DOC";
-
 ONNX_OPERATOR_SET_SCHEMA(
     ConvInteger,
     10,
     OpSchema()
-        .SetDoc(ConvInteger_ver10_doc)
+        .SetDoc(kDoc_ConvInteger_ver10)
         .Input(
             0,
             "x",
@@ -1196,7 +1187,8 @@ ONNX_API void convTransposeShapeInference(InferenceContext& ctx) {
   std::vector<int64_t> effective_kernel_shape = kernel_shape;
   for (size_t i = 0; i < kernel_shape.size(); i++) {
     // accounting for dilation, how big is the kernel in this dimension
-    effective_kernel_shape[i] = (effective_kernel_shape[i] - 1) * dilations[i] + 1;
+    effective_kernel_shape[i] =
+        checkedAdd(checkedMultiply(checkedSubtract(effective_kernel_shape[i], 1), dilations[i]), 1);
   }
 
   std::vector<int64_t> pads;
@@ -1217,10 +1209,10 @@ ONNX_API void convTransposeShapeInference(InferenceContext& ctx) {
     if ((nullptr != auto_pad_attr) && (auto_pad_attr->s() != "VALID")) {
       int input_dims_size = static_cast<int>(n_input_dims);
       for (int i = 0; i < input_dims_size; ++i) {
-        int64_t total_pad = effective_kernel_shape[i] - strides[i];
+        int64_t total_pad = checkedSubtract(effective_kernel_shape[i], strides[i]);
         total_pad = std::max<int64_t>(total_pad, 0);
         int64_t half_pad_small = total_pad >> 1;
-        int64_t half_pad_big = total_pad - half_pad_small;
+        int64_t half_pad_big = checkedSubtract(total_pad, half_pad_small);
         if (auto_pad_attr->s() == "SAME_UPPER") {
           pads[i] = half_pad_small;
           pads[i + input_dims_size] = half_pad_big;
@@ -1281,8 +1273,11 @@ ONNX_API void convTransposeShapeInference(InferenceContext& ctx) {
     size_of_output = input_shape.dim_size() - 2;
     for (int i = 0; i < size_of_output; ++i) {
       if (input_shape.dim(i + 2).has_dim_value()) {
-        int64_t output_shape_dim = strides[i] * (input_shape.dim(i + 2).dim_value() - 1) + output_padding[i] +
-            effective_kernel_shape[i] - pads[i] - pads[i + n_input_dims];
+        int64_t output_shape_dim = checkedMultiply(strides[i], checkedSubtract(input_shape.dim(i + 2).dim_value(), 1));
+        output_shape_dim = checkedAdd(output_shape_dim, output_padding[i]);
+        output_shape_dim = checkedAdd(output_shape_dim, effective_kernel_shape[i]);
+        output_shape_dim = checkedSubtract(output_shape_dim, pads[i]);
+        output_shape_dim = checkedSubtract(output_shape_dim, pads[i + n_input_dims]);
         final_output_shape->add_dim()->set_dim_value(output_shape_dim);
       } else {
         final_output_shape->add_dim();
@@ -1627,53 +1622,12 @@ static std::function<void(OpSchema&)> GlobalLpPoolingOpSchemaGenerator(const cha
 
 ONNX_OPERATOR_SET_SCHEMA(GlobalLpPool, 22, OpSchema().FillUsing(GlobalLpPoolingOpSchemaGenerator("LpPool", "lp pool")));
 
-static constexpr const char* BatchNormalization_ver15_doc = R"DOC(
-Carries out batch normalization as described in the paper
-https://arxiv.org/abs/1502.03167. Depending on the mode it is being run,
-There are five required inputs 'X', 'scale', 'B', 'input_mean' and
-'input_var'.
-Note that 'input_mean' and 'input_var' are expected to be the estimated
-statistics in inference mode (training_mode=False, default),
-and the running statistics in training mode (training_mode=True).
-There are multiple cases for the number of outputs, which we list below:
-
-* Output case #1: Y, running_mean, running_var (training_mode=True)
-* Output case #2: Y (training_mode=False)
-
-When training_mode=False, extra outputs are invalid.
-The outputs are updated as follows when training_mode=True:
-```
-running_mean = input_mean * momentum + current_mean * (1 - momentum)
-running_var = input_var * momentum + current_var * (1 - momentum)
-
-Y = (X - current_mean) / sqrt(current_var + epsilon) * scale + B
-```
-where:
-```
-current_mean = ReduceMean(X, axis=all_except_channel_index)
-current_var =  ReduceVar(X, axis=all_except_channel_index)
-```
-Notice that `ReduceVar` refers to the population variance, and it equals to
-`sum(sqrd(x_i - x_avg)) / N`
-where `N` is the population size (this formula does not use sample size `N - 1`).
-
-The computation of ReduceMean and ReduceVar uses float to avoid overflow for float16 inputs.
-
-When training_mode=False:
-```
-Y = (X - input_mean) / sqrt(input_var + epsilon) * scale + B
-```
-
-For previous (depreciated) non-spatial cases, implementors are suggested
-to flatten the input shape to (N x C * D1 * D2 * ... * Dn) before a BatchNormalization Op.
-)DOC";
-
 ONNX_OPERATOR_SET_SCHEMA(
     BatchNormalization,
     15,
     OpSchema()
         .NumOutputs({1, 3})
-        .SetDoc(BatchNormalization_ver15_doc + GenerateOptionalArgumentsDoc())
+        .SetDoc(kDoc_BatchNormalization_ver15 + GenerateOptionalArgumentsDoc())
         .Attr("epsilon", "The epsilon value to use to avoid division by zero.", AttributeProto::FLOAT, 1e-5f)
         .Attr(
             "momentum",
@@ -1947,18 +1901,11 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static constexpr const char* Shrink_ver9_doc = R"DOC(
-Shrink takes one input data (Tensor<numeric>) and produces one Tensor output,
-having same datatype and shape with input. It has two attributes, lambd and
-bias. The formula of this operator is: If x < -lambd, y = x + bias;
-If x > lambd, y = x - bias; Otherwise, y = 0.
-)DOC";
-
 ONNX_OPERATOR_SET_SCHEMA(
     Shrink,
     9,
     OpSchema()
-        .SetDoc(Shrink_ver9_doc)
+        .SetDoc(kDoc_Shrink_ver9)
         .Attr("lambd", "The lambd value for the Shrink formulation. Default is 0.5.", AttributeProto::FLOAT, 0.5f)
         .Attr("bias", "The bias value added to output. Default is 0.", AttributeProto::FLOAT, 0.0f)
         .Input(0, "input", "The input data as Tensor.", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
@@ -2034,19 +1981,6 @@ ONNX_OPERATOR_SET_SCHEMA(
           updateOutputShape(ctx, 0, {multiplyDims(input_shape, 0, axis), multiplyDims(input_shape, axis, rank)});
         }));
 
-static constexpr const char* LRN_ver13_doc = R"DOC(
-Local Response Normalization proposed in the [AlexNet paper](https://papers.nips.cc/paper/4824-imagenet-classification-with-deep-convolutional-neural-networks.pdf).
-It normalizes over local input regions.
-The local region is defined across the channels. For an element `X[n, c, d1, ..., dk]` in a tensor
-of shape `(N x C x D1 x D2, ..., Dk)`, its region is
-`{X[n, i, d1, ..., dk] | max(0, c - floor((size - 1) / 2)) <= i <= min(C - 1, c + ceil((size - 1) / 2))}`.
-
-`square_sum[n, c, d1, ..., dk] = sum(X[n, i, d1, ..., dk] ^ 2)`,
-where `max(0, c - floor((size - 1) / 2)) <= i <= min(C - 1, c + ceil((size - 1) / 2))`.
-
-`Y[n, c, d1, ..., dk] = X[n, c, d1, ..., dk] / (bias + alpha / size * square_sum[n, c, d1, ..., dk] ) ^ beta`
-)DOC";
-
 ONNX_OPERATOR_SET_SCHEMA(
     LRN,
     13,
@@ -2088,38 +2022,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             {types::Float16, types::Float, types::Double, types::BFloat16},
             "Constrain input and output "
             " types to float tensors.")
-        .SetDoc(LRN_ver13_doc)
+        .SetDoc(kDoc_LRN_ver13)
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
-
-static constexpr const char* TfIdfVectorizer_ver9_doc = R"DOC(
-This transform extracts n-grams from the input sequence and save them as a vector. Input can
-be either a 1-D or 2-D tensor. For 1-D input, output is the n-gram representation of that input.
-For 2-D input, the output is also a  2-D tensor whose i-th row is the n-gram representation of the i-th input row.
-More specifically, if input shape is [C], the corresponding output shape would be [max(ngram_indexes) + 1].
-If input shape is [N, C], this operator produces a [N, max(ngram_indexes) + 1]-tensor.
-
-In contrast to standard n-gram extraction, here, the indexes of extracting an n-gram from the original
-sequence are not necessarily consecutive numbers. The discontinuity between indexes are controlled by the number of skips.
-If the number of skips is 2, we should skip two tokens when scanning through the original sequence.
-Let's consider an example. Assume that input sequence is [94, 17, 36, 12, 28] and the number of skips is 2.
-The associated 2-grams are [94, 12] and [17, 28] respectively indexed by [0, 3] and [1, 4].
-If the number of skips becomes 0, the 2-grams generated are [94, 17], [17, 36], [36, 12], [12, 28]
-indexed by [0, 1], [1, 2], [2, 3], [3, 4], respectively.
-
-The output vector (denoted by Y) stores the count of each n-gram;
-Y[ngram_indexes[i]] indicates the times that the i-th n-gram is found. The attribute ngram_indexes is used to determine the mapping
-between index i and the corresponding n-gram's output coordinate. If pool_int64s is [94, 17, 17, 36], ngram_indexes is [1, 0],
-ngram_counts=[0, 0], then the Y[0] (first element in Y) and Y[1] (second element in Y) are the counts of [17, 36] and [94, 17],
-respectively. An n-gram which cannot be found in pool_strings/pool_int64s should be ignored and has no effect on the output.
-Note that we may consider all skips up to S when generating the n-grams.
-
-The examples used above are true if mode is "TF". If mode is "IDF", all the counts larger than 1 would be truncated to 1 and
-the i-th element in weights would be used to scale (by multiplication) the count of the i-th n-gram in pool. If mode is "TFIDF",
-this operator first computes the counts of all n-grams and then scale them by the associated values in the weights attribute.
-
-Only one of pool_strings and pool_int64s can be set. If pool_int64s is set, the input should be an integer tensor.
-If pool_strings is set, the input must be a string tensor.
-)DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
     TfIdfVectorizer,
@@ -2212,12 +2116,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             updateOutputShape(ctx, 0, output_shape);
           }
         })
-        .SetDoc(TfIdfVectorizer_ver9_doc));
-
-static constexpr const char* mvn_ver13_doc = R"DOC(
-      A MeanVarianceNormalization Function: Perform mean variance normalization
-      on the input tensor X using formula: `(X-EX)/sqrt(E(X-EX)^2)`
-)DOC";
+        .SetDoc(kDoc_TfIdfVectorizer_ver9));
 
 static const std::vector<int64_t> mvn_default_axes = {0, 2, 3};
 
@@ -2225,7 +2124,7 @@ ONNX_OPERATOR_SET_SCHEMA(
     MeanVarianceNormalization,
     13,
     OpSchema()
-        .SetDoc(mvn_ver13_doc)
+        .SetDoc(kDoc_mvn_ver13)
         .Input(0, "X", "Input tensor", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
         .Output(0, "Y", "Output tensor", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
         .Attr(
@@ -2332,11 +2231,19 @@ static void col2imShapeInference(InferenceContext& ctx) {
   if (!block_shape.empty()) {
     block_shape_size = 1;
     for (const auto& dim : block_shape) {
-      block_shape_size *= dim;
+      if (dim <= 0) {
+        fail_shape_inference("'block_shape' input must contain only positive values");
+      }
+      block_shape_size = checkedMultiply(block_shape_size, dim);
     }
   }
   // If we haven't inferred the number of image dimensions, we can't set inferred shape.
   if (!n_input_dims.has_dim_value()) {
+    return;
+  }
+  // Do not materialize an attacker-controlled number of Dimension messages
+  // when only Col2Im's spatial rank is known.
+  if (n_input_dims.dim_value() < 0 || n_input_dims.dim_value() > kMaxMaterializedRank) {
     return;
   }
 
@@ -2365,19 +2272,6 @@ static void col2imShapeInference(InferenceContext& ctx) {
   }
 }
 
-static constexpr const char* Col2Im_ver18_doc = R"DOC(
-The operator rearranges column blocks back into a multidimensional image
-
-Col2Im behaves similarly to PyTorch's fold https://pytorch.org/docs/stable/generated/torch.nn.Fold.html,
-but it only supports *batched* multi-dimensional image tensors.
-Another implementation in Python with N-dimension support can be found at https://github.com/f-dangel/unfoldNd/.
-
-NOTE:
-  Although specifying image_shape looks redundant because it could be calculated from
-  convolution formulas, it is required as input for more advanced scenarios as explained
-  at PyTorch's implementation (https://github.com/pytorch/pytorch/blob/master/aten/src/ATen/native/Col2Im.cpp#L10)
-)DOC";
-
 ONNX_OPERATOR_SET_SCHEMA(
     Col2Im,
     18,
@@ -2405,7 +2299,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "If not present, the stride defaults to 1 along each spatial axis.",
             AttributeProto::INTS,
             OPTIONAL_VALUE)
-        .SetDoc(Col2Im_ver18_doc)
+        .SetDoc(kDoc_Col2Im_ver18)
         .Input(
             0,
             "input",
@@ -2457,50 +2351,6 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::all_tensor_types_ir4(),
             "Constrain input and output types to all numeric tensor types.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) { col2imShapeInference(ctx); }));
-
-static constexpr const char* LayerNormalization_ver17_doc = R"DOC(
-      This is layer normalization defined in ONNX as function.
-      The overall computation can be split into two stages.
-      The first stage is standardization, which makes the
-      normalized elements have zero mean and unit variances.
-      The computation required by standardization can be
-      described by the following equations.
-      ```
-      Mean = ReduceMean<axes=normalized_axes>(X)
-      D = Sub(X, Mean)
-      DD = Mul(D, D)
-      Var = ReduceMean<axes=normalized_axes>(DD)
-      VarEps = Add(Var, epsilon)
-      StdDev = Sqrt(VarEps)
-      InvStdDev = Reciprocal(StdDev)
-      Normalized = Mul(D, InvStdDev)
-      ```
-      where `normalized_axes` is `[axis, ..., rank of X - 1]`.
-      The variables `Var` and `StdDev` stand for variance and
-      standard deviation, respectively. The second output is
-      `Mean` and the last one is `InvStdDev`.
-      Depending on `stash_type` attribute, the actual computation
-      must happen in different floating-point precision.
-      For example, if `stash_type` is 1, this operator casts
-      all input variables to 32-bit float, perform the computation, and
-      finally cast `Normalized` back to the original type of `X`.
-      The second stage then scales and shifts the outcome of the
-      first stage using
-      ```
-      NormalizedScaled = Mul(Normalized, Scale)
-      Y = Add(NormalizedScaled, B)
-      ```
-      The second stage doesn't depends on `stash_type`.
-      All equations are in [this syntax](https://github.com/onnx/onnx/blob/main/docs/Syntax.md).
-      The same variable (i.e., input, output, and attribute) uses
-      the same name in the equations above and this operator's definition.
-      Let `d[i]` indicate the i-th dimension of `X`.
-      If `X`'s shape is `[d[0], ..., d[axis-1], d[axis], ..., d[rank-1]]`,
-      the shape of `Mean` and `InvStdDev` is `[d[0], ..., d[axis-1], 1, ..., 1]`.
-      `Y` and `X` have the same shape. This operator supports unidirectional broadcasting
-      (tensors `Scale` and `B` should be unidirectional broadcastable to tensor `X`);
-      for more details please check [the doc](Broadcasting.md).
-)DOC";
 
 static bool BuildContextDependentFunctionBodyLayerNormalization(
     const FunctionBodyBuildContext& ctx,
@@ -2610,7 +2460,7 @@ ONNX_OPERATOR_SET_SCHEMA(
     LayerNormalization,
     17,
     OpSchema()
-        .SetDoc(LayerNormalization_ver17_doc)
+        .SetDoc(kDoc_LayerNormalization_ver17)
         .Attr(
             "axis",
             "The first normalization dimension. If rank(X) is r, axis' allowed range is [-r, r). "
@@ -2699,37 +2549,40 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static constexpr const char* GroupNormalization_ver21_doc = R"DOC(
-A GroupNormalization function. Carries out group normalization as described in
-the paper https://arxiv.org/abs/1803.08494
+static void GroupNormalizationShapeInference(InferenceContext& ctx) {
+  propagateShapeAndTypeFromFirstInput(ctx);
 
-This operator transforms input according to
-```
-y = scale * (x - mean) / sqrt(variance + epsilon) + bias,
-```
-where the mean and variance are computed per instance per group of channels, and
-`scale` and `bias` should be specified for each channel. The number of
-groups `num_groups` should be divisible by the number of channels so that there are
-an equal number of channels per group.
+  const int64_t num_groups = getAttribute(ctx, "num_groups", 0);
+  if (num_groups <= 0) {
+    fail_shape_inference("Attribute num_groups must be > 0. num_groups=", num_groups, ".");
+  }
 
-The overall computation has two stages: the first stage normalizes the elements to
-have zero mean and unit variance for each instance in each group, and the second
-stage scales and shifts the results of the first stage. The floating-point precision
-used in the first stage is determined by the `stash_type` attribute. For example,
-if `stash_type` is 1, the operator casts all input variables to 32-bit float,
-performs the computation, and finally casts the normalized results back to the
-original type of `X`. The second stage does not depend on `stash_type`.
+  if (hasInputShape(ctx, 0) && getInputShape(ctx, 0).dim_size() < 2) {
+    fail_shape_inference("Input X must have rank >= 2.");
+  }
 
-When the number of groups is the same as the number of channels, this operator is
-equivalent to InstanceNormalization. When there is only one group, this operator
-is equivalent to LayerNormalization.
-)DOC";
+  checkInputRank(ctx, 1, 1);
+  checkInputRank(ctx, 2, 1);
 
+  Dim num_channels;
+  unifyInputDim(ctx, 0, 1, num_channels);
+  unifyInputDim(ctx, 1, 0, num_channels);
+  unifyInputDim(ctx, 2, 0, num_channels);
+
+  if (num_channels.has_dim_value() && num_channels.dim_value() % num_groups != 0) {
+    fail_shape_inference(
+        "The number of channels must be divisible by num_groups. channels=",
+        num_channels.dim_value(),
+        " num_groups=",
+        num_groups,
+        ".");
+  }
+}
 ONNX_OPERATOR_SET_SCHEMA(
     GroupNormalization,
     21,
     OpSchema()
-        .SetDoc(GroupNormalization_ver21_doc)
+        .SetDoc(kDoc_GroupNormalization_ver21)
         .Attr("epsilon", "The epsilon value to use to avoid division by zero.", AttributeProto::FLOAT, 1e-5f)
         .Attr(
             "num_groups",
@@ -2766,6 +2619,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::Differentiable)
         .TypeConstraint("T", OpSchema::all_float_types_ir4(), "Constrain input and output types to float tensors.")
         .SetNodeDeterminism(OpSchema::NodeDeterminism::Deterministic)
+        .TypeAndShapeInferenceFunction(GroupNormalizationShapeInference)
         .SetContextDependentFunctionBodyBuilder(
             [](const FunctionBodyBuildContext& ctx, const OpSchema& schema, FunctionProto& functionProto) {
               // GroupNormalization <epsilon, num_groups> (X, scale, bias) => (Y)
@@ -2843,42 +2697,11 @@ ONNX_OPERATOR_SET_SCHEMA(
               return true;
             }));
 
-static constexpr const char* RMSNormalization_ver23_doc = R"DOC(
-      This is RMS normalization defined in ONNX as function as described in the paper https://arxiv.org/pdf/1910.07467.
-      The overall computation can be split into two stages. The root mean squared norm is taken over the last D dimensions,
-      where D is the dimension of normalized_shape. For example, if normalized_shape is (3, 5) (a 2-dimensional shape),
-      the rms norm is computed over the last 2 dimensions of the input. The computation required by standardization can be
-      described by the following equations.
-      ```
-      XSquared = Mul(X, X)
-      XSquaredMean = ReduceMean<axes=normalized_axes>(XSquared)
-      MeanSquareEpsilon = Add(XSquaredMean, epsilon)
-      RMS = Sqrt(MeanSquareEpsilon)
-      Normalized = Div(X, RMS)
-      ```
-      where `normalized_axes` is `[axis, ..., rank of X - 1]`. The variables `RMS` stand for root mean square,
-      Depending on `stash_type` attribute, the actual computation
-      must happen in different floating-point precision.
-      For example, if `stash_type` is 1, this operator casts
-      all input variables to 32-bit float, perform the computation, and
-      finally cast `Normalized` back to the original type of `X`.
-      The second stage then scales the outcome of the first stage using:
-      ```
-      Y= Mul(Normalized, Scale)
-      ```
-      Let `d[i]` indicate the i-th dimension of `X`.
-      If `X`'s shape is `[d[0], ..., d[axis-1], d[axis], ..., d[rank-1]]`,
-      the shape of `RMS` is `[d[0], ..., d[axis-1], 1, ..., 1]`.
-      `Y` and `X` have the same shape. This operator supports unidirectional broadcasting
-      (`Scale` should be unidirectional broadcastable to tensor `X`);
-      for more details please check [the doc](Broadcasting.md).
-)DOC";
-
 ONNX_OPERATOR_SET_SCHEMA(
     RMSNormalization,
     23,
     OpSchema()
-        .SetDoc(RMSNormalization_ver23_doc)
+        .SetDoc(kDoc_RMSNormalization_ver23)
         .Attr(
             "axis",
             "The first normalization dimension. If rank(X) is r, axis' allowed range is [-r, r). "
@@ -2984,114 +2807,11 @@ ONNX_OPERATOR_SET_SCHEMA(
           return true;
         }));
 
-static constexpr const char* RotaryEmbedding_ver23_doc = R"DOC(
-RotaryEmbedding is the implementation of rotary positional embeddings (RoPE) based on the paper https://arxiv.org/pdf/2104.09864.
-The key advantage of RoPE is that it allows the model to understand both the absolute position of a token and the relative distances
-between tokens. This is achieved through a rotational mechanism where the extent of rotation is computed based on the token's absolute position (position_ids).
-
-The rotational mechanism is defined by sine and cosine functions that are used to represent the rotation angles.
-For each token in the sequence, its positional embedding is computed by rotating its embedding vector. This is done by splitting the
-embedding vector either into two halves or interleaving every alternate token and applying the rotation matrix to each half of the embedding vector.
-The rotation matrix is parameterized by the token's position in the sequence. The rotated halves of the embedding vector are concatenated
-to form the final positional embedding for each token. The rotated positional embeddings are used in the self-attention mechanism.
-The rotation ensures that the model captures both absolute and relative positional information.
-
-Rotary embeddings are defined using the following algorithm:
-
-```python
-def rotary_embedding(
-    input: np.ndarray,
-    cos_cache: np.ndarray,
-    sin_cache: np.ndarray,
-    position_ids: np.ndarray | None = None,
-    interleaved=None,
-    rotary_embedding_dim=None,
-    num_heads=None,
-) -> np.ndarray:
-    original_input_shape = input.shape
-    # First ensure input to be processed has shape [batch_size, seq_len, num_heads, head_size]
-    if len(input.shape) == 4:
-        input = np.transpose(input, (0, 2, 1, 3))
-    batch_size = input.shape[0]
-    sequence_length = input.shape[1]
-    if len(input.shape) == 3:
-        hidden_size = input.shape[2]
-        assert num_heads != 0
-        head_size = int(hidden_size / num_heads)
-        new_shape = [batch_size, sequence_length, num_heads, head_size]
-        input = np.reshape(input, new_shape)
-    assert len(input.shape) == 4
-    head_size = input.shape[3]
-
-    # Fully or partially perform rotation on input based on rotary_embedding_dim attribute
-    if rotary_embedding_dim is None or rotary_embedding_dim == 0:
-        # If rotary_embedding_dim not provided, perform full rotation by using head_size
-        rotary_embedding_dim = head_size
-    x_rotate = input[:, :, :, :rotary_embedding_dim]
-    x_not_rotate = input[:, :, :, rotary_embedding_dim:]
-    rotary_embedding_dim_half = int(rotary_embedding_dim / 2)
-
-    # Retrieve sin and cos caches using position ids
-    if position_ids is not None:
-        cos_cache = cos_cache[
-            position_ids
-        ]  # Shape: [batch_size, sequence_length, rotary_embedding_dim/2]
-        sin_cache = sin_cache[
-            position_ids
-        ]  # Shape: [batch_size, sequence_length, rotary_embedding_dim/2]
-
-    # Shape: [batch_size, sequence_length, rotary_embedding_dim/2]
-    if cos_cache.shape[-1] != rotary_embedding_dim_half:
-        raise ValueError(
-            f"Last dimension of cos cache ({cos_cache.shape[-1]}) does not match rotary_embedding_dim/2 ({rotary_embedding_dim_half})."
-        )
-    if sin_cache.shape[-1] != rotary_embedding_dim_half:
-        raise ValueError(
-            f"Last dimension of sin cache ({sin_cache.shape[-1]}) does not match rotary_embedding_dim/2 ({rotary_embedding_dim_half})."
-        )
-
-    cos_cache = np.expand_dims(
-        cos_cache, axis=2
-    )  # Shape: [batch_size, sequence_length, 1, rotary_embedding_dim/2]
-    sin_cache = np.expand_dims(
-        sin_cache, axis=2
-    )  # Shape: [batch_size, sequence_length, 1, rotary_embedding_dim/2]
-
-    # Either divide the input in halves or interleave (based on interleaved attribute)
-    if interleaved:
-        x1 = x_rotate[:, :, :, 0::2]
-        x2 = x_rotate[:, :, :, 1::2]
-    else:
-        x1, x2 = np.split(x_rotate, 2, axis=-1)
-
-    # Calculate real and imaginary values
-    real = (cos_cache * x1) - (sin_cache * x2)
-    imag = (sin_cache * x1) + (cos_cache * x2)
-
-    # Inserted rotated embeddings back to the original input
-    if interleaved:
-        # x_rotate[:, :, :, 0::2] = real
-        # x_rotate[:, :, :, 1::2] = imag
-        real = np.expand_dims(real, axis=-1)
-        imag = np.expand_dims(imag, axis=-1)
-        x_rotate_concat = np.concatenate((real, imag), axis=-1)
-        x_rotate = np.reshape(x_rotate_concat, x_rotate.shape)
-    else:
-        x_rotate = np.concatenate((real, imag), axis=-1)
-    output = np.concatenate((x_rotate, x_not_rotate), axis=-1)
-    if len(original_input_shape) == 3:
-        output = np.reshape(output, original_input_shape)
-    else:
-        output = np.transpose(output, (0, 2, 1, 3))
-    return output
-```
-)DOC";
-
 ONNX_OPERATOR_SET_SCHEMA(
     RotaryEmbedding,
     23,
     OpSchema()
-        .SetDoc(RotaryEmbedding_ver23_doc)
+        .SetDoc(kDoc_RotaryEmbedding_ver23)
         .Attr(
             "interleaved",
             "Rotate using interleaved pattern. Default value is 0 (False).",
@@ -3334,110 +3054,51 @@ ONNX_OPERATOR_SET_SCHEMA(
           return true;
         }));
 
-static constexpr const char* Attention_ver24_doc = R"DOC(
+static void Attention25Inference(InferenceContext& ctx) {
+  defs::nn::utils::AttentionPropagateElemTypeFromInputToOutput(ctx);
 
-Computes scaled dot product attention on query, key and value tensors, using an optional attention mask if passed.
+  for (const char* window_attr_name : {"left_window_size", "right_window_size"}) {
+    const auto* const window_attr = ctx.getAttribute(window_attr_name);
+    const int64_t window_size = window_attr != nullptr ? window_attr->i() : -1;
+    if (window_size < -1) {
+      fail_shape_inference(window_attr_name, " must be -1 or nonnegative, got ", window_size);
+    }
+  }
 
-This operator covers self and cross variants of the attention operation based on sequence lengths of K, Q and V.
+  if (hasInputShape(ctx, 0) && getInputShape(ctx, 0).dim_size() == 3) {
+    const auto* const q_num_heads_attr = ctx.getAttribute("q_num_heads");
+    const auto* const kv_num_heads_attr = ctx.getAttribute("kv_num_heads");
+    if (q_num_heads_attr != nullptr && kv_num_heads_attr != nullptr &&
+        (q_num_heads_attr->i() <= 0 || kv_num_heads_attr->i() <= 0)) {
+      fail_shape_inference("q_num_heads and kv_num_heads must be positive for 3D inputs.");
+    }
+  }
 
-For self attention, `kv_sequence_length` equals to `q_sequence_length`.
+  const bool has_past_key = ctx.hasInput(4);
+  const bool has_past_value = ctx.hasInput(5);
+  if (has_past_key != has_past_value) {
+    fail_shape_inference("past_key and past_value must be provided together.");
+  }
+  const bool has_present_key = ctx.hasOutput(1);
+  const bool has_present_value = ctx.hasOutput(2);
+  if (has_present_key != has_present_value) {
+    fail_shape_inference("present_key and present_value must be requested together.");
+  }
+  if (ctx.hasInput(6) && (has_past_key || has_present_key)) {
+    fail_shape_inference("nonpad_kv_seqlen cannot be combined with past or present cache tensors.");
+  }
 
-For cross attention, query and key might have different lengths.
-
-This operator also covers the 3 following variants based on the number of heads:
-1) Multi-headed Attention (MHA): Described in the paper https://arxiv.org/pdf/1706.03762, `q_num_heads = kv_num_heads`.
-2) Group-query Attention (GQA): Described in the paper https://arxiv.org/pdf/2305.13245, `q_num_heads > kv_num_heads`, `q_num_heads % kv_num_heads == 0`.
-3) Multi-query Attention (MQA): Described in the paper https://arxiv.org/pdf/1911.02150, `q_num_heads > kv_num_heads`, `kv_num_heads=1`.
-
-Attention bias to be added is calculated based on `attn_mask` input and `is_causal` attribute:
-1) `attn_mask`: A boolean mask where a value of `True` indicates that the element should take part in attention or a float mask of the same type as query, key, value that is added to the attention score.
-2) If `is_causal` is set to `1`, causal masking is applied with bottom-right (offset-aware) alignment: query `i` attends key `j` iff `j <= i + offset`, as illustrated below.
-
-```
-  2D causal mask for Attention (PR onnx/onnx#8068)
-   S_q=4 queries, S_k=8 keys
-   Rule: query i attends key j iff j <= i + offset
-         offset = nonpad_kv_seqlen - S_q
-
-   nonpad_kv_seqlen=4, offset=4-4=0
-
-          k0  k1  k2  k3  k4  k5  k6  k7
-         +----+----+----+----+----+----+----+----+
-    q0   | ## |    |    |    |    |    |    |    |
-         +----+----+----+----+----+----+----+----+
-    q1   | ## | ## |    |    |    |    |    |    |
-         +----+----+----+----+----+----+----+----+
-    q2   | ## | ## | ## |    |    |    |    |    |
-         +----+----+----+----+----+----+----+----+
-    q3   | ## | ## | ## | ## |    |    |    |    |
-         +----+----+----+----+----+----+----+----+
-
-
-   nonpad_kv_seqlen=8, offset=8-4=4
-
-          k0  k1  k2  k3  k4  k5  k6  k7
-         +----+----+----+----+----+----+----+----+
-    q0   | ## | ## | ## | ## | ## |    |    |    |
-         +----+----+----+----+----+----+----+----+
-    q1   | ## | ## | ## | ## | ## | ## |    |    |
-         +----+----+----+----+----+----+----+----+
-    q2   | ## | ## | ## | ## | ## | ## | ## |    |
-         +----+----+----+----+----+----+----+----+
-    q3   | ## | ## | ## | ## | ## | ## | ## | ## |
-         +----+----+----+----+----+----+----+----+
-```
-
-With `nonpad_kv_seqlen=4` (offset=0), the mask is the standard lower-triangular. With `nonpad_kv_seqlen=8` (offset=4), the diagonal shifts right by 4, so each query sees the 4 additional valid cached keys.
-
-`offset` is the count of valid keys preceding the current query block: `offset = past_sequence_length` when `past_key` is provided; `offset = nonpad_kv_seqlen - q_sequence_length` (per batch) when an external cache is indicated by `nonpad_kv_seqlen` without `past_key`; `offset = 0` when neither is provided (the no-cache case, which reduces to the standard lower-triangular mask). When `offset < 0` (`nonpad_kv_seqlen < q_sequence_length`, i.e. more query tokens than cached keys) the leading query rows have an empty key set (no key satisfies `j <= i + offset`) and are fully masked. The causal frontier is computed independently of `attn_mask` and is then composed with it additively: a boolean `attn_mask` intersects the allowed set (its disallowed positions contribute `-inf` to the bias), while a float `attn_mask` is added to the attention scores rather than disabling positions. A fully-masked query row (no key attended, including the negative-offset leading rows) produces a zero output row, not `NaN`, for both `Y` and the mode-`3` `qk_matmul_output` debug output; the mode-`3` `qk_matmul_output` is emitted at the operator's output precision (`T1`).
-
-Errata (in-place behavioral correction, no opset bump): the reference implementation and backend tests were incorrect when `nonpad_kv_seqlen != q_sequence_length` (nonzero bottom-right offset, top-left instead of bottom-right causal alignment) and produced `NaN` for fully-masked rows; corrected in version 1.23. This fixed three behaviors described above: external-cache bottom-right causal alignment (`offset = nonpad_kv_seqlen - q_sequence_length`), zero (non-`NaN`) output for fully-masked rows including the mode-`3` `qk_matmul_output`, and the mode-`3` `qk_matmul_output` precision (`T1`).
-
-With respect to KV cache update, this operator allows the following two use cases:
-
-1) Cache update happens inside the Attention operator. In this case, the `K` and `V` inputs contain only the incoming
-tokens for the current autoregressive step, and the four optional inputs/outputs past and present key and value are
-all needed. The Attention op performs a Concat operation on the past and incoming key and value to form the present
-key and value, respectively. Note that this only works correctly for the special case where the past key and value
-do not contain padded tokens.
-2) Cache update happens outside the Attention operator (for example, through the `TensorScatter` operator). In this
-case, the `K` and `V` inputs correspond to the entire cache tensor, so the four optional inputs/outputs past and
-present key and value should not be used. An additional input `nonpad_kv_seqlen` of shape (batch_size,) may be
-provided to indicate the number of non-padding tokens in each sample of the batch to save unnecessary computation.
-Here, the kv_sequence dimension of `attn_mask` can be shorter than `K` and `V`, but still needs to be at least as long
-as the maximum value of `nonpad_kv_seqlen`.
-
-Both past and present state key/values are optional. They shall be used together, and not allowed to use only one of them.
-The following pattern is applied to the Q, K and V inputs after appropriate reshaping of K and V inputs based on sequence lengths and num heads provided:
-
-```
-  The following pattern is applied by this operator:
-      Q          K          V
-      |          |          |
-Q*sqrt(scale) K*sqrt(scale) |
-      |          |          |
-      |       Transpose     |
-      |          |          |
-      ---MatMul---          |
-            |               |
-  softcap (if provided)     |
-            |               |
- at_mask---Add              |
-            |               |
-         Softmax            |
-            |               |
-            -----MatMul------
-                   |
-                   Y
-```
-
-)DOC";
+  if (hasInputShape(ctx, 0) && getInputShape(ctx, 0).dim_size() == 4 &&
+      (ctx.getAttribute("q_num_heads") != nullptr || ctx.getAttribute("kv_num_heads") != nullptr)) {
+    fail_shape_inference("q_num_heads and kv_num_heads must not be specified for 4D inputs.");
+  }
+}
 
 ONNX_OPERATOR_SET_SCHEMA(
     Attention,
-    24,
+    25,
     OpSchema()
-        .SetDoc(Attention_ver24_doc)
+        .SetDoc(kDoc_Attention_ver25)
         .Attr(
             "is_causal",
             "If set to `1`, causal masking is applied. For a square Q/K (no cache offset) this is a "
@@ -3466,29 +3127,47 @@ ONNX_OPERATOR_SET_SCHEMA(
             OPTIONAL_VALUE)
         .Attr(
             "softmax_precision",
-            "The floating-point precision used in softmax computation. "
-            "If softmax precision is not provided, the same precision as the input of softmax (Q and K) is used.",
+            "Specifies the precision for softmax computation. If provided, "
+            "the attention weights will be cast to this type before softmax "
+            "and then cast back to the original type. "
+            "Supported values are: `1` (FLOAT), `10` (FLOAT16), `11` (DOUBLE), "
+            "`16` (BFLOAT16).",
             AttributeProto::INT,
             OPTIONAL_VALUE)
         .Attr(
             "softcap",
-            "Softcap value for attention weights. Default value is 0.",
+            "Soft cap for attention logits, applied as `softcap * tanh(logits / softcap)`. "
+            "Default value of `0.0` means no soft capping is applied. "
+            "The soft cap is applied before mask / bias addition and softmax.",
             AttributeProto::FLOAT,
             static_cast<float>(0))
         .Attr(
             "qk_matmul_output_mode",
-            "If set to `0`, qk_matmul_output is the output of qk matmul. "
-            "If set to `1`, qk_matmul_output is the output after the softcap operation (before mask addition). "
-            "If set to `2`, qk_matmul_output includes the attention mask and softcap (if provided) applied to the output of qk matmul. "
-            "If set to `3`, qk_matmul_output is the output after the softmax operation. "
-            "In mode `3`, a fully-masked query row (every key disallowed) is a zero row, "
-            "consistent with the corresponding row of the primary output `Y`: the "
-            "fully-masked-row guard is applied before this output is produced. "
+            "Determines what the optional 4th output contains: "
+            "`0` (default): raw QK matmul result; "
+            "`1`: after softcap (before bias addition); "
+            "`2`: QK + softcap + bias; "
+            "`3`: post-softmax probabilities (after fully-masked-row guard). "
+            "In mode `3`, a fully-masked query row (every key disallowed) "
+            "is a zero row, consistent with the corresponding row of the primary output `Y`. "
             "The mode-`3` output is emitted at the operator's output precision (`T1`); when "
-            "`softmax_precision` differs from `T1` this is a cast of the softmax result to `T1`. "
-            "Default value is 0.",
+            "`softmax_precision` differs from `T1` this is a cast of the softmax result to `T1`.",
             AttributeProto::INT,
             static_cast<int64_t>(0))
+        .Attr(
+            "left_window_size",
+            "Maximum number of positions to the left of the current absolute query position that may be attended. "
+            "A value of `0` allows the current position but no preceding position, while `-1` leaves the left side "
+            "unbounded. This bound is composed with `is_causal` and `attn_mask`.",
+            AttributeProto::INT,
+            static_cast<int64_t>(-1))
+        .Attr(
+            "right_window_size",
+            "Maximum number of positions to the right of the current absolute query position that may be attended. "
+            "A value of `0` allows the current position but no following position, while `-1` leaves the right side "
+            "unbounded. Set `is_causal=0` to use a positive right window.",
+            AttributeProto::INT,
+            static_cast<int64_t>(-1))
         .Input(
             0,
             "Q",
@@ -3514,38 +3193,44 @@ ONNX_OPERATOR_SET_SCHEMA(
             3,
             "attn_mask",
             "Attention mask. "
-            "Shape must be broadcastable to `(batch_size, q_num_heads, q_sequence_length, total_sequence_length)` "
-            "where `total_sequence_length = past_sequence_length + kv_sequence_length.` "
-            "The last dimension can also be shorter than `total_sequence_length` and will be padded to `total_sequence_length` with negative infinity. "
-            "Two types of masks are supported: a boolean mask where a value of `True` indicates that the element should take part in attention, "
+            "Shape must be broadcastable to "
+            "`(batch_size, q_num_heads, q_sequence_length, total_sequence_length)` "
+            "where `total_sequence_length = past_sequence_length + kv_sequence_length`. "
+            "The last dimension can also be shorter than `total_sequence_length` and will be "
+            "padded to `total_sequence_length` with negative infinity. "
+            "Two types of masks are supported: a boolean mask where a value of `True` indicates "
+            "that the element should take part in attention, "
             "or a float mask of the same type as query, key, value that is added to the attention score.",
             "U",
             OpSchema::Optional)
         .Input(
             4,
             "past_key",
-            "past state cache for key with shape `(batch_size, kv_num_heads, past_sequence_length, head_size)`",
+            "Past state for key with shape `(batch_size, kv_num_heads, past_sequence_length, head_size)`. "
+            "Must be used together with `past_value` input.",
             "T1",
             OpSchema::Optional)
         .Input(
             5,
             "past_value",
-            "past state cache for value with shape `(batch_size, kv_num_heads, past_sequence_length, v_head_size)`",
+            "Past state for value with shape `(batch_size, kv_num_heads, past_sequence_length, v_head_size)`. "
+            "Must be used together with `past_key` input.",
             "T2",
             OpSchema::Optional)
         .Input(
             6,
             "nonpad_kv_seqlen",
-            "A vector of integers of shape `(batch_size,)` that indicates the number of valid (ie, non-padding) "
-            "tokens in each sample. A padding mask can be derived from this. This should not be used together with "
-            "`past_key` and `past_value` inputs or `present_key` and `present_value` outputs "
-            "(See the KV cache use cases in the operator description).",
+            "A vector of integers of shape `(batch_size,)` that indicates the number of valid "
+            "(i.e., non-padding) tokens in each sample. A padding mask can be derived from this. "
+            "This should not be used together with `past_key` and `past_value` inputs or "
+            "`present_key` and `present_value` outputs "
+            "(see the KV cache use cases in the operator description).",
             "tensor(int64)",
             OpSchema::Optional)
         .Output(
             0,
             "Y",
-            "The output tensor . "
+            "The output tensor. "
             "4D tensor with shape `(batch_size, q_num_heads, q_sequence_length, v_head_size)` or 3D tensor with shape `(batch_size, q_sequence_length, hidden_size)`. "
             "For cases with a 3D input tensor, `hidden_size = q_num_heads * v_head_size`",
             "T1")
@@ -3577,13 +3262,14 @@ ONNX_OPERATOR_SET_SCHEMA(
             "U",
             OpSchema::all_non_complex_numeric_types_plus_bool_ir4(),
             "Constrain output 'mask' types to boolean tensors and input types.")
-        .TypeAndShapeInferenceFunction(defs::nn::utils::AttentionPropagateElemTypeFromInputToOutput)
+        .TypeAndShapeInferenceFunction(Attention25Inference)
         .SetNodeDeterminism(OpSchema::NodeDeterminism::Deterministic)
         .SetContextDependentFunctionBodyBuilder([](const FunctionBodyBuildContext& ctx,
                                                    const OpSchema& schema,
                                                    FunctionProto& functionProto) {
-          // ScaledDotProductAttention <scale, is_causal, q_num_heads, kv_numheads> (Q, K, V, attn_mask, past_key,
-          // past_value) => (Y, present_key?, present_value?)
+          // ScaledDotProductAttention <scale, is_causal, q_num_heads, kv_numheads, left_window_size,
+          // right_window_size> (Q, K, V,
+          // attn_mask, past_key, past_value) => (Y, present_key?, present_value?)
           int64_t int_type = ONNX_NAMESPACE::TensorProto_DataType_INT64;
           int64_t float_type = ONNX_NAMESPACE::TensorProto_DataType_FLOAT;
 
@@ -3610,6 +3296,20 @@ ONNX_OPERATOR_SET_SCHEMA(
           int64_t kv_num_heads = (kv_num_heads_attr != nullptr) ? kv_num_heads_attr->i() : 0;
           auto is_causal_attr = ctx.getAttribute("is_causal");
           int64_t is_causal = (is_causal_attr != nullptr) ? is_causal_attr->i() : 0;
+
+          auto left_window_attr = ctx.getAttribute("left_window_size");
+          int64_t left_window_size = (left_window_attr != nullptr) ? left_window_attr->i() : -1;
+          auto right_window_attr = ctx.getAttribute("right_window_size");
+          int64_t right_window_size = (right_window_attr != nullptr) ? right_window_attr->i() : -1;
+          if (left_window_size < -1 || right_window_size < -1)
+            return false;
+          if (ctx.hasInput(4) != ctx.hasInput(5) || ctx.hasOutput(1) != ctx.hasOutput(2))
+            return false;
+          if (ctx.hasInput(6) && (ctx.hasInput(4) || ctx.hasOutput(1)))
+            return false;
+          if (t_qk->tensor_type().has_shape() && t_qk->tensor_type().shape().dim_size() == 4 &&
+              (q_num_heads_attr != nullptr || kv_num_heads_attr != nullptr))
+            return false;
 
           // Determine if input is 3D (requires reshape and transpose) or 4D (direct reshape)
           bool is_3d_input = (q_num_heads > 0 && kv_num_heads > 0);
@@ -3691,8 +3391,66 @@ ONNX_OPERATOR_SET_SCHEMA(
             builder.Add("present_value = Identity (PresentValue)");
           }
 
-          if (!defs::nn::utils::AttentionAppendFunctionCausalMask(ctx, builder, true))
+          if (!defs::nn::utils::AttentionAppendFunctionCausalMask(ctx, builder, true, true))
             return false;
+
+          // Window bounds are an additive overlay on the causal and attention masks.
+          if (left_window_size >= 0 || right_window_size >= 0) {
+            builder.Const1D("WinZero", static_cast<int64_t>(0))
+                .Const1D("WinOne", static_cast<int64_t>(1))
+                .Add("WinZeroNoDim = Squeeze(WinZero, WinZero)")
+                .Add("WinOneNoDim = Squeeze(WinOne, WinZero)")
+                .Add("WinSeqLen = Squeeze(QSeqLen, WinZero)")
+                .Add("WinTotalSeqLen = Squeeze(NewKVSeqLen, WinZero)")
+                .Add("WinRangeRow = Range(WinZeroNoDim, WinSeqLen, WinOneNoDim)") // [Sq]
+                .Add("WinRangeCol = Range(WinZeroNoDim, WinTotalSeqLen, WinOneNoDim)"); // [Skv]
+            if (left_window_size >= 0) {
+              builder.Const1D("LeftWindowSize", left_window_size)
+                  .Add("LeftWindowSizeNoDim = Squeeze(LeftWindowSize, WinZero)");
+            }
+            if (right_window_size >= 0) {
+              builder.Const1D("RightWindowSize", right_window_size)
+                  .Add("RightWindowSizeNoDim = Squeeze(RightWindowSize, WinZero)");
+            }
+            bool win_external_cache = ctx.hasInput(6) && !ctx.hasInput(4);
+            if (win_external_cache) {
+              // External cache: per-batch offset -> 4D mask
+              // [batch, 1, Sq, Skv]
+              builder
+                  .Add("WinOffset = Sub(nonpad_kv_seqlen, QSeqLen)") // (batch,)
+                  .Const("WinAxes123", std::vector<int64_t>{1, 2, 3})
+                  .Const("WinAxes01", std::vector<int64_t>{0, 1})
+                  .Add("WinOffset4D = Unsqueeze(WinOffset, WinAxes123)") // (batch,1,1,1)
+                  .Add("WinRow2D = Unsqueeze(WinRangeRow, WinOne)") // (Sq,1)
+                  .Add("WinRow4D = Unsqueeze(WinRow2D, WinAxes01)") // (1,1,Sq,1)
+                  .Add("WinCol2D = Unsqueeze(WinRangeCol, WinZero)") // (1,Skv)
+                  .Add("WinCol4D = Unsqueeze(WinCol2D, WinAxes01)") // (1,1,1,Skv)
+                  .Add("WinAbsPos = Add(WinRow4D, WinOffset4D)") // (batch,1,Sq,1)
+                  .Add("WinDiff = Sub(WinAbsPos, WinCol4D)"); // (batch,1,Sq,Skv)
+            } else {
+              // Internal cache (scalar PastKVSeqLen) or no cache: 2D mask [Sq, Skv]
+              builder
+                  .Add("WinRow2D = Unsqueeze(WinRangeRow, WinOne)") // (Sq,1)
+                  .Add("WinCol2D = Unsqueeze(WinRangeCol, WinZero)") // (1,Skv)
+                  .Add("WinAbsPos = Add(WinRow2D, PastKVSeqLen)") // (Sq,1)
+                  .Add("WinDiff = Sub(WinAbsPos, WinCol2D)"); // (Sq,Skv)
+            }
+            if (left_window_size >= 0 && right_window_size >= 0) {
+              builder.Add("WinLeftOk = LessOrEqual(WinDiff, LeftWindowSizeNoDim)")
+                  .Add("WinRightDiff = Neg(WinDiff)")
+                  .Add("WinRightOk = LessOrEqual(WinRightDiff, RightWindowSizeNoDim)")
+                  .Add("WinOk = And(WinLeftOk, WinRightOk)");
+            } else if (left_window_size >= 0) {
+              builder.Add("WinOk = LessOrEqual(WinDiff, LeftWindowSizeNoDim)");
+            } else {
+              builder.Add("WinRightDiff = Neg(WinDiff)").Add("WinOk = LessOrEqual(WinRightDiff, RightWindowSizeNoDim)");
+            }
+            builder.Add("WinMaskFloat = Where(WinOk, ScalarZero, FloatNegInf)")
+                .Add("WinMask = CastLike(WinMaskFloat, AttnBiasCausalOrNot)")
+                .Add("AttnBiasCausalWindow = Add(AttnBiasCausalOrNot, WinMask)");
+          } else {
+            builder.Add("AttnBiasCausalWindow = Identity(AttnBiasCausalOrNot)");
+          }
 
           // Add padding mask if kv_nonpad_seqlen is provided
           if (ctx.hasInput(6)) {
@@ -3705,10 +3463,11 @@ ONNX_OPERATOR_SET_SCHEMA(
                 .Add("PaddingMaskBool = Less(Range, KVSeqLenExpanded)") // [batch_size, KVSeqLen]
                 .Add("PaddingMaskFloat = Where(PaddingMaskBool, ScalarZero, FloatNegInf)") // [batch_size, KVSeqLen]
                 .Add("PaddingMask3D = Unsqueeze(PaddingMaskFloat, One1D)") // [batch_size, 1, KVSeqLen]
-                .Add("PaddingMask4D = Unsqueeze(PaddingMask3D, One1D)") // [batch_size, 1, 1, KVSeqLen]
-                .Add("AttnBiasCausalPad = Add(AttnBiasCausalOrNot, PaddingMask4D)");
+                .Add("PaddingMask4DFloat = Unsqueeze(PaddingMask3D, One1D)") // [batch_size, 1, 1, KVSeqLen]
+                .Add("PaddingMask4D = CastLike(PaddingMask4DFloat, AttnBiasCausalWindow)")
+                .Add("AttnBiasCausalPad = Add(AttnBiasCausalWindow, PaddingMask4D)");
           } else {
-            builder.Add("AttnBiasCausalPad = Identity(AttnBiasCausalOrNot)");
+            builder.Add("AttnBiasCausalPad = Identity(AttnBiasCausalWindow)");
           }
           builder.Add("AttnBiasT = Cast (AttnBiasCausalPad)", "to", T1);
 
@@ -3840,33 +3599,11 @@ ONNX_OPERATOR_SET_SCHEMA(
           return true;
         }));
 
-static constexpr const char* CausalConvWithState_ver27_doc = R"DOC(
-
-Stateful causal 1D depthwise convolution.
-
-Used by Gated DeltaNet (Qwen3.5) and Mamba (Jamba, FalconMamba) as a preprocessing step.
-Replaces the 3-op pattern (Concat + Conv + Slice) with a single fused operation.
-
-The convolution is causal (looks only at current and past positions) and depthwise
-(each channel is convolved independently with its own kernel).
-
-The input, weight, past_state, output, and present_state tensors are rank-3 with
-shape (batch_size, channels, length). The optional bias input is rank-1 with
-shape (channels). For higher-dimensional data, use Reshape nodes before and
-after this operator to pack extra dimensions into the batch or channel axis.
-
-Weight layout: (channels, 1, k) for depthwise convolution.
-The carry state stores the last (k-1) positions for incremental decode.
-
-The optional activation attribute supports fused SiLU/Swish activation.
-
-)DOC";
-
 ONNX_OPERATOR_SET_SCHEMA(
     CausalConvWithState,
     27,
     OpSchema()
-        .SetDoc(CausalConvWithState_ver27_doc)
+        .SetDoc(kDoc_CausalConvWithState_ver27)
         .Attr(
             "activation",
             "Fused activation function. One of: 'silu', 'swish', 'none'. "
@@ -4105,38 +3842,11 @@ ONNX_OPERATOR_SET_SCHEMA(
             {"tensor(float)", "tensor(float16)", "tensor(bfloat16)"},
             "Constrain input and output types to float tensors."));
 
-static constexpr const char* LinearAttention_ver27_doc = R"DOC(
-Unified linear attention operator for autoregressive decoding (T=1) and prefill (T>1).
-
-The query, key, value, and (where applicable) decay/beta inputs use 3D packed format
-[B, T, H*D], where heads are flattened into the last dimension; q_num_heads and
-kv_num_heads are always required and are used to unpack to 4D internally for computation.
-The optional past_state and present_state are 4D with shape (B, H_kv, d_k, d_v).
-
-Group-query attention (GQA) is supported: q_num_heads must be a positive multiple of
-kv_num_heads. When q_num_heads == kv_num_heads this reduces to multi-headed linear
-attention; when q_num_heads > kv_num_heads each KV head (and its recurrent state) is
-shared by `q_num_heads / kv_num_heads` query heads (multi-query attention is the
-special case kv_num_heads == 1).
-
-The update_rule attribute selects the recurrence type:
-- "linear": S_t = S_{t-1} + k_t ⊗ v_t; o_t = scale * q_t^T S_t
-- "gated": S_t = exp(g_t) * S_{t-1} + k_t ⊗ v_t; o_t = scale * q_t^T S_t
-- "delta": S_t = S_{t-1} + β_t * k_t ⊗ (v_t - S_{t-1}^T k_t); o_t = scale * q_t^T S_t
-- "gated_delta": S_t = exp(g_t) * S_{t-1} + β_t * k_t ⊗ (v_t - exp(g_t) * S_{t-1}^T k_t); o_t = scale * q_t^T S_t
-
-where g_t is the decay (in log-space), β_t is the update rate, and ⊗ denotes outer product.
-
-Semantics: Equivalent to running the recurrent update sequentially for each token,
-but may be implemented using chunk-parallel algorithms for GPU efficiency.
-
-)DOC";
-
 ONNX_OPERATOR_SET_SCHEMA(
     LinearAttention,
     27,
     OpSchema()
-        .SetDoc(LinearAttention_ver27_doc)
+        .SetDoc(kDoc_LinearAttention_ver27)
         .Attr(
             "update_rule",
             "The update rule for the linear attention recurrence. "
@@ -4701,7 +4411,7 @@ ONNX_OPERATOR_SET_SCHEMA(
                   q_num_heads,
                   ")");
             }
-            unifyDim(Dk, QPack.dim_value() / q_num_heads);
+            unifyDim(Dk, checkedDivide(QPack.dim_value(), q_num_heads));
           }
           if (kv_num_heads > 0 && KPack.has_dim_value()) {
             if (KPack.dim_value() % kv_num_heads != 0) {
@@ -4712,7 +4422,7 @@ ONNX_OPERATOR_SET_SCHEMA(
                   kv_num_heads,
                   ")");
             }
-            unifyDim(Dk, KPack.dim_value() / kv_num_heads);
+            unifyDim(Dk, checkedDivide(KPack.dim_value(), kv_num_heads));
           }
           // Derive d_v from V.
           if (kv_num_heads > 0 && VPack.has_dim_value()) {
@@ -4724,7 +4434,7 @@ ONNX_OPERATOR_SET_SCHEMA(
                   kv_num_heads,
                   ")");
             }
-            unifyDim(Dv, VPack.dim_value() / kv_num_heads);
+            unifyDim(Dv, checkedDivide(VPack.dim_value(), kv_num_heads));
           }
 
           // Strict validation of decay/beta last dims, deferred until d_k and H_kv
@@ -4743,14 +4453,15 @@ ONNX_OPERATOR_SET_SCHEMA(
               const int64_t decay_last = decay_type->tensor_type().shape().dim(2).dim_value();
               if (Dk.has_dim_value()) {
                 const int64_t dk = Dk.dim_value();
-                if (decay_last != kv_num_heads && decay_last != kv_num_heads * dk) {
+                const int64_t kv_dk = checkedMultiply(kv_num_heads, dk);
+                if (decay_last != kv_num_heads && decay_last != kv_dk) {
                   fail_shape_inference(
                       "decay last dim (",
                       decay_last,
                       ") must be kv_num_heads (",
                       kv_num_heads,
                       ") or kv_num_heads * d_k (",
-                      kv_num_heads * dk,
+                      kv_dk,
                       ")");
                 }
               } else if (decay_last != kv_num_heads && decay_last % kv_num_heads != 0) {
@@ -4778,7 +4489,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           // Output 0: (B, T, H_q * d_v) — 3D packed.
           Dim OutLast;
           if (q_num_heads > 0 && Dv.has_dim_value()) {
-            OutLast.set_dim_value(q_num_heads * Dv.dim_value());
+            OutLast.set_dim_value(checkedMultiply(q_num_heads, Dv.dim_value()));
           }
           updateOutputShape(ctx, 0, {B, T, OutLast});
 

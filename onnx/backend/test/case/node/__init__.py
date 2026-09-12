@@ -3,10 +3,8 @@
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
-import subprocess
 import sys
 from copy import deepcopy
-from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 import onnx
@@ -30,7 +28,6 @@ if TYPE_CHECKING:
 
 _NodeTestCases = []
 _TargetOpType = None
-_DiffOpTypes = None
 _existing_names: dict[str, onnx.NodeProto] = {}
 
 
@@ -271,8 +268,6 @@ def expect(
     # skip if the node_op's op_type is not same as the given one
     if _TargetOpType and node_op.op_type != _TargetOpType:
         return
-    if _DiffOpTypes is not None and node_op.op_type.lower() not in _DiffOpTypes:
-        return
     if name in _existing_names:
         raise ValueError(
             f"Name {name!r} is already using by one test case for node type {node_op.op_type!r}."
@@ -407,68 +402,10 @@ def expect(
         )
 
 
-def collect_testcases(op_type: str) -> list[TestCase]:
-    """Collect node test cases"""
-    # only keep those tests related to this operator
+def collect_testcases(op_type: str | None = None) -> list[TestCase]:
+    """Collect node test cases, optionally filtered to a single op_type."""
     global _TargetOpType  # noqa: PLW0603
     _TargetOpType = op_type
 
     import_recursive(sys.modules[__name__])
     return _NodeTestCases
-
-
-def collect_diff_testcases() -> list[TestCase]:
-    """Collect node test cases which are different from the main branch"""
-    global _DiffOpTypes  # noqa: PLW0603
-    _DiffOpTypes = get_diff_op_types()
-
-    import_recursive(sys.modules[__name__])
-    return _NodeTestCases
-
-
-def get_diff_op_types():
-    cwd_path = Path.cwd()
-    # Resolve the upstream main branch from the canonical onnx/onnx repository
-    # to avoid depending on local branch or remote naming conventions.
-    upstream_url = "https://github.com/onnx/onnx.git"
-    ls_remote = subprocess.run(
-        ["git", "ls-remote", upstream_url, "refs/heads/main"],
-        cwd=cwd_path,
-        capture_output=True,
-        check=True,
-    )
-    upstream_main_hash = ls_remote.stdout.split()[0].decode("utf-8")
-    # Fetch the upstream main commit so merge-base works even if the
-    # local repo hasn't fetched recently.
-    subprocess.run(
-        ["git", "fetch", upstream_url, upstream_main_hash],
-        cwd=cwd_path,
-        capture_output=True,
-        check=True,
-    )
-    # Find the fork point from upstream main
-    merge_base = subprocess.run(
-        ["git", "merge-base", "HEAD", upstream_main_hash],
-        cwd=cwd_path,
-        capture_output=True,
-        check=True,
-    )
-    base_commit = merge_base.stdout.strip().decode("utf-8")
-    # obtain list of added or modified files since the fork point
-    result = subprocess.run(
-        ["git", "diff", "--name-only", "--diff-filter=AM", base_commit, "HEAD"],
-        cwd=cwd_path,
-        capture_output=True,
-        check=True,
-    )
-    diff_list = result.stdout.split()
-    changed_op_types = []
-    for file in diff_list:
-        file_name = file.decode("utf-8")
-        if file_name.startswith("onnx/backend/test/case/node/") and file_name.endswith(
-            ".py"
-        ):
-            changed_op_types.append(
-                file_name.split("/")[-1].replace(".py", "").rstrip("_")
-            )
-    return changed_op_types

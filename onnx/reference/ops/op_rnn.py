@@ -75,10 +75,22 @@ class CommonRNN(OpRun):
     def _f_tanh(self, x):
         return np.tanh(x)
 
-    def _step(self, X, R, B, W, H_0):
+    def _run_forward(
+        self,
+        X: np.ndarray,
+        R: np.ndarray,
+        B: np.ndarray,
+        W: np.ndarray,
+        H_0: np.ndarray,
+    ) -> tuple[np.ndarray, np.ndarray]:
+        """Run a forward pass of the RNN.
+
+        Assumes that the num_directions axis has been squeezed out of the
+        inputs. (And returns Y, Yh without it.)
+        """
         h_list = []
         H_t = H_0
-        for x in np.split(X, X.shape[0], axis=0):
+        for x in X:
             H = self.f1(
                 np.dot(x, np.transpose(W))
                 + np.dot(H_t, np.transpose(R))
@@ -86,9 +98,7 @@ class CommonRNN(OpRun):
             )
             h_list.append(H)
             H_t = H
-        concatenated = np.concatenate(h_list)
-        if self.num_directions == 1:
-            output = np.expand_dims(concatenated, 1)
+        output = np.stack(h_list, axis=0)
         return output, h_list[-1]
 
     def _run(
@@ -97,7 +107,7 @@ class CommonRNN(OpRun):
         W,
         R,
         B=None,
-        sequence_lens=None,
+        sequence_lens=None,  # noqa: ARG002
         initial_h=None,
         activation_alpha=None,  # noqa: ARG002
         activation_beta=None,  # noqa: ARG002
@@ -110,38 +120,75 @@ class CommonRNN(OpRun):
         # TODO: support overridden attributes.
         self.num_directions = W.shape[0]
 
-        if self.num_directions == 1:
-            R = np.squeeze(R, axis=0)
-            W = np.squeeze(W, axis=0)
-            if B is not None:
-                B = np.squeeze(B, axis=0)
-            if sequence_lens is not None:
-                sequence_lens = np.squeeze(sequence_lens, axis=0)
+        hidden_size = R.shape[-1]
+
+        if layout == 1:
+            X = np.swapaxes(X, 0, 1)
             if initial_h is not None:
-                initial_h = np.squeeze(initial_h, axis=0)
+                initial_h = np.swapaxes(initial_h, 0, 1)
 
-            hidden_size = R.shape[-1]
-            batch_size = X.shape[1]
+        batch_size = X.shape[1]
+        if B is None:
+            B = np.zeros((self.num_directions, 2 * hidden_size), dtype=X.dtype)
+        H_0 = (
+            initial_h
+            if initial_h is not None
+            else np.zeros((self.num_directions, batch_size, hidden_size), dtype=X.dtype)
+        )
 
-            X = X if layout == 0 else np.swapaxes(X, 0, 1)
-            b = B if B is not None else np.zeros(2 * hidden_size, dtype=X.dtype)
-            h_0 = (
-                initial_h
-                if initial_h is not None
-                else np.zeros((batch_size, hidden_size), dtype=X.dtype)
+        if self.direction not in {"forward", "reverse", "bidirectional"}:
+            raise RuntimeError(f"Unknown direction {self.direction!r}.")
+        expected_num_directions = 2 if self.direction == "bidirectional" else 1
+        if self.num_directions != expected_num_directions:
+            raise RuntimeError(
+                f"direction={self.direction!r} requires num_directions={expected_num_directions} "
+                f"but got {self.num_directions}."
             )
 
-            B = b
-            H_0 = h_0
+        if self.direction == "forward":
+            Y, Y_h = self._run_forward(
+                X,
+                R[0],
+                B[0],
+                W[0],
+                H_0[0],
+            )
+            # Singleton num_directions axis
+            Y = np.expand_dims(Y, 1)
+            Y_h = np.expand_dims(Y_h, 0)
+        elif self.direction == "reverse":
+            Y, Y_h = self._run_forward(
+                np.flip(X, axis=0),
+                R[0],
+                B[0],
+                W[0],
+                H_0[0],
+            )
+            Y = np.flip(Y, axis=0)
+            Y = np.expand_dims(Y, 1)
+            Y_h = np.expand_dims(Y_h, 0)
         else:
-            raise NotImplementedError(
-                f"Unsupported value {self.num_directions} for num_directions and operator {self.__class__.__name__!r}."
+            Yf, Yf_h = self._run_forward(
+                X,
+                R[0],
+                B[0],
+                W[0],
+                H_0[0],
             )
+            Yb, Yb_h = self._run_forward(
+                np.flip(X, axis=0),
+                R[1],
+                B[1],
+                W[1],
+                H_0[1],
+            )
+            Yb = np.flip(Yb, axis=0)
+            Y = np.stack([Yf, Yb], axis=1)
+            Y_h = np.stack([Yf_h, Yb_h], axis=0)
 
-        Y, Y_h = self._step(X, R, B, W, H_0)
         if layout == 1:
             Y = np.transpose(Y, [2, 0, 1, 3])
-            Y_h = Y[:, :, -1, :]
+            Y_h = np.transpose(Y_h, [1, 0, 2])
 
         Y = Y.astype(X.dtype)
         return (Y,) if self.n_outputs == 1 else (Y, Y_h)

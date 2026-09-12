@@ -186,7 +186,9 @@ namespace ONNX_NAMESPACE {
   _(num_groups)                     \
   _(stash_type)                     \
   _(block_size)                     \
-  _(output_dtype)
+  _(output_dtype)                   \
+  _(left_window_size)               \
+  _(right_window_size)
 
 enum BuiltinSymbol : std::uint8_t {
 #define DEFINE_SYMBOL(s) k##s,

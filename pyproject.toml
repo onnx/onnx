@@ -28,7 +28,7 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-reference = ["Pillow"]
+reference = ["Pillow>=12.2.0"]
 
 [project.urls]
 Homepage = "https://onnx.ai/"
@@ -54,6 +54,7 @@ sdist.include = [
     "VERSION_NUMBER",
     "sbom.cdx.json",
     "cmake/**",
+    "tests/**",
     "tools/**",
     "onnx/**",
     "pyproject.toml",
@@ -95,8 +96,8 @@ cmake.define.ONNX_COVERAGE = "ON"
 build = "cp314-pyodide_wasm32"
 
 [tool.cibuildwheel]
-test-command = "pytest {project}/onnx/test"
-test-requires = ["pytest", "Pillow"]
+test-command = "pytest {project}/tests"
+test-requires = ["pytest", "Pillow", "packaging"]
 
 [tool.cibuildwheel.linux]
 manylinux-x86_64-image = "manylinux_2_28"
@@ -111,10 +112,7 @@ ignore = ["W002"]
 
 [tool.pytest.ini_options]
 addopts = "--tb=short --color=yes"
-testpaths = [
-    "onnx/test",
-    "onnx/examples",
-]
+testpaths = ["tests"]
 
 [tool.mypy]
 follow_imports = "silent"
@@ -224,7 +222,6 @@ lint.ignore = [
     "N999", # Module names
     "NPY002", # np.random.Generator may not be preferred in all cases
     "PLR0912", # Too many branches
-    "PLR0913", # Too many arguments to function call
     "PLR0915", # Too many statements
     "PYI011", # Allow protobuf enums as defaults to function arguments
     "PYI021", # Allow docstrings in pyi files
@@ -247,6 +244,11 @@ builtins-ignorelist = ["id", "input"]
 # Disallow all relative imports.
 ban-relative-imports = "all"
 
+[tool.ruff.lint.pylint]
+# 13 is the widest public signature we keep for backward compatibility (compose.merge_models).
+max-args = 13
+max-positional-args = 13
+
 [tool.ruff.lint.pydocstyle]
 convention = "google"
 
@@ -264,8 +266,17 @@ required-imports = ["from __future__ import annotations"]
     "N801", # Class casing
     "PLR2004", # Magic numbers
 ]
-"onnx/test/reference_evaluator_test.py" = ["C408"]  # dict(...) -> { ... }
-"onnx/test/**" = ["PLR2004", "S311", "T20"] # Magic numbers, non-crypto random, print allowed in tests
+# Op implementations take one parameter per input and attribute, fixed by the schema.
+"onnx/backend/test/case/node/**" = ["PLR0913", "PLR0917"]
+"onnx/reference/ops*/**" = ["PLR0913", "PLR0917"]
+"tests/python/reference_evaluator_test.py" = ["C408"]  # dict(...) -> { ... }
+"tests/python/**" = [
+    "PLR2004", # Magic numbers
+    "S311", # Non-crypto random
+    "T20", # print
+    "PLR0913", # Parametrized tests take one parameter per parametrize column
+    "PLR0917", # Ditto
+]
 "onnx/onnx_cpp2py_export/defs.pyi" = ["N802"]
 "onnx/fuzz/**" = [
     "N802",     # TestOneInput is the required atheris entry-point name

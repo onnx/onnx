@@ -14,10 +14,16 @@ def numpy_matmul(a, b):
     """
     try:
         if len(a.shape) <= 2 and len(b.shape) <= 2:
-            return np.dot(a, b)
-        return np.matmul(a, b)
+            res = np.dot(a, b)
+        else:
+            res = np.matmul(a, b)
     except ValueError as e:
         raise ValueError(f"Unable to multiply shapes {a.shape!r}, {b.shape!r}.") from e
+    # numpy may promote certain dtypes (e.g. bfloat16) to float32;
+    # cast back to preserve the ONNX type contract.
+    if res.dtype != a.dtype:
+        res = res.astype(a.dtype)
+    return res
 
 
 class MatMul(OpRunBinaryNum):
