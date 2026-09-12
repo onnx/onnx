@@ -6284,14 +6284,17 @@ class TestShapeInference(TestShapeInferenceHelper):
             graph, [make_tensor_value_info("Y", TensorProto.FLOAT, (25, 32, 32, 32))]
         )
 
-    def test_mvn_function_output_shape(self) -> None:
+    @pytest.mark.parametrize("opset", [28, 29])
+    def test_mvn_function_output_shape(self, opset: int) -> None:
         graph = self._make_graph(
             [("X", TensorProto.FLOAT, (25, 48, 16, 16))],
             [make_node("MeanVarianceNormalization", "X", "Y", axes=[0, 2, 3])],
             [],
         )
         self._assert_inferred(
-            graph, [make_tensor_value_info("Y", TensorProto.FLOAT, (25, 48, 16, 16))]
+            graph,
+            [make_tensor_value_info("Y", TensorProto.FLOAT, (25, 48, 16, 16))],
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, opset)],
         )
 
     def test_scan(self) -> None:

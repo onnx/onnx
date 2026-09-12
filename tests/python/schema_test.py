@@ -13,6 +13,7 @@ from onnx import TensorProto, defs, helper
 
 MOD_OPSET_13 = 13
 MOD_OPSET_28 = 28
+MVN_LEGACY_OPSET = 13
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
@@ -38,6 +39,72 @@ class TestSchema:
         v = defs.get_schema("BatchNormalization").attributes["epsilon"].default_value
         assert type(v) is onnx.AttributeProto
         assert v.type == onnx.AttributeProto.FLOAT
+
+    def test_mean_variance_normalization_opset29_schema(self) -> None:
+        opset = 29
+        schema = defs.get_schema("MeanVarianceNormalization", opset)
+        old_schema = defs.get_schema("MeanVarianceNormalization", opset - 1)
+
+        assert schema.since_version == opset
+        assert schema.attributes["epsilon"].default_value.f == pytest.approx(1e-9)
+        assert tuple(schema.attributes["axes"].default_value.ints) == (0, 2, 3)
+        assert schema.has_context_dependent_function
+        assert schema.node_determinism == defs.OpSchema.NodeDeterminism.Deterministic
+        assert "epsilon" not in old_schema.attributes
+
+        node = helper.make_node(
+            "MeanVarianceNormalization",
+            ["X"],
+            ["Y"],
+            axes=[1, -1],
+            epsilon=1e-5,
+        )
+        function_proto = onnx.FunctionProto()
+        function_proto.ParseFromString(
+            schema.get_context_dependent_function(
+                node.SerializeToString(),
+                [self._tensor_type_proto(TensorProto.DOUBLE).SerializeToString()],
+            )
+        )
+        casts = {
+            output: helper.get_attribute_value(n.attribute[0])
+            for n in function_proto.node
+            if n.op_type == "Cast"
+            for output in n.output
+        }
+        assert casts == {
+            "XCompute": TensorProto.DOUBLE,
+            "Exponent": TensorProto.DOUBLE,
+            "Epsilon": TensorProto.DOUBLE,
+            "Y": TensorProto.DOUBLE,
+        }
+
+    def test_mean_variance_normalization_legacy_float16_function(self) -> None:
+        schema = defs.get_schema("MeanVarianceNormalization", 28)
+        assert schema.since_version == MVN_LEGACY_OPSET
+        assert schema.has_context_dependent_function
+
+        node = helper.make_node("MeanVarianceNormalization", ["X"], ["Y"])
+        function_proto = onnx.FunctionProto()
+        function_proto.ParseFromString(
+            schema.get_context_dependent_function_with_opset_version(
+                18,
+                node.SerializeToString(),
+                [self._tensor_type_proto(TensorProto.FLOAT16).SerializeToString()],
+            )
+        )
+        casts = {
+            output: helper.get_attribute_value(n.attribute[0])
+            for n in function_proto.node
+            if n.op_type == "Cast"
+            for output in n.output
+        }
+        assert casts == {
+            "XCompute": TensorProto.FLOAT,
+            "Exponent": TensorProto.FLOAT,
+            "Epsilon": TensorProto.FLOAT,
+            "Y": TensorProto.FLOAT16,
+        }
 
     def test_function_body(self) -> None:
         selu_schema = defs.get_schema("Selu")

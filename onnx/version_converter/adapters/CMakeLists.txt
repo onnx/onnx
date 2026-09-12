@@ -23,6 +23,7 @@ target_sources(onnx PRIVATE
     group_normalization_20_21.h
     group_normalization_21_20.h
     maxpool_8_7.h
+    mean_variance_normalization_29_28.h
     no_previous_version.h
     pad_10_11.h
     q_dq_21_20.h
