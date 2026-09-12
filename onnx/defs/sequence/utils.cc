@@ -66,10 +66,9 @@ std::function<void(OpSchema&)> SplitToSequenceOpGenerator(
             axis += r;
           }
 
-          size_t num_inputs = ctx.getNumInputs();
           int64_t splitSize = 1;
           int64_t keepdims = 1;
-          if (num_inputs == 1) {
+          if (!ctx.hasInput(1)) {
             // input split is omitted, default to split by 1.
             const auto* const attr_proto = ctx.getAttribute("keepdims");
             if (attr_proto) {
