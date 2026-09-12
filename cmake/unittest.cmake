@@ -10,6 +10,7 @@ set(test_src
     ${ONNX_ROOT}/tests/cpp/function_context_test.cc
     ${ONNX_ROOT}/tests/cpp/function_get_test.cc
     ${ONNX_ROOT}/tests/cpp/function_verify_test.cc
+    ${ONNX_ROOT}/tests/cpp/graph_shape_inference_test.cc
     ${ONNX_ROOT}/tests/cpp/inliner_test.cc
     ${ONNX_ROOT}/tests/cpp/ir_test.cc
     ${ONNX_ROOT}/tests/cpp/op_reg_test.cc

@@ -15,10 +15,13 @@ target_sources(onnx PRIVATE
     constants.h
     file_utils.h
     graph_node_list.h
+    graph_shape_inference.cc
+    graph_shape_inference.h
     interned_strings.cc
     interned_strings.h
     ir_pb_converter.cc
     ir_pb_converter.h
+    ir_pb_converter_internal.h
     ir.h
     model_helpers.cc
     model_helpers.h
