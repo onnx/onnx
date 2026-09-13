@@ -6001,12 +6001,12 @@ const char kDoc_OneHotEncoder_ver1[] = R"DOC(
     to integers and the cats_int64s category list will be used for the lookups.
 )DOC";
 const char kDoc_Normalizer_ver1[] = R"DOC(
-    Normalize the input.  There are three normalization modes, which have the corresponding formulas,
-    defined using element-wise infix operators '/' and '^' and tensor-wide functions 'max' and 'sum':<br>
+    Normalize the input. There are three normalization modes, which have the corresponding formulas.
+    The function 'abs' and operator '^' are element-wise, while 'max' and 'sum' reduce along the normalization axis:<br>
 <br>
     Max: Y = X / max(X)<br>
-    L1:  Y = X / sum(X)<br>
-    L2:  Y = sqrt(X^2 / sum(X^2)}<br>
+    L1:  Y = X / sum(abs(X))<br>
+    L2:  Y = X / sqrt(sum(X^2))<br>
     In all modes, if the divisor is zero, Y == X.
 <br>
     For batches, that is, [N,C] tensors, normalization is done along the C axis. In other words, each row
