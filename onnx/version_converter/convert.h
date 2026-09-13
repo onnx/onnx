@@ -36,6 +36,7 @@
 #include "onnx/version_converter/adapters/gemm_7_6.h"
 #include "onnx/version_converter/adapters/gridsample_19_20.h"
 #include "onnx/version_converter/adapters/group_normalization_20_21.h"
+#include "onnx/version_converter/adapters/group_normalization_21_20.h"
 #include "onnx/version_converter/adapters/maxpool_8_7.h"
 #include "onnx/version_converter/adapters/no_previous_version.h"
 #include "onnx/version_converter/adapters/optional_ops.h"
@@ -726,6 +727,7 @@ class DefaultVersionConverter : public BaseVersionConverter {
     registerAdapter(
         std::make_unique<TypeRestriction>("ConstantOfShape", OpSetID(21), OpSetID(20), ir10_types_not_in_ir9));
     registerAdapter(std::make_unique<DequantizeLinear_21_20>());
+    registerAdapter(std::make_unique<GroupNormalization_21_20>());
     registerAdapter(std::make_unique<TypeRestriction>("Flatten", OpSetID(21), OpSetID(20), ir10_types_not_in_ir4));
     registerAdapter(std::make_unique<TypeRestriction>("Identity", OpSetID(21), OpSetID(20), ir10_types_not_in_ir9));
     registerAdapter(std::make_unique<TypeRestriction>("If", OpSetID(21), OpSetID(20), ir10_types_not_in_ir9));
