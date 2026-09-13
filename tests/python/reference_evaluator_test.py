@@ -857,6 +857,28 @@ class TestReferenceEvaluator:
         got = sess.run(None, {"X": x, "Y": y})[0]
         assert_allclose(got, expected)
 
+    @pytest.mark.parametrize(
+        "values",
+        [
+            np.array([-3e38, 3e38], dtype=np.float32),
+            np.array([False, True]),
+            np.array(["off", "on"]),
+        ],
+    )
+    def test_one_hot_selects_values_without_arithmetic(self, values: np.ndarray):
+        node = make_node("OneHot", ["indices", "depth", "values"], ["output"])
+        indices = np.array([0, 1], dtype=np.int64)
+        depth = np.array(2, dtype=np.int64)
+        expected = np.array(
+            [[values[1], values[0]], [values[0], values[1]]], dtype=values.dtype
+        )
+
+        got = ReferenceEvaluator(node).run(
+            None, {"indices": indices, "depth": depth, "values": values}
+        )[0]
+
+        assert_array_equal(got, expected)
+
     @pytest.mark.parametrize("axis", [-2, 1])
     def test_concat_rejects_axis_out_of_range(self, axis: int):
         node = make_node("Concat", ["X"], ["Y"], axis=axis)
