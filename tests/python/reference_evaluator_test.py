@@ -4693,6 +4693,51 @@ class TestReferenceEvaluator:
         assert isinstance(r, np.ndarray)
         assert r.shape == ()
 
+    @pytest.mark.parametrize("opset", [17, 18])
+    @pytest.mark.parametrize(
+        "data, expected",
+        [
+            (
+                np.array([[1e30, 1e30]], dtype=np.float32),
+                np.array([[np.sqrt(2) * 1e30]], dtype=np.float32),
+            ),
+            (
+                np.array([[1e-30, 1e-30]], dtype=np.float32),
+                np.array([[np.sqrt(2) * 1e-30]], dtype=np.float32),
+            ),
+            (
+                np.array([[1e200, 1e200]], dtype=np.float64),
+                np.array([[np.sqrt(2) * 1e200]], dtype=np.float64),
+            ),
+            (
+                np.array([[1e-200, 1e-200]], dtype=np.float64),
+                np.array([[np.sqrt(2) * 1e-200]], dtype=np.float64),
+            ),
+        ],
+    )
+    def test_reduce_l2_finite_range(self, opset, data, expected):
+        tensor_type = (
+            TensorProto.FLOAT if data.dtype == np.float32 else TensorProto.DOUBLE
+        )
+        X = make_tensor_value_info("X", tensor_type, [1, 2])
+        Y = make_tensor_value_info("Y", tensor_type, [1, 1])
+        if opset < 18:
+            node = make_node("ReduceL2", ["X"], ["Y"], axes=[1], keepdims=1)
+            inputs = [X]
+            feeds = {"X": data}
+        else:
+            A = make_tensor_value_info("axes", TensorProto.INT64, [1])
+            node = make_node("ReduceL2", ["X", "axes"], ["Y"], keepdims=1)
+            inputs = [X, A]
+            feeds = {"X": data, "axes": np.array([1], dtype=np.int64)}
+        model = make_model(
+            make_graph([node], "reduce_l2_finite_range", inputs, [Y]),
+            opset_imports=[make_opsetid("", opset)],
+        )
+
+        got = ReferenceEvaluator(model).run(None, feeds)[0]
+        assert_allclose(got, expected, rtol=1e-6, atol=0)
+
     @pytest.mark.parametrize("op", ["ReduceLogSum", "ReduceLogSumExp"])
     @pytest.mark.parametrize("opset", [13, 18, onnx_opset_version()])
     def test_reduce_log_sum_ops_reject_integer_input(self, op, opset):
