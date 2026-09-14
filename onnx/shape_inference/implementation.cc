@@ -496,7 +496,27 @@ class ShapeInferenceImplBase {
       }
     }
     auto domain_version = dit->second;
-    const auto* const schema = schema_registry->GetSchema(n.op_type(), domain_version, n.domain());
+    const OpSchema* schema = schema_registry->GetSchema(n.op_type(), domain_version, n.domain());
+    if (schema == nullptr) {
+      // Special case: QuantizeLinear/DequantizeLinear nodes in the "com.microsoft" domain
+      // (produced e.g. by the 16-bit QDQ quantizer in onnxruntime) have no registered schema,
+      // so shape inference would skip them. Fall back to the standard ONNX schema for these
+      // ops: the shape semantics are identical (the output has the same shape as input "x").
+      // Note: standard schemas are registered under the empty domain (""), which is
+      // equivalent to "ai.onnx" (see NormalizeDomain).
+      // See https://github.com/onnx/onnx/issues/6534
+      if (n.domain() == "com.microsoft" &&
+          (n.op_type() == "QuantizeLinear" || n.op_type() == "DequantizeLinear")) {
+        auto onnx_dit = opset_imports.find(ONNX_DOMAIN);
+        if (onnx_dit == opset_imports.end()) {
+          // The standard opset may also be imported under the "ai.onnx" domain name.
+          onnx_dit = opset_imports.find(AI_ONNX_DOMAIN);
+        }
+        if (onnx_dit != opset_imports.end()) {
+          schema = schema_registry->GetSchema(n.op_type(), onnx_dit->second, ONNX_DOMAIN);
+        }
+      }
+    }
     InferenceContextImpl ctx(
         n,
         value_types_by_name,

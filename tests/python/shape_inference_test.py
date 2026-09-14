@@ -7785,6 +7785,46 @@ class TestShapeInference(TestShapeInferenceHelper):
             graph, [make_tensor_value_info("y", elem_type, (30, 4, 5))]
         )
 
+    def test_dequantizelinear_ms_domain_int16(self) -> None:
+        # Regression test for https://github.com/onnx/onnx/issues/6534:
+        # 16-bit QDQ nodes produced by the onnxruntime quantizer use the
+        # "com.microsoft" domain, which has no registered schema. Shape
+        # inference must still infer their shapes by falling back to the
+        # standard ai.onnx schema for these ops.
+        graph = self._make_graph(
+            [
+                ("x", TensorProto.FLOAT, (2, 3)),
+                ("y_scale", TensorProto.FLOAT, ()),
+                ("y_zero_point", TensorProto.INT16, ()),
+            ],
+            [
+                make_node(
+                    "QuantizeLinear",
+                    ["x", "y_scale", "y_zero_point"],
+                    ["x_q"],
+                    domain="com.microsoft",
+                ),
+                make_node(
+                    "DequantizeLinear",
+                    ["x_q", "y_scale", "y_zero_point"],
+                    ["x_dq"],
+                    domain="com.microsoft",
+                ),
+            ],
+            [],
+        )
+        self._assert_inferred(
+            graph,
+            [
+                make_tensor_value_info("x_q", TensorProto.INT16, (2, 3)),
+                make_tensor_value_info("x_dq", TensorProto.FLOAT, (2, 3)),
+            ],
+            opset_imports=[
+                helper.make_opsetid("", 21),
+                helper.make_opsetid("com.microsoft", 1),
+            ],
+        )
+
     def test_dynamicquantizelinear(self) -> None:
         graph = self._make_graph(
             [("x", TensorProto.FLOAT, (30, 4, 5))],
