@@ -3,13 +3,17 @@
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
+import ml_dtypes
 import numpy as np
 
 from onnx.reference.ops._op import OpRunReduceNumpy
 
 
 def _reduce_l2(data, axes, keepdims):
-    if not np.issubdtype(data.dtype, np.floating):
+    if not (
+        np.issubdtype(data.dtype, np.floating)
+        or data.dtype == np.dtype(ml_dtypes.bfloat16)
+    ):
         return np.sqrt(np.sum(np.square(data), axis=axes, keepdims=keepdims)).astype(
             dtype=data.dtype
         )
@@ -20,14 +24,18 @@ def _reduce_l2(data, axes, keepdims):
     working = data.astype(working_dtype, copy=False)
     with np.errstate(invalid="ignore", over="ignore", under="ignore"):
         scale = np.max(np.abs(working), axis=axes, keepdims=True, initial=0)
-        finite_nonzero = np.isfinite(scale) & (scale != 0)
+        finite = np.isfinite(scale)
+        finite_nonzero = finite & (scale != 0)
         scaled = working / np.where(finite_nonzero, scale, 1)
         stable = scale * np.sqrt(np.sum(np.square(scaled), axis=axes, keepdims=True))
 
         # Preserve the previous Inf/NaN behavior instead of defining new
         # non-finite semantics as part of a finite-range correction.
-        direct = np.sqrt(np.sum(np.square(working), axis=axes, keepdims=True))
-        result = np.where(np.isfinite(scale), stable, direct)
+        if np.all(finite):
+            result = stable
+        else:
+            direct = np.sqrt(np.sum(np.square(working), axis=axes, keepdims=True))
+            result = np.where(finite, stable, direct)
 
     if not keepdims:
         if axes is None:
