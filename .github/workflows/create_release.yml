@@ -197,19 +197,18 @@ jobs:
           echo "Branch version: $branch_version"
           echo "Package version: $package_version"
 
-          # Enforce package version rules depending on selected release_type
-          if [ "${RELEASE_TYPE}" = "release" ]; then
-            # For a full release the package version must exactly match the branch
-            if [ "$package_version" != "$branch_version" ]; then
-              echo "Error: For a full release the package version ($package_version) must match the branch version ($branch_version)."
-              exit 1
-            fi
-          else
-            # For release-candidate allow branch_version or branch_versionrc*
-            if [[ "$package_version" != "$branch_version" && "$package_version" != "$branch_version"rc* ]]; then
-              echo "Error: Package version ($package_version) does not match branch version ($branch_version) or expected RC format."
-              exit 1
-            fi
+          # This job's `if:` already requires release_type == 'release', but re-check here
+          # and fail closed: if a future refactor ever loosens that job-level gate, this
+          # step must not silently fall back to the more permissive RC-suffix check below.
+          if [ "${RELEASE_TYPE}" != "release" ]; then
+            echo "Error: Unexpected release_type ($RELEASE_TYPE) in the publish-to-pypi-release check; expected 'release'."
+            exit 1
+          fi
+
+          # For a full release the package version must exactly match the branch
+          if [ "$package_version" != "$branch_version" ]; then
+            echo "Error: For a full release the package version ($package_version) must match the branch version ($branch_version)."
+            exit 1
           fi
 
   check_for_publish_preview_build_to_testpypi_weekly:

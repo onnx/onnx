@@ -122,6 +122,10 @@ Validation steps must be completed before this point! This is the point of new r
 
 <img width="548" height="749" alt="RunWorkflow_Final" src="https://github.com/user-attachments/assets/d836d0b8-b033-4317-aa21-2aeed3c74d05" />
 
+* Two safety-gate inputs must both be set explicitly for this run, or the publish-to-PyPI job is silently skipped (the workflow still shows "success", it just never uploads anything):
+    * `release_type`: set to `release` (the default, `release-candidate`, skips the publish job)
+    * `confirm_publish_release`: set to `yes` (the default, `no`, skips the publish job)
+
 ### NOTES:
 
 * Once the packages are uploaded to PyPI, **you cannot overwrite it on the same PyPI instance**.
