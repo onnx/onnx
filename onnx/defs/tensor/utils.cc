@@ -491,9 +491,9 @@ std::function<void(OpSchema&)> PadDocGenerator(
           auto axis = axes[i];
           const auto& input_dim = input_shape.dim(static_cast<int>(axis));
           auto& out_dim = *out_dims[axis];
-          auto total_pad = pads_data[i] + pads_data[num_axes + i];
+          auto total_pad = checkedAdd(pads_data[i], pads_data[num_axes + i]);
           if (input_dim.has_dim_value()) {
-            out_dim.set_dim_value(input_dim.dim_value() + total_pad);
+            out_dim.set_dim_value(checkedAdd(input_dim.dim_value(), total_pad));
           } else if (total_pad == 0) {
             out_dim = input_dim;
           }

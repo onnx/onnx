@@ -56,8 +56,7 @@ class StringRange final {
   StringRange(const char* data);
   const char* Data() const;
   size_t Size() const;
-  // Used only when ONNX_ML is enabled; suppress GCC -Wunused-function.
-  [[maybe_unused]] bool Empty() const;
+  bool Empty() const;
   bool StartsWith(const StringRange& str) const;
   bool EndsWith(const StringRange& str) const;
   bool LStrip();
@@ -131,7 +130,6 @@ std::string DataTypeUtils::ToString(const TypeProto& type_proto, const std::stri
       std::string map_str = "map(" + ToDataTypeString(type_proto.map_type().key_type()) + ",";
       return ToString(type_proto.map_type().value_type(), left + map_str, ")" + right);
     }
-#ifdef ONNX_ML
     case TypeProto::ValueCase::kOpaqueType: {
       std::string result;
       const auto& op_type = type_proto.opaque_type();
@@ -145,7 +143,6 @@ std::string DataTypeUtils::ToString(const TypeProto& type_proto, const std::stri
       result.append(")").append(right);
       return result;
     }
-#endif
     case TypeProto::ValueCase::kSparseTensorType: {
       // Note: We do not distinguish tensors with zero rank (a shape consisting
       // of an empty sequence of dimensions) here.
@@ -190,7 +187,6 @@ void DataTypeUtils::FromString(const std::string& type_str, TypeProto& type_prot
     FromString(std::string(v.Data(), v.Size()), *type_proto.mutable_map_type()->mutable_value_type());
     return;
   }
-#ifdef ONNX_ML
   if (s.LStrip("opaque")) {
     auto* opaque_type = type_proto.mutable_opaque_type();
     s.ParensWhitespaceStrip();
@@ -208,7 +204,6 @@ void DataTypeUtils::FromString(const std::string& type_str, TypeProto& type_prot
     }
     return;
   }
-#endif
   if (s.LStrip("sparse_tensor")) {
     s.ParensWhitespaceStrip();
     auto e = FromDataTypeString(std::string(s.Data(), s.Size()));
@@ -395,6 +390,8 @@ TypesWrapper::TypesWrapper() {
   type_str_to_tensor_data_type_["uint2"] = TensorProto_DataType_UINT2;
   type_str_to_tensor_data_type_["int2"] = TensorProto_DataType_INT2;
   type_str_to_tensor_data_type_["float4e2m1"] = TensorProto_DataType_FLOAT4E2M1;
+  type_str_to_tensor_data_type_["float6e2m3"] = TensorProto_DataType_FLOAT6E2M3;
+  type_str_to_tensor_data_type_["float6e3m2"] = TensorProto_DataType_FLOAT6E3M2;
 
   for (auto& [type_str, data_type] : type_str_to_tensor_data_type_) {
     tensor_data_type_to_type_str_[data_type] = type_str;

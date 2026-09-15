@@ -7,9 +7,11 @@
 #include <array>
 #include <charconv>
 #include <cmath>
+#include <cstdint>
 #include <iomanip>
 #include <string>
 #include <type_traits>
+#include <vector>
 
 #include "onnx/defs/tensor_proto_util.h"
 
@@ -17,6 +19,13 @@ namespace ONNX_NAMESPACE {
 namespace {
 
 using StringStringEntryProtos = google::protobuf::RepeatedPtrField<StringStringEntryProto>;
+
+// Widen a decoded raw_data element to the field type the printer emits.
+template <typename Element, typename Widened>
+std::vector<Widened> ParseRawIntData(const TensorProto& tensor) {
+  const std::vector<Element> elements = ParseRawData<Element>(tensor, /*exact_fit=*/true);
+  return std::vector<Widened>(elements.begin(), elements.end());
+}
 
 // Format numbers with std::to_chars: locale-independent and, for floating
 // point, the shortest form that round-trips through the parser.
@@ -68,6 +77,8 @@ class ProtoPrinter {
   void print(const TypeProto_Optional& optType);
 
   void print(const TypeProto_SparseTensor& sparseType);
+
+  void print(const TypeProto_Opaque& opaqueType);
 
   void print(const TensorProto& tensor, bool is_initializer = false);
 
@@ -239,6 +250,22 @@ void ProtoPrinter::print(const TypeProto_SparseTensor& sparseType) {
   output_ << ")";
 }
 
+void ProtoPrinter::print(const TypeProto_Opaque& opaqueType) {
+  // Mirrors the grammar accepted by the parser:
+  //   opaque()
+  //   opaque(name)
+  //   opaque(domain,name)
+  output_ << "opaque(";
+  const bool has_domain = opaqueType.has_domain() && !opaqueType.domain().empty();
+  if (has_domain) {
+    output_ << opaqueType.domain() << ",";
+  }
+  if (opaqueType.has_name() && !opaqueType.name().empty()) {
+    output_ << opaqueType.name();
+  }
+  output_ << ")";
+}
+
 void ProtoPrinter::print(const TypeProto& type) {
   if (type.has_tensor_type())
     print(type.tensor_type());
@@ -250,6 +277,8 @@ void ProtoPrinter::print(const TypeProto& type) {
     print(type.optional_type());
   else if (type.has_sparse_tensor_type())
     print(type.sparse_tensor_type());
+  else if (type.has_opaque_type())
+    print(type.opaque_type());
 }
 
 void ProtoPrinter::print(const TensorProto& tensor, bool is_initializer) {
@@ -269,20 +298,51 @@ void ProtoPrinter::print(const TensorProto& tensor, bool is_initializer) {
     print(tensor.external_data());
   } else if (tensor.has_raw_data()) {
     switch (static_cast<TensorProto::DataType>(tensor.data_type())) {
+      case TensorProto::DataType::TensorProto_DataType_INT8:
+        printSet(" {", ",", "}", ParseRawIntData<int8_t, int32_t>(tensor));
+        break;
+      case TensorProto::DataType::TensorProto_DataType_UINT8:
+      case TensorProto::DataType::TensorProto_DataType_BOOL:
+      // FLOAT8 types print their unsigned byte pattern, as FLOAT16 does below.
+      case TensorProto::DataType::TensorProto_DataType_FLOAT8E4M3FN:
+      case TensorProto::DataType::TensorProto_DataType_FLOAT8E4M3FNUZ:
+      case TensorProto::DataType::TensorProto_DataType_FLOAT8E5M2:
+      case TensorProto::DataType::TensorProto_DataType_FLOAT8E5M2FNUZ:
+      case TensorProto::DataType::TensorProto_DataType_FLOAT8E8M0:
+        printSet(" {", ",", "}", ParseRawIntData<uint8_t, int32_t>(tensor));
+        break;
+      case TensorProto::DataType::TensorProto_DataType_INT16:
+        printSet(" {", ",", "}", ParseRawIntData<int16_t, int32_t>(tensor));
+        break;
+      case TensorProto::DataType::TensorProto_DataType_UINT16:
+      // FLOAT16/BFLOAT16 print the unsigned 16-bit pattern, which the parser accepts.
+      case TensorProto::DataType::TensorProto_DataType_FLOAT16:
+      case TensorProto::DataType::TensorProto_DataType_BFLOAT16:
+        printSet(" {", ",", "}", ParseRawIntData<uint16_t, int32_t>(tensor));
+        break;
       case TensorProto::DataType::TensorProto_DataType_INT32:
-        printSet(" {", ",", "}", ParseData<int32_t>(&tensor));
+        printSet(" {", ",", "}", ParseRawData<int32_t>(tensor, /*exact_fit=*/true));
+        break;
+      // UINT32/UINT64 print into uint64_data, matching the non-raw branch.
+      case TensorProto::DataType::TensorProto_DataType_UINT32:
+        printSet(" {", ",", "}", ParseRawIntData<uint32_t, uint64_t>(tensor));
         break;
       case TensorProto::DataType::TensorProto_DataType_INT64:
-        printSet(" {", ",", "}", ParseData<int64_t>(&tensor));
+        printSet(" {", ",", "}", ParseRawData<int64_t>(tensor, /*exact_fit=*/true));
+        break;
+      case TensorProto::DataType::TensorProto_DataType_UINT64:
+        printSet(" {", ",", "}", ParseRawData<uint64_t>(tensor, /*exact_fit=*/true));
         break;
       case TensorProto::DataType::TensorProto_DataType_FLOAT:
-        printSet(" {", ",", "}", ParseData<float>(&tensor));
+        printSet(" {", ",", "}", ParseRawData<float>(tensor, /*exact_fit=*/true));
         break;
       case TensorProto::DataType::TensorProto_DataType_DOUBLE:
-        printSet(" {", ",", "}", ParseData<double>(&tensor));
+        printSet(" {", ",", "}", ParseRawData<double>(tensor, /*exact_fit=*/true));
         break;
       default:
-        output_ << "..."; // ParseData not instantiated for other types.
+        // Sub-byte packed types need an element count sizeof() cannot express;
+        // complex and string need a different element form.
+        output_ << "...";
         break;
     }
   } else {
@@ -293,6 +353,13 @@ void ProtoPrinter::print(const TensorProto& tensor, bool is_initializer) {
       case TensorProto::DataType::TensorProto_DataType_UINT8:
       case TensorProto::DataType::TensorProto_DataType_UINT16:
       case TensorProto::DataType::TensorProto_DataType_BOOL:
+      case TensorProto::DataType::TensorProto_DataType_FLOAT16:
+      case TensorProto::DataType::TensorProto_DataType_BFLOAT16:
+      case TensorProto::DataType::TensorProto_DataType_FLOAT8E4M3FN:
+      case TensorProto::DataType::TensorProto_DataType_FLOAT8E4M3FNUZ:
+      case TensorProto::DataType::TensorProto_DataType_FLOAT8E5M2:
+      case TensorProto::DataType::TensorProto_DataType_FLOAT8E5M2FNUZ:
+      case TensorProto::DataType::TensorProto_DataType_FLOAT8E8M0:
         printSet(" {", ",", "}", tensor.int32_data());
         break;
       case TensorProto::DataType::TensorProto_DataType_INT64:
@@ -319,6 +386,7 @@ void ProtoPrinter::print(const TensorProto& tensor, bool is_initializer) {
         break;
       }
       default:
+        output_ << "...";
         break;
     }
   }

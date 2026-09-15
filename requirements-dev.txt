@@ -1,5 +1,6 @@
 build
 numpy>=1.23.2
+packaging
 protobuf>=6.33.1
 pytest
 pytest-cov

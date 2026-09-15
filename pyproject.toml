@@ -54,6 +54,7 @@ sdist.include = [
     "VERSION_NUMBER",
     "sbom.cdx.json",
     "cmake/**",
+    "tests/**",
     "tools/**",
     "onnx/**",
     "pyproject.toml",
@@ -95,8 +96,8 @@ cmake.define.ONNX_COVERAGE = "ON"
 build = "cp314-pyodide_wasm32"
 
 [tool.cibuildwheel]
-test-command = "pytest {project}/onnx/test"
-test-requires = ["pytest", "Pillow"]
+test-command = "pytest {project}/tests"
+test-requires = ["pytest", "Pillow", "packaging"]
 
 [tool.cibuildwheel.linux]
 manylinux-x86_64-image = "manylinux_2_28"
@@ -111,10 +112,7 @@ ignore = ["W002"]
 
 [tool.pytest.ini_options]
 addopts = "--tb=short --color=yes"
-testpaths = [
-    "onnx/test",
-    "onnx/examples",
-]
+testpaths = ["tests"]
 
 [tool.mypy]
 follow_imports = "silent"
@@ -271,8 +269,8 @@ required-imports = ["from __future__ import annotations"]
 # Op implementations take one parameter per input and attribute, fixed by the schema.
 "onnx/backend/test/case/node/**" = ["PLR0913", "PLR0917"]
 "onnx/reference/ops*/**" = ["PLR0913", "PLR0917"]
-"onnx/test/reference_evaluator_test.py" = ["C408"]  # dict(...) -> { ... }
-"onnx/test/**" = [
+"tests/python/reference_evaluator_test.py" = ["C408"]  # dict(...) -> { ... }
+"tests/python/**" = [
     "PLR2004", # Magic numbers
     "S311", # Non-crypto random
     "T20", # print
