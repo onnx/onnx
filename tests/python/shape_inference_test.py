@@ -8608,6 +8608,18 @@ class TestShapeInference(TestShapeInferenceHelper):
             graph, [make_tensor_value_info("y", TensorProto.FLOAT, (2, 2))]
         )
 
+    def test_gathernd_reject_negative_batch_dims(self) -> None:
+        graph = self._make_graph(
+            [
+                ("x", TensorProto.FLOAT, (2, 2, 2)),
+                ("indices", TensorProto.INT64, (2, 1)),
+            ],
+            [make_node("GatherND", ["x", "indices"], ["y"], batch_dims=-5)],
+            [],
+        )
+        with pytest.raises(onnx.shape_inference.InferenceError):
+            self._inferred(graph)
+
     def test_cumprod(self) -> None:
         graph = self._make_graph(
             [("x", TensorProto.FLOAT, (3, 2)), ("axis", TensorProto.INT64, (1,))],
