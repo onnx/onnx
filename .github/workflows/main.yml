@@ -31,7 +31,7 @@ concurrency:
 
 jobs:
   test:
-    name: Test ${{ matrix.os }}, ${{ matrix.python_version }}, ${{ matrix.protobuf_type }}, debug=${{ matrix.debug_build }}, unity_build=${{ matrix.unity_build }}, onnx_ml=${{ matrix.onnx_ml }}, autogen=${{ matrix.autogenerate_files }}
+    name: Test ${{ matrix.os }}, ${{ matrix.python_version }}, ${{ matrix.protobuf_type }}, debug=${{ matrix.debug_build }}, unity_build=${{ matrix.unity_build }}, onnx_ml=${{ matrix.onnx_ml }}, autogen=${{ matrix.autogenerate_files }}${{ matrix.job_name_suffix }}
     strategy:
       fail-fast: false
       matrix:
@@ -45,6 +45,13 @@ jobs:
         unity_build: [0]
 
         include:
+          # Exercise clang-cl without adding another Windows job. The remaining
+          # Windows matrix entries continue to provide MSVC coverage.
+          - python_version: "3.14"
+            os: "windows-latest"
+            cmake_generator_args: "-T ClangCL"
+            job_name_suffix: ", compiler=clang-cl"
+
           # Ubuntu debug build runs with sanitizer
           - python_version: "3.14"
             autogenerate_files: 0
@@ -202,7 +209,7 @@ jobs:
           DEBUG: ${{ matrix.debug_build }}
           ONNX_ML: ${{ matrix.onnx_ml }}
           ONNX_BUILD_TESTS: 1
-          CMAKE_ARGS: "-DONNX_WERROR=ON -DONNX_USE_PROTOBUF_SHARED_LIBS=OFF -DONNX_USE_LITE_PROTO=ON -DONNX_USE_UNITY_BUILD=${{ matrix.unity_build }} -DONNX_HARDENING=ON"
+          CMAKE_ARGS: "${{ matrix.cmake_generator_args }} -DONNX_WERROR=ON -DONNX_USE_PROTOBUF_SHARED_LIBS=OFF -DONNX_USE_LITE_PROTO=ON -DONNX_USE_UNITY_BUILD=${{ matrix.unity_build }} -DONNX_HARDENING=ON"
 
       - name: pip freeze
         run: |
@@ -265,7 +272,8 @@ jobs:
       - name: Run Python tests with numpy<2.0 (win, mac)
         if: (matrix.python_version == '3.10') && (matrix.os == 'windows-latest' || matrix.os == 'macos-latest') && (matrix.debug_build != 1)
         run: |
-          pip install "numpy<2.0" pillow
+          # ml_dtypes 0.6.0 dropped numpy 1 support, so pin the last version that supports it.
+          pip install "numpy<2.0" "ml_dtypes==0.5.4" pillow
           pytest -s
 
       - name: Run Python tests with numpy<2.0 (ubuntu, python<3.13)
@@ -274,5 +282,6 @@ jobs:
           # 2024.10.15: Error message: The headers or library files could not be found for jpeg, a required dependency when compiling Pillow from source.
           sudo apt-get update
           sudo apt-get install libjpeg-dev zlib1g-dev libpng-dev
-          pip install --prefer-binary "numpy<2.0" pillow
+          # ml_dtypes 0.6.0 dropped numpy 1 support, so pin the last version that supports it.
+          pip install --prefer-binary "numpy<2.0" "ml_dtypes==0.5.4" pillow
           pytest -s

@@ -14,6 +14,7 @@ import onnx.defs
 import onnx.parser
 from onnx import (
     GraphProto,
+    ModelProto,
     SparseTensorProto,
     TensorProto,
     checker,
@@ -147,6 +148,34 @@ class TestChecker:
 
         graph.initializer[0].name = "X"
         checker.check_graph(graph)
+
+    def test_check_einsum_bfloat16(self) -> None:
+        # Einsum gained bfloat16 at opset 28; opset 12 predates it. Only
+        # full_check reaches the type constraint, so the accept/reject pair
+        # has to go through check_model rather than shape inference alone.
+        def model(opset: int) -> ModelProto:
+            node = helper.make_node(
+                "Einsum", ["X", "Y"], ["Z"], equation="bij,bjk->bik"
+            )
+            graph = helper.make_graph(
+                [node],
+                "test",
+                [
+                    helper.make_tensor_value_info("X", TensorProto.BFLOAT16, [5, 2, 3]),
+                    helper.make_tensor_value_info("Y", TensorProto.BFLOAT16, [5, 3, 4]),
+                ],
+                [helper.make_tensor_value_info("Z", TensorProto.BFLOAT16, [5, 2, 4])],
+            )
+            return helper.make_model(
+                graph,
+                producer_name="test",
+                opset_imports=[helper.make_opsetid("", opset)],
+            )
+
+        checker.check_model(model(28), full_check=True)
+
+        with pytest.raises(shape_inference.InferenceError):
+            checker.check_model(model(12), full_check=True)
 
     def test_check_graph_types(self) -> None:
         # This is for https://github.com/onnx/onnx/issues/3849.
@@ -332,6 +361,13 @@ class TestChecker:
         model = helper.make_model(graph, producer_name="test")
 
         checker.check_model(model.SerializeToString())
+
+    def test_check_model_malformed_bytes_raises(self) -> None:
+        # Bytes that cannot be parsed as a ModelProto (e.g. truncated or
+        # corrupted data) must raise instead of silently checking whatever
+        # partially-populated proto happened to result from the failed parse.
+        with pytest.raises(ValueError):
+            checker.check_model(b"\xff\xff\xff\xff\xff not a valid protobuf")
 
     def test_check_model_protobuf_size_boundary(
         self, monkeypatch: pytest.MonkeyPatch
@@ -1483,6 +1519,60 @@ class TestChecker:
             tensor2.raw_data = b"\x00" * 3  # ceil(10/4) = 3 bytes
             checker.check_tensor(tensor2)
 
+        # 6-bit types: 10 elements need ceil(10*6/8) = 8 bytes.
+        for dtype in (TensorProto.FLOAT6E2M3, TensorProto.FLOAT6E3M2):
+            tensor = TensorProto()
+            tensor.data_type = dtype
+            tensor.dims.extend([10])
+            tensor.name = "t"
+            tensor.raw_data = b"\x00" * 7
+            with pytest.raises(checker.ValidationError):
+                checker.check_tensor(tensor)
+            tensor.raw_data = b"\x00" * 8
+            checker.check_tensor(tensor)
+
+    @pytest.mark.parametrize("dtype", (TensorProto.FLOAT6E2M3, TensorProto.FLOAT6E3M2))
+    @pytest.mark.parametrize(
+        ("num_elements", "invalid_last_byte"),
+        ((1, 0x40), (2, 0x10), (3, 0x04)),
+    )
+    def test_check_tensor_float6_raw_data_padding(
+        self, dtype: int, num_elements: int, invalid_last_byte: int
+    ) -> None:
+        tensor = TensorProto()
+        tensor.data_type = dtype
+        tensor.dims.extend([num_elements])
+        tensor.name = "t"
+        tensor.raw_data = bytes((num_elements * 6 + 7) // 8 - 1) + bytes(
+            [invalid_last_byte]
+        )
+        with pytest.raises(checker.ValidationError, match="non-zero padding bits"):
+            checker.check_tensor(tensor)
+
+        tensor.raw_data = bytes((num_elements * 6 + 7) // 8)
+        checker.check_tensor(tensor)
+
+    @pytest.mark.parametrize("dtype", (TensorProto.FLOAT6E2M3, TensorProto.FLOAT6E3M2))
+    @pytest.mark.parametrize("invalid_value", (-1, 64))
+    def test_check_tensor_float6_int32_data_high_bits(
+        self, dtype: int, invalid_value: int
+    ) -> None:
+        int32_tensor = helper.make_tensor(
+            "int32", TensorProto.INT32, [1], [invalid_value]
+        )
+        checker.check_tensor(int32_tensor)
+
+        tensor = TensorProto()
+        tensor.data_type = dtype
+        tensor.dims.extend([1])
+        tensor.name = "t"
+        tensor.int32_data.append(invalid_value)
+        with pytest.raises(checker.ValidationError, match="must use only bits 0-5"):
+            checker.check_tensor(tensor)
+
+        tensor.int32_data[0] = 63
+        checker.check_tensor(tensor)
+
     def test_check_tensor_packed_subbyte_int32_data(self) -> None:
         """Reject packed sub-byte tensors whose int32_data payload is too small."""
         # 4-bit types: 8 elements per int32.
@@ -1575,6 +1665,120 @@ class TestChecker:
             tensor.dims.extend([0])
             tensor.name = "t"
             checker.check_tensor(tensor)
+
+    def test_check_tensor_float_double_data_too_small(self) -> None:
+        """Reject FLOAT/DOUBLE tensors whose value field has too few entries."""
+        tensor = TensorProto()
+        tensor.data_type = TensorProto.FLOAT
+        tensor.dims.extend([4])
+        tensor.name = "t"
+        tensor.float_data.extend([0.0] * 3)  # 1 short
+        with pytest.raises(checker.ValidationError):
+            checker.check_tensor(tensor)
+        tensor.float_data.append(0.0)
+        checker.check_tensor(tensor)
+
+        tensor = TensorProto()
+        tensor.data_type = TensorProto.DOUBLE
+        tensor.dims.extend([4])
+        tensor.name = "t"
+        tensor.double_data.extend([0.0] * 3)  # 1 short
+        with pytest.raises(checker.ValidationError):
+            checker.check_tensor(tensor)
+        tensor.double_data.append(0.0)
+        checker.check_tensor(tensor)
+
+    def test_check_tensor_complex_data_too_small(self) -> None:
+        """COMPLEX64/COMPLEX128 store 2 value-field entries (real, imag) per element."""
+        tensor = TensorProto()
+        tensor.data_type = TensorProto.COMPLEX64
+        tensor.dims.extend([3])
+        tensor.name = "t"
+        tensor.float_data.extend([0.0] * 5)  # need 3 * 2 = 6
+        with pytest.raises(checker.ValidationError):
+            checker.check_tensor(tensor)
+        tensor.float_data.append(0.0)
+        checker.check_tensor(tensor)
+
+        tensor = TensorProto()
+        tensor.data_type = TensorProto.COMPLEX128
+        tensor.dims.extend([3])
+        tensor.name = "t"
+        tensor.double_data.extend([0.0] * 5)  # need 3 * 2 = 6
+        with pytest.raises(checker.ValidationError):
+            checker.check_tensor(tensor)
+        tensor.double_data.append(0.0)
+        checker.check_tensor(tensor)
+
+    def test_check_tensor_int64_uint64_data_too_small(self) -> None:
+        """Reject INT64/UINT32/UINT64 tensors whose value field has too few entries."""
+        tensor = TensorProto()
+        tensor.data_type = TensorProto.INT64
+        tensor.dims.extend([4])
+        tensor.name = "t"
+        tensor.int64_data.extend([0] * 3)  # 1 short
+        with pytest.raises(checker.ValidationError):
+            checker.check_tensor(tensor)
+        tensor.int64_data.append(0)
+        checker.check_tensor(tensor)
+
+        for dtype in (TensorProto.UINT32, TensorProto.UINT64):
+            tensor = TensorProto()
+            tensor.data_type = dtype
+            tensor.dims.extend([4])
+            tensor.name = "t"
+            tensor.uint64_data.extend([0] * 3)  # 1 short
+            with pytest.raises(checker.ValidationError):
+                checker.check_tensor(tensor)
+            tensor.uint64_data.append(0)
+            checker.check_tensor(tensor)
+
+    def test_check_tensor_string_data_too_small(self) -> None:
+        """Reject STRING tensors whose string_data has too few entries."""
+        tensor = TensorProto()
+        tensor.data_type = TensorProto.STRING
+        tensor.dims.extend([4])
+        tensor.name = "t"
+        tensor.string_data.extend([b"a", b"b", b"c"])  # 1 short
+        with pytest.raises(checker.ValidationError):
+            checker.check_tensor(tensor)
+        tensor.string_data.append(b"d")
+        checker.check_tensor(tensor)
+
+    def test_check_tensor_raw_data_regular_types_too_small(self) -> None:
+        """Reject raw_data payloads too small for regular (non-packed) types."""
+        # FLOAT: 4 bytes/element; 4 elements need 16 bytes.
+        tensor = TensorProto()
+        tensor.data_type = TensorProto.FLOAT
+        tensor.dims.extend([4])
+        tensor.name = "t"
+        tensor.raw_data = b"\x00" * 15  # 1 byte short
+        with pytest.raises(checker.ValidationError):
+            checker.check_tensor(tensor)
+        tensor.raw_data = b"\x00" * 16
+        checker.check_tensor(tensor)
+
+        # INT64: 8 bytes/element; 4 elements need 32 bytes.
+        tensor = TensorProto()
+        tensor.data_type = TensorProto.INT64
+        tensor.dims.extend([4])
+        tensor.name = "t"
+        tensor.raw_data = b"\x00" * 31  # 1 byte short
+        with pytest.raises(checker.ValidationError):
+            checker.check_tensor(tensor)
+        tensor.raw_data = b"\x00" * 32
+        checker.check_tensor(tensor)
+
+        # COMPLEX128: 16 bytes/element; 2 elements need 32 bytes.
+        tensor = TensorProto()
+        tensor.data_type = TensorProto.COMPLEX128
+        tensor.dims.extend([2])
+        tensor.name = "t"
+        tensor.raw_data = b"\x00" * 31  # 1 byte short
+        with pytest.raises(checker.ValidationError):
+            checker.check_tensor(tensor)
+        tensor.raw_data = b"\x00" * 32
+        checker.check_tensor(tensor)
 
     def test_convtranspose_input_channels_must_be_divisible_by_group(self):
         node = helper.make_node("ConvTranspose", ["X", "W"], ["Y"], group=3)

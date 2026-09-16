@@ -218,6 +218,43 @@ class TestInferenceFunctionCall:
             }
         )
 
+    def test_if_subgraph_with_unknown_op_does_not_use_temporary_map(self) -> None:
+        branch_output = make_tensor_value_info("branch_result", TensorProto.FLOAT, ())
+        branches = [
+            make_graph(
+                [
+                    make_node(
+                        "UnknownOp",
+                        [],
+                        ["branch_result"],
+                        domain="local.unknown",
+                    )
+                ],
+                name,
+                [],
+                [branch_output],
+            )
+            for name in ("then_branch", "else_branch")
+        ]
+
+        result = infer_node_outputs(
+            get_schema("If", 25),
+            make_node(
+                "If",
+                ["cond"],
+                ["result"],
+                then_branch=branches[0],
+                else_branch=branches[1],
+            ),
+            _to_tensor_types({"cond": (TensorProto.BOOL, ())}),
+            opset_imports=[
+                make_opsetid("", 25),
+                make_opsetid("local.unknown", 1),
+            ],
+        )
+
+        assert result == _to_tensor_types({"result": (TensorProto.FLOAT, ())})
+
     def test_inference_with_conflow(self) -> None:
         model_script = """
         <

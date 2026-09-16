@@ -184,7 +184,7 @@ The function definition for this operator.
 #### {{ example }}
 
 ```python
-{{ format_example(code) }}
+{{ format_example(code) | safe }}
 ```
 {% endfor %}
 {% endif %}
@@ -644,6 +644,10 @@ def _process_example(code: str) -> str:
     return "\n".join(elements)
 
 
+_EXAMPLE_MODULE_ALIASES = {"Range": "rangeop"}
+_TOP_LEVEL_EXAMPLE_DOMAINS = {"ai.onnx.preview", "ai.onnx.preview.training"}
+
+
 def get_onnx_example(op_name, domain):
     """Retrieves examples associated to one operator
     stored in onnx packages.
@@ -652,17 +656,27 @@ def get_onnx_example(op_name, domain):
     :param fmt: rendering format
     :return: dictionary
     """
-    if domain in (None, "ai.onnx"):
+    fallback_modules = []
+    if domain in (None, "", "ai.onnx"):
         modules = [
             f"onnx.backend.test.case.node.{op_name.lower()}",
             f"onnx.backend.test.case.node.{pascal_to_snake_case(op_name)}",
         ]
+        if op_name in _EXAMPLE_MODULE_ALIASES:
+            modules.append(
+                f"onnx.backend.test.case.node.{_EXAMPLE_MODULE_ALIASES[op_name]}"
+            )
     else:
         domain_ = domain.replace(".", "_")
         modules = [
             f"onnx.backend.test.case.node.{domain_}.{op_name.lower()}",
             f"onnx.backend.test.case.node.{domain_}.{pascal_to_snake_case(op_name)}",
         ]
+        if domain in _TOP_LEVEL_EXAMPLE_DOMAINS:
+            fallback_modules = [
+                f"onnx.backend.test.case.node.{op_name.lower()}",
+                f"onnx.backend.test.case.node.{pascal_to_snake_case(op_name)}",
+            ]
     module = None
     for m in modules:
         try:
@@ -670,6 +684,13 @@ def get_onnx_example(op_name, domain):
             module = m
         except ImportError:  # noqa: PERF203
             continue
+    if module is None:
+        for m in fallback_modules:
+            try:
+                mod = importlib.import_module(m)
+                module = m
+            except ImportError:  # noqa: PERF203
+                continue
     if module is None:
         # Unable to find an example for 'op_name'.
         return {}

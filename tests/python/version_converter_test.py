@@ -21,6 +21,12 @@ from onnx import (
     helper,
     shape_inference,
 )
+from onnx.reference import ReferenceEvaluator
+
+MOD_OPSET_27 = 27
+MOD_OPSET_28 = 28
+EINSUM_OPSET_27 = 27
+EINSUM_OPSET_28 = 28
 
 
 class TestVersionConverter:
@@ -95,6 +101,41 @@ class TestVersionConverter:
         with pytest.raises(RuntimeError):
             test()
 
+    def test_rejects_captured_node_without_output(self) -> None:
+        nested_graph = helper.make_graph(
+            [helper.make_node("Captured", ["X"], [], domain="custom")],
+            "nested",
+            [],
+            [],
+        )
+        carrier = helper.make_node(
+            "NestedCarrier",
+            ["X"],
+            [],
+            domain="custom",
+            payload=nested_graph,
+        )
+        graph = helper.make_graph(
+            [helper.make_node("Flatten", ["X"], ["Y"]), carrier],
+            "test",
+            [helper.make_tensor_value_info("X", TensorProto.INT32, (2, 2))],
+            [helper.make_tensor_value_info("Y", TensorProto.INT32, (2, 2))],
+        )
+        model = helper.make_model(
+            graph,
+            opset_imports=[
+                helper.make_operatorsetid("", 9),
+                helper.make_operatorsetid("custom", 1),
+            ],
+        )
+        checker.check_model(model)
+
+        with pytest.raises(
+            onnx.version_converter.ConvertError,
+            match="Captured node must have exactly one output",
+        ):
+            onnx.version_converter.convert_version(model, 8)
+
     # A graph output that nothing produces must raise (ConvertError), not crash.
     # Regression test for a SEGV in graphProtoToGraph when a top-level
     # graph output name was absent from the value map.
@@ -128,6 +169,26 @@ class TestVersionConverter:
 
         with pytest.raises(onnx.version_converter.ConvertError):
             test()
+
+    def test_extend_supported_types_rejects_missing_output(self) -> None:
+        node = helper.make_node("Flatten", ["X"], [])
+        graph = helper.make_graph(
+            [node],
+            "malformed_flatten",
+            [helper.make_tensor_value_info("X", TensorProto.FLOAT, (2, 3))],
+            [],
+        )
+        model = helper.make_model(
+            graph,
+            opset_imports=[helper.make_operatorsetid("", 9)],
+        )
+
+        # convert_version runs shape inference before conversion, so Flatten's
+        # own shape-inference function rejects the missing output first; the
+        # adapter's ONNX_ASSERTM guard is defense-in-depth for callers that
+        # reach ExtendSupportedTypes without going through shape inference.
+        with pytest.raises((RuntimeError, shape_inference.InferenceError)):
+            onnx.version_converter.convert_version(model, 8)
 
     # A nested (subgraph) output that resolves to a value captured from the
     # enclosing scope is handled via a dummy node, not a crash. Exercises the
@@ -1379,20 +1440,22 @@ class TestVersionConverter:
         assert converted_model.opset_import[0].version == to_opset
 
     # Test Helper for Upsample Adapter: 9 -> 8
-    def helper_upsample_with_initializer(self, raw_scale: bool = False) -> None:
+    def helper_upsample_with_initializer(
+        self, raw_scale: bool = False, scale_name: str = "Scales"
+    ) -> None:
         from_opset = 9
         to_opset = 8
         data_type = TensorProto.FLOAT
 
         nodes = [
             onnx.helper.make_node(
-                "Upsample", inputs=["X", "Scales"], outputs=["Y"], mode="nearest"
+                "Upsample", inputs=["X", scale_name], outputs=["Y"], mode="nearest"
             )
         ]
 
         scale_value = [1.0, 1.0, 2.0, 3.0]
         scale_tensor = onnx.helper.make_tensor(
-            "Scales",
+            scale_name,
             onnx.TensorProto.FLOAT,
             [4],
             bytes(struct.pack("4f", *scale_value)) if raw_scale else scale_value,
@@ -1404,7 +1467,7 @@ class TestVersionConverter:
             "test_upsample",
             [
                 onnx.helper.make_tensor_value_info("X", data_type, [1, 1, 2, 2]),
-                onnx.helper.make_tensor_value_info("Scales", data_type, [4]),
+                onnx.helper.make_tensor_value_info(scale_name, data_type, [4]),
             ],
             [onnx.helper.make_tensor_value_info("Y", data_type, [1, 1, 4, 6])],
             [scale_tensor],
@@ -1473,6 +1536,11 @@ class TestVersionConverter:
     # Test Upsample Adapter: 9 -> 8
     def test_upsample_with_initializer_9_8(self) -> None:
         self.helper_upsample_with_initializer(raw_scale=False)
+
+    def test_upsample_with_long_initializer_name_9_8(self) -> None:
+        self.helper_upsample_with_initializer(
+            raw_scale=False, scale_name="scale_initializer_name_longer_than_sso"
+        )
 
     # Test Upsample Adapter: 9 -> 8
     def test_upsample_with_raw_initializer_9_8(self) -> None:
@@ -2333,6 +2401,30 @@ class TestVersionConverter:
         with pytest.raises((RuntimeError, shape_inference.InferenceError)):
             test()
 
+    def test_softmax_13_12_rejects_reshape_without_output(self) -> None:
+        graph = helper.make_graph(
+            [
+                helper.make_node("Softmax", ["X"], ["Y"], axis=-1),
+                helper.make_node("Reshape", ["Y"], [], domain="local.test"),
+            ],
+            "test_softmax_13_12_rejects_reshape_without_output",
+            [helper.make_tensor_value_info("X", TensorProto.FLOAT, (1, 2))],
+            [helper.make_tensor_value_info("Y", TensorProto.FLOAT, (1, 2))],
+        )
+        model = helper.make_model(
+            graph,
+            opset_imports=[
+                helper.make_operatorsetid("", 13),
+                helper.make_operatorsetid("local.test", 1),
+            ],
+        )
+        checker.check_model(model)
+
+        with pytest.raises(
+            RuntimeError, match="Reshape node must have at least 1 output"
+        ):
+            onnx.version_converter.convert_version(model, 12)
+
     @pytest.mark.parametrize(
         "x_shape, scale_shape, axis, block_size, output_dtype, zero_point_dtype, compatible",
         [
@@ -2461,6 +2553,121 @@ class TestVersionConverter:
         with context_manager:
             test(x_shape, scale_shape, axis, block_size, output_dtype, zero_point_dtype)
 
+    @staticmethod
+    def _group_normalization_model(
+        shape: tuple[int | str, ...],
+        dtype: int = TensorProto.FLOAT,
+        stash_type: int | None = None,
+    ) -> ModelProto:
+        attributes = {"epsilon": 1e-4, "num_groups": 2}
+        if stash_type is not None:
+            attributes["stash_type"] = stash_type
+        graph = helper.make_graph(
+            [
+                helper.make_node(
+                    "GroupNormalization",
+                    ["X", "scale", "bias"],
+                    ["Y"],
+                    **attributes,
+                )
+            ],
+            "group_normalization",
+            [
+                helper.make_tensor_value_info("X", dtype, shape),
+                helper.make_tensor_value_info("scale", dtype, [4]),
+                helper.make_tensor_value_info("bias", dtype, [4]),
+            ],
+            [helper.make_tensor_value_info("Y", dtype, shape)],
+        )
+        return helper.make_model(
+            graph, opset_imports=[helper.make_operatorsetid("", 21)]
+        )
+
+    @pytest.mark.parametrize(
+        "shape,dtype,stash_type,rtol",
+        [
+            pytest.param((2, 4), TensorProto.FLOAT, None, 1e-5, id="rank_two"),
+            pytest.param(
+                (2, 4, 3, 2, 2),
+                TensorProto.FLOAT,
+                TensorProto.FLOAT,
+                1e-5,
+                id="rank_five",
+            ),
+            pytest.param(
+                (2, 4, 3),
+                TensorProto.DOUBLE,
+                TensorProto.DOUBLE,
+                1e-12,
+                id="double_stash",
+            ),
+            pytest.param(
+                (2, 4, 3),
+                TensorProto.FLOAT16,
+                TensorProto.FLOAT16,
+                2e-3,
+                id="float16_stash",
+            ),
+            pytest.param(
+                (2, 4, 3),
+                TensorProto.BFLOAT16,
+                None,
+                1e-2,
+                id="bfloat16_input_float_stash",
+            ),
+        ],
+    )
+    def test_group_normalization_21_20_matches_reference(
+        self,
+        shape: tuple[int, ...],
+        dtype: int,
+        stash_type: int | None,
+        rtol: float,
+    ) -> None:
+        model = self._group_normalization_model(shape, dtype, stash_type)
+        converted = onnx.version_converter.convert_version(model, 20)
+        checker.check_model(converted, full_check=True)
+
+        np_dtype = helper.tensor_dtype_to_np_dtype(dtype)
+        rng = np.random.default_rng(0)
+        feeds = {
+            "X": rng.normal(size=shape).astype(np_dtype),
+            "scale": rng.normal(size=(4,)).astype(np_dtype),
+            "bias": rng.normal(size=(4,)).astype(np_dtype),
+        }
+        expected = ReferenceEvaluator(model).run(None, feeds)[0]
+        actual = ReferenceEvaluator(converted).run(None, feeds)[0]
+        np.testing.assert_allclose(
+            actual.astype(np.float64),
+            expected.astype(np.float64),
+            rtol=rtol,
+            atol=rtol,
+        )
+        assert "GroupNormalization" not in {
+            node.op_type for node in converted.graph.node
+        }
+        assert "InstanceNormalization" in {
+            node.op_type for node in converted.graph.node
+        }
+
+    def test_group_normalization_21_20_supports_symbolic_dimensions(self) -> None:
+        model = self._group_normalization_model(("N", 4, "H", "W"))
+        converted = onnx.version_converter.convert_version(model, 20)
+        checker.check_model(converted)
+        assert "GroupNormalization" not in {
+            node.op_type for node in converted.graph.node
+        }
+
+    def test_group_normalization_21_20_rejects_bfloat16_stash(self) -> None:
+        model = self._group_normalization_model(
+            (2, 4, 3), stash_type=TensorProto.BFLOAT16
+        )
+        with pytest.raises(
+            RuntimeError,
+            match=r"stash_type .* cannot be represented with InstanceNormalization",
+        ):
+            onnx.version_converter.convert_version(model, 20)
+
     @pytest.mark.parametrize(
         "y_shape, scale_shape, axis, block_size, compatible",
         [
@@ -2512,6 +2719,120 @@ class TestVersionConverter:
         )
         with context_manager:
             test(y_shape, scale_shape, axis, block_size)
+
+    def _quantize_linear_converted(self, dtype: int, src: int, dst: int) -> ModelProto:
+        node = helper.make_node("QuantizeLinear", ["X", "S"], ["Y"], output_dtype=dtype)
+        graph = helper.make_graph(
+            [node],
+            "quantize",
+            [
+                helper.make_tensor_value_info("X", TensorProto.FLOAT, [3, 4]),
+                helper.make_tensor_value_info("S", TensorProto.FLOAT, []),
+            ],
+            [helper.make_tensor_value_info("Y", dtype, [3, 4])],
+        )
+        return self._converted(graph, helper.make_operatorsetid("", src), dst)
+
+    def test_quantize_linear_uint8_27_28_and_28_27(self) -> None:
+        assert (
+            self._quantize_linear_converted(TensorProto.UINT8, 27, 28)
+            .opset_import[0]
+            .version
+            == 28
+        )
+        assert (
+            self._quantize_linear_converted(TensorProto.UINT8, 28, 27)
+            .opset_import[0]
+            .version
+            == 27
+        )
+
+    # QuantizeLinear 28 -> 27: FP6 types added in v28 must be rejected
+    @pytest.mark.parametrize("dtype", [TensorProto.FLOAT6E2M3, TensorProto.FLOAT6E3M2])
+    def test_quantize_linear_28_27_fp6_type_fails(self, dtype: int) -> None:
+        with pytest.raises(RuntimeError):
+            self._quantize_linear_converted(dtype, 28, 27)
+
+    @pytest.mark.parametrize("dtype", [TensorProto.FLOAT6E2M3, TensorProto.FLOAT6E3M2])
+    def test_quantize_linear_28_27_untyped_fp6_output_fails(self, dtype: int) -> None:
+        graph = helper.make_graph(
+            [
+                helper.make_node(
+                    "QuantizeLinear",
+                    ["X", "S"],
+                    ["Q"],
+                    output_dtype=dtype,
+                ),
+                helper.make_node("DequantizeLinear", ["Q", "S"], ["Y"]),
+            ],
+            "qdq",
+            [
+                helper.make_tensor_value_info("X", TensorProto.FLOAT, [3, 4]),
+                helper.make_tensor_value_info("S", TensorProto.FLOAT, []),
+            ],
+            [helper.make_tensor_value_info("Y", TensorProto.FLOAT, [3, 4])],
+        )
+        with pytest.raises(RuntimeError):
+            self._converted(graph, helper.make_operatorsetid("", 28), 27)
+
+    def _cast_converted(self, dtype: int, src: int, dst: int) -> ModelProto:
+        graph = helper.make_graph(
+            [helper.make_node("Cast", ["X"], ["Y"], to=dtype)],
+            "cast",
+            [helper.make_tensor_value_info("X", TensorProto.FLOAT, [3, 4])],
+            [helper.make_tensor_value_info("Y", dtype, [3, 4])],
+        )
+        return self._converted(graph, helper.make_operatorsetid("", src), dst)
+
+    def test_cast_float_27_28_and_28_27(self) -> None:
+        assert (
+            self._cast_converted(TensorProto.FLOAT, 27, 28).opset_import[0].version
+            == 28
+        )
+        assert (
+            self._cast_converted(TensorProto.FLOAT, 28, 27).opset_import[0].version
+            == 27
+        )
+
+    @pytest.mark.parametrize("dtype", [TensorProto.FLOAT6E2M3, TensorProto.FLOAT6E3M2])
+    def test_cast_28_27_fp6_type_fails(self, dtype: int) -> None:
+        with pytest.raises(RuntimeError):
+            self._cast_converted(dtype, 28, 27)
+
+    def _dequantize_linear_converted(
+        self, dtype: int, src: int, dst: int
+    ) -> ModelProto:
+        node = helper.make_node("DequantizeLinear", ["X", "S"], ["Y"])
+        graph = helper.make_graph(
+            [node],
+            "dequantize",
+            [
+                helper.make_tensor_value_info("X", dtype, [3, 4]),
+                helper.make_tensor_value_info("S", TensorProto.FLOAT, []),
+            ],
+            [helper.make_tensor_value_info("Y", TensorProto.FLOAT, [3, 4])],
+        )
+        return self._converted(graph, helper.make_operatorsetid("", src), dst)
+
+    def test_dequantize_linear_uint8_27_28_and_28_27(self) -> None:
+        assert (
+            self._dequantize_linear_converted(TensorProto.UINT8, 27, 28)
+            .opset_import[0]
+            .version
+            == 28
+        )
+        assert (
+            self._dequantize_linear_converted(TensorProto.UINT8, 28, 27)
+            .opset_import[0]
+            .version
+            == 27
+        )
+
+    # DequantizeLinear 28 -> 27: FP6 types added in v28 must be rejected
+    @pytest.mark.parametrize("dtype", [TensorProto.FLOAT6E2M3, TensorProto.FLOAT6E3M2])
+    def test_dequantize_linear_28_27_fp6_type_fails(self, dtype: int) -> None:
+        with pytest.raises(RuntimeError):
+            self._dequantize_linear_converted(dtype, 28, 27)
 
     def test_external_data_version_conversion(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -3214,3 +3535,103 @@ class TestVersionConverter:
     def test_celu_28_27_unsupported_type_fails(self, dtype: int) -> None:
         with pytest.raises(RuntimeError):
             self._celu_converted(dtype, 28, 27)
+
+    def _bitshift_converted(self, dtype: int, src: int, dst: int) -> ModelProto:
+        node = helper.make_node("BitShift", ["X", "Y"], ["Z"], direction="RIGHT")
+        graph = helper.make_graph(
+            [node],
+            "bitshift",
+            [
+                helper.make_tensor_value_info("X", dtype, [3, 4]),
+                helper.make_tensor_value_info("Y", dtype, [3, 4]),
+            ],
+            [helper.make_tensor_value_info("Z", dtype, [3, 4])],
+        )
+        return self._converted(graph, helper.make_operatorsetid("", src), dst)
+
+    def test_bitshift_uint8_27_28_and_28_27(self) -> None:
+        assert (
+            self._bitshift_converted(TensorProto.UINT8, 27, 28).opset_import[0].version
+            == 28
+        )
+        assert (
+            self._bitshift_converted(TensorProto.UINT8, 28, 27).opset_import[0].version
+            == 27
+        )
+
+    # BitShift 28 -> 27: the signed types added in v28 must be rejected
+    @pytest.mark.parametrize(
+        "dtype",
+        [TensorProto.INT8, TensorProto.INT16, TensorProto.INT32, TensorProto.INT64],
+    )
+    def test_bitshift_28_27_unsupported_type_fails(self, dtype: int) -> None:
+        with pytest.raises(RuntimeError):
+            self._bitshift_converted(dtype, 28, 27)
+
+    def _einsum_converted(self, dtype: int, src: int, dst: int) -> ModelProto:
+        node = helper.make_node("Einsum", ["X", "Y"], ["Z"], equation="bij,bjk->bik")
+        graph = helper.make_graph(
+            [node],
+            "einsum",
+            [
+                helper.make_tensor_value_info("X", dtype, [5, 2, 3]),
+                helper.make_tensor_value_info("Y", dtype, [5, 3, 4]),
+            ],
+            [helper.make_tensor_value_info("Z", dtype, [5, 2, 4])],
+        )
+        return self._converted(graph, helper.make_operatorsetid("", src), dst)
+
+    def test_einsum_float_27_28_and_28_27(self) -> None:
+        assert (
+            self._einsum_converted(TensorProto.FLOAT, EINSUM_OPSET_27, EINSUM_OPSET_28)
+            .opset_import[0]
+            .version
+            == EINSUM_OPSET_28
+        )
+        assert (
+            self._einsum_converted(TensorProto.FLOAT, EINSUM_OPSET_28, EINSUM_OPSET_27)
+            .opset_import[0]
+            .version
+            == EINSUM_OPSET_27
+        )
+
+    # Einsum 28 -> 27: bfloat16 was added in v28, so it must be rejected
+    def test_einsum_28_27_bfloat16_fails(self) -> None:
+        with pytest.raises(RuntimeError):
+            self._einsum_converted(
+                TensorProto.BFLOAT16, EINSUM_OPSET_28, EINSUM_OPSET_27
+            )
+
+    def _mod_converted(self, dtype: int, fmod: int, src: int, dst: int) -> ModelProto:
+        node = helper.make_node("Mod", ["A", "B"], ["C"], fmod=fmod)
+        graph = helper.make_graph(
+            [node],
+            "mod",
+            [
+                helper.make_tensor_value_info("A", dtype, [2, 1]),
+                helper.make_tensor_value_info("B", dtype, [3]),
+            ],
+            [helper.make_tensor_value_info("C", dtype, [2, 3])],
+        )
+        return self._converted(graph, helper.make_operatorsetid("", src), dst)
+
+    def test_mod_27_28_and_28_27(self) -> None:
+        assert (
+            self._mod_converted(TensorProto.INT64, 0, MOD_OPSET_27, MOD_OPSET_28)
+            .opset_import[0]
+            .version
+            == MOD_OPSET_28
+        )
+        assert (
+            self._mod_converted(TensorProto.INT64, 0, MOD_OPSET_28, MOD_OPSET_27)
+            .opset_import[0]
+            .version
+            == MOD_OPSET_27
+        )
+
+    @pytest.mark.parametrize(
+        "dtype", [TensorProto.FLOAT16, TensorProto.FLOAT, TensorProto.DOUBLE]
+    )
+    def test_mod_float_fmod_0_28_27_fails(self, dtype: int) -> None:
+        with pytest.raises(RuntimeError):
+            self._mod_converted(dtype, 0, MOD_OPSET_28, MOD_OPSET_27)
