@@ -56,7 +56,7 @@ Performs element-wise binary {name} (with Numpy-style broadcasting support).
 
 {broadcast_doc}
 
-For integer inputs, the result is computed using truncating division (rounding toward zero).
+For integer inputs, the result is computed using truncating division (rounding toward zero). For example, `-11 / 3` yields `-3`.
 (Opset 14 change): Extend supported types to include uint8, int8, uint16, and int16.
 )DOC";
           ReplaceAll(doc, "{name}", name);
