@@ -701,11 +701,11 @@ ONNX_OPERATOR_SET_SCHEMA(
               if (num_outputs < 1) {
                 fail_shape_inference("Attribute `num_outputs` value cannot be lower than 1");
               }
-              if (static_cast<size_t>(num_outputs) != ctx.getNumOutputs()) {
+              if (num_outputs < static_cast<int64_t>(ctx.getNumOutputs())) {
                 fail_shape_inference(
-                    "Mismatch between the 'num_outputs' attribute (",
+                    "The 'num_outputs' attribute (",
                     num_outputs,
-                    ") and the number of outputs (",
+                    ") must be greater or equal to the number outputs of the 'Split' node (",
                     ctx.getNumOutputs(),
                     ")");
               }
