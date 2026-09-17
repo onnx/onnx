@@ -2801,6 +2801,9 @@ ONNX_OPERATOR_SET_SCHEMA(
                 "Both `data` and `indices` input tensors in GatherND op "
                 "need to have rank larger than 0.");
           }
+          if (batch_dims_data < 0) {
+            fail_shape_inference("attribute 'batch_dims' of 'GatherND' must not be negative");
+          }
 
           // cannot ascertain if the input shapes are valid if shape of
           // `indices` is missing last dimension value so return at this point
@@ -2821,7 +2824,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             *ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape()->add_dim() = indices_shape.dim(i);
           }
 
-          for (int i = static_cast<int>(last_index_dimension); i < data_rank; ++i) {
+          for (auto i = last_index_dimension; i < data_rank; ++i) {
             *ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape()->add_dim() = data_shape.dim(i);
           }
         }));
