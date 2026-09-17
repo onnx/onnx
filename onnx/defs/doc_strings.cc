@@ -41,6 +41,18 @@ shift on a negative X, where the fill is a sign bit of 1, and 0 in every other
 case.
 )DOC";
 
+const char kDoc_MeanVarianceNormalization_ver13[] = R"DOC(
+A MeanVarianceNormalization Function: Perform mean variance normalization
+on the input tensor X using formula: `(X-EX)/(sqrt(E((X-EX)^2)) + 1e-9)`.
+)DOC";
+
+const char kDoc_MeanVarianceNormalization_ver29[] = R"DOC(
+A MeanVarianceNormalization Function: Perform mean variance normalization
+on the input tensor X using formula: `(X-EX)/(sqrt(E((X-EX)^2)) + epsilon)`.
+For float16 and bfloat16 inputs, the intermediate calculations are performed in
+float32 to reduce rounding error and keep the default epsilon nonzero.
+)DOC";
+
 const char kDoc_GRU_ver14[] = R"DOC(
 Computes an one-layer GRU. This operator is usually supported via some custom
 implementation such as CuDNN.
@@ -6635,6 +6647,8 @@ const char kDoc_RandomNormal_ver1[] = "";
 const char kDoc_Round_ver11[] = "";
 const char kDoc_SpaceToDepth_ver1[] = "";
 const char kDoc_InstanceNormalization_ver6[] = "";
+const char kDoc_MeanVarianceNormalization_ver13[] = "";
+const char kDoc_MeanVarianceNormalization_ver29[] = "";
 const char kDoc_ThresholdedRelu_ver10[] = "";
 const char kDoc_Acosh_ver9[] = "";
 const char kDoc_Dropout_ver13[] = "";
