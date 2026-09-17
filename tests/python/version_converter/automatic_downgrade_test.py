@@ -94,6 +94,109 @@ class TestAutomaticDowngrade(automatic_conversion_test_base.TestAutomaticConvers
             """,
         )
 
+    def test_pad_18_to_17(self) -> None:
+        self._test_model_conversion(
+            to_opset=17,
+            model="""
+                <ir_version: 8, opset_import: [ "" : 18]>
+                pad (
+                    float[1, 1, 2, 2] data,
+                    int64[8] pads,
+                    float constant_value
+                ) => (float[N, C, H, W] output)
+                {
+                    output = Pad (data, pads, constant_value)
+                }
+            """,
+        )
+
+    def test_pad_18_to_17_axes_fails(self) -> None:
+        self._test_model_conversion_fails(
+            to_opset=17,
+            model="""
+                <ir_version: 8, opset_import: [ "" : 18]>
+                pad (
+                    float[1, 1, 2, 2] data,
+                    int64[4] pads,
+                    int64[2] axes
+                ) => (float[N, C, H, W] output)
+                {
+                    output = Pad (data, pads, "", axes)
+                }
+            """,
+        )
+
+    def test_pad_18_to_17_omitted_axes(self) -> None:
+        self._test_model_conversion(
+            to_opset=17,
+            model="""
+                <ir_version: 8, opset_import: [ "" : 18]>
+                pad (
+                    float[1, 1, 2, 2] data,
+                    int64[8] pads
+                ) => (float[N, C, H, W] output)
+                {
+                    output = Pad (data, pads, "", "")
+                }
+            """,
+        )
+
+    def test_pad_19_to_18(self) -> None:
+        self._test_model_conversion(
+            to_opset=18,
+            model="""
+                <ir_version: 9, opset_import: [ "" : 19]>
+                pad (float[1, 1, 2, 2] data, int64[8] pads)
+                    => (float[N, C, H, W] output)
+                {
+                    output = Pad <mode = "reflect"> (data, pads)
+                }
+            """,
+        )
+
+    def test_pad_19_to_18_wrap_fails(self) -> None:
+        self._test_model_conversion_fails(
+            to_opset=18,
+            model="""
+                <ir_version: 9, opset_import: [ "" : 19]>
+                pad (float[1, 1, 2, 2] data, int64[8] pads)
+                    => (float[N, C, H, W] output)
+                {
+                    output = Pad <mode = "wrap"> (data, pads)
+                }
+            """,
+        )
+
+    def test_pad_13_to_12(self) -> None:
+        self._test_model_conversion(
+            to_opset=12,
+            model="""
+                <ir_version: 7, opset_import: [ "" : 13]>
+                pad (float[1, 1, 2, 2] data, int64[8] pads)
+                    => (float[N, C, H, W] output)
+                {
+                    output = Pad (data, pads)
+                }
+            """,
+        )
+
+    @pytest.mark.parametrize(
+        "tensor_type",
+        ["bfloat16", "bool", "complex64", "complex128", "string"],
+    )
+    def test_pad_13_to_12_unsupported_type_fails(self, tensor_type: str) -> None:
+        self._test_model_conversion_fails(
+            to_opset=12,
+            model=f"""
+                <ir_version: 7, opset_import: [ "" : 13]>
+                pad ({tensor_type}[1, 1, 2, 2] data, int64[8] pads)
+                    => ({tensor_type}[N, C, H, W] output)
+                {{
+                    output = Pad (data, pads)
+                }}
+            """,
+        )
+
     def test_dft20_no_axis(self) -> None:
         self._test_model_conversion(
             to_opset=19,
