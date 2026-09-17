@@ -5404,6 +5404,33 @@ class TestShapeInference(TestShapeInferenceHelper):
             ],
         )
 
+    def test_split_num_outputs_lt_number_of_named_outputs(self) -> None:
+        # More declared outputs than 'num_outputs' is invalid.
+        graph = self._make_graph(
+            [("x", TensorProto.FLOAT, (10,))],
+            [make_node("Split", ["x"], ["y", "z", "a", "b", "c"], num_outputs=2)],
+            [],
+        )
+        with pytest.raises(onnx.shape_inference.InferenceError):
+            self._inferred(graph)
+
+    def test_split_num_outputs_omitted_trailing_outputs(self) -> None:
+        # Fewer declared outputs than 'num_outputs' is allowed: by ONNX
+        # convention trailing outputs may be omitted. The inferred shapes
+        # correspond to the leading chunks of the 'num_outputs' split.
+        graph = self._make_graph(
+            [("x", TensorProto.FLOAT, (10,))],
+            [make_node("Split", ["x"], ["y", "z"], num_outputs=3)],
+            [],
+        )
+        self._assert_inferred(
+            graph,
+            [
+                make_tensor_value_info("y", TensorProto.FLOAT, (4,)),
+                make_tensor_value_info("z", TensorProto.FLOAT, (4,)),
+            ],
+        )
+
     def test_GLU_partial(self) -> None:
         graph = self._make_graph(
             [("x", TensorProto.FLOAT, (5, 6, 7))],
@@ -9044,10 +9071,12 @@ class TestShapeInference(TestShapeInferenceHelper):
                 opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
             )
 
-    def test_split_to_sequence_keepdims(self) -> None:
+    @pytest.mark.parametrize("inputs", [["input"], ["input", ""]])
+    @pytest.mark.parametrize("version", all_versions_for("SplitToSequence"))
+    def test_split_to_sequence_keepdims(self, inputs: list[str], version: int) -> None:
         graph = self._make_graph(
             [("input", TensorProto.FLOAT, (6, 4))],
-            [make_node("SplitToSequence", ["input"], ["output_sequence"], keepdims=1)],
+            [make_node("SplitToSequence", inputs, ["output_sequence"], keepdims=1)],
             [],
         )
         self._assert_inferred(
@@ -9057,12 +9086,17 @@ class TestShapeInference(TestShapeInferenceHelper):
                     "output_sequence", TensorProto.FLOAT, (1, 4)
                 )
             ],
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
         )
 
-    def test_split_to_sequence_not_keepdims(self) -> None:
+    @pytest.mark.parametrize("inputs", [["input"], ["input", ""]])
+    @pytest.mark.parametrize("version", all_versions_for("SplitToSequence"))
+    def test_split_to_sequence_not_keepdims(
+        self, inputs: list[str], version: int
+    ) -> None:
         graph = self._make_graph(
             [("input", TensorProto.FLOAT, (6, 4))],
-            [make_node("SplitToSequence", ["input"], ["output_sequence"], keepdims=0)],
+            [make_node("SplitToSequence", inputs, ["output_sequence"], keepdims=0)],
             [],
         )
         self._assert_inferred(
@@ -9072,6 +9106,7 @@ class TestShapeInference(TestShapeInferenceHelper):
                     "output_sequence", TensorProto.FLOAT, (4,)
                 )
             ],
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
         )
 
     def test_split_to_sequence_ignore_keepdims(self) -> None:
