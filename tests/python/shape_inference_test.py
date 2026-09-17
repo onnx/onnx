@@ -5404,6 +5404,33 @@ class TestShapeInference(TestShapeInferenceHelper):
             ],
         )
 
+    def test_split_num_outputs_lt_number_of_named_outputs(self) -> None:
+        # More declared outputs than 'num_outputs' is invalid.
+        graph = self._make_graph(
+            [("x", TensorProto.FLOAT, (10,))],
+            [make_node("Split", ["x"], ["y", "z", "a", "b", "c"], num_outputs=2)],
+            [],
+        )
+        with pytest.raises(onnx.shape_inference.InferenceError):
+            self._inferred(graph)
+
+    def test_split_num_outputs_omitted_trailing_outputs(self) -> None:
+        # Fewer declared outputs than 'num_outputs' is allowed: by ONNX
+        # convention trailing outputs may be omitted. The inferred shapes
+        # correspond to the leading chunks of the 'num_outputs' split.
+        graph = self._make_graph(
+            [("x", TensorProto.FLOAT, (10,))],
+            [make_node("Split", ["x"], ["y", "z"], num_outputs=3)],
+            [],
+        )
+        self._assert_inferred(
+            graph,
+            [
+                make_tensor_value_info("y", TensorProto.FLOAT, (4,)),
+                make_tensor_value_info("z", TensorProto.FLOAT, (4,)),
+            ],
+        )
+
     def test_GLU_partial(self) -> None:
         graph = self._make_graph(
             [("x", TensorProto.FLOAT, (5, 6, 7))],

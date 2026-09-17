@@ -701,6 +701,14 @@ ONNX_OPERATOR_SET_SCHEMA(
               if (num_outputs < 1) {
                 fail_shape_inference("Attribute `num_outputs` value cannot be lower than 1");
               }
+              if (num_outputs < static_cast<int64_t>(ctx.getNumOutputs())) {
+                fail_shape_inference(
+                    "The 'num_outputs' attribute (",
+                    num_outputs,
+                    ") must be greater or equal to the number outputs of the 'Split' node (",
+                    ctx.getNumOutputs(),
+                    ")");
+              }
               if (split_dim_value % num_outputs == 0) { // tensor is evenly splittable
                 int chunk_size = split_dim_value / num_outputs;
                 split.resize(num_outputs, chunk_size);
