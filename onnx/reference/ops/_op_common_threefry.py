@@ -41,8 +41,8 @@ def _threefry2x32_words(
     key0: int, key1: int, count0: np.ndarray, count1: np.ndarray
 ) -> tuple[np.ndarray, np.ndarray]:
     keys = (key0, key1, key0 ^ key1 ^ _KEY_PARITY)
-    value0 = (np.asarray(count0, dtype=np.int64) + keys[0]) & _UINT32_MASK
-    value1 = (np.asarray(count1, dtype=np.int64) + keys[1]) & _UINT32_MASK
+    value0 = (count0 + keys[0]) & _UINT32_MASK
+    value1 = (count1 + keys[1]) & _UINT32_MASK
 
     for injection in range(5):
         for rotation in _ROTATIONS[injection % 2]:
