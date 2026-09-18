@@ -119,3 +119,12 @@ class TestFunctionInference(TestShapeInferenceHelper):
 
         # A failing test-case with a non-trailing missing optional parameter
         self._check_fails(code, [float_type_, no_type_, int8_type_], [])
+
+    def test_fi_unsupported_op(self):
+        code = """
+            <opset_import: [ "" : 26, "unknown" : 1 ], domain: "local">
+            Unsupported (x) => (y) {
+                y = unknown.Op (x)
+            }
+        """
+        self._check(code, [float_type_], [], [no_type_])
