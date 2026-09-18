@@ -341,6 +341,8 @@ class TestBasicFunctions:
             ("uint32", TensorProto.UINT32),
             ("uint64", TensorProto.UINT64),
             ("float4e2m1", TensorProto.FLOAT4E2M1),
+            ("float6e2m3", TensorProto.FLOAT6E2M3),
+            ("float6e3m2", TensorProto.FLOAT6E3M2),
         ],
     )
     def test_parse_graph_types(self, name, itype) -> None:

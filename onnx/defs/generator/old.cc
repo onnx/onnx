@@ -591,13 +591,11 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint("T", OpSchema::all_tensor_types(), "Constrain input and output types to all tensor types.")
         .TypeAndShapeInferenceFunction(ConstantOpInference));
 
-static constexpr const char* Constant_ver1_doc = R"DOC(A constant tensor.)DOC";
-
 ONNX_OPERATOR_SET_SCHEMA(
     Constant,
     1,
     OpSchema()
-        .SetDoc(Constant_ver1_doc)
+        .SetDoc(kDoc_Constant_ver1)
         .Attr("value", "The value for the elements of the output tensor.", AttributeProto::TENSOR)
         .Output(0, "output", "Output tensor containing the same value of the provided tensor.", "T")
         .TypeConstraint(
@@ -615,13 +613,11 @@ ONNX_OPERATOR_SET_SCHEMA(
           updateOutputShape(ctx, 0, tensor_proto);
         }));
 
-static const char* const Constant_ver9_doc = Constant_ver1_doc;
-
 ONNX_OPERATOR_SET_SCHEMA(
     Constant,
     9,
     OpSchema()
-        .SetDoc(Constant_ver9_doc)
+        .SetDoc(kDoc_Constant_ver1)
         .Attr("value", "The value for the elements of the output tensor.", AttributeProto::TENSOR)
         .Output(0, "output", "Output tensor containing the same value of the provided tensor.", "T")
         .TypeConstraint("T", OpSchema::all_tensor_types(), "Constrain input and output types to all tensor types.")
@@ -634,16 +630,11 @@ ONNX_OPERATOR_SET_SCHEMA(
           updateOutputShape(ctx, 0, tensor_proto);
         }));
 
-static constexpr const char* Constant_ver11_doc = R"DOC(
-A constant tensor. Exactly one of the two attributes, either value or sparse_value,
-must be specified.
-)DOC";
-
 ONNX_OPERATOR_SET_SCHEMA(
     Constant,
     11,
     OpSchema()
-        .SetDoc(Constant_ver11_doc)
+        .SetDoc(kDoc_Constant_ver11)
         .Attr("value", "The value for the elements of the output tensor.", AttributeProto::TENSOR, false)
         .Attr(
             "sparse_value",

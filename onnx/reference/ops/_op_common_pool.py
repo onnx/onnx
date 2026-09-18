@@ -10,20 +10,25 @@ import numpy as np
 from onnx.reference.op_run import OpRun
 from onnx.reference.ops._op_common_indices import _get_index, _get_indices
 
+_NUM_2D_PADS = 4
+
 
 def _get_pad_shape(
     auto_pad: str,
-    input_spatial_shape: tuple[int],
-    kernel_spatial_shape: tuple[int],
-    strides_spatial: tuple[int],
-    output_spatial_shape: tuple[int],
-) -> tuple[int]:
+    input_spatial_shape: tuple[int, ...],
+    kernel_spatial_shape: tuple[int, ...],
+    strides_spatial: tuple[int, ...],
+    output_spatial_shape: tuple[int, ...],
+    dilations_spatial: tuple[int, ...] | None = None,
+) -> tuple[int, ...]:
     pad_shape = [0] * len(input_spatial_shape)
+    dilations_spatial = dilations_spatial or (1,) * len(input_spatial_shape)
     if auto_pad in ("SAME_UPPER", "SAME_LOWER"):
         for i in range(len(input_spatial_shape)):
             pad_shape[i] = (
                 (output_spatial_shape[i] - 1) * strides_spatial[i]
-                + kernel_spatial_shape[i]
+                + (kernel_spatial_shape[i] - 1) * dilations_spatial[i]
+                + 1
                 - input_spatial_shape[i]
             )
     elif auto_pad == "VALID":
@@ -40,10 +45,11 @@ def _get_pad_shape(
 
 def _get_output_shape_no_ceil(
     auto_pad: str,
-    input_spatial_shape: tuple[int],
-    kernel_spatial_shape: tuple[int],
-    strides_spatial: tuple[int],
-) -> tuple[int]:
+    input_spatial_shape: tuple[int, ...],
+    kernel_spatial_shape: tuple[int, ...],
+    strides_spatial: tuple[int, ...],
+    dilations_spatial: tuple[int, ...] | None = None,
+) -> tuple[int, ...]:
     out_shape = [0] * len(input_spatial_shape)
     if auto_pad in ("SAME_UPPER", "SAME_LOWER"):
         for i in range(len(input_spatial_shape)):
@@ -52,9 +58,11 @@ def _get_output_shape_no_ceil(
             )
     elif auto_pad == "VALID":
         for i in range(len(input_spatial_shape)):
+            dilation = dilations_spatial[i] if dilations_spatial else 1
+            effective_kernel = dilation * (kernel_spatial_shape[i] - 1) + 1
             out_shape[i] = int(
                 np.ceil(
-                    float(input_spatial_shape[i] - (kernel_spatial_shape[i] - 1))
+                    float(input_spatial_shape[i] - effective_kernel + 1)
                     / float(strides_spatial[i])
                 )
             )
@@ -63,15 +71,20 @@ def _get_output_shape_no_ceil(
 
 def _get_output_shape(
     auto_pad: str,
-    input_spatial_shape: tuple[int],
-    kernel_spatial_shape: tuple[int],
-    strides_spatial: tuple[int],
-    pad_shape: tuple[int] | None = None,
+    input_spatial_shape: tuple[int, ...],
+    kernel_spatial_shape: tuple[int, ...],
+    strides_spatial: tuple[int, ...],
+    pad_shape: tuple[int, ...] | None = None,
     ceil_mode: int | None = 0,
-) -> tuple[int]:
+    dilations_spatial: tuple[int, ...] | None = None,
+) -> tuple[int, ...]:
     if not ceil_mode:
         out_shape = _get_output_shape_no_ceil(
-            auto_pad, input_spatial_shape, kernel_spatial_shape, strides_spatial
+            auto_pad,
+            input_spatial_shape,
+            kernel_spatial_shape,
+            strides_spatial,
+            dilations_spatial,
         )
     else:
         round_fct = np.ceil if ceil_mode else np.floor
@@ -88,13 +101,11 @@ def _get_output_shape(
                     "'VALID' and ceil_mode is 1."
                 )
             for i in range(len(input_spatial_shape)):
+                dilation = dilations_spatial[i] if dilations_spatial else 1
+                effective_kernel = dilation * (kernel_spatial_shape[i] - 1) + 1
                 out_shape[i] = int(
                     round_fct(
-                        float(
-                            input_spatial_shape[i]
-                            + pad_shape[i]
-                            - kernel_spatial_shape[i]
-                        )
+                        float(input_spatial_shape[i] + pad_shape[i] - effective_kernel)
                         / float(strides_spatial[i])
                         + 1
                     )
@@ -226,7 +237,7 @@ class CommonPool(OpRun):
             pad_shape = [0] * (len(x.shape) - 2)
             x_shape = x.shape[2:]
             padded = x
-        elif len(pads) == 4:
+        elif len(pads) == _NUM_2D_PADS:
             pad_top, pad_bottom, pad_left, pad_right = pads
             pad_shape = [pad_top + pad_bottom, pad_left + pad_right]
             x_shape = np.array(x.shape[2:]) + np.array(pad_shape)
@@ -251,9 +262,10 @@ class CommonPool(OpRun):
                 strides,
                 pad_shape,
                 ceil_mode,
+                dilations,
             )
             pad_shape = _get_pad_shape(
-                auto_pad, x_shape, kernel_shape, strides, out_shape
+                auto_pad, x_shape, kernel_shape, strides, out_shape, dilations
             )
             if auto_pad == "SAME_LOWER":
                 pad_bottom = pad_shape[0] // 2
@@ -279,6 +291,7 @@ class CommonPool(OpRun):
                 strides,
                 pad_shape,
                 ceil_mode,
+                dilations,
             )
 
         n_dims = len(pads) // 2

@@ -7,22 +7,19 @@
 #include <vector>
 
 #include "onnx/common/safe_math.h"
+#include "onnx/defs/doc_strings.h"
 #include "onnx/defs/schema.h"
 #include "onnx/defs/traditionalml/utils.h"
 #include "onnx/defs/type_builders.h"
 
 #ifdef ONNX_ML
 namespace ONNX_NAMESPACE {
-static constexpr const char* ArrayFeatureExtractor_ver1_doc = R"DOC(
-    Select elements of the input tensor based on the indices passed.<br>
-    The indices are applied to the last axes of the tensor.
-)DOC";
 
 ONNX_ML_OPERATOR_SET_SCHEMA(
     ArrayFeatureExtractor,
     1,
     OpSchema()
-        .SetDoc(ArrayFeatureExtractor_ver1_doc)
+        .SetDoc(kDoc_ArrayFeatureExtractor_ver1)
         .Input(0, "X", "Data to be selected", "T")
         .Input(1, "Y", "The indices, based on 0 as the first index of any dimension.", "tensor(int64)")
         .Output(0, "Z", "Selected output data as an array", "T")
@@ -80,15 +77,11 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
             {types::Float, types::Double, types::Int64, types::Int32, types::String},
             "The input must be a tensor of a numeric type or string. The output will be of the same tensor type."));
 
-static constexpr const char* Binarizer_ver1_doc = R"DOC(
-    Maps the values of the input tensor to either 0 or 1, element-wise, based on the outcome of a comparison against a threshold value.
-)DOC";
-
 ONNX_ML_OPERATOR_SET_SCHEMA(
     Binarizer,
     1,
     OpSchema()
-        .SetDoc(Binarizer_ver1_doc)
+        .SetDoc(kDoc_Binarizer_ver1)
         .Input(0, "X", "Data to be binarized", "T")
         .Output(0, "Y", "Binarized output data", "T")
         .TypeConstraint(
@@ -98,17 +91,11 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
         .Attr("threshold", "Values greater than this are mapped to 1, others to 0.", AttributeProto::FLOAT, 0.f)
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) { propagateShapeAndTypeFromFirstInput(ctx); }));
 
-static constexpr const char* CastMap_ver1_doc = R"DOC(
-    Converts a map to a tensor.<br>The map key must be an int64 and the values will be ordered
-    in ascending order based on this key.<br>The operator supports dense packing or sparse packing.
-    If using sparse packing, the key cannot exceed the max_map-1 value.
-)DOC";
-
 ONNX_ML_OPERATOR_SET_SCHEMA(
     CastMap,
     1,
     OpSchema()
-        .SetDoc(CastMap_ver1_doc)
+        .SetDoc(kDoc_CastMap_ver1)
         .Input(0, "X", "The input map that is to be cast to a tensor", "T1")
         .Output(0, "Y", "A tensor representing the same data as the input map, ordered by their keys", "T2")
         .TypeConstraint(
@@ -153,22 +140,11 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static constexpr const char* CategoryMapper_ver1_doc = R"DOC(
-    Converts strings to integers and vice versa.<br>
-    Two sequences of equal length are used to map between integers and strings,
-    with strings and integers at the same index detailing the mapping.<br>
-    Each operator converts either integers to strings or strings to integers, depending
-    on which default value attribute is provided. Only one default value attribute
-    should be defined.<br>
-    If the string default value is set, it will convert integers to strings.
-    If the int default value is set, it will convert strings to integers.
-)DOC";
-
 ONNX_ML_OPERATOR_SET_SCHEMA(
     CategoryMapper,
     1,
     OpSchema()
-        .SetDoc(CategoryMapper_ver1_doc)
+        .SetDoc(kDoc_CategoryMapper_ver1)
         .Input(0, "X", "Input data", "T1")
         .Output(0, "Y", "Output data. If strings are input, the output values are integers, and vice versa.", "T2")
         .TypeConstraint(
@@ -227,25 +203,11 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static constexpr const char* DictVectorizer_ver1_doc = R"DOC(
-    Uses an index mapping to convert a dictionary to an array.<br>
-    Given a dictionary, each key is looked up in the vocabulary attribute corresponding to
-    the key type. The index into the vocabulary array at which the key is found is then
-    used to index the output 1-D tensor 'Y' and insert into it the value found in the dictionary 'X'.<br>
-    The key type of the input map must correspond to the element type of the defined vocabulary attribute.
-    Therefore, the output array will be equal in length to the index mapping vector parameter.
-    All keys in the input dictionary must be present in the index mapping vector.
-    For each item in the input dictionary, insert its value in the output array.
-    Any keys not present in the input dictionary, will be zero in the output array.<br>
-    For example: if the ``string_vocabulary`` parameter is set to ``["a", "c", "b", "z"]``,
-    then an input of ``{"a": 4, "c": 8}`` will produce an output of ``[4, 8, 0, 0]``.
-    )DOC";
-
 ONNX_ML_OPERATOR_SET_SCHEMA(
     DictVectorizer,
     1,
     OpSchema()
-        .SetDoc(DictVectorizer_ver1_doc)
+        .SetDoc(kDoc_DictVectorizer_ver1)
         .Input(0, "X", "A dictionary.", "T1")
         .Output(0, "Y", "A 1-D tensor holding values from the input dictionary.", "T2")
         .TypeConstraint(
@@ -279,18 +241,11 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
           output_elem_type->set_elem_type(input_elem_type);
         }));
 
-static constexpr const char* FeatureVectorizer_ver1_doc = R"DOC(
-    Concatenates input tensors into one continuous output.<br>
-    All input shapes are 2-D and are concatenated along the second dimension. 1-D tensors are treated as [1,C].
-    Inputs are copied to the output maintaining the order of the input arguments.<br>
-    All inputs must be integers or floats, while the output will be all floating point values.
-)DOC";
-
 ONNX_ML_OPERATOR_SET_SCHEMA(
     FeatureVectorizer,
     1,
     OpSchema()
-        .SetDoc(FeatureVectorizer_ver1_doc)
+        .SetDoc(kDoc_FeatureVectorizer_ver1)
         .Input(0, "X", "An ordered collection of tensors, all with the same element type.", "T1", OpSchema::Variadic)
         .Output(0, "Y", "The output array, elements ordered as the inputs.", "tensor(float)")
         .TypeConstraint(
@@ -299,22 +254,11 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
             "The input type must be a tensor of a numeric type.")
         .Attr("inputdimensions", "The size of each input in the input list", AttributeProto::INTS, OPTIONAL_VALUE));
 
-static constexpr const char* Imputer_ver1_doc = R"DOC(
-    Replaces inputs that equal one value with another, leaving all other elements alone.<br>
-    This operator is typically used to replace missing values in situations where they have a canonical
-    representation, such as -1, 0, NaN, or some extreme value.<br>
-    One and only one of imputed_value_floats or imputed_value_int64s should be defined -- floats if the input tensor
-    holds floats, integers if the input tensor holds integers. The imputed values must all fit within the
-    width of the tensor element type. One and only one of the replaced_value_float or replaced_value_int64 should be defined,
-    which one depends on whether floats or integers are being processed.<br>
-    The imputed_value attribute length can be 1 element, or it can have one element per input feature.<br>In other words, if the input tensor has the shape [*,F], then the length of the attribute array may be 1 or F. If it is 1, then it is broadcast along the last dimension and applied to each feature.
-)DOC";
-
 ONNX_ML_OPERATOR_SET_SCHEMA(
     Imputer,
     1,
     OpSchema()
-        .SetDoc(Imputer_ver1_doc)
+        .SetDoc(kDoc_Imputer_ver1)
         .Input(0, "X", "Data to be processed.", "T")
         .Output(0, "Y", "Imputed output data", "T")
         .TypeConstraint(
@@ -327,33 +271,11 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
         .Attr("imputed_value_int64s", "Value(s) to change to.", AttributeProto::INTS, OPTIONAL_VALUE)
         .Attr("replaced_value_int64", "A value that needs replacing.", AttributeProto::INT, static_cast<int64_t>(0)));
 
-static constexpr const char* LabelEncoder_ver4_doc = R"DOC(
-    Maps each element in the input tensor to another value.<br>
-    The mapping is determined by the two parallel attributes, 'keys_*' and
-    'values_*' attribute. The i-th value in the specified 'keys_*' attribute
-    would be mapped to the i-th value in the specified 'values_*' attribute. It
-    implies that input's element type and the element type of the specified
-    'keys_*' should be identical while the output type is identical to the
-    specified 'values_*' attribute. Note that the 'keys_*' and 'values_*' attributes
-    must have the same length. If an input element can not be found in the
-    specified 'keys_*' attribute, the 'default_*' that matches the specified
-    'values_*' attribute may be used as its output value. The type of the 'default_*'
-    attribute must match the 'values_*' attribute chosen. <br>
-    Let's consider an example which maps a string tensor to an integer tensor.
-    Assume and 'keys_strings' is ["Amy", "Sally"], 'values_int64s' is [5, 6],
-    and 'default_int64' is '-1'.  The input ["Dori", "Amy", "Amy", "Sally",
-    "Sally"] would be mapped to [-1, 5, 5, 6, 6].<br>
-    Since this operator is an one-to-one mapping, its input and output shapes
-    are the same. Notice that only one of 'keys_*'/'values_*' can be set.<br>
-    Float keys with value 'NaN' match any input 'NaN' value regardless of bit
-    value. If a key is repeated, the last key takes precedence.
-)DOC";
-
 ONNX_ML_OPERATOR_SET_SCHEMA(
     LabelEncoder,
     4,
     OpSchema()
-        .SetDoc(LabelEncoder_ver4_doc)
+        .SetDoc(kDoc_LabelEncoder_ver4)
         .Input(0, "X", "Input data. It must have the same element type as the keys_* attribute set.", "T1")
         .Output(0, "Y", "Output data. This tensor's element type is based on the values_* attribute set.", "T2")
         .TypeConstraint(
@@ -440,15 +362,11 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
           propagateShapeFromInputToOutput(ctx, 0, 0);
         }));
 
-static constexpr const char* LinearClassifier_ver1_doc = R"DOC(
-    Linear classifier
-)DOC";
-
 ONNX_ML_OPERATOR_SET_SCHEMA(
     LinearClassifier,
     1,
     OpSchema()
-        .SetDoc(LinearClassifier_ver1_doc)
+        .SetDoc(kDoc_LinearClassifier_ver1)
         .Input(0, "X", "Data to be classified.", "T1")
         .Output(0, "Y", "Classification outputs (one class per example).", "T2")
         .Output(1, "Z", "Classification scores ([N,E] - one score for each class and example", "tensor(float)")
@@ -534,20 +452,11 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
           updateOutputShape(ctx, 1, {batch_size_dim, class_count_dim});
         }));
 
-static constexpr const char* LinearRegressor_ver1_doc = R"DOC(
-    Generalized linear regression evaluation.<br>
-    If targets is set to 1 (default) then univariate regression is performed.<br>
-    If targets is set to M then M sets of coefficients must be passed in as a sequence
-    and M results will be output for each input n in N.<br>
-    The coefficients array is of length n, and the coefficients for each target are contiguous.
-    Intercepts are optional but if provided must match the number of targets.
-)DOC";
-
 ONNX_ML_OPERATOR_SET_SCHEMA(
     LinearRegressor,
     1,
     OpSchema()
-        .SetDoc(LinearRegressor_ver1_doc)
+        .SetDoc(kDoc_LinearRegressor_ver1)
         .Input(0, "X", "Data to be regressed.", "T")
         .Output(0, "Y", "Regression outputs (one per target, per example).", "tensor(float)")
         .TypeConstraint(
@@ -568,24 +477,11 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
             AttributeProto::INT,
             static_cast<int64_t>(1)));
 
-static constexpr const char* Normalizer_ver1_doc = R"DOC(
-    Normalize the input.  There are three normalization modes, which have the corresponding formulas,
-    defined using element-wise infix operators '/' and '^' and tensor-wide functions 'max' and 'sum':<br>
-<br>
-    Max: Y = X / max(X)<br>
-    L1:  Y = X / sum(X)<br>
-    L2:  Y = sqrt(X^2 / sum(X^2)}<br>
-    In all modes, if the divisor is zero, Y == X.
-<br>
-    For batches, that is, [N,C] tensors, normalization is done along the C axis. In other words, each row
-    of the batch is normalized independently.
-)DOC";
-
 ONNX_ML_OPERATOR_SET_SCHEMA(
     Normalizer,
     1,
     OpSchema()
-        .SetDoc(Normalizer_ver1_doc)
+        .SetDoc(kDoc_Normalizer_ver1)
         .Input(0, "X", "Data to be encoded, a tensor of shape [N,C] or [C]", "T")
         .Output(0, "Y", "Encoded output data", "tensor(float)")
         .TypeConstraint(
@@ -594,22 +490,11 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
             "The input must be a tensor of a numeric type.")
         .Attr("norm", "One of 'MAX,' 'L1,' 'L2'", AttributeProto::STRING, std::string("MAX")));
 
-static constexpr const char* OneHotEncoder_ver1_doc = R"DOC(
-    Replace each input element with an array of ones and zeros, where a single
-    one is placed at the index of the category that was passed in. The total category count
-    will determine the size of the extra dimension of the output array Y.<br>
-    For example, if we pass a tensor with a single value of 4, and a category count of 8,
-    the output will be a tensor with ``[0,0,0,0,1,0,0,0]``.<br>
-    This operator assumes every input feature is from the same set of categories.<br>
-    If the input is a tensor of float, int32, or double, the data will be cast
-    to integers and the cats_int64s category list will be used for the lookups.
-)DOC";
-
 ONNX_ML_OPERATOR_SET_SCHEMA(
     OneHotEncoder,
     1,
     OpSchema()
-        .SetDoc(OneHotEncoder_ver1_doc)
+        .SetDoc(kDoc_OneHotEncoder_ver1)
         .Input(0, "X", "Data to be encoded.", "T")
         .Output(0, "Y", "Encoded output data, having one more dimension than X.", "tensor(float)")
         .TypeConstraint(
@@ -653,15 +538,11 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
           updateOutputElemType(ctx, 0, TensorProto::FLOAT);
         }));
 
-static constexpr const char* Scaler_ver1_doc = R"DOC(
-    Rescale input data, for example to standardize features by removing the mean and scaling to unit variance.
-)DOC";
-
 ONNX_ML_OPERATOR_SET_SCHEMA(
     Scaler,
     1,
     OpSchema()
-        .SetDoc(Scaler_ver1_doc)
+        .SetDoc(kDoc_Scaler_ver1)
         .Input(0, "X", "Data to be scaled.", "T")
         .Output(0, "Y", "Scaled output data.", "tensor(float)")
         .TypeConstraint(
@@ -681,15 +562,11 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
             AttributeProto::FLOATS,
             OPTIONAL_VALUE));
 
-static constexpr const char* SVMClassifier_ver1_doc = R"DOC(
-    Support Vector Machine classifier
-)DOC";
-
 ONNX_ML_OPERATOR_SET_SCHEMA(
     SVMClassifier,
     1,
     OpSchema()
-        .SetDoc(SVMClassifier_ver1_doc)
+        .SetDoc(kDoc_SVMClassifier_ver1)
         .Input(0, "X", "Data to be classified.", "T1")
         .Output(0, "Y", "Classification outputs (one class per example).", "T2")
         .Output(
@@ -758,15 +635,11 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static constexpr const char* SVMRegressor_ver1_doc = R"DOC(
-    Support Vector Machine regression prediction and one-class SVM anomaly detection.
-)DOC";
-
 ONNX_ML_OPERATOR_SET_SCHEMA(
     SVMRegressor,
     1,
     OpSchema()
-        .SetDoc(SVMRegressor_ver1_doc)
+        .SetDoc(kDoc_SVMRegressor_ver1)
         .Input(0, "X", "Data to be regressed.", "T")
         .Output(0, "Y", "Regression outputs (one score per target per example).", "tensor(float)")
         .TypeConstraint(
@@ -799,29 +672,12 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
             std::string("NONE"))
         .Attr("rho", "", AttributeProto::FLOATS, OPTIONAL_VALUE));
 
-static constexpr const char* TreeEnsembleClassifier_ver5_doc = R"DOC(
-    This operator is DEPRECATED. Please use TreeEnsemble with provides similar functionality.
-    In order to determine the top class, the ArgMax node can be applied to the output of TreeEnsemble.
-    To encode class labels, use a LabelEncoder operator.
-    Tree Ensemble classifier. Returns the top class for each of N inputs.<br>
-    The attributes named 'nodes_X' form a sequence of tuples, associated by
-    index into the sequences, which must all be of equal length. These tuples
-    define the nodes.<br>
-    Similarly, all fields prefixed with 'class_' are tuples of votes at the leaves.
-    A leaf may have multiple votes, where each vote is weighted by
-    the associated class_weights index.<br>
-    One and only one of classlabels_strings or classlabels_int64s
-    will be defined. The class_ids are indices into this list.
-    All fields ending with <i>_as_tensor</i> can be used instead of the
-    same parameter without the suffix if the element type is double and not float.
-)DOC";
-
 ONNX_ML_OPERATOR_SET_SCHEMA(
     TreeEnsembleClassifier,
     5,
     OpSchema()
         .Deprecate()
-        .SetDoc(TreeEnsembleClassifier_ver5_doc)
+        .SetDoc(kDoc_TreeEnsembleClassifier_ver5)
         .Input(0, "X", "Input of shape [N,F]", "T1")
         .Output(0, "Y", "N, Top class for each point", "T2")
         .Output(1, "Z", "The class score for each class, for each point, a tensor of shape [N,E].", "tensor(float)")
@@ -916,29 +772,12 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
             AttributeProto::TENSOR,
             OPTIONAL_VALUE));
 
-static constexpr const char* TreeEnsembleRegressor_ver5_doc = R"DOC(
-    This operator is DEPRECATED. Please use TreeEnsemble instead which provides the same
-    functionality.<br>
-    Tree Ensemble regressor.  Returns the regressed values for each input in N.<br>
-    All args with nodes_ are fields of a tuple of tree nodes, and
-    it is assumed they are the same length, and an index i will decode the
-    tuple across these inputs.  Each node id can appear only once
-    for each tree id.<br>
-    All fields prefixed with target_ are tuples of votes at the leaves.<br>
-    A leaf may have multiple votes, where each vote is weighted by
-    the associated target_weights index.<br>
-    All fields ending with <i>_as_tensor</i> can be used instead of the
-    same parameter without the suffix if the element type is double and not float.
-    All trees must have their node ids start at 0 and increment by 1.<br>
-    Mode enum is BRANCH_LEQ, BRANCH_LT, BRANCH_GTE, BRANCH_GT, BRANCH_EQ, BRANCH_NEQ, LEAF
-)DOC";
-
 ONNX_ML_OPERATOR_SET_SCHEMA(
     TreeEnsembleRegressor,
     5,
     OpSchema()
         .Deprecate()
-        .SetDoc(TreeEnsembleRegressor_ver5_doc)
+        .SetDoc(kDoc_TreeEnsembleRegressor_ver5)
         .Input(0, "X", "Input of shape [N,F]", "T")
         .Output(0, "Y", "N classes", "tensor(float)")
         .TypeConstraint(
@@ -1017,27 +856,11 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
             AttributeProto::TENSOR,
             OPTIONAL_VALUE));
 
-static constexpr const char* TreeEnsemble_ver5_doc = R"DOC(
-    Tree Ensemble operator.  Returns the regressed values for each input in a batch.
-    Inputs have dimensions `[N, F]` where `N` is the input batch size and `F` is the number of input features.
-    Outputs have dimensions `[N, num_targets]` where `N` is the batch size and `num_targets` is the number of targets, which is a configurable attribute.
-
-    The encoding of this attribute is split along interior nodes and the leaves of the trees. Notably, attributes with the prefix `nodes_*` are associated with interior nodes, and attributes with the prefix `leaf_*` are associated with leaves.
-    The attributes `nodes_*` must all have the same length and encode a sequence of tuples, as defined by taking all the `nodes_*` fields at a given position.
-
-    All fields prefixed with `leaf_*` represent tree leaves, and similarly define tuples of leaves and must have identical length.
-
-    This operator can be used to implement both the previous `TreeEnsembleRegressor` and `TreeEnsembleClassifier` nodes.
-    The `TreeEnsembleRegressor` node maps directly to this node and requires changing how the nodes are represented.
-    The `TreeEnsembleClassifier` node can be implemented by adding a `ArgMax` node after this node to determine the top class.
-    To encode class labels, a `LabelEncoder` or `GatherND` operator may be used.
-)DOC";
-
 ONNX_ML_OPERATOR_SET_SCHEMA(
     TreeEnsemble,
     5,
     OpSchema()
-        .SetDoc(TreeEnsemble_ver5_doc)
+        .SetDoc(kDoc_TreeEnsemble_ver5)
         .Input(0, "X", "Input of shape [Batch Size, Number of Features]", "T")
         .Output(0, "Y", "Output of shape [Batch Size, Number of targets]", "T")
         .TypeConstraint(
@@ -1222,18 +1045,11 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
           updateOutputShape(ctx, 0, {N, E});
         }));
 
-static constexpr const char* ZipMap_ver1_doc = R"DOC(
-    Creates a map from the input and the attributes.<br>
-    The values are provided by the input tensor, while the keys are specified by the attributes.
-    Must provide keys in either classlabels_strings or classlabels_int64s (but not both).<br>
-    The columns of the tensor correspond one-by-one to the keys specified by the attributes. There must be as many columns as keys.<br>
-)DOC";
-
 ONNX_ML_OPERATOR_SET_SCHEMA(
     ZipMap,
     1,
     OpSchema()
-        .SetDoc(ZipMap_ver1_doc)
+        .SetDoc(kDoc_ZipMap_ver1)
         .Input(0, "X", "The input values", "tensor(float)")
         .Output(0, "Z", "The output map", "T")
         .TypeConstraint(

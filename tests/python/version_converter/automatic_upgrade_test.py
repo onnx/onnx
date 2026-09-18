@@ -7,6 +7,7 @@ from typing import ClassVar
 
 import automatic_conversion_test_base
 import numpy as np
+import pytest
 
 import onnx
 from onnx import TensorProto, helper
@@ -22,7 +23,9 @@ class TestAutomaticUpgrade(automatic_conversion_test_base.TestAutomaticConversio
 
     def _test_op_upgrade(self, op, *args, **kwargs):
         self.tested_ops.append(op)
-        self._test_op_conversion(op, *args, **kwargs, is_upgrade=True)
+        strict_check = kwargs.pop("strict_check", False)
+        mode = "strict_upgrade" if strict_check else "upgrade"
+        self._test_op_conversion(op, *args, **kwargs, mode=mode)
 
     def test_Abs(self) -> None:
         self._test_op_upgrade("Abs", 1, attrs={"consumed_inputs": [0]})
@@ -1108,6 +1111,37 @@ class TestAutomaticUpgrade(automatic_conversion_test_base.TestAutomaticConversio
     def test_ReduceLogSumExp(self) -> None:
         self._test_op_upgrade("ReduceLogSumExp", 1, [[3, 4, 5]], [[1, 1, 1]])
 
+    @pytest.mark.parametrize("op", ["ReduceLogSum", "ReduceLogSumExp"])
+    def test_reduce_log_sum_ops_float_with_axes_input_upgrade(self, op: str) -> None:
+        # The axes input is int64 even though T is float only from opset 28.
+        # Upgrading a valid float model must not be blocked by it.
+        self._test_model_conversion(
+            to_opset=onnx.defs.onnx_opset_version(),
+            model=f"""
+            <ir_version: 9, opset_import: [ "" : 18]>
+            g (float[3, 4, 5] data) => (float[1, 1, 1] reduced)
+            {{
+                axes = Constant <value = int64[3] {{0, 1, 2}}>()
+                reduced = {op} (data, axes)
+            }}
+        """,
+        )
+
+    @pytest.mark.parametrize("op", ["ReduceLogSum", "ReduceLogSumExp"])
+    def test_reduce_log_sum_ops_int_upgrade_fails(self, op: str) -> None:
+        # Integer support was removed in opset 28; upgrading an int model must fail.
+        self._test_model_conversion_fails(
+            to_opset=onnx.defs.onnx_opset_version(),
+            model=f"""
+            <ir_version: 9, opset_import: [ "" : 18]>
+            g (int64[3, 4, 5] data) => (int64[1, 1, 1] reduced)
+            {{
+                axes = Constant <value = int64[3] {{0, 1, 2}}>()
+                reduced = {op} (data, axes)
+            }}
+        """,
+        )
+
     def test_ReduceMean(self) -> None:
         self._test_op_upgrade("ReduceMean", 1, [[3, 4, 5]], [[1, 1, 1]])
 
@@ -1669,8 +1703,8 @@ class TestAutomaticUpgrade(automatic_conversion_test_base.TestAutomaticConversio
         signal = helper.make_tensor(
             "a",
             TensorProto.FLOAT,
-            dims=[2, 64],
-            vals=np.random.rand(2, 64).astype(np.float32),
+            dims=[2, 64, 1],
+            vals=np.random.rand(2, 64, 1).astype(np.float32),
         )
         frame_step = helper.make_tensor(
             "b", TensorProto.INT64, dims=[1], vals=np.array([8])
@@ -1681,8 +1715,8 @@ class TestAutomaticUpgrade(automatic_conversion_test_base.TestAutomaticConversio
         self._test_op_upgrade(
             operator_name,
             17,
-            [[2, 64], [1], [16]],
-            [[2, 7, 16, 2]],
+            [[2, 64, 1], [1], [16]],
+            [[2, 7, 9, 2]],
             [
                 TensorProto.FLOAT,
                 TensorProto.INT64,
@@ -1696,8 +1730,8 @@ class TestAutomaticUpgrade(automatic_conversion_test_base.TestAutomaticConversio
         signal = helper.make_tensor(
             "a",
             TensorProto.FLOAT,
-            dims=[2, 64],
-            vals=np.random.rand(2, 64).astype(np.float32),
+            dims=[2, 64, 1],
+            vals=np.random.rand(2, 64, 1).astype(np.float32),
         )
         frame_step = helper.make_tensor(
             "b", TensorProto.INT64, dims=[1], vals=np.array([8])
@@ -1708,7 +1742,7 @@ class TestAutomaticUpgrade(automatic_conversion_test_base.TestAutomaticConversio
         self._test_op_upgrade(
             operator_name,
             17,
-            [[2, 64], [1], [16]],
+            [[2, 64, 1], [1], [16]],
             [[2, 7, 9, 2]],
             [
                 TensorProto.FLOAT,
@@ -1744,10 +1778,11 @@ class TestAutomaticUpgrade(automatic_conversion_test_base.TestAutomaticConversio
                 TensorProto.FLOAT,
                 TensorProto.INT64,
             ],
+            attrs={"onesided": 0},
             initializer=[signal, frame_step, window],
         )
 
-        # Complex Onesided
+        # Complex with explicit frame length
         signal = helper.make_tensor(
             "a",
             TensorProto.FLOAT,
@@ -1761,20 +1796,20 @@ class TestAutomaticUpgrade(automatic_conversion_test_base.TestAutomaticConversio
             "c", TensorProto.FLOAT, dims=[16], vals=np.ones(16).astype(np.float32)
         )
         frame_length = helper.make_tensor(
-            "e", TensorProto.INT64, dims=[1], vals=np.array([16])
+            "d", TensorProto.INT64, dims=[], vals=np.array([16])
         )
         self._test_op_upgrade(
             operator_name,
             17,
-            [[2, 64, 2], [1], [16]],
-            [[2, 7, 9, 2]],
+            [[2, 64, 2], [1], [16], []],
+            [[2, 7, 16, 2]],
             [
                 TensorProto.FLOAT,
                 TensorProto.INT64,
                 TensorProto.FLOAT,
                 TensorProto.INT64,
             ],
-            attrs={"onesided": 1},
+            attrs={"onesided": 0},
             initializer=[signal, frame_step, window, frame_length],
         )
 
@@ -2099,6 +2134,141 @@ class TestAutomaticUpgrade(automatic_conversion_test_base.TestAutomaticConversio
             },
         )
 
+    def test_Optional_1(self) -> None:
+        # no input, optional(tensor(float))
+        self._test_op_upgrade(
+            "Optional",
+            15,
+            input_shapes=(),
+            output_shapes=((3, 4, 5),),
+            output_types=[TensorProto.FLOAT],
+            attrs={"type": helper.make_tensor_type_proto(TensorProto.FLOAT, (3, 4, 5))},
+            optional_outputs=(0,),
+            strict_check=True,
+        )
+
+    def test_Optional_2(self) -> None:
+        # no input, seq(tensor(float))
+        self._test_op_upgrade(
+            "Optional",
+            15,
+            input_shapes=(),
+            output_shapes=((3, 4, 5),),
+            output_types=[TensorProto.FLOAT],
+            attrs={
+                "type": helper.make_sequence_type_proto(
+                    helper.make_tensor_type_proto(TensorProto.FLOAT, (3, 4, 5))
+                )
+            },
+            seq_outputs=(0,),
+            optional_outputs=(0,),
+            strict_check=True,
+        )
+
+    def test_Optional_3(self) -> None:
+        # tensor(float)
+        self._test_op_upgrade(
+            "Optional",
+            15,
+            optional_outputs=(0,),
+            strict_check=True,
+        )
+
+    def test_Optional_4(self) -> None:
+        # seq(tensor(float))
+        self._test_op_upgrade(
+            "Optional",
+            15,
+            seq_inputs=(0,),
+            seq_outputs=(0,),
+            optional_outputs=(0,),
+            strict_check=True,
+        )
+
+    def test_OptionalHasElement_1(self) -> None:
+        # optional(tensor(float))
+        self._test_op_upgrade(
+            "OptionalHasElement",
+            15,
+            output_shapes=[[]],
+            output_types=[TensorProto.BOOL],
+            optional_inputs=(0,),
+            strict_check=True,
+        )
+
+    def test_OptionalHasElement_2(self) -> None:
+        # optional(seq(tensor(float)))
+        self._test_op_upgrade(
+            "OptionalHasElement",
+            15,
+            output_shapes=[[]],
+            output_types=[TensorProto.BOOL],
+            seq_inputs=(0,),
+            optional_inputs=(0,),
+            strict_check=True,
+        )
+
+    def test_OptionalHasElement_3(self) -> None:
+        # tensor(float)
+        # non-optional input support added in Opset 18
+        self._test_op_upgrade(
+            "OptionalHasElement",
+            18,
+            output_shapes=[[]],
+            output_types=[TensorProto.BOOL],
+            strict_check=True,
+        )
+
+    def test_OptionalHasElement_4(self) -> None:
+        # seq(tensor(float))
+        # non-optional input support added in Opset 18
+        self._test_op_upgrade(
+            "OptionalHasElement",
+            18,
+            output_shapes=[[]],
+            output_types=[TensorProto.BOOL],
+            seq_inputs=(0,),
+            strict_check=True,
+        )
+
+    def test_OptionalGetElement_1(self) -> None:
+        # optional(tensor(float))
+        self._test_op_upgrade(
+            "OptionalGetElement",
+            15,
+            optional_inputs=(0,),
+            strict_check=True,
+        )
+
+    def test_OptionalGetElement_2(self) -> None:
+        # optional(seq(tensor(float)))
+        self._test_op_upgrade(
+            "OptionalGetElement",
+            15,
+            seq_inputs=(0,),
+            seq_outputs=(0,),
+            optional_inputs=(0,),
+            strict_check=True,
+        )
+
+    def test_OptionalGetElement_3(self) -> None:
+        # tensor(float)
+        self._test_op_upgrade(
+            "OptionalGetElement",
+            18,
+            strict_check=True,
+        )
+
+    def test_OptionalGetElement_4(self) -> None:
+        # seq(tensor(float))
+        self._test_op_upgrade(
+            "OptionalGetElement",
+            18,
+            seq_inputs=(0,),
+            seq_outputs=(0,),
+            strict_check=True,
+        )
+
     def test_ops_tested(self) -> None:
         # NOTE: This test is order dependent and needs to run last in this class
         all_schemas = onnx.defs.get_all_schemas()
@@ -2115,9 +2285,6 @@ class TestAutomaticUpgrade(automatic_conversion_test_base.TestAutomaticConversio
             "SequenceLength",
             "SequenceMap",
             "SplitToSequence",
-            "Optional",
-            "OptionalGetElement",
-            "OptionalHasElement",
             "StringSplit",
         }
         expected_tested_ops = all_op_names - excluded_ops

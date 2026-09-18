@@ -1084,6 +1084,18 @@ struct Graph final {
     useName(initializer.name());
   }
 
+  // Move-taking overload: skips the copy above for a Tensor the caller is
+  // discarding. Existing lvalue call sites are unaffected.
+  void addInitializer(Tensor&& initializer) {
+    if (initializer.name().empty()) {
+      initializer.setName(getNextUniqueName());
+    }
+    // Read the name before the move below invalidates it.
+    initializer_names_.push_back(initializer.name());
+    useName(initializer.name());
+    initializers_.push_back(std::move(initializer));
+  }
+
   // For IR >= 4, initializer is not required to exist in input
   // Add initializer into initializer node list and return its Value
   Value* addInitializerAndCreateValue(Tensor& initializer) {
@@ -1093,6 +1105,23 @@ struct Graph final {
     init_value->setUniqueName(initializer.name());
     init_value->setSizes(dim_sizes);
     init_value->setElemType(initializer.elem_type());
+    return init_value;
+  }
+
+  // Move-taking counterpart to addInitializer(Tensor&&) above. Everything
+  // the returned Value needs is read before initializer is moved from.
+  Value* addInitializerAndCreateValue(Tensor&& initializer) {
+    if (initializer.name().empty()) {
+      initializer.setName(getNextUniqueName());
+    }
+    auto* init_value = initializer_node_->addOutput();
+    std::vector<Dimension> dim_sizes{initializer.sizes().cbegin(), initializer.sizes().cend()};
+    init_value->setUniqueName(initializer.name());
+    init_value->setSizes(dim_sizes);
+    init_value->setElemType(initializer.elem_type());
+    initializer_names_.push_back(initializer.name());
+    useName(initializer.name());
+    initializers_.push_back(std::move(initializer));
     return init_value;
   }
 

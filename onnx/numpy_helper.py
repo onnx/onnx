@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import math
 import sys
+from collections.abc import Sequence
 from typing import TYPE_CHECKING, Any
 
 import ml_dtypes
@@ -184,6 +185,81 @@ def _pack_2bitx4(array: np.ndarray) -> npt.NDArray[np.uint8]:
     return array_flat[0::4] | array_flat[1::4] | array_flat[2::4] | array_flat[3::4]
 
 
+def _pack_6bit(values: np.ndarray) -> npt.NDArray[np.uint8]:
+    """Pack a flat uint8 array of 6-bit codes 4-at-a-time into 3 bytes (LSB-first bit order)."""
+    flat = values.astype(np.uint8, copy=False).ravel() & 0x3F
+    n = flat.size
+    packed_size = math.ceil(n * 6 / 8)
+    pad = -n % 4
+    if pad:
+        flat = np.concatenate([flat, np.zeros(pad, dtype=np.uint8)])
+    v0, v1, v2, v3 = flat[0::4], flat[1::4], flat[2::4], flat[3::4]
+    packed = np.empty((v0.size, 3), dtype=np.uint8)
+    packed[:, 0] = v0 | ((v1 & 0x03) << 6)
+    packed[:, 1] = (v1 >> 2) | ((v2 & 0x0F) << 4)
+    packed[:, 2] = (v2 >> 4) | (v3 << 2)
+    return packed.reshape(-1)[:packed_size]
+
+
+def _unpack_6bit(data: np.ndarray, dims: Sequence[int]) -> npt.NDArray[np.uint8]:
+    """Unpack a 6-bit packed buffer (see _pack_6bit) back into a uint8 array of given dims."""
+    original_size = math.prod(dims)
+    num_groups = -(-original_size // 4)  # ceil division
+    needed_bytes = num_groups * 3
+    # _pack_6bit trims its output to this minimal size: trailing bytes beyond
+    # it would only ever encode a partial final group's zero-padding bits.
+    min_bytes = -(-original_size * 6 // 8)  # ceil division
+    data = data.astype(np.uint8, copy=False)
+    if data.size < min_bytes:
+        raise ValueError(
+            f"Packed 6-bit data ({data.size} bytes) is too small for the declared "
+            f"shape {list(dims)} ({min_bytes} bytes required)."
+        )
+    # Bulk-unpack whole 3-byte groups via strided views (no copy of `data`);
+    # only the possibly-incomplete final group (at most 2 missing bytes) needs
+    # padding, so pad just that instead of copying the whole buffer.
+    bulk_bytes = min(data.size, needed_bytes) // 3 * 3
+    bulk_groups = bulk_bytes // 3
+    unpacked = np.empty((num_groups, 4), dtype=np.uint8)
+    b0, b1, b2 = data[0:bulk_bytes:3], data[1:bulk_bytes:3], data[2:bulk_bytes:3]
+    unpacked[:bulk_groups, 0] = b0 & 0x3F
+    unpacked[:bulk_groups, 1] = ((b0 >> 6) & 0x03) | ((b1 & 0x0F) << 2)
+    unpacked[:bulk_groups, 2] = ((b1 >> 4) & 0x0F) | ((b2 & 0x03) << 4)
+    unpacked[:bulk_groups, 3] = (b2 >> 2) & 0x3F
+    if bulk_groups < num_groups:
+        tail = np.zeros(3, dtype=np.uint8)
+        rest = data[bulk_bytes:]
+        tail[: rest.size] = rest
+        t0, t1, t2 = tail
+        unpacked[bulk_groups, 0] = t0 & 0x3F
+        unpacked[bulk_groups, 1] = ((t0 >> 6) & 0x03) | ((t1 & 0x0F) << 2)
+        unpacked[bulk_groups, 2] = ((t1 >> 4) & 0x0F) | ((t2 & 0x03) << 4)
+        unpacked[bulk_groups, 3] = (t2 >> 2) & 0x3F
+    return unpacked.reshape(-1)[:original_size].reshape(dims)
+
+
+def _reshape_or_raise(
+    array: np.ndarray, dims: Sequence[int], tensor: onnx.TensorProto
+) -> np.ndarray:
+    """Reshape ``array`` to ``dims``, raising a more actionable error on mismatch.
+
+    A size mismatch here often means the bytes being parsed are not actually a
+    TensorProto: protobuf does not encode message-type information, so bytes
+    from a different message type (e.g. OptionalProto, SequenceProto) can be
+    silently misparsed as a TensorProto instead of failing to parse.
+    """
+    try:
+        return array.reshape(dims)
+    except ValueError as e:
+        raise ValueError(
+            f"{e} Failed to reshape tensor '{tensor.name}'. This can happen "
+            "when the parsed bytes are not actually a TensorProto; protobuf "
+            "does not encode message-type information, so a different message "
+            "type (e.g. OptionalProto, SequenceProto, MapProto) can be "
+            "silently misparsed as one."
+        ) from e
+
+
 def to_array(tensor: onnx.TensorProto, base_dir: str = "") -> np.ndarray:  # noqa: PLR0911
     """Converts a tensor def object to a numpy array.
 
@@ -212,7 +288,7 @@ def to_array(tensor: onnx.TensorProto, base_dir: str = "") -> np.ndarray:  # noq
     if tensor.data_type == onnx.TensorProto.STRING:
         utf8_strings = getattr(tensor, storage_field)
         ss = [s.decode("utf-8") for s in utf8_strings]
-        return np.asarray(ss).astype(np_dtype).reshape(dims)
+        return _reshape_or_raise(np.asarray(ss).astype(np_dtype), dims, tensor)
 
     # Load raw data from external tensor if it exists
     if onnx.external_data_helper.uses_external_data(tensor):
@@ -240,7 +316,16 @@ def to_array(tensor: onnx.TensorProto, base_dir: str = "") -> np.ndarray:  # noq
             data = np.frombuffer(raw_data, dtype=np.uint8)
             return _unpack_2bit(data, dims).view(np_dtype)
 
-        return np.frombuffer(raw_data, dtype=np_dtype).reshape(dims)
+        if tensor_dtype in {onnx.TensorProto.FLOAT6E2M3, onnx.TensorProto.FLOAT6E3M2}:
+            # raw_data is always the packed 6-bit stream (matching UINT4/UINT2's
+            # single-format convention below). A byte-length-based sniff between
+            # "packed" and "one byte per element" would be ambiguous for small
+            # tensors -- e.g. 3 elements pack to ceil(3*6/8) = 3 bytes too.
+            data = np.frombuffer(raw_data, dtype=np.uint8)
+            unpacked = _unpack_6bit(data, dims)
+            return unpacked.view(np_dtype)
+
+        return _reshape_or_raise(np.frombuffer(raw_data, dtype=np_dtype), dims, tensor)
 
     if tensor_dtype in {
         onnx.TensorProto.BFLOAT16,
@@ -248,13 +333,13 @@ def to_array(tensor: onnx.TensorProto, base_dir: str = "") -> np.ndarray:  # noq
         onnx.TensorProto.INT16,
         onnx.TensorProto.UINT16,
     }:
-        return (
+        return _reshape_or_raise(
             np.array(tensor.int32_data, dtype=np.int32)
             .view(np.uint32)
-            .astype(np.uint16)
-            .reshape(dims)
-            .view(np_dtype)
-        )
+            .astype(np.uint16),
+            dims,
+            tensor,
+        ).view(np_dtype)
 
     if tensor_dtype in {
         onnx.TensorProto.FLOAT8E4M3FN,
@@ -264,12 +349,31 @@ def to_array(tensor: onnx.TensorProto, base_dir: str = "") -> np.ndarray:  # noq
         onnx.TensorProto.FLOAT8E8M0,
         onnx.TensorProto.BOOL,
     }:
-        return (
+        return _reshape_or_raise(
             np.array(tensor.int32_data, dtype=np.int32)
             .view(np.uint32)
             .astype(np.uint8)
-            .view(np_dtype)
-            .reshape(dims)
+            .view(np_dtype),
+            dims,
+            tensor,
+        )
+
+    if tensor_dtype in {
+        onnx.TensorProto.FLOAT6E2M3,
+        onnx.TensorProto.FLOAT6E3M2,
+    }:
+        # Only the low 6 bits of each int32_data entry are meaningful; mask
+        # before reinterpreting, matching _pack_6bit's masking of the packed
+        # raw_data representation.
+        return _reshape_or_raise(
+            (
+                np.array(tensor.int32_data, dtype=np.int32)
+                .view(np.uint32)
+                .astype(np.uint8)
+                & 0x3F
+            ).view(np_dtype),
+            dims,
+            tensor,
         )
 
     if tensor_dtype in {
@@ -293,9 +397,13 @@ def to_array(tensor: onnx.TensorProto, base_dir: str = "") -> np.ndarray:  # noq
 
     data = getattr(tensor, storage_field)
     if tensor_dtype in (onnx.TensorProto.COMPLEX64, onnx.TensorProto.COMPLEX128):
-        return np.array(data, dtype=storage_np_dtype).view(dtype=np_dtype).reshape(dims)
+        return _reshape_or_raise(
+            np.array(data, dtype=storage_np_dtype).view(dtype=np_dtype), dims, tensor
+        )
 
-    return np.asarray(data, dtype=storage_np_dtype).astype(np_dtype).reshape(dims)
+    return _reshape_or_raise(
+        np.asarray(data, dtype=storage_np_dtype).astype(np_dtype), dims, tensor
+    )
 
 
 def tobytes_little_endian(array: np.ndarray) -> bytes:
@@ -370,6 +478,13 @@ def from_array(array: np.ndarray, /, name: str | None = None) -> onnx.TensorProt
     }:
         # Pack the array into int2
         array = _pack_2bitx4(array)
+
+    if dtype in {
+        onnx.TensorProto.FLOAT6E2M3,
+        onnx.TensorProto.FLOAT6E3M2,
+    }:
+        # Pack the array into 6-bit codes
+        array = _pack_6bit(array.view(np.uint8))
 
     tensor.raw_data = tobytes_little_endian(array)
     tensor.data_type = dtype  # type: ignore[assignment]
