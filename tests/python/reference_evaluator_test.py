@@ -3274,6 +3274,36 @@ class TestReferenceEvaluator:
         assert got.shape == (1, 1)
         assert got[0, 0] == 1
 
+    def test_reduce_mean_preserves_finite_range(self):
+        for opset in (17, 18):
+            for dtype, tensor_type, magnitude in (
+                (np.float32, TensorProto.FLOAT, 3.0e38),
+                (np.float64, TensorProto.DOUBLE, 1.0e308),
+            ):
+                X = make_tensor_value_info("X", tensor_type, [2, 2])
+                Y = make_tensor_value_info("Y", tensor_type, [2])
+                inputs = [X]
+                node_inputs = ["X"]
+                if opset >= 18:
+                    axes = make_tensor_value_info("axes", TensorProto.INT64, [1])
+                    inputs.append(axes)
+                    node_inputs.append("axes")
+                    node = make_node("ReduceMean", node_inputs, ["Y"], keepdims=0)
+                else:
+                    node = make_node(
+                        "ReduceMean", node_inputs, ["Y"], axes=[1], keepdims=0
+                    )
+
+                graph = make_graph([node], "g", inputs, [Y])
+                model = make_model(graph, opset_imports=[make_opsetid("", opset)])
+                feeds = {"X": np.full((2, 2), magnitude, dtype=dtype)}
+                if opset >= 18:
+                    feeds["axes"] = np.array([1], dtype=np.int64)
+
+                got = ReferenceEvaluator(model).run(None, feeds)[0]
+                expected = np.full((2,), magnitude, dtype=dtype)
+                np.testing.assert_array_equal(got, expected)
+
     @staticmethod
     def _cdist_model(opset, reduce_op="ReduceSumSquare"):
         # subgraph
