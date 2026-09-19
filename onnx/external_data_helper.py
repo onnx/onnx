@@ -143,6 +143,26 @@ def _validate_external_data_file_bounds(
     return data_file.read()
 
 
+def _read_external_data_bytes(tensor: TensorProto, base_dir: str) -> bytes:
+    """Reads and returns the raw bytes stored in the external file for tensor.
+
+    Unlike load_external_data_for_tensor, this does not mutate tensor: the
+    tensor's data_location and external_data fields are left untouched, so
+    the tensor still faithfully describes where its data lives on disk.
+
+    Arguments:
+        tensor: a TensorProto object.
+        base_dir: directory that contains the external data.
+
+    Returns:
+        The raw bytes read from the external data file.
+    """
+    info = ExternalDataInfo(tensor)
+    fd = _open_external_data_fd(base_dir, info.location, tensor.name, True)
+    with os.fdopen(fd, "rb") as data_file:
+        return _validate_external_data_file_bounds(data_file, info, tensor.name)
+
+
 def load_external_data_for_tensor(tensor: TensorProto, base_dir: str) -> None:
     """Loads data from an external file for tensor.
     Ideally TensorProto should not hold any raw data but if it does it will be ignored.
@@ -151,12 +171,7 @@ def load_external_data_for_tensor(tensor: TensorProto, base_dir: str) -> None:
         tensor: a TensorProto object.
         base_dir: directory that contains the external data.
     """
-    info = ExternalDataInfo(tensor)
-    fd = _open_external_data_fd(base_dir, info.location, tensor.name, True)
-    with os.fdopen(fd, "rb") as data_file:
-        tensor.raw_data = _validate_external_data_file_bounds(
-            data_file, info, tensor.name
-        )
+    tensor.raw_data = _read_external_data_bytes(tensor, base_dir)
 
 
 def load_external_data_for_model(model: ModelProto, base_dir: str) -> None:
