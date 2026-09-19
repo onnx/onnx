@@ -215,6 +215,65 @@ class TestReferenceEvaluatorAiOnnxMl:
         got = sess.run(None, feeds)[0]
         assert_allclose(got, expected, atol=1e-6)
 
+    @pytest.mark.parametrize("norm", ["MAX", "L1", "L2"])
+    @pytest.mark.parametrize(
+        "x, tensor_type",
+        [
+            (np.array([3, 4], dtype=np.int32), TensorProto.INT32),
+            (
+                np.array([[3_000_000_000, 4_000_000_000]], dtype=np.int64),
+                TensorProto.INT64,
+            ),
+            (np.array([[-3.0, -4.0]], dtype=np.float64), TensorProto.DOUBLE),
+        ],
+    )
+    @pytest.mark.skipif(not ONNX_ML, reason="onnx not compiled with ai.onnx.ml")
+    def test_normalizer_supported_input_types(self, norm, x, tensor_type):
+        X = make_tensor_value_info("X", tensor_type, list(x.shape))
+        Y = make_tensor_value_info("Y", TensorProto.FLOAT, list(x.shape))
+        node = make_node("Normalizer", ["X"], ["Y"], norm=norm, domain="ai.onnx.ml")
+        graph = make_graph([node], "ml", [X], [Y])
+        model = make_model_gen_version(graph, opset_imports=OPSETS)
+        onnx.checker.check_model(model)
+
+        x_float = x.astype(np.float64)
+        axis = 0 if x.ndim == 1 else 1
+        if norm == "MAX":
+            divisor = np.max(np.abs(x_float), axis=axis, keepdims=True)
+        elif norm == "L1":
+            divisor = np.sum(np.abs(x_float), axis=axis, keepdims=True)
+        else:
+            divisor = np.sqrt(np.sum(np.square(x_float), axis=axis, keepdims=True))
+        expected = (x_float / divisor).astype(np.float32)
+
+        got = ReferenceEvaluator(model).run(None, {"X": x})[0]
+        assert got.dtype == np.float32
+        assert_allclose(got, expected, rtol=1e-6)
+
+    @pytest.mark.parametrize(
+        "x",
+        [
+            np.array([[1e30, 1e30]], dtype=np.float32),
+            np.array([[1e-30, 1e-30]], dtype=np.float32),
+            np.array([[1e300, 1e300]], dtype=np.float64),
+            np.array([[1e-300, 1e-300]], dtype=np.float64),
+        ],
+    )
+    @pytest.mark.skipif(not ONNX_ML, reason="onnx not compiled with ai.onnx.ml")
+    def test_normalizer_l2_extreme_magnitudes(self, x):
+        tensor_type = TensorProto.FLOAT if x.dtype == np.float32 else TensorProto.DOUBLE
+        X = make_tensor_value_info("X", tensor_type, list(x.shape))
+        Y = make_tensor_value_info("Y", TensorProto.FLOAT, list(x.shape))
+        node = make_node("Normalizer", ["X"], ["Y"], norm="L2", domain="ai.onnx.ml")
+        graph = make_graph([node], "ml", [X], [Y])
+        model = make_model_gen_version(graph, opset_imports=OPSETS)
+        onnx.checker.check_model(model)
+
+        expected = np.full(x.shape, np.float32(1 / np.sqrt(2)), dtype=np.float32)
+        got = ReferenceEvaluator(model).run(None, {"X": x})[0]
+        assert got.dtype == np.float32
+        assert_allclose(got, expected, rtol=1e-6)
+
     @pytest.mark.parametrize(
         "inputdimensions, expected_value",
         [
