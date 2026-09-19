@@ -4773,6 +4773,29 @@ class TestReferenceEvaluator:
         )[0]
         np.testing.assert_array_equal(actual, expected)
 
+    @pytest.mark.parametrize("opset", [13, 18, onnx_opset_version()])
+    def test_reduce_log_sum_exp_infinite_inputs(self, opset):
+        X = make_tensor_value_info("X", TensorProto.FLOAT, [2, 2])
+        Y = make_tensor_value_info("Y", TensorProto.FLOAT, [2])
+        feeds = {
+            "X": np.array([[np.inf, -np.inf], [-np.inf, -np.inf]], dtype=np.float32)
+        }
+        expected = np.array([np.inf, -np.inf], dtype=np.float32)
+        if opset >= 18:
+            A = make_tensor_value_info("A", TensorProto.INT64, [1])
+            node = make_node("ReduceLogSumExp", ["X", "A"], ["Y"], keepdims=0)
+            inputs = [X, A]
+            feeds["A"] = np.array([1], dtype=np.int64)
+        else:
+            node = make_node("ReduceLogSumExp", ["X"], ["Y"], axes=[1], keepdims=0)
+            inputs = [X]
+        model = make_model(
+            make_graph([node], "g", inputs, [Y]),
+            opset_imports=[make_opsetid("", opset)],
+        )
+        got = ReferenceEvaluator(model).run(None, feeds)[0]
+        np.testing.assert_array_equal(got, expected)
+
     @pytest.mark.parametrize("dim", [1, 2, 3, 4, 5, 6])
     def test_pad(self, dim):
         X = make_tensor_value_info("X", TensorProto.FLOAT, None)
