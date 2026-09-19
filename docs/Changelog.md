@@ -34451,6 +34451,83 @@ This version of the operator has been available since version 28 of the default 
 <dd>Input can be of any tensor type.</dd>
 </dl>
 
+## Version 29 of the default ONNX operator set
+### <a name="InitPRNG-29"></a>**InitPRNG-29**</a>
+
+  Creates an initial pseudo-random number generator (PRNG) state from a
+  user-supplied seed. Given the same seed, this operator produces the same PRNG
+  state. It is a pure function and does not read or modify hidden random state.
+
+  The PRNG algorithm is Threefry2x32 with 20 rounds. A state is represented as a
+  rank-1 `tensor(int64)` of shape `[2]`. Each element stores one unsigned 32-bit
+  key word as a nonnegative int64 value. The first word contains the high 32 bits
+  of the seed and the second word contains the low 32 bits.
+
+#### Version
+
+This version of the operator has been available since version 29 of the default ONNX operator set.
+
+#### Inputs
+
+<dl>
+<dt><tt>seed</tt> : tensor(int64)</dt>
+<dd>Input seed value.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>prng_state</tt> : tensor(int64)</dt>
+<dd>Initial PRNG state.</dd>
+</dl>
+
+#### Type Constraints
+
+
+### <a name="SplitPRNG-29"></a>**SplitPRNG-29**</a>
+
+  Splits a PRNG state into one or more deterministic PRNG states. The outputs are
+  an ordered sequence of derived states suitable for independent downstream
+  random computations. Given the same inputs and number of outputs, this operator
+  produces the same output states. It is a pure function and does not read or
+  modify hidden random state.
+
+  When `data` is supplied, it must be a rank-1 tensor with one element for each
+  output. Element i is used to derive output state i. Values should be unique;
+  distinct values must produce distinct states for a fixed input state.
+
+  Each output state should normally be consumed at most once unless reproducing a
+  random stream is intentional.
+
+  The PRNG algorithm is Threefry2x32 with 20 rounds. Each input and output state
+  is a rank-1 `tensor(int64)` of shape `[2]`, with each element representing one
+  unsigned 32-bit key word. Without `data`, output i is derived by applying
+  Threefry2x32 to the input state and the 64-bit counter i. With `data`, output i
+  is produced by folding `data[i]` into the input state.
+
+#### Version
+
+This version of the operator has been available since version 29 of the default ONNX operator set.
+
+#### Inputs (1 - 2)
+
+<dl>
+<dt><tt>prng_state</tt> : tensor(int64)</dt>
+<dd>Input PRNG state.</dd>
+<dt><tt>data</tt> (optional) : tensor(int64)</dt>
+<dd>Optional rank-1 tensor used to derive structured PRNG states.</dd>
+</dl>
+
+#### Outputs (1 - &#8734;)
+
+<dl>
+<dt><tt>split_prng_states</tt> (variadic) : tensor(int64)</dt>
+<dd>One or more deterministically derived PRNG states.</dd>
+</dl>
+
+#### Type Constraints
+
+
 # ai.onnx.preview
 ## Version 1 of the 'ai.onnx.preview' operator set
 ### <a name="ai.onnx.preview.FlexAttention-1"></a>**ai.onnx.preview.FlexAttention-1**</a>
