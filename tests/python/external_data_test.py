@@ -656,6 +656,42 @@ class TestExternalDataToArray:
         loaded_large_data = to_array(model.graph.initializer[0], self.temp_dir)
         np.testing.assert_allclose(loaded_large_data, self.large_data)
 
+    def test_to_array_does_not_mutate_external_tensor(self) -> None:
+        # to_array() must not leave the tensor in a state that mixes stale
+        # external_data metadata with a populated raw_data field, otherwise
+        # a subsequent save tries to rewrite (rather than append to) the
+        # existing external data file.
+        onnx.save_model(
+            self.model,
+            self.model_file_path,
+            self.serialization_format,
+            save_as_external_data=True,
+            all_tensors_to_one_file=False,
+            size_threshold=0,
+        )
+        model = onnx.load(
+            self.model_file_path, self.serialization_format, load_external_data=False
+        )
+        initializer_tensor = model.graph.initializer[0]
+        assert initializer_tensor.data_location == TensorProto.EXTERNAL
+        assert not initializer_tensor.HasField("raw_data")
+
+        to_array(initializer_tensor, self.temp_dir)
+
+        assert initializer_tensor.data_location == TensorProto.EXTERNAL
+        assert not initializer_tensor.HasField("raw_data")
+
+        # Saving the model again, in the same directory as the original
+        # external data file, must not fail.
+        resaved_model_path = os.path.join(self.temp_dir, "resaved.onnx")
+        onnx.save_model(model, resaved_model_path, self.serialization_format)
+
+        reloaded_model = onnx.load(resaved_model_path, self.serialization_format)
+        np.testing.assert_allclose(
+            to_array(reloaded_model.graph.initializer[0], self.temp_dir),
+            self.large_data,
+        )
+
     def test_save_model_with_external_data_multiple_times(self) -> None:
         # Test onnx.save should respectively handle typical tensor and external tensor properly
         # 1st save: save two tensors which have raw_data
