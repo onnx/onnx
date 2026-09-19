@@ -8696,6 +8696,18 @@ class TestShapeInference(TestShapeInferenceHelper):
             graph, [make_tensor_value_info("y", TensorProto.FLOAT, (2, 2))]
         )
 
+    def test_gathernd_reject_negative_batch_dims(self) -> None:
+        graph = self._make_graph(
+            [
+                ("x", TensorProto.FLOAT, (2, 2, 2)),
+                ("indices", TensorProto.INT64, (2, 1)),
+            ],
+            [make_node("GatherND", ["x", "indices"], ["y"], batch_dims=-5)],
+            [],
+        )
+        with pytest.raises(onnx.shape_inference.InferenceError):
+            self._inferred(graph)
+
     def test_cumprod(self) -> None:
         graph = self._make_graph(
             [("x", TensorProto.FLOAT, (3, 2)), ("axis", TensorProto.INT64, (1,))],
@@ -13714,6 +13726,21 @@ class TestShapeInference(TestShapeInferenceHelper):
         with pytest.raises(onnx.shape_inference.InferenceError):
             onnx.checker.check_model(model, full_check=True)
             onnx.shape_inference.infer_shapes(model)
+
+    @pytest.mark.parametrize("axis", [2**31, 2**40])
+    def test_layer_normalization_axis_out_of_range(self, axis: int) -> None:
+        # A positive axis >= rank must be rejected, not narrowed to int and used as an
+        # out-of-bounds index into the Mean / InvStdDev output shapes.
+        model = onnx.parser.parse_model(
+            f"""
+            <ir_version: 10, opset_import: ["" : 17]>
+            graph (float[2,3,4] X, float[4] Scale) => () {{
+            Y, Mean, InvStdDev = LayerNormalization <axis = {axis}> (X, Scale)
+            }}
+            """
+        )
+        with pytest.raises(onnx.shape_inference.InferenceError):
+            onnx.shape_inference.infer_shapes(model, strict_mode=True)
 
     def test_issue_conv_6180(self):
         modeltxt = """
