@@ -329,11 +329,12 @@ class TestAutomaticUpgrade(automatic_conversion_test_base.TestAutomaticConversio
         )
 
     def test_Conv_3(self) -> None:
+        # M (6) is a multiple of group (3), as the spec requires.
         self._test_op_upgrade(
             "Conv",
             1,
-            [[1, 3, 5, 5], [4, 1, 2, 2], [4]],
-            [[1, 4, 3, 7]],
+            [[1, 3, 5, 5], [6, 1, 2, 2], [6]],
+            [[1, 6, 3, 7]],
             attrs={
                 "dilations": [1, 2],
                 "group": 3,

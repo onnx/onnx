@@ -2860,6 +2860,149 @@ class TestShapeInference(TestShapeInferenceHelper):
                 opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
             )
 
+    @pytest.mark.parametrize(
+        "version",
+        [
+            # opset 1-10 -> Conv-1 -> convPoolShapeInference_opset1_to_11
+            10,
+            # opset 11-21 -> Conv-11 -> convPoolShapeInference_opset19
+            19,
+            # opset 22+ -> Conv-22 -> convPoolShapeInference
+            defs.get_schema("Conv").since_version,
+        ],
+    )
+    def test_conv_channels_not_matching_weight_raises(self, version: int) -> None:
+        # C must equal W.shape[1] * group. Without the check the output shape is
+        # built from the mismatched weight tensor instead of failing.
+        graph = self._make_graph(
+            [
+                ("x", TensorProto.FLOAT, (1, 4, 8, 8)),
+                ("y", TensorProto.FLOAT, (6, 3, 3, 3)),
+            ],
+            [make_node("Conv", ["x", "y"], "z")],
+            [],
+        )
+        with pytest.raises(
+            onnx.shape_inference.InferenceError, match="Input channel dimension"
+        ):
+            self._inferred(
+                graph,
+                opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
+            )
+
+    @pytest.mark.parametrize(
+        "version",
+        [
+            # opset 1-10 -> Conv-1 -> convPoolShapeInference_opset1_to_11
+            10,
+            # opset 11-21 -> Conv-11 -> convPoolShapeInference_opset19
+            19,
+            # opset 22+ -> Conv-22 -> convPoolShapeInference
+            defs.get_schema("Conv").since_version,
+        ],
+    )
+    def test_conv_channels_not_divisible_by_group_raises(self, version: int) -> None:
+        graph = self._make_graph(
+            [
+                ("x", TensorProto.FLOAT, (1, 5, 8, 8)),
+                ("y", TensorProto.FLOAT, (6, 5, 3, 3)),
+            ],
+            [make_node("Conv", ["x", "y"], "z", group=2)],
+            [],
+        )
+        with pytest.raises(
+            onnx.shape_inference.InferenceError, match="Input channel dimension"
+        ):
+            self._inferred(
+                graph,
+                opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
+            )
+
+    @pytest.mark.parametrize(
+        "version",
+        [
+            # opset 1-10 -> Conv-1 -> convPoolShapeInference_opset1_to_11
+            10,
+            # opset 11-21 -> Conv-11 -> convPoolShapeInference_opset19
+            19,
+            # opset 22+ -> Conv-22 -> convPoolShapeInference
+            defs.get_schema("Conv").since_version,
+        ],
+    )
+    def test_conv_feature_maps_not_divisible_by_group_raises(
+        self, version: int
+    ) -> None:
+        # C == W.shape[1] * group holds here; only M is not a multiple of group.
+        graph = self._make_graph(
+            [
+                ("x", TensorProto.FLOAT, (1, 6, 8, 8)),
+                ("y", TensorProto.FLOAT, (4, 2, 3, 3)),
+            ],
+            [make_node("Conv", ["x", "y"], "z", group=3)],
+            [],
+        )
+        with pytest.raises(onnx.shape_inference.InferenceError, match=r"W\.shape\[0\]"):
+            self._inferred(
+                graph,
+                opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
+            )
+
+    @pytest.mark.parametrize(
+        "version",
+        [
+            # opset 1-10 -> Conv-1 -> convPoolShapeInference_opset1_to_11
+            10,
+            # opset 11-21 -> Conv-11 -> convPoolShapeInference_opset19
+            19,
+            # opset 22+ -> Conv-22 -> convPoolShapeInference
+            defs.get_schema("Conv").since_version,
+        ],
+    )
+    def test_conv_non_positive_group_raises(self, version: int) -> None:
+        graph = self._make_graph(
+            [
+                ("x", TensorProto.FLOAT, (1, 4, 8, 8)),
+                ("y", TensorProto.FLOAT, (6, 4, 3, 3)),
+            ],
+            [make_node("Conv", ["x", "y"], "z", group=0)],
+            [],
+        )
+        with pytest.raises(
+            onnx.shape_inference.InferenceError, match="Attribute group"
+        ):
+            self._inferred(
+                graph,
+                opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
+            )
+
+    @pytest.mark.parametrize(
+        "version",
+        [
+            # opset 1-10 -> Conv-1 -> convPoolShapeInference_opset1_to_11
+            10,
+            # opset 11-21 -> Conv-11 -> convPoolShapeInference_opset19
+            19,
+            # opset 22+ -> Conv-22 -> convPoolShapeInference
+            defs.get_schema("Conv").since_version,
+        ],
+    )
+    def test_conv_symbolic_channels_skip_group_check(self, version: int) -> None:
+        # Only dimensions with a known value can be checked; a symbolic channel
+        # dimension must still infer as before.
+        graph = self._make_graph(
+            [
+                ("x", TensorProto.FLOAT, (1, "C", 8, 8)),
+                ("y", TensorProto.FLOAT, (6, 3, 3, 3)),
+            ],
+            [make_node("Conv", ["x", "y"], "z")],
+            [],
+        )
+        self._assert_inferred(
+            graph,
+            [make_tensor_value_info("z", TensorProto.FLOAT, (1, 6, 6, 6))],
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
+        )
+
     @pytest.mark.parametrize("version", all_versions_for("MaxPool"))
     def test_maxpool_zero_kernel_shape(self, version: int) -> None:
         graph = self._make_graph(

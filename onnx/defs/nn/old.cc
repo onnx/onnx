@@ -140,6 +140,39 @@ static void convPoolShapeInference_opset19(
     fail_shape_inference("Input tensor must have at least 3 dimensions");
   }
 
+  // When the kernel shape comes from the weight tensor, the operator is one of the
+  // convolution family and the spec ties the channel dimensions to `group`:
+  // X.shape[1] == W.shape[1] * group == C, and W.shape[0] (M) must be a multiple of
+  // group. Neither was checked, so a model the reference implementation rejects came
+  // back from inference with a shape built from the mismatched weight tensor.
+  if (!require_kernel_shape) {
+    const int64_t group = getAttribute(ctx, "group", 1);
+    if (group <= 0) {
+      fail_shape_inference("Attribute group must be greater than 0. group=", group, ".");
+    }
+    const auto& weight_shape = ctx.getInputType(input2Idx)->tensor_type().shape();
+    if (weight_shape.dim_size() >= 2) {
+      const auto& channel_dim = input_shape.dim(1);
+      const auto& weight_channel_dim = weight_shape.dim(1);
+      if (channel_dim.has_dim_value() && weight_channel_dim.has_dim_value() &&
+          channel_dim.dim_value() != checkedMultiply(weight_channel_dim.dim_value(), group)) {
+        fail_shape_inference(
+            "Input channel dimension (",
+            channel_dim.dim_value(),
+            ") must equal W.shape[1] (",
+            weight_channel_dim.dim_value(),
+            ") * 'group' (",
+            group,
+            ").");
+      }
+      const auto& weight_output_dim = weight_shape.dim(0);
+      if (weight_output_dim.has_dim_value() && weight_output_dim.dim_value() % group != 0) {
+        fail_shape_inference(
+            "W.shape[0] (", weight_output_dim.dim_value(), ") must be a multiple of 'group' (", group, ").");
+      }
+    }
+  }
+
   // first dim is the batch axis and the next is the number of channels.
   size_t n_input_dims = static_cast<size_t>(input_shape.dim_size() - 2);
 
@@ -1974,6 +2007,39 @@ static void convPoolShapeInference_opset1_to_11(
   auto input_shape = ctx.getInputType(input1Idx)->tensor_type().shape();
   if (input_shape.dim_size() < 3) {
     fail_shape_inference("Input tensor must have at least 3 dimensions");
+  }
+
+  // When the kernel shape comes from the weight tensor, the operator is one of the
+  // convolution family and the spec ties the channel dimensions to `group`:
+  // X.shape[1] == W.shape[1] * group == C, and W.shape[0] (M) must be a multiple of
+  // group. Neither was checked, so a model the reference implementation rejects came
+  // back from inference with a shape built from the mismatched weight tensor.
+  if (!require_kernel_shape) {
+    const int64_t group = getAttribute(ctx, "group", 1);
+    if (group <= 0) {
+      fail_shape_inference("Attribute group must be greater than 0. group=", group, ".");
+    }
+    const auto& weight_shape = ctx.getInputType(input2Idx)->tensor_type().shape();
+    if (weight_shape.dim_size() >= 2) {
+      const auto& channel_dim = input_shape.dim(1);
+      const auto& weight_channel_dim = weight_shape.dim(1);
+      if (channel_dim.has_dim_value() && weight_channel_dim.has_dim_value() &&
+          channel_dim.dim_value() != checkedMultiply(weight_channel_dim.dim_value(), group)) {
+        fail_shape_inference(
+            "Input channel dimension (",
+            channel_dim.dim_value(),
+            ") must equal W.shape[1] (",
+            weight_channel_dim.dim_value(),
+            ") * 'group' (",
+            group,
+            ").");
+      }
+      const auto& weight_output_dim = weight_shape.dim(0);
+      if (weight_output_dim.has_dim_value() && weight_output_dim.dim_value() % group != 0) {
+        fail_shape_inference(
+            "W.shape[0] (", weight_output_dim.dim_value(), ") must be a multiple of 'group' (", group, ").");
+      }
+    }
   }
 
   // first dim is the batch axis and the next is the number of channels.
