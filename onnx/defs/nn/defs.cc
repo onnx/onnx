@@ -2236,6 +2236,19 @@ static void col2imShapeInference(InferenceContext& ctx) {
       }
       block_shape_size = checkedMultiply(block_shape_size, dim);
     }
+    // The channel dimension is folded into dimension 1 as C * prod(block_shape), so it
+    // must divide evenly. Without this check the integer division below silently reports
+    // a truncated channel count for an input the runtime rejects: dimension 1 of 5, 7
+    // and 9 with prod(block_shape) == 5 all infer C == 1.
+    const auto& block_dim = input_shape.dim(1);
+    if (block_dim.has_dim_value() && block_dim.dim_value() % block_shape_size != 0) {
+      fail_shape_inference(
+          "Input dimension 1 (",
+          block_dim.dim_value(),
+          ") must be a multiple of the product of 'block_shape' (",
+          block_shape_size,
+          ").");
+    }
   }
   // If we haven't inferred the number of image dimensions, we can't set inferred shape.
   if (!n_input_dims.has_dim_value()) {

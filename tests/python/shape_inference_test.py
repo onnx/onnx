@@ -700,6 +700,64 @@ class TestShapeInference(TestShapeInferenceHelper):
             opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
         )
 
+    @pytest.mark.parametrize("version", all_versions_for("Col2Im"))
+    @pytest.mark.parametrize("input_blocks", [7, 9, 3])
+    def test_col2im_block_shape_not_dividing_input_raises(
+        self, version: int, input_blocks: int
+    ) -> None:
+        # Dimension 1 holds C * prod(block_shape). With prod(block_shape) == 5 the
+        # integer division truncates: 5, 7 and 9 all used to infer C == 1, and 3
+        # inferred a zero-sized channel dimension.
+        graph = self._make_graph(
+            [
+                ("input", TensorProto.FLOAT, (1, input_blocks, 5)),
+                ("output_shape", TensorProto.INT64, (2,)),
+                ("kernel_shape", TensorProto.INT64, (2,)),
+            ],
+            [
+                make_node(
+                    "Col2Im", ["input", "output_shape", "kernel_shape"], ["output"]
+                )
+            ],
+            [],
+            initializer=[
+                make_tensor("output_shape", TensorProto.INT64, (2,), (5, 5)),
+                make_tensor("kernel_shape", TensorProto.INT64, (2,), (1, 5)),
+            ],
+        )
+        with pytest.raises(
+            onnx.shape_inference.InferenceError, match="must be a multiple of"
+        ):
+            self._inferred(
+                graph, opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)]
+            )
+
+    @pytest.mark.parametrize("version", all_versions_for("Col2Im"))
+    def test_col2im_symbolic_dim_skips_block_shape_check(self, version: int) -> None:
+        # Only a dimension with a known value can be checked.
+        graph = self._make_graph(
+            [
+                ("input", TensorProto.FLOAT, (1, "N", 5)),
+                ("output_shape", TensorProto.INT64, (2,)),
+                ("kernel_shape", TensorProto.INT64, (2,)),
+            ],
+            [
+                make_node(
+                    "Col2Im", ["input", "output_shape", "kernel_shape"], ["output"]
+                )
+            ],
+            [],
+            initializer=[
+                make_tensor("output_shape", TensorProto.INT64, (2,), (5, 5)),
+                make_tensor("kernel_shape", TensorProto.INT64, (2,), (1, 5)),
+            ],
+        )
+        self._assert_inferred(
+            graph,
+            [make_tensor_value_info("output", TensorProto.FLOAT, (1, None, 5, 5))],
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
+        )
+
     @pytest.mark.parametrize("version", all_versions_for("Concat"))
     def test_concat(self, version) -> None:
         graph = self._make_graph(
