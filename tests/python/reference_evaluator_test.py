@@ -234,6 +234,25 @@ class TestReferenceEvaluator:
         checker.check_model(m)
         return m
 
+    @pytest.mark.parametrize("k", [0, -1])
+    def test_topk_rejects_non_positive_k(self, k: int) -> None:
+        graph = make_graph(
+            [make_node("TopK", ["X", "K"], ["Values", "Indices"])],
+            "topk_non_positive_k",
+            [make_tensor_value_info("X", TensorProto.FLOAT, [3])],
+            [
+                make_tensor_value_info("Values", TensorProto.FLOAT, None),
+                make_tensor_value_info("Indices", TensorProto.INT64, None),
+            ],
+            [make_tensor("K", TensorProto.INT64, [1], [k])],
+        )
+        model = make_model(graph, opset_imports=[make_opsetid("", 24)])
+
+        with pytest.raises(ValueError, match="greater than zero"):
+            ReferenceEvaluator(model).run(
+                None, {"X": np.array([1.0, 2.0, 3.0], dtype=np.float32)}
+            )
+
     @pytest.mark.parametrize(
         "direction,num_directions",
         [("forward", 1), ("reverse", 1), ("bidirectional", 2)],

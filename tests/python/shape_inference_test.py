@@ -5020,6 +5020,66 @@ class TestShapeInference(TestShapeInferenceHelper):
             ],
         )
 
+    @pytest.mark.parametrize("version", all_versions_for("TopK"))
+    @pytest.mark.parametrize("k_value", [0, -1])
+    def test_topk_non_positive_k_known_axis_dim(
+        self, version: int, k_value: int
+    ) -> None:
+        # The axis dimension is known, so inference used to write K straight into
+        # the output shape: K=0 gave a zero-sized dimension and K=-1 a negative one.
+        graph = self._make_graph(
+            [("x", TensorProto.FLOAT, (3, 4, 5, 10))],
+            [make_node("TopK", ["x", "k"], ["y", "z"], axis=2)],
+            [],
+            initializer=[make_tensor("k", TensorProto.INT64, (1,), (k_value,))],
+        )
+        with pytest.raises(
+            onnx.shape_inference.InferenceError, match="greater than zero"
+        ):
+            self._inferred(
+                graph,
+                opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
+            )
+
+    @pytest.mark.parametrize("version", all_versions_for("TopK"))
+    @pytest.mark.parametrize("k_value", [0, -1])
+    def test_topk_non_positive_k_unknown_axis_dim(
+        self, version: int, k_value: int
+    ) -> None:
+        # K is a known initializer even though the axis dimension is not, so it can
+        # still be rejected. Inference used to skip the whole block here.
+        graph = self._make_graph(
+            [("x", TensorProto.FLOAT, (3, 4, None, 10))],
+            [make_node("TopK", ["x", "k"], ["y", "z"], axis=2)],
+            [],
+            initializer=[make_tensor("k", TensorProto.INT64, (1,), (k_value,))],
+        )
+        with pytest.raises(
+            onnx.shape_inference.InferenceError, match="greater than zero"
+        ):
+            self._inferred(
+                graph,
+                opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
+            )
+
+    @pytest.mark.parametrize("k_value", [0, -1])
+    def test_topk_1_non_positive_k_attribute_still_raises(self, k_value: int) -> None:
+        # TopK-1 takes k as an attribute and has always rejected a non-positive
+        # value. This pins that behaviour, which is what opset 10 lost when k
+        # became an input.
+        graph = self._make_graph(
+            [("x", TensorProto.FLOAT, (3, 4, 5, 10))],
+            [make_node("TopK", ["x"], ["y", "z"], axis=2, k=k_value)],
+            [],
+        )
+        with pytest.raises(
+            onnx.shape_inference.InferenceError, match="Invalid value for attribute k"
+        ):
+            self._inferred(
+                graph,
+                opset_imports=[helper.make_opsetid(ONNX_DOMAIN, 9)],
+            )
+
     def test_topk_missing_k_value_output_rank_check(self) -> None:
         graph = self._make_graph(
             [("x", TensorProto.FLOAT, (3, 4, 5, 10)), ("k", TensorProto.INT64, (1,))],

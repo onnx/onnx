@@ -93,13 +93,7 @@ std::function<void(OpSchema&)> TopKOpGenerator(std::vector<std::string> allowed_
           const auto& axis_dim = input_shape.dim(static_cast<int>(axis));
           const auto* const k = ctx.getInputData(1);
 
-          // Infer output shape if:
-          // (1) 'K' is available
-          // (2) axis_dim has dim value
-          // Otherwise cannot reliably compute output shape as axis dim value is
-          // unknown and hence cannot determine if axis dim value >= k (which
-          // should be enforced)
-          if (nullptr != k && axis_dim.has_dim_value()) {
+          if (nullptr != k) {
             int64_t k_value = 0;
             if (k->dims_size() != 1 || k->dims(0) != 1) {
               fail_shape_inference("K input must be a one-dimensional tensor of size 1.");
@@ -110,17 +104,25 @@ std::function<void(OpSchema&)> TopKOpGenerator(std::vector<std::string> allowed_
             } else {
               fail_shape_inference("K input must be of type int64.");
             }
-            if (axis_dim.dim_value() < k_value) {
-              fail_shape_inference("Axis has less than the requested k elements.");
+            if (k_value <= 0) {
+              fail_shape_inference("K input must be greater than zero.");
             }
 
-            TensorShapeProto result_shape = input_shape;
-            result_shape.mutable_dim(static_cast<int>(axis))->set_dim_value(k_value);
+            // The value of K can be validated without knowing the axis dimension,
+            // but the output shape can only be inferred after verifying K fits.
+            if (axis_dim.has_dim_value()) {
+              if (axis_dim.dim_value() < k_value) {
+                fail_shape_inference("Axis has less than the requested k elements.");
+              }
 
-            updateOutputShape(ctx, 0, result_shape);
-            updateOutputShape(ctx, 1, result_shape);
+              TensorShapeProto result_shape = input_shape;
+              result_shape.mutable_dim(static_cast<int>(axis))->set_dim_value(k_value);
 
-            return;
+              updateOutputShape(ctx, 0, result_shape);
+              updateOutputShape(ctx, 1, result_shape);
+
+              return;
+            }
           }
 
           // Infer output shapes' rank in any case
