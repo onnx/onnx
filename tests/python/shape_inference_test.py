@@ -6781,6 +6781,102 @@ class TestShapeInference(TestShapeInferenceHelper):
         with pytest.raises(onnx.shape_inference.InferenceError):
             self._inferred(graph)
 
+    @pytest.mark.parametrize("version", all_versions_for("MaxUnpool"))
+    @pytest.mark.parametrize(
+        ("attrs", "match"),
+        [
+            ({"kernel_shape": [0, 2], "strides": [2, 2]}, "kernel_shape"),
+            ({"kernel_shape": [-2, 2], "strides": [2, 2]}, "kernel_shape"),
+            ({"kernel_shape": [2, 2], "strides": [0, 2]}, "strides"),
+            ({"kernel_shape": [2, 2], "strides": [-1, 2]}, "strides"),
+            (
+                {"kernel_shape": [2, 2], "strides": [2, 2], "pads": [-1, 0, 0, 0]},
+                "pads",
+            ),
+        ],
+    )
+    def test_maxunpool_invalid_attribute_values_raise(
+        self, version: int, attrs: dict[str, Any], match: str
+    ) -> None:
+        # The reference implementation rejects all of these; inference used to
+        # carry them into the output-size arithmetic instead.
+        graph = self._make_graph(
+            [
+                ("xT", TensorProto.FLOAT, (1, 1, 2, 2)),
+                ("xI", TensorProto.INT64, (1, 1, 2, 2)),
+            ],
+            [make_node("MaxUnpool", ["xT", "xI"], "Y", **attrs)],
+            [],
+        )
+        with pytest.raises(onnx.shape_inference.InferenceError, match=match):
+            self._inferred(
+                graph, opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)]
+            )
+
+    @pytest.mark.parametrize("version", all_versions_for("MaxUnpool"))
+    def test_maxunpool_indices_dim_mismatch_raises(self, version: int) -> None:
+        # I must have the same dimensions as X. The output channel dimension is
+        # taken from I, so a mismatch used to infer an output with 5 channels for
+        # an input with 3.
+        graph = self._make_graph(
+            [
+                ("xT", TensorProto.FLOAT, (1, 3, 2, 2)),
+                ("xI", TensorProto.INT64, (1, 5, 2, 2)),
+            ],
+            [
+                make_node(
+                    "MaxUnpool", ["xT", "xI"], "Y", kernel_shape=[2, 2], strides=[2, 2]
+                )
+            ],
+            [],
+        )
+        with pytest.raises(
+            onnx.shape_inference.InferenceError, match="same dimensions"
+        ):
+            self._inferred(
+                graph, opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)]
+            )
+
+    @pytest.mark.parametrize("version", all_versions_for("MaxUnpool"))
+    def test_maxunpool_indices_rank_mismatch_raises(self, version: int) -> None:
+        graph = self._make_graph(
+            [
+                ("xT", TensorProto.FLOAT, (1, 1, 2, 2)),
+                ("xI", TensorProto.INT64, (1, 1, 2)),
+            ],
+            [
+                make_node(
+                    "MaxUnpool", ["xT", "xI"], "Y", kernel_shape=[2, 2], strides=[2, 2]
+                )
+            ],
+            [],
+        )
+        with pytest.raises(onnx.shape_inference.InferenceError, match="same rank"):
+            self._inferred(
+                graph, opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)]
+            )
+
+    @pytest.mark.parametrize("version", all_versions_for("MaxUnpool"))
+    def test_maxunpool_symbolic_indices_dim_skips_check(self, version: int) -> None:
+        # Only a dimension with a known value can be compared.
+        graph = self._make_graph(
+            [
+                ("xT", TensorProto.FLOAT, (1, "C", 2, 2)),
+                ("xI", TensorProto.INT64, (1, 5, 2, 2)),
+            ],
+            [
+                make_node(
+                    "MaxUnpool", ["xT", "xI"], "Y", kernel_shape=[2, 2], strides=[2, 2]
+                )
+            ],
+            [],
+        )
+        self._assert_inferred(
+            graph,
+            [make_tensor_value_info("Y", TensorProto.FLOAT, (1, 5, 4, 4))],
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
+        )
+
     def test_conv_transpose_rank0_weight_raises(self) -> None:
         graph = self._make_graph(
             [

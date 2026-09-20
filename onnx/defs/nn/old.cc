@@ -468,6 +468,9 @@ static void maxUnpoolShapeInference_opset11(InferenceContext& ctx) {
     if (pads.size() != n_input_dims * 2) {
       fail_shape_inference("Attribute pads has incorrect size.");
     }
+    if (std::any_of(pads.begin(), pads.end(), [](int64_t p) { return p < 0; })) {
+      fail_shape_inference("Attribute pads must not contain negative values");
+    }
   } else {
     pads.assign(n_input_dims * 2, 0);
   }
@@ -476,6 +479,9 @@ static void maxUnpoolShapeInference_opset11(InferenceContext& ctx) {
   if (getRepeatedAttribute(ctx, "strides", strides)) {
     if (strides.size() != n_input_dims) {
       fail_shape_inference("Attribute strides has incorrect size.");
+    }
+    if (std::any_of(strides.begin(), strides.end(), [](int64_t s) { return s <= 0; })) {
+      fail_shape_inference("Attribute strides must only contain positive values");
     }
   } else {
     strides.assign(n_input_dims, 1);
@@ -488,6 +494,38 @@ static void maxUnpoolShapeInference_opset11(InferenceContext& ctx) {
     }
   } else {
     fail_shape_inference("Attribute kernel_shape must be specified.");
+  }
+  if (std::any_of(kernel_shape.begin(), kernel_shape.end(), [](int64_t k) { return k <= 0; })) {
+    fail_shape_inference("Attribute kernel_shape must only contain positive values");
+  }
+
+  // The spec requires I to have the same dimensions as X. Without this check a
+  // mismatched pair is accepted and the output picks up its channel dimension from
+  // I rather than from X.
+  if (hasInputShape(ctx, 1)) {
+    const auto& indices_shape = ctx.getInputType(1)->tensor_type().shape();
+    if (indices_shape.dim_size() != input_shape.dim_size()) {
+      fail_shape_inference(
+          "Indices tensor I must have the same rank as input tensor X. X has rank ",
+          input_shape.dim_size(),
+          " and I has rank ",
+          indices_shape.dim_size(),
+          ".");
+    }
+    for (int i = 0; i < input_shape.dim_size(); ++i) {
+      const auto& x_dim = input_shape.dim(i);
+      const auto& indices_dim = indices_shape.dim(i);
+      if (x_dim.has_dim_value() && indices_dim.has_dim_value() && x_dim.dim_value() != indices_dim.dim_value()) {
+        fail_shape_inference(
+            "Indices tensor I must have the same dimensions as input tensor X. Dimension ",
+            i,
+            " is ",
+            x_dim.dim_value(),
+            " in X and ",
+            indices_dim.dim_value(),
+            " in I.");
+      }
+    }
   }
 
   if (ctx.getNumInputs() == 3) {
@@ -2601,6 +2639,9 @@ static void maxUnpoolShapeInference_opset9(InferenceContext& ctx) {
     if (pads.size() != n_input_dims * 2) {
       fail_shape_inference("Attribute pads has incorrect size.");
     }
+    if (std::any_of(pads.begin(), pads.end(), [](int64_t p) { return p < 0; })) {
+      fail_shape_inference("Attribute pads must not contain negative values");
+    }
   } else {
     pads.assign(n_input_dims * 2, 0);
   }
@@ -2609,6 +2650,9 @@ static void maxUnpoolShapeInference_opset9(InferenceContext& ctx) {
   if (getRepeatedAttribute(ctx, "strides", strides)) {
     if (strides.size() != n_input_dims) {
       fail_shape_inference("Attribute strides has incorrect size.");
+    }
+    if (std::any_of(strides.begin(), strides.end(), [](int64_t s) { return s <= 0; })) {
+      fail_shape_inference("Attribute strides must only contain positive values");
     }
   } else {
     strides.assign(n_input_dims, 1);
@@ -2621,6 +2665,38 @@ static void maxUnpoolShapeInference_opset9(InferenceContext& ctx) {
     }
   } else {
     fail_shape_inference("Attribute kernel_shape must be specified.");
+  }
+  if (std::any_of(kernel_shape.begin(), kernel_shape.end(), [](int64_t k) { return k <= 0; })) {
+    fail_shape_inference("Attribute kernel_shape must only contain positive values");
+  }
+
+  // The spec requires I to have the same dimensions as X. Without this check a
+  // mismatched pair is accepted and the output picks up its channel dimension from
+  // I rather than from X.
+  if (hasInputShape(ctx, 1)) {
+    const auto& indices_shape = ctx.getInputType(1)->tensor_type().shape();
+    if (indices_shape.dim_size() != input_shape.dim_size()) {
+      fail_shape_inference(
+          "Indices tensor I must have the same rank as input tensor X. X has rank ",
+          input_shape.dim_size(),
+          " and I has rank ",
+          indices_shape.dim_size(),
+          ".");
+    }
+    for (int i = 0; i < input_shape.dim_size(); ++i) {
+      const auto& x_dim = input_shape.dim(i);
+      const auto& indices_dim = indices_shape.dim(i);
+      if (x_dim.has_dim_value() && indices_dim.has_dim_value() && x_dim.dim_value() != indices_dim.dim_value()) {
+        fail_shape_inference(
+            "Indices tensor I must have the same dimensions as input tensor X. Dimension ",
+            i,
+            " is ",
+            x_dim.dim_value(),
+            " in X and ",
+            indices_dim.dim_value(),
+            " in I.");
+      }
+    }
   }
 
   if (ctx.getNumInputs() == 3) {
