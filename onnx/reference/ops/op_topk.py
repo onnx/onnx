@@ -19,6 +19,8 @@ def topk_sorted_implementation(X, k, axis, largest):
         k = k[0]
     # This conversion is needed for distribution x86.
     k = int(k)
+    if k <= 0:
+        raise ValueError(f"k must be a single positive value, not {k!r}.")
     # Used to tiebreak
     ind_axis = np.indices(X.shape)[axis]
     if largest:
