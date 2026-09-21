@@ -633,7 +633,7 @@ Performs element-wise binary {name} (with Numpy-style broadcasting support).
 
 {broadcast_doc}
 
-For integer inputs, the result is computed using truncating division (rounding toward zero).
+For integer inputs, the result is computed using truncating division (rounding toward zero). For example, `-11 / 3` yields `-3`.
 )DOC";
           ReplaceAll(doc, "{name}", name);
           ReplaceAll(doc, "{broadcast_doc}", GenerateBroadcastingDocMul().c_str()););
@@ -692,7 +692,7 @@ Performs element-wise binary {name} (with Numpy-style broadcasting support).
 
 {broadcast_doc}
 
-For integer inputs, the result is computed using truncating division (rounding toward zero).
+For integer inputs, the result is computed using truncating division (rounding toward zero). For example, `-11 / 3` yields `-3`.
 )DOC";
           ReplaceAll(doc, "{name}", name);
           ReplaceAll(doc, "{broadcast_doc}", GenerateBroadcastingDocMul().c_str()););
@@ -1978,7 +1978,7 @@ static std::function<void(OpSchema&)> MathDocGenerator_old_opset6(const char* na
 Performs element-wise binary {name} (with limited broadcast support).
 {broadcast_doc}
 
-For integer inputs, the result is computed using truncating division (rounding toward zero).
+For integer inputs, the result is computed using truncating division (rounding toward zero). For example, `-11 / 3` yields `-3`.
 )DOC";
           ReplaceAll(doc, "{name}", name);
           ReplaceAll(doc, "{broadcast_doc}", kDoc_Pow_ver1););

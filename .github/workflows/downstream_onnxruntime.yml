@@ -30,6 +30,9 @@ jobs:
     # when the 'run onnxruntime CI' label is set (akin to 'run release CIs').
     if: github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'run onnxruntime CI')
     runs-on: ubuntu-24.04-arm
+    permissions:
+      contents: read
+      issues: write
     steps:
       - name: Checkout onnx (this PR branch)
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -58,3 +61,25 @@ jobs:
       - name: Test onnxruntime
         working-directory: onnx
         run: pixi run -e ort test-onnxruntime
+
+      - name: Issue on failure
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        if: failure() && github.ref == 'refs/heads/main'
+        with:
+          script: |
+            github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: "open",
+              labels: "[bot] onnxruntime integration test"
+            }).then((issues) => {
+              if (issues.data.length === 0){
+                github.rest.issues.create({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  title: "onnxruntime integration test failed",
+                  body: `The onnxruntime integration test failed. See https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId} for details.`,
+                  labels: ["[bot] onnxruntime integration test"]
+                })
+              }
+            });
