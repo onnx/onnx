@@ -268,13 +268,21 @@ def to_array(tensor: onnx.TensorProto, base_dir: str = "") -> np.ndarray:  # noq
         ss = [s.decode("utf-8") for s in utf8_strings]
         return np.asarray(ss).astype(np_dtype).reshape(dims)
 
-    # Load raw data from external tensor if it exists
+    # Load raw data from external tensor if it exists, without mutating the
+    # input tensor: writing the data back into `tensor.raw_data` would leave
+    # the tensor's data_location/external_data fields stale, corrupting a
+    # subsequent save of the model.
+    external_raw_data = None
     if onnx.external_data_helper.uses_external_data(tensor):
-        onnx.external_data_helper.load_external_data_for_tensor(tensor, base_dir)
+        external_raw_data = onnx.external_data_helper._read_external_data_bytes(
+            tensor, base_dir
+        )
 
-    if tensor.HasField("raw_data"):
+    if external_raw_data is not None or tensor.HasField("raw_data"):
         # Raw_bytes support: using frombuffer.
-        raw_data = tensor.raw_data
+        raw_data = (
+            external_raw_data if external_raw_data is not None else tensor.raw_data
+        )
         if sys.byteorder == "big":
             # Convert endian from little to big
             raw_data = np.frombuffer(raw_data, dtype=np_dtype).byteswap().tobytes()
