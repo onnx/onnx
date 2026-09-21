@@ -33,6 +33,7 @@ from onnx.external_data_helper import (
     load_external_data_for_tensor,
     save_external_data,
     set_external_data,
+    write_external_data_tensors,
 )
 from onnx.numpy_helper import from_array, to_array
 
@@ -1153,6 +1154,44 @@ class TestSaveExternalDataOffsetBounds:
         with pytest.raises(checker.ValidationError, match=r"offset.*must be between"):
             save_external_data(tensor, str(tmp_path))
         assert (tmp_path / location).read_bytes() == existing_data
+
+
+class TestWriteExternalDataTensorsOffsetOrder:
+    """write_external_data_tensors() must write tensors in offset order.
+
+    save_external_data() validates that a tensor's pre-assigned offset lands at the
+    current end of its external file. If tensors are processed in graph order while
+    their pre-assigned offsets describe a different file layout, that validation
+    depends on graph order and rejects an otherwise valid layout.
+    """
+
+    def test_write_order_follows_offset_not_graph_order(self, tmp_path: Path) -> None:
+        """Two initializers with a layout ('second' then 'first') opposite of graph order."""
+        location = "data.bin"
+        first = from_array(np.zeros((4,), dtype=np.float32), name="first")
+        second = from_array(np.ones((4,), dtype=np.float32), name="second")
+        first_bytes = first.raw_data
+        second_bytes = second.raw_data
+
+        # 'first' precedes 'second' in the graph's initializer list, but the
+        # pre-assigned offsets place 'second' first in the external file.
+        set_external_data(second, location, offset=0, length=len(second_bytes))
+        set_external_data(
+            first, location, offset=len(second_bytes), length=len(first_bytes)
+        )
+
+        graph = helper.make_graph(
+            nodes=[],
+            name="test",
+            inputs=[],
+            outputs=[],
+            initializer=[first, second],
+        )
+        model = helper.make_model(graph)
+
+        write_external_data_tensors(model, str(tmp_path))
+
+        assert (tmp_path / location).read_bytes() == second_bytes + first_bytes
 
 
 class TestExternalDataInfoSecurity:

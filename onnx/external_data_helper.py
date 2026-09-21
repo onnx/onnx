@@ -426,13 +426,30 @@ def write_external_data_tensors(model: ModelProto, filepath: str) -> ModelProto:
     Returns:
         ModelProto: The modified model object.
     """
-    for tensor in _get_all_tensors(model):
-        # Writing to external data happens in 2 passes:
-        # 1. Tensors with raw data which pass the necessary conditions (size threshold etc) are marked for serialization
-        # 2. The raw data in these tensors is serialized to a file
-        # Thus serialize only if tensor has raw data and it was marked for serialization
-        if uses_external_data(tensor) and tensor.HasField("raw_data"):
-            save_external_data(tensor, filepath)
-            tensor.ClearField("raw_data")
+    # Writing to external data happens in 2 passes:
+    # 1. Tensors with raw data which pass the necessary conditions (size threshold etc) are marked for serialization
+    # 2. The raw data in these tensors is serialized to a file
+    # Thus serialize only if tensor has raw data and it was marked for serialization
+    tensors_to_write = [
+        tensor
+        for tensor in _get_all_tensors(model)
+        if uses_external_data(tensor) and tensor.HasField("raw_data")
+    ]
+    # save_external_data() appends each tensor to the end of its external data
+    # file and validates that any pre-assigned offset lands there. Sort by that
+    # offset (per destination file) so tensors are written in the order their
+    # offsets imply, regardless of their order in the graph; tensors without a
+    # pre-assigned offset keep their relative order and are written last.
+    infos = {id(tensor): ExternalDataInfo(tensor) for tensor in tensors_to_write}
+    tensors_to_write.sort(
+        key=lambda tensor: (
+            infos[id(tensor)].location,
+            infos[id(tensor)].offset is None,
+            infos[id(tensor)].offset or 0,
+        )
+    )
+    for tensor in tensors_to_write:
+        save_external_data(tensor, filepath)
+        tensor.ClearField("raw_data")
 
     return model
