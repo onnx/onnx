@@ -1621,6 +1621,22 @@ ONNX_OPERATOR_SET_SCHEMA(
           if (hasInputShape(ctx, 0)) {
             auto& input_shape = getInputShape(ctx, 0);
             if (input_shape.dim_size() == 4) {
+              // The spatial dimensions are split into blocks, so they must divide
+              // evenly. Without this check the integer divisions below silently report
+              // a truncated shape for an input the runtime rejects.
+              for (const int spatial_axis : {2, 3}) {
+                const auto& dim = input_shape.dim(spatial_axis);
+                if (dim.has_dim_value() && dim.dim_value() % blocksize != 0) {
+                  fail_shape_inference(
+                      "Input dimension ",
+                      spatial_axis,
+                      " (",
+                      dim.dim_value(),
+                      ") must be a multiple of 'blocksize' (",
+                      blocksize,
+                      ").");
+                }
+              }
               updateOutputShape(
                   ctx,
                   0,
@@ -1676,6 +1692,19 @@ ONNX_OPERATOR_SET_SCHEMA(
           if (hasInputShape(ctx, 0)) {
             auto& input_shape = getInputShape(ctx, 0);
             if (input_shape.dim_size() == 4) {
+              // The channels are redistributed into blocksize x blocksize blocks, so
+              // the channel dimension must divide evenly. Without this check the
+              // integer division below silently reports a truncated shape for an input
+              // the runtime rejects.
+              const auto& channel_dim = input_shape.dim(1);
+              if (channel_dim.has_dim_value() && channel_dim.dim_value() % block_area != 0) {
+                fail_shape_inference(
+                    "Input channel dimension (",
+                    channel_dim.dim_value(),
+                    ") must be a multiple of 'blocksize' * 'blocksize' (",
+                    block_area,
+                    ").");
+              }
               updateOutputShape(
                   ctx,
                   0,
