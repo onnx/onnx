@@ -5,6 +5,7 @@
 from __future__ import annotations
 
 import contextlib
+import gc
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
@@ -4744,6 +4745,54 @@ class TestShapeInference(TestShapeInferenceHelper):
             graph, [make_tensor_value_info("z", TensorProto.FLOAT, (2, 3, 100, 100))]
         )
 
+    @pytest.mark.parametrize(
+        ("shape", "blocksize"),
+        [("1,1,7,8", 2), ("1,1,8,7", 2), ("1,1,7,7", 3)],
+    )
+    def test_space_to_depth_spatial_dim_not_divisible(
+        self, shape: str, blocksize: int
+    ) -> None:
+        # The spatial dimensions are split into blocks, so one that is not a multiple of
+        # blocksize has no valid output shape and the reference implementation rejects
+        # the input. Inference used to report a silently truncated shape instead.
+        model = onnx.parser.parse_model(
+            f"""
+            <ir_version: 12, opset_import: ["" : 28]>
+            graph (float[{shape}] X) => () {{
+            Y = SpaceToDepth <blocksize = {blocksize}> (X)
+            }}
+            """
+        )
+        with pytest.raises(onnx.shape_inference.InferenceError):
+            onnx.shape_inference.infer_shapes(model, strict_mode=True)
+
+    @pytest.mark.parametrize("channels", [5, 6, 7])
+    def test_depth_to_space_channels_not_divisible(self, channels: int) -> None:
+        # The channels are redistributed into blocksize x blocksize blocks, so a channel
+        # count that is not a multiple of blocksize squared has no valid output shape.
+        model = onnx.parser.parse_model(
+            f"""
+            <ir_version: 12, opset_import: ["" : 28]>
+            graph (float[1,{channels},2,2] X) => () {{
+            Y = DepthToSpace <blocksize = 2, mode = "DCR"> (X)
+            }}
+            """
+        )
+        with pytest.raises(onnx.shape_inference.InferenceError):
+            onnx.shape_inference.infer_shapes(model, strict_mode=True)
+
+    def test_space_to_depth_symbolic_spatial_dims_are_not_rejected(self) -> None:
+        # Only a known dimension can be checked; a symbolic one must still infer.
+        model = onnx.parser.parse_model(
+            """
+            <ir_version: 12, opset_import: ["" : 28]>
+            graph (float[2,3,H,W] X) => () {
+            Y = SpaceToDepth <blocksize = 10> (X)
+            }
+            """
+        )
+        onnx.shape_inference.infer_shapes(model, strict_mode=True)
+
     def _rnn_forward(
         self, seqlen: int, batchsize: int, inpsize: int, hiddensize: int
     ) -> None:
@@ -5400,6 +5449,33 @@ class TestShapeInference(TestShapeInferenceHelper):
                 make_tensor_value_info("y", TensorProto.FLOAT, (2, 3, 3)),
                 make_tensor_value_info("z", TensorProto.FLOAT, (2, 3, 3)),
                 make_tensor_value_info("a", TensorProto.FLOAT, (2, 1, 3)),
+            ],
+        )
+
+    def test_split_num_outputs_lt_number_of_named_outputs(self) -> None:
+        # More declared outputs than 'num_outputs' is invalid.
+        graph = self._make_graph(
+            [("x", TensorProto.FLOAT, (10,))],
+            [make_node("Split", ["x"], ["y", "z", "a", "b", "c"], num_outputs=2)],
+            [],
+        )
+        with pytest.raises(onnx.shape_inference.InferenceError):
+            self._inferred(graph)
+
+    def test_split_num_outputs_omitted_trailing_outputs(self) -> None:
+        # Fewer declared outputs than 'num_outputs' is allowed: by ONNX
+        # convention trailing outputs may be omitted. The inferred shapes
+        # correspond to the leading chunks of the 'num_outputs' split.
+        graph = self._make_graph(
+            [("x", TensorProto.FLOAT, (10,))],
+            [make_node("Split", ["x"], ["y", "z"], num_outputs=3)],
+            [],
+        )
+        self._assert_inferred(
+            graph,
+            [
+                make_tensor_value_info("y", TensorProto.FLOAT, (4,)),
+                make_tensor_value_info("z", TensorProto.FLOAT, (4,)),
             ],
         )
 
@@ -8607,6 +8683,18 @@ class TestShapeInference(TestShapeInferenceHelper):
             graph, [make_tensor_value_info("y", TensorProto.FLOAT, (2, 2))]
         )
 
+    def test_gathernd_reject_negative_batch_dims(self) -> None:
+        graph = self._make_graph(
+            [
+                ("x", TensorProto.FLOAT, (2, 2, 2)),
+                ("indices", TensorProto.INT64, (2, 1)),
+            ],
+            [make_node("GatherND", ["x", "indices"], ["y"], batch_dims=-5)],
+            [],
+        )
+        with pytest.raises(onnx.shape_inference.InferenceError):
+            self._inferred(graph)
+
     def test_cumprod(self) -> None:
         graph = self._make_graph(
             [("x", TensorProto.FLOAT, (3, 2)), ("axis", TensorProto.INT64, (1,))],
@@ -9031,10 +9119,12 @@ class TestShapeInference(TestShapeInferenceHelper):
                 opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
             )
 
-    def test_split_to_sequence_keepdims(self) -> None:
+    @pytest.mark.parametrize("inputs", [["input"], ["input", ""]])
+    @pytest.mark.parametrize("version", all_versions_for("SplitToSequence"))
+    def test_split_to_sequence_keepdims(self, inputs: list[str], version: int) -> None:
         graph = self._make_graph(
             [("input", TensorProto.FLOAT, (6, 4))],
-            [make_node("SplitToSequence", ["input"], ["output_sequence"], keepdims=1)],
+            [make_node("SplitToSequence", inputs, ["output_sequence"], keepdims=1)],
             [],
         )
         self._assert_inferred(
@@ -9044,12 +9134,17 @@ class TestShapeInference(TestShapeInferenceHelper):
                     "output_sequence", TensorProto.FLOAT, (1, 4)
                 )
             ],
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
         )
 
-    def test_split_to_sequence_not_keepdims(self) -> None:
+    @pytest.mark.parametrize("inputs", [["input"], ["input", ""]])
+    @pytest.mark.parametrize("version", all_versions_for("SplitToSequence"))
+    def test_split_to_sequence_not_keepdims(
+        self, inputs: list[str], version: int
+    ) -> None:
         graph = self._make_graph(
             [("input", TensorProto.FLOAT, (6, 4))],
-            [make_node("SplitToSequence", ["input"], ["output_sequence"], keepdims=0)],
+            [make_node("SplitToSequence", inputs, ["output_sequence"], keepdims=0)],
             [],
         )
         self._assert_inferred(
@@ -9059,6 +9154,7 @@ class TestShapeInference(TestShapeInferenceHelper):
                     "output_sequence", TensorProto.FLOAT, (4,)
                 )
             ],
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
         )
 
     def test_split_to_sequence_ignore_keepdims(self) -> None:
@@ -13618,6 +13714,21 @@ class TestShapeInference(TestShapeInferenceHelper):
             onnx.checker.check_model(model, full_check=True)
             onnx.shape_inference.infer_shapes(model)
 
+    @pytest.mark.parametrize("axis", [2**31, 2**40])
+    def test_layer_normalization_axis_out_of_range(self, axis: int) -> None:
+        # A positive axis >= rank must be rejected, not narrowed to int and used as an
+        # out-of-bounds index into the Mean / InvStdDev output shapes.
+        model = onnx.parser.parse_model(
+            f"""
+            <ir_version: 10, opset_import: ["" : 17]>
+            graph (float[2,3,4] X, float[4] Scale) => () {{
+            Y, Mean, InvStdDev = LayerNormalization <axis = {axis}> (X, Scale)
+            }}
+            """
+        )
+        with pytest.raises(onnx.shape_inference.InferenceError):
+            onnx.shape_inference.infer_shapes(model, strict_mode=True)
+
     def test_issue_conv_6180(self):
         modeltxt = """
         <
@@ -14021,6 +14132,48 @@ class TestCustomSchemaShapeInference(TestShapeInferenceHelper):
 
         # clean up
         onnx.defs.deregister_schema(schema.name, schema.since_version, schema.domain)
+
+    def test_custom_schema_shape_inference_callback_lifetime(self) -> None:
+        op_type = "MySoftmax"
+        domain = "com.example"
+
+        def register_schema() -> None:
+            schema = OpSchema(
+                op_type,
+                domain,
+                1,
+                inputs=[OpSchema.FormalParameter("input", "float")],
+                outputs=[OpSchema.FormalParameter("output", "float")],
+            )
+
+            def infer(ctx: onnx.shape_inference.InferenceContext) -> None:
+                ctx.set_output_type(0, ctx.get_input_type(0))
+
+            schema.set_type_and_shape_inference_function(infer)
+            onnx.defs.register_schema(schema)
+
+        graph = make_graph(
+            [make_node(op_type, ["input"], ["output"], domain=domain)],
+            "g",
+            [make_tensor_value_info("input", TensorProto.FLOAT, [1, 3])],
+            [make_tensor_value_info("output", TensorProto.FLOAT, None)],
+        )
+        model = make_model(
+            graph,
+            opset_imports=[make_opsetid(ONNX_DOMAIN, 17), make_opsetid(domain, 1)],
+        )
+
+        # The schema and callback are local to register_schema(). The registered
+        # inference function must remain callable after those Python references
+        # have been released.
+        register_schema()
+        try:
+            gc.collect()
+            inferred = onnx.shape_inference.infer_shapes(model)
+            output_shape = inferred.graph.output[0].type.tensor_type.shape
+            assert [dim.dim_value for dim in output_shape.dim] == [1, 3]
+        finally:
+            onnx.defs.deregister_schema(op_type, 1, domain)
 
     def test_dummy_graph_schema_shape_inference(self) -> None:
         # generate graph

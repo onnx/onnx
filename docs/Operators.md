@@ -13978,7 +13978,7 @@ expect(node, inputs=[x], outputs=[y], name="test_det_nd")
 
   This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
 
-  For integer inputs, the result is computed using truncating division (rounding toward zero).
+  For integer inputs, the result is computed using truncating division (rounding toward zero). For example, `-11 / 3` yields `-3`.
   (Opset 14 change): Extend supported types to include uint8, int8, uint16, and int16.
 
 #### Version
@@ -18019,9 +18019,9 @@ expect(
   y = scale * (x - mean) / sqrt(variance + epsilon) + bias,
   ```
   where the mean and variance are computed per instance per group of channels, and
-  `scale` and `bias` should be specified for each channel. The number of
-  groups `num_groups` should be divisible by the number of channels so that there are
-  an equal number of channels per group.
+  `scale` and `bias` should be specified for each channel. The number of channels
+  should be divisible by `num_groups` so that there are an equal number of channels
+  per group.
 
   The overall computation has two stages: the first stage normalizes the elements to
   have zero mean and unit variance for each instance in each group, and the second

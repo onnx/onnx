@@ -7555,9 +7555,10 @@ class TestReferenceEvaluator:
         assert_array_equal(inverse, np.array([0, 1, 1, 2], dtype=np.int64))
         assert_array_equal(counts, np.array([1, 2, 1], dtype=np.int64))
 
-    def test_unique_not_sorted_with_axis(self) -> None:
+    @pytest.mark.parametrize("axis", [1, -1])
+    def test_unique_not_sorted_with_axis(self, axis: int) -> None:
         node = make_node(
-            "Unique", ["X"], ["Y", "indices", "inverse", "counts"], sorted=0, axis=1
+            "Unique", ["X"], ["Y", "indices", "inverse", "counts"], sorted=0, axis=axis
         )
         x = np.array([[3.0, 1.0, 3.0], [4.0, 2.0, 4.0]], dtype=np.float32)
         y, indices, inverse, counts = ReferenceEvaluator(node).run(None, {"X": x})
