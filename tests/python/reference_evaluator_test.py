@@ -1620,6 +1620,12 @@ class TestReferenceEvaluator:
         y = load_op("", "Softplus").eval(x)
         assert_allclose(y, x)
 
+    def test_eval_lpnormalization_l1_negative_values(self):
+        x = np.array([1.0, -1.0], dtype=np.float32)
+        y = load_op("", "LpNormalization").eval(x, axis=0, p=1)
+        expected = np.array([0.5, -0.5], dtype=np.float32)
+        assert_allclose(y, expected)
+
     def test_eval_cast(self):
         x = np.array([[0, 1], [-1, 2]], dtype=np.float32)
         y = Cast_19.eval(x, to=TensorProto.FLOAT8E4M3FN)
