@@ -733,9 +733,10 @@ static void processSliceInputs(const int64_t input_dim_size_or_value, int64_t& s
   if (step == 0) {
     fail_shape_inference("'step' cannot be 0 for Slice");
   }
-  // Empty dimension: clamp bounds are invalid when dimension size is 0,
-  // so short-circuit to produce a zero-length output.
-  if (input_dim_size_or_value == 0) {
+  // Empty or negative (invalid) dimension: clamp bounds are invalid when
+  // dimension size is not positive, so short-circuit to produce a
+  // zero-length output.
+  if (input_dim_size_or_value <= 0) {
     start = 0;
     end = 0;
     return;
