@@ -733,6 +733,13 @@ static void processSliceInputs(const int64_t input_dim_size_or_value, int64_t& s
   if (step == 0) {
     fail_shape_inference("'step' cannot be 0 for Slice");
   }
+  // A negative dimension is invalid: the std::clamp calls below require the
+  // upper bound to be >= the lower bound, so reject the dimension with a
+  // catchable error instead of invoking undefined behavior (a hardened
+  // std::clamp aborts the process with SIGABRT).
+  if (input_dim_size_or_value < 0) {
+    fail_shape_inference("Slice input dimension must be non-negative, got ", input_dim_size_or_value);
+  }
   // Empty dimension: clamp bounds are invalid when dimension size is 0,
   // so short-circuit to produce a zero-length output.
   if (input_dim_size_or_value == 0) {
