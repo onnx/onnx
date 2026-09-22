@@ -3454,6 +3454,7 @@ y_scale = (maximum(0, max(x)) - minimum(0, min(x))) / (qmax - qmin)
 
 * where qmax and qmin are max and min values for quantization range i.e. [0, 255] in case of uint8
 * data range is adjusted to include 0.
+* when the adjusted data range is 0, which happens when every value of x is 0, the numerator is replaced with 1, so that `y_scale` is `1 / (qmax - qmin)` instead of 0. This keeps `y_scale` nonzero and avoids a division by zero in the zero point calculation below.
 
 Zero point is calculated as:
 ```
