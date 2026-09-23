@@ -217,9 +217,10 @@ class TestReferenceEvaluatorAiOnnxMl:
 
     @pytest.mark.skipif(not ONNX_ML, reason="onnx not compiled with ai.onnx.ml")
     def test_normalizer_max_negative(self):
-        # `MAX` normalizes by `max(X)` (raw max), not `max(abs(X))`, so a row
-        # whose largest-magnitude value is negative must keep its sign. See
-        # https://github.com/onnx/onnx/issues/8452.
+        # `MAX` normalizes by `max(X)` (raw max), not `max(abs(X))`. For the
+        # all-negative first row the raw max is -1, so division flips the sign
+        # ([-2, -1] -> [2, 1]); an abs-max implementation would instead give
+        # [-1, -0.5]. See https://github.com/onnx/onnx/issues/8452.
         X = make_tensor_value_info("X", TensorProto.FLOAT, [2, 2])
         Y = make_tensor_value_info("Y", TensorProto.FLOAT, [2, 2])
         x = np.array([[-2.0, -1.0], [-3.0, 2.0]], dtype=np.float32)
