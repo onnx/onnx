@@ -1,0 +1,15 @@
+diff --git a/src/nb_internals.h b/src/nb_internals.h
+index 11babe7..7b64547 100644
+--- a/src/nb_internals.h
++++ b/src/nb_internals.h
+@@ -34,6 +34,10 @@
+ #  define NB_THREAD_LOCAL __thread
+ #endif
+
++#if defined(_AIX) && defined(func_data)
++#undef func_data
++#endif
++
+ // When forwarding vector calls between functions that are known to be implemented by
+ // nanobind, it uses an extended ABI that may set one additional bit to communicate
+ // that the implicit 'self' argument is trusted and does not need to be type-checked.
