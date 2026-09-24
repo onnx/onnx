@@ -36,6 +36,16 @@ class Resize_10_11 final : public Adapter {
     for (int i = 0; i < input_rank; i++)
       data.emplace_back(1.0f);
 
+    const Symbol coordinate_transformation_mode("coordinate_transformation_mode");
+    node->s_(coordinate_transformation_mode, "asymmetric");
+
+    const Symbol mode("mode");
+    std::string mode_val = node->hasAttribute(mode) ? node->s(mode) : "nearest";
+    if (mode_val == "nearest") {
+      const Symbol nearest_mode("nearest_mode");
+      node->s_(nearest_mode, "floor");
+    }
+
     Node* constant = graph->create(kConstant);
     constant->insertBefore(node);
     constant->t_(kvalue, t);

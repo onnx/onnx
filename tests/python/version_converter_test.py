@@ -1803,6 +1803,40 @@ class TestVersionConverter:
         converted_model = self._converted(graph, helper.make_operatorsetid("", 10), 11)
         assert converted_model.opset_import[0].version == 11
 
+    # Test Resize Adapter: 10 -> 11
+    def test_resize_10_11_preserves_opset10_semantics(self) -> None:
+        """The conversion must pin the opset-11 defaults to opset-10 semantics."""
+        for mode in ("nearest", "linear"):
+            nodes = [
+                helper.make_node(
+                    "Constant",
+                    [],
+                    ["scales"],
+                    value=helper.make_tensor(
+                        "", TensorProto.FLOAT, [4], [1.0, 1.0, 2.0, 2.0]
+                    ),
+                ),
+                helper.make_node("Resize", ["X", "scales"], ["Y"], mode=mode),
+            ]
+            graph = helper.make_graph(
+                nodes,
+                "test_resize_10_11",
+                [helper.make_tensor_value_info("X", TensorProto.FLOAT, (1, 1, 2, 2))],
+                [helper.make_tensor_value_info("Y", TensorProto.FLOAT, (1, 1, 4, 4))],
+            )
+            converted_model = self._converted(
+                graph, helper.make_operatorsetid("", 10), 11
+            )
+            resize = next(
+                n for n in converted_model.graph.node if n.op_type == "Resize"
+            )
+            attributes = {
+                attr.name: helper.get_attribute_value(attr) for attr in resize.attribute
+            }
+            assert attributes["coordinate_transformation_mode"] == b"asymmetric"
+            if mode == "nearest":
+                assert attributes["nearest_mode"] == b"floor"
+
     # Test Scatter Adapter: 10 -> 11
     def test_scatter_10_11_bounds_check(self) -> None:
         """Test Scatter 10->11 conversion with proper bounds checking."""
