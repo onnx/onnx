@@ -1688,6 +1688,72 @@ class TestChecker:
         tensor.double_data.append(0.0)
         checker.check_tensor(tensor)
 
+    @pytest.mark.parametrize(
+        ("dtype", "min_ir_version"),
+        (
+            (TensorProto.BFLOAT16, 4),
+            (TensorProto.FLOAT8E4M3FN, 9),
+            (TensorProto.FLOAT8E4M3FNUZ, 9),
+            (TensorProto.FLOAT8E5M2, 9),
+            (TensorProto.FLOAT8E5M2FNUZ, 9),
+            (TensorProto.UINT4, 10),
+            (TensorProto.INT4, 10),
+            (TensorProto.FLOAT4E2M1, 11),
+            (TensorProto.FLOAT8E8M0, 12),
+            (TensorProto.UINT2, 13),
+            (TensorProto.INT2, 13),
+            (TensorProto.FLOAT6E2M3, 14),
+            (TensorProto.FLOAT6E3M2, 14),
+        ),
+    )
+    def test_check_data_type_requires_ir_version(
+        self, dtype: int, min_ir_version: int
+    ) -> None:
+        """Data types must not be used with an IR version older than the one that introduced them."""
+        ctx = checker.C.CheckerContext()
+        ctx.opset_imports = {"": onnx.defs.onnx_opset_version()}
+
+        tensor = helper.make_tensor("t", dtype, [0], [])
+        tensor_value_info = helper.make_tensor_value_info("x", dtype, [1])
+        sequence_value_info = helper.make_value_info(
+            "s",
+            helper.make_sequence_type_proto(helper.make_tensor_type_proto(dtype, [1])),
+        )
+
+        ctx.ir_version = min_ir_version - 1
+        match = f"requires IR version >= {min_ir_version}"
+        with pytest.raises(checker.ValidationError, match=match):
+            checker.check_tensor(tensor, ctx)
+        with pytest.raises(checker.ValidationError, match=match):
+            checker.check_value_info(tensor_value_info, ctx)
+        with pytest.raises(checker.ValidationError, match=match):
+            checker.check_value_info(sequence_value_info, ctx)
+
+        ctx.ir_version = min_ir_version
+        checker.check_tensor(tensor, ctx)
+        checker.check_value_info(tensor_value_info, ctx)
+        checker.check_value_info(sequence_value_info, ctx)
+
+    def test_check_model_data_type_requires_ir_version(self) -> None:
+        """check_model rejects an initializer whose data type is newer than the model's ir_version."""
+        graph = helper.make_graph(
+            [helper.make_node("Identity", ["w"], ["y"])],
+            "g",
+            [],
+            [helper.make_tensor_value_info("y", TensorProto.INT4, [2])],
+            [helper.make_tensor("w", TensorProto.INT4, [2], [1, -1])],
+        )
+        # INT4 was introduced in IR version 10.
+        model = helper.make_model(
+            graph, ir_version=9, opset_imports=[helper.make_opsetid("", 19)]
+        )
+        with pytest.raises(checker.ValidationError, match="int4"):
+            checker.check_model(model)
+
+        model.ir_version = 10
+        model.opset_import[0].version = 21
+        checker.check_model(model)
+
     def test_check_tensor_complex_data_too_small(self) -> None:
         """COMPLEX64/COMPLEX128 store 2 value-field entries (real, imag) per element."""
         tensor = TensorProto()
