@@ -205,7 +205,9 @@ node = onnx.helper.make_node(
 )
 x = np.array([[0.0, 0.0], [1.0, 0.0]], dtype=np.float32)
 # Per the spec, a zero divisor leaves the row unchanged (Y == X).
-y = x / np.where(x.max(axis=1, keepdims=True) == 0, 1.0, x.max(axis=1, keepdims=True))
+y = x / np.where(
+    x.max(axis=1, keepdims=True) == 0, 1.0, x.max(axis=1, keepdims=True)
+)
 expect(
     node,
     inputs=[x],
