@@ -2467,7 +2467,8 @@ class TestShapeInference(TestShapeInferenceHelper):
 
     def test_slice_negative_dim(self) -> None:
         """Regression test for issue #8481: negative dim_value must not abort
-        the process (std::clamp precondition) - treat it like an empty dim."""
+        the process (std::clamp precondition) - treat it like an empty dim.
+        """
         graph = self._make_graph(
             [
                 ("x", TensorProto.FLOAT, (3, -1)),
