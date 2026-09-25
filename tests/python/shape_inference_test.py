@@ -2465,6 +2465,31 @@ class TestShapeInference(TestShapeInferenceHelper):
             graph, [make_tensor_value_info("y", TensorProto.FLOAT, (0, 6))]
         )
 
+    def test_slice_negative_dim(self) -> None:
+        """Regression test for issue #8481: negative dim_value must not abort
+        the process (std::clamp precondition) - treat it like an empty dim.
+        """
+        graph = self._make_graph(
+            [
+                ("x", TensorProto.FLOAT, (3, -1)),
+                ("starts", TensorProto.INT64, (1,)),
+                ("ends", TensorProto.INT64, (1,)),
+                ("axes", TensorProto.INT64, (1,)),
+                ("steps", TensorProto.INT64, (1,)),
+            ],
+            [make_node("Slice", ["x", "starts", "ends", "axes", "steps"], "y")],
+            [],
+            initializer=[
+                make_tensor("starts", TensorProto.INT64, (1,), (0,)),
+                make_tensor("ends", TensorProto.INT64, (1,), (2**63 - 1,)),
+                make_tensor("axes", TensorProto.INT64, (1,), (1,)),
+                make_tensor("steps", TensorProto.INT64, (1,), (1,)),
+            ],
+        )
+        self._assert_inferred(
+            graph, [make_tensor_value_info("y", TensorProto.FLOAT, (3, 0))]
+        )
+
     def test_slice_scalar_shape_output(self) -> None:
         """Shape(scalar) produces 0-length output; Slice on it should not crash."""
         graph = self._make_graph(
