@@ -93,14 +93,8 @@ std::function<void(OpSchema&)> TopKOpGenerator(std::vector<std::string> allowed_
           const auto& axis_dim = input_shape.dim(static_cast<int>(axis));
           const auto* const k = ctx.getInputData(1);
 
-          // Infer output shape if:
-          // (1) 'K' is available
-          // (2) axis_dim has dim value
-          // Otherwise cannot reliably compute output shape as axis dim value is
-          // unknown and hence cannot determine if axis dim value >= k (which
-          // should be enforced)
-          if (nullptr != k && axis_dim.has_dim_value()) {
-            int64_t k_value = 0;
+          int64_t k_value = 0;
+          if (nullptr != k) {
             if (k->dims_size() != 1 || k->dims(0) != 1) {
               fail_shape_inference("K input must be a one-dimensional tensor of size 1.");
             }
@@ -110,6 +104,18 @@ std::function<void(OpSchema&)> TopKOpGenerator(std::vector<std::string> allowed_
             } else {
               fail_shape_inference("K input must be of type int64.");
             }
+            if (k_value <= 0) {
+              fail_shape_inference("K input must contain a single positive value.");
+            }
+          }
+
+          // Infer output shape if:
+          // (1) 'K' is available
+          // (2) axis_dim has dim value
+          // Otherwise cannot reliably compute output shape as axis dim value is
+          // unknown and hence cannot determine if axis dim value >= k (which
+          // should be enforced)
+          if (nullptr != k && axis_dim.has_dim_value()) {
             if (axis_dim.dim_value() < k_value) {
               fail_shape_inference("Axis has less than the requested k elements.");
             }

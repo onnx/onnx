@@ -7737,6 +7737,14 @@ class TestReferenceEvaluator:
         assert_array_equal(inverse, np.array([1, 0, 1], dtype=np.int64))
         assert_array_equal(counts, np.array([1, 2], dtype=np.int64))
 
+    @pytest.mark.parametrize("k_value", [0, -1])
+    def test_topk_rejects_non_positive_k(self, k_value) -> None:
+        node = make_node("TopK", ["X", "K"], ["Values", "Indices"], axis=0)
+        x = np.array([3.0, 1.0, 2.0], dtype=np.float32)
+        k = np.array([k_value], dtype=np.int64)
+        with pytest.raises(ValueError, match="positive"):
+            ReferenceEvaluator(node).run(None, {"X": x, "K": k})
+
 
 class TestReferenceEvaluatorShapeAnnotationChecking:
     """Tests for the opt-in runtime shape-annotation validation feature
