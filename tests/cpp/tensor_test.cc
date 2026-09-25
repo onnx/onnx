@@ -2,10 +2,13 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
+#include <algorithm>
 #include <cstdint>
 #include <limits>
 #include <stdexcept>
 #include <string>
+#include <utility>
+#include <vector>
 
 #include "gtest/gtest.h"
 #include "onnx/common/assertions.h"
@@ -50,6 +53,114 @@ TEST(TensorTest, SizeFromDimOverflowThrows) {
   t.sizes() = {2, kLargeDim, kLargeDim};
   EXPECT_THROW(t.size_from_dim(1), tensor_error);
 #endif
+}
+
+// tensor_id() backs onnxoptimizer's TensorContentDigest cache
+// (onnxoptimizer/passes/tensor_content_hash.h), which relies on it never
+// being shared between two Tensor objects whose content could independently
+// diverge -- these tests cover the identity/uniqueness guarantee that
+// invariant depends on. See tensor.h's tensor_id_ comment for the full
+// rationale.
+TEST(TensorTest, TensorIdDistinctAcrossDefaultConstruction) {
+  Tensor a;
+  Tensor b;
+  EXPECT_NE(a.tensor_id(), b.tensor_id());
+}
+
+TEST(TensorTest, TensorIdDistinctAcrossCopyConstruction) {
+  Tensor a;
+  a.sizes() = {1, 2, 3};
+  Tensor b(a);
+  EXPECT_NE(a.tensor_id(), b.tensor_id());
+  // Copying is a deep, independent copy: mutating one afterward must not affect the other.
+  b.sizes().push_back(4);
+  EXPECT_NE(a.sizes(), b.sizes());
+}
+
+TEST(TensorTest, TensorIdDistinctAcrossMoveConstruction) {
+  Tensor a;
+  a.sizes() = {1, 2, 3};
+  const uint64_t a_id = a.tensor_id();
+  Tensor b(std::move(a));
+  EXPECT_NE(a_id, b.tensor_id());
+  EXPECT_EQ(b.sizes(), (std::vector<int64_t>{1, 2, 3}));
+}
+
+TEST(TensorTest, TensorIdRefreshedByCopyAssignment) {
+  Tensor a;
+  Tensor b;
+  const uint64_t b_id_before = b.tensor_id();
+  b = a;
+  // b's content just changed, so its id must move on even if a happens to look the same.
+  EXPECT_NE(b_id_before, b.tensor_id());
+  EXPECT_NE(a.tensor_id(), b.tensor_id());
+}
+
+TEST(TensorTest, TensorIdRefreshedByMoveAssignment) {
+  Tensor a;
+  Tensor b;
+  const uint64_t a_id = a.tensor_id();
+  const uint64_t b_id_before = b.tensor_id();
+  b = std::move(a);
+  EXPECT_NE(b_id_before, b.tensor_id());
+  EXPECT_NE(a_id, b.tensor_id());
+}
+
+TEST(TensorTest, TensorIdInvalidatedOnMoveAssignmentSource) {
+  Tensor a;
+  Tensor b;
+  const uint64_t a_id = a.tensor_id();
+  b = std::move(a);
+  // a is left in a valid but unspecified state and may go on to be reused
+  // for different content; it must not silently keep its pre-move id, or a
+  // cache keyed on tensor_id() could conflate the new content with the old.
+  EXPECT_NE(a_id, a.tensor_id());
+}
+
+TEST(TensorTest, TensorIdSelfMoveAssignmentInvalidatesId) {
+  Tensor a;
+  a.sizes() = {5};
+  const uint64_t id_before = a.tensor_id();
+#if defined(__clang__)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wself-move"
+#endif
+  a = std::move(a);
+#if defined(__clang__)
+#pragma clang diagnostic pop
+#endif
+  // Self-move-assignment can still alter the object's other members while
+  // leaving `this == &other`; the id must not be preserved through that.
+  EXPECT_NE(id_before, a.tensor_id());
+}
+
+TEST(TensorTest, TensorIdSelfAssignmentIsANoop) {
+  Tensor a;
+  a.sizes() = {5};
+  const uint64_t id_before = a.tensor_id();
+#if defined(__clang__)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wself-assign-overloaded"
+#endif
+  a = a;
+#if defined(__clang__)
+#pragma clang diagnostic pop
+#endif
+  EXPECT_EQ(id_before, a.tensor_id());
+  EXPECT_EQ(a.sizes(), (std::vector<int64_t>{5}));
+}
+
+TEST(TensorTest, TensorIdManyConstructionsAreAllDistinct) {
+  std::vector<uint64_t> ids;
+  ids.reserve(1000);
+  for (int i = 0; i < 1000; ++i) {
+    Tensor t;
+    ids.push_back(t.tensor_id());
+  }
+  std::vector<uint64_t> sorted_ids = ids;
+  std::sort(sorted_ids.begin(), sorted_ids.end());
+  EXPECT_EQ(std::adjacent_find(sorted_ids.begin(), sorted_ids.end()), sorted_ids.end())
+      << "expected all 1000 tensor_id()s to be distinct";
 }
 
 TEST(TensorTest, ParseDataThrowsOnMisalignedRawData) {
