@@ -143,6 +143,21 @@ static void check_type_ir_version(const TypeProto& type, const std::string& name
   }
 }
 
+static void check_attribute_tensors_ir_version(const AttributeProto& attr, const CheckerContext& ctx) {
+  if (attr.has_t()) {
+    check_data_type_ir_version(attr.t().data_type(), attr.name(), ctx);
+  }
+  for (const auto& tensor : attr.tensors()) {
+    check_data_type_ir_version(tensor.data_type(), attr.name(), ctx);
+  }
+  if (attr.has_sparse_tensor()) {
+    check_data_type_ir_version(attr.sparse_tensor().values().data_type(), attr.name(), ctx);
+  }
+  for (const auto& sparse_tensor : attr.sparse_tensors()) {
+    check_data_type_ir_version(sparse_tensor.values().data_type(), attr.name(), ctx);
+  }
+}
+
 void check_value_info(const ValueInfoProto& value_info, const CheckerContext& ctx) {
   enforce_non_empty_field(value_info, name);
   check_type_ir_version(value_info.type(), value_info.name(), ctx);
@@ -913,6 +928,11 @@ void check_graph(const GraphProto& graph, const CheckerContext& ctx, const Lexic
   for (const auto& value_info : graph.output()) {
     check_value_info(value_info, ctx);
   }
+  // Intermediate value_info entries are optional annotations and are not
+  // otherwise validated, but they must not use data types newer than the IR version.
+  for (const auto& value_info : graph.value_info()) {
+    check_type_ir_version(value_info.type(), value_info.name(), ctx);
+  }
 
   // Inherit values available in outer scope
   // Note that we do not allow shadowing, so the presence of an already-defined
@@ -1320,6 +1340,13 @@ void check_function(const FunctionProto& function, const CheckerContext& ctx, co
     if (!attrs.insert(attr).second) {
       fail_check("function (", function.name(), ") should not have duplicate attributes specified.");
     }
+  }
+  for (const auto& attr : function.attribute_proto()) {
+    check_attribute_tensors_ir_version(attr, ctx);
+  }
+  // Function inputs and outputs are untyped names; their types, if any, are given here.
+  for (const auto& value_info : function.value_info()) {
+    check_type_ir_version(value_info.type(), value_info.name(), ctx);
   }
   std::unordered_set<std::string> used_experimental_ops;
   for (const auto& node : function.node()) {

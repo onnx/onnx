@@ -1754,6 +1754,60 @@ class TestChecker:
         model.opset_import[0].version = 21
         checker.check_model(model)
 
+    @pytest.mark.parametrize(
+        "location",
+        ["function_value_info", "function_default_attribute", "graph_value_info"],
+    )
+    def test_check_model_annotation_data_type_requires_ir_version(
+        self, location: str
+    ) -> None:
+        """Data types in function value_info, function attribute defaults and graph value_info are checked too."""
+        # FLOAT4E2M1 was introduced in IR version 11.
+        dtype = TensorProto.FLOAT4E2M1
+        function_value_info = []
+        attribute_protos = []
+        graph_value_info = []
+        if location == "function_value_info":
+            function_value_info = [helper.make_tensor_value_info("fx", dtype, [1])]
+        elif location == "function_default_attribute":
+            attribute_protos = [
+                helper.make_attribute("value", helper.make_tensor("v", dtype, [0], []))
+            ]
+        else:
+            graph_value_info = [helper.make_tensor_value_info("y", dtype, [1])]
+
+        function = helper.make_function(
+            "local",
+            "f",
+            ["fx"],
+            ["fy"],
+            [helper.make_node("Identity", ["fx"], ["fy"])],
+            [helper.make_opsetid("", 21)],
+            attribute_protos=attribute_protos,
+            value_info=function_value_info,
+        )
+        graph = helper.make_graph(
+            [helper.make_node("f", ["x"], ["y"], domain="local")],
+            "g",
+            [helper.make_tensor_value_info("x", TensorProto.FLOAT, [1])],
+            [helper.make_tensor_value_info("y", TensorProto.FLOAT, [1])],
+            value_info=graph_value_info,
+        )
+        model = helper.make_model(
+            graph,
+            ir_version=10,
+            opset_imports=[
+                helper.make_opsetid("", 21),
+                helper.make_opsetid("local", 1),
+            ],
+            functions=[function],
+        )
+        with pytest.raises(checker.ValidationError, match="requires IR version >= 11"):
+            checker.check_model(model)
+
+        model.ir_version = 11
+        checker.check_model(model)
+
     def test_check_tensor_complex_data_too_small(self) -> None:
         """COMPLEX64/COMPLEX128 store 2 value-field entries (real, imag) per element."""
         tensor = TensorProto()
