@@ -33,6 +33,7 @@ from onnx.external_data_helper import (
     load_external_data_for_tensor,
     save_external_data,
     set_external_data,
+    write_external_data_tensors,
 )
 from onnx.numpy_helper import from_array, to_array
 
@@ -656,6 +657,42 @@ class TestExternalDataToArray:
         loaded_large_data = to_array(model.graph.initializer[0], self.temp_dir)
         np.testing.assert_allclose(loaded_large_data, self.large_data)
 
+    def test_to_array_does_not_mutate_external_tensor(self) -> None:
+        # to_array() must not leave the tensor in a state that mixes stale
+        # external_data metadata with a populated raw_data field, otherwise
+        # a subsequent save tries to rewrite (rather than append to) the
+        # existing external data file.
+        onnx.save_model(
+            self.model,
+            self.model_file_path,
+            self.serialization_format,
+            save_as_external_data=True,
+            all_tensors_to_one_file=False,
+            size_threshold=0,
+        )
+        model = onnx.load(
+            self.model_file_path, self.serialization_format, load_external_data=False
+        )
+        initializer_tensor = model.graph.initializer[0]
+        assert initializer_tensor.data_location == TensorProto.EXTERNAL
+        assert not initializer_tensor.HasField("raw_data")
+
+        to_array(initializer_tensor, self.temp_dir)
+
+        assert initializer_tensor.data_location == TensorProto.EXTERNAL
+        assert not initializer_tensor.HasField("raw_data")
+
+        # Saving the model again, in the same directory as the original
+        # external data file, must not fail.
+        resaved_model_path = os.path.join(self.temp_dir, "resaved.onnx")
+        onnx.save_model(model, resaved_model_path, self.serialization_format)
+
+        reloaded_model = onnx.load(resaved_model_path, self.serialization_format)
+        np.testing.assert_allclose(
+            to_array(reloaded_model.graph.initializer[0], self.temp_dir),
+            self.large_data,
+        )
+
     def test_save_model_with_external_data_multiple_times(self) -> None:
         # Test onnx.save should respectively handle typical tensor and external tensor properly
         # 1st save: save two tensors which have raw_data
@@ -1117,6 +1154,44 @@ class TestSaveExternalDataOffsetBounds:
         with pytest.raises(checker.ValidationError, match=r"offset.*must be between"):
             save_external_data(tensor, str(tmp_path))
         assert (tmp_path / location).read_bytes() == existing_data
+
+
+class TestWriteExternalDataTensorsOffsetOrder:
+    """write_external_data_tensors() must write tensors in offset order.
+
+    save_external_data() validates that a tensor's pre-assigned offset lands at the
+    current end of its external file. If tensors are processed in graph order while
+    their pre-assigned offsets describe a different file layout, that validation
+    depends on graph order and rejects an otherwise valid layout.
+    """
+
+    def test_write_order_follows_offset_not_graph_order(self, tmp_path: Path) -> None:
+        """Two initializers with a layout ('second' then 'first') opposite of graph order."""
+        location = "data.bin"
+        first = from_array(np.zeros((4,), dtype=np.float32), name="first")
+        second = from_array(np.ones((4,), dtype=np.float32), name="second")
+        first_bytes = first.raw_data
+        second_bytes = second.raw_data
+
+        # 'first' precedes 'second' in the graph's initializer list, but the
+        # pre-assigned offsets place 'second' first in the external file.
+        set_external_data(second, location, offset=0, length=len(second_bytes))
+        set_external_data(
+            first, location, offset=len(second_bytes), length=len(first_bytes)
+        )
+
+        graph = helper.make_graph(
+            nodes=[],
+            name="test",
+            inputs=[],
+            outputs=[],
+            initializer=[first, second],
+        )
+        model = helper.make_model(graph)
+
+        write_external_data_tensors(model, str(tmp_path))
+
+        assert (tmp_path / location).read_bytes() == second_bytes + first_bytes
 
 
 class TestExternalDataInfoSecurity:

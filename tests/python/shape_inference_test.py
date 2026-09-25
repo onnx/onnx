@@ -4806,6 +4806,54 @@ class TestShapeInference(TestShapeInferenceHelper):
             graph, [make_tensor_value_info("z", TensorProto.FLOAT, (2, 3, 100, 100))]
         )
 
+    @pytest.mark.parametrize(
+        ("shape", "blocksize"),
+        [("1,1,7,8", 2), ("1,1,8,7", 2), ("1,1,7,7", 3)],
+    )
+    def test_space_to_depth_spatial_dim_not_divisible(
+        self, shape: str, blocksize: int
+    ) -> None:
+        # The spatial dimensions are split into blocks, so one that is not a multiple of
+        # blocksize has no valid output shape and the reference implementation rejects
+        # the input. Inference used to report a silently truncated shape instead.
+        model = onnx.parser.parse_model(
+            f"""
+            <ir_version: 12, opset_import: ["" : 28]>
+            graph (float[{shape}] X) => () {{
+            Y = SpaceToDepth <blocksize = {blocksize}> (X)
+            }}
+            """
+        )
+        with pytest.raises(onnx.shape_inference.InferenceError):
+            onnx.shape_inference.infer_shapes(model, strict_mode=True)
+
+    @pytest.mark.parametrize("channels", [5, 6, 7])
+    def test_depth_to_space_channels_not_divisible(self, channels: int) -> None:
+        # The channels are redistributed into blocksize x blocksize blocks, so a channel
+        # count that is not a multiple of blocksize squared has no valid output shape.
+        model = onnx.parser.parse_model(
+            f"""
+            <ir_version: 12, opset_import: ["" : 28]>
+            graph (float[1,{channels},2,2] X) => () {{
+            Y = DepthToSpace <blocksize = 2, mode = "DCR"> (X)
+            }}
+            """
+        )
+        with pytest.raises(onnx.shape_inference.InferenceError):
+            onnx.shape_inference.infer_shapes(model, strict_mode=True)
+
+    def test_space_to_depth_symbolic_spatial_dims_are_not_rejected(self) -> None:
+        # Only a known dimension can be checked; a symbolic one must still infer.
+        model = onnx.parser.parse_model(
+            """
+            <ir_version: 12, opset_import: ["" : 28]>
+            graph (float[2,3,H,W] X) => () {
+            Y = SpaceToDepth <blocksize = 10> (X)
+            }
+            """
+        )
+        onnx.shape_inference.infer_shapes(model, strict_mode=True)
+
     def _rnn_forward(
         self, seqlen: int, batchsize: int, inpsize: int, hiddensize: int
     ) -> None:
