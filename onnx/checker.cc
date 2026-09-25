@@ -1249,6 +1249,13 @@ void check_function(const FunctionProto& function, const CheckerContext& ctx, co
       fail_check("function (", function.name(), ") should not have duplicate attributes specified.");
     }
   }
+  // A function attribute is declared either in `attribute` (no default value)
+  // or in `attribute_proto` (with a default value), not both.
+  for (const auto& attr : function.attribute_proto()) {
+    if (!attrs.insert(attr.name()).second) {
+      fail_check("function (", function.name(), ") should not have duplicate attributes specified.");
+    }
+  }
   std::unordered_set<std::string> used_experimental_ops;
   for (const auto& node : function.node()) {
     // nodes must be in topologically sorted order
@@ -1293,6 +1300,13 @@ void check_function(const FunctionProto& function, const CheckerContext& ctx, co
       }
       lex_ctx.add(output);
     }
+  }
+
+  // Default attribute values must be well-formed. They are checked with the
+  // full function scope, since a graph-valued default may be substituted into
+  // a body node and capture values defined in the function.
+  for (const auto& attr : function.attribute_proto()) {
+    check_attribute(attr, ctx_copy, lex_ctx);
   }
   print_warning_if_has_experimental(used_experimental_ops);
 }
