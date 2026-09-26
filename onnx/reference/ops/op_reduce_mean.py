@@ -11,8 +11,14 @@ from onnx.reference.ops._op import OpRunReduceNumpy
 
 
 def _mean(data, axes, keepdims):
+    # Preserve NumPy's precision and fast path for ordinary finite results.
+    with np.errstate(over="ignore", invalid="ignore"):
+        direct = np.mean(data, axis=axes, keepdims=keepdims, dtype=data.dtype)
     if data.size == 0 or not np.issubdtype(data.dtype, np.floating):
-        return np.mean(data, axis=axes, keepdims=keepdims, dtype=data.dtype)
+        return direct
+
+    if np.all(np.isfinite(direct)):
+        return direct
 
     if axes is None:
         reduction_axes = tuple(range(data.ndim))
@@ -20,7 +26,7 @@ def _mean(data, axes, keepdims):
         reduction_axes = tuple(axis % data.ndim for axis in axes)
 
     if not reduction_axes or len(set(reduction_axes)) != len(reduction_axes):
-        return np.mean(data, axis=axes, keepdims=keepdims, dtype=data.dtype)
+        return direct
 
     remaining_axes = tuple(
         axis for axis in range(data.ndim) if axis not in reduction_axes
@@ -30,12 +36,12 @@ def _mean(data, axes, keepdims):
     rows = np.transpose(data, remaining_axes + reduction_axes).reshape(
         -1, reduction_size
     )
-    result = np.empty(rows.shape[0], dtype=data.dtype)
+    result = np.asarray(direct).reshape(-1).copy()
 
-    for index, row in enumerate(rows):
-        if not np.all(np.isfinite(row)) or np.all(row == 0):
-            # Preserve NumPy's NaN, infinity, and signed-zero behavior.
-            result[index] = np.mean(row, dtype=data.dtype)
+    for index in np.flatnonzero(~np.isfinite(result)):
+        row = rows[index]
+        if not np.all(np.isfinite(row)):
+            # A non-finite input is not an intermediate-overflow failure.
             continue
 
         try:
