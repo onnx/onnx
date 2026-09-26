@@ -215,6 +215,28 @@ class TestReferenceEvaluatorAiOnnxMl:
         got = sess.run(None, feeds)[0]
         assert_allclose(got, expected, atol=1e-6)
 
+    @pytest.mark.skipif(not ONNX_ML, reason="onnx not compiled with ai.onnx.ml")
+    def test_normalizer_max_negative(self):
+        # `MAX` normalizes by `max(X)` (raw max), not `max(abs(X))`. For the
+        # all-negative first row the raw max is -1, so division flips the sign
+        # ([-2, -1] -> [2, 1]); an abs-max implementation would instead give
+        # [-1, -0.5]. See https://github.com/onnx/onnx/issues/8452.
+        X = make_tensor_value_info("X", TensorProto.FLOAT, [2, 2])
+        Y = make_tensor_value_info("Y", TensorProto.FLOAT, [2, 2])
+        x = np.array([[-2.0, -1.0], [-3.0, 2.0]], dtype=np.float32)
+
+        node = make_node("Normalizer", ["X"], ["Y"], norm="MAX", domain="ai.onnx.ml")
+        graph = make_graph([node], "ml", [X], [Y])
+        model = make_model_gen_version(graph, opset_imports=OPSETS)
+        onnx.checker.check_model(model)
+
+        feeds = {"X": x}
+        expected = x / x.max(axis=1, keepdims=True)
+        self._check_ort(model, feeds, atol=1e-6)
+        sess = ReferenceEvaluator(model)
+        got = sess.run(None, feeds)[0]
+        assert_allclose(got, expected, atol=1e-6)
+
     @pytest.mark.parametrize(
         "inputdimensions, expected_value",
         [
