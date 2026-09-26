@@ -146,7 +146,16 @@ if(ONNX_BUILD_PYTHON AND ONNX_DISABLE_EXCEPTIONS)
 endif()
 
 if(ONNX_BUILD_PYTHON)
-  set(python_dev_component Development.Module Development.SABIModule)
+  set(python_dev_component Development.Module)
+  set(python_optional_dev_component OPTIONAL_COMPONENTS Development.SABIModule)
+endif()
+
+# CMake 3.30+ excludes free-threaded Python from its default ABI search.
+if(CMAKE_VERSION VERSION_GREATER_EQUAL "3.30" AND NOT DEFINED Python3_FIND_ABI)
+  set(Python3_FIND_ABI "ANY" "ANY" "ANY" "ANY")
+endif()
+if(CMAKE_VERSION VERSION_GREATER_EQUAL "3.30" AND NOT DEFINED Python_FIND_ABI)
+  set(Python_FIND_ABI "ANY" "ANY" "ANY" "ANY")
 endif()
 
 if(CMAKE_CROSSCOMPILING)
@@ -154,7 +163,7 @@ if(CMAKE_CROSSCOMPILING)
   # must use a different package. See the discussion about this at
   # https://gitlab.kitware.com/cmake/cmake/-/issues/25145
   if(ONNX_BUILD_PYTHON)
-    find_package(Python3 REQUIRED COMPONENTS ${python_dev_component})
+    find_package(Python3 REQUIRED COMPONENTS ${python_dev_component} ${python_optional_dev_component})
   endif()
   find_package(Python REQUIRED COMPONENTS Interpreter)
   set(ONNX_PYTHON_INTERPRETER Python::Interpreter)
@@ -172,10 +181,10 @@ if(CMAKE_CROSSCOMPILING)
     endif()
   endif()
 else()
-  find_package(Python3 REQUIRED COMPONENTS Interpreter ${python_dev_component})
+  find_package(Python3 REQUIRED COMPONENTS Interpreter ${python_dev_component} ${python_optional_dev_component})
   # Find Python for nanobind
   set(Python_EXECUTABLE ${Python3_EXECUTABLE})
-  find_package(Python REQUIRED COMPONENTS Interpreter ${python_dev_component})
+  find_package(Python REQUIRED COMPONENTS Interpreter ${python_dev_component} ${python_optional_dev_component})
   set(ONNX_PYTHON_INTERPRETER Python3::Interpreter)
 endif()
 
