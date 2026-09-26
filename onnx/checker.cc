@@ -1251,10 +1251,20 @@ void check_function(const FunctionProto& function, const CheckerContext& ctx, co
   }
   // A function attribute is declared either in `attribute` (no default value)
   // or in `attribute_proto` (with a default value), not both.
+  std::unordered_map<std::string, const AttributeProto*> default_attrs;
   for (const auto& attr : function.attribute_proto()) {
+    if (attr.has_ref_attr_name()) {
+      fail_check(
+          "function (",
+          function.name(),
+          ") default attribute '",
+          attr.name(),
+          "' must not use ref_attr_name.");
+    }
     if (!attrs.insert(attr.name()).second) {
       fail_check("function (", function.name(), ") should not have duplicate attributes specified.");
     }
+    default_attrs.emplace(attr.name(), &attr);
   }
   std::unordered_set<std::string> used_experimental_ops;
   for (const auto& node : function.node()) {
@@ -1283,6 +1293,17 @@ void check_function(const FunctionProto& function, const CheckerContext& ctx, co
       check_opset_compatibility(node, ctx_copy, func_opset_imports, model_opset_imports);
     if (check_is_experimental_op(node)) {
       used_experimental_ops.insert(node.op_type());
+    }
+    // A graph-valued default may capture values from the function body. Check
+    // it at each substitution point so values defined by later nodes are not
+    // incorrectly considered visible.
+    for (const auto& attr : node.attribute()) {
+      if (attr.has_ref_attr_name()) {
+        const auto default_attr = default_attrs.find(attr.ref_attr_name());
+        if (default_attr != default_attrs.end()) {
+          check_attribute(*default_attr->second, ctx_copy, lex_ctx);
+        }
+      }
     }
     check_node(node, ctx_copy, lex_ctx);
 

@@ -138,6 +138,7 @@ class TestChecker:
             "type_mismatch",
             "missing_name",
             "malformed_tensor",
+            "attribute_reference",
         ],
     )
     def test_check_function_invalid_attribute_defaults(self, case: str) -> None:
@@ -156,6 +157,9 @@ class TestChecker:
         elif case == "missing_name":
             attr.ClearField("name")
             match = "name"
+        elif case == "attribute_reference":
+            attr.ref_attr_name = "other"
+            match = "must not use ref_attr_name"
         else:
             tensor = helper.make_tensor("v", TensorProto.FLOAT, [2], [1.0, 2.0])
             del tensor.float_data[1]
@@ -164,6 +168,43 @@ class TestChecker:
 
         function = self._make_function_with_defaults(attribute_protos, attributes)
         with pytest.raises(checker.ValidationError, match=match):
+            checker.check_function(function)
+
+    def test_check_function_graph_default_cannot_capture_later_value(self) -> None:
+        default_graph = helper.make_graph(
+            [helper.make_node("Identity", ["later"], ["then_value"])],
+            "then_graph",
+            [],
+            [helper.make_tensor_value_info("then_value", TensorProto.FLOAT, [1])],
+        )
+        else_graph = helper.make_graph(
+            [helper.make_node("Identity", ["x"], ["else_value"])],
+            "else_graph",
+            [],
+            [helper.make_tensor_value_info("else_value", TensorProto.FLOAT, [1])],
+        )
+        if_node = helper.make_node("If", ["cond"], ["y"])
+        if_node.attribute.extend(
+            [
+                helper.make_attribute_ref(
+                    "then_branch",
+                    onnx.AttributeProto.GRAPH,
+                    ref_attr_name="branch",
+                ),
+                helper.make_attribute("else_branch", else_graph),
+            ]
+        )
+        function = helper.make_function(
+            "local",
+            "f",
+            ["cond", "x"],
+            ["y"],
+            [if_node, helper.make_node("Identity", ["x"], ["later"])],
+            [helper.make_opsetid("", 21)],
+            attribute_protos=[helper.make_attribute("branch", default_graph)],
+        )
+
+        with pytest.raises(checker.ValidationError, match="later"):
             checker.check_function(function)
 
     def test_check_model_invalid_function_attribute_default(self) -> None:
