@@ -6044,6 +6044,42 @@ class TestReferenceEvaluator:
             assert_allclose(got[i], expected[i])
 
     @pytest.mark.parametrize(
+        "x",
+        [np.zeros((2, 3), dtype=np.float32), -np.zeros((4,), dtype=np.float32)],
+        ids=["all_zero", "negative_zero"],
+    )
+    def test_dynamic_quantize_linear_zero_input(self, x):
+        # An all-zero input has an empty (adjusted) range: the scale must be 1,
+        # not 0 (which would make x / y_scale a division by zero), with a zero
+        # point of 0 and an all-zero quantized output.
+        X = make_tensor_value_info("X", TensorProto.FLOAT, None)
+        Y = make_tensor_value_info("Y", TensorProto.UINT8, None)
+        Scale = make_tensor_value_info("scale", TensorProto.FLOAT, None)
+        Zp = make_tensor_value_info("zp", TensorProto.UINT8, None)
+        node = make_node("DynamicQuantizeLinear", ["X"], ["Y", "scale", "zp"])
+        model = make_model(
+            make_graph([node], "g", [X], [Y, Scale, Zp]),
+            opset_imports=[make_opsetid("", 18)],
+        )
+        y, scale, zp = ReferenceEvaluator(model).run(None, {"X": x})
+        assert y.dtype == np.uint8
+        assert_array_equal(y, np.zeros(x.shape, dtype=np.uint8))
+        assert scale.dtype == np.float32
+        assert scale.shape == ()
+        assert scale == np.float32(1.0)
+        assert zp.dtype == np.uint8
+        assert zp.shape == ()
+        assert zp == 0
+
+        # Match the prevailing implementation practice (onnxruntime's kernel).
+        sess = run_ort_inference(model)
+        if sess is not None:
+            for got, expected in zip(
+                sess.run(None, {"X": x}), (y, scale, zp), strict=True
+            ):
+                assert_array_equal(got, expected)
+
+    @pytest.mark.parametrize(
         "a, b, expected, expected_shape",
         [
             (["abc", "def"], [".com", ".net"], ["abc.com", "def.net"], (2,)),
