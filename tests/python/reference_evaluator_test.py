@@ -3274,6 +3274,115 @@ class TestReferenceEvaluator:
         assert got.shape == (1, 1)
         assert got[0, 0] == 1
 
+    def test_reduce_mean_preserves_finite_range(self):
+        for opset in (17, 18):
+            for dtype, tensor_type, magnitude in (
+                (np.float32, TensorProto.FLOAT, 3.0e38),
+                (np.float64, TensorProto.DOUBLE, 1.0e308),
+            ):
+                X = make_tensor_value_info("X", tensor_type, [2, 2])
+                Y = make_tensor_value_info("Y", tensor_type, [2])
+                inputs = [X]
+                node_inputs = ["X"]
+                if opset >= 18:
+                    axes = make_tensor_value_info("axes", TensorProto.INT64, [1])
+                    inputs.append(axes)
+                    node_inputs.append("axes")
+                    node = make_node("ReduceMean", node_inputs, ["Y"], keepdims=0)
+                else:
+                    node = make_node(
+                        "ReduceMean", node_inputs, ["Y"], axes=[1], keepdims=0
+                    )
+
+                graph = make_graph([node], "g", inputs, [Y])
+                model = make_model(graph, opset_imports=[make_opsetid("", opset)])
+                feeds = {"X": np.full((2, 2), magnitude, dtype=dtype)}
+                if opset >= 18:
+                    feeds["axes"] = np.array([1], dtype=np.int64)
+
+                got = ReferenceEvaluator(model).run(None, feeds)[0]
+                expected = np.full((2,), magnitude, dtype=dtype)
+                np.testing.assert_array_equal(got, expected)
+
+    def test_reduce_mean_preserves_numpy_finite_precision(self):
+        for opset in (17, 18):
+            X = make_tensor_value_info("X", TensorProto.FLOAT, [2, 4])
+            Y = make_tensor_value_info("Y", TensorProto.FLOAT, [2])
+            inputs = [X]
+            node_inputs = ["X"]
+            if opset >= 18:
+                axes = make_tensor_value_info("axes", TensorProto.INT64, [1])
+                inputs.append(axes)
+                node_inputs.append("axes")
+                node = make_node("ReduceMean", node_inputs, ["Y"], keepdims=0)
+            else:
+                node = make_node("ReduceMean", node_inputs, ["Y"], axes=[1], keepdims=0)
+
+            graph = make_graph([node], "g", inputs, [Y])
+            model = make_model(graph, opset_imports=[make_opsetid("", opset)])
+            feeds = {
+                "X": np.array(
+                    [
+                        [3.0e38, -3.0e38, 1.0e-10, 1.0e-10],
+                        [3.0e38, 1.0e-10, -3.0e38, 1.0e-10],
+                    ],
+                    dtype=np.float32,
+                )
+            }
+            if opset >= 18:
+                feeds["axes"] = np.array([1], dtype=np.int64)
+
+            got = ReferenceEvaluator(model).run(None, feeds)[0]
+            # Keep the existing NumPy result, including its ordering effects.
+            expected = np.mean(feeds["X"], axis=1, dtype=np.float32)
+            np.testing.assert_array_equal(expected[0], np.float32(5.0e-11))
+            np.testing.assert_array_equal(got, expected)
+
+    def test_reduce_mean_repairs_only_overflowed_finite_slices(self):
+        for opset in (17, 18):
+            for dtype, tensor_type, magnitude in (
+                (np.float32, TensorProto.FLOAT, 3.0e38),
+                (np.float64, TensorProto.DOUBLE, 1.0e308),
+            ):
+                data = np.array(
+                    [
+                        [magnitude, magnitude, magnitude, magnitude],
+                        [magnitude, magnitude, -magnitude, -magnitude],
+                        [magnitude, 1.0e-10, -magnitude, 1.0e-10],
+                        [np.inf, 1.0, 2.0, 3.0],
+                        [np.inf, -np.inf, 2.0, 3.0],
+                        [np.nan, 1.0, 2.0, 3.0],
+                        [-0.0, -0.0, -0.0, -0.0],
+                    ],
+                    dtype=dtype,
+                )
+                X = make_tensor_value_info("X", tensor_type, [7, 4])
+                Y = make_tensor_value_info("Y", tensor_type, [7])
+                inputs = [X]
+                feeds = {"X": data}
+                if opset >= 18:
+                    inputs.append(
+                        make_tensor_value_info("axes", TensorProto.INT64, [1])
+                    )
+                    feeds["axes"] = np.array([1], dtype=np.int64)
+                    node = make_node("ReduceMean", ["X", "axes"], ["Y"], keepdims=0)
+                else:
+                    node = make_node("ReduceMean", ["X"], ["Y"], axes=[1], keepdims=0)
+                model = make_model(
+                    make_graph([node], "g", inputs, [Y]),
+                    opset_imports=[make_opsetid("", opset)],
+                )
+                with np.errstate(over="ignore", invalid="ignore"):
+                    expected = np.mean(data, axis=1, dtype=dtype)
+                    got = ReferenceEvaluator(model).run(None, feeds)[0]
+                expected[0] = magnitude
+                expected[1] = 0.0
+                assert got.dtype == data.dtype
+                np.testing.assert_array_equal(got, expected)
+                np.testing.assert_array_equal(
+                    np.signbit(got[-1]), np.signbit(expected[-1])
+                )
+
     @staticmethod
     def _cdist_model(opset, reduce_op="ReduceSumSquare"):
         # subgraph
