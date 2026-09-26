@@ -180,7 +180,6 @@ jobs:
           if [ "${{ matrix.debug_build }}" == "1" ]; then
             if [ "${{ matrix.python_version }}" == "3.14t" ]; then
               export CMAKE_ARGS="$CMAKE_ARGS -DONNX_USE_ASAN=OFF -DONNX_USE_TSAN=ON"
-              export CMAKE_ARGS="$CMAKE_ARGS -DPython3_FIND_ABI=ANY\\;ANY\\;ANY\\;ON -DPython_FIND_ABI=ANY\\;ANY\\;ANY\\;ON"
             else
               export CMAKE_ARGS="$CMAKE_ARGS -DONNX_USE_ASAN=ON"
             fi
