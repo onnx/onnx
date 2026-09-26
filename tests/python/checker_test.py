@@ -102,6 +102,139 @@ class TestChecker:
         )
         checker.check_function(func_nested_identity_add)
 
+    @staticmethod
+    def _make_function_with_defaults(
+        attribute_protos: Sequence[onnx.AttributeProto],
+        attributes: Sequence[str] = (),
+    ) -> onnx.FunctionProto:
+        return helper.make_function(
+            "local",
+            "f",
+            ["x"],
+            ["y"],
+            [helper.make_node("Identity", ["x"], ["y"])],
+            [helper.make_opsetid("", 21)],
+            attributes=list(attributes),
+            attribute_protos=list(attribute_protos),
+        )
+
+    def test_check_function_attribute_defaults(self) -> None:
+        function = self._make_function_with_defaults(
+            [
+                helper.make_attribute("alpha", 1.0),
+                helper.make_attribute(
+                    "value", helper.make_tensor("v", TensorProto.FLOAT, [2], [1.0, 2.0])
+                ),
+            ],
+            attributes=["beta"],
+        )
+        checker.check_function(function)
+
+    @pytest.mark.parametrize(
+        "case",
+        [
+            "duplicate_default",
+            "declared_with_and_without_default",
+            "type_mismatch",
+            "missing_name",
+            "malformed_tensor",
+            "attribute_reference",
+        ],
+    )
+    def test_check_function_invalid_attribute_defaults(self, case: str) -> None:
+        attributes: list[str] = []
+        attr = helper.make_attribute("alpha", 1.0)
+        attribute_protos = [attr]
+        if case == "duplicate_default":
+            attribute_protos.append(helper.make_attribute("alpha", 2.0))
+            match = "duplicate attributes"
+        elif case == "declared_with_and_without_default":
+            attributes = ["alpha"]
+            match = "duplicate attributes"
+        elif case == "type_mismatch":
+            attr.type = onnx.AttributeProto.INT
+            match = "type field and data field mismatch"
+        elif case == "missing_name":
+            attr.ClearField("name")
+            match = "name"
+        elif case == "attribute_reference":
+            attr.ref_attr_name = "other"
+            match = "must not use ref_attr_name"
+        else:
+            tensor = helper.make_tensor("v", TensorProto.FLOAT, [2], [1.0, 2.0])
+            del tensor.float_data[1]
+            attribute_protos = [helper.make_attribute("value", tensor)]
+            match = "float_data"
+
+        function = self._make_function_with_defaults(attribute_protos, attributes)
+        with pytest.raises(checker.ValidationError, match=match):
+            checker.check_function(function)
+
+    def test_check_function_graph_default_cannot_capture_later_value(self) -> None:
+        default_graph = helper.make_graph(
+            [helper.make_node("Identity", ["later"], ["then_value"])],
+            "then_graph",
+            [],
+            [helper.make_tensor_value_info("then_value", TensorProto.FLOAT, [1])],
+        )
+        else_graph = helper.make_graph(
+            [helper.make_node("Identity", ["x"], ["else_value"])],
+            "else_graph",
+            [],
+            [helper.make_tensor_value_info("else_value", TensorProto.FLOAT, [1])],
+        )
+        if_node = helper.make_node("If", ["cond"], ["y"])
+        if_node.attribute.extend(
+            [
+                helper.make_attribute_ref(
+                    "then_branch",
+                    onnx.AttributeProto.GRAPH,
+                    ref_attr_name="branch",
+                ),
+                helper.make_attribute("else_branch", else_graph),
+            ]
+        )
+        function = helper.make_function(
+            "local",
+            "f",
+            ["cond", "x"],
+            ["y"],
+            [if_node, helper.make_node("Identity", ["x"], ["later"])],
+            [helper.make_opsetid("", 21)],
+            attribute_protos=[helper.make_attribute("branch", default_graph)],
+        )
+
+        with pytest.raises(checker.ValidationError, match="later"):
+            checker.check_function(function)
+
+    def test_check_model_invalid_function_attribute_default(self) -> None:
+        """check_model validates the attribute defaults of model-local functions."""
+        type_mismatch = helper.make_attribute("alpha", 1.0)
+        type_mismatch.type = onnx.AttributeProto.INT
+        function = self._make_function_with_defaults([type_mismatch])
+        graph = helper.make_graph(
+            [helper.make_node("f", ["x"], ["y"], domain="local")],
+            "g",
+            [helper.make_tensor_value_info("x", TensorProto.FLOAT, [1])],
+            [helper.make_tensor_value_info("y", TensorProto.FLOAT, [1])],
+        )
+        model = helper.make_model(
+            graph,
+            opset_imports=[
+                helper.make_opsetid("", 21),
+                helper.make_opsetid("local", 1),
+            ],
+            functions=[function],
+        )
+        with pytest.raises(
+            checker.ValidationError, match="type field and data field mismatch"
+        ):
+            checker.check_model(model)
+
+        function.attribute_proto[0].type = onnx.AttributeProto.FLOAT
+        model.functions[0].CopyFrom(function)
+        checker.check_model(model)
+
     def test_check_graph_ir_version_3(self) -> None:
         ctx = checker.C.CheckerContext()
         ctx.ir_version = 3
