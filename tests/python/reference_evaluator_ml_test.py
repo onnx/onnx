@@ -251,6 +251,14 @@ class TestReferenceEvaluatorAiOnnxMl:
         assert_allclose(got, expected, rtol=1e-6)
 
     @pytest.mark.parametrize(
+        "norm, expected_value",
+        [
+            ("MAX", 1.0),
+            ("L1", 0.5),
+            ("L2", 1 / np.sqrt(2)),
+        ],
+    )
+    @pytest.mark.parametrize(
         "x",
         [
             np.array([[1e30, 1e30]], dtype=np.float32),
@@ -260,19 +268,58 @@ class TestReferenceEvaluatorAiOnnxMl:
         ],
     )
     @pytest.mark.skipif(not ONNX_ML, reason="onnx not compiled with ai.onnx.ml")
-    def test_normalizer_l2_extreme_magnitudes(self, x):
+    def test_normalizer_extreme_magnitudes(self, norm, expected_value, x):
         tensor_type = TensorProto.FLOAT if x.dtype == np.float32 else TensorProto.DOUBLE
         X = make_tensor_value_info("X", tensor_type, list(x.shape))
         Y = make_tensor_value_info("Y", TensorProto.FLOAT, list(x.shape))
-        node = make_node("Normalizer", ["X"], ["Y"], norm="L2", domain="ai.onnx.ml")
+        node = make_node("Normalizer", ["X"], ["Y"], norm=norm, domain="ai.onnx.ml")
         graph = make_graph([node], "ml", [X], [Y])
         model = make_model_gen_version(graph, opset_imports=OPSETS)
         onnx.checker.check_model(model)
 
-        expected = np.full(x.shape, np.float32(1 / np.sqrt(2)), dtype=np.float32)
+        expected = np.full(x.shape, np.float32(expected_value), dtype=np.float32)
         got = ReferenceEvaluator(model).run(None, {"X": x})[0]
         assert got.dtype == np.float32
         assert_allclose(got, expected, rtol=1e-6)
+
+    @pytest.mark.parametrize("norm", ["MAX", "L1", "L2"])
+    @pytest.mark.parametrize(
+        "dtype,tensor_type",
+        [
+            (np.float32, TensorProto.FLOAT),
+            (np.float64, TensorProto.DOUBLE),
+            (np.int32, TensorProto.INT32),
+            (np.int64, TensorProto.INT64),
+        ],
+    )
+    @pytest.mark.parametrize("layout", ["vector", "matrix", "mixed"])
+    @pytest.mark.skipif(not ONNX_ML, reason="onnx not compiled with ai.onnx.ml")
+    def test_normalizer_zero_divisor(self, norm, dtype, tensor_type, layout):
+        if layout == "vector":
+            x = np.zeros(2, dtype=dtype)
+        elif layout == "matrix":
+            x = np.zeros((2, 2), dtype=dtype)
+        else:
+            x = np.array([[0, 0], [3, 4], [0, 0]], dtype=dtype)
+        X = make_tensor_value_info("X", tensor_type, list(x.shape))
+        Y = make_tensor_value_info("Y", TensorProto.FLOAT, list(x.shape))
+        node = make_node("Normalizer", ["X"], ["Y"], norm=norm, domain="ai.onnx.ml")
+        graph = make_graph([node], "ml", [X], [Y])
+        model = make_model_gen_version(graph, opset_imports=OPSETS)
+        onnx.checker.check_model(model)
+
+        expected = np.zeros(x.shape, dtype=np.float32)
+        if layout == "mixed":
+            expected[1] = {
+                "MAX": [3 / 4, 1],
+                "L1": [3 / 7, 4 / 7],
+                "L2": [3 / 5, 4 / 5],
+            }[norm]
+        got = ReferenceEvaluator(model).run(None, {"X": x})[0]
+        assert got.shape == x.shape
+        assert got.dtype == np.float32
+        assert np.isfinite(got).all()
+        assert_allclose(got, expected, rtol=1e-6, atol=0)
 
     @pytest.mark.parametrize(
         "inputdimensions, expected_value",
