@@ -922,6 +922,9 @@ class TestAutomaticUpgrade(automatic_conversion_test_base.TestAutomaticConversio
     def test_MeanVarianceNormalization(self) -> None:
         self._test_op_upgrade("MeanVarianceNormalization", 9, attrs={"axes": [1, 2]})
 
+    def test_MeanVarianceNormalization_opset28(self) -> None:
+        self._test_op_upgrade("MeanVarianceNormalization", 28, attrs={"axes": [1, 2]})
+
     def test_Min(self) -> None:
         self._test_op_upgrade(
             "Min",
