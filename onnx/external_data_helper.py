@@ -143,20 +143,41 @@ def _validate_external_data_file_bounds(
     return data_file.read()
 
 
+def _read_external_data_bytes(tensor: TensorProto, base_dir: str) -> bytes:
+    """Reads and returns the raw bytes stored in the external file for tensor.
+
+    Unlike load_external_data_for_tensor, this does not mutate tensor: the
+    tensor's data_location and external_data fields are left untouched, so
+    the tensor still faithfully describes where its data lives on disk.
+
+    Arguments:
+        tensor: a TensorProto object.
+        base_dir: directory that contains the external data.
+
+    Returns:
+        The raw bytes read from the external data file.
+    """
+    info = ExternalDataInfo(tensor)
+    fd = _open_external_data_fd(base_dir, info.location, tensor.name, True)
+    with os.fdopen(fd, "rb") as data_file:
+        return _validate_external_data_file_bounds(data_file, info, tensor.name)
+
+
 def load_external_data_for_tensor(tensor: TensorProto, base_dir: str) -> None:
-    """Loads data from an external file for tensor.
+    """Loads data from an external file for tensor and converts it to an in-memory tensor.
     Ideally TensorProto should not hold any raw data but if it does it will be ignored.
+
+    After this call, tensor.raw_data holds the loaded bytes and tensor no longer
+    describes external data: data_location is reset to DEFAULT and external_data is
+    cleared.
 
     Arguments:
         tensor: a TensorProto object.
         base_dir: directory that contains the external data.
     """
-    info = ExternalDataInfo(tensor)
-    fd = _open_external_data_fd(base_dir, info.location, tensor.name, True)
-    with os.fdopen(fd, "rb") as data_file:
-        tensor.raw_data = _validate_external_data_file_bounds(
-            data_file, info, tensor.name
-        )
+    tensor.raw_data = _read_external_data_bytes(tensor, base_dir)
+    tensor.data_location = TensorProto.DEFAULT
+    del tensor.external_data[:]
 
 
 def load_external_data_for_model(model: ModelProto, base_dir: str) -> None:
@@ -169,10 +190,6 @@ def load_external_data_for_model(model: ModelProto, base_dir: str) -> None:
     for tensor in _get_all_tensors(model):
         if uses_external_data(tensor):
             load_external_data_for_tensor(tensor, base_dir)
-            # After loading raw_data from external_data, change the state of tensors
-            tensor.data_location = TensorProto.DEFAULT
-            # and remove external data
-            del tensor.external_data[:]
 
 
 def set_external_data(
@@ -409,13 +426,30 @@ def write_external_data_tensors(model: ModelProto, filepath: str) -> ModelProto:
     Returns:
         ModelProto: The modified model object.
     """
-    for tensor in _get_all_tensors(model):
-        # Writing to external data happens in 2 passes:
-        # 1. Tensors with raw data which pass the necessary conditions (size threshold etc) are marked for serialization
-        # 2. The raw data in these tensors is serialized to a file
-        # Thus serialize only if tensor has raw data and it was marked for serialization
-        if uses_external_data(tensor) and tensor.HasField("raw_data"):
-            save_external_data(tensor, filepath)
-            tensor.ClearField("raw_data")
+    # Writing to external data happens in 2 passes:
+    # 1. Tensors with raw data which pass the necessary conditions (size threshold etc) are marked for serialization
+    # 2. The raw data in these tensors is serialized to a file
+    # Thus serialize only if tensor has raw data and it was marked for serialization
+    tensors_to_write = [
+        tensor
+        for tensor in _get_all_tensors(model)
+        if uses_external_data(tensor) and tensor.HasField("raw_data")
+    ]
+    # save_external_data() appends each tensor to the end of its external data
+    # file and validates that any pre-assigned offset lands there. Sort by that
+    # offset (per destination file) so tensors are written in the order their
+    # offsets imply, regardless of their order in the graph; tensors without a
+    # pre-assigned offset keep their relative order and are written last.
+    infos = {id(tensor): ExternalDataInfo(tensor) for tensor in tensors_to_write}
+    tensors_to_write.sort(
+        key=lambda tensor: (
+            infos[id(tensor)].location,
+            infos[id(tensor)].offset is None,
+            infos[id(tensor)].offset or 0,
+        )
+    )
+    for tensor in tensors_to_write:
+        save_external_data(tensor, filepath)
+        tensor.ClearField("raw_data")
 
     return model
