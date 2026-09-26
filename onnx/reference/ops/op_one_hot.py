@@ -27,6 +27,6 @@ def _one_hot(indices, depth, axis=-1, dtype=np.float32):
 class OneHot(OpRun):
     def _run(self, indices, depth, values, axis=None):
         off_value, on_value = values
-        y = _one_hot(indices, depth, axis=axis, dtype=values.dtype)
-        y = y * (on_value - off_value) + off_value
+        mask = _one_hot(indices, depth, axis=axis, dtype=np.bool_)
+        y = np.where(mask, on_value, off_value).astype(values.dtype)
         return (y,)
