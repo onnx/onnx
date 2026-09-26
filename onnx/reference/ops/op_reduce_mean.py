@@ -3,30 +3,58 @@
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
+import math
+
 import numpy as np
 
 from onnx.reference.ops._op import OpRunReduceNumpy
 
 
 def _mean(data, axes, keepdims):
-    if data.size == 0 or not np.issubdtype(data.dtype, np.inexact):
+    if data.size == 0 or not np.issubdtype(data.dtype, np.floating):
         return np.mean(data, axis=axes, keepdims=keepdims, dtype=data.dtype)
 
-    # Scaling keeps the intermediate sum in range without changing the mean.
-    # Use one as the scale for zero and non-finite slices so their prior NumPy
-    # semantics are preserved.
-    scale = np.max(np.abs(data), axis=axes, keepdims=True)
-    safe_scale = np.where(np.isfinite(scale) & (scale != 0), scale, 1)
-    result = (
-        np.mean(
-            data / safe_scale,
-            axis=axes,
-            keepdims=True,
-            dtype=data.dtype,
-        )
-        * safe_scale
+    if axes is None:
+        reduction_axes = tuple(range(data.ndim))
+    else:
+        reduction_axes = tuple(axis % data.ndim for axis in axes)
+
+    if not reduction_axes or len(set(reduction_axes)) != len(reduction_axes):
+        return np.mean(data, axis=axes, keepdims=keepdims, dtype=data.dtype)
+
+    remaining_axes = tuple(
+        axis for axis in range(data.ndim) if axis not in reduction_axes
     )
-    return result if keepdims else np.squeeze(result, axis=axes)
+    remaining_shape = tuple(data.shape[axis] for axis in remaining_axes)
+    reduction_size = math.prod(data.shape[axis] for axis in reduction_axes)
+    rows = np.transpose(data, remaining_axes + reduction_axes).reshape(
+        -1, reduction_size
+    )
+    result = np.empty(rows.shape[0], dtype=data.dtype)
+
+    for index, row in enumerate(rows):
+        if not np.all(np.isfinite(row)) or np.all(row == 0):
+            # Preserve NumPy's NaN, infinity, and signed-zero behavior.
+            result[index] = np.mean(row, dtype=data.dtype)
+            continue
+
+        try:
+            total = math.fsum(float(value) for value in row)
+            value = total / reduction_size
+        except OverflowError:
+            # Dividing each finite term first bounds the positive and negative
+            # partial totals by the largest representable input magnitude.
+            value = math.fsum(float(item) / reduction_size for item in row)
+        result[index] = value
+
+    reduced = result.reshape(remaining_shape)
+    if keepdims:
+        output_shape = tuple(
+            1 if axis in reduction_axes else data.shape[axis]
+            for axis in range(data.ndim)
+        )
+        return reduced.reshape(output_shape)
+    return reduced
 
 
 class ReduceMean_1(OpRunReduceNumpy):
