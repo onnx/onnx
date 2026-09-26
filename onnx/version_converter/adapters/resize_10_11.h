@@ -9,6 +9,7 @@
 #include <memory>
 #include <vector>
 
+#include "onnx/common/interned_strings.h"
 #include "onnx/version_converter/adapters/adapter.h"
 
 namespace ONNX_NAMESPACE::version_conversion {
@@ -40,6 +41,14 @@ class Resize_10_11 final : public Adapter {
     constant->insertBefore(node);
     constant->t_(kvalue, t);
     node->replaceInput(1, constant->output());
+
+    // Preserve opset-10 semantics. Opset 10 Resize used asymmetric coordinate
+    // transformation and floor nearest mode, whereas opset 11 changed the
+    // defaults to half_pixel / round_prefer_floor. Emit these explicitly so the
+    // converted model computes identical results.
+    const Symbol nearest_mode("nearest_mode");
+    node->s_(kcoordinate_transformation_mode, "asymmetric");
+    node->s_(nearest_mode, "floor");
   }
 
   Node* adapt(std::shared_ptr<Graph> graph, Node* node) const override {
