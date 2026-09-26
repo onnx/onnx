@@ -4693,6 +4693,119 @@ class TestReferenceEvaluator:
         assert isinstance(r, np.ndarray)
         assert r.shape == ()
 
+    @pytest.mark.parametrize("opset", [17, 18])
+    @pytest.mark.parametrize(
+        "data, expected",
+        [
+            (
+                np.array([[1e30, 1e30]], dtype=np.float32),
+                np.array([[np.sqrt(2) * 1e30]], dtype=np.float32),
+            ),
+            (
+                np.array([[1e-30, 1e-30]], dtype=np.float32),
+                np.array([[np.sqrt(2) * 1e-30]], dtype=np.float32),
+            ),
+            (
+                np.array([[1e200, 1e200]], dtype=np.float64),
+                np.array([[np.sqrt(2) * 1e200]], dtype=np.float64),
+            ),
+            (
+                np.array([[1e-200, 1e-200]], dtype=np.float64),
+                np.array([[np.sqrt(2) * 1e-200]], dtype=np.float64),
+            ),
+        ],
+    )
+    def test_reduce_l2_finite_range(self, opset, data, expected):
+        tensor_type = (
+            TensorProto.FLOAT if data.dtype == np.float32 else TensorProto.DOUBLE
+        )
+        X = make_tensor_value_info("X", tensor_type, [1, 2])
+        Y = make_tensor_value_info("Y", tensor_type, [1, 1])
+        if opset < 18:
+            node = make_node("ReduceL2", ["X"], ["Y"], axes=[1], keepdims=1)
+            inputs = [X]
+            feeds = {"X": data}
+        else:
+            A = make_tensor_value_info("axes", TensorProto.INT64, [1])
+            node = make_node("ReduceL2", ["X", "axes"], ["Y"], keepdims=1)
+            inputs = [X, A]
+            feeds = {"X": data, "axes": np.array([1], dtype=np.int64)}
+        model = make_model(
+            make_graph([node], "reduce_l2_finite_range", inputs, [Y]),
+            opset_imports=[make_opsetid("", opset)],
+        )
+
+        got = ReferenceEvaluator(model).run(None, feeds)[0]
+        assert_allclose(got, expected, rtol=1e-6, atol=0)
+
+    @pytest.mark.parametrize("exponent", [-100, 100])
+    @pytest.mark.parametrize("keepdims", [0, 1])
+    def test_reduce_l2_bfloat16_finite_range(self, exponent, keepdims):
+        data = np.array([[2.0**exponent, -(2.0**exponent)]], dtype=ml_dtypes.bfloat16)
+        expected = np.array(
+            [math.hypot(*(float(x) for x in data[0]))], dtype=ml_dtypes.bfloat16
+        )
+        if keepdims:
+            expected = expected[:, None]
+        X = make_tensor_value_info("X", TensorProto.BFLOAT16, [1, 2])
+        A = make_tensor_value_info("axes", TensorProto.INT64, [1])
+        Y = make_tensor_value_info("Y", TensorProto.BFLOAT16, list(expected.shape))
+        model = make_model(
+            make_graph(
+                [make_node("ReduceL2", ["X", "axes"], ["Y"], keepdims=keepdims)],
+                "reduce_l2_bfloat16_finite_range",
+                [X, A],
+                [Y],
+            ),
+            opset_imports=[make_opsetid("", 18)],
+        )
+        check_model(model)
+        got = ReferenceEvaluator(model).run(
+            None, {"X": data, "axes": np.array([1], dtype=np.int64)}
+        )[0]
+        assert got.dtype == data.dtype
+        assert got.shape == expected.shape
+        assert_array_equal(got.astype(np.float32), expected.astype(np.float32))
+
+    @pytest.mark.parametrize(
+        "dtype", [np.float16, np.float32, np.float64, ml_dtypes.bfloat16]
+    )
+    @pytest.mark.parametrize("keepdims", [0, 1])
+    @pytest.mark.parametrize(
+        "data, expected",
+        [
+            ([[0, 0], [0, -0.0]], [0, 0]),
+            (np.empty((2, 0)), [0, 0]),
+            (np.empty((0, 2)), np.empty(0)),
+            ([[3, 4], [np.inf, 0], [0, np.nan], [0, 0]], [5, np.inf, np.nan, 0]),
+        ],
+    )
+    def test_reduce_l2_nonfinite_and_empty(self, dtype, keepdims, data, expected):
+        data = np.array(data, dtype=dtype)
+        expected = np.array(expected, dtype=dtype)
+        if keepdims:
+            expected = expected[:, None]
+        tensor_type = onnx.helper.np_dtype_to_tensor_dtype(data.dtype)
+        X = make_tensor_value_info("X", tensor_type, list(data.shape))
+        A = make_tensor_value_info("axes", TensorProto.INT64, [1])
+        Y = make_tensor_value_info("Y", tensor_type, list(expected.shape))
+        model = make_model(
+            make_graph(
+                [make_node("ReduceL2", ["X", "axes"], ["Y"], keepdims=keepdims)],
+                "reduce_l2_nonfinite_and_empty",
+                [X, A],
+                [Y],
+            ),
+            opset_imports=[make_opsetid("", 18)],
+        )
+        check_model(model)
+        got = ReferenceEvaluator(model).run(
+            None, {"X": data, "axes": np.array([1], dtype=np.int64)}
+        )[0]
+        assert got.dtype == data.dtype
+        assert got.shape == expected.shape
+        assert_array_equal(got.astype(np.float64), expected.astype(np.float64))
+
     @pytest.mark.parametrize("op", ["ReduceLogSum", "ReduceLogSumExp"])
     @pytest.mark.parametrize("opset", [13, 18, onnx_opset_version()])
     def test_reduce_log_sum_ops_reject_integer_input(self, op, opset):
