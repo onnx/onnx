@@ -4505,6 +4505,35 @@ class TestReferenceEvaluator:
                 ref.run(None, {"X": data})
 
     @pytest.mark.parametrize(
+        ("p", "magnitude", "expected_value"),
+        [
+            (1, np.float32(3e38), np.float32(0.5)),
+            (2, np.float32(1e30), np.float32(2**-0.5)),
+            (2, np.float32(1e-30), np.float32(2**-0.5)),
+        ],
+    )
+    def test_lp_normalization_preserves_finite_extreme_inputs(
+        self, p: int, magnitude: np.float32, expected_value: np.float32
+    ) -> None:
+        node = make_node("LpNormalization", ["X"], ["Y"], axis=-1, p=p)
+        x = np.array([[magnitude, -magnitude], [0.0, 0.0]], dtype=np.float32)
+        (got,) = ReferenceEvaluator(node).run(None, {"X": x})
+        expected = np.array(
+            [[expected_value, -expected_value], [0.0, 0.0]], dtype=np.float32
+        )
+        assert_allclose(got, expected, rtol=2e-7, atol=0)
+
+    @pytest.mark.parametrize("p", [1, 2])
+    def test_lp_normalization_preserves_nonfinite_behavior(self, p: int) -> None:
+        node = make_node("LpNormalization", ["X"], ["Y"], axis=-1, p=p)
+        x = np.array([[np.inf, 1.0], [np.nan, 1.0]], dtype=np.float32)
+        with np.errstate(invalid="ignore"):
+            (got,) = ReferenceEvaluator(node).run(None, {"X": x})
+        assert np.isnan(got[0, 0])
+        assert got[0, 1] == 0
+        assert np.isnan(got[1]).all()
+
+    @pytest.mark.parametrize(
         ("shape", "size", "dtype", "elem_type"),
         [
             ((2, 3, 2, 2), 3, np.float32, TensorProto.FLOAT),
