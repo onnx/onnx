@@ -1655,7 +1655,7 @@ class TestReferenceEvaluator:
     def test_conv(self):
         X = make_tensor_value_info("X", TensorProto.FLOAT, [None, None, None, None])
         Y = make_tensor_value_info("Y", TensorProto.FLOAT, [None, None, None, None])
-        B = make_tensor_value_info("B", TensorProto.FLOAT, [None, None, None, None])
+        B = make_tensor_value_info("B", TensorProto.FLOAT, [None])
         W = make_tensor_value_info("W", TensorProto.FLOAT, [None, None, None, None])
         node = make_node(
             "Conv",
@@ -1681,7 +1681,7 @@ class TestReferenceEvaluator:
                 W = np.zeros((1, 1, 3, 3), dtype=np.float32)
                 W[0, 0, :, :] = np.minimum(2 ** np.arange(9).reshape((3, -1)), 256)
 
-                B = np.array([[[[0]]]], dtype=np.float32)
+                B = np.array([0], dtype=np.float32)
                 expected = sess1.run(None, {"X": X, "W": W, "B": B})[0]
                 got = sess2.run(None, {"X": X, "W": W, "B": B})[0]
                 assert_allclose(got, expected)
@@ -7736,6 +7736,14 @@ class TestReferenceEvaluator:
         assert_array_equal(indices, np.array([1, 0], dtype=np.int64))
         assert_array_equal(inverse, np.array([1, 0, 1], dtype=np.int64))
         assert_array_equal(counts, np.array([1, 2], dtype=np.int64))
+
+    @pytest.mark.parametrize("k_value", [0, -1])
+    def test_topk_rejects_non_positive_k(self, k_value) -> None:
+        node = make_node("TopK", ["X", "K"], ["Values", "Indices"], axis=0)
+        x = np.array([3.0, 1.0, 2.0], dtype=np.float32)
+        k = np.array([k_value], dtype=np.int64)
+        with pytest.raises(ValueError, match="positive"):
+            ReferenceEvaluator(node).run(None, {"X": x, "K": k})
 
 
 class TestReferenceEvaluatorShapeAnnotationChecking:
