@@ -21,6 +21,7 @@ from onnx import (
     helper,
     shape_inference,
 )
+from onnx.reference import ReferenceEvaluator
 
 MOD_OPSET_27 = 27
 MOD_OPSET_28 = 28
@@ -1802,6 +1803,40 @@ class TestVersionConverter:
         converted_model = self._converted(graph, helper.make_operatorsetid("", 10), 11)
         assert converted_model.opset_import[0].version == 11
 
+    # Test Resize Adapter: 10 -> 11
+    def test_resize_10_11_preserves_opset10_semantics(self) -> None:
+        """The conversion must pin the opset-11 defaults to opset-10 semantics."""
+        for mode in ("nearest", "linear"):
+            nodes = [
+                helper.make_node(
+                    "Constant",
+                    [],
+                    ["scales"],
+                    value=helper.make_tensor(
+                        "", TensorProto.FLOAT, [4], [1.0, 1.0, 2.0, 2.0]
+                    ),
+                ),
+                helper.make_node("Resize", ["X", "scales"], ["Y"], mode=mode),
+            ]
+            graph = helper.make_graph(
+                nodes,
+                "test_resize_10_11",
+                [helper.make_tensor_value_info("X", TensorProto.FLOAT, (1, 1, 2, 2))],
+                [helper.make_tensor_value_info("Y", TensorProto.FLOAT, (1, 1, 4, 4))],
+            )
+            converted_model = self._converted(
+                graph, helper.make_operatorsetid("", 10), 11
+            )
+            resize = next(
+                n for n in converted_model.graph.node if n.op_type == "Resize"
+            )
+            attributes = {
+                attr.name: helper.get_attribute_value(attr) for attr in resize.attribute
+            }
+            assert attributes["coordinate_transformation_mode"] == b"asymmetric"
+            if mode == "nearest":
+                assert attributes["nearest_mode"] == b"floor"
+
     # Test Scatter Adapter: 10 -> 11
     def test_scatter_10_11_bounds_check(self) -> None:
         """Test Scatter 10->11 conversion with proper bounds checking."""
@@ -2551,6 +2586,121 @@ class TestVersionConverter:
         )
         with context_manager:
             test(x_shape, scale_shape, axis, block_size, output_dtype, zero_point_dtype)
+
+    @staticmethod
+    def _group_normalization_model(
+        shape: tuple[int | str, ...],
+        dtype: int = TensorProto.FLOAT,
+        stash_type: int | None = None,
+    ) -> ModelProto:
+        attributes = {"epsilon": 1e-4, "num_groups": 2}
+        if stash_type is not None:
+            attributes["stash_type"] = stash_type
+        graph = helper.make_graph(
+            [
+                helper.make_node(
+                    "GroupNormalization",
+                    ["X", "scale", "bias"],
+                    ["Y"],
+                    **attributes,
+                )
+            ],
+            "group_normalization",
+            [
+                helper.make_tensor_value_info("X", dtype, shape),
+                helper.make_tensor_value_info("scale", dtype, [4]),
+                helper.make_tensor_value_info("bias", dtype, [4]),
+            ],
+            [helper.make_tensor_value_info("Y", dtype, shape)],
+        )
+        return helper.make_model(
+            graph, opset_imports=[helper.make_operatorsetid("", 21)]
+        )
+
+    @pytest.mark.parametrize(
+        "shape,dtype,stash_type,rtol",
+        [
+            pytest.param((2, 4), TensorProto.FLOAT, None, 1e-5, id="rank_two"),
+            pytest.param(
+                (2, 4, 3, 2, 2),
+                TensorProto.FLOAT,
+                TensorProto.FLOAT,
+                1e-5,
+                id="rank_five",
+            ),
+            pytest.param(
+                (2, 4, 3),
+                TensorProto.DOUBLE,
+                TensorProto.DOUBLE,
+                1e-12,
+                id="double_stash",
+            ),
+            pytest.param(
+                (2, 4, 3),
+                TensorProto.FLOAT16,
+                TensorProto.FLOAT16,
+                2e-3,
+                id="float16_stash",
+            ),
+            pytest.param(
+                (2, 4, 3),
+                TensorProto.BFLOAT16,
+                None,
+                1e-2,
+                id="bfloat16_input_float_stash",
+            ),
+        ],
+    )
+    def test_group_normalization_21_20_matches_reference(
+        self,
+        shape: tuple[int, ...],
+        dtype: int,
+        stash_type: int | None,
+        rtol: float,
+    ) -> None:
+        model = self._group_normalization_model(shape, dtype, stash_type)
+        converted = onnx.version_converter.convert_version(model, 20)
+        checker.check_model(converted, full_check=True)
+
+        np_dtype = helper.tensor_dtype_to_np_dtype(dtype)
+        rng = np.random.default_rng(0)
+        feeds = {
+            "X": rng.normal(size=shape).astype(np_dtype),
+            "scale": rng.normal(size=(4,)).astype(np_dtype),
+            "bias": rng.normal(size=(4,)).astype(np_dtype),
+        }
+        expected = ReferenceEvaluator(model).run(None, feeds)[0]
+        actual = ReferenceEvaluator(converted).run(None, feeds)[0]
+        np.testing.assert_allclose(
+            actual.astype(np.float64),
+            expected.astype(np.float64),
+            rtol=rtol,
+            atol=rtol,
+        )
+        assert "GroupNormalization" not in {
+            node.op_type for node in converted.graph.node
+        }
+        assert "InstanceNormalization" in {
+            node.op_type for node in converted.graph.node
+        }
+
+    def test_group_normalization_21_20_supports_symbolic_dimensions(self) -> None:
+        model = self._group_normalization_model(("N", 4, "H", "W"))
+        converted = onnx.version_converter.convert_version(model, 20)
+        checker.check_model(converted)
+        assert "GroupNormalization" not in {
+            node.op_type for node in converted.graph.node
+        }
+
+    def test_group_normalization_21_20_rejects_bfloat16_stash(self) -> None:
+        model = self._group_normalization_model(
+            (2, 4, 3), stash_type=TensorProto.BFLOAT16
+        )
+        with pytest.raises(
+            RuntimeError,
+            match=r"stash_type .* cannot be represented with InstanceNormalization",
+        ):
+            onnx.version_converter.convert_version(model, 20)
 
     @pytest.mark.parametrize(
         "y_shape, scale_shape, axis, block_size, compatible",
