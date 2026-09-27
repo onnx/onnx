@@ -156,9 +156,12 @@ class NonMaxSuppression(OpRun):
         pc.boxes_data_ = boxes_tensor
         pc.scores_data_ = scores_tensor
 
-        if max_output_boxes_per_class_tensor.size != 0:
+        if (
+            max_output_boxes_per_class_tensor is not None
+            and max_output_boxes_per_class_tensor.size != 0
+        ):
             pc.max_output_boxes_per_class_ = max_output_boxes_per_class_tensor
-        if iou_threshold_tensor.size != 0:
+        if iou_threshold_tensor is not None and iou_threshold_tensor.size != 0:
             pc.iou_threshold_ = iou_threshold_tensor
         if score_threshold_tensor is not None and score_threshold_tensor.size != 0:
             pc.score_threshold_ = score_threshold_tensor
@@ -198,8 +201,8 @@ class NonMaxSuppression(OpRun):
             score_threshold,
         ) = self.get_thresholds_from_inputs(pc, 0, 0, 0)
 
-        if max_output_boxes_per_class.size == 0:
-            return (np.empty((0,), dtype=np.int64),)
+        if max_output_boxes_per_class == 0:
+            return (np.empty((0, 3), dtype=np.int64),)
 
         boxes_data = pc.boxes_data_
         scores_data = pc.scores_data_
