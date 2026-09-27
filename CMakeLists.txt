@@ -147,15 +147,6 @@ endif()
 
 if(ONNX_BUILD_PYTHON)
   set(python_dev_component Development.Module)
-  set(python_optional_dev_component OPTIONAL_COMPONENTS Development.SABIModule)
-endif()
-
-# CMake 3.30+ excludes free-threaded Python from its default ABI search.
-if(CMAKE_VERSION VERSION_GREATER_EQUAL "3.30" AND NOT DEFINED Python3_FIND_ABI)
-  set(Python3_FIND_ABI "ANY" "ANY" "ANY" "ANY")
-endif()
-if(CMAKE_VERSION VERSION_GREATER_EQUAL "3.30" AND NOT DEFINED Python_FIND_ABI)
-  set(Python_FIND_ABI "ANY" "ANY" "ANY" "ANY")
 endif()
 
 if(CMAKE_CROSSCOMPILING)
@@ -163,7 +154,23 @@ if(CMAKE_CROSSCOMPILING)
   # must use a different package. See the discussion about this at
   # https://gitlab.kitware.com/cmake/cmake/-/issues/25145
   if(ONNX_BUILD_PYTHON)
-    find_package(Python3 REQUIRED COMPONENTS ${python_dev_component} ${python_optional_dev_component})
+    # There is no target interpreter to query, so a free-threaded target has to
+    # be requested explicitly with -DPython3_FIND_ABI=ANY;ANY;ANY;ON.
+    set(python_gil_disabled OFF)
+    list(LENGTH Python3_FIND_ABI python_find_abi_length)
+    if(python_find_abi_length GREATER 3)
+      list(GET Python3_FIND_ABI 3 python_gil_disabled)
+      string(TOUPPER "${python_gil_disabled}" python_gil_disabled)
+      if(NOT python_gil_disabled STREQUAL "ON")
+        set(python_gil_disabled OFF)
+      endif()
+    endif()
+    # Free-threaded CPython has no stable ABI; every other build must provide
+    # it, since the wheel is tagged abi3.
+    if(NOT python_gil_disabled)
+      list(APPEND python_dev_component Development.SABIModule)
+    endif()
+    find_package(Python3 REQUIRED COMPONENTS ${python_dev_component})
   endif()
   find_package(Python REQUIRED COMPONENTS Interpreter)
   set(ONNX_PYTHON_INTERPRETER Python::Interpreter)
@@ -181,10 +188,38 @@ if(CMAKE_CROSSCOMPILING)
     endif()
   endif()
 else()
-  find_package(Python3 REQUIRED COMPONENTS Interpreter ${python_dev_component} ${python_optional_dev_component})
+  find_package(Python3 REQUIRED COMPONENTS Interpreter)
+  if(ONNX_BUILD_PYTHON)
+    execute_process(
+      COMMAND "${Python3_EXECUTABLE}" -c
+              "import sysconfig; print(sysconfig.get_config_var('Py_GIL_DISABLED') or 0)"
+      OUTPUT_VARIABLE python_gil_disabled
+      OUTPUT_STRIP_TRAILING_WHITESPACE
+      COMMAND_ERROR_IS_FATAL ANY)
+    if(python_gil_disabled)
+      # CMake 3.30+ only searches for free-threaded development files when
+      # asked to. Request exactly this ABI so a regular libpython installed
+      # alongside cannot be picked up instead.
+      if(CMAKE_VERSION VERSION_GREATER_EQUAL "3.30")
+        if(NOT DEFINED Python3_FIND_ABI)
+          set(Python3_FIND_ABI "ANY" "ANY" "ANY" "ON")
+        endif()
+        if(NOT DEFINED Python_FIND_ABI)
+          set(Python_FIND_ABI "ANY" "ANY" "ANY" "ON")
+        endif()
+      endif()
+    else()
+      # Free-threaded CPython has no stable ABI; every other build must provide
+      # it, since the wheel is tagged abi3.
+      list(APPEND python_dev_component Development.SABIModule)
+    endif()
+    # Interpreter must be requested again: FindPython locates the development
+    # files through it.
+    find_package(Python3 REQUIRED COMPONENTS Interpreter ${python_dev_component})
+  endif()
   # Find Python for nanobind
   set(Python_EXECUTABLE ${Python3_EXECUTABLE})
-  find_package(Python REQUIRED COMPONENTS Interpreter ${python_dev_component} ${python_optional_dev_component})
+  find_package(Python REQUIRED COMPONENTS Interpreter ${python_dev_component})
   set(ONNX_PYTHON_INTERPRETER Python3::Interpreter)
 endif()
 
