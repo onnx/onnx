@@ -1254,12 +1254,7 @@ void check_function(const FunctionProto& function, const CheckerContext& ctx, co
   std::unordered_map<std::string, const AttributeProto*> default_attrs;
   for (const auto& attr : function.attribute_proto()) {
     if (attr.has_ref_attr_name()) {
-      fail_check(
-          "function (",
-          function.name(),
-          ") default attribute '",
-          attr.name(),
-          "' must not use ref_attr_name.");
+      fail_check("function (", function.name(), ") default attribute '", attr.name(), "' must not use ref_attr_name.");
     }
     if (!attrs.insert(attr.name()).second) {
       fail_check("function (", function.name(), ") should not have duplicate attributes specified.");
