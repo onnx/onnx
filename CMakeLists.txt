@@ -165,9 +165,12 @@ if(CMAKE_CROSSCOMPILING)
         set(python_gil_disabled OFF)
       endif()
     endif()
-    # Free-threaded CPython has no stable ABI; every other build must provide
-    # it, since the wheel is tagged abi3.
-    if(NOT python_gil_disabled)
+    if(DEFINED SKBUILD_SABI_COMPONENT)
+      # scikit-build-core decides from wheel.py-api whether the wheel is tagged
+      # abi3; request the stable ABI exactly when it is.
+      list(APPEND python_dev_component ${SKBUILD_SABI_COMPONENT})
+    elseif(NOT python_gil_disabled)
+      # Free-threaded CPython has no stable ABI.
       list(APPEND python_dev_component Development.SABIModule)
     endif()
     find_package(Python3 REQUIRED COMPONENTS ${python_dev_component})
@@ -196,11 +199,20 @@ else()
       OUTPUT_VARIABLE python_gil_disabled
       OUTPUT_STRIP_TRAILING_WHITESPACE
       COMMAND_ERROR_IS_FATAL ANY)
-    if(python_gil_disabled)
-      # CMake 3.30+ only searches for free-threaded development files when
-      # asked to. Request exactly this ABI so a regular libpython installed
-      # alongside cannot be picked up instead.
-      if(CMAKE_VERSION VERSION_GREATER_EQUAL "3.30")
+    if(python_gil_disabled AND CMAKE_VERSION VERSION_GREATER_EQUAL "3.30")
+      if(NOT WIN32 AND CMAKE_VERSION VERSION_LESS "4.1")
+        # FindPython in CMake 3.30-4.0 rejects Development.Module on POSIX
+        # whenever *_FIND_ABI is set, and scikit-build-core >= 1.1 sets it for
+        # free-threaded interpreters. POSIX finds the free-threaded headers
+        # through the interpreter without it.
+        unset(Python3_FIND_ABI)
+        unset(Python3_FIND_ABI CACHE)
+        unset(Python_FIND_ABI)
+        unset(Python_FIND_ABI CACHE)
+      else()
+        # CMake 3.30+ only searches for free-threaded development files when
+        # asked to. Request exactly this ABI so a regular libpython installed
+        # alongside cannot be picked up instead.
         if(NOT DEFINED Python3_FIND_ABI)
           set(Python3_FIND_ABI "ANY" "ANY" "ANY" "ON")
         endif()
@@ -208,9 +220,13 @@ else()
           set(Python_FIND_ABI "ANY" "ANY" "ANY" "ON")
         endif()
       endif()
-    else()
-      # Free-threaded CPython has no stable ABI; every other build must provide
-      # it, since the wheel is tagged abi3.
+    endif()
+    if(DEFINED SKBUILD_SABI_COMPONENT)
+      # scikit-build-core decides from wheel.py-api whether the wheel is tagged
+      # abi3; request the stable ABI exactly when it is.
+      list(APPEND python_dev_component ${SKBUILD_SABI_COMPONENT})
+    elseif(NOT python_gil_disabled)
+      # Free-threaded CPython has no stable ABI.
       list(APPEND python_dev_component Development.SABIModule)
     endif()
     # Interpreter must be requested again: FindPython locates the development
