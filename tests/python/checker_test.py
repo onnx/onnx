@@ -156,7 +156,7 @@ class TestChecker:
             match = "type field and data field mismatch"
         elif case == "missing_name":
             attr.ClearField("name")
-            match = "name"
+            match = "Field 'name'"
         elif case == "attribute_reference":
             attr.ref_attr_name = "other"
             match = "must not use ref_attr_name"
@@ -204,6 +204,76 @@ class TestChecker:
             attribute_protos=[helper.make_attribute("branch", default_graph)],
         )
 
+        with pytest.raises(checker.ValidationError, match="later"):
+            checker.check_function(function)
+
+    @staticmethod
+    def _make_function_with_nested_branch_ref(
+        captured: str, body_tail: Sequence[onnx.NodeProto] = ()
+    ) -> onnx.FunctionProto:
+        """Builds a function whose outer If contains an inner If that takes its
+        then_branch from the graph default ``branch``, which reads ``captured``.
+        The outer then_branch defines ``tmp`` before the inner If.
+        """
+
+        def identity_graph(name: str, src: str, dst: str) -> onnx.GraphProto:
+            return helper.make_graph(
+                [helper.make_node("Identity", [src], [dst])],
+                name,
+                [],
+                [helper.make_tensor_value_info(dst, TensorProto.FLOAT, [1])],
+            )
+
+        inner_if = helper.make_node("If", ["cond"], ["inner_y"])
+        inner_if.attribute.extend(
+            [
+                helper.make_attribute_ref(
+                    "then_branch", onnx.AttributeProto.GRAPH, ref_attr_name="branch"
+                ),
+                helper.make_attribute(
+                    "else_branch", identity_graph("inner_else", "tmp", "inner_else_y")
+                ),
+            ]
+        )
+        outer_then = helper.make_graph(
+            [helper.make_node("Identity", ["x"], ["tmp"]), inner_if],
+            "outer_then",
+            [],
+            [helper.make_tensor_value_info("inner_y", TensorProto.FLOAT, [1])],
+        )
+        outer_if = helper.make_node(
+            "If",
+            ["cond"],
+            ["y"],
+            then_branch=outer_then,
+            else_branch=identity_graph("outer_else", "x", "outer_else_y"),
+        )
+        return helper.make_function(
+            "local",
+            "f",
+            ["cond", "x"],
+            ["y"],
+            [outer_if, *body_tail],
+            [helper.make_opsetid("", 21)],
+            attribute_protos=[
+                helper.make_attribute(
+                    "branch", identity_graph("branch", captured, "branch_y")
+                )
+            ],
+        )
+
+    def test_check_function_nested_graph_default_captures_subgraph_value(
+        self,
+    ) -> None:
+        """A graph default referenced in a subgraph may capture that subgraph's values."""
+        checker.check_function(self._make_function_with_nested_branch_ref("tmp"))
+
+    def test_check_function_nested_graph_default_cannot_capture_later_value(
+        self,
+    ) -> None:
+        function = self._make_function_with_nested_branch_ref(
+            "later", [helper.make_node("Identity", ["x"], ["later"])]
+        )
         with pytest.raises(checker.ValidationError, match="later"):
             checker.check_function(function)
 

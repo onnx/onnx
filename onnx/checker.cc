@@ -736,6 +736,21 @@ void check_attribute(const AttributeProto& attr, const CheckerContext& ctx, cons
     }
   }
 
+  if (attr.has_ref_attr_name()) {
+    // A reference to a default value of the enclosing function's attribute. Check the
+    // default where it would be substituted, so a graph-valued default may capture
+    // only the values visible at this point, including values of enclosing subgraphs.
+    const auto* defaults = ctx.get_function_attribute_defaults();
+    if (defaults != nullptr) {
+      const auto default_attr = defaults->find(attr.ref_attr_name());
+      if (default_attr != defaults->end()) {
+        CheckerContext default_ctx(ctx);
+        default_ctx.set_function_attribute_defaults(nullptr);
+        check_attribute(*default_attr->second, default_ctx, lex_ctx);
+      }
+    }
+  }
+
   if (attr.has_t()) {
     check_tensor(attr.t(), ctx);
   }
@@ -1207,6 +1222,26 @@ void check_model_local_functions(
   }
 }
 
+// Collects the attribute names that nodes refer to via ref_attr_name, including
+// nodes in nested subgraphs.
+static void collect_referenced_attributes(
+    const google::protobuf::RepeatedPtrField<NodeProto>& nodes,
+    std::unordered_set<std::string>& names) {
+  for (const auto& node : nodes) {
+    for (const auto& attr : node.attribute()) {
+      if (attr.has_ref_attr_name()) {
+        names.insert(attr.ref_attr_name());
+      }
+      if (attr.has_g()) {
+        collect_referenced_attributes(attr.g().node(), names);
+      }
+      for (const auto& graph : attr.graphs()) {
+        collect_referenced_attributes(graph.node(), names);
+      }
+    }
+  }
+}
+
 void check_function(const FunctionProto& function, const CheckerContext& ctx, const LexicalScopeContext& parent_lex) {
   enforce_non_empty_field(function, name);
 
@@ -1261,6 +1296,8 @@ void check_function(const FunctionProto& function, const CheckerContext& ctx, co
     }
     default_attrs.emplace(attr.name(), &attr);
   }
+  // Referenced defaults are checked by check_attribute at each reference in the body.
+  ctx_copy.set_function_attribute_defaults(&default_attrs);
   std::unordered_set<std::string> used_experimental_ops;
   for (const auto& node : function.node()) {
     // nodes must be in topologically sorted order
@@ -1289,17 +1326,6 @@ void check_function(const FunctionProto& function, const CheckerContext& ctx, co
     if (check_is_experimental_op(node)) {
       used_experimental_ops.insert(node.op_type());
     }
-    // A graph-valued default may capture values from the function body. Check
-    // it at each substitution point so values defined by later nodes are not
-    // incorrectly considered visible.
-    for (const auto& attr : node.attribute()) {
-      if (attr.has_ref_attr_name()) {
-        const auto default_attr = default_attrs.find(attr.ref_attr_name());
-        if (default_attr != default_attrs.end()) {
-          check_attribute(*default_attr->second, ctx_copy, lex_ctx);
-        }
-      }
-    }
     check_node(node, ctx_copy, lex_ctx);
 
     // check for SSA form
@@ -1318,11 +1344,15 @@ void check_function(const FunctionProto& function, const CheckerContext& ctx, co
     }
   }
 
-  // Default attribute values must be well-formed. They are checked with the
-  // full function scope, since a graph-valued default may be substituted into
-  // a body node and capture values defined in the function.
+  // Defaults that no node references were not checked above. They are never
+  // substituted, so check them for well-formedness with the full function scope.
+  std::unordered_set<std::string> referenced_attrs;
+  collect_referenced_attributes(function.node(), referenced_attrs);
+  ctx_copy.set_function_attribute_defaults(nullptr);
   for (const auto& attr : function.attribute_proto()) {
-    check_attribute(attr, ctx_copy, lex_ctx);
+    if (referenced_attrs.count(attr.name()) == 0) {
+      check_attribute(attr, ctx_copy, lex_ctx);
+    }
   }
   print_warning_if_has_experimental(used_experimental_ops);
 }
