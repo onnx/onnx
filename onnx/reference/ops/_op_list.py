@@ -104,10 +104,12 @@ __all__ = [
     "Gemm_6",
     "Gemm_7",
     "GlobalAveragePool",
+    "GlobalLpPool",
     "GlobalMaxPool",
     "Greater",
     "GreaterOrEqual",
-    "GridSample",
+    "GridSample_16",
+    "GridSample_20",
     "GRU",
     "HammingWindow",
     "HannWindow",
@@ -369,10 +371,11 @@ from onnx.reference.ops.op_gather_elements import GatherElements
 from onnx.reference.ops.op_gathernd import GatherND
 from onnx.reference.ops.op_gemm import Gemm_6, Gemm_7
 from onnx.reference.ops.op_global_average_pool import GlobalAveragePool
+from onnx.reference.ops.op_global_lp_pool import GlobalLpPool
 from onnx.reference.ops.op_global_max_pool import GlobalMaxPool
 from onnx.reference.ops.op_greater import Greater
 from onnx.reference.ops.op_greater_or_equal import GreaterOrEqual
-from onnx.reference.ops.op_grid_sample import GridSample
+from onnx.reference.ops.op_grid_sample import GridSample_16, GridSample_20
 from onnx.reference.ops.op_gru import GRU
 from onnx.reference.ops.op_hamming_window import HammingWindow
 from onnx.reference.ops.op_hann_window import HannWindow

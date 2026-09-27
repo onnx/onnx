@@ -199,6 +199,19 @@ void check_tensor(const TensorProto& tensor, const CheckerContext& ctx) {
               ") has a shape too large to validate against its data type.");
         }
         expected_bytes = (expected_bits / 8) + (expected_bits % 8 != 0);
+        if (expected_bytes > 0 && static_cast<int64_t>(tensor.raw_data().size()) >= expected_bytes) {
+          const auto used_bits = static_cast<uint8_t>(expected_bits % 8);
+          if (used_bits != 0) {
+            const auto last_byte = static_cast<uint8_t>(tensor.raw_data()[expected_bytes - 1]);
+            const auto unused_bits_mask = static_cast<uint8_t>(0xFFU << used_bits);
+            if ((last_byte & unused_bits_mask) != 0) {
+              fail_check(
+                  "TensorProto (tensor name: ",
+                  tensor.name(),
+                  ") has non-zero padding bits in its packed FLOAT6 raw_data.");
+            }
+          }
+        }
         break;
       }
       case TensorProto::UINT8:
@@ -341,6 +354,14 @@ void check_tensor(const TensorProto& tensor, const CheckerContext& ctx) {
                 ") is too small for the declared shape (",
                 expected_int32s,
                 " int32 values required).");
+          }
+          if (tensor.data_type() == TensorProto::FLOAT6E2M3 || tensor.data_type() == TensorProto::FLOAT6E3M2) {
+            for (const auto value : tensor.int32_data()) {
+              if (value < 0 || value > 0x3F) {
+                fail_check(
+                    "TensorProto (tensor name: ", tensor.name(), ") FLOAT6 int32_data values must use only bits 0-5.");
+              }
+            }
           }
         }
         break;

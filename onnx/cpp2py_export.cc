@@ -501,8 +501,10 @@ NB_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) { // NOLINT(cppcoreguidelines-
           })
       .def(
           "set_type_and_shape_inference_function",
-          [](OpSchema& op, const std::function<void(InferenceContext*)>& func) -> OpSchema& {
-            auto wrapper = [=](InferenceContext& ctx) { func(&ctx); };
+          [](OpSchema& op, std::function<void(InferenceContext*)> func) -> OpSchema& {
+            // Move nanobind's guarded Python-callable wrapper into the registered
+            // inference function so it remains valid after this binding returns.
+            auto wrapper = [func = std::move(func)](InferenceContext& ctx) { func(&ctx); };
             return op.TypeAndShapeInferenceFunction(wrapper);
           },
           nb::rv_policy::reference_internal)
@@ -651,7 +653,6 @@ NB_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) { // NOLINT(cppcoreguidelines-
   version_converter.def("convert_version", [](const nb::bytes& bytes, int target) {
     ModelProto proto{};
     ParseProtoFromPyBytesOrThrow(&proto, bytes);
-    shape_inference::InferShapes(proto);
     return ProtoToBytes(version_conversion::ConvertVersion(proto, target));
   });
 

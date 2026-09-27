@@ -5,7 +5,7 @@ from __future__ import annotations
 
 import pytest
 
-from onnx import TensorProto, checker, helper, inliner, parser
+from onnx import checker, inliner, parser
 
 
 class TestInliner:
@@ -139,31 +139,41 @@ class TestInliner:
         inlined_nodes = inlined.graph.node
         assert "Abs" in [n.op_type for n in inlined_nodes]
 
+    def test_sequence_map_inlining_rejects_missing_input_type(self):
+        model = parser.parse_model(
+            """
+            <ir_version: 13, opset_import: [ "" : 17 ]>
+            missing_sequence_type (seq(float) input) => (seq(float) output) {
+                output = SequenceMap (input) <
+                    body = body (float body_input) => (float body_output) {
+                        body_output = Identity(body_input)
+                    }
+                >
+            }
+            """
+        )
+        model.graph.input[0].ClearField("type")
+        model.graph.output[0].ClearField("type")
+
+        with pytest.raises(ValueError, match="Expected a sequence type"):
+            inliner.inline_selected_functions(
+                model, [], exclude=True, inline_schema_functions=True
+            )
+
     def test_inline_ignores_constant_without_outputs(self):
-        function = helper.make_function(
-            "local",
-            "identity",
-            ["X"],
-            ["Y"],
-            [helper.make_node("Identity", ["X"], ["Y"])],
-            opset_imports=[helper.make_opsetid("", 12)],
-        )
-        graph = helper.make_graph(
-            [
-                helper.make_node("Constant", [], []),
-                helper.make_node("identity", ["X"], ["Y"], domain="local"),
-            ],
-            "constant_without_outputs",
-            [helper.make_tensor_value_info("X", TensorProto.FLOAT, (1,))],
-            [helper.make_tensor_value_info("Y", TensorProto.FLOAT, (1,))],
-        )
-        model = helper.make_model(
-            graph,
-            functions=[function],
-            opset_imports=[
-                helper.make_opsetid("", 13),
-                helper.make_opsetid("local", 1),
-            ],
+        model = parser.parse_model(
+            """
+            <ir_version: 13, opset_import: [ "" : 13, "local" : 1 ]>
+            constant_without_outputs (float[1] X) => (float[1] Y) {
+                = Constant()
+                Y = local.identity(X)
+            }
+
+            <opset_import: [ "" : 12 ], domain: "local">
+            identity (X) => (Y) {
+                Y = Identity(X)
+            }
+            """
         )
 
         inlined = inliner.inline_local_functions(model, convert_version=True)

@@ -1,0 +1,33 @@
+# Copyright (c) ONNX Project Contributors
+#
+# SPDX-License-Identifier: Apache-2.0
+
+name: Verify SHA-256
+description: Fail the build closed if an expected digest is missing, or if it doesn't match the actual one.
+inputs:
+  file:
+    description: Name of the file being verified, used only in error messages.
+    required: true
+  expected-sha256:
+    description: Expected SHA-256 digest looked up from a pinned manifest, or empty if none could be resolved.
+    required: true
+  actual-sha256:
+    description: SHA-256 digest computed from the downloaded file.
+    required: true
+runs:
+  using: composite
+  steps:
+    - shell: bash
+      env:
+        FILE: ${{ inputs.file }}
+        EXPECTED_SHA256: ${{ inputs.expected-sha256 }}
+        ACTUAL_SHA256: ${{ inputs.actual-sha256 }}
+      run: |
+        if [ -z "$EXPECTED_SHA256" ]; then
+          echo "::error::No pinned SHA-256 for ${FILE}" >&2
+          exit 1
+        fi
+        if [ "$ACTUAL_SHA256" != "$EXPECTED_SHA256" ]; then
+          echo "::error::SHA-256 mismatch for ${FILE}: expected ${EXPECTED_SHA256}, got ${ACTUAL_SHA256}" >&2
+          exit 1
+        fi
