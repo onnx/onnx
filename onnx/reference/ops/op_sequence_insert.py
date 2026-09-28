@@ -28,8 +28,10 @@ def sequence_insert_reference_implementation(
             ) from e
     if position is not None:
         # In these cases, insert_position will be between [-len(sequence), len(sequence)]
-        # The position argument will be in the format np.array([pos_index])
-        insert_position = (position[0] + len(seq)) % len(seq)
+        # The position argument will be in the format np.array([pos_index]).
+        # list.insert counts negative positions from the back and appends
+        # when the position equals len(seq), as the specification requires.
+        insert_position = int(position[0])
         seq.insert(insert_position, tensor)
     else:
         # Default position of insertion is at the end of the sequence.

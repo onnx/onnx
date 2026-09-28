@@ -3763,6 +3763,54 @@ class TestReferenceEvaluator:
         for a, b in zip(expected[0], got[0], strict=True):
             assert_allclose(a, b)
 
+    @pytest.mark.parametrize(
+        "position,expected",
+        [
+            (0, [2.0, 0.0, 1.0]),
+            (1, [0.0, 2.0, 1.0]),
+            (2, [0.0, 1.0, 2.0]),
+            (-1, [0.0, 2.0, 1.0]),
+            (-2, [2.0, 0.0, 1.0]),
+        ],
+    )
+    def test_sequence_insert_position(self, position, expected):
+        A = make_tensor_value_info("A", TensorProto.FLOAT, [1])
+        B = make_tensor_value_info("B", TensorProto.FLOAT, [1])
+        C = make_tensor_value_info("C", TensorProto.FLOAT, [1])
+        P = make_tensor_value_info("P", TensorProto.INT64, [])
+        Z = make_tensor_sequence_value_info("Z", TensorProto.FLOAT, None)
+        nodes = [
+            make_node("SequenceConstruct", ["A", "B"], ["S"]),
+            make_node("SequenceInsert", ["S", "C", "P"], ["Z"]),
+        ]
+        model = make_model(make_graph(nodes, "g", [A, B, C, P], [Z]))
+        ref = ReferenceEvaluator(model)
+        got = ref.run(
+            None,
+            {
+                "A": np.array([0], dtype=np.float32),
+                "B": np.array([1], dtype=np.float32),
+                "C": np.array([2], dtype=np.float32),
+                "P": np.array(position, dtype=np.int64),
+            },
+        )[0]
+        assert [float(t[0]) for t in got] == expected
+
+    def test_sequence_insert_into_empty_sequence(self):
+        C = make_tensor_value_info("C", TensorProto.FLOAT, [1])
+        P = make_tensor_value_info("P", TensorProto.INT64, [])
+        Z = make_tensor_sequence_value_info("Z", TensorProto.FLOAT, None)
+        nodes = [
+            make_node("SequenceEmpty", [], ["S"], dtype=TensorProto.FLOAT),
+            make_node("SequenceInsert", ["S", "C", "P"], ["Z"]),
+        ]
+        model = make_model(make_graph(nodes, "g", [C, P], [Z]))
+        ref = ReferenceEvaluator(model)
+        c = np.array([2], dtype=np.float32)
+        got = ref.run(None, {"C": c, "P": np.array(0, dtype=np.int64)})[0]
+        assert len(got) == 1
+        assert_allclose(got[0], c)
+
     def test_cast_float8(self):
         X = make_tensor_value_info("X", TensorProto.FLOAT, [None])
         F1 = make_tensor_value_info("F1", TensorProto.FLOAT, [None])
