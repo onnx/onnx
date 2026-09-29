@@ -7698,6 +7698,55 @@ class TestReferenceEvaluator:
         with pytest.raises(ValueError, match="identical dtypes"):
             ref.run(None, {"A": a, "B": b})
 
+    @pytest.mark.parametrize(
+        "dtype", [np.float16, ml_dtypes.bfloat16, np.float32, np.float64]
+    )
+    @pytest.mark.parametrize(
+        "theta,size,expected_shape",
+        [
+            (
+                [[[1, 0, 0], [0, 1, 0]]],
+                [1, 1, 2, 2],
+                (1, 2, 2, 2),
+            ),
+            (
+                [[[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0]]],
+                [1, 1, 2, 2, 2],
+                (1, 2, 2, 2, 3),
+            ),
+        ],
+        ids=["2d", "3d"],
+    )
+    def test_affine_grid_preserves_dtype(
+        self, dtype, theta, size, expected_shape
+    ) -> None:
+        theta = np.array(theta, dtype=dtype)
+        size = np.array(size, dtype=np.int64)
+        node = make_node("AffineGrid", ["theta", "size"], ["grid"])
+
+        (grid,) = ReferenceEvaluator(node).run(None, {"theta": theta, "size": size})
+
+        assert grid.dtype == theta.dtype
+        assert grid.shape == expected_shape
+        assert_array_equal(
+            np.abs(grid.astype(np.float64)),
+            np.full(expected_shape, 0.5),
+        )
+
+    def test_affine_grid_preserves_double_precision(self) -> None:
+        translation = 2**-40
+        theta = np.array(
+            [[[1, 0, translation], [0, 1, 0]]],
+            dtype=np.float64,
+        )
+        size = np.array([1, 1, 2, 2], dtype=np.int64)
+        node = make_node("AffineGrid", ["theta", "size"], ["grid"])
+
+        (grid,) = ReferenceEvaluator(node).run(None, {"theta": theta, "size": size})
+
+        assert grid.dtype == theta.dtype
+        assert grid[0, 0, 0, 0] == -0.5 + translation
+
     @staticmethod
     def _grid_sample_model(opset: int, mode: str | None):
         X = make_tensor_value_info("X", TensorProto.FLOAT, [None, None, None, None])
