@@ -366,6 +366,35 @@ class TestReferenceEvaluator:
         got = ReferenceEvaluator(model).run(None, {"X": x, "Y": y})[0]
         np.testing.assert_array_equal(got, np.array(expected, dtype=np_dtype))
 
+    @pytest.mark.parametrize("ignore_index", [-1, -100])
+    def test_nllloss_mean_excludes_ignore_index_without_weight(
+        self, ignore_index: int
+    ) -> None:
+        x = np.log(np.array([[0.25, 0.75], [0.5, 0.5]], dtype=np.float32))
+        target = np.array([0, ignore_index], dtype=np.int64)
+        graph = make_graph(
+            [
+                make_node(
+                    "NegativeLogLikelihoodLoss",
+                    ["X", "target"],
+                    ["loss"],
+                    reduction="mean",
+                    ignore_index=ignore_index,
+                )
+            ],
+            "nllloss_ignore_index",
+            [
+                make_tensor_value_info("X", TensorProto.FLOAT, [2, 2]),
+                make_tensor_value_info("target", TensorProto.INT64, [2]),
+            ],
+            [make_tensor_value_info("loss", TensorProto.FLOAT, [])],
+        )
+        model = make_model(graph, opset_imports=[make_opsetid("", 22)])
+
+        got = ReferenceEvaluator(model).run(None, {"X": x, "target": target})[0]
+
+        assert_allclose(got, -x[0, 0])
+
     @staticmethod
     def _linear_regression(clip=False, opset=None, min_value=-1.0, max_value=1.0):
         X = make_tensor_value_info("X", TensorProto.FLOAT, [None, None])
