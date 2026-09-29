@@ -701,6 +701,33 @@ class TestComposeFunctions:
                 n.name == _prefixed(prefix, name) for g in pfx_graphs for n in g.node
             )
 
+    def test_add_prefix_attribute_subgraph_outer_initializer(self) -> None:
+        """Tests that a subgraph reading an outer initializer follows its new name."""
+        C = helper.make_tensor_value_info("C", TensorProto.BOOL, [])
+        X = helper.make_tensor_value_info("X", TensorProto.FLOAT, [2])
+        Out = helper.make_tensor_value_info("Out", TensorProto.FLOAT, [2])
+        W = helper.make_tensor("W", TensorProto.FLOAT, [2], [10.0, 20.0])
+
+        cond = helper.make_node(
+            "If",
+            inputs=["C"],
+            outputs=["Out"],
+            then_branch=helper.make_graph(
+                [helper.make_node("Add", ["X", "W"], ["Out"])], "then", [], [Out]
+            ),
+            else_branch=helper.make_graph(
+                [helper.make_node("Sub", ["X", "W"], ["Out"])], "else", [], [Out]
+            ),
+        )
+        graph = helper.make_graph([cond], "graph", [C, X], [Out], initializer=[W])
+
+        prefix = "prefix."
+        prefixed_graph = compose.add_prefix_graph(graph, prefix)
+        checker.check_graph(prefixed_graph)
+        assert [init.name for init in prefixed_graph.initializer] == ["prefix.W"]
+        for attribute in prefixed_graph.node[0].attribute:
+            assert list(attribute.g.node[0].input) == ["prefix.X", "prefix.W"]
+
     def test_add_prefix_all(self) -> None:
         """Tests prefixing all names in the graph"""
         self._test_add_prefix(True, True, True, True, True, True)

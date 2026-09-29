@@ -509,17 +509,6 @@ def add_prefix_graph(
         for entry in g.output:
             name_map[entry.name] = _prefixed(prefix, entry.name)
 
-    if rename_nodes:
-        for n in g.node:
-            n.name = _prefixed(prefix, n.name)
-            for attribute in n.attribute:
-                if attribute.HasField("g"):
-                    add_prefix_graph(
-                        attribute.g, prefix, inplace=True, name_map=name_map
-                    )
-                for sub_g in attribute.graphs:
-                    add_prefix_graph(sub_g, prefix, inplace=True, name_map=name_map)
-
     if rename_initializers:
         for init in g.initializer:
             name_map[init.name] = _prefixed(prefix, init.name)
@@ -534,6 +523,19 @@ def add_prefix_graph(
     if rename_value_infos:
         for entry in g.value_info:
             name_map[entry.name] = _prefixed(prefix, entry.name)
+
+    # Subgraphs can refer to any name of the outer scope, so they are renamed
+    # only once name_map holds all of them, including initializers.
+    if rename_nodes:
+        for n in g.node:
+            n.name = _prefixed(prefix, n.name)
+            for attribute in n.attribute:
+                if attribute.HasField("g"):
+                    add_prefix_graph(
+                        attribute.g, prefix, inplace=True, name_map=name_map
+                    )
+                for sub_g in attribute.graphs:
+                    add_prefix_graph(sub_g, prefix, inplace=True, name_map=name_map)
 
     for n in g.node:
         for i, output in enumerate(n.output):
