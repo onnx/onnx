@@ -1426,13 +1426,19 @@ void check_function(const FunctionProto& function, const CheckerContext& ctx, co
   }
 
   // Defaults that no node references were not checked above. They are never
-  // substituted, so check them for well-formedness with the full function scope.
+  // substituted, so check them for well-formedness with only the function inputs
+  // in scope; with node outputs in scope, a graph default reusing one of those
+  // names internally would be rejected by the SSA check.
   std::unordered_set<std::string> referenced_attrs;
   collect_referenced_attributes(function.node(), referenced_attrs);
   ctx_copy.set_function_attribute_defaults(nullptr);
+  LexicalScopeContext input_lex_ctx{parent_lex};
+  for (const auto& input : function.input()) {
+    input_lex_ctx.add(input);
+  }
   for (const auto& attr : function.attribute_proto()) {
     if (referenced_attrs.count(attr.name()) == 0) {
-      check_attribute(attr, ctx_copy, lex_ctx);
+      check_attribute(attr, ctx_copy, input_lex_ctx);
     }
   }
   print_warning_if_has_experimental(used_experimental_ops);

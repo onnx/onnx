@@ -277,6 +277,23 @@ class TestChecker:
         with pytest.raises(checker.ValidationError, match="later"):
             checker.check_function(function)
 
+    def test_check_function_unreferenced_graph_default_may_reuse_body_names(
+        self,
+    ) -> None:
+        """An unreferenced graph default is never substituted, so its internal
+        names may coincide with names produced by the function body.
+        """
+        default_graph = helper.make_graph(
+            [helper.make_node("Identity", ["x"], ["y"])],
+            "branch",
+            [],
+            [helper.make_tensor_value_info("y", TensorProto.FLOAT, [1])],
+        )
+        function = self._make_function_with_defaults(
+            [helper.make_attribute("branch", default_graph)]
+        )
+        checker.check_function(function)
+
     def test_check_model_invalid_function_attribute_default(self) -> None:
         """check_model validates the attribute defaults of model-local functions."""
         type_mismatch = helper.make_attribute("alpha", 1.0)
