@@ -7114,6 +7114,31 @@ class TestReferenceEvaluator:
         with pytest.raises(ValueError):
             self._run_resize(data, axes=axes, sizes=sizes, mode="linear")
 
+    @pytest.mark.parametrize(
+        ("coordinate_transformation_mode", "mode", "scale", "roi", "expected"),
+        [
+            ("tf_crop_and_resize", "linear", 0.7, [0, 1], [1, 3, 5]),
+            ("tf_crop_and_resize", "linear", 0.3, [0.25, 0.75], [3]),
+            ("pytorch_half_pixel", "linear", 0.3, None, [1]),
+            ("pytorch_half_pixel", "cubic", 0.2, None, [1]),
+        ],
+    )
+    def test_resize_uses_integer_output_length(
+        self, coordinate_transformation_mode, mode, scale, roi, expected
+    ):
+        # On a ramp the interpolated value is x_original + 1, so the expected values follow
+        # directly from the spec formulas, where length_resized is the integer output length.
+        data = np.arange(1, 6, dtype=np.float32)
+        kwargs = {} if roi is None else {"roi": np.array(roi, dtype=np.float32)}
+        output = self._run_resize(
+            data,
+            scales=np.array([scale], dtype=np.float32),
+            mode=mode,
+            coordinate_transformation_mode=coordinate_transformation_mode,
+            **kwargs,
+        )
+        assert_allclose(output, np.array(expected, dtype=np.float32), atol=1e-6)
+
     @pytest.mark.parametrize("policy", ["not_larger", "not_smaller"])
     def test_resize_partial_axes_keep_aspect_ratio(self, policy):
         data = np.arange(2 * 3 * 5, dtype=np.float32).reshape(2, 3, 5)
