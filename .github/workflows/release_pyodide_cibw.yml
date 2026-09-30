@@ -53,7 +53,7 @@ jobs:
           echo "PROTOC_ACTUAL_SHA256=$(shasum -a 256 protoc.zip | awk '{print $1}')" >> $GITHUB_ENV
 
       - name: Verify protoc checksum
-        uses: ./.github/actions/verify-sha256
+        uses: $/.github/actions/verify-sha256
         with:
           file: ${{ env.PROTOC_ZIP }}
           expected-sha256: ${{ env.PROTOC_EXPECTED_SHA256 }}
@@ -71,7 +71,7 @@ jobs:
           echo "PROTOBUF_ACTUAL_SHA256=$(shasum -a 256 protobuf.tar.gz | awk '{print $1}')" >> $GITHUB_ENV
 
       - name: Verify protobuf source checksum
-        uses: ./.github/actions/verify-sha256
+        uses: $/.github/actions/verify-sha256
         with:
           file: protobuf-${{ env.PROTOBUF_VERSION }}.tar.gz
           expected-sha256: ${{ env.PROTOBUF_EXPECTED_SHA256 }}

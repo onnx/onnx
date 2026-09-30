@@ -71,7 +71,7 @@ jobs:
           Add-Content -Path $env:GITHUB_ENV -Value "PROTOC_ACTUAL_SHA256=$actual"
 
       - name: Verify protoc checksum
-        uses: ./.github/actions/verify-sha256
+        uses: $/.github/actions/verify-sha256
         with:
           file: ${{ env.PROTOC_ZIP }}
           expected-sha256: ${{ env.PROTOC_EXPECTED_SHA256 }}
@@ -91,7 +91,7 @@ jobs:
           Add-Content -Path $env:GITHUB_ENV -Value "PROTOBUF_ACTUAL_SHA256=$actual"
 
       - name: Verify protobuf source checksum
-        uses: ./.github/actions/verify-sha256
+        uses: $/.github/actions/verify-sha256
         with:
           file: protobuf-${{ env.PROTOBUF_VERSION }}.tar.gz
           expected-sha256: ${{ env.PROTOBUF_EXPECTED_SHA256 }}
