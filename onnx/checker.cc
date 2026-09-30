@@ -816,6 +816,19 @@ void check_attribute(const AttributeProto& attr, const CheckerContext& ctx, cons
     if (defaults != nullptr) {
       const auto default_attr = defaults->find(attr.ref_attr_name());
       if (default_attr != defaults->end()) {
+        const auto default_type = default_attr->second->type();
+        if (attr.type() != AttributeProto::UNDEFINED && attr.type() != default_type) {
+          fail_check(
+              "Attribute (name: ",
+              attr.name(),
+              ") refers to function attribute '",
+              attr.ref_attr_name(),
+              "' of type ",
+              AttributeProto_AttributeType_Name(default_type),
+              ", but is declared as ",
+              AttributeProto_AttributeType_Name(attr.type()),
+              ".");
+        }
         CheckerContext default_ctx(ctx);
         default_ctx.set_function_attribute_defaults(nullptr);
         check_attribute(*default_attr->second, default_ctx, lex_ctx);

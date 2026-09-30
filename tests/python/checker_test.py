@@ -277,6 +277,35 @@ class TestChecker:
         with pytest.raises(checker.ValidationError, match="later"):
             checker.check_function(function)
 
+    def test_check_function_default_type_must_match_reference(self) -> None:
+        """A reference must declare the same type as the default it refers to."""
+        else_graph = helper.make_graph(
+            [helper.make_node("Identity", ["x"], ["else_value"])],
+            "else_graph",
+            [],
+            [helper.make_tensor_value_info("else_value", TensorProto.FLOAT, [1])],
+        )
+        if_node = helper.make_node("If", ["cond"], ["y"])
+        if_node.attribute.extend(
+            [
+                helper.make_attribute_ref(
+                    "then_branch", onnx.AttributeProto.GRAPH, ref_attr_name="branch"
+                ),
+                helper.make_attribute("else_branch", else_graph),
+            ]
+        )
+        function = helper.make_function(
+            "local",
+            "f",
+            ["cond", "x"],
+            ["y"],
+            [if_node],
+            [helper.make_opsetid("", 21)],
+            attribute_protos=[helper.make_attribute("branch", 1.0)],
+        )
+        with pytest.raises(checker.ValidationError, match="FLOAT"):
+            checker.check_function(function)
+
     def test_check_function_unreferenced_graph_default_may_reuse_body_names(
         self,
     ) -> None:
