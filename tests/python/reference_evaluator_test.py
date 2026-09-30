@@ -3811,6 +3811,46 @@ class TestReferenceEvaluator:
         assert len(got) == 1
         assert_allclose(got[0], c)
 
+    @pytest.mark.parametrize("position", [3, -3])
+    def test_sequence_insert_position_out_of_range(self, position):
+        A = make_tensor_value_info("A", TensorProto.FLOAT, [1])
+        B = make_tensor_value_info("B", TensorProto.FLOAT, [1])
+        C = make_tensor_value_info("C", TensorProto.FLOAT, [1])
+        P = make_tensor_value_info("P", TensorProto.INT64, [])
+        Z = make_tensor_sequence_value_info("Z", TensorProto.FLOAT, None)
+        nodes = [
+            make_node("SequenceConstruct", ["A", "B"], ["S"]),
+            make_node("SequenceInsert", ["S", "C", "P"], ["Z"]),
+        ]
+        model = make_model(make_graph(nodes, "g", [A, B, C, P], [Z]))
+        ref = ReferenceEvaluator(model)
+        feeds = {
+            "A": np.array([0], dtype=np.float32),
+            "B": np.array([1], dtype=np.float32),
+            "C": np.array([2], dtype=np.float32),
+            "P": np.array(position, dtype=np.int64),
+        }
+        with pytest.raises(ValueError, match="out of range"):
+            ref.run(None, feeds)
+
+    @pytest.mark.parametrize("position", [1, -1])
+    def test_sequence_insert_into_empty_sequence_out_of_range(self, position):
+        C = make_tensor_value_info("C", TensorProto.FLOAT, [1])
+        P = make_tensor_value_info("P", TensorProto.INT64, [])
+        Z = make_tensor_sequence_value_info("Z", TensorProto.FLOAT, None)
+        nodes = [
+            make_node("SequenceEmpty", [], ["S"], dtype=TensorProto.FLOAT),
+            make_node("SequenceInsert", ["S", "C", "P"], ["Z"]),
+        ]
+        model = make_model(make_graph(nodes, "g", [C, P], [Z]))
+        ref = ReferenceEvaluator(model)
+        feeds = {
+            "C": np.array([2], dtype=np.float32),
+            "P": np.array(position, dtype=np.int64),
+        }
+        with pytest.raises(ValueError, match="out of range"):
+            ref.run(None, feeds)
+
     def test_cast_float8(self):
         X = make_tensor_value_info("X", TensorProto.FLOAT, [None])
         F1 = make_tensor_value_info("F1", TensorProto.FLOAT, [None])
