@@ -196,10 +196,10 @@ def _interpolate_1d_with_x(
     input_width = len(data)
     output_width = scale_factor * input_width
     if coordinate_transformation_mode == "align_corners":
-        if output_width == 1:
+        if output_width_int == 1:
             x_ori = 0.0
         else:
-            x_ori = x * (input_width - 1) / (output_width - 1)
+            x_ori = x * (input_width - 1) / (output_width_int - 1)
     elif coordinate_transformation_mode == "asymmetric":
         x_ori = x / scale_factor
     elif coordinate_transformation_mode == "tf_crop_and_resize":
@@ -329,8 +329,8 @@ def _compute_x_ori(
     if coordinate_transformation_mode == "align_corners":
         x_ori = (
             np.zeros(output_width_int, dtype=np.float64)
-            if output_width == 1
-            else y * (input_width - 1) / (output_width - 1)
+            if output_width_int == 1
+            else y * (input_width - 1) / (output_width_int - 1)
         )
     elif coordinate_transformation_mode == "asymmetric":
         x_ori = y / scale_factor

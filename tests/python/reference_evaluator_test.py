@@ -7174,6 +7174,23 @@ class TestReferenceEvaluator:
         )
         assert output.shape == (2, 0, 4)
 
+    @pytest.mark.parametrize("mode", ["linear", "cubic"])
+    def test_resize_align_corners_uses_integer_output_size(self, mode):
+        # W: floor(4 * 0.6) == 2, H: floor(2 * 0.6) == 1. align_corners must map
+        # the first and last output pixels to the first and last input pixels.
+        data = np.array([[[[1, 2, 3, 4], [5, 6, 7, 8]]]], dtype=np.float32)
+        attributes = {"mode": mode, "coordinate_transformation_mode": "align_corners"}
+
+        actual = self._run_resize(
+            data, scales=np.array([1, 1, 0.6, 0.6], dtype=np.float32), **attributes
+        )
+        assert_allclose(actual, np.array([[[[1, 4]]]], dtype=np.float32))
+
+        expected = self._run_resize(
+            data, sizes=np.array([1, 1, 1, 2], dtype=np.int64), **attributes
+        )
+        assert_allclose(actual, expected)
+
     def test_sequence_axis(self):
         model = self._load_model(
             """
