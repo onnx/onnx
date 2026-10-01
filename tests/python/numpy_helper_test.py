@@ -103,6 +103,27 @@ class TestNumpyHelper:
             # Differing key types should raise a TypeError
             numpy_helper.from_dict({0: np.array(0.1), 1.1: np.array(0.9)})
 
+    def test_from_dict_string_keys(self):
+        map_proto = numpy_helper.from_dict(
+            {"a": np.array([0.1]), "bb": np.array([0.9])}
+        )
+        assert map_proto.key_type == onnx.TensorProto.STRING
+        assert list(map_proto.string_keys) == [b"a", b"bb"]
+        assert not map_proto.keys
+        result = numpy_helper.to_dict(map_proto)
+        np.testing.assert_equal(result, {b"a": np.array([0.1]), b"bb": np.array([0.9])})
+        # The bytes keys returned by to_dict can be converted back.
+        assert numpy_helper.from_dict(result) == map_proto
+
+    def test_from_dict_duplicate_str_and_bytes_keys(self):
+        with pytest.raises(ValueError, match="not unique"):
+            # "a" and b"a" are distinct dict keys but both encode to b"a".
+            numpy_helper.from_dict({"a": np.array(0.1), b"a": np.array(0.9)})
+
+    def test_from_dict_differing_string_and_int_key_types(self):
+        with pytest.raises(TypeError):
+            numpy_helper.from_dict({"a": np.array(0.1), 1: np.array(0.9)})
+
     def test_from_dict_differing_value_types(self):
         with pytest.raises(TypeError):
             # Differing value types should raise a TypeError
