@@ -171,6 +171,16 @@ void check_value_info(const ValueInfoProto& value_info, const CheckerContext& ct
       const auto& type = value_info.type().tensor_type();
       enforce_has_field(type, elem_type);
       enforce_has_field(type, shape);
+      // IR: a tensor shape is a list of non-negative integers (docs/IR.md).
+      for (const auto& dim : type.shape().dim()) {
+        if (dim.has_dim_value() && dim.dim_value() < 0) {
+          fail_check(
+              "Invalid tensor shape (value_info name: ",
+              value_info.name(),
+              "): dimension value must be non-negative, got ",
+              dim.dim_value());
+        }
+      }
     } break;
     case TypeProto::kOptionalType: {
       const auto& type = value_info.type().optional_type();
