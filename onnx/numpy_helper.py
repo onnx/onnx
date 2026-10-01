@@ -656,9 +656,16 @@ def from_dict(dict_: dict[Any, Any], name: str | None = None) -> onnx.MapProto:
 
     map_proto.key_type = key_type  # type: ignore[assignment]
     if key_type == onnx.TensorProto.STRING:
-        map_proto.string_keys.extend(
+        string_keys = [
             key.encode("utf-8") if isinstance(key, str) else key for key in keys
-        )
+        ]
+        if len(set(string_keys)) != len(string_keys):
+            raise ValueError(
+                "The keys in the input dictionary are not unique after "
+                "encoding str keys as UTF-8 bytes and therefore are not "
+                "valid as a map."
+            )
+        map_proto.string_keys.extend(string_keys)
     elif key_type in valid_key_int_types:
         map_proto.keys.extend(keys)
     else:

@@ -115,6 +115,11 @@ class TestNumpyHelper:
         # The bytes keys returned by to_dict can be converted back.
         assert numpy_helper.from_dict(result) == map_proto
 
+    def test_from_dict_duplicate_str_and_bytes_keys(self):
+        with pytest.raises(ValueError, match="not unique"):
+            # "a" and b"a" are distinct dict keys but both encode to b"a".
+            numpy_helper.from_dict({"a": np.array(0.1), b"a": np.array(0.9)})
+
     def test_from_dict_differing_string_and_int_key_types(self):
         with pytest.raises(TypeError):
             numpy_helper.from_dict({"a": np.array(0.1), 1: np.array(0.9)})
