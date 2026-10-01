@@ -10,5 +10,5 @@ from onnx.reference.ops._op import OpRunUnaryNum
 
 class ThresholdedRelu(OpRunUnaryNum):
     def _run(self, x, alpha=None):
-        alpha = alpha or self.alpha
+        alpha = self.alpha if alpha is None else alpha
         return (np.where(x > alpha, x, 0).astype(x.dtype),)

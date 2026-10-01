@@ -30,6 +30,7 @@ from onnx.backend.test.case.node.roialign import get_roi_align_input_values
 from onnx.checker import check_model
 from onnx.defs import onnx_opset_version
 from onnx.helper import (
+    make_attribute_ref,
     make_function,
     make_graph,
     make_model,
@@ -789,6 +790,48 @@ class TestReferenceEvaluator:
         a = np.array([-1], dtype=np.int64)
         result = sess.run(None, {"X": x, "axis": a})[0]
         expected = x.sum(axis=-1, keepdims=1)
+        assert_allclose(result, expected)
+
+    @pytest.mark.parametrize(
+        ("op_type", "name", "value"),
+        [
+            ("Elu", "alpha", 0.0),
+            ("Flatten", "axis", 0),
+            ("HardSigmoid", "beta", 0.0),
+            ("Hardmax", "axis", 0),
+            ("LeakyRelu", "alpha", 0.0),
+            ("LogSoftmax", "axis", 0),
+            ("LpNormalization", "axis", 0),
+            ("Softmax", "axis", 0),
+            ("Swish", "alpha", 0.0),
+            ("ThresholdedRelu", "alpha", 0.0),
+        ],
+    )
+    def test_unary_attribute_ref(self, op_type, name, value):
+        opset_imports = [make_opsetid("", 24), make_opsetid("custom", 1)]
+        attr_type = (
+            AttributeProto.INT if isinstance(value, int) else AttributeProto.FLOAT
+        )
+        node = make_node(op_type, ["X"], ["Y"])
+        node.attribute.append(make_attribute_ref(name, attr_type))
+        func = make_function("custom", "F", ["X"], ["Y"], [node], opset_imports, [name])
+        X = make_tensor_value_info("X", TensorProto.FLOAT, None)
+        Y = make_tensor_value_info("Y", TensorProto.FLOAT, None)
+        call = make_node("F", ["X"], ["Y"], domain="custom", **{name: value})
+        model = make_model(
+            make_graph([call], "g", [X], [Y]),
+            opset_imports=opset_imports,
+            functions=[func],
+        )
+        direct = make_model(
+            make_graph(
+                [make_node(op_type, ["X"], ["Y"], **{name: value})], "g", [X], [Y]
+            ),
+            opset_imports=opset_imports[:1],
+        )
+        x = np.array([[-1.0, 2.0], [3.0, -5.0]], dtype=np.float32)
+        expected = ReferenceEvaluator(direct).run(None, {"X": x})[0]
+        result = ReferenceEvaluator(model).run(None, {"X": x})[0]
         assert_allclose(result, expected)
 
     def test_reduce_sum_square_18(self):
