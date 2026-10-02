@@ -9,8 +9,8 @@ from onnx.reference.op_run import OpRun
 
 
 def common_reference_implementation(data: np.ndarray, shape: np.ndarray) -> np.ndarray:
-    ones = np.ones(shape, dtype=data.dtype)
-    return data * ones
+    output_shape = np.broadcast_shapes(data.shape, tuple(shape))
+    return np.broadcast_to(data, output_shape).copy()
 
 
 class Expand(OpRun):
