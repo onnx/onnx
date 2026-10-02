@@ -35,7 +35,13 @@ class STFT(Base):
             output[0, i] = np.stack((complex_out.real, complex_out.imag), axis=1)
 
         output = output.astype(signal.dtype)
-        expect(node, inputs=[signal, step, length], outputs=[output], name="test_stft")
+        expect(
+            node,
+            inputs=[signal, step, length],
+            outputs=[output],
+            name="test_stft",
+            opset_imports=[onnx.helper.make_opsetid("", 17)],
+        )
 
         node = onnx.helper.make_node(
             "STFT",
@@ -67,4 +73,48 @@ class STFT(Base):
             inputs=[signal, step, window],
             outputs=[output],
             name="test_stft_with_window",
+            opset_imports=[onnx.helper.make_opsetid("", 17)],
         )
+
+    @staticmethod
+    def export_rank2() -> None:
+        signal = np.arange(32, dtype=np.float32).reshape(2, 16)
+        length = np.array(4, dtype=np.int64)
+        step = np.array(2, dtype=np.int64)
+        for onesided in (0, 1):
+            for with_window in (False, True):
+                window = np.hanning(4).astype(np.float32)
+                node = onnx.helper.make_node(
+                    "STFT",
+                    inputs=[
+                        "signal",
+                        "frame_step",
+                        "window" if with_window else "",
+                        "frame_length",
+                    ],
+                    outputs=["output"],
+                    onesided=onesided,
+                )
+                inputs = [signal, step]
+                if with_window:
+                    inputs.append(window)
+                inputs.append(length)
+                frames = np.stack(
+                    [signal[:, start : start + 4] for start in range(0, 13, 2)],
+                    axis=1,
+                )
+                if with_window:
+                    frames = frames * window
+                transformed = np.fft.fft(frames, axis=2)
+                if onesided:
+                    transformed = transformed[:, :, :3]
+                output = np.stack((transformed.real, transformed.imag), axis=-1).astype(
+                    np.float32
+                )
+                expect(
+                    node,
+                    inputs=inputs,
+                    outputs=[output],
+                    name=f"test_stft_rank2_onesided_{onesided}_window_{int(with_window)}",
+                    opset_imports=[onnx.helper.make_opsetid("", 29)],
+                )

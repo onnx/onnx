@@ -62,6 +62,7 @@
 #include "onnx/version_converter/adapters/split_12_13.h"
 #include "onnx/version_converter/adapters/split_13_12.h"
 #include "onnx/version_converter/adapters/split_17_18.h"
+#include "onnx/version_converter/adapters/stft_29_28.h"
 #include "onnx/version_converter/adapters/sum_8_7.h"
 #include "onnx/version_converter/adapters/topk_9_10.h"
 #include "onnx/version_converter/adapters/transformers.h"
@@ -1125,6 +1126,12 @@ class DefaultVersionConverter : public BaseVersionConverter {
     // Downgrading needs no restriction: opset 27 accepts a superset of the v28 float-only types.
     registerAdapter(std::make_unique<CompatibleAdapter>("ReduceLogSum", OpSetID(28), OpSetID(27)));
     registerAdapter(std::make_unique<CompatibleAdapter>("ReduceLogSumExp", OpSetID(28), OpSetID(27)));
+
+    /******** 28 -> 29 ********/
+    registerAdapter(std::make_unique<CompatibleAdapter>("STFT", OpSetID(28), OpSetID(29)));
+
+    /******** 29 -> 28 ********/
+    registerAdapter(std::make_unique<STFT_29_28>());
   }
 
   ModelProto convert_version(const ModelProto& mp_in, const OpSetID& initial_version, const OpSetID& target_version)
