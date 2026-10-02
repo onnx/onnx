@@ -6,6 +6,38 @@
 
 namespace ONNX_NAMESPACE {
 #ifndef __ONNX_NO_DOC_STRINGS
+const char kDoc_InitPRNG_ver29[] = R"DOC(
+Creates an initial pseudo-random number generator (PRNG) state from a
+user-supplied seed. Given the same seed, this operator produces the same PRNG
+state. It is a pure function and does not read or modify hidden random state.
+
+The PRNG algorithm is Threefry2x32 with 20 rounds. A state is represented as a
+rank-1 `tensor(int64)` of shape `[2]`. Each element stores one unsigned 32-bit
+key word as a nonnegative int64 value. The first word contains the high 32 bits
+of the seed and the second word contains the low 32 bits.
+)DOC";
+
+const char kDoc_SplitPRNG_ver29[] = R"DOC(
+Splits a PRNG state into one or more deterministic PRNG states. The outputs are
+an ordered sequence of derived states suitable for independent downstream
+random computations. Given the same inputs and number of outputs, this operator
+produces the same output states. It is a pure function and does not read or
+modify hidden random state.
+
+When `data` is supplied, it must be a rank-1 tensor with one element for each
+output. Element i is used to derive output state i. Values should be unique;
+distinct values must produce distinct states for a fixed input state.
+
+Each output state should normally be consumed at most once unless reproducing a
+random stream is intentional.
+
+The PRNG algorithm is Threefry2x32 with 20 rounds. Each input and output state
+is a rank-1 `tensor(int64)` of shape `[2]`, with each element representing one
+unsigned 32-bit key word. Without `data`, output i is derived by applying
+Threefry2x32 to the input state and the 64-bit counter i. With `data`, output i
+is produced by folding `data[i]` into the input state.
+)DOC";
+
 const char kDoc_BitShift_ver11[] = R"DOC(
 Bitwise shift operator performs element-wise operation. For each input element, if the
 attribute "direction" is "RIGHT", this operator moves its binary representation toward
@@ -6617,6 +6649,8 @@ const char kDoc_NonZero_ver9[] = R"DOC(
     but for scalar input, NonZero produces output shape (0, N) instead of (1, N), which is different from Numpy's behavior.
 )DOC";
 #else
+const char kDoc_InitPRNG_ver29[] = "";
+const char kDoc_SplitPRNG_ver29[] = "";
 const char kDoc_BitShift_ver11[] = "";
 const char kDoc_BitShift_ver28[] = "";
 const char kDoc_SpaceToDepth_ver28[] = "";
