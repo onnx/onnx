@@ -143,21 +143,6 @@ static void check_type_ir_version(const TypeProto& type, const std::string& name
   }
 }
 
-static void check_attribute_tensors_ir_version(const AttributeProto& attr, const CheckerContext& ctx) {
-  if (attr.has_t()) {
-    check_data_type_ir_version(attr.t().data_type(), attr.name(), ctx);
-  }
-  for (const auto& tensor : attr.tensors()) {
-    check_data_type_ir_version(tensor.data_type(), attr.name(), ctx);
-  }
-  if (attr.has_sparse_tensor()) {
-    check_data_type_ir_version(attr.sparse_tensor().values().data_type(), attr.name(), ctx);
-  }
-  for (const auto& sparse_tensor : attr.sparse_tensors()) {
-    check_data_type_ir_version(sparse_tensor.values().data_type(), attr.name(), ctx);
-  }
-}
-
 void check_value_info(const ValueInfoProto& value_info, const CheckerContext& ctx) {
   enforce_non_empty_field(value_info, name);
   check_type_ir_version(value_info.type(), value_info.name(), ctx);
@@ -823,6 +808,34 @@ void check_attribute(const AttributeProto& attr, const CheckerContext& ctx, cons
     }
   }
 
+  if (attr.has_ref_attr_name()) {
+    // A reference to a default value of the enclosing function's attribute. Check the
+    // default where it would be substituted, so a graph-valued default may capture
+    // only the values visible at this point, including values of enclosing subgraphs.
+    const auto* defaults = ctx.get_function_attribute_defaults();
+    if (defaults != nullptr) {
+      const auto default_attr = defaults->find(attr.ref_attr_name());
+      if (default_attr != defaults->end()) {
+        const auto default_type = default_attr->second->type();
+        if (attr.type() != AttributeProto::UNDEFINED && attr.type() != default_type) {
+          fail_check(
+              "Attribute (name: ",
+              attr.name(),
+              ") refers to function attribute '",
+              attr.ref_attr_name(),
+              "' of type ",
+              AttributeProto_AttributeType_Name(default_type),
+              ", but is declared as ",
+              AttributeProto_AttributeType_Name(attr.type()),
+              ".");
+        }
+        CheckerContext default_ctx(ctx);
+        default_ctx.set_function_attribute_defaults(nullptr);
+        check_attribute(*default_attr->second, default_ctx, lex_ctx);
+      }
+    }
+  }
+
   if (attr.has_t()) {
     check_tensor(attr.t(), ctx);
   }
@@ -1299,6 +1312,26 @@ void check_model_local_functions(
   }
 }
 
+// Collects the attribute names that nodes refer to via ref_attr_name, including
+// nodes in nested subgraphs.
+static void collect_referenced_attributes(
+    const google::protobuf::RepeatedPtrField<NodeProto>& nodes,
+    std::unordered_set<std::string>& names) {
+  for (const auto& node : nodes) {
+    for (const auto& attr : node.attribute()) {
+      if (attr.has_ref_attr_name()) {
+        names.insert(attr.ref_attr_name());
+      }
+      if (attr.has_g()) {
+        collect_referenced_attributes(attr.g().node(), names);
+      }
+      for (const auto& graph : attr.graphs()) {
+        collect_referenced_attributes(graph.node(), names);
+      }
+    }
+  }
+}
+
 void check_function(const FunctionProto& function, const CheckerContext& ctx, const LexicalScopeContext& parent_lex) {
   enforce_non_empty_field(function, name);
 
@@ -1341,9 +1374,20 @@ void check_function(const FunctionProto& function, const CheckerContext& ctx, co
       fail_check("function (", function.name(), ") should not have duplicate attributes specified.");
     }
   }
+  // A function attribute is declared either in `attribute` (no default value)
+  // or in `attribute_proto` (with a default value), not both.
+  std::unordered_map<std::string, const AttributeProto*> default_attrs;
   for (const auto& attr : function.attribute_proto()) {
-    check_attribute_tensors_ir_version(attr, ctx);
+    if (attr.has_ref_attr_name()) {
+      fail_check("function (", function.name(), ") default attribute '", attr.name(), "' must not use ref_attr_name.");
+    }
+    if (!attrs.insert(attr.name()).second) {
+      fail_check("function (", function.name(), ") should not have duplicate attributes specified.");
+    }
+    default_attrs.emplace(attr.name(), &attr);
   }
+  // Referenced defaults are checked by check_attribute at each reference in the body.
+  ctx_copy.set_function_attribute_defaults(&default_attrs);
   // Function inputs and outputs are untyped names; their types, if any, are given here.
   for (const auto& value_info : function.value_info()) {
     check_type_ir_version(value_info.type(), value_info.name(), ctx);
@@ -1391,6 +1435,23 @@ void check_function(const FunctionProto& function, const CheckerContext& ctx, co
             "' has been used as output names multiple times.");
       }
       lex_ctx.add(output);
+    }
+  }
+
+  // Defaults that no node references were not checked above. They are never
+  // substituted, so check them for well-formedness with only the function inputs
+  // in scope; with node outputs in scope, a graph default reusing one of those
+  // names internally would be rejected by the SSA check.
+  std::unordered_set<std::string> referenced_attrs;
+  collect_referenced_attributes(function.node(), referenced_attrs);
+  ctx_copy.set_function_attribute_defaults(nullptr);
+  LexicalScopeContext input_lex_ctx{parent_lex};
+  for (const auto& input : function.input()) {
+    input_lex_ctx.add(input);
+  }
+  for (const auto& attr : function.attribute_proto()) {
+    if (referenced_attrs.count(attr.name()) == 0) {
+      check_attribute(attr, ctx_copy, input_lex_ctx);
     }
   }
   print_warning_if_has_experimental(used_experimental_ops);

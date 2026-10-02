@@ -90,6 +90,16 @@ class CheckerContext final {
     check_custom_domain_ = value;
   }
 
+  // Default attribute values of the function whose body is being checked, keyed by
+  // attribute name, or nullptr outside a function body. Not owned.
+  const std::unordered_map<std::string, const AttributeProto*>* get_function_attribute_defaults() const {
+    return function_attribute_defaults_;
+  }
+
+  void set_function_attribute_defaults(const std::unordered_map<std::string, const AttributeProto*>* defaults) {
+    function_attribute_defaults_ = defaults;
+  }
+
   explicit CheckerContext() = default;
 
  private:
@@ -100,6 +110,7 @@ class CheckerContext final {
   std::string model_dir_;
   bool skip_opset_compatibility_check_ = false;
   bool check_custom_domain_ = false;
+  const std::unordered_map<std::string, const AttributeProto*>* function_attribute_defaults_ = nullptr;
 };
 
 class LexicalScopeContext final {
