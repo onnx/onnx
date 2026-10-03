@@ -28,7 +28,7 @@ class LpPool(CommonPool):
             self,
             "AVG",
             count_include_pad,
-            np.power(np.absolute(x), p),
+            np.power(np.absolute(x.astype(np.float64)), p),
             auto_pad=auto_pad,
             ceil_mode=ceil_mode,
             dilations=dilations,

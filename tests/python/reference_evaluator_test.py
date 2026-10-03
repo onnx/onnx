@@ -2767,6 +2767,40 @@ class TestReferenceEvaluator:
         got1 = ref1.run(None, feeds)
         assert_allclose(got1[0], expected)
 
+    @pytest.mark.parametrize(
+        ("data", "expected", "elem_type"),
+        [
+            (
+                np.array([[[[3, 4]]]], dtype=np.float16),
+                np.array([[[[5]]]], dtype=np.float16),
+                TensorProto.FLOAT16,
+            ),
+            (
+                np.array([[[[256, 256]]]], dtype=np.float16),
+                np.array([[[[362]]]], dtype=np.float16),
+                TensorProto.FLOAT16,
+            ),
+            (
+                np.array([[[[1e20, 1e20]]]], dtype=np.float32),
+                np.array([[[[1.4142136e20]]]], dtype=np.float32),
+                TensorProto.FLOAT,
+            ),
+        ],
+    )
+    def test_lp_pool_finite_norm_after_intermediate_overflow(
+        self, data, expected, elem_type
+    ):
+        X = make_tensor_value_info("X", elem_type, data.shape)
+        Y = make_tensor_value_info("Y", elem_type, expected.shape)
+        node = make_node("LpPool", ["X"], ["Y"], kernel_shape=[1, 2], p=2)
+        graph = make_graph([node], "g", [X], [Y])
+        model = make_model(graph, opset_imports=[make_opsetid("", 22)])
+
+        got = ReferenceEvaluator(model).run(None, {"X": data})[0]
+
+        assert got.dtype == data.dtype
+        assert_allclose(got, expected, rtol=1e-6)
+
     @staticmethod
     def _evaluate_global_lp_pool(data, expected, p, elem_type, opset):
         X = make_tensor_value_info("X", elem_type, data.shape)
