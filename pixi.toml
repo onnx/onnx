@@ -135,10 +135,8 @@ editorconfig-checker = "==3.2.1"
 # We want to use a clang-tidy/clang-format version that is possibly
 # newer than the one provided by the default macos cxx-compiler
 # package. We thus install this into a separate environment.
-# Capped below 23 until the findings from the new clang-tidy 23 checks are
-# addressed in a dedicated PR.
-clang = ">=22,<23"
-clang-tools = "<23"
+clang = ">=23"
+clang-tools = ">=23"
 clang-format = "*"
 python = "*"
 
