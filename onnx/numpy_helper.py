@@ -616,6 +616,9 @@ def _map_key_type(key: Any) -> int:
             f"Unsupported map key type: {type(key).__name__} (key {key!r}). "
             "Map keys must be integers, str or bytes."
         )
+    # Python ints have no fixed width; store them as INT64 on every platform.
+    if isinstance(key, int):
+        return int(onnx.TensorProto.INT64)
     # Every NumPy integer dtype maps onto one of INT8..UINT64, all of which are
     # valid key types, so no further check is needed.
     return int(helper.np_dtype_to_tensor_dtype(np.result_type(key)))
