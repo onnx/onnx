@@ -1061,6 +1061,30 @@ struct Graph final {
     return true;
   }
 
+  // Same traversal as isNameUnique(), but collects every name into `out`
+  // instead of checking one candidate at a time.
+  void collectAllNames(std::unordered_set<std::string>& out) const {
+    out.insert(initializer_names_.cbegin(), initializer_names_.cend());
+    for (const auto& node_entry : all_nodes) {
+      const Node* node = node_entry.first;
+      for (const auto& attr : node->attributeNames()) {
+        if (node->kindOf(attr) == AttributeKind::g) {
+          node->g(attr)->collectAllNames(out);
+        } else if (node->kindOf(attr) == AttributeKind::gs) {
+          for (const auto& subgraph : node->gs(attr)) {
+            subgraph->collectAllNames(out);
+          }
+        }
+      }
+      for (const Value* v : node->inputs()) {
+        out.insert(v->uniqueName());
+      }
+      for (const Value* v : node->outputs()) {
+        out.insert(v->uniqueName());
+      }
+    }
+  }
+
  public:
   Graph() : output_(initOutput(create(kReturn, 0))), input_(create(kParam, 0)), initializer_node_(create(kParam, 0)) {}
 
@@ -1204,6 +1228,28 @@ struct Graph final {
 
   std::string getNextUniqueName() {
     return toVarName(getNextUnique());
+  }
+
+  // Like `count` consecutive getNextUniqueName() calls, but pays
+  // isNameUnique()'s full graph scan once for the batch instead of once
+  // per name.
+  std::vector<std::string> reserveUniqueNames(size_t count) {
+    std::vector<std::string> names;
+    names.reserve(count);
+    if (count == 0) {
+      return names;
+    }
+    std::unordered_set<std::string> used;
+    collectAllNames(used);
+    for (size_t i = 0; i < count; i++) {
+      std::string name = toVarName(++next_unique_);
+      while (used.count(name) != 0) {
+        name = toVarName(++next_unique_);
+      }
+      used.insert(name);
+      names.push_back(std::move(name));
+    }
+    return names;
   }
 
   // These invocations of begin() on output of function are OK
