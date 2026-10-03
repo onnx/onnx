@@ -6,7 +6,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import pytest
-from shape_inference_test import TestShapeInferenceHelper
+from shape_inference_test_utils import TestShapeInferenceHelper
 
 import onnx
 import onnx.helper
