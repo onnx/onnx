@@ -186,3 +186,87 @@ class MaxRoiPool(Base):
             outputs=[Y],
             name="test_maxroipool_float64",
         )
+
+    @staticmethod
+    def export_maxroipool_negative_input_non_square_pool() -> None:
+        node = onnx.helper.make_node(
+            "MaxRoiPool",
+            inputs=["X", "rois"],
+            outputs=["Y"],
+            pooled_shape=[1, 3],
+            spatial_scale=1.0,
+        )
+
+        X = np.array([[[[-6.0, -5.0, -4.0], [-3.0, -2.0, -1.0]]]], dtype=np.float32)
+        rois = np.array([[0.0, -2.0, 0.0, 2.0, 1.0]], dtype=np.float32)
+        Y = np.array([[[[0.0, -2.0, -1.0]]]], dtype=np.float32)
+
+        expect(
+            node,
+            inputs=[X, rois],
+            outputs=[Y],
+            name="test_maxroipool_negative_input_non_square_pool",
+        )
+
+    @staticmethod
+    def export_maxroipool_float32_coordinate_precision() -> None:
+        node = onnx.helper.make_node(
+            "MaxRoiPool",
+            inputs=["X", "rois"],
+            outputs=["Y"],
+            pooled_shape=[1, 1],
+            spatial_scale=0.9999998807907104,
+        )
+
+        X = np.array([[[[10.0, 0.0]]]], dtype=np.float32)
+        rois = np.array([[0.0, 0.5000000596046448, 0.0, 1.0, 0.0]], dtype=np.float32)
+        Y = np.array([[[[0.0]]]], dtype=np.float32)
+
+        expect(
+            node,
+            inputs=[X, rois],
+            outputs=[Y],
+            name="test_maxroipool_float32_coordinate_precision",
+        )
+
+    @staticmethod
+    def export_maxroipool_float32_bin_precision() -> None:
+        node = onnx.helper.make_node(
+            "MaxRoiPool",
+            inputs=["X", "rois"],
+            outputs=["Y"],
+            pooled_shape=[1, 82],
+            spatial_scale=1.0,
+        )
+
+        X = np.array([[[[10.0, 1.0]]]], dtype=np.float32)
+        rois = np.array([[0.0, 0.0, 0.0, 1.0, 0.0]], dtype=np.float32)
+        Y = np.array([[[[10.0] * 42 + [1.0] * 40]]], dtype=np.float32)
+
+        expect(
+            node,
+            inputs=[X, rois],
+            outputs=[Y],
+            name="test_maxroipool_float32_bin_precision",
+        )
+
+    @staticmethod
+    def export_maxroipool_float64_round_precision() -> None:
+        node = onnx.helper.make_node(
+            "MaxRoiPool",
+            inputs=["X", "rois"],
+            outputs=["Y"],
+            pooled_shape=[1, 1],
+            spatial_scale=1.0,
+        )
+
+        X = np.array([[[[10.0, 0.0]]]], dtype=np.float64)
+        rois = np.array([[0.0, 0.49999999999999994, 0.0, 1.0, 0.0]], dtype=np.float64)
+        Y = np.array([[[[10.0]]]], dtype=np.float64)
+
+        expect(
+            node,
+            inputs=[X, rois],
+            outputs=[Y],
+            name="test_maxroipool_float64_round_precision",
+        )
