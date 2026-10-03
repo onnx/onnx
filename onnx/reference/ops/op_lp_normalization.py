@@ -12,8 +12,17 @@ class LpNormalization(OpRunUnaryNum):
     def _run(self, x, axis=None, p=None):
         axis = axis or self.axis
         p = p or self.p
-        norm = np.power(np.power(np.abs(x), p).sum(axis=axis), 1.0 / p)
-        norm = np.expand_dims(norm, axis)
-        # When norm is 0, return 0 instead of NaN (0/0 = 0)
-        result = np.where(norm == 0, 0, x / norm)
+        scale = np.max(np.abs(x), axis=axis, keepdims=True, initial=0)
+        safe_scale = np.where(
+            (scale == 0) | ~np.isfinite(scale),
+            np.array(1, dtype=x.dtype),
+            scale,
+        )
+        scaled = x / safe_scale
+        norm = np.power(
+            np.power(np.abs(scaled), p).sum(axis=axis, keepdims=True), 1.0 / p
+        )
+        safe_norm = np.where(norm == 0, np.array(1, dtype=x.dtype), norm)
+        # When all values along the axis are 0, return 0 instead of NaN.
+        result = np.where(scale == 0, 0, scaled / safe_norm)
         return (result.astype(x.dtype),)
