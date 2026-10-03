@@ -26,7 +26,6 @@ jobs:
       fail-fast: false
       matrix:
         build:
-          - "cp310-macosx_universal2"
           - "cp311-macosx_universal2"
           - "cp312-macosx_universal2"
           - "cp314t-macosx_universal2"
