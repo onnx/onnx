@@ -32,10 +32,23 @@ class Device:
 
     def __init__(self, device: str) -> None:
         options = device.split(":")
-        self.type = getattr(DeviceType, options[0])
+        device_type = options[0]
+        valid_types = [name for name in vars(DeviceType) if not name.startswith("_")]
+        if device_type not in valid_types:
+            raise ValueError(
+                f"Unsupported device type {device_type!r}. "
+                f"Expected one of: {', '.join(valid_types)}."
+            )
+        self.type = getattr(DeviceType, device_type)
         self.device_id = 0
         if len(options) > 1:
-            self.device_id = int(options[1])
+            try:
+                self.device_id = int(options[1])
+            except ValueError:
+                raise ValueError(
+                    f"Invalid device id {options[1]!r} in device string {device!r}; "
+                    "the device id must be an integer."
+                ) from None
 
 
 def namedtupledict(
