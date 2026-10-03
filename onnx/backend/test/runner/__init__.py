@@ -15,7 +15,7 @@ import time
 import unittest
 from collections import defaultdict
 from re import Pattern
-from typing import TYPE_CHECKING, Any, Self
+from typing import TYPE_CHECKING, Any
 from urllib.request import urlretrieve
 
 import numpy as np
@@ -99,19 +99,19 @@ class Runner:
             test_case.__module__ = self._parent_module
         return test_case
 
-    def include(self, pattern: str) -> Self:
+    def include(self, pattern: str) -> Runner:
         self._include_patterns.add(re.compile(pattern))
         return self
 
-    def exclude(self, pattern: str) -> Self:
+    def exclude(self, pattern: str) -> Runner:
         self._exclude_patterns.add(re.compile(pattern))
         return self
 
-    def xfail(self, pattern: str) -> Self:
+    def xfail(self, pattern: str) -> Runner:
         self._xfail_patterns.add(re.compile(pattern))
         return self
 
-    def enable_report(self) -> Self:
+    def enable_report(self) -> Runner:
         import pytest  # noqa: PLC0415
 
         for category, items_map in self._test_items.items():
