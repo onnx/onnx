@@ -600,16 +600,36 @@ def to_dict(map_proto: onnx.MapProto) -> dict[Any, Any]:
     return dict(zip(key_list, value_list, strict=False))
 
 
-def _map_key_dtype(key: Any) -> np.dtype:
-    # np.result_type interprets a str argument as a dtype name, so string
-    # keys (of any length) are all mapped to the dtype used for STRING.
+def _map_key_type(key: Any) -> int:
+    """Returns the MapProto key type a Python map key is stored as.
+
+    Raises:
+        TypeError: if the key cannot be represented as a MapProto key.
+    """
+    # np.result_type is not a key-type classifier: it reads a str argument as a
+    # dtype name, and it maps non-key objects onto dtypes that only fail later.
     if isinstance(key, (str, bytes)):
-        return np.dtype(object)
-    return np.result_type(key)
+        return int(onnx.TensorProto.STRING)
+    # bool is a subclass of int but BOOL is not a valid key type.
+    if isinstance(key, bool) or not isinstance(key, (int, np.integer)):
+        raise TypeError(
+            f"Unsupported map key type: {type(key).__name__} (key {key!r}). "
+            "Map keys must be integers, str or bytes."
+        )
+    # Python ints have no fixed width; store them as INT64 on every platform.
+    if isinstance(key, int):
+        return int(onnx.TensorProto.INT64)
+    # Every NumPy integer dtype maps onto one of INT8..UINT64, all of which are
+    # valid key types, so no further check is needed.
+    return int(helper.np_dtype_to_tensor_dtype(np.result_type(key)))
 
 
 def from_dict(dict_: dict[Any, Any], name: str | None = None) -> onnx.MapProto:
     """Converts a Python dictionary into a map def.
+
+    Integer, ``str`` and ``bytes`` keys are supported. ``str`` keys are stored
+    UTF-8 encoded, so :func:`to_dict` returns them as ``bytes``; such a
+    dictionary can be passed back to this function unchanged.
 
     Args:
         dict_: Python dictionary
@@ -617,6 +637,11 @@ def from_dict(dict_: dict[Any, Any], name: str | None = None) -> onnx.MapProto:
 
     Returns:
         MapProto: the converted map def.
+
+    Raises:
+        ValueError: if the dictionary is empty, or a ``str`` key is not
+            encodable as UTF-8.
+        TypeError: if the keys or the values do not all share one valid type.
     """
     map_proto = onnx.MapProto()
     if name:
@@ -624,21 +649,9 @@ def from_dict(dict_: dict[Any, Any], name: str | None = None) -> onnx.MapProto:
     if not dict_:
         raise ValueError("Cannot convert an empty dictionary to MapProto.")
     keys = list(dict_)
-    raw_key_type = _map_key_dtype(keys[0])
-    key_type = helper.np_dtype_to_tensor_dtype(raw_key_type)
+    key_type = _map_key_type(keys[0])
 
-    valid_key_int_types = {
-        onnx.TensorProto.INT8,
-        onnx.TensorProto.INT16,
-        onnx.TensorProto.INT32,
-        onnx.TensorProto.INT64,
-        onnx.TensorProto.UINT8,
-        onnx.TensorProto.UINT16,
-        onnx.TensorProto.UINT32,
-        onnx.TensorProto.UINT64,
-    }
-
-    if not (all(_map_key_dtype(key) == raw_key_type for key in keys)):
+    if not all(_map_key_type(key) == key_type for key in keys):
         raise TypeError(
             "The key type in the input dictionary is not the same "
             "for all keys and therefore is not valid as a map."
@@ -656,20 +669,26 @@ def from_dict(dict_: dict[Any, Any], name: str | None = None) -> onnx.MapProto:
 
     map_proto.key_type = key_type  # type: ignore[assignment]
     if key_type == onnx.TensorProto.STRING:
-        string_keys = [
-            key.encode("utf-8") if isinstance(key, str) else key for key in keys
-        ]
-        if len(set(string_keys)) != len(string_keys):
+        encoded_keys = []
+        for key in keys:
+            if not isinstance(key, str):
+                encoded_keys.append(key)
+                continue
+            try:
+                encoded_keys.append(key.encode("utf-8"))
+            except UnicodeEncodeError as exc:
+                raise ValueError(
+                    f"Map key {key!r} cannot be encoded as UTF-8."
+                ) from exc
+        if len(set(encoded_keys)) != len(encoded_keys):
             raise ValueError(
                 "The keys in the input dictionary are not unique after "
                 "encoding str keys as UTF-8 bytes and therefore are not "
                 "valid as a map."
             )
-        map_proto.string_keys.extend(string_keys)
-    elif key_type in valid_key_int_types:
-        map_proto.keys.extend(keys)
+        map_proto.string_keys.extend(encoded_keys)
     else:
-        raise TypeError(f"Unsupported map key type: {key_type}")
+        map_proto.keys.extend(keys)
     map_proto.values.CopyFrom(value_seq)
     return map_proto
 
