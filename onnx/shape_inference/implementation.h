@@ -512,6 +512,11 @@ struct DataPropagationContextImpl : public DataPropagationContext {
   std::unordered_map<std::string, const AttributeProto*> attributesByName_;
 };
 
+// Looks up the opset version imported for `domain`, falling back to AI_ONNX_DOMAIN if `domain` is
+// ONNX_DOMAIN and isn't found directly. Returns nullptr if neither is imported. Shared between the
+// ModelProto/FunctionProto loop below and Graph-native shape inference (graph_shape_inference.cc).
+const int* LookupOpsetImport(const std::string& domain, const std::unordered_map<std::string, int>& opset_imports);
+
 void checkShapesAndTypes(const TypeProto& inferred_type, const TypeProto& existing_type);
 
 void MaterializeSymbolicShape(TypeProto* inferred_type, SymbolTable& symbol_table);
