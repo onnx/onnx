@@ -68,3 +68,20 @@ class DynamicQuantizeLinear(Base):
             outputs=[Y, Y_Scale, Y_ZeroPoint],
             name="test_dynamicquantizelinear_min_adjusted",
         )
+
+        # All values are zero, so the data range is zero. The scale must not be
+        # zero: the numerator is replaced with 1, giving 1 / 255. Without that
+        # the zero point calculation would divide by zero.
+        X = np.zeros((3, 4), dtype=np.float32)
+
+        # expected scale 0.0039215686 and zero point 0
+        Y_Scale = np.float32(1.0 / (255 - 0))  # uint8 -> [0, 255]
+        Y_ZeroPoint = np.uint8(0)
+        Y = np.zeros((3, 4), dtype=np.uint8)
+
+        expect(
+            node,
+            inputs=[X],
+            outputs=[Y, Y_Scale, Y_ZeroPoint],
+            name="test_dynamicquantizelinear_zero_range",
+        )
