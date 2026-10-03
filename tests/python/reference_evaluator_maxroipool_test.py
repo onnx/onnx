@@ -21,7 +21,9 @@ def test_max_roi_pool_rejects_out_of_range_batch_index(batch_index: int) -> None
     )
     sess = ReferenceEvaluator(node)
 
-    with pytest.raises(ValueError, match=f"ROI batch index {batch_index} is out of range"):
+    with pytest.raises(
+        ValueError, match=f"ROI batch index {batch_index} is out of range"
+    ):
         sess.run(
             None,
             {
