@@ -3394,4 +3394,198 @@ ONNX_OPERATOR_SET_SCHEMA(
                 *ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape());
         }));
 
+ONNX_OPERATOR_SET_SCHEMA(
+    STFT,
+    17,
+    OpSchema()
+        .SetDoc(kDoc_STFT_ver17)
+        .Attr(
+            "onesided",
+            "If onesided is 1, only values for w in [0, 1, 2, ..., floor(n_fft/2) + 1] are returned because "
+            "the real-to-complex Fourier transform satisfies the conjugate symmetry, i.e., X[m, w] = X[m, n_fft-w]*. "
+            "Note if the input or window tensors are complex, then onesided output is not possible. "
+            "Enabling onesided with real inputs performs a Real-valued fast Fourier transform (RFFT). "
+            "When invoked with real or complex valued input, the default value is 1. "
+            "Values can be 0 or 1.",
+            AttributeProto::INT,
+            static_cast<int64_t>(1))
+        .Input(
+            0,
+            "signal",
+            "Input tensor representing a real or complex valued signal. "
+            "For real input, the following shape is expected: [batch_size][signal_length][1]. "
+            "For complex input, the following shape is expected: [batch_size][signal_length][2], where "
+            "[batch_size][signal_length][0] represents the real component and [batch_size][signal_length][1] represents the imaginary component of the signal. "
+            "The tensor is expected to have rank 3.",
+            "T1",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::NonDifferentiable)
+        .Input(
+            1,
+            "frame_step",
+            "A scalar representing the number of samples to step between successive DFTs.",
+            "T2",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::NonDifferentiable)
+        .Input(
+            2,
+            "window",
+            "An optional 1-D tensor representing the window function to be applied to each frame of the signal before computing the DFT. "
+            "The length of the window (window.shape[0]) determines the frame length when `frame_length` is not specified. "
+            "If both `window` and `frame_length` are provided, the length of the `window` must equal `frame_length`. "
+            "When omitted, a rectangular (all-ones) window of length `frame_length` is used.",
+            "T1",
+            OpSchema::Optional,
+            true,
+            1,
+            OpSchema::NonDifferentiable)
+        .Input(
+            3,
+            "frame_length",
+            "An optional scalar representing the length of each frame (i.e., the DFT size). "
+            "When omitted and `window` is provided, `frame_length` is inferred from `window.shape[0]`. "
+            "When both `window` and `frame_length` are omitted, `frame_length` defaults to `signal_length`. "
+            "If both `frame_length` and `window` are provided, the length of the `window` must equal `frame_length`.",
+            "T2",
+            OpSchema::Optional,
+            true,
+            1,
+            OpSchema::NonDifferentiable)
+        .Output(
+            0,
+            "output",
+            "The Short-time Fourier Transform of the signal. "
+            "The number of frames in the output is `frames = floor((signal_length - frame_length) / frame_step) + 1`. "
+            "If onesided is 1, the output has the shape: [batch_size][frames][dft_unique_bins][2], where dft_unique_bins is frame_length // 2 + 1 (the unique components of the DFT). "
+            "If onesided is 0, the output has the shape: [batch_size][frames][frame_length][2], where frame_length is the length of the DFT. "
+            "The last dimension of size 2 represents the real and imaginary parts of each complex value.",
+            "T1",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::NonDifferentiable)
+        .TypeConstraint(
+            "T1",
+            {types::Float, types::Float16, types::Double, types::BFloat16},
+            "Constrain signal and output to float tensors.")
+        .TypeConstraint("T2", {types::Int32, types::Int64}, "Constrain scalar length types to int64_t.")
+        .TypeAndShapeInferenceFunction([](ONNX_NAMESPACE::InferenceContext& ctx) {
+          propagateElemTypeFromInputToOutput(ctx, 0, 0);
+          if (!hasInputShape(ctx, 0)) {
+            return;
+          }
+
+          auto& input_shape = getInputShape(ctx, 0);
+          if (input_shape.dim_size() != 3) {
+            fail_shape_inference("Input 0 (signal) must have rank 3.");
+          }
+
+          const auto& complex_dim = input_shape.dim(2);
+          if (complex_dim.has_dim_value() && complex_dim.dim_value() != 1 && complex_dim.dim_value() != 2) {
+            fail_shape_inference("The last dimension of signal must have size 1 (real) or 2 (complex).");
+          }
+
+          const int64_t onesided = getAttribute(ctx, "onesided", 1);
+          if (onesided != 0 && onesided != 1) {
+            fail_shape_inference("Attribute onesided must be 0 or 1.");
+          }
+          if (onesided == 1 && complex_dim.has_dim_value() && complex_dim.dim_value() != 1) {
+            fail_shape_inference("One-sided STFT requires real input (signal's last dimension must be 1).");
+          }
+
+          const auto& signal_dim = input_shape.dim(1);
+          const int64_t signal_size = signal_dim.has_dim_value() ? signal_dim.dim_value() : -1;
+
+          // Preserve compatibility with existing models that use a single-element vector.
+          if (hasInputShape(ctx, 1)) {
+            const auto& frame_step_shape = getInputShape(ctx, 1);
+            if (frame_step_shape.dim_size() > 1 ||
+                (frame_step_shape.dim_size() == 1 && frame_step_shape.dim(0).has_dim_value() &&
+                 frame_step_shape.dim(0).dim_value() != 1)) {
+              fail_shape_inference("Input 1 (frame_step) must be a scalar or a single-element vector.");
+            }
+          }
+
+          const auto* frame_step = ctx.getInputData(1);
+          int64_t frame_step_value = -1;
+          if (frame_step != nullptr) {
+            if (frame_step->dims_size() > 1 || (frame_step->dims_size() == 1 && frame_step->dims(0) != 1)) {
+              fail_shape_inference("Input 1 (frame_step) must be a scalar or a single-element vector.");
+            }
+            frame_step_value = defs::math::utils::GetScalarValueFromTensor<int64_t>(frame_step);
+            if (frame_step_value <= 0) {
+              fail_shape_inference("frame_step must be greater than 0.");
+            }
+          }
+
+          const bool has_window = ctx.hasInput(2);
+          const auto* window_shape = has_window ? getOptionalInputShape(ctx, 2) : nullptr;
+          int64_t window_length = -1;
+          if (window_shape != nullptr) {
+            if (window_shape->dim_size() != 1) {
+              fail_shape_inference("Input 2 (window) must have rank 1.");
+            }
+            if (window_shape->dim(0).has_dim_value()) {
+              window_length = window_shape->dim(0).dim_value();
+              if (window_length <= 0) {
+                fail_shape_inference("window must have a positive length.");
+              }
+            }
+          }
+
+          const bool has_frame_length = ctx.hasInput(3);
+          if (has_frame_length && hasInputShape(ctx, 3) && getInputShape(ctx, 3).dim_size() != 0) {
+            fail_shape_inference("Input 3 (frame_length) must be a scalar.");
+          }
+
+          const auto* frame_length = has_frame_length ? ctx.getInputData(3) : nullptr;
+          int64_t frame_length_value = -1;
+          if (frame_length != nullptr) {
+            if (frame_length->dims_size() != 0) {
+              fail_shape_inference("Input 3 (frame_length) must be a scalar.");
+            }
+            frame_length_value = defs::math::utils::GetScalarValueFromTensor<int64_t>(frame_length);
+            if (frame_length_value <= 0) {
+              fail_shape_inference("frame_length must be greater than 0.");
+            }
+            if (window_length >= 0 && window_length != frame_length_value) {
+              fail_type_inference(
+                  "If STFT has both a window input and frame_length specified, the dimension of the window "
+                  "must match the frame_length specified.");
+            }
+          }
+
+          const bool frame_length_defaults_to_signal = !has_window && !has_frame_length;
+          int64_t dft_size = frame_length_value;
+          if (dft_size < 0 && window_length >= 0) {
+            dft_size = window_length;
+          } else if (dft_size < 0 && frame_length_defaults_to_signal) {
+            dft_size = signal_size;
+          }
+
+          // The output has the following shape: [batch_size][frames][dft_unique_bins][2]
+          ONNX_NAMESPACE::TensorShapeProto result_shape_proto;
+          *result_shape_proto.add_dim() = input_shape.dim(0);
+
+          if (frame_length_defaults_to_signal) {
+            result_shape_proto.add_dim()->set_dim_value(1);
+          } else if (frame_step_value > 0 && signal_size >= dft_size && dft_size > 0) {
+            result_shape_proto.add_dim()->set_dim_value(((signal_size - dft_size) / frame_step_value) + 1);
+          } else {
+            result_shape_proto.add_dim();
+          }
+
+          if (dft_size > 0) {
+            result_shape_proto.add_dim()->set_dim_value(onesided == 1 ? ((dft_size >> 1) + 1) : dft_size);
+          } else {
+            result_shape_proto.add_dim();
+          }
+          result_shape_proto.add_dim()->set_dim_value(2);
+          updateOutputShape(ctx, 0, result_shape_proto);
+        }));
+
 } // namespace ONNX_NAMESPACE
