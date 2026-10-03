@@ -9,6 +9,8 @@ import numpy as np
 
 from onnx.reference.op_run import OpRun
 
+_HALF = 0.5
+
 
 def _round_half_away_from_zero(value: float) -> int:
     """Round as C++ std::round does, half away from zero.
@@ -17,7 +19,10 @@ def _round_half_away_from_zero(value: float) -> int:
     cannot be used here, and floor(value + 0.5) is not equivalent for
     negative coordinates.
     """
-    return int(math.copysign(math.floor(abs(value) + 0.5), value))
+    magnitude = abs(float(value))
+    integer_part = math.floor(magnitude)
+    rounded = integer_part + int(magnitude - integer_part >= _HALF)
+    return -rounded if value < 0 else rounded
 
 
 class MaxRoiPool(OpRun):
@@ -31,11 +36,17 @@ class MaxRoiPool(OpRun):
         channels = X.shape[1]
         height, width = X.shape[2], X.shape[3]
         pooled_height, pooled_width = pooled_shape
+        calculation_dtype = np.float64 if X.dtype == np.float64 else np.float32
+        spatial_scale = calculation_dtype(spatial_scale)
 
         Y = np.empty((num_rois, channels, pooled_height, pooled_width), dtype=X.dtype)
         for n in range(num_rois):
-            roi = rois[n].astype(np.float64)
+            roi = rois[n].astype(calculation_dtype)
             roi_batch_ind = int(roi[0])
+            if not 0 <= roi_batch_ind < X.shape[0]:
+                raise ValueError(
+                    f"ROI batch index {roi_batch_ind} is out of range for batch size {X.shape[0]}"
+                )
             roi_start_w = _round_half_away_from_zero(roi[1] * spatial_scale)
             roi_start_h = _round_half_away_from_zero(roi[2] * spatial_scale)
             roi_end_w = _round_half_away_from_zero(roi[3] * spatial_scale)
@@ -45,16 +56,28 @@ class MaxRoiPool(OpRun):
             roi_width = max(roi_end_w - roi_start_w + 1, 1)
             roi_height = max(roi_end_h - roi_start_h + 1, 1)
 
-            bin_size_h = roi_height / pooled_height
-            bin_size_w = roi_width / pooled_width
+            bin_size_h = calculation_dtype(roi_height) / calculation_dtype(
+                pooled_height
+            )
+            bin_size_w = calculation_dtype(roi_width) / calculation_dtype(pooled_width)
 
             for c in range(channels):
                 for ph in range(pooled_height):
                     for pw in range(pooled_width):
-                        hstart = math.floor(ph * bin_size_h) + roi_start_h
-                        wstart = math.floor(pw * bin_size_w) + roi_start_w
-                        hend = math.ceil((ph + 1) * bin_size_h) + roi_start_h
-                        wend = math.ceil((pw + 1) * bin_size_w) + roi_start_w
+                        hstart = (
+                            math.floor(calculation_dtype(ph) * bin_size_h) + roi_start_h
+                        )
+                        wstart = (
+                            math.floor(calculation_dtype(pw) * bin_size_w) + roi_start_w
+                        )
+                        hend = (
+                            math.ceil(calculation_dtype(ph + 1) * bin_size_h)
+                            + roi_start_h
+                        )
+                        wend = (
+                            math.ceil(calculation_dtype(pw + 1) * bin_size_w)
+                            + roi_start_w
+                        )
 
                         hstart = min(max(hstart, 0), height)
                         hend = min(max(hend, 0), height)
