@@ -26,8 +26,6 @@ jobs:
       fail-fast: false
       matrix:
         build:
-          - "cp310-win_amd64"
-          - "cp310-win32"
           - "cp311-win_amd64"
           - "cp311-win32"
           - "cp311-win_arm64"
@@ -111,7 +109,7 @@ jobs:
         run: echo "SOURCE_DATE_EPOCH=$(git log -1 --pretty=%ct)" >> $GITHUB_ENV
 
       - name: Build wheels
-        uses: pypa/cibuildwheel@1828c10ab37f080699c7b81cea34097c684a7074  # v4.2.0
+        uses: pypa/cibuildwheel@e090b81e30c4d855ea63bf4b6e59204c09a101ae  # v4.2.1
         with:
           output-dir: dist/
           only: ${{ matrix.build }}
