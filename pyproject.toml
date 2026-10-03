@@ -19,7 +19,7 @@ classifiers = [
 ]
 license = "Apache-2.0"
 # scikit-build-core expects dependencies here rather than in a requirements.txt file
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 dependencies = [
     "numpy>=1.23.2",
     "protobuf>=6.31.1",
