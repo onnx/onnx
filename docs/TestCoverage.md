@@ -6,7 +6,7 @@
 * [Overall Test Coverage](#overall-test-coverage)
 # Node Test Coverage
 ## Summary
-Node tests have covered 193/202 (95.54%, 5 generators excluded) common operators.
+Node tests have covered 194/203 (95.57%, 5 generators excluded) common operators.
 
 Node tests have covered 1/1 (100.00%, 0 generators excluded) experimental operators.
 
@@ -12382,6 +12382,181 @@ expect(
     inputs=[data, indices],
     outputs=[output],
     name="test_gathernd_example_int32_batch_dim1",
+)
+```
+
+</details>
+
+
+### GeGLU
+There are 6 test cases, listed as following:
+<details>
+<summary>approximate_none</summary>
+
+```python
+node = onnx.helper.make_node(
+    "GeGLU",
+    inputs=["a", "b"],
+    outputs=["y"],
+    approximate="none",
+)
+expect(
+    node,
+    inputs=[_A, _B],
+    outputs=[_Y_NONE],
+    name="test_geglu_approximate_none",
+    opset_imports=[onnx.helper.make_opsetid("", 29)],
+)
+```
+
+</details>
+<details>
+<summary>bfloat16</summary>
+
+```python
+node = onnx.helper.make_node(
+    "GeGLU",
+    inputs=["a", "b"],
+    outputs=["y"],
+)
+a = np.array(_A_2D, dtype=ml_dtypes.bfloat16)
+b = np.array(_B_2D, dtype=ml_dtypes.bfloat16)
+y = np.array(
+    [
+        [-0.0020294189453125, -0.00012683868408203125, 0.158203125, 3.90625],
+        [-0.30859375, -1.3984375, -0.00775146484375, 0.578125],
+    ],
+    dtype=ml_dtypes.bfloat16,
+)
+expect(
+    node,
+    inputs=[a, b],
+    outputs=[y],
+    name="test_geglu_bfloat16",
+    opset_imports=[onnx.helper.make_opsetid("", 29)],
+)
+```
+
+</details>
+<details>
+<summary>double</summary>
+
+```python
+node = onnx.helper.make_node(
+    "GeGLU",
+    inputs=["a", "b"],
+    outputs=["y"],
+)
+a = np.array(_A_2D, dtype=np.float64)
+b = np.array(_B_2D, dtype=np.float64)
+y = np.array(
+    [
+        [
+            -0.002024847047445155,
+            -0.00012668496733247991,
+            0.15865525393145707,
+            3.908999472207283,
+        ],
+        [
+            -0.3085375387259869,
+            -1.399789198096713,
+            -0.007762081657220199,
+            0.5800294857173488,
+        ],
+    ],
+    dtype=np.float64,
+)
+expect(
+    node,
+    inputs=[a, b],
+    outputs=[y],
+    name="test_geglu_double",
+    opset_imports=[onnx.helper.make_opsetid("", 29)],
+)
+```
+
+</details>
+<details>
+<summary>float16</summary>
+
+```python
+node = onnx.helper.make_node(
+    "GeGLU",
+    inputs=["a", "b"],
+    outputs=["y"],
+)
+a = np.array(_A_2D, dtype=np.float16)
+b = np.array(_B_2D, dtype=np.float16)
+y = np.array(
+    [
+        [
+            -0.002025604248046875,
+            -0.00012671947479248047,
+            0.15869140625,
+            3.908203125,
+        ],
+        [-0.30859375, -1.3994140625, -0.007762908935546875, 0.580078125],
+    ],
+    dtype=np.float16,
+)
+expect(
+    node,
+    inputs=[a, b],
+    outputs=[y],
+    name="test_geglu_float16",
+    opset_imports=[onnx.helper.make_opsetid("", 29)],
+)
+```
+
+</details>
+<details>
+<summary>geglu</summary>
+
+```python
+node = onnx.helper.make_node(
+    "GeGLU",
+    inputs=["a", "b"],
+    outputs=["y"],
+)
+expect(
+    node,
+    inputs=[_A, _B],
+    outputs=[_Y_NONE],
+    name="test_geglu",
+    opset_imports=[onnx.helper.make_opsetid("", 29)],
+)
+```
+
+</details>
+<details>
+<summary>tanh</summary>
+
+```python
+node = onnx.helper.make_node(
+    "GeGLU",
+    inputs=["a", "b"],
+    outputs=["y"],
+    approximate="tanh",
+)
+y = np.array(
+    [
+        [
+            [0.420596, -0.045402307, -2.9963627],
+            [7.9998593, -0.31761602, -0.345714],
+        ],
+        [
+            [-0.001818696, 1.9545977, -0.23142898],
+            [0.0001404919, 0.0, 0.34989288],
+        ],
+    ],
+    dtype=np.float32,
+)
+expect(
+    node,
+    inputs=[_A, _B],
+    outputs=[y],
+    name="test_geglu_tanh",
+    opset_imports=[onnx.helper.make_opsetid("", 29)],
 )
 ```
 

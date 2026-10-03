@@ -7740,6 +7740,76 @@ class TestReferenceEvaluator:
         with pytest.raises(ValueError, match="identical dtypes"):
             ref.run(None, {"A": a, "B": b})
 
+    @staticmethod
+    def _geglu_model(approximate: str | None = None) -> ModelProto:
+        # Dynamic shapes so model-level shape inference does not reject the
+        # mismatched-shape/dtype cases before they reach the reference _run.
+        a = make_tensor_value_info("A", TensorProto.FLOAT, [None, None])
+        b = make_tensor_value_info("B", TensorProto.FLOAT, [None, None])
+        y = make_tensor_value_info("Y", TensorProto.FLOAT, [None, None])
+        kwargs = {} if approximate is None else {"approximate": approximate}
+        node = make_node("GeGLU", ["A", "B"], ["Y"], **kwargs)
+        graph = make_graph([node], "geglu", [a, b], [y])
+        return make_model(graph, opset_imports=[make_opsetid("", 29)])
+
+    # Expected values are computed in float64 with math.erf and math.tanh.
+    @pytest.mark.parametrize(
+        ("approximate", "expected"),
+        [
+            (
+                None,
+                [
+                    [0.4206724, -0.045500264, -2.9959502],
+                    [-0.008099388, 0.00012668497, 0.34573123],
+                ],
+            ),
+            (
+                "none",
+                [
+                    [0.4206724, -0.045500264, -2.9959502],
+                    [-0.008099388, 0.00012668497, 0.34573123],
+                ],
+            ),
+            (
+                "tanh",
+                [
+                    [0.420596, -0.045402307, -2.9963627],
+                    [-0.007274784, 7.024595e-05, 0.345714],
+                ],
+            ),
+        ],
+    )
+    def test_geglu(self, approximate: str | None, expected: list) -> None:
+        ref = ReferenceEvaluator(self._geglu_model(approximate))
+        a = np.array([[1.0, -2.0, 3.0], [-3.0, -4.0, 0.5]], dtype=np.float32)
+        b = np.array([[0.5, 1.0, -1.0], [2.0, -1.0, 1.0]], dtype=np.float32)
+        (got,) = ref.run(None, {"A": a, "B": b})
+        # Same tolerance as the backend node tests: at a = -4, float32 keeps only
+        # about 12 bits of 1 + erf(a / sqrt(2)).
+        assert_allclose(got, np.array(expected, dtype=np.float32), rtol=1e-3)
+        assert got.dtype == np.float32
+
+    def test_geglu_shape_mismatch_raises(self) -> None:
+        ref = ReferenceEvaluator(self._geglu_model())
+        a = np.ones((2, 3), dtype=np.float32)
+        b = np.ones((2, 1), dtype=np.float32)
+        with pytest.raises(ValueError, match="identical shapes"):
+            ref.run(None, {"A": a, "B": b})
+
+    def test_geglu_dtype_mismatch_raises(self) -> None:
+        ref = ReferenceEvaluator(self._geglu_model())
+        a = np.ones((2, 3), dtype=np.float32)
+        b = np.ones((2, 3), dtype=np.float16)
+        with pytest.raises(ValueError, match="identical dtypes"):
+            ref.run(None, {"A": a, "B": b})
+
+    def test_geglu_bad_approximate_raises(self) -> None:
+        ref = ReferenceEvaluator(self._geglu_model(approximate="sigmoid"))
+        a = np.ones((2, 3), dtype=np.float32)
+        b = np.ones((2, 3), dtype=np.float32)
+        with pytest.raises(ValueError, match="must be 'none' or 'tanh'"):
+            ref.run(None, {"A": a, "B": b})
+
     @pytest.mark.parametrize(
         "dtype", [np.float16, ml_dtypes.bfloat16, np.float32, np.float64]
     )
