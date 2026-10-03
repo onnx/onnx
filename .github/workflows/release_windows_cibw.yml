@@ -26,8 +26,6 @@ jobs:
       fail-fast: false
       matrix:
         build:
-          - "cp310-win_amd64"
-          - "cp310-win32"
           - "cp311-win_amd64"
           - "cp311-win32"
           - "cp311-win_arm64"
