@@ -23942,9 +23942,7 @@ node = onnx.helper.make_node(
 )
 
 X = np.array([[[[10.0, 0.0]]]], dtype=np.float32)
-rois = np.array(
-    [[0.0, 0.5000000596046448, 0.0, 1.0, 0.0]], dtype=np.float32
-)
+rois = np.array([[0.0, 0.5000000596046448, 0.0, 1.0, 0.0]], dtype=np.float32)
 Y = np.array([[[[0.0]]]], dtype=np.float32)
 
 expect(
