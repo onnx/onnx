@@ -61,33 +61,42 @@ class MaxRoiPool(OpRun):
             )
             bin_size_w = calculation_dtype(roi_width) / calculation_dtype(pooled_width)
 
-            for c in range(channels):
-                for ph in range(pooled_height):
-                    for pw in range(pooled_width):
-                        hstart = (
-                            math.floor(calculation_dtype(ph) * bin_size_h) + roi_start_h
-                        )
-                        wstart = (
-                            math.floor(calculation_dtype(pw) * bin_size_w) + roi_start_w
-                        )
-                        hend = (
-                            math.ceil(calculation_dtype(ph + 1) * bin_size_h)
-                            + roi_start_h
-                        )
-                        wend = (
-                            math.ceil(calculation_dtype(pw + 1) * bin_size_w)
-                            + roi_start_w
-                        )
+            # Bin bounds do not depend on the channel, so compute them once per
+            # ROI; the ROI offset is added in float64, which rounds only above
+            # 2**53. The window max stays per bin, since the windows have
+            # different shapes, but it covers all channels in one reduction.
+            edges_h = np.arange(pooled_height + 1, dtype=calculation_dtype)
+            edges_w = np.arange(pooled_width + 1, dtype=calculation_dtype)
+            hstart = np.clip(
+                np.floor(edges_h[:-1] * bin_size_h).astype(np.float64) + roi_start_h,
+                0,
+                height,
+            ).astype(np.int64)
+            hend = np.clip(
+                np.ceil(edges_h[1:] * bin_size_h).astype(np.float64) + roi_start_h,
+                0,
+                height,
+            ).astype(np.int64)
+            wstart = np.clip(
+                np.floor(edges_w[:-1] * bin_size_w).astype(np.float64) + roi_start_w,
+                0,
+                width,
+            ).astype(np.int64)
+            wend = np.clip(
+                np.ceil(edges_w[1:] * bin_size_w).astype(np.float64) + roi_start_w,
+                0,
+                width,
+            ).astype(np.int64)
 
-                        hstart = min(max(hstart, 0), height)
-                        hend = min(max(hend, 0), height)
-                        wstart = min(max(wstart, 0), width)
-                        wend = min(max(wend, 0), width)
-
-                        if hend <= hstart or wend <= wstart:
-                            Y[n, c, ph, pw] = 0
-                        else:
-                            Y[n, c, ph, pw] = X[
-                                roi_batch_ind, c, hstart:hend, wstart:wend
-                            ].max()
+            for ph in range(pooled_height):
+                for pw in range(pooled_width):
+                    if hend[ph] <= hstart[ph] or wend[pw] <= wstart[pw]:
+                        Y[n, :, ph, pw] = 0
+                    else:
+                        Y[n, :, ph, pw] = X[
+                            roi_batch_ind,
+                            :,
+                            hstart[ph] : hend[ph],
+                            wstart[pw] : wend[pw],
+                        ].max(axis=(1, 2))
         return (Y.astype(X.dtype),)
