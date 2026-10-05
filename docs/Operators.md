@@ -30723,6 +30723,32 @@ expect(
 
 
 <details>
+<summary>float16_large_sum</summary>
+
+```python
+node = onnx.helper.make_node(
+    "ReduceLogSumExp",
+    inputs=["data", "axes"],
+    outputs=["reduced"],
+    keepdims=1,
+)
+data = np.zeros((256, 256), dtype=np.float16)
+axes = np.array([0, 1], dtype=np.int64)
+# The sum of 65536 exponentials overflows float16, but its logarithm does not.
+reduced = np.array([[np.log(data.size)]], dtype=np.float16)
+
+expect(
+    node,
+    inputs=[data, axes],
+    outputs=[reduced],
+    name="test_reduce_log_sum_exp_float16_large_sum",
+)
+```
+
+</details>
+
+
+<details>
 <summary>keepdims</summary>
 
 ```python
