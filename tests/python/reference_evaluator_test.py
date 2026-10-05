@@ -4825,6 +4825,39 @@ class TestReferenceEvaluator:
         np.testing.assert_array_equal(actual, expected)
 
     @pytest.mark.parametrize("opset", [13, 18, onnx_opset_version()])
+    @pytest.mark.parametrize("keepdims", [0, 1])
+    @pytest.mark.parametrize("values", [[0.0], [8.0], [-1.0, 0.0]])
+    def test_reduce_log_sum_exp_float16_large_reduction(self, opset, keepdims, values):
+        repeats = 65536
+        data = np.tile(np.array([values], dtype=np.float16), (1, repeats))
+        output_shape = [1, 1] if keepdims else [1]
+        X = make_tensor_value_info("X", TensorProto.FLOAT16, list(data.shape))
+        Y = make_tensor_value_info("Y", TensorProto.FLOAT16, output_shape)
+        feeds = {"X": data}
+        if opset >= 18:
+            A = make_tensor_value_info("A", TensorProto.INT64, [1])
+            node = make_node("ReduceLogSumExp", ["X", "A"], ["Y"], keepdims=keepdims)
+            inputs = [X, A]
+            feeds["A"] = np.array([1], dtype=np.int64)
+        else:
+            node = make_node(
+                "ReduceLogSumExp", ["X"], ["Y"], axes=[1], keepdims=keepdims
+            )
+            inputs = [X]
+        model = make_model(
+            make_graph([node], "g", inputs, [Y]),
+            opset_imports=[make_opsetid("", opset)],
+        )
+        got = ReferenceEvaluator(model).run(None, feeds)[0]
+        expected_value = math.log(repeats) + math.log(
+            math.fsum(math.exp(value) for value in values)
+        )
+        expected = np.full(output_shape, expected_value, dtype=np.float16)
+        assert got.shape == expected.shape
+        assert got.dtype == expected.dtype
+        np.testing.assert_allclose(got, expected, rtol=1e-3, atol=0)
+
+    @pytest.mark.parametrize("opset", [13, 18, onnx_opset_version()])
     def test_reduce_log_sum_exp_infinite_inputs(self, opset):
         X = make_tensor_value_info("X", TensorProto.FLOAT, [2, 2])
         Y = make_tensor_value_info("Y", TensorProto.FLOAT, [2])
