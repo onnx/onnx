@@ -39,7 +39,8 @@ def to_float8e8m0(
         raise ValueError(f"Unsupported rounding mode: {round_mode}")
 
     x = np.asarray(x)
-    if x.dtype != np.float64:
+    # Compare kind and size so non-native-endian binary64 is also kept exact
+    if not (x.dtype.kind == "f" and x.dtype.itemsize == 8):  # noqa: PLR2004
         x = x.astype(np.float32)
     # float32 values (including subnormals) are exactly representable as
     # float64, so every input is rounded to E8M0 exactly once.

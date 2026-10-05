@@ -283,6 +283,10 @@ class TestNumpyHelper:
         assert code(np.float64(1e39), "down", saturate=False) == 0xFF
         assert code(f64(0x47EFFFFFFFFFFFFF), "nearest") == 0xFE
         assert code(np.float64(1.0 + 2.0**-40), "up") == 128
+        # Non-native-endian float64 is also rounded once.
+        swapped = np.asarray([f64(0x380FFFFFFFFFFFFF)]).astype(">f8")
+        out = numpy_helper.to_float8e8m0(swapped, round_mode="down")
+        assert int(out.view(np.uint8)[0]) == 0
 
     def test_from_array_object_invalid_type(self) -> None:
         a = np.array([42], dtype=object)
