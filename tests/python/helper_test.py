@@ -437,6 +437,8 @@ class TestHelperNodeFunctions:
         test([("", 24)], 12)
         test([("", 25)], 13)
         test([("", 26)], 13)
+        test([("", 27)], 13)
+        test([("", 28)], 14)
         # standard opset can be referred to using empty-string or "ai.onnx"
         test([("ai.onnx", 9)], 4)
         test([("ai.onnx.ml", 2)], 6)
