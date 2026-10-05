@@ -167,7 +167,7 @@ disable = [
 
 [tool.ruff]
 # NOTE: Do not create an exclude list. Edit .lintrunner.toml instead
-target-version = "py310"
+target-version = "py311"
 unsafe-fixes = true
 lint.select = [
     "A", # flake8-builtins
