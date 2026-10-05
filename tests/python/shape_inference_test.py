@@ -2465,6 +2465,33 @@ class TestShapeInference(TestShapeInferenceHelper):
             graph, [make_tensor_value_info("y", TensorProto.FLOAT, (0, 6))]
         )
 
+    @pytest.mark.parametrize("opset_version", [10, 11, 13])
+    def test_slice_negative_dim_value(self, opset_version: int) -> None:
+        """Slice on negative dimension should not abort in shape inference."""
+        graph = self._make_graph(
+            [
+                ("x", TensorProto.FLOAT, (-1, 6)),
+                ("starts", TensorProto.INT64, (1,)),
+                ("ends", TensorProto.INT64, (1,)),
+                ("axes", TensorProto.INT64, (1,)),
+                ("steps", TensorProto.INT64, (1,)),
+            ],
+            [make_node("Slice", ["x", "starts", "ends", "axes", "steps"], "y")],
+            [],
+            initializer=[
+                make_tensor("starts", TensorProto.INT64, (1,), (0,)),
+                make_tensor("ends", TensorProto.INT64, (1,), (0,)),
+                make_tensor("axes", TensorProto.INT64, (1,), (0,)),
+                make_tensor("steps", TensorProto.INT64, (1,), (1,)),
+            ],
+        )
+        with pytest.raises(checker.ValidationError):
+            self._assert_inferred(
+                graph,
+                [make_tensor_value_info("y", TensorProto.FLOAT, (0, 6))],
+                opset_imports=[make_opsetid("", opset_version)],
+            )
+
     def test_slice_scalar_shape_output(self) -> None:
         """Shape(scalar) produces 0-length output; Slice on it should not crash."""
         graph = self._make_graph(

@@ -654,18 +654,18 @@ class TestChecker:
     def test_check_model_negative_dimension_slice(self) -> None:
         X = helper.make_tensor_value_info("X", TensorProto.FLOAT, [10, 10])
         Y = helper.make_tensor_value_info("Y", TensorProto.FLOAT, [-1])
-        
+
         node = helper.make_node(
             "Slice",
             inputs=["X", "starts", "ends", "axes", "steps"],
             outputs=["Y"],
         )
-        
+
         starts = helper.make_tensor_value_info("starts", TensorProto.INT64, [1])
         ends = helper.make_tensor_value_info("ends", TensorProto.INT64, [1])
         axes = helper.make_tensor_value_info("axes", TensorProto.INT64, [1])
         steps = helper.make_tensor_value_info("steps", TensorProto.INT64, [1])
-        
+
         graph = helper.make_graph(
             [node],
             "test_slice",
@@ -675,6 +675,31 @@ class TestChecker:
         model = helper.make_model(graph, producer_name="test")
         with pytest.raises(checker.ValidationError):
             checker.check_model(model)
+
+    def test_check_model_zero_dimension_slice(self) -> None:
+        X = helper.make_tensor_value_info("X", TensorProto.FLOAT, [10, 10])
+        Y = helper.make_tensor_value_info("Y", TensorProto.FLOAT, [0])
+
+        node = helper.make_node(
+            "Slice",
+            inputs=["X", "starts", "ends", "axes", "steps"],
+            outputs=["Y"],
+        )
+
+        starts = helper.make_tensor_value_info("starts", TensorProto.INT64, [1])
+        ends = helper.make_tensor_value_info("ends", TensorProto.INT64, [1])
+        axes = helper.make_tensor_value_info("axes", TensorProto.INT64, [1])
+        steps = helper.make_tensor_value_info("steps", TensorProto.INT64, [1])
+
+        graph = helper.make_graph(
+            [node],
+            "test_slice_zero",
+            [X, starts, ends, axes, steps],
+            [Y],
+        )
+        model = helper.make_model(graph, producer_name="test")
+        # Should complete without error
+        checker.check_model(model)
 
     def test_loop_with_same_initializer_input_below_ir4(self) -> None:
         # This is for testing IR<4: tensors must exist both in initializer and input
