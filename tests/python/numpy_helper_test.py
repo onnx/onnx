@@ -256,6 +256,34 @@ class TestNumpyHelper:
             == 0xFF
         )
 
+    def test_to_float8e8m0_subnormal_and_float64(self) -> None:
+        def code(x, mode, saturate=True):
+            out = numpy_helper.to_float8e8m0(
+                np.asarray([x]), saturate=saturate, round_mode=mode
+            )
+            return int(out.view(np.uint8)[0])
+
+        def f32(bits):
+            return np.array([bits], dtype=np.uint32).view(np.float32)[0]
+
+        def f64(bits):
+            return np.array([bits], dtype=np.uint64).view(np.float64)[0]
+
+        # float32 subnormals: 2**-127 is exactly E8M0 code 0.
+        assert code(f32(0x00400000), "up") == 0
+        assert code(f32(0x00080000), "up") == 0
+        assert code(f32(0x00400001), "nearest") == 0
+        assert code(f32(0x00600000), "nearest") == 1  # 1.5 * 2**-127 ties up
+        assert code(f32(0x00400001), "up") == 1
+        assert code(f32(0x007FFFFF), "down") == 0
+        assert code(np.float32(0.0), "up") == 0
+        # float64 inputs are rounded once, not via float32.
+        assert code(f64(0x380FFFFFFFFFFFFF), "down") == 0
+        assert code(np.float64(1e39), "down") == 0xFE
+        assert code(np.float64(1e39), "down", saturate=False) == 0xFF
+        assert code(f64(0x47EFFFFFFFFFFFFF), "nearest") == 0xFE
+        assert code(np.float64(1.0 + 2.0**-40), "up") == 128
+
     def test_from_array_object_invalid_type(self) -> None:
         a = np.array([42], dtype=object)
         with pytest.raises(NotImplementedError, match="int"):
