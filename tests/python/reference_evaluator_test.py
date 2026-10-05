@@ -797,6 +797,7 @@ class TestReferenceEvaluator:
         [
             ("Elu", "alpha", 0.0),
             ("Flatten", "axis", 0),
+            ("HardSigmoid", "alpha", 0.0),
             ("HardSigmoid", "beta", 0.0),
             ("Hardmax", "axis", 0),
             ("LeakyRelu", "alpha", 0.0),
