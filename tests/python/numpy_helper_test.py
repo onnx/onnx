@@ -269,6 +269,49 @@ class TestNumpyHelper:
         seq2 = numpy_helper.from_list([])
         assert seq2.elem_type == onnx.SequenceProto.TENSOR
 
+    @pytest.mark.parametrize("dtype", onnx.OptionalProto.DataType.values())
+    def test_optional_none_roundtrip(self, dtype: int) -> None:
+        optional = numpy_helper.from_optional(None, dtype=dtype)
+        assert optional.elem_type == dtype
+        assert numpy_helper.to_optional(optional) is None
+
+    @pytest.mark.parametrize(
+        "value",
+        [
+            np.array([], dtype=np.float32),
+            np.array(0, dtype=np.int64),
+            [],
+            [np.array([1], dtype=np.float32)],
+            {0: np.array([1], dtype=np.float32)},
+        ],
+    )
+    def test_optional_value_roundtrip(self, value) -> None:
+        optional = numpy_helper.from_optional(value)
+        result = numpy_helper.to_optional(optional)
+        assert result is not None
+        np.testing.assert_equal(result, value)
+
+    def test_to_optional_present_empty_map(self) -> None:
+        value = helper.make_map(
+            "empty_map",
+            onnx.TensorProto.INT64,
+            [],
+            numpy_helper.from_list([]),
+        )
+        optional = helper.make_optional("optional", onnx.OptionalProto.MAP, value)
+        assert numpy_helper.to_optional(optional) == {}
+
+    def test_to_optional_nested_value(self) -> None:
+        value = np.array([1], dtype=np.float32)
+        inner = numpy_helper.from_optional(value)
+        optional = helper.make_optional("outer", onnx.OptionalProto.OPTIONAL, inner)
+        np.testing.assert_equal(numpy_helper.to_optional(optional), value)
+
+    def test_to_optional_unsupported_type(self) -> None:
+        optional = onnx.OptionalProto(elem_type=999)
+        with pytest.raises(TypeError, match="not supported"):
+            numpy_helper.to_optional(optional)
+
     def test_to_dict_mismatched_lengths(self) -> None:
         # Build a valid map then add an extra key to create a mismatch
         m = numpy_helper.from_dict({1: np.array(1.0), 2: np.array(2.0)})
