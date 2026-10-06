@@ -73,8 +73,94 @@ namespace ONNX_NAMESPACE::checker {
     }                                                                                    \
   } while (0)
 
+// Returns the IR version that introduced the given tensor data type, or 0 for
+// data types that have been available since the first IR version.
+static int min_ir_version_for_data_type(int32_t data_type) {
+  switch (data_type) {
+    case TensorProto::BFLOAT16:
+      return 0x00000004;
+    case TensorProto::FLOAT8E4M3FN:
+    case TensorProto::FLOAT8E4M3FNUZ:
+    case TensorProto::FLOAT8E5M2:
+    case TensorProto::FLOAT8E5M2FNUZ:
+      return 0x00000009;
+    case TensorProto::UINT4:
+    case TensorProto::INT4:
+      return 0x0000000A;
+    case TensorProto::FLOAT4E2M1:
+      return 0x0000000B;
+    case TensorProto::FLOAT8E8M0:
+      return 0x0000000C;
+    case TensorProto::UINT2:
+    case TensorProto::INT2:
+      return 0x0000000D;
+    case TensorProto::FLOAT6E2M3:
+    case TensorProto::FLOAT6E3M2:
+      return 0x0000000E;
+    default:
+      return 0;
+  }
+}
+
+static void check_data_type_ir_version(int32_t data_type, const std::string& name, const CheckerContext& ctx) {
+  const int min_ir_version = min_ir_version_for_data_type(data_type);
+  // A non-positive IR version means the context does not carry one (e.g. a
+  // default-constructed CheckerContext), so there is nothing to check against.
+  if (ctx.get_ir_version() > 0 && ctx.get_ir_version() < min_ir_version) {
+    fail_check(
+        "Data type ",
+        Utils::DataTypeUtils::ToDataTypeString(data_type),
+        " used by '",
+        name,
+        "' requires IR version >= ",
+        min_ir_version,
+        ", but the IR version is ",
+        ctx.get_ir_version(),
+        ".");
+  }
+}
+
+static void check_type_ir_version(const TypeProto& type, const std::string& name, const CheckerContext& ctx) {
+  switch (type.value_case()) {
+    case TypeProto::kTensorType:
+      check_data_type_ir_version(type.tensor_type().elem_type(), name, ctx);
+      break;
+    case TypeProto::kSparseTensorType:
+      check_data_type_ir_version(type.sparse_tensor_type().elem_type(), name, ctx);
+      break;
+    case TypeProto::kSequenceType:
+      check_type_ir_version(type.sequence_type().elem_type(), name, ctx);
+      break;
+    case TypeProto::kOptionalType:
+      check_type_ir_version(type.optional_type().elem_type(), name, ctx);
+      break;
+    case TypeProto::kMapType:
+      check_data_type_ir_version(type.map_type().key_type(), name, ctx);
+      check_type_ir_version(type.map_type().value_type(), name, ctx);
+      break;
+    default:
+      break;
+  }
+}
+
+static void check_attribute_tensors_ir_version(const AttributeProto& attr, const CheckerContext& ctx) {
+  if (attr.has_t()) {
+    check_data_type_ir_version(attr.t().data_type(), attr.name(), ctx);
+  }
+  for (const auto& tensor : attr.tensors()) {
+    check_data_type_ir_version(tensor.data_type(), attr.name(), ctx);
+  }
+  if (attr.has_sparse_tensor()) {
+    check_data_type_ir_version(attr.sparse_tensor().values().data_type(), attr.name(), ctx);
+  }
+  for (const auto& sparse_tensor : attr.sparse_tensors()) {
+    check_data_type_ir_version(sparse_tensor.values().data_type(), attr.name(), ctx);
+  }
+}
+
 void check_value_info(const ValueInfoProto& value_info, const CheckerContext& ctx) {
   enforce_non_empty_field(value_info, name);
+  check_type_ir_version(value_info.type(), value_info.name(), ctx);
   // Relax constraint for subgraph input/output.
   if (!ctx.is_main_graph())
     return;
@@ -119,6 +205,7 @@ void check_tensor(const TensorProto& tensor, const CheckerContext& ctx) {
   if (tensor.data_type() == TensorProto::UNDEFINED) {
     fail_check("setting data_type field (tensor name: ", tensor.name(), ") to UNDEFINED is not allowed");
   }
+  check_data_type_ir_version(tensor.data_type(), tensor.name(), ctx);
 
   int num_value_fields = 0;
 
@@ -841,6 +928,11 @@ void check_graph(const GraphProto& graph, const CheckerContext& ctx, const Lexic
   for (const auto& value_info : graph.output()) {
     check_value_info(value_info, ctx);
   }
+  // Intermediate value_info entries are optional annotations and are not
+  // otherwise validated, but they must not use data types newer than the IR version.
+  for (const auto& value_info : graph.value_info()) {
+    check_type_ir_version(value_info.type(), value_info.name(), ctx);
+  }
 
   // Inherit values available in outer scope
   // Note that we do not allow shadowing, so the presence of an already-defined
@@ -1248,6 +1340,13 @@ void check_function(const FunctionProto& function, const CheckerContext& ctx, co
     if (!attrs.insert(attr).second) {
       fail_check("function (", function.name(), ") should not have duplicate attributes specified.");
     }
+  }
+  for (const auto& attr : function.attribute_proto()) {
+    check_attribute_tensors_ir_version(attr, ctx);
+  }
+  // Function inputs and outputs are untyped names; their types, if any, are given here.
+  for (const auto& value_info : function.value_info()) {
+    check_type_ir_version(value_info.type(), value_info.name(), ctx);
   }
   std::unordered_set<std::string> used_experimental_ops;
   for (const auto& node : function.node()) {

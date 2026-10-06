@@ -19,7 +19,7 @@ classifiers = [
 ]
 license = "Apache-2.0"
 # scikit-build-core expects dependencies here rather than in a requirements.txt file
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 dependencies = [
     "numpy>=1.23.2",
     "protobuf>=6.31.1",
@@ -167,7 +167,7 @@ disable = [
 
 [tool.ruff]
 # NOTE: Do not create an exclude list. Edit .lintrunner.toml instead
-target-version = "py310"
+target-version = "py311"
 unsafe-fixes = true
 lint.select = [
     "A", # flake8-builtins

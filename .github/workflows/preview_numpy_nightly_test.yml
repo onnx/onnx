@@ -2,11 +2,11 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
-name: Test source distribution build
+name: Test with numpy nightly wheels
 
 on:
   schedule:
-    - cron:  '0 0 * * 2'
+    - cron:  '0 0 * * 3'
   workflow_call:
   workflow_dispatch:
 
@@ -15,11 +15,11 @@ permissions:
 
 jobs:
 
-  test_sdist:
+  test_numpy_nightly:
 
     strategy:
       matrix:
-        os: [ubuntu-24.04, windows-latest]
+        os: [ubuntu-24.04, windows-latest, macos-14]
         python-version: ['3.11', '3.12', '3.13']
       fail-fast: false
     runs-on: ${{ matrix.os }}
@@ -45,5 +45,11 @@ jobs:
             python -m pip install dist/*.tar.gz
             python -m pip install pytest ml_dtypes pillow
 
-        - name: Run tests
+        - name: Install numpy nightly wheel
+          shell: bash
+          run: |
+            python -m pip uninstall -y numpy
+            python -m pip install -i https://pypi.anaconda.org/scientific-python-nightly-wheels/simple numpy
+
+        - name: Run tests against numpy nightly
           run: pytest
