@@ -46,7 +46,7 @@ def retry_execute(times: int) -> Callable[[Callable[..., Any]], Callable[..., An
             for i in range(1, times + 1):
                 try:
                     return func(*args, **kwargs)
-                except Exception:  # noqa: PERF203
+                except Exception:
                     print(f"{i} times tried")
                     if i == times:
                         raise
