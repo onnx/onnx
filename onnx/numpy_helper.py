@@ -687,15 +687,31 @@ def to_optional(optional: onnx.OptionalProto) -> Any | None:
     if elem_type == onnx.OptionalProto.UNDEFINED:
         return None
     if elem_type == onnx.OptionalProto.TENSOR:
-        return to_array(optional.tensor_value)
+        return (
+            to_array(optional.tensor_value)
+            if optional.HasField("tensor_value")
+            else None
+        )
     if elem_type == onnx.OptionalProto.SPARSE_TENSOR:
-        return to_array(optional.sparse_tensor_value)  # type: ignore[arg-type]
+        return (
+            to_array(optional.sparse_tensor_value)  # type: ignore[arg-type]
+            if optional.HasField("sparse_tensor_value")
+            else None
+        )
     if elem_type == onnx.OptionalProto.SEQUENCE:
-        return to_list(optional.sequence_value)
+        return (
+            to_list(optional.sequence_value)
+            if optional.HasField("sequence_value")
+            else None
+        )
     if elem_type == onnx.OptionalProto.MAP:
-        return to_dict(optional.map_value)
+        return to_dict(optional.map_value) if optional.HasField("map_value") else None
     if elem_type == onnx.OptionalProto.OPTIONAL:
-        return to_optional(optional.optional_value)
+        return (
+            to_optional(optional.optional_value)
+            if optional.HasField("optional_value")
+            else None
+        )
     raise TypeError("The element type in the input optional is not supported.")
 
 
