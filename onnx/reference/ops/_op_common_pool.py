@@ -182,7 +182,7 @@ def _pool(
         for i in listi2:
             try:
                 values.append(window[i])
-            except IndexError:  # noqa: PERF203
+            except IndexError:
                 continue
         window_vals = np.array(values)
 
