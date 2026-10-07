@@ -2717,6 +2717,49 @@ class TestReferenceEvaluator:
         got1 = ref1.run(None, feeds)
         assert_allclose(got1[0], expected)
 
+    @staticmethod
+    def _max_pool_same_expected(x, kernel, stride, auto_pad):
+        # Explicit SAME padding of the last axis with -inf, then a strided
+        # sliding max. An odd padding puts the extra element at the end for
+        # SAME_UPPER and at the beginning for SAME_LOWER.
+        n = x.shape[-1]
+        out = -(-n // stride)
+        pad = max(0, (out - 1) * stride + kernel - n)
+        begin = pad // 2 if auto_pad == "SAME_UPPER" else pad - pad // 2
+        padded = np.pad(
+            x, [(0, 0)] * (x.ndim - 1) + [(begin, pad - begin)], constant_values=-np.inf
+        )
+        return np.stack(
+            [
+                padded[..., i * stride : i * stride + kernel].max(axis=-1)
+                for i in range(out)
+            ],
+            axis=-1,
+        )
+
+    @pytest.mark.parametrize("auto_pad", ["SAME_UPPER", "SAME_LOWER"])
+    @pytest.mark.parametrize(("kernel", "stride"), [(4, 2), (3, 2), (2, 1)])
+    def test_max_pool_1d_same_padding(self, auto_pad, kernel, stride):
+        X = make_tensor_value_info("X", TensorProto.FLOAT, [None, None, None])
+        Y = make_tensor_value_info("Y", TensorProto.FLOAT, [None, None, None])
+        node = make_node(
+            "MaxPool",
+            ["X"],
+            ["Y"],
+            kernel_shape=[kernel],
+            strides=[stride],
+            auto_pad=auto_pad,
+        )
+        graph = make_graph([node], "g", [X], [Y])
+        onnx_model = make_model(graph, opset_imports=[make_opsetid("", 18)])
+        x = np.array([[[3, 9, 1, 7, 2, 8, 4]]], dtype=np.float32)
+
+        got = ReferenceEvaluator(onnx_model).run(None, {"X": x})[0]
+
+        expected = self._max_pool_same_expected(x, kernel, stride, auto_pad)
+        assert got.shape == (1, 1, -(-7 // stride))
+        assert_allclose(got, expected)
+
     def test_max_pool_2d_2(self):
         X = make_tensor_value_info("X", TensorProto.FLOAT, [None, None, None, None])
         Y = make_tensor_value_info("Y", TensorProto.FLOAT, [None, None, None, None])
