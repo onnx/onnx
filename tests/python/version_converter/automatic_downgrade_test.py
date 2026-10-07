@@ -180,6 +180,22 @@ class TestAutomaticDowngrade(automatic_conversion_test_base.TestAutomaticConvers
         """,
         )
 
+    def test_GroupedMatMul_downgrade_fails(self) -> None:
+        self._test_model_conversion_fails(
+            to_opset=28,
+            model="""
+            <ir_version: 13, opset_import: [ "" : 29]>
+            grouped_matmul (
+                float[4, 3] input,
+                float[2, 3, 5] weights,
+                int64[4, 2] group_indices
+            ) => (float[4, 2, 5] output)
+            {
+                output = GroupedMatMul (input, weights, group_indices)
+            }
+        """,
+        )
+
     def test_BitShift(self) -> None:
         self._test_op_downgrade(
             "BitShift",

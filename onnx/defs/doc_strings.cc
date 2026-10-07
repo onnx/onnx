@@ -2348,6 +2348,24 @@ numeric_limits::lowest() and numeric_limits::max(), respectively.
 When 'min' is greater than 'max', the clip operator sets all the 'input' values to
 the value of 'max'. Thus, this is equivalent to 'Min(max, Max(input, min))'.
 )DOC";
+const char kDoc_GroupedMatMul_ver29[] = R"DOC(
+GroupedMatMul multiplies each row of a token matrix by one or more selected
+group (expert) weight matrices. Given `input` of shape `[M, K]`, `weights` of
+shape `[G, K, N]`, and `group_indices` of shape `[M, k]`, the output has shape
+`[M, k, N]` and is defined by:
+
+```
+output[m, i] = input[m] @ weights[group_indices[m, i]]
+```
+
+If `bias` is present, `bias[group_indices[m, i]]` is added to each corresponding
+result. Every value in `group_indices` must be in the range `[0, G)`.
+
+This operator is represented as a context-dependent function. Its decomposition
+uses Gather, Expand, and MatMul to define the result, while runtimes are expected
+to use a fused grouped-matrix-multiplication implementation to avoid materializing
+the expanded intermediate tensors.
+)DOC";
 const char kDoc_SwiGLU_ver28[] = R"DOC(
 SwiGLU is a gated activation that takes two inputs, a gate `A` and a linear (value)
 input `B`, and produces one output `Y`. It applies the Swish activation to the gate
@@ -6729,6 +6747,7 @@ const char kDoc_SoftmaxCrossEntropyLoss_ver13[] = "";
 const char kDoc_MatMulInteger_ver10[] = "";
 const char kDoc_Gemm_ver13[] = "";
 const char kDoc_Clip_ver13[] = "";
+const char kDoc_GroupedMatMul_ver29[] = "";
 const char kDoc_SwiGLU_ver28[] = "";
 const char kDoc_Swish_ver24[] = "";
 const char kDoc_gelu_ver20[] = "";

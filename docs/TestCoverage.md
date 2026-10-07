@@ -6,7 +6,7 @@
 * [Overall Test Coverage](#overall-test-coverage)
 # Node Test Coverage
 ## Summary
-Node tests have covered 193/202 (95.54%, 5 generators excluded) common operators.
+Node tests have covered 194/203 (95.57%, 5 generators excluded) common operators.
 
 Node tests have covered 1/1 (100.00%, 0 generators excluded) experimental operators.
 
@@ -13693,6 +13693,163 @@ expect(
     inputs=[x, scale, bias],
     outputs=[y],
     name="test_group_normalization_example",
+)
+```
+
+</details>
+
+
+### GroupedMatMul
+There are 6 test cases, listed as following:
+<details>
+<summary>groupedmatmul</summary>
+
+```python
+node = onnx.helper.make_node(
+    "GroupedMatMul",
+    inputs=["input", "weights", "group_indices"],
+    outputs=["output"],
+)
+input = np.array(
+    [[1, 0, -1], [0, 1, 2], [1, 1, 0], [0, 0, 1]], dtype=np.float32
+)
+weights = np.array(
+    [[[1, 0], [0, 1], [-1, 0]], [[0, 1], [1, 0], [0, 1]]],
+    dtype=np.float32,
+)
+group_indices = np.array([[0], [1], [0], [1]], dtype=np.int64)
+output = grouped_matmul(input, weights, group_indices)
+
+expect(
+    node,
+    inputs=[input, weights, group_indices],
+    outputs=[output],
+    name="test_groupedmatmul",
+    opset_imports=[onnx.helper.make_opsetid("", 29)],
+)
+```
+
+</details>
+<details>
+<summary>single_group</summary>
+
+```python
+node = onnx.helper.make_node(
+    "GroupedMatMul",
+    inputs=["input", "weights", "group_indices"],
+    outputs=["output"],
+)
+input = np.array([[1, 2], [3, 4], [5, 6]], dtype=np.float32)
+weights = np.array([[[1, 2, 3], [4, 5, 6]]], dtype=np.float32)
+group_indices = np.zeros((3, 1), dtype=np.int64)
+output = grouped_matmul(input, weights, group_indices)
+
+expect(
+    node,
+    inputs=[input, weights, group_indices],
+    outputs=[output],
+    name="test_groupedmatmul_single_group",
+    opset_imports=[onnx.helper.make_opsetid("", 29)],
+)
+```
+
+</details>
+<details>
+<summary>with_bias</summary>
+
+```python
+node = onnx.helper.make_node(
+    "GroupedMatMul",
+    inputs=["input", "weights", "group_indices", "bias"],
+    outputs=["output"],
+)
+input = np.array([[1, 0], [0, 1]], dtype=np.float32)
+weights = np.array(
+    [[[1, 0], [0, 1]], [[0, 1], [1, 0]], [[1, 1], [0, 0]]],
+    dtype=np.float32,
+)
+group_indices = np.array([[0, 1], [2, 0]], dtype=np.int64)
+bias = np.array([[0.1, 0.2], [0.3, 0.0], [0.5, 0.5]], dtype=np.float32)
+output = grouped_matmul(input, weights, group_indices, bias)
+
+expect(
+    node,
+    inputs=[input, weights, group_indices, bias],
+    outputs=[output],
+    name="test_groupedmatmul_with_bias",
+    opset_imports=[onnx.helper.make_opsetid("", 29)],
+)
+```
+
+</details>
+<details>
+<summary>with_unused_group</summary>
+
+```python
+node = onnx.helper.make_node(
+    "GroupedMatMul",
+    inputs=["input", "weights", "group_indices"],
+    outputs=["output"],
+)
+input = np.array([[1, 2], [3, 4], [5, 6], [7, 8]], dtype=np.float32)
+weights = np.arange(12, dtype=np.float32).reshape(3, 2, 2)
+group_indices = np.array([[0], [0], [2], [2]], dtype=np.int64)
+output = grouped_matmul(input, weights, group_indices)
+
+expect(
+    node,
+    inputs=[input, weights, group_indices],
+    outputs=[output],
+    name="test_groupedmatmul_with_unused_group",
+    opset_imports=[onnx.helper.make_opsetid("", 29)],
+)
+```
+
+</details>
+<details>
+<summary>zero_selections</summary>
+
+```python
+node = onnx.helper.make_node(
+    "GroupedMatMul",
+    inputs=["input", "weights", "group_indices"],
+    outputs=["output"],
+)
+input = np.arange(6, dtype=np.float32).reshape(2, 3)
+weights = np.arange(24, dtype=np.float32).reshape(2, 3, 4)
+group_indices = np.empty((2, 0), dtype=np.int64)
+output = grouped_matmul(input, weights, group_indices)
+
+expect(
+    node,
+    inputs=[input, weights, group_indices],
+    outputs=[output],
+    name="test_groupedmatmul_zero_selections",
+    opset_imports=[onnx.helper.make_opsetid("", 29)],
+)
+```
+
+</details>
+<details>
+<summary>zero_tokens</summary>
+
+```python
+node = onnx.helper.make_node(
+    "GroupedMatMul",
+    inputs=["input", "weights", "group_indices"],
+    outputs=["output"],
+)
+input = np.empty((0, 3), dtype=np.float32)
+weights = np.arange(24, dtype=np.float32).reshape(2, 3, 4)
+group_indices = np.empty((0, 2), dtype=np.int64)
+output = grouped_matmul(input, weights, group_indices)
+
+expect(
+    node,
+    inputs=[input, weights, group_indices],
+    outputs=[output],
+    name="test_groupedmatmul_zero_tokens",
+    opset_imports=[onnx.helper.make_opsetid("", 29)],
 )
 ```
 
