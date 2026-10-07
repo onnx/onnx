@@ -3015,6 +3015,35 @@ class TestReferenceEvaluator:
         got1 = ref1.run(None, feeds)
         assert_allclose(got1[0], expected)
 
+    def test_conv_transpose_group_in_channels_differ_from_out_channels(self):
+        # 4 input channels, 2 groups, 3 output channels per group: the input
+        # rows of W per group (2) differ from the output channels per group (3)
+        X = make_tensor_value_info("X", TensorProto.FLOAT, [None, None, None, None])
+        W = make_tensor_value_info("W", TensorProto.FLOAT, [None, None, None, None])
+        Y = make_tensor_value_info("Y", TensorProto.FLOAT, [None, None, None, None])
+        node = make_node("ConvTranspose", ["X", "W"], ["Y"], group=2)
+        graph = make_graph([node], "g", [X, W], [Y])
+        onnx_model = make_model(graph, opset_imports=[make_opsetid("", 16)])
+        x = np.arange(1 * 4 * 2 * 3).reshape((1, 4, 2, 3)).astype(np.float32)
+        w = np.arange(4 * 3 * 1 * 1).reshape((4, 3, 1, 1)).astype(np.float32)
+
+        got = ReferenceEvaluator(onnx_model).run(None, {"X": x, "W": w})[0]
+
+        # with a 1x1 kernel, output channel g*3+m of group g is
+        # sum over the group's input channels c of x[:, c] * w[c, m]
+        expected = np.concatenate(
+            [
+                np.einsum(
+                    "nchw,cm->nmhw",
+                    x[:, 2 * g : 2 * g + 2],
+                    w[2 * g : 2 * g + 2, :, 0, 0],
+                )
+                for g in range(2)
+            ],
+            axis=1,
+        )
+        assert_allclose(got, expected)
+
     def test_stft(self):
         signal = make_tensor_value_info("signal", TensorProto.FLOAT, [None, None, None])
         frame_step = make_tensor_value_info("frame_step", TensorProto.INT64, [None])
