@@ -21,23 +21,17 @@ class LpPool(CommonPool):
         strides=None,
         count_include_pad=None,
     ):
-        # utilize AvgPool the same fashion Pytorch does. Note that there is a difference in computation.
-        # it needs another PR to address.
-        # https://github.com/pytorch/pytorch/blob/f58ba553b78db7f88477f9ba8c9333bd1590e30a/torch/nn/functional.py#L1015
-        power_average = CommonPool._run(
+        result = CommonPool._run(
             self,
-            "AVG",
+            "LPPOOL",
             count_include_pad,
-            np.power(np.absolute(x.astype(np.float64)), p),
+            x.astype(np.float64),
             auto_pad=auto_pad,
             ceil_mode=ceil_mode,
             dilations=dilations,
             kernel_shape=kernel_shape,
             pads=pads,
             strides=strides,
+            p=p,
         )
-
-        kernel_element_count = np.prod(kernel_shape, dtype=np.int64)
-        return (
-            np.power(kernel_element_count * power_average[0], 1.0 / p).astype(x.dtype),
-        )
+        return (result[0].astype(x.dtype),)

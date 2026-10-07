@@ -208,7 +208,7 @@ def pool(
         pads = pads * spatial_size * 2
     strides = strides or [1] * spatial_size
 
-    if pooling_type == "AVG":
+    if pooling_type in {"AVG", "LPPOOL"}:
         effective_kernel = tuple(
             (kernel[i] - 1) * dilations[i] + 1 for i in range(spatial_size)
         )
@@ -230,6 +230,28 @@ def pool(
             return windows[slices]
 
         kernel_axes = tuple(range(-spatial_size, 0))
+        if pooling_type == "LPPOOL":
+            windows = sliding_windows(padded)
+            chunk_size = max(1, 262144 // int(np.prod(kernel)))
+            for prefix in np.ndindex(windows.shape[: -spatial_size - 1]):
+                for start in range(0, windows.shape[-spatial_size - 1], chunk_size):
+                    output_slice = (*prefix, slice(start, start + chunk_size))
+                    values = np.abs(windows[output_slice].astype(np.float64))
+                    if count_include_pad != 1:
+                        values = np.where(np.isnan(values), 0, values)
+                    scales = np.max(values, axis=kernel_axes, keepdims=True)
+                    scaled = np.zeros_like(values)
+                    np.divide(
+                        values,
+                        scales,
+                        out=scaled,
+                        where=(scales != 0) & np.isfinite(scales),
+                    )
+                    norms = np.sum(scaled**p, axis=kernel_axes) ** (1.0 / p)
+                    scales = np.squeeze(scales, axis=kernel_axes)
+                    norms *= np.where(np.isfinite(scales), scales, 1)
+                    y[output_slice] = np.where(np.isfinite(scales), norms, scales)
+            return y
         if count_include_pad == 1:
             return np.mean(sliding_windows(padded), axis=kernel_axes).astype(
                 padded.dtype
@@ -291,12 +313,6 @@ def pool(
             f = np.average
         elif pooling_type == "MAX":
             f = np.max
-        elif pooling_type == "LPPOOL":
-
-            def lp_pool(x: np.array, p: int = p) -> float:
-                return np.sum(np.abs(x) ** p) ** (1.0 / p)
-
-            f = lp_pool
         else:
             raise NotImplementedError(
                 f"Pooling type {pooling_type} does not support. Should be AVG, MAX"
