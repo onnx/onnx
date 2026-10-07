@@ -40,11 +40,12 @@ class Normalizer(Base):
             norm="MAX",
             domain="ai.onnx.ml",
         )
-        x = np.array([[0.0, 0.0], [1.0, 0.0]], dtype=np.float32)
-        # Per the spec, a zero divisor leaves the row unchanged (Y == X).
-        y = x / np.where(
-            x.max(axis=1, keepdims=True) == 0, 1.0, x.max(axis=1, keepdims=True)
-        )
+        # A zero divisor leaves the row unchanged (Y == X). This must hold for
+        # an all-zero row ([0, 0]) as well as a nonzero row whose raw maximum is
+        # zero ([-2, 0]): both are returned unchanged, not zeroed out.
+        x = np.array([[0.0, 0.0], [-2.0, 0.0]], dtype=np.float32)
+        div = x.max(axis=1, keepdims=True)
+        y = x / np.where(div == 0, 1.0, div)
         expect(
             node,
             inputs=[x],

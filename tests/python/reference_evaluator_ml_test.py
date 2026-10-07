@@ -227,7 +227,13 @@ class TestReferenceEvaluatorAiOnnxMl:
 
         node = make_node("Normalizer", ["X"], ["Y"], norm="MAX", domain="ai.onnx.ml")
         graph = make_graph([node], "ml", [X], [Y])
-        model = make_model_gen_version(graph, opset_imports=OPSETS)
+        # Normalizer is an ai.onnx.ml opset-1 operator with no default-domain
+        # nodes, so build the model with only ML opset 1. Importing the default
+        # domain (OPSETS) would bump the opset/IR version past onnxruntime's
+        # limits and make _check_ort skip the comparison.
+        model = make_model_gen_version(
+            graph, opset_imports=[make_opsetid("ai.onnx.ml", 1)]
+        )
         onnx.checker.check_model(model)
 
         feeds = {"X": x}
