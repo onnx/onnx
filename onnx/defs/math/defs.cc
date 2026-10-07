@@ -1269,9 +1269,6 @@ static bool BuildContextDependentFunctionBodyGroupedMatMul(
   }
 
   schema.BuildFunction(functionProto);
-  if (!ctx.hasInput(3)) {
-    functionProto.mutable_input()->RemoveLast();
-  }
   return true;
 }
 

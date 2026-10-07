@@ -13700,7 +13700,7 @@ expect(
 
 
 ### GroupedMatMul
-There are 6 test cases, listed as following:
+There are 7 test cases, listed as following:
 <details>
 <summary>groupedmatmul</summary>
 
@@ -13801,6 +13801,35 @@ expect(
     inputs=[input, weights, group_indices],
     outputs=[output],
     name="test_groupedmatmul_with_unused_group",
+    opset_imports=[onnx.helper.make_opsetid("", 29)],
+)
+```
+
+</details>
+<details>
+<summary>without_bias_explicit_empty_input</summary>
+
+```python
+node = onnx.helper.make_node(
+    "GroupedMatMul",
+    inputs=["input", "weights", "group_indices", ""],
+    outputs=["output"],
+)
+input = np.array(
+    [[1, 0, -1], [0, 1, 2], [1, 1, 0], [0, 0, 1]], dtype=np.float32
+)
+weights = np.array(
+    [[[1, 0], [0, 1], [-1, 0]], [[0, 1], [1, 0], [0, 1]]],
+    dtype=np.float32,
+)
+group_indices = np.array([[0], [1], [0], [1]], dtype=np.int64)
+output = grouped_matmul(input, weights, group_indices)
+
+expect(
+    node,
+    inputs=[input, weights, group_indices],
+    outputs=[output],
+    name="test_groupedmatmul_without_bias_explicit_empty_input",
     opset_imports=[onnx.helper.make_opsetid("", 29)],
 )
 ```
