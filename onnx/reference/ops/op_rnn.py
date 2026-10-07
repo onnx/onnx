@@ -72,6 +72,12 @@ class CommonRNN(OpRun):
             return lambda x: x * alpha + beta
         raise RuntimeError(f"Unknown activation function {name!r}.")
 
+    def _clip(self, x):
+        # `clip` bounds the input of the activations
+        if self.clip is None:
+            return x
+        return np.clip(x, -self.clip, self.clip)
+
     def _f_tanh(self, x):
         return np.tanh(x)
 
@@ -92,9 +98,11 @@ class CommonRNN(OpRun):
         H_t = H_0
         for x in X:
             H = self.f1(
-                np.dot(x, np.transpose(W))
-                + np.dot(H_t, np.transpose(R))
-                + np.add(*np.split(B, 2))
+                self._clip(
+                    np.dot(x, np.transpose(W))
+                    + np.dot(H_t, np.transpose(R))
+                    + np.add(*np.split(B, 2))
+                )
             )
             h_list.append(H)
             H_t = H

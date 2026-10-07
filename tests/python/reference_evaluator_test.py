@@ -234,6 +234,39 @@ class TestReferenceEvaluator:
         checker.check_model(m)
         return m
 
+    @pytest.mark.parametrize("op_type", ["RNN", "GRU", "LSTM"])
+    def test_rnn_clip(self, op_type: str) -> None:
+        # Large weights and no recurrence: every pre-activation is 10, so with
+        # clip=0.5 each activation sees 0.5.
+        n_gates = {"RNN": 1, "GRU": 3, "LSTM": 4}[op_type]
+        X = np.ones((2, 1, 1), dtype=np.float32)
+        W = np.full((1, n_gates, 1), 10, dtype=np.float32)
+        R = np.zeros((1, n_gates, 1), dtype=np.float32)
+        graph = make_graph(
+            [make_node(op_type, ["X", "W", "R"], ["Y"], hidden_size=1, clip=0.5)],
+            "rnn_clip",
+            [
+                make_tensor_value_info("X", TensorProto.FLOAT, list(X.shape)),
+                make_tensor_value_info("W", TensorProto.FLOAT, list(W.shape)),
+                make_tensor_value_info("R", TensorProto.FLOAT, list(R.shape)),
+            ],
+            [make_tensor_value_info("Y", TensorProto.FLOAT, None)],
+        )
+        model = make_model(graph, opset_imports=[make_opsetid("", 14)])
+        (Y,) = ReferenceEvaluator(model).run(None, {"X": X, "W": W, "R": R})
+
+        sig, tanh = 1 / (1 + np.exp(-0.5)), np.tanh(0.5)
+        if op_type == "RNN":
+            expected = [tanh, tanh]
+        elif op_type == "GRU":
+            h1 = (1 - sig) * tanh
+            expected = [h1, (1 - sig) * tanh + sig * h1]
+        else:
+            c1 = sig * tanh
+            c2 = sig * c1 + sig * tanh
+            expected = [sig * np.tanh(c1), sig * np.tanh(c2)]
+        assert_allclose(Y.ravel(), np.array(expected, dtype=np.float32), rtol=1e-6)
+
     @pytest.mark.parametrize(
         "direction,num_directions",
         [("forward", 1), ("reverse", 1), ("bidirectional", 2)],
