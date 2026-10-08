@@ -657,8 +657,10 @@ class OpFunction(OpRun):
         bindings = kwargs.pop("bindings", None)
         feeds = {
             name: value
-            for name, value in zip(impl.input_names, inputs, strict=False)
-            if value is not None
+            for name, caller_name, value in zip(
+                impl.input_names, self.onnx_node.input, inputs, strict=False
+            )
+            if caller_name
         }
         attributes = self.attributes_.copy()
         attributes.update(kwargs)

@@ -762,6 +762,31 @@ class TestReferenceEvaluator:
         expected = x.sum(axis=-1, keepdims=1)
         assert_allclose(result, expected)
 
+    def test_function_with_empty_optional_input(self):
+        domain = "custom"
+        opset_imports = [make_opsetid("", 18), make_opsetid(domain, 1)]
+        function = make_function(
+            domain,
+            "HasElement",
+            ["X"],
+            ["Y"],
+            [make_node("OptionalHasElement", ["X"], ["Y"])],
+            [make_opsetid("", 18)],
+        )
+        tensor_type = onnx.helper.make_tensor_type_proto(TensorProto.FLOAT, [None])
+        optional_type = onnx.helper.make_optional_type_proto(tensor_type)
+        graph = make_graph(
+            [make_node("HasElement", ["X"], ["Y"], domain=domain)],
+            "optional_function",
+            [make_value_info("X", optional_type)],
+            [make_tensor_value_info("Y", TensorProto.BOOL, [])],
+        )
+        model = make_model(graph, opset_imports=opset_imports, functions=[function])
+
+        (result,) = ReferenceEvaluator(model).run(None, {"X": None})
+
+        assert result == np.array(False)
+
     def test_reduce_sum_square_18(self):
         X = make_tensor_value_info("X", TensorProto.FLOAT, [None, None])
         A = make_tensor_value_info("A", TensorProto.INT64, [None, None])
