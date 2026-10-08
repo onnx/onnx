@@ -41,7 +41,7 @@ jobs:
         debug_build: [0]
         onnx_ml: [1]
         protobuf_type: ['Internal']
-        python_version: ['3.14t', '3.14', '3.11']
+        python_version: ['3.15t', '3.15', '3.14t', '3.14', '3.11']
         unity_build: [0]
 
         include:
@@ -130,6 +130,8 @@ jobs:
         uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
           python-version: ${{ matrix.python_version }}
+          # Python 3.15 is still a release candidate.
+          allow-prereleases: true
 
       - name: Show versions
         run: |
