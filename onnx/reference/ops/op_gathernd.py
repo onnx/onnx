@@ -35,6 +35,9 @@ def _gather_nd_impl(
         + list(data.shape)[batch_dims + indices.shape[-1] :]
     )
 
+    if batch_dims_size == 0:
+        return (np.empty(output_shape, dtype=data.dtype),)
+
     # Placeholder for output data.
     output_data_buffer = []
 
