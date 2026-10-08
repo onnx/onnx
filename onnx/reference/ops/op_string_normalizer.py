@@ -63,12 +63,14 @@ class StringNormalizer(OpRun):
             )
         else:
             raise RuntimeTypeError("x must be a matrix or a vector.")
+        # Retain input empty strings unless they are explicit stopwords.
+        keep = (res != "") | ((x == "") & ("" not in raw_stops))
         if len(res.shape) == 2 and res.shape[0] == 1:
-            res = np.array([[w for w in res.tolist()[0] if len(w) > 0]])
+            res = np.array([res[keep].tolist()])
             if res.shape[1] == 0:
                 res = np.array([[""]])
         elif len(res.shape) == 1:
-            res = np.array([w for w in res.tolist() if len(w) > 0])
+            res = np.array(res[keep].tolist())
             if len(res) == 0:
                 res = np.array([""])
         return (res,)
