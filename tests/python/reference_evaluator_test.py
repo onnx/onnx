@@ -7340,6 +7340,27 @@ class TestReferenceEvaluator:
         assert_array_equal(mean, np.zeros((1, 1), dtype=np.float32))
         assert_array_equal(inv_std_dev, np.array([[1.0 / 256.0]], dtype=np.float32))
 
+    def test_softmax_float16_uses_float32_accumulation(self):
+        x_info = make_tensor_value_info("X", TensorProto.FLOAT16, [1, 65536])
+        y_info = make_tensor_value_info("Y", TensorProto.FLOAT16, [1, 65536])
+        model = make_model(
+            make_graph(
+                [make_node("Softmax", ["X"], ["Y"], axis=1)],
+                "softmax_float16_accumulation",
+                [x_info],
+                [y_info],
+            ),
+            opset_imports=[make_opsetid("", 23)],
+        )
+        x = np.zeros((1, 65536), dtype=np.float16)
+
+        (actual,) = ReferenceEvaluator(model).run(None, {"X": x})
+
+        expected = np.full_like(x, np.float16(1.0 / x.shape[1]))
+        assert actual.dtype == np.float16
+        assert_array_equal(actual, expected)
+        assert_allclose(actual.sum(dtype=np.float32), 1.0, rtol=0, atol=0)
+
     def test_logsoftmax_large_finite_gap_stays_finite(self):
         x_info = make_tensor_value_info("X", TensorProto.FLOAT, [1, 2])
         y_info = make_tensor_value_info("Y", TensorProto.FLOAT, [1, 2])
