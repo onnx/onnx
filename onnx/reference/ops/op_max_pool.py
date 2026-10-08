@@ -91,7 +91,10 @@ class MaxPool(CommonPool):
                     output_spatial_shape[i] - 1
                 ) * strides[i] >= input_spatial_shape[i] + new_pads[i][0]
                 if need_to_reduce_out_size_in_ceil_mode:
-                    output_spatial_shape[i] -= 1
+                    # Ignore all windows starting in the right padding.
+                    output_spatial_shape[i] = (
+                        input_spatial_shape[i] + new_pads[i][0] + strides[i] - 1
+                    ) // strides[i]
         else:
             for i in range(len(input_spatial_shape)):
                 output_spatial_shape[i] = int(
