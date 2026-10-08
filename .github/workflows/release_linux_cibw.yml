@@ -26,14 +26,14 @@ jobs:
       fail-fast: false
       matrix:
         build:
-          - "cp310-manylinux_x86_64"
-          - "cp310-manylinux_aarch64"
           - "cp311-manylinux_x86_64"
           - "cp311-manylinux_aarch64"
           - "cp312-manylinux_x86_64"
           - "cp312-manylinux_aarch64"
           - "cp314t-manylinux_x86_64"
+          - "cp315t-manylinux_x86_64"
           - "cp314t-manylinux_aarch64"
+          - "cp315t-manylinux_aarch64"
 
     runs-on: ${{ contains(matrix.build, 'aarch64') && 'ubuntu-24.04-arm' || 'ubuntu-24.04' }}
 
