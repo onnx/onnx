@@ -93,7 +93,7 @@ class Pad_2(OpRun):
 class Pad_11(OpRun):
     def _run(self, data, pads, constant_value=None, mode=None):
         if constant_value is None:
-            constant_value = 0
+            constant_value = "" if data.dtype.kind in {"O", "S", "U"} else 0
         return (
             _pad_impl(data, pads, mode=mode, constant_values=constant_value, axes=None),
         )
@@ -102,7 +102,7 @@ class Pad_11(OpRun):
 class Pad_18(OpRun):
     def _run(self, data, pads, constant_value=None, axes=None, mode=None):
         if constant_value is None:
-            constant_value = 0
+            constant_value = "" if data.dtype.kind in {"O", "S", "U"} else 0
         return (
             _pad_impl(data, pads, mode=mode, constant_values=constant_value, axes=axes),
         )
