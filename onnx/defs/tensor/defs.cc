@@ -19,6 +19,199 @@
 
 namespace ONNX_NAMESPACE {
 
+static int64_t PackedByteCount(int64_t count, int64_t bits) {
+  return (count / 8) * bits + ((count % 8) * bits + 7) / 8;
+}
+
+static void InferPackedShape(InferenceContext& ctx, bool unpack) {
+  propagateElemTypeFromInputToOutput(ctx, 0, 0);
+  const auto bits = getAttribute(ctx, "bits", int64_t{0});
+  if (bits < 1 || bits > 8) {
+    fail_shape_inference("bits must be between 1 and 8.");
+  }
+  if (unpack && hasInputShape(ctx, 1) && getInputShape(ctx, 1).dim_size() != 0) {
+    fail_shape_inference("count must be a scalar.");
+  }
+  int64_t count = -1;
+  if (unpack) {
+    const auto* data = ctx.getInputData(1);
+    if (data != nullptr) {
+      if (data->dims_size() != 0 || data->data_type() != TensorProto::INT64) {
+        fail_shape_inference("count must be a scalar int64 tensor.");
+      }
+      const auto values = ParseData<int64_t>(data);
+      if (values.size() != 1 || values[0] < 0) {
+        fail_shape_inference("count must be nonnegative.");
+      }
+      count = values[0];
+    }
+  }
+  if (!hasNInputShapes(ctx, 1)) {
+    return;
+  }
+  const auto& input_shape = getInputShape(ctx, 0);
+  const auto rank = input_shape.dim_size();
+  if (rank == 0) {
+    fail_shape_inference("Input must have rank at least 1.");
+  }
+  auto* output_shape = getOutputShape(ctx, 0);
+  for (int i = 0; i < rank - 1; ++i) {
+    *output_shape->add_dim() = input_shape.dim(i);
+  }
+  const auto& last = input_shape.dim(rank - 1);
+  auto* output_last = output_shape->add_dim();
+  if (unpack) {
+    if (count >= 0) {
+      output_last->set_dim_value(count);
+      if (last.has_dim_value() && last.dim_value() != PackedByteCount(count, bits)) {
+        fail_shape_inference("Packed last dimension must equal ceil(count * bits / 8).");
+      }
+    }
+  } else if (last.has_dim_value()) {
+    output_last->set_dim_value(PackedByteCount(last.dim_value(), bits));
+  } else if (bits == 8) {
+    *output_last = last;
+  }
+}
+
+static void InferPackShape(InferenceContext& ctx) {
+  InferPackedShape(ctx, false);
+}
+
+static void InferUnpackShape(InferenceContext& ctx) {
+  InferPackedShape(ctx, true);
+}
+
+ONNX_OPERATOR_SET_SCHEMA(
+    Pack,
+    29,
+    OpSchema()
+        .SetDoc(R"DOC(
+Packs unsigned integer codes into a contiguous least-significant-bit-first
+bitstream independently along the last axis. Input and output are UINT8 tensors
+of rank at least 1. Each input element must be in [0, 2^bits - 1].
+For input shape [..., N], the output shape is [..., ceil(N * bits / 8)].
+All leading dimensions are preserved, including zero dimensions.
+
+In each row, bit k of code i is stored at bit (i * bits + k) % 8 of byte
+floor((i * bits + k) / 8), for 0 <= k < bits. Codes may cross byte boundaries.
+Rows start on byte boundaries, and unused high bits in each row's final byte
+are zero. An empty last axis produces an empty last axis.
+
+For example, bits=3 packs [0, 1, 2, 3, 4, 5, 6, 7] into [136, 198, 250].
+This follows the canonical contiguous bitstream proposed in
+https://github.com/microsoft/onnxruntime/pull/32657, rather than a backend-specific
+split-plane layout. This operator packs code bit patterns, not quantized
+floating-point values; signed interpretation and quantization are separate.
+)DOC")
+        .Attr("bits", "Number of bits per unsigned code, from 1 to 8 inclusive.", AttributeProto::INT)
+        .Input(0, "X", "Unsigned codes, each representable in bits bits.", "T")
+        .Output(0, "Y", "Packed bytes, independently packed along the last axis.", "T")
+        .TypeConstraint("T", {"tensor(uint8)"}, "Unsigned byte tensors.")
+        .TypeAndShapeInferenceFunction(InferPackShape)
+        .FunctionBody(
+            R"ONNX(
+        {
+            bits = Constant <value_int: int = @bits>()
+            zero = Constant <value = int64 {0}>()
+            one = Constant <value = int64 {1}>()
+            seven = Constant <value = int64 {7}>()
+            eight = Constant <value = int64 {8}>()
+            last = Constant <value = int64 {-1}>()
+            axes = Constant <value = int64[1] {-1}>()
+            pads = Constant <value = int64[2] {0, 1}>()
+            bit_positions = Constant <value = uint8[8] {0, 1, 2, 3, 4, 5, 6, 7}>()
+            bit_positions64 = Cast <to = 7>(bit_positions)
+            one8 = Constant <value = uint8 {1}>()
+            shape = Shape(X)
+            count = Gather(shape, last)
+            num_bits = Mul(count, bits)
+            rounded = Add(num_bits, seven)
+            num_bytes = Div(rounded, eight)
+            byte_indices = Range(zero, num_bytes, one)
+            starts = Mul(byte_indices, eight)
+            starts_column = Unsqueeze(starts, axes)
+            offsets = Add(starts_column, bit_positions64)
+            code_indices = Div(offsets, bits)
+            safe_indices = Min(code_indices, count)
+            code_offsets = Mod(offsets, bits)
+            shifts = Cast <to = 2>(code_offsets)
+            padded = Pad(X, pads, , axes)
+            codes = Gather <axis = -1>(padded, safe_indices)
+            shifted = BitShift <direction = "RIGHT">(codes, shifts)
+            code_bits = BitwiseAnd(shifted, one8)
+            placed = BitShift <direction = "LEFT">(code_bits, bit_positions)
+            placed64 = Cast <to = 7>(placed)
+            bytes64 = ReduceSum <keepdims = 0>(placed64, axes)
+            Y = Cast <to = 2>(bytes64)
+        }
+        )ONNX",
+            29));
+
+ONNX_OPERATOR_SET_SCHEMA(
+    Unpack,
+    29,
+    OpSchema()
+        .SetDoc(R"DOC(
+Unpacks the contiguous least-significant-bit-first bitstream defined by Pack,
+independently along the last axis, into UINT8 unsigned codes. Input X must have
+rank at least 1. The scalar int64 input count gives the number of codes per row
+and must be nonnegative. For input shape [..., B], B must equal
+ceil(count * bits / 8), and the output shape is [..., count].
+
+Code i consists of bits at offsets i * bits through (i + 1) * bits - 1 in its
+row, with the first bit being the least significant. Unused high bits in the
+last byte are padding and are ignored; Pack always writes them as zero.
+All leading dimensions are preserved, including zero dimensions.
+count=0 requires an empty last axis and produces an empty last axis.
+
+For example, bits=3 and count=8 unpack [136, 198, 250] into
+[0, 1, 2, 3, 4, 5, 6, 7]. The explicit count distinguishes padding from codes.
+Signed codes, floating-point scaling, and zero-point adjustment are not part
+of this operator.
+)DOC")
+        .Attr("bits", "Number of bits per unsigned code, from 1 to 8 inclusive.", AttributeProto::INT)
+        .Input(0, "X", "Packed unsigned bytes.", "T")
+        .Input(1, "count", "Nonnegative scalar number of unpacked codes per row.", "tensor(int64)")
+        .Output(0, "Y", "Unpacked unsigned codes, one byte per code.", "T")
+        .TypeConstraint("T", {"tensor(uint8)"}, "Unsigned byte tensors.")
+        .TypeAndShapeInferenceFunction(InferUnpackShape)
+        .FunctionBody(
+            R"ONNX(
+        {
+            bits = Constant <value_int: int = @bits>()
+            zero = Constant <value = int64 {0}>()
+            one = Constant <value = int64 {1}>()
+            eight = Constant <value = int64 {8}>()
+            eight16 = Constant <value = uint16 {8}>()
+            axes = Constant <value = int64[1] {-1}>()
+            pads = Constant <value = int64[2] {0, 1}>()
+            indices = Range(zero, count, one)
+            offsets = Mul(indices, bits)
+            byte_indices = Div(offsets, eight)
+            next_indices = Add(byte_indices, one)
+            bit_offsets = Mod(offsets, eight)
+            shifts = Cast <to = 4>(bit_offsets)
+            one64 = Cast <to = 13>(one)
+            bits64 = Cast <to = 13>(bits)
+            limit = BitShift <direction = "LEFT">(one64, bits64)
+            limit_signed = Cast <to = 7>(limit)
+            mask_signed = Sub(limit_signed, one)
+            mask = Cast <to = 4>(mask_signed)
+            padded = Pad(X, pads, , axes)
+            low8 = Gather <axis = -1>(padded, byte_indices)
+            high8 = Gather <axis = -1>(padded, next_indices)
+            low = Cast <to = 4>(low8)
+            high = Cast <to = 4>(high8)
+            high_shifted = BitShift <direction = "LEFT">(high, eight16)
+            word = BitwiseOr(low, high_shifted)
+            shifted = BitShift <direction = "RIGHT">(word, shifts)
+            codes = BitwiseAnd(shifted, mask)
+            Y = Cast <to = 2>(codes)
+        }
+        )ONNX",
+            29));
+
 ONNX_OPERATOR_SET_SCHEMA(
     Cast,
     28,
