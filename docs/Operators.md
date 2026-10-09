@@ -14413,6 +14413,7 @@ expect(
 
   * where qmax and qmin are max and min values for quantization range i.e. [0, 255] in case of uint8
   * data range is adjusted to include 0.
+  * when the adjusted data range is 0, which happens when every value of x is 0, the numerator is replaced with 1, so that `y_scale` is `1 / (qmax - qmin)` instead of 0. This keeps `y_scale` nonzero and avoids a division by zero in the zero point calculation below.
 
   Zero point is calculated as:
   ```
@@ -14524,6 +14525,23 @@ expect(
     inputs=[X],
     outputs=[Y, Y_Scale, Y_ZeroPoint],
     name="test_dynamicquantizelinear_min_adjusted",
+)
+
+# All values are zero, so the data range is zero. The scale must not be
+# zero: the numerator is replaced with 1, giving 1 / 255. Without that
+# the zero point calculation would divide by zero.
+X = np.zeros((3, 4), dtype=np.float32)
+
+# expected scale 0.0039215686 and zero point 0
+Y_Scale = np.float32(1.0 / (255 - 0))  # uint8 -> [0, 255]
+Y_ZeroPoint = np.uint8(0)
+Y = np.zeros((3, 4), dtype=np.uint8)
+
+expect(
+    node,
+    inputs=[X],
+    outputs=[Y, Y_Scale, Y_ZeroPoint],
+    name="test_dynamicquantizelinear_zero_range",
 )
 ```
 
