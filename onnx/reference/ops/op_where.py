@@ -18,4 +18,4 @@ class Where(OpRun):
             raise RuntimeError(
                 f"x and y should share the same dtype {x.dtype} != {y.dtype}"
             )
-        return (np.where(condition, x, y).astype(x.dtype),)
+        return (np.where(condition, x, y),)
