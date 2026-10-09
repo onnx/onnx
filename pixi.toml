@@ -100,7 +100,7 @@ cmake = ">=3.31.5"
 cxx-compiler = ">=1.8.0"
 # follows requirements-dev.txt
 ml_dtypes = ">=0.5.1"
-numpy = ">=1.22.0"
+numpy = ">=1.26"
 protobuf = ">=6.31.1"
 pytest = ">=8.3.4"
 pytest-cov = ">=6.0.0"
@@ -114,7 +114,7 @@ pillow = ">=12.2.0"
 [feature.oldies.dependencies]
 protobuf = "==6.31.1"
 python = "3.11.*"
-numpy = "==1.23.5"
+numpy = "==1.26.4"
 
 [feature.lint.dependencies]
 clang-format = ">=22.1.1"
