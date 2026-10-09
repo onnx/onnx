@@ -138,11 +138,10 @@ void OpSchema::CheckInputOutputType(struct InferenceContext& ctx) const {
     if (param.GetIsHomogeneous()) {
       const auto& type_proto = Utils::DataTypeUtils::ToType(*param_type);
       auto [it, inserted] = type_constraints.emplace(type_str, *type_proto);
-      if (!inserted) {
-        // failed to insert a new element due to a duplication, now check consistency
-        if (it->second != *type_proto) {
-          fail_check(param.GetName(), " has inconsistent type ", *Utils::DataTypeUtils::ToType(*param_type));
-        }
+      if ((!inserted) && (it->second != *type_proto))
+      // failed to insert a new element due to a duplication, now check consistency
+      {
+        fail_check(param.GetName(), " has inconsistent type ", *Utils::DataTypeUtils::ToType(*param_type));
       }
     }
   } // for inputs
@@ -854,7 +853,7 @@ OpSchema& OpSchema::FunctionBody(
 
   auto function_proto = std::make_shared<FunctionProto>();
   for (const auto& relied_opset : relied_opsets) {
-    *(function_proto->mutable_opset_import()->Add()) = relied_opset;
+    *function_proto->mutable_opset_import()->Add() = relied_opset;
   }
 
   for (const auto& node : func_nodes) {

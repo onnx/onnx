@@ -229,7 +229,7 @@ static void convPoolShapeInference_opset19(
         int64_t total_pad = residual == 0 ? checkedSubtract(effective_kernel_shape[i], stride)
                                           : checkedSubtract(effective_kernel_shape[i], residual);
         total_pad = std::max<int64_t>(total_pad, 0);
-        int64_t half_pad_small = total_pad >> 1;
+        int64_t half_pad_small = total_pad / 2;
         int64_t half_pad_big = checkedSubtract(total_pad, half_pad_small);
         if (auto_pad_attr->s() == "SAME_UPPER") {
           pads[i] = half_pad_small;
@@ -726,7 +726,7 @@ static void convTransposeShapeInference_opset11(InferenceContext& ctx) {
       for (int i = 0; i < input_dims_size; ++i) {
         int64_t total_pad = checkedSubtract(effective_kernel_shape[i], strides[i]);
         total_pad = std::max<int64_t>(total_pad, 0);
-        int64_t half_pad_small = total_pad >> 1;
+        int64_t half_pad_small = total_pad / 2;
         int64_t half_pad_big = checkedSubtract(total_pad, half_pad_small);
         if (auto_pad_attr->s() == "SAME_UPPER") {
           pads[i] = half_pad_small;
@@ -774,13 +774,12 @@ static void convTransposeShapeInference_opset11(InferenceContext& ctx) {
   if (output_shape_presented) {
     size_of_output = static_cast<int>(output_shape.size());
     for (int i = 0; i < size_of_output; ++i) {
-      if (input_shape.dim(i + 2).has_dim_value()) {
-        if (output_shape[i] < input_shape.dim(i + 2).dim_value()) {
-          // TODO(ONNX): throw exception?
-          return; // output shape value cannot be smaller than the input shape
-                  // value
-        }
+      if ((input_shape.dim(i + 2).has_dim_value()) && (output_shape[i] < input_shape.dim(i + 2).dim_value())) {
+        // TODO(ONNX): throw exception?
+        return; // output shape value cannot be smaller than the input shape
+                // value
       }
+
       final_output_shape->add_dim()->set_dim_value(output_shape[i]);
     }
     return;
@@ -2062,7 +2061,7 @@ static void convPoolShapeInference_opset1_to_11(
         int64_t total_pad = residual == 0 ? checkedSubtract(effective_kernel_shape[i], stride)
                                           : checkedSubtract(effective_kernel_shape[i], residual);
         total_pad = std::max<int64_t>(total_pad, 0);
-        int64_t half_pad_small = total_pad >> 1;
+        int64_t half_pad_small = total_pad / 2;
         int64_t half_pad_big = checkedSubtract(total_pad, half_pad_small);
         if (auto_pad_attr->s() == "SAME_UPPER") {
           pads[i] = half_pad_small;
@@ -3063,7 +3062,7 @@ static void convTransposeShapeInference_opset1(InferenceContext& ctx) {
       for (int i = 0; i < input_dims_size; ++i) {
         int64_t total_pad = checkedSubtract(effective_kernel_shape[i], strides[i]);
         total_pad = std::max<int64_t>(total_pad, 0);
-        int64_t half_pad_small = total_pad >> 1;
+        int64_t half_pad_small = total_pad / 2;
         int64_t half_pad_big = checkedSubtract(total_pad, half_pad_small);
         if (auto_pad_attr->s() == "SAME_UPPER") {
           pads[i] = half_pad_small;
@@ -3111,13 +3110,12 @@ static void convTransposeShapeInference_opset1(InferenceContext& ctx) {
   if (output_shape_presented) {
     size_of_output = static_cast<int>(output_shape.size());
     for (int i = 0; i < size_of_output; ++i) {
-      if (input_shape.dim(i + 2).has_dim_value()) {
-        if (output_shape[i] < input_shape.dim(i + 2).dim_value()) {
-          // TODO(ONNX): throw exception?
-          return; // output shape value cannot be smaller than the input shape
-                  // value
-        }
+      if ((input_shape.dim(i + 2).has_dim_value()) && (output_shape[i] < input_shape.dim(i + 2).dim_value())) {
+        // TODO(ONNX): throw exception?
+        return; // output shape value cannot be smaller than the input shape
+                // value
       }
+
       final_output_shape->add_dim()->set_dim_value(output_shape[i]);
     }
     return;

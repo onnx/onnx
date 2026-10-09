@@ -115,17 +115,17 @@ void gridSampleShapeInference(InferenceContext& ctx) {
 
   auto* output_shape = getOutputShape(ctx, 0);
   // N
-  Dim& N = *(output_shape->add_dim());
+  Dim& N = *output_shape->add_dim();
   // The first call sets the dimension using the dimensions from input_shape.
   unifyDim(input_shape.dim(0), N);
   // The second call checks the dimension using the dimensions from grid_shape.
   unifyDim(grid_shape.dim(0), N);
   // C
-  Dim& C = *(output_shape->add_dim());
+  Dim& C = *output_shape->add_dim();
   unifyDim(input_shape.dim(1), C);
   // Other Dimensions.
   for (int i = 0; i < num_dims - 2; ++i) {
-    Dim& D = *(output_shape->add_dim());
+    Dim& D = *output_shape->add_dim();
     unifyDim(grid_shape.dim(1 + i), D);
   }
 }
@@ -172,10 +172,8 @@ static void resizeShapeInferenceVersioned(InferenceContext& ctx, int opset_versi
     scales = nullptr;
   }
 
-  if (opset_version >= 13) {
-    if (hasScalesInput + hasSizesInput != 1) {
-      fail_shape_inference("Either `sizes` or `scales` must be provided, but not both of them");
-    }
+  if ((opset_version >= 13) && (hasScalesInput + hasSizesInput != 1)) {
+    fail_shape_inference("Either `sizes` or `scales` must be provided, but not both of them");
   }
 
   const auto* const keep_aspect_ratio_policy_attr = ctx.getAttribute("keep_aspect_ratio_policy");
