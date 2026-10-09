@@ -22969,7 +22969,7 @@ This version of the operator has been available since version 19 of the default 
 <dt><tt>B</tt> (optional) : T</dt>
 <dd>Optional 1D bias of length oC to be added to the convolution. Default is a tensor of zeros.</dd>
 <dt><tt>mask</tt> (optional) : T</dt>
-<dd>The mask tensor to be applied to each position in the convolution kernel. It has shape (N, offset_group * kH * kW, oH, oW) for 2D data or (N, offset_group * k1 * k2 * ... * kn * n, o1, o2, ... , on) for nD data. Default is a tensor of ones.</dd>
+<dd>The mask tensor to be applied to each position in the convolution kernel. It has shape (N, offset_group * kH * kW, oH, oW) for 2D data or (N, offset_group * k1 * k2 * ... * kn, o1, o2, ... , on) for nD data. Default is a tensor of ones.</dd>
 </dl>
 
 #### Outputs
@@ -26451,7 +26451,7 @@ This version of the operator has been available since version 22 of the default 
 <dt><tt>B</tt> (optional) : T</dt>
 <dd>Optional 1D bias of length oC to be added to the convolution. Default is a tensor of zeros.</dd>
 <dt><tt>mask</tt> (optional) : T</dt>
-<dd>The mask tensor to be applied to each position in the convolution kernel. It has shape (N, offset_group * kH * kW, oH, oW) for 2D data or (N, offset_group * k1 * k2 * ... * kn * n, o1, o2, ... , on) for nD data. Default is a tensor of ones.</dd>
+<dd>The mask tensor to be applied to each position in the convolution kernel. It has shape (N, offset_group * kH * kW, oH, oW) for 2D data or (N, offset_group * k1 * k2 * ... * kn, o1, o2, ... , on) for nD data. Default is a tensor of ones.</dd>
 </dl>
 
 #### Outputs
