@@ -33,7 +33,9 @@ jobs:
           - "cp312-win32"
           - "cp312-win_arm64"
           - "cp314t-win_amd64"
+          - "cp315t-win_amd64"
           - "cp314t-win_arm64"
+          - "cp315t-win_arm64"
     runs-on: ${{ contains(matrix.build, 'arm64') && 'windows-11-arm' || 'windows-2022' }}
 
     steps:
