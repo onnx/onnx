@@ -273,12 +273,14 @@ class TestNumpyHelper:
         just_below_two_to_negative_126 = np.array(
             [0x380FFFFFFFFFFFFF], dtype=np.uint64
         ).view(np.float64)
-        np.testing.assert_array_equal(
-            numpy_helper.to_float8e8m0(
-                just_below_two_to_negative_126, round_mode="down"
-            ).view(np.uint8),
-            [0],
-        )
+        for inputs in (
+            just_below_two_to_negative_126,
+            just_below_two_to_negative_126.astype(">f8"),
+        ):
+            np.testing.assert_array_equal(
+                numpy_helper.to_float8e8m0(inputs, round_mode="down").view(np.uint8),
+                [0],
+            )
 
         np.testing.assert_array_equal(
             numpy_helper.to_float8e8m0(

@@ -36,7 +36,7 @@ def to_float8e8m0(
         np.ndarray: Array of ml_dtypes.float8_e8m0fnu values.
     """
     array = np.asarray(x)
-    if array.dtype not in (np.dtype(np.float32), np.dtype(np.float64)):
+    if array.dtype.kind != "f" or array.dtype.itemsize not in (4, 8):
         array = array.astype(np.float32)
 
     magnitude = np.abs(array)
