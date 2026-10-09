@@ -24,8 +24,8 @@ def to_float8e8m0(
     saturate: bool = True,
     round_mode: str = "up",
 ) -> np.ndarray:
-    """Convert float32 NumPy array to float8e8m0 representation. If the input
-    is not a float32 array, it will be cast to one first.
+    """Convert a float32 or float64 NumPy array to float8e8m0 representation.
+    Inputs with other dtypes are cast to float32 first.
 
     Args:
         x: Input array to convert.
@@ -35,61 +35,32 @@ def to_float8e8m0(
     Returns:
         np.ndarray: Array of ml_dtypes.float8_e8m0fnu values.
     """
-    x_f32 = np.asarray(x, dtype=np.float32)
-    f_bits = x_f32.view(np.uint32)
+    array = np.asarray(x)
+    if array.dtype.kind != "f" or array.dtype.itemsize not in (4, 8):
+        array = array.astype(np.float32)
 
-    # Extract exponent bits
-    exponent = (f_bits >> 23) & 0xFF
-    exponent = exponent.astype(
-        np.uint16
-    )  # use uint16 to prevent overflow during computation
-
-    # Identify NaN or Inf
-    special_mask = exponent == 0xFF  # noqa: PLR2004
-    output = np.zeros_like(exponent, dtype=np.uint8)
-    output[special_mask] = 0xFF  # Preserve NaN/Inf as max exponent
-
-    # Process normal numbers
-    normal_mask = ~special_mask
+    magnitude = np.abs(array)
+    significand, binary_exponent = np.frexp(magnitude)
+    exponent = binary_exponent.astype(np.int16) - 1
+    exact_power_significand = 0.5
+    nearest_rounding_threshold = 0.75
+    min_exponent = -127
+    max_exponent = 127
 
     if round_mode == "nearest":
-        # Get guard, round, sticky, and least significant bits
-        g = ((f_bits & 0x400000) > 0).astype(np.uint8)
-        r = ((f_bits & 0x200000) > 0).astype(np.uint8)
-        s = ((f_bits & 0x1FFFFF) > 0).astype(np.uint8)
-        lsb = (exponent > 0).astype(np.uint8)
-
-        round_up = (g == 1) & ((r == 1) | (s == 1) | (lsb == 1))
-
-        increment = np.zeros_like(exponent)
-        increment[round_up & normal_mask] = 1
-
-        if saturate:
-            max_mask = (exponent == 0xFE) & round_up & normal_mask  # noqa: PLR2004
-            increment[max_mask] = 0  # Don't overflow past max value
-
-        exponent += increment
-
+        exponent += (significand >= nearest_rounding_threshold).astype(np.int16)
     elif round_mode == "up":
-        has_fraction = (f_bits & 0x7FFFFF) > 0
-        round_up = has_fraction & normal_mask
-
-        if saturate:
-            max_mask = (exponent == 0xFE) & round_up  # noqa: PLR2004
-            round_up[max_mask] = False
-
-        exponent += round_up.astype(np.uint16)
-
-    elif round_mode == "down":
-        pass  # No rounding needed
-
-    else:
+        exponent += (significand > exact_power_significand).astype(np.int16)
+    elif round_mode != "down":
         raise ValueError(f"Unsupported rounding mode: {round_mode}")
 
-    # Clip exponent to uint8 range
-    exponent = exponent.astype(np.uint8)
+    exponent = np.where(magnitude == 0, min_exponent, exponent)
+    exponent = np.maximum(exponent, min_exponent)
+    if saturate:
+        exponent = np.minimum(exponent, max_exponent)
 
-    output[normal_mask] = exponent[normal_mask]
+    normal_mask = np.isfinite(magnitude) & (exponent <= max_exponent)
+    output = np.where(normal_mask, exponent - min_exponent, 0xFF).astype(np.uint8)
 
     return output.view(ml_dtypes.float8_e8m0fnu)
 
@@ -238,6 +209,28 @@ def _unpack_6bit(data: np.ndarray, dims: Sequence[int]) -> npt.NDArray[np.uint8]
     return unpacked.reshape(-1)[:original_size].reshape(dims)
 
 
+def _reshape_or_raise(
+    array: np.ndarray, dims: Sequence[int], tensor: onnx.TensorProto
+) -> np.ndarray:
+    """Reshape ``array`` to ``dims``, raising a more actionable error on mismatch.
+
+    A size mismatch here often means the bytes being parsed are not actually a
+    TensorProto: protobuf does not encode message-type information, so bytes
+    from a different message type (e.g. OptionalProto, SequenceProto) can be
+    silently misparsed as a TensorProto instead of failing to parse.
+    """
+    try:
+        return array.reshape(dims)
+    except ValueError as e:
+        raise ValueError(
+            f"{e} Failed to reshape tensor '{tensor.name}'. This can happen "
+            "when the parsed bytes are not actually a TensorProto; protobuf "
+            "does not encode message-type information, so a different message "
+            "type (e.g. OptionalProto, SequenceProto, MapProto) can be "
+            "silently misparsed as one."
+        ) from e
+
+
 def to_array(tensor: onnx.TensorProto, base_dir: str = "") -> np.ndarray:  # noqa: PLR0911
     """Converts a tensor def object to a numpy array.
 
@@ -266,15 +259,23 @@ def to_array(tensor: onnx.TensorProto, base_dir: str = "") -> np.ndarray:  # noq
     if tensor.data_type == onnx.TensorProto.STRING:
         utf8_strings = getattr(tensor, storage_field)
         ss = [s.decode("utf-8") for s in utf8_strings]
-        return np.asarray(ss).astype(np_dtype).reshape(dims)
+        return _reshape_or_raise(np.asarray(ss).astype(np_dtype), dims, tensor)
 
-    # Load raw data from external tensor if it exists
+    # Load raw data from external tensor if it exists, without mutating the
+    # input tensor: writing the data back into `tensor.raw_data` would leave
+    # the tensor's data_location/external_data fields stale, corrupting a
+    # subsequent save of the model.
+    external_raw_data = None
     if onnx.external_data_helper.uses_external_data(tensor):
-        onnx.external_data_helper.load_external_data_for_tensor(tensor, base_dir)
+        external_raw_data = onnx.external_data_helper._read_external_data_bytes(
+            tensor, base_dir
+        )
 
-    if tensor.HasField("raw_data"):
+    if external_raw_data is not None or tensor.HasField("raw_data"):
         # Raw_bytes support: using frombuffer.
-        raw_data = tensor.raw_data
+        raw_data = (
+            external_raw_data if external_raw_data is not None else tensor.raw_data
+        )
         if sys.byteorder == "big":
             # Convert endian from little to big
             raw_data = np.frombuffer(raw_data, dtype=np_dtype).byteswap().tobytes()
@@ -303,7 +304,7 @@ def to_array(tensor: onnx.TensorProto, base_dir: str = "") -> np.ndarray:  # noq
             unpacked = _unpack_6bit(data, dims)
             return unpacked.view(np_dtype)
 
-        return np.frombuffer(raw_data, dtype=np_dtype).reshape(dims)
+        return _reshape_or_raise(np.frombuffer(raw_data, dtype=np_dtype), dims, tensor)
 
     if tensor_dtype in {
         onnx.TensorProto.BFLOAT16,
@@ -311,13 +312,13 @@ def to_array(tensor: onnx.TensorProto, base_dir: str = "") -> np.ndarray:  # noq
         onnx.TensorProto.INT16,
         onnx.TensorProto.UINT16,
     }:
-        return (
+        return _reshape_or_raise(
             np.array(tensor.int32_data, dtype=np.int32)
             .view(np.uint32)
-            .astype(np.uint16)
-            .reshape(dims)
-            .view(np_dtype)
-        )
+            .astype(np.uint16),
+            dims,
+            tensor,
+        ).view(np_dtype)
 
     if tensor_dtype in {
         onnx.TensorProto.FLOAT8E4M3FN,
@@ -327,12 +328,13 @@ def to_array(tensor: onnx.TensorProto, base_dir: str = "") -> np.ndarray:  # noq
         onnx.TensorProto.FLOAT8E8M0,
         onnx.TensorProto.BOOL,
     }:
-        return (
+        return _reshape_or_raise(
             np.array(tensor.int32_data, dtype=np.int32)
             .view(np.uint32)
             .astype(np.uint8)
-            .view(np_dtype)
-            .reshape(dims)
+            .view(np_dtype),
+            dims,
+            tensor,
         )
 
     if tensor_dtype in {
@@ -342,15 +344,15 @@ def to_array(tensor: onnx.TensorProto, base_dir: str = "") -> np.ndarray:  # noq
         # Only the low 6 bits of each int32_data entry are meaningful; mask
         # before reinterpreting, matching _pack_6bit's masking of the packed
         # raw_data representation.
-        return (
+        return _reshape_or_raise(
             (
                 np.array(tensor.int32_data, dtype=np.int32)
                 .view(np.uint32)
                 .astype(np.uint8)
                 & 0x3F
-            )
-            .view(np_dtype)
-            .reshape(dims)
+            ).view(np_dtype),
+            dims,
+            tensor,
         )
 
     if tensor_dtype in {
@@ -374,9 +376,13 @@ def to_array(tensor: onnx.TensorProto, base_dir: str = "") -> np.ndarray:  # noq
 
     data = getattr(tensor, storage_field)
     if tensor_dtype in (onnx.TensorProto.COMPLEX64, onnx.TensorProto.COMPLEX128):
-        return np.array(data, dtype=storage_np_dtype).view(dtype=np_dtype).reshape(dims)
+        return _reshape_or_raise(
+            np.array(data, dtype=storage_np_dtype).view(dtype=np_dtype), dims, tensor
+        )
 
-    return np.asarray(data, dtype=storage_np_dtype).astype(np_dtype).reshape(dims)
+    return _reshape_or_raise(
+        np.asarray(data, dtype=storage_np_dtype).astype(np_dtype), dims, tensor
+    )
 
 
 def tobytes_little_endian(array: np.ndarray) -> bytes:
@@ -565,6 +571,14 @@ def to_dict(map_proto: onnx.MapProto) -> dict[Any, Any]:
     return dict(zip(key_list, value_list, strict=False))
 
 
+def _map_key_dtype(key: Any) -> np.dtype:
+    # np.result_type interprets a str argument as a dtype name, so string
+    # keys (of any length) are all mapped to the dtype used for STRING.
+    if isinstance(key, (str, bytes)):
+        return np.dtype(object)
+    return np.result_type(key)
+
+
 def from_dict(dict_: dict[Any, Any], name: str | None = None) -> onnx.MapProto:
     """Converts a Python dictionary into a map def.
 
@@ -581,7 +595,7 @@ def from_dict(dict_: dict[Any, Any], name: str | None = None) -> onnx.MapProto:
     if not dict_:
         raise ValueError("Cannot convert an empty dictionary to MapProto.")
     keys = list(dict_)
-    raw_key_type = np.result_type(keys[0])
+    raw_key_type = _map_key_dtype(keys[0])
     key_type = helper.np_dtype_to_tensor_dtype(raw_key_type)
 
     valid_key_int_types = {
@@ -595,7 +609,7 @@ def from_dict(dict_: dict[Any, Any], name: str | None = None) -> onnx.MapProto:
         onnx.TensorProto.UINT64,
     }
 
-    if not (all(np.result_type(key) == raw_key_type for key in keys)):
+    if not (all(_map_key_dtype(key) == raw_key_type for key in keys)):
         raise TypeError(
             "The key type in the input dictionary is not the same "
             "for all keys and therefore is not valid as a map."
@@ -613,7 +627,16 @@ def from_dict(dict_: dict[Any, Any], name: str | None = None) -> onnx.MapProto:
 
     map_proto.key_type = key_type  # type: ignore[assignment]
     if key_type == onnx.TensorProto.STRING:
-        map_proto.string_keys.extend(keys)
+        string_keys = [
+            key.encode("utf-8") if isinstance(key, str) else key for key in keys
+        ]
+        if len(set(string_keys)) != len(string_keys):
+            raise ValueError(
+                "The keys in the input dictionary are not unique after "
+                "encoding str keys as UTF-8 bytes and therefore are not "
+                "valid as a map."
+            )
+        map_proto.string_keys.extend(string_keys)
     elif key_type in valid_key_int_types:
         map_proto.keys.extend(keys)
     else:

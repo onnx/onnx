@@ -103,6 +103,27 @@ class TestNumpyHelper:
             # Differing key types should raise a TypeError
             numpy_helper.from_dict({0: np.array(0.1), 1.1: np.array(0.9)})
 
+    def test_from_dict_string_keys(self):
+        map_proto = numpy_helper.from_dict(
+            {"a": np.array([0.1]), "bb": np.array([0.9])}
+        )
+        assert map_proto.key_type == onnx.TensorProto.STRING
+        assert list(map_proto.string_keys) == [b"a", b"bb"]
+        assert not map_proto.keys
+        result = numpy_helper.to_dict(map_proto)
+        np.testing.assert_equal(result, {b"a": np.array([0.1]), b"bb": np.array([0.9])})
+        # The bytes keys returned by to_dict can be converted back.
+        assert numpy_helper.from_dict(result) == map_proto
+
+    def test_from_dict_duplicate_str_and_bytes_keys(self):
+        with pytest.raises(ValueError, match="not unique"):
+            # "a" and b"a" are distinct dict keys but both encode to b"a".
+            numpy_helper.from_dict({"a": np.array(0.1), b"a": np.array(0.9)})
+
+    def test_from_dict_differing_string_and_int_key_types(self):
+        with pytest.raises(TypeError):
+            numpy_helper.from_dict({"a": np.array(0.1), 1: np.array(0.9)})
+
     def test_from_dict_differing_value_types(self):
         with pytest.raises(TypeError):
             # Differing value types should raise a TypeError
@@ -235,6 +256,41 @@ class TestNumpyHelper:
             == 0xFF
         )
 
+    def test_to_float8e8m0_float32_subnormals(self) -> None:
+        values = np.array([0x00400000, 0x00080000, 0x00400001], dtype=np.uint32)
+        inputs = values.view(np.float32)
+
+        np.testing.assert_array_equal(
+            numpy_helper.to_float8e8m0(inputs[:2], round_mode="up").view(np.uint8),
+            [0, 0],
+        )
+        np.testing.assert_array_equal(
+            numpy_helper.to_float8e8m0(inputs[2:], round_mode="nearest").view(np.uint8),
+            [0],
+        )
+
+    def test_to_float8e8m0_float64_without_double_rounding(self) -> None:
+        just_below_two_to_negative_126 = np.array(
+            [0x380FFFFFFFFFFFFF], dtype=np.uint64
+        ).view(np.float64)
+        for inputs in (
+            just_below_two_to_negative_126,
+            just_below_two_to_negative_126.astype(">f8"),
+        ):
+            np.testing.assert_array_equal(
+                numpy_helper.to_float8e8m0(inputs, round_mode="down").view(np.uint8),
+                [0],
+            )
+
+        np.testing.assert_array_equal(
+            numpy_helper.to_float8e8m0(
+                np.array([1e39], dtype=np.float64),
+                saturate=True,
+                round_mode="down",
+            ).view(np.uint8),
+            [0xFE],
+        )
+
     def test_from_array_object_invalid_type(self) -> None:
         a = np.array([42], dtype=object)
         with pytest.raises(NotImplementedError, match="int"):
@@ -323,4 +379,16 @@ class TestNumpyHelper:
         tensor.dims.extend([1000])
         tensor.int32_data.append(0)  # encodes 16 elements, not 1000
         with pytest.raises(ValueError):
+            numpy_helper.to_array(tensor)
+
+    def test_to_array_reshape_mismatch_hints_wrong_message_type(self) -> None:
+        # A TensorProto whose dims/data disagree can arise from parsing bytes
+        # that are not actually a TensorProto (e.g. an OptionalProto whose
+        # "name" field is misread as TensorProto's "dims" field, since
+        # protobuf does not encode message-type information). The error
+        # should hint at this rather than surface a bare numpy reshape error.
+        tensor = onnx.TensorProto()
+        tensor.data_type = onnx.TensorProto.FLOAT
+        tensor.dims.extend([111, 112, 116, 95, 105, 110])  # ASCII for "opt_in"
+        with pytest.raises(ValueError, match="not actually a TensorProto"):
             numpy_helper.to_array(tensor)

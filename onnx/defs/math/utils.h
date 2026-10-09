@@ -50,8 +50,6 @@ void MatMulShapeInference(ONNX_NAMESPACE::InferenceContext& ctx, int input1Idx, 
 
 void QLinearMatMulShapeInference(ONNX_NAMESPACE::InferenceContext& ctx);
 
-const char* QLinearMatMulDoc();
-
 int64_t MathOpTwoIntegers(const std::string& op_type, int64_t a, int64_t b);
 
 } // namespace ONNX_NAMESPACE::defs::math::utils

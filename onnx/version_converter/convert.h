@@ -36,12 +36,17 @@
 #include "onnx/version_converter/adapters/gemm_7_6.h"
 #include "onnx/version_converter/adapters/gridsample_19_20.h"
 #include "onnx/version_converter/adapters/group_normalization_20_21.h"
+#include "onnx/version_converter/adapters/group_normalization_21_20.h"
 #include "onnx/version_converter/adapters/maxpool_8_7.h"
 #include "onnx/version_converter/adapters/no_previous_version.h"
+#include "onnx/version_converter/adapters/optional_ops.h"
 #include "onnx/version_converter/adapters/pad_10_11.h"
+#include "onnx/version_converter/adapters/pad_18_17.h"
+#include "onnx/version_converter/adapters/pad_19_18.h"
 #include "onnx/version_converter/adapters/q_dq_21_20.h"
 #include "onnx/version_converter/adapters/quantize_linear_28_27.h"
 #include "onnx/version_converter/adapters/range_27_26.h"
+#include "onnx/version_converter/adapters/reduce_log_sum_27_28.h"
 #include "onnx/version_converter/adapters/reshape_4_5.h"
 #include "onnx/version_converter/adapters/reshape_5_4.h"
 #include "onnx/version_converter/adapters/resize_10_11.h"
@@ -496,7 +501,14 @@ class DefaultVersionConverter : public BaseVersionConverter {
     registerAdapter(std::make_unique<Softmax_12_13>("LogSoftmax"));
 
     /******** 13 -> 12 ********/
+    const std::vector<TensorProto_DataType> pad_11_unallowed_types = {
+        TensorProto_DataType_BFLOAT16,
+        TensorProto_DataType_BOOL,
+        TensorProto_DataType_COMPLEX64,
+        TensorProto_DataType_COMPLEX128,
+        TensorProto_DataType_STRING};
     registerAdapter(std::make_unique<CompatibleAdapter>("Constant", OpSetID(13), OpSetID(12)));
+    registerAdapter(std::make_unique<TypeRestriction>("Pad", OpSetID(13), OpSetID(12), pad_11_unallowed_types));
     registerAdapter(std::make_unique<AxesInputToAttribute>("ReduceSum", OpSetID(13), OpSetID(12)));
     registerAdapter(std::make_unique<AxesInputToAttribute>("Squeeze", OpSetID(13), OpSetID(12)));
     registerAdapter(std::make_unique<AxesInputToAttribute>("Unsqueeze", OpSetID(13), OpSetID(12)));
@@ -519,6 +531,9 @@ class DefaultVersionConverter : public BaseVersionConverter {
     registerAdapter(std::make_unique<BatchNormalization_13_14>());
 
     /******** 14 -> 13 ********/
+    const std::vector<TensorProto_DataType> mul_14_unallowed_types = {
+        TensorProto_DataType_UINT8, TensorProto_DataType_INT8, TensorProto_DataType_UINT16, TensorProto_DataType_INT16};
+    registerAdapter(std::make_unique<TypeRestriction>("Mul", OpSetID(14), OpSetID(13), mul_14_unallowed_types));
     registerAdapter("GRU", 14, 13, RemoveAttribute(klayout, 0));
     registerAdapter("LSTM", 14, 13, RemoveAttribute(klayout, 0));
     registerAdapter("RNN", 14, 13, RemoveAttribute(klayout, 0));
@@ -574,6 +589,12 @@ class DefaultVersionConverter : public BaseVersionConverter {
     registerAdapter(std::make_unique<AxesAttributeToInput>("ReduceSumSquare", OpSetID(17), OpSetID(18)));
 
     /******** 18 -> 17 ********/
+    registerAdapter(
+        std::make_unique<OptionalOpsAdapter>(
+            "OptionalGetElement", OpSetID(18), OpSetID(17), std::vector<TensorProto_DataType>{}, true, false));
+    registerAdapter(
+        std::make_unique<OptionalOpsAdapter>(
+            "OptionalHasElement", OpSetID(18), OpSetID(17), std::vector<TensorProto_DataType>{}, true, false));
     registerAdapter(std::make_unique<AxesInputToAttribute>("ReduceL1", OpSetID(18), OpSetID(17)));
     registerAdapter(std::make_unique<AxesInputToAttribute>("ReduceL2", OpSetID(18), OpSetID(17)));
     registerAdapter(std::make_unique<AxesInputToAttribute>("ReduceLogSum", OpSetID(18), OpSetID(17)));
@@ -583,6 +604,7 @@ class DefaultVersionConverter : public BaseVersionConverter {
     registerAdapter(std::make_unique<AxesInputToAttribute>("ReduceMin", OpSetID(18), OpSetID(17)));
     registerAdapter(std::make_unique<AxesInputToAttribute>("ReduceProd", OpSetID(18), OpSetID(17)));
     registerAdapter(std::make_unique<AxesInputToAttribute>("ReduceSumSquare", OpSetID(18), OpSetID(17)));
+    registerAdapter(std::make_unique<Pad_18_17>());
     registerAdapter(std::make_unique<Resize_18_17>());
     registerAdapter(std::make_unique<Scatter_18_17>("ScatterElements"));
     registerAdapter(std::make_unique<Scatter_18_17>("ScatterND"));
@@ -626,12 +648,12 @@ class DefaultVersionConverter : public BaseVersionConverter {
     registerAdapter(std::make_unique<TypeRestriction>("Identity", OpSetID(19), OpSetID(18), float8_unallowed_types));
     registerAdapter(std::make_unique<TypeRestriction>("If", OpSetID(19), OpSetID(18), float8_unallowed_types));
     registerAdapter(std::make_unique<TypeRestriction>("Loop", OpSetID(19), OpSetID(18), float8_unallowed_types));
-    registerAdapter(std::make_unique<CompatibleAdapter>("Pad", OpSetID(19), OpSetID(18)));
     registerAdapter(std::make_unique<TypeRestriction>("Reshape", OpSetID(19), OpSetID(18), float8_unallowed_types));
     registerAdapter(std::make_unique<CompatibleAdapter>("Resize", OpSetID(19), OpSetID(18)));
     registerAdapter(std::make_unique<TypeRestriction>("Scan", OpSetID(19), OpSetID(18), float8_unallowed_types));
     registerAdapter(std::make_unique<TypeRestriction>("Shape", OpSetID(19), OpSetID(18), float8_unallowed_types));
     registerAdapter(std::make_unique<TypeRestriction>("Size", OpSetID(19), OpSetID(18), float8_unallowed_types));
+    registerAdapter(std::make_unique<Pad_19_18>());
 
     /******** 19 -> 20 ********/
     registerAdapter(std::make_unique<AxisAttributeToInput>("DFT", OpSetID(19), OpSetID(20), 2, 1));
@@ -643,6 +665,15 @@ class DefaultVersionConverter : public BaseVersionConverter {
     registerAdapter(std::make_unique<GridSample_19_20>());
 
     /******** 20 -> 19 ********/
+    const std::vector<TensorProto_DataType> constant_of_shape_9_unallowed_types = {
+        TensorProto_DataType_BFLOAT16,
+        TensorProto_DataType_FLOAT8E4M3FN,
+        TensorProto_DataType_FLOAT8E4M3FNUZ,
+        TensorProto_DataType_FLOAT8E5M2,
+        TensorProto_DataType_FLOAT8E5M2FNUZ};
+    registerAdapter(
+        std::make_unique<TypeRestriction>(
+            "ConstantOfShape", OpSetID(20), OpSetID(19), constant_of_shape_9_unallowed_types));
     const std::vector<TensorProto_DataType> is_nan_13_unallowed_types = {
         TensorProto_DataType_FLOAT8E4M3FN,
         TensorProto_DataType_FLOAT8E4M3FNUZ,
@@ -709,6 +740,7 @@ class DefaultVersionConverter : public BaseVersionConverter {
     registerAdapter(
         std::make_unique<TypeRestriction>("ConstantOfShape", OpSetID(21), OpSetID(20), ir10_types_not_in_ir9));
     registerAdapter(std::make_unique<DequantizeLinear_21_20>());
+    registerAdapter(std::make_unique<GroupNormalization_21_20>());
     registerAdapter(std::make_unique<TypeRestriction>("Flatten", OpSetID(21), OpSetID(20), ir10_types_not_in_ir4));
     registerAdapter(std::make_unique<TypeRestriction>("Identity", OpSetID(21), OpSetID(20), ir10_types_not_in_ir9));
     registerAdapter(std::make_unique<TypeRestriction>("If", OpSetID(21), OpSetID(20), ir10_types_not_in_ir9));
@@ -986,7 +1018,11 @@ class DefaultVersionConverter : public BaseVersionConverter {
     registerAdapter(std::make_unique<Range_27_26>(range_27_unallowed_types));
 
     /******** 27 -> 28 ********/
+    registerAdapter(std::make_unique<CompatibleAdapter>("BitShift", OpSetID(27), OpSetID(28)));
     registerAdapter(std::make_unique<CompatibleAdapter>("Celu", OpSetID(27), OpSetID(28)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("Optional", OpSetID(27), OpSetID(28)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("OptionalHasElement", OpSetID(27), OpSetID(28)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("OptionalGetElement", OpSetID(27), OpSetID(28)));
     registerAdapter(std::make_unique<CompatibleAdapter>("Einsum", OpSetID(27), OpSetID(28)));
     registerAdapter(std::make_unique<CompatibleAdapter>("Mod", OpSetID(27), OpSetID(28)));
     registerAdapter(std::make_unique<CompatibleAdapter>("DepthToSpace", OpSetID(27), OpSetID(28)));
@@ -998,8 +1034,22 @@ class DefaultVersionConverter : public BaseVersionConverter {
     registerAdapter(std::make_unique<CompatibleAdapter>("Cast", OpSetID(27), OpSetID(28)));
     registerAdapter(std::make_unique<CompatibleAdapter>("QuantizeLinear", OpSetID(27), OpSetID(28)));
     registerAdapter(std::make_unique<CompatibleAdapter>("DequantizeLinear", OpSetID(27), OpSetID(28)));
+    // ReduceLogSum/ReduceLogSumExp v28 dropped integer support from T.
+    // Only the data input and the output carry T; the axes input is always int64.
+    const std::vector<TensorProto_DataType> reduce_log_sum_28_unallowed_types = {
+        TensorProto_DataType_UINT32,
+        TensorProto_DataType_UINT64,
+        TensorProto_DataType_INT32,
+        TensorProto_DataType_INT64};
+    registerAdapter(std::make_unique<ReduceLogSum_27_28>("ReduceLogSum", reduce_log_sum_28_unallowed_types));
+    registerAdapter(std::make_unique<ReduceLogSum_27_28>("ReduceLogSumExp", reduce_log_sum_28_unallowed_types));
 
     /******** 28 -> 27 ********/
+    // BitShift v28 widened T with the signed integer types; BitShift v11 (opset 27) is unsigned only.
+    const std::vector<TensorProto_DataType> bitshift_28_unallowed_types = {
+        TensorProto_DataType_INT8, TensorProto_DataType_INT16, TensorProto_DataType_INT32, TensorProto_DataType_INT64};
+    registerAdapter(
+        std::make_unique<TypeRestriction>("BitShift", OpSetID(28), OpSetID(27), bitshift_28_unallowed_types));
     // Celu v28 widened T to all_float_types_ir4(); Celu v12 (opset 27) supports only FLOAT.
     const std::vector<TensorProto_DataType> celu_28_unallowed_types = {
         TensorProto_DataType_FLOAT16, TensorProto_DataType_BFLOAT16, TensorProto_DataType_DOUBLE};
@@ -1031,6 +1081,31 @@ class DefaultVersionConverter : public BaseVersionConverter {
       }
       return node;
     });
+
+    const std::vector<TensorProto_DataType> optionals_28_unallowed_types = {
+        TensorProto_DataType_BFLOAT16,
+        TensorProto_DataType_FLOAT8E4M3FN,
+        TensorProto_DataType_FLOAT8E4M3FNUZ,
+        TensorProto_DataType_FLOAT8E5M2,
+        TensorProto_DataType_FLOAT8E5M2FNUZ,
+        TensorProto_DataType_UINT4,
+        TensorProto_DataType_INT4,
+        TensorProto_DataType_FLOAT4E2M1,
+        TensorProto_DataType_FLOAT8E8M0,
+        TensorProto_DataType_UINT2,
+        TensorProto_DataType_INT2,
+        TensorProto_DataType_FLOAT6E2M3,
+        TensorProto_DataType_FLOAT6E3M2};
+
+    registerAdapter(
+        std::make_unique<OptionalOpsAdapter>(
+            "Optional", OpSetID(28), OpSetID(27), optionals_28_unallowed_types, false, true, true));
+    registerAdapter(
+        std::make_unique<OptionalOpsAdapter>(
+            "OptionalHasElement", OpSetID(28), OpSetID(27), optionals_28_unallowed_types, true, true, true));
+    registerAdapter(
+        std::make_unique<OptionalOpsAdapter>(
+            "OptionalGetElement", OpSetID(28), OpSetID(27), optionals_28_unallowed_types));
     registerAdapter(std::make_unique<CompatibleAdapter>("DepthToSpace", OpSetID(28), OpSetID(27)));
     registerAdapter("SpaceToDepth", 28, 27, RemoveAttribute(Symbol("mode"), std::string("DCR")));
     // Compress, OneHot, ReverseSequence, Unique v28 added BFLOAT16 support.
@@ -1047,6 +1122,9 @@ class DefaultVersionConverter : public BaseVersionConverter {
     registerAdapter(std::make_unique<QuantizeLinear_28_27>(ir14_types_not_in_ir13));
     registerAdapter(
         std::make_unique<TypeRestriction>("DequantizeLinear", OpSetID(28), OpSetID(27), ir14_types_not_in_ir13));
+    // Downgrading needs no restriction: opset 27 accepts a superset of the v28 float-only types.
+    registerAdapter(std::make_unique<CompatibleAdapter>("ReduceLogSum", OpSetID(28), OpSetID(27)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("ReduceLogSumExp", OpSetID(28), OpSetID(27)));
   }
 
   ModelProto convert_version(const ModelProto& mp_in, const OpSetID& initial_version, const OpSetID& target_version)
