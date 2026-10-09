@@ -7340,9 +7340,18 @@ class TestReferenceEvaluator:
         assert_array_equal(mean, np.zeros((1, 1), dtype=np.float32))
         assert_array_equal(inv_std_dev, np.array([[1.0 / 256.0]], dtype=np.float32))
 
-    def test_softmax_float16_uses_float32_accumulation(self):
-        x_info = make_tensor_value_info("X", TensorProto.FLOAT16, [1, 65536])
-        y_info = make_tensor_value_info("Y", TensorProto.FLOAT16, [1, 65536])
+    @pytest.mark.parametrize(
+        ("dtype", "tensor_type", "width"),
+        [
+            (np.float16, TensorProto.FLOAT16, 65536),
+            (ml_dtypes.bfloat16, TensorProto.BFLOAT16, 1024),
+        ],
+    )
+    def test_softmax_low_precision_uses_float32_accumulation(
+        self, dtype, tensor_type, width
+    ):
+        x_info = make_tensor_value_info("X", tensor_type, [1, width])
+        y_info = make_tensor_value_info("Y", tensor_type, [1, width])
         model = make_model(
             make_graph(
                 [make_node("Softmax", ["X"], ["Y"], axis=1)],
@@ -7352,12 +7361,12 @@ class TestReferenceEvaluator:
             ),
             opset_imports=[make_opsetid("", 23)],
         )
-        x = np.zeros((1, 65536), dtype=np.float16)
+        x = np.zeros((1, width), dtype=dtype)
 
         (actual,) = ReferenceEvaluator(model).run(None, {"X": x})
 
-        expected = np.full_like(x, np.float16(1.0 / x.shape[1]))
-        assert actual.dtype == np.float16
+        expected = np.full_like(x, dtype(1.0 / x.shape[1]))
+        assert actual.dtype == dtype
         assert_array_equal(actual, expected)
         assert_allclose(actual.sum(dtype=np.float32), 1.0, rtol=0, atol=0)
 
