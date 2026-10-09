@@ -10,6 +10,9 @@ from onnx.reference.op_run import OpRun
 
 def _one_hot(indices, depth, axis=-1, dtype=np.float32):
     values = np.asarray(indices)
+    if not np.issubdtype(values.dtype, np.integer):
+        values = values.astype(np.int64)
+    depth = int(np.asarray(depth).item())
     rank = len(values.shape)
     depth_range = np.arange(depth)
     if axis < 0:
