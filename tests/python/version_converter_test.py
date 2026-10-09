@@ -314,6 +314,53 @@ class TestVersionConverter:
         assert converted_model.graph.node[0].op_type == "Mul"
         assert converted_model.opset_import[0].version == 8
 
+    def test_mul_14_13_float(self) -> None:
+        nodes = [helper.make_node("Mul", ["X1", "X2"], ["Y"])]
+        graph = helper.make_graph(
+            nodes,
+            "test",
+            [
+                helper.make_tensor_value_info("X1", TensorProto.FLOAT, (5,)),
+                helper.make_tensor_value_info("X2", TensorProto.FLOAT, (5,)),
+            ],
+            [helper.make_tensor_value_info("Y", TensorProto.FLOAT, (5,))],
+        )
+
+        converted_model = self._converted(graph, helper.make_operatorsetid("", 14), 13)
+
+        assert converted_model.graph.node[0].op_type == "Mul"
+        assert (
+            converted_model.graph.output[0].type.tensor_type.elem_type
+            == TensorProto.FLOAT
+        )
+        assert converted_model.opset_import[0].version == 13
+
+    @pytest.mark.parametrize(
+        "data_type",
+        [
+            TensorProto.UINT8,
+            TensorProto.INT8,
+            TensorProto.UINT16,
+            TensorProto.INT16,
+        ],
+    )
+    def test_mul_14_13_rejects_opset14_only_types(self, data_type: int) -> None:
+        nodes = [helper.make_node("Mul", ["X1", "X2"], ["Y"])]
+        graph = helper.make_graph(
+            nodes,
+            "test",
+            [
+                helper.make_tensor_value_info("X1", data_type, (5,)),
+                helper.make_tensor_value_info("X2", data_type, (5,)),
+            ],
+            [helper.make_tensor_value_info("Y", data_type, (5,))],
+        )
+
+        with pytest.raises(
+            RuntimeError, match=r"operator 'Mul' is unallowed for Opset Version 13"
+        ):
+            self._converted(graph, helper.make_operatorsetid("", 14), 13)
+
     # Test Gemm Adapter: 1 -> 8
     def test_gemm_up(self) -> None:
         nodes = [helper.make_node("Gemm", ["A", "B", "C"], ["Y"])]
@@ -1802,6 +1849,40 @@ class TestVersionConverter:
         )
         converted_model = self._converted(graph, helper.make_operatorsetid("", 10), 11)
         assert converted_model.opset_import[0].version == 11
+
+    # Test Resize Adapter: 10 -> 11
+    def test_resize_10_11_preserves_opset10_semantics(self) -> None:
+        """The conversion must pin the opset-11 defaults to opset-10 semantics."""
+        for mode in ("nearest", "linear"):
+            nodes = [
+                helper.make_node(
+                    "Constant",
+                    [],
+                    ["scales"],
+                    value=helper.make_tensor(
+                        "", TensorProto.FLOAT, [4], [1.0, 1.0, 2.0, 2.0]
+                    ),
+                ),
+                helper.make_node("Resize", ["X", "scales"], ["Y"], mode=mode),
+            ]
+            graph = helper.make_graph(
+                nodes,
+                "test_resize_10_11",
+                [helper.make_tensor_value_info("X", TensorProto.FLOAT, (1, 1, 2, 2))],
+                [helper.make_tensor_value_info("Y", TensorProto.FLOAT, (1, 1, 4, 4))],
+            )
+            converted_model = self._converted(
+                graph, helper.make_operatorsetid("", 10), 11
+            )
+            resize = next(
+                n for n in converted_model.graph.node if n.op_type == "Resize"
+            )
+            attributes = {
+                attr.name: helper.get_attribute_value(attr) for attr in resize.attribute
+            }
+            assert attributes["coordinate_transformation_mode"] == b"asymmetric"
+            if mode == "nearest":
+                assert attributes["nearest_mode"] == b"floor"
 
     # Test Scatter Adapter: 10 -> 11
     def test_scatter_10_11_bounds_check(self) -> None:

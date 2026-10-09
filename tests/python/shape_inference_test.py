@@ -61,7 +61,7 @@ def get_available_versions(schema: OpSchema) -> set[int]:
             versions.add(
                 defs.get_schema(schema.name, version, schema.domain).since_version
             )
-        except SchemaError:  # noqa: PERF203
+        except SchemaError:
             break
     return versions
 
@@ -5037,6 +5037,21 @@ class TestShapeInference(TestShapeInferenceHelper):
                 ),
             ],
         )
+
+    @pytest.mark.parametrize("k_value", [0, -1])
+    @pytest.mark.parametrize("known_axis_dim", [True, False])
+    def test_topk_rejects_non_positive_k(
+        self, k_value: int, known_axis_dim: bool
+    ) -> None:
+        x_shape = (3, 4, 5, 10) if known_axis_dim else (3, 4, None, 10)
+        graph = self._make_graph(
+            [("x", TensorProto.FLOAT, x_shape)],
+            [make_node("TopK", ["x", "k"], ["y", "z"], axis=2)],
+            [],
+            initializer=[make_tensor("k", TensorProto.INT64, (1,), (k_value,))],
+        )
+        with pytest.raises(onnx.shape_inference.InferenceError):
+            self._inferred(graph)
 
     def test_gemm(self) -> None:
         graph = self._make_graph(
