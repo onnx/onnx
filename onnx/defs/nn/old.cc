@@ -774,7 +774,7 @@ static void convTransposeShapeInference_opset11(InferenceContext& ctx) {
   if (output_shape_presented) {
     size_of_output = static_cast<int>(output_shape.size());
     for (int i = 0; i < size_of_output; ++i) {
-      if ((input_shape.dim(i + 2).has_dim_value()) && (output_shape[i] < input_shape.dim(i + 2).dim_value())) {
+      if (input_shape.dim(i + 2).has_dim_value() && output_shape[i] < input_shape.dim(i + 2).dim_value()) {
         // TODO(ONNX): throw exception?
         return; // output shape value cannot be smaller than the input shape
                 // value
@@ -3110,7 +3110,7 @@ static void convTransposeShapeInference_opset1(InferenceContext& ctx) {
   if (output_shape_presented) {
     size_of_output = static_cast<int>(output_shape.size());
     for (int i = 0; i < size_of_output; ++i) {
-      if ((input_shape.dim(i + 2).has_dim_value()) && (output_shape[i] < input_shape.dim(i + 2).dim_value())) {
+      if (input_shape.dim(i + 2).has_dim_value() && output_shape[i] < input_shape.dim(i + 2).dim_value()) {
         // TODO(ONNX): throw exception?
         return; // output shape value cannot be smaller than the input shape
                 // value

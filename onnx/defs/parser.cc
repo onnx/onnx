@@ -552,7 +552,7 @@ Common::Status OnnxParser::ParseFunctionInputOutput(IdList& idlist, ValueInfoLis
 // The value-info is added to the "inputs", while the initializer is added to initializers.
 Common::Status OnnxParser::ParseInput(ValueInfoList& inputs, TensorList& initializers) {
   inputs.Clear();
-  if ((Matches('(')) && (!Matches(')'))) {
+  if (Matches('(') && !Matches(')')) {
     do {
       ValueInfoProto vi;
       PARSE(vi);
@@ -575,7 +575,7 @@ Common::Status OnnxParser::ParseInput(ValueInfoList& inputs, TensorList& initial
 // A value-info is added to the "value_infos", while an initializer is added to initializers.
 Common::Status OnnxParser::ParseValueInfo(ValueInfoList& value_infos, TensorList& initializers) {
   value_infos.Clear();
-  if ((Matches('<')) && (!Matches('>'))) {
+  if (Matches('<') && !Matches('>')) {
     do {
       ValueInfoProto vi;
       PARSE(vi);

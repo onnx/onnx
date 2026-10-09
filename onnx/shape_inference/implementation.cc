@@ -441,7 +441,7 @@ class ShapeInferenceImplBase {
               input_data_by_name[output_name] = &input_data_by_name_holder[output_name];
             }
           } else if (
-              (attr.type() == AttributeProto::SPARSE_TENSOR && attr.has_sparse_tensor()) && (reuse_constant_tensors)) {
+              attr.type() == AttributeProto::SPARSE_TENSOR && attr.has_sparse_tensor() && reuse_constant_tensors) {
             input_sparse_data_by_name[output_name] = &attr.sparse_tensor();
           }
 
