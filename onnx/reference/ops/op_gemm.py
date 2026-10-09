@@ -60,7 +60,7 @@ class Gemm_6(OpRun):
                 raise ValueError(
                     f"Unable to add shape {c.shape} to shape {res.shape} without broadcast."
                 )
-            return (res + c,)
+            return ((res + c * beta).astype(a.dtype),)
         if transA:
             _meth = _gemm11 if transB else _gemm10
         else:
