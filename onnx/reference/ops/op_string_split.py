@@ -17,6 +17,8 @@ def pad_empty_string(
         assert isinstance(padding_requirement, int)
         return split_lists + ["" for _ in range(padding_requirement)]
     if isinstance(split_lists, np.ndarray):
+        if split_lists.ndim == 0:
+            return pad_empty_string(split_lists.item(), padding_requirement)
         assert isinstance(padding_requirement, list)
         return list(map(pad_empty_string, split_lists, padding_requirement))
     raise TypeError(f"Invalid array type '{type(split_lists)}'")
