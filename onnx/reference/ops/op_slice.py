@@ -27,6 +27,13 @@ def _slice(
         starts = np.array([starts])
     if len(ends.shape) == 0:
         ends = np.array([ends])
+    if steps is not None:
+        # ONNX clamps negative-step starts to 0, unlike Python's -1 lower bound.
+        effective_axes = range(len(starts)) if axes is None else axes
+        starts = starts.copy()
+        for i, (axis, step) in enumerate(zip(effective_axes, steps, strict=False)):
+            if step < 0:
+                starts[i] = max(starts[i], -data.shape[axis])
     if axes is None:
         if steps is None:
             slices = [slice(s, e) for s, e in zip(starts, ends, strict=False)]
