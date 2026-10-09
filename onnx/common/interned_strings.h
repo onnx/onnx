@@ -199,12 +199,12 @@ enum BuiltinSymbol : std::uint8_t {
 
 struct Symbol {
   Symbol() = default;
-  // NOLINTNEXTLINE(cppcoreguidelines-explicit-constructor, google-explicit-constructor, misc-explicit-constructor)
+  // NOLINTNEXTLINE(*constructor, runtime/explicit)
   /*implicit*/ Symbol(BuiltinSymbol value) : value(value) {}
   explicit Symbol(const std::string& s);
   explicit Symbol(uint32_t value) : value(value) {}
 
-  // NOLINTNEXTLINE(cppcoreguidelines-explicit-constructor, google-explicit-constructor, misc-explicit-constructor)
+  // NOLINTNEXTLINE(*constructor)
   operator uint32_t() const {
     return value;
   }

@@ -1025,7 +1025,7 @@ class OpSchemaRegistry final : public ISchemaRegistry {
    public:
     // Export to cpp custom register macro.
     // DO NOT decorate the constructor as "explicit" because that breaks the macro ONNX_OPERATOR_SCHEMA_UNIQ.
-    // NOLINTNEXTLINE(cppcoreguidelines-explicit-constructor, google-explicit-constructor, misc-explicit-constructor)
+    // NOLINTNEXTLINE(*constructor)
     OpSchemaRegisterOnce( // NOSONAR
         OpSchema op_schema,
         int opset_version_to_load = 0,
