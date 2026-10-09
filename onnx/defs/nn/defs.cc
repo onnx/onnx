@@ -2524,7 +2524,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             // positive value.
             axis += input_ndim;
           }
-          if (axis < 0) {
+          if (axis < 0 || axis >= input_ndim) {
             fail_shape_inference(
                 "Unexpected axis value (",
                 axis,
@@ -2537,14 +2537,14 @@ ONNX_OPERATOR_SET_SCHEMA(
           if (ctx.getNumOutputs() > 1) {
             auto mean_shape = ctx.getOutputType(1)->mutable_tensor_type()->mutable_shape();
             mean_shape->CopyFrom(input_shape);
-            for (int d = static_cast<int>(axis); d < input_ndim; ++d)
+            for (auto d = axis; d < input_ndim; ++d)
               mean_shape->mutable_dim(d)->set_dim_value(1);
           }
 
           if (ctx.getNumOutputs() > 2) {
             auto inv_std_dev_shape = ctx.getOutputType(2)->mutable_tensor_type()->mutable_shape();
             inv_std_dev_shape->CopyFrom(input_shape);
-            for (int d = static_cast<int>(axis); d < input_ndim; ++d)
+            for (auto d = axis; d < input_ndim; ++d)
               inv_std_dev_shape->mutable_dim(d)->set_dim_value(1);
           }
         }));
