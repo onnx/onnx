@@ -4,7 +4,7 @@
 """Guards against defining an operator schema without registering it.
 
 An operator schema is *defined* with one of the ONNX_..._OPERATOR_SET_SCHEMA
-macros in onnx/defs/**/defs.cc or old.cc, but it is only actually placed in
+macros in an onnx/defs/**/*.cc file, but it is only actually placed in
 the schema registry if it is also *registered*: forward-declared and passed
 to `fn(...)` inside the matching onnx/defs/operator_sets*.h header. Forgetting
 the second step compiles cleanly and silently drops the schema (see
@@ -22,6 +22,7 @@ build, and reports exactly which (name, version) pairs are missing.
 
 from __future__ import annotations
 
+import functools
 import re
 from pathlib import Path
 
@@ -49,6 +50,10 @@ _MACRO_DOMAIN_AND_HEADER = {
         DEFS_DIR / "operator_sets_preview.h",
     ),
 }
+# Macros that currently have no schemas at all (ai.onnx.training defines no operators).
+# Every other macro must yield at least one definition and one registration, so a regex
+# or glob that silently stops matching fails loudly instead of passing with empty sets.
+_MACROS_WITHOUT_SCHEMAS = {"ONNX_TRAINING_OPERATOR_SET_SCHEMA"}
 
 _DEFINITION_RE = re.compile(
     r"\b("
@@ -59,12 +64,12 @@ _DEFINITION_RE = re.compile(
 # Anchored on the full fn(...) call, not just GetOpSchema<...>, so a stray reference to the
 # class name elsewhere in the file (e.g. left over in a comment) isn't mistaken for registration.
 _REGISTRATION_RE = re.compile(
-    r"fn\(\s*GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME\(\s*([A-Za-z0-9_]+)\s*,\s*(\d+)\s*,\s*([A-Za-z0-9_]+)\s*\)>\(\)\)"
+    r"fn\(\s*GetOpSchema\s*<\s*ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME\(\s*([A-Za-z0-9_]+)\s*,\s*(\d+)\s*,\s*([A-Za-z0-9_]+)\s*\)\s*>\s*\(\s*\)\s*\)"
 )
 # Preview headers alternatively use an alias with (ver, name) instead of (domain, ver, name);
 # see ONNX_PREVIEW_OPERATOR_SET_SCHEMA_CLASS_NAME in onnx/defs/schema.h.
 _PREVIEW_REGISTRATION_RE = re.compile(
-    r"fn\(\s*GetOpSchema<ONNX_PREVIEW_OPERATOR_SET_SCHEMA_CLASS_NAME\(\s*(\d+)\s*,\s*([A-Za-z0-9_]+)\s*\)>\(\)\)"
+    r"fn\(\s*GetOpSchema\s*<\s*ONNX_PREVIEW_OPERATOR_SET_SCHEMA_CLASS_NAME\(\s*(\d+)\s*,\s*([A-Za-z0-9_]+)\s*\)\s*>\s*\(\s*\)\s*\)"
 )
 
 # Matches C++ // line comments and /* */ block comments, so a commented-out fn(...) call
@@ -76,12 +81,13 @@ def _strip_comments(text: str) -> str:
     return _COMMENT_RE.sub("", text)
 
 
+@functools.cache
 def _defined_schemas() -> dict[str, set[tuple[str, int]]]:
     """Returns, per macro, the set of (name, version) pairs defined via that macro."""
     defined: dict[str, set[tuple[str, int]]] = {
         macro: set() for macro in _MACRO_DOMAIN_AND_HEADER
     }
-    for source_file in (*DEFS_DIR.glob("**/defs.cc"), *DEFS_DIR.glob("**/old.cc")):
+    for source_file in DEFS_DIR.glob("**/*.cc"):
         text = source_file.read_text(encoding="utf-8")
         for match in _DEFINITION_RE.finditer(text):
             macro, name, version = match.group(1), match.group(2), int(match.group(3))
@@ -110,9 +116,24 @@ def test_all_defined_schemas_are_registered(macro: str) -> None:
     defined = _defined_schemas()[macro]
     registered = _registered_schemas(header, domain)
 
+    if macro in _MACROS_WITHOUT_SCHEMAS:
+        assert not defined, (
+            f"{macro}(...) now defines schemas {sorted(defined)}; "
+            "remove it from _MACROS_WITHOUT_SCHEMAS so this test checks them."
+        )
+    else:
+        assert defined, (
+            f"Found no {macro}(...) definitions under onnx/defs/**/*.cc; "
+            "the definition regex or file glob likely no longer matches the sources."
+        )
+        assert registered, (
+            f"Found no {domain} registrations in {header.relative_to(REPO_ROOT)}; "
+            "the registration regex likely no longer matches the header."
+        )
+
     missing = defined - registered
     assert not missing, (
-        f"{len(missing)} operator schema(s) defined via {macro}(...) in onnx/defs/**/{{defs,old}}.cc "
+        f"{len(missing)} operator schema(s) defined via {macro}(...) in onnx/defs/**/*.cc "
         f"are missing from {header.relative_to(REPO_ROOT)}: {sorted(missing)}. "
         "Each schema must be forward-declared as "
         f"ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME({domain}, <version>, <Name>) and passed to fn(GetOpSchema<...>()) "
