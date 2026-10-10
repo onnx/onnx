@@ -1518,12 +1518,16 @@ class OpSet_Onnx_ver28 {
   }
 };
 
+// Forward declarations for ai.onnx version 29
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 29, InitPRNG);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 29, SplitPRNG);
+
 // Iterate over schema from ai.onnx version 29
 class OpSet_Onnx_ver29 {
  public:
   static void ForEachSchema(const std::function<void(OpSchema&&)>& fn) {
-    // TODO: Remove after introducing the first schema to opset 29
-    (void)fn;
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 29, InitPRNG)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 29, SplitPRNG)>());
   }
 };
 
