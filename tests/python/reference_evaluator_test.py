@@ -2767,6 +2767,112 @@ class TestReferenceEvaluator:
         got1 = ref1.run(None, feeds)
         assert_allclose(got1[0], expected)
 
+    @pytest.mark.parametrize(
+        ("data", "expected", "elem_type", "p"),
+        [
+            (
+                np.array([[[[3, 4]]]], dtype=np.float16),
+                np.array([[[[5]]]], dtype=np.float16),
+                TensorProto.FLOAT16,
+                2,
+            ),
+            (
+                np.array([[[[256, 256]]]], dtype=np.float16),
+                np.array([[[[362]]]], dtype=np.float16),
+                TensorProto.FLOAT16,
+                2,
+            ),
+            (
+                np.array([[[[1e20, 1e20]]]], dtype=np.float32),
+                np.array([[[[1.4142136e20]]]], dtype=np.float32),
+                TensorProto.FLOAT,
+                2,
+            ),
+            (
+                np.array([[[[1e20, 1e20, 1e-30, 1e-30]]]], dtype=np.float32),
+                np.array([[[[1.0442738e20, 1.0442738e-30]]]], dtype=np.float32),
+                TensorProto.FLOAT,
+                16,
+            ),
+            (
+                np.array([[[[1e200, 1e200]]]], dtype=np.float64),
+                np.array([[[[1.0442737824274138e200]]]], dtype=np.float64),
+                TensorProto.DOUBLE,
+                16,
+            ),
+            (
+                np.array([[[[0, 0]]]], dtype=np.float32),
+                np.array([[[[0]]]], dtype=np.float32),
+                TensorProto.FLOAT,
+                16,
+            ),
+            (
+                np.array([[[[-3, 4]]]], dtype=np.float32),
+                np.array([[[[91 ** (1 / 3)]]]], dtype=np.float32),
+                TensorProto.FLOAT,
+                3,
+            ),
+            (
+                np.array([[[[np.inf, 1]]]], dtype=np.float32),
+                np.array([[[[np.inf]]]], dtype=np.float32),
+                TensorProto.FLOAT,
+                16,
+            ),
+        ],
+    )
+    def test_lp_pool_finite_norm_after_intermediate_overflow(
+        self, data, expected, elem_type, p
+    ):
+        X = make_tensor_value_info("X", elem_type, data.shape)
+        Y = make_tensor_value_info("Y", elem_type, expected.shape)
+        node = make_node(
+            "LpPool", ["X"], ["Y"], kernel_shape=[1, 2], strides=[1, 2], p=p
+        )
+        graph = make_graph([node], "g", [X], [Y])
+        model = make_model(graph, opset_imports=[make_opsetid("", 22)])
+
+        got = ReferenceEvaluator(model).run(None, {"X": data})[0]
+
+        assert got.dtype == data.dtype
+        assert_allclose(got, expected, rtol=1e-6)
+
+    @pytest.mark.parametrize(
+        ("data", "expected", "attrs"),
+        [
+            (
+                np.array([[[[3, 4, 12]]]], dtype=np.float32),
+                np.array([[[[5, 12]]]], dtype=np.float32),
+                {"strides": [1, 2], "ceil_mode": 1},
+            ),
+            (
+                np.array([[[[3, 99, 4]]]], dtype=np.float32),
+                np.array([[[[5]]]], dtype=np.float32),
+                {"dilations": [1, 2]},
+            ),
+            (
+                np.array([[[[3, 4]]]], dtype=np.float32),
+                np.array([[[[3, 5, 4]]]], dtype=np.float32),
+                {"pads": [0, 1, 0, 1]},
+            ),
+            (
+                np.array([[[[3, 4, 12]]]], dtype=np.float32),
+                np.array([[[[5, 12]]]], dtype=np.float32),
+                {"strides": [1, 2], "auto_pad": "SAME_UPPER"},
+            ),
+        ],
+    )
+    def test_lp_pool_window_geometry(self, data, expected, attrs):
+        X = make_tensor_value_info("X", TensorProto.FLOAT, data.shape)
+        Y = make_tensor_value_info("Y", TensorProto.FLOAT, expected.shape)
+        node = make_node("LpPool", ["X"], ["Y"], kernel_shape=[1, 2], p=2, **attrs)
+        graph = make_graph([node], "g", [X], [Y])
+        model = make_model(graph, opset_imports=[make_opsetid("", 22)])
+
+        got = ReferenceEvaluator(model).run(None, {"X": data})[0]
+
+        assert got.dtype == data.dtype
+        assert_allclose(got, expected, rtol=1e-6)
+
     @staticmethod
     def _evaluate_global_lp_pool(data, expected, p, elem_type, opset):
         X = make_tensor_value_info("X", elem_type, data.shape)
