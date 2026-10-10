@@ -158,9 +158,57 @@ static void check_attribute_tensors_ir_version(const AttributeProto& attr, const
   }
 }
 
+static void check_type_shapes(const TypeProto& type, const std::string& name) {
+  switch (type.value_case()) {
+    case TypeProto::kTensorType: {
+      const auto& tensor_type = type.tensor_type();
+      if (tensor_type.has_shape()) {
+        // IR: a tensor shape is a list of non-negative integers (docs/IR.md).
+        for (const auto& dim : tensor_type.shape().dim()) {
+          if (dim.has_dim_value() && dim.dim_value() < 0) {
+            fail_check(
+                "Invalid tensor shape (value_info name: ",
+                name,
+                "): dimension value must be non-negative, got ",
+                dim.dim_value());
+          }
+        }
+      }
+      break;
+    }
+    case TypeProto::kSparseTensorType: {
+      const auto& sparse_tensor_type = type.sparse_tensor_type();
+      if (sparse_tensor_type.has_shape()) {
+        for (const auto& dim : sparse_tensor_type.shape().dim()) {
+          if (dim.has_dim_value() && dim.dim_value() < 0) {
+            fail_check(
+                "Invalid tensor shape (value_info name: ",
+                name,
+                "): dimension value must be non-negative, got ",
+                dim.dim_value());
+          }
+        }
+      }
+      break;
+    }
+    case TypeProto::kSequenceType:
+      check_type_shapes(type.sequence_type().elem_type(), name);
+      break;
+    case TypeProto::kOptionalType:
+      check_type_shapes(type.optional_type().elem_type(), name);
+      break;
+    case TypeProto::kMapType:
+      check_type_shapes(type.map_type().value_type(), name);
+      break;
+    default:
+      break;
+  }
+}
+
 void check_value_info(const ValueInfoProto& value_info, const CheckerContext& ctx) {
   enforce_non_empty_field(value_info, name);
   check_type_ir_version(value_info.type(), value_info.name(), ctx);
+  check_type_shapes(value_info.type(), value_info.name());
   // Relax constraint for subgraph input/output.
   if (!ctx.is_main_graph())
     return;
