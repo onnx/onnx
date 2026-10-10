@@ -2465,6 +2465,40 @@ class TestShapeInference(TestShapeInferenceHelper):
             graph, [make_tensor_value_info("y", TensorProto.FLOAT, (0, 6))]
         )
 
+    # all_versions_for("Slice") currently yields only {10, 11, 13} because of the
+    # unrelated `version > 5` filter (#5289); restrict to opset >= 10 since
+    # Slice-1 takes starts/ends as attributes and cannot use this 5-input graph.
+    @pytest.mark.parametrize(
+        "version", [v for v in all_versions_for("Slice") if v >= 10]
+    )
+    def test_slice_negative_dim_raises(self, version) -> None:
+        """Regression test for issue #8481: a negative input dim must raise a
+        catchable InferenceError, not abort the process via std::clamp UB.
+        """
+        graph = self._make_graph(
+            [
+                ("x", TensorProto.FLOAT, (3, -1)),
+                ("starts", TensorProto.INT64, (1,)),
+                ("ends", TensorProto.INT64, (1,)),
+                ("axes", TensorProto.INT64, (1,)),
+                ("steps", TensorProto.INT64, (1,)),
+            ],
+            [make_node("Slice", ["x", "starts", "ends", "axes", "steps"], "y")],
+            [],
+            initializer=[
+                make_tensor("starts", TensorProto.INT64, (1,), (0,)),
+                make_tensor("ends", TensorProto.INT64, (1,), (1,)),
+                make_tensor("axes", TensorProto.INT64, (1,), (1,)),
+                make_tensor("steps", TensorProto.INT64, (1,), (1,)),
+            ],
+        )
+        with pytest.raises(
+            onnx.shape_inference.InferenceError, match="must be non-negative"
+        ):
+            self._inferred(
+                graph, opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)]
+            )
+
     def test_slice_scalar_shape_output(self) -> None:
         """Shape(scalar) produces 0-length output; Slice on it should not crash."""
         graph = self._make_graph(
