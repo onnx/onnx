@@ -126,7 +126,7 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#ReverseSequence">ReverseSequence</a>|<a href="Changelog.md#ReverseSequence-28">28</a>, <a href="Changelog.md#ReverseSequence-10">10</a>|
 |<a href="#RoiAlign">RoiAlign</a>|<a href="Changelog.md#RoiAlign-22">22</a>, <a href="Changelog.md#RoiAlign-16">16</a>, <a href="Changelog.md#RoiAlign-10">10</a>|
 |<a href="#Round">Round</a>|<a href="Changelog.md#Round-22">22</a>, <a href="Changelog.md#Round-11">11</a>|
-|<a href="#STFT">STFT</a>|<a href="Changelog.md#STFT-17">17</a>|
+|<a href="#STFT">STFT</a>|<a href="Changelog.md#STFT-29">29</a>, <a href="Changelog.md#STFT-17">17</a>|
 |<a href="#Scan">Scan</a>|<a href="Changelog.md#Scan-25">25</a>, <a href="Changelog.md#Scan-24">24</a>, <a href="Changelog.md#Scan-23">23</a>, <a href="Changelog.md#Scan-21">21</a>, <a href="Changelog.md#Scan-19">19</a>, <a href="Changelog.md#Scan-16">16</a>, <a href="Changelog.md#Scan-11">11</a>, <a href="Changelog.md#Scan-9">9</a>, <a href="Changelog.md#Scan-8">8</a>|
 |<a href="#Scatter">Scatter</a> (deprecated)|<a href="Changelog.md#Scatter-11">11</a>, <a href="Changelog.md#Scatter-9">9</a>|
 |<a href="#ScatterElements">ScatterElements</a>|<a href="Changelog.md#ScatterElements-18">18</a>, <a href="Changelog.md#ScatterElements-16">16</a>, <a href="Changelog.md#ScatterElements-13">13</a>, <a href="Changelog.md#ScatterElements-11">11</a>|
@@ -36072,7 +36072,9 @@ expect(node, inputs=[x], outputs=[y], name="test_round")
 
 #### Version
 
-This version of the operator has been available since version 17 of the default ONNX operator set.
+This version of the operator has been available since version 29 of the default ONNX operator set.
+
+Other versions of this operator: <a href="Changelog.md#STFT-17">17</a>
 
 #### Attributes
 
@@ -36085,7 +36087,7 @@ This version of the operator has been available since version 17 of the default 
 
 <dl>
 <dt><tt>signal</tt> (non-differentiable) : T1</dt>
-<dd>Input tensor representing a real or complex valued signal. For real input, the following shape is expected: [batch_size][signal_length][1]. For complex input, the following shape is expected: [batch_size][signal_length][2], where [batch_size][signal_length][0] represents the real component and [batch_size][signal_length][1] represents the imaginary component of the signal. The tensor is expected to have rank 3.</dd>
+<dd>Input tensor representing a real or complex valued signal. For real input, the following shapes are expected: [batch_size][signal_length] or [batch_size][signal_length][1]. For complex input, the following shape is expected: [batch_size][signal_length][2], where [batch_size][signal_length][0] represents the real component and [batch_size][signal_length][1] represents the imaginary component of the signal. Real-valued signals may have rank 2 or 3; complex-valued signals must have rank 3.</dd>
 <dt><tt>frame_step</tt> (non-differentiable) : T2</dt>
 <dd>A scalar representing the number of samples to step between successive DFTs.</dd>
 <dt><tt>window</tt> (optional, non-differentiable) : T1</dt>
@@ -36114,6 +36116,55 @@ This version of the operator has been available since version 17 of the default 
 #### Examples
 
 <details>
+<summary>rank2</summary>
+
+```python
+signal = np.arange(32, dtype=np.float32).reshape(2, 16)
+length = np.array(4, dtype=np.int64)
+step = np.array(2, dtype=np.int64)
+for onesided in (0, 1):
+    for with_window in (False, True):
+        window = np.hanning(4).astype(np.float32)
+        node = onnx.helper.make_node(
+            "STFT",
+            inputs=[
+                "signal",
+                "frame_step",
+                "window" if with_window else "",
+                "frame_length",
+            ],
+            outputs=["output"],
+            onesided=onesided,
+        )
+        inputs = [signal, step]
+        if with_window:
+            inputs.append(window)
+        inputs.append(length)
+        frames = np.stack(
+            [signal[:, start : start + 4] for start in range(0, 13, 2)],
+            axis=1,
+        )
+        if with_window:
+            frames = frames * window
+        transformed = np.fft.fft(frames, axis=2)
+        if onesided:
+            transformed = transformed[:, :, :3]
+        output = np.stack((transformed.real, transformed.imag), axis=-1).astype(
+            np.float32
+        )
+        expect(
+            node,
+            inputs=inputs,
+            outputs=[output],
+            name=f"test_stft_rank2_onesided_{onesided}_window_{int(with_window)}",
+            opset_imports=[onnx.helper.make_opsetid("", 29)],
+        )
+```
+
+</details>
+
+
+<details>
 <summary>stft</summary>
 
 ```python
@@ -36139,7 +36190,13 @@ for i in range(nstfts):
     output[0, i] = np.stack((complex_out.real, complex_out.imag), axis=1)
 
 output = output.astype(signal.dtype)
-expect(node, inputs=[signal, step, length], outputs=[output], name="test_stft")
+expect(
+    node,
+    inputs=[signal, step, length],
+    outputs=[output],
+    name="test_stft",
+    opset_imports=[onnx.helper.make_opsetid("", 17)],
+)
 
 node = onnx.helper.make_node(
     "STFT",
@@ -36171,6 +36228,7 @@ expect(
     inputs=[signal, step, window],
     outputs=[output],
     name="test_stft_with_window",
+    opset_imports=[onnx.helper.make_opsetid("", 17)],
 )
 ```
 
