@@ -99,9 +99,7 @@ Rows start on byte boundaries, and unused high bits in each row's final byte
 are zero. An empty last axis produces an empty last axis.
 
 For example, bits=3 packs [0, 1, 2, 3, 4, 5, 6, 7] into [136, 198, 250].
-This follows the canonical contiguous bitstream proposed in
-https://github.com/microsoft/onnxruntime/pull/32657, rather than a backend-specific
-split-plane layout. This operator packs code bit patterns, not quantized
+This operator packs code bit patterns, not quantized
 floating-point values; signed interpretation and quantization are separate.
 )DOC")
         .Attr("bits", "Number of bits per unsigned code, from 1 to 8 inclusive.", AttributeProto::INT)
