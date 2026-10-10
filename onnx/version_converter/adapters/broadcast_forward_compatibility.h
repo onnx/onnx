@@ -29,41 +29,39 @@ class BroadcastForwardCompatibility final : public Adapter {
       const std::vector<Dimension>& A_sizes = inputs[0]->sizes();
       const std::vector<Dimension>& B_sizes = inputs[1]->sizes();
       // Also assert that broadcasting syntax are correct if axis is not present
-      if (node->hasAttribute(kaxis)) {
-        if (node->i(kaxis) != static_cast<int>(A_sizes.size() - B_sizes.size())) {
-          // Add a Reshape node before input B
-          Node* n = graph->create(kUnsqueeze);
-          n->addInput(inputs[1]);
-          std::vector<int64_t> axes;
-          std::vector<Dimension> new_sizes = B_sizes;
-          auto size = A_sizes.size() > B_sizes.size() ? A_sizes.size() - B_sizes.size() : 0;
-          axes.reserve(size);
-          new_sizes.reserve(new_sizes.size() + size);
-          for (size_t i = 0; i < size; i++) {
-            axes.emplace_back(B_sizes.size() + i);
-            new_sizes.emplace_back(1);
-          }
-          if (target_version().version() >= 13) { // Unsqueeze takes 'axes' input
-            Tensor t;
-            t.elem_type() = TensorProto_DataType_INT64;
-            t.sizes() = std::vector<int64_t>{static_cast<int64_t>(axes.size())};
-            auto& data = t.int64s();
-            for (auto a : axes) {
-              data.emplace_back(a);
-            }
-            Node* constant = graph->create(kConstant);
-            constant->insertBefore(node);
-            constant->t_(kvalue, t);
-            node->addInput(constant->output());
-          } else { // Unsqueeze takes 'axes' attribute
-            n->is_(kaxes, std::forward<const std::vector<int64_t>>(axes));
-          }
-          // Move n before node
-          n->insertBefore(node);
-          // Set 2nd input to node to 1st of n and output of n to 2nd input to node
-          n->output()->setSizes(new_sizes);
-          node->replaceInput(1, n->output());
+      if (node->hasAttribute(kaxis) && node->i(kaxis) != static_cast<int>(A_sizes.size() - B_sizes.size())) {
+        // Add a Reshape node before input B
+        Node* n = graph->create(kUnsqueeze);
+        n->addInput(inputs[1]);
+        std::vector<int64_t> axes;
+        std::vector<Dimension> new_sizes = B_sizes;
+        auto size = A_sizes.size() > B_sizes.size() ? A_sizes.size() - B_sizes.size() : 0;
+        axes.reserve(size);
+        new_sizes.reserve(new_sizes.size() + size);
+        for (size_t i = 0; i < size; i++) {
+          axes.emplace_back(B_sizes.size() + i);
+          new_sizes.emplace_back(1);
         }
+        if (target_version().version() >= 13) { // Unsqueeze takes 'axes' input
+          Tensor t;
+          t.elem_type() = TensorProto_DataType_INT64;
+          t.sizes() = std::vector<int64_t>{static_cast<int64_t>(axes.size())};
+          auto& data = t.int64s();
+          for (auto a : axes) {
+            data.emplace_back(a);
+          }
+          Node* constant = graph->create(kConstant);
+          constant->insertBefore(node);
+          constant->t_(kvalue, t);
+          node->addInput(constant->output());
+        } else { // Unsqueeze takes 'axes' attribute
+          n->is_(kaxes, std::forward<const std::vector<int64_t>>(axes));
+        }
+        // Move n before node
+        n->insertBefore(node);
+        // Set 2nd input to node to 1st of n and output of n to 2nd input to node
+        n->output()->setSizes(new_sizes);
+        node->replaceInput(1, n->output());
       }
       node->removeAttribute(kbroadcast);
     }

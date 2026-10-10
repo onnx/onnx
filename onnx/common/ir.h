@@ -1258,7 +1258,7 @@ struct Graph final {
   ResourceGuard setStageTemporary(size_t s) {
     auto prev_stage = new_node_stage_;
     new_node_stage_ = s;
-    return ResourceGuard([prev_stage, this]() { this->new_node_stage_ = prev_stage; });
+    return ResourceGuard([prev_stage, this] { this->new_node_stage_ = prev_stage; });
   }
 
   size_t registerOutput(Value* n) {
