@@ -1884,6 +1884,133 @@ class TestVersionConverter:
             if mode == "nearest":
                 assert attributes["nearest_mode"] == b"floor"
 
+    @pytest.mark.parametrize("initial_version", [11, 12])
+    @pytest.mark.parametrize("target_version", [13, 18])
+    def test_resize_12_13_rejects_tf_half_pixel_for_nn(
+        self, initial_version: int, target_version: int
+    ) -> None:
+        graph = helper.make_graph(
+            [
+                helper.make_node(
+                    "Resize",
+                    ["X", "roi", "scales"],
+                    ["Y"],
+                    coordinate_transformation_mode="tf_half_pixel_for_nn",
+                )
+            ],
+            "test_resize_12_13",
+            [helper.make_tensor_value_info("X", TensorProto.FLOAT, (1, 1, 2, 2))],
+            [helper.make_tensor_value_info("Y", TensorProto.FLOAT, (1, 1, 4, 4))],
+            [
+                helper.make_tensor("roi", TensorProto.FLOAT, [0], []),
+                helper.make_tensor("scales", TensorProto.FLOAT, [4], [1, 1, 2, 2]),
+            ],
+        )
+        with pytest.raises(RuntimeError, match="tf_half_pixel_for_nn"):
+            self._converted(
+                graph, helper.make_operatorsetid("", initial_version), target_version
+            )
+
+    @pytest.mark.parametrize("initial_version", [11, 12])
+    @pytest.mark.parametrize("source", ["initializer", "constant", "input"])
+    @pytest.mark.parametrize("mode", ["nearest", "linear"])
+    def test_resize_12_13_omits_empty_scales(
+        self, initial_version: int, source: str, mode: str
+    ) -> None:
+        empty = helper.make_tensor("empty", TensorProto.FLOAT, [0], [])
+        nodes = []
+        inputs = [helper.make_tensor_value_info("X", TensorProto.FLOAT, (1, 1, 2, 2))]
+        initializers = [
+            helper.make_tensor("sizes", TensorProto.INT64, [4], [1, 1, 4, 4])
+        ]
+        feeds = {"X": np.arange(4, dtype=np.float32).reshape(1, 1, 2, 2)}
+        if source == "initializer":
+            initializers.append(empty)
+        elif source == "constant":
+            nodes.append(helper.make_node("Constant", [], ["empty"], value=empty))
+        else:
+            inputs.append(
+                helper.make_tensor_value_info("empty", TensorProto.FLOAT, (0,))
+            )
+            feeds["empty"] = np.array([], dtype=np.float32)
+        # The empty tensor is shared with roi and must remain available there.
+        nodes.append(
+            helper.make_node(
+                "Resize", ["X", "empty", "empty", "sizes"], ["Y"], mode=mode
+            )
+        )
+        graph = helper.make_graph(
+            nodes,
+            "test_resize_12_13",
+            inputs,
+            [helper.make_tensor_value_info("Y", TensorProto.FLOAT, (1, 1, 4, 4))],
+            initializers,
+        )
+        model = helper.make_model(
+            graph, opset_imports=[helper.make_operatorsetid("", initial_version)]
+        )
+        checker.check_model(model, full_check=True)
+        converted = onnx.version_converter.convert_version(model, 13)
+        checker.check_model(converted, full_check=True)
+        resize = next(n for n in converted.graph.node if n.op_type == "Resize")
+        assert list(resize.input) == ["X", "empty", "", "sizes"]
+        np.testing.assert_array_equal(
+            ReferenceEvaluator(converted).run(None, feeds)[0],
+            ReferenceEvaluator(model).run(None, feeds)[0],
+        )
+
+    @pytest.mark.parametrize("initial_version", [11, 12])
+    @pytest.mark.parametrize(
+        "coordinate_mode",
+        [
+            None,
+            "half_pixel",
+            "pytorch_half_pixel",
+            "align_corners",
+            "asymmetric",
+            "tf_crop_and_resize",
+        ],
+    )
+    @pytest.mark.parametrize("omit_sizes", [True, False])
+    def test_resize_12_13_preserves_scales(
+        self, initial_version: int, coordinate_mode: str | None, omit_sizes: bool
+    ) -> None:
+        attributes = (
+            {"coordinate_transformation_mode": coordinate_mode}
+            if coordinate_mode is not None
+            else {}
+        )
+        resize_inputs = ["X", "roi", "scales"]
+        if not omit_sizes:
+            resize_inputs.append("")
+        graph = helper.make_graph(
+            [helper.make_node("Resize", resize_inputs, ["Y"], **attributes)],
+            "test_resize_12_13",
+            [helper.make_tensor_value_info("X", TensorProto.FLOAT, (1, 1, 2, 2))],
+            [helper.make_tensor_value_info("Y", TensorProto.FLOAT, (1, 1, 4, 4))],
+            [
+                helper.make_tensor(
+                    "roi", TensorProto.FLOAT, [8], [0, 0, 0, 0, 1, 1, 1, 1]
+                ),
+                helper.make_tensor("scales", TensorProto.FLOAT, [4], [1, 1, 2, 2]),
+            ],
+        )
+        converted = self._converted(
+            graph, helper.make_operatorsetid("", initial_version), 13
+        )
+        checker.check_model(converted, full_check=True)
+        resize = converted.graph.node[0]
+        assert list(resize.input) == resize_inputs
+        assert resize.attribute == graph.node[0].attribute
+        model = helper.make_model(
+            graph, opset_imports=[helper.make_operatorsetid("", initial_version)]
+        )
+        feeds = {"X": np.arange(4, dtype=np.float32).reshape(1, 1, 2, 2)}
+        np.testing.assert_array_equal(
+            ReferenceEvaluator(converted).run(None, feeds)[0],
+            ReferenceEvaluator(model).run(None, feeds)[0],
+        )
+
     # Test Scatter Adapter: 10 -> 11
     def test_scatter_10_11_bounds_check(self) -> None:
         """Test Scatter 10->11 conversion with proper bounds checking."""
