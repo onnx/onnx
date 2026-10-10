@@ -262,91 +262,64 @@ void check_tensor(const TensorProto& tensor, const CheckerContext& ctx) {
     if (tensor.data_type() == TensorProto::STRING) {
       fail_check("STRING data (tensor name: ", tensor.name(), ") should not be stored in raw_data field");
     }
-    // Validate that raw_data is large enough for the declared shape and type: either a
-    // packed sub-byte type (2 or 4 elements per byte) or a regular, byte-aligned type.
-    int64_t expected_bytes = 0;
-    int64_t bytes_per_elem = 0;
-    switch (tensor.data_type()) {
-      case TensorProto::UINT4:
-      case TensorProto::INT4:
-      case TensorProto::FLOAT4E2M1:
-        expected_bytes = (nelem + 1) / 2; // 2 elements per byte, ceiling division
-        break;
-      case TensorProto::UINT2:
-      case TensorProto::INT2:
-        expected_bytes = (nelem + 3) / 4; // 4 elements per byte, ceiling division
-        break;
-      case TensorProto::FLOAT6E2M3:
-      case TensorProto::FLOAT6E3M2: {
-        int64_t expected_bits = 0;
-        if (checked_mul_overflow(nelem, 6, &expected_bits)) {
+    // For segmented tensors, dims describe the full tensor; segment describes the stored chunk.
+    int64_t described_elems = nelem;
+    if (tensor.has_segment()) {
+      const auto& seg = tensor.segment();
+      if (!seg.has_begin() || !seg.has_end()) {
+        fail_check("TensorProto segment must set begin and end (tensor name: ", tensor.name(), ")");
+      }
+      const int64_t begin = seg.begin();
+      const int64_t end = seg.end();
+      if (begin < 0 || end < begin || end > nelem) {
+        fail_check(
+            "Invalid TensorProto segment (tensor name: ",
+            tensor.name(),
+            "): [",
+            begin,
+            ", ",
+            end,
+            ") out of [0, ",
+            nelem,
+            ")");
+      }
+      described_elems = end - begin;
+    }
+    const int64_t bit_width = ElementBitWidth(tensor.data_type());
+    if (bit_width < 0) {
+      fail_check("Unrecognized data_type (tensor name: ", tensor.name(), "): ", tensor.data_type());
+    }
+    if (described_elems > 0) {
+      int64_t total_bits = 0;
+      if (checked_mul_overflow(described_elems, bit_width, &total_bits)) {
+        fail_check("Tensor byte size overflow (tensor name: ", tensor.name(), ")");
+      }
+      const auto used_bits = static_cast<uint8_t>(total_bits % 8);
+      if (checked_add_overflow(total_bits, 7, &total_bits)) {
+        fail_check("Tensor byte size overflow (tensor name: ", tensor.name(), ")");
+      }
+      const int64_t expected_bytes = total_bits / 8;
+      const int64_t actual_bytes = static_cast<int64_t>(tensor.raw_data().size());
+      if (actual_bytes < expected_bytes) {
+        fail_check(
+            "TensorProto (tensor name: ",
+            tensor.name(),
+            ") raw_data size (",
+            actual_bytes,
+            " bytes) is too small for the declared shape and type (",
+            expected_bytes,
+            " bytes required).");
+      }
+      if (bit_width == 6 && used_bits != 0) {
+        const auto last_byte = static_cast<uint8_t>(tensor.raw_data()[expected_bytes - 1]);
+        const auto unused_bits_mask = static_cast<uint8_t>(0xFFU << used_bits);
+        if ((last_byte & unused_bits_mask) != 0) {
           fail_check(
               "TensorProto (tensor name: ",
               tensor.name(),
-              ") has a shape too large to validate against its data type.");
+              ") has non-zero padding bits in its packed FLOAT6 raw_data.");
         }
-        expected_bytes = (expected_bits / 8) + (expected_bits % 8 != 0);
-        if (expected_bytes > 0 && static_cast<int64_t>(tensor.raw_data().size()) >= expected_bytes) {
-          const auto used_bits = static_cast<uint8_t>(expected_bits % 8);
-          if (used_bits != 0) {
-            const auto last_byte = static_cast<uint8_t>(tensor.raw_data()[expected_bytes - 1]);
-            const auto unused_bits_mask = static_cast<uint8_t>(0xFFU << used_bits);
-            if ((last_byte & unused_bits_mask) != 0) {
-              fail_check(
-                  "TensorProto (tensor name: ",
-                  tensor.name(),
-                  ") has non-zero padding bits in its packed FLOAT6 raw_data.");
-            }
-          }
-        }
-        break;
       }
-      case TensorProto::UINT8:
-      case TensorProto::INT8:
-      case TensorProto::BOOL:
-      case TensorProto::FLOAT8E4M3FN:
-      case TensorProto::FLOAT8E4M3FNUZ:
-      case TensorProto::FLOAT8E5M2:
-      case TensorProto::FLOAT8E5M2FNUZ:
-      case TensorProto::FLOAT8E8M0:
-        bytes_per_elem = 1;
-        break;
-      case TensorProto::UINT16:
-      case TensorProto::INT16:
-      case TensorProto::FLOAT16:
-      case TensorProto::BFLOAT16:
-        bytes_per_elem = 2;
-        break;
-      case TensorProto::FLOAT:
-      case TensorProto::INT32:
-      case TensorProto::UINT32:
-        bytes_per_elem = 4;
-        break;
-      case TensorProto::DOUBLE:
-      case TensorProto::INT64:
-      case TensorProto::UINT64:
-      case TensorProto::COMPLEX64: // 2 x float32
-        bytes_per_elem = 8;
-        break;
-      case TensorProto::COMPLEX128: // 2 x float64
-        bytes_per_elem = 16;
-        break;
-      default:
-        break;
-    }
-    if (bytes_per_elem > 0 && checked_mul_overflow(nelem, bytes_per_elem, &expected_bytes)) {
-      fail_check(
-          "TensorProto (tensor name: ", tensor.name(), ") has a shape too large to validate against its data type.");
-    }
-    if (expected_bytes > 0 && static_cast<int64_t>(tensor.raw_data().size()) < expected_bytes) {
-      fail_check(
-          "TensorProto (tensor name: ",
-          tensor.name(),
-          ") raw_data size (",
-          tensor.raw_data().size(),
-          " bytes) is too small for the declared shape and type (",
-          expected_bytes,
-          " bytes required).");
     }
     return;
   } else {
@@ -1767,14 +1740,14 @@ int64_t open_external_data(
   ScopedFd guard(fd);
 
   // Post-open checks (fail closed).
-  struct stat fd_stat{};
+  struct stat fd_stat {};
   if (fstat(fd, &fd_stat) != 0) {
     fail_check("Tensor ", tensor_name, " external data: fstat failed.");
   }
   if (!kernel_verified) {
     // Verify containment via canonical path + inode comparison.
     auto canonical_data = verify_path_containment(data_path, base_dir, tensor_name);
-    struct stat path_stat{};
+    struct stat path_stat {};
     if (stat(canonical_data.c_str(), &path_stat) != 0) {
       fail_check("Tensor ", tensor_name, " external data: cannot stat canonical path.");
     }
