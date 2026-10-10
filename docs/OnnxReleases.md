@@ -65,6 +65,7 @@ RC-Candidates
 
 **Partner Validation**
 
+ * **Long-term goal (aspirational, not yet enforced):** move toward a fixed ~2-week testing/soak period for each release candidate before it is promoted to the final release, giving downstream/partner projects (onnxruntime, pytorch, tensorflow-onnx, onnx-tensorrt, sklearn-onnx, etc.) reliable lead time to validate against the RC. Today the actual RC window varies release to release depending on how quickly partner issues are found and fixed; this is a direction to work toward, not a current guarantee, and should only be documented as a firm process once it has actually been followed for a release or two.
  * User should install the rc-packages with `pip install onnx=={rc version}`
  * Open Issues for external repos:
      * Create GitHub issues in converters' repos to provide them the package links and oppuruntity to test the release before it goes public.
