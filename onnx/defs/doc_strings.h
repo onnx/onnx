@@ -37,6 +37,7 @@ extern const char kDoc_EyeLike_ver9[];
 extern const char kDoc_Flatten_ver24[];
 extern const char kDoc_GridSample_ver20[];
 extern const char kDoc_GRU_ver14[];
+extern const char kDoc_GroupedMatMul_ver29[];
 extern const char kDoc_HardSigmoid_ver6[];
 extern const char kDoc_HardSwish_ver14[];
 extern const char kDoc_InstanceNormalization_ver6[];

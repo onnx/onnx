@@ -545,6 +545,20 @@ class TestAutomaticUpgrade(automatic_conversion_test_base.TestAutomaticConversio
             attrs={"mode": "nearest", "padding_mode": "border", "align_corners": 1},
         )
 
+    def test_GroupedMatMul(self) -> None:
+        self._test_op_upgrade(
+            "GroupedMatMul",
+            29,
+            [[4, 3], [2, 3, 5], [4, 2], [2, 5]],
+            [[4, 2, 5]],
+            [
+                TensorProto.FLOAT,
+                TensorProto.FLOAT,
+                TensorProto.INT64,
+                TensorProto.FLOAT,
+            ],
+        )
+
     def test_GRU_1(self) -> None:
         # 2->3, 6->7 adapters are missing
         self._test_op_upgrade(
