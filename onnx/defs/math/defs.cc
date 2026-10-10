@@ -518,7 +518,9 @@ ONNX_OPERATOR_SET_SCHEMA(
             }
             )ONNX"));
 
-static void SwiGLUShapeInference(InferenceContext& ctx) {
+// Shared by the two-input gated activations (SwiGLU, GeGLU), which have an
+// identical gate/value shape contract.
+static void GatedActivationShapeInference(InferenceContext& ctx) {
   propagateElemTypeFromInputToOutput(ctx, 0, 0);
   if (!hasNInputShapes(ctx, 2)) {
     return;
@@ -548,7 +550,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Output(0, "Y", "Output tensor", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
         .TypeConstraint("T", OpSchema::all_float_types_ir4(), "Constrain input and output types to float tensors.")
         .SetNodeDeterminism(OpSchema::NodeDeterminism::Deterministic)
-        .TypeAndShapeInferenceFunction(SwiGLUShapeInference)
+        .TypeAndShapeInferenceFunction(GatedActivationShapeInference)
         .FunctionBody(
             R"ONNX(
           {
@@ -556,6 +558,69 @@ ONNX_OPERATOR_SET_SCHEMA(
             Y = Mul (SwishGate, B)
           }
         )ONNX"));
+
+static std::string GetGeGLUApproximate(const AttributeProto* approx_attr_proto) {
+  return approx_attr_proto != nullptr && approx_attr_proto->has_s() ? approx_attr_proto->s() : gelu_default_approx;
+}
+
+static void GeGLUShapeInference(InferenceContext& ctx) {
+  const std::string approximate = GetGeGLUApproximate(ctx.getAttribute("approximate"));
+  if (approximate != "none" && approximate != "tanh") {
+    fail_shape_inference("GeGLU: 'approximate' must be \"none\" or \"tanh\", got \"", approximate, "\".");
+  }
+  GatedActivationShapeInference(ctx);
+}
+
+// Gelu's body computes in T. In float16 its 1 + Erf(A / sqrt(2)) term loses
+// nearly all precision for negative A (about 8% error at A = -3, zero below
+// about -4), so float16 and bfloat16 inputs are computed in float32 here.
+static bool BuildContextDependentFunctionBodyGeGLU(
+    const FunctionBodyBuildContext& ctx,
+    const OpSchema& schema,
+    FunctionProto& functionProto) {
+  const std::string approximate = GetGeGLUApproximate(ctx.getAttribute("approximate"));
+  if (approximate != "none" && approximate != "tanh") {
+    return false;
+  }
+  const auto* const tp = ctx.getInputType(0);
+  if ((tp == nullptr) || (!tp->has_tensor_type())) {
+    return false;
+  }
+  const int64_t T = tp->tensor_type().elem_type();
+
+  FunctionBuilder builder(functionProto);
+  if (T == TensorProto_DataType_FLOAT16 || T == TensorProto_DataType_BFLOAT16) {
+    const int64_t U = TensorProto_DataType_FLOAT;
+    builder.Add("A32 = Cast (A)", "to", U)
+        .Add("B32 = Cast (B)", "to", U)
+        .Add("GeluGate = Gelu (A32)", "approximate", approximate)
+        .Add("Y32 = Mul (GeluGate, B32)")
+        .Add("Y = Cast (Y32)", "to", T);
+  } else {
+    builder.Add("GeluGate = Gelu (A)", "approximate", approximate).Add("Y = Mul (GeluGate, B)");
+  }
+  schema.BuildFunction(functionProto);
+  return true;
+}
+
+ONNX_OPERATOR_SET_SCHEMA(
+    GeGLU,
+    29,
+    OpSchema()
+        .SetDoc(kDoc_GeGLU_ver29)
+        .Attr(
+            "approximate",
+            "Gelu approximation algorithm used for the gate: `\"none\"` (default) or `\"tanh\"`. "
+            "Any other value is invalid.",
+            AttributeProto::STRING,
+            gelu_default_approx)
+        .Input(0, "A", "Gate input tensor", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
+        .Input(1, "B", "Linear (value) input tensor", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
+        .Output(0, "Y", "Output tensor", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
+        .TypeConstraint("T", OpSchema::all_float_types_ir4(), "Constrain input and output types to float tensors.")
+        .SetNodeDeterminism(OpSchema::NodeDeterminism::Deterministic)
+        .TypeAndShapeInferenceFunction(GeGLUShapeInference)
+        .SetContextDependentFunctionBodyBuilder(BuildContextDependentFunctionBodyGeGLU));
 
 ONNX_OPERATOR_SET_SCHEMA(
     Exp,

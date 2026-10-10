@@ -2368,6 +2368,47 @@ outputs directly to `A` (gate) and `B` (value); for a fused/packed single
 projection, split it upstream into `A` and `B` with `Split` (contiguous layout)
 or `Slice`/`Gather` (interleaved layout).
 )DOC";
+const char kDoc_GeGLU_ver29[] = R"DOC(
+GeGLU is a gated activation that takes two inputs, a gate `A` and a linear (value)
+input `B`, and produces one output `Y`. It applies the Gelu activation to the gate
+and multiplies the result elementwise by the linear input:
+
+```
+Y = Gelu(A) * B
+```
+
+The gate activation is the `Gelu` operator with the same `approximate` attribute.
+With `approximate = "none"` (the default) it is the exact form
+
+```
+Gelu(a) = 0.5 * a * (1 + erf(a / sqrt(2)))
+```
+
+and with `approximate = "tanh"` it is the tanh approximation
+
+```
+Gelu(a) = 0.5 * a * (1 + tanh(sqrt(2 / pi) * (a + 0.044715 * a^3)))
+```
+
+Any other value of `approximate` is invalid. For float16 and bfloat16 inputs the
+function body computes `Gelu(A) * B` in float32 and casts the result back to the
+input type, because Gelu evaluated in float16 loses nearly all precision for
+negative gate values.
+
+Inputs `A` and `B` must have identical shapes; broadcasting is not applied and the
+output `Y` has the same shape as the inputs. A model whose `A` and `B` shapes
+differ at runtime is invalid, even though the `Mul` in the function body would
+broadcast them.
+
+Exporters typically produce `A` and `B` in one of two ways: for the common
+two-projection form wire the two projection outputs directly to `A` (gate) and `B`
+(value); for a fused/packed single projection, split it upstream into `A` and `B`
+with `Split` (contiguous layout) or `Slice`/`Gather` (interleaved layout).
+
+GeGLU was introduced in "GLU Variants Improve Transformer" (Shazeer, 2020,
+https://arxiv.org/abs/2002.05202) and is used as the feed-forward gate in models
+such as T5 v1.1 and Gemma.
+)DOC";
 const char kDoc_Swish_ver24[] = R"DOC(
 Swish function takes one input data (Tensor<T>) and produces one output data (Tensor<T>) of the same shape,
 where $Swish(x) = x * sigmoid(alpha * x)$.
@@ -6733,6 +6774,7 @@ const char kDoc_MatMulInteger_ver10[] = "";
 const char kDoc_Gemm_ver13[] = "";
 const char kDoc_Clip_ver13[] = "";
 const char kDoc_SwiGLU_ver28[] = "";
+const char kDoc_GeGLU_ver29[] = "";
 const char kDoc_Swish_ver24[] = "";
 const char kDoc_gelu_ver20[] = "";
 const char kDoc_celu_ver28[] = "";

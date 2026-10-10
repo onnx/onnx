@@ -179,6 +179,7 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#DepthToSpace">DepthToSpace</a>|<a href="Changelog.md#DepthToSpace-28">28</a>, <a href="Changelog.md#DepthToSpace-13">13</a>, <a href="Changelog.md#DepthToSpace-11">11</a>, <a href="Changelog.md#DepthToSpace-1">1</a>|28|
 |<a href="#DynamicQuantizeLinear">DynamicQuantizeLinear</a>|<a href="Changelog.md#DynamicQuantizeLinear-11">11</a>|11|
 |<a href="#Elu">Elu</a>|<a href="Changelog.md#Elu-22">22</a>, <a href="Changelog.md#Elu-6">6</a>, <a href="Changelog.md#Elu-1">1</a>|18|
+|<a href="#GeGLU">GeGLU</a>|<a href="Changelog.md#GeGLU-29">29</a>|29|
 |<a href="#Gelu">Gelu</a>|<a href="Changelog.md#Gelu-20">20</a>|20|
 |<a href="#GreaterOrEqual">GreaterOrEqual</a>|<a href="Changelog.md#GreaterOrEqual-16">16</a>, <a href="Changelog.md#GreaterOrEqual-12">12</a>|16|
 |<a href="#GroupNormalization">GroupNormalization</a>|<a href="Changelog.md#GroupNormalization-21">21</a>, <a href="Changelog.md#GroupNormalization-18">18</a>|21|
@@ -16484,6 +16485,268 @@ expect(
     inputs=[data, indices],
     outputs=[output],
     name="test_gathernd_example_int32_batch_dim1",
+)
+```
+
+</details>
+
+
+### <a name="GeGLU"></a><a name="geglu">**GeGLU**</a>
+
+  GeGLU is a gated activation that takes two inputs, a gate `A` and a linear (value)
+  input `B`, and produces one output `Y`. It applies the Gelu activation to the gate
+  and multiplies the result elementwise by the linear input:
+
+  ```
+  Y = Gelu(A) * B
+  ```
+
+  The gate activation is the `Gelu` operator with the same `approximate` attribute.
+  With `approximate = "none"` (the default) it is the exact form
+
+  ```
+  Gelu(a) = 0.5 * a * (1 + erf(a / sqrt(2)))
+  ```
+
+  and with `approximate = "tanh"` it is the tanh approximation
+
+  ```
+  Gelu(a) = 0.5 * a * (1 + tanh(sqrt(2 / pi) * (a + 0.044715 * a^3)))
+  ```
+
+  Any other value of `approximate` is invalid. For float16 and bfloat16 inputs the
+  function body computes `Gelu(A) * B` in float32 and casts the result back to the
+  input type, because Gelu evaluated in float16 loses nearly all precision for
+  negative gate values.
+
+  Inputs `A` and `B` must have identical shapes; broadcasting is not applied and the
+  output `Y` has the same shape as the inputs. A model whose `A` and `B` shapes
+  differ at runtime is invalid, even though the `Mul` in the function body would
+  broadcast them.
+
+  Exporters typically produce `A` and `B` in one of two ways: for the common
+  two-projection form wire the two projection outputs directly to `A` (gate) and `B`
+  (value); for a fused/packed single projection, split it upstream into `A` and `B`
+  with `Split` (contiguous layout) or `Slice`/`Gather` (interleaved layout).
+
+  GeGLU was introduced in "GLU Variants Improve Transformer" (Shazeer, 2020,
+  https://arxiv.org/abs/2002.05202) and is used as the feed-forward gate in models
+  such as T5 v1.1 and Gemma.
+
+#### Version
+
+This version of the operator has been available since version 29 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>approximate</tt> : string (default is none)</dt>
+<dd>Gelu approximation algorithm used for the gate: `"none"` (default) or `"tanh"`. Any other value is invalid.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>A</tt> (differentiable) : T</dt>
+<dd>Gate input tensor</dd>
+<dt><tt>B</tt> (differentiable) : T</dt>
+<dd>Linear (value) input tensor</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> (differentiable) : T</dt>
+<dd>Output tensor</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(bfloat16), tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>approximate_none</summary>
+
+```python
+node = onnx.helper.make_node(
+    "GeGLU",
+    inputs=["a", "b"],
+    outputs=["y"],
+    approximate="none",
+)
+expect(
+    node,
+    inputs=[_A, _B],
+    outputs=[_Y_NONE],
+    name="test_geglu_approximate_none",
+    opset_imports=[onnx.helper.make_opsetid("", 29)],
+)
+```
+
+</details>
+
+
+<details>
+<summary>bfloat16</summary>
+
+```python
+node = onnx.helper.make_node(
+    "GeGLU",
+    inputs=["a", "b"],
+    outputs=["y"],
+)
+a = np.array(_A_2D, dtype=ml_dtypes.bfloat16)
+b = np.array(_B_2D, dtype=ml_dtypes.bfloat16)
+y = np.array(
+    [
+        [-0.0020294189453125, -0.00012683868408203125, 0.158203125, 3.90625],
+        [-0.30859375, -1.3984375, -0.00775146484375, 0.578125],
+    ],
+    dtype=ml_dtypes.bfloat16,
+)
+expect(
+    node,
+    inputs=[a, b],
+    outputs=[y],
+    name="test_geglu_bfloat16",
+    opset_imports=[onnx.helper.make_opsetid("", 29)],
+)
+```
+
+</details>
+
+
+<details>
+<summary>double</summary>
+
+```python
+node = onnx.helper.make_node(
+    "GeGLU",
+    inputs=["a", "b"],
+    outputs=["y"],
+)
+a = np.array(_A_2D, dtype=np.float64)
+b = np.array(_B_2D, dtype=np.float64)
+y = np.array(
+    [
+        [
+            -0.002024847047445155,
+            -0.00012668496733247991,
+            0.15865525393145707,
+            3.908999472207283,
+        ],
+        [
+            -0.3085375387259869,
+            -1.399789198096713,
+            -0.007762081657220199,
+            0.5800294857173488,
+        ],
+    ],
+    dtype=np.float64,
+)
+expect(
+    node,
+    inputs=[a, b],
+    outputs=[y],
+    name="test_geglu_double",
+    opset_imports=[onnx.helper.make_opsetid("", 29)],
+)
+```
+
+</details>
+
+
+<details>
+<summary>float16</summary>
+
+```python
+node = onnx.helper.make_node(
+    "GeGLU",
+    inputs=["a", "b"],
+    outputs=["y"],
+)
+a = np.array(_A_2D, dtype=np.float16)
+b = np.array(_B_2D, dtype=np.float16)
+y = np.array(
+    [
+        [
+            -0.002025604248046875,
+            -0.00012671947479248047,
+            0.15869140625,
+            3.908203125,
+        ],
+        [-0.30859375, -1.3994140625, -0.007762908935546875, 0.580078125],
+    ],
+    dtype=np.float16,
+)
+expect(
+    node,
+    inputs=[a, b],
+    outputs=[y],
+    name="test_geglu_float16",
+    opset_imports=[onnx.helper.make_opsetid("", 29)],
+)
+```
+
+</details>
+
+
+<details>
+<summary>geglu</summary>
+
+```python
+node = onnx.helper.make_node(
+    "GeGLU",
+    inputs=["a", "b"],
+    outputs=["y"],
+)
+expect(
+    node,
+    inputs=[_A, _B],
+    outputs=[_Y_NONE],
+    name="test_geglu",
+    opset_imports=[onnx.helper.make_opsetid("", 29)],
+)
+```
+
+</details>
+
+
+<details>
+<summary>tanh</summary>
+
+```python
+node = onnx.helper.make_node(
+    "GeGLU",
+    inputs=["a", "b"],
+    outputs=["y"],
+    approximate="tanh",
+)
+y = np.array(
+    [
+        [
+            [0.420596, -0.045402307, -2.9963627],
+            [7.9998593, -0.31761602, -0.345714],
+        ],
+        [
+            [-0.001818696, 1.9545977, -0.23142898],
+            [0.0001404919, 0.0, 0.34989288],
+        ],
+    ],
+    dtype=np.float32,
+)
+expect(
+    node,
+    inputs=[_A, _B],
+    outputs=[y],
+    name="test_geglu_tanh",
+    opset_imports=[onnx.helper.make_opsetid("", 29)],
 )
 ```
 
