@@ -12,6 +12,9 @@ class MatMulInteger(OpRun):
     def _run(self, A, B, a_zero_point=None, b_zero_point=None):
         A32 = A.astype(np.int32)
         if a_zero_point is not None:
+            if A.ndim == 2 and a_zero_point.ndim == 1:
+                # A vector zero point quantizes each row of a matrix.
+                a_zero_point = a_zero_point.reshape(-1, 1)
             A32 -= a_zero_point
         B32 = B.astype(np.int32)
         if b_zero_point is not None:
