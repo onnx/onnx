@@ -29,6 +29,10 @@ __all__ = [
     "Atan",
     "Atanh",
     "Attention",
+    "Attention_1",
+    "Attention_23",
+    "Attention_24",
+    "Attention_25",
     "AttributeHasValue",
     "AveragePool_1",
     "AveragePool_7",
@@ -76,6 +80,8 @@ __all__ = [
     "DepthToSpace",
     "DequantizeLinear_19",
     "DequantizeLinear_21",
+    "DequantizeLinear_23",
+    "DequantizeLinear_25",
     "Det",
     "DFT_17",
     "DFT_20",
@@ -98,10 +104,12 @@ __all__ = [
     "Gemm_6",
     "Gemm_7",
     "GlobalAveragePool",
+    "GlobalLpPool",
     "GlobalMaxPool",
     "Greater",
     "GreaterOrEqual",
-    "GridSample",
+    "GridSample_16",
+    "GridSample_20",
     "GRU",
     "HammingWindow",
     "HannWindow",
@@ -156,6 +164,8 @@ __all__ = [
     "QuantizeLinear_10",
     "QuantizeLinear_19",
     "QuantizeLinear_21",
+    "QuantizeLinear_23",
+    "QuantizeLinear_25",
     "RandomNormal",
     "RandomNormalLike",
     "RandomUniform",
@@ -219,6 +229,7 @@ __all__ = [
     "SoftmaxCrossEntropyLoss",
     "Softplus",
     "Softsign",
+    "SwiGLU",
     "Swish",
     "SpaceToDepth",
     "Split_2",
@@ -281,7 +292,13 @@ from onnx.reference.ops.op_asin import Asin
 from onnx.reference.ops.op_asinh import Asinh
 from onnx.reference.ops.op_atan import Atan
 from onnx.reference.ops.op_atanh import Atanh
-from onnx.reference.ops.op_attention import Attention
+from onnx.reference.ops.op_attention import (
+    Attention,
+    Attention_1,
+    Attention_23,
+    Attention_24,
+    Attention_25,
+)
 from onnx.reference.ops.op_attribute_has_value import AttributeHasValue
 from onnx.reference.ops.op_average_pool import (
     AveragePool_1,
@@ -332,6 +349,8 @@ from onnx.reference.ops.op_depth_to_space import DepthToSpace
 from onnx.reference.ops.op_dequantize_linear import (
     DequantizeLinear_19,
     DequantizeLinear_21,
+    DequantizeLinear_23,
+    DequantizeLinear_25,
 )
 from onnx.reference.ops.op_det import Det
 from onnx.reference.ops.op_dft import DFT_17, DFT_20
@@ -352,10 +371,11 @@ from onnx.reference.ops.op_gather_elements import GatherElements
 from onnx.reference.ops.op_gathernd import GatherND
 from onnx.reference.ops.op_gemm import Gemm_6, Gemm_7
 from onnx.reference.ops.op_global_average_pool import GlobalAveragePool
+from onnx.reference.ops.op_global_lp_pool import GlobalLpPool
 from onnx.reference.ops.op_global_max_pool import GlobalMaxPool
 from onnx.reference.ops.op_greater import Greater
 from onnx.reference.ops.op_greater_or_equal import GreaterOrEqual
-from onnx.reference.ops.op_grid_sample import GridSample
+from onnx.reference.ops.op_grid_sample import GridSample_16, GridSample_20
 from onnx.reference.ops.op_gru import GRU
 from onnx.reference.ops.op_hamming_window import HammingWindow
 from onnx.reference.ops.op_hann_window import HannWindow
@@ -408,6 +428,8 @@ from onnx.reference.ops.op_quantize_linear import (
     QuantizeLinear_10,
     QuantizeLinear_19,
     QuantizeLinear_21,
+    QuantizeLinear_23,
+    QuantizeLinear_25,
 )
 from onnx.reference.ops.op_random_normal import RandomNormal
 from onnx.reference.ops.op_random_normal_like import RandomNormalLike
@@ -475,6 +497,7 @@ from onnx.reference.ops.op_string_normalizer import StringNormalizer
 from onnx.reference.ops.op_string_split import StringSplit
 from onnx.reference.ops.op_sub import Sub
 from onnx.reference.ops.op_sum import Sum
+from onnx.reference.ops.op_swiglu import SwiGLU
 from onnx.reference.ops.op_swish import Swish
 from onnx.reference.ops.op_tan import Tan
 from onnx.reference.ops.op_tanh import Tanh
@@ -499,10 +522,10 @@ def _build_registered_operators() -> dict[str, dict[int | None, type[OpRun]]]:
 def load_op(
     domain: str,
     op_type: str,
-    version: None | int = None,
+    version: int | None = None,
     custom: Any = None,
-    node: None | NodeProto = None,
-    input_types: None | list[TypeProto] = None,
+    node: NodeProto | None = None,
+    input_types: list[TypeProto] | None = None,
     expand: bool = False,
     evaluator_cls: type | None = None,
 ) -> Any:
@@ -582,7 +605,7 @@ def load_op(
             f"and domain {domain!r}, schema.has_function is {has_function}, "
             f"schema.has_context_dependent_function is {has_context_dependent_function}. "
             f"You may either add one or skip the test in "
-            f"'test_backend_reference.py'. Available implementations:\n{available}"
+            f"'backend_reference_test.py'. Available implementations:\n{available}"
         )
     impl = _registered_operators[op_type]
     if None not in impl:

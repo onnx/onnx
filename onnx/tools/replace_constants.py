@@ -76,9 +76,7 @@ def _replace_constant_of_shape_with_range(
     The function is not recursive. The recursivity is done by
     *replace_initializer_by_constant_of_shape*.
     """
-    if isinstance(onx, GraphProto):
-        nodes = list(onx.node)
-    elif isinstance(onx, FunctionProto):
+    if isinstance(onx, (GraphProto, FunctionProto)):
         nodes = list(onx.node)
     else:
         raise TypeError(f"Not implemented for type {type(onx)}.")
@@ -99,8 +97,6 @@ def _replace_constant_of_shape_with_range(
                 existing_names.add(name)
                 return name
             i += 1
-        # The function should never go through that line.
-        raise RuntimeError("The function should never go through that line.")
 
     cst0 = make_node("Constant", [], [_find_name("zero")], value_int=0)
     cst1 = make_node("Constant", [], [_find_name("one")], value_int=1)
@@ -158,17 +154,10 @@ def _replace_constant_of_shape_value(
     onx: GraphProto | FunctionProto, value_constant_of_shape: float
 ) -> GraphProto | FunctionProto:
     """Replaces all fill value of all nodes *ConstantOfShape*."""
-    if isinstance(onx, GraphProto):
-        nodes = list(onx.node)
-    elif isinstance(onx, FunctionProto):
+    if isinstance(onx, (GraphProto, FunctionProto)):
         nodes = list(onx.node)
     else:
         raise TypeError(f"Not implemented for type {type(onx)}.")
-
-    existing_names = set()
-    for node in nodes:
-        existing_names |= set(node.input)
-        existing_names |= set(node.output)
 
     update = {}
     for inode, node in enumerate(nodes):

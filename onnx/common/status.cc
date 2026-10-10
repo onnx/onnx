@@ -10,8 +10,7 @@
 
 #include "onnx/string_utils.h"
 
-namespace ONNX_NAMESPACE {
-namespace Common {
+namespace ONNX_NAMESPACE::Common {
 
 Status::Status(StatusCategory category, StatusCode code, const std::string& msg) {
   assert(StatusCode::OK != code);
@@ -85,5 +84,4 @@ const std::string& Status::EmptyString() {
   return empty_str;
 }
 
-} // namespace Common
-} // namespace ONNX_NAMESPACE
+} // namespace ONNX_NAMESPACE::Common

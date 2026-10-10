@@ -115,8 +115,8 @@ OpSchemaRegistry* OpSchemaRegistry::Instance() {
 void OpSchema::CheckInputOutputType(struct InferenceContext& ctx) const {
   std::unordered_map<std::string, std::string> type_constraints;
   // Check the number of inputs / output.
-  VerifyInputNum(ctx.getNumInputs());
-  VerifyOutputNum(ctx.getNumOutputs());
+  VerifyInputNum(static_cast<int>(ctx.getNumInputs()));
+  VerifyOutputNum(static_cast<int>(ctx.getNumOutputs()));
 
   // check all input types
   for (size_t in_idx = 0; in_idx < ctx.getNumInputs(); ++in_idx) {
@@ -502,7 +502,7 @@ OpSchema& OpSchema::Attr(
 #define ATTR_SETTER_WITH_SINGLE_VALUE(type, field, attrtype)                                                           \
   OpSchema& OpSchema::Attr(                                                                                            \
       std::string name, std::string description, AttributeProto::AttributeType attr_type, const type& default_value) { \
-    if (attrtype != attr_type) {                                                                                       \
+    if ((attrtype) != attr_type) {                                                                                     \
       fail_schema("Attribute specification type mismatch.");                                                           \
     }                                                                                                                  \
     AttributeProto a;                                                                                                  \
@@ -523,7 +523,7 @@ OpSchema& OpSchema::Attr(
       std::string description,                                              \
       AttributeProto::AttributeType attr_type,                              \
       const std::vector<type>& default_value) {                             \
-    if (attrtype != attr_type) {                                            \
+    if ((attrtype) != attr_type) {                                          \
       fail_schema("Attribute specification type mismatch.");                \
     }                                                                       \
     AttributeProto a;                                                       \
@@ -539,7 +539,7 @@ OpSchema& OpSchema::Attr(
 #define ATTR_SETTER_WITH_SINGLE_COMPLEXVALUE(type, field, attrtype)                                                    \
   OpSchema& OpSchema::Attr(                                                                                            \
       std::string name, std::string description, AttributeProto::AttributeType attr_type, const type& default_value) { \
-    if (attrtype != attr_type) {                                                                                       \
+    if ((attrtype) != attr_type) {                                                                                     \
       fail_schema("Attribute specification type mismatch.");                                                           \
     }                                                                                                                  \
     AttributeProto a;                                                                                                  \
@@ -556,7 +556,7 @@ OpSchema& OpSchema::Attr(
       std::string description,                                              \
       AttributeProto::AttributeType attr_type,                              \
       const std::vector<type>& default_value) {                             \
-    if (attrtype != attr_type) {                                            \
+    if ((attrtype) != attr_type) {                                          \
       fail_schema("Attribute specification type mismatch.");                \
     }                                                                       \
     AttributeProto a;                                                       \
@@ -1363,6 +1363,40 @@ const std::vector<std::string>& OpSchema::all_non_string_tensor_types_ir13() {
   return v;
 }
 
+const std::vector<std::string>& OpSchema::all_tensor_types_ir14() {
+  static const auto v = types::Tensors(
+      {TensorProto::UINT8,        TensorProto::UINT16,         TensorProto::UINT32,     TensorProto::UINT64,
+       TensorProto::INT8,         TensorProto::INT16,          TensorProto::INT32,      TensorProto::INT64,
+       TensorProto::BFLOAT16,     TensorProto::FLOAT16,        TensorProto::FLOAT,      TensorProto::DOUBLE,
+       TensorProto::STRING,       TensorProto::BOOL,           TensorProto::COMPLEX64,  TensorProto::COMPLEX128,
+       TensorProto::FLOAT8E4M3FN, TensorProto::FLOAT8E4M3FNUZ, TensorProto::FLOAT8E5M2, TensorProto::FLOAT8E5M2FNUZ,
+       TensorProto::UINT4,        TensorProto::INT4,           TensorProto::FLOAT4E2M1, TensorProto::FLOAT8E8M0,
+       TensorProto::UINT2,        TensorProto::INT2,           TensorProto::FLOAT6E2M3, TensorProto::FLOAT6E3M2});
+  return v;
+}
+
+const std::vector<std::string>& OpSchema::all_non_complex_tensor_types_ir14() {
+  static const auto v = types::Tensors(
+      {TensorProto::UINT8,      TensorProto::UINT16,         TensorProto::UINT32,       TensorProto::UINT64,
+       TensorProto::INT8,       TensorProto::INT16,          TensorProto::INT32,        TensorProto::INT64,
+       TensorProto::BFLOAT16,   TensorProto::FLOAT16,        TensorProto::FLOAT,        TensorProto::DOUBLE,
+       TensorProto::STRING,     TensorProto::BOOL,           TensorProto::FLOAT8E4M3FN, TensorProto::FLOAT8E4M3FNUZ,
+       TensorProto::FLOAT8E5M2, TensorProto::FLOAT8E5M2FNUZ, TensorProto::UINT4,        TensorProto::INT4,
+       TensorProto::FLOAT4E2M1, TensorProto::FLOAT8E8M0,     TensorProto::UINT2,        TensorProto::INT2,
+       TensorProto::FLOAT6E2M3, TensorProto::FLOAT6E3M2});
+  return v;
+}
+
+const std::vector<std::string>& OpSchema::all_non_string_tensor_types_ir14() {
+  static const auto v = [] {
+    auto result = all_tensor_types_ir14();
+    const auto string_type = types::Tensor(TensorProto::STRING);
+    result.erase(std::find(result.begin(), result.end(), string_type));
+    return result;
+  }();
+  return v;
+}
+
 const std::vector<std::string>& OpSchema::all_tensor_sequence_types() {
   static const auto v = types::Sequence(all_tensor_types());
   return v;
@@ -1395,6 +1429,11 @@ const std::vector<std::string>& OpSchema::all_tensor_sequence_types_ir12() {
 
 const std::vector<std::string>& OpSchema::all_tensor_sequence_types_ir13() {
   static const auto v = types::Sequence(all_tensor_types_ir13());
+  return v;
+}
+
+const std::vector<std::string>& OpSchema::all_tensor_sequence_types_ir14() {
+  static const auto v = types::Sequence(all_tensor_types_ir14());
   return v;
 }
 
@@ -1529,13 +1568,13 @@ OpSchema::NodeDeterminism OpSchema::GetNodeDeterminism() const {
       return NodeDeterminism::Unknown;
     } else if (const FunctionProto* func_proto = GetFunction(); func_proto) {
       const OpSchemaRegistry& reg = *OpSchemaRegistry::Instance();
-      std::unordered_map<std::string, int> domain_to_opset_version;
+      std::unordered_map<std::string, int64_t> domain_to_opset_version;
       for (const auto& opset : func_proto->opset_import()) {
         domain_to_opset_version[opset.domain()] = opset.version();
       }
       for (const NodeProto& n : func_proto->node()) {
-        const int opset = domain_to_opset_version[n.domain()];
-        const OpSchema* sch = reg.GetSchema(n.op_type(), opset, n.domain());
+        const int64_t opset = domain_to_opset_version[n.domain()];
+        const OpSchema* sch = reg.GetSchema(n.op_type(), static_cast<int>(opset), n.domain());
         if (!sch) {
           return NodeDeterminism::Unknown;
         }
@@ -1654,10 +1693,10 @@ OpName_Domain_Version_Schema_Map& OpSchemaRegistry::map() {
       if (OpSchemaRegistry::Instance()->GetLoadedSchemaVersion() == 0) {
         ONNX_ASSERTM(
             dbg_registered_schema_count == ONNX_DBG_GET_COUNT_IN_OPSETS(),
-            "%zu schema were exposed from operator sets and automatically placed into the static registry.  "
-            "%zu were expected based on calls to registration macros. Operator set functions may need to be updated.",
             dbg_registered_schema_count,
-            ONNX_DBG_GET_COUNT_IN_OPSETS())
+            " schema were exposed from operator sets and automatically placed into the static registry.  ",
+            ONNX_DBG_GET_COUNT_IN_OPSETS(),
+            " were expected based on calls to registration macros. Operator set functions may need to be updated.")
       }
 #endif
     }

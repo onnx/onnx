@@ -6,7 +6,7 @@
 * [Overall Test Coverage](#overall-test-coverage)
 # Node Test Coverage
 ## Summary
-Node tests have covered 189/201 (94.03%, 5 generators excluded) common operators.
+Node tests have covered 193/202 (95.54%, 5 generators excluded) common operators.
 
 Node tests have covered 1/1 (100.00%, 0 generators excluded) experimental operators.
 
@@ -1114,7 +1114,7 @@ expect(node, inputs=[x], outputs=[y], name="test_atanh")
 
 
 ### Attention
-There are 64 test cases, listed as following:
+There are 93 test cases, listed as following:
 <details>
 <summary>attention</summary>
 
@@ -1133,6 +1133,254 @@ expect(
     outputs=[Y],
     name="test_attention_4d",
     opset_imports=[onnx.helper.make_opsetid("", 23)],
+)
+```
+
+</details>
+<details>
+<summary>attention_23_boolmask_fullymasked_row_nan_robustness</summary>
+
+```python
+"""Opset-23 fully-masked boolean ``attn_mask`` row -> zero (not ``NaN``).
+
+This locks the opset-23 / ``old.cc`` function-body fully-masked-row guard
+against future regressions. In opset 23 the only in-contract fully-masked
+row comes from an all-``False`` boolean ``attn_mask`` row (``is_causal`` is
+not set here): every key for that query is disallowed, so ``softmax`` over an
+all-``-inf`` bias row is ``NaN``. The guard zeros that row's probabilities
+before the ``P @ V`` contraction so the output row is exactly ``0``, while
+rows with at least one allowed key are unchanged.
+
+4D Q/K/V is used so ``q_num_heads``/``kv_num_heads`` are omitted (passing
+them would make the function body treat the input as 3D).
+"""
+np.random.seed(4)
+B, H, S, D = 1, 2, 2, 8
+
+node = onnx.helper.make_node(
+    "Attention",
+    inputs=["Q", "K", "V", "attn_mask"],
+    outputs=["Y"],
+)
+
+Q = np.random.rand(B, H, S, D).astype(np.float32)
+K = np.random.rand(B, H, S, D).astype(np.float32)
+V = np.random.rand(B, H, S, D).astype(np.float32)
+# Row 0: no key allowed -> fully masked (Bug-2 empty row). Row 1: both keys
+# allowed -> finite, unchanged by the guard.
+attn_mask = np.array([[False, False], [True, True]], dtype=np.bool_)
+
+Y, _, _, _ = _compute_attention(Q, K, V, attn_mask=attn_mask)
+
+# Fully-masked row 0 is exactly zero (not NaN); every other cell is finite.
+assert np.all(np.isfinite(Y)), "non-masked rows must be finite"
+assert np.array_equal(Y[:, :, 0, :], np.zeros_like(Y[:, :, 0, :])), (
+    "fully-masked row must be zero (Bug-2)"
+)
+
+expect(
+    node,
+    inputs=[Q, K, V, attn_mask],
+    outputs=[Y],
+    name="test_attention_23_boolmask_fullymasked_row_nan_robustness",
+    opset_imports=[onnx.helper.make_opsetid("", 23)],
+)
+```
+
+</details>
+<details>
+<summary>attention_23_fullymasked_qk_matmul_output_mode3_zero</summary>
+
+```python
+"""Opset-23 ``qk_matmul_output_mode=3`` fully-masked row is a zero row.
+
+Mode ``3`` exposes the post-softmax matrix as the optional
+``qk_matmul_output``.  For a fully-masked query row (all-``False`` boolean
+``attn_mask`` row), the fully-masked-row guard is applied before this output
+is produced, so the mode-3 row is zeroed, consistent with the primary output
+``Y`` row (both are ``0``).  This pins the mandated agreement between the
+guarded primary output and the mode-3 output at opset 23.
+
+4D Q/K/V is used so ``q_num_heads``/``kv_num_heads`` are omitted (passing
+them would make the function body treat the input as 3D).
+"""
+np.random.seed(13)
+B, H, S, D = 1, 2, 2, 8
+
+node = onnx.helper.make_node(
+    "Attention",
+    inputs=["Q", "K", "V", "attn_mask"],
+    outputs=["Y", "", "", "qk_matmul_output"],
+    qk_matmul_output_mode=3,
+)
+
+Q = np.random.rand(B, H, S, D).astype(np.float32)
+K = np.random.rand(B, H, S, D).astype(np.float32)
+V = np.random.rand(B, H, S, D).astype(np.float32)
+# Row 0: no key allowed -> fully masked. Row 1: both keys allowed -> finite.
+attn_mask = np.array([[False, False], [True, True]], dtype=np.bool_)
+
+Y, _, _, qk_matmul_output = _compute_attention(
+    Q,
+    K,
+    V,
+    attn_mask=attn_mask,
+    qk_matmul_output_mode=3,
+)
+
+# Primary output row 0 and the mode-3 row 0 are both guarded to zero.
+assert np.array_equal(Y[:, :, 0, :], np.zeros_like(Y[:, :, 0, :])), (
+    "fully-masked primary output row must be zero"
+)
+assert np.array_equal(
+    qk_matmul_output[:, :, 0, :], np.zeros_like(qk_matmul_output[:, :, 0, :])
+), "mode-3 output row for a fully-masked query must be zero (consistent with Y)"
+assert np.all(np.isfinite(qk_matmul_output)), (
+    "all mode-3 rows are finite (the fully-masked row is guarded to 0.0)"
+)
+assert np.all(np.isfinite(Y)), (
+    "all Y rows are finite (the fully-masked row is guarded to 0.0)"
+)
+
+expect(
+    node,
+    inputs=[Q, K, V, attn_mask],
+    outputs=[Y, qk_matmul_output],
+    name="test_attention_23_fullymasked_qk_matmul_output_mode3_zero",
+    opset_imports=[onnx.helper.make_opsetid("", 23)],
+)
+```
+
+</details>
+<details>
+<summary>attention_24_fullymasked_qk_matmul_output_mode3_zero</summary>
+
+```python
+"""Opset-24 ``qk_matmul_output_mode=3`` fully-masked row is a zero row.
+
+The opset-24 twin of
+``export_attention_23_fullymasked_qk_matmul_output_mode3_zero``.  Mode ``3``
+exposes the post-softmax matrix as the optional ``qk_matmul_output``.  For a
+fully-masked query row (all-``False`` boolean ``attn_mask`` row), the
+fully-masked-row guard is applied before this output is produced, so the
+mode-3 row is zeroed, consistent with the primary output ``Y`` row (both are
+``0``).  This pins the mandated agreement between the guarded primary output
+and the mode-3 output at opset 24.
+
+4D Q/K/V is used so ``q_num_heads``/``kv_num_heads`` are omitted (passing
+them would make the function body treat the input as 3D).
+"""
+np.random.seed(13)
+B, H, S, D = 1, 2, 2, 8
+
+node = onnx.helper.make_node(
+    "Attention",
+    inputs=["Q", "K", "V", "attn_mask"],
+    outputs=["Y", "", "", "qk_matmul_output"],
+    qk_matmul_output_mode=3,
+)
+
+Q = np.random.rand(B, H, S, D).astype(np.float32)
+K = np.random.rand(B, H, S, D).astype(np.float32)
+V = np.random.rand(B, H, S, D).astype(np.float32)
+# Row 0: no key allowed -> fully masked. Row 1: both keys allowed -> finite.
+attn_mask = np.array([[False, False], [True, True]], dtype=np.bool_)
+
+Y, _, _, qk_matmul_output = _compute_attention(
+    Q,
+    K,
+    V,
+    attn_mask=attn_mask,
+    qk_matmul_output_mode=3,
+)
+
+# Primary output row 0 and the mode-3 row 0 are both guarded to zero.
+assert np.array_equal(Y[:, :, 0, :], np.zeros_like(Y[:, :, 0, :])), (
+    "fully-masked primary output row must be zero"
+)
+assert np.array_equal(
+    qk_matmul_output[:, :, 0, :], np.zeros_like(qk_matmul_output[:, :, 0, :])
+), "mode-3 output row for a fully-masked query must be zero (consistent with Y)"
+assert np.all(np.isfinite(qk_matmul_output)), (
+    "all mode-3 rows are finite (the fully-masked row is guarded to 0.0)"
+)
+assert np.all(np.isfinite(Y)), (
+    "all Y rows are finite (the fully-masked row is guarded to 0.0)"
+)
+
+expect(
+    node,
+    inputs=[Q, K, V, attn_mask],
+    outputs=[Y, qk_matmul_output],
+    name="test_attention_24_fullymasked_qk_matmul_output_mode3_zero",
+    opset_imports=[onnx.helper.make_opsetid("", 24)],
+)
+```
+
+</details>
+<details>
+<summary>attention_24_qk_matmul_output_mode3_softmax_precision</summary>
+
+```python
+"""Mode-3 ``qk_matmul_output`` is emitted at the output precision ``T1``.
+
+``qk_matmul_output_mode=3`` exposes the post-softmax probabilities.  When
+``softmax_precision`` differs from the operator's output type ``T1`` (here
+``T1 = float16`` with softmax computed in ``float32``), the mode-3 output is
+cast back to ``T1`` -- matching the reference implementation, which casts the
+exposed matrix to ``Q.dtype``.  This locks both the dtype contract and the
+fully-masked-row zeroing under a non-default ``softmax_precision``.
+
+4D Q/K/V is used so ``q_num_heads``/``kv_num_heads`` are omitted (passing
+them would make the function body treat the input as 3D).
+"""
+np.random.seed(17)
+B, H, S, D = 1, 2, 2, 8
+
+node = onnx.helper.make_node(
+    "Attention",
+    inputs=["Q", "K", "V", "attn_mask"],
+    outputs=["Y", "", "", "qk_matmul_output"],
+    qk_matmul_output_mode=3,
+    softmax_precision=int(onnx.TensorProto.FLOAT),
+)
+
+# T1 = float16; softmax runs in float32, so the mode-3 output is cast back to
+# float16 on emission.
+Q = np.random.rand(B, H, S, D).astype(np.float16)
+K = np.random.rand(B, H, S, D).astype(np.float16)
+V = np.random.rand(B, H, S, D).astype(np.float16)
+# Row 0: fully masked. Row 1: both keys allowed -> finite.
+attn_mask = np.array([[False, False], [True, True]], dtype=np.bool_)
+
+Y, _, _, qk_matmul_output = _compute_attention(
+    Q,
+    K,
+    V,
+    attn_mask=attn_mask,
+    qk_matmul_output_mode=3,
+    softmax_precision=int(onnx.TensorProto.FLOAT),
+)
+
+# The mode-3 output is emitted at T1 (float16), not the float32 softmax
+# precision, matching the operator's output type.
+assert qk_matmul_output.dtype == np.float16, (
+    "mode-3 qk_matmul_output must be emitted at the output precision T1 (float16)"
+)
+# The fully-masked row is still guarded to zero, consistent with Y.
+assert np.array_equal(
+    qk_matmul_output[:, :, 0, :], np.zeros_like(qk_matmul_output[:, :, 0, :])
+), "mode-3 output row for a fully-masked query must be zero (consistent with Y)"
+assert np.all(np.isfinite(qk_matmul_output)), (
+    "all mode-3 rows are finite (the fully-masked row is guarded to 0.0)"
+)
+
+expect(
+    node,
+    inputs=[Q, K, V, attn_mask],
+    outputs=[Y, qk_matmul_output],
+    name="test_attention_24_qk_matmul_output_mode3_softmax_precision",
+    opset_imports=[onnx.helper.make_opsetid("", 24)],
 )
 ```
 
@@ -1241,6 +1489,38 @@ expect(
     inputs=[Q, K, V],
     outputs=[Y],
     name="test_attention_3d_causal",
+    opset_imports=[onnx.helper.make_opsetid("", 23)],
+)
+```
+
+</details>
+<details>
+<summary>attention_3d_causal_bf16</summary>
+
+```python
+"""3D input with is_causal=1 and bfloat16."""
+node = onnx.helper.make_node(
+    "Attention",
+    inputs=["Q", "K", "V"],
+    outputs=["Y"],
+    is_causal=1,
+    q_num_heads=3,
+    kv_num_heads=3,
+)
+
+Q = np.random.rand(2, 4, 24).astype(ml_dtypes.bfloat16)
+K = np.random.rand(2, 6, 24).astype(ml_dtypes.bfloat16)
+V = np.random.rand(2, 6, 24).astype(ml_dtypes.bfloat16)
+
+Y, _, _, _ = _compute_attention(
+    Q, K, V, is_causal=1, q_num_heads=3, kv_num_heads=3
+)
+
+expect(
+    node,
+    inputs=[Q, K, V],
+    outputs=[Y],
+    name="test_attention_3d_causal_bf16",
     opset_imports=[onnx.helper.make_opsetid("", 23)],
 )
 ```
@@ -1699,6 +1979,46 @@ expect(
 
 </details>
 <details>
+<summary>attention_3d_local_window</summary>
+
+```python
+"""Sliding window with 3D MQA inputs and a distinct V head size."""
+left_window_size = 2
+node = onnx.helper.make_node(
+    "Attention",
+    inputs=["Q", "K", "V"],
+    outputs=["Y"],
+    q_num_heads=4,
+    kv_num_heads=1,
+    is_causal=1,
+    left_window_size=left_window_size,
+)
+
+Q = np.random.rand(2, 4, 32).astype(np.float32)
+K = np.random.rand(2, 6, 8).astype(np.float32)
+V = np.random.rand(2, 6, 6).astype(np.float32)
+
+Y, _, _, _ = _compute_attention(
+    Q,
+    K,
+    V,
+    q_num_heads=4,
+    kv_num_heads=1,
+    is_causal=1,
+    left_window_size=left_window_size,
+)
+
+expect(
+    node,
+    inputs=[Q, K, V],
+    outputs=[Y],
+    name="test_attention_3d_local_window",
+    opset_imports=[onnx.helper.make_opsetid("", 25)],
+)
+```
+
+</details>
+<details>
 <summary>attention_3d_scaled</summary>
 
 ```python
@@ -2051,6 +2371,338 @@ expect(
 
 </details>
 <details>
+<summary>attention_4d_causal_nonpad_attn_mask_composition</summary>
+
+```python
+"""Compose ``is_causal`` + ``nonpad_kv_seqlen`` + boolean ``attn_mask``.
+
+The existing nonpad tests use no ``attn_mask`` and the existing mask tests
+use no ``nonpad_kv_seqlen``; this is the first to activate all three
+constraints together on the external-cache path with ``batch > 1``.  The
+three biases are summed additively and a key is attended only if allowed by
+all three.  Crucially the inputs are designed so that **each constraint is
+independently necessary** -- removing any one changes the golden -- to avoid a
+degenerate test that a backend ignoring ``is_causal`` and/or
+``nonpad_kv_seqlen`` could still pass:
+
+* **``is_causal`` binds.**  Each batch has a key that the boolean mask allows
+  (``True``) but the bottom-right causal frontier disallows
+  (``j > i + offset``); only ``is_causal`` masks it (batch 0 row 0 key 2,
+  batch 1 row 0 key 3).
+* **``attn_mask`` binds.**  Each batch has a key the causal frontier and the
+  padding bound both allow but the boolean mask sets ``False`` (batch 0 row 2
+  key 1, batch 1 row 2 key 2); only the mask masks it.
+* **``nonpad_kv_seqlen`` binds.**  ``nonpad_kv_seqlen`` sets the per-batch
+  causal *offset* (``offset = nonpad_kv_seqlen - q_sequence_length``), so
+  dropping it collapses the frontier to top-left (``offset = 0``) and shifts
+  which keys are attended.  (Under ``is_causal=1`` the causal frontier already
+  subsumes the ``j < nonpad`` padding bound, so ``nonpad_kv_seqlen`` binds
+  through the offset it induces rather than through a redundant padding cut.)
+
+The mask is chosen to leave at least one allowed key on every query row, so
+this exercises the *intersection* of the three constraints with finite outputs
+(the fully-masked-row guard is covered by
+``test_attention_4d_causal_nonpad_negative_offset_structural_empty`` and
+``test_attention_24_fullymasked_qk_matmul_output_mode3_zero``).
+
+4D Q/K/V is used so ``q_num_heads``/``kv_num_heads`` are omitted (passing
+them would make the function body treat the input as 3D).
+"""
+np.random.seed(11)
+B, H, L, D = 2, 2, 6, 8
+S_q = 3
+
+node = onnx.helper.make_node(
+    "Attention",
+    inputs=["Q", "K", "V", "attn_mask", "", "", "nonpad_kv_seqlen"],
+    outputs=["Y"],
+    is_causal=1,
+)
+
+Q = np.random.rand(B, H, S_q, D).astype(np.float32)
+K = np.random.rand(B, H, L, D).astype(np.float32)
+V = np.random.rand(B, H, L, D).astype(np.float32)
+nonpad_kv_seqlen = np.array([4, 5], dtype=np.int64)  # offsets [1, 2]
+# Per-batch (B, 1, S_q, L) bool mask. Each batch is laid out so all three
+# constraints uniquely bind (see the docstring): a causal-only-masked key
+# (mask True, j > i + offset), a mask-only-masked key (mask False, causal +
+# nonpad allow it), and >=1 allowed key per row.
+attn_mask = np.array(
+    [
+        [
+            [
+                [True, True, True, False, False, False],
+                [True, True, True, False, False, False],
+                [True, False, True, True, False, False],
+            ]
+        ],
+        [
+            [
+                [True, True, True, True, False, False],
+                [True, True, True, True, False, False],
+                [True, True, False, True, True, False],
+            ]
+        ],
+    ],
+    dtype=np.bool_,
+)
+
+Y, _, _, _ = _compute_attention(
+    Q,
+    K,
+    V,
+    attn_mask=attn_mask,
+    nonpad_kv_seqlen=nonpad_kv_seqlen,
+    is_causal=1,
+)
+
+# The chosen mask leaves >=1 allowed key per row, so the composition stays
+# finite (no fully-masked row in this case).
+assert np.all(np.isfinite(Y)), "composed-constraint output must be finite"
+
+# Non-degeneracy: each constraint is independently necessary. Removing any one
+# of the three (is_causal, attn_mask, nonpad_kv_seqlen) must change the result,
+# so a backend that ignores is_causal or nonpad_kv_seqlen cannot reproduce the
+# golden by applying only the most restrictive mask.
+y_no_causal, _, _, _ = _compute_attention(
+    Q, K, V, attn_mask=attn_mask, nonpad_kv_seqlen=nonpad_kv_seqlen, is_causal=0
+)
+y_no_mask, _, _, _ = _compute_attention(
+    Q, K, V, nonpad_kv_seqlen=nonpad_kv_seqlen, is_causal=1
+)
+y_no_nonpad, _, _, _ = _compute_attention(
+    Q, K, V, attn_mask=attn_mask, is_causal=1
+)
+assert not np.allclose(Y, y_no_causal, equal_nan=True), (
+    "is_causal must bind: dropping it changes the result"
+)
+assert not np.allclose(Y, y_no_mask, equal_nan=True), (
+    "attn_mask must bind: dropping it changes the result"
+)
+assert not np.allclose(Y, y_no_nonpad, equal_nan=True), (
+    "nonpad_kv_seqlen must bind (via the causal offset): dropping it changes the result"
+)
+
+expect(
+    node,
+    inputs=[Q, K, V, attn_mask, nonpad_kv_seqlen],
+    outputs=[Y],
+    name="test_attention_4d_causal_nonpad_attn_mask_composition",
+    opset_imports=[onnx.helper.make_opsetid("", 24)],
+)
+```
+
+</details>
+<details>
+<summary>attention_4d_causal_nonpad_batch_prefill</summary>
+
+```python
+"""Batch>1 continued prefill with distinct per-batch bottom-right offsets.
+
+The batched generalization of the ``batch == 1`` continued-prefill case: with
+``nonpad_kv_seqlen = [4, 5, 6]`` and ``S_q = 2`` the per-batch bottom-right
+offsets are ``[2, 3, 4]`` (all ``>= 0``), so each batch realigns its causal
+frontier to its own valid-key prefix.  This pins that the per-batch offset is
+applied independently across the batch dimension.
+
+4D Q/K/V is used so ``q_num_heads``/``kv_num_heads`` are omitted (passing
+them would make the function body treat the input as 3D).
+"""
+np.random.seed(12)
+B, H, L, D = 3, 2, 6, 8
+S_q = 2
+
+node = onnx.helper.make_node(
+    "Attention",
+    inputs=["Q", "K", "V", "", "", "", "nonpad_kv_seqlen"],
+    outputs=["Y"],
+    is_causal=1,
+)
+
+Q = np.random.rand(B, H, S_q, D).astype(np.float32)
+K = np.random.rand(B, H, L, D).astype(np.float32)
+V = np.random.rand(B, H, L, D).astype(np.float32)
+nonpad_kv_seqlen = np.array([4, 5, 6], dtype=np.int64)  # offsets [2, 3, 4]
+
+Y, _, _, _ = _compute_attention(
+    Q,
+    K,
+    V,
+    nonpad_kv_seqlen=nonpad_kv_seqlen,
+    is_causal=1,
+)
+
+assert np.all(np.isfinite(Y)), "per-batch prefill output must be finite"
+
+expect(
+    node,
+    inputs=[Q, K, V, nonpad_kv_seqlen],
+    outputs=[Y],
+    name="test_attention_4d_causal_nonpad_batch_prefill",
+    opset_imports=[onnx.helper.make_opsetid("", 24)],
+)
+```
+
+</details>
+<details>
+<summary>attention_4d_causal_nonpad_continued_prefill</summary>
+
+```python
+"""Continued / chunked prefill (S_q=2) into a partially-filled static cache.
+
+With ``nonpad_kv_seqlen = [4]`` and ``S_q = 2`` the bottom-right offset is
+``4 - 2 = 2``: query 0 attends keys ``{0,1,2}`` and query 1 attends
+``{0,1,2,3}``.  The old top-left alignment would mask everything past the
+diagonal (``{0}`` and ``{0,1}``), so this test fails pre-fix.
+"""
+np.random.seed(1)
+B, H, L, D = 1, 2, 4, 8
+S_q = 2
+
+node = onnx.helper.make_node(
+    "Attention",
+    inputs=["Q", "K", "V", "", "", "", "nonpad_kv_seqlen"],
+    outputs=["Y"],
+    is_causal=1,
+)
+
+Q = np.random.rand(B, H, S_q, D).astype(np.float32)
+K = np.random.rand(B, H, L, D).astype(np.float32)
+V = np.random.rand(B, H, L, D).astype(np.float32)
+nonpad_kv_seqlen = np.array([4], dtype=np.int64)
+
+Y, _, _, _ = _compute_attention(
+    Q,
+    K,
+    V,
+    nonpad_kv_seqlen=nonpad_kv_seqlen,
+    is_causal=1,
+)
+
+expect(
+    node,
+    inputs=[Q, K, V, nonpad_kv_seqlen],
+    outputs=[Y],
+    name="test_attention_4d_causal_nonpad_continued_prefill",
+    opset_imports=[onnx.helper.make_opsetid("", 24)],
+)
+```
+
+</details>
+<details>
+<summary>attention_4d_causal_nonpad_negative_offset_structural_empty</summary>
+
+```python
+"""Negative bottom-right offset: structurally-empty early query rows -> zero.
+
+This is the onnx-node twin of the ORT gtest
+``Attention_Causal_NonPadKVSeqLen_StructuralEmptyRow_Zero`` /
+``StructuralEmptyRows_Zero_CUDA``.  With ``nonpad_kv_seqlen = [2]`` and
+``S_q = 4`` the bottom-right offset is ``2 - 4 = -2``: query row ``sq``
+attends keys ``0..(sq - 2)``, so rows 0 and 1 have an empty key set.  Their
+``softmax`` over an all-``-inf`` bias row is ``NaN``; the fully-masked-row
+guard zeros those rows before the ``P @ V`` contraction so the output rows are
+exactly ``0``, while rows 2 and 3 (attending keys ``{0}`` and ``{0,1}``) stay finite
+and nonzero.  A ``nonpad_kv_seqlen[b] < q_sequence_length`` input is out of
+the contract's intended use, but its result is still well-defined (zeroed
+rows) rather than ``NaN``; this test pins that defined behavior.
+
+4D Q/K/V is used so ``q_num_heads``/``kv_num_heads`` are omitted (passing
+them would make the function body treat the input as 3D).
+"""
+np.random.seed(7)
+B, H, L, D = 1, 2, 4, 8
+S_q = 4
+
+node = onnx.helper.make_node(
+    "Attention",
+    inputs=["Q", "K", "V", "", "", "", "nonpad_kv_seqlen"],
+    outputs=["Y"],
+    is_causal=1,
+)
+
+Q = np.random.rand(B, H, S_q, D).astype(np.float32)
+K = np.random.rand(B, H, L, D).astype(np.float32)
+V = np.random.rand(B, H, L, D).astype(np.float32)
+# offset = nonpad - S_q = 2 - 4 = -2 -> rows 0,1 structurally empty.
+nonpad_kv_seqlen = np.array([2], dtype=np.int64)
+
+Y, _, _, _ = _compute_attention(
+    Q,
+    K,
+    V,
+    nonpad_kv_seqlen=nonpad_kv_seqlen,
+    is_causal=1,
+)
+
+# Structurally-empty early rows are exactly zero (not NaN); later rows finite.
+assert np.all(np.isfinite(Y)), "all output rows must be finite"
+assert np.array_equal(Y[:, :, 0, :], np.zeros_like(Y[:, :, 0, :])), (
+    "structurally-empty row 0 must be zero"
+)
+assert np.array_equal(Y[:, :, 1, :], np.zeros_like(Y[:, :, 1, :])), (
+    "structurally-empty row 1 must be zero"
+)
+assert np.any(Y[:, :, 2, :] != 0) and np.any(Y[:, :, 3, :] != 0), (
+    "rows with a non-empty key set must be nonzero"
+)
+
+expect(
+    node,
+    inputs=[Q, K, V, nonpad_kv_seqlen],
+    outputs=[Y],
+    name="test_attention_4d_causal_nonpad_negative_offset_structural_empty",
+    opset_imports=[onnx.helper.make_opsetid("", 24)],
+)
+```
+
+</details>
+<details>
+<summary>attention_4d_causal_with_past_and_present</summary>
+
+```python
+"""Regression guard: internal (past_key) cache + is_causal.
+
+This exercises the unchanged scalar bottom-right path (offset =
+past_sequence_length).  Its golden output must remain identical to the
+pre-fix behavior, proving the external-cache change does not touch the
+past_key path.
+"""
+np.random.seed(2)
+node = onnx.helper.make_node(
+    "Attention",
+    inputs=["Q", "K", "V", "", "past_key", "past_value"],
+    outputs=["Y", "present_key", "present_value"],
+    is_causal=1,
+)
+
+past_sequence_length = 3
+Q = np.random.rand(2, 3, 4, 8).astype(np.float32)
+K = np.random.rand(2, 3, 4, 8).astype(np.float32)
+V = np.random.rand(2, 3, 4, 8).astype(np.float32)
+past_key = np.random.rand(2, 3, past_sequence_length, 8).astype(np.float32)
+past_value = np.random.rand(2, 3, past_sequence_length, 8).astype(np.float32)
+
+Y, present_key, present_value, _ = _compute_attention(
+    Q,
+    K,
+    V,
+    past_key=past_key,
+    past_value=past_value,
+    is_causal=1,
+)
+
+expect(
+    node,
+    inputs=[Q, K, V, past_key, past_value],
+    outputs=[Y, present_key, present_value],
+    name="test_attention_4d_causal_with_past_and_present",
+    opset_imports=[onnx.helper.make_opsetid("", 24)],
+)
+```
+
+</details>
+<details>
 <summary>attention_4d_diff_heads_mask4d_padded_kv</summary>
 
 ```python
@@ -2079,6 +2731,90 @@ expect(
     inputs=[Q, K, V, attn_mask, nonpad_kv_seqlen],
     outputs=[Y],
     name="test_attention_4d_diff_heads_mask4d_padded_kv",
+    opset_imports=[onnx.helper.make_opsetid("", 24)],
+)
+```
+
+</details>
+<details>
+<summary>attention_4d_gqa_causal_nonpad_decode</summary>
+
+```python
+"""External/static-cache decode (S_q=1) with per-batch valid lengths.
+
+K/V are the full static cache buffer; ``nonpad_kv_seqlen`` marks how many
+leading keys are valid per batch.  With bottom-right (offset-aware) causal
+masking the single decode query attends keys ``0..nonpad[b]-1``.  Under the
+old top-left alignment it would attend only key 0, so this test fails
+pre-fix and passes post-fix.
+"""
+np.random.seed(0)
+B, H_q, H_kv, L, D = 2, 4, 2, 8, 8
+
+node = onnx.helper.make_node(
+    "Attention",
+    inputs=["Q", "K", "V", "", "", "", "nonpad_kv_seqlen"],
+    outputs=["Y"],
+    is_causal=1,
+)
+
+Q = np.random.rand(B, H_q, 1, D).astype(np.float32)
+K = np.random.rand(B, H_kv, L, D).astype(np.float32)
+V = np.random.rand(B, H_kv, L, D).astype(np.float32)
+# Batch 0 has all 8 keys valid, batch 1 only the first 5.
+nonpad_kv_seqlen = np.array([8, 5], dtype=np.int64)
+
+Y, _, _, _ = _compute_attention(
+    Q,
+    K,
+    V,
+    nonpad_kv_seqlen=nonpad_kv_seqlen,
+    is_causal=1,
+)
+
+expect(
+    node,
+    inputs=[Q, K, V, nonpad_kv_seqlen],
+    outputs=[Y],
+    name="test_attention_4d_gqa_causal_nonpad_decode",
+    opset_imports=[onnx.helper.make_opsetid("", 24)],
+)
+```
+
+</details>
+<details>
+<summary>attention_4d_gqa_causal_nonpad_decode_fp16</summary>
+
+```python
+"""fp16 variant of the external-cache decode case (locks -inf dtype handling)."""
+np.random.seed(0)
+B, H_q, H_kv, L, D = 2, 4, 2, 8, 8
+
+node = onnx.helper.make_node(
+    "Attention",
+    inputs=["Q", "K", "V", "", "", "", "nonpad_kv_seqlen"],
+    outputs=["Y"],
+    is_causal=1,
+)
+
+Q = np.random.rand(B, H_q, 1, D).astype(np.float16)
+K = np.random.rand(B, H_kv, L, D).astype(np.float16)
+V = np.random.rand(B, H_kv, L, D).astype(np.float16)
+nonpad_kv_seqlen = np.array([8, 5], dtype=np.int64)
+
+Y, _, _, _ = _compute_attention(
+    Q,
+    K,
+    V,
+    nonpad_kv_seqlen=nonpad_kv_seqlen,
+    is_causal=1,
+)
+
+expect(
+    node,
+    inputs=[Q, K, V, nonpad_kv_seqlen],
+    outputs=[Y],
+    name="test_attention_4d_gqa_causal_nonpad_decode_fp16",
     opset_imports=[onnx.helper.make_opsetid("", 24)],
 )
 ```
@@ -2313,6 +3049,78 @@ expect(
 
 </details>
 <details>
+<summary>attention_attn_mask_causal_bf16</summary>
+
+```python
+"""Float attn_mask + is_causal with bfloat16 — mask is bf16, causal mask must be cast."""
+node = onnx.helper.make_node(
+    "Attention",
+    inputs=["Q", "K", "V", "attn_mask"],
+    outputs=["Y"],
+    is_causal=1,
+)
+
+Q = np.random.rand(2, 3, 4, 8).astype(ml_dtypes.bfloat16)
+K = np.random.rand(2, 3, 6, 8).astype(ml_dtypes.bfloat16)
+V = np.random.rand(2, 3, 6, 8).astype(ml_dtypes.bfloat16)
+attn_mask = np.random.rand(2, 1, 4, 6).astype(ml_dtypes.bfloat16)
+
+Y, _, _, _ = _compute_attention(
+    Q,
+    K,
+    V,
+    attn_mask=attn_mask,
+    is_causal=1,
+)
+
+expect(
+    node,
+    inputs=[Q, K, V, attn_mask],
+    outputs=[Y],
+    name="test_attention_4d_attn_mask_causal_bf16",
+    opset_imports=[onnx.helper.make_opsetid("", 23)],
+)
+```
+
+</details>
+<details>
+<summary>attention_bidirectional_window</summary>
+
+```python
+"""Asymmetric bidirectional window independent of causal masking."""
+node = onnx.helper.make_node(
+    "Attention",
+    inputs=["Q", "K", "V"],
+    outputs=["Y"],
+    left_window_size=1,
+    right_window_size=2,
+)
+
+Q = np.zeros((1, 1, 5, 1), dtype=np.float32)
+K = np.zeros((1, 1, 5, 1), dtype=np.float32)
+V = np.arange(5, dtype=np.float32).reshape(1, 1, 5, 1)
+Y, _, _, _ = _compute_attention(
+    Q,
+    K,
+    V,
+    left_window_size=1,
+    right_window_size=2,
+)
+
+np.testing.assert_allclose(
+    Y.reshape(-1), np.array([1.0, 1.5, 2.5, 3.0, 3.5], dtype=np.float32)
+)
+expect(
+    node,
+    inputs=[Q, K, V],
+    outputs=[Y],
+    name="test_attention_bidirectional_window",
+    opset_imports=[onnx.helper.make_opsetid("", 25)],
+)
+```
+
+</details>
+<details>
 <summary>attention_causal</summary>
 
 ```python
@@ -2335,6 +3143,165 @@ expect(
     outputs=[Y],
     name="test_attention_4d_causal",
     opset_imports=[onnx.helper.make_opsetid("", 23)],
+)
+```
+
+</details>
+<details>
+<summary>attention_causal_bf16</summary>
+
+```python
+"""is_causal=1 with bfloat16 inputs exercises causal mask CastLike fix."""
+node = onnx.helper.make_node(
+    "Attention",
+    inputs=["Q", "K", "V"],
+    outputs=["Y"],
+    is_causal=1,
+)
+
+Q = np.random.rand(2, 3, 4, 8).astype(ml_dtypes.bfloat16)
+K = np.random.rand(2, 3, 6, 8).astype(ml_dtypes.bfloat16)
+V = np.random.rand(2, 3, 6, 8).astype(ml_dtypes.bfloat16)
+
+Y, _, _, _ = _compute_attention(Q, K, V, is_causal=1)
+
+expect(
+    node,
+    inputs=[Q, K, V],
+    outputs=[Y],
+    name="test_attention_4d_causal_bf16",
+    opset_imports=[onnx.helper.make_opsetid("", 23)],
+)
+```
+
+</details>
+<details>
+<summary>attention_causal_boolmask_nan_robustness</summary>
+
+```python
+"""Composed ``is_causal`` + boolean ``attn_mask`` NaN-robustness.
+
+The causal frontier (lower-triangular here, offset 0) and the boolean
+``attn_mask`` are intersected: a key is attended only if allowed by both.
+This exercises two pre-fix NaN sources on the same forward pass:
+
+* **Bug-1 (allowed cells stay finite).**  Query 0 is allowed key 0 by both
+  the causal frontier (``{0}``) and the mask (``True`` at key 0).  The old
+  ``(1 - attn_mask) * -inf`` conversion computes ``0 * -inf = NaN`` at that
+  allowed cell, poisoning the row.  The select conversion
+  ``where(attn_mask, 0, -inf)`` keeps it finite.
+* **Bug-2 (fully-masked row -> 0).**  Query 1 is allowed keys ``{0, 1}`` by
+  the causal frontier but the mask is ``False`` at both, so the combined
+  constraint allows no key.  ``softmax`` of an all-``-inf`` row is ``NaN``;
+  the fully-masked-row guard zeros it before the ``P @ V`` contraction so
+  the output row is ``0``.
+
+4D Q/K/V is used so ``q_num_heads``/``kv_num_heads`` are omitted (passing
+them would make the function body treat the input as 3D).
+"""
+np.random.seed(3)
+B, H, S, D = 1, 2, 2, 8
+
+node = onnx.helper.make_node(
+    "Attention",
+    inputs=["Q", "K", "V", "attn_mask"],
+    outputs=["Y"],
+    is_causal=1,
+)
+
+Q = np.random.rand(B, H, S, D).astype(np.float32)
+K = np.random.rand(B, H, S, D).astype(np.float32)
+V = np.random.rand(B, H, S, D).astype(np.float32)
+# Row 0: key 0 allowed (Bug-1 allowed cell). Row 1: no key allowed -> fully
+# masked once intersected with the causal frontier (Bug-2 empty row).
+attn_mask = np.array([[True, False], [False, False]], dtype=np.bool_)
+
+Y, _, _, _ = _compute_attention(
+    Q,
+    K,
+    V,
+    attn_mask=attn_mask,
+    is_causal=1,
+)
+
+# Bug-1: allowed cells are finite (no NaN anywhere). Bug-2: the fully-masked
+# query row is exactly zero, not NaN.
+assert np.all(np.isfinite(Y)), "allowed cells must be finite (Bug-1)"
+assert np.array_equal(Y[:, :, 1, :], np.zeros_like(Y[:, :, 1, :])), (
+    "fully-masked row must be zero (Bug-2)"
+)
+
+expect(
+    node,
+    inputs=[Q, K, V, attn_mask],
+    outputs=[Y],
+    name="test_attention_causal_boolmask_nan_robustness",
+    opset_imports=[onnx.helper.make_opsetid("", 24)],
+)
+```
+
+</details>
+<details>
+<summary>attention_causal_fp16</summary>
+
+```python
+"""is_causal=1 with float16 inputs."""
+node = onnx.helper.make_node(
+    "Attention",
+    inputs=["Q", "K", "V"],
+    outputs=["Y"],
+    is_causal=1,
+)
+
+Q = np.random.rand(2, 3, 4, 8).astype(np.float16)
+K = np.random.rand(2, 3, 6, 8).astype(np.float16)
+V = np.random.rand(2, 3, 6, 8).astype(np.float16)
+
+Y, _, _, _ = _compute_attention(Q, K, V, is_causal=1)
+
+expect(
+    node,
+    inputs=[Q, K, V],
+    outputs=[Y],
+    name="test_attention_4d_causal_fp16",
+    opset_imports=[onnx.helper.make_opsetid("", 23)],
+)
+```
+
+</details>
+<details>
+<summary>attention_causal_padded_kv_bf16</summary>
+
+```python
+"""is_causal=1 + nonpad_kv_seqlen with bfloat16 exercises both CastLike fixes."""
+node = onnx.helper.make_node(
+    "Attention",
+    inputs=["Q", "K", "V", "attn_mask", "", "", "nonpad_kv_seqlen"],
+    outputs=["Y"],
+    is_causal=1,
+)
+
+Q = np.random.rand(2, 3, 4, 8).astype(ml_dtypes.bfloat16)
+K = np.random.rand(2, 3, 6, 8).astype(ml_dtypes.bfloat16)
+V = np.random.rand(2, 3, 6, 8).astype(ml_dtypes.bfloat16)
+attn_mask = np.random.rand(2, 3, 4, 4).astype(ml_dtypes.bfloat16)
+nonpad_kv_seqlen = np.array([3, 4], dtype=np.int64)
+
+Y, _, _, _ = _compute_attention(
+    Q,
+    K,
+    V,
+    attn_mask=attn_mask,
+    is_causal=1,
+    nonpad_kv_seqlen=nonpad_kv_seqlen,
+)
+
+expect(
+    node,
+    inputs=[Q, K, V, attn_mask, nonpad_kv_seqlen],
+    outputs=[Y],
+    name="test_attention_4d_causal_padded_kv_bf16",
+    opset_imports=[onnx.helper.make_opsetid("", 24)],
 )
 ```
 
@@ -2824,6 +3791,403 @@ expect(
     outputs=[Y, present_key, present_value],
     name="test_attention_4d_gqa_with_past_and_present_fp16",
     opset_imports=[onnx.helper.make_opsetid("", 23)],
+)
+```
+
+</details>
+<details>
+<summary>attention_local_window</summary>
+
+```python
+"""Causal sliding window attention with two preceding positions."""
+left_window_size = 2
+node = onnx.helper.make_node(
+    "Attention",
+    inputs=["Q", "K", "V"],
+    outputs=["Y"],
+    is_causal=1,
+    left_window_size=left_window_size,
+)
+
+Q = np.random.rand(2, 3, 4, 8).astype(np.float32)
+K = np.random.rand(2, 3, 6, 8).astype(np.float32)
+V = np.random.rand(2, 3, 6, 8).astype(np.float32)
+
+Y, _, _, _ = _compute_attention(
+    Q, K, V, is_causal=1, left_window_size=left_window_size
+)
+
+expect(
+    node,
+    inputs=[Q, K, V],
+    outputs=[Y],
+    name="test_attention_local_window",
+    opset_imports=[onnx.helper.make_opsetid("", 25)],
+)
+```
+
+</details>
+<details>
+<summary>attention_local_window_default</summary>
+
+```python
+"""Disabled window bounds behave identically to version 24."""
+node = onnx.helper.make_node(
+    "Attention",
+    inputs=["Q", "K", "V"],
+    outputs=["Y"],
+    left_window_size=-1,
+    right_window_size=-1,
+)
+
+Q = np.random.rand(2, 3, 4, 8).astype(np.float32)
+K = np.random.rand(2, 3, 6, 8).astype(np.float32)
+V = np.random.rand(2, 3, 6, 8).astype(np.float32)
+
+Y, _, _, _ = _compute_attention(
+    Q, K, V, left_window_size=-1, right_window_size=-1
+)
+
+expect(
+    node,
+    inputs=[Q, K, V],
+    outputs=[Y],
+    name="test_attention_local_window_default",
+    opset_imports=[onnx.helper.make_opsetid("", 25)],
+)
+```
+
+</details>
+<details>
+<summary>attention_local_window_ext_cache_float16_mask</summary>
+
+```python
+"""External cache with a float16 attention mask."""
+left_window_size = 2
+B, H, S_q, S_kv, D = 2, 3, 4, 8, 8
+node = onnx.helper.make_node(
+    "Attention",
+    inputs=["Q", "K", "V", "attn_mask", "", "", "nonpad_kv_seqlen"],
+    outputs=["Y"],
+    is_causal=1,
+    left_window_size=left_window_size,
+)
+
+Q = np.zeros((B, H, S_q, D), dtype=np.float16)
+K = np.zeros((B, H, S_kv, D), dtype=np.float16)
+V = np.ones((B, H, S_kv, D), dtype=np.float16)
+attn_mask = np.zeros((1, S_kv), dtype=np.float16)
+nonpad_kv_seqlen = np.array([6, 7], dtype=np.int64)
+
+Y, _, _, _ = _compute_attention(
+    Q,
+    K,
+    V,
+    attn_mask=attn_mask,
+    nonpad_kv_seqlen=nonpad_kv_seqlen,
+    is_causal=1,
+    left_window_size=left_window_size,
+)
+
+expect(
+    node,
+    inputs=[Q, K, V, attn_mask, nonpad_kv_seqlen],
+    outputs=[Y],
+    name="test_attention_local_window_ext_cache_float16_mask",
+    opset_imports=[onnx.helper.make_opsetid("", 25)],
+)
+```
+
+</details>
+<details>
+<summary>attention_local_window_ext_cache_rank2_mask</summary>
+
+```python
+"""External cache with a conventional rank-2 ``(1, kv)`` mask."""
+left_window_size = 2
+B, H, S_q, S_kv, D = 2, 3, 4, 8, 8
+node = onnx.helper.make_node(
+    "Attention",
+    inputs=["Q", "K", "V", "attn_mask", "", "", "nonpad_kv_seqlen"],
+    outputs=["Y"],
+    is_causal=1,
+    left_window_size=left_window_size,
+)
+
+Q = np.random.rand(B, H, S_q, D).astype(np.float32)
+K = np.random.rand(B, H, S_kv, D).astype(np.float32)
+V = np.random.rand(B, H, S_kv, D).astype(np.float32)
+attn_mask = np.random.rand(1, S_kv).astype(np.float32)
+nonpad_kv_seqlen = np.array([6, 7], dtype=np.int64)
+
+Y, _, _, _ = _compute_attention(
+    Q,
+    K,
+    V,
+    attn_mask=attn_mask,
+    nonpad_kv_seqlen=nonpad_kv_seqlen,
+    is_causal=1,
+    left_window_size=left_window_size,
+)
+
+expect(
+    node,
+    inputs=[Q, K, V, attn_mask, nonpad_kv_seqlen],
+    outputs=[Y],
+    name="test_attention_local_window_ext_cache_rank2_mask",
+    opset_imports=[onnx.helper.make_opsetid("", 25)],
+)
+```
+
+</details>
+<details>
+<summary>attention_local_window_ext_cache_rank3_head_mask</summary>
+
+```python
+"""External cache with a legal rank-3 ``(heads, q, kv)`` mask."""
+left_window_size = 2
+B, H, S_q, S_kv, D = 2, 3, 4, 8, 8
+node = onnx.helper.make_node(
+    "Attention",
+    inputs=["Q", "K", "V", "attn_mask", "", "", "nonpad_kv_seqlen"],
+    outputs=["Y"],
+    is_causal=1,
+    left_window_size=left_window_size,
+)
+
+Q = np.random.rand(B, H, S_q, D).astype(np.float32)
+K = np.random.rand(B, H, S_kv, D).astype(np.float32)
+V = np.random.rand(B, H, S_kv, D).astype(np.float32)
+# Rank 3 is right-aligned as (heads, q, kv), not (batch, q, kv).
+attn_mask = np.random.rand(H, S_q, S_kv).astype(np.float32)
+# External cache: nonpad_kv_seqlen marks valid key count per batch
+nonpad_kv_seqlen = np.array([6, 7], dtype=np.int64)
+
+Y, _, _, _ = _compute_attention(
+    Q,
+    K,
+    V,
+    attn_mask=attn_mask,
+    nonpad_kv_seqlen=nonpad_kv_seqlen,
+    is_causal=1,
+    left_window_size=left_window_size,
+)
+
+expect(
+    node,
+    inputs=[Q, K, V, attn_mask, nonpad_kv_seqlen],
+    outputs=[Y],
+    name="test_attention_local_window_ext_cache_rank3_head_mask",
+    opset_imports=[onnx.helper.make_opsetid("", 25)],
+)
+```
+
+</details>
+<details>
+<summary>attention_local_window_ext_cache_rank4_batch_mask</summary>
+
+```python
+"""External cache with a batch-specific rank-4 ``(batch, 1, q, kv)`` mask."""
+left_window_size = 2
+B, H, S_q, S_kv, D = 2, 3, 4, 8, 8
+node = onnx.helper.make_node(
+    "Attention",
+    inputs=["Q", "K", "V", "attn_mask", "", "", "nonpad_kv_seqlen"],
+    outputs=["Y"],
+    is_causal=1,
+    left_window_size=left_window_size,
+)
+
+Q = np.random.rand(B, H, S_q, D).astype(np.float32)
+K = np.random.rand(B, H, S_kv, D).astype(np.float32)
+V = np.random.rand(B, H, S_kv, D).astype(np.float32)
+attn_mask = np.random.rand(B, 1, S_q, S_kv).astype(np.float32)
+nonpad_kv_seqlen = np.array([6, 7], dtype=np.int64)
+
+Y, _, _, _ = _compute_attention(
+    Q,
+    K,
+    V,
+    attn_mask=attn_mask,
+    nonpad_kv_seqlen=nonpad_kv_seqlen,
+    is_causal=1,
+    left_window_size=left_window_size,
+)
+
+expect(
+    node,
+    inputs=[Q, K, V, attn_mask, nonpad_kv_seqlen],
+    outputs=[Y],
+    name="test_attention_local_window_ext_cache_rank4_batch_mask",
+    opset_imports=[onnx.helper.make_opsetid("", 25)],
+)
+```
+
+</details>
+<details>
+<summary>attention_local_window_gqa_rank4_mask</summary>
+
+```python
+"""Windowed GQA with distinct V head size and a per-head boolean mask."""
+np.random.seed(25)
+B, H_q, H_kv, S_q, S_kv, D_qk, D_v = 2, 4, 2, 4, 6, 8, 6
+left_window_size = 2
+softmax_precision = int(onnx.TensorProto.DOUBLE)
+node = onnx.helper.make_node(
+    "Attention",
+    inputs=["Q", "K", "V", "attn_mask"],
+    outputs=["Y", "", "", "qk_matmul_output"],
+    is_causal=1,
+    left_window_size=left_window_size,
+    softcap=2.0,
+    softmax_precision=softmax_precision,
+    qk_matmul_output_mode=3,
+)
+
+Q = np.random.rand(B, H_q, S_q, D_qk).astype(np.float32)
+K = np.random.rand(B, H_kv, S_kv, D_qk).astype(np.float32)
+V = np.random.rand(B, H_kv, S_kv, D_v).astype(np.float32)
+attn_mask = np.ones((B, H_q, S_q, S_kv), dtype=np.bool_)
+attn_mask[:, :, 0, :] = False
+
+Y, _, _, qk_matmul_output = _compute_attention(
+    Q,
+    K,
+    V,
+    attn_mask=attn_mask,
+    is_causal=1,
+    left_window_size=left_window_size,
+    softcap=2.0,
+    softmax_precision=softmax_precision,
+    qk_matmul_output_mode=3,
+)
+
+assert Y.shape == (B, H_q, S_q, D_v)
+assert np.array_equal(Y[:, :, 0, :], np.zeros_like(Y[:, :, 0, :]))
+assert np.array_equal(
+    qk_matmul_output[:, :, 0, :], np.zeros_like(qk_matmul_output[:, :, 0, :])
+)
+
+expect(
+    node,
+    inputs=[Q, K, V, attn_mask],
+    outputs=[Y, qk_matmul_output],
+    name="test_attention_local_window_gqa_rank4_mask",
+    opset_imports=[onnx.helper.make_opsetid("", 25)],
+)
+```
+
+</details>
+<details>
+<summary>attention_local_window_rank1_boolean_mask</summary>
+
+```python
+"""A rank-1 boolean mask retains standard right-aligned broadcasting."""
+left_window_size = 2
+node = onnx.helper.make_node(
+    "Attention",
+    inputs=["Q", "K", "V", "attn_mask"],
+    outputs=["Y"],
+    is_causal=1,
+    left_window_size=left_window_size,
+)
+
+Q = np.random.rand(2, 3, 4, 8).astype(np.float32)
+K = np.random.rand(2, 3, 6, 8).astype(np.float32)
+V = np.random.rand(2, 3, 6, 8).astype(np.float32)
+attn_mask = np.array([True, True, True, True, False, False])
+
+Y, _, _, _ = _compute_attention(
+    Q,
+    K,
+    V,
+    attn_mask=attn_mask,
+    is_causal=1,
+    left_window_size=left_window_size,
+)
+
+expect(
+    node,
+    inputs=[Q, K, V, attn_mask],
+    outputs=[Y],
+    name="test_attention_local_window_rank1_boolean_mask",
+    opset_imports=[onnx.helper.make_opsetid("", 25)],
+)
+```
+
+</details>
+<details>
+<summary>attention_local_window_with_past</summary>
+
+```python
+"""Sliding window with internal KV cache (past_key/past_value)."""
+left_window_size = 2
+past_sequence_length = 8
+node = onnx.helper.make_node(
+    "Attention",
+    inputs=["Q", "K", "V", "", "past_key", "past_value"],
+    outputs=["Y", "present_key", "present_value"],
+    is_causal=1,
+    left_window_size=left_window_size,
+)
+
+Q = np.random.rand(2, 3, 4, 8).astype(np.float32)
+K = np.random.rand(2, 3, 2, 8).astype(np.float32)
+V = np.random.rand(2, 3, 2, 8).astype(np.float32)
+past_key = np.random.rand(2, 3, past_sequence_length, 8).astype(np.float32)
+past_value = np.random.rand(2, 3, past_sequence_length, 8).astype(np.float32)
+
+Y, present_key, present_value, _ = _compute_attention(
+    Q,
+    K,
+    V,
+    past_key=past_key,
+    past_value=past_value,
+    is_causal=1,
+    left_window_size=left_window_size,
+)
+
+expect(
+    node,
+    inputs=[Q, K, V, past_key, past_value],
+    outputs=[Y, present_key, present_value],
+    name="test_attention_local_window_with_past",
+    opset_imports=[onnx.helper.make_opsetid("", 25)],
+)
+```
+
+</details>
+<details>
+<summary>attention_padded_kv_bf16</summary>
+
+```python
+"""nonpad_kv_seqlen with bfloat16 inputs exercises padding mask CastLike fix."""
+node = onnx.helper.make_node(
+    "Attention",
+    inputs=["Q", "K", "V", "attn_mask", "", "", "nonpad_kv_seqlen"],
+    outputs=["Y"],
+)
+
+Q = np.random.rand(2, 3, 4, 8).astype(ml_dtypes.bfloat16)
+K = np.random.rand(2, 3, 6, 8).astype(ml_dtypes.bfloat16)
+V = np.random.rand(2, 3, 6, 8).astype(ml_dtypes.bfloat16)
+attn_mask = np.random.rand(2, 3, 4, 4).astype(ml_dtypes.bfloat16)
+nonpad_kv_seqlen = np.array([3, 4], dtype=np.int64)
+
+Y, _, _, _ = _compute_attention(
+    Q,
+    K,
+    V,
+    attn_mask=attn_mask,
+    nonpad_kv_seqlen=nonpad_kv_seqlen,
+)
+
+expect(
+    node,
+    inputs=[Q, K, V, attn_mask, nonpad_kv_seqlen],
+    outputs=[Y],
+    name="test_attention_4d_padded_kv_bf16",
+    opset_imports=[onnx.helper.make_opsetid("", 24)],
 )
 ```
 
@@ -3378,7 +4742,7 @@ expect(
 
 
 ### AveragePool
-There are 17 test cases, listed as following:
+There are 21 test cases, listed as following:
 <details>
 <summary>averagepool_1d_default</summary>
 
@@ -3404,6 +4768,64 @@ padded = x
 y = pool(padded, x_shape, kernel_shape, strides, out_shape, "AVG")
 
 expect(node, inputs=[x], outputs=[y], name="test_averagepool_1d_default")
+```
+
+</details>
+<details>
+<summary>averagepool_1d_dilations_same_lower</summary>
+
+```python
+"""input_shape: [1, 1, 6]
+output_shape: [1, 1, 3]
+"""
+node = onnx.helper.make_node(
+    "AveragePool",
+    inputs=["x"],
+    outputs=["y"],
+    kernel_shape=[3],
+    strides=[2],
+    dilations=[2],
+    auto_pad="SAME_LOWER",
+)
+
+x = np.arange(1, 7, dtype=np.float32).reshape(1, 1, 6)
+y = np.array([[[2, 3, 4]]]).astype(np.float32)
+
+expect(
+    node,
+    inputs=[x],
+    outputs=[y],
+    name="test_averagepool_1d_dilations_same_lower",
+)
+```
+
+</details>
+<details>
+<summary>averagepool_1d_dilations_same_upper</summary>
+
+```python
+"""input_shape: [1, 1, 6]
+output_shape: [1, 1, 3]
+"""
+node = onnx.helper.make_node(
+    "AveragePool",
+    inputs=["x"],
+    outputs=["y"],
+    kernel_shape=[3],
+    strides=[2],
+    dilations=[2],
+    auto_pad="SAME_UPPER",
+)
+
+x = np.arange(1, 7, dtype=np.float32).reshape(1, 1, 6)
+y = np.array([[[3, 4, 5]]]).astype(np.float32)
+
+expect(
+    node,
+    inputs=[x],
+    outputs=[y],
+    name="test_averagepool_1d_dilations_same_upper",
+)
 ```
 
 </details>
@@ -3522,7 +4944,6 @@ node = onnx.helper.make_node(
     ceil_mode=True,
 )
 
-# input shape: [1, 1, 4, 4]
 x = np.array(
     [
         [
@@ -3535,10 +4956,67 @@ x = np.array(
         ]
     ]
 ).astype(np.float32)
-
 y = np.array([[[[6, 7], [10, 11]]]]).astype(np.float32)
 
 expect(node, inputs=[x], outputs=[y], name="test_averagepool_2d_dilations")
+```
+
+</details>
+<details>
+<summary>averagepool_2d_dilations_count_include_pad</summary>
+
+```python
+"""input_shape: [1, 1, 3, 3]
+output_shape: [1, 1, 3, 3]
+"""
+node = onnx.helper.make_node(
+    "AveragePool",
+    inputs=["x"],
+    outputs=["y"],
+    kernel_shape=[2, 2],
+    dilations=[2, 2],
+    pads=[1, 1, 1, 1],
+    count_include_pad=1,
+)
+
+x = np.arange(1, 10, dtype=np.float32).reshape(1, 1, 3, 3)
+y = np.array(
+    [[[[1.25, 2.5, 1.25], [2.5, 5.0, 2.5], [1.25, 2.5, 1.25]]]],
+    dtype=np.float32,
+)
+
+expect(
+    node,
+    inputs=[x],
+    outputs=[y],
+    name="test_averagepool_2d_dilations_count_include_pad",
+)
+```
+
+</details>
+<details>
+<summary>averagepool_2d_dilations_valid</summary>
+
+```python
+"""input_shape: [1, 1, 7, 7]
+output_shape: [1, 1, 3, 3]
+"""
+node = onnx.helper.make_node(
+    "AveragePool",
+    inputs=["x"],
+    outputs=["y"],
+    kernel_shape=[3, 3],
+    strides=[1, 1],
+    dilations=[2, 2],
+    auto_pad="VALID",
+)
+
+x = np.arange(1, 50, dtype=np.float32).reshape(1, 1, 7, 7)
+y = np.array([[[[17, 18, 19], [24, 25, 26], [31, 32, 33]]]]).astype(np.float32)
+
+expect(
+    node, inputs=[x], outputs=[y], name="test_averagepool_2d_dilations_valid"
+)
 ```
 
 </details>
@@ -4478,7 +5956,183 @@ expect(node, inputs=[x], outputs=[y], name="test_bitcast_uint32_to_int32")
 
 
 ### BitShift
-There are 8 test cases, listed as following:
+There are 28 test cases, listed as following:
+<details>
+<summary>left_int16</summary>
+
+```python
+node = onnx.helper.make_node(
+    "BitShift", inputs=["x", "y"], outputs=["z"], direction="LEFT"
+)
+
+x = np.array([16, 4, 1]).astype(np.int16)
+y = np.array([1, 2, 3]).astype(np.int16)
+z = x << y  # expected output [32, 16, 8]
+expect(node, inputs=[x, y], outputs=[z], name="test_bitshift_left_int16")
+```
+
+</details>
+<details>
+<summary>left_int32</summary>
+
+```python
+node = onnx.helper.make_node(
+    "BitShift", inputs=["x", "y"], outputs=["z"], direction="LEFT"
+)
+
+x = np.array([16, 4, 1]).astype(np.int32)
+y = np.array([1, 2, 3]).astype(np.int32)
+z = x << y  # expected output [32, 16, 8]
+expect(node, inputs=[x, y], outputs=[z], name="test_bitshift_left_int32")
+```
+
+</details>
+<details>
+<summary>left_int32_negative_shift</summary>
+
+```python
+node = onnx.helper.make_node(
+    "BitShift", inputs=["x", "y"], outputs=["z"], direction="LEFT"
+)
+
+x = np.array([-8, 4, -1]).astype(np.int32)
+y = np.array([-1, -32, -64]).astype(np.int32)
+z = np.array([0, 0, 0]).astype(np.int32)
+expect(
+    node,
+    inputs=[x, y],
+    outputs=[z],
+    name="test_bitshift_left_int32_negative_shift",
+)
+```
+
+</details>
+<details>
+<summary>left_int32_overflow</summary>
+
+```python
+node = onnx.helper.make_node(
+    "BitShift", inputs=["x", "y"], outputs=["z"], direction="LEFT"
+)
+
+x = np.array([1073741824, 1, -1073741824]).astype(np.int32)
+y = np.array([1, 31, 1]).astype(np.int32)
+z = x << y  # expected output [-2147483648, -2147483648, -2147483648]
+expect(
+    node, inputs=[x, y], outputs=[z], name="test_bitshift_left_int32_overflow"
+)
+```
+
+</details>
+<details>
+<summary>left_int32_shift_ge_width</summary>
+
+```python
+node = onnx.helper.make_node(
+    "BitShift", inputs=["x", "y"], outputs=["z"], direction="LEFT"
+)
+
+x = np.array([-8, 4, -1]).astype(np.int32)
+y = np.array([32, 33, 100]).astype(np.int32)
+z = np.array([0, 0, 0]).astype(np.int32)
+expect(
+    node,
+    inputs=[x, y],
+    outputs=[z],
+    name="test_bitshift_left_int32_shift_ge_width",
+)
+```
+
+</details>
+<details>
+<summary>left_int64</summary>
+
+```python
+node = onnx.helper.make_node(
+    "BitShift", inputs=["x", "y"], outputs=["z"], direction="LEFT"
+)
+
+x = np.array([16, 4, 1]).astype(np.int64)
+y = np.array([1, 2, 3]).astype(np.int64)
+z = x << y  # expected output [32, 16, 8]
+expect(node, inputs=[x, y], outputs=[z], name="test_bitshift_left_int64")
+```
+
+</details>
+<details>
+<summary>left_int8</summary>
+
+```python
+node = onnx.helper.make_node(
+    "BitShift", inputs=["x", "y"], outputs=["z"], direction="LEFT"
+)
+
+x = np.array([16, 4, 1]).astype(np.int8)
+y = np.array([1, 2, 3]).astype(np.int8)
+z = x << y  # expected output [32, 16, 8]
+expect(node, inputs=[x, y], outputs=[z], name="test_bitshift_left_int8")
+```
+
+</details>
+<details>
+<summary>left_int8_negative_shift</summary>
+
+```python
+node = onnx.helper.make_node(
+    "BitShift", inputs=["x", "y"], outputs=["z"], direction="LEFT"
+)
+
+x = np.array([-8, 4, -1]).astype(np.int8)
+y = np.array([-1, -8, -16]).astype(np.int8)
+z = np.array([0, 0, 0]).astype(np.int8)
+expect(
+    node,
+    inputs=[x, y],
+    outputs=[z],
+    name="test_bitshift_left_int8_negative_shift",
+)
+```
+
+</details>
+<details>
+<summary>left_int8_overflow</summary>
+
+```python
+# Bits shifted past the most significant bit are discarded, so the result
+# wraps within the width of the type rather than being undefined as in C.
+node = onnx.helper.make_node(
+    "BitShift", inputs=["x", "y"], outputs=["z"], direction="LEFT"
+)
+
+x = np.array([64, 1, -64]).astype(np.int8)
+y = np.array([1, 7, 1]).astype(np.int8)
+z = x << y  # expected output [-128, -128, -128]
+expect(
+    node, inputs=[x, y], outputs=[z], name="test_bitshift_left_int8_overflow"
+)
+```
+
+</details>
+<details>
+<summary>left_int8_shift_ge_width</summary>
+
+```python
+node = onnx.helper.make_node(
+    "BitShift", inputs=["x", "y"], outputs=["z"], direction="LEFT"
+)
+
+x = np.array([-8, 4, -1]).astype(np.int8)
+y = np.array([8, 9, 127]).astype(np.int8)
+z = np.array([0, 0, 0]).astype(np.int8)
+expect(
+    node,
+    inputs=[x, y],
+    outputs=[z],
+    name="test_bitshift_left_int8_shift_ge_width",
+)
+```
+
+</details>
 <details>
 <summary>left_unit16</summary>
 
@@ -4536,6 +6190,196 @@ x = np.array([16, 4, 1]).astype(np.uint8)
 y = np.array([1, 2, 3]).astype(np.uint8)
 z = x << y  # expected output [32, 16, 8]
 expect(node, inputs=[x, y], outputs=[z], name="test_bitshift_left_uint8")
+```
+
+</details>
+<details>
+<summary>right_int16</summary>
+
+```python
+node = onnx.helper.make_node(
+    "BitShift", inputs=["x", "y"], outputs=["z"], direction="RIGHT"
+)
+
+x = np.array([16, 4, 1]).astype(np.int16)
+y = np.array([1, 2, 3]).astype(np.int16)
+z = x >> y  # expected output [8, 1, 0]
+expect(node, inputs=[x, y], outputs=[z], name="test_bitshift_right_int16")
+```
+
+</details>
+<details>
+<summary>right_int32</summary>
+
+```python
+node = onnx.helper.make_node(
+    "BitShift", inputs=["x", "y"], outputs=["z"], direction="RIGHT"
+)
+
+x = np.array([16, 4, 1]).astype(np.int32)
+y = np.array([1, 2, 3]).astype(np.int32)
+z = x >> y  # expected output [8, 1, 0]
+expect(node, inputs=[x, y], outputs=[z], name="test_bitshift_right_int32")
+```
+
+</details>
+<details>
+<summary>right_int32_negative_input</summary>
+
+```python
+node = onnx.helper.make_node(
+    "BitShift", inputs=["x", "y"], outputs=["z"], direction="RIGHT"
+)
+
+x = np.array([-8, -1, -2147483648]).astype(np.int32)
+y = np.array([1, 1, 1]).astype(np.int32)
+z = x >> y  # expected output [-4, -1, -1073741824]
+expect(
+    node,
+    inputs=[x, y],
+    outputs=[z],
+    name="test_bitshift_right_int32_negative_input",
+)
+```
+
+</details>
+<details>
+<summary>right_int32_negative_shift</summary>
+
+```python
+node = onnx.helper.make_node(
+    "BitShift", inputs=["x", "y"], outputs=["z"], direction="RIGHT"
+)
+
+x = np.array([-8, 4, -1]).astype(np.int32)
+y = np.array([-1, -32, -64]).astype(np.int32)
+z = np.array([-1, 0, -1]).astype(np.int32)
+expect(
+    node,
+    inputs=[x, y],
+    outputs=[z],
+    name="test_bitshift_right_int32_negative_shift",
+)
+```
+
+</details>
+<details>
+<summary>right_int32_shift_ge_width</summary>
+
+```python
+node = onnx.helper.make_node(
+    "BitShift", inputs=["x", "y"], outputs=["z"], direction="RIGHT"
+)
+
+x = np.array([-8, 4, -1]).astype(np.int32)
+y = np.array([32, 33, 100]).astype(np.int32)
+z = np.array([-1, 0, -1]).astype(np.int32)
+expect(
+    node,
+    inputs=[x, y],
+    outputs=[z],
+    name="test_bitshift_right_int32_shift_ge_width",
+)
+```
+
+</details>
+<details>
+<summary>right_int64</summary>
+
+```python
+node = onnx.helper.make_node(
+    "BitShift", inputs=["x", "y"], outputs=["z"], direction="RIGHT"
+)
+
+x = np.array([16, 4, 1]).astype(np.int64)
+y = np.array([1, 2, 3]).astype(np.int64)
+z = x >> y  # expected output [8, 1, 0]
+expect(node, inputs=[x, y], outputs=[z], name="test_bitshift_right_int64")
+```
+
+</details>
+<details>
+<summary>right_int8</summary>
+
+```python
+node = onnx.helper.make_node(
+    "BitShift", inputs=["x", "y"], outputs=["z"], direction="RIGHT"
+)
+
+x = np.array([16, 4, 1]).astype(np.int8)
+y = np.array([1, 2, 3]).astype(np.int8)
+z = x >> y  # expected output [8, 1, 0]
+expect(node, inputs=[x, y], outputs=[z], name="test_bitshift_right_int8")
+```
+
+</details>
+<details>
+<summary>right_int8_negative_input</summary>
+
+```python
+# Right shift of a signed value is an arithmetic shift: the sign bit is
+# replicated into the vacated high bits, so a negative input stays negative.
+node = onnx.helper.make_node(
+    "BitShift", inputs=["x", "y"], outputs=["z"], direction="RIGHT"
+)
+
+x = np.array([-8, -1, -128]).astype(np.int8)
+y = np.array([1, 1, 1]).astype(np.int8)
+z = x >> y  # expected output [-4, -1, -64]
+expect(
+    node,
+    inputs=[x, y],
+    outputs=[z],
+    name="test_bitshift_right_int8_negative_input",
+)
+```
+
+</details>
+<details>
+<summary>right_int8_negative_shift</summary>
+
+```python
+# A negative shift amount is out of range just as one at or past the bit
+# width is, and gives the same full-width result: 0, or -1 where an
+# arithmetic right shift fills the result with the sign bit. Y only reaches
+# negative values for a signed type, since it shares the type of X.
+node = onnx.helper.make_node(
+    "BitShift", inputs=["x", "y"], outputs=["z"], direction="RIGHT"
+)
+
+x = np.array([-8, 4, -1]).astype(np.int8)
+y = np.array([-1, -8, -16]).astype(np.int8)
+z = np.array([-1, 0, -1]).astype(np.int8)
+expect(
+    node,
+    inputs=[x, y],
+    outputs=[z],
+    name="test_bitshift_right_int8_negative_shift",
+)
+```
+
+</details>
+<details>
+<summary>right_int8_shift_ge_width</summary>
+
+```python
+# NumPy saturates a shift by at least the bit width, giving 0, or -1 for a
+# right shift of a negative value where the sign bit fills the result. C
+# and most hardware mask the shift count instead, so this is easy to get
+# wrong (see pytorch/pytorch#70904).
+node = onnx.helper.make_node(
+    "BitShift", inputs=["x", "y"], outputs=["z"], direction="RIGHT"
+)
+
+x = np.array([-8, 4, -1]).astype(np.int8)
+y = np.array([8, 9, 127]).astype(np.int8)
+z = np.array([-1, 0, -1]).astype(np.int8)
+expect(
+    node,
+    inputs=[x, y],
+    outputs=[z],
+    name="test_bitshift_right_int8_shift_ge_width",
+)
 ```
 
 </details>
@@ -5939,7 +7783,7 @@ expect(node, inputs=[x], outputs=[y], name="test_ceil")
 
 
 ### Celu
-There are 1 test cases, listed as following:
+There are 3 test cases, listed as following:
 <details>
 <summary>celu</summary>
 
@@ -5975,10 +7819,64 @@ input_data = np.array(
 
 # Calculate expected output data
 positive_input = np.maximum(0, input_data)
-negative_input = np.minimum(0, alpha * (np.exp(input_data / alpha) - 1))
+negative_input = np.minimum(0, alpha * np.expm1(input_data / alpha))
 expected_output = positive_input + negative_input
 
 expect(node, inputs=[input_data], outputs=[expected_output], name="test_celu")
+```
+
+</details>
+<details>
+<summary>celu_bfloat16</summary>
+
+```python
+alpha = 2.0
+node = onnx.helper.make_node(
+    "Celu",
+    inputs=["X"],
+    outputs=["Y"],
+    alpha=alpha,
+)
+
+input_data = np.array([-3.0, -0.5, 0.0, 0.5, 3.0], dtype=ml_dtypes.bfloat16)
+
+positive_input = np.maximum(0, input_data)
+negative_input = np.minimum(0, alpha * np.expm1(input_data / alpha))
+expected_output = (positive_input + negative_input).astype(ml_dtypes.bfloat16)
+
+expect(
+    node,
+    inputs=[input_data],
+    outputs=[expected_output],
+    name="test_celu_bfloat16",
+)
+```
+
+</details>
+<details>
+<summary>celu_float16</summary>
+
+```python
+alpha = 2.0
+node = onnx.helper.make_node(
+    "Celu",
+    inputs=["X"],
+    outputs=["Y"],
+    alpha=alpha,
+)
+
+input_data = np.array([-3.0, -0.5, 0.0, 0.5, 3.0], dtype=np.float16)
+
+positive_input = np.maximum(0, input_data)
+negative_input = np.minimum(0, alpha * np.expm1(input_data / alpha))
+expected_output = (positive_input + negative_input).astype(np.float16)
+
+expect(
+    node,
+    inputs=[input_data],
+    outputs=[expected_output],
+    name="test_celu_float16",
+)
 ```
 
 </details>
@@ -6635,7 +8533,7 @@ expect(
 
 
 ### Compress
-There are 4 test cases, listed as following:
+There are 5 test cases, listed as following:
 <details>
 <summary>compress_0</summary>
 
@@ -6685,6 +8583,29 @@ expect(
     inputs=[input, condition.astype(bool)],
     outputs=[output],
     name="test_compress_1",
+)
+```
+
+</details>
+<details>
+<summary>compress_bfloat16</summary>
+
+```python
+node = onnx.helper.make_node(
+    "Compress",
+    inputs=["input", "condition"],
+    outputs=["output"],
+    axis=0,
+)
+input = np.array([[1, 2], [3, 4], [5, 6]]).astype(ml_dtypes.bfloat16)
+condition = np.array([0, 1, 1])
+output = np.compress(condition, input, axis=0)
+
+expect(
+    node,
+    inputs=[input, condition.astype(bool)],
+    outputs=[output],
+    name="test_compress_bfloat16",
 )
 ```
 
@@ -9396,7 +11317,7 @@ expect(
 
 
 ### Einsum
-There are 6 test cases, listed as following:
+There are 9 test cases, listed as following:
 <details>
 <summary>einsum_batch_diagonal</summary>
 
@@ -9427,6 +11348,27 @@ Y = np.random.randn(5, 3, 4)
 Z = einsum_reference_implementation(Eqn, (X, Y))
 
 expect(node, inputs=[X, Y], outputs=[Z], name="test_einsum_batch_matmul")
+```
+
+</details>
+<details>
+<summary>einsum_batch_matmul_bfloat16</summary>
+
+```python
+Eqn = "bij, bjk -> bik"
+node = onnx.helper.make_node(
+    "Einsum", inputs=["x", "y"], outputs=["z"], equation=Eqn
+)
+
+# Binary operands ensure products and the three-term reductions are
+# exactly representable in bfloat16, independent of accumulation order.
+X = (np.arange(30).reshape(5, 2, 3) % 2).astype(ml_dtypes.bfloat16)
+Y = (np.arange(60).reshape(5, 3, 4) % 2).astype(ml_dtypes.bfloat16)
+Z = einsum_bfloat16_reference_implementation(Eqn, (X, Y))
+
+expect(
+    node, inputs=[X, Y], outputs=[Z], name="test_einsum_batch_matmul_bfloat16"
+)
 ```
 
 </details>
@@ -9480,6 +11422,24 @@ expect(node, inputs=[X], outputs=[Z], name="test_einsum_sum")
 
 </details>
 <details>
+<summary>einsum_sum_bfloat16</summary>
+
+```python
+# A pure reduction: NumPy raises TypeError on bfloat16 here without the
+# float32 accumulation path.
+Eqn = "ij->i"
+node = onnx.helper.make_node(
+    "Einsum", inputs=["x"], outputs=["y"], equation=Eqn
+)
+
+X = np.arange(12).reshape(3, 4).astype(ml_dtypes.bfloat16)
+Z = einsum_bfloat16_reference_implementation(Eqn, (X,))
+
+expect(node, inputs=[X], outputs=[Z], name="test_einsum_sum_bfloat16")
+```
+
+</details>
+<details>
 <summary>einsum_transpose</summary>
 
 ```python
@@ -9495,6 +11455,22 @@ expect(node, inputs=[X], outputs=[Y], name="test_einsum_transpose")
 ```
 
 </details>
+<details>
+<summary>einsum_transpose_bfloat16</summary>
+
+```python
+Eqn = "ij->ji"
+node = onnx.helper.make_node(
+    "Einsum", inputs=["x"], outputs=["y"], equation=Eqn
+)
+
+X = np.arange(12).reshape(3, 4).astype(ml_dtypes.bfloat16)
+Y = einsum_bfloat16_reference_implementation(Eqn, (X,))
+
+expect(node, inputs=[X], outputs=[Y], name="test_einsum_transpose_bfloat16")
+```
+
+</details>
 
 
 ### Elu
@@ -9507,11 +11483,11 @@ node = onnx.helper.make_node("Elu", inputs=["x"], outputs=["y"], alpha=2.0)
 
 x = np.array([-1, 0, 1]).astype(np.float32)
 # expected output [-1.2642411, 0., 1.]
-y = np.clip(x, 0, np.inf) + (np.exp(np.clip(x, -np.inf, 0)) - 1) * 2.0
+y = np.clip(x, 0, np.inf) + np.expm1(np.clip(x, -np.inf, 0)) * 2.0
 expect(node, inputs=[x], outputs=[y], name="test_elu_example")
 
 x = np.random.randn(3, 4, 5).astype(np.float32)
-y = np.clip(x, 0, np.inf) + (np.exp(np.clip(x, -np.inf, 0)) - 1) * 2.0
+y = np.clip(x, 0, np.inf) + np.expm1(np.clip(x, -np.inf, 0)) * 2.0
 expect(node, inputs=[x], outputs=[y], name="test_elu")
 ```
 
@@ -9527,7 +11503,7 @@ node = onnx.helper.make_node(
     outputs=["y"],
 )
 x = np.random.randn(3, 4, 5).astype(np.float32)
-y = np.clip(x, 0, np.inf) + (np.exp(np.clip(x, -np.inf, 0)) - 1) * default_alpha
+y = np.clip(x, 0, np.inf) + np.expm1(np.clip(x, -np.inf, 0)) * default_alpha
 expect(node, inputs=[x], outputs=[y], name="test_elu_default")
 ```
 
@@ -9902,7 +11878,7 @@ expect(node, inputs=[x], outputs=[y], name="test_floor")
 
 
 ### GRU
-There are 4 test cases, listed as following:
+There are 6 test cases, listed as following:
 <details>
 <summary>batchwise</summary>
 
@@ -9937,6 +11913,47 @@ expect(
     inputs=[input, W, R],
     outputs=[Y.astype(np.float32), Y_h.astype(np.float32)],
     name="test_gru_batchwise",
+)
+```
+
+</details>
+<details>
+<summary>bidirectional</summary>
+
+```python
+"""Test case for direction=bidirectional attribute."""
+# seq_length=3, batch=1, input_size=2
+input = np.array([[[1.0, 2.0]], [[3.0, 4.0]], [[5.0, 6.0]]]).astype(np.float32)
+
+input_size = 2
+hidden_size = 5
+weight_scales = np.array([[[0.5]], [[2.0]]], dtype=np.float32)
+number_of_gates = 3
+
+node = onnx.helper.make_node(
+    "GRU",
+    inputs=["X", "W", "R"],
+    outputs=["Y", "Y_h"],
+    hidden_size=hidden_size,
+    direction="bidirectional",
+)
+
+# Multiply broadcasts in num_directions axis, to have different W & R
+# in each direction
+W = weight_scales * np.ones(
+    (1, number_of_gates * hidden_size, input_size)
+).astype(np.float32)
+R = weight_scales * np.ones(
+    (1, number_of_gates * hidden_size, hidden_size)
+).astype(np.float32)
+
+gru = GRUHelper(X=input, W=W, R=R, direction="bidirectional")
+Y, Y_h = gru.step()
+expect(
+    node,
+    inputs=[input, W, R],
+    outputs=[Y.astype(np.float32), Y_h.astype(np.float32)],
+    name="test_gru_bidirectional",
 )
 ```
 
@@ -10016,6 +12033,46 @@ expect(
     inputs=[input, W, R, B],
     outputs=[Y_h.astype(np.float32)],
     name="test_gru_with_initial_bias",
+)
+```
+
+</details>
+<details>
+<summary>reverse</summary>
+
+```python
+"""Test case for direction=reverse attribute."""
+# seq_length=3, batch=1, input_size=2
+input = np.array([[[1.0, 2.0]], [[3.0, 4.0]], [[5.0, 6.0]]]).astype(np.float32)
+
+input_size = 2
+hidden_size = 5
+weight_scale = 0.1
+number_of_gates = 3
+
+node = onnx.helper.make_node(
+    "GRU",
+    inputs=["X", "W", "R"],
+    # Output Y to check ordering.
+    outputs=["Y", "Y_h"],
+    hidden_size=hidden_size,
+    direction="reverse",
+)
+
+W = weight_scale * np.ones(
+    (1, number_of_gates * hidden_size, input_size)
+).astype(np.float32)
+R = weight_scale * np.ones(
+    (1, number_of_gates * hidden_size, hidden_size)
+).astype(np.float32)
+
+gru = GRUHelper(X=input, W=W, R=R, direction="reverse")
+Y, Y_h = gru.step()
+expect(
+    node,
+    inputs=[input, W, R],
+    outputs=[Y.astype(np.float32), Y_h.astype(np.float32)],
+    name="test_gru_reverse",
 )
 ```
 
@@ -10600,8 +12657,65 @@ expect(node, inputs=[x], outputs=[y], name="test_globalaveragepool_precomputed")
 </details>
 
 
+### GlobalLpPool
+There are 3 test cases, listed as following:
+<details>
+<summary>globallppool_1d_p3</summary>
+
+```python
+node = onnx.helper.make_node(
+    "GlobalLpPool",
+    inputs=["x"],
+    outputs=["y"],
+    p=3,
+)
+x = np.array([[[-1.0, 2.0], [-3.0, 4.0]]], dtype=np.float32)
+y = np.array([[[2.080084], [4.4979415]]], dtype=np.float32)
+expect(node, inputs=[x], outputs=[y], name="test_globallppool_1d_p3")
+```
+
+</details>
+<details>
+<summary>globallppool_3d</summary>
+
+```python
+node = onnx.helper.make_node(
+    "GlobalLpPool",
+    inputs=["x"],
+    outputs=["y"],
+    p=1,
+)
+x = np.array(
+    [[[[[-1.0, 2.0]], [[-3.0, 4.0]]]]],
+    dtype=np.float32,
+)
+y = np.array([[[[[10.0]]]]], dtype=np.float32)
+expect(node, inputs=[x], outputs=[y], name="test_globallppool_3d")
+```
+
+</details>
+<details>
+<summary>globallppool_default</summary>
+
+```python
+node = onnx.helper.make_node(
+    "GlobalLpPool",
+    inputs=["x"],
+    outputs=["y"],
+)
+x = np.array(
+    [[[[1.0, -2.0], [3.0, -4.0]], [[5.0, -6.0], [7.0, -8.0]]]],
+    dtype=np.float32,
+)
+y = np.array([[[[5.477226]], [[13.190906]]]], dtype=np.float32)
+expect(node, inputs=[x], outputs=[y], name="test_globallppool_default")
+```
+
+</details>
+
+
 ### GlobalMaxPool
-There are 2 test cases, listed as following:
+There are 3 test cases, listed as following:
 <details>
 <summary>globalmaxpool</summary>
 
@@ -10614,6 +12728,21 @@ node = onnx.helper.make_node(
 x = np.random.randn(1, 3, 5, 5).astype(np.float32)
 y = np.max(x, axis=tuple(range(2, np.ndim(x))), keepdims=True)
 expect(node, inputs=[x], outputs=[y], name="test_globalmaxpool")
+```
+
+</details>
+<details>
+<summary>globalmaxpool_3d</summary>
+
+```python
+node = onnx.helper.make_node(
+    "GlobalMaxPool",
+    inputs=["x"],
+    outputs=["y"],
+)
+x = np.random.randn(2, 4, 10).astype(np.float32)
+y = np.max(x, axis=tuple(range(2, np.ndim(x))), keepdims=True)
+expect(node, inputs=[x], outputs=[y], name="test_globalmaxpool_3d")
 ```
 
 </details>
@@ -10754,7 +12883,7 @@ expect(
 
 
 ### Greater
-There are 4 test cases, listed as following:
+There are 2 test cases, listed as following:
 <details>
 <summary>greater</summary>
 
@@ -10803,7 +12932,45 @@ expect(node, inputs=[x, y], outputs=[z], name="test_greater_uint64")
 
 </details>
 <details>
-<summary>greater</summary>
+<summary>greater_broadcast</summary>
+
+```python
+node = onnx.helper.make_node(
+    "Greater",
+    inputs=["x", "y"],
+    outputs=["greater"],
+)
+
+x = np.random.randn(3, 4, 5).astype(np.float32)
+y = np.random.randn(5).astype(np.float32)
+z = np.greater(x, y)
+expect(node, inputs=[x, y], outputs=[z], name="test_greater_bcast")
+```
+
+</details>
+
+
+### GreaterOrEqual
+There are 2 test cases, listed as following:
+<details>
+<summary>greater_broadcast</summary>
+
+```python
+node = onnx.helper.make_node(
+    "GreaterOrEqual",
+    inputs=["x", "y"],
+    outputs=["greater_equal"],
+)
+
+x = np.random.randn(3, 4, 5).astype(np.float32)
+y = np.random.randn(5).astype(np.float32)
+z = np.greater_equal(x, y)
+expect(node, inputs=[x, y], outputs=[z], name="test_greater_equal_bcast")
+```
+
+</details>
+<details>
+<summary>greaterorequal</summary>
 
 ```python
 node = onnx.helper.make_node(
@@ -10846,40 +13013,6 @@ x = np.random.randint(24, size=(3, 4, 5), dtype=np.uint64)
 y = np.random.randint(24, size=(3, 4, 5), dtype=np.uint64)
 z = np.greater_equal(x, y)
 expect(node, inputs=[x, y], outputs=[z], name="test_greater_equal_uint64")
-```
-
-</details>
-<details>
-<summary>greater_broadcast</summary>
-
-```python
-node = onnx.helper.make_node(
-    "Greater",
-    inputs=["x", "y"],
-    outputs=["greater"],
-)
-
-x = np.random.randn(3, 4, 5).astype(np.float32)
-y = np.random.randn(5).astype(np.float32)
-z = np.greater(x, y)
-expect(node, inputs=[x, y], outputs=[z], name="test_greater_bcast")
-```
-
-</details>
-<details>
-<summary>greater_broadcast</summary>
-
-```python
-node = onnx.helper.make_node(
-    "GreaterOrEqual",
-    inputs=["x", "y"],
-    outputs=["greater_equal"],
-)
-
-x = np.random.randn(3, 4, 5).astype(np.float32)
-y = np.random.randn(5).astype(np.float32)
-z = np.greater_equal(x, y)
-expect(node, inputs=[x, y], outputs=[z], name="test_greater_equal_bcast")
 ```
 
 </details>
@@ -12476,14 +14609,14 @@ beta = 0.75
 bias = 1.0
 nsize = 3
 node = onnx.helper.make_node("LRN", inputs=["x"], outputs=["y"], size=3)
-x = np.random.randn(5, 5, 5, 5).astype(np.float32)
-square_sum = np.zeros((5, 5, 5, 5)).astype(np.float32)
+x = np.random.randn(1, 5, 5, 5).astype(np.float32)
+square_sum = np.zeros_like(x)
 for n, c, h, w in np.ndindex(x.shape):
     square_sum[n, c, h, w] = sum(
         x[
             n,
             max(0, c - math.floor((nsize - 1) / 2)) : min(
-                5, c + math.ceil((nsize - 1) / 2) + 1
+                x.shape[1], c + math.ceil((nsize - 1) / 2) + 1
             ),
             h,
             w,
@@ -12512,14 +14645,14 @@ node = onnx.helper.make_node(
     bias=bias,
     size=nsize,
 )
-x = np.random.randn(5, 5, 5, 5).astype(np.float32)
-square_sum = np.zeros((5, 5, 5, 5)).astype(np.float32)
+x = np.random.randn(1, 5, 5, 5).astype(np.float32)
+square_sum = np.zeros_like(x)
 for n, c, h, w in np.ndindex(x.shape):
     square_sum[n, c, h, w] = sum(
         x[
             n,
             max(0, c - math.floor((nsize - 1) / 2)) : min(
-                5, c + math.ceil((nsize - 1) / 2) + 1
+                x.shape[1], c + math.ceil((nsize - 1) / 2) + 1
             ),
             h,
             w,
@@ -12534,7 +14667,7 @@ expect(node, inputs=[x], outputs=[y], name="test_lrn")
 
 
 ### LSTM
-There are 4 test cases, listed as following:
+There are 6 test cases, listed as following:
 <details>
 <summary>batchwise</summary>
 
@@ -12563,12 +14696,52 @@ R = weight_scale * np.ones(
 ).astype(np.float32)
 
 lstm = LSTMHelper(X=input, W=W, R=R, layout=layout)
-Y, Y_h = lstm.step()
+Y, Y_h, _ = lstm.step()
 expect(
     node,
     inputs=[input, W, R],
     outputs=[Y.astype(np.float32), Y_h.astype(np.float32)],
     name="test_lstm_batchwise",
+)
+```
+
+</details>
+<details>
+<summary>bidirectional</summary>
+
+```python
+# seq_length = 3, batch_size=1, input_size=2
+input = np.array([[[1.0, 2.0]], [[3.0, 4.0]], [[5.0, 6.0]]]).astype(np.float32)
+
+input_size = 2
+hidden_size = 3
+weight_scales = np.array([[[0.5]], [[2.0]]], dtype=np.float32)
+number_of_gates = 4
+
+node = onnx.helper.make_node(
+    "LSTM",
+    inputs=["X", "W", "R"],
+    outputs=["", "Y_h", "Y_c"],
+    hidden_size=hidden_size,
+    direction="bidirectional",
+)
+
+# Multiply broadcasts in num_directions axis, to have different W & R
+# in each direction
+W = weight_scales * np.ones(
+    (1, number_of_gates * hidden_size, input_size)
+).astype(np.float32)
+R = weight_scales * np.ones(
+    (1, number_of_gates * hidden_size, hidden_size)
+).astype(np.float32)
+
+lstm = LSTMHelper(X=input, W=W, R=R, direction="bidirectional")
+_, Y_h, Y_c = lstm.step()
+expect(
+    node,
+    inputs=[input, W, R],
+    outputs=[Y_h.astype(np.float32), Y_c.astype(np.float32)],
+    name="test_lstm_bidirectional",
 )
 ```
 
@@ -12596,7 +14769,7 @@ R = weight_scale * np.ones(
 ).astype(np.float32)
 
 lstm = LSTMHelper(X=input, W=W, R=R)
-_, Y_h = lstm.step()
+_, Y_h, _ = lstm.step()
 expect(
     node,
     inputs=[input, W, R],
@@ -12642,7 +14815,7 @@ R_B = np.zeros((1, number_of_gates * hidden_size)).astype(np.float32)
 B = np.concatenate((W_B, R_B), 1)
 
 lstm = LSTMHelper(X=input, W=W, R=R, B=B)
-_, Y_h = lstm.step()
+_, Y_h, _ = lstm.step()
 expect(
     node,
     inputs=[input, W, R, B],
@@ -12691,12 +14864,50 @@ P = weight_scale * np.ones((1, number_of_peepholes * hidden_size)).astype(
 lstm = LSTMHelper(
     X=input, W=W, R=R, B=B, P=P, initial_c=init_c, initial_h=init_h
 )
-_, Y_h = lstm.step()
+_, Y_h, _ = lstm.step()
 expect(
     node,
     inputs=[input, W, R, B, seq_lens, init_h, init_c, P],
     outputs=[Y_h.astype(np.float32)],
     name="test_lstm_with_peepholes",
+)
+```
+
+</details>
+<details>
+<summary>reverse</summary>
+
+```python
+# seq_length = 3, batch_size=1, input_size=2
+input = np.array([[[1.0, 2.0]], [[3.0, 4.0]], [[5.0, 6.0]]]).astype(np.float32)
+
+input_size = 2
+hidden_size = 3
+weight_scale = 0.1
+number_of_gates = 4
+
+node = onnx.helper.make_node(
+    "LSTM",
+    inputs=["X", "W", "R"],
+    outputs=["", "Y_h", "Y_c"],
+    hidden_size=hidden_size,
+    direction="reverse",
+)
+
+W = weight_scale * np.ones(
+    (1, number_of_gates * hidden_size, input_size)
+).astype(np.float32)
+R = weight_scale * np.ones(
+    (1, number_of_gates * hidden_size, hidden_size)
+).astype(np.float32)
+
+lstm = LSTMHelper(X=input, W=W, R=R, direction="reverse")
+_, Y_h, Y_c = lstm.step()
+expect(
+    node,
+    inputs=[input, W, R],
+    outputs=[Y_h.astype(np.float32), Y_c.astype(np.float32)],
+    name="test_lstm_reverse",
 )
 ```
 
@@ -12873,7 +15084,7 @@ expect(node, inputs=[x], outputs=[y], name="test_leakyrelu_default")
 
 
 ### Less
-There are 4 test cases, listed as following:
+There are 2 test cases, listed as following:
 <details>
 <summary>less</summary>
 
@@ -12922,7 +15133,45 @@ expect(node, inputs=[x, y], outputs=[z], name="test_less_uint64")
 
 </details>
 <details>
-<summary>less</summary>
+<summary>less_broadcast</summary>
+
+```python
+node = onnx.helper.make_node(
+    "Less",
+    inputs=["x", "y"],
+    outputs=["less"],
+)
+
+x = np.random.randn(3, 4, 5).astype(np.float32)
+y = np.random.randn(5).astype(np.float32)
+z = np.less(x, y)
+expect(node, inputs=[x, y], outputs=[z], name="test_less_bcast")
+```
+
+</details>
+
+
+### LessOrEqual
+There are 2 test cases, listed as following:
+<details>
+<summary>less_broadcast</summary>
+
+```python
+node = onnx.helper.make_node(
+    "LessOrEqual",
+    inputs=["x", "y"],
+    outputs=["less_equal"],
+)
+
+x = np.random.randn(3, 4, 5).astype(np.float32)
+y = np.random.randn(5).astype(np.float32)
+z = np.less_equal(x, y)
+expect(node, inputs=[x, y], outputs=[z], name="test_less_equal_bcast")
+```
+
+</details>
+<details>
+<summary>lessorequal</summary>
 
 ```python
 node = onnx.helper.make_node(
@@ -12965,40 +15214,6 @@ x = np.random.randint(24, size=(3, 4, 5), dtype=np.uint64)
 y = np.random.randint(24, size=(3, 4, 5), dtype=np.uint64)
 z = np.less_equal(x, y)
 expect(node, inputs=[x, y], outputs=[z], name="test_less_equal_uint64")
-```
-
-</details>
-<details>
-<summary>less_broadcast</summary>
-
-```python
-node = onnx.helper.make_node(
-    "Less",
-    inputs=["x", "y"],
-    outputs=["less"],
-)
-
-x = np.random.randn(3, 4, 5).astype(np.float32)
-y = np.random.randn(5).astype(np.float32)
-z = np.less(x, y)
-expect(node, inputs=[x, y], outputs=[z], name="test_less_bcast")
-```
-
-</details>
-<details>
-<summary>less_broadcast</summary>
-
-```python
-node = onnx.helper.make_node(
-    "LessOrEqual",
-    inputs=["x", "y"],
-    outputs=["less_equal"],
-)
-
-x = np.random.randn(3, 4, 5).astype(np.float32)
-y = np.random.randn(5).astype(np.float32)
-z = np.less_equal(x, y)
-expect(node, inputs=[x, y], outputs=[z], name="test_less_equal_bcast")
 ```
 
 </details>
@@ -14096,7 +16311,7 @@ expect(
 
 
 ### LpNormalization
-There are 6 test cases, listed as following:
+There are 7 test cases, listed as following:
 <details>
 <summary>default</summary>
 
@@ -14154,6 +16369,25 @@ x = np.array(
 l1_norm_axis_last = np.sum(abs(x), axis=-1, keepdims=True)
 y = x / l1_norm_axis_last
 expect(node, inputs=[x], outputs=[y], name="test_l1normalization_axis_last")
+```
+
+</details>
+<details>
+<summary>l1normalization_negative_values</summary>
+
+```python
+node = onnx.helper.make_node(
+    "LpNormalization", inputs=["x"], outputs=["y"], axis=0, p=1
+)
+x = np.array([1.0, -1.0], dtype=np.float32)
+l1_norm = np.sum(abs(x), axis=0, keepdims=True)
+y = x / l1_norm
+expect(
+    node,
+    inputs=[x],
+    outputs=[y],
+    name="test_l1normalization_negative_values",
+)
 ```
 
 </details>
@@ -15474,7 +17708,44 @@ expect(
 
 
 ### MaxUnpool
-There are 2 test cases, listed as following:
+There are 4 test cases, listed as following:
+<details>
+<summary>1d</summary>
+
+```python
+node = onnx.helper.make_node(
+    "MaxUnpool",
+    inputs=["xT", "xI"],
+    outputs=["y"],
+    kernel_shape=[2],
+    strides=[2],
+)
+xT = np.array([[[1, 2]]], dtype=np.float32)
+xI = np.array([[[1, 3]]], dtype=np.int64)
+y = np.array([[[0, 1, 0, 2]]], dtype=np.float32)
+expect(node, inputs=[xT, xI], outputs=[y], name="test_maxunpool_export_1d")
+```
+
+</details>
+<details>
+<summary>4d</summary>
+
+```python
+node = onnx.helper.make_node(
+    "MaxUnpool",
+    inputs=["xT", "xI"],
+    outputs=["y"],
+    kernel_shape=[2, 2, 2, 2],
+    strides=[2, 2, 2, 2],
+)
+xT = np.array([[[[[[1, 2]]]]]], dtype=np.float32)
+xI = np.array([[[[[[0, 31]]]]]], dtype=np.int64)
+y = np.zeros((1, 1, 2, 2, 2, 4), dtype=np.float32)
+y.flat[[0, 31]] = xT.flat
+expect(node, inputs=[xT, xI], outputs=[y], name="test_maxunpool_export_4d")
+```
+
+</details>
 <details>
 <summary>with_output_shape</summary>
 
@@ -15487,7 +17758,7 @@ node = onnx.helper.make_node(
     strides=[2, 2],
 )
 xT = np.array([[[[5, 6], [7, 8]]]], dtype=np.float32)
-xI = np.array([[[[5, 7], [13, 15]]]], dtype=np.int64)
+xI = np.array([[[[6, 8], [16, 18]]]], dtype=np.int64)
 output_shape = np.array((1, 1, 5, 5), dtype=np.int64)
 y = np.array(
     [
@@ -15655,12 +17926,12 @@ upper_edge_hertz = np.float32(8192 / 2)
 num_spectrogram_bins = dft_length // 2 + 1
 frequency_bins = np.arange(0, num_mel_bins + 2)
 
-low_frequency_mel = 2595 * np.log10(1 + lower_edge_hertz / 700)
-high_frequency_mel = 2595 * np.log10(1 + upper_edge_hertz / 700)
+low_frequency_mel = 2595 * np.log1p(lower_edge_hertz / 700) / np.log(10)
+high_frequency_mel = 2595 * np.log1p(upper_edge_hertz / 700) / np.log(10)
 mel_step = (high_frequency_mel - low_frequency_mel) / frequency_bins.shape[0]
 
 frequency_bins = frequency_bins * mel_step + low_frequency_mel
-frequency_bins = 700 * (np.power(10, (frequency_bins / 2595)) - 1)
+frequency_bins = 700 * np.expm1(frequency_bins / 2595 * np.log(10))
 frequency_bins = ((dft_length + 1) * frequency_bins) // sample_rate
 frequency_bins = frequency_bins.astype(int)
 
@@ -15790,7 +18061,7 @@ node = onnx.helper.make_node("Mish", inputs=["X"], outputs=["Y"])
 input_data = np.linspace(-10, 10, 10000, dtype=np.float32)
 
 # Calculate expected output data
-expected_output = input_data * np.tanh(np.log1p(np.exp(input_data)))
+expected_output = input_data * np.tanh(np.logaddexp(0, input_data))
 
 expect(node, inputs=[input_data], outputs=[expected_output], name="test_mish")
 ```
@@ -15799,7 +18070,44 @@ expect(node, inputs=[input_data], outputs=[expected_output], name="test_mish")
 
 
 ### Mod
-There are 13 test cases, listed as following:
+There are 18 test cases, listed as following:
+<details>
+<summary>fmod_0_signed_zero</summary>
+
+```python
+for dtype in (np.float16, np.float32, np.float64):
+    tensor_type = onnx.helper.np_dtype_to_tensor_dtype(np.dtype(dtype))
+    mod = onnx.helper.make_node("Mod", ["x", "y"], ["remainder"], fmod=0)
+    # Sign maps both signed zeros to zero; Reciprocal exposes them as signed infinities.
+    reciprocal = onnx.helper.make_node("Reciprocal", ["remainder"], ["z"])
+    graph = onnx.helper.make_graph(
+        [mod, reciprocal],
+        f"ModFmod0SignedZero{np.dtype(dtype).name}",
+        [
+            onnx.helper.make_tensor_value_info("x", tensor_type, [4]),
+            onnx.helper.make_tensor_value_info("y", tensor_type, [4]),
+        ],
+        [
+            onnx.helper.make_tensor_value_info("z", tensor_type, [4]),
+        ],
+    )
+    model = onnx.helper.make_model_gen_version(
+        graph,
+        producer_name="backend-test",
+        opset_imports=[onnx.helper.make_opsetid("", 28)],
+    )
+    x = np.array([0.0, -0.0, 0.0, -0.0], dtype=dtype)
+    y = np.array([-2.0, 2.0, 2.0, -2.0], dtype=dtype)
+    z = np.array([-np.inf, np.inf, np.inf, -np.inf], dtype=dtype)
+    expect(
+        model,
+        inputs=[x, y],
+        outputs=[z],
+        name=f"test_mod_fmod_0_signed_zero_{np.dtype(dtype).name}",
+    )
+```
+
+</details>
 <details>
 <summary>mod_broadcast</summary>
 
@@ -15822,6 +18130,68 @@ z = np.mod(x, y)
 #    [[6, 0, 1, 2, 3],
 #     [4, 5, 6, 0, 1]]], dtype=int32)
 expect(node, inputs=[x, y], outputs=[z], name="test_mod_broadcast")
+```
+
+</details>
+<details>
+<summary>mod_float_edge_cases_fmod_0</summary>
+
+```python
+for dtype in (np.float16, np.float32, np.float64):
+    node = onnx.helper.make_node(
+        "Mod", inputs=["x", "y"], outputs=["z"], fmod=0
+    )
+    x = np.array(
+        [
+            0.0,
+            -0.0,
+            0.0,
+            -0.0,
+            -3.0,
+            3.0,
+            -1.0,
+            1.0,
+            np.inf,
+            -np.inf,
+            1.0,
+            1.0,
+            np.nan,
+            1.0,
+        ],
+        dtype=dtype,
+    )
+    y = np.array(
+        [
+            -2.0,
+            2.0,
+            2.0,
+            -2.0,
+            np.inf,
+            np.inf,
+            -np.inf,
+            -np.inf,
+            2.0,
+            2.0,
+            0.0,
+            -0.0,
+            2.0,
+            np.nan,
+        ],
+        dtype=dtype,
+    )
+    with np.errstate(divide="ignore", invalid="ignore"):
+        z = np.mod(x, y)
+
+    np.testing.assert_array_equal(np.signbit(z[:4]), [True, False, False, True])
+    np.testing.assert_array_equal(
+        np.isnan(z[8:]), [True, True, True, True, True, True]
+    )
+    expect(
+        node,
+        inputs=[x, y],
+        outputs=[z],
+        name=f"test_mod_float_edge_cases_fmod_0_{np.dtype(dtype).name}",
+    )
 ```
 
 </details>
@@ -15854,6 +18224,21 @@ expect(node, inputs=[x, y], outputs=[z], name="test_mod_mixed_sign_float16")
 
 </details>
 <details>
+<summary>mod_mixed_sign_float16_fmod_0</summary>
+
+```python
+node = onnx.helper.make_node("Mod", inputs=["x", "y"], outputs=["z"], fmod=0)
+
+x = np.array([-4.3, 7.2, 5.0, 4.3, -7.2, 8.0]).astype(np.float16)
+y = np.array([2.1, -3.4, 8.0, -2.1, 3.4, 5.0]).astype(np.float16)
+z = np.mod(x, y)
+expect(
+    node, inputs=[x, y], outputs=[z], name="test_mod_float16_mixed_sign_fmod_0"
+)
+```
+
+</details>
+<details>
 <summary>mod_mixed_sign_float32</summary>
 
 ```python
@@ -15869,6 +18254,21 @@ expect(node, inputs=[x, y], outputs=[z], name="test_mod_mixed_sign_float32")
 
 </details>
 <details>
+<summary>mod_mixed_sign_float32_fmod_0</summary>
+
+```python
+node = onnx.helper.make_node("Mod", inputs=["x", "y"], outputs=["z"], fmod=0)
+
+x = np.array([-4.3, 7.2, 5.0, 4.3, -7.2, 8.0]).astype(np.float32)
+y = np.array([2.1, -3.4, 8.0, -2.1, 3.4, 5.0]).astype(np.float32)
+z = np.mod(x, y)
+expect(
+    node, inputs=[x, y], outputs=[z], name="test_mod_float32_mixed_sign_fmod_0"
+)
+```
+
+</details>
+<details>
 <summary>mod_mixed_sign_float64</summary>
 
 ```python
@@ -15878,6 +18278,21 @@ x = np.array([-4.3, 7.2, 5.0, 4.3, -7.2, 8.0]).astype(np.float64)
 y = np.array([2.1, -3.4, 8.0, -2.1, 3.4, 5.0]).astype(np.float64)
 z = np.fmod(x, y)  # expected output [-0.1,  0.4,  5. ,  0.1, -0.4,  3.]
 expect(node, inputs=[x, y], outputs=[z], name="test_mod_mixed_sign_float64")
+```
+
+</details>
+<details>
+<summary>mod_mixed_sign_float64_fmod_0</summary>
+
+```python
+node = onnx.helper.make_node("Mod", inputs=["x", "y"], outputs=["z"], fmod=0)
+
+x = np.array([-4.3, 7.2, 5.0, 4.3, -7.2, 8.0]).astype(np.float64)
+y = np.array([2.1, -3.4, 8.0, -2.1, 3.4, 5.0]).astype(np.float64)
+z = np.mod(x, y)  # expected output [ 2.0, -3.0,  5. , -2.0,  3.0,  3.]
+expect(
+    node, inputs=[x, y], outputs=[z], name="test_mod_float64_mixed_sign_fmod_0"
+)
 ```
 
 </details>
@@ -17400,7 +19815,7 @@ expect(node, inputs=[x], outputs=[np.logical_not(x)], name="test_not_4d")
 
 
 ### OneHot
-There are 4 test cases, listed as following:
+There are 6 test cases, listed as following:
 <details>
 <summary>with_axis</summary>
 
@@ -17425,6 +19840,36 @@ expect(
     inputs=[indices, depth, values],
     outputs=[y],
     name="test_onehot_with_axis",
+)
+```
+
+</details>
+<details>
+<summary>with_bfloat16_values</summary>
+
+```python
+axisValue = 1
+on_value = 3.0
+off_value = 1.0
+output_type = ml_dtypes.bfloat16
+node = onnx.helper.make_node(
+    "OneHot",
+    inputs=["indices", "depth", "values"],
+    outputs=["y"],
+    axis=axisValue,
+)
+indices = np.array([0, 2], dtype=np.int64)
+depth = np.float32(4)
+values = np.array([off_value, on_value], dtype=output_type)
+y = one_hot(indices, int(depth), axis=axisValue, dtype=output_type)
+y = (y * output_type(on_value - off_value) + output_type(off_value)).astype(
+    output_type
+)
+expect(
+    node,
+    inputs=[indices, depth, values],
+    outputs=[y],
+    name="test_onehot_with_bfloat16_values",
 )
 ```
 
@@ -17487,6 +19932,41 @@ expect(
     inputs=[indices, depth, values],
     outputs=[y],
     name="test_onehot_negative_indices",
+)
+```
+
+</details>
+<details>
+<summary>with_out_of_range_indices</summary>
+
+```python
+axisValue = 1
+on_value = 3
+off_value = 1
+output_type = np.float32
+node = onnx.helper.make_node(
+    "OneHot",
+    inputs=["indices", "depth", "values"],
+    outputs=["y"],
+    axis=axisValue,
+)
+# Indices outside [-depth, depth-1] map to an all-off_value row.
+indices = np.array([5, -6, -1], dtype=np.int64)
+
+# print(y)
+# [[1. 1. 1. 1. 1.]
+#  [1. 1. 1. 1. 1.]
+#  [1. 1. 1. 1. 3.]]
+
+depth = np.float32(5)
+values = np.array([off_value, on_value], dtype=output_type)
+y = one_hot(indices, depth, axis=axisValue, dtype=output_type)
+y = y * (on_value - off_value) + off_value
+expect(
+    node,
+    inputs=[indices, depth, values],
+    outputs=[y],
+    name="test_onehot_out_of_range_indices",
 )
 ```
 
@@ -17788,7 +20268,7 @@ expect(node, inputs=[x, slope], outputs=[y], name="test_prelu_broadcast")
 
 
 ### Pad
-There are 4 test cases, listed as following:
+There are 8 test cases, listed as following:
 <details>
 <summary>constant_pad</summary>
 
@@ -17864,6 +20344,95 @@ expect(
     outputs=[y],
     name="test_constant_pad_negative_axes",
 )
+```
+
+</details>
+<details>
+<summary>constant_pad_negative_pads</summary>
+
+```python
+node = onnx.helper.make_node(
+    "Pad", inputs=["x", "pads", "value"], outputs=["y"], mode="constant"
+)
+x = np.array([1, 2, 3], dtype=np.int32)
+pads = np.array([-4, 2], dtype=np.int64)
+value = np.int32(-1)
+y = np.array([-1], dtype=np.int32)
+
+expect(
+    node,
+    inputs=[x, pads, value],
+    outputs=[y],
+    name="test_constant_pad_negative_pads",
+)
+```
+
+</details>
+<details>
+<summary>constant_pad_to_empty</summary>
+
+```python
+node = onnx.helper.make_node(
+    "Pad", inputs=["x", "pads"], outputs=["y"], mode="constant"
+)
+x = np.array([1, 2, 3], dtype=np.float32)
+pads = np.array([-3, 0], dtype=np.int64)
+y = np.empty((0,), dtype=np.float32)
+
+expect(
+    node,
+    inputs=[x, pads],
+    outputs=[y],
+    name="test_constant_pad_to_empty",
+)
+```
+
+</details>
+<details>
+<summary>negative_pad_axes</summary>
+
+```python
+node = onnx.helper.make_node(
+    "Pad", inputs=["x", "pads", "", "axes"], outputs=["y"], mode="edge"
+)
+x = np.array([[0, 1, 2, 3], [4, 5, 6, 7]], dtype=np.int64)
+pads = np.array([-1, 2], dtype=np.int64)
+axes = np.array([-1], dtype=np.int32)
+y = np.array(
+    [[1, 2, 3, 3, 3], [5, 6, 7, 7, 7]],
+    dtype=np.int64,
+)
+
+expect(
+    node,
+    inputs=[x, pads, axes],
+    outputs=[y],
+    name="test_negative_pad_axes",
+)
+```
+
+</details>
+<details>
+<summary>negative_pad_reflect_and_wrap</summary>
+
+```python
+x = np.array([0, 1, 2, 3], dtype=np.float32)
+pads = np.array([-1, 2], dtype=np.int64)
+expected = {
+    "reflect": np.array([1, 2, 3, 2, 1], dtype=np.float32),
+    "wrap": np.array([1, 2, 3, 1, 2], dtype=np.float32),
+}
+
+for mode, y in expected.items():
+    node = onnx.helper.make_node(
+        "Pad", inputs=["x", "pads"], outputs=["y"], mode=mode
+    )
+    expect(
+        node,
+        inputs=[x, pads],
+        outputs=[y],
+        name=f"test_negative_pad_{mode}",
+    )
 ```
 
 </details>
@@ -18173,7 +20742,9 @@ for quant_type_name in ["uint8", "int8"]:
         b = b.astype(quant_type)
 
         b_scale = np.array([0.00705], dtype=dtype)
-        b_zero_point = np.array([114], dtype=quant_type)
+        b_zero_point = np.array(
+            [114 - 127] if quant_type == np.int8 else [114], dtype=quant_type
+        )
 
         y_scale = np.array([0.0107], dtype=dtype)
         y_zero_point = np.array(
@@ -18183,8 +20754,8 @@ for quant_type_name in ["uint8", "int8"]:
         if quant_type == np.int8:
             output = np.array(
                 [
-                    [[-86, -128, -128], [115, 39, -121]],
-                    [[-86, -128, -128], [115, 39, -121]],
+                    [[41, -12, -9], [1, -75, -128]],
+                    [[41, -12, -9], [1, -75, -128]],
                 ]
             )
         else:
@@ -18884,7 +21455,7 @@ for i in range(len(X.shape)):
 
 
 ### RNN
-There are 4 test cases, listed as following:
+There are 6 test cases, listed as following:
 <details>
 <summary>batchwise</summary>
 
@@ -18914,6 +21485,40 @@ expect(
     inputs=[input, W, R],
     outputs=[Y.astype(np.float32), Y_h.astype(np.float32)],
     name="test_simple_rnn_batchwise",
+)
+```
+
+</details>
+<details>
+<summary>bidirectional</summary>
+
+```python
+input = np.array([[[1.0, 2.0]], [[3.0, 4.0]], [[5.0, 6.0]]]).astype(np.float32)
+
+input_size = 2
+hidden_size = 4
+weight_scales = np.array([[[0.5]], [[2.0]]], dtype=np.float32)
+
+node = onnx.helper.make_node(
+    "RNN",
+    inputs=["X", "W", "R"],
+    outputs=["", "Y_h"],
+    hidden_size=hidden_size,
+    direction="bidirectional",
+)
+
+# Multiply broadcasts in num_directions axis, to have different W & R
+# in each direction
+W = weight_scales * np.ones((1, hidden_size, input_size)).astype(np.float32)
+R = weight_scales * np.ones((1, hidden_size, hidden_size)).astype(np.float32)
+
+rnn = RNNHelper(X=input, W=W, R=R, direction="bidirectional")
+_, Y_h = rnn.step()
+expect(
+    node,
+    inputs=[input, W, R],
+    outputs=[Y_h.astype(np.float32)],
+    name="test_simple_rnn_bidirectional",
 )
 ```
 
@@ -18981,6 +21586,38 @@ expect(
     inputs=[input, W, R, B],
     outputs=[Y_h.astype(np.float32)],
     name="test_simple_rnn_with_initial_bias",
+)
+```
+
+</details>
+<details>
+<summary>reverse</summary>
+
+```python
+input = np.array([[[1.0, 2.0]], [[3.0, 4.0]], [[5.0, 6.0]]]).astype(np.float32)
+
+input_size = 2
+hidden_size = 4
+weight_scale = 0.1
+
+node = onnx.helper.make_node(
+    "RNN",
+    inputs=["X", "W", "R"],
+    outputs=["", "Y_h"],
+    hidden_size=hidden_size,
+    direction="reverse",
+)
+
+W = weight_scale * np.ones((1, hidden_size, input_size)).astype(np.float32)
+R = weight_scale * np.ones((1, hidden_size, hidden_size)).astype(np.float32)
+
+rnn = RNNHelper(X=input, W=W, R=R, direction="reverse")
+_, Y_h = rnn.step()
+expect(
+    node,
+    inputs=[input, W, R],
+    outputs=[Y_h.astype(np.float32)],
+    name="test_simple_rnn_reverse",
 )
 ```
 
@@ -19898,7 +22535,7 @@ expect(
 
 
 ### ReduceMax
-There are 6 test cases, listed as following:
+There are 7 test cases, listed as following:
 <details>
 <summary>bool_inputs</summary>
 
@@ -20044,6 +22681,34 @@ expect(
     inputs=[data, axes],
     outputs=[reduced],
     name="test_reduce_max_empty_set",
+)
+```
+
+</details>
+<details>
+<summary>empty_set_bool</summary>
+
+```python
+shape = [2, 0, 4]
+keepdims = 1
+reduced_shape = [2, 1, 4]
+
+node = onnx.helper.make_node(
+    "ReduceMax",
+    inputs=["data", "axes"],
+    outputs=["reduced"],
+    keepdims=keepdims,
+)
+
+data = np.empty(shape, dtype=np.bool_)
+axes = np.array([1], dtype=np.int64)
+reduced = np.full(reduced_shape, False, dtype=np.bool_)
+
+expect(
+    node,
+    inputs=[data, axes],
+    outputs=[reduced],
+    name="test_reduce_max_empty_set_bool",
 )
 ```
 
@@ -21531,9 +24196,9 @@ data = np.array(
 
 scales = np.array([1.0, 1.0, 0.8, 0.8], dtype=np.float32)
 
-# [[[[ 1.          2.39519159  3.79038317]
-#    [ 6.58076634  7.97595793  9.37114951]
-#    [12.16153268 13.55672427 14.95191585]]]]
+# [[[[ 1.   2.5  4. ]
+#    [ 7.   8.5 10. ]
+#    [13.  14.5 16. ]]]]
 output = interpolate_nd(
     data,
     lambda x, _: cubic_coeffs(x),
@@ -21658,7 +24323,7 @@ data = np.array(
 
 scales = np.array([1.0, 1.0, 0.6, 0.6], dtype=np.float32)
 
-# [[[[1.       3.142857]]]]
+# [[[[1. 4.]]]]
 output = interpolate_nd(
     data,
     lambda x, _: linear_coeffs(x),
@@ -23261,7 +25926,7 @@ expect(
 
 
 ### ReverseSequence
-There are 2 test cases, listed as following:
+There are 3 test cases, listed as following:
 <details>
 <summary>reversesequence_batch</summary>
 
@@ -23282,7 +25947,7 @@ x = np.array(
     ],
     dtype=np.float32,
 )
-sequence_lens = np.array([1, 2, 3, 4], dtype=np.int64)
+sequence_lens = np.array([0, 2, 3, 4], dtype=np.int64)
 
 y = np.array(
     [
@@ -23299,6 +25964,35 @@ expect(
     inputs=[x, sequence_lens],
     outputs=[y],
     name="test_reversesequence_batch",
+)
+```
+
+</details>
+<details>
+<summary>reversesequence_bfloat16</summary>
+
+```python
+node = onnx.helper.make_node(
+    "ReverseSequence",
+    inputs=["x", "sequence_lens"],
+    outputs=["y"],
+    time_axis=1,
+    batch_axis=0,
+)
+
+x = np.array(
+    [[1.0, 2.0, 3.0, 4.0], [5.0, 6.0, 7.0, 8.0]], dtype=ml_dtypes.bfloat16
+)
+sequence_lens = np.array([4, 3], dtype=np.int64)
+y = np.array(
+    [[4.0, 3.0, 2.0, 1.0], [7.0, 6.0, 5.0, 8.0]], dtype=ml_dtypes.bfloat16
+)
+
+expect(
+    node,
+    inputs=[x, sequence_lens],
+    outputs=[y],
+    name="test_reversesequence_bfloat16",
 )
 ```
 
@@ -24468,7 +27162,7 @@ expect(
 
 
 ### ScatterND
-There are 5 test cases, listed as following:
+There are 7 test cases, listed as following:
 <details>
 <summary>scatternd</summary>
 
@@ -24595,6 +27289,32 @@ expect(
 
 </details>
 <details>
+<summary>scatternd_max_with_element_indices</summary>
+
+```python
+node = onnx.helper.make_node(
+    "ScatterND",
+    inputs=["data", "indices", "updates"],
+    outputs=["y"],
+    reduction="max",
+)
+data = np.array([[1, 2], [3, 4]], dtype=np.float32)
+# Indices address individual elements (index rank == data rank),
+# which exercises the reduction at the element level.
+indices = np.array([[0, 0], [1, 1]], dtype=np.int64)
+updates = np.array([5, 1], dtype=np.float32)
+# Expecting output as np.array([[5, 2], [3, 4]], dtype=np.float32)
+output = scatter_nd_impl(data, indices, updates, reduction="max")
+expect(
+    node,
+    inputs=[data, indices, updates],
+    outputs=[output],
+    name="test_scatternd_max_with_element_indices",
+)
+```
+
+</details>
+<details>
 <summary>scatternd_min</summary>
 
 ```python
@@ -24632,6 +27352,30 @@ expect(
     inputs=[data, indices, updates],
     outputs=[output],
     name="test_scatternd_min",
+)
+```
+
+</details>
+<details>
+<summary>scatternd_min_with_element_indices</summary>
+
+```python
+node = onnx.helper.make_node(
+    "ScatterND",
+    inputs=["data", "indices", "updates"],
+    outputs=["y"],
+    reduction="min",
+)
+data = np.array([[1, 2], [3, 4]], dtype=np.float32)
+indices = np.array([[0, 0], [1, 1]], dtype=np.int64)
+updates = np.array([5, 1], dtype=np.float32)
+# Expecting output as np.array([[1, 2], [3, 1]], dtype=np.float32)
+output = scatter_nd_impl(data, indices, updates, reduction="min")
+expect(
+    node,
+    inputs=[data, indices, updates],
+    outputs=[output],
+    name="test_scatternd_min_with_element_indices",
 )
 ```
 
@@ -24692,17 +27436,11 @@ node = onnx.helper.make_node(
 
 x = np.array([-1, 0, 1]).astype(np.float32)
 # expected output [-3.79272318, 0., 3.]
-y = (
-    np.clip(x, 0, np.inf) * 3.0
-    + (np.exp(np.clip(x, -np.inf, 0)) - 1) * 2.0 * 3.0
-)
+y = np.clip(x, 0, np.inf) * 3.0 + np.expm1(np.clip(x, -np.inf, 0)) * 2.0 * 3.0
 expect(node, inputs=[x], outputs=[y], name="test_selu_example")
 
 x = np.random.randn(3, 4, 5).astype(np.float32)
-y = (
-    np.clip(x, 0, np.inf) * 3.0
-    + (np.exp(np.clip(x, -np.inf, 0)) - 1) * 2.0 * 3.0
-)
+y = np.clip(x, 0, np.inf) * 3.0 + np.expm1(np.clip(x, -np.inf, 0)) * 2.0 * 3.0
 expect(node, inputs=[x], outputs=[y], name="test_selu")
 ```
 
@@ -24721,7 +27459,7 @@ node = onnx.helper.make_node(
 x = np.random.randn(3, 4, 5).astype(np.float32)
 y = (
     np.clip(x, 0, np.inf) * default_gamma
-    + (np.exp(np.clip(x, -np.inf, 0)) - 1) * default_alpha * default_gamma
+    + np.expm1(np.clip(x, -np.inf, 0)) * default_alpha * default_gamma
 )
 expect(node, inputs=[x], outputs=[y], name="test_selu_default")
 ```
@@ -26803,13 +29541,11 @@ node = onnx.helper.make_node(
 )
 
 x = np.array([-1, 0, 1]).astype(np.float32)
-y = np.log(
-    np.exp(x) + 1
-)  # expected output [0.31326166, 0.69314718, 1.31326163]
+y = np.logaddexp(0, x)  # expected output [0.31326166, 0.69314718, 1.31326163]
 expect(node, inputs=[x], outputs=[y], name="test_softplus_example")
 
 x = np.random.randn(3, 4, 5).astype(np.float32)
-y = np.log(np.exp(x) + 1)
+y = np.logaddexp(0, x)
 expect(node, inputs=[x], outputs=[y], name="test_softplus")
 ```
 
@@ -26841,7 +29577,109 @@ expect(node, inputs=[x], outputs=[y], name="test_softsign")
 
 
 ### SpaceToDepth
-There are 2 test cases, listed as following:
+There are 4 test cases, listed as following:
+<details>
+<summary>crd_mode_example</summary>
+
+```python
+node = onnx.helper.make_node(
+    "SpaceToDepth",
+    inputs=["x"],
+    outputs=["y"],
+    blocksize=2,
+    mode="CRD",
+)
+
+# (1, 2, 4, 6) input tensor
+x = np.array(
+    [
+        [
+            [
+                [0.0, 9.0, 1.0, 10.0, 2.0, 11.0],
+                [18.0, 27.0, 19.0, 28.0, 20.0, 29.0],
+                [3.0, 12.0, 4.0, 13.0, 5.0, 14.0],
+                [21.0, 30.0, 22.0, 31.0, 23.0, 32.0],
+            ],
+            [
+                [36.0, 45.0, 37.0, 46.0, 38.0, 47.0],
+                [54.0, 63.0, 55.0, 64.0, 56.0, 65.0],
+                [39.0, 48.0, 40.0, 49.0, 41.0, 50.0],
+                [57.0, 66.0, 58.0, 67.0, 59.0, 68.0],
+            ],
+        ]
+    ]
+).astype(np.float32)
+
+# (1, 8, 2, 3) output tensor
+y = np.array(
+    [
+        [
+            [[0.0, 1.0, 2.0], [3.0, 4.0, 5.0]],
+            [[9.0, 10.0, 11.0], [12.0, 13.0, 14.0]],
+            [[18.0, 19.0, 20.0], [21.0, 22.0, 23.0]],
+            [[27.0, 28.0, 29.0], [30.0, 31.0, 32.0]],
+            [[36.0, 37.0, 38.0], [39.0, 40.0, 41.0]],
+            [[45.0, 46.0, 47.0], [48.0, 49.0, 50.0]],
+            [[54.0, 55.0, 56.0], [57.0, 58.0, 59.0]],
+            [[63.0, 64.0, 65.0], [66.0, 67.0, 68.0]],
+        ]
+    ]
+).astype(np.float32)
+expect(node, inputs=[x], outputs=[y], name="test_spacetodepth_crd_mode_example")
+```
+
+</details>
+<details>
+<summary>dcr_mode_example</summary>
+
+```python
+node = onnx.helper.make_node(
+    "SpaceToDepth",
+    inputs=["x"],
+    outputs=["y"],
+    blocksize=2,
+    mode="DCR",
+)
+
+# (1, 2, 4, 6) input tensor
+x = np.array(
+    [
+        [
+            [
+                [0.0, 18.0, 1.0, 19.0, 2.0, 20.0],
+                [36.0, 54.0, 37.0, 55.0, 38.0, 56.0],
+                [3.0, 21.0, 4.0, 22.0, 5.0, 23.0],
+                [39.0, 57.0, 40.0, 58.0, 41.0, 59.0],
+            ],
+            [
+                [9.0, 27.0, 10.0, 28.0, 11.0, 29.0],
+                [45.0, 63.0, 46.0, 64.0, 47.0, 65.0],
+                [12.0, 30.0, 13.0, 31.0, 14.0, 32.0],
+                [48.0, 66.0, 49.0, 67.0, 50.0, 68.0],
+            ],
+        ]
+    ]
+).astype(np.float32)
+
+# (1, 8, 2, 3) output tensor
+y = np.array(
+    [
+        [
+            [[0.0, 1.0, 2.0], [3.0, 4.0, 5.0]],
+            [[9.0, 10.0, 11.0], [12.0, 13.0, 14.0]],
+            [[18.0, 19.0, 20.0], [21.0, 22.0, 23.0]],
+            [[27.0, 28.0, 29.0], [30.0, 31.0, 32.0]],
+            [[36.0, 37.0, 38.0], [39.0, 40.0, 41.0]],
+            [[45.0, 46.0, 47.0], [48.0, 49.0, 50.0]],
+            [[54.0, 55.0, 56.0], [57.0, 58.0, 59.0]],
+            [[63.0, 64.0, 65.0], [66.0, 67.0, 68.0]],
+        ]
+    ]
+).astype(np.float32)
+expect(node, inputs=[x], outputs=[y], name="test_spacetodepth_dcr_mode_example")
+```
+
+</details>
 <details>
 <summary>example</summary>
 
@@ -27963,6 +30801,85 @@ node = onnx.helper.make_node(
 )
 expect(
     node, inputs=[data_0, data_1], outputs=[result], name="test_sum_two_inputs"
+)
+```
+
+</details>
+
+
+### SwiGLU
+There are 3 test cases, listed as following:
+<details>
+<summary>alpha</summary>
+
+```python
+node = onnx.helper.make_node(
+    "SwiGLU",
+    inputs=["a", "b"],
+    outputs=["y"],
+    alpha=0.5,  # pass alpha as attribute
+)
+
+a = np.array([[1.0, -2.0, 3.0, 4.0], [-1.0, 2.0, -3.0, 0.5]], dtype=np.float32)
+b = np.array([[0.5, 1.0, -1.0, 2.0], [2.0, -1.0, 0.5, 1.0]], dtype=np.float32)
+y = swiglu(a, b, alpha=0.5)
+
+expect(
+    node,
+    inputs=[a, b],
+    outputs=[y],
+    name="test_swiglu_alpha",
+    opset_imports=[onnx.helper.make_opsetid("", 28)],
+)
+```
+
+</details>
+<details>
+<summary>float16</summary>
+
+```python
+node = onnx.helper.make_node(
+    "SwiGLU",
+    inputs=["a", "b"],
+    outputs=["y"],
+)
+
+a = np.array([[1.0, -2.0, 3.0, 4.0], [-1.0, 2.0, -3.0, 0.5]], dtype=np.float16)
+b = np.array([[0.5, 1.0, -1.0, 2.0], [2.0, -1.0, 0.5, 1.0]], dtype=np.float16)
+y = swiglu(a.astype(np.float32), b.astype(np.float32), alpha=1.0).astype(
+    np.float16
+)
+
+expect(
+    node,
+    inputs=[a, b],
+    outputs=[y],
+    name="test_swiglu_float16",
+    opset_imports=[onnx.helper.make_opsetid("", 28)],
+)
+```
+
+</details>
+<details>
+<summary>swiglu</summary>
+
+```python
+node = onnx.helper.make_node(
+    "SwiGLU",
+    inputs=["a", "b"],
+    outputs=["y"],
+)
+
+a = np.array([[1.0, -2.0, 3.0, 4.0], [-1.0, 2.0, -3.0, 0.5]], dtype=np.float32)
+b = np.array([[0.5, 1.0, -1.0, 2.0], [2.0, -1.0, 0.5, 1.0]], dtype=np.float32)
+y = swiglu(a, b, alpha=1.0)
+
+expect(
+    node,
+    inputs=[a, b],
+    outputs=[y],
+    name="test_swiglu",
+    opset_imports=[onnx.helper.make_opsetid("", 28)],
 )
 ```
 
@@ -29359,7 +32276,7 @@ expect(node, inputs=[x, k], outputs=[y], name="test_triu_zero")
 
 
 ### Unique
-There are 6 test cases, listed as following:
+There are 10 test cases, listed as following:
 <details>
 <summary>length_1</summary>
 
@@ -29392,6 +32309,64 @@ expect(
     inputs=[x],
     outputs=[y, indices, inverse_indices, counts],
     name="test_unique_length_1",
+    output_type_protos=unique_output_types(x),
+)
+```
+
+</details>
+<details>
+<summary>not_sorted_single_output</summary>
+
+```python
+node_not_sorted = onnx.helper.make_node(
+    "Unique",
+    inputs=["X"],
+    outputs=["Y"],
+    sorted=0,
+)
+
+# Y keeps the order of first occurrence even when the optional outputs
+# are not requested.
+x = np.array([2.0, 1.0, 1.0, 3.0, 4.0, 3.0], dtype=np.float32)
+y = np.array([2.0, 1.0, 3.0, 4.0], dtype=np.float32)
+
+expect(
+    node_not_sorted,
+    inputs=[x],
+    outputs=[y],
+    name="test_unique_not_sorted_single_output",
+    output_type_protos=unique_output_types(x)[:1],
+)
+```
+
+</details>
+<details>
+<summary>not_sorted_with_axis</summary>
+
+```python
+node_not_sorted = onnx.helper.make_node(
+    "Unique",
+    inputs=["X"],
+    outputs=["Y", "indices", "inverse_indices", "counts"],
+    sorted=0,
+    axis=1,
+)
+
+# The unique columns are [3.0, 4.0] and [1.0, 2.0], kept in the order
+# they first appear in X instead of ascending order. indices point into
+# the columns of X, inverse_indices and counts follow the order of Y.
+x = np.array([[3.0, 1.0, 3.0], [4.0, 2.0, 4.0]], dtype=np.float32)
+y = np.array([[3.0, 1.0], [4.0, 2.0]], dtype=np.float32)
+indices = np.array([0, 1], dtype=np.int64)
+inverse_indices = np.array([0, 1, 0], dtype=np.int64)
+counts = np.array([2, 1], dtype=np.int64)
+
+expect(
+    node_not_sorted,
+    inputs=[x],
+    outputs=[y, indices, inverse_indices, counts],
+    name="test_unique_not_sorted_with_axis",
+    output_type_protos=unique_output_types(x, axis=1),
 )
 ```
 
@@ -29441,6 +32416,37 @@ expect(
     inputs=[x],
     outputs=[y, indices, inverse_indices, counts],
     name="test_unique_not_sorted_without_axis",
+    output_type_protos=unique_output_types(x),
+)
+```
+
+</details>
+<details>
+<summary>not_sorted_without_axis_2d</summary>
+
+```python
+node_not_sorted = onnx.helper.make_node(
+    "Unique",
+    inputs=["X"],
+    outputs=["Y", "indices", "inverse_indices", "counts"],
+    sorted=0,
+)
+
+# X is flattened to [2.0, 1.0, 1.0, 3.0] because axis is not set, and Y
+# holds its unique values in order of first occurrence. indices point
+# into the flattened X, inverse_indices and counts follow the order of Y.
+x = np.array([[2.0, 1.0], [1.0, 3.0]], dtype=np.float32)
+y = np.array([2.0, 1.0, 3.0], dtype=np.float32)
+indices = np.array([0, 1, 3], dtype=np.int64)
+inverse_indices = np.array([0, 1, 1, 2], dtype=np.int64)
+counts = np.array([1, 2, 1], dtype=np.int64)
+
+expect(
+    node_not_sorted,
+    inputs=[x],
+    outputs=[y, indices, inverse_indices, counts],
+    name="test_unique_not_sorted_without_axis_2d",
+    output_type_protos=unique_output_types(x),
 )
 ```
 
@@ -29479,6 +32485,7 @@ expect(
     inputs=[x],
     outputs=[y, indices, inverse_indices, counts],
     name="test_unique_sorted_with_axis",
+    output_type_protos=unique_output_types(x, axis=0),
 )
 ```
 
@@ -29526,6 +32533,7 @@ expect(
     inputs=[x],
     outputs=[y, indices, inverse_indices, counts],
     name="test_unique_sorted_with_axis_3d",
+    output_type_protos=unique_output_types(x, axis=1),
 )
 ```
 
@@ -29565,6 +32573,7 @@ expect(
     inputs=[x],
     outputs=[y, indices, inverse_indices, counts],
     name="test_unique_sorted_with_negative_axis",
+    output_type_protos=unique_output_types(x, axis=-1),
 )
 ```
 
@@ -29589,6 +32598,33 @@ expect(
     inputs=[x],
     outputs=[y, indices, inverse_indices, counts],
     name="test_unique_sorted_without_axis",
+    output_type_protos=unique_output_types(x),
+)
+```
+
+</details>
+<details>
+<summary>unique_bfloat16_sorted_without_axis</summary>
+
+```python
+node_sorted = onnx.helper.make_node(
+    "Unique",
+    inputs=["X"],
+    outputs=["Y", "indices", "inverse_indices", "counts"],
+    sorted=1,
+)
+x = np.array([2.0, 1.0, 1.0, 3.0, 4.0, 3.0], dtype=ml_dtypes.bfloat16)
+y, indices, inverse_indices, counts = np.unique(
+    x, return_index=True, return_inverse=True, return_counts=True
+)
+indices, inverse_indices, counts = specify_int64(
+    indices, inverse_indices, counts
+)
+expect(
+    node_sorted,
+    inputs=[x],
+    outputs=[y, indices, inverse_indices, counts],
+    name="test_unique_bfloat16_sorted_without_axis",
 )
 ```
 
@@ -29873,15 +32909,6 @@ expect(node, inputs=[x, y], outputs=[z], name="test_xor_bcast4v4d")
 
 ## &#x1F494;No Cover Common Operators
 ### ConcatFromSequence (call for test cases)
-
-
-### GlobalLpPool (call for test cases)
-
-
-### GreaterOrEqual (call for test cases)
-
-
-### LessOrEqual (call for test cases)
 
 
 ### MaxRoiPool (call for test cases)

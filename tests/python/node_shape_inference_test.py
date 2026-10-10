@@ -1,0 +1,24 @@
+# SPDX-License-Identifier: Apache-2.0
+
+# Copyright (c) ONNX Project Contributors
+from __future__ import annotations
+
+import pytest
+
+import onnx.helper
+import onnx.shape_inference
+
+
+class TestNodeInference:
+    @pytest.mark.parametrize("op_type", ["GreaterOrEqual", "LessOrEqual"])
+    def test_comparison_op(self, op_type):
+        node = onnx.helper.make_node(op_type, ["x", "y"], ["z"])
+        schema = onnx.defs.get_schema(node.op_type, 23, "")
+        xtype = onnx.helper.make_tensor_type_proto(onnx.TensorProto.INT32, [1, 10])
+        ytype = onnx.helper.make_tensor_type_proto(onnx.TensorProto.INT32, [10, 1])
+        result = onnx.shape_inference.infer_node_outputs(
+            schema, node, {"x": xtype, "y": ytype}
+        )
+        assert list(result.keys()) == ["z"]
+        assert result["z"].tensor_type.elem_type == onnx.TensorProto.BOOL
+        assert [dim.dim_value for dim in result["z"].tensor_type.shape.dim] == [10, 10]

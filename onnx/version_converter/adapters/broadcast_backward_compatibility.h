@@ -14,8 +14,7 @@
 
 #include "onnx/version_converter/adapters/adapter.h"
 
-namespace ONNX_NAMESPACE {
-namespace version_conversion {
+namespace ONNX_NAMESPACE::version_conversion {
 
 class BroadcastBackwardCompatibility final : public Adapter {
  public:
@@ -38,12 +37,12 @@ class BroadcastBackwardCompatibility final : public Adapter {
     int req_broadcast = check_numpy_unibroadcastable_and_require_broadcast(A_sizes, B_sizes);
     ONNX_ASSERTM(
         req_broadcast != -1,
-        "%s being converted from %" PRId64 " to %" PRId64
-        " does "
-        "not have broadcastable inputs.",
-        name().c_str(),
+        name(),
+        " being converted from ",
         static_cast<int64_t>(initial_version().version()),
-        static_cast<int64_t>(target_version().version()))
+        " to ",
+        static_cast<int64_t>(target_version().version()),
+        " does not have broadcastable inputs.")
     if (req_broadcast == 1) {
       // If conditional is not fulfilled, we have a default broadcast
       // Add broadcast attribute
@@ -57,5 +56,4 @@ class BroadcastBackwardCompatibility final : public Adapter {
   }
 };
 
-} // namespace version_conversion
-} // namespace ONNX_NAMESPACE
+} // namespace ONNX_NAMESPACE::version_conversion

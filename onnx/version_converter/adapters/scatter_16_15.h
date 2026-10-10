@@ -18,8 +18,7 @@
 #include "onnx/version_converter/adapters/adapter.h"
 #include "onnx/version_converter/adapters/transformers.h"
 
-namespace ONNX_NAMESPACE {
-namespace version_conversion {
+namespace ONNX_NAMESPACE::version_conversion {
 
 class Scatter_16_15 : public Adapter {
  public:
@@ -52,13 +51,14 @@ class Scatter_16_15 : public Adapter {
     ONNX_ASSERTM(
         std::find(std::begin(unallowed_types_), std::end(unallowed_types_), val->elemType()) ==
             std::end(unallowed_types_),
-        "DataType (%d) of Input or Output"
-        " of operator '%s' is unallowed for Opset Version %" PRId64 ".",
+        "DataType (",
         val->elemType(),
-        name().c_str(),
-        static_cast<int64_t>(target_version().version()))
+        ") of Input or Output of operator '",
+        name(),
+        "' is unallowed for Opset Version ",
+        static_cast<int64_t>(target_version().version()),
+        ".")
   }
 };
 
-} // namespace version_conversion
-} // namespace ONNX_NAMESPACE
+} // namespace ONNX_NAMESPACE::version_conversion

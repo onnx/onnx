@@ -15,8 +15,7 @@
 #include "onnx/onnx-data.pb.h"
 #include "onnx/string_utils.h"
 
-namespace ONNX_NAMESPACE {
-namespace checker {
+namespace ONNX_NAMESPACE::checker {
 // std::string member means copy may throw when allocation fails
 // NOLINTNEXTLINE(bugprone-exception-copy-constructor-throws)
 class ValidationError final : public std::runtime_error {
@@ -71,7 +70,7 @@ class CheckerContext final {
     model_dir_ = model_dir;
   }
 
-  std::string get_model_dir() const {
+  const std::string& get_model_dir() const {
     return model_dir_;
   }
 
@@ -200,5 +199,4 @@ int64_t open_external_data(
     bool read_only);
 ONNX_API bool check_is_experimental_op(const NodeProto& node);
 
-} // namespace checker
-} // namespace ONNX_NAMESPACE
+} // namespace ONNX_NAMESPACE::checker

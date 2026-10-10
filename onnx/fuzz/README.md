@@ -19,6 +19,14 @@ for crashes, hangs, and sanitizer violations.
 | `fuzz_version_converter.py` | `version_converter.convert_version` | Raw bytes → protobuf parser |
 | `make_seed_corpus.py` | *(seed generator, not a fuzzer)* | Produces seed zips for OSS-Fuzz |
 
+## CI regression check
+
+[`.github/workflows/fuzz.yml`](../../.github/workflows/fuzz.yml) runs each harness in this
+repo's own CI (a short smoke run on PRs/pushes that touch `onnx/`, a longer nightly run) as
+a regression check — e.g. to catch a harness failing to import or a documented harness file
+going missing. This is separate from, and much shallower than, OSS-Fuzz's own continuous
+fuzzing campaigns; OSS-Fuzz findings are not surfaced in this repo's CI.
+
 ## How OSS-Fuzz uses these files
 
 The companion OSS-Fuzz project ([google/oss-fuzz#15382](https://github.com/google/oss-fuzz/pull/15382))

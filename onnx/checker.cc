@@ -8,6 +8,7 @@
 #include <cstdint>
 #include <filesystem> // NOLINT(build/c++17)
 #include <iostream>
+#include <limits>
 #include <string>
 #include <unordered_map>
 #include <unordered_set>
@@ -56,25 +57,110 @@ struct open_how {
 
 #endif // _WIN32
 
-namespace ONNX_NAMESPACE {
-namespace checker {
+namespace ONNX_NAMESPACE::checker {
 
 #define enforce_has_field(proto, field)                                              \
   do {                                                                               \
-    if (!proto.has_##field()) {                                                      \
+    if (!(proto).has_##field()) {                                                    \
       fail_check("Field '", #field, "' of '", #proto, "' is required but missing."); \
     }                                                                                \
   } while (0)
 
 #define enforce_non_empty_field(proto, field)                                            \
   do {                                                                                   \
-    if (proto.field().empty()) {                                                         \
+    if ((proto).field().empty()) {                                                       \
       fail_check("Field '", #field, "' of '", #proto, "' is required to be non-empty."); \
     }                                                                                    \
   } while (0)
 
+// Returns the IR version that introduced the given tensor data type, or 0 for
+// data types that have been available since the first IR version.
+static int min_ir_version_for_data_type(int32_t data_type) {
+  switch (data_type) {
+    case TensorProto::BFLOAT16:
+      return 0x00000004;
+    case TensorProto::FLOAT8E4M3FN:
+    case TensorProto::FLOAT8E4M3FNUZ:
+    case TensorProto::FLOAT8E5M2:
+    case TensorProto::FLOAT8E5M2FNUZ:
+      return 0x00000009;
+    case TensorProto::UINT4:
+    case TensorProto::INT4:
+      return 0x0000000A;
+    case TensorProto::FLOAT4E2M1:
+      return 0x0000000B;
+    case TensorProto::FLOAT8E8M0:
+      return 0x0000000C;
+    case TensorProto::UINT2:
+    case TensorProto::INT2:
+      return 0x0000000D;
+    case TensorProto::FLOAT6E2M3:
+    case TensorProto::FLOAT6E3M2:
+      return 0x0000000E;
+    default:
+      return 0;
+  }
+}
+
+static void check_data_type_ir_version(int32_t data_type, const std::string& name, const CheckerContext& ctx) {
+  const int min_ir_version = min_ir_version_for_data_type(data_type);
+  // A non-positive IR version means the context does not carry one (e.g. a
+  // default-constructed CheckerContext), so there is nothing to check against.
+  if (ctx.get_ir_version() > 0 && ctx.get_ir_version() < min_ir_version) {
+    fail_check(
+        "Data type ",
+        Utils::DataTypeUtils::ToDataTypeString(data_type),
+        " used by '",
+        name,
+        "' requires IR version >= ",
+        min_ir_version,
+        ", but the IR version is ",
+        ctx.get_ir_version(),
+        ".");
+  }
+}
+
+static void check_type_ir_version(const TypeProto& type, const std::string& name, const CheckerContext& ctx) {
+  switch (type.value_case()) {
+    case TypeProto::kTensorType:
+      check_data_type_ir_version(type.tensor_type().elem_type(), name, ctx);
+      break;
+    case TypeProto::kSparseTensorType:
+      check_data_type_ir_version(type.sparse_tensor_type().elem_type(), name, ctx);
+      break;
+    case TypeProto::kSequenceType:
+      check_type_ir_version(type.sequence_type().elem_type(), name, ctx);
+      break;
+    case TypeProto::kOptionalType:
+      check_type_ir_version(type.optional_type().elem_type(), name, ctx);
+      break;
+    case TypeProto::kMapType:
+      check_data_type_ir_version(type.map_type().key_type(), name, ctx);
+      check_type_ir_version(type.map_type().value_type(), name, ctx);
+      break;
+    default:
+      break;
+  }
+}
+
+static void check_attribute_tensors_ir_version(const AttributeProto& attr, const CheckerContext& ctx) {
+  if (attr.has_t()) {
+    check_data_type_ir_version(attr.t().data_type(), attr.name(), ctx);
+  }
+  for (const auto& tensor : attr.tensors()) {
+    check_data_type_ir_version(tensor.data_type(), attr.name(), ctx);
+  }
+  if (attr.has_sparse_tensor()) {
+    check_data_type_ir_version(attr.sparse_tensor().values().data_type(), attr.name(), ctx);
+  }
+  for (const auto& sparse_tensor : attr.sparse_tensors()) {
+    check_data_type_ir_version(sparse_tensor.values().data_type(), attr.name(), ctx);
+  }
+}
+
 void check_value_info(const ValueInfoProto& value_info, const CheckerContext& ctx) {
   enforce_non_empty_field(value_info, name);
+  check_type_ir_version(value_info.type(), value_info.name(), ctx);
   // Relax constraint for subgraph input/output.
   if (!ctx.is_main_graph())
     return;
@@ -99,10 +185,10 @@ void check_value_info(const ValueInfoProto& value_info, const CheckerContext& ct
       enforce_has_field(type, key_type);
       enforce_has_field(type, value_type);
     } break;
-#ifdef ONNX_ML
-    case TypeProto::kOpaqueType:
-      break;
-#endif
+    case TypeProto::kOpaqueType: {
+      const auto& type = value_info.type().opaque_type();
+      enforce_non_empty_field(type, name);
+    } break;
     case TypeProto::kSparseTensorType: {
       const auto& type = value_info.type().sparse_tensor_type();
       enforce_has_field(type, elem_type);
@@ -119,6 +205,7 @@ void check_tensor(const TensorProto& tensor, const CheckerContext& ctx) {
   if (tensor.data_type() == TensorProto::UNDEFINED) {
     fail_check("setting data_type field (tensor name: ", tensor.name(), ") to UNDEFINED is not allowed");
   }
+  check_data_type_ir_version(tensor.data_type(), tensor.name(), ctx);
 
   int num_value_fields = 0;
 
@@ -175,8 +262,10 @@ void check_tensor(const TensorProto& tensor, const CheckerContext& ctx) {
     if (tensor.data_type() == TensorProto::STRING) {
       fail_check("STRING data (tensor name: ", tensor.name(), ") should not be stored in raw_data field");
     }
-    // Validate that raw_data is large enough for the declared packed sub-byte type and shape.
+    // Validate that raw_data is large enough for the declared shape and type: either a
+    // packed sub-byte type (2 or 4 elements per byte) or a regular, byte-aligned type.
     int64_t expected_bytes = 0;
+    int64_t bytes_per_elem = 0;
     switch (tensor.data_type()) {
       case TensorProto::UINT4:
       case TensorProto::INT4:
@@ -187,8 +276,67 @@ void check_tensor(const TensorProto& tensor, const CheckerContext& ctx) {
       case TensorProto::INT2:
         expected_bytes = (nelem + 3) / 4; // 4 elements per byte, ceiling division
         break;
+      case TensorProto::FLOAT6E2M3:
+      case TensorProto::FLOAT6E3M2: {
+        int64_t expected_bits = 0;
+        if (checked_mul_overflow(nelem, 6, &expected_bits)) {
+          fail_check(
+              "TensorProto (tensor name: ",
+              tensor.name(),
+              ") has a shape too large to validate against its data type.");
+        }
+        expected_bytes = (expected_bits / 8) + (expected_bits % 8 != 0);
+        if (expected_bytes > 0 && static_cast<int64_t>(tensor.raw_data().size()) >= expected_bytes) {
+          const auto used_bits = static_cast<uint8_t>(expected_bits % 8);
+          if (used_bits != 0) {
+            const auto last_byte = static_cast<uint8_t>(tensor.raw_data()[expected_bytes - 1]);
+            const auto unused_bits_mask = static_cast<uint8_t>(0xFFU << used_bits);
+            if ((last_byte & unused_bits_mask) != 0) {
+              fail_check(
+                  "TensorProto (tensor name: ",
+                  tensor.name(),
+                  ") has non-zero padding bits in its packed FLOAT6 raw_data.");
+            }
+          }
+        }
+        break;
+      }
+      case TensorProto::UINT8:
+      case TensorProto::INT8:
+      case TensorProto::BOOL:
+      case TensorProto::FLOAT8E4M3FN:
+      case TensorProto::FLOAT8E4M3FNUZ:
+      case TensorProto::FLOAT8E5M2:
+      case TensorProto::FLOAT8E5M2FNUZ:
+      case TensorProto::FLOAT8E8M0:
+        bytes_per_elem = 1;
+        break;
+      case TensorProto::UINT16:
+      case TensorProto::INT16:
+      case TensorProto::FLOAT16:
+      case TensorProto::BFLOAT16:
+        bytes_per_elem = 2;
+        break;
+      case TensorProto::FLOAT:
+      case TensorProto::INT32:
+      case TensorProto::UINT32:
+        bytes_per_elem = 4;
+        break;
+      case TensorProto::DOUBLE:
+      case TensorProto::INT64:
+      case TensorProto::UINT64:
+      case TensorProto::COMPLEX64: // 2 x float32
+        bytes_per_elem = 8;
+        break;
+      case TensorProto::COMPLEX128: // 2 x float64
+        bytes_per_elem = 16;
+        break;
       default:
         break;
+    }
+    if (bytes_per_elem > 0 && checked_mul_overflow(nelem, bytes_per_elem, &expected_bytes)) {
+      fail_check(
+          "TensorProto (tensor name: ", tensor.name(), ") has a shape too large to validate against its data type.");
     }
     if (expected_bytes > 0 && static_cast<int64_t>(tensor.raw_data().size()) < expected_bytes) {
       fail_check(
@@ -196,7 +344,7 @@ void check_tensor(const TensorProto& tensor, const CheckerContext& ctx) {
           tensor.name(),
           ") raw_data size (",
           tensor.raw_data().size(),
-          " bytes) is too small for the declared shape and packed type (",
+          " bytes) is too small for the declared shape and type (",
           expected_bytes,
           " bytes required).");
     }
@@ -218,11 +366,51 @@ void check_tensor(const TensorProto& tensor, const CheckerContext& ctx) {
       case TensorProto::FLOAT:
       case TensorProto::COMPLEX64:
         check_field(float_data);
+        if (nelem > 0) {
+          // COMPLEX64 stores interleaved real/imaginary parts: 2 float_data entries per element.
+          int64_t expected_floats = 0;
+          if (checked_mul_overflow(nelem, tensor.data_type() == TensorProto::COMPLEX64 ? 2 : 1, &expected_floats)) {
+            fail_check(
+                "TensorProto (tensor name: ",
+                tensor.name(),
+                ") has a shape too large to validate against its data type.");
+          }
+          if (static_cast<int64_t>(tensor.float_data().size()) < expected_floats) {
+            fail_check(
+                "TensorProto (tensor name: ",
+                tensor.name(),
+                ") float_data size (",
+                tensor.float_data().size(),
+                ") is too small for the declared shape (",
+                expected_floats,
+                " float values required).");
+          }
+        }
         break;
 
       case TensorProto::DOUBLE:
       case TensorProto::COMPLEX128:
         check_field(double_data);
+        if (nelem > 0) {
+          // COMPLEX128 stores interleaved real/imaginary parts: 2 double_data entries per element.
+          int64_t expected_doubles = 0;
+          if (checked_mul_overflow(nelem, tensor.data_type() == TensorProto::COMPLEX128 ? 2 : 1, &expected_doubles)) {
+            fail_check(
+                "TensorProto (tensor name: ",
+                tensor.name(),
+                ") has a shape too large to validate against its data type.");
+          }
+          if (static_cast<int64_t>(tensor.double_data().size()) < expected_doubles) {
+            fail_check(
+                "TensorProto (tensor name: ",
+                tensor.name(),
+                ") double_data size (",
+                tensor.double_data().size(),
+                ") is too small for the declared shape (",
+                expected_doubles,
+                " double values required).");
+          }
+        }
         break;
 
       case TensorProto::INT32:
@@ -238,6 +426,33 @@ void check_tensor(const TensorProto& tensor, const CheckerContext& ctx) {
       case TensorProto::FLOAT8E5M2:
       case TensorProto::FLOAT8E5M2FNUZ:
       case TensorProto::FLOAT8E8M0:
+      case TensorProto::FLOAT6E2M3:
+      case TensorProto::FLOAT6E3M2:
+        check_field(int32_data);
+        if (nelem > 0) {
+          // These types are not packed: each element occupies one int32_data entry.
+          const int64_t expected_int32s = nelem;
+          if (static_cast<int64_t>(tensor.int32_data().size()) < expected_int32s) {
+            fail_check(
+                "TensorProto (tensor name: ",
+                tensor.name(),
+                ") int32_data size (",
+                tensor.int32_data().size(),
+                ") is too small for the declared shape (",
+                expected_int32s,
+                " int32 values required).");
+          }
+          if (tensor.data_type() == TensorProto::FLOAT6E2M3 || tensor.data_type() == TensorProto::FLOAT6E3M2) {
+            for (const auto value : tensor.int32_data()) {
+              if (value < 0 || value > 0x3F) {
+                fail_check(
+                    "TensorProto (tensor name: ", tensor.name(), ") FLOAT6 int32_data values must use only bits 0-5.");
+              }
+            }
+          }
+        }
+        break;
+
       case TensorProto::UINT4:
       case TensorProto::INT4:
       case TensorProto::FLOAT4E2M1:
@@ -278,15 +493,45 @@ void check_tensor(const TensorProto& tensor, const CheckerContext& ctx) {
 
       case TensorProto::INT64:
         check_field(int64_data);
+        if (nelem > 0 && static_cast<int64_t>(tensor.int64_data().size()) < nelem) {
+          fail_check(
+              "TensorProto (tensor name: ",
+              tensor.name(),
+              ") int64_data size (",
+              tensor.int64_data().size(),
+              ") is too small for the declared shape (",
+              nelem,
+              " int64 values required).");
+        }
         break;
 
       case TensorProto::UINT32:
       case TensorProto::UINT64:
         check_field(uint64_data);
+        if (nelem > 0 && static_cast<int64_t>(tensor.uint64_data().size()) < nelem) {
+          fail_check(
+              "TensorProto (tensor name: ",
+              tensor.name(),
+              ") uint64_data size (",
+              tensor.uint64_data().size(),
+              ") is too small for the declared shape (",
+              nelem,
+              " uint64 values required).");
+        }
         break;
 
       case TensorProto::STRING:
         check_field(string_data);
+        if (nelem > 0 && static_cast<int64_t>(tensor.string_data_size()) < nelem) {
+          fail_check(
+              "TensorProto (tensor name: ",
+              tensor.name(),
+              ") string_data size (",
+              tensor.string_data_size(),
+              ") is too small for the declared shape (",
+              nelem,
+              " string values required).");
+        }
         break;
 
       default:
@@ -453,11 +698,11 @@ check_sparse_tensor_indices_2(const TensorProto& indices, const SparseTensorProt
   for (size_t i = 0; i < nnz; ++i) {
     int64_t curr_index = 0; // linearized index of i-th value
     for (int j = 0; j < dense_rank; ++j) {
-      auto index_ij = index_data[i * dense_rank + j];
+      auto index_ij = index_data[(i * dense_rank) + j];
       if ((index_ij < 0) || (index_ij >= sparse_tensor_proto.dims(j))) {
         fail_check("Sparse tensor (", indices.name(), ") index value at position [", i, ",", j, "] out of range.");
       }
-      curr_index = curr_index * sparse_tensor_proto.dims(j) + index_ij;
+      curr_index = (curr_index * sparse_tensor_proto.dims(j)) + index_ij;
     }
     if (curr_index <= prev_index) {
       fail_check(
@@ -527,7 +772,7 @@ void check_attribute(const AttributeProto& attr, const CheckerContext& ctx, cons
   int used_fields = 0;
 
 #define check_type(expected_type)                                                     \
-  if (attr.has_type() && attr.type() != expected_type) {                              \
+  if (attr.has_type() && attr.type() != (expected_type)) {                            \
     fail_check("type field and data field mismatch in attribute ", attr.name(), "."); \
   }
 
@@ -630,7 +875,13 @@ void check_node(const NodeProto& node, const CheckerContext& ctx, const LexicalS
   const auto& opset_imports = ctx.get_opset_imports();
   auto dit = opset_imports.find(node.domain());
   if (dit == opset_imports.end()) {
-    fail_check("No opset import for domain '" + node.domain() + "'");
+    // Both "" (ONNX_DOMAIN) and "ai.onnx" (AI_ONNX_DOMAIN) refer to the default ONNX domain
+    if (node.domain() == ONNX_DOMAIN) {
+      dit = opset_imports.find(AI_ONNX_DOMAIN);
+    }
+    if (dit == opset_imports.end()) {
+      fail_check("No opset import for domain '" + node.domain() + "'");
+    }
   }
   auto domain_version = dit->second;
 
@@ -676,6 +927,11 @@ void check_graph(const GraphProto& graph, const CheckerContext& ctx, const Lexic
   }
   for (const auto& value_info : graph.output()) {
     check_value_info(value_info, ctx);
+  }
+  // Intermediate value_info entries are optional annotations and are not
+  // otherwise validated, but they must not use data types newer than the IR version.
+  for (const auto& value_info : graph.value_info()) {
+    check_type_ir_version(value_info.type(), value_info.name(), ctx);
   }
 
   // Inherit values available in outer scope
@@ -800,6 +1056,14 @@ void check_graph(const GraphProto& graph, const CheckerContext& ctx, const Lexic
   }
 
   print_warning_if_has_experimental(used_experimental_ops);
+}
+
+// Converts a proto opset version to int, rejecting values that do not fit.
+static int checked_opset_version(int64_t version) {
+  if (version < std::numeric_limits<int>::min() || version > std::numeric_limits<int>::max()) {
+    fail_check("Opset import version ", version, " is out of supported range");
+  }
+  return static_cast<int>(version);
 }
 
 // Utilify function to get the imported version of domain from opset imports
@@ -931,9 +1195,36 @@ void DetectCycleDFS(
           cycle,
           " -> ",
           GetFunctionImplId(*callee),
-          ". Self-referencing or cyclically-referencing functions would cause infinite recursion.");
+          ". Model-local functions must not be recursive.");
     } else if (s == VisitState::Unvisited) {
       push(callee);
+    }
+  }
+}
+
+// Collect callee edges from a list of nodes into the callee set. A node in a
+// function body may carry subgraphs (via GRAPH / GRAPHS attributes on control-flow
+// ops such as If/Loop/Scan) whose own nodes can also call model-local functions, so
+// we descend recursively to detect cycles hidden at any nesting level. This follows the
+// same subgraph descent as the existing checker recursion (check_graph -> check_node ->
+// check_attribute -> check_graph) and does not add a new unbounded-recursion characteristic.
+void CollectCalleeEdges(
+    const google::protobuf::RepeatedPtrField<NodeProto>& nodes,
+    const std::unordered_map<std::string, FuncPtr>& func_by_key,
+    std::unordered_set<FuncPtr>& callees) {
+  for (const auto& node : nodes) {
+    auto it = func_by_key.find(GetCalleeId(node));
+    if (it != func_by_key.end()) {
+      callees.insert(it->second);
+    }
+    // has_g() guards the singular GRAPH attribute; graphs() is the repeated GRAPHS field.
+    for (const auto& attr : node.attribute()) {
+      if (attr.has_g()) {
+        CollectCalleeEdges(attr.g().node(), func_by_key, callees);
+      }
+      for (const auto& subgraph : attr.graphs()) {
+        CollectCalleeEdges(subgraph.node(), func_by_key, callees);
+      }
     }
   }
 }
@@ -961,17 +1252,12 @@ void check_function_call_cycles(const ModelProto& model) {
     }
   }
 
-  // Build adjacency list using pointers directly
+  // Build adjacency list of FuncPtr edges. FuncPtr points into model.functions(), which
+  // outlives this local map, so storing raw pointers as graph nodes is safe here.
   CallGraph call_graph;
   for (const auto& entry : func_by_key) {
     const auto* func = entry.second;
-    auto& callees = call_graph[func];
-    for (const auto& node : func->node()) {
-      auto it = func_by_key.find(GetCalleeId(node));
-      if (it != func_by_key.end()) {
-        callees.insert(it->second);
-      }
-    }
+    CollectCalleeEdges(func->node(), func_by_key, call_graph[func]);
   }
 
   std::unordered_map<FuncPtr, VisitState> state;
@@ -998,7 +1284,7 @@ void check_model_local_functions(
   for (const auto& function_proto : model.functions()) {
     for (const auto& opset_import : function_proto.opset_import()) {
       if (get_version_for_domain(opset_import.domain(), model_opset_imports) == -1) {
-        model_opset_imports[opset_import.domain()] = opset_import.version();
+        model_opset_imports[opset_import.domain()] = checked_opset_version(opset_import.version());
       }
     }
   }
@@ -1025,7 +1311,7 @@ void check_function(const FunctionProto& function, const CheckerContext& ctx, co
 
   std::unordered_map<std::string, int> func_opset_imports;
   for (const auto& relied_opset : function.opset_import()) {
-    func_opset_imports[relied_opset.domain()] = static_cast<int>(relied_opset.version());
+    func_opset_imports[relied_opset.domain()] = checked_opset_version(relied_opset.version());
   }
 
   ctx_copy.set_opset_imports(func_opset_imports);
@@ -1054,6 +1340,13 @@ void check_function(const FunctionProto& function, const CheckerContext& ctx, co
     if (!attrs.insert(attr).second) {
       fail_check("function (", function.name(), ") should not have duplicate attributes specified.");
     }
+  }
+  for (const auto& attr : function.attribute_proto()) {
+    check_attribute_tensors_ir_version(attr, ctx);
+  }
+  // Function inputs and outputs are untyped names; their types, if any, are given here.
+  for (const auto& value_info : function.value_info()) {
+    check_type_ir_version(value_info.type(), value_info.name(), ctx);
   }
   std::unordered_set<std::string> used_experimental_ops;
   for (const auto& node : function.node()) {
@@ -1122,7 +1415,7 @@ static void check_model(const ModelProto& model, CheckerContext& ctx) {
   ctx.set_ir_version(static_cast<int>(model.ir_version()));
   std::unordered_map<std::string, int> opset_imports;
   for (const auto& opset_import : model.opset_import()) {
-    opset_imports[opset_import.domain()] = static_cast<int>(opset_import.version());
+    opset_imports[opset_import.domain()] = checked_opset_version(opset_import.version());
   }
   if (model.ir_version() >= 3) {
     if (opset_imports.empty()) {
@@ -1498,7 +1791,7 @@ int64_t open_external_data(
 
 #endif
 
-static std::unordered_set<std::string> experimental_ops = {
+static const std::unordered_set<std::string> experimental_ops = {
     "ATen",
     "Affine",
     "ConstantFill",
@@ -1518,5 +1811,4 @@ bool check_is_experimental_op(const NodeProto& node) {
 #undef enforce_has_field
 #undef enforce_non_empty_field
 
-} // namespace checker
-} // namespace ONNX_NAMESPACE
+} // namespace ONNX_NAMESPACE::checker

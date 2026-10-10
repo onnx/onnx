@@ -26,7 +26,7 @@ ONNX is [widely supported](http://onnx.ai/supported-tools) and can be found in m
 
 * [Documentation of ONNX Python Package](https://onnx.ai/onnx/)
 * [Tutorials for creating ONNX models](https://github.com/onnx/tutorials)
-* [Pre-trained ONNX models](https://github.com/onnx/models)
+* [Pre-trained ONNX models](https://huggingface.co/onnx-community)
 
 # Learn about the ONNX spec
 
@@ -75,7 +75,7 @@ Stay up to date with the latest ONNX news. [[Facebook](https://www.facebook.com/
 
 # Roadmap
 
-A roadmap process takes place every year. More details can be found [here](https://github.com/onnx/steering-committee/tree/main/roadmap)
+A roadmap process takes place every year. More details can be found in [ROADMAP.md](ROADMAP.md).
 
 # Installation
 
@@ -112,20 +112,28 @@ pytest
 
 Check out the [contributor guide](https://github.com/onnx/onnx/blob/main/CONTRIBUTING.md) for instructions.
 
-# Reproducible Builds (Linux)
+# Reproducible Build Support
 
-This project provides reproducible builds for Linux.
+ONNX build and release workflows set
+[`SOURCE_DATE_EPOCH`](https://reproducible-builds.org/docs/source-date-epoch/)
+to the source commit timestamp. This removes timestamp-dependent variation from
+supported build steps and makes independent build comparison easier.
 
-A *reproducible build* means that the same source code will always produce identical binary outputs, no matter who builds it or where it is built.
-
-To achieve this, we use the [`SOURCE_DATE_EPOCH`](https://reproducible-builds.org/docs/source-date-epoch/) standard. This ensures that build timestamps and other time-dependent information are fixed, making the output bit-for-bit identical across different environments.
+`SOURCE_DATE_EPOCH` alone does not guarantee byte-for-byte identical artifacts
+across different environments. A reproducibility check must also use the same
+source revision, dependency versions, toolchain, target platform, and build
+configuration, and then compare the resulting artifacts.
 
 ### Why this matters
-- **Transparency**: Anyone can verify that the distributed binaries were created from the published source code.
-- **Security**: Prevents tampering or hidden changes in the build process.
-- **Trust**: Users can be confident that the binaries they download are exactly what the maintainers intended.
 
-If you prefer, you can use the prebuilt reproducible binaries instead of building from source yourself.
+A fixed build timestamp removes one known source of nondeterminism. When
+independent builds use the same controlled inputs, their artifacts can be
+compared byte for byte, with cryptographic digests providing a practical
+shortcut. A byte-for-byte match demonstrates identical outputs, while a
+mismatch identifies a difference that needs investigation. This comparison
+complements release provenance attestations; it does not replace them.
+
+Release artifacts are available from [PyPI](https://pypi.org/project/onnx/).
 
 # License
 

@@ -203,9 +203,9 @@ def extract_model(
 
     The sub-model is defined by the names of the input and output tensors *exactly*.
 
-    Note: For control-flow operators, e.g. If and Loop, the _boundary of sub-model_,
-    which is defined by the input and output tensors, should not _cut through_ the
-    subgraph that is connected to the _main graph_ as attributes of these operators.
+    Note: For control-flow operators, e.g. If and Loop, the *boundary of sub-model*,
+    which is defined by the input and output tensors, should not *cut through* the
+    subgraph that is connected to the *main graph* as attributes of these operators.
 
     Note: When the extracted model size is larger than 2GB, the extra data will be saved in "output_path.data".
 
