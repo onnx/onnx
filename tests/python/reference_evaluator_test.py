@@ -6117,6 +6117,55 @@ class TestReferenceEvaluator:
         for i in range(2, -1, -1):
             assert_allclose(got[i], expected[i])
 
+    @staticmethod
+    def _dynamic_quantize_linear_model():
+        X = make_tensor_value_info("X", TensorProto.FLOAT, None)
+        Y = make_tensor_value_info("Y", TensorProto.UINT8, None)
+        Scale = make_tensor_value_info("scale", TensorProto.FLOAT, None)
+        Zp = make_tensor_value_info("zp", TensorProto.UINT8, None)
+        node = make_node("DynamicQuantizeLinear", ["X"], ["Y", "scale", "zp"])
+        return make_model_gen_version(
+            make_graph([node], "g", [X], [Y, Scale, Zp]),
+            opset_imports=[make_opsetid("", 18)],
+        )
+
+    @pytest.mark.parametrize(
+        "x",
+        [np.zeros((2, 3), dtype=np.float32), -np.zeros((4,), dtype=np.float32)],
+        ids=["all_zero", "negative_zero"],
+    )
+    def test_dynamic_quantize_linear_zero_input(self, x):
+        # An all-zero input has an empty (adjusted) range: the scale must be 1,
+        # not 0 (which would make x / y_scale a division by zero), with a zero
+        # point of 0 and an all-zero quantized output.
+        model = self._dynamic_quantize_linear_model()
+        y, scale, zp = ReferenceEvaluator(model).run(None, {"X": x})
+        assert y.dtype == np.uint8
+        assert_array_equal(y, np.zeros(x.shape, dtype=np.uint8))
+        assert scale.dtype == np.float32
+        assert scale.shape == ()
+        assert scale == np.float32(1.0)
+        assert zp.dtype == np.uint8
+        assert zp.shape == ()
+        assert zp == 0
+
+    @pytest.mark.parametrize(
+        "x",
+        [np.zeros((2, 3), dtype=np.float32), -np.zeros((4,), dtype=np.float32)],
+        ids=["all_zero", "negative_zero"],
+    )
+    @skip_if_no_onnxruntime
+    def test_dynamic_quantize_linear_zero_input_matches_onnxruntime(self, x):
+        # Match the prevailing implementation practice (onnxruntime's kernel).
+        model = self._dynamic_quantize_linear_model()
+        sess = run_ort_inference(model)
+        if sess is None:
+            pytest.skip("onnxruntime does not support this IR or opset version")
+        expected = ReferenceEvaluator(model).run(None, {"X": x})
+        for got, exp in zip(sess.run(None, {"X": x}), expected, strict=True):
+            assert got.dtype == exp.dtype
+            assert_array_equal(got, exp)
+
     @pytest.mark.parametrize(
         "a, b, expected, expected_shape",
         [
