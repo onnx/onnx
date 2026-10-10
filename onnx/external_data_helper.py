@@ -322,7 +322,7 @@ def save_external_data(tensor: TensorProto, base_path: str) -> None:
                     f"{file_size + _MAX_EXTERNAL_DATA_PADDING}."
                 )
             if padding > 0:
-                data_file.write(b"\0" * padding)
+                data_file.truncate(info.offset)
 
             data_file.seek(info.offset)
         offset = data_file.tell()

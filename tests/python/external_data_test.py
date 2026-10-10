@@ -1416,3 +1416,24 @@ class TestLoadExternalDataFileSizeValidation(TestLoadExternalDataBase):
 
         load_external_data_for_tensor(tensor, self.temp_dir)
         assert tensor.raw_data == raw
+
+
+class TestSaveExternalDataPadding:
+    def test_save_external_data_honors_offset_without_explicit_padding(
+        self, tmp_path: Path
+    ) -> None:
+        array = np.array([1.0, 2.0, 3.0], dtype=np.float32)
+        tensor = from_array(array, name="weight")
+        raw = tensor.raw_data
+        offset = _MAX_EXTERNAL_DATA_PADDING
+
+        set_external_data(tensor, location="weights.bin", offset=offset)
+
+        save_external_data(tensor, str(tmp_path))
+
+        data_path = tmp_path / "weights.bin"
+        assert os.path.getsize(data_path) == offset + len(raw)
+        with open(data_path, "rb") as data_file:
+            assert data_file.read(16) == b"\0" * 16
+            data_file.seek(offset)
+            assert data_file.read(len(raw)) == raw
