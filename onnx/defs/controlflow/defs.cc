@@ -27,7 +27,7 @@ ONNX_OPERATOR_SET_SCHEMA(
     If,
     25,
     OpSchema()
-        .SetDoc("If conditional")
+        .SetDoc(kDoc_If_ver25)
         .Input(0, "cond", "Condition for the if. The tensor must contain a single element.", "B")
         .Output(
             0,

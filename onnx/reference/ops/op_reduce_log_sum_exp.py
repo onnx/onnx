@@ -9,21 +9,35 @@ from onnx.reference.ops._op import OpRunReduceNumpy
 
 
 def compute_log_sum_exp(data, axes, keepdims):
-    data_max = data.copy()
-    ind = np.isinf(data_max)
-    data_max[ind] = -np.inf
-    mx = data_max.max(axis=axes, keepdims=True)
-    sub = np.subtract(data, mx)
-    exp = np.exp(sub, out=sub)
-    mxs = np.sum(exp, axis=axes, keepdims=True, dtype=data.dtype)
-    res = np.log(mxs) + mx
+    dtype = data.dtype
+    if dtype == np.float16:
+        # The exponential sum can overflow float16 even when its logarithm is finite.
+        data = data.astype(np.float32)
+    mx = data.max(axis=axes, keepdims=True)
+    shift = np.where(np.isfinite(mx), mx, np.zeros_like(mx))
+    with np.errstate(divide="ignore", invalid="ignore", over="ignore"):
+        sub = np.subtract(data, shift)
+        exp = np.exp(sub, out=sub)
+        mxs = np.sum(exp, axis=axes, keepdims=True, dtype=data.dtype)
+        res = np.log(mxs) + shift
     if not keepdims:
         res = np.squeeze(res, axis=axes)
-    return (res,)
+    return (res.astype(dtype, copy=False),)
+
+
+def _check_integer_input(data):
+    if np.issubdtype(data.dtype, np.integer):
+        raise TypeError(
+            f"ReduceLogSumExp does not support integer input (got {data.dtype}). "
+            "The operator is defined in terms of Exp and Log, which are only defined "
+            "for float types. Integer types were removed from the schema in opset 28. "
+            "Cast the input to a float type."
+        )
 
 
 class ReduceLogSumExp_1(OpRunReduceNumpy):
     def _run(self, data, axes=None, keepdims=None):
+        _check_integer_input(data)
         tax = tuple(axes) if axes is not None else None
 
         if data.size == 0:
@@ -33,6 +47,7 @@ class ReduceLogSumExp_1(OpRunReduceNumpy):
 
 class ReduceLogSumExp_18(OpRunReduceNumpy):
     def _run(self, data, axes=None, keepdims=1, noop_with_empty_axes=0):
+        _check_integer_input(data)
         axes = self.handle_axes(axes, noop_with_empty_axes)
 
         keepdims = keepdims != 0

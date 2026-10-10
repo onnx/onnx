@@ -3,6 +3,7 @@
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
+import ml_dtypes
 import numpy as np
 
 import onnx
@@ -96,4 +97,23 @@ class Compress(Base):
             inputs=[input, condition.astype(bool)],
             outputs=[output],
             name="test_compress_negative_axis",
+        )
+
+    @staticmethod
+    def export_compress_bfloat16() -> None:
+        node = onnx.helper.make_node(
+            "Compress",
+            inputs=["input", "condition"],
+            outputs=["output"],
+            axis=0,
+        )
+        input = np.array([[1, 2], [3, 4], [5, 6]]).astype(ml_dtypes.bfloat16)
+        condition = np.array([0, 1, 1])
+        output = np.compress(condition, input, axis=0)
+
+        expect(
+            node,
+            inputs=[input, condition.astype(bool)],
+            outputs=[output],
+            name="test_compress_bfloat16",
         )

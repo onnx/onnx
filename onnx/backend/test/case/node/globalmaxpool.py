@@ -42,3 +42,14 @@ class GlobalMaxPool(Base):
         ).astype(np.float32)
         y = np.array([[[[9]]]]).astype(np.float32)
         expect(node, inputs=[x], outputs=[y], name="test_globalmaxpool_precomputed")
+
+    @staticmethod
+    def export_globalmaxpool_3d() -> None:
+        node = onnx.helper.make_node(
+            "GlobalMaxPool",
+            inputs=["x"],
+            outputs=["y"],
+        )
+        x = np.random.randn(2, 4, 10).astype(np.float32)
+        y = np.max(x, axis=tuple(range(2, np.ndim(x))), keepdims=True)
+        expect(node, inputs=[x], outputs=[y], name="test_globalmaxpool_3d")

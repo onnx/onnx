@@ -27,7 +27,9 @@ class Loop(OpRun):
         """
         return True
 
-    def _run(self, M, cond, *args, context=None, body=None, attributes=None):
+    def _run(
+        self, M, cond, *args, context=None, body=None, attributes=None, bindings=None
+    ):
         if args:
             v_initial = args[0]
             args = args[1:]
@@ -60,7 +62,7 @@ class Loop(OpRun):
                 )
             if len(body.input_names) > 1 and body.input_names[1] is not None:
                 inputs[body.input_names[1]] = cond
-            outputs = self._run_body(inputs, attributes=attributes)
+            outputs = self._run_body(inputs, attributes=attributes, bindings=bindings)
             if self.K > 0:
                 for k in range(self.K):
                     k_carried_away[k].append(outputs[-self.K + k])

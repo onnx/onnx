@@ -10,5 +10,5 @@ class Mean(OpRun):
     def _run(self, *args):
         res = args[0].copy()
         for m in args[1:]:
-            res += m
+            res = res + m
         return ((res / len(args)).astype(args[0].dtype),)

@@ -46,7 +46,7 @@ LD_LIBRARY_PATH=./.setuptools-cmake-build/ .setuptools-cmake-build/onnx_gtests
 .setuptools-cmake-build\Release\onnx_gtests.exe
 ```
 
-Tests live in `onnx/test/` with `*_test.py` naming.
+Tests live in `tests/` with `*_test.py` naming.
 
 ## Linting
 

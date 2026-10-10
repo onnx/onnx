@@ -8,6 +8,11 @@ include(cmake/Utils.cmake)
 cmake_policy(SET CMP0063 NEW)
 # Modules FindPython3 and FindPython use LOCATION for lookup strategy.
 cmake_policy(SET CMP0094 NEW)
+# Allow the protoc-generated proto sources to be added to the built-in
+# `codegen` target (CMake 3.31+); see the CODEGEN option below.
+if(POLICY CMP0171)
+  cmake_policy(SET CMP0171 NEW)
+endif()
 
 # Set default build type
 get_property(isMultiConfig GLOBAL PROPERTY GENERATOR_IS_MULTI_CONFIG)
@@ -117,8 +122,10 @@ if(MSVC)
   add_compile_options(/MP /utf-8 /nologo)
   add_compile_options(
     /wd5287  # https://developercommunity.visualstudio.com/t/warning-C5287:-operands-are-different-e/10877942?sort=newest
-    /Zc:lambda  # https://developercommunity.visualstudio.com/t/fatal--error-C1001:-Internal-compiler-er/10906076
   )
+  if(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
+    add_compile_options(/Zc:lambda) # https://developercommunity.visualstudio.com/t/fatal--error-C1001:-Internal-compiler-er/10906076
+  endif()
 endif()
 
 if(ONNX_DISABLE_EXCEPTIONS)
@@ -139,7 +146,7 @@ if(ONNX_BUILD_PYTHON AND ONNX_DISABLE_EXCEPTIONS)
 endif()
 
 if(ONNX_BUILD_PYTHON)
-  set(python_dev_component Development.Module Development.SABIModule)
+  set(python_dev_component Development.Module)
 endif()
 
 if(CMAKE_CROSSCOMPILING)
@@ -147,6 +154,25 @@ if(CMAKE_CROSSCOMPILING)
   # must use a different package. See the discussion about this at
   # https://gitlab.kitware.com/cmake/cmake/-/issues/25145
   if(ONNX_BUILD_PYTHON)
+    # There is no target interpreter to query, so a free-threaded target has to
+    # be requested explicitly with -DPython3_FIND_ABI=ANY;ANY;ANY;ON.
+    set(python_gil_disabled OFF)
+    list(LENGTH Python3_FIND_ABI python_find_abi_length)
+    if(python_find_abi_length GREATER 3)
+      list(GET Python3_FIND_ABI 3 python_gil_disabled)
+      string(TOUPPER "${python_gil_disabled}" python_gil_disabled)
+      if(NOT python_gil_disabled STREQUAL "ON")
+        set(python_gil_disabled OFF)
+      endif()
+    endif()
+    if(DEFINED SKBUILD_SABI_COMPONENT)
+      # scikit-build-core decides from wheel.py-api whether the wheel is tagged
+      # abi3; request the stable ABI exactly when it is.
+      list(APPEND python_dev_component ${SKBUILD_SABI_COMPONENT})
+    elseif(NOT python_gil_disabled)
+      # Free-threaded CPython has no stable ABI.
+      list(APPEND python_dev_component Development.SABIModule)
+    endif()
     find_package(Python3 REQUIRED COMPONENTS ${python_dev_component})
   endif()
   find_package(Python REQUIRED COMPONENTS Interpreter)
@@ -165,7 +191,48 @@ if(CMAKE_CROSSCOMPILING)
     endif()
   endif()
 else()
-  find_package(Python3 REQUIRED COMPONENTS Interpreter ${python_dev_component})
+  find_package(Python3 REQUIRED COMPONENTS Interpreter)
+  if(ONNX_BUILD_PYTHON)
+    execute_process(
+      COMMAND "${Python3_EXECUTABLE}" -c
+              "import sysconfig; print(sysconfig.get_config_var('Py_GIL_DISABLED') or 0)"
+      OUTPUT_VARIABLE python_gil_disabled
+      OUTPUT_STRIP_TRAILING_WHITESPACE
+      COMMAND_ERROR_IS_FATAL ANY)
+    if(python_gil_disabled AND CMAKE_VERSION VERSION_GREATER_EQUAL "3.30")
+      if(NOT WIN32 AND CMAKE_VERSION VERSION_LESS "4.1")
+        # FindPython in CMake 3.30-4.0 rejects Development.Module on POSIX
+        # whenever *_FIND_ABI is set, and scikit-build-core >= 1.1 sets it for
+        # free-threaded interpreters. POSIX finds the free-threaded headers
+        # through the interpreter without it.
+        unset(Python3_FIND_ABI)
+        unset(Python3_FIND_ABI CACHE)
+        unset(Python_FIND_ABI)
+        unset(Python_FIND_ABI CACHE)
+      else()
+        # CMake 3.30+ only searches for free-threaded development files when
+        # asked to. Request exactly this ABI so a regular libpython installed
+        # alongside cannot be picked up instead.
+        if(NOT DEFINED Python3_FIND_ABI)
+          set(Python3_FIND_ABI "ANY" "ANY" "ANY" "ON")
+        endif()
+        if(NOT DEFINED Python_FIND_ABI)
+          set(Python_FIND_ABI "ANY" "ANY" "ANY" "ON")
+        endif()
+      endif()
+    endif()
+    if(DEFINED SKBUILD_SABI_COMPONENT)
+      # scikit-build-core decides from wheel.py-api whether the wheel is tagged
+      # abi3; request the stable ABI exactly when it is.
+      list(APPEND python_dev_component ${SKBUILD_SABI_COMPONENT})
+    elseif(NOT python_gil_disabled)
+      # Free-threaded CPython has no stable ABI.
+      list(APPEND python_dev_component Development.SABIModule)
+    endif()
+    # Interpreter must be requested again: FindPython locates the development
+    # files through it.
+    find_package(Python3 REQUIRED COMPONENTS Interpreter ${python_dev_component})
+  endif()
   # Find Python for nanobind
   set(Python_EXECUTABLE ${Python3_EXECUTABLE})
   find_package(Python REQUIRED COMPONENTS Interpreter ${python_dev_component})
@@ -400,6 +467,7 @@ function(RELATIVE_PROTOBUF_GENERATE_CPP SRCS)
 
   set(GEN_PROTO_PY "${ONNX_ROOT}/onnx/gen_proto.py")
   set(GENERATED_FILES)
+  set(PROTOC_OUTPUTS)
   foreach(INFILE ${ARGN})
     set(ABS_FILE "${ONNX_ROOT}/${INFILE}")
     get_filename_component(FILE_DIR ${ABS_FILE} DIRECTORY)
@@ -498,11 +566,21 @@ function(RELATIVE_PROTOBUF_GENERATE_CPP SRCS)
       endif()
     endif()
 
+    set(_codegen_option)
+    if(POLICY CMP0171)
+      set(_codegen_option CODEGEN)
+    endif()
     add_custom_command(OUTPUT ${_protoc_outputs}
         COMMAND "${ONNX_PROTOC_EXECUTABLE}" ${PROTOC_ARGS}
         DEPENDS ${GENERATED_FILES}
-        COMMENT "Running C++ protocol buffer compiler on ${GENERATED_PROTO}")
+        COMMENT "Running C++ protocol buffer compiler on ${GENERATED_PROTO}"
+        ${_codegen_option})
+    list(APPEND PROTOC_OUTPUTS ${_protoc_outputs})
   endforeach()
+
+  # A target tooling (clang-tidy, clangd, ...) can build to force generation
+  # of the proto C++ sources/headers without building the rest of ONNX.
+  add_custom_target(onnx_proto_headers DEPENDS ${PROTOC_OUTPUTS})
 
   set(${SRCS} ${${SRCS}} PARENT_SCOPE)
   set(ONNX_PROTO_PY_FILES ${_py_files} PARENT_SCOPE)
@@ -518,6 +596,12 @@ relative_protobuf_generate_cpp(ONNX_PROTO_SRCS
 # generated .proto files; protoc and C++ compilation still overlap afterwards.
 add_custom_target(onnx_proto_gen DEPENDS ${ONNX_GENERATED_PROTO_FILES})
 
+# onnx_proto_headers also needs the generated .proto files (transitively, via
+# the protoc step). Without this, Xcode's build system rejects the shared
+# custom command: it requires that when two independent targets need the same
+# generated file, one be a dependency of the other.
+add_dependencies(onnx_proto_headers onnx_proto_gen)
+
 set(LINKED_PROTOBUF_TARGET protobuf::libprotobuf)
 if(ONNX_USE_LITE_PROTO)
   if(TARGET protobuf::libprotobuf-lite)
@@ -526,10 +610,14 @@ if(ONNX_USE_LITE_PROTO)
 endif()
 
 # Compile the generated .pb.cc sources in exactly one target: Xcode's build
-# system rejects a protoc custom command shared across several targets.
+# system rejects a protoc custom command shared across several targets. Since
+# onnx_proto_headers also depends on those same .pb.cc files (it just doesn't
+# compile them), make onnx_proto depend on onnx_proto_headers so Xcode treats
+# it as the owner of that custom command instead of erroring out.
 add_library(onnx_proto ${ONNX_PROTO_SRCS})
 add_onnx_global_defines(onnx_proto)
 add_dependencies(onnx_proto onnx_proto_gen)
+add_dependencies(onnx_proto onnx_proto_headers)
 
 # Core library. Hand-written sources come from target_sources(onnx ...) in the
 # subdirectories; the protobuf objects are pulled in from onnx_proto.

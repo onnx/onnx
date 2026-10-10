@@ -36,7 +36,7 @@ If an operator can be split into new primitives, prefer proposing those primitiv
 |-----------|------|
 | Function body definition | `onnx/defs/<domain>/defs.cc` (inline with the schema) |
 | FunctionBuilder utilities | `onnx/defs/function.h` |
-| Function tests (C++) | `onnx/test/cpp/function_get_test.cc`, `onnx/test/cpp/function_verify_test.cc` |
+| Function tests (C++) | `tests/cpp/function_get_test.cc`, `tests/cpp/function_verify_test.cc` |
 
 ## Simple function body (string-based)
 
@@ -237,15 +237,15 @@ For the formal grammar, see [Syntax.md](Syntax.md). The parser implementation an
 | Formal syntax specification | [docs/Syntax.md](Syntax.md) |
 | C++ parser implementation | `onnx/defs/parser.h`, `onnx/defs/parser.cc` |
 | Python parser | `onnx/parser.py` |
-| C++ parser tests | `onnx/test/cpp/parser_test.cc` |
-| Python parser tests | `onnx/test/parser_test.py` |
+| C++ parser tests | `tests/cpp/parser_test.cc` |
+| Python parser tests | `tests/python/parser_test.py` |
 
 ## Testing
 
 Function bodies are tested in the C++ test suite:
 
-- **`onnx/test/cpp/function_get_test.cc`** — verifies `HasFunction()` and `GetFunction()` return correct results
-- **`onnx/test/cpp/function_verify_test.cc`** — verifies function body type constraints and correctness
+- **`tests/cpp/function_get_test.cc`** — verifies `HasFunction()` and `GetFunction()` return correct results
+- **`tests/cpp/function_verify_test.cc`** — verifies function body type constraints and correctness
 
 To run:
 

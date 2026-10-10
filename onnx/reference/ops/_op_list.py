@@ -29,6 +29,10 @@ __all__ = [
     "Atan",
     "Atanh",
     "Attention",
+    "Attention_1",
+    "Attention_23",
+    "Attention_24",
+    "Attention_25",
     "AttributeHasValue",
     "AveragePool_1",
     "AveragePool_7",
@@ -100,10 +104,12 @@ __all__ = [
     "Gemm_6",
     "Gemm_7",
     "GlobalAveragePool",
+    "GlobalLpPool",
     "GlobalMaxPool",
     "Greater",
     "GreaterOrEqual",
-    "GridSample",
+    "GridSample_16",
+    "GridSample_20",
     "GRU",
     "HammingWindow",
     "HannWindow",
@@ -286,7 +292,13 @@ from onnx.reference.ops.op_asin import Asin
 from onnx.reference.ops.op_asinh import Asinh
 from onnx.reference.ops.op_atan import Atan
 from onnx.reference.ops.op_atanh import Atanh
-from onnx.reference.ops.op_attention import Attention
+from onnx.reference.ops.op_attention import (
+    Attention,
+    Attention_1,
+    Attention_23,
+    Attention_24,
+    Attention_25,
+)
 from onnx.reference.ops.op_attribute_has_value import AttributeHasValue
 from onnx.reference.ops.op_average_pool import (
     AveragePool_1,
@@ -359,10 +371,11 @@ from onnx.reference.ops.op_gather_elements import GatherElements
 from onnx.reference.ops.op_gathernd import GatherND
 from onnx.reference.ops.op_gemm import Gemm_6, Gemm_7
 from onnx.reference.ops.op_global_average_pool import GlobalAveragePool
+from onnx.reference.ops.op_global_lp_pool import GlobalLpPool
 from onnx.reference.ops.op_global_max_pool import GlobalMaxPool
 from onnx.reference.ops.op_greater import Greater
 from onnx.reference.ops.op_greater_or_equal import GreaterOrEqual
-from onnx.reference.ops.op_grid_sample import GridSample
+from onnx.reference.ops.op_grid_sample import GridSample_16, GridSample_20
 from onnx.reference.ops.op_gru import GRU
 from onnx.reference.ops.op_hamming_window import HammingWindow
 from onnx.reference.ops.op_hann_window import HannWindow

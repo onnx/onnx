@@ -71,3 +71,9 @@ A successful verification confirms that the artifact was built by GitHub Actions
 ### Software Bill of Materials (SBOM)
 
 Each wheel also embeds a [CycloneDX 1.7](https://cyclonedx.org/) SBOM (`.cdx.json`) listing the bundled third-party components shipped inside the wheel (e.g. statically linked C++ libraries).
+
+## EU Cyber Resilience Act (CRA) Stewardship
+
+ONNX is hosted by [LF AI & Data](https://lfaidata.foundation/), a Linux Foundation project. Under the Linux Foundation's CRA stewardship framework, LF AI & Data's CRA steward is the Linux Foundation, and its policy is available at https://www.linuxfoundation.org/security. The Linux Foundation is registered with ENISA's single reporting platform and handles the CRA-mandated regulatory reporting timelines (a 24-hour early warning followed by a 72-hour formal notification) for actively exploited vulnerabilities and severe security incidents affecting in-scope digital products.
+
+This does not change how to report a vulnerability in ONNX — continue to use the process described above. If you believe you have found an actively exploited vulnerability or a severe security incident (for example, a compromise of the release process), report it immediately through those same channels so maintainers can begin remediation. Maintainers will notify the LF steward's CRA contact in parallel with fixing the problem, never instead of fixing it.

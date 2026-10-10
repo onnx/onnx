@@ -122,6 +122,7 @@ class Scan(OpRun):
         scan_output_axes=None,  # noqa: ARG002
         scan_output_directions=None,  # noqa: ARG002
         attributes=None,  # noqa: ARG002
+        bindings=None,
     ):
         # TODO: support overridden attributes.
         (
@@ -158,7 +159,7 @@ class Scan(OpRun):
             )
 
             try:
-                outputs_list = self._run_body(inputs)
+                outputs_list = self._run_body(inputs, bindings=bindings)
             except TypeError as e:
                 raise TypeError(
                     f"Unable to call 'run' for type '{type(self.body)}'."

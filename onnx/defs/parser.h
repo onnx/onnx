@@ -102,6 +102,8 @@ class PrimitiveTypeNameMap : public StringIntMap<PrimitiveTypeNameMap> {
     map_["float4e2m1"] = TensorProto_DataType_FLOAT4E2M1;
     map_["uint2"] = TensorProto_DataType_UINT2;
     map_["int2"] = TensorProto_DataType_INT2;
+    map_["float6e2m3"] = TensorProto_DataType_FLOAT6E2M3;
+    map_["float6e3m2"] = TensorProto_DataType_FLOAT6E3M2;
   }
 
   static bool IsTypeName(const std::string& dtype) {
@@ -145,6 +147,7 @@ class KeyWordMap {
     MAP_TYPE,
     OPTIONAL_TYPE,
     SPARSE_TENSOR_TYPE,
+    OPAQUE_TYPE,
     OVERLOAD_KW
   };
 
@@ -161,6 +164,7 @@ class KeyWordMap {
     map_["map"] = KeyWord::MAP_TYPE;
     map_["optional"] = KeyWord::OPTIONAL_TYPE;
     map_["sparse_tensor"] = KeyWord::SPARSE_TENSOR_TYPE;
+    map_["opaque"] = KeyWord::OPAQUE_TYPE;
     map_["overload"] = KeyWord::OVERLOAD_KW;
   }
 

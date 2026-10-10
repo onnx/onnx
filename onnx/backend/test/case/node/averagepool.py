@@ -563,7 +563,6 @@ class AveragePool(Base):
             ceil_mode=True,
         )
 
-        # input shape: [1, 1, 4, 4]
         x = np.array(
             [
                 [
@@ -576,10 +575,109 @@ class AveragePool(Base):
                 ]
             ]
         ).astype(np.float32)
-
         y = np.array([[[[6, 7], [10, 11]]]]).astype(np.float32)
 
         expect(node, inputs=[x], outputs=[y], name="test_averagepool_2d_dilations")
+
+    @staticmethod
+    def export_averagepool_2d_dilations_valid() -> None:
+        """input_shape: [1, 1, 7, 7]
+        output_shape: [1, 1, 3, 3]
+        """
+        node = onnx.helper.make_node(
+            "AveragePool",
+            inputs=["x"],
+            outputs=["y"],
+            kernel_shape=[3, 3],
+            strides=[1, 1],
+            dilations=[2, 2],
+            auto_pad="VALID",
+        )
+
+        x = np.arange(1, 50, dtype=np.float32).reshape(1, 1, 7, 7)
+        y = np.array([[[[17, 18, 19], [24, 25, 26], [31, 32, 33]]]]).astype(np.float32)
+
+        expect(
+            node, inputs=[x], outputs=[y], name="test_averagepool_2d_dilations_valid"
+        )
+
+    @staticmethod
+    def export_averagepool_2d_dilations_count_include_pad() -> None:
+        """input_shape: [1, 1, 3, 3]
+        output_shape: [1, 1, 3, 3]
+        """
+        node = onnx.helper.make_node(
+            "AveragePool",
+            inputs=["x"],
+            outputs=["y"],
+            kernel_shape=[2, 2],
+            dilations=[2, 2],
+            pads=[1, 1, 1, 1],
+            count_include_pad=1,
+        )
+
+        x = np.arange(1, 10, dtype=np.float32).reshape(1, 1, 3, 3)
+        y = np.array(
+            [[[[1.25, 2.5, 1.25], [2.5, 5.0, 2.5], [1.25, 2.5, 1.25]]]],
+            dtype=np.float32,
+        )
+
+        expect(
+            node,
+            inputs=[x],
+            outputs=[y],
+            name="test_averagepool_2d_dilations_count_include_pad",
+        )
+
+    @staticmethod
+    def export_averagepool_1d_dilations_same_upper() -> None:
+        """input_shape: [1, 1, 6]
+        output_shape: [1, 1, 3]
+        """
+        node = onnx.helper.make_node(
+            "AveragePool",
+            inputs=["x"],
+            outputs=["y"],
+            kernel_shape=[3],
+            strides=[2],
+            dilations=[2],
+            auto_pad="SAME_UPPER",
+        )
+
+        x = np.arange(1, 7, dtype=np.float32).reshape(1, 1, 6)
+        y = np.array([[[3, 4, 5]]]).astype(np.float32)
+
+        expect(
+            node,
+            inputs=[x],
+            outputs=[y],
+            name="test_averagepool_1d_dilations_same_upper",
+        )
+
+    @staticmethod
+    def export_averagepool_1d_dilations_same_lower() -> None:
+        """input_shape: [1, 1, 6]
+        output_shape: [1, 1, 3]
+        """
+        node = onnx.helper.make_node(
+            "AveragePool",
+            inputs=["x"],
+            outputs=["y"],
+            kernel_shape=[3],
+            strides=[2],
+            dilations=[2],
+            auto_pad="SAME_LOWER",
+        )
+
+        x = np.arange(1, 7, dtype=np.float32).reshape(1, 1, 6)
+        y = np.array([[[2, 3, 4]]]).astype(np.float32)
+
+        expect(
+            node,
+            inputs=[x],
+            outputs=[y],
+            name="test_averagepool_1d_dilations_same_lower",
+        )
 
     @staticmethod
     def export_averagepool_3d_dilations() -> None:
