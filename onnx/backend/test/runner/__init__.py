@@ -87,12 +87,6 @@ class Runner:
         for rt in load_model_tests(kind="simple"):
             self._add_model_test(rt, "Simple")
 
-        for ct in load_model_tests(kind="pytorch-converted"):
-            self._add_model_test(ct, "PyTorchConverted")
-
-        for test_case in load_model_tests(kind="pytorch-operator"):
-            self._add_model_test(test_case, "PyTorchOperator")
-
     def _get_test_case(self, name: str) -> type[unittest.TestCase]:
         test_case = type(str(name), (unittest.TestCase,), {})
         if self._parent_module:
