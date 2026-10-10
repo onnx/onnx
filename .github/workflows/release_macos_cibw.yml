@@ -29,6 +29,7 @@ jobs:
           - "cp311-macosx_universal2"
           - "cp312-macosx_universal2"
           - "cp314t-macosx_universal2"
+          - "cp315t-macosx_universal2"
 
     runs-on: macos-14
 

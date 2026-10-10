@@ -256,6 +256,41 @@ class TestNumpyHelper:
             == 0xFF
         )
 
+    def test_to_float8e8m0_float32_subnormals(self) -> None:
+        values = np.array([0x00400000, 0x00080000, 0x00400001], dtype=np.uint32)
+        inputs = values.view(np.float32)
+
+        np.testing.assert_array_equal(
+            numpy_helper.to_float8e8m0(inputs[:2], round_mode="up").view(np.uint8),
+            [0, 0],
+        )
+        np.testing.assert_array_equal(
+            numpy_helper.to_float8e8m0(inputs[2:], round_mode="nearest").view(np.uint8),
+            [0],
+        )
+
+    def test_to_float8e8m0_float64_without_double_rounding(self) -> None:
+        just_below_two_to_negative_126 = np.array(
+            [0x380FFFFFFFFFFFFF], dtype=np.uint64
+        ).view(np.float64)
+        for inputs in (
+            just_below_two_to_negative_126,
+            just_below_two_to_negative_126.astype(">f8"),
+        ):
+            np.testing.assert_array_equal(
+                numpy_helper.to_float8e8m0(inputs, round_mode="down").view(np.uint8),
+                [0],
+            )
+
+        np.testing.assert_array_equal(
+            numpy_helper.to_float8e8m0(
+                np.array([1e39], dtype=np.float64),
+                saturate=True,
+                round_mode="down",
+            ).view(np.uint8),
+            [0xFE],
+        )
+
     def test_from_array_object_invalid_type(self) -> None:
         a = np.array([42], dtype=object)
         with pytest.raises(NotImplementedError, match="int"):
