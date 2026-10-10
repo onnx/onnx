@@ -13978,7 +13978,7 @@ expect(node, inputs=[x], outputs=[y], name="test_det_nd")
 
   This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
 
-  For integer inputs, the result is computed using truncating division (rounding toward zero).
+  For integer inputs, the result is computed using truncating division (rounding toward zero). For example, `-11 / 3` yields `-3`.
   (Opset 14 change): Extend supported types to include uint8, int8, uint16, and int16.
 
 #### Version
@@ -14413,6 +14413,9 @@ expect(
 
   * where qmax and qmin are max and min values for quantization range i.e. [0, 255] in case of uint8
   * data range is adjusted to include 0.
+  * if the adjusted data range is empty, i.e. maximum(0, max(x)) == minimum(0, min(x)), which
+    happens when every element of x is 0, then y_scale = 1 (so that y_zero_point = 0 and y = 0
+    below) instead of 0.
 
   Zero point is calculated as:
   ```
@@ -14524,6 +14527,22 @@ expect(
     inputs=[X],
     outputs=[Y, Y_Scale, Y_ZeroPoint],
     name="test_dynamicquantizelinear_min_adjusted",
+)
+
+# The adjusted range is empty when every element is 0:
+# expected scale 1 and zero point 0
+X = np.zeros((2, 3), dtype=np.float32)
+x_min = np.minimum(0, np.min(X))
+x_max = np.maximum(0, np.max(X))
+Y_Scale = np.float32(1.0 if x_max == x_min else (x_max - x_min) / (255 - 0))
+Y_ZeroPoint = np.clip(round((0 - x_min) / Y_Scale), 0, 255).astype(np.uint8)
+Y = np.clip(np.round(X / Y_Scale) + Y_ZeroPoint, 0, 255).astype(np.uint8)
+
+expect(
+    node,
+    inputs=[X],
+    outputs=[Y, Y_Scale, Y_ZeroPoint],
+    name="test_dynamicquantizelinear_zero_input",
 )
 ```
 
@@ -16942,6 +16961,67 @@ Other versions of this operator: <a href="Changelog.md#GlobalLpPool-1">1</a>, <a
 </dl>
 
 
+#### Examples
+
+<details>
+<summary>globallppool_1d_p3</summary>
+
+```python
+node = onnx.helper.make_node(
+    "GlobalLpPool",
+    inputs=["x"],
+    outputs=["y"],
+    p=3,
+)
+x = np.array([[[-1.0, 2.0], [-3.0, 4.0]]], dtype=np.float32)
+y = np.array([[[2.080084], [4.4979415]]], dtype=np.float32)
+expect(node, inputs=[x], outputs=[y], name="test_globallppool_1d_p3")
+```
+
+</details>
+
+
+<details>
+<summary>globallppool_3d</summary>
+
+```python
+node = onnx.helper.make_node(
+    "GlobalLpPool",
+    inputs=["x"],
+    outputs=["y"],
+    p=1,
+)
+x = np.array(
+    [[[[[-1.0, 2.0]], [[-3.0, 4.0]]]]],
+    dtype=np.float32,
+)
+y = np.array([[[[[10.0]]]]], dtype=np.float32)
+expect(node, inputs=[x], outputs=[y], name="test_globallppool_3d")
+```
+
+</details>
+
+
+<details>
+<summary>globallppool_default</summary>
+
+```python
+node = onnx.helper.make_node(
+    "GlobalLpPool",
+    inputs=["x"],
+    outputs=["y"],
+)
+x = np.array(
+    [[[[1.0, -2.0], [3.0, -4.0]], [[5.0, -6.0], [7.0, -8.0]]]],
+    dtype=np.float32,
+)
+y = np.array([[[[5.477226]], [[13.190906]]]], dtype=np.float32)
+expect(node, inputs=[x], outputs=[y], name="test_globallppool_default")
+```
+
+</details>
+
+
 ### <a name="GlobalMaxPool"></a><a name="globalmaxpool">**GlobalMaxPool**</a>
 
   GlobalMaxPool consumes an input tensor X and applies max pooling across
@@ -17958,9 +18038,9 @@ expect(
   y = scale * (x - mean) / sqrt(variance + epsilon) + bias,
   ```
   where the mean and variance are computed per instance per group of channels, and
-  `scale` and `bias` should be specified for each channel. The number of
-  groups `num_groups` should be divisible by the number of channels so that there are
-  an equal number of channels per group.
+  `scale` and `bias` should be specified for each channel. The number of channels
+  should be divisible by `num_groups` so that there are an equal number of channels
+  per group.
 
   The overall computation has two stages: the first stage normalizes the elements to
   have zero mean and unit variance for each instance in each group, and the second
@@ -22096,6 +22176,27 @@ expect(node, inputs=[x], outputs=[y], name="test_l1normalization_axis_last")
 
 
 <details>
+<summary>l1normalization_negative_values</summary>
+
+```python
+node = onnx.helper.make_node(
+    "LpNormalization", inputs=["x"], outputs=["y"], axis=0, p=1
+)
+x = np.array([1.0, -1.0], dtype=np.float32)
+l1_norm = np.sum(abs(x), axis=0, keepdims=True)
+y = x / l1_norm
+expect(
+    node,
+    inputs=[x],
+    outputs=[y],
+    name="test_l1normalization_negative_values",
+)
+```
+
+</details>
+
+
+<details>
 <summary>l2normalization_axis_0</summary>
 
 ```python
@@ -23847,6 +23948,47 @@ Other versions of this operator: <a href="Changelog.md#MaxUnpool-9">9</a>, <a hr
 #### Examples
 
 <details>
+<summary>1d</summary>
+
+```python
+node = onnx.helper.make_node(
+    "MaxUnpool",
+    inputs=["xT", "xI"],
+    outputs=["y"],
+    kernel_shape=[2],
+    strides=[2],
+)
+xT = np.array([[[1, 2]]], dtype=np.float32)
+xI = np.array([[[1, 3]]], dtype=np.int64)
+y = np.array([[[0, 1, 0, 2]]], dtype=np.float32)
+expect(node, inputs=[xT, xI], outputs=[y], name="test_maxunpool_export_1d")
+```
+
+</details>
+
+
+<details>
+<summary>4d</summary>
+
+```python
+node = onnx.helper.make_node(
+    "MaxUnpool",
+    inputs=["xT", "xI"],
+    outputs=["y"],
+    kernel_shape=[2, 2, 2, 2],
+    strides=[2, 2, 2, 2],
+)
+xT = np.array([[[[[[1, 2]]]]]], dtype=np.float32)
+xI = np.array([[[[[[0, 31]]]]]], dtype=np.int64)
+y = np.zeros((1, 1, 2, 2, 2, 4), dtype=np.float32)
+y.flat[[0, 31]] = xT.flat
+expect(node, inputs=[xT, xI], outputs=[y], name="test_maxunpool_export_4d")
+```
+
+</details>
+
+
+<details>
 <summary>with_output_shape</summary>
 
 ```python
@@ -23858,7 +24000,7 @@ node = onnx.helper.make_node(
     strides=[2, 2],
 )
 xT = np.array([[[[5, 6], [7, 8]]]], dtype=np.float32)
-xI = np.array([[[[5, 7], [13, 15]]]], dtype=np.int64)
+xI = np.array([[[[6, 8], [16, 18]]]], dtype=np.int64)
 output_shape = np.array((1, 1, 5, 5), dtype=np.int64)
 y = np.array(
     [
@@ -30600,6 +30742,32 @@ expect(
 
 
 <details>
+<summary>float16_large_sum</summary>
+
+```python
+node = onnx.helper.make_node(
+    "ReduceLogSumExp",
+    inputs=["data", "axes"],
+    outputs=["reduced"],
+    keepdims=1,
+)
+data = np.zeros((256, 256), dtype=np.float16)
+axes = np.array([0, 1], dtype=np.int64)
+# The sum of 65536 exponentials overflows float16, but its logarithm does not.
+reduced = np.array([[np.log(data.size)]], dtype=np.float16)
+
+expect(
+    node,
+    inputs=[data, axes],
+    outputs=[reduced],
+    name="test_reduce_log_sum_exp_float16_large_sum",
+)
+```
+
+</details>
+
+
+<details>
 <summary>keepdims</summary>
 
 ```python
@@ -32984,9 +33152,9 @@ data = np.array(
 
 scales = np.array([1.0, 1.0, 0.8, 0.8], dtype=np.float32)
 
-# [[[[ 1.          2.39519159  3.79038317]
-#    [ 6.58076634  7.97595793  9.37114951]
-#    [12.16153268 13.55672427 14.95191585]]]]
+# [[[[ 1.   2.5  4. ]
+#    [ 7.   8.5 10. ]
+#    [13.  14.5 16. ]]]]
 output = interpolate_nd(
     data,
     lambda x, _: cubic_coeffs(x),
@@ -33117,7 +33285,7 @@ data = np.array(
 
 scales = np.array([1.0, 1.0, 0.6, 0.6], dtype=np.float32)
 
-# [[[[1.       3.142857]]]]
+# [[[[1. 4.]]]]
 output = interpolate_nd(
     data,
     lambda x, _: linear_coeffs(x),
@@ -44323,6 +44491,67 @@ expect(
 
 
 <details>
+<summary>not_sorted_single_output</summary>
+
+```python
+node_not_sorted = onnx.helper.make_node(
+    "Unique",
+    inputs=["X"],
+    outputs=["Y"],
+    sorted=0,
+)
+
+# Y keeps the order of first occurrence even when the optional outputs
+# are not requested.
+x = np.array([2.0, 1.0, 1.0, 3.0, 4.0, 3.0], dtype=np.float32)
+y = np.array([2.0, 1.0, 3.0, 4.0], dtype=np.float32)
+
+expect(
+    node_not_sorted,
+    inputs=[x],
+    outputs=[y],
+    name="test_unique_not_sorted_single_output",
+    output_type_protos=unique_output_types(x)[:1],
+)
+```
+
+</details>
+
+
+<details>
+<summary>not_sorted_with_axis</summary>
+
+```python
+node_not_sorted = onnx.helper.make_node(
+    "Unique",
+    inputs=["X"],
+    outputs=["Y", "indices", "inverse_indices", "counts"],
+    sorted=0,
+    axis=1,
+)
+
+# The unique columns are [3.0, 4.0] and [1.0, 2.0], kept in the order
+# they first appear in X instead of ascending order. indices point into
+# the columns of X, inverse_indices and counts follow the order of Y.
+x = np.array([[3.0, 1.0, 3.0], [4.0, 2.0, 4.0]], dtype=np.float32)
+y = np.array([[3.0, 1.0], [4.0, 2.0]], dtype=np.float32)
+indices = np.array([0, 1], dtype=np.int64)
+inverse_indices = np.array([0, 1, 0], dtype=np.int64)
+counts = np.array([2, 1], dtype=np.int64)
+
+expect(
+    node_not_sorted,
+    inputs=[x],
+    outputs=[y, indices, inverse_indices, counts],
+    name="test_unique_not_sorted_with_axis",
+    output_type_protos=unique_output_types(x, axis=1),
+)
+```
+
+</details>
+
+
+<details>
 <summary>not_sorted_without_axis</summary>
 
 ```python
@@ -44367,6 +44596,38 @@ expect(
     inputs=[x],
     outputs=[y, indices, inverse_indices, counts],
     name="test_unique_not_sorted_without_axis",
+    output_type_protos=unique_output_types(x),
+)
+```
+
+</details>
+
+
+<details>
+<summary>not_sorted_without_axis_2d</summary>
+
+```python
+node_not_sorted = onnx.helper.make_node(
+    "Unique",
+    inputs=["X"],
+    outputs=["Y", "indices", "inverse_indices", "counts"],
+    sorted=0,
+)
+
+# X is flattened to [2.0, 1.0, 1.0, 3.0] because axis is not set, and Y
+# holds its unique values in order of first occurrence. indices point
+# into the flattened X, inverse_indices and counts follow the order of Y.
+x = np.array([[2.0, 1.0], [1.0, 3.0]], dtype=np.float32)
+y = np.array([2.0, 1.0, 3.0], dtype=np.float32)
+indices = np.array([0, 1, 3], dtype=np.int64)
+inverse_indices = np.array([0, 1, 1, 2], dtype=np.int64)
+counts = np.array([1, 2, 1], dtype=np.int64)
+
+expect(
+    node_not_sorted,
+    inputs=[x],
+    outputs=[y, indices, inverse_indices, counts],
+    name="test_unique_not_sorted_without_axis_2d",
     output_type_protos=unique_output_types(x),
 )
 ```

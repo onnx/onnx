@@ -5294,7 +5294,7 @@ This version of the operator has been available since version 6 of the default O
   Attribute `broadcast=1` needs to be passed to enable broadcasting.
 
 
-  For integer inputs, the result is computed using truncating division (rounding toward zero).
+  For integer inputs, the result is computed using truncating division (rounding toward zero). For example, `-11 / 3` yields `-3`.
 
 #### Version
 
@@ -6533,7 +6533,7 @@ This version of the operator has been available since version 7 of the default O
 
   This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
 
-  For integer inputs, the result is computed using truncating division (rounding toward zero).
+  For integer inputs, the result is computed using truncating division (rounding toward zero). For example, `-11 / 3` yields `-3`.
 
 #### Version
 
@@ -11014,6 +11014,9 @@ This version of the operator has been available since version 11 of the default 
 
   * where qmax and qmin are max and min values for quantization range i.e. [0, 255] in case of uint8
   * data range is adjusted to include 0.
+  * if the adjusted data range is empty, i.e. maximum(0, max(x)) == minimum(0, min(x)), which
+    happens when every element of x is 0, then y_scale = 1 (so that y_zero_point = 0 and y = 0
+    below) instead of 0.
 
   Zero point is calculated as:
   ```
@@ -12139,15 +12142,15 @@ This version of the operator has been available since version 11 of the default 
         [4.5, 5.7],
     ]
 
-    pads = [0, 1, 0, 1]
+    pads = [0, 2, 0, 0]
 
     mode = 'reflect'
 
     output =
     [
-        [1.2, 1.0, 1.2, 1.0],
-        [3.4, 2.3, 3.4, 2.3],
-        [5.7, 4.5, 5.7, 4.5],
+        [1.0, 1.2, 1.0, 1.2],
+        [2.3, 3.4, 2.3, 3.4],
+        [4.5, 5.7, 4.5, 5.7],
     ]
 
 
@@ -15413,7 +15416,7 @@ This version of the operator has been available since version 13 of the default 
 
   This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
 
-  For integer inputs, the result is computed using truncating division (rounding toward zero).
+  For integer inputs, the result is computed using truncating division (rounding toward zero). For example, `-11 / 3` yields `-3`.
 
 #### Version
 
@@ -17094,15 +17097,15 @@ This version of the operator has been available since version 13 of the default 
         [4.5, 5.7],
     ]
 
-    pads = [0, 1, 0, 1]
+    pads = [0, 2, 0, 0]
 
     mode = 'reflect'
 
     output =
     [
-        [1.2, 1.0, 1.2, 1.0],
-        [3.4, 2.3, 3.4, 2.3],
-        [5.7, 4.5, 5.7, 4.5],
+        [1.0, 1.2, 1.0, 1.2],
+        [2.3, 3.4, 2.3, 3.4],
+        [4.5, 5.7, 4.5, 5.7],
     ]
 
 
@@ -18962,7 +18965,7 @@ This version of the operator has been available since version 14 of the default 
 
   This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
 
-  For integer inputs, the result is computed using truncating division (rounding toward zero).
+  For integer inputs, the result is computed using truncating division (rounding toward zero). For example, `-11 / 3` yields `-3`.
   (Opset 14 change): Extend supported types to include uint8, int8, uint16, and int16.
 
 #### Version
@@ -21797,14 +21800,14 @@ This version of the operator has been available since version 18 of the default 
       [4.5, 5.7],
   ]
 
-  pads = [0, 1, 0, 1]
+  pads = [0, 2, 0, 0]
 
   mode = 'reflect'
 
   output = [
-      [1.2, 1.0, 1.2, 1.0],
-      [3.4, 2.3, 3.4, 2.3],
-      [5.7, 4.5, 5.7, 4.5],
+      [1.0, 1.2, 1.0, 1.2],
+      [2.3, 3.4, 2.3, 3.4],
+      [4.5, 5.7, 4.5, 5.7],
   ]
   ```
 
@@ -24916,9 +24919,9 @@ This version of the operator has been available since version 21 of the default 
   y = scale * (x - mean) / sqrt(variance + epsilon) + bias,
   ```
   where the mean and variance are computed per instance per group of channels, and
-  `scale` and `bias` should be specified for each channel. The number of
-  groups `num_groups` should be divisible by the number of channels so that there are
-  an equal number of channels per group.
+  `scale` and `bias` should be specified for each channel. The number of channels
+  should be divisible by `num_groups` so that there are an equal number of channels
+  per group.
 
   The overall computation has two stages: the first stage normalizes the elements to
   have zero mean and unit variance for each instance in each group, and the second

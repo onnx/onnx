@@ -7,6 +7,7 @@
 #include <utility>
 #include <vector>
 
+#include "onnx/defs/doc_strings.h"
 #include "onnx/defs/function.h"
 #include "onnx/defs/schema.h"
 #include "onnx/defs/sequence/utils.h"
@@ -14,15 +15,11 @@
 
 namespace ONNX_NAMESPACE {
 
-static constexpr const char* SequenceEmpty_ver11_doc = R"DOC(
-Construct an empty tensor sequence, with given data type.
-)DOC";
-
 ONNX_OPERATOR_SET_SCHEMA(
     SequenceEmpty,
     11,
     OpSchema()
-        .SetDoc(SequenceEmpty_ver11_doc)
+        .SetDoc(kDoc_SequenceEmpty_ver11)
         .Attr(
             "dtype",
             "(Optional) The data type of the tensors in the output sequence. "
@@ -45,16 +42,11 @@ ONNX_OPERATOR_SET_SCHEMA(
               elem_type);
         }));
 
-static constexpr const char* SequenceConstruct_ver11_doc = R"DOC(
-Construct a tensor sequence containing 'inputs' tensors.
-All tensors in 'inputs' must have the same data type.
-)DOC";
-
 ONNX_OPERATOR_SET_SCHEMA(
     SequenceConstruct,
     11,
     OpSchema()
-        .SetDoc(SequenceConstruct_ver11_doc)
+        .SetDoc(kDoc_SequenceConstruct_ver11)
         .Input(0, "inputs", "Tensors.", "T", OpSchema::Variadic)
         .Output(0, "output_sequence", "Sequence enclosing the input tensors.", "S")
         .TypeConstraint("T", OpSchema::all_tensor_types(), "Constrain input types to any tensor type.")
@@ -97,19 +89,11 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static constexpr const char* SequenceInsert_ver11_doc = R"DOC(
-Outputs a tensor sequence that inserts 'tensor' into 'input_sequence' at 'position'.
-'tensor' must have the same data type as 'input_sequence'.
-Accepted range for 'position' is in `[-n, n]`, where `n` is the number of tensors in 'input_sequence'.
-Negative value means counting positions from the back.
-'position' is optional, by default it inserts 'tensor' to the back of 'input_sequence'.
-)DOC";
-
 ONNX_OPERATOR_SET_SCHEMA(
     SequenceInsert,
     11,
     OpSchema()
-        .SetDoc(SequenceInsert_ver11_doc)
+        .SetDoc(kDoc_SequenceInsert_ver11)
         .Input(0, "input_sequence", "Input sequence.", "S")
         .Input(1, "tensor", "Input tensor to be inserted into the input sequence.", "T")
         .Input(
@@ -160,17 +144,11 @@ ONNX_OPERATOR_SET_SCHEMA(
           UnionShapeInfo(input1_type->tensor_type().shape(), *output_tensor_type);
         }));
 
-static constexpr const char* SequenceAt_ver11_doc = R"DOC(
-Outputs a tensor copy from the tensor at 'position' in 'input_sequence'.
-Accepted range for 'position' is in `[-n, n - 1]`, where `n` is the number of tensors in 'input_sequence'.
-Negative value means counting positions from the back.
-)DOC";
-
 ONNX_OPERATOR_SET_SCHEMA(
     SequenceAt,
     11,
     OpSchema()
-        .SetDoc(SequenceAt_ver11_doc)
+        .SetDoc(kDoc_SequenceAt_ver11)
         .Input(0, "input_sequence", "Input sequence.", "S")
         .Input(
             1,
@@ -197,18 +175,11 @@ ONNX_OPERATOR_SET_SCHEMA(
           ctx.getOutputType(0)->CopyFrom(input0_type->sequence_type().elem_type());
         }));
 
-static constexpr const char* SequenceErase_ver11_doc = R"DOC(
-Outputs a tensor sequence that removes the tensor at 'position' from 'input_sequence'.
-Accepted range for 'position' is in `[-n, n - 1]`, where `n` is the number of tensors in 'input_sequence'.
-Negative value means counting positions from the back.
-'position' is optional, by default it erases the last tensor from 'input_sequence'.
-)DOC";
-
 ONNX_OPERATOR_SET_SCHEMA(
     SequenceErase,
     11,
     OpSchema()
-        .SetDoc(SequenceErase_ver11_doc)
+        .SetDoc(kDoc_SequenceErase_ver11)
         .Input(0, "input_sequence", "Input sequence.", "S")
         .Input(
             1,
@@ -235,15 +206,11 @@ ONNX_OPERATOR_SET_SCHEMA(
           ctx.getOutputType(0)->CopyFrom(*input0_type);
         }));
 
-static constexpr const char* SequenceLength_ver11_doc = R"DOC(
-Produces a scalar(tensor of empty shape) containing the number of tensors in 'input_sequence'.
-)DOC";
-
 ONNX_OPERATOR_SET_SCHEMA(
     SequenceLength,
     11,
     OpSchema()
-        .SetDoc(SequenceLength_ver11_doc)
+        .SetDoc(kDoc_SequenceLength_ver11)
         .Input(0, "input_sequence", "Input sequence.", "S")
         .Output(0, "length", "Length of input sequence. It must be a scalar(tensor of empty shape).", "I")
         .TypeConstraint("S", OpSchema::all_tensor_sequence_types(), "Constrain to any tensor type.")
@@ -267,13 +234,6 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::all_tensor_types_ir4(),
             OpSchema::all_tensor_sequence_types_ir4())));
 
-static constexpr const char* ConcatFromSequence_ver11_doc = R"DOC(
-Concatenate a sequence of tensors into a single tensor.
-All input tensors must have the same shape, except for the dimension size of the axis to concatenate on.
-By default 'new_axis' is 0, the behavior is similar to numpy.concatenate.
-When 'new_axis' is 1, the behavior is similar to numpy.stack.
-)DOC";
-
 ONNX_OPERATOR_SET_SCHEMA(
     ConcatFromSequence,
     11,
@@ -290,7 +250,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "default 0 means do not insert new axis.",
             AttributeProto::INT,
             static_cast<int64_t>(0))
-        .SetDoc(ConcatFromSequence_ver11_doc)
+        .SetDoc(kDoc_ConcatFromSequence_ver11)
         .Input(0, "input_sequence", "Sequence of tensors for concatenation", "S")
         .Output(0, "concat_result", "Concatenated tensor", "T")
         .TypeConstraint("S", OpSchema::all_tensor_sequence_types(), "Constrain input types to any tensor type.")
@@ -351,22 +311,6 @@ ONNX_OPERATOR_SET_SCHEMA(
             }
           }
         }));
-
-static constexpr const char* SequenceMap_ver17_doc = R"DOC(
-Applies a sub-graph to each sample in the input sequence(s).
-
-Inputs can be either tensors or sequences, with the exception of the first input which must
-be a sequence. The length of the first input sequence will determine the number of samples in the
-outputs. Any other sequence inputs should have the same number of samples. The number of inputs
-and outputs, should match the one of the subgraph.
-
-For each i-th element in the output, a sample will be extracted from the input sequence(s) at
-the i-th position and the sub-graph will be applied to it.
-The outputs will contain the outputs of the sub-graph for each sample, in the same order as in
-the input.
-
-This operator assumes that processing each sample is independent and could executed in parallel
-or in any order. Users cannot expect any specific ordering in which each subgraph is computed.)DOC";
 
 static void SequenceMapInferenceFunction(InferenceContext& ctx) {
   auto num_inputs = ctx.getNumInputs();
@@ -602,7 +546,7 @@ ONNX_OPERATOR_SET_SCHEMA(
     SequenceMap,
     17,
     OpSchema()
-        .SetDoc(SequenceMap_ver17_doc)
+        .SetDoc(kDoc_SequenceMap_ver17)
         .Attr(
             "body",
             "The graph to be run for each sample in the sequence(s). "

@@ -131,15 +131,11 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Constrain input types to all (non-complex) tensors.")
         .TypeConstraint("T1", {types::Bool}, "Constrain output to boolean tensor."));
 
-static constexpr const char* Not_ver1_doc = R"DOC(
-Returns the negation of the input tensor element-wise.
-)DOC";
-
 ONNX_OPERATOR_SET_SCHEMA(
     Not,
     1,
     OpSchema()
-        .SetDoc(Not_ver1_doc)
+        .SetDoc(kDoc_Not_ver1)
         .Input(0, "X", "Input tensor", "T", OpSchema::Single, true, 1, OpSchema::NonDifferentiable)
         .Output(0, "Y", "Output tensor", "T", OpSchema::Single, true, 1, OpSchema::NonDifferentiable)
         .TypeConstraint("T", {types::Bool}, "Constrain input/output to boolean tensors.")
@@ -220,15 +216,11 @@ ONNX_OPERATOR_SET_SCHEMA(
         }
         )ONNX"));
 
-static constexpr const char* BitwiseNot_ver18_doc = R"DOC(
-Returns the bitwise not of the input tensor element-wise.
-)DOC";
-
 ONNX_OPERATOR_SET_SCHEMA(
     BitwiseNot,
     18,
     OpSchema()
-        .SetDoc(BitwiseNot_ver18_doc)
+        .SetDoc(kDoc_BitwiseNot_ver18)
         .Input(0, "X", "Input tensor", "T", OpSchema::Single, true, 1, OpSchema::NonDifferentiable)
         .Output(0, "Y", "Output tensor", "T", OpSchema::Single, true, 1, OpSchema::NonDifferentiable)
         .TypeConstraint(
