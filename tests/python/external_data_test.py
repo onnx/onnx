@@ -1061,6 +1061,40 @@ class TestLoadExternalDataSymlinkProtection(TestLoadExternalDataBase):
         with pytest.raises(checker.ValidationError):
             load_external_data_for_model(loaded_model, model_dir)
 
+    def test_empty_base_dir_rejects_parent_directory_symlink(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """An empty base directory must mean the current directory for containment."""
+        sensitive_dir = os.path.join(self.temp_dir, "sensitive")
+        os.makedirs(sensitive_dir)
+        with open(os.path.join(sensitive_dir, "secret.bin"), "wb") as f:
+            f.write(b"SENSITIVE DATA" * 100)
+
+        model_dir = os.path.join(self.temp_dir, "model_dir")
+        os.makedirs(model_dir)
+        subdir_path = os.path.join(model_dir, "subdir")
+        os.makedirs(subdir_path)
+
+        model, _ = _make_external_data_test_model()
+        model_path = os.path.join(model_dir, "model.onnx")
+        onnx.save_model(
+            model,
+            model_path,
+            save_as_external_data=True,
+            all_tensors_to_one_file=True,
+            location="subdir/secret.bin",
+            size_threshold=1024,
+        )
+        shutil.rmtree(subdir_path)
+        os.symlink(sensitive_dir, subdir_path)
+
+        monkeypatch.chdir(model_dir)
+        loaded_model = onnx.load("model.onnx", load_external_data=False)
+        with pytest.raises(checker.ValidationError):
+            load_external_data_for_model(loaded_model, "")
+        with pytest.raises(checker.ValidationError):
+            checker.check_model("model.onnx")
+
 
 @pytest.mark.skipif(os.name == "nt", reason="Hardlinks behave differently on Windows")
 class TestLoadExternalDataHardlinkProtection(TestLoadExternalDataBase):
