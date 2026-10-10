@@ -1931,6 +1931,29 @@ ONNX_OPERATOR_SET_SCHEMA(
                  {{"Processed_STD"}, "Add", {"STD", "Epsilon"}},
                  {{"Y"}, "Div", {"X_variance", "Processed_STD"}}})));
 
+ONNX_OPERATOR_SET_SCHEMA(
+    MeanVarianceNormalization,
+    13,
+    OpSchema()
+        .SetDoc(kDoc_MeanVarianceNormalization_ver13)
+        .Input(0, "X", "Input tensor", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
+        .Output(0, "Y", "Output tensor", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
+        .Attr(
+            "axes",
+            "A list of integers, along which to reduce. The default is to "
+            "calculate along axes [0,2,3] for calculating mean and variance "
+            "along each channel. Two variables with the same C-coordinate "
+            "are associated with the same mean and variance.",
+            AttributeProto::INTS,
+            defs::nn::utils::kMeanVarianceNormalizationDefaultAxes)
+        .TypeConstraint(
+            "T",
+            {"tensor(float16)", "tensor(float)", "tensor(double)", "tensor(bfloat16)"},
+            "Constrain input and output types to all numeric tensors.")
+        .SetContextDependentFunctionBodyBuilder(defs::nn::utils::BuildMeanVarianceNormalizationFunctionBody_opset13, 13)
+        .SetContextDependentFunctionBodyBuilder(defs::nn::utils::BuildMeanVarianceNormalizationFunctionBody_opset18, 18)
+        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
+
 constexpr const char* pads_doc2 =
     "Padding for the beginning and ending along each spatial axis, it can take any value greater "
     "than or equal to 0. The value represent the number of pixels added to the beginning "
