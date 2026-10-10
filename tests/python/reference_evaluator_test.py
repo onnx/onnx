@@ -3015,6 +3015,39 @@ class TestReferenceEvaluator:
         got1 = ref1.run(None, feeds)
         assert_allclose(got1[0], expected)
 
+    @pytest.mark.parametrize(
+        ("align_corners", "expected"),
+        [
+            (0, [-1.5, 13.009993, 52.75, 9.55125]),
+            (1, [-0.072, 12.547577, 50.327225, 4.281476]),
+        ],
+    )
+    def test_grid_sample_cubic_border_out_of_bounds(self, align_corners, expected):
+        # Expected values from torch.nn.functional.grid_sample(mode="bicubic",
+        # padding_mode="border"): the coordinate is not clamped, each of the
+        # 4 neighbors is.
+        X = make_tensor_value_info("X", TensorProto.FLOAT, [None, None, None, None])
+        G = make_tensor_value_info("G", TensorProto.FLOAT, [None, None, None, None])
+        Y = make_tensor_value_info("Y", TensorProto.FLOAT, [None, None, None, None])
+        node = make_node(
+            "GridSample",
+            ["X", "G"],
+            ["Y"],
+            mode="cubic",
+            padding_mode="border",
+            align_corners=align_corners,
+        )
+        graph = make_graph([node], "g", [X, G], [Y])
+        onnx_model = make_model(graph, opset_imports=[make_opsetid("", 20)])
+        x = (np.arange(8, dtype=np.float32) ** 2).reshape((1, 1, 2, 4))
+        grid = np.array(
+            [[[[-1.4, -1.0], [-0.6, 0.2], [1.3, 1.0], [0.9, -1.5]]]], dtype=np.float32
+        )
+        got = ReferenceEvaluator(onnx_model).run(None, {"X": x, "G": grid})[0]
+        assert_allclose(
+            got, np.array(expected, dtype=np.float32).reshape((1, 1, 1, 4)), atol=1e-5
+        )
+
     def test_stft(self):
         signal = make_tensor_value_info("signal", TensorProto.FLOAT, [None, None, None])
         frame_step = make_tensor_value_info("frame_step", TensorProto.INT64, [None])
