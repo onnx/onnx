@@ -30,7 +30,8 @@ std::function<void(OpSchema&)> ReduceOpGenerator(
     bool axes_input,
     const char* func_body,
     const ContextDependentFunctionBodyBuilder& function_builder,
-    bool supports_boolean_datatype /* = false */) {
+    bool supports_boolean_datatype /* = false */,
+    bool float_types_only /* = false */) {
   return [=](OpSchema& schema) {
     std::string doc = R"DOC(
 Computes the {name} of the input tensor's elements along the provided axes. The resulting
@@ -96,11 +97,15 @@ to `False` instead of `True`.)DOC";
           OPTIONAL_VALUE);
     }
     schema.Output(0, "reduced", "Reduced output tensor.", "T", OpSchema::Single, true, 1, OpSchema::Differentiable);
-    schema.TypeConstraint(
-        "T",
-        GetSupportedDataTypesForReductionOps(supports_8bit_datatypes, supports_boolean_datatype),
-        supports_boolean_datatype ? "Constrain input and output types to numeric and Boolean tensors."
-                                  : "Constrain input and output types to numeric tensors.");
+    if (float_types_only) {
+      schema.TypeConstraint("T", OpSchema::all_float_types_ir4(), "Constrain input and output types to float tensors.");
+    } else {
+      schema.TypeConstraint(
+          "T",
+          GetSupportedDataTypesForReductionOps(supports_8bit_datatypes, supports_boolean_datatype),
+          supports_boolean_datatype ? "Constrain input and output types to numeric and Boolean tensors."
+                                    : "Constrain input and output types to numeric tensors.");
+    }
     if (func_body) {
       schema.FunctionBody(func_body);
     } else if (function_builder) {

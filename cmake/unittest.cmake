@@ -20,6 +20,7 @@ set(test_src
     ${ONNX_ROOT}/tests/cpp/tensor_test.cc
     ${ONNX_ROOT}/tests/cpp/test_main.cc
     ${ONNX_ROOT}/tests/cpp/utf8_conversion_test.cc
+    ${ONNX_ROOT}/tests/cpp/version_converter_test.cc
 )
 add_executable(${UT_NAME} ${test_src})
 find_package(Threads REQUIRED)

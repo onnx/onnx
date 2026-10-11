@@ -3,6 +3,7 @@
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
+import ml_dtypes
 import numpy as np
 
 import onnx
@@ -83,4 +84,29 @@ class ReverseSequence(Base):
             inputs=[x, sequence_lens],
             outputs=[y],
             name="test_reversesequence_batch",
+        )
+
+    @staticmethod
+    def export_reversesequence_bfloat16() -> None:
+        node = onnx.helper.make_node(
+            "ReverseSequence",
+            inputs=["x", "sequence_lens"],
+            outputs=["y"],
+            time_axis=1,
+            batch_axis=0,
+        )
+
+        x = np.array(
+            [[1.0, 2.0, 3.0, 4.0], [5.0, 6.0, 7.0, 8.0]], dtype=ml_dtypes.bfloat16
+        )
+        sequence_lens = np.array([4, 3], dtype=np.int64)
+        y = np.array(
+            [[4.0, 3.0, 2.0, 1.0], [7.0, 6.0, 5.0, 8.0]], dtype=ml_dtypes.bfloat16
+        )
+
+        expect(
+            node,
+            inputs=[x, sequence_lens],
+            outputs=[y],
+            name="test_reversesequence_bfloat16",
         )
