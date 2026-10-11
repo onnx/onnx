@@ -138,6 +138,22 @@ class TestHelperAttributeFunctions:
         assert list(attr.ints) == [1, 2]
         checker.check_attribute(attr)
 
+    # Recent protobuf 6.x releases warn about bools in int fields, protobuf>=7 rejects them
+    @pytest.mark.filterwarnings("error::DeprecationWarning")
+    def test_attr_repeated_bool(self) -> None:
+        attr = helper.make_attribute("bools", [True, False, True])
+        assert attr.name == "bools"
+        assert attr.type == AttributeProto.INTS
+        assert list(attr.ints) == [1, 0, 1]
+        checker.check_attribute(attr)
+
+    @pytest.mark.filterwarnings("error::DeprecationWarning")
+    def test_attr_repeated_mixed_bools_and_ints(self) -> None:
+        attr = helper.make_attribute("mixed", [True, 2, False])
+        assert attr.type == AttributeProto.INTS
+        assert list(attr.ints) == [1, 2, 0]
+        checker.check_attribute(attr)
+
     def test_attr_repeated_mixed_floats_and_ints(self) -> None:
         attr = helper.make_attribute("mixed", [1, 2, 3.0, 4.5])
         assert attr.name == "mixed"
