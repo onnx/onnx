@@ -14413,6 +14413,9 @@ expect(
 
   * where qmax and qmin are max and min values for quantization range i.e. [0, 255] in case of uint8
   * data range is adjusted to include 0.
+  * if the adjusted data range is empty, i.e. maximum(0, max(x)) == minimum(0, min(x)), which
+    happens when every element of x is 0, then y_scale = 1 (so that y_zero_point = 0 and y = 0
+    below) instead of 0.
 
   Zero point is calculated as:
   ```
@@ -14524,6 +14527,22 @@ expect(
     inputs=[X],
     outputs=[Y, Y_Scale, Y_ZeroPoint],
     name="test_dynamicquantizelinear_min_adjusted",
+)
+
+# The adjusted range is empty when every element is 0:
+# expected scale 1 and zero point 0
+X = np.zeros((2, 3), dtype=np.float32)
+x_min = np.minimum(0, np.min(X))
+x_max = np.maximum(0, np.max(X))
+Y_Scale = np.float32(1.0 if x_max == x_min else (x_max - x_min) / (255 - 0))
+Y_ZeroPoint = np.clip(round((0 - x_min) / Y_Scale), 0, 255).astype(np.uint8)
+Y = np.clip(np.round(X / Y_Scale) + Y_ZeroPoint, 0, 255).astype(np.uint8)
+
+expect(
+    node,
+    inputs=[X],
+    outputs=[Y, Y_Scale, Y_ZeroPoint],
+    name="test_dynamicquantizelinear_zero_input",
 )
 ```
 
@@ -30716,6 +30735,32 @@ expect(
     inputs=[data, axes],
     outputs=[reduced],
     name="test_reduce_log_sum_exp_empty_set",
+)
+```
+
+</details>
+
+
+<details>
+<summary>float16_large_sum</summary>
+
+```python
+node = onnx.helper.make_node(
+    "ReduceLogSumExp",
+    inputs=["data", "axes"],
+    outputs=["reduced"],
+    keepdims=1,
+)
+data = np.zeros((256, 256), dtype=np.float16)
+axes = np.array([0, 1], dtype=np.int64)
+# The sum of 65536 exponentials overflows float16, but its logarithm does not.
+reduced = np.array([[np.log(data.size)]], dtype=np.float16)
+
+expect(
+    node,
+    inputs=[data, axes],
+    outputs=[reduced],
+    name="test_reduce_log_sum_exp_float16_large_sum",
 )
 ```
 

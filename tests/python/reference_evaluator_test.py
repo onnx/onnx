@@ -4825,6 +4825,39 @@ class TestReferenceEvaluator:
         np.testing.assert_array_equal(actual, expected)
 
     @pytest.mark.parametrize("opset", [13, 18, onnx_opset_version()])
+    @pytest.mark.parametrize("keepdims", [0, 1])
+    @pytest.mark.parametrize("values", [[0.0], [8.0], [-1.0, 0.0]])
+    def test_reduce_log_sum_exp_float16_large_reduction(self, opset, keepdims, values):
+        repeats = 65536
+        data = np.tile(np.array([values], dtype=np.float16), (1, repeats))
+        output_shape = [1, 1] if keepdims else [1]
+        X = make_tensor_value_info("X", TensorProto.FLOAT16, list(data.shape))
+        Y = make_tensor_value_info("Y", TensorProto.FLOAT16, output_shape)
+        feeds = {"X": data}
+        if opset >= 18:
+            A = make_tensor_value_info("A", TensorProto.INT64, [1])
+            node = make_node("ReduceLogSumExp", ["X", "A"], ["Y"], keepdims=keepdims)
+            inputs = [X, A]
+            feeds["A"] = np.array([1], dtype=np.int64)
+        else:
+            node = make_node(
+                "ReduceLogSumExp", ["X"], ["Y"], axes=[1], keepdims=keepdims
+            )
+            inputs = [X]
+        model = make_model(
+            make_graph([node], "g", inputs, [Y]),
+            opset_imports=[make_opsetid("", opset)],
+        )
+        got = ReferenceEvaluator(model).run(None, feeds)[0]
+        expected_value = math.log(repeats) + math.log(
+            math.fsum(math.exp(value) for value in values)
+        )
+        expected = np.full(output_shape, expected_value, dtype=np.float16)
+        assert got.shape == expected.shape
+        assert got.dtype == expected.dtype
+        np.testing.assert_allclose(got, expected, rtol=1e-3, atol=0)
+
+    @pytest.mark.parametrize("opset", [13, 18, onnx_opset_version()])
     def test_reduce_log_sum_exp_infinite_inputs(self, opset):
         X = make_tensor_value_info("X", TensorProto.FLOAT, [2, 2])
         Y = make_tensor_value_info("Y", TensorProto.FLOAT, [2])
@@ -6116,6 +6149,55 @@ class TestReferenceEvaluator:
         assert len(got) == 3
         for i in range(2, -1, -1):
             assert_allclose(got[i], expected[i])
+
+    @staticmethod
+    def _dynamic_quantize_linear_model():
+        X = make_tensor_value_info("X", TensorProto.FLOAT, None)
+        Y = make_tensor_value_info("Y", TensorProto.UINT8, None)
+        Scale = make_tensor_value_info("scale", TensorProto.FLOAT, None)
+        Zp = make_tensor_value_info("zp", TensorProto.UINT8, None)
+        node = make_node("DynamicQuantizeLinear", ["X"], ["Y", "scale", "zp"])
+        return make_model_gen_version(
+            make_graph([node], "g", [X], [Y, Scale, Zp]),
+            opset_imports=[make_opsetid("", 18)],
+        )
+
+    @pytest.mark.parametrize(
+        "x",
+        [np.zeros((2, 3), dtype=np.float32), -np.zeros((4,), dtype=np.float32)],
+        ids=["all_zero", "negative_zero"],
+    )
+    def test_dynamic_quantize_linear_zero_input(self, x):
+        # An all-zero input has an empty (adjusted) range: the scale must be 1,
+        # not 0 (which would make x / y_scale a division by zero), with a zero
+        # point of 0 and an all-zero quantized output.
+        model = self._dynamic_quantize_linear_model()
+        y, scale, zp = ReferenceEvaluator(model).run(None, {"X": x})
+        assert y.dtype == np.uint8
+        assert_array_equal(y, np.zeros(x.shape, dtype=np.uint8))
+        assert scale.dtype == np.float32
+        assert scale.shape == ()
+        assert scale == np.float32(1.0)
+        assert zp.dtype == np.uint8
+        assert zp.shape == ()
+        assert zp == 0
+
+    @pytest.mark.parametrize(
+        "x",
+        [np.zeros((2, 3), dtype=np.float32), -np.zeros((4,), dtype=np.float32)],
+        ids=["all_zero", "negative_zero"],
+    )
+    @skip_if_no_onnxruntime
+    def test_dynamic_quantize_linear_zero_input_matches_onnxruntime(self, x):
+        # Match the prevailing implementation practice (onnxruntime's kernel).
+        model = self._dynamic_quantize_linear_model()
+        sess = run_ort_inference(model)
+        if sess is None:
+            pytest.skip("onnxruntime does not support this IR or opset version")
+        expected = ReferenceEvaluator(model).run(None, {"X": x})
+        for got, exp in zip(sess.run(None, {"X": x}), expected, strict=True):
+            assert got.dtype == exp.dtype
+            assert_array_equal(got, exp)
 
     @pytest.mark.parametrize(
         "a, b, expected, expected_shape",
