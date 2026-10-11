@@ -75,19 +75,6 @@ function(add_onnx_hardening_flags target)
       target_compile_options(${target} PRIVATE -ftrivial-auto-var-init=zero)
     endif()
 
-    # Zero-initialize padding bits in automatic variable initializers (GCC 15+)
-    check_cxx_compiler_flag(-fzero-init-padding-bits=all COMPILER_SUPPORTS_ZERO_INIT_PADDING_BITS)
-    if(COMPILER_SUPPORTS_ZERO_INIT_PADDING_BITS)
-      target_compile_options(${target} PRIVATE -fzero-init-padding-bits=all)
-    endif()
-
-    # Treat only trailing arrays declared as [] as flexible arrays, which
-    # tightens _FORTIFY_SOURCE and array bounds checks (GCC 13+, Clang 16+)
-    check_cxx_compiler_flag(-fstrict-flex-arrays=3 COMPILER_SUPPORTS_STRICT_FLEX_ARRAYS)
-    if(COMPILER_SUPPORTS_STRICT_FLEX_ARRAYS)
-      target_compile_options(${target} PRIVATE -fstrict-flex-arrays=3)
-    endif()
-
     # Warn about any Unicode bidirectional control characters ("Trojan Source").
     # GCC 12+ only; ONNX sources are written left-to-right.
     check_cxx_compiler_flag(-Wbidi-chars=any COMPILER_SUPPORTS_BIDI_CHARS)
