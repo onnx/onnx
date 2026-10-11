@@ -676,7 +676,8 @@ def make_attribute(
                 )
 
         if attr_type == AttributeProto.INTS:
-            attr.ints.extend(value)
+            # bool is a numbers.Integral, but protobuf>=7 rejects bools in int fields
+            attr.ints.extend(int(v) if isinstance(v, bool) else v for v in value)
             attr.type = AttributeProto.INTS
         elif attr_type == AttributeProto.FLOATS:
             attr.floats.extend(value)
@@ -1247,7 +1248,7 @@ def strip_doc_string(proto: google.protobuf.message.Message) -> None:
         if descriptor.name == "doc_string":
             proto.ClearField(descriptor.name)
         elif descriptor.type == descriptor.TYPE_MESSAGE:
-            if descriptor.label == descriptor.LABEL_REPEATED:
+            if descriptor.is_repeated:
                 for x in getattr(proto, descriptor.name):
                     strip_doc_string(x)
             elif proto.HasField(descriptor.name):
