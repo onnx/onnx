@@ -908,7 +908,7 @@ void InferShapes(
   std::string model_string;
   // Protobuf marks SerializeToString nodiscard, so check it explicitly.
   if (!model.SerializeToString(&model_string)) {
-    fail_check("Unable to serialize the inferred model for the target path:", save_path);
+    fail_check("Unable to serialize the inferred model for the target path: ", save_path);
   }
   ONNX_TRY {
     output << model_string;
