@@ -1247,7 +1247,7 @@ def strip_doc_string(proto: google.protobuf.message.Message) -> None:
         if descriptor.name == "doc_string":
             proto.ClearField(descriptor.name)
         elif descriptor.type == descriptor.TYPE_MESSAGE:
-            if descriptor.label == descriptor.LABEL_REPEATED:
+            if descriptor.is_repeated:
                 for x in getattr(proto, descriptor.name):
                     strip_doc_string(x)
             elif proto.HasField(descriptor.name):

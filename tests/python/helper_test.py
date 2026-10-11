@@ -1176,3 +1176,18 @@ class TestAttrTypeToStr:
     def test_attr_type_to_str_undefined(self):
         result = helper._attr_type_to_str(9999)
         assert result == "UNDEFINED"
+
+
+class TestStripDocString:
+    def test_strip_doc_string_clears_nested_doc_strings(self) -> None:
+        node = helper.make_node("Relu", ["x"], ["y"], doc_string="node doc")
+        graph = helper.make_graph([node], "g", [], [], doc_string="graph doc")
+        model = helper.make_model(graph, doc_string="model doc")
+        helper.strip_doc_string(model)
+        assert model.doc_string == ""
+        assert model.graph.doc_string == ""
+        assert model.graph.node[0].doc_string == ""
+
+    def test_strip_doc_string_rejects_non_message(self) -> None:
+        with pytest.raises(TypeError):
+            helper.strip_doc_string("not a proto")  # type: ignore[arg-type]
