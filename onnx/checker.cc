@@ -1745,14 +1745,14 @@ int64_t open_external_data(
   ScopedFd guard(fd);
 
   // Post-open checks (fail closed).
-  struct stat fd_stat {};
+  struct stat fd_stat{};
   if (fstat(fd, &fd_stat) != 0) {
     fail_check("Tensor ", tensor_name, " external data: fstat failed.");
   }
   if (!kernel_verified) {
     // Verify containment via canonical path + inode comparison.
     auto canonical_data = verify_path_containment(data_path, base_dir, tensor_name);
-    struct stat path_stat {};
+    struct stat path_stat{};
     if (stat(canonical_data.c_str(), &path_stat) != 0) {
       fail_check("Tensor ", tensor_name, " external data: cannot stat canonical path.");
     }
