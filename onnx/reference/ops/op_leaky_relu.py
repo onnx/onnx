@@ -19,5 +19,5 @@ def _leaky_relu(x: np.ndarray, alpha: float) -> np.ndarray:
 
 class LeakyRelu(OpRunUnaryNum):
     def _run(self, x, alpha=None):
-        alpha = alpha or self.alpha
+        alpha = self.alpha if alpha is None else alpha
         return (_leaky_relu(x, alpha).astype(x.dtype),)
