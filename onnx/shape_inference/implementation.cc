@@ -24,6 +24,15 @@
 #include "onnx/shape_inference/attribute_binder.h"
 
 namespace ONNX_NAMESPACE::shape_inference {
+
+const int* LookupOpsetImport(const std::string& domain, const std::unordered_map<std::string, int>& opset_imports) {
+  auto it = opset_imports.find(domain);
+  if (it == opset_imports.end() && domain == ONNX_DOMAIN) {
+    it = opset_imports.find(AI_ONNX_DOMAIN);
+  }
+  return it == opset_imports.end() ? nullptr : &it->second;
+}
+
 namespace {
 
 std::string GetValueCaseString(const TypeProto& type) {
@@ -479,24 +488,17 @@ class ShapeInferenceImplBase {
 
   void Process(NodeProto& n) {
     // Resolve domain for node
-    auto dit = opset_imports.find(n.domain());
-    if (dit == opset_imports.end()) {
-      // Both "" (ONNX_DOMAIN) and "ai.onnx" (AI_ONNX_DOMAIN) refer to the default ONNX domain
-      if (n.domain() == ONNX_DOMAIN) {
-        dit = opset_imports.find(AI_ONNX_DOMAIN);
-      }
-      if (dit == opset_imports.end()) {
-        fail_type_inference(
-            "Cannot infer type and shape for node name ",
-            n.name(),
-            ". No opset import for domain ",
-            n.domain(),
-            " optype ",
-            n.op_type());
-      }
+    const int* domain_version = LookupOpsetImport(n.domain(), opset_imports);
+    if (domain_version == nullptr) {
+      fail_type_inference(
+          "Cannot infer type and shape for node name ",
+          n.name(),
+          ". No opset import for domain ",
+          n.domain(),
+          " optype ",
+          n.op_type());
     }
-    auto domain_version = dit->second;
-    const auto* const schema = schema_registry->GetSchema(n.op_type(), domain_version, n.domain());
+    const auto* const schema = schema_registry->GetSchema(n.op_type(), *domain_version, n.domain());
     InferenceContextImpl ctx(
         n,
         value_types_by_name,
