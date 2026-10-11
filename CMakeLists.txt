@@ -568,6 +568,7 @@ add_dependencies(onnx_proto onnx_proto_headers)
 add_library(onnx)
 add_subdirectory(onnx)
 target_link_libraries(onnx PUBLIC onnx_proto)
+add_dependencies(onnx onnx_proto)
 set_target_properties(onnx PROPERTIES CXX_VISIBILITY_PRESET hidden)
 add_onnx_global_defines(onnx)
 
