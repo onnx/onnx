@@ -3,6 +3,7 @@
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
+import ml_dtypes
 import numpy as np
 
 import onnx
@@ -16,7 +17,10 @@ _QK_MATMUL_OUTPUT_AFTER_SOFTMAX = 3
 
 
 def _softmax(x: np.ndarray, axis: int = -1) -> np.ndarray:
-    x_max = np.max(x, axis=axis, keepdims=True)
+    # Match the standalone Softmax reference implementation so Attention's
+    # direct and function-expanded paths use the same low-precision semantics.
+    data = x.astype(np.float32) if x.dtype in (np.float16, ml_dtypes.bfloat16) else x
+    x_max = np.max(data, axis=axis, keepdims=True)
     # A fully-masked row is all `-inf`, so `x_max` is `-inf` and the naive
     # `exp(x - x_max)` evaluates `exp(-inf - (-inf)) = NaN`. Such a row has no
     # attendable key; by convention it softmaxes to all-zero probabilities.
@@ -24,10 +28,10 @@ def _softmax(x: np.ndarray, axis: int = -1) -> np.ndarray:
     # computing NaN and overwriting it), so `_softmax` never emits a NaN/warning
     # and the all-`-inf` case is independently unit-testable.
     row_all_masked = np.isneginf(x_max)
-    zero = np.zeros((), dtype=x.dtype)
-    one = np.ones((), dtype=x.dtype)
+    zero = np.zeros((), dtype=data.dtype)
+    one = np.ones((), dtype=data.dtype)
     safe_max = np.where(row_all_masked, zero, x_max)
-    tmp = np.exp(x - safe_max)
+    tmp = np.exp(data - safe_max)
     s = np.sum(tmp, axis=axis, keepdims=True)
     s = np.where(s == zero, one, s)  # avoid 0/0 for fully-masked rows
     return tmp / s

@@ -7352,6 +7352,24 @@ class TestReferenceEvaluator:
         assert_allclose(got[0].sum(), 1.0)
         assert_allclose(got[0], _softmax(x[:1])[0])
 
+    @pytest.mark.parametrize(
+        ("dtype", "width"),
+        [
+            (np.float16, 65536),
+            (ml_dtypes.bfloat16, 1024),
+        ],
+    )
+    def test_attention_softmax_low_precision_uses_float32_accumulation(
+        self, dtype, width
+    ):
+        x = np.zeros((1, width), dtype=dtype)
+
+        actual = _softmax(x)
+
+        assert actual.dtype == np.float32
+        assert_array_equal(actual, np.full((1, width), 1.0 / width, dtype=np.float32))
+        assert_allclose(actual.sum(), 1.0, rtol=0, atol=0)
+
     def test_rms_normalization_float16_uses_float32_stash(self):
         model = make_model(
             make_graph(
