@@ -537,12 +537,17 @@ function(RELATIVE_PROTOBUF_GENERATE_CPP SRCS)
         COMMENT "Running gen_proto.py on ${INFILE}")
     message("Generated: ${GENERATED_PROTO}")
 
+    # Annotate the generated classes so a shared onnx_proto exports them.
+    if(BUILD_SHARED_LIBS)
+      set(_cpp_out "--cpp_out=dllexport_decl=ONNX_PROTO_API:${CMAKE_CURRENT_BINARY_DIR}")
+    else()
+      set(_cpp_out "--cpp_out=${CMAKE_CURRENT_BINARY_DIR}")
+    endif()
     set(PROTOC_ARGS
         ${GENERATED_PROTO}
         -I
         ${CMAKE_CURRENT_BINARY_DIR}
-        --cpp_out
-        ${CMAKE_CURRENT_BINARY_DIR})
+        ${_cpp_out})
     if(ONNX_BUILD_PYTHON)
       list(APPEND PROTOC_ARGS --python_out)
       if(ONNX_GEN_PB_TYPE_STUBS)
@@ -616,6 +621,17 @@ endif()
 # it as the owner of that custom command instead of erroring out.
 add_library(onnx_proto ${ONNX_PROTO_SRCS})
 add_onnx_global_defines(onnx_proto)
+if(BUILD_SHARED_LIBS)
+  # The generated .pb.cc files include no header that could define the macro.
+  if(WIN32)
+    target_compile_definitions(onnx_proto
+      PRIVATE "ONNX_PROTO_API=__declspec(dllexport)"
+      INTERFACE "ONNX_PROTO_API=__declspec(dllimport)")
+  else()
+    target_compile_definitions(onnx_proto
+      PUBLIC "ONNX_PROTO_API=__attribute__((visibility(\"default\")))")
+  endif()
+endif()
 add_dependencies(onnx_proto onnx_proto_gen)
 add_dependencies(onnx_proto onnx_proto_headers)
 
@@ -631,6 +647,62 @@ target_link_libraries(onnx PUBLIC onnx_proto)
 add_dependencies(onnx onnx_proto)
 set_target_properties(onnx PROPERTIES CXX_VISIBILITY_PRESET hidden)
 add_onnx_global_defines(onnx)
+
+# ONNX_API: CMake defines onnx_EXPORTS for a shared onnx, so the export header
+# knows what the hand-written preprocessor branches used to guess.
+include(GenerateExportHeader)
+# ONNX_EXPORT and ONNX_IMPORT are not emitted by GenerateExportHeader, so add
+# them for consumers that use them directly. Only ONNX_BUILD_MAIN_LIB, which a
+# consumer sets, has to stay a preprocessor branch.
+if(MSVC)
+  set(_onnx_export_token "__declspec(dllexport)")
+  set(_onnx_import_token "__declspec(dllimport)")
+  if(BUILD_SHARED_LIBS)
+    set(_onnx_default_export "${_onnx_export_token}")
+    set(_onnx_default_import "${_onnx_import_token}")
+  else()
+    # A static onnx annotates nothing, as before.
+    set(_onnx_default_export "")
+    set(_onnx_default_import "")
+  endif()
+else()
+  set(_onnx_export_token "__attribute__((__visibility__(\"default\")))")
+  set(_onnx_import_token "${_onnx_export_token}")
+  set(_onnx_default_export "${_onnx_export_token}")
+  set(_onnx_default_import "${_onnx_export_token}")
+endif()
+string(CONCAT ONNX_EXPORT_COMPAT
+  "\n/* Kept for consumers that use these directly. */\n"
+  "#define ONNX_EXPORT ${_onnx_default_export}\n"
+  "#define ONNX_IMPORT ${_onnx_default_import}\n"
+  "\n/* Set by a project that links a static onnx into a shared library of its\n"
+  "   own and re-exports the ONNX API from it, as PyTorch does. */\n"
+  "#if defined(ONNX_BUILD_MAIN_LIB) || defined(ONNX_BUILD_SHARED_LIBS)\n"
+  "#  undef ONNX_EXPORT\n"
+  "#  undef ONNX_IMPORT\n"
+  "#  define ONNX_EXPORT ${_onnx_export_token}\n"
+  "#  define ONNX_IMPORT ${_onnx_import_token}\n"
+  "#endif\n")
+if(NOT BUILD_SHARED_LIBS)
+  # A static onnx keeps the default visibility it always had.
+  string(APPEND ONNX_EXPORT_COMPAT
+    "\n#undef ONNX_API\n"
+    "#define ONNX_API ONNX_EXPORT\n")
+else()
+  string(APPEND ONNX_EXPORT_COMPAT
+    "\n#if defined(ONNX_BUILD_MAIN_LIB) || defined(ONNX_BUILD_SHARED_LIBS)\n"
+    "#  undef ONNX_API\n"
+    "#  define ONNX_API ONNX_EXPORT\n"
+    "#endif\n")
+endif()
+generate_export_header(onnx
+  BASE_NAME ONNX
+  EXPORT_MACRO_NAME ONNX_API
+  NO_EXPORT_MACRO_NAME ONNX_NO_EXPORT
+  DEPRECATED_MACRO_NAME ONNX_DEPRECATED
+  STATIC_DEFINE ONNX_STATIC_DEFINE
+  CUSTOM_CONTENT_FROM_VARIABLE ONNX_EXPORT_COMPAT
+  EXPORT_FILE_NAME ${CMAKE_CURRENT_BINARY_DIR}/onnx/onnx_export.h)
 
 if(ONNX_BUILD_PYTHON)
   if(BUILD_SHARED_LIBS)
