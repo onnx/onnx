@@ -1505,7 +1505,11 @@ static std::filesystem::path verify_path_containment(
   if (ec) {
     fail_check("Tensor ", tensor_name, " external data path could not be canonicalized: ", ec.message());
   }
-  auto canonical_base = std::filesystem::weakly_canonical(utf8_to_path(base_dir), ec);
+  // An empty base_dir means the current working directory. Passing an empty
+  // path to weakly_canonical can leave the containment prefix empty, which
+  // would accept every external-data path.
+  const auto normalized_base_dir = base_dir.empty() ? std::string(".") : base_dir;
+  auto canonical_base = std::filesystem::weakly_canonical(utf8_to_path(normalized_base_dir), ec);
   if (ec) {
     fail_check("Tensor ", tensor_name, " base directory could not be canonicalized: ", ec.message());
   }
@@ -1688,7 +1692,8 @@ static int try_kernel_contained_open(
     const std::string& location,
     [[maybe_unused]] const std::string& tensor_name,
     [[maybe_unused]] bool read_only) {
-  int raw_dirfd = open(base_dir.c_str(), O_RDONLY | O_DIRECTORY | O_CLOEXEC);
+  const auto normalized_base_dir = base_dir.empty() ? std::string(".") : base_dir;
+  int raw_dirfd = open(normalized_base_dir.c_str(), O_RDONLY | O_DIRECTORY | O_CLOEXEC);
   if (raw_dirfd < 0) {
     return -1;
   }

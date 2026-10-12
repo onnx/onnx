@@ -61,7 +61,7 @@ def get_available_versions(schema: OpSchema) -> set[int]:
             versions.add(
                 defs.get_schema(schema.name, version, schema.domain).since_version
             )
-        except SchemaError:  # noqa: PERF203
+        except SchemaError:
             break
     return versions
 
