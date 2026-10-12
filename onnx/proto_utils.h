@@ -7,6 +7,8 @@
 #include <google/protobuf/io/coded_stream.h>
 #include <google/protobuf/io/zero_copy_stream_impl_lite.h>
 
+#include <cstdint>
+#include <limits>
 #include <string>
 #include <vector>
 
@@ -38,7 +40,7 @@ bool ParseProtoFromBytes(Proto* proto, const char* buffer, size_t length) {
   // Reject inputs larger than the 2 GB proto limit before casting to int.
   // ArrayInputStream takes an int size, so passing a truncated value would
   // silently parse fewer bytes than requested.
-  constexpr int total_bytes_limit = (2048LL << 20) - 1;
+  constexpr std::int32_t total_bytes_limit = std::numeric_limits<std::int32_t>::max();
   if (length > static_cast<size_t>(total_bytes_limit)) {
     return false;
   }

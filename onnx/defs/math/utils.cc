@@ -237,7 +237,7 @@ void MatMulShapeInference(ONNX_NAMESPACE::InferenceContext& ctx, int input1Idx, 
     }
   }
 
-  *ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape() = resultShape;
+  *ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape() = std::move(resultShape);
 }
 
 void QLinearMatMulShapeInference(ONNX_NAMESPACE::InferenceContext& ctx) {

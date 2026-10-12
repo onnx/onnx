@@ -391,7 +391,7 @@ Common::Status OnnxParser::Parse(TypeProto& typeProto) {
       }
     } else {
       // Create shape with zero dimensions for scalar
-      (void)(tensortype->mutable_shape());
+      (void)tensortype->mutable_shape();
     }
   } else {
     switch (KeyWordMap::Lookup(id)) {
@@ -446,7 +446,7 @@ Common::Status OnnxParser::Parse(TypeProto& typeProto) {
             }
           } else {
             // Create shape with zero dimensions for scalar
-            (void)(sparsetype->mutable_shape());
+            (void)sparsetype->mutable_shape();
           }
         } else {
           return ParseError("Unexpected type in sparse-tensor element type.");
@@ -473,7 +473,7 @@ Common::Status OnnxParser::Parse(TypeProto& typeProto) {
           while (Matches('.')) {
             std::string next_component;
             CHECK_PARSER_STATUS(ParseIdentifier(next_component));
-            domain_or_name += ".";
+            domain_or_name += '.';
             domain_or_name += next_component;
           }
           if (Matches(',')) {
@@ -552,22 +552,21 @@ Common::Status OnnxParser::ParseFunctionInputOutput(IdList& idlist, ValueInfoLis
 // The value-info is added to the "inputs", while the initializer is added to initializers.
 Common::Status OnnxParser::ParseInput(ValueInfoList& inputs, TensorList& initializers) {
   inputs.Clear();
-  if (Matches('(')) {
-    if (!Matches(')')) {
-      do {
-        ValueInfoProto vi;
-        PARSE(vi);
-        *inputs.Add() = vi;
-        if (Matches('=')) {
-          // default value for input
-          TensorProto& tp = *initializers.Add();
-          tp.set_name(vi.name());
-          CHECK_PARSER_STATUS(Parse(tp, vi.type()));
-        }
-      } while (Matches(','));
-      MATCH(')');
-    }
+  if (Matches('(') && !Matches(')')) {
+    do {
+      ValueInfoProto vi;
+      PARSE(vi);
+      *inputs.Add() = vi;
+      if (Matches('=')) {
+        // default value for input
+        TensorProto& tp = *initializers.Add();
+        tp.set_name(vi.name());
+        CHECK_PARSER_STATUS(Parse(tp, vi.type()));
+      }
+    } while (Matches(','));
+    MATCH(')');
   }
+
   return Common::Status::OK();
 }
 
@@ -576,24 +575,23 @@ Common::Status OnnxParser::ParseInput(ValueInfoList& inputs, TensorList& initial
 // A value-info is added to the "value_infos", while an initializer is added to initializers.
 Common::Status OnnxParser::ParseValueInfo(ValueInfoList& value_infos, TensorList& initializers) {
   value_infos.Clear();
-  if (Matches('<')) {
-    if (!Matches('>')) {
-      do {
-        ValueInfoProto vi;
-        PARSE(vi);
-        if (Matches('=')) {
-          // initializer
-          TensorProto& tp = *initializers.Add();
-          tp.set_name(vi.name());
-          CHECK_PARSER_STATUS(Parse(tp, vi.type()));
-        } else {
-          // valueinfo
-          *value_infos.Add() = vi;
-        }
-      } while (Matches(','));
-      MATCH('>');
-    }
+  if (Matches('<') && !Matches('>')) {
+    do {
+      ValueInfoProto vi;
+      PARSE(vi);
+      if (Matches('=')) {
+        // initializer
+        TensorProto& tp = *initializers.Add();
+        tp.set_name(vi.name());
+        CHECK_PARSER_STATUS(Parse(tp, vi.type()));
+      } else {
+        // valueinfo
+        *value_infos.Add() = vi;
+      }
+    } while (Matches(','));
+    MATCH('>');
   }
+
   return Common::Status::OK();
 }
 
@@ -713,7 +711,7 @@ Common::Status OnnxParser::Parse(TensorProto& tensorProto, const TypeProto& tens
 
 bool OnnxParser::NextIsIdentifier() {
   auto id = PeekIdentifier();
-  return !(id.empty());
+  return !id.empty();
 }
 
 bool OnnxParser::NextIsType() {
@@ -740,7 +738,7 @@ Common::Status OnnxParser::ParseSingleAttributeValue(AttributeProto& attr, Attri
       TypeProto typeProto;
       CHECK_PARSER_STATUS(Parse(typeProto));
       next = NextChar();
-      if ((next == '{') || (next == '=') || (NextIsIdentifier())) {
+      if ((next == '{') || (next == '=') || NextIsIdentifier()) {
         attr.set_type(AttributeProto_AttributeType_TENSOR);
         auto& tensorProto = *attr.mutable_t();
         CHECK_PARSER_STATUS(ParseOptionalQuotableIdentifier(*tensorProto.mutable_name()));
@@ -917,7 +915,7 @@ Common::Status OnnxParser::Parse(NodeProto& node) {
   std::string id = ParseOptionalIdentifier();
   while (Matches('.')) {
     if (!domain.empty())
-      domain += ".";
+      domain += '.';
     domain += id;
     CHECK_PARSER_STATUS(ParseIdentifier(id));
   }
