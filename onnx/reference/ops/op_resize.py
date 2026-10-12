@@ -818,3 +818,20 @@ class Resize(OpRun):
         inverse_permutation = np.argsort(permutation)
         output = np.transpose(reshaped_result, tuple(inverse_permutation))
         return (output,)
+
+
+class Resize_10(Resize):
+    def _run(self, X, scales, mode=None):
+        # Use the same legacy coordinates and rounding as the 10->11 converter.
+        return super()._run(
+            X,
+            None,
+            scales=scales,
+            mode=mode,
+            coordinate_transformation_mode="asymmetric",
+            nearest_mode="floor",
+        )
+
+
+# Explicit dispatch prevents newer opsets from selecting the legacy adapter.
+Resize_11 = Resize
