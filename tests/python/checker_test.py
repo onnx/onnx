@@ -1570,6 +1570,18 @@ class TestChecker:
             tensor.raw_data = b"\x00" * 8
             checker.check_tensor(tensor)
 
+    @pytest.mark.parametrize("dtype", (TensorProto.INT2, TensorProto.UINT2))
+    def test_check_tensor_2bit_raw_data_size_does_not_overflow(
+        self, dtype: int
+    ) -> None:
+        tensor = TensorProto()
+        tensor.data_type = dtype
+        tensor.dims.append(2**63 - 1)
+        tensor.name = "t"
+        tensor.raw_data = b"\x00"
+        with pytest.raises(checker.ValidationError, match="raw_data size"):
+            checker.check_tensor(tensor)
+
     @pytest.mark.parametrize("dtype", (TensorProto.FLOAT6E2M3, TensorProto.FLOAT6E3M2))
     @pytest.mark.parametrize(
         ("num_elements", "invalid_last_byte"),
