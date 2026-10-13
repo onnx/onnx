@@ -914,6 +914,30 @@ class TestCheckExternalDataBounds:
         with pytest.raises(checker.ValidationError, match="too small"):
             checker.check_model(model_filename)
 
+    @pytest.mark.parametrize("key", ["offset", "length"])
+    def test_check_model_ignores_invalid_superseded_value(self, key: str) -> None:
+        model_filename = self.create_test_model({key: "invalid"}, self.value.tobytes())
+        model = onnx.load(model_filename, load_external_data=False)
+        entry = model.graph.initializer[0].external_data.add()
+        entry.key, entry.value = key, "0" if key == "offset" else "24"
+        with open(model_filename, "wb") as model_file:
+            model_file.write(model.SerializeToString())
+
+        checker.check_model(model_filename)
+        onnx.load(model_filename)
+
+    @pytest.mark.parametrize("key", ["offset", "length"])
+    def test_check_model_rejects_omitted_value(self, key: str) -> None:
+        model_filename = self.create_test_model({}, self.value.tobytes())
+        model = onnx.load(model_filename, load_external_data=False)
+        entry = model.graph.initializer[0].external_data.add()
+        entry.key = key
+        with open(model_filename, "wb") as model_file:
+            model_file.write(model.SerializeToString())
+
+        with pytest.raises(checker.ValidationError, match="non-negative integer"):
+            checker.check_model(model_filename)
+
 
 class TestSaveAllTensorsAsExternalDataWithPath(TestSaveAllTensorsAsExternalData):
     def get_temp_model_filename(self) -> pathlib.Path:

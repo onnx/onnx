@@ -211,10 +211,10 @@ static int64_t expected_raw_data_bytes(const TensorProto& tensor, int64_t nelem)
     case TensorProto::UINT4:
     case TensorProto::INT4:
     case TensorProto::FLOAT4E2M1:
-      return nelem / 2 + (nelem % 2 != 0); // 2 elements per byte, ceiling division
+      return (nelem / 2) + (nelem % 2 != 0); // 2 elements per byte, ceiling division
     case TensorProto::UINT2:
     case TensorProto::INT2:
-      return (nelem + 3) / 4; // 4 elements per byte, ceiling division
+      return (nelem / 4) + (nelem % 4 != 0); // 4 elements per byte, ceiling division
     case TensorProto::FLOAT6E2M3:
     case TensorProto::FLOAT6E3M2: {
       int64_t expected_bits = 0;
@@ -390,23 +390,31 @@ void check_tensor(const TensorProto& tensor, const CheckerContext& ctx) {
     // of each key is the one that describes the data.
     bool has_location = false;
     std::filesystem::path data_path;
-    std::optional<int64_t> offset;
-    std::optional<int64_t> length;
+    const StringStringEntryProto* offset_entry = nullptr;
+    const StringStringEntryProto* length_entry = nullptr;
     for (const StringStringEntryProto& entry : tensor.external_data()) {
-      if (!entry.has_key() || !entry.has_value()) {
+      if (!entry.has_key()) {
         continue;
       }
       if (entry.key() == "location") {
         has_location = true;
         data_path = resolve_external_data_location(ctx.get_model_dir(), entry.value(), tensor.name());
       } else if (entry.key() == "offset") {
-        offset = parse_external_data_integer(entry, tensor.name());
+        offset_entry = &entry;
       } else if (entry.key() == "length") {
-        length = parse_external_data_integer(entry, tensor.name());
+        length_entry = &entry;
       }
     }
     if (!has_location) {
       fail_check("TensorProto ( tensor name: ", tensor.name(), ") is stored externally but doesn't have a location.");
+    }
+    std::optional<int64_t> offset;
+    if (offset_entry != nullptr) {
+      offset = parse_external_data_integer(*offset_entry, tensor.name());
+    }
+    std::optional<int64_t> length;
+    if (length_entry != nullptr) {
+      length = parse_external_data_integer(*length_entry, tensor.name());
     }
     check_external_data_size(tensor, nelem, data_path, offset, length);
     return;
