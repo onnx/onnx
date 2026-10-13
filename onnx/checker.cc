@@ -211,7 +211,7 @@ static int64_t expected_raw_data_bytes(const TensorProto& tensor, int64_t nelem)
     case TensorProto::UINT4:
     case TensorProto::INT4:
     case TensorProto::FLOAT4E2M1:
-      return (nelem + 1) / 2; // 2 elements per byte, ceiling division
+      return nelem / 2 + (nelem % 2 != 0); // 2 elements per byte, ceiling division
     case TensorProto::UINT2:
     case TensorProto::INT2:
       return (nelem + 3) / 4; // 4 elements per byte, ceiling division
