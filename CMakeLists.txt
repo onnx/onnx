@@ -647,6 +647,16 @@ target_link_libraries(onnx PUBLIC onnx_proto)
 add_dependencies(onnx onnx_proto)
 set_target_properties(onnx PROPERTIES CXX_VISIBILITY_PRESET hidden)
 add_onnx_global_defines(onnx)
+if(BUILD_SHARED_LIBS)
+  # A shared onnx needs the shared onnx_proto, which is installed next to it.
+  # Without a search path of its own, an installed libonnx only finds it via
+  # system paths or LD_LIBRARY_PATH.
+  if(APPLE)
+    set_property(TARGET onnx APPEND PROPERTY INSTALL_RPATH "@loader_path")
+  elseif(UNIX)
+    set_property(TARGET onnx APPEND PROPERTY INSTALL_RPATH "$ORIGIN")
+  endif()
+endif()
 
 # ONNX_API: CMake defines onnx_EXPORTS for a shared onnx, so the export header
 # knows what the hand-written preprocessor branches used to guess.
