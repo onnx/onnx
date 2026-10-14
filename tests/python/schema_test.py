@@ -34,6 +34,16 @@ class TestSchema:
     def test_typecheck(self) -> None:
         defs.get_schema("Conv")
 
+    @pytest.mark.parametrize(
+        ("domain", "version_column"),
+        [("", 2), ("ai.onnx.ml", 3), ("ai.onnx.training", 4)],
+    )
+    def test_last_release_version_map(self, domain: str, version_column: int) -> None:
+        released_version = defs.C.last_release_version_map()[domain]
+        assert released_version == helper.VERSION_TABLE[-1][version_column]
+        min_version, max_version = defs.C.schema_version_map()[domain]
+        assert min_version <= released_version <= max_version
+
     def test_attr_default_value(self) -> None:
         v = defs.get_schema("BatchNormalization").attributes["epsilon"].default_value
         assert type(v) is onnx.AttributeProto
