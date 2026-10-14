@@ -2684,6 +2684,41 @@ class TestReferenceEvaluator:
         with pytest.raises(ValueError, match="zero-size array"):
             self._run_global_max_pool(x)
 
+    @pytest.mark.parametrize("opset", [11, 19, onnx_opset_version()])
+    @pytest.mark.parametrize(
+        ("count_include_pad", "pads", "expected_shape"),
+        [
+            (0, [0, 0, 0, 0], (1, 1, 1, 1)),
+            (1, [0, 0, 0, 0], (1, 1, 1, 1)),
+            (0, [1, 1, 1, 1], (1, 1, 3, 3)),
+        ],
+    )
+    def test_average_pool_float16_large_window_sum(
+        self, opset, count_include_pad, pads, expected_shape
+    ):
+        # A full window sums to 49 * 1400 = 68600, which exceeds the float16
+        # range, while every average (1400) is representable.
+        x = np.full((1, 1, 7, 7), 1400, dtype=np.float16)
+        node = make_node(
+            "AveragePool",
+            ["X"],
+            ["Y"],
+            kernel_shape=[7, 7],
+            count_include_pad=count_include_pad,
+            pads=pads,
+        )
+        X = make_tensor_value_info("X", TensorProto.FLOAT16, x.shape)
+        Y = make_tensor_value_info("Y", TensorProto.FLOAT16, expected_shape)
+        model = make_model(
+            make_graph([node], "g", [X], [Y]),
+            opset_imports=[make_opsetid("", opset)],
+        )
+
+        got = ReferenceEvaluator(model).run(None, {"X": x})[0]
+
+        assert got.dtype == np.float16
+        assert_array_equal(got, np.full(expected_shape, 1400, dtype=np.float16))
+
     def test_max_pool_2d_1(self):
         X = make_tensor_value_info("X", TensorProto.FLOAT, [None, None, None, None])
         Y = make_tensor_value_info("Y", TensorProto.FLOAT, [None, None, None, None])
