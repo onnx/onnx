@@ -20,7 +20,7 @@
 namespace ONNX_NAMESPACE {
 
 static int64_t PackedByteCount(int64_t count, int64_t bits) {
-  return (count / 8) * bits + ((count % 8) * bits + 7) / 8;
+  return ((count / 8) * bits) + ((((count % 8) * bits) + 7) / 8);
 }
 
 static void InferPackedShape(InferenceContext& ctx, bool unpack) {
