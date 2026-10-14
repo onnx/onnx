@@ -120,9 +120,48 @@ class TestNumpyHelper:
             # "a" and b"a" are distinct dict keys but both encode to b"a".
             numpy_helper.from_dict({"a": np.array(0.1), b"a": np.array(0.9)})
 
+    def test_from_dict_bytes_keys(self):
+        map_proto = numpy_helper.from_dict(
+            {b"a": np.array([0.1]), b"bb": np.array([0.9])}
+        )
+        assert map_proto.key_type == onnx.TensorProto.STRING
+        assert list(map_proto.string_keys) == [b"a", b"bb"]
+
+    def test_from_dict_non_ascii_string_keys(self):
+        map_proto = numpy_helper.from_dict({"\u00e9": np.array([0.1])})
+        assert list(map_proto.string_keys) == ["\u00e9".encode()]
+
     def test_from_dict_differing_string_and_int_key_types(self):
         with pytest.raises(TypeError):
             numpy_helper.from_dict({"a": np.array(0.1), 1: np.array(0.9)})
+
+    def test_from_dict_unencodable_string_key(self):
+        with pytest.raises(ValueError, match="cannot be encoded as UTF-8"):
+            numpy_helper.from_dict({"\ud800": np.array([0.1])})
+
+    @pytest.mark.parametrize(
+        ("dtype", "expected_key_type"),
+        [
+            (np.int8, onnx.TensorProto.INT8),
+            (np.int32, onnx.TensorProto.INT32),
+            (np.int64, onnx.TensorProto.INT64),
+            (np.uint16, onnx.TensorProto.UINT16),
+        ],
+    )
+    def test_from_dict_numpy_integer_keys(self, dtype, expected_key_type):
+        map_proto = numpy_helper.from_dict({dtype(1): np.array([0.1])})
+        assert map_proto.key_type == expected_key_type
+        assert list(map_proto.keys) == [1]
+
+    def test_from_dict_python_int_keys(self):
+        map_proto = numpy_helper.from_dict({1: np.array([0.1]), 2: np.array([0.9])})
+        assert map_proto.key_type == onnx.TensorProto.INT64
+        assert list(map_proto.keys) == [1, 2]
+
+    @pytest.mark.parametrize("key", [True, 1.5, None, (1, 2), np.float32(1)])
+    def test_from_dict_invalid_key_types(self, key):
+        with pytest.raises(TypeError):
+            numpy_helper.from_dict({key: np.array([0.1])})
 
     def test_from_dict_differing_value_types(self):
         with pytest.raises(TypeError):
