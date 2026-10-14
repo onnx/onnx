@@ -88,7 +88,7 @@ def _defined_schemas() -> dict[str, set[tuple[str, int]]]:
         macro: set() for macro in _MACRO_DOMAIN_AND_HEADER
     }
     for source_file in DEFS_DIR.glob("**/*.cc"):
-        text = source_file.read_text(encoding="utf-8")
+        text = _strip_comments(source_file.read_text(encoding="utf-8"))
         for match in _DEFINITION_RE.finditer(text):
             macro, name, version = match.group(1), match.group(2), int(match.group(3))
             defined[macro].add((name, version))
