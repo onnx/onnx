@@ -44,27 +44,33 @@
       "versioningTemplate": "loose"
     },
     {
-      // Detect nanobind version in sbom.cdx.json. CMakeLists.txt reads the version and
-      // GIT_REPOSITORY URL from this file via sbom_get_dep() (see cmake/Utils.cmake) rather
-      // than hardcoding them, so this is the only place the pin needs to be bumped.
+      // Detect nanobind's version and pinned commit hash in sbom.cdx.json. CMakeLists.txt
+      // reads both from this file via sbom_get_dep() (see cmake/Utils.cmake) rather than
+      // hardcoding them, so this is the only place the pin needs to be bumped.
       // Example:
       //   {
       //     "type": "library",
       //     "name": "nanobind",
-      //     "version": "2.12.0",
+      //     "version": "2.15.0",
       //     "bom-ref": "nanobind",
-      //     "purl": "pkg:github/wjakob/nanobind@v2.12.0",
-      // nanobind is fetched via GIT_TAG (git clone), not as a release tarball, so no
-      // hash is recorded here (see the "hashes" field on other sbom.cdx.json entries).
+      //     "purl": "pkg:github/wjakob/nanobind@v2.15.0",
+      //     "externalReferences": [{"type": "vcs", "url": "https://github.com/wjakob/nanobind.git"}],
+      //     "hashes": [{"alg": "SHA-1", "content": "a47983000e9dda68177fc1fd426f7147d785c2c0"}],
+      // nanobind is fetched via GIT_TAG (git clone) pinned to that commit, not as a
+      // release tarball, so the version and the commit hash it resolves to must be
+      // bumped together -- both are captured below so Renovate updates them as a pair.
       // If nanobind switches to publishing release tarballs, this should be migrated to
       // github-releases with a URL + SHA256 hash (like googletest / protobuf / abseil-cpp).
       "customType": "regex",
       "fileMatch": ["^sbom\\.cdx\\.json$"],
       "matchStrings": [
-        "\"name\":\\s*\"nanobind\",\\s*\"version\":\\s*\"(?<currentValue>[0-9]+\\.[0-9]+\\.[0-9]+)\",\\s*\"bom-ref\":\\s*\"nanobind\",\\s*\"purl\":\\s*\"pkg:github/(?<depName>[^/]+/[^@]+)@v[0-9]+\\.[0-9]+\\.[0-9]+\""
+        "\"name\":\\s*\"nanobind\",\\s*\"version\":\\s*\"(?<currentValue>[0-9]+\\.[0-9]+\\.[0-9]+)\",\\s*\"bom-ref\":\\s*\"nanobind\",\\s*\"purl\":\\s*\"pkg:github/(?<depName>[^/]+/[^@]+)@v[0-9]+\\.[0-9]+\\.[0-9]+\",[\\s\\S]*?\"hashes\":\\s*\\[\\s*\\{\\s*\"alg\":\\s*\"SHA-1\",\\s*\"content\":\\s*\"(?<currentDigest>[0-9a-f]{40})\""
       ],
-      "autoReplaceStringTemplate": "\"name\": \"nanobind\",\n      \"version\": \"{{{newValue}}}\",\n      \"bom-ref\": \"nanobind\",\n      \"purl\": \"pkg:github/{{{depName}}}@v{{{newValue}}}\"",
-      // github-tags is used because nanobind publishes tags (e.g. v2.12.0) but not GitHub releases
+      "autoReplaceStringTemplate": "\"name\": \"nanobind\",\n      \"version\": \"{{{newValue}}}\",\n      \"bom-ref\": \"nanobind\",\n      \"purl\": \"pkg:github/{{{depName}}}@v{{{newValue}}}\",\n      \"externalReferences\": [\n        {\n          \"type\": \"vcs\",\n          \"url\": \"https://github.com/{{{depName}}}.git\"\n        }\n      ],\n      \"hashes\": [\n        {\n          \"alg\": \"SHA-1\",\n          \"content\": \"{{{newDigest}}}\"",
+      // github-tags is used because nanobind publishes tags (e.g. v2.12.0) but not GitHub
+      // releases; it also resolves each tag to the commit SHA captured as currentDigest/
+      // newDigest above, which is what lets Renovate keep the pinned hash in sync with
+      // the version.
       "datasourceTemplate": "github-tags"
     },
     {

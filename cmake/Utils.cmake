@@ -3,7 +3,9 @@
 # Look up a dependency by name in sbom.cdx.json and set URL, SHA256, and VERSION
 # variables in the caller's scope. For example:
 #   sbom_get_dep("abseil-cpp" _absl)
-# sets _absl_URL, _absl_SHA256, _absl_VERSION.
+# sets _absl_URL, _absl_SHA256, _absl_VERSION. _SHA256 holds whatever is in the
+# component's first "hashes" entry verbatim (e.g. a git-fetched dependency like
+# nanobind records a pinned commit SHA-1 there, not a tarball's SHA-256).
 function(sbom_get_dep dep_name prefix)
   file(READ "${CMAKE_CURRENT_SOURCE_DIR}/sbom.cdx.json" _sbom)
   string(JSON _count LENGTH "${_sbom}" "components")
@@ -17,7 +19,7 @@ function(sbom_get_dep dep_name prefix)
       string(JSON _version GET "${_sbom}" "components" ${_i} "version")
       set(${prefix}_URL "${_url}" PARENT_SCOPE)
       set(${prefix}_VERSION "${_version}" PARENT_SCOPE)
-      # SHA256 is optional (e.g. git-only deps like nanobind).
+      # hashes is optional; some components may not have a pinned hash recorded.
       string(JSON _hash_count ERROR_VARIABLE _err LENGTH "${_sbom}" "components" ${_i} "hashes")
       if(_hash_count AND _hash_count GREATER 0)
         string(JSON _sha256 GET "${_sbom}" "components" ${_i} "hashes" 0 "content")
