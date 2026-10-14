@@ -699,6 +699,44 @@ class TestReferenceEvaluator:
         expected = x
         assert_allclose(result, expected)
 
+    @pytest.mark.parametrize(
+        ("tensor_type", "dtype"),
+        [
+            (TensorProto.FLOAT16, np.float16),
+            (TensorProto.FLOAT, np.float32),
+            (TensorProto.DOUBLE, np.float64),
+        ],
+    )
+    @pytest.mark.parametrize(
+        ("beta", "expected"),
+        [
+            (0.25, [[11, 12.5, 14, 15.5], [29, 35, 41, 47]]),
+            (0.0, [[10, 11.5, 13, 14.5], [28, 34, 40, 46]]),
+        ],
+    )
+    @pytest.mark.parametrize("broadcast", [0, 1])
+    def test_gemm_6(self, tensor_type, dtype, broadcast, beta, expected):
+        # Y = alpha * A * B + beta * C with and without broadcast, and the
+        # output type T must match the input type.
+        inputs = [
+            make_tensor_value_info(name, tensor_type, [None, None]) for name in "ABC"
+        ]
+        Y = make_tensor_value_info("Y", tensor_type, [None, None])
+        node = make_node(
+            "Gemm", ["A", "B", "C"], ["Y"], alpha=0.5, beta=beta, broadcast=broadcast
+        )
+        model = make_model(
+            make_graph([node], "g", inputs, [Y]),
+            opset_imports=[make_opsetid("", 6)],
+        )
+        check_model(model)
+        a = np.arange(6).reshape((2, 3)).astype(dtype)
+        b = np.arange(12).reshape((3, 4)).astype(dtype)
+        c = np.full((2, 4), 4, dtype=dtype)
+        got = ReferenceEvaluator(model).run(None, {"A": a, "B": b, "C": c})[0]
+        assert got.dtype == dtype
+        assert_array_equal(got, np.array(expected, dtype=dtype))
+
     def test_reduce_sum_11(self):
         X = make_tensor_value_info("X", TensorProto.FLOAT, [None, None])
         Y = make_tensor_value_info("Y", TensorProto.FLOAT, [None])
