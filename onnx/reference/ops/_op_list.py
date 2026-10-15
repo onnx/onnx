@@ -114,7 +114,8 @@ __all__ = [
     "HammingWindow",
     "HannWindow",
     "HardSigmoid",
-    "Hardmax",
+    "Hardmax_1",
+    "Hardmax_13",
     "Identity",
     "If",
     "ImageDecoder",
@@ -127,7 +128,8 @@ __all__ = [
     "LessOrEqual",
     "LinearAttention",
     "Log",
-    "LogSoftmax",
+    "LogSoftmax_1",
+    "LogSoftmax_13",
     "Loop",
     "LpNormalization",
     "LpPool",
@@ -225,7 +227,8 @@ __all__ = [
     "Size",
     "Slice_1",
     "Slice_10",
-    "Softmax",
+    "Softmax_1",
+    "Softmax_13",
     "SoftmaxCrossEntropyLoss",
     "Softplus",
     "Softsign",
@@ -380,7 +383,7 @@ from onnx.reference.ops.op_gru import GRU
 from onnx.reference.ops.op_hamming_window import HammingWindow
 from onnx.reference.ops.op_hann_window import HannWindow
 from onnx.reference.ops.op_hard_sigmoid import HardSigmoid
-from onnx.reference.ops.op_hardmax import Hardmax
+from onnx.reference.ops.op_hardmax import Hardmax_1, Hardmax_13
 from onnx.reference.ops.op_identity import Identity
 from onnx.reference.ops.op_if import If
 from onnx.reference.ops.op_image_decoder import ImageDecoder
@@ -393,7 +396,7 @@ from onnx.reference.ops.op_less import Less
 from onnx.reference.ops.op_less_or_equal import LessOrEqual
 from onnx.reference.ops.op_linear_attention import LinearAttention
 from onnx.reference.ops.op_log import Log
-from onnx.reference.ops.op_log_softmax import LogSoftmax
+from onnx.reference.ops.op_log_softmax import LogSoftmax_1, LogSoftmax_13
 from onnx.reference.ops.op_loop import Loop
 from onnx.reference.ops.op_lp_normalization import LpNormalization
 from onnx.reference.ops.op_lp_pool import LpPool
@@ -482,7 +485,7 @@ from onnx.reference.ops.op_sin import Sin
 from onnx.reference.ops.op_sinh import Sinh
 from onnx.reference.ops.op_size import Size
 from onnx.reference.ops.op_slice import Slice_1, Slice_10
-from onnx.reference.ops.op_softmax import Softmax
+from onnx.reference.ops.op_softmax import Softmax_1, Softmax_13
 from onnx.reference.ops.op_softmax_cross_entropy_loss import SoftmaxCrossEntropyLoss
 from onnx.reference.ops.op_softplus import Softplus
 from onnx.reference.ops.op_softsign import Softsign
