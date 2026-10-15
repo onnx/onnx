@@ -73,7 +73,7 @@ an unprioritized list of items for the next year.
 - LinearAttention (support for Gated DeltaNet-2)
 
 #### Q1 2027:
-- Support Mixture-of-Exports (possibly via Grouped MatMul operator)
+- Support Mixture-of-Experts (possibly via Grouped MatMul operator)
 - RotaryEmbedding for visual models (2D)
 
 #### Q2 2027:
