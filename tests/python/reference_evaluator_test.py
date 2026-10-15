@@ -2684,6 +2684,34 @@ class TestReferenceEvaluator:
         with pytest.raises(ValueError, match="zero-size array"):
             self._run_global_max_pool(x)
 
+    @pytest.mark.parametrize("op_type", ["Softmax", "LogSoftmax", "Hardmax"])
+    @pytest.mark.parametrize("axis", [None, 0, 1, -2])
+    def test_softmax_family_before_opset_13(self, op_type, axis):
+        # Before opset 13 the input is coerced to 2D at axis (default 1) and
+        # the op runs on the second dimension.
+        attrs = {} if axis is None else {"axis": axis}
+        node = make_node(op_type, ["X"], ["Y"], **attrs)
+        onnx_model = make_model(
+            make_graph(
+                [node],
+                "g",
+                [make_tensor_value_info("X", TensorProto.FLOAT, None)],
+                [make_tensor_value_info("Y", TensorProto.FLOAT, None)],
+            ),
+            opset_imports=[make_opsetid("", 12)],
+        )
+        x = np.random.default_rng(0).standard_normal((2, 3, 4)).astype(np.float32)
+        x_2d = x.reshape(int(np.prod(x.shape[: 1 if axis is None else axis])), -1)
+        if op_type == "Hardmax":
+            expected = np.zeros_like(x_2d)
+            expected[np.arange(x_2d.shape[0]), x_2d.argmax(axis=1)] = 1
+        else:
+            expected = np.exp(x_2d) / np.exp(x_2d).sum(axis=1, keepdims=True)
+            if op_type == "LogSoftmax":
+                expected = np.log(expected)
+        got = ReferenceEvaluator(onnx_model).run(None, {"X": x})[0]
+        assert_allclose(got, expected.reshape(x.shape), rtol=1e-5)
+
     def test_max_pool_2d_1(self):
         X = make_tensor_value_info("X", TensorProto.FLOAT, [None, None, None, None])
         Y = make_tensor_value_info("Y", TensorProto.FLOAT, [None, None, None, None])
