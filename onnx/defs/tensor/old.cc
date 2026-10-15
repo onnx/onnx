@@ -2450,6 +2450,14 @@ ONNX_OPERATOR_SET_SCHEMA(
 
             const auto input_dim_value = input_dim.dim_value();
 
+            // A negative dimension is invalid: the std::clamp calls below require the
+            // upper bound to be >= the lower bound, so reject the dimension with a
+            // catchable error instead of invoking undefined behavior (a hardened
+            // std::clamp aborts the process with SIGABRT).
+            if (input_dim_value < 0) {
+              fail_shape_inference("Slice input dimension must be non-negative, got ", input_dim_value);
+            }
+
             // Empty dimension: clamp bounds are invalid when dimension size is 0,
             // so short-circuit to produce a zero-length output.
             if (input_dim_value == 0) {
@@ -5454,6 +5462,14 @@ ONNX_OPERATOR_SET_SCHEMA(
               continue;
 
             const auto input_dim_value = input_dim.dim_value();
+
+            // A negative dimension is invalid: the std::clamp calls below require the
+            // upper bound to be >= the lower bound, so reject the dimension with a
+            // catchable error instead of invoking undefined behavior (a hardened
+            // std::clamp aborts the process with SIGABRT).
+            if (input_dim_value < 0) {
+              fail_shape_inference("Slice input dimension must be non-negative, got ", input_dim_value);
+            }
 
             // Empty dimension: clamp bounds are invalid when dimension size is 0,
             // so short-circuit to produce a zero-length output.
