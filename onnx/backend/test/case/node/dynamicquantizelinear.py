@@ -68,3 +68,19 @@ class DynamicQuantizeLinear(Base):
             outputs=[Y, Y_Scale, Y_ZeroPoint],
             name="test_dynamicquantizelinear_min_adjusted",
         )
+
+        # The adjusted range is empty when every element is 0:
+        # expected scale 1 and zero point 0
+        X = np.zeros((2, 3), dtype=np.float32)
+        x_min = np.minimum(0, np.min(X))
+        x_max = np.maximum(0, np.max(X))
+        Y_Scale = np.float32(1.0 if x_max == x_min else (x_max - x_min) / (255 - 0))
+        Y_ZeroPoint = np.clip(round((0 - x_min) / Y_Scale), 0, 255).astype(np.uint8)
+        Y = np.clip(np.round(X / Y_Scale) + Y_ZeroPoint, 0, 255).astype(np.uint8)
+
+        expect(
+            node,
+            inputs=[X],
+            outputs=[Y, Y_Scale, Y_ZeroPoint],
+            name="test_dynamicquantizelinear_zero_input",
+        )

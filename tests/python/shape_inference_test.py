@@ -291,6 +291,15 @@ class TestShapeInference(TestShapeInferenceHelper):
         with pytest.raises(onnx.shape_inference.InferenceError):
             self._inferred(graph)
 
+    def test_serialized_model_with_trailing_data_raises(self) -> None:
+        graph = self._make_graph(
+            [("x", TensorProto.FLOAT, (2,))], [make_node("Relu", ["x"], ["y"])], []
+        )
+        serialized = make_model(graph).SerializeToString()
+        # Data after a 0 tag must be rejected rather than silently dropped.
+        with pytest.raises(ValueError):
+            onnx.shape_inference.infer_shapes(serialized + b"\x00" + b"\xff" * 16)
+
     def _identity_prop(self, op: str, **kwargs: Any) -> None:
         graph = self._make_graph(
             [("x", TensorProto.FLOAT, (30, 4, 5))],
