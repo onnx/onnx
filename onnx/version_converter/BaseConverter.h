@@ -60,14 +60,14 @@ class BaseVersionConverter {
         if (adapter_ptr != target_map->second.end()) {
           return *(adapter_ptr->second);
         } else {
-          ONNX_ASSERTM(false, "No Adapter To Version ", target, " for ", op_name)
+          ONNX_THROW("No Adapter To Version ", target, " for ", op_name);
         }
       } else {
-        ONNX_ASSERTM(false, "No Adapter From Version ", initial, " for ", op_name)
+        ONNX_THROW("No Adapter From Version ", initial, " for ", op_name);
       }
     } else {
       // No adapters exist for the given op
-      ONNX_ASSERTM(false, "No Adapter For ", op_name)
+      ONNX_THROW("No Adapter For ", op_name);
     }
   }
 
