@@ -445,7 +445,7 @@ class DefaultVersionConverter : public BaseVersionConverter {
     registerAdapter(std::make_unique<CompatibleAdapter>("GatherND", OpSetID(12), OpSetID(13)));
     registerAdapter(std::make_unique<CompatibleAdapter>("Gemm", OpSetID(12), OpSetID(13)));
     registerAdapter(std::make_unique<CompatibleAdapter>("Greater", OpSetID(12), OpSetID(13)));
-    registerAdapter(std::make_unique<CompatibleAdapter>("Hardmax", OpSetID(12), OpSetID(13)));
+    registerAdapter(std::make_unique<Softmax_12_13>("Hardmax"));
     registerAdapter(std::make_unique<CompatibleAdapter>("Identity", OpSetID(12), OpSetID(13)));
     registerAdapter(std::make_unique<CompatibleAdapter>("If", OpSetID(12), OpSetID(13)));
     registerAdapter(std::make_unique<CompatibleAdapter>("IsNaN", OpSetID(12), OpSetID(13)));
@@ -508,14 +508,18 @@ class DefaultVersionConverter : public BaseVersionConverter {
         TensorProto_DataType_COMPLEX64,
         TensorProto_DataType_COMPLEX128,
         TensorProto_DataType_STRING};
+    const std::vector<TensorProto_DataType> transpose_12_unallowed_types = {TensorProto_DataType_BFLOAT16};
     registerAdapter(std::make_unique<CompatibleAdapter>("Constant", OpSetID(13), OpSetID(12)));
     registerAdapter(std::make_unique<TypeRestriction>("Pad", OpSetID(13), OpSetID(12), pad_11_unallowed_types));
     registerAdapter(std::make_unique<AxesInputToAttribute>("ReduceSum", OpSetID(13), OpSetID(12)));
     registerAdapter(std::make_unique<AxesInputToAttribute>("Squeeze", OpSetID(13), OpSetID(12)));
     registerAdapter(std::make_unique<AxesInputToAttribute>("Unsqueeze", OpSetID(13), OpSetID(12)));
+    registerAdapter(
+        std::make_unique<TypeRestriction>("Transpose", OpSetID(13), OpSetID(12), transpose_12_unallowed_types));
     registerAdapter(std::make_unique<Split_13_12>());
     registerAdapter(std::make_unique<Softmax_13_12>("Softmax"));
     registerAdapter(std::make_unique<Softmax_13_12>("LogSoftmax"));
+    registerAdapter(std::make_unique<Softmax_13_12>("Hardmax"));
     // These shape operators only added bfloat16 support in opset 13.
     // Keep them in downgraded graphs, including Softmax upgrade scaffolding.
     const std::vector<TensorProto_DataType> shape_ops_12_unallowed_types = {TensorProto_DataType_BFLOAT16};

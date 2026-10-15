@@ -2541,6 +2541,48 @@ class TestVersionConverter:
         assert converted_model.graph.node[0].attribute[0].i == 2
         assert converted_model.opset_import[0].version == 12
 
+    @pytest.mark.parametrize("op_type", ["Softmax", "LogSoftmax", "Hardmax"])
+    @pytest.mark.parametrize("axis", [0, 1, -2])
+    def test_softmax_13_12_non_last_axis(self, op_type: str, axis: int) -> None:
+        # Opset 12 coerces the input to 2D at axis, so a non-last axis needs a
+        # transpose to keep the opset 13 result.
+        graph = helper.make_graph(
+            [helper.make_node(op_type, ["X"], ["Y"], axis=axis)],
+            "test",
+            [helper.make_tensor_value_info("X", TensorProto.FLOAT, (2, 3, 4))],
+            [helper.make_tensor_value_info("Y", TensorProto.FLOAT, (2, 3, 4))],
+        )
+        original = helper.make_model(
+            graph, opset_imports=[helper.make_operatorsetid("", 13)]
+        )
+        converted_model = self._converted(graph, helper.make_operatorsetid("", 13), 12)
+        assert [node.op_type for node in converted_model.graph.node] == [
+            "Transpose",
+            op_type,
+            "Transpose",
+        ]
+        x = np.random.default_rng(0).standard_normal((2, 3, 4)).astype(np.float32)
+        expected = ReferenceEvaluator(original).run(None, {"X": x})[0]
+        got = ReferenceEvaluator(converted_model).run(None, {"X": x})[0]
+        np.testing.assert_allclose(got, expected, rtol=1e-6)
+
+    @pytest.mark.parametrize("axis", [0, 1])
+    def test_hardmax_11_13(self, axis: int) -> None:
+        graph = helper.make_graph(
+            [helper.make_node("Hardmax", ["X"], ["Y"], axis=axis)],
+            "test",
+            [helper.make_tensor_value_info("X", TensorProto.FLOAT, (2, 3, 4))],
+            [helper.make_tensor_value_info("Y", TensorProto.FLOAT, (2, 3, 4))],
+        )
+        converted_model = self._converted(graph, helper.make_operatorsetid("", 11), 13)
+        x = np.random.default_rng(0).standard_normal((2, 3, 4)).astype(np.float32)
+        # Opset 11 takes the argmax over the input coerced to 2D at axis.
+        x_2d = x.reshape(int(np.prod(x.shape[:axis])), -1)
+        expected = np.zeros_like(x_2d)
+        expected[np.arange(x_2d.shape[0]), x_2d.argmax(axis=1)] = 1
+        got = ReferenceEvaluator(converted_model).run(None, {"X": x})[0]
+        np.testing.assert_array_equal(got, expected.reshape(x.shape))
+
     @pytest.mark.parametrize(
         "op_type, attrs, from_opset, to_opset, output_type, output_shape",
         [
