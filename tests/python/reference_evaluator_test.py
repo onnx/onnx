@@ -7060,6 +7060,119 @@ class TestReferenceEvaluator:
         got = ref.run(None, {"data": data, "indices": indices, "updates": updates})
         assert_allclose(got[0], expected)
 
+    @pytest.mark.parametrize("mode", [None, "nearest", "linear"])
+    @pytest.mark.parametrize("dtype", [np.float32, np.float64])
+    @pytest.mark.parametrize("initializer", [False, True])
+    @pytest.mark.parametrize(
+        ("shape", "scale_values"),
+        [
+            ((4,), (1.5,)),
+            ((4,), (0.6,)),
+            ((4,), (1.0,)),
+            ((2, 3), (2.0, 1.5)),
+            ((1, 3), (2.0, 0.5)),
+            ((1,), (0.5,)),
+        ],
+    )
+    def test_resize_opset10(self, mode, dtype, initializer, shape, scale_values):
+        data = (np.arange(math.prod(shape)) * 10).astype(dtype).reshape(shape)
+        scales = np.array(scale_values, dtype=np.float32)
+        output_shape = np.floor(np.array(shape) * scales).astype(int).tolist()
+        tensor_type = onnx.helper.np_dtype_to_tensor_dtype(data.dtype)
+        attributes = {} if mode is None else {"mode": mode}
+        inputs = [make_tensor_value_info("X", tensor_type, list(shape))]
+        initializers = []
+        feeds = {"X": data}
+        if initializer:
+            initializers.append(onnx.numpy_helper.from_array(scales, name="scales"))
+        else:
+            inputs.append(
+                make_tensor_value_info("scales", TensorProto.FLOAT, [len(shape)])
+            )
+            feeds["scales"] = scales
+        graph = make_graph(
+            [make_node("Resize", ["X", "scales"], ["Y"], **attributes)],
+            "resize-opset10",
+            inputs,
+            [make_tensor_value_info("Y", tensor_type, output_shape)],
+            initializer=initializers,
+        )
+        imports = [make_opsetid("", 10)]
+        model = make_model(
+            graph,
+            opset_imports=imports,
+            ir_version=onnx.helper.find_min_ir_version_for(imports),
+        )
+        check_model(model, full_check=True)
+        model = onnx.load_from_string(model.SerializeToString())
+
+        expected = data
+        for axis, scale in enumerate(scales):
+            coordinates = np.arange(output_shape[axis], dtype=np.float64) / scale
+            if mode == "linear":
+                expected = np.apply_along_axis(
+                    lambda values, coordinates=coordinates: np.interp(
+                        coordinates, np.arange(len(values)), values
+                    ),
+                    axis,
+                    expected,
+                )
+            else:
+                expected = np.take(
+                    expected, np.floor(coordinates).astype(int), axis=axis
+                )
+        got = ReferenceEvaluator(model).run(None, feeds)[0]
+        assert got.dtype == data.dtype
+        assert got.shape == tuple(output_shape)
+        assert_allclose(got, expected.astype(dtype), rtol=1e-6)
+
+    @pytest.mark.parametrize("opset", [11, 12, 13, 18, 19, 28])
+    @pytest.mark.parametrize("use_sizes", [False, True])
+    @pytest.mark.parametrize("mode", ["nearest", "linear"])
+    def test_resize_newer_opsets_keep_coordinate_modes(self, opset, use_sizes, mode):
+        data = np.array([0, 10, 20, 30], dtype=np.float32)
+        roi = np.array([], dtype=np.float32)
+        scales = (
+            np.array([], dtype=np.float32)
+            if use_sizes
+            else np.array([0.6], dtype=np.float32)
+        )
+        inputs = ["X", "roi", "scales"]
+        feeds = {"X": data, "roi": roi, "scales": scales}
+        if use_sizes:
+            inputs.append("sizes")
+            feeds["sizes"] = np.array([2], dtype=np.int64)
+            if opset >= 13:
+                inputs[2] = ""
+                del feeds["scales"]
+        attributes = {"mode": mode}
+        if mode == "linear":
+            attributes["coordinate_transformation_mode"] = "align_corners"
+        graph = make_graph(
+            [make_node("Resize", inputs, ["Y"], **attributes)],
+            "resize-newer-opset",
+            [
+                make_tensor_value_info(
+                    name,
+                    onnx.helper.np_dtype_to_tensor_dtype(value.dtype),
+                    list(value.shape),
+                )
+                for name, value in feeds.items()
+            ],
+            [make_tensor_value_info("Y", TensorProto.FLOAT, [2])],
+        )
+        imports = [make_opsetid("", opset)]
+        model = make_model(
+            graph,
+            opset_imports=imports,
+            ir_version=onnx.helper.find_min_ir_version_for(imports),
+        )
+        check_model(model, full_check=True)
+        model = onnx.load_from_string(model.SerializeToString())
+        got = ReferenceEvaluator(model).run(None, feeds)[0]
+        expected = np.array([0, 20 if mode == "nearest" else 30], dtype=np.float32)
+        assert_allclose(got, expected)
+
     @staticmethod
     def _run_resize(
         data: np.ndarray,
