@@ -19,11 +19,11 @@ class QLinearMatMul(OpRun):
         if b_zero_point is not None:
             B -= b_zero_point.astype(np.int32)
         C = np.matmul(A, B)
-        D = C * (a_scale * b_scale / y_scale)
+        D = np.rint(C * (a_scale * b_scale / y_scale))
         if y_zero_point is not None:
             D += y_zero_point
             dtype = y_zero_point.dtype
         else:
             dtype = a.dtype
         qmin, qmax = np.iinfo(dtype).min, np.iinfo(dtype).max
-        return (np.clip(np.rint(D), qmin, qmax).astype(dtype),)
+        return (np.clip(D, qmin, qmax).astype(dtype),)
