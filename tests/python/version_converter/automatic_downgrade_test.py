@@ -309,6 +309,25 @@ class TestAutomaticDowngrade(automatic_conversion_test_base.TestAutomaticConvers
         """,
         )
 
+    def test_GeGLU(self) -> None:
+        self._test_op_downgrade(
+            "GeGLU", 29, [[2, 3], [2, 3]], [[2, 3]], attrs={"approximate": "tanh"}
+        )
+
+    def test_GeGLU_downgrade_fails(self) -> None:
+        # GeGLU was introduced at opset 29; no decomposition adapter exists for
+        # downgrading to an earlier opset. The version converter must raise.
+        self._test_model_conversion_fails(
+            to_opset=28,
+            model="""
+            <ir_version: 14, opset_import: [ "" : 29]>
+            geglu (float[2, 3] A, float[2, 3] B) => (float[2, 3] Y)
+            {
+                Y = GeGLU <approximate = "tanh"> (A, B)
+            }
+        """,
+        )
+
     def test_CausalConvWithState_downgrade_fails(self) -> None:
         # CausalConvWithState was introduced at opset 27; no decomposition
         # adapter exists for downgrading to opset 24. The version converter
