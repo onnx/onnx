@@ -3,6 +3,7 @@
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
+import ml_dtypes
 import numpy as np
 
 from onnx.reference.ops._op import OpRunReduceNumpy
@@ -18,16 +19,21 @@ def _check_integer_input(data):
         )
 
 
+def _log_sum(data, axes, keepdims):
+    dtype = data.dtype
+    # The sum can overflow float16 and bfloat16 even when its logarithm is finite.
+    sum_dtype = np.float32 if dtype in (np.float16, ml_dtypes.bfloat16) else dtype
+    res = np.sum(data, axis=axes, keepdims=keepdims, dtype=sum_dtype)
+    return (np.log(res).astype(dtype, copy=False),)
+
+
 class ReduceLogSum_1(OpRunReduceNumpy):
     def _run(self, data, axes=None, keepdims=True):
         _check_integer_input(data)
         tax = tuple(axes) if axes is not None else None
         if data.size == 0:
             return self.reduce_constant(data, -np.inf, tax, keepdims)
-        res = np.sum(data, axis=tax, keepdims=keepdims)  # type: ignore[arg-type]
-        if len(res.shape) > 0:
-            return (np.log(res, out=res),)
-        return (np.log(res),)
+        return _log_sum(data, tax, keepdims)
 
 
 class ReduceLogSum_18(OpRunReduceNumpy):
@@ -40,7 +46,4 @@ class ReduceLogSum_18(OpRunReduceNumpy):
         if data.size == 0:
             return self.reduce_constant(data, -np.inf, axes, keepdims)
 
-        res = np.sum(data, axis=axes, keepdims=keepdims)
-        if len(res.shape) > 0:
-            return (np.log(res, out=res),)
-        return (np.log(res),)
+        return _log_sum(data, axes, keepdims)
