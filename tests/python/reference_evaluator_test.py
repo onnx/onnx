@@ -2767,6 +2767,53 @@ class TestReferenceEvaluator:
         got1 = ref1.run(None, feeds)
         assert_allclose(got1[0], expected)
 
+    @pytest.mark.parametrize(
+        ("op_type", "x", "attrs", "expected"),
+        [
+            # Windows [1, 2, 3, 4] and [4, 5]: ceil_mode needs two extra
+            # elements, all of them after the input.
+            (
+                "AveragePool",
+                np.arange(1, 6, dtype=np.float32).reshape(1, 1, 5),
+                {"kernel_shape": [4], "strides": [3]},
+                [[[2.5, 4.5]]],
+            ),
+            (
+                "LpPool",
+                np.arange(1, 6, dtype=np.float32).reshape(1, 1, 5),
+                {"kernel_shape": [4], "strides": [3], "p": 2},
+                [[[np.sqrt(30), np.sqrt(41)]]],
+            ),
+            # Explicit head pad plus two ceil_mode elements at the tail:
+            # windows [pad, 1, 2, 3, 4] and [5, 6, 7].
+            (
+                "AveragePool",
+                np.arange(1, 8, dtype=np.float32).reshape(1, 1, 7),
+                {"kernel_shape": [5], "strides": [5], "pads": [1, 0]},
+                [[[2.5, 6.0]]],
+            ),
+            (
+                "AveragePool",
+                np.arange(1, 26, dtype=np.float32).reshape(1, 1, 5, 5),
+                {"kernel_shape": [4, 4], "strides": [3, 3]},
+                [[[[10.0, 12.0], [20.0, 22.0]]]],
+            ),
+            # Only one extra element is needed here; this case already passed.
+            (
+                "AveragePool",
+                np.arange(1, 8, dtype=np.float32).reshape(1, 1, 7),
+                {"kernel_shape": [2], "strides": [2]},
+                [[[1.5, 3.5, 5.5, 7.0]]],
+            ),
+        ],
+    )
+    def test_pool_ceil_mode_extra_padding_is_at_the_end(
+        self, op_type, x, attrs, expected
+    ):
+        node = make_node(op_type, ["X"], ["Y"], ceil_mode=1, **attrs)
+        got = ReferenceEvaluator(node).run(None, {"X": x})[0]
+        assert_allclose(got, np.array(expected, dtype=np.float32), rtol=1e-6)
+
     @staticmethod
     def _evaluate_global_lp_pool(data, expected, p, elem_type, opset):
         X = make_tensor_value_info("X", elem_type, data.shape)
