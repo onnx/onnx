@@ -8,6 +8,74 @@
 
 namespace ONNX_NAMESPACE::defs::nn::utils {
 
+const std::vector<int64_t> kMeanVarianceNormalizationDefaultAxes = {0, 2, 3};
+
+static bool BuildMeanVarianceNormalizationFunctionBody(
+    const FunctionBodyBuildContext& ctx,
+    const OpSchema& schema,
+    FunctionProto& functionProto,
+    int functionOpsetVersion) {
+  ONNX_ASSERT(functionOpsetVersion == 13 || functionOpsetVersion == 18)
+  const auto* const input_type = ctx.getInputType(0);
+  if ((input_type == nullptr) || !input_type->has_tensor_type()) {
+    return false;
+  }
+  const int32_t elem_type = input_type->tensor_type().elem_type();
+  if (elem_type == TensorProto_DataType_UNDEFINED) {
+    return false;
+  }
+  const int32_t compute_type = elem_type == TensorProto_DataType_FLOAT16 || elem_type == TensorProto_DataType_BFLOAT16
+      ? TensorProto_DataType_FLOAT
+      : elem_type;
+
+  const auto* const epsilon_attr = ctx.getAttribute("epsilon");
+  const float epsilon = (epsilon_attr != nullptr) ? epsilon_attr->f() : 1e-9f;
+
+  FunctionBuilder builder(functionProto);
+  builder.Add("XCompute = Cast (X)", "to", static_cast<int64_t>(compute_type))
+      .Const("ExponentFloat", ToTensor<float>(2.0f))
+      .Const("EpsilonFloat", ToTensor<float>(epsilon))
+      .Add("Exponent = Cast (ExponentFloat)", "to", static_cast<int64_t>(compute_type))
+      .Add("Epsilon = Cast (EpsilonFloat)", "to", static_cast<int64_t>(compute_type));
+
+  if (functionOpsetVersion == 13) {
+    builder.Add("X_RM = ReduceMean <axes : ints = @axes> (XCompute)")
+        .Add("EX_squared = Pow (X_RM, Exponent)")
+        .Add("X_squared = Pow (XCompute, Exponent)")
+        .Add("E_Xsquared = ReduceMean <axes : ints = @axes> (X_squared)");
+  } else {
+    builder.Add("axes = Constant <value_ints: ints = @axes>()")
+        .Add("X_RM = ReduceMean (XCompute, axes)")
+        .Add("EX_squared = Pow (X_RM, Exponent)")
+        .Add("X_squared = Pow (XCompute, Exponent)")
+        .Add("E_Xsquared = ReduceMean (X_squared, axes)");
+  }
+
+  builder.Add("Variance = Sub (E_Xsquared, EX_squared)")
+      .Add("STD = Sqrt (Variance)")
+      .Add("X_variance = Sub (XCompute, X_RM)")
+      .Add("Processed_STD = Add (STD, Epsilon)")
+      .Add("YCompute = Div (X_variance, Processed_STD)")
+      .Add("Y = Cast (YCompute)", "to", static_cast<int64_t>(elem_type));
+
+  schema.BuildFunction(functionProto);
+  return true;
+}
+
+bool BuildMeanVarianceNormalizationFunctionBody_opset13(
+    const FunctionBodyBuildContext& ctx,
+    const OpSchema& schema,
+    FunctionProto& functionProto) {
+  return BuildMeanVarianceNormalizationFunctionBody(ctx, schema, functionProto, 13);
+}
+
+bool BuildMeanVarianceNormalizationFunctionBody_opset18(
+    const FunctionBodyBuildContext& ctx,
+    const OpSchema& schema,
+    FunctionProto& functionProto) {
+  return BuildMeanVarianceNormalizationFunctionBody(ctx, schema, functionProto, 18);
+}
+
 std::vector<int64_t> getConvPoolStrides(InferenceContext& ctx, size_t n_input_dims) {
   std::vector<int64_t> strides;
   if (getRepeatedAttribute(ctx, "strides", strides)) {
