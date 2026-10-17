@@ -182,6 +182,7 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#Gelu">Gelu</a>|<a href="Changelog.md#Gelu-20">20</a>|20|
 |<a href="#GreaterOrEqual">GreaterOrEqual</a>|<a href="Changelog.md#GreaterOrEqual-16">16</a>, <a href="Changelog.md#GreaterOrEqual-12">12</a>|16|
 |<a href="#GroupNormalization">GroupNormalization</a>|<a href="Changelog.md#GroupNormalization-21">21</a>, <a href="Changelog.md#GroupNormalization-18">18</a>|21|
+|<a href="#GroupedMatMul">GroupedMatMul</a>|<a href="Changelog.md#GroupedMatMul-29">29</a>|29|
 |<a href="#HammingWindow">HammingWindow</a>|<a href="Changelog.md#HammingWindow-17">17</a>|17|
 |<a href="#HannWindow">HannWindow</a>|<a href="Changelog.md#HannWindow-17">17</a>|17|
 |<a href="#HardSigmoid">HardSigmoid</a>|<a href="Changelog.md#HardSigmoid-22">22</a>, <a href="Changelog.md#HardSigmoid-6">6</a>, <a href="Changelog.md#HardSigmoid-1">1</a>|18|
@@ -18153,6 +18154,257 @@ expect(
     inputs=[x, scale, bias],
     outputs=[y],
     name="test_group_normalization_example",
+)
+```
+
+</details>
+
+
+### <a name="GroupedMatMul"></a><a name="groupedmatmul">**GroupedMatMul**</a>
+
+  GroupedMatMul multiplies each row of a token matrix by one or more selected
+  group (expert) weight matrices. Given `input` of shape `[M, K]`, `weights` of
+  shape `[G, K, N]`, and `group_indices` of shape `[M, k]`, the output has shape
+  `[M, k, N]` and is defined by:
+
+  ```
+  output[m, i] = input[m] @ weights[group_indices[m, i]]
+  ```
+
+  If `bias` is present, `bias[group_indices[m, i]]` is added to each corresponding
+  result. Every value in `group_indices` must be in the range `[0, G)`.
+
+  This operator is represented as a context-dependent function. Its decomposition
+  uses Gather, Expand, and MatMul to define the result, while runtimes are expected
+  to use a fused grouped-matrix-multiplication implementation to avoid materializing
+  the expanded intermediate tensors.
+
+#### Version
+
+This version of the operator has been available since version 29 of the default ONNX operator set.
+
+#### Inputs (3 - 4)
+
+<dl>
+<dt><tt>input</tt> (differentiable) : T</dt>
+<dd>Row-major token matrix with shape [M, K].</dd>
+<dt><tt>weights</tt> (differentiable) : T</dt>
+<dd>Stack of G group weight matrices with shape [G, K, N].</dd>
+<dt><tt>group_indices</tt> (non-differentiable) : Tind</dt>
+<dd>Group index for each token and slot, with shape [M, k]. Values must be in [0, G).</dd>
+<dt><tt>bias</tt> (optional, differentiable) : T</dt>
+<dd>Optional per-group bias with shape [G, N].</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> (differentiable) : T</dt>
+<dd>Per-group matrix multiplication results with shape [M, k, N].</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(bfloat16)</dt>
+<dd>Constrain input, weights, bias, and output to floating-point tensors.</dd>
+<dt><tt>Tind</tt> : tensor(int64)</dt>
+<dd>Constrain group indices to int64 tensors.</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>groupedmatmul</summary>
+
+```python
+node = onnx.helper.make_node(
+    "GroupedMatMul",
+    inputs=["input", "weights", "group_indices"],
+    outputs=["output"],
+)
+input = np.array(
+    [[1, 0, -1], [0, 1, 2], [1, 1, 0], [0, 0, 1]], dtype=np.float32
+)
+weights = np.array(
+    [[[1, 0], [0, 1], [-1, 0]], [[0, 1], [1, 0], [0, 1]]],
+    dtype=np.float32,
+)
+group_indices = np.array([[0], [1], [0], [1]], dtype=np.int64)
+output = grouped_matmul(input, weights, group_indices)
+
+expect(
+    node,
+    inputs=[input, weights, group_indices],
+    outputs=[output],
+    name="test_groupedmatmul",
+    opset_imports=[onnx.helper.make_opsetid("", 29)],
+)
+```
+
+</details>
+
+
+<details>
+<summary>single_group</summary>
+
+```python
+node = onnx.helper.make_node(
+    "GroupedMatMul",
+    inputs=["input", "weights", "group_indices"],
+    outputs=["output"],
+)
+input = np.array([[1, 2], [3, 4], [5, 6]], dtype=np.float32)
+weights = np.array([[[1, 2, 3], [4, 5, 6]]], dtype=np.float32)
+group_indices = np.zeros((3, 1), dtype=np.int64)
+output = grouped_matmul(input, weights, group_indices)
+
+expect(
+    node,
+    inputs=[input, weights, group_indices],
+    outputs=[output],
+    name="test_groupedmatmul_single_group",
+    opset_imports=[onnx.helper.make_opsetid("", 29)],
+)
+```
+
+</details>
+
+
+<details>
+<summary>with_bias</summary>
+
+```python
+node = onnx.helper.make_node(
+    "GroupedMatMul",
+    inputs=["input", "weights", "group_indices", "bias"],
+    outputs=["output"],
+)
+input = np.array([[1, 0], [0, 1]], dtype=np.float32)
+weights = np.array(
+    [[[1, 0], [0, 1]], [[0, 1], [1, 0]], [[1, 1], [0, 0]]],
+    dtype=np.float32,
+)
+group_indices = np.array([[0, 1], [2, 0]], dtype=np.int64)
+bias = np.array([[0.1, 0.2], [0.3, 0.0], [0.5, 0.5]], dtype=np.float32)
+output = grouped_matmul(input, weights, group_indices, bias)
+
+expect(
+    node,
+    inputs=[input, weights, group_indices, bias],
+    outputs=[output],
+    name="test_groupedmatmul_with_bias",
+    opset_imports=[onnx.helper.make_opsetid("", 29)],
+)
+```
+
+</details>
+
+
+<details>
+<summary>with_unused_group</summary>
+
+```python
+node = onnx.helper.make_node(
+    "GroupedMatMul",
+    inputs=["input", "weights", "group_indices"],
+    outputs=["output"],
+)
+input = np.array([[1, 2], [3, 4], [5, 6], [7, 8]], dtype=np.float32)
+weights = np.arange(12, dtype=np.float32).reshape(3, 2, 2)
+group_indices = np.array([[0], [0], [2], [2]], dtype=np.int64)
+output = grouped_matmul(input, weights, group_indices)
+
+expect(
+    node,
+    inputs=[input, weights, group_indices],
+    outputs=[output],
+    name="test_groupedmatmul_with_unused_group",
+    opset_imports=[onnx.helper.make_opsetid("", 29)],
+)
+```
+
+</details>
+
+
+<details>
+<summary>without_bias_explicit_empty_input</summary>
+
+```python
+node = onnx.helper.make_node(
+    "GroupedMatMul",
+    inputs=["input", "weights", "group_indices", ""],
+    outputs=["output"],
+)
+input = np.array(
+    [[1, 0, -1], [0, 1, 2], [1, 1, 0], [0, 0, 1]], dtype=np.float32
+)
+weights = np.array(
+    [[[1, 0], [0, 1], [-1, 0]], [[0, 1], [1, 0], [0, 1]]],
+    dtype=np.float32,
+)
+group_indices = np.array([[0], [1], [0], [1]], dtype=np.int64)
+output = grouped_matmul(input, weights, group_indices)
+
+expect(
+    node,
+    inputs=[input, weights, group_indices],
+    outputs=[output],
+    name="test_groupedmatmul_without_bias_explicit_empty_input",
+    opset_imports=[onnx.helper.make_opsetid("", 29)],
+)
+```
+
+</details>
+
+
+<details>
+<summary>zero_selections</summary>
+
+```python
+node = onnx.helper.make_node(
+    "GroupedMatMul",
+    inputs=["input", "weights", "group_indices"],
+    outputs=["output"],
+)
+input = np.arange(6, dtype=np.float32).reshape(2, 3)
+weights = np.arange(24, dtype=np.float32).reshape(2, 3, 4)
+group_indices = np.empty((2, 0), dtype=np.int64)
+output = grouped_matmul(input, weights, group_indices)
+
+expect(
+    node,
+    inputs=[input, weights, group_indices],
+    outputs=[output],
+    name="test_groupedmatmul_zero_selections",
+    opset_imports=[onnx.helper.make_opsetid("", 29)],
+)
+```
+
+</details>
+
+
+<details>
+<summary>zero_tokens</summary>
+
+```python
+node = onnx.helper.make_node(
+    "GroupedMatMul",
+    inputs=["input", "weights", "group_indices"],
+    outputs=["output"],
+)
+input = np.empty((0, 3), dtype=np.float32)
+weights = np.arange(24, dtype=np.float32).reshape(2, 3, 4)
+group_indices = np.empty((0, 2), dtype=np.int64)
+output = grouped_matmul(input, weights, group_indices)
+
+expect(
+    node,
+    inputs=[input, weights, group_indices],
+    outputs=[output],
+    name="test_groupedmatmul_zero_tokens",
+    opset_imports=[onnx.helper.make_opsetid("", 29)],
 )
 ```
 

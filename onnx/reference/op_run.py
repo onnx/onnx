@@ -648,14 +648,20 @@ class OpFunction(OpRun):
         return self._run_impl(self.impl_, *inputs, **kwargs)
 
     def _run_impl(self, impl, *inputs, **kwargs):
-        if len(impl.input_names) != len(inputs):
+        if len(inputs) > len(impl.input_names):
             raise RuntimeError(
                 f"Mismatch lengths between the number of inputs {len(inputs)} "
-                f"and the expected number of inputs {len(impl.input_names)} "
+                f"and the maximum number of inputs {len(impl.input_names)} "
                 f"for node {self.op_type!r} from domain {self.domain!r}."
             )
         bindings = kwargs.pop("bindings", None)
-        feeds = dict(zip(impl.input_names, inputs, strict=False))
+        feeds = {
+            name: value
+            for name, caller_name, value in zip(
+                impl.input_names, self.onnx_node.input, inputs, strict=False
+            )
+            if caller_name
+        }
         attributes = self.attributes_.copy()
         attributes.update(kwargs)
         run_kwargs: dict[str, Any] = {}
@@ -699,6 +705,9 @@ class OpFunctionContextDependant(OpFunction):
         # created the body for this operator.
         types = []
         for t in inputs:
+            if t is None:
+                types.append(onnx.TypeProto())
+                continue
             dtype = onnx.helper.np_dtype_to_tensor_dtype(t.dtype)
             types.append(onnx.helper.make_tensor_type_proto(dtype, t.shape))  # type: ignore[arg-type]
         cl = self.parent._load_impl(self.onnx_node, types)
