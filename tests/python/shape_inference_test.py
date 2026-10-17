@@ -13971,6 +13971,44 @@ class TestShapeInference(TestShapeInferenceHelper):
         ):
             onnx.shape_inference.infer_shapes(Path("model.onnx"))
 
+    def test_softmax_cross_entropy_loss_zero_batch_function_body(self) -> None:
+        # The function body of SoftmaxCrossEntropyLoss reshapes scores to
+        # (N, C, D). When the batch dimension is zero the -1 dimension
+        # cannot be inferred, so the body computes the target shape from
+        # Shape(scores). Expand the body for a zero-batch input and run
+        # shape inference over the expanded graph (schemas 13 and 12).
+        node = make_node(
+            "SoftmaxCrossEntropyLoss",
+            ["scores", "labels"],
+            ["loss"],
+            reduction="none",
+        )
+        types = [
+            helper.make_tensor_type_proto(TensorProto.FLOAT, [0, 3]),
+            helper.make_tensor_type_proto(TensorProto.INT64, [0]),
+        ]
+        for schema_version, opset_version in ((13, 18), (12, 12)):
+            schema = defs.get_schema("SoftmaxCrossEntropyLoss", schema_version)
+            body = schema.get_context_dependent_function(
+                node.SerializeToString(), [t.SerializeToString() for t in types]
+            )
+            function_proto = onnx.FunctionProto()
+            function_proto.ParseFromString(body)
+            graph = make_graph(
+                list(function_proto.node),
+                "softmax_cross_entropy_zero_batch",
+                [
+                    make_tensor_value_info("scores", TensorProto.FLOAT, [0, 3]),
+                    make_tensor_value_info("labels", TensorProto.INT64, [0]),
+                ],
+                [make_tensor_value_info("loss", TensorProto.FLOAT, [0])],
+            )
+            model = make_model(
+                graph,
+                opset_imports=[helper.make_opsetid(ONNX_DOMAIN, opset_version)],
+            )
+            onnx.shape_inference.infer_shapes(model, strict_mode=True)
+
 
 class TestCustomSchemaShapeInference(TestShapeInferenceHelper):
     custom_op_type: str = "CustomOp"
