@@ -1448,7 +1448,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "mask",
             "The mask tensor to be applied to each position in the convolution kernel. "
             "It has shape (N, offset_group * kH * kW, oH, oW) for 2D data or "
-            "(N, offset_group * k1 * k2 * ... * kn * n, o1, o2, ... , on) for nD data. Default is a "
+            "(N, offset_group * k1 * k2 * ... * kn, o1, o2, ... , on) for nD data. Default is a "
             "tensor of ones.",
             "T",
             OpSchema::Optional)
