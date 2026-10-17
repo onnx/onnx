@@ -486,9 +486,9 @@ class VectorSet : public FunctionIdSet {
   VectorSet(FunctionIdVector&& function_ids, bool invert) : function_ids_(std::move(function_ids)), invert_(invert) {}
 
   bool Contains(const std::string& function_domain, const std::string& function_name) const override {
-    bool found =
-        std::find(function_ids_.begin(), function_ids_.end(), std::make_pair(function_domain, function_name)) !=
-        function_ids_.end();
+    bool found = std::any_of(function_ids_.begin(), function_ids_.end(), [&](const auto& id) {
+      return id.first == function_domain && id.second == function_name;
+    });
     return invert_ ? !found : found;
   }
 

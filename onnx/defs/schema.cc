@@ -711,7 +711,7 @@ OpSchema::TypeConstraint(std::string type_str, std::vector<std::string> constrai
   for (const auto& t : constraints) {
     d.insert(Utils::DataTypeUtils::ToType(t));
   }
-  type_constraints_.emplace(type_str, std::make_pair(d, description));
+  type_constraints_.try_emplace(type_str, std::move(d), description);
   type_constraint_params_.emplace_back(std::move(type_str), std::move(constraints), std::move(description));
   return *this;
 }
@@ -726,7 +726,7 @@ OpSchema& OpSchema::TypeConstraint(
     constraints_vector.emplace_back(constraint);
   }
 
-  return TypeConstraint(std::string(type_str), constraints_vector, std::string(description));
+  return TypeConstraint(std::string(type_str), std::move(constraints_vector), std::string(description));
 }
 
 void OpSchema::ParseAndSetTypes(
