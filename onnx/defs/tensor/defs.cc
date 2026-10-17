@@ -735,7 +735,7 @@ static void processSliceInputs(const int64_t input_dim_size_or_value, int64_t& s
   }
   // Empty dimension: clamp bounds are invalid when dimension size is 0,
   // so short-circuit to produce a zero-length output.
-  if (input_dim_size_or_value == 0) {
+  if (input_dim_size_or_value <= 0) {
     start = 0;
     end = 0;
     return;
