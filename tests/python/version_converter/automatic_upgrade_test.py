@@ -595,6 +595,16 @@ class TestAutomaticUpgrade(automatic_conversion_test_base.TestAutomaticConversio
     def test_Identity(self) -> None:
         self._test_op_upgrade("Identity", 1)
 
+    def test_InitPRNG(self) -> None:
+        self._test_op_upgrade(
+            "InitPRNG",
+            29,
+            [[]],
+            [[2]],
+            [TensorProto.INT64],
+            [TensorProto.INT64],
+        )
+
     def test_If(self) -> None:
         sub_output = [
             helper.make_tensor_value_info("out", TensorProto.FLOAT, [3, 4, 5])
@@ -1493,6 +1503,16 @@ class TestAutomaticUpgrade(automatic_conversion_test_base.TestAutomaticConversio
             [[3, 4, 7]],
             [[3, 4, 2], [3, 4, 1], [3, 4, 4]],
             attrs={"axis": 2, "split": [2, 1, 4]},
+        )
+
+    def test_SplitPRNG(self) -> None:
+        self._test_op_upgrade(
+            "SplitPRNG",
+            29,
+            [[2]],
+            [[2], [2]],
+            [TensorProto.INT64],
+            [TensorProto.INT64, TensorProto.INT64],
         )
 
     def test_Sqrt(self) -> None:
