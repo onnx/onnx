@@ -59,6 +59,57 @@ TEST(IR, ValidIdentifierTest) {
   }
 }
 
+TEST(IR, ImportInitializerPreservesDataAndInputNames) {
+  const std::string name = "initializer_name_longer_than_small_string_storage";
+  const std::string raw_data(4096, '\x01');
+  for (int64_t ir_version : {3, 8}) {
+    for (bool is_input : {false, true}) {
+      if (ir_version < 4 && !is_input) {
+        continue;
+      }
+      SCOPED_TRACE(::testing::Message() << "ir_version=" << ir_version << ", is_input=" << is_input);
+      ModelProto model;
+      model.set_ir_version(ir_version);
+      auto* graph = model.mutable_graph();
+      graph->set_name("initializer_import");
+      auto* initializer = graph->add_initializer();
+      initializer->set_name(name);
+      initializer->set_data_type(TensorProto_DataType_FLOAT);
+      initializer->add_dims(1024);
+      initializer->set_raw_data(raw_data);
+      if (is_input) {
+        auto* input = graph->add_input();
+        input->set_name(name);
+        auto* type = input->mutable_type()->mutable_tensor_type();
+        type->set_elem_type(TensorProto_DataType_FLOAT);
+        type->mutable_shape()->add_dim()->set_dim_value(1024);
+      }
+      auto* node = graph->add_node();
+      node->set_op_type("Identity");
+      node->add_input(name);
+      node->add_output("result");
+      graph->add_output()->set_name("result");
+
+      auto imported = ImportModelProto(model);
+      ASSERT_TRUE(imported != nullptr);
+      ASSERT_EQ(imported->initializers().size(), 1u);
+      const auto& tensor = imported->initializers().front();
+      EXPECT_EQ(tensor.name(), name);
+      EXPECT_EQ(tensor.raw(), raw_data);
+      EXPECT_EQ(tensor.sizes(), std::vector<int64_t>({1024}));
+      EXPECT_EQ(tensor.elem_type(), TensorProto_DataType_FLOAT);
+      EXPECT_EQ(imported->initializer_names(), std::vector<std::string>({name}));
+      ASSERT_EQ(imported->outputs().size(), 1u);
+      const auto* imported_node = imported->outputs()[0]->node();
+      EXPECT_EQ(imported_node->kind(), kIdentity);
+      ASSERT_EQ(imported_node->inputs().size(), 1u);
+      EXPECT_EQ(imported_node->inputs()[0]->uniqueName(), name);
+      EXPECT_EQ(initializer->raw_data(), raw_data);
+      EXPECT_EQ(initializer->name(), name);
+    }
+  }
+}
+
 // Regression: copyMetadata() must not turn "rank unknown" into rank 0.
 TEST(IR, CopyMetadataPreservesUnknownRank) {
   Graph g;

@@ -2,11 +2,27 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
+#include <string>
+#include <vector>
+
 #include "gtest/gtest.h"
 #include "onnx/defs/operator_sets.h"
 #include "onnx/defs/schema.h"
 
 namespace ONNX_NAMESPACE::Test {
+
+TEST(SchemaRegistrationTest, TypeConstraintPreservesTypesAndDescription) {
+  OpSchema schema;
+  schema.TypeConstraint("T", {"tensor(float)", "tensor(double)"}, "allowed tensor types");
+  const auto& constraint = schema.typeConstraintMap().at("T");
+  EXPECT_EQ(constraint.first.size(), 2u);
+  EXPECT_EQ(constraint.second, "allowed tensor types");
+  ASSERT_EQ(schema.typeConstraintParams().size(), 1u);
+  const auto& parameter = schema.typeConstraintParams().front();
+  EXPECT_EQ(parameter.type_param_str, "T");
+  EXPECT_EQ(parameter.allowed_type_strs, std::vector<std::string>({"tensor(float)", "tensor(double)"}));
+  EXPECT_EQ(parameter.description, "allowed tensor types");
+}
 
 TEST(SchemaRegistrationTest, DisabledOnnxStaticRegistrationAPICall) {
 #ifdef __ONNX_DISABLE_STATIC_REGISTRATION
