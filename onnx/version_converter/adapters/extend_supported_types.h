@@ -14,8 +14,7 @@
 
 #include "onnx/version_converter/adapters/adapter.h"
 
-namespace ONNX_NAMESPACE {
-namespace version_conversion {
+namespace ONNX_NAMESPACE::version_conversion {
 
 struct ExtendSupportedTypes final : public Adapter {
   explicit ExtendSupportedTypes(const std::string& op_name, const OpSetID& initial, const OpSetID& target)
@@ -38,7 +37,19 @@ struct ExtendSupportedTypes final : public Adapter {
   void adapt_type_extension(const std::shared_ptr<Graph>& graph, Node* node) const {
     const ArrayRef<Value*>& inputs = node->inputs();
     const ArrayRef<Value*>& outputs = node->outputs();
-    const std::string original_output_name = node->output()->uniqueName();
+
+    ONNX_ASSERTM(
+        outputs.size() == 1,
+        name(),
+        " being converted from ",
+        static_cast<int64_t>(initial_version().version()),
+        " to ",
+        static_cast<int64_t>(target_version().version()),
+        " must have exactly one output, but found ",
+        outputs.size(),
+        ".")
+
+    const std::string original_output_name = outputs[0]->uniqueName();
 
     const int input_type = !inputs.empty() ? inputs[0]->elemType() : -1;
     const int output_type = outputs[0]->elemType();
@@ -100,5 +111,4 @@ struct ExtendSupportedTypes final : public Adapter {
   }
 };
 
-} // namespace version_conversion
-} // namespace ONNX_NAMESPACE
+} // namespace ONNX_NAMESPACE::version_conversion

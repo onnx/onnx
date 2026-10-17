@@ -14,8 +14,7 @@
 #include "onnx/onnx_pb.h"
 #include "onnx/version_converter/helper.h"
 
-namespace ONNX_NAMESPACE {
-namespace version_conversion {
+namespace ONNX_NAMESPACE::version_conversion {
 
 class Adapter {
  private:
@@ -65,5 +64,4 @@ class GenericAdapter final : public Adapter {
   NodeTransformerFunction transformer_;
 };
 
-} // namespace version_conversion
-} // namespace ONNX_NAMESPACE
+} // namespace ONNX_NAMESPACE::version_conversion

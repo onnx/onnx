@@ -77,7 +77,7 @@ VERSION_TABLE: VersionTableType = [
     ("1.20.1", 13, 25, 5, 1),
     ("1.21.0", 13, 26, 5, 1),
     ("1.22.0", 13, 27, 5, 1),
-    ("1.23.0", 13, 28, 5, 1),
+    ("1.23.0", 14, 28, 5, 1),
 ]
 
 VersionMapType = dict[tuple[str, int], int]
@@ -397,15 +397,19 @@ def make_tensor(
     np_dtype = tensor_dtype_to_np_dtype(data_type)
 
     if raw:
-        # NumPy doesn't have INT2/INT4/FP4. It is packed in couples to UINT8 buffers.
-        if data_type in {TensorProto.UINT4, TensorProto.INT4, TensorProto.FLOAT4E2M1}:
-            expected_size_bytes = 0.5
+        # NumPy doesn't have INT2/INT4/FP4/FP6. It is packed in couples to UINT8 buffers.
+        if data_type in {TensorProto.FLOAT6E2M3, TensorProto.FLOAT6E3M2}:
+            bits_per_element = 6
+        elif data_type in {TensorProto.UINT4, TensorProto.INT4, TensorProto.FLOAT4E2M1}:
+            bits_per_element = 4
         elif data_type in {TensorProto.UINT2, TensorProto.INT2}:
-            expected_size_bytes = 0.25
+            bits_per_element = 2
         else:
-            expected_size_bytes = np_dtype.itemsize
-        expected_size_bytes *= math.prod(dims)
-        expected_size_bytes = math.ceil(expected_size_bytes)
+            bits_per_element = np_dtype.itemsize * 8
+        # Integer ceil(n * bits_per_element / 8): avoids the float-multiplication
+        # precision loss for large n that a `math.ceil(fraction * n)` formula
+        # would be susceptible to.
+        expected_size_bytes = -(-math.prod(dims) * bits_per_element // 8)
         if isinstance(vals, np.ndarray):
             if data_type in {
                 TensorProto.INT4,
@@ -415,6 +419,8 @@ def make_tensor(
                 vals = onnx.numpy_helper._pack_4bitx2(vals)
             elif data_type in {TensorProto.UINT2, TensorProto.INT2}:
                 vals = onnx.numpy_helper._pack_2bitx4(vals)
+            elif data_type in {TensorProto.FLOAT6E2M3, TensorProto.FLOAT6E3M2}:
+                vals = onnx.numpy_helper._pack_6bit(vals.view(np.uint8))
 
             raw_data = onnx.numpy_helper.tobytes_little_endian(vals)
         elif isinstance(vals, bytes):
@@ -448,6 +454,9 @@ def make_tensor(
         vals = onnx.numpy_helper.to_float8e8m0(
             np.asarray(vals), saturate=True, round_mode="up"
         ).flatten()
+    elif data_type in {TensorProto.FLOAT6E2M3, TensorProto.FLOAT6E3M2}:
+        # For FP6 in non-raw mode, store per-element bytes in int32_data (like float8)
+        vals = np.asarray(vals, dtype=np_dtype).flatten().view(np.uint8)
     else:
         vals = np.asarray(vals, dtype=np_dtype).flatten()
 
@@ -667,7 +676,8 @@ def make_attribute(
                 )
 
         if attr_type == AttributeProto.INTS:
-            attr.ints.extend(value)
+            # bool is a numbers.Integral, but protobuf>=7 rejects bools in int fields
+            attr.ints.extend(int(v) if isinstance(v, bool) else v for v in value)
             attr.type = AttributeProto.INTS
         elif attr_type == AttributeProto.FLOATS:
             attr.floats.extend(value)
@@ -1023,7 +1033,6 @@ def printable_attribute(
     elif attr.HasField("i"):
         content.append(str_int(attr.i))
     elif attr.HasField("s"):
-        # TODO: Bit nervous about Python 2 / Python 3 determinism implications
         content.append(repr(_sanitize_str(attr.s)))
     elif attr.HasField("t"):
         if len(attr.t.dims) > 0:
@@ -1044,7 +1053,6 @@ def printable_attribute(
     elif attr.ints:
         content.append(str_list(str_int, attr.ints))
     elif attr.strings:
-        # TODO: Bit nervous about Python 2 / Python 3 determinism implications
         content.append(str(list(map(_sanitize_str, attr.strings))))
     elif attr.tensors:
         content.append("[<Tensor>, ...]")
@@ -1238,7 +1246,7 @@ def strip_doc_string(proto: google.protobuf.message.Message) -> None:
         if descriptor.name == "doc_string":
             proto.ClearField(descriptor.name)
         elif descriptor.type == descriptor.TYPE_MESSAGE:
-            if descriptor.label == descriptor.LABEL_REPEATED:
+            if descriptor.is_repeated:
                 for x in getattr(proto, descriptor.name):
                     strip_doc_string(x)
             elif proto.HasField(descriptor.name):

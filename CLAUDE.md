@@ -46,7 +46,7 @@ LD_LIBRARY_PATH=./.setuptools-cmake-build/ .setuptools-cmake-build/onnx_gtests
 .setuptools-cmake-build\Release\onnx_gtests.exe
 ```
 
-Tests live in `onnx/test/` with `*_test.py` naming.
+Tests live in `tests/` with `*_test.py` naming.
 
 ## Linting
 
@@ -73,7 +73,6 @@ Edit the source, then regenerate. CI verifies these are up to date.
 |---|---|---|
 | `docs/Operators.md`, `docs/Changelog.md`, `docs/TestCoverage.md` | Op schemas in `onnx/defs/` | `python onnx/defs/gen_doc.py` |
 | `onnx/*_pb2.py`, `onnx/*_pb.h`, `onnx/onnx_data.proto` | `onnx/onnx.in.proto`, `onnx/onnx-ml.in.proto` | `python onnx/gen_proto.py` |
-| `onnx/backend/test/data/` node tests | Op schemas + reference impl | `python onnx/backend/test/stat_coverage.py` |
 
 Edit `.in.proto` files, **not** `.proto` files. When adding/changing operator schemas, run all three scripts.
 

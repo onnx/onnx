@@ -31,7 +31,7 @@ concurrency:
 
 jobs:
   test:
-    name: Test ${{ matrix.os }}, ${{ matrix.python_version }}, ${{ matrix.protobuf_type }}, debug=${{ matrix.debug_build }}, unity_build=${{ matrix.unity_build }}, onnx_ml=${{ matrix.onnx_ml }}, autogen=${{ matrix.autogenerate_files }}
+    name: Test ${{ matrix.os }}, ${{ matrix.python_version }}, ${{ matrix.protobuf_type }}, debug=${{ matrix.debug_build }}, unity_build=${{ matrix.unity_build }}, onnx_ml=${{ matrix.onnx_ml }}, autogen=${{ matrix.autogenerate_files }}${{ matrix.job_name_suffix }}
     strategy:
       fail-fast: false
       matrix:
@@ -41,10 +41,26 @@ jobs:
         debug_build: [0]
         onnx_ml: [1]
         protobuf_type: ['Internal']
-        python_version: ['3.14t', '3.14', '3.10']
+        python_version: ['3.15t', '3.15', '3.14t', '3.14', '3.11']
         unity_build: [0]
 
         include:
+          # Exercise what a fresh `pip install onnx` produces - gencode from the
+          # pinned protoc plus the newest protobuf runtime - without adding
+          # another Linux job. The remaining matrix entries keep testing the
+          # runtime pinned in requirements-release_test.txt.
+          - python_version: "3.14"
+            os: "ubuntu-24.04"
+            newest_protobuf: 1
+            job_name_suffix: ", newest_protobuf=1"
+
+          # Exercise clang-cl without adding another Windows job. The remaining
+          # Windows matrix entries continue to provide MSVC coverage.
+          - python_version: "3.14"
+            os: "windows-latest"
+            cmake_generator_args: "-T ClangCL"
+            job_name_suffix: ", compiler=clang-cl"
+
           # Ubuntu debug build runs with sanitizer
           - python_version: "3.14"
             autogenerate_files: 0
@@ -115,14 +131,16 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           persist-credentials: false
 
       - name: Set up Python
-        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
           python-version: ${{ matrix.python_version }}
+          # Python 3.15 is still a release candidate.
+          allow-prereleases: true
 
       - name: Show versions
         run: |
@@ -202,7 +220,7 @@ jobs:
           DEBUG: ${{ matrix.debug_build }}
           ONNX_ML: ${{ matrix.onnx_ml }}
           ONNX_BUILD_TESTS: 1
-          CMAKE_ARGS: "-DONNX_WERROR=ON -DONNX_USE_PROTOBUF_SHARED_LIBS=OFF -DONNX_USE_LITE_PROTO=ON -DONNX_USE_UNITY_BUILD=${{ matrix.unity_build }} -DONNX_HARDENING=ON"
+          CMAKE_ARGS: "${{ matrix.cmake_generator_args }} -DONNX_WERROR=ON -DONNX_USE_PROTOBUF_SHARED_LIBS=OFF -DONNX_USE_LITE_PROTO=ON -DONNX_USE_UNITY_BUILD=${{ matrix.unity_build }} -DONNX_HARDENING=ON"
 
       - name: pip freeze
         run: |
@@ -212,8 +230,14 @@ jobs:
         run: |
           python -m pip install -r requirements-release_test.txt
 
+      - name: Upgrade the protobuf runtime to the newest release
+        if: matrix.newest_protobuf == 1
+        run: |
+          python -m pip install --upgrade protobuf
+          python -c "import google.protobuf; print(google.protobuf.__version__)"
+
       - name: Setup ASAN LD_PRELOAD
-        if: startsWith(matrix.os,'ubuntu') && (matrix.debug_build == 1) && (matrix.python_version != '3.14t') && (matrix.python_version != '3.10')
+        if: startsWith(matrix.os,'ubuntu') && (matrix.debug_build == 1) && (matrix.python_version != '3.14t') && (matrix.python_version != '3.11')
         run: |
           echo "LD_PRELOAD=$(/usr/bin/c++ -print-file-name=libasan.so):$(/usr/bin/c++ -print-file-name=libstdc++.so)" >> $GITHUB_ENV
 
@@ -233,6 +257,19 @@ jobs:
           export LD_LIBRARY_PATH="./.setuptools-cmake-build/:$LD_LIBRARY_PATH"
           ./.setuptools-cmake-build/onnx_gtests
 
+      - name: Check that the generated protobuf objects are not duplicated
+        # The generated *.pb.cc objects must live in onnx_proto only. A second
+        # copy inside onnx makes any process that loads both libraries register
+        # onnx/onnx-ml.proto twice, which aborts protobuf with
+        # "File already exists in database" (issue #6094).
+        if: startsWith(matrix.os,'ubuntu') || matrix.os == 'macos-latest'
+        run: |
+          ar t .setuptools-cmake-build/libonnx.a > onnx_members.txt
+          if grep '\.pb\.cc\.o$' onnx_members.txt; then
+            echo "::error::libonnx contains a second copy of the generated protobuf objects; it must link onnx_proto instead"
+            exit 1
+          fi
+
       - name: Run C++ extension test
         if: (startsWith(matrix.os,'ubuntu') || matrix.os == 'macos-latest') && matrix.debug_build == 0 && matrix.protobuf_type == 'External'
         run: |
@@ -244,61 +281,37 @@ jobs:
           cmake --build build_for_install --parallel
           sudo cmake --install build_for_install
 
-          cmake -S onnx/test/cmake -B onnx/test/cmake/build \
+          cmake -S tests/cmake -B tests/cmake/build \
             -DONNX_ML=${{ matrix.onnx_ml }}
-          cmake --build onnx/test/cmake/build
-          ./onnx/test/cmake/build/main
+          cmake --build tests/cmake/build
+          ./tests/cmake/build/main
 
       - name: Upload coverage to Codecov
         if: github.repository_owner == 'onnx'
-        uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f # v7.0.0
+        uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5 # v7.1.1
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
 
       - name: Upload test results to Codecov
         if: github.repository_owner == 'onnx' && !cancelled()
-        uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f # v7.0.0
+        uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5 # v7.1.1
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           report_type: test_results
 
-      # Note that the test data should be generated with numpy>=2.0.
-      # numpy 1.x and numpy 2.0 produce slightly different numerical values.
-      - name: Test backend test data
-        if: matrix.autogenerate_files == 1 && startsWith(matrix.os,'ubuntu')
-        run: |
-          python onnx/backend/test/cmd_tools.py generate-data --clean
-          git status
-          git diff --exit-code -- . ':!onnx/onnx-data.proto' ':!onnx/onnx-data.proto3' ':!*output_*.pb' ':!*input_*.pb'
-          if [ $? -ne 0 ]; then
-            echo "git diff for test generation returned failures. Please check updated node test files"
-            exit 1
-          fi
-          git diff --exit-code --diff-filter=ADR -- . ':!onnx/onnx-data.proto' ':!onnx/onnx-data.proto3'
-          if [ $? -ne 0 ]; then
-            echo "Test generation returned failures. Please check the number of node test files (input_*.pb or output_*.pb)"
-            exit 1
-          fi
-          pip uninstall -y pillow
-          python onnx/backend/test/cmd_tools.py generate-data --clean
-          git status
-          git diff --exit-code -- . ':!onnx/onnx-data.proto' ':!onnx/onnx-data.proto3' ':!*output_*.pb' ':!*input_*.pb'
-          if [ $? -ne 0 ]; then
-            echo "git diff for test generation without pillow returned failures. Please check updated node test files"
-            exit 1
-          fi
-
       - name: Run Python tests with numpy<2.0 (win, mac)
-        if: (matrix.python_version == '3.10') && (matrix.os == 'windows-latest' || matrix.os == 'macos-latest') && (matrix.debug_build != 1)
+        if: (matrix.python_version == '3.11') && (matrix.os == 'windows-latest' || matrix.os == 'macos-latest') && (matrix.debug_build != 1)
         run: |
-          pip install "numpy<2.0" pillow
+          # ml_dtypes 0.6.0 dropped numpy 1 support, so pin the last version that supports it.
+          pip install "numpy<2.0" "ml_dtypes==0.5.4" pillow
           pytest -s
 
       - name: Run Python tests with numpy<2.0 (ubuntu, python<3.13)
-        if: (matrix.python_version == '3.10') && startsWith(matrix.os,'ubuntu')
+        if: (matrix.python_version == '3.11') && startsWith(matrix.os,'ubuntu')
         run: |
           # 2024.10.15: Error message: The headers or library files could not be found for jpeg, a required dependency when compiling Pillow from source.
           sudo apt-get update
           sudo apt-get install libjpeg-dev zlib1g-dev libpng-dev
-          pip install --prefer-binary "numpy<2.0" pillow
+          # ml_dtypes 0.6.0 dropped numpy 1 support, so pin the last version that supports it.
+          pip install --prefer-binary "numpy<2.0" "ml_dtypes==0.5.4" pillow
           pytest -s

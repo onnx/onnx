@@ -478,7 +478,12 @@ getShapeInput(const InferenceContext& ctx, size_t input_index, bool fail_if_nega
     }
     if (shape_input_shape.dim(0).has_dim_value()) {
       // Attempt rank inference using shape of shape input
-      int64_t dim_value = shape_input_shape.dim(0).dim_value();
+      const int64_t dim_value = shape_input_shape.dim(0).dim_value();
+      // Rank-only inference is optional. Avoid materializing an attacker-controlled
+      // number of empty Dimension messages when the shape values are unavailable.
+      if (dim_value < 0 || dim_value > kMaxMaterializedRank) {
+        return shape_input;
+      }
       for (int64_t i = 0; i < dim_value; ++i) {
         shape_input.add_dim();
       }

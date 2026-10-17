@@ -6,8 +6,8 @@ SPDX-License-Identifier: Apache-2.0
 
 # ONNX Security Assurance Case
 
-**Version:** 1.1
-**Date:** June 2026
+**Version:** 1.2
+**Date:** August 2026
 **Project:** ONNX (Open Neural Network Exchange)
 **Scope:** ONNX Core (`onnx/onnx`) and the produced Python wheel
 
@@ -20,6 +20,10 @@ Using shape/type inference, version update utilities, and model validation is al
 Resource exhaustion, however, may be triggered from within these utilities and users are advised to guard against this accordingly.
 
 Validation utilities such as `onnx.checker.check_model` are provided on a best-effort basis (e.g. a validated `ModelProto` object may contain `NodeProto` objects that do not adhere to the ONNX specification).
+
+Loading or deserializing a model does not implicitly invoke `onnx.checker.check_model`.
+Consumers that require semantic model validation must call the checker explicitly after loading.
+Binary protobuf parsing rejects malformed wire data, but accepts and preserves unknown fields for forward compatibility.
 
 The onnx reference implementation is not yet considered safe for production use on untrusted inputs.
 
@@ -53,12 +57,12 @@ A malicious model references external tensor data via attacker-controlled file p
 | Principle | Application in ONNX Core |
 |-----------|--------------------------|
 | Economy of Mechanism | Protocol Buffers for serialization; validation centralized in checker.cc; minimal dependencies |
-| Fail-Safe Defaults | Validation on by default; must opt out with `check_model=False`; unknown protobuf fields rejected |
-| Complete Mediation | Every model load goes through the validation pipeline; all operator inputs are type- and shape-checked |
+| Fail-Safe Defaults | Partial: binary protobuf wire-format checks and external-data path checks apply during loading; semantic model validation is not automatic and must be requested explicitly |
+| Complete Mediation | Partial: semantic model validation is centralized in `checker.cc` when callers invoke the checker; loading and validation are separate operations |
 | Least Privilege | No elevated privileges required; no network access; file I/O restricted to explicitly specified paths |
 | Separation of Privilege | External data loading requires both model reference and file system access; releases require SLSA attestation |
 | Least Common Mechanism | No global mutable state; validation is stateless; each API call operates independently |
-| Psychological Acceptability | Secure defaults need no configuration; clear validation error messages; type-annotated Python API |
+| Psychological Acceptability | Explicit loading and validation APIs; clear validation error messages; type-annotated Python API |
 
 
 ## Common Weaknesses Mitigated
@@ -66,7 +70,7 @@ A malicious model references external tensor data via attacker-controlled file p
 | CWE | Mitigation |
 |-----|-----------|
 | CWE-787/125 Out-of-bounds R/W | Modern C++ (std::vector, RAII); ASan in CI |
-| CWE-20 Input Validation | Comprehensive model validation on load; protobuf schema enforcement; operator shape/type checking |
+| CWE-20 Input Validation | Protobuf wire-format checks during parsing; explicit best-effort semantic validation via `onnx.checker.check_model`; optional shape inference with `full_check=True` |
 | CWE-416 Use After Free | RAII/smart pointers (unique_ptr, shared_ptr); ASan in CI; code review |
 | CWE-190 Integer Overflow | Checked size arithmetic in tensor allocation; UBSan in CI |
 | CWE-22 Path Traversal | External data paths validated and normalized; no auto-resolution outside model directory |

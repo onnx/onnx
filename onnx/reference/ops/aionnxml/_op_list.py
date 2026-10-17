@@ -59,7 +59,7 @@ def _build_registered_operators() -> dict[str, dict[int | None, type[OpRun]]]:
 def load_op(
     domain: str,
     op_type: str,
-    version: None | int,
+    version: int | None,
     custom: Any = None,
 ) -> Any:
     """Loads the implemented for a specified operator.

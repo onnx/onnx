@@ -259,7 +259,7 @@ class Coverage:
             metadata_writer.writerow(
                 [
                     "Latest Update",
-                    datetime.datetime.now(tz=datetime.timezone.utc)
+                    datetime.datetime.now(tz=datetime.UTC)
                     .isoformat()
                     .replace("T", " "),
                 ]

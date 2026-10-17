@@ -22,8 +22,7 @@
 #include "onnx/shape_inference/implementation.h"
 #include "onnx/version_converter/convert.h"
 
-namespace ONNX_NAMESPACE {
-namespace inliner {
+namespace ONNX_NAMESPACE::inliner {
 
 namespace { // internal/private API
 
@@ -394,7 +393,9 @@ using ConstNodeMap = std::unordered_map<std::string, const NodeProto*>;
 ConstNodeMap FindConstantNodes(const GraphProto& graph) {
   ConstNodeMap result;
   for (const NodeProto& node : graph.node()) {
-    if (IsOnnxDomain(node.domain()) && (node.op_type() == "Constant")) {
+    // Malformed Constant nodes can have no outputs; do not index an absent
+    // protobuf field while collecting constants for function conversion.
+    if (IsOnnxDomain(node.domain()) && (node.op_type() == "Constant") && !node.output().empty()) {
       result[node.output(0)] = &node;
     }
   }
@@ -802,5 +803,4 @@ std::string Renamer::BindToUniqueName(const std::string& original_name) {
   return pImpl_->GetRenamer().BindToUniqueName(original_name);
 }
 
-} // namespace inliner
-} // namespace ONNX_NAMESPACE
+} // namespace ONNX_NAMESPACE::inliner

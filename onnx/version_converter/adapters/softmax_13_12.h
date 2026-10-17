@@ -11,8 +11,7 @@
 
 #include "onnx/version_converter/adapters/adapter.h"
 
-namespace ONNX_NAMESPACE {
-namespace version_conversion {
+namespace ONNX_NAMESPACE::version_conversion {
 
 class Softmax_13_12 final : public Adapter {
  public:
@@ -48,6 +47,7 @@ class Softmax_13_12 final : public Adapter {
     for (Use u : node->output()->uses()) {
       if (u.user->kind() == kReshape) {
         Node* reshape = u.user;
+        ONNX_ASSERTM(!reshape->outputs().empty(), "Reshape node must have at least 1 output")
         auto* const reshape_output = reshape->outputs()[0];
         node->output()->replaceAllUsesWith(reshape_output);
         reshape->destroy();
@@ -62,5 +62,4 @@ class Softmax_13_12 final : public Adapter {
   }
 };
 
-} // namespace version_conversion
-} // namespace ONNX_NAMESPACE
+} // namespace ONNX_NAMESPACE::version_conversion

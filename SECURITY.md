@@ -35,7 +35,7 @@ Reports describing expected behavior, unrealistic preconditions, or issues outsi
 3. **Fix.** A patch is developed in a private fork or Security Advisory draft and reviewed by a second maintainer.
 4. **Disclose.** Merge the fix and release the patched version, then publish the GitHub Security Advisory — this requests a CVE if applicable and serves as the public announcement.
 
-    Out-of-cycle releases are triggered for confirmed Critical/High vulnerabilities or active exploitation. ONNX has no LTS branches; backporting a fix to an already-released version beyond the current out-of-cycle release is assessed case by case — see [RELEASE-MANAGEMENT.md](RELEASE-MANAGEMENT.md#long-term-support-lts).
+Out-of-cycle releases are triggered for confirmed Critical/High vulnerabilities or active exploitation. ONNX has no LTS branches; backports to superseded releases are assessed case by case — see [RELEASE-MANAGEMENT.md](RELEASE-MANAGEMENT.md#long-term-support-lts).
 
 ## Security announcements
 
@@ -71,3 +71,13 @@ A successful verification confirms that the artifact was built by GitHub Actions
 ### Software Bill of Materials (SBOM)
 
 Each wheel also embeds a [CycloneDX 1.7](https://cyclonedx.org/) SBOM (`.cdx.json`) listing the bundled third-party components shipped inside the wheel (e.g. statically linked C++ libraries).
+
+### Vulnerability Exploitability eXchange (VEX)
+
+When a published vulnerability in a dependency does not affect ONNX, maintainers record this as an [OpenVEX](https://openvex.dev/) statement in the [`.vex/`](.vex/) directory. Vulnerability scanners that accept OpenVEX input can use these documents to suppress findings that do not apply to ONNX. A `not_affected` statement only covers the dependency as used by ONNX; if your own code uses the same dependency directly, assess the vulnerability for that usage separately.
+
+## EU Cyber Resilience Act (CRA) Stewardship
+
+ONNX is hosted by [LF AI & Data](https://lfaidata.foundation/), a Linux Foundation project. Under the Linux Foundation's CRA stewardship framework, LF AI & Data's CRA steward is the Linux Foundation, and its policy is available at https://www.linuxfoundation.org/security. The Linux Foundation is registered with ENISA's single reporting platform and handles the CRA-mandated regulatory reporting timelines (a 24-hour early warning followed by a 72-hour formal notification) for actively exploited vulnerabilities and severe security incidents affecting in-scope digital products.
+
+This does not change how to report a vulnerability in ONNX — continue to use the process described above. If you believe you have found an actively exploited vulnerability or a severe security incident (for example, a compromise of the release process), report it immediately through those same channels so maintainers can begin remediation. Maintainers will notify the LF steward's CRA contact in parallel with fixing the problem, never instead of fixing it.

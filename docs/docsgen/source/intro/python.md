@@ -532,7 +532,7 @@ number.
 ```
 
 Field `training_info` can be used to store additional graphs.
-See [training_tool_test.py](https://github.com/onnx/onnx/blob/main/onnx/test/training_tool_test.py)
+See [training_tool_test.py](/tests/python/training_tool_test.py)
 to see how it works.
 
 ## Subgraph: test and loops

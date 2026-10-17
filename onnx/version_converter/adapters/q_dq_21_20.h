@@ -14,8 +14,7 @@
 #include "onnx/common/assertions.h"
 #include "onnx/version_converter/adapters/type_restriction.h"
 
-namespace ONNX_NAMESPACE {
-namespace version_conversion {
+namespace ONNX_NAMESPACE::version_conversion {
 
 static const std::vector<TensorProto_DataType> q_dq_20_unallowed_types = {
     TensorProto_DataType_UINT16,
@@ -83,5 +82,4 @@ class DequantizeLinear_21_20 final : public TypeRestriction {
   }
 };
 
-} // namespace version_conversion
-} // namespace ONNX_NAMESPACE
+} // namespace ONNX_NAMESPACE::version_conversion

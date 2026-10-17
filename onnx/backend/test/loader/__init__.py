@@ -6,11 +6,20 @@ from __future__ import annotations
 import json
 import os
 
+import onnx.backend.test.case.node
 from onnx.backend.test.case.test_case import TestCase
+from onnx.backend.test.case.utils import import_recursive
 
 DATA_DIR = os.path.join(
     os.path.dirname(os.path.realpath(os.path.dirname(__file__))), "data"
 )
+
+
+def load_node_model_tests() -> list[TestCase]:
+    import_recursive(onnx.backend.test.case.node)
+    from onnx.backend.test.case.node import _NodeTestCases  # noqa: PLC0415
+
+    return _NodeTestCases
 
 
 def load_model_tests(
@@ -18,6 +27,9 @@ def load_model_tests(
     kind: str | None = None,
 ) -> list[TestCase]:
     """Load model test cases from on-disk data files."""
+    if kind == "node":
+        return load_node_model_tests()
+
     supported_kinds = os.listdir(data_dir)
     if kind not in supported_kinds:
         raise ValueError(f"kind must be one of {supported_kinds}")

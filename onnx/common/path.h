@@ -14,6 +14,8 @@
 #define NOMINMAX
 #endif
 #include <windows.h>
+// windows.h defines OPTIONAL, which clashes with enum members of the same name in onnx-data.pb.h.
+#undef OPTIONAL
 
 #include "onnx/checker.h"
 #endif
