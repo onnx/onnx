@@ -7510,6 +7510,68 @@ class TestReferenceEvaluator:
         assert np.isfinite(loss).all()
         assert np.isfinite(log_prob).all()
 
+    def test_softmax_cross_entropy_zero_batch(self):
+        # The function body reshapes scores to (N, C, D). With a zero-sized
+        # batch dimension the input has no elements, so the target shape is
+        # computed from Shape(scores) instead of relying on a -1 dimension.
+        for dims, label_dims in [((0, 3), (0,)), ((0, 3, 5), (0, 5))]:
+            scores_info = make_tensor_value_info(
+                "scores", TensorProto.FLOAT, list(dims)
+            )
+            label_info = make_tensor_value_info(
+                "labels", TensorProto.INT64, list(label_dims)
+            )
+            loss_info = make_tensor_value_info(
+                "loss", TensorProto.FLOAT, list(label_dims)
+            )
+            node = make_node(
+                "SoftmaxCrossEntropyLoss",
+                ["scores", "labels"],
+                ["loss"],
+                reduction="none",
+            )
+            model = make_model(
+                make_graph(
+                    [node],
+                    "softmax_cross_entropy_zero_batch",
+                    [scores_info, label_info],
+                    [loss_info],
+                ),
+                opset_imports=[make_opsetid("", 23)],
+            )
+            scores = np.zeros(dims, dtype=np.float32)
+            labels = np.zeros(label_dims, dtype=np.int64)
+            (loss,) = ReferenceEvaluator(model).run(
+                None, {"scores": scores, "labels": labels}
+            )
+            assert loss.shape == label_dims
+
+    def test_softmax_cross_entropy_zero_batch_opset12(self):
+        scores_info = make_tensor_value_info("scores", TensorProto.FLOAT, [0, 3])
+        label_info = make_tensor_value_info("labels", TensorProto.INT64, [0])
+        loss_info = make_tensor_value_info("loss", TensorProto.FLOAT, [0])
+        node = make_node(
+            "SoftmaxCrossEntropyLoss",
+            ["scores", "labels"],
+            ["loss"],
+            reduction="none",
+        )
+        model = make_model(
+            make_graph(
+                [node],
+                "softmax_cross_entropy_zero_batch_opset12",
+                [scores_info, label_info],
+                [loss_info],
+            ),
+            opset_imports=[make_opsetid("", 12)],
+        )
+        scores = np.zeros((0, 3), dtype=np.float32)
+        labels = np.zeros((0,), dtype=np.int64)
+        (loss,) = ReferenceEvaluator(model).run(
+            None, {"scores": scores, "labels": labels}
+        )
+        assert loss.shape == (0,)
+
     def test_center_crop_pad_no_change_when_shape_equals_dim(self):
         """Test CenterCropPad when target shape equals current dimension.
 
