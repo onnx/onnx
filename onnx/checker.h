@@ -74,6 +74,17 @@ class CheckerContext final {
     return model_dir_;
   }
 
+  // Whether the checker received the model as a file path, in which case model_dir_
+  // is the directory external data locations are resolved against. When false, the
+  // model was checked from memory and file-system checks of external data are skipped.
+  void set_model_dir_known(bool model_dir_known) {
+    model_dir_known_ = model_dir_known;
+  }
+
+  bool get_model_dir_known() const {
+    return model_dir_known_;
+  }
+
   bool skip_opset_compatibility_check() const {
     return skip_opset_compatibility_check_;
   }
@@ -98,6 +109,7 @@ class CheckerContext final {
   bool is_main_graph_ = true;
   const ISchemaRegistry* schema_registry_ = OpSchemaRegistry::Instance();
   std::string model_dir_;
+  bool model_dir_known_ = false;
   bool skip_opset_compatibility_check_ = false;
   bool check_custom_domain_ = false;
 };

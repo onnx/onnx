@@ -1576,3 +1576,79 @@ class TestLoadExternalDataFileSizeValidation(TestLoadExternalDataBase):
 
         load_external_data_for_tensor(tensor, self.temp_dir)
         assert tensor.raw_data == raw
+
+
+class TestCheckModelInMemoryExternalData:
+    """check_model() on an in-memory model must not resolve external data
+    locations against the current working directory (issue #8597).
+    """
+
+    @pytest.fixture(autouse=True)
+    def setup(self, tmp_path: Path) -> None:
+        self.model_dir = tmp_path / "model_dir"
+        self.model_dir.mkdir()
+        self.other_dir = tmp_path / "other_dir"
+        self.other_dir.mkdir()
+        weight = from_array(np.ones(4, np.float32), "w")
+        graph = helper.make_graph(
+            [helper.make_node("Identity", ["w"], ["y"])],
+            "g",
+            inputs=[],
+            outputs=[helper.make_tensor_value_info("y", TensorProto.FLOAT, [4])],
+            initializer=[weight],
+        )
+        self.model_path = str(self.model_dir / "model.onnx")
+        onnx.save(
+            helper.make_model(graph),
+            self.model_path,
+            save_as_external_data=True,
+            location="weights.bin",
+            size_threshold=0,
+        )
+
+    def _in_memory_model(self) -> ModelProto:
+        return onnx.load(self.model_path, load_external_data=False)
+
+    def test_in_memory_check_from_other_cwd_passes(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        monkeypatch.chdir(self.other_dir)
+        checker.check_model(self._in_memory_model())
+
+    def test_in_memory_check_ignores_unrelated_cwd_file(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        # An unrelated file with the same name in the cwd must not be checked.
+        (self.other_dir / "weights.bin").write_bytes(b"\x00" * 8)
+        monkeypatch.chdir(self.other_dir)
+        checker.check_model(self._in_memory_model())
+
+    @pytest.mark.parametrize("location", ["", "/abs/weights.bin", "../weights.bin"])
+    def test_in_memory_check_still_rejects_bad_locations(
+        self, monkeypatch: pytest.MonkeyPatch, location: str
+    ) -> None:
+        model = self._in_memory_model()
+        model.graph.initializer[0].external_data[0].value = location
+        monkeypatch.chdir(self.model_dir)
+        with pytest.raises(checker.ValidationError):
+            checker.check_model(model)
+
+    def test_path_check_still_validates_external_file(self) -> None:
+        checker.check_model(self.model_path)
+        (self.model_dir / "weights.bin").write_bytes(b"\x00" * 4)
+        with pytest.raises(checker.ValidationError, match="exceeds available data"):
+            checker.check_model(self.model_path)
+
+    def test_path_check_still_rejects_missing_file(self) -> None:
+        (self.model_dir / "weights.bin").unlink()
+        with pytest.raises(checker.ValidationError):
+            checker.check_model(self.model_path)
+
+    def test_bare_filename_still_resolves_against_cwd(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        monkeypatch.chdir(self.model_dir)
+        checker.check_model("model.onnx")
+        (self.model_dir / "weights.bin").unlink()
+        with pytest.raises(checker.ValidationError):
+            checker.check_model("model.onnx")

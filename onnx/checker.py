@@ -136,6 +136,12 @@ def check_model(
         model: Model to check. If model is a path, the function checks model
             path first. If the model bytes size is larger than 2GB, function
             should be called using model path.
+
+            When the model is given as a ModelProto or bytes, external data
+            locations are validated lexically only: without a model file there is
+            no model directory to resolve them against, so the outcome does not
+            depend on the current working directory. Pass the model path to
+            validate the external data files themselves.
         full_check: If True, the function also runs shape inference check.
         skip_opset_compatibility_check: If True, the function skips the check for
             opset compatibility.
