@@ -1363,6 +1363,40 @@ const std::vector<std::string>& OpSchema::all_non_string_tensor_types_ir13() {
   return v;
 }
 
+const std::vector<std::string>& OpSchema::all_tensor_types_ir14() {
+  static const auto v = types::Tensors(
+      {TensorProto::UINT8,        TensorProto::UINT16,         TensorProto::UINT32,     TensorProto::UINT64,
+       TensorProto::INT8,         TensorProto::INT16,          TensorProto::INT32,      TensorProto::INT64,
+       TensorProto::BFLOAT16,     TensorProto::FLOAT16,        TensorProto::FLOAT,      TensorProto::DOUBLE,
+       TensorProto::STRING,       TensorProto::BOOL,           TensorProto::COMPLEX64,  TensorProto::COMPLEX128,
+       TensorProto::FLOAT8E4M3FN, TensorProto::FLOAT8E4M3FNUZ, TensorProto::FLOAT8E5M2, TensorProto::FLOAT8E5M2FNUZ,
+       TensorProto::UINT4,        TensorProto::INT4,           TensorProto::FLOAT4E2M1, TensorProto::FLOAT8E8M0,
+       TensorProto::UINT2,        TensorProto::INT2,           TensorProto::FLOAT6E2M3, TensorProto::FLOAT6E3M2});
+  return v;
+}
+
+const std::vector<std::string>& OpSchema::all_non_complex_tensor_types_ir14() {
+  static const auto v = types::Tensors(
+      {TensorProto::UINT8,      TensorProto::UINT16,         TensorProto::UINT32,       TensorProto::UINT64,
+       TensorProto::INT8,       TensorProto::INT16,          TensorProto::INT32,        TensorProto::INT64,
+       TensorProto::BFLOAT16,   TensorProto::FLOAT16,        TensorProto::FLOAT,        TensorProto::DOUBLE,
+       TensorProto::STRING,     TensorProto::BOOL,           TensorProto::FLOAT8E4M3FN, TensorProto::FLOAT8E4M3FNUZ,
+       TensorProto::FLOAT8E5M2, TensorProto::FLOAT8E5M2FNUZ, TensorProto::UINT4,        TensorProto::INT4,
+       TensorProto::FLOAT4E2M1, TensorProto::FLOAT8E8M0,     TensorProto::UINT2,        TensorProto::INT2,
+       TensorProto::FLOAT6E2M3, TensorProto::FLOAT6E3M2});
+  return v;
+}
+
+const std::vector<std::string>& OpSchema::all_non_string_tensor_types_ir14() {
+  static const auto v = [] {
+    auto result = all_tensor_types_ir14();
+    const auto string_type = types::Tensor(TensorProto::STRING);
+    result.erase(std::find(result.begin(), result.end(), string_type));
+    return result;
+  }();
+  return v;
+}
+
 const std::vector<std::string>& OpSchema::all_tensor_sequence_types() {
   static const auto v = types::Sequence(all_tensor_types());
   return v;
@@ -1395,6 +1429,11 @@ const std::vector<std::string>& OpSchema::all_tensor_sequence_types_ir12() {
 
 const std::vector<std::string>& OpSchema::all_tensor_sequence_types_ir13() {
   static const auto v = types::Sequence(all_tensor_types_ir13());
+  return v;
+}
+
+const std::vector<std::string>& OpSchema::all_tensor_sequence_types_ir14() {
+  static const auto v = types::Sequence(all_tensor_types_ir14());
   return v;
 }
 

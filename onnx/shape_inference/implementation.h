@@ -93,26 +93,53 @@ class SymbolTableImpl : public SymbolTable {
 };
 
 struct GraphInferenceContext {
+  using OuterScopeValueTypesMap = std::unordered_map<std::string, TypeProto*>;
+
   GraphInferenceContext(
-      const std::unordered_map<std::string, TypeProto*>& outer_scope_value_types_by_name_in,
+      const OuterScopeValueTypesMap& outer_scope_value_types_by_name_in,
       std::unordered_map<std::string, int> opset_imports_in,
       SymbolTable* symbol_table_in = nullptr,
-      const ModelLocalFunctionsMap& model_local_functions_in = {},
+      ModelLocalFunctionsMap model_local_functions_in = {},
       const ISchemaRegistry* schema_registry_in = OpSchemaRegistry::Instance(),
       DataValueMap* generated_shape_data_by_name_in = nullptr,
       const int64_t ir_version_in = IR_VERSION)
-      : outer_scope_value_types_by_name{&outer_scope_value_types_by_name_in},
+      : owned_outer_scope_value_types_by_name{},
+        outer_scope_value_types_by_name{&outer_scope_value_types_by_name_in},
         opset_imports{std::move(opset_imports_in)},
         symbol_table{symbol_table_in},
-        model_local_functions{model_local_functions_in},
+        model_local_functions{std::move(model_local_functions_in)},
         schema_registry{schema_registry_in},
         generated_shape_data_by_name{generated_shape_data_by_name_in},
         ir_version{ir_version_in} {}
 
-  const std::unordered_map<std::string, TypeProto*>* outer_scope_value_types_by_name;
+  GraphInferenceContext(
+      OuterScopeValueTypesMap&& outer_scope_value_types_by_name_in,
+      std::unordered_map<std::string, int> opset_imports_in,
+      SymbolTable* symbol_table_in = nullptr,
+      ModelLocalFunctionsMap model_local_functions_in = {},
+      const ISchemaRegistry* schema_registry_in = OpSchemaRegistry::Instance(),
+      DataValueMap* generated_shape_data_by_name_in = nullptr,
+      const int64_t ir_version_in = IR_VERSION)
+      // A heap-owned map keeps the raw view valid across context copies and moves
+      // when a caller supplies a temporary that would otherwise dangle.
+      : owned_outer_scope_value_types_by_name{
+            std::make_shared<const OuterScopeValueTypesMap>(std::move(outer_scope_value_types_by_name_in))},
+        outer_scope_value_types_by_name{owned_outer_scope_value_types_by_name.get()},
+        opset_imports{std::move(opset_imports_in)},
+        symbol_table{symbol_table_in},
+        model_local_functions{std::move(model_local_functions_in)},
+        schema_registry{schema_registry_in},
+        generated_shape_data_by_name{generated_shape_data_by_name_in},
+        ir_version{ir_version_in} {}
+
+  // Lvalue maps remain borrowed so subgraph inference observes parent-scope
+  // types added while the enclosing graph is processed.
+  const std::shared_ptr<const OuterScopeValueTypesMap> owned_outer_scope_value_types_by_name;
+  const OuterScopeValueTypesMap* outer_scope_value_types_by_name;
   const std::unordered_map<std::string, int> opset_imports;
   SymbolTable* symbol_table;
-  const ModelLocalFunctionsMap& model_local_functions;
+  // Own the map so default or explicitly temporary arguments cannot dangle after construction.
+  const ModelLocalFunctionsMap model_local_functions;
   const ISchemaRegistry* schema_registry;
   DataValueMap* generated_shape_data_by_name;
   const int64_t ir_version;

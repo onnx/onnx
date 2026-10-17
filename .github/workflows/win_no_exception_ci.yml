@@ -22,7 +22,7 @@ jobs:
     runs-on: windows-2022
     strategy:
       matrix:
-        python-version: ['3.10']
+        python-version: ['3.11']
         architecture: ['x64']
     steps:
     - name: Checkout ONNX
