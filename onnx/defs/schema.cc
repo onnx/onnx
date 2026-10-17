@@ -711,7 +711,7 @@ OpSchema::TypeConstraint(std::string type_str, std::vector<std::string> constrai
   for (const auto& t : constraints) {
     d.insert(Utils::DataTypeUtils::ToType(t));
   }
-  type_constraints_.emplace(type_str, std::make_pair(std::move(d), description));
+  type_constraints_.try_emplace(type_str, std::move(d), description);
   type_constraint_params_.emplace_back(std::move(type_str), std::move(constraints), std::move(description));
   return *this;
 }

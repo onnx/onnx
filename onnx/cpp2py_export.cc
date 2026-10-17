@@ -138,7 +138,7 @@ static std::pair<std::vector<Ts>, std::unordered_map<std::string, T*>> ParseProt
     i++;
   }
   // C++ guarantees that the pointers remain valid after std::vector<Ts> is moved.
-  return std::make_pair(std::move(values), result);
+  return {std::move(values), std::move(result)};
 }
 
 static std::unordered_map<std::string, nb::bytes> CallNodeInferenceFunction(

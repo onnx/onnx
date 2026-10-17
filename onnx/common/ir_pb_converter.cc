@@ -308,12 +308,12 @@ std::unique_ptr<Graph> graphProtoToGraph(const ONNX_NAMESPACE::GraphProto& gp, b
   // otherwise getNextUnique() may conflicts with an existing initializer name.
   for (int i = 0; i < gp.initializer_size(); ++i) {
     auto init = tensorProtoToTensor(gp.initializer(i));
+    // Preserve the lookup key before moving the Tensor.
+    auto init_name = init.name();
     // If ir_version >= 4, initializer does not have to be included in input
     // Create a Value from initializer by addInitializerNode if name does not exist in input
     // and save it into value_by_name_of for later use (node input)
-    if (ir_version >= 4 && value_by_name_of.count(init.name()) == 0) {
-      // Preserve the lookup key before the assignment's RHS moves the Tensor.
-      auto init_name = init.name();
+    if (ir_version >= 4 && value_by_name_of.count(init_name) == 0) {
       value_by_name_of[std::move(init_name)] = g->addInitializerAndCreateValue(std::move(init));
     } else {
       // If ir_version < 4 or the initializer exists in input
