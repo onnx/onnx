@@ -366,6 +366,35 @@ class TestReferenceEvaluator:
         got = ReferenceEvaluator(model).run(None, {"X": x, "Y": y})[0]
         np.testing.assert_array_equal(got, np.array(expected, dtype=np_dtype))
 
+    @pytest.mark.parametrize("ignore_index", [-1, -100])
+    def test_nllloss_mean_excludes_ignore_index_without_weight(
+        self, ignore_index: int
+    ) -> None:
+        x = np.log(np.array([[0.25, 0.75], [0.5, 0.5]], dtype=np.float32))
+        target = np.array([0, ignore_index], dtype=np.int64)
+        graph = make_graph(
+            [
+                make_node(
+                    "NegativeLogLikelihoodLoss",
+                    ["X", "target"],
+                    ["loss"],
+                    reduction="mean",
+                    ignore_index=ignore_index,
+                )
+            ],
+            "nllloss_ignore_index",
+            [
+                make_tensor_value_info("X", TensorProto.FLOAT, [2, 2]),
+                make_tensor_value_info("target", TensorProto.INT64, [2]),
+            ],
+            [make_tensor_value_info("loss", TensorProto.FLOAT, [])],
+        )
+        model = make_model(graph, opset_imports=[make_opsetid("", 22)])
+
+        got = ReferenceEvaluator(model).run(None, {"X": x, "target": target})[0]
+
+        assert_allclose(got, -x[0, 0])
+
     @staticmethod
     def _linear_regression(clip=False, opset=None, min_value=-1.0, max_value=1.0):
         X = make_tensor_value_info("X", TensorProto.FLOAT, [None, None])
@@ -856,6 +885,28 @@ class TestReferenceEvaluator:
         sess = ReferenceEvaluator(node1)
         got = sess.run(None, {"X": x, "Y": y})[0]
         assert_allclose(got, expected)
+
+    @pytest.mark.parametrize(
+        "values",
+        [
+            np.array([-3e38, 3e38], dtype=np.float32),
+            np.array([False, True]),
+            np.array(["off", "on"]),
+        ],
+    )
+    def test_one_hot_selects_values_without_arithmetic(self, values: np.ndarray):
+        node = make_node("OneHot", ["indices", "depth", "values"], ["output"])
+        indices = np.array([0, 1], dtype=np.int64)
+        depth = np.array(2, dtype=np.int64)
+        expected = np.array(
+            [[values[1], values[0]], [values[0], values[1]]], dtype=values.dtype
+        )
+
+        got = ReferenceEvaluator(node).run(
+            None, {"indices": indices, "depth": depth, "values": values}
+        )[0]
+
+        assert_array_equal(got, expected)
 
     @pytest.mark.parametrize("axis", [-2, 1])
     def test_concat_rejects_axis_out_of_range(self, axis: int):
@@ -1655,7 +1706,7 @@ class TestReferenceEvaluator:
     def test_conv(self):
         X = make_tensor_value_info("X", TensorProto.FLOAT, [None, None, None, None])
         Y = make_tensor_value_info("Y", TensorProto.FLOAT, [None, None, None, None])
-        B = make_tensor_value_info("B", TensorProto.FLOAT, [None, None, None, None])
+        B = make_tensor_value_info("B", TensorProto.FLOAT, [None])
         W = make_tensor_value_info("W", TensorProto.FLOAT, [None, None, None, None])
         node = make_node(
             "Conv",
@@ -1681,7 +1732,7 @@ class TestReferenceEvaluator:
                 W = np.zeros((1, 1, 3, 3), dtype=np.float32)
                 W[0, 0, :, :] = np.minimum(2 ** np.arange(9).reshape((3, -1)), 256)
 
-                B = np.array([[[[0]]]], dtype=np.float32)
+                B = np.array([0], dtype=np.float32)
                 expected = sess1.run(None, {"X": X, "W": W, "B": B})[0]
                 got = sess2.run(None, {"X": X, "W": W, "B": B})[0]
                 assert_allclose(got, expected)
@@ -2715,6 +2766,91 @@ class TestReferenceEvaluator:
         ref1 = ReferenceEvaluator(onnx_model)
         got1 = ref1.run(None, feeds)
         assert_allclose(got1[0], expected)
+
+    @staticmethod
+    def _evaluate_global_lp_pool(data, expected, p, elem_type, opset):
+        X = make_tensor_value_info("X", elem_type, data.shape)
+        Y = make_tensor_value_info("Y", elem_type, expected.shape)
+        node = make_node("GlobalLpPool", ["X"], ["Y"], p=p)
+        graph = make_graph([node], "g", [X], [Y])
+        model = make_model(graph, opset_imports=[make_opsetid("", opset)])
+        return ReferenceEvaluator(model).run(None, {"X": data})[0]
+
+    @pytest.mark.parametrize(
+        ("data", "expected", "p", "elem_type", "opset"),
+        [
+            (
+                np.array([[[-1, 2, -3], [0, 4, -5]]], dtype=np.float16),
+                np.array([[[6], [9]]], dtype=np.float16),
+                1,
+                TensorProto.FLOAT16,
+                22,
+            ),
+            (
+                np.array([[[300, 300], [1e-4, 1e-4]]], dtype=np.float16),
+                np.array([[[424.25], [1.415e-4]]], dtype=np.float16),
+                2,
+                TensorProto.FLOAT16,
+                22,
+            ),
+            (
+                np.arange(1, 9, dtype=np.float64).reshape(1, 1, 2, 2, 2),
+                np.array([[[[[10.90272461]]]]], dtype=np.float64),
+                3,
+                TensorProto.DOUBLE,
+                22,
+            ),
+            (
+                np.array([[[1, 2, 2]]], dtype=ml_dtypes.bfloat16),
+                np.array([[[3]]], dtype=ml_dtypes.bfloat16),
+                2,
+                TensorProto.BFLOAT16,
+                22,
+            ),
+            (
+                np.array([[[3e19, 3e19]]], dtype=ml_dtypes.bfloat16),
+                np.array([[[4.237e19]]], dtype=ml_dtypes.bfloat16),
+                2,
+                TensorProto.BFLOAT16,
+                22,
+            ),
+            (
+                np.array([[[1, 4, 9]]], dtype=np.float32),
+                np.array([[[36]]], dtype=np.float32),
+                0.5,
+                TensorProto.FLOAT,
+                1,
+            ),
+            (
+                np.array([[[1e100, 1e-300]]], dtype=np.float64),
+                np.array([[[3.47096941e245]]], dtype=np.float64),
+                0.001,
+                TensorProto.DOUBLE,
+                1,
+            ),
+        ],
+    )
+    def test_global_lp_pool(self, data, expected, p, elem_type, opset):
+        got = self._evaluate_global_lp_pool(data, expected, p, elem_type, opset)
+
+        assert got.dtype == data.dtype
+        assert_allclose(got.astype(np.float64), expected.astype(np.float64), rtol=1e-6)
+
+    def test_global_lp_pool_nan_and_inf(self):
+        data = np.array([[[np.nan, 1, 2], [np.inf, 1, 2]]], dtype=np.float32)
+        expected = np.array([[[np.nan], [np.inf]]], dtype=np.float32)
+
+        got = self._evaluate_global_lp_pool(data, expected, 2, TensorProto.FLOAT, 22)
+
+        np.testing.assert_array_equal(got, expected)
+
+    def test_global_lp_pool_empty_spatial_dimension(self):
+        data = np.empty((2, 3, 0, 4), dtype=np.float32)
+        expected = np.zeros((2, 3, 1, 1), dtype=np.float32)
+
+        got = self._evaluate_global_lp_pool(data, expected, 3, TensorProto.FLOAT, 22)
+
+        np.testing.assert_array_equal(got, expected)
 
     def test_scatter_elements(self):
         X = make_tensor_value_info("X", TensorProto.FLOAT, [None, None])
@@ -4637,6 +4773,113 @@ class TestReferenceEvaluator:
         # specific message is on the chained cause rather than the exception itself.
         assert "does not support integer input" in str(exc_info.value.__cause__)
 
+    @pytest.mark.parametrize(
+        ("data", "indices", "axis", "expected"),
+        [
+            (
+                np.array([[10, 11, 12], [20, 21, 22]], dtype=np.int64),
+                np.array([[2, 0]], dtype=np.int64),
+                1,
+                np.array([[12, 10]], dtype=np.int64),
+            ),
+            (
+                np.array([[10, 11], [20, 21], [30, 31]], dtype=np.int64),
+                np.array([[2], [0]], dtype=np.int64),
+                0,
+                np.array([[30], [10]], dtype=np.int64),
+            ),
+            (
+                np.arange(12, dtype=np.int64).reshape(2, 2, 3),
+                np.array([[[2, 0], [1, 2]]], dtype=np.int64),
+                -1,
+                np.array([[[2, 0], [4, 5]]], dtype=np.int64),
+            ),
+        ],
+    )
+    def test_gather_elements_accepts_smaller_non_axis_dimensions(
+        self, data, indices, axis, expected
+    ):
+        node = make_node("GatherElements", ["data", "indices"], ["output"], axis=axis)
+        model = make_model(
+            make_graph(
+                [node],
+                "g",
+                [
+                    make_tensor_value_info("data", TensorProto.INT64, list(data.shape)),
+                    make_tensor_value_info(
+                        "indices", TensorProto.INT64, list(indices.shape)
+                    ),
+                ],
+                [
+                    make_tensor_value_info(
+                        "output", TensorProto.INT64, list(indices.shape)
+                    )
+                ],
+            ),
+            opset_imports=[make_opsetid("", 13)],
+        )
+
+        actual = ReferenceEvaluator(model).run(
+            None, {"data": data, "indices": indices}
+        )[0]
+        np.testing.assert_array_equal(actual, expected)
+
+    @pytest.mark.parametrize("opset", [13, 18, onnx_opset_version()])
+    @pytest.mark.parametrize("keepdims", [0, 1])
+    @pytest.mark.parametrize("values", [[0.0], [8.0], [-1.0, 0.0]])
+    def test_reduce_log_sum_exp_float16_large_reduction(self, opset, keepdims, values):
+        repeats = 65536
+        data = np.tile(np.array([values], dtype=np.float16), (1, repeats))
+        output_shape = [1, 1] if keepdims else [1]
+        X = make_tensor_value_info("X", TensorProto.FLOAT16, list(data.shape))
+        Y = make_tensor_value_info("Y", TensorProto.FLOAT16, output_shape)
+        feeds = {"X": data}
+        if opset >= 18:
+            A = make_tensor_value_info("A", TensorProto.INT64, [1])
+            node = make_node("ReduceLogSumExp", ["X", "A"], ["Y"], keepdims=keepdims)
+            inputs = [X, A]
+            feeds["A"] = np.array([1], dtype=np.int64)
+        else:
+            node = make_node(
+                "ReduceLogSumExp", ["X"], ["Y"], axes=[1], keepdims=keepdims
+            )
+            inputs = [X]
+        model = make_model(
+            make_graph([node], "g", inputs, [Y]),
+            opset_imports=[make_opsetid("", opset)],
+        )
+        got = ReferenceEvaluator(model).run(None, feeds)[0]
+        expected_value = math.log(repeats) + math.log(
+            math.fsum(math.exp(value) for value in values)
+        )
+        expected = np.full(output_shape, expected_value, dtype=np.float16)
+        assert got.shape == expected.shape
+        assert got.dtype == expected.dtype
+        np.testing.assert_allclose(got, expected, rtol=1e-3, atol=0)
+
+    @pytest.mark.parametrize("opset", [13, 18, onnx_opset_version()])
+    def test_reduce_log_sum_exp_infinite_inputs(self, opset):
+        X = make_tensor_value_info("X", TensorProto.FLOAT, [2, 2])
+        Y = make_tensor_value_info("Y", TensorProto.FLOAT, [2])
+        feeds = {
+            "X": np.array([[np.inf, -np.inf], [-np.inf, -np.inf]], dtype=np.float32)
+        }
+        expected = np.array([np.inf, -np.inf], dtype=np.float32)
+        if opset >= 18:
+            A = make_tensor_value_info("A", TensorProto.INT64, [1])
+            node = make_node("ReduceLogSumExp", ["X", "A"], ["Y"], keepdims=0)
+            inputs = [X, A]
+            feeds["A"] = np.array([1], dtype=np.int64)
+        else:
+            node = make_node("ReduceLogSumExp", ["X"], ["Y"], axes=[1], keepdims=0)
+            inputs = [X]
+        model = make_model(
+            make_graph([node], "g", inputs, [Y]),
+            opset_imports=[make_opsetid("", opset)],
+        )
+        got = ReferenceEvaluator(model).run(None, feeds)[0]
+        np.testing.assert_array_equal(got, expected)
+
     @pytest.mark.parametrize("dim", [1, 2, 3, 4, 5, 6])
     def test_pad(self, dim):
         X = make_tensor_value_info("X", TensorProto.FLOAT, None)
@@ -5907,6 +6150,55 @@ class TestReferenceEvaluator:
         for i in range(2, -1, -1):
             assert_allclose(got[i], expected[i])
 
+    @staticmethod
+    def _dynamic_quantize_linear_model():
+        X = make_tensor_value_info("X", TensorProto.FLOAT, None)
+        Y = make_tensor_value_info("Y", TensorProto.UINT8, None)
+        Scale = make_tensor_value_info("scale", TensorProto.FLOAT, None)
+        Zp = make_tensor_value_info("zp", TensorProto.UINT8, None)
+        node = make_node("DynamicQuantizeLinear", ["X"], ["Y", "scale", "zp"])
+        return make_model_gen_version(
+            make_graph([node], "g", [X], [Y, Scale, Zp]),
+            opset_imports=[make_opsetid("", 18)],
+        )
+
+    @pytest.mark.parametrize(
+        "x",
+        [np.zeros((2, 3), dtype=np.float32), -np.zeros((4,), dtype=np.float32)],
+        ids=["all_zero", "negative_zero"],
+    )
+    def test_dynamic_quantize_linear_zero_input(self, x):
+        # An all-zero input has an empty (adjusted) range: the scale must be 1,
+        # not 0 (which would make x / y_scale a division by zero), with a zero
+        # point of 0 and an all-zero quantized output.
+        model = self._dynamic_quantize_linear_model()
+        y, scale, zp = ReferenceEvaluator(model).run(None, {"X": x})
+        assert y.dtype == np.uint8
+        assert_array_equal(y, np.zeros(x.shape, dtype=np.uint8))
+        assert scale.dtype == np.float32
+        assert scale.shape == ()
+        assert scale == np.float32(1.0)
+        assert zp.dtype == np.uint8
+        assert zp.shape == ()
+        assert zp == 0
+
+    @pytest.mark.parametrize(
+        "x",
+        [np.zeros((2, 3), dtype=np.float32), -np.zeros((4,), dtype=np.float32)],
+        ids=["all_zero", "negative_zero"],
+    )
+    @skip_if_no_onnxruntime
+    def test_dynamic_quantize_linear_zero_input_matches_onnxruntime(self, x):
+        # Match the prevailing implementation practice (onnxruntime's kernel).
+        model = self._dynamic_quantize_linear_model()
+        sess = run_ort_inference(model)
+        if sess is None:
+            pytest.skip("onnxruntime does not support this IR or opset version")
+        expected = ReferenceEvaluator(model).run(None, {"X": x})
+        for got, exp in zip(sess.run(None, {"X": x}), expected, strict=True):
+            assert got.dtype == exp.dtype
+            assert_array_equal(got, exp)
+
     @pytest.mark.parametrize(
         "a, b, expected, expected_shape",
         [
@@ -6904,6 +7196,31 @@ class TestReferenceEvaluator:
         with pytest.raises(ValueError):
             self._run_resize(data, axes=axes, sizes=sizes, mode="linear")
 
+    @pytest.mark.parametrize(
+        ("coordinate_transformation_mode", "mode", "scale", "roi", "expected"),
+        [
+            ("tf_crop_and_resize", "linear", 0.7, [0, 1], [1, 3, 5]),
+            ("tf_crop_and_resize", "linear", 0.3, [0.25, 0.75], [3]),
+            ("pytorch_half_pixel", "linear", 0.3, None, [1]),
+            ("pytorch_half_pixel", "cubic", 0.2, None, [1]),
+        ],
+    )
+    def test_resize_uses_integer_output_length(
+        self, coordinate_transformation_mode, mode, scale, roi, expected
+    ):
+        # On a ramp the interpolated value is x_original + 1, so the expected values follow
+        # directly from the spec formulas, where length_resized is the integer output length.
+        data = np.arange(1, 6, dtype=np.float32)
+        kwargs = {} if roi is None else {"roi": np.array(roi, dtype=np.float32)}
+        output = self._run_resize(
+            data,
+            scales=np.array([scale], dtype=np.float32),
+            mode=mode,
+            coordinate_transformation_mode=coordinate_transformation_mode,
+            **kwargs,
+        )
+        assert_allclose(output, np.array(expected, dtype=np.float32), atol=1e-6)
+
     @pytest.mark.parametrize("policy", ["not_larger", "not_smaller"])
     def test_resize_partial_axes_keep_aspect_ratio(self, policy):
         data = np.arange(2 * 3 * 5, dtype=np.float32).reshape(2, 3, 5)
@@ -6938,6 +7255,23 @@ class TestReferenceEvaluator:
             empty, axes=[1], scales=np.array([1.5]), mode="linear"
         )
         assert output.shape == (2, 0, 4)
+
+    @pytest.mark.parametrize("mode", ["linear", "cubic"])
+    def test_resize_align_corners_uses_integer_output_size(self, mode):
+        # W: floor(4 * 0.6) == 2, H: floor(2 * 0.6) == 1. align_corners must map
+        # the first and last output pixels to the first and last input pixels.
+        data = np.array([[[[1, 2, 3, 4], [5, 6, 7, 8]]]], dtype=np.float32)
+        attributes = {"mode": mode, "coordinate_transformation_mode": "align_corners"}
+
+        actual = self._run_resize(
+            data, scales=np.array([1, 1, 0.6, 0.6], dtype=np.float32), **attributes
+        )
+        assert_allclose(actual, np.array([[[[1, 4]]]], dtype=np.float32))
+
+        expected = self._run_resize(
+            data, sizes=np.array([1, 1, 1, 2], dtype=np.int64), **attributes
+        )
+        assert_allclose(actual, expected)
 
     def test_sequence_axis(self):
         model = self._load_model(
@@ -7017,6 +7351,164 @@ class TestReferenceEvaluator:
         # Unmasked rows still produce a valid probability distribution.
         assert_allclose(got[0].sum(), 1.0)
         assert_allclose(got[0], _softmax(x[:1])[0])
+
+    def test_rms_normalization_float16_uses_float32_stash(self):
+        model = make_model(
+            make_graph(
+                [
+                    make_node(
+                        "RMSNormalization",
+                        ["X", "Scale"],
+                        ["Y"],
+                        epsilon=0.0,
+                        stash_type=TensorProto.FLOAT,
+                    )
+                ],
+                "rms_normalization_float32_stash",
+                [
+                    make_tensor_value_info("X", TensorProto.FLOAT16, [1, 2]),
+                    make_tensor_value_info("Scale", TensorProto.FLOAT16, [2]),
+                ],
+                [make_tensor_value_info("Y", TensorProto.FLOAT16, [1, 2])],
+            ),
+            opset_imports=[make_opsetid("", 23)],
+        )
+        x = np.array([[256.0, 256.0]], dtype=np.float16)
+        scale = np.ones(2, dtype=np.float16)
+
+        (actual,) = ReferenceEvaluator(model).run(None, {"X": x, "Scale": scale})
+
+        assert actual.dtype == np.float16
+        assert_array_equal(actual, np.ones((1, 2), dtype=np.float16))
+
+    def test_layer_normalization_float16_uses_float32_stash(self):
+        model = make_model(
+            make_graph(
+                [
+                    make_node(
+                        "LayerNormalization",
+                        ["X", "Scale", "B"],
+                        ["Y", "Mean", "InvStdDev"],
+                        epsilon=0.0,
+                        stash_type=TensorProto.FLOAT,
+                    )
+                ],
+                "layer_normalization_float32_stash",
+                [
+                    make_tensor_value_info("X", TensorProto.FLOAT16, [1, 2]),
+                    make_tensor_value_info("Scale", TensorProto.FLOAT16, [2]),
+                    make_tensor_value_info("B", TensorProto.FLOAT16, [2]),
+                ],
+                [
+                    make_tensor_value_info("Y", TensorProto.FLOAT16, [1, 2]),
+                    make_tensor_value_info("Mean", TensorProto.FLOAT, [1, 1]),
+                    make_tensor_value_info("InvStdDev", TensorProto.FLOAT, [1, 1]),
+                ],
+            ),
+            opset_imports=[make_opsetid("", 23)],
+        )
+        x = np.array([[256.0, -256.0]], dtype=np.float16)
+        scale = np.ones(2, dtype=np.float16)
+        bias = np.zeros(2, dtype=np.float16)
+
+        actual, mean, inv_std_dev = ReferenceEvaluator(model).run(
+            None, {"X": x, "Scale": scale, "B": bias}
+        )
+
+        assert actual.dtype == np.float16
+        assert mean.dtype == np.float32
+        assert inv_std_dev.dtype == np.float32
+        assert_array_equal(actual, np.array([[1.0, -1.0]], dtype=np.float16))
+        assert_array_equal(mean, np.zeros((1, 1), dtype=np.float32))
+        assert_array_equal(inv_std_dev, np.array([[1.0 / 256.0]], dtype=np.float32))
+
+    def test_logsoftmax_large_finite_gap_stays_finite(self):
+        x_info = make_tensor_value_info("X", TensorProto.FLOAT, [1, 2])
+        y_info = make_tensor_value_info("Y", TensorProto.FLOAT, [1, 2])
+        model = make_model(
+            make_graph(
+                [make_node("LogSoftmax", ["X"], ["Y"], axis=-1)],
+                "logsoftmax_large_finite_gap",
+                [x_info],
+                [y_info],
+            ),
+            opset_imports=[make_opsetid("", 23)],
+        )
+        x = np.array([[0.0, -104.0]], dtype=np.float32)
+
+        (got,) = ReferenceEvaluator(model).run(None, {"X": x})
+
+        assert np.isfinite(got).all()
+        assert got.dtype == np.float32
+        assert_allclose(got, x, rtol=0, atol=0)
+
+    def test_softmax_cross_entropy_large_finite_gap_stays_finite(self):
+        x_info = make_tensor_value_info("X", TensorProto.FLOAT, [1, 2])
+        label_info = make_tensor_value_info("label", TensorProto.INT64, [1])
+        loss_info = make_tensor_value_info("loss", TensorProto.FLOAT, [1])
+        log_prob_info = make_tensor_value_info("log_prob", TensorProto.FLOAT, [1, 2])
+        model = make_model(
+            make_graph(
+                [
+                    make_node(
+                        "SoftmaxCrossEntropyLoss",
+                        ["X", "label"],
+                        ["loss", "log_prob"],
+                        reduction="none",
+                    )
+                ],
+                "softmax_cross_entropy_large_finite_gap",
+                [x_info, label_info],
+                [loss_info, log_prob_info],
+            ),
+            opset_imports=[make_opsetid("", 23)],
+        )
+        x = np.array([[0.0, -104.0]], dtype=np.float32)
+        label = np.array([1], dtype=np.int64)
+
+        loss, log_prob = ReferenceEvaluator(model).run(None, {"X": x, "label": label})
+
+        assert np.isfinite(loss).all()
+        assert np.isfinite(log_prob).all()
+        assert loss.dtype == np.float32
+        assert log_prob.dtype == np.float32
+        assert_allclose(loss, np.array([104.0], dtype=np.float32), rtol=0, atol=0)
+        assert_allclose(log_prob, x, rtol=0, atol=0)
+
+    def test_softmax_cross_entropy_weighted_mean_preserves_float16_dtype(self):
+        x_info = make_tensor_value_info("X", TensorProto.FLOAT16, [1, 2])
+        label_info = make_tensor_value_info("label", TensorProto.INT64, [1])
+        weight_info = make_tensor_value_info("weight", TensorProto.FLOAT16, [2])
+        loss_info = make_tensor_value_info("loss", TensorProto.FLOAT16, [])
+        log_prob_info = make_tensor_value_info("log_prob", TensorProto.FLOAT16, [1, 2])
+        model = make_model(
+            make_graph(
+                [
+                    make_node(
+                        "SoftmaxCrossEntropyLoss",
+                        ["X", "label", "weight"],
+                        ["loss", "log_prob"],
+                        reduction="mean",
+                    )
+                ],
+                "softmax_cross_entropy_weighted_mean_float16",
+                [x_info, label_info, weight_info],
+                [loss_info, log_prob_info],
+            ),
+            opset_imports=[make_opsetid("", 23)],
+        )
+        x = np.array([[0.0, -10.0]], dtype=np.float16)
+        label = np.array([1], dtype=np.int64)
+        weight = np.ones(2, dtype=np.float16)
+
+        loss, log_prob = ReferenceEvaluator(model).run(
+            None, {"X": x, "label": label, "weight": weight}
+        )
+
+        assert loss.dtype == np.float16
+        assert log_prob.dtype == np.float16
+        assert np.isfinite(loss).all()
+        assert np.isfinite(log_prob).all()
 
     def test_center_crop_pad_no_change_when_shape_equals_dim(self):
         """Test CenterCropPad when target shape equals current dimension.
@@ -7329,6 +7821,176 @@ class TestReferenceEvaluator:
         b = np.ones((2, 3), dtype=np.float16)
         with pytest.raises(ValueError, match="identical dtypes"):
             ref.run(None, {"A": a, "B": b})
+
+    @pytest.mark.parametrize(
+        "dtype", [np.float16, ml_dtypes.bfloat16, np.float32, np.float64]
+    )
+    @pytest.mark.parametrize(
+        "theta,size,expected_shape",
+        [
+            (
+                [[[1, 0, 0], [0, 1, 0]]],
+                [1, 1, 2, 2],
+                (1, 2, 2, 2),
+            ),
+            (
+                [[[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0]]],
+                [1, 1, 2, 2, 2],
+                (1, 2, 2, 2, 3),
+            ),
+        ],
+        ids=["2d", "3d"],
+    )
+    def test_affine_grid_preserves_dtype(
+        self, dtype, theta, size, expected_shape
+    ) -> None:
+        theta = np.array(theta, dtype=dtype)
+        size = np.array(size, dtype=np.int64)
+        node = make_node("AffineGrid", ["theta", "size"], ["grid"])
+
+        (grid,) = ReferenceEvaluator(node).run(None, {"theta": theta, "size": size})
+
+        assert grid.dtype == theta.dtype
+        assert grid.shape == expected_shape
+        assert_array_equal(
+            np.abs(grid.astype(np.float64)),
+            np.full(expected_shape, 0.5),
+        )
+
+    def test_affine_grid_preserves_double_precision(self) -> None:
+        translation = 2**-40
+        theta = np.array(
+            [[[1, 0, translation], [0, 1, 0]]],
+            dtype=np.float64,
+        )
+        size = np.array([1, 1, 2, 2], dtype=np.int64)
+        node = make_node("AffineGrid", ["theta", "size"], ["grid"])
+
+        (grid,) = ReferenceEvaluator(node).run(None, {"theta": theta, "size": size})
+
+        assert grid.dtype == theta.dtype
+        assert grid[0, 0, 0, 0] == -0.5 + translation
+
+    @staticmethod
+    def _grid_sample_model(opset: int, mode: str | None):
+        X = make_tensor_value_info("X", TensorProto.FLOAT, [None, None, None, None])
+        grid = make_tensor_value_info(
+            "grid", TensorProto.FLOAT, [None, None, None, None]
+        )
+        Y = make_tensor_value_info("Y", TensorProto.FLOAT, [None, None, None, None])
+        kwargs = {} if mode is None else {"mode": mode}
+        node = make_node(
+            "GridSample",
+            ["X", "grid"],
+            ["Y"],
+            padding_mode="border",
+            align_corners=0,
+            **kwargs,
+        )
+        graph = make_graph([node], "gs", [X, grid], [Y])
+        return make_model(graph, opset_imports=[make_opsetid("", opset)])
+
+    @staticmethod
+    def _grid_sample_inputs():
+        x = np.arange(1, 17, dtype=np.float32).reshape((1, 1, 4, 4))
+        grid = np.array(
+            [
+                [
+                    [[-1.0, -1.0], [-0.4, -0.7], [0.3, 0.15]],
+                    [[0.55, 0.9], [1.2, -1.3], [0.0, 0.0]],
+                ]
+            ],
+            dtype=np.float32,
+        )
+        return x, grid
+
+    @pytest.mark.parametrize(
+        ("mode_16", "mode_20"),
+        [("bilinear", "linear"), ("nearest", "nearest"), ("bicubic", "cubic")],
+    )
+    def test_grid_sample_16_mode_names(self, mode_16: str, mode_20: str) -> None:
+        x, grid = self._grid_sample_inputs()
+        model_16 = self._grid_sample_model(16, mode_16)
+        check_model(model_16)
+        got = ReferenceEvaluator(model_16).run(None, {"X": x, "grid": grid})[0]
+        expected = ReferenceEvaluator(self._grid_sample_model(20, mode_20)).run(
+            None, {"X": x, "grid": grid}
+        )[0]
+        assert_allclose(got, expected, atol=1e-6)
+
+    def test_grid_sample_16_default_mode(self) -> None:
+        x, grid = self._grid_sample_inputs()
+        got = ReferenceEvaluator(self._grid_sample_model(16, None)).run(
+            None, {"X": x, "grid": grid}
+        )[0]
+        expected = ReferenceEvaluator(self._grid_sample_model(16, "bilinear")).run(
+            None, {"X": x, "grid": grid}
+        )[0]
+        assert_allclose(got, expected, atol=1e-6)
+
+    @pytest.mark.parametrize("mode", ["linear", "cubic"])
+    def test_grid_sample_16_rejects_opset_20_mode_names(self, mode: str) -> None:
+        x, grid = self._grid_sample_inputs()
+        sess = ReferenceEvaluator(self._grid_sample_model(16, mode))
+        with pytest.raises(ValueError, match="attribute 'mode'"):
+            sess.run(None, {"X": x, "grid": grid})
+
+    @pytest.mark.parametrize("mode", ["bilinear", "bicubic"])
+    def test_grid_sample_20_rejects_opset_16_mode_names(self, mode: str) -> None:
+        x, grid = self._grid_sample_inputs()
+        sess = ReferenceEvaluator(self._grid_sample_model(20, mode))
+        with pytest.raises(ValueError, match="attribute 'mode'"):
+            sess.run(None, {"X": x, "grid": grid})
+
+    def test_unique_not_sorted_single_output(self) -> None:
+        # Y follows the order of first occurrence even when the optional
+        # outputs are not requested (spec example 1).
+        node = make_node("Unique", ["X"], ["Y"], sorted=0)
+        x = np.array([2.0, 1.0, 1.0, 3.0, 4.0, 3.0], dtype=np.float32)
+        (y,) = ReferenceEvaluator(node).run(None, {"X": x})
+        assert_array_equal(y, np.array([2.0, 1.0, 3.0, 4.0], dtype=np.float32))
+
+    def test_unique_not_sorted_without_axis_2d(self) -> None:
+        node = make_node(
+            "Unique", ["X"], ["Y", "indices", "inverse", "counts"], sorted=0
+        )
+        x = np.array([[2.0, 1.0], [1.0, 3.0]], dtype=np.float32)
+        y, indices, inverse, counts = ReferenceEvaluator(node).run(None, {"X": x})
+        assert_array_equal(y, np.array([2.0, 1.0, 3.0], dtype=np.float32))
+        assert_array_equal(indices, np.array([0, 1, 3], dtype=np.int64))
+        assert_array_equal(inverse, np.array([0, 1, 1, 2], dtype=np.int64))
+        assert_array_equal(counts, np.array([1, 2, 1], dtype=np.int64))
+
+    @pytest.mark.parametrize("axis", [1, -1])
+    def test_unique_not_sorted_with_axis(self, axis: int) -> None:
+        node = make_node(
+            "Unique", ["X"], ["Y", "indices", "inverse", "counts"], sorted=0, axis=axis
+        )
+        x = np.array([[3.0, 1.0, 3.0], [4.0, 2.0, 4.0]], dtype=np.float32)
+        y, indices, inverse, counts = ReferenceEvaluator(node).run(None, {"X": x})
+        assert_array_equal(y, np.array([[3.0, 1.0], [4.0, 2.0]], dtype=np.float32))
+        assert_array_equal(indices, np.array([0, 1], dtype=np.int64))
+        assert_array_equal(inverse, np.array([0, 1, 0], dtype=np.int64))
+        assert_array_equal(counts, np.array([2, 1], dtype=np.int64))
+
+    def test_unique_sorted_with_negative_axis(self) -> None:
+        node = make_node(
+            "Unique", ["X"], ["Y", "indices", "inverse", "counts"], sorted=1, axis=-1
+        )
+        x = np.array([[3.0, 1.0, 3.0], [4.0, 2.0, 4.0]], dtype=np.float32)
+        y, indices, inverse, counts = ReferenceEvaluator(node).run(None, {"X": x})
+        assert_array_equal(y, np.array([[1.0, 3.0], [2.0, 4.0]], dtype=np.float32))
+        assert_array_equal(indices, np.array([1, 0], dtype=np.int64))
+        assert_array_equal(inverse, np.array([1, 0, 1], dtype=np.int64))
+        assert_array_equal(counts, np.array([1, 2], dtype=np.int64))
+
+    @pytest.mark.parametrize("k_value", [0, -1])
+    def test_topk_rejects_non_positive_k(self, k_value) -> None:
+        node = make_node("TopK", ["X", "K"], ["Values", "Indices"], axis=0)
+        x = np.array([3.0, 1.0, 2.0], dtype=np.float32)
+        k = np.array([k_value], dtype=np.int64)
+        with pytest.raises(ValueError, match="positive"):
+            ReferenceEvaluator(node).run(None, {"X": x, "K": k})
 
 
 class TestReferenceEvaluatorShapeAnnotationChecking:

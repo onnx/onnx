@@ -701,6 +701,14 @@ ONNX_OPERATOR_SET_SCHEMA(
               if (num_outputs < 1) {
                 fail_shape_inference("Attribute `num_outputs` value cannot be lower than 1");
               }
+              if (num_outputs < static_cast<int64_t>(ctx.getNumOutputs())) {
+                fail_shape_inference(
+                    "The 'num_outputs' attribute (",
+                    num_outputs,
+                    ") must be greater or equal to the number outputs of the 'Split' node (",
+                    ctx.getNumOutputs(),
+                    ")");
+              }
               if (split_dim_value % num_outputs == 0) { // tensor is evenly splittable
                 int chunk_size = split_dim_value / num_outputs;
                 split.resize(num_outputs, chunk_size);
@@ -1613,6 +1621,22 @@ ONNX_OPERATOR_SET_SCHEMA(
           if (hasInputShape(ctx, 0)) {
             auto& input_shape = getInputShape(ctx, 0);
             if (input_shape.dim_size() == 4) {
+              // The spatial dimensions are split into blocks, so they must divide
+              // evenly. Without this check the integer divisions below silently report
+              // a truncated shape for an input the runtime rejects.
+              for (const int spatial_axis : {2, 3}) {
+                const auto& dim = input_shape.dim(spatial_axis);
+                if (dim.has_dim_value() && dim.dim_value() % blocksize != 0) {
+                  fail_shape_inference(
+                      "Input dimension ",
+                      spatial_axis,
+                      " (",
+                      dim.dim_value(),
+                      ") must be a multiple of 'blocksize' (",
+                      blocksize,
+                      ").");
+                }
+              }
               updateOutputShape(
                   ctx,
                   0,
@@ -1668,6 +1692,19 @@ ONNX_OPERATOR_SET_SCHEMA(
           if (hasInputShape(ctx, 0)) {
             auto& input_shape = getInputShape(ctx, 0);
             if (input_shape.dim_size() == 4) {
+              // The channels are redistributed into blocksize x blocksize blocks, so
+              // the channel dimension must divide evenly. Without this check the
+              // integer division below silently reports a truncated shape for an input
+              // the runtime rejects.
+              const auto& channel_dim = input_shape.dim(1);
+              if (channel_dim.has_dim_value() && channel_dim.dim_value() % block_area != 0) {
+                fail_shape_inference(
+                    "Input channel dimension (",
+                    channel_dim.dim_value(),
+                    ") must be a multiple of 'blocksize' * 'blocksize' (",
+                    block_area,
+                    ").");
+              }
               updateOutputShape(
                   ctx,
                   0,
@@ -2793,6 +2830,9 @@ ONNX_OPERATOR_SET_SCHEMA(
                 "Both `data` and `indices` input tensors in GatherND op "
                 "need to have rank larger than 0.");
           }
+          if (batch_dims_data < 0) {
+            fail_shape_inference("attribute 'batch_dims' of 'GatherND' must not be negative");
+          }
 
           // cannot ascertain if the input shapes are valid if shape of
           // `indices` is missing last dimension value so return at this point
@@ -2813,7 +2853,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             *ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape()->add_dim() = indices_shape.dim(i);
           }
 
-          for (int i = static_cast<int>(last_index_dimension); i < data_rank; ++i) {
+          for (auto i = last_index_dimension; i < data_rank; ++i) {
             *ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape()->add_dim() = data_shape.dim(i);
           }
         }));
