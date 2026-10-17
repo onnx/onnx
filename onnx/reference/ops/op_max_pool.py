@@ -20,11 +20,19 @@ class MaxPool(CommonPool):
         storage_order=None,
         strides=None,
     ):
+        # CommonPool ignores explicit pads outside 2D, counts them twice in 2D
+        # when ceil_mode=1, and leaves the batch and channel offsets out of
+        # Indices, so it only handles SAME padding with unit strides and dilations.
         if (
-            dilations is not None
-            and (min(dilations) != max(dilations) or min(dilations) != 1)
-        ) or (
-            strides is not None and (min(strides) != max(strides) or min(strides) != 1)
+            (
+                dilations is not None
+                and (min(dilations) != max(dilations) or min(dilations) != 1)
+            )
+            or (
+                strides is not None
+                and (min(strides) != max(strides) or min(strides) != 1)
+            )
+            or auto_pad not in ("SAME_UPPER", "SAME_LOWER")
         ):
             return self._max_pool(
                 x,
