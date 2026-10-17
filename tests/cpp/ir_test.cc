@@ -33,33 +33,6 @@ static bool IsValidIdentifier(const std::string& name) {
 }
 
 TEST(IR, ValidIdentifierTest) {
-  Graph* g = new Graph(); // NOLINT(cppcoreguidelines-owning-memory)
-  g->setName("test");
-  Value* x = g->addInput();
-  x->setUniqueName("x");
-  x->setElemType(ONNX_NAMESPACE::TensorProto_DataType_FLOAT);
-  x->setSizes({Dimension("M"), Dimension("N")});
-  Node* node1 = g->create(kNeg, 1);
-  node1->addInput(x);
-  g->appendNode(node1);
-  Value* temp1 = node1->outputs()[0];
-  Node* node2 = g->create(kNeg, 1);
-  node2->addInput(temp1);
-  g->appendNode(node2);
-  Value* y = node2->outputs()[0];
-  g->registerOutput(y);
-
-  ModelProto model;
-  ExportModelProto(&model, std::shared_ptr<Graph>(g));
-
-  for (const auto& node : model.graph().node()) {
-    for (const auto& name : node.output()) {
-      EXPECT_TRUE(IsValidIdentifier(name));
-    }
-  }
-}
-
-TEST(IR, ImportInitializerPreservesDataAndInputNames) {
   const std::string name = "initializer_name_longer_than_small_string_storage";
   const std::string raw_data(4096, '\x01');
   for (int64_t ir_version : {3, 8}) {
@@ -68,27 +41,40 @@ TEST(IR, ImportInitializerPreservesDataAndInputNames) {
         continue;
       }
       SCOPED_TRACE(::testing::Message() << "ir_version=" << ir_version << ", is_input=" << is_input);
+      auto g = std::make_shared<Graph>();
+      g->setName("test");
+      Tensor initializer;
+      initializer.setName(name);
+      initializer.elem_type() = TensorProto_DataType_FLOAT;
+      initializer.sizes() = {1024};
+      initializer.set_raw_data(raw_data);
+      Value* x = nullptr;
+      if (is_input) {
+        x = g->addInput();
+        x->setUniqueName(name);
+        x->setElemType(TensorProto_DataType_FLOAT);
+        x->setSizes({Dimension(1024)});
+        g->addInitializer(initializer);
+      } else {
+        x = g->addInitializerAndCreateValue(initializer);
+      }
+      Node* node1 = g->create(kNeg, 1);
+      node1->addInput(x);
+      g->appendNode(node1);
+      Node* node2 = g->create(kNeg, 1);
+      node2->addInput(node1->outputs()[0]);
+      g->appendNode(node2);
+      g->registerOutput(node2->outputs()[0]);
+
       ModelProto model;
       model.set_ir_version(ir_version);
-      auto* graph = model.mutable_graph();
-      graph->set_name("initializer_import");
-      auto* initializer = graph->add_initializer();
-      initializer->set_name(name);
-      initializer->set_data_type(TensorProto_DataType_FLOAT);
-      initializer->add_dims(1024);
-      initializer->set_raw_data(raw_data);
-      if (is_input) {
-        auto* input = graph->add_input();
-        input->set_name(name);
-        auto* type = input->mutable_type()->mutable_tensor_type();
-        type->set_elem_type(TensorProto_DataType_FLOAT);
-        type->mutable_shape()->add_dim()->set_dim_value(1024);
+      ExportModelProto(&model, g);
+      for (const auto& node : model.graph().node()) {
+        for (const auto& output_name : node.output()) {
+          EXPECT_TRUE(IsValidIdentifier(output_name));
+        }
       }
-      auto* node = graph->add_node();
-      node->set_op_type("Identity");
-      node->add_input(name);
-      node->add_output("result");
-      graph->add_output()->set_name("result");
+      EXPECT_TRUE(IsValidIdentifier(model.graph().initializer(0).name()));
 
       auto imported = ImportModelProto(model);
       ASSERT_TRUE(imported != nullptr);
@@ -100,12 +86,13 @@ TEST(IR, ImportInitializerPreservesDataAndInputNames) {
       EXPECT_EQ(tensor.elem_type(), TensorProto_DataType_FLOAT);
       EXPECT_EQ(imported->initializer_names(), std::vector<std::string>({name}));
       ASSERT_EQ(imported->outputs().size(), 1u);
-      const auto* imported_node = imported->outputs()[0]->node();
-      EXPECT_EQ(imported_node->kind(), kIdentity);
-      ASSERT_EQ(imported_node->inputs().size(), 1u);
-      EXPECT_EQ(imported_node->inputs()[0]->uniqueName(), name);
-      EXPECT_EQ(initializer->raw_data(), raw_data);
-      EXPECT_EQ(initializer->name(), name);
+      const auto* last_node = imported->outputs()[0]->node();
+      ASSERT_EQ(last_node->inputs().size(), 1u);
+      const auto* first_node = last_node->inputs()[0]->node();
+      ASSERT_EQ(first_node->inputs().size(), 1u);
+      EXPECT_EQ(first_node->inputs()[0]->uniqueName(), name);
+      EXPECT_EQ(model.graph().initializer(0).raw_data(), raw_data);
+      EXPECT_EQ(model.graph().initializer(0).name(), name);
     }
   }
 }
