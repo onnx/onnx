@@ -255,6 +255,115 @@ class TestShapeInferenceHelper:
             pytest.skip(reason)
 
 
+class TestPackingShapeInference(TestShapeInferenceHelper):
+    @pytest.mark.parametrize("bits", range(1, 9))
+    @pytest.mark.parametrize("n", [0, 1, 7, 8, 9, 17])
+    def test_pack_shape(self, bits, n) -> None:
+        graph = self._make_graph(
+            [("X", TensorProto.UINT8, ("rows", n))],
+            [make_node("Pack", ["X"], ["Y"], bits=bits)],
+            [],
+        )
+        self._assert_inferred(
+            graph,
+            [
+                make_tensor_value_info(
+                    "Y", TensorProto.UINT8, ("rows", (n * bits + 7) // 8)
+                )
+            ],
+        )
+
+    @pytest.mark.parametrize("bits", [3, 8])
+    def test_pack_symbolic_last(self, bits) -> None:
+        graph = self._make_graph(
+            [("X", TensorProto.UINT8, ("rows", "codes"))],
+            [make_node("Pack", ["X"], ["Y"], bits=bits)],
+            [],
+        )
+        self._assert_inferred(
+            graph,
+            [
+                make_tensor_value_info(
+                    "Y", TensorProto.UINT8, ("rows", "codes" if bits == 8 else None)
+                )
+            ],
+        )
+
+    @pytest.mark.parametrize("constant", [False, True])
+    @pytest.mark.parametrize("n", [0, 1, 9])
+    def test_unpack_shape(self, constant, n) -> None:
+        graph = self._make_graph(
+            [
+                ("X", TensorProto.UINT8, ("rows", (n * 3 + 7) // 8)),
+                ("count", TensorProto.INT64, ()),
+            ],
+            [make_node("Unpack", ["X", "count"], ["Y"], bits=3)],
+            [],
+            initializer=[make_tensor("count", TensorProto.INT64, [], [n])]
+            if constant
+            else [],
+        )
+        self._assert_inferred(
+            graph,
+            [
+                make_tensor_value_info(
+                    "Y", TensorProto.UINT8, ("rows", n if constant else None)
+                )
+            ],
+        )
+
+    @pytest.mark.parametrize(
+        ("op", "bits", "shape", "count", "count_shape"),
+        [
+            ("Pack", 0, (3,), None, ()),
+            ("Pack", 9, (3,), None, ()),
+            ("Pack", 3, (), None, ()),
+            ("Unpack", 3, (), 0, ()),
+            ("Unpack", 3, (1,), -1, ()),
+            ("Unpack", 3, (1,), 3, ()),
+            ("Unpack", 3, (1,), 2, (1,)),
+            ("Unpack", 3, (1,), None, (1,)),
+        ],
+    )
+    def test_packing_invalid_shape(self, op, bits, shape, count, count_shape) -> None:
+        inputs = [("X", TensorProto.UINT8, shape)]
+        names = ["X"]
+        initializer = []
+        if op == "Unpack":
+            inputs.append(("count", TensorProto.INT64, count_shape))
+            names.append("count")
+            if count is not None:
+                initializer.append(
+                    make_tensor("count", TensorProto.INT64, count_shape, [count])
+                )
+        graph = self._make_graph(
+            inputs,
+            [make_node(op, names, ["Y"], bits=bits)],
+            [],
+            initializer=initializer,
+        )
+        with pytest.raises(onnx.shape_inference.InferenceError):
+            self._inferred(graph)
+
+    @pytest.mark.parametrize("op", ["Pack", "Unpack"])
+    def test_packing_unknown_rank(self, op) -> None:
+        inputs = [make_tensor_value_info("X", TensorProto.UINT8, None)]
+        names = ["X"]
+        if op == "Unpack":
+            inputs.append(make_tensor_value_info("count", TensorProto.INT64, []))
+            names.append("count")
+        graph = make_graph(
+            [make_node(op, names, ["Y"], bits=3)],
+            "packing",
+            inputs,
+            [make_empty_tensor_value_info("Y")],
+        )
+        model = make_model(graph)
+        inferred = onnx.shape_inference.infer_shapes(model, strict_mode=True)
+        assert inferred.graph.output[0].type.tensor_type.elem_type == TensorProto.UINT8
+        assert not inferred.graph.output[0].type.tensor_type.HasField("shape")
+
+
 class TestShapeInference(TestShapeInferenceHelper):
     def test_shape_input_excessive_length_leaves_output_rank_unknown(self) -> None:
         graph = make_graph(

@@ -34454,6 +34454,109 @@ This version of the operator has been available since version 28 of the default 
 <dd>Input can be of any tensor type.</dd>
 </dl>
 
+## Version 29 of the default ONNX operator set
+### <a name="Pack-29"></a>**Pack-29**</a>
+
+  Packs unsigned integer codes into a contiguous least-significant-bit-first
+  bitstream independently along the last axis. Input and output are UINT8 tensors
+  of rank at least 1. Each input element must be in [0, 2^bits - 1].
+  For input shape [..., N], the output shape is [..., ceil(N * bits / 8)].
+  All leading dimensions are preserved, including zero dimensions.
+
+  In each row, bit k of code i is stored at bit (i * bits + k) % 8 of byte
+  floor((i * bits + k) / 8), for 0 <= k < bits. Codes may cross byte boundaries.
+  Rows start on byte boundaries, and unused high bits in each row's final byte
+  are zero. An empty last axis produces an empty last axis.
+
+  For example, bits=3 packs [0, 1, 2, 3, 4, 5, 6, 7] into [136, 198, 250].
+  This operator packs code bit patterns, not quantized
+  floating-point values; signed interpretation and quantization are separate.
+
+#### Version
+
+This version of the operator has been available since version 29 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>bits</tt> : int (required)</dt>
+<dd>Number of bits per unsigned code, from 1 to 8 inclusive.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> : T</dt>
+<dd>Unsigned codes, each representable in bits bits.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> : T</dt>
+<dd>Packed bytes, independently packed along the last axis.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(uint8)</dt>
+<dd>Unsigned byte tensors.</dd>
+</dl>
+
+### <a name="Unpack-29"></a>**Unpack-29**</a>
+
+  Unpacks the contiguous least-significant-bit-first bitstream defined by Pack,
+  independently along the last axis, into UINT8 unsigned codes. Input X must have
+  rank at least 1. The scalar int64 input count gives the number of codes per row
+  and must be nonnegative. For input shape [..., B], B must equal
+  ceil(count * bits / 8), and the output shape is [..., count].
+
+  Code i consists of bits at offsets i * bits through (i + 1) * bits - 1 in its
+  row, with the first bit being the least significant. Unused high bits in the
+  last byte are padding and are ignored; Pack always writes them as zero.
+  All leading dimensions are preserved, including zero dimensions.
+  count=0 requires an empty last axis and produces an empty last axis.
+
+  For example, bits=3 and count=8 unpack [136, 198, 250] into
+  [0, 1, 2, 3, 4, 5, 6, 7]. The explicit count distinguishes padding from codes.
+  Signed codes, floating-point scaling, and zero-point adjustment are not part
+  of this operator.
+
+#### Version
+
+This version of the operator has been available since version 29 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>bits</tt> : int (required)</dt>
+<dd>Number of bits per unsigned code, from 1 to 8 inclusive.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> : T</dt>
+<dd>Packed unsigned bytes.</dd>
+<dt><tt>count</tt> : tensor(int64)</dt>
+<dd>Nonnegative scalar number of unpacked codes per row.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> : T</dt>
+<dd>Unpacked unsigned codes, one byte per code.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(uint8)</dt>
+<dd>Unsigned byte tensors.</dd>
+</dl>
+
 # ai.onnx.preview
 ## Version 1 of the 'ai.onnx.preview' operator set
 ### <a name="ai.onnx.preview.FlexAttention-1"></a>**ai.onnx.preview.FlexAttention-1**</a>
