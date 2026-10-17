@@ -241,7 +241,8 @@ __all__ = [
     "Squeeze_1",
     "Squeeze_11",
     "Squeeze_13",
-    "STFT",
+    "STFT_17",
+    "STFT_29",
     "StringConcat",
     "StringNormalizer",
     "StringSplit",
@@ -491,7 +492,7 @@ from onnx.reference.ops.op_split import Split_2, Split_11, Split_13, Split_18
 from onnx.reference.ops.op_split_to_sequence import SplitToSequence
 from onnx.reference.ops.op_sqrt import Sqrt
 from onnx.reference.ops.op_squeeze import Squeeze_1, Squeeze_11, Squeeze_13
-from onnx.reference.ops.op_stft import STFT
+from onnx.reference.ops.op_stft import STFT_17, STFT_29
 from onnx.reference.ops.op_string_concat import StringConcat
 from onnx.reference.ops.op_string_normalizer import StringNormalizer
 from onnx.reference.ops.op_string_split import StringSplit
