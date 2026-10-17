@@ -75,6 +75,30 @@ Every person granted GitHub organization membership is added to a GitHub Team co
 
 **Process:** The SIG Architecture & Infra chairs are responsible for conducting activity audits — as part of routine SIG maintenance or in response to seat pressure, rather than on a fixed schedule — and for acting on the resulting removals. Seat status and governance status are tracked independently: members removed solely for seat capacity keep their Contributor/Approver governance status and voting eligibility, and may be re-added to the GitHub organization (and their SIG Team) when a seat becomes available. Members who lose governance status — through inactivity, resignation, or a Code of Conduct ruling — must requalify through the normal sponsorship process to regain it, regardless of whether or when their seat is restored.
 
+## Release Manager
+
+> **Work in Progress:** This role definition is under active discussion. Details may change before ratification by the Steering Committee.
+
+The Release Manager is an appointed position, not a Community Role — it does not carry voting rights or sit on the Member → Contributor → Approver ladder, similar to how a SIG chair or Steering Committee seat is an appointment layered on top of that base progression rather than a new rung in it.
+
+A Release Manager takes responsibility for driving a single release cycle from branch cut to final publication. The role commonly rotates among Member Companies each release; the same person or company may serve multiple consecutive cycles by mutual agreement. Release Managers are nominated by the SIG Architecture & Infra chairs and confirmed by the Steering Committee.
+
+**Eligibility:** No prior Contributor status or codebase familiarity is required. In practice, Release Managers are often designated through an informal rotation among Member Companies and may be new to the codebase; nomination by SIG Architecture & Infra and confirmation by the Steering Committee are the operative checks.
+
+**Duties for a release cycle:**
+
+* Announce the release timeline and branch-cut date on community channels (Slack, mailing list, GitHub discussion)
+* Create the release branch (`rel-X.Y.Z`) and update all version references in build scripts and metadata
+* Coordinate the RC1 build: trigger CI, publish the `X.Y.Zrc1` wheel per the process in [docs/OnnxReleases.md](../docs/OnnxReleases.md), and announce the start of the RC testing period
+* Communicate with each SIG during the RC period: share the RC build, solicit testing feedback, track open issues by SIG ownership, and report status back to the community in weekly updates
+* Triage incoming bug reports during RC testing; decide with SIG chairs which fixes are release-critical
+* Cut additional RC builds as needed (RC2, RC3) until no critical regressions remain
+* Finalize release notes, tag the release commit, and coordinate the PyPI publish
+* Update the release wiki page and announce the final release to community channels
+* Hand off any open patch-release tracking to the next cycle's Release Manager (or retain it by agreement)
+
+A Release Manager may delegate individual tasks to other Contributors or Approvers, but retains overall accountability for the release shipping on time and in good shape.
+
 ## Organizational Structure
 
 The ONNX community is organized in the following manner, with all governance and execution being planned and coordinated as follows:
