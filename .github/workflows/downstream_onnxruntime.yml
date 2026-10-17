@@ -30,15 +30,18 @@ jobs:
     # when the 'run onnxruntime CI' label is set (akin to 'run release CIs').
     if: github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'run onnxruntime CI')
     runs-on: ubuntu-24.04-arm
+    permissions:
+      contents: read
+      issues: write
     steps:
       - name: Checkout onnx (this PR branch)
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           path: onnx
           persist-credentials: false
 
       - name: Checkout onnxruntime main
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           repository: microsoft/onnxruntime
           ref: main
@@ -46,7 +49,7 @@ jobs:
           persist-credentials: false
 
       - name: Set up pixi
-        uses: prefix-dev/setup-pixi@a09b6247153796b190642a2b53fac4241043cf6f # v0.10.0
+        uses: prefix-dev/setup-pixi@d3f436a425481402e6a95a1d1fc10331c708cd9e # v0.10.2
         with:
           manifest-path: onnx/pixi.toml
           environments: ort
@@ -58,3 +61,25 @@ jobs:
       - name: Test onnxruntime
         working-directory: onnx
         run: pixi run -e ort test-onnxruntime
+
+      - name: Issue on failure
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        if: failure() && github.ref == 'refs/heads/main'
+        with:
+          script: |
+            github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: "open",
+              labels: "[bot] onnxruntime integration test"
+            }).then((issues) => {
+              if (issues.data.length === 0){
+                github.rest.issues.create({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  title: "onnxruntime integration test failed",
+                  body: `The onnxruntime integration test failed. See https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId} for details.`,
+                  labels: ["[bot] onnxruntime integration test"]
+                })
+              }
+            });

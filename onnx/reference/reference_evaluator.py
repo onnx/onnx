@@ -19,7 +19,6 @@ from onnx.onnx_pb import (
     TypeProto,
 )
 from onnx.reference import op_run
-from onnx.reference.ops_optimized import optimized_operators
 from onnx.reference.shape_annotation_checker import (
     SymbolBindings,
     check_value_against_type,
@@ -48,15 +47,6 @@ class ReferenceEvaluator:
             must define the static attribute `domain`, there may be
             multiple implementations for the same operator, the first
             one in the list is used.
-        optimized: some operators have two implementations, a naive one
-            corresponding to definition of the mathematical definition
-            of the operator, another one more efficient. This is the
-            case for operator Conv. The naive version is ten times
-            slower than the optimized one using a decomposition into
-            *Conv = im2col + Gemm*. If True, all optimized kernels are
-            added in `new_ops` and are used instead of the inner
-            implementation if list *new_ops* does not already contain
-            one.
         check_shape_annotations: if True, every input and computed value is
             checked, as it becomes available, against its declared static
             shape annotation (see `docs/ShapeAnnotationSemantics.md
@@ -213,18 +203,9 @@ class ReferenceEvaluator:
         functions: list[ReferenceEvaluator | FunctionProto] | None = None,
         verbose: int = 0,
         new_ops: list[type[op_run.OpRun]] | None = None,
-        optimized: bool = True,
         check_shape_annotations: bool = False,
     ) -> None:
         self.check_shape_annotations_ = check_shape_annotations
-        if optimized:
-            if new_ops is None:
-                new_ops = optimized_operators.copy()
-            else:
-                set_new_ops = set(new_ops)
-                for op in optimized_operators:
-                    if op not in set_new_ops:
-                        new_ops.append(op)
         self.output_types_ = None
         self.input_types_ = None
 

@@ -1472,21 +1472,58 @@ class OpSet_Onnx_ver27 {
 };
 
 // Forward declarations for ai.onnx version 28
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 28, BitShift);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 28, Celu);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 28, Einsum);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 28, Mod);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 28, DepthToSpace);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 28, SpaceToDepth);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 28, Compress);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 28, OneHot);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 28, ReverseSequence);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 28, SwiGLU);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 28, Optional);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 28, OptionalHasElement);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 28, OptionalGetElement);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 28, Unique);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 28, Cast);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 28, QuantizeLinear);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 28, DequantizeLinear);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 28, ReduceLogSum);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 28, ReduceLogSumExp);
 
 // Iterate over schema from ai.onnx version 28
 class OpSet_Onnx_ver28 {
  public:
   static void ForEachSchema(const std::function<void(OpSchema&&)>& fn) {
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 28, BitShift)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 28, Celu)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 28, Einsum)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 28, Mod)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 28, DepthToSpace)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 28, SpaceToDepth)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 28, Compress)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 28, OneHot)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 28, ReverseSequence)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 28, SwiGLU)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 28, Optional)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 28, OptionalHasElement)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 28, OptionalGetElement)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 28, Unique)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 28, Cast)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 28, QuantizeLinear)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 28, DequantizeLinear)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 28, ReduceLogSum)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 28, ReduceLogSumExp)>());
+  }
+};
+
+// Iterate over schema from ai.onnx version 29
+class OpSet_Onnx_ver29 {
+ public:
+  static void ForEachSchema(const std::function<void(OpSchema&&)>& fn) {
+    // TODO: Remove after introducing the first schema to opset 29
+    (void)fn;
   }
 };
 
@@ -1519,6 +1556,7 @@ ONNX_API inline void RegisterOnnxOperatorSetSchema() {
   RegisterOpSetSchema<OpSet_Onnx_ver26>();
   RegisterOpSetSchema<OpSet_Onnx_ver27>();
   RegisterOpSetSchema<OpSet_Onnx_ver28>();
+  RegisterOpSetSchema<OpSet_Onnx_ver29>();
   // 0 means all versions of ONNX schema have been loaded
   OpSchemaRegistry::SetLoadedSchemaVersion(0);
 }
@@ -1528,6 +1566,7 @@ ONNX_API inline void RegisterOnnxOperatorSetSchema(int target_version, bool fail
   // These calls for schema registration here are required to be in descending order for this to work correctly
   //
   // Version-specific registration sees duplicate schema version request as error if fail_duplicate_schema
+  RegisterOpSetSchema<OpSet_Onnx_ver29>(target_version, fail_duplicate_schema);
   RegisterOpSetSchema<OpSet_Onnx_ver28>(target_version, fail_duplicate_schema);
   RegisterOpSetSchema<OpSet_Onnx_ver27>(target_version, fail_duplicate_schema);
   RegisterOpSetSchema<OpSet_Onnx_ver26>(target_version, fail_duplicate_schema);

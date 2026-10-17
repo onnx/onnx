@@ -33,6 +33,7 @@ jobs:
       - run: |
           pip install -q check-jsonschema
           python -m check_jsonschema --schemafile "https://cyclonedx.org/schema/bom-1.7.schema.json" sbom.cdx.json
+          python -m check_jsonschema --schemafile "https://raw.githubusercontent.com/openvex/spec/a68ccd19b15a9604d28ef66ebf33f27a772ba4ec/openvex_json_schema.json" .vex/*.openvex.json
 
   enforce-style:
     name: Enforce style
@@ -84,7 +85,7 @@ jobs:
         # To toggle linter comments in the files page, press `i` on the keyboard
         if: always()
         continue-on-error: true
-        uses: github/codeql-action/upload-sarif@e4fba868fa4b1b91e1fdab776edc8cfbe6e9fb81
+        uses: github/codeql-action/upload-sarif@2892aa5e19bbd11bc0cff5427e3b750a04d9e3c2
         with:
           # Path to SARIF file relative to the root of the repository
           sarif_file: lintrunner.sarif
