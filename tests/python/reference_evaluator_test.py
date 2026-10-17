@@ -1980,6 +1980,48 @@ class TestReferenceEvaluator:
         got = qlinearconv_w_scale_vector_session.run(None, feeds)[0]
         assert_allclose(got, expected)
 
+    @pytest.mark.parametrize("spatial_shape", [(4,), (2, 3), (2, 2, 3), (3, 2, 2)])
+    @pytest.mark.parametrize("dtype", [np.uint8, np.int8])
+    def test_qlinearconv_w_scale_vector_spatial_ranks(self, spatial_shape, dtype):
+        values = np.arange(2 * np.prod(spatial_shape), dtype=np.int32)
+        values = (values - values.size // 2).reshape(2, 1, *spatial_shape)
+        zero = 32 if dtype == np.uint8 else 0
+        feeds = {
+            "x": (values + zero).astype(dtype),
+            "x_scale": np.array(0.5, dtype=np.float32),
+            "x_zero_point": np.array(zero, dtype=dtype),
+            "w": np.full((2, 1) + (1,) * len(spatial_shape), 2, dtype=dtype),
+            "w_scale": np.array([0.5, 1.0], dtype=np.float32),
+            "w_zero_point": np.zeros(2, dtype=dtype),
+            "y_scale": np.array(1.0, dtype=np.float32),
+            "y_zero_point": np.array(zero, dtype=dtype),
+        }
+        integer_type = TensorProto.UINT8 if dtype == np.uint8 else TensorProto.INT8
+        inputs = [
+            make_tensor_value_info(
+                name,
+                TensorProto.FLOAT if array.dtype == np.float32 else integer_type,
+                array.shape,
+            )
+            for name, array in feeds.items()
+        ]
+        graph = make_graph(
+            [make_node("QLinearConv", list(feeds), ["y"])],
+            "qlinearconv_per_channel",
+            inputs,
+            [make_tensor_value_info("y", integer_type, [2, 2, *spatial_shape])],
+        )
+        model = make_model_gen_version(graph, opset_imports=[make_opsetid("", 16)])
+        check_model(model)
+
+        # The two pointwise filters produce half and all of the centered input.
+        expected = np.concatenate(
+            (np.rint(values * 0.5) + zero, values + zero), axis=1
+        ).astype(dtype)
+        (got,) = ReferenceEvaluator(model).run(None, feeds)
+        assert got.dtype == expected.dtype
+        assert_array_equal(got, expected)
+
     def test_qlinearconv_w_scale_vector_fails_with_w_scale_2D(
         self, qlinearconv_w_scale_vector_session: ReferenceEvaluator
     ):
