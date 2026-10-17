@@ -18,6 +18,7 @@ from urllib.parse import urlencode
 ORG_MEMBERS_QUERY = """
 query($org: String!, $after: String) {
   organization(login: $org) {
+    viewerIsAMember
     membersWithRole(first: 100, after: $after) {
       pageInfo { hasNextPage endCursor }
       nodes { login }
@@ -127,6 +128,11 @@ def list_member_logins(org: str) -> set[str]:
         organization = data.get("organization")
         if organization is None:
             raise RuntimeError(f"Organization {org!r} was not found or is not visible")
+        if not organization["viewerIsAMember"]:
+            raise RuntimeError(
+                f"The authenticated account must be a member of {org!r} to ensure "
+                "private organization memberships are visible"
+            )
         connection = organization["membersWithRole"]
         members.update(node["login"] for node in connection["nodes"])
         if not connection["pageInfo"]["hasNextPage"]:
@@ -189,7 +195,7 @@ def primary_repo(candidate: dict[str, Any]) -> str | None:
     repo_activity = candidate["repo_activity"]
     if not repo_activity:
         return None
-    return max(repo_activity, key=lambda repo: repo_activity[repo])
+    return min(repo_activity, key=lambda repo: (-repo_activity[repo], repo.lower()))
 
 
 def search_issues_or_pulls(
@@ -286,7 +292,7 @@ def collect_commit_activity(
                 login = author.get("login")
                 if not login or login in member_logins or author.get("type") == "Bot":
                     continue
-                commit_date = commit.get("commit", {}).get("author", {}).get("date")
+                commit_date = commit.get("commit", {}).get("committer", {}).get("date")
                 if not commit_date:
                     continue
                 note_activity(
@@ -305,8 +311,8 @@ def activity_span_days(candidate: dict[str, Any]) -> int:
     last = candidate["last_activity_at"]
     if first is None or last is None:
         return 0
-    first_date = datetime.fromisoformat(first.replace("Z", "+00:00"))
-    last_date = datetime.fromisoformat(last.replace("Z", "+00:00"))
+    first_date = datetime.fromisoformat(first)
+    last_date = datetime.fromisoformat(last)
     return (last_date - first_date).days
 
 
@@ -539,10 +545,6 @@ def parse_args() -> argparse.Namespace:
         parser.error("--months must be positive")
     if arguments.min_active_months < 0:
         parser.error("--min-active-months must not be negative")
-    if arguments.min_active_months > arguments.months:
-        parser.error(
-            "--min-active-months cannot exceed --months: no candidate could qualify"
-        )
     if arguments.workers < 1:
         parser.error("--workers must be positive")
     return arguments

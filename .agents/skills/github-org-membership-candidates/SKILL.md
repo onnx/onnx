@@ -23,8 +23,9 @@ may be worth inviting.
 
 ## Prerequisites
 
-Read access to the organization's repositories is sufficient; organization ownership is not
-required. Authenticate with at least `read:org` and `repo` (for private repository activity).
+The authenticated account must be a member of the organization so the report can exclude members
+whose organization membership is private. Organization ownership is not required. Authenticate
+with at least `read:org` and `repo` (for private repository activity).
 
 Verify the active account without querying any individual member:
 
@@ -62,9 +63,9 @@ commits + 2 * issues + 3 * pull_requests
 The score is a sorting aid, not a judgment of contribution quality or eligibility. Candidate
 bands:
 
-- `priority-candidate`: score at or above `--min-score` (default 8) **and** an activity span of
-  at least `--min-active-months` (default 6, measured as a 30-day-month day count) between the
-  candidate's first and last observed contribution in the reporting period
+- `priority-candidate`: score at or above `--min-score` (default 8) **and** an activity span of at
+  least `--min-active-months` (default 6, converted to calendar days relative to the report's end
+  date) between the candidate's first and last observed contribution in the reporting period
 - `candidate`: any observable activity that does not clear both bars
 
 The span requirement exists because a raw contribution count, or even "touches two different
