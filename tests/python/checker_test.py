@@ -669,10 +669,9 @@ class TestChecker:
             checker.check_model(model)
 
     def test_check_model_negative_dimension_subgraph(self) -> None:
-        n1 = helper.make_node("Scale", ["X"], ["Y"], scale=2.0, name="n1")
-        input_x = helper.make_tensor_value_info("X", TensorProto.FLOAT, [-1])
+        n1 = helper.make_node("Identity", ["X"], ["Y"], name="n1")
         output_y = helper.make_tensor_value_info("Y", TensorProto.FLOAT, [-1])
-        subgraph = helper.make_graph([n1], "nested", [input_x], [output_y])
+        subgraph = helper.make_graph([n1], "nested", [], [output_y])
 
         i1 = helper.make_node(
             "If", ["cond"], ["Z"], then_branch=subgraph, else_branch=subgraph
@@ -681,13 +680,41 @@ class TestChecker:
             [i1],
             "test",
             inputs=[
-                helper.make_tensor_value_info("cond", TensorProto.BOOL, [1]),
-                input_x,
+                helper.make_tensor_value_info("cond", TensorProto.BOOL, []),
+                helper.make_tensor_value_info("X", TensorProto.FLOAT, [1]),
             ],
-            outputs=[output_y],
+            outputs=[helper.make_tensor_value_info("Z", TensorProto.FLOAT, [1])],
         )
         model = helper.make_model(graph, producer_name="test")
-        with pytest.raises(checker.ValidationError):
+        with pytest.raises(checker.ValidationError, match="dimension value must be non-negative"):
+            checker.check_model(model)
+
+    @pytest.mark.parametrize("location", ["graph", "function"])
+    def test_check_model_negative_dimension_annotation(self, location: str) -> None:
+        """Intermediate graph and function annotations must not use negative dimensions."""
+        value_info = helper.make_tensor_value_info("annotation", TensorProto.FLOAT, [-1])
+        function = helper.make_function(
+            "local",
+            "f",
+            ["X"],
+            ["Y"],
+            [helper.make_node("Identity", ["X"], ["Y"])],
+            [helper.make_opsetid("", 21)],
+            value_info=[value_info] if location == "function" else [],
+        )
+        graph = helper.make_graph(
+            [helper.make_node("f", ["X"], ["Y"], domain="local")],
+            "test",
+            [helper.make_tensor_value_info("X", TensorProto.FLOAT, [1])],
+            [helper.make_tensor_value_info("Y", TensorProto.FLOAT, [1])],
+            value_info=[value_info] if location == "graph" else [],
+        )
+        model = helper.make_model(
+            graph,
+            opset_imports=[helper.make_opsetid("", 21), helper.make_opsetid("local", 1)],
+            functions=[function],
+        )
+        with pytest.raises(checker.ValidationError, match="dimension value must be non-negative"):
             checker.check_model(model)
 
     def test_check_model_negative_dimension_slice(self) -> None:

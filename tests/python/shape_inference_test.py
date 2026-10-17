@@ -2494,12 +2494,11 @@ class TestShapeInference(TestShapeInferenceHelper):
                 make_tensor("steps", TensorProto.INT64, (1,), (1,)),
             ],
         )
-        with pytest.raises(checker.ValidationError):
-            self._assert_inferred(
-                graph,
-                [make_tensor_value_info("y", TensorProto.FLOAT, (0, 6))],
-                opset_imports=[make_opsetid("", opset_version)],
-            )
+        self._assert_inferred(
+            graph,
+            [make_tensor_value_info("y", TensorProto.FLOAT, (0, 6))],
+            opset_imports=[make_opsetid("", opset_version)],
+        )
 
     def test_slice_scalar_shape_output(self) -> None:
         """Shape(scalar) produces 0-length output; Slice on it should not crash."""

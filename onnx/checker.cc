@@ -1083,9 +1083,11 @@ void check_graph(const GraphProto& graph, const CheckerContext& ctx, const Lexic
     check_value_info(value_info, ctx);
   }
   // Intermediate value_info entries are optional annotations and are not
-  // otherwise validated, but they must not use data types newer than the IR version.
+  // otherwise validated, but they must not use data types newer than the IR version
+  // or invalid tensor shapes.
   for (const auto& value_info : graph.value_info()) {
     check_type_ir_version(value_info.type(), value_info.name(), ctx);
+    check_type_shapes(value_info.type(), value_info.name());
   }
 
   // Inherit values available in outer scope
@@ -1501,6 +1503,7 @@ void check_function(const FunctionProto& function, const CheckerContext& ctx, co
   // Function inputs and outputs are untyped names; their types, if any, are given here.
   for (const auto& value_info : function.value_info()) {
     check_type_ir_version(value_info.type(), value_info.name(), ctx);
+    check_type_shapes(value_info.type(), value_info.name());
   }
   std::unordered_set<std::string> used_experimental_ops;
   for (const auto& node : function.node()) {
