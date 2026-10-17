@@ -227,12 +227,9 @@ class ModelContainer:
                     pass
 
             # Route the actual write through the hardened primitive shared with
-            # write_external_data_tensors, which validates offsets/padding bounds
-            # (see save_external_data) instead of writing at a self-computed offset.
-            tensor.raw_data = tensor_bytes
+            # save_external_data without copying the payload into the protobuf.
             _set_external_data(tensor, location=location)
-            ext_data.save_external_data(tensor, folder)
-            tensor.ClearField("raw_data")
+            ext_data._write_external_data(tensor, folder, tensor_bytes)
 
         with open(file_path, "wb") as f:
             f.write(copy.SerializeToString())

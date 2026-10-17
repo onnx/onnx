@@ -140,6 +140,26 @@ class TestLargeOnnx:
                                 copy[ext.value], expected[tensor.name]
                             )
 
+    def test_large_model_save_does_not_stage_data_in_proto(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        large_model = _large_linear_regression()
+        write_external_data = ext_data._write_external_data
+        tensors_with_raw_data: list[bool] = []
+
+        def check_no_raw_data(
+            tensor: onnx.TensorProto, base_path: str, data: bytes
+        ) -> None:
+            tensors_with_raw_data.append(tensor.HasField("raw_data"))
+            write_external_data(tensor, base_path, data)
+
+        monkeypatch.setattr(ext_data, "_write_external_data", check_no_raw_data)
+        with tempfile.TemporaryDirectory() as temp:
+            large_model.save(os.path.join(temp, "model.onnx"), True)
+
+        assert tensors_with_raw_data
+        assert not any(tensors_with_raw_data)
+
     def test_large_multi_files(self):
         large_model = _large_linear_regression()
         assert isinstance(large_model, onnx.model_container.ModelContainer)
