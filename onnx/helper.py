@@ -1033,7 +1033,6 @@ def printable_attribute(
     elif attr.HasField("i"):
         content.append(str_int(attr.i))
     elif attr.HasField("s"):
-        # TODO: Bit nervous about Python 2 / Python 3 determinism implications
         content.append(repr(_sanitize_str(attr.s)))
     elif attr.HasField("t"):
         if len(attr.t.dims) > 0:
@@ -1054,7 +1053,6 @@ def printable_attribute(
     elif attr.ints:
         content.append(str_list(str_int, attr.ints))
     elif attr.strings:
-        # TODO: Bit nervous about Python 2 / Python 3 determinism implications
         content.append(str(list(map(_sanitize_str, attr.strings))))
     elif attr.tensors:
         content.append("[<Tensor>, ...]")

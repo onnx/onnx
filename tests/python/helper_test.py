@@ -1132,24 +1132,6 @@ def test_make_tensor_raw(tensor_dtype: int, vals_as_bytes: bool) -> None:
 
 
 class TestHelperMappingFunctions:
-    # TODO (#4554): remove these tests about catching warnings after the deprecation period
-    # Test these new functions should not raise any deprecation warnings
-    @pytest.mark.filterwarnings("error::DeprecationWarning")
-    def test_tensor_dtype_to_np_dtype_not_throw_warning(self) -> None:
-        _ = helper.tensor_dtype_to_np_dtype(TensorProto.FLOAT)
-
-    @pytest.mark.filterwarnings("error::DeprecationWarning")
-    def test_tensor_dtype_to_storage_tensor_dtype_not_throw_warning(self) -> None:
-        _ = helper.tensor_dtype_to_storage_tensor_dtype(TensorProto.FLOAT)
-
-    @pytest.mark.filterwarnings("error::DeprecationWarning")
-    def test_tensor_dtype_to_field_not_throw_warning(self) -> None:
-        _ = helper.tensor_dtype_to_field(TensorProto.FLOAT)
-
-    @pytest.mark.filterwarnings("error::DeprecationWarning")
-    def test_np_dtype_to_tensor_dtype_not_throw_warning(self) -> None:
-        _ = helper.np_dtype_to_tensor_dtype(np.dtype("float32"))
-
     def test_tensor_dtype_to_np_dtype_bfloat16(self) -> None:
         assert (
             helper.tensor_dtype_to_np_dtype(TensorProto.BFLOAT16) == ml_dtypes.bfloat16
