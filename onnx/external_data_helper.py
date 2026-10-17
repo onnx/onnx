@@ -205,6 +205,17 @@ def set_external_data(
             f"Tensor {tensor.name} does not have raw_data field. Cannot set external data for this tensor."
         )
 
+    _set_external_data(tensor, location, offset, length, checksum, basepath)
+
+
+def _set_external_data(
+    tensor: TensorProto,
+    location: str,
+    offset: int | None = None,
+    length: int | None = None,
+    checksum: str | None = None,
+    basepath: str | None = None,
+) -> None:
     del tensor.external_data[:]
     tensor.data_location = TensorProto.EXTERNAL
     for k, v in {
@@ -299,11 +310,15 @@ def save_external_data(tensor: TensorProto, base_path: str) -> None:
     Raises:
         ValueError: If the external file is invalid.
     """
-    info = ExternalDataInfo(tensor)
-
     if not tensor.HasField("raw_data"):
         raise onnx_checker.ValidationError("raw_data field doesn't exist.")
 
+    _write_external_data(tensor, base_path, tensor.raw_data)
+
+
+def _write_external_data(tensor: TensorProto, base_path: str, data: bytes) -> None:
+    """Write an existing byte buffer using a tensor's external-data metadata."""
+    info = ExternalDataInfo(tensor)
     fd = _open_external_data_fd(base_path, info.location, tensor.name, False)
     with os.fdopen(fd, "r+b") as data_file:
         data_file.seek(0, 2)
@@ -326,8 +341,8 @@ def save_external_data(tensor: TensorProto, base_path: str) -> None:
 
             data_file.seek(info.offset)
         offset = data_file.tell()
-        data_file.write(tensor.raw_data)
-        set_external_data(tensor, info.location, offset, data_file.tell() - offset)
+        data_file.write(data)
+        _set_external_data(tensor, info.location, offset, data_file.tell() - offset)
 
 
 def _get_all_tensors(onnx_model_proto: ModelProto) -> Iterable[TensorProto]:
