@@ -327,10 +327,11 @@ Common::Status OnnxParser::Parse(IdList& idlist, AttrList& attrlist) {
     std::string id;
     CHECK_PARSER_STATUS(ParseQuotableIdentifier(id));
     auto next = NextChar();
-    if (next == ':' || next == '=')
-      Parse(*attrlist.Add(), id);
-    else
+    if (next == ':' || next == '=') {
+      CHECK_PARSER_STATUS(Parse(*attrlist.Add(), id));
+    } else {
       *idlist.Add() = id;
+    }
   } while (Matches(','));
   return Common::Status::OK();
 }
