@@ -1538,6 +1538,11 @@ class TestAutomaticUpgrade(automatic_conversion_test_base.TestAutomaticConversio
             "SwiGLU", 28, [[2, 3], [2, 3]], [[2, 3]], attrs={"alpha": 0.5}
         )
 
+    def test_GeGLU(self) -> None:
+        self._test_op_upgrade(
+            "GeGLU", 29, [[2, 3], [2, 3]], [[2, 3]], attrs={"approximate": "tanh"}
+        )
+
     def test_Tanh(self) -> None:
         self._test_op_upgrade("Tanh", 1, attrs={"consumed_inputs": [0]})
 
