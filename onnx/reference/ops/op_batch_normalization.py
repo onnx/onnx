@@ -3,9 +3,20 @@
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
+import ml_dtypes
 import numpy as np
 
 from onnx.reference.op_run import OpRun
+
+
+def _mean_and_var(x: np.ndarray, axis: tuple[int, ...]):
+    # The intermediate sums of the mean and the variance can overflow
+    # float16 and bfloat16 even when the statistics themselves are
+    # representable (#8550). Accumulate in float32 and let the caller
+    # cast the result back to the input type.
+    if x.dtype in (np.dtype(np.float16), np.dtype(ml_dtypes.bfloat16)):
+        x = x.astype(np.float32)
+    return x.mean(axis=axis), x.var(axis=axis)
 
 
 def _batchnorm_test_mode(
@@ -36,8 +47,7 @@ def _batchnorm_training_mode(
     epsilon: float = 1e-5,
 ) -> np.ndarray:
     axis = tuple(np.delete(np.arange(len(x.shape)), 1))
-    saved_mean = x.mean(axis=axis)
-    saved_var = x.var(axis=axis)
+    saved_mean, saved_var = _mean_and_var(x, axis)
     output_mean = mean * momentum + saved_mean * (1 - momentum)
     output_var = var * momentum + saved_var * (1 - momentum)
     y = _batchnorm_test_mode(x, s, bias, saved_mean, saved_var, epsilon=epsilon)
@@ -78,8 +88,7 @@ class BatchNormalization_9(OpRun):
             res = _batchnorm_test_mode(x, scale, bias, mean, var, epsilon=epsilon)
             return (res,)
         axis = tuple(np.delete(np.arange(len(x.shape)), 1))
-        saved_mean = x.mean(axis=axis)
-        saved_var = x.var(axis=axis)
+        saved_mean, saved_var = _mean_and_var(x, axis)
         output_mean = mean * momentum + saved_mean * (1 - momentum)
         output_var = var * momentum + saved_var * (1 - momentum)
         res = _batchnorm_test_mode(
