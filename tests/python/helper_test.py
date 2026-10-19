@@ -225,6 +225,22 @@ class TestHelperAttributeFunctions:
         attr = helper.make_attribute("sts", [sparse_tensor, sparse_tensor])
         assert "[<Sparse Tensor>, ...]" in helper.printable_attribute(attr)
 
+    def test_printable_attribute_scalar_tensor_raw_data(self) -> None:
+        raw = numpy_helper.from_array(np.array(3.5, dtype=np.float32))
+        typed = helper.make_tensor("t", TensorProto.FLOAT, [], [3.5])
+        assert raw.raw_data
+        assert not typed.raw_data
+
+        raw_text = helper.printable_attribute(helper.make_attribute("value", raw))
+        typed_text = helper.printable_attribute(helper.make_attribute("value", typed))
+        assert raw_text == "value = <Scalar Tensor [3.5]>"
+        assert typed_text == raw_text
+
+    def test_printable_attribute_scalar_tensor_bad_raw_data(self) -> None:
+        tensor = TensorProto(data_type=TensorProto.FLOAT, raw_data=b"\x00")
+        with pytest.raises(ValueError):
+            helper.printable_attribute(helper.make_attribute("value", tensor))
+
     def test_attr_repeated_graph_proto(self) -> None:
         graphs = [GraphProto(), GraphProto()]
         graphs[0].name = "a"
