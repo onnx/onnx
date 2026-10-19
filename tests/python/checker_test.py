@@ -686,13 +686,17 @@ class TestChecker:
             outputs=[helper.make_tensor_value_info("Z", TensorProto.FLOAT, [1])],
         )
         model = helper.make_model(graph, producer_name="test")
-        with pytest.raises(checker.ValidationError, match="dimension value must be non-negative"):
+        with pytest.raises(
+            checker.ValidationError, match="dimension value must be non-negative"
+        ):
             checker.check_model(model)
 
     @pytest.mark.parametrize("location", ["graph", "function"])
     def test_check_model_negative_dimension_annotation(self, location: str) -> None:
         """Intermediate graph and function annotations must not use negative dimensions."""
-        value_info = helper.make_tensor_value_info("annotation", TensorProto.FLOAT, [-1])
+        value_info = helper.make_tensor_value_info(
+            "annotation", TensorProto.FLOAT, [-1]
+        )
         function = helper.make_function(
             "local",
             "f",
@@ -711,10 +715,15 @@ class TestChecker:
         )
         model = helper.make_model(
             graph,
-            opset_imports=[helper.make_opsetid("", 21), helper.make_opsetid("local", 1)],
+            opset_imports=[
+                helper.make_opsetid("", 21),
+                helper.make_opsetid("local", 1),
+            ],
             functions=[function],
         )
-        with pytest.raises(checker.ValidationError, match="dimension value must be non-negative"):
+        with pytest.raises(
+            checker.ValidationError, match="dimension value must be non-negative"
+        ):
             checker.check_model(model)
 
     def test_check_model_negative_dimension_slice(self) -> None:

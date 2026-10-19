@@ -2477,28 +2477,34 @@ class TestShapeInference(TestShapeInferenceHelper):
     @pytest.mark.parametrize("opset_version", [10, 11, 13])
     def test_slice_negative_dim_value(self, opset_version: int) -> None:
         """Slice on negative dimension should not abort in shape inference."""
-        graph = self._make_graph(
-            [
-                ("x", TensorProto.FLOAT, (-1, 6)),
-                ("starts", TensorProto.INT64, (1,)),
-                ("ends", TensorProto.INT64, (1,)),
-                ("axes", TensorProto.INT64, (1,)),
-                ("steps", TensorProto.INT64, (1,)),
-            ],
-            [make_node("Slice", ["x", "starts", "ends", "axes", "steps"], "y")],
-            [],
-            initializer=[
-                make_tensor("starts", TensorProto.INT64, (1,), (0,)),
-                make_tensor("ends", TensorProto.INT64, (1,), (0,)),
-                make_tensor("axes", TensorProto.INT64, (1,), (0,)),
-                make_tensor("steps", TensorProto.INT64, (1,), (1,)),
-            ],
+        input_types = {
+            "x": helper.make_tensor_type_proto(TensorProto.FLOAT, (-1, 6)),
+        }
+        input_data = {}
+        if opset_version == 10:
+            node = make_node("Slice", ["x"], "y", starts=[0], ends=[0], axes=[0])
+        else:
+            node = make_node("Slice", ["x", "starts", "ends", "axes", "steps"], "y")
+            input_types.update(
+                {
+                    name: helper.make_tensor_type_proto(TensorProto.INT64, (1,))
+                    for name in ("starts", "ends", "axes", "steps")
+                }
+            )
+            input_data = {
+                "starts": make_tensor("starts", TensorProto.INT64, (1,), (0,)),
+                "ends": make_tensor("ends", TensorProto.INT64, (1,), (0,)),
+                "axes": make_tensor("axes", TensorProto.INT64, (1,), (0,)),
+                "steps": make_tensor("steps", TensorProto.INT64, (1,), (1,)),
+            }
+
+        inferred = onnx.shape_inference.infer_node_outputs(
+            defs.get_schema("Slice", opset_version),
+            node,
+            input_types,
+            input_data,
         )
-        self._assert_inferred(
-            graph,
-            [make_tensor_value_info("y", TensorProto.FLOAT, (0, 6))],
-            opset_imports=[make_opsetid("", opset_version)],
-        )
+        assert [dim.dim_value for dim in inferred["y"].tensor_type.shape.dim] == [0, 6]
 
     def test_slice_scalar_shape_output(self) -> None:
         """Shape(scalar) produces 0-length output; Slice on it should not crash."""
