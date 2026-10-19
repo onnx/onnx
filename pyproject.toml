@@ -45,7 +45,7 @@ build-dir = ".setuptools-cmake-build"
 cmake.version = ">=3.26"
 cmake.build-type = "Release"
 wheel.packages = ["onnx"]
-wheel.exclude = ["**.proto3", "**.md", "**/CMakeLists.txt"]
+wheel.exclude = ["**.md", "**/CMakeLists.txt"]
 wheel.py-api = "cp312"
 sdist.include = [
     "LICENSE",

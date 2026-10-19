@@ -64,29 +64,26 @@ PACKAGE_NAME_REGEX = re.compile(r"\{PACKAGE_NAME\}")
 ML_REGEX = re.compile(r"(.*)\-ml")
 
 
-def process_package_name(
-    lines: Iterable[str], package_name: str, extension: str
-) -> Iterable[str]:
+def process_package_name(lines: Iterable[str], package_name: str) -> Iterable[str]:
     need_rename = package_name != DEFAULT_PACKAGE_NAME
     for line in lines:
-        m = IMPORT_REGEX.match(line)
+        m = IMPORT_REGEX.match(line) if need_rename else None
         if m:
             include_name = m.group(2)
-            if need_rename:
-                ml = ML_REGEX.match(include_name)
-                if ml:
-                    include_name = f"{ml.group(1)}_{package_name}-ml"
-                else:
-                    include_name = f"{include_name}_{package_name}"
-            yield m.group(1) + f'import "{include_name}{extension}";'
+            ml = ML_REGEX.match(include_name)
+            if ml:
+                include_name = f"{ml.group(1)}_{package_name}-ml"
+            else:
+                include_name = f"{include_name}_{package_name}"
+            yield m.group(1) + f'import "{include_name}.proto";'
         else:
             yield PACKAGE_NAME_REGEX.sub(package_name, line)
 
 
-def translate(source: str, onnx_ml: bool, package_name: str, extension: str) -> str:
+def translate(source: str, onnx_ml: bool, package_name: str) -> str:
     lines: Iterable[str] = source.splitlines()
     lines = process_ifs(lines, onnx_ml=onnx_ml)
-    lines = process_package_name(lines, package_name, extension)
+    lines = process_package_name(lines, package_name)
     return os.linesep.join(lines)
 
 
@@ -119,15 +116,13 @@ def convert(
     logger.info("Processing %s", proto_in)
     with open(proto_in, encoding="utf-8") as fin:
         source = fin.read()
-    # Keep the historical .proto3 filenames as aliases of the same schema.
-    for extension in (".proto", ".proto3"):
-        proto = qualify(f"{proto_base}{extension}", pardir=output)
-        logger.info("Writing %s", proto)
-        with open(proto, "w", newline="", encoding="utf-8") as fout:
-            fout.write(autogen_header)
-            fout.write(translate(source, import_ml, package_name, extension))
-            if lite:
-                fout.write(LITE_OPTION)
+    proto = qualify(f"{proto_base}.proto", pardir=output)
+    logger.info("Writing %s", proto)
+    with open(proto, "w", newline="", encoding="utf-8") as fout:
+        fout.write(autogen_header)
+        fout.write(translate(source, import_ml, package_name))
+        if lite:
+            fout.write(LITE_OPTION)
 
     if need_rename:
         if do_onnx_ml:
