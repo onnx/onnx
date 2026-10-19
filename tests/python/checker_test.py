@@ -1678,6 +1678,17 @@ class TestChecker:
             tensor.raw_data = b"\x00" * 8
             checker.check_tensor(tensor)
 
+    @pytest.mark.parametrize("dtype", (-1, 999))
+    def test_check_tensor_rejects_unknown_data_type(self, dtype: int) -> None:
+        tensor = TensorProto()
+        tensor.data_type = dtype
+        tensor.dims.append(1)
+        tensor.name = "t"
+        tensor.raw_data = b"\x00"
+
+        with pytest.raises(checker.ValidationError, match="Unrecognized data_type"):
+            checker.check_tensor(tensor)
+
     @pytest.mark.parametrize("dtype", (TensorProto.INT2, TensorProto.UINT2))
     def test_check_tensor_2bit_raw_data_size_does_not_overflow(
         self, dtype: int
@@ -1769,6 +1780,28 @@ class TestChecker:
             tensor2.name = "t"
             tensor2.int32_data.extend([0, 0])  # ceil(20/16) = 2
             checker.check_tensor(tensor2)
+
+    @pytest.mark.parametrize(
+        "dtype",
+        (
+            TensorProto.INT4,
+            TensorProto.UINT4,
+            TensorProto.FLOAT4E2M1,
+            TensorProto.INT2,
+            TensorProto.UINT2,
+        ),
+    )
+    def test_check_tensor_packed_int32_data_size_does_not_overflow(
+        self, dtype: int
+    ) -> None:
+        tensor = TensorProto()
+        tensor.data_type = dtype
+        tensor.dims.append(2**63 - 1)
+        tensor.name = "t"
+        tensor.int32_data.append(0)
+
+        with pytest.raises(checker.ValidationError, match="int32_data size"):
+            checker.check_tensor(tensor)
 
     def test_check_tensor_unpacked_int32_data(self) -> None:
         """Reject non-packed int32_data-stored tensors whose payload is too small.
