@@ -101,7 +101,9 @@ def test_invalid_utf8_is_rejected_by_python_and_cpp(bad_utf8, field, tmp_path):
     replacement = bad_utf8 + b"x" * (len(marker) - len(bad_utf8))
     corrupted = wire.replace(marker.encode(), replacement)
 
-    with pytest.raises(google.protobuf.message.DecodeError):
+    # The pure-Python protobuf backend (used by free-threaded builds) raises
+    # UnicodeDecodeError, while upb wraps it in DecodeError.
+    with pytest.raises((google.protobuf.message.DecodeError, UnicodeDecodeError)):
         onnx.load_model_from_string(corrupted)
     # Pass bytes directly so this exercises the C++ parser, not Python's.
     with pytest.raises(ValueError, match="Unable to parse proto"):
