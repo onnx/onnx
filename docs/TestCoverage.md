@@ -27914,6 +27914,8 @@ test_shape("_clip_start", x, start=-10)
 
 test_shape("_clip_end", x, end=10)
 
+test_shape("_clip_end_negative", x, end=-4)
+
 test_shape("_start_greater_than_end", x, start=2, end=1)
 ```
 
