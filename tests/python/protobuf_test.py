@@ -63,9 +63,10 @@ def test_unknown_enum_values_are_preserved_as_values():
     # Proto3 enums are open: unknown values are exposed, unlike proto2's
     # unknown-field representation. This intentional change needs documenting.
     wire = b"\x70\x7f"
+    unknown_value = 127
     tensor = onnx.TensorProto.FromString(wire)
     assert tensor.HasField("data_location")
-    assert tensor.data_location == 127
+    assert tensor.data_location == unknown_value
     assert tensor.SerializeToString() == wire
 
 
