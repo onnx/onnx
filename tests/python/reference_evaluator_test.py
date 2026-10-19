@@ -7363,12 +7363,16 @@ class TestReferenceEvaluator:
         self, dtype, width
     ):
         x = np.zeros((1, width), dtype=dtype)
+        if dtype == ml_dtypes.bfloat16:
+            x = np.linspace(-4, 4, width, dtype=np.float32).reshape(1, -1).astype(dtype)
 
         actual = _softmax(x)
 
-        assert actual.dtype == np.float32
-        assert_array_equal(actual, np.full((1, width), 1.0 / width, dtype=np.float32))
-        assert_allclose(actual.sum(), 1.0, rtol=0, atol=0)
+        data = x.astype(np.float32)
+        expected = np.exp(data - data.max(axis=1, keepdims=True))
+        expected = (expected / expected.sum(axis=1, keepdims=True)).astype(dtype)
+        assert actual.dtype == dtype
+        assert_array_equal(actual, expected)
 
     def test_rms_normalization_float16_uses_float32_stash(self):
         model = make_model(
@@ -7462,13 +7466,16 @@ class TestReferenceEvaluator:
             opset_imports=[make_opsetid("", 23)],
         )
         x = np.zeros((1, width), dtype=dtype)
+        if dtype == ml_dtypes.bfloat16:
+            x = np.linspace(-4, 4, width, dtype=np.float32).reshape(1, -1).astype(dtype)
 
         (actual,) = ReferenceEvaluator(model).run(None, {"X": x})
 
-        expected = np.full_like(x, dtype(1.0 / x.shape[1]))
+        data = x.astype(np.float32)
+        expected = np.exp(data - data.max(axis=1, keepdims=True))
+        expected = (expected / expected.sum(axis=1, keepdims=True)).astype(dtype)
         assert actual.dtype == dtype
         assert_array_equal(actual, expected)
-        assert_allclose(actual.sum(dtype=np.float32), 1.0, rtol=0, atol=0)
 
     def test_logsoftmax_large_finite_gap_stays_finite(self):
         x_info = make_tensor_value_info("X", TensorProto.FLOAT, [1, 2])

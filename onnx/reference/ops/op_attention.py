@@ -34,7 +34,7 @@ def _softmax(x: np.ndarray, axis: int = -1) -> np.ndarray:
     tmp = np.exp(data - safe_max)
     s = np.sum(tmp, axis=axis, keepdims=True)
     s = np.where(s == zero, one, s)  # avoid 0/0 for fully-masked rows
-    return tmp / s
+    return (tmp / s).astype(x.dtype)
 
 
 def _softcap(X, softcap):
