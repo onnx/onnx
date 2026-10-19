@@ -442,7 +442,10 @@ def from_array(array: np.ndarray, /, name: str | None = None) -> onnx.TensorProt
                 )
         return tensor
 
-    dtype = helper.np_dtype_to_tensor_dtype(array.dtype)
+    array_dtype = array.dtype
+    if not array_dtype.isnative and np.issubdtype(array_dtype, np.number):
+        array_dtype = array_dtype.newbyteorder("=")
+    dtype = helper.np_dtype_to_tensor_dtype(array_dtype)
     if dtype in {
         onnx.TensorProto.INT4,
         onnx.TensorProto.UINT4,

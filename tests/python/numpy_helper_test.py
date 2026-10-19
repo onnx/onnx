@@ -12,6 +12,38 @@ from onnx import helper, numpy_helper
 
 
 class TestNumpyHelper:
+    @pytest.mark.parametrize(
+        "dtype", ["i2", "i4", "i8", "u2", "u4", "u8", "f2", "f4", "f8", "c8", "c16"]
+    )
+    @pytest.mark.parametrize("byteorder", ["<", ">"])
+    @pytest.mark.parametrize("layout", ["matrix", "scalar", "empty", "strided"])
+    def test_from_array_byteorder(
+        self, dtype: str, byteorder: str, layout: str
+    ) -> None:
+        array = np.arange(12).astype(np.dtype(dtype).newbyteorder(byteorder))
+        if layout == "matrix":
+            array = array.reshape(3, 4)
+        elif layout == "scalar":
+            array = array[:1].reshape(())
+        elif layout == "empty":
+            array = array[:0].reshape(0, 3)
+        else:
+            array = array[::-2]
+        original_dtype = array.dtype
+        original_bytes = array.tobytes()
+
+        tensor = numpy_helper.from_array(array, "byteorder")
+
+        assert tensor.name == "byteorder"
+        assert tuple(tensor.dims) == array.shape
+        assert tensor.data_type == helper.np_dtype_to_tensor_dtype(np.dtype(dtype))
+        assert (
+            tensor.raw_data == array.astype(np.dtype(dtype).newbyteorder("<")).tobytes()
+        )
+        np.testing.assert_array_equal(numpy_helper.to_array(tensor), array)
+        assert array.dtype == original_dtype
+        assert array.tobytes() == original_bytes
+
     def _test_numpy_helper_float_type(self, dtype: np.number) -> None:
         a = np.random.rand(13, 37).astype(dtype)
         tensor_def = numpy_helper.from_array(a, "test")
