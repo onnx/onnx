@@ -327,10 +327,11 @@ Common::Status OnnxParser::Parse(IdList& idlist, AttrList& attrlist) {
     std::string id;
     CHECK_PARSER_STATUS(ParseQuotableIdentifier(id));
     auto next = NextChar();
-    if (next == ':' || next == '=')
-      Parse(*attrlist.Add(), id);
-    else
+    if (next == ':' || next == '=') {
+      CHECK_PARSER_STATUS(Parse(*attrlist.Add(), id));
+    } else {
       *idlist.Add() = id;
+    }
   } while (Matches(','));
   return Common::Status::OK();
 }
@@ -373,6 +374,11 @@ Common::Status OnnxParser::Parse(TensorShapeProto& shape) {
 }
 
 Common::Status OnnxParser::Parse(TypeProto& typeProto) {
+  if (recursion_depth_ >= kMaxRecursionDepth) {
+    return ParseError("Maximum parser recursion depth of ", kMaxRecursionDepth, " exceeded.");
+  }
+  RecursionDepthGuard recursion_guard(recursion_depth_);
+
   std::string id;
   CHECK_PARSER_STATUS(ParseIdentifier(id));
   int dtype = PrimitiveTypeNameMap::Lookup(id);
@@ -956,6 +962,11 @@ Common::Status OnnxParser::Parse(GraphProto& graph) {
 }
 
 Common::Status OnnxParser::Parse(std::string name, GraphProto& graph) {
+  if (recursion_depth_ >= kMaxRecursionDepth) {
+    return ParseError("Maximum parser recursion depth of ", kMaxRecursionDepth, " exceeded.");
+  }
+  RecursionDepthGuard recursion_guard(recursion_depth_);
+
   graph.set_name(name);
   graph.mutable_initializer()->Clear();
   CHECK_PARSER_STATUS(ParseInput(*graph.mutable_input(), *graph.mutable_initializer()));
