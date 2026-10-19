@@ -12,6 +12,23 @@ This document contains the normative specification of the semantics of ONNX.
 
 The `.proto` and `.proto3` files found under the [onnx folder](/onnx/) form the normative specification of its syntax authored in the [Protocol Buffers](https://developers.google.com/protocol-buffers) definition language. Commentary found in the `.proto` and `.proto3` files are intended to improve readability of those files, but are not normative if they conflict with this document. Such conflicts should be reported as documentation bugs.
 
+Both filename variants use proto3 with explicit `optional` fields. This preserves
+the distinction between an absent field and an explicitly set default value from
+the earlier proto2 schema. Field numbers, wire types, and numeric repeated-field
+packing are unchanged; existing conforming binary models do not need conversion.
+Consumers generating bindings need a compiler with proto3 optional support
+(enabled by default in protoc 3.15 and later).
+
+This migration changes protobuf parsing behavior. Known `string` fields must
+contain valid UTF-8, including documentation and metadata; malformed strings that
+some proto2 runtimes accepted now fail parsing. `bytes` fields and unknown fields
+remain binary data. Proto3 enums are open: an unrecognized numeric value is exposed
+through the field rather than stored only among unknown fields. This does not make
+such a value valid under ONNX's semantic constraints. Consumers must regenerate
+bindings together and validate downstream integrations; wire compatibility does
+not imply C++ ABI or descriptor compatibility. Explicit optional scalar fields
+also introduce synthetic oneofs in descriptors.
+
 __Notes on model validation__
 
 A [tool](../onnx/checker.py) is available to perform general validation of models against this specification. It is implemented in C++ with a Python command-line wrapper.

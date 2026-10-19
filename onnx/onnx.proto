@@ -6,7 +6,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 
-syntax = "proto2";
+syntax = "proto3";
 
 package onnx;
 
@@ -29,16 +29,11 @@ package onnx;
 //
 // Protobuf compatibility
 //
-// To simplify framework compatibility, ONNX is defined using the subset of protobuf
-// that is compatible with both protobuf v2 and v3. This means that we do not use any
-// protobuf features that are only available in one of the two versions.
-//
-// Here are the most notable contortions we have to carry out to work around
-// these limitations:
-//
-//   - No 'map' (added protobuf 3.0). We instead represent mappings as lists
-//     of key-value pairs, where order does not matter and duplicates
-//     are not allowed.
+// ONNX uses proto3 with explicit optional fields to preserve the field presence
+// semantics of the earlier proto2 schema. Field numbers and wire types are
+// unchanged. Numeric repeated fields retain their previous packed settings.
+// Protobuf validates UTF-8 in string fields; bytes fields remain binary data.
+// Mappings remain lists of key-value pairs for compatibility with existing models.
 
 
 // Versioning
@@ -191,8 +186,8 @@ message AttributeProto {
   // optional ValueProto v = 12;         // value - subsumes everything but graph
   optional TypeProto tp = 14;          // type proto
 
-  repeated float floats = 7;          // list of floats
-  repeated int64 ints = 8;            // list of ints
+  repeated float floats = 7 [packed = false]; // list of floats
+  repeated int64 ints = 8 [packed = false];   // list of ints
   repeated bytes strings = 9;         // list of UTF-8 strings
   repeated TensorProto tensors = 10;  // list of tensors
   repeated GraphProto graphs = 11;    // list of graph
@@ -253,7 +248,7 @@ message NodeProto {
 // See https://developers.google.com/protocol-buffers/docs/proto3#maps
 message IntIntListEntryProto {
   optional int64 key = 1;
-  repeated int64 value = 2;
+  repeated int64 value = 2 [packed = false];
 };
 
 // Multi-device configuration proto for NodeProto.
@@ -278,7 +273,7 @@ message ShardingSpecProto {
 
   // The following is the list of devices across which the logical
   // tensor is sharded or replicated.
-  repeated int64 device = 2;
+  repeated int64 device = 2 [packed = false];
 
   // Each element v in above field devices may represent either a
   // device or a set of devices (when we want the same shard/tensor
@@ -670,7 +665,7 @@ message TensorProto {
   }
 
   // The shape of the tensor.
-  repeated int64 dims = 1;
+  repeated int64 dims = 1 [packed = false];
 
   // The data type of the tensor.
   // This field MUST have a valid TensorProto.DataType value
@@ -826,7 +821,7 @@ message SparseTensorProto {
   optional TensorProto indices = 2;
 
   // The shape of the underlying dense-tensor: [dim_1, dim_2, ... dim_rank]
-  repeated int64 dims = 3;
+  repeated int64 dims = 3 [packed = false];
 }
 
 // Defines a tensor shape. A dimension can be either an integer value

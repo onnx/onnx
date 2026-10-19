@@ -31,16 +31,11 @@ package onnx;
 //
 // Protobuf compatibility
 //
-// To simplify framework compatibility, ONNX is defined using the subset of protobuf
-// that is compatible with both protobuf v2 and v3. This means that we do not use any
-// protobuf features that are only available in one of the two versions.
-//
-// Here are the most notable contortions we have to carry out to work around
-// these limitations:
-//
-//   - No 'map' (added protobuf 3.0). We instead represent mappings as lists
-//     of key-value pairs, where order does not matter and duplicates
-//     are not allowed.
+// ONNX uses proto3 with explicit optional fields to preserve the field presence
+// semantics of the earlier proto2 schema. Field numbers and wire types are
+// unchanged. Numeric repeated fields retain their previous packed settings.
+// Protobuf validates UTF-8 in string fields; bytes fields remain binary data.
+// Mappings remain lists of key-value pairs for compatibility with existing models.
 
 
 // Versioning
@@ -163,16 +158,16 @@ message AttributeProto {
   }
 
   // The name field MUST be present for this version of the IR.
-  string name = 1;           // namespace Attribute
+  optional string name = 1;           // namespace Attribute
 
   // if ref_attr_name is not empty, ref_attr_name is the attribute name in parent function.
   // In this case, this AttributeProto does not contain data, and it's a reference of attribute
   // in parent scope.
   // NOTE: This should ONLY be used in function (sub-graph). It's invalid to be used in main graph.
-  string ref_attr_name = 21;
+  optional string ref_attr_name = 21;
 
   // A human-readable documentation for this attribute. Markdown is allowed.
-  string doc_string = 13;
+  optional string doc_string = 13;
 
   // The type field MUST be present for this version of the IR.
   // For 0.0.1 versions of the IR, this field was not defined, and
@@ -180,21 +175,21 @@ message AttributeProto {
   // which value field was in use.  For IR_VERSION 0.0.2 or later, this
   // field MUST be set and match the f|i|s|t|... field in use.  This
   // change was made to accommodate proto3 implementations.
-  AttributeType type = 20;   // discriminator that indicates which field below is in use
+  optional AttributeType type = 20;   // discriminator that indicates which field below is in use
 
   // Exactly ONE of the following fields must be present for this version of the IR
-  float f = 2;               // float
-  int64 i = 3;               // int
-  bytes s = 4;               // UTF-8 string
-  TensorProto t = 5;         // tensor value
-  GraphProto g = 6;          // graph
-  SparseTensorProto sparse_tensor = 22;  // sparse tensor value
+  optional float f = 2;               // float
+  optional int64 i = 3;               // int
+  optional bytes s = 4;               // UTF-8 string
+  optional TensorProto t = 5;         // tensor value
+  optional GraphProto g = 6;          // graph
+  optional SparseTensorProto sparse_tensor = 22;  // sparse tensor value
   // Do not use field below, it's deprecated.
   // optional ValueProto v = 12;         // value - subsumes everything but graph
-  TypeProto tp = 14;          // type proto
+  optional TypeProto tp = 14;          // type proto
 
-  repeated float floats = 7;          // list of floats
-  repeated int64 ints = 8;            // list of ints
+  repeated float floats = 7 [packed = false]; // list of floats
+  repeated int64 ints = 8 [packed = false];   // list of ints
   repeated bytes strings = 9;         // list of UTF-8 strings
   repeated TensorProto tensors = 10;  // list of tensors
   repeated GraphProto graphs = 11;    // list of graph
@@ -206,12 +201,12 @@ message AttributeProto {
 // the shape of the value.
 message ValueInfoProto {
   // This field MUST be present in this version of the IR.
-  string name = 1;     // namespace Value
+  optional string name = 1;     // namespace Value
   // This field MUST be present in this version of the IR for
   // inputs and outputs of the top-level graph.
-  TypeProto type = 2;
+  optional TypeProto type = 2;
   // A human-readable documentation for this value. Markdown is allowed.
-  string doc_string = 3;
+  optional string doc_string = 3;
   // Named metadata values; keys should be distinct.
   repeated StringStringEntryProto metadata_props = 4;
 }
@@ -229,20 +224,20 @@ message NodeProto {
 
   // An optional identifier for this node in a graph.
   // This field MAY be absent in this version of the IR.
-  string name = 3;     // namespace Node
+  optional string name = 3;     // namespace Node
 
   // The symbolic identifier of the Operator to execute.
-  string op_type = 4;  // namespace Operator
+  optional string op_type = 4;  // namespace Operator
   // The domain of the OperatorSet that specifies the operator named by op_type.
-  string domain = 7;   // namespace Domain
+  optional string domain = 7;   // namespace Domain
   // Overload identifier, used only to map this to a model-local function.
-  string overload = 8;
+  optional string overload = 8;
 
   // Additional named attributes.
   repeated AttributeProto attribute = 5;
 
   // A human-readable documentation for this node. Markdown is allowed.
-  string doc_string = 6;
+  optional string doc_string = 6;
 
   // Named metadata values; keys should be distinct.
   repeated StringStringEntryProto metadata_props = 9;
@@ -254,19 +249,19 @@ message NodeProto {
 // IntIntListEntryProto follows the pattern for cross-proto-version maps.
 // See https://developers.google.com/protocol-buffers/docs/proto3#maps
 message IntIntListEntryProto {
-  int64 key = 1;
-  repeated int64 value = 2;
+  optional int64 key = 1;
+  repeated int64 value = 2 [packed = false];
 };
 
 // Multi-device configuration proto for NodeProto.
 message NodeDeviceConfigurationProto {
     // This field MUST be present for this version of the IR.
     // ID of the configuration. MUST match the name of a DeviceConfigurationProto.
-    string configuration_id = 1;
+    optional string configuration_id = 1;
     // Sharding spec for the node.
     repeated ShardingSpecProto sharding_spec = 2;
     // Pipeline stage of this node.
-    int32 pipeline_stage = 3;
+    optional int32 pipeline_stage = 3;
 }
 
 // ShardingSpecProto: This describes the sharding spec for a specific
@@ -276,11 +271,11 @@ message ShardingSpecProto {
   // Identifies the input or output of the node that is being sharded.
   // Required to match a name specified in the node's input or output list of ValueInfoProtos.
   // It is called `logical tensor` in subsequent descriptions.
-  string tensor_name = 1;
+  optional string tensor_name = 1;
 
   // The following is the list of devices across which the logical
   // tensor is sharded or replicated.
-  repeated int64 device = 2;
+  repeated int64 device = 2 [packed = false];
 
   // Each element v in above field devices may represent either a
   // device or a set of devices (when we want the same shard/tensor
@@ -302,7 +297,7 @@ message ShardedDimProto {
   // The axis this sharding corresponds to. Must be in the range of
   // [-r, r - 1], where r is the rank of the tensor. Negative axis values means
   // counting from the back.
-  int64 axis = 1;
+  optional int64 axis = 1;
 
   // Describes how the tensor on the provided axis is sharded.
   // The common-case is described by a single instance of SimpleShardedDimProto.
@@ -322,7 +317,7 @@ message SimpleShardedDimProto {
 
     // This field MUST be present for this version of the IR.
     // Number of shards to split dim into.
-    int64 num_shards = 3;
+    optional int64 num_shards = 3;
 }
 
 // Training information
@@ -358,7 +353,7 @@ message TrainingInfoProto {
   //
   // By default, this field is an empty graph and its evaluation does not
   // produce any output. Thus, no initializer would be changed by default.
-  GraphProto initialization = 1;
+  optional GraphProto initialization = 1;
 
   // This field represents a training algorithm step. Given required inputs,
   // it computes outputs to update initializers in its own or inference graph's
@@ -389,7 +384,7 @@ message TrainingInfoProto {
   // By default, this field is an empty graph and its evaluation does not
   // produce any output. Evaluating the default training step never
   // update any initializers.
-  GraphProto algorithm = 2;
+  optional GraphProto algorithm = 2;
 
   // This field specifies the bindings from the outputs of "initialization" to
   // some initializers in "ModelProto.graph.initializer" and
@@ -452,7 +447,7 @@ message TrainingInfoProto {
 message ModelProto {
   // The version of the IR this model targets. See Version enum above.
   // This field MUST be present.
-  int64 ir_version = 1;
+  optional int64 ir_version = 1;
 
   // The OperatorSets this model relies on.
   // All ModelProtos MUST have at least one entry that
@@ -467,12 +462,12 @@ message ModelProto {
   // The name of the framework or tool used to generate this model.
   // This field SHOULD be present to indicate which implementation/tool/framework
   // emitted the model.
-  string producer_name = 2;
+  optional string producer_name = 2;
 
   // The version of the framework or tool used to generate this model.
   // This field SHOULD be present to indicate which implementation/tool/framework
   // emitted the model.
-  string producer_version = 3;
+  optional string producer_version = 3;
 
   // Domain name of the model.
   // We use reverse domain names as name space indicators. For example:
@@ -480,16 +475,16 @@ message ModelProto {
   //
   // Together with `model_version` and GraphProto.name, this forms the unique identity of
   // the graph.
-  string domain = 4;
+  optional string domain = 4;
 
   // The version of the graph encoded. See Version enum below.
-  int64 model_version = 5;
+  optional int64 model_version = 5;
 
   // A human-readable documentation for this model. Markdown is allowed.
-  string doc_string = 6;
+  optional string doc_string = 6;
 
   // The parameterized graph that is evaluated to execute the model.
-  GraphProto graph = 7;
+  optional GraphProto graph = 7;
 
   // Named metadata values; keys should be distinct.
   repeated StringStringEntryProto metadata_props = 14;
@@ -532,10 +527,10 @@ message ModelProto {
 message DeviceConfigurationProto {
     // This field MUST be present for this version of the IR.
     // Name of the configuration.
-    string name = 1;
+    optional string name = 1;
     // This field MUST be present for this version of the IR.
     // Number of devices inside this configuration.
-    int32 num_devices = 2;
+    optional int32 num_devices = 2;
     // Optional names of the devices. MUST be length of num_devices if provided.
     repeated string device = 3;
 }
@@ -543,12 +538,12 @@ message DeviceConfigurationProto {
 // StringStringEntryProto follows the pattern for cross-proto-version maps.
 // See https://developers.google.com/protocol-buffers/docs/proto3#maps
 message StringStringEntryProto {
-  string key = 1;
-  string value = 2;
+  optional string key = 1;
+  optional string value = 2;
 };
 
 message TensorAnnotation {
-  string tensor_name = 1;
+  optional string tensor_name = 1;
   // <key, value> pairs to annotate tensor specified by <tensor_name> above.
   // The keys used in the mapping below must be pre-defined in ONNX spec.
   // For example, for 8-bit linear quantization case, 'SCALE_TENSOR', 'ZERO_POINT_TENSOR' will be pre-defined as
@@ -569,7 +564,7 @@ message GraphProto {
   repeated NodeProto node = 1;
 
   // The name of the graph.
-  string name = 2;   // namespace Graph
+  optional string name = 2;   // namespace Graph
 
   // A list of named tensor values, used to specify constant inputs of the graph.
   // Each initializer (both TensorProto as well SparseTensorProto) MUST have a name.
@@ -581,7 +576,7 @@ message GraphProto {
   repeated SparseTensorProto sparse_initializer = 15;
 
   // A human-readable documentation for this graph. Markdown is allowed.
-  string doc_string = 10;
+  optional string doc_string = 10;
 
   // The inputs and outputs of the graph.
   repeated ValueInfoProto input = 11;
@@ -672,20 +667,20 @@ message TensorProto {
   }
 
   // The shape of the tensor.
-  repeated int64 dims = 1;
+  repeated int64 dims = 1 [packed = false];
 
   // The data type of the tensor.
   // This field MUST have a valid TensorProto.DataType value
-  int32 data_type = 2;
+  optional int32 data_type = 2;
 
   // For very large tensors, we may want to store them in chunks, in which
   // case the following fields will specify the segment that is stored in
   // the current TensorProto.
   message Segment {
-    int64 begin = 1;
-    int64 end = 2;
+    optional int64 begin = 1;
+    optional int64 end = 2;
   }
-  Segment segment = 3;
+  optional Segment segment = 3;
 
   // Tensor content must be organized in row-major order.
   //
@@ -737,10 +732,10 @@ message TensorProto {
   repeated int64 int64_data = 7 [packed = true];
 
   // Optionally, a name for the tensor.
-  string name = 8; // namespace Value
+  optional string name = 8; // namespace Value
 
   // A human-readable documentation for this tensor. Markdown is allowed.
-  string doc_string = 12;
+  optional string doc_string = 12;
 
   // Serializations can either use one of the fields above, or use this
   // raw bytes field. The only exception is the string case, where one is
@@ -765,7 +760,7 @@ message TensorProto {
   // that in some cases (e.g. int data), protobuf does a better packing via
   // variable length storage, and may lead to smaller binary footprint.
   // When this field is present, the data_type field MUST NOT be STRING or UNDEFINED
-  bytes raw_data = 9;
+  optional bytes raw_data = 9;
 
   // Data can be stored inside the protobuf file using type-specific fields or raw_data.
   // Alternatively, raw bytes data can be stored in an external file, using the external_data field.
@@ -787,7 +782,7 @@ message TensorProto {
   }
 
   // If value not set, data is stored in raw_data (if set) otherwise in type-specified field.
-  DataLocation data_location = 14;
+  optional DataLocation data_location = 14;
 
   // For double
   // Complex128 tensors are encoded as a single array of doubles,
@@ -813,7 +808,7 @@ message SparseTensorProto {
   // The default-value is zero for numeric tensors, and empty-string for string tensors.
   // values must have a non-empty name present which serves as a name for SparseTensorProto
   // when used in sparse_initializer list.
-  TensorProto values = 1;
+  optional TensorProto values = 1;
 
   // The indices of the non-default values, which may be stored in one of two formats.
   // (a) Indices can be a tensor of shape [NNZ, rank] with the [i,j]-th value
@@ -825,10 +820,10 @@ message SparseTensorProto {
   // The indices must appear in ascending order without duplication.
   // In the first format, the ordering is lexicographic-ordering:
   // e.g., index-value [1,4] must appear before [2,1]
-  TensorProto indices = 2;
+  optional TensorProto indices = 2;
 
   // The shape of the underlying dense-tensor: [dim_1, dim_2, ... dim_rank]
-  repeated int64 dims = 3;
+  repeated int64 dims = 3 [packed = false];
 }
 
 // Defines a tensor shape. A dimension can be either an integer value
@@ -845,7 +840,7 @@ message TensorShapeProto {
     // that operations are applied to the correct axis of a tensor.
     // Refer to https://github.com/onnx/onnx/blob/main/docs/DimensionDenotation.md#denotation-definition
     // for pre-defined dimension denotations.
-    string denotation = 3;
+    optional string denotation = 3;
   };
   repeated Dimension dim = 1;
 }
@@ -859,15 +854,15 @@ message TypeProto {
     // This field MUST NOT have the value of UNDEFINED
     // This field MUST have a valid TensorProto.DataType value
     // This field MUST be present for this version of the IR.
-    int32 elem_type = 1;
-    TensorShapeProto shape = 2;
+    optional int32 elem_type = 1;
+    optional TensorShapeProto shape = 2;
   }
 
   // repeated T
   message Sequence {
     // The type and optional shape of each element of the sequence.
     // This field MUST be present for this version of the IR.
-    TypeProto elem_type = 1;
+    optional TypeProto elem_type = 1;
   };
 
   // map<K,V>
@@ -875,9 +870,9 @@ message TypeProto {
     // This field MUST have a valid TensorProto.DataType value
     // This field MUST be present for this version of the IR.
     // This field MUST refer to an integral type ([U]INT{8|16|32|64}) or STRING
-    int32 key_type = 1;
+    optional int32 key_type = 1;
     // This field MUST be present for this version of the IR.
-    TypeProto value_type = 2;
+    optional TypeProto value_type = 2;
   };
 
   // wrapper for Tensor, Sequence, or Map
@@ -885,7 +880,7 @@ message TypeProto {
     // The type and optional shape of the element wrapped.
     // This field MUST be present for this version of the IR.
     // Possible values correspond to OptionalProto.DataType enum
-    TypeProto elem_type = 1;
+    optional TypeProto elem_type = 1;
   };
 
 
@@ -893,15 +888,15 @@ message TypeProto {
     // This field MUST NOT have the value of UNDEFINED
     // This field MUST have a valid TensorProto.DataType value
     // This field MUST be present for this version of the IR.
-    int32 elem_type = 1;
-    TensorShapeProto shape = 2;
+    optional int32 elem_type = 1;
+    optional TensorShapeProto shape = 2;
   }
 
   message Opaque {
     // When missing, the domain is the same as the model's.
-    string domain = 1;
+    optional string domain = 1;
     // The name is optional but significant when provided.
-    string name = 2;
+    optional string name = 2;
     // DEPRECATED: parameters that help define the type.
     reserved 3;
     reserved "parameters";
@@ -937,7 +932,7 @@ message TypeProto {
   // type with a standard semantic description as to what is
   // stored inside. Refer to https://github.com/onnx/onnx/blob/main/docs/TypeDenotation.md#type-denotation-definition
   // for pre-defined type denotations.
-  string denotation = 6;
+  optional string denotation = 6;
 }
 
 // Operator Sets
@@ -948,11 +943,11 @@ message OperatorSetIdProto {
   // The empty string ("") or absence of this field implies the operator
   // set that is defined as part of the ONNX specification.
   // This field MUST be present in this version of the IR when referring to any other operator set.
-  string domain = 1;
+  optional string domain = 1;
 
   // The version of the operator set being identified.
   // This field MUST be present in this version of the IR.
-  int64 version = 2;
+  optional int64 version = 2;
 }
 
 // Operator/function status.
@@ -964,7 +959,7 @@ enum OperatorStatus {
 message FunctionProto {
   // The name of the function, similar to op_type in NodeProto.
   // This is part of the unique-id (domain, name, overload) of FunctionProtos in a model.
-  string name = 1;
+  optional string name = 1;
 
   // Deprecated since IR Version 8
   // optional int64 since_version = 2;
@@ -993,7 +988,7 @@ message FunctionProto {
   // The nodes in the function.
   repeated NodeProto node = 7;
   // A human-readable documentation for this function. Markdown is allowed.
-  string doc_string = 8;
+  optional string doc_string = 8;
 
   // The OperatorSets this function body (graph) relies on.
   //
@@ -1012,11 +1007,11 @@ message FunctionProto {
 
   // The domain which this function belongs to.
   // This is part of the unique-id (domain, name, overload) of FunctionProtos in a model.
-  string domain = 10;
+  optional string domain = 10;
 
   // The overload identifier of the function.
   // This is part of the unique-id (domain, name, overload) of FunctionProtos in a model.
-  string overload = 13;
+  optional string overload = 13;
 
   // Information for the values in the function. The ValueInfoProto.name's
   // must be distinct and refer to names in the function (including inputs,

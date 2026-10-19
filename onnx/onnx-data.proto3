@@ -34,7 +34,7 @@ import "onnx/onnx-ml.proto3";
 //
 message SequenceProto {
 
-  string name = 1;
+  optional string name = 1;
 
   enum DataType {
     UNDEFINED = 0;
@@ -47,7 +47,7 @@ message SequenceProto {
 
   // The data type of the element.
   // This field MUST have a valid SequenceProto.DataType value
-  int32 elem_type = 2;
+  optional int32 elem_type = 2;
 
   // For TensorProto values.
   // When this field is present, the elem_type field MUST be TENSOR.
@@ -82,19 +82,19 @@ message SequenceProto {
 //
 message MapProto {
 
-  string name = 1;
+  optional string name = 1;
 
   // All MapProto data types must have the same length of keys and values.
 
   // The data type of the key.
   // This field MUST have a valid TensorProto.DataType value of
   // INT8, INT16, INT32, INT64, UINT8, UINT16, UINT32, UINT64, or STRING
-  int32 key_type = 2;
+  optional int32 key_type = 2;
 
   // Every element of keys has to be one of the following data types
   // INT8, INT16, INT32, INT64, UINT8, UINT16, UINT32, UINT64, or STRING.
   // The integer cases are represented by the repeated int64 field keys below.
-  repeated int64 keys = 3;
+  repeated int64 keys = 3 [packed = false];
 
   // If keys are strings, they are represented by the repeated bytes field
   // string_keys below.
@@ -103,7 +103,7 @@ message MapProto {
   // MapProto values are represented in a SequenceProto of the same length as the
   // repeated keys field and have to be one of the following data types
   // TENSOR, SPARSE_TENSOR, MAP, SEQUENCE.
-  SequenceProto values = 5;
+  optional SequenceProto values = 5;
 }
 
 // Optional
@@ -111,7 +111,7 @@ message MapProto {
 //
 message OptionalProto {
 
-  string name = 1;
+  optional string name = 1;
 
   enum DataType {
     UNDEFINED = 0;
@@ -126,27 +126,27 @@ message OptionalProto {
   // is Tensor, Sparse Tensor, Sequence, Map, or Optional.
   // The type of the optional value MUST match the elem_type specified.
   // This field MUST have a valid OptionalProto.DataType value.
-  int32 elem_type = 2;
+  optional int32 elem_type = 2;
 
   // For TensorProto value.
   // When this field is present, the elem_type field MUST be TENSOR.
-  TensorProto tensor_value = 3;
+  optional TensorProto tensor_value = 3;
 
   // For SparseTensorProto value.
   // When this field is present, the elem_type field MUST be SPARSE_TENSOR.
-  SparseTensorProto sparse_tensor_value = 4;
+  optional SparseTensorProto sparse_tensor_value = 4;
 
   // For SequenceProto value.
   // When this field is present, the elem_type field MUST be SEQUENCE.
-  SequenceProto sequence_value = 5;
+  optional SequenceProto sequence_value = 5;
 
   // For MapProto value.
   // When this field is present, the elem_type field MUST be MAP.
-  MapProto map_value = 6;
+  optional MapProto map_value = 6;
 
   // For OptionalProto value, allowing optional to be of itself (completeness)
   // When this field is present, the elem_type field MUST be OPTIONAL.
-  OptionalProto optional_value = 7;
+  optional OptionalProto optional_value = 7;
 
 }
 

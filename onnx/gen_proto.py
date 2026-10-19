@@ -80,24 +80,9 @@ def process_package_name(lines: Iterable[str], package_name: str) -> Iterable[st
             yield PACKAGE_NAME_REGEX.sub(package_name, line)
 
 
-PROTO_SYNTAX_REGEX = re.compile(r'(\s*)syntax\s*=\s*"proto2"\s*;\s*$')
-OPTIONAL_REGEX = re.compile(r"(\s*)optional\s(.*)$")
-
-
 def convert_to_proto3(lines: Iterable[str]) -> Iterable[str]:
+    """Generate the legacy .proto3 filenames without changing field presence."""
     for line in lines:
-        # Set the syntax specifier
-        m = PROTO_SYNTAX_REGEX.match(line)
-        if m:
-            yield m.group(1) + 'syntax = "proto3";'
-            continue
-
-        # Remove optional keywords
-        m = OPTIONAL_REGEX.match(line)
-        if m:
-            yield m.group(1) + m.group(2)
-            continue
-
         # Rewrite import
         m = IMPORT_REGEX.match(line)
         if m:
