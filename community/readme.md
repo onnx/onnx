@@ -95,6 +95,7 @@ A Release Manager takes responsibility for driving a single release cycle from b
 * Cut additional RC builds as needed (RC2, RC3) until no critical regressions remain
 * Finalize release notes, tag the release commit, and coordinate the PyPI publish
 * Update the release wiki page and announce the final release to community channels
+* When a patch release is warranted, coordinate backports, testing, release notes, tagging, and publication with the relevant SIG chairs
 * Hand off any open patch-release tracking to the next cycle's Release Manager (or retain it by agreement)
 
 A Release Manager may delegate individual tasks to other Contributors or Approvers, but retains overall accountability for the release shipping on time and in good shape.
