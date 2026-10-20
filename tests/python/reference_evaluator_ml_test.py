@@ -402,6 +402,75 @@ class TestReferenceEvaluatorAiOnnxMl:
         got = sess.run(None, {"X": x})[0]
         assert expected.tolist() == got.tolist()
 
+    @pytest.mark.parametrize(
+        "keys_attribute",
+        [
+            {"keys_floats": [1.0, np.nan, 3.0]},
+            {
+                "keys_tensor": make_tensor(
+                    "keys_tensor", TensorProto.FLOAT, [3], [1.0, np.nan, 3.0]
+                )
+            },
+        ],
+        ids=["keys_floats", "keys_tensor"],
+    )
+    @pytest.mark.skipif(not ONNX_ML, reason="onnx not compiled with ai.onnx.ml")
+    def test_label_encoder_nan_key(self, keys_attribute):
+        X = make_tensor_value_info("X", TensorProto.FLOAT, [None])
+        Y = make_tensor_value_info("Y", TensorProto.INT64, [None])
+        node = make_node(
+            "LabelEncoder",
+            ["X"],
+            ["Y"],
+            domain="ai.onnx.ml",
+            values_tensor=make_tensor(
+                "values_tensor", TensorProto.INT64, [3], [1, 2, 3]
+            ),
+            default_tensor=make_tensor("default_tensor", TensorProto.INT64, [], [-5]),
+            **keys_attribute,
+        )
+        graph = make_graph([node], "ml", [X], [Y])
+        model = make_model_gen_version(graph, opset_imports=OPSETS)
+        onnx.checker.check_model(model)
+        # A NaN key matches any NaN input, whatever its bit pattern.
+        negative_nan = -np.float32(np.nan)
+        x = np.array([np.nan, 1, negative_nan, 3, 4], dtype=np.float32)
+        expected = np.array([2, 1, 2, 3, -5], dtype=np.int64)
+        sess = ReferenceEvaluator(model)
+        got = sess.run(None, {"X": x})[0]
+        assert expected.tolist() == got.tolist()
+
+    @pytest.mark.parametrize(
+        "values_type, values, expected",
+        [
+            (TensorProto.INT64, [10, 20], [10, -1, 20]),
+            (TensorProto.FLOAT, [0.5, 1.5], [0.5, -0.0, 1.5]),
+            (TensorProto.STRING, ["a", "b"], ["a", "_Unused", "b"]),
+        ],
+        ids=["int64", "float", "string"],
+    )
+    @pytest.mark.skipif(not ONNX_ML, reason="onnx not compiled with ai.onnx.ml")
+    def test_label_encoder_values_tensor_default(self, values_type, values, expected):
+        X = make_tensor_value_info("X", TensorProto.INT64, [None])
+        Y = make_tensor_value_info("Y", values_type, [None])
+        node = make_node(
+            "LabelEncoder",
+            ["X"],
+            ["Y"],
+            domain="ai.onnx.ml",
+            keys_tensor=make_tensor("keys_tensor", TensorProto.INT64, [2], [1, 2]),
+            values_tensor=make_tensor("values_tensor", values_type, [2], values),
+        )
+        graph = make_graph([node], "ml", [X], [Y])
+        model = make_model_gen_version(graph, opset_imports=OPSETS)
+        onnx.checker.check_model(model)
+        x = np.array([1, 7, 2], dtype=np.int64)
+        sess = ReferenceEvaluator(model)
+        got = sess.run(None, {"X": x})[0]
+        assert expected == got.tolist()
+        if values_type == TensorProto.FLOAT:
+            assert np.signbit(got[1])
+
     @pytest.mark.skipif(not ONNX_ML, reason="onnx not compiled with ai.onnx.ml")
     def test_dict_vectorizer(self):
         value_type = TypeProto()
