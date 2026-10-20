@@ -13,7 +13,7 @@ class TestVersionConverter:
     @pytest.mark.parametrize("target_version", [13, 14, 15])
     def test_preserve_graph_and_node_metadata(self, target_version: int) -> None:
         branch = helper.make_graph(
-            [helper.make_node("Identity", ["X"], ["B"])],
+            [helper.make_node("Abs", ["X"], ["B"])],
             "branch",
             [],
             [helper.make_tensor_value_info("B", TensorProto.FLOAT, [1])],
