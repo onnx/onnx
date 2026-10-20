@@ -36,14 +36,26 @@ class LogSoftmax(OpRun):
         return legacy_normalize(x, axis, True)
 
 
+class Hardmax(OpRun):
+    op_domain = ""
+
+    def _run(self, x, axis=1):
+        axis %= x.ndim
+        flat = x.reshape(int(np.prod(x.shape[:axis])), -1)
+        result = np.zeros_like(flat)
+        result[np.arange(flat.shape[0]), flat.argmax(axis=1)] = 1
+        return (result.reshape(x.shape),)
+
+
 def value(name, shape, dtype=TensorProto.FLOAT):
     return helper.make_tensor_value_info(name, dtype, shape)
 
 
-@pytest.mark.parametrize("op", ["Softmax", "LogSoftmax"])
+@pytest.mark.parametrize("op", ["Softmax", "LogSoftmax", "Hardmax"])
 @pytest.mark.parametrize("layout", ["flatten", "reshape", "both"])
 @pytest.mark.parametrize("shared", [False, True])
-def test_preserve_neighboring_shape_operators(op, layout, shared):
+@pytest.mark.parametrize("axis", [0, -2, -1])
+def test_preserve_neighboring_shape_operators(op, layout, shared, axis):
     before = layout in ("flatten", "both")
     after = layout in ("reshape", "both")
     shape = [2, 3, 4] if before else [2, 12]
@@ -54,7 +66,7 @@ def test_preserve_neighboring_shape_operators(op, layout, shared):
         nodes.append(helper.make_node("Flatten", ["X"], ["F"], axis=1))
         if shared:
             outputs.append(value("F", [2, 12]))
-    nodes.append(helper.make_node(op, ["F" if before else "X"], ["S"], axis=-1))
+    nodes.append(helper.make_node(op, ["F" if before else "X"], ["S"], axis=axis))
     if after:
         initializers.append(
             numpy_helper.from_array(np.array([4, 6], dtype=np.int64), name="shape")
@@ -76,18 +88,24 @@ def test_preserve_neighboring_shape_operators(op, layout, shared):
     converted = version_converter.convert_version(original, 12)
     assert original.SerializeToString() == serialized
     checker.check_model(converted, full_check=True)
-    assert [n.op_type for n in converted.graph.node] == [n.op_type for n in nodes]
+    expected_ops = []
+    for node in nodes:
+        if node.op_type == op and axis != -1:
+            expected_ops.extend(["Transpose", op, "Transpose"])
+        else:
+            expected_ops.append(node.op_type)
     assert [o.name for o in converted.graph.output] == [o.name for o in outputs]
     data = np.arange(24, dtype=np.float32).reshape(shape) / 10
     expected = ReferenceEvaluator(original).run(None, {"X": data})
-    actual = ReferenceEvaluator(converted, new_ops=[Softmax, LogSoftmax]).run(
+    actual = ReferenceEvaluator(converted, new_ops=[Softmax, LogSoftmax, Hardmax]).run(
         None, {"X": data}
     )
     for result, reference in zip(actual, expected, strict=True):
         np.testing.assert_allclose(result, reference, rtol=1e-6, atol=1e-6)
+    assert [n.op_type for n in converted.graph.node] == expected_ops
 
 
-@pytest.mark.parametrize("op", ["Softmax", "LogSoftmax"])
+@pytest.mark.parametrize("op", ["Softmax", "LogSoftmax", "Hardmax"])
 @pytest.mark.parametrize("axis", [0, 1, -2])
 def test_softmax_roundtrip(op, axis):
     original = helper.make_model(
@@ -111,10 +129,10 @@ def test_softmax_roundtrip(op, axis):
         "Reshape",
     ]
     data = np.arange(24, dtype=np.float32).reshape(2, 3, 4) / 10
-    expected = ReferenceEvaluator(original, new_ops=[Softmax, LogSoftmax]).run(
+    expected = ReferenceEvaluator(original, new_ops=[Softmax, LogSoftmax, Hardmax]).run(
         None, {"X": data}
     )[0]
-    actual = ReferenceEvaluator(converted, new_ops=[Softmax, LogSoftmax]).run(
+    actual = ReferenceEvaluator(converted, new_ops=[Softmax, LogSoftmax, Hardmax]).run(
         None, {"X": data}
     )[0]
     np.testing.assert_allclose(actual, expected, rtol=1e-6, atol=1e-6)
@@ -147,3 +165,24 @@ def test_shape_operator_downgrade_rejects_bfloat16(op):
     checker.check_model(original, full_check=True)
     with pytest.raises(RuntimeError, match="unallowed"):
         version_converter.convert_version(original, 12)
+
+
+@pytest.mark.parametrize("op", ["Softmax", "LogSoftmax", "Hardmax"])
+@pytest.mark.parametrize("axis", [2, -3, 2**63 - 1, -(2**63)])
+def test_reject_invalid_axis_before_indexing_permutation(op, axis):
+    original = helper.make_model(
+        helper.make_graph(
+            [
+                helper.make_node("Flatten", ["X"], ["F"], axis=1),
+                helper.make_node(op, ["F"], ["Y"], axis=axis),
+            ],
+            "invalid-axis",
+            [value("X", [2, 3, 4])],
+            [value("Y", [2, 12])],
+        ),
+        opset_imports=[helper.make_opsetid("", 13)],
+    )
+    before = original.SerializeToString()
+    with pytest.raises(RuntimeError, match="axis is out of range"):
+        version_converter.convert_version(original, 12)
+    assert original.SerializeToString() == before

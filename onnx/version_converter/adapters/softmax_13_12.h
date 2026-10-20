@@ -6,6 +6,7 @@
 
 #pragma once
 
+#include <cstdint>
 #include <memory>
 #include <numeric>
 #include <string>
@@ -23,7 +24,7 @@ class Softmax_13_12 final : public Adapter {
   void adapt_softmax_13_12(const std::shared_ptr<Graph>& graph, Node* node) const {
     ONNX_ASSERTM(node->inputs().size() >= 1, "Softmax node must have at least 1 input")
 
-    int new_axis = node->hasAttribute(kaxis) ? static_cast<int>(node->i(kaxis)) : -1;
+    int64_t new_axis = node->hasAttribute(kaxis) ? node->i(kaxis) : -1;
     int input_rank = static_cast<int>(node->inputs()[0]->sizes().size());
 
     // Handle Softmax on the last axis (default behavior in opset 13)
@@ -38,8 +39,11 @@ class Softmax_13_12 final : public Adapter {
 
     // Opset 12 coerces the input to 2D at axis, so it matches opset 13 only on the
     // last axis. Otherwise swap axis with the last one around the op.
-    if (new_axis != input_rank - 1 && node->inputs()[0]->node()->kind() != kFlatten) {
+    // Flatten produces a rank-two tensor, but axis 0 still differs between
+    // opsets. Its presence does not justify bypassing the transpose pair.
+    if (new_axis != input_rank - 1) {
       ONNX_ASSERTM(input_rank > 0, "Softmax with a non-last axis needs a known input rank")
+      ONNX_ASSERTM(new_axis >= 0 && new_axis < input_rank, "Softmax axis is out of range for the input rank")
       std::vector<int64_t> perm(input_rank);
       std::iota(perm.begin(), perm.end(), 0);
       std::swap(perm[new_axis], perm[input_rank - 1]);
