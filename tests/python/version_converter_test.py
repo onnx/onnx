@@ -2609,13 +2609,13 @@ class TestVersionConverter:
         with pytest.raises((RuntimeError, shape_inference.InferenceError)):
             test()
 
-    def test_softmax_13_12_rejects_reshape_without_output(self) -> None:
+    def test_softmax_13_12_preserves_custom_reshape_without_output(self) -> None:
         graph = helper.make_graph(
             [
                 helper.make_node("Softmax", ["X"], ["Y"], axis=-1),
                 helper.make_node("Reshape", ["Y"], [], domain="local.test"),
             ],
-            "test_softmax_13_12_rejects_reshape_without_output",
+            "test_softmax_13_12_preserves_custom_reshape_without_output",
             [helper.make_tensor_value_info("X", TensorProto.FLOAT, (1, 2))],
             [helper.make_tensor_value_info("Y", TensorProto.FLOAT, (1, 2))],
         )
@@ -2628,10 +2628,11 @@ class TestVersionConverter:
         )
         checker.check_model(model)
 
-        with pytest.raises(
-            RuntimeError, match="Reshape node must have at least 1 output"
-        ):
-            onnx.version_converter.convert_version(model, 12)
+        # This is not the standard-domain Reshape operator. Its output arity
+        # is not ours to validate, and the Softmax adapter must not modify it.
+        converted = onnx.version_converter.convert_version(model, 12)
+        checker.check_model(converted)
+        assert converted.graph.node[1] == model.graph.node[1]
 
     @pytest.mark.parametrize(
         "x_shape, scale_shape, axis, block_size, output_dtype, zero_point_dtype, compatible",
