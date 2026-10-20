@@ -26,6 +26,8 @@ def convert_version(model: ModelProto, target_version: int) -> ModelProto:
 
     Raises:
         RuntimeError when some necessary conversion is not supported.
+        ConvertError when preserved model-local functions are incompatible with
+        the target opset. Function bodies are not converted.
     """
     if not isinstance(model, ModelProto):
         raise TypeError(
