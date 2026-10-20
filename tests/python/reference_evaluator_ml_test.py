@@ -426,7 +426,7 @@ class TestReferenceEvaluatorAiOnnxMl:
             values_tensor=make_tensor(
                 "values_tensor", TensorProto.INT64, [3], [1, 2, 3]
             ),
-            default_tensor=make_tensor("default_tensor", TensorProto.INT64, [], [-5]),
+            default_tensor=make_tensor("default_tensor", TensorProto.INT64, [1], [-5]),
             **keys_attribute,
         )
         graph = make_graph([node], "ml", [X], [Y])
@@ -436,6 +436,34 @@ class TestReferenceEvaluatorAiOnnxMl:
         negative_nan = -np.float32(np.nan)
         x = np.array([np.nan, 1, negative_nan, 3, 4], dtype=np.float32)
         expected = np.array([2, 1, 2, 3, -5], dtype=np.int64)
+        sess = ReferenceEvaluator(model)
+        got = sess.run(None, {"X": x})[0]
+        assert expected.tolist() == got.tolist()
+
+    @pytest.mark.skipif(not ONNX_ML, reason="onnx not compiled with ai.onnx.ml")
+    def test_label_encoder_nan_key_bitwise_opset2(self):
+        # LabelEncoder-2 compares keys bit-wise: a NaN key only matches a NaN
+        # input with the same bit pattern.
+        X = make_tensor_value_info("X", TensorProto.FLOAT, [None])
+        Y = make_tensor_value_info("Y", TensorProto.INT64, [None])
+        node = make_node(
+            "LabelEncoder",
+            ["X"],
+            ["Y"],
+            domain="ai.onnx.ml",
+            keys_floats=[1.0, np.nan],
+            values_int64s=[1, 2],
+            default_int64=-5,
+        )
+        graph = make_graph([node], "ml", [X], [Y])
+        model = make_model_gen_version(
+            graph,
+            opset_imports=[make_opsetid("", 18), make_opsetid("ai.onnx.ml", 2)],
+        )
+        onnx.checker.check_model(model)
+        negative_nan = -np.float32(np.nan)
+        x = np.array([np.nan, 1, negative_nan, 4], dtype=np.float32)
+        expected = np.array([2, 1, -5, -5], dtype=np.int64)
         sess = ReferenceEvaluator(model)
         got = sess.run(None, {"X": x})[0]
         assert expected.tolist() == got.tolist()

@@ -8,7 +8,15 @@ import numpy as np
 from onnx.reference.ops.aionnxml._op_run_aionnxml import OpRunAiOnnxMl
 
 
-class LabelEncoder(OpRunAiOnnxMl):
+def _float_bits(value) -> int:
+    return int(np.float32(value).view(np.uint32))
+
+
+class _LabelEncoder(OpRunAiOnnxMl):
+    # LabelEncoder-4: a NaN key matches any NaN input. LabelEncoder-2 compares
+    # keys bit-wise, so a NaN key only matches a NaN input with the same bits.
+    nan_key_matches_any_nan = True
+
     def _run(
         self,
         x,
@@ -28,15 +36,15 @@ class LabelEncoder(OpRunAiOnnxMl):
         keys = keys_floats or keys_int64s or keys_strings or keys_tensor
         values = values_floats or values_int64s or values_strings or values_tensor
         classes = {}
-        has_nan_key = False
-        nan_key_value = None
+        # NaN keys never compare equal in a dict, so they are looked up by bit
+        # pattern. If a key is repeated, the last one takes precedence.
+        nan_keys = {}
         for key, value in zip(keys, values, strict=False):
             if isinstance(key, (float, np.floating)) and np.isnan(key):
-                # A NaN key matches any NaN input, the last one takes precedence.
-                has_nan_key = True
-                nan_key_value = value
+                nan_keys[_float_bits(key)] = value
             else:
                 classes[key] = value
+        last_nan_value = list(nan_keys.values())[-1] if nan_keys else None
 
         if values is values_tensor:
             if default_tensor is None:
@@ -64,8 +72,10 @@ class LabelEncoder(OpRunAiOnnxMl):
                 defval = ""
 
         def lookup(x):
-            if has_nan_key and isinstance(x, (float, np.floating)) and np.isnan(x):
-                return nan_key_value
+            if nan_keys and isinstance(x, (float, np.floating)) and np.isnan(x):
+                if self.nan_key_matches_any_nan:
+                    return last_nan_value
+                return nan_keys.get(_float_bits(x), defval)
             return classes.get(x, defval)
 
         lookup_func = np.vectorize(lookup, otypes=[otype])
@@ -73,3 +83,15 @@ class LabelEncoder(OpRunAiOnnxMl):
         if output.dtype == object:
             output = output.astype(np.str_)
         return (output,)
+
+
+class LabelEncoder_2(_LabelEncoder):
+    # Opsets 2 and 3: LabelEncoder-2 specifies bit-wise key comparison.
+    nan_key_matches_any_nan = False
+
+
+class LabelEncoder_4(_LabelEncoder):
+    nan_key_matches_any_nan = True
+
+
+LabelEncoder = LabelEncoder_4
