@@ -39,12 +39,13 @@ class _LabelEncoder(OpRunAiOnnxMl):
         # NaN keys never compare equal in a dict, so they are looked up by bit
         # pattern. If a key is repeated, the last one takes precedence.
         nan_keys = {}
+        last_nan_value = None
         for key, value in zip(keys, values, strict=False):
             if isinstance(key, (float, np.floating)) and np.isnan(key):
                 nan_keys[_float_bits(key)] = value
+                last_nan_value = value
             else:
                 classes[key] = value
-        last_nan_value = list(nan_keys.values())[-1] if nan_keys else None
 
         if values is values_tensor:
             if default_tensor is None:

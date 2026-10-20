@@ -441,6 +441,31 @@ class TestReferenceEvaluatorAiOnnxMl:
         assert expected.tolist() == got.tolist()
 
     @pytest.mark.skipif(not ONNX_ML, reason="onnx not compiled with ai.onnx.ml")
+    def test_label_encoder_repeated_nan_keys_last_wins(self):
+        # Repeated NaN keys with interleaved bit patterns: under LabelEncoder-4
+        # the last NaN key takes precedence for any NaN input.
+        X = make_tensor_value_info("X", TensorProto.FLOAT, [None])
+        Y = make_tensor_value_info("Y", TensorProto.INT64, [None])
+        negative_nan = -np.float32(np.nan)
+        node = make_node(
+            "LabelEncoder",
+            ["X"],
+            ["Y"],
+            domain="ai.onnx.ml",
+            keys_floats=[np.nan, float(negative_nan), np.nan],
+            values_int64s=[10, 20, 30],
+            default_int64=-5,
+        )
+        graph = make_graph([node], "ml", [X], [Y])
+        model = make_model_gen_version(graph, opset_imports=OPSETS)
+        onnx.checker.check_model(model)
+        x = np.array([np.nan, negative_nan, 1], dtype=np.float32)
+        expected = np.array([30, 30, -5], dtype=np.int64)
+        sess = ReferenceEvaluator(model)
+        got = sess.run(None, {"X": x})[0]
+        assert expected.tolist() == got.tolist()
+
+    @pytest.mark.skipif(not ONNX_ML, reason="onnx not compiled with ai.onnx.ml")
     def test_label_encoder_nan_key_bitwise_opset2(self):
         # LabelEncoder-2 compares keys bit-wise: a NaN key only matches a NaN
         # input with the same bit pattern.
