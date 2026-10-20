@@ -38,6 +38,7 @@ import functools
 import re
 from pathlib import Path
 
+import onnx
 import pytest
 
 from onnx.defs import (
@@ -266,6 +267,13 @@ def test_runtime_registry_matches_defined_schemas(macro: str) -> None:
     single source of truth for what users actually get, so require it to hold exactly
     the schemas defined via this macro.
     """
+    if macro == "ONNX_ML_OPERATOR_SET_SCHEMA" and not onnx.ONNX_ML:
+        pytest.skip(
+            "ML schemas are intentionally not registered at runtime in ONNX_ML=0 "
+            "builds (schema.cc guards RegisterOnnxMLOperatorSetSchema with "
+            "#ifdef ONNX_ML); the header check above still applies."
+        )
+
     _, registry_domain, _ = _MACRO_INFO[macro]
     defined = _defined_schemas()[macro]
     runtime = _runtime_schemas_by_domain().get(registry_domain, set())
