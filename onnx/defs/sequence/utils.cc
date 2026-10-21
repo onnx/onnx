@@ -4,7 +4,6 @@
 #include "onnx/defs/sequence/utils.h"
 
 #include <algorithm>
-#include <numeric>
 #include <string>
 #include <utility>
 #include <vector>
@@ -121,7 +120,12 @@ std::function<void(OpSchema&)> SplitToSequenceOpGenerator(
                 return -1;
               } else {
                 // split is 1-D tensor
-                int64_t splitSizesSum = std::accumulate(splitSizes.begin(), splitSizes.end(), static_cast<int64_t>(0));
+                int64_t splitSizesSum = 0;
+                for (const int64_t splitSize : splitSizes) {
+                  if (checked_add_overflow(splitSizesSum, splitSize, &splitSizesSum)) {
+                    fail_shape_inference("Sum of split values is too large.");
+                  }
+                }
                 if (splitDimValue != splitSizesSum) {
                   fail_shape_inference(
                       "Sum of split values not equal to 'input' dim size on 'axis'. 'axis' dim size=",
