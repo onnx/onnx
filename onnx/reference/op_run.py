@@ -655,13 +655,8 @@ class OpFunction(OpRun):
                 f"for node {self.op_type!r} from domain {self.domain!r}."
             )
         bindings = kwargs.pop("bindings", None)
-        feeds = {
-            name: value
-            for name, caller_name, value in zip(
-                impl.input_names, self.onnx_node.input, inputs, strict=False
-            )
-            if caller_name
-        }
+        feeds = dict(zip(impl.input_names, inputs, strict=False))
+        feeds.update(dict.fromkeys(impl.input_names[len(inputs) :]))
         attributes = self.attributes_.copy()
         attributes.update(kwargs)
         run_kwargs: dict[str, Any] = {}

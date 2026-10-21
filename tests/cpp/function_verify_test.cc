@@ -395,7 +395,7 @@ TEST(FunctionVerification, VerifyContextDependentFunctionExpansionWithOptionalIn
     FunctionProto function;
     ASSERT_TRUE(schema->BuildContextDependentFunction(context, function));
     EXPECT_EQ(function.input_size(), 4);
-    EXPECT_NO_THROW(FunctionExpandHelper(*node, function, graph));
+    FunctionExpandHelper(*node, function, graph);
   }
 }
 

@@ -451,7 +451,7 @@ class TestShapeInference(TestShapeInferenceHelper):
             [
                 ("input", TensorProto.FLOAT, ("M", "K")),
                 ("weights", TensorProto.FLOAT, ("G", "K", "N")),
-                ("group_indices", TensorProto.INT64, ("M", "k")),
+                ("group_indices", TensorProto.INT64, ("M", "S")),
                 ("bias", TensorProto.FLOAT, ("G", "N")),
             ],
             [
@@ -465,17 +465,21 @@ class TestShapeInference(TestShapeInferenceHelper):
         )
         self._assert_inferred(
             graph,
-            [make_tensor_value_info("output", TensorProto.FLOAT, ("M", "k", "N"))],
+            [make_tensor_value_info("output", TensorProto.FLOAT, ("M", "S", "N"))],
             opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
         )
 
     @pytest.mark.parametrize("version", all_versions_for("GroupedMatMul"))
-    def test_groupedmatmul_without_bias(self, version) -> None:
+    @pytest.mark.parametrize(
+        "elem_type", [TensorProto.FLOAT16, TensorProto.BFLOAT16, TensorProto.DOUBLE]
+    )
+    @pytest.mark.parametrize("index_type", [TensorProto.INT32, TensorProto.INT64])
+    def test_groupedmatmul_without_bias(self, version, elem_type, index_type) -> None:
         graph = self._make_graph(
             [
-                ("input", TensorProto.FLOAT16, (4, 3)),
-                ("weights", TensorProto.FLOAT16, (2, 3, 5)),
-                ("group_indices", TensorProto.INT64, (4, 2)),
+                ("input", elem_type, (4, 3)),
+                ("weights", elem_type, (2, 3, 5)),
+                ("group_indices", index_type, (4, 2)),
             ],
             [
                 make_node(
@@ -488,7 +492,7 @@ class TestShapeInference(TestShapeInferenceHelper):
         )
         self._assert_inferred(
             graph,
-            [make_tensor_value_info("output", TensorProto.FLOAT16, (4, 2, 5))],
+            [make_tensor_value_info("output", elem_type, (4, 2, 5))],
             opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
         )
 
