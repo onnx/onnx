@@ -68,6 +68,10 @@ class CheckerContext final {
 
   void set_model_dir(const std::string& model_dir) {
     model_dir_ = model_dir;
+    // Supplying a directory explicitly opts into file-system validation of
+    // external data locations; keep the known flag in sync so callers of this
+    // setter retain existence, containment and size checks.
+    model_dir_known_ = true;
   }
 
   const std::string& get_model_dir() const {

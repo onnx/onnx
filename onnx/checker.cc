@@ -355,7 +355,10 @@ static void check_external_data_location_lexical(const std::string& location, co
   if (file_path.empty()) {
     fail_check("Location of external TensorProto ( tensor name: ", tensor_name, ") should not be empty.");
   }
-  if (file_path.is_absolute()) {
+  // On Windows, a location like "/abs/weights.bin" has a root directory but no
+  // drive, so is_absolute() returns false; reject any root component to also
+  // cover drive-relative locations such as "C:weights.bin".
+  if (file_path.is_absolute() || file_path.has_root_path()) {
     fail_check(
         "Location of external TensorProto ( tensor name: ",
         tensor_name,
