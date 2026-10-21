@@ -19,11 +19,15 @@ class OpRunUnary(OpRun):
     Checks that input and output types are the same.
     """
 
-    def run(self, x):
+    def run(self, x, linked_attributes=None):
         """Calls method ``_run``, catches exceptions, displays a longer error message.
 
         Supports only unary operators.
         """
+        if linked_attributes is not None:
+            # The node is part of a function body and one of its attributes
+            # refers to an attribute of the calling node.
+            return OpRun.run(self, x, linked_attributes=linked_attributes)
         self._log("-- begin %s.run(1 input)", self.__class__.__name__)
         try:
             res = self._run(x)
@@ -42,13 +46,13 @@ class OpRunUnaryNum(OpRunUnary):
     Checks that input and output types are the same.
     """
 
-    def run(self, x):
+    def run(self, x, linked_attributes=None):
         """Calls method ``OpRunUnary.run``.
 
         Catches exceptions, displays a longer error message.
         Checks that the result is not empty.
         """
-        res = OpRunUnary.run(self, x)
+        res = OpRunUnary.run(self, x, linked_attributes=linked_attributes)
         if len(res) == 0 or res[0] is None:
             return res
         if not isinstance(res[0], list) and res[0].dtype != x.dtype:
