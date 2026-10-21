@@ -709,14 +709,18 @@ ONNX_OPERATOR_SET_SCHEMA(
                     ctx.getNumOutputs(),
                     ")");
               }
+              // Only the outputs of the node are read below, so do not size the vector by `num_outputs`.
+              const auto num_node_outputs = static_cast<size_t>(ctx.getNumOutputs());
               if (split_dim_value % num_outputs == 0) { // tensor is evenly splittable
                 int chunk_size = split_dim_value / num_outputs;
-                split.resize(num_outputs, chunk_size);
+                split.assign(num_node_outputs, chunk_size);
               } else { // tensor needs to be split unevenly
                 int chunk_size = (split_dim_value / num_outputs) + 1;
                 int last_chunk_size = split_dim_value - (chunk_size * (num_outputs - 1));
-                split.resize(num_outputs - 1, chunk_size);
-                split.push_back(last_chunk_size);
+                split.assign(num_node_outputs, chunk_size);
+                if (static_cast<int64_t>(num_node_outputs) == num_outputs) {
+                  split.back() = last_chunk_size;
+                }
               }
             } else {
               fail_shape_inference("Neither 'split' input nor 'num_outputs' attribute has been given");

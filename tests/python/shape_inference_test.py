@@ -5624,6 +5624,21 @@ class TestShapeInference(TestShapeInferenceHelper):
             ],
         )
 
+    def test_split_num_outputs_far_above_output_count(self) -> None:
+        # The attribute must not size an allocation, only the declared outputs do.
+        graph = self._make_graph(
+            [("x", TensorProto.FLOAT, (5,))],
+            [make_node("Split", ["x"], ["y", "z"], num_outputs=2**40)],
+            [],
+        )
+        self._assert_inferred(
+            graph,
+            [
+                make_tensor_value_info("y", TensorProto.FLOAT, (1,)),
+                make_tensor_value_info("z", TensorProto.FLOAT, (1,)),
+            ],
+        )
+
     def test_GLU_partial(self) -> None:
         graph = self._make_graph(
             [("x", TensorProto.FLOAT, (5, 6, 7))],
