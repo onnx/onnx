@@ -9857,6 +9857,27 @@ class TestShapeInference(TestShapeInferenceHelper):
         with pytest.raises(onnx.shape_inference.InferenceError):
             self._inferred(graph)
 
+    @pytest.mark.parametrize(
+        ("equation", "shape"),
+        [
+            ("i_j", (2, 3)),
+            ("i.j", (2, 3)),
+            ("i1j", (2, 3)),
+            ("ij..", (2, 3)),
+            ("...i...", (2,)),
+        ],
+    )
+    def test_einsum_unsupported_character_raises(self, equation, shape) -> None:
+        graph = self._make_graph(
+            [("x", TensorProto.FLOAT, shape)],
+            [make_node("Einsum", ["x"], ["y"], equation=equation)],
+            [],
+        )
+        with pytest.raises(
+            onnx.shape_inference.InferenceError, match="unsupported character"
+        ):
+            self._inferred(graph)
+
     def test_einsum_outer_prod(self) -> None:
         graph = self._make_graph(
             [("x", TensorProto.FLOAT, (3, 5)), ("y", TensorProto.FLOAT, (7, 9))],
