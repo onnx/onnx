@@ -9279,6 +9279,31 @@ class TestShapeInference(TestShapeInferenceHelper):
             ],
         )
 
+    def test_split_to_sequence_split_sizes_sum_overflow(self) -> None:
+        max_int64 = 2**63 - 1
+        graph = self._make_graph(
+            [
+                ("input", TensorProto.FLOAT, (max_int64 - 2, 4)),
+                ("split", TensorProto.INT64, (3,)),
+            ],
+            [make_node("SplitToSequence", ["input", "split"], ["output_sequence"])],
+            [],
+            initializer=[
+                make_tensor(
+                    "split",
+                    TensorProto.INT64,
+                    (3,),
+                    (max_int64, max_int64, max_int64),
+                )
+            ],
+        )
+
+        with pytest.raises(
+            onnx.shape_inference.InferenceError,
+            match="Sum of split values is too large",
+        ):
+            self._inferred(graph)
+
     def test_split_to_sequence_non_divisible(self) -> None:
         graph = self._make_graph(
             [("input", TensorProto.FLOAT, (6, 4)), ("split", TensorProto.INT32, ())],

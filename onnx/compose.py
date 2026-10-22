@@ -711,7 +711,8 @@ def expand_out_dim_graph(
             )
         )
         new_shape = [d.dim_value for d in o.type.tensor_type.shape.dim]
-        new_shape.insert(dim_idx, 1)
+        # Unsqueeze resolves a negative axis against the output rank (input rank + 1)
+        new_shape.insert(dim_idx if dim_idx >= 0 else len(new_shape) + dim_idx + 1, 1)
         g.output.append(
             helper.make_tensor_value_info(
                 o.name, o.type.tensor_type.elem_type, new_shape
