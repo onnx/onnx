@@ -26,10 +26,10 @@ jobs:
       fail-fast: false
       matrix:
         build:
-          - "cp310-macosx_universal2"
           - "cp311-macosx_universal2"
           - "cp312-macosx_universal2"
           - "cp314t-macosx_universal2"
+          - "cp315t-macosx_universal2"
 
     runs-on: macos-14
 
@@ -61,7 +61,7 @@ jobs:
           echo "PROTOC_ACTUAL_SHA256=$(shasum -a 256 protoc.zip | awk '{print $1}')" >> $GITHUB_ENV
 
       - name: Verify protoc checksum
-        uses: ./.github/actions/verify-sha256
+        uses: $/.github/actions/verify-sha256
         with:
           file: ${{ env.PROTOC_ZIP }}
           expected-sha256: ${{ env.PROTOC_EXPECTED_SHA256 }}
@@ -79,7 +79,7 @@ jobs:
           echo "PROTOBUF_ACTUAL_SHA256=$(shasum -a 256 protobuf.tar.gz | awk '{print $1}')" >> $GITHUB_ENV
 
       - name: Verify protobuf source checksum
-        uses: ./.github/actions/verify-sha256
+        uses: $/.github/actions/verify-sha256
         with:
           file: protobuf-${{ env.PROTOBUF_VERSION }}.tar.gz
           expected-sha256: ${{ env.PROTOBUF_EXPECTED_SHA256 }}
@@ -92,7 +92,7 @@ jobs:
         run: echo "SOURCE_DATE_EPOCH=$(git log -1 --pretty=%ct)" >> $GITHUB_ENV
 
       - name: Build wheels
-        uses: pypa/cibuildwheel@1828c10ab37f080699c7b81cea34097c684a7074  # v4.2.0
+        uses: pypa/cibuildwheel@e090b81e30c4d855ea63bf4b6e59204c09a101ae  # v4.2.1
         with:
           output-dir: dist/
           only: ${{ matrix.build }}

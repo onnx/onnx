@@ -50,6 +50,7 @@
 #include "onnx/version_converter/adapters/reshape_4_5.h"
 #include "onnx/version_converter/adapters/reshape_5_4.h"
 #include "onnx/version_converter/adapters/resize_10_11.h"
+#include "onnx/version_converter/adapters/resize_12_13.h"
 #include "onnx/version_converter/adapters/resize_18_17.h"
 #include "onnx/version_converter/adapters/scan_8_9.h"
 #include "onnx/version_converter/adapters/scan_9_8.h"
@@ -477,7 +478,7 @@ class DefaultVersionConverter : public BaseVersionConverter {
     registerAdapter(std::make_unique<CompatibleAdapter>("ReduceSumSquare", OpSetID(12), OpSetID(13)));
     registerAdapter(std::make_unique<CompatibleAdapter>("Relu", OpSetID(12), OpSetID(13)));
     registerAdapter(std::make_unique<CompatibleAdapter>("Reshape", OpSetID(12), OpSetID(13)));
-    registerAdapter(std::make_unique<CompatibleAdapter>("Resize", OpSetID(12), OpSetID(13)));
+    registerAdapter(std::make_unique<Resize_12_13>());
     registerAdapter(std::make_unique<CompatibleAdapter>("ScatterElements", OpSetID(12), OpSetID(13)));
     registerAdapter(std::make_unique<CompatibleAdapter>("ScatterND", OpSetID(12), OpSetID(13)));
     registerAdapter(std::make_unique<CompatibleAdapter>("Shape", OpSetID(12), OpSetID(13)));
@@ -531,6 +532,9 @@ class DefaultVersionConverter : public BaseVersionConverter {
     registerAdapter(std::make_unique<BatchNormalization_13_14>());
 
     /******** 14 -> 13 ********/
+    const std::vector<TensorProto_DataType> mul_14_unallowed_types = {
+        TensorProto_DataType_UINT8, TensorProto_DataType_INT8, TensorProto_DataType_UINT16, TensorProto_DataType_INT16};
+    registerAdapter(std::make_unique<TypeRestriction>("Mul", OpSetID(14), OpSetID(13), mul_14_unallowed_types));
     registerAdapter("GRU", 14, 13, RemoveAttribute(klayout, 0));
     registerAdapter("LSTM", 14, 13, RemoveAttribute(klayout, 0));
     registerAdapter("RNN", 14, 13, RemoveAttribute(klayout, 0));
