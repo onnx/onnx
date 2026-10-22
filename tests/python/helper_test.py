@@ -241,6 +241,20 @@ class TestHelperAttributeFunctions:
         with pytest.raises(ValueError):
             helper.printable_attribute(helper.make_attribute("value", tensor))
 
+    @pytest.mark.parametrize(
+        ("size", "expected"),
+        [
+            (10, "value = <Scalar Tensor [0.0, 1.0, 2.0, 3.0, 4.0, ...]>"),
+            (5, "value = <Scalar Tensor [0.0, 1.0, 2.0, 3.0, 4.0]>"),
+        ],
+    )
+    def test_printable_attribute_scalar_tensor_element_limit(
+        self, size: int, expected: str
+    ) -> None:
+        tensor = TensorProto(data_type=TensorProto.FLOAT, float_data=range(size))
+        attr = helper.make_attribute("value", tensor)
+        assert helper.printable_attribute(attr) == expected
+
     def test_attr_repeated_graph_proto(self) -> None:
         graphs = [GraphProto(), GraphProto()]
         graphs[0].name = "a"

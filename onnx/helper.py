@@ -1043,7 +1043,11 @@ def printable_attribute(
                 value = onnx.numpy_helper.to_array(attr.t).reshape(-1).tolist()
             else:
                 value = getattr(attr.t, tensor_dtype_to_field(attr.t.data_type))
-            content.append(f"<Scalar Tensor {value}>")
+            limit = 5
+            value_str = (
+                str(value[:limit])[:-1] + ", ...]" if len(value) > limit else str(value)
+            )
+            content.append(f"<Scalar Tensor {value_str}>")
     elif attr.HasField("g"):
         content.append(f"<graph {attr.g.name}>")
         graphs.append(attr.g)
