@@ -38,23 +38,16 @@ inline std::string ProtoDebugString(const ::google::protobuf::Message& proto) {
 template <typename Proto>
 bool ParseProtoFromBytes(Proto* proto, const char* buffer, size_t length) {
   // Reject inputs larger than the 2 GB proto limit before casting to int.
-  // ArrayInputStream takes an int size, so passing a truncated value would
+  // ParseFromArray takes an int size, so passing a truncated value would
   // silently parse fewer bytes than requested.
   constexpr std::int32_t total_bytes_limit = std::numeric_limits<std::int32_t>::max();
   if (length > static_cast<size_t>(total_bytes_limit)) {
     return false;
   }
-  ::google::protobuf::io::ArrayInputStream input_stream(buffer, static_cast<int>(length));
-  ::google::protobuf::io::CodedInputStream coded_stream(&input_stream);
-#if GOOGLE_PROTOBUF_VERSION >= 3011000
-  // Only take one parameter since protobuf 3.11
-  coded_stream.SetTotalBytesLimit(total_bytes_limit);
-#else
-  // Total bytes hard limit / warning limit are set to 2GB and 512MB respectively.
-  coded_stream.SetTotalBytesLimit(total_bytes_limit, 512LL << 20);
-#endif
-
-  return proto->ParseFromCodedStream(&coded_stream);
+  // Unlike ParseFromCodedStream, ParseFromArray fails unless the whole buffer
+  // is consumed, so data after a 0 or end-group tag is rejected rather than
+  // silently dropped.
+  return proto->ParseFromArray(buffer, static_cast<int>(length));
 }
 
 template <typename T>

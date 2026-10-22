@@ -33,6 +33,7 @@ jobs:
       - run: |
           pip install -q check-jsonschema
           python -m check_jsonschema --schemafile "https://cyclonedx.org/schema/bom-1.7.schema.json" sbom.cdx.json
+          python -m check_jsonschema --schemafile "https://raw.githubusercontent.com/openvex/spec/a68ccd19b15a9604d28ef66ebf33f27a772ba4ec/openvex_json_schema.json" .vex/*.openvex.json
 
   enforce-style:
     name: Enforce style
