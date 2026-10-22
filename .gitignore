@@ -54,7 +54,6 @@ onnx/*_pb.pyi
 .idea
 
 # Visual Studio Code files
-.vscode
 !/.vscode/settings.json
 
 # OSX dir files
@@ -116,3 +115,5 @@ docs/docsgen/**/*.pb
 _codeql_build_dir/
 _codeql_detected_source_root
 /.lycheecache
+config.bat
+node_modules

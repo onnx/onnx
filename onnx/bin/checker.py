@@ -3,6 +3,7 @@
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
+import utils.session
 import argparse
 
 from onnx import NodeProto, checker, load
