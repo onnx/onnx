@@ -8719,6 +8719,35 @@ class TestShapeInference(TestShapeInferenceHelper):
         with pytest.raises(onnx.shape_inference.InferenceError):
             self._inferred(graph)
 
+    @pytest.mark.parametrize("version", all_versions_for("GatherND"))
+    def test_gathernd_reject_negative_indices_last_dim(self, version) -> None:
+        graph = self._make_graph(
+            [
+                ("x", TensorProto.FLOAT, (2, 2, 2)),
+                ("indices", TensorProto.INT64, (2, -1)),
+            ],
+            [make_node("GatherND", ["x", "indices"], ["y"])],
+            [],
+        )
+        with pytest.raises(
+            onnx.shape_inference.InferenceError, match="must not be negative"
+        ):
+            self._inferred(
+                graph, opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)]
+            )
+
+    def test_gathernd_12_reject_negative_batch_dims(self) -> None:
+        graph = self._make_graph(
+            [
+                ("x", TensorProto.FLOAT, (2, 2, 2)),
+                ("indices", TensorProto.INT64, (2, 1)),
+            ],
+            [make_node("GatherND", ["x", "indices"], ["y"], batch_dims=-5)],
+            [],
+        )
+        with pytest.raises(onnx.shape_inference.InferenceError, match="batch_dims"):
+            self._inferred(graph, opset_imports=[helper.make_opsetid(ONNX_DOMAIN, 12)])
+
     def test_cumprod(self) -> None:
         graph = self._make_graph(
             [("x", TensorProto.FLOAT, (3, 2)), ("axis", TensorProto.INT64, (1,))],
