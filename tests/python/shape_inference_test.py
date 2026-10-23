@@ -8806,6 +8806,35 @@ class TestShapeInference(TestShapeInferenceHelper):
         with pytest.raises(onnx.shape_inference.InferenceError):
             self._inferred(graph)
 
+    @pytest.mark.parametrize("version", all_versions_for("GatherND"))
+    def test_gathernd_reject_negative_indices_last_dim(self, version) -> None:
+        graph = self._make_graph(
+            [
+                ("x", TensorProto.FLOAT, (2, 2, 2)),
+                ("indices", TensorProto.INT64, (2, -1)),
+            ],
+            [make_node("GatherND", ["x", "indices"], ["y"])],
+            [],
+        )
+        with pytest.raises(
+            onnx.shape_inference.InferenceError, match="must not be negative"
+        ):
+            self._inferred(
+                graph, opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)]
+            )
+
+    def test_gathernd_12_reject_negative_batch_dims(self) -> None:
+        graph = self._make_graph(
+            [
+                ("x", TensorProto.FLOAT, (2, 2, 2)),
+                ("indices", TensorProto.INT64, (2, 1)),
+            ],
+            [make_node("GatherND", ["x", "indices"], ["y"], batch_dims=-5)],
+            [],
+        )
+        with pytest.raises(onnx.shape_inference.InferenceError, match="batch_dims"):
+            self._inferred(graph, opset_imports=[helper.make_opsetid(ONNX_DOMAIN, 12)])
+
     def test_cumprod(self) -> None:
         graph = self._make_graph(
             [("x", TensorProto.FLOAT, (3, 2)), ("axis", TensorProto.INT64, (1,))],
@@ -9336,6 +9365,31 @@ class TestShapeInference(TestShapeInferenceHelper):
                 )
             ],
         )
+
+    def test_split_to_sequence_split_sizes_sum_overflow(self) -> None:
+        max_int64 = 2**63 - 1
+        graph = self._make_graph(
+            [
+                ("input", TensorProto.FLOAT, (max_int64 - 2, 4)),
+                ("split", TensorProto.INT64, (3,)),
+            ],
+            [make_node("SplitToSequence", ["input", "split"], ["output_sequence"])],
+            [],
+            initializer=[
+                make_tensor(
+                    "split",
+                    TensorProto.INT64,
+                    (3,),
+                    (max_int64, max_int64, max_int64),
+                )
+            ],
+        )
+
+        with pytest.raises(
+            onnx.shape_inference.InferenceError,
+            match="Sum of split values is too large",
+        ):
+            self._inferred(graph)
 
     def test_split_to_sequence_non_divisible(self) -> None:
         graph = self._make_graph(
@@ -9942,6 +9996,27 @@ class TestShapeInference(TestShapeInferenceHelper):
             [],
         )
         with pytest.raises(onnx.shape_inference.InferenceError):
+            self._inferred(graph)
+
+    @pytest.mark.parametrize(
+        ("equation", "shape"),
+        [
+            ("i_j", (2, 3)),
+            ("i.j", (2, 3)),
+            ("i1j", (2, 3)),
+            ("ij..", (2, 3)),
+            ("...i...", (2,)),
+        ],
+    )
+    def test_einsum_unsupported_character_raises(self, equation, shape) -> None:
+        graph = self._make_graph(
+            [("x", TensorProto.FLOAT, shape)],
+            [make_node("Einsum", ["x"], ["y"], equation=equation)],
+            [],
+        )
+        with pytest.raises(
+            onnx.shape_inference.InferenceError, match="unsupported character"
+        ):
             self._inferred(graph)
 
     def test_einsum_outer_prod(self) -> None:
