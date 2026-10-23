@@ -1193,10 +1193,10 @@ static void ScanInferenceFunction_opset9(InferenceContext& ctx) {
           output_axis = handle_negative_axis_validate_opset9("scan_output_axes", output_axis, output_rank);
 
           for (int j = 0; j < output_axis; ++j)
-            *(inferred_shape.add_dim()) = subgraph_output_shape.dim(j);
-          *(inferred_shape.add_dim()) = sequence_len_dim;
+            *inferred_shape.add_dim() = subgraph_output_shape.dim(j);
+          *inferred_shape.add_dim() = sequence_len_dim;
           for (int j = output_axis; j < subgraph_output_rank; ++j)
-            *(inferred_shape.add_dim()) = subgraph_output_shape.dim(j);
+            *inferred_shape.add_dim() = subgraph_output_shape.dim(j);
 
           // Merge inferred shape with existing shape information
           mergeInShapeInfo(inferred_shape, *mutable_scan_output_tensor_type);
