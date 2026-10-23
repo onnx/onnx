@@ -2550,7 +2550,7 @@ ONNX_OPERATOR_SET_SCHEMA(
 
 ONNX_OPERATOR_SET_SCHEMA(
     STFT,
-    17,
+    29,
     OpSchema()
         .SetDoc(kDoc_STFT_ver17)
         .Attr(
@@ -2567,10 +2567,10 @@ ONNX_OPERATOR_SET_SCHEMA(
             0,
             "signal",
             "Input tensor representing a real or complex valued signal. "
-            "For real input, the following shape is expected: [batch_size][signal_length][1]. "
+            "For real input, the following shapes are expected: [batch_size][signal_length] or [batch_size][signal_length][1]. "
             "For complex input, the following shape is expected: [batch_size][signal_length][2], where "
             "[batch_size][signal_length][0] represents the real component and [batch_size][signal_length][1] represents the imaginary component of the signal. "
-            "The tensor is expected to have rank 3.",
+            "Real-valued signals may have rank 2 or 3; complex-valued signals must have rank 3.",
             "T1",
             OpSchema::Single,
             true,
@@ -2634,11 +2634,16 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
 
           auto& input_shape = getInputShape(ctx, 0);
-          if (input_shape.dim_size() != 3) {
-            fail_shape_inference("Input 0 (signal) must have rank 3.");
+          if (input_shape.dim_size() != 2 && input_shape.dim_size() != 3) {
+            fail_shape_inference("Input 0 (signal) must have rank 2 or 3.");
           }
 
-          const auto& complex_dim = input_shape.dim(2);
+          TensorShapeProto::Dimension complex_dim;
+          if (input_shape.dim_size() == 3) {
+            complex_dim.CopyFrom(input_shape.dim(2));
+          } else {
+            complex_dim.set_dim_value(1);
+          }
           if (complex_dim.has_dim_value() && complex_dim.dim_value() != 1 && complex_dim.dim_value() != 2) {
             fail_shape_inference("The last dimension of signal must have size 1 (real) or 2 (complex).");
           }

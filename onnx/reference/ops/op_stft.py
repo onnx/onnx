@@ -152,7 +152,7 @@ def _istft(x, fft_length: int, hop_length, window, onesided=False):
     return transposed.reshape(final_shape)
 
 
-class STFT(OpRun):
+class STFT_17(OpRun):
     def _run(self, x, frame_step, window=None, frame_length=None, onesided=None):
         if frame_length is None:
             if window is None:
@@ -165,3 +165,10 @@ class STFT(OpRun):
         n_frames = 1 + (x.shape[-2] - frame_length) // frame_step
         res = _stft(x, frame_length, hop_length, n_frames, window, onesided=onesided)
         return (res.astype(x.dtype),)
+
+
+class STFT_29(STFT_17):
+    def _run(self, x, frame_step, window=None, frame_length=None, onesided=None):
+        if x.ndim == 2:
+            x = x[..., np.newaxis]
+        return super()._run(x, frame_step, window, frame_length, onesided)

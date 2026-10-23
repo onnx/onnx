@@ -12616,6 +12616,7 @@ class TestShapeInference(TestShapeInferenceHelper):
                 make_tensor_value_info("window", TensorProto.FLOAT, (5,)),
                 make_tensor_value_info("output", TensorProto.FLOAT, (2, 3, 3, 2)),
             ],
+            opset_imports=[make_opsetid("", 17)],
         )
 
         graph = self._make_graph(
@@ -12668,6 +12669,7 @@ class TestShapeInference(TestShapeInferenceHelper):
                 make_tensor_value_info("frame_length", TensorProto.INT64, ()),
                 make_tensor_value_info("output", TensorProto.FLOAT, (2, 3, 5, 2)),
             ],
+            opset_imports=[make_opsetid("", 17)],
         )
 
         graph = self._make_graph(
@@ -12711,6 +12713,7 @@ class TestShapeInference(TestShapeInferenceHelper):
                 make_tensor_value_info("frame_length", TensorProto.INT64, ()),
                 make_tensor_value_info("output", TensorProto.FLOAT, (2, 3, 3, 2)),
             ],
+            opset_imports=[make_opsetid("", 17)],
         )
 
     def test_stft_partial_shape_dynamic_signal(self):
@@ -12745,6 +12748,7 @@ class TestShapeInference(TestShapeInferenceHelper):
                     "output", TensorProto.FLOAT, ("batch", None, 3, 2)
                 ),
             ],
+            opset_imports=[make_opsetid("", 17)],
         )
 
     def test_stft_partial_shape_dynamic_signal_with_frame_length(self):
@@ -12777,6 +12781,7 @@ class TestShapeInference(TestShapeInferenceHelper):
                 make_tensor_value_info("frame_length", TensorProto.INT64, ()),
                 make_tensor_value_info("output", TensorProto.FLOAT, (1, None, 3, 2)),
             ],
+            opset_imports=[make_opsetid("", 17)],
         )
 
     def test_stft_partial_shape_dynamic_signal_full_spectrum(self):
@@ -12811,6 +12816,7 @@ class TestShapeInference(TestShapeInferenceHelper):
                 make_tensor_value_info("frame_length", TensorProto.INT64, ()),
                 make_tensor_value_info("output", TensorProto.FLOAT, (1, None, 5, 2)),
             ],
+            opset_imports=[make_opsetid("", 17)],
         )
 
     def test_stft_partial_shape_dynamic_frame_step(self):
@@ -12838,6 +12844,7 @@ class TestShapeInference(TestShapeInferenceHelper):
                 make_tensor_value_info("window", TensorProto.FLOAT, (5,)),
                 make_tensor_value_info("output", TensorProto.FLOAT, (1, None, 3, 2)),
             ],
+            opset_imports=[make_opsetid("", 17)],
         )
 
     def test_stft_partial_shape_single_element_frame_step(self):
@@ -12869,6 +12876,7 @@ class TestShapeInference(TestShapeInferenceHelper):
                 make_tensor_value_info("window", TensorProto.FLOAT, (5,)),
                 make_tensor_value_info("output", TensorProto.FLOAT, (1, 3, 3, 2)),
             ],
+            opset_imports=[make_opsetid("", 17)],
         )
 
     def test_stft_partial_shape_dynamic_frame_length(self):
@@ -12900,6 +12908,7 @@ class TestShapeInference(TestShapeInferenceHelper):
                     "output", TensorProto.FLOAT, ("batch", None, None, 2)
                 ),
             ],
+            opset_imports=[make_opsetid("", 17)],
         )
 
     def test_stft_partial_shape_dynamic_window_length(self):
@@ -12927,6 +12936,7 @@ class TestShapeInference(TestShapeInferenceHelper):
                     "output", TensorProto.FLOAT, ("batch", None, None, 2)
                 ),
             ],
+            opset_imports=[make_opsetid("", 17)],
         )
 
     def test_stft_partial_shape_default_frame_length(self):
@@ -12951,6 +12961,7 @@ class TestShapeInference(TestShapeInferenceHelper):
                     "output", TensorProto.FLOAT, ("batch", 1, None, 2)
                 ),
             ],
+            opset_imports=[make_opsetid("", 17)],
         )
 
     def test_stft_complex_signal_full_spectrum(self):
@@ -12987,6 +12998,7 @@ class TestShapeInference(TestShapeInferenceHelper):
                 make_tensor_value_info("window", TensorProto.FLOAT, (5,)),
                 make_tensor_value_info("output", TensorProto.FLOAT, ("batch", 3, 5, 2)),
             ],
+            opset_imports=[make_opsetid("", 17)],
         )
 
     def test_stft_complex_signal_rejects_onesided(self):
@@ -13038,7 +13050,10 @@ class TestShapeInference(TestShapeInferenceHelper):
             [],
         )
         with pytest.raises(onnx.shape_inference.InferenceError):
-            self._inferred(graph)
+            onnx.shape_inference.infer_shapes(
+                onnx.helper.make_model(graph, opset_imports=[make_opsetid("", 17)]),
+                strict_mode=True,
+            )
 
     @pytest.mark.parametrize(
         ("input_name", "input_shape", "node_inputs"),
