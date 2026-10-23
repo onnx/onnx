@@ -136,7 +136,7 @@ std::vector<NodeProto> FunctionBodyHelper::BuildNodes(const std::vector<NodeDef>
       n.add_output(o);
     }
     for (const auto& attr : node.attributes) {
-      *(n.add_attribute()) = attr.proto;
+      *n.add_attribute() = attr.proto;
     }
   }
 
@@ -156,7 +156,7 @@ void FunctionBodyHelper::BuildNodes(FunctionProto& functionProto, const std::vec
       np->add_output(o);
     }
     for (const auto& attr : node.attributes) {
-      *(np->add_attribute()) = attr.proto;
+      *np->add_attribute() = attr.proto;
     }
   }
 }
@@ -169,7 +169,7 @@ bool FunctionBodyHelper::BuildFunctionProto(
   BuildNodes(functionProto, node_defs);
 
   for (const auto& relied_opset : relied_opsets) {
-    *(functionProto.mutable_opset_import()->Add()) = relied_opset;
+    *functionProto.mutable_opset_import()->Add() = relied_opset;
   }
 
   schema.BuildFunction(functionProto);
