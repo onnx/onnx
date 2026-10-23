@@ -2219,7 +2219,7 @@ ONNX_OPERATOR_SET_SCHEMA(
               // For RFFT, output size on signal axis is floor(dft_length/2) + 1
               if (is_onesided && !inverse) {
                 // RFFT: one-sided output
-                auto half_signal_size = (dft_length_value >> 1) + 1;
+                auto half_signal_size = (dft_length_value / 2) + 1;
                 result_shape_proto.mutable_dim(axis_idx)->set_dim_value(half_signal_size);
               } else {
                 // Standard FFT/IFFT and IRFFT: full length
@@ -2237,7 +2237,7 @@ ONNX_OPERATOR_SET_SCHEMA(
                 result_shape_proto.mutable_dim(axis_idx)->set_dim_value(full_signal_size);
               } else {
                 // RFFT without explicit dft_length: infer one-sided output size from input
-                auto half_signal_size = (axis_dimension_value >> 1) + 1;
+                auto half_signal_size = (axis_dimension_value / 2) + 1;
                 result_shape_proto.mutable_dim(axis_idx)->set_dim_value(half_signal_size);
               }
             } else {
@@ -2542,7 +2542,7 @@ ONNX_OPERATOR_SET_SCHEMA(
 
           if (num_mel_bins_value > 0 && dft_length_value > 0) {
             ONNX_NAMESPACE::TensorShapeProto result_shape;
-            result_shape.add_dim()->set_dim_value(static_cast<int64_t>((dft_length_value >> 1) + 1));
+            result_shape.add_dim()->set_dim_value(static_cast<int64_t>((dft_length_value / 2) + 1));
             result_shape.add_dim()->set_dim_value(num_mel_bins_value);
             updateOutputShape(ctx, 0, result_shape);
           }
@@ -2734,7 +2734,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
 
           if (dft_size > 0) {
-            result_shape_proto.add_dim()->set_dim_value(onesided == 1 ? ((dft_size >> 1) + 1) : dft_size);
+            result_shape_proto.add_dim()->set_dim_value(onesided == 1 ? ((dft_size / 2) + 1) : dft_size);
           } else {
             result_shape_proto.add_dim();
           }
