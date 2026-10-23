@@ -4732,6 +4732,9 @@ ONNX_OPERATOR_SET_SCHEMA(
                 "Both `data` and `indices` input tensors in GatherND op "
                 "need to have rank larger than 0.");
           }
+          if (batch_dims_data < 0) {
+            fail_shape_inference("attribute 'batch_dims' of 'GatherND' must not be negative");
+          }
 
           // cannot ascertain if the input shapes are valid if shape of
           // `indices` is missing last dimension value so return at this point
@@ -4739,8 +4742,11 @@ ONNX_OPERATOR_SET_SCHEMA(
             return;
           }
 
-          const auto last_index_dimension =
-              checkedAdd(indices_shape.dim(indices_rank - 1).dim_value(), batch_dims_data);
+          const auto indices_last_dim = indices_shape.dim(indices_rank - 1).dim_value();
+          if (indices_last_dim < 0) {
+            fail_shape_inference("Last dimension of `indices` input tensor in GatherND op must not be negative");
+          }
+          const auto last_index_dimension = checkedAdd(indices_last_dim, batch_dims_data);
 
           if (last_index_dimension > data_rank) {
             fail_shape_inference(
@@ -5954,6 +5960,9 @@ ONNX_OPERATOR_SET_SCHEMA(
 
           const auto last_index_dimension = indices_shape.dim(indices_rank - 1).dim_value();
 
+          if (last_index_dimension < 0) {
+            fail_shape_inference("Last dimension of `indices` input tensor in GatherND op must not be negative");
+          }
           if (last_index_dimension > data_rank) {
             fail_shape_inference(
                 "Last dimension of `indices` input tensor in GatherND op "
