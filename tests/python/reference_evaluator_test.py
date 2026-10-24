@@ -7319,6 +7319,64 @@ class TestReferenceEvaluator:
         )
         assert_allclose(actual, expected)
 
+    @pytest.mark.parametrize(
+        ("additional_types", "expected"),
+        [
+            ([], [[1, 2], [3, 4]]),
+            (["sequence"], [[11, 22], [33, 44]]),
+            (["tensor"], [[11, 22], [13, 24]]),
+            (["sequence", "sequence"], [[111, 222], [333, 444]]),
+            (["tensor", "sequence"], [[111, 222], [313, 424]]),
+            (["sequence", "tensor"], [[111, 222], [133, 244]]),
+            (["tensor", "tensor"], [[111, 222], [113, 224]]),
+        ],
+    )
+    def test_sequence_map_additional_inputs(self, additional_types, expected):
+        input_types = ["sequence", *additional_types]
+        input_names = [f"X{i}" for i in range(len(input_types))]
+        body = make_graph(
+            [
+                make_node("Sum", input_names, ["sum"]),
+                make_node("Neg", ["sum"], ["neg"]),
+            ],
+            "body",
+            [
+                make_tensor_value_info(name, TensorProto.FLOAT, [2])
+                for name in input_names
+            ],
+            [
+                make_tensor_value_info(name, TensorProto.FLOAT, [2])
+                for name in ("sum", "neg")
+            ],
+        )
+        inputs = []
+        feeds = {}
+        for i, (name, input_type) in enumerate(
+            zip(input_names, input_types, strict=True)
+        ):
+            value = np.array([[1, 2], [3, 4]], dtype=np.float32) * 10**i
+            if input_type == "sequence":
+                inputs.append(make_sequence_value_info(name, TensorProto.FLOAT, [2]))
+                feeds[name] = list(value)
+            else:
+                inputs.append(make_tensor_value_info(name, TensorProto.FLOAT, [2]))
+                feeds[name] = value[0]
+        outputs = [
+            make_sequence_value_info(name, TensorProto.FLOAT, [2])
+            for name in ("Y", "Z")
+        ]
+        node = make_node("SequenceMap", input_names, ["Y", "Z"], body=body)
+        model = make_model(
+            make_graph([node], "g", inputs, outputs),
+            opset_imports=[make_opsetid("", 17)],
+        )
+        check_model(model)
+
+        actual = ReferenceEvaluator(model).run(None, feeds)
+        expected = np.array(expected, dtype=np.float32)
+        assert_array_equal(actual[0], expected)
+        assert_array_equal(actual[1], -expected)
+
     def test_sequence_axis(self):
         model = self._load_model(
             """
