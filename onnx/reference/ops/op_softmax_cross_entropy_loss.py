@@ -40,8 +40,12 @@ def softmaxcrossentropy(
 
     # if input is 4-d and above, make it 3-d
     if len(input_shape) != 3:
-        inp = inp.reshape((N, C, -1))
-        target = target.reshape((N, -1))
+        # Compute the trailing dimension explicitly: when the batch size is
+        # zero the array has no elements and a -1 dimension cannot be
+        # inferred.
+        D = int(np.prod(input_shape[2:]))
+        inp = inp.reshape((N, C, D))
+        target = target.reshape((N, D))
 
     # Get a dimension from the reshaped input.
     # If the original input shape is [N, C, H, W],

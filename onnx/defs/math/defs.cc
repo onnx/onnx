@@ -2012,14 +2012,28 @@ static bool BuildContextDependentFunctionBodySCE(
     FunctionProto& functionProto) {
   FunctionBuilder builder(functionProto);
   // Using stable implementation of LogSoftmax
+  // The target shape of the first Reshape is computed from Shape(scores)
+  // instead of the constant [0, 0, -1]: when the batch dimension is zero the
+  // input has no elements, the -1 dimension cannot be inferred, and expanding
+  // the function body fails. Concatenating the first two dimensions with the
+  // product of the trailing ones (1 for a 2-D input) gives the same
+  // (N, C, D) shape without relying on -1.
   builder //
-      .Const("Shape3D", std::vector<int64_t>({0, 0, -1})) //
+      .Const("ReshapeStart0", std::vector<int64_t>({0})) //
+      .Const("ReshapeEnd2", std::vector<int64_t>({2})) //
+      .Const("ReshapeStart2", std::vector<int64_t>({2})) //
+      .Const("ReshapeEndMax", std::vector<int64_t>({9223372036854775807LL})) //
+      .Const("ReshapeAxes0", std::vector<int64_t>({0})) //
       .Add(R"(
+        X_shape = Shape (scores)
+        X_NC = Slice (X_shape, ReshapeStart0, ReshapeEnd2, ReshapeAxes0)
+        X_Tail = Slice (X_shape, ReshapeStart2, ReshapeEndMax, ReshapeAxes0)
+        X_D = ReduceProd <axes = [0], keepdims = 1> (X_Tail)
+        Shape3D = Concat <axis = 0> (X_NC, X_D)
         X_NCD = Reshape (scores, Shape3D)
         X_NDC = Transpose <perm = [0, 2, 1]> (X_NCD)
         X_LogSM = LogSoftmax <axis = 2> (X_NDC)
         X_LogSM_NCD = Transpose <perm = [0, 2, 1]> (X_LogSM)
-        X_shape = Shape (scores)
         X_Log = Reshape (X_LogSM_NCD, X_shape)
       )");
 

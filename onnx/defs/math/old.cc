@@ -1755,15 +1755,37 @@ static bool BuildContextDependentFunctionBodySCE_opset12(
     const OpSchema& schema,
     FunctionProto& functionProto) {
   std::vector<FunctionBodyHelper::NodeDef> body;
-  body.reserve(9);
+  body.reserve(17);
 
   // Using stable implementation of LogSoftmax
-  body.push_back({{"Shape3D"}, "Constant", {}, {MakeAttribute("value", ToDimensionOneInt64Tensor_old({0, 0, -1}))}});
+  // The target shape of the first Reshape is computed from Shape(scores)
+  // instead of the constant [0, 0, -1]: when the batch dimension is zero the
+  // input has no elements, the -1 dimension cannot be inferred, and expanding
+  // the function body fails. Concatenating the first two dimensions with the
+  // product of the trailing ones (1 for a 2-D input) gives the same
+  // (N, C, D) shape without relying on -1.
+  body.push_back({{"X_shape"}, "Shape", {"scores"}});
+  body.push_back({{"ReshapeStart0"}, "Constant", {}, {MakeAttribute("value", ToDimensionOneInt64Tensor_old({0}))}});
+  body.push_back({{"ReshapeEnd2"}, "Constant", {}, {MakeAttribute("value", ToDimensionOneInt64Tensor_old({2}))}});
+  body.push_back({{"ReshapeStart2"}, "Constant", {}, {MakeAttribute("value", ToDimensionOneInt64Tensor_old({2}))}});
+  body.push_back(
+      {{"ReshapeEndMax"},
+       "Constant",
+       {},
+       {MakeAttribute("value", ToDimensionOneInt64Tensor_old({std::numeric_limits<int64_t>::max()}))}});
+  body.push_back({{"ReshapeAxes0"}, "Constant", {}, {MakeAttribute("value", ToDimensionOneInt64Tensor_old({0}))}});
+  body.push_back({{"X_NC"}, "Slice", {"X_shape", "ReshapeStart0", "ReshapeEnd2", "ReshapeAxes0"}});
+  body.push_back({{"X_Tail"}, "Slice", {"X_shape", "ReshapeStart2", "ReshapeEndMax", "ReshapeAxes0"}});
+  body.push_back(
+      {{"X_D"},
+       "ReduceProd",
+       {"X_Tail"},
+       {MakeAttribute("axes", std::vector<int64_t>({0})), MakeAttribute("keepdims", static_cast<int64_t>(1))}});
+  body.push_back({{"Shape3D"}, "Concat", {"X_NC", "X_D"}, {MakeAttribute("axis", static_cast<int64_t>(0))}});
   body.push_back({{"X_NCD"}, "Reshape", {"scores", "Shape3D"}});
   body.push_back({{"X_NDC"}, "Transpose", {"X_NCD"}, {MakeAttribute("perm", std::vector<int64_t>({0, 2, 1}))}});
   body.push_back({{"X_LogSM"}, "LogSoftmax", {"X_NDC"}, {MakeAttribute("axis", static_cast<int64_t>(2))}});
   body.push_back({{"X_LogSM_NCD"}, "Transpose", {"X_LogSM"}, {MakeAttribute("perm", std::vector<int64_t>({0, 2, 1}))}});
-  body.push_back({{"X_shape"}, "Shape", {"scores"}});
   body.push_back({{"X_Log"}, "Reshape", {"X_LogSM_NCD", "X_shape"}});
 
   // Review(mzs): Ideally we want to reuse the output from Log for sub-graph
