@@ -7223,6 +7223,7 @@ class TestReferenceEvaluator:
         roi=None,
         scales=None,
         sizes=None,
+        opset: int = 19,
         **attributes,
     ) -> np.ndarray:
         inputs = ["X", "", "", ""]
@@ -7248,7 +7249,7 @@ class TestReferenceEvaluator:
             [make_tensor_value_info("Y", TensorProto.UNDEFINED, None)],
             initializer=initializers,
         )
-        model = make_model(graph, opset_imports=[make_opsetid("", 19)])
+        model = make_model(graph, opset_imports=[make_opsetid("", opset)])
         return ReferenceEvaluator(model).run(None, {"X": data})[0]
 
     @staticmethod
@@ -7375,6 +7376,92 @@ class TestReferenceEvaluator:
             **kwargs,
         )
         assert_allclose(output, np.array(expected, dtype=np.float32), atol=1e-6)
+
+    @pytest.mark.parametrize(
+        ("mode", "expected"),
+        [
+            ("nearest", [10.0, 10.0, 20.0, 20.0]),
+            ("linear", [10.0, 15.0, 20.0, 20.0]),
+        ],
+    )
+    def test_resize_10_uses_second_input_as_scales(self, mode, expected):
+        data = np.array([10, 20], dtype=np.float32)
+        scales = np.array([2], dtype=np.float32)
+        node = make_node("Resize", ["X", "scales"], ["Y"], mode=mode)
+        graph = make_graph(
+            [node],
+            "resize_10",
+            [make_tensor_value_info("X", TensorProto.FLOAT, None)],
+            [make_tensor_value_info("Y", TensorProto.UNDEFINED, None)],
+            initializer=[onnx.numpy_helper.from_array(scales, name="scales")],
+        )
+        model = make_model(graph, opset_imports=[make_opsetid("", 10)])
+        output = ReferenceEvaluator(model).run(None, {"X": data})[0]
+        assert output.shape == (4,)
+        assert_allclose(output, np.array(expected, dtype=np.float32))
+
+    @pytest.mark.parametrize("opset", [11, 12])
+    def test_resize_tf_half_pixel_for_nn(self, opset):
+        data = np.array([10, 20], dtype=np.float32)
+        output = self._run_resize(
+            data,
+            roi=np.array([0, 1], dtype=np.float32),
+            scales=np.array([2], dtype=np.float32),
+            mode="nearest",
+            nearest_mode="floor",
+            coordinate_transformation_mode="tf_half_pixel_for_nn",
+            opset=opset,
+        )
+        assert output.shape == (4,)
+        assert_allclose(output, np.array([10.0, 10.0, 20.0, 20.0], dtype=np.float32))
+
+    def test_resize_half_pixel_symmetric_nearest_downsample(self):
+        data = np.arange(7, dtype=np.float32) * 10
+        output = self._run_resize(
+            data,
+            scales=np.array([0.5], dtype=np.float32),
+            mode="nearest",
+            coordinate_transformation_mode="half_pixel_symmetric",
+            opset=19,
+        )
+        assert output.shape == (3,)
+        assert_allclose(output, np.array([10.0, 30.0, 50.0], dtype=np.float32))
+
+    @pytest.mark.parametrize(
+        "data",
+        [
+            np.array([2**53 + 1, 2**53 + 3], dtype=np.uint64),
+            np.array([2**53 + 1, -(2**53 + 1)], dtype=np.int64),
+            np.array([1 + 2j, 3 + 4j], dtype=np.complex64),
+            np.array([True, False], dtype=bool),
+            np.array(["cat", "dog"], dtype=object),
+        ],
+    )
+    def test_resize_nearest_preserves_dtype(self, data):
+        output = self._run_resize(
+            data, scales=np.array([2], dtype=np.float32), mode="nearest"
+        )
+        assert output.dtype == data.dtype
+        assert output.tolist() == np.repeat(data, 2).tolist()
+
+    def test_resize_partial_axes_nearest_preserves_int64(self):
+        data = np.array(
+            [
+                [2**53 + 1, -(2**53 + 1)],
+                [2**53 + 3, -(2**53 + 3)],
+                [2**53 + 5, -(2**53 + 5)],
+            ],
+            dtype=np.int64,
+        )
+        output = self._run_resize(
+            data,
+            axes=[1],
+            sizes=np.array([4], dtype=np.int64),
+            mode="nearest",
+        )
+        assert output.dtype == data.dtype
+        expected = np.repeat(data, 2, axis=1)
+        assert output.tolist() == expected.tolist()
 
     @pytest.mark.parametrize("policy", ["not_larger", "not_smaller"])
     def test_resize_partial_axes_keep_aspect_ratio(self, policy):
