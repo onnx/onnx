@@ -389,7 +389,7 @@ jobs:
       url: https://pypi.org/p/onnx
 
     permissions:
-      contents: read
+      contents: write
       id-token: write
       attestations: write
 
@@ -421,6 +421,37 @@ jobs:
         with:
           name: attestation-bundle-release
           path: ${{ steps.attest.outputs.bundle-path }}
+
+      - name: Upload wheels and per-artifact attestations to GitHub Release
+        if: hashFiles('dist/**') != ''
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          version="${GITHUB_REF_NAME#rel-}"
+          if ! gh release view "v${version}" --repo "${{ github.repository }}" 2>/dev/null; then
+            echo "ERROR: GitHub Release v${version} does not exist."
+            echo "Create and publish the release tag before running this workflow."
+            exit 1
+          fi
+          for file in dist/*.whl dist/*.tar.gz; do
+            [ -f "$file" ] || continue
+            filename=$(basename "$file")
+            abs_file="$(realpath "$file")"
+            gh release upload "v${version}" "$file" --clobber
+            # gh attestation download writes to CWD; use a per-artifact tmpdir
+            # so the digest-named output file can be renamed unambiguously.
+            tmpdir=$(mktemp -d)
+            (cd "$tmpdir" && gh attestation download "$abs_file" \
+              --repo "${{ github.repository }}")
+            bundle=$(ls "$tmpdir"/*.sigstore.bundle 2>/dev/null | head -1)
+            if [ -n "$bundle" ]; then
+              mv "$bundle" "${filename}.sigstore.bundle"
+              gh release upload "v${version}" "${filename}.sigstore.bundle" --clobber
+            else
+              echo "ERROR: no bundle produced for $filename" && exit 1
+            fi
+            rm -rf "$tmpdir"
+          done
 
       - name: Publish release_build to pypi
         if: (github.repository_owner == 'onnx')
