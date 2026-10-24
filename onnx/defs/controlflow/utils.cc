@@ -15,12 +15,12 @@ void ClearShape(TypeProto& input_type) {
   } else if (input_type.has_sequence_type()) {
     auto& seq_type = *input_type.mutable_sequence_type();
     if (seq_type.has_elem_type()) {
-      ClearShape(*(seq_type.mutable_elem_type()));
+      ClearShape(*seq_type.mutable_elem_type());
     }
   } else if (input_type.has_optional_type()) {
     auto& opt_type = *input_type.mutable_optional_type();
     if (opt_type.has_elem_type()) {
-      ClearShape(*(opt_type.mutable_elem_type()));
+      ClearShape(*opt_type.mutable_elem_type());
     }
   }
 }
@@ -361,10 +361,10 @@ void ScanInferenceFunction(InferenceContext& ctx) {
           output_axis = handle_negative_axis_validate("scan_output_axes", output_axis, output_rank);
 
           for (int j = 0; j < output_axis; ++j)
-            *(inferred_shape.add_dim()) = subgraph_output_shape.dim(j);
-          *(inferred_shape.add_dim()) = sequence_len_dim;
+            *inferred_shape.add_dim() = subgraph_output_shape.dim(j);
+          *inferred_shape.add_dim() = sequence_len_dim;
           for (int j = output_axis; j < subgraph_output_rank; ++j)
-            *(inferred_shape.add_dim()) = subgraph_output_shape.dim(j);
+            *inferred_shape.add_dim() = subgraph_output_shape.dim(j);
 
           // Merge inferred shape with existing shape information
           mergeInShapeInfo(inferred_shape, *mutable_scan_output_tensor_type);
