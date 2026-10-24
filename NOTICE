@@ -29,7 +29,7 @@ License: BSD-3-Clause (see LICENSE)
 
 Copyright (c) 2022 Wenzel Jakob <wenzel.jakob@epfl.ch>
 
-Version: 2.15.0
+Version: 3.0.1
 Source: https://github.com/wjakob/nanobind
 License: BSD-3-Clause
 
