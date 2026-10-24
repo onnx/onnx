@@ -190,46 +190,60 @@ class ModelContainer:
         copy.ParseFromString(proto)
         prefix = os.path.splitext(os.path.split(file_path)[-1])[0]
 
+        shared_data_file = None
         if all_tensors_to_one_file:
             file_weight = f"{os.path.split(file_path)[1]}.weight"
-            full_file_weight = f"{file_path}.weight"
-            with open(full_file_weight, "wb") as f:
-                pass
+            shared_data_file = ext_data._open_external_data_file_for_write(
+                folder, file_weight, "ModelContainer", truncate=True
+            )
 
-        for tensor in ext_data._get_all_tensors(copy):
-            if not ext_data.uses_external_data(tensor):
-                continue
-            prop: onnx.StringStringEntryProto | None = None
-            for ext in tensor.external_data:
-                if ext.key == "location":
-                    prop = ext
-            if prop is None:
-                raise RuntimeError(
-                    f"No location found for tensor name {tensor.name!r}."
-                )
-            if prop.value not in self.large_initializers:
-                raise RuntimeError(
-                    f"Unable to find large tensor named {tensor.name!r} "
-                    f"with location {prop.value!r} in "
-                    f"{sorted(self.large_initializers)}."
-                )
-            np_tensor = self.large_initializers[prop.value]
+        try:
+            for tensor in ext_data._get_all_tensors(copy):
+                if not ext_data.uses_external_data(tensor):
+                    continue
+                prop: onnx.StringStringEntryProto | None = None
+                for ext in tensor.external_data:
+                    if ext.key == "location":
+                        prop = ext
+                if prop is None:
+                    raise RuntimeError(
+                        f"No location found for tensor name {tensor.name!r}."
+                    )
+                if prop.value not in self.large_initializers:
+                    raise RuntimeError(
+                        f"Unable to find large tensor named {tensor.name!r} "
+                        f"with location {prop.value!r} in "
+                        f"{sorted(self.large_initializers)}."
+                    )
+                np_tensor = self.large_initializers[prop.value]
 
-            tensor_bytes = onnx.numpy_helper.tobytes_little_endian(np_tensor)
+                tensor_bytes = onnx.numpy_helper.tobytes_little_endian(np_tensor)
 
-            if all_tensors_to_one_file:
-                location = file_weight
-            else:
-                location = f"{_clean_name(prefix, prop.value, unique_names)}.weight"
-                prop.value = location
-                # Each tensor owns its file; start it fresh (save_external_data appends).
-                with open(os.path.join(folder, location), "wb") as f:
-                    pass
+                if all_tensors_to_one_file:
+                    location = file_weight
+                    data_file = shared_data_file
+                    if data_file is None:
+                        raise RuntimeError("Shared external-data file is not open.")
+                else:
+                    location = f"{_clean_name(prefix, prop.value, unique_names)}.weight"
+                    prop.value = location
+                    data_file = ext_data._open_external_data_file_for_write(
+                        folder, location, tensor.name, truncate=True
+                    )
 
-            # Route the actual write through the hardened primitive shared with
-            # save_external_data without copying the payload into the protobuf.
-            _set_external_data(tensor, location=location)
-            ext_data._write_external_data(tensor, folder, tensor_bytes)
+                # Route the actual write through the hardened primitive shared with
+                # save_external_data without copying the payload into the protobuf.
+                _set_external_data(tensor, location=location)
+                try:
+                    ext_data._write_external_data_to_file(
+                        tensor, data_file, tensor_bytes
+                    )
+                finally:
+                    if not all_tensors_to_one_file and data_file is not None:
+                        data_file.close()
+        finally:
+            if shared_data_file is not None:
+                shared_data_file.close()
 
         with open(file_path, "wb") as f:
             f.write(copy.SerializeToString())

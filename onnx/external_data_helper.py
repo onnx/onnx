@@ -319,30 +319,65 @@ def save_external_data(tensor: TensorProto, base_path: str) -> None:
 def _write_external_data(tensor: TensorProto, base_path: str, data: bytes) -> None:
     """Write an existing byte buffer using a tensor's external-data metadata."""
     info = ExternalDataInfo(tensor)
-    fd = _open_external_data_fd(base_path, info.location, tensor.name, False)
-    with os.fdopen(fd, "r+b") as data_file:
-        data_file.seek(0, 2)
-        if info.offset is not None:
-            # A tensor is written at the end of the file, optionally bumped forward by
-            # an alignment gap. The gap only aligns tensors that share a file, so it is
-            # always under one boundary. An offset before the end would overwrite data
-            # already in the file; one far past it would pad with an unbounded, untrusted
-            # amount of zeros. Reject both instead of writing.
-            file_size = data_file.tell()
-            padding = info.offset - file_size
-            if not 0 <= padding <= _MAX_EXTERNAL_DATA_PADDING:
-                raise onnx_checker.ValidationError(
-                    f"External data offset ({info.offset}) for tensor {tensor.name!r} "
-                    f"must be between the current file size ({file_size}) and "
-                    f"{file_size + _MAX_EXTERNAL_DATA_PADDING}."
-                )
-            if padding > 0:
-                data_file.write(b"\0" * padding)
+    with _open_external_data_file_for_write(
+        base_path, info.location, tensor.name
+    ) as data_file:
+        _write_external_data_to_file(tensor, data_file, data)
 
-            data_file.seek(info.offset)
-        offset = data_file.tell()
-        data_file.write(data)
-        _set_external_data(tensor, info.location, offset, data_file.tell() - offset)
+
+def _open_external_data_file_for_write(
+    base_path: str,
+    location: str,
+    tensor_name: str,
+    *,
+    truncate: bool = False,
+) -> IO[bytes]:
+    """Open an external-data file for writing and optionally truncate it safely.
+
+    Truncation deliberately happens only after ``_open_external_data_fd`` has
+    validated containment, rejected links, and verified the opened file. Using
+    ``open(..., "wb")`` or an ``O_TRUNC`` flag would modify the target before
+    those post-open checks could reject it.
+    """
+    fd = _open_external_data_fd(base_path, location, tensor_name, False)
+    data_file = os.fdopen(fd, "r+b")
+    if truncate:
+        try:
+            data_file.seek(0)
+            data_file.truncate()
+        except BaseException:
+            data_file.close()
+            raise
+    return data_file
+
+
+def _write_external_data_to_file(
+    tensor: TensorProto, data_file: IO[bytes], data: bytes
+) -> None:
+    """Append a byte buffer to an already validated external-data file."""
+    info = ExternalDataInfo(tensor)
+    data_file.seek(0, 2)
+    if info.offset is not None:
+        # A tensor is written at the end of the file, optionally bumped forward by
+        # an alignment gap. The gap only aligns tensors that share a file, so it is
+        # always under one boundary. An offset before the end would overwrite data
+        # already in the file; one far past it would pad with an unbounded, untrusted
+        # amount of zeros. Reject both instead of writing.
+        file_size = data_file.tell()
+        padding = info.offset - file_size
+        if not 0 <= padding <= _MAX_EXTERNAL_DATA_PADDING:
+            raise onnx_checker.ValidationError(
+                f"External data offset ({info.offset}) for tensor {tensor.name!r} "
+                f"must be between the current file size ({file_size}) and "
+                f"{file_size + _MAX_EXTERNAL_DATA_PADDING}."
+            )
+        if padding > 0:
+            data_file.write(b"\0" * padding)
+
+        data_file.seek(info.offset)
+    offset = data_file.tell()
+    data_file.write(data)
+    _set_external_data(tensor, info.location, offset, data_file.tell() - offset)
 
 
 def _get_all_tensors(onnx_model_proto: ModelProto) -> Iterable[TensorProto]:
@@ -409,7 +444,7 @@ def _is_valid_filename(filename: str) -> bool:
 
 def uses_external_data(tensor: TensorProto) -> bool:
     """Returns true if the tensor stores data in an external location."""
-    return (
+    return bool(
         tensor.HasField("data_location")
         and tensor.data_location == TensorProto.EXTERNAL
     )
