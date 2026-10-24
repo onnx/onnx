@@ -4899,6 +4899,41 @@ class TestReferenceEvaluator:
         assert isinstance(r, np.ndarray)
         assert r.shape == ()
 
+    @pytest.mark.parametrize(
+        ("tensor_type", "dtype"),
+        [
+            (TensorProto.INT32, np.int32),
+            (TensorProto.UINT32, np.uint32),
+            (TensorProto.INT64, np.int64),
+            (TensorProto.FLOAT, np.float32),
+        ],
+    )
+    @pytest.mark.parametrize("opset", [13, 18, onnx_opset_version()])
+    def test_reduce_sum_square_keeps_input_type(self, tensor_type, dtype, opset):
+        # The output type T must match the input type. np.sum promotes int32
+        # and uint32 to 64-bit integers unless the dtype is given explicitly.
+        X = make_tensor_value_info("X", tensor_type, None)
+        Y = make_tensor_value_info("Y", tensor_type, None)
+        opset_with_axes_input = 18
+        if opset >= opset_with_axes_input:
+            A = make_tensor_value_info("A", TensorProto.INT64, None)
+            node = make_node("ReduceSumSquare", ["X", "A"], ["Y"], keepdims=0)
+            inputs = [X, A]
+        else:
+            node = make_node("ReduceSumSquare", ["X"], ["Y"], axes=[1], keepdims=0)
+            inputs = [X]
+        model = make_model(
+            make_graph([node], "g", inputs, [Y]),
+            opset_imports=[make_opsetid("", opset)],
+        )
+        x = np.arange(6).reshape((2, 3)).astype(dtype)
+        feeds = {"X": x}
+        if opset >= opset_with_axes_input:
+            feeds["A"] = np.array([1], dtype=np.int64)
+        got = ReferenceEvaluator(model).run(None, feeds)[0]
+        assert got.dtype == dtype
+        assert_array_equal(got, np.array([5, 50], dtype=dtype))
+
     @pytest.mark.parametrize("op", ["ReduceLogSum", "ReduceLogSumExp"])
     @pytest.mark.parametrize("opset", [13, 18, onnx_opset_version()])
     def test_reduce_log_sum_ops_reject_integer_input(self, op, opset):
