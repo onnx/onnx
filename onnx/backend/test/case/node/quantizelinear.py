@@ -213,6 +213,46 @@ class QuantizeLinear(Base):
         )
 
     @staticmethod
+    def export_uint16_overflow() -> None:
+        node = onnx.helper.make_node(
+            "QuantizeLinear",
+            inputs=["x", "y_scale", "y_zero_point"],
+            outputs=["y"],
+        )
+
+        x = np.array([1e20, -1e20]).astype(np.float32)
+        y_scale = np.float32(1.0)
+        y_zero_point = np.uint16(32767)
+        y = np.array([65535, 0]).astype(np.uint16)
+
+        expect(
+            node,
+            inputs=[x, y_scale, y_zero_point],
+            outputs=[y],
+            name="test_quantizelinear_uint16_overflow",
+        )
+
+    @staticmethod
+    def export_int16_overflow() -> None:
+        node = onnx.helper.make_node(
+            "QuantizeLinear",
+            inputs=["x", "y_scale", "y_zero_point"],
+            outputs=["y"],
+        )
+
+        x = np.array([1e20, -1e20]).astype(np.float32)
+        y_scale = np.float32(1.0)
+        y_zero_point = np.int16(256)
+        y = np.array([32767, -32768]).astype(np.int16)
+
+        expect(
+            node,
+            inputs=[x, y_scale, y_zero_point],
+            outputs=[y],
+            name="test_quantizelinear_int16_overflow",
+        )
+
+    @staticmethod
     def export_uint4() -> None:
         node = onnx.helper.make_node(
             "QuantizeLinear",
