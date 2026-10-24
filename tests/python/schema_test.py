@@ -34,6 +34,14 @@ class TestSchema:
     def test_typecheck(self) -> None:
         defs.get_schema("Conv")
 
+    @pytest.mark.parametrize("op_version", [19, 22])
+    def test_deformconv_mask_shape_description(self, op_version: int) -> None:
+        schema = defs.get_schema("DeformConv", op_version)
+        inputs = {param.name: param.description for param in schema.inputs}
+        kernel_positions = "offset_group * k1 * k2 * ... * kn"
+        assert f"(N, {kernel_positions}, o1, o2, ... , on)" in inputs["mask"]
+        assert f"(N, {kernel_positions} * n, o1, o2, ... , on)" in inputs["offset"]
+
     def test_attr_default_value(self) -> None:
         v = defs.get_schema("BatchNormalization").attributes["epsilon"].default_value
         assert type(v) is onnx.AttributeProto
