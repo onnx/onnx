@@ -50,9 +50,9 @@ class TypesWrapper final {
 class StringRange final {
  public:
   StringRange(const char* data, size_t size);
-  // NOLINTNEXTLINE(google-explicit-constructor)
+  // NOLINTNEXTLINE(*constructor)
   StringRange(const std::string& str);
-  // NOLINTNEXTLINE(google-explicit-constructor)
+  // NOLINTNEXTLINE(*constructor)
   StringRange(const char* data);
   const char* Data() const;
   size_t Size() const;
@@ -95,7 +95,7 @@ DataType DataTypeUtils::ToType(const TypeProto& type_proto) {
     GetTypeStrToProtoMap()[typeStr] = type;
     it = GetTypeStrToProtoMap().find(typeStr);
   }
-  return &(it->first);
+  return &it->first;
 }
 
 DataType DataTypeUtils::ToType(const std::string& type_str) {
