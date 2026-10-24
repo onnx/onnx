@@ -27,4 +27,7 @@ bool AttentionAppendFunctionCausalMask(
     bool padding,
     bool cast_mask_to_bias = false);
 
+/** Appends Attention's precision-controlled Softmax function body. */
+void AttentionAppendFunctionSoftmax(FunctionBuilder& builder, int64_t softmax_precision, int64_t output_precision);
+
 } // namespace ONNX_NAMESPACE::defs::nn::utils

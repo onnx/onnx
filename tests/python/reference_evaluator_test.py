@@ -7507,6 +7507,119 @@ class TestReferenceEvaluator:
         assert_allclose(got[0].sum(), 1.0)
         assert_allclose(got[0], _softmax(x[:1])[0])
 
+    @pytest.mark.parametrize(
+        ("dtype", "width"),
+        [
+            (np.float16, 65536),
+            (ml_dtypes.bfloat16, 1024),
+        ],
+    )
+    def test_attention_softmax_preserves_selected_precision(self, dtype, width):
+        x = np.zeros((1, width), dtype=dtype)
+        if dtype == ml_dtypes.bfloat16:
+            x = np.linspace(-4, 4, width, dtype=np.float32).reshape(1, -1).astype(dtype)
+
+        with np.errstate(over="ignore"):
+            actual = _softmax(x)
+            expected = np.exp(x - x.max(axis=1, keepdims=True))
+            expected /= expected.sum(axis=1, keepdims=True)
+
+        data = x.astype(np.float32)
+        promoted = np.exp(data - data.max(axis=1, keepdims=True))
+        promoted = (promoted / promoted.sum(axis=1, keepdims=True)).astype(dtype)
+        assert actual.dtype == dtype
+        assert_array_equal(actual, expected)
+        assert not np.array_equal(actual, promoted)
+
+    @pytest.mark.parametrize(
+        ("softmax_precision", "selected_dtype", "width"),
+        [
+            (TensorProto.FLOAT16, np.float16, 65536),
+            (TensorProto.BFLOAT16, ml_dtypes.bfloat16, 1024),
+        ],
+    )
+    def test_attention_explicit_low_softmax_precision_matches_expanded_function(
+        self, softmax_precision, selected_dtype, width
+    ):
+        q_info = make_tensor_value_info("Q", TensorProto.FLOAT, [1, 1, 1, 1])
+        k_info = make_tensor_value_info("K", TensorProto.FLOAT, [1, 1, width, 1])
+        v_info = make_tensor_value_info("V", TensorProto.FLOAT, [1, 1, width, 1])
+        mask_info = make_tensor_value_info(
+            "attn_mask", TensorProto.BOOL, [1, 1, 1, width]
+        )
+        past_key_info = make_tensor_value_info(
+            "past_key", TensorProto.FLOAT, [1, 1, 0, 1]
+        )
+        past_value_info = make_tensor_value_info(
+            "past_value", TensorProto.FLOAT, [1, 1, 0, 1]
+        )
+        y_info = make_tensor_value_info("Y", TensorProto.FLOAT, [1, 1, 1, 1])
+        present_key_info = make_tensor_value_info(
+            "present_key", TensorProto.FLOAT, [1, 1, width, 1]
+        )
+        present_value_info = make_tensor_value_info(
+            "present_value", TensorProto.FLOAT, [1, 1, width, 1]
+        )
+        p_info = make_tensor_value_info("P", TensorProto.FLOAT, [1, 1, 1, width])
+        node = make_node(
+            "Attention",
+            ["Q", "K", "V", "attn_mask", "past_key", "past_value"],
+            ["Y", "present_key", "present_value", "P"],
+            qk_matmul_output_mode=3,
+            softmax_precision=softmax_precision,
+        )
+        model = make_model(
+            make_graph(
+                [node],
+                "attention_explicit_low_softmax_precision",
+                [
+                    q_info,
+                    k_info,
+                    v_info,
+                    mask_info,
+                    past_key_info,
+                    past_value_info,
+                ],
+                [y_info, present_key_info, present_value_info, p_info],
+            ),
+            opset_imports=[make_opsetid("", 23)],
+        )
+        check_model(model)
+
+        q = np.ones((1, 1, 1, 1), dtype=np.float32)
+        k = np.zeros((1, 1, width, 1), dtype=np.float32)
+        if selected_dtype == ml_dtypes.bfloat16:
+            k = np.linspace(-4, 4, width, dtype=np.float32).reshape(1, 1, width, 1)
+        v = np.zeros((1, 1, width, 1), dtype=np.float32)
+        feeds = {
+            "Q": q,
+            "K": k,
+            "V": v,
+            "attn_mask": np.ones((1, 1, 1, width), dtype=np.bool_),
+            "past_key": np.empty((1, 1, 0, 1), dtype=np.float32),
+            "past_value": np.empty((1, 1, 0, 1), dtype=np.float32),
+        }
+
+        with np.errstate(over="ignore"):
+            direct = ReferenceEvaluator(model).run(None, feeds)
+
+            class Attention(OpRunExpand):
+                op_domain = ""
+
+            expanded = ReferenceEvaluator(model, new_ops=[Attention]).run(None, feeds)
+
+        selected_logits = k.reshape(1, width).astype(selected_dtype)
+        with np.errstate(over="ignore"):
+            expected = _softmax(selected_logits).astype(np.float32)
+        data = selected_logits.astype(np.float32)
+        promoted = np.exp(data - data.max(axis=1, keepdims=True))
+        promoted /= promoted.sum(axis=1, keepdims=True)
+
+        assert_array_equal(direct[3].reshape(1, width), expected)
+        assert_array_equal(expanded[3], direct[3])
+        assert_array_equal(expanded[0], direct[0])
+        assert not np.array_equal(direct[3].reshape(1, width), promoted)
+
     def test_rms_normalization_float16_uses_float32_stash(self):
         model = make_model(
             make_graph(
@@ -7576,6 +7689,39 @@ class TestReferenceEvaluator:
         assert_array_equal(actual, np.array([[1.0, -1.0]], dtype=np.float16))
         assert_array_equal(mean, np.zeros((1, 1), dtype=np.float32))
         assert_array_equal(inv_std_dev, np.array([[1.0 / 256.0]], dtype=np.float32))
+
+    @pytest.mark.parametrize(
+        ("dtype", "tensor_type", "width"),
+        [
+            (np.float16, TensorProto.FLOAT16, 65536),
+            (ml_dtypes.bfloat16, TensorProto.BFLOAT16, 1024),
+        ],
+    )
+    def test_softmax_low_precision_uses_float32_accumulation(
+        self, dtype, tensor_type, width
+    ):
+        x_info = make_tensor_value_info("X", tensor_type, [1, width])
+        y_info = make_tensor_value_info("Y", tensor_type, [1, width])
+        model = make_model(
+            make_graph(
+                [make_node("Softmax", ["X"], ["Y"], axis=1)],
+                "softmax_float16_accumulation",
+                [x_info],
+                [y_info],
+            ),
+            opset_imports=[make_opsetid("", 23)],
+        )
+        x = np.zeros((1, width), dtype=dtype)
+        if dtype == ml_dtypes.bfloat16:
+            x = np.linspace(-4, 4, width, dtype=np.float32).reshape(1, -1).astype(dtype)
+
+        (actual,) = ReferenceEvaluator(model).run(None, {"X": x})
+
+        data = x.astype(np.float32)
+        expected = np.exp(data - data.max(axis=1, keepdims=True))
+        expected = (expected / expected.sum(axis=1, keepdims=True)).astype(dtype)
+        assert actual.dtype == dtype
+        assert_array_equal(actual, expected)
 
     def test_logsoftmax_large_finite_gap_stays_finite(self):
         x_info = make_tensor_value_info("X", TensorProto.FLOAT, [1, 2])
