@@ -1220,6 +1220,109 @@ ONNX_OPERATOR_SET_SCHEMA(
           defs::math::utils::MatMulShapeInference(ctx, 0, 1);
         }));
 
+static void GroupedMatMulShapeInference(InferenceContext& ctx) {
+  propagateElemTypeFromInputToOutput(ctx, 0, 0);
+
+  Dim M, K, G, N, S;
+  ctx.unifyInputShape(0, {M, K});
+  ctx.unifyInputShape(1, {G, K, N});
+  ctx.unifyInputShape(2, {M, S});
+  if (ctx.hasInput(3)) {
+    ctx.unifyInputShape(3, {G, N});
+  }
+  updateOutputShape(ctx, 0, {M, S, N});
+}
+
+static bool BuildContextDependentFunctionBodyGroupedMatMul(
+    const FunctionBodyBuildContext& ctx,
+    const OpSchema& schema,
+    FunctionProto& functionProto) {
+  FunctionBuilder builder(functionProto);
+  builder.Const1D("index_zero", int64_t{0})
+      .Const1D("index_one", int64_t{1})
+      .Const1D("index_two", int64_t{2})
+      .Add("input_shape = Shape (input)")
+      .Add("weights_shape = Shape (weights)")
+      .Add("indices_shape = Shape (group_indices)")
+      .Add("M = Gather <axis = 0> (input_shape, index_zero)")
+      .Add("K = Gather <axis = 0> (input_shape, index_one)")
+      .Add("N = Gather <axis = 0> (weights_shape, index_two)")
+      .Add("S = Gather <axis = 0> (indices_shape, index_one)")
+      .Add("MS = Mul (M, S)")
+      .Add("indices_flat = Reshape <allowzero = 1> (group_indices, MS)")
+      .Add("selected_weights = Gather <axis = 0> (weights, indices_flat)")
+      .Add("input_unsqueezed = Unsqueeze (input, index_one)")
+      .Add("expanded_shape = Concat <axis = 0> (M, S, K)")
+      .Add("input_expanded = Expand (input_unsqueezed, expanded_shape)")
+      .Add("matmul_input_shape = Concat <axis = 0> (MS, index_one, K)")
+      .Add("matmul_input = Reshape <allowzero = 1> (input_expanded, matmul_input_shape)")
+      .Add("matmul_result = MatMul (matmul_input, selected_weights)")
+      .Add("output_shape = Concat <axis = 0> (M, S, N)")
+      .Add("result = Reshape <allowzero = 1> (matmul_result, output_shape)");
+
+  if (ctx.hasInput(3)) {
+    builder.Add("selected_bias = Gather <axis = 0> (bias, indices_flat)")
+        .Add("reshaped_bias = Reshape <allowzero = 1> (selected_bias, output_shape)")
+        .Add("output = Add (result, reshaped_bias)");
+  } else {
+    builder.Add("output = Identity (result)");
+  }
+
+  schema.BuildFunction(functionProto);
+  return true;
+}
+
+ONNX_OPERATOR_SET_SCHEMA(
+    GroupedMatMul,
+    29,
+    OpSchema()
+        .SetDoc(kDoc_GroupedMatMul_ver29)
+        .Input(0, "input", "Token matrix with shape [M, K].", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
+        .Input(
+            1,
+            "weights",
+            "Stack of G group weight matrices with shape [G, K, N].",
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::Differentiable)
+        .Input(
+            2,
+            "group_indices",
+            "Group index for each token and selection, with shape [M, S]. Values outside [0, G) are invalid input.",
+            "Tind",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::NonDifferentiable)
+        .Input(
+            3,
+            "bias",
+            "Optional per-group bias with shape [G, N].",
+            "T",
+            OpSchema::Optional,
+            true,
+            1,
+            OpSchema::Differentiable)
+        .Output(
+            0,
+            "output",
+            "Per-group matrix multiplication results with shape [M, S, N].",
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::Differentiable)
+        .TypeConstraint(
+            "T",
+            {types::Float16, types::Float, types::Double, types::BFloat16},
+            "Constrain input, weights, bias, and output to floating-point tensors.")
+        .TypeConstraint("Tind", {types::Int32, types::Int64}, "Constrain group indices to int32 or int64 tensors.")
+        .SetNodeDeterminism(OpSchema::NodeDeterminism::Deterministic)
+        .TypeAndShapeInferenceFunction(GroupedMatMulShapeInference)
+        .SetContextDependentFunctionBodyBuilder(BuildContextDependentFunctionBodyGroupedMatMul));
+
 ONNX_OPERATOR_SET_SCHEMA(
     TopK,
     24,
