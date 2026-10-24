@@ -346,6 +346,36 @@ static void check_external_data_size(
   }
 }
 
+// Validate the lexical form of an external-data location without touching the file
+// system. Used when a model is checked from memory: there is no model directory to
+// resolve locations against, so file-system checks would depend on the current
+// working directory.
+static void check_external_data_location_lexical(const std::string& location, const std::string& tensor_name) {
+  auto file_path = utf8_to_path(location);
+  if (file_path.empty()) {
+    fail_check("Location of external TensorProto ( tensor name: ", tensor_name, ") should not be empty.");
+  }
+  // On Windows, a location like "/abs/weights.bin" has a root directory but no
+  // drive, so is_absolute() returns false; reject any root component to also
+  // cover drive-relative locations such as "C:weights.bin".
+  if (file_path.is_absolute() || file_path.has_root_path()) {
+    fail_check(
+        "Location of external TensorProto ( tensor name: ",
+        tensor_name,
+        ") should be a relative path, but it is an absolute path: ",
+        location);
+  }
+  auto relative_path = file_path.lexically_normal().make_preferred();
+  if (relative_path.native().find(std::filesystem::path("..").native()) != std::filesystem::path::string_type::npos) {
+    fail_check(
+        "Data of TensorProto ( tensor name: ",
+        tensor_name,
+        ") should be a file inside the model directory, but '",
+        location,
+        "' points outside the directory.");
+  }
+}
+
 void check_tensor(const TensorProto& tensor, const CheckerContext& ctx) {
   enforce_has_field(tensor, data_type);
   if (!TensorProto_DataType_IsValid(tensor.data_type())) {
@@ -401,7 +431,13 @@ void check_tensor(const TensorProto& tensor, const CheckerContext& ctx) {
       }
       if (entry.key() == "location") {
         has_location = true;
-        data_path = resolve_external_data_location(ctx.get_model_dir(), entry.value(), tensor.name());
+        if (ctx.get_model_dir_known()) {
+          data_path = resolve_external_data_location(ctx.get_model_dir(), entry.value(), tensor.name());
+        } else {
+          // No model directory is known for an in-memory model: validate the location
+          // lexically only, so the result does not depend on the current working directory.
+          check_external_data_location_lexical(entry.value(), tensor.name());
+        }
       } else if (entry.key() == "offset") {
         offset_entry = &entry;
       } else if (entry.key() == "length") {
@@ -419,7 +455,9 @@ void check_tensor(const TensorProto& tensor, const CheckerContext& ctx) {
     if (length_entry != nullptr) {
       length = parse_external_data_integer(*length_entry, tensor.name());
     }
-    check_external_data_size(tensor, nelem, data_path, offset, length);
+    if (ctx.get_model_dir_known()) {
+      check_external_data_size(tensor, nelem, data_path, offset, length);
+    }
     return;
   }
   if (nelem == 0 && num_value_fields != 0) {
@@ -1561,6 +1599,7 @@ void check_model(
     model_dir = model_path.substr(0, pos + 1);
   }
   ctx.set_model_dir(model_dir);
+  ctx.set_model_dir_known(true);
   ctx.set_skip_opset_compatibility_check(skip_opset_compatibility_check);
   ctx.set_check_custom_domain(check_custom_domain);
   check_model(model, ctx);
