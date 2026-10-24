@@ -9,6 +9,9 @@
 #include <cmath>
 #include <cstdint>
 #include <iomanip>
+#include <limits>
+#include <locale>
+#include <sstream>
 #include <string>
 #include <type_traits>
 #include <vector>
@@ -27,6 +30,18 @@ std::vector<Widened> ParseRawIntData(const TensorProto& tensor) {
   return std::vector<Widened>(elements.begin(), elements.end());
 }
 
+// Apple's libc++ only provides floating-point to_chars from macOS 13.3 and
+// iOS 16.3.
+#if defined(__APPLE__) &&                                        \
+    ((defined(__ENVIRONMENT_MAC_OS_X_VERSION_MIN_REQUIRED__) &&  \
+      __ENVIRONMENT_MAC_OS_X_VERSION_MIN_REQUIRED__ < 130300) || \
+     (defined(__ENVIRONMENT_IPHONE_OS_VERSION_MIN_REQUIRED__) && \
+      __ENVIRONMENT_IPHONE_OS_VERSION_MIN_REQUIRED__ < 160300))
+constexpr bool kHasFloatingPointToChars = false;
+#else
+constexpr bool kHasFloatingPointToChars = true;
+#endif
+
 // Format numbers with std::to_chars: locale-independent and, for floating
 // point, the shortest form that round-trips through the parser.
 template <typename T>
@@ -39,9 +54,17 @@ void PrintNumber(std::ostream& os, T value) {
       return;
     }
   }
-  std::array<char, 32> buf{};
-  const auto res = std::to_chars(buf.data(), buf.data() + buf.size(), value);
-  os.write(buf.data(), res.ptr - buf.data());
+  if constexpr (std::is_floating_point_v<T> && !kHasFloatingPointToChars) {
+    // Fall back to a classic-locale stream with enough digits to round-trip.
+    std::ostringstream stream;
+    stream.imbue(std::locale::classic());
+    stream << std::setprecision(std::numeric_limits<T>::max_digits10) << value;
+    os << stream.str();
+  } else {
+    std::array<char, 32> buf{};
+    const auto res = std::to_chars(buf.data(), buf.data() + buf.size(), value);
+    os.write(buf.data(), res.ptr - buf.data());
+  }
 }
 
 bool IsValidIdentifier(const std::string& str) {
