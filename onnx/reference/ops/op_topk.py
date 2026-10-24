@@ -43,6 +43,10 @@ class _CommonTopK(OpRun):
         as it sorts everything then extracts the top *k*
         values.
 
+        For floating-point inputs, how NaN values are handled is
+        implementation-defined by the specification, this implementation
+        sorts them as the greatest values.
+
         .. warning::
             ONNX specifications may be imprecise in case of negative value
             for axis. The implementation follows what `onnxruntime`
