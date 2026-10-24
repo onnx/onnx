@@ -17,6 +17,42 @@
 
 namespace ONNX_NAMESPACE::Test {
 
+TEST(IR, Proto3PreservesExplicitDefaultPresence) {
+  AttributeProto attribute;
+  EXPECT_FALSE(attribute.has_i());
+  const std::string wire("\x18\x00", 2);
+  ASSERT_TRUE(attribute.ParseFromString(wire));
+  EXPECT_TRUE(attribute.has_i());
+  EXPECT_EQ(attribute.i(), 0);
+  EXPECT_EQ(attribute.SerializeAsString(), wire);
+}
+
+TEST(IR, Proto3RejectsInvalidUtf8) {
+  // NodeProto.name, including on protobuf-lite builds without reflection.
+  for (const std::string invalid : {std::string("\xff"), std::string("\xed\xa0\x80")}) {
+    const std::string wire = std::string("\x1a") + static_cast<char>(invalid.size()) + invalid;
+    NodeProto node;
+    EXPECT_FALSE(node.ParseFromString(wire));
+  }
+  NodeProto node;
+  ASSERT_TRUE(node.ParseFromString("\x1a\x03\xe5\x9c\x96"));
+  EXPECT_EQ(node.name(), "\xe5\x9c\x96");
+}
+
+TEST(IR, Proto3RejectsUnknownAttributeTypeDuringConversion) {
+#ifndef ONNX_NO_EXCEPTIONS
+  ModelProto model;
+  model.set_ir_version(IR_VERSION);
+  auto* node = model.mutable_graph()->add_node();
+  node->set_op_type("Custom");
+  auto* attribute = node->add_attribute();
+  attribute->set_name("unknown");
+  // Proto3 exposes unknown enum values instead of hiding them in unknown fields.
+  ASSERT_TRUE(attribute->MergeFromString("\xa0\x01\x7f"));
+  EXPECT_THROW(ImportModelProto(model), ConvertError);
+#endif
+}
+
 static bool IsValidIdentifier(const std::string& name) {
   if (name.empty()) {
     return false;

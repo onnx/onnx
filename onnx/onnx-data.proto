@@ -6,7 +6,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 
-syntax = "proto2";
+syntax = "proto3";
 
 package onnx;
 import "onnx/onnx-ml.proto";
@@ -94,7 +94,7 @@ message MapProto {
   // Every element of keys has to be one of the following data types
   // INT8, INT16, INT32, INT64, UINT8, UINT16, UINT32, UINT64, or STRING.
   // The integer cases are represented by the repeated int64 field keys below.
-  repeated int64 keys = 3;
+  repeated int64 keys = 3 [packed = false];
 
   // If keys are strings, they are represented by the repeated bytes field
   // string_keys below.

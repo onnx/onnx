@@ -62,7 +62,7 @@ As a general principle, implementations SHOULD be robust in the face of missing 
 
 For example, the `ModelProto.ir_version` property MUST be present in every model. The ONNX checker (`onnx/checker.py`) will enforce these rules.
 
-Because the protocol buffer message definitions (.proto / .proto3 files) are expected to be consumed by multiple independent developers, changes to those definitions SHOULD NOT break code that depends on generated language bindings (e.g., changing the type of an existing field).
+Because the protocol buffer message definitions (.proto files) are expected to be consumed by multiple independent developers, changes to those definitions SHOULD NOT break code that depends on generated language bindings (e.g., changing the type of an existing field).
 
 ## Operator versioning
 
