@@ -21,10 +21,16 @@ class MaxPool(CommonPool):
         strides=None,
     ):
         if (
-            dilations is not None
-            and (min(dilations) != max(dilations) or min(dilations) != 1)
-        ) or (
-            strides is not None and (min(strides) != max(strides) or min(strides) != 1)
+            (
+                dilations is not None
+                and (min(dilations) != max(dilations) or min(dilations) != 1)
+            )
+            or (
+                strides is not None
+                and (min(strides) != max(strides) or min(strides) != 1)
+            )
+            # CommonPool only pads 2D inputs for auto_pad
+            or auto_pad in ("SAME_UPPER", "SAME_LOWER")
         ):
             return self._max_pool(
                 x,
@@ -110,20 +116,21 @@ class MaxPool(CommonPool):
             # Deprecated attribute
             if auto_pad in ("SAME_UPPER", "SAME_LOWER"):
                 for i in range(len(input_spatial_shape)):
-                    if auto_pad == "SAME_UPPER":
-                        output_spatial_shape[i] = int(
-                            np.ceil(input_spatial_shape[i] / strides[i])
-                        )
-                    else:
-                        output_spatial_shape[i] = int(
-                            np.floor(input_spatial_shape[i] / strides[i])
-                        )
-                    pad_i = (
+                    output_spatial_shape[i] = int(
+                        np.ceil(input_spatial_shape[i] / strides[i])
+                    )
+                    pad_i = max(
+                        0,
                         (output_spatial_shape[i] - 1) * strides[i]
                         + ((kernel_shape[i] - 1) * dilations[i] + 1)
-                        - input_spatial_shape[i]
+                        - input_spatial_shape[i],
                     )
-                    new_pads[i, 0] = pad_i // 2
+                    # an odd padding puts the extra element at the end for
+                    # SAME_UPPER and at the beginning for SAME_LOWER
+                    if auto_pad == "SAME_UPPER":
+                        new_pads[i, 0] = pad_i // 2
+                    else:
+                        new_pads[i, 0] = pad_i - pad_i // 2
                     new_pads[i, 1] = pad_i - new_pads[i, 0]
             else:
                 for i in range(len(input_spatial_shape)):
