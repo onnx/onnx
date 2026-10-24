@@ -659,6 +659,123 @@ class TestChecker:
         with pytest.raises(shape_inference.InferenceError):
             checker.check_model(model, True)
 
+    def test_check_model_negative_dimension_sequence(self) -> None:
+        X = helper.make_tensor_sequence_value_info("X", TensorProto.FLOAT, [-1])
+        Y = helper.make_tensor_sequence_value_info("Y", TensorProto.FLOAT, [-1])
+        node = helper.make_node("ConcatFromSequence", ["X"], ["Y"], axis=0, new_axis=0)
+        graph = helper.make_graph([node], "test_negative_dim", [X], [Y])
+        model = helper.make_model(graph, producer_name="test")
+        with pytest.raises(checker.ValidationError):
+            checker.check_model(model)
+
+    def test_check_model_negative_dimension_subgraph(self) -> None:
+        n1 = helper.make_node("Identity", ["X"], ["Y"], name="n1")
+        output_y = helper.make_tensor_value_info("Y", TensorProto.FLOAT, [-1])
+        subgraph = helper.make_graph([n1], "nested", [], [output_y])
+
+        i1 = helper.make_node(
+            "If", ["cond"], ["Z"], then_branch=subgraph, else_branch=subgraph
+        )
+        graph = helper.make_graph(
+            [i1],
+            "test",
+            inputs=[
+                helper.make_tensor_value_info("cond", TensorProto.BOOL, []),
+                helper.make_tensor_value_info("X", TensorProto.FLOAT, [1]),
+            ],
+            outputs=[helper.make_tensor_value_info("Z", TensorProto.FLOAT, [1])],
+        )
+        model = helper.make_model(graph, producer_name="test")
+        with pytest.raises(
+            checker.ValidationError, match="dimension value must be non-negative"
+        ):
+            checker.check_model(model)
+
+    @pytest.mark.parametrize("location", ["graph", "function"])
+    def test_check_model_negative_dimension_annotation(self, location: str) -> None:
+        """Intermediate graph and function annotations must not use negative dimensions."""
+        value_info = helper.make_tensor_value_info(
+            "annotation", TensorProto.FLOAT, [-1]
+        )
+        function = helper.make_function(
+            "local",
+            "f",
+            ["X"],
+            ["Y"],
+            [helper.make_node("Identity", ["X"], ["Y"])],
+            [helper.make_opsetid("", 21)],
+            value_info=[value_info] if location == "function" else [],
+        )
+        graph = helper.make_graph(
+            [helper.make_node("f", ["X"], ["Y"], domain="local")],
+            "test",
+            [helper.make_tensor_value_info("X", TensorProto.FLOAT, [1])],
+            [helper.make_tensor_value_info("Y", TensorProto.FLOAT, [1])],
+            value_info=[value_info] if location == "graph" else [],
+        )
+        model = helper.make_model(
+            graph,
+            opset_imports=[
+                helper.make_opsetid("", 21),
+                helper.make_opsetid("local", 1),
+            ],
+            functions=[function],
+        )
+        with pytest.raises(
+            checker.ValidationError, match="dimension value must be non-negative"
+        ):
+            checker.check_model(model)
+
+    def test_check_model_negative_dimension_slice(self) -> None:
+        X = helper.make_tensor_value_info("X", TensorProto.FLOAT, [10, 10])
+        Y = helper.make_tensor_value_info("Y", TensorProto.FLOAT, [-1])
+
+        node = helper.make_node(
+            "Slice",
+            inputs=["X", "starts", "ends", "axes", "steps"],
+            outputs=["Y"],
+        )
+
+        starts = helper.make_tensor_value_info("starts", TensorProto.INT64, [1])
+        ends = helper.make_tensor_value_info("ends", TensorProto.INT64, [1])
+        axes = helper.make_tensor_value_info("axes", TensorProto.INT64, [1])
+        steps = helper.make_tensor_value_info("steps", TensorProto.INT64, [1])
+
+        graph = helper.make_graph(
+            [node],
+            "test_slice",
+            [X, starts, ends, axes, steps],
+            [Y],
+        )
+        model = helper.make_model(graph, producer_name="test")
+        with pytest.raises(checker.ValidationError):
+            checker.check_model(model)
+
+    def test_check_model_zero_dimension_slice(self) -> None:
+        X = helper.make_tensor_value_info("X", TensorProto.FLOAT, [10, 10])
+        Y = helper.make_tensor_value_info("Y", TensorProto.FLOAT, [0])
+
+        node = helper.make_node(
+            "Slice",
+            inputs=["X", "starts", "ends", "axes", "steps"],
+            outputs=["Y"],
+        )
+
+        starts = helper.make_tensor_value_info("starts", TensorProto.INT64, [1])
+        ends = helper.make_tensor_value_info("ends", TensorProto.INT64, [1])
+        axes = helper.make_tensor_value_info("axes", TensorProto.INT64, [1])
+        steps = helper.make_tensor_value_info("steps", TensorProto.INT64, [1])
+
+        graph = helper.make_graph(
+            [node],
+            "test_slice_zero",
+            [X, starts, ends, axes, steps],
+            [Y],
+        )
+        model = helper.make_model(graph, producer_name="test")
+        # Should complete without error
+        checker.check_model(model)
+
     def test_loop_with_same_initializer_input_below_ir4(self) -> None:
         # This is for testing IR<4: tensors must exist both in initializer and input
         # shape_inference should allow different number of graph input and node input for Loop
