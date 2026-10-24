@@ -13,6 +13,8 @@ __all__ = [
     "FeatureVectorizer",
     "Imputer",
     "LabelEncoder",
+    "LabelEncoder_2",
+    "LabelEncoder_4",
     "LinearClassifier",
     "LinearRegressor",
     "Normalizer",
@@ -37,7 +39,11 @@ from onnx.reference.ops.aionnxml.op_binarizer import Binarizer
 from onnx.reference.ops.aionnxml.op_dict_vectorizer import DictVectorizer
 from onnx.reference.ops.aionnxml.op_feature_vectorizer import FeatureVectorizer
 from onnx.reference.ops.aionnxml.op_imputer import Imputer
-from onnx.reference.ops.aionnxml.op_label_encoder import LabelEncoder
+from onnx.reference.ops.aionnxml.op_label_encoder import (
+    LabelEncoder,
+    LabelEncoder_2,
+    LabelEncoder_4,
+)
 from onnx.reference.ops.aionnxml.op_linear_classifier import LinearClassifier
 from onnx.reference.ops.aionnxml.op_linear_regressor import LinearRegressor
 from onnx.reference.ops.aionnxml.op_normalizer import Normalizer
