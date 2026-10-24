@@ -8038,6 +8038,58 @@ class TestReferenceEvaluator:
         with pytest.raises(ValueError, match="positive"):
             ReferenceEvaluator(node).run(None, {"X": x, "K": k})
 
+    @pytest.mark.parametrize(
+        ("input_type", "to"),
+        [
+            (TensorProto.INT4, TensorProto.INT8),
+            (TensorProto.UINT4, TensorProto.UINT8),
+            (TensorProto.FLOAT4E2M1, TensorProto.FLOAT8E4M3FN),
+            (TensorProto.INT2, TensorProto.INT4),
+            (TensorProto.FLOAT6E2M3, TensorProto.UINT8),
+            (TensorProto.UINT8, TensorProto.UINT4),
+        ],
+        ids=[
+            "int4_to_int8",
+            "uint4_to_uint8",
+            "float4e2m1_to_float8e4m3fn",
+            "int2_to_int4",
+            "float6e2m3_to_uint8",
+            "uint8_to_uint4",
+        ],
+    )
+    def test_bitcast_rejects_sub_byte_bit_width_mismatch(self, input_type, to) -> None:
+        node = make_node("BitCast", ["X"], ["Y"], to=to)
+        x = np.array([0, 1], dtype=onnx.helper.tensor_dtype_to_np_dtype(input_type))
+        with pytest.raises(ValueError, match="same bit-width"):
+            ReferenceEvaluator(node).run(None, {"X": x})
+
+    @pytest.mark.parametrize(
+        ("x", "to", "expected"),
+        [
+            (
+                np.array([-8, -1, 0, 7], dtype=ml_dtypes.int4),
+                TensorProto.UINT4,
+                np.array([8, 15, 0, 7], dtype=ml_dtypes.uint4),
+            ),
+            (
+                np.array([-6, -0.5, 0, 6], dtype=ml_dtypes.float4_e2m1fn),
+                TensorProto.UINT4,
+                np.array([15, 9, 0, 7], dtype=ml_dtypes.uint4),
+            ),
+            (
+                np.array([-2, -1, 0, 1], dtype=ml_dtypes.int2),
+                TensorProto.UINT2,
+                np.array([2, 3, 0, 1], dtype=ml_dtypes.uint2),
+            ),
+        ],
+        ids=["int4_to_uint4", "float4e2m1_to_uint4", "int2_to_uint2"],
+    )
+    def test_bitcast_sub_byte_types(self, x, to, expected) -> None:
+        node = make_node("BitCast", ["X"], ["Y"], to=to)
+        got = ReferenceEvaluator(node).run(None, {"X": x})[0]
+        assert got.dtype == expected.dtype
+        assert_array_equal(got.astype(np.int8), expected.astype(np.int8))
+
 
 class TestReferenceEvaluatorShapeAnnotationChecking:
     """Tests for the opt-in runtime shape-annotation validation feature
