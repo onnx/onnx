@@ -2479,24 +2479,18 @@ class TestShapeInference(TestShapeInferenceHelper):
         """Slice on negative dimension should not abort in shape inference."""
         input_types = {
             "x": helper.make_tensor_type_proto(TensorProto.FLOAT, (-1, 6)),
+            **{
+                name: helper.make_tensor_type_proto(TensorProto.INT64, (1,))
+                for name in ("starts", "ends", "axes", "steps")
+            },
         }
-        input_data = {}
-        if opset_version == 10:
-            node = make_node("Slice", ["x"], "y", starts=[0], ends=[0], axes=[0])
-        else:
-            node = make_node("Slice", ["x", "starts", "ends", "axes", "steps"], "y")
-            input_types.update(
-                {
-                    name: helper.make_tensor_type_proto(TensorProto.INT64, (1,))
-                    for name in ("starts", "ends", "axes", "steps")
-                }
-            )
-            input_data = {
-                "starts": make_tensor("starts", TensorProto.INT64, (1,), (0,)),
-                "ends": make_tensor("ends", TensorProto.INT64, (1,), (0,)),
-                "axes": make_tensor("axes", TensorProto.INT64, (1,), (0,)),
-                "steps": make_tensor("steps", TensorProto.INT64, (1,), (1,)),
-            }
+        node = make_node("Slice", ["x", "starts", "ends", "axes", "steps"], "y")
+        input_data = {
+            "starts": make_tensor("starts", TensorProto.INT64, (1,), (0,)),
+            "ends": make_tensor("ends", TensorProto.INT64, (1,), (0,)),
+            "axes": make_tensor("axes", TensorProto.INT64, (1,), (0,)),
+            "steps": make_tensor("steps", TensorProto.INT64, (1,), (1,)),
+        }
 
         inferred = onnx.shape_inference.infer_node_outputs(
             defs.get_schema("Slice", opset_version),
