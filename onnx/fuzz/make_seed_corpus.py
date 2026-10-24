@@ -465,18 +465,57 @@ def _write_zip(path: str, entries: Mapping[str, bytes | str]) -> None:
             zf.writestr(name, entry.encode() if isinstance(entry, str) else entry)
 
 
-_USAGE = "Usage: {prog} <version_converter_out.zip> <parser_out.zip> <checker_out.zip> <shape_inference_out.zip> [compose_out.zip]\n"
+def _external_data_seed(
+    operation: int,
+    location: int,
+    *,
+    flags: int = 0,
+    offset: int = 0,
+    length: int = 0,
+    alternate_delta: int = 0,
+    payload: bytes = b"seed payload",
+) -> bytes:
+    """Pack the stable six-byte header consumed by fuzz_external_data.py."""
+    return (
+        bytes((operation, location, flags, offset, length, alternate_delta)) + payload
+    )
+
+
+_EXTERNAL_DATA_SEEDS = {
+    "metadata_duplicates_unknown.bin": _external_data_seed(
+        0, 0, flags=0x0F, offset=3, length=10
+    ),
+    "load_regular.bin": _external_data_seed(1, 0),
+    "load_traversal.bin": _external_data_seed(1, 3),
+    "load_absolute.bin": _external_data_seed(1, 5),
+    "load_symlink.bin": _external_data_seed(1, 6),
+    "load_hardlink.bin": _external_data_seed(1, 7),
+    "load_windows_unc.bin": _external_data_seed(1, 9),
+    "load_windows_drive.bin": _external_data_seed(1, 11),
+    "save_regular.bin": _external_data_seed(2, 2),
+    "save_hardlink.bin": _external_data_seed(2, 7),
+    "model_out_of_bounds.bin": _external_data_seed(3, 0, offset=8, length=10),
+    "write_overlapping_offsets.bin": _external_data_seed(4, 2, offset=1, length=1),
+    "container_load_regular.bin": _external_data_seed(5, 0),
+    "container_load_hardlink.bin": _external_data_seed(5, 7),
+    "save_model_traversal.bin": _external_data_seed(6, 3),
+    "container_roundtrip.bin": _external_data_seed(7, 0),
+}
+
+
+_USAGE = "Usage: {prog} <version_converter_out.zip> <parser_out.zip> <checker_out.zip> <shape_inference_out.zip> [compose_out.zip [external_data_out.zip]]\n"
 
 
 def main() -> int:
-    if len(sys.argv) not in (5, 6):
+    if len(sys.argv) not in (5, 6, 7):
         sys.stderr.write(_USAGE.format(prog=sys.argv[0]))
         return 2
     version_converter_out = sys.argv[1]
     parser_out = sys.argv[2]
     checker_out = sys.argv[3]
     shape_inference_out = sys.argv[4]
-    compose_out = sys.argv[5] if len(sys.argv) == 6 else None
+    compose_out = sys.argv[5] if len(sys.argv) >= 6 else None
+    external_data_out = sys.argv[6] if len(sys.argv) == 7 else None
 
     version_converter_seeds = {
         "cast_9_missing_input.onnx": _make_model(
@@ -542,6 +581,9 @@ def main() -> int:
             "compose_prefix.bin": _compose_prefix(),
         }
         _write_zip(compose_out, compose_seeds)
+
+    if external_data_out is not None:
+        _write_zip(external_data_out, _EXTERNAL_DATA_SEEDS)
 
     return 0
 
