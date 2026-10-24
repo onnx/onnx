@@ -330,6 +330,69 @@ class TestReferenceEvaluator:
         np.testing.assert_allclose(Y_c, expected_c, rtol=rtol, atol=atol)
         np.testing.assert_allclose(Y_h, expected_h, rtol=rtol, atol=atol)
 
+    @pytest.mark.parametrize("op_type", ["RNN", "GRU", "LSTM"])
+    @pytest.mark.parametrize("direction", ["forward", "reverse", "bidirectional"])
+    def test_rnn_sequence_lens(self, op_type: str, direction: str) -> None:
+        # Each batch entry must give the same result as running the op on its
+        # first sequence_lens[b] steps only; the outputs after that are zeros.
+        n_gates = {"RNN": 1, "GRU": 3, "LSTM": 4}[op_type]
+        num_directions = 2 if direction == "bidirectional" else 1
+        hidden_size, input_size = 3, 2
+        rng = np.random.default_rng(0)
+        X = rng.standard_normal((4, 3, input_size)).astype(np.float32)
+        W = rng.standard_normal(
+            (num_directions, n_gates * hidden_size, input_size)
+        ).astype(np.float32)
+        R = rng.standard_normal(
+            (num_directions, n_gates * hidden_size, hidden_size)
+        ).astype(np.float32)
+        sequence_lens = np.array([4, 1, 2], dtype=np.int32)
+
+        def make_rnn_model(with_sequence_lens):
+            inputs = ["X", "W", "R"]
+            if with_sequence_lens:
+                inputs += ["", "sequence_lens"]
+            graph = make_graph(
+                [
+                    make_node(
+                        op_type,
+                        inputs,
+                        ["Y", "Y_h"],
+                        hidden_size=hidden_size,
+                        direction=direction,
+                    )
+                ],
+                "rnn_sequence_lens",
+                [
+                    make_tensor_value_info(
+                        name,
+                        TensorProto.INT32
+                        if name == "sequence_lens"
+                        else TensorProto.FLOAT,
+                        None,
+                    )
+                    for name in inputs
+                    if name
+                ],
+                [
+                    make_tensor_value_info("Y", TensorProto.FLOAT, None),
+                    make_tensor_value_info("Y_h", TensorProto.FLOAT, None),
+                ],
+            )
+            return make_model(graph, opset_imports=[make_opsetid("", 14)])
+
+        Y, Y_h = ReferenceEvaluator(make_rnn_model(True)).run(
+            None, {"X": X, "W": W, "R": R, "sequence_lens": sequence_lens}
+        )
+        ref = ReferenceEvaluator(make_rnn_model(False))
+        for b, length in enumerate(sequence_lens):
+            expected_y, expected_y_h = ref.run(
+                None, {"X": X[:length, b : b + 1], "W": W, "R": R}
+            )
+            assert_allclose(Y[:length, :, b : b + 1], expected_y, rtol=1e-5, atol=1e-6)
+            assert_allclose(Y[length:, :, b], 0)
+            assert_allclose(Y_h[:, b : b + 1], expected_y_h, rtol=1e-5, atol=1e-6)
+
     @pytest.mark.parametrize(
         "np_dtype,tensor_dtype",
         [
