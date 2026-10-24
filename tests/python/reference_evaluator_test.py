@@ -4903,6 +4903,54 @@ class TestReferenceEvaluator:
         assert got.dtype == expected.dtype
         np.testing.assert_allclose(got, expected, rtol=1e-3, atol=0)
 
+    @pytest.mark.parametrize("dtype", [np.float16, ml_dtypes.bfloat16])
+    def test_batch_normalization_training_mode_low_precision_overflow(self, dtype):
+        # The training-mode statistics are computed in the input type and
+        # their intermediate sums overflow float16 and bfloat16 even when
+        # the results themselves are representable (#8550).
+        x = np.arange(0, 512, 2, dtype=np.float32).reshape(256, 1)
+        params = {
+            "S": np.array([1.0], np.float32),
+            "B": np.array([0.0], np.float32),
+            "M": np.array([0.0], np.float32),
+            "V": np.array([1.0], np.float32),
+        }
+        feeds_f32 = {"X": x, **params}
+        feeds_low = {k: v.astype(dtype) for k, v in feeds_f32.items()}
+
+        def build(tensor_dtype):
+            inputs = [
+                make_tensor_value_info("X", tensor_dtype, [256, 1]),
+                make_tensor_value_info("S", tensor_dtype, [1]),
+                make_tensor_value_info("B", tensor_dtype, [1]),
+                make_tensor_value_info("M", tensor_dtype, [1]),
+                make_tensor_value_info("V", tensor_dtype, [1]),
+            ]
+            outputs = [
+                make_tensor_value_info("Y", tensor_dtype, [256, 1]),
+                make_tensor_value_info("RM", tensor_dtype, [1]),
+                make_tensor_value_info("RV", tensor_dtype, [1]),
+            ]
+            node = make_node(
+                "BatchNormalization",
+                ["X", "S", "B", "M", "V"],
+                ["Y", "RM", "RV"],
+                training_mode=1,
+                momentum=0.9,
+            )
+            return make_model(
+                make_graph([node], "g", inputs, outputs),
+                opset_imports=[make_opsetid("", onnx_opset_version())],
+            )
+
+        low_dtype = TensorProto.FLOAT16 if dtype == np.float16 else TensorProto.BFLOAT16
+        expected = ReferenceEvaluator(build(TensorProto.FLOAT)).run(None, feeds_f32)
+        got = ReferenceEvaluator(build(low_dtype)).run(None, feeds_low)
+        rtol = 2e-2 if dtype == ml_dtypes.bfloat16 else 1e-3
+        for g, e in zip(got, expected, strict=True):
+            assert g.dtype == np.dtype(dtype)
+            np.testing.assert_allclose(g.astype(np.float32), e, rtol=rtol, atol=1e-3)
+
     @pytest.mark.parametrize("opset", [13, 18, onnx_opset_version()])
     def test_reduce_log_sum_exp_infinite_inputs(self, opset):
         X = make_tensor_value_info("X", TensorProto.FLOAT, [2, 2])
