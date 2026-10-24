@@ -2763,6 +2763,54 @@ class TestReferenceEvaluator:
         got1 = ref1.run(None, feeds)
         assert_allclose(got1[0], expected)
 
+    @pytest.mark.parametrize("ceil_mode", [0, 1])
+    @pytest.mark.parametrize("spatial", [(7,), (7, 6), (5, 6, 4)])
+    def test_max_pool_unit_stride_explicit_pads(self, spatial, ceil_mode):
+        # Same configuration as the pooling branch of torchvision's GoogLeNet
+        # inception blocks: kernel 3, stride 1, pads 1.
+        n_dims = len(spatial)
+        node = make_node(
+            "MaxPool",
+            ["X"],
+            ["Y"],
+            kernel_shape=[3] * n_dims,
+            pads=[1] * (2 * n_dims),
+            ceil_mode=ceil_mode,
+        )
+        X = make_tensor_value_info("X", TensorProto.FLOAT, None)
+        Y = make_tensor_value_info("Y", TensorProto.FLOAT, None)
+        onnx_model = make_model(
+            make_graph([node], "g", [X], [Y]), opset_imports=[make_opsetid("", 22)]
+        )
+        x = np.random.default_rng(0).standard_normal((2, 3, *spatial))
+        x = x.astype(np.float32)
+        padded = np.pad(
+            x, [(0, 0), (0, 0)] + [(1, 1)] * n_dims, constant_values=-np.inf
+        )
+        windows = np.lib.stride_tricks.sliding_window_view(
+            padded, (3,) * n_dims, axis=tuple(range(2, 2 + n_dims))
+        )
+        expected = windows.max(axis=tuple(range(-n_dims, 0)))
+        got = ReferenceEvaluator(onnx_model).run(None, {"X": x})[0]
+        assert_allclose(got, expected)
+
+    def test_max_pool_indices_include_channel_offset(self):
+        # Indices are flat positions in the whole input tensor, so the second
+        # channel starts at 9.
+        node = make_node("MaxPool", ["X"], ["Y", "I"], kernel_shape=[2, 2])
+        X = make_tensor_value_info("X", TensorProto.FLOAT, None)
+        Y = make_tensor_value_info("Y", TensorProto.FLOAT, None)
+        I = make_tensor_value_info("I", TensorProto.INT64, None)  # noqa: E741
+        onnx_model = make_model(
+            make_graph([node], "g", [X], [Y, I]),
+            opset_imports=[make_opsetid("", 22)],
+        )
+        x = np.arange(18, dtype=np.float32).reshape((1, 2, 3, 3))
+        got_y, got_i = ReferenceEvaluator(onnx_model).run(None, {"X": x})
+        expected = np.array([[[[4, 5], [7, 8]], [[13, 14], [16, 17]]]])
+        assert_array_equal(got_y, expected.astype(np.float32))
+        assert_array_equal(got_i, expected)
+
     def test_max_pool_2d_2(self):
         X = make_tensor_value_info("X", TensorProto.FLOAT, [None, None, None, None])
         Y = make_tensor_value_info("Y", TensorProto.FLOAT, [None, None, None, None])
