@@ -5,7 +5,7 @@ from __future__ import annotations
 
 import os
 import tempfile
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, ClassVar
 
 import numpy as np
 import pytest
@@ -2010,3 +2010,271 @@ class TestChecker:
             match=r"Input channels C must be divisible by group for ConvTranspose",
         ):
             checker.check_model(model, full_check=True)
+
+
+class TestCheckerRejectsInvalidUtf8:
+    """The checker must reject identifier-like fields that are not valid UTF-8.
+
+    The Python protobuf bindings refuse invalid UTF-8 on assignment, so these
+    tests serialize an otherwise valid model and overwrite bytes of a unique
+    marker string inside the field under test, keeping the field length
+    unchanged so the message still parses. The corrupted model is checked
+    through a file path, which is how such models reach the checker in
+    practice.
+    """
+
+    _MARKER = "utf8marker"
+    _BAD_UTF8_VARIANTS: ClassVar[dict[str, bytes]] = {
+        "stray_bytes": b"utf8m\xff\xfeker",
+        "truncated": b"utf8mark\xe4\xb8",
+        "surrogate": b"utf8m\xed\xa0\x80rk",
+        "overlong": b"utf8m\xc0\xabrke",
+    }
+
+    @staticmethod
+    def _corrupt(model: ModelProto, replacement: bytes) -> bytes:
+        serialized = model.SerializeToString()
+        marker = TestCheckerRejectsInvalidUtf8._MARKER.encode()
+        assert serialized.count(marker) == 1
+        assert len(replacement) == len(marker)
+        return serialized.replace(marker, replacement, 1)
+
+    @staticmethod
+    def _model(
+        *,
+        graph_name: str = "graph",
+        node_name: str = "node",
+        op_type: str = "Relu",
+        domain: str = "",
+        node_inputs: Sequence[str] = ("x",),
+        node_outputs: Sequence[str] = ("y",),
+        graph_input_name: str = "x",
+        graph_output_name: str = "y",
+        initializer_name: str = "init",
+        attribute_name: str | None = None,
+    ) -> ModelProto:
+        attributes = {} if attribute_name is None else {attribute_name: 1.0}
+        node = helper.make_node(
+            op_type,
+            list(node_inputs),
+            list(node_outputs),
+            name=node_name,
+            domain=domain,
+            **attributes,
+        )
+        graph = helper.make_graph(
+            [node],
+            graph_name,
+            [helper.make_tensor_value_info(graph_input_name, TensorProto.FLOAT, [1])],
+            [helper.make_tensor_value_info(graph_output_name, TensorProto.FLOAT, [1])],
+            [
+                numpy_helper.from_array(
+                    np.zeros([1], dtype=np.float32), name=initializer_name
+                )
+            ],
+        )
+        return helper.make_model(graph)
+
+    @pytest.mark.parametrize(
+        "replacement", list(_BAD_UTF8_VARIANTS.values()), ids=list(_BAD_UTF8_VARIANTS)
+    )
+    @pytest.mark.parametrize(
+        "kwargs",
+        [
+            {"graph_name": _MARKER},
+            {"node_name": _MARKER},
+            {"op_type": _MARKER},
+            {"domain": _MARKER},
+            {"node_inputs": (_MARKER,)},
+            {"node_outputs": (_MARKER,)},
+            {"graph_input_name": _MARKER},
+            {"initializer_name": _MARKER},
+            {"attribute_name": _MARKER},
+        ],
+        ids=[
+            "graph_name",
+            "node_name",
+            "node_op_type",
+            "node_domain",
+            "node_input",
+            "node_output",
+            "value_info_name",
+            "initializer_name",
+            "attribute_name",
+        ],
+    )
+    def test_invalid_utf8_rejected(self, kwargs, replacement, tmp_path):
+        corrupted = self._corrupt(self._model(**kwargs), replacement)
+        model_path = tmp_path / "model.onnx"
+        model_path.write_bytes(corrupted)
+        with pytest.raises(checker.ValidationError, match="invalid UTF-8"):
+            checker.check_model(str(model_path))
+
+    def test_invalid_utf8_rejected_via_bytes(self):
+        model = self._model(graph_name=self._MARKER)
+        with pytest.raises(checker.ValidationError, match="invalid UTF-8"):
+            checker.check_model(
+                self._corrupt(model, self._BAD_UTF8_VARIANTS["stray_bytes"])
+            )
+
+    @pytest.mark.parametrize(
+        "replacement", list(_BAD_UTF8_VARIANTS.values()), ids=list(_BAD_UTF8_VARIANTS)
+    )
+    def test_function_name_invalid_utf8_rejected(self, replacement, tmp_path):
+        model = self._model()
+        function = helper.make_function(
+            "custom",
+            self._MARKER,
+            ["x"],
+            ["z"],
+            [helper.make_node("Relu", ["x"], ["z"], name="fnnode")],
+            opset_imports=[
+                helper.make_operatorsetid("", onnx.defs.onnx_opset_version())
+            ],
+        )
+        model.functions.append(function)
+        corrupted = self._corrupt(model, replacement)
+        model_path = tmp_path / "model.onnx"
+        model_path.write_bytes(corrupted)
+        with pytest.raises(checker.ValidationError, match="invalid UTF-8"):
+            checker.check_model(str(model_path))
+
+    @pytest.mark.parametrize(
+        "replacement", list(_BAD_UTF8_VARIANTS.values()), ids=list(_BAD_UTF8_VARIANTS)
+    )
+    def test_function_input_invalid_utf8_rejected(self, replacement, tmp_path):
+        model = self._model()
+        function = helper.make_function(
+            "custom",
+            "func",
+            [self._MARKER],
+            ["z"],
+            [helper.make_node("Relu", ["x"], ["z"], name="fnnode")],
+            opset_imports=[
+                helper.make_operatorsetid("", onnx.defs.onnx_opset_version())
+            ],
+        )
+        model.functions.append(function)
+        corrupted = self._corrupt(model, replacement)
+        model_path = tmp_path / "model.onnx"
+        model_path.write_bytes(corrupted)
+        with pytest.raises(checker.ValidationError, match="invalid UTF-8"):
+            checker.check_model(str(model_path))
+
+    def _utf8_function(self, nodes=None):
+        return helper.make_function(
+            "custom",
+            "func",
+            ["x"],
+            ["z"],
+            nodes
+            if nodes is not None
+            else [helper.make_node("Relu", ["x"], ["z"], name="fnnode")],
+            opset_imports=[
+                helper.make_operatorsetid("", onnx.defs.onnx_opset_version())
+            ],
+        )
+
+    @pytest.mark.parametrize(
+        "replacement", list(_BAD_UTF8_VARIANTS.values()), ids=list(_BAD_UTF8_VARIANTS)
+    )
+    def test_graph_value_info_invalid_utf8_rejected(self, replacement):
+        model = self._model()
+        value_info = model.graph.value_info.add()
+        value_info.name = self._MARKER
+        value_info.type.CopyFrom(
+            helper.make_tensor_value_info("vi", TensorProto.FLOAT, [1]).type
+        )
+        corrupted = self._corrupt(model, replacement)
+        with pytest.raises(checker.ValidationError, match="invalid UTF-8"):
+            checker.check_model(corrupted)
+
+    @pytest.mark.parametrize(
+        "replacement", list(_BAD_UTF8_VARIANTS.values()), ids=list(_BAD_UTF8_VARIANTS)
+    )
+    def test_function_value_info_invalid_utf8_rejected(self, replacement):
+        model = self._model()
+        function = self._utf8_function()
+        value_info = function.value_info.add()
+        value_info.name = self._MARKER
+        value_info.type.CopyFrom(
+            helper.make_tensor_value_info("vi", TensorProto.FLOAT, [1]).type
+        )
+        model.functions.append(function)
+        corrupted = self._corrupt(model, replacement)
+        with pytest.raises(checker.ValidationError, match="invalid UTF-8"):
+            checker.check_model(corrupted)
+
+    @pytest.mark.parametrize(
+        "replacement", list(_BAD_UTF8_VARIANTS.values()), ids=list(_BAD_UTF8_VARIANTS)
+    )
+    def test_function_attribute_proto_name_invalid_utf8_rejected(self, replacement):
+        model = self._model()
+        function = self._utf8_function()
+        function.attribute.append(self._MARKER)
+        attr = function.attribute_proto.add()
+        attr.name = self._MARKER
+        attr.type = onnx.AttributeProto.FLOAT
+        attr.f = 1.0
+        model.functions.append(function)
+        serialized = model.SerializeToString()
+        marker = self._MARKER.encode()
+        assert serialized.count(marker) == 2
+        corrupted = serialized.replace(marker, replacement)
+        with pytest.raises(checker.ValidationError, match="invalid UTF-8"):
+            checker.check_model(corrupted)
+
+    @pytest.mark.parametrize(
+        "replacement", list(_BAD_UTF8_VARIANTS.values()), ids=list(_BAD_UTF8_VARIANTS)
+    )
+    def test_function_attribute_tensor_name_invalid_utf8_rejected(self, replacement):
+        model = self._model()
+        function = self._utf8_function()
+        function.attribute.append("attr")
+        attr = function.attribute_proto.add()
+        attr.name = "attr"
+        attr.type = onnx.AttributeProto.FLOAT
+        attr.t.CopyFrom(
+            numpy_helper.from_array(
+                np.zeros([1], dtype=np.float32), name=self._MARKER
+            )
+        )
+        model.functions.append(function)
+        corrupted = self._corrupt(model, replacement)
+        with pytest.raises(checker.ValidationError, match="invalid UTF-8"):
+            checker.check_model(corrupted)
+
+    @pytest.mark.parametrize(
+        "replacement", list(_BAD_UTF8_VARIANTS.values()), ids=list(_BAD_UTF8_VARIANTS)
+    )
+    def test_function_node_domain_invalid_utf8_rejected(self, replacement):
+        # A corrupted domain in a function body reaches check_opset_compatibility
+        # before check_node validates it; the error message must escape the raw
+        # bytes instead of crashing while converting the exception.
+        model = self._model()
+        function = self._utf8_function(
+            nodes=[
+                helper.make_node(
+                    "Relu", ["x"], ["z"], name="fnnode", domain=self._MARKER
+                )
+            ]
+        )
+        model.functions.append(function)
+        corrupted = self._corrupt(model, replacement)
+        with pytest.raises(
+            checker.ValidationError, match="invalid UTF-8|No Opset registered"
+        ):
+            checker.check_model(corrupted)
+
+    def test_valid_non_ascii_names_accepted(self):
+        model = self._model(
+            graph_name="\u30b0\u30e9\u30d5",
+            node_name="\u30ce\u30fc\u30c9",
+            op_type="Relu",
+            node_inputs=("\u5165\u529b",),
+            node_outputs=("\u51fa\u529b",),
+            graph_input_name="\u5165\u529b",
+            graph_output_name="\u51fa\u529b",
+            initializer_name="\u521d\u671f\u5316",
+        )
+        checker.check_model(model)

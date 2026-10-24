@@ -129,6 +129,9 @@ def check_model(
     properly or is higher than checker's ir_version, or if the model
     has duplicate keys in metadata_props.
 
+    Fields holding identifiers (names, op_type, domain, and node/function
+    input and output names) must contain valid UTF-8.
+
     If IR version >= 3, the model must specify opset_import.
     If IR version < 3, the model cannot have any opset_import specified.
 

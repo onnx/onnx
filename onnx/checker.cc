@@ -75,6 +75,90 @@ namespace ONNX_NAMESPACE::checker {
     }                                                                                    \
   } while (0)
 
+// Returns true when 'value' is well-formed UTF-8. Rejects stray continuation
+// bytes, truncated sequences, overlong encodings, surrogate halves, and code
+// points beyond U+10FFFF.
+static bool is_valid_utf8(const std::string& value) {
+  size_t i = 0;
+  const size_t n = value.size();
+  while (i < n) {
+    const auto byte = static_cast<unsigned char>(value[i]);
+    if (byte < 0x80) {
+      ++i;
+      continue;
+    }
+    size_t extra_bytes;
+    unsigned int code_point;
+    if (byte >= 0xC2 && byte <= 0xDF) {
+      extra_bytes = 1;
+      code_point = byte & 0x1Fu;
+    } else if (byte >= 0xE0 && byte <= 0xEF) {
+      extra_bytes = 2;
+      code_point = byte & 0x0Fu;
+    } else if (byte >= 0xF0 && byte <= 0xF4) {
+      extra_bytes = 3;
+      code_point = byte & 0x07u;
+    } else {
+      return false;
+    }
+    if (i + extra_bytes >= n) {
+      return false;
+    }
+    for (size_t k = 1; k <= extra_bytes; ++k) {
+      const auto continuation = static_cast<unsigned char>(value[i + k]);
+      if (continuation < 0x80 || continuation > 0xBF) {
+        return false;
+      }
+      code_point = (code_point << 6) | (continuation & 0x3Fu);
+    }
+    if (extra_bytes == 2 && code_point < 0x800u) {
+      return false; // overlong three-byte encoding
+    }
+    if (extra_bytes == 3 && code_point < 0x10000u) {
+      return false; // overlong four-byte encoding
+    }
+    if (code_point > 0x10FFFFu) {
+      return false;
+    }
+    if (code_point >= 0xD800u && code_point <= 0xDFFFu) {
+      return false; // surrogate halves are not valid scalar values
+    }
+    i += extra_bytes + 1;
+  }
+  return true;
+}
+
+// Identifier-like string fields must contain valid UTF-8; empty values are
+// handled by the existing presence checks.
+static void check_valid_utf8(const std::string& value, const char* what) {
+  if (!value.empty() && !is_valid_utf8(value)) {
+    fail_check("Field '", what, "' contains invalid UTF-8.");
+  }
+}
+
+// Returns the value unchanged when it is valid UTF-8, otherwise escapes every
+// non-ASCII byte as \\xNN so the value can be embedded in an error message
+// without producing a malformed string.
+static std::string utf8_safe(const std::string& value) {
+  if (is_valid_utf8(value)) {
+    return value;
+  }
+  static const char* const hex_digits = "0123456789abcdef";
+  std::string escaped;
+  escaped.reserve(value.size() + 4);
+  for (const char raw : value) {
+    const auto byte = static_cast<unsigned char>(raw);
+    if (byte < 0x80) {
+      escaped += static_cast<char>(byte);
+    } else {
+      escaped += "\\x";
+      escaped += hex_digits[byte >> 4];
+      escaped += hex_digits[byte & 0x0Fu];
+    }
+  }
+  return escaped;
+}
+
 // Returns the IR version that introduced the given tensor data type, or 0 for
 // data types that have been available since the first IR version.
 static int min_ir_version_for_data_type(int32_t data_type) {
@@ -162,6 +246,7 @@ static void check_attribute_tensors_ir_version(const AttributeProto& attr, const
 
 void check_value_info(const ValueInfoProto& value_info, const CheckerContext& ctx) {
   enforce_non_empty_field(value_info, name);
+  check_valid_utf8(value_info.name(), "name of ValueInfoProto");
   check_type_ir_version(value_info.type(), value_info.name(), ctx);
   // Relax constraint for subgraph input/output.
   if (!ctx.is_main_graph())
@@ -348,6 +433,7 @@ static void check_external_data_size(
 
 void check_tensor(const TensorProto& tensor, const CheckerContext& ctx) {
   enforce_has_field(tensor, data_type);
+  check_valid_utf8(tensor.name(), "name of TensorProto");
   if (!TensorProto_DataType_IsValid(tensor.data_type())) {
     fail_check("Unrecognized data_type (tensor name: ", tensor.name(), "): ", tensor.data_type());
   }
@@ -873,6 +959,7 @@ void check_sparse_tensor(const SparseTensorProto& sparse_tensor_proto, const Che
 // actually test if an attribute is valid per a schema
 void check_attribute(const AttributeProto& attr, const CheckerContext& ctx, const LexicalScopeContext& lex_ctx) {
   enforce_non_empty_field(attr, name);
+  check_valid_utf8(attr.name(), "name of AttributeProto");
 
   if (ctx.get_ir_version() >= 0x00000002) {
     enforce_has_field(attr, type);
@@ -974,6 +1061,15 @@ static void print_warning_if_has_experimental(const std::unordered_set<std::stri
 
 void check_node(const NodeProto& node, const CheckerContext& ctx, const LexicalScopeContext& lex_ctx) {
   enforce_non_empty_field(node, op_type);
+  check_valid_utf8(node.name(), "name of NodeProto");
+  check_valid_utf8(node.op_type(), "op_type of NodeProto");
+  check_valid_utf8(node.domain(), "domain of NodeProto");
+  for (const auto& input : node.input()) {
+    check_valid_utf8(input, "input of NodeProto");
+  }
+  for (const auto& output : node.output()) {
+    check_valid_utf8(output, "output of NodeProto");
+  }
 
   if (node.input().empty() && node.output().empty()) {
     fail_check("NodeProto (name: ", node.name(), ", type: ", node.op_type(), ") has zero input and zero output.");
@@ -988,7 +1084,7 @@ void check_node(const NodeProto& node, const CheckerContext& ctx, const LexicalS
       dit = opset_imports.find(AI_ONNX_DOMAIN);
     }
     if (dit == opset_imports.end()) {
-      fail_check("No opset import for domain '" + node.domain() + "'");
+      fail_check("No opset import for domain '", utf8_safe(node.domain()), "'");
     }
   }
   auto domain_version = dit->second;
@@ -1029,6 +1125,7 @@ void check_node(const NodeProto& node, const CheckerContext& ctx, const LexicalS
 
 void check_graph(const GraphProto& graph, const CheckerContext& ctx, const LexicalScopeContext& parent_lex) {
   enforce_non_empty_field(graph, name);
+  check_valid_utf8(graph.name(), "name of GraphProto");
 
   for (const auto& value_info : graph.input()) {
     check_value_info(value_info, ctx);
@@ -1039,6 +1136,7 @@ void check_graph(const GraphProto& graph, const CheckerContext& ctx, const Lexic
   // Intermediate value_info entries are optional annotations and are not
   // otherwise validated, but they must not use data types newer than the IR version.
   for (const auto& value_info : graph.value_info()) {
+    check_valid_utf8(value_info.name(), "name of ValueInfoProto");
     check_type_ir_version(value_info.type(), value_info.name(), ctx);
   }
 
@@ -1101,6 +1199,14 @@ void check_graph(const GraphProto& graph, const CheckerContext& ctx, const Lexic
   }
   std::unordered_set<std::string> used_experimental_ops;
   for (const auto& node : graph.node()) {
+    // Validate identifier-like strings before the topological check so that a
+    // corrupted name is reported as an encoding problem, not a sorting one.
+    for (const auto& input : node.input()) {
+      check_valid_utf8(input, "input of NodeProto");
+    }
+    for (const auto& output : node.output()) {
+      check_valid_utf8(output, "output of NodeProto");
+    }
     // nodes must be in topologically sorted order
     for (const auto& input : node.input()) {
       // explicit optional input
@@ -1110,12 +1216,12 @@ void check_graph(const GraphProto& graph, const CheckerContext& ctx, const Lexic
       if (!lex_ctx.this_or_ancestor_graph_has(input)) {
         fail_check(
             "Nodes in a graph must be topologically sorted, however input '",
-            input,
+            utf8_safe(input),
             "' of node: \n",
             "name: ",
-            node.name(),
+            utf8_safe(node.name()),
             " OpType: ",
-            node.op_type(),
+            utf8_safe(node.op_type()),
             "\n is not output of any previous nodes.");
       }
     }
@@ -1133,7 +1239,8 @@ void check_graph(const GraphProto& graph, const CheckerContext& ctx, const Lexic
     }
     ONNX_CATCH(ValidationError & ex) {
       ONNX_HANDLE_EXCEPTION([&]() {
-        ex.AppendContext("Bad node spec for node. Name: " + node.name() + " OpType: " + node.op_type());
+        ex.AppendContext(
+            "Bad node spec for node. Name: " + utf8_safe(node.name()) + " OpType: " + utf8_safe(node.op_type()));
         // Rethrow without copying to avoid triggering
         // bugprone-exception-copy-constructor-throws.
         // The in-place AppendContext modification is preserved because
@@ -1196,7 +1303,7 @@ void check_opset_compatibility(
   auto model_opset_version = get_version_for_domain(node.domain(), model_opset_imports);
 
   if (func_opset_version == -1) {
-    fail_check("No Opset registered for domain " + node.domain());
+    fail_check("No Opset registered for domain ", utf8_safe(node.domain()));
   }
 
   if (model_opset_version == -1) {
@@ -1225,8 +1332,9 @@ void check_opset_compatibility(
   if (!schema_for_model_import || !schema_for_function_import ||
       schema_for_function_import->since_version() != schema_for_model_import->since_version()) {
     fail_check(
-        "Opset import for domain " + node.domain() + " in function op " + node.op_type() +
-        "is not compatible with the version imported by model. FunctionOp imports version " +
+        "Opset import for domain ", utf8_safe(node.domain()), " in function op ",
+        utf8_safe(node.op_type()),
+        " is not compatible with the version imported by model. FunctionOp imports version " +
         ONNX_NAMESPACE::to_string(func_opset_version) + " whereas model imports version " +
         ONNX_NAMESPACE::to_string(model_opset_version));
   }
@@ -1409,6 +1517,17 @@ void check_model_local_functions(
 
 void check_function(const FunctionProto& function, const CheckerContext& ctx, const LexicalScopeContext& parent_lex) {
   enforce_non_empty_field(function, name);
+  check_valid_utf8(function.name(), "name of FunctionProto");
+  check_valid_utf8(function.domain(), "domain of FunctionProto");
+  for (const auto& input : function.input()) {
+    check_valid_utf8(input, "input of FunctionProto");
+  }
+  for (const auto& output : function.output()) {
+    check_valid_utf8(output, "output of FunctionProto");
+  }
+  for (const auto& attr : function.attribute()) {
+    check_valid_utf8(attr, "attribute of FunctionProto");
+  }
 
   if (ctx.get_ir_version() >= 0x00000008) {
     enforce_has_field(function, domain);
@@ -1450,14 +1569,30 @@ void check_function(const FunctionProto& function, const CheckerContext& ctx, co
     }
   }
   for (const auto& attr : function.attribute_proto()) {
+    check_valid_utf8(attr.name(), "name of AttributeProto");
+    if (attr.has_t()) {
+      check_valid_utf8(attr.t().name(), "name of TensorProto");
+    }
+    for (const auto& tensor : attr.tensors()) {
+      check_valid_utf8(tensor.name(), "name of TensorProto");
+    }
     check_attribute_tensors_ir_version(attr, ctx);
   }
   // Function inputs and outputs are untyped names; their types, if any, are given here.
   for (const auto& value_info : function.value_info()) {
+    check_valid_utf8(value_info.name(), "name of ValueInfoProto");
     check_type_ir_version(value_info.type(), value_info.name(), ctx);
   }
   std::unordered_set<std::string> used_experimental_ops;
   for (const auto& node : function.node()) {
+    // Validate identifier-like strings before the topological check so that a
+    // corrupted name is reported as an encoding problem, not a sorting one.
+    for (const auto& input : node.input()) {
+      check_valid_utf8(input, "input of NodeProto");
+    }
+    for (const auto& output : node.output()) {
+      check_valid_utf8(output, "output of NodeProto");
+    }
     // nodes must be in topologically sorted order
     for (const auto& input : node.input()) {
       // explicit optional input
@@ -1467,12 +1602,12 @@ void check_function(const FunctionProto& function, const CheckerContext& ctx, co
       if (!lex_ctx.this_graph_has(input)) {
         fail_check(
             "Nodes in a function must be topologically sorted, however input '",
-            input,
+            utf8_safe(input),
             "' of node: \n",
             "Name: ",
-            node.name(),
+            utf8_safe(node.name()),
             " OpType: ",
-            node.op_type(),
+            utf8_safe(node.op_type()),
             "\n is neither output of any previous nodes nor input of the function.");
       }
     }
