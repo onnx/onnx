@@ -5244,6 +5244,23 @@ class TestReferenceEvaluator:
         assert got.dtype == np.uint16
         assert_allclose(np.array(1, dtype=np.uint16), got)
 
+    @pytest.mark.parametrize(
+        "attributes",
+        [
+            {"end": -4},
+            {"start": 1, "end": -4},
+            {"start": -2, "end": -4},
+        ],
+    )
+    def test_shape_end_below_negative_rank_is_empty(self, attributes):
+        node = make_node("Shape", ["X"], ["Y"], **attributes)
+        x = np.zeros((2, 3, 4), dtype=np.float32)
+
+        got = ReferenceEvaluator(node).run(None, {"X": x})[0]
+
+        assert got.shape == (0,)
+        assert got.dtype == np.int64
+
     def test_dynamic_quantize_linear(self):
         feeds = {
             "X": np.array(
