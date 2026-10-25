@@ -28298,7 +28298,7 @@ expect(node, inputs=[x], outputs=[y], name="test_size")
 
 
 ### Slice
-There are 8 test cases, listed as following:
+There are 9 test cases, listed as following:
 <details>
 <summary>slice</summary>
 
@@ -28442,6 +28442,32 @@ expect(
     inputs=[x, starts, ends, axes, steps],
     outputs=[y],
     name="test_slice_neg_steps",
+)
+```
+
+</details>
+<details>
+<summary>slice_neg_steps_start_below_negative_dim</summary>
+
+```python
+node = onnx.helper.make_node(
+    "Slice",
+    inputs=["x", "starts", "ends", "axes", "steps"],
+    outputs=["y"],
+)
+
+x = np.random.randn(20, 10, 5).astype(np.float32)
+starts = np.array([-21, -11, -6], dtype=np.int64)
+ends = np.array([-22, -12, -7], dtype=np.int64)
+axes = np.array([0, 1, 2], dtype=np.int64)
+steps = np.array([-1, -3, -2]).astype(np.int64)
+y = x[0:1, 0:1, 0:1]
+
+expect(
+    node,
+    inputs=[x, starts, ends, axes, steps],
+    outputs=[y],
+    name="test_slice_neg_steps_start_below_negative_dim",
 )
 ```
 
