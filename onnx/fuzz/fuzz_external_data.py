@@ -259,7 +259,9 @@ def TestOneInput(data: bytes) -> None:
     effective_location_index = (
         alternate_index if data[2] & 0x01 and operation != 6 else location_index
     )
-    unsafe_location = effective_location_index in {3, 4, 5, 6, 7}
+    unsafe_location = effective_location_index in {3, 4, 5, 7} or (
+        effective_location_index == 6 and (_BASE / "symlink.bin").is_symlink()
+    )
     if completed and 1 <= operation <= 6 and unsafe_location:
         raise AssertionError("external-data operation followed an unsafe location")
 

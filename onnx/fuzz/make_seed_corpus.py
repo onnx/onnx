@@ -497,7 +497,7 @@ _EXTERNAL_DATA_SEEDS = {
     "model_out_of_bounds.bin": _external_data_seed(3, 0, offset=8, length=10),
     "write_overlapping_offsets.bin": _external_data_seed(4, 2, offset=1, length=1),
     "container_load_regular.bin": _external_data_seed(5, 0),
-    "container_load_hardlink.bin": _external_data_seed(5, 7),
+    "container_load_hardlink.bin": _external_data_seed(5, 7, payload=b"1234567"),
     "save_model_traversal.bin": _external_data_seed(6, 3),
     "container_roundtrip.bin": _external_data_seed(7, 0),
 }
