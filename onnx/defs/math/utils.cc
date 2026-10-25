@@ -382,8 +382,12 @@ static void einsumShapeInference(ONNX_NAMESPACE::InferenceContext& ctx, std::str
         continue;
 
       } else if (!is_letter(term[index])) {
-        num_illegal_char += 1;
-        continue;
+        fail_shape_inference(
+            "Einsum equation has an unsupported character '",
+            term[index],
+            "' in the term for input ",
+            num_operands,
+            ". Only letters and one ellipsis are allowed.");
       }
 
       const auto inserted = label_maps.emplace(term[index], num_labels).second;
