@@ -125,7 +125,8 @@ class ConvTranspose(OpRun):
                     group=1,
                     kernel_shape=kernel_shape,
                     output_padding=output_padding,
-                    output_shape=output_shape,
+                    # pads are resolved above and give the same output_shape
+                    output_shape=None,
                     pads=pads,
                     strides=strides,
                 )
