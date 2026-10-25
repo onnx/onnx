@@ -12,11 +12,13 @@ This document contains the normative specification of the semantics of ONNX.
 
 The `.proto` files found under the [onnx folder](/onnx/) form the normative specification of its syntax authored in the [Protocol Buffers](https://developers.google.com/protocol-buffers) definition language. Commentary found in the `.proto` files is intended to improve readability of those files, but is not normative if it conflicts with this document. Such conflicts should be reported as documentation bugs.
 
-The schemas use proto3 with explicit `optional` fields, preserving
-field presence and the earlier proto2 field numbers, wire types, and numeric
-repeated-field packing. Known `string` fields require valid UTF-8; `bytes` fields
-remain binary. Proto3 exposes unrecognized enum values, which remain subject to
-ONNX's semantic constraints. Generating bindings requires proto3 optional support.
+The schemas use Protobuf Edition 2023 with explicit field presence and closed
+enums, preserving the earlier proto2 field numbers, wire types, and numeric
+repeated-field packing. Unrecognized enum values remain in the unknown field set.
+Known `string` fields require valid UTF-8; `bytes` fields remain binary.
+Generating bindings requires `protoc` 27.0 or newer and generators and runtimes
+that support Edition 2023. Descriptors use Editions features instead of proto3
+synthetic oneofs, so reflection-based consumers must support these features.
 
 __Notes on model validation__
 

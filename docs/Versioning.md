@@ -54,7 +54,7 @@ The IR format is versioned using simple numbers, which MUST be monotonically inc
 
 NOTE: breaking changes include those that do not alter the serialized binary format, but still break software using libraries that write or read it. For example, changing the spelling of a message property will cause code accessing the property break.
 
-The IR format adheres to the versioning guidelines defined in the [Updating a Message Type](https://developers.google.com/protocol-buffers/docs/proto3#updating) section of the proto3 specification.
+The IR format adheres to the versioning guidelines defined in the [Updating a Message Type](https://protobuf.dev/programming-guides/editions/#updating) section of the Protobuf Editions guide.
 
 As a general principle, implementations SHOULD be robust in the face of missing fields. However, to ensure basic interoperation, a subset of message fields will be marked as required for a given IR version and all producers MUST set these fields correctly. Required fields MUST always be marked with the comment:
 

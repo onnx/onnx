@@ -150,8 +150,11 @@ jobs:
       - name: Install external protobuf - Linux
         if: matrix.protobuf_type == 'External' && startsWith(matrix.os,'ubuntu')
         run: |
-          sudo apt-get update
-          sudo apt-get install libprotobuf-dev protobuf-compiler
+          # Use the same Edition 2023-capable release for protoc and the shared runtime.
+          source workflow_scripts/protobuf/build_protobuf_unix.sh "$(nproc)" "$RUNNER_TEMP/protobuf" Release ON
+          echo "$INSTALL_PROTOBUF_PATH/bin" >> "$GITHUB_PATH"
+          echo "CMAKE_PREFIX_PATH=$INSTALL_PROTOBUF_PATH${CMAKE_PREFIX_PATH:+:$CMAKE_PREFIX_PATH}" >> "$GITHUB_ENV"
+          echo "LD_LIBRARY_PATH=$INSTALL_PROTOBUF_PATH/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}" >> "$GITHUB_ENV"
 
       - name: Install external protobuf - MacOS
         if: matrix.protobuf_type == 'External' && matrix.os == 'macos-latest'
@@ -174,6 +177,8 @@ jobs:
           }
 
           workflow_scripts/protobuf/build_protobuf_win.ps1 -cmake_arch $cmake_arch
+          "$env:GITHUB_WORKSPACE/protobuf-31.1/protobuf_install/bin" >> $env:GITHUB_PATH
+          "CMAKE_PREFIX_PATH=$env:GITHUB_WORKSPACE/protobuf-31.1/protobuf_install" >> $env:GITHUB_ENV
         shell: pwsh
 
       - name: Build and install ONNX - Linux
