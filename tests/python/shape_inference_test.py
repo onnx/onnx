@@ -291,6 +291,15 @@ class TestShapeInference(TestShapeInferenceHelper):
         with pytest.raises(onnx.shape_inference.InferenceError):
             self._inferred(graph)
 
+    def test_serialized_model_with_trailing_data_raises(self) -> None:
+        graph = self._make_graph(
+            [("x", TensorProto.FLOAT, (2,))], [make_node("Relu", ["x"], ["y"])], []
+        )
+        serialized = make_model(graph).SerializeToString()
+        # Data after a 0 tag must be rejected rather than silently dropped.
+        with pytest.raises(ValueError):
+            onnx.shape_inference.infer_shapes(serialized + b"\x00" + b"\xff" * 16)
+
     def _identity_prop(self, op: str, **kwargs: Any) -> None:
         graph = self._make_graph(
             [("x", TensorProto.FLOAT, (30, 4, 5))],
@@ -444,6 +453,93 @@ class TestShapeInference(TestShapeInferenceHelper):
         )
         self._make_matmul_test_allow_unknown(version, (3,), None, None)
         self._make_matmul_test_allow_unknown(version, None, None, None)
+
+    @pytest.mark.parametrize("version", all_versions_for("GroupedMatMul"))
+    def test_groupedmatmul(self, version) -> None:
+        graph = self._make_graph(
+            [
+                ("input", TensorProto.FLOAT, ("M", "K")),
+                ("weights", TensorProto.FLOAT, ("G", "K", "N")),
+                ("group_indices", TensorProto.INT64, ("M", "S")),
+                ("bias", TensorProto.FLOAT, ("G", "N")),
+            ],
+            [
+                make_node(
+                    "GroupedMatMul",
+                    ["input", "weights", "group_indices", "bias"],
+                    ["output"],
+                )
+            ],
+            [],
+        )
+        self._assert_inferred(
+            graph,
+            [make_tensor_value_info("output", TensorProto.FLOAT, ("M", "S", "N"))],
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
+        )
+
+    @pytest.mark.parametrize("version", all_versions_for("GroupedMatMul"))
+    @pytest.mark.parametrize(
+        "elem_type", [TensorProto.FLOAT16, TensorProto.BFLOAT16, TensorProto.DOUBLE]
+    )
+    @pytest.mark.parametrize("index_type", [TensorProto.INT32, TensorProto.INT64])
+    def test_groupedmatmul_without_bias(self, version, elem_type, index_type) -> None:
+        graph = self._make_graph(
+            [
+                ("input", elem_type, (4, 3)),
+                ("weights", elem_type, (2, 3, 5)),
+                ("group_indices", index_type, (4, 2)),
+            ],
+            [
+                make_node(
+                    "GroupedMatMul",
+                    ["input", "weights", "group_indices"],
+                    ["output"],
+                )
+            ],
+            [],
+        )
+        self._assert_inferred(
+            graph,
+            [make_tensor_value_info("output", elem_type, (4, 2, 5))],
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
+        )
+
+    @pytest.mark.parametrize(
+        ("input_shapes", "input_names"),
+        [
+            (((4, 3, 1), (2, 3, 5), (4, 2)), ("input", "weights", "group_indices")),
+            (((4, 3), (2, 3), (4, 2)), ("input", "weights", "group_indices")),
+            (((4, 3), (2, 3, 5), (4,)), ("input", "weights", "group_indices")),
+            (((4, 3), (2, 4, 5), (4, 2)), ("input", "weights", "group_indices")),
+            (((4, 3), (2, 3, 5), (3, 2)), ("input", "weights", "group_indices")),
+            (
+                ((4, 3), (2, 3, 5), (4, 2), (3, 5)),
+                ("input", "weights", "group_indices", "bias"),
+            ),
+            (
+                ((4, 3), (2, 3, 5), (4, 2), (2, 4)),
+                ("input", "weights", "group_indices", "bias"),
+            ),
+        ],
+    )
+    def test_groupedmatmul_invalid_shapes(self, input_shapes, input_names) -> None:
+        input_types = [
+            TensorProto.INT64 if name == "group_indices" else TensorProto.FLOAT
+            for name in input_names
+        ]
+        graph = self._make_graph(
+            [
+                (name, elem_type, shape)
+                for name, elem_type, shape in zip(
+                    input_names, input_types, input_shapes, strict=True
+                )
+            ],
+            [make_node("GroupedMatMul", list(input_names), ["output"])],
+            [],
+        )
+        with pytest.raises(onnx.shape_inference.InferenceError):
+            self._inferred(graph)
 
     @pytest.mark.parametrize("version", all_versions_for("Cast"))
     def test_cast(self, version) -> None:
@@ -2464,6 +2560,40 @@ class TestShapeInference(TestShapeInferenceHelper):
         self._assert_inferred(
             graph, [make_tensor_value_info("y", TensorProto.FLOAT, (0, 6))]
         )
+
+    # all_versions_for("Slice") currently yields only {10, 11, 13} because of the
+    # unrelated `version > 5` filter (#5289); restrict to opset >= 10 since
+    # Slice-1 takes starts/ends as attributes and cannot use this 5-input graph.
+    @pytest.mark.parametrize(
+        "version", [v for v in all_versions_for("Slice") if v >= 10]
+    )
+    def test_slice_negative_dim_raises(self, version) -> None:
+        """Regression test for issue #8481: a negative input dim must raise a
+        catchable InferenceError, not abort the process via std::clamp UB.
+        """
+        graph = self._make_graph(
+            [
+                ("x", TensorProto.FLOAT, (3, -1)),
+                ("starts", TensorProto.INT64, (1,)),
+                ("ends", TensorProto.INT64, (1,)),
+                ("axes", TensorProto.INT64, (1,)),
+                ("steps", TensorProto.INT64, (1,)),
+            ],
+            [make_node("Slice", ["x", "starts", "ends", "axes", "steps"], "y")],
+            [],
+            initializer=[
+                make_tensor("starts", TensorProto.INT64, (1,), (0,)),
+                make_tensor("ends", TensorProto.INT64, (1,), (1,)),
+                make_tensor("axes", TensorProto.INT64, (1,), (1,)),
+                make_tensor("steps", TensorProto.INT64, (1,), (1,)),
+            ],
+        )
+        with pytest.raises(
+            onnx.shape_inference.InferenceError, match="must be non-negative"
+        ):
+            self._inferred(
+                graph, opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)]
+            )
 
     def test_slice_scalar_shape_output(self) -> None:
         """Shape(scalar) produces 0-length output; Slice on it should not crash."""
@@ -8710,6 +8840,35 @@ class TestShapeInference(TestShapeInferenceHelper):
         with pytest.raises(onnx.shape_inference.InferenceError):
             self._inferred(graph)
 
+    @pytest.mark.parametrize("version", all_versions_for("GatherND"))
+    def test_gathernd_reject_negative_indices_last_dim(self, version) -> None:
+        graph = self._make_graph(
+            [
+                ("x", TensorProto.FLOAT, (2, 2, 2)),
+                ("indices", TensorProto.INT64, (2, -1)),
+            ],
+            [make_node("GatherND", ["x", "indices"], ["y"])],
+            [],
+        )
+        with pytest.raises(
+            onnx.shape_inference.InferenceError, match="must not be negative"
+        ):
+            self._inferred(
+                graph, opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)]
+            )
+
+    def test_gathernd_12_reject_negative_batch_dims(self) -> None:
+        graph = self._make_graph(
+            [
+                ("x", TensorProto.FLOAT, (2, 2, 2)),
+                ("indices", TensorProto.INT64, (2, 1)),
+            ],
+            [make_node("GatherND", ["x", "indices"], ["y"], batch_dims=-5)],
+            [],
+        )
+        with pytest.raises(onnx.shape_inference.InferenceError, match="batch_dims"):
+            self._inferred(graph, opset_imports=[helper.make_opsetid(ONNX_DOMAIN, 12)])
+
     def test_cumprod(self) -> None:
         graph = self._make_graph(
             [("x", TensorProto.FLOAT, (3, 2)), ("axis", TensorProto.INT64, (1,))],
@@ -9240,6 +9399,31 @@ class TestShapeInference(TestShapeInferenceHelper):
                 )
             ],
         )
+
+    def test_split_to_sequence_split_sizes_sum_overflow(self) -> None:
+        max_int64 = 2**63 - 1
+        graph = self._make_graph(
+            [
+                ("input", TensorProto.FLOAT, (max_int64 - 2, 4)),
+                ("split", TensorProto.INT64, (3,)),
+            ],
+            [make_node("SplitToSequence", ["input", "split"], ["output_sequence"])],
+            [],
+            initializer=[
+                make_tensor(
+                    "split",
+                    TensorProto.INT64,
+                    (3,),
+                    (max_int64, max_int64, max_int64),
+                )
+            ],
+        )
+
+        with pytest.raises(
+            onnx.shape_inference.InferenceError,
+            match="Sum of split values is too large",
+        ):
+            self._inferred(graph)
 
     def test_split_to_sequence_non_divisible(self) -> None:
         graph = self._make_graph(
@@ -9846,6 +10030,27 @@ class TestShapeInference(TestShapeInferenceHelper):
             [],
         )
         with pytest.raises(onnx.shape_inference.InferenceError):
+            self._inferred(graph)
+
+    @pytest.mark.parametrize(
+        ("equation", "shape"),
+        [
+            ("i_j", (2, 3)),
+            ("i.j", (2, 3)),
+            ("i1j", (2, 3)),
+            ("ij..", (2, 3)),
+            ("...i...", (2,)),
+        ],
+    )
+    def test_einsum_unsupported_character_raises(self, equation, shape) -> None:
+        graph = self._make_graph(
+            [("x", TensorProto.FLOAT, shape)],
+            [make_node("Einsum", ["x"], ["y"], equation=equation)],
+            [],
+        )
+        with pytest.raises(
+            onnx.shape_inference.InferenceError, match="unsupported character"
+        ):
             self._inferred(graph)
 
     def test_einsum_outer_prod(self) -> None:

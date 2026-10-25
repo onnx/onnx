@@ -6,7 +6,7 @@
 * [Overall Test Coverage](#overall-test-coverage)
 # Node Test Coverage
 ## Summary
-Node tests have covered 193/202 (95.54%, 5 generators excluded) common operators.
+Node tests have covered 194/203 (95.57%, 5 generators excluded) common operators.
 
 Node tests have covered 1/1 (100.00%, 0 generators excluded) experimental operators.
 
@@ -11311,6 +11311,22 @@ expect(
     outputs=[Y, Y_Scale, Y_ZeroPoint],
     name="test_dynamicquantizelinear_min_adjusted",
 )
+
+# The adjusted range is empty when every element is 0:
+# expected scale 1 and zero point 0
+X = np.zeros((2, 3), dtype=np.float32)
+x_min = np.minimum(0, np.min(X))
+x_max = np.maximum(0, np.max(X))
+Y_Scale = np.float32(1.0 if x_max == x_min else (x_max - x_min) / (255 - 0))
+Y_ZeroPoint = np.clip(round((0 - x_min) / Y_Scale), 0, 255).astype(np.uint8)
+Y = np.clip(np.round(X / Y_Scale) + Y_ZeroPoint, 0, 255).astype(np.uint8)
+
+expect(
+    node,
+    inputs=[X],
+    outputs=[Y, Y_Scale, Y_ZeroPoint],
+    name="test_dynamicquantizelinear_zero_input",
+)
 ```
 
 </details>
@@ -13693,6 +13709,219 @@ expect(
     inputs=[x, scale, bias],
     outputs=[y],
     name="test_group_normalization_example",
+)
+```
+
+</details>
+
+
+### GroupedMatMul
+There are 8 test cases, listed as following:
+<details>
+<summary>additional_types</summary>
+
+```python
+for dtype in (np.float16, np.float64):
+    for index_dtype in (np.int32, np.int64):
+        node = onnx.helper.make_node(
+            "GroupedMatMul",
+            inputs=["input", "weights", "group_indices", "bias"],
+            outputs=["output"],
+        )
+        input = np.array([[1, 2], [3, 4]], dtype=dtype)
+        weights = np.array([[[1, 0], [0, 1]], [[0, 1], [1, 0]]], dtype=dtype)
+        group_indices = np.array([[0, 1], [1, 0]], dtype=index_dtype)
+        bias = np.array([[0.5, 1], [1.5, 2]], dtype=dtype)
+        output = grouped_matmul(input, weights, group_indices, bias)
+
+        expect(
+            node,
+            inputs=[input, weights, group_indices, bias],
+            outputs=[output],
+            name=f"test_groupedmatmul_{np.dtype(dtype).name}_{np.dtype(index_dtype).name}",
+            opset_imports=[onnx.helper.make_opsetid("", 29)],
+        )
+```
+
+</details>
+<details>
+<summary>groupedmatmul</summary>
+
+```python
+node = onnx.helper.make_node(
+    "GroupedMatMul",
+    inputs=["input", "weights", "group_indices"],
+    outputs=["output"],
+)
+input = np.array(
+    [[1, 0, -1], [0, 1, 2], [1, 1, 0], [0, 0, 1]], dtype=np.float32
+)
+weights = np.array(
+    [[[1, 0], [0, 1], [-1, 0]], [[0, 1], [1, 0], [0, 1]]],
+    dtype=np.float32,
+)
+group_indices = np.array([[0], [1], [0], [1]], dtype=np.int64)
+output = grouped_matmul(input, weights, group_indices)
+
+expect(
+    node,
+    inputs=[input, weights, group_indices],
+    outputs=[output],
+    name="test_groupedmatmul",
+    opset_imports=[onnx.helper.make_opsetid("", 29)],
+)
+```
+
+</details>
+<details>
+<summary>single_group</summary>
+
+```python
+node = onnx.helper.make_node(
+    "GroupedMatMul",
+    inputs=["input", "weights", "group_indices"],
+    outputs=["output"],
+)
+input = np.array([[1, 2], [3, 4], [5, 6]], dtype=np.float32)
+weights = np.array([[[1, 2, 3], [4, 5, 6]]], dtype=np.float32)
+group_indices = np.zeros((3, 1), dtype=np.int64)
+output = grouped_matmul(input, weights, group_indices)
+
+expect(
+    node,
+    inputs=[input, weights, group_indices],
+    outputs=[output],
+    name="test_groupedmatmul_single_group",
+    opset_imports=[onnx.helper.make_opsetid("", 29)],
+)
+```
+
+</details>
+<details>
+<summary>with_bias</summary>
+
+```python
+node = onnx.helper.make_node(
+    "GroupedMatMul",
+    inputs=["input", "weights", "group_indices", "bias"],
+    outputs=["output"],
+)
+input = np.array([[1, 0], [0, 1]], dtype=np.float32)
+weights = np.array(
+    [[[1, 0], [0, 1]], [[0, 1], [1, 0]], [[1, 1], [0, 0]]],
+    dtype=np.float32,
+)
+group_indices = np.array([[0, 1], [2, 0]], dtype=np.int64)
+bias = np.array([[0.1, 0.2], [0.3, 0.0], [0.5, 0.5]], dtype=np.float32)
+output = grouped_matmul(input, weights, group_indices, bias)
+
+expect(
+    node,
+    inputs=[input, weights, group_indices, bias],
+    outputs=[output],
+    name="test_groupedmatmul_with_bias",
+    opset_imports=[onnx.helper.make_opsetid("", 29)],
+)
+```
+
+</details>
+<details>
+<summary>with_unused_group</summary>
+
+```python
+node = onnx.helper.make_node(
+    "GroupedMatMul",
+    inputs=["input", "weights", "group_indices"],
+    outputs=["output"],
+)
+input = np.array([[1, 2], [3, 4], [5, 6], [7, 8]], dtype=np.float32)
+weights = np.arange(12, dtype=np.float32).reshape(3, 2, 2)
+group_indices = np.array([[0], [0], [2], [2]], dtype=np.int64)
+output = grouped_matmul(input, weights, group_indices)
+
+expect(
+    node,
+    inputs=[input, weights, group_indices],
+    outputs=[output],
+    name="test_groupedmatmul_with_unused_group",
+    opset_imports=[onnx.helper.make_opsetid("", 29)],
+)
+```
+
+</details>
+<details>
+<summary>without_bias_explicit_empty_input</summary>
+
+```python
+node = onnx.helper.make_node(
+    "GroupedMatMul",
+    inputs=["input", "weights", "group_indices", ""],
+    outputs=["output"],
+)
+input = np.array(
+    [[1, 0, -1], [0, 1, 2], [1, 1, 0], [0, 0, 1]], dtype=np.float32
+)
+weights = np.array(
+    [[[1, 0], [0, 1], [-1, 0]], [[0, 1], [1, 0], [0, 1]]],
+    dtype=np.float32,
+)
+group_indices = np.array([[0], [1], [0], [1]], dtype=np.int64)
+output = grouped_matmul(input, weights, group_indices)
+
+expect(
+    node,
+    inputs=[input, weights, group_indices],
+    outputs=[output],
+    name="test_groupedmatmul_without_bias_explicit_empty_input",
+    opset_imports=[onnx.helper.make_opsetid("", 29)],
+)
+```
+
+</details>
+<details>
+<summary>zero_selections</summary>
+
+```python
+node = onnx.helper.make_node(
+    "GroupedMatMul",
+    inputs=["input", "weights", "group_indices"],
+    outputs=["output"],
+)
+input = np.arange(6, dtype=np.float32).reshape(2, 3)
+weights = np.arange(24, dtype=np.float32).reshape(2, 3, 4)
+group_indices = np.empty((2, 0), dtype=np.int64)
+output = grouped_matmul(input, weights, group_indices)
+
+expect(
+    node,
+    inputs=[input, weights, group_indices],
+    outputs=[output],
+    name="test_groupedmatmul_zero_selections",
+    opset_imports=[onnx.helper.make_opsetid("", 29)],
+)
+```
+
+</details>
+<details>
+<summary>zero_tokens</summary>
+
+```python
+node = onnx.helper.make_node(
+    "GroupedMatMul",
+    inputs=["input", "weights", "group_indices"],
+    outputs=["output"],
+)
+input = np.empty((0, 3), dtype=np.float32)
+weights = np.arange(24, dtype=np.float32).reshape(2, 3, 4)
+group_indices = np.empty((0, 2), dtype=np.int64)
+output = grouped_matmul(input, weights, group_indices)
+
+expect(
+    node,
+    inputs=[input, weights, group_indices],
+    outputs=[output],
+    name="test_groupedmatmul_zero_tokens",
+    opset_imports=[onnx.helper.make_opsetid("", 29)],
 )
 ```
 
@@ -22330,7 +22559,7 @@ expect(
 
 
 ### ReduceLogSumExp
-There are 5 test cases, listed as following:
+There are 6 test cases, listed as following:
 <details>
 <summary>default_axes_keepdims</summary>
 
@@ -22440,6 +22669,30 @@ expect(
     inputs=[data, axes],
     outputs=[reduced],
     name="test_reduce_log_sum_exp_empty_set",
+)
+```
+
+</details>
+<details>
+<summary>float16_large_sum</summary>
+
+```python
+node = onnx.helper.make_node(
+    "ReduceLogSumExp",
+    inputs=["data", "axes"],
+    outputs=["reduced"],
+    keepdims=1,
+)
+data = np.zeros((256, 256), dtype=np.float16)
+axes = np.array([0, 1], dtype=np.int64)
+# The sum of 65536 exponentials overflows float16, but its logarithm does not.
+reduced = np.array([[np.log(data.size)]], dtype=np.float16)
+
+expect(
+    node,
+    inputs=[data, axes],
+    outputs=[reduced],
+    name="test_reduce_log_sum_exp_float16_large_sum",
 )
 ```
 
