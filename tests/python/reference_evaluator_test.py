@@ -954,6 +954,41 @@ class TestReferenceEvaluator:
 
         assert_array_equal(got, expected)
 
+    @pytest.mark.parametrize(
+        ("indices", "depth", "expected"),
+        [
+            # depth may be a rank-1 tensor holding exactly one element.
+            (
+                np.array([0, 2], dtype=np.int64),
+                np.array([3], dtype=np.int64),
+                np.array([[1, 0, 0], [0, 0, 1]], dtype=np.float32),
+            ),
+            # A non-integer depth is cast to int64: 3.7 -> 3 classes.
+            (
+                np.array([0, 2, -1], dtype=np.int64),
+                np.array(3.7, dtype=np.float32),
+                np.array([[1, 0, 0], [0, 0, 1], [0, 0, 1]], dtype=np.float32),
+            ),
+            # Non-integer indices are cast to int64: 1.7 -> 1, -1.2 -> -1.
+            (
+                np.array([1.7, -1.2], dtype=np.float32),
+                np.array(3, dtype=np.int64),
+                np.array([[0, 1, 0], [0, 0, 1]], dtype=np.float32),
+            ),
+        ],
+    )
+    def test_one_hot_casts_depth_and_indices_to_int64(
+        self, indices: np.ndarray, depth: np.ndarray, expected: np.ndarray
+    ):
+        node = make_node("OneHot", ["indices", "depth", "values"], ["output"])
+        values = np.array([0, 1], dtype=np.float32)
+
+        got = ReferenceEvaluator(node).run(
+            None, {"indices": indices, "depth": depth, "values": values}
+        )[0]
+
+        assert_array_equal(got, expected)
+
     @pytest.mark.parametrize("axis", [-2, 1])
     def test_concat_rejects_axis_out_of_range(self, axis: int):
         node = make_node("Concat", ["X"], ["Y"], axis=axis)

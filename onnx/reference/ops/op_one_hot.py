@@ -10,6 +10,11 @@ from onnx.reference.op_run import OpRun
 
 def _one_hot(indices, depth, axis=-1, dtype=np.float32):
     values = np.asarray(indices)
+    # Non-integer indices and depth are cast to int64 before use, and depth
+    # may be a scalar or a rank-1 tensor holding exactly one element.
+    if not np.issubdtype(values.dtype, np.integer):
+        values = values.astype(np.int64)
+    depth = int(np.asarray(depth).astype(np.int64).reshape(-1)[0])
     rank = len(values.shape)
     depth_range = np.arange(depth)
     if axis < 0:
