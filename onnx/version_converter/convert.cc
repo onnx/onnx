@@ -170,6 +170,8 @@ ModelProto DefaultVersionConverter::convert_version(
       return static_cast<int>(version);
     };
     checker::CheckerContext ctx;
+    // The converter never reads external data, so it may not be present here.
+    ctx.set_skip_external_data_check(true);
     ctx.set_ir_version(checked_version(mp_out.ir_version()));
     std::unordered_map<std::string, int> imports;
     for (const auto& import : mp_out.opset_import()) {

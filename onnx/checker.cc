@@ -388,6 +388,10 @@ void check_tensor(const TensorProto& tensor, const CheckerContext& ctx) {
           ") is stored externally and should not have data field.",
           value_field);
     }
+    if (ctx.skip_external_data_check()) {
+      // The data file is not accessed (e.g. the model was loaded without its external data).
+      return;
+    }
 
     // Every location is validated, but, as in the Python loader, the last value
     // of each key is the one that describes the data.
