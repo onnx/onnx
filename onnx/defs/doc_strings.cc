@@ -2348,6 +2348,33 @@ numeric_limits::lowest() and numeric_limits::max(), respectively.
 When 'min' is greater than 'max', the clip operator sets all the 'input' values to
 the value of 'max'. Thus, this is equivalent to 'Min(max, Max(input, min))'.
 )DOC";
+const char kDoc_GroupedMatMul_ver29[] = R"DOC(
+GroupedMatMul multiplies each row of a token matrix by one or more selected
+group (expert) weight matrices. Given `input` of shape `[M, K]`, `weights` of
+shape `[G, K, N]`, and `group_indices` of shape `[M, S]`, where `S` is the number
+of selections per token, the output has shape `[M, S, N]` and is defined by:
+
+```
+output[m, i] = input[m] @ weights[group_indices[m, i]]
+```
+
+If `bias` is present, `bias[group_indices[m, i]]` is added to each corresponding
+result. Every value in `group_indices` must be in the range `[0, G)`.
+Values outside this range, including negative indices, are invalid input;
+the behavior is undefined for such inputs. In particular, negative indices
+do not select groups by counting backwards from `G`.
+
+This operator is represented as a context-dependent function, which also provides
+its reference implementation. Its decomposition uses Gather, Expand, and MatMul
+to define the result, while runtimes are expected to use a fused
+grouped-matrix-multiplication implementation to avoid materializing the expanded
+intermediate tensors, including selected weights of shape `[M * S, K, N]`.
+
+Weight-only quantized experts are intended to be expressed by applying
+DequantizeLinear to quantized weights (with the appropriate scales and zero
+points) and passing the result to GroupedMatMul. Runtimes may fuse this
+composition to avoid materializing the dequantized `[G, K, N]` weights.
+)DOC";
 const char kDoc_SwiGLU_ver28[] = R"DOC(
 SwiGLU is a gated activation that takes two inputs, a gate `A` and a linear (value)
 input `B`, and produces one output `Y`. It applies the Swish activation to the gate
@@ -3454,6 +3481,9 @@ y_scale = (maximum(0, max(x)) - minimum(0, min(x))) / (qmax - qmin)
 
 * where qmax and qmin are max and min values for quantization range i.e. [0, 255] in case of uint8
 * data range is adjusted to include 0.
+* if the adjusted data range is empty, i.e. maximum(0, max(x)) == minimum(0, min(x)), which
+  happens when every element of x is 0, then y_scale = 1 (so that y_zero_point = 0 and y = 0
+  below) instead of 0.
 
 Zero point is calculated as:
 ```
@@ -6729,6 +6759,7 @@ const char kDoc_SoftmaxCrossEntropyLoss_ver13[] = "";
 const char kDoc_MatMulInteger_ver10[] = "";
 const char kDoc_Gemm_ver13[] = "";
 const char kDoc_Clip_ver13[] = "";
+const char kDoc_GroupedMatMul_ver29[] = "";
 const char kDoc_SwiGLU_ver28[] = "";
 const char kDoc_Swish_ver24[] = "";
 const char kDoc_gelu_ver20[] = "";

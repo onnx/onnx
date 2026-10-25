@@ -618,6 +618,45 @@ class TestChecker:
         with pytest.raises(ValueError):
             checker.check_model(b"\xff\xff\xff\xff\xff not a valid protobuf")
 
+    @pytest.mark.parametrize(
+        "trailer",
+        [b"\x00" + b"\xff" * 16, b"\x0c" + b"\xff" * 8],
+        ids=["zero_tag", "end_group_tag"],
+    )
+    def test_check_model_trailing_data_raises(self, trailer: bytes) -> None:
+        # A 0 tag or an end-group tag ends the parse early. The bytes after it
+        # must be rejected rather than silently dropped, matching
+        # onnx.load_from_string, which rejects the same input.
+        node = helper.make_node("Relu", ["X"], ["Y"], name="test")
+        graph = helper.make_graph(
+            [node],
+            "test",
+            [helper.make_tensor_value_info("X", TensorProto.FLOAT, [1, 2])],
+            [helper.make_tensor_value_info("Y", TensorProto.FLOAT, [1, 2])],
+        )
+        model = helper.make_model(graph, producer_name="test")
+
+        with pytest.raises(ValueError):
+            checker.check_model(model.SerializeToString() + trailer)
+
+    def test_check_model_path_trailing_data_raises(self) -> None:
+        node = helper.make_node("Relu", ["X"], ["Y"], name="test")
+        graph = helper.make_graph(
+            [node],
+            "test",
+            [helper.make_tensor_value_info("X", TensorProto.FLOAT, [1, 2])],
+            [helper.make_tensor_value_info("Y", TensorProto.FLOAT, [1, 2])],
+        )
+        model = helper.make_model(graph, producer_name="test")
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            model_path = os.path.join(temp_dir, "model.onnx")
+            # Trailing NUL padding, e.g. from a preallocated or partly zeroed file.
+            with open(model_path, "wb") as f:
+                f.write(model.SerializeToString() + b"\x00" * 16)
+            with pytest.raises(checker.ValidationError):
+                checker.check_model(model_path)
+
     def test_check_model_protobuf_size_boundary(
         self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
@@ -1780,6 +1819,29 @@ class TestChecker:
             tensor.raw_data = b"\x00" * 8
             checker.check_tensor(tensor)
 
+    @pytest.mark.parametrize("dtype", (-1, 999))
+    def test_check_tensor_rejects_unknown_data_type(self, dtype: int) -> None:
+        tensor = TensorProto()
+        tensor.data_type = dtype
+        tensor.dims.append(1)
+        tensor.name = "t"
+        tensor.raw_data = b"\x00"
+
+        with pytest.raises(checker.ValidationError, match="Unrecognized data_type"):
+            checker.check_tensor(tensor)
+
+    @pytest.mark.parametrize("dtype", (TensorProto.INT2, TensorProto.UINT2))
+    def test_check_tensor_2bit_raw_data_size_does_not_overflow(
+        self, dtype: int
+    ) -> None:
+        tensor = TensorProto()
+        tensor.data_type = dtype
+        tensor.dims.append(2**63 - 1)
+        tensor.name = "t"
+        tensor.raw_data = b"\x00"
+        with pytest.raises(checker.ValidationError, match="raw_data size"):
+            checker.check_tensor(tensor)
+
     @pytest.mark.parametrize("dtype", (TensorProto.FLOAT6E2M3, TensorProto.FLOAT6E3M2))
     @pytest.mark.parametrize(
         ("num_elements", "invalid_last_byte"),
@@ -1859,6 +1921,28 @@ class TestChecker:
             tensor2.name = "t"
             tensor2.int32_data.extend([0, 0])  # ceil(20/16) = 2
             checker.check_tensor(tensor2)
+
+    @pytest.mark.parametrize(
+        "dtype",
+        (
+            TensorProto.INT4,
+            TensorProto.UINT4,
+            TensorProto.FLOAT4E2M1,
+            TensorProto.INT2,
+            TensorProto.UINT2,
+        ),
+    )
+    def test_check_tensor_packed_int32_data_size_does_not_overflow(
+        self, dtype: int
+    ) -> None:
+        tensor = TensorProto()
+        tensor.data_type = dtype
+        tensor.dims.append(2**63 - 1)
+        tensor.name = "t"
+        tensor.int32_data.append(0)
+
+        with pytest.raises(checker.ValidationError, match="int32_data size"):
+            checker.check_tensor(tensor)
 
     def test_check_tensor_unpacked_int32_data(self) -> None:
         """Reject non-packed int32_data-stored tensors whose payload is too small.
