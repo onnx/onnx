@@ -348,6 +348,9 @@ static void check_external_data_size(
 
 void check_tensor(const TensorProto& tensor, const CheckerContext& ctx) {
   enforce_has_field(tensor, data_type);
+  if (!TensorProto_DataType_IsValid(tensor.data_type())) {
+    fail_check("Unrecognized data_type (tensor name: ", tensor.name(), "): ", tensor.data_type());
+  }
   if (tensor.data_type() == TensorProto::UNDEFINED) {
     fail_check("setting data_type field (tensor name: ", tensor.name(), ") to UNDEFINED is not allowed");
   }
@@ -565,7 +568,7 @@ void check_tensor(const TensorProto& tensor, const CheckerContext& ctx) {
         check_field(int32_data);
         if (nelem > 0) {
           // Each int32 stores 4 bytes = 8 4-bit elements.
-          const int64_t expected_int32s = (nelem + 7) / 8;
+          const int64_t expected_int32s = (nelem / 8) + (nelem % 8 != 0);
           if (static_cast<int64_t>(tensor.int32_data().size()) < expected_int32s) {
             fail_check(
                 "TensorProto (tensor name: ",
@@ -583,7 +586,7 @@ void check_tensor(const TensorProto& tensor, const CheckerContext& ctx) {
         check_field(int32_data);
         if (nelem > 0) {
           // Each int32 stores 4 bytes = 16 2-bit elements.
-          const int64_t expected_int32s = (nelem + 15) / 16;
+          const int64_t expected_int32s = (nelem / 16) + (nelem % 16 != 0);
           if (static_cast<int64_t>(tensor.int32_data().size()) < expected_int32s) {
             fail_check(
                 "TensorProto (tensor name: ",
@@ -920,13 +923,12 @@ void check_attribute(const AttributeProto& attr, const CheckerContext& ctx, cons
     fail_check("Attribute (name: ", attr.name(), ") should not contain more than one value field.");
   }
 
-  if (!ctx.is_main_graph()) {
-    // It's an attribute of a node in function body.
-    if (attr.has_ref_attr_name() && used_fields != 0) {
-      // The attribute proto is supposed to refer to data outside and does not
-      // have its own value field set.
-      fail_check("Attribute (name: ", attr.name(), ") should refer to attribute in parent node.");
-    }
+  if ((!ctx.is_main_graph()) && (attr.has_ref_attr_name() && used_fields != 0))
+  // It's an attribute of a node in function body.
+  {
+    // The attribute proto is supposed to refer to data outside and does not
+    // have its own value field set.
+    fail_check("Attribute (name: ", attr.name(), ") should refer to attribute in parent node.");
   }
 
   if (attr.has_t()) {
@@ -1825,6 +1827,8 @@ static int try_kernel_contained_open(
     }
   }
 #elif defined(ONNX_HAS_RESOLVE_BENEATH)
+  // POSIX open flags are int bitmasks.
+  // NOLINTBEGIN(bugprone-signed-bitwise)
   int flags = O_RESOLVE_BENEATH | O_CLOEXEC;
 #ifdef O_NOFOLLOW
   flags |= O_NOFOLLOW;
@@ -1834,6 +1838,7 @@ static int try_kernel_contained_open(
   } else {
     fd = openat(raw_dirfd, rel.c_str(), flags | O_CREAT | O_RDWR, 0600);
   }
+  // NOLINTEND(bugprone-signed-bitwise)
   if (fd < 0) {
     fail_check("Cannot open external data for tensor ", tensor_name);
   }
@@ -1863,6 +1868,8 @@ int64_t open_external_data(
 
   // Fallback: open() + O_NOFOLLOW + post-open inode verification.
   if (fd < 0) {
+    // POSIX open flags are int bitmasks.
+    // NOLINTBEGIN(bugprone-signed-bitwise)
     int flags = read_only ? O_RDONLY : (O_CREAT | O_RDWR);
 #ifdef O_CLOEXEC
     flags |= O_CLOEXEC;
@@ -1871,6 +1878,7 @@ int64_t open_external_data(
     flags |= O_NOFOLLOW;
 #endif
     fd = read_only ? open(data_path.c_str(), flags) : open(data_path.c_str(), flags, 0600);
+    // NOLINTEND(bugprone-signed-bitwise)
     if (fd == -1) {
       fail_check("Cannot open external data for tensor ", tensor_name);
     }

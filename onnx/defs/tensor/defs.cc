@@ -729,6 +729,13 @@ ONNX_OPERATOR_SET_SCHEMA(
         }));
 
 static void processSliceInputs(const int64_t input_dim_size_or_value, int64_t& start, int64_t& end, int64_t step) {
+  // A negative dimension is invalid: the std::clamp calls below require the
+  // upper bound to be >= the lower bound, so reject the dimension with a
+  // catchable error instead of invoking undefined behavior (a hardened
+  // std::clamp aborts the process with SIGABRT).
+  if (input_dim_size_or_value < 0) {
+    fail_shape_inference("Slice input dimension must be non-negative, got ", input_dim_size_or_value);
+  }
   // process step
   if (step == 0) {
     fail_shape_inference("'step' cannot be 0 for Slice");
@@ -2840,8 +2847,11 @@ ONNX_OPERATOR_SET_SCHEMA(
             return;
           }
 
-          const auto last_index_dimension =
-              checkedAdd(indices_shape.dim(indices_rank - 1).dim_value(), batch_dims_data);
+          const auto indices_last_dim = indices_shape.dim(indices_rank - 1).dim_value();
+          if (indices_last_dim < 0) {
+            fail_shape_inference("Last dimension of `indices` input tensor in GatherND op must not be negative");
+          }
+          const auto last_index_dimension = checkedAdd(indices_last_dim, batch_dims_data);
 
           if (last_index_dimension > data_rank) {
             fail_shape_inference(
