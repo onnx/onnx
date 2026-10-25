@@ -29963,7 +29963,7 @@ Other versions of this operator: <a href="Changelog.md#Range-11">11</a>
 <dt><tt>start</tt> : T</dt>
 <dd>Scalar. First entry for the range of output values.</dd>
 <dt><tt>limit</tt> : T</dt>
-<dd>Scalar. Exclusive upper limit for the range of output values.</dd>
+<dd>Scalar. Exclusive bound for the range of output values.</dd>
 <dt><tt>delta</tt> : T</dt>
 <dd>Scalar. Value to step by.</dd>
 </dl>
