@@ -38,9 +38,9 @@ import functools
 import re
 from pathlib import Path
 
-import onnx
 import pytest
 
+import onnx
 from onnx.defs import (
     AI_ONNX_PREVIEW_DOMAIN,
     AI_ONNX_PREVIEW_TRAINING_DOMAIN,
