@@ -975,6 +975,20 @@ class TestReferenceEvaluator:
                 np.array(3, dtype=np.int64),
                 np.array([[0, 1, 0], [0, 0, 1]], dtype=np.float32),
             ),
+            # Narrow integer indices are widened, so -1 wraps to 127 instead
+            # of overflowing int8.
+            (
+                np.array([-1, 0], dtype=np.int8),
+                np.array(128, dtype=np.int64),
+                np.eye(128, dtype=np.float32)[[127, 0]],
+            ),
+            # uint64 indices above the int64 range stay out of range instead
+            # of wrapping to -1.
+            (
+                np.array([2**64 - 1, 2], dtype=np.uint64),
+                np.array(3, dtype=np.int64),
+                np.array([[0, 0, 0], [0, 0, 1]], dtype=np.float32),
+            ),
         ],
     )
     def test_one_hot_casts_depth_and_indices_to_int64(
@@ -988,6 +1002,30 @@ class TestReferenceEvaluator:
         )[0]
 
         assert_array_equal(got, expected)
+
+    @pytest.mark.parametrize(
+        ("depth", "match"),
+        [
+            (
+                np.array([3, 4], dtype=np.int64),
+                r"exactly one element, got shape \(2,\)",
+            ),
+            (np.array([], dtype=np.int64), r"exactly one element, got shape \(0,\)"),
+            (
+                np.array([[3]], dtype=np.int64),
+                r"exactly one element, got shape \(1, 1\)",
+            ),
+            (np.array(-2, dtype=np.int64), "must be non-negative, got -2"),
+        ],
+    )
+    def test_one_hot_rejects_invalid_depth(self, depth: np.ndarray, match: str):
+        node = make_node("OneHot", ["indices", "depth", "values"], ["output"])
+        indices = np.array([0, 1], dtype=np.int64)
+        values = np.array([0, 1], dtype=np.float32)
+        sess = ReferenceEvaluator(node)
+
+        with pytest.raises(ValueError, match=match):
+            sess.run(None, {"indices": indices, "depth": depth, "values": values})
 
     @pytest.mark.parametrize("axis", [-2, 1])
     def test_concat_rejects_axis_out_of_range(self, axis: int):
