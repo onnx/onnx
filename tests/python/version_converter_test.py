@@ -29,6 +29,10 @@ EINSUM_OPSET_27 = 27
 EINSUM_OPSET_28 = 28
 
 
+def _attrs(node: onnx.NodeProto) -> dict:
+    return {a.name: helper.get_attribute_value(a) for a in node.attribute}
+
+
 class TestVersionConverter:
     def _converted(
         self,
@@ -2556,11 +2560,19 @@ class TestVersionConverter:
             graph, opset_imports=[helper.make_operatorsetid("", 13)]
         )
         converted_model = self._converted(graph, helper.make_operatorsetid("", 13), 12)
-        assert [node.op_type for node in converted_model.graph.node] == [
+        transpose_in, op, transpose_out = converted_model.graph.node
+        assert [transpose_in.op_type, op.op_type, transpose_out.op_type] == [
             "Transpose",
             op_type,
             "Transpose",
         ]
+        # The reference evaluator applies opset 13 semantics to opset 12 too, so check
+        # that the op runs on the last axis, where both opsets agree.
+        assert _attrs(op)["axis"] == 2
+        perm = [0, 1, 2]
+        perm[axis % 3], perm[2] = 2, axis % 3
+        assert _attrs(transpose_in)["perm"] == perm
+        assert _attrs(transpose_out)["perm"] == perm
         x = np.random.default_rng(0).standard_normal((2, 3, 4)).astype(np.float32)
         expected = ReferenceEvaluator(original).run(None, {"X": x})[0]
         got = ReferenceEvaluator(converted_model).run(None, {"X": x})[0]
@@ -2582,6 +2594,151 @@ class TestVersionConverter:
         expected[np.arange(x_2d.shape[0]), x_2d.argmax(axis=1)] = 1
         got = ReferenceEvaluator(converted_model).run(None, {"X": x})[0]
         np.testing.assert_array_equal(got, expected.reshape(x.shape))
+
+    def test_softmax_13_12_keeps_preceding_flatten(self) -> None:
+        # A Flatten before the op is the user's, not one added by 12 -> 13.
+        graph = helper.make_graph(
+            [
+                helper.make_node("Flatten", ["X"], ["F"], domain="local.test"),
+                helper.make_node("Hardmax", ["F"], ["Y"], axis=0),
+            ],
+            "test",
+            [helper.make_tensor_value_info("X", TensorProto.FLOAT, (2, 3, 4))],
+            [helper.make_tensor_value_info("Y", TensorProto.FLOAT, (2, 12))],
+            value_info=[helper.make_tensor_value_info("F", TensorProto.FLOAT, (2, 12))],
+        )
+        model = helper.make_model(
+            graph,
+            opset_imports=[
+                helper.make_operatorsetid("", 13),
+                helper.make_operatorsetid("local.test", 1),
+            ],
+        )
+        converted_model = onnx.version_converter.convert_version(model, 12)
+        nodes = converted_model.graph.node
+        assert [node.op_type for node in nodes] == [
+            "Flatten",
+            "Transpose",
+            "Hardmax",
+            "Transpose",
+        ]
+        assert nodes[1].input == ["F"]
+        assert _attrs(nodes[2])["axis"] == 1
+
+    @pytest.mark.parametrize("op_type", ["Softmax", "LogSoftmax", "Hardmax"])
+    @pytest.mark.parametrize("axis", [-1, 0])
+    def test_softmax_13_12_rejects_bfloat16(self, op_type: str, axis: int) -> None:
+        graph = helper.make_graph(
+            [helper.make_node(op_type, ["X"], ["Y"], axis=axis)],
+            "test",
+            [helper.make_tensor_value_info("X", TensorProto.BFLOAT16, (2, 3))],
+            [helper.make_tensor_value_info("Y", TensorProto.BFLOAT16, (2, 3))],
+        )
+        with pytest.raises(RuntimeError, match="BFLOAT16"):
+            self._converted(graph, helper.make_operatorsetid("", 13), 12)
+
+    @pytest.mark.parametrize("axis", [3, -4])
+    def test_softmax_13_12_rejects_out_of_range_axis(self, axis: int) -> None:
+        graph = helper.make_graph(
+            [helper.make_node("Softmax", ["X"], ["Y"], axis=axis)],
+            "test",
+            [helper.make_tensor_value_info("X", TensorProto.FLOAT, (2, 3, 4))],
+            [helper.make_tensor_value_info("Y", TensorProto.FLOAT, (2, 3, 4))],
+        )
+        with pytest.raises((RuntimeError, shape_inference.InferenceError)):
+            self._converted(graph, helper.make_operatorsetid("", 13), 12)
+
+    def test_softmax_13_12_intermediate_name_is_unique(self) -> None:
+        graph = helper.make_graph(
+            [
+                helper.make_node("Softmax", ["X"], ["Y_transposed"]),
+                helper.make_node("Softmax", ["X"], ["Y"], axis=0),
+            ],
+            "test",
+            [helper.make_tensor_value_info("X", TensorProto.FLOAT, (2, 3))],
+            [
+                helper.make_tensor_value_info(
+                    "Y_transposed", TensorProto.FLOAT, (2, 3)
+                ),
+                helper.make_tensor_value_info("Y", TensorProto.FLOAT, (2, 3)),
+            ],
+        )
+        converted_model = self._converted(graph, helper.make_operatorsetid("", 13), 12)
+        assert [o.name for o in converted_model.graph.output] == ["Y_transposed", "Y"]
+
+    def test_hardmax_12_13_captured_by_if(self) -> None:
+        def branch(name: str) -> GraphProto:
+            return helper.make_graph(
+                [helper.make_node("Identity", ["Y"], [name])],
+                name,
+                [],
+                [helper.make_tensor_value_info(name, TensorProto.FLOAT, (2, 3, 4))],
+            )
+
+        graph = helper.make_graph(
+            [
+                helper.make_node("Hardmax", ["X"], ["Y"], axis=1),
+                helper.make_node(
+                    "If",
+                    ["C"],
+                    ["Z"],
+                    then_branch=branch("then_out"),
+                    else_branch=branch("else_out"),
+                ),
+            ],
+            "test",
+            [
+                helper.make_tensor_value_info("X", TensorProto.FLOAT, (2, 3, 4)),
+                helper.make_tensor_value_info("C", TensorProto.BOOL, ()),
+            ],
+            [
+                helper.make_tensor_value_info("Y", TensorProto.FLOAT, (2, 3, 4)),
+                helper.make_tensor_value_info("Z", TensorProto.FLOAT, (2, 3, 4)),
+            ],
+        )
+        converted_model = self._converted(graph, helper.make_operatorsetid("", 12), 13)
+        x = np.random.default_rng(0).standard_normal((2, 3, 4)).astype(np.float32)
+        # Opset 12 takes the argmax over the input coerced to 2D at axis.
+        x_2d = x.reshape(2, 12)
+        expected = np.zeros_like(x_2d)
+        expected[np.arange(2), x_2d.argmax(axis=1)] = 1
+        y, z = ReferenceEvaluator(converted_model).run(
+            None, {"X": x, "C": np.array(True)}
+        )
+        np.testing.assert_array_equal(y, expected.reshape(x.shape))
+        np.testing.assert_array_equal(z, expected.reshape(x.shape))
+
+    def test_hardmax_13_12_captured_by_scan(self) -> None:
+        body = helper.make_graph(
+            # Transpose has a 13 -> 12 adapter; Identity does not.
+            [helper.make_node("Transpose", ["Y"], ["out"], perm=[0, 1, 2])],
+            "body",
+            [helper.make_tensor_value_info("s", TensorProto.FLOAT, ())],
+            [helper.make_tensor_value_info("out", TensorProto.FLOAT, (2, 3, 4))],
+        )
+        graph = helper.make_graph(
+            [
+                helper.make_node("Hardmax", ["X"], ["Y"], axis=1),
+                helper.make_node("Scan", ["S"], ["Z"], body=body, num_scan_inputs=1),
+            ],
+            "test",
+            [
+                helper.make_tensor_value_info("X", TensorProto.FLOAT, (2, 3, 4)),
+                helper.make_tensor_value_info("S", TensorProto.FLOAT, (1,)),
+            ],
+            [
+                helper.make_tensor_value_info("Y", TensorProto.FLOAT, (2, 3, 4)),
+                helper.make_tensor_value_info("Z", TensorProto.FLOAT, (1, 2, 3, 4)),
+            ],
+        )
+        converted_model = self._converted(graph, helper.make_operatorsetid("", 13), 12)
+        x = np.random.default_rng(0).standard_normal((2, 3, 4)).astype(np.float32)
+        expected = (x == x.max(axis=1, keepdims=True)).astype(np.float32)
+        y, z = ReferenceEvaluator(converted_model).run(
+            None, {"X": x, "S": np.zeros(1, dtype=np.float32)}
+        )
+        np.testing.assert_array_equal(y, expected)
+        np.testing.assert_array_equal(z[0], expected)
 
     @pytest.mark.parametrize(
         "op_type, attrs, from_opset, to_opset, output_type, output_shape",
@@ -2651,13 +2808,13 @@ class TestVersionConverter:
         with pytest.raises((RuntimeError, shape_inference.InferenceError)):
             test()
 
-    def test_softmax_13_12_rejects_reshape_without_output(self) -> None:
+    def test_softmax_13_12_keeps_following_reshape(self) -> None:
         graph = helper.make_graph(
             [
                 helper.make_node("Softmax", ["X"], ["Y"], axis=-1),
                 helper.make_node("Reshape", ["Y"], [], domain="local.test"),
             ],
-            "test_softmax_13_12_rejects_reshape_without_output",
+            "test_softmax_13_12_keeps_following_reshape",
             [helper.make_tensor_value_info("X", TensorProto.FLOAT, (1, 2))],
             [helper.make_tensor_value_info("Y", TensorProto.FLOAT, (1, 2))],
         )
@@ -2670,10 +2827,12 @@ class TestVersionConverter:
         )
         checker.check_model(model)
 
-        with pytest.raises(
-            RuntimeError, match="Reshape node must have at least 1 output"
-        ):
-            onnx.version_converter.convert_version(model, 12)
+        # The Reshape is the user's, so the downgrade leaves it in place.
+        converted_model = onnx.version_converter.convert_version(model, 12)
+        softmax, reshape = converted_model.graph.node
+        assert _attrs(softmax)["axis"] == 1
+        assert reshape.op_type == "Reshape"
+        assert reshape.input == ["Y"]
 
     @pytest.mark.parametrize(
         "x_shape, scale_shape, axis, block_size, output_dtype, zero_point_dtype, compatible",
