@@ -712,6 +712,18 @@ configure_file(
   ${PROJECT_SOURCE_DIR}/cmake/ONNXConfigVersion.cmake.in
   ${PROJECT_BINARY_DIR}/ONNXConfigVersion.cmake
   @ONLY)
+# External Protobuf builds can expose Abseil and utf8_range in the installed
+# ONNX targets' link interface. Load those packages before importing the targets.
+set(ONNX_CONFIG_NEEDS_ABSL OFF)
+set(ONNX_CONFIG_NEEDS_UTF8_RANGE OFF)
+if(protobuf_ABSL_USED_TARGETS)
+  if(TARGET absl::absl_check)
+    set(ONNX_CONFIG_NEEDS_ABSL ON)
+  endif()
+  if(TARGET utf8_range::utf8_range OR TARGET utf8_range::utf8_validity)
+    set(ONNX_CONFIG_NEEDS_UTF8_RANGE ON)
+  endif()
+endif()
 configure_file(
   ${PROJECT_SOURCE_DIR}/cmake/ONNXConfig.cmake.in
   ${PROJECT_BINARY_DIR}/ONNXConfig.cmake
