@@ -791,6 +791,52 @@ class TestReferenceEvaluator:
         expected = x.sum(axis=-1, keepdims=1)
         assert_allclose(result, expected)
 
+    def test_function_with_empty_optional_input(self):
+        domain = "custom"
+        opset_imports = [make_opsetid("", 18), make_opsetid(domain, 1)]
+        function = make_function(
+            domain,
+            "HasElement",
+            ["X"],
+            ["Y"],
+            [make_node("OptionalHasElement", ["X"], ["Y"])],
+            [make_opsetid("", 18)],
+        )
+        tensor_type = onnx.helper.make_tensor_type_proto(TensorProto.FLOAT, [None])
+        optional_type = onnx.helper.make_optional_type_proto(tensor_type)
+        graph = make_graph(
+            [make_node("HasElement", ["X"], ["Y"], domain=domain)],
+            "optional_function",
+            [make_value_info("X", optional_type)],
+            [make_tensor_value_info("Y", TensorProto.BOOL, [])],
+        )
+        model = make_model(graph, opset_imports=opset_imports, functions=[function])
+
+        (result,) = ReferenceEvaluator(model).run(None, {"X": None})
+
+        assert result == np.array(False)
+
+    @pytest.mark.parametrize("inputs", ["X", 'X, ""', "X, min"])
+    def test_function_forwarding_optional_input(self, inputs):
+        model = parser.parse_model(f"""
+            <ir_version: 8, opset_import: ["" : 18, "custom" : 1]>
+            optional_function (float[3] X, float min) => (float[3] Y) {{
+                Y = custom.ClipWithMin ({inputs})
+            }}
+            <domain: "custom", opset_import: ["" : 18]>
+            ClipWithMin (A, B) => (Y) {{
+                Y = Clip (A, B)
+            }}
+        """)
+        check_model(model)
+        x = np.array([-2, 0, 2], dtype=np.float32)
+        minimum = np.array(-1, dtype=np.float32)
+
+        (result,) = ReferenceEvaluator(model).run(None, {"X": x, "min": minimum})
+
+        expected = np.maximum(x, minimum) if inputs == "X, min" else x
+        assert_array_equal(result, expected)
+
     def test_reduce_sum_square_18(self):
         X = make_tensor_value_info("X", TensorProto.FLOAT, [None, None])
         A = make_tensor_value_info("A", TensorProto.INT64, [None, None])
@@ -3325,6 +3371,115 @@ class TestReferenceEvaluator:
         assert got.shape == (1, 1)
         assert got[0, 0] == 1
 
+    def test_reduce_mean_preserves_finite_range(self):
+        for opset in (17, 18):
+            for dtype, tensor_type, magnitude in (
+                (np.float32, TensorProto.FLOAT, 3.0e38),
+                (np.float64, TensorProto.DOUBLE, 1.0e308),
+            ):
+                X = make_tensor_value_info("X", tensor_type, [2, 2])
+                Y = make_tensor_value_info("Y", tensor_type, [2])
+                inputs = [X]
+                node_inputs = ["X"]
+                if opset >= 18:
+                    axes = make_tensor_value_info("axes", TensorProto.INT64, [1])
+                    inputs.append(axes)
+                    node_inputs.append("axes")
+                    node = make_node("ReduceMean", node_inputs, ["Y"], keepdims=0)
+                else:
+                    node = make_node(
+                        "ReduceMean", node_inputs, ["Y"], axes=[1], keepdims=0
+                    )
+
+                graph = make_graph([node], "g", inputs, [Y])
+                model = make_model(graph, opset_imports=[make_opsetid("", opset)])
+                feeds = {"X": np.full((2, 2), magnitude, dtype=dtype)}
+                if opset >= 18:
+                    feeds["axes"] = np.array([1], dtype=np.int64)
+
+                got = ReferenceEvaluator(model).run(None, feeds)[0]
+                expected = np.full((2,), magnitude, dtype=dtype)
+                np.testing.assert_array_equal(got, expected)
+
+    def test_reduce_mean_preserves_numpy_finite_precision(self):
+        for opset in (17, 18):
+            X = make_tensor_value_info("X", TensorProto.FLOAT, [2, 4])
+            Y = make_tensor_value_info("Y", TensorProto.FLOAT, [2])
+            inputs = [X]
+            node_inputs = ["X"]
+            if opset >= 18:
+                axes = make_tensor_value_info("axes", TensorProto.INT64, [1])
+                inputs.append(axes)
+                node_inputs.append("axes")
+                node = make_node("ReduceMean", node_inputs, ["Y"], keepdims=0)
+            else:
+                node = make_node("ReduceMean", node_inputs, ["Y"], axes=[1], keepdims=0)
+
+            graph = make_graph([node], "g", inputs, [Y])
+            model = make_model(graph, opset_imports=[make_opsetid("", opset)])
+            feeds = {
+                "X": np.array(
+                    [
+                        [3.0e38, -3.0e38, 1.0e-10, 1.0e-10],
+                        [3.0e38, 1.0e-10, -3.0e38, 1.0e-10],
+                    ],
+                    dtype=np.float32,
+                )
+            }
+            if opset >= 18:
+                feeds["axes"] = np.array([1], dtype=np.int64)
+
+            got = ReferenceEvaluator(model).run(None, feeds)[0]
+            # Keep the existing NumPy result, including its ordering effects.
+            expected = np.mean(feeds["X"], axis=1, dtype=np.float32)
+            np.testing.assert_array_equal(expected[0], np.float32(5.0e-11))
+            np.testing.assert_array_equal(got, expected)
+
+    def test_reduce_mean_repairs_only_overflowed_finite_slices(self):
+        for opset in (17, 18):
+            for dtype, tensor_type, magnitude in (
+                (np.float32, TensorProto.FLOAT, 3.0e38),
+                (np.float64, TensorProto.DOUBLE, 1.0e308),
+            ):
+                data = np.array(
+                    [
+                        [magnitude, magnitude, magnitude, magnitude],
+                        [magnitude, magnitude, -magnitude, -magnitude],
+                        [magnitude, 1.0e-10, -magnitude, 1.0e-10],
+                        [np.inf, 1.0, 2.0, 3.0],
+                        [np.inf, -np.inf, 2.0, 3.0],
+                        [np.nan, 1.0, 2.0, 3.0],
+                        [-0.0, -0.0, -0.0, -0.0],
+                    ],
+                    dtype=dtype,
+                )
+                X = make_tensor_value_info("X", tensor_type, [7, 4])
+                Y = make_tensor_value_info("Y", tensor_type, [7])
+                inputs = [X]
+                feeds = {"X": data}
+                if opset >= 18:
+                    inputs.append(
+                        make_tensor_value_info("axes", TensorProto.INT64, [1])
+                    )
+                    feeds["axes"] = np.array([1], dtype=np.int64)
+                    node = make_node("ReduceMean", ["X", "axes"], ["Y"], keepdims=0)
+                else:
+                    node = make_node("ReduceMean", ["X"], ["Y"], axes=[1], keepdims=0)
+                model = make_model(
+                    make_graph([node], "g", inputs, [Y]),
+                    opset_imports=[make_opsetid("", opset)],
+                )
+                with np.errstate(over="ignore", invalid="ignore"):
+                    expected = np.mean(data, axis=1, dtype=dtype)
+                    got = ReferenceEvaluator(model).run(None, feeds)[0]
+                expected[0] = magnitude
+                expected[1] = 0.0
+                assert got.dtype == data.dtype
+                np.testing.assert_array_equal(got, expected)
+                np.testing.assert_array_equal(
+                    np.signbit(got[-1]), np.signbit(expected[-1])
+                )
+
     @staticmethod
     def _cdist_model(opset, reduce_op="ReduceSumSquare"):
         # subgraph
@@ -4825,6 +4980,39 @@ class TestReferenceEvaluator:
         np.testing.assert_array_equal(actual, expected)
 
     @pytest.mark.parametrize("opset", [13, 18, onnx_opset_version()])
+    @pytest.mark.parametrize("keepdims", [0, 1])
+    @pytest.mark.parametrize("values", [[0.0], [8.0], [-1.0, 0.0]])
+    def test_reduce_log_sum_exp_float16_large_reduction(self, opset, keepdims, values):
+        repeats = 65536
+        data = np.tile(np.array([values], dtype=np.float16), (1, repeats))
+        output_shape = [1, 1] if keepdims else [1]
+        X = make_tensor_value_info("X", TensorProto.FLOAT16, list(data.shape))
+        Y = make_tensor_value_info("Y", TensorProto.FLOAT16, output_shape)
+        feeds = {"X": data}
+        if opset >= 18:
+            A = make_tensor_value_info("A", TensorProto.INT64, [1])
+            node = make_node("ReduceLogSumExp", ["X", "A"], ["Y"], keepdims=keepdims)
+            inputs = [X, A]
+            feeds["A"] = np.array([1], dtype=np.int64)
+        else:
+            node = make_node(
+                "ReduceLogSumExp", ["X"], ["Y"], axes=[1], keepdims=keepdims
+            )
+            inputs = [X]
+        model = make_model(
+            make_graph([node], "g", inputs, [Y]),
+            opset_imports=[make_opsetid("", opset)],
+        )
+        got = ReferenceEvaluator(model).run(None, feeds)[0]
+        expected_value = math.log(repeats) + math.log(
+            math.fsum(math.exp(value) for value in values)
+        )
+        expected = np.full(output_shape, expected_value, dtype=np.float16)
+        assert got.shape == expected.shape
+        assert got.dtype == expected.dtype
+        np.testing.assert_allclose(got, expected, rtol=1e-3, atol=0)
+
+    @pytest.mark.parametrize("opset", [13, 18, onnx_opset_version()])
     def test_reduce_log_sum_exp_infinite_inputs(self, opset):
         X = make_tensor_value_info("X", TensorProto.FLOAT, [2, 2])
         Y = make_tensor_value_info("Y", TensorProto.FLOAT, [2])
@@ -5055,6 +5243,23 @@ class TestReferenceEvaluator:
         assert got.shape == ()
         assert got.dtype == np.uint16
         assert_allclose(np.array(1, dtype=np.uint16), got)
+
+    @pytest.mark.parametrize(
+        "attributes",
+        [
+            {"end": -4},
+            {"start": 1, "end": -4},
+            {"start": -2, "end": -4},
+        ],
+    )
+    def test_shape_end_below_negative_rank_is_empty(self, attributes):
+        node = make_node("Shape", ["X"], ["Y"], **attributes)
+        x = np.zeros((2, 3, 4), dtype=np.float32)
+
+        got = ReferenceEvaluator(node).run(None, {"X": x})[0]
+
+        assert got.shape == (0,)
+        assert got.dtype == np.int64
 
     def test_dynamic_quantize_linear(self):
         feeds = {
@@ -6116,6 +6321,55 @@ class TestReferenceEvaluator:
         assert len(got) == 3
         for i in range(2, -1, -1):
             assert_allclose(got[i], expected[i])
+
+    @staticmethod
+    def _dynamic_quantize_linear_model():
+        X = make_tensor_value_info("X", TensorProto.FLOAT, None)
+        Y = make_tensor_value_info("Y", TensorProto.UINT8, None)
+        Scale = make_tensor_value_info("scale", TensorProto.FLOAT, None)
+        Zp = make_tensor_value_info("zp", TensorProto.UINT8, None)
+        node = make_node("DynamicQuantizeLinear", ["X"], ["Y", "scale", "zp"])
+        return make_model_gen_version(
+            make_graph([node], "g", [X], [Y, Scale, Zp]),
+            opset_imports=[make_opsetid("", 18)],
+        )
+
+    @pytest.mark.parametrize(
+        "x",
+        [np.zeros((2, 3), dtype=np.float32), -np.zeros((4,), dtype=np.float32)],
+        ids=["all_zero", "negative_zero"],
+    )
+    def test_dynamic_quantize_linear_zero_input(self, x):
+        # An all-zero input has an empty (adjusted) range: the scale must be 1,
+        # not 0 (which would make x / y_scale a division by zero), with a zero
+        # point of 0 and an all-zero quantized output.
+        model = self._dynamic_quantize_linear_model()
+        y, scale, zp = ReferenceEvaluator(model).run(None, {"X": x})
+        assert y.dtype == np.uint8
+        assert_array_equal(y, np.zeros(x.shape, dtype=np.uint8))
+        assert scale.dtype == np.float32
+        assert scale.shape == ()
+        assert scale == np.float32(1.0)
+        assert zp.dtype == np.uint8
+        assert zp.shape == ()
+        assert zp == 0
+
+    @pytest.mark.parametrize(
+        "x",
+        [np.zeros((2, 3), dtype=np.float32), -np.zeros((4,), dtype=np.float32)],
+        ids=["all_zero", "negative_zero"],
+    )
+    @skip_if_no_onnxruntime
+    def test_dynamic_quantize_linear_zero_input_matches_onnxruntime(self, x):
+        # Match the prevailing implementation practice (onnxruntime's kernel).
+        model = self._dynamic_quantize_linear_model()
+        sess = run_ort_inference(model)
+        if sess is None:
+            pytest.skip("onnxruntime does not support this IR or opset version")
+        expected = ReferenceEvaluator(model).run(None, {"X": x})
+        for got, exp in zip(sess.run(None, {"X": x}), expected, strict=True):
+            assert got.dtype == exp.dtype
+            assert_array_equal(got, exp)
 
     @pytest.mark.parametrize(
         "a, b, expected, expected_shape",
@@ -7909,6 +8163,58 @@ class TestReferenceEvaluator:
         k = np.array([k_value], dtype=np.int64)
         with pytest.raises(ValueError, match="positive"):
             ReferenceEvaluator(node).run(None, {"X": x, "K": k})
+
+    @pytest.mark.parametrize(
+        ("input_type", "to"),
+        [
+            (TensorProto.INT4, TensorProto.INT8),
+            (TensorProto.UINT4, TensorProto.UINT8),
+            (TensorProto.FLOAT4E2M1, TensorProto.FLOAT8E4M3FN),
+            (TensorProto.INT2, TensorProto.INT4),
+            (TensorProto.FLOAT6E2M3, TensorProto.UINT8),
+            (TensorProto.UINT8, TensorProto.UINT4),
+        ],
+        ids=[
+            "int4_to_int8",
+            "uint4_to_uint8",
+            "float4e2m1_to_float8e4m3fn",
+            "int2_to_int4",
+            "float6e2m3_to_uint8",
+            "uint8_to_uint4",
+        ],
+    )
+    def test_bitcast_rejects_sub_byte_bit_width_mismatch(self, input_type, to) -> None:
+        node = make_node("BitCast", ["X"], ["Y"], to=to)
+        x = np.array([0, 1], dtype=onnx.helper.tensor_dtype_to_np_dtype(input_type))
+        with pytest.raises(ValueError, match="same bit-width"):
+            ReferenceEvaluator(node).run(None, {"X": x})
+
+    @pytest.mark.parametrize(
+        ("x", "to", "expected"),
+        [
+            (
+                np.array([-8, -1, 0, 7], dtype=ml_dtypes.int4),
+                TensorProto.UINT4,
+                np.array([8, 15, 0, 7], dtype=ml_dtypes.uint4),
+            ),
+            (
+                np.array([-6, -0.5, 0, 6], dtype=ml_dtypes.float4_e2m1fn),
+                TensorProto.UINT4,
+                np.array([15, 9, 0, 7], dtype=ml_dtypes.uint4),
+            ),
+            (
+                np.array([-2, -1, 0, 1], dtype=ml_dtypes.int2),
+                TensorProto.UINT2,
+                np.array([2, 3, 0, 1], dtype=ml_dtypes.uint2),
+            ),
+        ],
+        ids=["int4_to_uint4", "float4e2m1_to_uint4", "int2_to_uint2"],
+    )
+    def test_bitcast_sub_byte_types(self, x, to, expected) -> None:
+        node = make_node("BitCast", ["X"], ["Y"], to=to)
+        got = ReferenceEvaluator(node).run(None, {"X": x})[0]
+        assert got.dtype == expected.dtype
+        assert_array_equal(got.astype(np.int8), expected.astype(np.int8))
 
 
 class TestReferenceEvaluatorShapeAnnotationChecking:
