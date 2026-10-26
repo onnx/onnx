@@ -1518,7 +1518,6 @@ class TestVersionConverter:
             "test_upsample",
             [
                 onnx.helper.make_tensor_value_info("X", data_type, [1, 1, 2, 2]),
-                onnx.helper.make_tensor_value_info(scale_name, data_type, [4]),
             ],
             [onnx.helper.make_tensor_value_info("Y", data_type, [1, 1, 4, 6])],
             [scale_tensor],
