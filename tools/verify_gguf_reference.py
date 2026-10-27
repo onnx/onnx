@@ -140,6 +140,7 @@ def main() -> None:
         raise RuntimeError(f"Cannot load test corpus from {test_path}")
     tests = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(tests)
+    specification = tests._load_specification()
     source = _PREAMBLE
     impl = sources["ggml-impl.h"]
     source += _function(impl, "ggml_e8m0_to_fp32_half") + "\n"
@@ -206,12 +207,26 @@ endif()
             np.testing.assert_array_equal(
                 actual.view(np.uint32), expected.view(np.uint32)
             )
+            documented = np.array(
+                [
+                    specification["decode_block"](
+                        block.tobytes(), _NAMES[qtype].upper()
+                    )
+                    for block in blocks
+                ],
+                dtype=np.float32,
+            )
+            np.testing.assert_array_equal(
+                documented.view(np.uint32), expected.view(np.uint32)
+            )
             digest = hashlib.sha256(expected.astype("<f4").tobytes()).hexdigest()
             if digest != tests._ORACLE_DIGESTS[qtype]:
                 raise AssertionError(
                     f"Stored oracle digest disagrees with upstream for type {qtype}"
                 )
-            logger.info("GGML type %s: upstream C comparison and digest passed", qtype)
+            logger.info(
+                "GGML type %s: reference, specification, and upstream C agree", qtype
+            )
     for name, (width, _, _, _) in CODEBOOKS.items():
         match = re.search(
             rf"GGML_TABLE_BEGIN\(\w+, {name}, \w+\)(.*?)GGML_TABLE_END\(\)",

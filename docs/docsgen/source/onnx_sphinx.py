@@ -407,6 +407,9 @@ def get_markdown_doc(
         rep = {
             "[the doc](IR.md)": f"[ONNX IR]({main_docs_url}docs/IR.md)",
             "[the doc](Broadcasting.md)": f"[Broadcasting in ONNX]({main_docs_url}docs/Broadcasting.md)",
+            "[DequantizeGGUF decoding specification](DequantizeGGUF.md)": (
+                "[DequantizeGGUF decoding specification](../repo-docs/DequantizeGGUF.md)"
+            ),
         }
         for key, value in rep.items():
             doc = doc.replace(key, value)

@@ -1,7 +1,7 @@
 # Copyright (c) ONNX Project Contributors
 #
 # SPDX-License-Identifier: Apache-2.0
-"""Generate compact IQ lookup data from the operator's pinned ggml-common.h."""
+"""Generate reference and specification IQ data from pinned ggml-common.h."""
 
 from __future__ import annotations
 
@@ -95,6 +95,31 @@ def main() -> None:
         / "_gguf_codebooks.py"
     )
     output.write_text("\n".join(lines), encoding="utf-8", newline="\n")
+    document = Path(__file__).resolve().parents[1] / "docs" / "DequantizeGGUF.md"
+    text = document.read_text(encoding="utf-8")
+    begin = "<!-- BEGIN GENERATED GGUF CODEBOOKS -->"
+    end = "<!-- END GENERATED GGUF CODEBOOKS -->"
+    if text.count(begin) != 1 or text.count(end) != 1:
+        raise ValueError(
+            "The decoding specification must contain one codebook section."
+        )
+    prefix, remainder = text.split(begin)
+    _, suffix = remainder.split(end)
+    table_start = next(
+        i for i, line in enumerate(lines) if line.startswith("CODEBOOKS:")
+    )
+    tables = ["CODEBOOKS = {", *lines[table_start + 1 :]]
+    document.write_text(
+        prefix
+        + begin
+        + "\n\n```python\n"
+        + "\n".join(tables)
+        + "```\n\n"
+        + end
+        + suffix,
+        encoding="utf-8",
+        newline="\n",
+    )
 
 
 if __name__ == "__main__":

@@ -61,3 +61,15 @@ def test_get_markdown_doc_finds_top_level_domain_examples(
 
 def test_get_onnx_example_does_not_fall_back_for_unrelated_domains() -> None:
     assert onnx_sphinx.get_onnx_example("Add", "ai.onnx.ml") == {}
+
+
+def test_dequantizegguf_specification_link() -> None:
+    docs, _, _ = onnx_sphinx.get_markdown_doc(
+        ".", op_name="DequantizeGGUF", domain="", example=False
+    )
+    assert (
+        "[DequantizeGGUF decoding specification](../repo-docs/DequantizeGGUF.md)"
+        in docs
+    )
+    assert (onnx_sphinx._DOCS_DIR / "DequantizeGGUF.md").is_file()
+    assert "DequantizeGGUF.md" not in onnx_sphinx.REPO_DOCS_EXCLUDE

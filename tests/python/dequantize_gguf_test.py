@@ -4,7 +4,9 @@
 from __future__ import annotations
 
 import hashlib
+import re
 import struct
+from pathlib import Path
 
 import numpy as np
 import pytest
@@ -135,6 +137,106 @@ def _run(
 
 def test_complete_format_set() -> None:
     assert set(GGUF_BLOCK_SIZES) == set(_ORACLE_DIGESTS)
+
+
+def _load_specification():
+    path = Path(__file__).resolve().parents[2] / "docs" / "DequantizeGGUF.md"
+    blocks = re.findall(
+        r"^```python\n(.*?)^```$",
+        path.read_text(encoding="utf-8"),
+        flags=re.MULTILINE | re.DOTALL,
+    )
+    namespace = {}
+    exec("\n".join(blocks), namespace)  # noqa: S102
+    return namespace
+
+
+@pytest.fixture(scope="module")
+def specification():
+    return _load_specification()
+
+
+@pytest.mark.parametrize("qtype", sorted(_ORACLE_DIGESTS))
+def test_specification_decoding(specification, qtype: int) -> None:
+    actual = np.array(
+        [
+            specification["decode_block"](block.tobytes(), _GGMLType(qtype).name)
+            for block in _corpus(qtype)
+        ],
+        dtype=np.float32,
+    )
+    digest = hashlib.sha256(actual.astype("<f4").tobytes()).hexdigest()
+    assert digest == _ORACLE_DIGESTS[qtype]
+
+
+@pytest.mark.parametrize(
+    "name,rows,width",
+    [
+        ("iq2xxs_grid", 256, 8),
+        ("iq2xs_grid", 512, 8),
+        ("iq2s_grid", 1024, 8),
+        ("iq3xxs_grid", 256, 4),
+        ("iq3s_grid", 512, 4),
+        ("iq1s_grid", 2048, 8),
+    ],
+)
+def test_specification_codebooks(specification, name, rows, width) -> None:
+    width_in_spec, _, bits, text = specification["CODEBOOKS"][name]
+    assert width_in_spec == width
+    assert len(bytes.fromhex(text)) * 8 == rows * width * bits
+    data = np.array(
+        [specification["grid"](name, i) for i in range(rows)], dtype=np.int8
+    )
+    assert hashlib.sha256(data.tobytes()).hexdigest() == _CODEBOOK_DIGESTS[name]
+
+
+@pytest.mark.parametrize("qtype", [39, 40])
+def test_specification_block_float_scales(specification, qtype: int) -> None:
+    quants = bytes((j % 16) | ((15 - j % 16) << 4) for j in range(32))
+    for code in range(256):
+        block = (
+            bytes([code]) + quants[:16]
+            if qtype == _GGMLType.MXFP4
+            else bytes([code] * 4) + quants
+        )
+        actual = np.array(
+            specification["decode_block"](block, _GGMLType(qtype).name),
+            dtype=np.float32,
+        )
+        with np.errstate(over="ignore"):
+            expected = _decode_block(block, qtype)
+        np.testing.assert_array_equal(actual.view(np.uint32), expected.view(np.uint32))
+
+
+@pytest.mark.parametrize("qtype", sorted(set(GGUF_BLOCK_SIZES) - {39, 40}))
+def test_specification_ieee_scales(specification, qtype: int) -> None:
+    scale_bits = [0, 0x8000, 1, 0x3C00, 0x7BFF, 0x7C00, 0xFC00, 0x7E00]
+    for block, bits in zip(_corpus(qtype, len(scale_bits)), scale_bits, strict=True):
+        data = bytearray(block.tobytes())
+        if qtype == _GGMLType.Q8_K:
+            struct.pack_into(
+                "<f", data, 0, struct.unpack("<e", bits.to_bytes(2, "little"))[0]
+            )
+        elif qtype == _GGMLType.IQ1_M:
+            for j in range(4):
+                offset = 48 + 2 * j
+                word = int.from_bytes(data[offset : offset + 2], "little") & 0x0FFF
+                struct.pack_into(
+                    "<H", data, offset, word | (((bits >> (4 * j)) & 15) << 12)
+                )
+        else:
+            offset = {10: 80, 11: 108, 14: 208, 34: 52, 35: 64}.get(qtype, 0)
+            struct.pack_into("<H", data, offset, bits)
+        actual = np.array(
+            specification["decode_block"](data, _GGMLType(qtype).name), dtype=np.float32
+        )
+        with np.errstate(over="ignore", invalid="ignore"):
+            expected = _decode_block(bytes(data), qtype)
+        np.testing.assert_array_equal(actual, expected)
+        non_nan = ~np.isnan(expected)
+        np.testing.assert_array_equal(
+            actual[non_nan].view(np.uint32), expected[non_nan].view(np.uint32)
+        )
 
 
 @pytest.mark.parametrize("qtype", sorted(_ORACLE_DIGESTS))

@@ -166,17 +166,9 @@ tensor type identifier. The supported identifiers and block sizes are:
 | 41 | Q1_0 | 128 | 18 |
 | 42 | Q2_0 | 64 | 18 |
 
-The formats use the packed field layouts and IQ codebooks from
-[GGML revision da8e2a54b919557b816b1c2beb432ccb766f7ce0](https://github.com/ggml-org/ggml/tree/da8e2a54b919557b816b1c2beb432ccb766f7ce0).
-These are defined in
-[`src/ggml-common.h`](https://github.com/ggml-org/ggml/blob/da8e2a54b919557b816b1c2beb432ccb766f7ce0/src/ggml-common.h);
-decoding follows its `dequantize_row_*` functions in
-[`src/ggml-quants.c`](https://github.com/ggml-org/ggml/blob/da8e2a54b919557b816b1c2beb432ccb766f7ce0/src/ggml-quants.c)
-and floating-point scale conversions in
-[`src/ggml-impl.h`](https://github.com/ggml-org/ggml/blob/da8e2a54b919557b816b1c2beb432ccb766f7ce0/src/ggml-impl.h).
-Q8_1 and Q8_K decode as `d * qs[j]` using their scale `d` and signed INT8
-values `qs`. Q8_1 uses a FLOAT16 scale; Q8_K uses a FLOAT scale.
-Their cached sum fields are ignored.
+The byte layouts, per-format decoding algorithms, and complete IQ codebooks
+are defined in the in-tree
+[DequantizeGGUF decoding specification](DequantizeGGUF.md).
 
 `shape` gives the logical output dimensions in ONNX (row-major) order.
 For a GGUF descriptor `[ne0, ne1, ...]`, use `shape=[..., ne1, ne0]`.
@@ -187,7 +179,7 @@ multiple of the format's elements per block, even for an empty tensor.
 If B is elements per block and S is bytes per block, the input length must be
 `product(shape[:-1]) * (shape[-1] / B) * S`.
 
-Blocks are decoded in input order to FLOAT using the specified GGML
+Blocks are decoded in input order to FLOAT using the specified
 arithmetic and codebooks. The concatenated values are reshaped to `shape`
 and converted once to `output_dtype`. Decoding arithmetic uses FLOAT
 precision for all output types. FLOAT16 and BFLOAT16 conversion uses
