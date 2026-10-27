@@ -5,7 +5,8 @@
 The input selects a read, write, model-load, or ModelContainer operation and
 mutates external-data paths plus offset/length metadata. All paths resolve in a
 disposable workspace. Traversal, absolute-path, symlink, and hardlink cases
-point at a sentinel outside the model directory; modifying it is a finding.
+point at a sentinel outside the model directory; opening or modifying it is a
+finding.
 """
 
 from __future__ import annotations
@@ -57,6 +58,26 @@ _EXPECTED_ERRORS = (
     ValueError,
     onnx.checker.ValidationError,
 )
+
+_original_open_external_data_fd = external_data_helper._open_external_data_fd
+
+
+def _checked_open_external_data_fd(
+    base_dir: str, location: str, tensor_name: str, read_only: bool
+) -> int:
+    # Every external-data read and write, including ModelContainer.load, opens
+    # through this helper. Checking the descriptor here reports an escape even
+    # when a later bounds or reshape error aborts the operation.
+    fd = _original_open_external_data_fd(base_dir, location, tensor_name, read_only)
+    fd_stat = os.fstat(fd)
+    sentinel_stat = _SENTINEL.stat()
+    if (fd_stat.st_dev, fd_stat.st_ino) == (sentinel_stat.st_dev, sentinel_stat.st_ino):
+        os.close(fd)
+        raise AssertionError("external-data open resolved to the sentinel")
+    return fd
+
+
+external_data_helper._open_external_data_fd = _checked_open_external_data_fd
 
 
 def _reset_workspace(payload: bytes) -> bytes:
@@ -165,11 +186,14 @@ def _make_model(*tensors: TensorProto) -> onnx.ModelProto:
     return helper.make_model(graph)
 
 
-def _exercise(data: bytes, location: str, alternate_location: str) -> None:
+def _exercise(
+    data: bytes,
+    location: str,
+    alternate_location: str,
+    payload: bytes,
+    file_data: bytes,
+) -> None:
     operation = data[0] % 8
-    payload = data[6:4102] or b"\0"
-    file_data = _reset_workspace(payload)
-
     needs_raw_data = operation in (2, 4)
     tensor = _make_external_tensor(
         data,
@@ -246,25 +270,21 @@ def TestOneInput(data: bytes) -> None:
     locations = _locations()
     location_index = data[1] % len(locations)
     alternate_index = (location_index + data[5] + 1) % len(locations)
+    payload = data[6:4102] or b"\0"
+    # Fixture setup runs before the expected-error suppression so its failures
+    # are not mistaken for expected target errors.
+    file_data = _reset_workspace(payload)
 
-    completed = False
-    try:
-        _exercise(data, locations[location_index], locations[alternate_index])
-    except _EXPECTED_ERRORS:
-        pass
-    else:
-        completed = True
+    with contextlib.suppress(*_EXPECTED_ERRORS):
+        _exercise(
+            data,
+            locations[location_index],
+            locations[alternate_index],
+            payload,
+            file_data,
+        )
 
-    operation = data[0] % 8
-    effective_location_index = (
-        alternate_index if data[2] & 0x01 and operation != 6 else location_index
-    )
-    unsafe_location = effective_location_index in {3, 4, 5, 7} or (
-        effective_location_index == 6 and (_BASE / "symlink.bin").is_symlink()
-    )
-    if completed and 1 <= operation <= 6 and unsafe_location:
-        raise AssertionError("external-data operation followed an unsafe location")
-
+    # Writes through plain open() (ModelContainer.save) bypass the open check.
     if not _SENTINEL.exists() or _SENTINEL.read_bytes() != _SENTINEL_CONTENT:
         raise AssertionError("external-data operation modified the sentinel")
 

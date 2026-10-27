@@ -116,8 +116,10 @@ workspace on every iteration. Fuzzer-selected locations include ordinary and
 nested files, missing files, traversal paths, absolute paths, UNC and Windows
 drive forms, encoded traversal text, symlinks, and hardlinks. All escape and
 link cases target a sentinel outside the model directory. The harness reports a
-finding if an operation modifies that sentinel, even when the operation also
-raises an otherwise expected validation error.
+finding if an external-data open resolves to that sentinel (same device and
+inode) or if an operation modifies it, even when the operation also raises an
+otherwise expected validation error. Fixture setup failures are not treated as
+expected errors.
 
 The six-byte input header selects the operation, location, duplicate-metadata
 flags, offset, length, and alternate location. Remaining bytes become bounded
