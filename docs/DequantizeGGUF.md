@@ -11,7 +11,6 @@ GGUF tensor's packed quantized payload. It allows importers to preserve packed
 weights as UINT8 initializers, including external-data initializers, rather
 than expanding every weight before exporting an ONNX model. Backends can
 constant-fold decoding or recognize a decoding/matrix-multiplication pattern.
-The operator does not prescribe fusion or a quantized arithmetic kernel.
 
 The [operator schema](Operators.md#DequantizeGGUF) defines the contract. This
 document records the rationale and upstream evidence behind that contract.
@@ -29,8 +28,7 @@ to runtime inputs for metadata that must be known to determine output type and
 shape. FLOAT, FLOAT16, BFLOAT16, and DOUBLE outputs are supported; decoding uses
 FLOAT arithmetic before the final conversion.
 
-This is deliberately not a file reader. The importer removes GGUF headers and
-alignment padding, selects each tensor's byte range, normalizes multibyte
+The importer selects each tensor's payload byte range, normalizes multibyte
 fields to little-endian, and supplies dimensions in ONNX order. In GGML the
 first dimension is contiguous; ONNX's last dimension is contiguous. Thus GGUF
 dimensions `[ne0, ne1, ne2]` map to ONNX shape `[ne2, ne1, ne0]`, without
@@ -39,9 +37,8 @@ global multiplier, or other transformation remains outside the operator.
 
 With `B` elements and `S` bytes per block, require
 `len(x) = product(shape[:-1]) * (shape[-1] / B) * S` and `shape[-1] % B = 0`.
-No truncated blocks, row padding, extra bytes, inferred dimensions, or implicit
-transpose are allowed. Zero dimensions mean empty dimensions, not Reshape-style
-copying. The innermost dimension must remain block-aligned for empty outputs.
+Shape dimensions are nonnegative literal sizes. A zero dimension produces an
+empty tensor. The innermost dimension remains block-aligned for empty outputs.
 
 ## Versioned upstream basis
 
@@ -49,8 +46,7 @@ The source of truth is **GGML
 [`da8e2a54b919557b816b1c2beb432ccb766f7ce0`](https://github.com/ggml-org/ggml/tree/da8e2a54b919557b816b1c2beb432ccb766f7ce0)**,
 whose `GGML_QNT_VERSION` is 2. A GGUF container version, a quantization version,
 a model-level `general.file_type`, and a tensor-level `ggml_type` are different
-concepts. The operator fixes concrete layouts and codebooks; it does not
-dynamically follow an upstream branch or accept arbitrary future enum values.
+concepts. The operator fixes the layouts, codebooks, and enum values at this revision.
 Older files with different layouts must be converted by the importer.
 
 | Evidence                                                                                                                                     | What it establishes                                                                         |
@@ -74,30 +70,25 @@ Q8_0, Q8_1, Q2_K, Q3_K, Q4_K, Q5_K, Q6_K, Q8_K, IQ2_XXS, IQ2_XS, IQ3_XXS,
 IQ1_S, IQ4_NL, IQ3_S, IQ2_S, IQ4_XS, IQ1_M, TQ1_0, TQ2_0, MXFP4, NVFP4,
 Q1_0, and Q2_0. The schema lists every numeric ID and block size.
 
-Q8_1 and Q8_K are primarily intermediate/dot-product formats. They are included
-to avoid making the quantized set implicitly incomplete. Q8_1 uses a FLOAT16
+Q8_1 and Q8_K also serve as intermediate/dot-product formats. Q8_1 uses a FLOAT16
 scale and 32 signed INT8 quants; Q8_K uses a FLOAT scale and 256 signed INT8
-quants. Both decode as `d * q`; cached sums are not additive biases.
-Q8_1's older FLOAT-scale layout is not this proposal's layout.
+quants. Both decode as `d * q`, with cached sum fields ignored.
 
 Plain F32, F16, BF16, F64, I8, I16, I32, and I64 are excluded because ONNX
 already represents their values directly. Removed Q4_2/Q4_3 and repacked
 Q4_0/IQ4_NL IDs 31-33 and 36-38 are also excluded. Runtime-specific interleaved
 layouts and fork-specific enums are not standardized by this operator.
 
-MXFP4/NVFP4 remain in scope: although ONNX has FLOAT4E2M1 and low-precision scale
-types, these GGML payloads interleave scales and quants in blocks and have
-specific byte-order and lane-order conventions. They are not plain FLOAT4
-initializers. Filename labels such as `Q4_K_M` denote model-level type mixtures,
-not additional tensor types or values of `ggml_type`.
+MXFP4/NVFP4 payloads interleave scales and quants in blocks with format-specific
+byte and lane ordering. Filename labels such as `Q4_K_M` denote model-level
+type mixtures; the `ggml_type` attribute identifies each tensor's format.
 
 ## Packed layouts and decoding
 
 The following fields appear in order without extra padding. `h` denotes a
 little-endian FLOAT16, `f` a little-endian FLOAT, `u16` a little-endian unsigned
-16-bit integer, and bracketed lengths count entries of the indicated type. Bit-plane order and
-codebook indexing follow the pinned row decoders, not generic adjacent-bit
-unpacking.
+16-bit integer, and bracketed lengths count entries of the indicated type.
+Bit-plane order and codebook indexing follow the pinned row decoders.
 
 | Format  | Packed fields                               | Decoding summary                                                                        |
 | ------- | ------------------------------------------- | --------------------------------------------------------------------------------------- |
@@ -131,23 +122,20 @@ unpacking.
 
 The IQ4_NL table is
 `[-127,-104,-83,-65,-49,-35,-22,-10,1,13,25,38,53,69,89,113]`.
-Other IQ tables are fixed by the pinned `ggml-common.h`, not supplied as model
-inputs. Seven stored sign bits are completed with an eighth parity bit for
+Other IQ tables are fixed by the pinned `ggml-common.h`.
+Seven stored sign bits are completed with an eighth parity bit for
 IQ2_XXS, IQ2_XS, and IQ3_XXS.
 
-Scale conversion follows GGML, including its nonstandard encodings:
-NVFP4 scale byte `0x7f` decodes to zero, not an ONNX FLOAT8 NaN. MXFP4 uses
-`ggml_e8m0_to_fp32_half` multiplied by doubled E2M1 table values. In particular,
-the implementation must not first round the full E8M0 scale to FLOAT: at the
-largest exponent that would overflow before multiplying by 0.5. The proposal
-does not replace these conversions with nominal low-precision ONNX casts.
+Scale conversion follows GGML: NVFP4 scale byte `0x7f` decodes to zero.
+MXFP4 uses `ggml_e8m0_to_fp32_half` multiplied by doubled E2M1 table values.
+Computing the half scale first preserves finite FLOAT values at the largest
+exponent, where the full E8M0 scale would overflow.
 All 256 possible scale bytes are covered by explicit tests.
 
 ## Reference implementation and validation
 
-The implementation depends only on ONNX's existing NumPy and dtype support,
-not on a GGUF package, C library, or file parser. It is intentionally a
-readable block decoder rather than a performance kernel.
+The reference implementation uses NumPy and ONNX's dtype support to decode
+one block at a time.
 
 The IQ tables are compacted without loss from the pinned source. Reproduce
 them with:
@@ -165,8 +153,7 @@ nonzero corpus for each format, including negative/zero/subnormal scales,
 high-bit masks, signs, group scales, and varied codebook indices. Expected
 FLOAT output digests were obtained from the pinned GGML C row decoders,
 compiled with strict floating-point arithmetic; Q8_1 uses the documented
-`d*q` fields because upstream has no row decoder for it. No expected digest
-is derived from the ONNX implementation. Complete codebook digests independently
+`d*q` fields because upstream has no row decoder for it. Complete codebook digests
 cover every lookup entry.
 
 Reproduce the upstream C comparison with an installed C compiler and CMake:
@@ -180,7 +167,7 @@ extracts the upstream decoder functions unchanged, and builds a temporary oracle
 library with strict FLOAT arithmetic. Its Q8_1 oracle is the explicit field
 definition above. The tool checks both decoded FLOAT bits and stored test digests,
 then verifies every codebook's digest directly from the upstream numeric tables.
-Normal tests do not need the upstream source or a C compiler.
+Normal tests compare results against the committed digests.
 
 The tests also cover shape/order, all four output types, default output type,
 empty tensors, malformed lengths and metadata, rejected enums, ignored cached
@@ -188,6 +175,3 @@ sums, and every MXFP4/NVFP4 scale encoding. Backend examples have hand-written
 expected results for Q4_0, Q5_1, IQ4_NL, MXFP4, and an empty K-quant tensor.
 Shape inference validates all format sizes, unknown packed lengths, static
 output dimensions, block alignment, and byte-count overflow.
-
-This is an operator proposal for Operators SIG review, not a claim that
-existing ONNX runtimes already implement it.

@@ -129,16 +129,12 @@ ONNX_OPERATOR_SET_SCHEMA(
     29,
     OpSchema()
         .SetDoc(R"DOC(
-Dequantizes the packed payload of one GGUF tensor, not a GGUF file.
-`x` is a one-dimensional UINT8 tensor containing exactly the tensor's bytes,
-without file headers, offsets, alignment padding, or runtime-specific repacking.
-All multibyte fields are little-endian. Importers of big-endian GGUF files
-must normalize the payload before invoking this operator.
+Dequantizes a GGUF tensor's packed quantized payload to a floating-point tensor.
+`x` is a one-dimensional UINT8 tensor of consecutive quantization blocks.
+All multibyte fields are little-endian.
 
-`ggml_type` is the tensor's numeric `ggml_type` identifier, NOT the model-level
-`general.file_type` / `ggml_ftype`, a filename quantization label, or an ONNX
-TensorProto data type. The supported (identifier, name, elements per block,
-bytes per block) tuples are:
+`ggml_type` selects the tensor's quantization format using the numeric GGML
+tensor type identifier. The supported identifiers and block sizes are:
 
 | Identifier | Format | Elements | Bytes |
 |---|---|---|---|
@@ -170,47 +166,39 @@ bytes per block) tuples are:
 | 41 | Q1_0 | 128 | 18 |
 | 42 | Q2_0 | 64 | 18 |
 
-These are all active quantized types in
+The formats use the packed field layouts and IQ codebooks from
 [GGML revision da8e2a54b919557b816b1c2beb432ccb766f7ce0](https://github.com/ggml-org/ggml/tree/da8e2a54b919557b816b1c2beb432ccb766f7ce0).
-Packed field layouts and IQ codebooks are defined by that revision's
+These are defined in
 [`src/ggml-common.h`](https://github.com/ggml-org/ggml/blob/da8e2a54b919557b816b1c2beb432ccb766f7ce0/src/ggml-common.h);
 decoding follows its `dequantize_row_*` functions in
 [`src/ggml-quants.c`](https://github.com/ggml-org/ggml/blob/da8e2a54b919557b816b1c2beb432ccb766f7ce0/src/ggml-quants.c)
 and floating-point scale conversions in
 [`src/ggml-impl.h`](https://github.com/ggml-org/ggml/blob/da8e2a54b919557b816b1c2beb432ccb766f7ce0/src/ggml-impl.h).
-For Q8_1, decode `d * qs[j]` using its FLOAT16 `d` and signed INT8 `qs`;
-the cached `s` field is ignored. Q8_K similarly ignores cached `bsums`.
-These auxiliary formats are included even though they are normally used
-for intermediate quantization rather than stored weights.
-Unquantized types (0, 1, 24-28, 30), removed types (4, 5, 31-33, 36-38),
-and unknown identifiers are invalid. MXFP4 and NVFP4 are included because
-their scaled block payloads are not plain ONNX FLOAT4 tensors.
+Q8_1 and Q8_K decode as `d * qs[j]` using their scale `d` and signed INT8
+values `qs`. Q8_1 uses a FLOAT16 scale; Q8_K uses a FLOAT scale.
+Their cached sum fields are ignored.
 
-`shape` gives the logical output dimensions in ONNX (row-major) order,
-not the dimension order stored in a GGUF tensor descriptor. For a GGUF
-descriptor `[ne0, ne1, ...]`, use `shape=[..., ne1, ne0]`. Decoding
-preserves the flattened element order; it does not transpose values.
-Rank must be at least one. Dimensions must be nonnegative literal sizes
-(no inferred -1 or copy-from-input 0). The last dimension must be a
+`shape` gives the logical output dimensions in ONNX (row-major) order.
+For a GGUF descriptor `[ne0, ne1, ...]`, use `shape=[..., ne1, ne0]`.
+Decoding preserves the flattened element order.
+Rank must be at least one. Dimensions are nonnegative literal sizes;
+a zero dimension produces an empty tensor. The last dimension must be a
 multiple of the format's elements per block, even for an empty tensor.
 If B is elements per block and S is bytes per block, the input length must be
-`product(shape[:-1]) * (shape[-1] / B) * S`. No partial blocks or trailing
-bytes are permitted.
+`product(shape[:-1]) * (shape[-1] / B) * S`.
 
-Decode every block to FLOAT using the specified GGML arithmetic and
-codebooks, then reshape the concatenated values to `shape` and convert
-once to `output_dtype`. Arithmetic uses FLOAT precision; DOUBLE output
-does not request higher-precision dequantization. FLOAT16 and BFLOAT16
-conversion uses round-to-nearest, ties-to-even, as in Cast. Invalid
-metadata or payload lengths are errors. No requantization, per-tensor
-multiplier, or model-specific tensor permutation is performed.
+Blocks are decoded in input order to FLOAT using the specified GGML
+arithmetic and codebooks. The concatenated values are reshaped to `shape`
+and converted once to `output_dtype`. Decoding arithmetic uses FLOAT
+precision for all output types. FLOAT16 and BFLOAT16 conversion uses
+round-to-nearest, ties-to-even, as in Cast.
 
 For example, a Q4_0 block is a little-endian FLOAT16 scale `d` followed
 by 16 bytes `q`. It produces `y[j]=d*((q[j]&15)-8)` and
 `y[j+16]=d*((q[j]>>4)-8)` for j=0,...,15. Thus 36 bytes containing two
 blocks can be decoded with `ggml_type=2, shape=[2,32]`.
 )DOC")
-        .Input(0, "x", "Canonical little-endian packed tensor payload, without padding.", "tensor(uint8)")
+        .Input(0, "x", "Consecutive quantization blocks with little-endian fields.", "tensor(uint8)")
         .Output(0, "y", "Dequantized tensor with the specified shape and output_dtype.", "T")
         .Attr("ggml_type", "Quantized GGML tensor type identifier from the supported table.", AttributeProto::INT, true)
         .Attr("shape", "Logical output dimensions in ONNX order; rank at least one.", AttributeProto::INTS, true)
