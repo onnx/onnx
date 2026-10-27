@@ -175,7 +175,7 @@ if(CMAKE_CROSSCOMPILING)
     endif()
     find_package(Python3 REQUIRED COMPONENTS ${python_dev_component})
   endif()
-  find_package(Python REQUIRED COMPONENTS Interpreter)
+  include(cmake/FindHostPython.cmake)
   set(ONNX_PYTHON_INTERPRETER Python::Interpreter)
   if(ONNX_BUILD_PYTHON)
     # nanobind >= 2.13 only auto-runs its own find_package(Python ...) when
