@@ -4,9 +4,23 @@
 # library version information
 set(ONNX_VERSION "@ONNX_VERSION@")
 
-if(NOT @ONNX_USE_PROTOBUF_SHARED_LIBS@)
-  find_package(Protobuf REQUIRED CONFIG)
+include(CMakeFindDependencyMacro)
+set(_onnx_protobuf_target "@LINKED_PROTOBUF_TARGET@")
+if(NOT TARGET ${_onnx_protobuf_target})
+  # Prefer Protobuf's package config, which also discovers its dependencies.
+  # Older system packages may provide only CMake's FindProtobuf module.
+  find_package(Protobuf QUIET CONFIG)
+  if(NOT Protobuf_FOUND)
+    if(Protobuf_CONSIDERED_CONFIGS)
+      set(ONNX_FOUND FALSE)
+      set(ONNX_NOT_FOUND_MESSAGE "The Protobuf package could not be loaded: ${Protobuf_NOT_FOUND_MESSAGE}")
+      unset(_onnx_protobuf_target)
+      return()
+    endif()
+    find_dependency(Protobuf MODULE)
+  endif()
 endif()
+unset(_onnx_protobuf_target)
 
 # import targets
 include ("${CMAKE_CURRENT_LIST_DIR}/ONNXTargets.cmake")
