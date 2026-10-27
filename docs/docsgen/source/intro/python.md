@@ -15,7 +15,7 @@ an ONNX graph with the {ref}`Python API <l-python-onnx-api>`
 While the core `onnx` Python package provides low-level APIs to construct Protobuf structures directly (`make_node`, `make_graph`, `make_model`), creating complex models by hand using raw Protobuf messages can be verbose and error-prone. Several official and ecosystem tools offer higher-level, Pythonic interfaces for constructing and manipulating ONNX graphs:
 
 - **[onnx/ir-py](https://github.com/onnx/ir-py)**: An ergonomic in-memory intermediate representation (IR) for ONNX in Python, providing a modern interface for inspecting and modifying models without direct interaction with Protobuf objects.
-- **[spox](https://github.com/Quantco/spox)**: A strongly-typed, functional API for building and composing ONNX models using standard Python expressions (operator overloading, slicing, control flow) with type and shape validation.
+- **[spox](https://github.com/Quantco/spox)**: A pythonic and functional API for building and composing ONNX models with immediate type and shape validation.
 - **[ndonnx](https://github.com/Quantco/ndonnx)**: A NumPy-compatible array interface that traces standard array operations directly into ONNX graphs, allowing you to write NumPy-like code and export it as an ONNX model.
 
 The following sections introduce the standard, lower-level ONNX Python API provided directly by the `onnx` package.
