@@ -2,11 +2,225 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
+#include <limits>
+
 #include "onnx/defs/doc_strings.h"
 #include "onnx/defs/schema.h"
 #include "onnx/defs/type_builders.h"
 
 namespace ONNX_NAMESPACE {
+
+namespace {
+
+std::pair<int64_t, int64_t> GGUFBlockSize(int64_t type) {
+  switch (type) {
+    case 2:
+      return {32, 18};
+    case 3:
+      return {32, 20};
+    case 6:
+      return {32, 22};
+    case 7:
+      return {32, 24};
+    case 8:
+      return {32, 34};
+    case 9:
+      return {32, 36};
+    case 10:
+      return {256, 84};
+    case 11:
+      return {256, 110};
+    case 12:
+      return {256, 144};
+    case 13:
+      return {256, 176};
+    case 14:
+      return {256, 210};
+    case 15:
+      return {256, 292};
+    case 16:
+      return {256, 66};
+    case 17:
+      return {256, 74};
+    case 18:
+      return {256, 98};
+    case 19:
+      return {256, 50};
+    case 20:
+      return {32, 18};
+    case 21:
+      return {256, 110};
+    case 22:
+      return {256, 82};
+    case 23:
+      return {256, 136};
+    case 29:
+      return {256, 56};
+    case 34:
+      return {256, 54};
+    case 35:
+      return {256, 66};
+    case 39:
+      return {32, 17};
+    case 40:
+      return {64, 36};
+    case 41:
+      return {128, 18};
+    case 42:
+      return {64, 18};
+    default:
+      fail_shape_inference("Unsupported quantized ggml_type: ", type);
+  }
+}
+
+void DequantizeGGUFInference(InferenceContext& ctx) {
+  const auto* type = ctx.getAttribute("ggml_type");
+  const auto* shape = ctx.getAttribute("shape");
+  if (type == nullptr || shape == nullptr) {
+    fail_shape_inference("DequantizeGGUF requires ggml_type and shape.");
+  }
+  const auto block = GGUFBlockSize(type->i());
+  const auto output_dtype = getAttribute(ctx, "output_dtype", TensorProto::FLOAT);
+  if (output_dtype != TensorProto::FLOAT && output_dtype != TensorProto::FLOAT16 &&
+      output_dtype != TensorProto::BFLOAT16 && output_dtype != TensorProto::DOUBLE) {
+    fail_type_inference("output_dtype must be FLOAT, FLOAT16, BFLOAT16, or DOUBLE.");
+  }
+  updateOutputElemType(ctx, 0, static_cast<int32_t>(output_dtype));
+  if (shape->ints_size() == 0) {
+    fail_shape_inference("shape must have rank at least one.");
+  }
+  bool empty = false;
+  for (const auto dim : shape->ints()) {
+    if (dim < 0) {
+      fail_shape_inference("shape dimensions must be nonnegative; -1 is not supported.");
+    }
+    empty = empty || dim == 0;
+  }
+  if (shape->ints(shape->ints_size() - 1) % block.first != 0) {
+    fail_shape_inference("The last output dimension must be a multiple of the quantization block size.");
+  }
+  int64_t bytes = empty ? 0 : block.second;
+  for (int i = 0; i < shape->ints_size(); ++i) {
+    const auto dim = i == shape->ints_size() - 1 ? shape->ints(i) / block.first : shape->ints(i);
+    if (dim != 0 && bytes > std::numeric_limits<int64_t>::max() / dim) {
+      fail_shape_inference("The packed byte count exceeds int64 range.");
+    }
+    bytes *= dim;
+  }
+  if (hasInputShape(ctx, 0)) {
+    const auto& input_shape = getInputShape(ctx, 0);
+    if (input_shape.dim_size() != 1) {
+      fail_shape_inference("The packed input must be a one-dimensional UINT8 tensor.");
+    }
+    if (input_shape.dim(0).has_dim_value() && input_shape.dim(0).dim_value() != bytes) {
+      fail_shape_inference("Packed input length must be exactly ", bytes, " bytes.");
+    }
+  }
+  auto* output_shape = getOutputShape(ctx, 0);
+  for (const auto dim : shape->ints()) {
+    output_shape->add_dim()->set_dim_value(dim);
+  }
+}
+
+} // namespace
+
+ONNX_OPERATOR_SET_SCHEMA(
+    DequantizeGGUF,
+    29,
+    OpSchema()
+        .SetDoc(R"DOC(
+Dequantizes the packed payload of one GGUF tensor, not a GGUF file.
+`x` is a one-dimensional UINT8 tensor containing exactly the tensor's bytes,
+without file headers, offsets, alignment padding, or runtime-specific repacking.
+All multibyte fields are little-endian. Importers of big-endian GGUF files
+must normalize the payload before invoking this operator.
+
+`ggml_type` is the tensor's numeric `ggml_type` identifier, NOT the model-level
+`general.file_type` / `ggml_ftype`, a filename quantization label, or an ONNX
+TensorProto data type. The supported (identifier, name, elements per block,
+bytes per block) tuples are:
+
+| Identifier | Format | Elements | Bytes |
+|---|---|---|---|
+| 2 | Q4_0 | 32 | 18 |
+| 3 | Q4_1 | 32 | 20 |
+| 6 | Q5_0 | 32 | 22 |
+| 7 | Q5_1 | 32 | 24 |
+| 8 | Q8_0 | 32 | 34 |
+| 9 | Q8_1 | 32 | 36 |
+| 10 | Q2_K | 256 | 84 |
+| 11 | Q3_K | 256 | 110 |
+| 12 | Q4_K | 256 | 144 |
+| 13 | Q5_K | 256 | 176 |
+| 14 | Q6_K | 256 | 210 |
+| 15 | Q8_K | 256 | 292 |
+| 16 | IQ2_XXS | 256 | 66 |
+| 17 | IQ2_XS | 256 | 74 |
+| 18 | IQ3_XXS | 256 | 98 |
+| 19 | IQ1_S | 256 | 50 |
+| 20 | IQ4_NL | 32 | 18 |
+| 21 | IQ3_S | 256 | 110 |
+| 22 | IQ2_S | 256 | 82 |
+| 23 | IQ4_XS | 256 | 136 |
+| 29 | IQ1_M | 256 | 56 |
+| 34 | TQ1_0 | 256 | 54 |
+| 35 | TQ2_0 | 256 | 66 |
+| 39 | MXFP4 | 32 | 17 |
+| 40 | NVFP4 | 64 | 36 |
+| 41 | Q1_0 | 128 | 18 |
+| 42 | Q2_0 | 64 | 18 |
+
+These are all active quantized types in
+[GGML revision da8e2a54b919557b816b1c2beb432ccb766f7ce0](https://github.com/ggml-org/ggml/tree/da8e2a54b919557b816b1c2beb432ccb766f7ce0).
+Packed field layouts and IQ codebooks are defined by that revision's
+[`src/ggml-common.h`](https://github.com/ggml-org/ggml/blob/da8e2a54b919557b816b1c2beb432ccb766f7ce0/src/ggml-common.h);
+decoding follows its `dequantize_row_*` functions in
+[`src/ggml-quants.c`](https://github.com/ggml-org/ggml/blob/da8e2a54b919557b816b1c2beb432ccb766f7ce0/src/ggml-quants.c)
+and floating-point scale conversions in
+[`src/ggml-impl.h`](https://github.com/ggml-org/ggml/blob/da8e2a54b919557b816b1c2beb432ccb766f7ce0/src/ggml-impl.h).
+For Q8_1, decode `d * qs[j]` using its FLOAT16 `d` and signed INT8 `qs`;
+the cached `s` field is ignored. Q8_K similarly ignores cached `bsums`.
+These auxiliary formats are included even though they are normally used
+for intermediate quantization rather than stored weights.
+Unquantized types (0, 1, 24-28, 30), removed types (4, 5, 31-33, 36-38),
+and unknown identifiers are invalid. MXFP4 and NVFP4 are included because
+their scaled block payloads are not plain ONNX FLOAT4 tensors.
+
+`shape` gives the logical output dimensions in ONNX (row-major) order,
+not the dimension order stored in a GGUF tensor descriptor. For a GGUF
+descriptor `[ne0, ne1, ...]`, use `shape=[..., ne1, ne0]`. Decoding
+preserves the flattened element order; it does not transpose values.
+Rank must be at least one. Dimensions must be nonnegative literal sizes
+(no inferred -1 or copy-from-input 0). The last dimension must be a
+multiple of the format's elements per block, even for an empty tensor.
+If B is elements per block and S is bytes per block, the input length must be
+`product(shape[:-1]) * (shape[-1] / B) * S`. No partial blocks or trailing
+bytes are permitted.
+
+Decode every block to FLOAT using the specified GGML arithmetic and
+codebooks, then reshape the concatenated values to `shape` and convert
+once to `output_dtype`. Arithmetic uses FLOAT precision; DOUBLE output
+does not request higher-precision dequantization. FLOAT16 and BFLOAT16
+conversion uses round-to-nearest, ties-to-even, as in Cast. Invalid
+metadata or payload lengths are errors. No requantization, per-tensor
+multiplier, or model-specific tensor permutation is performed.
+
+For example, a Q4_0 block is a little-endian FLOAT16 scale `d` followed
+by 16 bytes `q`. It produces `y[j]=d*((q[j]&15)-8)` and
+`y[j+16]=d*((q[j]>>4)-8)` for j=0,...,15. Thus 36 bytes containing two
+blocks can be decoded with `ggml_type=2, shape=[2,32]`.
+)DOC")
+        .Input(0, "x", "Canonical little-endian packed tensor payload, without padding.", "tensor(uint8)")
+        .Output(0, "y", "Dequantized tensor with the specified shape and output_dtype.", "T")
+        .Attr("ggml_type", "Quantized GGML tensor type identifier from the supported table.", AttributeProto::INT, true)
+        .Attr("shape", "Logical output dimensions in ONNX order; rank at least one.", AttributeProto::INTS, true)
+        .Attr(
+            "output_dtype",
+            "ONNX TensorProto data type of the output: FLOAT, FLOAT16, BFLOAT16, or DOUBLE.",
+            AttributeProto::INT,
+            static_cast<int64_t>(TensorProto::FLOAT))
+        .TypeConstraint("T", {types::Float, types::Float16, types::BFloat16, types::Double}, "Floating-point output.")
+        .TypeAndShapeInferenceFunction(DequantizeGGUFInference));
 
 ONNX_OPERATOR_SET_SCHEMA(
     QuantizeLinear,

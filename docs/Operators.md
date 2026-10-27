@@ -47,6 +47,7 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#CumSum">CumSum</a>|<a href="Changelog.md#CumSum-14">14</a>, <a href="Changelog.md#CumSum-11">11</a>|
 |<a href="#DFT">DFT</a>|<a href="Changelog.md#DFT-20">20</a>, <a href="Changelog.md#DFT-17">17</a>|
 |<a href="#DeformConv">DeformConv</a>|<a href="Changelog.md#DeformConv-22">22</a>, <a href="Changelog.md#DeformConv-19">19</a>|
+|<a href="#DequantizeGGUF">DequantizeGGUF</a>|<a href="Changelog.md#DequantizeGGUF-29">29</a>|
 |<a href="#DequantizeLinear">DequantizeLinear</a>|<a href="Changelog.md#DequantizeLinear-28">28</a>, <a href="Changelog.md#DequantizeLinear-25">25</a>, <a href="Changelog.md#DequantizeLinear-24">24</a>, <a href="Changelog.md#DequantizeLinear-23">23</a>, <a href="Changelog.md#DequantizeLinear-21">21</a>, <a href="Changelog.md#DequantizeLinear-19">19</a>, <a href="Changelog.md#DequantizeLinear-13">13</a>, <a href="Changelog.md#DequantizeLinear-10">10</a>|
 |<a href="#Det">Det</a>|<a href="Changelog.md#Det-22">22</a>, <a href="Changelog.md#Det-11">11</a>|
 |<a href="#Div">Div</a>|<a href="Changelog.md#Div-14">14</a>, <a href="Changelog.md#Div-13">13</a>, <a href="Changelog.md#Div-7">7</a>, <a href="Changelog.md#Div-6">6</a>, <a href="Changelog.md#Div-1">1</a>|
@@ -13385,6 +13386,247 @@ y = np.array(
     ]
 ).astype(np.float32)
 expect(node, inputs=[x], outputs=[y], name="test_depthtospace_example")
+```
+
+</details>
+
+
+### <a name="DequantizeGGUF"></a><a name="dequantizegguf">**DequantizeGGUF**</a>
+
+  Dequantizes the packed payload of one GGUF tensor, not a GGUF file.
+  `x` is a one-dimensional UINT8 tensor containing exactly the tensor's bytes,
+  without file headers, offsets, alignment padding, or runtime-specific repacking.
+  All multibyte fields are little-endian. Importers of big-endian GGUF files
+  must normalize the payload before invoking this operator.
+
+  `ggml_type` is the tensor's numeric `ggml_type` identifier, NOT the model-level
+  `general.file_type` / `ggml_ftype`, a filename quantization label, or an ONNX
+  TensorProto data type. The supported (identifier, name, elements per block,
+  bytes per block) tuples are:
+
+  | Identifier | Format | Elements | Bytes |
+  |---|---|---|---|
+  | 2 | Q4_0 | 32 | 18 |
+  | 3 | Q4_1 | 32 | 20 |
+  | 6 | Q5_0 | 32 | 22 |
+  | 7 | Q5_1 | 32 | 24 |
+  | 8 | Q8_0 | 32 | 34 |
+  | 9 | Q8_1 | 32 | 36 |
+  | 10 | Q2_K | 256 | 84 |
+  | 11 | Q3_K | 256 | 110 |
+  | 12 | Q4_K | 256 | 144 |
+  | 13 | Q5_K | 256 | 176 |
+  | 14 | Q6_K | 256 | 210 |
+  | 15 | Q8_K | 256 | 292 |
+  | 16 | IQ2_XXS | 256 | 66 |
+  | 17 | IQ2_XS | 256 | 74 |
+  | 18 | IQ3_XXS | 256 | 98 |
+  | 19 | IQ1_S | 256 | 50 |
+  | 20 | IQ4_NL | 32 | 18 |
+  | 21 | IQ3_S | 256 | 110 |
+  | 22 | IQ2_S | 256 | 82 |
+  | 23 | IQ4_XS | 256 | 136 |
+  | 29 | IQ1_M | 256 | 56 |
+  | 34 | TQ1_0 | 256 | 54 |
+  | 35 | TQ2_0 | 256 | 66 |
+  | 39 | MXFP4 | 32 | 17 |
+  | 40 | NVFP4 | 64 | 36 |
+  | 41 | Q1_0 | 128 | 18 |
+  | 42 | Q2_0 | 64 | 18 |
+
+  These are all active quantized types in
+  [GGML revision da8e2a54b919557b816b1c2beb432ccb766f7ce0](https://github.com/ggml-org/ggml/tree/da8e2a54b919557b816b1c2beb432ccb766f7ce0).
+  Packed field layouts and IQ codebooks are defined by that revision's
+  [`src/ggml-common.h`](https://github.com/ggml-org/ggml/blob/da8e2a54b919557b816b1c2beb432ccb766f7ce0/src/ggml-common.h);
+  decoding follows its `dequantize_row_*` functions in
+  [`src/ggml-quants.c`](https://github.com/ggml-org/ggml/blob/da8e2a54b919557b816b1c2beb432ccb766f7ce0/src/ggml-quants.c)
+  and floating-point scale conversions in
+  [`src/ggml-impl.h`](https://github.com/ggml-org/ggml/blob/da8e2a54b919557b816b1c2beb432ccb766f7ce0/src/ggml-impl.h).
+  For Q8_1, decode `d * qs[j]` using its FLOAT16 `d` and signed INT8 `qs`;
+  the cached `s` field is ignored. Q8_K similarly ignores cached `bsums`.
+  These auxiliary formats are included even though they are normally used
+  for intermediate quantization rather than stored weights.
+  Unquantized types (0, 1, 24-28, 30), removed types (4, 5, 31-33, 36-38),
+  and unknown identifiers are invalid. MXFP4 and NVFP4 are included because
+  their scaled block payloads are not plain ONNX FLOAT4 tensors.
+
+  `shape` gives the logical output dimensions in ONNX (row-major) order,
+  not the dimension order stored in a GGUF tensor descriptor. For a GGUF
+  descriptor `[ne0, ne1, ...]`, use `shape=[..., ne1, ne0]`. Decoding
+  preserves the flattened element order; it does not transpose values.
+  Rank must be at least one. Dimensions must be nonnegative literal sizes
+  (no inferred -1 or copy-from-input 0). The last dimension must be a
+  multiple of the format's elements per block, even for an empty tensor.
+  If B is elements per block and S is bytes per block, the input length must be
+  `product(shape[:-1]) * (shape[-1] / B) * S`. No partial blocks or trailing
+  bytes are permitted.
+
+  Decode every block to FLOAT using the specified GGML arithmetic and
+  codebooks, then reshape the concatenated values to `shape` and convert
+  once to `output_dtype`. Arithmetic uses FLOAT precision; DOUBLE output
+  does not request higher-precision dequantization. FLOAT16 and BFLOAT16
+  conversion uses round-to-nearest, ties-to-even, as in Cast. Invalid
+  metadata or payload lengths are errors. No requantization, per-tensor
+  multiplier, or model-specific tensor permutation is performed.
+
+  For example, a Q4_0 block is a little-endian FLOAT16 scale `d` followed
+  by 16 bytes `q`. It produces `y[j]=d*((q[j]&15)-8)` and
+  `y[j+16]=d*((q[j]>>4)-8)` for j=0,...,15. Thus 36 bytes containing two
+  blocks can be decoded with `ggml_type=2, shape=[2,32]`.
+
+#### Version
+
+This version of the operator has been available since version 29 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>ggml_type</tt> : int (required)</dt>
+<dd>Quantized GGML tensor type identifier from the supported table.</dd>
+<dt><tt>output_dtype</tt> : int (default is 1)</dt>
+<dd>ONNX TensorProto data type of the output: FLOAT, FLOAT16, BFLOAT16, or DOUBLE.</dd>
+<dt><tt>shape</tt> : list of ints (required)</dt>
+<dd>Logical output dimensions in ONNX order; rank at least one.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>x</tt> : tensor(uint8)</dt>
+<dd>Canonical little-endian packed tensor payload, without padding.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>y</tt> : T</dt>
+<dd>Dequantized tensor with the specified shape and output_dtype.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float), tensor(float16), tensor(bfloat16), tensor(double)</dt>
+<dd>Floating-point output.</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>empty</summary>
+
+```python
+node = helper.make_node(
+    "DequantizeGGUF", ["x"], ["y"], ggml_type=10, shape=[0, 256]
+)
+expect(
+    node,
+    inputs=[np.empty(0, dtype=np.uint8)],
+    outputs=[np.empty((0, 256), dtype=np.float32)],
+    name="test_dequantizegguf_empty",
+)
+```
+
+</details>
+
+
+<details>
+<summary>iq4_nl</summary>
+
+```python
+node = helper.make_node(
+    "DequantizeGGUF",
+    ["x"],
+    ["y"],
+    ggml_type=20,
+    shape=[32],
+    output_dtype=TensorProto.FLOAT16,
+)
+x = np.frombuffer(struct.pack("<e", 0.5) + bytes(range(16)), dtype=np.uint8)
+y = np.array(
+    [
+        -127,
+        -104,
+        -83,
+        -65,
+        -49,
+        -35,
+        -22,
+        -10,
+        1,
+        13,
+        25,
+        38,
+        53,
+        69,
+        89,
+        113,
+    ]
+    + [-127] * 16,
+    dtype=np.float16,
+) * np.float16(0.5)
+expect(node, inputs=[x], outputs=[y], name="test_dequantizegguf_iq4_nl_float16")
+```
+
+</details>
+
+
+<details>
+<summary>mxfp4</summary>
+
+```python
+node = helper.make_node(
+    "DequantizeGGUF", ["x"], ["y"], ggml_type=39, shape=[32]
+)
+x = np.array([127, *list(range(16))], dtype=np.uint8)
+y = np.array(
+    [0, 0.5, 1, 1.5, 2, 3, 4, 6, 0, -0.5, -1, -1.5, -2, -3, -4, -6] + [0] * 16,
+    dtype=np.float32,
+)
+expect(node, inputs=[x], outputs=[y], name="test_dequantizegguf_mxfp4")
+```
+
+</details>
+
+
+<details>
+<summary>q4_0</summary>
+
+```python
+node = helper.make_node(
+    "DequantizeGGUF", ["x"], ["y"], ggml_type=2, shape=[2, 32]
+)
+x = np.frombuffer(
+    struct.pack("<e", 0.5)
+    + bytes(range(16))
+    + struct.pack("<e", -2)
+    + bytes([0xF0] * 16),
+    dtype=np.uint8,
+)
+y = np.array(
+    [
+        list(np.arange(-8, 8) * 0.5) + [-4] * 16,
+        [16] * 16 + [-14] * 16,
+    ],
+    dtype=np.float32,
+)
+expect(node, inputs=[x], outputs=[y], name="test_dequantizegguf_q4_0")
+```
+
+</details>
+
+
+<details>
+<summary>q5_1</summary>
+
+```python
+node = helper.make_node("DequantizeGGUF", ["x"], ["y"], ggml_type=7, shape=[32])
+x = np.frombuffer(
+    struct.pack("<eeI", 0.5, -1, 0xFFFF0000) + bytes(range(16)), dtype=np.uint8
+)
+y = np.array(list(np.arange(16) * 0.5 - 1) + [7] * 16, dtype=np.float32)
+expect(node, inputs=[x], outputs=[y], name="test_dequantizegguf_q5_1")
 ```
 
 </details>
