@@ -25,6 +25,19 @@ applicable `topic:` or `module:` label, as enforced by
 names. For example, use `topic: documentation` for a documentation-only PR and
 add any other existing labels that materially apply to the change.
 
+## PR descriptions
+
+Follow the structure of [`pull_request_template.md`](pull_request_template.md).
+Describe what the change does and why. Do not list the tests, lint runs, or build commands you ran:
+CI runs the tests and linters on every PR, so such lists add length without information.
+Mention testing only if it is not covered by CI (e.g., manual verification on a specific platform or with a downstream
+runtime).
+Include the checklist from the template verbatim and leave the box unchecked;
+only the human author may check it.
+
+## Linters and formatters
+
+PRs will not be merged if they do not pass this project's linting and formatting rules.
 We use pixi tasks for installing and linting
 
 ```sh
