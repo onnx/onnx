@@ -5011,6 +5011,74 @@ class TestShapeInference(TestShapeInferenceHelper):
         with pytest.raises(onnx.shape_inference.InferenceError):
             self._inferred(graph)
 
+    @pytest.mark.parametrize(
+        ("a_shape", "b_shape", "c_shape", "transA", "transB", "expected"),
+        [
+            ((5,), (7, 5), (7,), 0, 1, (7,)),
+            ((5,), (5, 7), (), 1, 0, (7,)),
+            ((2, 3, 5), (7, 5), (7,), 0, 1, (2, 3, 7)),
+            ((2, 5, 3), (7, 5), (2, 1, 7), 1, 1, (2, 3, 7)),
+            ((2, 3, 4, 5), (5, 7), (1, 7), 0, 0, (2, 3, 4, 7)),
+            (("batch", None, 5), (5, "out"), (), 0, 0, ("batch", None, "out")),
+            ((0, 3, 5), (5, 7), (7,), 0, 0, (0, 3, 7)),
+            ((2, 3, 0), (0, 7), (7,), 0, 0, (2, 3, 7)),
+            ((2, 3, 5), None, (), 0, 0, (2, 3, None)),
+            ((2, 3, 5), (5, None), (), 0, 0, (2, 3, None)),
+            (("batch", 5, "rows"), (7, 5), (7,), 1, 1, ("batch", "rows", 7)),
+            ((2, None, None), None, (), 0, 0, (2, None, None)),
+            ((2, 3, 5), (5, 0), (1,), 0, 0, (2, 3, 0)),
+        ],
+    )
+    def test_gemm_29(self, a_shape, b_shape, c_shape, transA, transB, expected) -> None:
+        graph = self._make_graph(
+            [
+                ("a", TensorProto.FLOAT, a_shape),
+                ("b", TensorProto.FLOAT, b_shape),
+                ("c", TensorProto.FLOAT, c_shape),
+            ],
+            [make_node("Gemm", ["a", "b", "c"], ["y"], transA=transA, transB=transB)],
+            [],
+        )
+        self._assert_inferred(
+            graph,
+            [make_tensor_value_info("y", TensorProto.FLOAT, expected)],
+            opset_imports=[helper.make_opsetid("", 29)],
+        )
+
+    @pytest.mark.parametrize(
+        ("a_shape", "b_shape", "c_shape"),
+        [
+            ((), (5, 7), (7,)),
+            ((2, 3, 5), (1, 5, 7), (7,)),
+            ((2, 3, 5), (5,), (7,)),
+            ((2, 3, 5), (4, 7), (7,)),
+            ((2, 3, 5), (5, 7), (2, 4, 7)),
+            ((5,), (5, 7), (1, 7)),
+        ],
+    )
+    def test_gemm_29_invalid_shapes(self, a_shape, b_shape, c_shape) -> None:
+        graph = self._make_graph(
+            [
+                ("a", TensorProto.FLOAT, a_shape),
+                ("b", TensorProto.FLOAT, b_shape),
+                ("c", TensorProto.FLOAT, c_shape),
+            ],
+            [make_node("Gemm", ["a", "b", "c"], ["y"])],
+            [],
+        )
+        with pytest.raises(onnx.shape_inference.InferenceError):
+            self._inferred(graph, opset_imports=[helper.make_opsetid("", 29)])
+
+    @pytest.mark.parametrize("a_shape", [(5,), (2, 3, 5)])
+    def test_gemm_13_still_requires_matrices(self, a_shape) -> None:
+        graph = self._make_graph(
+            [("a", TensorProto.FLOAT, a_shape), ("b", TensorProto.FLOAT, (5, 7))],
+            [make_node("Gemm", ["a", "b"], ["y"])],
+            [],
+        )
+        with pytest.raises(onnx.shape_inference.InferenceError):
+            self._inferred(graph, opset_imports=[helper.make_opsetid("", 13)])
+
     def test_gemm(self) -> None:
         graph = self._make_graph(
             [

@@ -34455,6 +34455,67 @@ This version of the operator has been available since version 28 of the default 
 </dl>
 
 ## Version 29 of the default ONNX operator set
+### <a name="Gemm-29"></a>**Gemm-29**</a>
+
+  Generalized matrix multiplication: `Y = alpha * A' * B' + beta * C`.
+  A has rank at least 1 and B has rank 2. A' is A with its last two axes swapped
+  when transA is non-zero; for rank-1 A, transA has no effect.
+  B' is B transposed when transB is non-zero.
+  If A' has shape (..., K) and B' has shape (K, N), Y has shape (..., N):
+  each vector along A's contraction axis is multiplied by the same matrix B'.
+  The leading dimensions of A' are preserved, including when there are none.
+  C must be unidirectionally broadcastable to Y. If C is omitted, it is treated
+  as scalar zero. When beta is zero, C does not contribute to the result.
+
+  For example, A of shape (2, 3, 5), B of shape (7, 5), C of shape (7,),
+  and transB=1 produce Y of shape (2, 3, 7). This represents an affine
+  linear layer directly, without reshaping A or separately adding the bias.
+  With rank-1 A of shape (5,), the same B and C produce Y of shape (7,).
+  This operator supports **unidirectional broadcasting** (tensor C should be unidirectional broadcastable to tensor A' * B'); for more details please check [the doc](Broadcasting.md).
+  This operator has **optional** inputs/outputs. See [the doc](IR.md) for more details about the representation of optional arguments. An empty string may be used in the place of an actual argument's name to indicate a missing argument. Trailing optional arguments (those not followed by an argument that is present) may also be simply omitted.
+
+#### Version
+
+This version of the operator has been available since version 29 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>alpha</tt> : float (default is 1.0)</dt>
+<dd>Scalar multiplier for the product of input tensors A * B.</dd>
+<dt><tt>beta</tt> : float (default is 1.0)</dt>
+<dd>Scalar multiplier for input tensor C.</dd>
+<dt><tt>transA</tt> : int (default is 0)</dt>
+<dd>Whether to swap the last two axes of A. Has no effect on rank-1 A.</dd>
+<dt><tt>transB</tt> : int (default is 0)</dt>
+<dd>Whether B should be transposed</dd>
+</dl>
+
+#### Inputs (2 - 3)
+
+<dl>
+<dt><tt>A</tt> (differentiable) : T</dt>
+<dd>Input tensor A. Rank >= 1 tensor. After applying transA, its shape is (..., K).</dd>
+<dt><tt>B</tt> (differentiable) : T</dt>
+<dd>Input tensor B. The shape of B should be (K, N) if transB is 0, or (N, K) if transB is non-zero.</dd>
+<dt><tt>C</tt> (optional, differentiable) : T</dt>
+<dd>Optional input tensor C. If not specified, the computation is done as if C is a scalar 0. The shape of C must be unidirectionally broadcastable to the output shape (..., N).</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> (differentiable) : T</dt>
+<dd>Output tensor of shape (..., N).</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double), tensor(uint32), tensor(uint64), tensor(int32), tensor(int64), tensor(bfloat16)</dt>
+<dd>Constrain input and output types to float/int tensors.</dd>
+</dl>
+
 ### <a name="GroupedMatMul-29"></a>**GroupedMatMul-29**</a>
 
   GroupedMatMul multiplies each row of a token matrix by one or more selected

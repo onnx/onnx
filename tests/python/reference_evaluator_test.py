@@ -212,6 +212,138 @@ def im2col(
 
 
 class TestReferenceEvaluator:
+    @pytest.mark.parametrize(
+        "shape", [(5,), (2, 5), (2, 3, 5), (2, 3, 4, 5), (0, 3, 5), (2, 3, 0)]
+    )
+    @pytest.mark.parametrize("transA", [0, 1, -1])
+    @pytest.mark.parametrize("transB", [0, 1, -1])
+    @pytest.mark.parametrize("bias_shape", [None, (), (7,)])
+    @pytest.mark.parametrize("expand", [False, True])
+    def test_gemm_29_linear(self, shape, transA, transB, bias_shape, expand):
+        rng = np.random.default_rng(0)
+        a = rng.standard_normal(shape).astype(np.float32)
+        weights = rng.standard_normal((7, shape[-1])).astype(np.float32)
+        b = weights if transB else weights.T
+        input_a = a.swapaxes(-1, -2) if transA and a.ndim > 1 else a
+        inputs = [
+            make_tensor_value_info("A", TensorProto.FLOAT, input_a.shape),
+            make_tensor_value_info("B", TensorProto.FLOAT, b.shape),
+        ]
+        feeds = {"A": input_a, "B": b}
+        expected = 0.25 * np.einsum("...k,nk->...n", a, weights)
+        if bias_shape is not None:
+            c = rng.standard_normal(bias_shape).astype(np.float32)
+            inputs.append(make_tensor_value_info("C", TensorProto.FLOAT, c.shape))
+            feeds["C"] = c
+            expected += 0.5 * c
+        node = make_node(
+            "Gemm",
+            list(feeds),
+            ["Y"],
+            transA=transA,
+            transB=transB,
+            alpha=0.25,
+            beta=0.5,
+        )
+        model = make_model(
+            make_graph(
+                [node],
+                "linear",
+                inputs,
+                [make_tensor_value_info("Y", TensorProto.FLOAT, expected.shape)],
+            ),
+            opset_imports=[make_opsetid("", 29)],
+        )
+        check_model(model, full_check=True)
+        expanded_op = type("Gemm", (OpRunExpand,), {"op_domain": ""})
+        ref = ReferenceEvaluator(model, new_ops=[expanded_op] if expand else None)
+        got = ref.run(None, feeds)[0]
+        assert got.shape == expected.shape
+        assert got.dtype == expected.dtype
+        assert_allclose(got, expected, rtol=1e-5, atol=1e-6)
+
+    @pytest.mark.parametrize("expand", [False, True])
+    def test_gemm_29_beta_zero(self, expand):
+        model = parser.parse_model("""
+            <ir_version: 14, opset_import: ["" : 29]>
+            g (float[2, 3, 5] A, float[5, 7] B, float[7] C) => (float[2, 3, 7] Y) {
+                Y = Gemm <beta = 0.0> (A, B, C)
+            }
+        """)
+        feeds = {
+            "A": np.ones((2, 3, 5), dtype=np.float32),
+            "B": np.ones((5, 7), dtype=np.float32),
+            "C": np.full((7,), np.nan, dtype=np.float32),
+        }
+        expanded_op = type("Gemm", (OpRunExpand,), {"op_domain": ""})
+        got = ReferenceEvaluator(model, new_ops=[expanded_op] if expand else None).run(
+            None, feeds
+        )[0]
+        assert_array_equal(got, np.full((2, 3, 7), 5, dtype=np.float32))
+
+    @pytest.mark.parametrize(
+        "dtype",
+        [
+            np.float16,
+            ml_dtypes.bfloat16,
+            np.float32,
+            np.float64,
+            np.int32,
+            np.int64,
+            np.uint32,
+            np.uint64,
+        ],
+    )
+    def test_gemm_29_types(self, dtype):
+        a = np.arange(30).reshape(2, 3, 5).astype(dtype)
+        b = np.arange(35).reshape(5, 7).astype(dtype)
+        node = make_node("Gemm", ["A", "B"], ["Y"])
+        ref = ReferenceEvaluator(node)
+        got = ref.run(None, {"A": a, "B": b})[0]
+        assert got.dtype == a.dtype
+        assert_array_equal(got, np.matmul(a, b).astype(a.dtype))
+
+    @pytest.mark.parametrize("version", [13, 28, 29])
+    def test_gemm_version_dispatch(self, version):
+        model = parser.parse_model(f"""
+            <ir_version: 14, opset_import: ["" : {version}]>
+            g (float[2, 5] A, float[7, 5] B, float[7] C) => (float[2, 7] Y) {{
+                Y = Gemm <transB = 1> (A, B, C)
+            }}
+        """)
+        feeds = {
+            "A": np.ones((2, 5), dtype=np.float32),
+            "B": np.ones((7, 5), dtype=np.float32),
+            "C": np.ones((7,), dtype=np.float32),
+        }
+        ref = ReferenceEvaluator(model)
+        expected_class = "Gemm_29" if version == 29 else "Gemm_7"
+        assert ref.rt_nodes_[0].__class__.__name__ == expected_class
+        assert_array_equal(
+            ref.run(None, feeds)[0], np.full((2, 7), 6, dtype=np.float32)
+        )
+
+    @pytest.mark.parametrize(
+        ("a_shape", "b_shape", "c_shape"),
+        [
+            ((), (5, 7), (7,)),
+            ((2, 3, 5), (1, 5, 7), (7,)),
+            ((2, 3, 5), (5, 7), (2, 4, 7)),
+            ((5,), (5, 7), (1, 7)),
+        ],
+    )
+    def test_gemm_29_invalid_shapes(self, a_shape, b_shape, c_shape):
+        ref = ReferenceEvaluator(make_node("Gemm", ["A", "B", "C"], ["Y"]))
+        with pytest.raises(ValueError, match="Gemm input"):
+            ref.run(
+                None,
+                {
+                    "A": np.ones(a_shape, dtype=np.float32),
+                    "B": np.ones(b_shape, dtype=np.float32),
+                    "C": np.ones(c_shape, dtype=np.float32),
+                },
+            )
+
     m2_def = """
         <
             ir_version: 7,
