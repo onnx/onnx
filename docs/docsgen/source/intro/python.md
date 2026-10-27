@@ -16,7 +16,8 @@ While the core `onnx` Python package provides low-level APIs to construct Protob
 
 - **[onnx/ir-py](https://github.com/onnx/ir-py)**: An ergonomic in-memory intermediate representation (IR) for ONNX in Python, providing a modern interface for inspecting and modifying models without direct interaction with Protobuf objects.
 - **[spox](https://github.com/Quantco/spox)**: A pythonic and functional API for building and composing ONNX models with immediate type and shape validation.
-- **[ndonnx](https://github.com/Quantco/ndonnx)**: A NumPy-compatible array interface that traces standard array operations directly into ONNX graphs, allowing you to write NumPy-like code and export it as an ONNX model.
+- **[ndonnx](https://github.com/Quantco/ndonnx)**: A NumPy-compatible array interface (c.f. [array-api](https://data-apis.org/array-api/latest/)) that traces standard array operations, allowing you to write regular NumPy code and export it as an ONNX model.
+ndonnx seamlessly interoperates with `spox`, which provides full access to all ONNX operators, data, and container types.
 
 The following sections introduce the standard, lower-level ONNX Python API provided directly by the `onnx` package.
 
