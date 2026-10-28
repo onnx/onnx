@@ -3,6 +3,7 @@
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
+import os
 import shutil
 import subprocess
 import sys
@@ -91,6 +92,10 @@ def test_onnx_package_discovers_protobuf(
         encoding="utf-8",
     )
     (project / "main.cc").write_text("int main() { return 0; }\n", encoding="utf-8")
+    # Build tools are not part of the instrumented Python process. In particular,
+    # a preloaded TSAN runtime resolves suppression paths relative to each tool.
+    environment = os.environ.copy()
+    environment.pop("LD_PRELOAD", None)
     # Execute only the local CMake binary with this test's generated fixtures.
     completed = subprocess.run(  # noqa: S603
         [
@@ -114,6 +119,7 @@ def test_onnx_package_discovers_protobuf(
         capture_output=True,
         text=True,
         check=False,
+        env=environment,
     )
     if discovery == "broken_config":
         assert completed.returncode != 0
