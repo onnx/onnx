@@ -31,11 +31,12 @@ def main() -> None:
     command = [
         cmake,
         "-S",
-        str(Path(__file__).resolve().parent),
+        str(Path(__file__).resolve().parents[2]),
         "-B",
         str(build_dir),
         f"-DCMAKE_INSTALL_PREFIX={prefix}",
         f"-DCMAKE_BUILD_TYPE={args.config}",
+        "-DONNX_BUILD_PROTOBUF_ONLY=ON",
     ]
     if args.arch:
         command.extend(["-A", args.arch])

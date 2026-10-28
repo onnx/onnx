@@ -201,8 +201,9 @@ settings are respected.
 
 ### Building external Protobuf for CI
 
-Run `python workflow_scripts/protobuf/build.py` to build and install the pinned
-external-Protobuf dependency. Use `--help` for build, install, and architecture
+Run `python workflow_scripts/protobuf/build.py` to build and install Protobuf
+through the main CMake project's `ONNX_BUILD_PROTOBUF_ONLY` mode, using the
+versions and hashes in `sbom.cdx.json`. Use `--help` for build, install, and architecture
 options. For local ONNX builds, add the installed `bin` directory to `PATH` and
 set `CMAKE_PREFIX_PATH` to the install prefix. GitHub Actions receives these
 paths automatically for subsequent steps.
