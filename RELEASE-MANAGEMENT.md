@@ -8,10 +8,6 @@ SPDX-License-Identifier: Apache-2.0
 
 This describes the process by which versions of ONNX are officially released to the public.
 
-Use the [release manager's checklist](docs/OnnxReleases.md) for branch, workflow,
-publication, and post-release operations. Administrator-only package cleanup is
-documented separately in [Release Administration](docs/ReleaseAdministration.md).
-
 Release Cadence
 ---------------
 
@@ -85,20 +81,20 @@ to be produced.
 
 - The release manager will announce the intent of the process (to produce
   major, minor or patch update) and the overall timeline (documented in our
-  wiki: [example](https://github.com/onnx/onnx/wiki/Logistics-for-ONNX-Release-1.23.0)).
+  wiki: [example](https://github.com/onnx/onnx/wiki/Logistics-for-ONNX-Release-1.19.0).
   A release branch is created with the name `rel-major#.minor#.patch#`, and any version
   references in build scripts or version checks are updated.
 
 - The release manager announces the initial commit for testing. The first
   period lasts two weeks; any regressions found should be fixed, typically via
   the main branch. Incomplete features should be done or excised during this
-  period. Release-candidate versions use the `X.Y.Zrc1` format in `VERSION_NUMBER`.
+  period. A distribution can be made available with an `rc1` suffix (e.g. `1.24.0rc1`).
 
 - The release manager announces a second round of testing (unless it's only a
   patch update with no regressions found). Only critical bugs are fixed at
   this point, or those introduced by patches from the first week. A third
   week may be introduced at the release manager's discretion if significant
-  fixes need to be taken. Distributions with `X.Y.ZrcN` versions can be made
+  fixes need to be taken. Distributions with `rcN` suffixes can be made
   available if convenient.
 
 - Release notes are updated with final changes, and a file with sources is
@@ -127,14 +123,12 @@ In addition to stable releases, we publish **weekly development builds** to a se
 
 ## Why a Separate Package?
 
-- **Separate development packages:** Weekly builds use the `onnx-weekly` distribution; RCs and stable releases use `onnx`.
-- **Enable isolated testing:** Try upcoming features in a separate virtual environment. Both distributions provide the `onnx` import package and must not be installed together in the same environment.
+- **Avoid accidental installs:** Pre-release versions can be installed unintentionally; `onnx-weekly` ensures stable users are unaffected.
+- **Enable safe testing:** Use a separate virtual environment: `onnx` and `onnx-weekly` both provide the `onnx` import package and should not be installed together.
 - **Simplify automation:** Weekly builds are pushed automatically from `main` without polluting the main release history.
 
 ## Installation
 
-Run this command in a separate virtual environment from your stable ONNX install:
-
 ```bash
-python -m pip install onnx-weekly
+pip install onnx-weekly
 ```

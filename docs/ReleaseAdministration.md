@@ -31,10 +31,6 @@ access from an existing project owner when necessary.
 
 ### TestPyPI Release Candidates
 
-This applies only to candidates or rehearsals actually uploaded to TestPyPI.
-The normal RC publication target is PyPI, as described in the
-[release manager's checklist](OnnxReleases.md#build-and-publish-packages).
-
 After the corresponding stable release and partner validation are complete,
 administrators may remove obsolete ONNX release-candidate distributions from
 TestPyPI. Retain candidates that are still needed to investigate the current
