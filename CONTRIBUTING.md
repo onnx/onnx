@@ -185,27 +185,14 @@ Run `lintrunner --help` and see the `.lintrunner.toml` file for more usage examp
 
 #### Semgrep
 
-The Lint workflow runs public rules from a pinned revision of
-`semgrep/semgrep-rules` with Semgrep Community Edition. Known false positives and
-low-signal audit rules are documented in `.semgrep-excluded-rules.txt`.
-Findings are advisory during rollout. JSON, SARIF, and text reports are available
-as workflow artifacts, including parser errors, timeouts, and unsupported rules.
-Public rules requiring Pro language extensions are skipped by Community Edition.
-Tests remain in scope; generated files, build outputs, and vendored code are
-excluded through `.semgrepignore`. Existing `nosemgrep` suppressions are disabled
-for this evaluation.
+The [Lint workflow](.github/workflows/lint.yml) runs Semgrep Community Edition
+and uploads JSON, SARIF, and text reports in the `semgrep-results` artifact.
+Findings are advisory during rollout. Rule exclusions and their reasons are in
+`.semgrep-excluded-rules.txt`; file exclusions are in `.semgrepignore`.
 
-To reproduce locally, install `requirements-dev.txt`, check out the rules
-revision specified in `.github/workflows/lint.yml` into `.semgrep-rules`, then
-run:
-
-```sh
-python workflow_scripts/semgrep/collect_rules.py .semgrep-rules .semgrep-rules/collected.json --exclude .semgrep-excluded-rules.txt
-semgrep scan --config .semgrep-rules/collected.json --metrics=off --disable-version-check --disable-nosem --json-output .semgrep-rules/results.json .
-```
-
-The scanner and externally fetched rules are CI tools, not ONNX build or runtime
-dependencies. No Semgrep account or token is required.
+To reproduce locally, install `requirements-dev.txt` and follow the Semgrep
+job's pinned rule checkout, collection, and scan commands. No account or token
+is required.
 
 #### Naming for legacy helper functions in `onnx/defs/*/old.cc`
 
