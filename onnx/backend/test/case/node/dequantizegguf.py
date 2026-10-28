@@ -16,7 +16,7 @@ class DequantizeGGUF(Base):
     @staticmethod
     def export_q4_0() -> None:
         node = helper.make_node(
-            "DequantizeGGUF", ["x"], ["y"], ggml_type=2, shape=[2, 32]
+            "DequantizeGGUF", ["x"], ["y"], format="gguf:q4_0", shape=[2, 32]
         )
         x = np.frombuffer(
             struct.pack("<e", 0.5)
@@ -36,7 +36,9 @@ class DequantizeGGUF(Base):
 
     @staticmethod
     def export_q5_1() -> None:
-        node = helper.make_node("DequantizeGGUF", ["x"], ["y"], ggml_type=7, shape=[32])
+        node = helper.make_node(
+            "DequantizeGGUF", ["x"], ["y"], format="gguf:q5_1", shape=[32]
+        )
         x = np.frombuffer(
             struct.pack("<eeI", 0.5, -1, 0xFFFF0000) + bytes(range(16)), dtype=np.uint8
         )
@@ -49,7 +51,7 @@ class DequantizeGGUF(Base):
             "DequantizeGGUF",
             ["x"],
             ["y"],
-            ggml_type=20,
+            format="gguf:iq4_nl",
             shape=[32],
             output_dtype=TensorProto.FLOAT16,
         )
@@ -81,7 +83,7 @@ class DequantizeGGUF(Base):
     @staticmethod
     def export_mxfp4() -> None:
         node = helper.make_node(
-            "DequantizeGGUF", ["x"], ["y"], ggml_type=39, shape=[32]
+            "DequantizeGGUF", ["x"], ["y"], format="gguf:mxfp4", shape=[32]
         )
         x = np.array([127, *list(range(16))], dtype=np.uint8)
         y = np.array(
@@ -93,7 +95,7 @@ class DequantizeGGUF(Base):
     @staticmethod
     def export_empty() -> None:
         node = helper.make_node(
-            "DequantizeGGUF", ["x"], ["y"], ggml_type=10, shape=[0, 256]
+            "DequantizeGGUF", ["x"], ["y"], format="gguf:q2_k", shape=[0, 256]
         )
         expect(
             node,

@@ -51,7 +51,8 @@ class _GGMLType(IntEnum):
     Q2_0 = 42
 
 
-# ggml_type: (logical block size, packed block bytes)
+# Private GGML IDs used by the translated decoders.
+# The operator accepts only the ONNX format identifiers in GGUF_FORMATS.
 GGUF_BLOCK_SIZES = {
     2: (32, 18),
     3: (32, 20),
@@ -81,6 +82,7 @@ GGUF_BLOCK_SIZES = {
     41: (128, 18),
     42: (64, 18),
 }
+GGUF_FORMATS = {f"gguf:{kind.name.lower()}": kind for kind in _GGMLType}
 _IQ4 = np.array(
     [-127, -104, -83, -65, -49, -35, -22, -10, 1, 13, 25, 38, 53, 69, 89, 113],
     dtype=np.float32,
@@ -362,9 +364,10 @@ def _decode_block(block: bytes, qtype: int) -> np.ndarray:  # noqa: PLR0911
 
 
 class DequantizeGGUF(OpRun):
-    def _run(self, x, ggml_type=None, shape=None, output_dtype=None):
-        if ggml_type not in GGUF_BLOCK_SIZES:
-            raise ValueError(f"Unsupported quantized ggml_type: {ggml_type}")
+    def _run(self, x, format=None, shape=None, output_dtype=None):  # noqa: A002
+        if format not in GGUF_FORMATS:
+            raise ValueError(f"Unsupported quantization format: {format}")
+        qtype = GGUF_FORMATS[format]
         if x.dtype != np.uint8 or x.ndim != 1:
             raise ValueError("x must be a one-dimensional UINT8 tensor.")
         if output_dtype not in (
@@ -380,7 +383,7 @@ class DequantizeGGUF(OpRun):
             raise ValueError(
                 "shape must have rank at least one and nonnegative dimensions."
             )
-        block_size, block_bytes = GGUF_BLOCK_SIZES[ggml_type]
+        block_size, block_bytes = GGUF_BLOCK_SIZES[qtype]
         if shape[-1] % block_size:
             raise ValueError(
                 "The last output dimension must be a multiple of the quantization block size."
@@ -396,7 +399,7 @@ class DequantizeGGUF(OpRun):
         out = np.empty(count, dtype=np.float32)
         for j, block in enumerate(x.reshape(-1, block_bytes)):
             out[j * block_size : (j + 1) * block_size] = _decode_block(
-                block.tobytes(), ggml_type
+                block.tobytes(), qtype
             )
         return (
             out.reshape(tuple(shape)).astype(

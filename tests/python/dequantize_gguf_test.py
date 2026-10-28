@@ -11,15 +11,25 @@ from pathlib import Path
 import numpy as np
 import pytest
 
-import onnx
-from onnx import TensorProto, helper, parser
+from onnx import (
+    AttributeProto,
+    TensorProto,
+    checker,
+    defs,
+    helper,
+    parser,
+    shape_inference,
+)
 from onnx.reference import ReferenceEvaluator
 from onnx.reference.ops.op_dequantize_gguf import (
     GGUF_BLOCK_SIZES,
+    GGUF_FORMATS,
     _decode_block,
     _GGMLType,
     _grid,
 )
+
+_SPECIFICATION_PATH = Path(__file__).resolve().parents[2] / "docs" / "DequantizeGGUF.md"
 
 # SHA256 of little-endian FLOAT output from 64 blocks per format, using the
 # unmodified dequantize_row_* functions at GGML da8e2a54b919557b816b1c2beb432ccb766f7ce0.
@@ -116,20 +126,25 @@ def _corpus(qtype: int, count: int = 64) -> np.ndarray:
 
 
 def _run(
-    x: np.ndarray, qtype: int = 2, shape=None, output_dtype: int = TensorProto.FLOAT
+    x: np.ndarray,
+    qtype: int | str = 2,
+    shape=None,
+    output_dtype: int = TensorProto.FLOAT,
 ) -> np.ndarray:
     node = helper.make_node(
         "DequantizeGGUF",
         ["x"],
         ["y"],
-        ggml_type=qtype,
+        format=f"gguf:{_GGMLType(qtype).name.lower()}"
+        if isinstance(qtype, int)
+        else qtype,
         output_dtype=output_dtype,
     )
     node.attribute.append(
         helper.make_attribute(
             "shape",
             [32] if shape is None else shape,
-            attr_type=onnx.AttributeProto.INTS,
+            attr_type=AttributeProto.INTS,
         )
     )
     return ReferenceEvaluator(node).run(None, {"x": x})[0]
@@ -137,13 +152,61 @@ def _run(
 
 def test_complete_format_set() -> None:
     assert set(GGUF_BLOCK_SIZES) == set(_ORACLE_DIGESTS)
+    assert set(GGUF_FORMATS.values()) == set(_ORACLE_DIGESTS)
+
+
+def test_format_attribute_schema() -> None:
+    schema = defs.get_schema("DequantizeGGUF", 29)
+    assert schema.attributes["format"].type == defs.OpSchema.AttrType.STRING
+    assert schema.attributes["format"].required
+    assert "ggml_type" not in schema.attributes
+
+
+def test_documented_format_identifiers() -> None:
+    expected = {
+        name: (kind.name, *GGUF_BLOCK_SIZES[kind])
+        for name, kind in GGUF_FORMATS.items()
+    }
+    for text in (
+        _SPECIFICATION_PATH.read_text(encoding="utf-8"),
+        defs.get_schema("DequantizeGGUF", 29).doc,
+    ):
+        rows = re.findall(
+            r"^\|\s*(gguf:[a-z0-9_]+)\s*\|\s*(\w+)\s*\|\s*(\d+)\s*\|\s*(\d+)\s*\|$",
+            text,
+            flags=re.MULTILINE,
+        )
+        assert len(rows) == len(expected)
+        assert {
+            name: (kind, int(width), int(size)) for name, kind, width, size in rows
+        } == expected
+
+
+@pytest.mark.parametrize("attrs", [{"format": 2}, {"ggml_type": 2}, {}])
+def test_format_attribute_required_string(attrs) -> None:
+    model = parser.parse_model("""
+        <ir_version: 13, opset_import: ["" : 29]>
+        gguf (uint8[18] x) => (float[32] y) {
+            y = DequantizeGGUF<shape=[32]>(x)
+        }
+    """)
+    model.graph.node[0].attribute.extend(
+        helper.make_attribute(name, value) for name, value in attrs.items()
+    )
+    with pytest.raises(checker.ValidationError):
+        checker.check_model(model)
+
+
+def test_reference_rejects_numeric_format() -> None:
+    node = helper.make_node("DequantizeGGUF", ["x"], ["y"], format=2, shape=[32])
+    with pytest.raises(ValueError, match="Unsupported quantization format"):
+        ReferenceEvaluator(node).run(None, {"x": np.zeros(18, dtype=np.uint8)})
 
 
 def _load_specification():
-    path = Path(__file__).resolve().parents[2] / "docs" / "DequantizeGGUF.md"
     blocks = re.findall(
         r"^```python\n(.*?)^```$",
-        path.read_text(encoding="utf-8"),
+        _SPECIFICATION_PATH.read_text(encoding="utf-8"),
         flags=re.MULTILINE | re.DOTALL,
     )
     namespace = {}
@@ -282,10 +345,10 @@ def test_default_output_dtype() -> None:
     model = parser.parse_model("""
         <ir_version: 13, opset_import: ["" : 29]>
         gguf (uint8[18] x) => (float[32] y) {
-            y = DequantizeGGUF<ggml_type=2, shape=[32]>(x)
+            y = DequantizeGGUF<format="gguf:q4_0", shape=[32]>(x)
         }
     """)
-    onnx.checker.check_model(model, full_check=True)
+    checker.check_model(model, full_check=True)
     block = np.frombuffer(struct.pack("<e", 0.5) + bytes(range(16)), dtype=np.uint8)
     actual = ReferenceEvaluator(model).run(None, {"x": block})[0]
     expected = np.array(list(np.arange(-8, 8) * 0.5) + [-4] * 16, dtype=np.float32)
@@ -301,12 +364,34 @@ def test_empty(qtype: int) -> None:
 
 
 @pytest.mark.parametrize(
-    "qtype",
-    [0, 1, 4, 5, *range(24, 29), 30, *range(31, 34), *range(36, 39), -1, 43, 2**32],
+    "name",
+    [
+        "",
+        "q4_0",
+        "GGUF:q4_0",
+        "gguf:Q4_0",
+        "gguf:q2_K",
+        "onnx:q4_0",
+        "gguf:f32",
+        "gguf:f16",
+        "gguf:bf16",
+        "gguf:i8",
+        "gguf:q4_2",
+        "gguf:q4_3",
+        "gguf:q4_0_4_4",
+        "gguf:unknown",
+        "gguf:2",
+        "2",
+        "gguf:q4_0 ",
+    ],
 )
-def test_rejected_formats(qtype: int) -> None:
-    with pytest.raises(ValueError, match="Unsupported quantized ggml_type"):
-        _run(np.zeros(18, dtype=np.uint8), qtype)
+def test_rejected_formats(name: str) -> None:
+    with pytest.raises(ValueError, match="Unsupported quantization format"):
+        _run(np.zeros(18, dtype=np.uint8), name)
+    with pytest.raises(
+        shape_inference.InferenceError, match="Unsupported quantization format"
+    ):
+        _infer(format=name)
 
 
 @pytest.mark.parametrize("shape", [[], [-1, 32], [31], [0, 31]])
@@ -389,11 +474,11 @@ def test_all_block_float_scale_bytes(qtype: int) -> None:
 
 
 def _infer(input_shape=(18,), input_type=TensorProto.UINT8, **attrs):
-    attributes = {"ggml_type": 2, "output_dtype": TensorProto.FLOAT, **attrs}
+    attributes = {"format": "gguf:q4_0", "output_dtype": TensorProto.FLOAT, **attrs}
     shape = attributes.pop("shape", [32])
     node = helper.make_node("DequantizeGGUF", ["x"], ["y"], **attributes)
     node.attribute.append(
-        helper.make_attribute("shape", shape, attr_type=onnx.AttributeProto.INTS)
+        helper.make_attribute("shape", shape, attr_type=AttributeProto.INTS)
     )
     graph = helper.make_graph(
         [node],
@@ -402,7 +487,7 @@ def _infer(input_shape=(18,), input_type=TensorProto.UINT8, **attrs):
         [helper.make_empty_tensor_value_info("y")],
     )
     model = helper.make_model(graph, opset_imports=[helper.make_opsetid("", 29)])
-    return onnx.shape_inference.infer_shapes(model, check_type=True, strict_mode=True)
+    return shape_inference.infer_shapes(model, check_type=True, strict_mode=True)
 
 
 @pytest.mark.parametrize(
@@ -450,7 +535,11 @@ def test_shape_inference(elem_type, input_shape) -> None:
     ],
 )
 def test_shape_inference_formats(qtype, block, packed) -> None:
-    model = _infer((packed * 6,), ggml_type=qtype, shape=[2, 3, block])
+    model = _infer(
+        (packed * 6,),
+        format=f"gguf:{_GGMLType(qtype).name.lower()}",
+        shape=[2, 3, block],
+    )
     out = model.graph.output[0].type.tensor_type
     assert out.elem_type == TensorProto.FLOAT
     assert [dim.dim_value for dim in out.shape.dim] == [2, 3, block]
@@ -475,19 +564,16 @@ def test_shape_inference_empty(shape) -> None:
         ((19,), {"shape": [32]}),
         ((1, 18), {"shape": [32]}),
         ((), {"shape": [32]}),
-        ((18,), {"ggml_type": 0}),
-        ((18,), {"ggml_type": 4}),
-        ((18,), {"ggml_type": 31}),
-        ((18,), {"ggml_type": 43}),
+        ((18,), {"format": 2}),
         ((18,), {"output_dtype": TensorProto.INT32}),
         ((None,), {"shape": [2**62, 32]}),
     ],
 )
 def test_shape_inference_invalid(input_shape, attrs) -> None:
-    with pytest.raises(onnx.shape_inference.InferenceError):
+    with pytest.raises(shape_inference.InferenceError):
         _infer(input_shape, **attrs)
 
 
 def test_shape_inference_invalid_input_type() -> None:
-    with pytest.raises(onnx.shape_inference.InferenceError):
+    with pytest.raises(shape_inference.InferenceError):
         _infer(input_type=TensorProto.INT8)

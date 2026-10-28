@@ -17,17 +17,25 @@ The [operator schema](Operators.md#DequantizeGGUF) registers this contract.
 ## Signature and storage
 
 ```text
-y = DequantizeGGUF<ggml_type, shape, output_dtype=FLOAT>(x)
+y = DequantizeGGUF<format, shape, output_dtype=FLOAT>(x)
 ```
 
 `x` is a rank-one UINT8 tensor of exact payload bytes. The three attributes
-describe fixed weight metadata: the tensor's GGML type ID, the logical ONNX
-output shape, and the ONNX floating-point output type. `ggml_type` and `shape`
+describe fixed weight metadata: the quantization format, the logical ONNX
+output shape, and the ONNX floating-point output type. `format` and `shape`
 are required attributes. `output_dtype` defaults to FLOAT and also supports
 FLOAT16, BFLOAT16, and DOUBLE. Blocks are decoded in input order to FLOAT.
 Their concatenated values are reshaped to `shape` and converted once to
 `output_dtype`. FLOAT16 and BFLOAT16 conversion uses round-to-nearest,
 ties-to-even, as in Cast.
+
+`format` is an ONNX-defined, case-sensitive string identifier. The `gguf:`
+prefix identifies the encoding family. Each permitted identifier denotes the
+fixed layout, algorithm, and codebooks defined in this document. For example:
+
+```text
+y = DequantizeGGUF<format="gguf:q2_0", shape=[64]>(x)
+```
 
 The importer selects each tensor's payload byte range, normalizes multibyte
 fields to little-endian, and supplies dimensions in ONNX order. In GGML the
@@ -47,7 +55,8 @@ The formats originate from **GGML
 [`da8e2a54b919557b816b1c2beb432ccb766f7ce0`](https://github.com/ggml-org/ggml/tree/da8e2a54b919557b816b1c2beb432ccb766f7ce0)**,
 whose `GGML_QNT_VERSION` is 2. A GGUF container version, a quantization version,
 a model-level `general.file_type`, and a tensor-level `ggml_type` are different
-concepts. The operator fixes the layouts, codebooks, and enum values at this revision.
+concepts. Importers map GGML's numeric tensor type IDs to the ONNX identifiers
+in the table below: for example, GGML type 2 maps to `"gguf:q4_0"`.
 Older files with different layouts must be converted by the importer.
 
 | Evidence                                                                                                                                     | What it establishes                                                                         |
@@ -64,40 +73,40 @@ The GGUF prose enum lags the live GGML header: for example, it does not yet list
 NVFP4, Q1_0, and Q2_0 at the pinned revision. Consequently the proposal follows
 the header and implementation, not just the prose enum.
 
-## Quantized coverage and exclusions
+## Quantization formats
 
-The permitted `ggml_type` identifiers, decoded element counts `B`, and packed
+The permitted `format` identifiers, decoded element counts `B`, and packed
 byte counts `S` are:
 
 | Identifier | Format  | B   | S   |
 | ---------- | ------- | --- | --- |
-| 2          | Q4_0    | 32  | 18  |
-| 3          | Q4_1    | 32  | 20  |
-| 6          | Q5_0    | 32  | 22  |
-| 7          | Q5_1    | 32  | 24  |
-| 8          | Q8_0    | 32  | 34  |
-| 9          | Q8_1    | 32  | 36  |
-| 10         | Q2_K    | 256 | 84  |
-| 11         | Q3_K    | 256 | 110 |
-| 12         | Q4_K    | 256 | 144 |
-| 13         | Q5_K    | 256 | 176 |
-| 14         | Q6_K    | 256 | 210 |
-| 15         | Q8_K    | 256 | 292 |
-| 16         | IQ2_XXS | 256 | 66  |
-| 17         | IQ2_XS  | 256 | 74  |
-| 18         | IQ3_XXS | 256 | 98  |
-| 19         | IQ1_S   | 256 | 50  |
-| 20         | IQ4_NL  | 32  | 18  |
-| 21         | IQ3_S   | 256 | 110 |
-| 22         | IQ2_S   | 256 | 82  |
-| 23         | IQ4_XS  | 256 | 136 |
-| 29         | IQ1_M   | 256 | 56  |
-| 34         | TQ1_0   | 256 | 54  |
-| 35         | TQ2_0   | 256 | 66  |
-| 39         | MXFP4   | 32  | 17  |
-| 40         | NVFP4   | 64  | 36  |
-| 41         | Q1_0    | 128 | 18  |
-| 42         | Q2_0    | 64  | 18  |
+| gguf:q4_0 | Q4_0 | 32 | 18 |
+| gguf:q4_1 | Q4_1 | 32 | 20 |
+| gguf:q5_0 | Q5_0 | 32 | 22 |
+| gguf:q5_1 | Q5_1 | 32 | 24 |
+| gguf:q8_0 | Q8_0 | 32 | 34 |
+| gguf:q8_1 | Q8_1 | 32 | 36 |
+| gguf:q2_k | Q2_K | 256 | 84 |
+| gguf:q3_k | Q3_K | 256 | 110 |
+| gguf:q4_k | Q4_K | 256 | 144 |
+| gguf:q5_k | Q5_K | 256 | 176 |
+| gguf:q6_k | Q6_K | 256 | 210 |
+| gguf:q8_k | Q8_K | 256 | 292 |
+| gguf:iq2_xxs | IQ2_XXS | 256 | 66 |
+| gguf:iq2_xs | IQ2_XS | 256 | 74 |
+| gguf:iq3_xxs | IQ3_XXS | 256 | 98 |
+| gguf:iq1_s | IQ1_S | 256 | 50 |
+| gguf:iq4_nl | IQ4_NL | 32 | 18 |
+| gguf:iq3_s | IQ3_S | 256 | 110 |
+| gguf:iq2_s | IQ2_S | 256 | 82 |
+| gguf:iq4_xs | IQ4_XS | 256 | 136 |
+| gguf:iq1_m | IQ1_M | 256 | 56 |
+| gguf:tq1_0 | TQ1_0 | 256 | 54 |
+| gguf:tq2_0 | TQ2_0 | 256 | 66 |
+| gguf:mxfp4 | MXFP4 | 32 | 17 |
+| gguf:nvfp4 | NVFP4 | 64 | 36 |
+| gguf:q1_0 | Q1_0 | 128 | 18 |
+| gguf:q2_0 | Q2_0 | 64 | 18 |
 
 Q8_1 and Q8_K also serve as intermediate/dot-product formats. Q8_1 uses a FLOAT16
 scale and 32 signed INT8 quants; Q8_K uses a FLOAT scale and 256 signed INT8

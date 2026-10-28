@@ -34,7 +34,7 @@ class TestAutomaticUpgrade(automatic_conversion_test_base.TestAutomaticConversio
             [[18]],
             [[32]],
             input_types=[TensorProto.UINT8],
-            attrs={"ggml_type": 2, "shape": [32]},
+            attrs={"format": "gguf:q4_0", "shape": [32]},
         )
 
     def test_Abs(self) -> None:

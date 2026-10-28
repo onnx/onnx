@@ -29,7 +29,7 @@ class TestAutomaticDowngrade(automatic_conversion_test_base.TestAutomaticConvers
             [[18]],
             [[32]],
             input_types=[onnx.TensorProto.UINT8],
-            attrs={"ggml_type": 2, "shape": [32]},
+            attrs={"format": "gguf:q4_0", "shape": [32]},
         )
 
     def test_dequantizegguf_before_introduction_fails(self) -> None:
@@ -38,7 +38,7 @@ class TestAutomaticDowngrade(automatic_conversion_test_base.TestAutomaticConvers
             model="""
                 <ir_version: 13, opset_import: ["" : 29]>
                 gguf (uint8[18] x) => (float[32] y) {
-                    y = DequantizeGGUF<ggml_type=2, shape=[32]>(x)
+                    y = DequantizeGGUF<format="gguf:q4_0", shape=[32]>(x)
                 }
             """,
         )
