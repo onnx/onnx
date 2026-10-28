@@ -193,6 +193,20 @@ When adding or renaming helper functions in legacy schema files (`old.cc`), pref
 
 Examples: `RNNShapeInference_opset7_to_13`, `PoolOpSchemaGenerator_opset10_to_11`.
 
+### Updating generated documentation
+
+Run `python tools/update_doc.py` to rebuild the editable package and regenerate
+operator documentation and test coverage. Existing `ONNX_ML` and `CMAKE_ARGS`
+settings are respected.
+
+### Building external Protobuf for CI
+
+Run `python workflow_scripts/protobuf/build.py` to build and install the pinned
+external-Protobuf dependency. Use `--help` for build, install, and architecture
+options. For local ONNX builds, add the installed `bin` directory to `PATH` and
+set `CMAKE_PREFIX_PATH` to the install prefix. GitHub Actions receives these
+paths automatically for subsequent steps.
+
 ### Testing
 
 ONNX uses [pytest](https://docs.pytest.org) as a test driver. Pixi users can run `pixi run pytest` directly. For non-Pixi users, first install pytest:

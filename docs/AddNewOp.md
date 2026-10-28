@@ -94,7 +94,7 @@ Domain subdirectories under `onnx/defs/`: `math/`, `nn/`, `tensor/`, `logical/`,
     2. Similarly add at least one automatic downgrade test for your operator in [tests/python/version_converter/automatic_downgrade_test.py](/tests/python/version_converter/automatic_downgrade_test.py) using `_test_op_downgrade`. Specifying the current version so that once the op is updated at a higher opset version the test will ensure downward conversion is validated.
 
 6. Update the documentation
-    1. Running [the script](/tools/update_doc.sh) to update the doc
+    1. Run `python tools/update_doc.py` to rebuild ONNX and update the docs.
 7. Shape Inference function
     1. Please provide a shape inference function in cases where it is meaningful and applicable.
     2. In cases where shape inference is not possible, it must have logic to perform
