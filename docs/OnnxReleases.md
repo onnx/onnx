@@ -6,7 +6,10 @@ SPDX-License-Identifier: Apache-2.0
 
 # ONNX Releases
 
-The ONNX project plans to release roughly every three months. We follow the [Semver](https://semver.org/) versioning approach and make decisions as a community on a release-by-release basis on whether to produce a major or minor release.
+This is the release manager's operational checklist. See
+[Release Management](../RELEASE-MANAGEMENT.md) for release cadence and policy,
+[Versioning](Versioning.md) for IR and opset compatibility rules, and
+[Release Administration](ReleaseAdministration.md) for administrator-only tasks.
 
 ## Preparation
 
@@ -16,7 +19,7 @@ The ONNX project plans to release roughly every three months. We follow the [Sem
     * For (v.X.Y.Z), if release is to be 1.16.0,
         * X=1, Y=16, Z=0
         * The new branch will be `rel-1.16.0`
-            * Branch protections rules are automatically applied to branches following this format.
+            * Confirm with Architecture & Infra SIG that the matching branch protection rules and required checks apply.
         * The new tag will be `v1.16.0`
 * Create new page for the release in [Release logistics wiki](https://github.com/onnx/onnx/wiki) (Add the release manager to the ONNX organization, if not already seen, so that the manager has write permissions in the wiki.)
 * Before creating a release branch, it is highly recommended to have in mind to compile **preliminary release notes** — ideally maintained in a shared location such as the **release wiki page**. These notes should include a clear summary of the **new features**, a list of **bug fixes**, any **known issues**, and especially any **deprecations or removals**, with links to relevant tickets or documentation where applicable. Having this information ready ensures that the team can confidently and promptly create a `rc1` (release candidate 1) immediately after the branch is cut, without delays. Acting quickly at this stage also helps to **reduce the need for parallel work on both the main and release branches**, minimizing merge conflicts, duplicated effort, and coordination overhead. This practice supports a smoother, more transparent release process.
@@ -26,48 +29,62 @@ The ONNX project plans to release roughly every three months. We follow the [Sem
 
 ## Create Release Branch
 
+For a new major/minor release, cut from `main` after the version checks below.
+For a patch release, base `rel-X.Y.Z` on the existing release line or previous
+release tag and select the required fixes; do not pull unrelated development
+features from `main` or advance its version/opset just to issue a patch.
+
 * In `main` branch, before creating the release branch:
     1. Make sure the release version ([/VERSION_NUMBER](/VERSION_NUMBER)), IR version, ai.onnx opset version, ai.onnx.ml opset version, and ai.onnx.training opset version are correct for the new release in [ONNX proto files](/onnx/onnx.in.proto), [Versioning.md](Versioning.md), [schema.h](/onnx/defs/schema.h), [helper.py](/onnx/helper.py), and [helper_test.py](/tests/python/helper_test.py).
 
 * Create a release branch
-    1. Click "New branch" from [branches](https://github.com/onnx/onnx/branches) and choose `main` as Source.
+    1. Click "New branch" from [branches](https://github.com/onnx/onnx/branches) and choose the source appropriate to the release type above.
     1. Make sure all tests pass on the new branch.
 
 * After cutting the release branch:
-    1. Create PR to set [VERSION_NUMBER](/VERSION_NUMBER) file in `main` to the next future release, `X.Y+1.0`.
+    1. For a new major/minor release, create a PR to set [VERSION_NUMBER](/VERSION_NUMBER) in `main` to the next planned development version.
     1. Create PR to set `VERSION_NUMBER` file in the new release's branch to `X.Y.Zrc1`.
         * For example the first release candidate for 1.16.0 would be `1.16.0rc1`
-    1. Bump opset version for ai.onnx domain in `onnx/defs/operator_sets.h` and `onnx/defs/schema.h` for use by future operator additions and changes.
+    1. For the next development cycle, bump the ai.onnx opset in `main` in `onnx/defs/operator_sets.h` and `onnx/defs/schema.h` for future operator changes. Do not apply this development bump to the release branch.
         * For example, this [demo PR](https://github.com/onnx/onnx/pull/6001).
 
-## Upload release candidate to PyPI
+## Build and publish packages
 
-* Go to "Actions" -> select ["Create Releases"](https://github.com/onnx/onnx/actions/workflows/create_release.yml) -> Push the button "Run workflow" with the following config:
+Open [Create Releases](https://github.com/onnx/onnx/actions/workflows/create_release.yml)
+and select **Run workflow**. In **Use workflow from**, choose the branch whose
+`VERSION_NUMBER` and source commit you intend to release.
 
-<img width="339" height="586" alt="make-release-config" src="https://github.com/user-attachments/assets/9e2ab1df-3db5-4161-9d2e-fa95153e189a" />
+Set only the publish input listed below to `yes`; leave all other publish inputs
+at `no`. A build-only run leaves all four publish inputs at `no`.
 
-RC-Candidates
+| Purpose | Branch | `build_mode` | Publish input | Package index / project | Deployment environment |
+| --- | --- | --- | --- | --- | --- |
+| Release candidate (`X.Y.ZrcN`) or final release (`X.Y.Z`) | `rel-X.Y.Z` | `release` | `publish_pypi_release` | PyPI / `onnx` | `pypi-release` |
+| Optional TestPyPI rehearsal | `rel-X.Y.Z` | `release` | `publish_testpypi_release` | TestPyPI / `onnx` | `testpypi-release` |
+| Development preview | `main` | `preview` | `publish_pypi_weekly` | PyPI / `onnx-weekly` | `pypi-weekly` |
+| TestPyPI development preview | `main` | `preview` | `publish_testpypi_weekly` | TestPyPI / `onnx-weekly` | `testpypi-weekly` |
 
-* Published to https://pypi.org/ (starting with onnx 1.19.2 before it was test.pypi.org)
-* Build-mode: Release
+Use `build_mode=release` for both RCs and final releases. The default `preview`
+mode renames the distribution to `onnx-weekly` and appends a development-version
+suffix. Release candidates are published to the `onnx` project on PyPI;
+TestPyPI is an optional rehearsal, not a mandatory RC destination.
 
-* This button triggers the build of the different OS
-
-<img width="1059" height="755" alt="create_releases_overview_jobs" src="https://github.com/user-attachments/assets/d56018f4-a26e-4a38-af0f-6d34f36510c7" />
-
-* All artifacts of the single runs could be found associated to the job
-
-<img width="1556" height="335" alt="create_releases_artifact_overview" src="https://github.com/user-attachments/assets/5f1cb1db-9a22-4a15-84bf-bb68c488898a" />
-
-* Before the final merge, it must be confirmed manually via the set up deployment environments.
+Check the Linux, Windows, macOS, Pyodide, and source-distribution build jobs and
+their artifacts. The protected deployment environments control publication;
+complete any configured approval after inspecting the build results. Publishing
+a GitHub release or pushing a tag does not itself publish packages to PyPI.
 
 ## Package verification
 
 **Partner Validation**
 
  * User should install the rc-packages with `pip install onnx=={rc version}`
+ * Validate the actual wheels and sdist from the intended run. Follow
+   [Release Verification](ReleaseVerification.md) to verify published artifacts.
+   Test installations in clean environments outside the ONNX checkout so that
+   imports exercise the installed package.
  * Open Issues for external repos:
-     * Create GitHub issues in converters' repos to provide them the package links and oppuruntity to test the release before it goes public.
+     * Create GitHub issues in converters' repos to provide package links and an opportunity to test before the final release.
         * https://github.com/microsoft/onnxruntime
             * Example: https://github.com/microsoft/onnxruntime/issues/19783
             * Note: [How_To_Update_ONNX_Dev_Notes](https://github.com/microsoft/onnxruntime/blob/main/docs/How_To_Update_ONNX_Dev_Notes.md) exists in their repo documenting how to pull in new ONNX releases.
@@ -100,6 +117,8 @@ Validation steps must be completed before this point. This is the point of no re
 ## Set final version number
 
 * Create PR to remove "`rcX`" suffix from `VERSION_NUMBER` file in the new release's branch.
+* Use a build-only run with `build_mode=release` and all publish inputs set to
+  `no` to inspect the final-version artifacts before publishing the release tag.
 
 ## Create release tag
 
@@ -118,14 +137,20 @@ Validation steps must be completed before this point. This is the point of no re
 
 ## Upload to Official PyPI
 
-* Starting with the release of 1.19, the final release will also be pushed to pypi via Github “Action" -> "Create releases" (see above). Use the following config for official release:
-
-<img width="548" height="749" alt="RunWorkflow_Final" src="https://github.com/user-attachments/assets/d836d0b8-b033-4317-aa21-2aeed3c74d05" />
+* Run **Create Releases** on the release branch with `build_mode=release` and
+  `publish_pypi_release=yes`, as described in [Build and publish packages](#build-and-publish-packages).
+* Confirm `VERSION_NUMBER` is exactly `X.Y.Z`, without an RC or development
+  suffix, and the workflow run's source commit matches the published `vX.Y.Z`
+  tag. The same publish input also accepts RC versions; it does not enforce a
+  final version for you.
+* This run rebuilds packages with the final version. It does not rename or
+  promote the previously published RC files.
 
 ### NOTES:
 
 * Once the packages are uploaded to PyPI, **you cannot overwrite it on the same PyPI instance**.
-  * Make sure everything is correct on TestPyPI before uploading to PyPI.
+  * Complete partner validation against the PyPI RC. If a TestPyPI rehearsal is
+    used, validate it before the corresponding PyPI upload as well.
 * Publishing uses GitHub Actions, protected deployment environments, and PyPI Trusted Publishing. Release managers do not enter PyPI passwords or API tokens into the workflow. The Architecture & Infra SIG administers the deployment environments and PyPI project access.
 
 ## After PyPI Release
