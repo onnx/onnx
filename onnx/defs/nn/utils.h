@@ -19,6 +19,9 @@ std::vector<int64_t> getConvPoolStrides(InferenceContext& ctx, size_t n_input_di
 
 /** Implements shape and type propagation for Attention (23-). */
 void AttentionPropagateElemTypeFromInputToOutput(InferenceContext& ctx);
+void Attention29PropagateElemTypeFromInputToOutput(InferenceContext& ctx);
+
+OpSchema AttentionSchema25();
 
 /** Implements CausalMask for Attention. */
 bool AttentionAppendFunctionCausalMask(

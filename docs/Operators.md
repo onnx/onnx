@@ -168,7 +168,7 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#Xor">Xor</a>|<a href="Changelog.md#Xor-7">7</a>, <a href="Changelog.md#Xor-1">1</a>|
 |**Function**|**Since version**|**Function version**|
 |<a href="#AffineGrid">AffineGrid</a>|<a href="Changelog.md#AffineGrid-20">20</a>|20|
-|<a href="#Attention">Attention</a>|<a href="Changelog.md#Attention-25">25</a>, <a href="Changelog.md#Attention-24">24</a>, <a href="Changelog.md#Attention-23">23</a>|25|
+|<a href="#Attention">Attention</a>|<a href="Changelog.md#Attention-29">29</a>, <a href="Changelog.md#Attention-25">25</a>, <a href="Changelog.md#Attention-24">24</a>, <a href="Changelog.md#Attention-23">23</a>|29|
 |<a href="#Bernoulli">Bernoulli</a>|<a href="Changelog.md#Bernoulli-22">22</a>, <a href="Changelog.md#Bernoulli-15">15</a>|22|
 |<a href="#BlackmanWindow">BlackmanWindow</a>|<a href="Changelog.md#BlackmanWindow-17">17</a>|17|
 |<a href="#CastLike">CastLike</a>|<a href="Changelog.md#CastLike-25">25</a>, <a href="Changelog.md#CastLike-24">24</a>, <a href="Changelog.md#CastLike-23">23</a>, <a href="Changelog.md#CastLike-21">21</a>, <a href="Changelog.md#CastLike-19">19</a>, <a href="Changelog.md#CastLike-15">15</a>|25|
@@ -1760,11 +1760,44 @@ expect(node, inputs=[x], outputs=[y], name="test_atanh")
   ```
 
 
+  An optional `head_sink` supplies one learned, finite normalization logit per query head,
+  including separate logits for query heads sharing a KV head in GQA or MQA.
+  For the final real-key logits `L` (after scaling, softcap, and additive masks),
+  the probabilities are
+
+      P[b,h,i,j] = exp(L[b,h,i,j]) / (exp(head_sink[h]) + sum_k exp(L[b,h,i,k]))
+      Y[b,h,i,:] = sum_j P[b,h,i,j] * V[b,h,j,:]
+
+  Implementations must evaluate this normalization stably, for example by subtracting
+  the maximum of the real logits and the sink logit before exponentiation.
+  The sink is already in final-logit units: it is not scaled or softcapped.
+  It is always visible, independent of causal, window, attention, and padding masks.
+  It contributes only to the denominator, never to the numerator; it is not a real
+  key/value token, consumes no cache position, and does not change sequence lengths
+  or cache outputs. This is unrelated to retaining "sink tokens" in a KV cache.
+  The sink and real logits are cast to `softmax_precision` (or `T1` when absent)
+  before joint normalization; real probabilities are then cast back to `T1`.
+
+  All four `qk_matmul_output` modes retain real-key dimensions only. Modes 0, 1, and 2
+  are independent of the sink; mode 3 contains the sink-normalized real-key probabilities,
+  which need not sum to one. Fully masked rows still produce zero real probabilities
+  and zero `Y`. With a sink, an empty real-key sequence is also allowed and produces
+  zero `Y` and an empty score/probability output. Values and unmasked logits are
+  assumed finite. Without `head_sink`, the Attention-25 behavior is unchanged.
+
+  A zero sink gives smooth-softmax, with denominator `1 + sum_k exp(L[k])`.
+  For example, one real logit 0, real value 2 and sink logit `log(3)` produce `Y = 0.5`.
+  This normalization is used by ONNX Runtime's
+  [DynamicSparseAttention](https://github.com/microsoft/onnxruntime/blob/526e95a1447a43af1d1ac71c0cd8b1de62b47f5d/onnxruntime/core/graph/contrib_ops/bert_defs.cc#L637-L751)
+  and [SparsePagedAttention](https://github.com/microsoft/onnxruntime/blob/526e95a1447a43af1d1ac71c0cd8b1de62b47f5d/onnxruntime/core/graph/contrib_ops/bert_defs.cc#L2203-L2284).
+  The public [GPT-OSS reference model](https://github.com/openai/gpt-oss/blob/243a1b02767da73bd2e3975be250afa801635866/gpt_oss/torch/model.py#L167-L218)
+  uses this learned per-query-head sink normalization with grouped-query and sliding-window attention.
+
 #### Version
 
-This version of the operator has been available since version 25 of the default ONNX operator set.
+This version of the operator has been available since version 29 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#Attention-23">23</a>, <a href="Changelog.md#Attention-24">24</a>
+Other versions of this operator: <a href="Changelog.md#Attention-23">23</a>, <a href="Changelog.md#Attention-24">24</a>, <a href="Changelog.md#Attention-25">25</a>
 
 #### Attributes
 
@@ -1789,7 +1822,7 @@ Other versions of this operator: <a href="Changelog.md#Attention-23">23</a>, <a 
 <dd>Specifies the precision for softmax computation. If provided, the attention weights will be cast to this type before softmax and then cast back to the original type. Supported values are: `1` (FLOAT), `10` (FLOAT16), `11` (DOUBLE), `16` (BFLOAT16).</dd>
 </dl>
 
-#### Inputs (3 - 7)
+#### Inputs (3 - 8)
 
 <dl>
 <dt><tt>Q</tt> : T1</dt>
@@ -1806,6 +1839,8 @@ Other versions of this operator: <a href="Changelog.md#Attention-23">23</a>, <a 
 <dd>Past state for value with shape `(batch_size, kv_num_heads, past_sequence_length, v_head_size)`. Must be used together with `past_key` input.</dd>
 <dt><tt>nonpad_kv_seqlen</tt> (optional) : tensor(int64)</dt>
 <dd>A vector of integers of shape `(batch_size,)` that indicates the number of valid (i.e., non-padding) tokens in each sample. A padding mask can be derived from this. This should not be used together with `past_key` and `past_value` inputs or `present_key` and `present_value` outputs (see the KV cache use cases in the operator description).</dd>
+<dt><tt>head_sink</tt> (optional) : T1</dt>
+<dd>Finite denominator-only normalization logits of shape `(q_num_heads,)`, in final-logit units.</dd>
 </dl>
 
 #### Outputs (1 - 4)
@@ -4652,6 +4687,58 @@ expect(
 
 
 <details>
+<summary>attention_head_sink</summary>
+
+```python
+node = onnx.helper.make_node(
+    "Attention",
+    ["Q", "K", "V", "", "", "", "", "head_sink"],
+    ["Y", "", "", "probabilities"],
+    qk_matmul_output_mode=3,
+)
+Q = np.zeros((1, 1, 1, 1), dtype=np.float32)
+K = Q.copy()
+V = np.full_like(Q, 2)
+head_sink = np.array([np.log(3)], dtype=np.float32)
+expect(
+    node,
+    inputs=[Q, K, V, head_sink],
+    outputs=[np.full_like(Q, 0.5), np.full_like(Q, 0.25)],
+    name="test_attention_head_sink",
+    opset_imports=[onnx.helper.make_opsetid("", 29)],
+)
+```
+
+</details>
+
+
+<details>
+<summary>attention_head_sink_empty_keys</summary>
+
+```python
+node = onnx.helper.make_node(
+    "Attention",
+    ["Q", "K", "V", "", "", "", "", "head_sink"],
+    ["Y", "", "", "probabilities"],
+    qk_matmul_output_mode=3,
+)
+Q = np.zeros((1, 2, 1, 1), dtype=np.float32)
+K = np.zeros((1, 1, 0, 1), dtype=np.float32)
+V = K.copy()
+head_sink = np.zeros(2, dtype=np.float32)
+expect(
+    node,
+    inputs=[Q, K, V, head_sink],
+    outputs=[np.zeros_like(Q), np.zeros((1, 2, 1, 0), dtype=np.float32)],
+    name="test_attention_head_sink_empty_keys",
+    opset_imports=[onnx.helper.make_opsetid("", 29)],
+)
+```
+
+</details>
+
+
+<details>
 <summary>attention_local_window</summary>
 
 ```python
@@ -5639,6 +5726,37 @@ expect(
     outputs=[Y, qk_matmul_output],
     name="test_attention_4d_with_qk_matmul_softmax",
     opset_imports=[onnx.helper.make_opsetid("", 23)],
+)
+```
+
+</details>
+
+
+<details>
+<summary>attention_zero_sink_gqa</summary>
+
+```python
+node = onnx.helper.make_node(
+    "Attention",
+    ["Q", "K", "V", "mask", "", "", "", "head_sink"],
+    ["Y", "", "", "probabilities"],
+    qk_matmul_output_mode=3,
+)
+Q = np.zeros((1, 2, 1, 1), dtype=np.float32)
+K = np.zeros((1, 1, 2, 1), dtype=np.float32)
+V = np.array([2, 4], dtype=np.float32).reshape(1, 1, 2, 1)
+mask = np.array([[[[True, True]], [[False, False]]]])
+head_sink = np.zeros(2, dtype=np.float32)
+Y = np.array([2, 0], dtype=np.float32).reshape(1, 2, 1, 1)
+probabilities = np.array([1 / 3, 1 / 3, 0, 0], dtype=np.float32).reshape(
+    1, 2, 1, 2
+)
+expect(
+    node,
+    inputs=[Q, K, V, mask, head_sink],
+    outputs=[Y, probabilities],
+    name="test_attention_zero_sink_gqa",
+    opset_imports=[onnx.helper.make_opsetid("", 29)],
 )
 ```
 

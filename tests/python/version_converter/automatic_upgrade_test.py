@@ -214,6 +214,15 @@ class TestAutomaticUpgrade(automatic_conversion_test_base.TestAutomaticConversio
             [TensorProto.FLOAT],
         )
 
+    def test_Attention_25_to_29(self) -> None:
+        self._test_op_upgrade(
+            "Attention",
+            25,
+            [[2, 4, 3, 8], [2, 2, 6, 8], [2, 2, 6, 5]],
+            [[2, 4, 3, 5]],
+            attrs={"left_window_size": 2},
+        )
+
     def test_AveragePool(self) -> None:
         self._test_op_upgrade(
             "AveragePool",

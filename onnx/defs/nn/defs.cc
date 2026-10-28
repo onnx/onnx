@@ -3053,8 +3053,11 @@ ONNX_OPERATOR_SET_SCHEMA(
           return true;
         }));
 
-static void Attention25Inference(InferenceContext& ctx) {
-  defs::nn::utils::AttentionPropagateElemTypeFromInputToOutput(ctx);
+static void AttentionInference(InferenceContext& ctx, bool sink_version) {
+  if (sink_version)
+    defs::nn::utils::Attention29PropagateElemTypeFromInputToOutput(ctx);
+  else
+    defs::nn::utils::AttentionPropagateElemTypeFromInputToOutput(ctx);
 
   for (const char* window_attr_name : {"left_window_size", "right_window_size"}) {
     const auto* const window_attr = ctx.getAttribute(window_attr_name);
@@ -3093,510 +3096,626 @@ static void Attention25Inference(InferenceContext& ctx) {
   }
 }
 
+static void Attention25Inference(InferenceContext& ctx) {
+  AttentionInference(ctx, false);
+}
+
+static bool
+BuildAttentionFunction(const FunctionBodyBuildContext& ctx, const OpSchema& schema, FunctionProto& functionProto);
+
+OpSchema defs::nn::utils::AttentionSchema25() {
+  return OpSchema()
+      .SetDoc(kDoc_Attention_ver25)
+      .Attr(
+          "is_causal",
+          "If set to `1`, causal masking is applied. For a square Q/K (no cache offset) this is a "
+          "lower-triangular matrix. In general the mask is bottom-right (offset-aware): query in-block "
+          "index `i` attends key `j` iff `j <= i + offset`, where `offset` is the count of valid keys "
+          "preceding the query block (`past_sequence_length` for an internal `past_key` cache, or "
+          "`nonpad_kv_seqlen - q_sequence_length` per batch for an external cache). When `offset = 0` "
+          "this reduces to the lower-triangular (top-left) mask.",
+          AttributeProto::INT,
+          static_cast<int64_t>(0))
+      .Attr(
+          "scale",
+          "Scaling factor applied to $Q*K^T$. Default value is `1/sqrt(head_size)`. To prevent "
+          "[numerical overflow](https://tinyurl.com/sudb9s96), scale `Q`, `K` by `sqrt(scale)` before matmul.",
+          AttributeProto::FLOAT,
+          OPTIONAL_VALUE)
+      .Attr(
+          "q_num_heads",
+          "Number of heads of query. Must be used with 3D inputs of Q, K and V. ",
+          AttributeProto::INT,
+          OPTIONAL_VALUE)
+      .Attr(
+          "kv_num_heads",
+          "Number of heads of key and value. Must be used with 3D inputs of Q, K and V. ",
+          AttributeProto::INT,
+          OPTIONAL_VALUE)
+      .Attr(
+          "softmax_precision",
+          "Specifies the precision for softmax computation. If provided, "
+          "the attention weights will be cast to this type before softmax "
+          "and then cast back to the original type. "
+          "Supported values are: `1` (FLOAT), `10` (FLOAT16), `11` (DOUBLE), "
+          "`16` (BFLOAT16).",
+          AttributeProto::INT,
+          OPTIONAL_VALUE)
+      .Attr(
+          "softcap",
+          "Soft cap for attention logits, applied as `softcap * tanh(logits / softcap)`. "
+          "Default value of `0.0` means no soft capping is applied. "
+          "The soft cap is applied before mask / bias addition and softmax.",
+          AttributeProto::FLOAT,
+          static_cast<float>(0))
+      .Attr(
+          "qk_matmul_output_mode",
+          "Determines what the optional 4th output contains: "
+          "`0` (default): raw QK matmul result; "
+          "`1`: after softcap (before bias addition); "
+          "`2`: QK + softcap + bias; "
+          "`3`: post-softmax probabilities (after fully-masked-row guard). "
+          "In mode `3`, a fully-masked query row (every key disallowed) "
+          "is a zero row, consistent with the corresponding row of the primary output `Y`. "
+          "The mode-`3` output is emitted at the operator's output precision (`T1`); when "
+          "`softmax_precision` differs from `T1` this is a cast of the softmax result to `T1`.",
+          AttributeProto::INT,
+          static_cast<int64_t>(0))
+      .Attr(
+          "left_window_size",
+          "Maximum number of positions to the left of the current absolute query position that may be attended. "
+          "A value of `0` allows the current position but no preceding position, while `-1` leaves the left side "
+          "unbounded. This bound is composed with `is_causal` and `attn_mask`.",
+          AttributeProto::INT,
+          static_cast<int64_t>(-1))
+      .Attr(
+          "right_window_size",
+          "Maximum number of positions to the right of the current absolute query position that may be attended. "
+          "A value of `0` allows the current position but no following position, while `-1` leaves the right side "
+          "unbounded. Set `is_causal=0` to use a positive right window.",
+          AttributeProto::INT,
+          static_cast<int64_t>(-1))
+      .Input(
+          0,
+          "Q",
+          "Query tensor. "
+          "4D tensor with shape `(batch_size, q_num_heads, q_sequence_length, head_size)` or 3D tensor with shape `(batch_size, q_sequence_length, q_hidden_size)`. "
+          "For cases with a 3D input tensor, `q_hidden_size = q_num_heads * head_size`",
+          "T1")
+      .Input(
+          1,
+          "K",
+          "Key tensor. "
+          "4D tensor with shape `(batch_size, kv_num_heads, kv_sequence_length, head_size)` or 3D tensor with shape `(batch_size, kv_sequence_length, k_hidden_size)`. "
+          "For cases with a 3D input tensor, `k_hidden_size = kv_num_heads * head_size`",
+          "T1")
+      .Input(
+          2,
+          "V",
+          "Value tensor. "
+          "4D tensor with shape `(batch_size, kv_num_heads, kv_sequence_length, v_head_size)` or 3D tensor with shape `(batch_size, kv_sequence_length, v_hidden_size)`. "
+          "For cases with a 3D input tensor, `v_hidden_size = kv_num_heads * v_head_size`",
+          "T2")
+      .Input(
+          3,
+          "attn_mask",
+          "Attention mask. "
+          "Shape must be broadcastable to "
+          "`(batch_size, q_num_heads, q_sequence_length, total_sequence_length)` "
+          "where `total_sequence_length = past_sequence_length + kv_sequence_length`. "
+          "The last dimension can also be shorter than `total_sequence_length` and will be "
+          "padded to `total_sequence_length` with negative infinity. "
+          "Two types of masks are supported: a boolean mask where a value of `True` indicates "
+          "that the element should take part in attention, "
+          "or a float mask of the same type as query, key, value that is added to the attention score.",
+          "U",
+          OpSchema::Optional)
+      .Input(
+          4,
+          "past_key",
+          "Past state for key with shape `(batch_size, kv_num_heads, past_sequence_length, head_size)`. "
+          "Must be used together with `past_value` input.",
+          "T1",
+          OpSchema::Optional)
+      .Input(
+          5,
+          "past_value",
+          "Past state for value with shape `(batch_size, kv_num_heads, past_sequence_length, v_head_size)`. "
+          "Must be used together with `past_key` input.",
+          "T2",
+          OpSchema::Optional)
+      .Input(
+          6,
+          "nonpad_kv_seqlen",
+          "A vector of integers of shape `(batch_size,)` that indicates the number of valid "
+          "(i.e., non-padding) tokens in each sample. A padding mask can be derived from this. "
+          "This should not be used together with `past_key` and `past_value` inputs or "
+          "`present_key` and `present_value` outputs "
+          "(see the KV cache use cases in the operator description).",
+          "tensor(int64)",
+          OpSchema::Optional)
+      .Output(
+          0,
+          "Y",
+          "The output tensor. "
+          "4D tensor with shape `(batch_size, q_num_heads, q_sequence_length, v_head_size)` or 3D tensor with shape `(batch_size, q_sequence_length, hidden_size)`. "
+          "For cases with a 3D input tensor, `hidden_size = q_num_heads * v_head_size`",
+          "T1")
+      .Output(
+          1,
+          "present_key",
+          "Updated key cache with shape `(batch_size, kv_num_heads, total_sequence_length, head_size)` "
+          "where `total_sequence_length = past_sequence_length + kv_sequence_length`.",
+          "T1",
+          OpSchema::Optional)
+      .Output(
+          2,
+          "present_value",
+          "Updated value cache with shape `(batch_size, kv_num_heads, total_sequence_length, v_head_size)` "
+          "where `total_sequence_length = past_sequence_length + kv_sequence_length`.",
+          "T2",
+          OpSchema::Optional)
+      .Output(
+          3,
+          "qk_matmul_output",
+          "The output of QK matmul. "
+          "4D tensor with shape `(batch_size, q_num_heads, q_sequence_length, total_sequence_length)` "
+          "where `total_sequence_length = past_sequence_length + kv_sequence_length`.",
+          "T1",
+          OpSchema::Optional)
+      .TypeConstraint("T1", OpSchema::all_float_types_ir4(), "Constrain Q and K inputs types to float tensors.")
+      .TypeConstraint("T2", OpSchema::all_float_types_ir4(), "Constrain V input types to float tensors.")
+      .TypeConstraint(
+          "U",
+          OpSchema::all_non_complex_numeric_types_plus_bool_ir4(),
+          "Constrain output 'mask' types to boolean tensors and input types.")
+      .TypeAndShapeInferenceFunction(Attention25Inference)
+      .SetNodeDeterminism(OpSchema::NodeDeterminism::Deterministic)
+      .SetContextDependentFunctionBodyBuilder(BuildAttentionFunction);
+}
+
+static bool
+BuildAttentionFunction(const FunctionBodyBuildContext& ctx, const OpSchema& schema, FunctionProto& functionProto) {
+  const bool has_sink = schema.SinceVersion() >= 29 && ctx.hasInput(7);
+  // ScaledDotProductAttention <scale, is_causal, q_num_heads, kv_numheads, left_window_size,
+  // right_window_size> (Q, K, V,
+  // attn_mask, past_key, past_value) => (Y, present_key?, present_value?)
+  int64_t int_type = ONNX_NAMESPACE::TensorProto_DataType_INT64;
+  int64_t float_type = ONNX_NAMESPACE::TensorProto_DataType_FLOAT;
+
+  // Get input types
+  auto t_qk = ctx.getInputType(0);
+  if ((t_qk == nullptr) || (!t_qk->has_tensor_type()))
+    return false;
+  int64_t T1 = t_qk->tensor_type().elem_type();
+
+  // Determine precision types for Softmax
+  auto softmax_precision_attr = ctx.getAttribute("softmax_precision");
+  int64_t softmax_precision = (softmax_precision_attr != nullptr) ? softmax_precision_attr->i() : T1;
+  if ((softmax_precision != ONNX_NAMESPACE::TensorProto_DataType_FLOAT) &&
+      (softmax_precision != ONNX_NAMESPACE::TensorProto_DataType_BFLOAT16) &&
+      (softmax_precision != ONNX_NAMESPACE::TensorProto_DataType_FLOAT16) &&
+      (softmax_precision != ONNX_NAMESPACE::TensorProto_DataType_DOUBLE))
+    return false; // Error
+
+  // If shape is 3D, q_num_heads and kv_num_heads is provided,
+  // for 4D cases, set num_heads to zero for reshape purposes
+  auto q_num_heads_attr = ctx.getAttribute("q_num_heads");
+  int64_t q_num_heads = (q_num_heads_attr != nullptr) ? q_num_heads_attr->i() : 0;
+  auto kv_num_heads_attr = ctx.getAttribute("kv_num_heads");
+  int64_t kv_num_heads = (kv_num_heads_attr != nullptr) ? kv_num_heads_attr->i() : 0;
+  auto is_causal_attr = ctx.getAttribute("is_causal");
+  int64_t is_causal = (is_causal_attr != nullptr) ? is_causal_attr->i() : 0;
+
+  auto left_window_attr = ctx.getAttribute("left_window_size");
+  int64_t left_window_size = (left_window_attr != nullptr) ? left_window_attr->i() : -1;
+  auto right_window_attr = ctx.getAttribute("right_window_size");
+  int64_t right_window_size = (right_window_attr != nullptr) ? right_window_attr->i() : -1;
+  if (left_window_size < -1 || right_window_size < -1)
+    return false;
+  if (ctx.hasInput(4) != ctx.hasInput(5) || ctx.hasOutput(1) != ctx.hasOutput(2))
+    return false;
+  if (ctx.hasInput(6) && (ctx.hasInput(4) || ctx.hasOutput(1)))
+    return false;
+  if (t_qk->tensor_type().has_shape() && t_qk->tensor_type().shape().dim_size() == 4 &&
+      (q_num_heads_attr != nullptr || kv_num_heads_attr != nullptr))
+    return false;
+
+  // Determine if input is 3D (requires reshape and transpose) or 4D (direct reshape)
+  bool is_3d_input = (q_num_heads > 0 && kv_num_heads > 0);
+
+  FunctionBuilder builder(functionProto);
+  builder
+      .Add("BatchSize = Shape <start = 0, end = 1> (Q)") // batch size
+      .Add("QSeqLen = Shape <start = -2, end = -1> (Q)") // q_sequence_length
+      .Add("KVSeqLen = Shape <start = -2, end = -1> (K)"); // kv_sequence_length
+
+  if (is_3d_input) {
+    // For 3D inputs: First reshape to [batch_size, seq_length, num_heads, head_size]
+    // then transpose to [batch_size, num_heads, seq_length, head_size]
+    builder
+        .Const1D("QNumHeadsAttr", q_num_heads) // q_num_heads from attrs
+        .Const1D("KVNumHeadsAttr", kv_num_heads) // kv_num_heads from attrs
+        .Const1D("NegOne", static_cast<int64_t>(-1)); // head_size, inferred from other dimensions
+
+    if (!has_sink) {
+      builder.Add("QIntermediateShape = Concat <axis = 0> (BatchSize, QSeqLen, QNumHeadsAttr, NegOne)")
+          .Add("KVIntermediateShape = Concat <axis = 0> (BatchSize, KVSeqLen, KVNumHeadsAttr, NegOne)")
+          .Add("QIntermediate = Reshape (Q, QIntermediateShape)")
+          .Add("KIntermediate = Reshape (K, KVIntermediateShape)")
+          .Add("VIntermediate = Reshape (V, KVIntermediateShape)")
+          // Then transpose to [batch_size, num_heads, seq_length, head_size]
+          .Add("QReshaped = Transpose <perm = [0, 2, 1, 3]> (QIntermediate)")
+          .Add("KReshaped = Transpose <perm = [0, 2, 1, 3]> (KIntermediate)")
+          .Add("VReshaped = Transpose <perm = [0, 2, 1, 3]> (VIntermediate)");
+    } else {
+      // Explicit head sizes avoid the ambiguous zero-element reshape with -1.
+      builder.Add("QHiddenSize = Shape <start = 2, end = 3> (Q)")
+          .Add("KHiddenSize = Shape <start = 2, end = 3> (K)")
+          .Add("VHiddenSize = Shape <start = 2, end = 3> (V)")
+          .Add("QHeadSize3D = Div(QHiddenSize, QNumHeadsAttr)")
+          .Add("KHeadSize3D = Div(KHiddenSize, KVNumHeadsAttr)")
+          .Add("VHeadSize3D = Div(VHiddenSize, KVNumHeadsAttr)")
+          .Add("QIntermediateShape = Concat <axis = 0> (BatchSize, QSeqLen, QNumHeadsAttr, QHeadSize3D)")
+          .Add("KVIntermediateShape = Concat <axis = 0> (BatchSize, KVSeqLen, KVNumHeadsAttr, KHeadSize3D)")
+          .Add("VIntermediateShape = Concat <axis = 0> (BatchSize, KVSeqLen, KVNumHeadsAttr, VHeadSize3D)")
+          .Add("QIntermediate = Reshape <allowzero = 1> (Q, QIntermediateShape)")
+          .Add("KIntermediate = Reshape <allowzero = 1> (K, KVIntermediateShape)")
+          .Add("VIntermediate = Reshape <allowzero = 1> (V, VIntermediateShape)")
+          .Add("QReshaped = Transpose <perm = [0, 2, 1, 3]> (QIntermediate)")
+          .Add("KReshaped = Transpose <perm = [0, 2, 1, 3]> (KIntermediate)")
+          .Add("VReshaped = Transpose <perm = [0, 2, 1, 3]> (VIntermediate)");
+    }
+  } else {
+    // For 4D inputs: Already in desired shape [batch_size, num_heads, seq_length, head_size]
+    builder.Add("QReshaped = Identity(Q)").Add("KReshaped = Identity(K)").Add("VReshaped = Identity(V)");
+  }
+
+  builder
+      .Add("QNumHeads = Shape <start = 1, end = 2> (QReshaped)") // q_num_heads
+      .Add("KVNumHeads = Shape <start = 1, end = 2> (KReshaped)"); // kv_num_heads
+
+  // Calculate scaling factor if scale attribute not provided
+  auto scale_attr = ctx.getAttribute("scale");
+  float scale = (scale_attr != nullptr) ? scale_attr->f() : static_cast<float>(1);
+  builder
+      .Add("QKHeadSize = Shape <start = 3, end = 4> (QReshaped)") // head_size for Q and K
+      .Add("QKHeadSizeF = Cast (QKHeadSize)", "to", float_type)
+      .Add("VHeadSize = Shape <start = 3, end = 4> (VReshaped)") // head_size for V
+      .Add("SqrtHeadSize = Sqrt(QKHeadSizeF)")
+      .Const1D("One1D", static_cast<int64_t>(1))
+      .Const1D("NegOne1D", static_cast<int64_t>(-1))
+      .Const1D("One1DF", static_cast<float>(1))
+      .Const1D("Zero1D", static_cast<int64_t>(0))
+      .Add("CalculatedScale = Div(One1DF, SqrtHeadSize)")
+      .Const("ScaleF", ToTensor<float>(scale))
+      .Add(scale_attr != nullptr ? "ScaleFactor = Identity(ScaleF)" : "ScaleFactor = Identity(CalculatedScale)")
+      .Add("ScaleFactorSqrt = Sqrt(ScaleFactor)")
+      .Add("ScaleFactorF = Cast (ScaleFactorSqrt)", "to", T1);
+
+  // Update key and value caches for past and present states
+
+  if (ctx.hasInput(4)) {
+    builder.Add("PresentKey = Concat <axis = 2> (past_key, KReshaped)");
+    builder.Add("PastKVSeqLen =  Shape <start = -2, end = -1> (past_key)");
+  } else {
+    builder.Add("PresentKey = Identity (KReshaped)");
+    builder.Const1D("PastKVSeqLen", static_cast<int64_t>(0));
+  }
+  // External/static cache bottom-right offset (per batch): nonpad_kv_seqlen - q_len.
+  // Only meaningful when is_causal=1, nonpad present (input 6), and no past_key (input 4).
+  if (is_causal == 1 && ctx.hasInput(6) && !ctx.hasInput(4)) {
+    builder.Add("CausalOffsetPerBatch = Sub(nonpad_kv_seqlen, QSeqLen)"); // (batch,)
+  }
+  if (ctx.hasOutput(1)) {
+    builder.Add("present_key = Identity (PresentKey)");
+  }
+
+  if (ctx.hasInput(5)) {
+    builder.Add("PresentValue = Concat <axis = 2> (past_value, VReshaped)");
+  } else {
+    builder.Add("PresentValue = Identity (VReshaped)");
+  }
+  if (ctx.hasOutput(2)) {
+    builder.Add("present_value = Identity (PresentValue)");
+  }
+
+  if (!defs::nn::utils::AttentionAppendFunctionCausalMask(ctx, builder, true, true))
+    return false;
+
+  // Window bounds are an additive overlay on the causal and attention masks.
+  if (left_window_size >= 0 || right_window_size >= 0) {
+    builder.Const1D("WinZero", static_cast<int64_t>(0))
+        .Const1D("WinOne", static_cast<int64_t>(1))
+        .Add("WinZeroNoDim = Squeeze(WinZero, WinZero)")
+        .Add("WinOneNoDim = Squeeze(WinOne, WinZero)")
+        .Add("WinSeqLen = Squeeze(QSeqLen, WinZero)")
+        .Add("WinTotalSeqLen = Squeeze(NewKVSeqLen, WinZero)")
+        .Add("WinRangeRow = Range(WinZeroNoDim, WinSeqLen, WinOneNoDim)") // [Sq]
+        .Add("WinRangeCol = Range(WinZeroNoDim, WinTotalSeqLen, WinOneNoDim)"); // [Skv]
+    if (left_window_size >= 0) {
+      builder.Const1D("LeftWindowSize", left_window_size).Add("LeftWindowSizeNoDim = Squeeze(LeftWindowSize, WinZero)");
+    }
+    if (right_window_size >= 0) {
+      builder.Const1D("RightWindowSize", right_window_size)
+          .Add("RightWindowSizeNoDim = Squeeze(RightWindowSize, WinZero)");
+    }
+    bool win_external_cache = ctx.hasInput(6) && !ctx.hasInput(4);
+    if (win_external_cache) {
+      // External cache: per-batch offset -> 4D mask
+      // [batch, 1, Sq, Skv]
+      builder
+          .Add("WinOffset = Sub(nonpad_kv_seqlen, QSeqLen)") // (batch,)
+          .Const("WinAxes123", std::vector<int64_t>{1, 2, 3})
+          .Const("WinAxes01", std::vector<int64_t>{0, 1})
+          .Add("WinOffset4D = Unsqueeze(WinOffset, WinAxes123)") // (batch,1,1,1)
+          .Add("WinRow2D = Unsqueeze(WinRangeRow, WinOne)") // (Sq,1)
+          .Add("WinRow4D = Unsqueeze(WinRow2D, WinAxes01)") // (1,1,Sq,1)
+          .Add("WinCol2D = Unsqueeze(WinRangeCol, WinZero)") // (1,Skv)
+          .Add("WinCol4D = Unsqueeze(WinCol2D, WinAxes01)") // (1,1,1,Skv)
+          .Add("WinAbsPos = Add(WinRow4D, WinOffset4D)") // (batch,1,Sq,1)
+          .Add("WinDiff = Sub(WinAbsPos, WinCol4D)"); // (batch,1,Sq,Skv)
+    } else {
+      // Internal cache (scalar PastKVSeqLen) or no cache: 2D mask [Sq, Skv]
+      builder
+          .Add("WinRow2D = Unsqueeze(WinRangeRow, WinOne)") // (Sq,1)
+          .Add("WinCol2D = Unsqueeze(WinRangeCol, WinZero)") // (1,Skv)
+          .Add("WinAbsPos = Add(WinRow2D, PastKVSeqLen)") // (Sq,1)
+          .Add("WinDiff = Sub(WinAbsPos, WinCol2D)"); // (Sq,Skv)
+    }
+    if (left_window_size >= 0 && right_window_size >= 0) {
+      builder.Add("WinLeftOk = LessOrEqual(WinDiff, LeftWindowSizeNoDim)")
+          .Add("WinRightDiff = Neg(WinDiff)")
+          .Add("WinRightOk = LessOrEqual(WinRightDiff, RightWindowSizeNoDim)")
+          .Add("WinOk = And(WinLeftOk, WinRightOk)");
+    } else if (left_window_size >= 0) {
+      builder.Add("WinOk = LessOrEqual(WinDiff, LeftWindowSizeNoDim)");
+    } else {
+      builder.Add("WinRightDiff = Neg(WinDiff)").Add("WinOk = LessOrEqual(WinRightDiff, RightWindowSizeNoDim)");
+    }
+    builder.Add("WinMaskFloat = Where(WinOk, ScalarZero, FloatNegInf)")
+        .Add("WinMask = CastLike(WinMaskFloat, AttnBiasCausalOrNot)")
+        .Add("AttnBiasCausalWindow = Add(AttnBiasCausalOrNot, WinMask)");
+  } else {
+    builder.Add("AttnBiasCausalWindow = Identity(AttnBiasCausalOrNot)");
+  }
+
+  // Add padding mask if kv_nonpad_seqlen is provided
+  if (ctx.hasInput(6)) {
+    builder
+        .Add("KVSeqLenExpanded = Unsqueeze(nonpad_kv_seqlen, One1D)") // [batch_size, 1]
+        .Add("KVSeqLen0D = Squeeze(KVSeqLen)")
+        .Const("Zero0D", static_cast<int64_t>(0))
+        .Const("One0D", static_cast<int64_t>(1))
+        .Add("Range = Range(Zero0D, KVSeqLen0D, One0D)") // [KVSeqLen,]
+        .Add("PaddingMaskBool = Less(Range, KVSeqLenExpanded)") // [batch_size, KVSeqLen]
+        .Add("PaddingMaskFloat = Where(PaddingMaskBool, ScalarZero, FloatNegInf)") // [batch_size, KVSeqLen]
+        .Add("PaddingMask3D = Unsqueeze(PaddingMaskFloat, One1D)") // [batch_size, 1, KVSeqLen]
+        .Add("PaddingMask4DFloat = Unsqueeze(PaddingMask3D, One1D)") // [batch_size, 1, 1, KVSeqLen]
+        .Add("PaddingMask4D = CastLike(PaddingMask4DFloat, AttnBiasCausalWindow)")
+        .Add("AttnBiasCausalPad = Add(AttnBiasCausalWindow, PaddingMask4D)");
+  } else {
+    builder.Add("AttnBiasCausalPad = Identity(AttnBiasCausalWindow)");
+  }
+  builder.Add("AttnBiasT = Cast (AttnBiasCausalPad)", "to", T1);
+
+  // Group Query Attention is applied if the following are satisfied
+  // 1) q_num_heads != kv_num_heads
+  // 2) q_num_heads % kv_num_heads == 0
+  // 3) kv_num_heads == k_num_heads == v_num_heads
+  builder.Add("NGQACond1 = Equal(QNumHeads, KVNumHeads)")
+      .Add("GQACond1 = Not(NGQACond1)")
+      .Add("DivNumHeads = Div(QNumHeads, KVNumHeads)")
+      .Add("IDivNumHeads = Cast(DivNumHeads)", "to", int_type)
+      .Add("RemainderNumHeads = Mod(QNumHeads, KVNumHeads)")
+      .Add("GQACond2 = Equal(RemainderNumHeads, Zero1D)")
+      .Add("GQACond = And(GQACond1, GQACond2)")
+      .Add("InterleaveDim = Where(GQACond, IDivNumHeads, One1D)");
+
+  // repeat kv (repeat_interleave)
+  builder.Const1D("Two1D", static_cast<int64_t>(2))
+      .Add("KUnsqueezed = Unsqueeze(PresentKey, Two1D)") // [B, Hk, 1, T, Dk]
+      .Add("VUnsqueezed = Unsqueeze(PresentValue, Two1D)"); // [B, Hk, 1, T, Dv]
+
+  // Build expand shape: [B, Hk, repeats, T, Dk]
+  builder.Add("KExpandShape = Concat <axis = 0> (BatchSize, KVNumHeads, InterleaveDim, NewKVSeqLen, QKHeadSize)")
+      .Add("KExpanded = Expand(KUnsqueezed, KExpandShape)");
+  builder.Add("VExpandShape = Concat <axis = 0> (BatchSize, KVNumHeads, InterleaveDim, NewKVSeqLen, VHeadSize)")
+      .Add("VExpanded = Expand(VUnsqueezed, VExpandShape)");
+
+  // Reshape to [B, Hq, T, Dk] where Hq = Hk * repeats
+  builder.Add("KAttentionShape = Concat <axis = 0> (BatchSize, QNumHeads, NewKVSeqLen, QKHeadSize)")
+      .Add("VAttentionShape = Concat <axis = 0> (BatchSize, QNumHeads, NewKVSeqLen, VHeadSize)")
+      .Add(
+          has_sink ? "KAttentionInput = Reshape <allowzero = 1> (KExpanded, KAttentionShape)"
+                   : "KAttentionInput = Reshape(KExpanded, KAttentionShape)")
+      .Add(
+          has_sink ? "VAttentionInput = Reshape <allowzero = 1> (VExpanded, VAttentionShape)"
+                   : "VAttentionInput = Reshape(VExpanded, VAttentionShape)");
+
+  // The following pattern is applied
+  //      Q          K          V
+  //      |          |          |
+  //     Q*scale    K*scale     |
+  //      |          |          |
+  //      |       Transpose     |
+  //      |          |          |
+  //      ---MatMul---          |
+  //            |               |
+  //  softcap (if provided)     |
+  //            |               |
+  // at_mask---Add              |
+  //            |               |
+  //         Softmax            |
+  //            |               |
+  //            -----MatMul------
+  //                    |
+  //                    Y
+  builder.Add("KTranspose = Transpose <perm = [0, 1, 3, 2]> (KAttentionInput)")
+      .Add("QScaled = Mul(QReshaped, ScaleFactorF)")
+      .Add("KScaled = Mul(KTranspose, ScaleFactorF)")
+      .Add("QKAttnWeight = MatMul(QScaled, KScaled)")
+      .Add("QKAttnCast = Cast (QKAttnWeight)", "to", T1);
+
+  // Apply softcap before bias/mask addition.
+  // Softcap must come before mask so that -inf mask values remain -inf
+  // (zero probability in softmax). If applied after, -inf maps to
+  // -softcap (finite), leaking probability to masked positions.
+  auto softcap_attr = ctx.getAttribute("softcap");
+  float softcap_val = (softcap_attr != nullptr) ? softcap_attr->f() : static_cast<float>(0);
+  if (softcap_val != 0) {
+    builder.Const1D("Softcap", softcap_val)
+        .Add("SoftcapF = Cast (Softcap)", "to", T1)
+        .Add("SoftcapDiv = Div(QKAttnCast, SoftcapF)")
+        .Add("SoftcapTanh = Tanh(SoftcapDiv)")
+        .Add("QKAttnSoftcapped = Mul(SoftcapTanh, SoftcapF)")
+        .Add("QKAttnWeightSoftcap = Add(QKAttnSoftcapped, AttnBiasT)");
+  } else {
+    builder.Add("QKAttnWeightSoftcap = Add(QKAttnCast, AttnBiasT)");
+  }
+  builder.Add("SoftmaxCast = Cast (QKAttnWeightSoftcap)", "to", softmax_precision);
+  if (has_sink) {
+    builder.Const("SinkAxes", std::vector<int64_t>{0, 2, 3})
+        .Add("Sink4D = Unsqueeze(head_sink, SinkAxes)")
+        .Add("SinkCast = Cast(Sink4D)", "to", softmax_precision)
+        .Add("SinkShape = Concat <axis = 0> (BatchSize, QNumHeads, QSeqLen, One1D)")
+        .Add("SinkExpanded = Expand(SinkCast, SinkShape)")
+        .Add("JointLogits = Concat <axis = -1> (SoftmaxCast, SinkExpanded)")
+        .Add("JointProbabilities = Softmax(JointLogits)")
+        .Add("AttnWeightSoftmax = Slice(JointProbabilities, Zero1D, NewKVSeqLen, NegOne1D)");
+  } else {
+    builder.Add("AttnWeightSoftmax = Softmax (SoftmaxCast)");
+  }
+  builder.Add("SoftmaxOut = Cast (AttnWeightSoftmax)", "to", T1);
+
+  // Fully-masked-row guard: a query row whose additive bias (AttnBiasT) is
+  // entirely -inf (every key disallowed by the combined causal + attn_mask
+  // constraints) softmaxes to NaN. Detect such rows on the additive bias
+  // row-max and zero their probabilities with Where (not Mul; NaN * 0 = NaN)
+  // BEFORE the P @ V contraction so 0 @ V = 0. The guard runs before the
+  // mode-3 output capture so the exposed qk_matmul_output row is also zeroed,
+  // consistent with Y. Mirrors the reference impl so primary == _expanded
+  // bit-for-bit; a no-op for rows with any allowed key.
+  if (has_sink) {
+    builder.Add("SoftmaxOutSafe = Identity(SoftmaxOut)");
+  } else {
+    builder.Add("BiasRowMaxAxes = Constant <value = int64[1] {-1}> ()")
+        .Add("BiasRowMax = ReduceMax(AttnBiasT, BiasRowMaxAxes)") // keepdims=1 (default)
+        .Add("FloatNegInfT = CastLike(FloatNegInf, AttnBiasT)")
+        .Add("RowAllMasked = Equal(BiasRowMax, FloatNegInfT)")
+        .Add("ZeroProbT = CastLike(ScalarZero, SoftmaxOut)")
+        .Add("SoftmaxOutSafe = Where(RowAllMasked, ZeroProbT, SoftmaxOut)");
+  }
+
+  // QK MatMul output if required
+  auto qk_matmul_output_mode_attr = ctx.getAttribute("qk_matmul_output_mode");
+  int64_t qk_matmul_output_mode = (qk_matmul_output_mode_attr != nullptr) ? qk_matmul_output_mode_attr->i() : 0;
+  if (ctx.hasOutput(3)) {
+    if (qk_matmul_output_mode == 1) {
+      // Mode 1: after softcap (before bias addition)
+      if (softcap_val != 0) {
+        builder.Add("qk_matmul_output = Identity(QKAttnSoftcapped)");
+      } else {
+        // No softcap applied, same as raw QK
+        builder.Add("qk_matmul_output = Identity(QKAttnCast)");
+      }
+    } else if (qk_matmul_output_mode == 2) {
+      // Mode 2: QK + softcap + bias (after softcap + bias addition)
+      builder.Add("qk_matmul_output = Identity(QKAttnWeightSoftcap)");
+    } else if (qk_matmul_output_mode == 3) {
+      // Mode 3: post-softmax, after the fully-masked-row guard (a fully-masked
+      // row is zeroed, consistent with the primary output Y).
+      builder.Add("qk_matmul_output = Identity(SoftmaxOutSafe)");
+    } else {
+      builder.Add("qk_matmul_output = Identity(QKAttnWeight)");
+    }
+  }
+
+  builder.Add("YPreReshape = MatMul(SoftmaxOutSafe, VAttentionInput)");
+  // Reshape Y to 3D if input is a 3D tensor
+  if (is_3d_input) {
+    builder.Add("YTranspose = Transpose <perm = [0, 2, 1, 3]> (YPreReshape)");
+    if (has_sink) {
+      builder.Add("YHiddenSize = Mul(QNumHeads, VHeadSize)")
+          .Add("YNewShape = Concat <axis = 0> (BatchSize, QSeqLen, YHiddenSize)")
+          .Add("Y = Reshape <allowzero = 1> (YTranspose, YNewShape)");
+    } else {
+      builder.Add("YNewShape = Concat <axis = 0> (Zero1D, Zero1D, NegOne)").Add("Y = Reshape(YTranspose, YNewShape)");
+    }
+  } else {
+    builder.Add("Y = Identity(YPreReshape)");
+  }
+
+  schema.BuildFunction(functionProto);
+  return true;
+}
+
+static void Attention29Inference(InferenceContext& ctx) {
+  AttentionInference(ctx, true);
+  if (!ctx.hasInput(7) || !hasInputShape(ctx, 7))
+    return;
+  const auto& sink_shape = getInputShape(ctx, 7);
+  if (sink_shape.dim_size() != 1)
+    fail_shape_inference("head_sink must have rank 1.");
+  if (!hasInputShape(ctx, 0))
+    return;
+  const auto& q_shape = getInputShape(ctx, 0);
+  if (q_shape.dim_size() == 4) {
+    if (sink_shape.dim(0).has_dim_value() && q_shape.dim(1).has_dim_value() &&
+        sink_shape.dim(0).dim_value() != q_shape.dim(1).dim_value())
+      fail_shape_inference("head_sink length must equal q_num_heads.");
+  } else if (q_shape.dim_size() == 3) {
+    const auto* heads = ctx.getAttribute("q_num_heads");
+    if (heads != nullptr && sink_shape.dim(0).has_dim_value() && sink_shape.dim(0).dim_value() != heads->i())
+      fail_shape_inference("head_sink length must equal q_num_heads.");
+  }
+}
+
 ONNX_OPERATOR_SET_SCHEMA(
     Attention,
-    25,
-    OpSchema()
-        .SetDoc(kDoc_Attention_ver25)
-        .Attr(
-            "is_causal",
-            "If set to `1`, causal masking is applied. For a square Q/K (no cache offset) this is a "
-            "lower-triangular matrix. In general the mask is bottom-right (offset-aware): query in-block "
-            "index `i` attends key `j` iff `j <= i + offset`, where `offset` is the count of valid keys "
-            "preceding the query block (`past_sequence_length` for an internal `past_key` cache, or "
-            "`nonpad_kv_seqlen - q_sequence_length` per batch for an external cache). When `offset = 0` "
-            "this reduces to the lower-triangular (top-left) mask.",
-            AttributeProto::INT,
-            static_cast<int64_t>(0))
-        .Attr(
-            "scale",
-            "Scaling factor applied to $Q*K^T$. Default value is `1/sqrt(head_size)`. To prevent "
-            "[numerical overflow](https://tinyurl.com/sudb9s96), scale `Q`, `K` by `sqrt(scale)` before matmul.",
-            AttributeProto::FLOAT,
-            OPTIONAL_VALUE)
-        .Attr(
-            "q_num_heads",
-            "Number of heads of query. Must be used with 3D inputs of Q, K and V. ",
-            AttributeProto::INT,
-            OPTIONAL_VALUE)
-        .Attr(
-            "kv_num_heads",
-            "Number of heads of key and value. Must be used with 3D inputs of Q, K and V. ",
-            AttributeProto::INT,
-            OPTIONAL_VALUE)
-        .Attr(
-            "softmax_precision",
-            "Specifies the precision for softmax computation. If provided, "
-            "the attention weights will be cast to this type before softmax "
-            "and then cast back to the original type. "
-            "Supported values are: `1` (FLOAT), `10` (FLOAT16), `11` (DOUBLE), "
-            "`16` (BFLOAT16).",
-            AttributeProto::INT,
-            OPTIONAL_VALUE)
-        .Attr(
-            "softcap",
-            "Soft cap for attention logits, applied as `softcap * tanh(logits / softcap)`. "
-            "Default value of `0.0` means no soft capping is applied. "
-            "The soft cap is applied before mask / bias addition and softmax.",
-            AttributeProto::FLOAT,
-            static_cast<float>(0))
-        .Attr(
-            "qk_matmul_output_mode",
-            "Determines what the optional 4th output contains: "
-            "`0` (default): raw QK matmul result; "
-            "`1`: after softcap (before bias addition); "
-            "`2`: QK + softcap + bias; "
-            "`3`: post-softmax probabilities (after fully-masked-row guard). "
-            "In mode `3`, a fully-masked query row (every key disallowed) "
-            "is a zero row, consistent with the corresponding row of the primary output `Y`. "
-            "The mode-`3` output is emitted at the operator's output precision (`T1`); when "
-            "`softmax_precision` differs from `T1` this is a cast of the softmax result to `T1`.",
-            AttributeProto::INT,
-            static_cast<int64_t>(0))
-        .Attr(
-            "left_window_size",
-            "Maximum number of positions to the left of the current absolute query position that may be attended. "
-            "A value of `0` allows the current position but no preceding position, while `-1` leaves the left side "
-            "unbounded. This bound is composed with `is_causal` and `attn_mask`.",
-            AttributeProto::INT,
-            static_cast<int64_t>(-1))
-        .Attr(
-            "right_window_size",
-            "Maximum number of positions to the right of the current absolute query position that may be attended. "
-            "A value of `0` allows the current position but no following position, while `-1` leaves the right side "
-            "unbounded. Set `is_causal=0` to use a positive right window.",
-            AttributeProto::INT,
-            static_cast<int64_t>(-1))
+    29,
+    defs::nn::utils::AttentionSchema25()
+        .SetDoc(std::string(kDoc_Attention_ver25) + R"DOC(
+An optional `head_sink` supplies one learned, finite normalization logit per query head,
+including separate logits for query heads sharing a KV head in GQA or MQA.
+For the final real-key logits `L` (after scaling, softcap, and additive masks),
+the probabilities are
+
+    P[b,h,i,j] = exp(L[b,h,i,j]) / (exp(head_sink[h]) + sum_k exp(L[b,h,i,k]))
+    Y[b,h,i,:] = sum_j P[b,h,i,j] * V[b,h,j,:]
+
+Implementations must evaluate this normalization stably, for example by subtracting
+the maximum of the real logits and the sink logit before exponentiation.
+The sink is already in final-logit units: it is not scaled or softcapped.
+It is always visible, independent of causal, window, attention, and padding masks.
+It contributes only to the denominator, never to the numerator; it is not a real
+key/value token, consumes no cache position, and does not change sequence lengths
+or cache outputs. This is unrelated to retaining "sink tokens" in a KV cache.
+The sink and real logits are cast to `softmax_precision` (or `T1` when absent)
+before joint normalization; real probabilities are then cast back to `T1`.
+
+All four `qk_matmul_output` modes retain real-key dimensions only. Modes 0, 1, and 2
+are independent of the sink; mode 3 contains the sink-normalized real-key probabilities,
+which need not sum to one. Fully masked rows still produce zero real probabilities
+and zero `Y`. With a sink, an empty real-key sequence is also allowed and produces
+zero `Y` and an empty score/probability output. Values and unmasked logits are
+assumed finite. Without `head_sink`, the Attention-25 behavior is unchanged.
+
+A zero sink gives smooth-softmax, with denominator `1 + sum_k exp(L[k])`.
+For example, one real logit 0, real value 2 and sink logit `log(3)` produce `Y = 0.5`.
+This normalization is used by ONNX Runtime's
+[DynamicSparseAttention](https://github.com/microsoft/onnxruntime/blob/526e95a1447a43af1d1ac71c0cd8b1de62b47f5d/onnxruntime/core/graph/contrib_ops/bert_defs.cc#L637-L751)
+and [SparsePagedAttention](https://github.com/microsoft/onnxruntime/blob/526e95a1447a43af1d1ac71c0cd8b1de62b47f5d/onnxruntime/core/graph/contrib_ops/bert_defs.cc#L2203-L2284).
+The public [GPT-OSS reference model](https://github.com/openai/gpt-oss/blob/243a1b02767da73bd2e3975be250afa801635866/gpt_oss/torch/model.py#L167-L218)
+uses this learned per-query-head sink normalization with grouped-query and sliding-window attention.
+)DOC")
         .Input(
-            0,
-            "Q",
-            "Query tensor. "
-            "4D tensor with shape `(batch_size, q_num_heads, q_sequence_length, head_size)` or 3D tensor with shape `(batch_size, q_sequence_length, q_hidden_size)`. "
-            "For cases with a 3D input tensor, `q_hidden_size = q_num_heads * head_size`",
-            "T1")
-        .Input(
-            1,
-            "K",
-            "Key tensor. "
-            "4D tensor with shape `(batch_size, kv_num_heads, kv_sequence_length, head_size)` or 3D tensor with shape `(batch_size, kv_sequence_length, k_hidden_size)`. "
-            "For cases with a 3D input tensor, `k_hidden_size = kv_num_heads * head_size`",
-            "T1")
-        .Input(
-            2,
-            "V",
-            "Value tensor. "
-            "4D tensor with shape `(batch_size, kv_num_heads, kv_sequence_length, v_head_size)` or 3D tensor with shape `(batch_size, kv_sequence_length, v_hidden_size)`. "
-            "For cases with a 3D input tensor, `v_hidden_size = kv_num_heads * v_head_size`",
-            "T2")
-        .Input(
-            3,
-            "attn_mask",
-            "Attention mask. "
-            "Shape must be broadcastable to "
-            "`(batch_size, q_num_heads, q_sequence_length, total_sequence_length)` "
-            "where `total_sequence_length = past_sequence_length + kv_sequence_length`. "
-            "The last dimension can also be shorter than `total_sequence_length` and will be "
-            "padded to `total_sequence_length` with negative infinity. "
-            "Two types of masks are supported: a boolean mask where a value of `True` indicates "
-            "that the element should take part in attention, "
-            "or a float mask of the same type as query, key, value that is added to the attention score.",
-            "U",
-            OpSchema::Optional)
-        .Input(
-            4,
-            "past_key",
-            "Past state for key with shape `(batch_size, kv_num_heads, past_sequence_length, head_size)`. "
-            "Must be used together with `past_value` input.",
+            7,
+            "head_sink",
+            "Finite denominator-only normalization logits of shape `(q_num_heads,)`, in final-logit units.",
             "T1",
             OpSchema::Optional)
-        .Input(
-            5,
-            "past_value",
-            "Past state for value with shape `(batch_size, kv_num_heads, past_sequence_length, v_head_size)`. "
-            "Must be used together with `past_key` input.",
-            "T2",
-            OpSchema::Optional)
-        .Input(
-            6,
-            "nonpad_kv_seqlen",
-            "A vector of integers of shape `(batch_size,)` that indicates the number of valid "
-            "(i.e., non-padding) tokens in each sample. A padding mask can be derived from this. "
-            "This should not be used together with `past_key` and `past_value` inputs or "
-            "`present_key` and `present_value` outputs "
-            "(see the KV cache use cases in the operator description).",
-            "tensor(int64)",
-            OpSchema::Optional)
-        .Output(
-            0,
-            "Y",
-            "The output tensor. "
-            "4D tensor with shape `(batch_size, q_num_heads, q_sequence_length, v_head_size)` or 3D tensor with shape `(batch_size, q_sequence_length, hidden_size)`. "
-            "For cases with a 3D input tensor, `hidden_size = q_num_heads * v_head_size`",
-            "T1")
-        .Output(
-            1,
-            "present_key",
-            "Updated key cache with shape `(batch_size, kv_num_heads, total_sequence_length, head_size)` "
-            "where `total_sequence_length = past_sequence_length + kv_sequence_length`.",
-            "T1",
-            OpSchema::Optional)
-        .Output(
-            2,
-            "present_value",
-            "Updated value cache with shape `(batch_size, kv_num_heads, total_sequence_length, v_head_size)` "
-            "where `total_sequence_length = past_sequence_length + kv_sequence_length`.",
-            "T2",
-            OpSchema::Optional)
-        .Output(
-            3,
-            "qk_matmul_output",
-            "The output of QK matmul. "
-            "4D tensor with shape `(batch_size, q_num_heads, q_sequence_length, total_sequence_length)` "
-            "where `total_sequence_length = past_sequence_length + kv_sequence_length`.",
-            "T1",
-            OpSchema::Optional)
-        .TypeConstraint("T1", OpSchema::all_float_types_ir4(), "Constrain Q and K inputs types to float tensors.")
-        .TypeConstraint("T2", OpSchema::all_float_types_ir4(), "Constrain V input types to float tensors.")
-        .TypeConstraint(
-            "U",
-            OpSchema::all_non_complex_numeric_types_plus_bool_ir4(),
-            "Constrain output 'mask' types to boolean tensors and input types.")
-        .TypeAndShapeInferenceFunction(Attention25Inference)
-        .SetNodeDeterminism(OpSchema::NodeDeterminism::Deterministic)
-        .SetContextDependentFunctionBodyBuilder([](const FunctionBodyBuildContext& ctx,
-                                                   const OpSchema& schema,
-                                                   FunctionProto& functionProto) {
-          // ScaledDotProductAttention <scale, is_causal, q_num_heads, kv_numheads, left_window_size,
-          // right_window_size> (Q, K, V,
-          // attn_mask, past_key, past_value) => (Y, present_key?, present_value?)
-          int64_t int_type = ONNX_NAMESPACE::TensorProto_DataType_INT64;
-          int64_t float_type = ONNX_NAMESPACE::TensorProto_DataType_FLOAT;
-
-          // Get input types
-          auto t_qk = ctx.getInputType(0);
-          if ((t_qk == nullptr) || (!t_qk->has_tensor_type()))
-            return false;
-          int64_t T1 = t_qk->tensor_type().elem_type();
-
-          // Determine precision types for Softmax
-          auto softmax_precision_attr = ctx.getAttribute("softmax_precision");
-          int64_t softmax_precision = (softmax_precision_attr != nullptr) ? softmax_precision_attr->i() : T1;
-          if ((softmax_precision != ONNX_NAMESPACE::TensorProto_DataType_FLOAT) &&
-              (softmax_precision != ONNX_NAMESPACE::TensorProto_DataType_BFLOAT16) &&
-              (softmax_precision != ONNX_NAMESPACE::TensorProto_DataType_FLOAT16) &&
-              (softmax_precision != ONNX_NAMESPACE::TensorProto_DataType_DOUBLE))
-            return false; // Error
-
-          // If shape is 3D, q_num_heads and kv_num_heads is provided,
-          // for 4D cases, set num_heads to zero for reshape purposes
-          auto q_num_heads_attr = ctx.getAttribute("q_num_heads");
-          int64_t q_num_heads = (q_num_heads_attr != nullptr) ? q_num_heads_attr->i() : 0;
-          auto kv_num_heads_attr = ctx.getAttribute("kv_num_heads");
-          int64_t kv_num_heads = (kv_num_heads_attr != nullptr) ? kv_num_heads_attr->i() : 0;
-          auto is_causal_attr = ctx.getAttribute("is_causal");
-          int64_t is_causal = (is_causal_attr != nullptr) ? is_causal_attr->i() : 0;
-
-          auto left_window_attr = ctx.getAttribute("left_window_size");
-          int64_t left_window_size = (left_window_attr != nullptr) ? left_window_attr->i() : -1;
-          auto right_window_attr = ctx.getAttribute("right_window_size");
-          int64_t right_window_size = (right_window_attr != nullptr) ? right_window_attr->i() : -1;
-          if (left_window_size < -1 || right_window_size < -1)
-            return false;
-          if (ctx.hasInput(4) != ctx.hasInput(5) || ctx.hasOutput(1) != ctx.hasOutput(2))
-            return false;
-          if (ctx.hasInput(6) && (ctx.hasInput(4) || ctx.hasOutput(1)))
-            return false;
-          if (t_qk->tensor_type().has_shape() && t_qk->tensor_type().shape().dim_size() == 4 &&
-              (q_num_heads_attr != nullptr || kv_num_heads_attr != nullptr))
-            return false;
-
-          // Determine if input is 3D (requires reshape and transpose) or 4D (direct reshape)
-          bool is_3d_input = (q_num_heads > 0 && kv_num_heads > 0);
-
-          FunctionBuilder builder(functionProto);
-          builder
-              .Add("BatchSize = Shape <start = 0, end = 1> (Q)") // batch size
-              .Add("QSeqLen = Shape <start = -2, end = -1> (Q)") // q_sequence_length
-              .Add("KVSeqLen = Shape <start = -2, end = -1> (K)"); // kv_sequence_length
-
-          if (is_3d_input) {
-            // For 3D inputs: First reshape to [batch_size, seq_length, num_heads, head_size]
-            // then transpose to [batch_size, num_heads, seq_length, head_size]
-            builder
-                .Const1D("QNumHeadsAttr", q_num_heads) // q_num_heads from attrs
-                .Const1D("KVNumHeadsAttr", kv_num_heads) // kv_num_heads from attrs
-                .Const1D("NegOne", static_cast<int64_t>(-1)); // head_size, inferred from other dimensions
-
-            builder.Add("QIntermediateShape = Concat <axis = 0> (BatchSize, QSeqLen, QNumHeadsAttr, NegOne)")
-                .Add("KVIntermediateShape = Concat <axis = 0> (BatchSize, KVSeqLen, KVNumHeadsAttr, NegOne)")
-                .Add("QIntermediate = Reshape (Q, QIntermediateShape)")
-                .Add("KIntermediate = Reshape (K, KVIntermediateShape)")
-                .Add("VIntermediate = Reshape (V, KVIntermediateShape)")
-                // Then transpose to [batch_size, num_heads, seq_length, head_size]
-                .Add("QReshaped = Transpose <perm = [0, 2, 1, 3]> (QIntermediate)")
-                .Add("KReshaped = Transpose <perm = [0, 2, 1, 3]> (KIntermediate)")
-                .Add("VReshaped = Transpose <perm = [0, 2, 1, 3]> (VIntermediate)");
-          } else {
-            // For 4D inputs: Already in desired shape [batch_size, num_heads, seq_length, head_size]
-            builder.Add("QReshaped = Identity(Q)").Add("KReshaped = Identity(K)").Add("VReshaped = Identity(V)");
-          }
-
-          builder
-              .Add("QNumHeads = Shape <start = 1, end = 2> (QReshaped)") // q_num_heads
-              .Add("KVNumHeads = Shape <start = 1, end = 2> (KReshaped)"); // kv_num_heads
-
-          // Calculate scaling factor if scale attribute not provided
-          auto scale_attr = ctx.getAttribute("scale");
-          float scale = (scale_attr != nullptr) ? scale_attr->f() : static_cast<float>(1);
-          builder
-              .Add("QKHeadSize = Shape <start = 3, end = 4> (QReshaped)") // head_size for Q and K
-              .Add("QKHeadSizeF = Cast (QKHeadSize)", "to", float_type)
-              .Add("VHeadSize = Shape <start = 3, end = 4> (VReshaped)") // head_size for V
-              .Add("SqrtHeadSize = Sqrt(QKHeadSizeF)")
-              .Const1D("One1D", static_cast<int64_t>(1))
-              .Const1D("NegOne1D", static_cast<int64_t>(-1))
-              .Const1D("One1DF", static_cast<float>(1))
-              .Const1D("Zero1D", static_cast<int64_t>(0))
-              .Add("CalculatedScale = Div(One1DF, SqrtHeadSize)")
-              .Const("ScaleF", ToTensor<float>(scale))
-              .Add(scale_attr != nullptr ? "ScaleFactor = Identity(ScaleF)" : "ScaleFactor = Identity(CalculatedScale)")
-              .Add("ScaleFactorSqrt = Sqrt(ScaleFactor)")
-              .Add("ScaleFactorF = Cast (ScaleFactorSqrt)", "to", T1);
-
-          // Update key and value caches for past and present states
-
-          if (ctx.hasInput(4)) {
-            builder.Add("PresentKey = Concat <axis = 2> (past_key, KReshaped)");
-            builder.Add("PastKVSeqLen =  Shape <start = -2, end = -1> (past_key)");
-          } else {
-            builder.Add("PresentKey = Identity (KReshaped)");
-            builder.Const1D("PastKVSeqLen", static_cast<int64_t>(0));
-          }
-          // External/static cache bottom-right offset (per batch): nonpad_kv_seqlen - q_len.
-          // Only meaningful when is_causal=1, nonpad present (input 6), and no past_key (input 4).
-          if (is_causal == 1 && ctx.hasInput(6) && !ctx.hasInput(4)) {
-            builder.Add("CausalOffsetPerBatch = Sub(nonpad_kv_seqlen, QSeqLen)"); // (batch,)
-          }
-          if (ctx.hasOutput(1)) {
-            builder.Add("present_key = Identity (PresentKey)");
-          }
-
-          if (ctx.hasInput(5)) {
-            builder.Add("PresentValue = Concat <axis = 2> (past_value, VReshaped)");
-          } else {
-            builder.Add("PresentValue = Identity (VReshaped)");
-          }
-          if (ctx.hasOutput(2)) {
-            builder.Add("present_value = Identity (PresentValue)");
-          }
-
-          if (!defs::nn::utils::AttentionAppendFunctionCausalMask(ctx, builder, true, true))
-            return false;
-
-          // Window bounds are an additive overlay on the causal and attention masks.
-          if (left_window_size >= 0 || right_window_size >= 0) {
-            builder.Const1D("WinZero", static_cast<int64_t>(0))
-                .Const1D("WinOne", static_cast<int64_t>(1))
-                .Add("WinZeroNoDim = Squeeze(WinZero, WinZero)")
-                .Add("WinOneNoDim = Squeeze(WinOne, WinZero)")
-                .Add("WinSeqLen = Squeeze(QSeqLen, WinZero)")
-                .Add("WinTotalSeqLen = Squeeze(NewKVSeqLen, WinZero)")
-                .Add("WinRangeRow = Range(WinZeroNoDim, WinSeqLen, WinOneNoDim)") // [Sq]
-                .Add("WinRangeCol = Range(WinZeroNoDim, WinTotalSeqLen, WinOneNoDim)"); // [Skv]
-            if (left_window_size >= 0) {
-              builder.Const1D("LeftWindowSize", left_window_size)
-                  .Add("LeftWindowSizeNoDim = Squeeze(LeftWindowSize, WinZero)");
-            }
-            if (right_window_size >= 0) {
-              builder.Const1D("RightWindowSize", right_window_size)
-                  .Add("RightWindowSizeNoDim = Squeeze(RightWindowSize, WinZero)");
-            }
-            bool win_external_cache = ctx.hasInput(6) && !ctx.hasInput(4);
-            if (win_external_cache) {
-              // External cache: per-batch offset -> 4D mask
-              // [batch, 1, Sq, Skv]
-              builder
-                  .Add("WinOffset = Sub(nonpad_kv_seqlen, QSeqLen)") // (batch,)
-                  .Const("WinAxes123", std::vector<int64_t>{1, 2, 3})
-                  .Const("WinAxes01", std::vector<int64_t>{0, 1})
-                  .Add("WinOffset4D = Unsqueeze(WinOffset, WinAxes123)") // (batch,1,1,1)
-                  .Add("WinRow2D = Unsqueeze(WinRangeRow, WinOne)") // (Sq,1)
-                  .Add("WinRow4D = Unsqueeze(WinRow2D, WinAxes01)") // (1,1,Sq,1)
-                  .Add("WinCol2D = Unsqueeze(WinRangeCol, WinZero)") // (1,Skv)
-                  .Add("WinCol4D = Unsqueeze(WinCol2D, WinAxes01)") // (1,1,1,Skv)
-                  .Add("WinAbsPos = Add(WinRow4D, WinOffset4D)") // (batch,1,Sq,1)
-                  .Add("WinDiff = Sub(WinAbsPos, WinCol4D)"); // (batch,1,Sq,Skv)
-            } else {
-              // Internal cache (scalar PastKVSeqLen) or no cache: 2D mask [Sq, Skv]
-              builder
-                  .Add("WinRow2D = Unsqueeze(WinRangeRow, WinOne)") // (Sq,1)
-                  .Add("WinCol2D = Unsqueeze(WinRangeCol, WinZero)") // (1,Skv)
-                  .Add("WinAbsPos = Add(WinRow2D, PastKVSeqLen)") // (Sq,1)
-                  .Add("WinDiff = Sub(WinAbsPos, WinCol2D)"); // (Sq,Skv)
-            }
-            if (left_window_size >= 0 && right_window_size >= 0) {
-              builder.Add("WinLeftOk = LessOrEqual(WinDiff, LeftWindowSizeNoDim)")
-                  .Add("WinRightDiff = Neg(WinDiff)")
-                  .Add("WinRightOk = LessOrEqual(WinRightDiff, RightWindowSizeNoDim)")
-                  .Add("WinOk = And(WinLeftOk, WinRightOk)");
-            } else if (left_window_size >= 0) {
-              builder.Add("WinOk = LessOrEqual(WinDiff, LeftWindowSizeNoDim)");
-            } else {
-              builder.Add("WinRightDiff = Neg(WinDiff)").Add("WinOk = LessOrEqual(WinRightDiff, RightWindowSizeNoDim)");
-            }
-            builder.Add("WinMaskFloat = Where(WinOk, ScalarZero, FloatNegInf)")
-                .Add("WinMask = CastLike(WinMaskFloat, AttnBiasCausalOrNot)")
-                .Add("AttnBiasCausalWindow = Add(AttnBiasCausalOrNot, WinMask)");
-          } else {
-            builder.Add("AttnBiasCausalWindow = Identity(AttnBiasCausalOrNot)");
-          }
-
-          // Add padding mask if kv_nonpad_seqlen is provided
-          if (ctx.hasInput(6)) {
-            builder
-                .Add("KVSeqLenExpanded = Unsqueeze(nonpad_kv_seqlen, One1D)") // [batch_size, 1]
-                .Add("KVSeqLen0D = Squeeze(KVSeqLen)")
-                .Const("Zero0D", static_cast<int64_t>(0))
-                .Const("One0D", static_cast<int64_t>(1))
-                .Add("Range = Range(Zero0D, KVSeqLen0D, One0D)") // [KVSeqLen,]
-                .Add("PaddingMaskBool = Less(Range, KVSeqLenExpanded)") // [batch_size, KVSeqLen]
-                .Add("PaddingMaskFloat = Where(PaddingMaskBool, ScalarZero, FloatNegInf)") // [batch_size, KVSeqLen]
-                .Add("PaddingMask3D = Unsqueeze(PaddingMaskFloat, One1D)") // [batch_size, 1, KVSeqLen]
-                .Add("PaddingMask4DFloat = Unsqueeze(PaddingMask3D, One1D)") // [batch_size, 1, 1, KVSeqLen]
-                .Add("PaddingMask4D = CastLike(PaddingMask4DFloat, AttnBiasCausalWindow)")
-                .Add("AttnBiasCausalPad = Add(AttnBiasCausalWindow, PaddingMask4D)");
-          } else {
-            builder.Add("AttnBiasCausalPad = Identity(AttnBiasCausalWindow)");
-          }
-          builder.Add("AttnBiasT = Cast (AttnBiasCausalPad)", "to", T1);
-
-          // Group Query Attention is applied if the following are satisfied
-          // 1) q_num_heads != kv_num_heads
-          // 2) q_num_heads % kv_num_heads == 0
-          // 3) kv_num_heads == k_num_heads == v_num_heads
-          builder.Add("NGQACond1 = Equal(QNumHeads, KVNumHeads)")
-              .Add("GQACond1 = Not(NGQACond1)")
-              .Add("DivNumHeads = Div(QNumHeads, KVNumHeads)")
-              .Add("IDivNumHeads = Cast(DivNumHeads)", "to", int_type)
-              .Add("RemainderNumHeads = Mod(QNumHeads, KVNumHeads)")
-              .Add("GQACond2 = Equal(RemainderNumHeads, Zero1D)")
-              .Add("GQACond = And(GQACond1, GQACond2)")
-              .Add("InterleaveDim = Where(GQACond, IDivNumHeads, One1D)");
-
-          // repeat kv (repeat_interleave)
-          builder.Const1D("Two1D", static_cast<int64_t>(2))
-              .Add("KUnsqueezed = Unsqueeze(PresentKey, Two1D)") // [B, Hk, 1, T, Dk]
-              .Add("VUnsqueezed = Unsqueeze(PresentValue, Two1D)"); // [B, Hk, 1, T, Dv]
-
-          // Build expand shape: [B, Hk, repeats, T, Dk]
-          builder
-              .Add("KExpandShape = Concat <axis = 0> (BatchSize, KVNumHeads, InterleaveDim, NewKVSeqLen, QKHeadSize)")
-              .Add("KExpanded = Expand(KUnsqueezed, KExpandShape)");
-          builder.Add("VExpandShape = Concat <axis = 0> (BatchSize, KVNumHeads, InterleaveDim, NewKVSeqLen, VHeadSize)")
-              .Add("VExpanded = Expand(VUnsqueezed, VExpandShape)");
-
-          // Reshape to [B, Hq, T, Dk] where Hq = Hk * repeats
-          builder.Add("KAttentionShape = Concat <axis = 0> (BatchSize, QNumHeads, NewKVSeqLen, QKHeadSize)")
-              .Add("VAttentionShape = Concat <axis = 0> (BatchSize, QNumHeads, NewKVSeqLen, VHeadSize)")
-              .Add("KAttentionInput = Reshape(KExpanded, KAttentionShape)")
-              .Add("VAttentionInput = Reshape(VExpanded, VAttentionShape)");
-
-          // The following pattern is applied
-          //      Q          K          V
-          //      |          |          |
-          //     Q*scale    K*scale     |
-          //      |          |          |
-          //      |       Transpose     |
-          //      |          |          |
-          //      ---MatMul---          |
-          //            |               |
-          //  softcap (if provided)     |
-          //            |               |
-          // at_mask---Add              |
-          //            |               |
-          //         Softmax            |
-          //            |               |
-          //            -----MatMul------
-          //                    |
-          //                    Y
-          builder.Add("KTranspose = Transpose <perm = [0, 1, 3, 2]> (KAttentionInput)")
-              .Add("QScaled = Mul(QReshaped, ScaleFactorF)")
-              .Add("KScaled = Mul(KTranspose, ScaleFactorF)")
-              .Add("QKAttnWeight = MatMul(QScaled, KScaled)")
-              .Add("QKAttnCast = Cast (QKAttnWeight)", "to", T1);
-
-          // Apply softcap before bias/mask addition.
-          // Softcap must come before mask so that -inf mask values remain -inf
-          // (zero probability in softmax). If applied after, -inf maps to
-          // -softcap (finite), leaking probability to masked positions.
-          auto softcap_attr = ctx.getAttribute("softcap");
-          float softcap_val = (softcap_attr != nullptr) ? softcap_attr->f() : static_cast<float>(0);
-          if (softcap_val != 0) {
-            builder.Const1D("Softcap", softcap_val)
-                .Add("SoftcapF = Cast (Softcap)", "to", T1)
-                .Add("SoftcapDiv = Div(QKAttnCast, SoftcapF)")
-                .Add("SoftcapTanh = Tanh(SoftcapDiv)")
-                .Add("QKAttnSoftcapped = Mul(SoftcapTanh, SoftcapF)")
-                .Add("QKAttnWeightSoftcap = Add(QKAttnSoftcapped, AttnBiasT)");
-          } else {
-            builder.Add("QKAttnWeightSoftcap = Add(QKAttnCast, AttnBiasT)");
-          }
-          builder.Add("SoftmaxCast = Cast (QKAttnWeightSoftcap)", "to", softmax_precision)
-              .Add("AttnWeightSoftmax = Softmax (SoftmaxCast)")
-              .Add("SoftmaxOut = Cast (AttnWeightSoftmax)", "to", T1);
-
-          // Fully-masked-row guard: a query row whose additive bias (AttnBiasT) is
-          // entirely -inf (every key disallowed by the combined causal + attn_mask
-          // constraints) softmaxes to NaN. Detect such rows on the additive bias
-          // row-max and zero their probabilities with Where (not Mul; NaN * 0 = NaN)
-          // BEFORE the P @ V contraction so 0 @ V = 0. The guard runs before the
-          // mode-3 output capture so the exposed qk_matmul_output row is also zeroed,
-          // consistent with Y. Mirrors the reference impl so primary == _expanded
-          // bit-for-bit; a no-op for rows with any allowed key.
-          builder.Add("BiasRowMaxAxes = Constant <value = int64[1] {-1}> ()")
-              .Add("BiasRowMax = ReduceMax(AttnBiasT, BiasRowMaxAxes)") // keepdims=1 (default)
-              .Add("FloatNegInfT = CastLike(FloatNegInf, AttnBiasT)")
-              .Add("RowAllMasked = Equal(BiasRowMax, FloatNegInfT)")
-              .Add("ZeroProbT = CastLike(ScalarZero, SoftmaxOut)")
-              .Add("SoftmaxOutSafe = Where(RowAllMasked, ZeroProbT, SoftmaxOut)");
-
-          // QK MatMul output if required
-          auto qk_matmul_output_mode_attr = ctx.getAttribute("qk_matmul_output_mode");
-          int64_t qk_matmul_output_mode = (qk_matmul_output_mode_attr != nullptr) ? qk_matmul_output_mode_attr->i() : 0;
-          if (ctx.hasOutput(3)) {
-            if (qk_matmul_output_mode == 1) {
-              // Mode 1: after softcap (before bias addition)
-              if (softcap_val != 0) {
-                builder.Add("qk_matmul_output = Identity(QKAttnSoftcapped)");
-              } else {
-                // No softcap applied, same as raw QK
-                builder.Add("qk_matmul_output = Identity(QKAttnCast)");
-              }
-            } else if (qk_matmul_output_mode == 2) {
-              // Mode 2: QK + softcap + bias (after softcap + bias addition)
-              builder.Add("qk_matmul_output = Identity(QKAttnWeightSoftcap)");
-            } else if (qk_matmul_output_mode == 3) {
-              // Mode 3: post-softmax, after the fully-masked-row guard (a fully-masked
-              // row is zeroed, consistent with the primary output Y).
-              builder.Add("qk_matmul_output = Identity(SoftmaxOutSafe)");
-            } else {
-              builder.Add("qk_matmul_output = Identity(QKAttnWeight)");
-            }
-          }
-
-          builder.Add("YPreReshape = MatMul(SoftmaxOutSafe, VAttentionInput)");
-          // Reshape Y to 3D if input is a 3D tensor
-          if (is_3d_input) {
-            builder.Add("YTranspose = Transpose <perm = [0, 2, 1, 3]> (YPreReshape)")
-                .Add("YNewShape = Concat <axis = 0> (Zero1D, Zero1D, NegOne)")
-                .Add("Y = Reshape(YTranspose, YNewShape)");
-          } else {
-            builder.Add("Y = Identity(YPreReshape)");
-          }
-
-          schema.BuildFunction(functionProto);
-          return true;
-        }));
+        .TypeAndShapeInferenceFunction(Attention29Inference));
 
 ONNX_OPERATOR_SET_SCHEMA(
     CausalConvWithState,

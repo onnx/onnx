@@ -14,6 +14,71 @@ from onnx.reference.ops.op_attention import _compute_attention
 
 class Attention(Base):
     @staticmethod
+    def export_attention_head_sink() -> None:
+        node = onnx.helper.make_node(
+            "Attention",
+            ["Q", "K", "V", "", "", "", "", "head_sink"],
+            ["Y", "", "", "probabilities"],
+            qk_matmul_output_mode=3,
+        )
+        Q = np.zeros((1, 1, 1, 1), dtype=np.float32)
+        K = Q.copy()
+        V = np.full_like(Q, 2)
+        head_sink = np.array([np.log(3)], dtype=np.float32)
+        expect(
+            node,
+            inputs=[Q, K, V, head_sink],
+            outputs=[np.full_like(Q, 0.5), np.full_like(Q, 0.25)],
+            name="test_attention_head_sink",
+            opset_imports=[onnx.helper.make_opsetid("", 29)],
+        )
+
+    @staticmethod
+    def export_attention_zero_sink_gqa() -> None:
+        node = onnx.helper.make_node(
+            "Attention",
+            ["Q", "K", "V", "mask", "", "", "", "head_sink"],
+            ["Y", "", "", "probabilities"],
+            qk_matmul_output_mode=3,
+        )
+        Q = np.zeros((1, 2, 1, 1), dtype=np.float32)
+        K = np.zeros((1, 1, 2, 1), dtype=np.float32)
+        V = np.array([2, 4], dtype=np.float32).reshape(1, 1, 2, 1)
+        mask = np.array([[[[True, True]], [[False, False]]]])
+        head_sink = np.zeros(2, dtype=np.float32)
+        Y = np.array([2, 0], dtype=np.float32).reshape(1, 2, 1, 1)
+        probabilities = np.array([1 / 3, 1 / 3, 0, 0], dtype=np.float32).reshape(
+            1, 2, 1, 2
+        )
+        expect(
+            node,
+            inputs=[Q, K, V, mask, head_sink],
+            outputs=[Y, probabilities],
+            name="test_attention_zero_sink_gqa",
+            opset_imports=[onnx.helper.make_opsetid("", 29)],
+        )
+
+    @staticmethod
+    def export_attention_head_sink_empty_keys() -> None:
+        node = onnx.helper.make_node(
+            "Attention",
+            ["Q", "K", "V", "", "", "", "", "head_sink"],
+            ["Y", "", "", "probabilities"],
+            qk_matmul_output_mode=3,
+        )
+        Q = np.zeros((1, 2, 1, 1), dtype=np.float32)
+        K = np.zeros((1, 1, 0, 1), dtype=np.float32)
+        V = K.copy()
+        head_sink = np.zeros(2, dtype=np.float32)
+        expect(
+            node,
+            inputs=[Q, K, V, head_sink],
+            outputs=[np.zeros_like(Q), np.zeros((1, 2, 1, 0), dtype=np.float32)],
+            name="test_attention_head_sink_empty_keys",
+            opset_imports=[onnx.helper.make_opsetid("", 29)],
+        )
+
+    @staticmethod
     def export_attention() -> None:
         node = onnx.helper.make_node("Attention", inputs=["Q", "K", "V"], outputs=["Y"])
 

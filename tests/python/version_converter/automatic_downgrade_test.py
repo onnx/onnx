@@ -238,6 +238,26 @@ class TestAutomaticDowngrade(automatic_conversion_test_base.TestAutomaticConvers
             attrs={"equation": "bij, bjk -> bik"},
         )
 
+    def test_attention_29_to_28_without_sink(self) -> None:
+        self._test_op_downgrade(
+            "Attention",
+            28,
+            [[2, 4, 3, 8], [2, 2, 6, 8], [2, 2, 6, 5]],
+            [[2, 4, 3, 5]],
+            attrs={"left_window_size": 2},
+        )
+
+    def test_attention_29_to_28_with_sink_fails(self) -> None:
+        model = onnx.parser.parse_model("""
+            <ir_version: 13, opset_import: ["" : 29]>
+            sink (float[1, 2, 3, 4] Q, float[1, 1, 5, 4] K,
+                  float[1, 1, 5, 4] V, float[2] head_sink) => (Y) {
+                Y = Attention(Q, K, V, , , , , head_sink)
+            }
+        """)
+        with pytest.raises(RuntimeError, match="head_sink is not representable"):
+            onnx.version_converter.convert_version(model, 28)
+
     def test_attention_25_to_24_default_window(self) -> None:
         """Attention with disabled window bounds can be downgraded."""
         self._test_op_downgrade(

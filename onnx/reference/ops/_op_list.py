@@ -33,6 +33,7 @@ __all__ = [
     "Attention_23",
     "Attention_24",
     "Attention_25",
+    "Attention_29",
     "AttributeHasValue",
     "AveragePool_1",
     "AveragePool_7",
@@ -298,6 +299,7 @@ from onnx.reference.ops.op_attention import (
     Attention_23,
     Attention_24,
     Attention_25,
+    Attention_29,
 )
 from onnx.reference.ops.op_attribute_has_value import AttributeHasValue
 from onnx.reference.ops.op_average_pool import (

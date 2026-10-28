@@ -138,7 +138,17 @@ def _compute_attention(
     left_window_size=None,
     right_window_size=None,
     _validate_attention25=True,
+    head_sink: np.ndarray | None = None,
+    _validate_attention29=False,
 ) -> np.ndarray:
+    if head_sink is not None:
+        num_heads = q_num_heads if Q.ndim == _INPUT_RANK_3D else Q.shape[1]
+        if head_sink.shape != (num_heads,):
+            raise ValueError("head_sink must have shape (q_num_heads,)")
+        if head_sink.dtype != Q.dtype:
+            raise TypeError("head_sink must have the same dtype as Q")
+        if not np.all(np.isfinite(head_sink)):
+            raise ValueError("head_sink must contain finite logits")
     left_window_size = -1 if left_window_size is None else left_window_size
     right_window_size = -1 if right_window_size is None else right_window_size
     if left_window_size < -1:
@@ -342,6 +352,7 @@ def _compute_attention(
     #                    Y
     k_transpose = np.transpose(K, (0, 1, 3, 2))
     qk_matmul_output = numpy_matmul(Q * scale, k_transpose * scale)
+    raw_qk = qk_matmul_output
 
     # Apply softcap before mask/bias addition.
     # Softcap must be applied before mask so that -inf mask values remain -inf
@@ -355,6 +366,8 @@ def _compute_attention(
         pass  # qk_matmul_output already holds the softcapped-only value
     elif qk_matmul_output_mode == _QK_MATMUL_OUTPUT_WITH_BIAS:
         qk_matmul_output = qk_with_bias.copy()
+    if (head_sink is not None or _validate_attention29) and qk_matmul_output_mode in (None, 0):
+        qk_matmul_output = raw_qk
 
     if softmax_precision is not None:
         qk_with_bias = qk_with_bias.astype(
@@ -365,7 +378,13 @@ def _compute_attention(
     # semantics, however, are decided on the additive bias below (not on the
     # logits), so masking stays correct even when a masked row's raw QK score is
     # non-`-inf` (e.g. `+inf + (-inf) = NaN`).
-    qk_softmax = _softmax(qk_with_bias)
+    if head_sink is None:
+        qk_softmax = _softmax(qk_with_bias)
+    else:
+        sink = head_sink.astype(qk_with_bias.dtype).reshape(1, -1, 1, 1)
+        sink = np.broadcast_to(sink, (*qk_with_bias.shape[:-1], 1))
+        joint_logits = np.concatenate((qk_with_bias, sink), axis=-1)
+        qk_softmax = _softmax(joint_logits)[..., :-1]
 
     # Fully-masked-row guard: a query row whose additive bias is entirely -inf
     # (every key disallowed by the combined causal + attn_mask constraints) has no
@@ -374,12 +393,13 @@ def _compute_attention(
     # the P @ V contraction so 0 @ V = 0. The guard runs before the mode-3 capture
     # so the exposed qk_matmul_output row is also zeroed, consistent with Y, and
     # mirrors the function body's bias-based guard for primary == _expanded parity.
-    row_all_masked = np.isneginf(
-        np.max(attn_bias, axis=-1, keepdims=True)
-    )  # (..., q, 1)
-    qk_softmax = np.where(
-        row_all_masked, np.zeros((), dtype=qk_softmax.dtype), qk_softmax
-    )
+    if head_sink is None:
+        row_all_masked = np.isneginf(
+            np.max(attn_bias, axis=-1, keepdims=True)
+        )  # (..., q, 1)
+        qk_softmax = np.where(
+            row_all_masked, np.zeros((), dtype=qk_softmax.dtype), qk_softmax
+        )
 
     if qk_matmul_output_mode == _QK_MATMUL_OUTPUT_AFTER_SOFTMAX:
         # Mode 3 exposes the post-softmax probabilities; a fully-masked row is
@@ -395,12 +415,14 @@ def _compute_attention(
     output = numpy_matmul(qk_softmax, V)
     if input_shape_len == _INPUT_RANK_3D:
         output = np.transpose(output, (0, 2, 1, 3))
-        output = np.reshape(output, (output.shape[0], output.shape[1], -1))
+        hidden_size = q_num_heads * V.shape[3] if head_sink is not None else -1
+        output = np.reshape(output, (output.shape[0], output.shape[1], hidden_size))
     return output, present_key, present_value, qk_matmul_output
 
 
 class Attention(OpRun):
     _validate_attention25 = True
+    _validate_attention29 = False
 
     def _run(
         self,
@@ -411,6 +433,7 @@ class Attention(OpRun):
         past_key: np.ndarray | None = None,
         past_value: np.ndarray | None = None,
         nonpad_kv_seqlen: np.ndarray | None = None,
+        head_sink: np.ndarray | None = None,
         scale=None,
         is_causal=False,
         q_num_heads=None,
@@ -421,6 +444,8 @@ class Attention(OpRun):
         left_window_size=None,
         right_window_size=None,
     ) -> np.ndarray:
+        if head_sink is not None and not self._validate_attention29:
+            raise ValueError("head_sink requires Attention opset 29 or later")
         return _compute_attention(
             Q,
             K,
@@ -439,6 +464,8 @@ class Attention(OpRun):
             left_window_size=left_window_size,
             right_window_size=right_window_size,
             _validate_attention25=self._validate_attention25,
+            head_sink=head_sink,
+            _validate_attention29=self._validate_attention29,
         )
 
 
@@ -460,3 +487,7 @@ class Attention_24(Attention_23):
 
 class Attention_25(Attention):
     _validate_attention25 = True
+
+
+class Attention_29(Attention):
+    _validate_attention29 = True

@@ -3002,6 +3002,88 @@ class TestShapeInference(TestShapeInferenceHelper):
                 opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
             )
 
+    @pytest.mark.parametrize("sink_shape", ["4", "H", "?"])
+    def test_attention_head_sink(self, sink_shape: str) -> None:
+        model = onnx.parser.parse_model(
+            f"""
+            <ir_version: 13, opset_import: ["" : 29]>
+            sink (float[B, 4, Q, 8] q, float[B, 2, 6, 8] k,
+                  float[B, 2, 6, 5] v, float[{sink_shape}] head_sink)
+                => (float[B, 4, Q, 5] y, float[B, 4, Q, 6] probabilities) {{
+                y, , , probabilities = Attention <qk_matmul_output_mode = 3>
+                    (q, k, v, , , , , head_sink)
+            }}
+            """
+        )
+        inferred = onnx.shape_inference.infer_shapes(
+            model, strict_mode=True, check_type=True
+        )
+        assert inferred.graph.output[0].type == model.graph.output[0].type
+        assert inferred.graph.output[1].type == model.graph.output[1].type
+
+    @pytest.mark.parametrize("packed", [False, True])
+    @pytest.mark.parametrize(
+        ("sink_type", "message"),
+        [("float[2, 2]", "rank 1"), ("float[3]", "q_num_heads"), ("double[4]", "type")],
+    )
+    def test_attention_head_sink_invalid(
+        self, packed: bool, sink_type: str, message: str
+    ) -> None:
+        q_shape, k_shape, v_shape = (
+            ("1, 3, 32", "1, 6, 16", "1, 6, 10")
+            if packed
+            else ("1, 4, 3, 8", "1, 2, 6, 8", "1, 2, 6, 5")
+        )
+        attrs = "<q_num_heads = 4, kv_num_heads = 2>" if packed else ""
+        model = onnx.parser.parse_model(
+            f"""
+            <ir_version: 13, opset_import: ["" : 29]>
+            sink (float[{q_shape}] q, float[{k_shape}] k,
+                  float[{v_shape}] v, {sink_type} head_sink) => (y) {{
+                y = Attention {attrs} (q, k, v, , , , , head_sink)
+            }}
+            """
+        )
+        with pytest.raises(onnx.shape_inference.InferenceError, match=message):
+            onnx.shape_inference.infer_shapes(model, strict_mode=True, check_type=True)
+
+    @pytest.mark.parametrize("with_past", [False, True])
+    @pytest.mark.parametrize("packed", [False, True])
+    def test_attention_head_sink_empty_and_symbolic_shapes(
+        self, with_past: bool, packed: bool
+    ) -> None:
+        q_shape, k_shape, v_shape = (
+            ("B, Q, 32", "B, 0, 16", "B, 0, 10")
+            if packed
+            else ("B, 4, Q, 8", "B, 2, 0, 8", "B, 2, 0, 5")
+        )
+        attrs = "<q_num_heads = 4, kv_num_heads = 2>" if packed else ""
+        past_inputs = (
+            ", float[B, 2, 3, 8] pk, float[B, 2, 3, 5] pv" if with_past else ""
+        )
+        cache_args = "pk, pv" if with_past else ","
+        model = onnx.parser.parse_model(f"""
+            <ir_version: 13, opset_import: ["" : 29]>
+            sink (float[{q_shape}] q, float[{k_shape}] k, float[{v_shape}] v,
+                  float[4] head_sink {past_inputs}) => (y, scores) {{
+                y, , , scores = Attention {attrs} (q, k, v, , {cache_args}, , head_sink)
+            }}
+        """)
+        inferred = onnx.shape_inference.infer_shapes(
+            model, strict_mode=True, check_type=True
+        )
+        expected_y_shape = ["B", "Q", 20] if packed else ["B", 4, "Q", 5]
+        assert (
+            inferred.graph.output[0].type
+            == make_tensor_value_info("y", TensorProto.FLOAT, expected_y_shape).type
+        )
+        assert (
+            inferred.graph.output[1].type
+            == make_tensor_value_info(
+                "scores", TensorProto.FLOAT, ["B", 4, "Q", 3 if with_past else 0]
+            ).type
+        )
+
     def test_attention_4d(self) -> None:
         graph = self._make_graph(
             [

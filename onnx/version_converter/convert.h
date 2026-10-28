@@ -1126,6 +1126,15 @@ class DefaultVersionConverter : public BaseVersionConverter {
     // Downgrading needs no restriction: opset 27 accepts a superset of the v28 float-only types.
     registerAdapter(std::make_unique<CompatibleAdapter>("ReduceLogSum", OpSetID(28), OpSetID(27)));
     registerAdapter(std::make_unique<CompatibleAdapter>("ReduceLogSumExp", OpSetID(28), OpSetID(27)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("Attention", OpSetID(28), OpSetID(29)));
+    registerAdapter("Attention", 29, 28, [](const std::shared_ptr<Graph>&, Node* node) {
+      ONNX_ASSERTM(
+          node->inputs().size() <= 7 || node->inputs()[7]->node()->kind() == kUndefined,
+          "Attention 29->28 downgrade: head_sink is not representable in opset 28.");
+      while (node->inputs().size() > 7)
+        node->removeInput(7);
+      return node;
+    });
   }
 
   ModelProto convert_version(const ModelProto& mp_in, const OpSetID& initial_version, const OpSetID& target_version)
