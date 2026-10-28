@@ -27,9 +27,9 @@ class TestAutomaticUpgrade(automatic_conversion_test_base.TestAutomaticConversio
         mode = "strict_upgrade" if strict_check else "upgrade"
         self._test_op_conversion(op, *args, **kwargs, mode=mode)
 
-    def test_DequantizeGGUF(self) -> None:
+    def test_DequantizePacked(self) -> None:
         self._test_op_upgrade(
-            "DequantizeGGUF",
+            "DequantizePacked",
             29,
             [[18]],
             [[32]],

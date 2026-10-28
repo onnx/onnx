@@ -22,9 +22,9 @@ class TestAutomaticDowngrade(automatic_conversion_test_base.TestAutomaticConvers
         mode = "strict_downgrade" if strict_check else "downgrade"
         self._test_op_conversion(op, *args, **kwargs, mode=mode)
 
-    def test_dequantizegguf(self) -> None:
+    def test_dequantizepacked(self) -> None:
         self._test_op_downgrade(
-            "DequantizeGGUF",
+            "DequantizePacked",
             29,
             [[18]],
             [[32]],
@@ -32,13 +32,13 @@ class TestAutomaticDowngrade(automatic_conversion_test_base.TestAutomaticConvers
             attrs={"format": "gguf:q4_0", "shape": [32]},
         )
 
-    def test_dequantizegguf_before_introduction_fails(self) -> None:
+    def test_dequantizepacked_before_introduction_fails(self) -> None:
         self._test_model_conversion_fails(
             to_opset=28,
             model="""
                 <ir_version: 13, opset_import: ["" : 29]>
                 gguf (uint8[18] x) => (float[32] y) {
-                    y = DequantizeGGUF<format="gguf:q4_0", shape=[32]>(x)
+                    y = DequantizePacked<format="gguf:q4_0", shape=[32]>(x)
                 }
             """,
         )

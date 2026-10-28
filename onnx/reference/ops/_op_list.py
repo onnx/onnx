@@ -78,11 +78,11 @@ __all__ = [
     "CumSum",
     "DeformConv",
     "DepthToSpace",
-    "DequantizeGGUF",
     "DequantizeLinear_19",
     "DequantizeLinear_21",
     "DequantizeLinear_23",
     "DequantizeLinear_25",
+    "DequantizePacked",
     "Det",
     "DFT_17",
     "DFT_20",
@@ -347,13 +347,13 @@ from onnx.reference.ops.op_cum_prod import CumProd
 from onnx.reference.ops.op_cum_sum import CumSum
 from onnx.reference.ops.op_deform_conv import DeformConv
 from onnx.reference.ops.op_depth_to_space import DepthToSpace
-from onnx.reference.ops.op_dequantize_gguf import DequantizeGGUF
 from onnx.reference.ops.op_dequantize_linear import (
     DequantizeLinear_19,
     DequantizeLinear_21,
     DequantizeLinear_23,
     DequantizeLinear_25,
 )
+from onnx.reference.ops.op_dequantize_packed import DequantizePacked
 from onnx.reference.ops.op_det import Det
 from onnx.reference.ops.op_dft import DFT_17, DFT_20
 from onnx.reference.ops.op_div import Div

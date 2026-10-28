@@ -95,7 +95,7 @@ def main() -> None:
         / "_gguf_codebooks.py"
     )
     output.write_text("\n".join(lines), encoding="utf-8", newline="\n")
-    document = Path(__file__).resolve().parents[1] / "docs" / "DequantizeGGUF.md"
+    document = Path(__file__).resolve().parents[1] / "docs" / "DequantizePacked.md"
     text = document.read_text(encoding="utf-8")
     begin = "<!-- BEGIN GENERATED GGUF CODEBOOKS -->"
     end = "<!-- END GENERATED GGUF CODEBOOKS -->"

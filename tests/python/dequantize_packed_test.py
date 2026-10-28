@@ -21,7 +21,7 @@ from onnx import (
     shape_inference,
 )
 from onnx.reference import ReferenceEvaluator
-from onnx.reference.ops.op_dequantize_gguf import (
+from onnx.reference.ops.op_dequantize_packed import (
     GGUF_BLOCK_SIZES,
     GGUF_FORMATS,
     _decode_block,
@@ -29,7 +29,9 @@ from onnx.reference.ops.op_dequantize_gguf import (
     _grid,
 )
 
-_SPECIFICATION_PATH = Path(__file__).resolve().parents[2] / "docs" / "DequantizeGGUF.md"
+_SPECIFICATION_PATH = (
+    Path(__file__).resolve().parents[2] / "docs" / "DequantizePacked.md"
+)
 
 # SHA256 of little-endian FLOAT output from 64 blocks per format, using the
 # unmodified dequantize_row_* functions at GGML da8e2a54b919557b816b1c2beb432ccb766f7ce0.
@@ -132,7 +134,7 @@ def _run(
     output_dtype: int = TensorProto.FLOAT,
 ) -> np.ndarray:
     node = helper.make_node(
-        "DequantizeGGUF",
+        "DequantizePacked",
         ["x"],
         ["y"],
         format=f"gguf:{_GGMLType(qtype).name.lower()}"
@@ -156,7 +158,7 @@ def test_complete_format_set() -> None:
 
 
 def test_format_attribute_schema() -> None:
-    schema = defs.get_schema("DequantizeGGUF", 29)
+    schema = defs.get_schema("DequantizePacked", 29)
     assert schema.attributes["format"].type == defs.OpSchema.AttrType.STRING
     assert schema.attributes["format"].required
     assert "ggml_type" not in schema.attributes
@@ -169,7 +171,7 @@ def test_documented_format_identifiers() -> None:
     }
     for text in (
         _SPECIFICATION_PATH.read_text(encoding="utf-8"),
-        defs.get_schema("DequantizeGGUF", 29).doc,
+        defs.get_schema("DequantizePacked", 29).doc,
     ):
         rows = re.findall(
             r"^\|\s*(gguf:[a-z0-9_]+)\s*\|\s*(\w+)\s*\|\s*(\d+)\s*\|\s*(\d+)\s*\|$",
@@ -187,7 +189,7 @@ def test_format_attribute_required_string(attrs) -> None:
     model = parser.parse_model("""
         <ir_version: 13, opset_import: ["" : 29]>
         gguf (uint8[18] x) => (float[32] y) {
-            y = DequantizeGGUF<shape=[32]>(x)
+            y = DequantizePacked<shape=[32]>(x)
         }
     """)
     model.graph.node[0].attribute.extend(
@@ -198,7 +200,7 @@ def test_format_attribute_required_string(attrs) -> None:
 
 
 def test_reference_rejects_numeric_format() -> None:
-    node = helper.make_node("DequantizeGGUF", ["x"], ["y"], format=2, shape=[32])
+    node = helper.make_node("DequantizePacked", ["x"], ["y"], format=2, shape=[32])
     with pytest.raises(ValueError, match="Unsupported quantization format"):
         ReferenceEvaluator(node).run(None, {"x": np.zeros(18, dtype=np.uint8)})
 
@@ -345,7 +347,7 @@ def test_default_output_dtype() -> None:
     model = parser.parse_model("""
         <ir_version: 13, opset_import: ["" : 29]>
         gguf (uint8[18] x) => (float[32] y) {
-            y = DequantizeGGUF<format="gguf:q4_0", shape=[32]>(x)
+            y = DequantizePacked<format="gguf:q4_0", shape=[32]>(x)
         }
     """)
     checker.check_model(model, full_check=True)
@@ -476,7 +478,7 @@ def test_all_block_float_scale_bytes(qtype: int) -> None:
 def _infer(input_shape=(18,), input_type=TensorProto.UINT8, **attrs):
     attributes = {"format": "gguf:q4_0", "output_dtype": TensorProto.FLOAT, **attrs}
     shape = attributes.pop("shape", [32])
-    node = helper.make_node("DequantizeGGUF", ["x"], ["y"], **attributes)
+    node = helper.make_node("DequantizePacked", ["x"], ["y"], **attributes)
     node.attribute.append(
         helper.make_attribute("shape", shape, attr_type=AttributeProto.INTS)
     )

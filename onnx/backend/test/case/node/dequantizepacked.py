@@ -12,11 +12,11 @@ from onnx.backend.test.case.base import Base
 from onnx.backend.test.case.node import expect
 
 
-class DequantizeGGUF(Base):
+class DequantizePacked(Base):
     @staticmethod
     def export_q4_0() -> None:
         node = helper.make_node(
-            "DequantizeGGUF", ["x"], ["y"], format="gguf:q4_0", shape=[2, 32]
+            "DequantizePacked", ["x"], ["y"], format="gguf:q4_0", shape=[2, 32]
         )
         x = np.frombuffer(
             struct.pack("<e", 0.5)
@@ -32,23 +32,23 @@ class DequantizeGGUF(Base):
             ],
             dtype=np.float32,
         )
-        expect(node, inputs=[x], outputs=[y], name="test_dequantizegguf_q4_0")
+        expect(node, inputs=[x], outputs=[y], name="test_dequantizepacked_q4_0")
 
     @staticmethod
     def export_q5_1() -> None:
         node = helper.make_node(
-            "DequantizeGGUF", ["x"], ["y"], format="gguf:q5_1", shape=[32]
+            "DequantizePacked", ["x"], ["y"], format="gguf:q5_1", shape=[32]
         )
         x = np.frombuffer(
             struct.pack("<eeI", 0.5, -1, 0xFFFF0000) + bytes(range(16)), dtype=np.uint8
         )
         y = np.array(list(np.arange(16) * 0.5 - 1) + [7] * 16, dtype=np.float32)
-        expect(node, inputs=[x], outputs=[y], name="test_dequantizegguf_q5_1")
+        expect(node, inputs=[x], outputs=[y], name="test_dequantizepacked_q5_1")
 
     @staticmethod
     def export_iq4_nl() -> None:
         node = helper.make_node(
-            "DequantizeGGUF",
+            "DequantizePacked",
             ["x"],
             ["y"],
             format="gguf:iq4_nl",
@@ -78,28 +78,30 @@ class DequantizeGGUF(Base):
             + [-127] * 16,
             dtype=np.float16,
         ) * np.float16(0.5)
-        expect(node, inputs=[x], outputs=[y], name="test_dequantizegguf_iq4_nl_float16")
+        expect(
+            node, inputs=[x], outputs=[y], name="test_dequantizepacked_iq4_nl_float16"
+        )
 
     @staticmethod
     def export_mxfp4() -> None:
         node = helper.make_node(
-            "DequantizeGGUF", ["x"], ["y"], format="gguf:mxfp4", shape=[32]
+            "DequantizePacked", ["x"], ["y"], format="gguf:mxfp4", shape=[32]
         )
         x = np.array([127, *list(range(16))], dtype=np.uint8)
         y = np.array(
             [0, 0.5, 1, 1.5, 2, 3, 4, 6, 0, -0.5, -1, -1.5, -2, -3, -4, -6] + [0] * 16,
             dtype=np.float32,
         )
-        expect(node, inputs=[x], outputs=[y], name="test_dequantizegguf_mxfp4")
+        expect(node, inputs=[x], outputs=[y], name="test_dequantizepacked_mxfp4")
 
     @staticmethod
     def export_empty() -> None:
         node = helper.make_node(
-            "DequantizeGGUF", ["x"], ["y"], format="gguf:q2_k", shape=[0, 256]
+            "DequantizePacked", ["x"], ["y"], format="gguf:q2_k", shape=[0, 256]
         )
         expect(
             node,
             inputs=[np.empty(0, dtype=np.uint8)],
             outputs=[np.empty((0, 256), dtype=np.float32)],
-            name="test_dequantizegguf_empty",
+            name="test_dequantizepacked_empty",
         )

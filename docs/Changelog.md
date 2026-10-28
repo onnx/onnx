@@ -34455,9 +34455,9 @@ This version of the operator has been available since version 28 of the default 
 </dl>
 
 ## Version 29 of the default ONNX operator set
-### <a name="DequantizeGGUF-29"></a>**DequantizeGGUF-29**</a>
+### <a name="DequantizePacked-29"></a>**DequantizePacked-29**</a>
 
-  Dequantizes the packed payload of one GGUF tensor.
+  Dequantizes the packed payload of one quantized tensor.
   `x` is a one-dimensional UINT8 tensor containing exactly the tensor's bytes.
   All multibyte fields are little-endian.
 
@@ -34498,7 +34498,7 @@ This version of the operator has been available since version 28 of the default 
 
   The byte layouts, per-format decoding algorithms, and complete IQ codebooks
   are defined in the in-tree
-  [DequantizeGGUF decoding specification](DequantizeGGUF.md).
+  [DequantizePacked decoding specification](DequantizePacked.md).
 
   `shape` gives the logical output dimensions in ONNX (row-major) order.
   For a GGUF descriptor `[ne0, ne1, ...]`, use `shape=[..., ne1, ne0]`.

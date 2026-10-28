@@ -14,6 +14,7 @@ from docs.docsgen.source import onnx_sphinx
     "op_name",
     [
         "BatchNormalization",
+        "DequantizePacked",
         "GreaterOrEqual",
         "InstanceNormalization",
         "LessOrEqual",
@@ -63,13 +64,13 @@ def test_get_onnx_example_does_not_fall_back_for_unrelated_domains() -> None:
     assert onnx_sphinx.get_onnx_example("Add", "ai.onnx.ml") == {}
 
 
-def test_dequantizegguf_specification_link() -> None:
+def test_dequantizepacked_specification_link() -> None:
     docs, _, _ = onnx_sphinx.get_markdown_doc(
-        ".", op_name="DequantizeGGUF", domain="", example=False
+        ".", op_name="DequantizePacked", domain="", example=False
     )
     assert (
-        "[DequantizeGGUF decoding specification](../repo-docs/DequantizeGGUF.md)"
+        "[DequantizePacked decoding specification](../repo-docs/DequantizePacked.md)"
         in docs
     )
-    assert (onnx_sphinx._DOCS_DIR / "DequantizeGGUF.md").is_file()
-    assert "DequantizeGGUF.md" not in onnx_sphinx.REPO_DOCS_EXCLUDE
+    assert (onnx_sphinx._DOCS_DIR / "DequantizePacked.md").is_file()
+    assert "DequantizePacked.md" not in onnx_sphinx.REPO_DOCS_EXCLUDE

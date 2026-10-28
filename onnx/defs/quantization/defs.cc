@@ -14,7 +14,7 @@ namespace ONNX_NAMESPACE {
 
 namespace {
 
-std::pair<int64_t, int64_t> GGUFBlockSize(const std::string& format) {
+std::pair<int64_t, int64_t> DequantizePackedBlockSize(const std::string& format) {
   static const std::unordered_map<std::string, std::pair<int64_t, int64_t>> block_sizes = {
       {"gguf:q4_0", {32, 18}},     {"gguf:q4_1", {32, 20}},    {"gguf:q5_0", {32, 22}},     {"gguf:q5_1", {32, 24}},
       {"gguf:q8_0", {32, 34}},     {"gguf:q8_1", {32, 36}},    {"gguf:q2_k", {256, 84}},    {"gguf:q3_k", {256, 110}},
@@ -31,13 +31,13 @@ std::pair<int64_t, int64_t> GGUFBlockSize(const std::string& format) {
   return it->second;
 }
 
-void DequantizeGGUFInference(InferenceContext& ctx) {
+void DequantizePackedInference(InferenceContext& ctx) {
   const auto* format = ctx.getAttribute("format");
   const auto* shape = ctx.getAttribute("shape");
   if (format == nullptr || shape == nullptr) {
-    fail_shape_inference("DequantizeGGUF requires format and shape.");
+    fail_shape_inference("DequantizePacked requires format and shape.");
   }
-  const auto block = GGUFBlockSize(format->s());
+  const auto block = DequantizePackedBlockSize(format->s());
   const auto output_dtype = getAttribute(ctx, "output_dtype", TensorProto::FLOAT);
   if (output_dtype != TensorProto::FLOAT && output_dtype != TensorProto::FLOAT16 &&
       output_dtype != TensorProto::BFLOAT16 && output_dtype != TensorProto::DOUBLE) {
@@ -83,11 +83,11 @@ void DequantizeGGUFInference(InferenceContext& ctx) {
 } // namespace
 
 ONNX_OPERATOR_SET_SCHEMA(
-    DequantizeGGUF,
+    DequantizePacked,
     29,
     OpSchema()
         .SetDoc(R"DOC(
-Dequantizes the packed payload of one GGUF tensor.
+Dequantizes the packed payload of one quantized tensor.
 `x` is a one-dimensional UINT8 tensor containing exactly the tensor's bytes.
 All multibyte fields are little-endian.
 
@@ -128,7 +128,7 @@ The supported identifiers and block sizes are:
 
 The byte layouts, per-format decoding algorithms, and complete IQ codebooks
 are defined in the in-tree
-[DequantizeGGUF decoding specification](DequantizeGGUF.md).
+[DequantizePacked decoding specification](DequantizePacked.md).
 
 `shape` gives the logical output dimensions in ONNX (row-major) order.
 For a GGUF descriptor `[ne0, ne1, ...]`, use `shape=[..., ne1, ne0]`.
@@ -164,7 +164,7 @@ blocks can be decoded with `format="gguf:q4_0", shape=[2,32]`.
             AttributeProto::INT,
             static_cast<int64_t>(TensorProto::FLOAT))
         .TypeConstraint("T", {types::Float, types::Float16, types::BFloat16, types::Double}, "Floating-point output.")
-        .TypeAndShapeInferenceFunction(DequantizeGGUFInference));
+        .TypeAndShapeInferenceFunction(DequantizePackedInference));
 
 ONNX_OPERATOR_SET_SCHEMA(
     QuantizeLinear,

@@ -68,7 +68,7 @@ Version: da8e2a54b919557b816b1c2beb432ccb766f7ce0
 Source: https://github.com/ggml-org/ggml
 License: MIT
 
-The DequantizeGGUF reference implementation includes losslessly compacted IQ
+The DequantizePacked reference implementation includes losslessly compacted IQ
 lookup tables and decoding logic based on this revision. GGML is not linked
 or required at runtime.
 

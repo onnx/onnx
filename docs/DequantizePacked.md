@@ -5,19 +5,19 @@ Copyright (c) 2023-2026 The ggml authors
 SPDX-License-Identifier: Apache-2.0 AND MIT
 -->
 
-# DequantizeGGUF decoding specification
+# DequantizePacked decoding specification
 
 This document defines the packed layouts, arithmetic, element ordering, and
-codebooks for every format supported by `DequantizeGGUF` in opset 29.
+codebooks for every format supported by `DequantizePacked` in opset 29.
 The signature, storage rules, layouts, algorithms, and codebooks below are
 normative. Source provenance and validation notes are informative.
 
-The [operator schema](Operators.md#DequantizeGGUF) registers this contract.
+The [operator schema](Operators.md#DequantizePacked) registers this contract.
 
 ## Signature and storage
 
 ```text
-y = DequantizeGGUF<format, shape, output_dtype=FLOAT>(x)
+y = DequantizePacked<format, shape, output_dtype=FLOAT>(x)
 ```
 
 `x` is a rank-one UINT8 tensor of exact payload bytes. The three attributes
@@ -34,7 +34,7 @@ prefix identifies the encoding family. Each permitted identifier denotes the
 fixed layout, algorithm, and codebooks defined in this document. For example:
 
 ```text
-y = DequantizeGGUF<format="gguf:q2_0", shape=[64]>(x)
+y = DequantizePacked<format="gguf:q2_0", shape=[64]>(x)
 ```
 
 The importer selects each tensor's payload byte range, normalizes multibyte
@@ -775,7 +775,7 @@ The generator checks the input file's SHA256 before extracting numeric tables.
 The upstream MIT notice is retained next to the generated data in
 `onnx/reference/ops/GGML_LICENSE`.
 
-`tests/python/dequantize_gguf_test.py` constructs a deterministic 64-block
+`tests/python/dequantize_packed_test.py` constructs a deterministic 64-block
 nonzero corpus for each format, including negative/zero/subnormal scales,
 high-bit masks, signs, group scales, and varied codebook indices. Expected
 FLOAT output digests were obtained from the pinned GGML C row decoders,

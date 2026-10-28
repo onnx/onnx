@@ -363,7 +363,7 @@ def _decode_block(block: bytes, qtype: int) -> np.ndarray:  # noqa: PLR0911
     raise ValueError(f"Unsupported quantized ggml_type: {qtype}")
 
 
-class DequantizeGGUF(OpRun):
+class DequantizePacked(OpRun):
     def _run(self, x, format=None, shape=None, output_dtype=None):  # noqa: A002
         if format not in GGUF_FORMATS:
             raise ValueError(f"Unsupported quantization format: {format}")

@@ -1,7 +1,7 @@
 # Copyright (c) ONNX Project Contributors
 #
 # SPDX-License-Identifier: Apache-2.0
-"""Compare DequantizeGGUF with pinned upstream C, without adding a runtime dependency."""
+"""Compare DequantizePacked's GGUF formats with pinned upstream C."""
 
 from __future__ import annotations
 
@@ -21,7 +21,7 @@ from pathlib import Path
 import numpy as np
 
 from onnx.reference.ops._gguf_codebooks import CODEBOOKS
-from onnx.reference.ops.op_dequantize_gguf import GGUF_BLOCK_SIZES, _decode_block
+from onnx.reference.ops.op_dequantize_packed import GGUF_BLOCK_SIZES, _decode_block
 
 logger = logging.getLogger(__name__)
 
@@ -133,7 +133,7 @@ def main() -> None:
         Path(__file__).resolve().parents[1]
         / "tests"
         / "python"
-        / "dequantize_gguf_test.py"
+        / "dequantize_packed_test.py"
     )
     spec = importlib.util.spec_from_file_location("gguf_tests", test_path)
     if spec is None or spec.loader is None:
