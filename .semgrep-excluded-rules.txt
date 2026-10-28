@@ -1,0 +1,23 @@
+# Copyright (c) ONNX Project Contributors
+# SPDX-License-Identifier: Apache-2.0
+
+# Legal lambda/generator expressions and intentional test-message concatenation.
+python.lang.maintainability.return.return-not-in-function
+python.lang.correctness.return-in-init.return-in-init
+python.lang.correctness.common-mistakes.string-concat-in-list.string-concat-in-list
+# Boolean properties, callable guards, and intentional None identity checks.
+python.lang.maintainability.is-function-without-parentheses.is-function-without-parentheses
+python.lang.correctness.common-mistakes.is-comparison-string.identical-is-comparison
+# The token match is a lockfile checksum; the AI match is a license filename.
+generic.secrets.gitleaks.square-access-token.square-access-token
+ai.generic.detect-generic-ai-anthprop.detect-generic-ai-anthprop
+# Inventory/audit-only rules: expected PyTorch usage and reviewed exclusions.
+ai.python.detect-pytorch.detect-pytorch
+generic.ci.audit.changed-semgrepignore.changed-semgrepignore
+# Reviewed development tools, plugin imports, report generation, and filenames.
+# These audit rules report expected API use without establishing a defect.
+python.lang.security.audit.dangerous-subprocess-use-audit.dangerous-subprocess-use-audit
+python.lang.security.audit.non-literal-import.non-literal-import
+python.lang.security.audit.dynamic-urllib-use-detected.dynamic-urllib-use-detected
+python.lang.security.use-defusedcsv.use-defusedcsv
+python.lang.security.insecure-uuid-version.insecure-uuid-version

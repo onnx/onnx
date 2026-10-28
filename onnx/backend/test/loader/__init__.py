@@ -49,12 +49,12 @@ def load_model_tests(
             model_name = test_name[len("test_")]
             model_dir: str | None = case_dir
             if os.path.exists(os.path.join(case_dir, "data.json")):
-                with open(os.path.join(case_dir, "data.json")) as f:
+                with open(os.path.join(case_dir, "data.json"), encoding="utf-8") as f:
                     data = json.load(f)
                     rtol = data.get("rtol", rtol)
                     atol = data.get("atol", atol)
         else:
-            with open(os.path.join(case_dir, "data.json")) as f:
+            with open(os.path.join(case_dir, "data.json"), encoding="utf-8") as f:
                 data = json.load(f)
                 url = data["url"]
                 model_name = data["model_name"]

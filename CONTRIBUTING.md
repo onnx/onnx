@@ -185,21 +185,22 @@ Run `lintrunner --help` and see the `.lintrunner.toml` file for more usage examp
 
 #### Semgrep
 
-The Semgrep workflow evaluates all public rules from a pinned revision of
-`semgrep/semgrep-rules` with Semgrep Community Edition. Findings are advisory
-while false positives are assessed. JSON, SARIF, and text reports are available
+The Lint workflow runs public rules from a pinned revision of
+`semgrep/semgrep-rules` with Semgrep Community Edition. Known false positives and
+low-signal audit rules are documented in `.semgrep-excluded-rules.txt`.
+Findings are advisory during rollout. JSON, SARIF, and text reports are available
 as workflow artifacts, including parser errors, timeouts, and unsupported rules.
 Public rules requiring Pro language extensions are skipped by Community Edition.
 Tests remain in scope; generated files, build outputs, and vendored code are
 excluded through `.semgrepignore`. Existing `nosemgrep` suppressions are disabled
 for this evaluation.
 
-To reproduce locally, install `requirements-semgrep.txt`, check out the rules
-revision specified in `.github/workflows/semgrep.yml` into `.semgrep-rules`, then
+To reproduce locally, install `requirements-dev.txt`, check out the rules
+revision specified in `.github/workflows/lint.yml` into `.semgrep-rules`, then
 run:
 
 ```sh
-python workflow_scripts/semgrep/collect_rules.py .semgrep-rules .semgrep-rules/collected.json
+python workflow_scripts/semgrep/collect_rules.py .semgrep-rules .semgrep-rules/collected.json --exclude .semgrep-excluded-rules.txt
 semgrep scan --config .semgrep-rules/collected.json --metrics=off --disable-version-check --disable-nosem --json-output .semgrep-rules/results.json .
 ```
 

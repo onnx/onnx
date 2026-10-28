@@ -1,5 +1,0 @@
-# Copyright (c) ONNX Project Contributors
-# SPDX-License-Identifier: Apache-2.0
-
-# CI-only scanner; not an ONNX build or runtime dependency.
-semgrep==1.182.1

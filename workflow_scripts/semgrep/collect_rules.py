@@ -16,7 +16,13 @@ def main() -> None:
     )
     parser.add_argument("source", type=Path)
     parser.add_argument("output", type=Path)
+    parser.add_argument("--exclude", type=Path, required=True)
     args = parser.parse_args()
+    excluded = {
+        line.strip()
+        for line in args.exclude.read_text(encoding="utf-8").splitlines()
+        if line.strip() and not line.lstrip().startswith("#")
+    }
     yaml = YAML(typ="safe")
     rules = []
     for path in sorted(args.source.rglob("*")):
@@ -42,9 +48,15 @@ def main() -> None:
                 rules.append(rule)
     if not rules:
         parser.error("No Semgrep rules were found")
+    unknown = excluded - {rule["id"] for rule in rules}
+    if unknown:
+        parser.error(f"Unknown excluded rules: {sorted(unknown)}")
+    rules = [rule for rule in rules if rule["id"] not in excluded]
     args.output.write_text(json.dumps({"rules": rules}, indent=2), encoding="utf-8")
     logging.basicConfig(level=logging.INFO, format="%(message)s")
-    logging.getLogger(__name__).info("Collected %d Semgrep rules", len(rules))
+    logging.getLogger(__name__).info(
+        "Collected %d Semgrep rules (%d exclusions)", len(rules), len(excluded)
+    )
 
 
 if __name__ == "__main__":

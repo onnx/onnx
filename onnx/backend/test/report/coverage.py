@@ -159,7 +159,7 @@ class Coverage:
         existing_models: OrderedDict[str, dict[str, str]] = OrderedDict()
         frameworks: list[str] = []
         if os.path.isfile(nodes_path):
-            with open(nodes_path) as nodes_file:
+            with open(nodes_path, encoding="utf-8") as nodes_file:
                 reader = csv.DictReader(nodes_file)
                 assert reader.fieldnames
                 frameworks = list(reader.fieldnames)
@@ -168,7 +168,7 @@ class Coverage:
                     del row["Op"]
                     existing_nodes[str(op)] = row
         if os.path.isfile(models_path):
-            with open(models_path) as models_file:
+            with open(models_path, encoding="utf-8") as models_file:
                 reader = csv.DictReader(models_file)
                 for row in reader:
                     model = row["Model"]
@@ -176,7 +176,7 @@ class Coverage:
                     existing_models[str(model)] = row
         backend = os.environ.get("BACKEND")
         other_frameworks = frameworks[1:]
-        with open(nodes_path, "w") as nodes_file:
+        with open(nodes_path, "w", encoding="utf-8") as nodes_file:
             if "Op" not in frameworks:
                 frameworks.append("Op")
             if backend not in frameworks:
@@ -208,7 +208,7 @@ class Coverage:
                 existing_nodes[node]["Op"] = str(node)
                 node_writer.writerow(existing_nodes[node])
             node_writer.writerow(summaries)
-        with open(models_path, "w") as models_file:
+        with open(models_path, "w", encoding="utf-8") as models_file:
             frameworks[0] = "Model"
             model_writer = csv.DictWriter(models_file, fieldnames=frameworks)
             model_writer.writeheader()
@@ -254,6 +254,7 @@ class Coverage:
         with open(
             os.path.join(str(os.environ.get("CSVDIR")), "metadata.csv"),
             "w",
+            encoding="utf-8",
         ) as metadata_file:
             metadata_writer = csv.writer(metadata_file)
             metadata_writer.writerow(
