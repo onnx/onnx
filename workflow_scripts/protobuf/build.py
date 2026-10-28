@@ -28,33 +28,44 @@ def main() -> None:
         parser.error("CMake must be installed and available on PATH")
     build_dir = args.build_dir.resolve()
     prefix = (args.install_prefix or build_dir / "install").resolve()
+
+    def run_cmake(*options: str | Path) -> None:
+        subprocess.run([cmake, *map(str, options)], check=True)  # noqa: S603
+
+    # Makefiles and Visual Studio support building dependency subprojects.
+    generator = (
+        os.environ.get("CMAKE_GENERATOR", "Visual Studio 17 2022")
+        if os.name == "nt"
+        else "Unix Makefiles"
+    )
     command = [
-        cmake,
         "-S",
         str(Path(__file__).resolve().parents[2]),
         "-B",
         str(build_dir),
+        "-G",
+        generator,
         f"-DCMAKE_INSTALL_PREFIX={prefix}",
         f"-DCMAKE_BUILD_TYPE={args.config}",
-        "-DONNX_BUILD_PROTOBUF_ONLY=ON",
+        "-DONNX_BUILD_CUSTOM_PROTOBUF=ON",
+        "-DONNX_BUILD_PYTHON=OFF",
+        "-DONNX_BUILD_TESTS=OFF",
+        "-DONNX_INSTALL=OFF",
     ]
     if args.arch:
         command.extend(["-A", args.arch])
-    subprocess.run(command, check=True)  # noqa: S603
-    subprocess.run(  # noqa: S603
-        [
-            cmake,
+    run_cmake(*command)
+    for dependency in ("absl", "protobuf"):
+        dependency_dir = build_dir / "_deps" / f"{dependency}-build"
+        run_cmake(
             "--build",
-            str(build_dir),
+            dependency_dir,
             "--config",
             args.config,
-            "--target",
-            "install",
             "--parallel",
             str(args.parallel),
-        ],
-        check=True,
-    )
+        )
+        run_cmake("--install", dependency_dir, "--config", args.config)
     protoc = prefix / "bin" / ("protoc.exe" if os.name == "nt" else "protoc")
     subprocess.run([str(protoc), "--version"], check=True)  # noqa: S603
     # Environment changes in a subprocess do not propagate to its caller.

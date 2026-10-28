@@ -43,7 +43,6 @@ endif()
 
 option(ONNX_BUILD_PYTHON "Build Python binaries" OFF)
 option(ONNX_BUILD_CUSTOM_PROTOBUF "Build and use ONNX's own protobuf" OFF)
-option(ONNX_BUILD_PROTOBUF_ONLY "Build Protobuf dependencies without ONNX targets" OFF)
 option(ONNX_USE_PROTOBUF_SHARED_LIBS "Build ONNX using protobuf shared library." OFF)
 option(ONNX_GEN_PB_TYPE_STUBS "Generate protobuf python type stubs" ON)
 option(ONNX_WERROR "Build with Werror" OFF)
@@ -61,12 +60,6 @@ option(ONNX_PYODIDE_BUILD "Build ONNX for Pyodide/Emscripten (wasm32)." OFF)
 option(ONNX_INSTALL "Install ONNX targets, headers, and CMake config files" ON)
 if(WIN32)
   option(ONNX_USE_MSVC_STATIC_RUNTIME "Build with MSVC static runtime. Ignored if CMAKE_MSVC_RUNTIME_LIBRARY is defined." OFF)
-endif()
-
-if(ONNX_BUILD_PROTOBUF_ONLY)
-  set(ONNX_BUILD_CUSTOM_PROTOBUF ON)
-  set(ONNX_BUILD_PYTHON OFF)
-  set(ONNX_BUILD_TESTS OFF)
 endif()
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
@@ -465,10 +458,6 @@ if(NOT ONNX_PROTOC_EXECUTABLE)
     set(CMAKE_CXX_FLAGS ${ONNX_CMAKE_CXX_FLAGS})
 endif()
 message(STATUS "ONNX_PROTOC_EXECUTABLE: ${ONNX_PROTOC_EXECUTABLE}")
-
-if(ONNX_BUILD_PROTOBUF_ONLY)
-  return()
-endif()
 
 # function(RELATIVE_PROTOBUF_GENERATE_CPP SRCS HDRS ROOT_DIR) from
 # https://github.com/tensorflow/tensorflow/blob/d2c3b873/tensorflow/contrib/cmake/tf_core_framework.cmake
