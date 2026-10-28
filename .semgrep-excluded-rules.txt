@@ -14,6 +14,10 @@ ai.generic.detect-generic-ai-anthprop.detect-generic-ai-anthprop
 # Inventory/audit-only rules: expected PyTorch usage and reviewed exclusions.
 ai.python.detect-pytorch.detect-pytorch
 generic.ci.audit.changed-semgrepignore.changed-semgrepignore
+# These rules misclassify GitHub's valid $/ self-repository references.
+# zizmor covers action pinning and understands the new syntax.
+yaml.github-actions.security.audit.third-party-action-not-pinned-to-commit-sha.third-party-action-not-pinned-to-commit-sha
+yaml.github-actions.security.github-actions-mutable-action-tag.github-actions-mutable-action-tag
 # Reviewed development tools, plugin imports, report generation, and filenames.
 # These audit rules report expected API use without establishing a defect.
 python.lang.security.audit.dangerous-subprocess-use-audit.dangerous-subprocess-use-audit
