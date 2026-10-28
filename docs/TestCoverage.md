@@ -12328,7 +12328,7 @@ expect(
 
 
 ### GatherND
-There are 3 test cases, listed as following:
+There are 4 test cases, listed as following:
 <details>
 <summary>float32</summary>
 
@@ -12398,6 +12398,25 @@ expect(
     inputs=[data, indices],
     outputs=[output],
     name="test_gathernd_example_int32_batch_dim1",
+)
+```
+
+</details>
+<details>
+<summary>selected_kv_int32_indices</summary>
+
+```python
+node = onnx.helper.make_node(
+    "GatherND", ["cache", "positions"], ["selected"], batch_dims=1
+)
+cache = np.arange(24, dtype=np.float32).reshape(2, 4, 3)
+positions = np.array([[[[0], [2]]], [[[1], [-1]]]], dtype=np.int32)
+selected = np.stack([cache[0, [[0, 2]]], cache[1, [[1, 3]]]])
+expect(
+    node,
+    inputs=[cache, positions],
+    outputs=[selected],
+    name="test_gathernd_selected_kv_int32_indices",
 )
 ```
 
@@ -27465,7 +27484,30 @@ expect(
 
 
 ### ScatterND
-There are 7 test cases, listed as following:
+There are 8 test cases, listed as following:
+<details>
+<summary>batched_token_add_int32_indices</summary>
+
+```python
+node = onnx.helper.make_node(
+    "ScatterND", ["data", "indices", "updates"], ["output"], reduction="add"
+)
+data = np.zeros((2, 3, 2), dtype=np.float32)
+indices = np.array([[0, 1], [1, 0], [0, 1], [1, -1]], dtype=np.int32)
+updates = np.array([[1, 2], [3, 4], [5, 6], [7, 8]], dtype=np.float32)
+output = np.array(
+    [[[0, 0], [6, 8], [0, 0]], [[3, 4], [0, 0], [7, 8]]],
+    dtype=np.float32,
+)
+expect(
+    node,
+    inputs=[data, indices, updates],
+    outputs=[output],
+    name="test_scatternd_batched_token_add_int32_indices",
+)
+```
+
+</details>
 <details>
 <summary>scatternd</summary>
 
