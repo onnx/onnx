@@ -6,6 +6,7 @@ from __future__ import annotations
 import math
 import random
 from typing import Any
+from unittest import mock
 
 import ml_dtypes
 import numpy as np
@@ -377,6 +378,19 @@ class TestHelperNodeFunctions:
         assert graph.node[1] == node_def2
         assert graph.doc_string == ""
         assert graph.value_info[0] == value_info[0]
+
+    def test_graph_copies_initializers_individually(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        graph = mock.MagicMock(spec=GraphProto())
+        monkeypatch.setattr(helper, "GraphProto", lambda: graph)
+        tensor = helper.make_tensor("weight", TensorProto.FLOAT, [1], [1.0])
+
+        result = helper.make_graph([], "test", [], [], initializer=[tensor])
+
+        assert result is graph
+        graph.initializer.extend.assert_not_called()
+        graph.initializer.add.return_value.CopyFrom.assert_called_once_with(tensor)
 
     def test_graph_docstring(self) -> None:
         graph = helper.make_graph([], "my graph", [], [], None, "my docs")
