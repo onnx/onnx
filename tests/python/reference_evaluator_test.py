@@ -3098,6 +3098,33 @@ class TestReferenceEvaluator:
         got1 = ref1.run(None, feeds)
         assert_allclose(got1[0], expected)
 
+    @pytest.mark.parametrize(
+        "operator,tensor_type,size,index,expected",
+        [
+            ("HannWindow", TensorProto.FLOAT16, 32768, 24576, 0.5),
+            ("HammingWindow", TensorProto.FLOAT16, 16384, 12288, 25 / 46),
+            ("HannWindow", TensorProto.INT8, 64, 32, 1),
+        ],
+    )
+    def test_window_small_types(self, operator, tensor_type, size, index, expected):
+        node = make_node(
+            operator, ["size"], ["y"], periodic=1, output_datatype=tensor_type
+        )
+        inputs = [make_tensor_value_info("size", TensorProto.INT64, [])]
+        outputs = [make_tensor_value_info("y", tensor_type, [size])]
+        model = make_model(
+            make_graph([node], "test", inputs, outputs),
+            opset_imports=[make_opsetid("", 17)],
+        )
+        check_model(model, full_check=True)
+        result = ReferenceEvaluator(model).run(
+            None, {"size": np.array(size, dtype=np.int64)}
+        )[0]
+        dtype = onnx.helper.tensor_dtype_to_np_dtype(tensor_type)
+        assert result.dtype == dtype
+        assert np.isfinite(result).all()
+        assert result[index] == dtype.type(expected)
+
     def test_stft_with_window(self):
         signal = make_tensor_value_info("signal", TensorProto.FLOAT, [None, None, None])
         frame_step = make_tensor_value_info("frame_step", TensorProto.INT64, [None])
@@ -5243,6 +5270,23 @@ class TestReferenceEvaluator:
         assert got.shape == ()
         assert got.dtype == np.uint16
         assert_allclose(np.array(1, dtype=np.uint16), got)
+
+    @pytest.mark.parametrize(
+        "attributes",
+        [
+            {"end": -4},
+            {"start": 1, "end": -4},
+            {"start": -2, "end": -4},
+        ],
+    )
+    def test_shape_end_below_negative_rank_is_empty(self, attributes):
+        node = make_node("Shape", ["X"], ["Y"], **attributes)
+        x = np.zeros((2, 3, 4), dtype=np.float32)
+
+        got = ReferenceEvaluator(node).run(None, {"X": x})[0]
+
+        assert got.shape == (0,)
+        assert got.dtype == np.int64
 
     def test_dynamic_quantize_linear(self):
         feeds = {
