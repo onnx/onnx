@@ -21,7 +21,7 @@ Before committing, pushing, filing an issue, or opening a pull request, review [
 - Match existing code patterns and conventions — read surrounding code before making changes.
 - Keep PRs focused. Do not bundle unrelated changes or refactor code outside the scope of the task.
 - New operators must follow the process in `docs/AddNewOp.md`.
-- Do not introduce new dependencies as a matter of course. If one genuinely seems necessary, it must be MIT- or Apache-2.0-licensed, and should be raised with maintainers rather than added unilaterally.
+- Avoid adding new dependencies. A proposal for one must provide a compelling justification, explain why the standard library and existing dependencies are insufficient, and assess its maintenance, security, packaging, and cross-platform impact. Its license must be compatible with ONNX's Apache-2.0 distribution, and maintainers must approve the dependency before it is added.
 
 ## Build
 
