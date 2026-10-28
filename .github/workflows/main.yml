@@ -140,7 +140,6 @@ jobs:
           sudo apt-get update
           sudo apt-get install libprotobuf-dev protobuf-compiler
 
-
       - name: Set up MSBuild (x64)
         if: startsWith(matrix.os,'windows')
         uses: microsoft/setup-msbuild@30375c66a4eea26614e0d39710365f22f8b0af57 # v3.0.0
