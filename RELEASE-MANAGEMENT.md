@@ -86,7 +86,7 @@ to be produced.
 - The release manager will announce the intent of the process (to produce
   major, minor or patch update) and the overall timeline (documented in our
   wiki: [example](https://github.com/onnx/onnx/wiki/Logistics-for-ONNX-Release-1.23.0)).
-  A release branch is created with the name `rel-X.Y.Z`, and any version
+  A release branch is created with the name `rel-major#.minor#.patch#`, and any version
   references in build scripts or version checks are updated.
 
 - The release manager announces the initial commit for testing. The first
