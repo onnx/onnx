@@ -13,7 +13,9 @@ from onnx import shape_inference as inference
 from onnx.reference import ReferenceEvaluator
 
 
-def _selected_attention_model(*, local_plus_selected: bool) -> ModelProto:
+def _selected_attention_model(
+    *, local_plus_selected: bool, int32_indices: bool = False
+) -> ModelProto:
     """Fixed-shape examples described in docs/SparseAttention.md.
 
     B=2, Hq=4, Hkv=2, Q=3, main L=5, auxiliary L=4, D=2, Dv=1,
@@ -42,7 +44,13 @@ def _selected_attention_model(*, local_plus_selected: bool) -> ModelProto:
         ("query_positions", [2, 3]),
         ("key_positions", [2, 5]),
     ]:
-        input_info(name, TensorProto.INT64, shape)
+        input_info(
+            name,
+            TensorProto.INT32
+            if name == "indices" and int32_indices
+            else TensorProto.INT64,
+            shape,
+        )
     if local_plus_selected:
         input_info("aux_K", TensorProto.FLOAT, [2, 2, 4, 2])
         input_info("aux_V", TensorProto.FLOAT, [2, 2, 4, 1])
@@ -57,6 +65,10 @@ def _selected_attention_model(*, local_plus_selected: bool) -> ModelProto:
     ]:
         constant(name, values)
 
+    selected_input = "indices"
+    if int32_indices:
+        nodes.append(node("Cast", ["indices"], ["indices_i64"], to=TensorProto.INT64))
+        selected_input = "indices_i64"
     nodes.extend(
         [
             node("Transpose", ["Q"], ["query_bqhd"], perm=[0, 2, 1, 3]),
@@ -64,7 +76,7 @@ def _selected_attention_model(*, local_plus_selected: bool) -> ModelProto:
             node("Unsqueeze", ["counts", "last_axis"], ["counts_3d"]),
             node("Less", ["slots", "counts_3d"], ["valid"]),
             # Sanitize BEFORE gathering: padding may contain arbitrary indices.
-            node("Where", ["valid", "indices", "zero"], ["safe_indices"]),
+            node("Where", ["valid", selected_input, "zero"], ["safe_indices"]),
             node("Unsqueeze", ["safe_indices", "last_axis"], ["selected_indices"]),
             node("Unsqueeze", ["query_positions", "last_axis"], ["query_frontier"]),
         ]
@@ -385,6 +397,24 @@ def test_original_causal_coordinates(expanded: bool) -> None:
         np.full((2, 4, 3, 1), 10.0),
         expanded=expanded,
     )
+
+
+@pytest.mark.parametrize("expanded", [False, True])
+def test_int32_selection_with_visibility_holes(expanded: bool) -> None:
+    feeds = _feeds()
+    feeds["Q"].fill(0)
+    feeds["K"].fill(0)
+    feeds["V"][:] = np.arange(5, dtype=np.float32).reshape(1, 1, 5, 1) * 10
+    feeds["key_positions"][:] = [0, 2, 3, 5, 1]
+    feeds["query_positions"].fill(3)
+    feeds["indices"] = np.tile(np.array([3, 0, -1], np.int32), (2, 3, 1))
+    feeds["counts"].fill(2)
+    # Row 3 is future; the last row is visible, so misreading -1 would add value 40.
+    model = _selected_attention_model(local_plus_selected=False, int32_indices=True)
+    _check_and_run(model, feeds, np.zeros((2, 4, 3, 1)), expanded=expanded)
+    feeds["indices"].fill(-1)
+    feeds["counts"].fill(0)
+    _check_and_run(model, feeds, np.zeros((2, 4, 3, 1)), expanded=expanded)
 
 
 @pytest.mark.parametrize("expanded", [False, True])
