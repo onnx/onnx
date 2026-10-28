@@ -86,7 +86,7 @@ Build artifacts go to `.setuptools-cmake-build/`.
 
 ## PR descriptions
 
-Follow the structure of [`pull_request_template.md`](pull_request_template.md).
+Follow the structure of [`.github/pull_request_template.md`](.github/pull_request_template.md).
 Describe what the change does and why. Do not list the tests, lint runs, or build commands you ran:
 CI runs the tests and linters on every PR, so such lists add length without information.
 Mention testing only if it is not covered by CI (e.g., manual verification on a specific platform or with a downstream
