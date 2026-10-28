@@ -867,6 +867,21 @@ class TestCheckExternalDataBounds:
         checker.check_model(model_filename)
         onnx.load(model_filename)
 
+    def test_check_model_in_memory_does_not_resolve_against_cwd(self) -> None:
+        model_filename = self.create_test_model({}, self.value.tobytes())
+        model = onnx.load(model_filename, load_external_data=False)
+        with pytest.raises(
+            checker.ValidationError, match="not checked from a file path"
+        ):
+            checker.check_model(model)
+
+    def test_check_model_bare_filename_still_resolves_against_cwd(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        model_filename = self.create_test_model({}, self.value.tobytes())
+        monkeypatch.chdir(self.temp_dir)
+        checker.check_model(os.path.basename(model_filename))
+
     @pytest.mark.parametrize(
         ("external_data", "data_size", "match"),
         [
