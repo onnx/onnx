@@ -7888,6 +7888,200 @@ class TestReferenceEvaluator:
         # Each of the 3 iterations adds `bias` to the running state.
         assert_allclose(final, np.array([30, 300], dtype=np.float32))
 
+    @pytest.mark.parametrize(
+        ("dilation", "kernel", "length"),
+        [(1, 3, 7), (2, 3, 7), (3, 4, 1), (2, 3, 0), (3, 1, 0), (3, 1, 7)],
+    )
+    @pytest.mark.parametrize("dtype", ["float", "float16", "bfloat16"])
+    @pytest.mark.parametrize("activation", ["none", "silu", "swish"])
+    @pytest.mark.parametrize("with_state", [False, True])
+    @pytest.mark.parametrize("with_bias", [False, True])
+    def test_causal_conv_with_state_dilated_function(
+        self, dilation, kernel, length, dtype, activation, with_state, with_bias
+    ):
+        history = (kernel - 1) * dilation
+        bias_arg = ", bias" if with_bias else ', ""'
+        past_arg = ", past" if with_state else ""
+        model = onnx.parser.parse_model(
+            f"""
+            <ir_version: 10, opset_import: ["" : 29]>
+            g ({dtype}[2,C,L] input, {dtype}[3,1,{kernel}] weight,
+               {dtype}[3] bias, {dtype}[2,3,{history}] past)
+                => ({dtype}[2,3,L] output, {dtype}[2,3,{history}] present)
+            {{
+                output, present = CausalConvWithState <dilation={dilation}, activation="{activation}">
+                    (input, weight{bias_arg}{past_arg})
+            }}
+            """
+        )
+        check_model(model, full_check=True)
+        rng = np.random.default_rng(42)
+        np_dtype = {
+            "float": np.float32,
+            "float16": np.float16,
+            "bfloat16": ml_dtypes.bfloat16,
+        }[dtype]
+        feeds = {
+            "input": rng.standard_normal((2, 3, length)).astype(np_dtype),
+            "weight": rng.standard_normal((3, 1, kernel)).astype(np_dtype),
+            "bias": rng.standard_normal(3).astype(np_dtype),
+            "past": rng.standard_normal((2, 3, history)).astype(np_dtype),
+        }
+        padded = np.concatenate(
+            [
+                feeds["past"] if with_state else np.zeros_like(feeds["past"]),
+                feeds["input"],
+            ],
+            axis=2,
+        )
+        expected = np.empty_like(feeds["input"])
+        for t in range(length):
+            taps = padded[:, :, t + np.arange(kernel) * dilation].astype(np.float32)
+            values = np.sum(taps * feeds["weight"][:, 0, :].astype(np.float32), axis=2)
+            if with_bias:
+                values += feeds["bias"].astype(np.float32)
+            values = values.astype(np_dtype)
+            if activation != "none":
+                values = values.astype(np.float32)
+                values = (values / (1 + np.exp(-values))).astype(np_dtype)
+            expected[:, :, t] = values
+        expected_state = padded[:, :, length:]
+
+        class CausalConvWithState(OpRunExpand):
+            op_domain = ""
+
+        for new_ops in (None, [CausalConvWithState]):
+            output, state = ReferenceEvaluator(model, new_ops=new_ops).run(None, feeds)
+            assert output.dtype == np_dtype
+            assert output.shape == expected.shape
+            tolerance = {"float": 1e-6, "float16": 5e-3, "bfloat16": 4e-2}[dtype]
+            assert_allclose(
+                output.astype(np.float32),
+                expected.astype(np.float32),
+                rtol=tolerance,
+                atol=tolerance,
+            )
+            assert_array_equal(state, expected_state)
+
+    @pytest.mark.parametrize("dilation", [1, 2, 3])
+    @pytest.mark.parametrize("kernel", [1, 4])
+    @pytest.mark.parametrize("with_state", [False, True])
+    @pytest.mark.parametrize("activation", ["none", "silu"])
+    def test_causal_conv_with_state_dilated_streaming(
+        self, dilation, kernel, with_state, activation
+    ):
+        history = (kernel - 1) * dilation
+        model = onnx.parser.parse_model(
+            f"""
+            <ir_version: 10, opset_import: ["" : 29]>
+            g (float[1,2,L] input, float[2,1,{kernel}] weight, float[2] bias,
+               float[1,2,{history}] past)
+                => (float[1,2,L] output, float[1,2,{history}] present)
+            {{
+                output, present = CausalConvWithState <dilation={dilation}, activation="{activation}">
+                    (input, weight, bias, past)
+            }}
+            """
+        )
+        rng = np.random.default_rng(0)
+        feeds = {
+            "input": rng.standard_normal((1, 2, 7)).astype(np.float32),
+            "weight": rng.standard_normal((2, 1, kernel)).astype(np.float32),
+            "bias": rng.standard_normal(2).astype(np.float32),
+            "past": rng.standard_normal((1, 2, history)).astype(np.float32),
+        }
+        initial = feeds["past"] if with_state else np.zeros_like(feeds["past"])
+        full_output, full_state = ReferenceEvaluator(model).run(
+            None, {**feeds, "past": initial}
+        )
+
+        class CausalConvWithState(OpRunExpand):
+            op_domain = ""
+
+        for new_ops in (None, [CausalConvWithState]):
+            evaluator = ReferenceEvaluator(model, new_ops=new_ops)
+            state = initial
+            outputs = []
+            offset = 0
+            for size in (0, 1, 2, 0, 3, 1, 0):
+                chunk, state = evaluator.run(
+                    None,
+                    {
+                        **feeds,
+                        "input": feeds["input"][:, :, offset : offset + size],
+                        "past": state,
+                    },
+                )
+                outputs.append(chunk)
+                offset += size
+            assert_allclose(
+                np.concatenate(outputs, axis=2), full_output, rtol=1e-5, atol=1e-6
+            )
+            assert_array_equal(state, full_state)
+
+    @pytest.mark.parametrize("version", [27, 28, 29])
+    def test_causal_conv_with_state_reference_version(self, version):
+        model = onnx.parser.parse_model(
+            f"""
+            <ir_version: 10, opset_import: ["" : {version}]>
+            g (float[1,1,2] input, float[1,1,2] weight)
+                => (float[1,1,2] output, float[1,1,1] present)
+            {{
+                output, present = CausalConvWithState (input, weight)
+            }}
+            """
+        )
+        ref = ReferenceEvaluator(model)
+        assert (
+            ref.rt_nodes_[0].__class__.__name__
+            == f"CausalConvWithState_{27 if version < 29 else 29}"
+        )
+        output, state = ref.run(
+            None,
+            {
+                "input": np.array([[[1, 2]]], dtype=np.float32),
+                "weight": np.array([[[3, 4]]], dtype=np.float32),
+            },
+        )
+        assert_array_equal(output, [[[4, 11]]])
+        assert_array_equal(state, [[[2]]])
+
+    @pytest.mark.parametrize(
+        ("dilation", "activation", "name", "shape", "message"),
+        [
+            (0, "none", "input", (1, 2, 1), "dilation"),
+            (2, "relu", "input", (1, 2, 1), "activation"),
+            (2, "none", "input", (1, 2), "input must be rank 3"),
+            (2, "none", "weight", (2, 1, 0), "weight must have shape"),
+            (2, "none", "weight", (2, 2, 3), "weight must have shape"),
+            (2, "none", "bias", (1,), "bias must have shape"),
+            (2, "none", "past", (1, 2, 2), "past_state must have shape"),
+        ],
+    )
+    def test_causal_conv_with_state_invalid_reference(
+        self, dilation, activation, name, shape, message
+    ):
+        model = onnx.parser.parse_model(
+            f"""
+            <ir_version: 10, opset_import: ["" : 29]>
+            g (float[1,2,1] input, float[2,1,3] weight, float[2] bias, float[1,2,4] past)
+                => (float[1,2,1] output, float[1,2,4] present)
+            {{
+                output, present = CausalConvWithState <dilation={dilation}, activation="{activation}">
+                    (input, weight, bias, past)
+            }}
+            """
+        )
+        feeds = {
+            "input": np.ones((1, 2, 1), dtype=np.float32),
+            "weight": np.ones((2, 1, 3), dtype=np.float32),
+            "bias": np.ones(2, dtype=np.float32),
+            "past": np.ones((1, 2, 4), dtype=np.float32),
+        }
+        feeds[name] = np.ones(shape, dtype=np.float32)
+        with pytest.raises(ValueError, match=message):
+            ReferenceEvaluator(model).run(None, feeds)
+
     def test_causal_conv_with_state_silu_fp16_function_body(self):
         # Regression test: the CausalConvWithState function body must upcast
         # Sigmoid/Mul to float32 for the SiLU activation, matching the

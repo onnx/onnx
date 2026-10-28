@@ -3597,7 +3597,73 @@ class TestShapeInference(TestShapeInferenceHelper):
         with pytest.raises(onnx.shape_inference.InferenceError):
             self._inferred(model)
 
-    def test_causal_conv_with_state_static(self) -> None:
+    @pytest.mark.parametrize(
+        ("kernel", "dilation", "state", "expected"),
+        [
+            ("4", 2, None, 6),
+            ("1", 7, None, 0),
+            ("K", 3, None, None),
+            ("K", 3, "9", 9),
+            ("K", 3, "H", "H"),
+            ("4", 2, "6", 6),
+            (str(2**62), 2, None, 2**63 - 2),
+        ],
+    )
+    def test_causal_conv_with_state_dilated_shape(
+        self, kernel, dilation, state, expected
+    ) -> None:
+        past = f", float[B,C,{state}] past_state" if state is not None else ""
+        args = ', "", past_state' if state is not None else ""
+        model = onnx.parser.parse_model(
+            f"""
+            <ir_version: 10, opset_import: ["" : 29]>
+            g (float[B,C,L] input, float[C,1,{kernel}] weight{past})
+                => (output, present_state)
+            {{
+                output, present_state = CausalConvWithState <dilation={dilation}> (input, weight{args})
+            }}
+            """
+        )
+        self._assert_inferred(
+            model,
+            [
+                make_tensor_value_info("output", TensorProto.FLOAT, ("B", "C", "L")),
+                make_tensor_value_info(
+                    "present_state", TensorProto.FLOAT, ("B", "C", expected)
+                ),
+            ],
+        )
+
+    @pytest.mark.parametrize(
+        ("kernel", "dilation", "state"),
+        [
+            (3, 0, 0),
+            (3, -1, 0),
+            (0, 2, 0),
+            (4, 2, 3),
+            ("K", 2, 3),
+            (2**62 + 1, 2, 0),
+            (3, 2**63 - 1, 0),
+        ],
+    )
+    def test_causal_conv_with_state_invalid_dilation_or_history(
+        self, kernel, dilation, state
+    ) -> None:
+        model = onnx.parser.parse_model(
+            f"""
+            <ir_version: 10, opset_import: ["" : 29]>
+            g (float[2,4,0] input, float[4,1,{kernel}] weight, float[2,4,{state}] past)
+                => (output, present)
+            {{
+                output, present = CausalConvWithState <dilation={dilation}> (input, weight, "", past)
+            }}
+            """
+        )
+        with pytest.raises(onnx.shape_inference.InferenceError):
+            self._inferred(model)
+
+    @pytest.mark.parametrize("version", [27, 29])
+    def test_causal_conv_with_state_static(self, version) -> None:
         model = onnx.parser.parse_model(
             """
             <ir_version: 10, opset_import: ["" : 27]>
@@ -3608,6 +3674,7 @@ class TestShapeInference(TestShapeInferenceHelper):
             }
             """
         )
+        model.opset_import[0].version = version
         self._assert_inferred(
             model,
             [

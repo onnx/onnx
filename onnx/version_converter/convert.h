@@ -1126,6 +1126,9 @@ class DefaultVersionConverter : public BaseVersionConverter {
     // Downgrading needs no restriction: opset 27 accepts a superset of the v28 float-only types.
     registerAdapter(std::make_unique<CompatibleAdapter>("ReduceLogSum", OpSetID(28), OpSetID(27)));
     registerAdapter(std::make_unique<CompatibleAdapter>("ReduceLogSumExp", OpSetID(28), OpSetID(27)));
+
+    registerAdapter(std::make_unique<CompatibleAdapter>("CausalConvWithState", OpSetID(28), OpSetID(29)));
+    registerAdapter("CausalConvWithState", 29, 28, RemoveAttribute(Symbol("dilation"), int64_t{1}));
   }
 
   ModelProto convert_version(const ModelProto& mp_in, const OpSetID& initial_version, const OpSetID& target_version)
