@@ -3053,6 +3053,226 @@ ONNX_OPERATOR_SET_SCHEMA(
           return true;
         }));
 
+static void IndexedAttentionInference(InferenceContext& ctx) {
+  propagateElemTypeFromInputToOutput(ctx, 0, 0);
+  auto* output = getOutputShape(ctx, 0);
+  for (int i = 0; i < 4; ++i)
+    output->add_dim();
+  TensorShapeProto::Dimension batch, heads, queries, key_heads, history, depth, value_depth;
+  for (int input = 0; input < 4; ++input) {
+    if (!hasInputShape(ctx, input))
+      continue;
+    const auto& shape = getInputShape(ctx, input);
+    if (shape.dim_size() != 4)
+      fail_shape_inference("IndexedAttention inputs Q, K, V and indices must have rank 4.");
+    unifyDim(shape.dim(0), batch);
+    if (input == 0) {
+      unifyDim(shape.dim(1), heads);
+      unifyDim(shape.dim(2), queries);
+      unifyDim(shape.dim(3), depth);
+    } else if (input < 3) {
+      unifyDim(shape.dim(1), key_heads);
+      unifyDim(shape.dim(2), history);
+      unifyDim(shape.dim(3), input == 1 ? depth : value_depth);
+    } else {
+      unifyDim(shape.dim(2), queries);
+    }
+  }
+  if (hasInputShape(ctx, 3)) {
+    const auto& index_heads = getInputShape(ctx, 3).dim(1);
+    if (index_heads.has_dim_value() && index_heads.dim_value() != 1)
+      unifyDim(index_heads, heads);
+    if (hasInputShape(ctx, 4)) {
+      TensorShapeProto target;
+      *target.add_dim() = batch;
+      *target.add_dim() = heads;
+      *target.add_dim() = queries;
+      *target.add_dim() = getInputShape(ctx, 3).dim(3);
+      const auto& mask = getInputShape(ctx, 4);
+      if (mask.dim_size() > 4)
+        fail_shape_inference("IndexedAttention candidate_mask must broadcast to [B, Hq, Sq, C].");
+      for (int i = 0; i < mask.dim_size(); ++i) {
+        const auto& dim = mask.dim(i);
+        if (dim.has_dim_value() && dim.dim_value() != 1)
+          unifyDim(dim, *target.mutable_dim(4 - mask.dim_size() + i));
+      }
+    }
+  }
+  if (hasInputShape(ctx, 4) && getInputShape(ctx, 4).dim_size() > 4)
+    fail_shape_inference("IndexedAttention candidate_mask must broadcast to [B, Hq, Sq, C].");
+  for (const auto* dim : {&batch, &heads, &queries, &key_heads, &depth, &value_depth}) {
+    if (dim->has_dim_value() && dim->dim_value() <= 0)
+      fail_shape_inference("IndexedAttention batch, head counts, query length and head sizes must be positive.");
+  }
+  if (heads.has_dim_value() && key_heads.has_dim_value() && heads.dim_value() % key_heads.dim_value() != 0)
+    fail_shape_inference("IndexedAttention query heads must be divisible by key/value heads.");
+  const auto* scale = ctx.getAttribute("scale");
+  if (scale != nullptr && !(scale->f() >= 0))
+    fail_shape_inference("IndexedAttention scale must be nonnegative.");
+  *output->mutable_dim(0) = batch;
+  *output->mutable_dim(1) = heads;
+  *output->mutable_dim(2) = queries;
+  *output->mutable_dim(3) = value_depth;
+}
+
+static bool
+BuildIndexedAttention(const FunctionBodyBuildContext& ctx, const OpSchema& schema, FunctionProto& functionProto) {
+  const auto* type = ctx.getInputType(0);
+  if (type == nullptr || !type->has_tensor_type())
+    return false;
+  const auto accumulation_type =
+      type->tensor_type().elem_type() == TensorProto::DOUBLE ? TensorProto::DOUBLE : TensorProto::FLOAT;
+  FunctionBuilder builder(functionProto);
+  builder.Add(R"ONNX(
+    Zero = Constant <value = int64 {0}> ()
+    One = Constant <value = int64 {1}> ()
+    OneVector = Constant <value = int64[1] {1}> ()
+    LastAxis = Constant <value = int64[1] {-1}> ()
+    HistoryAxis = Constant <value = int64[1] {2}> ()
+    PadBefore = Constant <value = int64[2] {1, 0}> ()
+    PadAfter = Constant <value = int64[2] {0, 1}> ()
+    False = Constant <value = bool {0}> ()
+    MinusOne = Constant <value = int64 {-1}> ()
+    Batch = Shape <start = 0, end = 1> (Q)
+    Heads = Shape <start = 1, end = 2> (Q)
+    Queries = Shape <start = 2, end = 3> (Q)
+    Depth = Shape <start = 3, end = 4> (Q)
+    ValueDepth = Shape <start = 3, end = 4> (V)
+    KeyHeads = Shape <start = 1, end = 2> (K)
+    History = Shape <start = 2, end = 3> (K)
+    Candidates = Shape <start = 3, end = 4> (indices)
+    IndexShape = Concat <axis = 0> (Batch, Heads, Queries, Candidates)
+    Indices64 = Cast <to = 7> (indices)
+    ExpandedIndices = Expand (Indices64, IndexShape)
+    Nonnegative = GreaterOrEqual (ExpandedIndices, Zero)
+    InHistory = Less (ExpandedIndices, History)
+    InRange = And (Nonnegative, InHistory)
+  )ONNX");
+  if (ctx.hasInput(4))
+    builder.Add("Allowed = And (InRange, candidate_mask)");
+  else
+    builder.Add("Allowed = Identity (InRange)");
+  // The masked sentinel keeps Attention's key axis nonempty, even for an empty history or selection.
+  builder.Add(R"ONNX(
+    PaddedAllowed = Pad (Allowed, PadAfter, False, LastAxis)
+    PaddedIndices = Pad (ExpandedIndices, PadAfter, MinusOne, LastAxis)
+    ShiftedIndices = Add (PaddedIndices, One)
+    SafeIndices = Where (PaddedAllowed, ShiftedIndices, Zero)
+    GatherIndices = Unsqueeze (SafeIndices, LastAxis)
+    HeadCount = Squeeze (Heads)
+    HeadRange = Range (Zero, HeadCount, One)
+    GroupSize = Div (Heads, KeyHeads)
+    HeadMap = Div (HeadRange, GroupSize)
+    KByHead = Gather <axis = 1> (K, HeadMap)
+    VByHead = Gather <axis = 1> (V, HeadMap)
+    KZero = CastLike (Zero, K)
+    VZero = CastLike (Zero, V)
+    KPadded = Pad (KByHead, PadBefore, KZero, HistoryAxis)
+    VPadded = Pad (VByHead, PadBefore, VZero, HistoryAxis)
+    SelectedK = GatherND <batch_dims = 2> (KPadded, GatherIndices)
+    SelectedV = GatherND <batch_dims = 2> (VPadded, GatherIndices)
+    RowsBH = Mul (Batch, Heads)
+    Rows = Mul (RowsBH, Queries)
+    CandidateCount = Add (Candidates, OneVector)
+    QShape = Concat <axis = 0> (Rows, OneVector, OneVector, Depth)
+    KShape = Concat <axis = 0> (Rows, OneVector, CandidateCount, Depth)
+    VShape = Concat <axis = 0> (Rows, OneVector, CandidateCount, ValueDepth)
+    MaskShape = Concat <axis = 0> (Rows, OneVector, OneVector, CandidateCount)
+    QRows = Reshape (Q, QShape)
+    KRows = Reshape (SelectedK, KShape)
+    VRows = Reshape (SelectedV, VShape)
+    MaskRows = Reshape (PaddedAllowed, MaskShape)
+  )ONNX");
+  builder.Add("QAcc = Cast (QRows)", "to", accumulation_type)
+      .Add("KAcc = Cast (KRows)", "to", accumulation_type)
+      .Add("VAcc = Cast (VRows)", "to", accumulation_type);
+  if (ctx.getAttribute("scale") != nullptr)
+    builder.Add("Attended = Attention <scale: float = @scale> (QAcc, KAcc, VAcc, MaskRows)");
+  else
+    builder.Add("Attended = Attention (QAcc, KAcc, VAcc, MaskRows)");
+  builder.Add(R"ONNX(
+    OutputShape = Concat <axis = 0> (Batch, Heads, Queries, ValueDepth)
+    OutputAcc = Reshape (Attended, OutputShape)
+    Y = CastLike (OutputAcc, Q)
+  )ONNX");
+  schema.BuildFunction(functionProto);
+  return true;
+}
+
+ONNX_OPERATOR_SET_SCHEMA(
+    IndexedAttention,
+    29,
+    OpSchema()
+        .SetDoc(R"DOC(
+Scaled dot-product attention over an explicit list of candidate key/value positions per query.
+Q has shape [B, Hq, Sq, D], K [B, Hkv, Sk, D], and V [B, Hkv, Sk, Dv].
+The int32 or int64 indices have shape [B, Hi, Sq, C], where Hi is 1 (shared across query heads)
+or Hq. Hq must be divisible by Hkv: query head h uses KV head floor(h / (Hq / Hkv)).
+B, Hq, Hkv, Sq, D and Dv must be positive; Sk and C may be zero.
+
+Each index is a position in the original Sk axis, not a position in the compacted candidate list.
+Indices outside [0, Sk) are padding and ignored; negative indices do not wrap.
+The optional boolean candidate_mask broadcasts to [B, Hq, Sq, C]; false entries are ignored.
+For each query, gather the allowed K/V entries, compute scores = scale * Q @ K_selected^T,
+and return softmax(scores) @ V_selected. The default scale is 1/sqrt(D).
+Duplicates are multiset entries: each occurrence contributes separately to the softmax denominator
+and weighted sum. A row without allowed candidates returns zeros, including when C=0 or Sk=0.
+The output Y has shape [B, Hq, Sq, Dv] and the same element type as Q/K/V.
+
+The function casts Q/K/V to float32 before Attention (float64 for double inputs), uses Attention's
+split square-root scaling and stable softmax, and casts only the final result to the input type.
+Inputs and scaled dot products are expected to be finite.
+
+Causality is expressed in original coordinates outside this function: for query_positions
+of shape [B, 1, Sq, 1], use candidate_mask = LessOrEqual(indices, query_positions).
+Combine this with per-batch valid-history bounds or other boolean constraints using And.
+There is no causal comparison against the compacted candidate ordinal.
+Local and selected candidates can share one denominator by concatenating their index lists before
+this function; remove overlaps first if set rather than multiset semantics are wanted.
+
+For example, indices [[[[0, 2, -1]]]] select historical positions 0 and 2 for a single query.
+With zero Q/K and V values [2, 4, 8], the result is 5, not the dense-history mean.
+
+GLM-5.3 and DeepSeek-V3.2-Exp use a learned indexer followed by TopK to select historical tokens.
+Keep indexer projections, positional transforms, weighted ReLU score reduction and TopK outside
+this function. Feed the resulting indices here and reuse them across heads or layers as needed.
+Qwen3.8-Flash-Next (Qwen4 experimental preview) selects micro-blocks; expand selected blocks into
+original token indices outside this function, then apply original-coordinate validity/causal masks.
+Its indexer groups the compacted visible positions into groups of four and retains the partial tail.
+For visible positions [0, 2, 3, 5, 6, 8], the first group is [0, 2, 3, 5] and the tail is [6, 8].
+Selecting that group yields [0, 2, 3, 5, 6, 8], not a contiguous block computed from a block ordinal.
+KV projections, positional transforms and cache updates are also outside this function.
+
+The standard-op body is portable semantics and a fusion boundary: an optimized backend can load
+selected KV entries directly and perform online softmax without constructing a dense history mask
+or materializing per-query candidate copies. The decomposition itself makes no speed guarantee.
+
+Model references:
+* https://github.com/huggingface/transformers/blob/c27795950091cdaf1b0e32c4aed58618fb41ffa0/src/transformers/models/glm_moe_dsa/modeling_glm_moe_dsa.py
+* https://github.com/deepseek-ai/DeepSeek-V3.2-Exp/blob/87e509a2e5a100d221c97df52c6e8be7835f0057/inference/model.py
+* https://huggingface.co/Qwen/Qwen3.8-Flash-Next
+* https://github.com/huggingface/transformers/blob/c27795950091cdaf1b0e32c4aed58618fb41ffa0/src/transformers/models/qwen4_exp/modular_qwen4_exp.py
+)DOC")
+        .Input(0, "Q", "Queries [B, Hq, Sq, D].", "T")
+        .Input(1, "K", "Keys [B, Hkv, Sk, D].", "T")
+        .Input(2, "V", "Values [B, Hkv, Sk, Dv].", "T")
+        .Input(3, "indices", "Original historical positions [B, 1 or Hq, Sq, C].", "Tind")
+        .Input(
+            4,
+            "candidate_mask",
+            "Boolean allowed-candidate mask, broadcastable to [B, Hq, Sq, C].",
+            "tensor(bool)",
+            OpSchema::Optional)
+        .Output(0, "Y", "Attention result [B, Hq, Sq, Dv].", "T")
+        .Attr("scale", "Nonnegative attention scale; defaults to 1/sqrt(D).", AttributeProto::FLOAT, OPTIONAL_VALUE)
+        .TypeConstraint(
+            "T",
+            {"tensor(float16)", "tensor(bfloat16)", "tensor(float)", "tensor(double)"},
+            "Floating point inputs and output.")
+        .TypeConstraint("Tind", {"tensor(int32)", "tensor(int64)"}, "Signed historical positions.")
+        .TypeAndShapeInferenceFunction(IndexedAttentionInference)
+        .SetContextDependentFunctionBodyBuilder(BuildIndexedAttention));
+
 static void Attention25Inference(InferenceContext& ctx) {
   defs::nn::utils::AttentionPropagateElemTypeFromInputToOutput(ctx);
 

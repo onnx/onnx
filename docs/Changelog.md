@@ -34516,6 +34516,99 @@ This version of the operator has been available since version 29 of the default 
 <dd>Constrain group indices to int32 or int64 tensors.</dd>
 </dl>
 
+### <a name="IndexedAttention-29"></a>**IndexedAttention-29**</a>
+
+  Scaled dot-product attention over an explicit list of candidate key/value positions per query.
+  Q has shape [B, Hq, Sq, D], K [B, Hkv, Sk, D], and V [B, Hkv, Sk, Dv].
+  The int32 or int64 indices have shape [B, Hi, Sq, C], where Hi is 1 (shared across query heads)
+  or Hq. Hq must be divisible by Hkv: query head h uses KV head floor(h / (Hq / Hkv)).
+  B, Hq, Hkv, Sq, D and Dv must be positive; Sk and C may be zero.
+
+  Each index is a position in the original Sk axis, not a position in the compacted candidate list.
+  Indices outside [0, Sk) are padding and ignored; negative indices do not wrap.
+  The optional boolean candidate_mask broadcasts to [B, Hq, Sq, C]; false entries are ignored.
+  For each query, gather the allowed K/V entries, compute scores = scale * Q @ K_selected^T,
+  and return softmax(scores) @ V_selected. The default scale is 1/sqrt(D).
+  Duplicates are multiset entries: each occurrence contributes separately to the softmax denominator
+  and weighted sum. A row without allowed candidates returns zeros, including when C=0 or Sk=0.
+  The output Y has shape [B, Hq, Sq, Dv] and the same element type as Q/K/V.
+
+  The function casts Q/K/V to float32 before Attention (float64 for double inputs), uses Attention's
+  split square-root scaling and stable softmax, and casts only the final result to the input type.
+  Inputs and scaled dot products are expected to be finite.
+
+  Causality is expressed in original coordinates outside this function: for query_positions
+  of shape [B, 1, Sq, 1], use candidate_mask = LessOrEqual(indices, query_positions).
+  Combine this with per-batch valid-history bounds or other boolean constraints using And.
+  There is no causal comparison against the compacted candidate ordinal.
+  Local and selected candidates can share one denominator by concatenating their index lists before
+  this function; remove overlaps first if set rather than multiset semantics are wanted.
+
+  For example, indices [[[[0, 2, -1]]]] select historical positions 0 and 2 for a single query.
+  With zero Q/K and V values [2, 4, 8], the result is 5, not the dense-history mean.
+
+  GLM-5.3 and DeepSeek-V3.2-Exp use a learned indexer followed by TopK to select historical tokens.
+  Keep indexer projections, positional transforms, weighted ReLU score reduction and TopK outside
+  this function. Feed the resulting indices here and reuse them across heads or layers as needed.
+  Qwen3.8-Flash-Next (Qwen4 experimental preview) selects micro-blocks; expand selected blocks into
+  original token indices outside this function, then apply original-coordinate validity/causal masks.
+  Its indexer groups the compacted visible positions into groups of four and retains the partial tail.
+  For visible positions [0, 2, 3, 5, 6, 8], the first group is [0, 2, 3, 5] and the tail is [6, 8].
+  Selecting that group yields [0, 2, 3, 5, 6, 8], not a contiguous block computed from a block ordinal.
+  KV projections, positional transforms and cache updates are also outside this function.
+
+  The standard-op body is portable semantics and a fusion boundary: an optimized backend can load
+  selected KV entries directly and perform online softmax without constructing a dense history mask
+  or materializing per-query candidate copies. The decomposition itself makes no speed guarantee.
+
+  Model references:
+  * https://github.com/huggingface/transformers/blob/c27795950091cdaf1b0e32c4aed58618fb41ffa0/src/transformers/models/glm_moe_dsa/modeling_glm_moe_dsa.py
+  * https://github.com/deepseek-ai/DeepSeek-V3.2-Exp/blob/87e509a2e5a100d221c97df52c6e8be7835f0057/inference/model.py
+  * https://huggingface.co/Qwen/Qwen3.8-Flash-Next
+  * https://github.com/huggingface/transformers/blob/c27795950091cdaf1b0e32c4aed58618fb41ffa0/src/transformers/models/qwen4_exp/modular_qwen4_exp.py
+
+#### Version
+
+This version of the operator has been available since version 29 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>scale</tt> : float</dt>
+<dd>Nonnegative attention scale; defaults to 1/sqrt(D).</dd>
+</dl>
+
+#### Inputs (4 - 5)
+
+<dl>
+<dt><tt>Q</tt> : T</dt>
+<dd>Queries [B, Hq, Sq, D].</dd>
+<dt><tt>K</tt> : T</dt>
+<dd>Keys [B, Hkv, Sk, D].</dd>
+<dt><tt>V</tt> : T</dt>
+<dd>Values [B, Hkv, Sk, Dv].</dd>
+<dt><tt>indices</tt> : Tind</dt>
+<dd>Original historical positions [B, 1 or Hq, Sq, C].</dd>
+<dt><tt>candidate_mask</tt> (optional) : tensor(bool)</dt>
+<dd>Boolean allowed-candidate mask, broadcastable to [B, Hq, Sq, C].</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> : T</dt>
+<dd>Attention result [B, Hq, Sq, Dv].</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(bfloat16), tensor(float), tensor(double)</dt>
+<dd>Floating point inputs and output.</dd>
+<dt><tt>Tind</tt> : tensor(int32), tensor(int64)</dt>
+<dd>Signed historical positions.</dd>
+</dl>
+
 # ai.onnx.preview
 ## Version 1 of the 'ai.onnx.preview' operator set
 ### <a name="ai.onnx.preview.FlexAttention-1"></a>**ai.onnx.preview.FlexAttention-1**</a>

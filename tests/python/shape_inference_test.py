@@ -3002,6 +3002,38 @@ class TestShapeInference(TestShapeInferenceHelper):
                 opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
             )
 
+    @pytest.mark.parametrize(
+        ("qshape", "vshape", "ishape", "expected"),
+        [
+            (
+                ("B", "H", "S", "D"),
+                ("B", 2, "T", "Dv"),
+                ("B", 1, "S", "C"),
+                ("B", "H", "S", "Dv"),
+            ),
+            ((2, 4, 3, 5), (2, 2, 7, 6), (2, 4, 3, 2), (2, 4, 3, 6)),
+            ((2, 4, 3, 5), (2, 2, 0, 6), (2, 1, 3, 0), (2, 4, 3, 6)),
+            (None, None, None, (None, None, None, None)),
+        ],
+    )
+    def test_indexed_attention(self, qshape, vshape, ishape, expected) -> None:
+        kshape = None if vshape is None else (*vshape[:3], qshape[3])
+        graph = self._make_graph(
+            [
+                ("Q", TensorProto.FLOAT, qshape),
+                ("K", TensorProto.FLOAT, kshape),
+                ("V", TensorProto.FLOAT, vshape),
+                ("indices", TensorProto.INT64, ishape),
+            ],
+            [make_node("IndexedAttention", ["Q", "K", "V", "indices"], ["Y"])],
+            [],
+        )
+        self._assert_inferred(
+            graph,
+            [make_tensor_value_info("Y", TensorProto.FLOAT, expected)],
+            opset_imports=[helper.make_opsetid("", 29)],
+        )
+
     def test_attention_4d(self) -> None:
         graph = self._make_graph(
             [

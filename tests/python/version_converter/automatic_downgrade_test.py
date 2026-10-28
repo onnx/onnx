@@ -17,6 +17,21 @@ from onnx import helper
 
 
 class TestAutomaticDowngrade(automatic_conversion_test_base.TestAutomaticConversion):
+    def test_IndexedAttention(self) -> None:
+        self._test_op_downgrade(
+            "IndexedAttention",
+            29,
+            [[2, 4, 3, 5], [2, 2, 7, 5], [2, 2, 7, 6], [2, 1, 3, 2]],
+            [[2, 4, 3, 6]],
+            [
+                onnx.TensorProto.FLOAT,
+                onnx.TensorProto.FLOAT,
+                onnx.TensorProto.FLOAT,
+                onnx.TensorProto.INT64,
+            ],
+            [onnx.TensorProto.FLOAT],
+        )
+
     def _test_op_downgrade(self, op: str, *args, **kwargs):
         strict_check = kwargs.pop("strict_check", False)
         mode = "strict_downgrade" if strict_check else "downgrade"

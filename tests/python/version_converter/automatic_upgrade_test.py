@@ -30,6 +30,21 @@ class TestAutomaticUpgrade(automatic_conversion_test_base.TestAutomaticConversio
     def test_Abs(self) -> None:
         self._test_op_upgrade("Abs", 1, attrs={"consumed_inputs": [0]})
 
+    def test_IndexedAttention(self) -> None:
+        self._test_op_upgrade(
+            "IndexedAttention",
+            29,
+            [[2, 4, 3, 5], [2, 2, 7, 5], [2, 2, 7, 6], [2, 1, 3, 2]],
+            [[2, 4, 3, 6]],
+            [
+                TensorProto.FLOAT,
+                TensorProto.FLOAT,
+                TensorProto.FLOAT,
+                TensorProto.INT64,
+            ],
+            [TensorProto.FLOAT],
+        )
+
     def test_Acosh(self) -> None:
         self._test_op_upgrade("Acosh", 9)
 

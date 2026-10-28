@@ -399,6 +399,39 @@ TEST(FunctionVerification, VerifyContextDependentFunctionExpansionWithOptionalIn
   }
 }
 
+TEST(FunctionVerification, VerifyIndexedAttentionFunction) {
+  const auto* const schema = OpSchemaRegistry::Schema("IndexedAttention", 29, "");
+  ASSERT_NE(schema, nullptr);
+  EXPECT_TRUE(schema->HasContextDependentFunction());
+  for (int type : {TensorProto::FLOAT16, TensorProto::BFLOAT16, TensorProto::FLOAT, TensorProto::DOUBLE}) {
+    for (bool has_mask : {false, true}) {
+      NodeProto node;
+      node.set_op_type("IndexedAttention");
+      for (const char* input : {"Q", "K", "V", "indices"})
+        node.add_input(input);
+      if (has_mask)
+        node.add_input("candidate_mask");
+      node.add_output("Y");
+      std::vector<TypeProto> types(5);
+      for (int input = 0; input < 3; ++input)
+        types[input].mutable_tensor_type()->set_elem_type(type);
+      types[3].mutable_tensor_type()->set_elem_type(TensorProto::INT64);
+      types[4].mutable_tensor_type()->set_elem_type(TensorProto::BOOL);
+      FunctionBodyBuildContextImpl context(node, types);
+      FunctionProto function;
+      ASSERT_TRUE(schema->BuildContextDependentFunction(context, function));
+      EXPECT_EQ(function.name(), "IndexedAttention");
+      EXPECT_EQ(function.opset_import(0).version(), 29);
+      checker::CheckerContext checker_context;
+      checker_context.set_ir_version(IR_VERSION);
+      checker_context.set_is_main_graph(false);
+      checker_context.set_opset_imports({{"", 29}});
+      checker::LexicalScopeContext lexical_scope;
+      EXPECT_NO_THROW(checker::check_function(function, checker_context, lexical_scope));
+    }
+  }
+}
+
 static void RegisterFunctionSchema() {
   FunctionProto function_body;
   FunctionBuilder(function_body).Add(R"ONNX(
