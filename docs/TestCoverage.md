@@ -15449,7 +15449,58 @@ expect(node, inputs=[x, y], outputs=[z], name="test_less_equal_uint64")
 
 
 ### LinearAttention
-There are 14 test cases, listed as following:
+There are 15 test cases, listed as following:
+<details>
+<summary>compact_value_heads</summary>
+
+```python
+# Scaled-down Gated DeltaNet examples: adjacent Q/K repeats, independent
+# value/state heads and gates. Real head ratios include 2, 3 and 8.
+rng = np.random.default_rng(0)
+for factor in (2, 3, 8):
+    b, t, hk, dk, dv = 1, 3, 2, 4, 5
+    hv = hk * factor
+    query = _l2_normalize(
+        rng.normal(size=(b, t, hk * dk)).astype(np.float16), hk
+    )
+    key = _l2_normalize(rng.normal(size=(b, t, hk * dk)).astype(np.float16), hk)
+    value = rng.normal(size=(b, t, hv * dv)).astype(np.float16)
+    state = rng.normal(size=(b, hv, dk, dv)).astype(np.float32)
+    decay = -rng.uniform(0.1, 0.9, (b, t, hv)).astype(np.float16)
+    beta = rng.uniform(0.1, 0.9, (b, t, hv)).astype(np.float16)
+    expanded = [
+        np.repeat(x.reshape(b, t, hk, dk), factor, axis=2).reshape(
+            b, t, hv * dk
+        )
+        for x in (query, key)
+    ]
+    expected = _compute(
+        *expanded,
+        value,
+        state,
+        decay,
+        beta,
+        q_num_heads=hv,
+        kv_num_heads=hv,
+    )
+    node = onnx.helper.make_node(
+        "LinearAttention",
+        ["query", "key", "value", "past_state", "decay", "beta"],
+        ["output", "present_state"],
+        q_num_heads=hk,
+        kv_num_heads=hk,
+        v_num_heads=hv,
+    )
+    expect(
+        node,
+        inputs=[query, key, value, state, decay, beta],
+        outputs=list(expected),
+        name=f"test_linear_attention_compact_value_heads_factor_{factor}",
+        opset_imports=[onnx.helper.make_opsetid("", 29)],
+    )
+```
+
+</details>
 <details>
 <summary>decode_step</summary>
 

@@ -283,6 +283,33 @@ class TestAutomaticDowngrade(automatic_conversion_test_base.TestAutomaticConvers
         """,
         )
 
+    @pytest.mark.parametrize("value_heads", [None, 0, 2])
+    def test_linear_attention_29_to_28_compatible(self, value_heads) -> None:
+        attrs = {"q_num_heads": 2, "kv_num_heads": 2, "update_rule": "linear"}
+        if value_heads is not None:
+            attrs["v_num_heads"] = value_heads
+        self._test_op_downgrade(
+            "LinearAttention",
+            29,
+            [[1, 3, 8], [1, 3, 8], [1, 3, 6]],
+            [[1, 3, 6], [1, 2, 4, 3]],
+            attrs=attrs,
+        )
+
+    def test_linear_attention_29_expanded_downgrade_fails(self) -> None:
+        self._test_model_conversion_fails(
+            to_opset=28,
+            model="""
+            <ir_version: 13, opset_import: ["" : 29]>
+            g (float[1,3,8] Q, float[1,3,8] K, float[1,3,18] V)
+                => (float[1,3,18] Y, float[1,6,4,3] S) {
+                Y, S = LinearAttention <
+                    q_num_heads=2, kv_num_heads=2, v_num_heads=6, update_rule="linear"
+                > (Q, K, V)
+            }
+            """,
+        )
+
     def test_GroupedMatMul_downgrade_fails(self) -> None:
         self._test_model_conversion_fails(
             to_opset=28,
