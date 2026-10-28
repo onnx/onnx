@@ -1,0 +1,107 @@
+# Copyright (c) ONNX Project Contributors
+#
+# SPDX-License-Identifier: Apache-2.0
+
+name: RISC-V cross build
+
+on:
+  pull_request:
+    paths:
+      - CMakeLists.txt
+      - cmake/**
+      - onnx/**
+      - tests/cmake/**
+      - sbom.cdx.json
+      - .github/workflows/cross_build.yml
+  push:
+    branches: [main]
+    paths:
+      - CMakeLists.txt
+      - cmake/**
+      - onnx/**
+      - tests/cmake/**
+      - sbom.cdx.json
+      - .github/workflows/cross_build.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  riscv64:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Set up host Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: '3.12'
+      - name: Install cross compiler and emulator
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends g++-riscv64-linux-gnu ninja-build qemu-user
+      - name: Download matching host protoc
+        run: |
+          python - <<'PY'
+          import hashlib
+          import io
+          import json
+          import pathlib
+          import urllib.request
+          import zipfile
+
+          components = json.loads(pathlib.Path("sbom.cdx.json").read_text())["components"]
+          entry = next(c for c in components if c["name"] == "protoc-linux-x86_64")
+          url = entry["externalReferences"][0]["url"]
+          payload = urllib.request.urlopen(url, timeout=120).read()
+          if hashlib.sha256(payload).hexdigest() != entry["hashes"][0]["content"]:
+              raise RuntimeError("Host protoc checksum mismatch")
+          with zipfile.ZipFile(io.BytesIO(payload)) as archive:
+              archive.extractall(".cross-host")
+          pathlib.Path(".cross-host/bin/protoc").chmod(0o755)
+          PY
+      - name: Cross build and install target Protobuf
+        run: |
+          cmake -S tests/cmake/cross_protobuf -B .cross-deps -G Ninja \
+            -DCMAKE_TOOLCHAIN_FILE="$PWD/tests/cmake/riscv64-linux-gnu.cmake" \
+            -DONNX_TARGET_PREFIX="$PWD/.cross-target" \
+            -DCMAKE_INSTALL_PREFIX="$PWD/.cross-target" \
+            -DCMAKE_BUILD_TYPE=Release
+          cmake --build .cross-deps --parallel 2
+          cmake --install .cross-deps
+      - name: Cross build and install ONNX with the host compiler
+        run: |
+          # A cached target-side tool must lose to the explicit host protoc.
+          # It fails even on hosts with binfmt support for RISC-V executables.
+          mkdir -p .cross-target/bin
+          echo 'int main() { return 99; }' > .cross-protoc.cc
+          riscv64-linux-gnu-g++ .cross-protoc.cc -o .cross-target/bin/protoc
+          cmake -S . -B .cross-onnx -G Ninja \
+            -DCMAKE_TOOLCHAIN_FILE="$PWD/tests/cmake/riscv64-linux-gnu.cmake" \
+            -DONNX_TARGET_PREFIX="$PWD/.cross-target" \
+            -DCMAKE_PREFIX_PATH="$PWD/.cross-target" \
+            -DCMAKE_INSTALL_PREFIX="$PWD/.cross-target" \
+            -DCMAKE_BUILD_TYPE=Release -DONNX_BUILD_PYTHON=OFF \
+            -DONNX_CUSTOM_PROTOC_EXECUTABLE="$PWD/.cross-host/bin/protoc" \
+            -DProtobuf_PROTOC_EXECUTABLE="$PWD/.cross-target/bin/protoc"
+          cmake --build .cross-onnx --parallel 2
+          cmake --install .cross-onnx
+      - name: Link and execute the RISC-V consumer
+        run: |
+          cmake -S tests/cmake -B .cross-consumer -G Ninja \
+            -DCMAKE_TOOLCHAIN_FILE="$PWD/tests/cmake/riscv64-linux-gnu.cmake" \
+            -DONNX_TARGET_PREFIX="$PWD/.cross-target" \
+            -DCMAKE_PREFIX_PATH="$PWD/.cross-target" \
+            -DProtobuf_PROTOC_EXECUTABLE="$PWD/.cross-host/bin/protoc" \
+            -DCMAKE_BUILD_TYPE=Release
+          cmake --build .cross-consumer --parallel 2
+          riscv64-linux-gnu-readelf -h .cross-consumer/main | grep 'Machine:.*RISC-V'
+          qemu-riscv64 -L /usr/riscv64-linux-gnu .cross-consumer/main
