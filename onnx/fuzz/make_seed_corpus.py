@@ -79,6 +79,9 @@ def _make_model_unchecked(
 # Text-format seeds for fuzz_parser, extracted from tests/python/parser_test.py.
 # Includes malformed numeric literals, which must produce parser.ParseError.
 _PARSER_SEEDS: dict[str, str] = {
+    "string_escapes.txt": 'quote: " backslash: \\ newline: \n',
+    "string_nul.txt": "before\0after",
+    "string_unicode.txt": "\u00e9\u4e2d\U0001f642",
     # Minimal 3-op linear model; exercises basic node and graph parsing.
     "basic_matmul_softmax.txt": """\
 < ir_version: 7,
