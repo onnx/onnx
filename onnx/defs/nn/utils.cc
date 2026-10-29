@@ -768,14 +768,14 @@ static void InferLinearAttentionShape(InferenceContext& ctx) {
   // Reject packed last dims that are not divisible by their head count
   // up-front so the resulting integer-division d_k actually corresponds
   // to a shape the function body can reshape to (B, T, H, D).
-  if (q_num_heads > 0 && QPack.has_dim_value()) {
+  if (QPack.has_dim_value()) {
     if (QPack.dim_value() % q_num_heads != 0) {
       fail_shape_inference(
           "Packed query last dim (", QPack.dim_value(), ") must be divisible by q_num_heads (", q_num_heads, ")");
     }
     unifyDim(Dk, checkedDivide(QPack.dim_value(), q_num_heads));
   }
-  if (kv_num_heads > 0 && KPack.has_dim_value()) {
+  if (KPack.has_dim_value()) {
     if (KPack.dim_value() % kv_num_heads != 0) {
       fail_shape_inference(
           "Packed key last dim (", KPack.dim_value(), ") must be divisible by kv_num_heads (", kv_num_heads, ")");
@@ -806,7 +806,7 @@ static void InferLinearAttentionShape(InferenceContext& ctx) {
   if ((Dk.has_dim_value() && Dk.dim_value() <= 0) || (Dv.has_dim_value() && Dv.dim_value() <= 0)) {
     fail_shape_inference("Key and value head dimensions must be positive");
   }
-  if (has_decay && kv_num_heads > 0) {
+  if (has_decay) {
     const auto* decay_type = ctx.getInputType(4);
     if (decay_type != nullptr && decay_type->has_tensor_type() && decay_type->tensor_type().has_shape() &&
         decay_type->tensor_type().shape().dim_size() == 3 && decay_type->tensor_type().shape().dim(2).has_dim_value()) {
@@ -833,7 +833,7 @@ static void InferLinearAttentionShape(InferenceContext& ctx) {
       }
     }
   }
-  if (has_beta && kv_num_heads > 0) {
+  if (has_beta) {
     const auto* beta_type = ctx.getInputType(5);
     if (beta_type != nullptr && beta_type->has_tensor_type() && beta_type->tensor_type().has_shape() &&
         beta_type->tensor_type().shape().dim_size() == 3 && beta_type->tensor_type().shape().dim(2).has_dim_value()) {
@@ -846,7 +846,7 @@ static void InferLinearAttentionShape(InferenceContext& ctx) {
 
   // Output 0: (B, T, output_heads * d_v).
   Dim OutLast;
-  if (q_num_heads > 0 && Dv.has_dim_value()) {
+  if (Dv.has_dim_value()) {
     OutLast.set_dim_value(checkedMultiply(output_heads, Dv.dim_value()));
   }
   updateOutputShape(ctx, 0, {B, T, OutLast});
@@ -856,6 +856,10 @@ static void InferLinearAttentionShape(InferenceContext& ctx) {
 }
 
 OpSchema LinearAttentionSchema(bool expanded_value_heads) {
+  // Both versions share the recurrence, types and optional-input rules.
+  // Only opset 29 exposes independent value/state heads; legacy query GQA
+  // remains the default. Keep the packed value, gate and output descriptions
+  // aligned with that choice, while leaving Q/K packing unchanged.
   auto schema = OpSchema();
   if (expanded_value_heads) {
     schema.Attr(
