@@ -781,8 +781,13 @@ Common::Status OnnxParser::ParseSingleAttributeValue(AttributeProto& attr, Attri
           attr.set_type(AttributeProto_AttributeType_FLOAT);
           attr.set_f(LocaleIndependentStof(literal.value));
         } else {
+          int64_t value = 0;
+          const char* end = literal.value.data() + literal.value.size();
+          const auto result = std::from_chars(literal.value.data(), end, value);
+          if (result.ec != std::errc{} || result.ptr != end)
+            return ParseError("Integer literal is invalid or out of range: ", literal.value);
           attr.set_type(AttributeProto_AttributeType_INT);
-          attr.set_i(std::stoll(literal.value));
+          attr.set_i(value);
         }
         break;
       case LiteralType::FLOAT_LITERAL:
