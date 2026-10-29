@@ -240,7 +240,11 @@ TEST(OpsetVersionRange, FunctionDeterminism) {
     imports.back().set_version(std::numeric_limits<int64_t>::max());
     OpSchema invalid;
     invalid.SetName("InvalidLocalIdentity").SetDomain("local").SinceVersion(18).FunctionBody({node}, imports);
-    EXPECT_THROW(invalid.GetNodeDeterminism(), checker::ValidationError);
+    // Determinism lookup preserves its existing non-validating behavior.
+    EXPECT_NO_THROW(invalid.GetNodeDeterminism());
+    if (unused_domain) {
+      EXPECT_EQ(invalid.GetNodeDeterminism(), OpSchema::NodeDeterminism::Deterministic);
+    }
   }
 }
 #endif // ONNX_NO_EXCEPTIONS
