@@ -201,6 +201,7 @@ for _name, _literal in {
     "negative_float_overflow": "-1e1000",
     "float_subnormal": "1.401298464324817e-45",
     "double_subnormal": "4.9406564584124654e-324",
+    "double_rounding": "1.0000000596046447753906250000000001",
     "long_exponent": "1e99999999999999999",
     "float_underflow": "-1e-1000",
     "incomplete_exponent": "1e+",
