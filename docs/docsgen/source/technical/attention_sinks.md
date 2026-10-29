@@ -16,7 +16,7 @@ sink probability before multiplying by real values.
 
 This guide describes an explanatory composition of existing standard-domain
 operators, not a change to the normative
-[Attention operator](../operators/onnx__Attention.md). It introduces no operator,
+{ref}`Attention operator <l-onnx-doc-Attention>`. It introduces no operator,
 function registration, or runtime API. Here, a *sink* is a virtual softmax
 candidate, not a real prefix token retained in a streaming KV cache.
 
