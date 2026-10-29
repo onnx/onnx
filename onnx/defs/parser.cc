@@ -56,6 +56,8 @@ bool TryParseFloat(std::string_view s, float& value) {
   float parsed = 0.0f;
 #if defined(__cpp_lib_to_chars) && __cpp_lib_to_chars >= 201611L
   const char* last = s.data() + s.size();
+  // from_chars uses an explicit end pointer, not a NUL terminator.
+  // NOLINTNEXTLINE(bugprone-suspicious-stringview-data-usage)
   const auto result = std::from_chars(s.data(), last, parsed);
   if (result.ec == std::errc{} && result.ptr == last) {
     value = parsed;
@@ -85,6 +87,8 @@ bool TryParseFloat(std::string_view s, double& value) {
   double parsed = 0.0;
 #if defined(__cpp_lib_to_chars) && __cpp_lib_to_chars >= 201611L
   const char* last = s.data() + s.size();
+  // from_chars uses an explicit end pointer, not a NUL terminator.
+  // NOLINTNEXTLINE(bugprone-suspicious-stringview-data-usage)
   const auto result = std::from_chars(s.data(), last, parsed);
   if (result.ec == std::errc{} && result.ptr == last) {
     value = parsed;
@@ -741,6 +745,8 @@ Common::Status OnnxParser::ParseSingleAttributeValue(AttributeProto& attr, Attri
         if (expected != AttributeProto_AttributeType_FLOAT) {
           int64_t value = 0;
           const char* end = literal.value.data() + literal.value.size();
+          // from_chars uses an explicit end pointer, not a NUL terminator.
+          // NOLINTNEXTLINE(bugprone-suspicious-stringview-data-usage)
           const auto result = std::from_chars(literal.value.data(), end, value);
           if (result.ec != std::errc{} || result.ptr != end)
             return ParseError("Integer literal is invalid or out of range: ", literal.value);

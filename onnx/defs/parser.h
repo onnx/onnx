@@ -321,6 +321,8 @@ class ParserBase {
       return ParseError("Integer value expected, but not found.");
     int64_t parsed = 0;
     const char* end = literal.value.data() + literal.value.size();
+    // from_chars uses an explicit end pointer, not a NUL terminator.
+    // NOLINTNEXTLINE(bugprone-suspicious-stringview-data-usage)
     const auto result = std::from_chars(literal.value.data(), end, parsed);
     if (result.ec != std::errc{} || result.ptr != end)
       return ParseError("Integer literal is invalid or out of range: ", literal.value);
