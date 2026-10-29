@@ -13,6 +13,7 @@
 #include <string_view>
 #include <system_error>
 #include <unordered_map>
+#include <utility>
 
 #include "onnx/common/common.h"
 #include "onnx/common/status.h"
@@ -297,6 +298,7 @@ class ParserBase {
   struct Literal {
     LiteralType type{LiteralType::UNDEFINED};
     std::string value;
+    std::string_view number; // Borrows the parser input; only string literals need storage.
   };
 
   Common::Status Parse(Literal& result);
@@ -307,10 +309,10 @@ class ParserBase {
     if (literal.type != LiteralType::INT_LITERAL)
       return ParseError("Integer value expected, but not found.");
     int64_t parsed = 0;
-    const char* end = literal.value.data() + literal.value.size();
-    const auto result = std::from_chars(literal.value.data(), end, parsed);
+    const char* end = literal.number.data() + literal.number.size();
+    const auto result = std::from_chars(literal.number.data(), end, parsed);
     if (result.ec != std::errc{} || result.ptr != end)
-      return ParseError("Integer literal is invalid or out of range: ", literal.value);
+      return ParseError("Integer literal is invalid or out of range: ", literal.number);
     val = parsed;
     return Common::Status::OK();
   }
@@ -320,8 +322,8 @@ class ParserBase {
     CHECK_PARSER_STATUS(Parse(literal))
     if (literal.type != LiteralType::INT_LITERAL)
       return ParseError("Integer value expected, but not found.");
-    const char* begin = literal.value.data();
-    const char* end = begin + literal.value.size();
+    const char* begin = literal.number.data();
+    const char* end = begin + literal.number.size();
     // Preserve negative zero, but reject negative nonzero unsigned values.
     const bool negative = begin != end && *begin == '-';
     if (negative)
@@ -329,14 +331,14 @@ class ParserBase {
     uint64_t parsed = 0;
     const auto result = std::from_chars(begin, end, parsed);
     if (result.ec != std::errc{} || result.ptr != end || (negative && parsed != 0))
-      return ParseError("Unsigned integer literal is invalid or out of range: ", literal.value);
+      return ParseError("Unsigned integer literal is invalid or out of range: ", literal.number);
     val = parsed;
     return Common::Status::OK();
   }
 
-  ONNX_API Common::Status Parse(float& val);
+  Common::Status Parse(float& val);
 
-  ONNX_API Common::Status Parse(double& val);
+  Common::Status Parse(double& val);
 
   // Parse a string-literal enclosed within double-quotes.
   Common::Status Parse(std::string& val) {
@@ -344,7 +346,7 @@ class ParserBase {
     CHECK_PARSER_STATUS(Parse(literal))
     if (literal.type != LiteralType::STRING_LITERAL)
       return ParseError("String value expected, but not found.");
-    val = literal.value;
+    val = std::move(literal.value);
     return Common::Status::OK();
   }
 

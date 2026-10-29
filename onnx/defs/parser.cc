@@ -27,36 +27,31 @@
 
 namespace {
 
-#ifdef _WIN32
 struct CLocale {
-  _locale_t loc;
-  CLocale() : loc(_create_locale(LC_ALL, "C")) {}
+  CLocale() = default;
+#ifdef _WIN32
+  _locale_t loc = _create_locale(LC_ALL, "C");
   ~CLocale() {
     if (loc)
       _free_locale(loc);
   }
-  CLocale(const CLocale&) = delete;
-  CLocale& operator=(const CLocale&) = delete;
-};
-#else // POSIX (Linux, macOS)
-struct CLocale {
-  locale_t loc;
-  CLocale() : loc(newlocale(LC_ALL_MASK, "C", nullptr)) {}
+#else
+  locale_t loc = newlocale(LC_ALL_MASK, "C", nullptr);
   ~CLocale() {
     if (loc)
       freelocale(loc);
   }
+#endif
   CLocale(const CLocale&) = delete;
   CLocale& operator=(const CLocale&) = delete;
 };
-#endif
 
 const CLocale& GetCLocale() {
   static const CLocale instance;
   return instance;
 }
 
-bool TryParseFloat(const std::string& s, float& value) {
+bool TryParseFloat(std::string_view s, float& value) {
   float parsed = 0.0f;
 #if defined(__cpp_lib_to_chars) && __cpp_lib_to_chars >= 201611L
   const char* last = s.data() + s.size();
@@ -72,19 +67,20 @@ bool TryParseFloat(const std::string& s, float& value) {
   const auto& cloc = GetCLocale();
   if (!cloc.loc)
     return false;
+  const std::string text(s); // strto*_l requires a NUL-terminated buffer.
   char* end = nullptr;
 #ifdef _WIN32
-  parsed = _strtof_l(s.c_str(), &end, cloc.loc);
+  parsed = _strtof_l(text.c_str(), &end, cloc.loc);
 #else
-  parsed = strtof_l(s.c_str(), &end, cloc.loc);
+  parsed = strtof_l(text.c_str(), &end, cloc.loc);
 #endif
-  if (end == s.c_str() || end != s.c_str() + s.size())
+  if (end == text.c_str() || end != text.c_str() + text.size())
     return false;
   value = parsed;
   return true;
 }
 
-bool TryParseFloat(const std::string& s, double& value) {
+bool TryParseFloat(std::string_view s, double& value) {
   double parsed = 0.0;
 #if defined(__cpp_lib_to_chars) && __cpp_lib_to_chars >= 201611L
   const char* last = s.data() + s.size();
@@ -100,13 +96,14 @@ bool TryParseFloat(const std::string& s, double& value) {
   const auto& cloc = GetCLocale();
   if (!cloc.loc)
     return false;
+  const std::string text(s); // strto*_l requires a NUL-terminated buffer.
   char* end = nullptr;
 #ifdef _WIN32
-  parsed = _strtod_l(s.c_str(), &end, cloc.loc);
+  parsed = _strtod_l(text.c_str(), &end, cloc.loc);
 #else
-  parsed = strtod_l(s.c_str(), &end, cloc.loc);
+  parsed = strtod_l(text.c_str(), &end, cloc.loc);
 #endif
-  if (end == s.c_str() || end != s.c_str() + s.size())
+  if (end == text.c_str() || end != text.c_str() + text.size())
     return false;
   value = parsed;
   return true;
@@ -125,8 +122,8 @@ Common::Status ParserBase::Parse(float& val) {
   CHECK_PARSER_STATUS(Parse(literal));
   if (literal.type != LiteralType::INT_LITERAL && literal.type != LiteralType::FLOAT_LITERAL)
     return ParseError("Unexpected literal type.");
-  if (!TryParseFloat(literal.value, val))
-    return ParseError("Invalid floating-point literal: ", literal.value);
+  if (!TryParseFloat(literal.number, val))
+    return ParseError("Invalid floating-point literal: ", literal.number);
   return Common::Status::OK();
 }
 
@@ -135,8 +132,8 @@ Common::Status ParserBase::Parse(double& val) {
   CHECK_PARSER_STATUS(Parse(literal));
   if (literal.type != LiteralType::INT_LITERAL && literal.type != LiteralType::FLOAT_LITERAL)
     return ParseError("Unexpected literal type.");
-  if (!TryParseFloat(literal.value, val))
-    return ParseError("Invalid floating-point literal: ", literal.value);
+  if (!TryParseFloat(literal.number, val))
+    return ParseError("Invalid floating-point literal: ", literal.number);
   return Common::Status::OK();
 }
 
@@ -171,7 +168,7 @@ Common::Status ParserBase::Parse(Literal& result) {
         target.push_back(input_[from] != '\\' ? input_[from] : input_[++from]);
       }
     } else {
-      result.value = std::string(input_.substr(from + 1, pos_ - from - 2)); // skip enclosing quotes
+      result.value.assign(input_.substr(from + 1, pos_ - from - 2)); // skip enclosing quotes
     }
     return Common::Status::OK();
   }
@@ -190,8 +187,8 @@ Common::Status ParserBase::Parse(Literal& result) {
         ++pos_;
       }
       float value = 0.0f;
-      result.value = std::string(input_.substr(from, pos_ - from));
-      if (!TryParseFloat(result.value, value))
+      result.number = input_.substr(from, pos_ - from);
+      if (!TryParseFloat(result.number, value))
         return ParseError("Encountered invalid float literal!");
       result.type = LiteralType::FLOAT_LITERAL;
     } else {
@@ -226,7 +223,7 @@ Common::Status ParserBase::Parse(Literal& result) {
         ++pos_;
     }
 
-    result.value = std::string(input_.substr(from, pos_ - from));
+    result.number = input_.substr(from, pos_ - from);
     result.type = decimal_point ? LiteralType::FLOAT_LITERAL : LiteralType::INT_LITERAL;
   }
   return Common::Status::OK();
@@ -247,19 +244,15 @@ bool ParserBase::NextIsValidFloatString() {
       return false;
     }
 
-    std::string candidate = std::string(input_.substr(from, pos_ - from));
-
-    // Reset parser location before continuing.
+    const auto candidate = input_.substr(from, pos_ - from);
     pos_ = from;
-
-    std::transform(candidate.begin(), candidate.end(), candidate.begin(), [](char c) {
-      // ASCII-only lowercasing; std::tolower is locale-dependent.
-      return (c >= 'A' && c <= 'Z') ? static_cast<char>(c - 'A' + 'a') : c;
-    });
-    if (candidate == std::string_view("inf") || candidate == std::string_view("infinity") ||
-        candidate == std::string_view("nan")) {
-      return true;
-    }
+    const auto matches = [candidate](std::string_view expected) {
+      return std::equal(candidate.begin(), candidate.end(), expected.begin(), expected.end(), [](char a, char b) {
+        // ASCII-only lowercasing; std::tolower is locale-dependent.
+        return ((a >= 'A' && a <= 'Z') ? static_cast<char>(a - 'A' + 'a') : a) == b;
+      });
+    };
+    return matches("inf") || matches("infinity") || matches("nan");
   }
   return false;
 }
@@ -759,34 +752,29 @@ Common::Status OnnxParser::ParseSingleAttributeValue(AttributeProto& attr, Attri
       case LiteralType::UNDEFINED:
         return ParseError("Internal error");
       case LiteralType::INT_LITERAL:
-        if (expected == AttributeProto_AttributeType_FLOAT) {
-          // Implicit INT->FLOAT cast; parse the text as float to preserve "-0".
-          float value = 0.0f;
-          if (!TryParseFloat(literal.value, value))
-            return ParseError("Invalid floating-point literal: ", literal.value);
-          attr.set_type(AttributeProto_AttributeType_FLOAT);
-          attr.set_f(value);
-        } else {
+        if (expected != AttributeProto_AttributeType_FLOAT) {
           int64_t value = 0;
-          const char* end = literal.value.data() + literal.value.size();
-          const auto result = std::from_chars(literal.value.data(), end, value);
+          const char* end = literal.number.data() + literal.number.size();
+          const auto result = std::from_chars(literal.number.data(), end, value);
           if (result.ec != std::errc{} || result.ptr != end)
-            return ParseError("Integer literal is invalid or out of range: ", literal.value);
+            return ParseError("Integer literal is invalid or out of range: ", literal.number);
           attr.set_type(AttributeProto_AttributeType_INT);
           attr.set_i(value);
+          break;
         }
-        break;
+        // Parse explicit float attributes as float to preserve "-0".
+        [[fallthrough]];
       case LiteralType::FLOAT_LITERAL: {
         float value = 0.0f;
-        if (!TryParseFloat(literal.value, value))
-          return ParseError("Invalid floating-point literal: ", literal.value);
+        if (!TryParseFloat(literal.number, value))
+          return ParseError("Invalid floating-point literal: ", literal.number);
         attr.set_type(AttributeProto_AttributeType_FLOAT);
         attr.set_f(value);
         break;
       }
       case LiteralType::STRING_LITERAL:
         attr.set_type(AttributeProto_AttributeType_STRING);
-        attr.set_s(literal.value);
+        attr.set_s(std::move(literal.value));
         break;
     }
   }
