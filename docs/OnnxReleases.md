@@ -44,7 +44,7 @@ The ONNX project plans to release roughly every three months. We follow the [Sem
 
 * Go to "Actions" -> select ["Create Releases"](https://github.com/onnx/onnx/actions/workflows/create_release.yml) -> "Run workflow" on `rel-X.Y.Z`. Set `build_mode=release` and `publish_pypi_release=yes`; leave all other publish inputs at `no`.
 
-<img width="339" alt="Release candidate publishing configuration example" src="images/release-candidate-config.png" />
+![Release candidate publishing configuration example](docsgen/source/_static/release-candidate-config.png)
 
 RC-Candidates
 
