@@ -47,7 +47,7 @@ SPDX-License-Identifier: Apache-2.0
 - Improved conformance test suite (parameterized, filterable, usable from non-Python runtimes)
 - Continued C++ hardening improvements
 
-#### Q3 2027 
+#### Q3 2027
 -
 
 ---
