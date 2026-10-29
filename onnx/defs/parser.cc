@@ -781,8 +781,10 @@ Common::Status OnnxParser::ParseSingleAttributeValue(AttributeProto& attr, Attri
           attr.set_type(AttributeProto_AttributeType_FLOAT);
           attr.set_f(LocaleIndependentStof(literal.value));
         } else {
+          int64_t intval = 0;
+          CHECK_PARSER_STATUS(ParseInteger(literal, intval));
           attr.set_type(AttributeProto_AttributeType_INT);
-          attr.set_i(std::stoll(literal.value));
+          attr.set_i(intval);
         }
         break;
       case LiteralType::FLOAT_LITERAL:
