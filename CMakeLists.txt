@@ -1,3 +1,7 @@
+# Copyright (c) ONNX Project Contributors
+#
+# SPDX-License-Identifier: Apache-2.0
+
 # Minimum CMake required
 cmake_minimum_required(VERSION 3.26)
 # Project
