@@ -15,6 +15,7 @@
 #include <cmath>
 #include <cstdlib>
 #include <limits>
+#include <locale>
 #include <string>
 #include <string_view>
 #include <system_error>
@@ -248,8 +249,7 @@ bool ParserBase::NextIsValidFloatString() {
     pos_ = from;
     const auto matches = [candidate](std::string_view expected) {
       return std::equal(candidate.begin(), candidate.end(), expected.begin(), expected.end(), [](char a, char b) {
-        // ASCII-only lowercasing; std::tolower is locale-dependent.
-        return ((a >= 'A' && a <= 'Z') ? static_cast<char>(a - 'A' + 'a') : a) == b;
+        return std::tolower(a, std::locale::classic()) == b;
       });
     };
     return matches("inf") || matches("infinity") || matches("nan");
