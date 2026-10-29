@@ -4,4 +4,4 @@
 # Shell scripts must keep LF endings on all platforms; a CRLF checkout breaks
 # shellcheck (SC1017) and execution under Unix shells.
 *.sh text eol=lf
-*.pb -text -linguist-detectable
+*.pb -linguist-detectable
