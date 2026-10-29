@@ -13,6 +13,7 @@ set(test_src
     ${ONNX_ROOT}/tests/cpp/inliner_test.cc
     ${ONNX_ROOT}/tests/cpp/ir_test.cc
     ${ONNX_ROOT}/tests/cpp/op_reg_test.cc
+    ${ONNX_ROOT}/tests/cpp/opset_version_test.cc
     ${ONNX_ROOT}/tests/cpp/parser_test.cc
     ${ONNX_ROOT}/tests/cpp/safe_math_test.cc
     ${ONNX_ROOT}/tests/cpp/schema_registration_test.cc

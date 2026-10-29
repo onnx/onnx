@@ -26,7 +26,7 @@ namespace ONNX_NAMESPACE::inliner {
 
 namespace { // internal/private API
 
-using OpsetMapBase = std::unordered_map<std::string, int64_t>;
+using OpsetMapBase = std::unordered_map<std::string, int>;
 
 // A representation of the opset versions required by a model or a function.
 // Used to check for compatibility between a model and a function or between
@@ -35,7 +35,17 @@ struct OpsetMap : public OpsetMapBase {
  public:
   // Construct a map representing the opset versions required by a model.
   explicit OpsetMap(const ModelProto& model) {
+    for (const auto& opset : model.opset_import()) {
+      checker::checked_opset_version(opset.version(), opset.domain());
+    }
     (void)Add(model.opset_import());
+    // Validate every local function before any graph or function is mutated,
+    // including unselected functions and imports after an opset mismatch.
+    for (const auto& function : model.functions()) {
+      for (const auto& opset : function.opset_import()) {
+        checker::checked_opset_version(opset.version(), opset.domain());
+      }
+    }
   }
 
   // Adds the opset versions required by a function to the map. Returns true
@@ -65,7 +75,7 @@ struct OpsetMap : public OpsetMapBase {
   bool Add(const google::protobuf::RepeatedPtrField<OperatorSetIdProto>& list) {
     for (const auto& pair : list) {
       auto domain = NormalizeDomain(pair.domain());
-      auto version = pair.version();
+      auto version = checker::checked_opset_version(pair.version(), pair.domain());
       auto iter = this->find(domain);
       if (iter != this->end()) {
         if (iter->second != version)
@@ -417,7 +427,7 @@ const TypeProto& GetType(const ModelProto& model, const std::string& var) {
   ONNX_ASSERTM(false, "Type unknown for ", var)
 }
 
-void ConvertVersion(ModelProto& model, const NodeProto& call_node, FunctionProto& function, int target_version) {
+void ConvertVersion(ModelProto& model, const NodeProto& call_node, FunctionProto& function, int64_t target_version) {
   shape_inference::InferShapes(model);
 
   ModelProto function_as_model;
@@ -539,7 +549,7 @@ struct InlinerImpl {
       }
     }
     if (schema_registry != nullptr) {
-      const int domain_version = static_cast<int>(GetDomainVersion(model, domain));
+      const int domain_version = checker::checked_opset_version(GetDomainVersion(model, domain), domain);
       const auto* const op_schema = schema_registry->GetSchema(node.op_type(), domain_version, domain);
 
       if (op_schema == nullptr) {
@@ -590,7 +600,7 @@ struct InlinerImpl {
         // Rename variable names in callee
         InliningRenamer::Rename(node, callee, "__" + std::to_string(++this->inline_count), this->name_generator);
         if (target_version != kNoConversion) {
-          ConvertVersion(model, node, callee, static_cast<int>(target_version));
+          ConvertVersion(model, node, callee, target_version);
         }
         std::unordered_set<std::string> actual_parameters;
         for (const auto& x : node.input())

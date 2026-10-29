@@ -1167,9 +1167,13 @@ void check_graph(const GraphProto& graph, const CheckerContext& ctx, const Lexic
 }
 
 // Converts a proto opset version to int, rejecting values that do not fit.
-static int checked_opset_version(int64_t version) {
+int checked_opset_version(int64_t version, const std::string& domain) {
   if (version < std::numeric_limits<int>::min() || version > std::numeric_limits<int>::max()) {
-    fail_check("Opset import version ", version, " is out of supported range");
+    fail_check(
+        "Opset import version ",
+        version,
+        domain.empty() ? "" : " for domain '" + domain + "'",
+        " is out of supported range");
   }
   return static_cast<int>(version);
 }
@@ -1392,7 +1396,8 @@ void check_model_local_functions(
   for (const auto& function_proto : model.functions()) {
     for (const auto& opset_import : function_proto.opset_import()) {
       if (get_version_for_domain(opset_import.domain(), model_opset_imports) == -1) {
-        model_opset_imports[opset_import.domain()] = checked_opset_version(opset_import.version());
+        model_opset_imports[opset_import.domain()] =
+            checked_opset_version(opset_import.version(), opset_import.domain());
       }
     }
   }
@@ -1419,7 +1424,7 @@ void check_function(const FunctionProto& function, const CheckerContext& ctx, co
 
   std::unordered_map<std::string, int> func_opset_imports;
   for (const auto& relied_opset : function.opset_import()) {
-    func_opset_imports[relied_opset.domain()] = checked_opset_version(relied_opset.version());
+    func_opset_imports[relied_opset.domain()] = checked_opset_version(relied_opset.version(), relied_opset.domain());
   }
 
   ctx_copy.set_opset_imports(func_opset_imports);
@@ -1523,7 +1528,7 @@ static void check_model(const ModelProto& model, CheckerContext& ctx) {
   ctx.set_ir_version(static_cast<int>(model.ir_version()));
   std::unordered_map<std::string, int> opset_imports;
   for (const auto& opset_import : model.opset_import()) {
-    opset_imports[opset_import.domain()] = checked_opset_version(opset_import.version());
+    opset_imports[opset_import.domain()] = checked_opset_version(opset_import.version(), opset_import.domain());
   }
   if (model.ir_version() >= 3) {
     if (opset_imports.empty()) {

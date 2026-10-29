@@ -8,6 +8,7 @@
 #include <unordered_map>
 #include <vector>
 
+#include "onnx/checker.h"
 #include "onnx/defs/schema.h"
 #include "onnx/inliner/inliner.h"
 
@@ -62,8 +63,9 @@ void FunctionExpandHelper(
   // get the domain version for function schema
   int domain_version = -1;
   for (const auto& opset_import : func.opset_import()) {
+    const int version = checker::checked_opset_version(opset_import.version(), opset_import.domain());
     if (opset_import.domain() == node.domain()) {
-      domain_version = static_cast<int>(opset_import.version());
+      domain_version = version;
     }
   }
   if (domain_version == -1) {

@@ -303,7 +303,8 @@ template <class T>
 std::unordered_map<std::string, int> GetOpsetImportsFromProto(const T& proto) {
   std::unordered_map<std::string, int> opset_imports;
   for (const auto& opset_import : proto.opset_import()) {
-    opset_imports[opset_import.domain()] = static_cast<int>(opset_import.version());
+    opset_imports[opset_import.domain()] =
+        checker::checked_opset_version(opset_import.version(), opset_import.domain());
   }
   return opset_imports;
 }
@@ -858,6 +859,10 @@ void InferShapes(
     const ISchemaRegistry* schema_registry,
     const ShapeInferenceOptions& options,
     const std::unordered_map<std::string, const FunctionProto*>& model_local_functions) {
+  // Validate all imports before node-level error handling or graph mutation.
+  for (const auto& entry : model_local_functions) {
+    GetOpsetImportsFromProto(*entry.second);
+  }
   SymbolTableImpl symbol_table;
   InferShapesImpl(
       g,
@@ -878,6 +883,8 @@ void InferShapes(
   SymbolTableImpl symbol_table;
   ModelLocalFunctionsMap model_local_functions_by_id;
   for (const auto& function_proto : m.functions()) {
+    // Include unused functions and domains, independently of error_mode.
+    GetOpsetImportsFromProto(function_proto);
     model_local_functions_by_id.insert({GetFunctionIdentifier(function_proto), &function_proto});
   }
   checker::check_function_call_cycles(m);
