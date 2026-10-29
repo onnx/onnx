@@ -1182,6 +1182,7 @@ static bool BuildContextDependentFunctionBodyGemm(
     }
     const int rank = a_type->tensor_type().shape().dim_size();
     std::vector<int64_t> perm;
+    perm.reserve(rank);
     for (int i = 0; i < rank; ++i) {
       perm.push_back(i);
     }
