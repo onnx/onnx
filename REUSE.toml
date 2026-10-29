@@ -176,7 +176,7 @@ SPDX-FileCopyrightText = "Copyright (c) ONNX Project Contributors"
 SPDX-License-Identifier = "Apache-2.0"
 
 [[annotations]]
-path = [".vscode/settings.json", "docs/docsgen/source/_templates/layout.html", "docs/docsgen/source/_templates/sidebar-nav-bs.html", "docs/images/onnx_hub_arch.svg", "docs/onnx-horizontal-color.png", "tools/protoc-gen-mypy.sh.in"]
+path = [".vscode/settings.json", "docs/docsgen/source/_templates/layout.html", "docs/docsgen/source/_templates/sidebar-nav-bs.html", "docs/images/onnx_hub_arch.svg", "docs/images/release-candidate-config.png", "docs/onnx-horizontal-color.png", "tools/protoc-gen-mypy.sh.in"]
 precedence = "aggregate"
 SPDX-FileCopyrightText = "Copyright (c) ONNX Project Contributors"
 SPDX-License-Identifier = "Apache-2.0"
