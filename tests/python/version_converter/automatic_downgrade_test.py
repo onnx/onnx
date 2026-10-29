@@ -286,9 +286,7 @@ class TestAutomaticDowngrade(automatic_conversion_test_base.TestAutomaticConvers
 
     @pytest.mark.parametrize("value_heads", [None, 0, 2])
     def test_linear_attention_29_to_28_compatible(self, value_heads) -> None:
-        value_heads_attr = (
-            "" if value_heads is None else f", v_num_heads={value_heads}"
-        )
+        value_heads_attr = "" if value_heads is None else f", v_num_heads={value_heads}"
         model = onnx.parser.parse_model(
             f"""
             <ir_version: 13, opset_import: ["" : 29]>
