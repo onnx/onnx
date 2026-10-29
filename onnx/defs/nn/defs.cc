@@ -3688,10 +3688,10 @@ CausalConvWithStateFunction(const FunctionBodyBuildContext& ctx, const OpSchema&
   )ONNX");
   builder.Add(
       ctx.hasInput(2) ? "ConvAll = Conv (ConvInput, weight, bias)" : "ConvAll = Conv (ConvInput, weight)",
-      "group",
-      channels,
       "dilations",
-      std::vector<int64_t>{dilation});
+      std::vector<int64_t>{dilation},
+      "group",
+      channels);
   builder.Const1D("Zero1D", int64_t{0}).Const1D("SliceAxes", int64_t{2}).Add(R"ONNX(
     InputLength = Shape <start = 2, end = 3> (input)
     ConvOut = Slice (ConvAll, Zero1D, InputLength, SliceAxes)

@@ -4851,20 +4851,22 @@ class TestReferenceEvaluator:
         assert_allclose(got, expected)
 
     @pytest.mark.parametrize(
-        ("auto_pad", "expected"),
+        ("auto_pad", "dilation", "expected"),
         [
-            ("SAME_UPPER", [[[3.0, 5.0]], [[15.0, 13.0]]]),
-            ("SAME_LOWER", [[[1.0, 6.0]], [[9.0, 18.0]]]),
-            ("VALID", [[[3.0]], [[15.0]]]),
+            ("SAME_UPPER", 1, [[[3.0, 5.0]], [[15.0, 13.0]]]),
+            ("SAME_LOWER", 1, [[[1.0, 6.0]], [[9.0, 18.0]]]),
+            ("VALID", 1, [[[3.0]], [[15.0]]]),
+            ("SAME_UPPER", 2, [[[4.0, 4.0]], [[12.0, 12.0]]]),
+            ("SAME_LOWER", 2, [[[2.0, 2.0]], [[10.0, 10.0]]]),
         ],
     )
-    def test_conv_im2col_auto_pad_modes(self, auto_pad, expected):
+    def test_conv_im2col_auto_pad_modes(self, auto_pad, dilation, expected):
         got = _conv_implementation(
             X=np.arange(8, dtype=np.float32).reshape((2, 1, 4)),
             W=np.ones((1, 1, 3), dtype=np.float32),
             B=None,
             auto_pad=auto_pad,
-            dilations=[1],
+            dilations=[dilation],
             group=1,
             kernel_shape=[3],
             pads=None,
@@ -7962,6 +7964,83 @@ class TestReferenceEvaluator:
                 atol=tolerance,
             )
             assert_array_equal(state, expected_state)
+
+    @pytest.mark.parametrize("expand", [False, True])
+    @pytest.mark.parametrize("nonfinite", [np.inf, -np.inf, np.nan])
+    @pytest.mark.parametrize(
+        ("input_values", "past_values", "weight_values", "expected_values"),
+        [
+            ([1, None, 2], None, [1, 1], [1, None, 3]),
+            ([1, 2, 3], [1, None], [1, 1], [2, None, 4]),
+            ([1, 2, 3], [None, 1], [1, 1], [None, 3, 4]),
+            ([1, 2, 3], [None, 1], [0, 1], [np.nan, 2, 3]),
+        ],
+    )
+    def test_causal_conv_with_state_dilated_nonfinite(
+        self,
+        expand,
+        nonfinite,
+        input_values,
+        past_values,
+        weight_values,
+        expected_values,
+    ):
+        def tensor(values):
+            return np.array(
+                [nonfinite if v is None else v for v in values], dtype=np.float32
+            ).reshape(1, 1, -1)
+
+        def model(with_state):
+            past_arg = ', "", past' if with_state else ""
+            return onnx.parser.parse_model(
+                f"""
+                <ir_version: 10, opset_import: ["" : 29]>
+                g (float[1,1,L] input, float[1,1,2] weight, float[1,1,2] past)
+                    => (float[1,1,L] output, float[1,1,2] present)
+                {{
+                    output, present = CausalConvWithState <dilation=2>
+                        (input, weight{past_arg})
+                }}
+                """
+            )
+
+        feeds = {
+            "input": tensor(input_values),
+            "weight": tensor(weight_values),
+            "past": tensor([0, 0] if past_values is None else past_values),
+        }
+        expected = tensor(expected_values)
+        expected_state = feeds["input"][:, :, -2:]
+
+        class CausalConvWithState(OpRunExpand):
+            op_domain = ""
+
+        new_ops = [CausalConvWithState] if expand else None
+        evaluator = ReferenceEvaluator(model(past_values is not None), new_ops=new_ops)
+        # Zero-valued actual taps still multiply nonfinite samples.
+        with np.errstate(invalid="ignore"):
+            output, state = evaluator.run(None, feeds)
+        assert_array_equal(output, expected)
+        assert_array_equal(state, expected_state)
+
+        streaming = ReferenceEvaluator(model(True), new_ops=new_ops)
+        state = feeds["past"]
+        chunks = []
+        offset = 0
+        for size in (0, 1, 1, 0, 1, 0):
+            with np.errstate(invalid="ignore"):
+                chunk, state = streaming.run(
+                    None,
+                    {
+                        **feeds,
+                        "input": feeds["input"][:, :, offset : offset + size],
+                        "past": state,
+                    },
+                )
+            chunks.append(chunk)
+            offset += size
+        assert_array_equal(np.concatenate(chunks, axis=2), expected)
+        assert_array_equal(state, expected_state)
 
     @pytest.mark.parametrize("dilation", [1, 2, 3])
     @pytest.mark.parametrize("kernel", [1, 4])
