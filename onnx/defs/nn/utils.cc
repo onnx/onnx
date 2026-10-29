@@ -283,12 +283,12 @@ static bool BuildLinearAttentionFunction(
   //   5. Transpose/reshape 4D outputs back to 3D (B, T, H_q*d_v)
 
   // --- Step 1: Extract attributes and validate ---
-  auto* update_rule_attr = ctx.getAttribute("update_rule");
+  const auto* update_rule_attr = ctx.getAttribute("update_rule");
   std::string update_rule =
       (update_rule_attr != nullptr && update_rule_attr->has_s()) ? update_rule_attr->s() : "gated_delta";
 
-  auto* q_num_heads_attr = ctx.getAttribute("q_num_heads");
-  auto* kv_num_heads_attr = ctx.getAttribute("kv_num_heads");
+  const auto* q_num_heads_attr = ctx.getAttribute("q_num_heads");
+  const auto* kv_num_heads_attr = ctx.getAttribute("kv_num_heads");
   if (q_num_heads_attr == nullptr || !q_num_heads_attr->has_i() || kv_num_heads_attr == nullptr ||
       !kv_num_heads_attr->has_i()) {
     return false;
@@ -308,7 +308,7 @@ static bool BuildLinearAttentionFunction(
     kv_num_heads = v_heads;
   }
 
-  auto* scale_attr = ctx.getAttribute("scale");
+  const auto* scale_attr = ctx.getAttribute("scale");
   float scale = (scale_attr != nullptr && scale_attr->has_f()) ? scale_attr->f() : 0.0f;
 
   // Per-rule presence of optional inputs
@@ -375,6 +375,7 @@ static bool BuildLinearAttentionFunction(
 
   if (v_heads > 0) {
     std::vector<int64_t> head_indices;
+    head_indices.reserve(static_cast<std::size_t>(v_heads));
     for (int64_t h = 0; h < v_heads; ++h) {
       head_indices.push_back(h / (v_heads / input_k_heads));
     }
@@ -514,7 +515,7 @@ static bool BuildLinearAttentionFunction(
   std::string body;
   std::string body_inputs;
   std::string scan_inputs;
-  int64_t num_scan_inputs;
+  int64_t num_scan_inputs = 0;
   if (update_rule == "linear") {
     body_inputs = "state_in, q_t, k_t, v_t";
     scan_inputs = "State0, Q4D, K4D, V4D";
@@ -645,8 +646,8 @@ static bool BuildLinearAttentionFunction(
 
 static void InferLinearAttentionShape(InferenceContext& ctx) {
   // Read required attributes
-  auto* q_num_heads_attr = ctx.getAttribute("q_num_heads");
-  auto* kv_num_heads_attr = ctx.getAttribute("kv_num_heads");
+  const auto* q_num_heads_attr = ctx.getAttribute("q_num_heads");
+  const auto* kv_num_heads_attr = ctx.getAttribute("kv_num_heads");
   int64_t q_num_heads = (q_num_heads_attr && q_num_heads_attr->has_i()) ? q_num_heads_attr->i() : 0;
   int64_t kv_num_heads = (kv_num_heads_attr && kv_num_heads_attr->has_i()) ? kv_num_heads_attr->i() : 0;
 
@@ -673,7 +674,7 @@ static void InferLinearAttentionShape(InferenceContext& ctx) {
   const int64_t output_heads = v_heads == 0 ? q_num_heads : v_heads;
 
   // Read update_rule attribute with default
-  auto* update_rule_attr = ctx.getAttribute("update_rule");
+  const auto* update_rule_attr = ctx.getAttribute("update_rule");
   std::string update_rule = (update_rule_attr != nullptr) ? update_rule_attr->s() : "gated_delta";
 
   // Validate update_rule value
@@ -806,7 +807,7 @@ static void InferLinearAttentionShape(InferenceContext& ctx) {
     fail_shape_inference("Key and value head dimensions must be positive");
   }
   if (has_decay && kv_num_heads > 0) {
-    auto* decay_type = ctx.getInputType(4);
+    const auto* decay_type = ctx.getInputType(4);
     if (decay_type != nullptr && decay_type->has_tensor_type() && decay_type->tensor_type().has_shape() &&
         decay_type->tensor_type().shape().dim_size() == 3 && decay_type->tensor_type().shape().dim(2).has_dim_value()) {
       const int64_t decay_last = decay_type->tensor_type().shape().dim(2).dim_value();
@@ -833,7 +834,7 @@ static void InferLinearAttentionShape(InferenceContext& ctx) {
     }
   }
   if (has_beta && kv_num_heads > 0) {
-    auto* beta_type = ctx.getInputType(5);
+    const auto* beta_type = ctx.getInputType(5);
     if (beta_type != nullptr && beta_type->has_tensor_type() && beta_type->tensor_type().has_shape() &&
         beta_type->tensor_type().shape().dim_size() == 3 && beta_type->tensor_type().shape().dim(2).has_dim_value()) {
       const int64_t beta_last = beta_type->tensor_type().shape().dim(2).dim_value();
