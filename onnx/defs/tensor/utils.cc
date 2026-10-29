@@ -53,7 +53,7 @@ static void GatherNDShapeInference(InferenceContext& ctx) {
   for (int i = 0; i < indices_rank - 1; ++i) {
     *output_shape->add_dim() = indices_shape.dim(i);
   }
-  for (auto i = last_index_dimension; i < data_rank; ++i) {
+  for (int i = static_cast<int>(last_index_dimension); i < data_rank; ++i) {
     *output_shape->add_dim() = data_shape.dim(i);
   }
 }
