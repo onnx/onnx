@@ -15,7 +15,7 @@ for crashes, hangs, and sanitizer violations.
 | `fuzz_compose.py` | `compose.merge_models` | Raw (length-prefixed model pair) **and** structured (toggle byte) |
 | `fuzz_external_data.py` | External-data metadata, read/write helpers, model loading, and `ModelContainer` | Structured bytes + disposable filesystem fixtures |
 | `fuzz_model_loader.py` | `load_model_from_string` + `checker.check_model` | Raw bytes → protobuf parser |
-| `fuzz_parser.py` | `parser.parse_model` | UTF-8 text (ONNX text format) |
+| `fuzz_parser.py` | `parser.parse_model`, `parse_graph`, `parse_function`, `parse_node` | UTF-8 text (ONNX text format) |
 | `fuzz_shape_inference.py` | `shape_inference.infer_shapes` | Raw bytes **and** structured model (toggle byte) |
 | `fuzz_version_converter.py` | `version_converter.convert_version` | Raw bytes → protobuf parser |
 | `make_seed_corpus.py` | *(seed generator, not a fuzzer)* | Produces seed zips for OSS-Fuzz |
@@ -73,6 +73,14 @@ Fuzz targets must never crash on expected errors — only on *unexpected* ones
 `ValidationError`, `InferenceError`, `DecodeError`, etc. are expected when the
 fuzzer feeds random bytes. Swallowing them lets libFuzzer keep searching for
 inputs that cause real bugs.
+
+The parser harness accepts only `UnicodeDecodeError` (invalid UTF-8) and
+`parser.ParseError` as expected input errors. Numeric conversion errors such as
+`OverflowError`, `ValueError`, `IndexError`, or `RuntimeError` must escape to
+libFuzzer. Its corpus includes integer boundaries, overflow, unsigned negatives,
+and floating-point overflow, underflow, and malformed exponents. Raw decimal
+literals also exercise a structured float attribute, where rejection is a bug;
+range errors must preserve floating-point rounding to zero, subnormals, or infinity.
 
 ### Why `TestOneInput`?
 

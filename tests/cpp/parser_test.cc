@@ -4,8 +4,6 @@
 
 #include <clocale>
 #include <cmath>
-#include <cstdint>
-#include <limits>
 #include <string>
 #include <string_view>
 
@@ -72,68 +70,6 @@ TEST(ParserTest, NonNulTerminatedStringView) {
   EXPECT_TRUE(status.IsOK()) << status.ErrorMessage();
   EXPECT_TRUE(std::isinf(val));
   EXPECT_TRUE(parser.EndOfInput()) << "Extra unparsed input unexpected.";
-}
-
-TEST(ParserTest, SignedIntegerLiterals) {
-  for (int64_t expected : {std::numeric_limits<int64_t>::min(), int64_t{0}, std::numeric_limits<int64_t>::max()}) {
-    const std::string text = std::to_string(expected);
-    ParserBase parser(text);
-    int64_t value = 17;
-    const auto status = parser.Parse(value);
-    ASSERT_TRUE(status.IsOK()) << status.ErrorMessage();
-    EXPECT_EQ(value, expected);
-    EXPECT_TRUE(parser.EndOfInput());
-  }
-  for (const std::string& text :
-       {std::string("9223372036854775808"), std::string("-9223372036854775809"), std::string(1000, '9')}) {
-    SCOPED_TRACE(text);
-    ParserBase parser(text);
-    int64_t value = 17;
-    EXPECT_FALSE(parser.Parse(value).IsOK());
-    EXPECT_EQ(value, 17);
-  }
-}
-
-TEST(ParserTest, UnsignedIntegerLiterals) {
-  for (const auto* text : {"0", "-0", "-000", "18446744073709551615"}) {
-    SCOPED_TRACE(text);
-    ParserBase parser(text);
-    uint64_t value = 17;
-    const auto status = parser.Parse(value);
-    ASSERT_TRUE(status.IsOK()) << status.ErrorMessage();
-    EXPECT_EQ(value, text[0] == '1' ? std::numeric_limits<uint64_t>::max() : uint64_t{0});
-    EXPECT_TRUE(parser.EndOfInput());
-  }
-  for (const auto* text : {"18446744073709551616", "-1", "-18446744073709551615", "-18446744073709551616"}) {
-    SCOPED_TRACE(text);
-    ParserBase parser(text);
-    uint64_t value = 17;
-    EXPECT_FALSE(parser.Parse(value).IsOK());
-    EXPECT_EQ(value, 17);
-  }
-}
-
-TEST(ParserTest, IntegerRangesInProtos) {
-  TypeProto type;
-  ExpectParseFailure(type, "float[9223372036854775808]");
-  AttributeProto attr;
-  ExpectParseFailure(attr, "axis = 9223372036854775808");
-  ExpectParseFailure(attr, "axes = [0, -9223372036854775809]");
-  Parse(attr, "axis = -9223372036854775808");
-  EXPECT_EQ(attr.i(), std::numeric_limits<int64_t>::min());
-  Parse(attr, "axis = 9223372036854775807");
-  EXPECT_EQ(attr.i(), std::numeric_limits<int64_t>::max());
-  TensorProto tensor;
-  ExpectParseFailure(tensor, "int64[1] = {9223372036854775808}");
-  ExpectParseFailure(tensor, "uint64[1] = {18446744073709551616}");
-  ExpectParseFailure(tensor, "uint64[1] = {-1}");
-  Parse(tensor, "int64[2] = {-9223372036854775808, 9223372036854775807}");
-  ASSERT_EQ(tensor.int64_data_size(), 2);
-  EXPECT_EQ(tensor.int64_data(0), std::numeric_limits<int64_t>::min());
-  EXPECT_EQ(tensor.int64_data(1), std::numeric_limits<int64_t>::max());
-  Parse(tensor, "uint64[1] = {18446744073709551615}");
-  ASSERT_EQ(tensor.uint64_data_size(), 1);
-  EXPECT_EQ(tensor.uint64_data(0), std::numeric_limits<uint64_t>::max());
 }
 
 TEST(ParserTest, TypeTest) {

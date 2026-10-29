@@ -21,10 +21,6 @@
 
 namespace ONNX_NAMESPACE {
 
-// Locale-independent string-to-float/double conversion (defined in parser.cc).
-ONNX_API float LocaleIndependentStof(const std::string& s);
-ONNX_API double LocaleIndependentStod(const std::string& s);
-
 using IdList = google::protobuf::RepeatedPtrField<std::string>;
 
 using NodeList = google::protobuf::RepeatedPtrField<NodeProto>;
@@ -338,33 +334,9 @@ class ParserBase {
     return Common::Status::OK();
   }
 
-  Common::Status Parse(float& val) {
-    Literal literal;
-    CHECK_PARSER_STATUS(Parse(literal))
-    switch (literal.type) {
-      case LiteralType::INT_LITERAL:
-      case LiteralType::FLOAT_LITERAL:
-        val = LocaleIndependentStof(literal.value);
-        break;
-      default:
-        return ParseError("Unexpected literal type.");
-    }
-    return Common::Status::OK();
-  }
+  ONNX_API Common::Status Parse(float& val);
 
-  Common::Status Parse(double& val) {
-    Literal literal;
-    CHECK_PARSER_STATUS(Parse(literal))
-    switch (literal.type) {
-      case LiteralType::INT_LITERAL:
-      case LiteralType::FLOAT_LITERAL:
-        val = LocaleIndependentStod(literal.value);
-        break;
-      default:
-        return ParseError("Unexpected literal type.");
-    }
-    return Common::Status::OK();
-  }
+  ONNX_API Common::Status Parse(double& val);
 
   // Parse a string-literal enclosed within double-quotes.
   Common::Status Parse(std::string& val) {
