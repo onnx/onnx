@@ -9,8 +9,7 @@ from pathlib import Path
 import numpy as np
 import pytest
 
-import onnx
-from onnx import helper
+from onnx import TensorProto, checker, helper, load_from_string
 from onnx.inliner import inline_local_functions
 from onnx.reference import ReferenceEvaluator
 
@@ -132,26 +131,22 @@ def _router_model(grouped):
         domain="local.moe",
     )
     info = {
-        "Logits": (onnx.TensorProto.FLOAT, ["T", "E"]),
-        "Correction": (onnx.TensorProto.FLOAT, ["E"]),
-        "GroupShape": (onnx.TensorProto.INT64, [2]),
-        "GroupK": (onnx.TensorProto.INT64, [1]),
-        "K": (onnx.TensorProto.INT64, [1]),
-        "Normalize": (onnx.TensorProto.BOOL, []),
-        "Epsilon": (onnx.TensorProto.FLOAT, []),
-        "Scale": (onnx.TensorProto.FLOAT, []),
+        "Logits": (TensorProto.FLOAT, ["T", "E"]),
+        "Correction": (TensorProto.FLOAT, ["E"]),
+        "GroupShape": (TensorProto.INT64, [2]),
+        "GroupK": (TensorProto.INT64, [1]),
+        "K": (TensorProto.INT64, [1]),
+        "Normalize": (TensorProto.BOOL, []),
+        "Epsilon": (TensorProto.FLOAT, []),
+        "Scale": (TensorProto.FLOAT, []),
     }
     graph = helper.make_graph(
         [node],
         "router",
         [helper.make_tensor_value_info(name, *info[name]) for name in inputs],
         [
-            helper.make_tensor_value_info(
-                "Indices", onnx.TensorProto.INT64, ["T", "k"]
-            ),
-            helper.make_tensor_value_info(
-                "Weights", onnx.TensorProto.FLOAT, ["T", "k"]
-            ),
+            helper.make_tensor_value_info("Indices", TensorProto.INT64, ["T", "k"]),
+            helper.make_tensor_value_info("Weights", TensorProto.FLOAT, ["T", "k"]),
         ],
     )
     return helper.make_model(
@@ -255,11 +250,11 @@ def test_duplicate_experts_are_independent_routes():
 @pytest.mark.parametrize("grouped", [False, True])
 def test_serialization_and_inlining(grouped):
     model = _EXAMPLE["make_model"](grouped=grouped)
-    model = onnx.load_from_string(model.SerializeToString())
+    model = load_from_string(model.SerializeToString())
     model = inline_local_functions(model)
     assert not model.functions
     assert not any(node.domain == "local.moe" for node in model.graph.node)
-    onnx.checker.check_model(model, full_check=True)
+    checker.check_model(model, full_check=True)
     feeds = _feeds(grouped=grouped)
     expected = _oracle(feeds, grouped)
     for actual, oracle in zip(

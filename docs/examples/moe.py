@@ -6,11 +6,10 @@ from __future__ import annotations
 import argparse
 from pathlib import Path
 
-import onnx
-from onnx import helper, parser
+from onnx import FunctionProto, ModelProto, TensorProto, checker, helper, parser, save
 
 
-def make_functions() -> list[onnx.FunctionProto]:
+def make_functions() -> list[FunctionProto]:
     """Build portable model-local functions used by the MoE examples."""
     bodies = [
         """
@@ -103,23 +102,19 @@ def make_functions() -> list[onnx.FunctionProto]:
         "FlatHidden": ["Tk", "I"],
     }
     selected.value_info.extend(
-        helper.make_tensor_value_info(name, onnx.TensorProto.FLOAT, shape)
+        helper.make_tensor_value_info(name, TensorProto.FLOAT, shape)
         for name, shape in float_shapes.items()
     )
     selected.value_info.extend(
         [
-            helper.make_tensor_value_info(
-                "Indices", onnx.TensorProto.INT64, ["T", "k"]
-            ),
-            helper.make_tensor_value_info(
-                "FlatIndices", onnx.TensorProto.INT64, ["Tk", 1]
-            ),
+            helper.make_tensor_value_info("Indices", TensorProto.INT64, ["T", "k"]),
+            helper.make_tensor_value_info("FlatIndices", TensorProto.INT64, ["Tk", 1]),
         ]
     )
     return functions
 
 
-def make_model(*, grouped: bool = False) -> onnx.ModelProto:
+def make_model(*, grouped: bool = False) -> ModelProto:
     """Build a float32 MoE block with dynamic token/expert/hidden dimensions.
 
     The softmax example has a sigmoid-gated shared expert (Qwen family).
@@ -179,7 +174,7 @@ def make_model(*, grouped: bool = False) -> onnx.ModelProto:
         functions=make_functions(),
         producer_name="onnx-moe-example",
     )
-    onnx.checker.check_model(model, full_check=True)
+    checker.check_model(model, full_check=True)
     return model
 
 
@@ -188,5 +183,5 @@ if __name__ == "__main__":
     args.add_argument("output", type=Path, help="Directory for the generated models")
     output = args.parse_args().output
     output.mkdir(parents=True, exist_ok=True)
-    onnx.save(make_model(), output / "softmax_moe.onnx")
-    onnx.save(make_model(grouped=True), output / "grouped_sigmoid_moe.onnx")
+    save(make_model(), output / "softmax_moe.onnx")
+    save(make_model(grouped=True), output / "grouped_sigmoid_moe.onnx")
