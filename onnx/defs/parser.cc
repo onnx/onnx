@@ -123,8 +123,8 @@ Common::Status ParserBase::Parse(float& val) {
   CHECK_PARSER_STATUS(Parse(literal));
   if (literal.type != LiteralType::INT_LITERAL && literal.type != LiteralType::FLOAT_LITERAL)
     return ParseError("Unexpected literal type.");
-  if (!TryParseFloat(literal.number, val))
-    return ParseError("Invalid floating-point literal: ", literal.number);
+  if (!TryParseFloat(literal.value, val))
+    return ParseError("Invalid floating-point literal: ", literal.value);
   return Common::Status::OK();
 }
 
@@ -133,8 +133,8 @@ Common::Status ParserBase::Parse(double& val) {
   CHECK_PARSER_STATUS(Parse(literal));
   if (literal.type != LiteralType::INT_LITERAL && literal.type != LiteralType::FLOAT_LITERAL)
     return ParseError("Unexpected literal type.");
-  if (!TryParseFloat(literal.number, val))
-    return ParseError("Invalid floating-point literal: ", literal.number);
+  if (!TryParseFloat(literal.value, val))
+    return ParseError("Invalid floating-point literal: ", literal.value);
   return Common::Status::OK();
 }
 
@@ -144,10 +144,8 @@ Common::Status ParserBase::Parse(Literal& result) {
   size_t from = pos_;
   if (nextch == '"') {
     ++pos_;
-    bool has_escape = false;
     while (!AtEnd() && (Cur() != '"')) {
       if (Cur() == '\\') {
-        has_escape = true;
         ++pos_;
         if (AtEnd())
           return ParseError("Incomplete string literal.");
@@ -158,19 +156,7 @@ Common::Status ParserBase::Parse(Literal& result) {
       return ParseError("Incomplete string literal.");
     ++pos_;
     result.type = LiteralType::STRING_LITERAL;
-    if (has_escape) {
-      std::string& target = result.value;
-      target.clear();
-      target.reserve(pos_ - from - 2); // upper bound
-      // input_[from] is the starting quote. input_[pos_-1] is the ending quote.
-      // Copy what is in-between, except for the escape character
-      while (++from < pos_ - 1) {
-        // Copy current char, if not escape, or next char otherwise.
-        target.push_back(input_[from] != '\\' ? input_[from] : input_[++from]);
-      }
-    } else {
-      result.value.assign(input_.substr(from + 1, pos_ - from - 2)); // skip enclosing quotes
-    }
+    result.value = input_.substr(from + 1, pos_ - from - 2); // skip enclosing quotes
     return Common::Status::OK();
   }
 
@@ -188,8 +174,8 @@ Common::Status ParserBase::Parse(Literal& result) {
         ++pos_;
       }
       float value = 0.0f;
-      result.number = input_.substr(from, pos_ - from);
-      if (!TryParseFloat(result.number, value))
+      result.value = input_.substr(from, pos_ - from);
+      if (!TryParseFloat(result.value, value))
         return ParseError("Encountered invalid float literal!");
       result.type = LiteralType::FLOAT_LITERAL;
     } else {
@@ -224,7 +210,7 @@ Common::Status ParserBase::Parse(Literal& result) {
         ++pos_;
     }
 
-    result.number = input_.substr(from, pos_ - from);
+    result.value = input_.substr(from, pos_ - from);
     result.type = decimal_point ? LiteralType::FLOAT_LITERAL : LiteralType::INT_LITERAL;
   }
   return Common::Status::OK();
@@ -754,10 +740,10 @@ Common::Status OnnxParser::ParseSingleAttributeValue(AttributeProto& attr, Attri
       case LiteralType::INT_LITERAL:
         if (expected != AttributeProto_AttributeType_FLOAT) {
           int64_t value = 0;
-          const char* end = literal.number.data() + literal.number.size();
-          const auto result = std::from_chars(literal.number.data(), end, value);
+          const char* end = literal.value.data() + literal.value.size();
+          const auto result = std::from_chars(literal.value.data(), end, value);
           if (result.ec != std::errc{} || result.ptr != end)
-            return ParseError("Integer literal is invalid or out of range: ", literal.number);
+            return ParseError("Integer literal is invalid or out of range: ", literal.value);
           attr.set_type(AttributeProto_AttributeType_INT);
           attr.set_i(value);
           break;
@@ -766,15 +752,15 @@ Common::Status OnnxParser::ParseSingleAttributeValue(AttributeProto& attr, Attri
         [[fallthrough]];
       case LiteralType::FLOAT_LITERAL: {
         float value = 0.0f;
-        if (!TryParseFloat(literal.number, value))
-          return ParseError("Invalid floating-point literal: ", literal.number);
+        if (!TryParseFloat(literal.value, value))
+          return ParseError("Invalid floating-point literal: ", literal.value);
         attr.set_type(AttributeProto_AttributeType_FLOAT);
         attr.set_f(value);
         break;
       }
       case LiteralType::STRING_LITERAL:
         attr.set_type(AttributeProto_AttributeType_STRING);
-        attr.set_s(std::move(literal.value));
+        literal.DecodeString(*attr.mutable_s());
         break;
     }
   }
