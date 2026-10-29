@@ -40,18 +40,15 @@ class MeanVarianceNormalization(Base):
 
         # Calculate expected output data
         data_mean = np.mean(input_data, axis=(0, 2, 3), keepdims=1)
-        data_mean_squared = np.square(data_mean)
-        data_squared_mean = np.mean(
-            np.square(input_data), axis=(0, 2, 3), keepdims=True
-        )
-        std = np.sqrt(data_squared_mean - data_mean_squared)
+        centered = input_data - data_mean
+        std = np.sqrt(np.mean(np.square(centered), axis=(0, 2, 3), keepdims=True))
         expected_output = (input_data - data_mean) / (std + 1e-9)
 
         expect(node, inputs=[input_data], outputs=[expected_output], name="test_mvn")
 
     @staticmethod
     def export_epsilon() -> None:
-        epsilon = 1e-5
+        epsilon = 1.0
         node = onnx.helper.make_node(
             "MeanVarianceNormalization",
             inputs=["X"],
@@ -64,9 +61,8 @@ class MeanVarianceNormalization(Base):
 
         # Calculate expected output with custom epsilon
         data_mean = np.mean(input_data, axis=(1, -1), keepdims=True)
-        data_mean_squared = np.square(data_mean)
-        data_squared_mean = np.mean(np.square(input_data), axis=(1, -1), keepdims=True)
-        std = np.sqrt(data_squared_mean - data_mean_squared)
+        centered = input_data - data_mean
+        std = np.sqrt(np.mean(np.square(centered), axis=(1, -1), keepdims=True))
         expected_output = (input_data - data_mean) / (std + epsilon)
 
         expect(
@@ -86,10 +82,9 @@ class MeanVarianceNormalization(Base):
         )
         input_data = np.ones(2, dtype=np.float32)
         mean = np.mean(input_data, axis=0, keepdims=True)
-        mean_squared = np.square(mean)
-        squared_mean = np.mean(np.square(input_data), axis=0, keepdims=True)
-        expected_output = (input_data - mean) / (
-            np.sqrt(squared_mean - mean_squared) + 1e-9
+        centered = input_data - mean
+        expected_output = centered / (
+            np.sqrt(np.mean(np.square(centered), axis=0, keepdims=True)) + 1e-9
         )
 
         expect(

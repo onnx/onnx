@@ -1129,7 +1129,7 @@ class DefaultVersionConverter : public BaseVersionConverter {
     registerAdapter(std::make_unique<CompatibleAdapter>("ReduceLogSumExp", OpSetID(28), OpSetID(27)));
 
     /******** 28 -> 29 ********/
-    registerAdapter(std::make_unique<CompatibleAdapter>("MeanVarianceNormalization", OpSetID(28), OpSetID(29)));
+    registerAdapter(std::make_unique<MeanVarianceNormalization_28_29>());
 
     /******** 29 -> 28 ********/
     registerAdapter(std::make_unique<MeanVarianceNormalization_29_28>());

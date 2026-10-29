@@ -8,9 +8,11 @@ from typing import ClassVar
 import automatic_conversion_test_base
 import numpy as np
 import pytest
+from numpy.testing import assert_allclose
 
 import onnx
 from onnx import TensorProto, helper
+from onnx.reference import ReferenceEvaluator
 
 #####################################################################################
 # Every test calls _test_op_conversion to upgrade a model from an initial opset version
@@ -937,7 +939,26 @@ class TestAutomaticUpgrade(automatic_conversion_test_base.TestAutomaticConversio
         self._test_op_upgrade("MeanVarianceNormalization", 9, attrs={"axes": [1, 2]})
 
     def test_MeanVarianceNormalization_opset28(self) -> None:
-        self._test_op_upgrade("MeanVarianceNormalization", 28, attrs={"axes": [1, 2]})
+        model = onnx.parser.parse_model(
+            """
+            <ir_version: 13, opset_import: [ "" : 28]>
+            mvn (float[3] X) => (float[3] Y)
+            {
+                Y = MeanVarianceNormalization <axes = [0]> (X)
+            }
+            """
+        )
+        x = np.array([1000.0, 1001.0, 1002.0], dtype=np.float32)
+        expected = ReferenceEvaluator(model).run(None, {"X": x})[0]
+
+        converted = onnx.version_converter.convert_version(model, 29)
+        onnx.checker.check_model(converted)
+        assert all(
+            node.op_type != "MeanVarianceNormalization" for node in converted.graph.node
+        )
+        got = ReferenceEvaluator(converted).run(None, {"X": x})[0]
+
+        assert_allclose(got, expected)
 
     def test_Min(self) -> None:
         self._test_op_upgrade(

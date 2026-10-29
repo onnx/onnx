@@ -28,13 +28,10 @@ static bool BuildMeanVarianceNormalizationFunctionBody(
       ? TensorProto_DataType_FLOAT
       : elem_type;
 
-  const auto* const epsilon_attr = ctx.getAttribute("epsilon");
-  const float epsilon = (epsilon_attr != nullptr) ? epsilon_attr->f() : 1e-9f;
-
   FunctionBuilder builder(functionProto);
   builder.Add("XCompute = Cast (X)", "to", static_cast<int64_t>(compute_type))
       .Const("ExponentFloat", ToTensor<float>(2.0f))
-      .Const("EpsilonFloat", ToTensor<float>(epsilon))
+      .Add("EpsilonFloat = Constant <value_float: float = @epsilon>()")
       .Add("Exponent = Cast (ExponentFloat)", "to", static_cast<int64_t>(compute_type))
       .Add("Epsilon = Cast (EpsilonFloat)", "to", static_cast<int64_t>(compute_type));
 

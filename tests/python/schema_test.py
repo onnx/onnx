@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING
 import pytest
 
 import onnx
-from onnx import TensorProto, defs, helper
+from onnx import AttributeProto, TensorProto, defs, helper
 
 MOD_OPSET_13 = 13
 MOD_OPSET_28 = 28
@@ -78,6 +78,33 @@ class TestSchema:
             "Epsilon": TensorProto.DOUBLE,
             "Y": TensorProto.DOUBLE,
         }
+        epsilon_constant = next(
+            n
+            for n in function_proto.node
+            if "EpsilonFloat" in n.output and n.op_type == "Constant"
+        )
+        assert epsilon_constant.attribute[0].ref_attr_name == "epsilon"
+
+        linked_epsilon = helper.make_attribute_ref(
+            "epsilon", AttributeProto.FLOAT, ref_attr_name="outer_epsilon"
+        )
+        linked_node = helper.make_node(
+            "MeanVarianceNormalization", ["X"], ["Y"], axes=[0]
+        )
+        linked_node.attribute.append(linked_epsilon)
+        linked_function = onnx.FunctionProto()
+        linked_function.ParseFromString(
+            schema.get_context_dependent_function(
+                linked_node.SerializeToString(),
+                [self._tensor_type_proto(TensorProto.FLOAT).SerializeToString()],
+            )
+        )
+        linked_constant = next(
+            n
+            for n in linked_function.node
+            if "EpsilonFloat" in n.output and n.op_type == "Constant"
+        )
+        assert linked_constant.attribute[0].ref_attr_name == "epsilon"
 
     def test_mean_variance_normalization_legacy_static_function(self) -> None:
         schema = defs.get_schema("MeanVarianceNormalization", 28)

@@ -3927,6 +3927,69 @@ class TestReferenceEvaluator:
 
         assert_allclose(got, np.zeros(2, dtype=np.float16), rtol=0, atol=0)
 
+    def test_mvn_opset29_unannotated_node(self) -> None:
+        node = make_node(
+            "MeanVarianceNormalization",
+            ["X"],
+            ["Y"],
+            axes=[0],
+            epsilon=1e-5,
+        )
+        x = np.array([1.0, 2.0, 4.0], dtype=np.float32)
+
+        got = ReferenceEvaluator(node).run(None, {"X": x})[0]
+        centered = x - np.mean(x)
+        expected = centered / (np.sqrt(np.mean(np.square(centered))) + 1e-5)
+
+        assert_allclose(got, expected)
+
+    def test_mvn_opset29_unannotated_function_with_linked_epsilon(self) -> None:
+        domain = "local"
+        x_info = make_tensor_value_info("X", TensorProto.FLOAT, [3])
+        y_info = make_tensor_value_info("Y", TensorProto.FLOAT, [3])
+        epsilon_ref = onnx.helper.make_attribute_ref(
+            "epsilon", AttributeProto.FLOAT, ref_attr_name="function_epsilon"
+        )
+        mvn_node = make_node("MeanVarianceNormalization", ["X"], ["Y"], axes=[0])
+        mvn_node.attribute.append(epsilon_ref)
+        function = make_function(
+            domain,
+            "LocalMVN",
+            ["X"],
+            ["Y"],
+            [mvn_node],
+            [make_opsetid("", 29)],
+            attributes=["function_epsilon"],
+            value_info=[x_info, y_info],
+        )
+        call = make_node(
+            "LocalMVN",
+            ["X"],
+            ["Y"],
+            domain=domain,
+            function_epsilon=0.5,
+        )
+        model = make_model(
+            make_graph([call], "g", [x_info], [y_info]),
+            functions=[function],
+            opset_imports=[make_opsetid("", 29), make_opsetid(domain, 1)],
+        )
+        x = np.array([1.0, 2.0, 4.0], dtype=np.float32)
+
+        got = ReferenceEvaluator(model).run(None, {"X": x})[0]
+        centered = x - np.mean(x)
+        expected = centered / (np.sqrt(np.mean(np.square(centered))) + 0.5)
+
+        assert_allclose(got, expected)
+
+        class MeanVarianceNormalization(OpRunExpand):
+            op_domain = ""
+
+        expanded = ReferenceEvaluator(model, new_ops=[MeanVarianceNormalization]).run(
+            None, {"X": x}
+        )[0]
+        assert_allclose(expanded, expected)
+
     def test_concat_in_a_function(self):
         def create_model():
             nodes = []
