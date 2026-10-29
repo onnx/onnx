@@ -1,3 +1,7 @@
+# Copyright (c) ONNX Project Contributors
+#
+# SPDX-License-Identifier: Apache-2.0
+
 # - Config file for the ONNX package
 # It defines ONNX targets for other cmake libraries to use.
 
