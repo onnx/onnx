@@ -12,19 +12,16 @@ from typing import TYPE_CHECKING, Any
 import numpy as np
 import pytest
 from google.protobuf import text_format
+from shape_inference_test_utils import TestShapeInferenceHelper
 
 import onnx.shape_inference
 from onnx import (
     ONNX_ML,
-    GraphProto,
-    ModelProto,
-    NodeProto,
     OperatorSetIdProto,
     SparseTensorProto,
     TensorProto,
     TensorShapeProto,
     TypeProto,
-    ValueInfoProto,
     checker,
     defs,
     helper,
@@ -84,175 +81,6 @@ def all_versions_for(op_name: str) -> list[int]:
         # Issue reference: https://github.com/onnx/onnx/issues/5289.
         if version > 5 or domain != ONNX_DOMAIN
     ]
-
-
-class TestShapeInferenceHelper:
-    def _make_graph(
-        self,
-        seed_values: Sequence[str | tuple[str, TensorProto.DataType, Any]],
-        nodes: list[NodeProto],
-        value_info: list[ValueInfoProto],
-        initializer: Sequence[TensorProto] | None = None,
-    ) -> GraphProto:
-        if initializer is None:
-            initializer = []
-        names_in_initializer = {x.name for x in initializer}
-        input_value_infos = []
-        # If the starting values are not also initializers,
-        # introduce the starting values as the output of reshape,
-        # so that the sizes are guaranteed to be unknown
-        for seed_value in seed_values:
-            if isinstance(seed_value, tuple):
-                seed_name, proto_type = seed_value[:2]
-                seed_value_info = make_tensor_value_info(*seed_value)
-            else:
-                seed_name, proto_type = seed_value, TensorProto.UNDEFINED
-                seed_value_info = make_empty_tensor_value_info(seed_value)
-            if seed_name in names_in_initializer:
-                input_value_infos.append(seed_value_info)
-            else:
-                value_info.append(seed_value_info)
-                input_value_infos.append(
-                    make_tensor_value_info("SEED_" + seed_name, proto_type, ())
-                )
-                input_value_infos.append(
-                    make_tensor_value_info(
-                        "UNKNOWN_SHAPE_" + seed_name, TensorProto.INT64, (None,)
-                    )
-                )
-                nodes[:0] = [
-                    make_node(
-                        "Reshape",
-                        ["SEED_" + seed_name, "UNKNOWN_SHAPE_" + seed_name],
-                        [seed_name],
-                    )
-                ]
-        return helper.make_graph(
-            nodes,
-            "test",
-            input_value_infos,
-            [],
-            initializer=initializer,
-            value_info=value_info,
-        )
-
-    def _inferred(
-        self, graph_or_model: GraphProto | ModelProto, **kwargs: Any
-    ) -> ModelProto:
-        data_prop = kwargs.pop("data_prop", False)
-        if isinstance(graph_or_model, GraphProto):
-            kwargs["producer_name"] = "onnx-test"
-            orig_model = helper.make_model(graph_or_model, **kwargs)
-        else:
-            orig_model = graph_or_model
-        inferred_model = onnx.shape_inference.infer_shapes(
-            orig_model, check_type=True, strict_mode=True, data_prop=data_prop
-        )
-        checker.check_model(inferred_model)
-        return inferred_model
-
-    def _assert_inferred(
-        self,
-        graph_or_model: GraphProto | ModelProto,
-        inferred_value_infos: list[ValueInfoProto],
-        **kwargs: Any,
-    ) -> None:
-        graph = (
-            graph_or_model
-            if isinstance(graph_or_model, GraphProto)
-            else graph_or_model.graph
-        )
-        # "inferred_value_infos" specifies the expected delta produced by type/shape inference.
-        # The types/shapes specified in inferred_value_infos should be inferred by the inference implementation,
-        # while for names not in inferred_value_infos, the original type/shape in input model should be preserved.
-        names_in_inferred_value_infos = {x.name for x in inferred_value_infos}
-        # The types/shapes can be recorded in graph.output and/or graph.value_info.
-        # For the input model, if a name is specified in both, verify the two records
-        # agree (symmetric to the check applied to the inferred model below), to avoid
-        # masking inconsistent test inputs.
-        expected: dict[str, ValueInfoProto] = {}
-        for x in [*graph.value_info, *graph.output]:
-            if x.name in names_in_inferred_value_infos:
-                continue
-            if x.name in expected:
-                self._compare_value_infos(expected[x.name].type, x.type)
-            else:
-                expected[x.name] = x
-        expected.update({x.name: x for x in inferred_value_infos})
-        inferred_model = self._inferred(graph_or_model, **kwargs)
-        inferred_graph = inferred_model.graph
-        # Inferred type info may be recorded either in value_info (intermediate
-        # values, and outputs that were untyped in the input model) or directly on
-        # the graph outputs (outputs that were already typed). Merge both by name.
-        # An untyped graph output is recorded in BOTH value_info and output; when a
-        # name appears in both, verify that the two records agree.
-        inferred: dict[str, ValueInfoProto] = {}
-        for x in [*inferred_graph.value_info, *inferred_graph.output]:
-            if x.name in inferred:
-                self._compare_value_infos(inferred[x.name].type, x.type)
-            else:
-                inferred[x.name] = x
-        assert expected.keys() == inferred.keys(), (
-            f"\nExpected value infos for: {sorted(expected)}"
-            f"\nInferred value infos for: {sorted(inferred)}\n"
-        )
-        for name, expected_vi in expected.items():
-            self._compare_value_infos(expected_vi.type, inferred[name].type)
-
-    def _compare_value_infos(
-        self, vi_type: TypeProto, inferred_vi_type: TypeProto
-    ) -> None:
-        if vi_type.HasField("tensor_type"):
-            assert inferred_vi_type.HasField("tensor_type")
-            assert vi_type.tensor_type.HasField("elem_type")
-            assert inferred_vi_type.tensor_type.HasField("elem_type")
-            assert (
-                vi_type.tensor_type.elem_type == inferred_vi_type.tensor_type.elem_type
-            )
-            assert vi_type.tensor_type.HasField(
-                "shape"
-            ) == inferred_vi_type.tensor_type.HasField("shape")
-            if vi_type.tensor_type.HasField("shape"):
-                assert len(vi_type.tensor_type.shape.dim) == len(
-                    inferred_vi_type.tensor_type.shape.dim
-                )
-                for dim_i, dim in enumerate(vi_type.tensor_type.shape.dim):
-                    inferred_dim = inferred_vi_type.tensor_type.shape.dim[dim_i]
-                    # if it is a symbolic shape, make sure the inferred symbol has generated (dim_param)
-                    if dim.dim_param:
-                        assert dim.dim_param == inferred_dim.dim_param, (
-                            f"\n{vi_type}\n{inferred_vi_type}\n"
-                        )
-                    else:
-                        assert dim.dim_value == inferred_dim.dim_value, (
-                            f"\n{vi_type}\n{inferred_vi_type}\n"
-                        )
-        elif vi_type.HasField("sequence_type"):
-            assert inferred_vi_type.HasField("sequence_type")
-            vi = vi_type.sequence_type.elem_type
-            inferred_vi = inferred_vi_type.sequence_type.elem_type
-            self._compare_value_infos(vi, inferred_vi)
-        elif vi_type.HasField("optional_type"):
-            assert inferred_vi_type.HasField("optional_type")
-            vi = vi_type.optional_type.elem_type
-            inferred_vi = inferred_vi_type.optional_type.elem_type
-            self._compare_value_infos(vi, inferred_vi)
-        elif vi_type.HasField("map_type"):
-            assert inferred_vi_type.HasField("map_type")
-            assert vi_type.map_type.key_type == vi_type.map_type.key_type
-            self._compare_value_infos(
-                vi_type.map_type.value_type, inferred_vi_type.map_type.value_type
-            )
-        elif vi_type == onnx.TypeProto():
-            assert inferred_vi_type == onnx.TypeProto()
-        else:
-            raise NotImplementedError(
-                "Unrecognized value info type in _compare_value_infos: ", str(vi_type)
-            )
-
-    def skipIf(self, condition, reason):
-        if condition:
-            pytest.skip(reason)
 
 
 class TestShapeInference(TestShapeInferenceHelper):
@@ -453,6 +281,93 @@ class TestShapeInference(TestShapeInferenceHelper):
         )
         self._make_matmul_test_allow_unknown(version, (3,), None, None)
         self._make_matmul_test_allow_unknown(version, None, None, None)
+
+    @pytest.mark.parametrize("version", all_versions_for("GroupedMatMul"))
+    def test_groupedmatmul(self, version) -> None:
+        graph = self._make_graph(
+            [
+                ("input", TensorProto.FLOAT, ("M", "K")),
+                ("weights", TensorProto.FLOAT, ("G", "K", "N")),
+                ("group_indices", TensorProto.INT64, ("M", "S")),
+                ("bias", TensorProto.FLOAT, ("G", "N")),
+            ],
+            [
+                make_node(
+                    "GroupedMatMul",
+                    ["input", "weights", "group_indices", "bias"],
+                    ["output"],
+                )
+            ],
+            [],
+        )
+        self._assert_inferred(
+            graph,
+            [make_tensor_value_info("output", TensorProto.FLOAT, ("M", "S", "N"))],
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
+        )
+
+    @pytest.mark.parametrize("version", all_versions_for("GroupedMatMul"))
+    @pytest.mark.parametrize(
+        "elem_type", [TensorProto.FLOAT16, TensorProto.BFLOAT16, TensorProto.DOUBLE]
+    )
+    @pytest.mark.parametrize("index_type", [TensorProto.INT32, TensorProto.INT64])
+    def test_groupedmatmul_without_bias(self, version, elem_type, index_type) -> None:
+        graph = self._make_graph(
+            [
+                ("input", elem_type, (4, 3)),
+                ("weights", elem_type, (2, 3, 5)),
+                ("group_indices", index_type, (4, 2)),
+            ],
+            [
+                make_node(
+                    "GroupedMatMul",
+                    ["input", "weights", "group_indices"],
+                    ["output"],
+                )
+            ],
+            [],
+        )
+        self._assert_inferred(
+            graph,
+            [make_tensor_value_info("output", elem_type, (4, 2, 5))],
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
+        )
+
+    @pytest.mark.parametrize(
+        ("input_shapes", "input_names"),
+        [
+            (((4, 3, 1), (2, 3, 5), (4, 2)), ("input", "weights", "group_indices")),
+            (((4, 3), (2, 3), (4, 2)), ("input", "weights", "group_indices")),
+            (((4, 3), (2, 3, 5), (4,)), ("input", "weights", "group_indices")),
+            (((4, 3), (2, 4, 5), (4, 2)), ("input", "weights", "group_indices")),
+            (((4, 3), (2, 3, 5), (3, 2)), ("input", "weights", "group_indices")),
+            (
+                ((4, 3), (2, 3, 5), (4, 2), (3, 5)),
+                ("input", "weights", "group_indices", "bias"),
+            ),
+            (
+                ((4, 3), (2, 3, 5), (4, 2), (2, 4)),
+                ("input", "weights", "group_indices", "bias"),
+            ),
+        ],
+    )
+    def test_groupedmatmul_invalid_shapes(self, input_shapes, input_names) -> None:
+        input_types = [
+            TensorProto.INT64 if name == "group_indices" else TensorProto.FLOAT
+            for name in input_names
+        ]
+        graph = self._make_graph(
+            [
+                (name, elem_type, shape)
+                for name, elem_type, shape in zip(
+                    input_names, input_types, input_shapes, strict=True
+                )
+            ],
+            [make_node("GroupedMatMul", list(input_names), ["output"])],
+            [],
+        )
+        with pytest.raises(onnx.shape_inference.InferenceError):
+            self._inferred(graph)
 
     @pytest.mark.parametrize("version", all_versions_for("Cast"))
     def test_cast(self, version) -> None:
@@ -2473,6 +2388,40 @@ class TestShapeInference(TestShapeInferenceHelper):
         self._assert_inferred(
             graph, [make_tensor_value_info("y", TensorProto.FLOAT, (0, 6))]
         )
+
+    # all_versions_for("Slice") currently yields only {10, 11, 13} because of the
+    # unrelated `version > 5` filter (#5289); restrict to opset >= 10 since
+    # Slice-1 takes starts/ends as attributes and cannot use this 5-input graph.
+    @pytest.mark.parametrize(
+        "version", [v for v in all_versions_for("Slice") if v >= 10]
+    )
+    def test_slice_negative_dim_raises(self, version) -> None:
+        """Regression test for issue #8481: a negative input dim must raise a
+        catchable InferenceError, not abort the process via std::clamp UB.
+        """
+        graph = self._make_graph(
+            [
+                ("x", TensorProto.FLOAT, (3, -1)),
+                ("starts", TensorProto.INT64, (1,)),
+                ("ends", TensorProto.INT64, (1,)),
+                ("axes", TensorProto.INT64, (1,)),
+                ("steps", TensorProto.INT64, (1,)),
+            ],
+            [make_node("Slice", ["x", "starts", "ends", "axes", "steps"], "y")],
+            [],
+            initializer=[
+                make_tensor("starts", TensorProto.INT64, (1,), (0,)),
+                make_tensor("ends", TensorProto.INT64, (1,), (1,)),
+                make_tensor("axes", TensorProto.INT64, (1,), (1,)),
+                make_tensor("steps", TensorProto.INT64, (1,), (1,)),
+            ],
+        )
+        with pytest.raises(
+            onnx.shape_inference.InferenceError, match="must be non-negative"
+        ):
+            self._inferred(
+                graph, opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)]
+            )
 
     def test_slice_scalar_shape_output(self) -> None:
         """Shape(scalar) produces 0-length output; Slice on it should not crash."""
