@@ -44,6 +44,8 @@ The ONNX project plans to release roughly every three months. We follow the [Sem
 
 * Go to "Actions" -> select ["Create Releases"](https://github.com/onnx/onnx/actions/workflows/create_release.yml) -> "Run workflow" on `rel-X.Y.Z`. Set `build_mode=release` and `publish_pypi_release=yes`; leave all other publish inputs at `no`.
 
+<img width="339" alt="Release candidate publishing configuration example" src="images/release-candidate-config.png" />
+
 RC-Candidates
 
 * Published to https://pypi.org/ (starting with onnx 1.19.2 before it was test.pypi.org)
@@ -118,6 +120,8 @@ Validation steps must be completed before this point. This is the point of no re
 ## Upload to Official PyPI
 
 * Run "Create Releases" on `rel-X.Y.Z` with `build_mode=release` and `publish_pypi_release=yes`; leave all other publish inputs at `no`. Confirm `VERSION_NUMBER` is `X.Y.Z` without an RC suffix.
+
+<img width="548" height="749" alt="RunWorkflow_Final" src="https://github.com/user-attachments/assets/d836d0b8-b033-4317-aa21-2aeed3c74d05" />
 
 ### NOTES:
 
