@@ -6,9 +6,16 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-import onnx
-from onnx import TensorProto, helper, numpy_helper, shape_inference, version_converter
+from onnx import (
+    TensorProto,
+    checker,
+    helper,
+    numpy_helper,
+    shape_inference,
+    version_converter,
+)
 from onnx.reference import ReferenceEvaluator
+from onnx.reference.op_run import OpRun
 
 _INT32_INDICES_OPSET = 29
 
@@ -48,7 +55,7 @@ def test_nd_indices_type_constraints(op, version, index_type):
         inferred = shape_inference.infer_shapes(
             model, check_type=True, strict_mode=True
         )
-        onnx.checker.check_model(inferred, full_check=True)
+        checker.check_model(inferred, full_check=True)
 
 
 @pytest.mark.parametrize("index_type", [TensorProto.INT32, TensorProto.INT64])
@@ -177,7 +184,7 @@ def test_scatternd_reductions_and_downgrade(dtype, reduction, empty):
     for version in (29, 28, 18):
         converted = version_converter.convert_version(model, version)
         converted = shape_inference.infer_shapes(converted, strict_mode=True)
-        onnx.checker.check_model(converted, full_check=True)
+        checker.check_model(converted, full_check=True)
         output = ReferenceEvaluator(converted).run(None, feeds)[0]
         np.testing.assert_array_equal(output, expected)
 
@@ -201,7 +208,7 @@ def test_gathernd_downgrade_preserves_input_and_batch_dims(initializer, dtype):
         del feeds["indices"]
     converted = version_converter.convert_version(model, 13)
     converted = shape_inference.infer_shapes(converted, strict_mode=True)
-    onnx.checker.check_model(converted, full_check=True)
+    checker.check_model(converted, full_check=True)
     casts = [node for node in converted.graph.node if node.op_type == "Cast"]
     assert len(casts) == (1 if dtype == np.int32 else 0)
     if not initializer:
@@ -211,18 +218,55 @@ def test_gathernd_downgrade_preserves_input_and_batch_dims(initializer, dtype):
     np.testing.assert_array_equal(output, expected)
 
 
-def test_gathernd_downgrade_unknown_intermediate_type():
-    model = _model("GatherND", [2, 3], [1, 1], TensorProto.INT32)
-    gather = model.graph.node[0]
-    gather.input[1] = "untyped_indices"
+@pytest.mark.parametrize("op", ["GatherND", "ScatterND"])
+@pytest.mark.parametrize("dtype", [np.int32, np.int64])
+def test_nd_indices_downgrade_unknown_intermediate_type(op, dtype):
+    class OpaqueIndices(OpRun):
+        op_domain = "test.nd_indices"
+
+        def _run(self, indices):
+            return (indices,)
+
+    model = _model(op, [2, 3], [1, 1], helper.np_dtype_to_tensor_dtype(np.dtype(dtype)))
+    model.graph.node[0].input[1] = "untyped_indices"
     model.graph.node.insert(
-        0, helper.make_node("Identity", ["indices"], ["untyped_indices"])
+        0,
+        helper.make_node(
+            "OpaqueIndices",
+            ["indices"],
+            ["untyped_indices"],
+            domain=OpaqueIndices.op_domain,
+        ),
+    )
+    model.opset_import.append(helper.make_opsetid(OpaqueIndices.op_domain, 1))
+    model.graph.output[0].CopyFrom(
+        helper.make_tensor_value_info(
+            "output", TensorProto.FLOAT, [1, 3] if op == "GatherND" else [2, 3]
+        )
+    )
+    inferred = shape_inference.infer_shapes(model, strict_mode=True)
+    assert not any(
+        value.name == "untyped_indices" and value.type.tensor_type.elem_type
+        for value in inferred.graph.value_info
     )
     converted = version_converter.convert_version(model, 28)
     assert [node.op_type for node in converted.graph.node] == [
-        "Identity",
+        "OpaqueIndices",
         "Cast",
-        "GatherND",
+        op,
     ]
+    cast_node = converted.graph.node[1]
+    assert list(cast_node.input) == ["untyped_indices"]
+    assert helper.get_attribute_value(cast_node.attribute[0]) == TensorProto.INT64
+    assert converted.graph.node[2].input[1] == cast_node.output[0]
     inferred = shape_inference.infer_shapes(converted, strict_mode=True)
-    onnx.checker.check_model(inferred, full_check=True)
+    checker.check_model(inferred, full_check=True)
+    data = np.arange(6, dtype=np.float32).reshape(2, 3)
+    feeds = {"data": data, "indices": np.array([[-1]], dtype=dtype)}
+    if op == "GatherND":
+        expected = data[[-1]]
+    else:
+        feeds["updates"] = np.array([[7, 8, 9]], dtype=np.float32)
+        expected = np.array([[0, 1, 2], [7, 8, 9]], dtype=np.float32)
+    actual = ReferenceEvaluator(converted, new_ops=[OpaqueIndices]).run(None, feeds)[0]
+    np.testing.assert_array_equal(actual, expected)
