@@ -331,16 +331,32 @@ def test_complete_codebooks(name: str) -> None:
     "dtype",
     [TensorProto.FLOAT, TensorProto.FLOAT16, TensorProto.BFLOAT16, TensorProto.DOUBLE],
 )
-def test_output_dtype_and_order(dtype: int) -> None:
+def test_output_dtype_order_and_storage(
+    dtype: int, monkeypatch: pytest.MonkeyPatch
+) -> None:
     blocks = _corpus(2, 6)
     expected = np.stack(
         [_decode_block(block.tobytes(), 2) for block in blocks]
     ).reshape(2, 3, 32)
+    decoded_buffers: list[np.ndarray] = []
+    original_empty = np.empty
+
+    def track_empty(*args, **kwargs) -> np.ndarray:
+        allocated = original_empty(*args, **kwargs)
+        if allocated.shape == (expected.size,) and allocated.dtype == np.float32:
+            decoded_buffers.append(allocated)
+        return allocated
+
+    monkeypatch.setattr(np, "empty", track_empty)
     actual = _run(blocks.ravel(), shape=[2, 3, 32], output_dtype=dtype)
     np.testing.assert_array_equal(
         actual, expected.astype(helper.tensor_dtype_to_np_dtype(dtype))
     )
     assert actual.dtype == helper.tensor_dtype_to_np_dtype(dtype)
+    assert actual.flags.c_contiguous
+    assert len(decoded_buffers) == 1
+    assert np.shares_memory(actual, decoded_buffers[0]) == (dtype == TensorProto.FLOAT)
+    assert not np.shares_memory(actual, blocks)
 
 
 def test_default_output_dtype() -> None:

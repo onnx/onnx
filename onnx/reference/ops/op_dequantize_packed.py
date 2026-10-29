@@ -403,6 +403,6 @@ class DequantizePacked(OpRun):
             )
         return (
             out.reshape(tuple(shape)).astype(
-                helper.tensor_dtype_to_np_dtype(output_dtype)
+                helper.tensor_dtype_to_np_dtype(output_dtype), copy=False
             ),
         )
