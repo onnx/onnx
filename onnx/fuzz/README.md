@@ -74,13 +74,9 @@ Fuzz targets must never crash on expected errors — only on *unexpected* ones
 fuzzer feeds random bytes. Swallowing them lets libFuzzer keep searching for
 inputs that cause real bugs.
 
-The parser harness accepts only `UnicodeDecodeError` (invalid UTF-8) and
-`parser.ParseError` as expected input errors. Numeric conversion errors such as
-`OverflowError`, `ValueError`, `IndexError`, or `RuntimeError` must escape to
-libFuzzer. Its corpus includes integer boundaries, overflow, unsigned negatives,
-and floating-point overflow, underflow, and malformed exponents. Raw decimal
-literals also exercise a structured float attribute, where rejection is a bug;
-range errors must preserve floating-point rounding to zero, subnormals, or infinity.
+The parser harness ignores only invalid UTF-8 and `parser.ParseError`; other
+exceptions are findings. It also checks that valid decimal literals parse as
+float attributes, including values that round to zero or infinity.
 
 ### Why `TestOneInput`?
 
