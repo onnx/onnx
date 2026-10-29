@@ -16,6 +16,14 @@ TEST(FunctionAPITest, GetFunctionOpWithVersion) {
 }
 
 TEST(FunctionAPITest, GetMeanVarianceNormalizationFunctionWithVersion) {
+  for (const int version : {13, 17, 18, 28}) {
+    const auto* const schema = OpSchemaRegistry::Schema("MeanVarianceNormalization", version, "");
+    ASSERT_TRUE(schema);
+    EXPECT_TRUE(schema->HasFunction());
+    EXPECT_FALSE(schema->HasContextDependentFunction());
+    EXPECT_EQ(schema->GetFunction()->name(), "MeanVarianceNormalization");
+  }
+
   NodeProto node;
   node.set_op_type("MeanVarianceNormalization");
   node.add_input("X");
@@ -24,14 +32,13 @@ TEST(FunctionAPITest, GetMeanVarianceNormalizationFunctionWithVersion) {
   input_type.mutable_tensor_type()->set_elem_type(TensorProto_DataType_FLOAT);
   FunctionBodyBuildContextImpl ctx(node, {input_type});
 
-  for (const int version : {13, 17, 18, 28, 29}) {
-    const auto* const schema = OpSchemaRegistry::Schema("MeanVarianceNormalization", version, "");
-    ASSERT_TRUE(schema);
-    EXPECT_TRUE(schema->HasContextDependentFunction());
-    FunctionProto function;
-    EXPECT_TRUE(schema->BuildContextDependentFunction(ctx, function, version));
-    EXPECT_EQ(function.name(), "MeanVarianceNormalization");
-  }
+  const auto* const schema = OpSchemaRegistry::Schema("MeanVarianceNormalization", 29, "");
+  ASSERT_TRUE(schema);
+  EXPECT_FALSE(schema->HasFunction());
+  EXPECT_TRUE(schema->HasContextDependentFunction());
+  FunctionProto function;
+  EXPECT_TRUE(schema->BuildContextDependentFunction(ctx, function, 29));
+  EXPECT_EQ(function.name(), "MeanVarianceNormalization");
 }
 
 } // namespace ONNX_NAMESPACE::Test

@@ -33,6 +33,7 @@ from onnx.external_data_helper import (
     load_external_data_for_tensor,
     save_external_data,
     set_external_data,
+    write_external_data_tensors,
 )
 from onnx.numpy_helper import from_array, to_array
 
@@ -656,6 +657,42 @@ class TestExternalDataToArray:
         loaded_large_data = to_array(model.graph.initializer[0], self.temp_dir)
         np.testing.assert_allclose(loaded_large_data, self.large_data)
 
+    def test_to_array_does_not_mutate_external_tensor(self) -> None:
+        # to_array() must not leave the tensor in a state that mixes stale
+        # external_data metadata with a populated raw_data field, otherwise
+        # a subsequent save tries to rewrite (rather than append to) the
+        # existing external data file.
+        onnx.save_model(
+            self.model,
+            self.model_file_path,
+            self.serialization_format,
+            save_as_external_data=True,
+            all_tensors_to_one_file=False,
+            size_threshold=0,
+        )
+        model = onnx.load(
+            self.model_file_path, self.serialization_format, load_external_data=False
+        )
+        initializer_tensor = model.graph.initializer[0]
+        assert initializer_tensor.data_location == TensorProto.EXTERNAL
+        assert not initializer_tensor.HasField("raw_data")
+
+        to_array(initializer_tensor, self.temp_dir)
+
+        assert initializer_tensor.data_location == TensorProto.EXTERNAL
+        assert not initializer_tensor.HasField("raw_data")
+
+        # Saving the model again, in the same directory as the original
+        # external data file, must not fail.
+        resaved_model_path = os.path.join(self.temp_dir, "resaved.onnx")
+        onnx.save_model(model, resaved_model_path, self.serialization_format)
+
+        reloaded_model = onnx.load(resaved_model_path, self.serialization_format)
+        np.testing.assert_allclose(
+            to_array(reloaded_model.graph.initializer[0], self.temp_dir),
+            self.large_data,
+        )
+
     def test_save_model_with_external_data_multiple_times(self) -> None:
         # Test onnx.save should respectively handle typical tensor and external tensor properly
         # 1st save: save two tensors which have raw_data
@@ -774,6 +811,132 @@ class TestNotAllowToLoadExternalDataOutsideModelDirectoryOnWindows(
         self.model_filename = self.create_test_model("C:/file.bin")
         with pytest.raises(onnx.checker.ValidationError):
             checker.check_model(self.model_filename)
+
+
+class TestCheckExternalDataBounds:
+    """check_model validates offset and length against the external data file the
+    same way onnx.load does, and that the data fits the tensor's shape and type.
+    """
+
+    @pytest.fixture(autouse=True)
+    def setup(self, tmp_path: Path) -> None:
+        self.temp_dir = str(tmp_path)
+        self.value = np.arange(6, dtype=np.float32)  # 24 bytes
+
+    def create_test_model(self, external_data: dict[str, str], data: bytes) -> str:
+        with open(os.path.join(self.temp_dir, "data.bin"), "wb") as data_file:
+            data_file.write(data)
+        tensor = from_array(self.value, "weight")
+        tensor.ClearField("raw_data")
+        tensor.data_location = TensorProto.EXTERNAL
+        for key, value in {"location": "data.bin", **external_data}.items():
+            entry = tensor.external_data.add()
+            entry.key = key
+            entry.value = value
+        graph = helper.make_graph(
+            [helper.make_node("Identity", ["weight"], ["y"])],
+            "test_graph",
+            inputs=[],
+            outputs=[
+                helper.make_tensor_value_info("y", TensorProto.FLOAT, self.value.shape)
+            ],
+            initializer=[tensor],
+        )
+        model_filename = os.path.join(self.temp_dir, "model.onnx")
+        with open(model_filename, "wb") as model_file:
+            model_file.write(helper.make_model(graph).SerializeToString())
+        return model_filename
+
+    @pytest.mark.parametrize(
+        ("external_data", "prefix", "suffix"),
+        [
+            ({}, b"", b""),
+            ({"offset": "8", "length": "24"}, b"\x00" * 8, b"\x00" * 8),
+            ({"offset": "8"}, b"\x00" * 8, b""),
+            # Data beyond what the shape needs is allowed, as for raw_data.
+            ({}, b"", b"\x00" * 8),
+        ],
+        ids=["whole_file", "offset_and_length", "offset_to_end", "trailing_data"],
+    )
+    def test_check_model_valid(
+        self, external_data: dict[str, str], prefix: bytes, suffix: bytes
+    ) -> None:
+        model_filename = self.create_test_model(
+            external_data, prefix + self.value.tobytes() + suffix
+        )
+        checker.check_model(model_filename)
+        onnx.load(model_filename)
+
+    @pytest.mark.parametrize(
+        ("external_data", "data_size", "match"),
+        [
+            ({"offset": "abc"}, 24, "must be a non-negative integer"),
+            ({"offset": "-1"}, 24, "must be a non-negative integer"),
+            ({"offset": ""}, 24, "must be a non-negative integer"),
+            ({"length": "1.5"}, 24, "must be a non-negative integer"),
+            ({"length": "99999999999999999999"}, 24, "must be a non-negative integer"),
+            ({"offset": "100"}, 24, "exceeds file size"),
+            ({"offset": "8", "length": "24"}, 24, "exceeds available data"),
+            ({}, 12, "too small for the declared shape"),
+            ({"length": "12"}, 24, "too small for the declared shape"),
+            ({"offset": "16"}, 24, "too small for the declared shape"),
+        ],
+        ids=[
+            "offset_not_a_number",
+            "offset_negative",
+            "offset_empty",
+            "length_not_an_integer",
+            "length_overflows_int64",
+            "offset_past_end",
+            "length_past_end",
+            "file_too_small",
+            "length_too_small",
+            "offset_leaves_too_little",
+        ],
+    )
+    def test_check_model_invalid(
+        self, external_data: dict[str, str], data_size: int, match: str
+    ) -> None:
+        model_filename = self.create_test_model(
+            external_data, self.value.tobytes()[:data_size]
+        )
+        with pytest.raises(checker.ValidationError, match=match):
+            checker.check_model(model_filename)
+
+    def test_check_model_uses_last_value_of_each_key(self) -> None:
+        # onnx.load uses the last "length"; it must be the one that is checked.
+        model_filename = self.create_test_model({"length": "24"}, self.value.tobytes())
+        model = onnx.load(model_filename, load_external_data=False)
+        entry = model.graph.initializer[0].external_data.add()
+        entry.key, entry.value = "length", "12"
+        with open(model_filename, "wb") as model_file:
+            model_file.write(model.SerializeToString())
+        with pytest.raises(checker.ValidationError, match="too small"):
+            checker.check_model(model_filename)
+
+    @pytest.mark.parametrize("key", ["offset", "length"])
+    def test_check_model_ignores_invalid_superseded_value(self, key: str) -> None:
+        model_filename = self.create_test_model({key: "invalid"}, self.value.tobytes())
+        model = onnx.load(model_filename, load_external_data=False)
+        entry = model.graph.initializer[0].external_data.add()
+        entry.key, entry.value = key, "0" if key == "offset" else "24"
+        with open(model_filename, "wb") as model_file:
+            model_file.write(model.SerializeToString())
+
+        checker.check_model(model_filename)
+        onnx.load(model_filename)
+
+    @pytest.mark.parametrize("key", ["offset", "length"])
+    def test_check_model_rejects_omitted_value(self, key: str) -> None:
+        model_filename = self.create_test_model({}, self.value.tobytes())
+        model = onnx.load(model_filename, load_external_data=False)
+        entry = model.graph.initializer[0].external_data.add()
+        entry.key = key
+        with open(model_filename, "wb") as model_file:
+            model_file.write(model.SerializeToString())
+
+        with pytest.raises(checker.ValidationError, match="non-negative integer"):
+            checker.check_model(model_filename)
 
 
 class TestSaveAllTensorsAsExternalDataWithPath(TestSaveAllTensorsAsExternalData):
@@ -1024,6 +1187,40 @@ class TestLoadExternalDataSymlinkProtection(TestLoadExternalDataBase):
         with pytest.raises(checker.ValidationError):
             load_external_data_for_model(loaded_model, model_dir)
 
+    def test_empty_base_dir_rejects_parent_directory_symlink(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """An empty base directory must mean the current directory for containment."""
+        sensitive_dir = os.path.join(self.temp_dir, "sensitive")
+        os.makedirs(sensitive_dir)
+        with open(os.path.join(sensitive_dir, "secret.bin"), "wb") as f:
+            f.write(b"SENSITIVE DATA" * 100)
+
+        model_dir = os.path.join(self.temp_dir, "model_dir")
+        os.makedirs(model_dir)
+        subdir_path = os.path.join(model_dir, "subdir")
+        os.makedirs(subdir_path)
+
+        model, _ = _make_external_data_test_model()
+        model_path = os.path.join(model_dir, "model.onnx")
+        onnx.save_model(
+            model,
+            model_path,
+            save_as_external_data=True,
+            all_tensors_to_one_file=True,
+            location="subdir/secret.bin",
+            size_threshold=1024,
+        )
+        shutil.rmtree(subdir_path)
+        os.symlink(sensitive_dir, subdir_path)
+
+        monkeypatch.chdir(model_dir)
+        loaded_model = onnx.load("model.onnx", load_external_data=False)
+        with pytest.raises(checker.ValidationError):
+            load_external_data_for_model(loaded_model, "")
+        with pytest.raises(checker.ValidationError):
+            checker.check_model("model.onnx")
+
 
 @pytest.mark.skipif(os.name == "nt", reason="Hardlinks behave differently on Windows")
 class TestLoadExternalDataHardlinkProtection(TestLoadExternalDataBase):
@@ -1117,6 +1314,44 @@ class TestSaveExternalDataOffsetBounds:
         with pytest.raises(checker.ValidationError, match=r"offset.*must be between"):
             save_external_data(tensor, str(tmp_path))
         assert (tmp_path / location).read_bytes() == existing_data
+
+
+class TestWriteExternalDataTensorsOffsetOrder:
+    """write_external_data_tensors() must write tensors in offset order.
+
+    save_external_data() validates that a tensor's pre-assigned offset lands at the
+    current end of its external file. If tensors are processed in graph order while
+    their pre-assigned offsets describe a different file layout, that validation
+    depends on graph order and rejects an otherwise valid layout.
+    """
+
+    def test_write_order_follows_offset_not_graph_order(self, tmp_path: Path) -> None:
+        """Two initializers with a layout ('second' then 'first') opposite of graph order."""
+        location = "data.bin"
+        first = from_array(np.zeros((4,), dtype=np.float32), name="first")
+        second = from_array(np.ones((4,), dtype=np.float32), name="second")
+        first_bytes = first.raw_data
+        second_bytes = second.raw_data
+
+        # 'first' precedes 'second' in the graph's initializer list, but the
+        # pre-assigned offsets place 'second' first in the external file.
+        set_external_data(second, location, offset=0, length=len(second_bytes))
+        set_external_data(
+            first, location, offset=len(second_bytes), length=len(first_bytes)
+        )
+
+        graph = helper.make_graph(
+            nodes=[],
+            name="test",
+            inputs=[],
+            outputs=[],
+            initializer=[first, second],
+        )
+        model = helper.make_model(graph)
+
+        write_external_data_tensors(model, str(tmp_path))
+
+        assert (tmp_path / location).read_bytes() == second_bytes + first_bytes
 
 
 class TestExternalDataInfoSecurity:

@@ -5294,7 +5294,7 @@ This version of the operator has been available since version 6 of the default O
   Attribute `broadcast=1` needs to be passed to enable broadcasting.
 
 
-  For integer inputs, the result is computed using truncating division (rounding toward zero).
+  For integer inputs, the result is computed using truncating division (rounding toward zero). For example, `-11 / 3` yields `-3`.
 
 #### Version
 
@@ -6533,7 +6533,7 @@ This version of the operator has been available since version 7 of the default O
 
   This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
 
-  For integer inputs, the result is computed using truncating division (rounding toward zero).
+  For integer inputs, the result is computed using truncating division (rounding toward zero). For example, `-11 / 3` yields `-3`.
 
 #### Version
 
@@ -11014,6 +11014,9 @@ This version of the operator has been available since version 11 of the default 
 
   * where qmax and qmin are max and min values for quantization range i.e. [0, 255] in case of uint8
   * data range is adjusted to include 0.
+  * if the adjusted data range is empty, i.e. maximum(0, max(x)) == minimum(0, min(x)), which
+    happens when every element of x is 0, then y_scale = 1 (so that y_zero_point = 0 and y = 0
+    below) instead of 0.
 
   Zero point is calculated as:
   ```
@@ -15413,7 +15416,7 @@ This version of the operator has been available since version 13 of the default 
 
   This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
 
-  For integer inputs, the result is computed using truncating division (rounding toward zero).
+  For integer inputs, the result is computed using truncating division (rounding toward zero). For example, `-11 / 3` yields `-3`.
 
 #### Version
 
@@ -18962,7 +18965,7 @@ This version of the operator has been available since version 14 of the default 
 
   This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
 
-  For integer inputs, the result is computed using truncating division (rounding toward zero).
+  For integer inputs, the result is computed using truncating division (rounding toward zero). For example, `-11 / 3` yields `-3`.
   (Opset 14 change): Extend supported types to include uint8, int8, uint16, and int16.
 
 #### Version
@@ -24916,9 +24919,9 @@ This version of the operator has been available since version 21 of the default 
   y = scale * (x - mean) / sqrt(variance + epsilon) + bias,
   ```
   where the mean and variance are computed per instance per group of channels, and
-  `scale` and `bias` should be specified for each channel. The number of
-  groups `num_groups` should be divisible by the number of channels so that there are
-  an equal number of channels per group.
+  `scale` and `bias` should be specified for each channel. The number of channels
+  should be divisible by `num_groups` so that there are an equal number of channels
+  per group.
 
   The overall computation has two stages: the first stage normalizes the elements to
   have zero mean and unit variance for each instance in each group, and the second
@@ -34452,6 +34455,67 @@ This version of the operator has been available since version 28 of the default 
 </dl>
 
 ## Version 29 of the default ONNX operator set
+### <a name="GroupedMatMul-29"></a>**GroupedMatMul-29**</a>
+
+  GroupedMatMul multiplies each row of a token matrix by one or more selected
+  group (expert) weight matrices. Given `input` of shape `[M, K]`, `weights` of
+  shape `[G, K, N]`, and `group_indices` of shape `[M, S]`, where `S` is the number
+  of selections per token, the output has shape `[M, S, N]` and is defined by:
+
+  ```
+  output[m, i] = input[m] @ weights[group_indices[m, i]]
+  ```
+
+  If `bias` is present, `bias[group_indices[m, i]]` is added to each corresponding
+  result. Every value in `group_indices` must be in the range `[0, G)`.
+  Values outside this range, including negative indices, are invalid input;
+  the behavior is undefined for such inputs. In particular, negative indices
+  do not select groups by counting backwards from `G`.
+
+  This operator is represented as a context-dependent function, which also provides
+  its reference implementation. Its decomposition uses Gather, Expand, and MatMul
+  to define the result, while runtimes are expected to use a fused
+  grouped-matrix-multiplication implementation to avoid materializing the expanded
+  intermediate tensors, including selected weights of shape `[M * S, K, N]`.
+
+  Weight-only quantized experts are intended to be expressed by applying
+  DequantizeLinear to quantized weights (with the appropriate scales and zero
+  points) and passing the result to GroupedMatMul. Runtimes may fuse this
+  composition to avoid materializing the dequantized `[G, K, N]` weights.
+
+#### Version
+
+This version of the operator has been available since version 29 of the default ONNX operator set.
+
+#### Inputs (3 - 4)
+
+<dl>
+<dt><tt>input</tt> (differentiable) : T</dt>
+<dd>Token matrix with shape [M, K].</dd>
+<dt><tt>weights</tt> (differentiable) : T</dt>
+<dd>Stack of G group weight matrices with shape [G, K, N].</dd>
+<dt><tt>group_indices</tt> (non-differentiable) : Tind</dt>
+<dd>Group index for each token and selection, with shape [M, S]. Values outside [0, G) are invalid input.</dd>
+<dt><tt>bias</tt> (optional, differentiable) : T</dt>
+<dd>Optional per-group bias with shape [G, N].</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> (differentiable) : T</dt>
+<dd>Per-group matrix multiplication results with shape [M, S, N].</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
+<dd>Constrain input, weights, bias, and output to floating-point tensors.</dd>
+<dt><tt>Tind</tt> : tensor(int32), tensor(int64)</dt>
+<dd>Constrain group indices to int32 or int64 tensors.</dd>
+</dl>
+
 ### <a name="MeanVarianceNormalization-29"></a>**MeanVarianceNormalization-29**</a>
 
   A MeanVarianceNormalization Function: Perform mean variance normalization
