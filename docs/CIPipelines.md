@@ -31,9 +31,11 @@ SPDX-License-Identifier: Apache-2.0
 
 | Workflow | When it runs | What it does |
 |---|---|---|
-| [ReproducibleBuild](/.github/workflows/reproducible_build.yml) | Weekly (Monday 06:00 UTC), workflow\_dispatch, every PR | Calls each platform cibw workflow once with a single `cp312` target. Each workflow performs two clean builds sequentially on the same runner and compares their SHA-256 checksums. A mismatch on any platform fails the workflow. |
+| [ReproducibleBuild](/.github/workflows/reproducible_build.yml) | Weekly (Monday 06:00 UTC), workflow\_dispatch, PRs that change the build configuration (`CMakeLists.txt`, `cmake/`, `pyproject.toml`, `sbom.cdx.json`, the cibw workflows) | Calls each platform cibw workflow twice with a single `cp312` target and tests skipped, so the two builds run as separate jobs on separate runners (artifact prefixes `repro-build1` and `repro-build2`). A `compare` job then checks that each platform's two wheels are byte-identical. A mismatch on any platform fails the workflow. |
 
-The three cibw workflows (`release_linux_cibw.yml`, `release_macos_cibw.yml`, `release_windows_cibw.yml`) accept an optional `build` input (single target), an `artifact_name_prefix` input, and a `reproducibility_check` input that enables the second clean build and local comparison.
+The three cibw workflows (`release_linux_cibw.yml`, `release_macos_cibw.yml`, `release_windows_cibw.yml`) accept a `builds` input (JSON array of cibuildwheel identifiers, defaulting to the full release matrix), an `artifact_name_prefix` input and a `skip_tests` input.
+
+Both builds check out the same commit into the same workspace path, so differences caused by the checkout path are not detected; differences between runners and build times are.
 
 ### Diagnosing a mismatch with diffoscope
 
@@ -52,9 +54,9 @@ For **Windows PE** (`.pyd`) files, install `binutils-mingw-w64-x86-64` so diffos
 
 | Platform | Typical cause | Fix |
 |---|---|---|
-| Linux | zip timestamp in `.whl` archive | `SOURCE_DATE_EPOCH` (already set in the workflow) |
-| macOS | ad-hoc codesign hash embedding build path | Use `ZERO_AR_DATE=1`; avoid absolute paths in CMake |
-| Windows | PE `TimeDateStamp` header field | `/Brepro` linker flag (already set in `CMakeLists.txt`) |
+| Linux | zip timestamp in `.whl` archive | `SOURCE_DATE_EPOCH`, set from the commit time and passed into the manylinux container via `CIBW_ENVIRONMENT_PASS_LINUX` |
+| macOS | archive member timestamps; ad-hoc codesign hash embedding build path | `ZERO_AR_DATE=1` (set in `release_macos_cibw.yml`); avoid absolute paths in CMake |
+| Windows | PE `TimeDateStamp` header field | `/Brepro` for Release builds (set in `add_onnx_compile_options` in `cmake/Utils.cmake`) |
 
 ## Security and Supply Chain
 

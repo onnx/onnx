@@ -2,10 +2,10 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
-# Verifies that two successive builds from identical source produce bit-for-bit
-# identical wheels (reproducible builds). Calls each platform cibw workflow
-# with a single target that is built twice on the same runner.
-# A mismatch on any platform fails the workflow.
+# Verifies that two independent builds from identical source produce bit-for-bit
+# identical wheels (reproducible builds). Each platform cibw workflow is called
+# twice, so the two builds run as separate jobs on separate runners, and a
+# compare job checks the wheels. A mismatch on any platform fails the workflow.
 
 name: ReproducibleBuild
 
@@ -14,31 +14,107 @@ on:
     - cron: '0 6 * * 1'  # every Monday 06:00 UTC
   workflow_dispatch:
   pull_request:
+    # Source changes are covered by the weekly run; PRs only run when the build
+    # configuration changes.
+    paths:
+      - "CMakeLists.txt"
+      - "cmake/**"
+      - "pyproject.toml"
+      - "sbom.cdx.json"
+      - ".github/workflows/reproducible_build.yml"
+      - ".github/workflows/release_linux_cibw.yml"
+      - ".github/workflows/release_macos_cibw.yml"
+      - ".github/workflows/release_windows_cibw.yml"
 
 permissions:
   contents: read
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
-  linux:
+  linux-build1:
     uses: ./.github/workflows/release_linux_cibw.yml
     with:
       build_mode: release
-      build: cp312-manylinux_x86_64
-      artifact_name_prefix: repro
-      reproducibility_check: true
+      builds: '["cp312-manylinux_x86_64"]'
+      artifact_name_prefix: repro-build1
+      skip_tests: true
 
-  macos:
+  linux-build2:
+    uses: ./.github/workflows/release_linux_cibw.yml
+    with:
+      build_mode: release
+      builds: '["cp312-manylinux_x86_64"]'
+      artifact_name_prefix: repro-build2
+      skip_tests: true
+
+  macos-build1:
     uses: ./.github/workflows/release_macos_cibw.yml
     with:
       build_mode: release
-      build: cp312-macosx_universal2
-      artifact_name_prefix: repro
-      reproducibility_check: true
+      builds: '["cp312-macosx_universal2"]'
+      artifact_name_prefix: repro-build1
+      skip_tests: true
 
-  windows:
+  macos-build2:
+    uses: ./.github/workflows/release_macos_cibw.yml
+    with:
+      build_mode: release
+      builds: '["cp312-macosx_universal2"]'
+      artifact_name_prefix: repro-build2
+      skip_tests: true
+
+  windows-build1:
     uses: ./.github/workflows/release_windows_cibw.yml
     with:
       build_mode: release
-      build: cp312-win_amd64
-      artifact_name_prefix: repro
-      reproducibility_check: true
+      builds: '["cp312-win_amd64"]'
+      artifact_name_prefix: repro-build1
+      skip_tests: true
+
+  windows-build2:
+    uses: ./.github/workflows/release_windows_cibw.yml
+    with:
+      build_mode: release
+      builds: '["cp312-win_amd64"]'
+      artifact_name_prefix: repro-build2
+      skip_tests: true
+
+  compare:
+    # Compare every platform whose builds finished, even if another platform failed.
+    if: ${{ !cancelled() }}
+    needs: [linux-build1, linux-build2, macos-build1, macos-build2, windows-build1, windows-build2]
+    strategy:
+      fail-fast: false
+      matrix:
+        platform: [linux, macos, windows]
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          pattern: repro-build1-${{ matrix.platform }}-*
+          path: build1
+          merge-multiple: true
+
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          pattern: repro-build2-${{ matrix.platform }}-*
+          path: build2
+          merge-multiple: true
+
+      - name: Compare wheel checksums
+        run: |
+          shopt -s nullglob
+          build1=(build1/*.whl)
+          build2=(build2/*.whl)
+          if [ ${#build1[@]} -ne 1 ] || [ ${#build2[@]} -ne 1 ]; then
+            echo "Expected exactly one wheel from each build, got ${#build1[@]} and ${#build2[@]}"
+            exit 1
+          fi
+          sha256sum "${build1[0]}" "${build2[0]}"
+          if ! cmp --silent "${build1[0]}" "${build2[0]}"; then
+            echo "${{ matrix.platform }} wheels are not reproducible; see docs/CIPipelines.md for diagnosing with diffoscope"
+            exit 1
+          fi
