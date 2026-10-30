@@ -2348,6 +2348,33 @@ numeric_limits::lowest() and numeric_limits::max(), respectively.
 When 'min' is greater than 'max', the clip operator sets all the 'input' values to
 the value of 'max'. Thus, this is equivalent to 'Min(max, Max(input, min))'.
 )DOC";
+const char kDoc_GroupedMatMul_ver29[] = R"DOC(
+GroupedMatMul multiplies each row of a token matrix by one or more selected
+group (expert) weight matrices. Given `input` of shape `[M, K]`, `weights` of
+shape `[G, K, N]`, and `group_indices` of shape `[M, S]`, where `S` is the number
+of selections per token, the output has shape `[M, S, N]` and is defined by:
+
+```
+output[m, i] = input[m] @ weights[group_indices[m, i]]
+```
+
+If `bias` is present, `bias[group_indices[m, i]]` is added to each corresponding
+result. Every value in `group_indices` must be in the range `[0, G)`.
+Values outside this range, including negative indices, are invalid input;
+the behavior is undefined for such inputs. In particular, negative indices
+do not select groups by counting backwards from `G`.
+
+This operator is represented as a context-dependent function, which also provides
+its reference implementation. Its decomposition uses Gather, Expand, and MatMul
+to define the result, while runtimes are expected to use a fused
+grouped-matrix-multiplication implementation to avoid materializing the expanded
+intermediate tensors, including selected weights of shape `[M * S, K, N]`.
+
+Weight-only quantized experts are intended to be expressed by applying
+DequantizeLinear to quantized weights (with the appropriate scales and zero
+points) and passing the result to GroupedMatMul. Runtimes may fuse this
+composition to avoid materializing the dequantized `[G, K, N]` weights.
+)DOC";
 const char kDoc_SwiGLU_ver28[] = R"DOC(
 SwiGLU is a gated activation that takes two inputs, a gate `A` and a linear (value)
 input `B`, and produces one output `Y`. It applies the Swish activation to the gate
@@ -2947,9 +2974,9 @@ This operator transforms input according to
 y = scale * (x - mean) / sqrt(variance + epsilon) + bias,
 ```
 where the mean and variance are computed per instance per group of channels, and
-`scale` and `bias` should be specified for each channel. The number of
-groups `num_groups` should be divisible by the number of channels so that there are
-an equal number of channels per group.
+`scale` and `bias` should be specified for each channel. The number of channels
+should be divisible by `num_groups` so that there are an equal number of channels
+per group.
 
 The overall computation has two stages: the first stage normalizes the elements to
 have zero mean and unit variance for each instance in each group, and the second
@@ -3454,6 +3481,9 @@ y_scale = (maximum(0, max(x)) - minimum(0, min(x))) / (qmax - qmin)
 
 * where qmax and qmin are max and min values for quantization range i.e. [0, 255] in case of uint8
 * data range is adjusted to include 0.
+* if the adjusted data range is empty, i.e. maximum(0, max(x)) == minimum(0, min(x)), which
+  happens when every element of x is 0, then y_scale = 1 (so that y_zero_point = 0 and y = 0
+  below) instead of 0.
 
 Zero point is calculated as:
 ```
@@ -6001,12 +6031,12 @@ const char kDoc_OneHotEncoder_ver1[] = R"DOC(
     to integers and the cats_int64s category list will be used for the lookups.
 )DOC";
 const char kDoc_Normalizer_ver1[] = R"DOC(
-    Normalize the input.  There are three normalization modes, which have the corresponding formulas,
-    defined using element-wise infix operators '/' and '^' and tensor-wide functions 'max' and 'sum':<br>
+    Normalize the input. There are three normalization modes, which have the corresponding formulas.
+    The function 'abs' and operator '^' are element-wise, while 'max' and 'sum' reduce along the normalization axis:<br>
 <br>
     Max: Y = X / max(X)<br>
-    L1:  Y = X / sum(X)<br>
-    L2:  Y = sqrt(X^2 / sum(X^2)}<br>
+    L1:  Y = X / sum(abs(X))<br>
+    L2:  Y = X / sqrt(sum(X^2))<br>
     In all modes, if the divisor is zero, Y == X.
 <br>
     For batches, that is, [N,C] tensors, normalization is done along the C axis. In other words, each row
@@ -6729,6 +6759,7 @@ const char kDoc_SoftmaxCrossEntropyLoss_ver13[] = "";
 const char kDoc_MatMulInteger_ver10[] = "";
 const char kDoc_Gemm_ver13[] = "";
 const char kDoc_Clip_ver13[] = "";
+const char kDoc_GroupedMatMul_ver29[] = "";
 const char kDoc_SwiGLU_ver28[] = "";
 const char kDoc_Swish_ver24[] = "";
 const char kDoc_gelu_ver20[] = "";

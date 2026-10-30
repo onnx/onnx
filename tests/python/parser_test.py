@@ -119,6 +119,14 @@ class TestBasicFunctions:
         model = onnx.parser.parse_model(input)
         checker.check_model(model)
 
+    def test_parse_function_rejects_invalid_attribute_default(self) -> None:
+        function_text = "f <a: int = 1.0> () => () {}"
+
+        with pytest.raises(
+            onnx.parser.ParseError, match="Mismatch between expected type"
+        ):
+            onnx.parser.parse_function(function_text)
+
     @pytest.mark.parametrize(
         "graph_text, expected_attribute",
         [

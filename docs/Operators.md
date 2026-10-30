@@ -182,6 +182,7 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#Gelu">Gelu</a>|<a href="Changelog.md#Gelu-20">20</a>|20|
 |<a href="#GreaterOrEqual">GreaterOrEqual</a>|<a href="Changelog.md#GreaterOrEqual-16">16</a>, <a href="Changelog.md#GreaterOrEqual-12">12</a>|16|
 |<a href="#GroupNormalization">GroupNormalization</a>|<a href="Changelog.md#GroupNormalization-21">21</a>, <a href="Changelog.md#GroupNormalization-18">18</a>|21|
+|<a href="#GroupedMatMul">GroupedMatMul</a>|<a href="Changelog.md#GroupedMatMul-29">29</a>|29|
 |<a href="#HammingWindow">HammingWindow</a>|<a href="Changelog.md#HammingWindow-17">17</a>|17|
 |<a href="#HannWindow">HannWindow</a>|<a href="Changelog.md#HannWindow-17">17</a>|17|
 |<a href="#HardSigmoid">HardSigmoid</a>|<a href="Changelog.md#HardSigmoid-22">22</a>, <a href="Changelog.md#HardSigmoid-6">6</a>, <a href="Changelog.md#HardSigmoid-1">1</a>|18|
@@ -13980,7 +13981,7 @@ expect(node, inputs=[x], outputs=[y], name="test_det_nd")
 
   This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
 
-  For integer inputs, the result is computed using truncating division (rounding toward zero).
+  For integer inputs, the result is computed using truncating division (rounding toward zero). For example, `-11 / 3` yields `-3`.
   (Opset 14 change): Extend supported types to include uint8, int8, uint16, and int16.
 
 #### Version
@@ -14415,6 +14416,9 @@ expect(
 
   * where qmax and qmin are max and min values for quantization range i.e. [0, 255] in case of uint8
   * data range is adjusted to include 0.
+  * if the adjusted data range is empty, i.e. maximum(0, max(x)) == minimum(0, min(x)), which
+    happens when every element of x is 0, then y_scale = 1 (so that y_zero_point = 0 and y = 0
+    below) instead of 0.
 
   Zero point is calculated as:
   ```
@@ -14526,6 +14530,22 @@ expect(
     inputs=[X],
     outputs=[Y, Y_Scale, Y_ZeroPoint],
     name="test_dynamicquantizelinear_min_adjusted",
+)
+
+# The adjusted range is empty when every element is 0:
+# expected scale 1 and zero point 0
+X = np.zeros((2, 3), dtype=np.float32)
+x_min = np.minimum(0, np.min(X))
+x_max = np.maximum(0, np.max(X))
+Y_Scale = np.float32(1.0 if x_max == x_min else (x_max - x_min) / (255 - 0))
+Y_ZeroPoint = np.clip(round((0 - x_min) / Y_Scale), 0, 255).astype(np.uint8)
+Y = np.clip(np.round(X / Y_Scale) + Y_ZeroPoint, 0, 255).astype(np.uint8)
+
+expect(
+    node,
+    inputs=[X],
+    outputs=[Y, Y_Scale, Y_ZeroPoint],
+    name="test_dynamicquantizelinear_zero_input",
 )
 ```
 
@@ -18021,9 +18041,9 @@ expect(
   y = scale * (x - mean) / sqrt(variance + epsilon) + bias,
   ```
   where the mean and variance are computed per instance per group of channels, and
-  `scale` and `bias` should be specified for each channel. The number of
-  groups `num_groups` should be divisible by the number of channels so that there are
-  an equal number of channels per group.
+  `scale` and `bias` should be specified for each channel. The number of channels
+  should be divisible by `num_groups` so that there are an equal number of channels
+  per group.
 
   The overall computation has two stages: the first stage normalizes the elements to
   have zero mean and unit variance for each instance in each group, and the second
@@ -18136,6 +18156,295 @@ expect(
     inputs=[x, scale, bias],
     outputs=[y],
     name="test_group_normalization_example",
+)
+```
+
+</details>
+
+
+### <a name="GroupedMatMul"></a><a name="groupedmatmul">**GroupedMatMul**</a>
+
+  GroupedMatMul multiplies each row of a token matrix by one or more selected
+  group (expert) weight matrices. Given `input` of shape `[M, K]`, `weights` of
+  shape `[G, K, N]`, and `group_indices` of shape `[M, S]`, where `S` is the number
+  of selections per token, the output has shape `[M, S, N]` and is defined by:
+
+  ```
+  output[m, i] = input[m] @ weights[group_indices[m, i]]
+  ```
+
+  If `bias` is present, `bias[group_indices[m, i]]` is added to each corresponding
+  result. Every value in `group_indices` must be in the range `[0, G)`.
+  Values outside this range, including negative indices, are invalid input;
+  the behavior is undefined for such inputs. In particular, negative indices
+  do not select groups by counting backwards from `G`.
+
+  This operator is represented as a context-dependent function, which also provides
+  its reference implementation. Its decomposition uses Gather, Expand, and MatMul
+  to define the result, while runtimes are expected to use a fused
+  grouped-matrix-multiplication implementation to avoid materializing the expanded
+  intermediate tensors, including selected weights of shape `[M * S, K, N]`.
+
+  Weight-only quantized experts are intended to be expressed by applying
+  DequantizeLinear to quantized weights (with the appropriate scales and zero
+  points) and passing the result to GroupedMatMul. Runtimes may fuse this
+  composition to avoid materializing the dequantized `[G, K, N]` weights.
+
+#### Version
+
+This version of the operator has been available since version 29 of the default ONNX operator set.
+
+#### Inputs (3 - 4)
+
+<dl>
+<dt><tt>input</tt> (differentiable) : T</dt>
+<dd>Token matrix with shape [M, K].</dd>
+<dt><tt>weights</tt> (differentiable) : T</dt>
+<dd>Stack of G group weight matrices with shape [G, K, N].</dd>
+<dt><tt>group_indices</tt> (non-differentiable) : Tind</dt>
+<dd>Group index for each token and selection, with shape [M, S]. Values outside [0, G) are invalid input.</dd>
+<dt><tt>bias</tt> (optional, differentiable) : T</dt>
+<dd>Optional per-group bias with shape [G, N].</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> (differentiable) : T</dt>
+<dd>Per-group matrix multiplication results with shape [M, S, N].</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
+<dd>Constrain input, weights, bias, and output to floating-point tensors.</dd>
+<dt><tt>Tind</tt> : tensor(int32), tensor(int64)</dt>
+<dd>Constrain group indices to int32 or int64 tensors.</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>additional_types</summary>
+
+```python
+for dtype in (np.float16, np.float64):
+    for index_dtype in (np.int32, np.int64):
+        node = onnx.helper.make_node(
+            "GroupedMatMul",
+            inputs=["input", "weights", "group_indices", "bias"],
+            outputs=["output"],
+        )
+        input = np.array([[1, 2], [3, 4]], dtype=dtype)
+        weights = np.array([[[1, 0], [0, 1]], [[0, 1], [1, 0]]], dtype=dtype)
+        group_indices = np.array([[0, 1], [1, 0]], dtype=index_dtype)
+        bias = np.array([[0.5, 1], [1.5, 2]], dtype=dtype)
+        output = grouped_matmul(input, weights, group_indices, bias)
+
+        expect(
+            node,
+            inputs=[input, weights, group_indices, bias],
+            outputs=[output],
+            name=f"test_groupedmatmul_{np.dtype(dtype).name}_{np.dtype(index_dtype).name}",
+            opset_imports=[onnx.helper.make_opsetid("", 29)],
+        )
+```
+
+</details>
+
+
+<details>
+<summary>groupedmatmul</summary>
+
+```python
+node = onnx.helper.make_node(
+    "GroupedMatMul",
+    inputs=["input", "weights", "group_indices"],
+    outputs=["output"],
+)
+input = np.array(
+    [[1, 0, -1], [0, 1, 2], [1, 1, 0], [0, 0, 1]], dtype=np.float32
+)
+weights = np.array(
+    [[[1, 0], [0, 1], [-1, 0]], [[0, 1], [1, 0], [0, 1]]],
+    dtype=np.float32,
+)
+group_indices = np.array([[0], [1], [0], [1]], dtype=np.int64)
+output = grouped_matmul(input, weights, group_indices)
+
+expect(
+    node,
+    inputs=[input, weights, group_indices],
+    outputs=[output],
+    name="test_groupedmatmul",
+    opset_imports=[onnx.helper.make_opsetid("", 29)],
+)
+```
+
+</details>
+
+
+<details>
+<summary>single_group</summary>
+
+```python
+node = onnx.helper.make_node(
+    "GroupedMatMul",
+    inputs=["input", "weights", "group_indices"],
+    outputs=["output"],
+)
+input = np.array([[1, 2], [3, 4], [5, 6]], dtype=np.float32)
+weights = np.array([[[1, 2, 3], [4, 5, 6]]], dtype=np.float32)
+group_indices = np.zeros((3, 1), dtype=np.int64)
+output = grouped_matmul(input, weights, group_indices)
+
+expect(
+    node,
+    inputs=[input, weights, group_indices],
+    outputs=[output],
+    name="test_groupedmatmul_single_group",
+    opset_imports=[onnx.helper.make_opsetid("", 29)],
+)
+```
+
+</details>
+
+
+<details>
+<summary>with_bias</summary>
+
+```python
+node = onnx.helper.make_node(
+    "GroupedMatMul",
+    inputs=["input", "weights", "group_indices", "bias"],
+    outputs=["output"],
+)
+input = np.array([[1, 0], [0, 1]], dtype=np.float32)
+weights = np.array(
+    [[[1, 0], [0, 1]], [[0, 1], [1, 0]], [[1, 1], [0, 0]]],
+    dtype=np.float32,
+)
+group_indices = np.array([[0, 1], [2, 0]], dtype=np.int64)
+bias = np.array([[0.1, 0.2], [0.3, 0.0], [0.5, 0.5]], dtype=np.float32)
+output = grouped_matmul(input, weights, group_indices, bias)
+
+expect(
+    node,
+    inputs=[input, weights, group_indices, bias],
+    outputs=[output],
+    name="test_groupedmatmul_with_bias",
+    opset_imports=[onnx.helper.make_opsetid("", 29)],
+)
+```
+
+</details>
+
+
+<details>
+<summary>with_unused_group</summary>
+
+```python
+node = onnx.helper.make_node(
+    "GroupedMatMul",
+    inputs=["input", "weights", "group_indices"],
+    outputs=["output"],
+)
+input = np.array([[1, 2], [3, 4], [5, 6], [7, 8]], dtype=np.float32)
+weights = np.arange(12, dtype=np.float32).reshape(3, 2, 2)
+group_indices = np.array([[0], [0], [2], [2]], dtype=np.int64)
+output = grouped_matmul(input, weights, group_indices)
+
+expect(
+    node,
+    inputs=[input, weights, group_indices],
+    outputs=[output],
+    name="test_groupedmatmul_with_unused_group",
+    opset_imports=[onnx.helper.make_opsetid("", 29)],
+)
+```
+
+</details>
+
+
+<details>
+<summary>without_bias_explicit_empty_input</summary>
+
+```python
+node = onnx.helper.make_node(
+    "GroupedMatMul",
+    inputs=["input", "weights", "group_indices", ""],
+    outputs=["output"],
+)
+input = np.array(
+    [[1, 0, -1], [0, 1, 2], [1, 1, 0], [0, 0, 1]], dtype=np.float32
+)
+weights = np.array(
+    [[[1, 0], [0, 1], [-1, 0]], [[0, 1], [1, 0], [0, 1]]],
+    dtype=np.float32,
+)
+group_indices = np.array([[0], [1], [0], [1]], dtype=np.int64)
+output = grouped_matmul(input, weights, group_indices)
+
+expect(
+    node,
+    inputs=[input, weights, group_indices],
+    outputs=[output],
+    name="test_groupedmatmul_without_bias_explicit_empty_input",
+    opset_imports=[onnx.helper.make_opsetid("", 29)],
+)
+```
+
+</details>
+
+
+<details>
+<summary>zero_selections</summary>
+
+```python
+node = onnx.helper.make_node(
+    "GroupedMatMul",
+    inputs=["input", "weights", "group_indices"],
+    outputs=["output"],
+)
+input = np.arange(6, dtype=np.float32).reshape(2, 3)
+weights = np.arange(24, dtype=np.float32).reshape(2, 3, 4)
+group_indices = np.empty((2, 0), dtype=np.int64)
+output = grouped_matmul(input, weights, group_indices)
+
+expect(
+    node,
+    inputs=[input, weights, group_indices],
+    outputs=[output],
+    name="test_groupedmatmul_zero_selections",
+    opset_imports=[onnx.helper.make_opsetid("", 29)],
+)
+```
+
+</details>
+
+
+<details>
+<summary>zero_tokens</summary>
+
+```python
+node = onnx.helper.make_node(
+    "GroupedMatMul",
+    inputs=["input", "weights", "group_indices"],
+    outputs=["output"],
+)
+input = np.empty((0, 3), dtype=np.float32)
+weights = np.arange(24, dtype=np.float32).reshape(2, 3, 4)
+group_indices = np.empty((0, 2), dtype=np.int64)
+output = grouped_matmul(input, weights, group_indices)
+
+expect(
+    node,
+    inputs=[input, weights, group_indices],
+    outputs=[output],
+    name="test_groupedmatmul_zero_tokens",
+    opset_imports=[onnx.helper.make_opsetid("", 29)],
 )
 ```
 
@@ -26268,6 +26577,58 @@ expect(
 
 
 <details>
+<summary>nonmaxsuppression_scalar_inputs</summary>
+
+```python
+node = onnx.helper.make_node(
+    "NonMaxSuppression",
+    inputs=[
+        "boxes",
+        "scores",
+        "max_output_boxes_per_class",
+        "iou_threshold",
+        "score_threshold",
+    ],
+    outputs=["selected_indices"],
+)
+boxes = np.array(
+    [
+        [
+            [0.0, 0.0, 1.0, 1.0],
+            [0.0, 0.1, 1.0, 1.1],
+            [0.0, -0.1, 1.0, 0.9],
+            [0.0, 10.0, 1.0, 11.0],
+            [0.0, 10.1, 1.0, 11.1],
+            [0.0, 100.0, 1.0, 101.0],
+        ]
+    ]
+).astype(np.float32)
+scores = np.array([[[0.9, 0.75, 0.6, 0.95, 0.5, 0.3]]]).astype(np.float32)
+# max_output_boxes_per_class, iou_threshold and score_threshold are
+# scalars, so they are given here as 0-D tensors.
+max_output_boxes_per_class = np.array(3).astype(np.int64)
+iou_threshold = np.array(0.5).astype(np.float32)
+score_threshold = np.array(0.4).astype(np.float32)
+selected_indices = np.array([[0, 0, 3], [0, 0, 0]]).astype(np.int64)
+
+expect(
+    node,
+    inputs=[
+        boxes,
+        scores,
+        max_output_boxes_per_class,
+        iou_threshold,
+        score_threshold,
+    ],
+    outputs=[selected_indices],
+    name="test_nonmaxsuppression_scalar_inputs",
+)
+```
+
+</details>
+
+
+<details>
 <summary>nonmaxsuppression_single_box</summary>
 
 ```python
@@ -27438,6 +27799,19 @@ expect(node, inputs=[x], outputs=[y], name="test_pack_3bit")
 node = helper.make_node("Pack", ["X"], ["Y"], bits=3)
 x = np.empty((2, 0), dtype=np.uint8)
 expect(node, inputs=[x], outputs=[x], name="test_pack_empty")
+```
+
+</details>
+
+
+<details>
+<summary>pack_empty_rows</summary>
+
+```python
+node = helper.make_node("Pack", ["X"], ["Y"], bits=5)
+x = np.empty((2, 0, 9), dtype=np.uint8)
+y = np.empty((2, 0, 6), dtype=np.uint8)
+expect(node, inputs=[x], outputs=[y], name="test_pack_empty_rows")
 ```
 
 </details>
@@ -30815,6 +31189,32 @@ expect(
 
 
 <details>
+<summary>float16_large_sum</summary>
+
+```python
+node = onnx.helper.make_node(
+    "ReduceLogSumExp",
+    inputs=["data", "axes"],
+    outputs=["reduced"],
+    keepdims=1,
+)
+data = np.zeros((256, 256), dtype=np.float16)
+axes = np.array([0, 1], dtype=np.int64)
+# The sum of 65536 exponentials overflows float16, but its logarithm does not.
+reduced = np.array([[np.log(data.size)]], dtype=np.float16)
+
+expect(
+    node,
+    inputs=[data, axes],
+    outputs=[reduced],
+    name="test_reduce_log_sum_exp_float16_large_sum",
+)
+```
+
+</details>
+
+
+<details>
 <summary>keepdims</summary>
 
 ```python
@@ -33199,9 +33599,9 @@ data = np.array(
 
 scales = np.array([1.0, 1.0, 0.8, 0.8], dtype=np.float32)
 
-# [[[[ 1.          2.39519159  3.79038317]
-#    [ 6.58076634  7.97595793  9.37114951]
-#    [12.16153268 13.55672427 14.95191585]]]]
+# [[[[ 1.   2.5  4. ]
+#    [ 7.   8.5 10. ]
+#    [13.  14.5 16. ]]]]
 output = interpolate_nd(
     data,
     lambda x, _: cubic_coeffs(x),
@@ -33332,7 +33732,7 @@ data = np.array(
 
 scales = np.array([1.0, 1.0, 0.6, 0.6], dtype=np.float32)
 
-# [[[[1.       3.142857]]]]
+# [[[[1. 4.]]]]
 output = interpolate_nd(
     data,
     lambda x, _: linear_coeffs(x),
@@ -38258,6 +38658,8 @@ test_shape("_start_1_end_2", x, start=1, end=2)
 test_shape("_clip_start", x, start=-10)
 
 test_shape("_clip_end", x, end=10)
+
+test_shape("_clip_end_negative", x, end=-4)
 
 test_shape("_start_greater_than_end", x, start=2, end=1)
 ```
@@ -44538,6 +44940,67 @@ expect(
 
 
 <details>
+<summary>not_sorted_single_output</summary>
+
+```python
+node_not_sorted = onnx.helper.make_node(
+    "Unique",
+    inputs=["X"],
+    outputs=["Y"],
+    sorted=0,
+)
+
+# Y keeps the order of first occurrence even when the optional outputs
+# are not requested.
+x = np.array([2.0, 1.0, 1.0, 3.0, 4.0, 3.0], dtype=np.float32)
+y = np.array([2.0, 1.0, 3.0, 4.0], dtype=np.float32)
+
+expect(
+    node_not_sorted,
+    inputs=[x],
+    outputs=[y],
+    name="test_unique_not_sorted_single_output",
+    output_type_protos=unique_output_types(x)[:1],
+)
+```
+
+</details>
+
+
+<details>
+<summary>not_sorted_with_axis</summary>
+
+```python
+node_not_sorted = onnx.helper.make_node(
+    "Unique",
+    inputs=["X"],
+    outputs=["Y", "indices", "inverse_indices", "counts"],
+    sorted=0,
+    axis=1,
+)
+
+# The unique columns are [3.0, 4.0] and [1.0, 2.0], kept in the order
+# they first appear in X instead of ascending order. indices point into
+# the columns of X, inverse_indices and counts follow the order of Y.
+x = np.array([[3.0, 1.0, 3.0], [4.0, 2.0, 4.0]], dtype=np.float32)
+y = np.array([[3.0, 1.0], [4.0, 2.0]], dtype=np.float32)
+indices = np.array([0, 1], dtype=np.int64)
+inverse_indices = np.array([0, 1, 0], dtype=np.int64)
+counts = np.array([2, 1], dtype=np.int64)
+
+expect(
+    node_not_sorted,
+    inputs=[x],
+    outputs=[y, indices, inverse_indices, counts],
+    name="test_unique_not_sorted_with_axis",
+    output_type_protos=unique_output_types(x, axis=1),
+)
+```
+
+</details>
+
+
+<details>
 <summary>not_sorted_without_axis</summary>
 
 ```python
@@ -44582,6 +45045,38 @@ expect(
     inputs=[x],
     outputs=[y, indices, inverse_indices, counts],
     name="test_unique_not_sorted_without_axis",
+    output_type_protos=unique_output_types(x),
+)
+```
+
+</details>
+
+
+<details>
+<summary>not_sorted_without_axis_2d</summary>
+
+```python
+node_not_sorted = onnx.helper.make_node(
+    "Unique",
+    inputs=["X"],
+    outputs=["Y", "indices", "inverse_indices", "counts"],
+    sorted=0,
+)
+
+# X is flattened to [2.0, 1.0, 1.0, 3.0] because axis is not set, and Y
+# holds its unique values in order of first occurrence. indices point
+# into the flattened X, inverse_indices and counts follow the order of Y.
+x = np.array([[2.0, 1.0], [1.0, 3.0]], dtype=np.float32)
+y = np.array([2.0, 1.0, 3.0], dtype=np.float32)
+indices = np.array([0, 1, 3], dtype=np.int64)
+inverse_indices = np.array([0, 1, 1, 2], dtype=np.int64)
+counts = np.array([1, 2, 1], dtype=np.int64)
+
+expect(
+    node_not_sorted,
+    inputs=[x],
+    outputs=[y, indices, inverse_indices, counts],
+    name="test_unique_not_sorted_without_axis_2d",
     output_type_protos=unique_output_types(x),
 )
 ```
@@ -44855,6 +45350,20 @@ node = helper.make_node("Unpack", ["X", "count"], ["Y"], bits=3)
 x = np.empty((2, 0), dtype=np.uint8)
 count = np.array(0, dtype=np.int64)
 expect(node, inputs=[x, count], outputs=[x], name="test_unpack_empty")
+```
+
+</details>
+
+
+<details>
+<summary>unpack_empty_rows</summary>
+
+```python
+node = helper.make_node("Unpack", ["X", "count"], ["Y"], bits=5)
+x = np.empty((2, 0, 6), dtype=np.uint8)
+count = np.array(9, dtype=np.int64)
+y = np.empty((2, 0, 9), dtype=np.uint8)
+expect(node, inputs=[x, count], outputs=[y], name="test_unpack_empty_rows")
 ```
 
 </details>

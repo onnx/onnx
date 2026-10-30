@@ -123,25 +123,41 @@ floating-point values; signed interpretation and quantization are separate.
             one8 = Constant <value = uint8 {1}>()
             shape = Shape(X)
             count = Gather(shape, last)
-            num_bits = Mul(count, bits)
-            rounded = Add(num_bits, seven)
-            num_bytes = Div(rounded, eight)
-            byte_indices = Range(zero, num_bytes, one)
-            starts = Mul(byte_indices, eight)
-            starts_column = Unsqueeze(starts, axes)
-            offsets = Add(starts_column, bit_positions64)
-            code_indices = Div(offsets, bits)
-            safe_indices = Min(code_indices, count)
-            code_offsets = Mod(offsets, bits)
-            shifts = Cast <to = 2>(code_offsets)
-            padded = Pad(X, pads, , axes)
-            codes = Gather <axis = -1>(padded, safe_indices)
-            shifted = BitShift <direction = "RIGHT">(codes, shifts)
-            code_bits = BitwiseAnd(shifted, one8)
-            placed = BitShift <direction = "LEFT">(code_bits, bit_positions)
-            placed64 = Cast <to = 7>(placed)
-            bytes64 = ReduceSum <keepdims = 0>(placed64, axes)
-            Y = Cast <to = 2>(bytes64)
+            groups = Div(count, eight)
+            whole_bytes = Mul(groups, bits)
+            remainder = Mod(count, eight)
+            tail_bits = Mul(remainder, bits)
+            rounded_tail = Add(tail_bits, seven)
+            tail_bytes = Div(rounded_tail, eight)
+            num_bytes = Add(whole_bytes, tail_bytes)
+            size = Size(X)
+            empty = Equal(size, zero)
+            Y = If (empty) <
+                then_branch = empty_pack () => (empty_output) {
+                    leading = Shape <end = -1>(X)
+                    trailing = Unsqueeze(num_bytes, axes)
+                    output_shape = Concat <axis = 0>(leading, trailing)
+                    empty_output = ConstantOfShape <value = uint8[1] {0}>(output_shape)
+                },
+                else_branch = pack_codes () => (packed_output) {
+                    byte_indices = Range(zero, num_bytes, one)
+                    starts = Mul(byte_indices, eight)
+                    starts_column = Unsqueeze(starts, axes)
+                    offsets = Add(starts_column, bit_positions64)
+                    code_indices = Div(offsets, bits)
+                    safe_indices = Min(code_indices, count)
+                    code_offsets = Mod(offsets, bits)
+                    shifts = Cast <to = 2>(code_offsets)
+                    padded = Pad(X, pads, , axes)
+                    codes = Gather <axis = -1>(padded, safe_indices)
+                    shifted = BitShift <direction = "RIGHT">(codes, shifts)
+                    code_bits = BitwiseAnd(shifted, one8)
+                    placed = BitShift <direction = "LEFT">(code_bits, bit_positions)
+                    placed64 = Cast <to = 7>(placed)
+                    bytes64 = ReduceSum <keepdims = 0>(placed64, axes)
+                    packed_output = Cast <to = 2>(bytes64)
+                }
+            >
         }
         )ONNX",
             29));
@@ -184,28 +200,40 @@ of this operator.
             eight16 = Constant <value = uint16 {8}>()
             axes = Constant <value = int64[1] {-1}>()
             pads = Constant <value = int64[2] {0, 1}>()
-            indices = Range(zero, count, one)
-            offsets = Mul(indices, bits)
-            byte_indices = Div(offsets, eight)
-            next_indices = Add(byte_indices, one)
-            bit_offsets = Mod(offsets, eight)
-            shifts = Cast <to = 4>(bit_offsets)
-            one64 = Cast <to = 13>(one)
-            bits64 = Cast <to = 13>(bits)
-            limit = BitShift <direction = "LEFT">(one64, bits64)
-            limit_signed = Cast <to = 7>(limit)
-            mask_signed = Sub(limit_signed, one)
-            mask = Cast <to = 4>(mask_signed)
-            padded = Pad(X, pads, , axes)
-            low8 = Gather <axis = -1>(padded, byte_indices)
-            high8 = Gather <axis = -1>(padded, next_indices)
-            low = Cast <to = 4>(low8)
-            high = Cast <to = 4>(high8)
-            high_shifted = BitShift <direction = "LEFT">(high, eight16)
-            word = BitwiseOr(low, high_shifted)
-            shifted = BitShift <direction = "RIGHT">(word, shifts)
-            codes = BitwiseAnd(shifted, mask)
-            Y = Cast <to = 2>(codes)
+            size = Size(X)
+            empty = Equal(size, zero)
+            Y = If (empty) <
+                then_branch = empty_unpack () => (empty_output) {
+                    leading = Shape <end = -1>(X)
+                    trailing = Unsqueeze(count, axes)
+                    output_shape = Concat <axis = 0>(leading, trailing)
+                    empty_output = ConstantOfShape <value = uint8[1] {0}>(output_shape)
+                },
+                else_branch = unpack_codes () => (unpacked_output) {
+                    indices = Range(zero, count, one)
+                    offsets = Mul(indices, bits)
+                    byte_indices = Div(offsets, eight)
+                    next_indices = Add(byte_indices, one)
+                    bit_offsets = Mod(offsets, eight)
+                    shifts = Cast <to = 4>(bit_offsets)
+                    one64 = Cast <to = 13>(one)
+                    bits64 = Cast <to = 13>(bits)
+                    limit = BitShift <direction = "LEFT">(one64, bits64)
+                    limit_signed = Cast <to = 7>(limit)
+                    mask_signed = Sub(limit_signed, one)
+                    mask = Cast <to = 4>(mask_signed)
+                    padded = Pad(X, pads, , axes)
+                    low8 = Gather <axis = -1>(padded, byte_indices)
+                    high8 = Gather <axis = -1>(padded, next_indices)
+                    low = Cast <to = 4>(low8)
+                    high = Cast <to = 4>(high8)
+                    high_shifted = BitShift <direction = "LEFT">(high, eight16)
+                    word = BitwiseOr(low, high_shifted)
+                    shifted = BitShift <direction = "RIGHT">(word, shifts)
+                    codes = BitwiseAnd(shifted, mask)
+                    unpacked_output = Cast <to = 2>(codes)
+                }
+            >
         }
         )ONNX",
             29));
@@ -369,45 +397,6 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::all_non_string_tensor_types_ir13(),
             "Constrain output types. Bitcasting to string is not supported.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-          auto get_bit_size = [](int element_type) -> int {
-            switch (element_type) {
-              case TensorProto::FLOAT:
-              case TensorProto::INT32:
-              case TensorProto::UINT32:
-                return 32;
-              case TensorProto::DOUBLE:
-              case TensorProto::INT64:
-              case TensorProto::UINT64:
-              case TensorProto::COMPLEX64:
-                return 64;
-              case TensorProto::COMPLEX128:
-                return 128;
-              case TensorProto::FLOAT16:
-              case TensorProto::BFLOAT16:
-              case TensorProto::INT16:
-              case TensorProto::UINT16:
-                return 16;
-              case TensorProto::INT8:
-              case TensorProto::UINT8:
-              case TensorProto::BOOL:
-              case TensorProto::FLOAT8E4M3FN:
-              case TensorProto::FLOAT8E4M3FNUZ:
-              case TensorProto::FLOAT8E5M2:
-              case TensorProto::FLOAT8E5M2FNUZ:
-              case TensorProto::FLOAT8E8M0:
-                return 8;
-              case TensorProto::INT4:
-              case TensorProto::UINT4:
-              case TensorProto::FLOAT4E2M1:
-                return 4;
-              case TensorProto::INT2:
-              case TensorProto::UINT2:
-                return 2;
-              default:
-                return 0;
-            }
-          };
-
           // Validate that input and output types have the same bit-width
           auto input_type = ctx.getInputType(0);
           if (input_type && input_type->has_tensor_type()) {
@@ -415,9 +404,9 @@ ONNX_OPERATOR_SET_SCHEMA(
             auto* to_attr = ctx.getAttribute("to");
             if (to_attr) {
               auto output_element_type = static_cast<int32_t>(to_attr->i());
-              int input_element_bit_size = get_bit_size(input_element_type);
-              int output_element_bit_size = get_bit_size(output_element_type);
-              if (input_element_bit_size != 0 && output_element_bit_size != 0 &&
+              int64_t input_element_bit_size = ElementBitWidth(input_element_type);
+              int64_t output_element_bit_size = ElementBitWidth(output_element_type);
+              if (input_element_bit_size > 0 && output_element_bit_size > 0 &&
                   input_element_bit_size != output_element_bit_size) {
                 fail_shape_inference(
                     "BitCast requires input and output types to have the same bit-width, but input type has ",
@@ -892,6 +881,14 @@ ONNX_OPERATOR_SET_SCHEMA(
               if (num_outputs < 1) {
                 fail_shape_inference("Attribute `num_outputs` value cannot be lower than 1");
               }
+              if (num_outputs < static_cast<int64_t>(ctx.getNumOutputs())) {
+                fail_shape_inference(
+                    "The 'num_outputs' attribute (",
+                    num_outputs,
+                    ") must be greater or equal to the number outputs of the 'Split' node (",
+                    ctx.getNumOutputs(),
+                    ")");
+              }
               if (split_dim_value % num_outputs == 0) { // tensor is evenly splittable
                 int chunk_size = split_dim_value / num_outputs;
                 split.resize(num_outputs, chunk_size);
@@ -912,6 +909,13 @@ ONNX_OPERATOR_SET_SCHEMA(
         }));
 
 static void processSliceInputs(const int64_t input_dim_size_or_value, int64_t& start, int64_t& end, int64_t step) {
+  // A negative dimension is invalid: the std::clamp calls below require the
+  // upper bound to be >= the lower bound, so reject the dimension with a
+  // catchable error instead of invoking undefined behavior (a hardened
+  // std::clamp aborts the process with SIGABRT).
+  if (input_dim_size_or_value < 0) {
+    fail_shape_inference("Slice input dimension must be non-negative, got ", input_dim_size_or_value);
+  }
   // process step
   if (step == 0) {
     fail_shape_inference("'step' cannot be 0 for Slice");
@@ -1804,6 +1808,22 @@ ONNX_OPERATOR_SET_SCHEMA(
           if (hasInputShape(ctx, 0)) {
             auto& input_shape = getInputShape(ctx, 0);
             if (input_shape.dim_size() == 4) {
+              // The spatial dimensions are split into blocks, so they must divide
+              // evenly. Without this check the integer divisions below silently report
+              // a truncated shape for an input the runtime rejects.
+              for (const int spatial_axis : {2, 3}) {
+                const auto& dim = input_shape.dim(spatial_axis);
+                if (dim.has_dim_value() && dim.dim_value() % blocksize != 0) {
+                  fail_shape_inference(
+                      "Input dimension ",
+                      spatial_axis,
+                      " (",
+                      dim.dim_value(),
+                      ") must be a multiple of 'blocksize' (",
+                      blocksize,
+                      ").");
+                }
+              }
               updateOutputShape(
                   ctx,
                   0,
@@ -1859,6 +1879,19 @@ ONNX_OPERATOR_SET_SCHEMA(
           if (hasInputShape(ctx, 0)) {
             auto& input_shape = getInputShape(ctx, 0);
             if (input_shape.dim_size() == 4) {
+              // The channels are redistributed into blocksize x blocksize blocks, so
+              // the channel dimension must divide evenly. Without this check the
+              // integer division below silently reports a truncated shape for an input
+              // the runtime rejects.
+              const auto& channel_dim = input_shape.dim(1);
+              if (channel_dim.has_dim_value() && channel_dim.dim_value() % block_area != 0) {
+                fail_shape_inference(
+                    "Input channel dimension (",
+                    channel_dim.dim_value(),
+                    ") must be a multiple of 'blocksize' * 'blocksize' (",
+                    block_area,
+                    ").");
+              }
               updateOutputShape(
                   ctx,
                   0,
@@ -2984,6 +3017,9 @@ ONNX_OPERATOR_SET_SCHEMA(
                 "Both `data` and `indices` input tensors in GatherND op "
                 "need to have rank larger than 0.");
           }
+          if (batch_dims_data < 0) {
+            fail_shape_inference("attribute 'batch_dims' of 'GatherND' must not be negative");
+          }
 
           // cannot ascertain if the input shapes are valid if shape of
           // `indices` is missing last dimension value so return at this point
@@ -2991,8 +3027,11 @@ ONNX_OPERATOR_SET_SCHEMA(
             return;
           }
 
-          const auto last_index_dimension =
-              checkedAdd(indices_shape.dim(indices_rank - 1).dim_value(), batch_dims_data);
+          const auto indices_last_dim = indices_shape.dim(indices_rank - 1).dim_value();
+          if (indices_last_dim < 0) {
+            fail_shape_inference("Last dimension of `indices` input tensor in GatherND op must not be negative");
+          }
+          const auto last_index_dimension = checkedAdd(indices_last_dim, batch_dims_data);
 
           if (last_index_dimension > data_rank) {
             fail_shape_inference(
@@ -3004,7 +3043,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             *ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape()->add_dim() = indices_shape.dim(i);
           }
 
-          for (int i = static_cast<int>(last_index_dimension); i < data_rank; ++i) {
+          for (auto i = last_index_dimension; i < data_rank; ++i) {
             *ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape()->add_dim() = data_shape.dim(i);
           }
         }));

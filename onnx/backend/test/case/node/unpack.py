@@ -33,3 +33,11 @@ class Unpack(Base):
         x = np.empty((2, 0), dtype=np.uint8)
         count = np.array(0, dtype=np.int64)
         expect(node, inputs=[x, count], outputs=[x], name="test_unpack_empty")
+
+    @staticmethod
+    def export_unpack_empty_rows() -> None:
+        node = helper.make_node("Unpack", ["X", "count"], ["Y"], bits=5)
+        x = np.empty((2, 0, 6), dtype=np.uint8)
+        count = np.array(9, dtype=np.int64)
+        y = np.empty((2, 0, 9), dtype=np.uint8)
+        expect(node, inputs=[x, count], outputs=[y], name="test_unpack_empty_rows")

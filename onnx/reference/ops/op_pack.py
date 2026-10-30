@@ -11,13 +11,20 @@ from onnx.reference.op_run import OpRun
 class Pack(OpRun):
     def _run(self, x, bits=None):
         if bits is None or not 1 <= bits <= 8:
-            raise ValueError("bits must be between 1 and 8.")
+            raise ValueError(f"bits must be between 1 and 8; got {bits!r}.")
         if x.dtype != np.uint8 or x.ndim == 0:
-            raise ValueError("X must be a UINT8 tensor of rank at least 1.")
+            raise ValueError(
+                f"X must be a UINT8 tensor of rank at least 1; got dtype={x.dtype}, shape={x.shape}."
+            )
         if np.any(x > (1 << bits) - 1):
-            raise ValueError("Input codes must be representable in bits bits.")
+            raise ValueError(
+                f"Input codes must be representable in {bits} bits; "
+                f"expected values in [0, {(1 << bits) - 1}], got maximum {x.max()}."
+            )
         shape = (*x.shape[:-1], (x.shape[-1] * bits + 7) // 8)
         result = np.zeros(shape, dtype=np.uint8)
+        if x.size == 0:
+            return (result,)
         for i in range(x.shape[-1]):
             byte, shift = divmod(i * bits, 8)
             code = x[..., i].astype(np.uint16)

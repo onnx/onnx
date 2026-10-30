@@ -3,8 +3,10 @@
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
+import inspect
 import math
 import random
+import warnings
 from typing import Any
 
 import ml_dtypes
@@ -136,6 +138,22 @@ class TestHelperAttributeFunctions:
         attr = helper.make_attribute("ints", [1, 2])
         assert attr.name == "ints"
         assert list(attr.ints) == [1, 2]
+        checker.check_attribute(attr)
+
+    # Recent protobuf 6.x releases warn about bools in int fields, protobuf>=7 rejects them
+    @pytest.mark.filterwarnings("error::DeprecationWarning")
+    def test_attr_repeated_bool(self) -> None:
+        attr = helper.make_attribute("bools", [True, False, True])
+        assert attr.name == "bools"
+        assert attr.type == AttributeProto.INTS
+        assert list(attr.ints) == [1, 0, 1]
+        checker.check_attribute(attr)
+
+    @pytest.mark.filterwarnings("error::DeprecationWarning")
+    def test_attr_repeated_mixed_bools_and_ints(self) -> None:
+        attr = helper.make_attribute("mixed", [True, 2, False])
+        assert attr.type == AttributeProto.INTS
+        assert list(attr.ints) == [1, 2, 0]
         checker.check_attribute(attr)
 
     def test_attr_repeated_mixed_floats_and_ints(self) -> None:
@@ -934,6 +952,20 @@ class TestHelperOptionalAndSequenceFunctions:
 
 
 class TestPrintableGraph:
+    def test_deprecation_warning_and_metadata(self) -> None:
+        graph = helper.make_graph([], "empty", [], [])
+        original = helper.printable_graph.__wrapped__
+        with warnings.catch_warnings(record=True, action="always") as caught:
+            result = helper.printable_graph(graph)
+        assert result == original(graph)
+        assert len(caught) == 1
+        assert caught[0].category is DeprecationWarning
+        assert caught[0].filename == __file__
+        assert str(caught[0].message) == helper.printable_graph.__deprecated__
+        assert helper.printable_graph.__name__ == original.__name__
+        assert helper.printable_graph.__doc__ == original.__doc__
+        assert inspect.signature(helper.printable_graph) == inspect.signature(original)
+
     def test_initializer_with_matching_graph_input(self) -> None:
         add = helper.make_node("Add", ["X", "Y_Initializer"], ["Z"])
         value_info = [helper.make_tensor_value_info("Y", TensorProto.FLOAT, [1])]
@@ -1116,24 +1148,6 @@ def test_make_tensor_raw(tensor_dtype: int, vals_as_bytes: bool) -> None:
 
 
 class TestHelperMappingFunctions:
-    # TODO (#4554): remove these tests about catching warnings after the deprecation period
-    # Test these new functions should not raise any deprecation warnings
-    @pytest.mark.filterwarnings("error::DeprecationWarning")
-    def test_tensor_dtype_to_np_dtype_not_throw_warning(self) -> None:
-        _ = helper.tensor_dtype_to_np_dtype(TensorProto.FLOAT)
-
-    @pytest.mark.filterwarnings("error::DeprecationWarning")
-    def test_tensor_dtype_to_storage_tensor_dtype_not_throw_warning(self) -> None:
-        _ = helper.tensor_dtype_to_storage_tensor_dtype(TensorProto.FLOAT)
-
-    @pytest.mark.filterwarnings("error::DeprecationWarning")
-    def test_tensor_dtype_to_field_not_throw_warning(self) -> None:
-        _ = helper.tensor_dtype_to_field(TensorProto.FLOAT)
-
-    @pytest.mark.filterwarnings("error::DeprecationWarning")
-    def test_np_dtype_to_tensor_dtype_not_throw_warning(self) -> None:
-        _ = helper.np_dtype_to_tensor_dtype(np.dtype("float32"))
-
     def test_tensor_dtype_to_np_dtype_bfloat16(self) -> None:
         assert (
             helper.tensor_dtype_to_np_dtype(TensorProto.BFLOAT16) == ml_dtypes.bfloat16
@@ -1176,3 +1190,18 @@ class TestAttrTypeToStr:
     def test_attr_type_to_str_undefined(self):
         result = helper._attr_type_to_str(9999)
         assert result == "UNDEFINED"
+
+
+class TestStripDocString:
+    def test_strip_doc_string_clears_nested_doc_strings(self) -> None:
+        node = helper.make_node("Relu", ["x"], ["y"], doc_string="node doc")
+        graph = helper.make_graph([node], "g", [], [], doc_string="graph doc")
+        model = helper.make_model(graph, doc_string="model doc")
+        helper.strip_doc_string(model)
+        assert model.doc_string == ""
+        assert model.graph.doc_string == ""
+        assert model.graph.node[0].doc_string == ""
+
+    def test_strip_doc_string_rejects_non_message(self) -> None:
+        with pytest.raises(TypeError):
+            helper.strip_doc_string("not a proto")  # type: ignore[arg-type]

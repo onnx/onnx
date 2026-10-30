@@ -1,3 +1,7 @@
+# Copyright (c) ONNX Project Contributors
+#
+# SPDX-License-Identifier: Apache-2.0
+
 # Minimum CMake required
 cmake_minimum_required(VERSION 3.26)
 # Project
@@ -135,7 +139,7 @@ if(ONNX_DISABLE_EXCEPTIONS)
     string(REGEX REPLACE "/EHsc" "/EHs-c-" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
     add_definitions(-D_HAS_EXCEPTIONS=0)
   else()
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-exceptions -fno-unwind-tables -fno-asynchronous-unwind-tables")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-exceptions")
   endif()
 endif()
 
@@ -146,7 +150,7 @@ if(ONNX_BUILD_PYTHON AND ONNX_DISABLE_EXCEPTIONS)
 endif()
 
 if(ONNX_BUILD_PYTHON)
-  set(python_dev_component Development.Module Development.SABIModule)
+  set(python_dev_component Development.Module)
 endif()
 
 if(CMAKE_CROSSCOMPILING)
@@ -154,6 +158,25 @@ if(CMAKE_CROSSCOMPILING)
   # must use a different package. See the discussion about this at
   # https://gitlab.kitware.com/cmake/cmake/-/issues/25145
   if(ONNX_BUILD_PYTHON)
+    # There is no target interpreter to query, so a free-threaded target has to
+    # be requested explicitly with -DPython3_FIND_ABI=ANY;ANY;ANY;ON.
+    set(python_gil_disabled OFF)
+    list(LENGTH Python3_FIND_ABI python_find_abi_length)
+    if(python_find_abi_length GREATER 3)
+      list(GET Python3_FIND_ABI 3 python_gil_disabled)
+      string(TOUPPER "${python_gil_disabled}" python_gil_disabled)
+      if(NOT python_gil_disabled STREQUAL "ON")
+        set(python_gil_disabled OFF)
+      endif()
+    endif()
+    if(DEFINED SKBUILD_SABI_COMPONENT)
+      # scikit-build-core decides from wheel.py-api whether the wheel is tagged
+      # abi3; request the stable ABI exactly when it is.
+      list(APPEND python_dev_component ${SKBUILD_SABI_COMPONENT})
+    elseif(NOT python_gil_disabled)
+      # Free-threaded CPython has no stable ABI.
+      list(APPEND python_dev_component Development.SABIModule)
+    endif()
     find_package(Python3 REQUIRED COMPONENTS ${python_dev_component})
   endif()
   find_package(Python REQUIRED COMPONENTS Interpreter)
@@ -172,7 +195,48 @@ if(CMAKE_CROSSCOMPILING)
     endif()
   endif()
 else()
-  find_package(Python3 REQUIRED COMPONENTS Interpreter ${python_dev_component})
+  find_package(Python3 REQUIRED COMPONENTS Interpreter)
+  if(ONNX_BUILD_PYTHON)
+    execute_process(
+      COMMAND "${Python3_EXECUTABLE}" -c
+              "import sysconfig; print(sysconfig.get_config_var('Py_GIL_DISABLED') or 0)"
+      OUTPUT_VARIABLE python_gil_disabled
+      OUTPUT_STRIP_TRAILING_WHITESPACE
+      COMMAND_ERROR_IS_FATAL ANY)
+    if(python_gil_disabled AND CMAKE_VERSION VERSION_GREATER_EQUAL "3.30")
+      if(NOT WIN32 AND CMAKE_VERSION VERSION_LESS "4.1")
+        # FindPython in CMake 3.30-4.0 rejects Development.Module on POSIX
+        # whenever *_FIND_ABI is set, and scikit-build-core >= 1.1 sets it for
+        # free-threaded interpreters. POSIX finds the free-threaded headers
+        # through the interpreter without it.
+        unset(Python3_FIND_ABI)
+        unset(Python3_FIND_ABI CACHE)
+        unset(Python_FIND_ABI)
+        unset(Python_FIND_ABI CACHE)
+      else()
+        # CMake 3.30+ only searches for free-threaded development files when
+        # asked to. Request exactly this ABI so a regular libpython installed
+        # alongside cannot be picked up instead.
+        if(NOT DEFINED Python3_FIND_ABI)
+          set(Python3_FIND_ABI "ANY" "ANY" "ANY" "ON")
+        endif()
+        if(NOT DEFINED Python_FIND_ABI)
+          set(Python_FIND_ABI "ANY" "ANY" "ANY" "ON")
+        endif()
+      endif()
+    endif()
+    if(DEFINED SKBUILD_SABI_COMPONENT)
+      # scikit-build-core decides from wheel.py-api whether the wheel is tagged
+      # abi3; request the stable ABI exactly when it is.
+      list(APPEND python_dev_component ${SKBUILD_SABI_COMPONENT})
+    elseif(NOT python_gil_disabled)
+      # Free-threaded CPython has no stable ABI.
+      list(APPEND python_dev_component Development.SABIModule)
+    endif()
+    # Interpreter must be requested again: FindPython locates the development
+    # files through it.
+    find_package(Python3 REQUIRED COMPONENTS Interpreter ${python_dev_component})
+  endif()
   # Find Python for nanobind
   set(Python_EXECUTABLE ${Python3_EXECUTABLE})
   find_package(Python REQUIRED COMPONENTS Interpreter ${python_dev_component})
@@ -211,37 +275,42 @@ if(NOT ONNX_BUILD_CUSTOM_PROTOBUF)
     # in https://github.com/caffe2/caffe2/blob/b7d983f255ef5496474f1ea188edb5e0ac4
     # 42761/cmake/ProtoBuf.cmake#L82-L92 The following section is stolen from
     # cmake/ProtoBuf.cmake in Caffe2
-    find_program(Protobuf_PROTOC_EXECUTABLE
-                NAMES protoc
-                DOC "The Google Protocol Buffers Compiler")
-
-    # Only if protoc was found, seed the include directories and libraries. We
-    # assume that protoc is installed at PREFIX/bin. We use get_filename_component
-    # to resolve PREFIX.
-    if(Protobuf_PROTOC_EXECUTABLE)
-      set(ONNX_PROTOC_EXECUTABLE ${Protobuf_PROTOC_EXECUTABLE})
-      get_filename_component(_PROTOBUF_INSTALL_PREFIX
-                            ${Protobuf_PROTOC_EXECUTABLE} DIRECTORY)
-      get_filename_component(_PROTOBUF_INSTALL_PREFIX
-                            ${_PROTOBUF_INSTALL_PREFIX}/.. REALPATH)
-      find_library(Protobuf_PROTOC_LIBRARY
+    if(EXISTS "${ONNX_CUSTOM_PROTOC_EXECUTABLE}")
+      set(Protobuf_PROTOC_EXECUTABLE "${ONNX_CUSTOM_PROTOC_EXECUTABLE}")
+    else()
+      find_program(Protobuf_PROTOC_EXECUTABLE
                   NAMES protoc
-                  PATHS ${_PROTOBUF_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}
+                  DOC "The Google Protocol Buffers Compiler")
+    endif()
+
+    # A compiler is needed before discovering the external Protobuf libraries.
+    if(Protobuf_PROTOC_EXECUTABLE)
+      # A host protoc may live outside the target sysroot when cross-compiling.
+      # Let the toolchain locate target headers and libraries in that case.
+      if(NOT CMAKE_CROSSCOMPILING)
+        get_filename_component(_PROTOBUF_INSTALL_PREFIX
+                              ${Protobuf_PROTOC_EXECUTABLE} DIRECTORY)
+        get_filename_component(_PROTOBUF_INSTALL_PREFIX
+                              ${_PROTOBUF_INSTALL_PREFIX}/.. REALPATH)
+        find_library(Protobuf_PROTOC_LIBRARY
+                    NAMES protoc
+                    PATHS ${_PROTOBUF_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}
+                    NO_DEFAULT_PATH)
+        if(ONNX_USE_LITE_PROTO)
+          find_library(Protobuf_LITE_LIBRARY
+            NAMES protobuf-lite
+            PATHS ${_PROTOBUF_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}
+            NO_DEFAULT_PATH)
+        else()
+          find_library(Protobuf_LIBRARY
+            NAMES protobuf
+            PATHS ${_PROTOBUF_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}
+            NO_DEFAULT_PATH)
+        endif(ONNX_USE_LITE_PROTO)
+        find_path(Protobuf_INCLUDE_DIR google/protobuf/service.h
+                  PATHS ${_PROTOBUF_INSTALL_PREFIX}/include
                   NO_DEFAULT_PATH)
-      if(ONNX_USE_LITE_PROTO)
-        find_library(Protobuf_LITE_LIBRARY
-          NAMES protobuf-lite
-          PATHS ${_PROTOBUF_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}
-          NO_DEFAULT_PATH)
-      else()
-        find_library(Protobuf_LIBRARY
-          NAMES protobuf
-          PATHS ${_PROTOBUF_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}
-          NO_DEFAULT_PATH)
-      endif(ONNX_USE_LITE_PROTO)
-      find_path(Protobuf_INCLUDE_DIR google/protobuf/service.h
-                PATHS ${_PROTOBUF_INSTALL_PREFIX}/include
-                NO_DEFAULT_PATH)
+      endif()
       if(ONNX_USE_PROTOBUF_SHARED_LIBS)
         set(Protobuf_USE_STATIC_LIBS OFF)
       else()
@@ -249,6 +318,7 @@ if(NOT ONNX_BUILD_CUSTOM_PROTOBUF)
       endif()
       find_package(Protobuf)
       if(Protobuf_FOUND)
+        set(ONNX_PROTOC_EXECUTABLE "${Protobuf_PROTOC_EXECUTABLE}")
         set(PROTOBUF_DIR "${_PROTOBUF_INSTALL_PREFIX}")
         set(Build_Protobuf OFF)
         if("${Protobuf_VERSION}" VERSION_GREATER_EQUAL "4.22.0")
@@ -560,12 +630,27 @@ add_dependencies(onnx_proto onnx_proto_gen)
 add_dependencies(onnx_proto onnx_proto_headers)
 
 # Core library. Hand-written sources come from target_sources(onnx ...) in the
-# subdirectories; the protobuf objects are pulled in from onnx_proto.
-add_library(onnx $<TARGET_OBJECTS:onnx_proto>)
+# subdirectories. onnx links onnx_proto rather than embedding its objects:
+# both targets are installed and exported, so embedding puts a second copy of
+# the generated descriptors into any process that ends up with both libraries.
+# Protobuf aborts on the second registration of the same file name with
+# "File already exists in database: onnx/onnx-ml.proto".
+add_library(onnx)
 add_subdirectory(onnx)
+target_link_libraries(onnx PUBLIC onnx_proto)
 add_dependencies(onnx onnx_proto)
 set_target_properties(onnx PROPERTIES CXX_VISIBILITY_PRESET hidden)
 add_onnx_global_defines(onnx)
+if(BUILD_SHARED_LIBS)
+  # A shared onnx needs the shared onnx_proto, which is installed next to it.
+  # Without a search path of its own, an installed libonnx only finds it via
+  # system paths or LD_LIBRARY_PATH.
+  if(APPLE)
+    set_property(TARGET onnx APPEND PROPERTY INSTALL_RPATH "@loader_path")
+  elseif(UNIX)
+    set_property(TARGET onnx APPEND PROPERTY INSTALL_RPATH "$ORIGIN")
+  endif()
+endif()
 
 if(ONNX_BUILD_PYTHON)
   if(BUILD_SHARED_LIBS)

@@ -404,7 +404,7 @@ message TrainingInfoProto {
   // x = x - r * g
   //
   // where "x" is the optimized tensor, "r" stands for learning rate, and "g" is
-  // gradient of "x" with respect to a chosen loss. To avoid adding assignments
+  // gradient of a chosen loss with respect to "x". To avoid adding assignments
   // into the training graph, we split the update equation into
   //
   // y = x - r * g

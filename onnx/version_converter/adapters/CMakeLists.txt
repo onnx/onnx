@@ -21,6 +21,7 @@ target_sources(onnx PRIVATE
     gemm_7_6.h
     gridsample_19_20.h
     group_normalization_20_21.h
+    group_normalization_21_20.h
     maxpool_8_7.h
     no_previous_version.h
     pad_10_11.h
@@ -29,6 +30,7 @@ target_sources(onnx PRIVATE
     reshape_4_5.h
     reshape_5_4.h
     resize_10_11.h
+    resize_12_13.h
     resize_18_17.h
     scan_8_9.h
     scan_9_8.h

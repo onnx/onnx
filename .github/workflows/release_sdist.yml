@@ -7,9 +7,6 @@ name: sdistRelease
 on:
   workflow_call:
     inputs:
-      os:
-        required: true
-        type: string
       build_mode:
         required: true
         type: string
@@ -26,8 +23,7 @@ jobs:
     runs-on: ubuntu-24.04
     strategy:
       matrix:
-        python-version: ['3.10']
-        target-architecture: ['arm64']
+        python-version: ['3.11']
 
     steps:
     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -42,7 +38,7 @@ jobs:
     - name: Install Python dependencies
       run: |
         python -m pip install -q --upgrade pip
-        python -m pip install -q build scikit-build-core
+        python -m pip install -q build
 
     - name: Build source distribution (preview build / weekly)
       if: ${{ inputs.build_mode != 'release' }}

@@ -142,6 +142,11 @@ struct FunctionOpAttributeMap {
   }
 
   FunctionOpAttributeMap() {
+    for (const char* bits :
+         {"bits = 1", "bits = 2", "bits = 3", "bits = 4", "bits = 5", "bits = 6", "bits = 7", "bits = 8"}) {
+      addTestCase("Pack", 29, {bits});
+      addTestCase("Unpack", 29, {bits});
+    }
     addTestCase("Elu", 6, {"alpha = 1.0"});
     addTestCase("LeakyRelu", 16, {"alpha = 0.1"});
     addTestCase("HardSigmoid", 6, {"alpha = 0.2", "beta=0.5"});
@@ -373,6 +378,30 @@ TEST(FunctionVerification, VerifyFunctionExpandHelper) {
   }
   FAIL() << "During expanding MeanVarianceNormalization function, "
          << "the default attribute `axes` has not been assigned to ReduceMean op.";
+}
+
+TEST(FunctionVerification, VerifyContextDependentFunctionExpansionWithOptionalInput) {
+  const auto* const schema = OpSchemaRegistry::Schema("GroupedMatMul", 29, "");
+  ASSERT_NE(schema, nullptr);
+
+  for (bool use_explicit_empty_input : {false, true}) {
+    GraphProto graph;
+    NodeProto* node = graph.add_node();
+    node->set_op_type("GroupedMatMul");
+    node->add_input("input");
+    node->add_input("weights");
+    node->add_input("group_indices");
+    if (use_explicit_empty_input) {
+      node->add_input("");
+    }
+    node->add_output("output");
+
+    FunctionBodyBuildContextImpl context(*node);
+    FunctionProto function;
+    ASSERT_TRUE(schema->BuildContextDependentFunction(context, function));
+    EXPECT_EQ(function.input_size(), 4);
+    FunctionExpandHelper(*node, function, graph);
+  }
 }
 
 static void RegisterFunctionSchema() {

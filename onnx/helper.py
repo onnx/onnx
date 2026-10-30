@@ -12,10 +12,10 @@ from typing import TYPE_CHECKING, Any, TypeVar
 
 import google.protobuf.message
 import numpy as np
-import typing_extensions
 
 import onnx
 from onnx import _mapping, defs
+from onnx._deprecated import deprecated
 from onnx.onnx_data_pb import MapProto, OptionalProto, SequenceProto
 from onnx.onnx_pb import (
     AttributeProto,
@@ -676,7 +676,8 @@ def make_attribute(
                 )
 
         if attr_type == AttributeProto.INTS:
-            attr.ints.extend(value)
+            # bool is a numbers.Integral, but protobuf>=7 rejects bools in int fields
+            attr.ints.extend(int(v) if isinstance(v, bool) else v for v in value)
             attr.type = AttributeProto.INTS
         elif attr_type == AttributeProto.FLOATS:
             attr.floats.extend(value)
@@ -1032,7 +1033,6 @@ def printable_attribute(
     elif attr.HasField("i"):
         content.append(str_int(attr.i))
     elif attr.HasField("s"):
-        # TODO: Bit nervous about Python 2 / Python 3 determinism implications
         content.append(repr(_sanitize_str(attr.s)))
     elif attr.HasField("t"):
         if len(attr.t.dims) > 0:
@@ -1053,7 +1053,6 @@ def printable_attribute(
     elif attr.ints:
         content.append(str_list(str_int, attr.ints))
     elif attr.strings:
-        # TODO: Bit nervous about Python 2 / Python 3 determinism implications
         content.append(str(list(map(_sanitize_str, attr.strings))))
     elif attr.tensors:
         content.append("[<Tensor>, ...]")
@@ -1154,9 +1153,7 @@ def printable_node(
     return prefix + " ".join(content)
 
 
-@typing_extensions.deprecated(
-    "Deprecated since 1.19. Consider using onnx.printer.to_text() instead."
-)
+@deprecated("Deprecated since 1.19. Consider using onnx.printer.to_text() instead.")
 def printable_graph(graph: GraphProto, prefix: str = "") -> str:
     """Display a GraphProto as a string.
 
@@ -1247,7 +1244,7 @@ def strip_doc_string(proto: google.protobuf.message.Message) -> None:
         if descriptor.name == "doc_string":
             proto.ClearField(descriptor.name)
         elif descriptor.type == descriptor.TYPE_MESSAGE:
-            if descriptor.label == descriptor.LABEL_REPEATED:
+            if descriptor.is_repeated:
                 for x in getattr(proto, descriptor.name):
                     strip_doc_string(x)
             elif proto.HasField(descriptor.name):
@@ -1315,7 +1312,7 @@ def tensor_dtype_to_string(tensor_dtype: int) -> str:
     return _mapping.TENSOR_TYPE_MAP[tensor_dtype].name
 
 
-@functools.lru_cache(None)
+@functools.cache
 def tensor_dtype_to_field(tensor_dtype: int) -> str:
     """Convert a TensorProto's data_type to corresponding field name for storage. It can be used while making tensors.
 
@@ -1339,7 +1336,7 @@ def tensor_dtype_to_field(tensor_dtype: int) -> str:
     ]
 
 
-@functools.lru_cache(None)
+@functools.cache
 def np_dtype_to_tensor_dtype(np_dtype: np.dtype) -> TensorProto.DataType:
     """Convert a numpy's dtype to corresponding tensor type. It can be used while converting numpy arrays to tensors.
 

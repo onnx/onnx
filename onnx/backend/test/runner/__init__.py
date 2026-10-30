@@ -15,7 +15,7 @@ import time
 import unittest
 from collections import defaultdict
 from re import Pattern
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Self
 from urllib.request import urlretrieve
 
 import numpy as np
@@ -46,7 +46,7 @@ def retry_execute(times: int) -> Callable[[Callable[..., Any]], Callable[..., An
             for i in range(1, times + 1):
                 try:
                     return func(*args, **kwargs)
-                except Exception:  # noqa: PERF203
+                except Exception:
                     print(f"{i} times tried")
                     if i == times:
                         raise
@@ -99,19 +99,19 @@ class Runner:
             test_case.__module__ = self._parent_module
         return test_case
 
-    def include(self, pattern: str) -> Runner:
+    def include(self, pattern: str) -> Self:
         self._include_patterns.add(re.compile(pattern))
         return self
 
-    def exclude(self, pattern: str) -> Runner:
+    def exclude(self, pattern: str) -> Self:
         self._exclude_patterns.add(re.compile(pattern))
         return self
 
-    def xfail(self, pattern: str) -> Runner:
+    def xfail(self, pattern: str) -> Self:
         self._xfail_patterns.add(re.compile(pattern))
         return self
 
-    def enable_report(self) -> Runner:
+    def enable_report(self) -> Self:
         import pytest  # noqa: PLC0415
 
         for category, items_map in self._test_items.items():

@@ -6,7 +6,7 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from onnx import checker, defs, helper, parser
+from onnx import TensorProto, checker, defs, helper, parser
 from onnx.reference import ReferenceEvaluator
 
 
@@ -114,7 +114,15 @@ def test_noncontiguous_input(bits: int, function: bool) -> None:
 
 
 @pytest.mark.parametrize(
-    "count", [np.array(-1, dtype=np.int64), np.array([2], dtype=np.int64)]
+    "count",
+    [
+        np.array(-1, dtype=np.int64),
+        np.array([2], dtype=np.int64),
+        np.array([[2]], dtype=np.int64),
+        np.array(2, dtype=np.int32),
+        np.array(2, dtype=np.uint64),
+        np.array(2, dtype=np.float32),
+    ],
 )
 def test_unpack_invalid_count(count: np.ndarray) -> None:
     with pytest.raises(ValueError, match="nonnegative scalar"):
@@ -133,3 +141,92 @@ def test_unpack_invalid_length(count: int) -> None:
                 "count": np.array(count, dtype=np.int64),
             },
         )
+
+
+@pytest.mark.parametrize("bits", range(1, 9))
+@pytest.mark.parametrize("function", [False, True])
+def test_all_codes(bits: int, function: bool) -> None:
+    x = np.arange(1 << bits, dtype=np.uint8)[::-1]
+    packed = evaluator("Pack", bits, function, x.shape).run(None, {"X": x})[0]
+    np.testing.assert_array_equal(packed, oracle(x, bits))
+    unpacked = evaluator("Unpack", bits, function, packed.shape).run(
+        None, {"X": packed, "count": np.array(x.size, dtype=np.int64)}
+    )[0]
+    np.testing.assert_array_equal(unpacked, x)
+    assert packed.dtype == unpacked.dtype == np.uint8
+
+
+@pytest.mark.parametrize("bits", range(1, 9))
+@pytest.mark.parametrize("n", [1, 2, 7, 9, 17])
+@pytest.mark.parametrize("function", [False, True])
+def test_unpack_arbitrary_bytes(bits: int, n: int, function: bool) -> None:
+    rng = np.random.default_rng(42)
+    x = rng.integers(0, 256, size=(3, (n * bits + 7) // 8), dtype=np.uint8)
+    expected = np.array(
+        [
+            [
+                (int.from_bytes(row.tobytes(), "little") >> (i * bits))
+                & ((1 << bits) - 1)
+                for i in range(n)
+            ]
+            for row in x
+        ],
+        dtype=np.uint8,
+    )
+    unpacked = evaluator("Unpack", bits, function, x.shape).run(
+        None, {"X": x, "count": np.array(n, dtype=np.int64)}
+    )[0]
+    np.testing.assert_array_equal(unpacked, expected)
+
+
+@pytest.mark.parametrize("bits", range(1, 9))
+@pytest.mark.parametrize("n", [0, 9, 2**61, 2**61 + 1])
+@pytest.mark.parametrize("function", [False, True])
+def test_empty_rows_do_not_iterate(
+    bits: int, n: int, function: bool, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    def unexpected_range(*_args, **_kwargs):
+        pytest.fail("Empty tensors must not construct or iterate over code indices.")
+
+    # Guard the regression against both unbounded Python loops and huge allocations.
+    monkeypatch.setattr(
+        "onnx.reference.ops.op_pack.range", unexpected_range, raising=False
+    )
+    monkeypatch.setattr(
+        "onnx.reference.ops.op_unpack.range", unexpected_range, raising=False
+    )
+    monkeypatch.setattr("onnx.reference.ops.op_range.Range._run", unexpected_range)
+    x = np.empty((2, 0, n), dtype=np.uint8)
+    packed = evaluator("Pack", bits, function, x.shape).run(None, {"X": x})[0]
+    assert packed.shape == (2, 0, (n * bits + 7) // 8)
+    unpacked = evaluator("Unpack", bits, function, packed.shape).run(
+        None, {"X": packed, "count": np.array(n, dtype=np.int64)}
+    )[0]
+    assert unpacked.shape == x.shape
+    assert packed.dtype == unpacked.dtype == np.uint8
+
+
+@pytest.mark.parametrize("op", ["Pack", "Unpack"])
+@pytest.mark.parametrize("dtype", [np.int8, np.int32, np.float32, np.bool_])
+def test_invalid_input_dtype(op: str, dtype: type) -> None:
+    feeds = {"X": np.zeros((1,), dtype=dtype)}
+    if op == "Unpack":
+        feeds["count"] = np.array(2, dtype=np.int64)
+    with pytest.raises(ValueError, match="UINT8 tensor"):
+        evaluator(op, 3).run(None, feeds)
+
+
+@pytest.mark.parametrize("op", ["Pack", "Unpack"])
+def test_bits_is_required(op: str) -> None:
+    inputs = [helper.make_tensor_value_info("X", TensorProto.UINT8, [1])]
+    if op == "Unpack":
+        inputs.append(helper.make_tensor_value_info("count", TensorProto.INT64, []))
+    graph = helper.make_graph(
+        [helper.make_node(op, [value.name for value in inputs], ["Y"])],
+        "packing",
+        inputs,
+        [helper.make_tensor_value_info("Y", TensorProto.UINT8, [None])],
+    )
+    model = helper.make_model(graph, opset_imports=[helper.make_opsetid("", 29)])
+    with pytest.raises(checker.ValidationError, match="bits"):
+        checker.check_model(model)

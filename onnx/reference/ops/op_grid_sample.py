@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import numbers
+from typing import ClassVar
 
 import numpy as np
 
@@ -11,7 +12,14 @@ from onnx.reference.op_run import OpRun
 from onnx.reference.ops.op_resize import _get_all_coords
 
 
-class GridSample(OpRun):
+class _CommonGridSample(OpRun):
+    """Shared implementation for every version of GridSample.
+
+    Subclasses declare the mode names their opset defines via ``mode_mapping``.
+    """
+
+    mode_mapping: ClassVar[dict[str, str]] = {}
+
     # https://github.com/pytorch/pytorch/blob/v2.0.0/aten/src/ATen/native/GridSampler.h#L26
     def _gs_denormalize(self, n, length: int, align_corners: bool):
         # n is the normalized coordinate (float)
@@ -290,6 +298,14 @@ class GridSample(OpRun):
         padding_mode = padding_mode or self.padding_mode
         align_corners = align_corners or self.align_corners
 
+        if mode not in self.mode_mapping:
+            raise ValueError(
+                f"Unexpected value {mode!r} for attribute 'mode' of operator "
+                f"GridSample, it must be one of "
+                f"{sorted(self.mode_mapping)}."
+            )
+        mode = self.mode_mapping[mode]
+
         x_dims = X.shape
         grid_dims = grid.shape
         N = x_dims[0]
@@ -363,3 +379,19 @@ class GridSample(OpRun):
                         )
 
         return (Y.astype(X.dtype),)
+
+
+class GridSample_16(_CommonGridSample):
+    mode_mapping: ClassVar[dict[str, str]] = {
+        "bilinear": "linear",
+        "nearest": "nearest",
+        "bicubic": "cubic",
+    }
+
+
+class GridSample_20(_CommonGridSample):
+    mode_mapping: ClassVar[dict[str, str]] = {
+        "linear": "linear",
+        "nearest": "nearest",
+        "cubic": "cubic",
+    }

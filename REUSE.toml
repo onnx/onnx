@@ -26,12 +26,6 @@ SPDX-FileCopyrightText = "Copyright (c) ONNX Project Contributors"
 SPDX-License-Identifier = "Apache-2.0"
 
 [[annotations]]
-path = ["onnx/backend/test/data/node/**.onnx", "onnx/backend/test/data/node/**.pb"]
-precedence = "aggregate"
-SPDX-FileCopyrightText = "Copyright (c) ONNX Project Contributors"
-SPDX-License-Identifier = "Apache-2.0"
-
-[[annotations]]
 path = "onnx/backend/test/data/simple/**/test_data_set_0/**pb"
 precedence = "aggregate"
 SPDX-FileCopyrightText = "Copyright (c) ONNX Project Contributors"
@@ -225,6 +219,12 @@ SPDX-License-Identifier = "Apache-2.0"
 
 [[annotations]]
 path = "sbom.cdx.json"
+precedence = "aggregate"
+SPDX-FileCopyrightText = "Copyright (c) ONNX Project Contributors"
+SPDX-License-Identifier = "Apache-2.0"
+
+[[annotations]]
+path = ".vex/**.json"
 precedence = "aggregate"
 SPDX-FileCopyrightText = "Copyright (c) ONNX Project Contributors"
 SPDX-License-Identifier = "Apache-2.0"

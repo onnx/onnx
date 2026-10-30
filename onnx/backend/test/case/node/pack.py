@@ -30,3 +30,10 @@ class Pack(Base):
         node = helper.make_node("Pack", ["X"], ["Y"], bits=3)
         x = np.empty((2, 0), dtype=np.uint8)
         expect(node, inputs=[x], outputs=[x], name="test_pack_empty")
+
+    @staticmethod
+    def export_pack_empty_rows() -> None:
+        node = helper.make_node("Pack", ["X"], ["Y"], bits=5)
+        x = np.empty((2, 0, 9), dtype=np.uint8)
+        y = np.empty((2, 0, 6), dtype=np.uint8)
+        expect(node, inputs=[x], outputs=[y], name="test_pack_empty_rows")
