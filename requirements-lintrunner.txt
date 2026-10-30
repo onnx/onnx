@@ -1,4 +1,5 @@
 # This file is auto updated by dependabot
+lintrunner>=0.10.7
 lintrunner-adapters>=0.14.1
 # RUFF
 ruff==0.16.8
