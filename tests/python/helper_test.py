@@ -3,8 +3,10 @@
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
+import inspect
 import math
 import random
+import warnings
 from typing import Any
 
 import ml_dtypes
@@ -950,6 +952,20 @@ class TestHelperOptionalAndSequenceFunctions:
 
 
 class TestPrintableGraph:
+    def test_deprecation_warning_and_metadata(self) -> None:
+        graph = helper.make_graph([], "empty", [], [])
+        original = helper.printable_graph.__wrapped__
+        with warnings.catch_warnings(record=True, action="always") as caught:
+            result = helper.printable_graph(graph)
+        assert result == original(graph)
+        assert len(caught) == 1
+        assert caught[0].category is DeprecationWarning
+        assert caught[0].filename == __file__
+        assert str(caught[0].message) == helper.printable_graph.__deprecated__
+        assert helper.printable_graph.__name__ == original.__name__
+        assert helper.printable_graph.__doc__ == original.__doc__
+        assert inspect.signature(helper.printable_graph) == inspect.signature(original)
+
     def test_initializer_with_matching_graph_input(self) -> None:
         add = helper.make_node("Add", ["X", "Y_Initializer"], ["Z"])
         value_info = [helper.make_tensor_value_info("Y", TensorProto.FLOAT, [1])]
