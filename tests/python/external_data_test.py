@@ -1429,8 +1429,7 @@ class TestExternalDataInfoSecurity:
         tensor = self._make_tensor_with_external_data(
             {"location": "weights.bin", "malicious_attr": "evil_value"}
         )
-        with warnings.catch_warnings(record=True) as caught:
-            warnings.simplefilter("always")
+        with warnings.catch_warnings(record=True, action="always") as caught:
             info = ExternalDataInfo(tensor)
         # Unknown attribute must NOT be set on the object
         assert not hasattr(info, "malicious_attr"), (
@@ -1456,8 +1455,7 @@ class TestExternalDataInfoSecurity:
         dunder_entry.value = "builtins.dict"
 
         original_class = ExternalDataInfo
-        with warnings.catch_warnings(record=True) as caught:
-            warnings.simplefilter("always")
+        with warnings.catch_warnings(record=True, action="always") as caught:
             info = ExternalDataInfo(tensor)
         # Object type must not have been corrupted
         assert isinstance(info, original_class)
@@ -1505,8 +1503,7 @@ class TestExternalDataInfoSecurity:
                 "__dict__": "c",
             }
         )
-        with warnings.catch_warnings(record=True) as caught:
-            warnings.simplefilter("always")
+        with warnings.catch_warnings(record=True, action="always") as caught:
             info = ExternalDataInfo(tensor)
         assert not hasattr(info, "evil_one")
         assert not hasattr(info, "evil_two")
