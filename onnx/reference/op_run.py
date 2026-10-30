@@ -4,7 +4,7 @@
 from __future__ import annotations
 
 import abc
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Self
 
 import numpy as np
 
@@ -551,7 +551,7 @@ class OpRun(abc.ABC):
         n_outputs: int | None = None,
         verbose: int = 0,
         **kwargs: Any,
-    ) -> Any:
+    ) -> Self:
         """Instantiates this class based on the given information.
 
         Args:
@@ -563,7 +563,7 @@ class OpRun(abc.ABC):
             **kwargs: node attributes
 
         Returns:
-            NodeProto
+            An instance of this operator class.
         """
 
         def log_function(pattern: str, *args: Any) -> None:
