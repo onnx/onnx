@@ -2541,6 +2541,53 @@ class TestVersionConverter:
         assert converted_model.opset_import[0].version == 12
 
     @pytest.mark.parametrize(
+        "op_type, from_opset, to_opset",
+        [("ReduceSum", 13, 12), ("ReduceMean", 18, 17), ("ReduceMax", 18, 13)],
+    )
+    @pytest.mark.parametrize("has_axes", [True, False])
+    def test_reduce_drops_noop_with_empty_axes(
+        self, op_type: str, from_opset: int, to_opset: int, has_axes: bool
+    ) -> None:
+        nodes = [
+            helper.make_node(
+                op_type,
+                ["X", "axes"] if has_axes else ["X"],
+                ["Y"],
+                keepdims=1,
+                noop_with_empty_axes=0,
+            )
+        ]
+        graph = helper.make_graph(
+            nodes,
+            "test",
+            [helper.make_tensor_value_info("X", TensorProto.FLOAT, (2, 3, 4))],
+            [helper.make_tensor_value_info("Y", TensorProto.FLOAT, None)],
+            [helper.make_tensor("axes", TensorProto.INT64, [1], [1])]
+            if has_axes
+            else [],
+        )
+        converted_model = self._converted(
+            graph, helper.make_operatorsetid("", from_opset), to_opset
+        )
+        node = converted_model.graph.node[0]
+        assert [a.name for a in node.attribute] == (
+            ["keepdims", "axes"] if has_axes else ["keepdims"]
+        )
+
+    def test_reduce_rejects_noop_with_empty_axes(self) -> None:
+        # With noop_with_empty_axes=1 and no axes the op is an identity, while
+        # ReduceMean-17 without axes reduces over all dimensions.
+        nodes = [helper.make_node("ReduceMean", ["X"], ["Y"], noop_with_empty_axes=1)]
+        graph = helper.make_graph(
+            nodes,
+            "test",
+            [helper.make_tensor_value_info("X", TensorProto.FLOAT, (2, 3, 4))],
+            [helper.make_tensor_value_info("Y", TensorProto.FLOAT, None)],
+        )
+        with pytest.raises(RuntimeError, match="noop_with_empty_axes"):
+            self._converted(graph, helper.make_operatorsetid("", 18), 17)
+
+    @pytest.mark.parametrize(
         "op_type, attrs, from_opset, to_opset, output_type, output_shape",
         [
             (
