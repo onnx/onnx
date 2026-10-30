@@ -21580,18 +21580,42 @@ expect(node, inputs=[x], outputs=[y], name="test_log")
 
 ### <a name="Log1p"></a><a name="log1p">**Log1p**</a>
 
-  Computes the natural logarithm of one plus each input element: `Y = log(1 + X)`.
-  The output has the same shape and element type as the input.
+  Computes the natural logarithm of one plus each input element, independently.
+  The input may have any shape, including a scalar or an empty tensor. The output
+  has the same shape and element type as the input. Supported element types are
+  FLOAT16, BFLOAT16, FLOAT, and DOUBLE.
 
-  The computation preserves accuracy for small inputs, including inputs for which
-  `1 + X` would round to `1` in the input type. Implementations must not lose such
-  inputs through an intermediate rounded addition. For example, for float32 input
-  `1e-8`, the result is approximately `1e-8`, rather than zero.
+  For a finite input element `x > -1` with `x != 0`, the mathematical result is
+  `y = ln(1 + x)`, where `ln` is the logarithm to base `e`. Here `x` denotes the
+  exact real value represented by the input element, and `1 + x` denotes an exact
+  real sum in the mathematical definition, not an intermediate floating-point
+  addition that must be materialized.
 
-  The behavior follows NumPy's `log1p`: positive and negative zero are preserved;
-  `X = -1` produces negative infinity; `X < -1` produces NaN;
-  positive infinity produces positive infinity; and NaN inputs produce NaN.
-  See https://numpy.org/doc/stable/reference/generated/numpy.log1p.html.
+  Special values are defined element-wise as follows:
+
+  | Input `x` | Output `y` |
+  | --- | --- |
+  | Positive zero | Positive zero |
+  | Negative zero | Negative zero |
+  | `-1` | Negative infinity |
+  | Finite `x < -1` | NaN |
+  | Negative infinity | NaN |
+  | Positive infinity | Positive infinity |
+  | NaN | NaN |
+
+  The sign and payload of an output NaN are unspecified.
+
+  The computation must preserve small nonzero results that would be lost by
+  rounding `1 + x` to `1` before applying the logarithm. In particular, an output
+  must not become zero solely because such an intermediate sum rounds to `1`
+  when the mathematical result is representable as a nonzero value in the output
+  type. Near zero, `ln(1 + x) / x` tends to `1`. For example, a FLOAT input `1e-8`
+  produces a result approximately equal to `1e-8`, rather than zero.
+
+  Implementations may choose their numerical algorithm; the operation is not
+  specified as a composition of `Add` and `Log`. Non-special results are subject
+  to floating-point approximation, without a requirement for bitwise agreement
+  between implementations or correctly rounded transcendental results.
 
 #### Version
 
