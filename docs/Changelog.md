@@ -23618,7 +23618,7 @@ x_original = length_resized > 1 ? (x_resized + 0.5) / scale - 0.5 : 0
 
 if coordinate_transformation_mode is `"align_corners"`,
 ```
-x_original = x_resized * (length_original - 1) / (length_resized - 1)
+x_original = length_resized > 1 ? x_resized * (length_original - 1) / (length_resized - 1) : 0
 ```
 
 if coordinate_transformation_mode is `"asymmetric"`,
