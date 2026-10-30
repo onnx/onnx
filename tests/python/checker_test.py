@@ -25,6 +25,7 @@ from onnx import (
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
+    from pathlib import Path
 
 
 class TestChecker:
@@ -1769,6 +1770,156 @@ class TestChecker:
         tensor3.name = "t"
         checker.check_tensor(tensor3)
 
+    @staticmethod
+    def _raw_data_tensor(dtype: int, dims: list[int], nbytes: int) -> TensorProto:
+        tensor = TensorProto()
+        tensor.data_type = dtype
+        tensor.dims.extend(dims)
+        tensor.name = "t"
+        tensor.raw_data = b"\x00" * nbytes
+        return tensor
+
+    def test_check_tensor_raw_data_size(self) -> None:
+        """Reject whole-byte tensors whose raw_data payload is too small."""
+        # (data type, bytes per element)
+        cases = [
+            (TensorProto.BOOL, 1),
+            (TensorProto.UINT8, 1),
+            (TensorProto.FLOAT8E4M3FN, 1),
+            (TensorProto.FLOAT16, 2),
+            (TensorProto.BFLOAT16, 2),
+            (TensorProto.FLOAT, 4),
+            (TensorProto.INT32, 4),
+            (TensorProto.DOUBLE, 8),
+            (TensorProto.INT64, 8),
+            (TensorProto.COMPLEX64, 8),
+            (TensorProto.COMPLEX128, 16),
+        ]
+        for dtype, elem_size in cases:
+            with pytest.raises(checker.ValidationError):
+                checker.check_tensor(
+                    self._raw_data_tensor(dtype, [4], 4 * elem_size - 1)
+                )
+            # Exactly enough bytes must pass.
+            checker.check_tensor(self._raw_data_tensor(dtype, [4], 4 * elem_size))
+
+        # Trailing bytes are accepted: external data loaded without a length key reads to EOF.
+        checker.check_tensor(self._raw_data_tensor(TensorProto.FLOAT, [4], 64))
+
+        # Segmented tensors use the segment range instead of dims; raw_data holds one
+        # chunk of length end - begin, and begin/end must lie in [0, nelem].
+        tensor = self._raw_data_tensor(TensorProto.FLOAT, [1000], 16)
+        tensor.segment.begin = 0
+        tensor.segment.end = 4
+        checker.check_tensor(tensor)
+
+        # Segment missing begin or end.
+        for kwargs in ({"begin": 0}, {"end": 4}):
+            bad = self._raw_data_tensor(TensorProto.FLOAT, [1000], 16)
+            for k, v in kwargs.items():
+                setattr(bad.segment, k, v)
+            with pytest.raises(checker.ValidationError):
+                checker.check_tensor(bad)
+
+        # Segment begin < 0.
+        bad = self._raw_data_tensor(TensorProto.FLOAT, [1000], 16)
+        bad.segment.begin = -1
+        bad.segment.end = 4
+        with pytest.raises(checker.ValidationError):
+            checker.check_tensor(bad)
+
+        # Segment end > nelem.
+        bad = self._raw_data_tensor(TensorProto.FLOAT, [1000], 16)
+        bad.segment.begin = 0
+        bad.segment.end = 1001
+        with pytest.raises(checker.ValidationError):
+            checker.check_tensor(bad)
+
+        # An unrecognized data_type has no known element size.
+        with pytest.raises(checker.ValidationError):
+            checker.check_tensor(self._raw_data_tensor(99, [4], 16))
+
+        # Byte-size overflow is reported instead of overflowing int64 internally.
+        with pytest.raises(checker.ValidationError):
+            checker.check_tensor(
+                self._raw_data_tensor(TensorProto.FLOAT, [2**63 - 1], 1)
+            )
+
+    @pytest.mark.parametrize(
+        "dtype, field, value_count",
+        [
+            (TensorProto.FLOAT, "float_data", 17),
+            (TensorProto.COMPLEX64, "float_data", 34),
+            (TensorProto.DOUBLE, "double_data", 17),
+            (TensorProto.COMPLEX128, "double_data", 34),
+            (TensorProto.INT32, "int32_data", 17),
+            (TensorProto.INT64, "int64_data", 17),
+            (TensorProto.UINT32, "uint64_data", 17),
+            (TensorProto.UINT64, "uint64_data", 17),
+            (TensorProto.STRING, "string_data", 17),
+            (TensorProto.FLOAT6E2M3, "int32_data", 17),
+            (TensorProto.FLOAT6E3M2, "int32_data", 17),
+            (TensorProto.INT4, "int32_data", 3),
+            (TensorProto.INT2, "int32_data", 2),
+        ],
+    )
+    def test_check_tensor_segment_typed_data(
+        self, dtype: int, field: str, value_count: int
+    ) -> None:
+        tensor = TensorProto(data_type=dtype, dims=[1000])
+        tensor.segment.begin = 2
+        tensor.segment.end = 19
+        values = getattr(tensor, field)
+        values.extend([b"value" if field == "string_data" else 0] * value_count)
+        checker.check_tensor(tensor)
+
+        values.pop()
+        with pytest.raises(checker.ValidationError, match=f"{field} size"):
+            checker.check_tensor(tensor)
+
+    @pytest.mark.parametrize("payload", ["raw", "typed", "external"])
+    @pytest.mark.parametrize(
+        "segment",
+        [
+            {"begin": 0},
+            {"end": 4},
+            {"begin": -1, "end": 4},
+            {"begin": 5, "end": 4},
+            {"begin": 0, "end": 1001},
+        ],
+        ids=["missing_end", "missing_begin", "negative_begin", "reversed", "past_end"],
+    )
+    def test_check_tensor_invalid_segment_all_payloads(
+        self,
+        payload: str,
+        segment: dict[str, int],
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        tensor = TensorProto(data_type=TensorProto.FLOAT, dims=[1000])
+        if payload == "raw":
+            tensor.raw_data = bytes(4000)
+        elif payload == "typed":
+            tensor.float_data.extend([0.0] * 1000)
+        else:
+            monkeypatch.chdir(tmp_path)
+            (tmp_path / "weights.bin").write_bytes(bytes(4000))
+            tensor.data_location = TensorProto.EXTERNAL
+            tensor.external_data.add(key="location", value="weights.bin")
+        for key, value in segment.items():
+            setattr(tensor.segment, key, value)
+        with pytest.raises(checker.ValidationError, match="segment"):
+            checker.check_tensor(tensor)
+
+    def test_check_tensor_empty_segment(self) -> None:
+        tensor = TensorProto(data_type=TensorProto.FLOAT, dims=[1000])
+        tensor.segment.begin = tensor.segment.end = 1000
+        checker.check_tensor(tensor)
+
+        tensor.float_data.append(0.0)
+        with pytest.raises(checker.ValidationError, match="0-element"):
+            checker.check_tensor(tensor)
+
     def test_check_tensor_packed_subbyte_raw_data(self) -> None:
         """Reject packed sub-byte tensors whose raw_data payload is too small."""
         # 4-bit types (INT4, UINT4, FLOAT4E2M1): 2 elements per byte.
@@ -1829,6 +1980,29 @@ class TestChecker:
 
         with pytest.raises(checker.ValidationError, match="Unrecognized data_type"):
             checker.check_tensor(tensor)
+
+    @pytest.mark.parametrize("dtype", (TensorProto.FLOAT6E2M3, TensorProto.FLOAT6E3M2))
+    @pytest.mark.parametrize(
+        "raw_data, count, valid",
+        [
+            (b"\x3f", 1, True),
+            (b"\x40", 1, False),
+            (b"\xff\xff\x03", 3, True),
+            (b"\xff\xff\x04", 3, False),
+        ],
+    )
+    def test_check_tensor_segment_float6_padding(
+        self, dtype: int, raw_data: bytes, count: int, valid: bool
+    ) -> None:
+        tensor = self._raw_data_tensor(dtype, [1000], len(raw_data))
+        tensor.raw_data = raw_data
+        tensor.segment.begin = 5
+        tensor.segment.end = 5 + count
+        if valid:
+            checker.check_tensor(tensor)
+        else:
+            with pytest.raises(checker.ValidationError, match="padding bits"):
+                checker.check_tensor(tensor)
 
     @pytest.mark.parametrize("dtype", (TensorProto.INT2, TensorProto.UINT2))
     def test_check_tensor_2bit_raw_data_size_does_not_overflow(

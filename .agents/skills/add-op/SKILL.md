@@ -78,6 +78,8 @@ ONNX_OPERATOR_SET_SCHEMA(
 
 ## Writing Tests
 
+Node tests belong in `onnx/backend/test/case/node/` as Python exporters with `expect(...)` calls. Backend tests discover and build these cases in memory; do not commit generated `.onnx` or `.pb` fixtures under `onnx/backend/test/data/node/`.
+
 For test fixtures, prefer the ONNX text format via `onnx.parser` / C++ `OnnxParser`. See the [`onnxtxt`](../onnxtxt/SKILL.md) skill for the per-file recommendations table, body-subgraph idioms, the argument-order convention, and the `unk__*` materialization gotcha. (Empirical: PR #7962 cut ~58–70% of test LOC by switching.)
 
 ## After Making Changes
