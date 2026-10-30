@@ -89,6 +89,9 @@ onnx/examples/.coverage.nbval
 test_report
 test-output.xml
 
+# Node tests are built in memory from Python; do not commit generated fixtures.
+/onnx/backend/test/data/node/
+
 # autocomplete
 .ycm_extra_conf.py
 

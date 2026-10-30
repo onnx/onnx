@@ -132,7 +132,7 @@ jobs:
 
       - name: Validate wheel
         run: |
-          python -m pip install -q abi3audit check-wheel-contents
+          python -m pip install -q -r requirements-release_wheel_check.txt
           Get-ChildItem -Path dist/*.whl | ForEach-Object {
             echo "Checking $($_.Name)"
             check-wheel-contents $_.FullName

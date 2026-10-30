@@ -7719,8 +7719,7 @@ class TestReferenceEvaluator:
         # A fully-masked row (all `-inf`) must softmax to all-zeros without
         # producing NaN or emitting a NumPy warning.
         x = np.array([[0.0, 1.0, 2.0], [-np.inf, -np.inf, -np.inf]], dtype=np.float64)
-        with warnings.catch_warnings():
-            warnings.simplefilter("error")
+        with warnings.catch_warnings(action="error"):
             got = _softmax(x)
         assert not np.isnan(got).any()
         assert_allclose(got[1], np.zeros(3, dtype=np.float64))
