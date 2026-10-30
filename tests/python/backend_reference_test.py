@@ -8,7 +8,7 @@ import platform
 import sys
 from typing import Any
 
-import numpy
+import numpy as np
 import version_utils
 
 import onnx.backend.base
@@ -26,7 +26,7 @@ class ReferenceEvaluatorBackendRep(onnx.backend.base.BackendRep):
         self._session = session
 
     def run(self, inputs, **kwargs):  # noqa: ARG002
-        if isinstance(inputs, numpy.ndarray):
+        if isinstance(inputs, np.ndarray):
             inputs = [inputs]
         if isinstance(inputs, list):
             if len(inputs) == len(self._session.input_names):

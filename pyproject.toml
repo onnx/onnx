@@ -184,6 +184,7 @@ lint.select = [
     "FURB", # refurb
     "G", # flake8-logging-format
     "I", # isort
+    "ICN", # flake8-import-conventions
     "ISC", # flake8-implicit-str-concat
     "LOG", # flake8-logging
     "N", # pep8-naming
@@ -192,6 +193,7 @@ lint.select = [
     "PGH", # pygrep-hooks
     "PIE", # flake8-pie
     "PL", # pylint
+    "PT012", # Keep each pytest.raises block focused on one call
     "PYI", # flake8-pyi
     "RSE", # flake8-raise
     "RUF", # Ruff-specific rules
