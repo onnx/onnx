@@ -39,7 +39,7 @@ void LoadProtoFromPath(const std::string& proto_path, T& proto) {
   }
 
   google::protobuf::io::IstreamInputStream input(&proto_stream);
-  bool parsed;
+  bool parsed = false;
   {
     google::protobuf::io::CodedInputStream coded_input(&input);
     coded_input.SetTotalBytesLimit(total_bytes_limit);
@@ -47,8 +47,8 @@ void LoadProtoFromPath(const std::string& proto_path, T& proto) {
   }
   // The coded stream returns any unread bytes to input on destruction. Check
   // for physical EOF too, since reaching its byte limit can end parsing early.
-  const void* remaining_data;
-  int remaining_size;
+  const void* remaining_data = nullptr;
+  int remaining_size = 0;
   const bool has_remaining_data = input.Next(&remaining_data, &remaining_size);
   if (proto_stream.bad() || (proto_stream.fail() && !proto_stream.eof())) {
     fail_check("Unable to read proto file: ", proto_path, ". Please check if it is a valid proto. ");
