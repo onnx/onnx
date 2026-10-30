@@ -69,6 +69,8 @@ Protobuf is required for ONNX. If you don't have Protobuf installed, ONNX will i
 
 Protobuf uses different major-version numbers for some language runtimes. In this checkout, the Python package requirement is `protobuf 6.31.1` in [`pyproject.toml`](pyproject.toml), while the corresponding upstream C++ library and compiler release is `v31.1` in [`sbom.cdx.json`](sbom.cdx.json). These version strings are related but are not interchangeable: use the `v31.1` tag when building the C++ library or `protoc` from source. See [Protobuf version support](https://protobuf.dev/support/version-support/) for an explanation of the versioning scheme.
 
+The schemas use Protobuf Edition 2023. External toolchains need `protoc` 27.0 or newer and a matching C++ runtime; Protobuf 3.x cannot compile these schemas. Other language generators and runtimes must also support Edition 2023. The bundled v31.1 toolchain meets this requirement.
+
 Or, you can manually install [Protobuf C/C++ libraries and tools](https://github.com/protocolbuffers/protobuf) with specified version before proceeding forward. Then depending on how you installed Protobuf, you need to set environment variable CMAKE_ARGS to "-DONNX_USE_PROTOBUF_SHARED_LIBS=ON" or "-DONNX_USE_PROTOBUF_SHARED_LIBS=OFF". For example, you may need to run the following command:
 
 Linux or Mac:

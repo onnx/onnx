@@ -17,6 +17,60 @@
 
 namespace ONNX_NAMESPACE::Test {
 
+TEST(IR, Edition2023PreservesExplicitDefaultPresence) {
+  AttributeProto attribute;
+  EXPECT_FALSE(attribute.has_i());
+  const std::string wire("\x18\x00", 2);
+  ASSERT_TRUE(attribute.ParseFromString(wire));
+  EXPECT_TRUE(attribute.has_i());
+  EXPECT_EQ(attribute.i(), 0);
+  EXPECT_EQ(attribute.SerializeAsString(), wire);
+}
+
+TEST(IR, Edition2023RejectsInvalidUtf8) {
+  // NodeProto.name, including on protobuf-lite builds without reflection.
+  for (const std::string invalid : {std::string("\xff"), std::string("\xed\xa0\x80")}) {
+    const std::string wire = std::string("\x1a") + static_cast<char>(invalid.size()) + invalid;
+    NodeProto node;
+    EXPECT_FALSE(node.ParseFromString(wire));
+  }
+  NodeProto node;
+  ASSERT_TRUE(node.ParseFromString("\x1a\x03\xe5\x9c\x96"));
+  EXPECT_EQ(node.name(), "\xe5\x9c\x96");
+}
+
+TEST(IR, Edition2023PreservesUnknownEnumValues) {
+  // Closed enums retain unknown values without exposing them through accessors,
+  // including in protobuf-lite builds without reflection.
+  const std::string attribute_wire("\xa0\x01\x7f", 3);
+  AttributeProto attribute;
+  ASSERT_TRUE(attribute.ParseFromString(attribute_wire));
+  EXPECT_FALSE(attribute.has_type());
+  EXPECT_EQ(attribute.type(), AttributeProto::UNDEFINED);
+  EXPECT_EQ(attribute.SerializeAsString(), attribute_wire);
+
+  const std::string tensor_wire("\x70\x7f", 2);
+  TensorProto tensor;
+  ASSERT_TRUE(tensor.ParseFromString(tensor_wire));
+  EXPECT_FALSE(tensor.has_data_location());
+  EXPECT_EQ(tensor.data_location(), TensorProto::DEFAULT);
+  EXPECT_EQ(tensor.SerializeAsString(), tensor_wire);
+}
+
+TEST(IR, Edition2023RejectsUnknownAttributeTypeDuringConversion) {
+#ifndef ONNX_NO_EXCEPTIONS
+  ModelProto model;
+  model.set_ir_version(IR_VERSION);
+  auto* node = model.mutable_graph()->add_node();
+  node->set_op_type("Custom");
+  auto* attribute = node->add_attribute();
+  attribute->set_name("unknown");
+  // An unrecognized closed-enum value leaves the required discriminator unset.
+  ASSERT_TRUE(attribute->MergeFromString("\xa0\x01\x7f"));
+  EXPECT_THROW(ImportModelProto(model), ConvertError);
+#endif
+}
+
 static bool IsValidIdentifier(const std::string& name) {
   if (name.empty()) {
     return false;

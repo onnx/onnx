@@ -1021,8 +1021,7 @@ def printable_attribute(
     def str_list(str_elem: Callable[[_T], str], xs: Sequence[_T]) -> str:
         return "[" + ", ".join(map(str_elem, xs)) + "]"
 
-    # for now, this logic should continue to work as long as we are running on a proto3
-    # implementation. If/when we switch to proto3, we will need to use attr.type
+    # Explicit optional fields preserve presence for zero and empty values.
 
     # To support printing subgraphs, if we find a graph attribute, print out
     # its name here and pass the graph itself up to the caller for later

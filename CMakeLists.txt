@@ -69,15 +69,6 @@ if(NOT DEFINED ONNX_ML)
   option(ONNX_ML "Enable traditional ML API." ${DEFAULT_ONNX_ML})
 endif()
 
-if(NOT DEFINED ONNX_VERIFY_PROTO3)
-  if(DEFINED ENV{ONNX_VERIFY_PROTO3})
-    set(PROTO3_ENABLED $ENV{ONNX_VERIFY_PROTO3})
-  else()
-    set(PROTO3_ENABLED OFF)
-  endif()
-  option(ONNX_VERIFY_PROTO3 "Generate code by proto3" ${PROTO3_ENABLED})
-endif()
-
 if(NOT DEFINED CMAKE_CXX_STANDARD)
   set(CMAKE_CXX_STANDARD 17)
 else()
@@ -509,16 +500,8 @@ function(RELATIVE_PROTOBUF_GENERATE_CPP SRCS)
     if(ONNX_USE_LITE_PROTO)
       list(APPEND GEN_PROTO_ARGS -l)
     endif()
-    if(ONNX_VERIFY_PROTO3)
-        if(NOT ONNX_PROTOC_EXECUTABLE)
-          message(FATAL_ERROR "Protobuf compiler not found")
-        endif()
-        list(APPEND GEN_PROTO_ARGS --protoc_path)
-        list(APPEND GEN_PROTO_ARGS "${ONNX_PROTOC_EXECUTABLE}")
-    endif()
-
     # Use add_custom_command to avoid re-generate of PROTO files
-    set(deps ${INFILE})
+    set(deps ${INFILE} "${GEN_PROTO_PY}")
     if(TARGET protobuf::protoc)
       list(APPEND deps protobuf::protoc)
     endif()
@@ -729,6 +712,18 @@ configure_file(
   ${PROJECT_SOURCE_DIR}/cmake/ONNXConfigVersion.cmake.in
   ${PROJECT_BINARY_DIR}/ONNXConfigVersion.cmake
   @ONLY)
+# External Protobuf builds can expose Abseil and utf8_range in the installed
+# ONNX targets' link interface. Load those packages before importing the targets.
+set(ONNX_CONFIG_NEEDS_ABSL OFF)
+set(ONNX_CONFIG_NEEDS_UTF8_RANGE OFF)
+if(protobuf_ABSL_USED_TARGETS)
+  if(TARGET absl::absl_check)
+    set(ONNX_CONFIG_NEEDS_ABSL ON)
+  endif()
+  if(TARGET utf8_range::utf8_range OR TARGET utf8_range::utf8_validity)
+    set(ONNX_CONFIG_NEEDS_UTF8_RANGE ON)
+  endif()
+endif()
 configure_file(
   ${PROJECT_SOURCE_DIR}/cmake/ONNXConfig.cmake.in
   ${PROJECT_BINARY_DIR}/ONNXConfig.cmake

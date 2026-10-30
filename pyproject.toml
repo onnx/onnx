@@ -45,7 +45,7 @@ build-dir = ".setuptools-cmake-build"
 cmake.version = ">=3.26"
 cmake.build-type = "Release"
 wheel.packages = ["onnx"]
-wheel.exclude = ["**.proto3", "**.md", "**/CMakeLists.txt"]
+wheel.exclude = ["**.md", "**/CMakeLists.txt"]
 wheel.py-api = "cp312"
 sdist.include = [
     "LICENSE",
@@ -72,7 +72,6 @@ ONNX_INSTALL = "OFF"
 ONNX_ML = {env = "ONNX_ML", default = "ON"}
 ONNX_NAMESPACE = {env = "ONNX_NAMESPACE", default = "onnx"}
 ONNX_BUILD_TESTS = {env = "ONNX_BUILD_TESTS", default = "OFF"}
-ONNX_VERIFY_PROTO3 = {env = "ONNX_VERIFY_PROTO3", default = "OFF"}
 ONNX_DISABLE_EXCEPTIONS = {env = "ONNX_DISABLE_EXCEPTIONS", default = "OFF"}
 ONNX_DISABLE_STATIC_REGISTRATION = {env = "ONNX_DISABLE_STATIC_REGISTRATION", default = "OFF"}
 ONNX_USE_MSVC_STATIC_RUNTIME = {env = "USE_MSVC_STATIC_RUNTIME", default = "OFF"}

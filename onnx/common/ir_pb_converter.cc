@@ -203,6 +203,9 @@ static void convertAttribute(const ONNX_NAMESPACE::AttributeProto& ap, Node& n, 
     case ONNX_NAMESPACE::AttributeProto_AttributeType_UNDEFINED:
       fail_convert("Unknown tensor data type");
       break;
+    default:
+      fail_convert("Unknown attribute type: ", ap.type());
+      break;
   }
 }
 

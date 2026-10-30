@@ -8,6 +8,7 @@
 export CORE_NUMBER=$1
 export INSTALL_PROTOBUF_PATH=$2
 export BUILD_TYPE=$3
+PROTOBUF_SHARED_LIBS=${4:-OFF}
 
 if [[ -z "$CORE_NUMBER" ]]; then
    export CORE_NUMBER=1
@@ -31,7 +32,16 @@ wget https://github.com/protocolbuffers/protobuf/releases/download/v31.1/protobu
 tar -xvf protobuf-31.1.tar.gz
 cd protobuf-31.1
 mkdir build_source && cd build_source
-cmake -DBUILD_SHARED_LIBS=OFF -DCMAKE_INSTALL_PREFIX=$INSTALL_PROTOBUF_PATH -DCMAKE_POSITION_INDEPENDENT_CODE=ON -Dprotobuf_BUILD_TESTS=OFF -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DABSL_ROOT_DIR="${ORIGINAL_PATH}/../abseil-cpp-20250127.0" -DCMAKE_CXX_STANDARD=17 -DABSL_PROPAGATE_CXX_STD=on ..
+cmake -DBUILD_SHARED_LIBS="$PROTOBUF_SHARED_LIBS" \
+    -DCMAKE_INSTALL_PREFIX="$INSTALL_PROTOBUF_PATH" \
+    -DCMAKE_INSTALL_LIBDIR=lib \
+    -DCMAKE_INSTALL_RPATH="$INSTALL_PROTOBUF_PATH/lib" \
+    -DCMAKE_POSITION_INDEPENDENT_CODE=ON \
+    -Dprotobuf_BUILD_TESTS=OFF \
+    -DCMAKE_BUILD_TYPE="$BUILD_TYPE" \
+    -Dprotobuf_FORCE_FETCH_DEPENDENCIES=ON \
+    -DFETCHCONTENT_SOURCE_DIR_ABSL="${ORIGINAL_PATH}/../abseil-cpp-20250127.0" \
+    -DCMAKE_CXX_STANDARD=17 -DABSL_PROPAGATE_CXX_STD=ON ..
 if [ "$INSTALL_PROTOBUF_PATH" == "/usr" ]; then
     # Don't use sudo for root
     if [[ "$(id -u)" == "0" ]]; then
@@ -42,7 +52,7 @@ if [ "$INSTALL_PROTOBUF_PATH" == "/usr" ]; then
     fi
 else
     cmake --build . --target install --parallel $CORE_NUMBER
-    export PATH=$INSTALL_PROTOBUF_PATH/include:$INSTALL_PROTOBUF_PATH/lib:$INSTALL_PROTOBUF_PATH/bin:$PATH
+    export PATH="$INSTALL_PROTOBUF_PATH/bin:$PATH"
 fi
 protoc --version
 cd $ORIGINAL_PATH

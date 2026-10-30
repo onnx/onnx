@@ -4,8 +4,15 @@
 # library version information
 set(ONNX_VERSION "@ONNX_VERSION@")
 
+include(CMakeFindDependencyMacro)
 if(NOT @ONNX_USE_PROTOBUF_SHARED_LIBS@)
-  find_package(Protobuf REQUIRED CONFIG)
+  find_dependency(Protobuf CONFIG)
+endif()
+if(@ONNX_CONFIG_NEEDS_ABSL@)
+  find_dependency(absl CONFIG)
+endif()
+if(@ONNX_CONFIG_NEEDS_UTF8_RANGE@)
+  find_dependency(utf8_range CONFIG)
 endif()
 
 # import targets
