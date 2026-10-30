@@ -7702,6 +7702,105 @@ class TestReferenceEvaluator:
         assert_allclose(loss, np.array([104.0], dtype=np.float32), rtol=0, atol=0)
         assert_allclose(log_prob, x, rtol=0, atol=0)
 
+    @pytest.mark.parametrize(
+        "dtype,margin", [(np.float16, 10.0), (np.float32, 18.0), (np.float64, 40.0)]
+    )
+    @pytest.mark.parametrize("axis", [0, 1, -1])
+    def test_logsoftmax_preserves_small_log_probability(self, dtype, margin, axis):
+        # Move the winning class between entries to exercise argmax selection.
+        x = np.full((3, 3), -margin, dtype=dtype)
+        np.fill_diagonal(x, 0)
+        x = np.stack([x, x], axis=0)
+        normalizer = np.log1p(2 * np.exp(-margin))
+        expected = (x.astype(np.float64) - normalizer).astype(dtype)
+        x = np.moveaxis(x, -1, axis)
+        expected = np.moveaxis(expected, -1, axis)
+        original = x.copy()
+        node = make_node("LogSoftmax", ["X"], ["Y"], axis=axis)
+
+        (got,) = ReferenceEvaluator(node).run(None, {"X": x})
+
+        assert got.dtype == dtype
+        assert (got < 0).all()
+        assert_array_equal(x, original)
+        assert_allclose(got, expected, rtol=4 * np.finfo(dtype).eps, atol=0)
+
+    def test_logsoftmax_tied_maxima_and_masked_classes(self):
+        x = np.array([[0, 0, -200], [4, 4, 4], [0, -np.inf, -np.inf]], dtype=np.float64)
+        expected = np.array(
+            [
+                [-np.log(2), -np.log(2), -200 - np.log(2)],
+                [-np.log(3), -np.log(3), -np.log(3)],
+                [0, -np.inf, -np.inf],
+            ],
+            dtype=np.float64,
+        )
+        node = make_node("LogSoftmax", ["X"], ["Y"], axis=-1)
+
+        (got,) = ReferenceEvaluator(node).run(None, {"X": x})
+
+        assert_allclose(got, expected, rtol=1e-15, atol=0)
+
+    @pytest.mark.parametrize("shape", [(2, 1, 3), (0, 3)])
+    def test_logsoftmax_single_class_and_empty_input(self, shape):
+        x = np.zeros(shape, dtype=np.float32)
+        node = make_node("LogSoftmax", ["X"], ["Y"], axis=1)
+
+        (got,) = ReferenceEvaluator(node).run(None, {"X": x})
+
+        assert_array_equal(got, x)
+
+    @pytest.mark.parametrize(
+        "dtype,margin", [(np.float16, 10.0), (np.float32, 18.0), (np.float64, 40.0)]
+    )
+    @pytest.mark.parametrize("reduction", ["none", "sum", "mean"])
+    @pytest.mark.parametrize("weighted", [False, True])
+    @pytest.mark.parametrize("spatial", [False, True])
+    def test_softmax_cross_entropy_preserves_small_loss(
+        self, dtype, margin, reduction, weighted, spatial
+    ):
+        x = np.full((3, 3), -margin, dtype=dtype)
+        np.fill_diagonal(x, 0)
+        labels = np.array([0, 1, -1], dtype=np.int64)
+        normalizer = np.log1p(2 * np.exp(-margin))
+        expected_log_prob = (x.astype(np.float64) - normalizer).astype(dtype)
+        expected_loss = np.array([normalizer, normalizer, 0], dtype=dtype)
+        weights = np.array([1, 2, 3], dtype=dtype)
+        if weighted:
+            expected_loss *= np.array([1, 2, 0], dtype=dtype)
+        if spatial:
+            x = np.repeat(x[..., None, None], 2, axis=-1)
+            labels = np.repeat(labels[..., None, None], 2, axis=-1)
+            expected_log_prob = np.repeat(
+                expected_log_prob[..., None, None], 2, axis=-1
+            )
+            expected_loss = np.repeat(expected_loss[..., None, None], 2, axis=-1)
+        if reduction == "sum":
+            expected_loss = expected_loss.sum()
+        elif reduction == "mean":
+            denominator = (3 if weighted else 2) * (2 if spatial else 1)
+            expected_loss = (expected_loss.sum() / denominator).astype(dtype)
+        feeds = {"X": x, "labels": labels}
+        if weighted:
+            feeds["weights"] = weights
+        node = make_node(
+            "SoftmaxCrossEntropyLoss",
+            list(feeds),
+            ["loss", "log_prob"],
+            reduction=reduction,
+            ignore_index=-1,
+        )
+
+        loss, log_prob = ReferenceEvaluator(node).run(None, feeds)
+
+        assert loss.dtype == dtype
+        assert log_prob.dtype == dtype
+        assert np.any(loss > 0)
+        assert_allclose(loss, expected_loss, rtol=4 * np.finfo(dtype).eps, atol=0)
+        assert_allclose(
+            log_prob, expected_log_prob, rtol=4 * np.finfo(dtype).eps, atol=0
+        )
+
     def test_softmax_cross_entropy_weighted_mean_preserves_float16_dtype(self):
         x_info = make_tensor_value_info("X", TensorProto.FLOAT16, [1, 2])
         label_info = make_tensor_value_info("label", TensorProto.INT64, [1])
