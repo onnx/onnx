@@ -5118,8 +5118,9 @@ class TestReferenceEvaluator:
             mean * effective_momentum + batch_mean * (1 - effective_momentum),
             var * effective_momentum + batch_var * (1 - effective_momentum),
             batch_mean,
-            # The legacy fifth output is the saved inverse standard deviation.
-            np.reciprocal(np.sqrt(batch_var + 1e-5)),
+            # saved_var is the batch variance (5.0 here), as documented by the
+            # schema, not the inverse standard deviation (about 0.447).
+            batch_var,
         )
         for got, want in zip(actual, expected, strict=True):
             np.testing.assert_allclose(got, want, rtol=1e-6, atol=1e-6)

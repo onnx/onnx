@@ -80,9 +80,11 @@ class BatchNormalization_9(OpRun):
         res, saved_mean, saved_var, output_mean, output_var = _batchnorm_training_mode(
             x, scale, bias, mean, var, momentum=momentum, epsilon=epsilon
         )
-        # Opset 9's legacy fifth output stores the inverse standard deviation.
-        saved_inv_std = np.reciprocal(np.sqrt(saved_var + epsilon)).astype(x.dtype)
-        return res, output_mean, output_var, saved_mean, saved_inv_std
+        # The fifth output is the saved batch variance, as the opset-9 schema
+        # names and documents it. Some runtimes return the inverse standard
+        # deviation 1 / sqrt(var + epsilon) there instead; that convention is
+        # not part of the specification.
+        return res, output_mean, output_var, saved_mean, saved_var
 
 
 class BatchNormalization_14(OpRun):
