@@ -1154,3 +1154,110 @@ class SoftmaxCrossEntropyLoss(Base):
             outputs=[loss, log_prob],
             name="test_sce_NCd1d2d3_sum_weight_high_ii_log_prob",
         )
+
+    @staticmethod
+    def export_softmaxcrossentropy_small_loss() -> None:
+        for dtype, margin in [
+            (np.float16, 10.0),
+            (np.float32, 18.0),
+            (np.float64, 40.0),
+        ]:
+            x = np.full((3, 3), -margin, dtype=dtype)
+            np.fill_diagonal(x, 0)
+            # Independent analytical values ensure a regression cannot change
+            # both the implementation and its expected outputs together.
+            normalizer = np.log1p(2 * np.exp(-margin))
+            log_prob = (x.astype(np.float64) - normalizer).astype(dtype)
+            loss = np.array([normalizer, 2 * normalizer, 0], dtype=dtype)
+            x = np.repeat(x[..., None, None], 2, axis=-1)
+            log_prob = np.repeat(log_prob[..., None, None], 2, axis=-1)
+            loss = np.repeat(loss[..., None, None], 2, axis=-1)
+            labels = np.repeat(
+                np.array([0, 1, -1], dtype=np.int64)[..., None, None], 2, axis=-1
+            )
+            weights = np.array([1, 2, 3], dtype=dtype)
+            for reduction in ["none", "sum", "mean"]:
+                node = onnx.helper.make_node(
+                    "SoftmaxCrossEntropyLoss",
+                    ["x", "labels", "weights"],
+                    ["loss", "log_prob"],
+                    reduction=reduction,
+                    ignore_index=-1,
+                )
+                expected_loss = loss
+                if reduction == "sum":
+                    expected_loss = loss.sum()
+                elif reduction == "mean":
+                    expected_loss = (loss.sum() / 6).astype(dtype)
+                expect(
+                    node,
+                    inputs=[x, labels, weights],
+                    outputs=[expected_loss, log_prob],
+                    name=f"test_sce_small_loss_{np.dtype(dtype).name}_{reduction}",
+                    rtol=4 * float(np.finfo(dtype).eps),
+                    atol=0,
+                )
+
+    @staticmethod
+    def export_softmaxcrossentropy_tied_maxima() -> None:
+        node = onnx.helper.make_node(
+            "SoftmaxCrossEntropyLoss",
+            ["x", "labels"],
+            ["loss", "log_prob"],
+            reduction="none",
+        )
+        x = np.array([[0, 0, -200], [4, 4, 4]], dtype=np.float64)
+        labels = np.array([1, 2], dtype=np.int64)
+        loss = np.array([np.log(2), np.log(3)], dtype=np.float64)
+        log_prob = np.array(
+            [
+                [-np.log(2), -np.log(2), -200 - np.log(2)],
+                [-np.log(3), -np.log(3), -np.log(3)],
+            ],
+            dtype=np.float64,
+        )
+        expect(
+            node,
+            inputs=[x, labels],
+            outputs=[loss, log_prob],
+            name="test_sce_tied_maxima",
+            rtol=1e-15,
+            atol=0,
+        )
+
+    @staticmethod
+    def export_softmaxcrossentropy_single_class() -> None:
+        node = onnx.helper.make_node(
+            "SoftmaxCrossEntropyLoss",
+            ["x", "labels"],
+            ["loss", "log_prob"],
+            reduction="none",
+        )
+        x = np.array([[10], [-20]], dtype=np.float32)
+        labels = np.zeros(2, dtype=np.int64)
+        expect(
+            node,
+            inputs=[x, labels],
+            outputs=[np.zeros(2, dtype=np.float32), np.zeros_like(x)],
+            name="test_sce_single_class",
+            atol=0,
+        )
+
+    @staticmethod
+    def export_softmaxcrossentropy_large_finite_gap() -> None:
+        node = onnx.helper.make_node(
+            "SoftmaxCrossEntropyLoss",
+            ["x", "labels"],
+            ["loss", "log_prob"],
+            reduction="none",
+        )
+        x = np.array([[0, -200]], dtype=np.float32)
+        labels = np.array([1], dtype=np.int64)
+        expect(
+            node,
+            inputs=[x, labels],
+            outputs=[np.array([200], dtype=np.float32), x],
+            name="test_sce_large_finite_gap",
+            rtol=0,
+            atol=0,
+        )
