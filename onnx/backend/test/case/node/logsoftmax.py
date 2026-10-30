@@ -12,9 +12,13 @@ from onnx.backend.test.case.node import expect
 
 def logsoftmax(x: np.ndarray, axis: int = -1) -> np.ndarray:
     x_max = np.max(x, axis=axis, keepdims=True)
-    tmp = np.exp(x - x_max)
+    shifted = x - x_max
+    tmp = np.exp(shifted)
+    # Keep one maximum's contribution separate to avoid rounding 1 + epsilon.
+    max_index = np.argmax(x, axis=axis, keepdims=True)
+    np.put_along_axis(tmp, max_index, 0, axis=axis)
     s = np.sum(tmp, axis=axis, keepdims=True)
-    return (x - x_max) - np.log(s)
+    return shifted - np.log1p(s)
 
 
 class LogSoftmax(Base):

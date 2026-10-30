@@ -6,6 +6,7 @@ from __future__ import annotations
 import numpy as np
 
 from onnx.reference.op_run import OpRun
+from onnx.reference.ops.op_log_softmax import _log_softmax
 
 
 def softmaxcrossentropy(
@@ -20,9 +21,7 @@ def softmaxcrossentropy(
     C = input_shape[1]
 
     # compute log_softmax
-    max_x = np.max(x, axis=1, keepdims=True)
-    shifted_x = x - max_x
-    inp = shifted_x - np.log(np.sum(np.exp(shifted_x), axis=1, keepdims=True))
+    inp = _log_softmax(x, axis=1)
     log_prob = None
     if get_log_prob is True:
         log_prob = np.copy(inp).astype(x.dtype)
