@@ -7715,12 +7715,14 @@ class TestReferenceEvaluator:
         expected = (x.astype(np.float64) - normalizer).astype(dtype)
         x = np.moveaxis(x, -1, axis)
         expected = np.moveaxis(expected, -1, axis)
+        original = x.copy()
         node = make_node("LogSoftmax", ["X"], ["Y"], axis=axis)
 
         (got,) = ReferenceEvaluator(node).run(None, {"X": x})
 
         assert got.dtype == dtype
         assert (got < 0).all()
+        assert_array_equal(x, original)
         assert_allclose(got, expected, rtol=4 * np.finfo(dtype).eps, atol=0)
 
     def test_logsoftmax_tied_maxima_and_masked_classes(self):

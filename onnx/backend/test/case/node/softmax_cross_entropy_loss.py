@@ -10,7 +10,7 @@ import numpy as np
 import onnx
 from onnx.backend.test.case.base import Base
 from onnx.backend.test.case.node import expect
-from onnx.backend.test.case.node.logsoftmax import logsoftmax
+from onnx.reference.ops._op_common_softmax import _log_softmax
 
 
 def softmaxcrossentropy(
@@ -30,7 +30,7 @@ def softmaxcrossentropy(
     C = input_shape[1]
 
     # compute log_softmax
-    inp = logsoftmax(x, axis=1)
+    inp = _log_softmax(x, axis=1)
     log_prob = None
     if get_log_prob is True:
         log_prob = np.copy(inp)

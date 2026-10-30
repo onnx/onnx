@@ -6,7 +6,7 @@ from __future__ import annotations
 import numpy as np
 
 from onnx.reference.op_run import OpRun
-from onnx.reference.ops.op_log_softmax import _log_softmax
+from onnx.reference.ops._op_common_softmax import _log_softmax
 
 
 def softmaxcrossentropy(
