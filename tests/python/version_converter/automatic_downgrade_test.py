@@ -23,6 +23,25 @@ class TestAutomaticDowngrade(automatic_conversion_test_base.TestAutomaticConvers
         self._test_op_conversion(op, *args, **kwargs, mode=mode)
 
     @pytest.mark.parametrize(
+        "index_type", [onnx.TensorProto.INT32, onnx.TensorProto.INT64]
+    )
+    @pytest.mark.parametrize("op", ["GatherND", "ScatterND"])
+    def test_nd_indices_29_to_28(self, op, index_type) -> None:
+        scatter = op == "ScatterND"
+        self._test_op_downgrade(
+            op,
+            from_opset=28,
+            input_shapes=[[2, 3], [1, 1], *([[1, 3]] if scatter else [])],
+            output_shapes=[[2, 3] if scatter else [1, 3]],
+            input_types=[
+                onnx.TensorProto.FLOAT,
+                index_type,
+                *([onnx.TensorProto.FLOAT] if scatter else []),
+            ],
+            strict_check=True,
+        )
+
+    @pytest.mark.parametrize(
         "op",
         [
             "ReduceL1",

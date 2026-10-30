@@ -40,6 +40,25 @@ def scatter_nd_impl(
 
 class ScatterND(Base):
     @staticmethod
+    def export_batched_token_add_int32_indices() -> None:
+        node = onnx.helper.make_node(
+            "ScatterND", ["data", "indices", "updates"], ["output"], reduction="add"
+        )
+        data = np.zeros((2, 3, 2), dtype=np.float32)
+        indices = np.array([[0, 1], [1, 0], [0, 1], [1, -1]], dtype=np.int32)
+        updates = np.array([[1, 2], [3, 4], [5, 6], [7, 8]], dtype=np.float32)
+        output = np.array(
+            [[[0, 0], [6, 8], [0, 0]], [[3, 4], [0, 0], [7, 8]]],
+            dtype=np.float32,
+        )
+        expect(
+            node,
+            inputs=[data, indices, updates],
+            outputs=[output],
+            name="test_scatternd_batched_token_add_int32_indices",
+        )
+
+    @staticmethod
     def export_scatternd() -> None:
         node = onnx.helper.make_node(
             "ScatterND",
