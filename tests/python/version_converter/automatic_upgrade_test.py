@@ -509,6 +509,15 @@ class TestAutomaticUpgrade(automatic_conversion_test_base.TestAutomaticConversio
     def test_Gemm(self) -> None:
         self._test_op_upgrade("Gemm", 1, [[5, 4], [4, 3], [3]], [[5, 3]])
 
+    def test_Gemm_28_to_29(self) -> None:
+        self._test_op_upgrade(
+            "Gemm",
+            28,
+            [[4, 5], [3, 4], [3]],
+            [[5, 3]],
+            attrs={"transA": 1, "transB": 1},
+        )
+
     def test_GlobalAveragePool(self) -> None:
         self._test_op_upgrade("GlobalAveragePool", 1, [[1, 3, 10, 10]], [[1, 3, 1, 1]])
 

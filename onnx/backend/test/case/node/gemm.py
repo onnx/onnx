@@ -19,7 +19,7 @@ def gemm_reference_implementation(
     transA: int = 0,
     transB: int = 0,
 ) -> np.ndarray:
-    A = A if transA == 0 else A.T
+    A = A if transA == 0 or A.ndim == 1 else A.swapaxes(-1, -2)
     B = B if transB == 0 else B.T
     C = C if C is not None else np.array(0)
 
@@ -29,6 +29,61 @@ def gemm_reference_implementation(
 
 
 class Gemm(Base):
+    @staticmethod
+    def export_linear() -> None:
+        for shape, suffix in [
+            ((5,), "vector"),
+            ((2, 3, 5), "rank3"),
+            ((2, 3, 4, 5), "rank4"),
+            ((0, 3, 5), "empty_batch"),
+            ((2, 3, 0), "empty_features"),
+        ]:
+            for has_bias in (False, True):
+                node = onnx.helper.make_node(
+                    "Gemm",
+                    inputs=["a", "b", "c"] if has_bias else ["a", "b"],
+                    outputs=["y"],
+                    transB=1,
+                )
+                a = np.random.ranf(shape).astype(np.float32)
+                b = np.random.ranf((7, shape[-1])).astype(np.float32)
+                c = np.random.ranf((7,)).astype(np.float32)
+                y = gemm_reference_implementation(
+                    a, b, c if has_bias else None, transB=1
+                )
+                expect(
+                    node,
+                    inputs=[a, b, c] if has_bias else [a, b],
+                    outputs=[y],
+                    name=f"test_gemm_linear_{suffix}_{'bias' if has_bias else 'no_bias'}",
+                    opset_imports=[onnx.helper.make_opsetid("", 29)],
+                )
+
+    @staticmethod
+    def export_high_rank_transpose() -> None:
+        node = onnx.helper.make_node(
+            "Gemm",
+            inputs=["a", "b", "c"],
+            outputs=["y"],
+            transA=1,
+            transB=1,
+            alpha=0.25,
+            beta=0.5,
+        )
+        a = np.random.ranf((2, 5, 3)).astype(np.float32)
+        b = np.random.ranf((7, 5)).astype(np.float32)
+        c = np.random.ranf((2, 1, 7)).astype(np.float32)
+        y = gemm_reference_implementation(
+            a, b, c, transA=1, transB=1, alpha=0.25, beta=0.5
+        )
+        expect(
+            node,
+            inputs=[a, b, c],
+            outputs=[y],
+            name="test_gemm_high_rank_transpose",
+            opset_imports=[onnx.helper.make_opsetid("", 29)],
+        )
+
     @staticmethod
     def export_default_zero_bias() -> None:
         node = onnx.helper.make_node("Gemm", inputs=["a", "b", "c"], outputs=["y"])
