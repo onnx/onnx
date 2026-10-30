@@ -34455,6 +34455,77 @@ This version of the operator has been available since version 28 of the default 
 </dl>
 
 ## Version 29 of the default ONNX operator set
+### <a name="CausalConvWithState-29"></a>**CausalConvWithState-29**</a>
+
+  Stateful causal one-dimensional depthwise convolution with optional dilation.
+
+  Let `d = dilation`, `K = weight.shape[2]`, and `H = (K - 1) * d`.
+  The input has shape `(B, C, L)`, weight has shape `(C, 1, K)`, and
+  optional bias has shape `(C)`. Both state tensors have shape `(B, C, H)`.
+  The state contains consecutive raw input samples in chronological order,
+  not subsampled, convolved, or activated values.
+
+  Concatenate `past_state` (or `H` zeros per batch/channel when absent) and
+  `input` along axis 2 to obtain `P`. Before optional activation,
+  `output[b,c,t] = sum_j weight[c,0,j] * P[b,c,t+j*d] + bias[c]`,
+  where `0 <= j < K` and `0 <= t < L`; omitted bias is zero.
+  This uses the cross-correlation convention of Conv. The output has shape
+  `(B, C, L)`. Activation is identity for 'none', or `x * sigmoid(x)` for
+  'silu' and its alias 'swish'.
+
+  `present_state` is the last `H` samples of `P`, including past samples or
+  zero padding when `L < H`. Feeding it into the next call gives the same
+  result as processing the concatenated sequence in one call. For example,
+  `K=3, d=2` requires four consecutive history samples, while each output
+  uses three samples spaced two positions apart. `K=1` gives empty state.
+  An empty chunk gives empty output and leaves the state unchanged (or zero
+  when no state is provided). Dilation 1 preserves the undilated behavior.
+
+  This operator decomposes into concatenation, dilated depthwise Conv, slicing,
+  and optional activation. It does not impose a model-specific state layout.
+
+#### Version
+
+This version of the operator has been available since version 29 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>activation</tt> : string (default is none)</dt>
+<dd>Fused activation function. One of: 'silu', 'swish', 'none'. Default is 'none'.</dd>
+<dt><tt>dilation</tt> : int (default is 1)</dt>
+<dd>Spacing between kernel samples. Must be >= 1.</dd>
+</dl>
+
+#### Inputs (2 - 4)
+
+<dl>
+<dt><tt>input</tt> (differentiable) : T</dt>
+<dd>Input tensor with shape (batch_size, channels, length). Channels-first layout.</dd>
+<dt><tt>weight</tt> (differentiable) : T</dt>
+<dd>Depthwise convolution kernel with shape (channels, 1, k) where k is the kernel size. The middle dim of size 1 follows the ONNX `Conv` weight layout `(M, C/group, k1, ..., kn)`: since this op is always depthwise, `group = channels`, so `C/group = 1`. Keeping this layout makes the weight tensor a drop-in for a depthwise `Conv(group=channels)` weight, so `Conv` <-> `CausalConvWithState` rewrites require no reshape.</dd>
+<dt><tt>bias</tt> (optional, differentiable) : T</dt>
+<dd>Optional per-channel bias with shape (channels).</dd>
+<dt><tt>past_state</tt> (optional, non-differentiable) : T</dt>
+<dd>Raw chronological history with shape (batch_size, channels, (k - 1) * dilation). If not provided, history is zero.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> (differentiable) : T</dt>
+<dd>Convolution output with same shape as input.</dd>
+<dt><tt>present_state</tt> (non-differentiable) : T</dt>
+<dd>The last (k - 1) * dilation raw samples of the concatenated history and input, with shape (batch_size, channels, (k - 1) * dilation).</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float), tensor(float16), tensor(bfloat16)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
 ### <a name="GroupedMatMul-29"></a>**GroupedMatMul-29**</a>
 
   GroupedMatMul multiplies each row of a token matrix by one or more selected

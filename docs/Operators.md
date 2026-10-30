@@ -172,7 +172,7 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#Bernoulli">Bernoulli</a>|<a href="Changelog.md#Bernoulli-22">22</a>, <a href="Changelog.md#Bernoulli-15">15</a>|22|
 |<a href="#BlackmanWindow">BlackmanWindow</a>|<a href="Changelog.md#BlackmanWindow-17">17</a>|17|
 |<a href="#CastLike">CastLike</a>|<a href="Changelog.md#CastLike-25">25</a>, <a href="Changelog.md#CastLike-24">24</a>, <a href="Changelog.md#CastLike-23">23</a>, <a href="Changelog.md#CastLike-21">21</a>, <a href="Changelog.md#CastLike-19">19</a>, <a href="Changelog.md#CastLike-15">15</a>|25|
-|<a href="#CausalConvWithState">CausalConvWithState</a>|<a href="Changelog.md#CausalConvWithState-27">27</a>|27|
+|<a href="#CausalConvWithState">CausalConvWithState</a>|<a href="Changelog.md#CausalConvWithState-29">29</a>, <a href="Changelog.md#CausalConvWithState-27">27</a>|29|
 |<a href="#Celu">Celu</a>|<a href="Changelog.md#Celu-28">28</a>, <a href="Changelog.md#Celu-12">12</a>|28|
 |<a href="#CenterCropPad">CenterCropPad</a>|<a href="Changelog.md#CenterCropPad-18">18</a>|18|
 |<a href="#Clip">Clip</a>|<a href="Changelog.md#Clip-13">13</a>, <a href="Changelog.md#Clip-12">12</a>, <a href="Changelog.md#Clip-11">11</a>, <a href="Changelog.md#Clip-6">6</a>, <a href="Changelog.md#Clip-1">1</a>|13|
@@ -9110,34 +9110,46 @@ for from_type, to_type in test_cases:
 
 ### <a name="CausalConvWithState"></a><a name="causalconvwithstate">**CausalConvWithState**</a>
 
-  Stateful causal 1D depthwise convolution.
+  Stateful causal one-dimensional depthwise convolution with optional dilation.
 
-  Used by Gated DeltaNet (Qwen3.5) and Mamba (Jamba, FalconMamba) as a preprocessing step.
-  Replaces the 3-op pattern (Concat + Conv + Slice) with a single fused operation.
+  Let `d = dilation`, `K = weight.shape[2]`, and `H = (K - 1) * d`.
+  The input has shape `(B, C, L)`, weight has shape `(C, 1, K)`, and
+  optional bias has shape `(C)`. Both state tensors have shape `(B, C, H)`.
+  The state contains consecutive raw input samples in chronological order,
+  not subsampled, convolved, or activated values.
 
-  The convolution is causal (looks only at current and past positions) and depthwise
-  (each channel is convolved independently with its own kernel).
+  Concatenate `past_state` (or `H` zeros per batch/channel when absent) and
+  `input` along axis 2 to obtain `P`. Before optional activation,
+  `output[b,c,t] = sum_j weight[c,0,j] * P[b,c,t+j*d] + bias[c]`,
+  where `0 <= j < K` and `0 <= t < L`; omitted bias is zero.
+  This uses the cross-correlation convention of Conv. The output has shape
+  `(B, C, L)`. Activation is identity for 'none', or `x * sigmoid(x)` for
+  'silu' and its alias 'swish'.
 
-  The input, weight, past_state, output, and present_state tensors are rank-3 with
-  shape (batch_size, channels, length). The optional bias input is rank-1 with
-  shape (channels). For higher-dimensional data, use Reshape nodes before and
-  after this operator to pack extra dimensions into the batch or channel axis.
+  `present_state` is the last `H` samples of `P`, including past samples or
+  zero padding when `L < H`. Feeding it into the next call gives the same
+  result as processing the concatenated sequence in one call. For example,
+  `K=3, d=2` requires four consecutive history samples, while each output
+  uses three samples spaced two positions apart. `K=1` gives empty state.
+  An empty chunk gives empty output and leaves the state unchanged (or zero
+  when no state is provided). Dilation 1 preserves the undilated behavior.
 
-  Weight layout: (channels, 1, k) for depthwise convolution.
-  The carry state stores the last (k-1) positions for incremental decode.
-
-  The optional activation attribute supports fused SiLU/Swish activation.
-
+  This operator decomposes into concatenation, dilated depthwise Conv, slicing,
+  and optional activation. It does not impose a model-specific state layout.
 
 #### Version
 
-This version of the operator has been available since version 27 of the default ONNX operator set.
+This version of the operator has been available since version 29 of the default ONNX operator set.
+
+Other versions of this operator: <a href="Changelog.md#CausalConvWithState-27">27</a>
 
 #### Attributes
 
 <dl>
 <dt><tt>activation</tt> : string (default is none)</dt>
 <dd>Fused activation function. One of: 'silu', 'swish', 'none'. Default is 'none'.</dd>
+<dt><tt>dilation</tt> : int (default is 1)</dt>
+<dd>Spacing between kernel samples. Must be >= 1.</dd>
 </dl>
 
 #### Inputs (2 - 4)
@@ -9150,7 +9162,7 @@ This version of the operator has been available since version 27 of the default 
 <dt><tt>bias</tt> (optional, differentiable) : T</dt>
 <dd>Optional per-channel bias with shape (channels).</dd>
 <dt><tt>past_state</tt> (optional, non-differentiable) : T</dt>
-<dd>Carry state from previous step with shape (batch_size, channels, k - 1). If not provided, padding is zero.</dd>
+<dd>Raw chronological history with shape (batch_size, channels, (k - 1) * dilation). If not provided, history is zero.</dd>
 </dl>
 
 #### Outputs
@@ -9159,7 +9171,7 @@ This version of the operator has been available since version 27 of the default 
 <dt><tt>output</tt> (differentiable) : T</dt>
 <dd>Convolution output with same shape as input.</dd>
 <dt><tt>present_state</tt> (non-differentiable) : T</dt>
-<dd>Updated carry state with shape (batch_size, channels, k - 1). Contains the last (k - 1) values of the effective padded/concatenated sequence along the causal axis, including any values from past_state or zero-padding when the current input is shorter than k - 1.</dd>
+<dd>The last (k - 1) * dilation raw samples of the concatenated history and input, with shape (batch_size, channels, (k - 1) * dilation).</dd>
 </dl>
 
 #### Type Constraints
@@ -9256,6 +9268,47 @@ expect(
     name="test_causal_conv_with_state_decode_step",
     opset_imports=[onnx.helper.make_opsetid("", 27)],
 )
+```
+
+</details>
+
+
+<details>
+<summary>dilated</summary>
+
+```python
+for dilation, length, k, with_state, activation in (
+    (2, 7, 3, False, "none"),
+    (3, 1, 4, True, "silu"),
+    (2, 0, 3, True, "none"),
+    (3, 2, 1, False, "swish"),
+):
+    input_ = np.arange(2 * length, dtype=np.float32).reshape(1, 2, length)
+    weight = np.arange(2 * k, dtype=np.float32).reshape(2, 1, k) / 10
+    bias = np.array([0.25, -0.5], dtype=np.float32)
+    history = (k - 1) * dilation
+    past = np.arange(2 * history, dtype=np.float32).reshape(1, 2, history)
+    node = onnx.helper.make_node(
+        "CausalConvWithState",
+        ["input", "weight", "bias", "past_state"]
+        if with_state
+        else ["input", "weight", "bias"],
+        ["output", "present_state"],
+        dilation=dilation,
+        activation=activation,
+    )
+    expected = _compute(
+        input_, weight, bias, past if with_state else None, activation, dilation
+    )
+    expect(
+        node,
+        inputs=[input_, weight, bias, past]
+        if with_state
+        else [input_, weight, bias],
+        outputs=list(expected),
+        name=f"test_causal_conv_with_state_dilated_d{dilation}_l{length}_k{k}",
+        opset_imports=[onnx.helper.make_opsetid("", 29)],
+    )
 ```
 
 </details>

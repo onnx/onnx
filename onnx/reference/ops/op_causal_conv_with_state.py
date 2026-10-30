@@ -9,14 +9,18 @@ from onnx.reference.op_run import OpRun
 from onnx.reference.ops.op_conv import _conv_implementation
 
 
-class CausalConvWithState(OpRun):
-    def _run(
+class CausalConvWithState_27(OpRun):
+    def _run(self, input, weight, bias=None, past_state=None, activation=None):
+        return self._compute(input, weight, bias, past_state, activation, 1)
+
+    def _compute(
         self,
         input,
         weight,
         bias=None,
         past_state=None,
         activation=None,
+        dilation=1,
     ):
         if activation is None:
             activation = "none"
@@ -37,13 +41,33 @@ class CausalConvWithState(OpRun):
 
         batch_size, channels, _ = input.shape
         k = weight.shape[2]
+        if dilation < 1:
+            raise ValueError(f"dilation must be >= 1, got {dilation}.")
+        if k < 1 or weight.shape[:2] != (channels, 1):
+            raise ValueError(f"weight must have shape ({channels}, 1, k) with k >= 1.")
+        history = (k - 1) * dilation
+        if history > np.iinfo(np.int64).max:
+            raise ValueError("History length exceeds int64.")
+        if bias is not None and bias.shape != (channels,):
+            raise ValueError(f"bias must have shape ({channels},).")
+        if past_state is not None and past_state.shape != (
+            batch_size,
+            channels,
+            history,
+        ):
+            raise ValueError(
+                f"past_state must have shape ({batch_size}, {channels}, {history})."
+            )
 
-        # Step 1: build the left-padded input (B, C, L + k - 1).
+        # Retain raw chronological samples, including taps skipped by dilation.
         if past_state is None:
-            pad = np.zeros((batch_size, channels, k - 1), dtype=input.dtype)
+            pad = np.zeros((batch_size, channels, history), dtype=input.dtype)
         else:
             pad = past_state
         padded = np.concatenate([pad, input], axis=2)
+        present_state = padded[:, :, padded.shape[2] - history :]
+        if input.shape[2] == 0:
+            return (input.copy(), present_state)
 
         # Step 2: depthwise Conv1d (group = channels, valid padding).
         conv_out = _conv_implementation(
@@ -51,7 +75,7 @@ class CausalConvWithState(OpRun):
             weight,
             bias,
             "NOTSET",
-            [1],
+            [dilation],
             channels,
             [k],
             [0, 0],
@@ -65,7 +89,18 @@ class CausalConvWithState(OpRun):
         else:
             output = conv_out
 
-        # Step 4: present_state = last (k - 1) positions of the padded input.
-        present_state = padded[:, :, padded.shape[2] - (k - 1) :]
-
         return (output, present_state)
+
+
+class CausalConvWithState_29(CausalConvWithState_27):
+    def _run(
+        self, input, weight, bias=None, past_state=None, activation=None, dilation=None
+    ):
+        return self._compute(
+            input,
+            weight,
+            bias,
+            past_state,
+            activation,
+            1 if dilation is None else dilation,
+        )

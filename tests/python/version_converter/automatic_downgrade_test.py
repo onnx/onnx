@@ -331,6 +331,29 @@ class TestAutomaticDowngrade(automatic_conversion_test_base.TestAutomaticConvers
         """,
         )
 
+    @pytest.mark.parametrize("attrs", [{}, {"dilation": 1}])
+    def test_CausalConvWithState_unit_dilation_downgrade(self, attrs) -> None:
+        self._test_op_downgrade(
+            "CausalConvWithState",
+            27,
+            [[2, 4, 8], [4, 1, 4]],
+            [[2, 4, 8], [2, 4, 3]],
+            attrs=attrs,
+        )
+
+    def test_CausalConvWithState_dilated_downgrade_fails(self) -> None:
+        self._test_model_conversion_fails(
+            to_opset=28,
+            model="""
+            <ir_version: 10, opset_import: ["" : 29]>
+            g (float[2,4,8] input, float[4,1,4] weight)
+                => (float[2,4,8] output, float[2,4,6] present)
+            {
+                output, present = CausalConvWithState <dilation=2> (input, weight)
+            }
+            """,
+        )
+
     def test_CausalConvWithState_downgrade_fails(self) -> None:
         # CausalConvWithState was introduced at opset 27; no decomposition
         # adapter exists for downgrading to opset 24. The version converter

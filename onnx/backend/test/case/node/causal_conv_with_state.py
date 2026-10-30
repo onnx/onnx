@@ -9,11 +9,11 @@ import onnx
 from onnx.backend.test.case.base import Base
 from onnx.backend.test.case.node import expect
 from onnx.reference.ops.op_causal_conv_with_state import (
-    CausalConvWithState as _RefCausalConvWithState,
+    CausalConvWithState_29 as _RefCausalConvWithState,
 )
 
 
-def _compute(input_, weight, bias=None, past_state=None, activation="none"):
+def _compute(input_, weight, bias=None, past_state=None, activation="none", dilation=1):
     op = _RefCausalConvWithState.__new__(_RefCausalConvWithState)
     return op._run(
         input_,
@@ -21,10 +21,46 @@ def _compute(input_, weight, bias=None, past_state=None, activation="none"):
         bias=bias,
         past_state=past_state,
         activation=activation,
+        dilation=dilation,
     )
 
 
 class CausalConvWithState(Base):
+    @staticmethod
+    def export_dilated() -> None:
+        for dilation, length, k, with_state, activation in (
+            (2, 7, 3, False, "none"),
+            (3, 1, 4, True, "silu"),
+            (2, 0, 3, True, "none"),
+            (3, 2, 1, False, "swish"),
+        ):
+            input_ = np.arange(2 * length, dtype=np.float32).reshape(1, 2, length)
+            weight = np.arange(2 * k, dtype=np.float32).reshape(2, 1, k) / 10
+            bias = np.array([0.25, -0.5], dtype=np.float32)
+            history = (k - 1) * dilation
+            past = np.arange(2 * history, dtype=np.float32).reshape(1, 2, history)
+            node = onnx.helper.make_node(
+                "CausalConvWithState",
+                ["input", "weight", "bias", "past_state"]
+                if with_state
+                else ["input", "weight", "bias"],
+                ["output", "present_state"],
+                dilation=dilation,
+                activation=activation,
+            )
+            expected = _compute(
+                input_, weight, bias, past if with_state else None, activation, dilation
+            )
+            expect(
+                node,
+                inputs=[input_, weight, bias, past]
+                if with_state
+                else [input_, weight, bias],
+                outputs=list(expected),
+                name=f"test_causal_conv_with_state_dilated_d{dilation}_l{length}_k{k}",
+                opset_imports=[onnx.helper.make_opsetid("", 29)],
+            )
+
     @staticmethod
     def export_basic() -> None:
         node = onnx.helper.make_node(
