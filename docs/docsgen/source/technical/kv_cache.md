@@ -23,3 +23,7 @@ ONNX opset-24 has introduced new features to facilitate the representation of in
 - The same computational graph can be used for both the prefill and decode stages of the autoregressive model.
 
 As a reminder, the ONNX representation is still a functional representation, with ops that are pure functions. The graph layout described above is a useful common pattern to express in-place KV cache update, and the input/output aliasing is entirely up to backend implementations.
+
+Denominator-only [attention sinks](attention_sinks.md) are a separate
+existing-operator composition. Their virtual softmax candidate is not a token
+stored in the KV cache and does not change cache lengths or positions.
