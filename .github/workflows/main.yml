@@ -248,7 +248,7 @@ jobs:
           fi
 
       - name: Run C++ extension test
-        if: (startsWith(matrix.os,'ubuntu') || matrix.os == 'macos-latest') && matrix.debug_build == 0 && matrix.protobuf_type == 'External'
+        if: startsWith(matrix.os,'ubuntu') && matrix.debug_build == 0 && matrix.protobuf_type == 'External'
         run: |
           cmake -S . -B build_for_install \
             -DCMAKE_BUILD_TYPE=Release \

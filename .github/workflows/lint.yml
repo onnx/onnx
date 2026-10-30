@@ -59,7 +59,8 @@ jobs:
           export CMAKE_ARGS="-DONNX_WERROR=ON"
           export ONNX_NAMESPACE=ONNX_NAMESPACE_FOO_BAR_FOR_CI
 
-          python -m pip install ".[reference]"
+          # Constrain to the versions pinned for testing
+          python -m pip install ".[reference]" -c requirements-release_test.txt
       - name: Install dependencies
         run: |
           python -m pip install -r requirements-lintrunner.txt
