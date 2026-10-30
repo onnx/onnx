@@ -62,7 +62,7 @@ jobs:
           python -m pip install ".[reference]"
       - name: Install dependencies
         run: |
-          python -m pip install "lintrunner>=0.10.7" -r requirements-lintrunner.txt
+          python -m pip install -r requirements-lintrunner.txt
           lintrunner init
       - name: Run lintrunner on all files
         run: |
