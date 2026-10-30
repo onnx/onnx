@@ -239,7 +239,7 @@ class TestReferenceEvaluatorAiOnnxMl:
         x_float = x.astype(np.float64)
         axis = 0 if x.ndim == 1 else 1
         if norm == "MAX":
-            divisor = np.max(np.abs(x_float), axis=axis, keepdims=True)
+            divisor = np.max(x_float, axis=axis, keepdims=True)
         elif norm == "L1":
             divisor = np.sum(np.abs(x_float), axis=axis, keepdims=True)
         else:
@@ -319,6 +319,39 @@ class TestReferenceEvaluatorAiOnnxMl:
         assert got.shape == x.shape
         assert got.dtype == np.float32
         assert np.isfinite(got).all()
+        assert_allclose(got, expected, rtol=1e-6, atol=0)
+
+    @pytest.mark.parametrize(
+        "dtype,tensor_type",
+        [
+            (np.float32, TensorProto.FLOAT),
+            (np.float64, TensorProto.DOUBLE),
+            (np.int32, TensorProto.INT32),
+            (np.int64, TensorProto.INT64),
+        ],
+    )
+    @pytest.mark.parametrize("layout", ["matrix", "vector"])
+    @pytest.mark.skipif(not ONNX_ML, reason="onnx not compiled with ai.onnx.ml")
+    def test_normalizer_max_signed_maximum(self, dtype, tensor_type, layout):
+        # MAX divides by the signed maximum max(X), not by max(abs(X)), and a
+        # zero divisor returns the input unchanged, even for a nonzero row.
+        rows = [[-2, -1], [-4, 3], [-2, 0], [1, 2]]
+        expected_rows = [[2, 1], [-4 / 3, 1], [-2, 0], [0.5, 1]]
+        if layout == "matrix":
+            x = np.array(rows, dtype=dtype)
+            expected = np.array(expected_rows, dtype=np.float32)
+        else:
+            x = np.array(rows[1], dtype=dtype)
+            expected = np.array(expected_rows[1], dtype=np.float32)
+        X = make_tensor_value_info("X", tensor_type, list(x.shape))
+        Y = make_tensor_value_info("Y", TensorProto.FLOAT, list(x.shape))
+        node = make_node("Normalizer", ["X"], ["Y"], norm="MAX", domain="ai.onnx.ml")
+        graph = make_graph([node], "ml", [X], [Y])
+        model = make_model_gen_version(graph, opset_imports=OPSETS)
+        onnx.checker.check_model(model)
+
+        got = ReferenceEvaluator(model).run(None, {"X": x})[0]
+        assert got.dtype == np.float32
         assert_allclose(got, expected, rtol=1e-6, atol=0)
 
     @pytest.mark.parametrize(

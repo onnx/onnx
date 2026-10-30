@@ -23,8 +23,20 @@ class Normalizer(OpRunAiOnnxMl):
 
     @staticmethod
     def norm_max(x):
-        """Max normalization"""
-        return Normalizer._scaled(x).astype(np.float32)
+        """Max normalization: ``Y = X / max(X)``, and ``Y = X`` if ``max(X)`` is 0.
+
+        The divisor is the signed maximum of each row required by the
+        specification, not ``max(abs(X))``: ``[-2, -1]`` becomes ``[2, 1]``.
+        """
+        x_float = x.astype(np.float64, copy=False)
+        axis = 0 if x.ndim == 1 else 1
+        divisor = np.max(x_float, axis=axis, keepdims=True)
+        return np.divide(
+            x_float,
+            divisor,
+            out=x_float.copy(),
+            where=divisor != 0,
+        ).astype(np.float32)
 
     @staticmethod
     def norm_l1(x):
