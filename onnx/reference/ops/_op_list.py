@@ -127,6 +127,7 @@ __all__ = [
     "LessOrEqual",
     "LinearAttention",
     "Log",
+    "Log1p",
     "LogSoftmax",
     "Loop",
     "LpNormalization",
@@ -393,6 +394,7 @@ from onnx.reference.ops.op_less import Less
 from onnx.reference.ops.op_less_or_equal import LessOrEqual
 from onnx.reference.ops.op_linear_attention import LinearAttention
 from onnx.reference.ops.op_log import Log
+from onnx.reference.ops.op_log1p import Log1p
 from onnx.reference.ops.op_log_softmax import LogSoftmax
 from onnx.reference.ops.op_loop import Loop
 from onnx.reference.ops.op_lp_normalization import LpNormalization

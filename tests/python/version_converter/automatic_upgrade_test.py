@@ -690,6 +690,9 @@ class TestAutomaticUpgrade(automatic_conversion_test_base.TestAutomaticConversio
     def test_Log(self) -> None:
         self._test_op_upgrade("Log", 1, attrs={"consumed_inputs": [0]})
 
+    def test_Log1p(self) -> None:
+        self._test_op_upgrade("Log1p", 29)
+
     def test_LogSoftmax(self) -> None:
         self._test_op_upgrade("LogSoftmax", 1)
 

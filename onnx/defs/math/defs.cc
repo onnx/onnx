@@ -587,6 +587,29 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Constrain input and output types to float tensors.")
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
+static constexpr const char* kDoc_Log1p_ver29 = R"DOC(
+Computes the natural logarithm of one plus each input element: `Y = log(1 + X)`.
+The output has the same shape and element type as the input.
+
+The computation preserves accuracy for small inputs, including inputs for which
+`1 + X` would round to `1` in the input type. Implementations must not lose such
+inputs through an intermediate rounded addition. For example, for float32 input
+`1e-8`, the result is approximately `1e-8`, rather than zero.
+
+The behavior follows NumPy's `log1p`: positive and negative zero are preserved;
+`X = -1` produces negative infinity; `X < -1` produces NaN;
+positive infinity produces positive infinity; and NaN inputs produce NaN.
+See https://numpy.org/doc/stable/reference/generated/numpy.log1p.html.
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(
+    Log1p,
+    29,
+    OpSchema().FillUsing(
+        defs::math::utils::UnaryFloatMathOpGenerator(
+            kDoc_Log1p_ver29,
+            "The natural logarithm of one plus the input, computed element-wise")));
+
 ONNX_OPERATOR_SET_SCHEMA(
     Tanh,
     13,
@@ -1013,6 +1036,34 @@ ONNX_OPERATOR_SET_SCHEMA(
             },
             18));
 
+// An opset 29 decomposition can use Log1p without rounding away the small
+// normalization term. Earlier function bodies retain their original dependencies.
+static bool BuildContextDependentFunctionBodyLogSoftmax29(
+    const FunctionBodyBuildContext& ctx,
+    const OpSchema& schema,
+    FunctionProto& functionProto) {
+  const int64_t axis = ctx.getAttribute("axis") != nullptr ? ctx.getAttribute("axis")->i() : -1;
+  FunctionBuilder builder(functionProto);
+  builder.Const1D("axes", axis)
+      .Add("MaxIndex = ArgMax <keepdims = 1> (input)", "axis", axis)
+      .Add("MaxLogit = GatherElements (input, MaxIndex)", "axis", axis)
+      .Add(R"(
+        Shifted = Sub (input, MaxLogit)
+        Exponentials = Exp (Shifted)
+      )")
+      .Add("One = GatherElements (Exponentials, MaxIndex)", "axis", axis)
+      .Add("Zero = Sub (One, One)")
+      // Exclude exactly one maximum: masking all tied maxima would be incorrect.
+      .Add("Others = ScatterElements (Exponentials, MaxIndex, Zero)", "axis", axis)
+      .Add(R"(
+        OtherSum = ReduceSum <keepdims = 1> (Others, axes)
+        Normalizer = Log1p (OtherSum)
+        output = Sub (Shifted, Normalizer)
+      )");
+  schema.BuildFunction(functionProto);
+  return true;
+}
+
 ONNX_OPERATOR_SET_SCHEMA(
     LogSoftmax,
     13,
@@ -1057,7 +1108,8 @@ ONNX_OPERATOR_SET_SCHEMA(
               schema.BuildFunction(functionProto);
               return true;
             },
-            18));
+            18)
+        .SetContextDependentFunctionBodyBuilder(BuildContextDependentFunctionBodyLogSoftmax29, 29));
 
 ONNX_OPERATOR_SET_SCHEMA(
     Hardmax,

@@ -34516,6 +34516,46 @@ This version of the operator has been available since version 29 of the default 
 <dd>Constrain group indices to int32 or int64 tensors.</dd>
 </dl>
 
+### <a name="Log1p-29"></a>**Log1p-29**</a>
+
+  Computes the natural logarithm of one plus each input element: `Y = log(1 + X)`.
+  The output has the same shape and element type as the input.
+
+  The computation preserves accuracy for small inputs, including inputs for which
+  `1 + X` would round to `1` in the input type. Implementations must not lose such
+  inputs through an intermediate rounded addition. For example, for float32 input
+  `1e-8`, the result is approximately `1e-8`, rather than zero.
+
+  The behavior follows NumPy's `log1p`: positive and negative zero are preserved;
+  `X = -1` produces negative infinity; `X < -1` produces NaN;
+  positive infinity produces positive infinity; and NaN inputs produce NaN.
+  See https://numpy.org/doc/stable/reference/generated/numpy.log1p.html.
+
+#### Version
+
+This version of the operator has been available since version 29 of the default ONNX operator set.
+
+#### Inputs
+
+<dl>
+<dt><tt>input</tt> (differentiable) : T</dt>
+<dd>Input tensor</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> (differentiable) : T</dt>
+<dd>The natural logarithm of one plus the input, computed element-wise</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(bfloat16), tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
 # ai.onnx.preview
 ## Version 1 of the 'ai.onnx.preview' operator set
 ### <a name="ai.onnx.preview.FlexAttention-1"></a>**ai.onnx.preview.FlexAttention-1**</a>
