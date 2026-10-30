@@ -31,11 +31,13 @@ concurrency:
 
 jobs:
   test:
-    name: Test ${{ matrix.os }}, ${{ matrix.python_version }}, ${{ matrix.protobuf_type }}, debug=${{ matrix.debug_build }}, unity_build=${{ matrix.unity_build }}, onnx_ml=${{ matrix.onnx_ml }}${{ matrix.job_name_suffix }}
+    name: Test ${{ matrix.os }}, ${{ matrix.python_version }}, ${{ matrix.protobuf_type }}, debug=${{ matrix.debug_build }}, unity_build=${{ matrix.unity_build }}, onnx_ml=${{ matrix.onnx_ml }}, autogen=${{ matrix.autogenerate_files }}${{ matrix.job_name_suffix }}
     strategy:
       fail-fast: false
       matrix:
         os: [ubuntu-24.04, windows-latest, macos-latest]
+        # Retain the legacy values only to preserve required status-check names.
+        autogenerate_files: [0]
         # Test on the oldest and latest supported Python versions
         debug_build: [0]
         onnx_ml: [1]
@@ -62,6 +64,7 @@ jobs:
 
           # Ubuntu debug build runs with sanitizer
           - python_version: "3.14"
+            autogenerate_files: 0
             debug_build: 1
             onnx_ml: 1
             os: "ubuntu-24.04"
@@ -70,6 +73,7 @@ jobs:
 
           # Ubuntu debug build with TSAN (free-threaded Python)
           - python_version: "3.14t"
+            autogenerate_files: 0
             debug_build: 1
             onnx_ml: 1
             os: "ubuntu-24.04"
@@ -78,12 +82,14 @@ jobs:
 
           # Test compilation with external protobuf (shared on Linux, static on Windows).
           - python_version: "3.14"
+            autogenerate_files: 0
             debug_build: 0
             onnx_ml: 1
             os: "ubuntu-24.04"
             protobuf_type: 'External'
             unity_build: 0
           - python_version: "3.14"
+            autogenerate_files: 0
             debug_build: 0
             onnx_ml: 1
             os: "windows-2022"
@@ -91,6 +97,7 @@ jobs:
             unity_build: 0
           # The unity build may surface name clashes at compile time.
           - python_version: '3.14'
+            autogenerate_files: 1
             debug_build: 0
             onnx_ml: 1
             os: "ubuntu-24.04"
@@ -101,6 +108,7 @@ jobs:
           # different signal in testing it in relation with other
           # parameters.
           - python_version: '3.14'
+            autogenerate_files: 0
             debug_build: 0
             onnx_ml: 0
             os: "ubuntu-24.04"
