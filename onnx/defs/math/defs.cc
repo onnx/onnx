@@ -587,6 +587,53 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Constrain input and output types to float tensors.")
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
+static constexpr const char* kDoc_Log1p_ver29 = R"DOC(
+Computes the natural logarithm of one plus each input element, independently.
+The input may have any shape, including a scalar or an empty tensor. The output
+has the same shape and element type as the input. Supported element types are
+FLOAT16, BFLOAT16, FLOAT, and DOUBLE.
+
+For a finite input element `x > -1` with `x != 0`, the mathematical result is
+`y = ln(1 + x)`, where `ln` is the logarithm to base `e`. Here `x` denotes the
+exact real value represented by the input element, and `1 + x` denotes an exact
+real sum in the mathematical definition, not an intermediate floating-point
+addition that must be materialized.
+
+Special values are defined element-wise as follows:
+
+| Input `x` | Output `y` |
+| --- | --- |
+| Positive zero | Positive zero |
+| Negative zero | Negative zero |
+| `-1` | Negative infinity |
+| Finite `x < -1` | NaN |
+| Negative infinity | NaN |
+| Positive infinity | Positive infinity |
+| NaN | NaN |
+
+The sign and payload of an output NaN are unspecified.
+
+The computation must preserve small nonzero results that would be lost by
+rounding `1 + x` to `1` before applying the logarithm. In particular, an output
+must not become zero solely because such an intermediate sum rounds to `1`
+when the mathematical result is representable as a nonzero value in the output
+type. Near zero, `ln(1 + x) / x` tends to `1`. For example, a FLOAT input `1e-8`
+produces a result approximately equal to `1e-8`, rather than zero.
+
+Implementations may choose their numerical algorithm; the operation is not
+specified as a composition of `Add` and `Log`. Non-special results are subject
+to floating-point approximation, without a requirement for bitwise agreement
+between implementations or correctly rounded transcendental results.
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(
+    Log1p,
+    29,
+    OpSchema().FillUsing(
+        defs::math::utils::UnaryFloatMathOpGenerator(
+            kDoc_Log1p_ver29,
+            "The natural logarithm of one plus the input, computed element-wise")));
+
 ONNX_OPERATOR_SET_SCHEMA(
     Tanh,
     13,
@@ -1013,6 +1060,55 @@ ONNX_OPERATOR_SET_SCHEMA(
             },
             18));
 
+// An opset 29 decomposition can use Log1p without rounding away the small
+// normalization term. Earlier function bodies retain their original dependencies.
+static bool BuildContextDependentFunctionBodyLogSoftmax29(
+    const FunctionBodyBuildContext& ctx,
+    const OpSchema& schema,
+    FunctionProto& functionProto) {
+  const int64_t axis = ctx.getAttribute("axis") != nullptr ? ctx.getAttribute("axis")->i() : -1;
+  FunctionBuilder builder(functionProto);
+  builder.Const1D("axes", axis)
+      .Add("MaxIndex = ArgMax <keepdims = 1> (input)", "axis", axis)
+      .Add("MaxLogit = GatherElements (input, MaxIndex)", "axis", axis)
+      .Add(R"(
+        Shifted = Sub (input, MaxLogit)
+        Exponentials = Exp (Shifted)
+      )")
+      .Add("One = GatherElements (Exponentials, MaxIndex)", "axis", axis)
+      .Add("Zero = Sub (One, One)")
+      // Exclude exactly one maximum: masking all tied maxima would be incorrect.
+      .Add("Others = ScatterElements (Exponentials, MaxIndex, Zero)", "axis", axis)
+      .Add(R"(
+        OtherSum = ReduceSum <keepdims = 1> (Others, axes)
+        Normalizer = Log1p (OtherSum)
+        NonEmptyOutput = Sub (Shifted, Normalizer)
+      )");
+  // ArgMax is undefined along a zero-length axis. Keep the entire computation
+  // in the nonempty branch so no reduction is executed for any empty input.
+  GraphProto nonempty_branch;
+  nonempty_branch.set_name("logsoftmax_nonempty");
+  nonempty_branch.mutable_node()->Swap(functionProto.mutable_node());
+  nonempty_branch.add_output()->set_name("NonEmptyOutput");
+
+  GraphProto empty_branch;
+  empty_branch.set_name("logsoftmax_empty");
+  auto* identity = empty_branch.add_node();
+  identity->set_op_type("Identity");
+  identity->add_input("input");
+  identity->add_output("EmptyOutput");
+  empty_branch.add_output()->set_name("EmptyOutput");
+
+  builder.Const("ZeroSize", static_cast<int64_t>(0))
+      .Add(R"(
+        InputSize = Size (input)
+        IsEmpty = Equal (InputSize, ZeroSize)
+      )")
+      .Add("output = If (IsEmpty)", "then_branch", empty_branch, "else_branch", nonempty_branch);
+  schema.BuildFunction(functionProto);
+  return true;
+}
+
 ONNX_OPERATOR_SET_SCHEMA(
     LogSoftmax,
     13,
@@ -1057,7 +1153,8 @@ ONNX_OPERATOR_SET_SCHEMA(
               schema.BuildFunction(functionProto);
               return true;
             },
-            18));
+            18)
+        .SetContextDependentFunctionBodyBuilder(BuildContextDependentFunctionBodyLogSoftmax29, 29));
 
 ONNX_OPERATOR_SET_SCHEMA(
     Hardmax,

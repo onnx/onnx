@@ -6,7 +6,7 @@
 * [Overall Test Coverage](#overall-test-coverage)
 # Node Test Coverage
 ## Summary
-Node tests have covered 194/203 (95.57%, 5 generators excluded) common operators.
+Node tests have covered 195/204 (95.59%, 5 generators excluded) common operators.
 
 Node tests have covered 1/1 (100.00%, 0 generators excluded) experimental operators.
 
@@ -15996,6 +15996,113 @@ expect(node, inputs=[x], outputs=[y], name="test_log_example")
 x = np.exp(np.random.randn(3, 4, 5).astype(np.float32))
 y = np.log(x)
 expect(node, inputs=[x], outputs=[y], name="test_log")
+```
+
+</details>
+
+
+### Log1p
+There are 5 test cases, listed as following:
+<details>
+<summary>log1p</summary>
+
+```python
+node = onnx.helper.make_node("Log1p", ["x"], ["y"])
+for dtype in [np.float16, ml_dtypes.bfloat16, np.float32, np.float64]:
+    x = np.array(
+        [[-0.75, -0.5, 0.0, 0.25], [0.5, 1.0, 3.0, 1000.0]], dtype=dtype
+    )
+    y = np.array([math.log1p(float(v)) for v in x.flat], dtype=dtype).reshape(
+        x.shape
+    )
+    expect(
+        node,
+        inputs=[x],
+        outputs=[y],
+        name=f"test_log1p_{np.dtype(dtype).name}",
+        rtol=1e-2 if dtype == ml_dtypes.bfloat16 else 1e-3,
+    )
+```
+
+</details>
+<details>
+<summary>log1p_near_negative_one</summary>
+
+```python
+node = onnx.helper.make_node("Log1p", ["x"], ["y"])
+for dtype in [np.float16, ml_dtypes.bfloat16, np.float32, np.float64]:
+    x = np.nextafter(
+        np.array([-1.0], dtype=dtype), np.array([0.0], dtype=dtype)
+    )
+    y = np.array([math.log1p(float(x[0]))], dtype=dtype)
+    expect(
+        node,
+        inputs=[x],
+        outputs=[y],
+        name=f"test_log1p_near_negative_one_{np.dtype(dtype).name}",
+        rtol=1e-2 if dtype == ml_dtypes.bfloat16 else 1e-3,
+    )
+```
+
+</details>
+<details>
+<summary>log1p_scalar_and_empty</summary>
+
+```python
+node = onnx.helper.make_node("Log1p", ["x"], ["y"])
+expect(
+    node,
+    inputs=[np.array(1.0, dtype=np.float32)],
+    outputs=[np.array(math.log(2), dtype=np.float32)],
+    name="test_log1p_scalar",
+)
+x = np.empty((0, 3), dtype=np.float32)
+expect(node, inputs=[x], outputs=[x], name="test_log1p_empty")
+```
+
+</details>
+<details>
+<summary>log1p_small_inputs</summary>
+
+```python
+node = onnx.helper.make_node("Log1p", ["x"], ["y"])
+for dtype, tiny in [
+    (np.float16, 2.0**-14),
+    (ml_dtypes.bfloat16, 2.0**-10),
+    (np.float32, 1e-8),
+    (np.float64, 1e-20),
+]:
+    x = np.array([-tiny, -0.0, 0.0, tiny], dtype=dtype)
+    y = np.array([math.log1p(float(v)) for v in x], dtype=dtype)
+    # Relative error allows backend variation, while atol=0 catches
+    # an incorrect zero caused by rounding the intermediate 1 + x.
+    expect(
+        node,
+        inputs=[x],
+        outputs=[y],
+        name=f"test_log1p_small_inputs_{np.dtype(dtype).name}",
+        rtol=1e-2 if dtype == ml_dtypes.bfloat16 else 1e-3,
+        atol=0,
+    )
+```
+
+</details>
+<details>
+<summary>log1p_special_values</summary>
+
+```python
+node = onnx.helper.make_node("Log1p", ["x"], ["y"])
+for dtype in [np.float16, ml_dtypes.bfloat16, np.float32, np.float64]:
+    x = np.array([-0.0, 0.0, -1.0, -2.0, -np.inf, np.inf, np.nan], dtype=dtype)
+    y = np.array(
+        [-0.0, 0.0, -np.inf, np.nan, np.nan, np.inf, np.nan], dtype=dtype
+    )
+    expect(
+        node,
+        inputs=[x],
+        outputs=[y],
+        name=f"test_log1p_special_values_{np.dtype(dtype).name}",
+    )
 ```
 
 </details>

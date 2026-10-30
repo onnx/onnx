@@ -34516,6 +34516,70 @@ This version of the operator has been available since version 29 of the default 
 <dd>Constrain group indices to int32 or int64 tensors.</dd>
 </dl>
 
+### <a name="Log1p-29"></a>**Log1p-29**</a>
+
+  Computes the natural logarithm of one plus each input element, independently.
+  The input may have any shape, including a scalar or an empty tensor. The output
+  has the same shape and element type as the input. Supported element types are
+  FLOAT16, BFLOAT16, FLOAT, and DOUBLE.
+
+  For a finite input element `x > -1` with `x != 0`, the mathematical result is
+  `y = ln(1 + x)`, where `ln` is the logarithm to base `e`. Here `x` denotes the
+  exact real value represented by the input element, and `1 + x` denotes an exact
+  real sum in the mathematical definition, not an intermediate floating-point
+  addition that must be materialized.
+
+  Special values are defined element-wise as follows:
+
+  | Input `x` | Output `y` |
+  | --- | --- |
+  | Positive zero | Positive zero |
+  | Negative zero | Negative zero |
+  | `-1` | Negative infinity |
+  | Finite `x < -1` | NaN |
+  | Negative infinity | NaN |
+  | Positive infinity | Positive infinity |
+  | NaN | NaN |
+
+  The sign and payload of an output NaN are unspecified.
+
+  The computation must preserve small nonzero results that would be lost by
+  rounding `1 + x` to `1` before applying the logarithm. In particular, an output
+  must not become zero solely because such an intermediate sum rounds to `1`
+  when the mathematical result is representable as a nonzero value in the output
+  type. Near zero, `ln(1 + x) / x` tends to `1`. For example, a FLOAT input `1e-8`
+  produces a result approximately equal to `1e-8`, rather than zero.
+
+  Implementations may choose their numerical algorithm; the operation is not
+  specified as a composition of `Add` and `Log`. Non-special results are subject
+  to floating-point approximation, without a requirement for bitwise agreement
+  between implementations or correctly rounded transcendental results.
+
+#### Version
+
+This version of the operator has been available since version 29 of the default ONNX operator set.
+
+#### Inputs
+
+<dl>
+<dt><tt>input</tt> (differentiable) : T</dt>
+<dd>Input tensor</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> (differentiable) : T</dt>
+<dd>The natural logarithm of one plus the input, computed element-wise</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(bfloat16), tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
 # ai.onnx.preview
 ## Version 1 of the 'ai.onnx.preview' operator set
 ### <a name="ai.onnx.preview.FlexAttention-1"></a>**ai.onnx.preview.FlexAttention-1**</a>
