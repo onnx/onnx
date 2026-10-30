@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
-from warnings import catch_warnings, simplefilter
+from warnings import catch_warnings
 
 import numpy as np
 
@@ -12,6 +12,5 @@ from onnx.reference.op_run import OpRun
 
 class Pow(OpRun):
     def _run(self, a, b):
-        with catch_warnings():
-            simplefilter("ignore")
+        with catch_warnings(action="ignore"):
             return (np.power(a, b).astype(a.dtype),)
