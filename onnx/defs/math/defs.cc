@@ -1082,8 +1082,29 @@ static bool BuildContextDependentFunctionBodyLogSoftmax29(
       .Add(R"(
         OtherSum = ReduceSum <keepdims = 1> (Others, axes)
         Normalizer = Log1p (OtherSum)
-        output = Sub (Shifted, Normalizer)
+        NonEmptyOutput = Sub (Shifted, Normalizer)
       )");
+  // ArgMax is undefined along a zero-length axis. Keep the entire computation
+  // in the nonempty branch so no reduction is executed for any empty input.
+  GraphProto nonempty_branch;
+  nonempty_branch.set_name("logsoftmax_nonempty");
+  nonempty_branch.mutable_node()->Swap(functionProto.mutable_node());
+  nonempty_branch.add_output()->set_name("NonEmptyOutput");
+
+  GraphProto empty_branch;
+  empty_branch.set_name("logsoftmax_empty");
+  auto* identity = empty_branch.add_node();
+  identity->set_op_type("Identity");
+  identity->add_input("input");
+  identity->add_output("EmptyOutput");
+  empty_branch.add_output()->set_name("EmptyOutput");
+
+  builder.Const("ZeroSize", static_cast<int64_t>(0))
+      .Add(R"(
+        InputSize = Size (input)
+        IsEmpty = Equal (InputSize, ZeroSize)
+      )")
+      .Add("output = If (IsEmpty)", "then_branch", empty_branch, "else_branch", nonempty_branch);
   schema.BuildFunction(functionProto);
   return true;
 }

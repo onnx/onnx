@@ -39,7 +39,13 @@ def _get_logsoftmax_function(opset, axis, dtype):
 def test_logsoftmax_function_opset_dependencies(opset, dtype):
     function = _get_logsoftmax_function(opset, -1, dtype)
     assert defs.get_schema("LogSoftmax", opset).since_version == 13
-    assert any(node.op_type == "Log1p" for node in function.node) == (opset == 29)
+    nodes = function.node
+    if opset == 29:
+        branch = next(node for node in nodes if node.op_type == "If")
+        nodes = next(
+            attr.g.node for attr in branch.attribute if attr.name == "else_branch"
+        )
+    assert any(node.op_type == "Log1p" for node in nodes) == (opset == 29)
     assert any(o.domain == "" and o.version == opset for o in function.opset_import)
 
 
@@ -69,16 +75,34 @@ def test_logsoftmax_function_preserves_small_log_probability(dtype, margin, axis
     assert actual.dtype == dtype
     assert (actual < 0).all()
     assert_array_equal(x, original)
+    if dtype == ml_dtypes.bfloat16:
+        # NumPy 1.26 cannot promote bfloat16 with the Python float used by isclose.
+        actual = actual.astype(np.float32)
+        expected = expected.astype(np.float32)
     assert_allclose(
         actual, expected, rtol=1e-2 if dtype == ml_dtypes.bfloat16 else 1e-3, atol=0
     )
 
 
-@pytest.mark.parametrize("shape", [(2, 1, 3), (0, 3)])
-def test_logsoftmax_function_single_class_and_empty_input(shape):
-    x = np.zeros(shape, dtype=np.float32)
-    function = _get_logsoftmax_function(29, 1, x.dtype)
+@pytest.mark.parametrize(
+    "shape,axis",
+    [
+        ((2, 1, 3), 1),
+        ((0, 3), 1),
+        ((2, 0, 3), 1),
+        ((2, 0, 3), -2),
+        ((2, 3, 0), -1),
+        ((0, 2, 3), 0),
+    ],
+)
+@pytest.mark.parametrize(
+    "dtype", [np.float16, ml_dtypes.bfloat16, np.float32, np.float64]
+)
+def test_logsoftmax_function_single_class_and_empty_input(shape, axis, dtype):
+    x = np.zeros(shape, dtype=dtype)
+    function = _get_logsoftmax_function(29, axis, x.dtype)
     (actual,) = ReferenceEvaluator(function).run(None, {"input": x}, attributes={})
+    assert actual.dtype == dtype
     assert_array_equal(actual, x)
 
 
