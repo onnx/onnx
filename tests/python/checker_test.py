@@ -341,7 +341,7 @@ class TestChecker:
 
     def test_check_function_reference_to_undeclared_attribute(self) -> None:
         function = self._make_leaky_relu_function(
-            ref_attr_name="alpah",
+            ref_attr_name="undeclared",
             attribute_protos=[helper.make_attribute("alpha", 0.5)],
         )
         with pytest.raises(checker.ValidationError, match="does not declare"):
