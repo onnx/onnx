@@ -8,6 +8,7 @@ import os
 import struct
 import tempfile
 
+import ml_dtypes
 import numpy as np
 import pytest
 
@@ -30,6 +31,71 @@ EINSUM_OPSET_28 = 28
 
 
 class TestVersionConverter:
+    @pytest.mark.parametrize(
+        ("initial_version", "target_version"), [(28, 29), (29, 28)]
+    )
+    @pytest.mark.parametrize("nested", [False, True])
+    @pytest.mark.parametrize("intermediate", [False, True])
+    @pytest.mark.parametrize(
+        ("tensor_type", "dtype"),
+        [
+            ("float", np.float32),
+            ("float16", np.float16),
+            ("bfloat16", ml_dtypes.bfloat16),
+            ("double", np.float64),
+        ],
+    )
+    def test_mvn_captured_input(
+        self, initial_version, target_version, nested, intermediate, tensor_type, dtype
+    ) -> None:
+        prefix = "A = Identity (X)" if intermediate else ""
+        captured = "A" if intermediate else "X"
+        branch = onnx.parser.parse_graph(
+            f"""
+            branch () => ({tensor_type}[2] Z) {{
+                Z = MeanVarianceNormalization <axes = [0]> ({captured})
+            }}
+            """
+        )
+        if nested:
+            branch = helper.make_graph(
+                [
+                    helper.make_node(
+                        "If", ["cond"], ["Z"], then_branch=branch, else_branch=branch
+                    )
+                ],
+                "nested",
+                [],
+                [
+                    helper.make_tensor_value_info(
+                        "Z", helper.np_dtype_to_tensor_dtype(np.dtype(dtype)), [2]
+                    )
+                ],
+            )
+        model = onnx.parser.parse_model(
+            f"""
+            <ir_version: 13, opset_import: ["" : {initial_version}]>
+            mvn ({tensor_type}[2] X, bool cond) => ({tensor_type}[2] Y) {{
+                {prefix}
+                Y = If (cond)
+            }}
+            """
+        )
+        model.graph.node[-1].attribute.extend(
+            [
+                helper.make_attribute("then_branch", branch),
+                helper.make_attribute("else_branch", branch),
+            ]
+        )
+        checker.check_model(model)
+        feeds = {"X": np.array([1.0, 3.0], dtype=dtype), "cond": np.array(True)}
+        expected = ReferenceEvaluator(model).run(None, feeds)[0]
+        converted = onnx.version_converter.convert_version(model, target_version)
+        checker.check_model(converted, full_check=True)
+        got = ReferenceEvaluator(converted).run(None, feeds)[0]
+        assert got.dtype == dtype
+        np.testing.assert_allclose(got, expected)
+
     def _converted(
         self,
         graph: GraphProto,

@@ -139,6 +139,9 @@ __all__ = [
     "MaxPool",
     "MaxUnpool",
     "Mean",
+    "MeanVarianceNormalization_9",
+    "MeanVarianceNormalization_13",
+    "MeanVarianceNormalization_29",
     "MelWeightMatrix",
     "Min",
     "Mod",
@@ -405,6 +408,11 @@ from onnx.reference.ops.op_max import Max
 from onnx.reference.ops.op_max_pool import MaxPool
 from onnx.reference.ops.op_max_unpool import MaxUnpool
 from onnx.reference.ops.op_mean import Mean
+from onnx.reference.ops.op_mean_variance_normalization import (
+    MeanVarianceNormalization_9,
+    MeanVarianceNormalization_13,
+    MeanVarianceNormalization_29,
+)
 from onnx.reference.ops.op_mel_weight_matrix import MelWeightMatrix
 from onnx.reference.ops.op_min import Min
 from onnx.reference.ops.op_mod import Mod

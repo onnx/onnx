@@ -7,11 +7,48 @@
 #include <iostream>
 #include <memory>
 #include <string>
+#include <unordered_map>
 
 #include "onnx/common/ir_pb_converter.h"
 #include "onnx/shape_inference/implementation.h"
 
 namespace ONNX_NAMESPACE::version_conversion {
+
+static void PropagateCapturedTensorTypes(
+    const std::shared_ptr<Graph>& graph,
+    const std::unordered_map<std::string, Value*>& outer_scope) {
+  auto scope = outer_scope;
+  for (auto* input : graph->inputs()) {
+    scope[input->uniqueName()] = input;
+  }
+  for (auto* node : graph->nodes()) {
+    for (auto* output : node->outputs()) {
+      if (node->kind() == kCaptured) {
+        const auto source = outer_scope.find(output->uniqueName());
+        if (source != outer_scope.end()) {
+          if (output->elemType() == TensorProto_DataType_UNDEFINED) {
+            output->setElemType(source->second->elemType());
+          }
+          if (!output->has_sizes() && source->second->has_sizes()) {
+            output->setSizes(source->second->sizes());
+          }
+        }
+      }
+      scope[output->uniqueName()] = output;
+    }
+  }
+  for (auto* node : graph->nodes()) {
+    for (const auto& attr : node->attributeNames()) {
+      if (node->kindOf(attr) == AttributeKind::g) {
+        PropagateCapturedTensorTypes(node->g(attr), scope);
+      } else if (node->kindOf(attr) == AttributeKind::gs) {
+        for (const auto& subgraph : node->gs(attr)) {
+          PropagateCapturedTensorTypes(subgraph, scope);
+        }
+      }
+    }
+  }
+}
 
 ModelProto ConvertVersion(const ModelProto& mp_in, int target_version) {
   ModelProto inferred_model = mp_in;
@@ -154,6 +191,8 @@ ModelProto DefaultVersionConverter::convert_version(
 
   std::shared_ptr<Graph> g(ImportModelProto(mp_in));
 
+  // Imported capture placeholders lack the types inferred in their enclosing scope.
+  PropagateCapturedTensorTypes(g, {});
   convert_graph(g, initial_version, target_version);
 
   // Export g as ModelProto

@@ -18084,7 +18084,37 @@ expect(
 
 
 ### MeanVarianceNormalization
-There are 1 test cases, listed as following:
+There are 3 test cases, listed as following:
+<details>
+<summary>epsilon</summary>
+
+```python
+epsilon = 1.0
+node = onnx.helper.make_node(
+    "MeanVarianceNormalization",
+    inputs=["X"],
+    outputs=["Y"],
+    axes=[1, -1],
+    epsilon=epsilon,
+)
+
+input_data = np.arange(24, dtype=np.float64).reshape(2, 3, 4)
+
+# Calculate expected output with custom epsilon
+data_mean = np.mean(input_data, axis=(1, -1), keepdims=True)
+centered = input_data - data_mean
+std = np.sqrt(np.mean(np.square(centered), axis=(1, -1), keepdims=True))
+expected_output = (input_data - data_mean) / (std + epsilon)
+
+expect(
+    node,
+    inputs=[input_data],
+    outputs=[expected_output],
+    name="test_mvn_epsilon",
+)
+```
+
+</details>
 <details>
 <summary>meanvariancenormalization</summary>
 
@@ -18116,13 +18146,37 @@ input_data = np.array(
 
 # Calculate expected output data
 data_mean = np.mean(input_data, axis=(0, 2, 3), keepdims=1)
-data_mean_squared = np.power(data_mean, 2)
-data_squared = np.power(input_data, 2)
-data_squared_mean = np.mean(data_squared, axis=(0, 2, 3), keepdims=1)
-std = np.sqrt(data_squared_mean - data_mean_squared)
+centered = input_data - data_mean
+std = np.sqrt(np.mean(np.square(centered), axis=(0, 2, 3), keepdims=True))
 expected_output = (input_data - data_mean) / (std + 1e-9)
 
 expect(node, inputs=[input_data], outputs=[expected_output], name="test_mvn")
+```
+
+</details>
+<details>
+<summary>zero_variance</summary>
+
+```python
+node = onnx.helper.make_node(
+    "MeanVarianceNormalization",
+    inputs=["X"],
+    outputs=["Y"],
+    axes=[0],
+)
+input_data = np.ones(2, dtype=np.float32)
+mean = np.mean(input_data, axis=0, keepdims=True)
+centered = input_data - mean
+expected_output = centered / (
+    np.sqrt(np.mean(np.square(centered), axis=0, keepdims=True)) + 1e-9
+)
+
+expect(
+    node,
+    inputs=[input_data],
+    outputs=[expected_output],
+    name="test_mvn_zero_variance",
+)
 ```
 
 </details>
