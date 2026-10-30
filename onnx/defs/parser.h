@@ -8,10 +8,8 @@
 #pragma once
 
 #include <algorithm>
-#include <stdexcept>
 #include <string>
 #include <string_view>
-#include <type_traits>
 #include <unordered_map>
 
 #include "onnx/common/common.h"
@@ -428,29 +426,8 @@ class ParserBase {
   }
 
  protected:
-  template <typename T>
-  Common::Status ParseInteger(const Literal& literal, T& val) {
-    if (literal.type != LiteralType::INT_LITERAL)
-      return ParseError("Integer value expected, but not found.");
-    ONNX_TRY {
-      T parsed = 0;
-      if constexpr (std::is_unsigned_v<T>) {
-        parsed = std::stoull(literal.value);
-        if (!literal.value.empty() && literal.value.front() == '-' && parsed != 0)
-          return ParseError("Integer literal is out of range: ", literal.value);
-      } else {
-        parsed = std::stoll(literal.value);
-      }
-      val = parsed;
-    }
-    ONNX_CATCH(const std::invalid_argument&) {
-      return ParseError("Integer literal is invalid: ", literal.value);
-    }
-    ONNX_CATCH(const std::out_of_range&) {
-      return ParseError("Integer literal is out of range: ", literal.value);
-    }
-    return Common::Status::OK();
-  }
+  Common::Status ParseInteger(const Literal& literal, int64_t& val);
+  Common::Status ParseInteger(const Literal& literal, uint64_t& val);
 
   // True when the cursor has consumed all input.
   bool AtEnd() const {

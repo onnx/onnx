@@ -154,6 +154,63 @@ double LocaleIndependentStod(const std::string& s) {
 
 namespace ONNX_NAMESPACE {
 
+namespace {
+
+template <typename T>
+std::errc ParseIntegerChars(std::string_view text, T& value) {
+  const char* const begin = text.data();
+  const char* const end = begin + text.size();
+  const auto result = std::from_chars(begin, end, value);
+  if (result.ec != std::errc{}) {
+    return result.ec;
+  }
+  return result.ptr == end ? std::errc{} : std::errc::invalid_argument;
+}
+
+} // anonymous namespace
+
+Common::Status ParserBase::ParseInteger(const Literal& literal, int64_t& val) {
+  if (literal.type != LiteralType::INT_LITERAL) {
+    return ParseError("Integer value expected, but not found.");
+  }
+
+  int64_t parsed = 0;
+  const std::errc error = ParseIntegerChars(literal.value, parsed);
+  if (error == std::errc::result_out_of_range) {
+    return ParseError("Integer literal is out of range: ", literal.value);
+  }
+  if (error != std::errc{}) {
+    return ParseError("Integer literal is invalid: ", literal.value);
+  }
+
+  val = parsed;
+  return Common::Status::OK();
+}
+
+Common::Status ParserBase::ParseInteger(const Literal& literal, uint64_t& val) {
+  if (literal.type != LiteralType::INT_LITERAL) {
+    return ParseError("Integer value expected, but not found.");
+  }
+
+  std::string_view text = literal.value;
+  const bool negative = !text.empty() && text.front() == '-';
+  if (negative) {
+    text.remove_prefix(1);
+  }
+
+  uint64_t parsed = 0;
+  const std::errc error = ParseIntegerChars(text, parsed);
+  if (error == std::errc::result_out_of_range || (error == std::errc{} && negative && parsed != 0)) {
+    return ParseError("Integer literal is out of range: ", literal.value);
+  }
+  if (error != std::errc{}) {
+    return ParseError("Integer literal is invalid: ", literal.value);
+  }
+
+  val = parsed;
+  return Common::Status::OK();
+}
+
 Common::Status ParserBase::Parse(Literal& result) {
   bool decimal_point = false;
   auto nextch = NextChar();
