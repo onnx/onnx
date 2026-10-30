@@ -13,7 +13,7 @@ Release Cadence
 
 Branch cuts for a new release are planned every 3 months. However, the times can be changed as required.
 
-| Minor Version | Release branch cut | Release date | First patch release date |
+| Minor Version | Release branch cut | Release date | Patch release dates |
 | --- | --- | --- | --- |
 | 1.17.0 | XYZ | XYZ | Not planned |
 | 1.18.0 | Mar 2025 | May 2025 | Not planned |
@@ -21,7 +21,7 @@ Branch cuts for a new release are planned every 3 months. However, the times can
 | 1.20.0  | 31. October 2025 | November 2025 | January 2026 |
 | 1.21.0  | 25. February 2026 | 28. March 2026 | - |
 | 1.22.0 | 1. June 2026 | 15. June 2026 | - |
-| 1.23.0 (tbd) | 14. August 2026 | 1. September 2026 | tbd |
+| 1.23.0 | 1. September 2026 | 18. September 2026 | 29. September 2026 (1.23.1), 6. October 2026 (1.23.2) |
 | 1.24.0 (tbd) | 1. December 2026 | 14. December 2026 | tbd |
 | 1.25.0 (tbd) | 1. February 2027 | 28. February 2027 | tbd |
 

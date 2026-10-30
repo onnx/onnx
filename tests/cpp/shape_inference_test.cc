@@ -345,58 +345,18 @@ TEST(ShapeInferenceTest, MergeShapeInfoMismatches) {
 static void doInferencingTest(bool use_scan_opset8) {
   OpSchemaRegistry::Instance();
   GraphProto subgraph;
-
-  // simple tensor without shape info
-  TypeProto simple_tensor_no_shape;
-  auto* tensor_type = simple_tensor_no_shape.mutable_tensor_type();
-  tensor_type->set_elem_type(TensorProto_DataType_FLOAT);
-
-  // simple tensor with shape info
-  TypeProto simple_tensor = simple_tensor_no_shape;
-  simple_tensor.mutable_tensor_type()->mutable_shape()->add_dim()->set_dim_value(2);
-
-  // setup simple graph that can be used with Scan containing two Identity
-  // nodes. one for the loop state variable. one for the scan output.
-  {
-    NodeProto loop_state_identity;
-    loop_state_identity.set_name("loop_state_identity");
-    loop_state_identity.set_domain(ONNX_DOMAIN);
-    loop_state_identity.set_op_type("Identity");
-    loop_state_identity.set_doc_string("loop state identity");
-    loop_state_identity.add_input("loop_state_in");
-    loop_state_identity.add_output("loop_state_out");
-
-    *subgraph.add_node() = loop_state_identity;
-
-    NodeProto scan_in_out_identity;
-    scan_in_out_identity.set_name("scan_in_out_identity");
-    scan_in_out_identity.set_domain(ONNX_DOMAIN);
-    scan_in_out_identity.set_op_type("Identity");
-    scan_in_out_identity.set_doc_string("scan identity");
-    scan_in_out_identity.add_input("scan_in");
-    scan_in_out_identity.add_output("scan_out");
-    *subgraph.add_node() = scan_in_out_identity;
-
-    ValueInfoProto loop_state_in;
-    loop_state_in.set_name("loop_state_in");
-    *loop_state_in.mutable_type() = simple_tensor;
-    *subgraph.add_input() = loop_state_in;
-
-    ValueInfoProto scan_in;
-    scan_in.set_name("scan_in");
-    *scan_in.mutable_type() = simple_tensor;
-    *subgraph.add_input() = scan_in;
-
-    ValueInfoProto loop_state_out = loop_state_in;
-    loop_state_out.set_name("loop_state_out");
-    *loop_state_out.mutable_type() = simple_tensor_no_shape;
-    *subgraph.add_output() = loop_state_out;
-
-    ValueInfoProto scan_state_out = scan_in;
-    scan_state_out.set_name("scan_out");
-    *scan_state_out.mutable_type() = simple_tensor_no_shape;
-    *subgraph.add_output() = scan_state_out;
+  OnnxParser parser(R"ONNX(
+  scan_body (float[2] loop_state_in, float[2] scan_in) => (float[] loop_state_out, float[] scan_out) {
+    [loop_state_identity] loop_state_out = Identity(loop_state_in)
+    [scan_in_out_identity] scan_out = Identity(scan_in)
   }
+  )ONNX");
+  auto status = parser.Parse(subgraph);
+  ASSERT_TRUE(status.IsOK()) << status.ErrorMessage();
+  ASSERT_TRUE(parser.EndOfInput()) << "Extra unparsed input unexpected.";
+
+  TypeProto simple_tensor = subgraph.input(0).type();
+  TypeProto simple_tensor_no_shape = subgraph.output(0).type();
 
   std::unordered_map<std::string, int> opset_imports;
   opset_imports[ONNX_DOMAIN] = 8; // Scan is v8
@@ -535,6 +495,41 @@ TEST(InferenceContextImplTest, OptionalInputsAndOutputsUseNodeProtoPresence) {
   EXPECT_FALSE(ctx.hasOutput(1));
   EXPECT_TRUE(ctx.hasOutput(2));
   EXPECT_FALSE(ctx.hasOutput(3));
+}
+
+TEST(GraphInferencerImplTest, OuterScopeMapLifetimeTest) {
+  TypeProto outer_type;
+  outer_type.mutable_tensor_type()->set_elem_type(TensorProto_DataType_FLOAT);
+  outer_type.mutable_tensor_type()->mutable_shape();
+
+  auto make_subgraph = []() {
+    GraphProto graph;
+    auto* node = graph.add_node();
+    node->set_op_type("Identity");
+    node->add_input("outer");
+    node->add_output("result");
+    graph.add_output()->set_name("result");
+    return graph;
+  };
+  auto infer_and_check = [](GraphProto& graph, shape_inference::GraphInferenceContext& graph_context) {
+    shape_inference::GraphInferencerImpl graph_inferencer(graph, graph_context);
+    const auto output_types = graph_inferencer.doInferencing({}, {});
+    ASSERT_EQ(output_types.size(), 1);
+    ASSERT_NE(output_types[0], nullptr);
+    EXPECT_EQ(output_types[0]->tensor_type().elem_type(), TensorProto_DataType_FLOAT);
+  };
+
+  std::unordered_map<std::string, int> opset_imports{{ONNX_DOMAIN, 25}};
+  shape_inference::GraphInferenceContext::OuterScopeValueTypesMap live_outer_scope;
+  shape_inference::GraphInferenceContext borrowed_context(live_outer_scope, opset_imports);
+  live_outer_scope.emplace("outer", &outer_type);
+  auto borrowed_graph = make_subgraph();
+  infer_and_check(borrowed_graph, borrowed_context);
+
+  auto owned_graph = make_subgraph();
+  shape_inference::GraphInferenceContext owned_context(
+      shape_inference::GraphInferenceContext::OuterScopeValueTypesMap{{"outer", &outer_type}}, opset_imports);
+  infer_and_check(owned_graph, owned_context);
 }
 
 static void ParseAndInfer(ModelProto& model, const char* modelStr) {

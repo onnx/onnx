@@ -14,6 +14,7 @@ import onnx.defs
 import onnx.parser
 from onnx import (
     GraphProto,
+    ModelProto,
     SparseTensorProto,
     TensorProto,
     checker,
@@ -24,6 +25,7 @@ from onnx import (
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
+    from pathlib import Path
 
 
 class TestChecker:
@@ -147,6 +149,34 @@ class TestChecker:
 
         graph.initializer[0].name = "X"
         checker.check_graph(graph)
+
+    def test_check_einsum_bfloat16(self) -> None:
+        # Einsum gained bfloat16 at opset 28; opset 12 predates it. Only
+        # full_check reaches the type constraint, so the accept/reject pair
+        # has to go through check_model rather than shape inference alone.
+        def model(opset: int) -> ModelProto:
+            node = helper.make_node(
+                "Einsum", ["X", "Y"], ["Z"], equation="bij,bjk->bik"
+            )
+            graph = helper.make_graph(
+                [node],
+                "test",
+                [
+                    helper.make_tensor_value_info("X", TensorProto.BFLOAT16, [5, 2, 3]),
+                    helper.make_tensor_value_info("Y", TensorProto.BFLOAT16, [5, 3, 4]),
+                ],
+                [helper.make_tensor_value_info("Z", TensorProto.BFLOAT16, [5, 2, 4])],
+            )
+            return helper.make_model(
+                graph,
+                producer_name="test",
+                opset_imports=[helper.make_opsetid("", opset)],
+            )
+
+        checker.check_model(model(28), full_check=True)
+
+        with pytest.raises(shape_inference.InferenceError):
+            checker.check_model(model(12), full_check=True)
 
     def test_check_graph_types(self) -> None:
         # This is for https://github.com/onnx/onnx/issues/3849.
@@ -339,6 +369,45 @@ class TestChecker:
         # partially-populated proto happened to result from the failed parse.
         with pytest.raises(ValueError):
             checker.check_model(b"\xff\xff\xff\xff\xff not a valid protobuf")
+
+    @pytest.mark.parametrize(
+        "trailer",
+        [b"\x00" + b"\xff" * 16, b"\x0c" + b"\xff" * 8],
+        ids=["zero_tag", "end_group_tag"],
+    )
+    def test_check_model_trailing_data_raises(self, trailer: bytes) -> None:
+        # A 0 tag or an end-group tag ends the parse early. The bytes after it
+        # must be rejected rather than silently dropped, matching
+        # onnx.load_from_string, which rejects the same input.
+        node = helper.make_node("Relu", ["X"], ["Y"], name="test")
+        graph = helper.make_graph(
+            [node],
+            "test",
+            [helper.make_tensor_value_info("X", TensorProto.FLOAT, [1, 2])],
+            [helper.make_tensor_value_info("Y", TensorProto.FLOAT, [1, 2])],
+        )
+        model = helper.make_model(graph, producer_name="test")
+
+        with pytest.raises(ValueError):
+            checker.check_model(model.SerializeToString() + trailer)
+
+    def test_check_model_path_trailing_data_raises(self) -> None:
+        node = helper.make_node("Relu", ["X"], ["Y"], name="test")
+        graph = helper.make_graph(
+            [node],
+            "test",
+            [helper.make_tensor_value_info("X", TensorProto.FLOAT, [1, 2])],
+            [helper.make_tensor_value_info("Y", TensorProto.FLOAT, [1, 2])],
+        )
+        model = helper.make_model(graph, producer_name="test")
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            model_path = os.path.join(temp_dir, "model.onnx")
+            # Trailing NUL padding, e.g. from a preallocated or partly zeroed file.
+            with open(model_path, "wb") as f:
+                f.write(model.SerializeToString() + b"\x00" * 16)
+            with pytest.raises(checker.ValidationError):
+                checker.check_model(model_path)
 
     def test_check_model_protobuf_size_boundary(
         self, monkeypatch: pytest.MonkeyPatch
@@ -1452,6 +1521,156 @@ class TestChecker:
         tensor3.name = "t"
         checker.check_tensor(tensor3)
 
+    @staticmethod
+    def _raw_data_tensor(dtype: int, dims: list[int], nbytes: int) -> TensorProto:
+        tensor = TensorProto()
+        tensor.data_type = dtype
+        tensor.dims.extend(dims)
+        tensor.name = "t"
+        tensor.raw_data = b"\x00" * nbytes
+        return tensor
+
+    def test_check_tensor_raw_data_size(self) -> None:
+        """Reject whole-byte tensors whose raw_data payload is too small."""
+        # (data type, bytes per element)
+        cases = [
+            (TensorProto.BOOL, 1),
+            (TensorProto.UINT8, 1),
+            (TensorProto.FLOAT8E4M3FN, 1),
+            (TensorProto.FLOAT16, 2),
+            (TensorProto.BFLOAT16, 2),
+            (TensorProto.FLOAT, 4),
+            (TensorProto.INT32, 4),
+            (TensorProto.DOUBLE, 8),
+            (TensorProto.INT64, 8),
+            (TensorProto.COMPLEX64, 8),
+            (TensorProto.COMPLEX128, 16),
+        ]
+        for dtype, elem_size in cases:
+            with pytest.raises(checker.ValidationError):
+                checker.check_tensor(
+                    self._raw_data_tensor(dtype, [4], 4 * elem_size - 1)
+                )
+            # Exactly enough bytes must pass.
+            checker.check_tensor(self._raw_data_tensor(dtype, [4], 4 * elem_size))
+
+        # Trailing bytes are accepted: external data loaded without a length key reads to EOF.
+        checker.check_tensor(self._raw_data_tensor(TensorProto.FLOAT, [4], 64))
+
+        # Segmented tensors use the segment range instead of dims; raw_data holds one
+        # chunk of length end - begin, and begin/end must lie in [0, nelem].
+        tensor = self._raw_data_tensor(TensorProto.FLOAT, [1000], 16)
+        tensor.segment.begin = 0
+        tensor.segment.end = 4
+        checker.check_tensor(tensor)
+
+        # Segment missing begin or end.
+        for kwargs in ({"begin": 0}, {"end": 4}):
+            bad = self._raw_data_tensor(TensorProto.FLOAT, [1000], 16)
+            for k, v in kwargs.items():
+                setattr(bad.segment, k, v)
+            with pytest.raises(checker.ValidationError):
+                checker.check_tensor(bad)
+
+        # Segment begin < 0.
+        bad = self._raw_data_tensor(TensorProto.FLOAT, [1000], 16)
+        bad.segment.begin = -1
+        bad.segment.end = 4
+        with pytest.raises(checker.ValidationError):
+            checker.check_tensor(bad)
+
+        # Segment end > nelem.
+        bad = self._raw_data_tensor(TensorProto.FLOAT, [1000], 16)
+        bad.segment.begin = 0
+        bad.segment.end = 1001
+        with pytest.raises(checker.ValidationError):
+            checker.check_tensor(bad)
+
+        # An unrecognized data_type has no known element size.
+        with pytest.raises(checker.ValidationError):
+            checker.check_tensor(self._raw_data_tensor(99, [4], 16))
+
+        # Byte-size overflow is reported instead of overflowing int64 internally.
+        with pytest.raises(checker.ValidationError):
+            checker.check_tensor(
+                self._raw_data_tensor(TensorProto.FLOAT, [2**63 - 1], 1)
+            )
+
+    @pytest.mark.parametrize(
+        "dtype, field, value_count",
+        [
+            (TensorProto.FLOAT, "float_data", 17),
+            (TensorProto.COMPLEX64, "float_data", 34),
+            (TensorProto.DOUBLE, "double_data", 17),
+            (TensorProto.COMPLEX128, "double_data", 34),
+            (TensorProto.INT32, "int32_data", 17),
+            (TensorProto.INT64, "int64_data", 17),
+            (TensorProto.UINT32, "uint64_data", 17),
+            (TensorProto.UINT64, "uint64_data", 17),
+            (TensorProto.STRING, "string_data", 17),
+            (TensorProto.FLOAT6E2M3, "int32_data", 17),
+            (TensorProto.FLOAT6E3M2, "int32_data", 17),
+            (TensorProto.INT4, "int32_data", 3),
+            (TensorProto.INT2, "int32_data", 2),
+        ],
+    )
+    def test_check_tensor_segment_typed_data(
+        self, dtype: int, field: str, value_count: int
+    ) -> None:
+        tensor = TensorProto(data_type=dtype, dims=[1000])
+        tensor.segment.begin = 2
+        tensor.segment.end = 19
+        values = getattr(tensor, field)
+        values.extend([b"value" if field == "string_data" else 0] * value_count)
+        checker.check_tensor(tensor)
+
+        values.pop()
+        with pytest.raises(checker.ValidationError, match=f"{field} size"):
+            checker.check_tensor(tensor)
+
+    @pytest.mark.parametrize("payload", ["raw", "typed", "external"])
+    @pytest.mark.parametrize(
+        "segment",
+        [
+            {"begin": 0},
+            {"end": 4},
+            {"begin": -1, "end": 4},
+            {"begin": 5, "end": 4},
+            {"begin": 0, "end": 1001},
+        ],
+        ids=["missing_end", "missing_begin", "negative_begin", "reversed", "past_end"],
+    )
+    def test_check_tensor_invalid_segment_all_payloads(
+        self,
+        payload: str,
+        segment: dict[str, int],
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        tensor = TensorProto(data_type=TensorProto.FLOAT, dims=[1000])
+        if payload == "raw":
+            tensor.raw_data = bytes(4000)
+        elif payload == "typed":
+            tensor.float_data.extend([0.0] * 1000)
+        else:
+            monkeypatch.chdir(tmp_path)
+            (tmp_path / "weights.bin").write_bytes(bytes(4000))
+            tensor.data_location = TensorProto.EXTERNAL
+            tensor.external_data.add(key="location", value="weights.bin")
+        for key, value in segment.items():
+            setattr(tensor.segment, key, value)
+        with pytest.raises(checker.ValidationError, match="segment"):
+            checker.check_tensor(tensor)
+
+    def test_check_tensor_empty_segment(self) -> None:
+        tensor = TensorProto(data_type=TensorProto.FLOAT, dims=[1000])
+        tensor.segment.begin = tensor.segment.end = 1000
+        checker.check_tensor(tensor)
+
+        tensor.float_data.append(0.0)
+        with pytest.raises(checker.ValidationError, match="0-element"):
+            checker.check_tensor(tensor)
+
     def test_check_tensor_packed_subbyte_raw_data(self) -> None:
         """Reject packed sub-byte tensors whose raw_data payload is too small."""
         # 4-bit types (INT4, UINT4, FLOAT4E2M1): 2 elements per byte.
@@ -1490,6 +1709,106 @@ class TestChecker:
             tensor2.raw_data = b"\x00" * 3  # ceil(10/4) = 3 bytes
             checker.check_tensor(tensor2)
 
+        # 6-bit types: 10 elements need ceil(10*6/8) = 8 bytes.
+        for dtype in (TensorProto.FLOAT6E2M3, TensorProto.FLOAT6E3M2):
+            tensor = TensorProto()
+            tensor.data_type = dtype
+            tensor.dims.extend([10])
+            tensor.name = "t"
+            tensor.raw_data = b"\x00" * 7
+            with pytest.raises(checker.ValidationError):
+                checker.check_tensor(tensor)
+            tensor.raw_data = b"\x00" * 8
+            checker.check_tensor(tensor)
+
+    @pytest.mark.parametrize("dtype", (-1, 999))
+    def test_check_tensor_rejects_unknown_data_type(self, dtype: int) -> None:
+        tensor = TensorProto()
+        tensor.data_type = dtype
+        tensor.dims.append(1)
+        tensor.name = "t"
+        tensor.raw_data = b"\x00"
+
+        with pytest.raises(checker.ValidationError, match="Unrecognized data_type"):
+            checker.check_tensor(tensor)
+
+    @pytest.mark.parametrize("dtype", (TensorProto.FLOAT6E2M3, TensorProto.FLOAT6E3M2))
+    @pytest.mark.parametrize(
+        "raw_data, count, valid",
+        [
+            (b"\x3f", 1, True),
+            (b"\x40", 1, False),
+            (b"\xff\xff\x03", 3, True),
+            (b"\xff\xff\x04", 3, False),
+        ],
+    )
+    def test_check_tensor_segment_float6_padding(
+        self, dtype: int, raw_data: bytes, count: int, valid: bool
+    ) -> None:
+        tensor = self._raw_data_tensor(dtype, [1000], len(raw_data))
+        tensor.raw_data = raw_data
+        tensor.segment.begin = 5
+        tensor.segment.end = 5 + count
+        if valid:
+            checker.check_tensor(tensor)
+        else:
+            with pytest.raises(checker.ValidationError, match="padding bits"):
+                checker.check_tensor(tensor)
+
+    @pytest.mark.parametrize("dtype", (TensorProto.INT2, TensorProto.UINT2))
+    def test_check_tensor_2bit_raw_data_size_does_not_overflow(
+        self, dtype: int
+    ) -> None:
+        tensor = TensorProto()
+        tensor.data_type = dtype
+        tensor.dims.append(2**63 - 1)
+        tensor.name = "t"
+        tensor.raw_data = b"\x00"
+        with pytest.raises(checker.ValidationError, match="raw_data size"):
+            checker.check_tensor(tensor)
+
+    @pytest.mark.parametrize("dtype", (TensorProto.FLOAT6E2M3, TensorProto.FLOAT6E3M2))
+    @pytest.mark.parametrize(
+        ("num_elements", "invalid_last_byte"),
+        ((1, 0x40), (2, 0x10), (3, 0x04)),
+    )
+    def test_check_tensor_float6_raw_data_padding(
+        self, dtype: int, num_elements: int, invalid_last_byte: int
+    ) -> None:
+        tensor = TensorProto()
+        tensor.data_type = dtype
+        tensor.dims.extend([num_elements])
+        tensor.name = "t"
+        tensor.raw_data = bytes((num_elements * 6 + 7) // 8 - 1) + bytes(
+            [invalid_last_byte]
+        )
+        with pytest.raises(checker.ValidationError, match="non-zero padding bits"):
+            checker.check_tensor(tensor)
+
+        tensor.raw_data = bytes((num_elements * 6 + 7) // 8)
+        checker.check_tensor(tensor)
+
+    @pytest.mark.parametrize("dtype", (TensorProto.FLOAT6E2M3, TensorProto.FLOAT6E3M2))
+    @pytest.mark.parametrize("invalid_value", (-1, 64))
+    def test_check_tensor_float6_int32_data_high_bits(
+        self, dtype: int, invalid_value: int
+    ) -> None:
+        int32_tensor = helper.make_tensor(
+            "int32", TensorProto.INT32, [1], [invalid_value]
+        )
+        checker.check_tensor(int32_tensor)
+
+        tensor = TensorProto()
+        tensor.data_type = dtype
+        tensor.dims.extend([1])
+        tensor.name = "t"
+        tensor.int32_data.append(invalid_value)
+        with pytest.raises(checker.ValidationError, match="must use only bits 0-5"):
+            checker.check_tensor(tensor)
+
+        tensor.int32_data[0] = 63
+        checker.check_tensor(tensor)
+
     def test_check_tensor_packed_subbyte_int32_data(self) -> None:
         """Reject packed sub-byte tensors whose int32_data payload is too small."""
         # 4-bit types: 8 elements per int32.
@@ -1527,6 +1846,28 @@ class TestChecker:
             tensor2.name = "t"
             tensor2.int32_data.extend([0, 0])  # ceil(20/16) = 2
             checker.check_tensor(tensor2)
+
+    @pytest.mark.parametrize(
+        "dtype",
+        (
+            TensorProto.INT4,
+            TensorProto.UINT4,
+            TensorProto.FLOAT4E2M1,
+            TensorProto.INT2,
+            TensorProto.UINT2,
+        ),
+    )
+    def test_check_tensor_packed_int32_data_size_does_not_overflow(
+        self, dtype: int
+    ) -> None:
+        tensor = TensorProto()
+        tensor.data_type = dtype
+        tensor.dims.append(2**63 - 1)
+        tensor.name = "t"
+        tensor.int32_data.append(0)
+
+        with pytest.raises(checker.ValidationError, match="int32_data size"):
+            checker.check_tensor(tensor)
 
     def test_check_tensor_unpacked_int32_data(self) -> None:
         """Reject non-packed int32_data-stored tensors whose payload is too small.
@@ -1604,6 +1945,126 @@ class TestChecker:
             checker.check_tensor(tensor)
         tensor.double_data.append(0.0)
         checker.check_tensor(tensor)
+
+    @pytest.mark.parametrize(
+        ("dtype", "min_ir_version"),
+        (
+            (TensorProto.BFLOAT16, 4),
+            (TensorProto.FLOAT8E4M3FN, 9),
+            (TensorProto.FLOAT8E4M3FNUZ, 9),
+            (TensorProto.FLOAT8E5M2, 9),
+            (TensorProto.FLOAT8E5M2FNUZ, 9),
+            (TensorProto.UINT4, 10),
+            (TensorProto.INT4, 10),
+            (TensorProto.FLOAT4E2M1, 11),
+            (TensorProto.FLOAT8E8M0, 12),
+            (TensorProto.UINT2, 13),
+            (TensorProto.INT2, 13),
+            (TensorProto.FLOAT6E2M3, 14),
+            (TensorProto.FLOAT6E3M2, 14),
+        ),
+    )
+    def test_check_data_type_requires_ir_version(
+        self, dtype: int, min_ir_version: int
+    ) -> None:
+        """Data types must not be used with an IR version older than the one that introduced them."""
+        ctx = checker.C.CheckerContext()
+        ctx.opset_imports = {"": onnx.defs.onnx_opset_version()}
+
+        tensor = helper.make_tensor("t", dtype, [0], [])
+        tensor_value_info = helper.make_tensor_value_info("x", dtype, [1])
+        sequence_value_info = helper.make_value_info(
+            "s",
+            helper.make_sequence_type_proto(helper.make_tensor_type_proto(dtype, [1])),
+        )
+
+        ctx.ir_version = min_ir_version - 1
+        match = f"requires IR version >= {min_ir_version}"
+        with pytest.raises(checker.ValidationError, match=match):
+            checker.check_tensor(tensor, ctx)
+        with pytest.raises(checker.ValidationError, match=match):
+            checker.check_value_info(tensor_value_info, ctx)
+        with pytest.raises(checker.ValidationError, match=match):
+            checker.check_value_info(sequence_value_info, ctx)
+
+        ctx.ir_version = min_ir_version
+        checker.check_tensor(tensor, ctx)
+        checker.check_value_info(tensor_value_info, ctx)
+        checker.check_value_info(sequence_value_info, ctx)
+
+    def test_check_model_data_type_requires_ir_version(self) -> None:
+        """check_model rejects an initializer whose data type is newer than the model's ir_version."""
+        graph = helper.make_graph(
+            [helper.make_node("Identity", ["w"], ["y"])],
+            "g",
+            [],
+            [helper.make_tensor_value_info("y", TensorProto.INT4, [2])],
+            [helper.make_tensor("w", TensorProto.INT4, [2], [1, -1])],
+        )
+        # INT4 was introduced in IR version 10.
+        model = helper.make_model(
+            graph, ir_version=9, opset_imports=[helper.make_opsetid("", 19)]
+        )
+        with pytest.raises(checker.ValidationError, match="int4"):
+            checker.check_model(model)
+
+        model.ir_version = 10
+        model.opset_import[0].version = 21
+        checker.check_model(model)
+
+    @pytest.mark.parametrize(
+        "location",
+        ["function_value_info", "function_default_attribute", "graph_value_info"],
+    )
+    def test_check_model_annotation_data_type_requires_ir_version(
+        self, location: str
+    ) -> None:
+        """Data types in function value_info, function attribute defaults and graph value_info are checked too."""
+        # FLOAT4E2M1 was introduced in IR version 11.
+        dtype = TensorProto.FLOAT4E2M1
+        function_value_info = []
+        attribute_protos = []
+        graph_value_info = []
+        if location == "function_value_info":
+            function_value_info = [helper.make_tensor_value_info("fx", dtype, [1])]
+        elif location == "function_default_attribute":
+            attribute_protos = [
+                helper.make_attribute("value", helper.make_tensor("v", dtype, [0], []))
+            ]
+        else:
+            graph_value_info = [helper.make_tensor_value_info("y", dtype, [1])]
+
+        function = helper.make_function(
+            "local",
+            "f",
+            ["fx"],
+            ["fy"],
+            [helper.make_node("Identity", ["fx"], ["fy"])],
+            [helper.make_opsetid("", 21)],
+            attribute_protos=attribute_protos,
+            value_info=function_value_info,
+        )
+        graph = helper.make_graph(
+            [helper.make_node("f", ["x"], ["y"], domain="local")],
+            "g",
+            [helper.make_tensor_value_info("x", TensorProto.FLOAT, [1])],
+            [helper.make_tensor_value_info("y", TensorProto.FLOAT, [1])],
+            value_info=graph_value_info,
+        )
+        model = helper.make_model(
+            graph,
+            ir_version=10,
+            opset_imports=[
+                helper.make_opsetid("", 21),
+                helper.make_opsetid("local", 1),
+            ],
+            functions=[function],
+        )
+        with pytest.raises(checker.ValidationError, match="requires IR version >= 11"):
+            checker.check_model(model)
+
+        model.ir_version = 11
+        checker.check_model(model)
 
     def test_check_tensor_complex_data_too_small(self) -> None:
         """COMPLEX64/COMPLEX128 store 2 value-field entries (real, imag) per element."""

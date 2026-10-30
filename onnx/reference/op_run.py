@@ -4,7 +4,7 @@
 from __future__ import annotations
 
 import abc
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Self
 
 import numpy as np
 
@@ -551,7 +551,7 @@ class OpRun(abc.ABC):
         n_outputs: int | None = None,
         verbose: int = 0,
         **kwargs: Any,
-    ) -> Any:
+    ) -> Self:
         """Instantiates this class based on the given information.
 
         Args:
@@ -563,7 +563,7 @@ class OpRun(abc.ABC):
             **kwargs: node attributes
 
         Returns:
-            NodeProto
+            An instance of this operator class.
         """
 
         def log_function(pattern: str, *args: Any) -> None:
@@ -648,14 +648,15 @@ class OpFunction(OpRun):
         return self._run_impl(self.impl_, *inputs, **kwargs)
 
     def _run_impl(self, impl, *inputs, **kwargs):
-        if len(impl.input_names) != len(inputs):
+        if len(inputs) > len(impl.input_names):
             raise RuntimeError(
                 f"Mismatch lengths between the number of inputs {len(inputs)} "
-                f"and the expected number of inputs {len(impl.input_names)} "
+                f"and the maximum number of inputs {len(impl.input_names)} "
                 f"for node {self.op_type!r} from domain {self.domain!r}."
             )
         bindings = kwargs.pop("bindings", None)
         feeds = dict(zip(impl.input_names, inputs, strict=False))
+        feeds.update(dict.fromkeys(impl.input_names[len(inputs) :]))
         attributes = self.attributes_.copy()
         attributes.update(kwargs)
         run_kwargs: dict[str, Any] = {}
@@ -699,6 +700,9 @@ class OpFunctionContextDependant(OpFunction):
         # created the body for this operator.
         types = []
         for t in inputs:
+            if t is None:
+                types.append(onnx.TypeProto())
+                continue
             dtype = onnx.helper.np_dtype_to_tensor_dtype(t.dtype)
             types.append(onnx.helper.make_tensor_type_proto(dtype, t.shape))  # type: ignore[arg-type]
         cl = self.parent._load_impl(self.onnx_node, types)

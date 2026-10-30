@@ -218,6 +218,43 @@ class TestInferenceFunctionCall:
             }
         )
 
+    def test_if_subgraph_with_unknown_op_does_not_use_temporary_map(self) -> None:
+        branch_output = make_tensor_value_info("branch_result", TensorProto.FLOAT, ())
+        branches = [
+            make_graph(
+                [
+                    make_node(
+                        "UnknownOp",
+                        [],
+                        ["branch_result"],
+                        domain="local.unknown",
+                    )
+                ],
+                name,
+                [],
+                [branch_output],
+            )
+            for name in ("then_branch", "else_branch")
+        ]
+
+        result = infer_node_outputs(
+            get_schema("If", 25),
+            make_node(
+                "If",
+                ["cond"],
+                ["result"],
+                then_branch=branches[0],
+                else_branch=branches[1],
+            ),
+            _to_tensor_types({"cond": (TensorProto.BOOL, ())}),
+            opset_imports=[
+                make_opsetid("", 25),
+                make_opsetid("local.unknown", 1),
+            ],
+        )
+
+        assert result == _to_tensor_types({"result": (TensorProto.FLOAT, ())})
+
     def test_inference_with_conflow(self) -> None:
         model_script = """
         <
@@ -226,9 +263,9 @@ class TestInferenceFunctionCall:
             producer_name: "pytorch",
             producer_version: "2.1.0"
         >
-        torch_jit (float input_0) => (float reault, int64 index)
+        torch_jit (float input_0) => (float result, int64 index)
         {
-            reault, index = onnxscript.atenlib.aten_min_dim <dim = 0, keepdim = 1> (input_0)
+            result, index = onnxscript.atenlib.aten_min_dim <dim = 0, keepdim = 1> (input_0)
         }
         <
             domain: "onnxscript.atenlib",

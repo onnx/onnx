@@ -102,6 +102,8 @@ class PrimitiveTypeNameMap : public StringIntMap<PrimitiveTypeNameMap> {
     map_["float4e2m1"] = TensorProto_DataType_FLOAT4E2M1;
     map_["uint2"] = TensorProto_DataType_UINT2;
     map_["int2"] = TensorProto_DataType_INT2;
+    map_["float6e2m3"] = TensorProto_DataType_FLOAT6E2M3;
+    map_["float6e3m2"] = TensorProto_DataType_FLOAT6E3M2;
   }
 
   static bool IsTypeName(const std::string& dtype) {
@@ -480,6 +482,25 @@ class OnnxParser : public ParserBase {
   }
 
  private:
+  class RecursionDepthGuard {
+   public:
+    explicit RecursionDepthGuard(size_t& depth) : depth_(depth) {
+      ++depth_;
+    }
+
+    ~RecursionDepthGuard() {
+      --depth_;
+    }
+
+    RecursionDepthGuard(const RecursionDepthGuard&) = delete;
+    RecursionDepthGuard& operator=(const RecursionDepthGuard&) = delete;
+
+   private:
+    size_t& depth_;
+  };
+
+  static constexpr size_t kMaxRecursionDepth = 100;
+
   Common::Status Parse(std::string name, GraphProto& graph);
 
   Common::Status Parse(IdList& idlist);
@@ -511,6 +532,8 @@ class OnnxParser : public ParserBase {
   bool NextIsType();
 
   bool NextIsIdentifier();
+
+  size_t recursion_depth_ = 0;
 };
 
 } // namespace ONNX_NAMESPACE
