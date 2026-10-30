@@ -11,11 +11,11 @@
 // to parse floating-point literals independently of the global locale.
 #include <locale.h> // NOLINT(modernize-deprecated-headers)
 
-#include <cerrno>
 #include <charconv>
 #include <cmath>
 #include <cstdlib>
 #include <limits>
+#include <locale>
 #include <string>
 #include <string_view>
 #include <system_error>
@@ -23,130 +23,98 @@
 
 #include "onnx/common/common.h"
 
-// Locale-independent float/double parsing implementation.
-// Uses std::from_chars when the stdlib supports it (__cpp_lib_to_chars >= 201611L),
-// otherwise strtof_l/strtod_l with an explicit "C" locale. The strto*_l helpers
-// also resolve from_chars range errors: underflow rounds to zero or a subnormal
-// and is accepted; only overflow is an error.
+// Use from_chars where available; older standard libraries use the C locale.
+// Numeric conversion errors are reported without throwing.
 
 namespace {
 
-#ifdef _WIN32
 struct CLocale {
-  _locale_t loc;
-  CLocale() : loc(_create_locale(LC_ALL, "C")) {}
+  CLocale() = default;
+#ifdef _WIN32
+  _locale_t loc = _create_locale(LC_ALL, "C");
   ~CLocale() {
     if (loc)
       _free_locale(loc);
   }
-  CLocale(const CLocale&) = delete;
-  CLocale& operator=(const CLocale&) = delete;
-};
-#else // POSIX (Linux, macOS)
-struct CLocale {
-  locale_t loc;
-  CLocale() : loc(newlocale(LC_ALL_MASK, "C", nullptr)) {}
+#else
+  locale_t loc = newlocale(LC_ALL_MASK, "C", nullptr);
   ~CLocale() {
     if (loc)
       freelocale(loc);
   }
+#endif
   CLocale(const CLocale&) = delete;
   CLocale& operator=(const CLocale&) = delete;
 };
-#endif
 
 const CLocale& GetCLocale() {
   static const CLocale instance;
   return instance;
 }
 
-float StrtofC(const std::string& s) {
-  const auto& cloc = GetCLocale();
-  if (!cloc.loc) {
-    ONNX_THROW("Failed to create C locale for float parsing");
+bool TryParseFloat(std::string_view s, float& value) {
+  float parsed = 0.0f;
+#if defined(__cpp_lib_to_chars) && __cpp_lib_to_chars >= 201611L
+  const char* last = s.data() + s.size();
+  // from_chars uses an explicit end pointer, not a NUL terminator.
+  // NOLINTNEXTLINE(bugprone-suspicious-stringview-data-usage)
+  const auto result = std::from_chars(s.data(), last, parsed);
+  if (result.ec == std::errc{} && result.ptr == last) {
+    value = parsed;
+    return true;
   }
-  char* end = nullptr;
-  errno = 0;
-#ifdef _WIN32
-  const float val = _strtof_l(s.c_str(), &end, cloc.loc);
-#else
-  const float val = strtof_l(s.c_str(), &end, cloc.loc);
+  if (result.ec != std::errc::result_out_of_range || result.ptr != last)
+    return false;
 #endif
-  // ERANGE with a finite result is underflow: the value is still the correctly
-  // rounded zero or subnormal. Only overflow (±inf) is an error.
-  if (end == s.c_str() || end != s.c_str() + s.size() || (errno == ERANGE && std::isinf(val))) {
-    ONNX_THROW("Failed to parse float from string: " + s);
-  }
-  return val;
+  // Recover the rounded zero, subnormal, or infinity on a range error.
+  const auto& cloc = GetCLocale();
+  if (!cloc.loc)
+    return false;
+  const std::string text(s); // strto*_l requires a NUL-terminated buffer.
+  char* end = nullptr;
+#ifdef _WIN32
+  parsed = _strtof_l(text.c_str(), &end, cloc.loc);
+#else
+  parsed = strtof_l(text.c_str(), &end, cloc.loc);
+#endif
+  if (end == text.c_str() || end != text.c_str() + text.size())
+    return false;
+  value = parsed;
+  return true;
 }
 
-double StrtodC(const std::string& s) {
-  const auto& cloc = GetCLocale();
-  if (!cloc.loc) {
-    ONNX_THROW("Failed to create C locale for double parsing");
+bool TryParseFloat(std::string_view s, double& value) {
+  double parsed = 0.0;
+#if defined(__cpp_lib_to_chars) && __cpp_lib_to_chars >= 201611L
+  const char* last = s.data() + s.size();
+  // from_chars uses an explicit end pointer, not a NUL terminator.
+  // NOLINTNEXTLINE(bugprone-suspicious-stringview-data-usage)
+  const auto result = std::from_chars(s.data(), last, parsed);
+  if (result.ec == std::errc{} && result.ptr == last) {
+    value = parsed;
+    return true;
   }
-  char* end = nullptr;
-  errno = 0;
-#ifdef _WIN32
-  const double val = _strtod_l(s.c_str(), &end, cloc.loc);
-#else
-  const double val = strtod_l(s.c_str(), &end, cloc.loc);
+  if (result.ec != std::errc::result_out_of_range || result.ptr != last)
+    return false;
 #endif
-  if (end == s.c_str() || end != s.c_str() + s.size() || (errno == ERANGE && std::isinf(val))) {
-    ONNX_THROW("Failed to parse double from string: " + s);
-  }
-  return val;
+  // Recover the rounded zero, subnormal, or infinity on a range error.
+  const auto& cloc = GetCLocale();
+  if (!cloc.loc)
+    return false;
+  const std::string text(s); // strto*_l requires a NUL-terminated buffer.
+  char* end = nullptr;
+#ifdef _WIN32
+  parsed = _strtod_l(text.c_str(), &end, cloc.loc);
+#else
+  parsed = strtod_l(text.c_str(), &end, cloc.loc);
+#endif
+  if (end == text.c_str() || end != text.c_str() + text.size())
+    return false;
+  value = parsed;
+  return true;
 }
 
 } // anonymous namespace
-
-namespace ONNX_NAMESPACE {
-
-#if defined(__cpp_lib_to_chars) && __cpp_lib_to_chars >= 201611L
-
-float LocaleIndependentStof(const std::string& s) {
-  float val = 0.0f;
-  const char* const begin = s.data();
-  const char* const end = begin + s.size();
-  const auto result = std::from_chars(begin, end, val);
-  if (result.ec == std::errc::result_out_of_range && result.ptr == end) {
-    // from_chars leaves val unspecified on range errors; re-parse to accept
-    // underflow (rounds to zero/subnormal) and reject only overflow.
-    return StrtofC(s);
-  }
-  if (result.ec != std::errc{} || result.ptr != end) {
-    ONNX_THROW("Failed to parse float from string: " + s);
-  }
-  return val;
-}
-
-double LocaleIndependentStod(const std::string& s) {
-  double val = 0.0;
-  const char* const begin = s.data();
-  const char* const end = begin + s.size();
-  const auto result = std::from_chars(begin, end, val);
-  if (result.ec == std::errc::result_out_of_range && result.ptr == end) {
-    return StrtodC(s);
-  }
-  if (result.ec != std::errc{} || result.ptr != end) {
-    ONNX_THROW("Failed to parse double from string: " + s);
-  }
-  return val;
-}
-
-#else // No floating-point from_chars (e.g. Apple Clang)
-
-float LocaleIndependentStof(const std::string& s) {
-  return StrtofC(s);
-}
-
-double LocaleIndependentStod(const std::string& s) {
-  return StrtodC(s);
-}
-
-#endif // __cpp_lib_to_chars
-
-} // namespace ONNX_NAMESPACE
 
 #define PARSE_TOKEN(x) CHECK_PARSER_STATUS(ParserBase::Parse(x))
 #define PARSE(...) CHECK_PARSER_STATUS(Parse(__VA_ARGS__))
@@ -154,16 +122,34 @@ double LocaleIndependentStod(const std::string& s) {
 
 namespace ONNX_NAMESPACE {
 
+Common::Status ParserBase::Parse(float& val) {
+  Literal literal;
+  CHECK_PARSER_STATUS(Parse(literal));
+  if (literal.type != LiteralType::INT_LITERAL && literal.type != LiteralType::FLOAT_LITERAL)
+    return ParseError("Unexpected literal type.");
+  if (!TryParseFloat(literal.value, val))
+    return ParseError("Invalid floating-point literal: ", literal.value);
+  return Common::Status::OK();
+}
+
+Common::Status ParserBase::Parse(double& val) {
+  Literal literal;
+  CHECK_PARSER_STATUS(Parse(literal));
+  if (literal.type != LiteralType::INT_LITERAL && literal.type != LiteralType::FLOAT_LITERAL)
+    return ParseError("Unexpected literal type.");
+  if (!TryParseFloat(literal.value, val))
+    return ParseError("Invalid floating-point literal: ", literal.value);
+  return Common::Status::OK();
+}
+
 Common::Status ParserBase::Parse(Literal& result) {
   bool decimal_point = false;
   auto nextch = NextChar();
   size_t from = pos_;
   if (nextch == '"') {
     ++pos_;
-    bool has_escape = false;
     while (!AtEnd() && (Cur() != '"')) {
       if (Cur() == '\\') {
-        has_escape = true;
         ++pos_;
         if (AtEnd())
           return ParseError("Incomplete string literal.");
@@ -174,19 +160,7 @@ Common::Status ParserBase::Parse(Literal& result) {
       return ParseError("Incomplete string literal.");
     ++pos_;
     result.type = LiteralType::STRING_LITERAL;
-    if (has_escape) {
-      std::string& target = result.value;
-      target.clear();
-      target.reserve(pos_ - from - 2); // upper bound
-      // input_[from] is the starting quote. input_[pos_-1] is the ending quote.
-      // Copy what is in-between, except for the escape character
-      while (++from < pos_ - 1) {
-        // Copy current char, if not escape, or next char otherwise.
-        target.push_back(input_[from] != '\\' ? input_[from] : input_[++from]);
-      }
-    } else {
-      result.value = std::string(input_.substr(from + 1, pos_ - from - 2)); // skip enclosing quotes
-    }
+    result.value = input_.substr(from + 1, pos_ - from - 2); // skip enclosing quotes
     return Common::Status::OK();
   }
 
@@ -203,14 +177,11 @@ Common::Status ParserBase::Parse(Literal& result) {
       while (!AtEnd() && IsAlpha(Cur())) {
         ++pos_;
       }
-      ONNX_TRY {
-        static_cast<void>(LocaleIndependentStof(std::string(input_.substr(from, pos_ - from))));
-        result.type = LiteralType::FLOAT_LITERAL;
-        result.value = std::string(input_.substr(from, pos_ - from));
-      }
-      ONNX_CATCH(...) {
-        ONNX_HANDLE_EXCEPTION([&]() { return ParseError("Encountered invalid float literal!"); });
-      }
+      float value = 0.0f;
+      result.value = input_.substr(from, pos_ - from);
+      if (!TryParseFloat(result.value, value))
+        return ParseError("Encountered invalid float literal!");
+      result.type = LiteralType::FLOAT_LITERAL;
     } else {
       return ParseError("Encountered invalid float literal!");
     }
@@ -243,7 +214,7 @@ Common::Status ParserBase::Parse(Literal& result) {
         ++pos_;
     }
 
-    result.value = std::string(input_.substr(from, pos_ - from));
+    result.value = input_.substr(from, pos_ - from);
     result.type = decimal_point ? LiteralType::FLOAT_LITERAL : LiteralType::INT_LITERAL;
   }
   return Common::Status::OK();
@@ -264,19 +235,14 @@ bool ParserBase::NextIsValidFloatString() {
       return false;
     }
 
-    std::string candidate = std::string(input_.substr(from, pos_ - from));
-
-    // Reset parser location before continuing.
+    const auto candidate = input_.substr(from, pos_ - from);
     pos_ = from;
-
-    std::transform(candidate.begin(), candidate.end(), candidate.begin(), [](char c) {
-      // ASCII-only lowercasing; std::tolower is locale-dependent.
-      return (c >= 'A' && c <= 'Z') ? static_cast<char>(c - 'A' + 'a') : c;
-    });
-    if (candidate == std::string_view("inf") || candidate == std::string_view("infinity") ||
-        candidate == std::string_view("nan")) {
-      return true;
-    }
+    const auto matches = [candidate](std::string_view expected) {
+      return std::equal(candidate.begin(), candidate.end(), expected.begin(), expected.end(), [](char a, char b) {
+        return std::tolower(a, std::locale::classic()) == b;
+      });
+    };
+    return matches("inf") || matches("infinity") || matches("nan");
   }
   return false;
 }
@@ -756,10 +722,10 @@ Common::Status OnnxParser::ParseSingleAttributeValue(AttributeProto& attr, Attri
       }
     } else {
       if (NextIsValidFloatString()) {
-        Literal literal;
-        PARSE_TOKEN(literal);
+        float value = 0.0f;
+        PARSE_TOKEN(value);
         attr.set_type(AttributeProto_AttributeType_FLOAT);
-        attr.set_f(LocaleIndependentStof(literal.value));
+        attr.set_f(value);
       } else {
         attr.set_type(AttributeProto_AttributeType_GRAPH);
         PARSE(*attr.mutable_g());
@@ -776,22 +742,31 @@ Common::Status OnnxParser::ParseSingleAttributeValue(AttributeProto& attr, Attri
       case LiteralType::UNDEFINED:
         return ParseError("Internal error");
       case LiteralType::INT_LITERAL:
-        if (expected == AttributeProto_AttributeType_FLOAT) {
-          // Implicit INT->FLOAT cast; parse the text as float to preserve "-0".
-          attr.set_type(AttributeProto_AttributeType_FLOAT);
-          attr.set_f(LocaleIndependentStof(literal.value));
-        } else {
+        if (expected != AttributeProto_AttributeType_FLOAT) {
+          int64_t value = 0;
+          const char* end = literal.value.data() + literal.value.size();
+          // from_chars uses an explicit end pointer, not a NUL terminator.
+          // NOLINTNEXTLINE(bugprone-suspicious-stringview-data-usage)
+          const auto result = std::from_chars(literal.value.data(), end, value);
+          if (result.ec != std::errc{} || result.ptr != end)
+            return ParseError("Integer literal is invalid or out of range: ", literal.value);
           attr.set_type(AttributeProto_AttributeType_INT);
-          attr.set_i(std::stoll(literal.value));
+          attr.set_i(value);
+          break;
         }
-        break;
-      case LiteralType::FLOAT_LITERAL:
+        // Parse explicit float attributes as float to preserve "-0".
+        [[fallthrough]];
+      case LiteralType::FLOAT_LITERAL: {
+        float value = 0.0f;
+        if (!TryParseFloat(literal.value, value))
+          return ParseError("Invalid floating-point literal: ", literal.value);
         attr.set_type(AttributeProto_AttributeType_FLOAT);
-        attr.set_f(LocaleIndependentStof(literal.value));
+        attr.set_f(value);
         break;
+      }
       case LiteralType::STRING_LITERAL:
         attr.set_type(AttributeProto_AttributeType_STRING);
-        attr.set_s(literal.value);
+        literal.DecodeString(*attr.mutable_s());
         break;
     }
   }

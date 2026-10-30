@@ -77,8 +77,11 @@ def _make_model_unchecked(
 
 
 # Text-format seeds for fuzz_parser, extracted from tests/python/parser_test.py.
-# Each string is a valid input to onnx.parser.parse_model().
+# Includes malformed numeric literals, which must produce parser.ParseError.
 _PARSER_SEEDS: dict[str, str] = {
+    "string_escapes.txt": 'quote: " backslash: \\ newline: \n',
+    "string_nul.txt": "before\0after",
+    "string_unicode.txt": "\u00e9\u4e2d\U0001f642",
     # Minimal 3-op linear model; exercises basic node and graph parsing.
     "basic_matmul_softmax.txt": """\
 < ir_version: 7,
@@ -181,6 +184,45 @@ agraph (float[1] X) => (float[1] Y)
 }
 """,
 }
+
+
+# Keep the surrounding syntax valid so mutations reach numeric conversion.
+for _name, _literal in {
+    "int64_min": "-9223372036854775808",
+    "int64_max": "9223372036854775807",
+    "int64_overflow": "9223372036854775808",
+    "int64_underflow": "-9223372036854775809",
+    "uint64_max": "18446744073709551615",
+    "uint64_overflow": "18446744073709551616",
+    "negative": "-1",
+    "negative_zero": "-0",
+    "long_integer": "9" * 128,
+    "float_overflow": "1e1000",
+    "negative_float_overflow": "-1e1000",
+    "float_subnormal": "1.401298464324817e-45",
+    "double_subnormal": "4.9406564584124654e-324",
+    "double_rounding": "1.0000000596046447753906250000000001",
+    "long_exponent": "1e99999999999999999",
+    "float_underflow": "-1e-1000",
+    "incomplete_exponent": "1e+",
+    "infinity": "inf",
+    "nan": "nan",
+}.items():
+    _PARSER_SEEDS[f"literal_{_name}.txt"] = _literal
+    for _context, _body in {
+        "attribute": f"Y = Constant<value_int={_literal}>()",
+        "float_attribute": f"Y = Constant<value_float: float={_literal}>()",
+        "dimension": f"Y = Constant<value = int64[{_literal}] {{0}}>()",
+        "int64_tensor": f"Y = Constant<value = int64[1] {{{_literal}}}>()",
+        "uint64_tensor": f"Y = Constant<value = uint64[1] {{{_literal}}}>()",
+        "double_tensor": f"Y = Constant<value = double[1] {{{_literal}}}>()",
+    }.items():
+        _graph = f"numeric () => () {{ {_body} }}\n"
+        _PARSER_SEEDS[f"model_{_context}_{_name}.txt"] = (
+            '<ir_version: 8, opset_import: ["": 18]>\n' + _graph
+        )
+        _PARSER_SEEDS[f"graph_{_context}_{_name}.txt"] = _graph
+        _PARSER_SEEDS[f"node_{_context}_{_name}.txt"] = _body
 
 
 # Seed models for fuzz_shape_inference. Each seed is a complete serialized

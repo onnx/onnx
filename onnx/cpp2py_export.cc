@@ -7,6 +7,7 @@
 #include <nanobind/stl/function.h>
 #include <nanobind/stl/pair.h>
 #include <nanobind/stl/string.h>
+#include <nanobind/stl/string_view.h>
 #include <nanobind/stl/tuple.h>
 #include <nanobind/stl/unordered_map.h>
 #include <nanobind/stl/unordered_set.h>
@@ -15,6 +16,7 @@
 #include <algorithm>
 #include <limits>
 #include <string>
+#include <string_view>
 #include <tuple>
 #include <unordered_map>
 #include <utility>
@@ -111,9 +113,9 @@ static nb::object CastOrNone(const T* ptr) {
 }
 
 template <typename ProtoType>
-static std::tuple<bool, nb::bytes, nb::bytes> Parse(const char* cstr) {
+static std::tuple<bool, nb::bytes, nb::bytes> Parse(std::string_view text) {
   ProtoType proto{};
-  OnnxParser parser(cstr);
+  OnnxParser parser(text);
   auto status = parser.Parse(proto);
   const std::string& error_msg = status.ErrorMessage();
   return std::make_tuple(status.IsOK(), nb::bytes(error_msg.c_str(), error_msg.size()), ProtoToBytes(proto));
