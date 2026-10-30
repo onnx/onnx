@@ -2059,7 +2059,7 @@ class TestAutomaticUpgrade(automatic_conversion_test_base.TestAutomaticConversio
 
     def test_LinearAttention_basic_mha(self) -> None:
         # H_q == H_kv == 4, d_k == d_v == 16. update_rule="linear" with no
-        # optional inputs: baseline shape/dtype plumbing on the no-op upgrade.
+        # optional inputs: baseline shape/dtype plumbing on the compatible upgrade.
         self._test_op_upgrade(
             "LinearAttention",
             27,
@@ -2088,6 +2088,21 @@ class TestAutomaticUpgrade(automatic_conversion_test_base.TestAutomaticConversio
             attrs={
                 "q_num_heads": 8,
                 "kv_num_heads": 2,
+                "update_rule": "linear",
+            },
+        )
+
+    @pytest.mark.parametrize("value_heads", [4, 6, 16])
+    def test_linear_attention_expanded_heads(self, value_heads) -> None:
+        self._test_op_upgrade(
+            "LinearAttention",
+            29,
+            [[1, 3, 8], [1, 3, 8], [1, 3, value_heads * 3]],
+            [[1, 3, value_heads * 3], [1, value_heads, 4, 3]],
+            attrs={
+                "q_num_heads": 2,
+                "kv_num_heads": 2,
+                "v_num_heads": value_heads,
                 "update_rule": "linear",
             },
         )

@@ -1126,6 +1126,24 @@ class DefaultVersionConverter : public BaseVersionConverter {
     // Downgrading needs no restriction: opset 27 accepts a superset of the v28 float-only types.
     registerAdapter(std::make_unique<CompatibleAdapter>("ReduceLogSum", OpSetID(28), OpSetID(27)));
     registerAdapter(std::make_unique<CompatibleAdapter>("ReduceLogSumExp", OpSetID(28), OpSetID(27)));
+
+    /******** 28 -> 29 ********/
+    registerAdapter(std::make_unique<CompatibleAdapter>("LinearAttention", OpSetID(28), OpSetID(29)));
+
+    /******** 29 -> 28 ********/
+    // The default mode and an explicit equal value-head count retain v27 semantics.
+    registerAdapter("LinearAttention", 29, 28, [](const std::shared_ptr<Graph>& /*unused*/, Node* node) {
+      const Symbol v_heads{"v_num_heads"};
+      if (node->hasAttribute(v_heads)) {
+        const int64_t count = node->i(v_heads);
+        const int64_t key_heads = node->i(Symbol{"kv_num_heads"});
+        ONNX_ASSERTM(
+            count == 0 || count == key_heads,
+            "LinearAttention with expanded value/state heads cannot be downgraded to opset 28.");
+        node->removeAttribute(v_heads);
+      }
+      return node;
+    });
   }
 
   ModelProto convert_version(const ModelProto& mp_in, const OpSetID& initial_version, const OpSetID& target_version)

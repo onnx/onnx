@@ -2669,6 +2669,61 @@ const char kDoc_Mod_ver10[] = R"DOC(
 
   This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
 )DOC";
+const char kDoc_LinearAttention_ver29[] = R"DOC(
+Unified recurrent linear attention for prefill and autoregressive decoding.
+
+Inputs query, key and value have packed shapes [B, T, H_q*d_k],
+[B, T, H_k*d_k] and [B, T, H_v*d_v]. The required attributes q_num_heads
+and kv_num_heads specify H_q and H_k.
+
+With v_num_heads=0 (default), H_v=H_k, the output has H_q heads, and
+H_q must be a positive multiple of H_k. Each state head is shared by
+H_q/H_k adjacent query heads, preserving the opset-27 GQA/MQA behavior.
+
+With v_num_heads>0, H_v=v_num_heads, H_q must equal H_k, and H_v must be
+a positive multiple of H_k. The output has H_v heads. Value/state head h
+uses query and key head floor(h/(H_v/H_k)): expansion repeats adjacent heads,
+not the entire head axis. For H_k=2 and H_v=6, the mapping is [0,0,0,1,1,1].
+State, decay and beta are indexed by value head, not compact key head.
+Query GQA and value-head expansion cannot be combined.
+
+past_state and present_state have shape [B,H_v,d_k,d_v]. If past_state is
+absent it is zero-initialized. Computation accumulates in float32; output has
+query's type and present_state has past_state's type, or query's type when
+past_state is absent. Supply a float32 past_state to retain float32 state
+with lower-precision activations.
+
+For each token and state head, let S be the preceding state and k, v, q the
+corresponding vectors. Apply these steps in order:
+1. For "gated" and "gated_delta", D = exp(decay) * S; otherwise D = S.
+   Decay is log-space [B,T,H_v] or [B,T,H_v*d_k] and broadcasts over d_v.
+2. For "delta" and "gated_delta", u = beta * (v - D^T k); otherwise u = v.
+   Beta has shape [B,T,H_v] or [B,T,1].
+3. S_new = D + k outer u.
+4. o = scale * q^T S_new, expanding state at read time only for query GQA.
+
+Decay is required exactly for the gated rules; beta is required exactly for
+the delta rules. Q/K normalization is external. A zero scale attribute uses
+1/sqrt(d_k). chunk_size is an implementation hint and does not change results.
+Carrying float32 present_state between invocations preserves the recurrence
+across sequence chunks. T=0 returns empty output and unchanged state (or zero
+state when omitted).
+
+For example, Qwen3-Next-80B-A3B and Qwen3.5-35B-A3B Gated DeltaNet use
+H_q=H_k=16 and H_v=32.
+Setting q_num_heads=16, kv_num_heads=16, v_num_heads=32, update_rule="gated_delta"
+represents their recurrent core without materializing repeated Q/K inputs.
+L2 normalization, causal convolution, gate projections, output gating,
+normalization and the output projection remain ordinary surrounding graph
+operations. Qwen3.8-27B and Qwen3.8-Flash-Next use H_k=16,H_v=48 (factor 3);
+Qwen3.8-2.4T-A95B uses H_k=16,H_v=128 (factor 8).
+
+References:
+- [Qwen3-Next Gated DeltaNet implementation](https://github.com/huggingface/transformers/blob/c27795950091cdaf1b0e32c4aed58618fb41ffa0/src/transformers/models/qwen3_next/modeling_qwen3_next.py#L648-L764).
+- [Qwen3.8-27B configuration](https://huggingface.co/Qwen/Qwen3.8-27B/blob/1d4bf0f2ff6012fd82039f2fa52739d0dd7c60c0/config.json).
+- [Qwen3.8-2.4T-A95B configuration](https://huggingface.co/Qwen/Qwen3.8-2.4T-A95B/blob/207bd685a7e3696cfaff12ded7c6a7ea0f88c996/config.json).
+- [Qwen3.8-Flash-Next configuration](https://huggingface.co/Qwen/Qwen3.8-Flash-Next/blob/de4b8e4d43b917e7706784d8bb445c9af86a3540/config.json).
+)DOC";
 const char kDoc_LinearAttention_ver27[] = R"DOC(
 Unified linear attention operator for autoregressive decoding (T=1) and prefill (T>1).
 
@@ -6788,6 +6843,7 @@ const char kDoc_Floor_ver6[] = "";
 const char kDoc_Abs_ver6[] = "";
 const char kDoc_Mod_ver10[] = "";
 const char kDoc_LinearAttention_ver27[] = "";
+const char kDoc_LinearAttention_ver29[] = "";
 const char kDoc_CausalConvWithState_ver27[] = "";
 const char kDoc_Attention_ver25[] = "";
 const char kDoc_RotaryEmbedding_ver23[] = "";

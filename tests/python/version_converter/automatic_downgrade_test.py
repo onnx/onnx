@@ -9,6 +9,7 @@ import pytest
 
 import onnx
 from onnx import helper
+from onnx.reference import ReferenceEvaluator
 
 #####################################################################################
 # Every test calls _test_op_conversion to downgrade a model from the most recent opset version
@@ -287,6 +288,52 @@ class TestAutomaticDowngrade(automatic_conversion_test_base.TestAutomaticConvers
                 output, present_state = LinearAttention <q_num_heads = 4, kv_num_heads = 4, update_rule = "linear"> (Q, K, V)
             }
         """,
+        )
+
+    @pytest.mark.parametrize("value_heads", [None, 0, 2])
+    def test_linear_attention_29_to_28_compatible(self, value_heads) -> None:
+        value_heads_attr = "" if value_heads is None else f", v_num_heads={value_heads}"
+        model = onnx.parser.parse_model(
+            f"""
+            <ir_version: 13, opset_import: ["" : 29]>
+            g (float[1,3,8] Q, float[1,3,8] K, float[1,3,6] V)
+                => (float[1,3,6] Y, float[1,2,4,3] S) {{
+                Y, S = LinearAttention <
+                    q_num_heads=2, kv_num_heads=2, update_rule="linear"{value_heads_attr}
+                > (Q, K, V)
+            }}
+            """
+        )
+        converted = onnx.version_converter.convert_version(model, 28)
+        assert [(op.domain, op.version) for op in model.opset_import] == [("", 29)]
+        assert [(op.domain, op.version) for op in converted.opset_import] == [("", 28)]
+        assert {
+            attr.name: helper.get_attribute_value(attr)
+            for attr in converted.graph.node[0].attribute
+        } == {"q_num_heads": 2, "kv_num_heads": 2, "update_rule": b"linear"}
+        onnx.checker.check_model(converted, full_check=True)
+        rng = np.random.default_rng(42)
+        feeds = {
+            name: rng.normal(size=shape).astype(np.float32)
+            for name, shape in (("Q", (1, 3, 8)), ("K", (1, 3, 8)), ("V", (1, 3, 6)))
+        }
+        expected = ReferenceEvaluator(model).run(None, feeds)
+        actual = ReferenceEvaluator(converted).run(None, feeds)
+        for got, want in zip(actual, expected, strict=True):
+            np.testing.assert_array_equal(got, want)
+
+    def test_linear_attention_29_expanded_downgrade_fails(self) -> None:
+        self._test_model_conversion_fails(
+            to_opset=28,
+            model="""
+            <ir_version: 13, opset_import: ["" : 29]>
+            g (float[1,3,8] Q, float[1,3,8] K, float[1,3,18] V)
+                => (float[1,3,18] Y, float[1,6,4,3] S) {
+                Y, S = LinearAttention <
+                    q_num_heads=2, kv_num_heads=2, v_num_heads=6, update_rule="linear"
+                > (Q, K, V)
+            }
+            """,
         )
 
     def test_GroupedMatMul_downgrade_fails(self) -> None:

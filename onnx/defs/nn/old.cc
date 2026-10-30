@@ -4860,4 +4860,6 @@ ONNX_OPERATOR_SET_SCHEMA(
           return true;
         }));
 
+ONNX_OPERATOR_SET_SCHEMA(LinearAttention, 27, defs::nn::utils::LinearAttentionSchema());
+
 } // namespace ONNX_NAMESPACE

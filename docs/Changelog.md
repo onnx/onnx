@@ -34516,6 +34516,118 @@ This version of the operator has been available since version 29 of the default 
 <dd>Constrain group indices to int32 or int64 tensors.</dd>
 </dl>
 
+### <a name="LinearAttention-29"></a>**LinearAttention-29**</a>
+
+  Unified recurrent linear attention for prefill and autoregressive decoding.
+
+  Inputs query, key and value have packed shapes [B, T, H_q*d_k],
+  [B, T, H_k*d_k] and [B, T, H_v*d_v]. The required attributes q_num_heads
+  and kv_num_heads specify H_q and H_k.
+
+  With v_num_heads=0 (default), H_v=H_k, the output has H_q heads, and
+  H_q must be a positive multiple of H_k. Each state head is shared by
+  H_q/H_k adjacent query heads, preserving the opset-27 GQA/MQA behavior.
+
+  With v_num_heads>0, H_v=v_num_heads, H_q must equal H_k, and H_v must be
+  a positive multiple of H_k. The output has H_v heads. Value/state head h
+  uses query and key head floor(h/(H_v/H_k)): expansion repeats adjacent heads,
+  not the entire head axis. For H_k=2 and H_v=6, the mapping is [0,0,0,1,1,1].
+  State, decay and beta are indexed by value head, not compact key head.
+  Query GQA and value-head expansion cannot be combined.
+
+  past_state and present_state have shape [B,H_v,d_k,d_v]. If past_state is
+  absent it is zero-initialized. Computation accumulates in float32; output has
+  query's type and present_state has past_state's type, or query's type when
+  past_state is absent. Supply a float32 past_state to retain float32 state
+  with lower-precision activations.
+
+  For each token and state head, let S be the preceding state and k, v, q the
+  corresponding vectors. Apply these steps in order:
+  1. For "gated" and "gated_delta", D = exp(decay) * S; otherwise D = S.
+     Decay is log-space [B,T,H_v] or [B,T,H_v*d_k] and broadcasts over d_v.
+  2. For "delta" and "gated_delta", u = beta * (v - D^T k); otherwise u = v.
+     Beta has shape [B,T,H_v] or [B,T,1].
+  3. S_new = D + k outer u.
+  4. o = scale * q^T S_new, expanding state at read time only for query GQA.
+
+  Decay is required exactly for the gated rules; beta is required exactly for
+  the delta rules. Q/K normalization is external. A zero scale attribute uses
+  1/sqrt(d_k). chunk_size is an implementation hint and does not change results.
+  Carrying float32 present_state between invocations preserves the recurrence
+  across sequence chunks. T=0 returns empty output and unchanged state (or zero
+  state when omitted).
+
+  For example, Qwen3-Next-80B-A3B and Qwen3.5-35B-A3B Gated DeltaNet use
+  H_q=H_k=16 and H_v=32.
+  Setting q_num_heads=16, kv_num_heads=16, v_num_heads=32, update_rule="gated_delta"
+  represents their recurrent core without materializing repeated Q/K inputs.
+  L2 normalization, causal convolution, gate projections, output gating,
+  normalization and the output projection remain ordinary surrounding graph
+  operations. Qwen3.8-27B and Qwen3.8-Flash-Next use H_k=16,H_v=48 (factor 3);
+  Qwen3.8-2.4T-A95B uses H_k=16,H_v=128 (factor 8).
+
+  References:
+  - [Qwen3-Next Gated DeltaNet implementation](https://github.com/huggingface/transformers/blob/c27795950091cdaf1b0e32c4aed58618fb41ffa0/src/transformers/models/qwen3_next/modeling_qwen3_next.py#L648-L764).
+  - [Qwen3.8-27B configuration](https://huggingface.co/Qwen/Qwen3.8-27B/blob/1d4bf0f2ff6012fd82039f2fa52739d0dd7c60c0/config.json).
+  - [Qwen3.8-2.4T-A95B configuration](https://huggingface.co/Qwen/Qwen3.8-2.4T-A95B/blob/207bd685a7e3696cfaff12ded7c6a7ea0f88c996/config.json).
+  - [Qwen3.8-Flash-Next configuration](https://huggingface.co/Qwen/Qwen3.8-Flash-Next/blob/de4b8e4d43b917e7706784d8bb445c9af86a3540/config.json).
+
+#### Version
+
+This version of the operator has been available since version 29 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>chunk_size</tt> : int (default is 64)</dt>
+<dd>Chunk size for the chunk-parallel WY decomposition during prefill (T>1). Tuning hint; does not affect output correctness.</dd>
+<dt><tt>kv_num_heads</tt> : int (required)</dt>
+<dd>Number of compact key heads. Always required.</dd>
+<dt><tt>q_num_heads</tt> : int (required)</dt>
+<dd>Number of query heads. Always required.</dd>
+<dt><tt>scale</tt> : float (default is 0.0)</dt>
+<dd>Output scaling factor. When 0.0 (default), derives d_k = query.shape[-1] / q_num_heads and uses 1/sqrt(d_k). Set explicitly to override.</dd>
+<dt><tt>update_rule</tt> : string (default is gated_delta)</dt>
+<dd>The update rule for the linear attention recurrence. One of: 'linear', 'gated', 'delta', 'gated_delta'. Default is 'gated_delta'.</dd>
+<dt><tt>v_num_heads</tt> : int (default is 0)</dt>
+<dd>Value/state head count. Zero (default) uses kv_num_heads and preserves query GQA. A positive value requires q_num_heads == kv_num_heads and must be a multiple of kv_num_heads. Q/K head h is repeated adjacently v_num_heads / kv_num_heads times. The output has v_num_heads heads, and value, state, decay and beta use this head count.</dd>
+</dl>
+
+#### Inputs (3 - 6)
+
+<dl>
+<dt><tt>query</tt> (differentiable) : T</dt>
+<dd>Query vectors with 3D packed shape (B, T, H_q * d_k). Heads are packed into the last dimension.</dd>
+<dt><tt>key</tt> (differentiable) : T</dt>
+<dd>Key vectors with 3D packed shape (B, T, H_kv * d_k). Should be L2-normalized for delta/gated_delta modes.</dd>
+<dt><tt>value</tt> (differentiable) : T</dt>
+<dd>Value vectors with 3D packed shape (B, T, H_v * d_v), where H_v is kv_num_heads unless a positive v_num_heads is specified.</dd>
+<dt><tt>past_state</tt> (optional, non-differentiable) : S</dt>
+<dd>Recurrent state from previous step with shape (B, H_v, d_k, d_v). Always 4D. If not provided, defaults to zeros.</dd>
+<dt><tt>decay</tt> (optional, differentiable) : T</dt>
+<dd>Exponential decay gate in log-space, with shape (B, T, H_v * d_k) or (B, T, H_v). Required for 'gated' and 'gated_delta' modes.</dd>
+<dt><tt>beta</tt> (optional, differentiable) : T</dt>
+<dd>Update rate (sigmoid output), with shape (B, T, H_v) or (B, T, 1). Required for 'delta' and 'gated_delta' modes.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> (differentiable) : T</dt>
+<dd>Attention output with 3D packed shape (B, T, H_o * d_v), where H_o is q_num_heads unless a positive v_num_heads is specified.</dd>
+<dt><tt>present_state</tt> (non-differentiable) : S</dt>
+<dd>Updated recurrent state with shape (B, H_v, d_k, d_v). Always 4D.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(bfloat16), tensor(float)</dt>
+<dd>Constrain activation input and output types to float16, bfloat16, or float32 tensors.</dd>
+<dt><tt>S</tt> : tensor(float16), tensor(bfloat16), tensor(float)</dt>
+<dd>Constrain state types to float16, bfloat16, or float32 tensors. Should be float32 or the same as T for numerical stability on long sequences.</dd>
+</dl>
+
 # ai.onnx.preview
 ## Version 1 of the 'ai.onnx.preview' operator set
 ### <a name="ai.onnx.preview.FlexAttention-1"></a>**ai.onnx.preview.FlexAttention-1**</a>
