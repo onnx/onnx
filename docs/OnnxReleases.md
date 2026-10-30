@@ -42,14 +42,15 @@ The ONNX project plans to release roughly every three months. We follow the [Sem
 
 ## Upload release candidate to PyPI
 
-* Go to "Actions" -> select ["Create Releases"](https://github.com/onnx/onnx/actions/workflows/create_release.yml) -> Push the button "Run workflow" with the following config:
+* Go to "Actions" -> select ["Create Releases"](https://github.com/onnx/onnx/actions/workflows/create_release.yml) -> "Run workflow" on `rel-X.Y.Z`. Set `build_mode=release` and `publish_pypi_release=yes`; leave all other publish inputs at `no`.
 
-<img width="339" height="586" alt="make-release-config" src="https://github.com/user-attachments/assets/9e2ab1df-3db5-4161-9d2e-fa95153e189a" />
+![Release candidate publishing configuration example](docsgen/source/_static/release-candidate-config.png)
 
 RC-Candidates
 
 * Published to https://pypi.org/ (starting with onnx 1.19.2 before it was test.pypi.org)
-* Build-mode: Release
+* Build-mode: `release` (the default `preview` mode builds `onnx-weekly` instead).
+* TestPyPI is optional: use `publish_testpypi_release=yes` instead of `publish_pypi_release=yes` for a rehearsal on TestPyPI.
 
 * This button triggers the build of the different OS
 
@@ -59,7 +60,7 @@ RC-Candidates
 
 <img width="1556" height="335" alt="create_releases_artifact_overview" src="https://github.com/user-attachments/assets/5f1cb1db-9a22-4a15-84bf-bb68c488898a" />
 
-* Before the final merge, it must be confirmed manually via the set up deployment environments.
+* After reviewing the build artifacts, complete any publication approval configured in the deployment environment.
 
 ## Package verification
 
@@ -118,14 +119,14 @@ Validation steps must be completed before this point. This is the point of no re
 
 ## Upload to Official PyPI
 
-* Starting with the release of 1.19, the final release will also be pushed to pypi via Github “Action" -> "Create releases" (see above). Use the following config for official release:
+* Run "Create Releases" on `rel-X.Y.Z` with `build_mode=release` and `publish_pypi_release=yes`; leave all other publish inputs at `no`. Confirm `VERSION_NUMBER` is `X.Y.Z` without an RC suffix.
 
 <img width="548" height="749" alt="RunWorkflow_Final" src="https://github.com/user-attachments/assets/d836d0b8-b033-4317-aa21-2aeed3c74d05" />
 
 ### NOTES:
 
 * Once the packages are uploaded to PyPI, **you cannot overwrite it on the same PyPI instance**.
-  * Make sure everything is correct on TestPyPI before uploading to PyPI.
+  * Complete partner validation against the PyPI RC before the final release. If a TestPyPI rehearsal is used, validate it before the corresponding PyPI upload as well.
 * Publishing uses GitHub Actions, protected deployment environments, and PyPI Trusted Publishing. Release managers do not enter PyPI passwords or API tokens into the workflow. The Architecture & Infra SIG administers the deployment environments and PyPI project access.
 
 ## After PyPI Release
