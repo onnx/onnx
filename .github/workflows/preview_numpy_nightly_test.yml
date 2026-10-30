@@ -43,7 +43,7 @@ jobs:
             python -m pip install build
             python -m build --sdist
             python -m pip install dist/*.tar.gz
-            python -m pip install pytest ml_dtypes pillow
+            python -m pip install pytest pillow
 
         - name: Install numpy nightly wheel
           shell: bash
