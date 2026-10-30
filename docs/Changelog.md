@@ -34454,6 +34454,68 @@ This version of the operator has been available since version 28 of the default 
 <dd>Input can be of any tensor type.</dd>
 </dl>
 
+## Version 29 of the default ONNX operator set
+### <a name="GroupedMatMul-29"></a>**GroupedMatMul-29**</a>
+
+  GroupedMatMul multiplies each row of a token matrix by one or more selected
+  group (expert) weight matrices. Given `input` of shape `[M, K]`, `weights` of
+  shape `[G, K, N]`, and `group_indices` of shape `[M, S]`, where `S` is the number
+  of selections per token, the output has shape `[M, S, N]` and is defined by:
+
+  ```
+  output[m, i] = input[m] @ weights[group_indices[m, i]]
+  ```
+
+  If `bias` is present, `bias[group_indices[m, i]]` is added to each corresponding
+  result. Every value in `group_indices` must be in the range `[0, G)`.
+  Values outside this range, including negative indices, are invalid input;
+  the behavior is undefined for such inputs. In particular, negative indices
+  do not select groups by counting backwards from `G`.
+
+  This operator is represented as a context-dependent function, which also provides
+  its reference implementation. Its decomposition uses Gather, Expand, and MatMul
+  to define the result, while runtimes are expected to use a fused
+  grouped-matrix-multiplication implementation to avoid materializing the expanded
+  intermediate tensors, including selected weights of shape `[M * S, K, N]`.
+
+  Weight-only quantized experts are intended to be expressed by applying
+  DequantizeLinear to quantized weights (with the appropriate scales and zero
+  points) and passing the result to GroupedMatMul. Runtimes may fuse this
+  composition to avoid materializing the dequantized `[G, K, N]` weights.
+
+#### Version
+
+This version of the operator has been available since version 29 of the default ONNX operator set.
+
+#### Inputs (3 - 4)
+
+<dl>
+<dt><tt>input</tt> (differentiable) : T</dt>
+<dd>Token matrix with shape [M, K].</dd>
+<dt><tt>weights</tt> (differentiable) : T</dt>
+<dd>Stack of G group weight matrices with shape [G, K, N].</dd>
+<dt><tt>group_indices</tt> (non-differentiable) : Tind</dt>
+<dd>Group index for each token and selection, with shape [M, S]. Values outside [0, G) are invalid input.</dd>
+<dt><tt>bias</tt> (optional, differentiable) : T</dt>
+<dd>Optional per-group bias with shape [G, N].</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> (differentiable) : T</dt>
+<dd>Per-group matrix multiplication results with shape [M, S, N].</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
+<dd>Constrain input, weights, bias, and output to floating-point tensors.</dd>
+<dt><tt>Tind</tt> : tensor(int32), tensor(int64)</dt>
+<dd>Constrain group indices to int32 or int64 tensors.</dd>
+</dl>
+
 # ai.onnx.preview
 ## Version 1 of the 'ai.onnx.preview' operator set
 ### <a name="ai.onnx.preview.FlexAttention-1"></a>**ai.onnx.preview.FlexAttention-1**</a>
