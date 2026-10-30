@@ -183,6 +183,11 @@ function(add_onnx_compile_options target)
     if(ONNX_WERROR)
       target_compile_options(${target} PRIVATE "/WX")
     endif()
+    # Reproducible builds: omit timestamps from object files and replace the PE
+    # TimeDateStamp with a hash of inputs. Limited to the release configurations,
+    # which link without /INCREMENTAL, so developer builds are unaffected.
+    target_compile_options(${target} PRIVATE $<$<CONFIG:Release,MinSizeRel>:/Brepro>)
+    target_link_options(${target} PRIVATE $<$<CONFIG:Release,MinSizeRel>:/Brepro>)
   else()
     target_compile_options(${target} PRIVATE -Wall -Wextra)
     if(CMAKE_COMPILER_IS_GNUCXX AND CMAKE_CXX_COMPILER_VERSION
