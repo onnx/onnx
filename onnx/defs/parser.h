@@ -303,10 +303,11 @@ class ParserBase {
       size_t output = target.find('\\');
       if (output == std::string::npos)
         return;
-      for (size_t input = output; input < target.size(); ++input) {
+      size_t input = output;
+      while (input < target.size()) {
         if (target[input] == '\\')
           ++input;
-        target[output++] = target[input];
+        target[output++] = target[input++];
       }
       target.resize(output);
     }

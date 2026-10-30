@@ -41,6 +41,36 @@ def _check_float(actual: float, expected: float) -> None:
         assert actual.hex() == expected.hex(), (actual, expected)
 
 
+def _check_integer(text: str) -> None:
+    # Normalize first so long literals do not hit Python's int string limit.
+    digits = text.removeprefix("-").lstrip("0") or "0"
+    value = None
+    if len(digits) <= 20:
+        value = int(digits)
+        if text.startswith("-"):
+            value = -value
+    for kind in ("int", "int64", "uint64"):
+        lower, upper = (0, 2**64 - 1) if kind == "uint64" else (-(2**63), 2**63 - 1)
+        valid = value is not None and lower <= value <= upper
+        body = (
+            f"value_int: int={text}" if kind == "int" else f"value={kind}[1] {{{text}}}"
+        )
+        try:
+            node = parser.parse_node(f"Y = Constant<{body}>()")
+        except parser.ParseError:
+            assert not valid, (kind, text, "Valid integer literal was rejected")
+        else:
+            assert valid, (kind, text, "Out-of-range integer literal was accepted")
+            attribute = node.attribute[0]
+            if kind == "int":
+                actual = attribute.i
+            elif kind == "int64":
+                actual = attribute.t.int64_data[0]
+            else:
+                actual = attribute.t.uint64_data[0]
+            assert actual == value, (kind, text, actual, value)
+
+
 def TestOneInput(data):
     try:
         text = data.decode("utf-8")
@@ -60,6 +90,8 @@ def TestOneInput(data):
         except Exception as error:
             error.add_note(f"Parser entry point: {parse.__name__}")
             raise
+    if re.fullmatch(r"-?[0-9]+", text):
+        _check_integer(text)
     # Decimal literals are valid floating-point attributes even on range errors.
     # Do not suppress ParseError here: rejecting such a literal is also a bug.
     if re.fullmatch(
