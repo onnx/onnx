@@ -3943,6 +3943,66 @@ class TestReferenceEvaluator:
 
         assert_allclose(got, expected)
 
+    @pytest.mark.parametrize("opset", [9, 13, 18, 28, 29])
+    def test_mvn_empty_axes(self, opset: int) -> None:
+        model = onnx.parser.parse_model(
+            f"""
+            <ir_version: 13, opset_import: ["" : {opset}]>
+            mvn (float[2] X) => (float[2] Y) {{
+                Y = MeanVarianceNormalization <axes: ints = []> (X)
+            }}
+            """
+        )
+        x = np.array([1.0, 3.0], dtype=np.float32)
+        got = ReferenceEvaluator(model).run(None, {"X": x})[0]
+        assert_allclose(got, [-1.0, 1.0])
+
+    @pytest.mark.parametrize(
+        ("tensor_type", "dtype", "value"),
+        [
+            ("float16", np.float16, 60000.0),
+            ("bfloat16", ml_dtypes.bfloat16, 3e38),
+            ("float", np.float32, 3e38),
+            ("double", np.float64, 1e308),
+        ],
+    )
+    def test_mvn_opset29_large_constant(self, tensor_type, dtype, value) -> None:
+        model = onnx.parser.parse_model(
+            f"""
+            <ir_version: 13, opset_import: ["" : 29]>
+            mvn ({tensor_type}[2] X) => ({tensor_type}[2] Y) {{
+                Y = MeanVarianceNormalization <axes = [0]> (X)
+            }}
+            """
+        )
+        x = np.full(2, value, dtype=dtype)
+
+        class MeanVarianceNormalization(OpRunExpand):
+            op_domain = ""
+
+        for new_ops in (None, [MeanVarianceNormalization]):
+            got = ReferenceEvaluator(model, new_ops=new_ops).run(None, {"X": x})[0]
+            assert got.dtype == x.dtype
+            assert_allclose(got.astype(np.float64), np.zeros(2), rtol=0, atol=0)
+
+    def test_mvn_opset29_large_variance(self) -> None:
+        model = onnx.parser.parse_model(
+            """
+            <ir_version: 13, opset_import: ["" : 29]>
+            mvn (float[4] X) => (float[4] Y) {
+                Y = MeanVarianceNormalization <axes = [0]> (X)
+            }
+            """
+        )
+        x = np.array([1e19, -1e19, 1e19, -1e19], dtype=np.float32)
+
+        class MeanVarianceNormalization(OpRunExpand):
+            op_domain = ""
+
+        for new_ops in (None, [MeanVarianceNormalization]):
+            got = ReferenceEvaluator(model, new_ops=new_ops).run(None, {"X": x})[0]
+            assert_allclose(got, [1.0, -1.0, 1.0, -1.0])
+
     def test_mvn_opset29_unannotated_function_with_linked_epsilon(self) -> None:
         domain = "local"
         x_info = make_tensor_value_info("X", TensorProto.FLOAT, [3])

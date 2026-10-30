@@ -150,7 +150,7 @@ class MeanVarianceNormalization_29_28 final : public MeanVarianceNormalizationAd
         : input_type;
 
     const std::vector<int64_t> axes = node->hasAttribute(kaxes) ? node->is(kaxes) : std::vector<int64_t>{0, 2, 3};
-    const float epsilon_value = node->hasAttribute(kepsilon) ? node->f(kepsilon) : 1e-9f;
+    const float epsilon_value = node->hasAttribute(kepsilon) ? static_cast<float>(node->f(kepsilon)) : 1e-9f;
     Node* axes_constant = make_axes_constant(graph, node, axes);
     Value* input = cast_to(graph, node, node->inputs()[0], compute_type);
     Value* exponent = cast_to(graph, node, make_float_constant(graph, node, 2.0f)->output(), compute_type);

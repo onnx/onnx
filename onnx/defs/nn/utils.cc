@@ -30,9 +30,13 @@ static bool BuildMeanVarianceNormalizationFunctionBody(
 
   FunctionBuilder builder(functionProto);
   builder.Add("XCompute = Cast (X)", "to", static_cast<int64_t>(compute_type))
-      .Const("ExponentFloat", ToTensor<float>(2.0f))
-      .Add("EpsilonFloat = Constant <value_float: float = @epsilon>()")
-      .Add("Exponent = Cast (ExponentFloat)", "to", static_cast<int64_t>(compute_type))
+      .Const("ExponentFloat", ToTensor<float>(2.0f));
+  if (ctx.getAttribute("epsilon") == nullptr) {
+    builder.Add("EpsilonFloat = Constant()", "value_float", schema.attributes().at("epsilon").default_value.f());
+  } else {
+    builder.Add("EpsilonFloat = Constant <value_float: float = @epsilon>()");
+  }
+  builder.Add("Exponent = Cast (ExponentFloat)", "to", static_cast<int64_t>(compute_type))
       .Add("Epsilon = Cast (EpsilonFloat)", "to", static_cast<int64_t>(compute_type));
 
   if (functionOpsetVersion == 13) {
