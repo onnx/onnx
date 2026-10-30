@@ -44,7 +44,7 @@ using BASE_PROTO_TYPE = ::google::protobuf::Message;
    public:                                                                                        \
     NB_TYPE_CASTER(ONNX_NAMESPACE::ProtoType, nanobind::detail::const_name(PythonClassName));     \
                                                                                                   \
-    bool from_python(handle py_proto, uint8_t, cleanup_list*) noexcept {                          \
+    bool from_python(handle py_proto, uint32_t, cleanup_list*) noexcept {                         \
       try {                                                                                       \
         if (!nanobind::hasattr(py_proto, "SerializeToString")) {                                  \
           return false;                                                                           \
