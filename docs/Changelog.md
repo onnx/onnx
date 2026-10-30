@@ -34455,6 +34455,107 @@ This version of the operator has been available since version 28 of the default 
 </dl>
 
 ## Version 29 of the default ONNX operator set
+### <a name="DequantizePacked-29"></a>**DequantizePacked-29**</a>
+
+  Dequantizes the packed payload of one quantized tensor.
+  `x` is a one-dimensional UINT8 tensor containing exactly the tensor's bytes.
+  All multibyte fields are little-endian.
+
+  `format` selects the quantization format using an ONNX-defined, case-sensitive
+  string identifier. The `gguf:` prefix identifies the encoding family.
+  Each identifier denotes the fixed layout and decoding algorithm specified below.
+  The supported identifiers and block sizes are:
+
+  | Identifier | Format | Elements | Bytes |
+  |---|---|---|---|
+  | gguf:q4_0 | Q4_0 | 32 | 18 |
+  | gguf:q4_1 | Q4_1 | 32 | 20 |
+  | gguf:q5_0 | Q5_0 | 32 | 22 |
+  | gguf:q5_1 | Q5_1 | 32 | 24 |
+  | gguf:q8_0 | Q8_0 | 32 | 34 |
+  | gguf:q8_1 | Q8_1 | 32 | 36 |
+  | gguf:q2_k | Q2_K | 256 | 84 |
+  | gguf:q3_k | Q3_K | 256 | 110 |
+  | gguf:q4_k | Q4_K | 256 | 144 |
+  | gguf:q5_k | Q5_K | 256 | 176 |
+  | gguf:q6_k | Q6_K | 256 | 210 |
+  | gguf:q8_k | Q8_K | 256 | 292 |
+  | gguf:iq2_xxs | IQ2_XXS | 256 | 66 |
+  | gguf:iq2_xs | IQ2_XS | 256 | 74 |
+  | gguf:iq3_xxs | IQ3_XXS | 256 | 98 |
+  | gguf:iq1_s | IQ1_S | 256 | 50 |
+  | gguf:iq4_nl | IQ4_NL | 32 | 18 |
+  | gguf:iq3_s | IQ3_S | 256 | 110 |
+  | gguf:iq2_s | IQ2_S | 256 | 82 |
+  | gguf:iq4_xs | IQ4_XS | 256 | 136 |
+  | gguf:iq1_m | IQ1_M | 256 | 56 |
+  | gguf:tq1_0 | TQ1_0 | 256 | 54 |
+  | gguf:tq2_0 | TQ2_0 | 256 | 66 |
+  | gguf:mxfp4 | MXFP4 | 32 | 17 |
+  | gguf:nvfp4 | NVFP4 | 64 | 36 |
+  | gguf:q1_0 | Q1_0 | 128 | 18 |
+  | gguf:q2_0 | Q2_0 | 64 | 18 |
+
+  The byte layouts, per-format decoding algorithms, and complete IQ codebooks
+  are defined in the in-tree
+  [DequantizePacked decoding specification](DequantizePacked.md).
+
+  `shape` gives the logical output dimensions in ONNX (row-major) order.
+  For a GGUF descriptor `[ne0, ne1, ...]`, use `shape=[..., ne1, ne0]`.
+  Decoding preserves the flattened element order.
+  Rank must be at least one. Dimensions are nonnegative literal sizes;
+  a zero dimension produces an empty tensor. The last dimension must be a
+  multiple of the format's elements per block, even for an empty tensor.
+  If B is elements per block and S is bytes per block, the input length must be
+  `product(shape[:-1]) * (shape[-1] / B) * S`.
+
+  Blocks are decoded in input order to FLOAT using the specified
+  arithmetic and codebooks. The concatenated values are reshaped to `shape`
+  and converted once to `output_dtype`. Decoding arithmetic uses FLOAT
+  precision for all output types. FLOAT16 and BFLOAT16 conversion uses
+  round-to-nearest, ties-to-even, as in Cast.
+
+  For example, a Q4_0 block is a little-endian FLOAT16 scale `d` followed
+  by 16 bytes `q`. It produces `y[j]=d*((q[j]&15)-8)` and
+  `y[j+16]=d*((q[j]>>4)-8)` for j=0,...,15. Thus 36 bytes containing two
+  blocks can be decoded with `format="gguf:q4_0", shape=[2,32]`.
+
+#### Version
+
+This version of the operator has been available since version 29 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>format</tt> : string (required)</dt>
+<dd>ONNX-defined, case-sensitive quantization format identifier from the supported table.</dd>
+<dt><tt>output_dtype</tt> : int (default is 1)</dt>
+<dd>ONNX TensorProto data type of the output: FLOAT, FLOAT16, BFLOAT16, or DOUBLE.</dd>
+<dt><tt>shape</tt> : list of ints (required)</dt>
+<dd>Logical output dimensions in ONNX order; rank at least one.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>x</tt> : tensor(uint8)</dt>
+<dd>Consecutive quantization blocks with little-endian fields.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>y</tt> : T</dt>
+<dd>Dequantized tensor with the specified shape and output_dtype.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float), tensor(float16), tensor(bfloat16), tensor(double)</dt>
+<dd>Floating-point output.</dd>
+</dl>
+
 ### <a name="GroupedMatMul-29"></a>**GroupedMatMul-29**</a>
 
   GroupedMatMul multiplies each row of a token matrix by one or more selected

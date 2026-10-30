@@ -2,11 +2,169 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
+#include <limits>
+#include <string>
+#include <unordered_map>
+
 #include "onnx/defs/doc_strings.h"
 #include "onnx/defs/schema.h"
 #include "onnx/defs/type_builders.h"
 
 namespace ONNX_NAMESPACE {
+
+namespace {
+
+std::pair<int64_t, int64_t> DequantizePackedBlockSize(const std::string& format) {
+  static const std::unordered_map<std::string, std::pair<int64_t, int64_t>> block_sizes = {
+      {"gguf:q4_0", {32, 18}},     {"gguf:q4_1", {32, 20}},    {"gguf:q5_0", {32, 22}},     {"gguf:q5_1", {32, 24}},
+      {"gguf:q8_0", {32, 34}},     {"gguf:q8_1", {32, 36}},    {"gguf:q2_k", {256, 84}},    {"gguf:q3_k", {256, 110}},
+      {"gguf:q4_k", {256, 144}},   {"gguf:q5_k", {256, 176}},  {"gguf:q6_k", {256, 210}},   {"gguf:q8_k", {256, 292}},
+      {"gguf:iq2_xxs", {256, 66}}, {"gguf:iq2_xs", {256, 74}}, {"gguf:iq3_xxs", {256, 98}}, {"gguf:iq1_s", {256, 50}},
+      {"gguf:iq4_nl", {32, 18}},   {"gguf:iq3_s", {256, 110}}, {"gguf:iq2_s", {256, 82}},   {"gguf:iq4_xs", {256, 136}},
+      {"gguf:iq1_m", {256, 56}},   {"gguf:tq1_0", {256, 54}},  {"gguf:tq2_0", {256, 66}},   {"gguf:mxfp4", {32, 17}},
+      {"gguf:nvfp4", {64, 36}},    {"gguf:q1_0", {128, 18}},   {"gguf:q2_0", {64, 18}},
+  };
+  const auto it = block_sizes.find(format);
+  if (it == block_sizes.end()) {
+    fail_shape_inference("Unsupported quantization format: ", format);
+  }
+  return it->second;
+}
+
+void DequantizePackedInference(InferenceContext& ctx) {
+  const auto* format = ctx.getAttribute("format");
+  const auto* shape = ctx.getAttribute("shape");
+  if (format == nullptr || shape == nullptr) {
+    fail_shape_inference("DequantizePacked requires format and shape.");
+  }
+  const auto block = DequantizePackedBlockSize(format->s());
+  const auto output_dtype = getAttribute(ctx, "output_dtype", TensorProto::FLOAT);
+  if (output_dtype != TensorProto::FLOAT && output_dtype != TensorProto::FLOAT16 &&
+      output_dtype != TensorProto::BFLOAT16 && output_dtype != TensorProto::DOUBLE) {
+    fail_type_inference("output_dtype must be FLOAT, FLOAT16, BFLOAT16, or DOUBLE.");
+  }
+  updateOutputElemType(ctx, 0, static_cast<int32_t>(output_dtype));
+  if (shape->ints_size() == 0) {
+    fail_shape_inference("shape must have rank at least one.");
+  }
+  bool empty = false;
+  for (const auto dim : shape->ints()) {
+    if (dim < 0) {
+      fail_shape_inference("shape dimensions must be nonnegative; -1 is not supported.");
+    }
+    empty = empty || dim == 0;
+  }
+  if (shape->ints(shape->ints_size() - 1) % block.first != 0) {
+    fail_shape_inference("The last output dimension must be a multiple of the quantization block size.");
+  }
+  int64_t bytes = empty ? 0 : block.second;
+  for (int i = 0; i < shape->ints_size(); ++i) {
+    const auto dim = i == shape->ints_size() - 1 ? shape->ints(i) / block.first : shape->ints(i);
+    if (dim != 0 && bytes > std::numeric_limits<int64_t>::max() / dim) {
+      fail_shape_inference("The packed byte count exceeds int64 range.");
+    }
+    bytes *= dim;
+  }
+  if (hasInputShape(ctx, 0)) {
+    const auto& input_shape = getInputShape(ctx, 0);
+    if (input_shape.dim_size() != 1) {
+      fail_shape_inference("The packed input must be a one-dimensional UINT8 tensor.");
+    }
+    if (input_shape.dim(0).has_dim_value() && input_shape.dim(0).dim_value() != bytes) {
+      fail_shape_inference("Packed input length must be exactly ", bytes, " bytes.");
+    }
+  }
+  auto* output_shape = getOutputShape(ctx, 0);
+  for (const auto dim : shape->ints()) {
+    output_shape->add_dim()->set_dim_value(dim);
+  }
+}
+
+} // namespace
+
+ONNX_OPERATOR_SET_SCHEMA(
+    DequantizePacked,
+    29,
+    OpSchema()
+        .SetDoc(R"DOC(
+Dequantizes the packed payload of one quantized tensor.
+`x` is a one-dimensional UINT8 tensor containing exactly the tensor's bytes.
+All multibyte fields are little-endian.
+
+`format` selects the quantization format using an ONNX-defined, case-sensitive
+string identifier. The `gguf:` prefix identifies the encoding family.
+Each identifier denotes the fixed layout and decoding algorithm specified below.
+The supported identifiers and block sizes are:
+
+| Identifier | Format | Elements | Bytes |
+|---|---|---|---|
+| gguf:q4_0 | Q4_0 | 32 | 18 |
+| gguf:q4_1 | Q4_1 | 32 | 20 |
+| gguf:q5_0 | Q5_0 | 32 | 22 |
+| gguf:q5_1 | Q5_1 | 32 | 24 |
+| gguf:q8_0 | Q8_0 | 32 | 34 |
+| gguf:q8_1 | Q8_1 | 32 | 36 |
+| gguf:q2_k | Q2_K | 256 | 84 |
+| gguf:q3_k | Q3_K | 256 | 110 |
+| gguf:q4_k | Q4_K | 256 | 144 |
+| gguf:q5_k | Q5_K | 256 | 176 |
+| gguf:q6_k | Q6_K | 256 | 210 |
+| gguf:q8_k | Q8_K | 256 | 292 |
+| gguf:iq2_xxs | IQ2_XXS | 256 | 66 |
+| gguf:iq2_xs | IQ2_XS | 256 | 74 |
+| gguf:iq3_xxs | IQ3_XXS | 256 | 98 |
+| gguf:iq1_s | IQ1_S | 256 | 50 |
+| gguf:iq4_nl | IQ4_NL | 32 | 18 |
+| gguf:iq3_s | IQ3_S | 256 | 110 |
+| gguf:iq2_s | IQ2_S | 256 | 82 |
+| gguf:iq4_xs | IQ4_XS | 256 | 136 |
+| gguf:iq1_m | IQ1_M | 256 | 56 |
+| gguf:tq1_0 | TQ1_0 | 256 | 54 |
+| gguf:tq2_0 | TQ2_0 | 256 | 66 |
+| gguf:mxfp4 | MXFP4 | 32 | 17 |
+| gguf:nvfp4 | NVFP4 | 64 | 36 |
+| gguf:q1_0 | Q1_0 | 128 | 18 |
+| gguf:q2_0 | Q2_0 | 64 | 18 |
+
+The byte layouts, per-format decoding algorithms, and complete IQ codebooks
+are defined in the in-tree
+[DequantizePacked decoding specification](DequantizePacked.md).
+
+`shape` gives the logical output dimensions in ONNX (row-major) order.
+For a GGUF descriptor `[ne0, ne1, ...]`, use `shape=[..., ne1, ne0]`.
+Decoding preserves the flattened element order.
+Rank must be at least one. Dimensions are nonnegative literal sizes;
+a zero dimension produces an empty tensor. The last dimension must be a
+multiple of the format's elements per block, even for an empty tensor.
+If B is elements per block and S is bytes per block, the input length must be
+`product(shape[:-1]) * (shape[-1] / B) * S`.
+
+Blocks are decoded in input order to FLOAT using the specified
+arithmetic and codebooks. The concatenated values are reshaped to `shape`
+and converted once to `output_dtype`. Decoding arithmetic uses FLOAT
+precision for all output types. FLOAT16 and BFLOAT16 conversion uses
+round-to-nearest, ties-to-even, as in Cast.
+
+For example, a Q4_0 block is a little-endian FLOAT16 scale `d` followed
+by 16 bytes `q`. It produces `y[j]=d*((q[j]&15)-8)` and
+`y[j+16]=d*((q[j]>>4)-8)` for j=0,...,15. Thus 36 bytes containing two
+blocks can be decoded with `format="gguf:q4_0", shape=[2,32]`.
+)DOC")
+        .Input(0, "x", "Consecutive quantization blocks with little-endian fields.", "tensor(uint8)")
+        .Output(0, "y", "Dequantized tensor with the specified shape and output_dtype.", "T")
+        .Attr(
+            "format",
+            "ONNX-defined, case-sensitive quantization format identifier from the supported table.",
+            AttributeProto::STRING,
+            true)
+        .Attr("shape", "Logical output dimensions in ONNX order; rank at least one.", AttributeProto::INTS, true)
+        .Attr(
+            "output_dtype",
+            "ONNX TensorProto data type of the output: FLOAT, FLOAT16, BFLOAT16, or DOUBLE.",
+            AttributeProto::INT,
+            static_cast<int64_t>(TensorProto::FLOAT))
+        .TypeConstraint("T", {types::Float, types::Float16, types::BFloat16, types::Double}, "Floating-point output.")
+        .TypeAndShapeInferenceFunction(DequantizePackedInference));
 
 ONNX_OPERATOR_SET_SCHEMA(
     QuantizeLinear,
