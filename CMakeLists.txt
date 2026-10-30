@@ -135,7 +135,7 @@ if(ONNX_DISABLE_EXCEPTIONS)
     string(REGEX REPLACE "/EHsc" "/EHs-c-" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
     add_definitions(-D_HAS_EXCEPTIONS=0)
   else()
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-exceptions -fno-unwind-tables -fno-asynchronous-unwind-tables")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-exceptions")
   endif()
 endif()
 
@@ -631,6 +631,16 @@ target_link_libraries(onnx PUBLIC onnx_proto)
 add_dependencies(onnx onnx_proto)
 set_target_properties(onnx PROPERTIES CXX_VISIBILITY_PRESET hidden)
 add_onnx_global_defines(onnx)
+if(BUILD_SHARED_LIBS)
+  # A shared onnx needs the shared onnx_proto, which is installed next to it.
+  # Without a search path of its own, an installed libonnx only finds it via
+  # system paths or LD_LIBRARY_PATH.
+  if(APPLE)
+    set_property(TARGET onnx APPEND PROPERTY INSTALL_RPATH "@loader_path")
+  elseif(UNIX)
+    set_property(TARGET onnx APPEND PROPERTY INSTALL_RPATH "$ORIGIN")
+  endif()
+endif()
 
 if(ONNX_BUILD_PYTHON)
   if(BUILD_SHARED_LIBS)
