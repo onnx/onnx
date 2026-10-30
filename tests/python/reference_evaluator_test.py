@@ -3098,6 +3098,33 @@ class TestReferenceEvaluator:
         got1 = ref1.run(None, feeds)
         assert_allclose(got1[0], expected)
 
+    @pytest.mark.parametrize(
+        "operator,tensor_type,size,index,expected",
+        [
+            ("HannWindow", TensorProto.FLOAT16, 32768, 24576, 0.5),
+            ("HammingWindow", TensorProto.FLOAT16, 16384, 12288, 25 / 46),
+            ("HannWindow", TensorProto.INT8, 64, 32, 1),
+        ],
+    )
+    def test_window_small_types(self, operator, tensor_type, size, index, expected):
+        node = make_node(
+            operator, ["size"], ["y"], periodic=1, output_datatype=tensor_type
+        )
+        inputs = [make_tensor_value_info("size", TensorProto.INT64, [])]
+        outputs = [make_tensor_value_info("y", tensor_type, [size])]
+        model = make_model(
+            make_graph([node], "test", inputs, outputs),
+            opset_imports=[make_opsetid("", 17)],
+        )
+        check_model(model, full_check=True)
+        result = ReferenceEvaluator(model).run(
+            None, {"size": np.array(size, dtype=np.int64)}
+        )[0]
+        dtype = onnx.helper.tensor_dtype_to_np_dtype(tensor_type)
+        assert result.dtype == dtype
+        assert np.isfinite(result).all()
+        assert result[index] == dtype.type(expected)
+
     def test_stft_with_window(self):
         signal = make_tensor_value_info("signal", TensorProto.FLOAT, [None, None, None])
         frame_step = make_tensor_value_info("frame_step", TensorProto.INT64, [None])
@@ -6576,6 +6603,35 @@ class TestReferenceEvaluator:
         np.testing.assert_array_equal(np.array(expected_values, dtype=dtype), got[0])
 
     @pytest.mark.parametrize(
+        ("a_value", "expected"),
+        [
+            # x / y_scale = 0.5, y_zero_point = 1.
+            # Spec: rint(0.5) + 1 = 1. Rounding the sum yields rint(1.5) = 2.
+            (1, 1),
+            # x / y_scale = 2.5. Spec: rint(2.5) + 1 = 3. Sum-then-round: rint(3.5) = 4.
+            (5, 3),
+            # x / y_scale = -1.5. Spec: rint(-1.5) + 1 = -1. Sum-then-round: rint(-0.5) = 0.
+            (-3, -1),
+        ],
+    )
+    def test_qlinearmatmul_rounds_before_odd_zero_point(self, a_value, expected):
+        # b_scale is 1/2, exact in float32, so the quotient is a half-integer.
+        feeds = {
+            "a": np.array([[a_value]], dtype=np.int8),
+            "a_scale": np.array([1.0], dtype=np.float32),
+            "a_zero_point": np.array([0], dtype=np.int8),
+            "b": np.array([[1]], dtype=np.int8),
+            "b_scale": np.array([0.5], dtype=np.float32),
+            "b_zero_point": np.array([0], dtype=np.int8),
+            "y_scale": np.array([1.0], dtype=np.float32),
+            "y_zero_point": np.array([1], dtype=np.int8),
+        }
+        got = self._run_qlinear_int8(
+            "QLinearMatMul", feeds, ([1, 1], [1, 1]), [1, 1], opset=21
+        )
+        np.testing.assert_array_equal(np.array([[expected]], dtype=np.int8), got)
+
+    @pytest.mark.parametrize(
         "x, pattern, expected, expected_shape",
         [
             (
@@ -7515,8 +7571,7 @@ class TestReferenceEvaluator:
         # A fully-masked row (all `-inf`) must softmax to all-zeros without
         # producing NaN or emitting a NumPy warning.
         x = np.array([[0.0, 1.0, 2.0], [-np.inf, -np.inf, -np.inf]], dtype=np.float64)
-        with warnings.catch_warnings():
-            warnings.simplefilter("error")
+        with warnings.catch_warnings(action="error"):
             got = _softmax(x)
         assert not np.isnan(got).any()
         assert_allclose(got[1], np.zeros(3, dtype=np.float64))
@@ -8215,6 +8270,91 @@ class TestReferenceEvaluator:
         got = ReferenceEvaluator(node).run(None, {"X": x})[0]
         assert got.dtype == expected.dtype
         assert_array_equal(got.astype(np.int8), expected.astype(np.int8))
+
+    @staticmethod
+    def _non_max_suppression_boxes_and_scores() -> tuple[np.ndarray, np.ndarray]:
+        # Same boxes and scores as test_nonmaxsuppression_suppress_by_IOU.
+        boxes = np.array(
+            [
+                [
+                    [0.0, 0.0, 1.0, 1.0],
+                    [0.0, 0.1, 1.0, 1.1],
+                    [0.0, -0.1, 1.0, 0.9],
+                    [0.0, 10.0, 1.0, 11.0],
+                    [0.0, 10.1, 1.0, 11.1],
+                    [0.0, 100.0, 1.0, 101.0],
+                ]
+            ],
+            dtype=np.float32,
+        )
+        scores = np.array([[[0.9, 0.75, 0.6, 0.95, 0.5, 0.3]]], dtype=np.float32)
+        return boxes, scores
+
+    @pytest.mark.parametrize("shape", [(), (1,)], ids=["0d", "1d"])
+    def test_non_max_suppression_scalar_inputs(self, shape) -> None:
+        # max_output_boxes_per_class, iou_threshold and score_threshold are
+        # scalars in the spec; 1-D tensors holding one element are accepted too.
+        boxes, scores = self._non_max_suppression_boxes_and_scores()
+        node = make_node(
+            "NonMaxSuppression",
+            [
+                "boxes",
+                "scores",
+                "max_output_boxes_per_class",
+                "iou_threshold",
+                "score_threshold",
+            ],
+            ["selected_indices"],
+        )
+        (got,) = ReferenceEvaluator(node).run(
+            None,
+            {
+                "boxes": boxes,
+                "scores": scores,
+                "max_output_boxes_per_class": np.full(shape, 3, dtype=np.int64),
+                "iou_threshold": np.full(shape, 0.5, dtype=np.float32),
+                "score_threshold": np.full(shape, 0.4, dtype=np.float32),
+            },
+        )
+        assert_array_equal(got, np.array([[0, 0, 3], [0, 0, 0]], dtype=np.int64))
+
+    @pytest.mark.parametrize(
+        ("optional_inputs", "expected"),
+        [
+            # max_output_boxes_per_class defaults to 0, which means no output.
+            ({}, []),
+            # iou_threshold defaults to 0, so any overlap suppresses a box.
+            (
+                {"max_output_boxes_per_class": np.array(3, dtype=np.int64)},
+                [[0, 0, 3], [0, 0, 0], [0, 0, 5]],
+            ),
+            (
+                {
+                    "max_output_boxes_per_class": np.array(3, dtype=np.int64),
+                    "score_threshold": np.array(0.4, dtype=np.float32),
+                },
+                [[0, 0, 3], [0, 0, 0]],
+            ),
+        ],
+        ids=["all_omitted", "thresholds_omitted", "iou_threshold_omitted"],
+    )
+    def test_non_max_suppression_omitted_optional_inputs(
+        self, optional_inputs, expected
+    ) -> None:
+        boxes, scores = self._non_max_suppression_boxes_and_scores()
+        input_names = ["boxes", "scores"] + [
+            name if name in optional_inputs else ""
+            for name in (
+                "max_output_boxes_per_class",
+                "iou_threshold",
+                "score_threshold",
+            )
+        ]
+        node = make_node("NonMaxSuppression", input_names, ["selected_indices"])
+        (got,) = ReferenceEvaluator(node).run(
+            None, {"boxes": boxes, "scores": scores, **optional_inputs}
+        )
+        assert_array_equal(got, np.array(expected, dtype=np.int64).reshape(-1, 3))
 
 
 class TestReferenceEvaluatorShapeAnnotationChecking:
