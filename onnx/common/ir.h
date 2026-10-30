@@ -481,6 +481,7 @@ struct Node : public Attributes<Node> {
   std::string doc_string_;
   bool has_overload_{false};
   std::string overload_;
+  std::vector<StringStringEntryProto> metadata_props_;
   // Count of this node's currently-set attributes with kind g or gs (If/Loop/
   // Scan subgraph bodies, or any custom op with a graph attribute). Kept in
   // sync incrementally by onAttributeAdded()/onAttributeRemoved() so the
@@ -534,6 +535,12 @@ struct Node : public Attributes<Node> {
   }
   NodeKind kind() const {
     return kind_;
+  }
+  const std::vector<StringStringEntryProto>& metadataProps() const {
+    return metadata_props_;
+  }
+  void setMetadataProps(std::vector<StringStringEntryProto> props) {
+    metadata_props_ = std::move(props);
   }
   Graph* owningGraph() {
     return graph_;
@@ -1030,6 +1037,7 @@ struct Graph final {
   std::string doc_string_;
 
   std::vector<OpSetID> opset_versions_;
+  std::vector<StringStringEntryProto> metadata_props_;
 
   bool isNameUnique(const std::string& name) const {
     // O(1) check against this graph's own initializer/value names, replacing
@@ -1063,6 +1071,13 @@ struct Graph final {
 
  public:
   Graph() : output_(initOutput(create(kReturn, 0))), input_(create(kParam, 0)), initializer_node_(create(kParam, 0)) {}
+
+  const std::vector<StringStringEntryProto>& metadataProps() const {
+    return metadata_props_;
+  }
+  void setMetadataProps(std::vector<StringStringEntryProto> props) {
+    metadata_props_ = std::move(props);
+  }
 
   bool has_doc_string() const {
     return has_doc_string_;
@@ -1258,7 +1273,7 @@ struct Graph final {
   ResourceGuard setStageTemporary(size_t s) {
     auto prev_stage = new_node_stage_;
     new_node_stage_ = s;
-    return ResourceGuard([prev_stage, this]() { this->new_node_stage_ = prev_stage; });
+    return ResourceGuard([prev_stage, this] { this->new_node_stage_ = prev_stage; });
   }
 
   size_t registerOutput(Value* n) {

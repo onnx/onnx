@@ -17,7 +17,11 @@ class _CommonWindow(OpRun):
             N_1 = size
         else:
             N_1 = size - 1
-        ni = np.arange(size, dtype=dtype)
+        # float16 overflows when multiplied by pi; bfloat16 cannot hold large indices
+        work_dtype = dtype
+        if dtype.itemsize < 4 and not np.issubdtype(dtype, np.integer):
+            work_dtype = np.float32
+        ni = np.arange(size, dtype=work_dtype)
         return ni, N_1
 
     @staticmethod
