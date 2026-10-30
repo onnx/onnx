@@ -482,6 +482,25 @@ class OnnxParser : public ParserBase {
   }
 
  private:
+  class RecursionDepthGuard {
+   public:
+    explicit RecursionDepthGuard(size_t& depth) : depth_(depth) {
+      ++depth_;
+    }
+
+    ~RecursionDepthGuard() {
+      --depth_;
+    }
+
+    RecursionDepthGuard(const RecursionDepthGuard&) = delete;
+    RecursionDepthGuard& operator=(const RecursionDepthGuard&) = delete;
+
+   private:
+    size_t& depth_;
+  };
+
+  static constexpr size_t kMaxRecursionDepth = 100;
+
   Common::Status Parse(std::string name, GraphProto& graph);
 
   Common::Status Parse(IdList& idlist);
@@ -513,6 +532,8 @@ class OnnxParser : public ParserBase {
   bool NextIsType();
 
   bool NextIsIdentifier();
+
+  size_t recursion_depth_ = 0;
 };
 
 } // namespace ONNX_NAMESPACE
