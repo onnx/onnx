@@ -342,8 +342,31 @@ void check_tensor(const TensorProto& tensor, const CheckerContext& ctx) {
 
 #undef check_data_field
 
-  int64_t nelem =
+  const int64_t full_nelem =
       safe_dim_product(tensor.dims(), [&](const char* msg) { fail_check(msg, " (tensor name: ", tensor.name(), ")"); });
+  // Dims describe the full tensor, while segment describes the stored chunk for every payload type.
+  int64_t nelem = full_nelem;
+  if (tensor.has_segment()) {
+    const auto& seg = tensor.segment();
+    if (!seg.has_begin() || !seg.has_end()) {
+      fail_check("TensorProto segment must set begin and end (tensor name: ", tensor.name(), ")");
+    }
+    const int64_t begin = seg.begin();
+    const int64_t end = seg.end();
+    if (begin < 0 || end < begin || end > full_nelem) {
+      fail_check(
+          "Invalid TensorProto segment (tensor name: ",
+          tensor.name(),
+          "): [",
+          begin,
+          ", ",
+          end,
+          ") out of [0, ",
+          full_nelem,
+          ")");
+    }
+    nelem = end - begin;
+  }
   bool stored_externally = tensor.has_data_location() && tensor.data_location() == TensorProto::EXTERNAL;
   if (stored_externally) {
     if (num_value_fields != 0) {
@@ -397,30 +420,7 @@ void check_tensor(const TensorProto& tensor, const CheckerContext& ctx) {
     if (tensor.data_type() == TensorProto::STRING) {
       fail_check("STRING data (tensor name: ", tensor.name(), ") should not be stored in raw_data field");
     }
-    // For segmented tensors, dims describe the full tensor; segment describes the stored chunk.
-    int64_t described_elems = nelem;
-    if (tensor.has_segment()) {
-      const auto& seg = tensor.segment();
-      if (!seg.has_begin() || !seg.has_end()) {
-        fail_check("TensorProto segment must set begin and end (tensor name: ", tensor.name(), ")");
-      }
-      const int64_t begin = seg.begin();
-      const int64_t end = seg.end();
-      if (begin < 0 || end < begin || end > nelem) {
-        fail_check(
-            "Invalid TensorProto segment (tensor name: ",
-            tensor.name(),
-            "): [",
-            begin,
-            ", ",
-            end,
-            ") out of [0, ",
-            nelem,
-            ")");
-      }
-      described_elems = end - begin;
-    }
-    const int64_t expected_bytes = expected_raw_data_bytes(tensor, described_elems);
+    const int64_t expected_bytes = expected_raw_data_bytes(tensor, nelem);
     if (expected_bytes > 0 && static_cast<int64_t>(tensor.raw_data().size()) < expected_bytes) {
       fail_check(
           "TensorProto (tensor name: ",
@@ -432,8 +432,8 @@ void check_tensor(const TensorProto& tensor, const CheckerContext& ctx) {
           " bytes required).");
     }
     if (tensor.data_type() == TensorProto::FLOAT6E2M3 || tensor.data_type() == TensorProto::FLOAT6E3M2) {
-      // expected_raw_data_bytes() already rejected counts where described_elems * 6 overflows.
-      const auto used_bits = static_cast<uint8_t>((described_elems * 6) % 8);
+      // expected_raw_data_bytes() already rejected counts where nelem * 6 overflows.
+      const auto used_bits = static_cast<uint8_t>((nelem * 6) % 8);
       if (expected_bytes > 0 && used_bits != 0) {
         const auto last_byte = static_cast<uint8_t>(tensor.raw_data()[expected_bytes - 1]);
         const auto unused_bits_mask = static_cast<uint8_t>(0xFFU << used_bits);
