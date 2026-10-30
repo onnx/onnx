@@ -13760,7 +13760,8 @@ class TestShapeInference(TestShapeInferenceHelper):
         model = onnx.parser.parse_model(modeltxt)
         with pytest.raises(onnx.shape_inference.InferenceError):
             onnx.checker.check_model(model, full_check=True)
-            onnx.shape_inference.infer_shapes(model)
+        with pytest.raises(onnx.shape_inference.InferenceError):
+            onnx.shape_inference.infer_shapes(model, strict_mode=True)
 
     @pytest.mark.parametrize("axis", [2**31, 2**40])
     def test_layer_normalization_axis_out_of_range(self, axis: int) -> None:
@@ -13790,7 +13791,8 @@ class TestShapeInference(TestShapeInferenceHelper):
         model = onnx.parser.parse_model(modeltxt)
         with pytest.raises(onnx.shape_inference.InferenceError):
             onnx.checker.check_model(model, full_check=True)
-            onnx.shape_inference.infer_shapes(model)
+        with pytest.raises(onnx.shape_inference.InferenceError):
+            onnx.shape_inference.infer_shapes(model, strict_mode=True)
 
     def test_issue_gemm_6185(self):
         modeltxt = """
@@ -13805,7 +13807,8 @@ class TestShapeInference(TestShapeInferenceHelper):
         model = onnx.parser.parse_model(modeltxt)
         with pytest.raises(onnx.shape_inference.InferenceError):
             onnx.checker.check_model(model, full_check=True)
-            onnx.shape_inference.infer_shapes(model)
+        with pytest.raises(onnx.shape_inference.InferenceError):
+            onnx.shape_inference.infer_shapes(model, strict_mode=True)
 
     def test_issue_stft_6186(self):
         modeltxt = """
@@ -13820,7 +13823,8 @@ class TestShapeInference(TestShapeInferenceHelper):
         model = onnx.parser.parse_model(modeltxt)
         with pytest.raises(onnx.shape_inference.InferenceError):
             onnx.checker.check_model(model, full_check=True)
-            onnx.shape_inference.infer_shapes(model)
+        with pytest.raises(onnx.shape_inference.InferenceError):
+            onnx.shape_inference.infer_shapes(model, strict_mode=True)
 
     @pytest.mark.parametrize("version", all_versions_for("ConstantOfShape"))
     def test_issue_constantofshape_6135(self, version):
