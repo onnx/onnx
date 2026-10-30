@@ -4738,6 +4738,49 @@ class TestReferenceEvaluator:
                 ref.run(None, {"X": data})
 
     @pytest.mark.parametrize(
+        ("p", "magnitude", "expected_value"),
+        [
+            (1, np.float32(3e38), np.float32(0.5)),
+            (2, np.float32(1e30), np.float32(2**-0.5)),
+            (2, np.float32(1e-30), np.float32(2**-0.5)),
+        ],
+    )
+    def test_lp_normalization_preserves_finite_extreme_inputs(
+        self, p: int, magnitude: np.float32, expected_value: np.float32
+    ) -> None:
+        node = make_node("LpNormalization", ["X"], ["Y"], axis=-1, p=p)
+        x = np.array([[magnitude, -magnitude], [0.0, 0.0]], dtype=np.float32)
+        (got,) = ReferenceEvaluator(node).run(None, {"X": x})
+        expected = np.array(
+            [[expected_value, -expected_value], [0.0, 0.0]], dtype=np.float32
+        )
+        assert_allclose(got, expected, rtol=2e-7, atol=0)
+
+    @pytest.mark.parametrize("p", [1, 2])
+    def test_lp_normalization_preserves_nonfinite_behavior(self, p: int) -> None:
+        node = make_node("LpNormalization", ["X"], ["Y"], axis=-1, p=p)
+        x = np.array([[np.inf, 1.0], [np.nan, 1.0]], dtype=np.float32)
+        with np.errstate(invalid="ignore"):
+            (got,) = ReferenceEvaluator(node).run(None, {"X": x})
+        assert np.isnan(got[0, 0])
+        assert got[0, 1] == 0
+        assert np.isnan(got[1]).all()
+
+    @pytest.mark.parametrize("p", [1, 2])
+    @pytest.mark.parametrize("dtype", [np.float16, ml_dtypes.bfloat16])
+    def test_lp_normalization_half_precision_long_slice(self, p: int, dtype) -> None:
+        # In float16 the sum of 65520 scaled ones exceeds the maximum (65504);
+        # in bfloat16 it stalls at 256. Both normalized results are
+        # representable, so the reduction must be accumulated in float32.
+        n = 65520
+        node = make_node("LpNormalization", ["X"], ["Y"], axis=-1, p=p)
+        x = np.ones((1, n), dtype=dtype)
+        (got,) = ReferenceEvaluator(node).run(None, {"X": x})
+        expected = np.full((1, n), 1 / n if p == 1 else n**-0.5, dtype=np.float32)
+        assert got.dtype == dtype
+        assert_allclose(got.astype(np.float32), expected, rtol=4e-3, atol=0)
+
+    @pytest.mark.parametrize(
         ("shape", "size", "dtype", "elem_type"),
         [
             ((2, 3, 2, 2), 3, np.float32, TensorProto.FLOAT),
