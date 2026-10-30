@@ -492,7 +492,7 @@ static bool BuildLinearAttentionFunction(
   const std::string read_block = (group_size > 1) ? R"ONNX(
                 StateUnsq = Unsqueeze (state_out, Two1D)
                 StateExpanded = Expand (StateUnsq, StateExpandShape)
-                StateForRead = Reshape (StateExpanded, StateReadShape)
+                StateForRead = Reshape <allowzero = 1> (StateExpanded, StateReadShape)
                 QtRow = Unsqueeze (q_t_f, NegTwo1D)
                 ReadOut = MatMul (QtRow, StateForRead)
                 ReadSq = Squeeze (ReadOut, NegTwo1D)
@@ -644,7 +644,7 @@ static bool BuildLinearAttentionFunction(
   return true;
 }
 
-static void InferLinearAttentionShape(InferenceContext& ctx) {
+static void InferLinearAttentionShape(InferenceContext& ctx, bool expanded_value_heads) {
   // Read required attributes
   const auto* q_num_heads_attr = ctx.getAttribute("q_num_heads");
   const auto* kv_num_heads_attr = ctx.getAttribute("kv_num_heads");
@@ -803,7 +803,8 @@ static void InferLinearAttentionShape(InferenceContext& ctx) {
   //     (per-key-dim form). When d_k is unknown we still require divisibility
   //     by Hstate.
   //   beta  last dim must be 1 (broadcast) or Hstate (per-head).
-  if ((Dk.has_dim_value() && Dk.dim_value() <= 0) || (Dv.has_dim_value() && Dv.dim_value() <= 0)) {
+  if (expanded_value_heads &&
+      ((Dk.has_dim_value() && Dk.dim_value() <= 0) || (Dv.has_dim_value() && Dv.dim_value() <= 0))) {
     fail_shape_inference("Key and value head dimensions must be positive");
   }
   if (has_decay) {
@@ -811,7 +812,7 @@ static void InferLinearAttentionShape(InferenceContext& ctx) {
     if (decay_type != nullptr && decay_type->has_tensor_type() && decay_type->tensor_type().has_shape() &&
         decay_type->tensor_type().shape().dim_size() == 3 && decay_type->tensor_type().shape().dim(2).has_dim_value()) {
       const int64_t decay_last = decay_type->tensor_type().shape().dim(2).dim_value();
-      if (decay_last <= 0) {
+      if (expanded_value_heads && decay_last <= 0) {
         fail_shape_inference("decay last dimension must be positive");
       }
       if (Dk.has_dim_value()) {
@@ -853,6 +854,14 @@ static void InferLinearAttentionShape(InferenceContext& ctx) {
 
   // Output 1: present_state (B, Hstate, d_k, d_v).
   updateOutputShape(ctx, 1, {B, Hstate, Dk, Dv});
+}
+
+static void InferLinearAttentionShape_opset27(InferenceContext& ctx) {
+  InferLinearAttentionShape(ctx, false);
+}
+
+static void InferLinearAttentionShape_opset29(InferenceContext& ctx) {
+  InferLinearAttentionShape(ctx, true);
 }
 
 OpSchema LinearAttentionSchema(bool expanded_value_heads) {
@@ -996,7 +1005,8 @@ OpSchema LinearAttentionSchema(bool expanded_value_heads) {
           "Constrain state types to float16, bfloat16, or float32 tensors. "
           "Should be float32 or the same as T for numerical stability on long sequences.")
       .SetContextDependentFunctionBodyBuilder(BuildLinearAttentionFunction)
-      .TypeAndShapeInferenceFunction(InferLinearAttentionShape);
+      .TypeAndShapeInferenceFunction(
+          expanded_value_heads ? InferLinearAttentionShape_opset29 : InferLinearAttentionShape_opset27);
 }
 
 } // namespace ONNX_NAMESPACE::defs::nn::utils

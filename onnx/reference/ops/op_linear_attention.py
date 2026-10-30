@@ -97,7 +97,8 @@ class LinearAttention(OpRun):
             raise ValueError(
                 "query, key and value must have matching batch/sequence dimensions."
             )
-        if d_k <= 0 or d_v <= 0 or k4.shape[-1] != d_k:
+        version = getattr(self, "run_params", {}).get("opsets", {}).get("", 29)
+        if (version >= 29 and (d_k <= 0 or d_v <= 0)) or k4.shape[-1] != d_k:
             raise ValueError(
                 "Q/K head dimensions must match and key/value widths must be positive."
             )

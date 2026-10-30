@@ -251,3 +251,73 @@ def test_compact_heads_invalid_runtime_shapes(name):
         ValueError, match=r"num_heads|state head count|past_state shape"
     ):
         op._run(**feeds, **attrs)
+
+
+@pytest.mark.parametrize("version", [27, 28])
+@pytest.mark.parametrize("length", [0, 1, 3])
+@pytest.mark.parametrize("past", [False, True])
+@pytest.mark.parametrize("query_heads", [1, 2])
+@pytest.mark.parametrize("empty_dimension", ["key", "value"])
+@pytest.mark.parametrize("rule", ["linear", "gated_delta"])
+def test_legacy_zero_width_heads(
+    version, length, past, query_heads, empty_dimension, rule
+):
+    dk = 0 if empty_dimension == "key" else 1
+    dv = 0 if empty_dimension == "value" else 1
+    feeds = {
+        "query": np.ones((1, length, query_heads * dk), dtype=np.float32),
+        "key": np.ones((1, length, dk), dtype=np.float32),
+        "value": np.ones((1, length, dv), dtype=np.float32),
+    }
+    if past:
+        feeds["past_state"] = np.empty((1, 1, dk, dv), dtype=np.float32)
+    if rule == "gated_delta":
+        feeds["decay"] = np.zeros((1, length, dk), dtype=np.float32)
+        feeds["beta"] = np.ones((1, length, 1), dtype=np.float32)
+    attrs = {
+        "q_num_heads": query_heads,
+        "kv_num_heads": 1,
+        "update_rule": rule,
+        "scale": 1.0,
+    }
+    model = _model(feeds, attrs, version)
+    inferred = onnx.shape_inference.infer_shapes(model, strict_mode=True)
+    expected_shapes = [(1, length, query_heads * dv), (1, 1, dk, dv)]
+    assert [
+        tuple(dim.dim_value for dim in output.type.tensor_type.shape.dim)
+        for output in inferred.graph.output
+    ] == expected_shapes
+    for new_ops in (None, [LinearAttention]):
+        outputs = ReferenceEvaluator(model, new_ops=new_ops).run(None, feeds)
+        for output, shape in zip(outputs, expected_shapes, strict=True):
+            assert output.shape == shape
+            assert_array_equal(output, np.zeros(shape, dtype=np.float32))
+
+
+@pytest.mark.parametrize("value_heads", [None, 0, 2])
+@pytest.mark.parametrize("empty_dimension", ["key", "value"])
+def test_opset29_rejects_zero_width_heads(value_heads, empty_dimension):
+    dk = 0 if empty_dimension == "key" else 1
+    dv = 0 if empty_dimension == "value" else 1
+    heads = value_heads or 1
+    feeds = {
+        "query": np.ones((1, 1, dk), dtype=np.float32),
+        "key": np.ones((1, 1, dk), dtype=np.float32),
+        "value": np.ones((1, 1, heads * dv), dtype=np.float32),
+    }
+    attrs = {
+        "q_num_heads": 1,
+        "kv_num_heads": 1,
+        "update_rule": "linear",
+        "scale": 1.0,
+    }
+    model = _model(feeds, attrs, 27)
+    model.opset_import[0].version = 29
+    if value_heads is not None:
+        model.graph.node[0].attribute.append(
+            helper.make_attribute("v_num_heads", value_heads)
+        )
+    with pytest.raises(onnx.shape_inference.InferenceError, match="must be positive"):
+        onnx.shape_inference.infer_shapes(model, strict_mode=True)
+    with pytest.raises(ValueError, match="must be positive"):
+        ReferenceEvaluator(model).run(None, feeds)
