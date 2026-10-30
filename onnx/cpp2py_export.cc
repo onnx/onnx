@@ -31,12 +31,6 @@
 #include "onnx/shape_inference/implementation.h"
 #include "onnx/version_converter/convert.h"
 
-#ifdef ONNX_USE_LITE_PROTO
-using BASE_PROTO_TYPE = ::google::protobuf::MessageLite;
-#else
-using BASE_PROTO_TYPE = ::google::protobuf::Message;
-#endif
-
 // Generic type caster template for ONNX Proto classes
 #define ONNX_DEFINE_TYPE_CASTER(ProtoType, PythonClassName)                                       \
   template <>                                                                                     \
@@ -63,9 +57,9 @@ using BASE_PROTO_TYPE = ::google::protobuf::Message;
         rv_policy /* policy */,                                                                   \
         cleanup_list* /* cleanup */) noexcept {                                                   \
       try {                                                                                       \
-        std::string serialized = cpp_proto.SerializeAsString();                                   \
+        auto serialized = ONNX_NAMESPACE::ProtoToBytes(cpp_proto);                                \
         auto py_proto = nanobind::module_::import_("onnx").attr(#ProtoType)();                    \
-        py_proto.attr("ParseFromString")(nanobind::bytes(serialized.c_str(), serialized.size())); \
+        py_proto.attr("ParseFromString")(serialized);                                             \
         return py_proto.release();                                                                \
       } catch (...) {                                                                             \
         return handle();                                                                          \
@@ -87,12 +81,6 @@ ONNX_DEFINE_TYPE_CASTER(FunctionProto, "onnx.FunctionProto")
 
 namespace ONNX_NAMESPACE {
 namespace nb = nanobind;
-
-// Serialize a proto message into Python bytes.
-static nb::bytes ProtoToBytes(const BASE_PROTO_TYPE& proto) {
-  std::string out = proto.SerializeAsString();
-  return nb::bytes(out.data(), out.size());
-}
 
 // Parse a vector of Python bytes into a vector of protos.
 template <typename ProtoType>
