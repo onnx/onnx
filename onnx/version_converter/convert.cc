@@ -5,9 +5,11 @@
 #include "onnx/version_converter/convert.h"
 
 #include <iostream>
+#include <limits>
 #include <memory>
 #include <string>
 
+#include "onnx/checker.h"
 #include "onnx/common/ir_pb_converter.h"
 #include "onnx/shape_inference/implementation.h"
 
@@ -160,6 +162,37 @@ ModelProto DefaultVersionConverter::convert_version(
   debug("Finished conversion; returning model");
   ModelProto mp_out = PrepareOutput(mp_in);
   ExportModelProto(&mp_out, g);
+  if (mp_out.functions_size() != 0) {
+    // Function bodies keep their own imports, but ONNX also requires their
+    // operator schemas to agree with the model imports. Do not return an
+    // invalid model when conversion crosses such a schema boundary.
+    auto checked_version = [](int64_t version) {
+      if (version < 0 || version > std::numeric_limits<int>::max()) {
+        fail_convert("Version is outside the supported checker range: ", version);
+      }
+      return static_cast<int>(version);
+    };
+    checker::CheckerContext ctx;
+    // The converter never reads external data, so it may not be present here.
+    ctx.set_skip_external_data_check(true);
+    ctx.set_ir_version(checked_version(mp_out.ir_version()));
+    std::unordered_map<std::string, int> imports;
+    for (const auto& import : mp_out.opset_import()) {
+      imports[import.domain()] = checked_version(import.version());
+    }
+    ctx.set_opset_imports(std::move(imports));
+    ONNX_TRY {
+      checker::check_model_local_functions(mp_out, ctx, checker::LexicalScopeContext{});
+    }
+    ONNX_CATCH(const checker::ValidationError& error) {
+      ONNX_HANDLE_EXCEPTION([&]() {
+        fail_convert(
+            "Cannot preserve model-local functions at the requested opset; "
+            "function-body conversion is not supported: ",
+            error.what());
+      });
+    }
+  }
   return mp_out;
 }
 

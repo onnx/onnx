@@ -749,6 +749,9 @@ void ExportModelProto(ModelProto* p_m, const std::shared_ptr<Graph>& g) {
 
 ModelProto PrepareOutput(const ModelProto& mp_in) {
   ModelProto mp_out{};
+  // Model-local functions carry their own opset imports. Converting the
+  // model's graph must not remove their definitions or change those imports.
+  mp_out.mutable_functions()->CopyFrom(mp_in.functions());
 
   if (mp_in.has_ir_version()) {
     mp_out.set_ir_version(mp_in.ir_version());
