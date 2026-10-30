@@ -346,14 +346,17 @@ class _CommonGridSample(OpRun):
                         # https://github.com/pytorch/pytorch/pull/97000
                         x = np.rint(x)
                     # https://github.com/pytorch/pytorch/blob/v2.0.0/aten/src/ATen/native/GridSampler.h#L142
-                    for i, v in enumerate(x):
-                        x_min = border[i]
-                        x_max = border[i + num_dims]
-                        if v < x_min or v > x_max:
-                            if padding_mode == "border":
-                                x[i] = self._clamp(v, 0, dims[i] - 1)
-                            elif padding_mode == "reflection":
-                                x[i] = self._gs_reflect(v, x_min, x_max)
+                    # Cubic mode keeps the coordinate as is and pads each of its
+                    # 4 neighbors when reading them instead, as PyTorch does.
+                    if mode != "cubic":
+                        for i, v in enumerate(x):
+                            x_min = border[i]
+                            x_max = border[i + num_dims]
+                            if v < x_min or v > x_max:
+                                if padding_mode == "border":
+                                    x[i] = self._clamp(v, 0, dims[i] - 1)
+                                elif padding_mode == "reflection":
+                                    x[i] = self._gs_reflect(v, x_min, x_max)
 
                     if mode == "nearest":
                         x = x.astype(np.int32)
