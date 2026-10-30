@@ -1052,7 +1052,7 @@ class TestSaveExternalDataSymlinkProtection(TestLoadExternalDataBase):
     def test_save_rejects_symlink_target(self) -> None:
         """Saving external data must refuse to follow symlinks."""
         sensitive_file = os.path.join(self.temp_dir, "sensitive.txt")
-        with open(sensitive_file, "w") as f:
+        with open(sensitive_file, "w", encoding="utf-8") as f:
             f.write("SENSITIVE DATA")
 
         model, array = _make_external_data_test_model()
@@ -1086,7 +1086,7 @@ class TestSaveExternalDataSymlinkProtection(TestLoadExternalDataBase):
             )
 
         # Sensitive file must not be modified
-        with open(sensitive_file) as f:
+        with open(sensitive_file, encoding="utf-8") as f:
             assert f.read() == "SENSITIVE DATA"
 
 
@@ -1112,7 +1112,7 @@ class TestLoadExternalDataSymlinkProtection(TestLoadExternalDataBase):
 
         # Create a target file and replace external data with a symlink to it
         target_file = os.path.join(self.temp_dir, "target.txt")
-        with open(target_file, "w") as f:
+        with open(target_file, "w", encoding="utf-8") as f:
             f.write("SENSITIVE DATA")
 
         ext_data_path = os.path.join(self.temp_dir, ext_data)
@@ -1139,7 +1139,7 @@ class TestLoadExternalDataSymlinkProtection(TestLoadExternalDataBase):
 
         # Replace external data with a symlink
         target_file = os.path.join(self.temp_dir, "target.txt")
-        with open(target_file, "w") as f:
+        with open(target_file, "w", encoding="utf-8") as f:
             f.write("SENSITIVE DATA")
 
         ext_data_path = os.path.join(self.temp_dir, ext_data)

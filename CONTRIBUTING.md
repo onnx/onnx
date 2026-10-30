@@ -183,6 +183,17 @@ lintrunner f
 
 Run `lintrunner --help` and see the `.lintrunner.toml` file for more usage examples, as well as instructions on how to adopt new linters.
 
+#### Semgrep
+
+The [Lint workflow](.github/workflows/lint.yml) runs Semgrep Community Edition
+and uploads JSON, SARIF, and text reports in the `semgrep-results` artifact.
+Findings are advisory during rollout. Rule exclusions and their reasons are in
+`.semgrep-excluded-rules.txt`; file exclusions are in `.semgrepignore`.
+
+To reproduce locally, install `requirements-dev.txt` and follow the Semgrep
+job's pinned rule checkout, collection, and scan commands. No account or token
+is required.
+
 #### Naming for legacy helper functions in `onnx/defs/*/old.cc`
 
 When adding or renaming helper functions in legacy schema files (`old.cc`), prefer explicit opset-based names over numeric suffixes. This keeps intent clear and avoids ambiguity.

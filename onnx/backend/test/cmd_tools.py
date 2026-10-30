@@ -27,7 +27,9 @@ def generate_data(args: argparse.Namespace) -> None:
         output_dir = os.path.join(args.output, case.kind, case.name)
         prepare_dir(output_dir)
         if case.kind == "real":
-            with open(os.path.join(output_dir, "data.json"), "w") as fi:
+            with open(
+                os.path.join(output_dir, "data.json"), "w", encoding="utf-8"
+            ) as fi:
                 json.dump(
                     {
                         "url": case.url,
