@@ -4533,6 +4533,20 @@ class TestReferenceEvaluator:
         assert got[0, 1] == 0
         assert np.isnan(got[1]).all()
 
+    @pytest.mark.parametrize("p", [1, 2])
+    @pytest.mark.parametrize("dtype", [np.float16, ml_dtypes.bfloat16])
+    def test_lp_normalization_half_precision_long_slice(self, p: int, dtype) -> None:
+        # In float16 the sum of 65520 scaled ones exceeds the maximum (65504);
+        # in bfloat16 it stalls at 256. Both normalized results are
+        # representable, so the reduction must be accumulated in float32.
+        n = 65520
+        node = make_node("LpNormalization", ["X"], ["Y"], axis=-1, p=p)
+        x = np.ones((1, n), dtype=dtype)
+        (got,) = ReferenceEvaluator(node).run(None, {"X": x})
+        expected = np.full((1, n), 1 / n if p == 1 else n**-0.5, dtype=np.float32)
+        assert got.dtype == dtype
+        assert_allclose(got.astype(np.float32), expected, rtol=4e-3, atol=0)
+
     @pytest.mark.parametrize(
         ("shape", "size", "dtype", "elem_type"),
         [
