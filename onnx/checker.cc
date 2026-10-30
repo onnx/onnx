@@ -1619,6 +1619,21 @@ static std::filesystem::path verify_path_containment(
   return canonical_data;
 }
 
+// Returns true if a relative location has a component that refers to a parent
+// directory. Only whole components are rejected, so file names that merely
+// contain ".." (e.g. "model..v2.weight") stay valid. Components made only of
+// dots and spaces that start with ".." (e.g. "...", ".. ") are rejected too,
+// because Win32 path normalization trims trailing dots and spaces.
+static bool has_parent_dir_component(const std::filesystem::path& location) {
+  using char_type = std::filesystem::path::value_type;
+  auto is_dot_or_space = [](char_type c) { return c == char_type('.') || c == char_type(' '); };
+  return std::any_of(location.begin(), location.end(), [&](const std::filesystem::path& component) {
+    const auto& name = component.native();
+    return name.size() >= 2 && name[0] == char_type('.') && name[1] == char_type('.') &&
+        std::all_of(name.begin() + 2, name.end(), is_dot_or_space);
+  });
+}
+
 std::filesystem::path resolve_external_data_location(
     const std::string& base_dir,
     const std::string& location,
@@ -1636,7 +1651,7 @@ std::filesystem::path resolve_external_data_location(
         location);
   }
   auto relative_path = file_path.lexically_normal().make_preferred();
-  if (relative_path.native().find(std::filesystem::path("..").native()) != std::filesystem::path::string_type::npos) {
+  if (has_parent_dir_component(relative_path)) {
     fail_check(
         "Data of TensorProto ( tensor name: ",
         tensor_name,
@@ -1691,8 +1706,7 @@ validate_write_location(const std::string& base_dir, const std::string& location
   if (rel == std::filesystem::path(".")) {
     fail_check("External data location for tensor ", tensor_name, " is invalid: ", location);
   }
-  if (rel.native().find(std::filesystem::path("..").native()) !=
-      std::filesystem::path::string_type::npos) { // NOSONAR — C++17, no contains
+  if (has_parent_dir_component(rel)) {
     fail_check("External data location for tensor ", tensor_name, " contains '..': ", location);
   }
   return utf8_to_path(base_dir) / rel;

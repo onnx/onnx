@@ -1290,6 +1290,45 @@ class TestSaveExternalDataAbsolutePathValidation(TestLoadExternalDataBase):
             save_external_data(tensor, self.temp_dir)
 
 
+class TestExternalDataLocationParentDirComponent:
+    """Only whole '..' path components are rejected, not file names containing '..'."""
+
+    @pytest.mark.parametrize("location", ["model..v2.weight", "w..1.bin", "a..b/c.bin"])
+    def test_save_and_load_location_containing_dots(
+        self, tmp_path: Path, location: str
+    ) -> None:
+        array = np.arange(16, dtype=np.float32)
+        tensor = from_array(array, name="weight")
+        graph = helper.make_graph([], "g", [], [], initializer=[tensor])
+        model = helper.make_model(graph)
+        os.makedirs(tmp_path / os.path.dirname(location), exist_ok=True)
+        model_path = str(tmp_path / "model.onnx")
+
+        onnx.save_model(
+            model,
+            model_path,
+            save_as_external_data=True,
+            location=location,
+            size_threshold=0,
+        )
+        checker.check_model(model_path)
+        loaded = onnx.load_model(model_path)
+
+        np.testing.assert_array_equal(to_array(loaded.graph.initializer[0]), array)
+
+    @pytest.mark.parametrize(
+        "location",
+        ["../x.bin", "a/../../x.bin", "..", ".../x.bin", ".. /x.bin"],
+    )
+    def test_save_rejects_parent_dir_component(
+        self, tmp_path: Path, location: str
+    ) -> None:
+        tensor = from_array(np.ones((4,), dtype=np.float32), name="weight")
+        set_external_data(tensor, location=location)
+        with pytest.raises(checker.ValidationError):
+            save_external_data(tensor, str(tmp_path))
+
+
 def _tensor_with_offset(offset: int, location: str) -> TensorProto:
     """Create an in-memory tensor object that references an external 'location'."""
     tensor = from_array(np.ones((4,), dtype=np.float32), name="weight")
