@@ -39,6 +39,21 @@ class TestSchema:
         assert type(v) is onnx.AttributeProto
         assert v.type == onnx.AttributeProto.FLOAT
 
+    @pytest.mark.parametrize(
+        "value",
+        [b"", b"\x00\xff\x80", bytes(range(256)) * 256],
+        ids=["empty", "binary", "large"],
+    )
+    def test_attr_default_value_binary_round_trip(self, value: bytes) -> None:
+        proto = helper.make_attribute("value", value)
+        attribute = defs.OpSchema.Attribute("value", proto)
+        assert attribute._default_value == proto.SerializeToString()
+        assert attribute.default_value == proto
+
+    def test_attr_without_default_serializes_empty_proto(self) -> None:
+        attribute = defs.OpSchema.Attribute("value", defs.OpSchema.AttrType.STRING)
+        assert attribute._default_value == b""
+
     def test_function_body(self) -> None:
         selu_schema = defs.get_schema("Selu")
         assert type(selu_schema.function_body) is onnx.FunctionProto
