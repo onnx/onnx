@@ -8,7 +8,7 @@ import numpy as np
 import onnx
 from onnx.backend.test.case.base import Base
 from onnx.backend.test.case.node import expect
-from onnx.reference.ops._op_common_softmax import _log_softmax as logsoftmax
+from onnx.reference.ops._op_common_softmax import _log_softmax
 
 
 class LogSoftmax(Base):
@@ -22,7 +22,7 @@ class LogSoftmax(Base):
         x = np.array([[-1, 0, 1]]).astype(np.float32)
         # expected output
         # [[-2.4076061 -1.407606  -0.407606 ]]
-        y = logsoftmax(x)
+        y = _log_softmax(x)
         expect(node, inputs=[x], outputs=[y], name="test_logsoftmax_example_1")
 
     @staticmethod
@@ -31,7 +31,7 @@ class LogSoftmax(Base):
         # expected output
         # [[-3.4401896  -2.4401896  -1.4401896  -0.44018966]
         # [-3.4401896  -2.4401896  -1.4401896  -0.44018966]]
-        y = logsoftmax(x)
+        y = _log_softmax(x)
 
         node = onnx.helper.make_node(
             "LogSoftmax",
@@ -47,7 +47,7 @@ class LogSoftmax(Base):
             outputs=["y"],
             axis=0,
         )
-        y = logsoftmax(x, axis=0)
+        y = _log_softmax(x, axis=0)
         expect(node, inputs=[x], outputs=[y], name="test_logsoftmax_axis_0")
 
         node = onnx.helper.make_node(
@@ -56,7 +56,7 @@ class LogSoftmax(Base):
             outputs=["y"],
             axis=1,
         )
-        y = logsoftmax(x, axis=1)
+        y = _log_softmax(x, axis=1)
         expect(node, inputs=[x], outputs=[y], name="test_logsoftmax_axis_1")
 
         node = onnx.helper.make_node(
@@ -65,7 +65,7 @@ class LogSoftmax(Base):
             outputs=["y"],
             axis=2,
         )
-        y = logsoftmax(x, axis=2)
+        y = _log_softmax(x, axis=2)
         expect(node, inputs=[x], outputs=[y], name="test_logsoftmax_axis_2")
 
         node = onnx.helper.make_node(
@@ -74,7 +74,7 @@ class LogSoftmax(Base):
             outputs=["y"],
             axis=-1,
         )
-        y = logsoftmax(x, axis=-1)
+        y = _log_softmax(x, axis=-1)
         expect(node, inputs=[x], outputs=[y], name="test_logsoftmax_negative_axis")
 
         # default axis is -1
