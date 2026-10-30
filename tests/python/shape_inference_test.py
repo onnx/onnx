@@ -2075,7 +2075,23 @@ class TestShapeInference(TestShapeInferenceHelper):
             graph, [make_tensor_value_info("y", TensorProto.FLOAT, (1,))]
         )
 
-    def test_slice_without_input_shape(self) -> None:
+    def test_slice_attributes(self) -> None:
+        # Model opset 9 selects Slice-1 while supporting the helper's Reshape nodes.
+        graph = self._make_graph(
+            [("x", TensorProto.FLOAT, (3, 6, 2))],
+            [make_node("Slice", ["x"], ["y"], starts=[1, 0], ends=[2, 2], axes=[0, 2])],
+            [],
+        )
+        self._assert_inferred(
+            graph,
+            [make_tensor_value_info("y", TensorProto.FLOAT, (1, 6, 2))],
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, 9)],
+        )
+
+    @pytest.mark.parametrize(
+        "version", [v for v in all_versions_for("Slice") if v >= 10]
+    )
+    def test_slice_without_input_shape(self, version) -> None:
         graph = self._make_graph(
             [
                 ("x", TensorProto.FLOAT, (3, 2, "a")),
@@ -2086,10 +2102,15 @@ class TestShapeInference(TestShapeInferenceHelper):
             [],
         )
         self._assert_inferred(
-            graph, [make_tensor_value_info("y", TensorProto.FLOAT, (None, None, None))]
+            graph,
+            [make_tensor_value_info("y", TensorProto.FLOAT, (None, None, None))],
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
         )
 
-    def test_slice_with_input_shape(self) -> None:
+    @pytest.mark.parametrize(
+        "version", [v for v in all_versions_for("Slice") if v >= 10]
+    )
+    def test_slice_with_input_shape(self, version) -> None:
         graph = self._make_graph(
             [
                 ("x", TensorProto.FLOAT, (3, 2)),
@@ -2110,10 +2131,15 @@ class TestShapeInference(TestShapeInferenceHelper):
             ],
         )
         self._assert_inferred(
-            graph, [make_tensor_value_info("y", TensorProto.FLOAT, (1, 2))]
+            graph,
+            [make_tensor_value_info("y", TensorProto.FLOAT, (1, 2))],
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
         )
 
-    def test_slice_with_input_shape_containing_dim_params(self) -> None:
+    @pytest.mark.parametrize(
+        "version", [v for v in all_versions_for("Slice") if v >= 10]
+    )
+    def test_slice_with_input_shape_containing_dim_params(self, version) -> None:
         graph = self._make_graph(
             [
                 ("x", TensorProto.FLOAT, (1, "a", 1)),
@@ -2128,10 +2154,15 @@ class TestShapeInference(TestShapeInferenceHelper):
             ],
         )
         self._assert_inferred(
-            graph, [make_tensor_value_info("y", TensorProto.FLOAT, (1, None, 1))]
+            graph,
+            [make_tensor_value_info("y", TensorProto.FLOAT, (1, None, 1))],
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
         )
 
-    def test_slice_with_input_shape_steps(self) -> None:
+    @pytest.mark.parametrize(
+        "version", [v for v in all_versions_for("Slice") if v >= 10]
+    )
+    def test_slice_with_input_shape_steps(self, version) -> None:
         graph = self._make_graph(
             [
                 ("x", TensorProto.FLOAT, (5, 6, 7)),
@@ -2149,10 +2180,15 @@ class TestShapeInference(TestShapeInferenceHelper):
             ],
         )
         self._assert_inferred(
-            graph, [make_tensor_value_info("y", TensorProto.FLOAT, (1, 2, 2))]
+            graph,
+            [make_tensor_value_info("y", TensorProto.FLOAT, (1, 2, 2))],
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
         )
 
-    def test_slice_with_input_shape_axes(self) -> None:
+    @pytest.mark.parametrize(
+        "version", [v for v in all_versions_for("Slice") if v >= 10]
+    )
+    def test_slice_with_input_shape_axes(self, version) -> None:
         graph = self._make_graph(
             [
                 ("x", TensorProto.FLOAT, (3, 6, 2)),
@@ -2170,10 +2206,15 @@ class TestShapeInference(TestShapeInferenceHelper):
             ],
         )
         self._assert_inferred(
-            graph, [make_tensor_value_info("y", TensorProto.FLOAT, (1, 6, 2))]
+            graph,
+            [make_tensor_value_info("y", TensorProto.FLOAT, (1, 6, 2))],
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
         )
 
-    def test_slice_unsorted_axes(self) -> None:
+    @pytest.mark.parametrize(
+        "version", [v for v in all_versions_for("Slice") if v >= 10]
+    )
+    def test_slice_unsorted_axes(self, version) -> None:
         graph = self._make_graph(
             [
                 ("x", TensorProto.FLOAT, (3, 2)),
@@ -2190,10 +2231,15 @@ class TestShapeInference(TestShapeInferenceHelper):
             ],
         )
         self._assert_inferred(
-            graph, [make_tensor_value_info("y", TensorProto.FLOAT, (2, 1))]
+            graph,
+            [make_tensor_value_info("y", TensorProto.FLOAT, (2, 1))],
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
         )  # can handle unsorted axes
 
-    def test_slice_giant_number(self) -> None:
+    @pytest.mark.parametrize(
+        "version", [v for v in all_versions_for("Slice") if v >= 10]
+    )
+    def test_slice_giant_number(self, version) -> None:
         graph = self._make_graph(
             [
                 ("x", TensorProto.FLOAT, (3, 2)),
@@ -2210,10 +2256,15 @@ class TestShapeInference(TestShapeInferenceHelper):
             ],
         )
         self._assert_inferred(
-            graph, [make_tensor_value_info("y", TensorProto.FLOAT, (2, 2))]
+            graph,
+            [make_tensor_value_info("y", TensorProto.FLOAT, (2, 2))],
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
         )
 
-    def test_slice_giant_step(self) -> None:
+    @pytest.mark.parametrize(
+        "version", [v for v in all_versions_for("Slice") if v >= 10]
+    )
+    def test_slice_giant_step(self, version) -> None:
         graph = self._make_graph(
             [
                 ("x", TensorProto.FLOAT, (3, 2)),
@@ -2232,10 +2283,15 @@ class TestShapeInference(TestShapeInferenceHelper):
             ],
         )
         self._assert_inferred(
-            graph, [make_tensor_value_info("y", TensorProto.FLOAT, (2, 1))]
+            graph,
+            [make_tensor_value_info("y", TensorProto.FLOAT, (2, 1))],
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
         )
 
-    def test_slice_negative_end(self) -> None:
+    @pytest.mark.parametrize(
+        "version", [v for v in all_versions_for("Slice") if v >= 10]
+    )
+    def test_slice_negative_end(self, version) -> None:
         graph = self._make_graph(
             [
                 ("x", TensorProto.FLOAT, (3, 2)),
@@ -2254,10 +2310,15 @@ class TestShapeInference(TestShapeInferenceHelper):
             ],
         )
         self._assert_inferred(
-            graph, [make_tensor_value_info("y", TensorProto.FLOAT, (2, 1))]
+            graph,
+            [make_tensor_value_info("y", TensorProto.FLOAT, (2, 1))],
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
         )
 
-    def test_slice_negative_start(self) -> None:
+    @pytest.mark.parametrize(
+        "version", [v for v in all_versions_for("Slice") if v >= 10]
+    )
+    def test_slice_negative_start(self, version) -> None:
         graph = self._make_graph(
             [
                 ("x", TensorProto.FLOAT, (3, 2)),
@@ -2276,10 +2337,15 @@ class TestShapeInference(TestShapeInferenceHelper):
             ],
         )
         self._assert_inferred(
-            graph, [make_tensor_value_info("y", TensorProto.FLOAT, (2, 2))]
+            graph,
+            [make_tensor_value_info("y", TensorProto.FLOAT, (2, 2))],
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
         )
 
-    def test_slice_negative_step(self) -> None:
+    @pytest.mark.parametrize(
+        "version", [v for v in all_versions_for("Slice") if v >= 10]
+    )
+    def test_slice_negative_step(self, version) -> None:
         graph = self._make_graph(
             [
                 ("x", TensorProto.FLOAT, (3, 4)),
@@ -2300,10 +2366,15 @@ class TestShapeInference(TestShapeInferenceHelper):
             ],
         )
         self._assert_inferred(
-            graph, [make_tensor_value_info("y", TensorProto.FLOAT, (2, 3))]
+            graph,
+            [make_tensor_value_info("y", TensorProto.FLOAT, (2, 3))],
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
         )
 
-    def test_slice_variable_copy(self) -> None:
+    @pytest.mark.parametrize(
+        "version", [v for v in all_versions_for("Slice") if v >= 10]
+    )
+    def test_slice_variable_copy(self, version) -> None:
         graph = self._make_graph(
             [
                 ("x", TensorProto.FLOAT, ("a", 2)),
@@ -2320,10 +2391,15 @@ class TestShapeInference(TestShapeInferenceHelper):
             ],
         )
         self._assert_inferred(
-            graph, [make_tensor_value_info("y", TensorProto.FLOAT, ("a", 1))]
+            graph,
+            [make_tensor_value_info("y", TensorProto.FLOAT, ("a", 1))],
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
         )
 
-    def test_slice_variable_input_types(self) -> None:
+    @pytest.mark.parametrize(
+        "version", [v for v in all_versions_for("Slice") if v >= 10]
+    )
+    def test_slice_variable_input_types(self, version) -> None:
         graph = self._make_graph(
             [
                 ("x", TensorProto.DOUBLE, (3, 2)),
@@ -2340,10 +2416,15 @@ class TestShapeInference(TestShapeInferenceHelper):
             ],
         )
         self._assert_inferred(
-            graph, [make_tensor_value_info("y", TensorProto.DOUBLE, (2, 2))]
+            graph,
+            [make_tensor_value_info("y", TensorProto.DOUBLE, (2, 2))],
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
         )
 
-    def test_slice_empty_dim_positive_step(self) -> None:
+    @pytest.mark.parametrize(
+        "version", [v for v in all_versions_for("Slice") if v >= 10]
+    )
+    def test_slice_empty_dim_positive_step(self, version) -> None:
         """Slice on empty dimension with positive step should produce dim_value=0."""
         graph = self._make_graph(
             [
@@ -2363,10 +2444,15 @@ class TestShapeInference(TestShapeInferenceHelper):
             ],
         )
         self._assert_inferred(
-            graph, [make_tensor_value_info("y", TensorProto.FLOAT, (0, 6))]
+            graph,
+            [make_tensor_value_info("y", TensorProto.FLOAT, (0, 6))],
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
         )
 
-    def test_slice_empty_dim_negative_step(self) -> None:
+    @pytest.mark.parametrize(
+        "version", [v for v in all_versions_for("Slice") if v >= 10]
+    )
+    def test_slice_empty_dim_negative_step(self, version) -> None:
         """Regression test for issue #7735: std::clamp UB on empty dim with step=-1."""
         graph = self._make_graph(
             [
@@ -2386,7 +2472,9 @@ class TestShapeInference(TestShapeInferenceHelper):
             ],
         )
         self._assert_inferred(
-            graph, [make_tensor_value_info("y", TensorProto.FLOAT, (0, 6))]
+            graph,
+            [make_tensor_value_info("y", TensorProto.FLOAT, (0, 6))],
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
         )
 
     # all_versions_for("Slice") currently yields only {10, 11, 13} because of the
@@ -4224,7 +4312,8 @@ class TestShapeInference(TestShapeInferenceHelper):
                 ],
             )
 
-    def test_average_pool_auto_pads(self) -> None:
+    @pytest.mark.parametrize("version", [6, *all_versions_for("AveragePool")])
+    def test_average_pool_auto_pads(self, version: int) -> None:
         graph = self._make_graph(
             [("x", TensorProto.FLOAT, (30, 4, 7, 6, 4))],
             [
@@ -4240,10 +4329,15 @@ class TestShapeInference(TestShapeInferenceHelper):
             [],
         )
         self._assert_inferred(
-            graph, [make_tensor_value_info("z", TensorProto.FLOAT, (30, 4, 4, 3, 4))]
+            graph,
+            [make_tensor_value_info("z", TensorProto.FLOAT, (30, 4, 4, 3, 4))],
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
         )
 
-    def test_average_pool_with_dilations(self) -> None:
+    @pytest.mark.parametrize(
+        "version", [v for v in all_versions_for("AveragePool") if v >= 19]
+    )
+    def test_average_pool_with_dilations(self, version: int) -> None:
         graph = self._make_graph(
             [("X", TensorProto.FLOAT, (5, 3, 4, 4))],
             [
@@ -4254,10 +4348,17 @@ class TestShapeInference(TestShapeInferenceHelper):
             [],
         )
         self._assert_inferred(
-            graph, [make_tensor_value_info("Y", TensorProto.FLOAT, (5, 3, 2, 2))]
+            graph,
+            [make_tensor_value_info("Y", TensorProto.FLOAT, (5, 3, 2, 2))],
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
         )
 
-    def test_average_pool_with_same_upper_padding_and_stride_and_dilation(self) -> None:
+    @pytest.mark.parametrize(
+        "version", [v for v in all_versions_for("AveragePool") if v >= 19]
+    )
+    def test_average_pool_with_same_upper_padding_and_stride_and_dilation(
+        self, version: int
+    ) -> None:
         graph = self._make_graph(
             [("X", TensorProto.FLOAT, (5, 3, 4, 4))],
             [
@@ -4274,7 +4375,9 @@ class TestShapeInference(TestShapeInferenceHelper):
             [],
         )
         self._assert_inferred(
-            graph, [make_tensor_value_info("Y", TensorProto.FLOAT, (5, 3, 2, 2))]
+            graph,
+            [make_tensor_value_info("Y", TensorProto.FLOAT, (5, 3, 2, 2))],
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
         )
 
     def test_relu(self) -> None:
@@ -5577,17 +5680,21 @@ class TestShapeInference(TestShapeInferenceHelper):
             graph, [make_tensor_value_info("z", TensorProto.FLOAT, (4, 5, 6))]
         )
 
-    def test_maxpool(self) -> None:
+    @pytest.mark.parametrize("version", [7, *all_versions_for("MaxPool")])
+    def test_maxpool(self, version: int) -> None:
         graph = self._make_graph(
             [("X", TensorProto.FLOAT, (5, 3, 4, 4))],
             [make_node("MaxPool", ["X"], ["Y"], kernel_shape=[2, 2])],
             [],
         )
         self._assert_inferred(
-            graph, [make_tensor_value_info("Y", TensorProto.FLOAT, (5, 3, 3, 3))]
+            graph,
+            [make_tensor_value_info("Y", TensorProto.FLOAT, (5, 3, 3, 3))],
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
         )
 
-    def test_maxpool_with_indices(self) -> None:
+    @pytest.mark.parametrize("version", all_versions_for("MaxPool"))
+    def test_maxpool_with_indices(self, version: int) -> None:
         graph = self._make_graph(
             [("X", TensorProto.FLOAT, (5, 3, 4, 4))],
             [make_node("MaxPool", ["X"], ["Y", "Z"], kernel_shape=[2, 2])],
@@ -5599,19 +5706,24 @@ class TestShapeInference(TestShapeInferenceHelper):
                 make_tensor_value_info("Y", TensorProto.FLOAT, (5, 3, 3, 3)),
                 make_tensor_value_info("Z", TensorProto.INT64, (5, 3, 3, 3)),
             ],
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
         )
 
-    def test_maxpool_3D(self) -> None:
+    @pytest.mark.parametrize("version", [7, *all_versions_for("MaxPool")])
+    def test_maxpool_3D(self, version: int) -> None:
         graph = self._make_graph(
             [("X", TensorProto.FLOAT, (5, 3, 4, 4, 4))],
             [make_node("MaxPool", ["X"], ["Y"], kernel_shape=[2, 2, 2])],
             [],
         )
         self._assert_inferred(
-            graph, [make_tensor_value_info("Y", TensorProto.FLOAT, (5, 3, 3, 3, 3))]
+            graph,
+            [make_tensor_value_info("Y", TensorProto.FLOAT, (5, 3, 3, 3, 3))],
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
         )
 
-    def test_maxpool_with_padding(self) -> None:
+    @pytest.mark.parametrize("version", [7, *all_versions_for("MaxPool")])
+    def test_maxpool_with_padding(self, version: int) -> None:
         graph = self._make_graph(
             [("X", TensorProto.FLOAT, (5, 3, 4, 4))],
             [
@@ -5622,10 +5734,13 @@ class TestShapeInference(TestShapeInferenceHelper):
             [],
         )
         self._assert_inferred(
-            graph, [make_tensor_value_info("Y", TensorProto.FLOAT, (5, 3, 6, 6))]
+            graph,
+            [make_tensor_value_info("Y", TensorProto.FLOAT, (5, 3, 6, 6))],
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
         )
 
-    def test_maxpool_with_padding_and_stride(self) -> None:
+    @pytest.mark.parametrize("version", [7, *all_versions_for("MaxPool")])
+    def test_maxpool_with_padding_and_stride(self, version: int) -> None:
         graph = self._make_graph(
             [("X", TensorProto.FLOAT, (5, 3, 4, 4))],
             [
@@ -5641,7 +5756,9 @@ class TestShapeInference(TestShapeInferenceHelper):
             [],
         )
         self._assert_inferred(
-            graph, [make_tensor_value_info("Y", TensorProto.FLOAT, (5, 3, 3, 3))]
+            graph,
+            [make_tensor_value_info("Y", TensorProto.FLOAT, (5, 3, 3, 3))],
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
         )
 
     @pytest.mark.parametrize("version", all_versions_for("MaxPool"))
@@ -5686,7 +5803,10 @@ class TestShapeInference(TestShapeInferenceHelper):
                 opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
             )
 
-    def test_maxpool_with_floor_mode(self) -> None:
+    @pytest.mark.parametrize(
+        "version", [v for v in all_versions_for("MaxPool") if v >= 10]
+    )
+    def test_maxpool_with_floor_mode(self, version: int) -> None:
         graph = self._make_graph(
             [("X", TensorProto.FLOAT, (32, 288, 35, 35))],
             [
@@ -5702,10 +5822,15 @@ class TestShapeInference(TestShapeInferenceHelper):
             [],
         )
         self._assert_inferred(
-            graph, [make_tensor_value_info("Y", TensorProto.FLOAT, (32, 288, 17, 17))]
+            graph,
+            [make_tensor_value_info("Y", TensorProto.FLOAT, (32, 288, 17, 17))],
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
         )
 
-    def test_maxpool_with_ceil_mode(self) -> None:
+    @pytest.mark.parametrize(
+        "version", [v for v in all_versions_for("MaxPool") if v >= 10]
+    )
+    def test_maxpool_with_ceil_mode(self, version: int) -> None:
         graph = self._make_graph(
             [("X", TensorProto.FLOAT, (32, 288, 35, 35))],
             [
@@ -5721,10 +5846,15 @@ class TestShapeInference(TestShapeInferenceHelper):
             [],
         )
         self._assert_inferred(
-            graph, [make_tensor_value_info("Y", TensorProto.FLOAT, (32, 288, 18, 18))]
+            graph,
+            [make_tensor_value_info("Y", TensorProto.FLOAT, (32, 288, 18, 18))],
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
         )
 
-    def test_maxpool_ceil(self) -> None:
+    @pytest.mark.parametrize(
+        "version", [v for v in all_versions_for("MaxPool") if v >= 10]
+    )
+    def test_maxpool_ceil(self, version: int) -> None:
         graph = self._make_graph(
             [("X", TensorProto.FLOAT, (1, 1, 4, 4))],
             [
@@ -5740,20 +5870,28 @@ class TestShapeInference(TestShapeInferenceHelper):
             [],
         )
         self._assert_inferred(
-            graph, [make_tensor_value_info("Y", TensorProto.FLOAT, (1, 1, 2, 2))]
+            graph,
+            [make_tensor_value_info("Y", TensorProto.FLOAT, (1, 1, 2, 2))],
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
         )
 
-    def test_maxpool_with_dilations(self) -> None:
+    @pytest.mark.parametrize(
+        "version", [v for v in all_versions_for("MaxPool") if v >= 10]
+    )
+    def test_maxpool_with_dilations(self, version: int) -> None:
         graph = self._make_graph(
             [("X", TensorProto.FLOAT, (5, 3, 4, 4))],
             [make_node("MaxPool", ["X"], ["Y"], kernel_shape=[2, 2], dilations=[2, 2])],
             [],
         )
         self._assert_inferred(
-            graph, [make_tensor_value_info("Y", TensorProto.FLOAT, (5, 3, 2, 2))]
+            graph,
+            [make_tensor_value_info("Y", TensorProto.FLOAT, (5, 3, 2, 2))],
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
         )
 
-    def test_maxpool_with_same_upper_padding_and_stride(self) -> None:
+    @pytest.mark.parametrize("version", [7, *all_versions_for("MaxPool")])
+    def test_maxpool_with_same_upper_padding_and_stride(self, version: int) -> None:
         graph = self._make_graph(
             [("X", TensorProto.FLOAT, (5, 3, 4, 4))],
             [
@@ -5769,10 +5907,17 @@ class TestShapeInference(TestShapeInferenceHelper):
             [],
         )
         self._assert_inferred(
-            graph, [make_tensor_value_info("Y", TensorProto.FLOAT, (5, 3, 2, 2))]
+            graph,
+            [make_tensor_value_info("Y", TensorProto.FLOAT, (5, 3, 2, 2))],
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
         )
 
-    def test_maxpool_with_same_upper_padding_and_stride_and_dilation(self) -> None:
+    @pytest.mark.parametrize(
+        "version", [v for v in all_versions_for("MaxPool") if v >= 10]
+    )
+    def test_maxpool_with_same_upper_padding_and_stride_and_dilation(
+        self, version: int
+    ) -> None:
         graph = self._make_graph(
             [("X", TensorProto.FLOAT, (5, 3, 4, 4))],
             [
@@ -5789,10 +5934,13 @@ class TestShapeInference(TestShapeInferenceHelper):
             [],
         )
         self._assert_inferred(
-            graph, [make_tensor_value_info("Y", TensorProto.FLOAT, (5, 3, 2, 2))]
+            graph,
+            [make_tensor_value_info("Y", TensorProto.FLOAT, (5, 3, 2, 2))],
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
         )
 
-    def test_maxpool_with_same_upper_padding_and_stride_one(self) -> None:
+    @pytest.mark.parametrize("version", [7, *all_versions_for("MaxPool")])
+    def test_maxpool_with_same_upper_padding_and_stride_one(self, version: int) -> None:
         graph = self._make_graph(
             [("X", TensorProto.FLOAT, (5, 3, 4, 4))],
             [
@@ -5808,10 +5956,13 @@ class TestShapeInference(TestShapeInferenceHelper):
             [],
         )
         self._assert_inferred(
-            graph, [make_tensor_value_info("Y", TensorProto.FLOAT, (5, 3, 4, 4))]
+            graph,
+            [make_tensor_value_info("Y", TensorProto.FLOAT, (5, 3, 4, 4))],
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
         )
 
-    def test_maxpool_with_same_lower_padding_and_stride(self) -> None:
+    @pytest.mark.parametrize("version", [7, *all_versions_for("MaxPool")])
+    def test_maxpool_with_same_lower_padding_and_stride(self, version: int) -> None:
         graph = self._make_graph(
             [("X", TensorProto.FLOAT, (5, 3, 9, 9))],
             [
@@ -5827,10 +5978,17 @@ class TestShapeInference(TestShapeInferenceHelper):
             [],
         )
         self._assert_inferred(
-            graph, [make_tensor_value_info("Y", TensorProto.FLOAT, (5, 3, 5, 5))]
+            graph,
+            [make_tensor_value_info("Y", TensorProto.FLOAT, (5, 3, 5, 5))],
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
         )
 
-    def test_maxpool_with_same_lower_padding_and_stride_and_dilation(self) -> None:
+    @pytest.mark.parametrize(
+        "version", [v for v in all_versions_for("MaxPool") if v >= 10]
+    )
+    def test_maxpool_with_same_lower_padding_and_stride_and_dilation(
+        self, version: int
+    ) -> None:
         graph = self._make_graph(
             [("X", TensorProto.FLOAT, (5, 3, 9, 9))],
             [
@@ -5847,10 +6005,13 @@ class TestShapeInference(TestShapeInferenceHelper):
             [],
         )
         self._assert_inferred(
-            graph, [make_tensor_value_info("Y", TensorProto.FLOAT, (5, 3, 5, 5))]
+            graph,
+            [make_tensor_value_info("Y", TensorProto.FLOAT, (5, 3, 5, 5))],
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
         )
 
-    def test_maxpool_with_same_lower_padding_and_big_stride(self) -> None:
+    @pytest.mark.parametrize("version", [7, *all_versions_for("MaxPool")])
+    def test_maxpool_with_same_lower_padding_and_big_stride(self, version: int) -> None:
         graph = self._make_graph(
             [("X", TensorProto.FLOAT, (5, 3, 4, 4))],
             [
@@ -5866,30 +6027,39 @@ class TestShapeInference(TestShapeInferenceHelper):
             [],
         )
         self._assert_inferred(
-            graph, [make_tensor_value_info("Y", TensorProto.FLOAT, (5, 3, 1, 1))]
+            graph,
+            [make_tensor_value_info("Y", TensorProto.FLOAT, (5, 3, 1, 1))],
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
         )
 
-    def test_averagepool(self) -> None:
+    @pytest.mark.parametrize("version", [6, *all_versions_for("AveragePool")])
+    def test_averagepool(self, version: int) -> None:
         graph = self._make_graph(
             [("X", TensorProto.FLOAT, (5, 3, 4, 4))],
             [make_node("AveragePool", ["X"], ["Y"], kernel_shape=[2, 2])],
             [],
         )
         self._assert_inferred(
-            graph, [make_tensor_value_info("Y", TensorProto.FLOAT, (5, 3, 3, 3))]
+            graph,
+            [make_tensor_value_info("Y", TensorProto.FLOAT, (5, 3, 3, 3))],
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
         )
 
-    def test_averagepool_3D(self) -> None:
+    @pytest.mark.parametrize("version", [6, *all_versions_for("AveragePool")])
+    def test_averagepool_3D(self, version: int) -> None:
         graph = self._make_graph(
             [("X", TensorProto.FLOAT, (5, 3, 4, 4, 4))],
             [make_node("AveragePool", ["X"], ["Y"], kernel_shape=[2, 2, 2])],
             [],
         )
         self._assert_inferred(
-            graph, [make_tensor_value_info("Y", TensorProto.FLOAT, (5, 3, 3, 3, 3))]
+            graph,
+            [make_tensor_value_info("Y", TensorProto.FLOAT, (5, 3, 3, 3, 3))],
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
         )
 
-    def test_averagepool_with_padding(self) -> None:
+    @pytest.mark.parametrize("version", [6, *all_versions_for("AveragePool")])
+    def test_averagepool_with_padding(self, version: int) -> None:
         graph = self._make_graph(
             [("X", TensorProto.FLOAT, (5, 3, 4, 4))],
             [
@@ -5900,10 +6070,13 @@ class TestShapeInference(TestShapeInferenceHelper):
             [],
         )
         self._assert_inferred(
-            graph, [make_tensor_value_info("Y", TensorProto.FLOAT, (5, 3, 6, 6))]
+            graph,
+            [make_tensor_value_info("Y", TensorProto.FLOAT, (5, 3, 6, 6))],
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
         )
 
-    def test_averagepool_with_padding_and_stride(self) -> None:
+    @pytest.mark.parametrize("version", [6, *all_versions_for("AveragePool")])
+    def test_averagepool_with_padding_and_stride(self, version: int) -> None:
         graph = self._make_graph(
             [("X", TensorProto.FLOAT, (5, 3, 4, 4))],
             [
@@ -5919,7 +6092,9 @@ class TestShapeInference(TestShapeInferenceHelper):
             [],
         )
         self._assert_inferred(
-            graph, [make_tensor_value_info("Y", TensorProto.FLOAT, (5, 3, 3, 3))]
+            graph,
+            [make_tensor_value_info("Y", TensorProto.FLOAT, (5, 3, 3, 3))],
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
         )
 
     @pytest.mark.parametrize("version", all_versions_for("AveragePool"))
@@ -5964,7 +6139,10 @@ class TestShapeInference(TestShapeInferenceHelper):
                 opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
             )
 
-    def test_averagepool_ceil(self) -> None:
+    @pytest.mark.parametrize(
+        "version", [v for v in all_versions_for("AveragePool") if v >= 10]
+    )
+    def test_averagepool_ceil(self, version: int) -> None:
         graph = self._make_graph(
             [("X", TensorProto.FLOAT, (1, 1, 4, 4))],
             [
@@ -5980,40 +6158,52 @@ class TestShapeInference(TestShapeInferenceHelper):
             [],
         )
         self._assert_inferred(
-            graph, [make_tensor_value_info("Y", TensorProto.FLOAT, (1, 1, 2, 2))]
+            graph,
+            [make_tensor_value_info("Y", TensorProto.FLOAT, (1, 1, 2, 2))],
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
         )
 
-    def test_lppool(self) -> None:
+    @pytest.mark.parametrize("version", [10, *all_versions_for("LpPool")])
+    def test_lppool(self, version: int) -> None:
         graph = self._make_graph(
             [("X", TensorProto.FLOAT, (5, 3, 4, 4))],
             [make_node("LpPool", ["X"], ["Y"], kernel_shape=[2, 2])],
             [],
         )
         self._assert_inferred(
-            graph, [make_tensor_value_info("Y", TensorProto.FLOAT, (5, 3, 3, 3))]
+            graph,
+            [make_tensor_value_info("Y", TensorProto.FLOAT, (5, 3, 3, 3))],
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
         )
 
-    def test_lppool_3D(self) -> None:
+    @pytest.mark.parametrize("version", [10, *all_versions_for("LpPool")])
+    def test_lppool_3D(self, version: int) -> None:
         graph = self._make_graph(
             [("X", TensorProto.FLOAT, (5, 3, 4, 4, 4))],
             [make_node("LpPool", ["X"], ["Y"], kernel_shape=[2, 2, 2])],
             [],
         )
         self._assert_inferred(
-            graph, [make_tensor_value_info("Y", TensorProto.FLOAT, (5, 3, 3, 3, 3))]
+            graph,
+            [make_tensor_value_info("Y", TensorProto.FLOAT, (5, 3, 3, 3, 3))],
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
         )
 
-    def test_lppool_with_padding(self) -> None:
+    @pytest.mark.parametrize("version", [10, *all_versions_for("LpPool")])
+    def test_lppool_with_padding(self, version: int) -> None:
         graph = self._make_graph(
             [("X", TensorProto.FLOAT, (5, 3, 4, 4))],
             [make_node("LpPool", ["X"], ["Y"], kernel_shape=[2, 2], pads=[1, 1, 2, 2])],
             [],
         )
         self._assert_inferred(
-            graph, [make_tensor_value_info("Y", TensorProto.FLOAT, (5, 3, 6, 6))]
+            graph,
+            [make_tensor_value_info("Y", TensorProto.FLOAT, (5, 3, 6, 6))],
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
         )
 
-    def test_lppool_with_padding_and_stride(self) -> None:
+    @pytest.mark.parametrize("version", [10, *all_versions_for("LpPool")])
+    def test_lppool_with_padding_and_stride(self, version: int) -> None:
         graph = self._make_graph(
             [("X", TensorProto.FLOAT, (5, 3, 4, 4))],
             [
@@ -6029,20 +6219,32 @@ class TestShapeInference(TestShapeInferenceHelper):
             [],
         )
         self._assert_inferred(
-            graph, [make_tensor_value_info("Y", TensorProto.FLOAT, (5, 3, 3, 3))]
+            graph,
+            [make_tensor_value_info("Y", TensorProto.FLOAT, (5, 3, 3, 3))],
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
         )
 
-    def test_lppool_with_dilations(self) -> None:
+    @pytest.mark.parametrize(
+        "version", [v for v in all_versions_for("LpPool") if v >= 18]
+    )
+    def test_lppool_with_dilations(self, version: int) -> None:
         graph = self._make_graph(
             [("X", TensorProto.FLOAT, (5, 3, 4, 4))],
             [make_node("LpPool", ["X"], ["Y"], kernel_shape=[2, 2], dilations=[2, 2])],
             [],
         )
         self._assert_inferred(
-            graph, [make_tensor_value_info("Y", TensorProto.FLOAT, (5, 3, 2, 2))]
+            graph,
+            [make_tensor_value_info("Y", TensorProto.FLOAT, (5, 3, 2, 2))],
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
         )
 
-    def test_lppool_with_same_upper_padding_and_stride_and_dilation(self) -> None:
+    @pytest.mark.parametrize(
+        "version", [v for v in all_versions_for("LpPool") if v >= 18]
+    )
+    def test_lppool_with_same_upper_padding_and_stride_and_dilation(
+        self, version: int
+    ) -> None:
         graph = self._make_graph(
             [("X", TensorProto.FLOAT, (5, 3, 4, 4))],
             [
@@ -6059,7 +6261,9 @@ class TestShapeInference(TestShapeInferenceHelper):
             [],
         )
         self._assert_inferred(
-            graph, [make_tensor_value_info("Y", TensorProto.FLOAT, (5, 3, 2, 2))]
+            graph,
+            [make_tensor_value_info("Y", TensorProto.FLOAT, (5, 3, 2, 2))],
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
         )
 
     def test_roipool(self) -> None:
