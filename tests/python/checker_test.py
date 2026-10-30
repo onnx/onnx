@@ -307,6 +307,109 @@ class TestChecker:
         with pytest.raises(checker.ValidationError, match="FLOAT"):
             checker.check_function(function)
 
+    @staticmethod
+    def _make_leaky_relu_function(
+        ref_attr_name: str = "alpha",
+        attribute_protos: Sequence[onnx.AttributeProto] = (),
+        attributes: Sequence[str] = (),
+    ) -> onnx.FunctionProto:
+        node = helper.make_node("LeakyRelu", ["x"], ["y"])
+        node.attribute.append(
+            helper.make_attribute_ref(
+                "alpha", onnx.AttributeProto.FLOAT, ref_attr_name=ref_attr_name
+            )
+        )
+        return helper.make_function(
+            "local",
+            "f",
+            ["x"],
+            ["y"],
+            [node],
+            [helper.make_opsetid("", 21)],
+            attributes=list(attributes),
+            attribute_protos=list(attribute_protos),
+        )
+
+    def test_check_function_attribute_reference(self) -> None:
+        """A reference to a declared attribute is valid, with or without a default."""
+        checker.check_function(
+            self._make_leaky_relu_function(
+                attribute_protos=[helper.make_attribute("alpha", 0.5)]
+            )
+        )
+        checker.check_function(self._make_leaky_relu_function(attributes=["alpha"]))
+
+    def test_check_function_reference_to_undeclared_attribute(self) -> None:
+        function = self._make_leaky_relu_function(
+            ref_attr_name="alpah",
+            attribute_protos=[helper.make_attribute("alpha", 0.5)],
+        )
+        with pytest.raises(checker.ValidationError, match="does not declare"):
+            checker.check_function(function)
+
+    def test_check_function_untyped_default_is_reported_as_such(self) -> None:
+        """A referenced default without a type is reported as missing its type,
+        not as a type mismatch with the reference.
+        """
+        untyped = helper.make_attribute("alpha", 0.5)
+        untyped.ClearField("type")
+        function = self._make_leaky_relu_function(attribute_protos=[untyped])
+        with pytest.raises(checker.ValidationError, match="Field 'type'"):
+            checker.check_function(function)
+
+    @pytest.mark.parametrize("referenced", [False, True])
+    @pytest.mark.parametrize(
+        "kind", ["tensor", "tensors", "sparse_tensor", "sparse_tensors"]
+    )
+    @pytest.mark.parametrize(
+        ("data_type", "valid"),
+        [(TensorProto.FLOAT, True), (TensorProto.FLOAT8E4M3FN, False)],
+    )
+    def test_check_function_default_tensor_ir_version(
+        self, data_type: int, valid: bool, kind: str, referenced: bool
+    ) -> None:
+        """Tensor-valued defaults are checked against the IR version, whether
+        or not a node refers to them.
+        """
+        tensor = helper.make_tensor("v", data_type, [1], [1.0])
+        sparse_tensor = helper.make_sparse_tensor(
+            tensor, helper.make_tensor("i", TensorProto.INT64, [1], [0]), [2]
+        )
+        value = {
+            "tensor": tensor,
+            "tensors": [tensor],
+            "sparse_tensor": sparse_tensor,
+            "sparse_tensors": [sparse_tensor],
+        }[kind]
+        default = helper.make_attribute("value", value)
+        if referenced:
+            node = helper.make_node("Op", ["x"], ["y"], domain="custom")
+            node.attribute.append(
+                helper.make_attribute_ref("value", default.type, ref_attr_name="value")
+            )
+        else:
+            node = helper.make_node("Identity", ["x"], ["y"])
+        function = helper.make_function(
+            "local",
+            "f",
+            ["x"],
+            ["y"],
+            [node],
+            [helper.make_opsetid("", 21), helper.make_opsetid("custom", 1)],
+            attribute_protos=[default],
+        )
+        ctx = checker.C.CheckerContext()
+        ctx.ir_version = 8
+        ctx.opset_imports = {"": 21, "custom": 1}
+
+        if valid:
+            checker.check_function(function, ctx)
+        else:
+            with pytest.raises(
+                checker.ValidationError, match="requires IR version >= 9"
+            ):
+                checker.check_function(function, ctx)
+
     def test_check_function_unreferenced_graph_default_may_reuse_body_names(
         self,
     ) -> None:

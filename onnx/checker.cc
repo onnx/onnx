@@ -842,6 +842,84 @@ void check_sparse_tensor(const SparseTensorProto& sparse_tensor_proto, const Che
   }
 }
 
+// Attributes of the function whose body is being checked, so that check_attribute
+// can resolve ref_attr_name. Kept out of CheckerContext so this bookkeeping does
+// not become part of the public API; set only by FunctionAttributesScope.
+struct FunctionAttribute {
+  // nullptr if the attribute is declared without a default value.
+  const AttributeProto* default_value = nullptr;
+  bool referenced = false;
+  bool default_checked = false;
+};
+using FunctionAttributes = std::unordered_map<std::string, FunctionAttribute>;
+
+static thread_local FunctionAttributes* current_function_attributes = nullptr;
+
+class FunctionAttributesScope final {
+ public:
+  explicit FunctionAttributesScope(FunctionAttributes* attributes) : previous_(current_function_attributes) {
+    current_function_attributes = attributes;
+  }
+  ~FunctionAttributesScope() {
+    current_function_attributes = previous_;
+  }
+  FunctionAttributesScope(const FunctionAttributesScope&) = delete;
+  FunctionAttributesScope& operator=(const FunctionAttributesScope&) = delete;
+
+ private:
+  FunctionAttributes* previous_;
+};
+
+// Resolves a reference to an attribute of the enclosing function and checks the
+// default value it would be substituted with.
+static void check_function_attribute_reference(
+    const AttributeProto& attr,
+    FunctionAttributes& attributes,
+    const CheckerContext& ctx,
+    const LexicalScopeContext& lex_ctx) {
+  const auto it = attributes.find(attr.ref_attr_name());
+  if (it == attributes.end()) {
+    fail_check(
+        "Attribute (name: ",
+        attr.name(),
+        ") refers to function attribute '",
+        attr.ref_attr_name(),
+        "', which the function does not declare.");
+  }
+  auto& function_attr = it->second;
+  function_attr.referenced = true;
+  if (function_attr.default_value == nullptr) {
+    return;
+  }
+  const auto& default_attr = *function_attr.default_value;
+
+  // A graph-valued default is checked at every reference, where it would be
+  // substituted, so it may capture only the values visible there, including values
+  // of enclosing subgraphs. Other defaults do not depend on the scope; check them once.
+  // The default is checked before the types are compared, so a malformed default is
+  // reported as such. References inside a graph default are not resolved.
+  const bool is_graph = default_attr.has_g() || default_attr.graphs_size() > 0;
+  if (is_graph || !function_attr.default_checked) {
+    FunctionAttributesScope no_function_attributes(nullptr);
+    check_attribute(default_attr, ctx, lex_ctx);
+    function_attr.default_checked = true;
+  }
+
+  if (attr.type() != AttributeProto::UNDEFINED && default_attr.type() != AttributeProto::UNDEFINED &&
+      attr.type() != default_attr.type()) {
+    fail_check(
+        "Attribute (name: ",
+        attr.name(),
+        ") refers to function attribute '",
+        attr.ref_attr_name(),
+        "' of type ",
+        AttributeProto_AttributeType_Name(default_attr.type()),
+        ", but is declared as ",
+        AttributeProto_AttributeType_Name(attr.type()),
+        ".");
+  }
+}
+
 // NB: This is a generic "attribute well-formedness" check, it doesn't
 // actually test if an attribute is valid per a schema
 void check_attribute(const AttributeProto& attr, const CheckerContext& ctx, const LexicalScopeContext& lex_ctx) {
@@ -904,32 +982,8 @@ void check_attribute(const AttributeProto& attr, const CheckerContext& ctx, cons
     fail_check("Attribute (name: ", attr.name(), ") should refer to attribute in parent node.");
   }
 
-  if (attr.has_ref_attr_name()) {
-    // A reference to a default value of the enclosing function's attribute. Check the
-    // default where it would be substituted, so a graph-valued default may capture
-    // only the values visible at this point, including values of enclosing subgraphs.
-    const auto* defaults = ctx.get_function_attribute_defaults();
-    if (defaults != nullptr) {
-      const auto default_attr = defaults->find(attr.ref_attr_name());
-      if (default_attr != defaults->end()) {
-        const auto default_type = default_attr->second->type();
-        if (attr.type() != AttributeProto::UNDEFINED && attr.type() != default_type) {
-          fail_check(
-              "Attribute (name: ",
-              attr.name(),
-              ") refers to function attribute '",
-              attr.ref_attr_name(),
-              "' of type ",
-              AttributeProto_AttributeType_Name(default_type),
-              ", but is declared as ",
-              AttributeProto_AttributeType_Name(attr.type()),
-              ".");
-        }
-        CheckerContext default_ctx(ctx);
-        default_ctx.set_function_attribute_defaults(nullptr);
-        check_attribute(*default_attr->second, default_ctx, lex_ctx);
-      }
-    }
+  if (attr.has_ref_attr_name() && current_function_attributes != nullptr) {
+    check_function_attribute_reference(attr, *current_function_attributes, ctx, lex_ctx);
   }
 
   if (attr.has_t()) {
@@ -1408,26 +1462,6 @@ void check_model_local_functions(
   }
 }
 
-// Collects the attribute names that nodes refer to via ref_attr_name, including
-// nodes in nested subgraphs.
-static void collect_referenced_attributes(
-    const google::protobuf::RepeatedPtrField<NodeProto>& nodes,
-    std::unordered_set<std::string>& names) {
-  for (const auto& node : nodes) {
-    for (const auto& attr : node.attribute()) {
-      if (attr.has_ref_attr_name()) {
-        names.insert(attr.ref_attr_name());
-      }
-      if (attr.has_g()) {
-        collect_referenced_attributes(attr.g().node(), names);
-      }
-      for (const auto& graph : attr.graphs()) {
-        collect_referenced_attributes(graph.node(), names);
-      }
-    }
-  }
-}
-
 void check_function(const FunctionProto& function, const CheckerContext& ctx, const LexicalScopeContext& parent_lex) {
   enforce_non_empty_field(function, name);
 
@@ -1446,6 +1480,8 @@ void check_function(const FunctionProto& function, const CheckerContext& ctx, co
   ctx_copy.set_opset_imports(func_opset_imports);
 
   LexicalScopeContext lex_ctx{parent_lex};
+  // Only the function inputs, for checking defaults that no node refers to.
+  LexicalScopeContext input_lex_ctx{parent_lex};
 
   for (const auto& input : function.input()) {
     // TODO(ONNX): If shadowing isn't allowed, this should maybe use
@@ -1455,6 +1491,7 @@ void check_function(const FunctionProto& function, const CheckerContext& ctx, co
           "Graph must be in single static assignment (SSA) form, however '", input, "' has been used multiple times.");
     }
     lex_ctx.add(input);
+    input_lex_ctx.add(input);
   }
 
   std::unordered_set<std::string> outputs;
@@ -1464,26 +1501,24 @@ void check_function(const FunctionProto& function, const CheckerContext& ctx, co
     }
   }
 
-  std::unordered_set<std::string> attrs;
+  // A function attribute is declared either in `attribute` (no default value)
+  // or in `attribute_proto` (with a default value), not both.
+  FunctionAttributes attributes;
   for (const auto& attr : function.attribute()) {
-    if (!attrs.insert(attr).second) {
+    if (!attributes.emplace(attr, FunctionAttribute{}).second) {
       fail_check("function (", function.name(), ") should not have duplicate attributes specified.");
     }
   }
-  // A function attribute is declared either in `attribute` (no default value)
-  // or in `attribute_proto` (with a default value), not both.
-  std::unordered_map<std::string, const AttributeProto*> default_attrs;
   for (const auto& attr : function.attribute_proto()) {
     if (attr.has_ref_attr_name()) {
       fail_check("function (", function.name(), ") default attribute '", attr.name(), "' must not use ref_attr_name.");
     }
-    if (!attrs.insert(attr.name()).second) {
+    if (!attributes.emplace(attr.name(), FunctionAttribute{&attr}).second) {
       fail_check("function (", function.name(), ") should not have duplicate attributes specified.");
     }
-    default_attrs.emplace(attr.name(), &attr);
   }
-  // Referenced defaults are checked by check_attribute at each reference in the body.
-  ctx_copy.set_function_attribute_defaults(&default_attrs);
+  // References in the body are resolved, and referenced defaults checked, by check_attribute.
+  FunctionAttributesScope attributes_scope(&attributes);
   // Function inputs and outputs are untyped names; their types, if any, are given here.
   for (const auto& value_info : function.value_info()) {
     check_type_ir_version(value_info.type(), value_info.name(), ctx);
@@ -1538,15 +1573,9 @@ void check_function(const FunctionProto& function, const CheckerContext& ctx, co
   // substituted, so check them for well-formedness with only the function inputs
   // in scope; with node outputs in scope, a graph default reusing one of those
   // names internally would be rejected by the SSA check.
-  std::unordered_set<std::string> referenced_attrs;
-  collect_referenced_attributes(function.node(), referenced_attrs);
-  ctx_copy.set_function_attribute_defaults(nullptr);
-  LexicalScopeContext input_lex_ctx{parent_lex};
-  for (const auto& input : function.input()) {
-    input_lex_ctx.add(input);
-  }
+  FunctionAttributesScope no_function_attributes(nullptr);
   for (const auto& attr : function.attribute_proto()) {
-    if (referenced_attrs.count(attr.name()) == 0) {
+    if (!attributes.at(attr.name()).referenced) {
       check_attribute(attr, ctx_copy, input_lex_ctx);
     }
   }
