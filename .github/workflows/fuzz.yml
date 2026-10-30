@@ -68,8 +68,9 @@ jobs:
           mkdir -p corpus
           python onnx/fuzz/make_seed_corpus.py \
             corpus/version_converter.zip corpus/parser.zip \
-            corpus/checker.zip corpus/shape_inference.zip corpus/compose.zip
-          for name in version_converter parser checker shape_inference compose; do
+            corpus/checker.zip corpus/shape_inference.zip corpus/compose.zip \
+            corpus/external_data.zip
+          for name in version_converter parser checker shape_inference compose external_data; do
             mkdir -p "corpus/$name"
             python -m zipfile -e "corpus/$name.zip" "corpus/$name/"
           done
@@ -114,6 +115,11 @@ jobs:
 
       - name: Run fuzz_compose.py
         run: python onnx/fuzz/fuzz_compose.py -max_total_time="$FUZZ_SECONDS" -timeout=20 corpus/compose
+        env:
+          FUZZ_SECONDS: ${{ steps.duration.outputs.seconds }}
+
+      - name: Run fuzz_external_data.py
+        run: python onnx/fuzz/fuzz_external_data.py -max_total_time="$FUZZ_SECONDS" -timeout=20 corpus/external_data
         env:
           FUZZ_SECONDS: ${{ steps.duration.outputs.seconds }}
 
