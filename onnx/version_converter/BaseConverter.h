@@ -58,7 +58,7 @@ class BaseVersionConverter {
         // Either adapt from SinceVersion or Incompatible Breaking Change
         const auto adapter_ptr = target_map->second.find(target);
         if (adapter_ptr != target_map->second.end()) {
-          return *(adapter_ptr->second);
+          return *adapter_ptr->second;
         } else {
           ONNX_ASSERTM(false, "No Adapter To Version ", target, " for ", op_name)
         }

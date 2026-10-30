@@ -44,6 +44,10 @@ class AxesInputToAttribute : public Adapter {
       // No axes input provided, nothing to convert
       return;
     }
+    if (inputs[1]->node()->kind() == kUndefined) {
+      node->removeInput(1);
+      return node;
+    }
     // Get axes from initializer or constant operator
     // Identify whether we have a Constant Op or an Initializer
     Value* const_val = inputs[1];
@@ -56,6 +60,9 @@ class AxesInputToAttribute : public Adapter {
         node_ptr->destroy();
       }
     } else {
+      ONNX_ASSERTM(
+          graph->is_constant_initializer(const_val),
+          "Axes input must be constant; dynamic inputs and overridable initializers cannot be converted to attributes.")
       // Get Value name, find Initializer with same name
       for (const auto& initializer : graph->initializers()) {
         if (initializer.name() == inputs[1]->uniqueName()) {
