@@ -401,6 +401,18 @@ void check_tensor(const TensorProto& tensor, const CheckerContext& ctx) {
       }
       if (entry.key() == "location") {
         has_location = true;
+        // An in-memory model has no model directory, so an external data
+        // location must not be resolved against the current working
+        // directory. (A '#' location refers to in-memory data, not a
+        // file, and is unaffected.)
+        if (!ctx.model_dir_from_path() && !entry.value().empty() && entry.value()[0] != '#') {
+          fail_check(
+              "Data of TensorProto ( tensor name: ",
+              tensor.name(),
+              ") is stored externally, but the model was not checked from a file path, so its external data location '",
+              entry.value(),
+              "' cannot be resolved. Pass a model path to check_model to check external data.");
+        }
         data_path = resolve_external_data_location(ctx.get_model_dir(), entry.value(), tensor.name());
       } else if (entry.key() == "offset") {
         offset_entry = &entry;
