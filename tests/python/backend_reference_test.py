@@ -121,8 +121,10 @@ backend_test.exclude(
 
 # LogSoftmax's existing function bodies use Exp -> ReduceSum -> Log. Their
 # exponential sum rounds to one for these inputs, losing the small result.
-# Keep the strict node tests active; only the expanded forms are known failures.
-backend_test.xfail(r"test_logsoftmax_small_log_probability_.*_expanded")
+# Keep the strict node tests active; only the opset 13/18 expanded forms fail.
+backend_test.xfail(
+    r"test_logsoftmax_small_log_probability_.*_expanded(?:_ver18)?(?:_cpu|_cuda)?$"
+)
 
 # The following tests are about deprecated operators.
 backend_test.exclude("(test_scatter_with_axis|test_scatter_without)")
