@@ -95,7 +95,6 @@ jobs:
     if: github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'run release CIs') || contains(github.event.pull_request.labels.*.name, 'ci-slsa-provenance')
     uses: $/.github/workflows/release_sdist.yml
     with:
-      os: "macos"
       build_mode: ${{ github.event.inputs.build_mode || 'preview' }}
 
   attest_ci_build_artifacts:
@@ -170,7 +169,6 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-          submodules: true
 
       - name: Check if package_version matches branch
         run: |

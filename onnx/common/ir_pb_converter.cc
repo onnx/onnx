@@ -242,6 +242,11 @@ static Value* createDummyValue(
 }
 
 std::unique_ptr<Graph> graphProtoToGraph(const ONNX_NAMESPACE::GraphProto& gp, bool nested, const int64_t ir_version) {
+  // The internal IR only represents dense initializers. Reject even unused
+  // sparse initializers rather than silently dropping them during export.
+  if (gp.sparse_initializer_size() != 0) {
+    fail_convert("Sparse initializers are not supported by the version converter.");
+  }
   auto g = std::make_unique<Graph>();
 
   if (gp.has_name()) {
