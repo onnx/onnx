@@ -122,3 +122,50 @@ def test_attention_cache_validation_is_preserved_for_older_opsets() -> None:
             past_key=q,
             _validate_attention25=attention_impl._validate_attention25,
         )
+
+
+@pytest.mark.parametrize(
+    ("qk_matmul_output_mode", "expected_stage"),
+    [
+        (None, "raw"),
+        (0, "raw"),
+        (1, "softcapped"),
+        (2, "with_bias"),
+        (3, "probabilities"),
+    ],
+)
+def test_attention_qk_matmul_output_mode_with_softcap(
+    qk_matmul_output_mode, expected_stage
+) -> None:
+    # With scale=1 the logits are [25, 3], and softcap=2 saturates the first one,
+    # so every stage of the pipeline holds different values.
+    q = np.array([[[[3.0, 4.0]]]], dtype=np.float32)
+    k = np.array([[[[3.0, 4.0], [1.0, 0.0]]]], dtype=np.float32)
+    v = np.array([[[[1.0], [2.0]]]], dtype=np.float32)
+    attn_mask = np.array([[0.5, -0.5]], dtype=np.float32)
+    softcap = 2.0
+
+    raw = np.array([[[[25.0, 3.0]]]], dtype=np.float32)
+    softcapped = softcap * np.tanh(raw / softcap)
+    with_bias = softcapped + attn_mask
+    probabilities = np.exp(with_bias) / np.exp(with_bias).sum(axis=-1, keepdims=True)
+    stages: dict[str, np.ndarray] = {
+        "raw": raw,
+        "softcapped": softcapped,
+        "with_bias": with_bias,
+        "probabilities": probabilities,
+    }
+
+    y, _, _, qk_matmul_output = _compute_attention(
+        q,
+        k,
+        v,
+        attn_mask=attn_mask,
+        scale=1.0,
+        softcap=softcap,
+        qk_matmul_output_mode=qk_matmul_output_mode,
+    )
+
+    np.testing.assert_allclose(qk_matmul_output, stages[expected_stage], rtol=1e-6)
+    # The mode only selects the exposed stage; Y always comes from the capped logits.
+    np.testing.assert_allclose(y, probabilities @ v, rtol=1e-6)

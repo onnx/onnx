@@ -1114,7 +1114,7 @@ expect(node, inputs=[x], outputs=[y], name="test_atanh")
 
 
 ### Attention
-There are 93 test cases, listed as following:
+There are 94 test cases, listed as following:
 <details>
 <summary>attention</summary>
 
@@ -4664,6 +4664,41 @@ expect(
     inputs=[Q, K, V, attn_mask],
     outputs=[Y, qk_matmul_output],
     name="test_attention_4d_with_qk_matmul_bias",
+    opset_imports=[onnx.helper.make_opsetid("", 23)],
+)
+```
+
+</details>
+<details>
+<summary>attention_with_qk_matmul_raw_softcap</summary>
+
+```python
+"""Mode ``0`` exposes the raw QK matmul result, before ``softcap``."""
+node = onnx.helper.make_node(
+    "Attention",
+    inputs=["Q", "K", "V", "attn_mask"],
+    outputs=["Y", "", "", "qk_matmul_output"],
+    softcap=2.0,
+)
+
+Q = np.random.rand(2, 3, 4, 8).astype(np.float32)
+K = np.random.rand(2, 3, 6, 8).astype(np.float32)
+V = np.random.rand(2, 3, 6, 8).astype(np.float32)
+attn_mask = np.random.rand(4, 6).astype(np.float32)
+
+Y, _, _, qk_matmul_output = _compute_attention(
+    Q,
+    K,
+    V,
+    attn_mask=attn_mask,
+    softcap=2.0,
+)
+
+expect(
+    node,
+    inputs=[Q, K, V, attn_mask],
+    outputs=[Y, qk_matmul_output],
+    name="test_attention_4d_with_qk_matmul_raw_softcap",
     opset_imports=[onnx.helper.make_opsetid("", 23)],
 )
 ```
