@@ -516,6 +516,14 @@ class DefaultVersionConverter : public BaseVersionConverter {
     registerAdapter(std::make_unique<Split_13_12>());
     registerAdapter(std::make_unique<Softmax_13_12>("Softmax"));
     registerAdapter(std::make_unique<Softmax_13_12>("LogSoftmax"));
+    // These shape operators only added bfloat16 support in opset 13.
+    // Keep them in downgraded graphs, including Softmax upgrade scaffolding.
+    const std::vector<TensorProto_DataType> shape_ops_12_unallowed_types = {TensorProto_DataType_BFLOAT16};
+    registerAdapter(std::make_unique<TypeRestriction>("Shape", OpSetID(13), OpSetID(12), shape_ops_12_unallowed_types));
+    registerAdapter(
+        std::make_unique<TypeRestriction>("Flatten", OpSetID(13), OpSetID(12), shape_ops_12_unallowed_types));
+    registerAdapter(
+        std::make_unique<TypeRestriction>("Reshape", OpSetID(13), OpSetID(12), shape_ops_12_unallowed_types));
 
     /******** 13 -> 14 ********/
     registerAdapter(std::make_unique<CompatibleAdapter>("Add", OpSetID(13), OpSetID(14)));

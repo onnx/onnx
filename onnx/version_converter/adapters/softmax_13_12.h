@@ -34,26 +34,9 @@ class Softmax_13_12 final : public Adapter {
       node->i_(kaxis, new_axis);
     }
 
-    // Flatten and Reshape nodes added in opset 13 must be removed
-    // Check for Flatten node before Softmax and Reshape node after Softmax
-    if (node->inputs()[0]->node()->kind() == kFlatten) {
-      Node* flatten = node->inputs()[0]->node();
-      ONNX_ASSERTM(flatten->inputs().size() >= 1, "Flatten node must have at least 1 input")
-      auto* const flatten_input = flatten->inputs()[0];
-      node->replaceInput(0, flatten_input);
-      flatten->destroy();
-    }
-
-    for (Use u : node->output()->uses()) {
-      if (u.user->kind() == kReshape) {
-        Node* reshape = u.user;
-        ONNX_ASSERTM(!reshape->outputs().empty(), "Reshape node must have at least 1 output")
-        auto* const reshape_output = reshape->outputs()[0];
-        node->output()->replaceAllUsesWith(reshape_output);
-        reshape->destroy();
-        break;
-      }
-    }
+    // Neighboring Flatten/Reshape nodes are part of the model's semantics.
+    // Preserve them, including those inserted by the 12 -> 13 adapter: their
+    // last-axis, rank-two Softmax is already equivalent in opset 12.
   }
 
   Node* adapt(std::shared_ptr<Graph> graph, Node* node) const override {
