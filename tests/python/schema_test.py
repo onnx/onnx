@@ -448,7 +448,8 @@ class TestSchema:
                 o_allowed = o_allowed | types
             assert len(o_allowed) == len(tc["O"])
             assert all(t in tc["O"] for t in o_allowed)
-            assert tc["B"] == {"tensor(bool)"}
+            output_type = op.outputs[0].type_str
+            assert tc.get(output_type, {output_type}) == {"tensor(bool)"}
 
     def test_optional_get_element_type_constraints(self) -> None:
         def tensor(ts):

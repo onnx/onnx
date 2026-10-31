@@ -71,9 +71,8 @@ std::function<void(OpSchema&)> OptionalHasElementOpGenerator(std::vector<std::st
             0,
             "output",
             "A scalar boolean tensor. If true, it indicates that optional-type input contains an element. Otherwise, it is empty.",
-            "B")
+            types::Bool)
         .TypeConstraint("O", o_types, "Constrain input type to optional, tensor and sequence types.")
-        .TypeConstraint("B", {types::Bool}, "Constrain output to a boolean tensor.")
         .TypeAndShapeInferenceFunction(OptionalHasElementInference);
   };
 }

@@ -226,7 +226,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             1,
             "shape",
             "Specified shape for output.",
-            "tensor(int64)",
+            types::Int64,
             OpSchema::Single,
             true,
             1,
@@ -371,7 +371,15 @@ ONNX_OPERATOR_SET_SCHEMA(
     OpSchema()
         .SetDoc(kDoc_Shape_ver24)
         .Input(0, "data", "An input tensor.", "T", OpSchema::Single, true, 1, OpSchema::NonDifferentiable)
-        .Output(0, "shape", "Shape of the input tensor", "T1", OpSchema::Single, true, 1, OpSchema::NonDifferentiable)
+        .Output(
+            0,
+            "shape",
+            "Shape of the input tensor",
+            types::Int64,
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::NonDifferentiable)
         .Attr(
             "start",
             "(Optional) Starting axis for slicing the shape. Default value is 0."
@@ -386,7 +394,6 @@ ONNX_OPERATOR_SET_SCHEMA(
             AttributeProto::INT,
             OPTIONAL_VALUE)
         .TypeConstraint("T", OpSchema::all_tensor_types_ir13(), "Input tensor can be of arbitrary type.")
-        .TypeConstraint("T1", {types::Int64}, "Constrain output to int64 tensor.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           ctx.getOutputType(0)->mutable_tensor_type()->set_elem_type(TensorProto::INT64);
           auto output_shape = ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
@@ -437,13 +444,12 @@ ONNX_OPERATOR_SET_SCHEMA(
             0,
             "size",
             "Total number of elements of the input tensor",
-            "T1",
+            types::Int64,
             OpSchema::Single,
             true,
             1,
             OpSchema::NonDifferentiable)
         .TypeConstraint("T", OpSchema::all_tensor_types_ir13(), "Input tensor can be of arbitrary type.")
-        .TypeConstraint("T1", {types::Int64}, "Constrain output to int64 tensor, which should be a scalar though.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           ctx.getOutputType(0)->mutable_tensor_type()->set_elem_type(TensorProto::INT64);
           ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
@@ -573,7 +579,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "split",
             "Optional length of each output. Values should be >= 0."
             "Sum of the values must be equal to the dim value at 'axis' specified.",
-            "tensor(int64)",
+            types::Int64,
             OpSchema::Optional,
             true,
             1,
@@ -1108,7 +1114,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             1,
             "indices",
             "Tensor of rank q >= 1.",
-            "tensor(int64)",
+            types::Int64,
             OpSchema::Single,
             true,
             1,
@@ -1308,7 +1314,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "axes",
             "1D tensor of integers indicating the dimensions to squeeze. Negative value means counting dimensions "
             "from the back. Accepted range is [-r, r-1] where r = rank(data).",
-            "tensor(int64)",
+            types::Int64,
             OpSchema::Optional,
             true,
             1,
@@ -1396,7 +1402,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "axes",
             "1D tensor of integers indicating the dimensions to be inserted. Negative value means counting dimensions "
             "from the back. Accepted range is [-r, r-1] where r = rank(expanded).",
-            "tensor(int64)",
+            types::Int64,
             OpSchema::Single,
             true,
             1,
@@ -1698,7 +1704,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "repeats",
             "1D int64 tensor of the same length as input's dimension number, "
             "includes numbers of repeated copies along input's dimensions.",
-            "T1",
+            types::Int64,
             OpSchema::Single,
             true,
             1,
@@ -1714,7 +1720,6 @@ ONNX_OPERATOR_SET_SCHEMA(
             1,
             OpSchema::Differentiable)
         .TypeConstraint("T", OpSchema::all_tensor_types_ir4(), "Constrain input and output types to all tensor types.")
-        .TypeConstraint("T1", {types::Int64}, "Constrain repeat's type to int64 tensors.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           // Type inference
           propagateElemTypeFromInputToOutput(ctx, 0, 0);
@@ -1785,7 +1790,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "scales",
             "The scale array along each dimension. It takes value greater than or equal to 1."
             " The number of elements of 'scales' should be the same as the rank of input 'X'.",
-            "tensor(float)",
+            types::Float,
             OpSchema::Single)
         .Output(0, "Y", "N-D tensor after resizing", "T", OpSchema::Single)
         .TypeConstraint("T", OpSchema::all_tensor_types(), "Constrain input 'X' and output 'Y' to all tensor types.")
@@ -1940,7 +1945,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             " it's sampling down, otherwise, it's upsampling. The number of elements of 'scales' should"
             " be the same as the rank of input 'X' or the length of 'axes', if provided. "
             "One of 'scales' and 'sizes' MUST be specified and it is an error if both are specified. If 'sizes' is needed, the user can use an empty string as the name of 'scales' in this operator's input list.",
-            "tensor(float)",
+            types::Float,
             OpSchema::Optional,
             true,
             1,
@@ -1951,7 +1956,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Target size of the output tensor. Its interpretation depends on the 'keep_aspect_ratio_policy' value."
             "The number of elements of 'sizes' should be the same as the"
             " rank of input 'X', or the length of 'axes', if provided. Only one of 'scales' and 'sizes' can be specified. ",
-            "tensor(int64)",
+            types::Int64,
             OpSchema::Optional,
             true,
             1,
@@ -2062,7 +2067,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             1,
             "size",
             "the target output image size (N, C, H, W) for 2D or (N, C, D, H, W) for 3D",
-            "T2",
+            types::Int64,
             OpSchema::Single,
             true,
             1,
@@ -2077,7 +2082,6 @@ ONNX_OPERATOR_SET_SCHEMA(
             1,
             OpSchema::Differentiable)
         .TypeConstraint("T1", OpSchema::all_float_types_ir4(), "Constrain grid types to float tensors.")
-        .TypeConstraint("T2", {types::Int64}, "Constrain size's type to int64 tensors.")
         .SetDoc(kDoc_AffineGrid_ver20)
         .FunctionBody(R"ONNX(
         {
@@ -2331,7 +2335,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Its length can be less than the input length along the axis "
             "or the flattened input size if axis is not specified. "
             "In such cases data slices or elements exceeding the condition length are discarded.",
-            "T1",
+            types::Bool,
             OpSchema::Single,
             true,
             1,
@@ -2346,7 +2350,6 @@ ONNX_OPERATOR_SET_SCHEMA(
             1,
             OpSchema::Differentiable)
         .TypeConstraint("T", OpSchema::all_tensor_types_ir4(), "Constrain input and output types to all tensor types.")
-        .TypeConstraint("T1", {types::Bool}, "Constrain to boolean tensors.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           propagateElemTypeFromInputToOutput(ctx, 0, 0);
           auto axisAttr = ctx.getAttribute("axis");
@@ -2450,9 +2453,8 @@ ONNX_OPERATOR_SET_SCHEMA(
     OpSchema()
         .SetDoc(kDoc_IsNaN_ver20)
         .Input(0, "X", "input", "T1", OpSchema::Single, true, 1, OpSchema::NonDifferentiable)
-        .Output(0, "Y", "output", "T2", OpSchema::Single, true, 1, OpSchema::NonDifferentiable)
+        .Output(0, "Y", "output", types::Bool, OpSchema::Single, true, 1, OpSchema::NonDifferentiable)
         .TypeConstraint("T1", OpSchema::all_float_types_ir9(), "Constrain input types to float tensors.")
-        .TypeConstraint("T2", {types::Bool}, "Constrain output types to boolean tensors.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           updateOutputElemType(ctx, 0, TensorProto::BOOL);
           if (hasInputShape(ctx, 0)) {
@@ -2466,7 +2468,7 @@ ONNX_OPERATOR_SET_SCHEMA(
     OpSchema()
         .SetDoc(kDoc_IsInf_ver20)
         .Input(0, "X", "input", "T1", OpSchema::Single, true, 1, OpSchema::NonDifferentiable)
-        .Output(0, "Y", "output", "T2", OpSchema::Single, true, 1, OpSchema::NonDifferentiable)
+        .Output(0, "Y", "output", types::Bool, OpSchema::Single, true, 1, OpSchema::NonDifferentiable)
         .Attr(
             "detect_positive",
             "(Optional) Whether map positive infinity to true. Default to 1 "
@@ -2482,7 +2484,6 @@ ONNX_OPERATOR_SET_SCHEMA(
             AttributeProto::INT,
             static_cast<int64_t>(1))
         .TypeConstraint("T1", OpSchema::all_float_types_ir9(), "Constrain input types to float tensors.")
-        .TypeConstraint("T2", {types::Bool}, "Constrain output types to boolean tensors.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           updateOutputElemType(ctx, 0, TensorProto::BOOL);
           if (hasInputShape(ctx, 0)) {
@@ -2499,7 +2500,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             0,
             "condition",
             "When True (nonzero), yield X, otherwise yield Y",
-            "B",
+            types::Bool,
             OpSchema::Single,
             true,
             1,
@@ -2531,7 +2532,6 @@ ONNX_OPERATOR_SET_SCHEMA(
             true,
             1,
             OpSchema::Differentiable)
-        .TypeConstraint("B", {types::Bool}, "Constrain to boolean tensors.")
         .TypeConstraint(
             "T",
             OpSchema::all_tensor_types_ir4(),
@@ -2554,7 +2554,7 @@ ONNX_OPERATOR_SET_SCHEMA(
     OpSchema()
         .SetDoc(kDoc_NonZero_ver9)
         .Input(0, "X", "input", "T", OpSchema::Single, true, 1, OpSchema::NonDifferentiable)
-        .Output(0, "Y", "output", "tensor(int64)", OpSchema::Single, true, 1, OpSchema::NonDifferentiable)
+        .Output(0, "Y", "output", types::Int64, OpSchema::Single, true, 1, OpSchema::NonDifferentiable)
         .TypeConstraint("T", OpSchema::all_tensor_types_ir4(), "Constrain to all tensor types.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           updateOutputElemType(ctx, 0, TensorProto::INT64);
@@ -2588,7 +2588,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             1,
             "sequence_lens",
             "Tensor specifying lengths of the sequences in a batch. It has shape `[batch_size]`.",
-            "tensor(int64)",
+            types::Int64,
             OpSchema::Single)
         .Output(0, "Y", "Tensor with same shape of input.", "T", OpSchema::Single)
         .TypeConstraint("T", OpSchema::all_tensor_types_ir4(), "Input and output types can be of any tensor type.")
@@ -2655,7 +2655,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "containing indices of 'Y' elements' first occurrence in 'X'. "
             "When 'axis' is provided, it contains indices to subtensors in input 'X' on the 'axis'. "
             "When 'axis' is not provided, it contains indices to values in the flattened input tensor. ",
-            "tensor(int64)",
+            types::Int64,
             OpSchema::Optional,
             true,
             1,
@@ -2667,7 +2667,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "containing, for elements of 'X', its corresponding indices in 'Y'. "
             "When 'axis' is provided, it contains indices to subtensors in output 'Y' on the 'axis'. "
             "When 'axis' is not provided, it contains indices to values in output 'Y'. ",
-            "tensor(int64)",
+            types::Int64,
             OpSchema::Optional,
             true,
             1,
@@ -2678,7 +2678,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "A 1-D INT64 tensor containing "
             "the count of each element "
             "of 'Y' in input 'X'",
-            "tensor(int64)",
+            types::Int64,
             OpSchema::Optional,
             true,
             1,
@@ -2761,7 +2761,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "indices",
             "Tensor of rank q >= 1. All index values are expected to be within bounds [-s, s-1] "
             "along axis of size s. It is an error if any of the index values are out of bounds.",
-            "tensor(int64)",
+            types::Int64,
             OpSchema::Single,
             true,
             1,
@@ -2862,7 +2862,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "k",
             "A 0-D tensor containing a single value corresponding to the number diagonals above or below the main diagonal to exclude or include. "
             "Default value is 0 if it's not specified.",
-            "tensor(int64)",
+            types::Int64,
             OpSchema::Optional,
             true,
             1,
@@ -3081,7 +3081,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             2,
             "write_indices",
             "Write indices for the incoming update tensor in the cache. Shape is `(batch_size,)`. Assumed to be all zeros if not provided.",
-            "tensor(int64)",
+            types::Int64,
             OpSchema::Optional,
             true,
             1,
