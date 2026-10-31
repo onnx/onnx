@@ -12,14 +12,20 @@ from onnx import helper, numpy_helper
 
 
 class TestNumpyHelper:
-    def _test_numpy_helper_float_type(self, dtype: np.number) -> None:
+    @pytest.mark.parametrize(
+        "dtype", [np.float32, np.float16, np.complex64, np.complex128]
+    )
+    def test_float_roundtrip(self, dtype) -> None:
         a = np.random.rand(13, 37).astype(dtype)
         tensor_def = numpy_helper.from_array(a, "test")
         assert tensor_def.name == "test"
         a_recover = numpy_helper.to_array(tensor_def)
         np.testing.assert_equal(a, a_recover)
 
-    def _test_numpy_helper_int_type(self, dtype: np.number) -> None:
+    @pytest.mark.parametrize(
+        "dtype", [np.uint8, np.int8, np.uint16, np.int16, np.int32, np.int64]
+    )
+    def test_int_roundtrip(self, dtype) -> None:
         a = np.random.randint(
             np.iinfo(dtype).min, np.iinfo(dtype).max, dtype=dtype, size=(13, 37)
         )
@@ -27,27 +33,6 @@ class TestNumpyHelper:
         assert tensor_def.name == "test"
         a_recover = numpy_helper.to_array(tensor_def)
         np.testing.assert_equal(a, a_recover)
-
-    def test_float(self) -> None:
-        self._test_numpy_helper_float_type(np.float32)
-
-    def test_uint8(self) -> None:
-        self._test_numpy_helper_int_type(np.uint8)
-
-    def test_int8(self) -> None:
-        self._test_numpy_helper_int_type(np.int8)
-
-    def test_uint16(self) -> None:
-        self._test_numpy_helper_int_type(np.uint16)
-
-    def test_int16(self) -> None:
-        self._test_numpy_helper_int_type(np.int16)
-
-    def test_int32(self) -> None:
-        self._test_numpy_helper_int_type(np.int32)
-
-    def test_int64(self) -> None:
-        self._test_numpy_helper_int_type(np.int64)
 
     def test_string(self) -> None:
         a = np.array(["Amy", "Billy", "Cindy", "David"]).astype(object)
@@ -63,40 +48,19 @@ class TestNumpyHelper:
         a_recover = numpy_helper.to_array(tensor_def)
         np.testing.assert_equal(a, a_recover)
 
-    def test_float16(self) -> None:
-        self._test_numpy_helper_float_type(np.float16)
-
-    def test_complex64(self) -> None:
-        self._test_numpy_helper_float_type(np.complex64)
-
-    def test_complex128(self) -> None:
-        self._test_numpy_helper_float_type(np.complex128)
-
-    def test_from_dict_values_are_np_arrays_of_float(self):
-        map_proto = numpy_helper.from_dict({0: np.array(0.1), 1: np.array(0.9)})
+    @pytest.mark.parametrize(
+        "values",
+        [(0.1, 0.9), (1, 9), ([1, 2], [9, 10])],
+        ids=["float_scalars", "int_scalars", "int_vectors"],
+    )
+    def test_from_dict_array_values(self, values) -> None:
+        arrays = [np.array(value) for value in values]
+        map_proto = numpy_helper.from_dict(dict(enumerate(arrays)))
         assert isinstance(map_proto, onnx.MapProto)
-        assert numpy_helper.to_array(map_proto.values.tensor_values[0]) == np.array(0.1)
-        assert numpy_helper.to_array(map_proto.values.tensor_values[1]) == np.array(0.9)
-
-    def test_from_dict_values_are_np_arrays_of_int(self):
-        map_proto = numpy_helper.from_dict({0: np.array(1), 1: np.array(9)})
-        assert isinstance(map_proto, onnx.MapProto)
-        assert numpy_helper.to_array(map_proto.values.tensor_values[0]) == np.array(1)
-        assert numpy_helper.to_array(map_proto.values.tensor_values[1]) == np.array(9)
-
-    def test_from_dict_values_are_np_arrays_of_ints(self):
-        zero_array = np.array([1, 2])
-        one_array = np.array([9, 10])
-        map_proto = numpy_helper.from_dict({0: zero_array, 1: one_array})
-        assert isinstance(map_proto, onnx.MapProto)
-
-        out_tensor = numpy_helper.to_array(map_proto.values.tensor_values[0])
-        assert out_tensor[0] == zero_array[0]
-        assert out_tensor[1] == zero_array[1]
-
-        out_tensor = numpy_helper.to_array(map_proto.values.tensor_values[1])
-        assert out_tensor[0] == one_array[0]
-        assert out_tensor[1] == one_array[1]
+        for tensor, expected in zip(
+            map_proto.values.tensor_values, arrays, strict=True
+        ):
+            np.testing.assert_array_equal(numpy_helper.to_array(tensor), expected)
 
     def test_from_dict_differing_key_types(self):
         with pytest.raises(TypeError):
@@ -150,12 +114,6 @@ class TestNumpyHelper:
         if check_dtype:
             assert start[0].dtype == back.dtype
         again = numpy_helper.from_array(back, name="check")
-        assert tp.data_type == again.data_type
-        assert tp.name == again.name
-        assert len(tp.raw_data) == len(again.raw_data)
-        assert list(tp.raw_data) == list(again.raw_data)
-        assert tp.raw_data == again.raw_data
-        assert tuple(tp.dims) == tuple(again.dims)
         assert tp.SerializeToString() == again.SerializeToString()
         assert tp.data_type == helper.np_dtype_to_tensor_dtype(back.dtype)
 

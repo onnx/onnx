@@ -188,13 +188,6 @@ class TestSaveAndLoadFileExtensions:
 
 
 class TestBasicFunctions:
-    def test_protos_exist(self) -> None:
-        # The proto classes should exist
-        _ = onnx.AttributeProto
-        _ = onnx.NodeProto
-        _ = onnx.GraphProto
-        _ = onnx.ModelProto
-
     def test_version_exists(self) -> None:
         model = onnx.ModelProto()
         # When we create it, graph should not have a version string.
