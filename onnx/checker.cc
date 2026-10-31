@@ -845,6 +845,8 @@ void check_sparse_tensor(const SparseTensorProto& sparse_tensor_proto, const Che
 // Attributes of the function whose body is being checked, so that check_attribute
 // can resolve ref_attr_name. Kept out of CheckerContext so this bookkeeping does
 // not become part of the public API; set only by FunctionAttributesScope.
+namespace {
+
 struct FunctionAttribute {
   // nullptr if the attribute is declared without a default value.
   const AttributeProto* default_value = nullptr;
@@ -853,11 +855,11 @@ struct FunctionAttribute {
 };
 using FunctionAttributes = std::unordered_map<std::string, FunctionAttribute>;
 
-static thread_local FunctionAttributes* current_function_attributes = nullptr;
+thread_local FunctionAttributes* current_function_attributes = nullptr;
 
 class FunctionAttributesScope final {
  public:
-  explicit FunctionAttributesScope(FunctionAttributes* attributes) : previous_(current_function_attributes) {
+  explicit FunctionAttributesScope(FunctionAttributes* attributes) {
     current_function_attributes = attributes;
   }
   ~FunctionAttributesScope() {
@@ -867,8 +869,11 @@ class FunctionAttributesScope final {
   FunctionAttributesScope& operator=(const FunctionAttributesScope&) = delete;
 
  private:
-  FunctionAttributes* previous_;
+  // Initialized before the constructor body replaces current_function_attributes.
+  FunctionAttributes* previous_ = current_function_attributes;
 };
+
+} // namespace
 
 // Resolves a reference to an attribute of the enclosing function and checks the
 // default value it would be substituted with.
