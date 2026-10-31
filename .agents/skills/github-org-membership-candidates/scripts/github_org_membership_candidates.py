@@ -205,6 +205,8 @@ def search_issues_or_pulls(
     end: date,
 ) -> tuple[list[dict[str, Any]], bool]:
     query = f"org:{org} is:{item_type} created:{start.isoformat()}..{end.isoformat()}"
+    if item_type == "pr":
+        query += " draft:false"
     items: list[dict[str, Any]] = []
     for page in range(1, SEARCH_MAX_PAGES + 1):
         params = {

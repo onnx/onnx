@@ -7,6 +7,7 @@ import importlib.util
 import sys
 from datetime import date
 from pathlib import Path
+from urllib.parse import parse_qs, urlsplit
 
 import pytest
 
@@ -18,6 +19,12 @@ SCRIPT_PATH = (
     / "scripts"
     / "github_org_membership_candidates.py"
 )
+if not SCRIPT_PATH.is_file():
+    pytest.skip(
+        "Repository-only skill is not included in source distributions",
+        allow_module_level=True,
+    )
+
 SPEC = importlib.util.spec_from_file_location(
     "github_org_membership_candidates", SCRIPT_PATH
 )
@@ -26,6 +33,28 @@ assert SPEC.loader is not None
 membership_candidates = importlib.util.module_from_spec(SPEC)
 sys.modules[SPEC.name] = membership_candidates
 SPEC.loader.exec_module(membership_candidates)
+
+
+@pytest.mark.parametrize("item_type", ["issue", "pr"])
+def test_search_excludes_drafts_only_for_pull_requests(
+    monkeypatch: pytest.MonkeyPatch, item_type: str
+) -> None:
+    queries = []
+
+    def run_gh(arguments: list[str]) -> dict:
+        queries.append(parse_qs(urlsplit(arguments[1]).query)["q"][0])
+        return {"items": []}
+
+    monkeypatch.setattr(membership_candidates, "run_gh", run_gh)
+
+    membership_candidates.search_issues_or_pulls(
+        "onnx", item_type, date(2026, 1, 1), date(2026, 10, 1)
+    )
+
+    assert queries == [
+        f"org:onnx is:{item_type} created:2026-01-01..2026-10-01"
+        + (" draft:false" if item_type == "pr" else "")
+    ]
 
 
 def test_list_member_logins_requires_organization_membership(
