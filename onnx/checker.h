@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include <cstdint>
 #include <filesystem>
 #include <stdexcept>
 #include <string>
@@ -36,6 +37,10 @@ class ValidationError final : public std::runtime_error {
 };
 
 #define fail_check(...) ONNX_THROW_EX(ONNX_NAMESPACE::checker::ValidationError(ONNX_NAMESPACE::MakeString(__VA_ARGS__)))
+
+// Validate representability at int-indexed schema boundaries. This does not
+// restrict versions to the currently registered opsets.
+ONNX_API int checked_opset_version(int64_t version, const std::string& domain = "");
 
 class CheckerContext final {
  public:

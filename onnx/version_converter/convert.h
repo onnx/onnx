@@ -1132,5 +1132,8 @@ class DefaultVersionConverter : public BaseVersionConverter {
       const override;
 };
 
+ONNX_API ModelProto ConvertVersion(const ModelProto& mp_in, int64_t target_version);
+
+// Retain the existing entry point for C++ binary compatibility.
 ONNX_API ModelProto ConvertVersion(const ModelProto& mp_in, int target_version);
 } // namespace ONNX_NAMESPACE::version_conversion
