@@ -3374,6 +3374,36 @@ class TestReferenceEvaluator:
         expected = np.array([0], dtype=np.int64)
         assert got1[0].tolist() == expected.tolist()
 
+    @pytest.mark.parametrize(
+        ("axes", "starts", "ends", "steps", "expected"),
+        [
+            ([1], [-4], [-100], [-1], [[1], [4]]),
+            ([1], [-2], [-100], [-1], [[2, 1], [5, 4]]),
+            ([1], [np.iinfo(np.int64).min], [-100], [-2], [[1], [4]]),
+            (None, [-3], [-100], [-1], [[1, 2, 3]]),
+        ],
+    )
+    def test_slice_negative_step_start_below_negative_dim(
+        self, axes, starts, ends, steps, expected
+    ):
+        node = make_node(
+            "Slice",
+            ["X", "starts", "ends", "" if axes is None else "axes", "steps"],
+            ["Y"],
+        )
+        feeds = {
+            "X": np.array([[1, 2, 3], [4, 5, 6]], dtype=np.float32),
+            "starts": np.array(starts, dtype=np.int64),
+            "ends": np.array(ends, dtype=np.int64),
+            "steps": np.array(steps, dtype=np.int64),
+        }
+        if axes is not None:
+            feeds["axes"] = np.array(axes, dtype=np.int64)
+
+        got = ReferenceEvaluator(node).run(None, feeds)[0]
+
+        assert_array_equal(got, np.array(expected, dtype=np.float32))
+
     def test_onnxrt_reduce_mean(self):
         X = make_tensor_value_info("X", TensorProto.FLOAT, [None, None])
         Y = make_tensor_value_info("Y", TensorProto.FLOAT, [None, None])
