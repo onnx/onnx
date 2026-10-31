@@ -396,6 +396,13 @@ struct Value final {
   const Graph* owningGraph() const;
   use_list uses() const;
 
+  // Cheap (O(1)) equivalent of ``!uses().empty()`` that skips uses()'s scan
+  // for kCaptured placeholders in nested subgraphs -- safe only when the
+  // caller has established the graph tree has no control-flow subgraphs.
+  bool hasUsesInCurrentGraph() const {
+    return !uses_in_current_graph_.empty();
+  }
+
   // Replaces all uses of this node with 'newValue'.
   //
   // Given:   %3 = f(%1, %2)
@@ -409,7 +416,12 @@ struct Value final {
 
   Value* copyMetadata(const Value* from) {
     setElemType(from->elemType());
-    setSizes(from->sizes());
+    if (from->has_sizes()) {
+      setSizes(from->sizes());
+    } else {
+      // Don't let setSizes({}) turn "rank unknown" into "rank 0".
+      wipeSizes();
+    }
     if (from->has_unique_name()) {
       setUniqueName(from->uniqueName());
     }
@@ -469,6 +481,7 @@ struct Node : public Attributes<Node> {
   std::string doc_string_;
   bool has_overload_{false};
   std::string overload_;
+  std::vector<StringStringEntryProto> metadata_props_;
   // Count of this node's currently-set attributes with kind g or gs (If/Loop/
   // Scan subgraph bodies, or any custom op with a graph attribute). Kept in
   // sync incrementally by onAttributeAdded()/onAttributeRemoved() so the
@@ -523,6 +536,12 @@ struct Node : public Attributes<Node> {
   NodeKind kind() const {
     return kind_;
   }
+  const std::vector<StringStringEntryProto>& metadataProps() const {
+    return metadata_props_;
+  }
+  void setMetadataProps(std::vector<StringStringEntryProto> props) {
+    metadata_props_ = std::move(props);
+  }
   Graph* owningGraph() {
     return graph_;
   }
@@ -573,6 +592,15 @@ struct Node : public Attributes<Node> {
   bool hasUses() const {
     for (const auto* o : outputs()) {
       if (!o->uses().empty())
+        return true;
+    }
+    return false;
+  }
+  // Cheap equivalent of hasUses() -- see Value::hasUsesInCurrentGraph()'s
+  // comment for exactly what this does and doesn't see.
+  bool hasUsesInCurrentGraph() const {
+    for (const auto* o : outputs()) {
+      if (o->hasUsesInCurrentGraph())
         return true;
     }
     return false;
@@ -1009,6 +1037,7 @@ struct Graph final {
   std::string doc_string_;
 
   std::vector<OpSetID> opset_versions_;
+  std::vector<StringStringEntryProto> metadata_props_;
 
   bool isNameUnique(const std::string& name) const {
     // O(1) check against this graph's own initializer/value names, replacing
@@ -1043,6 +1072,13 @@ struct Graph final {
  public:
   Graph() : output_(initOutput(create(kReturn, 0))), input_(create(kParam, 0)), initializer_node_(create(kParam, 0)) {}
 
+  const std::vector<StringStringEntryProto>& metadataProps() const {
+    return metadata_props_;
+  }
+  void setMetadataProps(std::vector<StringStringEntryProto> props) {
+    metadata_props_ = std::move(props);
+  }
+
   bool has_doc_string() const {
     return has_doc_string_;
   }
@@ -1063,6 +1099,18 @@ struct Graph final {
     useName(initializer.name());
   }
 
+  // Move-taking overload: skips the copy above for a Tensor the caller is
+  // discarding. Existing lvalue call sites are unaffected.
+  void addInitializer(Tensor&& initializer) {
+    if (initializer.name().empty()) {
+      initializer.setName(getNextUniqueName());
+    }
+    // Read the name before the move below invalidates it.
+    initializer_names_.push_back(initializer.name());
+    useName(initializer.name());
+    initializers_.push_back(std::move(initializer));
+  }
+
   // For IR >= 4, initializer is not required to exist in input
   // Add initializer into initializer node list and return its Value
   Value* addInitializerAndCreateValue(Tensor& initializer) {
@@ -1075,18 +1123,39 @@ struct Graph final {
     return init_value;
   }
 
+  // Move-taking counterpart to addInitializer(Tensor&&) above. Everything
+  // the returned Value needs is read before initializer is moved from.
+  Value* addInitializerAndCreateValue(Tensor&& initializer) {
+    if (initializer.name().empty()) {
+      initializer.setName(getNextUniqueName());
+    }
+    auto* init_value = initializer_node_->addOutput();
+    std::vector<Dimension> dim_sizes{initializer.sizes().cbegin(), initializer.sizes().cend()};
+    init_value->setUniqueName(initializer.name());
+    init_value->setSizes(dim_sizes);
+    init_value->setElemType(initializer.elem_type());
+    initializer_names_.push_back(initializer.name());
+    useName(initializer.name());
+    initializers_.push_back(std::move(initializer));
+    return init_value;
+  }
+
   void eraseInitializer(const std::string& name) {
+    // Preserve an aliased initializer name before erase invalidates its storage;
+    // otherwise later comparisons read freed string memory.
+    // NOLINTNEXTLINE(performance-unnecessary-copy-initialization)
+    const std::string stable_name = name;
     initializers_.erase(
         std::remove_if(
             initializers_.begin(),
             initializers_.end(),
-            [&name](Tensor& initializer) { return initializer.name() == name; }),
+            [&stable_name](Tensor& initializer) { return initializer.name() == stable_name; }),
         initializers_.end());
     initializer_names_.erase(
-        std::remove(initializer_names_.begin(), initializer_names_.end(), name), initializer_names_.end());
-    releaseName(name);
+        std::remove(initializer_names_.begin(), initializer_names_.end(), stable_name), initializer_names_.end());
+    releaseName(stable_name);
     for (size_t i = 0; i < initializer_node_->outputs().size(); i++) {
-      if (initializer_node_->outputs()[i]->uniqueName() == name) {
+      if (initializer_node_->outputs()[i]->uniqueName() == stable_name) {
         initializer_node_->eraseOutput(i);
         break;
       }
@@ -1204,7 +1273,7 @@ struct Graph final {
   ResourceGuard setStageTemporary(size_t s) {
     auto prev_stage = new_node_stage_;
     new_node_stage_ = s;
-    return ResourceGuard([prev_stage, this]() { this->new_node_stage_ = prev_stage; });
+    return ResourceGuard([prev_stage, this] { this->new_node_stage_ = prev_stage; });
   }
 
   size_t registerOutput(Value* n) {

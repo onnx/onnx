@@ -54,6 +54,8 @@ static Tensor tensorProtoToTensor(const ONNX_NAMESPACE::TensorProto& tp) {
     case ONNX_NAMESPACE::TensorProto_DataType_FLOAT8E5M2:
     case ONNX_NAMESPACE::TensorProto_DataType_FLOAT8E5M2FNUZ:
     case ONNX_NAMESPACE::TensorProto_DataType_FLOAT8E8M0:
+    case ONNX_NAMESPACE::TensorProto_DataType_FLOAT6E2M3:
+    case ONNX_NAMESPACE::TensorProto_DataType_FLOAT6E3M2:
     case ONNX_NAMESPACE::TensorProto_DataType_FLOAT4E2M1: {
       ret.int32s().reserve(tp.int32_data_size());
       for (int i = 0; i < tp.int32_data_size(); i++) {
@@ -240,6 +242,11 @@ static Value* createDummyValue(
 }
 
 std::unique_ptr<Graph> graphProtoToGraph(const ONNX_NAMESPACE::GraphProto& gp, bool nested, const int64_t ir_version) {
+  // The internal IR only represents dense initializers. Reject even unused
+  // sparse initializers rather than silently dropping them during export.
+  if (gp.sparse_initializer_size() != 0) {
+    fail_convert("Sparse initializers are not supported by the version converter.");
+  }
   auto g = std::make_unique<Graph>();
 
   if (gp.has_name()) {
@@ -248,6 +255,7 @@ std::unique_ptr<Graph> graphProtoToGraph(const ONNX_NAMESPACE::GraphProto& gp, b
   if (gp.has_doc_string()) {
     g->setDocString(gp.doc_string());
   }
+  g->setMetadataProps({gp.metadata_props().begin(), gp.metadata_props().end()});
 
   // Values are created (as in `new Value(..)`) by the Node that
   // outputs them. Therefore we initialize the Nodes and Values in
@@ -321,7 +329,14 @@ std::unique_ptr<Graph> graphProtoToGraph(const ONNX_NAMESPACE::GraphProto& gp, b
 
   for (int i = 0; i < gp.node_size(); i++) {
     const auto& np = gp.node(i);
-    auto* n = g->create(Symbol(np.op_type()), /* num_outputs = */ np.output_size());
+    const auto kind = Symbol(np.op_type());
+    // IR routines treat this operator name as the internal captured-value
+    // sentinel and require exactly one output.
+    if (kind == kCaptured && np.output_size() != 1) {
+      fail_convert("Captured node must have exactly one output.");
+    }
+    auto* n = g->create(kind, /* num_outputs = */ np.output_size());
+    n->setMetadataProps({np.metadata_props().begin(), np.metadata_props().end()});
     g->appendNode(n);
     for (int j = 0; j < np.output_size(); j++) {
       auto* out = n->outputs()[j];
@@ -477,6 +492,7 @@ static void encodeTensor(ONNX_NAMESPACE::TensorProto& p, const Tensor& tensor) {
     case ONNX_NAMESPACE::TensorProto_DataType_FLOAT8E4M3FNUZ:
     case ONNX_NAMESPACE::TensorProto_DataType_FLOAT8E5M2:
     case ONNX_NAMESPACE::TensorProto_DataType_FLOAT8E5M2FNUZ:
+    case ONNX_NAMESPACE::TensorProto_DataType_FLOAT8E8M0:
     case ONNX_NAMESPACE::TensorProto_DataType_FLOAT4E2M1:
     case ONNX_NAMESPACE::TensorProto_DataType_BOOL:
     case ONNX_NAMESPACE::TensorProto_DataType_UINT2:
@@ -487,7 +503,9 @@ static void encodeTensor(ONNX_NAMESPACE::TensorProto& p, const Tensor& tensor) {
     case ONNX_NAMESPACE::TensorProto_DataType_INT16:
     case ONNX_NAMESPACE::TensorProto_DataType_INT32:
     case ONNX_NAMESPACE::TensorProto_DataType_UINT8:
-    case ONNX_NAMESPACE::TensorProto_DataType_UINT16: {
+    case ONNX_NAMESPACE::TensorProto_DataType_UINT16:
+    case ONNX_NAMESPACE::TensorProto_DataType_FLOAT6E2M3:
+    case ONNX_NAMESPACE::TensorProto_DataType_FLOAT6E3M2: {
       for (int32_t x : tensor.int32s()) {
         p.add_int32_data(x);
       }
@@ -643,6 +661,9 @@ static void encodeValueInfo(ONNX_NAMESPACE::ValueInfoProto& v, Value& n) {
 }
 
 static void encodeGraph(GraphProto& p_g, const std::shared_ptr<Graph>& g) {
+  for (const auto& prop : g->metadataProps()) {
+    p_g.add_metadata_props()->CopyFrom(prop);
+  }
   if (g->has_name()) {
     p_g.set_name(g->name());
   }
@@ -669,6 +690,9 @@ static void encodeGraph(GraphProto& p_g, const std::shared_ptr<Graph>& g) {
       continue;
     }
     auto* p_n = p_g.add_node();
+    for (const auto& prop : node->metadataProps()) {
+      p_n->add_metadata_props()->CopyFrom(prop);
+    }
     for (auto* input : node->inputs()) {
       if (input->node()->kind() == kUndefined) {
         p_n->add_input("");

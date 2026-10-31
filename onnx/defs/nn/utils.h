@@ -21,6 +21,10 @@ std::vector<int64_t> getConvPoolStrides(InferenceContext& ctx, size_t n_input_di
 void AttentionPropagateElemTypeFromInputToOutput(InferenceContext& ctx);
 
 /** Implements CausalMask for Attention. */
-bool AttentionAppendFunctionCausalMask(const FunctionBodyBuildContext& ctx, FunctionBuilder& builder, bool padding);
+bool AttentionAppendFunctionCausalMask(
+    const FunctionBodyBuildContext& ctx,
+    FunctionBuilder& builder,
+    bool padding,
+    bool cast_mask_to_bias = false);
 
 } // namespace ONNX_NAMESPACE::defs::nn::utils

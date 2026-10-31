@@ -12,6 +12,8 @@ class ReverseSequence(OpRun):
         index_data = [slice(0, s) for s in data.shape]
         result = data.copy()
         for i, sl in enumerate(sequence_lens):
+            if sl == 0:
+                continue
             index[batch_axis] = i
             index[time_axis] = slice(0, sl)
             index_data[batch_axis] = i

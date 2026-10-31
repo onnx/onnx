@@ -56,6 +56,25 @@ Member Companies do not have any voting rights, except via their employees who a
 
 Member Companies can request their logo be displayed on the website and other materials by following these [instructions](logo_request.md).
 
+## GitHub Organization Seat Policy
+
+> **Work in Progress:** This policy is under active discussion and is not yet ratified by the Steering Committee.
+
+The ONNX GitHub organization has a **limited number of GitHub organization membership seats**. These seats are a shared resource and must be actively managed.
+
+Every person granted GitHub organization membership is added to a GitHub Team corresponding to their sponsoring SIG (e.g., `sig-architecture-infra`), and repository permissions (Triage/Write/Maintain) are granted through that Team rather than directly to the individual. This keeps each seat traceable to a SIG and lets seat audits assess activity by area.
+
+**GitHub org membership (a seat) and Contributor/Approver governance status are independent.** Holding a seat says nothing on its own about SC election voting eligibility, and not holding one says nothing on its own either — voting eligibility is determined solely by Contributor/Approver governance status, per the Contributors section above. The two change together only when the same underlying event (sustained inactivity, resignation, or a Code of Conduct ruling) independently triggers both, as described below.
+
+**Removal triggers** — a person is removed from GitHub organization membership when any of the following apply:
+
+* No contribution activity (commits, PR reviews, issue comments, SIG meeting participation) for **12 consecutive months**, assessed whenever the SIG Architecture & Infra chairs conduct an activity audit — as part of their routine SIG maintenance, or in response to seat pressure (see below) — rather than on a fixed calendar date. Per the Contributors section above, sustained inactivity independently ends the member's Contributor/Approver governance status and SC election voting eligibility; this same inactivity is separately grounds for removing their GitHub org seat.
+* The member explicitly resigns or notifies the SIG Architecture & Infra chairs that they are no longer active. Resigning independently ends their governance status and voting eligibility; their GitHub org seat is removed as a separate, parallel action.
+* A Code of Conduct violation results in a ruling by the Steering Committee. The ruling independently ends their governance status and voting eligibility; their GitHub org seat is removed as a separate, parallel action.
+* As a fallback, if routine inactivity-based removal has not kept the organization under its seat limit and no seats are available, the SIG Architecture & Infra chairs audit activity across SIG Teams and remove the least-recently-active members' GitHub org membership (i.e., their SIG/WG Team membership) to free capacity. **This trigger is a seat-capacity action only** — it does not necessarily end the SC election voting eligibility. If this fallback is triggered repeatedly because genuine active participation is outgrowing the current cap, the SIG Architecture & Infra chairs can instead raise a request with the Steering Committee to increase the seat limit.
+
+**Process:** The SIG Architecture & Infra chairs are responsible for conducting activity audits — as part of routine SIG maintenance or in response to seat pressure, rather than on a fixed schedule — and for acting on the resulting removals. Seat status and governance status are tracked independently: members removed solely for seat capacity keep their Contributor/Approver governance status and voting eligibility, and may be re-added to the GitHub organization (and their SIG Team) when a seat becomes available. Members who lose governance status — through inactivity, resignation, or a Code of Conduct ruling — must requalify through the normal sponsorship process to regain it, regardless of whether or when their seat is restored.
+
 ## Organizational Structure
 
 The ONNX community is organized in the following manner, with all governance and execution being planned and coordinated as follows:

@@ -43,7 +43,7 @@ void AttentionPropagateElemTypeFromInputToOutput(InferenceContext& ctx) {
       }
       const auto* const kv_num_heads_attr = ctx.getAttribute("kv_num_heads");
       if (kv_num_heads_attr == nullptr) {
-        fail_type_inference("3D inputs expected to have q_num_heads attribute.");
+        fail_type_inference("3D inputs expected to have kv_num_heads attribute.");
       }
     }
 
@@ -124,58 +124,61 @@ void AttentionPropagateElemTypeFromInputToOutput(InferenceContext& ctx) {
     updateOutputShape(ctx, 3, qk_matmul_shape);
   }
 
-  if (ctx.hasOutput(1) && ctx.hasOutput(2)) { // has present outputs
-    if (ctx.hasInput(4) && ctx.hasInput(5)) { // has past_key
-      // copy the type from query to present key and value
-      propagateElemTypeFromInputToOutput(ctx, 4, 1);
-      propagateElemTypeFromInputToOutput(ctx, 5, 2);
+  if ((ctx.hasOutput(1) && ctx.hasOutput(2)) && (ctx.hasInput(4) && ctx.hasInput(5))) // has present outputs
+  { // has past_key
+    // copy the type from query to present key and value
+    propagateElemTypeFromInputToOutput(ctx, 4, 1);
+    propagateElemTypeFromInputToOutput(ctx, 5, 2);
 
-      if (hasInputShape(ctx, 4) && hasInputShape(ctx, 5)) {
-        const auto& past_key_shape = getInputShape(ctx, 4);
-        const auto& past_key_dims = past_key_shape.dim();
-        const auto& past_value_shape = getInputShape(ctx, 5);
-        const auto& past_value_dims = past_value_shape.dim();
+    if (hasInputShape(ctx, 4) && hasInputShape(ctx, 5)) {
+      const auto& past_key_shape = getInputShape(ctx, 4);
+      const auto& past_key_dims = past_key_shape.dim();
+      const auto& past_value_shape = getInputShape(ctx, 5);
+      const auto& past_value_dims = past_value_shape.dim();
 
-        // past key has shape (batch_size, kv_num_heads, past_sequence_length, head_size)
-        if (past_key_dims.size() != 4) {
-          fail_shape_inference("The past_key input shall be 4 dimensions");
+      // past key has shape (batch_size, kv_num_heads, past_sequence_length, head_size)
+      if (past_key_dims.size() != 4) {
+        fail_shape_inference("The past_key input shall be 4 dimensions");
+      }
+      // past value has shape (batch_size, kv_num_heads, past_sequence_length, v_head_size)
+      if (past_value_dims.size() != 4) {
+        fail_shape_inference("The past_value input shall be 4 dimensions");
+      }
+
+      if (kv_sequence_length > 0 && past_key_dims[2].has_dim_value()) {
+        int64_t total_sequence_length = checkedAdd(kv_sequence_length, past_key_dims[2].dim_value());
+
+        ONNX_NAMESPACE::TensorShapeProto present_key_shape;
+        for (const auto& dim : past_key_dims) {
+          *present_key_shape.add_dim() = dim;
         }
-        // past value has shape (batch_size, kv_num_heads, past_sequence_length, v_head_size)
-        if (past_value_dims.size() != 4) {
-          fail_shape_inference("The past_value input shall be 4 dimensions");
+
+        ONNX_NAMESPACE::TensorShapeProto present_value_shape;
+        for (const auto& dim : past_value_dims) {
+          *present_value_shape.add_dim() = dim;
         }
 
-        if (kv_sequence_length > 0 && past_key_dims[2].has_dim_value()) {
-          int64_t total_sequence_length = checkedAdd(kv_sequence_length, past_key_dims[2].dim_value());
-
-          ONNX_NAMESPACE::TensorShapeProto present_key_shape;
-          for (const auto& dim : past_key_dims) {
-            *present_key_shape.add_dim() = dim;
-          }
-
-          ONNX_NAMESPACE::TensorShapeProto present_value_shape;
-          for (const auto& dim : past_value_dims) {
-            *present_value_shape.add_dim() = dim;
-          }
-
-          if (ctx.hasOutput(3)) { // has qk_matmul_output with bias
-            qk_matmul_shape.mutable_dim(3)->set_dim_value(total_sequence_length);
-            updateOutputShape(ctx, 3, qk_matmul_shape);
-          }
-
-          // shape of present key/value is (batch_size, kv_num_heads, total_sequence_length, head_size)
-          present_key_shape.mutable_dim(2)->set_dim_value(total_sequence_length);
-          present_value_shape.mutable_dim(2)->set_dim_value(total_sequence_length);
-
-          updateOutputShape(ctx, 1, present_key_shape);
-          updateOutputShape(ctx, 2, present_value_shape);
+        if (ctx.hasOutput(3)) { // has qk_matmul_output with bias
+          qk_matmul_shape.mutable_dim(3)->set_dim_value(total_sequence_length);
+          updateOutputShape(ctx, 3, qk_matmul_shape);
         }
+
+        // shape of present key/value is (batch_size, kv_num_heads, total_sequence_length, head_size)
+        present_key_shape.mutable_dim(2)->set_dim_value(total_sequence_length);
+        present_value_shape.mutable_dim(2)->set_dim_value(total_sequence_length);
+
+        updateOutputShape(ctx, 1, present_key_shape);
+        updateOutputShape(ctx, 2, present_value_shape);
       }
     }
   }
 }
 
-bool AttentionAppendFunctionCausalMask(const FunctionBodyBuildContext& ctx, FunctionBuilder& builder, bool padding) {
+bool AttentionAppendFunctionCausalMask(
+    const FunctionBodyBuildContext& ctx,
+    FunctionBuilder& builder,
+    bool padding,
+    bool cast_mask_to_bias) {
   builder.Add("NewKVSeqLen =  Shape <start = -2, end = -1> (PresentKey)")
       .Add("AttnBiasShape = Concat <axis = 0> (QSeqLen, NewKVSeqLen)");
   float neg_inf = -std::numeric_limits<float>::infinity();
@@ -245,8 +248,16 @@ bool AttentionAppendFunctionCausalMask(const FunctionBodyBuildContext& ctx, Func
       builder.Add("RangeRow2DPast = Add(RangeRow2D, PastKVSeqLen)")
           .Add("BoolMaskTri = Less(RangeRow2DPast, RangeCol2D)");
     }
-    builder.Add("MaskTri = Where(BoolMaskTri, FloatNegInf, ScalarZero)")
-        .Add("AttnBiasCausalOrNot = Add(AttnBias, MaskTri)");
+    if (cast_mask_to_bias) {
+      // Cast the generated float mask before Add so non-float32 bias inputs
+      // remain valid.
+      builder.Add("MaskTriFloat = Where(BoolMaskTri, FloatNegInf, ScalarZero)")
+          .Add("MaskTri = CastLike(MaskTriFloat, AttnBias)");
+    } else {
+      // Preserve the exact function body emitted for frozen Attention-24.
+      builder.Add("MaskTri = Where(BoolMaskTri, FloatNegInf, ScalarZero)");
+    }
+    builder.Add("AttnBiasCausalOrNot = Add(AttnBias, MaskTri)");
   } else {
     builder.Add("AttnBiasCausalOrNot = Identity(AttnBias)");
   }
