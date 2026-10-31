@@ -478,30 +478,6 @@ class TestSchema:
 
 
 class TestOpSchema:
-    def test_init(self):
-        # Test that the constructor creates an OpSchema object
-        schema = defs.OpSchema("test_op", "test_domain", 1)
-        assert isinstance(schema, defs.OpSchema)
-        assert schema.node_determinism == defs.OpSchema.NodeDeterminism.Deterministic
-
-    def test_init_with_inputs(self) -> None:
-        op_schema = defs.OpSchema(
-            "test_op",
-            "test_domain",
-            1,
-            inputs=[defs.OpSchema.FormalParameter("input1", "T")],
-            type_constraints=[("T", ["tensor(int64)"], "")],
-        )
-        assert op_schema.name == "test_op"
-        assert op_schema.domain == "test_domain"
-        assert op_schema.since_version == 1
-        assert len(op_schema.inputs) == 1
-        assert op_schema.inputs[0].name == "input1"
-        assert op_schema.inputs[0].type_str == "T"
-        assert len(op_schema.type_constraints) == 1
-        assert op_schema.type_constraints[0].type_param_str == "T"
-        assert op_schema.type_constraints[0].allowed_type_strs == ["tensor(int64)"]
-
     def test_init_creates_multi_input_output_schema(self) -> None:
         expected_parameter_count = 2
         op_schema = defs.OpSchema(
@@ -549,6 +525,7 @@ class TestOpSchema:
         assert len(op_schema.inputs) == 0
         assert len(op_schema.outputs) == 0
         assert len(op_schema.type_constraints) == 0
+        assert op_schema.node_determinism == defs.OpSchema.NodeDeterminism.Deterministic
 
     def test_name(self):
         # Test that the name parameter is required and is a string
@@ -557,9 +534,6 @@ class TestOpSchema:
         with pytest.raises(TypeError):
             defs.OpSchema(123, "test_domain", 1)
 
-        schema = defs.OpSchema("test_op", "test_domain", 1)
-        assert schema.name == "test_op"
-
     def test_domain(self):
         # Test that the domain parameter is required and is a string
         with pytest.raises(TypeError):
@@ -567,16 +541,10 @@ class TestOpSchema:
         with pytest.raises(TypeError):
             defs.OpSchema("test_op", 123, 1)
 
-        schema = defs.OpSchema("test_op", "test_domain", 1)
-        assert schema.domain == "test_domain"
-
     def test_since_version(self):
         # Test that the since_version parameter is required and is an integer
         with pytest.raises(TypeError):
             defs.OpSchema("test_op", "test_domain")
-
-        schema = defs.OpSchema("test_op", "test_domain", 1)
-        assert schema.since_version == 1
 
     def test_doc(self):
         schema = defs.OpSchema("test_op", "test_domain", 1, doc="test_doc")
