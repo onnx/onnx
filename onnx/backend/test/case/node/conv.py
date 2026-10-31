@@ -95,6 +95,26 @@ class Conv(Base):
         )
 
     @staticmethod
+    def export_conv_with_bias() -> None:
+        node = onnx.helper.make_node(
+            "Conv", inputs=["x", "W", "B"], outputs=["y"], kernel_shape=[2, 2]
+        )
+        x = np.array(
+            [[[[1.0, 2.0, 3.0], [4.0, 5.0, 6.0], [7.0, 8.0, 9.0]]]],
+            dtype=np.float32,
+        )
+        W = np.array(
+            [[[[1.0, 0.0], [0.0, 1.0]]], [[[1.0, 1.0], [1.0, 1.0]]]],
+            dtype=np.float32,
+        )
+        B = np.array([-1.0, 2.0], dtype=np.float32)
+        y = np.array(
+            [[[[5.0, 7.0], [11.0, 13.0]], [[14.0, 18.0], [26.0, 30.0]]]],
+            dtype=np.float32,
+        )
+        expect(node, inputs=[x, W, B], outputs=[y], name="test_conv_with_bias")
+
+    @staticmethod
     def export_conv_with_strides() -> None:
         x = np.array(
             [
