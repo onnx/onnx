@@ -215,6 +215,10 @@ def search_issues_or_pulls(
             "order": "asc",
         }
         result = run_gh(["api", f"search/issues?{urlencode(params)}"])
+        if result.get("incomplete_results"):
+            raise RuntimeError(
+                f"GitHub returned incomplete {item_type} search results; narrow --months and retry"
+            )
         page_items = result.get("items", [])
         items.extend(page_items)
         if len(page_items) < SEARCH_PAGE_SIZE:
