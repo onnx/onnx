@@ -18041,7 +18041,29 @@ expect(
 
 
 ### Mean
-There are 1 test cases, listed as following:
+There are 2 test cases, listed as following:
+<details>
+<summary>float16_large_sum</summary>
+
+```python
+node = onnx.helper.make_node(
+    "Mean",
+    inputs=["data_0", "data_1"],
+    outputs=["result"],
+)
+data_0 = np.array([40000, 1], dtype=np.float16)
+data_1 = np.array([40000, 3], dtype=np.float16)
+# The sum of the inputs overflows float16, but their mean does not.
+result = np.array([40000, 2], dtype=np.float16)
+expect(
+    node,
+    inputs=[data_0, data_1],
+    outputs=[result],
+    name="test_mean_float16_large_sum",
+)
+```
+
+</details>
 <details>
 <summary>mean</summary>
 

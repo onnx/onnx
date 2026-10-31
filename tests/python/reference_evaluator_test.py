@@ -5008,6 +5008,55 @@ class TestReferenceEvaluator:
 
     @pytest.mark.parametrize("opset", [13, 18, onnx_opset_version()])
     @pytest.mark.parametrize("keepdims", [0, 1])
+    @pytest.mark.parametrize(
+        ("np_dtype", "tensor_type", "values"),
+        [
+            # The sum of 65536 float16 ones exceeds the float16 maximum of 65504.
+            (np.float16, TensorProto.FLOAT16, [1.0] * 65536),
+            # Summing in bfloat16 rounds 256 + 1 back to 256.
+            (ml_dtypes.bfloat16, TensorProto.BFLOAT16, [256.0, 1.0, 1.0]),
+        ],
+        ids=["float16", "bfloat16"],
+    )
+    def test_reduce_log_sum_low_precision_large_reduction(
+        self, opset, keepdims, np_dtype, tensor_type, values
+    ):
+        data = np.array([values], dtype=np_dtype)
+        output_shape = [1, 1] if keepdims else [1]
+        X = make_tensor_value_info("X", tensor_type, list(data.shape))
+        Y = make_tensor_value_info("Y", tensor_type, output_shape)
+        feeds = {"X": data}
+        if opset >= 18:
+            A = make_tensor_value_info("A", TensorProto.INT64, [1])
+            node = make_node("ReduceLogSum", ["X", "A"], ["Y"], keepdims=keepdims)
+            inputs = [X, A]
+            feeds["A"] = np.array([1], dtype=np.int64)
+        else:
+            node = make_node("ReduceLogSum", ["X"], ["Y"], axes=[1], keepdims=keepdims)
+            inputs = [X]
+        model = make_model(
+            make_graph([node], "g", inputs, [Y]),
+            opset_imports=[make_opsetid("", opset)],
+        )
+        got = ReferenceEvaluator(model).run(None, feeds)[0]
+        expected = np.full(output_shape, math.log(math.fsum(values)), dtype=np_dtype)
+        assert got.shape == expected.shape
+        assert got.dtype == expected.dtype
+        np.testing.assert_allclose(
+            got.astype(np.float32), expected.astype(np.float32), rtol=1e-3, atol=0
+        )
+
+    def test_reduce_log_sum_preserves_double_precision(self):
+        data = np.array([1.0, 2**-40], dtype=np.float64)
+        node = make_node("ReduceLogSum", ["X", "A"], ["Y"], keepdims=0)
+        got = ReferenceEvaluator(node).run(
+            None, {"X": data, "A": np.array([0], dtype=np.int64)}
+        )[0]
+        assert got.dtype == np.float64
+        np.testing.assert_allclose(got, math.log1p(2**-40), rtol=1e-12, atol=0)
+
+    @pytest.mark.parametrize("opset", [13, 18, onnx_opset_version()])
+    @pytest.mark.parametrize("keepdims", [0, 1])
     @pytest.mark.parametrize("values", [[0.0], [8.0], [-1.0, 0.0]])
     def test_reduce_log_sum_exp_float16_large_reduction(self, opset, keepdims, values):
         repeats = 65536
