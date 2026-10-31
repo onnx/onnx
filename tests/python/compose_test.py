@@ -925,6 +925,81 @@ class TestComposeFunctions:
             sparse_initializer1=["sparse_init1", "sparse_init2"],
         )
 
+    @pytest.mark.parametrize(
+        ("domain", "function_name", "overload"),
+        [("local", "Add", ""), ("local", "Add", "custom"), ("local", "CustomAdd", "")],
+    )
+    def test_add_prefix_function_identity(
+        self, domain: str, function_name: str, overload: str
+    ) -> None:
+        ops = [helper.make_opsetid("", 18)]
+        if domain:
+            ops.append(helper.make_opsetid(domain, 1))
+        # An external custom operator can coexist with a local function overload.
+        operator_domain = domain if overload else ""
+        function = helper.make_function(
+            domain,
+            function_name,
+            ["A", "B"],
+            ["C"],
+            [helper.make_node("Add", ["A", "B"], ["C"], domain=operator_domain)],
+            ops,
+            overload=overload,
+        )
+        wrapper = helper.make_function(
+            "local",
+            "Wrapper",
+            ["A", "B"],
+            ["C"],
+            [
+                helper.make_node(
+                    function_name, ["A", "B"], ["C"], domain=domain, overload=overload
+                )
+            ],
+            ops,
+        )
+        graph = helper.make_graph(
+            [
+                helper.make_node("Add", ["x", "y"], ["sum"], domain=operator_domain),
+                helper.make_node(
+                    function_name,
+                    ["sum", "y"],
+                    ["out"],
+                    domain=domain,
+                    overload=overload,
+                ),
+            ],
+            "graph",
+            [
+                helper.make_tensor_value_info(n, TensorProto.FLOAT, [1])
+                for n in ("x", "y")
+            ],
+            [helper.make_tensor_value_info("out", TensorProto.FLOAT, [1])],
+        )
+        model = helper.make_model(
+            graph, functions=[function, wrapper], opset_imports=ops
+        )
+        checker.check_model(model)
+        prefixed = compose.add_prefix(model, "prefix_")
+        checker.check_model(prefixed)
+        assert prefixed.graph.node[0].op_type == "Add"
+        assert prefixed.functions[0].node[0].op_type == "Add"
+        for node in (prefixed.graph.node[0], prefixed.functions[0].node[0]):
+            assert (node.domain, node.overload) == (operator_domain, "")
+        for node in (prefixed.graph.node[1], prefixed.functions[1].node[0]):
+            assert (node.domain, node.op_type, node.overload) == (
+                domain,
+                "prefix_" + function_name,
+                overload,
+            )
+        assert (
+            prefixed.functions[0].domain,
+            prefixed.functions[0].name,
+            prefixed.functions[0].overload,
+        ) == (domain, "prefix_" + function_name, overload)
+        assert model.graph.node[1].op_type == function_name
+        assert model.functions[0].name == function_name
+
     def test_overlapping_function_names(self) -> None:
         """Tests error checking when the name of local function entries overlaps"""
         ops = [helper.make_opsetid("", 10), helper.make_opsetid("local", 10)]

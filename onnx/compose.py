@@ -624,18 +624,18 @@ def add_prefix(
         f_name_map = {}
         for f in model.functions:
             new_f_name = prefix + f.name
-            f_name_map[f.name] = new_f_name
+            f_name_map[(f.domain, f.name, f.overload)] = new_f_name
             f.name = new_f_name
         # Adjust references to local functions in other local function
         # definitions
         for f in model.functions:
             for n in f.node:
-                if n.op_type in f_name_map:
-                    n.op_type = f_name_map[n.op_type]
+                if (n.domain, n.op_type, n.overload) in f_name_map:
+                    n.op_type = f_name_map[(n.domain, n.op_type, n.overload)]
         # Adjust references to local functions in the graph
         for n in model.graph.node:
-            if n.op_type in f_name_map:
-                n.op_type = f_name_map[n.op_type]
+            if (n.domain, n.op_type, n.overload) in f_name_map:
+                n.op_type = f_name_map[(n.domain, n.op_type, n.overload)]
 
     return model
 
