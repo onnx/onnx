@@ -3061,6 +3061,47 @@ class TestReferenceEvaluator:
         got1 = ref1.run(None, feeds)
         assert_allclose(got1[0], expected)
 
+    def test_conv_transpose_grouped_bias(self):
+        node = make_node("ConvTranspose", ["X", "W", "B"], ["Y"], group=2)
+        graph = make_graph(
+            [node],
+            "grouped_bias",
+            [
+                make_tensor_value_info("X", TensorProto.FLOAT, [None, 4, 1, 1]),
+                make_tensor_value_info("W", TensorProto.FLOAT, [None, 2, 1, 1]),
+                make_tensor_value_info("B", TensorProto.FLOAT, [4]),
+            ],
+            [make_tensor_value_info("Y", TensorProto.FLOAT, [None, 4, 1, 1])],
+        )
+        model = make_model(graph, opset_imports=[make_opsetid("", 16)])
+        feeds = {
+            "X": np.ones((2, 4, 1, 1), dtype=np.float32),
+            "W": np.ones((4, 2, 1, 1), dtype=np.float32),
+            "B": np.array([1, 2, 3, 4], dtype=np.float32),
+        }
+
+        got = ReferenceEvaluator(model).run(None, feeds)[0]
+        expected = np.tile(np.array([3, 4, 5, 6], dtype=np.float32), (2, 1)).reshape(
+            2, 4, 1, 1
+        )
+        assert_array_equal(got, expected)
+
+        # The grouped path must also continue to work when bias is omitted.
+        node.input.pop()
+        graph = make_graph(
+            [node],
+            "grouped_no_bias",
+            [
+                make_tensor_value_info("X", TensorProto.FLOAT, [None, 4, 1, 1]),
+                make_tensor_value_info("W", TensorProto.FLOAT, [None, 2, 1, 1]),
+            ],
+            [make_tensor_value_info("Y", TensorProto.FLOAT, [None, 4, 1, 1])],
+        )
+        model = make_model(graph, opset_imports=[make_opsetid("", 16)])
+        got = ReferenceEvaluator(model).run(None, {"X": feeds["X"], "W": feeds["W"]})[0]
+        expected = np.full((2, 4, 1, 1), 2, dtype=np.float32)
+        assert_array_equal(got, expected)
+
     def test_stft(self):
         signal = make_tensor_value_info("signal", TensorProto.FLOAT, [None, None, None])
         frame_step = make_tensor_value_info("frame_step", TensorProto.INT64, [None])
