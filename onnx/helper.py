@@ -1039,8 +1039,15 @@ def printable_attribute(
             content.append("<Tensor>")
         else:
             # special case to print scalars
-            field = tensor_dtype_to_field(attr.t.data_type)
-            content.append(f"<Scalar Tensor {getattr(attr.t, field)}>")
+            if attr.t.raw_data:
+                value = onnx.numpy_helper.to_array(attr.t).reshape(-1).tolist()
+            else:
+                value = getattr(attr.t, tensor_dtype_to_field(attr.t.data_type))
+            limit = 5
+            value_str = (
+                str(value[:limit])[:-1] + ", ...]" if len(value) > limit else str(value)
+            )
+            content.append(f"<Scalar Tensor {value_str}>")
     elif attr.HasField("g"):
         content.append(f"<graph {attr.g.name}>")
         graphs.append(attr.g)
