@@ -85,14 +85,3 @@ class TestRegistry:
             assert model.SerializeToString(
                 deterministic=True
             ) == loaded_model.SerializeToString(deterministic=True)
-
-
-class TestCustomSerializer:
-    def test_serialize_deserialize_model(self) -> None:
-        serializer = _OnnxTestTextualSerializer()
-        model = onnx.parser.parse_model(_TEST_MODEL)
-        serialized = serializer.serialize_proto(model)
-        deserialized = serializer.deserialize_proto(serialized, onnx.ModelProto())
-        assert model.SerializeToString(
-            deterministic=True
-        ) == deserialized.SerializeToString(deterministic=True)

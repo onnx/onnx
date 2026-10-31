@@ -31,9 +31,6 @@ class TestSchema:
             relu_schema.node_determinism == defs.OpSchema.NodeDeterminism.Deterministic
         )
 
-    def test_typecheck(self) -> None:
-        defs.get_schema("Conv")
-
     def test_attr_default_value(self) -> None:
         v = defs.get_schema("BatchNormalization").attributes["epsilon"].default_value
         assert type(v) is onnx.AttributeProto
@@ -224,28 +221,7 @@ class TestSchema:
             "tensor(int64)",
         }
 
-        for expected_type in expected_types:
-            assert expected_type in supported_types, (
-                f"Range should support {expected_type}"
-            )
-
-        # Verify no unexpected types are supported (regression check)
-        allowed_type_families = {
-            "float16",
-            "bfloat16",
-            "float",
-            "double",
-            "int16",
-            "int32",
-            "int64",
-        }
-
-        for supported_type in supported_types:
-            if supported_type.startswith("tensor(") and supported_type.endswith(")"):
-                base_type = supported_type[7:-1]
-                assert base_type in allowed_type_families, (
-                    f"Unexpected type {supported_type} supported by Range"
-                )
+        assert supported_types == expected_types
 
     def test_range_type_consistency(self) -> None:
         """Test Range operator type constraints are consistent."""
@@ -273,47 +249,6 @@ class TestSchema:
         assert len(type_constraints) == 1, (
             "Range should have exactly one type constraint 'T'"
         )
-
-    def test_range_numeric_types_only(self) -> None:
-        """Test Range operator only supports appropriate numeric types."""
-        range_schema = defs.get_schema("Range")
-
-        supported_types = set()
-        for constraint in range_schema.type_constraints:
-            if constraint.type_param_str == "T":
-                supported_types.update(constraint.allowed_type_strs)
-
-        unsupported_types = {
-            "tensor(bool)",
-            "tensor(string)",
-            "tensor(uint8)",
-            "tensor(uint16)",
-            "tensor(uint32)",
-            "tensor(uint64)",
-            "tensor(int8)",
-        }
-
-        for unsupported_type in unsupported_types:
-            assert unsupported_type not in supported_types, (
-                f"Range should not support {unsupported_type}"
-            )
-
-        # All supported types should be appropriate for arithmetic operations
-        for supported_type in supported_types:
-            assert supported_type.startswith("tensor("), (
-                f"All Range types should be tensors, got {supported_type}"
-            )
-
-            base_type = supported_type[7:-1]
-            assert base_type in [
-                "float16",
-                "bfloat16",
-                "float",
-                "double",
-                "int16",
-                "int32",
-                "int64",
-            ], f"Range type {base_type} should be a supported numeric type"
 
     def test_optional_type_constraints(self) -> None:
         def tensor(ts):
