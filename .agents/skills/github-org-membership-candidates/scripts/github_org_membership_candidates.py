@@ -9,8 +9,8 @@ import csv
 import json
 import subprocess
 import sys
-from concurrent.futures import ThreadPoolExecutor, as_completed
-from datetime import UTC, date, datetime
+from concurrent.futures import ThreadPoolExecutor
+from datetime import UTC, date, datetime, timedelta
 from pathlib import Path
 from typing import Any
 from urllib.parse import urlencode
@@ -27,8 +27,49 @@ query($org: String!, $after: String) {
 }
 """
 
+REVIEW_FIELDS = """
+pageInfo { hasNextPage endCursor }
+nodes { submittedAt author { __typename login } }
+"""
+
+# `latestReviews` is not used: it silently drops some comment-only reviewers.
+PULL_REQUESTS_QUERY = f"""
+query($q: String!, $after: String) {{
+  search(query: $q, type: ISSUE, first: 100, after: $after) {{
+    issueCount
+    pageInfo {{ hasNextPage endCursor }}
+    nodes {{
+      ... on PullRequest {{
+        number
+        createdAt
+        mergedAt
+        isDraft
+        author {{ __typename login }}
+        repository {{ nameWithOwner }}
+        reviews(first: 100) {{ {REVIEW_FIELDS} }}
+      }}
+    }}
+  }}
+}}
+"""
+
+MORE_REVIEWS_QUERY = f"""
+query($owner: String!, $name: String!, $number: Int!, $after: String) {{
+  repository(owner: $owner, name: $name) {{
+    pullRequest(number: $number) {{
+      reviews(first: 100, after: $after) {{ {REVIEW_FIELDS} }}
+    }}
+  }}
+}}
+"""
+
 SEARCH_PAGE_SIZE = 100
 SEARCH_MAX_PAGES = 10  # GitHub search API caps results at 1,000 per query.
+SEARCH_RESULT_CAP = SEARCH_PAGE_SIZE * SEARCH_MAX_PAGES
+
+# Automation identities that GitHub reports as ordinary users rather than `type: Bot`.
+BOT_LOGINS = {"actions-user"}
+BOT_LOGIN_SUFFIXES = ("-bot", "[bot]")
 
 # Best-effort repository -> SIG/WG mapping, sourced from the responsibilities table and
 # per-SIG READMEs in https://github.com/onnx/sigs (no repository is ever assigned to more than
@@ -73,11 +114,39 @@ NON_SIG_REPOS = {
 }
 
 
+def is_advisory_fork(repo_full_name: str) -> bool:
+    # GitHub Security Advisory temporary private forks (<owner>/<repo>-ghsa-xxxx-xxxx-xxxx) are not
+    # flagged as forks, yet carry a full copy of the upstream repository's history.
+    return "-ghsa-" in repo_full_name.split("/", 1)[-1]
+
+
+def is_bot(login: str, account_type: str | None) -> bool:
+    return (
+        account_type == "Bot"
+        or login in BOT_LOGINS
+        or login.endswith(BOT_LOGIN_SUFFIXES)
+    )
+
+
+def is_candidate_account(
+    login: str | None, account_type: str | None, member_logins: set[str]
+) -> bool:
+    return (
+        bool(login) and login not in member_logins and not is_bot(login, account_type)
+    )
+
+
+def in_window(timestamp: str | None, start: date, end: date) -> bool:
+    return (
+        timestamp is not None and start.isoformat() <= timestamp[:10] <= end.isoformat()
+    )
+
+
 def guess_sig(repo_full_name: str | None) -> str:
     if repo_full_name is None:
         return "unknown"
-    # GitHub Security Advisory temporary private forks (onnx/onnx-ghsa-...) mirror a fix already
-    # landing in the advisory's real repository; attribute them the same way as "onnx/onnx".
+    # Advisory forks (onnx/onnx-ghsa-...) mirror a fix already landing in the advisory's real
+    # repository; attribute them the same way as "onnx/onnx".
     if repo_full_name.startswith("onnx/onnx-ghsa-"):
         return REPO_SIG_MAP["onnx/onnx"]
     if repo_full_name in NON_SIG_REPOS:
@@ -160,6 +229,8 @@ def empty_candidate(login: str) -> dict[str, Any]:
         "login": login,
         "issues": 0,
         "pull_requests": 0,
+        "merged_pull_requests": 0,
+        "reviewed_pull_requests": 0,
         "commits": 0,
         "first_activity_at": None,
         "last_activity_at": None,
@@ -198,16 +269,34 @@ def primary_repo(candidate: dict[str, Any]) -> str | None:
     return min(repo_activity, key=lambda repo: (-repo_activity[repo], repo.lower()))
 
 
-def search_issues_or_pulls(
-    org: str,
-    item_type: str,
-    start: date,
-    end: date,
+def search_in_windows(
+    search: Any, query: str, qualifier: str, start: date, end: date
 ) -> tuple[list[dict[str, Any]], bool]:
-    query = f"org:{org} is:{item_type} created:{start.isoformat()}..{end.isoformat()}"
-    if item_type == "pr":
-        query += " draft:false"
+    """Run a date-qualified search, halving the window until each part fits under the cap.
+
+    `search(query, splittable)` returns `(items, total_count)` and may stop early with no items
+    when `splittable` is true and the total exceeds the cap. Only a single day that still exceeds
+    the cap is reported as capped.
+    """
+    splittable = start < end
+    items, total = search(
+        f"{query} {qualifier}:{start.isoformat()}..{end.isoformat()}", splittable
+    )
+    if total <= SEARCH_RESULT_CAP:
+        return items, False
+    if not splittable:
+        return items, True
+    middle = start + (end - start) // 2
+    first, first_capped = search_in_windows(search, query, qualifier, start, middle)
+    second, second_capped = search_in_windows(
+        search, query, qualifier, middle + timedelta(days=1), end
+    )
+    return first + second, first_capped or second_capped
+
+
+def search_issues(query: str, splittable: bool) -> tuple[list[dict[str, Any]], int]:
     items: list[dict[str, Any]] = []
+    total = 0
     for page in range(1, SEARCH_MAX_PAGES + 1):
         params = {
             "q": query,
@@ -219,38 +308,137 @@ def search_issues_or_pulls(
         result = run_gh(["api", f"search/issues?{urlencode(params)}"])
         if result.get("incomplete_results"):
             raise RuntimeError(
-                f"GitHub returned incomplete {item_type} search results; narrow --months and retry"
+                "GitHub returned incomplete issue search results; narrow --months and retry"
             )
+        total = result.get("total_count", 0)
+        if splittable and total > SEARCH_RESULT_CAP:
+            return [], total
         page_items = result.get("items", [])
         items.extend(page_items)
         if len(page_items) < SEARCH_PAGE_SIZE:
-            return items, False
-    return items, True
+            break
+    return items, total
 
 
-def collect_issue_and_pull_activity(
+def collect_issue_activity(
     org: str,
     start: date,
     end: date,
     member_logins: set[str],
-) -> tuple[dict[str, dict[str, Any]], bool]:
-    candidates: dict[str, dict[str, Any]] = {}
-    capped = False
-    for item_type, field in (("issue", "issues"), ("pr", "pull_requests")):
-        items, hit_cap = search_issues_or_pulls(org, item_type, start, end)
-        capped = capped or hit_cap
-        for item in items:
-            user = item.get("user") or {}
-            login = user.get("login")
-            if not login or login in member_logins or user.get("type") == "Bot":
+    candidates: dict[str, dict[str, Any]],
+) -> bool:
+    items, capped = search_in_windows(
+        search_issues, f"org:{org} is:issue", "created", start, end
+    )
+    for item in items:
+        user = item.get("user") or {}
+        login = user.get("login")
+        if not is_candidate_account(login, user.get("type"), member_logins):
+            continue
+        repository_url = item.get("repository_url")
+        created_at = item.get("created_at")
+        if not repository_url or not created_at:
+            continue
+        repo_full_name = "/".join(repository_url.rsplit("/", 2)[-2:])
+        note_activity(candidates, login, "issues", created_at, repo_full_name)
+    return capped
+
+
+def search_pull_requests(
+    query: str, splittable: bool
+) -> tuple[list[dict[str, Any]], int]:
+    items: list[dict[str, Any]] = []
+    cursor = None
+    while True:
+        result = graphql(PULL_REQUESTS_QUERY, {"q": query, "after": cursor})["search"]
+        total = result["issueCount"]
+        if splittable and total > SEARCH_RESULT_CAP:
+            return [], total
+        items.extend(node for node in result["nodes"] if node)
+        if not result["pageInfo"]["hasNextPage"]:
+            return items, total
+        cursor = result["pageInfo"]["endCursor"]
+
+
+def pull_request_reviews(pull: dict[str, Any]) -> list[dict[str, Any]]:
+    reviews = pull["reviews"]
+    nodes = list(reviews["nodes"])
+    owner, name = pull["repository"]["nameWithOwner"].split("/", 1)
+    while reviews["pageInfo"]["hasNextPage"]:
+        data = graphql(
+            MORE_REVIEWS_QUERY,
+            {
+                "owner": owner,
+                "name": name,
+                "number": str(pull["number"]),
+                "after": reviews["pageInfo"]["endCursor"],
+            },
+        )
+        reviews = data["repository"]["pullRequest"]["reviews"]
+        nodes.extend(reviews["nodes"])
+    return nodes
+
+
+def collect_pull_request_activity(
+    org: str,
+    start: date,
+    end: date,
+    member_logins: set[str],
+    candidates: dict[str, dict[str, Any]],
+) -> bool:
+    # Partition by last update rather than creation: a pull request merged or reviewed in the
+    # period was necessarily updated on or after the start, even if it was opened earlier.
+    search_end = max(end, datetime.now(UTC).date())
+    pulls, capped = search_in_windows(
+        search_pull_requests, f"org:{org} is:pr", "updated", start, search_end
+    )
+    for pull in pulls:
+        repo_full_name = pull["repository"]["nameWithOwner"]
+        author = pull.get("author") or {}
+        author_login = author.get("login")
+        if is_candidate_account(author_login, author.get("__typename"), member_logins):
+            if not pull["isDraft"] and in_window(pull["createdAt"], start, end):
+                note_activity(
+                    candidates,
+                    author_login,
+                    "pull_requests",
+                    pull["createdAt"],
+                    repo_full_name,
+                )
+            if in_window(pull["mergedAt"], start, end):
+                note_activity(
+                    candidates,
+                    author_login,
+                    "merged_pull_requests",
+                    pull["mergedAt"],
+                    repo_full_name,
+                )
+        # Count each reviewed pull request once per reviewer, at their latest in-period review.
+        latest_reviews: dict[str, str] = {}
+        for review in pull_request_reviews(pull):
+            reviewer = review.get("author") or {}
+            login = reviewer.get("login")
+            submitted_at = review.get("submittedAt")
+            if (
+                login == author_login
+                or not is_candidate_account(
+                    login, reviewer.get("__typename"), member_logins
+                )
+                or not in_window(submitted_at, start, end)
+            ):
                 continue
-            repository_url = item.get("repository_url")
-            created_at = item.get("created_at")
-            if not repository_url or not created_at:
-                continue
-            repo_full_name = "/".join(repository_url.rsplit("/", 2)[-2:])
-            note_activity(candidates, login, field, created_at, repo_full_name)
-    return candidates, capped
+            latest_reviews[login] = max(
+                latest_reviews.get(login, submitted_at), submitted_at
+            )
+        for login, submitted_at in latest_reviews.items():
+            note_activity(
+                candidates,
+                login,
+                "reviewed_pull_requests",
+                submitted_at,
+                repo_full_name,
+            )
+    return capped
 
 
 def fetch_repository_commits(
@@ -276,15 +464,17 @@ def collect_commit_activity(
 ) -> None:
     since = f"{start.isoformat()}T00:00:00Z"
     until = f"{end.isoformat()}T23:59:59Z"
+    seen_shas: set[str] = set()
     with ThreadPoolExecutor(max_workers=workers) as executor:
         futures = {
-            executor.submit(
+            repository["name_with_owner"]: executor.submit(
                 fetch_repository_commits, repository["name_with_owner"], since, until
-            ): repository["name_with_owner"]
+            )
             for repository in repositories
         }
-        for future in as_completed(futures):
-            name_with_owner = futures[future]
+        # Consume in repository order so a commit present in several repositories is always
+        # attributed to the same (first) one, then skipped everywhere else.
+        for name_with_owner, future in futures.items():
             try:
                 commits = future.result()
             except RuntimeError as error:
@@ -292,11 +482,16 @@ def collect_commit_activity(
                     f"Failed to collect commits for {name_with_owner!r}"
                 ) from error
             for commit in commits:
+                sha = commit.get("sha")
+                if sha in seen_shas:
+                    continue
+                if sha:
+                    seen_shas.add(sha)
                 author = commit.get("author")
                 if not author:
                     continue
                 login = author.get("login")
-                if not login or login in member_logins or author.get("type") == "Bot":
+                if not is_candidate_account(login, author.get("type"), member_logins):
                     continue
                 commit_date = commit.get("commit", {}).get("committer", {}).get("date")
                 if not commit_date:
@@ -306,9 +501,15 @@ def collect_commit_activity(
                 )
 
 
+SCORE_FORMULA = "commits + issues + 3*merged_pull_requests + 2*reviewed_pull_requests"
+
+
 def candidate_score(candidate: dict[str, Any]) -> int:
     return (
-        candidate["commits"] + 2 * candidate["issues"] + 3 * candidate["pull_requests"]
+        candidate["commits"]
+        + candidate["issues"]
+        + 3 * candidate["merged_pull_requests"]
+        + 2 * candidate["reviewed_pull_requests"]
     )
 
 
@@ -335,6 +536,8 @@ def summarize(
                 "login": candidate["login"],
                 "issues": candidate["issues"],
                 "pull_requests": candidate["pull_requests"],
+                "merged_pull_requests": candidate["merged_pull_requests"],
+                "reviewed_pull_requests": candidate["reviewed_pull_requests"],
                 "commits": candidate["commits"],
                 "score": score,
                 "first_activity_at": candidate["first_activity_at"],
@@ -384,6 +587,8 @@ def write_report(
         "login",
         "issues",
         "pull_requests",
+        "merged_pull_requests",
+        "reviewed_pull_requests",
         "commits",
         "score",
         "first_activity_at",
@@ -405,7 +610,7 @@ def write_report(
             "repository_count": repository_count,
             "min_score": min_score,
             "min_active_span_days": min_span_days,
-            "score": "commits + 2*issues + 3*pull_requests",
+            "score": SCORE_FORMULA,
             "search_capped": search_capped,
         },
         "candidates": rows,
@@ -429,9 +634,8 @@ def write_report(
     if search_capped:
         lines.extend(
             [
-                "**Note:** at least one issue/pull-request search hit GitHub's 1,000-result cap for",
-                "this period. Counts may be undercounted; narrow `--months` and re-run for a",
-                "precise picture.",
+                "**Note:** a single day's issue or pull-request search still exceeded GitHub's",
+                "1,000-result cap, so counts for that day may be undercounted.",
                 "",
             ]
         )
@@ -439,35 +643,37 @@ def write_report(
         [
             "## Priority candidates",
             "",
-            "| Account | Score | Issues | Pull requests | Commits | Active span (days) | Last observable activity | Likely SIG/WG |",
-            "|---|---:|---:|---:|---:|---:|---|---|",
+            "| Account | Score | Merged PRs | Reviewed PRs | Opened PRs | Issues | Commits | Active span (days) | Last observable activity | Likely SIG/WG |",
+            "|---|---:|---:|---:|---:|---:|---:|---:|---|---|",
         ]
     )
     lines.extend(
-        f"| {row['login']} | {row['score']} | {row['issues']} | {row['pull_requests']} | "
+        f"| {row['login']} | {row['score']} | {row['merged_pull_requests']} | "
+        f"{row['reviewed_pull_requests']} | {row['pull_requests']} | {row['issues']} | "
         f"{row['commits']} | {row['active_span_days']} | {row['last_activity_at'] or 'none'} | "
         f"{row['likely_sig']} |"
         for row in priority
     )
     if not priority:
-        lines.append("| _No accounts above the threshold_ | | | | | | | |")
+        lines.append("| _No accounts above the threshold_ | | | | | | | | | |")
     lines.extend(
         [
             "",
             "## All candidates",
             "",
-            "| Account | Score | Issues | Pull requests | Commits | Active span (days) | Last observable activity | Likely SIG/WG | Band |",
-            "|---|---:|---:|---:|---:|---:|---|---|---|",
+            "| Account | Score | Merged PRs | Reviewed PRs | Opened PRs | Issues | Commits | Active span (days) | Last observable activity | Likely SIG/WG | Band |",
+            "|---|---:|---:|---:|---:|---:|---:|---:|---|---|---|",
         ]
     )
     lines.extend(
-        f"| {row['login']} | {row['score']} | {row['issues']} | {row['pull_requests']} | "
+        f"| {row['login']} | {row['score']} | {row['merged_pull_requests']} | "
+        f"{row['reviewed_pull_requests']} | {row['pull_requests']} | {row['issues']} | "
         f"{row['commits']} | {row['active_span_days']} | {row['last_activity_at'] or 'none'} | "
         f"{row['likely_sig']} | {row['band']} |"
         for row in rows
     )
     if not rows:
-        lines.append("| _No non-member activity observed_ | | | | | | | | |")
+        lines.append("| _No non-member activity observed_ | | | | | | | | | | |")
     lines.extend(
         [
             "",
@@ -480,13 +686,19 @@ def write_report(
             "  distinct quarters or months: a contributor active only in late March and early",
             "  April touches two quarters but has been active for about a day, so a duration",
             "  threshold is the more reliable signal for sustained engagement.",
-            "- The score is `commits + 2*issues + 3*pull requests`.",
-            "- Pull request reviews are not counted (no organization-wide search for review",
-            "  activity without already knowing the account).",
+            f"- The score is `{SCORE_FORMULA}`. Opened pull requests are",
+            "  listed but not scored, so unmerged or rejected pull requests add nothing.",
+            "- `Reviewed PRs` counts other people's pull requests with at least one review",
+            "  (including comment-only reviews) submitted by the account in the period.",
+            "- Searches are split into smaller date windows until each fits under GitHub's",
+            "  1,000-result search cap.",
             "- Commits only cover each repository's default branch, and only non-fork,",
-            "  non-archived repositories.",
-            "- Comments, Discussions, draft work, moderation, and activity outside GitHub are",
-            "  not counted.",
+            "  non-archived repositories other than security-advisory forks (`*-ghsa-*`); a",
+            "  commit present in several repositories is counted once.",
+            "- Bots are excluded: GitHub `type: Bot` accounts, `actions-user`, and logins ending",
+            "  in `-bot` or `[bot]`.",
+            "- Comments outside reviews, Discussions, draft work, moderation, and activity",
+            "  outside GitHub are not counted.",
             "- Sponsorship, company affiliation, and Code of Conduct standing are not derivable",
             "  from the GitHub API and must be checked manually before any nomination.",
             "- `Likely SIG/WG` is a best-effort guess from the repository the candidate was most",
@@ -593,12 +805,19 @@ def main() -> int:
     scanned_repositories = [
         repository
         for repository in repositories
-        if not repository["fork"] and not repository["archived"]
+        if not repository["fork"]
+        and not repository["archived"]
+        and not is_advisory_fork(repository["name_with_owner"])
     ]
 
-    candidates, search_capped = collect_issue_and_pull_activity(
-        arguments.org, start, end, member_logins
+    candidates: dict[str, dict[str, Any]] = {}
+    issues_capped = collect_issue_activity(
+        arguments.org, start, end, member_logins, candidates
     )
+    pulls_capped = collect_pull_request_activity(
+        arguments.org, start, end, member_logins, candidates
+    )
+    search_capped = issues_capped or pulls_capped
     collect_commit_activity(
         scanned_repositories, start, end, member_logins, candidates, arguments.workers
     )

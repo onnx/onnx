@@ -48,7 +48,7 @@ The generated files are:
 
 | File | Content |
 |---|---|
-| `candidate-summary.csv` | Non-member login, contribution counts, score, activity span, a best-effort primary repository / likely SIG-WG guess, and candidate band |
+| `candidate-summary.csv` | Non-member login, contribution counts (issues, opened / merged / reviewed pull requests, commits), score, activity span, a best-effort primary repository / likely SIG-WG guess, and candidate band |
 | `report.json` | Machine-readable report and metadata |
 | `report.md` | Human-readable candidate queue and methodology |
 
@@ -57,8 +57,15 @@ The generated files are:
 The default score is:
 
 ```text
-commits + 2 * issues + 3 * pull_requests
+commits + issues + 3 * merged_pull_requests + 2 * reviewed_pull_requests
 ```
+
+Opened pull requests are reported but not scored, so unmerged or rejected pull requests add
+nothing; reviewing other people's pull requests, which is usually the clearest sign of sustained
+engagement, is. `reviewed_pull_requests` counts distinct pull requests by someone else with at
+least one review (comment-only reviews included) submitted by the account in the period. Issues
+weigh the same as a commit so that batches of tool-generated bug reports do not outrank merged
+work.
 
 The score is a sorting aid, not a judgment of contribution quality or eligibility. Candidate
 bands:
@@ -89,17 +96,20 @@ shortlist to bring to prospective sponsors or SIG chairs, not a nomination itsel
 
 ## Coverage limitations
 
-- Pull request reviews are not counted in this first version: there is no organization-wide
-  search for "reviewed by" activity without already knowing the candidate's login. A reviewer
-  who rarely opens issues or pull requests may be undercounted or missed entirely.
+- Pull requests, including their reviews, are read through a GraphQL search over pull requests
+  *updated* in the period, so a pull request opened earlier but merged or reviewed in the period
+  is still seen.
+- GitHub's search API caps results at 1,000 per query. The script halves each search's date
+  window until every part fits under the cap; only a single day that still exceeds it can be
+  undercounted, and the report notes when that happens.
 - Commit counts only cover each repository's default branch, and only non-fork, non-archived
-  repositories.
-- GitHub's search API caps results at 1,000 per query. In a very active organization or a long
-  `--months` window, issue or pull request counts near that cap may be undercounted; narrow
-  `--months` and re-run if a report notes the cap was hit.
-- Comments, Discussions, draft work, moderation, security work, and activity outside GitHub are
-  not counted.
-- Bot accounts (GitHub `type: Bot`) are excluded on a best-effort basis.
+  repositories. GitHub Security Advisory temporary private forks (`<repo>-ghsa-...`) are skipped:
+  GitHub does not flag them as forks, but they carry a full copy of the upstream history. A
+  commit that still appears in several scanned repositories is counted once.
+- Review comments count through their review; other comments, Discussions, draft work,
+  moderation, security work, and activity outside GitHub are not counted.
+- Bot accounts are excluded on a best-effort basis: GitHub `type: Bot`, the `actions-user`
+  identity used by GitHub Actions, and logins ending in `-bot` or `[bot]`.
 - The `Likely SIG/WG` guess is repository-level only, from a mapping hand-built from
   [onnx/sigs](https://github.com/onnx/sigs)'s responsibilities table (no machine-readable
   repository-to-SIG registry exists). For `onnx/onnx` specifically, Architecture & Infra is the
