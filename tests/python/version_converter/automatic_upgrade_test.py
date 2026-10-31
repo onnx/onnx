@@ -30,6 +30,28 @@ class TestAutomaticUpgrade(automatic_conversion_test_base.TestAutomaticConversio
     def test_Abs(self) -> None:
         self._test_op_upgrade("Abs", 1, attrs={"consumed_inputs": [0]})
 
+    def test_Pack(self) -> None:
+        self._test_op_upgrade(
+            "Pack",
+            29,
+            [[2, 8]],
+            [[2, 3]],
+            [TensorProto.UINT8],
+            [TensorProto.UINT8],
+            attrs={"bits": 3},
+        )
+
+    def test_Unpack(self) -> None:
+        self._test_op_upgrade(
+            "Unpack",
+            29,
+            [[2, 3], []],
+            [[2, 8]],
+            [TensorProto.UINT8, TensorProto.INT64],
+            [TensorProto.UINT8],
+            attrs={"bits": 3},
+        )
+
     def test_Acosh(self) -> None:
         self._test_op_upgrade("Acosh", 9)
 

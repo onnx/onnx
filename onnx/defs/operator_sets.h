@@ -1518,12 +1518,18 @@ class OpSet_Onnx_ver28 {
   }
 };
 
+// Forward declarations for ai.onnx version 29
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 29, Pack);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 29, Unpack);
+
 // Iterate over schema from ai.onnx version 29
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 29, GroupedMatMul);
 
 class OpSet_Onnx_ver29 {
  public:
   static void ForEachSchema(const std::function<void(OpSchema&&)>& fn) {
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 29, Pack)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 29, Unpack)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 29, GroupedMatMul)>());
   }
 };

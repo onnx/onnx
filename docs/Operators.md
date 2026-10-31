@@ -196,6 +196,7 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#Mish">Mish</a>|<a href="Changelog.md#Mish-22">22</a>, <a href="Changelog.md#Mish-18">18</a>|22|
 |<a href="#NegativeLogLikelihoodLoss">NegativeLogLikelihoodLoss</a>|<a href="Changelog.md#NegativeLogLikelihoodLoss-22">22</a>, <a href="Changelog.md#NegativeLogLikelihoodLoss-13">13</a>, <a href="Changelog.md#NegativeLogLikelihoodLoss-12">12</a>|22|
 |<a href="#PRelu">PRelu</a>|<a href="Changelog.md#PRelu-16">16</a>, <a href="Changelog.md#PRelu-9">9</a>, <a href="Changelog.md#PRelu-7">7</a>, <a href="Changelog.md#PRelu-6">6</a>, <a href="Changelog.md#PRelu-1">1</a>|16|
+|<a href="#Pack">Pack</a>|<a href="Changelog.md#Pack-29">29</a>|29|
 |<a href="#RMSNormalization">RMSNormalization</a>|<a href="Changelog.md#RMSNormalization-23">23</a>|23|
 |<a href="#Range">Range</a>|<a href="Changelog.md#Range-27">27</a>, <a href="Changelog.md#Range-11">11</a>|27|
 |<a href="#ReduceL1">ReduceL1</a>|<a href="Changelog.md#ReduceL1-18">18</a>, <a href="Changelog.md#ReduceL1-13">13</a>, <a href="Changelog.md#ReduceL1-11">11</a>, <a href="Changelog.md#ReduceL1-1">1</a>|18|
@@ -216,6 +217,7 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#SwiGLU">SwiGLU</a>|<a href="Changelog.md#SwiGLU-28">28</a>|28|
 |<a href="#Swish">Swish</a>|<a href="Changelog.md#Swish-24">24</a>|24|
 |<a href="#ThresholdedRelu">ThresholdedRelu</a>|<a href="Changelog.md#ThresholdedRelu-22">22</a>, <a href="Changelog.md#ThresholdedRelu-10">10</a>|18|
+|<a href="#Unpack">Unpack</a>|<a href="Changelog.md#Unpack-29">29</a>|29|
 
 ### ai.onnx.preview
 |**Operator**|**Since version**||
@@ -27725,6 +27727,120 @@ expect(node, inputs=[x, slope], outputs=[y], name="test_prelu_broadcast")
 </details>
 
 
+### <a name="Pack"></a><a name="pack">**Pack**</a>
+
+  Packs unsigned integer codes into bytes independently along the last axis.
+  The input `X` and output `Y` are UINT8 tensors of the same rank, which must be
+  at least 1. The required attribute `bits` must be an integer in [1, 8], and
+  each element of `X` must be in [0, 2^bits - 1].
+
+  For input shape `[..., N]`, the output shape is `[..., B]`, where
+  `B = ceil(N * bits / 8)`. Each fixed combination of indices in the leading
+  dimensions defines a row; a rank-1 tensor has one row.
+
+  Within each row, codes are packed in increasing last-axis index order, with
+  the least significant bit of each code first. Number the bits of each code
+  and byte starting at 0 for the least significant bit. For code index
+  `0 <= i < N` and bit index `0 <= k < bits`, bit `k` of input code `i` is stored
+  at bit `(i * bits + k) % 8` of output byte `floor((i * bits + k) / 8)`.
+  When a code spans a byte boundary, its remaining higher-order bits occupy
+  the low bits of the next byte. Each row begins at bit 0 of a new byte.
+  Unused high bits in the final byte of each row are zero.
+
+  All leading dimensions are preserved, including zero dimensions, and the
+  same output shape rule applies when any leading dimension is zero.
+  An input with `N = 0` produces an output with `B = 0`.
+
+  For example, `bits = 3` packs `[0, 1, 2, 3, 4, 5, 6, 7]` into
+  `[136, 198, 250]`. With `bits = 5`, the rows `[[1, 2, 3], [31, 0, 16]]`
+  are packed into `[[65, 12], [31, 64]]`.
+
+#### Version
+
+This version of the operator has been available since version 29 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>bits</tt> : int (required)</dt>
+<dd>Number of bits per unsigned code. Must be in [1, 8].</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> : T</dt>
+<dd>UINT8 tensor of rank at least 1, with each element in [0, 2^bits - 1].</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> : T</dt>
+<dd>Packed UINT8 tensor with the same leading dimensions as X and last dimension ceil(N * bits / 8), where N is the last dimension of X.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(uint8)</dt>
+<dd>Unsigned byte tensors.</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>pack_3bit</summary>
+
+```python
+node = helper.make_node("Pack", ["X"], ["Y"], bits=3)
+x = np.arange(8, dtype=np.uint8)
+y = np.array([0x88, 0xC6, 0xFA], dtype=np.uint8)
+expect(node, inputs=[x], outputs=[y], name="test_pack_3bit")
+```
+
+</details>
+
+
+<details>
+<summary>pack_empty</summary>
+
+```python
+node = helper.make_node("Pack", ["X"], ["Y"], bits=3)
+x = np.empty((2, 0), dtype=np.uint8)
+expect(node, inputs=[x], outputs=[x], name="test_pack_empty")
+```
+
+</details>
+
+
+<details>
+<summary>pack_empty_rows</summary>
+
+```python
+node = helper.make_node("Pack", ["X"], ["Y"], bits=5)
+x = np.empty((2, 0, 9), dtype=np.uint8)
+y = np.empty((2, 0, 6), dtype=np.uint8)
+expect(node, inputs=[x], outputs=[y], name="test_pack_empty_rows")
+```
+
+</details>
+
+
+<details>
+<summary>pack_rows_5bit</summary>
+
+```python
+node = helper.make_node("Pack", ["X"], ["Y"], bits=5)
+x = np.array([[1, 2, 3], [31, 0, 16]], dtype=np.uint8)
+y = np.array([[0x41, 0x0C], [0x1F, 0x40]], dtype=np.uint8)
+expect(node, inputs=[x], outputs=[y], name="test_pack_rows_5bit")
+```
+
+</details>
+
+
 ### <a name="Pad"></a><a name="pad">**Pad**</a>
 
   Given a tensor containing the data to be padded (`data`), a tensor containing the number of start and end pad values for axis (`pads`), (optionally) a `mode`, and (optionally) `constant_value`,
@@ -45162,6 +45278,129 @@ expect(
     outputs=[y, indices, inverse_indices, counts],
     name="test_unique_bfloat16_sorted_without_axis",
 )
+```
+
+</details>
+
+
+### <a name="Unpack"></a><a name="unpack">**Unpack**</a>
+
+  Unpacks bytes into unsigned integer codes independently along the last axis.
+  The input `X` and output `Y` are UINT8 tensors of the same rank, which must be
+  at least 1. The required attribute `bits` must be an integer in [1, 8].
+  The input `count` must be a nonnegative scalar INT64 tensor specifying the
+  number of output codes per row. Each element of `Y` is in [0, 2^bits - 1].
+
+  For input shape `[..., B]`, `B` must equal `ceil(count * bits / 8)`, and the
+  output shape is `[..., count]`. Each fixed combination of indices in the
+  leading dimensions defines a row; a rank-1 tensor has one row.
+
+  Within each row, input bytes are read in increasing last-axis index order,
+  starting with the least significant bit of each byte. Consecutive groups of
+  `bits` bits form output codes in order, with the first bit of each group as
+  the code's least significant bit. Number the bits of each byte and code
+  starting at 0 for the least significant bit. For code index
+  `0 <= i < count` and bit index `0 <= k < bits`, bit `k` of output code `i` is
+  read from bit `(i * bits + k) % 8` of input byte `floor((i * bits + k) / 8)`.
+  When a code spans a byte boundary, its higher-order bits are read from
+  the low bits of the next byte. Each row begins at bit 0 of a new byte.
+  Unused high bits in the final input byte of each row are padding and are ignored.
+
+  All leading dimensions are preserved, including zero dimensions, and the
+  same shape requirements apply when any leading dimension is zero.
+  With `count = 0`, both input and output must have an empty last axis.
+
+  For example, `bits = 3` and `count = 8` unpack `[136, 198, 250]` into
+  `[0, 1, 2, 3, 4, 5, 6, 7]`. With `bits = 3` and `count = 2`, `[255]`
+  is unpacked into `[7, 7]`.
+
+#### Version
+
+This version of the operator has been available since version 29 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>bits</tt> : int (required)</dt>
+<dd>Number of bits per unsigned code. Must be in [1, 8].</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> : T</dt>
+<dd>UINT8 tensor of rank at least 1, with last dimension ceil(count * bits / 8).</dd>
+<dt><tt>count</tt> : tensor(int64)</dt>
+<dd>Scalar INT64 tensor giving the number of output codes per row. Must be nonnegative.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> : T</dt>
+<dd>UINT8 tensor with the same leading dimensions as X and last dimension count. Each element is in [0, 2^bits - 1].</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(uint8)</dt>
+<dd>Unsigned byte tensors.</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>unpack_3bit</summary>
+
+```python
+node = helper.make_node("Unpack", ["X", "count"], ["Y"], bits=3)
+x = np.array([0x88, 0xC6, 0xFA], dtype=np.uint8)
+count = np.array(8, dtype=np.int64)
+y = np.arange(8, dtype=np.uint8)
+expect(node, inputs=[x, count], outputs=[y], name="test_unpack_3bit")
+```
+
+</details>
+
+
+<details>
+<summary>unpack_empty</summary>
+
+```python
+node = helper.make_node("Unpack", ["X", "count"], ["Y"], bits=3)
+x = np.empty((2, 0), dtype=np.uint8)
+count = np.array(0, dtype=np.int64)
+expect(node, inputs=[x, count], outputs=[x], name="test_unpack_empty")
+```
+
+</details>
+
+
+<details>
+<summary>unpack_empty_rows</summary>
+
+```python
+node = helper.make_node("Unpack", ["X", "count"], ["Y"], bits=5)
+x = np.empty((2, 0, 6), dtype=np.uint8)
+count = np.array(9, dtype=np.int64)
+y = np.empty((2, 0, 9), dtype=np.uint8)
+expect(node, inputs=[x, count], outputs=[y], name="test_unpack_empty_rows")
+```
+
+</details>
+
+
+<details>
+<summary>unpack_rows_5bit</summary>
+
+```python
+node = helper.make_node("Unpack", ["X", "count"], ["Y"], bits=5)
+x = np.array([[0x41, 0x0C], [0x1F, 0x40]], dtype=np.uint8)
+count = np.array(3, dtype=np.int64)
+y = np.array([[1, 2, 3], [31, 0, 16]], dtype=np.uint8)
+expect(node, inputs=[x, count], outputs=[y], name="test_unpack_rows_5bit")
 ```
 
 </details>
