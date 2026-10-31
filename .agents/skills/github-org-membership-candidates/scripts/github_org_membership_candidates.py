@@ -551,6 +551,11 @@ def parse_args() -> argparse.Namespace:
         parser.error("--min-active-months must not be negative")
     if arguments.workers < 1:
         parser.error("--workers must be positive")
+    repository_root = Path(__file__).resolve().parents[4]
+    output_dir = arguments.output_dir.resolve()
+    if output_dir == repository_root or repository_root in output_dir.parents:
+        parser.error("--output-dir must be outside the repository")
+    arguments.output_dir = output_dir
     return arguments
 
 
