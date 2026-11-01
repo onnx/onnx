@@ -382,6 +382,8 @@ class TestShapeInference(TestShapeInferenceHelper):
             opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
         )
 
+    # Rejected only with check_type=True (set by the shared harness); the default
+    # infer_shapes() path is still affected by #5960.
     def test_cast_to_complex(self) -> None:
         graph = self._make_graph(
             [("x", TensorProto.FLOAT, (2, 4, 3))],
@@ -389,7 +391,9 @@ class TestShapeInference(TestShapeInferenceHelper):
             [],
         )
 
-        with pytest.raises(onnx.shape_inference.InferenceError):
+        with pytest.raises(
+            onnx.shape_inference.InferenceError, match="has unsupported type"
+        ):
             self._inferred(graph)
 
     @pytest.mark.parametrize("version", all_versions_for("CastLike"))
@@ -7858,6 +7862,8 @@ class TestShapeInference(TestShapeInferenceHelper):
                 graph,
             )
 
+    # Rejected only with check_type=True (set by the shared harness); the default
+    # infer_shapes() path is still affected by #5960.
     def test_quantizelinear_invalid_output_dtype(self) -> None:
         graph = self._make_graph(
             [("x", TensorProto.FLOAT, (3, 4, 5)), ("y_scale", TensorProto.FLOAT, ())],
@@ -7872,7 +7878,9 @@ class TestShapeInference(TestShapeInferenceHelper):
             [],
         )
 
-        with pytest.raises(onnx.shape_inference.InferenceError):
+        with pytest.raises(
+            onnx.shape_inference.InferenceError, match="has unsupported type"
+        ):
             self._inferred(
                 graph,
             )
