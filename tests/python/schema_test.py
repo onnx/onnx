@@ -203,7 +203,7 @@ class TestSchema:
         assert "A - trunc(A / B) * B" in mod28.doc
 
     def test_range_supported_types(self) -> None:
-        """Test Range operator supports all expected numeric types."""
+        """Test Range operator supports exactly the expected numeric types."""
         range_schema = defs.get_schema("Range")
 
         supported_types = set()
