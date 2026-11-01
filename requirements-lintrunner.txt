@@ -2,7 +2,7 @@
 lintrunner>=0.10.7
 lintrunner-adapters>=0.14.1
 # RUFF
-ruff==0.16.8
+ruff==0.17.2
 # MYPY
 mypy==2.4.0
 types-protobuf==6.32.1.20260221
