@@ -440,11 +440,11 @@ class ShapeInferenceImplBase {
               input_data_by_name_holder[output_name] = attr.t();
               input_data_by_name[output_name] = &input_data_by_name_holder[output_name];
             }
-          } else if (attr.type() == AttributeProto::SPARSE_TENSOR && attr.has_sparse_tensor()) {
-            if (reuse_constant_tensors) {
-              input_sparse_data_by_name[output_name] = &attr.sparse_tensor();
-            }
+          } else if (
+              attr.type() == AttributeProto::SPARSE_TENSOR && attr.has_sparse_tensor() && reuse_constant_tensors) {
+            input_sparse_data_by_name[output_name] = &attr.sparse_tensor();
           }
+
         } else {
           switch (attr.type()) {
             case AttributeProto::INTS: {
@@ -512,7 +512,7 @@ class ShapeInferenceImplBase {
         if (schema->has_type_and_shape_inference_function()) {
           schema->GetTypeAndShapeInferenceFunction()(ctx);
         } else if (schema->HasFunction()) {
-          ProcessCall(n, *(schema->GetFunction()), ctx);
+          ProcessCall(n, *schema->GetFunction(), ctx);
         } // else: rely on schema->CheckInputOutputType() down below.
         // check type-constraints specified via type variables
         if (options.check_type) {
@@ -521,7 +521,7 @@ class ShapeInferenceImplBase {
       } else if (!model_local_functions_map.empty()) {
         auto iter = model_local_functions_map.find(GetFunctionIdentifier(n));
         if (iter != model_local_functions_map.end()) {
-          ProcessCall(n, *(iter->second), ctx);
+          ProcessCall(n, *iter->second, ctx);
         } else {
           has_unsupported_op = true;
           return;
@@ -716,7 +716,7 @@ class ShapeInferenceImplBase {
         // Copy the type info to ctx
         // to pass back to main graph
         auto* type_proto = ctx.getOutputType(i);
-        type_proto->CopyFrom(*(iter->second));
+        type_proto->CopyFrom(*iter->second);
       }
     }
 
@@ -906,8 +906,11 @@ void InferShapes(
   // Use SerializeToString instead of SerializeToOstream due to LITE_PROTO
   std::fstream output(save_path, std::ios::out | std::ios::trunc | std::ios::binary);
   std::string model_string;
+  // Protobuf marks SerializeToString nodiscard, so check it explicitly.
+  if (!model.SerializeToString(&model_string)) {
+    fail_check("Unable to serialize the inferred model for the target path: ", save_path);
+  }
   ONNX_TRY {
-    model.SerializeToString(&model_string);
     output << model_string;
   }
   ONNX_CATCH(...) {

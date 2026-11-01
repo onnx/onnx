@@ -5,10 +5,12 @@
 #include "onnx/checker.h"
 
 #include <algorithm>
+#include <charconv>
 #include <cstdint>
 #include <filesystem> // NOLINT(build/c++17)
 #include <iostream>
 #include <limits>
+#include <optional>
 #include <string>
 #include <unordered_map>
 #include <unordered_set>
@@ -73,8 +75,94 @@ namespace ONNX_NAMESPACE::checker {
     }                                                                                    \
   } while (0)
 
+// Returns the IR version that introduced the given tensor data type, or 0 for
+// data types that have been available since the first IR version.
+static int min_ir_version_for_data_type(int32_t data_type) {
+  switch (data_type) {
+    case TensorProto::BFLOAT16:
+      return 0x00000004;
+    case TensorProto::FLOAT8E4M3FN:
+    case TensorProto::FLOAT8E4M3FNUZ:
+    case TensorProto::FLOAT8E5M2:
+    case TensorProto::FLOAT8E5M2FNUZ:
+      return 0x00000009;
+    case TensorProto::UINT4:
+    case TensorProto::INT4:
+      return 0x0000000A;
+    case TensorProto::FLOAT4E2M1:
+      return 0x0000000B;
+    case TensorProto::FLOAT8E8M0:
+      return 0x0000000C;
+    case TensorProto::UINT2:
+    case TensorProto::INT2:
+      return 0x0000000D;
+    case TensorProto::FLOAT6E2M3:
+    case TensorProto::FLOAT6E3M2:
+      return 0x0000000E;
+    default:
+      return 0;
+  }
+}
+
+static void check_data_type_ir_version(int32_t data_type, const std::string& name, const CheckerContext& ctx) {
+  const int min_ir_version = min_ir_version_for_data_type(data_type);
+  // A non-positive IR version means the context does not carry one (e.g. a
+  // default-constructed CheckerContext), so there is nothing to check against.
+  if (ctx.get_ir_version() > 0 && ctx.get_ir_version() < min_ir_version) {
+    fail_check(
+        "Data type ",
+        Utils::DataTypeUtils::ToDataTypeString(data_type),
+        " used by '",
+        name,
+        "' requires IR version >= ",
+        min_ir_version,
+        ", but the IR version is ",
+        ctx.get_ir_version(),
+        ".");
+  }
+}
+
+static void check_type_ir_version(const TypeProto& type, const std::string& name, const CheckerContext& ctx) {
+  switch (type.value_case()) {
+    case TypeProto::kTensorType:
+      check_data_type_ir_version(type.tensor_type().elem_type(), name, ctx);
+      break;
+    case TypeProto::kSparseTensorType:
+      check_data_type_ir_version(type.sparse_tensor_type().elem_type(), name, ctx);
+      break;
+    case TypeProto::kSequenceType:
+      check_type_ir_version(type.sequence_type().elem_type(), name, ctx);
+      break;
+    case TypeProto::kOptionalType:
+      check_type_ir_version(type.optional_type().elem_type(), name, ctx);
+      break;
+    case TypeProto::kMapType:
+      check_data_type_ir_version(type.map_type().key_type(), name, ctx);
+      check_type_ir_version(type.map_type().value_type(), name, ctx);
+      break;
+    default:
+      break;
+  }
+}
+
+static void check_attribute_tensors_ir_version(const AttributeProto& attr, const CheckerContext& ctx) {
+  if (attr.has_t()) {
+    check_data_type_ir_version(attr.t().data_type(), attr.name(), ctx);
+  }
+  for (const auto& tensor : attr.tensors()) {
+    check_data_type_ir_version(tensor.data_type(), attr.name(), ctx);
+  }
+  if (attr.has_sparse_tensor()) {
+    check_data_type_ir_version(attr.sparse_tensor().values().data_type(), attr.name(), ctx);
+  }
+  for (const auto& sparse_tensor : attr.sparse_tensors()) {
+    check_data_type_ir_version(sparse_tensor.values().data_type(), attr.name(), ctx);
+  }
+}
+
 void check_value_info(const ValueInfoProto& value_info, const CheckerContext& ctx) {
   enforce_non_empty_field(value_info, name);
+  check_type_ir_version(value_info.type(), value_info.name(), ctx);
   // Relax constraint for subgraph input/output.
   if (!ctx.is_main_graph())
     return;
@@ -114,11 +202,124 @@ void check_value_info(const ValueInfoProto& value_info, const CheckerContext& ct
   }
 }
 
+// Returns the number of bytes the tensor's data must have for its declared shape and
+// type: either a packed sub-byte type (2, 4 or 4/3 elements per byte) or a regular,
+// byte-aligned type. Returns 0 for types without a fixed size, such as STRING.
+static int64_t expected_raw_data_bytes(const TensorProto& tensor, int64_t nelem) {
+  const int64_t bit_width = ElementBitWidth(tensor.data_type());
+  if (bit_width < 0) {
+    return 0;
+  }
+  if (bit_width == 2 || bit_width == 4) {
+    const int64_t elements_per_byte = 8 / bit_width;
+    return (nelem / elements_per_byte) + (nelem % elements_per_byte != 0);
+  }
+  if (bit_width == 6) {
+    int64_t expected_bits = 0;
+    if (checked_mul_overflow(nelem, bit_width, &expected_bits)) {
+      fail_check(
+          "TensorProto (tensor name: ", tensor.name(), ") has a shape too large to validate against its data type.");
+    }
+    return (expected_bits / 8) + (expected_bits % 8 != 0);
+  }
+  int64_t expected_bytes = 0;
+  if (checked_mul_overflow(nelem, bit_width / 8, &expected_bytes)) {
+    fail_check(
+        "TensorProto (tensor name: ", tensor.name(), ") has a shape too large to validate against its data type.");
+  }
+  return expected_bytes;
+}
+
+// Parses the value of an external_data "offset" or "length" entry, which must be a
+// non-negative decimal integer.
+static int64_t parse_external_data_integer(const StringStringEntryProto& entry, const std::string& tensor_name) {
+  const std::string& value = entry.value();
+  const char* end = value.data() + value.size();
+  int64_t result = -1;
+  const auto [ptr, ec] = std::from_chars(value.data(), end, result);
+  if (ec != std::errc() || ptr != end || result < 0) {
+    fail_check(
+        "External data ",
+        entry.key(),
+        " of TensorProto (tensor name: ",
+        tensor_name,
+        ") must be a non-negative integer, but it is '",
+        value,
+        "'.");
+  }
+  return result;
+}
+
+// Checks offset and length against the size of the external data file, as the
+// Python loader does before reading it, and that the data they describe is large
+// enough for the tensor's declared shape and type.
+static void check_external_data_size(
+    const TensorProto& tensor,
+    int64_t nelem,
+    const std::filesystem::path& data_path,
+    std::optional<int64_t> offset,
+    std::optional<int64_t> length) {
+  const auto data_path_str = path_to_utf8(data_path);
+  // As in resolve_external_data_location, a location starting with '#' refers to
+  // in-memory data rather than a file.
+  if (data_path_str.empty() || data_path_str[0] == '#') {
+    return;
+  }
+  std::error_code ec;
+  const std::uintmax_t file_size = std::filesystem::file_size(data_path, ec);
+  if (ec) {
+    fail_check(
+        "Unable to get the size of external data file ",
+        data_path_str,
+        " (tensor name: ",
+        tensor.name(),
+        "): ",
+        ec.message());
+  }
+  const auto start = static_cast<std::uintmax_t>(offset.value_or(0));
+  if (start > file_size) {
+    fail_check(
+        "External data offset (", start, ") exceeds file size (", file_size, ") for tensor ", tensor.name(), ".");
+  }
+  std::uintmax_t available = file_size - start;
+  if (length.has_value()) {
+    const auto requested = static_cast<std::uintmax_t>(*length);
+    if (requested > available) {
+      fail_check(
+          "External data length (",
+          requested,
+          ") exceeds available data (",
+          available,
+          " bytes from offset ",
+          start,
+          ") for tensor ",
+          tensor.name(),
+          ".");
+    }
+    available = requested;
+  }
+  const int64_t expected_bytes = expected_raw_data_bytes(tensor, nelem);
+  if (expected_bytes > 0 && available < static_cast<std::uintmax_t>(expected_bytes)) {
+    fail_check(
+        "External data of TensorProto (tensor name: ",
+        tensor.name(),
+        ") is ",
+        available,
+        " bytes, which is too small for the declared shape and type (",
+        expected_bytes,
+        " bytes required).");
+  }
+}
+
 void check_tensor(const TensorProto& tensor, const CheckerContext& ctx) {
   enforce_has_field(tensor, data_type);
+  if (!TensorProto_DataType_IsValid(tensor.data_type())) {
+    fail_check("Unrecognized data_type (tensor name: ", tensor.name(), "): ", tensor.data_type());
+  }
   if (tensor.data_type() == TensorProto::UNDEFINED) {
     fail_check("setting data_type field (tensor name: ", tensor.name(), ") to UNDEFINED is not allowed");
   }
+  check_data_type_ir_version(tensor.data_type(), tensor.name(), ctx);
 
   int num_value_fields = 0;
 
@@ -141,6 +342,31 @@ void check_tensor(const TensorProto& tensor, const CheckerContext& ctx) {
 
 #undef check_data_field
 
+  const int64_t full_nelem =
+      safe_dim_product(tensor.dims(), [&](const char* msg) { fail_check(msg, " (tensor name: ", tensor.name(), ")"); });
+  // Dims describe the full tensor, while segment describes the stored chunk for every payload type.
+  int64_t nelem = full_nelem;
+  if (tensor.has_segment()) {
+    const auto& seg = tensor.segment();
+    if (!seg.has_begin() || !seg.has_end()) {
+      fail_check("TensorProto segment must set begin and end (tensor name: ", tensor.name(), ")");
+    }
+    const int64_t begin = seg.begin();
+    const int64_t end = seg.end();
+    if (begin < 0 || end < begin || end > full_nelem) {
+      fail_check(
+          "Invalid TensorProto segment (tensor name: ",
+          tensor.name(),
+          "): [",
+          begin,
+          ", ",
+          end,
+          ") out of [0, ",
+          full_nelem,
+          ")");
+    }
+    nelem = end - begin;
+  }
   bool stored_externally = tensor.has_data_location() && tensor.data_location() == TensorProto::EXTERNAL;
   if (stored_externally) {
     if (num_value_fields != 0) {
@@ -151,20 +377,39 @@ void check_tensor(const TensorProto& tensor, const CheckerContext& ctx) {
           value_field);
     }
 
+    // Every location is validated, but, as in the Python loader, the last value
+    // of each key is the one that describes the data.
     bool has_location = false;
+    std::filesystem::path data_path;
+    const StringStringEntryProto* offset_entry = nullptr;
+    const StringStringEntryProto* length_entry = nullptr;
     for (const StringStringEntryProto& entry : tensor.external_data()) {
-      if (entry.has_key() && entry.has_value() && entry.key() == "location") {
+      if (!entry.has_key()) {
+        continue;
+      }
+      if (entry.key() == "location") {
         has_location = true;
-        resolve_external_data_location(ctx.get_model_dir(), entry.value(), tensor.name());
+        data_path = resolve_external_data_location(ctx.get_model_dir(), entry.value(), tensor.name());
+      } else if (entry.key() == "offset") {
+        offset_entry = &entry;
+      } else if (entry.key() == "length") {
+        length_entry = &entry;
       }
     }
     if (!has_location) {
       fail_check("TensorProto ( tensor name: ", tensor.name(), ") is stored externally but doesn't have a location.");
     }
+    std::optional<int64_t> offset;
+    if (offset_entry != nullptr) {
+      offset = parse_external_data_integer(*offset_entry, tensor.name());
+    }
+    std::optional<int64_t> length;
+    if (length_entry != nullptr) {
+      length = parse_external_data_integer(*length_entry, tensor.name());
+    }
+    check_external_data_size(tensor, nelem, data_path, offset, length);
     return;
   }
-  int64_t nelem =
-      safe_dim_product(tensor.dims(), [&](const char* msg) { fail_check(msg, " (tensor name: ", tensor.name(), ")"); });
   if (nelem == 0 && num_value_fields != 0) {
     fail_check("TensorProto (tensor name: ", tensor.name(), ") is 0-element but contains data!");
   }
@@ -175,82 +420,7 @@ void check_tensor(const TensorProto& tensor, const CheckerContext& ctx) {
     if (tensor.data_type() == TensorProto::STRING) {
       fail_check("STRING data (tensor name: ", tensor.name(), ") should not be stored in raw_data field");
     }
-    // Validate that raw_data is large enough for the declared shape and type: either a
-    // packed sub-byte type (2 or 4 elements per byte) or a regular, byte-aligned type.
-    int64_t expected_bytes = 0;
-    int64_t bytes_per_elem = 0;
-    switch (tensor.data_type()) {
-      case TensorProto::UINT4:
-      case TensorProto::INT4:
-      case TensorProto::FLOAT4E2M1:
-        expected_bytes = (nelem + 1) / 2; // 2 elements per byte, ceiling division
-        break;
-      case TensorProto::UINT2:
-      case TensorProto::INT2:
-        expected_bytes = (nelem + 3) / 4; // 4 elements per byte, ceiling division
-        break;
-      case TensorProto::FLOAT6E2M3:
-      case TensorProto::FLOAT6E3M2: {
-        int64_t expected_bits = 0;
-        if (checked_mul_overflow(nelem, 6, &expected_bits)) {
-          fail_check(
-              "TensorProto (tensor name: ",
-              tensor.name(),
-              ") has a shape too large to validate against its data type.");
-        }
-        expected_bytes = (expected_bits / 8) + (expected_bits % 8 != 0);
-        if (expected_bytes > 0 && static_cast<int64_t>(tensor.raw_data().size()) >= expected_bytes) {
-          const auto used_bits = static_cast<uint8_t>(expected_bits % 8);
-          if (used_bits != 0) {
-            const auto last_byte = static_cast<uint8_t>(tensor.raw_data()[expected_bytes - 1]);
-            const auto unused_bits_mask = static_cast<uint8_t>(0xFFU << used_bits);
-            if ((last_byte & unused_bits_mask) != 0) {
-              fail_check(
-                  "TensorProto (tensor name: ",
-                  tensor.name(),
-                  ") has non-zero padding bits in its packed FLOAT6 raw_data.");
-            }
-          }
-        }
-        break;
-      }
-      case TensorProto::UINT8:
-      case TensorProto::INT8:
-      case TensorProto::BOOL:
-      case TensorProto::FLOAT8E4M3FN:
-      case TensorProto::FLOAT8E4M3FNUZ:
-      case TensorProto::FLOAT8E5M2:
-      case TensorProto::FLOAT8E5M2FNUZ:
-      case TensorProto::FLOAT8E8M0:
-        bytes_per_elem = 1;
-        break;
-      case TensorProto::UINT16:
-      case TensorProto::INT16:
-      case TensorProto::FLOAT16:
-      case TensorProto::BFLOAT16:
-        bytes_per_elem = 2;
-        break;
-      case TensorProto::FLOAT:
-      case TensorProto::INT32:
-      case TensorProto::UINT32:
-        bytes_per_elem = 4;
-        break;
-      case TensorProto::DOUBLE:
-      case TensorProto::INT64:
-      case TensorProto::UINT64:
-      case TensorProto::COMPLEX64: // 2 x float32
-        bytes_per_elem = 8;
-        break;
-      case TensorProto::COMPLEX128: // 2 x float64
-        bytes_per_elem = 16;
-        break;
-      default:
-        break;
-    }
-    if (bytes_per_elem > 0 && checked_mul_overflow(nelem, bytes_per_elem, &expected_bytes)) {
-      fail_check(
-          "TensorProto (tensor name: ", tensor.name(), ") has a shape too large to validate against its data type.");
-    }
+    const int64_t expected_bytes = expected_raw_data_bytes(tensor, nelem);
     if (expected_bytes > 0 && static_cast<int64_t>(tensor.raw_data().size()) < expected_bytes) {
       fail_check(
           "TensorProto (tensor name: ",
@@ -260,6 +430,20 @@ void check_tensor(const TensorProto& tensor, const CheckerContext& ctx) {
           " bytes) is too small for the declared shape and type (",
           expected_bytes,
           " bytes required).");
+    }
+    if (tensor.data_type() == TensorProto::FLOAT6E2M3 || tensor.data_type() == TensorProto::FLOAT6E3M2) {
+      // expected_raw_data_bytes() already rejected counts where nelem * 6 overflows.
+      const auto used_bits = static_cast<uint8_t>((nelem * 6) % 8);
+      if (expected_bytes > 0 && used_bits != 0) {
+        const auto last_byte = static_cast<uint8_t>(tensor.raw_data()[expected_bytes - 1]);
+        const auto unused_bits_mask = static_cast<uint8_t>(0xFFU << used_bits);
+        if ((last_byte & unused_bits_mask) != 0) {
+          fail_check(
+              "TensorProto (tensor name: ",
+              tensor.name(),
+              ") has non-zero padding bits in its packed FLOAT6 raw_data.");
+        }
+      }
     }
     return;
   } else {
@@ -372,7 +556,7 @@ void check_tensor(const TensorProto& tensor, const CheckerContext& ctx) {
         check_field(int32_data);
         if (nelem > 0) {
           // Each int32 stores 4 bytes = 8 4-bit elements.
-          const int64_t expected_int32s = (nelem + 7) / 8;
+          const int64_t expected_int32s = (nelem / 8) + (nelem % 8 != 0);
           if (static_cast<int64_t>(tensor.int32_data().size()) < expected_int32s) {
             fail_check(
                 "TensorProto (tensor name: ",
@@ -390,7 +574,7 @@ void check_tensor(const TensorProto& tensor, const CheckerContext& ctx) {
         check_field(int32_data);
         if (nelem > 0) {
           // Each int32 stores 4 bytes = 16 2-bit elements.
-          const int64_t expected_int32s = (nelem + 15) / 16;
+          const int64_t expected_int32s = (nelem / 16) + (nelem % 16 != 0);
           if (static_cast<int64_t>(tensor.int32_data().size()) < expected_int32s) {
             fail_check(
                 "TensorProto (tensor name: ",
@@ -727,13 +911,12 @@ void check_attribute(const AttributeProto& attr, const CheckerContext& ctx, cons
     fail_check("Attribute (name: ", attr.name(), ") should not contain more than one value field.");
   }
 
-  if (!ctx.is_main_graph()) {
-    // It's an attribute of a node in function body.
-    if (attr.has_ref_attr_name() && used_fields != 0) {
-      // The attribute proto is supposed to refer to data outside and does not
-      // have its own value field set.
-      fail_check("Attribute (name: ", attr.name(), ") should refer to attribute in parent node.");
-    }
+  if ((!ctx.is_main_graph()) && (attr.has_ref_attr_name() && used_fields != 0))
+  // It's an attribute of a node in function body.
+  {
+    // The attribute proto is supposed to refer to data outside and does not
+    // have its own value field set.
+    fail_check("Attribute (name: ", attr.name(), ") should refer to attribute in parent node.");
   }
 
   if (attr.has_t()) {
@@ -840,6 +1023,11 @@ void check_graph(const GraphProto& graph, const CheckerContext& ctx, const Lexic
   }
   for (const auto& value_info : graph.output()) {
     check_value_info(value_info, ctx);
+  }
+  // Intermediate value_info entries are optional annotations and are not
+  // otherwise validated, but they must not use data types newer than the IR version.
+  for (const auto& value_info : graph.value_info()) {
+    check_type_ir_version(value_info.type(), value_info.name(), ctx);
   }
 
   // Inherit values available in outer scope
@@ -1249,6 +1437,13 @@ void check_function(const FunctionProto& function, const CheckerContext& ctx, co
       fail_check("function (", function.name(), ") should not have duplicate attributes specified.");
     }
   }
+  for (const auto& attr : function.attribute_proto()) {
+    check_attribute_tensors_ir_version(attr, ctx);
+  }
+  // Function inputs and outputs are untyped names; their types, if any, are given here.
+  for (const auto& value_info : function.value_info()) {
+    check_type_ir_version(value_info.type(), value_info.name(), ctx);
+  }
   std::unordered_set<std::string> used_experimental_ops;
   for (const auto& node : function.node()) {
     // nodes must be in topologically sorted order
@@ -1406,7 +1601,11 @@ static std::filesystem::path verify_path_containment(
   if (ec) {
     fail_check("Tensor ", tensor_name, " external data path could not be canonicalized: ", ec.message());
   }
-  auto canonical_base = std::filesystem::weakly_canonical(utf8_to_path(base_dir), ec);
+  // An empty base_dir means the current working directory. Passing an empty
+  // path to weakly_canonical can leave the containment prefix empty, which
+  // would accept every external-data path.
+  const auto normalized_base_dir = base_dir.empty() ? std::string(".") : base_dir;
+  auto canonical_base = std::filesystem::weakly_canonical(utf8_to_path(normalized_base_dir), ec);
   if (ec) {
     fail_check("Tensor ", tensor_name, " base directory could not be canonicalized: ", ec.message());
   }
@@ -1589,7 +1788,8 @@ static int try_kernel_contained_open(
     const std::string& location,
     [[maybe_unused]] const std::string& tensor_name,
     [[maybe_unused]] bool read_only) {
-  int raw_dirfd = open(base_dir.c_str(), O_RDONLY | O_DIRECTORY | O_CLOEXEC);
+  const auto normalized_base_dir = base_dir.empty() ? std::string(".") : base_dir;
+  int raw_dirfd = open(normalized_base_dir.c_str(), O_RDONLY | O_DIRECTORY | O_CLOEXEC);
   if (raw_dirfd < 0) {
     return -1;
   }
@@ -1615,6 +1815,8 @@ static int try_kernel_contained_open(
     }
   }
 #elif defined(ONNX_HAS_RESOLVE_BENEATH)
+  // POSIX open flags are int bitmasks.
+  // NOLINTBEGIN(bugprone-signed-bitwise)
   int flags = O_RESOLVE_BENEATH | O_CLOEXEC;
 #ifdef O_NOFOLLOW
   flags |= O_NOFOLLOW;
@@ -1624,6 +1826,7 @@ static int try_kernel_contained_open(
   } else {
     fd = openat(raw_dirfd, rel.c_str(), flags | O_CREAT | O_RDWR, 0600);
   }
+  // NOLINTEND(bugprone-signed-bitwise)
   if (fd < 0) {
     fail_check("Cannot open external data for tensor ", tensor_name);
   }
@@ -1653,6 +1856,8 @@ int64_t open_external_data(
 
   // Fallback: open() + O_NOFOLLOW + post-open inode verification.
   if (fd < 0) {
+    // POSIX open flags are int bitmasks.
+    // NOLINTBEGIN(bugprone-signed-bitwise)
     int flags = read_only ? O_RDONLY : (O_CREAT | O_RDWR);
 #ifdef O_CLOEXEC
     flags |= O_CLOEXEC;
@@ -1661,6 +1866,7 @@ int64_t open_external_data(
     flags |= O_NOFOLLOW;
 #endif
     fd = read_only ? open(data_path.c_str(), flags) : open(data_path.c_str(), flags, 0600);
+    // NOLINTEND(bugprone-signed-bitwise)
     if (fd == -1) {
       fail_check("Cannot open external data for tensor ", tensor_name);
     }

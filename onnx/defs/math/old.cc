@@ -633,7 +633,7 @@ Performs element-wise binary {name} (with Numpy-style broadcasting support).
 
 {broadcast_doc}
 
-For integer inputs, the result is computed using truncating division (rounding toward zero).
+For integer inputs, the result is computed using truncating division (rounding toward zero). For example, `-11 / 3` yields `-3`.
 )DOC";
           ReplaceAll(doc, "{name}", name);
           ReplaceAll(doc, "{broadcast_doc}", GenerateBroadcastingDocMul().c_str()););
@@ -692,7 +692,7 @@ Performs element-wise binary {name} (with Numpy-style broadcasting support).
 
 {broadcast_doc}
 
-For integer inputs, the result is computed using truncating division (rounding toward zero).
+For integer inputs, the result is computed using truncating division (rounding toward zero). For example, `-11 / 3` yields `-3`.
 )DOC";
           ReplaceAll(doc, "{name}", name);
           ReplaceAll(doc, "{broadcast_doc}", GenerateBroadcastingDocMul().c_str()););
@@ -1305,7 +1305,7 @@ static void matmulShapeInference_opset_9(ONNX_NAMESPACE::InferenceContext& ctx, 
     }
   }
 
-  *ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape() = resultShape;
+  *ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape() = std::move(resultShape);
 }
 
 ONNX_OPERATOR_SET_SCHEMA(
@@ -1978,7 +1978,7 @@ static std::function<void(OpSchema&)> MathDocGenerator_old_opset6(const char* na
 Performs element-wise binary {name} (with limited broadcast support).
 {broadcast_doc}
 
-For integer inputs, the result is computed using truncating division (rounding toward zero).
+For integer inputs, the result is computed using truncating division (rounding toward zero). For example, `-11 / 3` yields `-3`.
 )DOC";
           ReplaceAll(doc, "{name}", name);
           ReplaceAll(doc, "{broadcast_doc}", kDoc_Pow_ver1););
@@ -2889,14 +2889,8 @@ ONNX_OPERATOR_SET_SCHEMA(
           const auto& axis_dim = input_shape.dim(static_cast<int>(axis));
           const auto k = ctx.getInputData(1);
 
-          // Infer output shape if:
-          // (1) 'K' is available
-          // (2) axis_dim has dim value
-          // Otherwise cannot reliably compute output shape as axis dim value is
-          // unknown and hence cannot determine if axis dim value >= k (which
-          // should be enforced)
-          if (nullptr != k && axis_dim.has_dim_value()) {
-            int64_t k_value = 0;
+          int64_t k_value = 0;
+          if (nullptr != k) {
             if (k->dims_size() != 1 || k->dims(0) != 1) {
               fail_shape_inference("K input must be a one-dimensional tensor of size 1.");
             }
@@ -2908,6 +2902,18 @@ ONNX_OPERATOR_SET_SCHEMA(
               fail_shape_inference("K input must be of type int64.");
             }
 
+            if (k_value <= 0) {
+              fail_shape_inference("K input must contain a single positive value.");
+            }
+          }
+
+          // Infer output shape if:
+          // (1) 'K' is available
+          // (2) axis_dim has dim value
+          // Otherwise cannot reliably compute output shape as axis dim value is
+          // unknown and hence cannot determine if axis dim value >= k (which
+          // should be enforced)
+          if (nullptr != k && axis_dim.has_dim_value()) {
             if (axis_dim.dim_value() < k_value) {
               fail_shape_inference("Axis has less than the requested k elements.");
             }
@@ -3199,7 +3205,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             // For RFFT, output size on signal axis is floor(dft_length/2) + 1
             if (is_onesided && !inverse) {
               // RFFT: one-sided output
-              auto half_signal_size = (dft_length_value >> 1) + 1;
+              auto half_signal_size = (dft_length_value / 2) + 1;
               result_shape_proto.mutable_dim(axis_idx)->set_dim_value(half_signal_size);
             } else {
               // Standard FFT/IFFT and IRFFT: full length
@@ -3216,7 +3222,7 @@ ONNX_OPERATOR_SET_SCHEMA(
                 result_shape_proto.mutable_dim(axis_idx)->set_dim_value(full_signal_size);
               } else {
                 // RFFT without explicit dft_length: infer one-sided output size from input
-                auto half_signal_size = (axis_dimension_value >> 1) + 1;
+                auto half_signal_size = (axis_dimension_value / 2) + 1;
                 result_shape_proto.mutable_dim(axis_idx)->set_dim_value(half_signal_size);
               }
             } else {

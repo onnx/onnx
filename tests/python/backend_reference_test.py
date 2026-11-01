@@ -174,16 +174,5 @@ if version_utils.numpy_older_than("2.0"):
         r"reversesequence_bfloat16|unique_bfloat16_sorted_without_axis)_cpu"
     )
 
-# The documentation does not explicitly say that is_causal=1 and attn_mask is not None
-# is not allowed. The expansion (based on the function definition in ONNX)
-# assumes this case never happens and behaves likes is_causal=0 even if it is 1.
-# The reference implementation and the backend tests have a different behavior in that case.
-backend_test.exclude(
-    "(test_attention_4d_with_past_and_present_qk_matmul_bias_4d_mask_causal_expanded"
-    "|test_attention_4d_with_past_and_present_qk_matmul_bias_3d_mask_causal_expanded"
-    "|test_attention_4d_attn_mask_4d_causal_expanded"
-    "|test_attention_4d_attn_mask_3d_causal_expanded)"
-)
-
 # import all test cases at global scope to make them visible to python.unittest
 globals().update(backend_test.test_cases)

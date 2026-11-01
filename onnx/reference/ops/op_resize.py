@@ -196,26 +196,26 @@ def _interpolate_1d_with_x(
     input_width = len(data)
     output_width = scale_factor * input_width
     if coordinate_transformation_mode == "align_corners":
-        if output_width == 1:
+        if output_width_int == 1:
             x_ori = 0.0
         else:
-            x_ori = x * (input_width - 1) / (output_width - 1)
+            x_ori = x * (input_width - 1) / (output_width_int - 1)
     elif coordinate_transformation_mode == "asymmetric":
         x_ori = x / scale_factor
     elif coordinate_transformation_mode == "tf_crop_and_resize":
         if roi is None:
             raise ValueError("roi cannot be None.")
-        if output_width == 1:
+        if output_width_int == 1:
             x_ori = (roi[1] - roi[0]) * (input_width - 1) / 2
         else:
-            x_ori = x * (roi[1] - roi[0]) * (input_width - 1) / (output_width - 1)
+            x_ori = x * (roi[1] - roi[0]) * (input_width - 1) / (output_width_int - 1)
         x_ori += roi[0] * (input_width - 1)
         # Return extrapolation_value directly as what TF CropAndResize does
         if x_ori < 0 or x_ori > input_width - 1:
             return np.array(extrapolation_value)
     elif coordinate_transformation_mode == "pytorch_half_pixel":
-        if output_width == 1:
-            x_ori = -0.5
+        if output_width_int == 1:
+            x_ori = 0.0
         else:
             x_ori = (x + 0.5) / scale_factor - 0.5
     elif coordinate_transformation_mode == "half_pixel":
@@ -329,28 +329,28 @@ def _compute_x_ori(
     if coordinate_transformation_mode == "align_corners":
         x_ori = (
             np.zeros(output_width_int, dtype=np.float64)
-            if output_width == 1
-            else y * (input_width - 1) / (output_width - 1)
+            if output_width_int == 1
+            else y * (input_width - 1) / (output_width_int - 1)
         )
     elif coordinate_transformation_mode == "asymmetric":
         x_ori = y / scale_factor
     elif coordinate_transformation_mode == "tf_crop_and_resize":
         if roi is None:
             raise ValueError("roi cannot be None.")
-        if output_width == 1:
+        if output_width_int == 1:
             x_ori = np.full(
                 output_width_int,
                 (roi[1] - roi[0]) * (input_width - 1) / 2,
                 dtype=np.float64,
             )
         else:
-            x_ori = y * (roi[1] - roi[0]) * (input_width - 1) / (output_width - 1)
+            x_ori = y * (roi[1] - roi[0]) * (input_width - 1) / (output_width_int - 1)
         x_ori = x_ori + roi[0] * (input_width - 1)
         is_extrapolated = (x_ori < 0) | (x_ori > input_width - 1)
     elif coordinate_transformation_mode == "pytorch_half_pixel":
         x_ori = (
-            np.full(output_width_int, -0.5, dtype=np.float64)
-            if output_width == 1
+            np.zeros(output_width_int, dtype=np.float64)
+            if output_width_int == 1
             else (y + 0.5) / scale_factor - 0.5
         )
     elif coordinate_transformation_mode == "half_pixel":

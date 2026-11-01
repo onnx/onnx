@@ -217,7 +217,9 @@ static auto MakeChecker(void (*check_fn)(const ProtoType&, const Ctx&...)) {
   };
 }
 
-NB_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) { // NOLINT(cppcoreguidelines-pro-type-cstyle-cast)
+// NOLINTBEGIN(cppcoreguidelines-pro-type-cstyle-cast, bugprone-signed-bitwise)
+NB_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
+  // NOLINTEND(cppcoreguidelines-pro-type-cstyle-cast, bugprone-signed-bitwise)
   // Disabling nanobind leak warnings
   // TODO(#7283): Avoid leaks if possible
   nb::set_leak_warnings(false);
@@ -501,8 +503,10 @@ NB_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) { // NOLINT(cppcoreguidelines-
           })
       .def(
           "set_type_and_shape_inference_function",
-          [](OpSchema& op, const std::function<void(InferenceContext*)>& func) -> OpSchema& {
-            auto wrapper = [=](InferenceContext& ctx) { func(&ctx); };
+          [](OpSchema& op, std::function<void(InferenceContext*)> func) -> OpSchema& {
+            // Move nanobind's guarded Python-callable wrapper into the registered
+            // inference function so it remains valid after this binding returns.
+            auto wrapper = [func = std::move(func)](InferenceContext& ctx) { func(&ctx); };
             return op.TypeAndShapeInferenceFunction(wrapper);
           },
           nb::rv_policy::reference_internal)

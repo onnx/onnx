@@ -263,9 +263,9 @@ class TestInferenceFunctionCall:
             producer_name: "pytorch",
             producer_version: "2.1.0"
         >
-        torch_jit (float input_0) => (float reault, int64 index)
+        torch_jit (float input_0) => (float result, int64 index)
         {
-            reault, index = onnxscript.atenlib.aten_min_dim <dim = 0, keepdim = 1> (input_0)
+            result, index = onnxscript.atenlib.aten_min_dim <dim = 0, keepdim = 1> (input_0)
         }
         <
             domain: "onnxscript.atenlib",
