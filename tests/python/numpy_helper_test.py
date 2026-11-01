@@ -60,7 +60,9 @@ class TestNumpyHelper:
         for tensor, expected in zip(
             map_proto.values.tensor_values, arrays, strict=True
         ):
-            np.testing.assert_array_equal(numpy_helper.to_array(tensor), expected)
+            np.testing.assert_array_equal(
+                numpy_helper.to_array(tensor), expected, strict=True
+            )
 
     def test_from_dict_differing_key_types(self):
         with pytest.raises(TypeError):
