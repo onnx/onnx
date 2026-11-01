@@ -30,7 +30,8 @@ gh auth status
 
 ## Generate a report
 
-Use an absolute output directory outside the repository:
+Use an absolute output directory outside the repository (the script refuses a directory inside
+it):
 
 ```bash
 python .agents/skills/github-org-access-review/scripts/github_org_access_review.py \

@@ -156,7 +156,8 @@ def graphql(query: str, variables: dict[str, str | None]) -> dict[str, Any]:
     arguments = ["api", "graphql", "-f", f"query={query}"]
     for key, value in variables.items():
         if value is not None:
-            arguments.extend(["-F", f"{key}={value}"])
+            # -f keeps every value a string; -F would turn a numeric login into a number.
+            arguments.extend(["-f", f"{key}={value}"])
     result = run_gh(arguments)
     if result.get("errors"):
         raise RuntimeError(f"GitHub GraphQL error: {json.dumps(result['errors'])}")
@@ -198,7 +199,8 @@ def split_windows(start: date, end: date) -> list[tuple[date, date]]:
     windows = []
     cursor = start
     while cursor <= end:
-        window_end = min(cursor + timedelta(days=365), end)
+        # contributionsCollection may span at most one year; 365 inclusive dates stay within it.
+        window_end = min(cursor + timedelta(days=364), end)
         windows.append((cursor, window_end))
         cursor = window_end + timedelta(days=1)
     return windows
@@ -350,6 +352,8 @@ def fetch_window_activity(
                 repository = contribution["repository"]["nameWithOwner"]
                 commits = contribution["contributions"]
                 activity = activity_by_repo.setdefault(repository, empty_activity())
+                # Each node is one day of commits, but totalCount counts commits (the sum of the
+                # nodes' commitCount), so no pagination is needed for the commit total.
                 activity["commits"] += commits["totalCount"]
                 if commits["nodes"]:
                     update_last_activity(activity, commits["nodes"][0]["occurredAt"])
@@ -476,9 +480,7 @@ def activity_score(activity: dict[str, Any]) -> int:
 def review_band(last_activity_at: str | None, report_end: date) -> str:
     if last_activity_at is None:
         return "priority-review"
-    last_activity = datetime.fromisoformat(
-        last_activity_at.replace("Z", "+00:00")
-    ).date()
+    last_activity = datetime.fromisoformat(last_activity_at).date()
     inactive_days = (report_end - last_activity).days
     if inactive_days <= RECENT_ACTIVITY_DAYS:
         return "recent"
@@ -704,6 +706,13 @@ def parse_args() -> argparse.Namespace:
         parser.error("--months must be positive")
     if arguments.workers < 1:
         parser.error("--workers must be positive")
+    # Reports hold membership, role, and team data; refuse paths that could end up committed.
+    # resolve() follows symlinks, so a link pointing into the checkout is rejected too.
+    repository_root = Path(__file__).resolve().parents[4]
+    output_dir = arguments.output_dir.resolve()
+    if output_dir == repository_root or repository_root in output_dir.parents:
+        parser.error("--output-dir must be outside the repository")
+    arguments.output_dir = output_dir
     return arguments
 
 
