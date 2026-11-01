@@ -306,19 +306,13 @@ class ParserBase {
   Common::Status Parse(int64_t& val) {
     Literal literal;
     CHECK_PARSER_STATUS(Parse(literal))
-    if (literal.type != LiteralType::INT_LITERAL)
-      return ParseError("Integer value expected, but not found.");
-    val = std::stoll(literal.value);
-    return Common::Status::OK();
+    return ParseInteger(literal, val);
   }
 
   Common::Status Parse(uint64_t& val) {
     Literal literal;
     CHECK_PARSER_STATUS(Parse(literal))
-    if (literal.type != LiteralType::INT_LITERAL)
-      return ParseError("Integer value expected, but not found.");
-    val = std::stoull(literal.value);
-    return Common::Status::OK();
+    return ParseInteger(literal, val);
   }
 
   Common::Status Parse(float& val) {
@@ -432,6 +426,9 @@ class ParserBase {
   }
 
  protected:
+  Common::Status ParseInteger(const Literal& literal, int64_t& val);
+  Common::Status ParseInteger(const Literal& literal, uint64_t& val);
+
   // True when the cursor has consumed all input.
   bool AtEnd() const {
     return pos_ >= input_.size();
