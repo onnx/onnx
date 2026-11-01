@@ -129,8 +129,8 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#STFT">STFT</a>|<a href="Changelog.md#STFT-17">17</a>|
 |<a href="#Scan">Scan</a>|<a href="Changelog.md#Scan-25">25</a>, <a href="Changelog.md#Scan-24">24</a>, <a href="Changelog.md#Scan-23">23</a>, <a href="Changelog.md#Scan-21">21</a>, <a href="Changelog.md#Scan-19">19</a>, <a href="Changelog.md#Scan-16">16</a>, <a href="Changelog.md#Scan-11">11</a>, <a href="Changelog.md#Scan-9">9</a>, <a href="Changelog.md#Scan-8">8</a>|
 |<a href="#Scatter">Scatter</a> (deprecated)|<a href="Changelog.md#Scatter-11">11</a>, <a href="Changelog.md#Scatter-9">9</a>|
-|<a href="#ScatterElements">ScatterElements</a>|<a href="Changelog.md#ScatterElements-18">18</a>, <a href="Changelog.md#ScatterElements-16">16</a>, <a href="Changelog.md#ScatterElements-13">13</a>, <a href="Changelog.md#ScatterElements-11">11</a>|
-|<a href="#ScatterND">ScatterND</a>|<a href="Changelog.md#ScatterND-18">18</a>, <a href="Changelog.md#ScatterND-16">16</a>, <a href="Changelog.md#ScatterND-13">13</a>, <a href="Changelog.md#ScatterND-11">11</a>|
+|<a href="#ScatterElements">ScatterElements</a>|<a href="Changelog.md#ScatterElements-29">29</a>, <a href="Changelog.md#ScatterElements-18">18</a>, <a href="Changelog.md#ScatterElements-16">16</a>, <a href="Changelog.md#ScatterElements-13">13</a>, <a href="Changelog.md#ScatterElements-11">11</a>|
+|<a href="#ScatterND">ScatterND</a>|<a href="Changelog.md#ScatterND-29">29</a>, <a href="Changelog.md#ScatterND-18">18</a>, <a href="Changelog.md#ScatterND-16">16</a>, <a href="Changelog.md#ScatterND-13">13</a>, <a href="Changelog.md#ScatterND-11">11</a>|
 |<a href="#SequenceAt">SequenceAt</a>|<a href="Changelog.md#SequenceAt-11">11</a>|
 |<a href="#SequenceConstruct">SequenceConstruct</a>|<a href="Changelog.md#SequenceConstruct-11">11</a>|
 |<a href="#SequenceEmpty">SequenceEmpty</a>|<a href="Changelog.md#SequenceEmpty-11">11</a>|
@@ -36985,82 +36985,68 @@ expect(
 
 ### <a name="ScatterElements"></a><a name="scatterelements">**ScatterElements**</a>
 
-  ScatterElements takes three inputs `data`, `updates`, and `indices` of the same
-  rank r >= 1 and an optional attribute axis that identifies an axis of `data`
-  (by default, the outer-most axis, that is axis 0). The output of the operation
-  is produced by creating a copy of the input `data`, and then updating its value
-  to values specified by `updates` at specific index positions specified by
-  `indices`. Its output shape is the same as the shape of `data`.
+  ScatterElements takes three inputs `data`, `indices`, and `updates` of the same
+  rank r >= 1. `indices` and `updates` must have the same shape; their sizes must
+  not exceed the sizes of `data` in dimensions other than `axis`.
+  The output has the same shape and element type as `data`.
 
-  For each entry in `updates`, the target index in `data` is obtained by combining
-  the corresponding entry in `indices` with the index of the entry itself: the
-  index-value for dimension = axis is obtained from the value of the corresponding
-  entry in `indices` and the index-value for dimension != axis is obtained from the
-  index of the entry itself.
+  For each entry in `updates`, the target coordinate is the entry's coordinate
+  with the coordinate along `axis` replaced by the corresponding value in `indices`.
+  Negative indices count backwards from the end of that axis.
 
-  `reduction` allows specification of an optional reduction operation, which is applied to all values in `updates`
-  tensor into `output` at the specified `indices`.
-  In cases where `reduction` is set to "none", indices should not have duplicate entries: that is, if idx1 != idx2,
-  then indices[idx1] != indices[idx2]. For instance, in a 2-D tensor case, the update
-  corresponding to the [i][j] entry is performed as below:
-  ```
-  output[indices[i][j]][j] = updates[i][j] if axis = 0,
-  output[i][indices[i][j]] = updates[i][j] if axis = 1,
-  ```
-  When `reduction` is set to some reduction function `f`, the update corresponding to the [i][j] entry is performed as below:
-  ```
-  output[indices[i][j]][j] = f(output[indices[i][j]][j], updates[i][j]) if axis = 0,
-  output[i][indices[i][j]] = f(output[i][indices[i][j]], updates[i][j]) if axis = 1,
-  ```
-  where the `f` is `+`, `*`, `max` or `min` as specified.
+  When `reduction` is "none", each update replaces its target element. Multiple
+  updates must not address the same output element. `include_self` is ignored.
+  For other reductions, group all updates that address the same output element.
+  If `include_self` is 1 (the default), also include the original `data` value
+  exactly once in that group. If `include_self` is 0, reduce only the updates.
+  Elements not addressed by any update retain their original `data` values in
+  either case. "add", "mul", "max", and "min" compute the sum, product, maximum,
+  and minimum of each group, respectively.
 
-  This operator is the inverse of GatherElements. It is similar to Torch's Scatter operation.
+  For "mean", compute the sum of each group divided by its number of values,
+  not a sequence of pairwise averages. Thus, for N updates to a given element:
+  ```
+  output = (data + sum(updates)) / (N + 1)  # include_self = 1
+  output = sum(updates) / N               # include_self = 0, N > 0
+  ```
+  The "mean" reduction supports integer and floating-point tensors, but not
+  boolean, string, or complex tensors. Integer results are rounded toward
+  negative infinity. Floating-point results are converted to the input element
+  type after division.
 
-  (Opset 18 change): Adds max/min to the set of allowed reduction ops.
+  The reductions correspond to PyTorch's `scatter_reduce` modes "sum", "prod",
+  "amax", "amin", and "mean", respectively. A source tensor larger than `indices`
+  must be sliced to the shape of `indices` before being used as `updates`.
+  Unlike PyTorch, ONNX also accepts negative index values.
 
-  Example 1:
+  (Opset 29 change): Adds "mean" and the `include_self` attribute.
+
+  Example:
   ```
-  data = [
-      [0.0, 0.0, 0.0],
-      [0.0, 0.0, 0.0],
-      [0.0, 0.0, 0.0],
-  ]
-  indices = [
-      [1, 0, 2],
-      [0, 2, 1],
-  ]
-  updates = [
-      [1.0, 1.1, 1.2],
-      [2.0, 2.1, 2.2],
-  ]
-  output = [
-      [2.0, 1.1, 0.0]
-      [1.0, 0.0, 2.2]
-      [0.0, 2.1, 1.2]
-  ]
-  ```
-  Example 2:
-  ```
-  data = [[1.0, 2.0, 3.0, 4.0, 5.0]]
-  indices = [[1, 3]]
-  updates = [[1.1, 2.1]]
-  axis = 1
-  output = [[1.0, 1.1, 3.0, 2.1, 5.0]]
+  data = [1.0, 2.0, 3.0, 4.0]
+  indices = [0, 1, 0, 1, 2, 1]
+  updates = [1.0, 2.0, 3.0, 4.0, 5.0, 6.0]
+  axis = 0
+  reduction = "mean"
+  output = [5.0 / 3.0, 3.5, 4.0, 4.0]  # include_self = 1
+  output = [2.0, 4.0, 5.0, 4.0]         # include_self = 0
   ```
 
 #### Version
 
-This version of the operator has been available since version 18 of the default ONNX operator set.
+This version of the operator has been available since version 29 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#ScatterElements-11">11</a>, <a href="Changelog.md#ScatterElements-13">13</a>, <a href="Changelog.md#ScatterElements-16">16</a>
+Other versions of this operator: <a href="Changelog.md#ScatterElements-11">11</a>, <a href="Changelog.md#ScatterElements-13">13</a>, <a href="Changelog.md#ScatterElements-16">16</a>, <a href="Changelog.md#ScatterElements-18">18</a>
 
 #### Attributes
 
 <dl>
 <dt><tt>axis</tt> : int (default is 0)</dt>
 <dd>Which axis to scatter on. Negative value means counting dimensions from the back. Accepted range is [-r, r-1] where r = rank(data).</dd>
+<dt><tt>include_self</tt> : int (default is 1)</dt>
+<dd>Whether to include the original data value in the reduction: 1 (default) or 0. Untouched elements retain their original values. Ignored when reduction is 'none'.</dd>
 <dt><tt>reduction</tt> : string (default is none)</dt>
-<dd>Type of reduction to apply: none (default), add, mul, max, min. 'none': no reduction applied. 'add':  reduction using the addition operation. 'mul': reduction using the multiplication operation.'max': reduction using the maximum operation.'min': reduction using the minimum operation.</dd>
+<dd>Type of reduction to apply: none (default), add, mul, max, min, mean. 'none': no reduction applied. 'add':  reduction using the addition operation. 'mul': reduction using the multiplication operation. 'max': reduction using the maximum operation. 'min': reduction using the minimum operation. 'mean': arithmetic mean of all contributions to each output element.</dd>
 </dl>
 
 #### Inputs
@@ -37092,6 +37078,95 @@ Other versions of this operator: <a href="Changelog.md#ScatterElements-11">11</a
 
 
 #### Examples
+
+<details>
+<summary>scatter_elements_exclude_self</summary>
+
+```python
+data = np.array([[100, 2, 3, 4]], dtype=np.float32)
+indices = np.array([[0, 0, 2]], dtype=np.int32)
+updates = np.array([[3, 5, 7]], dtype=np.float32)
+for reduction, expected in (
+    ("add", [[8, 2, 7, 4]]),
+    ("mul", [[15, 2, 7, 4]]),
+    ("max", [[5, 2, 7, 4]]),
+    ("min", [[3, 2, 7, 4]]),
+):
+    node = onnx.helper.make_node(
+        "ScatterElements",
+        ["data", "indices", "updates"],
+        ["y"],
+        axis=1,
+        reduction=reduction,
+        include_self=0,
+    )
+    expect(
+        node,
+        inputs=[data, indices, updates],
+        outputs=[np.array(expected, dtype=np.float32)],
+        name=f"test_scatter_elements_{reduction}_exclude_self",
+        opset_imports=[onnx.helper.make_opsetid("", 29)],
+    )
+```
+
+</details>
+
+
+<details>
+<summary>scatter_elements_mean</summary>
+
+```python
+data = np.array([[1, 2, 3, 4]], dtype=np.float32)
+indices = np.array([[0, 1, 0, 1, -2, 1]], dtype=np.int64)
+updates = np.array([[1, 2, 3, 4, 5, 6]], dtype=np.float32)
+for include_self, expected in (
+    (1, [[5 / 3, 3.5, 4, 4]]),
+    (0, [[2, 4, 5, 4]]),
+):
+    node = onnx.helper.make_node(
+        "ScatterElements",
+        ["data", "indices", "updates"],
+        ["y"],
+        axis=-1,
+        reduction="mean",
+        include_self=include_self,
+    )
+    expect(
+        node,
+        inputs=[data, indices, updates],
+        outputs=[np.array(expected, dtype=np.float32)],
+        name=f"test_scatter_elements_mean_include_self_{include_self}",
+        opset_imports=[onnx.helper.make_opsetid("", 29)],
+    )
+```
+
+</details>
+
+
+<details>
+<summary>scatter_elements_mean_integer</summary>
+
+```python
+node = onnx.helper.make_node(
+    "ScatterElements",
+    ["data", "indices", "updates"],
+    ["y"],
+    reduction="mean",
+)
+data = np.array([-2, 8, 9], dtype=np.int64)
+indices = np.array([0, 0, 1], dtype=np.int64)
+updates = np.array([-3, -3, 5], dtype=np.int64)
+expect(
+    node,
+    inputs=[data, indices, updates],
+    outputs=[np.array([-3, 6, 9], dtype=np.int64)],
+    name="test_scatter_elements_mean_integer",
+    opset_imports=[onnx.helper.make_opsetid("", 29)],
+)
+```
+
+</details>
+
 
 <details>
 <summary>scatter_elements_with_axis</summary>
@@ -37309,93 +37384,67 @@ expect(
 
 ### <a name="ScatterND"></a><a name="scatternd">**ScatterND**</a>
 
-  ScatterND takes three inputs `data` tensor of rank r >= 1, `indices` tensor of rank q >= 1,
-  and `updates` tensor of rank q + r - indices.shape[-1] - 1. The output of the operation
-  is produced by creating a copy of the input `data`, and then updating its value to values
-  specified by `updates` at specific index positions specified by `indices`. Its output shape
-  is the same as the shape of `data`.
+  ScatterND takes `data` of rank r >= 1, `indices` of rank q >= 1, and `updates`
+  of rank q + r - k - 1, where k = indices.shape[-1] and 0 <= k <= r.
+  The output has the same shape and element type as `data`.
 
-  `indices` is an integer tensor. Let k denote indices.shape[-1], the last dimension in the shape of `indices`.
-  `indices` is treated as a (q-1)-dimensional tensor of k-tuples, where each k-tuple is a partial-index into `data`.
-  Hence, k can be a value at most the rank of `data`. When k equals rank(data), each update entry specifies an
-  update to a single element of the tensor. When k is less than rank(data) each update entry specifies an
-  update to a slice of the tensor. Index values are allowed to be negative, as per the usual
-  convention for counting backwards from the end, but are expected in the valid range.
+  Each entry in `indices` is a k-tuple indexing the first k dimensions of `data`.
+  Negative indices count backwards from the end of the corresponding dimension;
+  all indices must be in bounds. Each tuple addresses a single element when k = r
+  or a slice of the trailing r - k dimensions otherwise.
+  The shape of `updates` must equal indices.shape[:-1] + data.shape[k:].
+  For every coordinate `i` in indices.shape[:-1], updates[i] is scattered to
+  output[tuple(indices[i])].
 
-  `updates` is treated as a (q-1)-dimensional tensor of replacement-slice-values. Thus, the
-  first (q-1) dimensions of updates.shape must match the first (q-1) dimensions of indices.shape.
-  The remaining dimensions of `updates` correspond to the dimensions of the
-  replacement-slice-values. Each replacement-slice-value is a (r-k) dimensional tensor,
-  corresponding to the trailing (r-k) dimensions of `data`.  Thus, the shape of `updates`
-  must equal indices.shape[0:q-1] ++ data.shape[k:r], where ++ denotes the concatenation
-  of shapes.
+  When `reduction` is "none", updates replace the addressed elements or slices,
+  and multiple tuples must not address the same location. `include_self` is ignored.
+  For other reductions, group all updates addressing the same location and reduce
+  elementwise over each group. If `include_self` is 1 (the default), include the
+  original `data` value exactly once. If `include_self` is 0, reduce only updates.
+  Untouched elements retain their original `data` values in either case.
+  "add", "mul", "max", and "min" compute the sum, product, maximum, and minimum,
+  respectively.
 
-  The `output` is calculated via the following equation:
-
+  For "mean", sum all contributions before dividing by their count:
   ```
-  output = np.copy(data)
-  update_indices = indices.shape[:-1]
-  for idx in np.ndindex(update_indices):
-      output[tuple(indices[idx])] = updates[idx]
+  output = (data + sum(updates)) / (N + 1)  # include_self = 1
+  output = sum(updates) / N               # include_self = 0, N > 0
   ```
+  Here N is the number of updates addressing the element or slice.
+  This is not a sequence of pairwise averages.
+  The "mean" reduction supports integer and floating-point tensors, but not
+  boolean, string, or complex tensors. Integer results are rounded toward
+  negative infinity. Floating-point results are converted to the input element
+  type after division.
 
-  The order of iteration in the above loop is not specified.
-  In particular, indices should not have duplicate entries: that is, if idx1 != idx2, then indices[idx1] != indices[idx2].
-  This ensures that the output value does not depend on the iteration order.
+  This operator generalizes ScatterElements to multi-dimensional indices and
+  slice updates. It is the inverse of GatherND.
 
-  `reduction` allows specification of an optional reduction operation, which is applied to all values in `updates`
-  tensor into `output` at the specified `indices`.
-  In cases where `reduction` is set to "none", indices should not have duplicate entries: that is, if idx1 != idx2,
-  then indices[idx1] != indices[idx2]. This ensures that the output value does not depend on the iteration order.
-  When `reduction` is set to some reduction function `f`, `output` is calculated as follows:
+  (Opset 29 change): Adds "mean" and the `include_self` attribute.
 
+  Example:
   ```
-  output = np.copy(data)
-  update_indices = indices.shape[:-1]
-  for idx in np.ndindex(update_indices):
-      output[tuple(indices[idx])] = f(output[tuple(indices[idx])], updates[idx])
-  ```
-
-  where the `f` is `+`, `*`, `max` or `min` as specified.
-
-  This operator is the inverse of GatherND.
-
-  (Opset 18 change): Adds max/min to the set of allowed reduction ops.
-
-  Example 1:
-  ```
-  data    = [1, 2, 3, 4, 5, 6, 7, 8]
-  indices = [[4], [3], [1], [7]]
-  updates = [9, 10, 11, 12]
-  output  = [1, 11, 3, 10, 9, 6, 7, 12]
-  ```
-
-  Example 2:
-  ```
-  data    = [[[1, 2, 3, 4], [5, 6, 7, 8], [8, 7, 6, 5], [4, 3, 2, 1]],
-              [[1, 2, 3, 4], [5, 6, 7, 8], [8, 7, 6, 5], [4, 3, 2, 1]],
-              [[8, 7, 6, 5], [4, 3, 2, 1], [1, 2, 3, 4], [5, 6, 7, 8]],
-              [[8, 7, 6, 5], [4, 3, 2, 1], [1, 2, 3, 4], [5, 6, 7, 8]]]
-  indices = [[0], [2]]
-  updates = [[[5, 5, 5, 5], [6, 6, 6, 6], [7, 7, 7, 7], [8, 8, 8, 8]],
-              [[1, 1, 1, 1], [2, 2, 2, 2], [3, 3, 3, 3], [4, 4, 4, 4]]]
-  output  = [[[5, 5, 5, 5], [6, 6, 6, 6], [7, 7, 7, 7], [8, 8, 8, 8]],
-              [[1, 2, 3, 4], [5, 6, 7, 8], [8, 7, 6, 5], [4, 3, 2, 1]],
-              [[1, 1, 1, 1], [2, 2, 2, 2], [3, 3, 3, 3], [4, 4, 4, 4]],
-              [[8, 7, 6, 5], [4, 3, 2, 1], [1, 2, 3, 4], [5, 6, 7, 8]]]
+  data = [[1.0, 2.0], [3.0, 4.0]]
+  indices = [[0], [0]]
+  updates = [[3.0, 4.0], [5.0, 6.0]]
+  reduction = "mean"
+  output = [[3.0, 4.0], [3.0, 4.0]]  # include_self = 1
+  output = [[4.0, 5.0], [3.0, 4.0]]  # include_self = 0
   ```
 
 #### Version
 
-This version of the operator has been available since version 18 of the default ONNX operator set.
+This version of the operator has been available since version 29 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#ScatterND-11">11</a>, <a href="Changelog.md#ScatterND-13">13</a>, <a href="Changelog.md#ScatterND-16">16</a>
+Other versions of this operator: <a href="Changelog.md#ScatterND-11">11</a>, <a href="Changelog.md#ScatterND-13">13</a>, <a href="Changelog.md#ScatterND-16">16</a>, <a href="Changelog.md#ScatterND-18">18</a>
 
 #### Attributes
 
 <dl>
+<dt><tt>include_self</tt> : int (default is 1)</dt>
+<dd>Whether to include the original data value in the reduction: 1 (default) or 0. Untouched elements retain their original values. Ignored when reduction is 'none'.</dd>
 <dt><tt>reduction</tt> : string (default is none)</dt>
-<dd>Type of reduction to apply: none (default), add, mul, max, min. 'none': no reduction applied. 'add':  reduction using the addition operation. 'mul':  reduction using the addition operation. 'max': reduction using the maximum operation.'min': reduction using the minimum operation.</dd>
+<dd>Type of reduction to apply: none (default), add, mul, max, min, mean. 'none': no reduction applied. 'add':  reduction using the addition operation. 'mul': reduction using the multiplication operation. 'max': reduction using the maximum operation. 'min': reduction using the minimum operation. 'mean': arithmetic mean of all contributions to each output element.</dd>
 </dl>
 
 #### Inputs
@@ -37514,6 +37563,38 @@ expect(
 
 
 <details>
+<summary>scatternd_exclude_self</summary>
+
+```python
+data = np.array([[100, -100], [3, 4]], dtype=np.float32)
+indices = np.array([[0], [0]], dtype=np.int64)
+updates = np.array([[3, 4], [5, 6]], dtype=np.float32)
+for reduction, expected in (
+    ("add", [[8, 10], [3, 4]]),
+    ("mul", [[15, 24], [3, 4]]),
+    ("max", [[5, 6], [3, 4]]),
+    ("min", [[3, 4], [3, 4]]),
+):
+    node = onnx.helper.make_node(
+        "ScatterND",
+        ["data", "indices", "updates"],
+        ["y"],
+        reduction=reduction,
+        include_self=0,
+    )
+    expect(
+        node,
+        inputs=[data, indices, updates],
+        outputs=[np.array(expected, dtype=np.float32)],
+        name=f"test_scatternd_{reduction}_exclude_self",
+        opset_imports=[onnx.helper.make_opsetid("", 29)],
+    )
+```
+
+</details>
+
+
+<details>
 <summary>scatternd_max</summary>
 
 ```python
@@ -37579,6 +37660,61 @@ expect(
     inputs=[data, indices, updates],
     outputs=[output],
     name="test_scatternd_max_with_element_indices",
+)
+```
+
+</details>
+
+
+<details>
+<summary>scatternd_mean</summary>
+
+```python
+data = np.array([[1, 2], [3, 4]], dtype=np.float32)
+indices = np.array([[0], [-2]], dtype=np.int64)
+updates = np.array([[3, 4], [5, 6]], dtype=np.float32)
+for include_self, expected in (
+    (1, [[3, 4], [3, 4]]),
+    (0, [[4, 5], [3, 4]]),
+):
+    node = onnx.helper.make_node(
+        "ScatterND",
+        ["data", "indices", "updates"],
+        ["y"],
+        reduction="mean",
+        include_self=include_self,
+    )
+    expect(
+        node,
+        inputs=[data, indices, updates],
+        outputs=[np.array(expected, dtype=np.float32)],
+        name=f"test_scatternd_mean_include_self_{include_self}",
+        opset_imports=[onnx.helper.make_opsetid("", 29)],
+    )
+```
+
+</details>
+
+
+<details>
+<summary>scatternd_mean_integer</summary>
+
+```python
+node = onnx.helper.make_node(
+    "ScatterND",
+    ["data", "indices", "updates"],
+    ["y"],
+    reduction="mean",
+)
+data = np.array([[-2, 8], [9, 10]], dtype=np.int64)
+indices = np.array([[0, 0], [0, 0], [0, 1]], dtype=np.int64)
+updates = np.array([-3, -3, 5], dtype=np.int64)
+expect(
+    node,
+    inputs=[data, indices, updates],
+    outputs=[np.array([[-3, 6], [9, 10]], dtype=np.int64)],
+    name="test_scatternd_mean_integer",
+    opset_imports=[onnx.helper.make_opsetid("", 29)],
 )
 ```
 

@@ -22,6 +22,62 @@ class TestAutomaticDowngrade(automatic_conversion_test_base.TestAutomaticConvers
         mode = "strict_downgrade" if strict_check else "downgrade"
         self._test_op_conversion(op, *args, **kwargs, mode=mode)
 
+    @pytest.mark.parametrize("op", ["ScatterElements", "ScatterND"])
+    @pytest.mark.parametrize("reduction", ["none", "add", "mul", "min", "max"])
+    @pytest.mark.parametrize("include_self", [None, 1])
+    def test_scatter_29_to_28(self, op, reduction, include_self) -> None:
+        attrs = {"reduction": reduction}
+        if include_self is not None:
+            attrs["include_self"] = include_self
+        self._test_op_downgrade(
+            op,
+            28,
+            [[2], [2] if op == "ScatterElements" else [2, 1], [2]],
+            [[2]],
+            [onnx.TensorProto.FLOAT, onnx.TensorProto.INT64, onnx.TensorProto.FLOAT],
+            [onnx.TensorProto.FLOAT],
+            attrs=attrs,
+            strict_check=True,
+        )
+
+    @pytest.mark.parametrize("op", ["ScatterElements", "ScatterND"])
+    @pytest.mark.parametrize(
+        "attributes",
+        [
+            'reduction = "mean"',
+            'reduction = "mean", include_self = 0',
+            'reduction = "add", include_self = 0',
+            'reduction = "mul", include_self = 0',
+            'reduction = "max", include_self = 0',
+            'reduction = "min", include_self = 0',
+        ],
+    )
+    def test_scatter_new_reduction_29_to_28_fails(self, op, attributes) -> None:
+        index_shape = "2" if op == "ScatterElements" else "2, 1"
+        self._test_model_conversion_fails(
+            28,
+            f"""
+                <ir_version: 13, opset_import: ["" : 29]>
+                scatter (float[2] data, int64[{index_shape}] indices,
+                         float[2] updates) => (float[2] output) {{
+                    output = {op}<{attributes}>(data, indices, updates)
+                }}
+            """,
+        )
+
+    @pytest.mark.parametrize("op", ["ScatterElements", "ScatterND"])
+    def test_scatter_none_exclude_self_29_to_28(self, op) -> None:
+        self._test_op_downgrade(
+            op,
+            28,
+            [[2], [2] if op == "ScatterElements" else [2, 1], [2]],
+            [[2]],
+            [onnx.TensorProto.FLOAT, onnx.TensorProto.INT64, onnx.TensorProto.FLOAT],
+            [onnx.TensorProto.FLOAT],
+            attrs={"include_self": 0},
+            strict_check=True,
+        )
+
     @pytest.mark.parametrize(
         "op",
         [

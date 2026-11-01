@@ -34516,6 +34516,185 @@ This version of the operator has been available since version 29 of the default 
 <dd>Constrain group indices to int32 or int64 tensors.</dd>
 </dl>
 
+### <a name="ScatterElements-29"></a>**ScatterElements-29**</a>
+
+  ScatterElements takes three inputs `data`, `indices`, and `updates` of the same
+  rank r >= 1. `indices` and `updates` must have the same shape; their sizes must
+  not exceed the sizes of `data` in dimensions other than `axis`.
+  The output has the same shape and element type as `data`.
+
+  For each entry in `updates`, the target coordinate is the entry's coordinate
+  with the coordinate along `axis` replaced by the corresponding value in `indices`.
+  Negative indices count backwards from the end of that axis.
+
+  When `reduction` is "none", each update replaces its target element. Multiple
+  updates must not address the same output element. `include_self` is ignored.
+  For other reductions, group all updates that address the same output element.
+  If `include_self` is 1 (the default), also include the original `data` value
+  exactly once in that group. If `include_self` is 0, reduce only the updates.
+  Elements not addressed by any update retain their original `data` values in
+  either case. "add", "mul", "max", and "min" compute the sum, product, maximum,
+  and minimum of each group, respectively.
+
+  For "mean", compute the sum of each group divided by its number of values,
+  not a sequence of pairwise averages. Thus, for N updates to a given element:
+  ```
+  output = (data + sum(updates)) / (N + 1)  # include_self = 1
+  output = sum(updates) / N               # include_self = 0, N > 0
+  ```
+  The "mean" reduction supports integer and floating-point tensors, but not
+  boolean, string, or complex tensors. Integer results are rounded toward
+  negative infinity. Floating-point results are converted to the input element
+  type after division.
+
+  The reductions correspond to PyTorch's `scatter_reduce` modes "sum", "prod",
+  "amax", "amin", and "mean", respectively. A source tensor larger than `indices`
+  must be sliced to the shape of `indices` before being used as `updates`.
+  Unlike PyTorch, ONNX also accepts negative index values.
+
+  (Opset 29 change): Adds "mean" and the `include_self` attribute.
+
+  Example:
+  ```
+  data = [1.0, 2.0, 3.0, 4.0]
+  indices = [0, 1, 0, 1, 2, 1]
+  updates = [1.0, 2.0, 3.0, 4.0, 5.0, 6.0]
+  axis = 0
+  reduction = "mean"
+  output = [5.0 / 3.0, 3.5, 4.0, 4.0]  # include_self = 1
+  output = [2.0, 4.0, 5.0, 4.0]         # include_self = 0
+  ```
+
+#### Version
+
+This version of the operator has been available since version 29 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>axis</tt> : int (default is 0)</dt>
+<dd>Which axis to scatter on. Negative value means counting dimensions from the back. Accepted range is [-r, r-1] where r = rank(data).</dd>
+<dt><tt>include_self</tt> : int (default is 1)</dt>
+<dd>Whether to include the original data value in the reduction: 1 (default) or 0. Untouched elements retain their original values. Ignored when reduction is 'none'.</dd>
+<dt><tt>reduction</tt> : string (default is none)</dt>
+<dd>Type of reduction to apply: none (default), add, mul, max, min, mean. 'none': no reduction applied. 'add':  reduction using the addition operation. 'mul': reduction using the multiplication operation. 'max': reduction using the maximum operation. 'min': reduction using the minimum operation. 'mean': arithmetic mean of all contributions to each output element.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>data</tt> (differentiable) : T</dt>
+<dd>Tensor of rank r >= 1.</dd>
+<dt><tt>indices</tt> (non-differentiable) : Tind</dt>
+<dd>Tensor of int32/int64 indices, of r >= 1 (same rank as input). All index values are expected to be within bounds [-s, s-1] along axis of size s. It is an error if any of the index values are out of bounds.</dd>
+<dt><tt>updates</tt> (differentiable) : T</dt>
+<dd>Tensor of rank r >=1 (same rank and shape as indices)</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> (differentiable) : T</dt>
+<dd>Tensor of rank r >= 1 (same rank as input).</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
+<dd>Input and output types can be of any tensor type.</dd>
+<dt><tt>Tind</tt> : tensor(int32), tensor(int64)</dt>
+<dd>Constrain indices to integer types</dd>
+</dl>
+
+### <a name="ScatterND-29"></a>**ScatterND-29**</a>
+
+  ScatterND takes `data` of rank r >= 1, `indices` of rank q >= 1, and `updates`
+  of rank q + r - k - 1, where k = indices.shape[-1] and 0 <= k <= r.
+  The output has the same shape and element type as `data`.
+
+  Each entry in `indices` is a k-tuple indexing the first k dimensions of `data`.
+  Negative indices count backwards from the end of the corresponding dimension;
+  all indices must be in bounds. Each tuple addresses a single element when k = r
+  or a slice of the trailing r - k dimensions otherwise.
+  The shape of `updates` must equal indices.shape[:-1] + data.shape[k:].
+  For every coordinate `i` in indices.shape[:-1], updates[i] is scattered to
+  output[tuple(indices[i])].
+
+  When `reduction` is "none", updates replace the addressed elements or slices,
+  and multiple tuples must not address the same location. `include_self` is ignored.
+  For other reductions, group all updates addressing the same location and reduce
+  elementwise over each group. If `include_self` is 1 (the default), include the
+  original `data` value exactly once. If `include_self` is 0, reduce only updates.
+  Untouched elements retain their original `data` values in either case.
+  "add", "mul", "max", and "min" compute the sum, product, maximum, and minimum,
+  respectively.
+
+  For "mean", sum all contributions before dividing by their count:
+  ```
+  output = (data + sum(updates)) / (N + 1)  # include_self = 1
+  output = sum(updates) / N               # include_self = 0, N > 0
+  ```
+  Here N is the number of updates addressing the element or slice.
+  This is not a sequence of pairwise averages.
+  The "mean" reduction supports integer and floating-point tensors, but not
+  boolean, string, or complex tensors. Integer results are rounded toward
+  negative infinity. Floating-point results are converted to the input element
+  type after division.
+
+  This operator generalizes ScatterElements to multi-dimensional indices and
+  slice updates. It is the inverse of GatherND.
+
+  (Opset 29 change): Adds "mean" and the `include_self` attribute.
+
+  Example:
+  ```
+  data = [[1.0, 2.0], [3.0, 4.0]]
+  indices = [[0], [0]]
+  updates = [[3.0, 4.0], [5.0, 6.0]]
+  reduction = "mean"
+  output = [[3.0, 4.0], [3.0, 4.0]]  # include_self = 1
+  output = [[4.0, 5.0], [3.0, 4.0]]  # include_self = 0
+  ```
+
+#### Version
+
+This version of the operator has been available since version 29 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>include_self</tt> : int (default is 1)</dt>
+<dd>Whether to include the original data value in the reduction: 1 (default) or 0. Untouched elements retain their original values. Ignored when reduction is 'none'.</dd>
+<dt><tt>reduction</tt> : string (default is none)</dt>
+<dd>Type of reduction to apply: none (default), add, mul, max, min, mean. 'none': no reduction applied. 'add':  reduction using the addition operation. 'mul': reduction using the multiplication operation. 'max': reduction using the maximum operation. 'min': reduction using the minimum operation. 'mean': arithmetic mean of all contributions to each output element.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>data</tt> (differentiable) : T</dt>
+<dd>Tensor of rank r >= 1.</dd>
+<dt><tt>indices</tt> (non-differentiable) : tensor(int64)</dt>
+<dd>Tensor of rank q >= 1.</dd>
+<dt><tt>updates</tt> (differentiable) : T</dt>
+<dd>Tensor of rank q + r - indices_shape[-1] - 1.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> (differentiable) : T</dt>
+<dd>Tensor of rank r >= 1.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
+<dd>Constrain input and output types to any tensor type.</dd>
+</dl>
+
 # ai.onnx.preview
 ## Version 1 of the 'ai.onnx.preview' operator set
 ### <a name="ai.onnx.preview.FlexAttention-1"></a>**ai.onnx.preview.FlexAttention-1**</a>

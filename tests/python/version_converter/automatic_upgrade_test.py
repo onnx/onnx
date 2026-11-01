@@ -1394,6 +1394,20 @@ class TestAutomaticUpgrade(automatic_conversion_test_base.TestAutomaticConversio
             attrs={"reduction": "mul"},
         )
 
+    @pytest.mark.parametrize("op", ["ScatterElements", "ScatterND"])
+    @pytest.mark.parametrize("reduction", ["none", "add", "mul", "min", "max"])
+    def test_scatter_28_to_29(self, op, reduction) -> None:
+        self._test_op_upgrade(
+            op,
+            28,
+            [[2], [2] if op == "ScatterElements" else [2, 1], [2]],
+            [[2]],
+            [TensorProto.FLOAT, TensorProto.INT64, TensorProto.FLOAT],
+            [TensorProto.FLOAT],
+            attrs={"reduction": reduction},
+            strict_check=True,
+        )
+
     def test_Scan(self) -> None:
         sum_in = onnx.helper.make_tensor_value_info(
             "sum_in", onnx.TensorProto.FLOAT, [2]
