@@ -5606,6 +5606,22 @@ class TestShapeInference(TestShapeInferenceHelper):
         with pytest.raises(onnx.shape_inference.InferenceError):
             self._inferred(graph)
 
+    @pytest.mark.parametrize(
+        "elem_type",
+        [
+            TensorProto.FLOAT16,
+            TensorProto.BFLOAT16,
+            TensorProto.FLOAT,
+            TensorProto.DOUBLE,
+        ],
+    )
+    @pytest.mark.parametrize("shape", [(), (2, 3), ("N", None, 3), (0, 3)])
+    def test_expm1(self, elem_type, shape) -> None:
+        graph = self._make_graph(
+            [("x", elem_type, shape)], [make_node("Expm1", ["x"], ["y"])], []
+        )
+        self._assert_inferred(graph, [make_tensor_value_info("y", elem_type, shape)])
+
     def test_logsoftmax_2d(self) -> None:
         graph = self._make_graph(
             [("x", TensorProto.FLOAT, (4, 5))],

@@ -94,6 +94,7 @@ __all__ = [
     "Equal",
     "Erf",
     "Exp",
+    "Expm1",
     "Expand",
     "EyeLike",
     "Flatten",
@@ -363,6 +364,7 @@ from onnx.reference.ops.op_equal import Equal
 from onnx.reference.ops.op_erf import Erf
 from onnx.reference.ops.op_exp import Exp
 from onnx.reference.ops.op_expand import Expand
+from onnx.reference.ops.op_expm1 import Expm1
 from onnx.reference.ops.op_eyelike import EyeLike
 from onnx.reference.ops.op_flatten import Flatten
 from onnx.reference.ops.op_floor import Floor

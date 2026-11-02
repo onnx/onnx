@@ -34455,6 +34455,69 @@ This version of the operator has been available since version 28 of the default 
 </dl>
 
 ## Version 29 of the default ONNX operator set
+### <a name="Expm1-29"></a>**Expm1-29**</a>
+
+  Computes the exponential of each input element minus one, independently.
+  The input may have any shape, including a scalar or an empty tensor. The output
+  has the same shape and element type as the input. Supported element types are
+  FLOAT16, BFLOAT16, FLOAT, and DOUBLE.
+
+  For a finite nonzero input element `x`, the mathematical result is
+  `y = exp(x) - 1`, where `exp` is the exponential to base `e`. Here `x` denotes
+  the exact real value represented by the input element, and the exponential and
+  subtraction denote exact real operations in the mathematical definition, not
+  an intermediate floating-point exponential that must be materialized.
+
+  Special values are defined element-wise as follows:
+
+  | Input `x` | Output `y` |
+  | --- | --- |
+  | Positive zero | Positive zero |
+  | Negative zero | Negative zero |
+  | Negative infinity | `-1` |
+  | Positive infinity | Positive infinity |
+  | NaN | NaN |
+
+  The sign and payload of an output NaN are unspecified. Finite positive inputs
+  whose results overflow the output type produce positive infinity.
+
+  The computation must preserve small nonzero results that would be lost by
+  rounding `exp(x)` to `1` before subtracting `1`. In particular, an output must
+  not become zero solely because such an intermediate exponential rounds to `1`
+  when the mathematical result is representable as a nonzero value in the output
+  type. Near zero, `(exp(x) - 1) / x` tends to `1`. For example, a FLOAT input
+  `1e-8` produces a result approximately equal to `1e-8`, rather than zero.
+
+  Implementations may choose their numerical algorithm; the operation is not
+  specified as a composition of `Exp` and `Sub`. Non-special results are subject
+  to floating-point approximation, without a requirement for bitwise agreement
+  between implementations or correctly rounded transcendental results.
+
+#### Version
+
+This version of the operator has been available since version 29 of the default ONNX operator set.
+
+#### Inputs
+
+<dl>
+<dt><tt>input</tt> (differentiable) : T</dt>
+<dd>Input tensor</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> (differentiable) : T</dt>
+<dd>The exponential of the input minus one, computed element-wise</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(bfloat16), tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
 ### <a name="GroupedMatMul-29"></a>**GroupedMatMul-29**</a>
 
   GroupedMatMul multiplies each row of a token matrix by one or more selected
