@@ -6,7 +6,7 @@
 * [Overall Test Coverage](#overall-test-coverage)
 # Node Test Coverage
 ## Summary
-Node tests have covered 194/203 (95.57%, 5 generators excluded) common operators.
+Node tests have covered 195/204 (95.59%, 5 generators excluded) common operators.
 
 Node tests have covered 1/1 (100.00%, 0 generators excluded) experimental operators.
 
@@ -15996,6 +15996,84 @@ expect(node, inputs=[x], outputs=[y], name="test_log_example")
 x = np.exp(np.random.randn(3, 4, 5).astype(np.float32))
 y = np.log(x)
 expect(node, inputs=[x], outputs=[y], name="test_log")
+```
+
+</details>
+
+
+### LogCumSumExp
+There are 5 test cases, listed as following:
+<details>
+<summary>logcumsumexp</summary>
+
+```python
+x = np.array([-200, -100, 100], dtype=np.float32)
+node = onnx.helper.make_node("LogCumSumExp", ["X"], ["Y"])
+expect(node, [x], [x.copy()], name="test_logcumsumexp_dynamic_range")
+```
+
+</details>
+<details>
+<summary>logcumsumexp_axes</summary>
+
+```python
+x = np.log(np.arange(1, 25, dtype=np.float64)).reshape(2, 3, 4)
+for axis in (0, 1, 2, -1, -3):
+    node = onnx.helper.make_node("LogCumSumExp", ["X"], ["Y"], axis=axis)
+    y = np.log(np.cumsum(np.exp(x), axis=axis))
+    expect(node, [x], [y], name=f"test_logcumsumexp_axis_{axis}")
+```
+
+</details>
+<details>
+<summary>logcumsumexp_empty</summary>
+
+```python
+for shape, axis in (((2, 0, 3), 1), ((0, 3), -1)):
+    x = np.empty(shape, dtype=np.float32)
+    node = onnx.helper.make_node("LogCumSumExp", ["X"], ["Y"], axis=axis)
+    expect(node, [x], [x.copy()], name=f"test_logcumsumexp_empty_axis_{axis}")
+```
+
+</details>
+<details>
+<summary>logcumsumexp_low_precision</summary>
+
+```python
+for dtype in (np.float16, ml_dtypes.bfloat16):
+    x = np.zeros(128, dtype=dtype)
+    y = np.log(np.arange(1, 129, dtype=np.float64)).astype(dtype)
+    node = onnx.helper.make_node("LogCumSumExp", ["X"], ["Y"])
+    expect(node, [x], [y], name=f"test_logcumsumexp_{np.dtype(dtype).name}")
+```
+
+</details>
+<details>
+<summary>logcumsumexp_special_values</summary>
+
+```python
+x = np.array(
+    [
+        [-np.inf, -np.inf, -np.inf, -np.inf],
+        [-np.inf, 0, np.inf, -np.inf],
+        [0, np.inf, np.inf, 1],
+        [0, np.nan, np.inf, -np.inf],
+        [np.inf, -np.inf, np.nan, 0],
+    ],
+    dtype=np.float32,
+)
+y = np.array(
+    [
+        [-np.inf, -np.inf, -np.inf, -np.inf],
+        [-np.inf, 0, np.inf, np.inf],
+        [0, np.inf, np.inf, np.inf],
+        [0, np.nan, np.nan, np.nan],
+        [np.inf, np.inf, np.nan, np.nan],
+    ],
+    dtype=np.float32,
+)
+node = onnx.helper.make_node("LogCumSumExp", ["X"], ["Y"], axis=1)
+expect(node, [x], [y], name="test_logcumsumexp_special_values")
 ```
 
 </details>

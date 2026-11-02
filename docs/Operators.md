@@ -191,6 +191,7 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#LeakyRelu">LeakyRelu</a>|<a href="Changelog.md#LeakyRelu-16">16</a>, <a href="Changelog.md#LeakyRelu-6">6</a>, <a href="Changelog.md#LeakyRelu-1">1</a>|16|
 |<a href="#LessOrEqual">LessOrEqual</a>|<a href="Changelog.md#LessOrEqual-16">16</a>, <a href="Changelog.md#LessOrEqual-12">12</a>|16|
 |<a href="#LinearAttention">LinearAttention</a>|<a href="Changelog.md#LinearAttention-27">27</a>|27|
+|<a href="#LogCumSumExp">LogCumSumExp</a>|<a href="Changelog.md#LogCumSumExp-29">29</a>|29|
 |<a href="#LogSoftmax">LogSoftmax</a>|<a href="Changelog.md#LogSoftmax-13">13</a>, <a href="Changelog.md#LogSoftmax-11">11</a>, <a href="Changelog.md#LogSoftmax-1">1</a>|13, 18|
 |<a href="#MeanVarianceNormalization">MeanVarianceNormalization</a>|<a href="Changelog.md#MeanVarianceNormalization-13">13</a>, <a href="Changelog.md#MeanVarianceNormalization-9">9</a>|13, 18|
 |<a href="#Mish">Mish</a>|<a href="Changelog.md#Mish-22">22</a>, <a href="Changelog.md#Mish-18">18</a>|22|
@@ -21572,6 +21573,158 @@ expect(node, inputs=[x], outputs=[y], name="test_log_example")
 x = np.exp(np.random.randn(3, 4, 5).astype(np.float32))
 y = np.log(x)
 expect(node, inputs=[x], outputs=[y], name="test_log")
+```
+
+</details>
+
+
+### <a name="LogCumSumExp"></a><a name="logcumsumexp">**LogCumSumExp**</a>
+
+  Computes the inclusive, forward cumulative log-sum-exp of `X` along `axis`.
+  The output has the same shape and element type as `X`. The input must have
+  rank at least one; empty dimensions are supported and produce an empty output.
+  For each fixed set of indices outside `axis`, the output at position `j` is
+  `Y[j] = log(sum(exp(X[k]), k = 0, ..., j))`.
+
+  The computation must be numerically stable: neither directly exponentiating
+  the input nor subtracting a single maximum over the entire axis is sufficient.
+  For example, `X = [-200, -100, 100]` with `axis = 0` produces approximately
+  `[-200, -100, 100]`, not `[-inf, -inf, 100]`.
+
+  A prefix containing only negative infinities produces negative infinity.
+  A prefix containing positive infinity produces positive infinity unless it
+  also contains NaN. Any NaN in a prefix produces NaN for that and all subsequent
+  positions in that slice. Infinities alone must not introduce NaN.
+
+  Intermediate accumulation uses at least float32 precision for float16,
+  bfloat16 and float32 inputs, and at least float64 precision for float64 inputs.
+  The accumulator is not rounded to the output type between prefixes; each
+  output is converted to the input type. Different stable scan associations
+  may produce different floating-point rounding; bitwise equality is not required.
+
+  For finite values, a stable pairwise combination is
+  `max(a, b) + log1p(exp(min(a, b) - max(a, b)))`, with the infinity and NaN
+  rules above applied separately. The function body provides a sequential Scan
+  fallback, not a requirement for native implementations to use sequential Scan.
+
+  This corresponds to the inclusive forward operation in
+  [torch.logcumsumexp](https://docs.pytorch.org/docs/stable/generated/torch.logcumsumexp.html)
+  and [tf.math.cumulative_logsumexp](https://www.tensorflow.org/api_docs/python/tf/math/cumulative_logsumexp).
+
+#### Version
+
+This version of the operator has been available since version 29 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>axis</tt> : int (default is 0)</dt>
+<dd>Axis along which to accumulate. Must be in [-rank(X), rank(X)-1]. Negative axes count from the back.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> (differentiable) : T</dt>
+<dd>Input tensor of rank at least one.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> : T</dt>
+<dd>Inclusive cumulative log-sum-exp, with the same shape and type as X.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(bfloat16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output to floating-point tensors.</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>logcumsumexp</summary>
+
+```python
+x = np.array([-200, -100, 100], dtype=np.float32)
+node = onnx.helper.make_node("LogCumSumExp", ["X"], ["Y"])
+expect(node, [x], [x.copy()], name="test_logcumsumexp_dynamic_range")
+```
+
+</details>
+
+
+<details>
+<summary>logcumsumexp_axes</summary>
+
+```python
+x = np.log(np.arange(1, 25, dtype=np.float64)).reshape(2, 3, 4)
+for axis in (0, 1, 2, -1, -3):
+    node = onnx.helper.make_node("LogCumSumExp", ["X"], ["Y"], axis=axis)
+    y = np.log(np.cumsum(np.exp(x), axis=axis))
+    expect(node, [x], [y], name=f"test_logcumsumexp_axis_{axis}")
+```
+
+</details>
+
+
+<details>
+<summary>logcumsumexp_empty</summary>
+
+```python
+for shape, axis in (((2, 0, 3), 1), ((0, 3), -1)):
+    x = np.empty(shape, dtype=np.float32)
+    node = onnx.helper.make_node("LogCumSumExp", ["X"], ["Y"], axis=axis)
+    expect(node, [x], [x.copy()], name=f"test_logcumsumexp_empty_axis_{axis}")
+```
+
+</details>
+
+
+<details>
+<summary>logcumsumexp_low_precision</summary>
+
+```python
+for dtype in (np.float16, ml_dtypes.bfloat16):
+    x = np.zeros(128, dtype=dtype)
+    y = np.log(np.arange(1, 129, dtype=np.float64)).astype(dtype)
+    node = onnx.helper.make_node("LogCumSumExp", ["X"], ["Y"])
+    expect(node, [x], [y], name=f"test_logcumsumexp_{np.dtype(dtype).name}")
+```
+
+</details>
+
+
+<details>
+<summary>logcumsumexp_special_values</summary>
+
+```python
+x = np.array(
+    [
+        [-np.inf, -np.inf, -np.inf, -np.inf],
+        [-np.inf, 0, np.inf, -np.inf],
+        [0, np.inf, np.inf, 1],
+        [0, np.nan, np.inf, -np.inf],
+        [np.inf, -np.inf, np.nan, 0],
+    ],
+    dtype=np.float32,
+)
+y = np.array(
+    [
+        [-np.inf, -np.inf, -np.inf, -np.inf],
+        [-np.inf, 0, np.inf, np.inf],
+        [0, np.inf, np.inf, np.inf],
+        [0, np.nan, np.nan, np.nan],
+        [np.inf, np.inf, np.nan, np.nan],
+    ],
+    dtype=np.float32,
+)
+node = onnx.helper.make_node("LogCumSumExp", ["X"], ["Y"], axis=1)
+expect(node, [x], [y], name="test_logcumsumexp_special_values")
 ```
 
 </details>

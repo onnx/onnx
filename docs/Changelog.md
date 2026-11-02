@@ -34516,6 +34516,71 @@ This version of the operator has been available since version 29 of the default 
 <dd>Constrain group indices to int32 or int64 tensors.</dd>
 </dl>
 
+### <a name="LogCumSumExp-29"></a>**LogCumSumExp-29**</a>
+
+  Computes the inclusive, forward cumulative log-sum-exp of `X` along `axis`.
+  The output has the same shape and element type as `X`. The input must have
+  rank at least one; empty dimensions are supported and produce an empty output.
+  For each fixed set of indices outside `axis`, the output at position `j` is
+  `Y[j] = log(sum(exp(X[k]), k = 0, ..., j))`.
+
+  The computation must be numerically stable: neither directly exponentiating
+  the input nor subtracting a single maximum over the entire axis is sufficient.
+  For example, `X = [-200, -100, 100]` with `axis = 0` produces approximately
+  `[-200, -100, 100]`, not `[-inf, -inf, 100]`.
+
+  A prefix containing only negative infinities produces negative infinity.
+  A prefix containing positive infinity produces positive infinity unless it
+  also contains NaN. Any NaN in a prefix produces NaN for that and all subsequent
+  positions in that slice. Infinities alone must not introduce NaN.
+
+  Intermediate accumulation uses at least float32 precision for float16,
+  bfloat16 and float32 inputs, and at least float64 precision for float64 inputs.
+  The accumulator is not rounded to the output type between prefixes; each
+  output is converted to the input type. Different stable scan associations
+  may produce different floating-point rounding; bitwise equality is not required.
+
+  For finite values, a stable pairwise combination is
+  `max(a, b) + log1p(exp(min(a, b) - max(a, b)))`, with the infinity and NaN
+  rules above applied separately. The function body provides a sequential Scan
+  fallback, not a requirement for native implementations to use sequential Scan.
+
+  This corresponds to the inclusive forward operation in
+  [torch.logcumsumexp](https://docs.pytorch.org/docs/stable/generated/torch.logcumsumexp.html)
+  and [tf.math.cumulative_logsumexp](https://www.tensorflow.org/api_docs/python/tf/math/cumulative_logsumexp).
+
+#### Version
+
+This version of the operator has been available since version 29 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>axis</tt> : int (default is 0)</dt>
+<dd>Axis along which to accumulate. Must be in [-rank(X), rank(X)-1]. Negative axes count from the back.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> (differentiable) : T</dt>
+<dd>Input tensor of rank at least one.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> : T</dt>
+<dd>Inclusive cumulative log-sum-exp, with the same shape and type as X.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(bfloat16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output to floating-point tensors.</dd>
+</dl>
+
 # ai.onnx.preview
 ## Version 1 of the 'ai.onnx.preview' operator set
 ### <a name="ai.onnx.preview.FlexAttention-1"></a>**ai.onnx.preview.FlexAttention-1**</a>

@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include <algorithm>
+#include <limits>
 #include <map>
 #include <string>
 #include <unordered_set>
@@ -1726,6 +1727,168 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Constrain input and output types to numeric tensors.")
         .TypeConstraint("T2", {types::Int32, types::Int64}, "axis tensor can be int32 or int64 only")
         .TypeAndShapeInferenceFunction(ONNX_NAMESPACE::propagateShapeAndTypeFromFirstInput));
+
+static void LogCumSumExpShapeInference(InferenceContext& ctx) {
+  propagateShapeAndTypeFromFirstInput(ctx);
+  if (!hasNInputShapes(ctx, 1)) {
+    return;
+  }
+  const auto rank = getInputShape(ctx, 0).dim_size();
+  const auto axis = getAttribute(ctx, "axis", int64_t{0});
+  if (rank == 0) {
+    fail_shape_inference("LogCumSumExp requires rank >= 1; reshape scalar X to a one-element tensor.");
+  }
+  if (axis < -rank || axis >= rank) {
+    fail_shape_inference("LogCumSumExp axis ", axis, " is outside [-", rank, ", ", rank - 1, "] for X.");
+  }
+}
+
+static bool
+BuildLogCumSumExpFunction(const FunctionBodyBuildContext& ctx, const OpSchema& schema, FunctionProto& functionProto) {
+  const auto* input_type = ctx.getInputType(0);
+  if (input_type == nullptr || !input_type->has_tensor_type()) {
+    return false;
+  }
+  const auto elem_type = input_type->tensor_type().elem_type();
+  if (elem_type != TensorProto::FLOAT16 && elem_type != TensorProto::BFLOAT16 && elem_type != TensorProto::FLOAT &&
+      elem_type != TensorProto::DOUBLE) {
+    return false;
+  }
+  const bool use_double = elem_type == TensorProto::DOUBLE;
+  FunctionBuilder builder(functionProto);
+  builder.Add("X_acc = Cast (X)", "to", int64_t{use_double ? TensorProto::DOUBLE : TensorProto::FLOAT});
+  builder.Const("negative_infinity_float", -std::numeric_limits<float>::infinity())
+      .Add("negative_infinity = CastLike (negative_infinity_float, X_acc)");
+  const std::string prefix = R"ONNX(
+        axis_value = Constant <value_int: int = @axis> ()
+        scalar_zero = Constant <value = int64 {0}> ()
+        zero = Constant <value = int64[1] {0}> ()
+        one = Constant <value = int64[1] {1}> ()
+        end = Constant <value = int64[1] {9223372036854775807}> ()
+        X_shape = Shape (X)
+        rank = Size (X_shape)
+        axis_negative = Less (axis_value, zero)
+        axis_from_end = Add (axis_value, rank)
+        axis_normalized = Where (axis_negative, axis_from_end, axis_value)
+        size = Size (X)
+        empty = Equal (size, scalar_zero)
+        Y_acc = If (empty) <
+          then_branch = empty_input () => (empty_output) {
+            empty_output = Identity (X_acc)
+          },
+          else_branch = nonempty_input () => (nonempty_output) {
+            axis_end = Add (axis_normalized, one)
+            before_shape = Slice (X_shape, zero, axis_normalized)
+            after_shape = Slice (X_shape, axis_end, end)
+            before = ReduceProd <keepdims = 1> (before_shape)
+            after = ReduceProd <keepdims = 1> (after_shape)
+            length = Gather <axis = 0> (X_shape, axis_normalized)
+            scan_shape = Concat <axis = 0> (before, length, after)
+            state_shape = Concat <axis = 0> (before, after)
+            reshaped = Reshape (X_acc, scan_shape)
+            scan_input = Transpose <perm = [1, 0, 2]> (reshaped)
+            initial = Expand (negative_infinity, state_shape)
+      )ONNX";
+  // Flatten the dimensions before and after the axis so the Scan always uses axis 0,
+  // including when X's rank is unknown at function-building time.
+  // The log1p correction below retains exp(difference) when 1 + exp(difference)
+  // rounds to 1; its argument is in [0, 1], so the correction is well-conditioned.
+  const std::string acc_type = use_double ? "double" : "float";
+  builder.Add((prefix + R"ONNX(
+            final_state, scanned = Scan (initial, scan_input) <
+              num_scan_inputs = 1,
+              body = prefix ()ONNX" +
+               acc_type + "[?, ?] previous, " + acc_type + "[?, ?] current) => (" + acc_type + "[?, ?] next, " +
+               acc_type + R"ONNX([?, ?] output) {
+                zero_acc = Constant <value = float {0}> ()
+                one_acc = Constant <value = float {1}> ()
+                zero_t = CastLike (zero_acc, previous)
+                one_t = CastLike (one_acc, previous)
+                maximum = Max (previous, current)
+                minimum = Min (previous, current)
+                infinite = IsInf (maximum)
+                safe_maximum = Where (infinite, zero_t, maximum)
+                safe_minimum = Where (infinite, zero_t, minimum)
+                difference = Sub (safe_minimum, safe_maximum)
+                exponential = Exp (difference)
+                sum = Add (one_t, exponential)
+                logarithm = Log (sum)
+                rounded_exponential = Sub (sum, one_t)
+                error = Sub (exponential, rounded_exponential)
+                correction = Div (error, sum)
+                log_one_plus = Add (logarithm, correction)
+                finite_result = Add (safe_maximum, log_one_plus)
+                result = Where (infinite, maximum, finite_result)
+                previous_nan = IsNaN (previous)
+                current_nan = IsNaN (current)
+                any_nan = Or (previous_nan, current_nan)
+                nan_value = Where (previous_nan, previous, current)
+                next = Where (any_nan, nan_value, result)
+                output = Identity (next)
+              }
+            >
+            restored = Transpose <perm = [1, 0, 2]> (scanned)
+            nonempty_output = Reshape (restored, X_shape)
+          }
+        >
+        Y = CastLike (Y_acc, X)
+      )ONNX")
+                  .c_str());
+  schema.BuildFunction(functionProto);
+  return true;
+}
+
+static constexpr const char* LogCumSumExp_doc = R"DOC(
+Computes the inclusive, forward cumulative log-sum-exp of `X` along `axis`.
+The output has the same shape and element type as `X`. The input must have
+rank at least one; empty dimensions are supported and produce an empty output.
+For each fixed set of indices outside `axis`, the output at position `j` is
+`Y[j] = log(sum(exp(X[k]), k = 0, ..., j))`.
+
+The computation must be numerically stable: neither directly exponentiating
+the input nor subtracting a single maximum over the entire axis is sufficient.
+For example, `X = [-200, -100, 100]` with `axis = 0` produces approximately
+`[-200, -100, 100]`, not `[-inf, -inf, 100]`.
+
+A prefix containing only negative infinities produces negative infinity.
+A prefix containing positive infinity produces positive infinity unless it
+also contains NaN. Any NaN in a prefix produces NaN for that and all subsequent
+positions in that slice. Infinities alone must not introduce NaN.
+
+Intermediate accumulation uses at least float32 precision for float16,
+bfloat16 and float32 inputs, and at least float64 precision for float64 inputs.
+The accumulator is not rounded to the output type between prefixes; each
+output is converted to the input type. Different stable scan associations
+may produce different floating-point rounding; bitwise equality is not required.
+
+For finite values, a stable pairwise combination is
+`max(a, b) + log1p(exp(min(a, b) - max(a, b)))`, with the infinity and NaN
+rules above applied separately. The function body provides a sequential Scan
+fallback, not a requirement for native implementations to use sequential Scan.
+
+This corresponds to the inclusive forward operation in
+[torch.logcumsumexp](https://docs.pytorch.org/docs/stable/generated/torch.logcumsumexp.html)
+and [tf.math.cumulative_logsumexp](https://www.tensorflow.org/api_docs/python/tf/math/cumulative_logsumexp).
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(
+    LogCumSumExp,
+    29,
+    OpSchema()
+        .SetDoc(LogCumSumExp_doc)
+        .Attr(
+            "axis",
+            "Axis along which to accumulate. Must be in [-rank(X), rank(X)-1]. Negative axes count from the back.",
+            AttributeProto::INT,
+            int64_t{0})
+        .Input(0, "X", "Input tensor of rank at least one.", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
+        .Output(0, "Y", "Inclusive cumulative log-sum-exp, with the same shape and type as X.", "T")
+        .TypeConstraint(
+            "T",
+            {types::Float16, types::BFloat16, types::Float, types::Double},
+            "Constrain input and output to floating-point tensors.")
+        .TypeAndShapeInferenceFunction(LogCumSumExpShapeInference)
+        .SetContextDependentFunctionBodyBuilder(BuildLogCumSumExpFunction));
 
 ONNX_OPERATOR_SET_SCHEMA(
     Round,
