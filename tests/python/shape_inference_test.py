@@ -8548,6 +8548,97 @@ class TestShapeInference(TestShapeInferenceHelper):
             graph, [make_tensor_value_info("output", TensorProto.FLOAT, (2,))]
         )
 
+    @pytest.mark.parametrize("version", all_versions_for("Range"))
+    @pytest.mark.parametrize("bits", [32, 64])
+    @pytest.mark.parametrize("raw", [False, True])
+    @pytest.mark.parametrize("case", range(10))
+    def test_range_integer_boundaries(self, version, bits, raw, case) -> None:
+        low = -(1 << (bits - 1))
+        high = (1 << (bits - 1)) - 1
+        start, limit, delta = [
+            (low, high, high),
+            (high, low, -high),
+            (high, low, low),
+            (0, low, low),
+            (low, low + 3, 1),
+            (high - 3, high, 1),
+            (low + 3, low, -1),
+            (high, high - 3, -1),
+            (low, high, -1),
+            (high, low, 1),
+        ][case]
+        tensor_type = TensorProto.INT32 if bits == 32 else TensorProto.INT64
+        np_dtype = np.int32 if bits == 32 else np.int64
+        inputs = {"start": start, "limit": limit, "delta": delta}
+        graph = self._make_graph(
+            [(name, tensor_type, ()) for name in inputs],
+            [make_node("Range", list(inputs), ["output"])],
+            [],
+            initializer=[
+                make_tensor(
+                    name, tensor_type, (), np.array(value, dtype=np_dtype), raw=raw
+                )
+                for name, value in inputs.items()
+            ],
+        )
+        self._assert_inferred(
+            graph,
+            [
+                make_tensor_value_info(
+                    "output", tensor_type, (len(range(start, limit, delta)),)
+                )
+            ],
+            opset_imports=[make_opsetid(ONNX_DOMAIN, version)],
+        )
+
+    @pytest.mark.parametrize("version", all_versions_for("Range"))
+    @pytest.mark.parametrize("sign", [-1, 1])
+    def test_range_int64_exact_ceil(self, version, sign) -> None:
+        # Conversion to double would round the quotient down to exactly one.
+        inputs = {
+            "start": 0,
+            "limit": sign * ((1 << 60) + 1),
+            "delta": sign * (1 << 60),
+        }
+        graph = self._make_graph(
+            [(name, TensorProto.INT64, ()) for name in inputs],
+            [make_node("Range", list(inputs), ["output"])],
+            [],
+            initializer=[
+                make_tensor(name, TensorProto.INT64, (), [value])
+                for name, value in inputs.items()
+            ],
+        )
+        self._assert_inferred(
+            graph,
+            [make_tensor_value_info("output", TensorProto.INT64, (2,))],
+            opset_imports=[make_opsetid(ONNX_DOMAIN, version)],
+        )
+
+    @pytest.mark.parametrize("version", all_versions_for("Range"))
+    @pytest.mark.parametrize(
+        "start,limit,delta,message",
+        [
+            (0, 1, 0, "delta.*zero"),
+            (-(1 << 63), (1 << 63) - 1, 1, "int64"),
+        ],
+    )
+    def test_range_integer_invalid_length(
+        self, version, start, limit, delta, message
+    ) -> None:
+        inputs = {"start": start, "limit": limit, "delta": delta}
+        graph = self._make_graph(
+            [(name, TensorProto.INT64, ()) for name in inputs],
+            [make_node("Range", list(inputs), ["output"])],
+            [],
+            initializer=[
+                make_tensor(name, TensorProto.INT64, (), [value])
+                for name, value in inputs.items()
+            ],
+        )
+        with pytest.raises(onnx.shape_inference.InferenceError, match=message):
+            self._inferred(graph, opset_imports=[make_opsetid(ONNX_DOMAIN, version)])
+
     def test_range_initializer_invalid(self) -> None:
         # Create a TensorProto with incorrect data type for `delta`.
         # This should lead to an error when ParseData is called during shape inferencing
