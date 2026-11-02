@@ -11,6 +11,7 @@
 // to parse floating-point literals independently of the global locale.
 #include <locale.h> // NOLINT(modernize-deprecated-headers)
 
+#include <cerrno>
 #include <charconv>
 #include <cmath>
 #include <cstdlib>
@@ -66,18 +67,21 @@ bool TryParseFloat(std::string_view s, float& value) {
   if (result.ec != std::errc::result_out_of_range || result.ptr != last)
     return false;
 #endif
-  // Recover the rounded zero, subnormal, or infinity on a range error.
+  // Recover the rounded zero or subnormal on a range error; reject overflow.
   const auto& cloc = GetCLocale();
   if (!cloc.loc)
     return false;
   const std::string text(s); // strto*_l requires a NUL-terminated buffer.
   char* end = nullptr;
+  errno = 0;
 #ifdef _WIN32
   parsed = _strtof_l(text.c_str(), &end, cloc.loc);
 #else
   parsed = strtof_l(text.c_str(), &end, cloc.loc);
 #endif
   if (end == text.c_str() || end != text.c_str() + text.size())
+    return false;
+  if (errno == ERANGE && std::isinf(parsed))
     return false;
   value = parsed;
   return true;
@@ -97,18 +101,21 @@ bool TryParseFloat(std::string_view s, double& value) {
   if (result.ec != std::errc::result_out_of_range || result.ptr != last)
     return false;
 #endif
-  // Recover the rounded zero, subnormal, or infinity on a range error.
+  // Recover the rounded zero or subnormal on a range error; reject overflow.
   const auto& cloc = GetCLocale();
   if (!cloc.loc)
     return false;
   const std::string text(s); // strto*_l requires a NUL-terminated buffer.
   char* end = nullptr;
+  errno = 0;
 #ifdef _WIN32
   parsed = _strtod_l(text.c_str(), &end, cloc.loc);
 #else
   parsed = strtod_l(text.c_str(), &end, cloc.loc);
 #endif
   if (end == text.c_str() || end != text.c_str() + text.size())
+    return false;
+  if (errno == ERANGE && std::isinf(parsed))
     return false;
   value = parsed;
   return true;

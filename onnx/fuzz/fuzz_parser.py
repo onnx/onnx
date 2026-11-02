@@ -7,11 +7,17 @@ import re
 import sys
 from decimal import Decimal
 from fractions import Fraction
+from typing import TYPE_CHECKING
 
 import atheris
 
 with atheris.instrument_imports():
     from onnx import parser
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
+
+    from onnx import NodeProto
 
 
 def _float32(text: str, value: float) -> float:
@@ -41,6 +47,20 @@ def _check_float(actual: float, expected: float) -> None:
         assert actual.hex() == expected.hex(), (actual, expected)
 
 
+def _check_float_literal(
+    body: str, expected: float, special: bool, get: Callable[[NodeProto], float]
+) -> None:
+    # Decimal literals that overflow the target type must be rejected.
+    overflow = math.isinf(expected) and not special
+    try:
+        node = parser.parse_node(body)
+    except parser.ParseError:
+        assert overflow, (body, "Valid floating-point literal was rejected")
+    else:
+        assert not overflow, (body, "Overflowing floating-point literal was accepted")
+        _check_float(get(node), expected)
+
+
 def _check_integer(text: str) -> None:
     # Normalize first so long literals do not hit Python's int string limit.
     digits = text.removeprefix("-").lstrip("0") or "0"
@@ -52,6 +72,9 @@ def _check_integer(text: str) -> None:
     for kind in ("int", "int64", "uint64"):
         lower, upper = (0, 2**64 - 1) if kind == "uint64" else (-(2**63), 2**63 - 1)
         valid = value is not None and lower <= value <= upper
+        # Unsigned literals must not carry a sign, even "-0".
+        if kind == "uint64" and text.startswith("-"):
+            valid = False
         body = (
             f"value_int: int={text}" if kind == "int" else f"value={kind}[1] {{{text}}}"
         )
@@ -92,16 +115,23 @@ def TestOneInput(data):
             raise
     if re.fullmatch(r"-?[0-9]+", text):
         _check_integer(text)
-    # Decimal literals are valid floating-point attributes even on range errors.
-    # Do not suppress ParseError here: rejecting such a literal is also a bug.
-    if re.fullmatch(
-        r"-?[0-9]+(?:\.[0-9]*)?(?:[eE][+-]?[0-9]+)?", text
-    ) or text.lower().removeprefix("-") in {"inf", "infinity", "nan"}:
+    # Decimal literals parse unless they overflow; underflow rounds to zero or a
+    # subnormal. Special values (inf, infinity, nan) always parse.
+    special = text.lower().removeprefix("-") in {"inf", "infinity", "nan"}
+    if special or re.fullmatch(r"-?[0-9]+(?:\.[0-9]*)?(?:[eE][+-]?[0-9]+)?", text):
         expected = float(text)
-        node = parser.parse_node(f"Y = Constant<value_float: float={text}>()")
-        _check_float(node.attribute[0].f, _float32(text, expected))
-        node = parser.parse_node(f"Y = Constant<value=double[1] {{{text}}}>()")
-        _check_float(node.attribute[0].t.double_data[0], expected)
+        _check_float_literal(
+            f"Y = Constant<value_float: float={text}>()",
+            _float32(text, expected),
+            special,
+            lambda node: node.attribute[0].f,
+        )
+        _check_float_literal(
+            f"Y = Constant<value=double[1] {{{text}}}>()",
+            expected,
+            special,
+            lambda node: node.attribute[0].t.double_data[0],
+        )
     # Escape only quotes and backslashes, as required by the ONNX text format.
     quoted = text.replace("\\", "\\\\").replace('"', '\\"')
     node = parser.parse_node(f'Y = Constant<value_string="{quoted}">()')

@@ -75,10 +75,11 @@ fuzzer feeds random bytes. Swallowing them lets libFuzzer keep searching for
 inputs that cause real bugs.
 
 The parser harness ignores only invalid UTF-8 and `parser.ParseError`; other
-exceptions are findings. Valid decimal literals must parse as float attributes,
-and escaped string attributes must preserve their UTF-8 bytes, including NUL.
-Integer attributes and signed/unsigned tensors must preserve in-range values
-and reject out-of-range literals.
+exceptions are findings. Decimal literals must parse as float and double
+values unless they overflow, in which case they must be rejected. Escaped string
+attributes must preserve their UTF-8 bytes, including NUL. Integer attributes
+and signed/unsigned tensors must preserve in-range values and reject
+out-of-range literals; unsigned literals must not carry a sign, even `-0`.
 
 ### Why `TestOneInput`?
 

@@ -336,15 +336,12 @@ class ParserBase {
     CHECK_PARSER_STATUS(Parse(literal))
     if (literal.type != LiteralType::INT_LITERAL)
       return ParseError("Integer value expected, but not found.");
-    const char* begin = literal.value.data();
-    const char* end = begin + literal.value.size();
-    // Preserve negative zero, but reject negative nonzero unsigned values.
-    const bool negative = begin != end && *begin == '-';
-    if (negative)
-      ++begin;
     uint64_t parsed = 0;
-    const auto result = std::from_chars(begin, end, parsed);
-    if (result.ec != std::errc{} || result.ptr != end || (negative && parsed != 0))
+    const char* end = literal.value.data() + literal.value.size();
+    // from_chars rejects a leading '-' for unsigned types, including "-0".
+    // NOLINTNEXTLINE(bugprone-suspicious-stringview-data-usage)
+    const auto result = std::from_chars(literal.value.data(), end, parsed);
+    if (result.ec != std::errc{} || result.ptr != end)
       return ParseError("Unsigned integer literal is invalid or out of range: ", literal.value);
     val = parsed;
     return Common::Status::OK();
