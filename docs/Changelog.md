@@ -34462,9 +34462,13 @@ This version of the operator has been available since version 28 of the default 
   All multibyte fields are little-endian.
 
   `format` selects the quantization format using an ONNX-defined, case-sensitive
-  string identifier. The `gguf:` prefix identifies the encoding family.
-  Each identifier denotes the fixed layout and decoding algorithm specified below.
-  The supported identifiers and block sizes are:
+  string identifier. Identifiers are either fixed profiles or parameterized families.
+  The `gguf:` prefix identifies the existing GGML/GGUF layouts; `onnx:` identifies
+  layouts defined here by ONNX. Parameters use `;key=value`, in ascending ASCII
+  key order, with no whitespace, duplicate keys, implicit defaults, or escaping.
+  Only registered families and their declared parameters and values are accepted.
+  Names and values are case-sensitive. Integers use decimal digits without a sign
+  or leading zeros. The supported fixed identifiers and block sizes are:
 
   | Identifier | Format | Elements | Bytes |
   |---|---|---|---|
@@ -34496,7 +34500,18 @@ This version of the operator has been available since version 28 of the default 
   | gguf:q1_0 | Q1_0 | 128 | 18 |
   | gguf:q2_0 | Q2_0 | 64 | 18 |
 
-  The byte layouts, per-format decoding algorithms, and complete IQ codebooks
+  The parameterized NF4 family is
+  `onnx:nf4;block_size=B;scale_dtype=T`, where B is any positive int64 and T is
+  `float16`, `bfloat16`, or `float32`. Both parameters are required, in the order
+  shown. A block contains B NF4 indices and occupies
+  `sizeof(T) + B/2 + B%2` bytes (integer division). Its little-endian scale comes
+  first, followed by adjacent indices, with the earlier element in the low nibble.
+  For odd B, the last high nibble is ignored. Decode each element by multiplying
+  the specified FLOAT NF4 codebook value by the scale converted to FLOAT.
+  For example, `onnx:nf4;block_size=64;scale_dtype=float32` occupies 36 bytes per block.
+  The fixed `gguf:` profiles accept no parameters.
+
+  The byte layouts, per-format decoding algorithms, NF4 and complete IQ codebooks
   are defined in the in-tree
   [DequantizePacked decoding specification](DequantizePacked.md).
 
@@ -34528,7 +34543,7 @@ This version of the operator has been available since version 29 of the default 
 
 <dl>
 <dt><tt>format</tt> : string (required)</dt>
-<dd>ONNX-defined, case-sensitive quantization format identifier from the supported table.</dd>
+<dd>ONNX-defined, case-sensitive fixed profile or parameterized family identifier.</dd>
 <dt><tt>output_dtype</tt> : int (default is 1)</dt>
 <dd>ONNX TensorProto data type of the output: FLOAT, FLOAT16, BFLOAT16, or DOUBLE.</dd>
 <dt><tt>shape</tt> : list of ints (required)</dt>

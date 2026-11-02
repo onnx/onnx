@@ -2,14 +2,16 @@
 # Copyright (c) 2023-2026 The ggml authors
 #
 # SPDX-License-Identifier: Apache-2.0 AND MIT
-"""GGML block decoding at revision da8e2a54b919557b816b1c2beb432ccb766f7ce0.
+"""Packed GGML profiles and ONNX's parameterized NF4 family.
 
-The upstream MIT notice is retained in GGML_LICENSE.
+GGML decoding follows da8e2a54b919557b816b1c2beb432ccb766f7ce0;
+the upstream MIT notice is retained in GGML_LICENSE.
 """
 
 from __future__ import annotations
 
 import math
+import re
 import struct
 from enum import IntEnum
 from functools import lru_cache
@@ -52,7 +54,7 @@ class _GGMLType(IntEnum):
 
 
 # Private GGML IDs used by the translated decoders.
-# The operator accepts only the ONNX format identifiers in GGUF_FORMATS.
+# Fixed profiles retain their GGML IDs; NF4 is a separately defined family.
 GGUF_BLOCK_SIZES = {
     2: (32, 18),
     3: (32, 20),
@@ -91,6 +93,66 @@ _FP4 = np.array(
     [0, 1, 2, 3, 4, 6, 8, 12, 0, -1, -2, -3, -4, -6, -8, -12],
     dtype=np.float32,
 )
+
+
+_NF4_CODEBOOK_BITS = (
+    0xBF800000,
+    0xBF3239B1,
+    0xBF066B30,
+    0xBECA32A0,
+    0xBE91A24D,
+    0xBE3D353F,
+    0xBDBA7871,
+    0x00000000,
+    0x3DA2FAFF,
+    0x3E24CAE3,
+    0x3E7C04DD,
+    0x3EAD033A,
+    0x3EE1A4B8,
+    0x3F1007AB,
+    0x3F3913B3,
+    0x3F800000,
+)
+_NF4 = np.array(_NF4_CODEBOOK_BITS, dtype=np.uint32).view(np.float32)
+_NF4.flags.writeable = False
+
+
+def _parse_format(name: object) -> tuple[int | None, int, int, str | None]:
+    """Return decoder kind, elements/bytes per block, and NF4 scale type."""
+    if isinstance(name, str):
+        if name in GGUF_FORMATS:
+            kind = GGUF_FORMATS[name]
+            return kind, *GGUF_BLOCK_SIZES[kind], None
+        match = re.fullmatch(
+            r"onnx:nf4;block_size=([1-9][0-9]*);scale_dtype=(float16|bfloat16|float32)",
+            name,
+        )
+        if match is not None:
+            digits, scale = match.groups()
+            if len(digits) <= 19 and (
+                len(digits) < 19 or digits <= "9223372036854775807"
+            ):
+                block_size = int(digits)
+                scale_bytes = 4 if scale == "float32" else 2
+                return None, block_size, scale_bytes + (block_size + 1) // 2, scale
+    raise ValueError(f"Unsupported quantization format: {name}")
+
+
+def _decode_nf4_block(block: bytes, block_size: int, scale_dtype: str) -> np.ndarray:
+    if scale_dtype == "float32":
+        scale = np.float32(struct.unpack_from("<f", block)[0])
+        offset = 4
+    elif scale_dtype == "float16":
+        scale = _half(block)
+        offset = 2
+    else:
+        scale = np.float32(
+            struct.unpack("<f", struct.pack("<I", _uint(block, 0) << 16))[0]
+        )
+        offset = 2
+    packed = np.frombuffer(block, dtype=np.uint8, offset=offset)
+    indices = np.stack((packed & 15, packed >> 4), axis=1).ravel()[:block_size]
+    return _NF4[indices] * scale
 
 
 @lru_cache(maxsize=6)
@@ -365,9 +427,7 @@ def _decode_block(block: bytes, qtype: int) -> np.ndarray:  # noqa: PLR0911
 
 class DequantizePacked(OpRun):
     def _run(self, x, format=None, shape=None, output_dtype=None):  # noqa: A002
-        if format not in GGUF_FORMATS:
-            raise ValueError(f"Unsupported quantization format: {format}")
-        qtype = GGUF_FORMATS[format]
+        qtype, block_size, block_bytes, scale_dtype = _parse_format(format)
         if x.dtype != np.uint8 or x.ndim != 1:
             raise ValueError("x must be a one-dimensional UINT8 tensor.")
         if output_dtype not in (
@@ -383,7 +443,6 @@ class DequantizePacked(OpRun):
             raise ValueError(
                 "shape must have rank at least one and nonnegative dimensions."
             )
-        block_size, block_bytes = GGUF_BLOCK_SIZES[qtype]
         if shape[-1] % block_size:
             raise ValueError(
                 "The last output dimension must be a multiple of the quantization block size."
@@ -398,9 +457,13 @@ class DequantizePacked(OpRun):
             )
         out = np.empty(count, dtype=np.float32)
         for j, block in enumerate(x.reshape(-1, block_bytes)):
-            out[j * block_size : (j + 1) * block_size] = _decode_block(
-                block.tobytes(), qtype
-            )
+            data = block.tobytes()
+            if qtype is None:
+                assert scale_dtype is not None
+                values = _decode_nf4_block(data, block_size, scale_dtype)
+            else:
+                values = _decode_block(data, qtype)
+            out[j * block_size : (j + 1) * block_size] = values
         return (
             out.reshape(tuple(shape)).astype(
                 helper.tensor_dtype_to_np_dtype(output_dtype), copy=False

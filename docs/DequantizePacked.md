@@ -29,13 +29,51 @@ Their concatenated values are reshaped to `shape` and converted once to
 `output_dtype`. FLOAT16 and BFLOAT16 conversion uses round-to-nearest,
 ties-to-even, as in Cast.
 
-`format` is an ONNX-defined, case-sensitive string identifier. The `gguf:`
-prefix identifies the encoding family. Each permitted identifier denotes the
-fixed layout, algorithm, and codebooks defined in this document. For example:
+## Format identifiers and parameterized families
+
+A `format` is an ONNX-defined, case-sensitive identifier. It names either a
+fixed profile or a parameterized encoding family:
 
 ```text
-y = DequantizePacked<format="gguf:q2_0", shape=[64]>(x)
+identifier = family *(";" key "=" value)
 ```
+
+The namespace and family name identify the payload layout. `gguf:` identifies
+the existing GGML/GGUF layouts; `onnx:` identifies layouts specified here by
+ONNX. A prefix describes the byte-layout family, not the origin of its
+underlying quantization method. The complete permitted families and parameters
+are defined below; arbitrary identifiers are not accepted.
+
+Canonical parameterized identifiers have these rules:
+
+- A registered family declares its parameter keys and admissible values.
+- Keys appear once each in ascending ASCII order. Required parameters are
+  explicit; omitted defaults, duplicate keys, and unknown keys are invalid.
+- Family names, keys and symbolic values are case-sensitive ASCII. There is no
+  whitespace or escaping. A semicolon separates parameters and `=` separates
+  each key from its value.
+- Integer values are decimal digits without a sign or leading zeros. Their
+  permitted range is specified by the family.
+- Alternative parameter orderings and noncanonical spellings are rejected.
+  This gives each supported configuration one identifier.
+- Unknown families, parameter values and additional parameters are errors.
+
+The fixed `gguf:*` profiles below accept no parameters. Their existing
+identifiers retain exactly the same layouts and decoding arithmetic.
+
+The first parameterized family is NF4:
+
+```text
+onnx:nf4;block_size=64;scale_dtype=float32
+onnx:nf4;block_size=128;scale_dtype=float16
+onnx:nf4;block_size=3;scale_dtype=bfloat16
+```
+
+`block_size` is the number of weights sharing one scale, not a compute-kernel
+tile size. It is a positive integer no greater than `9223372036854775807`.
+`scale_dtype` is `float16`, `bfloat16`, or `float32`. Both parameters are
+required, in that order. The [NF4 definition](#nf4-family) specifies their
+wire representation and the resulting block size in bytes.
 
 The importer selects each tensor's payload byte range, normalizes multibyte
 fields to little-endian, and supplies dimensions in ONNX order. In GGML the
@@ -49,9 +87,9 @@ Shape has rank at least one, with nonnegative literal dimensions. A zero
 dimension produces an empty tensor. The innermost dimension remains
 block-aligned for empty outputs.
 
-## Source provenance (informative)
+## GGUF source provenance (informative)
 
-The formats originate from **GGML
+The fixed GGUF profiles originate from **GGML
 [`da8e2a54b919557b816b1c2beb432ccb766f7ce0`](https://github.com/ggml-org/ggml/tree/da8e2a54b919557b816b1c2beb432ccb766f7ce0)**,
 whose `GGML_QNT_VERSION` is 2. A GGUF container version, a quantization version,
 a model-level `general.file_type`, and a tensor-level `ggml_type` are different
@@ -75,7 +113,7 @@ the header and implementation, not just the prose enum.
 
 ## Quantization formats
 
-The permitted `format` identifiers, decoded element counts `B`, and packed
+The 27 fixed GGUF profiles, decoded element counts `B`, and packed
 byte counts `S` are:
 
 | Identifier | Format  | B   | S   |
@@ -114,6 +152,83 @@ quants. Both decode as `d * q`, with cached sum fields ignored.
 
 MXFP4/NVFP4 payloads interleave scales and quants in blocks with format-specific
 byte and lane ordering.
+
+## NF4 family
+
+`onnx:nf4` is a blockwise NormalFloat4 codebook encoding. It retains the
+single rank-one UINT8 payload input and the common `shape` and `output_dtype`
+attributes. It has no zero point and no per-tensor codebook input.
+
+| Parameter | Permitted values | Meaning |
+| --- | --- | --- |
+| `block_size` | Integers in `[1, 9223372036854775807]` | Number of decoded values per block, `B` |
+| `scale_dtype` | `float16`, `bfloat16`, `float32` | Scale field representation |
+
+Let `T` be the scale width, 2 bytes for FLOAT16/BFLOAT16 and 4 for FLOAT.
+Each block has exactly `S = T + B // 2 + B % 2` bytes:
+
+| Byte range | Field |
+| --- | --- |
+| `[0, T)` | One little-endian scale |
+| `[T, S)` | `ceil(B/2)` bytes of NF4 codebook indices |
+
+For each pair of adjacent elements, the earlier index occupies the low nibble:
+`q[2*j] = packed[j] & 15`, `q[2*j+1] = packed[j] >> 4`. For odd `B`, the
+last high nibble is ignored; canonical encoders write zero there. Each new
+block begins at the next byte after the preceding block, with no alignment
+padding. Blocks follow the logical row-major element order. The common
+innermost-dimension alignment and exact payload-length rules apply with this
+family's `B` and `S`.
+
+For example, 64 values with a FLOAT scale use 36 bytes; 128 values with a
+FLOAT16 scale use 66 bytes. Block sizes need not be powers of two or even.
+An importer preserves the source's scale type, code indices and block boundaries
+when repacking. Changing the block size is a quantization change. A partial
+source block can be decoded into an aligned padded shape, then trimmed with
+Slice and reshaped with Reshape while preserving source block boundaries.
+
+FLOAT16 scales use IEEE binary16. BFLOAT16 scales are 16-bit fields with the
+same sign and exponent bits as FLOAT and seven explicit fraction bits; their
+FLOAT representation is obtained by placing the field in bits 31–16 and
+setting bits 15–0 to zero. FLOAT scales use IEEE binary32. All conversions to
+FLOAT are exact for finite scale values. All scale bit patterns are defined;
+zero, infinity and NaN follow the common IEEE arithmetic rules below. NaN
+payload bits are unspecified.
+
+The NF4 codebook is fixed by these IEEE binary32 bit patterns, in index order.
+These patterns, rather than decimal approximations, are normative:
+
+| Index | FLOAT bits |
+| --- | --- |
+| 0 | `0xbf800000` |
+| 1 | `0xbf3239b1` |
+| 2 | `0xbf066b30` |
+| 3 | `0xbeca32a0` |
+| 4 | `0xbe91a24d` |
+| 5 | `0xbe3d353f` |
+| 6 | `0xbdba7871` |
+| 7 | `0x00000000` |
+| 8 | `0x3da2faff` |
+| 9 | `0x3e24cae3` |
+| 10 | `0x3e7c04dd` |
+| 11 | `0x3ead033a` |
+| 12 | `0x3ee1a4b8` |
+| 13 | `0x3f1007ab` |
+| 14 | `0x3f3913b3` |
+| 15 | `0x3f800000` |
+
+For each element, reinterpret its codebook entry as FLOAT, multiply it by the
+scale converted to FLOAT, and round the product once to FLOAT. After all
+blocks are decoded and reshaped, convert once to `output_dtype` under the
+common conversion rules. In particular, FLOAT16/BFLOAT16 outputs do not
+narrow the codebook or multiplication operands before the FLOAT product.
+
+The codebook matches
+[bitsandbytes NF4](https://github.com/bitsandbytes-foundation/bitsandbytes/blob/a616886cacf86701514f0cb1d6be760f967481c0/bitsandbytes/functional.py).
+This source link is informative; the table and payload layout above define
+the ONNX encoding. Nested/double-quantized scales are not part of this family;
+a layout carrying quantized scales requires a separately registered profile
+or family.
 
 ## Packed layouts and decoding
 
@@ -257,6 +372,34 @@ def grid(name, index):
 IQ4 = [-127, -104, -83, -65, -49, -35, -22, -10,
        1, 13, 25, 38, 53, 69, 89, 113]
 FP4 = [0, 1, 2, 3, 4, 6, 8, 12, 0, -1, -2, -3, -4, -6, -8, -12]
+```
+
+### NF4 decoding
+
+`B` and `scale_dtype` are parsed from the canonical family identifier. The
+caller has already checked that a block contains exactly `S` bytes. Scale
+conversion uses `H`, `U`, and `R`; `mul` fixes the FLOAT rounding point.
+
+```python
+NF4_CODEBOOK_BITS = (
+    0xbf800000, 0xbf3239b1, 0xbf066b30, 0xbeca32a0,
+    0xbe91a24d, 0xbe3d353f, 0xbdba7871, 0x00000000,
+    0x3da2faff, 0x3e24cae3, 0x3e7c04dd, 0x3ead033a,
+    0x3ee1a4b8, 0x3f1007ab, 0x3f3913b3, 0x3f800000,
+)
+
+
+def decode_nf4_block(b, B, scale_dtype):
+    if scale_dtype == "float16":
+        scale, offset = H(b), 2
+    elif scale_dtype == "bfloat16":
+        scale, offset = R(U(b, 0, 2) << 16), 2
+    else:  # float32
+        scale, offset = R(U(b, 0, 4)), 4
+    return [
+        mul(R(NF4_CODEBOOK_BITS[(b[offset + j // 2] >> (4 * (j % 2))) & 15]), scale)
+        for j in range(B)
+    ]
 ```
 
 ### Conventional, K-quant, nonlinear, ternary, and block-floating formats

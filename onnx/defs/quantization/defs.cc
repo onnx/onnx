@@ -24,6 +24,33 @@ std::pair<int64_t, int64_t> DequantizePackedBlockSize(const std::string& format)
       {"gguf:iq1_m", {256, 56}},   {"gguf:tq1_0", {256, 54}},  {"gguf:tq2_0", {256, 66}},   {"gguf:mxfp4", {32, 17}},
       {"gguf:nvfp4", {64, 36}},    {"gguf:q1_0", {128, 18}},   {"gguf:q2_0", {64, 18}},
   };
+  // Parameterized families have canonical parameter ordering and spelling.
+  const std::string prefix = "onnx:nf4;block_size=";
+  const std::string separator = ";scale_dtype=";
+  if (format.compare(0, prefix.size(), prefix) == 0) {
+    const auto end = format.find(separator, prefix.size());
+    if (end == std::string::npos || end == prefix.size() || format[prefix.size()] == '0') {
+      fail_shape_inference("Unsupported quantization format: ", format);
+    }
+    int64_t elements = 0;
+    for (auto i = prefix.size(); i < end; ++i) {
+      const char c = format[i];
+      if (c < '0' || c > '9' || elements > (std::numeric_limits<int64_t>::max() - (c - '0')) / 10) {
+        fail_shape_inference("Unsupported quantization format: ", format);
+      }
+      elements = elements * 10 + (c - '0');
+    }
+    const auto scale = format.substr(end + separator.size());
+    int64_t scale_bytes = 0;
+    if (scale == "float32") {
+      scale_bytes = 4;
+    } else if (scale == "float16" || scale == "bfloat16") {
+      scale_bytes = 2;
+    } else {
+      fail_shape_inference("Unsupported quantization format: ", format);
+    }
+    return {elements, scale_bytes + elements / 2 + elements % 2};
+  }
   const auto it = block_sizes.find(format);
   if (it == block_sizes.end()) {
     fail_shape_inference("Unsupported quantization format: ", format);
@@ -92,9 +119,13 @@ Dequantizes the packed payload of one quantized tensor.
 All multibyte fields are little-endian.
 
 `format` selects the quantization format using an ONNX-defined, case-sensitive
-string identifier. The `gguf:` prefix identifies the encoding family.
-Each identifier denotes the fixed layout and decoding algorithm specified below.
-The supported identifiers and block sizes are:
+string identifier. Identifiers are either fixed profiles or parameterized families.
+The `gguf:` prefix identifies the existing GGML/GGUF layouts; `onnx:` identifies
+layouts defined here by ONNX. Parameters use `;key=value`, in ascending ASCII
+key order, with no whitespace, duplicate keys, implicit defaults, or escaping.
+Only registered families and their declared parameters and values are accepted.
+Names and values are case-sensitive. Integers use decimal digits without a sign
+or leading zeros. The supported fixed identifiers and block sizes are:
 
 | Identifier | Format | Elements | Bytes |
 |---|---|---|---|
@@ -126,7 +157,18 @@ The supported identifiers and block sizes are:
 | gguf:q1_0 | Q1_0 | 128 | 18 |
 | gguf:q2_0 | Q2_0 | 64 | 18 |
 
-The byte layouts, per-format decoding algorithms, and complete IQ codebooks
+The parameterized NF4 family is
+`onnx:nf4;block_size=B;scale_dtype=T`, where B is any positive int64 and T is
+`float16`, `bfloat16`, or `float32`. Both parameters are required, in the order
+shown. A block contains B NF4 indices and occupies
+`sizeof(T) + B/2 + B%2` bytes (integer division). Its little-endian scale comes
+first, followed by adjacent indices, with the earlier element in the low nibble.
+For odd B, the last high nibble is ignored. Decode each element by multiplying
+the specified FLOAT NF4 codebook value by the scale converted to FLOAT.
+For example, `onnx:nf4;block_size=64;scale_dtype=float32` occupies 36 bytes per block.
+The fixed `gguf:` profiles accept no parameters.
+
+The byte layouts, per-format decoding algorithms, NF4 and complete IQ codebooks
 are defined in the in-tree
 [DequantizePacked decoding specification](DequantizePacked.md).
 
@@ -154,7 +196,7 @@ blocks can be decoded with `format="gguf:q4_0", shape=[2,32]`.
         .Output(0, "y", "Dequantized tensor with the specified shape and output_dtype.", "T")
         .Attr(
             "format",
-            "ONNX-defined, case-sensitive quantization format identifier from the supported table.",
+            "ONNX-defined, case-sensitive fixed profile or parameterized family identifier.",
             AttributeProto::STRING,
             true)
         .Attr("shape", "Logical output dimensions in ONNX order; rank at least one.", AttributeProto::INTS, true)
