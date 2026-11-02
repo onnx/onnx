@@ -46,7 +46,7 @@ class AxesInputToAttribute : public Adapter {
     }
     if (inputs[1]->node()->kind() == kUndefined) {
       node->removeInput(1);
-      return node;
+      return;
     }
     // Get axes from initializer or constant operator
     // Identify whether we have a Constant Op or an Initializer
