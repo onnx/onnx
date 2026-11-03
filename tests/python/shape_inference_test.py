@@ -9908,10 +9908,14 @@ class TestShapeInference(TestShapeInferenceHelper):
             graph, [make_tensor_value_info("z", TensorProto.FLOAT, ())]
         )
 
-    def test_einsum_scalar(self) -> None:
+    @pytest.mark.parametrize(
+        ("equation", "num_inputs"), [("->", 1), (",->", 2), (",,->", 3)]
+    )
+    def test_einsum_scalar(self, equation: str, num_inputs: int) -> None:
+        names = [f"x{i}" for i in range(num_inputs)]
         graph = self._make_graph(
-            [("x", TensorProto.FLOAT, ()), ("y", TensorProto.FLOAT, ())],
-            [make_node("Einsum", ["x", "y"], ["z"], equation=",->")],
+            [(name, TensorProto.FLOAT, ()) for name in names],
+            [make_node("Einsum", names, ["z"], equation=equation)],
             [],
         )
         self._assert_inferred(
@@ -10398,10 +10402,24 @@ class TestShapeInference(TestShapeInferenceHelper):
             graph, [make_tensor_value_info("z", TensorProto.FLOAT, (3, 3, 3, 3))]
         )
 
-    def test_einsum_scalar_times_array(self) -> None:  # Scalar times array
+    @pytest.mark.parametrize(
+        ("equation", "input_shapes"),
+        [
+            (",ij->ij", [(), (3, 3)]),
+            ("ij,->ij", [(3, 3), ()]),
+            (",ij,", [(), (3, 3), ()]),
+        ],
+    )
+    def test_einsum_scalar_times_array(
+        self, equation: str, input_shapes: list[tuple[int, ...]]
+    ) -> None:
+        names = [f"x{i}" for i in range(len(input_shapes))]
         graph = self._make_graph(
-            [("x", TensorProto.FLOAT, ()), ("y", TensorProto.FLOAT, (3, 3))],
-            [make_node("Einsum", ["x", "y"], ["z"], equation=",ij->ij")],
+            [
+                (name, TensorProto.FLOAT, shape)
+                for name, shape in zip(names, input_shapes, strict=False)
+            ],
+            [make_node("Einsum", names, ["z"], equation=equation)],
             [],
         )
         self._assert_inferred(

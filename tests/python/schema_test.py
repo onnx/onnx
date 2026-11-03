@@ -550,7 +550,18 @@ class TestOpSchema:
         schema = defs.OpSchema("test_op", "test_domain", 1, doc="test_doc")
         assert schema.doc == "test_doc"
 
-    def test_inputs(self):
+    @pytest.mark.parametrize(
+        ("type_str", "canonical"),
+        [
+            ("tensor(int64)", "tensor(int64)"),
+            (
+                " \tseq ( map ( int64 , optional ( tensor ( float ) ) ) ) \r\n",
+                "seq(map(int64,optional(tensor(float))))",
+            ),
+            ("opaque ( domain , name )", "opaque(domain , name)"),
+        ],
+    )
+    def test_inputs(self, type_str: str, canonical: str) -> None:
         # Test that the inputs parameter is optional and is a sequence of FormalParameter tuples
         inputs = [
             defs.OpSchema.FormalParameter(
@@ -562,12 +573,13 @@ class TestOpSchema:
             "test_domain",
             1,
             inputs=inputs,
-            type_constraints=[("T", ["tensor(int64)"], "")],
+            type_constraints=[("T", [type_str], "")],
         )
 
         assert len(schema.inputs) == 1
         assert schema.inputs[0].name == "input1"
         assert schema.inputs[0].type_str == "T"
+        assert schema.inputs[0].types == {canonical}
         assert schema.inputs[0].description == "The first input."
 
     def test_outputs(self):
