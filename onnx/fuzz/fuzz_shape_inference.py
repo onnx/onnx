@@ -10,11 +10,12 @@ fuzzer-controlled toggle byte at the tail can select the structured fallback:
   serialized models the structured builder will not produce.
 
 * Structured -> helper.make_model from FuzzedDataProvider -> infer_shapes
-  Samples registered operator schemas with unknown input types, or builds
-  graphs with subgraph-bearing ops (If / Loop / Scan) to reach the recursive
-  visitor without relying on random bytes parsing as a model.
+  Samples registered operator schemas with untyped, typed, constant, or
+  omitted inputs and generated attributes, or builds graphs with
+  subgraph-bearing ops (If / Loop / Scan) to reach the recursive visitor
+  without relying on random bytes parsing as a model.
 
-Both strict_mode values and both check_type values are sampled.
+All combinations of strict_mode, check_type, and data_prop are sampled.
 """
 
 from __future__ import annotations
@@ -64,9 +65,102 @@ _SCHEMAS = tuple(
 )
 
 
-def _build_unknown_type_model(fdp):
+_ELEM_TYPES = tuple(
+    value for value in TensorProto.DataType.values() if value != TensorProto.UNDEFINED
+)
+
+# Kinds of producer for each schema input.
+_UNTYPED, _TYPED, _INITIALIZER, _OMITTED = range(4)
+_MAX_EXTRA_INPUTS = 2
+_MAX_RANK = 4
+
+
+def _make_tensor_type(fdp):
+    elem_type = _ELEM_TYPES[fdp.ConsumeIntInRange(0, len(_ELEM_TYPES) - 1)]
+    rank = fdp.ConsumeIntInRange(-1, _MAX_RANK)
+    if rank < 0:
+        # No shape information at all.
+        return helper.make_tensor_type_proto(elem_type, None)
+    shape: list[int | str | None] = []
+    for i in range(rank):
+        kind = fdp.ConsumeIntInRange(0, 2)
+        if kind == 0:
+            shape.append(fdp.ConsumeIntInRange(0, 8))
+        elif kind == 1:
+            shape.append(f"d{i}")
+        else:
+            shape.append(None)
+    return helper.make_tensor_type_proto(elem_type, shape)
+
+
+def _make_type(fdp):
+    kind = fdp.ConsumeIntInRange(0, 7)
+    if kind == 6:
+        return helper.make_sequence_type_proto(_make_tensor_type(fdp))
+    if kind == 7:
+        key_type = (TensorProto.STRING, TensorProto.INT64)[fdp.ConsumeIntInRange(0, 1)]
+        return helper.make_map_type_proto(key_type, _make_tensor_type(fdp))
+    return _make_tensor_type(fdp)
+
+
+def _make_initializer(fdp, name):
+    # Small constant INT64 vectors drive data-dependent inference (Reshape,
+    # Expand, Slice, ...); float scalars cover the remaining constant inputs.
+    if fdp.ConsumeBool():
+        values = [
+            fdp.ConsumeIntInRange(-2, 6) for _ in range(fdp.ConsumeIntInRange(0, 4))
+        ]
+        return helper.make_tensor(name, TensorProto.INT64, [len(values)], values)
+    return helper.make_tensor(name, TensorProto.FLOAT, [], [1.0])
+
+
+def _make_attribute(fdp, name, attr_type):
+    t = defs.OpSchema.AttrType
+    if attr_type == t.INT:
+        value: Any = fdp.ConsumeIntInRange(-2, 4)
+    elif attr_type == t.INTS:
+        value = [
+            fdp.ConsumeIntInRange(-2, 4) for _ in range(fdp.ConsumeIntInRange(0, 3))
+        ]
+    elif attr_type == t.FLOAT:
+        value = float(fdp.ConsumeIntInRange(-2, 4))
+    elif attr_type == t.FLOATS:
+        value = [
+            float(fdp.ConsumeIntInRange(-2, 4))
+            for _ in range(fdp.ConsumeIntInRange(0, 3))
+        ]
+    elif attr_type == t.STRING:
+        value = "a"
+    elif attr_type == t.STRINGS:
+        value = ["a"] * fdp.ConsumeIntInRange(0, 3)
+    elif attr_type == t.TENSOR:
+        value = helper.make_tensor(name, TensorProto.FLOAT, [1], [1.0])
+    elif attr_type == t.GRAPH:
+        value = helper.make_graph([], name, [], [])
+    else:
+        return None
+    return helper.make_attribute(name, value, attr_type=int(attr_type))
+
+
+def _schema_attributes(fdp, schema):
+    # Supply required attributes so inference is not rejected up front, and
+    # sample optional ones to reach attribute-dependent branches.
+    attrs = []
+    for name, attr in sorted(schema.attributes.items()):
+        if attr.required or fdp.ConsumeBool():
+            proto = _make_attribute(fdp, name, attr.type)
+            if proto is not None:
+                attrs.append(proto)
+    return attrs
+
+
+def _build_schema_model(fdp):
     schema = _SCHEMAS[fdp.ConsumeIntInRange(0, len(_SCHEMAS) - 1)]
-    inputs = [f"X{i}" for i in range(schema.min_input)]
+    n_inputs = fdp.ConsumeIntInRange(
+        schema.min_input,
+        min(schema.max_input, schema.min_input + _MAX_EXTRA_INPUTS),
+    )
+    inputs = [f"X{i}" for i in range(n_inputs)]
     outputs = [f"Y{i}" for i in range(max(1, schema.min_output))]
     # Supply attributes needed to reach the inference code in #8651 rather
     # than stopping at an unrelated missing-attribute error.
@@ -99,21 +193,38 @@ def _build_unknown_type_model(fdp):
 
     nodes = []
     imports = [helper.make_opsetid(schema.domain, schema.since_version)]
+    graph_inputs = []
+    initializers = []
     if fdp.ConsumeBool():
         # A custom op can produce unknown types even in a checker-valid model.
-        graph_inputs = [
+        graph_inputs.append(
             helper.make_tensor_value_info("source", TensorProto.FLOAT, [2, 3])
-        ]
+        )
         nodes.append(
             helper.make_node("Custom", ["source"], inputs, domain="fuzz.custom")
         )
         imports.append(helper.make_opsetid("fuzz.custom", 1))
     else:
-        graph_inputs = [onnx.ValueInfoProto(name=name) for name in inputs]
-    nodes.append(
-        helper.make_node(schema.name, inputs, outputs, domain=schema.domain, **attrs)
+        for i, name in enumerate(inputs):
+            kind = fdp.ConsumeIntInRange(_UNTYPED, _OMITTED)
+            if kind == _UNTYPED:
+                graph_inputs.append(onnx.ValueInfoProto(name=name))
+            elif kind == _TYPED:
+                graph_inputs.append(helper.make_value_info(name, _make_type(fdp)))
+            elif kind == _INITIALIZER:
+                initializers.append(_make_initializer(fdp, name))
+            else:
+                # An empty name marks an omitted optional input.
+                inputs[i] = ""
+    node = helper.make_node(schema.name, inputs, outputs, domain=schema.domain, **attrs)
+    given = {attr.name for attr in node.attribute}
+    node.attribute.extend(
+        attr for attr in _schema_attributes(fdp, schema) if attr.name not in given
     )
-    graph = helper.make_graph(nodes, "unknown_type", graph_inputs, [])
+    nodes.append(node)
+    graph = helper.make_graph(
+        nodes, "schema_graph", graph_inputs, [], initializer=initializers
+    )
     return helper.make_model(graph, opset_imports=imports)
 
 
@@ -199,7 +310,7 @@ def _build_branch(fdp, depth, max_depth):
 
 def _build_model(fdp):
     if fdp.ConsumeBool():
-        return _build_unknown_type_model(fdp)
+        return _build_schema_model(fdp)
     # Top-level graph mirrors a branch but lives at depth 0 and chooses its
     # own opset version so different shape-inference codepaths (per-opset
     # schemas) are reached.
@@ -221,7 +332,8 @@ def TestOneInput(data):
     strict = bool(toggles & 0x01)
     check_type = bool(toggles & 0x02)
     use_structured = bool(toggles & 0x04)
-    # bits 0x08..0x80 are reserved for future toggles; mutations against
+    data_prop = bool(toggles & 0x08)
+    # bits 0x10..0x80 are reserved for future toggles; mutations against
     # them are harmless until claimed.
 
     try:
@@ -236,6 +348,7 @@ def TestOneInput(data):
             model,
             check_type=check_type,
             strict_mode=strict,
+            data_prop=data_prop,
         )
     except Exception:
         # Malformed fuzz inputs raise a broad set of expected exceptions
