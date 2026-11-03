@@ -953,7 +953,7 @@ ONNX_OPERATOR_SET_SCHEMA(
     OpSchema()
         .SetDoc(kDoc_Range_ver11)
         .Input(0, "start", "Scalar. First entry for the range of output values.", "T")
-        .Input(1, "limit", "Scalar. Exclusive upper limit for the range of output values.", "T")
+        .Input(1, "limit", "Scalar. Exclusive bound for the range of output values.", "T")
         .Input(2, "delta", "Scalar. Value to step by.", "T")
         .Output(0, "output", "A 1-D tensor with same type as the inputs containing generated range of values.", "T")
         .TypeConstraint(
