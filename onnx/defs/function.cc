@@ -90,14 +90,14 @@ void FunctionExpandHelper(
       if (io_names_map.count(input)) {
         new_node->add_input(io_names_map[input]);
       } else {
-        new_node->add_input("Func_" + node_name + input);
+        new_node->add_input()->assign("Func_").append(node_name).append(input);
       }
     }
     for (const auto& output : function_node.output()) {
       if (io_names_map.count(output)) {
         new_node->add_output(io_names_map[output]);
       } else {
-        new_node->add_output("Func_" + node_name + output);
+        new_node->add_output()->assign("Func_").append(node_name).append(output);
       }
     }
     for (const auto& attr : function_node.attribute()) {
