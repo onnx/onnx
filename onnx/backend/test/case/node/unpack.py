@@ -12,6 +12,14 @@ from onnx.backend.test.case.node import expect
 
 class Unpack(Base):
     @staticmethod
+    def export_unpack_ternary() -> None:
+        node = helper.make_node("Unpack", ["X", "count"], ["Y"], radix=3, group_size=5)
+        x = np.array([[102], [242]], dtype=np.uint8)
+        count = np.array(5, dtype=np.int64)
+        y = np.array([[0, 1, 2, 0, 1], [2, 2, 2, 2, 2]], dtype=np.uint8)
+        expect(node, inputs=[x, count], outputs=[y], name="test_unpack_ternary")
+
+    @staticmethod
     def export_unpack_3bit() -> None:
         node = helper.make_node("Unpack", ["X", "count"], ["Y"], bits=3)
         x = np.array([0x88, 0xC6, 0xFA], dtype=np.uint8)

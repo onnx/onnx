@@ -4,6 +4,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <limits>
 #include <numeric>
 #include <string>
 #include <utility>
@@ -19,16 +20,64 @@
 
 namespace ONNX_NAMESPACE {
 
-static int64_t PackedByteCount(int64_t count, int64_t bits) {
-  return ((count / 8) * bits) + ((((count % 8) * bits) + 7) / 8);
+struct PackingParameters {
+  int64_t radix;
+  int64_t group_size;
+  int64_t width;
+  std::vector<int64_t> powers;
+};
+
+template <typename Context>
+static PackingParameters GetPackingParameters(const Context& ctx) {
+  const auto* bits = ctx.getAttribute("bits");
+  const auto* radix = ctx.getAttribute("radix");
+  const auto* group_size = ctx.getAttribute("group_size");
+  if (bits != nullptr) {
+    if (radix != nullptr || group_size != nullptr) {
+      fail_shape_inference("Specify either bits or both radix and group_size, not both.");
+    }
+    if (bits->i() < 1 || bits->i() > 8) {
+      fail_shape_inference("bits must be between 1 and 8.");
+    }
+    return {int64_t{1} << bits->i(), 1, bits->i(), {1}};
+  }
+  if (radix == nullptr || group_size == nullptr) {
+    fail_shape_inference("Specify either bits or both radix and group_size.");
+  }
+  if (radix->i() < 2 || radix->i() > 256 || group_size->i() < 1) {
+    fail_shape_inference("radix must be in [2, 256] and group_size must be positive.");
+  }
+  PackingParameters result{radix->i(), group_size->i(), 0, {}};
+  int64_t limit = 1;
+  for (int64_t i = 0; i < result.group_size; ++i) {
+    if (limit > std::numeric_limits<int64_t>::max() / result.radix) {
+      fail_shape_inference("radix^group_size must fit in a positive INT64.");
+    }
+    result.powers.push_back(limit);
+    limit *= result.radix;
+  }
+  for (auto maximum = limit - 1; maximum != 0; maximum >>= 1) {
+    ++result.width;
+  }
+  return result;
+}
+
+static int64_t PackedGroupByteCount(int64_t count, const PackingParameters& p) {
+  const auto groups = count / p.group_size + (count % p.group_size != 0);
+  if (groups / 8 > std::numeric_limits<int64_t>::max() / p.width) {
+    fail_shape_inference("Packed dimension exceeds INT64.");
+  }
+  const auto whole = (groups / 8) * p.width;
+  const auto tail = ((groups % 8) * p.width + 7) / 8;
+  if (whole > std::numeric_limits<int64_t>::max() - tail) {
+    fail_shape_inference("Packed dimension exceeds INT64.");
+  }
+  return whole + tail;
 }
 
 static void InferPackedShape(InferenceContext& ctx, bool unpack) {
   propagateElemTypeFromInputToOutput(ctx, 0, 0);
-  const auto bits = getAttribute(ctx, "bits", int64_t{0});
-  if (bits < 1 || bits > 8) {
-    fail_shape_inference("bits must be between 1 and 8.");
-  }
+  const auto parameters = GetPackingParameters(ctx);
   if (unpack && hasInputShape(ctx, 1) && getInputShape(ctx, 1).dim_size() != 0) {
     fail_shape_inference("count must be a scalar.");
   }
@@ -63,13 +112,13 @@ static void InferPackedShape(InferenceContext& ctx, bool unpack) {
   if (unpack) {
     if (count >= 0) {
       output_last->set_dim_value(count);
-      if (last.has_dim_value() && last.dim_value() != PackedByteCount(count, bits)) {
-        fail_shape_inference("Packed last dimension must equal ceil(count * bits / 8).");
+      if (last.has_dim_value() && last.dim_value() != PackedGroupByteCount(count, parameters)) {
+        fail_shape_inference("Packed last dimension must equal the byte count required by the packing attributes.");
       }
     }
   } else if (last.has_dim_value()) {
-    output_last->set_dim_value(PackedByteCount(last.dim_value(), bits));
-  } else if (bits == 8) {
+    output_last->set_dim_value(PackedGroupByteCount(last.dim_value(), parameters));
+  } else if (parameters.width == 8 && parameters.group_size == 1) {
     *output_last = last;
   }
 }
@@ -82,6 +131,136 @@ static void InferUnpackShape(InferenceContext& ctx) {
   InferPackedShape(ctx, true);
 }
 
+static bool
+BuildGroupedPacking(const FunctionBodyBuildContext& ctx, const OpSchema& schema, FunctionProto& function, bool unpack) {
+  const auto p = GetPackingParameters(ctx);
+  FunctionBuilder builder(function);
+  builder.Const("radix_value", p.radix);
+  builder.Const("group_size_value", p.group_size);
+  builder.Const("width", p.width);
+  builder.Const("powers", p.powers);
+  std::vector<int64_t> bit_powers;
+  for (int64_t i = 0; i < p.width; ++i) {
+    bit_powers.push_back(int64_t{1} << i);
+  }
+  builder.Const("bit_powers", bit_powers);
+  builder.Const("ConstantTwo", int64_t{2});
+  builder.Add(R"ONNX(
+    zero = Constant <value = int64 {0}>()
+    one = Constant <value = int64 {1}>()
+    seven = Constant <value = int64 {7}>()
+    eight = Constant <value = int64 {8}>()
+    axes = Constant <value = int64[1] {-1}>()
+    leading = Shape <end = -1>(X)
+  )ONNX");
+  if (!unpack) {
+    builder.Add("input_shape = Shape(X)\nlast = Constant <value = int64 {-1}>()\ncount = Gather(input_shape, last)");
+  }
+  builder.Add(R"ONNX(
+    whole_groups = Div(count, group_size_value)
+    remainder = Mod(count, group_size_value)
+    has_tail = Greater(remainder, zero)
+    tail = Cast <to = 7>(has_tail)
+    groups = Add(whole_groups, tail)
+    byte_groups = Div(groups, eight)
+    whole_bytes = Mul(byte_groups, width)
+    residual_groups = Mod(groups, eight)
+    tail_bits = Mul(residual_groups, width)
+    rounded = Add(tail_bits, seven)
+    tail_bytes = Div(rounded, eight)
+    bytes = Add(whole_bytes, tail_bytes)
+    size = Size(X)
+    empty = Equal(size, zero)
+  )ONNX");
+  if (unpack) {
+    builder.Add(R"ONNX(
+      Y = If(empty) <
+        then_branch = empty_decode () => (empty_output) {
+          trailing = Unsqueeze(count, axes)
+          output_shape = Concat <axis = 0>(leading, trailing)
+          empty_output = ConstantOfShape <value = uint8[1] {0}>(output_shape)
+        },
+        else_branch = decode () => (decoded) {
+          group_indices = Range(zero, groups, one)
+          starts = Mul(group_indices, width)
+          column = Unsqueeze(starts, axes)
+          bit_indices = Range(zero, width, one)
+          offsets = Add(column, bit_indices)
+          byte_indices = Div(offsets, eight)
+          shifts64 = Mod(offsets, eight)
+          shifts = Cast <to = 2>(shifts64)
+          codes = Gather <axis = -1>(X, byte_indices)
+          shifted = BitShift <direction = "RIGHT">(codes, shifts)
+          one8 = Cast <to = 2>(one)
+          bits8 = BitwiseAnd(shifted, one8)
+          bits64 = Cast <to = 7>(bits8)
+          weighted = Mul(bits64, bit_powers)
+          indices = ReduceSum <keepdims = 0>(weighted, axes)
+          positions = Range(zero, count, one)
+          selected_groups = Div(positions, group_size_value)
+          digits = Mod(positions, group_size_value)
+          selected = Gather <axis = -1>(indices, selected_groups)
+          divisors = Gather(powers, digits)
+          divided = Div(selected, divisors)
+          values = Mod(divided, radix_value)
+          decoded = Cast <to = 2>(values)
+        }
+      >
+    )ONNX");
+  } else {
+    builder.Add(R"ONNX(
+      Y = If(empty) <
+        then_branch = empty_encode () => (empty_output) {
+          trailing = Unsqueeze(bytes, axes)
+          output_shape = Concat <axis = 0>(leading, trailing)
+          empty_output = ConstantOfShape <value = uint8[1] {0}>(output_shape)
+        },
+        else_branch = encode () => (encoded) {
+          group_indices = Range(zero, groups, one)
+          starts = Mul(group_indices, group_size_value)
+          column = Unsqueeze(starts, axes)
+          digit_indices = Range(zero, group_size_value, one)
+          positions = Add(column, digit_indices)
+          safe_positions = Min(positions, count)
+          pads = Constant <value = int64[2] {0, 1}>()
+          padded = Pad(X, pads, , axes)
+          codes = Gather <axis = -1>(padded, safe_positions)
+          codes64 = Cast <to = 7>(codes)
+          weighted = Mul(codes64, powers)
+          indices = ReduceSum <keepdims = 0>(weighted, axes)
+          padded_indices = Pad(indices, pads, , axes)
+          byte_indices = Range(zero, bytes, one)
+          bit_starts = Mul(byte_indices, eight)
+          bit_column = Unsqueeze(bit_starts, axes)
+          bit_positions = Range(zero, eight, one)
+          offsets = Add(bit_column, bit_positions)
+          selected_groups = Div(offsets, width)
+          safe_groups = Min(selected_groups, groups)
+          bit_indices = Mod(offsets, width)
+          selected = Gather <axis = -1>(padded_indices, safe_groups)
+          divisors = Gather(bit_powers, bit_indices)
+          divided = Div(selected, divisors)
+          bits64 = Mod(divided, ConstantTwo)
+          byte_powers = Constant <value = int64[8] {1, 2, 4, 8, 16, 32, 64, 128}>()
+          placed = Mul(bits64, byte_powers)
+          summed = ReduceSum <keepdims = 0>(placed, axes)
+          encoded = Cast <to = 2>(summed)
+        }
+      >
+    )ONNX");
+  }
+  schema.BuildFunction(function);
+  return true;
+}
+
+static bool BuildGroupedPack(const FunctionBodyBuildContext& ctx, const OpSchema& schema, FunctionProto& function) {
+  return BuildGroupedPacking(ctx, schema, function, false);
+}
+
+static bool BuildGroupedUnpack(const FunctionBodyBuildContext& ctx, const OpSchema& schema, FunctionProto& function) {
+  return BuildGroupedPacking(ctx, schema, function, true);
+}
+
 ONNX_OPERATOR_SET_SCHEMA(
     Pack,
     29,
@@ -89,10 +268,11 @@ ONNX_OPERATOR_SET_SCHEMA(
         .SetDoc(R"DOC(
 Packs unsigned integer codes into bytes independently along the last axis.
 The input `X` and output `Y` are UINT8 tensors of the same rank, which must be
-at least 1. The required attribute `bits` must be an integer in [1, 8], and
-each element of `X` must be in [0, 2^bits - 1].
+at least 1. Specify either `bits` in [1, 8], or both `radix` and `group_size`;
+the two spellings are mutually exclusive. With `bits`, each element of `X`
+must be in [0, 2^bits - 1].
 
-For input shape `[..., N]`, the output shape is `[..., B]`, where
+When using `bits`, for input shape `[..., N]`, the output shape is `[..., B]`, where
 `B = ceil(N * bits / 8)`. Each fixed combination of indices in the leading
 dimensions defines a row; a rank-1 tensor has one row.
 
@@ -112,71 +292,44 @@ An input with `N = 0` produces an output with `B = 0`.
 For example, `bits = 3` packs `[0, 1, 2, 3, 4, 5, 6, 7]` into
 `[136, 198, 250]`. With `bits = 5`, the rows `[[1, 2, 3], [31, 0, 16]]`
 are packed into `[[65, 12], [31, 64]]`.
+
+Grouped packing uses radix R in [2, 256] and positive group size G, with
+R^G <= 2^63 - 1. Each input value must be in [0, R - 1]. Divide each row
+into consecutive groups of G values; zero-pad the last group if incomplete.
+Group [x0, ..., x(G-1)] becomes the integer sum(xj * R^j): the first digit
+is least significant. Each group index occupies W = ceil(log2(R^G)) bits.
+Pack these indices contiguously, least-significant bit first, with no
+byte alignment between groups. The output last dimension is
+ceil(ceil(N/G) * W / 8). Unused final byte bits are zero.
+The original bits spelling is exactly (R, G) = (2^bits, 1).
+For R=3, G=5, [0, 1, 2, 0, 1] becomes [102], and [2, 2, 2, 2, 2]
+becomes [242]. Partial group [1, 2] becomes [7].
 )DOC")
-        .Attr("bits", "Number of bits per unsigned code. Must be in [1, 8].", AttributeProto::INT)
-        .Input(0, "X", "UINT8 tensor of rank at least 1, with each element in [0, 2^bits - 1].", "T")
+        .Attr(
+            "bits",
+            "Number of bits per unsigned code. Mutually exclusive with radix/group_size.",
+            AttributeProto::INT,
+            false)
+        .Attr(
+            "radix",
+            "Base of grouped codes, in [2, 256]. Requires group_size; excludes bits.",
+            AttributeProto::INT,
+            false)
+        .Attr(
+            "group_size",
+            "Codes per group. Positive; radix^group_size must fit in positive INT64.",
+            AttributeProto::INT,
+            false)
+        .Input(0, "X", "UINT8 tensor of rank at least 1, with codes below the selected radix.", "T")
         .Output(
             0,
             "Y",
             "Packed UINT8 tensor with the same leading dimensions as X and last dimension "
-            "ceil(N * bits / 8), where N is the last dimension of X.",
+            "ceil(ceil(N / group_size) * group_width / 8); bits implies group_size=1.",
             "T")
         .TypeConstraint("T", {"tensor(uint8)"}, "Unsigned byte tensors.")
         .TypeAndShapeInferenceFunction(InferPackShape)
-        .FunctionBody(
-            R"ONNX(
-        {
-            bits = Constant <value_int: int = @bits>()
-            zero = Constant <value = int64 {0}>()
-            one = Constant <value = int64 {1}>()
-            seven = Constant <value = int64 {7}>()
-            eight = Constant <value = int64 {8}>()
-            last = Constant <value = int64 {-1}>()
-            axes = Constant <value = int64[1] {-1}>()
-            pads = Constant <value = int64[2] {0, 1}>()
-            bit_positions = Constant <value = uint8[8] {0, 1, 2, 3, 4, 5, 6, 7}>()
-            bit_positions64 = Cast <to = 7>(bit_positions)
-            one8 = Constant <value = uint8 {1}>()
-            shape = Shape(X)
-            count = Gather(shape, last)
-            groups = Div(count, eight)
-            whole_bytes = Mul(groups, bits)
-            remainder = Mod(count, eight)
-            tail_bits = Mul(remainder, bits)
-            rounded_tail = Add(tail_bits, seven)
-            tail_bytes = Div(rounded_tail, eight)
-            num_bytes = Add(whole_bytes, tail_bytes)
-            size = Size(X)
-            empty = Equal(size, zero)
-            Y = If (empty) <
-                then_branch = empty_pack () => (empty_output) {
-                    leading = Shape <end = -1>(X)
-                    trailing = Unsqueeze(num_bytes, axes)
-                    output_shape = Concat <axis = 0>(leading, trailing)
-                    empty_output = ConstantOfShape <value = uint8[1] {0}>(output_shape)
-                },
-                else_branch = pack_codes () => (packed_output) {
-                    byte_indices = Range(zero, num_bytes, one)
-                    starts = Mul(byte_indices, eight)
-                    starts_column = Unsqueeze(starts, axes)
-                    offsets = Add(starts_column, bit_positions64)
-                    code_indices = Div(offsets, bits)
-                    safe_indices = Min(code_indices, count)
-                    code_offsets = Mod(offsets, bits)
-                    shifts = Cast <to = 2>(code_offsets)
-                    padded = Pad(X, pads, , axes)
-                    codes = Gather <axis = -1>(padded, safe_indices)
-                    shifted = BitShift <direction = "RIGHT">(codes, shifts)
-                    code_bits = BitwiseAnd(shifted, one8)
-                    placed = BitShift <direction = "LEFT">(code_bits, bit_positions)
-                    placed64 = Cast <to = 7>(placed)
-                    bytes64 = ReduceSum <keepdims = 0>(placed64, axes)
-                    packed_output = Cast <to = 2>(bytes64)
-                }
-            >
-        }
-        )ONNX",
-            29));
+        .SetContextDependentFunctionBodyBuilder(BuildGroupedPack));
 
 ONNX_OPERATOR_SET_SCHEMA(
     Unpack,
@@ -185,11 +338,12 @@ ONNX_OPERATOR_SET_SCHEMA(
         .SetDoc(R"DOC(
 Unpacks bytes into unsigned integer codes independently along the last axis.
 The input `X` and output `Y` are UINT8 tensors of the same rank, which must be
-at least 1. The required attribute `bits` must be an integer in [1, 8].
+at least 1. Specify either `bits` in [1, 8], or both `radix` and `group_size`;
+the two spellings are mutually exclusive.
 The input `count` must be a nonnegative scalar INT64 tensor specifying the
 number of output codes per row. Each element of `Y` is in [0, 2^bits - 1].
 
-For input shape `[..., B]`, `B` must equal `ceil(count * bits / 8)`, and the
+When using `bits`, for input shape `[..., B]`, `B` must equal `ceil(count * bits / 8)`, and the
 output shape is `[..., count]`. Each fixed combination of indices in the
 leading dimensions defines a row; a rank-1 tensor has one row.
 
@@ -211,9 +365,37 @@ With `count = 0`, both input and output must have an empty last axis.
 For example, `bits = 3` and `count = 8` unpack `[136, 198, 250]` into
 `[0, 1, 2, 3, 4, 5, 6, 7]`. With `bits = 3` and `count = 2`, `[255]`
 is unpacked into `[7, 7]`.
+
+Grouped unpacking uses radix R in [2, 256] and positive group size G, with
+R^G <= 2^63 - 1. Read consecutive W = ceil(log2(R^G)) bit group indices,
+least-significant bit first, without byte alignment between groups.
+Every group index must be less than R^G; encodings outside this range
+are invalid. Expand each index into G base-R digits, least significant
+digit first, then trim to count values per row. The input last dimension
+must equal ceil(ceil(count/G) * W / 8). Unused digits of the last group
+and unused high bits of the last byte are ignored. Each output code is
+in [0, R - 1]. The original bits spelling is (R, G) = (2^bits, 1).
+For R=3, G=5, [102] with count=5 becomes [0, 1, 2, 0, 1];
+[7] with count=2 becomes [1, 2].
+Results for invalid inputs are unspecified; function decompositions need
+not diagnose invalid indices or incorrect input sizes.
 )DOC")
-        .Attr("bits", "Number of bits per unsigned code. Must be in [1, 8].", AttributeProto::INT)
-        .Input(0, "X", "UINT8 tensor of rank at least 1, with last dimension ceil(count * bits / 8).", "T")
+        .Attr(
+            "bits",
+            "Number of bits per unsigned code. Mutually exclusive with radix/group_size.",
+            AttributeProto::INT,
+            false)
+        .Attr(
+            "radix",
+            "Base of grouped codes, in [2, 256]. Requires group_size; excludes bits.",
+            AttributeProto::INT,
+            false)
+        .Attr(
+            "group_size",
+            "Codes per group. Positive; radix^group_size must fit in positive INT64.",
+            AttributeProto::INT,
+            false)
+        .Input(0, "X", "UINT8 tensor of rank at least 1, with the exact packed byte count.", "T")
         .Input(
             1,
             "count",
@@ -223,57 +405,11 @@ is unpacked into `[7, 7]`.
             0,
             "Y",
             "UINT8 tensor with the same leading dimensions as X and last dimension count. "
-            "Each element is in [0, 2^bits - 1].",
+            "Each element is below the selected radix.",
             "T")
         .TypeConstraint("T", {"tensor(uint8)"}, "Unsigned byte tensors.")
         .TypeAndShapeInferenceFunction(InferUnpackShape)
-        .FunctionBody(
-            R"ONNX(
-        {
-            bits = Constant <value_int: int = @bits>()
-            zero = Constant <value = int64 {0}>()
-            one = Constant <value = int64 {1}>()
-            eight = Constant <value = int64 {8}>()
-            eight16 = Constant <value = uint16 {8}>()
-            axes = Constant <value = int64[1] {-1}>()
-            pads = Constant <value = int64[2] {0, 1}>()
-            size = Size(X)
-            empty = Equal(size, zero)
-            Y = If (empty) <
-                then_branch = empty_unpack () => (empty_output) {
-                    leading = Shape <end = -1>(X)
-                    trailing = Unsqueeze(count, axes)
-                    output_shape = Concat <axis = 0>(leading, trailing)
-                    empty_output = ConstantOfShape <value = uint8[1] {0}>(output_shape)
-                },
-                else_branch = unpack_codes () => (unpacked_output) {
-                    indices = Range(zero, count, one)
-                    offsets = Mul(indices, bits)
-                    byte_indices = Div(offsets, eight)
-                    next_indices = Add(byte_indices, one)
-                    bit_offsets = Mod(offsets, eight)
-                    shifts = Cast <to = 4>(bit_offsets)
-                    one64 = Cast <to = 13>(one)
-                    bits64 = Cast <to = 13>(bits)
-                    limit = BitShift <direction = "LEFT">(one64, bits64)
-                    limit_signed = Cast <to = 7>(limit)
-                    mask_signed = Sub(limit_signed, one)
-                    mask = Cast <to = 4>(mask_signed)
-                    padded = Pad(X, pads, , axes)
-                    low8 = Gather <axis = -1>(padded, byte_indices)
-                    high8 = Gather <axis = -1>(padded, next_indices)
-                    low = Cast <to = 4>(low8)
-                    high = Cast <to = 4>(high8)
-                    high_shifted = BitShift <direction = "LEFT">(high, eight16)
-                    word = BitwiseOr(low, high_shifted)
-                    shifted = BitShift <direction = "RIGHT">(word, shifts)
-                    codes = BitwiseAnd(shifted, mask)
-                    unpacked_output = Cast <to = 2>(codes)
-                }
-            >
-        }
-        )ONNX",
-            29));
+        .SetContextDependentFunctionBodyBuilder(BuildGroupedUnpack));
 
 ONNX_OPERATOR_SET_SCHEMA(
     Cast,

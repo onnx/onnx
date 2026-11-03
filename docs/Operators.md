@@ -27731,10 +27731,11 @@ expect(node, inputs=[x, slope], outputs=[y], name="test_prelu_broadcast")
 
   Packs unsigned integer codes into bytes independently along the last axis.
   The input `X` and output `Y` are UINT8 tensors of the same rank, which must be
-  at least 1. The required attribute `bits` must be an integer in [1, 8], and
-  each element of `X` must be in [0, 2^bits - 1].
+  at least 1. Specify either `bits` in [1, 8], or both `radix` and `group_size`;
+  the two spellings are mutually exclusive. With `bits`, each element of `X`
+  must be in [0, 2^bits - 1].
 
-  For input shape `[..., N]`, the output shape is `[..., B]`, where
+  When using `bits`, for input shape `[..., N]`, the output shape is `[..., B]`, where
   `B = ceil(N * bits / 8)`. Each fixed combination of indices in the leading
   dimensions defines a row; a rank-1 tensor has one row.
 
@@ -27755,6 +27756,18 @@ expect(node, inputs=[x, slope], outputs=[y], name="test_prelu_broadcast")
   `[136, 198, 250]`. With `bits = 5`, the rows `[[1, 2, 3], [31, 0, 16]]`
   are packed into `[[65, 12], [31, 64]]`.
 
+  Grouped packing uses radix R in [2, 256] and positive group size G, with
+  R^G <= 2^63 - 1. Each input value must be in [0, R - 1]. Divide each row
+  into consecutive groups of G values; zero-pad the last group if incomplete.
+  Group [x0, ..., x(G-1)] becomes the integer sum(xj * R^j): the first digit
+  is least significant. Each group index occupies W = ceil(log2(R^G)) bits.
+  Pack these indices contiguously, least-significant bit first, with no
+  byte alignment between groups. The output last dimension is
+  ceil(ceil(N/G) * W / 8). Unused final byte bits are zero.
+  The original bits spelling is exactly (R, G) = (2^bits, 1).
+  For R=3, G=5, [0, 1, 2, 0, 1] becomes [102], and [2, 2, 2, 2, 2]
+  becomes [242]. Partial group [1, 2] becomes [7].
+
 #### Version
 
 This version of the operator has been available since version 29 of the default ONNX operator set.
@@ -27762,22 +27775,26 @@ This version of the operator has been available since version 29 of the default 
 #### Attributes
 
 <dl>
-<dt><tt>bits</tt> : int (required)</dt>
-<dd>Number of bits per unsigned code. Must be in [1, 8].</dd>
+<dt><tt>bits</tt> : int</dt>
+<dd>Number of bits per unsigned code. Mutually exclusive with radix/group_size.</dd>
+<dt><tt>group_size</tt> : int</dt>
+<dd>Codes per group. Positive; radix^group_size must fit in positive INT64.</dd>
+<dt><tt>radix</tt> : int</dt>
+<dd>Base of grouped codes, in [2, 256]. Requires group_size; excludes bits.</dd>
 </dl>
 
 #### Inputs
 
 <dl>
 <dt><tt>X</tt> : T</dt>
-<dd>UINT8 tensor of rank at least 1, with each element in [0, 2^bits - 1].</dd>
+<dd>UINT8 tensor of rank at least 1, with codes below the selected radix.</dd>
 </dl>
 
 #### Outputs
 
 <dl>
 <dt><tt>Y</tt> : T</dt>
-<dd>Packed UINT8 tensor with the same leading dimensions as X and last dimension ceil(N * bits / 8), where N is the last dimension of X.</dd>
+<dd>Packed UINT8 tensor with the same leading dimensions as X and last dimension ceil(ceil(N / group_size) * group_width / 8); bits implies group_size=1.</dd>
 </dl>
 
 #### Type Constraints
@@ -27836,6 +27853,19 @@ node = helper.make_node("Pack", ["X"], ["Y"], bits=5)
 x = np.array([[1, 2, 3], [31, 0, 16]], dtype=np.uint8)
 y = np.array([[0x41, 0x0C], [0x1F, 0x40]], dtype=np.uint8)
 expect(node, inputs=[x], outputs=[y], name="test_pack_rows_5bit")
+```
+
+</details>
+
+
+<details>
+<summary>pack_ternary</summary>
+
+```python
+node = helper.make_node("Pack", ["X"], ["Y"], radix=3, group_size=5)
+x = np.array([[0, 1, 2, 0, 1], [2, 2, 2, 2, 2]], dtype=np.uint8)
+y = np.array([[102], [242]], dtype=np.uint8)
+expect(node, inputs=[x], outputs=[y], name="test_pack_ternary")
 ```
 
 </details>
@@ -45287,11 +45317,12 @@ expect(
 
   Unpacks bytes into unsigned integer codes independently along the last axis.
   The input `X` and output `Y` are UINT8 tensors of the same rank, which must be
-  at least 1. The required attribute `bits` must be an integer in [1, 8].
+  at least 1. Specify either `bits` in [1, 8], or both `radix` and `group_size`;
+  the two spellings are mutually exclusive.
   The input `count` must be a nonnegative scalar INT64 tensor specifying the
   number of output codes per row. Each element of `Y` is in [0, 2^bits - 1].
 
-  For input shape `[..., B]`, `B` must equal `ceil(count * bits / 8)`, and the
+  When using `bits`, for input shape `[..., B]`, `B` must equal `ceil(count * bits / 8)`, and the
   output shape is `[..., count]`. Each fixed combination of indices in the
   leading dimensions defines a row; a rank-1 tensor has one row.
 
@@ -45314,6 +45345,20 @@ expect(
   `[0, 1, 2, 3, 4, 5, 6, 7]`. With `bits = 3` and `count = 2`, `[255]`
   is unpacked into `[7, 7]`.
 
+  Grouped unpacking uses radix R in [2, 256] and positive group size G, with
+  R^G <= 2^63 - 1. Read consecutive W = ceil(log2(R^G)) bit group indices,
+  least-significant bit first, without byte alignment between groups.
+  Every group index must be less than R^G; encodings outside this range
+  are invalid. Expand each index into G base-R digits, least significant
+  digit first, then trim to count values per row. The input last dimension
+  must equal ceil(ceil(count/G) * W / 8). Unused digits of the last group
+  and unused high bits of the last byte are ignored. Each output code is
+  in [0, R - 1]. The original bits spelling is (R, G) = (2^bits, 1).
+  For R=3, G=5, [102] with count=5 becomes [0, 1, 2, 0, 1];
+  [7] with count=2 becomes [1, 2].
+  Results for invalid inputs are unspecified; function decompositions need
+  not diagnose invalid indices or incorrect input sizes.
+
 #### Version
 
 This version of the operator has been available since version 29 of the default ONNX operator set.
@@ -45321,15 +45366,19 @@ This version of the operator has been available since version 29 of the default 
 #### Attributes
 
 <dl>
-<dt><tt>bits</tt> : int (required)</dt>
-<dd>Number of bits per unsigned code. Must be in [1, 8].</dd>
+<dt><tt>bits</tt> : int</dt>
+<dd>Number of bits per unsigned code. Mutually exclusive with radix/group_size.</dd>
+<dt><tt>group_size</tt> : int</dt>
+<dd>Codes per group. Positive; radix^group_size must fit in positive INT64.</dd>
+<dt><tt>radix</tt> : int</dt>
+<dd>Base of grouped codes, in [2, 256]. Requires group_size; excludes bits.</dd>
 </dl>
 
 #### Inputs
 
 <dl>
 <dt><tt>X</tt> : T</dt>
-<dd>UINT8 tensor of rank at least 1, with last dimension ceil(count * bits / 8).</dd>
+<dd>UINT8 tensor of rank at least 1, with the exact packed byte count.</dd>
 <dt><tt>count</tt> : tensor(int64)</dt>
 <dd>Scalar INT64 tensor giving the number of output codes per row. Must be nonnegative.</dd>
 </dl>
@@ -45338,7 +45387,7 @@ This version of the operator has been available since version 29 of the default 
 
 <dl>
 <dt><tt>Y</tt> : T</dt>
-<dd>UINT8 tensor with the same leading dimensions as X and last dimension count. Each element is in [0, 2^bits - 1].</dd>
+<dd>UINT8 tensor with the same leading dimensions as X and last dimension count. Each element is below the selected radix.</dd>
 </dl>
 
 #### Type Constraints
@@ -45401,6 +45450,20 @@ x = np.array([[0x41, 0x0C], [0x1F, 0x40]], dtype=np.uint8)
 count = np.array(3, dtype=np.int64)
 y = np.array([[1, 2, 3], [31, 0, 16]], dtype=np.uint8)
 expect(node, inputs=[x, count], outputs=[y], name="test_unpack_rows_5bit")
+```
+
+</details>
+
+
+<details>
+<summary>unpack_ternary</summary>
+
+```python
+node = helper.make_node("Unpack", ["X", "count"], ["Y"], radix=3, group_size=5)
+x = np.array([[102], [242]], dtype=np.uint8)
+count = np.array(5, dtype=np.int64)
+y = np.array([[0, 1, 2, 0, 1], [2, 2, 2, 2, 2]], dtype=np.uint8)
+expect(node, inputs=[x, count], outputs=[y], name="test_unpack_ternary")
 ```
 
 </details>

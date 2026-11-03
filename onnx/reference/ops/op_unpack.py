@@ -6,12 +6,12 @@ from __future__ import annotations
 import numpy as np
 
 from onnx.reference.op_run import OpRun
+from onnx.reference.ops._packing import packing_parameters
 
 
 class Unpack(OpRun):
-    def _run(self, x, count, bits=None):
-        if bits is None or not 1 <= bits <= 8:
-            raise ValueError(f"bits must be between 1 and 8; got {bits!r}.")
+    def _run(self, x, count, bits=None, radix=None, group_size=None):
+        radix, group_size, width = packing_parameters(bits, radix, group_size)
         if x.dtype != np.uint8 or x.ndim == 0:
             raise ValueError(
                 f"X must be a UINT8 tensor of rank at least 1; got dtype={x.dtype}, shape={x.shape}."
@@ -22,19 +22,25 @@ class Unpack(OpRun):
                 f"got dtype={count.dtype}, shape={count.shape}, value={count}."
             )
         n = int(count)
-        expected_bytes = (n * bits + 7) // 8
+        groups = (n + group_size - 1) // group_size
+        expected_bytes = (groups * width + 7) // 8
         if x.shape[-1] != expected_bytes:
             raise ValueError(
-                "Packed last dimension must equal ceil(count * bits / 8); "
-                f"count={n}, bits={bits} require {expected_bytes} bytes, got {x.shape[-1]}."
+                "Packed last dimension must equal the byte count required by the packing attributes; "
+                f"count={n} requires {expected_bytes} bytes, got {x.shape[-1]}."
             )
         result = np.empty((*x.shape[:-1], n), dtype=np.uint8)
         if x.size == 0:
             return (result,)
-        for i in range(n):
-            byte, shift = divmod(i * bits, 8)
-            code = x[..., byte].astype(np.uint16) >> shift
-            if shift + bits > 8:
-                code |= x[..., byte + 1].astype(np.uint16) << (8 - shift)
-            result[..., i] = (code & ((1 << bits) - 1)).astype(np.uint8)
+        for index in np.ndindex(x.shape[:-1]):
+            word = int.from_bytes(x[index].tobytes(), "little")
+            for g in range(groups):
+                code = (word >> (g * width)) & ((1 << width) - 1)
+                if code >= radix**group_size:
+                    raise ValueError(
+                        "Packed group index must be less than radix^group_size."
+                    )
+                for j in range(min(group_size, n - g * group_size)):
+                    result[index][g * group_size + j] = code % radix
+                    code //= radix
         return (result,)

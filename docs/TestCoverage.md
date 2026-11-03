@@ -20547,7 +20547,7 @@ expect(node, inputs=[x, slope], outputs=[y], name="test_prelu_broadcast")
 
 
 ### Pack
-There are 4 test cases, listed as following:
+There are 5 test cases, listed as following:
 <details>
 <summary>pack_3bit</summary>
 
@@ -20588,6 +20588,17 @@ node = helper.make_node("Pack", ["X"], ["Y"], bits=5)
 x = np.array([[1, 2, 3], [31, 0, 16]], dtype=np.uint8)
 y = np.array([[0x41, 0x0C], [0x1F, 0x40]], dtype=np.uint8)
 expect(node, inputs=[x], outputs=[y], name="test_pack_rows_5bit")
+```
+
+</details>
+<details>
+<summary>pack_ternary</summary>
+
+```python
+node = helper.make_node("Pack", ["X"], ["Y"], radix=3, group_size=5)
+x = np.array([[0, 1, 2, 0, 1], [2, 2, 2, 2, 2]], dtype=np.uint8)
+y = np.array([[102], [242]], dtype=np.uint8)
+expect(node, inputs=[x], outputs=[y], name="test_pack_ternary")
 ```
 
 </details>
@@ -32984,7 +32995,7 @@ expect(
 
 
 ### Unpack
-There are 4 test cases, listed as following:
+There are 5 test cases, listed as following:
 <details>
 <summary>unpack_3bit</summary>
 
@@ -33029,6 +33040,18 @@ x = np.array([[0x41, 0x0C], [0x1F, 0x40]], dtype=np.uint8)
 count = np.array(3, dtype=np.int64)
 y = np.array([[1, 2, 3], [31, 0, 16]], dtype=np.uint8)
 expect(node, inputs=[x, count], outputs=[y], name="test_unpack_rows_5bit")
+```
+
+</details>
+<details>
+<summary>unpack_ternary</summary>
+
+```python
+node = helper.make_node("Unpack", ["X", "count"], ["Y"], radix=3, group_size=5)
+x = np.array([[102], [242]], dtype=np.uint8)
+count = np.array(5, dtype=np.int64)
+y = np.array([[0, 1, 2, 0, 1], [2, 2, 2, 2, 2]], dtype=np.uint8)
+expect(node, inputs=[x, count], outputs=[y], name="test_unpack_ternary")
 ```
 
 </details>

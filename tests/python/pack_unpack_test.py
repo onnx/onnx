@@ -6,7 +6,15 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from onnx import TensorProto, checker, defs, helper, parser
+from onnx import (
+    FunctionProto,
+    TensorProto,
+    checker,
+    defs,
+    helper,
+    parser,
+    shape_inference,
+)
 from onnx.reference import ReferenceEvaluator
 
 
@@ -29,7 +37,13 @@ def evaluator(
         """
     )
     if function:
-        body = defs.get_schema(op).function_body
+        body = FunctionProto()
+        body.ParseFromString(
+            defs.get_schema(op).get_context_dependent_function(
+                model.graph.node[0].SerializeToString(),
+                [value.type.SerializeToString() for value in model.graph.input],
+            )
+        )
         body.domain = "test.packing"
         model.functions.append(body)
         model.graph.node[0].domain = body.domain
@@ -47,6 +61,205 @@ def oracle(x: np.ndarray, bits: int) -> np.ndarray:
             word.to_bytes(packed.shape[-1], "little"), dtype=np.uint8
         )
     return packed
+
+
+def grouped_evaluator(
+    op: str, attrs: dict[str, int], shape: tuple[int, ...], function: bool = False
+) -> ReferenceEvaluator:
+    inputs = [helper.make_tensor_value_info("X", TensorProto.UINT8, shape)]
+    names = ["X"]
+    if op == "Unpack":
+        inputs.append(helper.make_tensor_value_info("count", TensorProto.INT64, []))
+        names.append("count")
+    node = helper.make_node(op, names, ["Y"], **attrs)
+    graph = helper.make_graph(
+        [node],
+        "grouped",
+        inputs,
+        [helper.make_tensor_value_info("Y", TensorProto.UINT8, [*shape[:-1], None])],
+    )
+    model = helper.make_model(
+        graph, opset_imports=[helper.make_opsetid("", 29)], ir_version=14
+    )
+    if function:
+        body = FunctionProto()
+        body.ParseFromString(
+            defs.get_schema(op).get_context_dependent_function(
+                node.SerializeToString(),
+                [value.type.SerializeToString() for value in inputs],
+            )
+        )
+        body.domain = "test.grouped"
+        model.functions.append(body)
+        node = model.graph.node[0]
+        node.domain = body.domain
+        model.opset_import.append(helper.make_opsetid(body.domain, 1))
+    checker.check_model(model, full_check=function)
+    return ReferenceEvaluator(model)
+
+
+def grouped_oracle(x: np.ndarray, radix: int, group_size: int) -> np.ndarray:
+    groups = (x.shape[-1] + group_size - 1) // group_size
+    width = (radix**group_size - 1).bit_length()
+    output = np.zeros((*x.shape[:-1], (groups * width + 7) // 8), dtype=np.uint8)
+    for row in np.ndindex(x.shape[:-1]):
+        bits = []
+        for start in range(0, x.shape[-1], group_size):
+            group = x[row][start : start + group_size]
+            value = sum(int(digit) * radix**j for j, digit in enumerate(group))
+            bits.extend((value >> j) & 1 for j in range(width))
+        for i, bit in enumerate(bits):
+            output[row][i // 8] |= bit << (i % 8)
+    return output
+
+
+@pytest.mark.parametrize(
+    "radix,group_size",
+    [(3, 5), (3, 3), (5, 3), (7, 2), (16, 2), (256, 1), (2, 62), (3, 39)],
+)
+@pytest.mark.parametrize("n", [0, 1, 2, 5, 9, 17, 65])
+@pytest.mark.parametrize("leading", [(), (2,), (2, 3), (0,), (2, 0)])
+def test_grouped_pack_unpack(
+    radix: int, group_size: int, n: int, leading: tuple[int, ...]
+) -> None:
+    rng = np.random.default_rng(1)
+    x = rng.integers(0, radix, (*leading, n), dtype=np.uint8)
+    expected = grouped_oracle(x, radix, group_size)
+    attrs = {"radix": radix, "group_size": group_size}
+    for function in (False, True):
+        packed = grouped_evaluator("Pack", attrs, x.shape, function).run(
+            None, {"X": x}
+        )[0]
+        np.testing.assert_array_equal(packed, expected)
+        decoded = grouped_evaluator("Unpack", attrs, packed.shape, function).run(
+            None, {"X": packed, "count": np.array(n, dtype=np.int64)}
+        )[0]
+        np.testing.assert_array_equal(decoded, x)
+
+
+@pytest.mark.parametrize("bits", range(1, 9))
+def test_grouped_bits_equivalence(bits: int) -> None:
+    x = (np.arange(37) % (1 << bits)).astype(np.uint8)
+    expected = oracle(x, bits)
+    for function in (False, True):
+        actual = grouped_evaluator(
+            "Pack", {"radix": 1 << bits, "group_size": 1}, x.shape, function
+        ).run(None, {"X": x})[0]
+        np.testing.assert_array_equal(actual, expected)
+
+
+@pytest.mark.parametrize(
+    "attrs",
+    [
+        {},
+        {"radix": 3},
+        {"group_size": 5},
+        {"bits": 3, "radix": 3, "group_size": 5},
+        {"bits": 3, "radix": 3},
+        {"bits": 3, "group_size": 5},
+        {"radix": 1, "group_size": 5},
+        {"radix": 257, "group_size": 1},
+        {"radix": 3, "group_size": 0},
+        {"radix": 3, "group_size": -1},
+        {"radix": 256, "group_size": 8},
+        {"radix": 2, "group_size": 63},
+        {"radix": 3, "group_size": 40},
+    ],
+)
+@pytest.mark.parametrize("op", ["Pack", "Unpack"])
+def test_grouped_invalid_attributes(op: str, attrs: dict[str, int]) -> None:
+    feeds = {"X": np.array([0], dtype=np.uint8)}
+    if op == "Unpack":
+        feeds["count"] = np.array(1, dtype=np.int64)
+    with pytest.raises(ValueError):
+        grouped_evaluator(op, attrs, (1,)).run(None, feeds)
+    node = helper.make_node(op, list(feeds), ["Y"], **attrs)
+    model = helper.make_model(
+        helper.make_graph(
+            [node],
+            "invalid",
+            [
+                helper.make_tensor_value_info(
+                    k, TensorProto.UINT8 if k == "X" else TensorProto.INT64, v.shape
+                )
+                for k, v in feeds.items()
+            ],
+            [helper.make_tensor_value_info("Y", TensorProto.UINT8, [None])],
+        ),
+        opset_imports=[helper.make_opsetid("", 29)],
+    )
+    with pytest.raises(shape_inference.InferenceError):
+        shape_inference.infer_shapes(model, strict_mode=True)
+
+
+def test_grouped_invalid_indices_and_codes() -> None:
+    attrs = {"radix": 3, "group_size": 5}
+    with pytest.raises(ValueError, match="representable"):
+        grouped_evaluator("Pack", attrs, (1,)).run(
+            None, {"X": np.array([3], dtype=np.uint8)}
+        )
+    with pytest.raises(ValueError, match="group index"):
+        grouped_evaluator("Unpack", attrs, (1,)).run(
+            None,
+            {
+                "X": np.array([243], dtype=np.uint8),
+                "count": np.array(5, dtype=np.int64),
+            },
+        )
+
+
+@pytest.mark.parametrize("function", [False, True])
+def test_grouped_ignored_digits_and_byte_padding(function: bool) -> None:
+    for attrs, payload, count, expected in [
+        ({"radix": 3, "group_size": 5}, [242], 2, [2, 2]),
+        ({"radix": 3, "group_size": 2}, [0xF8], 2, [2, 2]),
+    ]:
+        decoded = grouped_evaluator("Unpack", attrs, (1,), function).run(
+            None,
+            {
+                "X": np.array(payload, dtype=np.uint8),
+                "count": np.array(count, dtype=np.int64),
+            },
+        )[0]
+        np.testing.assert_array_equal(decoded, expected)
+
+
+@pytest.mark.parametrize("n,expected", [(0, 0), (1, 1), (5, 1), (6, 2), (11, 3)])
+def test_grouped_shape_inference(n: int, expected: int) -> None:
+    graph = helper.make_graph(
+        [helper.make_node("Pack", ["X"], ["Y"], radix=3, group_size=5)],
+        "shape",
+        [helper.make_tensor_value_info("X", TensorProto.UINT8, ["rows", n])],
+        [helper.make_tensor_value_info("Y", TensorProto.UINT8, None)],
+    )
+    model = helper.make_model(graph, opset_imports=[helper.make_opsetid("", 29)])
+    inferred = shape_inference.infer_shapes(model, strict_mode=True)
+    shape = inferred.graph.output[0].type.tensor_type.shape
+    assert shape.dim[0].dim_param == "rows"
+    assert shape.dim[1].dim_value == expected
+
+
+def test_grouped_unpack_shape_and_invalid_length() -> None:
+    expected_count = 6
+    for length in (1, 2):
+        count = helper.make_tensor("count", TensorProto.INT64, [], [expected_count])
+        graph = helper.make_graph(
+            [helper.make_node("Unpack", ["X", "count"], ["Y"], radix=3, group_size=5)],
+            "shape",
+            [helper.make_tensor_value_info("X", TensorProto.UINT8, [2, length])],
+            [helper.make_tensor_value_info("Y", TensorProto.UINT8, None)],
+            [count],
+        )
+        model = helper.make_model(graph, opset_imports=[helper.make_opsetid("", 29)])
+        if length == 1:
+            with pytest.raises(shape_inference.InferenceError, match="byte count"):
+                shape_inference.infer_shapes(model, strict_mode=True)
+        else:
+            inferred = shape_inference.infer_shapes(model, strict_mode=True)
+            assert (
+                inferred.graph.output[0].type.tensor_type.shape.dim[1].dim_value
+                == expected_count
+            )
 
 
 @pytest.mark.parametrize("bits", range(1, 9))
@@ -217,7 +430,7 @@ def test_invalid_input_dtype(op: str, dtype: type) -> None:
 
 
 @pytest.mark.parametrize("op", ["Pack", "Unpack"])
-def test_bits_is_required(op: str) -> None:
+def test_packing_attributes_are_required(op: str) -> None:
     inputs = [helper.make_tensor_value_info("X", TensorProto.UINT8, [1])]
     if op == "Unpack":
         inputs.append(helper.make_tensor_value_info("count", TensorProto.INT64, []))
@@ -228,5 +441,5 @@ def test_bits_is_required(op: str) -> None:
         [helper.make_tensor_value_info("Y", TensorProto.UINT8, [None])],
     )
     model = helper.make_model(graph, opset_imports=[helper.make_opsetid("", 29)])
-    with pytest.raises(checker.ValidationError, match="bits"):
-        checker.check_model(model)
+    with pytest.raises(shape_inference.InferenceError, match="bits"):
+        shape_inference.infer_shapes(model, strict_mode=True)
