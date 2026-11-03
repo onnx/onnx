@@ -192,7 +192,7 @@ static void UnionShapeInfo(const TensorShapeProto& source_shape, TensorShapeProt
   for (int i = 0; i < source_rank; ++i) {
     const auto& source_dim = source_shape.dim(i);
     const auto target_dim = target_shape.dim(i);
-    bool is_dims_conflict = [&]() {
+    bool is_dims_conflict = [&] {
       if (source_dim.has_dim_value()) {
         return !target_dim.has_dim_value() || target_dim.dim_value() != source_dim.dim_value();
       }

@@ -66,19 +66,19 @@ struct Visitor {
 struct MutableVisitor {
   virtual void VisitGraph(GraphProto& graph) {
     if (ProcessGraph(graph))
-      for (auto& node : *(graph.mutable_node()))
+      for (auto& node : *graph.mutable_node())
         VisitNode(node);
   }
 
   virtual void VisitFunction(FunctionProto& function) {
     if (ProcessFunction(function))
-      for (auto& node : *(function.mutable_node()))
+      for (auto& node : *function.mutable_node())
         VisitNode(node);
   }
 
   virtual void VisitNode(NodeProto& node) {
     if (ProcessNode(node)) {
-      for (auto& attr : *(node.mutable_attribute())) {
+      for (auto& attr : *node.mutable_attribute()) {
         VisitAttribute(attr);
       }
     }
@@ -89,7 +89,7 @@ struct MutableVisitor {
       if (attr.has_g()) {
         VisitGraph(*attr.mutable_g());
       }
-      for (auto& graph : *(attr.mutable_graphs()))
+      for (auto& graph : *attr.mutable_graphs())
         VisitGraph(graph);
     }
   }
