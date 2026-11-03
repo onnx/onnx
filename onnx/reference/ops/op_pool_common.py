@@ -120,8 +120,9 @@ def get_output_shape_explicit_padding(
             - pads[dims + dim]
         )
         if extra_pad > 0:
-            pads_spatial_shape_new[dim] += extra_pad // 2
-            pads_spatial_shape_new[dims + dim] += extra_pad - extra_pad // 2
+            # ceil_mode only extends the last window past the end of the
+            # input. Padding the beginning would shift every window.
+            pads_spatial_shape_new[dims + dim] += extra_pad
 
     return output_spatial_shape, pads_spatial_shape_new
 
