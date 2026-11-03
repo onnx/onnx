@@ -1,0 +1,18 @@
+# Copyright (c) ONNX Project Contributors
+# SPDX-License-Identifier: Apache-2.0
+
+# Keep tests in scope; replace Semgrep's default test-directory exclusions.
+.git/
+.semgrep-rules/
+.setuptools-cmake-build/
+.pixi/
+build/
+dist/
+third_party/
+**/*_pb2.py
+**/*_pb2.pyi
+**/*.pb.cc
+**/*.pb.h
+onnx/backend/test/data/
+# Vendored minified documentation asset.
+docs/docsgen/source/_static/*.min.js
