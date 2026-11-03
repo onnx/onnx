@@ -101,7 +101,7 @@ void LoopInferenceFunction(InferenceContext& ctx) {
 
     // copy so we can remove the shape before passing to the subgraph
     // inferencing
-    temporary_type_protos.push_back(*ctx.getInputType(i));
+    temporary_type_protos.push_back(ctx.getInputTypeOrFail(i));
     auto& input_type = temporary_type_protos.back();
 
     ClearShape(input_type);

@@ -2530,8 +2530,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           if (!hasNInputShapes(ctx, 1)) {
             return;
           }
-          auto input_type = ctx.getInputType(0);
-          const TensorShapeProto& shape = input_type->tensor_type().shape();
+          const TensorShapeProto& shape = ctx.getInputTypeOrFail(0).tensor_type().shape();
           std::vector<int64_t> perm;
           bool has_perm_attr = getRepeatedAttribute(ctx, "perm", perm);
           if (!has_perm_attr) {
@@ -2595,8 +2594,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           if (!hasNInputShapes(ctx, 1)) {
             return;
           }
-          auto input_type = ctx.getInputType(0);
-          const TensorShapeProto& shape = input_type->tensor_type().shape();
+          const TensorShapeProto& shape = ctx.getInputTypeOrFail(0).tensor_type().shape();
           std::vector<int64_t> perm;
           bool has_perm_attr = getRepeatedAttribute(ctx, "perm", perm);
           if (!has_perm_attr) {
@@ -2660,8 +2658,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           if (!hasNInputShapes(ctx, 1)) {
             return;
           }
-          auto input_type = ctx.getInputType(0);
-          const TensorShapeProto& shape = input_type->tensor_type().shape();
+          const TensorShapeProto& shape = ctx.getInputTypeOrFail(0).tensor_type().shape();
           std::vector<int64_t> perm;
           bool has_perm_attr = getRepeatedAttribute(ctx, "perm", perm);
           if (!has_perm_attr) {
@@ -2724,8 +2721,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           if (!hasNInputShapes(ctx, 1)) {
             return;
           }
-          auto input_type = ctx.getInputType(0);
-          const TensorShapeProto& shape = input_type->tensor_type().shape();
+          const TensorShapeProto& shape = ctx.getInputTypeOrFail(0).tensor_type().shape();
           std::vector<int64_t> perm;
           bool has_perm_attr = getRepeatedAttribute(ctx, "perm", perm);
           if (!has_perm_attr) {
@@ -2788,8 +2784,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           if (!hasNInputShapes(ctx, 1)) {
             return;
           }
-          auto input_type = ctx.getInputType(0);
-          const TensorShapeProto& shape = input_type->tensor_type().shape();
+          const TensorShapeProto& shape = ctx.getInputTypeOrFail(0).tensor_type().shape();
           std::vector<int64_t> perm;
           bool has_perm_attr = getRepeatedAttribute(ctx, "perm", perm);
           if (!has_perm_attr) {
@@ -6917,7 +6912,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           // Type inference
           propagateElemTypeFromInputToOutput(ctx, 0, 0);
-          const TypeProto* xTensorProto = ctx.getInputType(0);
+          const TypeProto& xTensorProto = ctx.getInputTypeOrFail(0);
           TypeProto* yTensorProto = ctx.getOutputType(0);
           TypeProto* indicesTensorProto = nullptr;
           TypeProto* inverseIndicesTensorProto = nullptr;
@@ -6947,10 +6942,10 @@ ONNX_OPERATOR_SET_SCHEMA(
             yTensorProto->mutable_tensor_type()->mutable_shape()->add_dim();
           } else {
             int axis = static_cast<int>(axisAttr->i());
-            if (!xTensorProto->tensor_type().has_shape()) {
+            if (!xTensorProto.tensor_type().has_shape()) {
               return;
             }
-            const TensorShapeProto& input_shape = xTensorProto->tensor_type().shape();
+            const TensorShapeProto& input_shape = xTensorProto.tensor_type().shape();
             int rank = input_shape.dim_size();
             if (axis < 0)
               axis += rank;
