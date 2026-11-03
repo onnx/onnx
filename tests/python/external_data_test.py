@@ -847,6 +847,33 @@ class TestCheckExternalDataBounds:
             model_file.write(helper.make_model(graph).SerializeToString())
         return model_filename
 
+    @pytest.mark.parametrize("offset", [0, 8])
+    @pytest.mark.parametrize("payload_size", [15, 16])
+    def test_check_model_segment(self, offset: int, payload_size: int) -> None:
+        model_filename = self.create_test_model(
+            {"offset": str(offset)}, bytes(offset + payload_size)
+        )
+        model = onnx.load(model_filename, load_external_data=False)
+        model.graph.initializer[0].segment.begin = 1
+        model.graph.initializer[0].segment.end = 5
+        with open(model_filename, "wb") as model_file:
+            model_file.write(model.SerializeToString())
+
+        if payload_size == 16:
+            checker.check_model(model_filename)
+        else:
+            with pytest.raises(checker.ValidationError, match="too small"):
+                checker.check_model(model_filename)
+
+    def test_check_model_empty_segment(self) -> None:
+        model_filename = self.create_test_model({}, b"")
+        model = onnx.load(model_filename, load_external_data=False)
+        segment = model.graph.initializer[0].segment
+        segment.begin = segment.end = self.value.size
+        with open(model_filename, "wb") as model_file:
+            model_file.write(model.SerializeToString())
+        checker.check_model(model_filename)
+
     @pytest.mark.parametrize(
         ("external_data", "prefix", "suffix"),
         [
@@ -1402,8 +1429,7 @@ class TestExternalDataInfoSecurity:
         tensor = self._make_tensor_with_external_data(
             {"location": "weights.bin", "malicious_attr": "evil_value"}
         )
-        with warnings.catch_warnings(record=True) as caught:
-            warnings.simplefilter("always")
+        with warnings.catch_warnings(record=True, action="always") as caught:
             info = ExternalDataInfo(tensor)
         # Unknown attribute must NOT be set on the object
         assert not hasattr(info, "malicious_attr"), (
@@ -1429,8 +1455,7 @@ class TestExternalDataInfoSecurity:
         dunder_entry.value = "builtins.dict"
 
         original_class = ExternalDataInfo
-        with warnings.catch_warnings(record=True) as caught:
-            warnings.simplefilter("always")
+        with warnings.catch_warnings(record=True, action="always") as caught:
             info = ExternalDataInfo(tensor)
         # Object type must not have been corrupted
         assert isinstance(info, original_class)
@@ -1478,8 +1503,7 @@ class TestExternalDataInfoSecurity:
                 "__dict__": "c",
             }
         )
-        with warnings.catch_warnings(record=True) as caught:
-            warnings.simplefilter("always")
+        with warnings.catch_warnings(record=True, action="always") as caught:
             info = ExternalDataInfo(tensor)
         assert not hasattr(info, "evil_one")
         assert not hasattr(info, "evil_two")

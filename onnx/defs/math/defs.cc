@@ -18,7 +18,7 @@
 
 namespace ONNX_NAMESPACE {
 
-static void MathOpDataPropagator(DataPropagationContext& ctx, const std::string& op_type) {
+static void MathOpDataPropagator(DataPropagationContext& ctx, std::string_view op_type) {
   const auto* const input_0 = ctx.getInputData(0);
   const auto* const input_1 = ctx.getInputData(1);
   if (input_0 == nullptr || input_1 == nullptr) {
