@@ -14,6 +14,12 @@ class CommonGRU(OpRun):
         self.n_outputs = len(onnx_node.output)
         self.number_of_gates = 3
 
+    def _clip(self, x):
+        # `clip` bounds the input of the activations
+        if self.clip is None:
+            return x
+        return np.clip(x, -self.clip, self.clip)
+
     def f(self, x):
         return 1 / (1 + np.exp(-x))
 
@@ -47,18 +53,22 @@ class CommonGRU(OpRun):
         for x in X:
             gates = np.dot(x, gates_w) + np.dot(H_t, gates_r) + gates_b
             z, r = np.split(gates, 2, -1)
-            z = self.f(z)
-            r = self.f(r)
+            z = self.f(self._clip(z))
+            r = self.f(self._clip(r))
             h_default = self.g(
-                np.dot(x, np.transpose(w_h))
-                + np.dot(r * H_t, np.transpose(r_h))
-                + w_bh
-                + r_bh
+                self._clip(
+                    np.dot(x, np.transpose(w_h))
+                    + np.dot(r * H_t, np.transpose(r_h))
+                    + w_bh
+                    + r_bh
+                )
             )
             h_linear = self.g(
-                np.dot(x, np.transpose(w_h))
-                + r * (np.dot(H_t, np.transpose(r_h)) + r_bh)
-                + w_bh
+                self._clip(
+                    np.dot(x, np.transpose(w_h))
+                    + r * (np.dot(H_t, np.transpose(r_h)) + r_bh)
+                    + w_bh
+                )
             )
             h = h_linear if self.linear_before_reset else h_default
             H = (1 - z) * h + z * H_t

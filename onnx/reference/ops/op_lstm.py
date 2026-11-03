@@ -14,6 +14,12 @@ class CommonLSTM(OpRun):
         self.n_outputs = len(onnx_node.output)
         self.n_gates = 3
 
+    def _clip(self, x):
+        # `clip` bounds the input of the activations
+        if self.clip is None:
+            return x
+        return np.clip(x, -self.clip, self.clip)
+
     def f(self, x: np.ndarray) -> np.ndarray:
         return 1 / (1 + np.exp(-x))
 
@@ -50,11 +56,11 @@ class CommonLSTM(OpRun):
                 + np.add(*np.split(B, 2))
             )
             i, o, f, c = np.split(gates, 4, -1)
-            i = self.f(i + p_i * C_t)
-            f = self.f(f + p_f * C_t)
-            c = self.g(c)
+            i = self.f(self._clip(i + p_i * C_t))
+            f = self.f(self._clip(f + p_f * C_t))
+            c = self.g(self._clip(c))
             C = f * C_t + i * c
-            o = self.f(o + p_o * C)
+            o = self.f(self._clip(o + p_o * C))
             H = o * self.h(C)
             h_list.append(H)
             H_t = H
