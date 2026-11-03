@@ -652,7 +652,7 @@ NB_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
       version_converter,
       "ConvertError");
 
-  version_converter.def("convert_version", [](const nb::bytes& bytes, int target) {
+  version_converter.def("convert_version", [](const nb::bytes& bytes, int64_t target) {
     ModelProto proto{};
     ParseProtoFromPyBytesOrThrow(&proto, bytes);
     return ProtoToBytes(version_conversion::ConvertVersion(proto, target));

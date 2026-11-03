@@ -16,6 +16,7 @@
 #include <utility>
 #include <vector>
 
+#include "onnx/checker.h"
 #include "onnx/version_converter/BaseConverter.h"
 #include "onnx/version_converter/adapters/Attention_24_23.h"
 #include "onnx/version_converter/adapters/Attention_25_24.h"
@@ -1132,5 +1133,8 @@ class DefaultVersionConverter : public BaseVersionConverter {
       const override;
 };
 
+ONNX_API ModelProto ConvertVersion(const ModelProto& mp_in, int64_t target_version);
+
+// Retain the existing entry point for C++ binary compatibility.
 ONNX_API ModelProto ConvertVersion(const ModelProto& mp_in, int target_version);
 } // namespace ONNX_NAMESPACE::version_conversion
