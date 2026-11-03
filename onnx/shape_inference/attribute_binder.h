@@ -28,8 +28,8 @@ class AttributeBinder : public MutableVisitor {
     for (auto attr_iter = attributes.begin(); attr_iter != attributes.end();) {
       auto& attr = *attr_iter;
       if (!attr.ref_attr_name().empty()) {
-        // Attribute-references must be replaced by the corresponding attribute-value in the call-node
-        // if the call-node contains the attribute. Otherwise, this attribute must be removed.
+        // Attribute-references must be replaced by their bound values.
+        // If no call-site value or default is available, the attribute must be removed.
         auto it = attr_map_.find(attr.ref_attr_name());
         if (it != attr_map_.end()) {
           const AttributeProto* replacement = it->second;
@@ -50,9 +50,12 @@ class AttributeBinder : public MutableVisitor {
   }
 
   // Updates a FunctionProto by replacing all attribute-references with the corresponding
-  // attribute-values in the call-node, if present. Otherwise, the attribute is removed.
+  // attribute-values in the call-node or their function defaults. Otherwise, the attribute is removed.
   static void BindAttributes(const NodeProto& callnode, FunctionProto& callee) {
     AttributeMap map;
+    for (const auto& attr : callee.attribute_proto()) {
+      map[attr.name()] = &attr;
+    }
     for (const auto& attr : callnode.attribute()) {
       map[attr.name()] = &attr;
     }
