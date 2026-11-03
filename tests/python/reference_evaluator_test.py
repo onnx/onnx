@@ -3061,6 +3061,65 @@ class TestReferenceEvaluator:
         got1 = ref1.run(None, feeds)
         assert_allclose(got1[0], expected)
 
+    def test_conv_transpose_2d_output_shape(self):
+        X = make_tensor_value_info("X", TensorProto.FLOAT, [None, None, None, None])
+        W = make_tensor_value_info("W", TensorProto.FLOAT, [None, None, None, None])
+        Y = make_tensor_value_info("Y", TensorProto.FLOAT, [None, None, None, None])
+        feeds = {
+            "X": np.arange(1 * 1 * 3 * 3).reshape((1, 1, 3, 3)).astype(np.float32),
+            "W": np.arange(1 * 2 * 3 * 3).reshape((1, 2, 3, 3)).astype(np.float32),
+        }
+
+        def run(**kwargs):
+            node = make_node(
+                "ConvTranspose", ["X", "W"], ["Y"], strides=[2, 2], **kwargs
+            )
+            graph = make_graph([node], "g", [X, W], [Y])
+            onnx_model = make_model(graph, opset_imports=[make_opsetid("", 16)])
+            return ReferenceEvaluator(onnx_model).run(None, feeds)[0]
+
+        # without padding the output is 7x7, so output_shape 6x6 needs a total padding of 1
+        full = run()
+        assert full.shape == (1, 2, 7, 7)
+        assert_allclose(run(output_shape=[6, 6]), full[:, :, 1:, 1:])
+        assert_allclose(
+            run(output_shape=[6, 6], auto_pad="SAME_UPPER"), full[:, :, :6, :6]
+        )
+        assert_allclose(
+            run(output_shape=[6, 6], auto_pad="SAME_LOWER"), full[:, :, 1:, 1:]
+        )
+        # pads are ignored when output_shape is given
+        assert_allclose(run(output_shape=[6, 6], pads=[0, 0, 1, 1]), full[:, :, 1:, 1:])
+        # with dilations 2 the output is 9x9
+        full_dilated = run(dilations=[2, 2])
+        assert full_dilated.shape == (1, 2, 9, 9)
+        assert_allclose(
+            run(output_shape=[8, 8], dilations=[2, 2]), full_dilated[:, :, 1:, 1:]
+        )
+
+    def test_conv_transpose_2d_group_asymmetric_pads(self):
+        X = make_tensor_value_info("X", TensorProto.FLOAT, [None, None, None, None])
+        W = make_tensor_value_info("W", TensorProto.FLOAT, [None, None, None, None])
+        Y = make_tensor_value_info("Y", TensorProto.FLOAT, [None, None, None, None])
+        feeds = {
+            "X": np.arange(1 * 2 * 3 * 3).reshape((1, 2, 3, 3)).astype(np.float32),
+            "W": np.arange(2 * 1 * 3 * 3).reshape((2, 1, 3, 3)).astype(np.float32),
+        }
+
+        def run(**kwargs):
+            node = make_node(
+                "ConvTranspose", ["X", "W"], ["Y"], strides=[2, 2], group=2, **kwargs
+            )
+            graph = make_graph([node], "g", [X, W], [Y])
+            onnx_model = make_model(graph, opset_imports=[make_opsetid("", 16)])
+            return ReferenceEvaluator(onnx_model).run(None, feeds)[0]
+
+        full = run()
+        assert full.shape == (1, 2, 7, 7)
+        assert_allclose(run(pads=[0, 0, 1, 1]), full[:, :, :6, :6])
+        assert_allclose(run(pads=[1, 1, 0, 0]), full[:, :, 1:, 1:])
+        assert_allclose(run(output_shape=[6, 6]), full[:, :, 1:, 1:])
+
     def test_stft(self):
         signal = make_tensor_value_info("signal", TensorProto.FLOAT, [None, None, None])
         frame_step = make_tensor_value_info("frame_step", TensorProto.INT64, [None])
