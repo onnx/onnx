@@ -227,17 +227,11 @@ class ParserBase {
     if (input_.empty())
       return std::string();
     // Special case: a parse-error at end of input starts from the last character.
-    size_t p = (pos_ < input_.size()) ? pos_ : input_.size() - 1;
-    while ((p > 0) && IsSpace(input_[p]))
-      --p;
-    while ((p > 0) && (input_[p] != '\n'))
-      --p;
-    // Start at character after '\n' unless we are at start of input
-    size_t context_start = (p > 0) ? (p + 1) : 0;
-    size_t context_end = context_start;
-    while ((context_end < input_.size()) && (input_[context_end] != '\n'))
-      ++context_end;
-    return std::string(input_.substr(context_start, context_end - context_start));
+    const auto last = input_.find_last_not_of(" \t\n\v\f\r", std::min(pos_, input_.size() - 1));
+    const auto newline = input_.rfind('\n', last == std::string_view::npos ? 0 : last);
+    // Preserve the first-line context when the only preceding newline is at offset zero.
+    const auto context = input_.substr(newline != std::string_view::npos && newline > 0 ? newline + 1 : 0);
+    return std::string(context.substr(0, context.find('\n')));
   }
 
   template <typename... Args>
@@ -251,8 +245,7 @@ class ParserBase {
 
   void SkipWhiteSpace() {
     do {
-      while (!AtEnd() && IsSpace(Cur()))
-        ++pos_;
+      pos_ = std::min(input_.find_first_not_of(" \t\n\v\f\r", pos_), input_.size());
       if (AtEnd() || (Cur() != '#'))
         return;
       // Skip rest of the line; the loop then consumes the newline as whitespace.

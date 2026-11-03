@@ -156,13 +156,12 @@ class ProtoPrinter {
   }
 
   void printQuoted(std::string_view str) {
-    output_ << "\"";
-    for (char ch : str) {
-      if ((ch == '\\') || (ch == '"'))
-        output_ << '\\';
-      output_ << ch;
+    output_ << '"';
+    for (auto pos = str.find_first_of("\\\""); pos != std::string_view::npos; pos = str.find_first_of("\\\"")) {
+      output_ << str.substr(0, pos) << '\\' << str[pos];
+      str.remove_prefix(pos + 1);
     }
-    output_ << "\"";
+    output_ << str << '"';
   }
 
   template <typename T>
