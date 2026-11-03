@@ -20,12 +20,12 @@ SPDX-License-Identifier: Apache-2.0
 
 | Workflow | When it runs | What it does |
 |---|---|---|
-| [Create Releases](/.github/workflows/create_release.yml) | Push to main/rel-\*, PRs targeting rel-\* or labeled "run release CIs", weekly (Monday 00:00 UTC), workflow\_dispatch | Orchestrator — calls WindowsRelease, LinuxRelease, MacRelease, PyodideRelease, and sdistRelease as reusable workflows |
-| [WindowsRelease](/.github/workflows/release_windows_cibw.yml) | Called by Create Releases | Builds Windows wheels for x64, x86, and arm64; verifies with minimum supported packages (2)(3) |
-| [LinuxRelease](/.github/workflows/release_linux_cibw.yml) | Called by Create Releases | Builds Linux wheels for x86\_64 (manylinux\_2\_28) and aarch64; verifies with minimum supported packages (3) |
-| [MacRelease](/.github/workflows/release_macos_cibw.yml) | Called by Create Releases | Builds macOS wheels (macos-14, MACOSX\_DEPLOYMENT\_TARGET=12.0); verifies with minimum supported packages (3) |
-| [PyodideRelease](/.github/workflows/release_pyodide_cibw.yml) | Called by Create Releases and on every push | Builds a Pyodide (WebAssembly) wheel on Ubuntu using `cibuildwheel` with a pre-downloaded host `protoc` and protobuf source; runs a basic import test (3) |
-| [sdistRelease](/.github/workflows/release_sdist.yml) | Called by Create Releases | Builds and tests source distribution |
+| [Create Releases](/.github/workflows/create_release.yml) | Push to main/rel-\*, labeled/synchronize PR events targeting main/rel-\* (jobs gated by labels), weekly (Monday 00:00 UTC), workflow\_dispatch | Orchestrator — calls WindowsRelease, LinuxRelease, MacRelease, PyodideRelease, and sdistRelease as reusable workflows |
+| [WindowsRelease](/.github/workflows/release_windows_cibw.yml) | Called by Create Releases | Builds Windows wheels for x64, x86, and arm64; runs wheel tests (2)(3) |
+| [LinuxRelease](/.github/workflows/release_linux_cibw.yml) | Called by Create Releases | Builds Linux wheels for x86\_64 (manylinux\_2\_28) and aarch64; runs wheel tests (3) |
+| [MacRelease](/.github/workflows/release_macos_cibw.yml) | Called by Create Releases | Builds macOS wheels (macos-14, MACOSX\_DEPLOYMENT\_TARGET=13.3); runs wheel tests (3) |
+| [PyodideRelease](/.github/workflows/release_pyodide_cibw.yml) | Called by Create Releases or workflow\_dispatch | Builds a Pyodide (WebAssembly) wheel on Ubuntu using `cibuildwheel` with a pre-downloaded host `protoc` and protobuf source; runs a basic import test (3) |
+| [sdistRelease](/.github/workflows/release_sdist.yml) | Called by Create Releases | Builds and uploads source distribution |
 
 ## Security and Supply Chain
 
@@ -50,8 +50,8 @@ SPDX-License-Identifier: Apache-2.0
 * **(1)** Release CIs run when:
   * A PR is merged into main or a rel-\* branch
   * Weekly (Monday 00:00 UTC) — publishes a Python wheel to the [onnx-weekly](https://pypi.org/project/onnx-weekly/) package on PyPI
-  * Any PR targeting a rel-\* branch
-  * Any PR labeled "run release CIs" (maintainers only)
+  * Labeled/synchronize events for PRs targeting main or rel-\* with `run release CIs`; targeting a release branch alone is not sufficient
+  * The `ci-slsa-provenance` label also enables the orchestrator's PR jobs, subject to each reusable workflow's own conditions
   * Manually via workflow\_dispatch
 
 * **(2)** Minimum supported dependency versions are listed in `[project.dependencies]` in [pyproject.toml](/pyproject.toml).

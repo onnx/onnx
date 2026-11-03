@@ -82,19 +82,19 @@ to be produced.
 - The release manager will announce the intent of the process (to produce
   major, minor or patch update) and the overall timeline (documented in our
   wiki: [example](https://github.com/onnx/onnx/wiki/Logistics-for-ONNX-Release-1.19.0).
-  A release branch is created with the name rel-major#.minor#(.patch#), and any version
+  A release branch is created with the name `rel-major#.minor#.patch#`, and any version
   references in build scripts or version checks are updated.
 
 - The release manager announces the initial commit for testing. The first
   period lasts two weeks; any regressions found should be fixed, typically via
   the main branch. Incomplete features should be done or excised during this
-  period. A distribution can be made available with an -RC1 suffix.
+  period. A distribution can be made available with an `rc1` suffix (e.g. `1.24.0rc1`).
 
 - The release manager announces a second round of testing (unless it's only a
   patch update with no regressions found). Only critical bugs are fixed at
   this point, or those introduced by patches from the first week. A third
   week may be introduced at the release manager's discretion if significant
-  fixes need to be taken. Distributions with -RCn suffixes can be made
+  fixes need to be taken. Distributions with `rcN` suffixes can be made
   available if convenient.
 
 - Release notes are updated with final changes, and a file with sources is
@@ -107,7 +107,7 @@ The release process really consists of communicating, testing to establish a
 known state of the project, and distributing files. This section deals with
 the second task.
 
-At the very least, the tests that are part of the /test folder should be run
+At the very least, the tests that are part of the `tests/` folder should be run
 under a variety of configurations. Issues fixed should ensure coverage in this
 suite to avoid regressions.
 
@@ -124,10 +124,11 @@ In addition to stable releases, we publish **weekly development builds** to a se
 ## Why a Separate Package?
 
 - **Avoid accidental installs:** Pre-release versions can be installed unintentionally; `onnx-weekly` ensures stable users are unaffected.
-- **Enable safe testing:** Try upcoming features without impacting stable installs. Both packages can coexist.
+- **Enable safe testing:** Use a separate virtual environment: `onnx` and `onnx-weekly` both provide the `onnx` import package and should not be installed together.
 - **Simplify automation:** Weekly builds are pushed automatically from `main` without polluting the main release history.
 
 ## Installation
 
 ```bash
 pip install onnx-weekly
+```

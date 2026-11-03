@@ -960,7 +960,7 @@ def _rewrite_repo_links(
             return target
         intree = _intree_location(abspath)
         if intree is not None:
-            rel = os.path.relpath(intree, tree_dir)
+            rel = pathlib.Path(os.path.relpath(intree, tree_dir)).as_posix()
             return f"{rel}#{fragment}" if fragment else rel
         repo_rel = abspath.relative_to(_REPO_ROOT).as_posix()
         url = _GITHUB_BLOB + repo_rel
