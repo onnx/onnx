@@ -1012,7 +1012,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           // a dimension marked -1.
           auto outputShape = ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
           TensorShapeProto::Dimension* negativeOneDim = nullptr;
-          const auto& dataInputTensorType = ctx.getInputType(0)->tensor_type();
+          const auto& dataInputTensorType = ctx.getInputTypeOrFail(0).tensor_type();
           std::vector<bool> unresolvedZeros(targetShapeProto.dim_size(), false);
           int64_t outputProduct = 1;
           bool outputProductValid = true;
@@ -1160,7 +1160,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           // a dimension marked -1.
           auto outputShape = ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
           TensorShapeProto::Dimension* negativeOneDim = nullptr;
-          const auto& dataInputTensorType = ctx.getInputType(0)->tensor_type();
+          const auto& dataInputTensorType = ctx.getInputTypeOrFail(0).tensor_type();
           std::vector<bool> unresolvedZeros(targetShapeProto.dim_size(), false);
           int64_t outputProduct = 1;
           bool outputProductValid = true;
@@ -1308,7 +1308,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           // a dimension marked -1.
           auto outputShape = ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
           TensorShapeProto::Dimension* negativeOneDim = nullptr;
-          const auto& dataInputTensorType = ctx.getInputType(0)->tensor_type();
+          const auto& dataInputTensorType = ctx.getInputTypeOrFail(0).tensor_type();
           std::vector<bool> unresolvedZeros(targetShapeProto.dim_size(), false);
           int64_t outputProduct = 1;
           bool outputProductValid = true;
@@ -1456,7 +1456,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           // a dimension marked -1.
           auto outputShape = ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
           TensorShapeProto::Dimension* negativeOneDim = nullptr;
-          const auto& dataInputTensorType = ctx.getInputType(0)->tensor_type();
+          const auto& dataInputTensorType = ctx.getInputTypeOrFail(0).tensor_type();
           std::vector<bool> unresolvedZeros(targetShapeProto.dim_size(), false);
           int64_t outputProduct = 1;
           bool outputProductValid = true;
@@ -1596,7 +1596,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           // a dimension marked -1.
           auto outputShape = ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
           TensorShapeProto::Dimension* negativeOneDim = nullptr;
-          const auto& dataInputTensorType = ctx.getInputType(0)->tensor_type();
+          const auto& dataInputTensorType = ctx.getInputTypeOrFail(0).tensor_type();
           std::vector<bool> unresolvedZeros(targetShape.size(), false);
           int64_t outputProduct = 1;
           for (size_t i = 0; i < targetShape.size(); ++i) {
@@ -1706,7 +1706,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           // a dimension marked -1.
           auto outputShape = ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
           TensorShapeProto::Dimension* negativeOneDim = nullptr;
-          const auto& dataInputTensorType = ctx.getInputType(0)->tensor_type();
+          const auto& dataInputTensorType = ctx.getInputTypeOrFail(0).tensor_type();
           std::vector<bool> unresolvedZeros(targetShape.size(), false);
           int64_t outputProduct = 1;
           for (int i = 0; i < static_cast<int>(targetShape.size()); ++i) {
@@ -1814,7 +1814,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             return;
           }
 
-          int64_t rank = static_cast<int64_t>(ctx.getInputType(0)->tensor_type().shape().dim_size());
+          int64_t rank = static_cast<int64_t>(ctx.getInputTypeOrFail(0).tensor_type().shape().dim_size());
           int64_t start = getAttribute(ctx, "start", 0);
           if (start < 0)
             start += rank;
@@ -1827,7 +1827,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         })
         .PartialDataPropagationFunction([](DataPropagationContext& ctx) {
           if (hasInputShape(ctx, 0)) {
-            auto& input_shape = ctx.getInputType(0)->tensor_type().shape();
+            auto& input_shape = ctx.getInputTypeOrFail(0).tensor_type().shape();
             int64_t rank = static_cast<int64_t>(input_shape.dim_size());
             int64_t start = getAttribute(ctx, "start", 0);
             if (start < 0)
@@ -1876,7 +1876,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             return;
           }
 
-          int64_t rank = static_cast<int64_t>(ctx.getInputType(0)->tensor_type().shape().dim_size());
+          int64_t rank = static_cast<int64_t>(ctx.getInputTypeOrFail(0).tensor_type().shape().dim_size());
           int64_t start = getAttribute(ctx, "start", 0);
           if (start < 0)
             start += rank;
@@ -1889,7 +1889,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         })
         .PartialDataPropagationFunction([](DataPropagationContext& ctx) {
           if (hasInputShape(ctx, 0)) {
-            auto& input_shape = ctx.getInputType(0)->tensor_type().shape();
+            auto& input_shape = ctx.getInputTypeOrFail(0).tensor_type().shape();
             int64_t rank = static_cast<int64_t>(input_shape.dim_size());
             int64_t start = getAttribute(ctx, "start", 0);
             if (start < 0)
@@ -1913,8 +1913,8 @@ static void ShapeOp13DataPropagator(DataPropagationContext& ctx) {
   if (!hasNInputShapes(ctx, 1)) {
     return;
   }
-  if (ctx.getInputType(0)->tensor_type().has_shape()) {
-    auto input_shape = ctx.getInputType(0)->tensor_type().shape();
+  if (ctx.getInputTypeOrFail(0).tensor_type().has_shape()) {
+    auto input_shape = ctx.getInputTypeOrFail(0).tensor_type().shape();
     TensorShapeProto tsp;
     tsp.CopyFrom(input_shape);
     ctx.addOutputData(0, std::move(tsp));
@@ -1939,8 +1939,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             return;
           }
 
-          if (ctx.getInputType(0)->tensor_type().has_shape()) {
-            output_length->set_dim_value(ctx.getInputType(0)->tensor_type().shape().dim_size());
+          if (ctx.getInputTypeOrFail(0).tensor_type().has_shape()) {
+            output_length->set_dim_value(ctx.getInputTypeOrFail(0).tensor_type().shape().dim_size());
           }
         })
         .PartialDataPropagationFunction([](DataPropagationContext& ctx) { ShapeOp13DataPropagator(ctx); }));
@@ -1963,8 +1963,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             return;
           }
 
-          if (ctx.getInputType(0)->tensor_type().has_shape()) {
-            output_length->set_dim_value(ctx.getInputType(0)->tensor_type().shape().dim_size());
+          if (ctx.getInputTypeOrFail(0).tensor_type().has_shape()) {
+            output_length->set_dim_value(ctx.getInputTypeOrFail(0).tensor_type().shape().dim_size());
           }
         })
         .PartialDataPropagationFunction([](DataPropagationContext& ctx) { ShapeOp13DataPropagator(ctx); }));
@@ -2063,7 +2063,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             return;
           }
 
-          auto rank = ctx.getInputType(0)->tensor_type().shape().dim_size();
+          auto rank = ctx.getInputTypeOrFail(0).tensor_type().shape().dim_size();
 
           auto axisAttr = ctx.getAttribute("axis");
           if (!axisAttr) {
@@ -2092,7 +2092,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
 
           for (size_t i = 0; i < numInputs; i++) {
-            const auto& shape = ctx.getInputType(i)->tensor_type().shape();
+            const auto& shape = ctx.getInputTypeOrFail(i).tensor_type().shape();
             if (shape.dim_size() != rank) {
               fail_shape_inference(
                   "All inputs to Concat must have same rank. Input ", i, " has rank ", shape.dim_size(), " != ", rank);
@@ -2150,7 +2150,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             return;
           }
 
-          const auto& shape = ctx.getInputType(0)->tensor_type().shape();
+          const auto& shape = ctx.getInputTypeOrFail(0).tensor_type().shape();
           int rank = shape.dim_size();
           int axis = static_cast<int>(getAttribute(ctx, "axis", 0));
           if (axis < -rank || axis >= rank) {
@@ -2247,7 +2247,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             return;
           }
 
-          const auto& shape = ctx.getInputType(0)->tensor_type().shape();
+          const auto& shape = ctx.getInputTypeOrFail(0).tensor_type().shape();
           int rank = shape.dim_size();
           int axis = static_cast<int>(getAttribute(ctx, "axis", 0));
           if (axis < -rank || axis >= rank) {
@@ -2354,7 +2354,7 @@ ONNX_OPERATOR_SET_SCHEMA(
 
           if (!startsInitializer || !endsInitializer || (hasInputShape(ctx, 3) && !ctx.getInputData(3)) ||
               (hasInputShape(ctx, 4) && !ctx.getInputData(4))) {
-            const auto input_rank = ctx.getInputType(0)->tensor_type().shape().dim_size();
+            const auto input_rank = ctx.getInputTypeOrFail(0).tensor_type().shape().dim_size();
             // we can infer the output rank - it never changes
             for (int i = 0; i < input_rank; ++i) {
               ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape()->add_dim();
@@ -2388,7 +2388,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             fail_shape_inference("Incorrect or missing input value for starts and ends");
           }
 
-          const auto& input_shape = ctx.getInputType(0)->tensor_type().shape();
+          const auto& input_shape = ctx.getInputTypeOrFail(0).tensor_type().shape();
           const auto input_rank = input_shape.dim_size();
           std::vector<int64_t> axes(starts.size());
           if (!axesInitializer) {
@@ -2436,7 +2436,7 @@ ONNX_OPERATOR_SET_SCHEMA(
 
             unique_axes.insert(axis);
 
-            auto input_dim = ctx.getInputType(0)->tensor_type().shape().dim(static_cast<int>(axis));
+            auto input_dim = ctx.getInputTypeOrFail(0).tensor_type().shape().dim(static_cast<int>(axis));
 
             // input dim value is missing - cannot perform shape inference for
             // this axis
@@ -3136,8 +3136,8 @@ ONNX_OPERATOR_SET_SCHEMA(
           if (!hasNInputShapes(ctx, 2)) {
             return;
           }
-          const TensorShapeProto& data_shape = ctx.getInputType(0)->tensor_type().shape();
-          const TensorShapeProto& indices_shape = ctx.getInputType(1)->tensor_type().shape();
+          const TensorShapeProto& data_shape = ctx.getInputTypeOrFail(0).tensor_type().shape();
+          const TensorShapeProto& indices_shape = ctx.getInputTypeOrFail(1).tensor_type().shape();
           int r = data_shape.dim_size();
           if (r < 1) {
             fail_shape_inference("data tensor must have rank >= 1");
@@ -3252,7 +3252,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             axes_not_specified = true;
           }
 
-          const auto& input_shape = ctx.getInputType(0)->tensor_type().shape();
+          const auto& input_shape = ctx.getInputTypeOrFail(0).tensor_type().shape();
           const auto input_ndim = input_shape.dim_size();
           checkAxesRange(axes, input_ndim);
           adjustNegativeAxes(axes, input_ndim);
@@ -3348,7 +3348,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             axes_not_specified = true;
           }
 
-          const auto& input_shape = ctx.getInputType(0)->tensor_type().shape();
+          const auto& input_shape = ctx.getInputTypeOrFail(0).tensor_type().shape();
           const auto input_ndim = input_shape.dim_size();
           checkAxesRange(axes, input_ndim);
           adjustNegativeAxes(axes, input_ndim);
@@ -3444,7 +3444,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             axes_not_specified = true;
           }
 
-          const auto& input_shape = ctx.getInputType(0)->tensor_type().shape();
+          const auto& input_shape = ctx.getInputTypeOrFail(0).tensor_type().shape();
           const auto input_ndim = input_shape.dim_size();
           checkAxesRange(axes, input_ndim);
           adjustNegativeAxes(axes, input_ndim);
@@ -3537,7 +3537,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             axes_not_specified = true;
           }
 
-          const auto& input_shape = ctx.getInputType(0)->tensor_type().shape();
+          const auto& input_shape = ctx.getInputTypeOrFail(0).tensor_type().shape();
           const auto input_ndim = input_shape.dim_size();
           checkAxesRange(axes, input_ndim);
           adjustNegativeAxes(axes, input_ndim);
@@ -3594,11 +3594,11 @@ ONNX_OPERATOR_SET_SCHEMA(
             return;
           }
 
-          if (!ctx.getInputType(0)->tensor_type().has_shape()) {
+          if (!ctx.getInputTypeOrFail(0).tensor_type().has_shape()) {
             return;
           }
 
-          const auto& input_shape = ctx.getInputType(0)->tensor_type().shape();
+          const auto& input_shape = ctx.getInputTypeOrFail(0).tensor_type().shape();
           const auto input_ndim = input_shape.dim_size();
           std::vector<int64_t> axes;
           if (!getRepeatedAttribute(ctx, "axes", axes)) {
@@ -3671,7 +3671,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
           axes = ParseData<int64_t>(axes_proto);
           ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
-          const auto& input_shape = ctx.getInputType(0)->tensor_type().shape();
+          const auto& input_shape = ctx.getInputTypeOrFail(0).tensor_type().shape();
           const auto input_ndim = input_shape.dim_size();
           const auto output_ndim = input_ndim + static_cast<int>(axes.size());
           checkAxesRange(axes, output_ndim);
@@ -3688,7 +3688,7 @@ ONNX_OPERATOR_SET_SCHEMA(
               ++j;
             }
             *ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape()->add_dim() =
-                ctx.getInputType(0)->tensor_type().shape().dim(i);
+                ctx.getInputTypeOrFail(0).tensor_type().shape().dim(i);
           }
           while (static_cast<size_t>(j) < axes.size() &&
                  axes[j] == ctx.getOutputType(0)->tensor_type().shape().dim_size()) {
@@ -3742,7 +3742,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
           axes = ParseData<int64_t>(axes_proto);
           ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
-          const auto& input_shape = ctx.getInputType(0)->tensor_type().shape();
+          const auto& input_shape = ctx.getInputTypeOrFail(0).tensor_type().shape();
           const auto input_ndim = input_shape.dim_size();
           const auto output_ndim = input_ndim + static_cast<int>(axes.size());
           checkAxesRange(axes, output_ndim);
@@ -3759,7 +3759,7 @@ ONNX_OPERATOR_SET_SCHEMA(
               ++j;
             }
             *ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape()->add_dim() =
-                ctx.getInputType(0)->tensor_type().shape().dim(i);
+                ctx.getInputTypeOrFail(0).tensor_type().shape().dim(i);
           }
           while (static_cast<size_t>(j) < axes.size() &&
                  axes[j] == ctx.getOutputType(0)->tensor_type().shape().dim_size()) {
@@ -3813,7 +3813,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
           axes = ParseData<int64_t>(axes_proto);
           ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
-          const auto& input_shape = ctx.getInputType(0)->tensor_type().shape();
+          const auto& input_shape = ctx.getInputTypeOrFail(0).tensor_type().shape();
           const auto input_ndim = input_shape.dim_size();
           const auto output_ndim = input_ndim + static_cast<int>(axes.size());
           checkAxesRange(axes, output_ndim);
@@ -3830,7 +3830,7 @@ ONNX_OPERATOR_SET_SCHEMA(
               ++j;
             }
             *ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape()->add_dim() =
-                ctx.getInputType(0)->tensor_type().shape().dim(i);
+                ctx.getInputTypeOrFail(0).tensor_type().shape().dim(i);
           }
           while (static_cast<size_t>(j) < axes.size() &&
                  axes[j] == ctx.getOutputType(0)->tensor_type().shape().dim_size()) {
@@ -3881,7 +3881,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
           axes = ParseData<int64_t>(axes_proto);
           ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
-          const auto& input_shape = ctx.getInputType(0)->tensor_type().shape();
+          const auto& input_shape = ctx.getInputTypeOrFail(0).tensor_type().shape();
           const auto input_ndim = input_shape.dim_size();
           const auto output_ndim = input_ndim + static_cast<int>(axes.size());
           checkAxesRange(axes, output_ndim);
@@ -3898,7 +3898,7 @@ ONNX_OPERATOR_SET_SCHEMA(
               ++j;
             }
             *ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape()->add_dim() =
-                ctx.getInputType(0)->tensor_type().shape().dim(i);
+                ctx.getInputTypeOrFail(0).tensor_type().shape().dim(i);
           }
           while (static_cast<size_t>(j) < axes.size() &&
                  axes[j] == ctx.getOutputType(0)->tensor_type().shape().dim_size()) {
@@ -3943,12 +3943,12 @@ ONNX_OPERATOR_SET_SCHEMA(
             unique_values.insert(val);
           }
 
-          if (!ctx.getInputType(0)->tensor_type().has_shape()) {
+          if (!ctx.getInputTypeOrFail(0).tensor_type().has_shape()) {
             return;
           }
 
           ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
-          const auto& input_shape = ctx.getInputType(0)->tensor_type().shape();
+          const auto& input_shape = ctx.getInputTypeOrFail(0).tensor_type().shape();
           const auto input_ndim = input_shape.dim_size();
           const auto output_ndim = input_ndim + static_cast<int>(axes.size());
           for (auto& axe : axes) {
@@ -3972,7 +3972,7 @@ ONNX_OPERATOR_SET_SCHEMA(
               ++j;
             }
             *ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape()->add_dim() =
-                ctx.getInputType(0)->tensor_type().shape().dim(i);
+                ctx.getInputTypeOrFail(0).tensor_type().shape().dim(i);
           }
           while (static_cast<size_t>(j) < axes.size() &&
                  axes[j] == ctx.getOutputType(0)->tensor_type().shape().dim_size()) {
@@ -4193,7 +4193,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             return;
           }
 
-          const auto& input_shape = ctx.getInputType(0)->tensor_type().shape();
+          const auto& input_shape = ctx.getInputTypeOrFail(0).tensor_type().shape();
           const auto input_rank = input_shape.dim_size();
 
           const auto repeats_inputs = ctx.getInputData(1);
@@ -4202,7 +4202,7 @@ ONNX_OPERATOR_SET_SCHEMA(
 
           if (nullptr != repeats_inputs && hasNInputShapes(ctx, 2)) {
             // shape inference is possible only when 'repeats' is an initializer
-            const auto& repeats_shape = ctx.getInputType(1)->tensor_type().shape();
+            const auto& repeats_shape = ctx.getInputTypeOrFail(1).tensor_type().shape();
             if (repeats_shape.dim_size() != 1 || repeats_inputs->data_type() != TensorProto::INT64) {
               fail_shape_inference("'Repeats' input must be 1D tensor of type int64");
             }
@@ -4785,10 +4785,10 @@ ONNX_OPERATOR_SET_SCHEMA(
             return;
           }
 
-          const auto& data_shape = ctx.getInputType(0)->tensor_type().shape();
+          const auto& data_shape = ctx.getInputTypeOrFail(0).tensor_type().shape();
           const auto data_rank = data_shape.dim_size();
 
-          const auto& indices_shape = ctx.getInputType(1)->tensor_type().shape();
+          const auto& indices_shape = ctx.getInputTypeOrFail(1).tensor_type().shape();
           const auto indices_rank = indices_shape.dim_size();
 
           int64_t batch_dims_data = getAttribute(ctx, "batch_dims", 0);
@@ -4902,7 +4902,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           if (!hasNInputShapes(ctx, 1)) {
             return;
           }
-          const auto& input_shape = ctx.getInputType(0)->tensor_type().shape();
+          const auto& input_shape = ctx.getInputTypeOrFail(0).tensor_type().shape();
           const auto input_rank = input_shape.dim_size();
 
           // Infer output shape if 'pads' tensor is available
@@ -5069,7 +5069,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             return;
           }
 
-          auto rank = ctx.getInputType(0)->tensor_type().shape().dim_size();
+          auto rank = ctx.getInputTypeOrFail(0).tensor_type().shape().dim_size();
 
           auto axisAttr = ctx.getAttribute("axis");
           if (!axisAttr) {
@@ -5093,7 +5093,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
 
           for (size_t i = 0; i < numInputs; i++) {
-            const auto& shape = ctx.getInputType(i)->tensor_type().shape();
+            const auto& shape = ctx.getInputTypeOrFail(i).tensor_type().shape();
             if (shape.dim_size() != rank) {
               fail_shape_inference("All inputs to Concat must have same rank");
             }
@@ -5366,7 +5366,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             // Negative axes were not explicitly discussed in the spec before opset-10.
             // Hence, they are officially not part of the spec, but some models/runtimes may use them.
             // So we perform simple rank inference in this case.
-            for (size_t i = 0; static_cast<int64_t>(i) < ctx.getInputType(0)->tensor_type().shape().dim_size(); ++i) {
+            for (size_t i = 0; static_cast<int64_t>(i) < ctx.getInputTypeOrFail(0).tensor_type().shape().dim_size();
+                 ++i) {
               ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape()->add_dim();
             }
             return;
@@ -5374,13 +5375,14 @@ ONNX_OPERATOR_SET_SCHEMA(
 
           ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
 
-          for (size_t i = 0, j = 0; static_cast<int64_t>(i) < ctx.getInputType(0)->tensor_type().shape().dim_size();
+          for (size_t i = 0, j = 0;
+               static_cast<int64_t>(i) < ctx.getInputTypeOrFail(0).tensor_type().shape().dim_size();
                ++i) {
             auto newdim = ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape()->add_dim();
             if (j < axes.size() && static_cast<size_t>(axes[j]) == i) {
               // There's a lot of potential behaviors. For now just
               // handle some simple cases.
-              const auto& dim = ctx.getInputType(0)->tensor_type().shape().dim(i);
+              const auto& dim = ctx.getInputTypeOrFail(0).tensor_type().shape().dim(i);
               if (dim.has_dim_value()) {
                 auto dim_value = dim.dim_value();
                 if (starts[j] < 0) {
@@ -5398,7 +5400,7 @@ ONNX_OPERATOR_SET_SCHEMA(
               }
               ++j;
             } else {
-              *newdim = ctx.getInputType(0)->tensor_type().shape().dim(i);
+              *newdim = ctx.getInputTypeOrFail(0).tensor_type().shape().dim(i);
             }
           }
         }));
@@ -5441,7 +5443,7 @@ ONNX_OPERATOR_SET_SCHEMA(
 
           if (!startsInitializer || !endsInitializer || (hasInputShape(ctx, 3) && !ctx.getInputData(3)) ||
               (hasInputShape(ctx, 4) && !ctx.getInputData(4))) {
-            const auto input_rank = ctx.getInputType(0)->tensor_type().shape().dim_size();
+            const auto input_rank = ctx.getInputTypeOrFail(0).tensor_type().shape().dim_size();
             // we can infer the output rank - it never changes
             for (int i = 0; i < input_rank; ++i) {
               ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape()->add_dim();
@@ -5475,7 +5477,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             fail_shape_inference("Incorrect or missing input value for starts and ends");
           }
 
-          const auto& input_shape = ctx.getInputType(0)->tensor_type().shape();
+          const auto& input_shape = ctx.getInputTypeOrFail(0).tensor_type().shape();
           const auto input_rank = input_shape.dim_size();
           std::vector<int64_t> axes(starts.size());
           if (!axesInitializer) {
@@ -5522,7 +5524,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             }
 
             unique_axes.insert(axis);
-            auto input_dim = ctx.getInputType(0)->tensor_type().shape().dim(axis);
+            auto input_dim = ctx.getInputTypeOrFail(0).tensor_type().shape().dim(axis);
 
             // input dim value is missing - cannot perform shape inference for
             // this axis
@@ -5667,8 +5669,8 @@ ONNX_OPERATOR_SET_SCHEMA(
           if (!hasNInputShapes(ctx, 2)) {
             return;
           }
-          const TensorShapeProto& data_shape = ctx.getInputType(0)->tensor_type().shape();
-          const TensorShapeProto& indices_shape = ctx.getInputType(1)->tensor_type().shape();
+          const TensorShapeProto& data_shape = ctx.getInputTypeOrFail(0).tensor_type().shape();
+          const TensorShapeProto& indices_shape = ctx.getInputTypeOrFail(1).tensor_type().shape();
           int r = data_shape.dim_size();
           if (r < 1) {
             fail_shape_inference("data tensor must have rank >= 1");
@@ -5715,11 +5717,11 @@ ONNX_OPERATOR_SET_SCHEMA(
             return;
           }
 
-          if (!ctx.getInputType(0)->tensor_type().has_shape()) {
+          if (!ctx.getInputTypeOrFail(0).tensor_type().has_shape()) {
             return;
           }
 
-          const auto& input_shape = ctx.getInputType(0)->tensor_type().shape();
+          const auto& input_shape = ctx.getInputTypeOrFail(0).tensor_type().shape();
           const auto input_ndim = input_shape.dim_size();
           std::vector<int64_t> axes;
           if (!getRepeatedAttribute(ctx, "axes", axes)) {
@@ -5768,21 +5770,21 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
           std::sort(axes.begin(), axes.end());
 
-          if (!ctx.getInputType(0)->tensor_type().has_shape()) {
+          if (!ctx.getInputTypeOrFail(0).tensor_type().has_shape()) {
             return;
           }
 
           ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
 
           int j = 0;
-          for (int i = 0; i < ctx.getInputType(0)->tensor_type().shape().dim_size(); ++i) {
+          for (int i = 0; i < ctx.getInputTypeOrFail(0).tensor_type().shape().dim_size(); ++i) {
             while (static_cast<size_t>(j) < axes.size() &&
                    axes[j] == ctx.getOutputType(0)->tensor_type().shape().dim_size()) {
               ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape()->add_dim()->set_dim_value(1);
               ++j;
             }
             *ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape()->add_dim() =
-                ctx.getInputType(0)->tensor_type().shape().dim(i);
+                ctx.getInputTypeOrFail(0).tensor_type().shape().dim(i);
           }
           while (static_cast<size_t>(j) < axes.size() &&
                  axes[j] == ctx.getOutputType(0)->tensor_type().shape().dim_size()) {
@@ -5885,7 +5887,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             return;
           }
 
-          const auto& shape = ctx.getInputType(0)->tensor_type().shape();
+          const auto& shape = ctx.getInputTypeOrFail(0).tensor_type().shape();
           int rank = shape.dim_size();
           int axis = static_cast<int>(getAttribute(ctx, "axis", 0));
           if (axis < -rank || axis >= rank) {
@@ -5970,7 +5972,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             return;
           }
 
-          auto& input_shape = ctx.getInputType(0)->tensor_type().shape();
+          auto& input_shape = ctx.getInputTypeOrFail(0).tensor_type().shape();
 
           std::vector<int64_t> pads;
           if (!getRepeatedAttribute(ctx, "pads", pads)) {
@@ -5985,9 +5987,9 @@ ONNX_OPERATOR_SET_SCHEMA(
           for (int i = 0; i < input_shape.dim_size(); ++i) {
             auto newdim = ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape()->add_dim();
             const auto total_pad = checkedAdd(pads[i], pads[input_shape.dim_size() + i]);
-            if (ctx.getInputType(0)->tensor_type().shape().dim(i).has_dim_value()) {
+            if (ctx.getInputTypeOrFail(0).tensor_type().shape().dim(i).has_dim_value()) {
               newdim->set_dim_value(
-                  checkedAdd(ctx.getInputType(0)->tensor_type().shape().dim(i).dim_value(), total_pad));
+                  checkedAdd(ctx.getInputTypeOrFail(0).tensor_type().shape().dim(i).dim_value(), total_pad));
             } else if (total_pad == 0) {
               *newdim = input_shape.dim(i);
             }
@@ -6018,10 +6020,10 @@ ONNX_OPERATOR_SET_SCHEMA(
             return;
           }
 
-          const auto& data_shape = ctx.getInputType(0)->tensor_type().shape();
+          const auto& data_shape = ctx.getInputTypeOrFail(0).tensor_type().shape();
           const auto data_rank = data_shape.dim_size();
 
-          const auto& indices_shape = ctx.getInputType(1)->tensor_type().shape();
+          const auto& indices_shape = ctx.getInputTypeOrFail(1).tensor_type().shape();
           const auto indices_rank = indices_shape.dim_size();
 
           if (data_rank < 1 || indices_rank < 1) {
@@ -6126,9 +6128,9 @@ ONNX_OPERATOR_SET_SCHEMA(
           propagateElemTypeFromInputToOutput(ctx, 1, 0);
           if (hasNInputShapes(ctx, 3)) {
             std::vector<const TensorShapeProto*> shapes;
-            shapes.push_back(&ctx.getInputType(0)->tensor_type().shape());
-            shapes.push_back(&ctx.getInputType(1)->tensor_type().shape());
-            shapes.push_back(&ctx.getInputType(2)->tensor_type().shape());
+            shapes.push_back(&ctx.getInputTypeOrFail(0).tensor_type().shape());
+            shapes.push_back(&ctx.getInputTypeOrFail(1).tensor_type().shape());
+            shapes.push_back(&ctx.getInputTypeOrFail(2).tensor_type().shape());
             multidirectionalBroadcastShapeInference(
                 shapes, *ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape());
           }
@@ -6178,7 +6180,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           if (!hasNInputShapes(ctx, 1)) {
             return;
           }
-          const auto& input_shape = ctx.getInputType(0)->tensor_type().shape();
+          const auto& input_shape = ctx.getInputTypeOrFail(0).tensor_type().shape();
           const auto input_rank = input_shape.dim_size();
 
           // Infer output shape if 'pads' tensor is available
@@ -6287,7 +6289,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           // a dimension marked -1.
           auto outputShape = ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
           TensorShapeProto::Dimension* negativeOneDim = nullptr;
-          const auto& dataInputTensorType = ctx.getInputType(0)->tensor_type();
+          const auto& dataInputTensorType = ctx.getInputTypeOrFail(0).tensor_type();
           std::vector<bool> unresolvedZeros(targetShapeProto.dim_size(), false);
           int64_t outputProduct = 1;
           bool outputProductValid = true;
@@ -6418,7 +6420,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             return;
           }
 
-          int64_t rank = static_cast<int64_t>(ctx.getInputType(0)->tensor_type().shape().dim_size());
+          int64_t rank = static_cast<int64_t>(ctx.getInputTypeOrFail(0).tensor_type().shape().dim_size());
           int64_t start = getAttribute(ctx, "start", 0);
           if (start < 0)
             start += rank;
@@ -6431,7 +6433,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         })
         .PartialDataPropagationFunction([](DataPropagationContext& ctx) {
           if (hasInputShape(ctx, 0)) {
-            auto& input_shape = ctx.getInputType(0)->tensor_type().shape();
+            auto& input_shape = ctx.getInputTypeOrFail(0).tensor_type().shape();
             int64_t rank = static_cast<int64_t>(input_shape.dim_size());
             int64_t start = getAttribute(ctx, "start", 0);
             if (start < 0)
@@ -6480,7 +6482,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             return;
           }
 
-          int64_t rank = static_cast<int64_t>(ctx.getInputType(0)->tensor_type().shape().dim_size());
+          int64_t rank = static_cast<int64_t>(ctx.getInputTypeOrFail(0).tensor_type().shape().dim_size());
           int64_t start = getAttribute(ctx, "start", 0);
           if (start < 0)
             start += rank;
@@ -6493,7 +6495,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         })
         .PartialDataPropagationFunction([](DataPropagationContext& ctx) {
           if (hasInputShape(ctx, 0)) {
-            auto& input_shape = ctx.getInputType(0)->tensor_type().shape();
+            auto& input_shape = ctx.getInputTypeOrFail(0).tensor_type().shape();
             int64_t rank = static_cast<int64_t>(input_shape.dim_size());
             int64_t start = getAttribute(ctx, "start", 0);
             if (start < 0)
@@ -6542,7 +6544,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             return;
           }
 
-          int64_t rank = static_cast<int64_t>(ctx.getInputType(0)->tensor_type().shape().dim_size());
+          int64_t rank = static_cast<int64_t>(ctx.getInputTypeOrFail(0).tensor_type().shape().dim_size());
           int64_t start = getAttribute(ctx, "start", 0);
           if (start < 0)
             start += rank;
@@ -6555,7 +6557,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         })
         .PartialDataPropagationFunction([](DataPropagationContext& ctx) {
           if (hasInputShape(ctx, 0)) {
-            auto& input_shape = ctx.getInputType(0)->tensor_type().shape();
+            auto& input_shape = ctx.getInputTypeOrFail(0).tensor_type().shape();
             int64_t rank = static_cast<int64_t>(input_shape.dim_size());
             int64_t start = getAttribute(ctx, "start", 0);
             if (start < 0)
@@ -6703,7 +6705,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           propagateElemTypeFromInputToOutput(ctx, 0, 0);
           auto axisAttr = ctx.getAttribute("axis");
           if (hasInputShape(ctx, 0)) {
-            const TensorShapeProto& indices_shape = ctx.getInputType(0)->tensor_type().shape();
+            const TensorShapeProto& indices_shape = ctx.getInputTypeOrFail(0).tensor_type().shape();
             int r = indices_shape.dim_size();
             if (r < 1) {
               fail_shape_inference("Indices tensor must have rank >= 1");
