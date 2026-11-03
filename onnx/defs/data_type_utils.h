@@ -7,6 +7,7 @@
 
 #include <mutex>
 #include <string>
+#include <string_view>
 #include <unordered_map>
 
 #include "onnx/common/common.h"
@@ -50,7 +51,7 @@ class DataTypeUtils final {
   static std::string ToDataTypeString(int32_t tensor_data_type);
 
  private:
-  static void FromString(const std::string& type_str, TypeProto& type_proto);
+  static void FromString(std::string_view type_str, TypeProto& type_proto);
 
   static int32_t FromDataTypeString(const std::string& type_str);
 
