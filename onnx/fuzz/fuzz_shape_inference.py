@@ -114,21 +114,20 @@ def _make_initializer(fdp, name):
     return helper.make_tensor(name, TensorProto.FLOAT, [], [1.0])
 
 
+def _small_ints(fdp):
+    return [fdp.ConsumeIntInRange(-2, 4) for _ in range(fdp.ConsumeIntInRange(0, 3))]
+
+
 def _make_attribute(fdp, name, attr_type):
     t = defs.OpSchema.AttrType
     if attr_type == t.INT:
         value: Any = fdp.ConsumeIntInRange(-2, 4)
     elif attr_type == t.INTS:
-        value = [
-            fdp.ConsumeIntInRange(-2, 4) for _ in range(fdp.ConsumeIntInRange(0, 3))
-        ]
+        value = _small_ints(fdp)
     elif attr_type == t.FLOAT:
         value = float(fdp.ConsumeIntInRange(-2, 4))
     elif attr_type == t.FLOATS:
-        value = [
-            float(fdp.ConsumeIntInRange(-2, 4))
-            for _ in range(fdp.ConsumeIntInRange(0, 3))
-        ]
+        value = [float(v) for v in _small_ints(fdp)]
     elif attr_type == t.STRING:
         value = "a"
     elif attr_type == t.STRINGS:
@@ -142,16 +141,46 @@ def _make_attribute(fdp, name, attr_type):
     return helper.make_attribute(name, value, attr_type=int(attr_type))
 
 
+# Consistent attributes needed to reach the inference code in #8651 rather
+# than stopping at an unrelated attribute error.
+_FIXED_ATTRIBUTES: dict[tuple[str, str], dict[str, Any]] = {
+    ("", "RegexFullMatch"): {"pattern": "a.*"},
+    ("ai.onnx.ml", "DictVectorizer"): {"string_vocabulary": ["a"]},
+    ("ai.onnx.ml", "LabelEncoder"): {"keys_strings": ["a"], "values_int64s": [1]},
+    ("ai.onnx.ml", "TreeEnsemble"): {
+        "nodes_splits": helper.make_tensor("s", TensorProto.FLOAT, [1], [0.5]),
+        "nodes_featureids": [0],
+        "nodes_modes": helper.make_tensor("m", TensorProto.UINT8, [1], [0]),
+        "nodes_truenodeids": [0],
+        "nodes_falsenodeids": [0],
+        "nodes_trueleafs": [1],
+        "nodes_falseleafs": [1],
+        "leaf_targetids": [0],
+        "leaf_weights": helper.make_tensor("w", TensorProto.FLOAT, [1], [1.0]),
+        "tree_roots": [0],
+        "n_targets": 1,
+    },
+}
+
+
+def _fixed_attributes(schema) -> dict[str, Any]:
+    if (schema.name, schema.since_version) == ("LabelEncoder", 1):
+        return {"classes_strings": ["a"]}
+    return _FIXED_ATTRIBUTES.get((schema.domain, schema.name), {})
+
+
 def _schema_attributes(fdp, schema):
     # Supply required attributes so inference is not rejected up front, and
     # sample optional ones to reach attribute-dependent branches.
-    attrs = []
+    attrs = {}
     for name, attr in sorted(schema.attributes.items()):
         if attr.required or fdp.ConsumeBool():
             proto = _make_attribute(fdp, name, attr.type)
             if proto is not None:
-                attrs.append(proto)
-    return attrs
+                attrs[name] = proto
+    for name, value in _fixed_attributes(schema).items():
+        attrs[name] = helper.make_attribute(name, value)
+    return list(attrs.values())
 
 
 def _build_schema_model(fdp):
@@ -162,34 +191,6 @@ def _build_schema_model(fdp):
     )
     inputs = [f"X{i}" for i in range(n_inputs)]
     outputs = [f"Y{i}" for i in range(max(1, schema.min_output))]
-    # Supply attributes needed to reach the inference code in #8651 rather
-    # than stopping at an unrelated missing-attribute error.
-    attrs: dict[str, Any] = {}
-    if schema.domain == "ai.onnx.ml":
-        if schema.name == "DictVectorizer":
-            attrs = {"string_vocabulary": ["a"]}
-        elif schema.name == "LabelEncoder":
-            attrs = (
-                {"classes_strings": ["a"]}
-                if schema.since_version == 1
-                else {"keys_strings": ["a"], "values_int64s": [1]}
-            )
-        elif schema.name == "TreeEnsemble":
-            attrs = {
-                "nodes_splits": helper.make_tensor("s", TensorProto.FLOAT, [1], [0.5]),
-                "nodes_featureids": [0],
-                "nodes_modes": helper.make_tensor("m", TensorProto.UINT8, [1], [0]),
-                "nodes_truenodeids": [0],
-                "nodes_falsenodeids": [0],
-                "nodes_trueleafs": [1],
-                "nodes_falseleafs": [1],
-                "leaf_targetids": [0],
-                "leaf_weights": helper.make_tensor("w", TensorProto.FLOAT, [1], [1.0]),
-                "tree_roots": [0],
-                "n_targets": 1,
-            }
-    elif schema.name == "RegexFullMatch":
-        attrs = {"pattern": "a.*"}
 
     nodes = []
     imports = [helper.make_opsetid(schema.domain, schema.since_version)]
@@ -216,11 +217,8 @@ def _build_schema_model(fdp):
             else:
                 # An empty name marks an omitted optional input.
                 inputs[i] = ""
-    node = helper.make_node(schema.name, inputs, outputs, domain=schema.domain, **attrs)
-    given = {attr.name for attr in node.attribute}
-    node.attribute.extend(
-        attr for attr in _schema_attributes(fdp, schema) if attr.name not in given
-    )
+    node = helper.make_node(schema.name, inputs, outputs, domain=schema.domain)
+    node.attribute.extend(_schema_attributes(fdp, schema))
     nodes.append(node)
     graph = helper.make_graph(
         nodes, "schema_graph", graph_inputs, [], initializer=initializers
