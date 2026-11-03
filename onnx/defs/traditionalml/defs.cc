@@ -28,7 +28,7 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
           if (!hasNInputShapes(ctx, 1)) {
             return;
           }
-          const auto& input_shape = ctx.getInputType(0)->tensor_type().shape();
+          const auto& input_shape = ctx.getInputTypeOrFail(0).tensor_type().shape();
           const auto input_ndim = input_shape.dim_size();
           if (input_ndim == 1) {
             return;
@@ -192,7 +192,7 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
           if (nullptr == ctx.getInputType(0)) {
             return;
           }
-          auto input_elem_type = ctx.getInputType(0)->tensor_type().elem_type();
+          auto input_elem_type = ctx.getInputTypeOrFail(0).tensor_type().elem_type();
           if (TensorProto::STRING == input_elem_type) {
             updateOutputElemType(ctx, 0, TensorProto::INT64);
           } else if (TensorProto::INT64 == input_elem_type) {
@@ -443,7 +443,7 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
           class_count_dim.set_dim_value(class_count);
 
           if (hasNInputShapes(ctx, 1)) {
-            const auto& input_shape = ctx.getInputType(0)->tensor_type().shape();
+            const auto& input_shape = ctx.getInputTypeOrFail(0).tensor_type().shape();
             const auto input_rank = input_shape.dim_size();
             if (input_rank == 1) {
               // if input_rank is 1, batch_size is interpreted to be 1
@@ -536,7 +536,7 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
           if (!hasNInputShapes(ctx, 1)) {
             return;
           }
-          const TensorShapeProto& input_shape = ctx.getInputType(0)->tensor_type().shape();
+          const TensorShapeProto& input_shape = ctx.getInputTypeOrFail(0).tensor_type().shape();
           TensorShapeProto* shape = ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
           for (int i = 0; i < input_shape.dim_size(); i++) {
             *shape->add_dim() = input_shape.dim(i);

@@ -81,10 +81,10 @@ ONNX_OPERATOR_SET_SCHEMA(
             return;
           }
 
-          *(output_tensor_type->mutable_shape()) = ctx.getInputType(0)->tensor_type().shape();
+          *(output_tensor_type->mutable_shape()) = ctx.getInputTypeOrFail(0).tensor_type().shape();
 
           for (size_t i = 1; i < numInputs; ++i) {
-            const auto& input_shape = ctx.getInputType(i)->tensor_type().shape();
+            const auto& input_shape = ctx.getInputTypeOrFail(i).tensor_type().shape();
             UnionShapeInfo(input_shape, *output_tensor_type);
           }
         }));
@@ -279,7 +279,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             new_axis = static_cast<int>(new_axis_attr->i());
           }
 
-          const auto& input_shape = ctx.getInputType(0)->sequence_type().elem_type().tensor_type().shape();
+          const auto& input_shape = ctx.getInputTypeOrFail(0).sequence_type().elem_type().tensor_type().shape();
           auto rank = input_shape.dim_size();
           if (1 != new_axis && 0 != new_axis) {
             fail_shape_inference("new_axis must be either 0 or 1");

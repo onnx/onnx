@@ -124,7 +124,7 @@ The type of the output tensor is integer.)DOC";
         return;
       }
 
-      const auto& input_shape = ctx.getInputType(0)->tensor_type().shape();
+      const auto& input_shape = ctx.getInputTypeOrFail(0).tensor_type().shape();
       auto* output_shape = ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
       int64_t input_ndim = input_shape.dim_size();
       int64_t axis = 0; // default to 0

@@ -192,8 +192,8 @@ ONNX_OPERATOR_SET_SCHEMA(
 
           // Shape inference
           if (hasNInputShapes(ctx, 2)) {
-            const TensorShapeProto& input_shape = ctx.getInputType(0)->tensor_type().shape();
-            const TensorShapeProto& target_shape = ctx.getInputType(1)->tensor_type().shape();
+            const TensorShapeProto& input_shape = ctx.getInputTypeOrFail(0).tensor_type().shape();
+            const TensorShapeProto& target_shape = ctx.getInputTypeOrFail(1).tensor_type().shape();
 
             const int input_rank = static_cast<int>(input_shape.dim_size());
             const int target_rank = static_cast<int>(target_shape.dim_size());
@@ -216,7 +216,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             }
 
             if (ctx.getNumInputs() == 3 && hasInputShape(ctx, 2)) {
-              const TensorShapeProto& weight_shape = ctx.getInputType(2)->tensor_type().shape();
+              const TensorShapeProto& weight_shape = ctx.getInputTypeOrFail(2).tensor_type().shape();
               if (weight_shape.dim_size() != 1) {
                 fail_shape_inference("Weight rank must be 1.");
               }
@@ -256,7 +256,7 @@ ONNX_OPERATOR_SET_SCHEMA(
 
           // Shape inference
           if (hasInputShape(ctx, 0)) {
-            const TensorShapeProto& input_shape = ctx.getInputType(0)->tensor_type().shape();
+            const TensorShapeProto& input_shape = ctx.getInputTypeOrFail(0).tensor_type().shape();
             TensorShapeProto* output_shape = ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
             const int rank = static_cast<int>(input_shape.dim_size());
 
@@ -667,8 +667,8 @@ Performs element-wise binary {name} (with Numpy-style broadcasting support).
       propagateElemTypeFromInputToOutput(ctx, 0, 0);
       if (hasNInputShapes(ctx, 2))
         bidirectionalBroadcastShapeInference(
-            ctx.getInputType(0)->tensor_type().shape(),
-            ctx.getInputType(1)->tensor_type().shape(),
+            ctx.getInputTypeOrFail(0).tensor_type().shape(),
+            ctx.getInputTypeOrFail(1).tensor_type().shape(),
             *ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape());
     });
   };
@@ -718,8 +718,8 @@ Performs element-wise binary {name} (with Numpy-style broadcasting support).
       propagateElemTypeFromInputToOutput(ctx, 0, 0);
       if (hasNInputShapes(ctx, 2))
         bidirectionalBroadcastShapeInference(
-            ctx.getInputType(0)->tensor_type().shape(),
-            ctx.getInputType(1)->tensor_type().shape(),
+            ctx.getInputTypeOrFail(0).tensor_type().shape(),
+            ctx.getInputTypeOrFail(1).tensor_type().shape(),
             *ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape());
     });
   };
@@ -788,7 +788,7 @@ and contains the {name} values of the corresponding input.
       }
 
       // Validate the value of 'axis'
-      const TensorShapeProto& input_shape = ctx.getInputType(0)->tensor_type().shape();
+      const TensorShapeProto& input_shape = ctx.getInputTypeOrFail(0).tensor_type().shape();
       int r = input_shape.dim_size();
       if (r == 0) {
         fail_shape_inference("Input rank must be >= 1 for ", name, ".");
@@ -841,8 +841,8 @@ ONNX_OPERATOR_SET_SCHEMA(
           propagateElemTypeFromInputToOutput(ctx, 0, 0);
           if (hasNInputShapes(ctx, 2))
             bidirectionalBroadcastShapeInference(
-                ctx.getInputType(0)->tensor_type().shape(),
-                ctx.getInputType(1)->tensor_type().shape(),
+                ctx.getInputTypeOrFail(0).tensor_type().shape(),
+                ctx.getInputTypeOrFail(1).tensor_type().shape(),
                 *ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape());
         }));
 
@@ -1039,8 +1039,8 @@ ONNX_OPERATOR_SET_SCHEMA(
           propagateElemTypeFromInputToOutput(ctx, 0, 0);
           if (hasNInputShapes(ctx, 2))
             bidirectionalBroadcastShapeInference(
-                ctx.getInputType(0)->tensor_type().shape(),
-                ctx.getInputType(1)->tensor_type().shape(),
+                ctx.getInputTypeOrFail(0).tensor_type().shape(),
+                ctx.getInputTypeOrFail(1).tensor_type().shape(),
                 *ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape());
         }));
 
@@ -1074,8 +1074,8 @@ ONNX_OPERATOR_SET_SCHEMA(
           propagateElemTypeFromInputToOutput(ctx, 0, 0);
           if (hasNInputShapes(ctx, 2))
             bidirectionalBroadcastShapeInference(
-                ctx.getInputType(0)->tensor_type().shape(),
-                ctx.getInputType(1)->tensor_type().shape(),
+                ctx.getInputTypeOrFail(0).tensor_type().shape(),
+                ctx.getInputTypeOrFail(1).tensor_type().shape(),
                 *ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape());
         }));
 
@@ -1245,8 +1245,8 @@ static void matmulShapeInference_opset_9(ONNX_NAMESPACE::InferenceContext& ctx, 
     return;
   }
 
-  const auto shape0 = ctx.getInputType(input1Idx)->tensor_type().shape();
-  const auto shape1 = ctx.getInputType(input2Idx)->tensor_type().shape();
+  const auto shape0 = ctx.getInputTypeOrFail(input1Idx).tensor_type().shape();
+  const auto shape1 = ctx.getInputTypeOrFail(input2Idx).tensor_type().shape();
 
   if (shape0.dim_size() == 0 || shape1.dim_size() == 0) {
     fail_shape_inference("Input tensors of wrong rank (0).");
@@ -1346,12 +1346,12 @@ ONNX_OPERATOR_SET_SCHEMA(
           // For shape inference, we need both input shape
           const auto shape_initializer = ctx.getInputData(1);
           if (hasNInputShapes(ctx, 2)) {
-            const auto& shape_input_shape = ctx.getInputType(1)->tensor_type().shape();
+            const auto& shape_input_shape = ctx.getInputTypeOrFail(1).tensor_type().shape();
             if (shape_input_shape.dim_size() != 1) {
               fail_shape_inference("'shape' input must be 1D tensor");
             }
 
-            const auto& input_shape = ctx.getInputType(0)->tensor_type().shape();
+            const auto& input_shape = ctx.getInputTypeOrFail(0).tensor_type().shape();
             TensorShapeProto second_shape;
             if (nullptr != shape_initializer) {
               const auto shape_data = ParseData<int64_t>(shape_initializer);
@@ -1688,8 +1688,8 @@ ONNX_OPERATOR_SET_SCHEMA(
 
           // Shape inference
           if (hasNInputShapes(ctx, 2)) {
-            const TensorShapeProto& input_shape = ctx.getInputType(0)->tensor_type().shape();
-            const TensorShapeProto& target_shape = ctx.getInputType(1)->tensor_type().shape();
+            const TensorShapeProto& input_shape = ctx.getInputTypeOrFail(0).tensor_type().shape();
+            const TensorShapeProto& target_shape = ctx.getInputTypeOrFail(1).tensor_type().shape();
 
             const int input_rank = static_cast<int>(input_shape.dim_size());
             const int target_rank = static_cast<int>(target_shape.dim_size());
@@ -1720,7 +1720,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             }
 
             if (ctx.getNumInputs() == 3 && hasInputShape(ctx, 2)) {
-              const TensorShapeProto& weight_shape = ctx.getInputType(2)->tensor_type().shape();
+              const TensorShapeProto& weight_shape = ctx.getInputTypeOrFail(2).tensor_type().shape();
               const auto weight_rank = weight_shape.dim_size();
               if (weight_rank != 1) {
                 fail_shape_inference("Weight rank must be 1. weight_rank=", weight_rank);
@@ -2067,8 +2067,8 @@ ONNX_OPERATOR_SET_SCHEMA(
           propagateElemTypeFromInputToOutput(ctx, 0, 0);
           if (hasNInputShapes(ctx, 2))
             bidirectionalBroadcastShapeInference(
-                ctx.getInputType(0)->tensor_type().shape(),
-                ctx.getInputType(1)->tensor_type().shape(),
+                ctx.getInputTypeOrFail(0).tensor_type().shape(),
+                ctx.getInputTypeOrFail(1).tensor_type().shape(),
                 *ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape());
         }));
 
@@ -2544,7 +2544,8 @@ ONNX_OPERATOR_SET_SCHEMA(
           } else if (
               hasInputShape(ctx, 2) &&
               (!ctx.getAttribute("broadcast") || static_cast<int>(ctx.getAttribute("broadcast")->i()) == 0)) {
-            *ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape() = ctx.getInputType(2)->tensor_type().shape();
+            *ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape() =
+                ctx.getInputTypeOrFail(2).tensor_type().shape();
           }
         }));
 
@@ -2724,8 +2725,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             return;
           }
 
-          const auto shape0 = ctx.getInputType(0)->tensor_type().shape();
-          const auto shape1 = ctx.getInputType(1)->tensor_type().shape();
+          const auto shape0 = ctx.getInputTypeOrFail(0).tensor_type().shape();
+          const auto shape1 = ctx.getInputTypeOrFail(1).tensor_type().shape();
 
           if (shape0.dim_size() == 0 || shape1.dim_size() == 0) {
             fail_shape_inference("Input tensors of wrong rank (0).");
@@ -3389,8 +3390,8 @@ ONNX_OPERATOR_SET_SCHEMA(
           propagateElemTypeFromInputToOutput(ctx, 0, 0);
           if (hasNInputShapes(ctx, 2))
             bidirectionalBroadcastShapeInference(
-                ctx.getInputType(0)->tensor_type().shape(),
-                ctx.getInputType(1)->tensor_type().shape(),
+                ctx.getInputTypeOrFail(0).tensor_type().shape(),
+                ctx.getInputTypeOrFail(1).tensor_type().shape(),
                 *ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape());
         }));
 
