@@ -8720,6 +8720,20 @@ class TestShapeInference(TestShapeInferenceHelper):
                 {"pattern": "a.*"},
                 TensorProto.BOOL,
             ),
+            (
+                "EyeLike",
+                ONNX_DOMAIN,
+                9,
+                {"dtype": TensorProto.INT64},
+                TensorProto.INT64,
+            ),
+            (
+                "EyeLike",
+                ONNX_DOMAIN,
+                22,
+                {"dtype": TensorProto.INT64},
+                TensorProto.INT64,
+            ),
         ],
     )
     def test_input_of_unknown_type(

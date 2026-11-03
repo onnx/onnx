@@ -537,6 +537,10 @@ inline void propagateShape(const TypeProto* from_type, TypeProto* to_type) {
 inline void propagateShapeFromInputToOutput(InferenceContext& ctx, size_t inputIndex, size_t outputIndex) {
   auto* output_type = ctx.getOutputType(outputIndex);
   const auto* input_type = ctx.getInputType(inputIndex);
+  // An input of unknown type has an unknown shape: leave the output shape unset.
+  if (input_type == nullptr) {
+    return;
+  }
 
   propagateShape(input_type, output_type);
 }
