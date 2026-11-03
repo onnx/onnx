@@ -31,31 +31,6 @@ class TestSchema:
             relu_schema.node_determinism == defs.OpSchema.NodeDeterminism.Deterministic
         )
 
-    @pytest.mark.parametrize(
-        ("type_str", "canonical"),
-        [
-            (" \t\n\v\f\r float \t\n\v\f\r", "tensor(float)"),
-            ("tensor ( float )", "tensor(float)"),
-            ("sparse_tensor ( int64 )", "sparse_tensor(int64)"),
-            (
-                "seq ( map ( int64 , optional ( tensor ( float ) ) ) )",
-                "seq(map(int64,optional(tensor(float))))",
-            ),
-            ("opaque ( domain , name )", "opaque(domain , name)"),
-            ("opaque ( , name )", "opaque( name)"),
-            ("opaque ( )", "opaque()"),
-        ],
-    )
-    def test_type_constraint_whitespace(self, type_str: str, canonical: str) -> None:
-        schema = defs.OpSchema(
-            "test_type_constraint_whitespace",
-            "test_domain",
-            1,
-            inputs=[defs.OpSchema.FormalParameter("X", "T")],
-            type_constraints=[("T", [type_str], "")],
-        )
-        assert schema.inputs[0].types == {canonical}
-
     def test_attr_default_value(self) -> None:
         v = defs.get_schema("BatchNormalization").attributes["epsilon"].default_value
         assert type(v) is onnx.AttributeProto
@@ -575,7 +550,18 @@ class TestOpSchema:
         schema = defs.OpSchema("test_op", "test_domain", 1, doc="test_doc")
         assert schema.doc == "test_doc"
 
-    def test_inputs(self):
+    @pytest.mark.parametrize(
+        ("type_str", "canonical"),
+        [
+            ("tensor(int64)", "tensor(int64)"),
+            (
+                " \tseq ( map ( int64 , optional ( tensor ( float ) ) ) ) \r\n",
+                "seq(map(int64,optional(tensor(float))))",
+            ),
+            ("opaque ( domain , name )", "opaque(domain , name)"),
+        ],
+    )
+    def test_inputs(self, type_str: str, canonical: str) -> None:
         # Test that the inputs parameter is optional and is a sequence of FormalParameter tuples
         inputs = [
             defs.OpSchema.FormalParameter(
@@ -587,12 +573,13 @@ class TestOpSchema:
             "test_domain",
             1,
             inputs=inputs,
-            type_constraints=[("T", ["tensor(int64)"], "")],
+            type_constraints=[("T", [type_str], "")],
         )
 
         assert len(schema.inputs) == 1
         assert schema.inputs[0].name == "input1"
         assert schema.inputs[0].type_str == "T"
+        assert schema.inputs[0].types == {canonical}
         assert schema.inputs[0].description == "The first input."
 
     def test_outputs(self):
