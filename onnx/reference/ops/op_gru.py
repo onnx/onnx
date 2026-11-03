@@ -27,11 +27,14 @@ class CommonGRU(OpRun):
         B: np.ndarray,
         W: np.ndarray,
         H_0: np.ndarray,
+        mask: np.ndarray | None = None,
     ) -> tuple[np.ndarray, np.ndarray]:
         """Run a single forward pass of the GRU.
 
         Assumes that the num_directions axis has been squeezed out of the
         inputs. (And returns Y, Yh without it.)
+        ``mask`` (sequence_length, batch_size) marks the steps that are within
+        ``sequence_lens``. The other steps keep the previous state and output zeros.
         """
         h_list = []
 
@@ -44,7 +47,7 @@ class CommonGRU(OpRun):
         gates_b = np.add(np.concatenate((w_bz, w_br)), np.concatenate((r_bz, r_br)))
 
         H_t = H_0
-        for x in X:
+        for t, x in enumerate(X):
             gates = np.dot(x, gates_w) + np.dot(H_t, gates_r) + gates_b
             z, r = np.split(gates, 2, -1)
             z = self.f(z)
@@ -62,10 +65,14 @@ class CommonGRU(OpRun):
             )
             h = h_linear if self.linear_before_reset else h_default
             H = (1 - z) * h + z * H_t
+            if mask is not None:
+                H = np.where(mask[t][:, np.newaxis], H, H_t)
             h_list.append(H)
             H_t = H
 
         Y = np.stack(h_list, axis=0)
+        if mask is not None:
+            Y = np.where(mask[:, :, np.newaxis], Y, 0)
         Y_h = H_t
         return Y, Y_h
 
@@ -77,6 +84,7 @@ class CommonGRU(OpRun):
         W: np.ndarray,
         H_0: np.ndarray,
         num_directions: int,
+        mask: np.ndarray | None = None,
     ) -> tuple[np.ndarray, np.ndarray]:
         if self.direction not in {"forward", "reverse", "bidirectional"}:
             raise RuntimeError(f"Unknown direction {self.direction!r}.")
@@ -87,6 +95,7 @@ class CommonGRU(OpRun):
                 f"but got {num_directions}."
             )
 
+        mask_reversed = None if mask is None else np.flip(mask, axis=0)
         if self.direction == "forward":
             Y, Y_h = self._run_forward(
                 X,
@@ -94,6 +103,7 @@ class CommonGRU(OpRun):
                 B[0],
                 W[0],
                 H_0[0],
+                mask,
             )
             Y = np.expand_dims(Y, 1)
             Y_h = np.expand_dims(Y_h, 0)
@@ -104,6 +114,7 @@ class CommonGRU(OpRun):
                 B[0],
                 W[0],
                 H_0[0],
+                mask_reversed,
             )
             Y = np.flip(Y, axis=0)
             Y = np.expand_dims(Y, 1)
@@ -115,6 +126,7 @@ class CommonGRU(OpRun):
                 B[0],
                 W[0],
                 H_0[0],
+                mask,
             )
             Yb, Yb_h = self._run_forward(
                 np.flip(X, axis=0),
@@ -122,6 +134,7 @@ class CommonGRU(OpRun):
                 B[1],
                 W[1],
                 H_0[1],
+                mask_reversed,
             )
             Yb = np.flip(Yb, axis=0)
             Y = np.stack([Yf, Yb], axis=1)
@@ -139,7 +152,7 @@ class CommonGRU(OpRun):
         W,
         R,
         B=None,
-        sequence_lens=None,  # noqa: ARG002
+        sequence_lens=None,
         initial_h=None,
         activation_alpha=None,  # noqa: ARG002
         activation_beta=None,  # noqa: ARG002
@@ -177,7 +190,11 @@ class CommonGRU(OpRun):
         B = b
         H_0 = h_0
 
-        Y, Y_h = self._step(X, R, B, W, H_0, num_directions=num_directions)
+        mask = None
+        if sequence_lens is not None:
+            mask = np.arange(X.shape[0])[:, np.newaxis] < sequence_lens[np.newaxis, :]
+
+        Y, Y_h = self._step(X, R, B, W, H_0, num_directions=num_directions, mask=mask)
         Y = Y.astype(X.dtype)
         return (Y,) if self.n_outputs == 1 else (Y, Y_h.astype(X.dtype))
 

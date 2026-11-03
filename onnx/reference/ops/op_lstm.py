@@ -32,18 +32,21 @@ class CommonLSTM(OpRun):
         P: np.ndarray,
         H_0: np.ndarray,
         C_0: np.ndarray,
+        mask: np.ndarray | None = None,
     ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
         """Run a forward pass of the LSTM.
 
         Assumes that the num_directions axis has been squeezed out of the
         inputs. (And returns Y, Yh, Yc without it.)
+        ``mask`` (sequence_length, batch_size) marks the steps that are within
+        ``sequence_lens``. The other steps keep the previous state and output zeros.
         """
         h_list = []
 
         [p_i, p_o, p_f] = np.split(P, 3)
         H_t = H_0
         C_t = C_0
-        for x in X:
+        for t, x in enumerate(X):
             gates = (
                 np.dot(x, np.transpose(W))
                 + np.dot(H_t, np.transpose(R))
@@ -56,11 +59,16 @@ class CommonLSTM(OpRun):
             C = f * C_t + i * c
             o = self.f(o + p_o * C)
             H = o * self.h(C)
+            if mask is not None:
+                H = np.where(mask[t][:, np.newaxis], H, H_t)
+                C = np.where(mask[t][:, np.newaxis], C, C_t)
             h_list.append(H)
             H_t = H
             C_t = C
 
         Y = np.stack(h_list, axis=0)
+        if mask is not None:
+            Y = np.where(mask[:, :, np.newaxis], Y, 0)
         Y_h = H_t
         Y_c = C_t
         return Y, Y_h, Y_c
@@ -75,6 +83,7 @@ class CommonLSTM(OpRun):
         C_0: np.ndarray,
         P: np.ndarray,
         num_directions: int,
+        mask: np.ndarray | None = None,
     ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
         if self.direction not in {"forward", "reverse", "bidirectional"}:
             raise RuntimeError(f"Unknown direction {self.direction!r}.")
@@ -85,6 +94,7 @@ class CommonLSTM(OpRun):
                 f"but got {num_directions}."
             )
 
+        mask_reversed = None if mask is None else np.flip(mask, axis=0)
         if self.direction == "forward":
             Y, Y_h, Y_c = self._run_forward(
                 X,
@@ -94,6 +104,7 @@ class CommonLSTM(OpRun):
                 P[0],
                 H_0[0],
                 C_0[0],
+                mask,
             )
             # Add num_directions axis to outputs
             Y = np.expand_dims(Y, 1)
@@ -108,6 +119,7 @@ class CommonLSTM(OpRun):
                 P[0],
                 H_0[0],
                 C_0[0],
+                mask_reversed,
             )
             Y = np.flip(Y, axis=0)
             Y = np.expand_dims(Y, 1)
@@ -122,6 +134,7 @@ class CommonLSTM(OpRun):
                 P[0],
                 H_0[0],
                 C_0[0],
+                mask,
             )
             Yb, Yb_h, Yb_c = self._run_forward(
                 np.flip(X, axis=0),
@@ -131,6 +144,7 @@ class CommonLSTM(OpRun):
                 P[1],
                 H_0[1],
                 C_0[1],
+                mask_reversed,
             )
             Yb = np.flip(Yb, axis=0)
             Y = np.stack([Yf, Yb], axis=1)
@@ -150,7 +164,7 @@ class CommonLSTM(OpRun):
         W,
         R,
         B=None,
-        sequence_lens=None,  # noqa: ARG002
+        sequence_lens=None,
         initial_h=None,
         initial_c=None,
         P=None,
@@ -194,8 +208,20 @@ class CommonLSTM(OpRun):
                 (num_directions, batch_size, hidden_size), dtype=X.dtype
             )
 
+        mask = None
+        if sequence_lens is not None:
+            mask = np.arange(X.shape[0])[:, np.newaxis] < sequence_lens[np.newaxis, :]
+
         Y, Y_h, Y_c = self._step(
-            X, R, B, W, initial_h, initial_c, P, num_directions=num_directions
+            X,
+            R,
+            B,
+            W,
+            initial_h,
+            initial_c,
+            P,
+            num_directions=num_directions,
+            mask=mask,
         )
         Y = Y.astype(X.dtype)
 
