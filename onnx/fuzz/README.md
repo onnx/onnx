@@ -94,17 +94,22 @@ for atheris harnesses. Ruff's `N802` (lowercase function names) is suppressed fo
 
 ### `fuzz_shape_inference.py` toggle byte
 
-The shape inference harness exercises two code paths per iteration, selected by
-the last byte of the input:
+The harness first attempts to load the complete input as a serialized model.
+Valid models always reach shape inference, irrespective of the final byte. If
+loading fails, the final byte determines whether to build a structured model:
 
 | Bit | Meaning |
 |---|---|
 | `0x01` | `strict_mode=True` |
 | `0x02` | `check_type=True` |
-| `0x04` | Use structured model builder (If/Loop/Scan subgraphs) instead of raw bytes |
+| `0x04` | Allow the structured fallback if the serialized model cannot be loaded |
 
-This lets a single harness cover both the protobuf-parser path and the recursive
-subgraph visitor without needing separate fuzzers.
+The raw path consumes the complete input; only the structured fallback removes
+the final control byte. Existing `.onnx` seeds remain complete, unframed models.
+
+The structured builder samples either If/Loop/Scan subgraphs or registered operator
+schema versions with unknown input types. The latter come from untyped graph inputs
+or a custom-domain producer, and include historical and `ai.onnx.ml` schemas.
 
 ### `fuzz_compose.py` toggle byte
 
