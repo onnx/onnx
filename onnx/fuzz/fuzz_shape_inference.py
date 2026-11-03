@@ -20,8 +20,12 @@ Both strict_mode values and both check_type values are sampled.
 from __future__ import annotations
 
 import sys
+from typing import TYPE_CHECKING
 
 import atheris
+
+if TYPE_CHECKING:
+    from typing import Any
 
 with atheris.instrument_imports():
     import onnx
@@ -66,7 +70,7 @@ def _build_unknown_type_model(fdp):
     outputs = [f"Y{i}" for i in range(max(1, schema.min_output))]
     # Supply attributes needed to reach the inference code in #8651 rather
     # than stopping at an unrelated missing-attribute error.
-    attrs = {}
+    attrs: dict[str, Any] = {}
     if schema.domain == "ai.onnx.ml":
         if schema.name == "DictVectorizer":
             attrs = {"string_vocabulary": ["a"]}
