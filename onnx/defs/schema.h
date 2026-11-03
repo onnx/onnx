@@ -926,14 +926,14 @@ class OpSchemaRegistry final : public ISchemaRegistry {
       // Increase the highest version when you make BC-breaking changes to the
       // operator schema on specific domain. Update the lowest version when it's
       // determined to remove too old version history.
-      map_[ONNX_DOMAIN] = std::make_pair(1, 29);
-      map_[AI_ONNX_ML_DOMAIN] = std::make_pair(1, 5);
-      map_[AI_ONNX_TRAINING_DOMAIN] = std::make_pair(1, 1);
-      map_[AI_ONNX_PREVIEW_DOMAIN] = std::make_pair(1, 1);
+      map_[ONNX_DOMAIN] = {1, 29};
+      map_[AI_ONNX_ML_DOMAIN] = {1, 5};
+      map_[AI_ONNX_TRAINING_DOMAIN] = {1, 1};
+      map_[AI_ONNX_PREVIEW_DOMAIN] = {1, 1};
       // ONNX's preview domain contains operators subject to change, so
       // versioning is not meaningful and that domain should have only one
       // version.
-      map_[AI_ONNX_PREVIEW_TRAINING_DOMAIN] = std::make_pair(1, 1);
+      map_[AI_ONNX_PREVIEW_TRAINING_DOMAIN] = {1, 1};
       // Version corresponding last release of ONNX. Update this to match with
       // the max version above in a *release* version of ONNX. But in other
       // versions, the max version may be ahead of the last-release-version.
@@ -974,7 +974,7 @@ class OpSchemaRegistry final : public ISchemaRegistry {
             << last_release_version_map_.at(domain) << ", domain: \"" << domain << "\"" << '\n';
         fail_schema(err.str());
       }
-      map_[domain] = std::make_pair(min_version, max_version);
+      map_[domain] = {min_version, max_version};
       // If a last-release-version is not explicitly specified, use max as
       // last-release-version.
       if (last_release_version == -1) {

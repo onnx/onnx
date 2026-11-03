@@ -33,28 +33,66 @@ static bool IsValidIdentifier(const std::string& name) {
 }
 
 TEST(IR, ValidIdentifierTest) {
-  Graph* g = new Graph(); // NOLINT(cppcoreguidelines-owning-memory)
-  g->setName("test");
-  Value* x = g->addInput();
-  x->setUniqueName("x");
-  x->setElemType(ONNX_NAMESPACE::TensorProto_DataType_FLOAT);
-  x->setSizes({Dimension("M"), Dimension("N")});
-  Node* node1 = g->create(kNeg, 1);
-  node1->addInput(x);
-  g->appendNode(node1);
-  Value* temp1 = node1->outputs()[0];
-  Node* node2 = g->create(kNeg, 1);
-  node2->addInput(temp1);
-  g->appendNode(node2);
-  Value* y = node2->outputs()[0];
-  g->registerOutput(y);
+  const std::string name = "initializer_name_longer_than_small_string_storage";
+  const std::string raw_data(4096, '\x01');
+  for (int64_t ir_version : {3, 8}) {
+    for (bool is_input : {false, true}) {
+      if (ir_version < 4 && !is_input) {
+        continue;
+      }
+      SCOPED_TRACE(::testing::Message() << "ir_version=" << ir_version << ", is_input=" << is_input);
+      auto g = std::make_shared<Graph>();
+      g->setName("test");
+      Tensor initializer;
+      initializer.setName(name);
+      initializer.elem_type() = TensorProto_DataType_FLOAT;
+      initializer.sizes() = {1024};
+      initializer.set_raw_data(raw_data);
+      Value* x = nullptr;
+      if (is_input) {
+        x = g->addInput();
+        x->setUniqueName(name);
+        x->setElemType(TensorProto_DataType_FLOAT);
+        x->setSizes({Dimension(1024)});
+        g->addInitializer(initializer);
+      } else {
+        x = g->addInitializerAndCreateValue(initializer);
+      }
+      Node* node1 = g->create(kNeg, 1);
+      node1->addInput(x);
+      g->appendNode(node1);
+      Node* node2 = g->create(kNeg, 1);
+      node2->addInput(node1->outputs()[0]);
+      g->appendNode(node2);
+      g->registerOutput(node2->outputs()[0]);
 
-  ModelProto model;
-  ExportModelProto(&model, std::shared_ptr<Graph>(g));
+      ModelProto model;
+      model.set_ir_version(ir_version);
+      ExportModelProto(&model, g);
+      for (const auto& node : model.graph().node()) {
+        for (const auto& output_name : node.output()) {
+          EXPECT_TRUE(IsValidIdentifier(output_name));
+        }
+      }
+      EXPECT_TRUE(IsValidIdentifier(model.graph().initializer(0).name()));
 
-  for (const auto& node : model.graph().node()) {
-    for (const auto& name : node.output()) {
-      EXPECT_TRUE(IsValidIdentifier(name));
+      auto imported = ImportModelProto(model);
+      ASSERT_TRUE(imported != nullptr);
+      ASSERT_EQ(imported->initializers().size(), 1u);
+      const auto& tensor = imported->initializers().front();
+      EXPECT_EQ(tensor.name(), name);
+      EXPECT_EQ(tensor.raw(), raw_data);
+      EXPECT_EQ(tensor.sizes(), std::vector<int64_t>({1024}));
+      EXPECT_EQ(tensor.elem_type(), TensorProto_DataType_FLOAT);
+      EXPECT_EQ(imported->initializer_names(), std::vector<std::string>({name}));
+      ASSERT_EQ(imported->outputs().size(), 1u);
+      const auto* last_node = imported->outputs()[0]->node();
+      ASSERT_EQ(last_node->inputs().size(), 1u);
+      const auto* first_node = last_node->inputs()[0]->node();
+      ASSERT_EQ(first_node->inputs().size(), 1u);
+      EXPECT_EQ(first_node->inputs()[0]->uniqueName(), name);
+      EXPECT_EQ(model.graph().initializer(0).raw_data(), raw_data);
+      EXPECT_EQ(model.graph().initializer(0).name(), name);
     }
   }
 }
