@@ -2158,7 +2158,11 @@ class TestShapeInference(TestShapeInferenceHelper):
         )
         self._assert_inferred(
             graph,
-            [make_tensor_value_info("y", TensorProto.FLOAT, (1, None, 1))],
+            [
+                make_tensor_value_info(
+                    "y", TensorProto.FLOAT, (1, "a" if version == 10 else None, 1)
+                )
+            ],
             opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
         )
 
