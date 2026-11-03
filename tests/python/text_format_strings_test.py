@@ -31,6 +31,12 @@ def test_error_context(text: str, context: str) -> None:
     assert f"Error context: {context}\n" in message
 
 
+@pytest.mark.parametrize("text", ['"', '"unterminated', '"tail\\', '"escaped\\"'])
+def test_incomplete_string_literal(text: str) -> None:
+    with pytest.raises(onnx.parser.ParseError, match="Incomplete string literal"):
+        onnx.parser.parse_node(text)
+
+
 @pytest.mark.parametrize("whitespace", [" ", "\t", "\n", "\v", "\f", "\r", "\r\n"])
 def test_whitespace_and_comments(whitespace: str) -> None:
     text = whitespace.join(["Y", "=", "Identity", "(", "X", ")"])

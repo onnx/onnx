@@ -155,13 +155,12 @@ Common::Status ParserBase::Parse(Literal& result) {
   size_t from = pos_;
   if (nextch == '"') {
     ++pos_;
-    while (!AtEnd() && (Cur() != '"')) {
-      if (Cur() == '\\') {
-        ++pos_;
-        if (AtEnd())
-          return ParseError("Incomplete string literal.");
-      }
-      ++pos_;
+    while (!AtEnd()) {
+      pos_ = std::min(input_.find_first_of("\\\"", pos_), input_.size());
+      if (AtEnd() || Cur() == '"')
+        break;
+      // A backslash escapes the following character, including a quote or backslash.
+      pos_ = std::min(pos_ + 2, input_.size());
     }
     if (AtEnd())
       return ParseError("Incomplete string literal.");
