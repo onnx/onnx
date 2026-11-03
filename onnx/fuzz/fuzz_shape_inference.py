@@ -2,19 +2,17 @@
 # SPDX-License-Identifier: Apache-2.0
 """Atheris fuzz harness for onnx.shape_inference.
 
-Two input paths are exercised per iteration, selected by a fuzzer-controlled
-toggle byte read from the *tail* of the input (so the head remains a valid
-candidate for the raw-bytes path):
+Valid serialized models always take the raw path. If parsing fails, a
+fuzzer-controlled toggle byte at the tail can select the structured fallback:
 
 * Raw bytes  -> onnx.load_model_from_string  -> infer_shapes
   Catches protobuf parser bugs and bugs reachable only through crafted
   serialized models the structured builder will not produce.
 
 * Structured -> helper.make_model from FuzzedDataProvider -> infer_shapes
-  Constructs ModelProto objects whose graphs include subgraph-bearing
-  ops (If / Loop / Scan) so the recursive visitor inside shape_inference
-  is reached on most iterations rather than only when the parser happens
-  to accept a random byte string.
+  Samples registered operator schemas with unknown input types, or builds
+  graphs with subgraph-bearing ops (If / Loop / Scan) to reach the recursive
+  visitor without relying on random bytes parsing as a model.
 
 Both strict_mode values and both check_type values are sampled.
 """
@@ -27,7 +25,7 @@ import atheris
 
 with atheris.instrument_imports():
     import onnx
-    from onnx import TensorProto, helper, shape_inference
+    from onnx import TensorProto, defs, helper, shape_inference
 
 # Elementwise unary ops with trivial shape inference rules. Useful as
 # filler nodes so generated graphs have non-trivial bodies that exercise
@@ -50,6 +48,69 @@ _UNARY = (
 # shape-inference visitor to descend, which is the path the known DoS lives
 # on. Loop/Scan exercise different subgraph-context plumbing than If.
 _SUBGRAPH_OPS = ("If", "Loop", "Scan")
+
+# Include historical versions and ML operators, whose inference functions
+# must also tolerate inputs with no known type.
+_SCHEMAS = tuple(
+    schema
+    for schema in defs.get_all_schemas_with_history()
+    if schema.domain in ("", "ai.onnx.ml")
+    and schema.min_input > 0
+    and schema.has_type_and_shape_inference_function
+)
+
+
+def _build_unknown_type_model(fdp):
+    schema = _SCHEMAS[fdp.ConsumeIntInRange(0, len(_SCHEMAS) - 1)]
+    inputs = [f"X{i}" for i in range(schema.min_input)]
+    outputs = [f"Y{i}" for i in range(max(1, schema.min_output))]
+    # Supply attributes needed to reach the inference code in #8651 rather
+    # than stopping at an unrelated missing-attribute error.
+    attrs = {}
+    if schema.domain == "ai.onnx.ml":
+        if schema.name == "DictVectorizer":
+            attrs = {"string_vocabulary": ["a"]}
+        elif schema.name == "LabelEncoder":
+            attrs = (
+                {"classes_strings": ["a"]}
+                if schema.since_version == 1
+                else {"keys_strings": ["a"], "values_int64s": [1]}
+            )
+        elif schema.name == "TreeEnsemble":
+            attrs = {
+                "nodes_splits": helper.make_tensor("s", TensorProto.FLOAT, [1], [0.5]),
+                "nodes_featureids": [0],
+                "nodes_modes": helper.make_tensor("m", TensorProto.UINT8, [1], [0]),
+                "nodes_truenodeids": [0],
+                "nodes_falsenodeids": [0],
+                "nodes_trueleafs": [1],
+                "nodes_falseleafs": [1],
+                "leaf_targetids": [0],
+                "leaf_weights": helper.make_tensor("w", TensorProto.FLOAT, [1], [1.0]),
+                "tree_roots": [0],
+                "n_targets": 1,
+            }
+    elif schema.name == "RegexFullMatch":
+        attrs = {"pattern": "a.*"}
+
+    nodes = []
+    imports = [helper.make_opsetid(schema.domain, schema.since_version)]
+    if fdp.ConsumeBool():
+        # A custom op can produce unknown types even in a checker-valid model.
+        graph_inputs = [
+            helper.make_tensor_value_info("source", TensorProto.FLOAT, [2, 3])
+        ]
+        nodes.append(
+            helper.make_node("Custom", ["source"], inputs, domain="fuzz.custom")
+        )
+        imports.append(helper.make_opsetid("fuzz.custom", 1))
+    else:
+        graph_inputs = [onnx.ValueInfoProto(name=name) for name in inputs]
+    nodes.append(
+        helper.make_node(schema.name, inputs, outputs, domain=schema.domain, **attrs)
+    )
+    graph = helper.make_graph(nodes, "unknown_type", graph_inputs, [])
+    return helper.make_model(graph, opset_imports=imports)
 
 
 def _const_bool(name, value=True):
@@ -133,12 +194,14 @@ def _build_branch(fdp, depth, max_depth):
 
 
 def _build_model(fdp):
+    if fdp.ConsumeBool():
+        return _build_unknown_type_model(fdp)
     # Top-level graph mirrors a branch but lives at depth 0 and chooses its
     # own opset version so different shape-inference codepaths (per-opset
     # schemas) are reached.
     max_depth = fdp.ConsumeIntInRange(0, 80)
     graph = _build_branch(fdp, depth=0, max_depth=max_depth)
-    opset = fdp.ConsumeIntInRange(7, 27)
+    opset = fdp.ConsumeIntInRange(7, defs.onnx_opset_version())
     return helper.make_model(
         graph,
         opset_imports=[helper.make_opsetid("", opset)],
@@ -146,12 +209,8 @@ def _build_model(fdp):
 
 
 def TestOneInput(data):
-    # Toggles live in the trailing byte. On the structured path we slice the
-    # byte off before handing the rest to FuzzedDataProvider. On the raw path
-    # we pass the full `data` to the protobuf parser unchanged: seed models
-    # are complete serialized ModelProtos, so slicing the tail would truncate
-    # every seed. The trailing toggle byte becomes part of the raw input,
-    # which libFuzzer mutates freely anyway.
+    # Preserve complete protobuf seeds, regardless of their final byte.
+    # The structured flag only applies when the raw model cannot be parsed.
     if len(data) < 2:
         return
     toggles = data[-1]
@@ -162,11 +221,13 @@ def TestOneInput(data):
     # them are harmless until claimed.
 
     try:
-        if use_structured:
+        try:
+            model = onnx.load_model_from_string(data)
+        except Exception:
+            if not use_structured:
+                return
             fdp = atheris.FuzzedDataProvider(data[:-1])
             model = _build_model(fdp)
-        else:
-            model = onnx.load_model_from_string(data)
         shape_inference.infer_shapes(
             model,
             check_type=check_type,
