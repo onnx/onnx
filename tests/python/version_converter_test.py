@@ -2574,18 +2574,37 @@ class TestVersionConverter:
             ["keepdims", "axes"] if has_axes else ["keepdims"]
         )
 
-    def test_reduce_rejects_noop_with_empty_axes(self) -> None:
-        # With noop_with_empty_axes=1 and no axes the op is an identity, while
-        # ReduceMean-17 without axes reduces over all dimensions.
-        nodes = [helper.make_node("ReduceMean", ["X"], ["Y"], noop_with_empty_axes=1)]
+    @pytest.mark.parametrize("axes", [None, [], [1]])
+    def test_reduce_with_noop_with_empty_axes(
+        self, axes: list[int] | None
+    ) -> None:
+        nodes = [
+            helper.make_node(
+                "ReduceMean",
+                ["X", "axes"] if axes is not None else ["X"],
+                ["Y"],
+                noop_with_empty_axes=1,
+            )
+        ]
         graph = helper.make_graph(
             nodes,
             "test",
             [helper.make_tensor_value_info("X", TensorProto.FLOAT, (2, 3, 4))],
             [helper.make_tensor_value_info("Y", TensorProto.FLOAT, None)],
+            [helper.make_tensor("axes", TensorProto.INT64, [len(axes)], axes)]
+            if axes is not None
+            else [],
         )
-        with pytest.raises(RuntimeError, match="noop_with_empty_axes"):
-            self._converted(graph, helper.make_operatorsetid("", 18), 17)
+        if not axes:
+            with pytest.raises(RuntimeError, match="noop_with_empty_axes"):
+                self._converted(graph, helper.make_operatorsetid("", 18), 17)
+        else:
+            converted_model = self._converted(
+                graph, helper.make_operatorsetid("", 18), 17
+            )
+            node = converted_model.graph.node[0]
+            assert [a.name for a in node.attribute] == ["axes"]
+            assert list(node.attribute[0].ints) == axes
 
     @pytest.mark.parametrize(
         "op_type, attrs, from_opset, to_opset, output_type, output_shape",
