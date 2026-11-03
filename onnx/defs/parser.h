@@ -180,10 +180,6 @@ class KeyWordMap {
 // Locale-independent ASCII classification, so that the text format does not
 // vary with the process locale. Accepts char or the int returned by
 // ParserBase::NextChar; non-ASCII bytes classify as false either way.
-constexpr bool IsSpace(int c) {
-  return c == ' ' || c == '\t' || c == '\n' || c == '\v' || c == '\f' || c == '\r';
-}
-
 constexpr bool IsAlpha(int c) {
   return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z');
 }
