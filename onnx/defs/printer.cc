@@ -70,16 +70,16 @@ void PrintNumber(std::ostream& os, T value) {
 
 bool IsValidIdentifier(std::string_view str) {
   // Check if str is a valid identifier
-  const char* next_ = str.data();
-  const char* end_ = next_ + str.size();
-  if (next_ == end_)
+  if (str.empty())
     return false; // empty string is not a valid identifier
-  if (!IsAlpha(*next_) && (*next_ != '_'))
+  if (!IsAlpha(str.front()) && str.front() != '_')
     return false; // first character must be a letter or '_'
-  ++next_;
-  while ((next_ < end_) && (IsAlnum(*next_) || (*next_ == '_')))
-    ++next_;
-  return next_ == end_;
+  str.remove_prefix(1);
+  for (char ch : str) {
+    if (!IsAlnum(ch) && ch != '_')
+      return false;
+  }
+  return true;
 }
 
 class ProtoPrinter {
