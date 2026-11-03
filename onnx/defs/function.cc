@@ -11,11 +11,6 @@
 #include "onnx/defs/schema.h"
 #include "onnx/inliner/inliner.h"
 
-static std::string InternalTensorNameGenerator(const std::string& node_name, const std::string& internal_name) {
-  std::string new_name = "Func_" + node_name + internal_name;
-  return new_name;
-}
-
 namespace ONNX_NAMESPACE {
 void FunctionExpandHelper(
     const NodeProto& node,
@@ -95,14 +90,14 @@ void FunctionExpandHelper(
       if (io_names_map.count(input)) {
         new_node->add_input(io_names_map[input]);
       } else {
-        new_node->add_input(InternalTensorNameGenerator(node_name, input));
+        new_node->add_input("Func_" + node_name + input);
       }
     }
     for (const auto& output : function_node.output()) {
       if (io_names_map.count(output)) {
         new_node->add_output(io_names_map[output]);
       } else {
-        new_node->add_output(InternalTensorNameGenerator(node_name, output));
+        new_node->add_output("Func_" + node_name + output);
       }
     }
     for (const auto& attr : function_node.attribute()) {

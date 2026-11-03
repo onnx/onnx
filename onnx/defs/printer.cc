@@ -13,6 +13,7 @@
 #include <locale>
 #include <sstream>
 #include <string>
+#include <string_view>
 #include <type_traits>
 #include <vector>
 
@@ -67,9 +68,9 @@ void PrintNumber(std::ostream& os, T value) {
   }
 }
 
-bool IsValidIdentifier(const std::string& str) {
+bool IsValidIdentifier(std::string_view str) {
   // Check if str is a valid identifier
-  const char* next_ = str.c_str();
+  const char* next_ = str.data();
   const char* end_ = next_ + str.size();
   if (next_ == end_)
     return false; // empty string is not a valid identifier
@@ -138,7 +139,7 @@ class ProtoPrinter {
   }
 
  private:
-  void printId(const std::string& str) {
+  void printId(std::string_view str) {
     if (IsValidIdentifier(str))
       output_ << str;
     else
@@ -154,7 +155,7 @@ class ProtoPrinter {
     }
   }
 
-  void printQuoted(const std::string& str) {
+  void printQuoted(std::string_view str) {
     output_ << "\"";
     for (char ch : str) {
       if ((ch == '\\') || (ch == '"'))

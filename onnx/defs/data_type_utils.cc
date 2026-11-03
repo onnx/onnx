@@ -51,7 +51,7 @@ class StringRange final {
  public:
   StringRange(const char* data, size_t size);
   // NOLINTNEXTLINE(*constructor)
-  StringRange(const std::string& str);
+  StringRange(std::string_view str);
   // NOLINTNEXTLINE(*constructor)
   StringRange(const char* data);
   const char* Data() const;
@@ -163,16 +163,16 @@ std::string DataTypeUtils::ToDataTypeString(int32_t tensor_data_type) {
   return iter->second;
 }
 
-void DataTypeUtils::FromString(const std::string& type_str, TypeProto& type_proto) {
+void DataTypeUtils::FromString(std::string_view type_str, TypeProto& type_proto) {
   StringRange s(type_str);
   type_proto.Clear();
   if (s.LStrip("seq")) {
     s.ParensWhitespaceStrip();
-    FromString(std::string(s.Data(), s.Size()), *type_proto.mutable_sequence_type()->mutable_elem_type());
+    FromString(std::string_view(s.Data(), s.Size()), *type_proto.mutable_sequence_type()->mutable_elem_type());
     return;
   } else if (s.LStrip("optional")) {
     s.ParensWhitespaceStrip();
-    FromString(std::string(s.Data(), s.Size()), *type_proto.mutable_optional_type()->mutable_elem_type());
+    FromString(std::string_view(s.Data(), s.Size()), *type_proto.mutable_optional_type()->mutable_elem_type());
     return;
   } else if (s.LStrip("map")) {
     s.ParensWhitespaceStrip();
@@ -184,7 +184,7 @@ void DataTypeUtils::FromString(const std::string& type_str, TypeProto& type_prot
     StringRange v(s.Data(), s.Size());
     auto key_type = FromDataTypeString(key);
     type_proto.mutable_map_type()->set_key_type(key_type);
-    FromString(std::string(v.Data(), v.Size()), *type_proto.mutable_map_type()->mutable_value_type());
+    FromString(std::string_view(v.Data(), v.Size()), *type_proto.mutable_map_type()->mutable_value_type());
     return;
   }
   if (s.LStrip("opaque")) {
@@ -247,7 +247,7 @@ StringRange::StringRange(const char* p_data, size_t p_size)
   LAndRStrip();
 }
 
-StringRange::StringRange(const std::string& p_str) : view_(p_str) {
+StringRange::StringRange(std::string_view p_str) : view_(p_str) {
   LAndRStrip();
 }
 

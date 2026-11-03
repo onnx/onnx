@@ -153,7 +153,7 @@ UnaryFloatMathOpGenerator(const char* doc, const char* output_description, std::
   };
 }
 
-int64_t MathOpTwoIntegers(const std::string& op_type, int64_t a, int64_t b) {
+int64_t MathOpTwoIntegers(std::string_view op_type, int64_t a, int64_t b) {
   bool (*checked_op)(int64_t, int64_t, int64_t*) = nullptr;
   if (op_type == "Add") {
     checked_op = checked_add_overflow;

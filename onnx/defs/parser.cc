@@ -695,7 +695,7 @@ bool OnnxParser::NextIsIdentifier() {
 
 bool OnnxParser::NextIsType() {
   auto id = PeekIdentifier();
-  if (PrimitiveTypeNameMap::IsTypeName(id))
+  if (PrimitiveTypeNameMap::Lookup(id) != 0)
     return true;
   switch (KeyWordMap::Lookup(id)) {
     case KeyWordMap::KeyWord::SEQ_TYPE:
