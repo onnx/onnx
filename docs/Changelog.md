@@ -34519,35 +34519,32 @@ This version of the operator has been available since version 29 of the default 
 ### <a name="LogCumSumExp-29"></a>**LogCumSumExp-29**</a>
 
   Computes the inclusive, forward cumulative log-sum-exp of `X` along `axis`.
-  The output has the same shape and element type as `X`. The input must have
-  rank at least one; empty dimensions are supported and produce an empty output.
-  For each fixed set of indices outside `axis`, the output at position `j` is
-  `Y[j] = log(sum(exp(X[k]), k = 0, ..., j))`.
+  Let `r = rank(X)`, where `r >= 1`. The attribute `axis` defaults to 0 and must
+  be in `[-r, r-1]`. The normalized axis is `a = axis` if `axis >= 0`, and
+  `a = axis + r` otherwise.
 
-  The computation must be numerically stable: neither directly exponentiating
-  the input nor subtracting a single maximum over the entire axis is sufficient.
-  For example, `X = [-200, -100, 100]` with `axis = 0` produces approximately
-  `[-200, -100, 100]`, not `[-inf, -inf, 100]`.
+  For each fixed choice of indices in the dimensions other than `a`, let
+  `x[0], ..., x[n-1]` be the input slice along `a`, where `n = X.shape[a]`.
+  The corresponding output slice is defined by
+  `y[j] = log(sum(exp(x[k]), k = 0, ..., j))` for `0 <= j < n`.
+  Thus, each prefix includes the current element and all preceding elements,
+  and excludes subsequent elements. The output `Y` has the same shape and
+  element type as `X`. If any dimension of `X` is zero, `Y` is empty.
 
-  A prefix containing only negative infinities produces negative infinity.
-  A prefix containing positive infinity produces positive infinity unless it
-  also contains NaN. Any NaN in a prefix produces NaN for that and all subsequent
-  positions in that slice. Infinities alone must not introduce NaN.
+  The following rules apply independently to each prefix, in order:
 
-  Intermediate accumulation uses at least float32 precision for float16,
-  bfloat16 and float32 inputs, and at least float64 precision for float64 inputs.
-  The accumulator is not rounded to the output type between prefixes; each
-  output is converted to the input type. Different stable scan associations
-  may produce different floating-point rounding; bitwise equality is not required.
+  * If the prefix contains NaN, its output is NaN.
+  * Otherwise, if the prefix contains positive infinity, its output is positive infinity.
+  * Otherwise, if every element in the prefix is negative infinity, its output is negative infinity.
 
-  For finite values, a stable pairwise combination is
-  `max(a, b) + log1p(exp(min(a, b) - max(a, b)))`, with the infinity and NaN
-  rules above applied separately. The function body provides a sequential Scan
-  fallback, not a requirement for native implementations to use sequential Scan.
+  Negative infinity contributes zero to the sum of exponentials.
 
-  This corresponds to the inclusive forward operation in
-  [torch.logcumsumexp](https://docs.pytorch.org/docs/stable/generated/torch.logcumsumexp.html)
-  and [tf.math.cumulative_logsumexp](https://www.tensorflow.org/api_docs/python/tf/math/cumulative_logsumexp).
+  Accumulation must be numerically stable and use at least float32 precision
+  for float16, bfloat16 and float32 inputs, and at least float64 precision for
+  float64 inputs. Each prefix result is converted to the element type of `X`
+  to form `Y`; this conversion must not reduce the precision of the intermediate
+  accumulation for subsequent prefixes. The floating-point accumulation order
+  is unspecified, and different orders may produce different rounding.
 
 #### Version
 
@@ -34557,28 +34554,28 @@ This version of the operator has been available since version 29 of the default 
 
 <dl>
 <dt><tt>axis</tt> : int (default is 0)</dt>
-<dd>Axis along which to accumulate. Must be in [-rank(X), rank(X)-1]. Negative axes count from the back.</dd>
+<dd>Axis along which to compute inclusive prefixes, defaulting to 0. Must be in [-rank(X), rank(X)-1]. A negative value is normalized by adding rank(X).</dd>
 </dl>
 
 #### Inputs
 
 <dl>
 <dt><tt>X</tt> (differentiable) : T</dt>
-<dd>Input tensor of rank at least one.</dd>
+<dd>Floating-point input tensor of rank at least one. Dimensions may be zero.</dd>
 </dl>
 
 #### Outputs
 
 <dl>
 <dt><tt>Y</tt> : T</dt>
-<dd>Inclusive cumulative log-sum-exp, with the same shape and type as X.</dd>
+<dd>Tensor with the same shape and element type as X, containing inclusive cumulative log-sum-exp values.</dd>
 </dl>
 
 #### Type Constraints
 
 <dl>
 <dt><tt>T</tt> : tensor(float16), tensor(bfloat16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output to floating-point tensors.</dd>
+<dd>Input and output have the same floating-point element type.</dd>
 </dl>
 
 # ai.onnx.preview
