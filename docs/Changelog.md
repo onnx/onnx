@@ -23574,6 +23574,10 @@ This version of the operator has been available since version 19 of the default 
   ```
   if input \"sizes\" is not specified.
 
+  When the input and output type is an integer type, each output value is the weighted average computed in floating point,
+  rounded to the nearest integer with ties rounded to the nearest even integer, and then saturated to the range of the output type.
+  In nearest mode every output value is a copy of one input value, so no rounding or saturation takes place.
+
 #### Version
 
 This version of the operator has been available since version 19 of the default ONNX operator set.

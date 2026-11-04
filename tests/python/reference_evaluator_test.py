@@ -7484,6 +7484,98 @@ class TestReferenceEvaluator:
         )
         assert output.shape == (2, 0, 4)
 
+    @staticmethod
+    def _integer_resize_ramp(dtype) -> np.ndarray:
+        """A 4x4 ramp spanning the whole range of an integer type."""
+        info = np.iinfo(dtype)
+        return (
+            np.linspace(info.min, info.max, 16)
+            .round()
+            .astype(dtype)
+            .reshape(1, 1, 4, 4)
+        )
+
+    @pytest.mark.parametrize(
+        ("mode", "attributes"),
+        [
+            ("linear", {}),
+            ("linear", {"antialias": 1}),
+            ("cubic", {}),
+            ("cubic", {"cubic_coeff_a": -0.5, "exclude_outside": 1}),
+        ],
+    )
+    @pytest.mark.parametrize("dtype", [np.uint8, np.int8, np.uint16, np.int16])
+    def test_resize_integer_output_rounds_to_nearest_even(
+        self, mode, attributes, dtype
+    ):
+        info = np.iinfo(dtype)
+        data = self._integer_resize_ramp(dtype)
+        scales = np.array([1.0, 1.0, 2.0, 2.0], dtype=np.float32)
+
+        actual = self._run_resize(data, scales=scales, mode=mode, **attributes)
+        weighted = self._run_resize(
+            data.astype(np.float64), scales=scales, mode=mode, **attributes
+        )
+        expected = np.clip(np.rint(weighted), info.min, info.max).astype(dtype)
+        truncated = np.clip(weighted, info.min, info.max).astype(dtype)
+
+        assert actual.dtype == dtype
+        assert_array_equal(actual, expected)
+        # The weighted averages have fractional parts above one half, so
+        # truncating them would give a different, biased result.
+        assert not np.array_equal(actual, truncated)
+
+    def test_resize_integer_output_rounds_ties_to_even(self):
+        data = np.array([[[[0, 10], [20, 30]]]], dtype=np.uint8)
+        scales = np.array([1.0, 1.0, 2.0, 2.0], dtype=np.float32)
+
+        actual = self._run_resize(data, scales=scales, mode="linear")
+
+        # Weighted averages 2.5, 7.5, 12.5, 17.5, 22.5 and 27.5 round to the
+        # nearest even integer; the others are exact.
+        expected = np.array(
+            [[[[0, 2, 8, 10], [5, 8, 12, 15], [15, 18, 22, 25], [20, 22, 28, 30]]]],
+            dtype=np.uint8,
+        )
+        assert actual.dtype == np.uint8
+        assert_array_equal(actual, expected)
+
+    @pytest.mark.parametrize("dtype", [np.uint8, np.int8])
+    def test_resize_integer_output_saturates(self, dtype):
+        info = np.iinfo(dtype)
+        data = self._integer_resize_ramp(dtype)
+        scales = np.array([1.0, 1.0, 2.0, 2.0], dtype=np.float32)
+
+        weighted = self._run_resize(
+            data.astype(np.float64), scales=scales, mode="cubic"
+        )
+        # Cubic interpolation with the default cubic_coeff_a overshoots the
+        # input range at the corners.
+        assert weighted.min() < info.min
+        assert weighted.max() > info.max
+
+        actual = self._run_resize(data, scales=scales, mode="cubic")
+        assert actual.dtype == dtype
+        assert actual.min() == info.min
+        assert actual.max() == info.max
+        assert_array_equal(
+            actual, np.clip(np.rint(weighted), info.min, info.max).astype(dtype)
+        )
+
+    @pytest.mark.parametrize("dtype", [np.uint8, np.int8])
+    def test_resize_integer_output_nearest_copies_input_values(self, dtype):
+        data = self._integer_resize_ramp(dtype)
+        scales = np.array([1.0, 1.0, 2.0, 2.0], dtype=np.float32)
+
+        actual = self._run_resize(data, scales=scales, mode="nearest")
+        weighted = self._run_resize(
+            data.astype(np.float64), scales=scales, mode="nearest"
+        )
+
+        assert actual.dtype == dtype
+        assert_array_equal(actual, weighted.astype(dtype))
+        assert set(actual.ravel().tolist()) <= set(data.ravel().tolist())
+
     @pytest.mark.parametrize("mode", ["linear", "cubic"])
     def test_resize_align_corners_uses_integer_output_size(self, mode):
         # W: floor(4 * 0.6) == 2, H: floor(2 * 0.6) == 1. align_corners must map
