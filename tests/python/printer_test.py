@@ -41,17 +41,30 @@ class TestBasicFunctions:
         assert text1 == text2
         self.check_graph(graph2)
 
-    def test_quoted_string_symbolic_dim_roundtrip(self) -> None:
+    @pytest.mark.parametrize(
+        ("quoted", "dimension"),
+        [
+            ('"M + N"', "M + N"),
+            (r'"M\"\\N\\"', 'M"\\N\\'),
+            ('"a\x00b"', "a\x00b"),
+        ],
+    )
+    def test_quoted_string_symbolic_dim_roundtrip(
+        self, quoted: str, dimension: str
+    ) -> None:
         # Test that non-identifier dim_params are printed as quoted strings and
         # can be parsed back (round-trip).
-        text0 = 'agraph (float["M + N"] x) => (float["M + N"] y) { y = Identity(x) }'
+        text0 = (
+            f"agraph (float[{quoted}] x) => (float[{quoted}] y) {{ y = Identity(x) }}"
+        )
         graph1 = parser.parse_graph(text0)
         text1 = printer.to_text(graph1)
         graph2 = parser.parse_graph(text1)
         text2 = printer.to_text(graph2)
         assert text1 == text2
-        # Verify that "M + N" is preserved as a quoted string in the printed output
-        assert '"M + N"' in text1
+        assert graph2.input[0].type.tensor_type.shape.dim[0].dim_param == dimension
+        assert graph2.output[0].type.tensor_type.shape.dim[0].dim_param == dimension
+        assert quoted in text1
 
     @pytest.mark.parametrize(
         "type_text",
