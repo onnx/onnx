@@ -115,6 +115,7 @@ pillow = ">=12.2.0"
 protobuf = "==6.31.1"
 python = "3.11.*"
 numpy = "==1.26.4"
+ml_dtypes = "<0.6.0"  # ml_dtypes' pyproject.toml requests numpy>2 making `pip check` fail
 
 [feature.lint.dependencies]
 clang-format = ">=22.1.1"

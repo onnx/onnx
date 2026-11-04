@@ -1,12 +1,25 @@
 # ONNX with Python
 
 ```{tip}
-Check out the [ir-py project](https://github.com/onnx/ir-py) for an alternative set of Python APIs for creating and manipulating ONNX models. The ir-py project provides a more modern and ergonomic interface compared to the ONNX Protobuf APIs described here.
+Check out {ref}`l-high-level-python-apis` (such as [ir-py](https://github.com/onnx/ir-py), [spox](https://github.com/Quantco/spox), and [ndonnx](https://github.com/Quantco/ndonnx)) for alternative Python APIs that provide more ergonomic interfaces for constructing and manipulating ONNX models compared to the low-level Protobuf APIs described here.
 ```
 
 Next sections highlight the main functions used to build
 an ONNX graph with the {ref}`Python API <l-python-onnx-api>`
 *onnx* offers.
+
+(l-high-level-python-apis)=
+
+## High-Level APIs and Model Authoring Libraries
+
+While the core `onnx` Python package provides low-level APIs to construct Protobuf structures directly (`make_node`, `make_graph`, `make_model`), creating complex models by hand using raw Protobuf messages can be verbose and error-prone. Several official and ecosystem tools offer higher-level, Pythonic interfaces for constructing and manipulating ONNX graphs:
+
+- **[onnx/ir-py](https://github.com/onnx/ir-py)**: An ergonomic in-memory intermediate representation (IR) for ONNX in Python, providing a modern interface for inspecting and modifying models without direct interaction with Protobuf objects.
+- **[spox](https://github.com/Quantco/spox)**: A pythonic and functional API for building and composing ONNX models with immediate type and shape validation.
+- **[ndonnx](https://github.com/Quantco/ndonnx)**: A NumPy-compatible array interface (c.f. [array-api](https://data-apis.org/array-api/latest/)) that traces standard array operations, allowing you to write regular NumPy code and export it as an ONNX model.
+ndonnx seamlessly interoperates with `spox`, which provides full access to all ONNX operators, data, and container types.
+
+The following sections introduce the standard, lower-level ONNX Python API provided directly by the `onnx` package.
 
 (l-onnx-linear-regression-onnx-api)=
 

@@ -129,8 +129,9 @@ def _parse_format(name: object) -> tuple[int | None, int, int, str | None]:
         )
         if match is not None:
             digits, scale = match.groups()
-            if len(digits) <= 19 and (
-                len(digits) < 19 or digits <= "9223372036854775807"
+            max_block_size = str(np.iinfo(np.int64).max)
+            if len(digits) <= len(max_block_size) and (
+                len(digits) < len(max_block_size) or digits <= max_block_size
             ):
                 block_size = int(digits)
                 scale_bytes = 4 if scale == "float32" else 2
