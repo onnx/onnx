@@ -148,6 +148,14 @@ def test_grouped_bits_equivalence(bits: int) -> None:
         np.testing.assert_array_equal(actual, expected)
 
 
+@pytest.mark.parametrize("attrs", [{"bits": 8}, {"radix": 256, "group_size": 1}])
+def test_pack_full_uint8_range_strided(attrs: dict[str, int]) -> None:
+    # NumPy 2.0 cannot safely compare a strided UINT8 array against 256.
+    x = np.arange(256, dtype=np.uint8)[::-2]
+    packed = grouped_evaluator("Pack", attrs, x.shape).run(None, {"X": x})[0]
+    np.testing.assert_array_equal(packed, x)
+
+
 @pytest.mark.parametrize(
     "attrs",
     [

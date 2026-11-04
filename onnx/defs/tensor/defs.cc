@@ -20,12 +20,16 @@
 
 namespace ONNX_NAMESPACE {
 
+namespace {
+
 struct PackingParameters {
   int64_t radix;
   int64_t group_size;
   int64_t width;
   std::vector<int64_t> powers;
 };
+
+} // namespace
 
 template <typename Context>
 static PackingParameters GetPackingParameters(const Context& ctx) {
@@ -39,7 +43,7 @@ static PackingParameters GetPackingParameters(const Context& ctx) {
     if (bits->i() < 1 || bits->i() > 8) {
       fail_shape_inference("bits must be between 1 and 8.");
     }
-    return {int64_t{1} << bits->i(), 1, bits->i(), {1}};
+    return {static_cast<int64_t>(uint64_t{1} << static_cast<uint64_t>(bits->i())), 1, bits->i(), {1}};
   }
   if (radix == nullptr || group_size == nullptr) {
     fail_shape_inference("Specify either bits or both radix and group_size.");
@@ -56,19 +60,19 @@ static PackingParameters GetPackingParameters(const Context& ctx) {
     result.powers.push_back(limit);
     limit *= result.radix;
   }
-  for (auto maximum = limit - 1; maximum != 0; maximum >>= 1) {
+  for (auto maximum = limit - 1; maximum != 0; maximum /= 2) {
     ++result.width;
   }
   return result;
 }
 
 static int64_t PackedGroupByteCount(int64_t count, const PackingParameters& p) {
-  const auto groups = count / p.group_size + (count % p.group_size != 0);
+  const auto groups = (count / p.group_size) + (count % p.group_size != 0);
   if (groups / 8 > std::numeric_limits<int64_t>::max() / p.width) {
     fail_shape_inference("Packed dimension exceeds INT64.");
   }
   const auto whole = (groups / 8) * p.width;
-  const auto tail = ((groups % 8) * p.width + 7) / 8;
+  const auto tail = (((groups % 8) * p.width) + 7) / 8;
   if (whole > std::numeric_limits<int64_t>::max() - tail) {
     fail_shape_inference("Packed dimension exceeds INT64.");
   }
@@ -140,8 +144,9 @@ BuildGroupedPacking(const FunctionBodyBuildContext& ctx, const OpSchema& schema,
   builder.Const("width", p.width);
   builder.Const("powers", p.powers);
   std::vector<int64_t> bit_powers;
+  bit_powers.reserve(static_cast<size_t>(p.width));
   for (int64_t i = 0; i < p.width; ++i) {
-    bit_powers.push_back(int64_t{1} << i);
+    bit_powers.push_back(static_cast<int64_t>(uint64_t{1} << static_cast<uint64_t>(i)));
   }
   builder.Const("bit_powers", bit_powers);
   builder.Const("ConstantTwo", int64_t{2});
@@ -301,6 +306,15 @@ is least significant. Each group index occupies W = ceil(log2(R^G)) bits.
 Pack these indices contiguously, least-significant bit first, with no
 byte alignment between groups. The output last dimension is
 ceil(ceil(N/G) * W / 8). Unused final byte bits are zero.
+R^G determines the precision of the integer arithmetic needed to form and
+decode group indices: indices range from 0 to R^G - 1 and require W value
+bits. Implementations must also accommodate intermediate values, including
+R^G if computed explicitly. Prefer (R, G) pairs that can be implemented
+using standard 32-bit or 64-bit integer arithmetic rather than requiring
+arbitrary-precision arithmetic. This specification's R^G bound permits
+exact signed 64-bit arithmetic for the base-radix group calculations.
+One commonly used choice is (R, G) = (3, 5), packing five ternary codes
+into one byte because 3^5 = 243.
 The original bits spelling is exactly (R, G) = (2^bits, 1).
 For R=3, G=5, [0, 1, 2, 0, 1] becomes [102], and [2, 2, 2, 2, 2]
 becomes [242]. Partial group [1, 2] becomes [7].
@@ -369,6 +383,12 @@ is unpacked into `[7, 7]`.
 Grouped unpacking uses radix R in [2, 256] and positive group size G, with
 R^G <= 2^63 - 1. Read consecutive W = ceil(log2(R^G)) bit group indices,
 least-significant bit first, without byte alignment between groups.
+R^G determines the precision of the integer arithmetic required for both
+packing and unpacking: valid group indices require W value bits, and any
+explicitly computed R^G or other intermediate must also fit. Prefer
+(R, G) pairs supported by standard 32-bit or 64-bit integer arithmetic.
+The R^G bound above permits exact signed 64-bit base-radix calculations.
+A commonly used choice is (R, G) = (3, 5): five ternary codes per byte.
 Every group index must be less than R^G; encodings outside this range
 are invalid. Expand each index into G base-R digits, least significant
 digit first, then trim to count values per row. The input last dimension

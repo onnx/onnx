@@ -16,7 +16,7 @@ class Pack(OpRun):
             raise ValueError(
                 f"X must be a UINT8 tensor of rank at least 1; got dtype={x.dtype}, shape={x.shape}."
             )
-        if np.any(x >= radix):
+        if np.any(x > radix - 1):
             raise ValueError(
                 f"Input codes must be representable in radix {radix}; "
                 f"expected values in [0, {radix - 1}], got maximum {x.max()}."

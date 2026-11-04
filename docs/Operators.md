@@ -27764,6 +27764,15 @@ expect(node, inputs=[x, slope], outputs=[y], name="test_prelu_broadcast")
   Pack these indices contiguously, least-significant bit first, with no
   byte alignment between groups. The output last dimension is
   ceil(ceil(N/G) * W / 8). Unused final byte bits are zero.
+  R^G determines the precision of the integer arithmetic needed to form and
+  decode group indices: indices range from 0 to R^G - 1 and require W value
+  bits. Implementations must also accommodate intermediate values, including
+  R^G if computed explicitly. Prefer (R, G) pairs that can be implemented
+  using standard 32-bit or 64-bit integer arithmetic rather than requiring
+  arbitrary-precision arithmetic. This specification's R^G bound permits
+  exact signed 64-bit arithmetic for the base-radix group calculations.
+  One commonly used choice is (R, G) = (3, 5), packing five ternary codes
+  into one byte because 3^5 = 243.
   The original bits spelling is exactly (R, G) = (2^bits, 1).
   For R=3, G=5, [0, 1, 2, 0, 1] becomes [102], and [2, 2, 2, 2, 2]
   becomes [242]. Partial group [1, 2] becomes [7].
@@ -45348,6 +45357,12 @@ expect(
   Grouped unpacking uses radix R in [2, 256] and positive group size G, with
   R^G <= 2^63 - 1. Read consecutive W = ceil(log2(R^G)) bit group indices,
   least-significant bit first, without byte alignment between groups.
+  R^G determines the precision of the integer arithmetic required for both
+  packing and unpacking: valid group indices require W value bits, and any
+  explicitly computed R^G or other intermediate must also fit. Prefer
+  (R, G) pairs supported by standard 32-bit or 64-bit integer arithmetic.
+  The R^G bound above permits exact signed 64-bit base-radix calculations.
+  A commonly used choice is (R, G) = (3, 5): five ternary codes per byte.
   Every group index must be less than R^G; encodings outside this range
   are invalid. Expand each index into G base-R digits, least significant
   digit first, then trim to count values per row. The input last dimension
