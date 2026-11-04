@@ -83,6 +83,8 @@ inline constexpr const char* UInt4 = "tensor(uint4)";
 inline constexpr const char* Int4 = "tensor(int4)";
 inline constexpr const char* UInt2 = "tensor(uint2)";
 inline constexpr const char* Int2 = "tensor(int2)";
+inline constexpr const char* Float6E2M3 = "tensor(float6e2m3)";
+inline constexpr const char* Float6E3M2 = "tensor(float6e3m2)";
 
 // Vector helpers: build type-string lists from element types, or wrap each
 // entry of an existing list with seq(...) / optional(...).

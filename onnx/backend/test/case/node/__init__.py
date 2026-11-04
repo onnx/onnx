@@ -263,8 +263,16 @@ def expect(
     inputs: Sequence[np.ndarray | TensorProto],
     outputs: Sequence[np.ndarray | TensorProto],
     name: str,
+    *,
+    rtol: float = 1e-3,
+    atol: float = 1e-7,
     **kwargs: Any,
 ) -> None:
+    """Register a node case and its function expansions with output tolerances.
+
+    Tolerances apply to all numeric outputs; backend test_kwargs can override them.
+    Other keyword arguments are forwarded to model construction.
+    """
     # skip if the node_op's op_type is not same as the given one
     if _TargetOpType and node_op.op_type != _TargetOpType:
         return
@@ -324,8 +332,8 @@ def expect(
             model=model,
             data_sets=[(inputs, outputs)],
             kind="node",
-            rtol=1e-3,
-            atol=1e-7,
+            rtol=rtol,
+            atol=atol,
         )
     )
 
@@ -396,8 +404,8 @@ def expect(
                 model=model,
                 data_sets=[(inputs, outputs)],
                 kind="node",
-                rtol=1e-3,
-                atol=1e-7,
+                rtol=rtol,
+                atol=atol,
             )
         )
 

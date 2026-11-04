@@ -77,8 +77,11 @@ def _make_model_unchecked(
 
 
 # Text-format seeds for fuzz_parser, extracted from tests/python/parser_test.py.
-# Each string is a valid input to onnx.parser.parse_model().
+# Includes malformed numeric literals, which must produce parser.ParseError.
 _PARSER_SEEDS: dict[str, str] = {
+    "string_escapes.txt": 'quote: " backslash: \\ newline: \n',
+    "string_nul.txt": "before\0after",
+    "string_unicode.txt": "\u00e9\u4e2d\U0001f642",
     # Minimal 3-op linear model; exercises basic node and graph parsing.
     "basic_matmul_softmax.txt": """\
 < ir_version: 7,
@@ -181,6 +184,45 @@ agraph (float[1] X) => (float[1] Y)
 }
 """,
 }
+
+
+# Keep the surrounding syntax valid so mutations reach numeric conversion.
+for _name, _literal in {
+    "int64_min": "-9223372036854775808",
+    "int64_max": "9223372036854775807",
+    "int64_overflow": "9223372036854775808",
+    "int64_underflow": "-9223372036854775809",
+    "uint64_max": "18446744073709551615",
+    "uint64_overflow": "18446744073709551616",
+    "negative": "-1",
+    "negative_zero": "-0",
+    "long_integer": "9" * 128,
+    "float_overflow": "1e1000",
+    "negative_float_overflow": "-1e1000",
+    "float_subnormal": "1.401298464324817e-45",
+    "double_subnormal": "4.9406564584124654e-324",
+    "double_rounding": "1.0000000596046447753906250000000001",
+    "long_exponent": "1e99999999999999999",
+    "float_underflow": "-1e-1000",
+    "incomplete_exponent": "1e+",
+    "infinity": "inf",
+    "nan": "nan",
+}.items():
+    _PARSER_SEEDS[f"literal_{_name}.txt"] = _literal
+    for _context, _body in {
+        "attribute": f"Y = Constant<value_int={_literal}>()",
+        "float_attribute": f"Y = Constant<value_float: float={_literal}>()",
+        "dimension": f"Y = Constant<value = int64[{_literal}] {{0}}>()",
+        "int64_tensor": f"Y = Constant<value = int64[1] {{{_literal}}}>()",
+        "uint64_tensor": f"Y = Constant<value = uint64[1] {{{_literal}}}>()",
+        "double_tensor": f"Y = Constant<value = double[1] {{{_literal}}}>()",
+    }.items():
+        _graph = f"numeric () => () {{ {_body} }}\n"
+        _PARSER_SEEDS[f"model_{_context}_{_name}.txt"] = (
+            '<ir_version: 8, opset_import: ["": 18]>\n' + _graph
+        )
+        _PARSER_SEEDS[f"graph_{_context}_{_name}.txt"] = _graph
+        _PARSER_SEEDS[f"node_{_context}_{_name}.txt"] = _body
 
 
 # Seed models for fuzz_shape_inference. Each seed is a complete serialized
@@ -465,18 +507,57 @@ def _write_zip(path: str, entries: Mapping[str, bytes | str]) -> None:
             zf.writestr(name, entry.encode() if isinstance(entry, str) else entry)
 
 
-_USAGE = "Usage: {prog} <version_converter_out.zip> <parser_out.zip> <checker_out.zip> <shape_inference_out.zip> [compose_out.zip]\n"
+def _external_data_seed(
+    operation: int,
+    location: int,
+    *,
+    flags: int = 0,
+    offset: int = 0,
+    length: int = 0,
+    alternate_delta: int = 0,
+    payload: bytes = b"seed payload",
+) -> bytes:
+    """Pack the stable six-byte header consumed by fuzz_external_data.py."""
+    return (
+        bytes((operation, location, flags, offset, length, alternate_delta)) + payload
+    )
+
+
+_EXTERNAL_DATA_SEEDS = {
+    "metadata_duplicates_unknown.bin": _external_data_seed(
+        0, 0, flags=0x0F, offset=3, length=10
+    ),
+    "load_regular.bin": _external_data_seed(1, 0),
+    "load_traversal.bin": _external_data_seed(1, 3),
+    "load_absolute.bin": _external_data_seed(1, 5),
+    "load_symlink.bin": _external_data_seed(1, 6),
+    "load_hardlink.bin": _external_data_seed(1, 7),
+    "load_windows_unc.bin": _external_data_seed(1, 9),
+    "load_windows_drive.bin": _external_data_seed(1, 11),
+    "save_regular.bin": _external_data_seed(2, 2),
+    "save_hardlink.bin": _external_data_seed(2, 7),
+    "model_out_of_bounds.bin": _external_data_seed(3, 0, offset=8, length=10),
+    "write_overlapping_offsets.bin": _external_data_seed(4, 2, offset=1, length=1),
+    "container_load_regular.bin": _external_data_seed(5, 0),
+    "container_load_hardlink.bin": _external_data_seed(5, 7, payload=b"1234567"),
+    "save_model_traversal.bin": _external_data_seed(6, 3),
+    "container_roundtrip.bin": _external_data_seed(7, 0),
+}
+
+
+_USAGE = "Usage: {prog} <version_converter_out.zip> <parser_out.zip> <checker_out.zip> <shape_inference_out.zip> [compose_out.zip [external_data_out.zip]]\n"
 
 
 def main() -> int:
-    if len(sys.argv) not in (5, 6):
+    if len(sys.argv) not in (5, 6, 7):
         sys.stderr.write(_USAGE.format(prog=sys.argv[0]))
         return 2
     version_converter_out = sys.argv[1]
     parser_out = sys.argv[2]
     checker_out = sys.argv[3]
     shape_inference_out = sys.argv[4]
-    compose_out = sys.argv[5] if len(sys.argv) == 6 else None
+    compose_out = sys.argv[5] if len(sys.argv) >= 6 else None
+    external_data_out = sys.argv[6] if len(sys.argv) == 7 else None
 
     version_converter_seeds = {
         "cast_9_missing_input.onnx": _make_model(
@@ -542,6 +623,9 @@ def main() -> int:
             "compose_prefix.bin": _compose_prefix(),
         }
         _write_zip(compose_out, compose_seeds)
+
+    if external_data_out is not None:
+        _write_zip(external_data_out, _EXTERNAL_DATA_SEEDS)
 
     return 0
 

@@ -12,10 +12,10 @@ from typing import TYPE_CHECKING, Any, TypeVar
 
 import google.protobuf.message
 import numpy as np
-import typing_extensions
 
 import onnx
 from onnx import _mapping, defs
+from onnx._deprecated import deprecated
 from onnx.onnx_data_pb import MapProto, OptionalProto, SequenceProto
 from onnx.onnx_pb import (
     AttributeProto,
@@ -397,15 +397,19 @@ def make_tensor(
     np_dtype = tensor_dtype_to_np_dtype(data_type)
 
     if raw:
-        # NumPy doesn't have INT2/INT4/FP4. It is packed in couples to UINT8 buffers.
-        if data_type in {TensorProto.UINT4, TensorProto.INT4, TensorProto.FLOAT4E2M1}:
-            expected_size_bytes = 0.5
+        # NumPy doesn't have INT2/INT4/FP4/FP6. It is packed in couples to UINT8 buffers.
+        if data_type in {TensorProto.FLOAT6E2M3, TensorProto.FLOAT6E3M2}:
+            bits_per_element = 6
+        elif data_type in {TensorProto.UINT4, TensorProto.INT4, TensorProto.FLOAT4E2M1}:
+            bits_per_element = 4
         elif data_type in {TensorProto.UINT2, TensorProto.INT2}:
-            expected_size_bytes = 0.25
+            bits_per_element = 2
         else:
-            expected_size_bytes = np_dtype.itemsize
-        expected_size_bytes *= math.prod(dims)
-        expected_size_bytes = math.ceil(expected_size_bytes)
+            bits_per_element = np_dtype.itemsize * 8
+        # Integer ceil(n * bits_per_element / 8): avoids the float-multiplication
+        # precision loss for large n that a `math.ceil(fraction * n)` formula
+        # would be susceptible to.
+        expected_size_bytes = -(-math.prod(dims) * bits_per_element // 8)
         if isinstance(vals, np.ndarray):
             if data_type in {
                 TensorProto.INT4,
@@ -415,6 +419,8 @@ def make_tensor(
                 vals = onnx.numpy_helper._pack_4bitx2(vals)
             elif data_type in {TensorProto.UINT2, TensorProto.INT2}:
                 vals = onnx.numpy_helper._pack_2bitx4(vals)
+            elif data_type in {TensorProto.FLOAT6E2M3, TensorProto.FLOAT6E3M2}:
+                vals = onnx.numpy_helper._pack_6bit(vals.view(np.uint8))
 
             raw_data = onnx.numpy_helper.tobytes_little_endian(vals)
         elif isinstance(vals, bytes):
@@ -448,6 +454,9 @@ def make_tensor(
         vals = onnx.numpy_helper.to_float8e8m0(
             np.asarray(vals), saturate=True, round_mode="up"
         ).flatten()
+    elif data_type in {TensorProto.FLOAT6E2M3, TensorProto.FLOAT6E3M2}:
+        # For FP6 in non-raw mode, store per-element bytes in int32_data (like float8)
+        vals = np.asarray(vals, dtype=np_dtype).flatten().view(np.uint8)
     else:
         vals = np.asarray(vals, dtype=np_dtype).flatten()
 
@@ -667,7 +676,8 @@ def make_attribute(
                 )
 
         if attr_type == AttributeProto.INTS:
-            attr.ints.extend(value)
+            # bool is a numbers.Integral, but protobuf>=7 rejects bools in int fields
+            attr.ints.extend(int(v) if isinstance(v, bool) else v for v in value)
             attr.type = AttributeProto.INTS
         elif attr_type == AttributeProto.FLOATS:
             attr.floats.extend(value)
@@ -1023,7 +1033,6 @@ def printable_attribute(
     elif attr.HasField("i"):
         content.append(str_int(attr.i))
     elif attr.HasField("s"):
-        # TODO: Bit nervous about Python 2 / Python 3 determinism implications
         content.append(repr(_sanitize_str(attr.s)))
     elif attr.HasField("t"):
         if len(attr.t.dims) > 0:
@@ -1044,7 +1053,6 @@ def printable_attribute(
     elif attr.ints:
         content.append(str_list(str_int, attr.ints))
     elif attr.strings:
-        # TODO: Bit nervous about Python 2 / Python 3 determinism implications
         content.append(str(list(map(_sanitize_str, attr.strings))))
     elif attr.tensors:
         content.append("[<Tensor>, ...]")
@@ -1145,9 +1153,7 @@ def printable_node(
     return prefix + " ".join(content)
 
 
-@typing_extensions.deprecated(
-    "Deprecated since 1.19. Consider using onnx.printer.to_text() instead."
-)
+@deprecated("Deprecated since 1.19. Consider using onnx.printer.to_text() instead.")
 def printable_graph(graph: GraphProto, prefix: str = "") -> str:
     """Display a GraphProto as a string.
 
@@ -1238,7 +1244,7 @@ def strip_doc_string(proto: google.protobuf.message.Message) -> None:
         if descriptor.name == "doc_string":
             proto.ClearField(descriptor.name)
         elif descriptor.type == descriptor.TYPE_MESSAGE:
-            if descriptor.label == descriptor.LABEL_REPEATED:
+            if descriptor.is_repeated:
                 for x in getattr(proto, descriptor.name):
                     strip_doc_string(x)
             elif proto.HasField(descriptor.name):
@@ -1306,7 +1312,7 @@ def tensor_dtype_to_string(tensor_dtype: int) -> str:
     return _mapping.TENSOR_TYPE_MAP[tensor_dtype].name
 
 
-@functools.lru_cache(None)
+@functools.cache
 def tensor_dtype_to_field(tensor_dtype: int) -> str:
     """Convert a TensorProto's data_type to corresponding field name for storage. It can be used while making tensors.
 
@@ -1330,7 +1336,7 @@ def tensor_dtype_to_field(tensor_dtype: int) -> str:
     ]
 
 
-@functools.lru_cache(None)
+@functools.cache
 def np_dtype_to_tensor_dtype(np_dtype: np.dtype) -> TensorProto.DataType:
     """Convert a numpy's dtype to corresponding tensor type. It can be used while converting numpy arrays to tensors.
 

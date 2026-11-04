@@ -7,6 +7,7 @@
 #include <nanobind/stl/function.h>
 #include <nanobind/stl/pair.h>
 #include <nanobind/stl/string.h>
+#include <nanobind/stl/string_view.h>
 #include <nanobind/stl/tuple.h>
 #include <nanobind/stl/unordered_map.h>
 #include <nanobind/stl/unordered_set.h>
@@ -15,6 +16,7 @@
 #include <algorithm>
 #include <limits>
 #include <string>
+#include <string_view>
 #include <tuple>
 #include <unordered_map>
 #include <utility>
@@ -111,9 +113,9 @@ static nb::object CastOrNone(const T* ptr) {
 }
 
 template <typename ProtoType>
-static std::tuple<bool, nb::bytes, nb::bytes> Parse(const char* cstr) {
+static std::tuple<bool, nb::bytes, nb::bytes> Parse(std::string_view text) {
   ProtoType proto{};
-  OnnxParser parser(cstr);
+  OnnxParser parser(text);
   auto status = parser.Parse(proto);
   const std::string& error_msg = status.ErrorMessage();
   return std::make_tuple(status.IsOK(), nb::bytes(error_msg.c_str(), error_msg.size()), ProtoToBytes(proto));
@@ -217,7 +219,9 @@ static auto MakeChecker(void (*check_fn)(const ProtoType&, const Ctx&...)) {
   };
 }
 
-NB_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) { // NOLINT(cppcoreguidelines-pro-type-cstyle-cast)
+// NOLINTBEGIN(cppcoreguidelines-pro-type-cstyle-cast, bugprone-signed-bitwise)
+NB_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
+  // NOLINTEND(cppcoreguidelines-pro-type-cstyle-cast, bugprone-signed-bitwise)
   // Disabling nanobind leak warnings
   // TODO(#7283): Avoid leaks if possible
   nb::set_leak_warnings(false);
@@ -501,8 +505,10 @@ NB_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) { // NOLINT(cppcoreguidelines-
           })
       .def(
           "set_type_and_shape_inference_function",
-          [](OpSchema& op, const std::function<void(InferenceContext*)>& func) -> OpSchema& {
-            auto wrapper = [=](InferenceContext& ctx) { func(&ctx); };
+          [](OpSchema& op, std::function<void(InferenceContext*)> func) -> OpSchema& {
+            // Move nanobind's guarded Python-callable wrapper into the registered
+            // inference function so it remains valid after this binding returns.
+            auto wrapper = [func = std::move(func)](InferenceContext& ctx) { func(&ctx); };
             return op.TypeAndShapeInferenceFunction(wrapper);
           },
           nb::rv_policy::reference_internal)
@@ -651,7 +657,6 @@ NB_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) { // NOLINT(cppcoreguidelines-
   version_converter.def("convert_version", [](const nb::bytes& bytes, int target) {
     ModelProto proto{};
     ParseProtoFromPyBytesOrThrow(&proto, bytes);
-    shape_inference::InferShapes(proto);
     return ProtoToBytes(version_conversion::ConvertVersion(proto, target));
   });
 

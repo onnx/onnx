@@ -466,18 +466,18 @@ struct DataPropagationContextImpl : public DataPropagationContext {
       // for future use
       auto [it, inserted] = generatedShapeData_.insert({input_name, std::move(tsp)});
       if (inserted) {
-        return &(it->second);
+        return &it->second;
       }
     }
 
     // If X has a known rank N, then X's value can be represented as an array
     // of N unknown values (represented as a TensorShapeProto).
     const TypeProto* type = getInputType(index);
-    if ((type != nullptr) && (type->has_tensor_type())) {
+    if (type != nullptr && type->has_tensor_type()) {
       const auto& tensor_type = type->tensor_type();
       if (tensor_type.has_shape()) {
         const TensorShapeProto& shape = tensor_type.shape();
-        if ((shape.dim_size() == 1) && (shape.dim(0).has_dim_value())) {
+        if (shape.dim_size() == 1 && shape.dim(0).has_dim_value()) {
           TensorShapeProto tsp;
           int64_t dim_value = shape.dim(0).dim_value();
           for (int64_t i = 0; i < dim_value; ++i) {
@@ -485,7 +485,7 @@ struct DataPropagationContextImpl : public DataPropagationContext {
           }
           auto [it, inserted] = generatedShapeData_.insert({input_name, std::move(tsp)});
           if (inserted) {
-            return &(it->second);
+            return &it->second;
           }
         }
       }

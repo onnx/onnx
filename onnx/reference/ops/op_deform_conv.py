@@ -121,7 +121,7 @@ def _deform_conv_implementation(
                             kernel = np.flip(
                                 kernel, 3
                             )  # spatial GridSample expects (x, y) input
-                            grid_sample_output = op_grid_sample.GridSample.eval(
+                            grid_sample_output = op_grid_sample.GridSample_20.eval(
                                 X[batch_idx : batch_idx + 1, ic_idx : ic_idx + 1],
                                 kernel,
                                 align_corners=1,
