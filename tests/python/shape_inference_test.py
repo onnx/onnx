@@ -5229,6 +5229,157 @@ class TestShapeInference(TestShapeInferenceHelper):
         with pytest.raises(onnx.shape_inference.InferenceError):
             self._inferred(graph)
 
+    @pytest.mark.parametrize(
+        ("a_shape", "b_shape", "c_shape", "transA", "transB", "expected"),
+        [
+            ((5,), (7, 5), (7,), 0, 1, (7,)),
+            ((5,), (5, 7), (), 1, 0, (7,)),
+            ((2, 3, 5), (7, 5), (7,), 0, 1, (2, 3, 7)),
+            ((2, 5, 3), (7, 5), (2, 1, 7), 1, 1, (2, 3, 7)),
+            ((2, 3, 4, 5), (5, 7), (1, 7), 0, 0, (2, 3, 4, 7)),
+            (("batch", None, 5), (5, "out"), (), 0, 0, ("batch", None, "out")),
+            ((0, 3, 5), (5, 7), (7,), 0, 0, (0, 3, 7)),
+            ((2, 3, 0), (0, 7), (7,), 0, 0, (2, 3, 7)),
+            ((2, 3, 5), None, (), 0, 0, (2, 3, None)),
+            ((2, 3, 5), (5, None), (), 0, 0, (2, 3, None)),
+            (("batch", 5, "rows"), (7, 5), (7,), 1, 1, ("batch", "rows", 7)),
+            ((2, None, None), None, (), 0, 0, (2, None, None)),
+            ((2, 3, 5), (5, 0), (1,), 0, 0, (2, 3, 0)),
+        ],
+    )
+    def test_gemm_29(self, a_shape, b_shape, c_shape, transA, transB, expected) -> None:
+        graph = self._make_graph(
+            [
+                ("a", TensorProto.FLOAT, a_shape),
+                ("b", TensorProto.FLOAT, b_shape),
+                ("c", TensorProto.FLOAT, c_shape),
+            ],
+            [make_node("Gemm", ["a", "b", "c"], ["y"], transA=transA, transB=transB)],
+            [],
+        )
+        self._assert_inferred(
+            graph,
+            [make_tensor_value_info("y", TensorProto.FLOAT, expected)],
+            opset_imports=[helper.make_opsetid("", 29)],
+        )
+
+    @pytest.mark.parametrize(
+        ("a_shape", "b_shape", "c_shape", "transA", "transB", "error_context"),
+        [
+            (
+                (),
+                (5, 7),
+                (7,),
+                0,
+                0,
+                ("A must have rank at least 1", "rank 0 and shape []"),
+            ),
+            (
+                (2, 3, 5),
+                (1, 5, 7),
+                (7,),
+                0,
+                0,
+                ("B must have rank 2", "rank 3 and shape [1,5,7]"),
+            ),
+            (
+                (2, 3, 5),
+                (5,),
+                (7,),
+                0,
+                0,
+                ("B must have rank 2", "rank 1 and shape [5]"),
+            ),
+            ((2, 3, 5), (), (7,), 0, 0, ("B must have rank 2", "rank 0 and shape []")),
+            (
+                (2, 3, 5),
+                (4, 7),
+                (7,),
+                0,
+                0,
+                (
+                    "A has shape [2,3,5] with transA=0",
+                    "B has shape [4,7] with transB=0",
+                    "A's last dimension is 5 but B's first dimension is 4",
+                ),
+            ),
+            (
+                (2, 5, 3),
+                (7, 4),
+                (7,),
+                1,
+                1,
+                (
+                    "A has shape [2,5,3] with transA=1",
+                    "B has shape [7,4] with transB=1",
+                    "A's last dimension is 5 but B's first dimension is 4",
+                ),
+            ),
+            (
+                (2, 3, 5),
+                (5, 7),
+                (2, 4, 7),
+                0,
+                0,
+                (
+                    "C with shape [2,4,7]",
+                    "output shape [2,3,7]",
+                    "C dimension 1 has size 4 instead of 1 or 3 (output dimension 1)",
+                ),
+            ),
+            (
+                (5,),
+                (5, 7),
+                (1, 7),
+                0,
+                0,
+                (
+                    "C with shape [1,7]",
+                    "output shape [7]",
+                    "C has rank 2 greater than output rank 1",
+                ),
+            ),
+            (
+                ("batch", None, 5),
+                (5, 7),
+                (4,),
+                0,
+                0,
+                (
+                    "C with shape [4]",
+                    "output shape [batch,?,7]",
+                    "C dimension 0 has size 4 instead of 1 or 7 (output dimension 2)",
+                ),
+            ),
+        ],
+    )
+    def test_gemm_29_invalid_shapes(
+        self, a_shape, b_shape, c_shape, transA, transB, error_context
+    ) -> None:
+        graph = self._make_graph(
+            [
+                ("a", TensorProto.FLOAT, a_shape),
+                ("b", TensorProto.FLOAT, b_shape),
+                ("c", TensorProto.FLOAT, c_shape),
+            ],
+            [make_node("Gemm", ["a", "b", "c"], ["y"], transA=transA, transB=transB)],
+            [],
+        )
+        with pytest.raises(onnx.shape_inference.InferenceError) as exc:
+            self._inferred(graph, opset_imports=[helper.make_opsetid("", 29)])
+        for context in error_context:
+            assert context in str(exc.value)
+
+    @pytest.mark.parametrize("a_shape", [(5,), (2, 3, 5)])
+    def test_gemm_13_still_requires_matrices(self, a_shape) -> None:
+        graph = self._make_graph(
+            [("a", TensorProto.FLOAT, a_shape), ("b", TensorProto.FLOAT, (5, 7))],
+            [make_node("Gemm", ["a", "b"], ["y"])],
+            [],
+        )
+        with pytest.raises(onnx.shape_inference.InferenceError):
+            self._inferred(graph, opset_imports=[helper.make_opsetid("", 13)])
+
     @pytest.mark.parametrize("version", all_versions_for("Gemm"))
     def test_gemm(self, version: int) -> None:
         graph = self._make_graph(

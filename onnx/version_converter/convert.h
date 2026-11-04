@@ -33,6 +33,7 @@
 #include "onnx/version_converter/adapters/compatible.h"
 #include "onnx/version_converter/adapters/dropout_11_12.h"
 #include "onnx/version_converter/adapters/extend_supported_types.h"
+#include "onnx/version_converter/adapters/gemm_29_28.h"
 #include "onnx/version_converter/adapters/gemm_6_7.h"
 #include "onnx/version_converter/adapters/gemm_7_6.h"
 #include "onnx/version_converter/adapters/gridsample_19_20.h"
@@ -1120,10 +1121,12 @@ class DefaultVersionConverter : public BaseVersionConverter {
     registerAdapter(std::make_unique<CompatibleAdapter>("ReduceLogSumExp", OpSetID(28), OpSetID(27)));
 
     /******** 28 -> 29 ********/
+    registerAdapter(std::make_unique<CompatibleAdapter>("Gemm", OpSetID(28), OpSetID(29)));
     registerAdapter(std::make_unique<CompatibleAdapter>("ScatterElements", OpSetID(28), OpSetID(29)));
     registerAdapter(std::make_unique<CompatibleAdapter>("ScatterND", OpSetID(28), OpSetID(29)));
 
     /******** 29 -> 28 ********/
+    registerAdapter(std::make_unique<Gemm_29_28>());
     for (const auto* op : {"ScatterElements", "ScatterND"}) {
       registerAdapter(op, 29, 28, [](const std::shared_ptr<Graph>& /*unused*/, Node* node) {
         const Symbol reduction{"reduction"};
