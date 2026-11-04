@@ -34457,16 +34457,16 @@ This version of the operator has been available since version 28 of the default 
 ## Version 29 of the default ONNX operator set
 ### <a name="Expm1-29"></a>**Expm1-29**</a>
 
-  Computes the exponential of each input element minus one, independently.
+  Computes `exp(x) - 1` element-wise, where `exp` is the exponential to base `e`.
   The input may have any shape, including a scalar or an empty tensor. The output
-  has the same shape and element type as the input. Supported element types are
-  FLOAT16, BFLOAT16, FLOAT, and DOUBLE.
+  has the same shape and element type as the input.
 
-  For a finite nonzero input element `x`, the mathematical result is
-  `y = exp(x) - 1`, where `exp` is the exponential to base `e`. Here `x` denotes
-  the exact real value represented by the input element, and the exponential and
-  subtraction denote exact real operations in the mathematical definition, not
-  an intermediate floating-point exponential that must be materialized.
+  For finite nonzero `x`, the output is a floating-point approximation of the
+  real-valued function `exp(x) - 1` at the exact value represented by `x`.
+  The computation must preserve nonzero results representable in the output type
+  when an intermediate floating-point `exp(x)` would round to `1`. For example,
+  a FLOAT input `1e-8` produces a result approximately equal to `1e-8`, rather
+  than zero.
 
   Special values are defined element-wise as follows:
 
@@ -34481,17 +34481,6 @@ This version of the operator has been available since version 28 of the default 
   The sign and payload of an output NaN are unspecified. Finite positive inputs
   whose results overflow the output type produce positive infinity.
 
-  The computation must preserve small nonzero results that would be lost by
-  rounding `exp(x)` to `1` before subtracting `1`. In particular, an output must
-  not become zero solely because such an intermediate exponential rounds to `1`
-  when the mathematical result is representable as a nonzero value in the output
-  type. Near zero, `(exp(x) - 1) / x` tends to `1`. For example, a FLOAT input
-  `1e-8` produces a result approximately equal to `1e-8`, rather than zero.
-
-  Implementations may choose their numerical algorithm; the operation is not
-  specified as a composition of `Exp` and `Sub`. Non-special results are subject
-  to floating-point approximation, without a requirement for bitwise agreement
-  between implementations or correctly rounded transcendental results.
 
 #### Version
 
