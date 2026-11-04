@@ -589,16 +589,15 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
 static constexpr const char* kDoc_Log1p_ver29 = R"DOC(
-Computes the natural logarithm of one plus each input element, independently.
-The input may have any shape, including a scalar or an empty tensor. The output
-has the same shape and element type as the input. Supported element types are
-FLOAT16, BFLOAT16, FLOAT, and DOUBLE.
+Computes `y = ln(1 + x)` element-wise, where `ln` is the natural logarithm.
+The output has the same shape and element type as the input, including for
+scalar and empty inputs.
 
-For a finite input element `x > -1` with `x != 0`, the mathematical result is
-`y = ln(1 + x)`, where `ln` is the logarithm to base `e`. Here `x` denotes the
-exact real value represented by the input element, and `1 + x` denotes an exact
-real sum in the mathematical definition, not an intermediate floating-point
-addition that must be materialized.
+For finite `x > -1`, the result is a floating-point approximation of `ln(1 + x)`,
+with `1 + x` evaluated as an exact real sum. Small nonzero results representable
+in the output type must be preserved even when floating-point addition would
+round `1 + x` to `1`. For example, a FLOAT input of `1e-8` produces approximately
+`1e-8`.
 
 Special values are defined element-wise as follows:
 
@@ -613,18 +612,6 @@ Special values are defined element-wise as follows:
 | NaN | NaN |
 
 The sign and payload of an output NaN are unspecified.
-
-The computation must preserve small nonzero results that would be lost by
-rounding `1 + x` to `1` before applying the logarithm. In particular, an output
-must not become zero solely because such an intermediate sum rounds to `1`
-when the mathematical result is representable as a nonzero value in the output
-type. Near zero, `ln(1 + x) / x` tends to `1`. For example, a FLOAT input `1e-8`
-produces a result approximately equal to `1e-8`, rather than zero.
-
-Implementations may choose their numerical algorithm; the operation is not
-specified as a composition of `Add` and `Log`. Non-special results are subject
-to floating-point approximation, without a requirement for bitwise agreement
-between implementations or correctly rounded transcendental results.
 )DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
@@ -1070,42 +1057,28 @@ static bool BuildContextDependentFunctionBodyLogSoftmax29(
   const int64_t axis = ctx.getAttribute("axis") != nullptr ? ctx.getAttribute("axis")->i() : -1;
   FunctionBuilder builder(functionProto);
   builder.Const1D("axes", axis)
-      .Add("MaxIndex = ArgMax <keepdims = 1> (input)", "axis", axis)
-      .Add("MaxLogit = GatherElements (input, MaxIndex)", "axis", axis)
+      .Const("OneInt", static_cast<int64_t>(1))
+      .Const("ZeroFloat", 0.0f)
       .Add(R"(
+        Zero = CastLike (ZeroFloat, input)
+        MaxLogit = ReduceMax <keepdims = 1> (input, axes)
         Shifted = Sub (input, MaxLogit)
         Exponentials = Exp (Shifted)
+        IsMax = Equal (Shifted, Zero)
+        Others = Where (IsMax, Zero, Exponentials)
+        IsMaxInt = Cast <to = 7> (IsMax)
+        MaxCount = ReduceSum <keepdims = 1> (IsMaxInt, axes)
+        RemainingMaxCount = Sub (MaxCount, OneInt)
+        TiedMaxima = CastLike (RemainingMaxCount, input)
       )")
-      .Add("One = GatherElements (Exponentials, MaxIndex)", "axis", axis)
-      .Add("Zero = Sub (One, One)")
-      // Exclude exactly one maximum: masking all tied maxima would be incorrect.
-      .Add("Others = ScatterElements (Exponentials, MaxIndex, Zero)", "axis", axis)
+      // Remove all maxima before summation, then restore all but one. Subtracting
+      // one from the full exponential sum would lose the small normalization term.
       .Add(R"(
         OtherSum = ReduceSum <keepdims = 1> (Others, axes)
-        Normalizer = Log1p (OtherSum)
-        NonEmptyOutput = Sub (Shifted, Normalizer)
+        NormalizerInput = Add (OtherSum, TiedMaxima)
+        Normalizer = Log1p (NormalizerInput)
+        output = Sub (Shifted, Normalizer)
       )");
-  // ArgMax is undefined along a zero-length axis. Keep the entire computation
-  // in the nonempty branch so no reduction is executed for any empty input.
-  GraphProto nonempty_branch;
-  nonempty_branch.set_name("logsoftmax_nonempty");
-  nonempty_branch.mutable_node()->Swap(functionProto.mutable_node());
-  nonempty_branch.add_output()->set_name("NonEmptyOutput");
-
-  GraphProto empty_branch;
-  empty_branch.set_name("logsoftmax_empty");
-  auto* identity = empty_branch.add_node();
-  identity->set_op_type("Identity");
-  identity->add_input("input");
-  identity->add_output("EmptyOutput");
-  empty_branch.add_output()->set_name("EmptyOutput");
-
-  builder.Const("ZeroSize", static_cast<int64_t>(0))
-      .Add(R"(
-        InputSize = Size (input)
-        IsEmpty = Equal (InputSize, ZeroSize)
-      )")
-      .Add("output = If (IsEmpty)", "then_branch", empty_branch, "else_branch", nonempty_branch);
   schema.BuildFunction(functionProto);
   return true;
 }

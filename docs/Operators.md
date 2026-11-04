@@ -21646,16 +21646,15 @@ expect(node, inputs=[x], outputs=[y], name="test_log")
 
 ### <a name="Log1p"></a><a name="log1p">**Log1p**</a>
 
-  Computes the natural logarithm of one plus each input element, independently.
-  The input may have any shape, including a scalar or an empty tensor. The output
-  has the same shape and element type as the input. Supported element types are
-  FLOAT16, BFLOAT16, FLOAT, and DOUBLE.
+  Computes `y = ln(1 + x)` element-wise, where `ln` is the natural logarithm.
+  The output has the same shape and element type as the input, including for
+  scalar and empty inputs.
 
-  For a finite input element `x > -1` with `x != 0`, the mathematical result is
-  `y = ln(1 + x)`, where `ln` is the logarithm to base `e`. Here `x` denotes the
-  exact real value represented by the input element, and `1 + x` denotes an exact
-  real sum in the mathematical definition, not an intermediate floating-point
-  addition that must be materialized.
+  For finite `x > -1`, the result is a floating-point approximation of `ln(1 + x)`,
+  with `1 + x` evaluated as an exact real sum. Small nonzero results representable
+  in the output type must be preserved even when floating-point addition would
+  round `1 + x` to `1`. For example, a FLOAT input of `1e-8` produces approximately
+  `1e-8`.
 
   Special values are defined element-wise as follows:
 
@@ -21670,18 +21669,6 @@ expect(node, inputs=[x], outputs=[y], name="test_log")
   | NaN | NaN |
 
   The sign and payload of an output NaN are unspecified.
-
-  The computation must preserve small nonzero results that would be lost by
-  rounding `1 + x` to `1` before applying the logarithm. In particular, an output
-  must not become zero solely because such an intermediate sum rounds to `1`
-  when the mathematical result is representable as a nonzero value in the output
-  type. Near zero, `ln(1 + x) / x` tends to `1`. For example, a FLOAT input `1e-8`
-  produces a result approximately equal to `1e-8`, rather than zero.
-
-  Implementations may choose their numerical algorithm; the operation is not
-  specified as a composition of `Add` and `Log`. Non-special results are subject
-  to floating-point approximation, without a requirement for bitwise agreement
-  between implementations or correctly rounded transcendental results.
 
 #### Version
 
