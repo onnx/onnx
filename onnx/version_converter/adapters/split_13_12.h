@@ -27,6 +27,10 @@ class Split_13_12 : public Adapter {
       // No split input provided, nothing to convert
       return node;
     }
+    if (inputs[1]->node()->kind() == kUndefined) {
+      node->removeInput(1);
+      return node;
+    }
     // Get 'split' from initializer or constant operator
     // Identify whether we have a Constant Op or an Initializer
     Value* const_val = inputs[1];
@@ -39,6 +43,9 @@ class Split_13_12 : public Adapter {
         node_ptr->destroy();
       }
     } else {
+      ONNX_ASSERTM(
+          graph->is_constant_initializer(const_val),
+          "Split input must be constant; dynamic inputs and overridable initializers cannot be converted to attributes.")
       // Get Value name, find Initializer with same name
       for (const auto& initializer : graph->initializers()) {
         if (initializer.name() == inputs[1]->uniqueName()) {

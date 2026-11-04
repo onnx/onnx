@@ -12,6 +12,7 @@
 #include <map>
 #include <memory>
 #include <string>
+#include <string_view>
 #include <unordered_map>
 #include <utility>
 #include <vector>
@@ -32,6 +33,7 @@
 #include "onnx/version_converter/adapters/compatible.h"
 #include "onnx/version_converter/adapters/dropout_11_12.h"
 #include "onnx/version_converter/adapters/extend_supported_types.h"
+#include "onnx/version_converter/adapters/gemm_29_28.h"
 #include "onnx/version_converter/adapters/gemm_6_7.h"
 #include "onnx/version_converter/adapters/gemm_7_6.h"
 #include "onnx/version_converter/adapters/gridsample_19_20.h"
@@ -91,7 +93,7 @@ class DefaultVersionConverter : public BaseVersionConverter {
          (version_it->second.find(curr_version + step) != version_it->second.end() && up));
   }
 
-  void debug(const std::string& str) const {
+  void debug(std::string_view str) const {
     if (DEBUG)
       std::cerr << str << '\n';
   }
@@ -104,15 +106,6 @@ class DefaultVersionConverter : public BaseVersionConverter {
         " and ",
         version_range.second,
         ")")
-  }
-
-  void assertDefaultDomain(const std::string& initial_domain, const std::string& target_domain) const {
-    ONNX_ASSERTM(
-        (initial_domain.empty() || initial_domain == "ai.onnx") &&
-            (target_domain.empty() || target_domain == "ai.onnx"),
-        "Warning: default onnx version converter can only convert "
-        " between default domain opset versions ('' or 'ai.onnx')\n")
-    ONNX_ASSERTM(initial_domain == target_domain, "initial_version and target_version must have the same domains")
   }
 
   void convert_graph(const std::shared_ptr<Graph>& g, const OpSetID& initial_version, const OpSetID& target_version)
@@ -1128,9 +1121,11 @@ class DefaultVersionConverter : public BaseVersionConverter {
     registerAdapter(std::make_unique<CompatibleAdapter>("ReduceLogSumExp", OpSetID(28), OpSetID(27)));
 
     /******** 28 -> 29 ********/
+    registerAdapter(std::make_unique<CompatibleAdapter>("Gemm", OpSetID(28), OpSetID(29)));
     registerAdapter(std::make_unique<CompatibleAdapter>("LinearAttention", OpSetID(28), OpSetID(29)));
 
     /******** 29 -> 28 ********/
+    registerAdapter(std::make_unique<Gemm_29_28>());
     // The default mode and an explicit equal value-head count retain v27 semantics.
     registerAdapter("LinearAttention", 29, 28, [](const std::shared_ptr<Graph>& /*unused*/, Node* node) {
       const Symbol v_heads{"v_num_heads"};
