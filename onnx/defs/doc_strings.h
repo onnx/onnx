@@ -119,6 +119,7 @@ extern const char kDoc_DFT_ver20[];
 extern const char kDoc_SoftmaxCrossEntropyLoss_ver13[];
 extern const char kDoc_MatMulInteger_ver10[];
 extern const char kDoc_Gemm_ver13[];
+extern const char kDoc_Gemm_ver29[];
 extern const char kDoc_Clip_ver13[];
 extern const char kDoc_SwiGLU_ver28[];
 extern const char kDoc_Swish_ver24[];
