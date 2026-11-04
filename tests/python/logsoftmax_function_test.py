@@ -38,10 +38,10 @@ def _get_logsoftmax_function(opset, axis, dtype):
 )
 def test_logsoftmax_function_opset_dependencies(opset, dtype):
     function = _get_logsoftmax_function(opset, -1, dtype)
-    assert defs.get_schema("LogSoftmax", opset).since_version == 13  # noqa: PLR2004
+    assert defs.get_schema("LogSoftmax", opset).since_version == 13
     nodes = function.node
     assert not any(node.op_type in {"If", "ArgMax"} for node in nodes)
-    assert any(node.op_type == "Log1p" for node in nodes) == (opset == 29)  # noqa: PLR2004
+    assert any(node.op_type == "Log1p" for node in nodes) == (opset == 29)
     assert any(o.domain == "" and o.version == opset for o in function.opset_import)
 
 
