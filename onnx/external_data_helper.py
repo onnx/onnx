@@ -4,12 +4,11 @@
 from __future__ import annotations
 
 import os
-import pathlib
 import re
-import sys
 import uuid
+import warnings
 from itertools import chain
-from typing import TYPE_CHECKING
+from typing import IO, TYPE_CHECKING
 
 import onnx.checker as onnx_checker
 import onnx.onnx_cpp2py_export.checker as c_checker
@@ -25,6 +24,38 @@ if TYPE_CHECKING:
     from collections.abc import Callable, Iterable
 
 
+def _open_external_data_fd(
+    base_dir: str, location: str, tensor_name: str, read_only: bool
+) -> int:
+    """Open external data via C++ and return a CRT file descriptor."""
+    return c_checker._open_external_data(base_dir, location, tensor_name, read_only)
+
+
+# Security: 3-layer defense against malicious external_data entries (GHSA-538c-55jv-c5g9)
+#
+# Layer 1 (here) — Attribute whitelist: Only spec-defined keys are accepted.
+#   Unknown keys are warned and ignored, preventing arbitrary attribute injection (CWE-915).
+#
+# Layer 2 (ExternalDataInfo.__init__) — Bounds validation: offset and length must be
+#   non-negative integers. Catches invalid values at parse time (CWE-400).
+#
+# Layer 3 (load_external_data_for_tensor) — File-size validation: offset and length are
+#   checked against actual file size before reading. This is the critical safety net that
+#   prevents memory exhaustion regardless of how the model was constructed (CWE-400).
+#
+# 'basepath' is included because set_external_data() and model_container
+# write it to protobuf entries; it must survive save/load round-trips.
+_ALLOWED_EXTERNAL_DATA_KEYS = frozenset(
+    {"location", "offset", "length", "checksum", "basepath"}
+)
+_SORTED_ALLOWED_KEYS = sorted(_ALLOWED_EXTERNAL_DATA_KEYS)
+_MAX_UNKNOWN_KEYS_IN_WARNING = 10
+_MAX_KEY_DISPLAY_LENGTH = 100
+
+# Largest alignment boundary offsets may use; see `ExternalData.md`
+_MAX_EXTERNAL_DATA_PADDING = 64 * 1024
+
+
 class ExternalDataInfo:
     def __init__(self, tensor: TensorProto) -> None:
         self.location = ""
@@ -33,36 +64,120 @@ class ExternalDataInfo:
         self.checksum = None
         self.basepath = ""
 
+        unknown_keys: set[str] = set()
+        unknown_key_count = 0
         for entry in tensor.external_data:
-            setattr(self, entry.key, entry.value)
+            # Layer 1: reject unknown keys (CWE-915 defense-in-depth)
+            if entry.key in _ALLOWED_EXTERNAL_DATA_KEYS:
+                setattr(self, entry.key, entry.value)
+            else:
+                unknown_key_count += 1
+                if len(unknown_keys) < _MAX_UNKNOWN_KEYS_IN_WARNING:
+                    truncated = entry.key[:_MAX_KEY_DISPLAY_LENGTH]
+                    if len(entry.key) > _MAX_KEY_DISPLAY_LENGTH:
+                        truncated += "..."
+                    unknown_keys.add(truncated)
 
-        if self.offset:
+        if unknown_keys:
+            shown = sorted(unknown_keys)
+            extra = unknown_key_count - len(shown)
+            key_list = repr(shown)
+            if extra > 0:
+                key_list += f" and {extra} more"
+            warnings.warn(
+                f"Ignoring unknown external data key(s) {key_list} "
+                f"for tensor {tensor.name!r}. "
+                f"Allowed keys: {_SORTED_ALLOWED_KEYS}",
+                stacklevel=2,
+            )
+
+        if self.offset is not None:
             self.offset = int(self.offset)
+            if self.offset < 0:
+                raise ValueError(
+                    f"External data offset must be non-negative, got {self.offset} "
+                    f"for tensor {tensor.name!r}"
+                )
 
-        if self.length:
+        if self.length is not None:
             self.length = int(self.length)
+            if self.length < 0:
+                raise ValueError(
+                    f"External data length must be non-negative, got {self.length} "
+                    f"for tensor {tensor.name!r}"
+                )
+
+
+def _validate_external_data_file_bounds(
+    data_file: IO[bytes],
+    info: ExternalDataInfo,
+    tensor_name: str,
+) -> bytes:
+    """Validate offset/length against actual file size and read data.
+
+    Layer 3 defense-in-depth (CWE-400): prevents memory exhaustion even if the
+    model was crafted via direct protobuf APIs that bypass Python parsing.
+
+    Returns the raw bytes read from the file.
+    """
+    file_size = os.fstat(data_file.fileno()).st_size
+
+    if info.offset is not None:
+        if info.offset > file_size:
+            raise ValueError(
+                f"External data offset ({info.offset}) exceeds file size "
+                f"({file_size}) for tensor {tensor_name!r}"
+            )
+        data_file.seek(info.offset)
+
+    if info.length is not None:
+        read_start = info.offset if info.offset is not None else 0
+        available = file_size - read_start
+        if info.length > available:
+            raise ValueError(
+                f"External data length ({info.length}) exceeds available data "
+                f"({available} bytes from offset {read_start}) "
+                f"for tensor {tensor_name!r}"
+            )
+        return data_file.read(info.length)
+    return data_file.read()
+
+
+def _read_external_data_bytes(tensor: TensorProto, base_dir: str) -> bytes:
+    """Reads and returns the raw bytes stored in the external file for tensor.
+
+    Unlike load_external_data_for_tensor, this does not mutate tensor: the
+    tensor's data_location and external_data fields are left untouched, so
+    the tensor still faithfully describes where its data lives on disk.
+
+    Arguments:
+        tensor: a TensorProto object.
+        base_dir: directory that contains the external data.
+
+    Returns:
+        The raw bytes read from the external data file.
+    """
+    info = ExternalDataInfo(tensor)
+    fd = _open_external_data_fd(base_dir, info.location, tensor.name, True)
+    with os.fdopen(fd, "rb") as data_file:
+        return _validate_external_data_file_bounds(data_file, info, tensor.name)
 
 
 def load_external_data_for_tensor(tensor: TensorProto, base_dir: str) -> None:
-    """Loads data from an external file for tensor.
+    """Loads data from an external file for tensor and converts it to an in-memory tensor.
     Ideally TensorProto should not hold any raw data but if it does it will be ignored.
+
+    After this call, tensor.raw_data holds the loaded bytes and tensor no longer
+    describes external data: data_location is reset to DEFAULT and external_data is
+    cleared.
 
     Arguments:
         tensor: a TensorProto object.
         base_dir: directory that contains the external data.
     """
-    info = ExternalDataInfo(tensor)
-    external_data_file_path = c_checker._resolve_external_data_location(  # type: ignore[attr-defined]
-        base_dir, info.location, tensor.name
-    )
-    with open(external_data_file_path, "rb") as data_file:
-        if info.offset:
-            data_file.seek(info.offset)
-
-        if info.length:
-            tensor.raw_data = data_file.read(info.length)
-        else:
-            tensor.raw_data = data_file.read()
+    tensor.raw_data = _read_external_data_bytes(tensor, base_dir)
+    tensor.data_location = TensorProto.DEFAULT
+    del tensor.external_data[:]
 
 
 def load_external_data_for_model(model: ModelProto, base_dir: str) -> None:
@@ -75,10 +190,6 @@ def load_external_data_for_model(model: ModelProto, base_dir: str) -> None:
     for tensor in _get_all_tensors(model):
         if uses_external_data(tensor):
             load_external_data_for_tensor(tensor, base_dir)
-            # After loading raw_data from external_data, change the state of tensors
-            tensor.data_location = TensorProto.DEFAULT
-            # and remove external data
-            del tensor.external_data[:]
 
 
 def set_external_data(
@@ -91,9 +202,7 @@ def set_external_data(
 ) -> None:
     if not tensor.HasField("raw_data"):
         raise ValueError(
-            "Tensor "
-            + tensor.name
-            + "does not have raw_data field. Cannot set external data for this tensor."
+            f"Tensor {tensor.name} does not have raw_data field. Cannot set external data for this tensor."
         )
 
     del tensor.external_data[:]
@@ -152,17 +261,11 @@ def convert_model_to_external_data(
                 raise FileExistsError(f"External data file exists in {location}.")
             file_name = location
         for tensor in tensors:
-            if (
-                tensor.HasField("raw_data")
-                and sys.getsizeof(tensor.raw_data) >= size_threshold
-            ):
+            if tensor.HasField("raw_data") and len(tensor.raw_data) >= size_threshold:
                 set_external_data(tensor, file_name)
     else:
         for tensor in tensors:
-            if (
-                tensor.HasField("raw_data")
-                and sys.getsizeof(tensor.raw_data) >= size_threshold
-            ):
+            if tensor.HasField("raw_data") and len(tensor.raw_data) >= size_threshold:
                 tensor_location = tensor.name
                 if not _is_valid_filename(tensor_location):
                     tensor_location = str(uuid.uuid1())
@@ -198,44 +301,28 @@ def save_external_data(tensor: TensorProto, base_path: str) -> None:
     """
     info = ExternalDataInfo(tensor)
 
-    # Let's check the tensor location is valid.
-    location_path = pathlib.Path(info.location)
-    if location_path.is_absolute() and len(location_path.parts) > 1:
-        raise onnx_checker.ValidationError(
-            f"Tensor {tensor.name!r} is external and must not be defined "
-            f"with an absolute path such as {info.location!r}, "
-            f"base_path={base_path!r}"
-        )
-    if ".." in location_path.parts:
-        raise onnx_checker.ValidationError(
-            f"Tensor {tensor.name!r} is external and must be placed in folder "
-            f"{base_path!r}, '..' is not needed in {info.location!r}."
-        )
-    if location_path.name in (".", ".."):
-        raise onnx_checker.ValidationError(
-            f"Tensor {tensor.name!r} is external and its name "
-            f"{info.location!r} is invalid."
-        )
-
-    external_data_file_path = os.path.join(base_path, info.location)
-
-    # Retrieve the tensor's data from raw_data or load external file
     if not tensor.HasField("raw_data"):
         raise onnx_checker.ValidationError("raw_data field doesn't exist.")
 
-    # Create file if it doesn't exist
-    if not os.path.isfile(external_data_file_path):
-        with open(external_data_file_path, "ab"):
-            pass
-
-    # Open file for reading and writing at random locations ('r+b')
-    with open(external_data_file_path, "r+b") as data_file:
+    fd = _open_external_data_fd(base_path, info.location, tensor.name, False)
+    with os.fdopen(fd, "r+b") as data_file:
         data_file.seek(0, 2)
         if info.offset is not None:
-            # Pad file to required offset if needed
+            # A tensor is written at the end of the file, optionally bumped forward by
+            # an alignment gap. The gap only aligns tensors that share a file, so it is
+            # always under one boundary. An offset before the end would overwrite data
+            # already in the file; one far past it would pad with an unbounded, untrusted
+            # amount of zeros. Reject both instead of writing.
             file_size = data_file.tell()
-            if info.offset > file_size:
-                data_file.write(b"\0" * (info.offset - file_size))
+            padding = info.offset - file_size
+            if not 0 <= padding <= _MAX_EXTERNAL_DATA_PADDING:
+                raise onnx_checker.ValidationError(
+                    f"External data offset ({info.offset}) for tensor {tensor.name!r} "
+                    f"must be between the current file size ({file_size}) and "
+                    f"{file_size + _MAX_EXTERNAL_DATA_PADDING}."
+                )
+            if padding > 0:
+                data_file.write(b"\0" * padding)
 
             data_file.seek(info.offset)
         offset = data_file.tell()
@@ -262,13 +349,10 @@ def _recursive_attribute_processor(
             yield from func(graph)
 
 
-def _get_initializer_tensors_from_graph(
-    graph_or_function: GraphProto | FunctionProto, /
-) -> Iterable[TensorProto]:
-    """Create an iterator of initializer tensors from ONNX model graph/function."""
-    if isinstance(graph_or_function, GraphProto):
-        yield from graph_or_function.initializer
-    for node in graph_or_function.node:
+def _get_initializer_tensors_from_graph(graph: GraphProto, /) -> Iterable[TensorProto]:
+    """Create an iterator of initializer tensors from ONNX model graph."""
+    yield from graph.initializer
+    for node in graph.node:
         for attribute in node.attribute:
             yield from _recursive_attribute_processor(
                 attribute, _get_initializer_tensors_from_graph
@@ -278,8 +362,6 @@ def _get_initializer_tensors_from_graph(
 def _get_initializer_tensors(onnx_model_proto: ModelProto) -> Iterable[TensorProto]:
     """Create an iterator of initializer tensors from ONNX model."""
     yield from _get_initializer_tensors_from_graph(onnx_model_proto.graph)
-    for function in onnx_model_proto.functions:
-        yield from _get_attribute_tensors_from_graph(function)
 
 
 def _get_attribute_tensors_from_graph(
@@ -344,13 +426,30 @@ def write_external_data_tensors(model: ModelProto, filepath: str) -> ModelProto:
     Returns:
         ModelProto: The modified model object.
     """
-    for tensor in _get_all_tensors(model):
-        # Writing to external data happens in 2 passes:
-        # 1. Tensors with raw data which pass the necessary conditions (size threshold etc) are marked for serialization
-        # 2. The raw data in these tensors is serialized to a file
-        # Thus serialize only if tensor has raw data and it was marked for serialization
-        if uses_external_data(tensor) and tensor.HasField("raw_data"):
-            save_external_data(tensor, filepath)
-            tensor.ClearField("raw_data")
+    # Writing to external data happens in 2 passes:
+    # 1. Tensors with raw data which pass the necessary conditions (size threshold etc) are marked for serialization
+    # 2. The raw data in these tensors is serialized to a file
+    # Thus serialize only if tensor has raw data and it was marked for serialization
+    tensors_to_write = [
+        tensor
+        for tensor in _get_all_tensors(model)
+        if uses_external_data(tensor) and tensor.HasField("raw_data")
+    ]
+    # save_external_data() appends each tensor to the end of its external data
+    # file and validates that any pre-assigned offset lands there. Sort by that
+    # offset (per destination file) so tensors are written in the order their
+    # offsets imply, regardless of their order in the graph; tensors without a
+    # pre-assigned offset keep their relative order and are written last.
+    infos = {id(tensor): ExternalDataInfo(tensor) for tensor in tensors_to_write}
+    tensors_to_write.sort(
+        key=lambda tensor: (
+            infos[id(tensor)].location,
+            infos[id(tensor)].offset is None,
+            infos[id(tensor)].offset or 0,
+        )
+    )
+    for tensor in tensors_to_write:
+        save_external_data(tensor, filepath)
+        tensor.ClearField("raw_data")
 
     return model

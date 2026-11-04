@@ -4,7 +4,7 @@
 from __future__ import annotations
 
 import csv
-import datetime
+import datetime as dt
 import os
 from collections import OrderedDict, defaultdict
 from typing import IO, Any
@@ -257,5 +257,8 @@ class Coverage:
         ) as metadata_file:
             metadata_writer = csv.writer(metadata_file)
             metadata_writer.writerow(
-                ["Latest Update", datetime.datetime.now().isoformat().replace("T", " ")]
+                [
+                    "Latest Update",
+                    dt.datetime.now(tz=dt.UTC).isoformat().replace("T", " "),
+                ]
             )

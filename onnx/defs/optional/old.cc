@@ -2,18 +2,21 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
+#include "onnx/defs/doc_strings.h"
+#include "onnx/defs/optional/utils.h"
 #include "onnx/defs/schema.h"
+#include "onnx/defs/type_builders.h"
 
 namespace ONNX_NAMESPACE {
-static constexpr const char* OptionalHasElement_ver1_doc = R"DOC(
-Returns true if the optional-type input contains an element. If it is an empty optional-type, this op returns false.
-)DOC";
+static std::vector<std::string> tensor_and_sequence_types() {
+  return types::Concat(OpSchema::all_tensor_types(), OpSchema::all_tensor_sequence_types());
+}
 
 ONNX_OPERATOR_SET_SCHEMA(
     OptionalHasElement,
     15,
     OpSchema()
-        .SetDoc(OptionalHasElement_ver1_doc)
+        .SetDoc(kDoc_OptionalHasElement_ver15)
         .Input(0, "input", "The optional input.", "O")
         .Output(
             0,
@@ -24,7 +27,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "O",
             OpSchema::all_optional_types(),
             "Constrain input type to optional tensor and optional sequence types.")
-        .TypeConstraint("B", {"tensor(bool)"}, "Constrain output to a boolean tensor.")
+        .TypeConstraint("B", {types::Bool}, "Constrain output to a boolean tensor.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           const size_t numInputs = ctx.getNumInputs();
           if (numInputs != 1) {
@@ -39,16 +42,11 @@ ONNX_OPERATOR_SET_SCHEMA(
           output_tensor_type->mutable_shape()->Clear();
         }));
 
-static constexpr const char* OptionalGetElement_ver1_doc = R"DOC(
-Outputs the element in the optional-type input. It is an error if the input value does not have an element
-and the behavior is undefined in this case.
-)DOC";
-
 ONNX_OPERATOR_SET_SCHEMA(
     OptionalGetElement,
     15,
     OpSchema()
-        .SetDoc(OptionalGetElement_ver1_doc)
+        .SetDoc(kDoc_OptionalGetElement_ver15)
         .Input(0, "input", "The optional input.", "O")
         .Output(0, "output", "Output element in the optional input.", "V")
         .TypeConstraint(
@@ -78,5 +76,26 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
           ctx.getOutputType(0)->CopyFrom(input_type->optional_type().elem_type());
         }));
+
+ONNX_OPERATOR_SET_SCHEMA(
+    Optional,
+    15,
+    OpSchema().FillUsing(
+        defs::optional::utils::OptionalOpGenerator(tensor_and_sequence_types(), OpSchema::all_optional_types())));
+
+ONNX_OPERATOR_SET_SCHEMA(
+    OptionalHasElement,
+    18,
+    OpSchema().FillUsing(
+        defs::optional::utils::OptionalHasElementOpGenerator(
+            types::Concat(OpSchema::all_optional_types(), tensor_and_sequence_types()))));
+
+ONNX_OPERATOR_SET_SCHEMA(
+    OptionalGetElement,
+    18,
+    OpSchema().FillUsing(
+        defs::optional::utils::OptionalGetElementOpGenerator(
+            OpSchema::all_optional_types(),
+            tensor_and_sequence_types())));
 
 } // namespace ONNX_NAMESPACE

@@ -17,10 +17,14 @@ class _CommonWindow(OpRun):
             N_1 = size
         else:
             N_1 = size - 1
-        ni = np.arange(size, dtype=dtype)
+        # float16 overflows when multiplied by pi; bfloat16 cannot hold large indices
+        work_dtype = dtype
+        if dtype.itemsize < 4 and not np.issubdtype(dtype, np.integer):
+            work_dtype = np.float32
+        ni = np.arange(size, dtype=work_dtype)
         return ni, N_1
 
     @staticmethod
-    def _end(size, res, output_datatype):  # type: ignore  # noqa: ARG004
+    def _end(size: int, res: np.ndarray, output_datatype: int) -> tuple[np.ndarray]:  # noqa: ARG004
         dtype = tensor_dtype_to_np_dtype(output_datatype)
         return (res.astype(dtype),)

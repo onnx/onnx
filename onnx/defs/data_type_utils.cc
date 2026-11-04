@@ -4,13 +4,32 @@
 
 #include "onnx/defs/data_type_utils.h"
 
-#include <cctype>
 #include <string>
+#include <string_view>
 #include <unordered_map>
 #include <unordered_set>
 
-namespace ONNX_NAMESPACE {
-namespace Utils {
+namespace ONNX_NAMESPACE::Utils {
+namespace {
+
+// ASCII whitespace only; trimming must not depend on the locale.
+std::string_view StripWhitespace(std::string_view str) {
+  constexpr std::string_view whitespace = " \t\n\v\f\r";
+  const auto first = str.find_first_not_of(whitespace);
+  if (first == std::string_view::npos)
+    return {};
+  return str.substr(first, str.find_last_not_of(whitespace) - first + 1);
+}
+
+std::string_view StripParens(std::string_view str) {
+  str = StripWhitespace(str);
+  if (!str.empty() && str.front() == '(')
+    str.remove_prefix(1);
+  str = StripWhitespace(str);
+  if (!str.empty() && str.back() == ')')
+    str.remove_suffix(1);
+  return StripWhitespace(str);
+}
 
 // Singleton wrapper around allowed data types.
 // This implements construct on first use which is needed to ensure
@@ -38,53 +57,7 @@ class TypesWrapper final {
   std::unordered_set<std::string> allowed_data_types_;
 };
 
-// Simple class which contains pointers to external string buffer and a size.
-// This can be used to track a "valid" range/slice of the string.
-// Caller should ensure StringRange is not used after external storage has
-// been freed.
-class StringRange final {
- public:
-  StringRange();
-  StringRange(const char* data, size_t size);
-  // NOLINTNEXTLINE(google-explicit-constructor)
-  StringRange(const std::string& str);
-  // NOLINTNEXTLINE(google-explicit-constructor)
-  StringRange(const char* data);
-  const char* Data() const;
-  size_t Size() const;
-  bool Empty() const;
-  char operator[](size_t idx) const;
-  void Reset();
-  void Reset(const char* data, size_t size);
-  void Reset(const std::string& str);
-  bool StartsWith(const StringRange& str) const;
-  bool EndsWith(const StringRange& str) const;
-  bool LStrip();
-  bool LStrip(size_t size);
-  bool LStrip(StringRange str);
-  bool RStrip();
-  bool RStrip(size_t size);
-  bool RStrip(StringRange str);
-  bool LAndRStrip();
-  void ParensWhitespaceStrip();
-  size_t Find(char ch) const;
-
-  // These methods provide a way to return the range of the string
-  // which was discarded by LStrip(). i.e. We capture the string
-  // range which was discarded.
-  StringRange GetCaptured();
-  void RestartCapture();
-
- private:
-  // data_ + size tracks the "valid" range of the external string buffer.
-  const char* data_;
-  size_t size_;
-
-  // start_ and end_ track the captured range.
-  // end_ advances when LStrip() is called.
-  const char* start_;
-  const char* end_;
-};
+} // namespace
 
 std::unordered_map<std::string, TypeProto>& DataTypeUtils::GetTypeStrToProtoMap() {
   static std::unordered_map<std::string, TypeProto> map;
@@ -106,7 +79,7 @@ DataType DataTypeUtils::ToType(const TypeProto& type_proto) {
     GetTypeStrToProtoMap()[typeStr] = type;
     it = GetTypeStrToProtoMap().find(typeStr);
   }
-  return &(it->first);
+  return &it->first;
 }
 
 DataType DataTypeUtils::ToType(const std::string& type_str) {
@@ -141,7 +114,6 @@ std::string DataTypeUtils::ToString(const TypeProto& type_proto, const std::stri
       std::string map_str = "map(" + ToDataTypeString(type_proto.map_type().key_type()) + ",";
       return ToString(type_proto.map_type().value_type(), left + map_str, ")" + right);
     }
-#ifdef ONNX_ML
     case TypeProto::ValueCase::kOpaqueType: {
       std::string result;
       const auto& op_type = type_proto.opaque_type();
@@ -155,7 +127,6 @@ std::string DataTypeUtils::ToString(const TypeProto& type_proto, const std::stri
       result.append(")").append(right);
       return result;
     }
-#endif
     case TypeProto::ValueCase::kSparseTensorType: {
       // Note: We do not distinguish tensors with zero rank (a shape consisting
       // of an empty sequence of dimensions) here.
@@ -176,60 +147,56 @@ std::string DataTypeUtils::ToDataTypeString(int32_t tensor_data_type) {
   return iter->second;
 }
 
-void DataTypeUtils::FromString(const std::string& type_str, TypeProto& type_proto) {
-  StringRange s(type_str);
+void DataTypeUtils::FromString(std::string_view type_str, TypeProto& type_proto) {
+  auto s = StripWhitespace(type_str);
   type_proto.Clear();
-  if (s.LStrip("seq")) {
-    s.ParensWhitespaceStrip();
-    FromString(std::string(s.Data(), s.Size()), *type_proto.mutable_sequence_type()->mutable_elem_type());
+  if (s.substr(0, 3) == "seq") {
+    s = StripParens(s.substr(3));
+    FromString(s, *type_proto.mutable_sequence_type()->mutable_elem_type());
     return;
-  } else if (s.LStrip("optional")) {
-    s.ParensWhitespaceStrip();
-    FromString(std::string(s.Data(), s.Size()), *type_proto.mutable_optional_type()->mutable_elem_type());
+  } else if (s.substr(0, 8) == "optional") {
+    s = StripParens(s.substr(8));
+    FromString(s, *type_proto.mutable_optional_type()->mutable_elem_type());
     return;
-  } else if (s.LStrip("map")) {
-    s.ParensWhitespaceStrip();
-    size_t key_size = s.Find(',');
-    StringRange k(s.Data(), key_size);
-    std::string key(k.Data(), k.Size());
-    s.LStrip(key_size);
-    s.LStrip(",");
-    StringRange v(s.Data(), s.Size());
-    auto key_type = FromDataTypeString(key);
+  } else if (s.substr(0, 3) == "map") {
+    s = StripParens(s.substr(3));
+    const auto key_size = s.find(',');
+    const auto key = StripWhitespace(s.substr(0, key_size));
+    if (key_size != std::string_view::npos)
+      s.remove_prefix(key_size + 1);
+    auto key_type = FromDataTypeString(std::string(key));
     type_proto.mutable_map_type()->set_key_type(key_type);
-    FromString(std::string(v.Data(), v.Size()), *type_proto.mutable_map_type()->mutable_value_type());
+    FromString(s, *type_proto.mutable_map_type()->mutable_value_type());
     return;
   }
-#ifdef ONNX_ML
-  if (s.LStrip("opaque")) {
+  if (s.substr(0, 6) == "opaque") {
     auto* opaque_type = type_proto.mutable_opaque_type();
-    s.ParensWhitespaceStrip();
-    if (!s.Empty()) {
-      size_t cm = s.Find(',');
-      if (cm != std::string::npos) {
+    s = StripParens(s.substr(6));
+    if (!s.empty()) {
+      size_t cm = s.find(',');
+      if (cm != std::string_view::npos) {
         if (cm > 0) {
-          opaque_type->mutable_domain()->assign(s.Data(), cm);
+          opaque_type->mutable_domain()->assign(s.substr(0, cm));
         }
-        s.LStrip(cm + 1); // skip comma
+        s.remove_prefix(cm + 1); // skip comma
       }
-      if (!s.Empty()) {
-        opaque_type->mutable_name()->assign(s.Data(), s.Size());
+      if (!s.empty()) {
+        opaque_type->mutable_name()->assign(s);
       }
     }
     return;
   }
-#endif
-  if (s.LStrip("sparse_tensor")) {
-    s.ParensWhitespaceStrip();
-    auto e = FromDataTypeString(std::string(s.Data(), s.Size()));
+  if (s.substr(0, 13) == "sparse_tensor") {
+    s = StripParens(s.substr(13));
+    auto e = FromDataTypeString(std::string(s));
     type_proto.mutable_sparse_tensor_type()->set_elem_type(e);
-  } else if (s.LStrip("tensor")) {
-    s.ParensWhitespaceStrip();
-    auto e = FromDataTypeString(std::string(s.Data(), s.Size()));
+  } else if (s.substr(0, 6) == "tensor") {
+    s = StripParens(s.substr(6));
+    auto e = FromDataTypeString(std::string(s));
     type_proto.mutable_tensor_type()->set_elem_type(e);
   } else {
     // Scalar
-    auto e = FromDataTypeString(std::string(s.Data(), s.Size()));
+    auto e = FromDataTypeString(std::string(s));
     TypeProto::Tensor* t = type_proto.mutable_tensor_type();
     t->set_elem_type(e);
     // Call mutable_shape() to initialize a shape with no dimension.
@@ -254,157 +221,7 @@ int32_t DataTypeUtils::FromDataTypeString(const std::string& type_str) {
   return t.TypeStrToTensorDataType()[type_str];
 }
 
-StringRange::StringRange() : data_(""), size_(0), start_(data_), end_(data_) {}
-
-StringRange::StringRange(const char* p_data, size_t p_size) : data_(p_data), size_(p_size), start_(data_), end_(data_) {
-  assert(p_data != nullptr);
-  LAndRStrip();
-}
-
-StringRange::StringRange(const std::string& p_str)
-    : data_(p_str.data()), size_(p_str.size()), start_(data_), end_(data_) {
-  LAndRStrip();
-}
-
-StringRange::StringRange(const char* p_data) : data_(p_data), size_(strlen(p_data)), start_(data_), end_(data_) {
-  LAndRStrip();
-}
-
-const char* StringRange::Data() const {
-  return data_;
-}
-
-size_t StringRange::Size() const {
-  return size_;
-}
-
-bool StringRange::Empty() const {
-  return size_ == 0;
-}
-
-char StringRange::operator[](size_t idx) const {
-  return data_[idx];
-}
-
-void StringRange::Reset() {
-  data_ = "";
-  size_ = 0;
-  start_ = end_ = data_;
-}
-
-void StringRange::Reset(const char* data, size_t size) {
-  data_ = data;
-  size_ = size;
-  start_ = end_ = data_;
-}
-
-void StringRange::Reset(const std::string& str) {
-  data_ = str.data();
-  size_ = str.size();
-  start_ = end_ = data_;
-}
-
-bool StringRange::StartsWith(const StringRange& str) const {
-  return ((size_ >= str.size_) && (memcmp(data_, str.data_, str.size_) == 0));
-}
-
-bool StringRange::EndsWith(const StringRange& str) const {
-  return ((size_ >= str.size_) && (memcmp(data_ + (size_ - str.size_), str.data_, str.size_) == 0));
-}
-
-bool StringRange::LStrip() {
-  size_t count = 0;
-  const char* ptr = data_;
-  while (count < size_ && isspace(*ptr)) {
-    count++;
-    ptr++;
-  }
-
-  if (count > 0) {
-    return LStrip(count);
-  }
-  return false;
-}
-
-bool StringRange::LStrip(size_t size) {
-  if (size <= size_) {
-    data_ += size;
-    size_ -= size;
-    end_ += size;
-    return true;
-  }
-  return false;
-}
-
-bool StringRange::LStrip(StringRange str) {
-  if (StartsWith(str)) {
-    return LStrip(str.size_);
-  }
-  return false;
-}
-
-bool StringRange::RStrip() {
-  size_t count = 0;
-  const char* ptr = data_ + size_ - 1;
-  while (count < size_ && isspace(*ptr)) {
-    ++count;
-    --ptr;
-  }
-
-  if (count > 0) {
-    return RStrip(count);
-  }
-  return false;
-}
-
-bool StringRange::RStrip(size_t size) {
-  if (size_ >= size) {
-    size_ -= size;
-    return true;
-  }
-  return false;
-}
-
-bool StringRange::RStrip(StringRange str) {
-  if (EndsWith(str)) {
-    return RStrip(str.size_);
-  }
-  return false;
-}
-
-bool StringRange::LAndRStrip() {
-  bool l = LStrip();
-  bool r = RStrip();
-  return l || r;
-}
-
-void StringRange::ParensWhitespaceStrip() {
-  LStrip();
-  LStrip("(");
-  LAndRStrip();
-  RStrip(")");
-  RStrip();
-}
-
-size_t StringRange::Find(const char ch) const {
-  size_t idx = 0;
-  while (idx < size_) {
-    if (data_[idx] == ch) {
-      return idx;
-    }
-    idx++;
-  }
-  return std::string::npos;
-}
-
-void StringRange::RestartCapture() {
-  start_ = data_;
-  end_ = data_;
-}
-
-StringRange StringRange::GetCaptured() {
-  return StringRange(start_, end_ - start_);
-}
+namespace {
 
 TypesWrapper& TypesWrapper::GetTypesWrapper() {
   static TypesWrapper types;
@@ -451,11 +268,15 @@ TypesWrapper::TypesWrapper() {
   type_str_to_tensor_data_type_["uint2"] = TensorProto_DataType_UINT2;
   type_str_to_tensor_data_type_["int2"] = TensorProto_DataType_INT2;
   type_str_to_tensor_data_type_["float4e2m1"] = TensorProto_DataType_FLOAT4E2M1;
+  type_str_to_tensor_data_type_["float6e2m3"] = TensorProto_DataType_FLOAT6E2M3;
+  type_str_to_tensor_data_type_["float6e3m2"] = TensorProto_DataType_FLOAT6E3M2;
 
   for (auto& [type_str, data_type] : type_str_to_tensor_data_type_) {
     tensor_data_type_to_type_str_[data_type] = type_str;
     allowed_data_types_.insert(type_str);
   }
 }
-} // namespace Utils
-} // namespace ONNX_NAMESPACE
+
+} // namespace
+
+} // namespace ONNX_NAMESPACE::Utils

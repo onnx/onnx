@@ -11,8 +11,7 @@
 #include "onnx/version_converter/adapters/adapter.h"
 #include "onnx/version_converter/adapters/transformers.h"
 
-namespace ONNX_NAMESPACE {
-namespace version_conversion {
+namespace ONNX_NAMESPACE::version_conversion {
 
 class Split_17_18 : public Adapter {
  public:
@@ -20,7 +19,7 @@ class Split_17_18 : public Adapter {
 
   void adapt_split_17_18(const std::shared_ptr<Graph>& /*unused*/, Node* node) const {
     const auto num_outputs = node->outputs().size();
-    node->i_(knum_outputs, num_outputs);
+    node->i_(knum_outputs, static_cast<int64_t>(num_outputs));
   }
 
   Node* adapt(std::shared_ptr<Graph> graph, Node* node) const override {
@@ -32,5 +31,4 @@ class Split_17_18 : public Adapter {
   }
 };
 
-} // namespace version_conversion
-} // namespace ONNX_NAMESPACE
+} // namespace ONNX_NAMESPACE::version_conversion

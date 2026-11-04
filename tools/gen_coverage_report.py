@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import argparse
 import os
+import shutil
 import subprocess
 
 
@@ -22,10 +23,18 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
+def _resolve(name: str) -> str:
+    path = shutil.which(name)
+    if path is None:
+        raise FileNotFoundError(f"{name!r} not found on PATH")
+    return path
+
+
 def gen_trace_file(root_dir: str, out_path: str) -> None:
-    subprocess.check_output(
+    lcov = _resolve("lcov")
+    subprocess.run(  # noqa: S603
         [
-            "lcov",
+            lcov,
             "-c",
             "-d",
             root_dir,
@@ -34,31 +43,34 @@ def gen_trace_file(root_dir: str, out_path: str) -> None:
             root_dir,
             "-o",
             out_path,
-        ]
+        ],
+        check=True,
     )
 
-    subprocess.check_output(
+    subprocess.run(  # noqa: S603
         [
-            "lcov",
+            lcov,
             "-r",
             out_path,
             os.path.join(root_dir, ".setuptools-cmake-build", "*"),
             "-o",
             out_path,
-        ]
+        ],
+        check=True,
     )
 
 
 def gen_html_files(root_dir: str, trace_path: str, out_dir: str) -> None:
-    subprocess.check_output(
+    subprocess.run(  # noqa: S603
         [
-            "genhtml",
+            _resolve("genhtml"),
             trace_path,
             "-p",
             root_dir,
             "-o",
             out_dir,
-        ]
+        ],
+        check=True,
     )
 
 

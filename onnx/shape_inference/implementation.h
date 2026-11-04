@@ -15,8 +15,7 @@
 #include "onnx/defs/tensor_proto_util.h"
 #include "onnx/string_utils.h"
 
-namespace ONNX_NAMESPACE {
-namespace shape_inference {
+namespace ONNX_NAMESPACE::shape_inference {
 
 using ModelLocalFunctionsMap = std::unordered_map<std::string, const FunctionProto*>;
 
@@ -94,29 +93,56 @@ class SymbolTableImpl : public SymbolTable {
 };
 
 struct GraphInferenceContext {
+  using OuterScopeValueTypesMap = std::unordered_map<std::string, TypeProto*>;
+
   GraphInferenceContext(
-      const std::unordered_map<std::string, TypeProto*>& outer_scope_value_types_by_name_in,
+      const OuterScopeValueTypesMap& outer_scope_value_types_by_name_in,
       std::unordered_map<std::string, int> opset_imports_in,
       SymbolTable* symbol_table_in = nullptr,
-      const ModelLocalFunctionsMap& model_local_functions_in = {},
+      ModelLocalFunctionsMap model_local_functions_in = {},
       const ISchemaRegistry* schema_registry_in = OpSchemaRegistry::Instance(),
       DataValueMap* generated_shape_data_by_name_in = nullptr,
-      const int ir_version_in = IR_VERSION)
-      : outer_scope_value_types_by_name{&outer_scope_value_types_by_name_in},
+      const int64_t ir_version_in = IR_VERSION)
+      : owned_outer_scope_value_types_by_name{},
+        outer_scope_value_types_by_name{&outer_scope_value_types_by_name_in},
         opset_imports{std::move(opset_imports_in)},
         symbol_table{symbol_table_in},
-        model_local_functions{model_local_functions_in},
+        model_local_functions{std::move(model_local_functions_in)},
         schema_registry{schema_registry_in},
         generated_shape_data_by_name{generated_shape_data_by_name_in},
         ir_version{ir_version_in} {}
 
-  const std::unordered_map<std::string, TypeProto*>* outer_scope_value_types_by_name;
+  GraphInferenceContext(
+      OuterScopeValueTypesMap&& outer_scope_value_types_by_name_in,
+      std::unordered_map<std::string, int> opset_imports_in,
+      SymbolTable* symbol_table_in = nullptr,
+      ModelLocalFunctionsMap model_local_functions_in = {},
+      const ISchemaRegistry* schema_registry_in = OpSchemaRegistry::Instance(),
+      DataValueMap* generated_shape_data_by_name_in = nullptr,
+      const int64_t ir_version_in = IR_VERSION)
+      // A heap-owned map keeps the raw view valid across context copies and moves
+      // when a caller supplies a temporary that would otherwise dangle.
+      : owned_outer_scope_value_types_by_name{
+            std::make_shared<const OuterScopeValueTypesMap>(std::move(outer_scope_value_types_by_name_in))},
+        outer_scope_value_types_by_name{owned_outer_scope_value_types_by_name.get()},
+        opset_imports{std::move(opset_imports_in)},
+        symbol_table{symbol_table_in},
+        model_local_functions{std::move(model_local_functions_in)},
+        schema_registry{schema_registry_in},
+        generated_shape_data_by_name{generated_shape_data_by_name_in},
+        ir_version{ir_version_in} {}
+
+  // Lvalue maps remain borrowed so subgraph inference observes parent-scope
+  // types added while the enclosing graph is processed.
+  const std::shared_ptr<const OuterScopeValueTypesMap> owned_outer_scope_value_types_by_name;
+  const OuterScopeValueTypesMap* outer_scope_value_types_by_name;
   const std::unordered_map<std::string, int> opset_imports;
   SymbolTable* symbol_table;
-  const ModelLocalFunctionsMap& model_local_functions;
+  // Own the map so default or explicitly temporary arguments cannot dangle after construction.
+  const ModelLocalFunctionsMap model_local_functions;
   const ISchemaRegistry* schema_registry;
   DataValueMap* generated_shape_data_by_name;
-  const int ir_version;
+  const int64_t ir_version;
 };
 
 class GraphInferencerImpl : public GraphInferencer {
@@ -143,8 +169,12 @@ struct InferenceContextImpl : public InferenceContext {
       const std::unordered_map<std::string, const SparseTensorProto*>& inputSparseDataByName,
       const ShapeInferenceOptions& options,
       DataValueMap* generatedShapeData = nullptr,
-      GraphInferenceContext* graphInferenceContext = nullptr)
-      : graphInferenceContext_{graphInferenceContext}, options_(options), node_(&n) {
+      GraphInferenceContext* graphInferenceContext = nullptr,
+      const std::unordered_set<std::string>* unboundValueNames = nullptr)
+      : graphInferenceContext_{graphInferenceContext},
+        options_(options),
+        node_(&n),
+        unboundValueNames_(unboundValueNames) {
     for (auto& attr : *n.mutable_attribute()) {
       attributesByName_[attr.name()] = &attr;
       if (attr.has_g()) {
@@ -161,7 +191,8 @@ struct InferenceContextImpl : public InferenceContext {
         allInputTypes_.push_back(nullptr);
       }
 
-      // input data can be in 1 of the 3 containers
+      // Concrete data may also have a symbolic representation after bridging
+      // partial data propagation results.
       // inputDataByName - this is when input is TensorProto
       // inputSparseDataByName - this is when input is SparseTensorProto
       // generatedShapeData - this is when input was generated as part of partial data propagation
@@ -169,7 +200,14 @@ struct InferenceContextImpl : public InferenceContext {
       if (inputDataIter != inputDataByName.cend()) {
         allInputData_.push_back(inputDataIter->second);
         allInputSparseData_.push_back(nullptr);
-        allShapeInputData_.push_back(nullptr);
+        const TensorShapeProto* shape_data = nullptr;
+        if (generatedShapeData != nullptr) {
+          const auto shape_it = generatedShapeData->find(input);
+          if (shape_it != generatedShapeData->cend()) {
+            shape_data = &shape_it->second;
+          }
+        }
+        allShapeInputData_.push_back(shape_data);
       } else {
         allInputData_.push_back(nullptr);
         const auto inputSparseDataIter = inputSparseDataByName.find(input);
@@ -215,6 +253,24 @@ struct InferenceContextImpl : public InferenceContext {
     return allInputTypes_[index];
   }
 
+  bool hasInput(size_t index) const override {
+    if (node_ == nullptr || index >= static_cast<size_t>(node_->input_size())) {
+      return false;
+    }
+    const std::string& name = node_->input(static_cast<int>(index));
+    if (name.empty()) {
+      return false;
+    }
+    // Inside a function body, a formal parameter is always referenced by its (non-empty) name,
+    // regardless of whether the caller actually provided that optional argument. unboundValueNames_
+    // records which formal parameters were not provided by the caller, so that such references are
+    // correctly reported as structurally absent here too.
+    if (unboundValueNames_ != nullptr && unboundValueNames_->count(name) > 0) {
+      return false;
+    }
+    return true;
+  }
+
   const TensorProto* getInputData(size_t index) const override {
     if (index >= allInputData_.size()) {
       ONNX_THROW("Input " + ONNX_NAMESPACE::to_string(index) + " is out of bounds.");
@@ -246,6 +302,13 @@ struct InferenceContextImpl : public InferenceContext {
       ONNX_THROW("Output " + ONNX_NAMESPACE::to_string(index) + " is out of bounds.");
     }
     return &allOutputTypes_[index];
+  }
+
+  bool hasOutput(size_t index) override {
+    if (node_ == nullptr || index >= static_cast<size_t>(node_->output_size())) {
+      return false;
+    }
+    return !node_->output(static_cast<int>(index)).empty();
   }
 
   GraphInferencer* getGraphAttributeInferencer(const std::string& attr_name) override {
@@ -300,6 +363,7 @@ struct InferenceContextImpl : public InferenceContext {
   mutable std::unordered_map<std::string, std::unique_ptr<GraphInferencer>> graphAttributeInferencers_;
   ShapeInferenceOptions options_;
   NodeProto* node_;
+  const std::unordered_set<std::string>* unboundValueNames_;
 };
 
 struct DataPropagationContextImpl : public DataPropagationContext {
@@ -410,18 +474,18 @@ struct DataPropagationContextImpl : public DataPropagationContext {
       // for future use
       auto [it, inserted] = generatedShapeData_.insert({input_name, std::move(tsp)});
       if (inserted) {
-        return &(it->second);
+        return &it->second;
       }
     }
 
     // If X has a known rank N, then X's value can be represented as an array
     // of N unknown values (represented as a TensorShapeProto).
     const TypeProto* type = getInputType(index);
-    if ((type != nullptr) && (type->has_tensor_type())) {
+    if (type != nullptr && type->has_tensor_type()) {
       const auto& tensor_type = type->tensor_type();
       if (tensor_type.has_shape()) {
         const TensorShapeProto& shape = tensor_type.shape();
-        if ((shape.dim_size() == 1) && (shape.dim(0).has_dim_value())) {
+        if (shape.dim_size() == 1 && shape.dim(0).has_dim_value()) {
           TensorShapeProto tsp;
           int64_t dim_value = shape.dim(0).dim_value();
           for (int64_t i = 0; i < dim_value; ++i) {
@@ -429,7 +493,7 @@ struct DataPropagationContextImpl : public DataPropagationContext {
           }
           auto [it, inserted] = generatedShapeData_.insert({input_name, std::move(tsp)});
           if (inserted) {
-            return &(it->second);
+            return &it->second;
           }
         }
       }
@@ -456,20 +520,13 @@ struct DataPropagationContextImpl : public DataPropagationContext {
   std::unordered_map<std::string, const AttributeProto*> attributesByName_;
 };
 
-void checkShapesAndTypes(const TypeProto_Sequence& inferredType, const TypeProto_Sequence& existingType);
-
 void checkShapesAndTypes(const TypeProto& inferred_type, const TypeProto& existing_type);
-
-template <typename TensorTypeProto>
-void GenerateSymbolicShape(TensorTypeProto* inferred_type, SymbolTable& symbol_table);
 
 void MaterializeSymbolicShape(TypeProto* inferred_type, SymbolTable& symbol_table);
 
 void mergeShapesAndTypes(const TypeProto_Tensor& inferred_type, TypeProto_Tensor* existing_type);
 
 void mergeShapesAndTypes(const TypeProto_SparseTensor& inferred_type, TypeProto_SparseTensor* existing_type);
-
-void mergeShapesAndTypes(const TypeProto_Sequence& inferredType, TypeProto_Tensor* existingType);
 
 void mergeShapesAndTypes(const TypeProto& inferred_type, TypeProto* existing_type);
 
@@ -531,6 +588,12 @@ void InferShapeForFunctionNode(
 /// the attribute values supplied.
 /// A TypeProto with value_case() == TypeProto::ValueCase::VALUE_NOT_SET is used
 /// for missing optional parameters.
+/// Note that input_types plays a dual role here: it is used both to indicate which
+/// of the (optional) inputs of the function are actually present/absent (an input is
+/// considered absent iff its entry has value_case() == TypeProto::ValueCase::VALUE_NOT_SET),
+/// and, for each present input, to convey its type. Consequently, this API has no way to
+/// represent an input that is present but whose type is unknown: such an input is
+/// indistinguishable, from this API's perspective, from one that is simply absent.
 ///
 std::vector<TypeProto> InferFunctionOutputTypes(
     const FunctionProto& function_proto,
@@ -541,5 +604,4 @@ std::string GetErrorWithNodeInfo(const NodeProto& n, const std::runtime_error& e
 
 void TraverseGraphsToAddExistingSymbols(const GraphProto& g, SymbolTable& symbol_table);
 
-} // namespace shape_inference
-} // namespace ONNX_NAMESPACE
+} // namespace ONNX_NAMESPACE::shape_inference

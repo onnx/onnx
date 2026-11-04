@@ -7,8 +7,6 @@
 #include <string>
 #include <vector>
 
-#include "onnx/defs/tensor_proto_util.h"
-
 namespace ONNX_NAMESPACE {
 
 void ClearShape(TypeProto& input_type) {
@@ -17,12 +15,12 @@ void ClearShape(TypeProto& input_type) {
   } else if (input_type.has_sequence_type()) {
     auto& seq_type = *input_type.mutable_sequence_type();
     if (seq_type.has_elem_type()) {
-      ClearShape(*(seq_type.mutable_elem_type()));
+      ClearShape(*seq_type.mutable_elem_type());
     }
   } else if (input_type.has_optional_type()) {
     auto& opt_type = *input_type.mutable_optional_type();
     if (opt_type.has_elem_type()) {
-      ClearShape(*(opt_type.mutable_elem_type()));
+      ClearShape(*opt_type.mutable_elem_type());
     }
   }
 }
@@ -186,15 +184,8 @@ void LoopInferenceFunction(InferenceContext& ctx) {
 
           mutable_inferred_shape->clear_dim();
 
-          // add dimension for number of iterations — use trip_count if available
-          auto* trip_dim = mutable_inferred_shape->add_dim();
-          const TensorProto* trip_count_data = ctx.getInputData(0);
-          if (trip_count_data != nullptr && trip_count_data->data_type() == TensorProto::INT64) {
-            const auto trip_values = ParseData<int64_t>(trip_count_data);
-            if (trip_values.size() == 1 && trip_values[0] >= 0) {
-              trip_dim->set_dim_value(trip_values[0]);
-            }
-          }
+          // trip_count is only an upper bound: the loop can exit early.
+          mutable_inferred_shape->add_dim();
 
           // add dimensions from subgraph output shape
           for (const auto& dim : subgraph_output_type->tensor_type().shape().dim()) {
@@ -208,18 +199,36 @@ void LoopInferenceFunction(InferenceContext& ctx) {
   }
 }
 
-int handle_negative_axis_validate(const std::string& attrib, int axis, int rank) {
+int handle_negative_axis_validate(std::string_view attrib, int axis, int rank) {
   if (-rank > axis || axis >= rank) {
     fail_shape_inference(attrib, " axis value ", axis, " is invalid for a tensor of rank ", rank);
   }
   return (axis >= 0 ? axis : axis + rank);
 }
 
+size_t ValidateScanCountsAndGetNumLoopStateVars(size_t num_inputs, size_t num_scan_inputs, size_t num_outputs) {
+  // Guard the subtractions below against underflow.
+  if (num_scan_inputs > num_inputs) {
+    fail_shape_inference(
+        "num_scan_inputs (", num_scan_inputs, ") cannot exceed the number of Scan inputs (", num_inputs, ").");
+  }
+  size_t num_loop_state_vars = num_inputs - num_scan_inputs;
+  if (num_loop_state_vars > num_outputs) {
+    fail_shape_inference(
+        "The number of outputs of the Scan (",
+        num_outputs,
+        ") should equal the sum of the number of loop state variables (",
+        num_loop_state_vars,
+        ") and the number of scan-outputs.");
+  }
+  return num_loop_state_vars;
+}
+
 void ScanInferenceFunction(InferenceContext& ctx) {
   auto num_inputs = ctx.getNumInputs();
-  auto num_scan_inputs = narrow_cast<size_t>(ctx.getAttribute("num_scan_inputs")->i());
-  auto num_loop_state_vars = num_inputs - num_scan_inputs;
+  auto num_scan_inputs = narrow<size_t>(getRequiredAttributeInt(ctx, "num_scan_inputs"));
   auto num_outputs = ctx.getNumOutputs();
+  auto num_loop_state_vars = ValidateScanCountsAndGetNumLoopStateVars(num_inputs, num_scan_inputs, num_outputs);
   auto num_scan_outputs = num_outputs - num_loop_state_vars;
 
   std::vector<int64_t> axes, output_axes;
@@ -360,10 +369,10 @@ void ScanInferenceFunction(InferenceContext& ctx) {
           output_axis = handle_negative_axis_validate("scan_output_axes", output_axis, output_rank);
 
           for (int j = 0; j < output_axis; ++j)
-            *(inferred_shape.add_dim()) = subgraph_output_shape.dim(j);
-          *(inferred_shape.add_dim()) = sequence_len_dim;
+            *inferred_shape.add_dim() = subgraph_output_shape.dim(j);
+          *inferred_shape.add_dim() = sequence_len_dim;
           for (int j = output_axis; j < subgraph_output_rank; ++j)
-            *(inferred_shape.add_dim()) = subgraph_output_shape.dim(j);
+            *inferred_shape.add_dim() = subgraph_output_shape.dim(j);
 
           // Merge inferred shape with existing shape information
           mergeInShapeInfo(inferred_shape, *mutable_scan_output_tensor_type);

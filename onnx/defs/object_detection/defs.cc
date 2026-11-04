@@ -6,16 +6,15 @@
 
 #include "onnx/defs/doc_strings.h"
 #include "onnx/defs/schema.h"
+#include "onnx/defs/type_builders.h"
 
 namespace ONNX_NAMESPACE {
-
-static const char* const RoiAlign_ver22_doc = kDoc_RoiAlign_ver16;
 
 ONNX_OPERATOR_SET_SCHEMA(
     RoiAlign,
     22,
     OpSchema()
-        .SetDoc(RoiAlign_ver22_doc)
+        .SetDoc(kDoc_RoiAlign_ver16)
         .Attr(
             "spatial_scale",
             "Multiplicative spatial scale factor to translate ROI coordinates "
@@ -80,38 +79,27 @@ ONNX_OPERATOR_SET_SCHEMA(
             "is a pooled feature map corresponding to the r-th RoI X[r-1].",
             "T1")
         .TypeConstraint("T1", OpSchema::all_float_types_ir4(), "Constrain types to float tensors.")
-        .TypeConstraint("T2", {"tensor(int64)"}, "Constrain types to int tensors.")
+        .TypeConstraint("T2", {types::Int64}, "Constrain types to int tensors.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           propagateElemTypeFromInputToOutput(ctx, 0, 0);
 
           size_t input_param = 0, rois_param = 1, batch_index_param = 2;
 
-          checkInputRank(ctx, input_param, 4);
-          checkInputRank(ctx, rois_param, 2);
-          checkInputRank(ctx, batch_index_param, 1);
+          // X: [N, C, H, W], rois: [num_rois, 4], batch_indices: [num_rois]
+          Dim N, C, H, W, num_rois, four;
+          four.set_dim_value(4);
 
-          // Output dimensions, initialized to an unknown-dimension-value
-          Dim num_rois, C, ht, width;
+          ctx.unifyInputShape(input_param, {N, C, H, W});
+          ctx.unifyInputShape(rois_param, {num_rois, four});
+          ctx.unifyInputShape(batch_index_param, {num_rois});
 
-          // Get value of C from dim 1 of input_param, if available
-          unifyInputDim(ctx, input_param, 1, C);
-
-          // Get value of num_rois from dim 0 of rois_param, if available
-          unifyInputDim(ctx, rois_param, 0, num_rois);
-          // ... or from dim 0 of batch_index_param, if available
-          unifyInputDim(ctx, batch_index_param, 0, num_rois);
-
-          // Get height from attribute, using default-value of 1
+          Dim ht, width;
           unifyDim(ht, getAttribute(ctx, "output_height", 1));
-
-          // Get width from attribute, using default-value of 1
           unifyDim(width, getAttribute(ctx, "output_width", 1));
 
-          // set output shape:
+          // output: [num_rois, C, output_height, output_width]
           updateOutputShape(ctx, 0, {num_rois, C, ht, width});
         }));
-
-static const char* const NonMaxSuppression_ver11_doc = kDoc_NonMaxSuppression_ver10;
 
 ONNX_OPERATOR_SET_SCHEMA(
     NonMaxSuppression,
@@ -154,7 +142,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "1 - the box data is supplied as [x_center, y_center, width, height]. Mostly used for Pytorch models.",
             AttributeProto::INT,
             static_cast<int64_t>(0))
-        .SetDoc(NonMaxSuppression_ver11_doc)
+        .SetDoc(kDoc_NonMaxSuppression_ver10)
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           // Type inference - Output is always of type INT64
           auto selected_indices_type = ctx.getOutputType(0)->mutable_tensor_type();

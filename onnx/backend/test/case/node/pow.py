@@ -10,7 +10,7 @@ from onnx.backend.test.case.base import Base
 from onnx.backend.test.case.node import expect
 
 
-def pow(x, y):  # type: ignore  # noqa: A001
+def pow(x: np.ndarray, y: np.ndarray) -> np.ndarray:  # noqa: A001
     return np.power(x, y).astype(x.dtype)
 
 

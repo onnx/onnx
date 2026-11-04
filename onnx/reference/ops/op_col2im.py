@@ -6,7 +6,7 @@ from __future__ import annotations
 import numpy as np
 
 from onnx.reference.op_run import OpRun
-from onnx.reference.ops._op_common_indices import _get_indices, _is_out
+from onnx.reference.ops._op_common_indices import _get_indices
 
 
 def _col2im_shape_check_2d(X, output_shape, kernel_shape, dilations, pads, strides):
@@ -165,21 +165,21 @@ def col2im_naive_implementation(
         dim_col.append(col)
 
     kernel_size = np.prod(kernel_shape)
-    col_size = np.prod(dim_col)
     for c_col in range(kernel_size):
         offset = _get_indices(c_col, kernel_shape)
 
-        for col in range(col_size):
-            ind_col = _get_indices(col, dim_col)
-            ind_im = []
-            for i in range(n_dims):
-                ind = (
-                    ind_col[i] * strides[i] - new_pads[i, 0] + offset[i] * dilations[i]
-                )
-                ind_im.append(ind)
+        # Column j along dimension i maps to image index first + j * stride,
+        # keep only the columns [lo, hi) landing inside the image.
+        ind_im, ind_col = [], []
+        for i in range(n_dims):
+            stride = int(strides[i])
+            first = int(offset[i] * dilations[i] - new_pads[i, 0])
+            lo = max(0, -(first // stride))
+            hi = max(lo, min(dim_col[i], (image_shape[i] - 1 - first) // stride + 1))
+            ind_im.append(slice(first + lo * stride, first + hi * stride, stride))
+            ind_col.append(slice(lo, hi))
 
-            if not _is_out(ind_im, data_im.shape):
-                data_im[tuple(ind_im)] += data_col[c_col, col]
+        data_im[tuple(ind_im)] += data_col[c_col].reshape(dim_col)[tuple(ind_col)]
 
     return data_im
 
@@ -195,7 +195,7 @@ class Col2Im(OpRun):
         if strides is None:
             strides = [1 for s in image_shape]
 
-        bl = np.prod(block_shape)
+        bl = np.prod(block_shape, dtype=np.int64)
         C = data.shape[1] // bl
         data = data.reshape((*data.shape[:1], C, bl, *data.shape[2:]))
 

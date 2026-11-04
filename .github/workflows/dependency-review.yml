@@ -13,10 +13,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: 'Checkout Repository'
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
-          submodules: recursive
           persist-credentials: false
 
       - name: 'Dependency Review'
-        uses: actions/dependency-review-action@98884d411b0f1c583e5ee579e7e897d4623019c2
+        uses: actions/dependency-review-action@907a6e9569212033966bc0b69d32473b046dd66b

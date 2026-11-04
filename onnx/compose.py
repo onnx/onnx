@@ -224,6 +224,9 @@ def merge_graphs(
             for attr in node.attribute:
                 if attr.type == AttributeProto.GRAPH:
                     connect_io(attr.g, 0, len(attr.g.node))
+                elif attr.type == AttributeProto.GRAPHS:
+                    for sub_g in attr.graphs:
+                        connect_io(sub_g, 0, len(sub_g.node))
 
             for index, name_ in enumerate(node.input):
                 if name_ in reversed_io_map:
@@ -276,7 +279,7 @@ def merge_graphs(
         ]
     )
 
-    g.name = name if name is not None else "_".join([g1.name, g2.name])
+    g.name = name if name is not None else f"{g1.name}_{g2.name}"
 
     if doc_string is None:
         doc_string = (
@@ -510,10 +513,12 @@ def add_prefix_graph(
         for n in g.node:
             n.name = _prefixed(prefix, n.name)
             for attribute in n.attribute:
-                if attribute.g:
+                if attribute.HasField("g"):
                     add_prefix_graph(
                         attribute.g, prefix, inplace=True, name_map=name_map
                     )
+                for sub_g in attribute.graphs:
+                    add_prefix_graph(sub_g, prefix, inplace=True, name_map=name_map)
 
     if rename_initializers:
         for init in g.initializer:
@@ -706,7 +711,8 @@ def expand_out_dim_graph(
             )
         )
         new_shape = [d.dim_value for d in o.type.tensor_type.shape.dim]
-        new_shape.insert(dim_idx, 1)
+        # Unsqueeze resolves a negative axis against the output rank (input rank + 1)
+        new_shape.insert(dim_idx if dim_idx >= 0 else len(new_shape) + dim_idx + 1, 1)
         g.output.append(
             helper.make_tensor_value_info(
                 o.name, o.type.tensor_type.elem_type, new_shape

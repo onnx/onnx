@@ -2,60 +2,48 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
-name: Test source dist of preview build at onnx-weekly
+name: Test source distribution build
 
 on:
   schedule:
     - cron:  '0 0 * * 2'
   workflow_call:
-    inputs:
-      os:
-        required: true
-        type: string
   workflow_dispatch:
-    inputs:
-      os:
-        required: true
-        type: string
 
 permissions:
   contents: read
 
 jobs:
 
-  test_sdist_preview:
+  test_sdist:
 
     strategy:
       matrix:
-        os: [ubuntu-24.04, ubuntu-22.04, windows-latest]
-        python-version: ['3.10','3.12']
-        target-architecture: ['arm64', 'x86_64']
+        os: [ubuntu-24.04, windows-latest]
+        python-version: ['3.11', '3.12', '3.13']
       fail-fast: false
     runs-on: ${{ matrix.os }}
 
     steps:
 
         - name: Checkout repository
-          uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+          uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
           with:
-            submodules: 'recursive'
             persist-credentials: false
 
-        - name: Test preview build source distribution from PyPI
-          if: (github.event_name == 'workflow_dispatch' || github.event_name == 'schedule')
-          run: |
-            python -m pip uninstall -y onnx-weekly
-            python -m pip install --upgrade pip
-            python -m pip install setuptools
-            python -m pip install --use-deprecated=legacy-resolver --no-binary onnx-weekly onnx-weekly
-            python -m pip install pytest ml_dtypes pillow parameterized
-            pytest
+        - name: Set up Python ${{ matrix.python-version }}
+          uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+          with:
+            python-version: ${{ matrix.python-version }}
 
-        - name: Test preview build source distribution from test.PyPI
-          if: (github.event_name == 'workflow_dispatch' || github.event_name == 'schedule')
+        - name: Build and install source distribution from this checkout
+          shell: bash
           run: |
-            python -m pip uninstall -y onnx-weekly
-            python -m pip install setuptools
-            python -m pip install -i https://test.pypi.org/pypi/ --use-deprecated=legacy-resolver --no-binary onnx-weekly onnx-weekly
-            python -m pip install pytest ml_dtypes pillow parameterized
-            pytest
+            python -m pip install --upgrade pip
+            python -m pip install build
+            python -m build --sdist
+            python -m pip install dist/*.tar.gz
+            python -m pip install pytest pillow
+
+        - name: Run tests
+          run: pytest

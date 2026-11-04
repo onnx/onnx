@@ -7,13 +7,121 @@
 
 #include "onnx/defs/parser.h"
 
-#include <cctype>
+// POSIX locale extensions (newlocale, freelocale, strtof_l, strtod_l) are used
+// to parse floating-point literals independently of the global locale.
+#include <locale.h> // NOLINT(modernize-deprecated-headers)
+
+#include <cerrno>
+#include <charconv>
+#include <cmath>
+#include <cstdlib>
 #include <limits>
+#include <locale>
 #include <string>
 #include <string_view>
+#include <system_error>
 #include <unordered_map>
 
 #include "onnx/common/common.h"
+
+// Use from_chars where available; older standard libraries use the C locale.
+// Numeric conversion errors are reported without throwing.
+
+namespace {
+
+struct CLocale {
+  CLocale() = default;
+#ifdef _WIN32
+  _locale_t loc = _create_locale(LC_ALL, "C");
+  ~CLocale() {
+    if (loc)
+      _free_locale(loc);
+  }
+#else
+  locale_t loc = newlocale(LC_ALL_MASK, "C", nullptr);
+  ~CLocale() {
+    if (loc)
+      freelocale(loc);
+  }
+#endif
+  CLocale(const CLocale&) = delete;
+  CLocale& operator=(const CLocale&) = delete;
+};
+
+const CLocale& GetCLocale() {
+  static const CLocale instance;
+  return instance;
+}
+
+bool TryParseFloat(std::string_view s, float& value) {
+  float parsed = 0.0f;
+#if defined(__cpp_lib_to_chars) && __cpp_lib_to_chars >= 201611L
+  const char* last = s.data() + s.size();
+  // from_chars uses an explicit end pointer, not a NUL terminator.
+  // NOLINTNEXTLINE(bugprone-suspicious-stringview-data-usage)
+  const auto result = std::from_chars(s.data(), last, parsed);
+  if (result.ec == std::errc{} && result.ptr == last) {
+    value = parsed;
+    return true;
+  }
+  if (result.ec != std::errc::result_out_of_range || result.ptr != last)
+    return false;
+#endif
+  // Recover the rounded zero or subnormal on a range error; reject overflow.
+  const auto& cloc = GetCLocale();
+  if (!cloc.loc)
+    return false;
+  const std::string text(s); // strto*_l requires a NUL-terminated buffer.
+  char* end = nullptr;
+  errno = 0;
+#ifdef _WIN32
+  parsed = _strtof_l(text.c_str(), &end, cloc.loc);
+#else
+  parsed = strtof_l(text.c_str(), &end, cloc.loc);
+#endif
+  if (end == text.c_str() || end != text.c_str() + text.size())
+    return false;
+  if (errno == ERANGE && std::isinf(parsed))
+    return false;
+  value = parsed;
+  return true;
+}
+
+bool TryParseFloat(std::string_view s, double& value) {
+  double parsed = 0.0;
+#if defined(__cpp_lib_to_chars) && __cpp_lib_to_chars >= 201611L
+  const char* last = s.data() + s.size();
+  // from_chars uses an explicit end pointer, not a NUL terminator.
+  // NOLINTNEXTLINE(bugprone-suspicious-stringview-data-usage)
+  const auto result = std::from_chars(s.data(), last, parsed);
+  if (result.ec == std::errc{} && result.ptr == last) {
+    value = parsed;
+    return true;
+  }
+  if (result.ec != std::errc::result_out_of_range || result.ptr != last)
+    return false;
+#endif
+  // Recover the rounded zero or subnormal on a range error; reject overflow.
+  const auto& cloc = GetCLocale();
+  if (!cloc.loc)
+    return false;
+  const std::string text(s); // strto*_l requires a NUL-terminated buffer.
+  char* end = nullptr;
+  errno = 0;
+#ifdef _WIN32
+  parsed = _strtod_l(text.c_str(), &end, cloc.loc);
+#else
+  parsed = strtod_l(text.c_str(), &end, cloc.loc);
+#endif
+  if (end == text.c_str() || end != text.c_str() + text.size())
+    return false;
+  if (errno == ERANGE && std::isinf(parsed))
+    return false;
+  value = parsed;
+  return true;
+}
+
+} // anonymous namespace
 
 #define PARSE_TOKEN(x) CHECK_PARSER_STATUS(ParserBase::Parse(x))
 #define PARSE(...) CHECK_PARSER_STATUS(Parse(__VA_ARGS__))
@@ -21,63 +129,65 @@
 
 namespace ONNX_NAMESPACE {
 
+Common::Status ParserBase::Parse(float& val) {
+  Literal literal;
+  CHECK_PARSER_STATUS(Parse(literal));
+  if (literal.type != LiteralType::INT_LITERAL && literal.type != LiteralType::FLOAT_LITERAL)
+    return ParseError("Unexpected literal type.");
+  if (!TryParseFloat(literal.value, val))
+    return ParseError("Invalid floating-point literal: ", literal.value);
+  return Common::Status::OK();
+}
+
+Common::Status ParserBase::Parse(double& val) {
+  Literal literal;
+  CHECK_PARSER_STATUS(Parse(literal));
+  if (literal.type != LiteralType::INT_LITERAL && literal.type != LiteralType::FLOAT_LITERAL)
+    return ParseError("Unexpected literal type.");
+  if (!TryParseFloat(literal.value, val))
+    return ParseError("Invalid floating-point literal: ", literal.value);
+  return Common::Status::OK();
+}
+
 Common::Status ParserBase::Parse(Literal& result) {
   bool decimal_point = false;
   auto nextch = NextChar();
-  const auto* from = next_;
+  size_t from = pos_;
   if (nextch == '"') {
-    ++next_;
-    bool has_escape = false;
-    while ((next_ < end_) && (*next_ != '"')) {
-      if (*next_ == '\\') {
-        has_escape = true;
-        ++next_;
-        if (next_ >= end_)
-          return ParseError("Incomplete string literal.");
-      }
-      ++next_;
+    ++pos_;
+    while (!AtEnd()) {
+      pos_ = std::min(input_.find_first_of("\\\"", pos_), input_.size());
+      if (AtEnd() || Cur() == '"')
+        break;
+      // A backslash escapes the following character, including a quote or backslash.
+      pos_ = std::min(pos_ + 2, input_.size());
     }
-    if (next_ >= end_)
+    if (AtEnd())
       return ParseError("Incomplete string literal.");
-    ++next_;
+    ++pos_;
     result.type = LiteralType::STRING_LITERAL;
-    if (has_escape) {
-      std::string& target = result.value;
-      target.clear();
-      target.reserve(next_ - from - 2); // upper bound
-      // *from is the starting quote. *(next_-1) is the ending quote.
-      // Copy what is in-between, except for the escape character
-      while (++from < next_ - 1) {
-        // Copy current char, if not escape, or next char otherwise.
-        target.push_back(*from != '\\' ? (*from) : *(++from));
-      }
-    } else {
-      result.value = std::string(from + 1, next_ - from - 2); // skip enclosing quotes
-    }
+    result.value = input_.substr(from + 1, pos_ - from - 2); // skip enclosing quotes
     return Common::Status::OK();
   }
 
   // Simplify the next ifs by consuming a possible negative sign.
   if (nextch == '-') {
-    ++next_;
+    ++pos_;
     nextch = NextChar();
   }
 
   // Check for float literals that start with alphabet characters.
-  if (isalpha(nextch)) {
+  if (IsAlpha(nextch)) {
     // Has to be a special float literal now: (-)*(nan|inf|infinity).
     if (NextIsValidFloatString()) {
-      while (next_ < end_ && isalpha(*next_)) {
-        ++next_;
+      while (!AtEnd() && IsAlpha(Cur())) {
+        ++pos_;
       }
-      ONNX_TRY {
-        static_cast<void>(std::stof(std::string(from, next_ - from)));
-        result.type = LiteralType::FLOAT_LITERAL;
-        result.value = std::string(from, next_ - from);
-      }
-      ONNX_CATCH(...) {
-        ONNX_HANDLE_EXCEPTION([&]() { return ParseError("Encountered invalid float literal!"); });
-      }
+      float value = 0.0f;
+      result.value = input_.substr(from, pos_ - from);
+      if (!TryParseFloat(result.value, value))
+        return ParseError("Encountered invalid float literal!");
+      result.type = LiteralType::FLOAT_LITERAL;
     } else {
       return ParseError("Encountered invalid float literal!");
     }
@@ -85,32 +195,32 @@ Common::Status ParserBase::Parse(Literal& result) {
   }
 
   // Checking for numeric ints or float literal.
-  if (isdigit(nextch)) {
-    ++next_;
+  if (IsDigit(nextch)) {
+    ++pos_;
 
-    while ((next_ < end_) && (isdigit(*next_) || (*next_ == '.'))) {
-      if (*next_ == '.') {
+    while (!AtEnd() && (IsDigit(Cur()) || (Cur() == '.'))) {
+      if (Cur() == '.') {
         if (decimal_point)
           break; // Only one decimal point allowed in numeric literal
         decimal_point = true;
       }
-      ++next_;
+      ++pos_;
     }
 
-    if (next_ == from)
+    if (pos_ == from)
       return ParseError("Value expected but not found.");
 
     // Optional exponent syntax: (e|E)(+|-)?[0-9]+
-    if ((next_ < end_) && ((*next_ == 'e') || (*next_ == 'E'))) {
+    if (!AtEnd() && ((Cur() == 'e') || (Cur() == 'E'))) {
       decimal_point = true; // treat as float-literal
-      ++next_;
-      if ((next_ < end_) && ((*next_ == '+') || (*next_ == '-')))
-        ++next_;
-      while ((next_ < end_) && (isdigit(*next_)))
-        ++next_;
+      ++pos_;
+      if (!AtEnd() && ((Cur() == '+') || (Cur() == '-')))
+        ++pos_;
+      while (!AtEnd() && IsDigit(Cur()))
+        ++pos_;
     }
 
-    result.value = std::string(from, next_ - from);
+    result.value = input_.substr(from, pos_ - from);
     result.type = decimal_point ? LiteralType::FLOAT_LITERAL : LiteralType::INT_LITERAL;
   }
   return Common::Status::OK();
@@ -118,30 +228,27 @@ Common::Status ParserBase::Parse(Literal& result) {
 
 bool ParserBase::NextIsValidFloatString() {
   auto nextch = NextChar();
-  const auto* const from = next_;
+  const size_t from = pos_;
   constexpr int INFINITY_LENGTH = 8;
 
-  if (isalpha(nextch)) {
-    while (next_ < end_ && isalpha(*next_) && (next_ - from) <= INFINITY_LENGTH) {
-      ++next_;
+  if (IsAlpha(nextch)) {
+    while (!AtEnd() && IsAlpha(Cur()) && (pos_ - from) <= INFINITY_LENGTH) {
+      ++pos_;
     }
 
-    if (isdigit(*next_)) { // No trailing digits
-      next_ = from;
+    if (!AtEnd() && IsDigit(Cur())) { // No trailing digits
+      pos_ = from;
       return false;
     }
 
-    std::string candidate = std::string(from, next_ - from);
-
-    // Reset parser location before continuing.
-    next_ = from;
-
-    std::transform(
-        candidate.begin(), candidate.end(), candidate.begin(), [](unsigned char c) { return std::tolower(c); });
-    if (candidate == std::string_view("inf") || candidate == std::string_view("infinity") ||
-        candidate == std::string_view("nan")) {
-      return true;
-    }
+    const auto candidate = input_.substr(from, pos_ - from);
+    pos_ = from;
+    const auto matches = [candidate](std::string_view expected) {
+      return std::equal(candidate.begin(), candidate.end(), expected.begin(), expected.end(), [](char a, char b) {
+        return std::tolower(a, std::locale::classic()) == b;
+      });
+    };
+    return matches("inf") || matches("infinity") || matches("nan");
   }
   return false;
 }
@@ -192,10 +299,11 @@ Common::Status OnnxParser::Parse(IdList& idlist, AttrList& attrlist) {
     std::string id;
     CHECK_PARSER_STATUS(ParseQuotableIdentifier(id));
     auto next = NextChar();
-    if (next == ':' || next == '=')
-      Parse(*attrlist.Add(), id);
-    else
+    if (next == ':' || next == '=') {
+      CHECK_PARSER_STATUS(Parse(*attrlist.Add(), id));
+    } else {
       *idlist.Add() = id;
+    }
   } while (Matches(','));
   return Common::Status::OK();
 }
@@ -216,6 +324,11 @@ Common::Status OnnxParser::Parse(TensorShapeProto& shape) {
   do {
     if (Matches('?')) {
       shape.add_dim();
+    } else if (NextChar() == '"') {
+      // Check for a quoted string as symbolic dim ...
+      std::string id;
+      CHECK_PARSER_STATUS(ParserBase::Parse(id));
+      shape.add_dim()->set_dim_param(id);
     } else {
       // Check for a symbolic identifier ...
       auto id = ParseOptionalIdentifier();
@@ -233,6 +346,11 @@ Common::Status OnnxParser::Parse(TensorShapeProto& shape) {
 }
 
 Common::Status OnnxParser::Parse(TypeProto& typeProto) {
+  if (recursion_depth_ >= kMaxRecursionDepth) {
+    return ParseError("Maximum parser recursion depth of ", kMaxRecursionDepth, " exceeded.");
+  }
+  RecursionDepthGuard recursion_guard(recursion_depth_);
+
   std::string id;
   CHECK_PARSER_STATUS(ParseIdentifier(id));
   int dtype = PrimitiveTypeNameMap::Lookup(id);
@@ -251,7 +369,7 @@ Common::Status OnnxParser::Parse(TypeProto& typeProto) {
       }
     } else {
       // Create shape with zero dimensions for scalar
-      (void)(tensortype->mutable_shape());
+      (void)tensortype->mutable_shape();
     }
   } else {
     switch (KeyWordMap::Lookup(id)) {
@@ -306,12 +424,46 @@ Common::Status OnnxParser::Parse(TypeProto& typeProto) {
             }
           } else {
             // Create shape with zero dimensions for scalar
-            (void)(sparsetype->mutable_shape());
+            (void)sparsetype->mutable_shape();
           }
         } else {
           return ParseError("Unexpected type in sparse-tensor element type.");
         }
         MATCH(')');
+        break;
+      }
+      case KeyWordMap::KeyWord::OPAQUE_TYPE: {
+        // Grammar: opaque ( )
+        //          opaque ( name )
+        //          opaque ( domain , name )
+        // The optional domain (like a node's domain) may itself be a
+        // dot-separated identifier (e.g., "ai.onnx.ml"). To avoid requiring
+        // unbounded look-ahead, a single dot-separated identifier before
+        // ')' is treated as the (domain-less) name -- matching the
+        // convention used by Utils::DataTypeUtils::FromString/ToString.
+        MATCH('(');
+        auto* opaquetype = typeProto.mutable_opaque_type();
+        opaquetype->clear_domain();
+        opaquetype->clear_name();
+        if (!Matches(')')) {
+          std::string domain_or_name;
+          CHECK_PARSER_STATUS(ParseIdentifier(domain_or_name));
+          while (Matches('.')) {
+            std::string next_component;
+            CHECK_PARSER_STATUS(ParseIdentifier(next_component));
+            domain_or_name += '.';
+            domain_or_name += next_component;
+          }
+          if (Matches(',')) {
+            opaquetype->set_domain(domain_or_name);
+            std::string name;
+            CHECK_PARSER_STATUS(ParseIdentifier(name));
+            opaquetype->set_name(name);
+          } else {
+            opaquetype->set_name(domain_or_name);
+          }
+          MATCH(')');
+        }
         break;
       }
       default:
@@ -378,22 +530,21 @@ Common::Status OnnxParser::ParseFunctionInputOutput(IdList& idlist, ValueInfoLis
 // The value-info is added to the "inputs", while the initializer is added to initializers.
 Common::Status OnnxParser::ParseInput(ValueInfoList& inputs, TensorList& initializers) {
   inputs.Clear();
-  if (Matches('(')) {
-    if (!Matches(')')) {
-      do {
-        ValueInfoProto vi;
-        PARSE(vi);
-        *inputs.Add() = vi;
-        if (Matches('=')) {
-          // default value for input
-          TensorProto& tp = *initializers.Add();
-          tp.set_name(vi.name());
-          CHECK_PARSER_STATUS(Parse(tp, vi.type()));
-        }
-      } while (Matches(','));
-      MATCH(')');
-    }
+  if (Matches('(') && !Matches(')')) {
+    do {
+      ValueInfoProto vi;
+      PARSE(vi);
+      *inputs.Add() = vi;
+      if (Matches('=')) {
+        // default value for input
+        TensorProto& tp = *initializers.Add();
+        tp.set_name(vi.name());
+        CHECK_PARSER_STATUS(Parse(tp, vi.type()));
+      }
+    } while (Matches(','));
+    MATCH(')');
   }
+
   return Common::Status::OK();
 }
 
@@ -402,24 +553,23 @@ Common::Status OnnxParser::ParseInput(ValueInfoList& inputs, TensorList& initial
 // A value-info is added to the "value_infos", while an initializer is added to initializers.
 Common::Status OnnxParser::ParseValueInfo(ValueInfoList& value_infos, TensorList& initializers) {
   value_infos.Clear();
-  if (Matches('<')) {
-    if (!Matches('>')) {
-      do {
-        ValueInfoProto vi;
-        PARSE(vi);
-        if (Matches('=')) {
-          // initializer
-          TensorProto& tp = *initializers.Add();
-          tp.set_name(vi.name());
-          CHECK_PARSER_STATUS(Parse(tp, vi.type()));
-        } else {
-          // valueinfo
-          *value_infos.Add() = vi;
-        }
-      } while (Matches(','));
-      MATCH('>');
-    }
+  if (Matches('<') && !Matches('>')) {
+    do {
+      ValueInfoProto vi;
+      PARSE(vi);
+      if (Matches('=')) {
+        // initializer
+        TensorProto& tp = *initializers.Add();
+        tp.set_name(vi.name());
+        CHECK_PARSER_STATUS(Parse(tp, vi.type()));
+      } else {
+        // valueinfo
+        *value_infos.Add() = vi;
+      }
+    } while (Matches(','));
+    MATCH('>');
   }
+
   return Common::Status::OK();
 }
 
@@ -488,6 +638,8 @@ Common::Status OnnxParser::Parse(TensorProto& tensorProto, const TypeProto& tens
           case TensorProto::DataType::TensorProto_DataType_FLOAT8E4M3FNUZ:
           case TensorProto::DataType::TensorProto_DataType_FLOAT8E5M2:
           case TensorProto::DataType::TensorProto_DataType_FLOAT8E5M2FNUZ:
+          case TensorProto::DataType::TensorProto_DataType_FLOAT6E2M3:
+          case TensorProto::DataType::TensorProto_DataType_FLOAT6E3M2:
           case TensorProto::DataType::TensorProto_DataType_FLOAT8E8M0:
           case TensorProto::DataType::TensorProto_DataType_BOOL:
           case TensorProto::DataType::TensorProto_DataType_FLOAT4E2M1:
@@ -495,8 +647,7 @@ Common::Status OnnxParser::Parse(TensorProto& tensorProto, const TypeProto& tens
             if (intval > std::numeric_limits<int32_t>::max() || intval < std::numeric_limits<int32_t>::min()) {
               return ParseError("Mismatch between data type and value: %d, %d", elem_type, intval);
             }
-            // NOLINTNEXTLINE(bugprone-narrowing-conversions)
-            tensorProto.add_int32_data(intval);
+            tensorProto.add_int32_data(static_cast<int32_t>(intval));
             break;
           case TensorProto::DataType::TensorProto_DataType_INT64:
             PARSE_TOKEN(intval);
@@ -538,18 +689,19 @@ Common::Status OnnxParser::Parse(TensorProto& tensorProto, const TypeProto& tens
 
 bool OnnxParser::NextIsIdentifier() {
   auto id = PeekIdentifier();
-  return !(id.empty());
+  return !id.empty();
 }
 
 bool OnnxParser::NextIsType() {
   auto id = PeekIdentifier();
-  if (PrimitiveTypeNameMap::IsTypeName(id))
+  if (PrimitiveTypeNameMap::Lookup(id) != 0)
     return true;
   switch (KeyWordMap::Lookup(id)) {
     case KeyWordMap::KeyWord::SEQ_TYPE:
     case KeyWordMap::KeyWord::MAP_TYPE:
     case KeyWordMap::KeyWord::OPTIONAL_TYPE:
     case KeyWordMap::KeyWord::SPARSE_TENSOR_TYPE:
+    case KeyWordMap::KeyWord::OPAQUE_TYPE:
       return true;
     default:
       return false;
@@ -559,12 +711,12 @@ bool OnnxParser::NextIsType() {
 Common::Status OnnxParser::ParseSingleAttributeValue(AttributeProto& attr, AttributeProto_AttributeType expected) {
   // Parse a single-value
   auto next = NextChar();
-  if (isalpha(next) || next == '_') {
+  if (IsAlpha(next) || next == '_') {
     if (NextIsType()) {
       TypeProto typeProto;
       CHECK_PARSER_STATUS(Parse(typeProto));
       next = NextChar();
-      if ((next == '{') || (next == '=') || (NextIsIdentifier())) {
+      if ((next == '{') || (next == '=') || NextIsIdentifier()) {
         attr.set_type(AttributeProto_AttributeType_TENSOR);
         auto& tensorProto = *attr.mutable_t();
         CHECK_PARSER_STATUS(ParseOptionalQuotableIdentifier(*tensorProto.mutable_name()));
@@ -576,10 +728,10 @@ Common::Status OnnxParser::ParseSingleAttributeValue(AttributeProto& attr, Attri
       }
     } else {
       if (NextIsValidFloatString()) {
-        Literal literal;
-        PARSE_TOKEN(literal);
+        float value = 0.0f;
+        PARSE_TOKEN(value);
         attr.set_type(AttributeProto_AttributeType_FLOAT);
-        attr.set_f(std::stof(literal.value));
+        attr.set_f(value);
       } else {
         attr.set_type(AttributeProto_AttributeType_GRAPH);
         PARSE(*attr.mutable_g());
@@ -596,32 +748,40 @@ Common::Status OnnxParser::ParseSingleAttributeValue(AttributeProto& attr, Attri
       case LiteralType::UNDEFINED:
         return ParseError("Internal error");
       case LiteralType::INT_LITERAL:
-        attr.set_type(AttributeProto_AttributeType_INT);
-        attr.set_i(std::stol(literal.value));
-        break;
-      case LiteralType::FLOAT_LITERAL:
+        if (expected != AttributeProto_AttributeType_FLOAT) {
+          int64_t value = 0;
+          const char* end = literal.value.data() + literal.value.size();
+          // from_chars uses an explicit end pointer, not a NUL terminator.
+          // NOLINTNEXTLINE(bugprone-suspicious-stringview-data-usage)
+          const auto result = std::from_chars(literal.value.data(), end, value);
+          if (result.ec != std::errc{} || result.ptr != end)
+            return ParseError("Integer literal is invalid or out of range: ", literal.value);
+          attr.set_type(AttributeProto_AttributeType_INT);
+          attr.set_i(value);
+          break;
+        }
+        // Parse explicit float attributes as float to preserve "-0".
+        [[fallthrough]];
+      case LiteralType::FLOAT_LITERAL: {
+        float value = 0.0f;
+        if (!TryParseFloat(literal.value, value))
+          return ParseError("Invalid floating-point literal: ", literal.value);
         attr.set_type(AttributeProto_AttributeType_FLOAT);
-        attr.set_f(std::stof(literal.value));
+        attr.set_f(value);
         break;
+      }
       case LiteralType::STRING_LITERAL:
         attr.set_type(AttributeProto_AttributeType_STRING);
-        attr.set_s(literal.value);
+        literal.DecodeString(*attr.mutable_s());
         break;
     }
   }
   if ((expected != AttributeProto_AttributeType_UNDEFINED) && (expected != attr.type())) {
-    // Mismatch between type-annotation and attribute-value. We do an implicit cast
-    // only in the special case of FLOAT type and integral value like 2
-    if ((expected == AttributeProto_AttributeType_FLOAT) && (attr.type() == AttributeProto_AttributeType_INT)) {
-      attr.set_type(AttributeProto_AttributeType_FLOAT);
-      attr.set_f(static_cast<float>(attr.i()));
-    } else {
-      return ParseError(
-          "Mismatch between expected type ",
-          AttributeProto_AttributeType_Name(expected),
-          " and specified value's type",
-          AttributeProto_AttributeType_Name(attr.type()));
-    }
+    return ParseError(
+        "Mismatch between expected type ",
+        AttributeProto_AttributeType_Name(expected),
+        " and specified value's type",
+        AttributeProto_AttributeType_Name(attr.type()));
   }
   return Common::Status::OK();
 }
@@ -742,7 +902,7 @@ Common::Status OnnxParser::Parse(NodeProto& node) {
   std::string id = ParseOptionalIdentifier();
   while (Matches('.')) {
     if (!domain.empty())
-      domain += ".";
+      domain += '.';
     domain += id;
     CHECK_PARSER_STATUS(ParseIdentifier(id));
   }
@@ -781,6 +941,11 @@ Common::Status OnnxParser::Parse(GraphProto& graph) {
 }
 
 Common::Status OnnxParser::Parse(std::string name, GraphProto& graph) {
+  if (recursion_depth_ >= kMaxRecursionDepth) {
+    return ParseError("Maximum parser recursion depth of ", kMaxRecursionDepth, " exceeded.");
+  }
+  RecursionDepthGuard recursion_guard(recursion_depth_);
+
   graph.set_name(name);
   graph.mutable_initializer()->Clear();
   CHECK_PARSER_STATUS(ParseInput(*graph.mutable_input(), *graph.mutable_initializer()));

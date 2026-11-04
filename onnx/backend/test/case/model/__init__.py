@@ -41,7 +41,6 @@ def expect(
     )
 
 
-# BASE_URL = "https://download.onnxruntime.ai/onnx/models"
 BASE_URL = "onnx/backend/test/data/light/light_%s.onnx"
 
 

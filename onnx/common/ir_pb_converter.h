@@ -35,7 +35,7 @@ class ConvertError final : public std::runtime_error {
   std::string expanded_message_;
 };
 
-#define fail_convert(...) ONNX_THROW_EX(ConvertError(MakeString(__VA_ARGS__)));
+#define fail_convert(...) ONNX_THROW_EX(ConvertError(MakeString(__VA_ARGS__)))
 
 void ExportModelProto(ModelProto* p_m, const std::shared_ptr<Graph>& g);
 

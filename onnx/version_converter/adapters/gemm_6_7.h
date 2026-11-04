@@ -11,8 +11,7 @@
 
 #include "onnx/version_converter/adapters/adapter.h"
 
-namespace ONNX_NAMESPACE {
-namespace version_conversion {
+namespace ONNX_NAMESPACE::version_conversion {
 
 class Gemm_6_7 final : public Adapter {
  public:
@@ -25,6 +24,8 @@ class Gemm_6_7 final : public Adapter {
     const auto& B_shape = inputs[1]->sizes();
     // Determine if C is broadcastable
     const auto& C_shape = inputs[2]->sizes();
+    ONNX_ASSERTM(A_shape.size() == 2, "Gemm input A must have exactly 2 dimensions")
+    ONNX_ASSERTM(B_shape.size() == 2, "Gemm input B must have exactly 2 dimensions")
     // Create (M, N) to input to numpy_unibroadcastable
     std::vector<Dimension> MN;
     if (node->hasAttribute(ktransA) && node->i(ktransA) == 1) {
@@ -51,5 +52,4 @@ class Gemm_6_7 final : public Adapter {
   }
 };
 
-} // namespace version_conversion
-} // namespace ONNX_NAMESPACE
+} // namespace ONNX_NAMESPACE::version_conversion

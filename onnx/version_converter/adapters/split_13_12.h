@@ -13,8 +13,7 @@
 
 #include "onnx/version_converter/adapters/adapter.h"
 
-namespace ONNX_NAMESPACE {
-namespace version_conversion {
+namespace ONNX_NAMESPACE::version_conversion {
 
 class Split_13_12 : public Adapter {
  public:
@@ -28,34 +27,29 @@ class Split_13_12 : public Adapter {
       // No split input provided, nothing to convert
       return node;
     }
+    if (inputs[1]->node()->kind() == kUndefined) {
+      node->removeInput(1);
+      return node;
+    }
     // Get 'split' from initializer or constant operator
     // Identify whether we have a Constant Op or an Initializer
     Value* const_val = inputs[1];
     Node* node_ptr = const_val->node();
     if (node_ptr->kind() == kConstant) {
-      // Get value attribute of kConstant
-      const std::vector<int64_t>& int64s = node_ptr->t(kvalue).int64s();
-      if (int64s.empty()) {
-        // Also handle raw data
-        std::string raw_data = node_ptr->t(kvalue).raw();
-        ONNX_ASSERTM(
-            !raw_data.empty() && raw_data.size() % 8 == 0,
-            "Raw Data must be non-empty and size must be a multiple of 8")
-        int64_t* raw = reinterpret_cast<int64_t*>(raw_data.data());
-        node->is_(ksplit, std::vector<int64_t>(raw, raw + node_ptr->t(kvalue).size_from_dim(0)));
-      } else {
-        node->is_(ksplit, std::forward<const std::vector<int64_t>>(int64s));
-      }
+      node->is_(ksplit, ReadInt64Tensor(node_ptr->t(kvalue)));
       // If Constant node isn't used anywhere else, remove it
       node->removeInput(1);
       if (const_val->uses().empty()) {
         node_ptr->destroy();
       }
     } else {
+      ONNX_ASSERTM(
+          graph->is_constant_initializer(const_val),
+          "Split input must be constant; dynamic inputs and overridable initializers cannot be converted to attributes.")
       // Get Value name, find Initializer with same name
       for (const auto& initializer : graph->initializers()) {
         if (initializer.name() == inputs[1]->uniqueName()) {
-          node->is_(ksplit, std::forward<const std::vector<int64_t>>(initializer.int64s()));
+          node->is_(ksplit, ReadInt64Tensor(initializer));
           node->removeInput(1);
           // Remove initializer
           if (const_val->uses().empty())
@@ -69,5 +63,4 @@ class Split_13_12 : public Adapter {
   }
 };
 
-} // namespace version_conversion
-} // namespace ONNX_NAMESPACE
+} // namespace ONNX_NAMESPACE::version_conversion

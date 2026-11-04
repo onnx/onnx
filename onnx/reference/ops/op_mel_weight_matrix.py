@@ -22,12 +22,12 @@ class MelWeightMatrix(OpRun):
         num_spectrogram_bins = dft_length // 2 + 1
         frequency_bins = np.arange(0, num_mel_bins + 2)
 
-        low_frequency_mel = 2595 * np.log10(1 + lower_edge_hertz / 700)
-        high_frequency_mel = 2595 * np.log10(1 + upper_edge_hertz / 700)
+        low_frequency_mel = 2595 * np.log1p(lower_edge_hertz / 700) / np.log(10)
+        high_frequency_mel = 2595 * np.log1p(upper_edge_hertz / 700) / np.log(10)
         mel_step = (high_frequency_mel - low_frequency_mel) / frequency_bins.shape[0]
 
         frequency_bins = frequency_bins * mel_step + low_frequency_mel
-        frequency_bins = 700 * (np.power(10, (frequency_bins / 2595)) - 1)
+        frequency_bins = 700 * np.expm1(frequency_bins / 2595 * np.log(10))
         frequency_bins = ((dft_length + 1) * frequency_bins) // sample_rate
         frequency_bins = frequency_bins.astype(int)
 

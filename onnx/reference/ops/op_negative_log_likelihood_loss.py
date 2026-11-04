@@ -34,7 +34,7 @@ def _compute_negative_log_likelihood_loss(
             gather_weight = np.where(target == ignore_index, 0, gather_weight).astype(
                 dtype=x.dtype
             )
-    elif ignore_index != -1:
+    elif ignore_index is not None:
         gather_weight = np.where(target == ignore_index, 0, 1).astype(dtype=x.dtype)
 
     # if input is 4-d and above, make it 3-d

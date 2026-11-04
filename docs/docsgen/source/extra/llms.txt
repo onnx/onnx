@@ -1,0 +1,42 @@
+<!--
+Copyright (c) ONNX Project Contributors
+
+SPDX-License-Identifier: Apache-2.0
+-->
+
+# ONNX
+
+> ONNX (Open Neural Network Exchange) is an open standard format for representing
+> machine learning models, with a shared set of operators and a common file format,
+> so models can move between frameworks, runtimes, and hardware. This file indexes
+> the ONNX documentation site for use by AI agents and other automated tools; the
+> canonical, most detailed source for any topic below is the linked page.
+
+## Core specification
+
+- [Operators reference](https://onnx.ai/onnx/operators/index.html): every operator schema, by opset version, with type constraints and (where available) a reference implementation and examples.
+- [IR specification](https://onnx.ai/onnx/repo-docs/IR.html): the intermediate representation — the abstract model for graphs, nodes, and the ONNX file format.
+- [Versioning](https://onnx.ai/onnx/repo-docs/Versioning.html): how the IR version, opset version, and operator set versioning interact, and the compatibility guarantees each gives.
+- [Broadcasting](https://onnx.ai/onnx/repo-docs/Broadcasting.html): the broadcasting rules operators follow for inputs of different shapes.
+- [Shape inference](https://onnx.ai/onnx/repo-docs/ShapeInference.html): how static shape and type inference works, and how to add it for a new operator.
+- [Version converter](https://onnx.ai/onnx/repo-docs/VersionConverter.html): converting a model between opset versions.
+- [Textual syntax](https://onnx.ai/onnx/repo-docs/Syntax.html): the compact text format for authoring ONNX models and function bodies (grammar and API).
+
+## Using ONNX
+
+- [Introduction to ONNX](https://onnx.ai/onnx/intro/index.html): concepts, and examples of producing and consuming ONNX models in Python.
+- [Python API reference](https://onnx.ai/onnx/api/index.html): the `onnx` Python package — protobuf message types, checker, helper, shape inference, and version converter APIs.
+- [Python API overview](https://onnx.ai/onnx/repo-docs/PythonAPIOverview.html): a task-oriented tour of the Python API.
+- [Implementing an ONNX backend](https://onnx.ai/onnx/repo-docs/ImplementingAnOnnxBackend.html): what a runtime needs to implement to support ONNX models, and how to run the backend test suite.
+
+## Contributing
+
+- [Adding a new operator](https://onnx.ai/onnx/repo-docs/AddNewOp.html): the process and requirements for proposing a new ONNX operator.
+- [Contributing guide](https://github.com/onnx/onnx/blob/main/CONTRIBUTING.md): coding style, PR process, and CI expectations for the onnx/onnx repository.
+- [GitHub repository](https://github.com/onnx/onnx): source code, issue tracker, and discussions.
+
+## Optional
+
+- [Changelog](https://github.com/onnx/onnx/blob/main/docs/Changelog.md): per-opset history of every operator schema change.
+- [Test coverage](https://github.com/onnx/onnx/blob/main/docs/TestCoverage.md): which operators and attributes are exercised by the backend test suite.
+- [Technical details](https://onnx.ai/onnx/technical/index.html): notes on specific data types and mechanisms (e.g. low-bit float types, KV cache).

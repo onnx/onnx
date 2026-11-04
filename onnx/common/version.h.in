@@ -1,0 +1,20 @@
+// Copyright (c) ONNX Project Contributors
+//
+// SPDX-License-Identifier: Apache-2.0
+
+// Auto-generated from version.h.in by CMake. Do not edit version.h directly.
+
+#pragma once
+
+#define ONNX_VERSION_MAJOR @ONNX_VERSION_MAJOR@
+#define ONNX_VERSION_MINOR @ONNX_VERSION_MINOR@
+#define ONNX_VERSION_PATCH @ONNX_VERSION_PATCH@
+#define ONNX_VERSION_STRING "@ONNX_VERSION@"
+
+namespace ONNX_NAMESPACE {
+
+// Represents the current ONNX version string for this build.
+// This may be a development or release-candidate version, not necessarily the most recent release.
+constexpr const char* LAST_RELEASE_VERSION = ONNX_VERSION_STRING;
+
+} // namespace ONNX_NAMESPACE

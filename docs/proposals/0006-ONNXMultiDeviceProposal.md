@@ -31,7 +31,7 @@ The key point of this design is that all multi-device specific annotations are a
 
 Sharding refers to modifying a tensor into multiple parts to be sent across multiple devices. A tensor may be sharded across any of its axis.
 
-Modification of a tensor generally falls into two categories: splitting and duplication. A formal description of the sharding rules can be found [here](ShardingFormalism.md).
+Modification of a tensor generally falls into two categories: splitting and duplication. A formal description of the sharding rules can be found [here](0007-ShardingFormalism.md).
 
 #### Sharding as a Split
 
