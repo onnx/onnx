@@ -153,6 +153,7 @@ __all__ = [
     "OptionalGetElement",
     "OptionalHasElement",
     "Or",
+    "Pack",
     "Pad_1",
     "Pad_2",
     "Pad_11",
@@ -259,6 +260,7 @@ __all__ = [
     "Transpose",
     "Trilu",
     "Unique",
+    "Unpack",
     "Unsqueeze_1",
     "Unsqueeze_11",
     "Unsqueeze_13",
@@ -419,6 +421,7 @@ from onnx.reference.ops.op_optional import Optional
 from onnx.reference.ops.op_optional_get_element import OptionalGetElement
 from onnx.reference.ops.op_optional_has_element import OptionalHasElement
 from onnx.reference.ops.op_or import Or
+from onnx.reference.ops.op_pack import Pack
 from onnx.reference.ops.op_pad import Pad_1, Pad_2, Pad_11, Pad_18
 from onnx.reference.ops.op_pow import Pow
 from onnx.reference.ops.op_prelu import PRelu
@@ -509,6 +512,7 @@ from onnx.reference.ops.op_topk import TopK_1, TopK_10, TopK_11
 from onnx.reference.ops.op_transpose import Transpose
 from onnx.reference.ops.op_trilu import Trilu
 from onnx.reference.ops.op_unique import Unique
+from onnx.reference.ops.op_unpack import Unpack
 from onnx.reference.ops.op_unsqueeze import Unsqueeze_1, Unsqueeze_11, Unsqueeze_13
 from onnx.reference.ops.op_upsample import Upsample
 from onnx.reference.ops.op_where import Where

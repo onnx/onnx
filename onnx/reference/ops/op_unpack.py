@@ -1,0 +1,46 @@
+# Copyright (c) ONNX Project Contributors
+#
+# SPDX-License-Identifier: Apache-2.0
+from __future__ import annotations
+
+import numpy as np
+
+from onnx.reference.op_run import OpRun
+from onnx.reference.ops._packing import packing_parameters
+
+
+class Unpack(OpRun):
+    def _run(self, x, count, bits=None, radix=None, group_size=None):
+        radix, group_size, width = packing_parameters(bits, radix, group_size)
+        if x.dtype != np.uint8 or x.ndim == 0:
+            raise ValueError(
+                f"X must be a UINT8 tensor of rank at least 1; got dtype={x.dtype}, shape={x.shape}."
+            )
+        if count.dtype != np.int64 or count.ndim != 0 or count < 0:
+            raise ValueError(
+                f"count must be a nonnegative scalar int64; "
+                f"got dtype={count.dtype}, shape={count.shape}, value={count}."
+            )
+        n = int(count)
+        groups = (n + group_size - 1) // group_size
+        expected_bytes = (groups * width + 7) // 8
+        if x.shape[-1] != expected_bytes:
+            raise ValueError(
+                "Packed last dimension must equal the byte count required by the packing attributes; "
+                f"count={n} requires {expected_bytes} bytes, got {x.shape[-1]}."
+            )
+        result = np.empty((*x.shape[:-1], n), dtype=np.uint8)
+        if x.size == 0:
+            return (result,)
+        for index in np.ndindex(x.shape[:-1]):
+            word = int.from_bytes(x[index].tobytes(), "little")
+            for g in range(groups):
+                code = (word >> (g * width)) & ((1 << width) - 1)
+                if code >= radix**group_size:
+                    raise ValueError(
+                        "Packed group index must be less than radix^group_size."
+                    )
+                for j in range(min(group_size, n - g * group_size)):
+                    result[index][g * group_size + j] = code % radix
+                    code //= radix
+        return (result,)

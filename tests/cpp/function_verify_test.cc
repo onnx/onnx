@@ -142,6 +142,15 @@ struct FunctionOpAttributeMap {
   }
 
   FunctionOpAttributeMap() {
+    for (const char* bits :
+         {"bits = 1", "bits = 2", "bits = 3", "bits = 4", "bits = 5", "bits = 6", "bits = 7", "bits = 8"}) {
+      addTestCase("Pack", 29, {bits});
+      addTestCase("Unpack", 29, {bits});
+    }
+    for (const char* group : {"group_size = 1", "group_size = 5", "group_size = 39"}) {
+      addTestCase("Pack", 29, {"radix = 3", group});
+      addTestCase("Unpack", 29, {"radix = 3", group});
+    }
     addTestCase("Elu", 6, {"alpha = 1.0"});
     addTestCase("LeakyRelu", 16, {"alpha = 0.1"});
     addTestCase("HardSigmoid", 6, {"alpha = 0.2", "beta=0.5"});

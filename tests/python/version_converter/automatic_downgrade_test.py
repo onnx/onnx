@@ -22,6 +22,28 @@ class TestAutomaticDowngrade(automatic_conversion_test_base.TestAutomaticConvers
         mode = "strict_downgrade" if strict_check else "downgrade"
         self._test_op_conversion(op, *args, **kwargs, mode=mode)
 
+    def test_Pack(self) -> None:
+        self._test_op_downgrade(
+            "Pack",
+            29,
+            [[2, 8]],
+            [[2, 3]],
+            [onnx.TensorProto.UINT8],
+            [onnx.TensorProto.UINT8],
+            attrs={"bits": 3},
+        )
+
+    def test_Unpack(self) -> None:
+        self._test_op_downgrade(
+            "Unpack",
+            29,
+            [[2, 3], []],
+            [[2, 8]],
+            [onnx.TensorProto.UINT8, onnx.TensorProto.INT64],
+            [onnx.TensorProto.UINT8],
+            attrs={"bits": 3},
+        )
+
     @pytest.mark.parametrize(
         "op",
         [
