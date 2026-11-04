@@ -12455,7 +12455,7 @@ expect(node, inputs=[x], outputs=[y], name="test_gelu_tanh_2")
 
 
 ### Gemm
-There are 11 test cases, listed as following:
+There are 13 test cases, listed as following:
 <details>
 <summary>all_attributes</summary>
 
@@ -12594,6 +12594,69 @@ b = np.random.ranf([5, 4]).astype(np.float32)
 c = np.zeros([1, 4]).astype(np.float32)
 y = gemm_reference_implementation(a, b, c)
 expect(node, inputs=[a, b, c], outputs=[y], name="test_gemm_default_zero_bias")
+```
+
+</details>
+<details>
+<summary>high_rank_transpose</summary>
+
+```python
+node = onnx.helper.make_node(
+    "Gemm",
+    inputs=["a", "b", "c"],
+    outputs=["y"],
+    transA=1,
+    transB=1,
+    alpha=0.25,
+    beta=0.5,
+)
+a = np.random.ranf((2, 5, 3)).astype(np.float32)
+b = np.random.ranf((7, 5)).astype(np.float32)
+c = np.random.ranf((2, 1, 7)).astype(np.float32)
+y = gemm_reference_implementation(
+    a, b, c, transA=1, transB=1, alpha=0.25, beta=0.5
+)
+expect(
+    node,
+    inputs=[a, b, c],
+    outputs=[y],
+    name="test_gemm_high_rank_transpose",
+    opset_imports=[onnx.helper.make_opsetid("", 29)],
+)
+```
+
+</details>
+<details>
+<summary>linear</summary>
+
+```python
+for shape, suffix in [
+    ((5,), "vector"),
+    ((2, 3, 5), "rank3"),
+    ((2, 3, 4, 5), "rank4"),
+    ((0, 3, 5), "empty_batch"),
+    ((2, 3, 0), "empty_features"),
+]:
+    for has_bias in (False, True):
+        node = onnx.helper.make_node(
+            "Gemm",
+            inputs=["a", "b", "c"] if has_bias else ["a", "b"],
+            outputs=["y"],
+            transB=1,
+        )
+        a = np.random.ranf(shape).astype(np.float32)
+        b = np.random.ranf((7, shape[-1])).astype(np.float32)
+        c = np.random.ranf((7,)).astype(np.float32)
+        y = gemm_reference_implementation(
+            a, b, c if has_bias else None, transB=1
+        )
+        expect(
+            node,
+            inputs=[a, b, c] if has_bias else [a, b],
+            outputs=[y],
+            name=f"test_gemm_linear_{suffix}_{'bias' if has_bias else 'no_bias'}",
+            opset_imports=[onnx.helper.make_opsetid("", 29)],
+        )
 ```
 
 </details>
