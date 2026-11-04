@@ -34466,11 +34466,6 @@ This version of the operator has been available since version 28 of the default 
   The leading dimensions of A' are preserved, including when there are none.
   C must be unidirectionally broadcastable to Y. If C is omitted, it is treated
   as scalar zero. When beta is zero, C does not contribute to the result.
-
-  For example, A of shape (2, 3, 5), B of shape (7, 5), C of shape (7,),
-  and transB=1 produce Y of shape (2, 3, 7). This represents an affine
-  linear layer directly, without reshaping A or separately adding the bias.
-  With rank-1 A of shape (5,), the same B and C produce Y of shape (7,).
   This operator supports **unidirectional broadcasting** (tensor C should be unidirectional broadcastable to tensor A' * B'); for more details please check [the doc](Broadcasting.md).
   This operator has **optional** inputs/outputs. See [the doc](IR.md) for more details about the representation of optional arguments. An empty string may be used in the place of an actual argument's name to indicate a missing argument. Trailing optional arguments (those not followed by an argument that is present) may also be simply omitted.
 

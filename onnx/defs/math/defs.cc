@@ -13,6 +13,7 @@
 #include "onnx/defs/doc_strings.h"
 #include "onnx/defs/function.h"
 #include "onnx/defs/math/utils.h"
+#include "onnx/defs/printer.h"
 #include "onnx/defs/schema.h"
 #include "onnx/defs/type_builders.h"
 
@@ -1121,6 +1122,11 @@ static void GemmShapeInference(InferenceContext& ctx) {
   propagateElemTypeFromInputToOutput(ctx, 0, 0);
   const bool transA = getAttribute(ctx, "transA", int64_t{0}) != 0;
   const bool transB = getAttribute(ctx, "transB", int64_t{0}) != 0;
+  if (hasInputShape(ctx, 1) && getInputShape(ctx, 1).dim_size() != 2) {
+    const auto& b_shape = getInputShape(ctx, 1);
+    fail_shape_inference(
+        "Gemm input B must have rank 2, but has rank ", b_shape.dim_size(), " and shape ", b_shape, ".");
+  }
   Dim K, N;
   if (transB) {
     ctx.unifyInputShape(1, {N, K});
@@ -1133,27 +1139,62 @@ static void GemmShapeInference(InferenceContext& ctx) {
   auto shape = getInputShape(ctx, 0);
   const int rank = shape.dim_size();
   if (rank == 0) {
-    fail_shape_inference("Gemm input A must have rank at least 1.");
+    fail_shape_inference("Gemm input A must have rank at least 1, but has rank 0 and shape ", shape, ".");
   }
   if (transA && rank > 1) {
     shape.mutable_dim()->SwapElements(rank - 2, rank - 1);
   }
   const auto& a_k = shape.dim(rank - 1);
   if (a_k.has_dim_value() && K.has_dim_value() && a_k.dim_value() != K.dim_value()) {
-    fail_shape_inference("Gemm inputs have incompatible contraction dimensions.");
+    fail_shape_inference(
+        "Gemm inputs have incompatible contraction dimensions: A has shape ",
+        getInputShape(ctx, 0),
+        " with transA=",
+        transA,
+        ", B has shape ",
+        getInputShape(ctx, 1),
+        " with transB=",
+        transB,
+        ". After transposition, A's last dimension is ",
+        a_k.dim_value(),
+        " but B's first dimension is ",
+        K.dim_value(),
+        "; these dimensions must match.");
   }
   *shape.mutable_dim(rank - 1) = N;
   if (hasInputShape(ctx, 2)) {
     const auto& bias = getInputShape(ctx, 2);
     if (bias.dim_size() > rank) {
-      fail_shape_inference("Gemm input C must be unidirectionally broadcastable to the output.");
+      fail_shape_inference(
+          "Gemm input C with shape ",
+          bias,
+          " must be unidirectionally broadcastable to output shape ",
+          shape,
+          ", but C has rank ",
+          bias.dim_size(),
+          " greater than output rank ",
+          rank,
+          ".");
     }
     for (int i = 0; i < bias.dim_size(); ++i) {
       const auto& c_dim = bias.dim(i);
       const auto& y_dim = shape.dim(rank - bias.dim_size() + i);
       if (c_dim.has_dim_value() && y_dim.has_dim_value() && c_dim.dim_value() != 1 &&
           c_dim.dim_value() != y_dim.dim_value()) {
-        fail_shape_inference("Gemm input C must be unidirectionally broadcastable to the output.");
+        fail_shape_inference(
+            "Gemm input C with shape ",
+            bias,
+            " must be unidirectionally broadcastable to output shape ",
+            shape,
+            ", but C dimension ",
+            i,
+            " has size ",
+            c_dim.dim_value(),
+            " instead of 1 or ",
+            y_dim.dim_value(),
+            " (output dimension ",
+            rank - bias.dim_size() + i,
+            ").");
       }
     }
   }
@@ -1220,23 +1261,8 @@ ONNX_OPERATOR_SET_SCHEMA(
     29,
     OpSchema()
         .SetDoc(GET_OP_DOC_STR(
-            std::string(R"DOC(
-Generalized matrix multiplication: `Y = alpha * A' * B' + beta * C`.
-A has rank at least 1 and B has rank 2. A' is A with its last two axes swapped
-when transA is non-zero; for rank-1 A, transA has no effect.
-B' is B transposed when transB is non-zero.
-If A' has shape (..., K) and B' has shape (K, N), Y has shape (..., N):
-each vector along A's contraction axis is multiplied by the same matrix B'.
-The leading dimensions of A' are preserved, including when there are none.
-C must be unidirectionally broadcastable to Y. If C is omitted, it is treated
-as scalar zero. When beta is zero, C does not contribute to the result.
-
-For example, A of shape (2, 3, 5), B of shape (7, 5), C of shape (7,),
-and transB=1 produce Y of shape (2, 3, 7). This represents an affine
-linear layer directly, without reshaping A or separately adding the bias.
-With rank-1 A of shape (5,), the same B and C produce Y of shape (7,).
-)DOC") + GenerateBroadcastingDocUni("tensor C", "tensor A' * B'") +
-            "\n" + GenerateOptionalArgumentsDoc()))
+            std::string(kDoc_Gemm_ver29) + GenerateBroadcastingDocUni("tensor C", "tensor A' * B'") + "\n" +
+            GenerateOptionalArgumentsDoc()))
         .Input(
             0,
             "A",
