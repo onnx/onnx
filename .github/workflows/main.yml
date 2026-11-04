@@ -149,9 +149,7 @@ jobs:
       - name: Install external protobuf - Windows
         if: matrix.protobuf_type == 'External' && startsWith(matrix.os, 'windows')
         run: |
-          . ./workflow_scripts/protobuf/build_protobuf_win.ps1 -cmake_arch x64
-          "$protobuf_install_dir/bin" >> $env:GITHUB_PATH
-          "CMAKE_PREFIX_PATH=$protobuf_install_dir" >> $env:GITHUB_ENV
+          python workflow_scripts/protobuf/build.py --build-dir "${{ runner.temp }}/protobuf-build"
         shell: pwsh
 
       - name: Build and install ONNX - Linux
