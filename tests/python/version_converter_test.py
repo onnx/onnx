@@ -2575,9 +2575,7 @@ class TestVersionConverter:
         )
 
     @pytest.mark.parametrize("axes", [None, [], [1]])
-    def test_reduce_with_noop_with_empty_axes(
-        self, axes: list[int] | None
-    ) -> None:
+    def test_reduce_with_noop_with_empty_axes(self, axes: list[int] | None) -> None:
         nodes = [
             helper.make_node(
                 "ReduceMean",
