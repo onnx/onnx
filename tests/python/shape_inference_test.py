@@ -1887,11 +1887,10 @@ class TestShapeInference(TestShapeInferenceHelper):
         )
 
     @pytest.mark.parametrize("op", ["ScatterElements", "ScatterND"])
-    @pytest.mark.parametrize("include_self", [0, 1])
     @pytest.mark.parametrize(
         "elem_type", [TensorProto.FLOAT, TensorProto.INT64, TensorProto.BFLOAT16]
     )
-    def test_scatter_mean(self, op, include_self, elem_type) -> None:
+    def test_scatter_mean(self, op, elem_type) -> None:
         graph = self._make_graph(
             [
                 ("data", elem_type, ("N", 3)),
@@ -1904,7 +1903,6 @@ class TestShapeInference(TestShapeInferenceHelper):
                     ["data", "indices", "updates"],
                     ["output"],
                     reduction="mean",
-                    include_self=include_self,
                 )
             ],
             [],
@@ -1920,11 +1918,6 @@ class TestShapeInference(TestShapeInferenceHelper):
         "attributes, type_name, message",
         [
             ('reduction = "average"', "float", "Invalid scatter reduction"),
-            (
-                'reduction = "mean", include_self = 2',
-                "float",
-                "Invalid scatter include_self",
-            ),
             ('reduction = "mean"', "bool", "requires an integer or floating-point"),
             ('reduction = "mean"', "string", "requires an integer or floating-point"),
             (

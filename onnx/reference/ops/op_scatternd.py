@@ -6,15 +6,15 @@ from __future__ import annotations
 import numpy as np
 
 from onnx.reference.op_run import OpRun
-from onnx.reference.ops._scatter import scatter_reduce
+from onnx.reference.ops._scatter import scatter_mean
 
 
-def _scatter_nd_impl(data, indices, updates, reduction=None, include_self=1):
-    if reduction == "mean" or include_self != 1:
+def _scatter_nd_impl(data, indices, updates, reduction=None):
+    if reduction == "mean":
         update_pairs = (
             (tuple(indices[i]), updates[i]) for i in np.ndindex(indices.shape[:-1])
         )
-        return scatter_reduce(data, update_pairs, reduction or "none", include_self)
+        return scatter_mean(data, update_pairs)
     output = np.copy(data)
     for i in np.ndindex(indices.shape[:-1]):
         if reduction == "add":
@@ -35,8 +35,6 @@ def _scatter_nd_impl(data, indices, updates, reduction=None, include_self=1):
 
 
 class ScatterND(OpRun):
-    def _run(self, data, indices, updates, reduction=None, include_self=1):
-        y = _scatter_nd_impl(
-            data, indices, updates, reduction=reduction, include_self=include_self
-        )
+    def _run(self, data, indices, updates, reduction=None):
+        y = _scatter_nd_impl(data, indices, updates, reduction=reduction)
         return (y,)

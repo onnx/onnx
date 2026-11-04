@@ -34528,19 +34528,17 @@ This version of the operator has been available since version 29 of the default 
   Negative indices count backwards from the end of that axis.
 
   When `reduction` is "none", each update replaces its target element. Multiple
-  updates must not address the same output element. `include_self` is ignored.
+  updates must not address the same output element.
   For other reductions, group all updates that address the same output element.
-  If `include_self` is 1 (the default), also include the original `data` value
-  exactly once in that group. If `include_self` is 0, reduce only the updates.
-  Elements not addressed by any update retain their original `data` values in
-  either case. "add", "mul", "max", and "min" compute the sum, product, maximum,
+  Also include the original `data` value exactly once in that group.
+  Elements not addressed by any update retain their original `data` values.
+  "add", "mul", "max", and "min" compute the sum, product, maximum,
   and minimum of each group, respectively.
 
   For "mean", compute the sum of each group divided by its number of values,
   not a sequence of pairwise averages. Thus, for N updates to a given element:
   ```
-  output = (data + sum(updates)) / (N + 1)  # include_self = 1
-  output = sum(updates) / N               # include_self = 0, N > 0
+  output = (data + sum(updates)) / (N + 1)
   ```
   The "mean" reduction supports integer and floating-point tensors, but not
   boolean, string, or complex tensors. Integer results are rounded toward
@@ -34552,7 +34550,7 @@ This version of the operator has been available since version 29 of the default 
   must be sliced to the shape of `indices` before being used as `updates`.
   Unlike PyTorch, ONNX also accepts negative index values.
 
-  (Opset 29 change): Adds "mean" and the `include_self` attribute.
+  (Opset 29 change): Adds "mean".
 
   Example:
   ```
@@ -34561,8 +34559,7 @@ This version of the operator has been available since version 29 of the default 
   updates = [1.0, 2.0, 3.0, 4.0, 5.0, 6.0]
   axis = 0
   reduction = "mean"
-  output = [5.0 / 3.0, 3.5, 4.0, 4.0]  # include_self = 1
-  output = [2.0, 4.0, 5.0, 4.0]         # include_self = 0
+  output = [5.0 / 3.0, 3.5, 4.0, 4.0]
   ```
 
 #### Version
@@ -34574,8 +34571,6 @@ This version of the operator has been available since version 29 of the default 
 <dl>
 <dt><tt>axis</tt> : int (default is 0)</dt>
 <dd>Which axis to scatter on. Negative value means counting dimensions from the back. Accepted range is [-r, r-1] where r = rank(data).</dd>
-<dt><tt>include_self</tt> : int (default is 1)</dt>
-<dd>Whether to include the original data value in the reduction: 1 (default) or 0. Untouched elements retain their original values. Ignored when reduction is 'none'.</dd>
 <dt><tt>reduction</tt> : string (default is none)</dt>
 <dd>Type of reduction to apply: none (default), add, mul, max, min, mean. 'none': no reduction applied. 'add':  reduction using the addition operation. 'mul': reduction using the multiplication operation. 'max': reduction using the maximum operation. 'min': reduction using the minimum operation. 'mean': arithmetic mean of all contributions to each output element.</dd>
 </dl>
@@ -34622,18 +34617,16 @@ This version of the operator has been available since version 29 of the default 
   output[tuple(indices[i])].
 
   When `reduction` is "none", updates replace the addressed elements or slices,
-  and multiple tuples must not address the same location. `include_self` is ignored.
+  and multiple tuples must not address the same location.
   For other reductions, group all updates addressing the same location and reduce
-  elementwise over each group. If `include_self` is 1 (the default), include the
-  original `data` value exactly once. If `include_self` is 0, reduce only updates.
-  Untouched elements retain their original `data` values in either case.
+  elementwise over each group, including the original `data` value exactly once.
+  Untouched elements retain their original `data` values.
   "add", "mul", "max", and "min" compute the sum, product, maximum, and minimum,
   respectively.
 
   For "mean", sum all contributions before dividing by their count:
   ```
-  output = (data + sum(updates)) / (N + 1)  # include_self = 1
-  output = sum(updates) / N               # include_self = 0, N > 0
+  output = (data + sum(updates)) / (N + 1)
   ```
   Here N is the number of updates addressing the element or slice.
   This is not a sequence of pairwise averages.
@@ -34645,7 +34638,7 @@ This version of the operator has been available since version 29 of the default 
   This operator generalizes ScatterElements to multi-dimensional indices and
   slice updates. It is the inverse of GatherND.
 
-  (Opset 29 change): Adds "mean" and the `include_self` attribute.
+  (Opset 29 change): Adds "mean".
 
   Example:
   ```
@@ -34653,8 +34646,7 @@ This version of the operator has been available since version 29 of the default 
   indices = [[0], [0]]
   updates = [[3.0, 4.0], [5.0, 6.0]]
   reduction = "mean"
-  output = [[3.0, 4.0], [3.0, 4.0]]  # include_self = 1
-  output = [[4.0, 5.0], [3.0, 4.0]]  # include_self = 0
+  output = [[3.0, 4.0], [3.0, 4.0]]
   ```
 
 #### Version
@@ -34664,8 +34656,6 @@ This version of the operator has been available since version 29 of the default 
 #### Attributes
 
 <dl>
-<dt><tt>include_self</tt> : int (default is 1)</dt>
-<dd>Whether to include the original data value in the reduction: 1 (default) or 0. Untouched elements retain their original values. Ignored when reduction is 'none'.</dd>
 <dt><tt>reduction</tt> : string (default is none)</dt>
 <dd>Type of reduction to apply: none (default), add, mul, max, min, mean. 'none': no reduction applied. 'add':  reduction using the addition operation. 'mul': reduction using the multiplication operation. 'max': reduction using the maximum operation. 'min': reduction using the minimum operation. 'mean': arithmetic mean of all contributions to each output element.</dd>
 </dl>

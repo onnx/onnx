@@ -27261,38 +27261,7 @@ expect(
 
 
 ### ScatterElements
-There are 10 test cases, listed as following:
-<details>
-<summary>scatter_elements_exclude_self</summary>
-
-```python
-data = np.array([[100, 2, 3, 4]], dtype=np.float32)
-indices = np.array([[0, 0, 2]], dtype=np.int32)
-updates = np.array([[3, 5, 7]], dtype=np.float32)
-for reduction, expected in (
-    ("add", [[8, 2, 7, 4]]),
-    ("mul", [[15, 2, 7, 4]]),
-    ("max", [[5, 2, 7, 4]]),
-    ("min", [[3, 2, 7, 4]]),
-):
-    node = onnx.helper.make_node(
-        "ScatterElements",
-        ["data", "indices", "updates"],
-        ["y"],
-        axis=1,
-        reduction=reduction,
-        include_self=0,
-    )
-    expect(
-        node,
-        inputs=[data, indices, updates],
-        outputs=[np.array(expected, dtype=np.float32)],
-        name=f"test_scatter_elements_{reduction}_exclude_self",
-        opset_imports=[onnx.helper.make_opsetid("", 29)],
-    )
-```
-
-</details>
+There are 9 test cases, listed as following:
 <details>
 <summary>scatter_elements_mean</summary>
 
@@ -27300,25 +27269,20 @@ for reduction, expected in (
 data = np.array([[1, 2, 3, 4]], dtype=np.float32)
 indices = np.array([[0, 1, 0, 1, -2, 1]], dtype=np.int64)
 updates = np.array([[1, 2, 3, 4, 5, 6]], dtype=np.float32)
-for include_self, expected in (
-    (1, [[5 / 3, 3.5, 4, 4]]),
-    (0, [[2, 4, 5, 4]]),
-):
-    node = onnx.helper.make_node(
-        "ScatterElements",
-        ["data", "indices", "updates"],
-        ["y"],
-        axis=-1,
-        reduction="mean",
-        include_self=include_self,
-    )
-    expect(
-        node,
-        inputs=[data, indices, updates],
-        outputs=[np.array(expected, dtype=np.float32)],
-        name=f"test_scatter_elements_mean_include_self_{include_self}",
-        opset_imports=[onnx.helper.make_opsetid("", 29)],
-    )
+node = onnx.helper.make_node(
+    "ScatterElements",
+    ["data", "indices", "updates"],
+    ["y"],
+    axis=-1,
+    reduction="mean",
+)
+expect(
+    node,
+    inputs=[data, indices, updates],
+    outputs=[np.array([[5 / 3, 3.5, 4, 4]], dtype=np.float32)],
+    name="test_scatter_elements_mean",
+    opset_imports=[onnx.helper.make_opsetid("", 29)],
+)
 ```
 
 </details>
@@ -27548,7 +27512,7 @@ expect(
 
 
 ### ScatterND
-There are 10 test cases, listed as following:
+There are 9 test cases, listed as following:
 <details>
 <summary>scatternd</summary>
 
@@ -27633,36 +27597,6 @@ expect(
 
 </details>
 <details>
-<summary>scatternd_exclude_self</summary>
-
-```python
-data = np.array([[100, -100], [3, 4]], dtype=np.float32)
-indices = np.array([[0], [0]], dtype=np.int64)
-updates = np.array([[3, 4], [5, 6]], dtype=np.float32)
-for reduction, expected in (
-    ("add", [[8, 10], [3, 4]]),
-    ("mul", [[15, 24], [3, 4]]),
-    ("max", [[5, 6], [3, 4]]),
-    ("min", [[3, 4], [3, 4]]),
-):
-    node = onnx.helper.make_node(
-        "ScatterND",
-        ["data", "indices", "updates"],
-        ["y"],
-        reduction=reduction,
-        include_self=0,
-    )
-    expect(
-        node,
-        inputs=[data, indices, updates],
-        outputs=[np.array(expected, dtype=np.float32)],
-        name=f"test_scatternd_{reduction}_exclude_self",
-        opset_imports=[onnx.helper.make_opsetid("", 29)],
-    )
-```
-
-</details>
-<details>
 <summary>scatternd_max</summary>
 
 ```python
@@ -27737,24 +27671,19 @@ expect(
 data = np.array([[1, 2], [3, 4]], dtype=np.float32)
 indices = np.array([[0], [-2]], dtype=np.int64)
 updates = np.array([[3, 4], [5, 6]], dtype=np.float32)
-for include_self, expected in (
-    (1, [[3, 4], [3, 4]]),
-    (0, [[4, 5], [3, 4]]),
-):
-    node = onnx.helper.make_node(
-        "ScatterND",
-        ["data", "indices", "updates"],
-        ["y"],
-        reduction="mean",
-        include_self=include_self,
-    )
-    expect(
-        node,
-        inputs=[data, indices, updates],
-        outputs=[np.array(expected, dtype=np.float32)],
-        name=f"test_scatternd_mean_include_self_{include_self}",
-        opset_imports=[onnx.helper.make_opsetid("", 29)],
-    )
+node = onnx.helper.make_node(
+    "ScatterND",
+    ["data", "indices", "updates"],
+    ["y"],
+    reduction="mean",
+)
+expect(
+    node,
+    inputs=[data, indices, updates],
+    outputs=[np.array([[3, 4], [3, 4]], dtype=np.float32)],
+    name="test_scatternd_mean",
+    opset_imports=[onnx.helper.make_opsetid("", 29)],
+)
 ```
 
 </details>

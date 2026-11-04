@@ -44,24 +44,19 @@ class ScatterND(Base):
         data = np.array([[1, 2], [3, 4]], dtype=np.float32)
         indices = np.array([[0], [-2]], dtype=np.int64)
         updates = np.array([[3, 4], [5, 6]], dtype=np.float32)
-        for include_self, expected in (
-            (1, [[3, 4], [3, 4]]),
-            (0, [[4, 5], [3, 4]]),
-        ):
-            node = onnx.helper.make_node(
-                "ScatterND",
-                ["data", "indices", "updates"],
-                ["y"],
-                reduction="mean",
-                include_self=include_self,
-            )
-            expect(
-                node,
-                inputs=[data, indices, updates],
-                outputs=[np.array(expected, dtype=np.float32)],
-                name=f"test_scatternd_mean_include_self_{include_self}",
-                opset_imports=[onnx.helper.make_opsetid("", 29)],
-            )
+        node = onnx.helper.make_node(
+            "ScatterND",
+            ["data", "indices", "updates"],
+            ["y"],
+            reduction="mean",
+        )
+        expect(
+            node,
+            inputs=[data, indices, updates],
+            outputs=[np.array([[3, 4], [3, 4]], dtype=np.float32)],
+            name="test_scatternd_mean",
+            opset_imports=[onnx.helper.make_opsetid("", 29)],
+        )
 
     @staticmethod
     def export_scatternd_mean_integer() -> None:
@@ -81,32 +76,6 @@ class ScatterND(Base):
             name="test_scatternd_mean_integer",
             opset_imports=[onnx.helper.make_opsetid("", 29)],
         )
-
-    @staticmethod
-    def export_scatternd_exclude_self() -> None:
-        data = np.array([[100, -100], [3, 4]], dtype=np.float32)
-        indices = np.array([[0], [0]], dtype=np.int64)
-        updates = np.array([[3, 4], [5, 6]], dtype=np.float32)
-        for reduction, expected in (
-            ("add", [[8, 10], [3, 4]]),
-            ("mul", [[15, 24], [3, 4]]),
-            ("max", [[5, 6], [3, 4]]),
-            ("min", [[3, 4], [3, 4]]),
-        ):
-            node = onnx.helper.make_node(
-                "ScatterND",
-                ["data", "indices", "updates"],
-                ["y"],
-                reduction=reduction,
-                include_self=0,
-            )
-            expect(
-                node,
-                inputs=[data, indices, updates],
-                outputs=[np.array(expected, dtype=np.float32)],
-                name=f"test_scatternd_{reduction}_exclude_self",
-                opset_imports=[onnx.helper.make_opsetid("", 29)],
-            )
 
     @staticmethod
     def export_scatternd() -> None:

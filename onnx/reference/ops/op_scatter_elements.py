@@ -6,10 +6,10 @@ from __future__ import annotations
 import numpy as np
 
 from onnx.reference.op_run import OpRun
-from onnx.reference.ops._scatter import scatter_reduce
+from onnx.reference.ops._scatter import scatter_mean
 
 
-def scatter_elements(data, indices, updates, axis=0, reduction=None, include_self=1):
+def scatter_elements(data, indices, updates, axis=0, reduction=None):
     """Scatter elements.
 
     ::
@@ -19,7 +19,7 @@ def scatter_elements(data, indices, updates, axis=0, reduction=None, include_sel
             output[i][indices[i][j][k]][k] = updates[i][j][k]
         and so on.
     """
-    if reduction == "mean" or include_self != 1:
+    if reduction == "mean":
 
         def update_pairs():
             for update_index in np.ndindex(indices.shape):
@@ -27,7 +27,7 @@ def scatter_elements(data, indices, updates, axis=0, reduction=None, include_sel
                 output_index[axis] = indices[update_index]
                 yield tuple(output_index), updates[update_index]
 
-        return scatter_reduce(data, update_pairs(), reduction or "none", include_self)
+        return scatter_mean(data, update_pairs())
 
     if reduction == "add":
 
@@ -67,13 +67,12 @@ def scatter_elements(data, indices, updates, axis=0, reduction=None, include_sel
 
 
 class ScatterElements(OpRun):
-    def _run(self, data, indices, updates, axis=None, reduction=None, include_self=1):
+    def _run(self, data, indices, updates, axis=None, reduction=None):
         res = scatter_elements(
             data,
             indices,
             updates,
             axis=axis,
             reduction=reduction,
-            include_self=include_self,
         )
         return (res,)

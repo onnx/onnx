@@ -1127,19 +1127,10 @@ class DefaultVersionConverter : public BaseVersionConverter {
     for (const auto* op : {"ScatterElements", "ScatterND"}) {
       registerAdapter(op, 29, 28, [](const std::shared_ptr<Graph>& /*unused*/, Node* node) {
         const Symbol reduction{"reduction"};
-        const Symbol include_self{"include_self"};
-        const bool no_reduction = !node->hasAttribute(reduction) || node->s(reduction) == "none";
         ONNX_ASSERTM(
             !node->hasAttribute(reduction) || node->s(reduction) != "mean",
             "Scatter reduction 'mean' cannot be downgraded to opset 28. "
             "Keep opset 29 or decompose the mean into scatter sums and counts.")
-        ONNX_ASSERTM(
-            no_reduction || !node->hasAttribute(include_self) || node->i(include_self) == 1,
-            "Scatter with include_self=0 cannot be downgraded to opset 28 when a reduction is applied. "
-            "Keep opset 29 or explicitly initialize the addressed data elements before reducing.")
-        if (node->hasAttribute(include_self)) {
-          node->removeAttribute(include_self);
-        }
         return node;
       });
     }

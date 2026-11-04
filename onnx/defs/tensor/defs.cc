@@ -1095,10 +1095,6 @@ static void ScatterReductionShapeInference(InferenceContext& ctx) {
       reduction != "mean") {
     fail_shape_inference("Invalid scatter reduction '", reduction, "'. Use one of: none, add, mul, max, min, mean.");
   }
-  const auto include_self = getAttribute(ctx, "include_self", static_cast<int64_t>(1));
-  if (include_self != 0 && include_self != 1) {
-    fail_shape_inference("Invalid scatter include_self value ", include_self, ". Use 0 or 1.");
-  }
   if (reduction == "mean" && ctx.getInputType(0) && ctx.getInputType(0)->has_tensor_type()) {
     const auto elem_type = ctx.getInputType(0)->tensor_type().elem_type();
     if (elem_type == TensorProto::BOOL || elem_type == TensorProto::STRING || elem_type == TensorProto::COMPLEX64 ||
@@ -1126,12 +1122,6 @@ ONNX_OPERATOR_SET_SCHEMA(
             "'mean': arithmetic mean of all contributions to each output element.",
             AttributeProto::STRING,
             std::string("none"))
-        .Attr(
-            "include_self",
-            "Whether to include the original data value in the reduction: 1 (default) or 0. "
-            "Untouched elements retain their original values. Ignored when reduction is 'none'.",
-            AttributeProto::INT,
-            static_cast<int64_t>(1))
         .Input(0, "data", "Tensor of rank r >= 1.", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
         .Input(
             1,
@@ -1177,12 +1167,6 @@ ONNX_OPERATOR_SET_SCHEMA(
             "'mean': arithmetic mean of all contributions to each output element.",
             AttributeProto::STRING,
             std::string("none"))
-        .Attr(
-            "include_self",
-            "Whether to include the original data value in the reduction: 1 (default) or 0. "
-            "Untouched elements retain their original values. Ignored when reduction is 'none'.",
-            AttributeProto::INT,
-            static_cast<int64_t>(1))
         .Input(0, "data", "Tensor of rank r >= 1.", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
         .Input(
             1,

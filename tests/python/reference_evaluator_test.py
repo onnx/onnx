@@ -2899,7 +2899,6 @@ class TestReferenceEvaluator:
         np.testing.assert_array_equal(got, expected)
 
     @pytest.mark.parametrize("op", ["ScatterElements", "ScatterND"])
-    @pytest.mark.parametrize("include_self", [0, 1])
     @pytest.mark.parametrize(
         "dtype, type_name",
         [
@@ -2912,13 +2911,13 @@ class TestReferenceEvaluator:
             (np.int64, "int64"),
         ],
     )
-    def test_scatter_mean(self, op, include_self, dtype, type_name):
+    def test_scatter_mean(self, op, dtype, type_name):
         index_shape = "3" if op == "ScatterElements" else "3, 1"
         model = onnx.parser.parse_model(f"""
             <ir_version: 13, opset_import: ["" : 29]>
             scatter ({type_name}[3] data, int64[{index_shape}] indices,
                      {type_name}[3] updates) => ({type_name}[3] output) {{
-                output = {op}<reduction = "mean", include_self = {include_self}>
+                output = {op}<reduction = "mean">
                          (data, indices, updates)
             }}
         """)
@@ -2929,8 +2928,6 @@ class TestReferenceEvaluator:
             indices = indices[:, None]
         updates = np.array([-3, -3, 5], dtype=dtype)
         expected = [-3, 6, 9] if np.issubdtype(dtype, np.integer) else [-8 / 3, 6.5, 9]
-        if not include_self:
-            expected = [-3, 5, 9]
         got = ReferenceEvaluator(model).run(
             None, {"data": data, "indices": indices, "updates": updates}
         )[0]
@@ -2943,17 +2940,16 @@ class TestReferenceEvaluator:
         np.testing.assert_array_equal(data, np.array([-2, 8, 9], dtype=dtype))
 
     @pytest.mark.parametrize("op", ["ScatterElements", "ScatterND"])
-    @pytest.mark.parametrize("include_self", [0, 1])
     @pytest.mark.parametrize(
         "type_name, dtype", [("int64", np.int64), ("uint64", np.uint64)]
     )
-    def test_scatter_mean_large_integer(self, op, include_self, type_name, dtype):
+    def test_scatter_mean_large_integer(self, op, type_name, dtype):
         index_shape = "2, 2" if op == "ScatterElements" else "2, 1"
         model = onnx.parser.parse_model(f"""
             <ir_version: 13, opset_import: ["" : 29]>
             scatter ({type_name}[2, 2] data, int64[{index_shape}] indices,
                      {type_name}[2, 2] updates) => ({type_name}[2, 2] output) {{
-                output = {op}<reduction = "mean", include_self = {include_self}>
+                output = {op}<reduction = "mean">
                          (data, indices, updates)
             }}
         """)
@@ -2973,14 +2969,13 @@ class TestReferenceEvaluator:
         np.testing.assert_array_equal(got, data)
 
     @pytest.mark.parametrize("op", ["ScatterElements", "ScatterND"])
-    @pytest.mark.parametrize("include_self", [0, 1])
-    def test_scatter_mean_empty(self, op, include_self):
+    def test_scatter_mean_empty(self, op):
         index_shape = "0" if op == "ScatterElements" else "0, 1"
         model = onnx.parser.parse_model(f"""
             <ir_version: 13, opset_import: ["" : 29]>
             scatter (float[3] data, int64[{index_shape}] indices,
                      float[0] updates) => (float[3] output) {{
-                output = {op}<reduction = "mean", include_self = {include_self}>
+                output = {op}<reduction = "mean">
                          (data, indices, updates)
             }}
         """)
@@ -2997,14 +2992,13 @@ class TestReferenceEvaluator:
         np.testing.assert_array_equal(got.view(np.uint32), data.view(np.uint32))
 
     @pytest.mark.parametrize("op", ["ScatterElements", "ScatterND"])
-    @pytest.mark.parametrize("include_self", [0, 1])
-    def test_scatter_mean_nan(self, op, include_self):
+    def test_scatter_mean_nan(self, op):
         index_shape = "2" if op == "ScatterElements" else "2, 1"
         model = onnx.parser.parse_model(f"""
             <ir_version: 13, opset_import: ["" : 29]>
             scatter (float[2] data, int64[{index_shape}] indices,
                      float[2] updates) => (float[2] output) {{
-                output = {op}<reduction = "mean", include_self = {include_self}>
+                output = {op}<reduction = "mean">
                          (data, indices, updates)
             }}
         """)
@@ -3019,19 +3013,16 @@ class TestReferenceEvaluator:
                 "updates": np.array([2, 4], dtype=np.float32),
             },
         )[0]
-        np.testing.assert_array_equal(
-            got, np.array([np.nan if include_self else 3, 7], dtype=np.float32)
-        )
+        np.testing.assert_array_equal(got, np.array([np.nan, 7], dtype=np.float32))
 
-    @pytest.mark.parametrize("include_self", [0, 1])
-    def test_scatternd_mean_whole_tensor(self, include_self):
-        model = onnx.parser.parse_model(f"""
+    def test_scatternd_mean_whole_tensor(self):
+        model = onnx.parser.parse_model("""
             <ir_version: 13, opset_import: ["" : 29]>
             scatter (float[2] data, int64[2, 0] indices,
-                     float[2, 2] updates) => (float[2] output) {{
-                output = ScatterND<reduction = "mean", include_self = {include_self}>
+                     float[2, 2] updates) => (float[2] output) {
+                output = ScatterND<reduction = "mean">
                          (data, indices, updates)
-            }}
+            }
         """)
         onnx.checker.check_model(model, full_check=True)
         got = ReferenceEvaluator(model).run(
@@ -3042,19 +3033,16 @@ class TestReferenceEvaluator:
                 "updates": np.array([[3, 4], [5, 6]], dtype=np.float32),
             },
         )[0]
-        np.testing.assert_array_equal(
-            got, np.array([3, 4] if include_self else [4, 5], dtype=np.float32)
-        )
+        np.testing.assert_array_equal(got, np.array([3, 4], dtype=np.float32))
 
     @pytest.mark.parametrize("op", ["ScatterElements", "ScatterND"])
-    @pytest.mark.parametrize("include_self", [0, 1])
-    def test_scatter_none_ignores_include_self(self, op, include_self):
+    def test_scatter_none_string(self, op):
         index_shape = "1" if op == "ScatterElements" else "1, 1"
         model = onnx.parser.parse_model(f"""
             <ir_version: 13, opset_import: ["" : 29]>
             scatter (string[2] data, int64[{index_shape}] indices,
                      string[1] updates) => (string[2] output) {{
-                output = {op}<include_self = {include_self}>(data, indices, updates)
+                output = {op}(data, indices, updates)
             }}
         """)
         onnx.checker.check_model(model, full_check=True)
@@ -3072,7 +3060,6 @@ class TestReferenceEvaluator:
     @skip_if_no_torch
     @pytest.mark.parametrize("op", ["ScatterElements", "ScatterND"])
     @pytest.mark.parametrize("axis", [0, 1, -1])
-    @pytest.mark.parametrize("include_self", [0, 1])
     @pytest.mark.parametrize("dtype", [np.float32, np.int64])
     @pytest.mark.parametrize(
         "reduction, torch_reduction",
@@ -3085,7 +3072,7 @@ class TestReferenceEvaluator:
         ],
     )
     def test_scatter_reduction_pytorch(
-        self, op, axis, include_self, dtype, reduction, torch_reduction
+        self, op, axis, dtype, reduction, torch_reduction
     ):
         import torch  # noqa: PLC0415
 
@@ -3101,7 +3088,6 @@ class TestReferenceEvaluator:
                 torch.from_numpy(indices),
                 torch.from_numpy(updates),
                 torch_reduction,
-                include_self=bool(include_self),
             )
             .numpy()
         )
@@ -3117,7 +3103,7 @@ class TestReferenceEvaluator:
             <ir_version: 13, opset_import: ["" : 29]>
             scatter ({type_name}[3, 4] data, int64[{index_shape}] indices,
                      {type_name}[{updates_shape}] updates) => ({type_name}[3, 4] output) {{
-                output = {op}<reduction = "{reduction}", include_self = {include_self}{axis_attribute}>
+                output = {op}<reduction = "{reduction}"{axis_attribute}>
                          (data, indices, updates)
             }}
         """)
