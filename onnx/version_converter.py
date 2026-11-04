@@ -26,6 +26,7 @@ def convert_version(model: ModelProto, target_version: int) -> ModelProto:
 
     Raises:
         RuntimeError when some necessary conversion is not supported.
+        ConvertError when a graph contains unsupported sparse initializers.
     """
     if not isinstance(model, ModelProto):
         raise TypeError(
