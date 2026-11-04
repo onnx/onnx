@@ -6,8 +6,8 @@
 
 #include <algorithm>
 #include <map>
-#include <sstream>
 #include <string>
+#include <string_view>
 #include <unordered_set>
 #include <utility>
 #include <vector>
@@ -153,7 +153,7 @@ UnaryFloatMathOpGenerator(const char* doc, const char* output_description, std::
   };
 }
 
-int64_t MathOpTwoIntegers(const std::string& op_type, int64_t a, int64_t b) {
+int64_t MathOpTwoIntegers(std::string_view op_type, int64_t a, int64_t b) {
   bool (*checked_op)(int64_t, int64_t, int64_t*) = nullptr;
   if (op_type == "Add") {
     checked_op = checked_add_overflow;
@@ -265,7 +265,7 @@ void QLinearMatMulShapeInference(ONNX_NAMESPACE::InferenceContext& ctx) {
   MatMulShapeInference(ctx, 0, 3);
 }
 
-static void einsumShapeInference(ONNX_NAMESPACE::InferenceContext& ctx, std::string const& equation) {
+static void einsumShapeInference(ONNX_NAMESPACE::InferenceContext& ctx, std::string_view equation) {
   // Only accept letters for indices
   auto is_letter = [](char c) { return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z'); };
 
@@ -274,33 +274,24 @@ static void einsumShapeInference(ONNX_NAMESPACE::InferenceContext& ctx, std::str
     return;
   }
   ONNX_NAMESPACE::TensorShapeProto output_shape;
-  std::string left_equation;
+  const auto mid_index = equation.find("->");
+  auto left_equation = equation.substr(0, mid_index);
 
-  auto mid_index = equation.find("->");
-  if (mid_index != std::string::npos) {
-    // Separate right and left hand sides of the equation
-    left_equation = equation.substr(0, mid_index);
-  } else {
-    // No right hand side
-    left_equation = equation;
-  }
-
-  std::string term;
   size_t num_operands = 0;
   size_t num_ellipsis = 0;
   size_t num_ellipsis_indices = 0;
   size_t first_ellipsis_operand = 0;
 
   // Parse the left-hand side
-  std::stringstream str(left_equation);
   std::map<char, int> label_maps;
   std::unordered_set<char> repeated_labels;
   ONNX_NAMESPACE::TensorShapeProto dims_value, ellipsis_dims_value;
   int num_labels = 0;
   bool ellipsis_flag = true;
 
-  while (!str.eof()) {
-    std::getline(str, term, ',');
+  while (true) {
+    const auto comma = left_equation.find(',');
+    const auto term = left_equation.substr(0, comma);
     auto ellipsis_index = term.find("...");
     if (num_inputs <= num_operands) {
       fail_shape_inference("Number of input tensors does not match the operands in the equation.");
@@ -319,7 +310,7 @@ static void einsumShapeInference(ONNX_NAMESPACE::InferenceContext& ctx, std::str
     }
 
     // Validate that term_size is compatible with rank before accessing dimensions
-    if (ellipsis_index != std::string::npos) {
+    if (ellipsis_index != std::string_view::npos) {
       // For ellipsis case, rank must be at least term_size
       if (rank < term_size) {
         fail_shape_inference(
@@ -401,6 +392,10 @@ static void einsumShapeInference(ONNX_NAMESPACE::InferenceContext& ctx, std::str
     }
 
     num_operands++;
+    if (comma == std::string_view::npos)
+      break;
+    // Keep empty terms, including a trailing scalar operand.
+    left_equation.remove_prefix(comma + 1);
   }
 
   if (num_inputs != num_operands) {
@@ -408,8 +403,8 @@ static void einsumShapeInference(ONNX_NAMESPACE::InferenceContext& ctx, std::str
   }
 
   // Parse the provided right-hand side
-  if (mid_index != std::string::npos) {
-    std::string right_equation = equation.substr(mid_index + 2);
+  if (mid_index != std::string_view::npos) {
+    const auto right_equation = equation.substr(mid_index + 2);
     auto right_ellipsis_index = right_equation.find("...");
 
     for (size_t index = 0; index < right_equation.size();) {
