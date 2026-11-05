@@ -3962,22 +3962,28 @@ class TestReferenceEvaluator:
                     )
 
     @pytest.mark.parametrize("opset", [13, 17, 18, 28, 29])
-    def test_mvn(self, opset: int, ref_opset: int = 13):
+    def test_mvn(self, opset: int):
         X = make_tensor_value_info("X", TensorProto.FLOAT, [None, None, None, None])
         Y = make_tensor_value_info("Y", TensorProto.FLOAT, [None, None, None, None])
         nodes = [
             make_node("MeanVarianceNormalization", ["X"], ["Y"]),
         ]
         graph = make_graph(nodes, "g", [X], [Y])
-        x = np.random.rand(3, 3, 3, 1).astype(np.float32)
+        x = np.random.default_rng(75).random((3, 3, 3, 1)).astype(np.float32)
 
         onnx_model = make_model(graph, opset_imports=[make_opsetid("", opset)])
         ref = ReferenceEvaluator(onnx_model)
         got = ref.run(None, {"X": x})[0]
 
-        ref_onnx_model = make_model(graph, opset_imports=[make_opsetid("", ref_opset)])
-        ref_expected = ReferenceEvaluator(ref_onnx_model)
-        expected = ref_expected.run(None, {"X": x})[0]
+        mean = np.mean(x, axis=(0, 2, 3), keepdims=True)
+        centered = x - mean
+        if opset >= 29:
+            variance = np.mean(np.square(centered), axis=(0, 2, 3), keepdims=True)
+        else:
+            variance = np.mean(np.square(x), axis=(0, 2, 3), keepdims=True) - np.square(
+                mean
+            )
+        expected = centered / (np.sqrt(variance) + np.float32(1e-9))
 
         assert got.shape == expected.shape
         assert_allclose(got, expected, rtol=1e-6)
