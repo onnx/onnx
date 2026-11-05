@@ -61,7 +61,7 @@ class QLinearConv(OpRun):
                 raise ValueError(
                     f"w_scale elements must match output channels: {np.size(w_scale)} != {np.shape(w)[0]}"
                 )
-            w_scale = np.expand_dims(w_scale, (0, 2, 3))
+            w_scale = np.reshape(w_scale, (1, -1) + (1,) * (res.ndim - 2))
 
         R = res * (x_scale * w_scale / y_scale)
         if y_zero_point is not None:
