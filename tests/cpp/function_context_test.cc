@@ -86,7 +86,7 @@ TEST(FunctionAPITest, ContextDependentFunctionTest) {
   checker::check_function(fnProto, checkerCtx, lexicalScope);
 }
 
-TEST(FunctionAPITest, ExpandMissingTrailingOptionalOutput) {
+static void CheckExpandedLinearAttention(bool trajectory, int64_t length) {
   const auto* const schema = OpSchemaRegistry::Schema("LinearAttention", 29, ONNX_DOMAIN);
   ASSERT_NE(schema, nullptr);
   NodeProto node;
@@ -94,7 +94,7 @@ TEST(FunctionAPITest, ExpandMissingTrailingOptionalOutput) {
   for (const auto* name : {"Q", "K", "V", "", "", ""}) {
     node.add_input(name);
   }
-  for (const auto* name : {"Y", "S", ""}) {
+  for (const auto* name : {"Y", "S", trajectory ? "States" : ""}) {
     node.add_output(name);
   }
   auto* rule = node.add_attribute();
@@ -114,15 +114,48 @@ TEST(FunctionAPITest, ExpandMissingTrailingOptionalOutput) {
   FunctionBodyBuildContextImpl ctx(node, types);
   FunctionProto function;
   ASSERT_TRUE(schema->BuildContextDependentFunction(ctx, function));
-  ASSERT_EQ(function.output_size(), 2);
+  ASSERT_EQ(function.output_size(), trajectory ? 3 : 2);
   GraphProto expanded;
   FunctionExpandHelper(node, function, expanded);
   EXPECT_GT(expanded.node_size(), 0);
+  ModelProto model;
+  model.set_ir_version(13);
+  model.mutable_graph()->CopyFrom(expanded);
+  model.mutable_graph()->set_name("expanded_linear_attention");
+  model.mutable_opset_import()->CopyFrom(function.opset_import());
+  for (const auto* name : {"Q", "K", "V", "Y", "S", "States"}) {
+    const std::string value_name(name);
+    if (value_name == "States" && !trajectory) {
+      continue;
+    }
+    const bool output = value_name == "Y" || value_name == "S" || value_name == "States";
+    auto* value = output ? model.mutable_graph()->add_output() : model.mutable_graph()->add_input();
+    value->set_name(name);
+    auto* tensor = value->mutable_type()->mutable_tensor_type();
+    tensor->set_elem_type(TensorProto::FLOAT);
+    const int rank = value_name == "States" ? 5 : (value_name == "S" ? 4 : 3);
+    for (int i = 0; i < rank; ++i) {
+      tensor->mutable_shape()->add_dim()->set_dim_value(value_name != "S" && i == 1 ? length : 1);
+    }
+  }
+  checker::check_model(model);
 #ifndef ONNX_NO_EXCEPTIONS
   // A named output still has to be bound by the function.
-  node.set_output(2, "Unexpected");
+  if (trajectory) {
+    node.add_output("Unexpected");
+  } else {
+    node.set_output(2, "Unexpected");
+  }
   EXPECT_THROW(FunctionExpandHelper(node, function, expanded), std::runtime_error);
 #endif
+}
+
+TEST(FunctionAPITest, ExpandMissingTrailingOptionalOutput) {
+  for (const bool trajectory : {false, true}) {
+    for (const int64_t length : {0, 2}) {
+      CheckExpandedLinearAttention(trajectory, length);
+    }
+  }
 }
 
 // A polymorphic context-dependent function test-case.

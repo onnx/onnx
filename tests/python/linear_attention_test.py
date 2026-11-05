@@ -10,7 +10,7 @@ import pytest
 from numpy.testing import assert_allclose, assert_array_equal
 
 import onnx
-from onnx import helper
+from onnx import helper, inliner
 from onnx.reference import ReferenceEvaluator
 from onnx.reference.op_run import OpRunExpand
 from onnx.reference.ops.op_linear_attention import (
@@ -20,6 +20,40 @@ from onnx.reference.ops.op_linear_attention import (
 
 class LinearAttention(OpRunExpand):
     op_domain = ""
+
+
+@pytest.mark.parametrize("trajectory", [False, True])
+@pytest.mark.parametrize("length", [0, 2])
+@pytest.mark.parametrize("past", [False, True])
+@pytest.mark.parametrize("rule", ["linear", "gated", "delta", "gated_delta"])
+def test_inlined_linear_attention_captures(trajectory, length, past, rule):
+    feeds, attrs = _case(3, length, rule, np.float32, past)
+    model = _model(feeds, attrs, trajectory=trajectory, empty_slots=True)
+    expected = ReferenceEvaluator(model).run(None, feeds)
+    node = model.graph.node[0]
+    types = {value.name: value.type for value in model.graph.input}
+    schema = onnx.defs.get_schema("LinearAttention", 29)
+    function = onnx.FunctionProto.FromString(
+        schema.get_context_dependent_function(
+            node.SerializeToString(),
+            [
+                types.get(name, onnx.TypeProto()).SerializeToString()
+                for name in node.input
+            ],
+        )
+    )
+    function.domain = "test.linear_attention"
+    model.functions.append(function)
+    node.domain = function.domain
+    if not trajectory:
+        node.output.pop()
+    model.opset_import.append(helper.make_opsetid(function.domain, 1))
+    expanded = inliner.inline_local_functions(model)
+    assert all(node.op_type != "LinearAttention" for node in expanded.graph.node)
+    onnx.checker.check_model(expanded, full_check=True)
+    actual = ReferenceEvaluator(expanded).run(None, feeds)
+    for got, want in zip(actual, expected, strict=True):
+        assert_allclose(got, want, rtol=2e-5, atol=2e-5)
 
 
 def _model(feeds, attrs, version=29, *, trajectory=False, empty_slots=False):
