@@ -164,6 +164,30 @@ def test_logsoftmax_function_many_nonmaximal_classes(dtype):
     )
 
 
+@pytest.mark.parametrize("axis", [0, -1])
+def test_logsoftmax_function_float16_underflowing_exponentials(axis):
+    x = np.full((2, 101), -18, dtype=np.float16)
+    x[:, 0] = 0
+    expected = (x.astype(np.float64) - np.log1p(100 * np.exp(-18))).astype(np.float16)
+    x = np.moveaxis(x, -1, axis)
+    expected = np.moveaxis(expected, -1, axis)
+    function = _get_logsoftmax_function(29, axis, x.dtype)
+    (actual,) = ReferenceEvaluator(function).run(None, {"input": x}, attributes={})
+    assert actual.dtype == x.dtype
+    assert_array_equal(actual, expected)
+
+
+def test_logsoftmax_function_float16_large_tied_count_with_tail():
+    x = np.zeros((1, 65538), dtype=np.float16)
+    x[:, 65490:] = -np.log(2)
+    d = x.astype(np.float64)
+    expected = (d - np.log(65490 + 48 * np.exp(d[0, -1]))).astype(np.float16)
+    function = _get_logsoftmax_function(29, -1, x.dtype)
+    (actual,) = ReferenceEvaluator(function).run(None, {"input": x}, attributes={})
+    assert actual.dtype == x.dtype
+    assert_array_equal(actual, expected)
+
+
 @pytest.mark.parametrize("x", [[np.inf, 0], [-np.inf, -np.inf], [np.nan, 0]])
 def test_logsoftmax_function_nonfinite_normalizer(x):
     x = np.array([x], dtype=np.float64)
