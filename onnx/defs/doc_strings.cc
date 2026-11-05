@@ -2720,6 +2720,24 @@ Carrying float32 present_state between invocations preserves the recurrence
 across sequence chunks. T=0 returns empty output and unchanged state (or zero
 state when omitted).
 
+The optional states output exposes the recurrent trajectory [B,T,H_v,d_k,d_v].
+Entry states[:,t] is S_new after token t's complete decay and update, before
+processing token t+1. It has the same element type as present_state, including
+float32 when past_state is float32 and activations are float16 or bfloat16.
+Snapshots do not round the internal float32 recurrence between tokens. For
+T>0, states[:,-1] equals present_state. For T=0, states has shape
+[B,0,H_v,d_k,d_v]; present_state remains the initial (or zero) state.
+When states is omitted, no intermediate-state storage is required. Requesting
+it intentionally adds storage proportional to B*T*H_v*d_k*d_v.
+
+This functional output supports speculative verification of recurrent models
+such as Mamba: the caller supplies the initial state, evaluates a candidate
+chunk, and uses Gather along the trajectory's time axis to select the state
+after an accepted nonempty prefix. If no tokens are accepted, the caller retains
+the initial state. The operator neither mutates inputs nor owns persistent
+state, acceptance policy, or commit/rollback behavior. Convolution history
+and other surrounding operations remain outside this recurrent operator.
+
 For example, Qwen3-Next-80B-A3B and Qwen3.5-35B-A3B Gated DeltaNet use
 H_q=H_k=16 and H_v=32.
 Setting q_num_heads=16, kv_num_heads=16, v_num_heads=32, update_rule="gated_delta"

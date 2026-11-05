@@ -15512,7 +15512,7 @@ expect(node, inputs=[x, y], outputs=[z], name="test_less_equal_uint64")
 
 
 ### LinearAttention
-There are 15 test cases, listed as following:
+There are 16 test cases, listed as following:
 <details>
 <summary>compact_value_heads</summary>
 
@@ -16086,6 +16086,81 @@ expect(
     name="test_linear_attention_prefill_with_past",
     opset_imports=_OPSET,
 )
+```
+
+</details>
+<details>
+<summary>state_trajectory</summary>
+
+```python
+rng = np.random.default_rng(42)
+for rule in ("linear", "gated", "delta", "gated_delta"):
+    for length in (0, 3):
+        b, hk, hv, dk, dv = 2, 2, 4, 2, 3
+        query = rng.normal(size=(b, length, hk * dk)).astype(np.float16)
+        key = _l2_normalize(
+            rng.normal(size=(b, length, hk * dk)).astype(np.float16), hk
+        )
+        value = rng.normal(size=(b, length, hv * dv)).astype(np.float16)
+        state = rng.normal(size=(b, hv, dk, dv)).astype(np.float32)
+        decay = (
+            -rng.uniform(0.1, 0.9, (b, length, hv)).astype(np.float16)
+            if rule in ("gated", "gated_delta")
+            else None
+        )
+        beta = (
+            rng.uniform(0.1, 0.9, (b, length, hv)).astype(np.float16)
+            if rule in ("delta", "gated_delta")
+            else None
+        )
+        expanded = [
+            np.repeat(x.reshape(b, length, hk, dk), hv // hk, axis=2).reshape(
+                b, length, hv * dk
+            )
+            for x in (query, key)
+        ]
+        packed = [*expanded, value, state, decay, beta]
+        expected = _compute(
+            *packed, q_num_heads=hv, kv_num_heads=hv, update_rule=rule
+        )
+        snapshots = [
+            _compute(
+                *[
+                    x if x is None or i == 3 else x[:, :end]
+                    for i, x in enumerate(packed)
+                ],
+                q_num_heads=hv,
+                kv_num_heads=hv,
+                update_rule=rule,
+            )[1]
+            for end in range(1, length + 1)
+        ]
+        states = (
+            np.stack(snapshots, axis=1)
+            if snapshots
+            else np.empty((b, 0, hv, dk, dv), dtype=np.float32)
+        )
+        values = [query, key, value, state, decay, beta]
+        names = ["query", "key", "value", "past_state", "decay", "beta"]
+        node = onnx.helper.make_node(
+            "LinearAttention",
+            [
+                name if x is not None else ""
+                for name, x in zip(names, values, strict=True)
+            ],
+            ["output", "present_state", "states"],
+            q_num_heads=hk,
+            kv_num_heads=hk,
+            v_num_heads=hv,
+            update_rule=rule,
+        )
+        expect(
+            node,
+            inputs=[x for x in values if x is not None],
+            outputs=[*expected, states],
+            name=f"test_linear_attention_state_trajectory_{rule}_length_{length}",
+            opset_imports=[onnx.helper.make_opsetid("", 29)],
+        )
 ```
 
 </details>

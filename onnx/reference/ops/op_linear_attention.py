@@ -173,6 +173,13 @@ class LinearAttention(OpRun):
 
         # --- Step 7+8: recurrence with GQA expansion at read time ---
         outputs = np.zeros((b, q_num_heads, t, d_v), dtype=np.float32)
+        node = getattr(self, "onnx_node", None)
+        has_states = node is not None and len(node.output) > 2 and bool(node.output[2])
+        states = (
+            np.empty((b, t, kv_num_heads, d_k, d_v), dtype=state_in_dtype)
+            if has_states
+            else None
+        )
         for i in range(t):
             q_t = q4[:, :, i, :]  # (B, H_q, d_k)
             k_t = k4[:, :, i, :]  # (B, H_kv, d_k)
@@ -191,6 +198,8 @@ class LinearAttention(OpRun):
 
             # Write: state += k_t ⊗ v_t  (outer product over last dims)
             state = state + k_t[..., :, None] * v_t[..., None, :]
+            if states is not None:
+                states[:, i] = state
 
             # Read with GQA: replicate KV-head state across query heads.
             if group_size == 1:
@@ -210,4 +219,6 @@ class LinearAttention(OpRun):
         # --- Step 10: present_state in same dtype as past_state (or query) ---
         present_state = state.astype(state_in_dtype)
 
+        if states is not None:
+            return (output, present_state, states)
         return (output, present_state)

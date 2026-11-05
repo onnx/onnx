@@ -273,7 +273,7 @@ static bool BuildLinearAttentionFunction(
     FunctionProto& functionProto) {
   // LinearAttention <update_rule, scale, q_num_heads, kv_num_heads, chunk_size>
   //   (query, key, value, past_state?, decay?, beta?)
-  //   => (output, present_state)
+  //   => (output, present_state, states?)
   //
   // Reference decomposition (sequential recurrence via Scan):
   //   1. Reshape/transpose 3D packed inputs (B, T, H*D) -> 4D (B, H, T, D)
@@ -331,6 +331,7 @@ static bool BuildLinearAttentionFunction(
     return false;
   }
   int64_t group_size = q_num_heads / kv_num_heads;
+  const bool has_states = ctx.hasOutput(2);
 
   FunctionBuilder builder(functionProto);
 
@@ -593,13 +594,16 @@ static bool BuildLinearAttentionFunction(
   // Assemble Scan node text. Body name is arbitrary.
   // We omit scan_input_axes/scan_output_axes (default 0); Q/K/V/decay/beta
   // were already pre-transposed so the T axis is the leading dimension.
-  std::string scan_text =
-      "ScanFinalState, ScanOutput = Scan <\n"
+  const std::string snapshot_output = has_states ? ", state_snapshot" : "";
+  const std::string snapshot_body = has_states ? "\nstate_snapshot = Identity (state_out)\n" : "";
+  const std::string scan_states = has_states ? ", ScanStates" : "";
+  const std::string scan_text = "ScanFinalState, ScanOutput" + scan_states +
+      " = Scan <\n"
       "  num_scan_inputs = " +
       std::to_string(num_scan_inputs) +
       ",\n"
       "  body = linear_attn_step (" +
-      body_inputs + ") => (state_out, output_t) {\n" + body + read_block +
+      body_inputs + ") => (state_out, output_t" + snapshot_output + ") {\n" + body + read_block + snapshot_body +
       "              }\n"
       "> (" +
       scan_inputs + ")";
@@ -610,16 +614,20 @@ static bool BuildLinearAttentionFunction(
                 IsEmpty = Equal (SeqLenScalar, ZeroLength)
                 EmptyOutputShape = Concat <axis = 0> (SeqLenDim, BatchDim, HqConst, DvDim)
               )ONNX");
-  const std::string guarded_scan = R"ONNX(
-                FinalState, OutputAccum = If (IsEmpty) <
-                  then_branch = empty_sequence () => (EmptyState, EmptyOutput) {
+  if (has_states) {
+    builder.Add("EmptyStatesShape = Concat <axis = 0> (SeqLenDim, BatchDim, HkvConst, DkDim, DvDim)");
+  }
+  const std::string guarded_scan = "FinalState, OutputAccum" + std::string(has_states ? ", StatesAccum" : "") +
+      " = If (IsEmpty) <\n"
+      "then_branch = empty_sequence () => (EmptyState, EmptyOutput" +
+      std::string(has_states ? ", EmptyStates" : "") + R"ONNX() {
                     EmptyState = Identity (State0)
                     EmptyFloat = ConstantOfShape (EmptyOutputShape)
                     EmptyOutput = CastLike (EmptyFloat, query)
-                  },
-                  else_branch = nonempty_sequence () => (ScanFinalState, ScanOutput) {
               )ONNX" +
-      scan_text + "\n}>";
+      std::string(has_states ? "EmptyStates = ConstantOfShape (EmptyStatesShape)\n" : "") +
+      "},\nelse_branch = nonempty_sequence () => (ScanFinalState, ScanOutput" + scan_states + ") {\n" + scan_text +
+      "\n}>";
   builder.Add(guarded_scan.c_str());
 
   // --- Step 6: Post-Scan 4D -> 3D reshape and present_state ---
@@ -639,8 +647,17 @@ static bool BuildLinearAttentionFunction(
   } else {
     builder.Add("present_state = CastLike (FinalState, query)");
   }
+  if (has_states) {
+    builder.Add("StatesTransposed = Transpose <perm = [1, 0, 2, 3, 4]> (StatesAccum)");
+    builder.Add(
+        ctx.hasInput(3) ? "states = CastLike (StatesTransposed, past_state)"
+                        : "states = CastLike (StatesTransposed, query)");
+  }
 
   schema.BuildFunction(functionProto);
+  if (!has_states && schema.outputs().size() > 2) {
+    functionProto.mutable_output()->RemoveLast();
+  }
   return true;
 }
 
@@ -728,11 +745,11 @@ static void InferLinearAttentionShape(InferenceContext& ctx, bool expanded_value
   // provide past_state with the desired state element type.
   // (The spec recommends S == float32 or S == T for numerical stability.)
   propagateElemTypeFromInputToOutput(ctx, 0, 0);
-  if (has_past_state && ctx.getInputType(3) != nullptr && ctx.getInputType(3)->has_tensor_type()) {
-    propagateElemTypeFromInputToOutput(ctx, 3, 1);
-  } else {
-    // No past_state is available to anchor S, so present_state defaults to T.
-    propagateElemTypeFromInputToOutput(ctx, 0, 1);
+  const size_t state_type_input =
+      has_past_state && ctx.getInputType(3) != nullptr && ctx.getInputType(3)->has_tensor_type() ? 3 : 0;
+  propagateElemTypeFromInputToOutput(ctx, state_type_input, 1);
+  if (expanded_value_heads && ctx.hasOutput(2)) {
+    propagateElemTypeFromInputToOutput(ctx, state_type_input, 2);
   }
 
   // --- Shape inference via dimension unification ---
@@ -854,6 +871,9 @@ static void InferLinearAttentionShape(InferenceContext& ctx, bool expanded_value
 
   // Output 1: present_state (B, Hstate, d_k, d_v).
   updateOutputShape(ctx, 1, {B, Hstate, Dk, Dv});
+  if (expanded_value_heads && ctx.hasOutput(2)) {
+    updateOutputShape(ctx, 2, {B, T, Hstate, Dk, Dv});
+  }
 }
 
 static void InferLinearAttentionShape_opset27(InferenceContext& ctx) {
@@ -879,6 +899,18 @@ OpSchema LinearAttentionSchema(bool expanded_value_heads) {
         "The output has v_num_heads heads, and value, state, decay and beta use this head count.",
         AttributeProto::INT,
         static_cast<int64_t>(0));
+    schema.Output(
+        2,
+        "states",
+        "Optional recurrent state trajectory with shape (B, T, H_v, d_k, d_v), in the same type as present_state. "
+        "Entry [:, t] is the state after token t's complete decay/update, before token t+1. "
+        "For T > 0 the last entry equals present_state; for T = 0 the trajectory is empty. "
+        "Omitting this output does not require storing intermediate states.",
+        "S",
+        OpSchema::Optional,
+        true,
+        1,
+        OpSchema::NonDifferentiable);
   }
   return schema.SetDoc(expanded_value_heads ? kDoc_LinearAttention_ver29 : kDoc_LinearAttention_ver27)
       .Attr(

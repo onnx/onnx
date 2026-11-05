@@ -2116,6 +2116,20 @@ class TestAutomaticUpgrade(automatic_conversion_test_base.TestAutomaticConversio
             },
         )
 
+    def test_linear_attention_state_trajectory(self) -> None:
+        self._test_op_upgrade(
+            "LinearAttention",
+            29,
+            [[1, 3, 8], [1, 3, 8], [1, 3, 18]],
+            [[1, 3, 18], [1, 6, 4, 3], [1, 3, 6, 4, 3]],
+            attrs={
+                "q_num_heads": 2,
+                "kv_num_heads": 2,
+                "v_num_heads": 6,
+                "update_rule": "linear",
+            },
+        )
+
     def test_LinearAttention_gated_delta(self) -> None:
         # update_rule="gated_delta" with both decay (per-keydim) and beta
         # required. Exercises the 6-positional-input form with a skipped

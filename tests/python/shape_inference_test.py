@@ -3230,6 +3230,120 @@ class TestShapeInference(TestShapeInferenceHelper):
                     opset_imports=[helper.make_opsetid(ONNX_DOMAIN, 25)],
                 )
 
+    @pytest.mark.parametrize("state_type", ["float", "float16", "bfloat16"])
+    @pytest.mark.parametrize("length", [0, 1, 4])
+    def test_linear_attention_trajectory(self, state_type, length) -> None:
+        model = onnx.parser.parse_model(
+            f"""
+            <ir_version: 13, opset_import: ["" : 29]>
+            g (bfloat16[2,{length},6] Q, bfloat16[2,{length},6] K,
+               bfloat16[2,{length},30] V, {state_type}[2,6,3,5] S)
+                => (Y, Next, States) {{
+                Y, Next, States = LinearAttention <
+                    q_num_heads=2, kv_num_heads=2, v_num_heads=6, update_rule="linear"
+                > (Q, K, V, S, , )
+            }}
+            """
+        )
+        dtype = {
+            "float": TensorProto.FLOAT,
+            "float16": TensorProto.FLOAT16,
+            "bfloat16": TensorProto.BFLOAT16,
+        }[state_type]
+        self._assert_inferred(
+            model,
+            [
+                make_tensor_value_info("Y", TensorProto.BFLOAT16, (2, length, 30)),
+                make_tensor_value_info("Next", dtype, (2, 6, 3, 5)),
+                make_tensor_value_info("States", dtype, (2, length, 6, 3, 5)),
+            ],
+        )
+
+    @pytest.mark.parametrize("past", [False, True])
+    def test_linear_attention_trajectory_symbolic(self, past) -> None:
+        state_input = ", float[B,2,Dk,Dv] S" if past else ""
+        state_argument = ", S" if past else ""
+        model = onnx.parser.parse_model(
+            f"""
+            <ir_version: 13, opset_import: ["" : 29]>
+            g (float16[B,T,QPack] Q, float16[B,T,KPack] K,
+               float16[B,T,VPack] V{state_input}) => (Y, Next, States) {{
+                Y, Next, States = LinearAttention <
+                    q_num_heads=4, kv_num_heads=2, update_rule="linear"
+                > (Q, K, V{state_argument})
+            }}
+            """
+        )
+        dtype = TensorProto.FLOAT if past else TensorProto.FLOAT16
+        self._assert_inferred(
+            model,
+            [
+                make_tensor_value_info("Y", TensorProto.FLOAT16, ("B", "T", None)),
+                make_tensor_value_info(
+                    "Next",
+                    dtype,
+                    ("B", 2, "Dk" if past else None, "Dv" if past else None),
+                ),
+                make_tensor_value_info(
+                    "States",
+                    dtype,
+                    ("B", "T", 2, "Dk" if past else None, "Dv" if past else None),
+                ),
+            ],
+        )
+
+    def test_linear_attention_trajectory_without_input_shapes(self) -> None:
+        graph = self._make_graph(
+            [
+                ("Q", TensorProto.FLOAT16, None),
+                ("K", TensorProto.FLOAT16, None),
+                ("V", TensorProto.FLOAT16, None),
+            ],
+            [
+                make_node(
+                    "LinearAttention",
+                    ["Q", "K", "V"],
+                    ["Y", "Next", "States"],
+                    q_num_heads=2,
+                    kv_num_heads=2,
+                    v_num_heads=6,
+                    update_rule="linear",
+                )
+            ],
+            [],
+        )
+        self._assert_inferred(
+            graph,
+            [
+                make_tensor_value_info("Y", TensorProto.FLOAT16, (None, None, None)),
+                make_tensor_value_info(
+                    "Next", TensorProto.FLOAT16, (None, 6, None, None)
+                ),
+                make_tensor_value_info(
+                    "States", TensorProto.FLOAT16, (None, None, 6, None, None)
+                ),
+            ],
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, 29)],
+        )
+
+    @pytest.mark.parametrize("shape", [(2, 4, 6, 3), (2, 4, 2, 3, 5), (2, 3, 6, 3, 5)])
+    def test_linear_attention_trajectory_inconsistent_output(self, shape) -> None:
+        model = onnx.parser.parse_model(
+            """
+            <ir_version: 13, opset_import: ["" : 29]>
+            g (float[2,4,6] Q, float[2,4,6] K, float[2,4,30] V) => (Y, Next, States) {
+                Y, Next, States = LinearAttention <
+                    q_num_heads=2, kv_num_heads=2, v_num_heads=6, update_rule="linear"
+                > (Q, K, V)
+            }
+            """
+        )
+        model.graph.output[2].CopyFrom(
+            make_tensor_value_info("States", TensorProto.FLOAT, shape)
+        )
+        with pytest.raises(onnx.shape_inference.InferenceError):
+            onnx.shape_inference.infer_shapes(model, strict_mode=True)
+
     @pytest.mark.parametrize("heads", [32, 48, 128])
     @pytest.mark.parametrize("length", [0, 1, 4])
     def test_linear_attention_expanded_heads(self, heads, length) -> None:

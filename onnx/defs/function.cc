@@ -36,14 +36,14 @@ void FunctionExpandHelper(
     io_names_map[func.input().Get(idx)] = node.input().Get(idx);
   }
   for (int idx = 0; idx < node.output_size(); ++idx) {
-    if (idx >= func.output_size()) {
-      ONNX_THROW("Output for function node " + node_name + " is out of bounds");
-    }
     // If the node output is missing, the corresponding function output should
     // be treated as an internal value (not as missing) because it could also be
     // an intermediate value.
     if (node.output().Get(idx).empty()) {
       continue;
+    }
+    if (idx >= func.output_size()) {
+      ONNX_THROW("Output for function node " + node_name + " is out of bounds");
     }
     io_names_map[func.output().Get(idx)] = node.output().Get(idx);
   }

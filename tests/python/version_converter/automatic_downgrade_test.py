@@ -323,7 +323,10 @@ class TestAutomaticDowngrade(automatic_conversion_test_base.TestAutomaticConvers
         )
 
     @pytest.mark.parametrize("value_heads", [None, 0, 2])
-    def test_linear_attention_29_to_28_compatible(self, value_heads) -> None:
+    @pytest.mark.parametrize("empty_output", [False, True])
+    def test_linear_attention_29_to_28_compatible(
+        self, value_heads, empty_output
+    ) -> None:
         value_heads_attr = "" if value_heads is None else f", v_num_heads={value_heads}"
         model = onnx.parser.parse_model(
             f"""
@@ -336,9 +339,12 @@ class TestAutomaticDowngrade(automatic_conversion_test_base.TestAutomaticConvers
             }}
             """
         )
+        if empty_output:
+            model.graph.node[0].output.append("")
         converted = onnx.version_converter.convert_version(model, 28)
         assert [(op.domain, op.version) for op in model.opset_import] == [("", 29)]
         assert [(op.domain, op.version) for op in converted.opset_import] == [("", 28)]
+        assert list(converted.graph.node[0].output) == ["Y", "S"]
         assert {
             attr.name: helper.get_attribute_value(attr)
             for attr in converted.graph.node[0].attribute
@@ -353,6 +359,27 @@ class TestAutomaticDowngrade(automatic_conversion_test_base.TestAutomaticConvers
         actual = ReferenceEvaluator(converted).run(None, feeds)
         for got, want in zip(actual, expected, strict=True):
             np.testing.assert_array_equal(got, want)
+
+    @pytest.mark.parametrize("value_heads", [None, 0, 2, 6])
+    def test_linear_attention_29_trajectory_downgrade_fails(self, value_heads) -> None:
+        attr = "" if value_heads is None else f", v_num_heads={value_heads}"
+        heads = value_heads or 2
+        model = onnx.parser.parse_model(
+            f"""
+            <ir_version: 13, opset_import: ["" : 29]>
+            g (float[1,3,8] Q, float[1,3,8] K, float[1,3,{heads * 3}] V)
+                => (float[1,3,{heads * 3}] Y, float[1,{heads},4,3] S,
+                    float[1,3,{heads},4,3] States) {{
+                Y, S, States = LinearAttention <
+                    q_num_heads=2, kv_num_heads=2, update_rule="linear"{attr}
+                > (Q, K, V)
+            }}
+            """
+        )
+        with pytest.raises(
+            RuntimeError, match="state trajectories cannot be downgraded"
+        ):
+            onnx.version_converter.convert_version(model, 28)
 
     def test_linear_attention_29_expanded_downgrade_fails(self) -> None:
         self._test_model_conversion_fails(

@@ -2,6 +2,8 @@
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
+from unittest.mock import patch
+
 import ml_dtypes
 import numpy as np
 import pytest
@@ -20,14 +22,15 @@ class LinearAttention(OpRunExpand):
     op_domain = ""
 
 
-def _model(feeds, attrs, version=29):
+def _model(feeds, attrs, version=29, *, trajectory=False, empty_slots=False):
     names = ["query", "key", "value", "past_state", "decay", "beta"]
     inputs = [name if name in feeds else "" for name in names]
-    while not inputs[-1]:
+    while not empty_slots and not inputs[-1]:
         inputs.pop()
-    node = helper.make_node(
-        "LinearAttention", inputs, ["output", "present_state"], **attrs
-    )
+    outputs = ["output", "present_state"]
+    if trajectory or empty_slots:
+        outputs.append("states" if trajectory else "")
+    node = helper.make_node("LinearAttention", inputs, outputs, **attrs)
     graph_inputs = [
         helper.make_tensor_value_info(
             name, helper.np_dtype_to_tensor_dtype(value.dtype), value.shape
@@ -38,15 +41,15 @@ def _model(feeds, attrs, version=29):
     state_type = helper.np_dtype_to_tensor_dtype(
         feeds.get("past_state", feeds["query"]).dtype
     )
-    graph = helper.make_graph(
-        [node],
-        "linear_attention",
-        graph_inputs,
-        [
-            helper.make_tensor_value_info("output", activation_type, [None] * 3),
-            helper.make_tensor_value_info("present_state", state_type, [None] * 4),
-        ],
-    )
+    graph_outputs = [
+        helper.make_tensor_value_info("output", activation_type, [None] * 3),
+        helper.make_tensor_value_info("present_state", state_type, [None] * 4),
+    ]
+    if trajectory:
+        graph_outputs.append(
+            helper.make_tensor_value_info("states", state_type, [None] * 5)
+        )
+    graph = helper.make_graph([node], "linear_attention", graph_inputs, graph_outputs)
     model = helper.make_model(graph, opset_imports=[helper.make_opsetid("", version)])
     onnx.checker.check_model(model, full_check=True)
     return model
@@ -181,8 +184,8 @@ def test_compact_head_order_and_decayed_delta():
         <ir_version: 13, opset_import: ["" : 29]>
         g (float[1,1,2] Q, float[1,1,2] K, float[1,1,4] V,
            float[1,4,1,1] S, float[1,1,4] D, float[1,1,4] Beta)
-            => (float[1,1,4] Y, float[1,4,1,1] Next) {
-            Y, Next = LinearAttention <
+            => (float[1,1,4] Y, float[1,4,1,1] Next, float[1,1,4,1,1] States) {
+            Y, Next, States = LinearAttention <
                 q_num_heads=2, kv_num_heads=2, v_num_heads=4, scale=1.0
             > (Q, K, V, S, D, Beta)
         }
@@ -198,9 +201,12 @@ def test_compact_head_order_and_decayed_delta():
     }
     # Decayed state is 1; correction uses [1,1,2,2], then writes and reads.
     for new_ops in (None, [LinearAttention]):
-        output, state = ReferenceEvaluator(model, new_ops=new_ops).run(None, feeds)
+        output, state, states = ReferenceEvaluator(model, new_ops=new_ops).run(
+            None, feeds
+        )
         assert_allclose(output, [[[2, 3, 60, 100]]])
         assert_allclose(state.reshape(4), [2, 3, 6, 10])
+        assert_array_equal(states[:, 0], state)
 
 
 @pytest.mark.parametrize(("version", "has_value_heads"), [(27, False), (29, True)])
@@ -321,3 +327,257 @@ def test_opset29_rejects_zero_width_heads(value_heads, empty_dimension):
         onnx.shape_inference.infer_shapes(model, strict_mode=True)
     with pytest.raises(ValueError, match="must be positive"):
         ReferenceEvaluator(model).run(None, feeds)
+
+
+def _trajectory_case(heads, length, rule, dtype, past, key_decay, scalar_beta):
+    q_heads, k_heads, v_heads = heads
+    state_heads = v_heads or k_heads
+    rng = np.random.default_rng(42)
+    batch, dk, dv = 2, 3, 5
+    key = rng.normal(size=(batch, length, k_heads, dk)).astype(np.float32)
+    key /= np.maximum(np.linalg.norm(key, axis=-1, keepdims=True), 1e-6)
+    feeds = {
+        "query": rng.normal(size=(batch, length, q_heads * dk)).astype(dtype),
+        "key": key.reshape(batch, length, k_heads * dk).astype(dtype),
+        "value": rng.normal(size=(batch, length, state_heads * dv)).astype(dtype),
+    }
+    if past:
+        feeds["past_state"] = rng.normal(size=(batch, state_heads, dk, dv)).astype(
+            np.float32
+        )
+    if rule in ("gated", "gated_delta"):
+        feeds["decay"] = -rng.uniform(
+            0.1, 0.9, (batch, length, state_heads * (dk if key_decay else 1))
+        ).astype(dtype)
+    if rule in ("delta", "gated_delta"):
+        feeds["beta"] = rng.uniform(
+            0.1, 0.9, (batch, length, 1 if scalar_beta else state_heads)
+        ).astype(dtype)
+    return feeds, {
+        "q_num_heads": q_heads,
+        "kv_num_heads": k_heads,
+        "v_num_heads": v_heads,
+        "update_rule": rule,
+        "scale": 0.7,
+    }
+
+
+def _trajectory_expected(feeds, attrs):
+    q_heads, k_heads = attrs["q_num_heads"], attrs["kv_num_heads"]
+    state_heads = attrs["v_num_heads"] or k_heads
+    output_heads = attrs["v_num_heads"] or q_heads
+    batch, length, _ = feeds["query"].shape
+    dk = feeds["key"].shape[-1] // k_heads
+    dv = feeds["value"].shape[-1] // state_heads
+    query = feeds["query"].astype(np.float32).reshape(batch, length, q_heads, dk)
+    key = feeds["key"].astype(np.float32).reshape(batch, length, k_heads, dk)
+    value = feeds["value"].astype(np.float32).reshape(batch, length, state_heads, dv)
+    state_dtype = feeds.get("past_state", feeds["query"]).dtype
+    state = feeds.get(
+        "past_state", np.zeros((batch, state_heads, dk, dv), dtype=np.float32)
+    ).astype(np.float32)
+    states = np.empty((batch, length, state_heads, dk, dv), dtype=state_dtype)
+    output = np.empty((batch, length, output_heads, dv), dtype=feeds["query"].dtype)
+    for t in range(length):
+        for b in range(batch):
+            for h in range(state_heads):
+                kh = h // (state_heads // k_heads)
+                k = key[b, t, kh]
+                if "decay" in feeds:
+                    decay = (
+                        feeds["decay"][b, t]
+                        .astype(np.float32)
+                        .reshape(state_heads, -1)[h]
+                    )
+                    state[b, h] *= np.exp(decay)[:, None]
+                update = value[b, t, h]
+                if "beta" in feeds:
+                    beta = feeds["beta"][b, t].astype(np.float32)
+                    update = beta[0 if beta.size == 1 else h] * (
+                        update - k @ state[b, h]
+                    )
+                state[b, h] += np.outer(k, update)
+            for h in range(output_heads):
+                sh = h if attrs["v_num_heads"] else h // (q_heads // k_heads)
+                qh = h // (state_heads // k_heads) if attrs["v_num_heads"] else h
+                output[b, t, h] = attrs["scale"] * (query[b, t, qh] @ state[b, sh])
+        states[:, t] = state
+    return (
+        output.reshape(batch, length, output_heads * dv),
+        state.astype(state_dtype),
+        states,
+    )
+
+
+@pytest.mark.parametrize(
+    "heads",
+    [
+        (2, 2, 0),
+        (4, 2, 0),
+        (4, 1, 0),
+        (2, 2, 2),
+        (2, 2, 4),
+        (2, 2, 6),
+        (2, 2, 16),
+        (1, 1, 16),
+    ],
+)
+@pytest.mark.parametrize("length", [0, 1, 4])
+@pytest.mark.parametrize("rule", ["linear", "gated", "delta", "gated_delta"])
+@pytest.mark.parametrize("dtype", [np.float32, np.float16, ml_dtypes.bfloat16])
+@pytest.mark.parametrize("past", [False, True])
+def test_state_trajectory(heads, length, rule, dtype, past):
+    feeds, attrs = _trajectory_case(heads, length, rule, dtype, past, True, True)
+    expected = _trajectory_expected(feeds, attrs)
+    model = _model(feeds, attrs, trajectory=True, empty_slots=True)
+    original = {name: value.copy() for name, value in feeds.items()}
+    for new_ops in (None, [LinearAttention]):
+        actual = ReferenceEvaluator(model, new_ops=new_ops).run(None, feeds)
+        baseline = ReferenceEvaluator(_model(feeds, attrs), new_ops=new_ops).run(
+            None, feeds
+        )
+        for got, want in zip(actual, expected, strict=True):
+            assert got.shape == want.shape
+            assert got.dtype == want.dtype
+            tolerance = max(3e-5, 2 * ml_dtypes.finfo(got.dtype).eps)
+            assert_allclose(
+                got.astype(np.float32),
+                want.astype(np.float32),
+                rtol=tolerance,
+                atol=2e-6,
+            )
+        for got, want in zip(actual[:2], baseline, strict=True):
+            assert_array_equal(got, want)
+        if length:
+            assert_array_equal(actual[2][:, -1], actual[1])
+        for name, value in feeds.items():
+            assert_array_equal(value, original[name])
+
+
+@pytest.mark.parametrize("state_dtype", [np.float32, np.float16, ml_dtypes.bfloat16])
+@pytest.mark.parametrize(("key_decay", "scalar_beta"), [(False, False), (True, True)])
+@pytest.mark.parametrize("expanded", [False, True])
+def test_state_trajectory_streaming_and_prefix_selection(
+    state_dtype, key_decay, scalar_beta, expanded
+):
+    feeds, attrs = _trajectory_case(
+        (2, 2, 6), 5, "gated_delta", np.float16, True, key_decay, scalar_beta
+    )
+    feeds["past_state"] = feeds["past_state"].astype(state_dtype)
+    model = _model(feeds, attrs, trajectory=True)
+    new_ops = [LinearAttention] if expanded else None
+    actual = ReferenceEvaluator(model, new_ops=new_ops).run(None, feeds)
+    expected = _trajectory_expected(feeds, attrs)
+    assert_array_equal(actual[2][:, -1], actual[1])
+    for got, want in zip(actual, expected, strict=True):
+        assert_allclose(
+            got.astype(np.float32),
+            want.astype(np.float32),
+            rtol=max(3e-5, 2 * ml_dtypes.finfo(got.dtype).eps),
+            atol=2e-6,
+        )
+    # Gather is caller-owned selection; accepting no tokens keeps the initial state.
+    model.graph.input.append(
+        helper.make_tensor_value_info("accepted", onnx.TensorProto.INT64, [])
+    )
+    model.graph.node.append(
+        helper.make_node("Gather", ["states", "accepted"], ["selected"], axis=1)
+    )
+    model.graph.output.append(
+        helper.make_tensor_value_info(
+            "selected",
+            helper.np_dtype_to_tensor_dtype(np.dtype(state_dtype)),
+            [2, 6, 3, 5],
+        )
+    )
+    onnx.checker.check_model(model, full_check=True)
+    for accepted in (0, 1, 3, 5):
+        selected = (
+            feeds["past_state"]
+            if accepted == 0
+            else ReferenceEvaluator(model, new_ops=new_ops).run(
+                ["selected"],
+                {**feeds, "accepted": np.array(accepted - 1, dtype=np.int64)},
+            )[0]
+        )
+        assert_array_equal(
+            selected,
+            feeds["past_state"] if accepted == 0 else actual[2][:, accepted - 1],
+        )
+        if state_dtype != np.float32:
+            continue
+        prefix = {
+            name: value if name == "past_state" else value[:, :accepted]
+            for name, value in feeds.items()
+        }
+        prefix_state = ReferenceEvaluator(_model(prefix, attrs), new_ops=new_ops).run(
+            None, prefix
+        )[1]
+        assert_allclose(selected, prefix_state, rtol=1e-6, atol=1e-6)
+        suffix = {
+            name: value[:, accepted:]
+            for name, value in feeds.items()
+            if name != "past_state"
+        }
+        suffix["past_state"] = selected
+        suffix_results = ReferenceEvaluator(
+            _model(suffix, attrs, trajectory=True), new_ops=new_ops
+        ).run(None, suffix)
+        assert_array_equal(suffix_results[0], actual[0][:, accepted:])
+        assert_allclose(suffix_results[1], actual[1], rtol=1e-6, atol=1e-6)
+        assert_allclose(
+            suffix_results[2], actual[2][:, accepted:], rtol=1e-6, atol=1e-6
+        )
+
+
+@pytest.mark.parametrize("empty_slots", [False, True])
+@pytest.mark.parametrize("rule", ["linear", "gated", "delta", "gated_delta"])
+def test_omitted_trajectory_has_no_snapshot_storage(empty_slots, rule):
+    feeds, attrs = _trajectory_case((2, 2, 4), 3, rule, np.float32, False, False, False)
+    model = _model(feeds, attrs, empty_slots=empty_slots)
+    evaluator = ReferenceEvaluator(model)
+    with patch(
+        "onnx.reference.ops.op_linear_attention.np.empty", wraps=np.empty
+    ) as allocate:
+        actual = evaluator.run(None, feeds)
+    assert not allocate.called
+    schema = onnx.defs.get_schema("LinearAttention", 29)
+    types = [
+        helper.make_tensor_type_proto(
+            helper.np_dtype_to_tensor_dtype(feeds[name].dtype), feeds[name].shape
+        )
+        if name
+        else onnx.TypeProto()
+        for name in model.graph.node[0].input
+    ]
+    function = onnx.FunctionProto.FromString(
+        schema.get_context_dependent_function(
+            model.graph.node[0].SerializeToString(),
+            [t.SerializeToString() for t in types],
+        )
+    )
+    assert list(function.output) == ["output", "present_state"]
+    conditional = next(node for node in function.node if node.op_type == "If")
+    for branch in conditional.attribute:
+        assert len(branch.g.output) == 2
+        for node in branch.g.node:
+            if node.op_type == "Scan":
+                assert len(node.output) == 2
+                body = next(attr.g for attr in node.attribute if attr.name == "body")
+                assert len(body.output) == 2
+    expanded = ReferenceEvaluator(model, new_ops=[LinearAttention]).run(None, feeds)
+    for got, want in zip(expanded, actual, strict=True):
+        assert_allclose(got, want, rtol=1e-5, atol=1e-6)
+
+
+def test_state_trajectory_is_opset29_only():
+    for version, count in [(27, 2), (28, 2), (29, 3)]:
+        schema = onnx.defs.get_schema("LinearAttention", version)
+        assert len(schema.outputs) == count
+        if version == 29:
+            assert schema.outputs[2].name == "states"
+            assert (
+                schema.outputs[2].option
+                == onnx.defs.OpSchema.FormalParameterOption.Optional
+            )
+            assert schema.outputs[2].type_str == "S"

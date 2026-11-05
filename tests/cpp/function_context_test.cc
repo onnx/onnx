@@ -5,6 +5,7 @@
 #include <stdexcept>
 #include <string>
 #include <unordered_map>
+#include <vector>
 
 #include "gtest/gtest.h"
 #include "onnx/checker.h"
@@ -38,8 +39,7 @@ static TensorProto ToTensor(double value, TensorProto_DataType elem_type) {
 static bool
 BuildFloatFunctionBody(const FunctionBodyBuildContext& /*ctx*/, const OpSchema& schema, FunctionProto& functionProto) {
   FunctionBuilder builder(functionProto);
-  builder.Const("Two", ToTensor(2.0, TensorProto_DataType::TensorProto_DataType_FLOAT))
-      .Add("Y = Mul (X, Two)");
+  builder.Const("Two", ToTensor(2.0, TensorProto_DataType::TensorProto_DataType_FLOAT)).Add("Y = Mul (X, Two)");
   schema.BuildFunction(functionProto);
   return true;
 }
@@ -84,6 +84,43 @@ TEST(FunctionAPITest, ContextDependentFunctionTest) {
   checkerCtx.set_opset_imports(opset_imports);
   checkerCtx.set_ir_version(7);
   checker::check_function(fnProto, checkerCtx, lexicalScope);
+}
+
+TEST(FunctionAPITest, ExpandMissingTrailingOptionalOutput) {
+  const auto* const schema = OpSchemaRegistry::Schema("LinearAttention", 29, ONNX_DOMAIN);
+  ASSERT_NE(schema, nullptr);
+  NodeProto node;
+  node.set_op_type("LinearAttention");
+  for (const auto* name : {"Q", "K", "V", "", "", ""}) {
+    node.add_input(name);
+  }
+  for (const auto* name : {"Y", "S", ""}) {
+    node.add_output(name);
+  }
+  auto* rule = node.add_attribute();
+  rule->set_name("update_rule");
+  rule->set_type(AttributeProto::STRING);
+  rule->set_s("linear");
+  for (const auto* name : {"q_num_heads", "kv_num_heads"}) {
+    auto* heads = node.add_attribute();
+    heads->set_name(name);
+    heads->set_type(AttributeProto::INT);
+    heads->set_i(1);
+  }
+  std::vector<TypeProto> types(6);
+  for (size_t i = 0; i < 3; ++i) {
+    types[i].mutable_tensor_type()->set_elem_type(TensorProto::FLOAT);
+  }
+  FunctionBodyBuildContextImpl ctx(node, types);
+  FunctionProto function;
+  ASSERT_TRUE(schema->BuildContextDependentFunction(ctx, function));
+  ASSERT_EQ(function.output_size(), 2);
+  GraphProto expanded;
+  EXPECT_NO_THROW(FunctionExpandHelper(node, function, expanded));
+  EXPECT_GT(expanded.node_size(), 0);
+  // A named output still has to be bound by the function.
+  node.set_output(2, "Unexpected");
+  EXPECT_THROW(FunctionExpandHelper(node, function, expanded), std::runtime_error);
 }
 
 // A polymorphic context-dependent function test-case.
