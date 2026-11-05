@@ -5,6 +5,8 @@ from __future__ import annotations
 
 import numpy as np
 
+from onnx.reference.ops.op_reduce_mean import _mean
+
 
 def scatter_mean(data, updates):
     """Average original data with (destination coordinate, update value) pairs."""
@@ -15,6 +17,8 @@ def scatter_mean(data, updates):
         )
     output = data.copy()
     integer_mean = np.issubdtype(data.dtype, np.integer)
+    if not integer_mean:
+        updates = list(updates)
     # Widen sums so integer overflow and low-precision accumulation do not
     # corrupt the mean before the final conversion to the output dtype.
     sums = data.astype(
@@ -28,11 +32,30 @@ def scatter_mean(data, updates):
             if integer_mean
             else update
         )
-        sums[index] += value
+        with np.errstate(over="ignore", invalid="ignore"):
+            sums[index] += value
         counts[index] += 1
         seen[index] = True
     if integer_mean:
         output[seen] = np.floor_divide(sums[seen], counts[seen]).astype(data.dtype)
     else:
         output[seen] = sums[seen] / counts[seen].astype(sums.dtype)
+        failed = np.flatnonzero(seen & ~np.isfinite(output))
+        if failed.size:
+            # Replay only failed destinations through ReduceMean's finite-sum
+            # overflow fallback, including each original data value once.
+            contributions = {i: [data.flat[i]] for i in failed}
+            positions = np.arange(data.size).reshape(data.shape)
+            for index, update in updates:
+                for position, value in zip(
+                    np.asarray(positions[index]).flat,
+                    np.asarray(update).flat,
+                    strict=True,
+                ):
+                    if position in contributions:
+                        contributions[position].append(value)
+            for position, values in contributions.items():
+                output.flat[position] = _mean(
+                    np.asarray(values, dtype=sums.dtype), axes=None, keepdims=False
+                )
     return output

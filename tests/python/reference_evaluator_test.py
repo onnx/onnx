@@ -3147,6 +3147,42 @@ class TestReferenceEvaluator:
         )[0]
         np.testing.assert_array_equal(got, np.array([np.nan, 7], dtype=np.float32))
 
+    @pytest.mark.parametrize("op", ["ScatterElements", "ScatterND"])
+    @pytest.mark.parametrize(
+        "values, expected",
+        [
+            ([1e308, 1e308, 1e308], 1e308),
+            ([-1e308, -1e308, -1e308], -1e308),
+            ([1e308, 1e308, -1e308], 1e308 / 3),
+            ([np.inf, 1e308, 1e308], np.inf),
+            ([np.inf, -np.inf, 1e308], np.nan),
+            ([np.nan, 1e308, 1e308], np.nan),
+        ],
+    )
+    def test_scatter_mean_float64_overflow(self, op, values, expected):
+        model = onnx.parser.parse_model(f"""
+            <ir_version: 13, opset_import: ["" : 29]>
+            scatter (double[2, 1] data, int64[2, 1] indices,
+                     double[2, 1] updates) => (double[2, 1] output) {{
+                output = {op}<reduction = "mean">(data, indices, updates)
+            }}
+        """)
+        data = np.array([[values[0]], [-0.0]], dtype=np.float64)
+        got = ReferenceEvaluator(model).run(
+            None,
+            {
+                "data": data,
+                "indices": np.array([[0], [-2]], dtype=np.int64),
+                "updates": np.array(values[1:], dtype=np.float64).reshape(2, 1),
+            },
+        )[0]
+        assert got.dtype == data.dtype
+        assert_allclose(got, np.array([[expected], [-0.0]]), equal_nan=True)
+        assert np.signbit(got[1, 0])
+        np.testing.assert_array_equal(
+            data, np.array([[values[0]], [-0.0]], dtype=np.float64)
+        )
+
     def test_scatternd_mean_whole_tensor(self):
         model = onnx.parser.parse_model("""
             <ir_version: 13, opset_import: ["" : 29]>
