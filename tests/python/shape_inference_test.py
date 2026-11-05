@@ -7661,6 +7661,35 @@ class TestShapeInference(TestShapeInferenceHelper):
             ],
         )
 
+    @pytest.mark.parametrize(
+        "version", [8, 11, 13, defs.get_schema("Loop").since_version]
+    )
+    @pytest.mark.parametrize("trip_count", [0, 2])
+    def test_loop_state_shape_may_change(self, version: int, trip_count: int) -> None:
+        model = onnx.parser.parse_model(
+            """
+            <ir_version: 8, opset_import: ["" : 13]>
+            test () => ()
+                <int64 max_trip_count = {0}, bool cond = {1},
+                 float[1] initial = {0}, float[2] replacement = {1, 2}>
+            {
+                final = Loop (max_trip_count, cond, initial) <
+                    body = subgraph (int64 iter, bool cond_in, state_in)
+                        => (cond_out, state_out) {
+                        cond_out = Identity (cond_in)
+                        state_out = Identity (replacement)
+                    }
+                >
+            }
+            """
+        )
+        model.opset_import[0].version = version
+        model.graph.initializer[0].int64_data[0] = trip_count
+        inferred = self._inferred(model, data_prop=True)
+        final = next(info for info in inferred.graph.value_info if info.name == "final")
+        # A body output shape does not describe the initial state of a zero-trip loop.
+        assert not final.type.tensor_type.HasField("shape")
+
     def test_loop_no_state(self) -> None:
         # The body's cond_in is left untyped (its type is supplied by Loop), and the body references
         # outer_scope_input from the enclosing graph. The Loop output is left untyped so that shape

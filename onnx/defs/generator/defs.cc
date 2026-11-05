@@ -472,15 +472,18 @@ ONNX_OPERATOR_SET_SCHEMA(
           if (delta_val == 0) {
             return;
           }
-          int64_t n =
-              std::max<int64_t>(static_cast<int64_t>(ceil(static_cast<double>(limit_val - start_val) / delta_val)), 0);
+          const int64_t n = compute_integral_range_length(start_val, limit_val, delta_val);
           // Cap output size to avoid excessive memory usage
           if (n > 1000) {
             return;
           }
           TensorShapeProto tsp;
+          int64_t value = start_val;
           for (int64_t i = 0; i < n; ++i) {
-            tsp.mutable_dim()->Add()->set_dim_value(start_val + i * delta_val);
+            tsp.mutable_dim()->Add()->set_dim_value(value);
+            if (i + 1 < n) {
+              value = checkedAdd(value, delta_val);
+            }
           }
           ctx.addOutputData(0, std::move(tsp));
         }));

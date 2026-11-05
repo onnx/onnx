@@ -13,6 +13,45 @@ from onnx.helper import make_node, make_tensor, make_tensor_value_info
 
 
 class TestDataPropagation(TestShapeInferenceHelper):
+    @pytest.mark.parametrize(
+        ("start", "limit", "delta", "index", "expected_dim"),
+        [
+            (0, (1 << 53) + 1, 1 << 53, 1, 1 << 53),
+            (-(1 << 63), (1 << 63) - 1, (1 << 63) - 1, 2, (1 << 63) - 2),
+            ((1 << 63) - 1, -(1 << 63), -((1 << 63) - 1), 1, 0),
+            ((1 << 63) - 1, -(1 << 63), -(1 << 63), 0, (1 << 63) - 1),
+        ],
+    )
+    def test_range_exact_int64_data(
+        self, start: int, limit: int, delta: int, index: int, expected_dim: int
+    ) -> None:
+        graph = self._make_graph(
+            [],
+            [
+                make_node("Range", ["start", "limit", "delta"], ["values"]),
+                make_node("Gather", ["values", "index"], ["shape"]),
+                make_node("ConstantOfShape", ["shape"], ["y"]),
+            ],
+            [],
+            initializer=[
+                make_tensor("start", TensorProto.INT64, (), [start]),
+                make_tensor("limit", TensorProto.INT64, (), [limit]),
+                make_tensor("delta", TensorProto.INT64, (), [delta]),
+                make_tensor("index", TensorProto.INT64, (1,), [index]),
+            ],
+        )
+        self._assert_inferred(
+            graph,
+            [
+                make_tensor_value_info(
+                    "values", TensorProto.INT64, (len(range(start, limit, delta)),)
+                ),
+                make_tensor_value_info("shape", TensorProto.INT64, (1,)),
+                make_tensor_value_info("y", TensorProto.FLOAT, (expected_dim,)),
+            ],
+            data_prop=True,
+        )
+
     @pytest.mark.parametrize("op_type", ["Add", "Sub", "Mul", "Div"])
     @pytest.mark.parametrize("version", [13, 18])
     def test_arithmetic_multidimensional_broadcast(
