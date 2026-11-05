@@ -324,8 +324,9 @@ class TestAutomaticDowngrade(automatic_conversion_test_base.TestAutomaticConvers
 
     @pytest.mark.parametrize("value_heads", [None, 0, 2])
     @pytest.mark.parametrize("empty_output", [False, True])
+    @pytest.mark.parametrize("empty_inputs", [False, True])
     def test_linear_attention_29_to_28_compatible(
-        self, value_heads, empty_output
+        self, value_heads, empty_output, empty_inputs
     ) -> None:
         value_heads_attr = "" if value_heads is None else f", v_num_heads={value_heads}"
         model = onnx.parser.parse_model(
@@ -341,6 +342,8 @@ class TestAutomaticDowngrade(automatic_conversion_test_base.TestAutomaticConvers
         )
         if empty_output:
             model.graph.node[0].output.append("")
+        if empty_inputs:
+            model.graph.node[0].input.extend(["", "", ""])
         converted = onnx.version_converter.convert_version(model, 28)
         assert [(op.domain, op.version) for op in model.opset_import] == [("", 29)]
         assert [(op.domain, op.version) for op in converted.opset_import] == [("", 28)]

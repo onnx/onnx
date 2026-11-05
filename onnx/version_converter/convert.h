@@ -1146,7 +1146,7 @@ class DefaultVersionConverter : public BaseVersionConverter {
     /******** 29 -> 28 ********/
     registerAdapter(std::make_unique<Gemm_29_28>());
     // The default mode and an explicit equal value-head count retain v27 semantics.
-    registerAdapter("LinearAttention", 29, 28, [](const std::shared_ptr<Graph>& /*unused*/, Node* node) {
+    registerAdapter("LinearAttention", 29, 28, [](const std::shared_ptr<Graph>& graph, Node* node) {
       ONNX_ASSERTM(
           node->outputs().size() <= 2 || node->outputs()[2]->uniqueName().empty(),
           "LinearAttention state trajectories cannot be downgraded to opset 28. "
@@ -1161,6 +1161,10 @@ class DefaultVersionConverter : public BaseVersionConverter {
         node->removeAttribute(v_heads);
       }
       if (node->outputs().size() > 2) {
+        // The importer can bind omitted input slots to this empty-named output.
+        auto* undefined = graph->create(kUndefined);
+        undefined->insertBefore(node);
+        node->outputs()[2]->replaceAllUsesWith(undefined->output());
         node->eraseOutput(2);
       }
       return node;
