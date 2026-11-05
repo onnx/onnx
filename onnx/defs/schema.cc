@@ -234,13 +234,6 @@ void OpSchema::Verify(const NodeProto& node) const {
     }
   }
 
-  // An internal symbol is defined as starting with two underscores. Attributes
-  // with names meeting this condition are considered implementation details
-  // and should be ignored for the purpose of schema checking.
-  auto isInternalSymbol = [](const std::string& sym) -> bool {
-    return sym.length() >= 2 && sym[0] == '_' && sym[1] == '_';
-  };
-
   // Check attributes
   std::unordered_set<std::string> seen_attr_names{};
   for (const auto& attr_proto : node.attribute()) {
@@ -254,7 +247,9 @@ void OpSchema::Verify(const NodeProto& node) const {
     AttributeProto::AttributeType expected_type{};
     if (search != attributes_.end()) {
       expected_type = search->second.type;
-    } else if (allows_unchecked_attributes_ || isInternalSymbol(name)) {
+    } else if (allows_unchecked_attributes_ || name.rfind("__", 0) == 0) {
+      // Attributes starting with two underscores are internal implementation
+      // details and are ignored for the purpose of schema checking.
       continue;
     } else {
       fail_check("Unrecognized attribute: ", name, " for operator ", node.op_type());
