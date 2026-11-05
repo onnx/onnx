@@ -116,11 +116,13 @@ TEST(FunctionAPITest, ExpandMissingTrailingOptionalOutput) {
   ASSERT_TRUE(schema->BuildContextDependentFunction(ctx, function));
   ASSERT_EQ(function.output_size(), 2);
   GraphProto expanded;
-  EXPECT_NO_THROW(FunctionExpandHelper(node, function, expanded));
+  FunctionExpandHelper(node, function, expanded);
   EXPECT_GT(expanded.node_size(), 0);
+#ifndef ONNX_NO_EXCEPTIONS
   // A named output still has to be bound by the function.
   node.set_output(2, "Unexpected");
   EXPECT_THROW(FunctionExpandHelper(node, function, expanded), std::runtime_error);
+#endif
 }
 
 // A polymorphic context-dependent function test-case.

@@ -2101,6 +2101,53 @@ class TestAutomaticUpgrade(automatic_conversion_test_base.TestAutomaticConversio
             },
         )
 
+    @pytest.mark.parametrize("widths", [(0, 1), (1, 0), (0, 0), (1, 1)])
+    @pytest.mark.parametrize("state_only", [False, True])
+    def test_linear_attention_28_to_29_head_widths(self, widths, state_only) -> None:
+        dk, dv = widths
+        inputs = [
+            helper.make_tensor_value_info(
+                name, TensorProto.FLOAT, [1, 1, None if state_only else width]
+            )
+            for name, width in (("Q", dk), ("K", dk), ("V", dv))
+        ]
+        if state_only:
+            inputs.append(
+                helper.make_tensor_value_info("Past", TensorProto.FLOAT, [1, 1, dk, dv])
+            )
+        model = helper.make_model(
+            helper.make_graph(
+                [
+                    helper.make_node(
+                        "LinearAttention",
+                        [value.name for value in inputs],
+                        ["Y", "S"],
+                        q_num_heads=1,
+                        kv_num_heads=1,
+                        update_rule="linear",
+                        scale=1.0,
+                    )
+                ],
+                "linear_attention_upgrade",
+                inputs,
+                [
+                    helper.make_tensor_value_info("Y", TensorProto.FLOAT, [1, 1, dv]),
+                    helper.make_tensor_value_info(
+                        "S", TensorProto.FLOAT, [1, 1, dk, dv]
+                    ),
+                ],
+            ),
+            opset_imports=[helper.make_opsetid("", 28)],
+        )
+        onnx.checker.check_model(model, full_check=True)
+        if dk == 0 or dv == 0:
+            with pytest.raises(RuntimeError, match="zero-width head dimension"):
+                onnx.version_converter.convert_version(model, 29)
+        else:
+            converted = onnx.version_converter.convert_version(model, 29)
+            onnx.checker.check_model(converted, full_check=True)
+        assert model.opset_import[0].version == 28
+
     @pytest.mark.parametrize("value_heads", [4, 6, 16])
     def test_linear_attention_expanded_heads(self, value_heads) -> None:
         self._test_op_upgrade(
