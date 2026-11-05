@@ -16,7 +16,8 @@ def _legacy_mvn(X, axes):
     axes = tuple(axes) or None
     mean = _mean(X, axes=axes, keepdims=True)
     variance = _mean(np.square(X), axes=axes, keepdims=True) - np.square(mean)
-    return ((X - mean) / (np.sqrt(variance) + np.float32(1e-9)),)
+    epsilon = np.asarray(np.float32(1e-9), dtype=X.dtype)
+    return ((X - mean) / (np.sqrt(variance) + epsilon),)
 
 
 class MeanVarianceNormalization_9(OpRun):

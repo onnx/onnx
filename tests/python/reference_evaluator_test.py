@@ -3982,6 +3982,40 @@ class TestReferenceEvaluator:
         assert got.shape == expected.shape
         assert_allclose(got, expected, rtol=1e-6)
 
+    @pytest.mark.parametrize("opset", [9, 13, 28])
+    @pytest.mark.parametrize("values", [[1.0, 1.0], [1.0, 3.0]])
+    @pytest.mark.parametrize(
+        ("tensor_type", "dtype"),
+        [("float16", np.float16), ("bfloat16", ml_dtypes.bfloat16)],
+    )
+    def test_mvn_legacy_low_precision_dtype(
+        self, opset, values, tensor_type, dtype
+    ) -> None:
+        model = parser.parse_model(
+            f"""
+            <ir_version: 13, opset_import: ["" : {opset}]>
+            mvn ({tensor_type}[2] X) => ({tensor_type}[2] Y) {{
+                A = MeanVarianceNormalization <axes = [0]> (X)
+                Y = Add (A, X)
+            }}
+            """
+        )
+        x = np.array(values, dtype=dtype)
+        centered = x - np.mean(x, keepdims=True, dtype=x.dtype)
+        variance = np.mean(np.square(x), keepdims=True, dtype=x.dtype) - np.square(
+            np.mean(x, keepdims=True, dtype=x.dtype)
+        )
+        with np.errstate(divide="ignore", invalid="ignore"):
+            expected = centered / (np.sqrt(variance) + dtype(1e-9)) + x
+            got = ReferenceEvaluator(model).run(None, {"X": x})[0]
+            converted = onnx.version_converter.convert_version(model, 29)
+            check_model(converted, full_check=True)
+            upgraded = ReferenceEvaluator(converted).run(None, {"X": x})[0]
+        assert got.dtype == x.dtype
+        assert upgraded.dtype == x.dtype
+        assert_allclose(got.astype(np.float32), expected.astype(np.float32))
+        assert_allclose(upgraded.astype(np.float32), got.astype(np.float32))
+
     @pytest.mark.parametrize(
         ("tensor_type", "dtype"),
         [

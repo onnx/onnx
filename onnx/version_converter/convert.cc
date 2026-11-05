@@ -4,22 +4,34 @@
 
 #include "onnx/version_converter/convert.h"
 
+#include <cstdint>
 #include <iostream>
 #include <memory>
 #include <string>
 #include <unordered_map>
+#include <vector>
 
 #include "onnx/common/ir_pb_converter.h"
 #include "onnx/shape_inference/implementation.h"
 
 namespace ONNX_NAMESPACE::version_conversion {
 
+struct CapturedTensorType {
+  int32_t elem_type;
+  bool has_sizes;
+  std::vector<Dimension> sizes;
+};
+
 static void PropagateCapturedTensorTypes(
     const std::shared_ptr<Graph>& graph,
-    const std::unordered_map<std::string, Value*>& outer_scope) {
+    const std::unordered_map<std::string, CapturedTensorType>& outer_scope) {
   auto scope = outer_scope;
+  for (const auto& initializer : graph->initializers()) {
+    scope[initializer.name()] = {
+        initializer.elem_type(), true, {initializer.sizes().begin(), initializer.sizes().end()}};
+  }
   for (auto* input : graph->inputs()) {
-    scope[input->uniqueName()] = input;
+    scope[input->uniqueName()] = {input->elemType(), input->has_sizes(), input->sizes()};
   }
   for (auto* node : graph->nodes()) {
     for (auto* output : node->outputs()) {
@@ -27,14 +39,14 @@ static void PropagateCapturedTensorTypes(
         const auto source = outer_scope.find(output->uniqueName());
         if (source != outer_scope.end()) {
           if (output->elemType() == TensorProto_DataType_UNDEFINED) {
-            output->setElemType(source->second->elemType());
+            output->setElemType(source->second.elem_type);
           }
-          if (!output->has_sizes() && source->second->has_sizes()) {
-            output->setSizes(source->second->sizes());
+          if (!output->has_sizes() && source->second.has_sizes) {
+            output->setSizes(source->second.sizes);
           }
         }
       }
-      scope[output->uniqueName()] = output;
+      scope[output->uniqueName()] = {output->elemType(), output->has_sizes(), output->sizes()};
     }
   }
   for (auto* node : graph->nodes()) {

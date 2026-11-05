@@ -20,6 +20,12 @@ class MeanVarianceNormalizationAdapter : public Adapter {
   MeanVarianceNormalizationAdapter(const OpSetID& initial_version, const OpSetID& target_version)
       : Adapter("MeanVarianceNormalization", initial_version, target_version) {}
 
+  static TensorProto_DataType get_input_type(Node* node) {
+    const auto elem_type = node->inputs()[0]->elemType();
+    return static_cast<TensorProto_DataType>(
+        elem_type == TensorProto_DataType_UNDEFINED ? node->output()->elemType() : elem_type);
+  }
+
   static Node* make_float_constant(const std::shared_ptr<Graph>& graph, Node* before, float value) {
     Tensor tensor;
     tensor.elem_type() = TensorProto_DataType_FLOAT;
@@ -103,13 +109,13 @@ class MeanVarianceNormalization_28_29 final : public MeanVarianceNormalizationAd
 
   Node* adapt(std::shared_ptr<Graph> graph, Node* node) const override {
     ONNX_ASSERTM(node->inputs().size() == 1, "MeanVarianceNormalization must have exactly one input.")
-    const auto input_type = static_cast<TensorProto_DataType>(node->inputs()[0]->elemType());
+    const auto input_type = get_input_type(node);
     ONNX_ASSERTM(
         input_type == TensorProto_DataType_FLOAT16 || input_type == TensorProto_DataType_FLOAT ||
             input_type == TensorProto_DataType_DOUBLE || input_type == TensorProto_DataType_BFLOAT16,
         "MeanVarianceNormalization 28->29 upgrade requires a known floating-point input type, got ",
         input_type,
-        ". Run shape inference before version conversion.")
+        ". Annotate the input or output tensor type before version conversion.")
 
     const std::vector<int64_t> axes = node->hasAttribute(kaxes) ? node->is(kaxes) : std::vector<int64_t>{0, 2, 3};
     Node* axes_constant = make_axes_constant(graph, node, axes);
@@ -138,13 +144,13 @@ class MeanVarianceNormalization_29_28 final : public MeanVarianceNormalizationAd
 
   Node* adapt(std::shared_ptr<Graph> graph, Node* node) const override {
     ONNX_ASSERTM(node->inputs().size() == 1, "MeanVarianceNormalization must have exactly one input.")
-    const auto input_type = static_cast<TensorProto_DataType>(node->inputs()[0]->elemType());
+    const auto input_type = get_input_type(node);
     ONNX_ASSERTM(
         input_type == TensorProto_DataType_FLOAT16 || input_type == TensorProto_DataType_FLOAT ||
             input_type == TensorProto_DataType_DOUBLE || input_type == TensorProto_DataType_BFLOAT16,
         "MeanVarianceNormalization 29->28 downgrade requires a known floating-point input type, got ",
         input_type,
-        ". Run shape inference before version conversion.")
+        ". Annotate the input or output tensor type before version conversion.")
     const auto compute_type = input_type == TensorProto_DataType_FLOAT16 || input_type == TensorProto_DataType_BFLOAT16
         ? TensorProto_DataType_FLOAT
         : input_type;
