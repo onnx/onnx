@@ -68,9 +68,12 @@ Ordinary LoRA scaling `alpha / r` is undefined at zero. Use a finite precomputed
 coefficient, or the branch-free normalization `alpha / max(r, 1)` for finite
 `alpha`. This agrees with `alpha / r` for every positive integer adapter rank.
 If computing it inside the graph, obtain `r` from `Shape(down)` and `Gather`,
-apply integer `Max` with one, then `Cast` to the scale's floating-point type
-before `Div`. Multiply the correction by the resulting finite coefficient
-before `Add`. The coefficient must also be representable and finite in the
+apply integer `Max` with one, then cast both the denominator and `alpha` to
+`FLOAT` or a wider floating-point type before `Div`. Cast the quotient to the
+correction's computation type only after division; casting a large rank directly
+to `FLOAT16` can overflow to infinity and incorrectly produce a zero coefficient.
+Multiply the correction by the resulting finite coefficient before `Add`.
+The coefficient must also be representable and finite in the
 chosen computation type: multiplying zero by infinity or NaN does not disable
 an adapter.
 
@@ -169,20 +172,27 @@ contains no control flow.
 
 The same logical shapes can be produced using released `DequantizeLinear`
 operators before the two `MatMul` nodes, for example with `UINT8` weights,
-`FLOAT` scales, opset 21, `axis = 0`, and `block_size = 2`. For positive
-`input_dim`, `output_dim`, and adapter rank `r`, use these shapes:
+`FLOAT` scales, opset 21, and `block_size = 2`. Block along a nonempty dimension:
+use `axis = 0` for the down projection and `axis = 1` for the up projection.
+For positive `input_dim` and `output_dim`, and nonnegative adapter rank `r`,
+use these shapes:
 
 | Input to `DequantizeLinear` | Quantized weight | Scale and zero point |
 |-----------------------------|------------------|----------------------|
 | Down projection | `[input_dim, r]` | `[ceil(input_dim / 2), r]` |
-| Up projection | `[r, output_dim]` | `[ceil(r / 2), output_dim]` |
+| Up projection | `[r, output_dim]` | `[r, ceil(output_dim / 2)]` |
 
 At `r = 0`, with `input_dim = 4` and `output_dim = 3`, this gives:
 
 | Projection | Quantized weight | Scale and zero point | Decoded weight |
 |------------|------------------|----------------------|----------------|
 | Down | `[4, 0]` | `[2, 0]` | `[4, 0]` |
-| Up | `[0, 3]` | `[0, 3]` | `[0, 3]` |
+| Up | `[0, 3]` | `[0, 2]` | `[0, 3]` |
+
+Do not block along the zero-sized adapter dimension. The released opset-21
+block-size constraint is undefined when both the blocked input dimension and
+its scale dimension are zero; checker acceptance alone does not resolve this
+schema limitation.
 
 Use the quantized weight's element type for the zero point. It may be omitted
 when the operator's default zero point is appropriate. Nonempty scales must be
@@ -193,10 +203,9 @@ zero points. Keep zero dimensions in the quantized weight shapes as well as the
 decoded shapes. No packing proposal or new operator is needed.
 
 For dynamic adapter inputs, preserve `"adapter_rank"` in the down scale shape
-`[ceil(input_dim / 2), "adapter_rank"]`. Use a separate symbol, such as
-`"adapter_blocks"`, for the up scale shape `["adapter_blocks", output_dim]`;
-the caller must supply `adapter_blocks = ceil(r / 2)`. ONNX symbolic dimension
-names alone cannot express this arithmetic relationship.
+`[ceil(input_dim / 2), "adapter_rank"]` and the up scale shape
+`["adapter_rank", ceil(output_dim / 2)]`. The caller must supply these concrete
+shapes with the weights.
 
 ## Deployment checks
 
