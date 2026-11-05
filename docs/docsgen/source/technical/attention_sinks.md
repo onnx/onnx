@@ -83,6 +83,11 @@ The graph assumes values have already been aligned to query heads. For grouped
 query attention (GQA), require `Hq = Hkv * G` with integer `G`. In
 `[B,Hkv,K,D]` layout, `Reshape` to `[B,Hkv,1,K,D]`, `Expand` to
 `[B,Hkv,G,K,D]`, and `Reshape` to `[B,Hq,K,D]` for both keys and values.
+If `K` can be zero, this GQA recipe requires opset 14 or later with
+`allowzero=1` on both reshapes so that zeros in their target shapes are
+literal empty dimensions, not instructions to copy input dimensions.
+Use explicit target dimensions without `-1` for these zero-safe reshapes.
+The core sink subgraph itself still supports opset 13.
 Thus query head `h` uses KV head `floor(h/G)`, while `S[h]` remains distinct.
 The same rule with `Hkv = 1` covers multi-query attention. Projections,
 positional embeddings, head layout transforms, and KV gathering/updating

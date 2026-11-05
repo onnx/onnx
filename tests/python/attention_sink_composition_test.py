@@ -155,16 +155,18 @@ def test_documented_online_fusion(block_size, key_count):
 
 
 @pytest.mark.parametrize("window", [1, 3])
-def test_original_position_masks_softcap_and_grouped_heads(window):
+@pytest.mark.parametrize("key_count", [0, 5])
+def test_original_position_masks_softcap_and_grouped_heads(window, key_count):
     model = make_sink_model(TensorProto.DOUBLE)
+    model.opset_import[0].version = 14
     prefix = []
     initializers = {
-        "key_group_shape": np.array([1, 2, 1, 5, 2], dtype=np.int64),
-        "key_expand_shape": np.array([1, 2, 2, 5, 2], dtype=np.int64),
-        "key_head_shape": np.array([1, 4, 5, 2], dtype=np.int64),
-        "value_group_shape": np.array([1, 2, 1, 5, 1], dtype=np.int64),
-        "value_expand_shape": np.array([1, 2, 2, 5, 1], dtype=np.int64),
-        "value_head_shape": np.array([1, 4, 5, 1], dtype=np.int64),
+        "key_group_shape": np.array([1, 2, 1, key_count, 2], dtype=np.int64),
+        "key_expand_shape": np.array([1, 2, 2, key_count, 2], dtype=np.int64),
+        "key_head_shape": np.array([1, 4, key_count, 2], dtype=np.int64),
+        "value_group_shape": np.array([1, 2, 1, key_count, 1], dtype=np.int64),
+        "value_expand_shape": np.array([1, 2, 2, key_count, 1], dtype=np.int64),
+        "value_head_shape": np.array([1, 4, key_count, 1], dtype=np.int64),
         "scale": np.array(0.5, dtype=np.float64),
         "cap": np.array(2, dtype=np.float64),
         "blocked": np.array(-np.inf, dtype=np.float64),
@@ -173,7 +175,10 @@ def test_original_position_masks_softcap_and_grouped_heads(window):
         prefix.extend(
             [
                 helper.make_node(
-                    "Reshape", [source, f"{stem}_group_shape"], [f"{stem}_group"]
+                    "Reshape",
+                    [source, f"{stem}_group_shape"],
+                    [f"{stem}_group"],
+                    allowzero=1,
                 ),
                 helper.make_node(
                     "Expand",
@@ -181,7 +186,10 @@ def test_original_position_masks_softcap_and_grouped_heads(window):
                     [f"{stem}_expanded"],
                 ),
                 helper.make_node(
-                    "Reshape", [f"{stem}_expanded", f"{stem}_head_shape"], [target]
+                    "Reshape",
+                    [f"{stem}_expanded", f"{stem}_head_shape"],
+                    [target],
+                    allowzero=1,
                 ),
             ]
         )
@@ -203,11 +211,11 @@ def test_original_position_masks_softcap_and_grouped_heads(window):
     del model.graph.input[:]
     for name, dtype, shape in [
         ("Q", TensorProto.DOUBLE, [1, 4, 3, 2]),
-        ("K_raw", TensorProto.DOUBLE, [1, 2, 5, 2]),
-        ("V_raw", TensorProto.DOUBLE, [1, 2, 5, 1]),
+        ("K_raw", TensorProto.DOUBLE, [1, 2, key_count, 2]),
+        ("V_raw", TensorProto.DOUBLE, [1, 2, key_count, 1]),
         ("S", TensorProto.DOUBLE, [4]),
-        ("allowed", TensorProto.BOOL, [1, 1, 3, 5]),
-        ("bias", TensorProto.DOUBLE, [1, 1, 3, 5]),
+        ("allowed", TensorProto.BOOL, [1, 1, 3, key_count]),
+        ("bias", TensorProto.DOUBLE, [1, 1, 3, key_count]),
     ]:
         model.graph.input.append(helper.make_tensor_value_info(name, dtype, shape))
     model.graph.initializer.extend(
@@ -216,12 +224,12 @@ def test_original_position_masks_softcap_and_grouped_heads(window):
     checker.check_model(model, full_check=True)
     rng = np.random.default_rng(7)
     q = rng.normal(size=(1, 4, 3, 2))
-    k = rng.normal(size=(1, 2, 5, 2))
-    v = np.arange(10, dtype=np.float64).reshape(1, 2, 5, 1) + 1
+    k = rng.normal(size=(1, 2, key_count, 2))
+    v = np.arange(2 * key_count, dtype=np.float64).reshape(1, 2, key_count, 1) + 1
     sinks = np.array([-3, 0, 1, 4], dtype=np.float64)
     query_positions = [8, 10, 11]
-    key_positions = [4, 7, 8, 10, 11]
-    valid = [True, True, False, True, True]
+    key_positions = [4, 7, 8, 10, 11][:key_count]
+    valid = [True, True, False, True, True][:key_count]
     allowed = np.array(
         [
             [
@@ -229,16 +237,17 @@ def test_original_position_masks_softcap_and_grouped_heads(window):
                 for j, kpos in enumerate(key_positions)
             ]
             for qpos in query_positions
-        ]
+        ],
+        dtype=np.bool_,
     )[None, None]
-    bias = rng.normal(size=(1, 1, 3, 5))
+    bias = rng.normal(size=(1, 1, 3, key_count))
     output, probabilities = ReferenceEvaluator(model).run(
         None,
         {"Q": q, "K_raw": k, "V_raw": v, "S": sinks, "allowed": allowed, "bias": bias},
     )
     # Reconstruct each score independently, including original-position eligibility.
-    logits = np.full((1, 4, 3, 5), -np.inf)
-    for h, i, j in np.ndindex(4, 3, 5):
+    logits = np.full((1, 4, 3, key_count), -np.inf)
+    for h, i, j in np.ndindex(4, 3, key_count):
         if valid[j] and 0 <= query_positions[i] - key_positions[j] < window:
             score = math.fsum(
                 float(q[0, h, i, d] * k[0, h // 2, j, d]) for d in range(2)
@@ -254,6 +263,10 @@ def test_original_position_masks_softcap_and_grouped_heads(window):
     np.testing.assert_array_equal(
         probabilities[~np.broadcast_to(allowed, logits.shape)], 0
     )
+    assert output.shape == (1, 4, 3, 1)
+    assert probabilities.shape == (1, 4, 3, key_count)
+    if key_count == 0:
+        np.testing.assert_array_equal(output, 0)
 
 
 def test_example_runs():
