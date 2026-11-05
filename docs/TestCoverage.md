@@ -10906,7 +10906,7 @@ expect(
 
 
 ### DequantizePacked
-There are 6 test cases, listed as following:
+There are 5 test cases, listed as following:
 <details>
 <summary>empty</summary>
 
@@ -10977,44 +10977,6 @@ y = np.array(
     dtype=np.float32,
 )
 expect(node, inputs=[x], outputs=[y], name="test_dequantizepacked_mxfp4")
-```
-
-</details>
-<details>
-<summary>nf4</summary>
-
-```python
-node = helper.make_node(
-    "DequantizePacked",
-    ["x"],
-    ["y"],
-    format="onnx:nf4;block_size=16;scale_dtype=float32",
-    shape=[16],
-)
-# One unit scale followed by adjacent indices 0..15, low nibble first.
-x = np.frombuffer(bytes.fromhex("0000803f1032547698badcfe"), dtype=np.uint8)
-y = np.array(
-    [
-        -1.0,
-        -0.6961928009986877,
-        -0.5250730514526367,
-        -0.39491748809814453,
-        -0.28444138169288635,
-        -0.18477343022823334,
-        -0.09105003625154495,
-        0.0,
-        0.07958029955625534,
-        0.16093020141124725,
-        0.24611230194568634,
-        0.33791524171829224,
-        0.44070982933044434,
-        0.5626170039176941,
-        0.7229568362236023,
-        1.0,
-    ],
-    dtype=np.float32,
-)
-expect(node, inputs=[x], outputs=[y], name="test_dequantizepacked_nf4")
 ```
 
 </details>

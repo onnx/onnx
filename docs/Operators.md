@@ -13905,13 +13905,8 @@ expect(
   All multibyte fields are little-endian.
 
   `format` selects the quantization format using an ONNX-defined, case-sensitive
-  string identifier. Identifiers are either fixed profiles or parameterized families.
-  The `gguf:` prefix identifies the existing GGML/GGUF layouts; `onnx:` identifies
-  layouts defined here by ONNX. Parameters use `;key=value`, in ascending ASCII
-  key order, with no whitespace, duplicate keys, implicit defaults, or escaping.
-  Only registered families and their declared parameters and values are accepted.
-  Names and values are case-sensitive. Integers use decimal digits without a sign
-  or leading zeros. The supported fixed identifiers and block sizes are:
+  string identifier. The `gguf:` prefix identifies the existing GGML/GGUF layouts.
+  Only the following fixed identifiers are supported; they accept no parameters:
 
   | Identifier | Format | Elements | Bytes |
   |---|---|---|---|
@@ -13943,18 +13938,7 @@ expect(
   | gguf:q1_0 | Q1_0 | 128 | 18 |
   | gguf:q2_0 | Q2_0 | 64 | 18 |
 
-  The parameterized NF4 family is
-  `onnx:nf4;block_size=B;scale_dtype=T`, where B is any positive int64 and T is
-  `float16`, `bfloat16`, or `float32`. Both parameters are required, in the order
-  shown. A block contains B NF4 indices and occupies
-  `sizeof(T) + B/2 + B%2` bytes (integer division). Its little-endian scale comes
-  first, followed by adjacent indices, with the earlier element in the low nibble.
-  For odd B, the last high nibble is ignored. Decode each element by multiplying
-  the specified FLOAT NF4 codebook value by the scale converted to FLOAT.
-  For example, `onnx:nf4;block_size=64;scale_dtype=float32` occupies 36 bytes per block.
-  The fixed `gguf:` profiles accept no parameters.
-
-  The byte layouts, per-format decoding algorithms, NF4 and complete IQ codebooks
+  The byte layouts, per-format decoding algorithms, and complete IQ codebooks
   are defined in the in-tree
   [DequantizePacked decoding specification](DequantizePacked.md).
 
@@ -13986,7 +13970,7 @@ This version of the operator has been available since version 29 of the default 
 
 <dl>
 <dt><tt>format</tt> : string (required)</dt>
-<dd>ONNX-defined, case-sensitive fixed profile or parameterized family identifier.</dd>
+<dd>ONNX-defined, case-sensitive fixed quantization format identifier.</dd>
 <dt><tt>output_dtype</tt> : int (default is 1)</dt>
 <dd>ONNX TensorProto data type of the output: FLOAT, FLOAT16, BFLOAT16, or DOUBLE.</dd>
 <dt><tt>shape</tt> : list of ints (required)</dt>
@@ -14091,46 +14075,6 @@ y = np.array(
     dtype=np.float32,
 )
 expect(node, inputs=[x], outputs=[y], name="test_dequantizepacked_mxfp4")
-```
-
-</details>
-
-
-<details>
-<summary>nf4</summary>
-
-```python
-node = helper.make_node(
-    "DequantizePacked",
-    ["x"],
-    ["y"],
-    format="onnx:nf4;block_size=16;scale_dtype=float32",
-    shape=[16],
-)
-# One unit scale followed by adjacent indices 0..15, low nibble first.
-x = np.frombuffer(bytes.fromhex("0000803f1032547698badcfe"), dtype=np.uint8)
-y = np.array(
-    [
-        -1.0,
-        -0.6961928009986877,
-        -0.5250730514526367,
-        -0.39491748809814453,
-        -0.28444138169288635,
-        -0.18477343022823334,
-        -0.09105003625154495,
-        0.0,
-        0.07958029955625534,
-        0.16093020141124725,
-        0.24611230194568634,
-        0.33791524171829224,
-        0.44070982933044434,
-        0.5626170039176941,
-        0.7229568362236023,
-        1.0,
-    ],
-    dtype=np.float32,
-)
-expect(node, inputs=[x], outputs=[y], name="test_dequantizepacked_nf4")
 ```
 
 </details>
