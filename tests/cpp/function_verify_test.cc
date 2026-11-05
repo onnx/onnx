@@ -379,7 +379,7 @@ TEST(FunctionVerification, VerifyContextDependentFunctionExpansionWithOptionalIn
   const auto* const schema = OpSchemaRegistry::Schema("GroupedMatMul", 29, "");
   ASSERT_NE(schema, nullptr);
 
-  for (int64_t transB : {int64_t{-1}, int64_t{0}, int64_t{1}}) {
+  for (int64_t transB : {int64_t{-1}, int64_t{0}, int64_t{1}, int64_t{2}}) {
     for (bool use_explicit_empty_input : {false, true}) {
       GraphProto graph;
       NodeProto* node = graph.add_node();
@@ -407,7 +407,7 @@ TEST(FunctionVerification, VerifyContextDependentFunctionExpansionWithOptionalIn
       for (const auto& body_node : function.node()) {
         if (body_node.output_size() == 1 && body_node.output(0) == "selected_weights") {
           ++selected_weights_count;
-          EXPECT_EQ(body_node.op_type(), transB == 1 ? "Transpose" : "Gather");
+          EXPECT_EQ(body_node.op_type(), transB > 0 ? "Transpose" : "Gather");
         }
         if (body_node.op_type() == "Transpose") {
           ++transpose_count;
@@ -420,7 +420,7 @@ TEST(FunctionVerification, VerifyContextDependentFunctionExpansionWithOptionalIn
           EXPECT_EQ(perm.ints(2), 1);
         }
       }
-      EXPECT_EQ(transpose_count, transB == 1 ? 1 : 0);
+      EXPECT_EQ(transpose_count, transB > 0 ? 1 : 0);
       EXPECT_EQ(selected_weights_count, 1);
       FunctionExpandHelper(*node, function, graph);
     }

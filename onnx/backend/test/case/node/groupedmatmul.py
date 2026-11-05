@@ -27,6 +27,27 @@ def grouped_matmul(
 
 class GroupedMatMul(Base):
     @staticmethod
+    def export_transposed_weights_nonzero() -> None:
+        input = np.array([[1, 2, -1], [3, 0, 4]], dtype=np.float32)
+        weights = np.arange(18, dtype=np.float32).reshape(3, 2, 3)
+        group_indices = np.array([[2, 0], [1, 2]], dtype=np.int64)
+        output = grouped_matmul(input, weights, group_indices, transB=1)
+        for transB in (-1, 2):
+            node = onnx.helper.make_node(
+                "GroupedMatMul",
+                ["input", "weights", "group_indices"],
+                ["output"],
+                transB=transB,
+            )
+            expect(
+                node,
+                inputs=[input, weights, group_indices],
+                outputs=[output],
+                name=f"test_groupedmatmul_transB_nonzero_{transB}",
+                opset_imports=[onnx.helper.make_opsetid("", 29)],
+            )
+
+    @staticmethod
     def export_transposed_weights() -> None:
         input = np.array([[1, 2, -1], [3, 0, 4]], dtype=np.float32)
         weights = np.arange(18, dtype=np.float32).reshape(3, 2, 3)

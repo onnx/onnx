@@ -283,7 +283,7 @@ class TestShapeInference(TestShapeInferenceHelper):
         self._make_matmul_test_allow_unknown(version, None, None, None)
 
     @pytest.mark.parametrize("version", all_versions_for("GroupedMatMul"))
-    @pytest.mark.parametrize("transB", [None, 0, 1])
+    @pytest.mark.parametrize("transB", [None, 0, 1, -1, 2])
     def test_groupedmatmul(self, version, transB) -> None:
         graph = self._make_graph(
             [
@@ -317,7 +317,7 @@ class TestShapeInference(TestShapeInferenceHelper):
         "elem_type", [TensorProto.FLOAT16, TensorProto.BFLOAT16, TensorProto.DOUBLE]
     )
     @pytest.mark.parametrize("index_type", [TensorProto.INT32, TensorProto.INT64])
-    @pytest.mark.parametrize("transB", [None, 0, 1])
+    @pytest.mark.parametrize("transB", [None, 0, 1, -1, 2])
     def test_groupedmatmul_without_bias(
         self, version, elem_type, index_type, transB
     ) -> None:
