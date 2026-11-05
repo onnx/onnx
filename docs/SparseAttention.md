@@ -20,11 +20,16 @@ After installing ONNX and the test dependencies, run them from the repository ro
 pixi run pytest tests/python/sparse_attention_test.py
 ```
 
-The builders are test-local examples, not public library APIs. They use standard
-opset 25, float32 tensors, finite input values, fixed positive source lengths,
-and deliberately fixed shapes to keep the graph transformations visible:
-batch 2, query heads 4, KV heads 2, query length 3, main KV length 5, auxiliary
-KV length 4, query/key head size 2, and value head size 1.
+The builders are test-local examples, not operator specifications or public
+library APIs. The input requirements below apply to these examples. They use
+standard opset 25 and finite float32 Q/K/V values, with fixed dimensions:
+batch `B=2`, query heads `Hq=4`, KV heads `Hkv=2`, query length `Q=3`,
+main KV length `L=5`, auxiliary KV length 4, query/key head size `D=2`,
+value head size `Dv=1`, and selection capacity `C=3`.
+Input tensors Q, K and V have layouts `[B,Hq,Q,D]`, `[B,Hkv,L,D]` and
+`[B,Hkv,L,Dv]`, respectively; `Q` in a shape denotes the query length.
+Counts and token coordinates are int64. All attention calls use dot-product
+logits scaled by `1/sqrt(D)` and boolean masks, where true permits a candidate.
 Query and KV lengths need not match. Each query head `h` uses KV head `h // 2`
 (contiguous GQA groups). Each query shares its selection across heads; per-head
 selectors are outside these examples.
@@ -89,9 +94,10 @@ mask: `GatherND` treats `-1` as the last source row, not padding. A dense
 scatter-to-boolean-mask alternative collapses duplicates and therefore only
 preserves these semantics for unique active indices.
 
-K/V transpose to `[B, L, Hkv, D]`; `GatherND(batch_dims=1)` produces
-`[B, Q, C, Hkv, D]`. Transpose and reshape fold query positions into batch:
-Q becomes `[B*Q, Hq, 1, D]` and gathered K/V become `[B*Q, Hkv, C, D]`.
+K transposes to `[B,L,Hkv,D]`; `GatherND(batch_dims=1)` produces
+`[B,Q,C,Hkv,D]`. Transpose and reshape fold query positions into batch:
+Q becomes `[B*Q,Hq,1,D]` and gathered K becomes `[B*Q,Hkv,C,D]`.
+V follows the same transformations with `Dv` in place of `D`.
 One ordinary `Attention` processes these per-query candidate lists, using a
 boolean mask `[B*Q, 1, 1, C]`. Reshape and transpose restore `[B, Hq, Q, Dv]`.
 
