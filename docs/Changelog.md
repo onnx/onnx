@@ -34567,7 +34567,7 @@ This version of the operator has been available since version 29 of the default 
 #### Outputs
 
 <dl>
-<dt><tt>Y</tt> : T</dt>
+<dt><tt>Y</tt> (differentiable) : T</dt>
 <dd>Tensor with the same shape and element type as X, containing inclusive cumulative log-sum-exp values.</dd>
 </dl>
 

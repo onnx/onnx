@@ -1759,8 +1759,12 @@ BuildLogCumSumExpFunction(const FunctionBodyBuildContext& ctx, const OpSchema& s
   builder.Add("X_acc = Cast (X)", "to", int64_t{use_double ? TensorProto::DOUBLE : TensorProto::FLOAT});
   builder.Const("negative_infinity_float", -std::numeric_limits<float>::infinity())
       .Add("negative_infinity = CastLike (negative_infinity_float, X_acc)");
+  if (ctx.getAttribute("axis") == nullptr) {
+    builder.Const("axis_value", int64_t{0});
+  } else {
+    builder.Add("axis_value = Constant <value_int: int = @axis> ()");
+  }
   const std::string prefix = R"ONNX(
-        axis_value = Constant <value_int: int = @axis> ()
         scalar_zero = Constant <value = int64 {0}> ()
         zero = Constant <value = int64[1] {0}> ()
         one = Constant <value = int64[1] {1}> ()
@@ -1828,7 +1832,7 @@ BuildLogCumSumExpFunction(const FunctionBodyBuildContext& ctx, const OpSchema& s
               }
             >
             restored = Transpose <perm = [1, 0, 2]> (scanned)
-            nonempty_output = Reshape (restored, X_shape)
+            nonempty_output = Reshape <allowzero = 1> (restored, X_shape)
           }
         >
         Y = CastLike (Y_acc, X)
@@ -1892,7 +1896,11 @@ ONNX_OPERATOR_SET_SCHEMA(
             0,
             "Y",
             "Tensor with the same shape and element type as X, containing inclusive cumulative log-sum-exp values.",
-            "T")
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::Differentiable)
         .TypeConstraint(
             "T",
             {types::Float16, types::BFloat16, types::Float, types::Double},

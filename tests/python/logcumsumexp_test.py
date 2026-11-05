@@ -10,14 +10,28 @@ import numpy as np
 import pytest
 from numpy.testing import assert_allclose, assert_array_equal
 
-import onnx
-from onnx import TensorProto, helper
+from onnx import (
+    FunctionProto,
+    TensorProto,
+    checker,
+    defs,
+    helper,
+    inliner,
+    shape_inference,
+)
 from onnx.reference import ReferenceEvaluator
 from onnx.reference.op_run import OpRunExpand
 
 
 class LogCumSumExp(OpRunExpand):
     pass
+
+
+def test_logcumsumexp_differentiation_category() -> None:
+    schema = defs.get_schema("LogCumSumExp", 29)
+    differentiable = defs.OpSchema.DifferentiationCategory.Differentiable
+    assert schema.inputs[0].differentiation_category == differentiable
+    assert schema.outputs[0].differentiation_category == differentiable
 
 
 def _oracle(x: np.ndarray, axis: int) -> np.ndarray:
@@ -129,6 +143,33 @@ def test_logcumsumexp_empty(shape, axis: int, expanded: bool) -> None:
     assert result.dtype == x.dtype
 
 
+@pytest.mark.parametrize("axis", [None, 0, -1])
+@pytest.mark.parametrize(
+    "shape", [(2, 3), (0, 3, 4, 2), (2, 0, 4, 3), (2, 3, 0, 4), (2, 3, 4, 0)]
+)
+def test_logcumsumexp_inlining(shape, axis: int | None) -> None:
+    x = np.arange(np.prod(shape), dtype=np.float32).reshape(shape)
+    model = _model(x, axis)
+    model.graph.input[0].CopyFrom(
+        helper.make_tensor_value_info("X", TensorProto.FLOAT, shape)
+    )
+    expanded = inliner.inline_selected_functions(
+        model, [("", "LogCumSumExp")], inline_schema_functions=True
+    )
+    assert all(node.op_type != "LogCumSumExp" for node in expanded.graph.node)
+    checker.check_model(expanded)
+    inferred = shape_inference.infer_shapes(expanded, strict_mode=True, data_prop=True)
+    checker.check_model(inferred, full_check=True)
+    assert (
+        tuple(
+            dim.dim_value for dim in inferred.graph.output[0].type.tensor_type.shape.dim
+        )
+        == shape
+    )
+    result = ReferenceEvaluator(inferred).run(None, {"X": x})[0]
+    assert_allclose(result, _oracle(x, 0 if axis is None else axis), rtol=2e-6)
+
+
 @pytest.mark.parametrize("dtype", [np.float16, ml_dtypes.bfloat16])
 @pytest.mark.parametrize("expanded", [False, True])
 def test_logcumsumexp_promoted_accumulation(dtype, expanded: bool) -> None:
@@ -170,11 +211,11 @@ def test_logcumsumexp_invalid_axis(shape, axis: int) -> None:
 )
 def test_logcumsumexp_expansion_checker(dtype: int) -> None:
     x_type = helper.make_tensor_type_proto(dtype, None)
-    schema = onnx.defs.get_schema("LogCumSumExp", 29)
+    schema = defs.get_schema("LogCumSumExp", 29)
     node = helper.make_node("LogCumSumExp", ["X"], ["Y"], axis=-1)
-    body = onnx.FunctionProto.FromString(
+    body = FunctionProto.FromString(
         schema.get_context_dependent_function(
             node.SerializeToString(), [x_type.SerializeToString()]
         )
     )
-    onnx.checker.check_function(body)
+    checker.check_function(body)
