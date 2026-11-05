@@ -58,23 +58,22 @@ dynamic behaviors block the flow of shape inference, for example a
 Reshape to a dynamically-provide shape. Also, all operators are not
 required to have a shape inference implementation.
 
-Partial data propagation represents INT32 and INT64 values, not fractional
-floating-point values. It leaves values unknown when narrowing conversions
-cannot be represented safely. Symbolic arithmetic also falls back to unknown
-dimensions when an operand's expression exceeds 1024 characters, bounding
-expression growth across repeated operations. Pooling with symbolic spatial
-dimensions may leave ceil-mode results unknown when the final-window correction
-cannot be determined statically.
-Propagated values are exposed as concrete tensors only when their fully known
-shape matches the number of values. Subgraph-local propagation records are
-isolated from sibling graphs while retaining access to visible outer values.
+Partial data propagation stores known values of INT32 and INT64 tensors.
+It does not evaluate floating-point values. An INT32 result containing a value
+outside the range [-2147483648, 2147483647] is not propagated. A propagated
+record is exposed as a concrete tensor only if every shape dimension is a
+known nonnegative integer and the product of those dimensions equals the
+number of stored values. Subgraph-local records are not visible to enclosing
+or sibling graphs; subgraphs can read visible outer-scope records.
 
-Some inference implementations preserve arithmetic on symbolic dimensions as
-descriptive `dim_param` strings. For example, `Concat` on tensors of shapes
-`(5, 2)` and `(N, 2)` can produce a dimension named `5 + N`. These names remain
-opaque, globally scoped symbols in ONNX IR; they are not expressions evaluated
-by the runtime. Shape inference does not generally simplify expressions or
-solve equations between symbols.
+Supported symbolic arithmetic operations encode results as `dim_param` strings.
+For example, `Concat` on tensors of shapes `(5, 2)` and `(N, 2)` can produce
+`(5 + N, 2)`. ONNX IR treats each `dim_param` string as an opaque, globally
+scoped symbol, not as an expression evaluated at runtime. Shape inference
+does not solve equations between symbols. When constructing an arithmetic
+expression, an operand string longer than 1024 characters produces an unknown
+result. Pooling with `ceil_mode=1` leaves a symbolic spatial output dimension
+unknown when the final-window correction cannot be determined statically.
 
 These limitations are a property of the current implementation, not
 fundamental constraints - if you are in need of something more
