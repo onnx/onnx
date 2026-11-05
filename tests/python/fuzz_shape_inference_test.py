@@ -8,7 +8,7 @@ import sys
 import zipfile
 from pathlib import Path
 from types import SimpleNamespace
-from unittest.mock import Mock
+from unittest.mock import Mock, call
 
 import pytest
 
@@ -32,6 +32,10 @@ class _ScriptedFDP:
 
     def ConsumeBool(self) -> bool:
         return self._bools.pop(0) if self._bools else False
+
+
+def _identity_infer() -> Mock:
+    return Mock(side_effect=lambda model, **_: model)
 
 
 @pytest.fixture
@@ -74,10 +78,12 @@ def test_raw_model_last_byte(harness, monkeypatch, version: int) -> None:
         helper.make_graph([], "raw", [], []),
         opset_imports=[helper.make_opsetid("", version)],
     )
-    infer = Mock()
+    infer = _identity_infer()
     monkeypatch.setattr(onnx.shape_inference, "infer_shapes", infer)
     harness["TestOneInput"](model.SerializeToString())
-    infer.assert_called_once_with(
+    # The harness infers once more to check the result.
+    assert infer.call_count == 2
+    assert infer.call_args_list[0] == call(
         model,
         strict_mode=bool(version & 1),
         check_type=bool(version & 2),
@@ -116,11 +122,10 @@ def test_unknown_input_types_reach_inference(
     harness["atheris"].FuzzedDataProvider.return_value = _ScriptedFDP(
         ints=[index], bools=[True, custom_producer]
     )
-    infer = Mock()
+    infer = _identity_infer()
     monkeypatch.setattr(onnx.shape_inference, "infer_shapes", infer)
     harness["TestOneInput"](b"\x00\x04")
-    infer.assert_called_once()
-    model = infer.call_args.args[0]
+    model = infer.call_args_list[0].args[0]
     target = model.graph.node[-1]
     assert (target.domain, target.op_type) == (domain, name)
     assert {op.domain: op.version for op in model.opset_import}[domain] == version
@@ -148,13 +153,14 @@ def test_input_kinds(harness, monkeypatch) -> None:
         # schema, input count, data kind, data type kind (tensor), elem type,
         # rank, dim kinds/values, shape kind, initializer length, values.
         ints=[index, 2, typed, 0, 0, 2, 0, 3, 1, initializer, 2, 2, -1],
-        # schema path, no custom producer, then INT64 initializer, allowzero.
-        bools=[True, False, True, True],
+        # schema path, no custom producer, arbitrary data type, then INT64
+        # initializer, allowzero.
+        bools=[True, False, False, True, True],
     )
-    infer = Mock()
+    infer = _identity_infer()
     monkeypatch.setattr(onnx.shape_inference, "infer_shapes", infer)
     harness["TestOneInput"](b"\x00\x04")
-    model = infer.call_args.args[0]
+    model = infer.call_args_list[0].args[0]
     (data,) = model.graph.input
     assert data.name == "X0"
     dims = data.type.tensor_type.shape.dim
@@ -172,8 +178,8 @@ def test_omitted_optional_input(harness, monkeypatch) -> None:
     harness["atheris"].FuzzedDataProvider.return_value = _ScriptedFDP(
         ints=[index, 2, 1, 0, 1, -1, 3], bools=[True, False]
     )
-    infer = Mock()
+    infer = _identity_infer()
     monkeypatch.setattr(onnx.shape_inference, "infer_shapes", infer)
     harness["TestOneInput"](b"\x00\x04")
-    node = infer.call_args.args[0].graph.node[0]
+    node = infer.call_args_list[0].args[0].graph.node[0]
     assert list(node.input) == ["X0", ""]
