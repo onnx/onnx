@@ -138,10 +138,22 @@ def test_logsoftmax_function_tied_maxima_and_masked_classes(dtype, axis):
 @pytest.mark.parametrize(
     "dtype", [np.float16, ml_dtypes.bfloat16, np.float32, np.float64]
 )
-def test_logsoftmax_function_many_tied_maxima(dtype):
-    x = np.zeros((2, 300), dtype=dtype)
-    expected = np.full_like(x, -np.log(300))
+@pytest.mark.parametrize("classes", [264, 300, 2052, 70000])
+def test_logsoftmax_function_many_tied_maxima(dtype, classes):
+    x = np.zeros((2, classes), dtype=dtype)
+    expected = np.full_like(x, -np.log(classes))
     function = _get_logsoftmax_function(29, -1, x.dtype)
+    (actual,) = ReferenceEvaluator(function).run(None, {"input": x}, attributes={})
+    assert actual.dtype == dtype
+    assert_array_equal(actual.astype(np.float64), expected.astype(np.float64))
+
+
+@pytest.mark.parametrize("dtype", [np.float16, ml_dtypes.bfloat16])
+def test_logsoftmax_function_many_nonmaximal_classes(dtype):
+    x = np.full((1, 200000), -1, dtype=dtype)
+    x[0, 0] = 0
+    expected = (x.astype(np.float64) - np.log1p(199999 * np.exp(-1))).astype(dtype)
+    function = _get_logsoftmax_function(29, -1, dtype)
     (actual,) = ReferenceEvaluator(function).run(None, {"input": x}, attributes={})
     assert actual.dtype == dtype
     assert_allclose(

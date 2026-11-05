@@ -1054,12 +1054,15 @@ static bool BuildContextDependentFunctionBodyLogSoftmax29(
     const FunctionBodyBuildContext& ctx,
     const OpSchema& schema,
     FunctionProto& functionProto) {
+  const auto* input_type = ctx.getInputType(0);
+  if (input_type == nullptr) {
+    return false;
+  }
+  const auto elem_type = input_type->tensor_type().elem_type();
+  const bool promote = elem_type == TensorProto::FLOAT16 || elem_type == TensorProto::BFLOAT16;
   const int64_t axis = ctx.getAttribute("axis") != nullptr ? ctx.getAttribute("axis")->i() : -1;
   FunctionBuilder builder(functionProto);
-  builder.Const1D("axes", axis)
-      .Const("OneInt", static_cast<int64_t>(1))
-      .Const("ZeroFloat", 0.0f)
-      .Add(R"(
+  builder.Const1D("axes", axis).Const("OneInt", static_cast<int64_t>(1)).Const("ZeroFloat", 0.0f).Add(R"(
         Zero = CastLike (ZeroFloat, input)
         MaxLogit = ReduceMax <keepdims = 1> (input, axes)
         Shifted = Sub (input, MaxLogit)
@@ -1069,14 +1072,26 @@ static bool BuildContextDependentFunctionBodyLogSoftmax29(
         IsMaxInt = Cast <to = 7> (IsMax)
         MaxCount = ReduceSum <keepdims = 1> (IsMaxInt, axes)
         RemainingMaxCount = Sub (MaxCount, OneInt)
+      )");
+  // Accumulate in float for 16-bit inputs to avoid overflowing large class counts.
+  if (promote) {
+    builder.Add(R"(
+        AccumulationInput = Cast <to = 1> (Others)
+        TiedMaxima = Cast <to = 1> (RemainingMaxCount)
+    )");
+  } else {
+    builder.Add(R"(
+        AccumulationInput = Identity (Others)
         TiedMaxima = CastLike (RemainingMaxCount, input)
-      )")
-      // Remove all maxima before summation, then restore all but one. Subtracting
-      // one from the full exponential sum would lose the small normalization term.
-      .Add(R"(
-        OtherSum = ReduceSum <keepdims = 1> (Others, axes)
+    )");
+  }
+  // Remove all maxima before summation, then restore all but one. Subtracting
+  // one from the full exponential sum would lose the small normalization term.
+  builder.Add(R"(
+        OtherSum = ReduceSum <keepdims = 1> (AccumulationInput, axes)
         NormalizerInput = Add (OtherSum, TiedMaxima)
-        Normalizer = Log1p (NormalizerInput)
+        NormalizerWide = Log1p (NormalizerInput)
+        Normalizer = CastLike (NormalizerWide, input)
         output = Sub (Shifted, Normalizer)
       )");
   schema.BuildFunction(functionProto);
