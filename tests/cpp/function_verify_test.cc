@@ -379,23 +379,43 @@ TEST(FunctionVerification, VerifyContextDependentFunctionExpansionWithOptionalIn
   const auto* const schema = OpSchemaRegistry::Schema("GroupedMatMul", 29, "");
   ASSERT_NE(schema, nullptr);
 
-  for (bool use_explicit_empty_input : {false, true}) {
-    GraphProto graph;
-    NodeProto* node = graph.add_node();
-    node->set_op_type("GroupedMatMul");
-    node->add_input("input");
-    node->add_input("weights");
-    node->add_input("group_indices");
-    if (use_explicit_empty_input) {
-      node->add_input("");
-    }
-    node->add_output("output");
+  for (int64_t transB : {int64_t{0}, int64_t{1}}) {
+    for (bool use_explicit_empty_input : {false, true}) {
+      GraphProto graph;
+      NodeProto* node = graph.add_node();
+      node->set_op_type("GroupedMatMul");
+      node->add_input("input");
+      node->add_input("weights");
+      node->add_input("group_indices");
+      if (use_explicit_empty_input) {
+        node->add_input("");
+      }
+      node->add_output("output");
+      auto* attr = node->add_attribute();
+      attr->set_name("transB");
+      attr->set_type(AttributeProto::INT);
+      attr->set_i(transB);
 
-    FunctionBodyBuildContextImpl context(*node);
-    FunctionProto function;
-    ASSERT_TRUE(schema->BuildContextDependentFunction(context, function));
-    EXPECT_EQ(function.input_size(), 4);
-    FunctionExpandHelper(*node, function, graph);
+      FunctionBodyBuildContextImpl context(*node);
+      FunctionProto function;
+      ASSERT_TRUE(schema->BuildContextDependentFunction(context, function));
+      EXPECT_EQ(function.input_size(), 4);
+      int transpose_count = 0;
+      for (const auto& body_node : function.node()) {
+        if (body_node.op_type() == "Transpose") {
+          ++transpose_count;
+          ASSERT_EQ(body_node.attribute_size(), 1);
+          const auto& perm = body_node.attribute(0);
+          EXPECT_EQ(perm.name(), "perm");
+          ASSERT_EQ(perm.ints_size(), 3);
+          EXPECT_EQ(perm.ints(0), 0);
+          EXPECT_EQ(perm.ints(1), 2);
+          EXPECT_EQ(perm.ints(2), 1);
+        }
+      }
+      EXPECT_EQ(transpose_count, transB);
+      FunctionExpandHelper(*node, function, graph);
+    }
   }
 }
 
