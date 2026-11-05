@@ -8,9 +8,9 @@ SPDX-License-Identifier: Apache-2.0
 
 Sparse support patterns do not necessarily require a new ONNX operator.
 Existing standard operators can express selected-key attention, joint local and
-auxiliary attention, and block-sparse support masks. These are **executable
-examples and conformance tests**, not a new sparse operator, cache ABI, or promise
-of sparse-kernel performance.
+auxiliary attention, and block-sparse support masks. The three **executable
+examples and conformance tests** below focus on their masking, candidate and
+normalization rules.
 
 The graph builders and numerical checks live in
 [`tests/python/sparse_attention_test.py`](../tests/python/sparse_attention_test.py).
@@ -50,67 +50,14 @@ The selection tensor can be reused by multiple attention layers while each layer
 gathers its own K/V. Keeping that tensor as a graph value exposes shared index
 reuse without prescribing how selection is computed or how KV is cached.
 
-### Mapping model selectors
-
-[GLM-5.3's configuration](https://huggingface.co/zai-org/GLM-5.3/blob/main/config.json)
-uses DSA and a schedule of full and shared indexer layers. The
-[pinned GLM DSA implementation](https://github.com/huggingface/transformers/blob/c27795950091cdaf1b0e32c4aed58618fb41ffa0/src/transformers/models/glm_moe_dsa/modeling_glm_moe_dsa.py#L153-L242)
-produces int32 top-k row positions; `GlmMoeDsaAttention` in the same file passes
-`prev_topk_indices` between layers according to `indexer_types`. An exporter can
-wire one selection value to the corresponding gather-and-attend compositions.
-Layers still use their own projections, K/V and attention scaling. Indexer
-scoring and MLA projections are upstream of this composition, not implemented
-by the examples.
-
-[Qwen3.8-Flash-Next's official model card](https://huggingface.co/Qwen/Qwen3.8-Flash-Next)
-describes it as a preview of the architecture underpinning Qwen4. Its
-[pinned QSA implementation](https://github.com/huggingface/transformers/blob/c27795950091cdaf1b0e32c4aed58618fb41ffa0/src/transformers/models/qwen4_exp/modular_qwen4_exp.py#L368-L508)
-groups each query's **compact visible-position list** in groups of four, selects
-complete groups, expands their actual member positions, then appends the visible
-partial tail. For visible positions `[0, 2, 3, 5, 6, 8]`, the complete group is
-`[0, 2, 3, 5]` and the tail is `[6, 8]`. These are not necessarily contiguous
-global blocks: multiplying a selected group ID by four would lose visibility
-holes. With the released budget of 2048 tokens and compression ratio four, the
-implementation stores int32 `[B, Sq, 2051]` positions with `-1` padding before
-building its dense support mask. An exporter can instead retain those selected
-row positions for gathering, including the tail, and retain the original
-visibility mask. If the K/V tensor is itself compacted, map original token
-positions to its row indices and carry original coordinates separately.
-
-The runnable examples use a count-valid prefix, rather than a sentinel-only
-interface. For a `-1`-padded selector, preserve `indices >= 0` as slot validity
-or supply counts when valid entries form a prefix. Widen int32 positions with
-`Cast(to=INT64)` for the existing opset-25 `GatherND`; the
-`int32_indices=True` example exercises this route. Apply `Where(valid, index, 0)`
-**before** gathering and keep validity in the attention mask. Passing `-1`
-directly to `GatherND` would select the last source row, not represent padding.
-Neither widening nor safe replacement licenses an out-of-range active index.
-
-These model selectors describe set-valued support. Their unique row positions
-map to the examples' multiset composition without changing weights; arbitrary
-duplicate indices do not. In particular, a dense scatter-to-boolean-mask
-implementation collapses duplicates, whereas repeated gathered candidates
-participate repeatedly in softmax.
-
-### Runtime recognition and fusion
-
-The selected-position tensor, its validity and the source K/V remain visible
-to an optimizing runtime. It can recognize the shared-index gather, layout
-changes, coordinate masking and Attention as one region, retain the original
-index tensor and load selected K/V directly from the source. When internal
-values have no other consumers, fusion can avoid materializing source
-transposes, gathered K/V tensors, folded layout copies, gathered-coordinate and
-mask tensors, and local/auxiliary concatenations. Query/output reshapes and
-transposes may become layout calculations rather than copies. A fused
-implementation can also avoid materializing attention scores/probabilities.
-
-This is an optimization opportunity, not a required execution plan or measured
-speed claim. A legal rewrite must preserve index validity, source-row identity,
-duplicate multiplicity, head mapping, coordinate masks, scaling, one shared
-normalization for combined candidates, and empty-row behavior. It must preserve
-other graph consumers of intermediates. Reusing an index tensor across layers
-does not imply sharing K/V values or changing the selector. The unfused graph
-remains executable using standard operators.
+For example, the pinned [GLM DSA implementation](https://github.com/huggingface/transformers/blob/c27795950091cdaf1b0e32c4aed58618fb41ffa0/src/transformers/models/glm_moe_dsa/modeling_glm_moe_dsa.py#L153-L242)
+shares top-k row positions between layers; the pinned [Qwen QSA implementation](https://github.com/huggingface/transformers/blob/c27795950091cdaf1b0e32c4aed58618fb41ffa0/src/transformers/models/qwen4_exp/modular_qwen4_exp.py#L368-L508)
+expands selected groups of a compact visible-position list, including its partial
+tail. Exporters must retain actual member positions and original visibility,
+not assume contiguous global blocks. Both selectors describe unique support;
+their int32, `-1`-padded positions need the validity and casting adaptation below.
+If K/V is compacted, map token positions to source rows while retaining original
+coordinates separately. The examples do not implement these selectors.
 
 ## Selected-only attention
 
@@ -129,6 +76,14 @@ main K/V tensors and request-local selected row indices:
   candidate contributes repeatedly to the softmax denominator and numerator.
   Exporters intending a set-valued sparse support must supply unique indices.
   There is no implicit deduplication or validation of invalid active indices/counts.
+
+For a `-1`-padded selector, preserve `indices >= 0` as slot validity, or supply
+counts when valid entries form a prefix. Widen int32 positions with
+`Cast(to=INT64)` for opset-25 `GatherND` (`int32_indices=True` exercises this).
+Apply `Where(valid, index, 0)` **before** gathering and retain validity in the
+mask: `GatherND` treats `-1` as the last source row, not padding. A dense
+scatter-to-boolean-mask alternative collapses duplicates and therefore only
+preserves these semantics for unique active indices.
 
 K/V transpose to `[B, L, Hkv, D]`; `GatherND(batch_dims=1)` produces
 `[B, Q, C, Hkv, D]`. Transpose and reshape fold query positions into batch:
@@ -188,12 +143,15 @@ is present **and** its original key coordinate is no later than its original
 query coordinate. The resulting `[B,Hq,Q,L]` mask feeds ordinary Attention.
 Block membership uses tensor ordinals; causality uses supplied token coordinates.
 
-This is a dense semantic fallback: both the mask and attention scores may be
-quadratic in sequence length. A runtime may recognize/fuse compact gathered
-candidate graphs or sparse masks, but these decompositions do not require or
-guarantee sparse execution.
-
 ## Scope and runtime context
+
+These are mathematical compositions, not a new operator, cache ABI, or measured
+performance claim. The block-mask fallback can materialize quadratic masks and
+scores. A runtime may fuse gathering, layout changes, masking and Attention to
+load selected K/V directly, avoiding intermediate tensors and attention scores.
+Such fusion must preserve other consumers, index validity, source-row identity,
+duplicate multiplicity, head mapping, coordinate masks, scaling, joint
+normalization and empty-row behavior. Shared indices do not imply shared K/V.
 
 The examples are motivated by ONNX Runtime contrib operators, pinned to
 [`526e95a1447a43af1d1ac71c0cd8b1de62b47f5d`](https://github.com/microsoft/onnxruntime/tree/526e95a1447a43af1d1ac71c0cd8b1de62b47f5d):
@@ -208,27 +166,19 @@ The examples are motivated by ONNX Runtime contrib operators, pinned to
   [parity tests](https://github.com/microsoft/onnxruntime/blob/526e95a1447a43af1d1ac71c0cd8b1de62b47f5d/onnxruntime/test/python/transformers/test_sparse_attention.py#L91-L174)
   expand block layouts to boolean dense masks.
 
-These are mathematical compositions, **not** drop-in decompositions of every
-contrib input or an ORT parity claim. ORT's DynamicSparseAttention schema requires
+These are **not** drop-in contrib decompositions or an ORT parity claim.
+ORT's DynamicSparseAttention schema requires
 unique active indices and `-1` padding; these examples explicitly allow multiset
 handling and arbitrary inactive padding instead. Paged block
 tables, in-place cache updates, selectors/top-k policies, quantized cache bytes,
 fused RoPE, scratch capacities, GPU dispatch and attention sinks are out of scope.
-Those runtime concerns do not justify transplanting a bespoke contrib schema into
-the portable standard just to express the supported mathematics.
-
 The separate [FlexAttention proposal (#7523)](https://github.com/onnx/onnx/pull/7523)
 explores programmable attention. These examples neither implement nor depend on
 it, and do not assess that proposal's correctness.
 
-The tests execute the composed models with `ReferenceEvaluator`, both with native
-Attention and with its schema function expanded to standard primitive operators.
-Models pass the checker and strict shape inference. Independent dense enumeration
-and hand-computable cases cover shared normalization, GQA head mapping, unequal
-lengths, reordered original coordinates, duplicate multiplicity, empty selection,
-arbitrary unused padding, per-batch layouts and partial/fully masked blocks.
-Focused cases also execute the int32-to-int64 path with `-1` padding and
-noncontiguous original coordinates. The model-selector mappings above are
-source-based explanations; these tests do not execute the GLM/Qwen indexers.
-The linked ORT source tests are evidence for the design, not executions performed
-by this conformance suite.
+The tests check models and strict shape inference, then compare native and
+function-expanded Attention in `ReferenceEvaluator` against independent dense
+enumeration and hand-computable cases. They cover the masking, normalization,
+head mapping and duplicate/empty-selection rules above, including int32 indices,
+arbitrary inactive padding and partial blocks. They do not execute the linked
+model selectors or ORT tests.
