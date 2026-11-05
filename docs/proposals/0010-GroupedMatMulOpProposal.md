@@ -124,8 +124,9 @@ documentation, and reference implementation.
 
 Input and output names, shapes, and type constraints are defined in
 [Operator Specification](#operator-specification).
-The symbols used below are `M`, `K`, `N`, `G` (= `weights.shape[0]`) and `k` (=
-`group_indices.shape[1]`).
+The symbols used below are `M` (number of input rows), `K` (contraction
+dimension), `N` (output dimension), `G` (number of groups), and `k`
+(number of selections per row, equal to `group_indices.shape[1]`).
 
 > **Note on efficiency.** The decomposition materialises a full `[M*k, K, N]` weight slice
 > and an `[M*k, K]` copy of the tokens. As explained in [Motivation](#motivation), these
@@ -163,11 +164,11 @@ table records the resulting behaviour for clarity.
 
 | Case | Behaviour |
 |---|---|
-| `k == 0` | No expert selected, empty tensor output of shape `[M, 0, N]`. (Not expected in real model.) |
+| `k == 0` | No expert selected; empty output tensor of shape `[M, 0, N]`. |
 | `k == 1` | One expert per token, output of shape `[M, 1, N]`. |
-| `G == 1`, all indices 0 | Equivalent to `MatMul(input, weights[0])` (+ optional bias). |
+| `G == 1`, all indices 0 | Each selection contains `input[m] @ weights[0]` if `transB == 0`, otherwise `input[m] @ weights[0].T`, plus `bias[0]` if present. |
 | `M == 0` | Zero-token input; output shape is `[0, k, N]`; no compute required. |
-| Out-of-range index | Invalid input (implementations must raise an error). |
+| Index outside `[0, G)`, including a negative index | Invalid input; behavior is undefined. Negative indices do not count backwards from `G`. |
 
 ### Operator Specification
 
@@ -184,9 +185,9 @@ table records the resulting behaviour for clarity.
 
 | Index | Name | Type | Required | Shape | Description |
 |---|---|---|---|---|---|
-| 0 | `input` | T | **Required** | `[M, K]` | Row-major token matrix. `M` tokens, `K` is the contraction (hidden) dimension. |
+| 0 | `input` | T | **Required** | `[M, K]` | Token matrix. `M` tokens, `K` is the contraction dimension. |
 | 1 | `weights` | T | **Required** | `[G, K, N]` if `transB == 0`, otherwise `[G, N, K]` | Stack of `G` expert weight matrices. All experts share the same `K` and `N`. |
-| 2 | `group_indices` | tensor(int64) | **Required** | `[M, k]` | Group (expert) index per token per slot. Each of the `M` tokens selects `k` experts. Values must be in `[0, G)`. Use `k=1` for the dense (single-expert) case. |
+| 2 | `group_indices` | Tind | **Required** | `[M, k]` | Group index per token per selection. Each token selects `k` groups. Values must be in `[0, G)`. |
 | 3 | `bias` | T | **Optional** | `[G, N]` | Per-group bias vector. Added to each expert's result. |
 
 **Notes:**
@@ -205,9 +206,8 @@ table records the resulting behaviour for clarity.
 
 | Constraint | Types |
 |---|---|
-| `T` | `tensor(float)`, `tensor(float16)`, `tensor(bfloat16)` |
-
-`group_indices` is always `tensor(int64)`.
+| `T` | `tensor(float)`, `tensor(float16)`, `tensor(double)`, `tensor(bfloat16)` |
+| `Tind` | `tensor(int32)`, `tensor(int64)` |
 
 #### Quantization
 
@@ -227,7 +227,7 @@ scales per expert, block of `K`, and output channel. Per-expert,
 per-output-channel quantization is the special case `[G, 1, N]` with one
 K-sized block.
 
-For the `[G, N, K]` layout with `transB=1`, the corresponding blocked
+For the `[G, N, K]` layout with non-zero `transB`, the corresponding blocked
 `DequantizeLinear` uses `axis=2` and scales of shape `[G, N, ceil(K/B)]`.
 Dequantization preserves the stored layout; `transB` changes only how the
 resulting floating-point matrices are multiplied.
