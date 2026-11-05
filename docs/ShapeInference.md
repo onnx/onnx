@@ -65,6 +65,8 @@ record is exposed as a concrete tensor only if every shape dimension is a
 known nonnegative integer and the product of those dimensions equals the
 number of stored values. Subgraph-local records are not visible to enclosing
 or sibling graphs; subgraphs can read visible outer-scope records.
+Records whose value count differs from a fully known tensor shape are not
+propagated. Synthetic records of unknown values are limited to 1000 elements.
 
 Supported symbolic arithmetic operations encode results as `dim_param` strings.
 For example, `Concat` on tensors of shapes `(5, 2)` and `(N, 2)` can produce

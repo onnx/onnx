@@ -496,6 +496,9 @@ struct DataPropagationContextImpl : public DataPropagationContext {
         if (shape.dim_size() == 1 && shape.dim(0).has_dim_value()) {
           TensorShapeProto tsp;
           int64_t dim_value = shape.dim(0).dim_value();
+          if (dim_value < 0 || dim_value > 1000) {
+            return nullptr;
+          }
           for (int64_t i = 0; i < dim_value; ++i) {
             tsp.add_dim();
           }
@@ -520,6 +523,29 @@ struct DataPropagationContextImpl : public DataPropagationContext {
     const auto elem_type = output_type->tensor_type().elem_type();
     if (elem_type != TensorProto::INT32 && elem_type != TensorProto::INT64) {
       return;
+    }
+    if (output_type->tensor_type().has_shape()) {
+      const auto& shape = output_type->tensor_type().shape();
+      bool concrete = true;
+      bool empty = false;
+      for (const auto& dim : shape.dim()) {
+        concrete = concrete && dim.has_dim_value() && dim.dim_value() >= 0;
+        empty = empty || (dim.has_dim_value() && dim.dim_value() == 0);
+      }
+      if (concrete) {
+        size_t count = empty ? 0 : 1;
+        if (!empty) {
+          for (const auto& dim : shape.dim()) {
+            if (static_cast<uint64_t>(dim.dim_value()) > static_cast<size_t>(tsp.dim_size()) / count) {
+              return;
+            }
+            count *= static_cast<size_t>(dim.dim_value());
+          }
+        }
+        if (count != static_cast<size_t>(tsp.dim_size())) {
+          return;
+        }
+      }
     }
     if (elem_type == TensorProto::INT32) {
       for (const auto& dim : tsp.dim()) {

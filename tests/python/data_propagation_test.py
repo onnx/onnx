@@ -13,6 +13,41 @@ from onnx.helper import make_node, make_tensor, make_tensor_value_info
 
 
 class TestDataPropagation(TestShapeInferenceHelper):
+    @pytest.mark.parametrize("op_type", ["Identity", "Neg"])
+    def test_large_nonconstant_integer_vector(self, op_type: str) -> None:
+        graph = self._make_graph(
+            [("x", TensorProto.INT64, (1 << 40,))],
+            [make_node(op_type, ["x"], ["y"])],
+            [],
+        )
+        self._assert_inferred(
+            graph,
+            [make_tensor_value_info("y", TensorProto.INT64, (1 << 40,))],
+            data_prop=True,
+        )
+
+    def test_inconsistent_partial_value_count_is_discarded(self) -> None:
+        graph = self._make_graph(
+            [("x", TensorProto.FLOAT, (3,))],
+            [
+                make_node("Unsqueeze", ["pads", "axis"], ["matrix"]),
+                make_node("Gather", ["matrix", "index"], ["selected"]),
+                make_node("Add", ["selected", "zeros"], ["computed_pads"]),
+                make_node("Pad", ["x", "computed_pads"], ["y"]),
+            ],
+            [],
+            initializer=[
+                make_tensor("pads", TensorProto.INT64, (2,), [1, 2]),
+                make_tensor("axis", TensorProto.INT64, (1,), [0]),
+                make_tensor("index", TensorProto.INT64, (), [0]),
+                make_tensor("zeros", TensorProto.INT64, (2,), [0, 0]),
+            ],
+        )
+        inferred = self._inferred(graph, data_prop=True)
+        y = next(info for info in inferred.graph.value_info if info.name == "y")
+        dim = y.type.tensor_type.shape.dim[0]
+        assert not dim.HasField("dim_value") or dim.dim_value == 6
+
     @pytest.mark.parametrize("version", [13, 27])
     def test_if_branch_data_is_local(self, version: int) -> None:
         model = onnx.parser.parse_model("""
