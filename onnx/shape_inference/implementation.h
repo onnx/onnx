@@ -400,9 +400,10 @@ struct DataPropagationContextImpl : public DataPropagationContext {
     size_t output_idx = 0;
     for (const auto& output : n.output()) {
       outputIndexToNameMap_.insert({output_idx++, output});
+      const auto type = valueTypesByName.find(output);
+      allOutputTypes_.push_back(
+          type != valueTypesByName.end() && type->second != nullptr ? *type->second : TypeProto{});
     }
-
-    allOutputTypes_.resize(n.output_size());
   }
 
   const AttributeProto* getAttribute(const std::string& name) const override {
@@ -447,6 +448,13 @@ struct DataPropagationContextImpl : public DataPropagationContext {
   const TensorShapeProto* getInputData(size_t index) override {
     if (index >= allInputData_.size()) {
       ONNX_THROW("Input " + ONNX_NAMESPACE::to_string(index) + " is out of bounds.");
+    }
+    // Integer-backed propagation cannot represent fractional or rounded floating values.
+    const auto* input_type = getInputType(index);
+    if (input_type == nullptr || !input_type->has_tensor_type() ||
+        (input_type->tensor_type().elem_type() != TensorProto::INT32 &&
+         input_type->tensor_type().elem_type() != TensorProto::INT64)) {
+      return nullptr;
     }
     const std::string input_name = inputIndexToNameMap_.at(index);
     // Gets it from previous data propagation
@@ -504,6 +512,25 @@ struct DataPropagationContextImpl : public DataPropagationContext {
   void addOutputData(size_t index, TensorShapeProto&& tsp) override {
     if (index >= outputIndexToNameMap_.size()) {
       ONNX_THROW("Input " + ONNX_NAMESPACE::to_string(index) + " is out of bounds.");
+    }
+    const auto* output_type = getOutputType(index);
+    if (!output_type->has_tensor_type()) {
+      return;
+    }
+    const auto elem_type = output_type->tensor_type().elem_type();
+    if (elem_type != TensorProto::INT32 && elem_type != TensorProto::INT64) {
+      return;
+    }
+    if (elem_type == TensorProto::INT32) {
+      for (const auto& dim : tsp.dim()) {
+        if (dim.has_dim_value() &&
+            (dim.dim_value() < std::numeric_limits<int32_t>::min() ||
+             dim.dim_value() > std::numeric_limits<int32_t>::max())) {
+          // A narrowing Cast or INT32 arithmetic may wrap; discard the record,
+          // rather than publishing an unconverted value or rejecting the model.
+          return;
+        }
+      }
     }
     auto [_, inserted] = generatedShapeData_.insert({outputIndexToNameMap_.at(index), std::move(tsp)});
     if (!inserted) {

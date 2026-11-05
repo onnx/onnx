@@ -39,7 +39,7 @@ static void NegDataPropagator_old(DataPropagationContext& ctx) {
   for (int i = 0; i < input->dim_size(); ++i) {
     const auto& dim = input->dim(i);
     if (dim.has_dim_value()) {
-      tsp.mutable_dim()->Add()->set_dim_value(-dim.dim_value());
+      tsp.mutable_dim()->Add()->set_dim_value(checkedSubtract(0, dim.dim_value()));
     } else {
       tsp.mutable_dim()->Add();
     }
@@ -90,7 +90,7 @@ static void DivDataPropagator_old(DataPropagationContext& ctx) {
     const auto& d0 = input_0->dim(size_0 == 1 ? 0 : i);
     const auto& d1 = input_1->dim(size_1 == 1 ? 0 : i);
     if (d0.has_dim_value() && d1.has_dim_value() && d1.dim_value() != 0) {
-      tsp.mutable_dim()->Add()->set_dim_value(d0.dim_value() / d1.dim_value());
+      tsp.mutable_dim()->Add()->set_dim_value(checkedDivide(d0.dim_value(), d1.dim_value()));
     } else {
       tsp.mutable_dim()->Add();
     }

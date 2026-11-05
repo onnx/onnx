@@ -14,6 +14,107 @@ from onnx.helper import make_node, make_tensor, make_tensor_value_info
 
 class TestDataPropagation(TestShapeInferenceHelper):
     @pytest.mark.parametrize(
+        ("op_type", "versions"), [("Neg", [6, 13]), ("Div", [7, 13, 14])]
+    )
+    def test_integer_unary_division_overflow(
+        self, op_type: str, versions: list[int]
+    ) -> None:
+        for version in versions:
+            graph = self._make_graph(
+                [],
+                [
+                    make_node(
+                        op_type,
+                        ["x"] if op_type == "Neg" else ["x", "minus_one"],
+                        ["y"],
+                    )
+                ],
+                [],
+                initializer=[
+                    make_tensor("x", TensorProto.INT64, (1,), [-(1 << 63)]),
+                    make_tensor("minus_one", TensorProto.INT64, (1,), [-1]),
+                ],
+            )
+            with pytest.raises(onnx.shape_inference.InferenceError, match="overflow"):
+                self._inferred(
+                    graph,
+                    data_prop=True,
+                    opset_imports=[onnx.helper.make_opsetid("", version)],
+                )
+
+    @pytest.mark.parametrize("version", [13, 14, 27])
+    def test_float_division_does_not_propagate_integer_quotient(
+        self, version: int
+    ) -> None:
+        graph = self._make_graph(
+            [],
+            [
+                make_node("Cast", ["a"], ["af"], to=TensorProto.FLOAT),
+                make_node("Cast", ["b"], ["bf"], to=TensorProto.FLOAT),
+                make_node("Div", ["af", "bf"], ["quotient"]),
+                make_node("Ceil", ["quotient"], ["rounded"]),
+                make_node("Cast", ["rounded"], ["shape"], to=TensorProto.INT64),
+                make_node("ConstantOfShape", ["shape"], ["y"]),
+            ],
+            [],
+            initializer=[
+                make_tensor("a", TensorProto.INT64, (1,), [5]),
+                make_tensor("b", TensorProto.INT64, (1,), [2]),
+            ],
+        )
+        self._assert_inferred(
+            graph,
+            [
+                make_tensor_value_info("af", TensorProto.FLOAT, (1,)),
+                make_tensor_value_info("bf", TensorProto.FLOAT, (1,)),
+                make_tensor_value_info("quotient", TensorProto.FLOAT, (1,)),
+                make_tensor_value_info("rounded", TensorProto.FLOAT, (1,)),
+                make_tensor_value_info("shape", TensorProto.INT64, (1,)),
+                make_tensor_value_info("y", TensorProto.FLOAT, (None,)),
+            ],
+            data_prop=True,
+            opset_imports=[onnx.helper.make_opsetid("", version)],
+        )
+
+    def test_narrowing_cast_discards_out_of_range_data(self) -> None:
+        graph = self._make_graph(
+            [],
+            [
+                make_node("Cast", ["x"], ["narrowed"], to=TensorProto.INT32),
+                make_node("Cast", ["narrowed"], ["shape"], to=TensorProto.INT64),
+                make_node("Relu", ["shape"], ["positive_shape"]),
+                make_node("ConstantOfShape", ["positive_shape"], ["y"]),
+            ],
+            [],
+            initializer=[make_tensor("x", TensorProto.INT64, (1,), [1 << 31])],
+        )
+        self._assert_inferred(
+            graph,
+            [
+                make_tensor_value_info("narrowed", TensorProto.INT32, (1,)),
+                make_tensor_value_info("shape", TensorProto.INT64, (1,)),
+                make_tensor_value_info("positive_shape", TensorProto.INT64, (1,)),
+                make_tensor_value_info("y", TensorProto.FLOAT, (None,)),
+            ],
+            data_prop=True,
+        )
+
+    @pytest.mark.parametrize("op_type", ["Add", "Mul"])
+    def test_symbolic_expression_growth_is_bounded(self, op_type: str) -> None:
+        nodes = [make_node("Shape", ["x"], ["value_0"])]
+        nodes.extend(
+            make_node(op_type, [f"value_{i}", f"value_{i}"], [f"value_{i + 1}"])
+            for i in range(16)
+        )
+        nodes.append(make_node("ConstantOfShape", ["value_16"], ["y"]))
+        graph = self._make_graph([("x", TensorProto.FLOAT, ("N",))], nodes, [])
+        inferred = self._inferred(graph, data_prop=True)
+        y = next(info for info in inferred.graph.value_info if info.name == "y")
+        dim = y.type.tensor_type.shape.dim[0]
+        assert not dim.HasField("dim_value")
+        assert len(dim.dim_param) <= 4096
+
+    @pytest.mark.parametrize(
         ("start", "limit", "delta", "index", "expected_dim"),
         [
             (0, (1 << 53) + 1, 1 << 53, 1, 1 << 53),

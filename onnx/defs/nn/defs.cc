@@ -217,6 +217,12 @@ ONNX_API void convPoolShapeInference(
     // default is floor mode .i.e. ceil_mode is set to 0
     auto ceil_mode = getAttribute(ctx, "ceil_mode", 0);
 
+    // The final window may start entirely in right padding. Without a concrete
+    // input dimension, the ceil-mode correction cannot be decided statically.
+    if (ceil_mode == 1 && !input_dim.has_dim_value()) {
+      continue;
+    }
+
     auto output_dim =
         (effective_input_dim - effective_kernel_shape[i] + (ceil_mode ? strides[i] - 1 : 0)) / strides[i] + 1;
 

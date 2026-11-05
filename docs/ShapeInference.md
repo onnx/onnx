@@ -58,14 +58,20 @@ dynamic behaviors block the flow of shape inference, for example a
 Reshape to a dynamically-provide shape. Also, all operators are not
 required to have a shape inference implementation.
 
-Shape inference works only with constants and simple variables. It
-does not support arithmetic expressions containing variables. For
-example, `Concat` on tensors of shapes `(5, 2)` and `(7, 2)` can be
-inferred to produce a result of shape `(12, 2)`, but `Concat` on
-tensors of shapes `(5, 2)` and `(N, 2)` will simply produce `(M, 2)`,
-rather than containing a representation of `N+5`. Note that differing
-unknown symbolic values will be propagated, so the `M` here represents
-an unknown quantity that is the same as other occurrences of `M`.
+Partial data propagation represents INT32 and INT64 values, not fractional
+floating-point values. It leaves values unknown when narrowing conversions
+cannot be represented safely. Symbolic arithmetic also falls back to unknown
+dimensions when an operand's expression exceeds 1024 characters, bounding
+expression growth across repeated operations. Pooling with symbolic spatial
+dimensions may leave ceil-mode results unknown when the final-window correction
+cannot be determined statically.
+
+Some inference implementations preserve arithmetic on symbolic dimensions as
+descriptive `dim_param` strings. For example, `Concat` on tensors of shapes
+`(5, 2)` and `(N, 2)` can produce a dimension named `5 + N`. These names remain
+opaque, globally scoped symbols in ONNX IR; they are not expressions evaluated
+by the runtime. Shape inference does not generally simplify expressions or
+solve equations between symbols.
 
 These limitations are a property of the current implementation, not
 fundamental constraints - if you are in need of something more

@@ -225,7 +225,8 @@ inline std::string dimToString(const TensorShapeProto::Dimension& dim) {
   if (dim.has_dim_value()) {
     return ONNX_NAMESPACE::to_string(dim.dim_value());
   }
-  if (dim.has_dim_param()) {
+  // Stop expansion before copying or combining large expression strings.
+  if (dim.has_dim_param() && dim.dim_param().size() <= 1024) {
     return dim.dim_param();
   }
   return "";

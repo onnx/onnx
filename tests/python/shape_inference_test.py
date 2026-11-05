@@ -7625,6 +7625,32 @@ class TestShapeInference(TestShapeInferenceHelper):
                 opset_imports=opset_imports,
             )
 
+    @pytest.mark.parametrize(
+        ("kernel", "stride", "pads"), [(2, 2, [1, 1]), (1, 3, [0, 0])]
+    )
+    def test_maxpool_symbolic_ceil_mode(
+        self, kernel: int, stride: int, pads: list[int]
+    ) -> None:
+        graph = self._make_graph(
+            [("x", TensorProto.FLOAT, (1, 1, "H"))],
+            [
+                make_node(
+                    "MaxPool",
+                    ["x"],
+                    ["y"],
+                    kernel_shape=[kernel],
+                    strides=[stride],
+                    pads=pads,
+                    ceil_mode=1,
+                )
+            ],
+            [],
+        )
+        self._assert_inferred(
+            graph,
+            [make_tensor_value_info("y", TensorProto.FLOAT, (1, 1, None))],
+        )
+
     def test_loop(self) -> None:
         # The body's cond_in and loop_state_in are left untyped (their types are supplied by Loop), and the
         # body references outer_scope_input from the enclosing graph. loop_state_final's rank may change

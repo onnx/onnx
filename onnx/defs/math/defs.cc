@@ -217,7 +217,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           for (int i = 0; i < input->dim_size(); ++i) {
             const auto& dim = input->dim(i);
             if (dim.has_dim_value()) {
-              tsp.mutable_dim()->Add()->set_dim_value(-dim.dim_value());
+              tsp.mutable_dim()->Add()->set_dim_value(checkedSubtract(0, dim.dim_value()));
             } else {
               tsp.mutable_dim()->Add();
             }
