@@ -54,10 +54,15 @@ class Dropout_7(DropoutBase):
 
 
 class Dropout_12(DropoutBase):
-    def _run(self, *inputs, seed=None):
+    def _run(self, *inputs, seed=None, training_mode=None):
         X = inputs[0]
-        ratio = 0.5 if len(inputs) <= 1 else inputs[1]
-        training_mode = False if len(inputs) <= 2 else inputs[2]
+        # Omitted optional inputs arrive as None, not truncated from inputs.
+        ratio = 0.5 if len(inputs) <= 1 or inputs[1] is None else inputs[1]
+        # In opset 12 training_mode is an attribute (passed as a keyword);
+        # in opset >= 13 it is the third input.
+        if len(inputs) > 2:
+            training_mode = inputs[2]
+        training_mode = training_mode is not None and bool(training_mode)
         return self._private_run(
             X,
             seed=seed,
