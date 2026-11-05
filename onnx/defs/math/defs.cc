@@ -1379,11 +1379,13 @@ static bool BuildContextDependentFunctionBodyGroupedMatMul(
                  : "N = Gather <axis = 0> (weights_shape, index_two)")
       .Add("S = Gather <axis = 0> (indices_shape, index_one)")
       .Add("MS = Mul (M, S)")
-      .Add("indices_flat = Reshape <allowzero = 1> (group_indices, MS)")
-      .Add("gathered_weights = Gather <axis = 0> (weights, indices_flat)");
-  builder.Add(
-      transB ? "selected_weights = Transpose <perm = [0, 2, 1]> (gathered_weights)"
-             : "selected_weights = Identity (gathered_weights)");
+      .Add("indices_flat = Reshape <allowzero = 1> (group_indices, MS)");
+  if (transB) {
+    builder.Add("gathered_weights = Gather <axis = 0> (weights, indices_flat)")
+        .Add("selected_weights = Transpose <perm = [0, 2, 1]> (gathered_weights)");
+  } else {
+    builder.Add("selected_weights = Gather <axis = 0> (weights, indices_flat)");
+  }
   builder.Add("input_unsqueezed = Unsqueeze (input, index_one)")
       .Add("expanded_shape = Concat <axis = 0> (M, S, K)")
       .Add("input_expanded = Expand (input_unsqueezed, expanded_shape)")
