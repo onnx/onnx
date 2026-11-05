@@ -145,6 +145,7 @@ struct FunctionOpAttributeMap {
     for (const char* bits :
          {"bits = 1", "bits = 2", "bits = 3", "bits = 4", "bits = 5", "bits = 6", "bits = 7", "bits = 8"}) {
       addTestCase("Pack", 29, {bits});
+      addTestCase("Pack", 29, {bits, "output_type = 12"});
       addTestCase("Unpack", 29, {bits});
     }
     for (const char* group : {"group_size = 1", "group_size = 5", "group_size = 39"}) {

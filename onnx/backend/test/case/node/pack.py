@@ -5,12 +5,21 @@ from __future__ import annotations
 
 import numpy as np
 
-from onnx import helper
+from onnx import TensorProto, helper
 from onnx.backend.test.case.base import Base
 from onnx.backend.test.case.node import expect
 
 
 class Pack(Base):
+    @staticmethod
+    def export_pack_uint32_axis() -> None:
+        node = helper.make_node(
+            "Pack", ["X"], ["Y"], bits=5, axis=0, output_type=TensorProto.UINT32
+        )
+        x = np.full((7, 2), 31, dtype=np.uint8)
+        y = np.array([[0xFFFFFFFF, 0xFFFFFFFF], [7, 7]], dtype=np.uint32)
+        expect(node, inputs=[x], outputs=[y], name="test_pack_uint32_axis")
+
     @staticmethod
     def export_pack_ternary() -> None:
         node = helper.make_node("Pack", ["X"], ["Y"], radix=3, group_size=5)

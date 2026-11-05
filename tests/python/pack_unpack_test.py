@@ -64,19 +64,38 @@ def oracle(x: np.ndarray, bits: int) -> np.ndarray:
 
 
 def grouped_evaluator(
-    op: str, attrs: dict[str, int], shape: tuple[int, ...], function: bool = False
+    op: str,
+    attrs: dict[str, int],
+    shape: tuple[int, ...],
+    function: bool = False,
+    storage_type: int = TensorProto.UINT8,
 ) -> ReferenceEvaluator:
-    inputs = [helper.make_tensor_value_info("X", TensorProto.UINT8, shape)]
+    inputs = [
+        helper.make_tensor_value_info(
+            "X", storage_type if op == "Unpack" else TensorProto.UINT8, shape
+        )
+    ]
     names = ["X"]
     if op == "Unpack":
         inputs.append(helper.make_tensor_value_info("count", TensorProto.INT64, []))
         names.append("count")
     node = helper.make_node(op, names, ["Y"], **attrs)
+    output_shape = list(shape)
+    if output_shape:
+        output_shape[attrs.get("axis", -1)] = None
     graph = helper.make_graph(
         [node],
         "grouped",
         inputs,
-        [helper.make_tensor_value_info("Y", TensorProto.UINT8, [*shape[:-1], None])],
+        [
+            helper.make_tensor_value_info(
+                "Y",
+                attrs.get("output_type", TensorProto.UINT8)
+                if op == "Pack"
+                else TensorProto.UINT8,
+                output_shape,
+            )
+        ],
     )
     model = helper.make_model(
         graph, opset_imports=[helper.make_opsetid("", 29)], ir_version=14
@@ -96,6 +115,117 @@ def grouped_evaluator(
         model.opset_import.append(helper.make_opsetid(body.domain, 1))
     checker.check_model(model, full_check=function)
     return ReferenceEvaluator(model)
+
+
+@pytest.mark.parametrize("storage_type", [TensorProto.UINT8, TensorProto.UINT32])
+@pytest.mark.parametrize("axis", [-3, -2, -1, 0, 1, 2])
+@pytest.mark.parametrize(
+    "attrs",
+    [
+        {"bits": 5},
+        {"bits": 8},
+        {"radix": 3, "group_size": 5},
+        {"radix": 3, "group_size": 39},
+    ],
+)
+@pytest.mark.parametrize("shape", [(2, 11, 17), (0, 3, 9), (2, 0, 9), (2, 3, 0)])
+def test_storage_words_and_axis(
+    storage_type: int, axis: int, attrs: dict[str, int], shape: tuple[int, ...]
+) -> None:
+    radix = attrs.get("radix", 1 << attrs.get("bits", 1))
+    group_size = attrs.get("group_size", 1)
+    x = np.random.default_rng(2).integers(0, radix, shape, dtype=np.uint8)
+    byte_rows = grouped_oracle(np.moveaxis(x, axis, -1), radix, group_size)
+    word_bits = 32 if storage_type == TensorProto.UINT32 else 8
+    words = (byte_rows.shape[-1] * 8 + word_bits - 1) // word_bits
+    dtype = np.uint32 if storage_type == TensorProto.UINT32 else np.uint8
+    expected_rows = np.zeros((*byte_rows.shape[:-1], words), dtype=dtype)
+    for row in np.ndindex(byte_rows.shape[:-1]):
+        stream = int.from_bytes(byte_rows[row].tobytes(), "little")
+        for i in range(words):
+            expected_rows[row][i] = (stream >> (word_bits * i)) & ((1 << word_bits) - 1)
+    expected = np.moveaxis(expected_rows, -1, axis)
+    pack_attrs = {**attrs, "axis": axis, "output_type": storage_type}
+    unpack_attrs = {**attrs, "axis": axis}
+    for function in (False, True):
+        pack = grouped_evaluator("Pack", pack_attrs, x.shape, function)
+        packed = pack.run(None, {"X": x})[0]
+        assert packed.dtype == dtype
+        np.testing.assert_array_equal(packed, expected)
+        unpack = grouped_evaluator(
+            "Unpack", unpack_attrs, packed.shape, function, storage_type
+        )
+        decoded = unpack.run(
+            None, {"X": packed, "count": np.array(x.shape[axis], dtype=np.int64)}
+        )[0]
+        np.testing.assert_array_equal(decoded, x)
+        unpack.proto_.graph.initializer.append(
+            helper.make_tensor("count", TensorProto.INT64, [], [x.shape[axis]])
+        )
+        for model, output in ((pack.proto_, packed), (unpack.proto_, decoded)):
+            inferred = shape_inference.infer_shapes(model, strict_mode=True)
+            tensor = inferred.graph.output[0].type.tensor_type
+            if not function:
+                assert tuple(d.dim_value for d in tensor.shape.dim) == output.shape
+            else:
+                assert len(tensor.shape.dim) == output.ndim
+                assert all(
+                    not d.HasField("dim_value") or d.dim_value == size
+                    for d, size in zip(tensor.shape.dim, output.shape, strict=True)
+                )
+            assert tensor.elem_type == helper.np_dtype_to_tensor_dtype(output.dtype)
+
+
+@pytest.mark.parametrize("function", [False, True])
+def test_uint32_bit31_and_padding(function: bool) -> None:
+    packed = np.array([0xFFFFFFFF, 0xFFFFFFFF], dtype=np.uint32)
+    decoded = grouped_evaluator(
+        "Unpack", {"bits": 5}, packed.shape, function, TensorProto.UINT32
+    ).run(None, {"X": packed, "count": np.array(7, dtype=np.int64)})[0]
+    np.testing.assert_array_equal(decoded, np.full(7, 31, dtype=np.uint8))
+    encoded = grouped_evaluator(
+        "Pack", {"bits": 5, "output_type": TensorProto.UINT32}, decoded.shape, function
+    ).run(None, {"X": decoded})[0]
+    np.testing.assert_array_equal(encoded, [0xFFFFFFFF, 7])
+
+
+@pytest.mark.parametrize("op", ["Pack", "Unpack"])
+@pytest.mark.parametrize("axis", [-3, 2])
+def test_invalid_axis(op: str, axis: int) -> None:
+    model = grouped_evaluator(op, {"bits": 3}, (2, 1)).proto_
+    model.graph.node[0].attribute.append(helper.make_attribute("axis", axis))
+    feeds = {"X": np.zeros((2, 1), dtype=np.uint8)}
+    if op == "Unpack":
+        feeds["count"] = np.array(2, dtype=np.int64)
+    with pytest.raises(ValueError, match="axis"):
+        ReferenceEvaluator(model).run(None, feeds)
+    with pytest.raises(shape_inference.InferenceError, match="axis"):
+        shape_inference.infer_shapes(model, strict_mode=True)
+
+
+@pytest.mark.parametrize(
+    "storage_type", [TensorProto.INT32, TensorProto.UINT16, TensorProto.FLOAT]
+)
+def test_invalid_output_storage_type(storage_type: int) -> None:
+    model = grouped_evaluator("Pack", {"bits": 3}, (1,)).proto_
+    model.graph.node[0].attribute.append(
+        helper.make_attribute("output_type", storage_type)
+    )
+    with pytest.raises(ValueError, match="output_type"):
+        ReferenceEvaluator(model).run(None, {"X": np.zeros(1, dtype=np.uint8)})
+    with pytest.raises(shape_inference.InferenceError, match="storage type"):
+        shape_inference.infer_shapes(model, strict_mode=True)
+
+
+def test_uint32_symbolic_axis_shape() -> None:
+    model = grouped_evaluator(
+        "Pack", {"bits": 5, "axis": 0, "output_type": TensorProto.UINT32}, (2, 3)
+    ).proto_
+    model.graph.input[0].type.tensor_type.shape.dim[0].dim_param = "N"
+    inferred = shape_inference.infer_shapes(model, strict_mode=True)
+    shape = inferred.graph.output[0].type.tensor_type.shape
+    assert not shape.dim[0].HasField("dim_value")
+    assert shape.dim[1] == model.graph.input[0].type.tensor_type.shape.dim[1]
 
 
 def grouped_oracle(x: np.ndarray, radix: int, group_size: int) -> np.ndarray:
@@ -260,7 +390,7 @@ def test_grouped_unpack_shape_and_invalid_length() -> None:
         )
         model = helper.make_model(graph, opset_imports=[helper.make_opsetid("", 29)])
         if length == 1:
-            with pytest.raises(shape_inference.InferenceError, match="byte count"):
+            with pytest.raises(shape_inference.InferenceError, match="word count"):
                 shape_inference.infer_shapes(model, strict_mode=True)
         else:
             inferred = shape_inference.infer_shapes(model, strict_mode=True)
@@ -354,7 +484,7 @@ def test_unpack_invalid_count(count: np.ndarray) -> None:
 
 @pytest.mark.parametrize("count", [0, 3])
 def test_unpack_invalid_length(count: int) -> None:
-    with pytest.raises(ValueError, match="Packed last dimension"):
+    with pytest.raises(ValueError, match="Packed axis dimension"):
         evaluator("Unpack", 3).run(
             None,
             {
@@ -433,7 +563,7 @@ def test_invalid_input_dtype(op: str, dtype: type) -> None:
     feeds = {"X": np.zeros((1,), dtype=dtype)}
     if op == "Unpack":
         feeds["count"] = np.array(2, dtype=np.int64)
-    with pytest.raises(ValueError, match="UINT8 tensor"):
+    with pytest.raises(ValueError, match="UINT8"):
         evaluator(op, 3).run(None, feeds)
 
 

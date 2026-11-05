@@ -34518,32 +34518,38 @@ This version of the operator has been available since version 29 of the default 
 
 ### <a name="Pack-29"></a>**Pack-29**</a>
 
-  Packs unsigned integer codes into bytes independently along the last axis.
-  The input `X` and output `Y` are UINT8 tensors of the same rank, which must be
-  at least 1. Specify either `bits` in [1, 8], or both `radix` and `group_size`;
+  Packs UINT8 unsigned integer codes into UINT8 or UINT32 storage words
+  independently along `axis` (default -1). Input and output have the same
+  rank, at least 1. Negative axes are supported; axis must be in [-rank, rank-1].
+  The `output_type` attribute selects UINT8 (default) or UINT32 storage,
+  with word_bits equal to 8 or 32 respectively. All other dimensions are preserved.
+  Specify either `bits` in [1, 8], or both `radix` and `group_size`;
   the two spellings are mutually exclusive. With `bits`, each element of `X`
   must be in [0, 2^bits - 1].
 
-  When using `bits`, for input shape `[..., N]`, the output shape is `[..., B]`, where
-  `B = ceil(N * bits / 8)`. Each fixed combination of indices in the leading
-  dimensions defines a row; a rank-1 tensor has one row.
+  When using `bits`, an input axis dimension N becomes B = ceil(N * bits / word_bits).
+  Each fixed combination of indices in the other dimensions defines an
+  independent sequence, called a row below; a rank-1 tensor has one row.
 
-  Within each row, codes are packed in increasing last-axis index order, with
+  Within each row, codes are packed in increasing axis index order, with
   the least significant bit of each code first. Number the bits of each code
-  and byte starting at 0 for the least significant bit. For code index
+  and storage word starting at 0 for the least significant bit. For code index
   `0 <= i < N` and bit index `0 <= k < bits`, bit `k` of input code `i` is stored
-  at bit `(i * bits + k) % 8` of output byte `floor((i * bits + k) / 8)`.
-  When a code spans a byte boundary, its remaining higher-order bits occupy
-  the low bits of the next byte. Each row begins at bit 0 of a new byte.
-  Unused high bits in the final byte of each row are zero.
+  at bit `(i * bits + k) % word_bits` of output word `floor((i * bits + k) / word_bits)`.
+  When a code spans a word boundary, its remaining higher-order bits occupy
+  the low bits of the next word. Each row begins at bit 0 of a new word.
+  Unused high bits in the final word of each row are zero. Bit positions
+  are defined numerically, independently of host endianness; tensor raw data
+  uses ONNX's little-endian serialization.
 
-  All leading dimensions are preserved, including zero dimensions, and the
-  same output shape rule applies when any leading dimension is zero.
+  All non-axis dimensions are preserved, including zero dimensions, and the
+  same output shape rule applies when any non-axis dimension is zero.
   An input with `N = 0` produces an output with `B = 0`.
 
-  For example, `bits = 3` packs `[0, 1, 2, 3, 4, 5, 6, 7]` into
+  With default UINT8 storage, `bits = 3` packs `[0, 1, 2, 3, 4, 5, 6, 7]` into
   `[136, 198, 250]`. With `bits = 5`, the rows `[[1, 2, 3], [31, 0, 16]]`
   are packed into `[[65, 12], [31, 64]]`.
+  With UINT32 storage, `bits = 5` packs `[1, 2, 3]` into `[3137]`.
 
   Grouped packing uses radix R in [2, 256] and positive group size G, with
   R^G <= 2^63 - 1. Each input value must be in [0, R - 1]. Divide each row
@@ -34551,8 +34557,8 @@ This version of the operator has been available since version 29 of the default 
   Group [x0, ..., x(G-1)] becomes the integer sum(xj * R^j): the first digit
   is least significant. Each group index occupies W = ceil(log2(R^G)) bits.
   Pack these indices contiguously, least-significant bit first, with no
-  byte alignment between groups. The output last dimension is
-  ceil(ceil(N/G) * W / 8). Unused final byte bits are zero.
+  word alignment between groups. The output axis dimension is
+  ceil(ceil(N/G) * W / word_bits). Unused final word bits are zero.
   R^G determines the precision of the integer arithmetic needed to form and
   decode group indices: indices range from 0 to R^G - 1 and require W value
   bits. Implementations must also accommodate intermediate values, including
@@ -34563,7 +34569,7 @@ This version of the operator has been available since version 29 of the default 
   One commonly used choice is (R, G) = (3, 5), packing five ternary codes
   into one byte because 3^5 = 243.
   The original bits spelling is exactly (R, G) = (2^bits, 1).
-  For R=3, G=5, [0, 1, 2, 0, 1] becomes [102], and [2, 2, 2, 2, 2]
+  With UINT8 storage and R=3, G=5, [0, 1, 2, 0, 1] becomes [102], and [2, 2, 2, 2, 2]
   becomes [242]. Partial group [1, 2] becomes [7].
 
 #### Version
@@ -34573,10 +34579,14 @@ This version of the operator has been available since version 29 of the default 
 #### Attributes
 
 <dl>
+<dt><tt>axis</tt> : int (default is -1)</dt>
+<dd>Axis along which independent sequences are packed. Negative axes are supported.</dd>
 <dt><tt>bits</tt> : int</dt>
 <dd>Number of bits per unsigned code. Mutually exclusive with radix/group_size.</dd>
 <dt><tt>group_size</tt> : int</dt>
 <dd>Codes per group. Positive; radix^group_size must fit in positive INT64.</dd>
+<dt><tt>output_type</tt> : int (default is 2)</dt>
+<dd>Packed storage type: TensorProto UINT8 (2) or UINT32 (12). Logical codes remain UINT8.</dd>
 <dt><tt>radix</tt> : int</dt>
 <dd>Base of grouped codes, in [2, 256]. Requires group_size; excludes bits.</dd>
 </dl>
@@ -34591,8 +34601,8 @@ This version of the operator has been available since version 29 of the default 
 #### Outputs
 
 <dl>
-<dt><tt>Y</tt> : T</dt>
-<dd>Packed UINT8 tensor with the same leading dimensions as X and last dimension ceil(ceil(N / group_size) * group_width / 8); bits implies group_size=1.</dd>
+<dt><tt>Y</tt> : TStorage</dt>
+<dd>Packed tensor preserving every dimension except axis, which becomes ceil(ceil(N / group_size) * group_width / word_bits); bits implies group_size=1.</dd>
 </dl>
 
 #### Type Constraints
@@ -34600,43 +34610,51 @@ This version of the operator has been available since version 29 of the default 
 <dl>
 <dt><tt>T</tt> : tensor(uint8)</dt>
 <dd>Unsigned byte tensors.</dd>
+<dt><tt>TStorage</tt> : tensor(uint8), tensor(uint32)</dt>
+<dd>Unsigned storage word tensors.</dd>
 </dl>
 
 ### <a name="Unpack-29"></a>**Unpack-29**</a>
 
-  Unpacks bytes into unsigned integer codes independently along the last axis.
-  The input `X` and output `Y` are UINT8 tensors of the same rank, which must be
-  at least 1. Specify either `bits` in [1, 8], or both `radix` and `group_size`;
+  Unpacks UINT8 or UINT32 storage words into UINT8 unsigned integer codes
+  independently along `axis` (default -1). Input and output have the same
+  rank, at least 1. Negative axes are supported; axis must be in [-rank, rank-1].
+  The input type determines word_bits: 8 for UINT8, 32 for UINT32.
+  Specify either `bits` in [1, 8], or both `radix` and `group_size`;
   the two spellings are mutually exclusive.
   The input `count` must be a nonnegative scalar INT64 tensor specifying the
-  number of output codes per row. Each element of `Y` is in [0, 2^bits - 1].
+  number of output codes along axis, excluding padding. With `bits`, each
+  element of `Y` is in [0, 2^bits - 1].
 
-  When using `bits`, for input shape `[..., B]`, `B` must equal `ceil(count * bits / 8)`, and the
-  output shape is `[..., count]`. Each fixed combination of indices in the
-  leading dimensions defines a row; a rank-1 tensor has one row.
+  When using `bits`, the input axis dimension B must equal ceil(count * bits / word_bits).
+  The output axis dimension is count; all other dimensions are preserved.
+  Each fixed combination of indices in the other dimensions defines an
+  independent sequence, called a row below; a rank-1 tensor has one row.
 
-  Within each row, input bytes are read in increasing last-axis index order,
-  starting with the least significant bit of each byte. Consecutive groups of
+  Within each row, input words are read in increasing axis index order,
+  starting with the least significant bit of each word. Consecutive groups of
   `bits` bits form output codes in order, with the first bit of each group as
-  the code's least significant bit. Number the bits of each byte and code
+  the code's least significant bit. Number the bits of each word and code
   starting at 0 for the least significant bit. For code index
   `0 <= i < count` and bit index `0 <= k < bits`, bit `k` of output code `i` is
-  read from bit `(i * bits + k) % 8` of input byte `floor((i * bits + k) / 8)`.
-  When a code spans a byte boundary, its higher-order bits are read from
-  the low bits of the next byte. Each row begins at bit 0 of a new byte.
-  Unused high bits in the final input byte of each row are padding and are ignored.
+  read from bit `(i * bits + k) % word_bits` of input word `floor((i * bits + k) / word_bits)`.
+  When a code spans a word boundary, its higher-order bits are read from
+  the low bits of the next word. Each row begins at bit 0 of a new word.
+  Unused high bits in the final input word of each row are padding and are ignored.
+  Bit positions are defined numerically, independently of host endianness;
+  tensor raw data uses ONNX's little-endian serialization.
 
-  All leading dimensions are preserved, including zero dimensions, and the
-  same shape requirements apply when any leading dimension is zero.
-  With `count = 0`, both input and output must have an empty last axis.
+  All non-axis dimensions are preserved, including zero dimensions, and the
+  same shape requirements apply when any non-axis dimension is zero.
+  With `count = 0`, both input and output must have an empty selected axis.
 
-  For example, `bits = 3` and `count = 8` unpack `[136, 198, 250]` into
+  With UINT8 storage, `bits = 3` and `count = 8` unpack `[136, 198, 250]` into
   `[0, 1, 2, 3, 4, 5, 6, 7]`. With `bits = 3` and `count = 2`, `[255]`
   is unpacked into `[7, 7]`.
 
   Grouped unpacking uses radix R in [2, 256] and positive group size G, with
   R^G <= 2^63 - 1. Read consecutive W = ceil(log2(R^G)) bit group indices,
-  least-significant bit first, without byte alignment between groups.
+  least-significant bit first, without word alignment between groups.
   R^G determines the precision of the integer arithmetic required for both
   packing and unpacking: valid group indices require W value bits, and any
   explicitly computed R^G or other intermediate must also fit. Prefer
@@ -34645,11 +34663,11 @@ This version of the operator has been available since version 29 of the default 
   A commonly used choice is (R, G) = (3, 5): five ternary codes per byte.
   Every group index must be less than R^G; encodings outside this range
   are invalid. Expand each index into G base-R digits, least significant
-  digit first, then trim to count values per row. The input last dimension
-  must equal ceil(ceil(count/G) * W / 8). Unused digits of the last group
-  and unused high bits of the last byte are ignored. Each output code is
+  digit first, then trim to count values per row. The input axis dimension
+  must equal ceil(ceil(count/G) * W / word_bits). Unused digits of the last group
+  and unused high bits of the last word are ignored. Each output code is
   in [0, R - 1]. The original bits spelling is (R, G) = (2^bits, 1).
-  For R=3, G=5, [102] with count=5 becomes [0, 1, 2, 0, 1];
+  With UINT8 storage and R=3, G=5, [102] with count=5 becomes [0, 1, 2, 0, 1];
   [7] with count=2 becomes [1, 2].
   Results for invalid inputs are unspecified; function decompositions need
   not diagnose invalid indices or incorrect input sizes.
@@ -34661,6 +34679,8 @@ This version of the operator has been available since version 29 of the default 
 #### Attributes
 
 <dl>
+<dt><tt>axis</tt> : int (default is -1)</dt>
+<dd>Axis along which independent sequences are unpacked. Negative axes are supported.</dd>
 <dt><tt>bits</tt> : int</dt>
 <dd>Number of bits per unsigned code. Mutually exclusive with radix/group_size.</dd>
 <dt><tt>group_size</tt> : int</dt>
@@ -34672,17 +34692,17 @@ This version of the operator has been available since version 29 of the default 
 #### Inputs
 
 <dl>
-<dt><tt>X</tt> : T</dt>
-<dd>UINT8 tensor of rank at least 1, with the exact packed byte count.</dd>
+<dt><tt>X</tt> : TStorage</dt>
+<dd>UINT8 or UINT32 tensor of rank at least 1, with the exact packed word count along axis.</dd>
 <dt><tt>count</tt> : tensor(int64)</dt>
-<dd>Scalar INT64 tensor giving the number of output codes per row. Must be nonnegative.</dd>
+<dd>Scalar INT64 tensor giving the logical output length along axis. Must be nonnegative.</dd>
 </dl>
 
 #### Outputs
 
 <dl>
 <dt><tt>Y</tt> : T</dt>
-<dd>UINT8 tensor with the same leading dimensions as X and last dimension count. Each element is below the selected radix.</dd>
+<dd>UINT8 tensor preserving every dimension except axis, which becomes count. Each element is below the selected radix.</dd>
 </dl>
 
 #### Type Constraints
@@ -34690,6 +34710,8 @@ This version of the operator has been available since version 29 of the default 
 <dl>
 <dt><tt>T</tt> : tensor(uint8)</dt>
 <dd>Unsigned byte tensors.</dd>
+<dt><tt>TStorage</tt> : tensor(uint8), tensor(uint32)</dt>
+<dd>Unsigned storage word tensors.</dd>
 </dl>
 
 # ai.onnx.preview
