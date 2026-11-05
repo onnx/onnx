@@ -57,6 +57,9 @@ tail. Exporters must retain actual member positions and original visibility,
 not assume contiguous global blocks. Both selectors describe unique support with
 int32 positions, requiring the cast below. Qwen's `-1` padding also requires the
 validity adaptation; GLM returns top-k row positions without sentinel padding.
+GLM can still select masked source rows when too few visible keys exist, so
+exporters must retain the original mask as described under selected-only
+attention; nonnegative indices alone do not establish visibility.
 If K/V is compacted, map token positions to source rows while retaining original
 coordinates separately. The examples do not implement these selectors.
 
