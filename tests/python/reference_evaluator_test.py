@@ -57,6 +57,7 @@ from onnx.reference.ops.op_col2im import (
     col2im_naive_implementation,
 )
 from onnx.reference.ops.op_conv import Conv, _conv_implementation
+from onnx.reference.ops.op_reduce_mean import _mean
 from onnx.reference.shape_annotation_checker import ShapeAnnotationError
 
 if TYPE_CHECKING:
@@ -3154,6 +3155,12 @@ class TestReferenceEvaluator:
             ([1e308, 1e308, 1e308], 1e308),
             ([-1e308, -1e308, -1e308], -1e308),
             ([1e308, 1e308, -1e308], 1e308 / 3),
+            ([np.finfo(np.float64).max] * 3, np.finfo(np.float64).max),
+            ([-np.finfo(np.float64).max] * 3, -np.finfo(np.float64).max),
+            (
+                [np.finfo(np.float64).max] * 2 + [-np.finfo(np.float64).max],
+                np.finfo(np.float64).max / 3,
+            ),
             ([np.inf, 1e308, 1e308], np.inf),
             ([np.inf, -np.inf, 1e308], np.nan),
             ([np.nan, 1e308, 1e308], np.nan),
@@ -3844,6 +3851,18 @@ class TestReferenceEvaluator:
             expected = np.mean(feeds["X"], axis=1, dtype=np.float32)
             np.testing.assert_array_equal(expected[0], np.float32(5.0e-11))
             np.testing.assert_array_equal(got, expected)
+
+    @pytest.mark.parametrize("sign", [1, -1])
+    @pytest.mark.parametrize("keepdims", [False, True])
+    def test_reduce_mean_finite_float64_limit(self, sign, keepdims):
+        maximum = float(np.finfo(np.float64).max)
+        data = np.full((2, 3), sign * maximum)
+        data[1, 2] *= -1
+        got = _mean(data, axes=(1,), keepdims=keepdims)
+        expected = np.array([sign * maximum, sign * maximum / 3])
+        if keepdims:
+            expected = expected[:, None]
+        np.testing.assert_array_equal(got, expected)
 
     def test_reduce_mean_repairs_only_overflowed_finite_slices(self):
         for opset in (17, 18):
