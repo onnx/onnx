@@ -58,13 +58,15 @@ jobs:
         run: pip install -e ".[reference]" -v
         env:
           ONNX_ML: 1
+          # Keep debug info so native crashes can be symbolized in the backtrace step.
+          SKBUILD_CMAKE_BUILD_TYPE: RelWithDebInfo
 
       - name: Install atheris
         run: pip install atheris
 
       - name: Generate seed corpora
         run: |
-          mkdir -p corpus
+          mkdir -p corpus crashes/{checker,model_loader,parser,shape_inference,version_converter,compose,external_data}
           python onnx/fuzz/make_seed_corpus.py \
             corpus/version_converter.zip corpus/parser.zip \
             corpus/checker.zip corpus/shape_inference.zip corpus/compose.zip \
@@ -88,47 +90,60 @@ jobs:
           fi
 
       - name: Run fuzz_checker.py
-        run: python onnx/fuzz/fuzz_checker.py -max_total_time="$FUZZ_SECONDS" -timeout=20 corpus/checker
+        run: python onnx/fuzz/fuzz_checker.py -max_total_time="$FUZZ_SECONDS" -timeout=20 -artifact_prefix=crashes/checker/ corpus/checker
         env:
           FUZZ_SECONDS: ${{ steps.duration.outputs.seconds }}
 
       - name: Run fuzz_model_loader.py
-        run: python onnx/fuzz/fuzz_model_loader.py -max_total_time="$FUZZ_SECONDS" -timeout=20 corpus/model_loader
+        run: python onnx/fuzz/fuzz_model_loader.py -max_total_time="$FUZZ_SECONDS" -timeout=20 -artifact_prefix=crashes/model_loader/ corpus/model_loader
         env:
           FUZZ_SECONDS: ${{ steps.duration.outputs.seconds }}
 
       - name: Run fuzz_parser.py
-        run: python onnx/fuzz/fuzz_parser.py -max_total_time="$FUZZ_SECONDS" -timeout=20 corpus/parser
+        run: python onnx/fuzz/fuzz_parser.py -max_total_time="$FUZZ_SECONDS" -timeout=20 -artifact_prefix=crashes/parser/ corpus/parser
         env:
           FUZZ_SECONDS: ${{ steps.duration.outputs.seconds }}
 
       - name: Run fuzz_shape_inference.py
-        run: python onnx/fuzz/fuzz_shape_inference.py -max_total_time="$FUZZ_SECONDS" -timeout=20 corpus/shape_inference
+        run: python onnx/fuzz/fuzz_shape_inference.py -max_total_time="$FUZZ_SECONDS" -timeout=20 -artifact_prefix=crashes/shape_inference/ corpus/shape_inference
         env:
           FUZZ_SECONDS: ${{ steps.duration.outputs.seconds }}
 
       - name: Run fuzz_version_converter.py
-        run: python onnx/fuzz/fuzz_version_converter.py -max_total_time="$FUZZ_SECONDS" -timeout=20 corpus/version_converter
+        run: python onnx/fuzz/fuzz_version_converter.py -max_total_time="$FUZZ_SECONDS" -timeout=20 -artifact_prefix=crashes/version_converter/ corpus/version_converter
         env:
           FUZZ_SECONDS: ${{ steps.duration.outputs.seconds }}
 
       - name: Run fuzz_compose.py
-        run: python onnx/fuzz/fuzz_compose.py -max_total_time="$FUZZ_SECONDS" -timeout=20 corpus/compose
+        run: python onnx/fuzz/fuzz_compose.py -max_total_time="$FUZZ_SECONDS" -timeout=20 -artifact_prefix=crashes/compose/ corpus/compose
         env:
           FUZZ_SECONDS: ${{ steps.duration.outputs.seconds }}
 
       - name: Run fuzz_external_data.py
-        run: python onnx/fuzz/fuzz_external_data.py -max_total_time="$FUZZ_SECONDS" -timeout=20 corpus/external_data
+        run: python onnx/fuzz/fuzz_external_data.py -max_total_time="$FUZZ_SECONDS" -timeout=20 -artifact_prefix=crashes/external_data/ corpus/external_data
         env:
           FUZZ_SECONDS: ${{ steps.duration.outputs.seconds }}
+
+      - name: Print backtraces for crashes
+        if: failure()
+        run: |
+          sudo apt-get update -qq && sudo apt-get install -y -qq gdb
+          for crash in crashes/*/*; do
+            [ -f "$crash" ] || continue
+            harness="onnx/fuzz/fuzz_$(basename "$(dirname "$crash")").py"
+            echo "::group::Backtrace for $crash ($harness)"
+            # gdb stops on the fatal signal before libFuzzer's handler runs and
+            # prints the native stack; Python frames come from faulthandler.
+            gdb -batch -ex "set pagination off" -ex "handle SIGSEGV SIGABRT SIGBUS SIGFPE SIGILL stop nopass" \
+              -ex run -ex "thread apply all bt" -ex "py-bt" \
+              --args python -X faulthandler "$harness" "$crash" || true
+            echo "::endgroup::"
+          done
 
       - name: Upload crash artifacts
         if: failure()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: fuzz-crashes
-          path: |
-            crash-*
-            timeout-*
-            oom-*
+          path: crashes/
           if-no-files-found: ignore
