@@ -159,7 +159,7 @@ observable outputs, including real-token debug probabilities with shape
 and cache lengths remain unchanged. Graph structure alone does not authorize
 reordering floating-point operations or reinterpreting a mask.
 
-A stable online-softmax kernel need not materialize `Z` or `P_all`. For each
+A range-checked online-softmax kernel need not materialize `Z` or `P_all`. For each
 row, initialize running maximum `m = s`, denominator `d = 1`, and value
 numerator vector `a = 0`. For each block of allowed real logits `l_j` and
 values `v_j`, use
@@ -175,8 +175,16 @@ finite sink keeps `m` finite, avoiding an all-masked `-inf - (-inf)`.
 Return `a / d`. The initial denominator represents the sink and its initial
 numerator represents its zero value. Do not initialize with `exp(s)` in
 unshifted units: that can overflow. Use the graph's computation type and
-honor its cast boundaries. Block reductions can change rounding, so this
-is a numerically stable fusion strategy, not a bitwise-equivalence promise.
+honor its cast boundaries. Shifting the logits stabilizes exponentiation,
+but does not guarantee that the denominator or unnormalized value numerator
+fits in the accumulator type. For example, four zero real logits, a zero
+sink, and four float64 values of `1e308` produce finite `Y = 8e307` in the
+explicit graph, but the unnormalized numerator overflows float64.
+Use this recurrence only with a justified accumulator-range bound or
+overflow-safe accumulation that satisfies the graph's numerical contract;
+otherwise fall back to the explicit graph. Finite inputs alone are not a
+sufficient range check. Block reductions can also change rounding, so this
+strategy is not a bitwise-equivalence promise.
 If real probabilities are requested, compute them from the final `m,d`
 without renormalizing over real keys alone.
 

@@ -154,6 +154,21 @@ def test_documented_online_fusion(block_size, key_count):
             )
 
 
+def test_online_numerator_range_requires_explicit_graph_fallback():
+    logits = np.zeros((1, 1, 1, 4), dtype=np.float64)
+    sinks = np.zeros(1, dtype=np.float64)
+    values = np.full((1, 1, 4, 1), 1e308, dtype=np.float64)
+    with np.errstate(over="raise"):
+        output, probabilities = ReferenceEvaluator(
+            make_sink_model(TensorProto.DOUBLE)
+        ).run(None, {"L": logits, "S": sinks, "V": values})
+    np.testing.assert_allclose(output, 8e307)
+    np.testing.assert_allclose(probabilities, 0.2)
+    assert np.isfinite(output).all()
+    with np.errstate(over="raise"), pytest.raises(FloatingPointError):
+        np.ones(4, dtype=np.float64) @ values.reshape(4, 1)
+
+
 @pytest.mark.parametrize("window", [1, 3])
 @pytest.mark.parametrize("key_count", [0, 5])
 def test_original_position_masks_softcap_and_grouped_heads(window, key_count):
