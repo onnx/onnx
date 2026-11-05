@@ -3716,12 +3716,17 @@ CausalConvWithStateFunction(const FunctionBodyBuildContext& ctx, const OpSchema&
 }
 
 OpSchema defs::nn::utils::CausalConvWithStateSchema(bool dilated) {
-  auto schema = OpSchema()
-                    .SetDoc(
-                        dilated ? R"DOC(
+  auto schema =
+      OpSchema()
+          .SetDoc(
+              dilated ? R"DOC(
 Stateful causal one-dimensional depthwise convolution with optional dilation.
 
 Let `d = dilation`, `K = weight.shape[2]`, and `H = (K - 1) * d`.
+The default value of `d` is 1. Both `d` and `K` must be at least 1,
+and `H` must be representable as a signed 64-bit integer.
+The effective kernel size is `H + 1`.
+Here `B`, `C`, and `L` denote batch size, channel count, and input length.
 The input has shape `(B, C, L)`, weight has shape `(C, 1, K)`, and
 optional bias has shape `(C)`. Both state tensors have shape `(B, C, H)`.
 The state contains consecutive raw input samples in chronological order,
@@ -3732,99 +3737,98 @@ Concatenate `past_state` (or `H` zeros per batch/channel when absent) and
 `output[b,c,t] = sum_j weight[c,0,j] * P[b,c,t+j*d] + bias[c]`,
 where `0 <= j < K` and `0 <= t < L`; omitted bias is zero.
 This uses the cross-correlation convention of Conv. The output has shape
-`(B, C, L)`. Activation is identity for 'none', or `x * sigmoid(x)` for
-'silu' and its alias 'swish'.
+`(B, C, L)`. Activation is identity for 'none' (the default), or
+`x / (1 + exp(-x))` for 'silu' and its alias 'swish'.
 
 `present_state` is the last `H` samples of `P`, including past samples or
 zero padding when `L < H`. Feeding it into the next call gives the same
 result as processing the concatenated sequence in one call. For example,
 `K=3, d=2` requires four consecutive history samples, while each output
 uses three samples spaced two positions apart. `K=1` gives empty state.
-An empty chunk gives empty output and leaves the state unchanged (or zero
-when no state is provided). Dilation 1 preserves the undilated behavior.
-
-This operator decomposes into concatenation, dilated depthwise Conv, slicing,
-and optional activation. It does not impose a model-specific state layout.
+When `L = 0`, the output has shape `(B, C, 0)`, and `present_state` equals
+`past_state` if provided, or a zero tensor of shape `(B, C, H)` otherwise.
 )DOC"
-                                : kDoc_CausalConvWithState_ver27)
-                    .Attr(
-                        "activation",
-                        "Fused activation function. One of: 'silu', 'swish', 'none'. "
-                        "Default is 'none'.",
-                        AttributeProto::STRING,
-                        std::string("none"))
-                    .Input(
-                        0,
-                        "input",
-                        "Input tensor with shape (batch_size, channels, length). Channels-first layout.",
-                        "T",
-                        OpSchema::Single,
-                        true,
-                        1,
-                        OpSchema::Differentiable)
-                    .Input(
-                        1,
-                        "weight",
-                        "Depthwise convolution kernel with shape (channels, 1, k) where k is the kernel size. "
+                      : kDoc_CausalConvWithState_ver27)
+          .Attr(
+              "activation",
+              "Fused activation function. One of: 'silu', 'swish', 'none'. "
+              "Default is 'none'.",
+              AttributeProto::STRING,
+              std::string("none"))
+          .Input(
+              0,
+              "input",
+              "Input tensor with shape (batch_size, channels, length). Channels-first layout.",
+              "T",
+              OpSchema::Single,
+              true,
+              1,
+              OpSchema::Differentiable)
+          .Input(
+              1,
+              "weight",
+              dilated ? "Depthwise convolution kernel with shape (channels, 1, k), where k must be >= 1. "
+                        "Each channel is convolved independently with its corresponding kernel."
+                      : "Depthwise convolution kernel with shape (channels, 1, k) where k is the kernel size. "
                         "The middle dim of size 1 follows the ONNX `Conv` weight layout `(M, C/group, k1, ..., kn)`: "
                         "since this op is always depthwise, `group = channels`, so `C/group = 1`. "
                         "Keeping this layout makes the weight tensor a drop-in for a depthwise `Conv(group=channels)` "
                         "weight, so `Conv` <-> `CausalConvWithState` rewrites require no reshape.",
-                        "T",
-                        OpSchema::Single,
-                        true,
-                        1,
-                        OpSchema::Differentiable)
-                    .Input(
-                        2,
-                        "bias",
-                        "Optional per-channel bias with shape (channels).",
-                        "T",
-                        OpSchema::Optional,
-                        true,
-                        1,
-                        OpSchema::Differentiable)
-                    .Input(
-                        3,
-                        "past_state",
-                        dilated ? "Raw chronological history with shape (batch_size, channels, (k - 1) * dilation). "
-                                  "If not provided, history is zero."
-                                : "Carry state from previous step with shape (batch_size, channels, k - 1). "
-                                  "If not provided, padding is zero.",
-                        "T",
-                        OpSchema::Optional,
-                        true,
-                        1,
-                        OpSchema::NonDifferentiable)
-                    .Output(
-                        0,
-                        "output",
-                        "Convolution output with same shape as input.",
-                        "T",
-                        OpSchema::Single,
-                        true,
-                        1,
-                        OpSchema::Differentiable)
-                    .Output(
-                        1,
-                        "present_state",
-                        dilated ? "The last (k - 1) * dilation raw samples of the concatenated history and input, "
-                                  "with shape (batch_size, channels, (k - 1) * dilation)."
-                                : "Updated carry state with shape (batch_size, channels, k - 1). "
-                                  "Contains the last (k - 1) values of the effective padded/concatenated "
-                                  "sequence along the causal axis, including any values from past_state "
-                                  "or zero-padding when the current input is shorter than k - 1.",
-                        "T",
-                        OpSchema::Single,
-                        true,
-                        1,
-                        OpSchema::NonDifferentiable)
-                    .TypeAndShapeInferenceFunction(CausalConvWithStateInference)
-                    .SetContextDependentFunctionBodyBuilder(CausalConvWithStateFunction)
-                    .TypeConstraint(
-                        "T",
-                        {"tensor(float)", "tensor(float16)", "tensor(bfloat16)"},
-                        "Constrain input and output types to float tensors.");
+              "T",
+              OpSchema::Single,
+              true,
+              1,
+              OpSchema::Differentiable)
+          .Input(
+              2,
+              "bias",
+              "Optional per-channel bias with shape (channels).",
+              "T",
+              OpSchema::Optional,
+              true,
+              1,
+              OpSchema::Differentiable)
+          .Input(
+              3,
+              "past_state",
+              dilated ? "Raw chronological history with shape (batch_size, channels, (k - 1) * dilation). "
+                        "If not provided, history is zero."
+                      : "Carry state from previous step with shape (batch_size, channels, k - 1). "
+                        "If not provided, padding is zero.",
+              "T",
+              OpSchema::Optional,
+              true,
+              1,
+              OpSchema::NonDifferentiable)
+          .Output(
+              0,
+              "output",
+              "Convolution output with same shape as input.",
+              "T",
+              OpSchema::Single,
+              true,
+              1,
+              OpSchema::Differentiable)
+          .Output(
+              1,
+              "present_state",
+              dilated ? "The last (k - 1) * dilation raw samples of the concatenated history and input, "
+                        "with shape (batch_size, channels, (k - 1) * dilation)."
+                      : "Updated carry state with shape (batch_size, channels, k - 1). "
+                        "Contains the last (k - 1) values of the effective padded/concatenated "
+                        "sequence along the causal axis, including any values from past_state "
+                        "or zero-padding when the current input is shorter than k - 1.",
+              "T",
+              OpSchema::Single,
+              true,
+              1,
+              OpSchema::NonDifferentiable)
+          .TypeAndShapeInferenceFunction(CausalConvWithStateInference)
+          .SetContextDependentFunctionBodyBuilder(CausalConvWithStateFunction)
+          .TypeConstraint(
+              "T",
+              {"tensor(float)", "tensor(float16)", "tensor(bfloat16)"},
+              "Constrain input and output types to float tensors.");
   if (dilated) {
     schema.Attr("dilation", "Spacing between kernel samples. Must be >= 1.", AttributeProto::INT, int64_t{1});
   }
