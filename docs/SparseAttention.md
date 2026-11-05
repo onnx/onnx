@@ -54,8 +54,9 @@ For example, the pinned [GLM DSA implementation](https://github.com/huggingface/
 shares top-k row positions between layers; the pinned [Qwen QSA implementation](https://github.com/huggingface/transformers/blob/c27795950091cdaf1b0e32c4aed58618fb41ffa0/src/transformers/models/qwen4_exp/modular_qwen4_exp.py#L368-L508)
 expands selected groups of a compact visible-position list, including its partial
 tail. Exporters must retain actual member positions and original visibility,
-not assume contiguous global blocks. Both selectors describe unique support;
-their int32, `-1`-padded positions need the validity and casting adaptation below.
+not assume contiguous global blocks. Both selectors describe unique support with
+int32 positions, requiring the cast below. Qwen's `-1` padding also requires the
+validity adaptation; GLM returns top-k row positions without sentinel padding.
 If K/V is compacted, map token positions to source rows while retaining original
 coordinates separately. The examples do not implement these selectors.
 
