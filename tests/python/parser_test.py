@@ -28,6 +28,7 @@ class TestBasicFunctions:
               C = Softmax(S)
            }
            """
+        input = " \t\n\v\f\r# leading comment\n" + input + "# trailing comment"
         graph = onnx.parser.parse_graph(input)
         self.check_graph(graph)
 
@@ -58,7 +59,9 @@ class TestBasicFunctions:
               C = Softmax(S)
            }
            """
-        with pytest.raises(onnx.parser.ParseError):
+        with pytest.raises(
+            onnx.parser.ParseError, match=r"Error context: +T = MatMul\[X, W\]"
+        ):
             onnx.parser.parse_graph(input)
 
     def test_parse_model_error(self) -> None:
