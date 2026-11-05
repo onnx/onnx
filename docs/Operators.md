@@ -24490,10 +24490,19 @@ expect(
 
 ### <a name="MeanVarianceNormalization"></a><a name="meanvariancenormalization">**MeanVarianceNormalization**</a>
 
-  A MeanVarianceNormalization Function: Perform mean variance normalization
-  on the input tensor X using formula: `(X-EX)/(sqrt(E((X-EX)^2)) + epsilon)`.
-  For float16 and bfloat16 inputs, the intermediate calculations are performed in
-  float32 to reduce rounding error and keep the default epsilon nonzero.
+  Computes mean-variance normalization of `X`:
+  `Y = (X - mean) / (sqrt(variance) + epsilon)`, where
+  `mean = ReduceMean(X, axes)` and
+  `variance = ReduceMean((X - mean)^2, axes)`.
+  Each reduction computes the arithmetic mean over `axes` and retains the
+  reduced dimensions with size 1 for broadcasting.
+  An empty `axes` list reduces over all dimensions.
+
+  The default `epsilon` is 1e-9 and is added after the square root.
+  For float16 and bfloat16 inputs, `X` is converted to float32 before computation.
+  Otherwise, computation uses the input type. `epsilon` is converted to the
+  computation type, and the result is cast to the input type.
+  `Y` has the same shape and element type as `X`.
 
 #### Version
 
@@ -24505,9 +24514,9 @@ Other versions of this operator: <a href="Changelog.md#MeanVarianceNormalization
 
 <dl>
 <dt><tt>axes</tt> : list of ints (default is ['0', '2', '3'])</dt>
-<dd>A list of integers, along which to reduce. The default is to calculate along axes [0,2,3] for calculating mean and variance along each channel. Two variables with the same C-coordinate are associated with the same mean and variance.</dd>
+<dd>Axes over which to compute mean and variance. Values must be in [-r, r-1], where r is the rank of X; negative values count from the last dimension. An empty list reduces over all dimensions. The default is [0, 2, 3], which computes per-channel statistics for an NCHW tensor.</dd>
 <dt><tt>epsilon</tt> : float (default is (1.000000e-09))</dt>
-<dd>The epsilon value to use to avoid division by zero.</dd>
+<dd>Value added to the standard deviation in the denominator.</dd>
 </dl>
 
 #### Inputs

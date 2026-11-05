@@ -47,10 +47,19 @@ on the input tensor X using formula: `(X-EX)/(sqrt(E((X-EX)^2)) + 1e-9)`.
 )DOC";
 
 const char kDoc_MeanVarianceNormalization_ver29[] = R"DOC(
-A MeanVarianceNormalization Function: Perform mean variance normalization
-on the input tensor X using formula: `(X-EX)/(sqrt(E((X-EX)^2)) + epsilon)`.
-For float16 and bfloat16 inputs, the intermediate calculations are performed in
-float32 to reduce rounding error and keep the default epsilon nonzero.
+Computes mean-variance normalization of `X`:
+`Y = (X - mean) / (sqrt(variance) + epsilon)`, where
+`mean = ReduceMean(X, axes)` and
+`variance = ReduceMean((X - mean)^2, axes)`.
+Each reduction computes the arithmetic mean over `axes` and retains the
+reduced dimensions with size 1 for broadcasting.
+An empty `axes` list reduces over all dimensions.
+
+The default `epsilon` is 1e-9 and is added after the square root.
+For float16 and bfloat16 inputs, `X` is converted to float32 before computation.
+Otherwise, computation uses the input type. `epsilon` is converted to the
+computation type, and the result is cast to the input type.
+`Y` has the same shape and element type as `X`.
 )DOC";
 
 const char kDoc_GRU_ver14[] = R"DOC(

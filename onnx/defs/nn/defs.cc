@@ -2126,13 +2126,14 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Output(0, "Y", "Output tensor", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
         .Attr(
             "axes",
-            "A list of integers, along which to reduce. The default is to "
-            "calculate along axes [0,2,3] for calculating mean and variance "
-            "along each channel. Two variables with the same C-coordinate "
-            "are associated with the same mean and variance.",
+            "Axes over which to compute mean and variance. Values must be in "
+            "[-r, r-1], where r is the rank of X; negative values count from "
+            "the last dimension. An empty list reduces over all dimensions. "
+            "The default is [0, 2, 3], which computes per-channel statistics "
+            "for an NCHW tensor.",
             AttributeProto::INTS,
             defs::nn::utils::kMeanVarianceNormalizationDefaultAxes)
-        .Attr("epsilon", "The epsilon value to use to avoid division by zero.", AttributeProto::FLOAT, 1e-9f)
+        .Attr("epsilon", "Value added to the standard deviation in the denominator.", AttributeProto::FLOAT, 1e-9f)
         .TypeConstraint(
             "T",
             {types::Float16, types::Float, types::Double, types::BFloat16},
