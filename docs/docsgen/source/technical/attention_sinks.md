@@ -24,8 +24,11 @@ candidate, not a real prefix token retained in a streaming KV cache.
 
 Let `L` be the final real-token logits with shape `[B, Hq, Q, K]`, and `V` the
 real values with shape `[B, Hq, K, Dv]`. `B` is batch size, `Hq` query-head
-count, `Q` query length, and `K` the number of real key positions. For each
-row, a finite sink logit `s` gives
+count, `Q` query length, `K` the number of real key positions, and `Dv` the
+value-vector dimension. The per-query-head sink tensor `S` has shape `[Hq]`.
+For each fixed batch, query head `h`, and query position, let `s = S[h]`,
+`L_j` be the logit at real key index `j`, and `V_j` its value vector.
+The real-key probability `p_j` and output vector `Y` are
 
 $$
 p_j = \frac{\exp(L_j)}{\exp(s) + \sum_{i=0}^{K-1}\exp(L_i)}, \qquad
@@ -35,7 +38,7 @@ $$
 The sink is in **final-logit units**: do not multiply it by the query/key
 scale, apply real-token softcap to it, or include it in a real-token mask.
 Construct `L` first, preserving the model's operation order. A common order is
-`MatMul(Q, Transpose(K))`, scaling, optional `c * Tanh(scores / c)` for positive
+query/key contraction, scaling, optional `c * Tanh(scores / c)` for positive
 softcap `c`, additive position bias, then
 `Where(allowed, scores, -inf)`. This is an example order, not a prescription
 for models whose bias or softcap placement differs. GPT-OSS uses scale followed
@@ -80,7 +83,9 @@ More general per-row sinks may already have shape `[B,Hq,Q,1]`, but a runtime
 specialization for per-head sinks must verify independence from batch/query.
 
 The graph assumes values have already been aligned to query heads. For grouped
-query attention (GQA), require `Hq = Hkv * G` with integer `G`. In
+query attention (GQA), let `Hkv` be the KV-head count and `G` the positive
+integer number of query heads per KV head; require `Hq = Hkv * G`.
+Let `D` denote the key-vector dimension for keys or `Dv` for values. In
 `[B,Hkv,K,D]` layout, `Reshape` to `[B,Hkv,1,K,D]`, `Expand` to
 `[B,Hkv,G,K,D]`, and `Reshape` to `[B,Hq,K,D]` for both keys and values.
 If `K` can be zero, this GQA recipe requires opset 14 or later with
@@ -120,7 +125,8 @@ NaN is not made harmless by a zero probability (`0 * NaN` is NaN).
 ## Why the sink has zero value contribution
 
 In exact arithmetic, append one **zero value vector** to `V` and retain all
-of `P_all`. Its product is
+of `P_all`. Let `p_s` be the sink probability, the final entry of `P_all`.
+The product is
 
 $$
 [p_0,\ldots,p_{K-1},p_s]\,[V_0,\ldots,V_{K-1},0]^T
