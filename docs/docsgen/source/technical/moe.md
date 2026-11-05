@@ -32,8 +32,9 @@ local functions can also be expanded with `onnx.inliner.inline_local_functions`.
 ## Selected-expert SwiGLU
 
 Flatten the batch and sequence dimensions into `T` tokens before this block.
-The example's weight layout is the transpose of the usual framework linear
-layer layout:
+Here `E` is the number of routed experts, `H` is the hidden width, `I` is each
+routed expert's intermediate width, and `k` is the number of routes per token.
+Expert matrices use input-width-by-output-width layout:
 
 | Input | Shape | Meaning |
 |---|---|---|
@@ -73,6 +74,7 @@ the model's `norm_topk_prob` setting.
 1. Apply sigmoid to the logits to obtain the **unbiased** `Scores`.
 2. Add the `[E]` correction bias to obtain selection-only `Choice` scores.
 3. Reshape to `[T,G,P]`, where `GroupShape=[G,P]` and `G*P=E`.
+   Group `g` contains expert IDs `g*P` through `(g+1)*P-1`.
    Rank each group by the sum of its two highest corrected scores.
 4. Choose `GroupK` groups. Use `ScatterElements` to form a `[T,G]` mask,
    expand it across the experts within each group, and replace scores outside
@@ -86,8 +88,8 @@ the model's `norm_topk_prob` setting.
 For example, logits `[2,1,0,-1]` in two groups of two ordinarily choose experts
 `[0,1]`. Correction `[0,0,3,3]` instead selects `[2,3]`. With no normalization
 and scale two, their mixture weights are `[1, 2*sigmoid(-1)]`, **not** the
-corrected scores. A correction bias must never become an additive FFN bias or
-an additive mixture weight.
+corrected scores. In this composition, correction bias affects selection only;
+it is not added to expert projections or mixture weights.
 
 ## Shared experts
 
@@ -121,6 +123,26 @@ always normalizes the selected probabilities.
 
 ## Input and numerical contract
 
+This contract applies to the example models and their local functions, not to
+all ONNX representations of MoE blocks. In addition to the selected-expert
+inputs defined above, the complete models use the following inputs. `J` is the
+shared expert's intermediate width; `G` is the number of groups and `P` is the
+number of experts per group.
+
+| Input | Shape | Meaning |
+|---|---|---|
+| `Router` | `[H,E]` | Router projection; `Logits = X @ Router` has shape `[T,E]` |
+| `SharedGate`, `SharedUp` | `[H,J]` | Shared expert gate and up matrices |
+| `SharedDown` | `[J,H]` | Shared expert down matrix |
+| `SharedRouter` | `[H,1]` | Shared expert gating projection; softmax model only |
+| `Correction` | `[E]` | Selection-only correction bias; grouped model only |
+| `GroupShape` | `[2]` | int64 values `[G,P]`; grouped model only |
+| `GroupK` | `[1]` | int64 number of selected groups; grouped model only |
+| `K` | `[1]` | int64 value `[k]` |
+| `Normalize` | `[]` | bool controlling selected-score normalization |
+| `Epsilon` | `[]` | float32 added to the selected-score sum when normalizing |
+| `Scale` | `[]` | float32 multiplier applied after optional normalization |
+
 These examples use **float32 throughout**, including router logits, softmax or
 sigmoid, correction, normalization, expert projections and weighted reduction.
 They illustrate the floating-point graph, not bitwise equivalence with
@@ -131,8 +153,9 @@ the GLM/Kimi router also computes its linear projection in float32. Activation
 placement and accumulation precision must be preserved when fusing.
 
 Inputs must have compatible shapes and finite values, and router calculations
-must produce finite logits and corrected scores. `E`, `H`, `I`, `J` and `k`
-are positive. `K` is int64 `[1]` with `1 <= k <= E`; for grouped routing,
+must produce finite logits, corrected scores and group-ranking sums.
+`T` is nonnegative; `E`, `H`, `I`, `J` and `k` are positive.
+`1 <= k <= E`; for grouped routing, `G` is positive,
 `P >= 2`, `1 <= GroupK <= G`, and `k <= GroupK*P`. `Normalize` is a scalar
 bool; `Epsilon` is a finite nonnegative float32 scalar; `Scale` is a finite
 float32 scalar. Normalization requires a positive denominator; extremely
