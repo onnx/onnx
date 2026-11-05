@@ -13,6 +13,74 @@ from onnx.helper import make_node, make_tensor, make_tensor_value_info
 
 
 class TestDataPropagation(TestShapeInferenceHelper):
+    @pytest.mark.parametrize("version", [13, 27])
+    def test_if_branch_data_is_local(self, version: int) -> None:
+        model = onnx.parser.parse_model("""
+            <ir_version: 8, opset_import: ["" : 13]>
+            test (bool cond, float[N, 3] x) => (y) {
+                outer_shape = Shape(x)
+                y = If(cond) <
+                    then_branch = then_graph () => (branch_output) {
+                        local = Constant<value = int64[1] {2}>()
+                        shared = Identity(local)
+                        branch_output = ConstantOfShape(shared)
+                    },
+                    else_branch = else_graph () => (branch_output) {
+                        local = Constant<value = int64[1] {4}>()
+                        shared = Identity(local)
+                        branch_output = ConstantOfShape(shared)
+                    }
+                >
+                z = If(cond) <
+                    then_branch = outer_then () => (branch_output) {
+                        branch_shape = Identity(outer_shape)
+                        branch_output = ConstantOfShape(branch_shape)
+                    },
+                    else_branch = outer_else () => (branch_output) {
+                        branch_shape = Identity(outer_shape)
+                        branch_output = ConstantOfShape(branch_shape)
+                    }
+                >
+            }
+        """)
+        model.opset_import[0].version = version
+        inferred = self._inferred(model, data_prop=True)
+        assert (
+            not inferred.graph.output[0]
+            .type.tensor_type.shape.dim[0]
+            .HasField("dim_value")
+        )
+        z = next(info for info in inferred.graph.value_info if info.name == "z")
+        assert z.type.tensor_type.shape.dim[0].dim_param == "N"
+        assert z.type.tensor_type.shape.dim[1].dim_value == 3
+
+    @pytest.mark.parametrize("operation", ["Squeeze", "Gather"])
+    def test_partial_values_do_not_create_malformed_pad_data(
+        self, operation: str
+    ) -> None:
+        nodes = [
+            make_node("Unsqueeze", ["pads", "axis"], ["matrix"]),
+            make_node(
+                operation,
+                ["matrix", "runtime"]
+                if operation == "Squeeze"
+                else ["matrix", "index"],
+                ["propagated"],
+            ),
+            make_node("Pad", ["x", "propagated"], ["y"]),
+        ]
+        graph = self._make_graph(
+            [("x", TensorProto.FLOAT, (3,)), ("runtime", TensorProto.INT64, (1,))],
+            nodes,
+            [],
+            initializer=[
+                make_tensor("pads", TensorProto.INT64, (2,), [1, 2]),
+                make_tensor("axis", TensorProto.INT64, (1,), [0]),
+                make_tensor("index", TensorProto.INT64, (), [0]),
+            ],
+        )
+        self._inferred(graph, data_prop=True)
+
     @pytest.mark.parametrize(
         ("op_type", "versions"), [("Neg", [6, 13]), ("Div", [7, 13, 14])]
     )

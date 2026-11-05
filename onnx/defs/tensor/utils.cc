@@ -140,6 +140,10 @@ void resizeShapeInferenceHelper(
     if (input_shape.dim(i).has_dim_param()) {
       // Propagate symbolic dim when the scale is an exact integer
       auto scale = scales_data[i];
+      if (!std::isfinite(scale) || scale <= 0 ||
+          static_cast<double>(scale) >= static_cast<double>(std::numeric_limits<int64_t>::max())) {
+        continue;
+      }
       auto int_scale = static_cast<int64_t>(scale);
       if (static_cast<float>(int_scale) == scale && int_scale > 0) {
         if (int_scale == 1) {

@@ -7651,6 +7651,21 @@ class TestShapeInference(TestShapeInferenceHelper):
             [make_tensor_value_info("y", TensorProto.FLOAT, (1, 1, None))],
         )
 
+    @pytest.mark.parametrize(
+        "scale", [float(1 << 63), float("inf"), float("nan"), -1.0, 0.0]
+    )
+    def test_resize_symbolic_unsupported_scale(self, scale: float) -> None:
+        graph = self._make_graph(
+            [("x", TensorProto.FLOAT, ("N",))],
+            [make_node("Resize", ["x", "", "scales"], ["y"])],
+            [],
+            initializer=[make_tensor("scales", TensorProto.FLOAT, (1,), [scale])],
+        )
+        self._assert_inferred(
+            graph,
+            [make_tensor_value_info("y", TensorProto.FLOAT, (None,))],
+        )
+
     def test_loop(self) -> None:
         # The body's cond_in and loop_state_in are left untyped (their types are supplied by Loop), and the
         # body references outer_scope_input from the enclosing graph. loop_state_final's rank may change

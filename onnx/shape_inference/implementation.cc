@@ -429,19 +429,40 @@ class ShapeInferenceImplBase {
   // that check dims_size() on the TensorProto.
   template <typename T>
   void AddTemporaryConstantWithDims(const std::string& name, const T& vector) {
-    input_data_by_name_holder[name] = ToTensor(vector);
-    auto& tp = input_data_by_name_holder[name];
-    // Set dims from the type info if available
     auto type_iter = value_types_by_name.find(name);
-    if (type_iter != value_types_by_name.end() && type_iter->second != nullptr &&
-        type_iter->second->has_tensor_type() && type_iter->second->tensor_type().has_shape()) {
-      const auto& shape = type_iter->second->tensor_type().shape();
-      tp.clear_dims();
-      for (const auto& dim : shape.dim()) {
-        tp.add_dims(dim.has_dim_value() ? dim.dim_value() : -1);
+    if (type_iter == value_types_by_name.end() || type_iter->second == nullptr ||
+        !type_iter->second->has_tensor_type() || !type_iter->second->tensor_type().has_shape()) {
+      return;
+    }
+    const auto& shape = type_iter->second->tensor_type().shape();
+    size_t element_count = 1;
+    for (const auto& dim : shape.dim()) {
+      if (!dim.has_dim_value() || dim.dim_value() < 0) {
+        return;
+      }
+      if (dim.dim_value() == 0) {
+        element_count = 0;
       }
     }
-    input_data_by_name[name] = &tp;
+    if (element_count != 0) {
+      for (const auto& dim : shape.dim()) {
+        if (static_cast<uint64_t>(dim.dim_value()) > vector.size() / element_count) {
+          return;
+        }
+        element_count *= static_cast<size_t>(dim.dim_value());
+      }
+    }
+    if (element_count != vector.size()) {
+      return;
+    }
+    auto tp = ToTensor(vector);
+    tp.clear_dims();
+    for (const auto& dim : shape.dim()) {
+      tp.add_dims(dim.dim_value());
+    }
+    input_data_by_name_holder[name] = std::move(tp);
+    auto& stored = input_data_by_name_holder[name];
+    input_data_by_name[name] = &stored;
   }
 
   void ProcessConstant(const NodeProto& n) {
@@ -1290,6 +1311,26 @@ std::vector<const TypeProto*> GraphInferencerImpl::doInferencing(
   // future: pass inputData into InferShapes either directly, or indirectly by
   // updating initializers that match subgraph inputs.
   (void)input_data;
+  // Sibling subgraphs may reuse local names. Keep visible outer records, but
+  // never publish local records into the enclosing or sibling scope.
+  DataValueMap local_shape_data;
+  if (context_->generated_shape_data_by_name != nullptr) {
+    local_shape_data = *context_->generated_shape_data_by_name;
+    for (const auto& input : g_->input()) {
+      local_shape_data.erase(input.name());
+    }
+    for (const auto& initializer : g_->initializer()) {
+      local_shape_data.erase(initializer.name());
+    }
+    for (const auto& initializer : g_->sparse_initializer()) {
+      local_shape_data.erase(initializer.values().name());
+    }
+    for (const auto& node : g_->node()) {
+      for (const auto& output : node.output()) {
+        local_shape_data.erase(output);
+      }
+    }
+  }
   InferShapesImpl(
       g_,
       *context_->outer_scope_value_types_by_name, // never null
@@ -1298,7 +1339,7 @@ std::vector<const TypeProto*> GraphInferencerImpl::doInferencing(
       symbol_table,
       context_->model_local_functions,
       context_->schema_registry,
-      context_->generated_shape_data_by_name);
+      context_->generated_shape_data_by_name != nullptr ? &local_shape_data : nullptr);
 
   std::vector<const TypeProto*> graph_output_types;
   graph_output_types.reserve(g_->output().size());

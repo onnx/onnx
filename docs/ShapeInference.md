@@ -65,6 +65,9 @@ dimensions when an operand's expression exceeds 1024 characters, bounding
 expression growth across repeated operations. Pooling with symbolic spatial
 dimensions may leave ceil-mode results unknown when the final-window correction
 cannot be determined statically.
+Propagated values are exposed as concrete tensors only when their fully known
+shape matches the number of values. Subgraph-local propagation records are
+isolated from sibling graphs while retaining access to visible outer values.
 
 Some inference implementations preserve arithmetic on symbolic dimensions as
 descriptive `dim_param` strings. For example, `Concat` on tensors of shapes
