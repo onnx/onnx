@@ -34577,11 +34577,13 @@ This version of the operator has been available since version 29 of the default 
   ScatterElements takes three inputs `data`, `indices`, and `updates` of the same
   rank r >= 1. `indices` and `updates` must have the same shape; their sizes must
   not exceed the sizes of `data` in dimensions other than `axis`.
+  `data` and `updates` must have the same element type.
   The output has the same shape and element type as `data`.
 
   For each entry in `updates`, the target coordinate is the entry's coordinate
   with the coordinate along `axis` replaced by the corresponding value in `indices`.
-  Negative indices count backwards from the end of that axis.
+  For an axis of size s, index values must be in [-s, s-1].
+  A negative index i identifies the same element as i + s.
 
   When `reduction` is "none", each update replaces its target element. Multiple
   updates must not address the same output element.
@@ -34591,20 +34593,15 @@ This version of the operator has been available since version 29 of the default 
   "add", "mul", "max", and "min" compute the sum, product, maximum,
   and minimum of each group, respectively.
 
-  For "mean", compute the sum of each group divided by its number of values,
-  not a sequence of pairwise averages. Thus, for N updates to a given element:
+  For "mean", let x be the original `data` value at an output element and
+  u_1, ..., u_N be all update values addressing that element. Its output value is:
   ```
-  output = (data + sum(updates)) / (N + 1)
+  output = (x + u_1 + ... + u_N) / (N + 1)
   ```
   The "mean" reduction supports integer and floating-point tensors, but not
   boolean, string, or complex tensors. Integer results are rounded toward
   negative infinity. Floating-point results are converted to the input element
   type after division.
-
-  The reductions correspond to PyTorch's `scatter_reduce` modes "sum", "prod",
-  "amax", "amin", and "mean", respectively. A source tensor larger than `indices`
-  must be sliced to the shape of `indices` before being used as `updates`.
-  Unlike PyTorch, ONNX also accepts negative index values.
 
   (Opset 29 change): Adds "mean".
 
@@ -34662,12 +34659,14 @@ This version of the operator has been available since version 29 of the default 
 
   ScatterND takes `data` of rank r >= 1, `indices` of rank q >= 1, and `updates`
   of rank q + r - k - 1, where k = indices.shape[-1] and 0 <= k <= r.
+  `data` and `updates` must have the same element type.
   The output has the same shape and element type as `data`.
 
   Each entry in `indices` is a k-tuple indexing the first k dimensions of `data`.
-  Negative indices count backwards from the end of the corresponding dimension;
-  all indices must be in bounds. Each tuple addresses a single element when k = r
-  or a slice of the trailing r - k dimensions otherwise.
+  For a dimension of size s, index values must be in [-s, s-1].
+  A negative index i identifies the same position as i + s.
+  Each tuple addresses a single element when k = r or a slice of the trailing
+  r - k dimensions otherwise. When k = 0, each tuple addresses the entire tensor.
   The shape of `updates` must equal indices.shape[:-1] + data.shape[k:].
   For every coordinate `i` in indices.shape[:-1], updates[i] is scattered to
   output[tuple(indices[i])].
@@ -34680,19 +34679,15 @@ This version of the operator has been available since version 29 of the default 
   "add", "mul", "max", and "min" compute the sum, product, maximum, and minimum,
   respectively.
 
-  For "mean", sum all contributions before dividing by their count:
+  For "mean", let x be the original `data` value at an output element and
+  u_1, ..., u_N be all update values addressing that element. Its output value is:
   ```
-  output = (data + sum(updates)) / (N + 1)
+  output = (x + u_1 + ... + u_N) / (N + 1)
   ```
-  Here N is the number of updates addressing the element or slice.
-  This is not a sequence of pairwise averages.
   The "mean" reduction supports integer and floating-point tensors, but not
   boolean, string, or complex tensors. Integer results are rounded toward
   negative infinity. Floating-point results are converted to the input element
   type after division.
-
-  This operator generalizes ScatterElements to multi-dimensional indices and
-  slice updates. It is the inverse of GatherND.
 
   (Opset 29 change): Adds "mean".
 
