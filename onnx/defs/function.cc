@@ -87,7 +87,9 @@ void FunctionExpandHelper(
   for (const auto& function_node : func.node()) {
     for (const auto& output : function_node.output()) {
       if (!output.empty() && !io_names_map.count(output)) {
-        renamer.BindName(output, "Func_" + node_name + output);
+        std::string renamed("Func_");
+        renamed.append(node_name).append(output);
+        renamer.BindName(output, renamed);
       }
     }
   }

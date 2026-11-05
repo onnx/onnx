@@ -30,25 +30,9 @@ def test_inlined_linear_attention_captures(trajectory, length, past, rule):
     feeds, attrs = _case(3, length, rule, np.float32, past)
     model = _model(feeds, attrs, trajectory=trajectory, empty_slots=True)
     expected = ReferenceEvaluator(model).run(None, feeds)
-    node = model.graph.node[0]
-    types = {value.name: value.type for value in model.graph.input}
-    schema = onnx.defs.get_schema("LinearAttention", 29)
-    function = onnx.FunctionProto.FromString(
-        schema.get_context_dependent_function(
-            node.SerializeToString(),
-            [
-                types.get(name, onnx.TypeProto()).SerializeToString()
-                for name in node.input
-            ],
-        )
+    expanded = inliner.inline_selected_functions(
+        model, [("", "LinearAttention")], inline_schema_functions=True
     )
-    function.domain = "test.linear_attention"
-    model.functions.append(function)
-    node.domain = function.domain
-    if not trajectory:
-        node.output.pop()
-    model.opset_import.append(helper.make_opsetid(function.domain, 1))
-    expanded = inliner.inline_local_functions(model)
     assert all(node.op_type != "LinearAttention" for node in expanded.graph.node)
     onnx.checker.check_model(expanded, full_check=True)
     actual = ReferenceEvaluator(expanded).run(None, feeds)

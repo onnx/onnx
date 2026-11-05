@@ -11,6 +11,7 @@
 #include "onnx/checker.h"
 #include "onnx/common/constants.h"
 #include "onnx/defs/function.h"
+#include "onnx/defs/parser.h"
 #include "onnx/defs/schema.h"
 
 namespace ONNX_NAMESPACE::Test {
@@ -155,6 +156,55 @@ TEST(FunctionAPITest, ExpandMissingTrailingOptionalOutput) {
     for (const int64_t length : {0, 2}) {
       CheckExpandedLinearAttention(trajectory, length);
     }
+  }
+}
+
+TEST(FunctionAPITest, InlinePassthroughSubgraphOutputs) {
+  for (const bool initializer_output : {false, true}) {
+    ModelProto model;
+    OnnxParser parser(R"ONNX(
+      <ir_version: 13, opset_import: ["" : 29]>
+      passthrough (float[2,1] X) => (float[2,1] Y) {
+        Y = Scan (X) <
+          num_scan_inputs = 1,
+          body = step (float[1] item) => (float[1] item) {}
+        >
+      }
+    )ONNX");
+    ASSERT_TRUE(parser.Parse(model).IsOK());
+    if (initializer_output) {
+      GraphProto* body = nullptr;
+      for (auto& attr : *model.mutable_graph()->mutable_node(0)->mutable_attribute()) {
+        if (attr.name() == "body") {
+          body = attr.mutable_g();
+        }
+      }
+      ASSERT_NE(body, nullptr);
+      auto* init = body->add_initializer();
+      init->set_name("unchanged");
+      init->set_data_type(TensorProto::FLOAT);
+      init->add_dims(1);
+      init->add_float_data(2.0f);
+      body->mutable_output(0)->set_name("unchanged");
+    }
+    checker::check_model(model);
+    FunctionProto function;
+    function.set_name("Softsign");
+    function.add_input("X");
+    function.add_output("Y");
+    function.mutable_opset_import()->CopyFrom(model.opset_import());
+    FunctionBuilder builder(function);
+    builder.AddInlinedCall({"Y"}, model.graph(), {"X"}, "passthrough");
+    model.mutable_graph()->mutable_node()->CopyFrom(function.node());
+    checker::check_model(model);
+
+    NodeProto call;
+    call.set_op_type("Softsign");
+    call.add_input("X");
+    call.add_output("Y");
+    model.mutable_graph()->clear_node();
+    FunctionExpandHelper(call, function, *model.mutable_graph());
+    checker::check_model(model);
   }
 }
 
