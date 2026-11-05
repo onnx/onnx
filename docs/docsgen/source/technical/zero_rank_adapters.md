@@ -29,8 +29,10 @@ an absent adapter.
 
 ## Shapes and numerical behavior
 
-For an input with at least one dimension, use the following shapes. The leading
-dimensions denoted by `...` may be absent, as in a single input vector.
+For an input with at least one dimension, `input_dim` is its final dimension
+and `output_dim` is the base output's final dimension. Use the following shapes.
+The leading dimensions denoted by `...` are identical for `X` and `base` and may
+be absent, as in a single input vector.
 
 | Value | Construction | Shape |
 |-------|--------------|-------|
@@ -45,8 +47,7 @@ dimensions denoted by `...` may be absent, as in a single input vector.
 At `r = 0`, `hidden` has no elements. Each element of `correction` is a sum
 over an empty reduction dimension, with value zero. The correction retains its
 full output shape; it is not itself an empty tensor unless an output dimension
-is also zero. This also avoids reading or multiplying elements of `X` in the
-adapter path, including any NaNs in `X`.
+is also zero. NaNs in `X` do not propagate through this empty reduction.
 
 The zero dimensions must be part of the **logical tensor shapes**. The weight
 tensors have zero elements, not merely an empty serialized byte payload attached
@@ -64,17 +65,19 @@ would still be added at `r = 0`; it does not disappear with the weights.
 Omit adapter biases, or separately supply zero biases when disabling an adapter.
 A bias that belongs to the base model stays on the base path.
 
-Ordinary LoRA scaling `alpha / r` is undefined at zero. Use a finite precomputed
+Let `alpha` be the adapter's scalar scaling parameter. Ordinary LoRA scaling
+`alpha / r` is undefined at zero. Use a finite precomputed
 coefficient, or the branch-free normalization `alpha / max(r, 1)` for finite
 `alpha`. This agrees with `alpha / r` for every positive integer adapter rank.
-If computing it inside the graph, obtain `r` from `Shape(down)` and `Gather`,
+If computing it inside the graph, obtain `r` by gathering index `1` along
+axis `0` of `Shape(down)`,
 apply integer `Max` with one, then cast both the denominator and `alpha` to
 `FLOAT` or a wider floating-point type before `Div`. Cast the quotient to the
 correction's computation type only after division; casting a large rank directly
 to `FLOAT16` can overflow to infinity and incorrectly produce a zero coefficient.
 Multiply the correction by the resulting finite coefficient before `Add`.
-The coefficient must also be representable and finite in the
-chosen computation type: multiplying zero by infinity or NaN does not disable
+The coefficient must also be representable and finite in the chosen computation
+type: multiplying zero by infinity or NaN does not disable
 an adapter.
 
 ## Switching adapters at runtime
@@ -200,7 +203,7 @@ valid positive, finite quantization scales; empty scales have the shapes above,
 not scalar placeholders. In a quantize/dequantize (QDQ) pair, give
 `QuantizeLinear` and `DequantizeLinear` matching axes, block sizes, scales, and
 zero points. Keep zero dimensions in the quantized weight shapes as well as the
-decoded shapes. No packing proposal or new operator is needed.
+decoded shapes.
 
 For dynamic adapter inputs, preserve `"adapter_rank"` in the down scale shape
 `[ceil(input_dim / 2), "adapter_rank"]` and the up scale shape
@@ -222,6 +225,5 @@ not establish support by an external runtime.
 
 A decoder whose output shape is fixed by a static attribute cannot directly
 switch its decoded logical adapter rank between positive and zero on successive
-invocations. This includes the proposed `DequantizePacked` with its static
-`shape` attribute. This convention does not change that proposal or any other
-operator contract.
+invocations. Such a decoder requires a different graph or a change to its
+shape attribute when the decoded adapter rank changes.
