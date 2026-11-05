@@ -71,8 +71,8 @@ OpSchema GatherNDSchema(bool allow_int32_indices) {
           .Input(
               1,
               "indices",
-              "Tensor of rank q >= 1. All index values are expected to be within bounds [-s, s-1] "
-              "along axis of size s. It is an error if any of the index values are out of bounds.",
+              "Tensor of rank q >= 1. Each index must be in [-s, s-1], where s is the size of "
+              "the corresponding data axis after the batch dimensions. An out-of-bounds index is an error.",
               allow_int32_indices ? "Tind" : "tensor(int64)",
               OpSchema::Single,
               true,
@@ -81,7 +81,7 @@ OpSchema GatherNDSchema(bool allow_int32_indices) {
           .Output(
               0,
               "output",
-              "Tensor of rank q + r - indices_shape[-1] - 1.",
+              "Tensor of rank q + r - indices_shape[-1] - 1 - batch_dims.",
               "T",
               OpSchema::Single,
               true,
@@ -104,8 +104,8 @@ OpSchema ScatterNDSchema(bool allow_int32_indices) {
               "Type of reduction to apply: none (default), add, mul, max, min. "
               "'none': no reduction applied. "
               "'add':  reduction using the addition operation. "
-              "'mul':  reduction using the addition operation. "
-              "'max': reduction using the maximum operation."
+              "'mul':  reduction using the multiplication operation. "
+              "'max': reduction using the maximum operation. "
               "'min': reduction using the minimum operation.",
               AttributeProto::STRING,
               std::string("none"))

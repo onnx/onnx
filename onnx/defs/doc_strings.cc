@@ -4244,11 +4244,12 @@ Some salient points about the inputs' rank and shape:
 
 2) The first `b` dimensions of the shape of `indices` tensor and `data` tensor must be equal.
 
-3) b < min(q, r) is to be honored.
+3) `batch_dims` must satisfy `0 <= b < min(q, r)`.
 
-4) The `indices_shape[-1]` should have a value between 1 (inclusive) and rank `r-b` (inclusive)
+4) `indices_shape[-1]` must be between 1 and `r-b`, inclusive.
 
-5) All values in `indices` are expected to be within bounds [-s, s-1] along axis of size `s` (i.e.) `-data_shape[i] <= indices[...,i] <= data_shape[i] - 1`.
+5) For each tuple component `i`, `0 <= i < indices_shape[-1]`, the index must satisfy
+   `-data_shape[b+i] <= indices[...,i] < data_shape[b+i]`.
    It is an error if any of the index values are out of bounds.
 
 The output is computed as follows:
@@ -4545,8 +4546,9 @@ is the same as the shape of `data`.
 `indices` is treated as a (q-1)-dimensional tensor of k-tuples, where each k-tuple is a partial-index into `data`.
 Hence, k can be a value at most the rank of `data`. When k equals rank(data), each update entry specifies an
 update to a single element of the tensor. When k is less than rank(data) each update entry specifies an
-update to a slice of the tensor. Index values are allowed to be negative, as per the usual
-convention for counting backwards from the end, but are expected in the valid range.
+update to a slice of the tensor. For each tuple component `i`, `0 <= i < k`, the index must satisfy
+`-data.shape[i] <= indices[...,i] < data.shape[i]`. Negative indices count backwards from the end
+of the corresponding dimension. An out-of-bounds index is an error.
 
 `updates` is treated as a (q-1)-dimensional tensor of replacement-slice-values. Thus, the
 first (q-1) dimensions of updates.shape must match the first (q-1) dimensions of indices.shape.
@@ -4566,8 +4568,6 @@ for idx in np.ndindex(update_indices):
 ```
 
 The order of iteration in the above loop is not specified.
-In particular, indices should not have duplicate entries: that is, if idx1 != idx2, then indices[idx1] != indices[idx2].
-This ensures that the output value does not depend on the iteration order.
 
 `reduction` allows specification of an optional reduction operation, which is applied to all values in `updates`
 tensor into `output` at the specified `indices`.
