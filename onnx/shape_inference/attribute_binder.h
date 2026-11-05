@@ -37,6 +37,8 @@ class AttributeBinder : public MutableVisitor {
           std::string name = attr.name();
           attr = *replacement;
           attr.set_name(name);
+          // Call-site graphs belong to the caller's attribute scope; their references
+          // must not be rebound using the callee's attribute map.
           ++attr_iter;
         } else {
           attr_iter = attributes.erase(attr_iter);

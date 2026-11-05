@@ -287,6 +287,66 @@ class TestInliner:
             np.testing.assert_array_equal(actual, value)
 
     @pytest.mark.parametrize("selected", [False, True])
+    @pytest.mark.parametrize("missing_first", [False, True])
+    def test_default_and_missing_attributes(self, selected, missing_first):
+        activation = helper.make_node("HardSigmoid", ["X"], ["Y"])
+        references = [
+            helper.make_attribute_ref(
+                "alpha", AttributeProto.FLOAT, ref_attr_name="slope"
+            ),
+            helper.make_attribute_ref(
+                "beta", AttributeProto.FLOAT, ref_attr_name="offset"
+            ),
+        ]
+        activation.attribute.extend(
+            reversed(references) if missing_first else references
+        )
+        function = helper.make_function(
+            "local",
+            "activation",
+            ["X"],
+            ["Y"],
+            [activation],
+            [helper.make_opsetid("", 18)],
+            attributes=["offset"],
+            attribute_protos=[helper.make_attribute("slope", 0.25)],
+        )
+        model = helper.make_model(
+            helper.make_graph(
+                [helper.make_node("activation", ["X"], ["Y"], domain="local")],
+                "mixed_attributes",
+                [helper.make_tensor_value_info("X", TensorProto.FLOAT, [3])],
+                [helper.make_tensor_value_info("Y", TensorProto.FLOAT, [3])],
+            ),
+            functions=[function],
+            ir_version=10,
+            opset_imports=[
+                helper.make_opsetid("", 18),
+                helper.make_opsetid("local", 1),
+            ],
+        )
+        checker.check_model(model, full_check=True)
+        original = model.SerializeToString()
+        result = (
+            inliner.inline_selected_functions(model, [("local", "activation")])
+            if selected
+            else inliner.inline_local_functions(model)
+        )
+        assert model.SerializeToString() == original
+        checker.check_model(result, full_check=True)
+        assert len(result.graph.node) == 1
+        node = result.graph.node[0]
+        assert node.op_type == "HardSigmoid"
+        assert len(node.attribute) == 1
+        assert node.attribute[0].name == "alpha"
+        assert node.attribute[0].f == 0.25
+        assert not node.attribute[0].ref_attr_name
+        (actual,) = ReferenceEvaluator(result).run(
+            None, {"X": np.asarray([-1.0, 0.0, 1.0], dtype=np.float32)}
+        )
+        np.testing.assert_array_equal(actual, [0.25, 0.5, 0.75])
+
+    @pytest.mark.parametrize("selected", [False, True])
     def test_default_graph_attribute(self, selected):
         def branch(value):
             return helper.make_graph(
@@ -366,6 +426,66 @@ class TestInliner:
                 np.testing.assert_array_equal(
                     actual, np.asarray([value], dtype=np.float32)
                 )
+
+    @pytest.mark.parametrize("selected", [False, True])
+    def test_graph_attribute_preserves_caller_scope(self, selected):
+        model = parser.parse_model(
+            """
+            <ir_version: 10, opset_import: [ "" : 18, "local" : 1 ]>
+            main (bool cond) => (float[1] Y) {
+                Y = local.outer(cond)
+            }
+
+            <opset_import: [ "" : 18, "local" : 1 ], domain: "local">
+            outer <slope: float = 0.25> (cond) => (Y) {
+                Y = local.inner <
+                    body = branch () => (float[1] out) {
+                        X = Constant <value = float[1] {-2}> ()
+                        out = LeakyRelu <alpha: float = @slope> (X)
+                    }
+                > (cond)
+            }
+
+            <opset_import: [ "" : 18 ], domain: "local">
+            inner <
+                slope: float = 0.75,
+                body: graph = default_branch () => (float[1] out) {
+                    out = Constant <value = float[1] {7}> ()
+                }
+            > (cond) => (Y) {
+                Y = If <then_branch: graph = @body, else_branch: graph = @body> (cond)
+            }
+            """
+        )
+        checker.check_model(model, full_check=True)
+        original = model.SerializeToString()
+        if selected:
+            result = inliner.inline_selected_functions(model, [("local", "inner")])
+            checker.check_model(result, full_check=True)
+            assert len(result.functions) == 1
+            outer = result.functions[0]
+            assert outer.name == "outer"
+            assert outer.node[0].op_type == "If"
+            # The copied graphs still belong to outer's attribute scope.
+            for attr in outer.node[0].attribute:
+                alpha = attr.g.node[1].attribute[0]
+                assert alpha.name == "alpha"
+                assert alpha.ref_attr_name == "slope"
+                assert not alpha.HasField("f")
+            result = inliner.inline_local_functions(result)
+        else:
+            result = inliner.inline_local_functions(model)
+        assert model.SerializeToString() == original
+        checker.check_model(result, full_check=True)
+        for attr in result.graph.node[0].attribute:
+            alpha = attr.g.node[1].attribute[0]
+            assert not alpha.ref_attr_name
+            assert alpha.f == 0.25
+        for condition in [True, False]:
+            (actual,) = ReferenceEvaluator(result).run(
+                None, {"cond": np.asarray(condition)}
+            )
+            np.testing.assert_array_equal(actual, np.asarray([-0.5], dtype=np.float32))
 
     @pytest.mark.parametrize("selected", [False, True])
     @pytest.mark.parametrize("default", [None, 0.25])
