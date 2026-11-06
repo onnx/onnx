@@ -20,6 +20,14 @@
 namespace ONNX_NAMESPACE {
 
 static void MathOpDataPropagator(DataPropagationContext& ctx, std::string_view op_type) {
+  for (size_t i = 0; i < 2; ++i) {
+    const auto* type = ctx.getInputType(i);
+    if (type == nullptr || !type->has_tensor_type() || !type->tensor_type().has_shape() ||
+        type->tensor_type().shape().dim_size() > 1) {
+      // TensorShapeProto stores scalar/vector values, not multidimensional broadcasting.
+      return;
+    }
+  }
   const auto* const input_0 = ctx.getInputData(0);
   const auto* const input_1 = ctx.getInputData(1);
   if (input_0 == nullptr || input_1 == nullptr) {
@@ -40,10 +48,20 @@ static void MathOpDataPropagator(DataPropagationContext& ctx, std::string_view o
       tsp.mutable_dim()->Add()->set_dim_value(
           defs::math::utils::MathOpTwoIntegers(op_type, input_dim_0.dim_value(), input_dim_1.dim_value()));
     } else {
-      // Cannot compute the value; simply add an empty dim without value and param
-      tsp.mutable_dim()->Add();
+      *tsp.add_dim() = computeDimension(ctx.getSymbolTable(), std::string(op_type), input_dim_0, input_dim_1);
     }
   }
+  ctx.addOutputData(0, std::move(tsp));
+}
+
+// Propagates data unchanged from input to output (for unary ops like Ceil, Floor
+// that are identity on integer dim_values stored in TensorShapeProto).
+static void UnaryIdentityDataPropagator(DataPropagationContext& ctx) {
+  const auto* input = ctx.getInputData(0);
+  if (input == nullptr) {
+    return;
+  }
+  TensorShapeProto tsp(*input);
   ctx.addOutputData(0, std::move(tsp));
 }
 
@@ -143,7 +161,12 @@ ONNX_OPERATOR_SET_SCHEMA(
         .FillUsing(MathDocGenerator("multiplication"))
         .PartialDataPropagationFunction([](DataPropagationContext& ctx) { MathOpDataPropagator(ctx, "Mul"); }));
 
-ONNX_OPERATOR_SET_SCHEMA(Div, 14, OpSchema().FillUsing(MathDocGenerator("division")));
+ONNX_OPERATOR_SET_SCHEMA(
+    Div,
+    14,
+    OpSchema().FillUsing(MathDocGenerator("division")).PartialDataPropagationFunction([](DataPropagationContext& ctx) {
+      MathOpDataPropagator(ctx, "Div");
+    }));
 
 ONNX_OPERATOR_SET_SCHEMA(
     Neg,
@@ -163,7 +186,23 @@ ONNX_OPERATOR_SET_SCHEMA(
              types::Double,
              types::BFloat16},
             "Constrain input and output types to signed numeric tensors.")
-        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
+        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput)
+        .PartialDataPropagationFunction([](DataPropagationContext& ctx) {
+          const auto* input = ctx.getInputData(0);
+          if (input == nullptr) {
+            return;
+          }
+          TensorShapeProto tsp;
+          for (int i = 0; i < input->dim_size(); ++i) {
+            const auto& dim = input->dim(i);
+            if (dim.has_dim_value()) {
+              tsp.mutable_dim()->Add()->set_dim_value(checkedSubtract(0, dim.dim_value()));
+            } else {
+              tsp.mutable_dim()->Add();
+            }
+          }
+          ctx.addOutputData(0, std::move(tsp));
+        }));
 
 ONNX_OPERATOR_SET_SCHEMA(
     Abs,
@@ -202,7 +241,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             "T",
             {types::Float16, types::Float, types::Double, types::BFloat16},
             "Constrain input and output types to float tensors.")
-        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
+        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput)
+        .PartialDataPropagationFunction(UnaryIdentityDataPropagator));
 
 ONNX_OPERATOR_SET_SCHEMA(
     Ceil,
@@ -215,7 +255,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             "T",
             {types::Float16, types::Float, types::Double, types::BFloat16},
             "Constrain input and output types to float tensors.")
-        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
+        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput)
+        .PartialDataPropagationFunction(UnaryIdentityDataPropagator));
 
 ONNX_OPERATOR_SET_SCHEMA(
     Sqrt,
@@ -257,7 +298,23 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         )ONNX",
             18)
-        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
+        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput)
+        .PartialDataPropagationFunction([](DataPropagationContext& ctx) {
+          const auto* input = ctx.getInputData(0);
+          if (input == nullptr) {
+            return;
+          }
+          TensorShapeProto tsp;
+          for (int i = 0; i < input->dim_size(); ++i) {
+            const auto& dim = input->dim(i);
+            if (dim.has_dim_value()) {
+              tsp.mutable_dim()->Add()->set_dim_value(std::max(static_cast<int64_t>(0), dim.dim_value()));
+            } else {
+              tsp.mutable_dim()->Add();
+            }
+          }
+          ctx.addOutputData(0, std::move(tsp));
+        }));
 
 ONNX_OPERATOR_SET_SCHEMA(
     LeakyRelu,

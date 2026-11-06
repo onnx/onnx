@@ -2,8 +2,7 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
-#include <string>
-#include <unordered_map>
+#include <utility>
 
 #include "gtest/gtest.h"
 #include "onnx/defs/parser.h"
@@ -43,73 +42,31 @@ static TensorShapeProto RunDataPropagation(const char* graphCode, int domainVers
   EXPECT_TRUE(status.IsOK()) << status.ErrorMessage();
   EXPECT_TRUE(parser.EndOfInput()) << "Extra unparsed input unexpected.";
 
-  // Constructs name to TypeProto map from value_info, input, output
-  std::unordered_map<std::string, TypeProto*> valueTypesByName;
-  for (auto& vi : *graph.mutable_value_info()) {
-    if (vi.has_type()) {
-      valueTypesByName[vi.name()] = vi.mutable_type();
-    }
-  }
-  for (auto& vi : *graph.mutable_input()) {
-    if (vi.has_type()) {
-      valueTypesByName[vi.name()] = vi.mutable_type();
-    }
-  }
-  for (auto& vi : *graph.mutable_output()) {
-    if (vi.has_type()) {
-      valueTypesByName[vi.name()] = vi.mutable_type();
-    }
-  }
-
-  // Constructs name to TensorProto map from initializer
-  std::unordered_map<std::string, const TensorProto*> inputDataByName;
-  for (const auto& tp : graph.initializer()) {
-    inputDataByName[tp.name()] = &tp;
-  }
-  // Collects data from constant nodes
-  for (const auto& n : graph.node()) {
-    if (n.op_type() != "Constant" || n.output().size() != 1) {
-      continue;
-    }
-    for (const auto& attr : n.attribute()) {
-      if (attr.name() == "value") {
-        if (attr.type() == AttributeProto::TENSOR && attr.has_t()) {
-          inputDataByName[n.output(0)] = &attr.t();
-        }
-      }
-    }
-  }
-
-  // Runs data propagation on each node
-  std::unordered_map<std::string, TensorShapeProto> generatedShapeDataByName;
-  auto* schemaRegistry = OpSchemaRegistry::Instance();
-  TensorShapeProto inferredShape;
-  for (auto n : graph.node()) {
-    // No need to run data propagation on Constant
-    if (n.op_type() == "Constant") {
-      continue;
-    }
-    shape_inference::DataPropagationContextImpl dataPropagationCtx(
-        n, valueTypesByName, inputDataByName, generatedShapeDataByName);
-    const auto* const schema = schemaRegistry->GetSchema(n.op_type(), domainVersion, n.domain());
-    EXPECT_TRUE(schema->has_data_propagation_function());
-    schema->GetDataPropagationFunction()(dataPropagationCtx);
-  }
+  ModelProto model;
+  model.set_ir_version(IR_VERSION);
+  *model.mutable_graph() = std::move(graph);
+  auto* opset = model.add_opset_import();
+  opset->set_domain(ONNX_DOMAIN);
+  opset->set_version(domainVersion);
+  shape_inference::DataValueMap generatedShapeDataByName;
+  shape_inference::InferShapes(
+      model, OpSchemaRegistry::Instance(), ShapeInferenceOptions(true, 1, true), &generatedShapeDataByName);
 
   // Assuming the graph being tested only has 1 output.
   // If this ever changes then fixes are required here.
-  const auto inputShapeDataIter = generatedShapeDataByName.find(graph.output(0).name());
+  const auto inputShapeDataIter = generatedShapeDataByName.find(model.graph().output(0).name());
   EXPECT_TRUE(inputShapeDataIter != generatedShapeDataByName.cend());
-
-  inferredShape.CopyFrom(inputShapeDataIter->second);
+  if (inputShapeDataIter == generatedShapeDataByName.cend()) {
+    return {};
+  }
 
   // Returns the partial shape data for output
-  return inferredShape;
+  return inputShapeDataIter->second;
 }
 
 TEST(DataPropagationImplTest, ShapeTest) {
   const char* code = R"ONNX(
-agraph (int32[7,4,1] x) => (int32[3] y)
+agraph (int32[7,4,1] x) => (int64[3] y)
 {
     xs = Shape(x)
     y = Cast<to = 7>(xs)
@@ -125,7 +82,7 @@ agraph (int32[7,4,1] x) => (int32[3] y)
 
 TEST(DataPropagationImplTest, SymbolicShapeTest) {
   const char* code = R"ONNX(
-agraph (int32[N,3,256,256] x) => (int32[4] y)
+agraph (int32[N,3,256,256] x) => (int64[4] y)
 {
     xs = Shape(x)
     y = Cast<to = 7>(xs)
@@ -142,7 +99,7 @@ agraph (int32[N,3,256,256] x) => (int32[4] y)
 
 TEST(DataPropagationImplTest, CastTest) {
   const char* code = R"ONNX(
-agraph (int32[2,5] x) => (int32[2] y)
+agraph (int32[2,5] x) => (int64[2] y)
 {
     xs = Shape(x)
     y = Cast<to = 7>(xs)
@@ -157,7 +114,7 @@ agraph (int32[2,5] x) => (int32[2] y)
 
 TEST(DataPropagationImplTest, SqueezeTest) {
   const char* code = R"ONNX(
-agraph (int32[2,5] x) => (int32[2] z)
+agraph (int32[2,5] x) => (int64[2] z)
 {
     xs = Shape(x)
     y = Squeeze(xs)
@@ -173,7 +130,7 @@ agraph (int32[2,5] x) => (int32[2] z)
 
 TEST(DataPropagationImplTest, UnsqueezeTest) {
   const char* code = R"ONNX(
-agraph (int32[2,5] x) => (int32[1,2] w)
+agraph (int32[2,5] x) => (int64[2,1] w)
 {
     xs = Shape(x)
     axis = Constant<value = int64[1] {1}>()
@@ -190,7 +147,7 @@ agraph (int32[2,5] x) => (int32[1,2] w)
 
 TEST(DataPropagationImplTest, SizeTest) {
   const char* code = R"ONNX(
-agraph (int64[1] x) => (int32[1] w)
+agraph (int64[1] x) => (int64[] w)
 <int64[3] init = {2,3,5}>
 {
     z = Size(init)
@@ -205,7 +162,7 @@ agraph (int64[1] x) => (int32[1] w)
 
 TEST(DataPropagationImplTest, AddTest) {
   const char* code = R"ONNX(
-agraph (int32[2,4,5] x, int32[2,4,5] y) => (int32[3] w)
+agraph (int32[2,4,5] x, int32[2,4,5] y) => (int64[3] w)
 {
     xs = Shape(x)
     ys = Shape(y)
@@ -223,7 +180,7 @@ agraph (int32[2,4,5] x, int32[2,4,5] y) => (int32[3] w)
 
 TEST(DataPropagationImplTest, AddSymbolicShapeTest) {
   const char* code = R"ONNX(
-agraph (int32[2,4,5] x, int32[2,4,M] y) => (int32[3] w)
+agraph (int32[2,4,5] x, int32[2,4,M] y) => (int64[3] w)
 {
     xs = Shape(x)
     ys = Shape(y)
@@ -231,19 +188,17 @@ agraph (int32[2,4,5] x, int32[2,4,M] y) => (int32[3] w)
     w = Cast<to = 7>(z)
 }
 )ONNX";
-  // Add({2,4,5}, {2,4,M}) = {4,8,?}
   TensorShapeProto expected_tsp;
   expected_tsp.mutable_dim()->Add()->set_dim_value(4);
   expected_tsp.mutable_dim()->Add()->set_dim_value(8);
-  // Not computable so do not set value or param
-  expected_tsp.mutable_dim()->Add();
+  expected_tsp.mutable_dim()->Add()->set_dim_param("5 + M");
   const auto propagated_tsp = RunDataPropagation(code);
-  EXPECT_TRUE(CompareShape(propagated_tsp, expected_tsp));
+  EXPECT_TRUE(CompareShape(propagated_tsp, expected_tsp, true));
 }
 
 TEST(DataPropagationImplTest, SubTest) {
   const char* code = R"ONNX(
-agraph (int32[10,11,6] x, int32[5] y) => (int32[3] w)
+agraph (int32[10,11,6] x, int32[5] y) => (int64[3] w)
 {
     xs = Shape(x)
     ys = Shape(y)
@@ -261,7 +216,7 @@ agraph (int32[10,11,6] x, int32[5] y) => (int32[3] w)
 
 TEST(DataPropagationImplTest, MulTest) {
   const char* code = R"ONNX(
-agraph (int32[2] x, int32[5,1,7] y) => (int32[3] w)
+agraph (int32[2] x, int32[5,1,7] y) => (int64[3] w)
 {
     xs = Shape(x)
     ys = Shape(y)
@@ -279,7 +234,7 @@ agraph (int32[2] x, int32[5,1,7] y) => (int32[3] w)
 
 TEST(DataPropagationImplTest, ConcatTest) {
   const char* code = R"ONNX(
-agraph (int32[1,2] x, int32[3,4] y) => (int32[4] w)
+agraph (int32[1,2] x, int32[3,4] y) => (int64[4] w)
 {
     xs = Shape(x)
     ys = Shape(y)
@@ -315,7 +270,7 @@ agraph (float[32, 1024] x, int64[2] dynamic_shape) => (int64[4] z)
 
 TEST(DataPropagationImplTest, GatherTest) {
   const char* code = R"ONNX(
-agraph (int32[1,2,3,4,5,6] x) => (int32[3] w)
+agraph (int32[1,2,3,4,5,6] x) => (int64[3] w)
 {
     xs = Shape(x)
     indices = Constant<value = int64[3] {0,3,5}>()
@@ -333,7 +288,7 @@ agraph (int32[1,2,3,4,5,6] x) => (int32[3] w)
 
 TEST(DataPropagationImplTest, GatherNegativeIndicesTest) {
   const char* code = R"ONNX(
-agraph (int32[1,2,3,4,5,6] x) => (int32[2] w)
+agraph (int32[1,2,3,4,5,6] x) => (int64[2] w)
 {
     xs = Shape(x)
     indices = Constant<value = int64[2] {-2,-1}>()
@@ -350,7 +305,7 @@ agraph (int32[1,2,3,4,5,6] x) => (int32[2] w)
 
 TEST(DataPropagationImplTest, SliceTest) {
   const char* code = R"ONNX(
-agraph (int32[1,2,3,4,5,6,7,8] x) => (int32[2] w)
+agraph (int32[1,2,3,4,5,6,7,8] x) => (int64[2] w)
 {
     xs = Shape(x)
     starts = Constant<value = int64[1] {1}>()
@@ -370,7 +325,7 @@ agraph (int32[1,2,3,4,5,6,7,8] x) => (int32[2] w)
 
 TEST(DataPropagationImplTest, SliceDefaultAxesAndStepTest) {
   const char* code = R"ONNX(
-agraph (int32[1,2,3,4,5,6,7,8] x) => (int32[3] w)
+agraph (int32[1,2,3,4,5,6,7,8] x) => (int64[3] w)
 {
     xs = Shape(x)
     starts = Constant<value = int64[1] {2}>()
@@ -389,7 +344,7 @@ agraph (int32[1,2,3,4,5,6,7,8] x) => (int32[3] w)
 
 TEST(DataPropagationImplTest, SliceNegativeStartEndStepTest) {
   const char* code = R"ONNX(
-agraph (int32[1,2,3,4,5,6,7,8] x) => (int32[3] w)
+agraph (int32[1,2,3,4,5,6,7,8] x) => (int64[2] w)
 {
     xs = Shape(x)
     starts = Constant<value = int64[1] {-3}>()

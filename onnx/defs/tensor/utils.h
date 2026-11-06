@@ -28,6 +28,12 @@ void resizeShapeInferenceHelper(
 
 void resizeShapeInferenceHelper(
     const TensorShapeProto& input_shape,
+    const std::vector<float>& scales_data,
+    TensorShapeProto* output_shape,
+    SymbolTable* symbols);
+
+void resizeShapeInferenceHelper(
+    const TensorShapeProto& input_shape,
     const std::vector<int64_t>& sizes_data,
     TensorShapeProto* output_shape);
 

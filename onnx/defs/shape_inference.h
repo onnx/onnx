@@ -5,6 +5,7 @@
 #pragma once
 
 #include <algorithm>
+#include <cctype>
 #include <functional>
 #include <limits>
 #include <string>
@@ -44,9 +45,14 @@ class SymbolTable {
   virtual void addFromGraph(const GraphProto& g) = 0;
   // Creates a new symbol which is not duplicate as any existing one
   std::string createNew() {
-    return createNew("unk__");
+    return createNew("_d");
   }
   virtual std::string createNew(const std::string& symbol_prefix) = 0;
+  // Interns an operation and its typed operands; returns empty when unsupported.
+  // Existing dimension names are atoms, not expressions parsed from their spelling.
+  virtual std::string createExpression(const std::string& /*op*/, const Dim& /*left*/, const Dim& /*right*/) {
+    return "";
+  }
   virtual ~SymbolTable() = default;
 };
 
@@ -90,6 +96,9 @@ class InferenceError final : public std::runtime_error {
   ONNX_THROW_EX(ONNX_NAMESPACE::InferenceError(ONNX_NAMESPACE::MakeString("[ShapeInferenceError] ", __VA_ARGS__)));
 
 struct InferenceContext {
+  virtual SymbolTable* getSymbolTable() const {
+    return nullptr;
+  }
   virtual const AttributeProto* getAttribute(const std::string& name) const = 0;
   virtual size_t getNumInputs() const = 0;
   virtual const TypeProto* getInputType(size_t index) const = 0;
@@ -141,6 +150,9 @@ struct InferenceContext {
 // If the shape of X is statically known, then data-propagation should be able to determine
 // the value of newshape, as well as the shape of Z.
 struct DataPropagationContext {
+  virtual SymbolTable* getSymbolTable() const {
+    return nullptr;
+  }
   virtual const AttributeProto* getAttribute(const std::string& name) const = 0;
   virtual size_t getNumInputs() const = 0;
   virtual const TypeProto* getInputType(size_t index) const = 0;
@@ -213,6 +225,39 @@ getAttribute(const InferenceContext& ctx, const std::string& attributeName, cons
     return defaultValue;
 }
 
+// --- Symbolic Dimension Arithmetic Helpers ---
+// Context-free arithmetic preserves concrete results and identity operations.
+// Compound symbolic results require a context-owned symbol allocator.
+
+// Convert a Dim to its string representation for use in expressions.
+inline std::string dimToString(const TensorShapeProto::Dimension& dim) {
+  if (dim.has_dim_value()) {
+    return ONNX_NAMESPACE::to_string(dim.dim_value());
+  }
+  // Stop expansion before copying or combining large expression strings.
+  if (dim.has_dim_param() && dim.dim_param().size() <= 1024) {
+    return dim.dim_param();
+  }
+  return "";
+}
+
+// Return true if a dim_param string is a "simple" token (identifier or number)
+// that does not need parentheses when used as an operand in a compound expression.
+inline bool dimParamIsSimple(const std::string& s) {
+  if (s.empty())
+    return true;
+  for (char c : s) {
+    if (c != '_' && !std::isalnum(static_cast<unsigned char>(c)))
+      return false;
+  }
+  return true;
+}
+
+// Wrap an expression string in parentheses if it is compound.
+inline std::string wrapIfCompound(const std::string& s) {
+  return dimParamIsSimple(s) ? s : "(" + s + ")";
+}
+
 inline int64_t checkedMultiply(int64_t lhs, int64_t rhs) {
   int64_t result = 0;
   if (checked_mul_overflow(lhs, rhs, &result)) {
@@ -257,6 +302,8 @@ inline TensorShapeProto::Dimension operator*(
     return dim2;
   } else if (dim2.has_dim_value() && (dim2.dim_value() == 1)) {
     return dim1;
+  } else if ((dim1.has_dim_value() && dim1.dim_value() == 0) || (dim2.has_dim_value() && dim2.dim_value() == 0)) {
+    result.set_dim_value(0);
   }
   return result;
 }
@@ -276,6 +323,8 @@ inline TensorShapeProto::Dimension operator*(const TensorShapeProto::Dimension& 
     result.set_dim_value(checkedMultiply(dim1.dim_value(), dim2));
   } else if (dim2 == 1) {
     return dim1;
+  } else if (dim2 == 0) {
+    result.set_dim_value(0);
   }
   return result;
 }
@@ -290,12 +339,38 @@ inline TensorShapeProto::Dimension operator/(const TensorShapeProto::Dimension& 
   return result;
 }
 
+// --- Addition and Subtraction operators for Dim ---
+
+inline TensorShapeProto::Dimension operator+(
+    const TensorShapeProto::Dimension& dim1,
+    const TensorShapeProto::Dimension& dim2) {
+  TensorShapeProto::Dimension result;
+  if (dim1.has_dim_value() && dim2.has_dim_value()) {
+    result.set_dim_value(checkedAdd(dim1.dim_value(), dim2.dim_value()));
+  } else if (dim1.has_dim_value() && dim1.dim_value() == 0) {
+    return dim2;
+  } else if (dim2.has_dim_value() && dim2.dim_value() == 0) {
+    return dim1;
+  }
+  return result;
+}
+
 inline TensorShapeProto::Dimension operator+(const TensorShapeProto::Dimension& dim1, int64_t dim2) {
   TensorShapeProto::Dimension result;
   if (dim1.has_dim_value()) {
     result.set_dim_value(checkedAdd(dim1.dim_value(), dim2));
   } else if (dim2 == 0) {
     return dim1;
+  }
+  return result;
+}
+
+inline TensorShapeProto::Dimension operator-(
+    const TensorShapeProto::Dimension& dim1,
+    const TensorShapeProto::Dimension& dim2) {
+  TensorShapeProto::Dimension result;
+  if (dim1.has_dim_value() && dim2.has_dim_value()) {
+    result.set_dim_value(checkedSubtract(dim1.dim_value(), dim2.dim_value()));
   }
   return result;
 }
@@ -322,6 +397,86 @@ inline TensorShapeProto::Dimension multiplyDims(const TensorShapeProto& shape, i
   return dim;
 }
 
+inline Dim makeDimension(int64_t value) {
+  Dim dim;
+  dim.set_dim_value(value);
+  return dim;
+}
+
+inline Dim computeDimension(SymbolTable* symbols, const std::string& op, const Dim& left, const Dim& right) {
+  Dim result;
+  if (op == "Add") {
+    result = left + right;
+  } else if (op == "Sub") {
+    result = left - right;
+  } else if (op == "Mul") {
+    result = left * right;
+  } else if (op == "Div" && right.has_dim_value()) {
+    result = left / right.dim_value();
+  }
+  if (!result.has_dim_value() && !result.has_dim_param() && symbols != nullptr) {
+    auto name = symbols->createExpression(op, left, right);
+    if (!name.empty()) {
+      result.set_dim_param(std::move(name));
+    }
+  }
+  return result;
+}
+
+class SymbolicDim {
+ public:
+  SymbolicDim(SymbolTable* symbols, Dim value) : symbols_(symbols), value_(std::move(value)) {}
+  // Arithmetic chains retain the allocator until assigned to a protobuf dimension.
+  // NOLINTNEXTLINE(cppcoreguidelines-explicit-constructor,google-explicit-constructor,misc-explicit-constructor)
+  operator const Dim&() const {
+    return value_;
+  }
+  bool has_dim_value() const {
+    return value_.has_dim_value();
+  }
+  bool has_dim_param() const {
+    return value_.has_dim_param();
+  }
+  int64_t dim_value() const {
+    return value_.dim_value();
+  }
+  void set_dim_value(int64_t value) {
+    value_.set_dim_value(value);
+  }
+  SymbolicDim apply(const std::string& op, const Dim& right) const {
+    return SymbolicDim(symbols_, computeDimension(symbols_, op, value_, right));
+  }
+  SymbolicDim operator+(int64_t right) const {
+    return apply("Add", makeDimension(right));
+  }
+  SymbolicDim operator-(int64_t right) const {
+    return apply("Sub", makeDimension(right));
+  }
+  SymbolicDim operator*(int64_t right) const {
+    return apply("Mul", makeDimension(right));
+  }
+  SymbolicDim operator/(int64_t right) const {
+    return apply("Div", makeDimension(right));
+  }
+
+ private:
+  SymbolTable* symbols_;
+  Dim value_;
+};
+
+template <typename Context>
+SymbolicDim symbolicDim(const Context& ctx, const Dim& dim) {
+  return SymbolicDim(ctx.getSymbolTable(), dim);
+}
+
+template <typename Context>
+Dim multiplyDims(const Context& ctx, const TensorShapeProto& shape, int from, int upto_exclusive) {
+  Dim result = makeDimension(1);
+  for (int i = from; i < upto_exclusive; ++i) {
+    result = computeDimension(ctx.getSymbolTable(), "Mul", result, shape.dim(i));
+  }
+  return result;
+}
 inline int32_t getTensorElementType(const TypeProto& type) {
   int32_t result = TensorProto::UNDEFINED;
   const auto value_case = type.value_case();

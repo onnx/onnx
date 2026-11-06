@@ -1329,29 +1329,24 @@ static void LoopInferenceFunction_opset8(InferenceContext& ctx) {
       // if there's an existing type check it matches. otherwise propagate
       propagateElemTypeWithValidation(subgraph_output_type, loop_output_type);
 
-      if (is_loop_state_var) {
-        // shape may change across iterations so ignore.
-      } else {
-        // propagate shape
-        if (subgraph_output_type->tensor_type().has_shape()) {
-          // per iteration output. first dimension will be number of iterations
-          // but we don't know that value yet
-          TypeProto inferred_type(*subgraph_output_type);
-          auto* mutable_inferred_tensor_type = inferred_type.mutable_tensor_type();
-          auto* mutable_inferred_shape = mutable_inferred_tensor_type->mutable_shape();
+      // Body shapes need not match the initial state when the loop executes zero times.
+      if (!is_loop_state_var && subgraph_output_type->tensor_type().has_shape()) {
+        // per iteration output. first dimension will be number of iterations
+        TypeProto inferred_type(*subgraph_output_type);
+        auto* mutable_inferred_tensor_type = inferred_type.mutable_tensor_type();
+        auto* mutable_inferred_shape = mutable_inferred_tensor_type->mutable_shape();
 
-          mutable_inferred_shape->clear_dim();
+        mutable_inferred_shape->clear_dim();
 
-          // add empty dimension for number of iterations
-          mutable_inferred_shape->add_dim();
+        // trip_count is only an upper bound: the loop can exit early.
+        mutable_inferred_shape->add_dim();
 
-          // add dimensions from subgraph output shape
-          for (const auto& dim : subgraph_output_type->tensor_type().shape().dim()) {
-            (*mutable_inferred_shape->add_dim()) = dim;
-          }
-
-          mergeInShapeInfo(*mutable_inferred_tensor_type, *loop_output_type->mutable_tensor_type());
+        // add dimensions from subgraph output shape
+        for (const auto& dim : subgraph_output_type->tensor_type().shape().dim()) {
+          (*mutable_inferred_shape->add_dim()) = dim;
         }
+
+        mergeInShapeInfo(*mutable_inferred_tensor_type, *loop_output_type->mutable_tensor_type());
       }
     }
   }
@@ -1484,29 +1479,24 @@ static void LoopInferenceFunction_opset11(InferenceContext& ctx) {
       // if there's an existing type check it matches. otherwise propagate
       propagateElemTypeWithValidation(subgraph_output_type, loop_output_type);
 
-      if (is_loop_state_var) {
-        // shape may change across iterations so ignore.
-      } else {
-        // propagate shape
-        if (subgraph_output_type->tensor_type().has_shape()) {
-          // per iteration output. first dimension will be number of iterations
-          // but we don't know that value yet
-          TypeProto inferred_type(*subgraph_output_type);
-          auto* mutable_inferred_tensor_type = inferred_type.mutable_tensor_type();
-          auto* mutable_inferred_shape = mutable_inferred_tensor_type->mutable_shape();
+      // Body shapes need not match the initial state when the loop executes zero times.
+      if (!is_loop_state_var && subgraph_output_type->tensor_type().has_shape()) {
+        // per iteration output. first dimension will be number of iterations
+        TypeProto inferred_type(*subgraph_output_type);
+        auto* mutable_inferred_tensor_type = inferred_type.mutable_tensor_type();
+        auto* mutable_inferred_shape = mutable_inferred_tensor_type->mutable_shape();
 
-          mutable_inferred_shape->clear_dim();
+        mutable_inferred_shape->clear_dim();
 
-          // add empty dimension for number of iterations
-          mutable_inferred_shape->add_dim();
+        // trip_count is only an upper bound: the loop can exit early.
+        mutable_inferred_shape->add_dim();
 
-          // add dimensions from subgraph output shape
-          for (const auto& dim : subgraph_output_type->tensor_type().shape().dim()) {
-            (*mutable_inferred_shape->add_dim()) = dim;
-          }
-
-          mergeInShapeInfo(*mutable_inferred_tensor_type, *loop_output_type->mutable_tensor_type());
+        // add dimensions from subgraph output shape
+        for (const auto& dim : subgraph_output_type->tensor_type().shape().dim()) {
+          (*mutable_inferred_shape->add_dim()) = dim;
         }
+
+        mergeInShapeInfo(*mutable_inferred_tensor_type, *loop_output_type->mutable_tensor_type());
       }
     }
   }
@@ -2026,29 +2016,24 @@ static void LoopInferenceFunction_opset13(InferenceContext& ctx) {
       // if there's an existing type check it matches. otherwise propagate
       propagateElemTypeWithValidation(subgraph_output_type, loop_output_type);
 
-      if (is_loop_state_var) {
-        // shape may change across iterations so ignore.
-      } else {
-        // propagate shape
-        if (subgraph_output_type->tensor_type().has_shape()) {
-          // per iteration output. first dimension will be number of iterations
-          // but we don't know that value yet
-          TypeProto inferred_type(*subgraph_output_type);
-          auto* mutable_inferred_tensor_type = inferred_type.mutable_tensor_type();
-          auto* mutable_inferred_shape = mutable_inferred_tensor_type->mutable_shape();
+      // Body shapes need not match the initial state when the loop executes zero times.
+      if (!is_loop_state_var && subgraph_output_type->tensor_type().has_shape()) {
+        // per iteration output. first dimension will be number of iterations
+        TypeProto inferred_type(*subgraph_output_type);
+        auto* mutable_inferred_tensor_type = inferred_type.mutable_tensor_type();
+        auto* mutable_inferred_shape = mutable_inferred_tensor_type->mutable_shape();
 
-          mutable_inferred_shape->clear_dim();
+        mutable_inferred_shape->clear_dim();
 
-          // add empty dimension for number of iterations
-          mutable_inferred_shape->add_dim();
+        // trip_count is only an upper bound: the loop can exit early.
+        mutable_inferred_shape->add_dim();
 
-          // add dimensions from subgraph output shape
-          for (const auto& dim : subgraph_output_type->tensor_type().shape().dim()) {
-            (*mutable_inferred_shape->add_dim()) = dim;
-          }
-
-          mergeInShapeInfo(*mutable_inferred_tensor_type, *loop_output_type->mutable_tensor_type());
+        // add dimensions from subgraph output shape
+        for (const auto& dim : subgraph_output_type->tensor_type().shape().dim()) {
+          (*mutable_inferred_shape->add_dim()) = dim;
         }
+
+        mergeInShapeInfo(*mutable_inferred_tensor_type, *loop_output_type->mutable_tensor_type());
       }
     }
   }

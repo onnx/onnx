@@ -161,6 +161,9 @@ int64_t MathOpTwoIntegers(std::string_view op_type, int64_t a, int64_t b) {
     checked_op = checked_sub_overflow;
   } else if (op_type == "Mul") {
     checked_op = checked_mul_overflow;
+  } else if (op_type == "Div") {
+    // Truncating division (toward zero), consistent with ONNX Div for integers
+    return checkedDivide(a, b);
   } else {
     fail_shape_inference("Wrong op_type name for running propagation: ", op_type);
   }
