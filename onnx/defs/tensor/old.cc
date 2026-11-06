@@ -19,14 +19,6 @@
 
 namespace ONNX_NAMESPACE {
 
-static void IdentityDataPropagator(DataPropagationContext& ctx) {
-  const auto* input_data = ctx.getInputData(0);
-  if (input_data != nullptr) {
-    TensorShapeProto tsp(*input_data);
-    ctx.addOutputData(0, std::move(tsp));
-  }
-}
-
 ONNX_OPERATOR_SET_SCHEMA(
     Cast,
     25,

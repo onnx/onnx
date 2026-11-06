@@ -60,6 +60,10 @@ inline void PropagateShapeDataFromInputToOutput(DataPropagationContext& ctx, int
   }
 }
 
+inline void IdentityDataPropagator(DataPropagationContext& ctx) {
+  PropagateShapeDataFromInputToOutput(ctx, 0);
+}
+
 inline void GatherOp13DataPropagator(DataPropagationContext& ctx) {
   if (!axisIsZero(ctx, true)) {
     return;
