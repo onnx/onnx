@@ -54,6 +54,22 @@ class TestAutomaticDowngrade(automatic_conversion_test_base.TestAutomaticConvers
         mode = "strict_downgrade" if strict_check else "downgrade"
         self._test_op_conversion(op, *args, **kwargs, mode=mode)
 
+    def test_LogCumSumExp(self) -> None:
+        self._test_op_downgrade(
+            "LogCumSumExp", 29, [[2, 3]], [[2, 3]], attrs={"axis": -1}
+        )
+
+    def test_LogCumSumExp_downgrade_fails(self) -> None:
+        self._test_model_conversion_fails(
+            to_opset=28,
+            model="""
+                <ir_version: 13, opset_import: ["" : 29]>
+                g (float[2, 3] X) => (float[2, 3] Y) {
+                    Y = LogCumSumExp <axis = -1> (X)
+                }
+            """,
+        )
+
     @pytest.mark.parametrize(
         "op",
         [
