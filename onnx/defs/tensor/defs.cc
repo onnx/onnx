@@ -911,6 +911,11 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         })
         .PartialDataPropagationFunction([](DataPropagationContext& ctx) {
+          const auto* type = ctx.getInputType(0);
+          if (type == nullptr || !type->has_tensor_type() || !type->tensor_type().has_shape() ||
+              type->tensor_type().shape().dim_size() != 1) {
+            return;
+          }
           const auto input_data = ctx.getInputData(0);
           const auto starts = ctx.getInputData(1);
           const auto ends = ctx.getInputData(2);

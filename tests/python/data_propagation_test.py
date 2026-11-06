@@ -13,6 +13,36 @@ from onnx.helper import make_node, make_tensor, make_tensor_value_info
 
 
 class TestDataPropagation(TestShapeInferenceHelper):
+    def test_slice_multidimensional_records_do_not_publish_flat_slice(self) -> None:
+        graph = self._make_graph(
+            [],
+            [
+                make_node("Unsqueeze", ["values", "axes"], ["one_row"]),
+                make_node("Concat", ["one_row", "one_row"], ["matrix"], axis=0),
+                make_node(
+                    "Slice", ["matrix", "starts", "ends", "axes", "steps"], ["row"]
+                ),
+                make_node("Squeeze", ["row", "axes"], ["shape"]),
+                make_node("ConstantOfShape", ["shape"], ["y"]),
+            ],
+            [],
+            initializer=[
+                make_tensor("values", TensorProto.INT64, (2,), [4, 8]),
+                make_tensor("starts", TensorProto.INT64, (1,), [0]),
+                make_tensor("ends", TensorProto.INT64, (1,), [4]),
+                make_tensor("axes", TensorProto.INT64, (1,), [0]),
+                make_tensor("steps", TensorProto.INT64, (1,), [2]),
+            ],
+        )
+        inferred = self._inferred(graph, data_prop=True)
+        shape = next(
+            info.type.tensor_type.shape
+            for info in inferred.graph.value_info
+            if info.name == "y"
+        )
+        assert len(shape.dim) == 2
+        assert not any(dim.HasField("dim_value") for dim in shape.dim)
+
     @pytest.mark.parametrize("version", [13, 19, 21, 23, 24, 25])
     @pytest.mark.parametrize(
         ("input_shape", "count"),
