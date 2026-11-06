@@ -17,6 +17,38 @@ from onnx import helper
 
 
 class TestAutomaticDowngrade(automatic_conversion_test_base.TestAutomaticConversion):
+    @pytest.mark.parametrize("has_bias", [False, True])
+    def test_Gemm_29_to_28(self, has_bias) -> None:
+        self._test_op_downgrade(
+            "Gemm",
+            from_opset=28,
+            input_shapes=[[4, 5], [3, 4], [3]] if has_bias else [[4, 5], [3, 4]],
+            output_shapes=[[5, 3]],
+            attrs={"transA": 1, "transB": 1},
+        )
+
+    @pytest.mark.parametrize("shape", [[5], [2, 3, 5]])
+    def test_Gemm_29_to_28_non_matrix_fails(self, shape) -> None:
+        with pytest.raises(RuntimeError, match="known rank 2"):
+            self._test_op_downgrade(
+                "Gemm",
+                from_opset=28,
+                input_shapes=[shape, [5, 7]],
+                output_shapes=[[*shape[:-1], 7]],
+            )
+
+    def test_Gemm_29_to_28_unknown_rank_fails(self) -> None:
+        model = onnx.parser.parse_model("""
+            <ir_version: 14, opset_import: ["" : 29]>
+            g (float[] A, float[5, 7] B) => (float[] Y) {
+                Y = Gemm (A, B)
+            }
+        """)
+        model.graph.input[0].type.tensor_type.ClearField("shape")
+        model.graph.output[0].type.tensor_type.ClearField("shape")
+        with pytest.raises(RuntimeError, match="known rank 2"):
+            onnx.version_converter.convert_version(model, 28)
+
     def _test_op_downgrade(self, op: str, *args, **kwargs):
         strict_check = kwargs.pop("strict_check", False)
         mode = "strict_downgrade" if strict_check else "downgrade"

@@ -1185,6 +1185,85 @@ ONNX_OPERATOR_SET_SCHEMA(
 
 ONNX_OPERATOR_SET_SCHEMA(
     Gemm,
+    13,
+    OpSchema()
+        .SetDoc(GET_OP_DOC_STR(
+            std::string(kDoc_Gemm_ver13) + GenerateBroadcastingDocUni("tensor C", "tensor A * B") + "\n" +
+            GenerateOptionalArgumentsDoc()))
+        .Input(
+            0,
+            "A",
+            "Input tensor A. "
+            "The shape of A should be (M, K) if transA is 0, "
+            "or (K, M) if transA is non-zero.",
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::Differentiable)
+        .Input(
+            1,
+            "B",
+            "Input tensor B. "
+            "The shape of B should be (K, N) if transB is 0, "
+            "or (N, K) if transB is non-zero.",
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::Differentiable)
+        .Input(
+            2,
+            "C",
+            "Optional input tensor C. "
+            "If not specified, the computation is done as if C is a scalar 0. "
+            "The shape of C should be unidirectional broadcastable to (M, N).",
+            "T",
+            OpSchema::Optional,
+            true,
+            1,
+            OpSchema::Differentiable)
+        .Output(0, "Y", "Output tensor of shape (M, N).", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
+        .TypeConstraint(
+            "T",
+            {types::Float16,
+             types::Float,
+             types::Double,
+             types::UInt32,
+             types::UInt64,
+             types::Int32,
+             types::Int64,
+             types::BFloat16},
+            "Constrain input and output types to float/int tensors.")
+        .Attr("transA", "Whether A should be transposed", AttributeProto::INT, static_cast<int64_t>(0))
+        .Attr("transB", "Whether B should be transposed", AttributeProto::INT, static_cast<int64_t>(0))
+        .Attr("alpha", "Scalar multiplier for the product of input tensors A * B.", AttributeProto::FLOAT, 1.0f)
+        .Attr("beta", "Scalar multiplier for input tensor C.", AttributeProto::FLOAT, 1.0f)
+        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+          propagateElemTypeFromInputToOutput(ctx, 0, 0);
+          auto transAAttr = ctx.getAttribute("transA");
+          bool transA = transAAttr ? static_cast<int>(transAAttr->i()) != 0 : false;
+          auto transBAttr = ctx.getAttribute("transB");
+          bool transB = transBAttr ? static_cast<int>(transBAttr->i()) != 0 : false;
+          // Gemm computes Y = alpha * A' * B' + beta * C
+          // A' is A or A^T depending on transA; B' is B or B^T depending on transB
+          Dim M, N, K;
+          if (transA) {
+            ctx.unifyInputShape(0, {K, M});
+          } else {
+            ctx.unifyInputShape(0, {M, K});
+          }
+          if (transB) {
+            ctx.unifyInputShape(1, {N, K});
+          } else {
+            ctx.unifyInputShape(1, {K, N});
+          }
+          // Output shape is (M, N)
+          updateOutputShape(ctx, 0, {M, N});
+        }));
+
+ONNX_OPERATOR_SET_SCHEMA(
+    Gemm,
     11,
     OpSchema()
         .SetDoc(GET_OP_DOC_STR(
