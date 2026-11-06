@@ -3960,9 +3960,9 @@ ONNX_OPERATOR_SET_SCHEMA(
                   ctx,
                   0,
                   {input_shape.dim(0),
-                   input_shape.dim(1) * block_area,
-                   input_shape.dim(2) / blocksize,
-                   input_shape.dim(3) / blocksize});
+                   symbolicDim(ctx, input_shape.dim(1)) * block_area,
+                   symbolicDim(ctx, input_shape.dim(2)) / blocksize,
+                   symbolicDim(ctx, input_shape.dim(3)) / blocksize});
             } else {
               fail_shape_inference("Input tensor must be 4-dimensional");
             }
@@ -4009,9 +4009,9 @@ ONNX_OPERATOR_SET_SCHEMA(
                   ctx,
                   0,
                   {input_shape.dim(0),
-                   input_shape.dim(1) * block_area,
-                   input_shape.dim(2) / blocksize,
-                   input_shape.dim(3) / blocksize});
+                   symbolicDim(ctx, input_shape.dim(1)) * block_area,
+                   symbolicDim(ctx, input_shape.dim(2)) / blocksize,
+                   symbolicDim(ctx, input_shape.dim(3)) / blocksize});
             } else {
               fail_shape_inference("Input tensor must be 4-dimensional");
             }
@@ -4051,9 +4051,9 @@ ONNX_OPERATOR_SET_SCHEMA(
                   ctx,
                   0,
                   {input_shape.dim(0),
-                   input_shape.dim(1) / block_area,
-                   input_shape.dim(2) * blocksize,
-                   input_shape.dim(3) * blocksize});
+                   symbolicDim(ctx, input_shape.dim(1)) / block_area,
+                   symbolicDim(ctx, input_shape.dim(2)) * blocksize,
+                   symbolicDim(ctx, input_shape.dim(3)) * blocksize});
             } else {
               fail_shape_inference("Input tensor must be 4-dimensional");
             }
@@ -4105,9 +4105,9 @@ ONNX_OPERATOR_SET_SCHEMA(
                   ctx,
                   0,
                   {input_shape.dim(0),
-                   input_shape.dim(1) / block_area,
-                   input_shape.dim(2) * blocksize,
-                   input_shape.dim(3) * blocksize});
+                   symbolicDim(ctx, input_shape.dim(1)) / block_area,
+                   symbolicDim(ctx, input_shape.dim(2)) * blocksize,
+                   symbolicDim(ctx, input_shape.dim(3)) * blocksize});
             } else {
               fail_shape_inference("Input tensor must be 4-dimensional");
             }
@@ -4179,7 +4179,7 @@ ONNX_OPERATOR_SET_SCHEMA(
                 if (repeats_data[i] == 1) {
                   *output_dim = input_dim;
                 } else {
-                  *output_dim = input_dim * repeats_data[i];
+                  *output_dim = symbolicDim(ctx, input_dim) * repeats_data[i];
                 }
               }
             }
@@ -5590,9 +5590,9 @@ ONNX_OPERATOR_SET_SCHEMA(
                   ctx,
                   0,
                   {input_shape.dim(0),
-                   input_shape.dim(1) / block_area,
-                   input_shape.dim(2) * blocksize,
-                   input_shape.dim(3) * blocksize});
+                   symbolicDim(ctx, input_shape.dim(1)) / block_area,
+                   symbolicDim(ctx, input_shape.dim(2)) * blocksize,
+                   symbolicDim(ctx, input_shape.dim(3)) * blocksize});
             } else {
               fail_shape_inference("Input tensor must be 4-dimensional");
             }

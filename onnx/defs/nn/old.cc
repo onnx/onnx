@@ -276,7 +276,7 @@ static void convPoolShapeInference_opset19(
       continue;
     }
 
-    auto input_dim = input_shape.dim(2 + i);
+    auto input_dim = symbolicDim(ctx, input_shape.dim(2 + i));
 
     // For SAME auto_pad with symbolic dims, output = ceil(input / stride)
     if (is_same_pad && input_dim.has_dim_param()) {
@@ -556,7 +556,7 @@ static void maxUnpoolShapeInference_opset11(InferenceContext& ctx) {
       continue;
     }
 
-    auto input_dim = input_shape.dim(2 + i);
+    auto input_dim = symbolicDim(ctx, input_shape.dim(2 + i));
     auto output_dim = (input_dim - 1) * strides[i];
     if (input_dim.has_dim_value()) {
       output_dim = output_dim + kernel_shape[i] - pads[i] - pads[i + kernel_shape_size];
@@ -798,8 +798,7 @@ static void convTransposeShapeInference_opset11(InferenceContext& ctx) {
   auto* final_output_shape = ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
 
   *final_output_shape->add_dim() = input_shape.dim(0);
-  *final_output_shape->add_dim() = weight_shape.dim(1) * group; // channels should be the second dim of second input
-                                                                // multiply group.
+  *final_output_shape->add_dim() = symbolicDim(ctx, weight_shape.dim(1)) * group;
 
   int size_of_output = 0;
   if (output_shape_presented) {
@@ -1708,7 +1707,8 @@ ONNX_OPERATOR_SET_SCHEMA(
           if (axis > rank || axis < 0) {
             fail_shape_inference("Invalid value(", axis, ") for attribute 'axis'");
           }
-          updateOutputShape(ctx, 0, {multiplyDims(input_shape, 0, axis), multiplyDims(input_shape, axis, rank)});
+          updateOutputShape(
+              ctx, 0, {multiplyDims(ctx, input_shape, 0, axis), multiplyDims(ctx, input_shape, axis, rank)});
         }));
 
 ONNX_OPERATOR_SET_SCHEMA(
@@ -1756,7 +1756,8 @@ ONNX_OPERATOR_SET_SCHEMA(
           if (axis > rank || axis < 0) {
             fail_shape_inference("Invalid value(", axis, ") for attribute 'axis'");
           }
-          updateOutputShape(ctx, 0, {multiplyDims(input_shape, 0, axis), multiplyDims(input_shape, axis, rank)});
+          updateOutputShape(
+              ctx, 0, {multiplyDims(ctx, input_shape, 0, axis), multiplyDims(ctx, input_shape, axis, rank)});
         }));
 
 ONNX_OPERATOR_SET_SCHEMA(
@@ -1804,7 +1805,8 @@ ONNX_OPERATOR_SET_SCHEMA(
           if (axis > rank || axis < 0) {
             fail_shape_inference("Invalid value(", axis, ") for attribute 'axis'");
           }
-          updateOutputShape(ctx, 0, {multiplyDims(input_shape, 0, axis), multiplyDims(input_shape, axis, rank)});
+          updateOutputShape(
+              ctx, 0, {multiplyDims(ctx, input_shape, 0, axis), multiplyDims(ctx, input_shape, axis, rank)});
         }));
 
 ONNX_OPERATOR_SET_SCHEMA(
@@ -1849,7 +1851,8 @@ ONNX_OPERATOR_SET_SCHEMA(
           if (axis > rank || axis < 0) {
             fail_shape_inference("Invalid value(", axis, ") for attribute 'axis'");
           }
-          updateOutputShape(ctx, 0, {multiplyDims(input_shape, 0, axis), multiplyDims(input_shape, axis, rank)});
+          updateOutputShape(
+              ctx, 0, {multiplyDims(ctx, input_shape, 0, axis), multiplyDims(ctx, input_shape, axis, rank)});
         }));
 
 ONNX_OPERATOR_SET_SCHEMA(
@@ -1890,7 +1893,8 @@ ONNX_OPERATOR_SET_SCHEMA(
           if (axis > rank || axis < 0) {
             fail_shape_inference("Invalid value(", axis, ") for attribute 'axis'");
           }
-          updateOutputShape(ctx, 0, {multiplyDims(input_shape, 0, axis), multiplyDims(input_shape, axis, rank)});
+          updateOutputShape(
+              ctx, 0, {multiplyDims(ctx, input_shape, 0, axis), multiplyDims(ctx, input_shape, axis, rank)});
         }));
 
 ONNX_OPERATOR_SET_SCHEMA(
@@ -2139,7 +2143,7 @@ static void convPoolShapeInference_opset1_to_11(
       continue;
     }
 
-    auto input_dim = input_shape.dim(2 + i);
+    auto input_dim = symbolicDim(ctx, input_shape.dim(2 + i));
 
     // For SAME auto_pad with symbolic dims, output = ceil(input / stride)
     if (is_same_pad && input_dim.has_dim_param()) {
@@ -2719,7 +2723,7 @@ static void maxUnpoolShapeInference_opset9(InferenceContext& ctx) {
       continue;
     }
 
-    auto input_dim = input_shape.dim(2 + i);
+    auto input_dim = symbolicDim(ctx, input_shape.dim(2 + i));
     auto output_dim = (input_dim - 1) * strides[i];
     if (input_dim.has_dim_value()) {
       output_dim = output_dim + kernel_shape[i] - pads[i] - pads[i + kernel_shape_size];
@@ -3165,8 +3169,7 @@ static void convTransposeShapeInference_opset1(InferenceContext& ctx) {
   auto* final_output_shape = ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
 
   *final_output_shape->add_dim() = input_shape.dim(0);
-  *final_output_shape->add_dim() = weight_shape.dim(1) * group; // channels should be the second dim of second input
-                                                                // multiply group.
+  *final_output_shape->add_dim() = symbolicDim(ctx, weight_shape.dim(1)) * group;
 
   int size_of_output = 0;
   if (output_shape_presented) {
@@ -3903,7 +3906,8 @@ ONNX_OPERATOR_SET_SCHEMA(
           if (axis > rank || axis < 0) {
             fail_shape_inference("Invalid value(", axis, ") for attribute 'axis'");
           }
-          updateOutputShape(ctx, 0, {multiplyDims(input_shape, 0, axis), multiplyDims(input_shape, axis, rank)});
+          updateOutputShape(
+              ctx, 0, {multiplyDims(ctx, input_shape, 0, axis), multiplyDims(ctx, input_shape, axis, rank)});
         }));
 
 ONNX_OPERATOR_SET_SCHEMA(
@@ -3940,7 +3944,8 @@ ONNX_OPERATOR_SET_SCHEMA(
           if (axis > rank || axis < 0) {
             fail_shape_inference("Invalid value(", axis, ") for attribute 'axis'");
           }
-          updateOutputShape(ctx, 0, {multiplyDims(input_shape, 0, axis), multiplyDims(input_shape, axis, rank)});
+          updateOutputShape(
+              ctx, 0, {multiplyDims(ctx, input_shape, 0, axis), multiplyDims(ctx, input_shape, axis, rank)});
         }));
 
 ONNX_OPERATOR_SET_SCHEMA(

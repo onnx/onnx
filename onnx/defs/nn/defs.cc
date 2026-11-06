@@ -197,7 +197,7 @@ ONNX_API void convPoolShapeInference(
     if (!input_shape.dim(2 + i).has_dim_value() && !input_shape.dim(2 + i).has_dim_param()) {
       continue;
     }
-    auto input_dim = input_shape.dim(2 + i);
+    auto input_dim = symbolicDim(ctx, input_shape.dim(2 + i));
 
     // For SAME auto_pad with symbolic dims, output = ceil(input / stride)
     if (is_same_pad && input_dim.has_dim_param()) {
@@ -512,7 +512,7 @@ static void maxUnpoolShapeInference(InferenceContext& ctx) {
       continue;
     }
 
-    auto input_dim = input_shape.dim(2 + i);
+    auto input_dim = symbolicDim(ctx, input_shape.dim(2 + i));
     auto output_dim = (input_dim - 1) * strides[i];
     if (input_dim.has_dim_value()) {
       output_dim = output_dim + kernel_shape[i] - pads[i] - pads[i + kernel_shape_size];
@@ -1290,8 +1290,7 @@ ONNX_API void convTransposeShapeInference(InferenceContext& ctx) {
   auto* final_output_shape = ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
 
   *final_output_shape->add_dim() = input_shape.dim(0);
-  *final_output_shape->add_dim() = weight_shape.dim(1) * group; // channels should be the second dim of second input
-                                                                // multiply group.
+  *final_output_shape->add_dim() = symbolicDim(ctx, weight_shape.dim(1)) * group;
 
   int size_of_output = 0;
   if (output_shape_presented) {
@@ -2015,7 +2014,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             fail_shape_inference("Invalid value(", axis, ") for attribute 'axis'");
           }
           // TODO(ONNX): is the operation defined for input-rank < 2?
-          updateOutputShape(ctx, 0, {multiplyDims(input_shape, 0, axis), multiplyDims(input_shape, axis, rank)});
+          updateOutputShape(
+              ctx, 0, {multiplyDims(ctx, input_shape, 0, axis), multiplyDims(ctx, input_shape, axis, rank)});
         }));
 
 ONNX_OPERATOR_SET_SCHEMA(
@@ -2295,7 +2295,7 @@ static void col2imShapeInference(InferenceContext& ctx) {
   *final_image_shape->add_dim() = N;
 
   if (block_shape_size > 0) {
-    C = input_shape.dim(1) / block_shape_size; // Otherwise, C is unknown.
+    C = symbolicDim(ctx, input_shape.dim(1)) / block_shape_size; // Otherwise, C is unknown.
   }
   *final_image_shape->add_dim() = C;
 

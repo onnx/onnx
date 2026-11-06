@@ -593,7 +593,7 @@ class ShapeInferenceImplBase {
               "Container for generated shape data cannot be nullptr when enable_data_propagation option is set.");
         }
         DataPropagationContextImpl data_propagation_ctx(
-            n, value_types_by_name, input_data_by_name, *generated_shape_data_by_name);
+            n, value_types_by_name, input_data_by_name, *generated_shape_data_by_name, symbol_table);
         schema->GetDataPropagationFunction()(data_propagation_ctx);
         // Bridge propagated shape data to input_data_by_name so that downstream
         // shape inference functions (which use getInputData returning TensorProto*)
@@ -965,6 +965,9 @@ void InferShapes(
     const ShapeInferenceOptions& options,
     const std::unordered_map<std::string, const FunctionProto*>& model_local_functions) {
   SymbolTableImpl symbol_table;
+  for (const auto& entry : model_local_functions) {
+    symbol_table.addFromFunction(*entry.second);
+  }
   InferShapesImpl(
       g,
       std::unordered_map<std::string, TypeProto*>(0),
@@ -982,8 +985,12 @@ void InferShapes(
     DataValueMap* generated_shape_data_by_name) {
   auto opset_imports = GetOpsetImportsFromProto(m);
   SymbolTableImpl symbol_table;
+  if (generated_shape_data_by_name != nullptr) {
+    symbol_table.addFromData(*generated_shape_data_by_name);
+  }
   ModelLocalFunctionsMap model_local_functions_by_id;
   for (const auto& function_proto : m.functions()) {
+    symbol_table.addFromFunction(function_proto);
     model_local_functions_by_id.insert({GetFunctionIdentifier(function_proto), &function_proto});
   }
   checker::check_function_call_cycles(m);
@@ -1361,6 +1368,9 @@ void TraverseGraphsToAddExistingSymbols(const GraphProto& g, SymbolTable& symbol
     for (const auto& attr : n.attribute()) {
       if (attr.has_g()) {
         TraverseGraphsToAddExistingSymbols(attr.g(), symbol_table);
+      }
+      for (const auto& graph : attr.graphs()) {
+        TraverseGraphsToAddExistingSymbols(graph, symbol_table);
       }
     }
   }

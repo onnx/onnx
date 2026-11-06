@@ -18,6 +18,13 @@
 namespace ONNX_NAMESPACE {
 void resizeShapeInferenceHelper(
     const TensorShapeProto& input_shape,
+    const std::vector<float>& scales_data,
+    TensorShapeProto* output_shape) {
+  resizeShapeInferenceHelper(input_shape, scales_data, output_shape, nullptr);
+}
+
+void resizeShapeInferenceHelper(
+    const TensorShapeProto& input_shape,
     const std::vector<int64_t>& sizes_data,
     TensorShapeProto* output_shape) {
   if (!sizes_data.empty()) {
@@ -133,7 +140,8 @@ void gridSampleShapeInference(InferenceContext& ctx) {
 void resizeShapeInferenceHelper(
     const TensorShapeProto& input_shape,
     const std::vector<float>& scales_data,
-    TensorShapeProto* output_shape) {
+    TensorShapeProto* output_shape,
+    SymbolTable* symbols) {
   resizeShapeInferenceHelper_opset7_to_10(input_shape, scales_data, output_shape);
   for (int i = 0; i < input_shape.dim_size(); ++i) {
     auto* dim = output_shape->mutable_dim(i);
@@ -149,7 +157,7 @@ void resizeShapeInferenceHelper(
         if (int_scale == 1) {
           *dim = input_shape.dim(i);
         } else {
-          *dim = input_shape.dim(i) * int_scale;
+          *dim = SymbolicDim(symbols, input_shape.dim(i)) * int_scale;
         }
       }
     }
@@ -306,7 +314,7 @@ static void resizeShapeInferenceVersioned(InferenceContext& ctx, int opset_versi
           fail_shape_inference("Number of elements of input 'scales' must be same as rank of input 'X'");
         }
       }
-      resizeShapeInferenceHelper(input_shape, scales_data, output_shape);
+      resizeShapeInferenceHelper(input_shape, scales_data, output_shape, ctx.getSymbolTable());
     } else {
       fail_shape_inference("Input 'scales' must have float element type.");
     }
@@ -515,7 +523,7 @@ std::function<void(OpSchema&)> PadDocGenerator(
           } else if (total_pad == 0) {
             out_dim = input_dim;
           } else if (input_dim.has_dim_param()) {
-            out_dim = input_dim + total_pad;
+            out_dim = symbolicDim(ctx, input_dim) + total_pad;
           }
         }
       }

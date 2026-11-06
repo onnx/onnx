@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include <map>
 #include <memory>
 #include <string>
 #include <unordered_map>
@@ -34,6 +35,31 @@ class SymbolTableImpl : public SymbolTable {
     AddExistingSymbolicDims(g.input());
     AddExistingSymbolicDims(g.output());
     AddExistingSymbolicDims(g.value_info());
+    for (const auto& node : g.node()) {
+      for (const auto& attribute : node.attribute()) {
+        AddTypeAttributeSymbols(attribute);
+      }
+    }
+  }
+  void addFromData(const DataValueMap& data) {
+    for (const auto& entry : data) {
+      for (const auto& dim : entry.second.dim()) {
+        if (dim.has_dim_param()) {
+          existing_symbols.insert(dim.dim_param());
+        }
+      }
+    }
+  }
+  void addFromFunction(const FunctionProto& function) {
+    AddExistingSymbolicDims(function.value_info());
+    for (const auto& attribute : function.attribute_proto()) {
+      AddAttributeSymbols(attribute);
+    }
+    for (const auto& node : function.node()) {
+      for (const auto& attribute : node.attribute()) {
+        AddAttributeSymbols(attribute);
+      }
+    }
   }
   // Creates a new unique symbol with the given prefix and adds it to the SymbolTable
   // Returns the newly created symbol
@@ -46,7 +72,76 @@ class SymbolTableImpl : public SymbolTable {
     return newSymbol;
   }
 
+  std::string createExpression(const std::string& op, const Dim& left, const Dim& right) override {
+    if ((!left.has_dim_value() && !left.has_dim_param()) || (!right.has_dim_value() && !right.has_dim_param())) {
+      return "";
+    }
+    const auto render = [this](const Dim& dim) {
+      const auto generated = dim.has_dim_param() ? expression_text_.find(dim.dim_param()) : expression_text_.end();
+      if (generated != expression_text_.end()) {
+        return generated->second.size() <= 1024 ? generated->second : std::string{};
+      }
+      return dimToString(dim);
+    };
+    const auto lhs = render(left);
+    const auto rhs = render(right);
+    if (lhs.empty() || rhs.empty() || lhs.size() > 1024 || rhs.size() > 1024) {
+      return "";
+    }
+    const auto token = [](const Dim& dim) {
+      return dim.has_dim_value() ? "i" + std::to_string(dim.dim_value()) : "s" + dim.dim_param();
+    };
+    const std::vector<std::string> key{op, token(left), token(right)};
+    const auto previous = expressions_.find(key);
+    if (previous != expressions_.end()) {
+      return previous->second;
+    }
+    std::string text;
+    if (op == "Add") {
+      text = lhs + " + " + rhs;
+    } else if (op == "Sub") {
+      text = lhs + " - " + wrapIfCompound(rhs);
+    } else if (op == "Mul") {
+      text = wrapIfCompound(lhs) + "*" + wrapIfCompound(rhs);
+    } else if (op == "Div") {
+      text = wrapIfCompound(lhs) + "/" + wrapIfCompound(rhs);
+    } else {
+      return "";
+    }
+    const auto name = existing_symbols.insert(text).second ? text : createNew(text + "__");
+    expressions_.emplace(key, name);
+    expression_text_.emplace(name, std::move(text));
+    return name;
+  }
+
  private:
+  void AddTypeAttributeSymbols(const AttributeProto& attribute) {
+    if (attribute.has_tp()) {
+      AddExistingSymbolicDims(attribute.tp());
+    }
+    for (const auto& type : attribute.type_protos()) {
+      AddExistingSymbolicDims(type);
+    }
+  }
+  void AddAttributeSymbols(const AttributeProto& attribute) {
+    AddTypeAttributeSymbols(attribute);
+    if (attribute.has_g()) {
+      AddGraphSymbols(attribute.g());
+    }
+    for (const auto& graph : attribute.graphs()) {
+      AddGraphSymbols(graph);
+    }
+  }
+  void AddGraphSymbols(const GraphProto& graph) {
+    addFromGraph(graph);
+    for (const auto& node : graph.node()) {
+      for (const auto& attribute : node.attribute()) {
+        AddAttributeSymbols(attribute);
+      }
+    }
+  }
+  std::map<std::vector<std::string>, std::string> expressions_;
+  std::unordered_map<std::string, std::string> expression_text_;
   unsigned int index_{0};
   std::unordered_set<std::string> existing_symbols;
 
@@ -162,6 +257,9 @@ class GraphInferencerImpl : public GraphInferencer {
 };
 
 struct InferenceContextImpl : public InferenceContext {
+  SymbolTable* getSymbolTable() const override {
+    return graphInferenceContext_ != nullptr ? graphInferenceContext_->symbol_table : nullptr;
+  }
   InferenceContextImpl(
       NodeProto& n,
       const std::unordered_map<std::string, TypeProto*>& valueTypesByName,
@@ -371,8 +469,9 @@ struct DataPropagationContextImpl : public DataPropagationContext {
       NodeProto& n,
       const std::unordered_map<std::string, TypeProto*>& valueTypesByName,
       const std::unordered_map<std::string, const TensorProto*>& inputDataByName,
-      DataValueMap& generatedShapeData)
-      : generatedShapeData_(generatedShapeData) {
+      DataValueMap& generatedShapeData,
+      SymbolTable* symbols = nullptr)
+      : generatedShapeData_(generatedShapeData), symbols_(symbols) {
     size_t input_idx = 0;
 
     for (auto& attr : *n.mutable_attribute()) {
@@ -413,6 +512,10 @@ struct DataPropagationContextImpl : public DataPropagationContext {
     } else {
       return iter->second;
     }
+  }
+
+  SymbolTable* getSymbolTable() const override {
+    return symbols_;
   }
 
   size_t getNumInputs() const override {
@@ -570,6 +673,7 @@ struct DataPropagationContextImpl : public DataPropagationContext {
   std::vector<const TypeProto*> allInputTypes_;
   std::vector<TypeProto> allOutputTypes_;
   DataValueMap& generatedShapeData_;
+  SymbolTable* symbols_;
   std::unordered_map<std::string, const AttributeProto*> attributesByName_;
 };
 

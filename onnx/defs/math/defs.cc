@@ -48,28 +48,7 @@ static void MathOpDataPropagator(DataPropagationContext& ctx, std::string_view o
       tsp.mutable_dim()->Add()->set_dim_value(
           defs::math::utils::MathOpTwoIntegers(op_type, input_dim_0.dim_value(), input_dim_1.dim_value()));
     } else {
-      // Produce a symbolic expression when at least one operand is symbolic
-      auto s0 = dimToString(input_dim_0);
-      auto s1 = dimToString(input_dim_1);
-      if (!s0.empty() && !s1.empty()) {
-        std::string expr;
-        if (op_type == "Add") {
-          expr = s0 + " + " + s1;
-        } else if (op_type == "Sub") {
-          expr = s0 + " - " + wrapIfCompound(s1);
-        } else if (op_type == "Mul") {
-          expr = wrapIfCompound(s0) + "*" + wrapIfCompound(s1);
-        } else if (op_type == "Div") {
-          expr = wrapIfCompound(s0) + "/" + wrapIfCompound(s1);
-        } else {
-          // Unsupported op — leave dim empty
-          tsp.mutable_dim()->Add();
-          continue;
-        }
-        tsp.mutable_dim()->Add()->set_dim_param(expr);
-      } else {
-        tsp.mutable_dim()->Add();
-      }
+      *tsp.add_dim() = computeDimension(ctx.getSymbolTable(), std::string(op_type), input_dim_0, input_dim_1);
     }
   }
   ctx.addOutputData(0, std::move(tsp));

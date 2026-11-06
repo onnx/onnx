@@ -13,6 +13,46 @@ from onnx.helper import make_node, make_tensor, make_tensor_value_info
 
 
 class TestDataPropagation(TestShapeInferenceHelper):
+    @pytest.mark.parametrize(
+        ("operation", "spelling"),
+        [("Add", "N + 2"), ("Sub", "N - 2"), ("Mul", "N*2"), ("Div", "N/2")],
+    )
+    @pytest.mark.parametrize("reverse", [False, True])
+    def test_expression_names_share_shape_and_data_provenance(
+        self, operation: str, spelling: str, reverse: bool
+    ) -> None:
+        nodes = [
+            make_node("Shape", ["x"], ["shape"]),
+            make_node(operation, ["shape", "two"], ["computed"]),
+            make_node("ConstantOfShape", ["computed"], ["y"]),
+            make_node(operation, ["shape", "two"], ["again"]),
+            make_node("ConstantOfShape", ["again"], ["repeated"]),
+        ]
+        flat = make_node("Flatten", ["matrix"], ["flat"], axis=0)
+        if reverse:
+            nodes.insert(0, flat)
+        else:
+            nodes.append(flat)
+        graph = self._make_graph(
+            [
+                ("x", TensorProto.FLOAT, ("N",)),
+                ("matrix", TensorProto.FLOAT, ("N", 2)),
+                ("independent", TensorProto.FLOAT, (spelling,)),
+            ],
+            nodes,
+            [],
+            initializer=[make_tensor("two", TensorProto.INT64, (1,), [2])],
+        )
+        inferred = self._inferred(graph, data_prop=True)
+        shapes = {
+            info.name: info.type.tensor_type.shape for info in inferred.graph.value_info
+        }
+        name = shapes["y"].dim[0].dim_param
+        assert name and name != spelling
+        assert shapes["repeated"] == shapes["y"]
+        if operation == "Mul":
+            assert shapes["flat"].dim[1].dim_param == name
+
     @pytest.mark.parametrize("op_type", ["Identity", "Neg"])
     def test_large_nonconstant_integer_vector(self, op_type: str) -> None:
         graph = self._make_graph(
