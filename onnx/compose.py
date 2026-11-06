@@ -16,7 +16,9 @@ from onnx import (
 )
 
 if TYPE_CHECKING:
-    from collections.abc import MutableMapping
+    from collections.abc import MutableMapping, Sequence
+
+    from onnx import NodeProto
 
 
 def check_overlapping_names(
@@ -626,16 +628,24 @@ def add_prefix(
             new_f_name = prefix + f.name
             f_name_map[f.name] = new_f_name
             f.name = new_f_name
+
+        def _rename_function_references(nodes: Sequence[NodeProto]) -> None:
+            for n in nodes:
+                if n.op_type in f_name_map:
+                    n.op_type = f_name_map[n.op_type]
+                # Local functions can also be called from subgraphs
+                for attribute in n.attribute:
+                    if attribute.HasField("g"):
+                        _rename_function_references(attribute.g.node)
+                    for sub_g in attribute.graphs:
+                        _rename_function_references(sub_g.node)
+
         # Adjust references to local functions in other local function
         # definitions
         for f in model.functions:
-            for n in f.node:
-                if n.op_type in f_name_map:
-                    n.op_type = f_name_map[n.op_type]
+            _rename_function_references(f.node)
         # Adjust references to local functions in the graph
-        for n in model.graph.node:
-            if n.op_type in f_name_map:
-                n.op_type = f_name_map[n.op_type]
+        _rename_function_references(model.graph.node)
 
     return model
 
