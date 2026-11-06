@@ -2,7 +2,7 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
-// Adapter for Softmax amd LogSoftmax in default domain from version 12 to 13
+// Adapter for Softmax, LogSoftmax and Hardmax in default domain from version 12 to 13
 
 #pragma once
 
@@ -49,29 +49,16 @@ class Softmax_12_13 final : public Adapter {
       node->i_(kaxis, -1);
 
       // Insert Reshape node after softmax
-      const std::string original_output_name = node->output()->uniqueName();
-      const use_list original_uses(node->output()->uses());
-      node->output()->setUniqueName(original_output_name + "_intermediate");
       Node* reshape = graph->create(kReshape);
-      reshape->addInput(node->outputs()[0]);
-      reshape->addInput(shape->output());
-      reshape->output()->setUniqueName(original_output_name);
-      reshape->insertAfter(node);
-
-      // Fix outputs & wiring
       if (!node->output()->sizes().empty()) {
         reshape->output()->setSizes(node->output()->sizes());
       }
       reshape->output()->setElemType(node->output()->elemType());
+      reshape->insertAfter(node);
+      ReplaceValueKeepingName(*graph, node->output(), reshape->output());
+      reshape->addInput(node->output());
+      reshape->addInput(shape->output());
       node->output()->wipeSizes();
-      for (Use u : original_uses) {
-        u.user->replaceInputWith(node->output(), reshape->output());
-      }
-      for (size_t i = 0; i < graph->outputs().size(); i++) {
-        if (graph->outputs()[i]->uniqueName() == original_output_name) {
-          graph->return_node()->replaceInput(i, reshape->output());
-        }
-      }
     }
   }
 
