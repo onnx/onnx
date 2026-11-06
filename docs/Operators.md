@@ -62,7 +62,7 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#GRU">GRU</a>|<a href="Changelog.md#GRU-22">22</a>, <a href="Changelog.md#GRU-14">14</a>, <a href="Changelog.md#GRU-7">7</a>, <a href="Changelog.md#GRU-3">3</a>, <a href="Changelog.md#GRU-1">1</a>|
 |<a href="#Gather">Gather</a>|<a href="Changelog.md#Gather-13">13</a>, <a href="Changelog.md#Gather-11">11</a>, <a href="Changelog.md#Gather-1">1</a>|
 |<a href="#GatherElements">GatherElements</a>|<a href="Changelog.md#GatherElements-13">13</a>, <a href="Changelog.md#GatherElements-11">11</a>|
-|<a href="#GatherND">GatherND</a>|<a href="Changelog.md#GatherND-13">13</a>, <a href="Changelog.md#GatherND-12">12</a>, <a href="Changelog.md#GatherND-11">11</a>|
+|<a href="#GatherND">GatherND</a>|<a href="Changelog.md#GatherND-29">29</a>, <a href="Changelog.md#GatherND-13">13</a>, <a href="Changelog.md#GatherND-12">12</a>, <a href="Changelog.md#GatherND-11">11</a>|
 |<a href="#GlobalAveragePool">GlobalAveragePool</a>|<a href="Changelog.md#GlobalAveragePool-22">22</a>, <a href="Changelog.md#GlobalAveragePool-1">1</a>|
 |<a href="#GlobalLpPool">GlobalLpPool</a>|<a href="Changelog.md#GlobalLpPool-22">22</a>, <a href="Changelog.md#GlobalLpPool-2">2</a>, <a href="Changelog.md#GlobalLpPool-1">1</a>|
 |<a href="#GlobalMaxPool">GlobalMaxPool</a>|<a href="Changelog.md#GlobalMaxPool-22">22</a>, <a href="Changelog.md#GlobalMaxPool-1">1</a>|
@@ -129,7 +129,7 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#Scan">Scan</a>|<a href="Changelog.md#Scan-25">25</a>, <a href="Changelog.md#Scan-24">24</a>, <a href="Changelog.md#Scan-23">23</a>, <a href="Changelog.md#Scan-21">21</a>, <a href="Changelog.md#Scan-19">19</a>, <a href="Changelog.md#Scan-16">16</a>, <a href="Changelog.md#Scan-11">11</a>, <a href="Changelog.md#Scan-9">9</a>, <a href="Changelog.md#Scan-8">8</a>|
 |<a href="#Scatter">Scatter</a> (deprecated)|<a href="Changelog.md#Scatter-11">11</a>, <a href="Changelog.md#Scatter-9">9</a>|
 |<a href="#ScatterElements">ScatterElements</a>|<a href="Changelog.md#ScatterElements-18">18</a>, <a href="Changelog.md#ScatterElements-16">16</a>, <a href="Changelog.md#ScatterElements-13">13</a>, <a href="Changelog.md#ScatterElements-11">11</a>|
-|<a href="#ScatterND">ScatterND</a>|<a href="Changelog.md#ScatterND-18">18</a>, <a href="Changelog.md#ScatterND-16">16</a>, <a href="Changelog.md#ScatterND-13">13</a>, <a href="Changelog.md#ScatterND-11">11</a>|
+|<a href="#ScatterND">ScatterND</a>|<a href="Changelog.md#ScatterND-29">29</a>, <a href="Changelog.md#ScatterND-18">18</a>, <a href="Changelog.md#ScatterND-16">16</a>, <a href="Changelog.md#ScatterND-13">13</a>, <a href="Changelog.md#ScatterND-11">11</a>|
 |<a href="#SequenceAt">SequenceAt</a>|<a href="Changelog.md#SequenceAt-11">11</a>|
 |<a href="#SequenceConstruct">SequenceConstruct</a>|<a href="Changelog.md#SequenceConstruct-11">11</a>|
 |<a href="#SequenceEmpty">SequenceEmpty</a>|<a href="Changelog.md#SequenceEmpty-11">11</a>|
@@ -16303,11 +16303,12 @@ expect(
 
   2) The first `b` dimensions of the shape of `indices` tensor and `data` tensor must be equal.
 
-  3) b < min(q, r) is to be honored.
+  3) `batch_dims` must satisfy `0 <= b < min(q, r)`.
 
-  4) The `indices_shape[-1]` should have a value between 1 (inclusive) and rank `r-b` (inclusive)
+  4) `indices_shape[-1]` must be between 1 and `r-b`, inclusive.
 
-  5) All values in `indices` are expected to be within bounds [-s, s-1] along axis of size `s` (i.e.) `-data_shape[i] <= indices[...,i] <= data_shape[i] - 1`.
+  5) For each tuple component `i`, `0 <= i < indices_shape[-1]`, the index must satisfy
+     `-data_shape[b+i] <= indices[...,i] < data_shape[b+i]`.
      It is an error if any of the index values are out of bounds.
 
   The output is computed as follows:
@@ -16375,9 +16376,9 @@ expect(
 
 #### Version
 
-This version of the operator has been available since version 13 of the default ONNX operator set.
+This version of the operator has been available since version 29 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#GatherND-11">11</a>, <a href="Changelog.md#GatherND-12">12</a>
+Other versions of this operator: <a href="Changelog.md#GatherND-11">11</a>, <a href="Changelog.md#GatherND-12">12</a>, <a href="Changelog.md#GatherND-13">13</a>
 
 #### Attributes
 
@@ -16391,15 +16392,15 @@ Other versions of this operator: <a href="Changelog.md#GatherND-11">11</a>, <a h
 <dl>
 <dt><tt>data</tt> (differentiable) : T</dt>
 <dd>Tensor of rank r >= 1.</dd>
-<dt><tt>indices</tt> (non-differentiable) : tensor(int64)</dt>
-<dd>Tensor of rank q >= 1. All index values are expected to be within bounds [-s, s-1] along axis of size s. It is an error if any of the index values are out of bounds.</dd>
+<dt><tt>indices</tt> (non-differentiable) : Tind</dt>
+<dd>Tensor of rank q >= 1. Each index must be in [-s, s-1], where s is the size of the corresponding data axis after the batch dimensions. An out-of-bounds index is an error.</dd>
 </dl>
 
 #### Outputs
 
 <dl>
 <dt><tt>output</tt> (differentiable) : T</dt>
-<dd>Tensor of rank q + r - indices_shape[-1] - 1.</dd>
+<dd>Tensor of rank q + r - indices_shape[-1] - 1 - batch_dims.</dd>
 </dl>
 
 #### Type Constraints
@@ -16407,6 +16408,8 @@ Other versions of this operator: <a href="Changelog.md#GatherND-11">11</a>, <a h
 <dl>
 <dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
 <dd>Constrain input and output types to any tensor type.</dd>
+<dt><tt>Tind</tt> : tensor(int32), tensor(int64)</dt>
+<dd>Constrain indices to int32 or int64 tensors.</dd>
 </dl>
 
 
@@ -16485,6 +16488,27 @@ expect(
     inputs=[data, indices],
     outputs=[output],
     name="test_gathernd_example_int32_batch_dim1",
+)
+```
+
+</details>
+
+
+<details>
+<summary>selected_kv_int32_indices</summary>
+
+```python
+node = onnx.helper.make_node(
+    "GatherND", ["cache", "positions"], ["selected"], batch_dims=1
+)
+cache = np.arange(24, dtype=np.float32).reshape(2, 4, 3)
+positions = np.array([[[[0], [2]]], [[[1], [-1]]]], dtype=np.int32)
+selected = np.stack([cache[0, [[0, 2]]], cache[1, [[1, 3]]]])
+expect(
+    node,
+    inputs=[cache, positions],
+    outputs=[selected],
+    name="test_gathernd_selected_kv_int32_indices",
 )
 ```
 
@@ -37385,8 +37409,9 @@ expect(
   `indices` is treated as a (q-1)-dimensional tensor of k-tuples, where each k-tuple is a partial-index into `data`.
   Hence, k can be a value at most the rank of `data`. When k equals rank(data), each update entry specifies an
   update to a single element of the tensor. When k is less than rank(data) each update entry specifies an
-  update to a slice of the tensor. Index values are allowed to be negative, as per the usual
-  convention for counting backwards from the end, but are expected in the valid range.
+  update to a slice of the tensor. For each tuple component `i`, `0 <= i < k`, the index must satisfy
+  `-data.shape[i] <= indices[...,i] < data.shape[i]`. Negative indices count backwards from the end
+  of the corresponding dimension. An out-of-bounds index is an error.
 
   `updates` is treated as a (q-1)-dimensional tensor of replacement-slice-values. Thus, the
   first (q-1) dimensions of updates.shape must match the first (q-1) dimensions of indices.shape.
@@ -37406,8 +37431,6 @@ expect(
   ```
 
   The order of iteration in the above loop is not specified.
-  In particular, indices should not have duplicate entries: that is, if idx1 != idx2, then indices[idx1] != indices[idx2].
-  This ensures that the output value does not depend on the iteration order.
 
   `reduction` allows specification of an optional reduction operation, which is applied to all values in `updates`
   tensor into `output` at the specified `indices`.
@@ -37453,15 +37476,15 @@ expect(
 
 #### Version
 
-This version of the operator has been available since version 18 of the default ONNX operator set.
+This version of the operator has been available since version 29 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#ScatterND-11">11</a>, <a href="Changelog.md#ScatterND-13">13</a>, <a href="Changelog.md#ScatterND-16">16</a>
+Other versions of this operator: <a href="Changelog.md#ScatterND-11">11</a>, <a href="Changelog.md#ScatterND-13">13</a>, <a href="Changelog.md#ScatterND-16">16</a>, <a href="Changelog.md#ScatterND-18">18</a>
 
 #### Attributes
 
 <dl>
 <dt><tt>reduction</tt> : string (default is none)</dt>
-<dd>Type of reduction to apply: none (default), add, mul, max, min. 'none': no reduction applied. 'add':  reduction using the addition operation. 'mul':  reduction using the addition operation. 'max': reduction using the maximum operation.'min': reduction using the minimum operation.</dd>
+<dd>Type of reduction to apply: none (default), add, mul, max, min. 'none': no reduction applied. 'add':  reduction using the addition operation. 'mul':  reduction using the multiplication operation. 'max': reduction using the maximum operation. 'min': reduction using the minimum operation.</dd>
 </dl>
 
 #### Inputs
@@ -37469,7 +37492,7 @@ Other versions of this operator: <a href="Changelog.md#ScatterND-11">11</a>, <a 
 <dl>
 <dt><tt>data</tt> (differentiable) : T</dt>
 <dd>Tensor of rank r >= 1.</dd>
-<dt><tt>indices</tt> (non-differentiable) : tensor(int64)</dt>
+<dt><tt>indices</tt> (non-differentiable) : Tind</dt>
 <dd>Tensor of rank q >= 1.</dd>
 <dt><tt>updates</tt> (differentiable) : T</dt>
 <dd>Tensor of rank q + r - indices_shape[-1] - 1.</dd>
@@ -37487,10 +37510,37 @@ Other versions of this operator: <a href="Changelog.md#ScatterND-11">11</a>, <a 
 <dl>
 <dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
 <dd>Constrain input and output types to any tensor type.</dd>
+<dt><tt>Tind</tt> : tensor(int32), tensor(int64)</dt>
+<dd>Constrain indices to int32 or int64 tensors.</dd>
 </dl>
 
 
 #### Examples
+
+<details>
+<summary>batched_token_add_int32_indices</summary>
+
+```python
+node = onnx.helper.make_node(
+    "ScatterND", ["data", "indices", "updates"], ["output"], reduction="add"
+)
+data = np.zeros((2, 3, 2), dtype=np.float32)
+indices = np.array([[0, 1], [1, 0], [0, 1], [1, -1]], dtype=np.int32)
+updates = np.array([[1, 2], [3, 4], [5, 6], [7, 8]], dtype=np.float32)
+output = np.array(
+    [[[0, 0], [6, 8], [0, 0]], [[3, 4], [0, 0], [7, 8]]],
+    dtype=np.float32,
+)
+expect(
+    node,
+    inputs=[data, indices, updates],
+    outputs=[output],
+    name="test_scatternd_batched_token_add_int32_indices",
+)
+```
+
+</details>
+
 
 <details>
 <summary>scatternd</summary>
