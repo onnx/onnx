@@ -8814,6 +8814,176 @@ class TestShapeInference(TestShapeInferenceHelper):
                 opset_imports=opset_imports,
             )
 
+    @pytest.mark.parametrize(
+        ("op_type", "domain", "version", "attributes", "expected_elem_type"),
+        [
+            (
+                "DictVectorizer",
+                ONNX_ML_DOMAIN,
+                1,
+                {"string_vocabulary": ["a"]},
+                TensorProto.UNDEFINED,
+            ),
+            ("LabelEncoder", ONNX_ML_DOMAIN, 1, {}, TensorProto.UNDEFINED),
+            (
+                "LabelEncoder",
+                ONNX_ML_DOMAIN,
+                2,
+                {"keys_strings": ["a"], "values_int64s": [1]},
+                TensorProto.INT64,
+            ),
+            (
+                "LabelEncoder",
+                ONNX_ML_DOMAIN,
+                4,
+                {"keys_strings": ["a"], "values_int64s": [1]},
+                TensorProto.INT64,
+            ),
+            (
+                "TreeEnsemble",
+                ONNX_ML_DOMAIN,
+                5,
+                {
+                    "nodes_splits": make_tensor(
+                        "nodes_splits", TensorProto.FLOAT, (1,), [0.5]
+                    ),
+                    "nodes_featureids": [0],
+                    "nodes_modes": make_tensor(
+                        "nodes_modes", TensorProto.UINT8, (1,), [0]
+                    ),
+                    "nodes_truenodeids": [0],
+                    "nodes_falsenodeids": [0],
+                    "nodes_trueleafs": [1],
+                    "nodes_falseleafs": [1],
+                    "leaf_targetids": [0],
+                    "leaf_weights": make_tensor(
+                        "leaf_weights", TensorProto.FLOAT, (1,), [1.0]
+                    ),
+                    "tree_roots": [0],
+                    "n_targets": 1,
+                },
+                TensorProto.FLOAT,
+            ),
+            (
+                "RegexFullMatch",
+                ONNX_DOMAIN,
+                20,
+                {"pattern": "a.*"},
+                TensorProto.BOOL,
+            ),
+        ],
+    )
+    def test_input_of_unknown_type(
+        self,
+        op_type: str,
+        domain: str,
+        version: int,
+        attributes: dict[str, Any],
+        expected_elem_type: int,
+    ) -> None:
+        if domain == ONNX_ML_DOMAIN and not ONNX_ML:
+            pytest.skip("ONNX_ML required to test ai.onnx.ml operators")
+        # The input is produced by a node from an unregistered domain, so its type
+        # is unknown when the operator's inference function runs.
+        graph = make_graph(
+            [
+                make_node("Custom", ["x"], ["t"], domain="custom.domain"),
+                make_node(op_type, ["t"], ["y"], domain=domain, **attributes),
+            ],
+            "input_of_unknown_type",
+            [make_tensor_value_info("x", TensorProto.FLOAT, (2, 3))],
+            [],
+        )
+        opset_imports = [
+            make_opsetid(ONNX_DOMAIN, version if domain == ONNX_DOMAIN else 21),
+            make_opsetid("custom.domain", 1),
+        ]
+        if domain == ONNX_ML_DOMAIN:
+            opset_imports.append(make_opsetid(ONNX_ML_DOMAIN, version))
+        model = make_model(graph, opset_imports=opset_imports)
+
+        inferred = onnx.shape_inference.infer_shapes(model)
+
+        value_infos = {vi.name: vi for vi in inferred.graph.value_info}
+        elem_type = (
+            value_infos["y"].type.tensor_type.elem_type
+            if "y" in value_infos
+            else TensorProto.UNDEFINED
+        )
+        assert elem_type == expected_elem_type
+
+    @pytest.mark.parametrize(
+        (
+            "op_type",
+            "domain",
+            "version",
+            "input_elem_type",
+            "attributes",
+            "expected_elem_type",
+        ),
+        [
+            (
+                "LabelEncoder",
+                ONNX_ML_DOMAIN,
+                2,
+                TensorProto.STRING,
+                {"keys_strings": ["a"], "values_int64s": [1]},
+                TensorProto.INT64,
+            ),
+            (
+                "LabelEncoder",
+                ONNX_ML_DOMAIN,
+                4,
+                TensorProto.STRING,
+                {"keys_strings": ["a"], "values_int64s": [1]},
+                TensorProto.INT64,
+            ),
+            (
+                "RegexFullMatch",
+                ONNX_DOMAIN,
+                20,
+                TensorProto.STRING,
+                {"pattern": "a.*"},
+                TensorProto.BOOL,
+            ),
+        ],
+    )
+    def test_typed_input_without_shape(
+        self,
+        op_type: str,
+        domain: str,
+        version: int,
+        input_elem_type: int,
+        attributes: dict[str, Any],
+        expected_elem_type: int,
+    ) -> None:
+        if domain == ONNX_ML_DOMAIN and not ONNX_ML:
+            pytest.skip("ONNX_ML required to test ai.onnx.ml operators")
+        # The element type is known and the shape is not, which is the path
+        # guarded by hasInputShape. Inference should still set the output
+        # element type and leave the output shape unset.
+        typed_input = make_tensor_value_info("x", input_elem_type, None)
+        typed_input.type.tensor_type.ClearField("shape")
+        graph = make_graph(
+            [make_node(op_type, ["x"], ["y"], domain=domain, **attributes)],
+            "typed_input_without_shape",
+            [typed_input],
+            [],
+        )
+        opset_imports = [
+            make_opsetid(ONNX_DOMAIN, version if domain == ONNX_DOMAIN else 21),
+        ]
+        if domain == ONNX_ML_DOMAIN:
+            opset_imports.append(make_opsetid(ONNX_ML_DOMAIN, version))
+        model = make_model(graph, opset_imports=opset_imports)
+
+        inferred = onnx.shape_inference.infer_shapes(model)
+
+        value_infos = {vi.name: vi for vi in inferred.graph.value_info}
+        tensor_type = value_infos["y"].type.tensor_type
+        assert tensor_type.elem_type == expected_elem_type
+        assert not tensor_type.HasField("shape")
+
     def make_sparse(
         self,
         shape: Sequence[int],
