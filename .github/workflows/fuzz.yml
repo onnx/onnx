@@ -35,6 +35,14 @@ on:
 permissions:
   contents: read
 
+env:
+  # Mirrors main.yml's sanitizer job. Leak detection is off because CPython
+  # intentionally leaks at exit; container-overflow is off because libstdc++
+  # itself is not instrumented.
+  ASAN_OPTIONS: detect_leaks=0:symbolize=1:detect_stack_use_after_return=true:strict_init_order=true:detect_odr_violation=1:detect_container_overflow=0:check_initialization_order=true:fast_unwind_on_malloc=1:verify_asan_link_order=0:alloc_dealloc_mismatch=1:abort_on_error=1
+  # halt_on_error turns UBSan reports into crashes that libFuzzer records.
+  UBSAN_OPTIONS: print_stacktrace=1:halt_on_error=1:abort_on_error=1
+
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
@@ -47,29 +55,37 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          submodules: recursive
           persist-credentials: false
 
       - name: Set up Python
-        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
         with:
           python-version: '3.12'
+
+      - name: Install atheris
+        run: pip install atheris
 
       - name: Build and install ONNX
         run: pip install -e ".[reference]" -v
         env:
           ONNX_ML: 1
+          # ONNX_USE_ASAN enables both ASan and UBSan; debug info keeps the
+          # sanitizer stack traces symbolized.
+          CMAKE_ARGS: -DONNX_USE_ASAN=ON
+          SKBUILD_CMAKE_BUILD_TYPE: RelWithDebInfo
 
-      - name: Install atheris
-        run: pip install atheris
+      - name: Setup ASAN LD_PRELOAD
+        run: |
+          echo "LD_PRELOAD=$(/usr/bin/c++ -print-file-name=libasan.so):$(/usr/bin/c++ -print-file-name=libstdc++.so)" >> "$GITHUB_ENV"
 
       - name: Generate seed corpora
         run: |
-          mkdir -p corpus
+          mkdir -p corpus crashes/{checker,model_loader,parser,shape_inference,version_converter,compose,external_data}
           python onnx/fuzz/make_seed_corpus.py \
             corpus/version_converter.zip corpus/parser.zip \
-            corpus/checker.zip corpus/shape_inference.zip corpus/compose.zip
-          for name in version_converter parser checker shape_inference compose; do
+            corpus/checker.zip corpus/shape_inference.zip corpus/compose.zip \
+            corpus/external_data.zip
+          for name in version_converter parser checker shape_inference compose external_data; do
             mkdir -p "corpus/$name"
             python -m zipfile -e "corpus/$name.zip" "corpus/$name/"
           done
@@ -88,42 +104,57 @@ jobs:
           fi
 
       - name: Run fuzz_checker.py
-        run: python onnx/fuzz/fuzz_checker.py -max_total_time="$FUZZ_SECONDS" -timeout=20 corpus/checker
+        run: python onnx/fuzz/fuzz_checker.py -max_total_time="$FUZZ_SECONDS" -timeout=20 -artifact_prefix=crashes/checker/ corpus/checker
         env:
           FUZZ_SECONDS: ${{ steps.duration.outputs.seconds }}
 
       - name: Run fuzz_model_loader.py
-        run: python onnx/fuzz/fuzz_model_loader.py -max_total_time="$FUZZ_SECONDS" -timeout=20 corpus/model_loader
+        run: python onnx/fuzz/fuzz_model_loader.py -max_total_time="$FUZZ_SECONDS" -timeout=20 -artifact_prefix=crashes/model_loader/ corpus/model_loader
         env:
           FUZZ_SECONDS: ${{ steps.duration.outputs.seconds }}
 
       - name: Run fuzz_parser.py
-        run: python onnx/fuzz/fuzz_parser.py -max_total_time="$FUZZ_SECONDS" -timeout=20 corpus/parser
+        run: python onnx/fuzz/fuzz_parser.py -max_total_time="$FUZZ_SECONDS" -timeout=20 -artifact_prefix=crashes/parser/ corpus/parser
         env:
           FUZZ_SECONDS: ${{ steps.duration.outputs.seconds }}
 
       - name: Run fuzz_shape_inference.py
-        run: python onnx/fuzz/fuzz_shape_inference.py -max_total_time="$FUZZ_SECONDS" -timeout=20 corpus/shape_inference
+        run: python onnx/fuzz/fuzz_shape_inference.py -max_total_time="$FUZZ_SECONDS" -timeout=20 -artifact_prefix=crashes/shape_inference/ corpus/shape_inference
         env:
           FUZZ_SECONDS: ${{ steps.duration.outputs.seconds }}
 
       - name: Run fuzz_version_converter.py
-        run: python onnx/fuzz/fuzz_version_converter.py -max_total_time="$FUZZ_SECONDS" -timeout=20 corpus/version_converter
+        run: python onnx/fuzz/fuzz_version_converter.py -max_total_time="$FUZZ_SECONDS" -timeout=20 -artifact_prefix=crashes/version_converter/ corpus/version_converter
         env:
           FUZZ_SECONDS: ${{ steps.duration.outputs.seconds }}
 
       - name: Run fuzz_compose.py
-        run: python onnx/fuzz/fuzz_compose.py -max_total_time="$FUZZ_SECONDS" -timeout=20 corpus/compose
+        run: python onnx/fuzz/fuzz_compose.py -max_total_time="$FUZZ_SECONDS" -timeout=20 -artifact_prefix=crashes/compose/ corpus/compose
         env:
           FUZZ_SECONDS: ${{ steps.duration.outputs.seconds }}
 
+      - name: Run fuzz_external_data.py
+        run: python onnx/fuzz/fuzz_external_data.py -max_total_time="$FUZZ_SECONDS" -timeout=20 -artifact_prefix=crashes/external_data/ corpus/external_data
+        env:
+          FUZZ_SECONDS: ${{ steps.duration.outputs.seconds }}
+
+      - name: Print backtraces for crashes
+        if: failure()
+        run: |
+          for crash in crashes/*/*; do
+            [ -f "$crash" ] || continue
+            harness="onnx/fuzz/fuzz_$(basename "$(dirname "$crash")").py"
+            echo "::group::Backtrace for $crash ($harness)"
+            # The sanitizer report gives the native stack; faulthandler adds
+            # the Python frames when the process aborts.
+            python -X faulthandler "$harness" "$crash" || true
+            echo "::endgroup::"
+          done
+
       - name: Upload crash artifacts
         if: failure()
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: fuzz-crashes
-          path: |
-            crash-*
-            timeout-*
-            oom-*
+          path: crashes/
           if-no-files-found: ignore

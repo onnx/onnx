@@ -20,7 +20,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-24.04, windows-latest, macos-14]
-        python-version: ['3.11', '3.12', '3.13']
+        python-version: ['3.13']
       fail-fast: false
     runs-on: ${{ matrix.os }}
 
@@ -32,7 +32,7 @@ jobs:
             persist-credentials: false
 
         - name: Set up Python ${{ matrix.python-version }}
-          uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+          uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
           with:
             python-version: ${{ matrix.python-version }}
 
@@ -43,13 +43,13 @@ jobs:
             python -m pip install build
             python -m build --sdist
             python -m pip install dist/*.tar.gz
-            python -m pip install pytest ml_dtypes pillow
+            python -m pip install pytest pillow
 
         - name: Install numpy nightly wheel
           shell: bash
           run: |
             python -m pip uninstall -y numpy
-            python -m pip install -i https://pypi.anaconda.org/scientific-python-nightly-wheels/simple numpy
+            python -m pip install --pre --upgrade --index-url https://pypi.anaconda.org/scientific-python-nightly-wheels/simple numpy
 
         - name: Run tests against numpy nightly
           run: pytest

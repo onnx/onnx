@@ -17,6 +17,38 @@ from onnx import helper
 
 
 class TestAutomaticDowngrade(automatic_conversion_test_base.TestAutomaticConversion):
+    @pytest.mark.parametrize("has_bias", [False, True])
+    def test_Gemm_29_to_28(self, has_bias) -> None:
+        self._test_op_downgrade(
+            "Gemm",
+            from_opset=28,
+            input_shapes=[[4, 5], [3, 4], [3]] if has_bias else [[4, 5], [3, 4]],
+            output_shapes=[[5, 3]],
+            attrs={"transA": 1, "transB": 1},
+        )
+
+    @pytest.mark.parametrize("shape", [[5], [2, 3, 5]])
+    def test_Gemm_29_to_28_non_matrix_fails(self, shape) -> None:
+        with pytest.raises(RuntimeError, match="known rank 2"):
+            self._test_op_downgrade(
+                "Gemm",
+                from_opset=28,
+                input_shapes=[shape, [5, 7]],
+                output_shapes=[[*shape[:-1], 7]],
+            )
+
+    def test_Gemm_29_to_28_unknown_rank_fails(self) -> None:
+        model = onnx.parser.parse_model("""
+            <ir_version: 14, opset_import: ["" : 29]>
+            g (float[] A, float[5, 7] B) => (float[] Y) {
+                Y = Gemm (A, B)
+            }
+        """)
+        model.graph.input[0].type.tensor_type.ClearField("shape")
+        model.graph.output[0].type.tensor_type.ClearField("shape")
+        with pytest.raises(RuntimeError, match="known rank 2"):
+            onnx.version_converter.convert_version(model, 28)
+
     def _test_op_downgrade(self, op: str, *args, **kwargs):
         strict_check = kwargs.pop("strict_check", False)
         mode = "strict_downgrade" if strict_check else "downgrade"
@@ -43,14 +75,20 @@ class TestAutomaticDowngrade(automatic_conversion_test_base.TestAutomaticConvers
         axes = helper.make_tensor(
             "b", onnx.TensorProto.INT64, dims=[3], vals=np.array([0, 1, 2])
         )
-        self._test_op_downgrade(
+        # Axes must be constant to become an attribute. Listing "b" as a graph
+        # input would make this initializer an overridable default instead.
+        graph = helper.make_graph(
+            [helper.make_node(op, ["a", "b"], ["c"])],
             op,
-            from_opset=13,
-            input_shapes=[[3, 4, 5], [3]],
-            output_shapes=[[1, 1, 1]],
-            input_types=[onnx.TensorProto.FLOAT, onnx.TensorProto.INT64],
-            initializer=[axes],
+            [helper.make_tensor_value_info("a", onnx.TensorProto.FLOAT, [3, 4, 5])],
+            [helper.make_tensor_value_info("c", onnx.TensorProto.FLOAT, [1, 1, 1])],
+            [axes],
         )
+        model = helper.make_model(
+            graph,
+            opset_imports=[helper.make_opsetid("", onnx.defs.onnx_opset_version())],
+        )
+        self._test_model_conversion(13, model)
 
     def test_constant_of_shape_20_to_19(self) -> None:
         self._test_model_conversion(
@@ -279,6 +317,22 @@ class TestAutomaticDowngrade(automatic_conversion_test_base.TestAutomaticConvers
                 => (float[2, 4, 64] output, float[2, 4, 16, 16] present_state)
             {
                 output, present_state = LinearAttention <q_num_heads = 4, kv_num_heads = 4, update_rule = "linear"> (Q, K, V)
+            }
+        """,
+        )
+
+    def test_GroupedMatMul_downgrade_fails(self) -> None:
+        self._test_model_conversion_fails(
+            to_opset=28,
+            model="""
+            <ir_version: 13, opset_import: [ "" : 29]>
+            grouped_matmul (
+                float[4, 3] input,
+                float[2, 3, 5] weights,
+                int64[4, 2] group_indices
+            ) => (float[4, 2, 5] output)
+            {
+                output = GroupedMatMul (input, weights, group_indices)
             }
         """,
         )

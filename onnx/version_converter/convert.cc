@@ -116,7 +116,10 @@ void DefaultVersionConverter::convert_graph(
             std::cerr << "Applying adapter" << '\n';
           }
           // adapt should handle replacing node in graph
+          // An adapter may destroy the original node and return its replacement.
+          const auto metadata_props = cur_op->metadataProps();
           cur_op = op_adapter.adapt(g, cur_op);
+          cur_op->setMetadataProps(metadata_props);
           it = graph_node_list_iterator(cur_op, kNextDirection);
         }
         // Recursively convert any subgraph attributes
@@ -140,7 +143,11 @@ ModelProto DefaultVersionConverter::convert_version(
     const OpSetID& target_version) const {
   const std::string& initial_domain = initial_version.domain();
   const std::string& target_domain = target_version.domain();
-  assertDefaultDomain(initial_domain, target_domain);
+  ONNX_ASSERTM(
+      (initial_domain.empty() || initial_domain == "ai.onnx") && (target_domain.empty() || target_domain == "ai.onnx"),
+      "Warning: default onnx version converter can only convert "
+      " between default domain opset versions ('' or 'ai.onnx')\n")
+  ONNX_ASSERTM(initial_domain == target_domain, "initial_version and target_version must have the same domains")
 
   for (auto it = mp_in.opset_import().begin(); it != mp_in.opset_import().end(); ++it) {
     if (it->domain() == initial_version.domain()) {
