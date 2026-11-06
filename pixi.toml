@@ -108,6 +108,11 @@ pytest-xdist = ">=3.6.1"
 zizmor = ">=1.24.1,<2,!=1.29.0"  # 1.29.0 has a regression for prek builtins, which is fixed in the next release
 onnxruntime = "*"
 
+# Workaround for https://github.com/conda-forge/compilers-feedstock/issues/84;
+# remove once the `gcc` package depends on `binutils` (conda-forge/ctng-compilers-feedstock#236).
+[feature.dev.target.linux.dependencies]
+binutils = "*"
+
 [feature.reference.dependencies]
 pillow = ">=12.2.0"
 
