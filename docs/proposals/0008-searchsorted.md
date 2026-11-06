@@ -3,7 +3,7 @@ Copyright (c) ONNX Project Contributors
 -->
 
 <!--- SPDX-License-Identifier: Apache-2.0 -->
-- Feature Name: Add Searchsorted operator to `ai.onnx`
+- Feature Name: Add SearchSorted operator to `ai.onnx`
 - Start Date: 2026-04-02
 - RFC PR: [onnx/onnx#8265](https://github.com/onnx/onnx/pull/7646)
 - Status: under discussion
@@ -11,17 +11,17 @@ Copyright (c) ONNX Project Contributors
   - cbourjau
 
 
-## Add a `Searchsorted` operator to the ai.onnx domain
+## Add a `SearchSorted` operator to the ai.onnx domain
 
-This RFC proposes adding the `Searchsorted` operator to the ai.onnx domain.
-Given two tensors `x1` and `x2`, `Searchsorted` finds the indices into `x1` such that, if the corresponding elements in `x2` were inserted before the indices, the order of `x1`, when sorted in ascending order, would be preserved.
+This RFC proposes adding the `SearchSorted` operator to the ai.onnx domain.
+Given two tensors `x1` and `x2`, `SearchSorted` finds the indices into `x1` such that, if the corresponding elements in `x2` were inserted before the indices, the order of `x1`, when sorted in ascending order, would be preserved.
 The proposed semantics are identical to the `searchsorted` function defined in the [array-API](https://data-apis.org/array-api/draft/API_specification/generated/array_api.searchsorted.html#searchsorted).
 
 ## Motivation
 
 An operation of this kind is common in tensor libraries (see [Prior Art section](#prior-art)), but cannot be expressed efficiently in the ONNX standard today.
 The operation is useful for feature discretization/bucketization in preprocessing steps (e.g., scikit-learn's [KBinsDiscretizer](https://github.com/scikit-learn/scikit-learn/blob/1074736921eecc3ba84743404696bdcaf877c023/sklearn/preprocessing/_discretization.py#L455)).
-`Searchsorted` can also be used to implement a Pandas-like [`merge_asof`](https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.merge_asof.html#pandas-merge-asof) operation: for each key from the left data frame (`x2`), find the index of the closest preceding key in the (sorted) right data frame (`x1`).
+`SearchSorted` can also be used to implement a Pandas-like [`merge_asof`](https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.merge_asof.html#pandas-merge-asof) operation: for each key from the left data frame (`x2`), find the index of the closest preceding key in the (sorted) right data frame (`x1`).
 
 Thus, a specialized and standardized operator enables exporting more models into a portable and clean computational graph and more efficient execution.
 
@@ -162,13 +162,7 @@ Ndonnx’s implementation is using one of the above-discussed costly workarounds
 
 It would be nice to use "**must** follow IEEE 754-2019" regarding the sorting semantics and "**must** be consistent with other sorting operators of an implementation", but this creates two possible issues:
  - It may be too restrictive for efficient implementations on all hardware
- - Mandating a "must" for the semantics of `Searchsorted` and coupling it to `Unique` would necessarily require explicit semantics for the `Unique` operator, but its floating point semantics are unspecified today.
-
-### Naming
-
-An alternative name for this operator is `SearchSorted`, which may fit better into the ONNX naming schema.
-It was nonetheless not chosen since the name `searchsorted` (rather than `search_sorted`) is the de facto standard name of this widely used operation in the Python ecosystem.
-
+ - Mandating a "must" for the semantics of `SearchSorted` and coupling it to `Unique` would necessarily require explicit semantics for the `Unique` operator, but its floating point semantics are unspecified today.
 
 ## Future possibilities
 
