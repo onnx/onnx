@@ -1122,9 +1122,53 @@ class DefaultVersionConverter : public BaseVersionConverter {
 
     /******** 28 -> 29 ********/
     registerAdapter(std::make_unique<CompatibleAdapter>("Gemm", OpSetID(28), OpSetID(29)));
+    registerAdapter("LinearAttention", 28, 29, [](const std::shared_ptr<Graph>& /*unused*/, Node* node) {
+      const auto& inputs = node->inputs();
+      for (size_t i = 0; i < inputs.size() && i < 4; ++i) {
+        const auto* input = inputs[i];
+        const size_t rank = i == 3 ? 4 : 3;
+        if (!input->has_sizes() || input->sizes().size() != rank) {
+          continue;
+        }
+        const auto& sizes = input->sizes();
+        for (size_t axis = 2; axis < rank; ++axis) {
+          ONNX_ASSERTM(
+              !sizes[axis].is_int || sizes[axis].dim != 0,
+              "LinearAttention input %zu has a zero-width head dimension at axis %zu and cannot be upgraded "
+              "to opset 29, which requires positive key and value head dimensions. Retain opset 28.",
+              i,
+              axis);
+        }
+      }
+      return node;
+    });
 
     /******** 29 -> 28 ********/
     registerAdapter(std::make_unique<Gemm_29_28>());
+    // The default mode and an explicit equal value-head count retain v27 semantics.
+    registerAdapter("LinearAttention", 29, 28, [](const std::shared_ptr<Graph>& graph, Node* node) {
+      ONNX_ASSERTM(
+          node->outputs().size() <= 2 || node->outputs()[2]->uniqueName().empty(),
+          "LinearAttention state trajectories cannot be downgraded to opset 28. "
+          "Omit the states output or retain opset 29.");
+      const Symbol v_heads{"v_num_heads"};
+      if (node->hasAttribute(v_heads)) {
+        const int64_t count = node->i(v_heads);
+        const int64_t key_heads = node->i(Symbol{"kv_num_heads"});
+        ONNX_ASSERTM(
+            count == 0 || count == key_heads,
+            "LinearAttention with expanded value/state heads cannot be downgraded to opset 28.");
+        node->removeAttribute(v_heads);
+      }
+      if (node->outputs().size() > 2) {
+        // The importer can bind omitted input slots to this empty-named output.
+        auto* undefined = graph->create(kUndefined);
+        undefined->insertBefore(node);
+        node->outputs()[2]->replaceAllUsesWith(undefined->output());
+        node->eraseOutput(2);
+      }
+      return node;
+    });
   }
 
   ModelProto convert_version(const ModelProto& mp_in, const OpSetID& initial_version, const OpSetID& target_version)

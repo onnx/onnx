@@ -5,11 +5,13 @@
 #include <stdexcept>
 #include <string>
 #include <unordered_map>
+#include <vector>
 
 #include "gtest/gtest.h"
 #include "onnx/checker.h"
 #include "onnx/common/constants.h"
 #include "onnx/defs/function.h"
+#include "onnx/defs/parser.h"
 #include "onnx/defs/schema.h"
 
 namespace ONNX_NAMESPACE::Test {
@@ -38,8 +40,7 @@ static TensorProto ToTensor(double value, TensorProto_DataType elem_type) {
 static bool
 BuildFloatFunctionBody(const FunctionBodyBuildContext& /*ctx*/, const OpSchema& schema, FunctionProto& functionProto) {
   FunctionBuilder builder(functionProto);
-  builder.Const("Two", ToTensor(2.0, TensorProto_DataType::TensorProto_DataType_FLOAT))
-      .Add("Y = Mul (X, Two)");
+  builder.Const("Two", ToTensor(2.0, TensorProto_DataType::TensorProto_DataType_FLOAT)).Add("Y = Mul (X, Two)");
   schema.BuildFunction(functionProto);
   return true;
 }
@@ -84,6 +85,127 @@ TEST(FunctionAPITest, ContextDependentFunctionTest) {
   checkerCtx.set_opset_imports(opset_imports);
   checkerCtx.set_ir_version(7);
   checker::check_function(fnProto, checkerCtx, lexicalScope);
+}
+
+static void CheckExpandedLinearAttention(bool trajectory, int64_t length) {
+  const auto* const schema = OpSchemaRegistry::Schema("LinearAttention", 29, ONNX_DOMAIN);
+  ASSERT_NE(schema, nullptr);
+  NodeProto node;
+  node.set_op_type("LinearAttention");
+  for (const auto* name : {"Q", "K", "V", "", "", ""}) {
+    node.add_input(name);
+  }
+  for (const auto* name : {"Y", "S", trajectory ? "States" : ""}) {
+    node.add_output(name);
+  }
+  auto* rule = node.add_attribute();
+  rule->set_name("update_rule");
+  rule->set_type(AttributeProto::STRING);
+  rule->set_s("linear");
+  for (const auto* name : {"q_num_heads", "kv_num_heads"}) {
+    auto* heads = node.add_attribute();
+    heads->set_name(name);
+    heads->set_type(AttributeProto::INT);
+    heads->set_i(1);
+  }
+  std::vector<TypeProto> types(6);
+  for (size_t i = 0; i < 3; ++i) {
+    types[i].mutable_tensor_type()->set_elem_type(TensorProto::FLOAT);
+  }
+  FunctionBodyBuildContextImpl ctx(node, types);
+  FunctionProto function;
+  ASSERT_TRUE(schema->BuildContextDependentFunction(ctx, function));
+  ASSERT_EQ(function.output_size(), trajectory ? 3 : 2);
+  GraphProto expanded;
+  FunctionExpandHelper(node, function, expanded);
+  EXPECT_GT(expanded.node_size(), 0);
+  ModelProto model;
+  model.set_ir_version(13);
+  model.mutable_graph()->CopyFrom(expanded);
+  model.mutable_graph()->set_name("expanded_linear_attention");
+  model.mutable_opset_import()->CopyFrom(function.opset_import());
+  for (const auto* name : {"Q", "K", "V", "Y", "S", "States"}) {
+    const std::string value_name(name);
+    if (value_name == "States" && !trajectory) {
+      continue;
+    }
+    const bool output = value_name == "Y" || value_name == "S" || value_name == "States";
+    auto* value = output ? model.mutable_graph()->add_output() : model.mutable_graph()->add_input();
+    value->set_name(name);
+    auto* tensor = value->mutable_type()->mutable_tensor_type();
+    tensor->set_elem_type(TensorProto::FLOAT);
+    const int rank = value_name == "States" ? 5 : (value_name == "S" ? 4 : 3);
+    for (int i = 0; i < rank; ++i) {
+      tensor->mutable_shape()->add_dim()->set_dim_value(value_name != "S" && i == 1 ? length : 1);
+    }
+  }
+  checker::check_model(model);
+#ifndef ONNX_NO_EXCEPTIONS
+  // A named output still has to be bound by the function.
+  if (trajectory) {
+    node.add_output("Unexpected");
+  } else {
+    node.set_output(2, "Unexpected");
+  }
+  EXPECT_THROW(FunctionExpandHelper(node, function, expanded), std::runtime_error);
+#endif
+}
+
+TEST(FunctionAPITest, ExpandMissingTrailingOptionalOutput) {
+  for (const bool trajectory : {false, true}) {
+    for (const int64_t length : {0, 2}) {
+      CheckExpandedLinearAttention(trajectory, length);
+    }
+  }
+}
+
+TEST(FunctionAPITest, InlinePassthroughSubgraphOutputs) {
+  for (const bool initializer_output : {false, true}) {
+    ModelProto model;
+    OnnxParser parser(R"ONNX(
+      <ir_version: 13, opset_import: ["" : 29]>
+      passthrough (float[2,1] X) => (float[2,1] Y) {
+        Y = Scan (X) <
+          num_scan_inputs = 1,
+          body = step (float[1] item) => (float[1] item) {}
+        >
+      }
+    )ONNX");
+    ASSERT_TRUE(parser.Parse(model).IsOK());
+    if (initializer_output) {
+      GraphProto* body = nullptr;
+      for (auto& attr : *model.mutable_graph()->mutable_node(0)->mutable_attribute()) {
+        if (attr.name() == "body") {
+          body = attr.mutable_g();
+        }
+      }
+      ASSERT_NE(body, nullptr);
+      auto* init = body->add_initializer();
+      init->set_name("unchanged");
+      init->set_data_type(TensorProto::FLOAT);
+      init->add_dims(1);
+      init->add_float_data(2.0f);
+      body->mutable_output(0)->set_name("unchanged");
+    }
+    checker::check_model(model);
+    FunctionProto function;
+    function.set_name("Softsign");
+    function.add_input("X");
+    function.add_output("Y");
+    function.mutable_opset_import()->CopyFrom(model.opset_import());
+    FunctionBuilder builder(function);
+    builder.AddInlinedCall({"Y"}, model.graph(), {"X"}, "passthrough");
+    model.mutable_graph()->mutable_node()->CopyFrom(function.node());
+    checker::check_model(model);
+
+    NodeProto call;
+    call.set_op_type("Softsign");
+    call.add_input("X");
+    call.add_output("Y");
+    model.mutable_graph()->clear_node();
+    FunctionExpandHelper(call, function, *model.mutable_graph());
+    checker::check_model(model);
+  }
 }
 
 // A polymorphic context-dependent function test-case.

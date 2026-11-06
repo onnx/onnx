@@ -33,6 +33,7 @@ class LinearAttention(OpRun):
         q_num_heads=None,
         scale=None,
         update_rule=None,
+        v_num_heads=None,
     ):
         # --- Step 1: defaults and validation ---
         if update_rule is None:
@@ -49,6 +50,20 @@ class LinearAttention(OpRun):
                 f"q_num_heads ({q_num_heads}) must be a positive multiple of "
                 f"kv_num_heads ({kv_num_heads})."
             )
+        if v_num_heads is None:
+            v_num_heads = 0
+        if v_num_heads < 0 or (
+            v_num_heads > 0
+            and (q_num_heads != kv_num_heads or v_num_heads % kv_num_heads != 0)
+        ):
+            raise ValueError(
+                "v_num_heads must be zero, or a positive multiple of kv_num_heads "
+                "with q_num_heads == kv_num_heads."
+            )
+        input_q_heads, input_k_heads = q_num_heads, kv_num_heads
+        if v_num_heads:
+            # The recurrence below operates on the expanded output/state heads.
+            q_num_heads = kv_num_heads = v_num_heads
 
         gating = update_rule in ("gated", "gated_delta")
         delta_correction = update_rule in ("delta", "gated_delta")
@@ -71,18 +86,33 @@ class LinearAttention(OpRun):
         # --- Step 2: unpack Q/K/V to 4D (B, H, T, D) ---
         out_dtype = query.dtype
         b, t, _ = query.shape
-        d_k = query.shape[-1] // q_num_heads
+        d_k = query.shape[-1] // input_q_heads
         d_v = value.shape[-1] // kv_num_heads
         group_size = q_num_heads // kv_num_heads
 
-        q4 = _unpack_3d_to_4d(query, q_num_heads).astype(np.float32)
-        k4 = _unpack_3d_to_4d(key, kv_num_heads).astype(np.float32)
+        q4 = _unpack_3d_to_4d(query, input_q_heads).astype(np.float32)
+        k4 = _unpack_3d_to_4d(key, input_k_heads).astype(np.float32)
         v4 = _unpack_3d_to_4d(value, kv_num_heads).astype(np.float32)
+        if key.shape[:2] != (b, t) or value.shape[:2] != (b, t):
+            raise ValueError(
+                "query, key and value must have matching batch/sequence dimensions."
+            )
+        version = getattr(self, "run_params", {}).get("opsets", {}).get("", 29)
+        if (version >= 29 and (d_k <= 0 or d_v <= 0)) or k4.shape[-1] != d_k:
+            raise ValueError(
+                "Q/K head dimensions must match and key/value widths must be positive."
+            )
+        if v_num_heads:
+            repeats = v_num_heads // input_k_heads
+            q4 = np.repeat(q4, repeats, axis=1)
+            k4 = np.repeat(k4, repeats, axis=1)
 
         # --- Step 3: unpack decay (broadcastable to (B, H_kv, T, d_k)) ---
         if decay is not None:
             if decay.ndim != 3:
                 raise ValueError(f"decay must be rank 3, got shape {decay.shape}.")
+            if decay.shape[:2] != (b, t):
+                raise ValueError("decay must match query's batch/sequence dimensions.")
             decay_last = decay.shape[-1]
             if decay_last == kv_num_heads:
                 # Per-head scalar: (B, T, H_kv) -> (B, H_kv, T, 1)
@@ -92,8 +122,8 @@ class LinearAttention(OpRun):
                 decay4 = _unpack_3d_to_4d(decay, kv_num_heads)
             else:
                 raise ValueError(
-                    f"decay last dim {decay_last} must equal kv_num_heads "
-                    f"({kv_num_heads}) or kv_num_heads*d_k ({kv_num_heads * d_k})."
+                    f"decay last dim {decay_last} must equal the state head count "
+                    f"({kv_num_heads}) or state heads*d_k ({kv_num_heads * d_k})."
                 )
             decay4 = decay4.astype(np.float32)
 
@@ -101,10 +131,12 @@ class LinearAttention(OpRun):
         if beta is not None:
             if beta.ndim != 3:
                 raise ValueError(f"beta must be rank 3, got shape {beta.shape}.")
+            if beta.shape[:2] != (b, t):
+                raise ValueError("beta must match query's batch/sequence dimensions.")
             beta_last = beta.shape[-1]
             if beta_last not in (kv_num_heads, 1):
                 raise ValueError(
-                    f"beta last dim {beta_last} must be kv_num_heads "
+                    f"beta last dim {beta_last} must be the state head count "
                     f"({kv_num_heads}) or 1."
                 )
             # (B, T, H_kv_or_1) -> (B, H_kv_or_1, T, 1)
@@ -141,6 +173,13 @@ class LinearAttention(OpRun):
 
         # --- Step 7+8: recurrence with GQA expansion at read time ---
         outputs = np.zeros((b, q_num_heads, t, d_v), dtype=np.float32)
+        node = getattr(self, "onnx_node", None)
+        has_states = node is not None and len(node.output) > 2 and bool(node.output[2])
+        states = (
+            np.empty((b, t, kv_num_heads, d_k, d_v), dtype=state_in_dtype)
+            if has_states
+            else None
+        )
         for i in range(t):
             q_t = q4[:, :, i, :]  # (B, H_q, d_k)
             k_t = k4[:, :, i, :]  # (B, H_kv, d_k)
@@ -159,6 +198,8 @@ class LinearAttention(OpRun):
 
             # Write: state += k_t ⊗ v_t  (outer product over last dims)
             state = state + k_t[..., :, None] * v_t[..., None, :]
+            if states is not None:
+                states[:, i] = state
 
             # Read with GQA: replicate KV-head state across query heads.
             if group_size == 1:
@@ -178,4 +219,6 @@ class LinearAttention(OpRun):
         # --- Step 10: present_state in same dtype as past_state (or query) ---
         present_state = state.astype(state_in_dtype)
 
+        if states is not None:
+            return (output, present_state, states)
         return (output, present_state)

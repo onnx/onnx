@@ -36,14 +36,14 @@ void FunctionExpandHelper(
     io_names_map[func.input().Get(idx)] = node.input().Get(idx);
   }
   for (int idx = 0; idx < node.output_size(); ++idx) {
-    if (idx >= func.output_size()) {
-      ONNX_THROW("Output for function node " + node_name + " is out of bounds");
-    }
     // If the node output is missing, the corresponding function output should
     // be treated as an internal value (not as missing) because it could also be
     // an intermediate value.
     if (node.output().Get(idx).empty()) {
       continue;
+    }
+    if (idx >= func.output_size()) {
+      ONNX_THROW("Output for function node " + node_name + " is out of bounds");
     }
     io_names_map[func.output().Get(idx)] = node.output().Get(idx);
   }
@@ -80,26 +80,23 @@ void FunctionExpandHelper(
     }
   }
 
+  inliner::Renamer renamer(node_name, g);
+  for (const auto& [formal, actual] : io_names_map) {
+    renamer.BindName(formal, actual);
+  }
+  for (const auto& function_node : func.node()) {
+    for (const auto& output : function_node.output()) {
+      if (!output.empty() && !io_names_map.count(output)) {
+        std::string renamed("Func_");
+        renamed.append(node_name).append(output);
+        renamer.BindName(output, renamed);
+      }
+    }
+  }
   for (const auto& function_node : func.node()) {
     NodeProto* new_node = g.add_node();
     new_node->CopyFrom(function_node);
-    new_node->clear_input();
-    new_node->clear_output();
     new_node->clear_attribute();
-    for (const auto& input : function_node.input()) {
-      if (io_names_map.count(input)) {
-        new_node->add_input(io_names_map[input]);
-      } else {
-        new_node->add_input()->assign("Func_").append(node_name).append(input);
-      }
-    }
-    for (const auto& output : function_node.output()) {
-      if (io_names_map.count(output)) {
-        new_node->add_output(io_names_map[output]);
-      } else {
-        new_node->add_output()->assign("Func_").append(node_name).append(output);
-      }
-    }
     for (const auto& attr : function_node.attribute()) {
       if (attr.has_ref_attr_name()) {
         if (attr_map.count(attr.ref_attr_name())) {
@@ -112,6 +109,7 @@ void FunctionExpandHelper(
         new_attr->CopyFrom(attr);
       }
     }
+    renamer.RenameNode(*new_node);
   }
 }
 

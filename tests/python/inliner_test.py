@@ -9,6 +9,23 @@ from onnx import checker, inliner, parser
 
 
 class TestInliner:
+    @pytest.mark.parametrize("extra_output", ["", "Unexpected"])
+    def test_trailing_optional_output_binding(self, extra_output):
+        model = parser.parse_model(
+            """
+            <ir_version: 13, opset_import: ["" : 29, "local" : 1]>
+            graph (float[1] X) => (float[1] Y) { Y = local.identity(X) }
+            <opset_import: ["" : 29], domain: "local">
+            identity (x) => (y) { y = Identity(x) }
+            """
+        )
+        model.graph.node[0].output.append(extra_output)
+        if extra_output:
+            with pytest.raises(RuntimeError, match="actual parameters"):
+                inliner.inline_local_functions(model)
+        else:
+            checker.check_model(inliner.inline_local_functions(model), full_check=True)
+
     def test_basic(self):
         model = parser.parse_model(
             """
