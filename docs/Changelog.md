@@ -34572,6 +34572,61 @@ This version of the operator has been available since version 29 of the default 
 <dd>Constrain group indices to int32 or int64 tensors.</dd>
 </dl>
 
+### <a name="SearchSorted-29"></a>**SearchSorted-29**</a>
+
+  Finds the indices into `x1` such that, if the corresponding elements in `x2` were inserted before the indices, the order of `x1`, when sorted in ascending order, would be preserved.
+
+  Let `v` be an element of `x2` given by `v = x2[j]`.
+
+    - If `v` is less than all elements in `x1`, then `out[j]` must be `0`.
+    - If `v` is greater than all elements in `x1`, then `out[j]` must be `M`, where `M` is the number of elements in `x1`.
+    - Otherwise, each returned index `i = out[j]` must satisfy an index condition:
+
+      - If `side == 'left'`, then `x1[i-1] < v <= x1[i]`.
+      - If `side == 'right'`, then `x1[i-1] <= v < x1[i]`.
+
+  **Notes**
+
+  For real-valued floating-point tensors, NaNs are ordered after all non-NaN values and are equivalent to each other, and `-0` and `+0` are equivalent (as in NumPy).
+
+#### Version
+
+This version of the operator has been available since version 29 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>side</tt> : string (default is left)</dt>
+<dd>Either `"left"` or `"right"`. Controls which index is returned if a value lands exactly on an edge.</dd>
+</dl>
+
+#### Inputs (2 - 3)
+
+<dl>
+<dt><tt>x1</tt> (non-differentiable) : T</dt>
+<dd>Input tensor. Must be one-dimensional. If `sorter` is not given, must be sorted in ascending order; otherwise, `sorter` must be a tensor of indices that sort `x1` in ascending order.</dd>
+<dt><tt>x2</tt> (non-differentiable) : T</dt>
+<dd>Tensor containing search values.</dd>
+<dt><tt>sorter</tt> (optional, non-differentiable) : Tind</dt>
+<dd>Tensor of indices that sort `x1` in ascending order. The tensor must have the same shape as `x1`.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>out</tt> (non-differentiable) : Tind</dt>
+<dd>A tensor of indices with the same shape as `x2`.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
+<dd>Constrain input types to numeric tensors.</dd>
+<dt><tt>Tind</tt> : tensor(int64)</dt>
+<dd>Constrain indices to int64.</dd>
+</dl>
+
 # ai.onnx.preview
 ## Version 1 of the 'ai.onnx.preview' operator set
 ### <a name="ai.onnx.preview.FlexAttention-1"></a>**ai.onnx.preview.FlexAttention-1**</a>
