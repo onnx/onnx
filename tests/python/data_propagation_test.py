@@ -21,10 +21,12 @@ class TestDataPropagation(TestShapeInferenceHelper):
             ((1 << 32, 1 << 32, 0), 0),
             ((1 << 32, 0, 1 << 32), 0),
             ((0, 1 << 32, 1 << 32), 0),
+            (("N", 0), 0),
+            ((0, "N"), 0),
         ],
     )
     def test_size_of_float_tensor_uses_shape(
-        self, version: int, input_shape: tuple[int, ...], count: int
+        self, version: int, input_shape: tuple[int | str, ...], count: int
     ) -> None:
         graph = self._make_graph(
             [("x", TensorProto.FLOAT, input_shape)],
@@ -36,16 +38,18 @@ class TestDataPropagation(TestShapeInferenceHelper):
             [],
             initializer=[make_tensor("axis", TensorProto.INT64, (1,), [0])],
         )
-        self._assert_inferred(
+        inferred = self._inferred(
             graph,
-            [
-                make_tensor_value_info("size", TensorProto.INT64, ()),
-                make_tensor_value_info("shape", TensorProto.INT64, (1,)),
-                make_tensor_value_info("y", TensorProto.FLOAT, (count,)),
-            ],
             data_prop=True,
             opset_imports=[onnx.helper.make_opsetid("", version)],
         )
+        types = {info.name: info.type for info in inferred.graph.value_info}
+        for expected in [
+            make_tensor_value_info("size", TensorProto.INT64, ()),
+            make_tensor_value_info("shape", TensorProto.INT64, (1,)),
+            make_tensor_value_info("y", TensorProto.FLOAT, (count,)),
+        ]:
+            assert types[expected.name] == expected.type
 
     def test_symbolic_int32_overflow_does_not_alias_dimension_arithmetic(self) -> None:
         graph = self._make_graph(
