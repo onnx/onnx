@@ -1088,19 +1088,38 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
+static void ScatterReductionShapeInference(InferenceContext& ctx) {
+  const auto* reduction_attr = ctx.getAttribute("reduction");
+  const std::string reduction = reduction_attr ? reduction_attr->s() : "none";
+  if (reduction != "none" && reduction != "add" && reduction != "mul" && reduction != "max" && reduction != "min" &&
+      reduction != "mean") {
+    fail_shape_inference("Invalid scatter reduction '", reduction, "'. Use one of: none, add, mul, max, min, mean.");
+  }
+  if (reduction == "mean" && ctx.getInputType(0) && ctx.getInputType(0)->has_tensor_type()) {
+    const auto elem_type = ctx.getInputType(0)->tensor_type().elem_type();
+    if (elem_type == TensorProto::BOOL || elem_type == TensorProto::STRING || elem_type == TensorProto::COMPLEX64 ||
+        elem_type == TensorProto::COMPLEX128) {
+      fail_type_inference(
+          "Scatter reduction 'mean' requires an integer or floating-point tensor. Cast the inputs to a supported type.");
+    }
+  }
+  propagateShapeAndTypeFromFirstInput(ctx);
+}
+
 ONNX_OPERATOR_SET_SCHEMA(
     ScatterND,
-    18,
+    29,
     OpSchema()
-        .SetDoc(kDoc_ScatterND_ver18)
+        .SetDoc(kDoc_ScatterND_ver29)
         .Attr(
             "reduction",
-            "Type of reduction to apply: none (default), add, mul, max, min. "
+            "Type of reduction to apply: none (default), add, mul, max, min, mean. "
             "'none': no reduction applied. "
             "'add':  reduction using the addition operation. "
-            "'mul':  reduction using the addition operation. "
-            "'max': reduction using the maximum operation."
-            "'min': reduction using the minimum operation.",
+            "'mul': reduction using the multiplication operation. "
+            "'max': reduction using the maximum operation. "
+            "'min': reduction using the minimum operation. "
+            "'mean': arithmetic mean of all contributions to each output element.",
             AttributeProto::STRING,
             std::string("none"))
         .Input(0, "data", "Tensor of rank r >= 1.", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
@@ -1124,18 +1143,13 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::Differentiable)
         .Output(0, "output", "Tensor of rank r >= 1.", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
         .TypeConstraint("T", OpSchema::all_tensor_types_ir4(), "Constrain input and output types to any tensor type.")
-        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-          propagateElemTypeFromInputToOutput(ctx, 0, 0);
-          if (hasNInputShapes(ctx, 1)) {
-            propagateShapeFromInputToOutput(ctx, 0, 0);
-          }
-        }));
+        .TypeAndShapeInferenceFunction(ScatterReductionShapeInference));
 
 ONNX_OPERATOR_SET_SCHEMA(
     ScatterElements,
-    18,
+    29,
     OpSchema()
-        .SetDoc(kDoc_ScatterElements_ver18)
+        .SetDoc(kDoc_ScatterElements_ver29)
         .Attr(
             "axis",
             "Which axis to scatter on. Negative value means "
@@ -1144,12 +1158,13 @@ ONNX_OPERATOR_SET_SCHEMA(
             static_cast<int64_t>(0))
         .Attr(
             "reduction",
-            "Type of reduction to apply: none (default), add, mul, max, min. "
+            "Type of reduction to apply: none (default), add, mul, max, min, mean. "
             "'none': no reduction applied. "
             "'add':  reduction using the addition operation. "
-            "'mul': reduction using the multiplication operation."
-            "'max': reduction using the maximum operation."
-            "'min': reduction using the minimum operation.",
+            "'mul': reduction using the multiplication operation. "
+            "'max': reduction using the maximum operation. "
+            "'min': reduction using the minimum operation. "
+            "'mean': arithmetic mean of all contributions to each output element.",
             AttributeProto::STRING,
             std::string("none"))
         .Input(0, "data", "Tensor of rank r >= 1.", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
@@ -1183,12 +1198,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::Differentiable)
         .TypeConstraint("T", OpSchema::all_tensor_types_ir4(), "Input and output types can be of any tensor type.")
         .TypeConstraint("Tind", {types::Int32, types::Int64}, "Constrain indices to integer types")
-        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-          propagateElemTypeFromInputToOutput(ctx, 0, 0);
-          if (hasNInputShapes(ctx, 1)) {
-            propagateShapeFromInputToOutput(ctx, 0, 0);
-          }
-        }));
+        .TypeAndShapeInferenceFunction(ScatterReductionShapeInference));
 
 ONNX_OPERATOR_SET_SCHEMA(
     Gather,

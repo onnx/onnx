@@ -2829,6 +2829,98 @@ ONNX_OPERATOR_SET_SCHEMA(
 
 ONNX_OPERATOR_SET_SCHEMA(
     ScatterND,
+    18,
+    OpSchema()
+        .SetDoc(kDoc_ScatterND_ver18)
+        .Attr(
+            "reduction",
+            "Type of reduction to apply: none (default), add, mul, max, min. "
+            "'none': no reduction applied. "
+            "'add':  reduction using the addition operation. "
+            "'mul':  reduction using the addition operation. "
+            "'max': reduction using the maximum operation."
+            "'min': reduction using the minimum operation.",
+            AttributeProto::STRING,
+            std::string("none"))
+        .Input(0, "data", "Tensor of rank r >= 1.", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
+        .Input(
+            1,
+            "indices",
+            "Tensor of rank q >= 1.",
+            "tensor(int64)",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::NonDifferentiable)
+        .Input(
+            2,
+            "updates",
+            "Tensor of rank q + r - indices_shape[-1] - 1.",
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::Differentiable)
+        .Output(0, "output", "Tensor of rank r >= 1.", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
+        .TypeConstraint("T", OpSchema::all_tensor_types_ir4(), "Constrain input and output types to any tensor type.")
+        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
+
+ONNX_OPERATOR_SET_SCHEMA(
+    ScatterElements,
+    18,
+    OpSchema()
+        .SetDoc(kDoc_ScatterElements_ver18)
+        .Attr(
+            "axis",
+            "Which axis to scatter on. Negative value means "
+            "counting dimensions from the back. Accepted range is [-r, r-1] where r = rank(data).",
+            AttributeProto::INT,
+            static_cast<int64_t>(0))
+        .Attr(
+            "reduction",
+            "Type of reduction to apply: none (default), add, mul, max, min. "
+            "'none': no reduction applied. "
+            "'add':  reduction using the addition operation. "
+            "'mul': reduction using the multiplication operation."
+            "'max': reduction using the maximum operation."
+            "'min': reduction using the minimum operation.",
+            AttributeProto::STRING,
+            std::string("none"))
+        .Input(0, "data", "Tensor of rank r >= 1.", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
+        .Input(
+            1,
+            "indices",
+            "Tensor of int32/int64 indices, of r >= 1 (same rank as input). All index values are expected to be "
+            "within bounds [-s, s-1] along axis of size s. It is an error if any of the index values are out of bounds.",
+            "Tind",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::NonDifferentiable)
+        .Input(
+            2,
+            "updates",
+            "Tensor of rank r >=1 (same rank and shape as indices)",
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::Differentiable)
+        .Output(
+            0,
+            "output",
+            "Tensor of rank r >= 1 (same rank as input).",
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::Differentiable)
+        .TypeConstraint("T", OpSchema::all_tensor_types_ir4(), "Input and output types can be of any tensor type.")
+        .TypeConstraint("Tind", {types::Int32, types::Int64}, "Constrain indices to integer types")
+        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
+
+ONNX_OPERATOR_SET_SCHEMA(
+    ScatterND,
     16,
     OpSchema()
         .SetDoc(kDoc_ScatterND_ver16)

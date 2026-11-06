@@ -1886,6 +1886,66 @@ class TestShapeInference(TestShapeInferenceHelper):
             opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
         )
 
+    @pytest.mark.parametrize("op", ["ScatterElements", "ScatterND"])
+    @pytest.mark.parametrize(
+        "elem_type", [TensorProto.FLOAT, TensorProto.INT64, TensorProto.BFLOAT16]
+    )
+    def test_scatter_mean(self, op, elem_type) -> None:
+        graph = self._make_graph(
+            [
+                ("data", elem_type, ("N", 3)),
+                ("indices", TensorProto.INT64, (2, 2)),
+                ("updates", elem_type, (2, 2) if op == "ScatterElements" else (2,)),
+            ],
+            [
+                make_node(
+                    op,
+                    ["data", "indices", "updates"],
+                    ["output"],
+                    reduction="mean",
+                )
+            ],
+            [],
+        )
+        self._assert_inferred(
+            graph,
+            [make_tensor_value_info("output", elem_type, ("N", 3))],
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, 29)],
+        )
+
+    @pytest.mark.parametrize("op", ["ScatterElements", "ScatterND"])
+    @pytest.mark.parametrize(
+        "attributes, type_name, message",
+        [
+            ('reduction = "average"', "float", "Invalid scatter reduction"),
+            ('reduction = "mean"', "bool", "requires an integer or floating-point"),
+            ('reduction = "mean"', "string", "requires an integer or floating-point"),
+            (
+                'reduction = "mean"',
+                "complex64",
+                "requires an integer or floating-point",
+            ),
+            (
+                'reduction = "mean"',
+                "complex128",
+                "requires an integer or floating-point",
+            ),
+        ],
+    )
+    def test_scatter_invalid_reduction(
+        self, op, attributes, type_name, message
+    ) -> None:
+        index_shape = "1" if op == "ScatterElements" else "1, 1"
+        model = onnx.parser.parse_model(f"""
+            <ir_version: 13, opset_import: ["" : 29]>
+            scatter ({type_name}[2] data, int64[{index_shape}] indices,
+                     {type_name}[1] updates) => ({type_name}[2] output) {{
+                output = {op}<{attributes}>(data, indices, updates)
+            }}
+        """)
+        with pytest.raises(onnx.shape_inference.InferenceError, match=message):
+            onnx.shape_inference.infer_shapes(model, strict_mode=True)
+
     def test_tensor_scatter(self) -> None:
         graph = self._make_graph(
             [

@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import math
+from fractions import Fraction
 
 import numpy as np
 
@@ -48,9 +49,10 @@ def _mean(data, axes, keepdims):
             total = math.fsum(float(value) for value in row)
             value = total / reduction_size
         except OverflowError:
-            # Dividing each finite term first bounds the positive and negative
-            # partial totals by the largest representable input magnitude.
-            value = math.fsum(float(item) / reduction_size for item in row)
+            # Exact accumulation avoids overflow and cancellation loss, even
+            # when divide-first summation rounds past the finite dtype limit.
+            total_exact = sum(Fraction(float(item)) for item in row)
+            value = float(total_exact / reduction_size)
         result[index] = value
 
     reduced = result.reshape(remaining_shape)
