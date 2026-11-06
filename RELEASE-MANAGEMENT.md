@@ -6,7 +6,9 @@ SPDX-License-Identifier: Apache-2.0
 
 # ONNX release management
 
-This describes the process by which versions of ONNX are officially released to the public.
+This document describes ONNX release policy, cadence, and compatibility. The
+operational procedure for release managers is maintained separately in the
+[ONNX release checklist](docs/OnnxReleases.md).
 
 Release Cadence
 ---------------
@@ -15,15 +17,18 @@ Branch cuts for a new release are planned every 3 months. However, the times can
 
 | Minor Version | Release branch cut | Release date | Patch release dates |
 | --- | --- | --- | --- |
-| 1.17.0 | XYZ | XYZ | Not planned |
-| 1.18.0 | Mar 2025 | May 2025 | Not planned |
-| 1.19.0 | 31. July 2025 | 27. August 2025 | 9. October 2025 |
-| 1.20.0  | 31. October 2025 | November 2025 | January 2026 |
-| 1.21.0  | 25. February 2026 | 28. March 2026 | - |
-| 1.22.0 | 1. June 2026 | 15. June 2026 | - |
-| 1.23.0 | 1. September 2026 | 18. September 2026 | 29. September 2026 (1.23.1), 6. October 2026 (1.23.2) |
-| 1.24.0 (tbd) | 1. December 2026 | 14. December 2026 | tbd |
-| 1.25.0 (tbd) | 1. February 2027 | 28. February 2027 | tbd |
+| 1.17.0 | — | 30 September 2024 | Not planned |
+| 1.18.0 | March 2025 | 8 May 2025 | Not planned |
+| 1.19.0 | 31 July 2025 | 26 August 2025 | 7 October 2025 |
+| 1.20.0 | 31 October 2025 | 1 December 2025 | 9 January 2026 |
+| 1.21.0 | 25 February 2026 | 27 March 2026 | — |
+| 1.22.0 | 1 June 2026 | 15 June 2026 | — |
+| 1.23.0 | 1 September 2026 | 18 September 2026 | 29 September 2026 (1.23.1), 6 October 2026 (1.23.2) |
+| 1.24.0 (planned) | 1 December 2026 | 14 December 2026 | TBD |
+| 1.25.0 (planned) | 1 February 2027 | 28 February 2027 | TBD |
+
+Dates for unpublished releases are targets and may change. Published release
+dates are recorded on the [GitHub Releases page](https://github.com/onnx/onnx/releases).
 
 ## Long-Term Support (LTS)
 
@@ -33,8 +38,12 @@ ONNX does not currently maintain LTS branches. Each minor release is superseded 
 Release Compatibility Matrix
 ----------------------------
 
-*Support for a Python version that went eol will be discontinued in the following ONNX release.*
-*ONNX does NOT follow https://scientific-python.org/specs/spec-0000/ or https://protobuf.dev/support/version-support/*
+*Support for a Python version that has reached end of life will be discontinued
+in the following ONNX release.*
+
+*ONNX does not follow the
+[Scientific Python ecosystem support policy](https://scientific-python.org/specs/spec-0000/)
+or the [Protobuf support policy](https://protobuf.dev/support/version-support/).*
 
 Changes are discussed in the community. Please do not hesitate to contact us if you have any requests.
 Planned changes for future releases as listed in the table below are subject to change.
@@ -54,14 +63,22 @@ Planned changes for future releases as listed in the table below are subject to 
 | 1.19.1 | 3.9-3.13, 3.13t (win, mac, linux) | 17 | 3.24 | v25.1 | manylinux2014 |
 | 1.20 | 3.10-3.13, 3.13t (win, mac, linux), 3.14 (mac) | 17 | 3.26 | v25.1 | manylinux_2_28 |
 | 1.21 | 3.10-3.13, 3.13t, 3.14, 3.14t | 17 | 3.26 | v25.1 | manylinux_2_28 |
-| 1.22 | 3.10, 3.11, 3.12-abi3, 3.14 (win, mac, linux), 3.14 pyodide | 17 | 3.24 | v25.1 | manylinux_2_28 |
-| *1.23* | | | | | |
+| 1.22 | 3.10, 3.11, 3.12+ (abi3), 3.14t, 3.14 Pyodide | 17 | 3.24 | v25.1 | manylinux_2_28 |
+| 1.23 | 3.10, 3.11, 3.12+ (abi3), 3.14t, 3.14 Pyodide | 17 | 3.26 | v31.1 | manylinux_2_28 |
+| *1.24 (planned)* | 3.11, 3.12+ (abi3), 3.14t, 3.15t, 3.14 Pyodide | 17 | 3.26 | v31.1 | manylinux_2_28 |
+
+`abi3` wheels built for CPython 3.12 are intended for CPython 3.12 and later.
+Free-threaded builds are shown with the `t` suffix and require separate wheels.
+Planned compatibility reflects the current build configuration and may change
+before release.
 
 
 Releases
 --------
 
-Releases are versioned according to [ONNX Versioning](docs/Versioning.md). This describes IR and operator versioning policies, as well as propose how models themselves should be versioned.
+Releases are versioned according to [ONNX Versioning](docs/Versioning.md). This
+describes IR and operator versioning policies and proposes how models themselves
+should be versioned.
 
 On a regular basis, new versions of ONNX are published, representing the aggregate of changes in the IR and operator sets. Such releases use semantic versioning to describe the progression of the standard.
 
@@ -72,33 +89,16 @@ Major, minor and patch releases will have branch names and version numbers refle
 Workflow
 --------
 
-The following workflow describes the steps taken to release an update of ONNX,
-and can be undertaken regardless of whether a major, minor or patch release is
-to be produced.
+The authoritative operational procedure is the
+[ONNX release checklist](docs/OnnxReleases.md). It covers preparation, creating
+the `rel-X.Y.Z` branch, publishing and validating release candidates, creating
+the final tag, publishing packages, and post-release tasks. Release candidate
+versions use the PEP 440 form `X.Y.ZrcN` (for example, `1.24.0rc1`).
 
-- The trigger for the workflow will typically be a time-based trigger based on
-  elapsed time (say every three months).
-
-- The release manager will announce the intent of the process (to produce
-  major, minor or patch update) and the overall timeline (documented in our
-  wiki: [example](https://github.com/onnx/onnx/wiki/Logistics-for-ONNX-Release-1.19.0).
-  A release branch is created with the name rel-major#.minor#(.patch#), and any version
-  references in build scripts or version checks are updated.
-
-- The release manager announces the initial commit for testing. The first
-  period lasts two weeks; any regressions found should be fixed, typically via
-  the main branch. Incomplete features should be done or excised during this
-  period. A distribution can be made available with an -RC1 suffix.
-
-- The release manager announces a second round of testing (unless it's only a
-  patch update with no regressions found). Only critical bugs are fixed at
-  this point, or those introduced by patches from the first week. A third
-  week may be introduced at the release manager's discretion if significant
-  fixes need to be taken. Distributions with -RCn suffixes can be made
-  available if convenient.
-
-- Release notes are updated with final changes, and a file with sources is
-  provided along with a release on the GitHub project page.
+The [Create Releases workflow](.github/workflows/create_release.yml) builds the
+platform wheels and source distribution and publishes them through protected
+GitHub environments and PyPI Trusted Publishing. The workflow and release
+checklist are the sources of truth for the exact build and publication steps.
 
 Testing
 -------
@@ -107,7 +107,7 @@ The release process really consists of communicating, testing to establish a
 known state of the project, and distributing files. This section deals with
 the second task.
 
-At the very least, the tests that are part of the /test folder should be run
+At the very least, the tests that are part of the `tests/` directory should be run
 under a variety of configurations. Issues fixed should ensure coverage in this
 suite to avoid regressions.
 
@@ -124,10 +124,16 @@ In addition to stable releases, we publish **weekly development builds** to a se
 ## Why a Separate Package?
 
 - **Avoid accidental installs:** Pre-release versions can be installed unintentionally; `onnx-weekly` ensures stable users are unaffected.
-- **Enable safe testing:** Try upcoming features without impacting stable installs. Both packages can coexist.
+- **Enable isolated testing:** Try upcoming features in a dedicated virtual
+  environment without changing a stable environment.
 - **Simplify automation:** Weekly builds are pushed automatically from `main` without polluting the main release history.
 
 ## Installation
 
 ```bash
 pip install onnx-weekly
+```
+
+`onnx` and `onnx-weekly` are separate PyPI projects, but both install the same
+Python import package (`onnx`). Do not install them together in one environment;
+use separate virtual environments or uninstall one before installing the other.
