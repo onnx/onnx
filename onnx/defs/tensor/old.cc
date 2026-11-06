@@ -2460,7 +2460,7 @@ ONNX_OPERATOR_SET_SCHEMA(
 
             // Empty dimension: clamp bounds are invalid when dimension size is 0,
             // so short-circuit to produce a zero-length output.
-            if (input_dim_value == 0) {
+            if (input_dim_value <= 0) {
               ctx.getOutputType(0)
                   ->mutable_tensor_type()
                   ->mutable_shape()
@@ -5479,7 +5479,7 @@ ONNX_OPERATOR_SET_SCHEMA(
 
             // Empty dimension: clamp bounds are invalid when dimension size is 0,
             // so short-circuit to produce a zero-length output.
-            if (input_dim_value == 0) {
+            if (input_dim_value <= 0) {
               ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape()->mutable_dim(axis)->set_dim_value(0);
               continue;
             }
