@@ -94,17 +94,35 @@ for atheris harnesses. Ruff's `N802` (lowercase function names) is suppressed fo
 
 ### `fuzz_shape_inference.py` toggle byte
 
-The shape inference harness exercises two code paths per iteration, selected by
-the last byte of the input:
+The harness first attempts to load the complete input as a serialized model.
+Valid models always reach shape inference, irrespective of the final byte. If
+loading fails, the final byte determines whether to build a structured model:
 
 | Bit | Meaning |
 |---|---|
 | `0x01` | `strict_mode=True` |
 | `0x02` | `check_type=True` |
-| `0x04` | Use structured model builder (If/Loop/Scan subgraphs) instead of raw bytes |
+| `0x04` | Allow the structured fallback if the serialized model cannot be loaded |
+| `0x08` | `data_prop=True` |
 
-This lets a single harness cover both the protobuf-parser path and the recursive
-subgraph visitor without needing separate fuzzers.
+The raw path consumes the complete input; only the structured fallback removes
+the final control byte. Existing `.onnx` seeds remain complete, unframed models.
+
+The structured builder samples either If/Loop/Scan subgraphs or a short chain of
+nodes of registered operator schema versions, including historical and
+`ai.onnx.ml` schemas. Each input is untyped, typed (arbitrarily or within the
+schema's type constraint), a constant initializer of any data type, omitted, or
+an output of an earlier node; alternatively all inputs of the first node come
+from a custom-domain producer and so have unknown types. Required attributes
+are generated from the schema, and optional ones are sampled. Generated
+attribute values include data type enum values, integer and floating-point
+edge cases, non-ASCII and invalid UTF-8 strings, and tensors of any data type.
+
+Besides crashes, a successful inference is a finding when inferring its result
+again fails or changes an inferred type, or when an inferred output type differs
+from the type its type constraint takes from valid inputs. Outputs whose type
+comes from an attribute, such as Cast's `to`, are not checked: without
+`check_type`, inference does not validate such attributes.
 
 ### `fuzz_compose.py` toggle byte
 
