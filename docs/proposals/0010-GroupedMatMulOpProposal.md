@@ -50,6 +50,13 @@ matrices `weights` of shape `[G, K, N]`, and a `group_indices` tensor of shape `
 selects, for each token, the `k` experts it should be multiplied by. It optionally takes a
 per-group `bias` (shape `[G, N]`).
 
+The optional integer attribute `transB` defaults to 0. When non-zero, `weights`
+instead has shape `[G, N, K]`: only the last two axes are logically transposed
+before multiplication. The input, output, group-index, and bias layouts are
+unchanged. This supports expert banks stored with contiguous `K` dimensions,
+including decoded block-quantized expert weights, without requiring an explicit
+`Transpose([0, 2, 1])` before `GroupedMatMul`.
+
 The output has shape `[M, k, N]`: the per-expert result for each of the `k` selected experts.
 Any weighted combination of these per-expert results (for example the top-`k` router-weighted
 sum in an MoE layer) is expressed with standard `Mul` / `ReduceSum` ops in the surrounding
@@ -104,7 +111,7 @@ post-activation up-projection outputs) rather than sharing a single input row.
 
 This section is the **single, normative definition** of `GroupedMatMul`. The operator is
 specified as an ONNX **function**: its meaning is exactly the composition of standard ONNX
-operators given below. Because the presence of the optional `bias` input changes the graph
+operators given below. Because `transB` and the presence of the optional `bias` input change the graph
 that is produced, the function body is **context-dependent** (built via
 `SetContextDependentFunctionBodyBuilder`, in the style of existing ops such as
 `CenterCropPad`).
@@ -117,8 +124,9 @@ documentation, and reference implementation.
 
 Input and output names, shapes, and type constraints are defined in
 [Operator Specification](#operator-specification).
-The symbols used below are `M`, `K`, `N`, `G` (= `weights.shape[0]`) and `k` (=
-`group_indices.shape[1]`).
+The symbols used below are `M` (number of input rows), `K` (contraction
+dimension), `N` (output dimension), `G` (number of groups), and `k`
+(number of selections per row, equal to `group_indices.shape[1]`).
 
 > **Note on efficiency.** The decomposition materialises a full `[M*k, K, N]` weight slice
 > and an `[M*k, K]` copy of the tokens. As explained in [Motivation](#motivation), these
@@ -131,7 +139,9 @@ The symbols used below are `M`, `K`, `N`, `G` (= `weights.shape[0]`) and `k` (=
 
 ```
 idx_flat  = Reshape<allowzero = 1>(group_indices, [M*k])
-W_sel     = Gather(weights, idx_flat, axis=0)            # [M*k, K, N] — duplicates weights!
+W_sel     = Gather(weights, idx_flat, axis=0)            # duplicates weights
+# If transB is non-zero, transpose the gathered matrices from [M*k, N, K]:
+W_sel     = Transpose<perm = [0, 2, 1]>(W_sel)           # only when transB is non-zero
 X         = Reshape<allowzero = 1>(Expand(Unsqueeze(input, 1), [M, k, K]),
                                    [M*k, 1, K])          # [M*k, 1, K] — copies tokens!
 r         = Reshape<allowzero = 1>(MatMul(X, W_sel), [M, k, N])  # [M, k, N]
@@ -144,8 +154,8 @@ r         = r + bias_sel                                          # (only when b
 output    = r                                                    # [M, k, N]
 ```
 
-The two resulting cases (with/without `bias`) are what the context-dependent function body
-emits: the `bias` line is included only when input 3 is present.
+The context-dependent function body emits the transpose only when `transB` is
+non-zero and includes the `bias` line only when input 3 is present.
 
 #### Edge Cases
 
@@ -154,11 +164,11 @@ table records the resulting behaviour for clarity.
 
 | Case | Behaviour |
 |---|---|
-| `k == 0` | No expert selected, empty tensor output of shape `[M, 0, N]`. (Not expected in real model.) |
+| `k == 0` | No expert selected; empty output tensor of shape `[M, 0, N]`. |
 | `k == 1` | One expert per token, output of shape `[M, 1, N]`. |
-| `G == 1`, all indices 0 | Equivalent to `MatMul(input, weights[0])` (+ optional bias). |
+| `G == 1`, all indices 0 | Each selection contains `input[m] @ weights[0]` if `transB == 0`, otherwise `input[m] @ weights[0].T`, plus `bias[0]` if present. |
 | `M == 0` | Zero-token input; output shape is `[0, k, N]`; no compute required. |
-| Out-of-range index | Invalid input (implementations must raise an error). |
+| Index outside `[0, G)`, including a negative index | Invalid input; behavior is undefined. Negative indices do not count backwards from `G`. |
 
 ### Operator Specification
 
@@ -168,16 +178,16 @@ table records the resulting behaviour for clarity.
 |---|---|
 | **Name** | `GroupedMatMul` |
 | **Domain** | `ai.onnx` (standard) |
-| **Opset version** | Next available opset (e.g. 27) |
-| **Since version** | (new in this opset) |
+| **Opset version** | 29 |
+| **Since version** | 29 (current proposal) |
 
 #### Inputs
 
 | Index | Name | Type | Required | Shape | Description |
 |---|---|---|---|---|---|
-| 0 | `input` | T | **Required** | `[M, K]` | Row-major token matrix. `M` tokens, `K` is the contraction (hidden) dimension. |
-| 1 | `weights` | T | **Required** | `[G, K, N]` | Stack of `G` expert weight matrices, each `K × N`. All experts share the same `K` and `N`. |
-| 2 | `group_indices` | tensor(int64) | **Required** | `[M, k]` | Group (expert) index per token per slot. Each of the `M` tokens selects `k` experts. Values must be in `[0, G)`. Use `k=1` for the dense (single-expert) case. |
+| 0 | `input` | T | **Required** | `[M, K]` | Token matrix. `M` tokens, `K` is the contraction dimension. |
+| 1 | `weights` | T | **Required** | `[G, K, N]` if `transB == 0`, otherwise `[G, N, K]` | Stack of `G` expert weight matrices. All experts share the same `K` and `N`. |
+| 2 | `group_indices` | Tind | **Required** | `[M, k]` | Group index per token per selection. Each token selects `k` groups. Values must be in `[0, G)`. |
 | 3 | `bias` | T | **Optional** | `[G, N]` | Per-group bias vector. Added to each expert's result. |
 
 **Notes:**
@@ -196,9 +206,8 @@ table records the resulting behaviour for clarity.
 
 | Constraint | Types |
 |---|---|
-| `T` | `tensor(float)`, `tensor(float16)`, `tensor(bfloat16)` |
-
-`group_indices` is always `tensor(int64)`.
+| `T` | `tensor(float)`, `tensor(float16)`, `tensor(double)`, `tensor(bfloat16)` |
+| `Tind` | `tensor(int32)`, `tensor(int64)` |
 
 #### Quantization
 
@@ -218,6 +227,11 @@ scales per expert, block of `K`, and output channel. Per-expert,
 per-output-channel quantization is the special case `[G, 1, N]` with one
 K-sized block.
 
+For the `[G, N, K]` layout with non-zero `transB`, the corresponding blocked
+`DequantizeLinear` uses `axis=2` and scales of shape `[G, N, ceil(K/B)]`.
+Dequantization preserves the stored layout; `transB` changes only how the
+resulting floating-point matrices are multiplied.
+
 No quantization parameters or quantized tensor types are needed in the
 `GroupedMatMul` schema. For efficient execution, runtimes should recognize and
 fuse the surrounding QDQ pattern so that the full dequantized expert-weight
@@ -227,8 +241,9 @@ be considered in a separate `QLinearGroupedMatMul`-style operator.
 
 #### Attributes
 
-None. All configuration is expressed through inputs (following ONNX's general preference for
-inputs over attributes when the values may be dynamic).
+| Name | Type | Default | Description |
+|---|---|---|---|
+| `transB` | INT | 0 | If non-zero, logically transpose the last two axes of `weights` before multiplication. The group axis and bias layout do not change. |
 
 #### Shape Inference Rules
 
@@ -236,14 +251,14 @@ Let:
 - `M  = input.shape[0]`
 - `K  = input.shape[1]`
 - `G  = weights.shape[0]`
-- `N  = weights.shape[2]`
+- `N  = weights.shape[2]` if `transB == 0`, otherwise `weights.shape[1]`
 - `k  = group_indices.shape[1]`
 
 Validation checks (raise error if violated):
 1. `input.rank == 2`
 2. `weights.rank == 3`
 3. `group_indices.rank == 2` and `group_indices.shape[0] == M`
-4. `weights.shape[1] == K` (contraction dimension agrees)
+4. `weights.shape[1] == K` if `transB == 0`, otherwise `weights.shape[2] == K` (contraction dimension agrees)
 5. If `bias` present: `bias.shape == [G, N]`
 
 Output shape:
