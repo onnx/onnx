@@ -27,9 +27,15 @@ def sequence_insert_reference_implementation(
                 f"Unable to iterate on type {type(sequence)}: {sequence}."
             ) from e
     if position is not None:
-        # In these cases, insert_position will be between [-len(sequence), len(sequence)]
-        # The position argument will be in the format np.array([pos_index])
-        insert_position = (position[0] + len(seq)) % len(seq)
+        # The position argument will be in the format np.array([pos_index]).
+        # Accepted positions are in [-len(seq), len(seq)]; list.insert counts
+        # negative positions from the back and appends when the position
+        # equals len(seq), as the specification requires.
+        insert_position = int(position[0])
+        if not -len(seq) <= insert_position <= len(seq):
+            raise ValueError(
+                f"Position {insert_position} is out of range [{-len(seq)}, {len(seq)}]."
+            )
         seq.insert(insert_position, tensor)
     else:
         # Default position of insertion is at the end of the sequence.
