@@ -1687,6 +1687,11 @@ shape [a_0, a_1, ..., a_{n-1}] and integer argument k, return two outputs:
 
 Given two equivalent values, this operator uses the indices along the axis as
 a tiebreaker. That is, the element with the lower index will appear first.
+
+For floating-point inputs, the handling of NaN values is implementation-defined:
+whether NaN values are selected, and where they appear relative to the other
+elements of the result, can differ between implementations. The ordering of the
+non-NaN values is as described above.
 )DOC";
 
 const char kDoc_Loop_ver13[] = R"DOC(
