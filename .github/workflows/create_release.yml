@@ -69,33 +69,32 @@ jobs:
 
   call-linux:
     if: github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'run release CIs') || contains(github.event.pull_request.labels.*.name, 'ci-slsa-provenance')
-    uses: ./.github/workflows/release_linux_cibw.yml
+    uses: $/.github/workflows/release_linux_cibw.yml
     with:
       build_mode: ${{ github.event.inputs.build_mode || 'preview' }}
 
   call-win:
     if: github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'run release CIs') || contains(github.event.pull_request.labels.*.name, 'ci-slsa-provenance')
-    uses: ./.github/workflows/release_windows_cibw.yml
+    uses: $/.github/workflows/release_windows_cibw.yml
     with:
       build_mode: ${{ github.event.inputs.build_mode || 'preview' }}
 
   call-mac:
     if: github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'run release CIs') || contains(github.event.pull_request.labels.*.name, 'ci-slsa-provenance')
-    uses: ./.github/workflows/release_macos_cibw.yml
+    uses: $/.github/workflows/release_macos_cibw.yml
     with:
       build_mode: ${{ github.event.inputs.build_mode || 'preview' }}
 
   call-pyodide:
     if: github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'run release CIs') || contains(github.event.pull_request.labels.*.name, 'ci-slsa-provenance')
-    uses: ./.github/workflows/release_pyodide_cibw.yml
+    uses: $/.github/workflows/release_pyodide_cibw.yml
     with:
       build_mode: ${{ github.event.inputs.build_mode || 'preview' }}
 
   call-sdist:
     if: github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'run release CIs') || contains(github.event.pull_request.labels.*.name, 'ci-slsa-provenance')
-    uses: ./.github/workflows/release_sdist.yml
+    uses: $/.github/workflows/release_sdist.yml
     with:
-      os: "macos"
       build_mode: ${{ github.event.inputs.build_mode || 'preview' }}
 
   attest_ci_build_artifacts:
@@ -123,13 +122,13 @@ jobs:
       attestations: write
 
     steps:
-      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
         with:
           pattern: wheels*
           path: dist
           merge-multiple: true
 
-      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
         with:
           pattern: sdist
           path: dist
@@ -138,13 +137,13 @@ jobs:
       - name: Generate SLSA Build Provenance attestations
         if: hashFiles('dist/**') != ''
         id: attest
-        uses: actions/attest-build-provenance@0f67c3f4856b2e3261c31976d6725780e5e4c373 # v4.1.1
+        uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
         with:
           subject-path: dist/**
 
       - name: Upload attestation bundle
         if: hashFiles('dist/**') != ''
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: attestation-bundle-ci
           path: ${{ steps.attest.outputs.bundle-path }}
@@ -170,7 +169,6 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-          submodules: true
 
       - name: Check if package_version matches branch
         run: |
@@ -212,14 +210,14 @@ jobs:
 
     steps:
 
-      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
         if: (github.event_name == 'workflow_dispatch' )
         with:
           pattern: wheels*
           path: dist
           merge-multiple: true
 
-      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
         if: (github.event_name == 'workflow_dispatch' )
         with:
           pattern: sdist
@@ -229,13 +227,13 @@ jobs:
       - name: Generate SLSA Build Provenance attestations
         if: hashFiles('dist/**') != ''
         id: attest
-        uses: actions/attest-build-provenance@0f67c3f4856b2e3261c31976d6725780e5e4c373 # v4.1.1
+        uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
         with:
           subject-path: dist/**
 
       - name: Upload attestation bundle
         if: hashFiles('dist/**') != ''
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: attestation-bundle-testpypi-weekly
           path: ${{ steps.attest.outputs.bundle-path }}
@@ -244,7 +242,7 @@ jobs:
         if: (github.ref == 'refs/heads/main') && (github.event.inputs.publish_testpypi_weekly == 'yes') && (github.repository_owner == 'onnx')
         id: upload_preview_build_to_testpypi_weekly
 
-        uses: pypa/gh-action-pypi-publish@ba38be9e461d3875417946c167d0b5f3d385a247
+        uses: pypa/gh-action-pypi-publish@7245906fb61fa33a13554f9d5fb856fe61758086
         with:
           repository-url: https://test.pypi.org/legacy/
           verbose: true
@@ -277,14 +275,14 @@ jobs:
 
       steps:
 
-        - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
           if: (github.event_name == 'workflow_dispatch' )
           with:
             pattern: wheels*
             path: dist
             merge-multiple: true
 
-        - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
           if: (github.event_name == 'workflow_dispatch' )
           with:
             pattern: sdist
@@ -294,13 +292,13 @@ jobs:
         - name: Generate SLSA Build Provenance attestations
           if: hashFiles('dist/**') != ''
           id: attest
-          uses: actions/attest-build-provenance@0f67c3f4856b2e3261c31976d6725780e5e4c373 # v4.1.1
+          uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
           with:
             subject-path: dist/**
 
         - name: Upload attestation bundle
           if: hashFiles('dist/**') != ''
-          uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+          uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
           with:
             name: attestation-bundle-testpypi-release
             path: ${{ steps.attest.outputs.bundle-path }}
@@ -308,7 +306,7 @@ jobs:
         - name: Upload release build to test.pypi
           id: upload_release_build_to_testpypi
 
-          uses: pypa/gh-action-pypi-publish@ba38be9e461d3875417946c167d0b5f3d385a247
+          uses: pypa/gh-action-pypi-publish@7245906fb61fa33a13554f9d5fb856fe61758086
           with:
             repository-url: https://test.pypi.org/legacy/
             verbose: true
@@ -341,14 +339,14 @@ jobs:
       attestations: write
 
     steps:
-      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
         if: (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch')
         with:
           pattern: wheels*
           path: dist
           merge-multiple: true
 
-      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
         if: (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch')
         with:
           pattern: sdist
@@ -358,13 +356,13 @@ jobs:
       - name: Generate SLSA Build Provenance attestations
         if: hashFiles('dist/**') != ''
         id: attest
-        uses: actions/attest-build-provenance@0f67c3f4856b2e3261c31976d6725780e5e4c373 # v4.1.1
+        uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
         with:
           subject-path: dist/**
 
       - name: Upload attestation bundle
         if: hashFiles('dist/**') != ''
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: attestation-bundle-weekly
           path: ${{ steps.attest.outputs.bundle-path }}
@@ -372,7 +370,7 @@ jobs:
       - name: Upload preview_build to pypi-weekly
         id: upload_preview_build_to_pypi_weekly
         if: (github.ref == 'refs/heads/main')
-        uses: pypa/gh-action-pypi-publish@ba38be9e461d3875417946c167d0b5f3d385a247
+        uses: pypa/gh-action-pypi-publish@7245906fb61fa33a13554f9d5fb856fe61758086
         with:
           repository-url: https://upload.pypi.org/legacy/
           verbose: true
@@ -394,14 +392,14 @@ jobs:
       attestations: write
 
     steps:
-      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
         if: (github.event_name == 'workflow_dispatch')
         with:
           pattern: wheels*
           path: dist
           merge-multiple: true
 
-      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
         if: (github.event_name == 'workflow_dispatch')
         with:
           pattern: sdist
@@ -411,20 +409,20 @@ jobs:
       - name: Generate SLSA Build Provenance attestations
         if: hashFiles('dist/**') != ''
         id: attest
-        uses: actions/attest-build-provenance@0f67c3f4856b2e3261c31976d6725780e5e4c373 # v4.1.1
+        uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
         with:
           subject-path: dist/**
 
       - name: Upload attestation bundle
         if: hashFiles('dist/**') != ''
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: attestation-bundle-release
           path: ${{ steps.attest.outputs.bundle-path }}
 
       - name: Publish release_build to pypi
         if: (github.repository_owner == 'onnx')
-        uses: pypa/gh-action-pypi-publish@ba38be9e461d3875417946c167d0b5f3d385a247
+        uses: pypa/gh-action-pypi-publish@7245906fb61fa33a13554f9d5fb856fe61758086
         with:
           repository-url: https://upload.pypi.org/legacy/
           verbose: true
@@ -434,4 +432,4 @@ jobs:
     name: test source distribution
     needs: [publish_preview_build_to_pypi_weekly, publish_release_build_to_testpypi]
     if: (needs.publish_preview_build_to_pypi_weekly.result == 'success' || needs.publish_release_build_to_testpypi.result == 'success')
-    uses: ./.github/workflows/preview_source_dist_test.yml
+    uses: $/.github/workflows/preview_source_dist_test.yml

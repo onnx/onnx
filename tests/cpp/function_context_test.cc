@@ -5,7 +5,6 @@
 #include <stdexcept>
 #include <string>
 #include <unordered_map>
-#include <vector>
 
 #include "gtest/gtest.h"
 #include "onnx/checker.h"
@@ -14,8 +13,6 @@
 #include "onnx/defs/schema.h"
 
 namespace ONNX_NAMESPACE::Test {
-
-// Utilities. TODO: Turn them into reusable ONNX utilities for use by
 
 static TensorProto ToTensor(double value, TensorProto_DataType elem_type) {
   TensorProto t;
@@ -37,44 +34,14 @@ static TensorProto ToTensor(double value, TensorProto_DataType elem_type) {
   return t;
 }
 
-static void BuildNodes(FunctionProto& functionProto, const std::vector<FunctionBodyHelper::NodeDef>& node_defs) {
-  for (const auto& node : node_defs) {
-    auto* np = functionProto.add_node();
-
-    np->set_op_type(node.op_type);
-    for (const auto& inp : node.inputs) {
-      np->add_input(inp);
-    }
-    for (const auto& o : node.outputs) {
-      np->add_output(o);
-    }
-    for (const auto& attr : node.attributes) {
-      *(np->add_attribute()) = attr.proto;
-    }
-  }
-}
-
-static bool BuildFunctionProto(
-    FunctionProto& functionProto,
-    const OpSchema& schema,
-    const std::vector<FunctionBodyHelper::NodeDef>& node_defs) {
-  BuildNodes(functionProto, node_defs);
-  schema.BuildFunction(functionProto);
-  return true;
-}
-
 // A monomorphic context-dependent function test-case.
 static bool
 BuildFloatFunctionBody(const FunctionBodyBuildContext& /*ctx*/, const OpSchema& schema, FunctionProto& functionProto) {
-  // Create a scalar-tensor constant 2.0 of float type:
-  auto two_as_tensor = ToTensor(2.0, TensorProto_DataType::TensorProto_DataType_FLOAT);
-
-  std::vector<FunctionBodyHelper::NodeDef> body{
-      // nodes: {outputs, op, inputs, attributes}
-      {{"Two"}, "Constant", {}, {{"value", two_as_tensor}}},
-      {{"Y"}, "Mul", {"X", "Two"}}};
-
-  return BuildFunctionProto(functionProto, schema, body);
+  FunctionBuilder builder(functionProto);
+  builder.Const("Two", ToTensor(2.0, TensorProto_DataType::TensorProto_DataType_FLOAT))
+      .Add("Y = Mul (X, Two)");
+  schema.BuildFunction(functionProto);
+  return true;
 }
 
 static void RegisterCustomFuncFloatSchema() {
@@ -128,14 +95,10 @@ BuildFunctionBody(const FunctionBodyBuildContext& ctx, const OpSchema& schema, F
   if ((tp == nullptr) || (!tp->has_tensor_type()))
     return false;
   auto elem_type = static_cast<TensorProto_DataType>(tp->tensor_type().elem_type());
-  auto two_as_tensor = ToTensor(2.0, elem_type);
-
-  std::vector<FunctionBodyHelper::NodeDef> body{
-      // nodes: {outputs, op, inputs, attributes}
-      {{"Two"}, "Constant", {}, {{"value", two_as_tensor}}},
-      {{"Y"}, "Mul", {"X", "Two"}}};
-
-  return BuildFunctionProto(functionProto, schema, body);
+  FunctionBuilder builder(functionProto);
+  builder.Const("Two", ToTensor(2.0, elem_type)).Add("Y = Mul (X, Two)");
+  schema.BuildFunction(functionProto);
+  return true;
 }
 
 static void RegisterCustomFunctionSchema() {

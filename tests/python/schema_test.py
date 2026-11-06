@@ -9,21 +9,27 @@ from typing import TYPE_CHECKING
 import pytest
 
 import onnx
-from onnx import defs
+from onnx import TensorProto, defs, helper
+
+MOD_OPSET_13 = 13
+MOD_OPSET_28 = 28
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
 
 class TestSchema:
+    @staticmethod
+    def _tensor_type_proto(elem_type: int) -> onnx.TypeProto:
+        type_proto = onnx.TypeProto()
+        type_proto.tensor_type.elem_type = elem_type
+        return type_proto
+
     def test_get_schema(self) -> None:
         relu_schema = defs.get_schema("Relu")
         assert (
             relu_schema.node_determinism == defs.OpSchema.NodeDeterminism.Deterministic
         )
-
-    def test_typecheck(self) -> None:
-        defs.get_schema("Conv")
 
     def test_attr_default_value(self) -> None:
         v = defs.get_schema("BatchNormalization").attributes["epsilon"].default_value
@@ -36,6 +42,86 @@ class TestSchema:
         assert (
             selu_schema.node_determinism == defs.OpSchema.NodeDeterminism.Deterministic
         )
+
+    @pytest.mark.parametrize("op_version", [23, 24])
+    @pytest.mark.parametrize(
+        "elem_type",
+        [TensorProto.BFLOAT16, TensorProto.FLOAT16, TensorProto.DOUBLE],
+    )
+    def test_attention_context_dependent_function_with_typed_causal_mask(
+        self, op_version: int, elem_type: int
+    ) -> None:
+        schema = defs.get_schema("Attention", op_version)
+        assert schema.has_context_dependent_function
+        node = helper.make_node(
+            "Attention",
+            ["Q", "K", "V", "attn_mask"],
+            ["Y"],
+            is_causal=1,
+            q_num_heads=2,
+            kv_num_heads=2,
+        )
+
+        input_types = [self._tensor_type_proto(elem_type)] * 4
+        function_proto = onnx.FunctionProto()
+        function_proto.ParseFromString(
+            schema.get_context_dependent_function(
+                node.SerializeToString(),
+                [input_type.SerializeToString() for input_type in input_types],
+            )
+        )
+
+        assert any(
+            n.op_type == "CastLike"
+            and tuple(n.input) == ("MaskTriFloat", "AttnBias")
+            and tuple(n.output) == ("MaskTri",)
+            for n in function_proto.node
+        )
+        output_types = onnx.shape_inference.infer_function_output_types(
+            function_proto, input_types, list(node.attribute)
+        )
+        assert output_types[0].tensor_type.elem_type == elem_type
+
+    @pytest.mark.parametrize(
+        "elem_type",
+        [TensorProto.BFLOAT16, TensorProto.FLOAT16, TensorProto.DOUBLE],
+    )
+    def test_attention_context_dependent_function_with_typed_padding_mask(
+        self, elem_type: int
+    ) -> None:
+        schema = defs.get_schema("Attention", 24)
+        assert schema.has_context_dependent_function
+        node = helper.make_node(
+            "Attention",
+            ["Q", "K", "V", "attn_mask", "", "", "nonpad_kv_seqlen"],
+            ["Y"],
+            q_num_heads=2,
+            kv_num_heads=2,
+        )
+
+        input_types = [self._tensor_type_proto(elem_type)] * 4 + [
+            self._tensor_type_proto(TensorProto.UNDEFINED),
+            self._tensor_type_proto(TensorProto.UNDEFINED),
+            self._tensor_type_proto(TensorProto.INT64),
+        ]
+        function_proto = onnx.FunctionProto()
+        function_proto.ParseFromString(
+            schema.get_context_dependent_function(
+                node.SerializeToString(),
+                [input_type.SerializeToString() for input_type in input_types],
+            )
+        )
+
+        assert any(
+            n.op_type == "CastLike"
+            and tuple(n.input) == ("PaddingMask4DFloat", "AttnBiasCausalOrNot")
+            and tuple(n.output) == ("PaddingMask4D",)
+            for n in function_proto.node
+        )
+        output_types = onnx.shape_inference.infer_function_output_types(
+            function_proto, input_types, list(node.attribute)
+        )
+        assert output_types[0].tensor_type.elem_type == elem_type
 
     def test_node_determinism(self) -> None:
         rand_schema = defs.get_schema("RandomNormalLike")
@@ -82,8 +168,42 @@ class TestSchema:
         assert celu28.has_function
         assert allowed(defs.get_schema("Celu", 12)) == {"tensor(float)"}
 
+    def test_bitshift_type_constraints(self) -> None:
+        def allowed(schema):
+            return next(
+                set(t.allowed_type_strs)
+                for t in schema.type_constraints
+                if t.type_param_str == "T"
+            )
+
+        unsigned = {
+            "tensor(uint8)",
+            "tensor(uint16)",
+            "tensor(uint32)",
+            "tensor(uint64)",
+        }
+        signed = {"tensor(int8)", "tensor(int16)", "tensor(int32)", "tensor(int64)"}
+
+        bitshift28 = defs.get_schema("BitShift", 28)
+        bitshift11 = defs.get_schema("BitShift", 11)
+        assert allowed(bitshift28) == unsigned | signed
+        assert allowed(bitshift11) == unsigned
+        assert "right shift is an arithmetic shift" in bitshift28.doc
+        assert "Y is negative" in bitshift28.doc
+        assert "effectively decreased" in bitshift11.doc
+
+    def test_mod_opset28_schema(self) -> None:
+        mod13 = defs.get_schema("Mod", MOD_OPSET_13)
+        mod28 = defs.get_schema("Mod", MOD_OPSET_28)
+
+        assert mod13.since_version == MOD_OPSET_13
+        assert mod28.since_version == MOD_OPSET_28
+        assert "floating point" not in mod28.doc
+        assert "A - floor(A / B) * B" in mod28.doc
+        assert "A - trunc(A / B) * B" in mod28.doc
+
     def test_range_supported_types(self) -> None:
-        """Test Range operator supports all expected numeric types."""
+        """Test Range operator supports exactly the expected numeric types."""
         range_schema = defs.get_schema("Range")
 
         supported_types = set()
@@ -101,28 +221,7 @@ class TestSchema:
             "tensor(int64)",
         }
 
-        for expected_type in expected_types:
-            assert expected_type in supported_types, (
-                f"Range should support {expected_type}"
-            )
-
-        # Verify no unexpected types are supported (regression check)
-        allowed_type_families = {
-            "float16",
-            "bfloat16",
-            "float",
-            "double",
-            "int16",
-            "int32",
-            "int64",
-        }
-
-        for supported_type in supported_types:
-            if supported_type.startswith("tensor(") and supported_type.endswith(")"):
-                base_type = supported_type[7:-1]
-                assert base_type in allowed_type_families, (
-                    f"Unexpected type {supported_type} supported by Range"
-                )
+        assert supported_types == expected_types
 
     def test_range_type_consistency(self) -> None:
         """Test Range operator type constraints are consistent."""
@@ -151,74 +250,236 @@ class TestSchema:
             "Range should have exactly one type constraint 'T'"
         )
 
-    def test_range_numeric_types_only(self) -> None:
-        """Test Range operator only supports appropriate numeric types."""
-        range_schema = defs.get_schema("Range")
+    def test_optional_type_constraints(self) -> None:
+        def tensor(ts):
+            return {f"tensor({t})" for t in ts}
 
-        supported_types = set()
-        for constraint in range_schema.type_constraints:
-            if constraint.type_param_str == "T":
-                supported_types.update(constraint.allowed_type_strs)
+        def seq(ts):
+            return {f"seq({t})" for t in ts}
 
-        unsupported_types = {
-            "tensor(bool)",
-            "tensor(string)",
-            "tensor(uint8)",
-            "tensor(uint16)",
-            "tensor(uint32)",
-            "tensor(uint64)",
-            "tensor(int8)",
+        def optional(ts):
+            return {f"optional({t})" for t in ts}
+
+        dtype15 = {
+            "float",
+            "uint8",
+            "int8",
+            "uint16",
+            "int16",
+            "int32",
+            "int64",
+            "string",
+            "bool",
+            "float16",
+            "double",
+            "uint32",
+            "uint64",
+            "complex64",
+            "complex128",
         }
+        dtype28 = dtype15 | {
+            "bfloat16",
+            "float8e4m3fn",
+            "float8e4m3fnuz",
+            "float8e5m2",
+            "float8e5m2fnuz",
+            "uint4",
+            "int4",
+            "float4e2m1",
+            "float8e8m0",
+            "uint2",
+            "int2",
+            "float6e2m3",
+            "float6e3m2",
+        }
+        allowed_types = {
+            15: tensor(dtype15) | seq(tensor(dtype15)),
+            28: tensor(dtype28) | seq(tensor(dtype28)),
+        }
+        for version, types in allowed_types.items():
+            op = defs.get_schema("Optional", version)
+            tc = {t.type_param_str: t.allowed_type_strs for t in op.type_constraints}
+            assert len(types) == len(tc["V"])
+            assert all(t in tc["V"] for t in types)
+            assert len(types) == len(tc["O"])
+            assert all(t in tc["O"] for t in optional(types))
 
-        for unsupported_type in unsupported_types:
-            assert unsupported_type not in supported_types, (
-                f"Range should not support {unsupported_type}"
-            )
+    def test_optional_docstrings(self) -> None:
+        optional15 = defs.get_schema("Optional", 15).doc
+        optional28 = defs.get_schema("Optional", 28).doc
+        assert optional15
+        assert optional15 == optional28
 
-        # All supported types should be appropriate for arithmetic operations
-        for supported_type in supported_types:
-            assert supported_type.startswith("tensor("), (
-                f"All Range types should be tensors, got {supported_type}"
-            )
+        has_element15 = defs.get_schema("OptionalHasElement", 15).doc
+        has_element18 = defs.get_schema("OptionalHasElement", 18).doc
+        has_element28 = defs.get_schema("OptionalHasElement", 28).doc
+        assert has_element15 != has_element18
+        assert has_element18 == has_element28
+        assert "tensor or sequence type" not in has_element15
+        assert "tensor or sequence type" in has_element18
 
-            base_type = supported_type[7:-1]
-            assert base_type in [
-                "float16",
-                "bfloat16",
-                "float",
-                "double",
-                "int16",
-                "int32",
-                "int64",
-            ], f"Range type {base_type} should be a supported numeric type"
+        get_element15 = defs.get_schema("OptionalGetElement", 15).doc
+        get_element18 = defs.get_schema("OptionalGetElement", 18).doc
+        get_element28 = defs.get_schema("OptionalGetElement", 28).doc
+        assert get_element15 != get_element18
+        assert get_element18 == get_element28
+        assert "returns the input" not in get_element15
+        assert "returns the input" in get_element18
+
+    def test_optional_has_element_type_constraints(self) -> None:
+        def tensor(ts):
+            return {f"tensor({t})" for t in ts}
+
+        def seq(ts):
+            return {f"seq({t})" for t in ts}
+
+        def optional(ts):
+            return {f"optional({t})" for t in ts}
+
+        dtype15 = {
+            "float",
+            "uint8",
+            "int8",
+            "uint16",
+            "int16",
+            "int32",
+            "int64",
+            "string",
+            "bool",
+            "float16",
+            "double",
+            "uint32",
+            "uint64",
+            "complex64",
+            "complex128",
+        }
+        dtype28 = dtype15 | {
+            "bfloat16",
+            "float8e4m3fn",
+            "float8e4m3fnuz",
+            "float8e5m2",
+            "float8e5m2fnuz",
+            "uint4",
+            "int4",
+            "float4e2m1",
+            "float8e8m0",
+            "uint2",
+            "int2",
+            "float6e2m3",
+            "float6e3m2",
+        }
+        allowed_types = {
+            15: tensor(dtype15) | seq(tensor(dtype15)),
+            18: tensor(dtype15) | seq(tensor(dtype15)),
+            28: tensor(dtype28) | seq(tensor(dtype28)),
+        }
+        for version, types in allowed_types.items():
+            op = defs.get_schema("OptionalHasElement", version)
+            tc = {
+                t.type_param_str: set(t.allowed_type_strs) for t in op.type_constraints
+            }
+            o_allowed = optional(types)
+            if version > min(allowed_types):
+                o_allowed = o_allowed | types
+            assert len(o_allowed) == len(tc["O"])
+            assert all(t in tc["O"] for t in o_allowed)
+            assert tc["B"] == {"tensor(bool)"}
+
+    def test_optional_get_element_type_constraints(self) -> None:
+        def tensor(ts):
+            return {f"tensor({t})" for t in ts}
+
+        def seq(ts):
+            return {f"seq({t})" for t in ts}
+
+        def optional(ts):
+            return {f"optional({t})" for t in ts}
+
+        dtype15 = {
+            "float",
+            "uint8",
+            "int8",
+            "uint16",
+            "int16",
+            "int32",
+            "int64",
+            "string",
+            "bool",
+            "float16",
+            "double",
+            "uint32",
+            "uint64",
+            "complex64",
+            "complex128",
+        }
+        dtype28 = dtype15 | {
+            "bfloat16",
+            "float8e4m3fn",
+            "float8e4m3fnuz",
+            "float8e5m2",
+            "float8e5m2fnuz",
+            "uint4",
+            "int4",
+            "float4e2m1",
+            "float8e8m0",
+            "uint2",
+            "int2",
+            "float6e2m3",
+            "float6e3m2",
+        }
+        allowed_types = {
+            15: tensor(dtype15) | seq(tensor(dtype15)),
+            18: tensor(dtype15) | seq(tensor(dtype15)),
+            28: tensor(dtype28) | seq(tensor(dtype28)),
+        }
+        for version, types in allowed_types.items():
+            op = defs.get_schema("OptionalGetElement", version)
+            tc = {
+                t.type_param_str: set(t.allowed_type_strs) for t in op.type_constraints
+            }
+            o_allowed = optional(types)
+            if version > min(allowed_types):
+                o_allowed = o_allowed | types
+            assert len(o_allowed) == len(tc["O"])
+            assert all(t in tc["O"] for t in o_allowed)
+            assert len(types) == len(tc["V"])
+            assert all(t in tc["V"] for t in types)
+
+    def test_optional_ops_accept_ir14_sequence_type(self) -> None:
+        sequence_input = helper.make_tensor_sequence_value_info(
+            "sequence_input", TensorProto.FLOAT6E2M3, [2, 3]
+        )
+        sequence_output = helper.make_tensor_sequence_value_info(
+            "sequence_output", TensorProto.FLOAT6E2M3, [2, 3]
+        )
+        has_element = helper.make_tensor_value_info("has_element", TensorProto.BOOL, [])
+        graph = helper.make_graph(
+            [
+                helper.make_node("Optional", ["sequence_input"], ["optional_value"]),
+                helper.make_node(
+                    "OptionalHasElement", ["optional_value"], ["has_element"]
+                ),
+                helper.make_node(
+                    "OptionalGetElement", ["optional_value"], ["sequence_output"]
+                ),
+            ],
+            "optional_ir14_sequence",
+            [sequence_input],
+            [has_element, sequence_output],
+        )
+        model = helper.make_model(
+            graph,
+            ir_version=14,
+            opset_imports=[helper.make_opsetid("", 28)],
+        )
+
+        onnx.checker.check_model(model, full_check=True)
+        onnx.shape_inference.infer_shapes(model, check_type=True, strict_mode=True)
 
 
 class TestOpSchema:
-    def test_init(self):
-        # Test that the constructor creates an OpSchema object
-        schema = defs.OpSchema("test_op", "test_domain", 1)
-        assert isinstance(schema, defs.OpSchema)
-        assert schema.node_determinism == defs.OpSchema.NodeDeterminism.Deterministic
-
-    def test_init_with_inputs(self) -> None:
-        op_schema = defs.OpSchema(
-            "test_op",
-            "test_domain",
-            1,
-            inputs=[defs.OpSchema.FormalParameter("input1", "T")],
-            type_constraints=[("T", ["tensor(int64)"], "")],
-        )
-        assert op_schema.name == "test_op"
-        assert op_schema.domain == "test_domain"
-        assert op_schema.since_version == 1
-        assert len(op_schema.inputs) == 1
-        assert op_schema.inputs[0].name == "input1"
-        assert op_schema.inputs[0].type_str == "T"
-        assert len(op_schema.type_constraints) == 1
-        assert op_schema.type_constraints[0].type_param_str == "T"
-        assert op_schema.type_constraints[0].allowed_type_strs == ["tensor(int64)"]
-
     def test_init_creates_multi_input_output_schema(self) -> None:
+        expected_parameter_count = 2
         op_schema = defs.OpSchema(
             "test_op",
             "test_domain",
@@ -238,12 +499,12 @@ class TestOpSchema:
                 )
             ],
         )
-        assert len(op_schema.inputs) == 2
+        assert len(op_schema.inputs) == expected_parameter_count
         assert op_schema.inputs[0].name == "input1"
         assert op_schema.inputs[0].type_str == "T"
         assert op_schema.inputs[1].name == "input2"
         assert op_schema.inputs[1].type_str == "T"
-        assert len(op_schema.outputs) == 2
+        assert len(op_schema.outputs) == expected_parameter_count
         assert op_schema.outputs[0].name == "output1"
         assert op_schema.outputs[0].type_str == "T"
         assert op_schema.outputs[1].name == "output2"
@@ -264,6 +525,7 @@ class TestOpSchema:
         assert len(op_schema.inputs) == 0
         assert len(op_schema.outputs) == 0
         assert len(op_schema.type_constraints) == 0
+        assert op_schema.node_determinism == defs.OpSchema.NodeDeterminism.Deterministic
 
     def test_name(self):
         # Test that the name parameter is required and is a string
@@ -272,9 +534,6 @@ class TestOpSchema:
         with pytest.raises(TypeError):
             defs.OpSchema(123, "test_domain", 1)
 
-        schema = defs.OpSchema("test_op", "test_domain", 1)
-        assert schema.name == "test_op"
-
     def test_domain(self):
         # Test that the domain parameter is required and is a string
         with pytest.raises(TypeError):
@@ -282,22 +541,27 @@ class TestOpSchema:
         with pytest.raises(TypeError):
             defs.OpSchema("test_op", 123, 1)
 
-        schema = defs.OpSchema("test_op", "test_domain", 1)
-        assert schema.domain == "test_domain"
-
     def test_since_version(self):
         # Test that the since_version parameter is required and is an integer
         with pytest.raises(TypeError):
             defs.OpSchema("test_op", "test_domain")
 
-        schema = defs.OpSchema("test_op", "test_domain", 1)
-        assert schema.since_version == 1
-
     def test_doc(self):
         schema = defs.OpSchema("test_op", "test_domain", 1, doc="test_doc")
         assert schema.doc == "test_doc"
 
-    def test_inputs(self):
+    @pytest.mark.parametrize(
+        ("type_str", "canonical"),
+        [
+            ("tensor(int64)", "tensor(int64)"),
+            (
+                " \tseq ( map ( int64 , optional ( tensor ( float ) ) ) ) \r\n",
+                "seq(map(int64,optional(tensor(float))))",
+            ),
+            ("opaque ( domain , name )", "opaque(domain , name)"),
+        ],
+    )
+    def test_inputs(self, type_str: str, canonical: str) -> None:
         # Test that the inputs parameter is optional and is a sequence of FormalParameter tuples
         inputs = [
             defs.OpSchema.FormalParameter(
@@ -309,12 +573,13 @@ class TestOpSchema:
             "test_domain",
             1,
             inputs=inputs,
-            type_constraints=[("T", ["tensor(int64)"], "")],
+            type_constraints=[("T", [type_str], "")],
         )
 
         assert len(schema.inputs) == 1
         assert schema.inputs[0].name == "input1"
         assert schema.inputs[0].type_str == "T"
+        assert schema.inputs[0].types == {canonical}
         assert schema.inputs[0].description == "The first input."
 
     def test_outputs(self):

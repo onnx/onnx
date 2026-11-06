@@ -39,7 +39,7 @@ def _layer_normalization(
     # layer normalization is equivalent to conducting
     # standardization on each column vector (s.t. each
     # column has zero mean and unit variance).
-    x_mat = np.reshape(X, (row_number, col_number))
+    x_mat = np.reshape(X.astype(np.float32), (row_number, col_number))
     # This computes mean for every x_mat's column.
     x_mean = np.sum(x_mat, axis=1, keepdims=True) / col_number
     x_diff = x_mat - x_mean
@@ -53,7 +53,7 @@ def _layer_normalization(
     y_mat = x_diff * inv_std_dev
     # Apply affine transform on normalization outcome.
     # W is linear coefficient while B is bias.
-    Y = np.reshape(y_mat, X_shape) * W
+    Y = np.reshape(y_mat, X_shape).astype(X.dtype) * W
     if B is not None:
         Y = Y + B
     # Matrix-level operations' outputs should be reshaped
@@ -61,7 +61,7 @@ def _layer_normalization(
     X_mean = np.reshape(x_mean, reduction_shape)
     X_inv_std_dev = np.reshape(inv_std_dev, reduction_shape)
 
-    return (Y.astype(X.dtype), X_mean.astype(X.dtype), X_inv_std_dev.astype(X.dtype))
+    return (Y.astype(X.dtype), X_mean, X_inv_std_dev)
 
 
 class LayerNormalization(OpRun):

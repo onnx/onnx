@@ -138,3 +138,47 @@ class TestInliner:
         )
         inlined_nodes = inlined.graph.node
         assert "Abs" in [n.op_type for n in inlined_nodes]
+
+    def test_sequence_map_inlining_rejects_missing_input_type(self):
+        model = parser.parse_model(
+            """
+            <ir_version: 13, opset_import: [ "" : 17 ]>
+            missing_sequence_type (seq(float) input) => (seq(float) output) {
+                output = SequenceMap (input) <
+                    body = body (float body_input) => (float body_output) {
+                        body_output = Identity(body_input)
+                    }
+                >
+            }
+            """
+        )
+        model.graph.input[0].ClearField("type")
+        model.graph.output[0].ClearField("type")
+
+        with pytest.raises(ValueError, match="Expected a sequence type"):
+            inliner.inline_selected_functions(
+                model, [], exclude=True, inline_schema_functions=True
+            )
+
+    def test_inline_ignores_constant_without_outputs(self):
+        model = parser.parse_model(
+            """
+            <ir_version: 13, opset_import: [ "" : 13, "local" : 1 ]>
+            constant_without_outputs (float[1] X) => (float[1] Y) {
+                = Constant()
+                Y = local.identity(X)
+            }
+
+            <opset_import: [ "" : 12 ], domain: "local">
+            identity (X) => (Y) {
+                Y = Identity(X)
+            }
+            """
+        )
+
+        inlined = inliner.inline_local_functions(model, convert_version=True)
+
+        assert [node.op_type for node in inlined.graph.node] == [
+            "Constant",
+            "Identity",
+        ]

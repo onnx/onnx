@@ -6,6 +6,7 @@
 
 #include <cstdint>
 #include <string>
+#include <string_view>
 #include <vector>
 
 #include "onnx/defs/schema.h"
@@ -16,6 +17,8 @@
 namespace ONNX_NAMESPACE::defs::math::utils {
 
 std::function<void(OpSchema&)> TopKOpGenerator(std::vector<std::string> allowed_types);
+
+std::function<void(OpSchema&)> EinsumOpGenerator(std::vector<std::string> allowed_types);
 
 // Unary elementwise ops on float types: T input -> T output, no attrs, no function body.
 std::function<void(OpSchema&)> UnaryFloatMathOpGenerator(
@@ -48,8 +51,6 @@ void MatMulShapeInference(ONNX_NAMESPACE::InferenceContext& ctx, int input1Idx, 
 
 void QLinearMatMulShapeInference(ONNX_NAMESPACE::InferenceContext& ctx);
 
-const char* QLinearMatMulDoc();
-
-int64_t MathOpTwoIntegers(const std::string& op_type, int64_t a, int64_t b);
+int64_t MathOpTwoIntegers(std::string_view op_type, int64_t a, int64_t b);
 
 } // namespace ONNX_NAMESPACE::defs::math::utils

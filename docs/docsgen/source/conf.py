@@ -77,6 +77,7 @@ coverage_show_missing_items = True
 exclude_patterns = []
 graphviz_output_format = "svg"
 html_css_files = ["css/custom.css"]
+html_extra_path = ["extra"]
 html_favicon = "onnx-favicon.png"
 html_sidebars = {}
 html_static_path = ["_static"]

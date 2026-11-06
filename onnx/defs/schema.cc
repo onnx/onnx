@@ -138,11 +138,10 @@ void OpSchema::CheckInputOutputType(struct InferenceContext& ctx) const {
     if (param.GetIsHomogeneous()) {
       const auto& type_proto = Utils::DataTypeUtils::ToType(*param_type);
       auto [it, inserted] = type_constraints.emplace(type_str, *type_proto);
-      if (!inserted) {
-        // failed to insert a new element due to a duplication, now check consistency
-        if (it->second != *type_proto) {
-          fail_check(param.GetName(), " has inconsistent type ", *Utils::DataTypeUtils::ToType(*param_type));
-        }
+      if ((!inserted) && (it->second != *type_proto))
+      // failed to insert a new element due to a duplication, now check consistency
+      {
+        fail_check(param.GetName(), " has inconsistent type ", *Utils::DataTypeUtils::ToType(*param_type));
       }
     }
   } // for inputs
@@ -235,13 +234,6 @@ void OpSchema::Verify(const NodeProto& node) const {
     }
   }
 
-  // An internal symbol is defined as starting with two underscores. Attributes
-  // with names meeting this condition are considered implementation details
-  // and should be ignored for the purpose of schema checking.
-  auto isInternalSymbol = [](const std::string& sym) -> bool {
-    return sym.length() >= 2 && sym[0] == '_' && sym[1] == '_';
-  };
-
   // Check attributes
   std::unordered_set<std::string> seen_attr_names{};
   for (const auto& attr_proto : node.attribute()) {
@@ -255,7 +247,9 @@ void OpSchema::Verify(const NodeProto& node) const {
     AttributeProto::AttributeType expected_type{};
     if (search != attributes_.end()) {
       expected_type = search->second.type;
-    } else if (allows_unchecked_attributes_ || isInternalSymbol(name)) {
+    } else if (allows_unchecked_attributes_ || name.rfind("__", 0) == 0) {
+      // Attributes starting with two underscores are internal implementation
+      // details and are ignored for the purpose of schema checking.
       continue;
     } else {
       fail_check("Unrecognized attribute: ", name, " for operator ", node.op_type());
@@ -854,7 +848,7 @@ OpSchema& OpSchema::FunctionBody(
 
   auto function_proto = std::make_shared<FunctionProto>();
   for (const auto& relied_opset : relied_opsets) {
-    *(function_proto->mutable_opset_import()->Add()) = relied_opset;
+    *function_proto->mutable_opset_import()->Add() = relied_opset;
   }
 
   for (const auto& node : func_nodes) {
@@ -1363,6 +1357,40 @@ const std::vector<std::string>& OpSchema::all_non_string_tensor_types_ir13() {
   return v;
 }
 
+const std::vector<std::string>& OpSchema::all_tensor_types_ir14() {
+  static const auto v = types::Tensors(
+      {TensorProto::UINT8,        TensorProto::UINT16,         TensorProto::UINT32,     TensorProto::UINT64,
+       TensorProto::INT8,         TensorProto::INT16,          TensorProto::INT32,      TensorProto::INT64,
+       TensorProto::BFLOAT16,     TensorProto::FLOAT16,        TensorProto::FLOAT,      TensorProto::DOUBLE,
+       TensorProto::STRING,       TensorProto::BOOL,           TensorProto::COMPLEX64,  TensorProto::COMPLEX128,
+       TensorProto::FLOAT8E4M3FN, TensorProto::FLOAT8E4M3FNUZ, TensorProto::FLOAT8E5M2, TensorProto::FLOAT8E5M2FNUZ,
+       TensorProto::UINT4,        TensorProto::INT4,           TensorProto::FLOAT4E2M1, TensorProto::FLOAT8E8M0,
+       TensorProto::UINT2,        TensorProto::INT2,           TensorProto::FLOAT6E2M3, TensorProto::FLOAT6E3M2});
+  return v;
+}
+
+const std::vector<std::string>& OpSchema::all_non_complex_tensor_types_ir14() {
+  static const auto v = types::Tensors(
+      {TensorProto::UINT8,      TensorProto::UINT16,         TensorProto::UINT32,       TensorProto::UINT64,
+       TensorProto::INT8,       TensorProto::INT16,          TensorProto::INT32,        TensorProto::INT64,
+       TensorProto::BFLOAT16,   TensorProto::FLOAT16,        TensorProto::FLOAT,        TensorProto::DOUBLE,
+       TensorProto::STRING,     TensorProto::BOOL,           TensorProto::FLOAT8E4M3FN, TensorProto::FLOAT8E4M3FNUZ,
+       TensorProto::FLOAT8E5M2, TensorProto::FLOAT8E5M2FNUZ, TensorProto::UINT4,        TensorProto::INT4,
+       TensorProto::FLOAT4E2M1, TensorProto::FLOAT8E8M0,     TensorProto::UINT2,        TensorProto::INT2,
+       TensorProto::FLOAT6E2M3, TensorProto::FLOAT6E3M2});
+  return v;
+}
+
+const std::vector<std::string>& OpSchema::all_non_string_tensor_types_ir14() {
+  static const auto v = [] {
+    auto result = all_tensor_types_ir14();
+    const auto string_type = types::Tensor(TensorProto::STRING);
+    result.erase(std::find(result.begin(), result.end(), string_type));
+    return result;
+  }();
+  return v;
+}
+
 const std::vector<std::string>& OpSchema::all_tensor_sequence_types() {
   static const auto v = types::Sequence(all_tensor_types());
   return v;
@@ -1395,6 +1423,11 @@ const std::vector<std::string>& OpSchema::all_tensor_sequence_types_ir12() {
 
 const std::vector<std::string>& OpSchema::all_tensor_sequence_types_ir13() {
   static const auto v = types::Sequence(all_tensor_types_ir13());
+  return v;
+}
+
+const std::vector<std::string>& OpSchema::all_tensor_sequence_types_ir14() {
+  static const auto v = types::Sequence(all_tensor_types_ir14());
   return v;
 }
 

@@ -4,7 +4,7 @@
 from __future__ import annotations
 
 import abc
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Self
 
 import numpy as np
 
@@ -226,8 +226,16 @@ class OpRun(abc.ABC):
         )
 
     @staticmethod
-    def _evaluate_subgraph(context, value, attributes):
-        return value.run(None, context or {}, attributes=attributes)
+    def _evaluate_subgraph(context, value, attributes, bindings=None):
+        run_kwargs: dict[str, Any] = {}
+        if bindings is not None:
+            # Reuse the parent's SymbolBindings so a symbolic dimension
+            # (single global namespace, see docs/ShapeAnnotationSemantics.md)
+            # is checked consistently between the parent graph and this
+            # subgraph (If/Loop/Scan body).
+            run_kwargs["check_shape_annotations"] = True
+            run_kwargs["_bindings"] = bindings
+        return value.run(None, context or {}, attributes=attributes, **run_kwargs)
 
     def _load_attributes(self) -> None:
         """Checks and loads attributes."""
@@ -248,8 +256,8 @@ class OpRun(abc.ABC):
                 setattr(
                     self,
                     f"_run_{att.name}",
-                    lambda context, value=value, attributes=None: (
-                        OpRun._evaluate_subgraph(context, value, attributes)
+                    lambda context, value=value, attributes=None, bindings=None: (
+                        OpRun._evaluate_subgraph(context, value, attributes, bindings)
                     ),
                 )
 
@@ -384,7 +392,7 @@ class OpRun(abc.ABC):
             )
         return res
 
-    def run(self, *args, linked_attributes=None, context=None):
+    def run(self, *args, linked_attributes=None, context=None, bindings=None):
         """Calls method ``_run``, catches exceptions,
         displays a longer error message.
 
@@ -394,6 +402,12 @@ class OpRun(abc.ABC):
                 the attribute of the function it belongs to
             context: if this node is part of the subgraph, `context` is
                 a dictionary with the values this node may use
+            bindings: if not None, the active `SymbolBindings` instance
+                (see `onnx.reference.shape_annotation_checker`) used to
+                check shape annotations; propagated to any subgraph this
+                node may invoke (If, Loop, Scan) so a symbolic dimension
+                shared between the parent graph and the subgraph is
+                checked consistently
 
         Returns:
             tuple of results
@@ -451,6 +465,8 @@ class OpRun(abc.ABC):
             kwargs["attributes"] = linked_attributes
         if context is not None:
             kwargs["context"] = context
+        if bindings is not None and (self.has_subgraph or isinstance(self, OpFunction)):
+            kwargs["bindings"] = bindings
         try:
             if overridden_attributes:
                 res = self._run(*args, **overridden_attributes, **kwargs)
@@ -535,7 +551,7 @@ class OpRun(abc.ABC):
         n_outputs: int | None = None,
         verbose: int = 0,
         **kwargs: Any,
-    ) -> Any:
+    ) -> Self:
         """Instantiates this class based on the given information.
 
         Args:
@@ -547,7 +563,7 @@ class OpRun(abc.ABC):
             **kwargs: node attributes
 
         Returns:
-            NodeProto
+            An instance of this operator class.
         """
 
         def log_function(pattern: str, *args: Any) -> None:
@@ -632,16 +648,25 @@ class OpFunction(OpRun):
         return self._run_impl(self.impl_, *inputs, **kwargs)
 
     def _run_impl(self, impl, *inputs, **kwargs):
-        if len(impl.input_names) != len(inputs):
+        if len(inputs) > len(impl.input_names):
             raise RuntimeError(
                 f"Mismatch lengths between the number of inputs {len(inputs)} "
-                f"and the expected number of inputs {len(impl.input_names)} "
+                f"and the maximum number of inputs {len(impl.input_names)} "
                 f"for node {self.op_type!r} from domain {self.domain!r}."
             )
+        bindings = kwargs.pop("bindings", None)
         feeds = dict(zip(impl.input_names, inputs, strict=False))
+        feeds.update(dict.fromkeys(impl.input_names[len(inputs) :]))
         attributes = self.attributes_.copy()
         attributes.update(kwargs)
-        results = impl.run(None, feeds, attributes=attributes)
+        run_kwargs: dict[str, Any] = {}
+        if bindings is not None:
+            # Propagate the parent's active SymbolBindings so a symbolic
+            # dimension shared between the caller and the function body is
+            # checked consistently (single global namespace).
+            run_kwargs["check_shape_annotations"] = True
+            run_kwargs["_bindings"] = bindings
+        results = impl.run(None, feeds, attributes=attributes, **run_kwargs)
         if len(impl.output_names) != len(results):
             raise RuntimeError(
                 f"Mismatch lengths between the number of outputs {len(results)} "
@@ -675,6 +700,9 @@ class OpFunctionContextDependant(OpFunction):
         # created the body for this operator.
         types = []
         for t in inputs:
+            if t is None:
+                types.append(onnx.TypeProto())
+                continue
             dtype = onnx.helper.np_dtype_to_tensor_dtype(t.dtype)
             types.append(onnx.helper.make_tensor_type_proto(dtype, t.shape))  # type: ignore[arg-type]
         cl = self.parent._load_impl(self.onnx_node, types)

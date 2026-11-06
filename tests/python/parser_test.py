@@ -28,6 +28,7 @@ class TestBasicFunctions:
               C = Softmax(S)
            }
            """
+        input = " \t\n\v\f\r# leading comment\n" + input + "# trailing comment"
         graph = onnx.parser.parse_graph(input)
         self.check_graph(graph)
 
@@ -58,7 +59,9 @@ class TestBasicFunctions:
               C = Softmax(S)
            }
            """
-        with pytest.raises(onnx.parser.ParseError):
+        with pytest.raises(
+            onnx.parser.ParseError, match=r"Error context: +T = MatMul\[X, W\]"
+        ):
             onnx.parser.parse_graph(input)
 
     def test_parse_model_error(self) -> None:
@@ -118,6 +121,14 @@ class TestBasicFunctions:
 
         model = onnx.parser.parse_model(input)
         checker.check_model(model)
+
+    def test_parse_function_rejects_invalid_attribute_default(self) -> None:
+        function_text = "f <a: int = 1.0> () => () {}"
+
+        with pytest.raises(
+            onnx.parser.ParseError, match="Mismatch between expected type"
+        ):
+            onnx.parser.parse_function(function_text)
 
     @pytest.mark.parametrize(
         "graph_text, expected_attribute",
@@ -341,6 +352,8 @@ class TestBasicFunctions:
             ("uint32", TensorProto.UINT32),
             ("uint64", TensorProto.UINT64),
             ("float4e2m1", TensorProto.FLOAT4E2M1),
+            ("float6e2m3", TensorProto.FLOAT6E2M3),
+            ("float6e3m2", TensorProto.FLOAT6E3M2),
         ],
     )
     def test_parse_graph_types(self, name, itype) -> None:

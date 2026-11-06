@@ -20,12 +20,12 @@ class Shape_15(Shape_1):
             if end is None or np.isnan(end):
                 return None
             if end < 0:
-                return (0, n + end)
+                return (0, max(n + end, 0))
             return (0, end)
         if end is None or np.isnan(end):
             return (start, n)
         if end < 0:
-            return (start, n + end)
+            return (start, max(n + end, 0))
         return (start, end)
 
     def _run(self, data, end=None, start=None):

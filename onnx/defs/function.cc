@@ -11,11 +11,6 @@
 #include "onnx/defs/schema.h"
 #include "onnx/inliner/inliner.h"
 
-static std::string InternalTensorNameGenerator(const std::string& node_name, const std::string& internal_name) {
-  std::string new_name = "Func_" + node_name + internal_name;
-  return new_name;
-}
-
 namespace ONNX_NAMESPACE {
 void FunctionExpandHelper(
     const NodeProto& node,
@@ -95,14 +90,14 @@ void FunctionExpandHelper(
       if (io_names_map.count(input)) {
         new_node->add_input(io_names_map[input]);
       } else {
-        new_node->add_input(InternalTensorNameGenerator(node_name, input));
+        new_node->add_input()->assign("Func_").append(node_name).append(input);
       }
     }
     for (const auto& output : function_node.output()) {
       if (io_names_map.count(output)) {
         new_node->add_output(io_names_map[output]);
       } else {
-        new_node->add_output(InternalTensorNameGenerator(node_name, output));
+        new_node->add_output()->assign("Func_").append(node_name).append(output);
       }
     }
     for (const auto& attr : function_node.attribute()) {
@@ -136,7 +131,7 @@ std::vector<NodeProto> FunctionBodyHelper::BuildNodes(const std::vector<NodeDef>
       n.add_output(o);
     }
     for (const auto& attr : node.attributes) {
-      *(n.add_attribute()) = attr.proto;
+      *n.add_attribute() = attr.proto;
     }
   }
 
@@ -156,7 +151,7 @@ void FunctionBodyHelper::BuildNodes(FunctionProto& functionProto, const std::vec
       np->add_output(o);
     }
     for (const auto& attr : node.attributes) {
-      *(np->add_attribute()) = attr.proto;
+      *np->add_attribute() = attr.proto;
     }
   }
 }
@@ -169,7 +164,7 @@ bool FunctionBodyHelper::BuildFunctionProto(
   BuildNodes(functionProto, node_defs);
 
   for (const auto& relied_opset : relied_opsets) {
-    *(functionProto.mutable_opset_import()->Add()) = relied_opset;
+    *functionProto.mutable_opset_import()->Add() = relied_opset;
   }
 
   schema.BuildFunction(functionProto);

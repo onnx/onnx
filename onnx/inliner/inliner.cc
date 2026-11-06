@@ -228,9 +228,8 @@ class InliningRenamer : public internal::MutableVisitor {
     for (; i < actuals.size(); ++i) {
       std::string& formal = *formals.Mutable(i);
       std::string rename_as = actuals.Get(i);
-      if (isOutput)
-        if (rename_as.empty())
-          rename_as = MakeUnique(formal);
+      if (isOutput && rename_as.empty())
+        rename_as = MakeUnique(formal);
       current_scope[formal] = rename_as;
       if (!rename_as.empty())
         formal = rename_as;
@@ -393,7 +392,9 @@ using ConstNodeMap = std::unordered_map<std::string, const NodeProto*>;
 ConstNodeMap FindConstantNodes(const GraphProto& graph) {
   ConstNodeMap result;
   for (const NodeProto& node : graph.node()) {
-    if (IsOnnxDomain(node.domain()) && (node.op_type() == "Constant")) {
+    // Malformed Constant nodes can have no outputs; do not index an absent
+    // protobuf field while collecting constants for function conversion.
+    if (IsOnnxDomain(node.domain()) && (node.op_type() == "Constant") && !node.output().empty()) {
       result[node.output(0)] = &node;
     }
   }
@@ -441,7 +442,7 @@ void ConvertVersion(ModelProto& model, const NodeProto& call_node, FunctionProto
     // We do not handle initializers-as-constants for now.
     auto it = constant_node_map.find(var);
     if (it != constant_node_map.end()) {
-      *nodes.Add() = *(it->second);
+      *nodes.Add() = *it->second;
     }
   }
 
@@ -587,7 +588,7 @@ struct InlinerImpl {
         internal::AttributeBinder::BindAttributes(node, callee);
 
         // Rename variable names in callee
-        InliningRenamer::Rename(node, callee, "__" + std::to_string(++(this->inline_count)), this->name_generator);
+        InliningRenamer::Rename(node, callee, "__" + std::to_string(++this->inline_count), this->name_generator);
         if (target_version != kNoConversion) {
           ConvertVersion(model, node, callee, static_cast<int>(target_version));
         }
