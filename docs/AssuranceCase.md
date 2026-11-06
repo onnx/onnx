@@ -85,7 +85,7 @@ A malicious model references external tensor data via attacker-controlled file p
 |--------|---------|
 | Static analysis | CodeQL (GitHub Advanced Security), Clang Static Analyzer, sonarcloud |
 | Dynamic analysis | ASan, MSan, UBSan, TSan in CI build matrix |
-| Fuzzing | Early stage — OSS-Fuzz harnesses ([onnx/fuzz](https://github.com/onnx/onnx/tree/main/onnx/fuzz)) cover the checker, model loader, text parser, shape inference, version converter, and compose; reference evaluator and external-data parsing are not yet covered. A short smoke run of these harnesses is part of this repo's CI ([fuzz.yml](https://github.com/onnx/onnx/blob/main/.github/workflows/fuzz.yml)); the full OSS-Fuzz continuous campaigns run separately and are not surfaced here |
+| Fuzzing | Early stage — OSS-Fuzz harnesses ([onnx/fuzz](https://github.com/onnx/onnx/tree/main/onnx/fuzz)) cover the checker, model loader, text parser, shape inference, version converter, compose, and filesystem-aware external-data read/write paths; the reference evaluator is not yet covered. The external-data harness checks path forms, links, duplicate and unknown metadata, offset/length bounds, multi-tensor writes, and `ModelContainer` against a protected sentinel. A short smoke run of these harnesses is part of this repo's CI ([fuzz.yml](https://github.com/onnx/onnx/blob/main/.github/workflows/fuzz.yml)); full sanitizer-backed campaigns run separately in OSS-Fuzz, whose [ONNX build status](https://oss-fuzz-build-logs.storage.googleapis.com/index.html#onnx) is public |
 | Dependency scanning | Dependabot, OpenSSF Scorecard |
 
 

@@ -63,7 +63,7 @@ def apply_affine_transform(theta_n, original_grid_homo):
         )  # shape (N, dim_2d, H * W)
         # transpose to (N, H * W, dim_2d) and then reshape to (N, H, W, dim_2d)
         grid = np.reshape(np.transpose(grid_n, (0, 2, 1)), (N, H, W, dim_2d))
-        return grid.astype(np.float32)
+        return grid.astype(theta_n.dtype)
     assert original_grid_homo.ndim == 4
     N, dim_3d, dim_homo = theta_n.shape
     assert dim_3d == 3 and dim_homo == 4
@@ -78,7 +78,7 @@ def apply_affine_transform(theta_n, original_grid_homo):
     )  # shape (N, dim_3d, D * H * W)
     # transpose to (N, D * H * W, dim_3d) and then reshape to (N, D, H, W, dim_3d)
     grid = np.reshape(np.transpose(grid_n, (0, 2, 1)), (N, D, H, W, dim_3d))
-    return grid.astype(np.float32)
+    return grid.astype(theta_n.dtype)
 
 
 class AffineGrid(OpRun):

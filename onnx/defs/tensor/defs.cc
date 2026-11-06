@@ -178,45 +178,6 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::all_non_string_tensor_types_ir13(),
             "Constrain output types. Bitcasting to string is not supported.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-          auto get_bit_size = [](int element_type) -> int {
-            switch (element_type) {
-              case TensorProto::FLOAT:
-              case TensorProto::INT32:
-              case TensorProto::UINT32:
-                return 32;
-              case TensorProto::DOUBLE:
-              case TensorProto::INT64:
-              case TensorProto::UINT64:
-              case TensorProto::COMPLEX64:
-                return 64;
-              case TensorProto::COMPLEX128:
-                return 128;
-              case TensorProto::FLOAT16:
-              case TensorProto::BFLOAT16:
-              case TensorProto::INT16:
-              case TensorProto::UINT16:
-                return 16;
-              case TensorProto::INT8:
-              case TensorProto::UINT8:
-              case TensorProto::BOOL:
-              case TensorProto::FLOAT8E4M3FN:
-              case TensorProto::FLOAT8E4M3FNUZ:
-              case TensorProto::FLOAT8E5M2:
-              case TensorProto::FLOAT8E5M2FNUZ:
-              case TensorProto::FLOAT8E8M0:
-                return 8;
-              case TensorProto::INT4:
-              case TensorProto::UINT4:
-              case TensorProto::FLOAT4E2M1:
-                return 4;
-              case TensorProto::INT2:
-              case TensorProto::UINT2:
-                return 2;
-              default:
-                return 0;
-            }
-          };
-
           // Validate that input and output types have the same bit-width
           auto input_type = ctx.getInputType(0);
           if (input_type && input_type->has_tensor_type()) {
@@ -224,9 +185,9 @@ ONNX_OPERATOR_SET_SCHEMA(
             auto* to_attr = ctx.getAttribute("to");
             if (to_attr) {
               auto output_element_type = static_cast<int32_t>(to_attr->i());
-              int input_element_bit_size = get_bit_size(input_element_type);
-              int output_element_bit_size = get_bit_size(output_element_type);
-              if (input_element_bit_size != 0 && output_element_bit_size != 0 &&
+              int64_t input_element_bit_size = ElementBitWidth(input_element_type);
+              int64_t output_element_bit_size = ElementBitWidth(output_element_type);
+              if (input_element_bit_size > 0 && output_element_bit_size > 0 &&
                   input_element_bit_size != output_element_bit_size) {
                 fail_shape_inference(
                     "BitCast requires input and output types to have the same bit-width, but input type has ",
@@ -729,6 +690,13 @@ ONNX_OPERATOR_SET_SCHEMA(
         }));
 
 static void processSliceInputs(const int64_t input_dim_size_or_value, int64_t& start, int64_t& end, int64_t step) {
+  // A negative dimension is invalid: the std::clamp calls below require the
+  // upper bound to be >= the lower bound, so reject the dimension with a
+  // catchable error instead of invoking undefined behavior (a hardened
+  // std::clamp aborts the process with SIGABRT).
+  if (input_dim_size_or_value < 0) {
+    fail_shape_inference("Slice input dimension must be non-negative, got ", input_dim_size_or_value);
+  }
   // process step
   if (step == 0) {
     fail_shape_inference("'step' cannot be 0 for Slice");
@@ -1621,6 +1589,22 @@ ONNX_OPERATOR_SET_SCHEMA(
           if (hasInputShape(ctx, 0)) {
             auto& input_shape = getInputShape(ctx, 0);
             if (input_shape.dim_size() == 4) {
+              // The spatial dimensions are split into blocks, so they must divide
+              // evenly. Without this check the integer divisions below silently report
+              // a truncated shape for an input the runtime rejects.
+              for (const int spatial_axis : {2, 3}) {
+                const auto& dim = input_shape.dim(spatial_axis);
+                if (dim.has_dim_value() && dim.dim_value() % blocksize != 0) {
+                  fail_shape_inference(
+                      "Input dimension ",
+                      spatial_axis,
+                      " (",
+                      dim.dim_value(),
+                      ") must be a multiple of 'blocksize' (",
+                      blocksize,
+                      ").");
+                }
+              }
               updateOutputShape(
                   ctx,
                   0,
@@ -1676,6 +1660,19 @@ ONNX_OPERATOR_SET_SCHEMA(
           if (hasInputShape(ctx, 0)) {
             auto& input_shape = getInputShape(ctx, 0);
             if (input_shape.dim_size() == 4) {
+              // The channels are redistributed into blocksize x blocksize blocks, so
+              // the channel dimension must divide evenly. Without this check the
+              // integer division below silently reports a truncated shape for an input
+              // the runtime rejects.
+              const auto& channel_dim = input_shape.dim(1);
+              if (channel_dim.has_dim_value() && channel_dim.dim_value() % block_area != 0) {
+                fail_shape_inference(
+                    "Input channel dimension (",
+                    channel_dim.dim_value(),
+                    ") must be a multiple of 'blocksize' * 'blocksize' (",
+                    block_area,
+                    ").");
+              }
               updateOutputShape(
                   ctx,
                   0,
@@ -2811,8 +2808,11 @@ ONNX_OPERATOR_SET_SCHEMA(
             return;
           }
 
-          const auto last_index_dimension =
-              checkedAdd(indices_shape.dim(indices_rank - 1).dim_value(), batch_dims_data);
+          const auto indices_last_dim = indices_shape.dim(indices_rank - 1).dim_value();
+          if (indices_last_dim < 0) {
+            fail_shape_inference("Last dimension of `indices` input tensor in GatherND op must not be negative");
+          }
+          const auto last_index_dimension = checkedAdd(indices_last_dim, batch_dims_data);
 
           if (last_index_dimension > data_rank) {
             fail_shape_inference(

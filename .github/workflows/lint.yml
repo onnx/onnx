@@ -27,12 +27,13 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
         with:
           python-version: '3.12'
       - run: |
           pip install -q check-jsonschema
           python -m check_jsonschema --schemafile "https://cyclonedx.org/schema/bom-1.7.schema.json" sbom.cdx.json
+          python -m check_jsonschema --schemafile "https://raw.githubusercontent.com/openvex/spec/a68ccd19b15a9604d28ef66ebf33f27a772ba4ec/openvex_json_schema.json" .vex/*.openvex.json
 
   enforce-style:
     name: Enforce style
@@ -44,26 +45,24 @@ jobs:
         with:
           persist-credentials: false
       - name: Setup Python
-        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
         with:
           python-version: "3.13"
+      - name: Build external Protobuf
+        run: python workflow_scripts/protobuf/build.py --build-dir "${{ runner.temp }}/protobuf-build"
       - name: Install ONNX
         run: |
-          source workflow_scripts/protobuf/build_protobuf_unix.sh $(nproc)
-
-          python -m pip install --quiet --upgrade pip setuptools wheel
+          python -m pip install --quiet --upgrade pip
 
           export ONNX_BUILD_TESTS=0
           export ONNX_ML=1
-          export CMAKE_ARGS="-DONNXIFI_DUMMY_BACKEND=ON -DONNX_WERROR=ON"
+          export CMAKE_ARGS="-DONNX_WERROR=ON"
           export ONNX_NAMESPACE=ONNX_NAMESPACE_FOO_BAR_FOR_CI
 
-          python -m pip install .
+          # Constrain to the versions pinned for testing
+          python -m pip install ".[reference]" -c requirements-release_test.txt
       - name: Install dependencies
         run: |
-          python -m pip install lintrunner>=0.10.7
-          # Use release_test to pin package versions
-          python -m pip install -r requirements-release_test.txt
           python -m pip install -r requirements-lintrunner.txt
           lintrunner init
       - name: Run lintrunner on all files
@@ -84,7 +83,7 @@ jobs:
         # To toggle linter comments in the files page, press `i` on the keyboard
         if: always()
         continue-on-error: true
-        uses: github/codeql-action/upload-sarif@db488ddef3bf6cb639b32c2e9a7c0a7ea8271d28
+        uses: github/codeql-action/upload-sarif@9b3254085494b55a0f7c4c2b3d2d52cc712ce370
         with:
           # Path to SARIF file relative to the root of the repository
           sarif_file: lintrunner.sarif
@@ -92,7 +91,7 @@ jobs:
           checkout_path: ${{ github.workspace }}
       - name: Upload lint results as artifacts
         if: always()
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
         with:
           name: lint-results
           path: |

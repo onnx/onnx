@@ -26,8 +26,6 @@ jobs:
       fail-fast: false
       matrix:
         build:
-          - "cp310-win_amd64"
-          - "cp310-win32"
           - "cp311-win_amd64"
           - "cp311-win32"
           - "cp311-win_arm64"
@@ -35,7 +33,9 @@ jobs:
           - "cp312-win32"
           - "cp312-win_arm64"
           - "cp314t-win_amd64"
+          - "cp315t-win_amd64"
           - "cp314t-win_arm64"
+          - "cp315t-win_arm64"
     runs-on: ${{ contains(matrix.build, 'arm64') && 'windows-11-arm' || 'windows-2022' }}
 
     steps:
@@ -47,7 +47,7 @@ jobs:
         shell: bash
         run: echo "PROTOBUF_VERSION=$(jq -r '.components[] | select(.name=="protobuf") | .version' sbom.cdx.json)" >> $GITHUB_ENV
 
-      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
         with:
           python-version: "3.12"
 
@@ -71,7 +71,7 @@ jobs:
           Add-Content -Path $env:GITHUB_ENV -Value "PROTOC_ACTUAL_SHA256=$actual"
 
       - name: Verify protoc checksum
-        uses: ./.github/actions/verify-sha256
+        uses: $/.github/actions/verify-sha256
         with:
           file: ${{ env.PROTOC_ZIP }}
           expected-sha256: ${{ env.PROTOC_EXPECTED_SHA256 }}
@@ -91,7 +91,7 @@ jobs:
           Add-Content -Path $env:GITHUB_ENV -Value "PROTOBUF_ACTUAL_SHA256=$actual"
 
       - name: Verify protobuf source checksum
-        uses: ./.github/actions/verify-sha256
+        uses: $/.github/actions/verify-sha256
         with:
           file: protobuf-${{ env.PROTOBUF_VERSION }}.tar.gz
           expected-sha256: ${{ env.PROTOBUF_EXPECTED_SHA256 }}
@@ -111,7 +111,7 @@ jobs:
         run: echo "SOURCE_DATE_EPOCH=$(git log -1 --pretty=%ct)" >> $GITHUB_ENV
 
       - name: Build wheels
-        uses: pypa/cibuildwheel@1828c10ab37f080699c7b81cea34097c684a7074  # v4.2.0
+        uses: pypa/cibuildwheel@b9e566a2b284570af229f6c2a33673410d0389a3  # v4.3.4
         with:
           output-dir: dist/
           only: ${{ matrix.build }}
@@ -125,14 +125,14 @@ jobs:
             -DONNX_WERROR=ON
             "
 
-      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: wheels-windows-${{ matrix.build }}
           path: dist/*.whl
 
       - name: Validate wheel
         run: |
-          python -m pip install -q abi3audit check-wheel-contents
+          python -m pip install -q -r requirements-release_wheel_check.txt
           Get-ChildItem -Path dist/*.whl | ForEach-Object {
             echo "Checking $($_.Name)"
             check-wheel-contents $_.FullName

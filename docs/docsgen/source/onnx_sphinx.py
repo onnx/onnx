@@ -682,14 +682,14 @@ def get_onnx_example(op_name, domain):
         try:
             mod = importlib.import_module(m)
             module = m
-        except ImportError:  # noqa: PERF203
+        except ImportError:
             continue
     if module is None:
         for m in fallback_modules:
             try:
                 mod = importlib.import_module(m)
                 module = m
-            except ImportError:  # noqa: PERF203
+            except ImportError:
                 continue
     if module is None:
         # Unable to find an example for 'op_name'.

@@ -251,6 +251,40 @@ TEST(ParserTest, AttributeTest) {
   EXPECT_EQ(attr.tp().tensor_type().elem_type(), float_type);
 }
 
+TEST(ParserTest, RejectsExcessivelyNestedTypes) {
+  std::string type = "float";
+  for (int i = 0; i < 99; ++i) {
+    type = "seq(" + type + ")";
+  }
+
+  TypeProto parsed_type;
+  auto status = OnnxParser::Parse(parsed_type, type);
+  EXPECT_TRUE(status.IsOK()) << status.ErrorMessage();
+
+  type = "seq(" + type + ")";
+  TypeProto excessive_type;
+  status = OnnxParser::Parse(excessive_type, type);
+  EXPECT_FALSE(status.IsOK());
+  EXPECT_NE(status.ErrorMessage().find("Maximum parser recursion depth"), std::string::npos);
+}
+
+TEST(ParserTest, RejectsExcessivelyNestedGraphs) {
+  std::string graph = "g () => () {}";
+  for (int i = 0; i < 99; ++i) {
+    graph = "g () => () { = Op <body = " + graph + "> () }";
+  }
+
+  GraphProto parsed_graph;
+  auto status = OnnxParser::Parse(parsed_graph, graph);
+  EXPECT_TRUE(status.IsOK()) << status.ErrorMessage();
+
+  graph = "g () => () { = Op <body = " + graph + "> () }";
+  GraphProto excessive_graph;
+  status = OnnxParser::Parse(excessive_graph, graph);
+  EXPECT_FALSE(status.IsOK());
+  EXPECT_NE(status.ErrorMessage().find("Maximum parser recursion depth"), std::string::npos);
+}
+
 TEST(ParserTest, AttrListTest) {
   const char* code = R"ONNX(
 <

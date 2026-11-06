@@ -138,11 +138,10 @@ void OpSchema::CheckInputOutputType(struct InferenceContext& ctx) const {
     if (param.GetIsHomogeneous()) {
       const auto& type_proto = Utils::DataTypeUtils::ToType(*param_type);
       auto [it, inserted] = type_constraints.emplace(type_str, *type_proto);
-      if (!inserted) {
-        // failed to insert a new element due to a duplication, now check consistency
-        if (it->second != *type_proto) {
-          fail_check(param.GetName(), " has inconsistent type ", *Utils::DataTypeUtils::ToType(*param_type));
-        }
+      if ((!inserted) && (it->second != *type_proto))
+      // failed to insert a new element due to a duplication, now check consistency
+      {
+        fail_check(param.GetName(), " has inconsistent type ", *Utils::DataTypeUtils::ToType(*param_type));
       }
     }
   } // for inputs
@@ -235,13 +234,6 @@ void OpSchema::Verify(const NodeProto& node) const {
     }
   }
 
-  // An internal symbol is defined as starting with two underscores. Attributes
-  // with names meeting this condition are considered implementation details
-  // and should be ignored for the purpose of schema checking.
-  auto isInternalSymbol = [](const std::string& sym) -> bool {
-    return sym.length() >= 2 && sym[0] == '_' && sym[1] == '_';
-  };
-
   // Check attributes
   std::unordered_set<std::string> seen_attr_names{};
   for (const auto& attr_proto : node.attribute()) {
@@ -255,7 +247,9 @@ void OpSchema::Verify(const NodeProto& node) const {
     AttributeProto::AttributeType expected_type{};
     if (search != attributes_.end()) {
       expected_type = search->second.type;
-    } else if (allows_unchecked_attributes_ || isInternalSymbol(name)) {
+    } else if (allows_unchecked_attributes_ || name.rfind("__", 0) == 0) {
+      // Attributes starting with two underscores are internal implementation
+      // details and are ignored for the purpose of schema checking.
       continue;
     } else {
       fail_check("Unrecognized attribute: ", name, " for operator ", node.op_type());
@@ -854,7 +848,7 @@ OpSchema& OpSchema::FunctionBody(
 
   auto function_proto = std::make_shared<FunctionProto>();
   for (const auto& relied_opset : relied_opsets) {
-    *(function_proto->mutable_opset_import()->Add()) = relied_opset;
+    *function_proto->mutable_opset_import()->Add() = relied_opset;
   }
 
   for (const auto& node : func_nodes) {
