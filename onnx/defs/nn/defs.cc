@@ -2696,6 +2696,31 @@ ONNX_OPERATOR_SET_SCHEMA(
               return true;
             }));
 
+static void RMSNormalizationShapeInference(InferenceContext& ctx) {
+  // Y has the type of scale and the shape of X.
+  propagateElemTypeFromInputToOutput(ctx, 1, 0);
+  if (!hasNInputShapes(ctx, 1)) {
+    return;
+  }
+  propagateShapeFromInputToOutput(ctx, 0, 0);
+  auto& input_shape = ctx.getInputType(0)->tensor_type().shape();
+  int64_t input_ndim = input_shape.dim_size();
+  int64_t axis = -1;
+  auto axis_proto = ctx.getAttribute("axis");
+  if (axis_proto) {
+    axis = axis_proto->i();
+  }
+  if (axis < 0) {
+    // Convert negative axis value to equivalent
+    // positive value.
+    axis += input_ndim;
+  }
+  if (axis < 0) {
+    fail_shape_inference(
+        "Unexpected axis value (", axis, ") rank of first input is ", input_ndim, " in ", ctx.getDisplayName(), ".");
+  }
+}
+
 ONNX_OPERATOR_SET_SCHEMA(
     RMSNormalization,
     23,
@@ -2730,34 +2755,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "V",
             {types::Float16, types::Float, types::Double, types::BFloat16},
             "Constrain output Y and scale type to float tensors.")
-        .TypeAndShapeInferenceFunction([](ONNX_NAMESPACE::InferenceContext& ctx) {
-          propagateShapeAndTypeFromFirstInput(ctx);
-          if (!hasNInputShapes(ctx, 1)) {
-            return;
-          }
-          auto& input_shape = ctx.getInputType(0)->tensor_type().shape();
-          int64_t input_ndim = input_shape.dim_size();
-          int64_t axis = -1;
-          auto axis_proto = ctx.getAttribute("axis");
-          if (axis_proto) {
-            axis = axis_proto->i();
-          }
-          if (axis < 0) {
-            // Convert negative axis value to equivalent
-            // positive value.
-            axis += input_ndim;
-          }
-          if (axis < 0) {
-            fail_shape_inference(
-                "Unexpected axis value (",
-                axis,
-                ") rank of first input is ",
-                input_ndim,
-                " in ",
-                ctx.getDisplayName(),
-                ".");
-          }
-        })
+        .TypeAndShapeInferenceFunction(RMSNormalizationShapeInference)
         .SetNodeDeterminism(OpSchema::NodeDeterminism::Deterministic)
         .SetContextDependentFunctionBodyBuilder([](const FunctionBodyBuildContext& ctx,
                                                    const OpSchema& schema,
@@ -2766,7 +2764,10 @@ ONNX_OPERATOR_SET_SCHEMA(
           auto tp = ctx.getInputType(0);
           if ((tp == nullptr) || (!tp->has_tensor_type()))
             return false;
-          int64_t T = tp->tensor_type().elem_type();
+          auto scale_type = ctx.getInputType(1);
+          if ((scale_type == nullptr) || (!scale_type->has_tensor_type()))
+            return false;
+          int64_t V = scale_type->tensor_type().elem_type();
 
           auto type_attr = ctx.getAttribute("stash_type");
           int64_t U = (type_attr != nullptr) ? type_attr->i()
@@ -2799,8 +2800,8 @@ ONNX_OPERATOR_SET_SCHEMA(
               .Add("MeanSquareEpsilon = Add (XSquaredMean, Epsilon)")
               .Add("RMS = Sqrt (MeanSquareEpsilon)")
               .Add("Normalized = Div (XU, RMS)")
-              .Add("NormalizedT = Cast (Normalized)", "to", T);
-          builder.Add("Y = Mul (NormalizedT, scale)");
+              .Add("NormalizedV = Cast (Normalized)", "to", V);
+          builder.Add("Y = Mul (NormalizedV, scale)");
 
           schema.BuildFunction(functionProto);
           return true;
