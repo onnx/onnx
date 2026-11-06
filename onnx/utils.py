@@ -52,6 +52,36 @@ class Extractor:
                 output_to_index[output_name] = index
         return output_to_index
 
+    @staticmethod
+    def _collect_outer_scope_names(node: NodeProto) -> set[str]:
+        """Outer-scope names read by the subgraphs of `node`, including nested subgraphs.
+
+        Subgraphs of control-flow operators (e.g. If and Loop) may read values from
+        the outer scope that are not inputs of `node` itself. Names defined inside
+        the subgraphs (graph inputs, initializers and node outputs) are excluded.
+        """
+        if not node.attribute:
+            return set()
+        graphs = [attr.g for attr in node.attribute if attr.HasField("g")]
+        graphs += [graph for attr in node.attribute for graph in attr.graphs]
+        used: set[str] = set()
+        defined: set[str] = set()
+        while graphs:
+            graph = graphs.pop()
+            defined.update(value_info.name for value_info in graph.input)
+            defined.update(tensor.name for tensor in graph.initializer)
+            defined.update(
+                sparse_tensor.values.name for sparse_tensor in graph.sparse_initializer
+            )
+            for subgraph_node in graph.node:
+                used.update(name for name in subgraph_node.input if name != "")
+                defined.update(subgraph_node.output)
+                for attr in subgraph_node.attribute:
+                    if attr.HasField("g"):
+                        graphs.append(attr.g)
+                    graphs.extend(attr.graphs)
+        return used - defined
+
     def _collect_new_io(self, io_names_to_extract: list[str]) -> list[ValueInfoProto]:
         # Validate that all names exist in self.value_infos
         missing_names = [
@@ -88,11 +118,11 @@ class Extractor:
                 if index not in reachable:
                     # add nodes connected to this output to sets
                     reachable.add(index)
+                    node = self.graph.node[index]
                     stack += [
-                        input_name
-                        for input_name in self.graph.node[index].input
-                        if input_name != ""
+                        input_name for input_name in node.input if input_name != ""
                     ]
+                    stack += self._collect_outer_scope_names(node)
 
     def _collect_reachable_nodes(
         self,
@@ -142,6 +172,7 @@ class Extractor:
         for node in nodes:
             all_tensors_names.update(node.input)
             all_tensors_names.update(node.output)
+            all_tensors_names.update(self._collect_outer_scope_names(node))
         initializer = [
             self.initializers[t] for t in self.initializers if t in all_tensors_names
         ]
