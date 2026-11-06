@@ -75,7 +75,14 @@ inline void SizeDataPropagator(DataPropagationContext& ctx) {
     if (!dim.has_dim_value() || dim.dim_value() < 0) {
       return;
     }
-    count = checkedMultiply(count, dim.dim_value());
+    if (dim.dim_value() == 0) {
+      count = 0;
+    }
+  }
+  if (count != 0) {
+    for (const auto& dim : shape.dim()) {
+      count = checkedMultiply(count, dim.dim_value());
+    }
   }
   TensorShapeProto data;
   data.add_dim()->set_dim_value(count);

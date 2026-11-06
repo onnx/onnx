@@ -14,9 +14,20 @@ from onnx.helper import make_node, make_tensor, make_tensor_value_info
 
 class TestDataPropagation(TestShapeInferenceHelper):
     @pytest.mark.parametrize("version", [13, 19, 21, 23, 24, 25])
-    def test_size_of_float_tensor_uses_shape(self, version: int) -> None:
+    @pytest.mark.parametrize(
+        ("input_shape", "count"),
+        [
+            ((2, 3), 6),
+            ((1 << 32, 1 << 32, 0), 0),
+            ((1 << 32, 0, 1 << 32), 0),
+            ((0, 1 << 32, 1 << 32), 0),
+        ],
+    )
+    def test_size_of_float_tensor_uses_shape(
+        self, version: int, input_shape: tuple[int, ...], count: int
+    ) -> None:
         graph = self._make_graph(
-            [("x", TensorProto.FLOAT, (2, 3))],
+            [("x", TensorProto.FLOAT, input_shape)],
             [
                 make_node("Size", ["x"], ["size"]),
                 make_node("Unsqueeze", ["size", "axis"], ["shape"]),
@@ -30,7 +41,7 @@ class TestDataPropagation(TestShapeInferenceHelper):
             [
                 make_tensor_value_info("size", TensorProto.INT64, ()),
                 make_tensor_value_info("shape", TensorProto.INT64, (1,)),
-                make_tensor_value_info("y", TensorProto.FLOAT, (6,)),
+                make_tensor_value_info("y", TensorProto.FLOAT, (count,)),
             ],
             data_prop=True,
             opset_imports=[onnx.helper.make_opsetid("", version)],
