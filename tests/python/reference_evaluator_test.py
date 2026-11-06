@@ -8601,6 +8601,46 @@ class TestReferenceEvaluator:
         )
         assert_array_equal(got, np.array(expected, dtype=np.int64).reshape(-1, 3))
 
+    @staticmethod
+    def _dropout_training_model(opset: int) -> ModelProto:
+        # One-node Dropout model with training_mode enabled and the optional
+        # ratio input omitted (middle omission in every opset with
+        # training_mode as an input, i.e. 12 and 13+).
+        node = make_node("Dropout", ["X", "", "training_mode"], ["Y", "mask"])
+        graph = make_graph(
+            [node],
+            "dropout_graph",
+            [
+                make_tensor_value_info("X", TensorProto.FLOAT, [4]),
+                make_tensor_value_info("training_mode", TensorProto.BOOL, []),
+            ],
+            [
+                make_tensor_value_info("Y", TensorProto.FLOAT, [4]),
+                make_tensor_value_info("mask", TensorProto.BOOL, [4]),
+            ],
+        )
+        return make_model(graph, opset_imports=[make_opsetid("", opset)])
+
+    @pytest.mark.parametrize("opset", [12, 13])
+    def test_dropout_omitted_ratio_training_mode(self, opset: int) -> None:
+        # ratio is optional with default 0.5, so a training-mode model may
+        # omit it.
+        model = self._dropout_training_model(opset)
+        check_model(model)
+        x = np.array([1.0, 2.0, 3.0, 4.0], dtype=np.float32)
+        y, mask = ReferenceEvaluator(model).run(
+            None, {"X": x, "training_mode": np.bool_(True)}
+        )
+        assert mask.dtype == np.bool_
+        assert_allclose(y, np.where(mask, x * 2.0, 0.0).astype(np.float32))
+
+    def test_dropout_omitted_ratio_inference(self) -> None:
+        # Control: inference-mode Dropout without ratio passes through data.
+        node = make_node("Dropout", ["X"], ["Y"])
+        x = np.array([1.0, 2.0, 3.0, 4.0], dtype=np.float32)
+        (y,) = ReferenceEvaluator(node).run(None, {"X": x})
+        assert_array_equal(y, x)
+
 
 class TestReferenceEvaluatorShapeAnnotationChecking:
     """Tests for the opt-in runtime shape-annotation validation feature
