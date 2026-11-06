@@ -7626,16 +7626,26 @@ class TestShapeInference(TestShapeInferenceHelper):
             )
 
     @pytest.mark.parametrize(
-        ("kernel", "stride", "pads"), [(2, 2, [1, 1]), (1, 3, [0, 0])]
+        ("kernel", "stride", "pads"),
+        [(2, 2, [1, 1]), (1, 3, [0, 0]), (3, 2, [0, 0])],
+    )
+    @pytest.mark.parametrize(
+        ("op_type", "version"),
+        [
+            (op_type, version)
+            for op_type in ["MaxPool", "AveragePool"]
+            for version in all_versions_for(op_type)
+            if version >= 10
+        ],
     )
     def test_maxpool_symbolic_ceil_mode(
-        self, kernel: int, stride: int, pads: list[int]
+        self, op_type: str, version: int, kernel: int, stride: int, pads: list[int]
     ) -> None:
         graph = self._make_graph(
             [("x", TensorProto.FLOAT, (1, 1, "H"))],
             [
                 make_node(
-                    "MaxPool",
+                    op_type,
                     ["x"],
                     ["y"],
                     kernel_shape=[kernel],
@@ -7646,10 +7656,19 @@ class TestShapeInference(TestShapeInferenceHelper):
             ],
             [],
         )
-        self._assert_inferred(
+        inferred = self._inferred(
             graph,
-            [make_tensor_value_info("y", TensorProto.FLOAT, (1, 1, None))],
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
         )
+        shape = next(
+            info.type.tensor_type.shape
+            for info in inferred.graph.value_info
+            if info.name == "y"
+        )
+        assert len(shape.dim) == 3
+        assert [dim.dim_value for dim in shape.dim[:2]] == [1, 1]
+        assert not shape.dim[2].HasField("dim_value")
+        assert "H" not in shape.dim[2].dim_param
 
     @pytest.mark.parametrize(
         "scale", [float(1 << 63), float("inf"), float("nan"), -1.0, 0.0]

@@ -91,7 +91,7 @@ identity operations but leave new compound symbolic results unknown.
 When constructing an arithmetic
 expression, an operand string longer than 1024 characters produces an unknown
 result. Pooling with `ceil_mode=1` leaves a symbolic spatial output dimension
-unknown when the final-window correction cannot be determined statically.
+unknown unless effective `SAME_UPPER` or `SAME_LOWER` auto-padding determines it.
 
 These limitations are a property of the current implementation, not
 fundamental constraints - if you are in need of something more

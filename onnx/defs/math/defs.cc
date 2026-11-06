@@ -22,7 +22,7 @@ namespace ONNX_NAMESPACE {
 static void MathOpDataPropagator(DataPropagationContext& ctx, std::string_view op_type) {
   for (size_t i = 0; i < 2; ++i) {
     const auto* type = ctx.getInputType(i);
-    if (type != nullptr && type->has_tensor_type() && type->tensor_type().has_shape() &&
+    if (type == nullptr || !type->has_tensor_type() || !type->tensor_type().has_shape() ||
         type->tensor_type().shape().dim_size() > 1) {
       // TensorShapeProto stores scalar/vector values, not multidimensional broadcasting.
       return;

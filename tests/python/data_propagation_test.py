@@ -356,6 +356,34 @@ class TestDataPropagation(TestShapeInferenceHelper):
         )
 
     @pytest.mark.parametrize("op_type", ["Add", "Sub", "Mul", "Div"])
+    @pytest.mark.parametrize("version", [13, 14])
+    def test_arithmetic_unknown_rank_broadcast(
+        self, op_type: str, version: int
+    ) -> None:
+        graph = self._make_graph(
+            [("x", TensorProto.FLOAT, (4, 8)), ("axes", TensorProto.INT64, (None,))],
+            [
+                make_node("Shape", ["x"], ["values"]),
+                make_node("Unsqueeze", ["values", "axis"], ["matrix"]),
+                make_node("Squeeze", ["matrix", "axes"], ["unknown_rank"]),
+                make_node(op_type, ["unknown_rank", "divisors"], ["y"]),
+            ],
+            [],
+            initializer=[
+                make_tensor("axis", TensorProto.INT64, (1,), [1]),
+                make_tensor("divisors", TensorProto.INT64, (3,), [1, 2, 4]),
+            ],
+        )
+        inferred = self._inferred(
+            graph,
+            data_prop=True,
+            opset_imports=[onnx.helper.make_opsetid("", version)],
+        )
+        types = {info.name: info.type for info in inferred.graph.value_info}
+        assert not types["unknown_rank"].tensor_type.HasField("shape")
+        assert not types["y"].tensor_type.HasField("shape")
+
+    @pytest.mark.parametrize("op_type", ["Add", "Sub", "Mul", "Div"])
     @pytest.mark.parametrize("version", [13, 18])
     def test_arithmetic_multidimensional_broadcast(
         self, op_type: str, version: int

@@ -291,7 +291,9 @@ static void convPoolShapeInference_opset19(
     auto effective_input_dim = input_dim + checkedAdd(pads[i], pads[i + kernel_shape_size]);
     auto ceil_mode = getAttribute(ctx, "ceil_mode", 0);
     if (!input_dim.has_dim_value()) {
-      *newdim = (effective_input_dim - effective_kernel_shape[i] + (ceil_mode ? strides[i] - 1 : 0)) / strides[i] + 1;
+      if (ceil_mode != 1) {
+        *newdim = (effective_input_dim - effective_kernel_shape[i]) / strides[i] + 1;
+      }
       continue;
     }
 
@@ -2158,7 +2160,9 @@ static void convPoolShapeInference_opset1_to_11(
     auto effective_input_dim = input_dim + checkedAdd(pads[i], pads[i + kernel_shape_size]);
     auto ceil_mode = getAttribute(ctx, "ceil_mode", 0);
     if (!input_dim.has_dim_value()) {
-      *newdim = (effective_input_dim - effective_kernel_shape[i] + (ceil_mode ? strides[i] - 1 : 0)) / strides[i] + 1;
+      if (ceil_mode != 1) {
+        *newdim = (effective_input_dim - effective_kernel_shape[i]) / strides[i] + 1;
+      }
       continue;
     }
 

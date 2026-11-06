@@ -69,7 +69,7 @@ static void ReluDataPropagator_old(DataPropagationContext& ctx) {
 static void DivDataPropagator_old(DataPropagationContext& ctx) {
   for (size_t i = 0; i < 2; ++i) {
     const auto* type = ctx.getInputType(i);
-    if (type != nullptr && type->has_tensor_type() && type->tensor_type().has_shape() &&
+    if (type == nullptr || !type->has_tensor_type() || !type->tensor_type().has_shape() ||
         type->tensor_type().shape().dim_size() > 1) {
       return;
     }
