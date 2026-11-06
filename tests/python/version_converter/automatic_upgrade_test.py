@@ -27,6 +27,16 @@ class TestAutomaticUpgrade(automatic_conversion_test_base.TestAutomaticConversio
         mode = "strict_upgrade" if strict_check else "upgrade"
         self._test_op_conversion(op, *args, **kwargs, mode=mode)
 
+    def test_DequantizePacked(self) -> None:
+        self._test_op_upgrade(
+            "DequantizePacked",
+            29,
+            [[18]],
+            [[32]],
+            input_types=[TensorProto.UINT8],
+            attrs={"format": "gguf:q4_0", "shape": [32]},
+        )
+
     def test_Abs(self) -> None:
         self._test_op_upgrade("Abs", 1, attrs={"consumed_inputs": [0]})
 

@@ -234,3 +234,9 @@ path = "AGENTS.md"
 precedence = "aggregate"
 SPDX-FileCopyrightText = "Copyright (c) ONNX Project Contributors"
 SPDX-License-Identifier = "Apache-2.0"
+
+[[annotations]]
+path = "onnx/reference/ops/GGML_LICENSE"
+precedence = "aggregate"
+SPDX-FileCopyrightText = "Copyright (c) 2023-2026 The ggml authors"
+SPDX-License-Identifier = "MIT"
