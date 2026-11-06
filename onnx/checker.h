@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include <cstdint>
 #include <filesystem>
 #include <stdexcept>
 #include <string>
@@ -36,6 +37,12 @@ class ValidationError final : public std::runtime_error {
 };
 
 #define fail_check(...) ONNX_THROW_EX(ONNX_NAMESPACE::checker::ValidationError(ONNX_NAMESPACE::MakeString(__VA_ARGS__)))
+
+// Opset versions are int64 in the proto, but the schema registry
+// (OperatorSetVersion) and the opset maps used by the checker, shape inference
+// and the inliner are int. Returns the version as int, or throws
+// ValidationError if it does not fit. Registered opsets are not checked.
+ONNX_API int check_opset_version(int64_t version, const std::string& domain = "");
 
 class CheckerContext final {
  public:
