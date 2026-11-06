@@ -652,9 +652,10 @@ struct DataPropagationContextImpl : public DataPropagationContext {
     }
     if (elem_type == TensorProto::INT32) {
       for (const auto& dim : tsp.dim()) {
-        if (dim.has_dim_value() &&
-            (dim.dim_value() < std::numeric_limits<int32_t>::min() ||
-             dim.dim_value() > std::numeric_limits<int32_t>::max())) {
+        if (dim.has_dim_param() ||
+            (dim.has_dim_value() &&
+             (dim.dim_value() < std::numeric_limits<int32_t>::min() ||
+              dim.dim_value() > std::numeric_limits<int32_t>::max()))) {
           // A narrowing Cast or INT32 arithmetic may wrap; discard the record,
           // rather than publishing an unconverted value or rejecting the model.
           return;

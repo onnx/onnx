@@ -164,26 +164,23 @@ void LoopInferenceFunction(InferenceContext& ctx) {
       propagateElemTypeWithValidation(subgraph_output_type, loop_output_type);
 
       // Body shapes need not match the initial state when the loop executes zero times.
-      if (!is_loop_state_var) {
-        // propagate shape
-        if (subgraph_output_type->tensor_type().has_shape()) {
-          // per iteration output. first dimension will be number of iterations
-          TypeProto inferred_type(*subgraph_output_type);
-          auto* mutable_inferred_tensor_type = inferred_type.mutable_tensor_type();
-          auto* mutable_inferred_shape = mutable_inferred_tensor_type->mutable_shape();
+      if (!is_loop_state_var && subgraph_output_type->tensor_type().has_shape()) {
+        // per iteration output. first dimension will be number of iterations
+        TypeProto inferred_type(*subgraph_output_type);
+        auto* mutable_inferred_tensor_type = inferred_type.mutable_tensor_type();
+        auto* mutable_inferred_shape = mutable_inferred_tensor_type->mutable_shape();
 
-          mutable_inferred_shape->clear_dim();
+        mutable_inferred_shape->clear_dim();
 
-          // trip_count is only an upper bound: the loop can exit early.
-          mutable_inferred_shape->add_dim();
+        // trip_count is only an upper bound: the loop can exit early.
+        mutable_inferred_shape->add_dim();
 
-          // add dimensions from subgraph output shape
-          for (const auto& dim : subgraph_output_type->tensor_type().shape().dim()) {
-            (*mutable_inferred_shape->add_dim()) = dim;
-          }
-
-          mergeInShapeInfo(*mutable_inferred_tensor_type, *loop_output_type->mutable_tensor_type());
+        // add dimensions from subgraph output shape
+        for (const auto& dim : subgraph_output_type->tensor_type().shape().dim()) {
+          (*mutable_inferred_shape->add_dim()) = dim;
         }
+
+        mergeInShapeInfo(*mutable_inferred_tensor_type, *loop_output_type->mutable_tensor_type());
       }
     }
   }

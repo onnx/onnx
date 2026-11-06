@@ -13,6 +13,50 @@ from onnx.helper import make_node, make_tensor, make_tensor_value_info
 
 
 class TestDataPropagation(TestShapeInferenceHelper):
+    @pytest.mark.parametrize("version", [13, 19, 21, 23, 24, 25])
+    def test_size_of_float_tensor_uses_shape(self, version: int) -> None:
+        graph = self._make_graph(
+            [("x", TensorProto.FLOAT, (2, 3))],
+            [
+                make_node("Size", ["x"], ["size"]),
+                make_node("Unsqueeze", ["size", "axis"], ["shape"]),
+                make_node("ConstantOfShape", ["shape"], ["y"]),
+            ],
+            [],
+            initializer=[make_tensor("axis", TensorProto.INT64, (1,), [0])],
+        )
+        self._assert_inferred(
+            graph,
+            [
+                make_tensor_value_info("size", TensorProto.INT64, ()),
+                make_tensor_value_info("shape", TensorProto.INT64, (1,)),
+                make_tensor_value_info("y", TensorProto.FLOAT, (6,)),
+            ],
+            data_prop=True,
+            opset_imports=[onnx.helper.make_opsetid("", version)],
+        )
+
+    def test_symbolic_int32_overflow_does_not_alias_dimension_arithmetic(self) -> None:
+        graph = self._make_graph(
+            [("x", TensorProto.FLOAT, ("N",)), ("matrix", TensorProto.FLOAT, ("N", 2))],
+            [
+                make_node("Shape", ["x"], ["shape64"]),
+                make_node("Cast", ["shape64"], ["shape32"], to=TensorProto.INT32),
+                make_node("Mul", ["shape32", "two"], ["wrapped"]),
+                make_node("Cast", ["wrapped"], ["shape"], to=TensorProto.INT64),
+                make_node("ConstantOfShape", ["shape"], ["y"]),
+                make_node("Flatten", ["matrix"], ["flat"], axis=0),
+            ],
+            [],
+            initializer=[make_tensor("two", TensorProto.INT32, (1,), [2])],
+        )
+        inferred = self._inferred(graph, data_prop=True)
+        shapes = {
+            info.name: info.type.tensor_type.shape for info in inferred.graph.value_info
+        }
+        assert shapes["flat"].dim[1].dim_param == "N*2"
+        assert shapes["y"].dim[0].dim_param != "N*2"
+
     @pytest.mark.parametrize(
         ("operation", "spelling"),
         [("Add", "N + 2"), ("Sub", "N - 2"), ("Mul", "N*2"), ("Div", "N/2")],

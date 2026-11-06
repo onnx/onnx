@@ -226,11 +226,10 @@ ONNX_API void convPoolShapeInference(
     auto output_dim =
         (effective_input_dim - effective_kernel_shape[i] + (ceil_mode ? strides[i] - 1 : 0)) / strides[i] + 1;
 
-    if (ceil_mode == 1 && output_dim.has_dim_value() && input_dim.has_dim_value()) {
-      if (checkedMultiply(checkedSubtract(output_dim.dim_value(), 1), strides[i]) >=
-          checkedAdd(input_dim.dim_value(), pads[i])) {
-        output_dim.set_dim_value(checkedSubtract(output_dim.dim_value(), 1));
-      }
+    if (ceil_mode == 1 && output_dim.has_dim_value() && input_dim.has_dim_value() &&
+        checkedMultiply(checkedSubtract(output_dim.dim_value(), 1), strides[i]) >=
+            checkedAdd(input_dim.dim_value(), pads[i])) {
+      output_dim.set_dim_value(checkedSubtract(output_dim.dim_value(), 1));
     }
 
     *newdim = output_dim;

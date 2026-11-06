@@ -446,7 +446,7 @@ class ShapeInferenceImplBase {
     }
     if (element_count != 0) {
       for (const auto& dim : shape.dim()) {
-        if (static_cast<uint64_t>(dim.dim_value()) > vector.size() / element_count) {
+        if (element_count == 0 || static_cast<uint64_t>(dim.dim_value()) > vector.size() / element_count) {
           return;
         }
         element_count *= static_cast<size_t>(dim.dim_value());

@@ -1987,14 +1987,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           ctx.getOutputType(0)->mutable_tensor_type()->set_elem_type(TensorProto::INT64);
           ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
         })
-        .PartialDataPropagationFunction([](DataPropagationContext& ctx) {
-          const auto input_data = ctx.getInputData(0);
-          if (input_data != nullptr) {
-            TensorShapeProto tsp;
-            tsp.mutable_dim()->Add()->set_dim_value(input_data->dim_size());
-            ctx.addOutputData(0, std::move(tsp));
-          }
-        }));
+        .PartialDataPropagationFunction(SizeDataPropagator));
 
 ONNX_OPERATOR_SET_SCHEMA(
     Size,
@@ -2017,14 +2010,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           ctx.getOutputType(0)->mutable_tensor_type()->set_elem_type(TensorProto::INT64);
           ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
         })
-        .PartialDataPropagationFunction([](DataPropagationContext& ctx) {
-          const auto input_data = ctx.getInputData(0);
-          if (input_data != nullptr) {
-            TensorShapeProto tsp;
-            tsp.mutable_dim()->Add()->set_dim_value(input_data->dim_size());
-            ctx.addOutputData(0, std::move(tsp));
-          }
-        }));
+        .PartialDataPropagationFunction(SizeDataPropagator));
 
 ONNX_OPERATOR_SET_SCHEMA(
     Size,
@@ -6541,14 +6527,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           ctx.getOutputType(0)->mutable_tensor_type()->set_elem_type(TensorProto::INT64);
           ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
         })
-        .PartialDataPropagationFunction([](DataPropagationContext& ctx) {
-          const auto input_data = ctx.getInputData(0);
-          if (input_data != nullptr) {
-            TensorShapeProto tsp;
-            tsp.mutable_dim()->Add()->set_dim_value(input_data->dim_size());
-            ctx.addOutputData(0, std::move(tsp));
-          }
-        }));
+        .PartialDataPropagationFunction(SizeDataPropagator));
 
 ONNX_OPERATOR_SET_SCHEMA(
     Size,
@@ -6571,14 +6550,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           ctx.getOutputType(0)->mutable_tensor_type()->set_elem_type(TensorProto::INT64);
           ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
         })
-        .PartialDataPropagationFunction([](DataPropagationContext& ctx) {
-          const auto input_data = ctx.getInputData(0);
-          if (input_data != nullptr) {
-            TensorShapeProto tsp;
-            tsp.mutable_dim()->Add()->set_dim_value(input_data->dim_size());
-            ctx.addOutputData(0, std::move(tsp));
-          }
-        }));
+        .PartialDataPropagationFunction(SizeDataPropagator));
 
 ONNX_OPERATOR_SET_SCHEMA(
     Size,
@@ -6601,14 +6573,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           ctx.getOutputType(0)->mutable_tensor_type()->set_elem_type(TensorProto::INT64);
           ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
         })
-        .PartialDataPropagationFunction([](DataPropagationContext& ctx) {
-          const auto input_data = ctx.getInputData(0);
-          if (input_data != nullptr) {
-            TensorShapeProto tsp;
-            tsp.mutable_dim()->Add()->set_dim_value(input_data->dim_size());
-            ctx.addOutputData(0, std::move(tsp));
-          }
-        }));
+        .PartialDataPropagationFunction(SizeDataPropagator));
 
 ONNX_OPERATOR_SET_SCHEMA(
     Compress,

@@ -302,9 +302,7 @@ inline TensorShapeProto::Dimension operator*(
     return dim2;
   } else if (dim2.has_dim_value() && (dim2.dim_value() == 1)) {
     return dim1;
-  } else if (dim1.has_dim_value() && (dim1.dim_value() == 0)) {
-    result.set_dim_value(0);
-  } else if (dim2.has_dim_value() && (dim2.dim_value() == 0)) {
+  } else if ((dim1.has_dim_value() && dim1.dim_value() == 0) || (dim2.has_dim_value() && dim2.dim_value() == 0)) {
     result.set_dim_value(0);
   }
   return result;
@@ -428,6 +426,8 @@ inline Dim computeDimension(SymbolTable* symbols, const std::string& op, const D
 class SymbolicDim {
  public:
   SymbolicDim(SymbolTable* symbols, Dim value) : symbols_(symbols), value_(std::move(value)) {}
+  // Arithmetic chains retain the allocator until assigned to a protobuf dimension.
+  // NOLINTNEXTLINE(cppcoreguidelines-explicit-constructor,google-explicit-constructor,misc-explicit-constructor)
   operator const Dim&() const {
     return value_;
   }

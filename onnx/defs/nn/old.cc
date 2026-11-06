@@ -295,7 +295,7 @@ static void convPoolShapeInference_opset19(
       continue;
     }
 
-    int64_t strided_kernel_positions;
+    int64_t strided_kernel_positions = 0;
     const int64_t stride_gap = checkedSubtract(effective_input_dim.dim_value(), effective_kernel_shape[i]);
     if (ceil_mode == 1)
       // exact ceil division; (a + b - 1) / b would be wrong for negative a
@@ -2162,7 +2162,7 @@ static void convPoolShapeInference_opset1_to_11(
       continue;
     }
 
-    int64_t strided_kernel_positions;
+    int64_t strided_kernel_positions = 0;
     const int64_t stride_gap = checkedSubtract(effective_input_dim.dim_value(), effective_kernel_shape[i]);
     if (ceil_mode == 1)
       // exact ceil division; (a + b - 1) / b would be wrong for negative a

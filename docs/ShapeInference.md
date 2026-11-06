@@ -60,7 +60,9 @@ required to have a shape inference implementation.
 
 Partial data propagation stores known values of INT32 and INT64 tensors.
 It does not evaluate floating-point values. An INT32 result containing a value
-outside the range [-2147483648, 2147483647] is not propagated. A propagated
+outside the range [-2147483648, 2147483647] or a symbolic value is not propagated.
+`Size` propagation uses the input shape and does
+not require integer input elements. A propagated
 record is exposed as a concrete tensor only if every shape dimension is a
 known nonnegative integer and the product of those dimensions equals the
 number of stored values. Subgraph-local records are not visible to enclosing
