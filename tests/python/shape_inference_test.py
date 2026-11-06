@@ -8553,6 +8553,78 @@ class TestShapeInference(TestShapeInferenceHelper):
         )
         assert elem_type == expected_elem_type
 
+    @pytest.mark.parametrize(
+        (
+            "op_type",
+            "domain",
+            "version",
+            "input_elem_type",
+            "attributes",
+            "expected_elem_type",
+        ),
+        [
+            (
+                "LabelEncoder",
+                ONNX_ML_DOMAIN,
+                2,
+                TensorProto.STRING,
+                {"keys_strings": ["a"], "values_int64s": [1]},
+                TensorProto.INT64,
+            ),
+            (
+                "LabelEncoder",
+                ONNX_ML_DOMAIN,
+                4,
+                TensorProto.STRING,
+                {"keys_strings": ["a"], "values_int64s": [1]},
+                TensorProto.INT64,
+            ),
+            (
+                "RegexFullMatch",
+                ONNX_DOMAIN,
+                20,
+                TensorProto.STRING,
+                {"pattern": "a.*"},
+                TensorProto.BOOL,
+            ),
+        ],
+    )
+    def test_typed_input_without_shape(
+        self,
+        op_type: str,
+        domain: str,
+        version: int,
+        input_elem_type: int,
+        attributes: dict[str, Any],
+        expected_elem_type: int,
+    ) -> None:
+        if domain == ONNX_ML_DOMAIN and not ONNX_ML:
+            pytest.skip("ONNX_ML required to test ai.onnx.ml operators")
+        # The element type is known and the shape is not, which is the path
+        # guarded by hasInputShape. Inference should still set the output
+        # element type and leave the output shape unset.
+        typed_input = make_tensor_value_info("x", input_elem_type, None)
+        typed_input.type.tensor_type.ClearField("shape")
+        graph = make_graph(
+            [make_node(op_type, ["x"], ["y"], domain=domain, **attributes)],
+            "typed_input_without_shape",
+            [typed_input],
+            [],
+        )
+        opset_imports = [
+            make_opsetid(ONNX_DOMAIN, version if domain == ONNX_DOMAIN else 21),
+        ]
+        if domain == ONNX_ML_DOMAIN:
+            opset_imports.append(make_opsetid(ONNX_ML_DOMAIN, version))
+        model = make_model(graph, opset_imports=opset_imports)
+
+        inferred = onnx.shape_inference.infer_shapes(model)
+
+        value_infos = {vi.name: vi for vi in inferred.graph.value_info}
+        tensor_type = value_infos["y"].type.tensor_type
+        assert tensor_type.elem_type == expected_elem_type
+        assert not tensor_type.HasField("shape")
+
     def make_sparse(
         self,
         shape: Sequence[int],
