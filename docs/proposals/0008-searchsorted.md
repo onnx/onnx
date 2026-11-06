@@ -16,6 +16,7 @@ Copyright (c) ONNX Project Contributors
 This RFC proposes adding the `SearchSorted` operator to the ai.onnx domain.
 Given two tensors `x1` and `x2`, `SearchSorted` finds the indices into `x1` such that, if the corresponding elements in `x2` were inserted before the indices, the order of `x1`, when sorted in ascending order, would be preserved.
 The proposed semantics are identical to the `searchsorted` function defined in the [array-API](https://data-apis.org/array-api/draft/API_specification/generated/array_api.searchsorted.html#searchsorted).
+`SearchSorted` is proposed as a function operator with a `Scan`-based function body as fallback (see [Using `Scan`](#using-scan)).
 
 ## Motivation
 
@@ -43,8 +44,7 @@ Let `v` be an element of `x2` given by `v = x2[j]`.
 
 **Notes**
 
-For real-valued floating-point tensors, the sort order of NaNs and signed zeros **should** follow IEEE 754-2019.
-If an implementation deviates from the IEEE 754's specified total order it **should**, nonetheless, ensure consistency with other sorting operators such as `Unique`.
+For real-valued floating-point tensors, NaNs are ordered after all non-NaN values and are equivalent to each other, and `-0` and `+0` are equivalent (as in NumPy).
 
 ### Attributes
 
@@ -83,7 +83,6 @@ While not mandating the implementation details, it is advised that runtimes impl
 ### Interaction with other operators
 
 The searching logic of this operator **should** be consistent with other sorting operators of an implementation.
-Sorting of floating-point numbers **should** follow IEEE 754-2019 total-ordering predicate (paywalled, but described [here](https://en.wikipedia.org/wiki/IEEE_754#Total-ordering_predicate)).
 
 ## Drawbacks
 
@@ -120,19 +119,36 @@ However, this requires creating two (boolean and int64) matrices of size `len(x1
 
 ### Using `Scan`
 
-Lastly, one may implement this operator using Scan.
-The loop body may be given as:
+Lastly, one may implement this operator using Scan, which is the proposed function body.
+The `Scan` iterates over `x1` and counts, for each element of `x2`, the elements of `x1` ordered before it (`side == "left"`) or not after it (`side == "right"`):
 
 ```
-def body(x2_item):
-    if side == "left":
-        return (x1 < x2_item).astype(int64).sum(axis=0)
-    else:
-        return (x1 <= x2_item).astype(int64).sum(axis=0)
+x1_sorted = Gather <axis = 0> (x1, sorter)    # `Identity (x1)` if `sorter` is not given
+x2_shape = Shape (x2)
+count0 = ConstantOfShape <value = int64[1] {0}> (x2_shape)
+x2_eq = Equal (x2, x2)    # false iff NaN
+x2_nan = Not (x2_eq)
+out = Scan <num_scan_inputs = 1, body = step (count_in, x1_i) => (count_out) {
+    x1_eq = Equal (x1_i, x1_i)
+
+    # side == "left"
+    lt = Less (x1_i, x2)
+    nan_gap = And (x2_nan, x1_eq)
+    hit = Or (lt, nan_gap)
+
+    # side == "right"
+    x1_nan = Not (x1_eq)
+    gt = Less (x2, x1_i)
+    nan_gap = And (x1_nan, x2_eq)
+    not_hit = Or (gt, nan_gap)
+    hit = Not (not_hit)
+
+    hit_i64 = Cast <to = 7> (hit)
+    count_out = Add (count_in, hit_i64)
+}> (count0, x1_sorted)
 ```
 
-which would be called for each item in `x2` (capturing `x1`).
-This implementation has two drawbacks:
+This implementation has two drawbacks compared to a dedicated kernel:
 
   - A dedicated operator can optimize this operation (and required allocations) much better than the generic Scan operator.
   - The comparison and summation operations have to process all elements.
@@ -160,9 +176,7 @@ Ndonnx’s implementation is using one of the above-discussed costly workarounds
 
 ### Required sorting semantics and inter-operator compatibility
 
-It would be nice to use "**must** follow IEEE 754-2019" regarding the sorting semantics and "**must** be consistent with other sorting operators of an implementation", but this creates two possible issues:
- - It may be too restrictive for efficient implementations on all hardware
- - Mandating a "must" for the semantics of `SearchSorted` and coupling it to `Unique` would necessarily require explicit semantics for the `Unique` operator, but its floating point semantics are unspecified today.
+It would be nice to use "**must** be consistent with other sorting operators of an implementation", but coupling `SearchSorted` to `Unique` would necessarily require explicit semantics for the `Unique` operator, whose floating point semantics are unspecified today.
 
 ## Future possibilities
 
