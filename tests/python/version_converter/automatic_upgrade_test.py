@@ -696,6 +696,9 @@ class TestAutomaticUpgrade(automatic_conversion_test_base.TestAutomaticConversio
             output_types=[TensorProto.BOOL],
         )
 
+    def test_Expm1(self) -> None:
+        self._test_op_upgrade("Expm1", 29)
+
     def test_Log(self) -> None:
         self._test_op_upgrade("Log", 1, attrs={"consumed_inputs": [0]})
 

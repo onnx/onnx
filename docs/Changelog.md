@@ -34455,6 +34455,58 @@ This version of the operator has been available since version 28 of the default 
 </dl>
 
 ## Version 29 of the default ONNX operator set
+### <a name="Expm1-29"></a>**Expm1-29**</a>
+
+  Computes `exp(x) - 1` element-wise, where `exp` is the exponential to base `e`.
+  The input may have any shape, including a scalar or an empty tensor. The output
+  has the same shape and element type as the input.
+
+  For finite nonzero `x`, the output is a floating-point approximation of the
+  real-valued function `exp(x) - 1` at the exact value represented by `x`.
+  The computation must preserve nonzero results representable in the output type
+  when an intermediate floating-point `exp(x)` would round to `1`. For example,
+  a FLOAT input `1e-8` produces a result approximately equal to `1e-8`, rather
+  than zero.
+
+  Special values are defined element-wise as follows:
+
+  | Input `x` | Output `y` |
+  | --- | --- |
+  | Positive zero | Positive zero |
+  | Negative zero | Negative zero |
+  | Negative infinity | `-1` |
+  | Positive infinity | Positive infinity |
+  | NaN | NaN |
+
+  The sign and payload of an output NaN are unspecified. Finite positive inputs
+  whose results overflow the output type produce positive infinity.
+
+
+#### Version
+
+This version of the operator has been available since version 29 of the default ONNX operator set.
+
+#### Inputs
+
+<dl>
+<dt><tt>input</tt> (differentiable) : T</dt>
+<dd>Input tensor</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> (differentiable) : T</dt>
+<dd>The exponential of the input minus one, computed element-wise</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(bfloat16), tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
 ### <a name="Gemm-29"></a>**Gemm-29**</a>
 
   Generalized matrix multiplication: `Y = alpha * A' * B' + beta * C`.

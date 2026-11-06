@@ -56,6 +56,7 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#Erf">Erf</a>|<a href="Changelog.md#Erf-13">13</a>, <a href="Changelog.md#Erf-9">9</a>|
 |<a href="#Exp">Exp</a>|<a href="Changelog.md#Exp-13">13</a>, <a href="Changelog.md#Exp-6">6</a>, <a href="Changelog.md#Exp-1">1</a>|
 |<a href="#Expand">Expand</a>|<a href="Changelog.md#Expand-13">13</a>, <a href="Changelog.md#Expand-8">8</a>|
+|<a href="#Expm1">Expm1</a>|<a href="Changelog.md#Expm1-29">29</a>|
 |<a href="#EyeLike">EyeLike</a>|<a href="Changelog.md#EyeLike-22">22</a>, <a href="Changelog.md#EyeLike-9">9</a>|
 |<a href="#Flatten">Flatten</a>|<a href="Changelog.md#Flatten-25">25</a>, <a href="Changelog.md#Flatten-24">24</a>, <a href="Changelog.md#Flatten-23">23</a>, <a href="Changelog.md#Flatten-21">21</a>, <a href="Changelog.md#Flatten-13">13</a>, <a href="Changelog.md#Flatten-11">11</a>, <a href="Changelog.md#Flatten-9">9</a>, <a href="Changelog.md#Flatten-1">1</a>|
 |<a href="#Floor">Floor</a>|<a href="Changelog.md#Floor-13">13</a>, <a href="Changelog.md#Floor-6">6</a>, <a href="Changelog.md#Floor-1">1</a>|
@@ -15227,6 +15228,148 @@ expect(
     outputs=[expanded],
     name="test_expand_dim_unchanged",
 )
+```
+
+</details>
+
+
+### <a name="Expm1"></a><a name="expm1">**Expm1**</a>
+
+  Computes `exp(x) - 1` element-wise, where `exp` is the exponential to base `e`.
+  The input may have any shape, including a scalar or an empty tensor. The output
+  has the same shape and element type as the input.
+
+  For finite nonzero `x`, the output is a floating-point approximation of the
+  real-valued function `exp(x) - 1` at the exact value represented by `x`.
+  The computation must preserve nonzero results representable in the output type
+  when an intermediate floating-point `exp(x)` would round to `1`. For example,
+  a FLOAT input `1e-8` produces a result approximately equal to `1e-8`, rather
+  than zero.
+
+  Special values are defined element-wise as follows:
+
+  | Input `x` | Output `y` |
+  | --- | --- |
+  | Positive zero | Positive zero |
+  | Negative zero | Negative zero |
+  | Negative infinity | `-1` |
+  | Positive infinity | Positive infinity |
+  | NaN | NaN |
+
+  The sign and payload of an output NaN are unspecified. Finite positive inputs
+  whose results overflow the output type produce positive infinity.
+
+
+#### Version
+
+This version of the operator has been available since version 29 of the default ONNX operator set.
+
+#### Inputs
+
+<dl>
+<dt><tt>input</tt> (differentiable) : T</dt>
+<dd>Input tensor</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> (differentiable) : T</dt>
+<dd>The exponential of the input minus one, computed element-wise</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(bfloat16), tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>expm1</summary>
+
+```python
+node = onnx.helper.make_node("Expm1", ["x"], ["y"])
+for dtype in [np.float16, ml_dtypes.bfloat16, np.float32, np.float64]:
+    x = np.array([[-10.0, -0.5, 0.0, 0.25], [0.5, 1.0, 3.0, 5.0]], dtype=dtype)
+    y = np.array([math.expm1(float(v)) for v in x.flat], dtype=dtype).reshape(
+        x.shape
+    )
+    expect(
+        node,
+        inputs=[x],
+        outputs=[y],
+        name=f"test_expm1_{np.dtype(dtype).name}",
+        rtol=1e-2 if dtype == ml_dtypes.bfloat16 else 1e-3,
+    )
+```
+
+</details>
+
+
+<details>
+<summary>expm1_scalar_and_empty</summary>
+
+```python
+node = onnx.helper.make_node("Expm1", ["x"], ["y"])
+expect(
+    node,
+    inputs=[np.array(1.0, dtype=np.float32)],
+    outputs=[np.array(math.expm1(1), dtype=np.float32)],
+    name="test_expm1_scalar",
+)
+x = np.empty((0, 3), dtype=np.float32)
+expect(node, inputs=[x], outputs=[x], name="test_expm1_empty")
+```
+
+</details>
+
+
+<details>
+<summary>expm1_small_inputs</summary>
+
+```python
+node = onnx.helper.make_node("Expm1", ["x"], ["y"])
+for dtype, tiny in [
+    (np.float16, 2.0**-14),
+    (ml_dtypes.bfloat16, 2.0**-10),
+    (np.float32, 1e-8),
+    (np.float64, 1e-20),
+]:
+    x = np.array([-tiny, -0.0, 0.0, tiny], dtype=dtype)
+    y = np.array([math.expm1(float(v)) for v in x], dtype=dtype)
+    # Relative error allows backend variation, while atol=0 catches
+    # an incorrect zero caused by rounding the intermediate exp(x).
+    expect(
+        node,
+        inputs=[x],
+        outputs=[y],
+        name=f"test_expm1_small_inputs_{np.dtype(dtype).name}",
+        rtol=1e-2 if dtype == ml_dtypes.bfloat16 else 1e-3,
+        atol=0,
+    )
+```
+
+</details>
+
+
+<details>
+<summary>expm1_special_values</summary>
+
+```python
+node = onnx.helper.make_node("Expm1", ["x"], ["y"])
+for dtype in [np.float16, ml_dtypes.bfloat16, np.float32, np.float64]:
+    x = np.array([-0.0, 0.0, -np.inf, np.inf, np.nan], dtype=dtype)
+    y = np.array([-0.0, 0.0, -1.0, np.inf, np.nan], dtype=dtype)
+    expect(
+        node,
+        inputs=[x],
+        outputs=[y],
+        name=f"test_expm1_special_values_{np.dtype(dtype).name}",
+    )
 ```
 
 </details>
