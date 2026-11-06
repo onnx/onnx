@@ -22995,6 +22995,33 @@ expect(node, inputs=[x], outputs=[y], name="test_lppool_3d_default")
 
   Matrix product that behaves like [numpy.matmul](https://numpy.org/doc/stable/reference/generated/numpy.matmul.html).
 
+  Both inputs must have rank at least 1. The inputs and output have the same element type `T`.
+
+  For two-dimensional inputs with shapes `(M, K)` and `(K, N)`, the output has shape `(M, N)` and is computed as:
+
+  ```text
+  Y[i, j] = sum(A[i, k] * B[k, j] for k in range(K))
+  ```
+
+  For inputs with rank greater than 2, the last two dimensions are matrix dimensions and the preceding dimensions are batch dimensions. The batch dimensions are aligned from right to left and broadcast: corresponding dimensions must be equal or one of them must be 1. When one dimension is 1, the other determines the output dimension. Missing leading dimensions are treated as 1. The output has the broadcast batch dimensions followed by `(M, N)`. The contracting dimensions `K` must match and are not broadcast.
+
+  One-dimensional inputs are promoted to matrices before applying these rules: a leading dimension of 1 is inserted for `A` with shape `(K,)`, giving `(1, K)`, and a trailing dimension of 1 is inserted for `B` with shape `(K,)`, giving `(K, 1)`. After multiplication, the corresponding inserted dimensions are removed from the output. Other dimensions of size 1 are preserved. Two one-dimensional inputs therefore produce a scalar tensor with shape `()`.
+
+  Examples of input and output shapes:
+
+  | Shape of A | Shape of B | Shape of Y |
+  | --- | --- | --- |
+  | `(2, 3)` | `(3, 4)` | `(2, 4)` |
+  | `(3,)` | `(3, 4)` | `(4,)` |
+  | `(2, 3)` | `(3,)` | `(2,)` |
+  | `(3,)` | `(3,)` | `()` |
+  | `(5, 2, 3)` | `(3, 4)` | `(5, 2, 4)` |
+  | `(2, 1, 3, 4)` | `(1, 5, 4, 6)` | `(2, 5, 3, 6)` |
+  | `(1, 3)` | `(3, 1)` | `(1, 1)` |
+  | `(2, 0)` | `(0, 3)` | `(2, 3)` |
+
+  A zero-sized contracting dimension (`K = 0`) produces zeros in the output. Inputs with rank 0, unequal contracting dimensions, or incompatible batch dimensions are invalid.
+
 #### Version
 
 This version of the operator has been available since version 13 of the default ONNX operator set.
