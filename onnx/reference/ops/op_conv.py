@@ -71,24 +71,6 @@ def _conv_implementation(
             f"Shape inconsistencies, X.shape={X.shape}, W.shape={W.shape}, group={group}, "
             f"W should be {(W.shape[0], X.shape[1] // group, np.prod(W.shape[1:]) // X.shape[1] * group)}."
         )
-    if any(dilation != 1 for dilation in dilations):
-        # Let's compute the dilated kernel.
-        nd = len(dilations)
-        new_kernel_shape = []
-        new_shape = list(W.shape[:-nd])
-        for i, d in enumerate(dilations):
-            di = len(W.shape) - nd + i
-            new_shape.append(W.shape[di] + (W.shape[di] - 1) * (d - 1))
-            new_kernel_shape.append(kernel_shape[i] + (kernel_shape[i] - 1) * (d - 1))
-        new_w = np.zeros(tuple(new_shape), dtype=W.dtype)
-        indices = [slice(0, new_w.shape[0]), slice(0, new_w.shape[1])]
-        for i, d in enumerate(dilations):
-            di = len(W.shape) - nd + i
-            indices.append(slice(0, new_w.shape[di], d))
-        new_w[tuple(indices)] = W
-        W = new_w
-        kernel_shape = new_kernel_shape
-
     if auto_pad == "VALID":
         pads = [0] * (2 * len(kernel_shape))
     elif auto_pad in {"SAME_LOWER", "SAME_UPPER"}:
@@ -97,7 +79,8 @@ def _conv_implementation(
         for i in range(len(X.shape) - 2):
             d = X.shape[i + 2]
             target_size = (d + strides[i] - 1) // strides[i]
-            pad_needed = max(0, (target_size - 1) * strides[i] + kernel_shape[i] - d)
+            effective_kernel = (kernel_shape[i] - 1) * dilations[i] + 1
+            pad_needed = max(0, (target_size - 1) * strides[i] + effective_kernel - d)
             if auto_pad == "SAME_LOWER":
                 pad_head = (pad_needed + 1) // 2
             else:
@@ -107,7 +90,8 @@ def _conv_implementation(
             tail.append(pad_tail)
         pads = head + tail
 
-    c2, out_shape = im2col(X, kernel_shape, pads, strides)
+    # Gather only actual taps: inserted zero weights would evaluate 0 * Inf/NaN.
+    c2, out_shape = im2col(X, kernel_shape, pads, strides, dilations)
     kernel_size = int(np.prod(kernel_shape))
     flattened_kernel_size = W.shape[1] * kernel_size
     output_size = X.shape[0] * int(np.prod(out_shape))
