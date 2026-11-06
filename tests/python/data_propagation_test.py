@@ -54,6 +54,18 @@ class TestDataPropagation(TestShapeInferenceHelper):
             data_prop=True,
         )
 
+    def test_excessive_input_length_is_not_materialized(self) -> None:
+        graph = self._make_graph(
+            [("x", TensorProto.FLOAT, (2**31,))],
+            [make_node("Cast", ["x"], ["y"], to=TensorProto.INT64)],
+            [],
+        )
+        self._assert_inferred(
+            graph,
+            [make_tensor_value_info("y", TensorProto.INT64, (2**31,))],
+            data_prop=True,
+        )
+
     def test_model_data_propagation(self) -> None:
         """Infer the shape of z by propagating the value of xshape."""
         model = onnx.parser.parse_model(
