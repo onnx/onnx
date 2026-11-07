@@ -7,6 +7,7 @@ from __future__ import annotations
 import importlib.util
 import math
 import warnings
+import weakref
 from os import getenv
 from textwrap import dedent
 from typing import TYPE_CHECKING
@@ -49,6 +50,7 @@ from onnx.reference.op_run import OpRun, OpRunExpand
 from onnx.reference.ops import load_op
 from onnx.reference.ops._op_common_indices import _get_indices, _is_out
 from onnx.reference.ops._op_list import Cast_19, Celu, NonZero
+from onnx.reference.ops._scatter import scatter_mean
 from onnx.reference.ops.aionnx_preview_training._op_list import Adam
 from onnx.reference.ops.op_attention import _apply_causal, _softmax
 from onnx.reference.ops.op_celu import _vcelu1
@@ -3287,6 +3289,74 @@ class TestReferenceEvaluator:
             None, {"data": data, "indices": indices, "updates": updates}
         )[0]
         assert_allclose(got, expected, rtol=1e-6, atol=1e-6)
+
+    @pytest.mark.parametrize(
+        "reduction, expected",
+        [
+            ("none", [3, 4]),
+            ("add", [4, 6]),
+            ("mul", [3, 8]),
+            ("max", [3, 4]),
+            ("min", [1, 2]),
+        ],
+    )
+    def test_scatternd_whole_tensor_opset18(self, reduction, expected):
+        model = make_model(
+            make_graph(
+                [
+                    make_node(
+                        "ScatterND",
+                        ["data", "indices", "updates"],
+                        ["out"],
+                        reduction=reduction,
+                    )
+                ],
+                "scatter",
+                [
+                    make_tensor_value_info("data", TensorProto.FLOAT, [2]),
+                    make_tensor_value_info("indices", TensorProto.INT64, [1, 0]),
+                    make_tensor_value_info("updates", TensorProto.FLOAT, [1, 2]),
+                ],
+                [make_tensor_value_info("out", TensorProto.FLOAT, [2])],
+            ),
+            opset_imports=[make_opsetid("", 18)],
+        )
+        check_model(model, full_check=True)
+        got = ReferenceEvaluator(model).run(
+            None,
+            {
+                "data": np.array([1, 2], dtype=np.float32),
+                "indices": np.empty((1, 0), dtype=np.int64),
+                "updates": np.array([[3, 4]], dtype=np.float32),
+            },
+        )[0]
+        assert_array_equal(got, expected)
+
+    @pytest.mark.parametrize(
+        "dtype, value, expected_traversals",
+        [
+            (np.float64, 2, 1),
+            (np.int64, 2, 1),
+            (np.float64, np.finfo(np.float64).max, 2),
+        ],
+    )
+    def test_scatter_mean_streaming(self, dtype, value, expected_traversals):
+        traversals = 0
+
+        def update_pairs():
+            nonlocal traversals
+            traversals += 1
+            references = []
+            for _ in range(4):
+                if len(references) > 1 and expected_traversals == 1:
+                    assert references[-2]() is None
+                update = np.array(value, dtype=dtype)
+                references.append(weakref.ref(update))
+                yield (0,), update
+
+        data = np.array([value, 7], dtype=dtype)
+        assert_array_equal(scatter_mean(data, update_pairs), data)
+        assert traversals == expected_traversals
 
     def test_scatter_elements(self):
         X = make_tensor_value_info("X", TensorProto.FLOAT, [None, None])

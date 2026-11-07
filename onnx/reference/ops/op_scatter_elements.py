@@ -27,7 +27,7 @@ def scatter_elements(data, indices, updates, axis=0, reduction=None):
                 output_index[axis] = indices[update_index]
                 yield tuple(output_index), updates[update_index]
 
-        return scatter_mean(data, update_pairs())
+        return scatter_mean(data, update_pairs)
 
     if reduction == "add":
 

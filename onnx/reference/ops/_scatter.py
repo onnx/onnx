@@ -8,8 +8,8 @@ import numpy as np
 from onnx.reference.ops.op_reduce_mean import _mean
 
 
-def scatter_mean(data, updates):
-    """Average original data with (destination coordinate, update value) pairs."""
+def scatter_mean(data, update_pairs):
+    """Average data with pairs from a replayable update iterator factory."""
     if data.dtype.kind in "bUSc":
         raise TypeError(
             f"Scatter mean does not support {data.dtype}; "
@@ -17,8 +17,6 @@ def scatter_mean(data, updates):
         )
     output = data.copy()
     integer_mean = np.issubdtype(data.dtype, np.integer)
-    if not integer_mean:
-        updates = list(updates)
     # Widen sums so integer overflow and low-precision accumulation do not
     # corrupt the mean before the final conversion to the output dtype.
     sums = data.astype(
@@ -26,7 +24,7 @@ def scatter_mean(data, updates):
     )
     counts = np.ones(data.shape, dtype=np.int64)
     seen = np.zeros(data.shape, dtype=np.bool_)
-    for index, update in updates:
+    for index, update in update_pairs():
         value = (
             (int(update) if np.ndim(update) == 0 else update.astype(object))
             if integer_mean
@@ -46,7 +44,7 @@ def scatter_mean(data, updates):
             # overflow fallback, including each original data value once.
             contributions = {i: [data.flat[i]] for i in failed}
             positions = np.arange(data.size).reshape(data.shape)
-            for index, update in updates:
+            for index, update in update_pairs():
                 for position, value in zip(
                     np.asarray(positions[index]).flat,
                     np.asarray(update).flat,
