@@ -264,4 +264,29 @@ bool AttentionAppendFunctionCausalMask(
   return true;
 }
 
+void AttentionAppendFunctionSoftmax(FunctionBuilder& builder, int64_t softmax_precision, int64_t output_precision) {
+  // Attention's softmax_precision attribute controls the calculation precision.
+  // Spell out the stable softmax instead of calling the standalone Softmax op,
+  // whose reference implementation may use a wider accumulator for low-precision
+  // inputs. This keeps the direct and function-expanded Attention paths aligned.
+  builder.Add("SoftmaxCast = Cast (QKAttnWeightSoftcap)", "to", softmax_precision)
+      .Add("BiasRowMaxAxes = Constant <value = int64[1] {-1}> ()")
+      .Add("BiasRowMax = ReduceMax(AttnBiasT, BiasRowMaxAxes)") // keepdims=1 (default)
+      .Add("FloatNegInfT = CastLike(FloatNegInf, AttnBiasT)")
+      .Add("RowAllMasked = Equal(BiasRowMax, FloatNegInfT)")
+      .Add("SoftmaxRowMax = ReduceMax(SoftmaxCast, BiasRowMaxAxes)") // keepdims=1 (default)
+      .Add("SoftmaxZero = CastLike(ScalarZero, SoftmaxCast)")
+      .Add("SoftmaxOne = CastLike(One1DF, SoftmaxCast)")
+      .Add("SoftmaxSafeMax = Where(RowAllMasked, SoftmaxZero, SoftmaxRowMax)")
+      .Add("SoftmaxShifted = Sub(SoftmaxCast, SoftmaxSafeMax)")
+      .Add("SoftmaxExp = Exp(SoftmaxShifted)")
+      .Add("SoftmaxExpSafe = Where(RowAllMasked, SoftmaxZero, SoftmaxExp)")
+      .Add("SoftmaxSum = ReduceSum(SoftmaxExpSafe, BiasRowMaxAxes)") // keepdims=1 (default)
+      .Add("SoftmaxSafeSum = Where(RowAllMasked, SoftmaxOne, SoftmaxSum)")
+      .Add("AttnWeightSoftmax = Div(SoftmaxExpSafe, SoftmaxSafeSum)")
+      .Add("SoftmaxOut = Cast (AttnWeightSoftmax)", "to", output_precision)
+      .Add("ZeroProbT = CastLike(ScalarZero, SoftmaxOut)")
+      .Add("SoftmaxOutSafe = Where(RowAllMasked, ZeroProbT, SoftmaxOut)");
+}
+
 } // namespace ONNX_NAMESPACE::defs::nn::utils

@@ -3541,24 +3541,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           } else {
             builder.Add("QKAttnWeightSoftcap = Add(QKAttnCast, AttnBiasT)");
           }
-          builder.Add("SoftmaxCast = Cast (QKAttnWeightSoftcap)", "to", softmax_precision)
-              .Add("AttnWeightSoftmax = Softmax (SoftmaxCast)")
-              .Add("SoftmaxOut = Cast (AttnWeightSoftmax)", "to", T1);
-
-          // Fully-masked-row guard: a query row whose additive bias (AttnBiasT) is
-          // entirely -inf (every key disallowed by the combined causal + attn_mask
-          // constraints) softmaxes to NaN. Detect such rows on the additive bias
-          // row-max and zero their probabilities with Where (not Mul; NaN * 0 = NaN)
-          // BEFORE the P @ V contraction so 0 @ V = 0. The guard runs before the
-          // mode-3 output capture so the exposed qk_matmul_output row is also zeroed,
-          // consistent with Y. Mirrors the reference impl so primary == _expanded
-          // bit-for-bit; a no-op for rows with any allowed key.
-          builder.Add("BiasRowMaxAxes = Constant <value = int64[1] {-1}> ()")
-              .Add("BiasRowMax = ReduceMax(AttnBiasT, BiasRowMaxAxes)") // keepdims=1 (default)
-              .Add("FloatNegInfT = CastLike(FloatNegInf, AttnBiasT)")
-              .Add("RowAllMasked = Equal(BiasRowMax, FloatNegInfT)")
-              .Add("ZeroProbT = CastLike(ScalarZero, SoftmaxOut)")
-              .Add("SoftmaxOutSafe = Where(RowAllMasked, ZeroProbT, SoftmaxOut)");
+          defs::nn::utils::AttentionAppendFunctionSoftmax(builder, softmax_precision, T1);
 
           // QK MatMul output if required
           auto qk_matmul_output_mode_attr = ctx.getAttribute("qk_matmul_output_mode");
