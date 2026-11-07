@@ -12,6 +12,19 @@ from onnx.helper import make_model, make_tensor_value_info
 
 
 class TestSymbolicShape:
+    @pytest.mark.parametrize("symbolic", [False, True])
+    def test_concrete_zero_comparison_requires_concrete_dimension(
+        self, symbolic: bool
+    ) -> None:
+        output = make_tensor_value_info(
+            "output", TensorProto.FLOAT, ["S"] if symbolic else [None]
+        )
+        model = make_model(helper.make_graph([], "comparison", [], [output]))
+        with pytest.raises(AssertionError):
+            self._assert_valueinfo_shape(
+                model, [make_tensor_value_info("output", TensorProto.FLOAT, [0])]
+            )
+
     @pytest.mark.parametrize("version", [1, 10, 11, 12, 18, 22])
     def test_pooling_floor_does_not_alias_integer_division(self, version: int) -> None:
         model = make_model(
@@ -343,7 +356,10 @@ class TestSymbolicShape:
                     # symbolic dimension must exist
                     assert dim.dim_param, f"{onnx_model}"
                 else:
-                    assert dim.dim_value == expected_dim.dim_value, f"{onnx_model}"
+                    assert (
+                        dim.HasField("dim_value")
+                        and dim.dim_value == expected_dim.dim_value
+                    ), f"{onnx_model}"
 
     def _count_unique_dim_param_number(self, onnx_model: ModelProto) -> int:
         """Return the total number of unique symbolic shape"""
