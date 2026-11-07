@@ -164,6 +164,14 @@ def test_format_attribute_schema() -> None:
     assert "ggml_type" not in schema.attributes
 
 
+def test_schema_online_specification_link() -> None:
+    assert (
+        "https://github.com/onnx/onnx/blob/"
+        "19b091202765d5d444acd9d9c25a0b81eef474b5/docs/DequantizePacked.md"
+        in defs.get_schema("DequantizePacked", 29).doc
+    )
+
+
 def test_documented_format_identifiers() -> None:
     expected = {
         name: (kind.name, *GGUF_BLOCK_SIZES[kind])

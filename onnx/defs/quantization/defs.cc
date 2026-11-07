@@ -128,6 +128,8 @@ Only the following fixed identifiers are supported; they accept no parameters:
 The byte layouts, per-format decoding algorithms, and complete IQ codebooks
 are defined in the in-tree
 [DequantizePacked decoding specification](DequantizePacked.md).
+The [online specification](https://github.com/onnx/onnx/blob/19b091202765d5d444acd9d9c25a0b81eef474b5/docs/DequantizePacked.md)
+is also accessible from installed schema documentation.
 
 `shape` gives the logical output dimensions in ONNX (row-major) order.
 For a GGUF descriptor `[ne0, ne1, ...]`, use `shape=[..., ne1, ne0]`.
