@@ -70,6 +70,8 @@ an unprioritized list of items for the next year.
 #### Q4 2026:
 - Variable length scan support
 - LinearAttention (support for Gated DeltaNet-2)
+- Support quantized formats defined by the GGUF format
+- Better MoE model support
 
 #### Q1 2027:
 - Support Mixture-of-Experts (possibly via Grouped MatMul operator)
@@ -106,6 +108,23 @@ an unprioritized list of items for the next year.
 #### Q2 2027
 - Fourth subset of ONNX operators (i) fully specified in compliance with the SONNX guidelines, (ii) fully formally specified and proved, (iii) implemented, (iv) tested and (v) integrated in the AIDGE framework.
 - Second subset of operators with numerical accuracy analysis.
+
+---
+
+
+### Optimizations SIG
+
+**Lead(s):** Freddy Chiu, Justin Chu
+**Last updated:** _2026-11-06_
+
+#### Q3 2026
+
+#### Q4 2026
+- Migration of the onnx-shape-inference project as a SIG-owned project
+
+#### Q1 2027
+
+#### Q2 2027
 
 ---
 
