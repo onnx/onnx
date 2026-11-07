@@ -103,6 +103,7 @@ __all__ = [
     "GatherND",
     "Gemm_6",
     "Gemm_7",
+    "Gemm_29",
     "GlobalAveragePool",
     "GlobalLpPool",
     "GlobalMaxPool",
@@ -369,7 +370,7 @@ from onnx.reference.ops.op_floor import Floor
 from onnx.reference.ops.op_gather import Gather
 from onnx.reference.ops.op_gather_elements import GatherElements
 from onnx.reference.ops.op_gathernd import GatherND
-from onnx.reference.ops.op_gemm import Gemm_6, Gemm_7
+from onnx.reference.ops.op_gemm import Gemm_6, Gemm_7, Gemm_29
 from onnx.reference.ops.op_global_average_pool import GlobalAveragePool
 from onnx.reference.ops.op_global_lp_pool import GlobalLpPool
 from onnx.reference.ops.op_global_max_pool import GlobalMaxPool

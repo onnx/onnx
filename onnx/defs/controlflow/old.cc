@@ -1042,13 +1042,6 @@ void ScanInferenceFunction_opset8(InferenceContext& ctx) {
   }
 }
 
-static int handle_negative_axis_validate_opset9(const std::string& attrib, int axis, int rank) {
-  if (-rank > axis || axis >= rank) {
-    fail_shape_inference(attrib, " axis value ", axis, " is invalid for a tensor of rank ", rank);
-  }
-  return (axis >= 0 ? axis : axis + rank);
-}
-
 static void ScanInferenceFunction_opset9(InferenceContext& ctx) {
   auto num_inputs = ctx.getNumInputs();
   auto num_scan_inputs = narrow<size_t>(getRequiredAttributeInt(ctx, "num_scan_inputs"));
@@ -1120,7 +1113,7 @@ static void ScanInferenceFunction_opset9(InferenceContext& ctx) {
 
         // remove sequence length dimensions and add to subgraph_input_types
         int axis = static_cast<int>(axes[i - num_loop_state_vars]);
-        axis = handle_negative_axis_validate_opset9("scan_input_axes", axis, shape.dim_size());
+        axis = handle_negative_axis_validate("scan_input_axes", axis, shape.dim_size());
 
         // update sequence_len if a value is available
 
@@ -1190,13 +1183,13 @@ static void ScanInferenceFunction_opset9(InferenceContext& ctx) {
           auto subgraph_output_rank = subgraph_output_shape.dim_size();
           auto output_rank = subgraph_output_rank + 1;
           int output_axis = static_cast<int>(output_axes[i - num_loop_state_vars]);
-          output_axis = handle_negative_axis_validate_opset9("scan_output_axes", output_axis, output_rank);
+          output_axis = handle_negative_axis_validate("scan_output_axes", output_axis, output_rank);
 
           for (int j = 0; j < output_axis; ++j)
-            *(inferred_shape.add_dim()) = subgraph_output_shape.dim(j);
-          *(inferred_shape.add_dim()) = sequence_len_dim;
+            *inferred_shape.add_dim() = subgraph_output_shape.dim(j);
+          *inferred_shape.add_dim() = sequence_len_dim;
           for (int j = output_axis; j < subgraph_output_rank; ++j)
-            *(inferred_shape.add_dim()) = subgraph_output_shape.dim(j);
+            *inferred_shape.add_dim() = subgraph_output_shape.dim(j);
 
           // Merge inferred shape with existing shape information
           mergeInShapeInfo(inferred_shape, *mutable_scan_output_tensor_type);
