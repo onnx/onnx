@@ -86,11 +86,14 @@ class _CommonQuantizeLinear(OpRun):
             x = x / y_scale
 
         if tensor_type in _QUANT_INTEGER_RANGES:
-            xi = np.rint(x).astype(np.int32)
+            quant_range = _QUANT_INTEGER_RANGES[tensor_type]
+            # No zero point within the output range can move values farther
+            # than this width back into range. Clip before the int32 cast.
+            width = quant_range[1] - quant_range[0]
+            xi = np.clip(np.rint(x).astype(np.float64), -width, width).astype(np.int32)
             if zero_point is not None:
                 xi += zero_point
             dtype = tensor_dtype_to_np_dtype(tensor_type)
-            quant_range = _QUANT_INTEGER_RANGES[tensor_type]
             return (np.clip(xi, quant_range[0], quant_range[1]).astype(dtype),)
 
         if tensor_type in {
