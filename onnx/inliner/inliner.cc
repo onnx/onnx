@@ -127,6 +127,8 @@ class NameGenerator : private internal::Visitor {
       Add(x.name());
     for (const auto& x : graph.initializer())
       Add(x.name());
+    for (const auto& x : graph.sparse_initializer())
+      Add(x.values().name());
     // Adding graph outputs is redundant for a valid graph, but we do it anyway,
     // to produce better results for invalid graphs.
     for (const auto& x : graph.output())
@@ -277,6 +279,14 @@ class InliningRenamer : public internal::MutableVisitor {
         init.set_name(binding->second);
       else
         Rename(*init.mutable_name());
+    }
+    for (auto& init : *graph.mutable_sparse_initializer()) {
+      auto* values = init.mutable_values();
+      auto binding = rename_scopes.back().find(values->name());
+      if (binding != rename_scopes.back().end())
+        values->set_name(binding->second);
+      else
+        Rename(*values->mutable_name());
     }
     for (auto& n : *graph.mutable_node())
       VisitNode(n);
