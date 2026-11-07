@@ -3,12 +3,49 @@
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
+import numpy as np
 import pytest
 
-from onnx import checker, inliner, parser
+from onnx import checker, inliner, numpy_helper, parser
+from onnx.reference import ReferenceEvaluator
 
 
 class TestInliner:
+    def test_scan_initializer_preserves_input_override(self):
+        model = parser.parse_model(
+            """
+            <ir_version: 13, opset_import: ["" : 29, "local" : 1]>
+            graph (float[2,1] X) => (float[2,1] Y) { Y = local.scan(X) }
+            <opset_import: ["" : 29], domain: "local">
+            scan (x) => (y) {
+                y = Scan (x) <
+                    num_scan_inputs = 1,
+                    body = step (float[1] item) => (float[1] result) {
+                        result = Identity(item)
+                    }
+                >
+            }
+            """
+        )
+        body = next(
+            attr.g
+            for attr in model.functions[0].node[0].attribute
+            if attr.name == "body"
+        )
+        body.initializer.append(
+            numpy_helper.from_array(np.array([99.0], dtype=np.float32), name="item")
+        )
+        checker.check_model(model)
+        feeds = {"X": np.array([[2.0], [3.0]], dtype=np.float32)}
+        np.testing.assert_array_equal(
+            ReferenceEvaluator(model).run(None, feeds)[0], feeds["X"]
+        )
+        expanded = inliner.inline_local_functions(model)
+        checker.check_model(expanded)
+        np.testing.assert_array_equal(
+            ReferenceEvaluator(expanded).run(None, feeds)[0], feeds["X"]
+        )
+
     @pytest.mark.parametrize("extra_output", ["", "Unexpected"])
     def test_trailing_optional_output_binding(self, extra_output):
         model = parser.parse_model(

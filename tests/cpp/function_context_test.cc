@@ -307,6 +307,61 @@ TEST(FunctionAPITest, NestedValueInfoFollowsRenamedDefinitions) {
   }
 }
 
+TEST(FunctionAPITest, NestedInitializerRetainsInputBinding) {
+  for (const bool expand : {false, true}) {
+    ModelProto model;
+    OnnxParser parser(R"ONNX(
+      <ir_version: 13, opset_import: ["" : 29]>
+      initialized (float[2,1] X) => (float[2,1] Y) {
+        Y = Scan (X) <
+          num_scan_inputs = 1,
+          body = step (float[1] item) => (float[1] result) {
+            result = Identity(item)
+          }
+        >
+      }
+    )ONNX");
+    ASSERT_TRUE(parser.Parse(model).IsOK());
+    for (auto& attr : *model.mutable_graph()->mutable_node(0)->mutable_attribute()) {
+      if (attr.name() == "body") {
+        auto* init = attr.mutable_g()->add_initializer();
+        init->set_name("item");
+        init->set_data_type(TensorProto::FLOAT);
+        init->add_dims(1);
+        init->add_float_data(99.0f);
+      }
+    }
+    checker::check_model(model);
+    FunctionProto function;
+    function.set_name("Softsign");
+    function.add_input("X");
+    function.add_output("Y");
+    function.mutable_opset_import()->CopyFrom(model.opset_import());
+    if (expand) {
+      function.mutable_node()->CopyFrom(model.graph().node());
+      NodeProto call;
+      call.set_name("initialized_call");
+      call.set_op_type("Softsign");
+      call.add_input("X");
+      call.add_output("Y");
+      model.mutable_graph()->clear_node();
+      FunctionExpandHelper(call, function, *model.mutable_graph());
+    } else {
+      FunctionBuilder builder(function);
+      builder.AddInlinedCall({"Y"}, model.graph(), {"X"}, "initialized_call");
+      model.mutable_graph()->mutable_node()->CopyFrom(function.node());
+    }
+    checker::check_model(model);
+    for (const auto& attr : model.graph().node(0).attribute()) {
+      if (attr.name() == "body") {
+        const auto& body = attr.g();
+        EXPECT_EQ(body.input(0).name(), body.initializer(0).name());
+        EXPECT_EQ(body.node(0).input(0), body.input(0).name());
+      }
+    }
+  }
+}
+
 // A polymorphic context-dependent function test-case.
 
 static bool

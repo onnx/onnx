@@ -271,8 +271,13 @@ class InliningRenamer : public internal::MutableVisitor {
     rename_scopes.emplace_back();
     for (auto& x : *graph.mutable_input())
       Rename(*x.mutable_name());
-    for (auto& init : *graph.mutable_initializer())
-      Rename(*init.mutable_name());
+    for (auto& init : *graph.mutable_initializer()) {
+      auto binding = rename_scopes.back().find(init.name());
+      if (binding != rename_scopes.back().end())
+        init.set_name(binding->second);
+      else
+        Rename(*init.mutable_name());
+    }
     for (auto& n : *graph.mutable_node())
       VisitNode(n);
     for (auto& y : *graph.mutable_output())
