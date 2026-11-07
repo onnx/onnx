@@ -3,6 +3,7 @@
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
+import ml_dtypes
 import numpy as np
 
 import onnx
@@ -30,6 +31,18 @@ def cast_to(
 
     if to == onnx.TensorProto.FLOAT8E8M0:
         return onnx.numpy_helper.to_float8e8m0(x, saturate, round_mode).astype(dtype)
+
+    if (
+        to
+        in {
+            onnx.TensorProto.FLOAT4E2M1,
+            onnx.TensorProto.FLOAT6E2M3,
+            onnx.TensorProto.FLOAT6E3M2,
+        }
+        and x.dtype.kind in "fV"  # float, or an ml_dtypes float type
+    ):
+        # These types have no NaN encoding: NaN becomes the largest positive value.
+        x = np.where(np.isnan(x), x.dtype.type(float(ml_dtypes.finfo(dtype).max)), x)
 
     return x.astype(dtype)
 
