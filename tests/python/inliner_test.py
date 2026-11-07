@@ -3,12 +3,62 @@
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
+import numpy as np
 import pytest
 
-from onnx import checker, inliner, parser
+from onnx import checker, defs, inliner, parser
+from onnx.reference import ReferenceEvaluator
 
 
 class TestInliner:
+    def test_groupedmatmul_linked_transb(self):
+        model = parser.parse_model(
+            """
+            <ir_version: 13, opset_import: ["" : 29, "local" : 1]>
+            g (float[1,2] X, float[1,2,2] W, int64[1,1] I) => (float[1,1,2] Y) {
+                Y = local.project <transpose = 1> (X, W, I)
+            }
+            <domain: "local", opset_import: ["" : 29]>
+            project <transpose> (float[1,2] X, float[1,2,2] W, int64[1,1] I)
+                => (float[1,1,2] Y) {
+                Y = GroupedMatMul <transB: int = @transpose> (X, W, I)
+            }
+            """
+        )
+        node = model.functions[0].node[0]
+        schema = defs.get_schema("GroupedMatMul", 29)
+        input_types = [value.type.SerializeToString() for value in model.graph.input]
+        assert not schema.get_context_dependent_function(
+            node.SerializeToString(), input_types
+        )
+        inlined = inliner.inline_selected_functions(
+            model,
+            [("local", "project")],
+            exclude=True,
+            inline_schema_functions=True,
+        )
+        retained_node = inlined.functions[0].node[0]
+        assert retained_node.op_type == "GroupedMatMul"
+        assert retained_node.attribute[0].ref_attr_name == "transpose"
+        assert not retained_node.attribute[0].HasField("i")
+        checker.check_model(inlined)
+        feeds = {
+            "X": np.array([[1, 2]], dtype=np.float32),
+            "W": np.array([[[1, 3], [5, 7]]], dtype=np.float32),
+            "I": np.array([[0]], dtype=np.int64),
+        }
+        expected = np.array([[[7, 19]]], dtype=np.float32)
+        bound = inliner.inline_selected_functions(
+            inlined, [], exclude=True, inline_schema_functions=True
+        )
+        assert not bound.functions
+        assert all(node.op_type != "GroupedMatMul" for node in bound.graph.node)
+        assert any(node.op_type == "Transpose" for node in bound.graph.node)
+        checker.check_model(bound)
+        np.testing.assert_array_equal(
+            ReferenceEvaluator(bound).run(None, feeds)[0], expected
+        )
+
     def test_basic(self):
         model = parser.parse_model(
             """
