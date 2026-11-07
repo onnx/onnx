@@ -102,9 +102,7 @@ def test_softmax_cross_entropy_loss_low_precision_weighted(dtype, reduction):
     # the finite loss for every reduction mode.
     x32 = np.zeros((2, 65536), dtype=np.float32)
     labels = np.array([1, 2], dtype=np.int64)
-    weights32 = np.full(
-        65536, 32768 if reduction == "mean" else 0.5, dtype=np.float32
-    )
+    weights32 = np.full(65536, 32768 if reduction == "mean" else 0.5, dtype=np.float32)
     expected_loss, _ = (
         value.astype(dtype)
         for value in _softmax_cross_entropy_loss(x32, labels, weights32, reduction)
