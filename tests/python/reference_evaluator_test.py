@@ -5,6 +5,7 @@
 from __future__ import annotations
 
 import importlib.util
+import itertools
 import math
 import warnings
 import weakref
@@ -3191,6 +3192,44 @@ class TestReferenceEvaluator:
         np.testing.assert_array_equal(
             data, np.array([[values[0]], [-0.0]], dtype=np.float64)
         )
+
+    @pytest.mark.parametrize("op", ["ScatterElements", "ScatterND"])
+    @pytest.mark.parametrize("sign", [-1, 1])
+    @pytest.mark.parametrize(
+        "values, expected",
+        [
+            ([np.finfo(np.float64).max, np.finfo(np.float64).max, -np.inf], -np.inf),
+            ([np.finfo(np.float64).max, -np.inf, -np.inf], -np.inf),
+            ([np.finfo(np.float64).max, np.inf, -np.inf], np.nan),
+            ([np.finfo(np.float64).max, np.nan, -np.inf], np.nan),
+        ],
+    )
+    def test_scatter_mean_infinity_overflow_order(self, op, sign, values, expected):
+        model = onnx.parser.parse_model(f"""
+            <ir_version: 13, opset_import: ["" : 29]>
+            scatter (double[2, 1] data, int64[2, 1] indices,
+                     double[2, 1] updates) => (double[2, 1] output) {{
+                output = {op}<reduction = "mean">(data, indices, updates)
+            }}
+        """)
+        evaluator = ReferenceEvaluator(model)
+        for order in itertools.permutations(values):
+            contributions = np.array(order, dtype=np.float64) * sign
+            got = evaluator.run(
+                None,
+                {
+                    "data": np.array([[contributions[0]], [-0.0]]),
+                    "indices": np.array([[0], [-2]], dtype=np.int64),
+                    "updates": contributions[1:].reshape(2, 1),
+                },
+            )[0]
+            assert_allclose(got, [[expected * sign], [-0.0]], equal_nan=True)
+            assert np.signbit(got[1, 0])
+            assert_allclose(
+                _mean(contributions, axes=None, keepdims=False),
+                expected * sign,
+                equal_nan=True,
+            )
 
     def test_scatternd_mean_whole_tensor(self):
         model = onnx.parser.parse_model("""

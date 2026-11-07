@@ -42,7 +42,12 @@ def _mean(data, axes, keepdims):
     for index in np.flatnonzero(~np.isfinite(result)):
         row = rows[index]
         if not np.all(np.isfinite(row)):
-            # A non-finite input is not an intermediate-overflow failure.
+            positive_infinity = np.any(np.isposinf(row))
+            negative_infinity = np.any(np.isneginf(row))
+            if np.any(np.isnan(row)) or (positive_infinity and negative_infinity):
+                result[index] = np.nan
+            else:
+                result[index] = np.inf if positive_infinity else -np.inf
             continue
 
         try:
