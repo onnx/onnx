@@ -4222,6 +4222,43 @@ class TestReferenceEvaluator:
         )[0]
         assert_allclose(expanded, expected)
 
+    @pytest.mark.parametrize("epsilon", [1e-46, 1e-5])
+    def test_mvn_opset29_python_linked_epsilon_float_rounding(self, epsilon) -> None:
+        node = make_node("MeanVarianceNormalization", ["X"], ["Y"], axes=[0])
+        node.attribute.append(
+            onnx.helper.make_attribute_ref(
+                "epsilon", AttributeProto.FLOAT, ref_attr_name="function_epsilon"
+            )
+        )
+        function = make_function(
+            "local",
+            "LocalMVN",
+            ["X"],
+            ["Y"],
+            [node],
+            [make_opsetid("", 29)],
+            attributes=["function_epsilon"],
+            value_info=[
+                make_tensor_value_info("X", TensorProto.DOUBLE, [2]),
+                make_tensor_value_info("Y", TensorProto.DOUBLE, [2]),
+            ],
+        )
+        x = np.array([0.0, 2e-46], dtype=np.float64)
+        centered = x - np.mean(x)
+        expected = centered / (
+            np.sqrt(np.mean(np.square(centered))) + np.float64(np.float32(epsilon))
+        )
+
+        class MeanVarianceNormalization(OpRunExpand):
+            op_domain = ""
+
+        for new_ops in (None, [MeanVarianceNormalization]):
+            got = ReferenceEvaluator(function, new_ops=new_ops).run(
+                None, {"X": x}, attributes={"function_epsilon": epsilon}
+            )[0]
+            assert got.dtype == x.dtype
+            assert_allclose(got, expected, rtol=1e-15, atol=0)
+
     def test_concat_in_a_function(self):
         def create_model():
             nodes = []

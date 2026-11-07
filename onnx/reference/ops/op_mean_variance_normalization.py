@@ -43,6 +43,7 @@ class MeanVarianceNormalization_29(OpRun):
             if X.dtype in (np.dtype(np.float16), np.dtype(ml_dtypes.bfloat16))
             else X
         )
+        epsilon = np.asarray(np.float32(epsilon), dtype=compute_x.dtype)
         mean = _mean(compute_x, axes=axes, keepdims=True)
         centered = compute_x - mean
         variance = _mean(np.square(centered), axes=axes, keepdims=True)
