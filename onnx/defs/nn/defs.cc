@@ -3678,7 +3678,8 @@ CausalConvWithStateFunction(const FunctionBodyBuildContext& ctx, const OpSchema&
       PaddedInput = Concat <axis = 2> (ZeroPadCast, input)
     )ONNX");
   }
-  // Append one unused sample so Conv is valid even for an empty chunk.
+  // An empty chunk has only H history samples, shorter than the H + 1 kernel span.
+  // Both v27 and v29 append one sample, discard the extra Conv output, and slice state from PaddedInput.
   builder.Add(R"ONNX(
     BatchChannelsConv = Shape <start = 0, end = 2> (input)
     ExtraShape = Concat <axis = 0> (BatchChannelsConv, One1D)
@@ -3832,6 +3833,8 @@ When `L = 0`, the output has shape `(B, C, 0)`, and `present_state` equals
   if (dilated) {
     schema.Attr("dilation", "Spacing between kernel samples. Must be >= 1.", AttributeProto::INT, int64_t{1});
   }
+  // v27 exposes no dilation attribute: the shared inference and function builders use dilation 1.
+  // Both schemas retain activation="none" and zero history when past_state is omitted.
   return schema;
 }
 
