@@ -15,6 +15,14 @@ if TYPE_CHECKING:
     from collections.abc import Callable
 
 
+def _cast_output(result: np.ndarray, dtype: Any) -> np.ndarray:
+    return (
+        result
+        if result.dtype == dtype
+        else onnx.numpy_helper.saturate_cast(result, dtype)
+    )
+
+
 def _cartesian(arrays: list[np.ndarray], out: np.ndarray | None = None) -> np.ndarray:
     """From https://stackoverflow.com/a/1235363
     Generate a cartesian product of input arrays.
@@ -220,6 +228,9 @@ def _interpolate_1d_with_x(
             x_ori = (x + 0.5) / scale_factor - 0.5
     elif coordinate_transformation_mode == "half_pixel":
         x_ori = (x + 0.5) / scale_factor - 0.5
+    elif coordinate_transformation_mode == "tf_half_pixel_for_nn":
+        # Resize-11/12 only (removed in opset 13).
+        x_ori = (x + 0.5) / scale_factor
     elif coordinate_transformation_mode == "half_pixel_symmetric":
         # Maps the center of the implicit ROI to the center of the output canvas.
         # The difference with `half_pixel` will be only relevant
@@ -355,6 +366,9 @@ def _compute_x_ori(
         )
     elif coordinate_transformation_mode == "half_pixel":
         x_ori = (y + 0.5) / scale_factor - 0.5
+    elif coordinate_transformation_mode == "tf_half_pixel_for_nn":
+        # Resize-11/12 only (removed in opset 13).
+        x_ori = (y + 0.5) / scale_factor
     elif coordinate_transformation_mode == "half_pixel_symmetric":
         adjustment = output_width_int / output_width
         center = input_width / 2
@@ -377,6 +391,8 @@ def _interpolate_1d_along_axis(
     extrapolation_value: float = 0.0,
     coordinate_transformation_mode: str = "half_pixel",
     exclude_outside: bool = False,
+    *,
+    nearest: bool = False,
 ) -> np.ndarray:
     """Vectorized 1-D resize along a single axis.
 
@@ -422,26 +438,36 @@ def _interpolate_1d_along_axis(
     for i in range(1, output_width_int):
         coeffs[i] = get_coeffs(float(ratios[i]), scale_factor)
 
-    # Replicate _get_neighbor_idxes semantics: take the n indices closest to
-    # x_ori (in padded-edge coordinates) with ties broken by smaller index.
-    pad_width = int(np.ceil(n / 2))
-    x_padded = x_ori + pad_width
-    p_padded = np.floor(x_padded).astype(np.int64)
-    frac = x_padded - p_padded
-
+    # Take the window from the same floor/ratio used for the coefficients;
+    # re-flooring a shifted coordinate can round differently when x_ori is
+    # within float error of an integer and select a window off by one.
     if n % 2 == 0:
-        # Even kernel: window centers are half-integers. At an integer
-        # x_padded, the tie between p-0.5 and p+0.5 goes to the smaller
-        # center (p-0.5), so the window starts at p - n/2.
-        offset_from_p = np.where(frac == 0, -(n // 2), -(n // 2) + 1)
+        left = np.where(integer_mask, x_ori_int - 1, x_ori_int)
+        start = left - (n // 2 - 1)
     else:
-        # Odd kernel: window centered on the nearest integer. Ties
-        # (frac == 0.5) go to the smaller center.
-        base = -((n - 1) // 2)
-        offset_from_p = np.where(frac <= 0.5, base, base + 1)
+        frac = x_ori - x_ori_int
+        start = np.where(frac <= 0.5, x_ori_int, x_ori_int + 1) - (n - 1) // 2
+    neighbor_idxes = start[:, None] + np.arange(n)[None, :]
 
-    start_padded = p_padded + offset_from_p
-    neighbor_idxes = start_padded[:, None] + np.arange(n)[None, :] - pad_width
+    if nearest and not exclude_outside:
+        selected = neighbor_idxes[
+            np.arange(output_width_int), np.argmax(coeffs, axis=-1)
+        ]
+        clamped = np.clip(selected, 0, input_width - 1).astype(np.intp)
+        result = np.take(data, clamped, axis=axis)
+        if is_extrapolated is not None and is_extrapolated.any():
+            mask_shape = (
+                (1,) * axis + (output_width_int,) + (1,) * (data.ndim - axis - 1)
+            )
+            mask = is_extrapolated.reshape(mask_shape)
+            fill_val = 0.0 if extrapolation_value is None else extrapolation_value
+            fill = (
+                fill_val
+                if result.dtype == object
+                else np.asarray(fill_val).astype(result.dtype)
+            )
+            result = np.where(mask, fill, result)
+        return result
 
     if exclude_outside:
         outside_mask = (neighbor_idxes < 0) | (neighbor_idxes >= input_width)
@@ -477,6 +503,8 @@ def _interpolate_nd(
     roi: np.ndarray | None = None,
     keep_aspect_ratio_policy: str | None = "stretch",
     exclude_outside: bool = False,
+    *,
+    nearest: bool = False,
     **kwargs: Any,
 ) -> np.ndarray:
     if output_size is None and scale_factors is None:
@@ -547,7 +575,8 @@ def _interpolate_nd(
     # Separable interpolation: resize one axis at a time. This avoids the
     # O(prod(output_shape)) scan of the old implementation, which called the
     # recursive _interpolate_nd_with_x once per output element.
-    result = data if data.dtype == np.float64 else data.astype(np.float64)
+    keep_dtype = nearest and not exclude_outside
+    result = data if keep_dtype or data.dtype == np.float64 else data.astype(np.float64)
     for axis in axes:
         axis_scale = float(scale_factors[axis])
         axis_output = int(output_size[axis])
@@ -573,6 +602,7 @@ def _interpolate_nd(
             get_coeffs,
             roi=axis_roi,
             exclude_outside=exclude_outside,
+            nearest=nearest,
             **kwargs,
         )
     return result
@@ -588,7 +618,7 @@ def _axes_chunk_size(
     get_coeffs: Callable[[float, float], np.ndarray],
     output_size: np.ndarray | None,
     scale_factors: np.ndarray | None,
-    keep_aspect_ratio_policy: str,
+    keep_aspect_ratio_policy: str | None,
     coordinate_transformation_mode: str,
     batch_size: int,
 ) -> int:
@@ -596,7 +626,10 @@ def _axes_chunk_size(
     if output_size is not None:
         axis_output = np.asarray(output_size, dtype=np.int64)
         axis_scales = axis_output / input_size
-        if keep_aspect_ratio_policy != "stretch":
+        if (
+            keep_aspect_ratio_policy is not None
+            and keep_aspect_ratio_policy != "stretch"
+        ):
             if keep_aspect_ratio_policy == "not_larger":
                 scale = axis_scales.min()
             elif keep_aspect_ratio_policy == "not_smaller":
@@ -665,6 +698,8 @@ class Resize(OpRun):
         mode: str | None = None,
         nearest_mode=None,
     ):
+        if keep_aspect_ratio_policy is None:
+            keep_aspect_ratio_policy = "stretch"
         if mode == "nearest":
             if antialias:
                 raise RuntimeError(
@@ -690,7 +725,7 @@ class Resize(OpRun):
             raise ValueError(f"Unexpected value {mode!r} for mode.")
 
         if axes is None:
-            output = onnx.numpy_helper.saturate_cast(
+            output = _cast_output(
                 _interpolate_nd(
                     X,
                     fct,
@@ -701,6 +736,7 @@ class Resize(OpRun):
                     exclude_outside=exclude_outside,
                     coordinate_transformation_mode=coordinate_transformation_mode,
                     extrapolation_value=extrapolation_value,
+                    nearest=(mode == "nearest"),
                 ),
                 X.dtype,
             )
@@ -722,7 +758,7 @@ class Resize(OpRun):
             or batch_size == 0
             or any(X.shape[axis] == 0 for axis in normalized_axes)
         ):
-            output = onnx.numpy_helper.saturate_cast(
+            output = _cast_output(
                 _interpolate_nd(
                     X,
                     fct,
@@ -734,6 +770,7 @@ class Resize(OpRun):
                     exclude_outside=exclude_outside,
                     coordinate_transformation_mode=coordinate_transformation_mode,
                     extrapolation_value=extrapolation_value,
+                    nearest=(mode == "nearest"),
                 ),
                 X.dtype,
             )
@@ -764,7 +801,7 @@ class Resize(OpRun):
                     if batch_view is not None
                     else permuted[np.unravel_index(index, batch_shape)]
                 )
-                chunk = onnx.numpy_helper.saturate_cast(
+                chunk = _cast_output(
                     _interpolate_nd(
                         chunk_input,
                         fct,
@@ -775,6 +812,7 @@ class Resize(OpRun):
                         exclude_outside=exclude_outside,
                         coordinate_transformation_mode=coordinate_transformation_mode,
                         extrapolation_value=extrapolation_value,
+                        nearest=(mode == "nearest"),
                     ),
                     X.dtype,
                 )
@@ -793,7 +831,7 @@ class Resize(OpRun):
                         )
                     ]
                 )
-                chunk = onnx.numpy_helper.saturate_cast(
+                chunk = _cast_output(
                     _interpolate_nd(
                         chunk_input,
                         fct,
@@ -805,6 +843,7 @@ class Resize(OpRun):
                         exclude_outside=exclude_outside,
                         coordinate_transformation_mode=coordinate_transformation_mode,
                         extrapolation_value=extrapolation_value,
+                        nearest=(mode == "nearest"),
                     ),
                     X.dtype,
                 )
@@ -818,3 +857,22 @@ class Resize(OpRun):
         inverse_permutation = np.argsort(permutation)
         output = np.transpose(reshaped_result, tuple(inverse_permutation))
         return (output,)
+
+
+class Resize_10(Resize):
+    # Resize-10 takes (X, scales). Its semantics match the 10 -> 11 version
+    # adapter: asymmetric coordinates and, for nearest, floor rounding.
+    def _run(self, X, scales, mode=None):  # type: ignore[override]
+        mode = "nearest" if mode is None else mode
+        return super()._run(
+            X,
+            None,
+            scales,
+            coordinate_transformation_mode="asymmetric",
+            mode=mode,
+            nearest_mode="floor" if mode == "nearest" else None,
+        )
+
+
+class Resize_11(Resize):
+    pass
