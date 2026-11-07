@@ -122,10 +122,9 @@ Dim computeDimension(SymbolTable* symbols, const std::string& op, const Dim& lef
 bool isReshapeSymbolicDimSafe(const InferenceContext& ctx, const Dim& dim, int index, bool allowzero) {
   int64_t lower_bound = 0;
   const auto* symbols = ctx.getSymbolTable();
-  if (symbols != nullptr && symbols->getValueLowerBound(dim, lower_bound)) {
-    if (allowzero ? lower_bound >= 0 : lower_bound >= 1) {
-      return true;
-    }
+  if (symbols != nullptr && symbols->getValueLowerBound(dim, lower_bound) &&
+      (allowzero ? lower_bound >= 0 : lower_bound >= 1)) {
+    return true;
   }
   const auto* input = ctx.getInputType(0);
   return !allowzero && input != nullptr && input->has_tensor_type() && input->tensor_type().has_shape() &&
