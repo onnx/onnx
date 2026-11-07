@@ -14,12 +14,13 @@
 #include "onnx/defs/doc_strings.h"
 #include "onnx/defs/function.h"
 #include "onnx/defs/math/utils.h"
+#include "onnx/defs/printer.h"
 #include "onnx/defs/schema.h"
 #include "onnx/defs/type_builders.h"
 
 namespace ONNX_NAMESPACE {
 
-static void MathOpDataPropagator(DataPropagationContext& ctx, const std::string& op_type) {
+static void MathOpDataPropagator(DataPropagationContext& ctx, std::string_view op_type) {
   const auto* const input_0 = ctx.getInputData(0);
   const auto* const input_1 = ctx.getInputData(1);
   if (input_0 == nullptr || input_1 == nullptr) {
@@ -1118,19 +1119,156 @@ ONNX_OPERATOR_SET_SCHEMA(
             )ONNX",
             18));
 
+static void GemmShapeInference(InferenceContext& ctx) {
+  propagateElemTypeFromInputToOutput(ctx, 0, 0);
+  const bool transA = getAttribute(ctx, "transA", int64_t{0}) != 0;
+  const bool transB = getAttribute(ctx, "transB", int64_t{0}) != 0;
+  if (hasInputShape(ctx, 1) && getInputShape(ctx, 1).dim_size() != 2) {
+    const auto& b_shape = getInputShape(ctx, 1);
+    fail_shape_inference(
+        "Gemm input B must have rank 2, but has rank ", b_shape.dim_size(), " and shape ", b_shape, ".");
+  }
+  Dim K, N;
+  if (transB) {
+    ctx.unifyInputShape(1, {N, K});
+  } else {
+    ctx.unifyInputShape(1, {K, N});
+  }
+  if (!hasInputShape(ctx, 0)) {
+    return;
+  }
+  auto shape = getInputShape(ctx, 0);
+  const int rank = shape.dim_size();
+  if (rank == 0) {
+    fail_shape_inference("Gemm input A must have rank at least 1, but has rank 0 and shape ", shape, ".");
+  }
+  if (transA && rank > 1) {
+    shape.mutable_dim()->SwapElements(rank - 2, rank - 1);
+  }
+  const auto& a_k = shape.dim(rank - 1);
+  if (a_k.has_dim_value() && K.has_dim_value() && a_k.dim_value() != K.dim_value()) {
+    fail_shape_inference(
+        "Gemm inputs have incompatible contraction dimensions: A has shape ",
+        getInputShape(ctx, 0),
+        " with transA=",
+        transA,
+        ", B has shape ",
+        getInputShape(ctx, 1),
+        " with transB=",
+        transB,
+        ". After transposition, A's last dimension is ",
+        a_k.dim_value(),
+        " but B's first dimension is ",
+        K.dim_value(),
+        "; these dimensions must match.");
+  }
+  *shape.mutable_dim(rank - 1) = N;
+  if (hasInputShape(ctx, 2)) {
+    const auto& bias = getInputShape(ctx, 2);
+    if (bias.dim_size() > rank) {
+      fail_shape_inference(
+          "Gemm input C with shape ",
+          bias,
+          " must be unidirectionally broadcastable to output shape ",
+          shape,
+          ", but C has rank ",
+          bias.dim_size(),
+          " greater than output rank ",
+          rank,
+          ".");
+    }
+    for (int i = 0; i < bias.dim_size(); ++i) {
+      const auto& c_dim = bias.dim(i);
+      const auto& y_dim = shape.dim(rank - bias.dim_size() + i);
+      if (c_dim.has_dim_value() && y_dim.has_dim_value() && c_dim.dim_value() != 1 &&
+          c_dim.dim_value() != y_dim.dim_value()) {
+        fail_shape_inference(
+            "Gemm input C with shape ",
+            bias,
+            " must be unidirectionally broadcastable to output shape ",
+            shape,
+            ", but C dimension ",
+            i,
+            " has size ",
+            c_dim.dim_value(),
+            " instead of 1 or ",
+            y_dim.dim_value(),
+            " (output dimension ",
+            rank - bias.dim_size() + i,
+            ").");
+      }
+    }
+  }
+  updateOutputShape(ctx, 0, shape);
+}
+
+static bool BuildContextDependentFunctionBodyGemm(
+    const FunctionBodyBuildContext& ctx,
+    const OpSchema& schema,
+    FunctionProto& functionProto) {
+  const auto* a_type = ctx.getInputType(0);
+  if (a_type == nullptr) {
+    return false;
+  }
+  const auto elem_type = a_type->tensor_type().elem_type();
+  if (elem_type != TensorProto::FLOAT && elem_type != TensorProto::DOUBLE && elem_type != TensorProto::FLOAT16 &&
+      elem_type != TensorProto::BFLOAT16) {
+    return false;
+  }
+  const auto* transA = ctx.getAttribute("transA");
+  const auto* transB = ctx.getAttribute("transB");
+  FunctionBuilder builder(functionProto);
+  if (transA != nullptr && transA->i() != 0) {
+    if (!a_type->tensor_type().has_shape()) {
+      return false;
+    }
+    const int rank = a_type->tensor_type().shape().dim_size();
+    std::vector<int64_t> perm;
+    perm.reserve(rank);
+    for (int i = 0; i < rank; ++i) {
+      perm.push_back(i);
+    }
+    if (rank > 1) {
+      std::swap(perm[rank - 2], perm[rank - 1]);
+    }
+    builder.Add("AT = Transpose (A)", "perm", perm);
+  } else {
+    builder.Add("AT = Identity (A)");
+  }
+  builder.Add(transB != nullptr && transB->i() != 0 ? "BT = Transpose <perm = [1, 0]> (B)" : "BT = Identity (B)");
+  builder.Add(R"ONNX(
+    Product = MatMul (AT, BT)
+    Alpha = Constant <value_float: float = @alpha> ()
+    AlphaCast = CastLike (Alpha, A)
+    ScaledProduct = Mul (Product, AlphaCast)
+  )ONNX");
+  const auto* beta = ctx.getAttribute("beta");
+  if (ctx.hasInput(2) && (beta == nullptr || beta->f() != 0.0f)) {
+    builder.Add(R"ONNX(
+      Beta = Constant <value_float: float = @beta> ()
+      BetaCast = CastLike (Beta, A)
+      ScaledBias = Mul (C, BetaCast)
+      Y = Add (ScaledProduct, ScaledBias)
+    )ONNX");
+  } else {
+    builder.Add("Y = Identity (ScaledProduct)");
+  }
+  schema.BuildFunction(functionProto);
+  return true;
+}
+
 ONNX_OPERATOR_SET_SCHEMA(
     Gemm,
-    13,
+    29,
     OpSchema()
         .SetDoc(GET_OP_DOC_STR(
-            std::string(kDoc_Gemm_ver13) + GenerateBroadcastingDocUni("tensor C", "tensor A * B") + "\n" +
+            std::string(kDoc_Gemm_ver29) + GenerateBroadcastingDocUni("tensor C", "tensor A' * B'") + "\n" +
             GenerateOptionalArgumentsDoc()))
         .Input(
             0,
             "A",
             "Input tensor A. "
-            "The shape of A should be (M, K) if transA is 0, "
-            "or (K, M) if transA is non-zero.",
+            "Rank >= 1 tensor. After applying transA, its shape is (..., K).",
             "T",
             OpSchema::Single,
             true,
@@ -1152,13 +1290,13 @@ ONNX_OPERATOR_SET_SCHEMA(
             "C",
             "Optional input tensor C. "
             "If not specified, the computation is done as if C is a scalar 0. "
-            "The shape of C should be unidirectional broadcastable to (M, N).",
+            "The shape of C must be unidirectionally broadcastable to the output shape (..., N).",
             "T",
             OpSchema::Optional,
             true,
             1,
             OpSchema::Differentiable)
-        .Output(0, "Y", "Output tensor of shape (M, N).", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
+        .Output(0, "Y", "Output tensor of shape (..., N).", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
         .TypeConstraint(
             "T",
             {types::Float16,
@@ -1170,32 +1308,16 @@ ONNX_OPERATOR_SET_SCHEMA(
              types::Int64,
              types::BFloat16},
             "Constrain input and output types to float/int tensors.")
-        .Attr("transA", "Whether A should be transposed", AttributeProto::INT, static_cast<int64_t>(0))
+        .Attr(
+            "transA",
+            "Whether to swap the last two axes of A. Has no effect on rank-1 A.",
+            AttributeProto::INT,
+            static_cast<int64_t>(0))
         .Attr("transB", "Whether B should be transposed", AttributeProto::INT, static_cast<int64_t>(0))
         .Attr("alpha", "Scalar multiplier for the product of input tensors A * B.", AttributeProto::FLOAT, 1.0f)
         .Attr("beta", "Scalar multiplier for input tensor C.", AttributeProto::FLOAT, 1.0f)
-        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-          propagateElemTypeFromInputToOutput(ctx, 0, 0);
-          auto transAAttr = ctx.getAttribute("transA");
-          bool transA = transAAttr ? static_cast<int>(transAAttr->i()) != 0 : false;
-          auto transBAttr = ctx.getAttribute("transB");
-          bool transB = transBAttr ? static_cast<int>(transBAttr->i()) != 0 : false;
-          // Gemm computes Y = alpha * A' * B' + beta * C
-          // A' is A or A^T depending on transA; B' is B or B^T depending on transB
-          Dim M, N, K;
-          if (transA) {
-            ctx.unifyInputShape(0, {K, M});
-          } else {
-            ctx.unifyInputShape(0, {M, K});
-          }
-          if (transB) {
-            ctx.unifyInputShape(1, {N, K});
-          } else {
-            ctx.unifyInputShape(1, {K, N});
-          }
-          // Output shape is (M, N)
-          updateOutputShape(ctx, 0, {M, N});
-        }));
+        .TypeAndShapeInferenceFunction(GemmShapeInference)
+        .SetContextDependentFunctionBodyBuilder(BuildContextDependentFunctionBodyGemm));
 
 ONNX_OPERATOR_SET_SCHEMA(
     MatMul,
