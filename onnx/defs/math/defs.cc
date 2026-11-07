@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include <algorithm>
+#include <limits>
 #include <map>
 #include <string>
 #include <unordered_set>
@@ -2135,13 +2136,21 @@ static bool BuildContextDependentFunctionBodySCE(
   FunctionBuilder builder(functionProto);
   // Using stable implementation of LogSoftmax
   builder //
-      .Const("Shape3D", std::vector<int64_t>({0, 0, -1})) //
+      .Const1D("const_zero", int64_t{0})
+      .Const1D("const_one", int64_t{1})
+      .Const1D("const_two", int64_t{2})
+      .Const1D("const_max", std::numeric_limits<int64_t>::max())
       .Add(R"(
+        X_shape = Shape (scores)
+        NC = Slice (X_shape, const_zero, const_two)
+        Spatial_shape = Slice (X_shape, const_two, const_max)
+        Spatial_shape_with_one = Concat <axis = 0> (Spatial_shape, const_one)
+        D = ReduceProd <keepdims = 1> (Spatial_shape_with_one)
+        Shape3D = Concat <axis = 0> (NC, D)
         X_NCD = Reshape (scores, Shape3D)
         X_NDC = Transpose <perm = [0, 2, 1]> (X_NCD)
         X_LogSM = LogSoftmax <axis = 2> (X_NDC)
         X_LogSM_NCD = Transpose <perm = [0, 2, 1]> (X_LogSM)
-        X_shape = Shape (scores)
         X_Log = Reshape (X_LogSM_NCD, X_shape)
       )");
 

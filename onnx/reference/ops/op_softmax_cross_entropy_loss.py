@@ -3,6 +3,8 @@
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
+import math
+
 import numpy as np
 
 from onnx.reference.op_run import OpRun
@@ -40,8 +42,10 @@ def softmaxcrossentropy(
 
     # if input is 4-d and above, make it 3-d
     if len(input_shape) != 3:
-        inp = inp.reshape((N, C, -1))
-        target = target.reshape((N, -1))
+        # An inferred dimension is ambiguous when the batch is empty.
+        spatial_size = math.prod(input_shape[2:])
+        inp = inp.reshape((N, C, spatial_size))
+        target = target.reshape((N, spatial_size))
 
     # Get a dimension from the reshaped input.
     # If the original input shape is [N, C, H, W],

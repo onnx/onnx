@@ -24,6 +24,7 @@ from onnx import (
     ModelProto,
     TensorProto,
     checker,
+    inliner,
     parser,
 )
 from onnx.backend.test.case.node.roialign import get_roi_align_input_values
@@ -7946,6 +7947,85 @@ class TestReferenceEvaluator:
         assert log_prob.dtype == np.float32
         assert_allclose(loss, np.array([104.0], dtype=np.float32), rtol=0, atol=0)
         assert_allclose(log_prob, x, rtol=0, atol=0)
+
+    @pytest.mark.parametrize("opset_version", [12, 13, 29])
+    @pytest.mark.parametrize("batch_size", [0, 2])
+    @pytest.mark.parametrize("spatial_shape", [(), (5,), (2, 3)])
+    @pytest.mark.parametrize("reduction", ["none", "sum", "mean"])
+    @pytest.mark.parametrize("weighted", [False, True])
+    def test_softmax_cross_entropy_zero_batch(
+        self, opset_version, batch_size, spatial_shape, reduction, weighted
+    ):
+        scores_shape = (batch_size, 3, *spatial_shape)
+        labels_shape = (batch_size, *spatial_shape)
+        loss_shape = labels_shape if reduction == "none" else ()
+        inputs = [
+            make_tensor_value_info("scores", TensorProto.FLOAT, scores_shape),
+            make_tensor_value_info("labels", TensorProto.INT64, labels_shape),
+        ]
+        feeds = {
+            "scores": np.zeros(scores_shape, dtype=np.float32),
+            "labels": np.ones(labels_shape, dtype=np.int64),
+        }
+        if weighted:
+            inputs.append(make_tensor_value_info("weights", TensorProto.FLOAT, [3]))
+            feeds["weights"] = np.array([1, 2, 3], dtype=np.float32)
+        model = make_model(
+            make_graph(
+                [
+                    make_node(
+                        "SoftmaxCrossEntropyLoss",
+                        list(feeds),
+                        ["loss", "log_prob"],
+                        reduction=reduction,
+                    )
+                ],
+                "sce_zero_batch",
+                inputs,
+                [
+                    make_tensor_value_info(
+                        "loss", TensorProto.FLOAT, (None,) * len(loss_shape)
+                    ),
+                    make_tensor_value_info(
+                        "log_prob", TensorProto.FLOAT, (None,) * len(scores_shape)
+                    ),
+                ],
+            ),
+            opset_imports=[make_opsetid("", opset_version)],
+        )
+        # Expand NLL as well to exercise the loss subgraph independently of
+        # its Python reference implementation's empty-batch reshape.
+        expanded = inliner.inline_selected_functions(
+            model,
+            [("", "SoftmaxCrossEntropyLoss"), ("", "NegativeLogLikelihoodLoss")],
+            inline_schema_functions=True,
+        )
+        assert not any(
+            node.op_type in {"SoftmaxCrossEntropyLoss", "NegativeLogLikelihoodLoss"}
+            for node in expanded.graph.node
+        )
+        assert not any(
+            attr.ref_attr_name
+            for node in expanded.graph.node
+            for attr in node.attribute
+        )
+        expected_loss = np.full(labels_shape, np.log(3) * (2 if weighted else 1))
+        if reduction == "sum":
+            expected_loss = expected_loss.sum()
+        elif reduction == "mean":
+            expected_loss = np.log(3) if batch_size else np.nan
+        for candidate in (model, expanded):
+            checker.check_model(candidate)
+            onnx.shape_inference.infer_shapes(candidate, strict_mode=True)
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore", RuntimeWarning)
+                loss, log_prob = ReferenceEvaluator(candidate).run(None, feeds)
+            assert loss.shape == loss_shape
+            assert loss.dtype == np.float32
+            assert log_prob.shape == scores_shape
+            assert log_prob.dtype == np.float32
+            assert_allclose(loss, expected_loss, rtol=1e-6, equal_nan=True)
+            assert_allclose(log_prob, np.full(scores_shape, -np.log(3)), rtol=1e-6)
 
     def test_softmax_cross_entropy_weighted_mean_preserves_float16_dtype(self):
         x_info = make_tensor_value_info("X", TensorProto.FLOAT16, [1, 2])
