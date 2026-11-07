@@ -8408,6 +8408,7 @@ class TestReferenceEvaluator:
             (2, "none", "weight", (2, 2, 3), "weight must have shape"),
             (2, "none", "bias", (1,), "bias must have shape"),
             (2, "none", "past", (1, 2, 2), "past_state must have shape"),
+            (2**63 - 1, "none", "weight", (2, 1, 2), "Effective kernel size"),
         ],
     )
     def test_causal_conv_with_state_invalid_reference(

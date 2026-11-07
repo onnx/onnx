@@ -43,6 +43,27 @@ class TestSchema:
             selu_schema.node_determinism == defs.OpSchema.NodeDeterminism.Deterministic
         )
 
+    @pytest.mark.parametrize(
+        ("kernel", "dilation", "expected"),
+        [(2, 2**63 - 1, False), (2, 2**63 - 2, True), (1, 2**63 - 1, True)],
+    )
+    def test_causal_conv_with_state_function_kernel_boundary(
+        self, kernel: int, dilation: int, expected: bool
+    ) -> None:
+        node = helper.make_node(
+            "CausalConvWithState", ["X", "W"], ["Y", "S"], dilation=dilation
+        )
+        input_types = [
+            helper.make_tensor_type_proto(TensorProto.FLOAT, [1, 1, 0]),
+            helper.make_tensor_type_proto(TensorProto.FLOAT, [1, 1, kernel]),
+        ]
+        function = defs.get_schema(
+            "CausalConvWithState", 29
+        ).get_context_dependent_function(
+            node.SerializeToString(), [t.SerializeToString() for t in input_types]
+        )
+        assert bool(function) == expected
+
     @pytest.mark.parametrize("op_version", [23, 24])
     @pytest.mark.parametrize(
         "elem_type",

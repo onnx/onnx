@@ -34461,8 +34461,8 @@ This version of the operator has been available since version 28 of the default 
 
   Let `d = dilation`, `K = weight.shape[2]`, and `H = (K - 1) * d`.
   The default value of `d` is 1. Both `d` and `K` must be at least 1,
-  and `H` must be representable as a signed 64-bit integer.
-  The effective kernel size is `H + 1`.
+  and the effective kernel size `H + 1` must be representable as a signed
+  64-bit integer.
   Here `B`, `C`, and `L` denote batch size, channel count, and input length.
   The input has shape `(B, C, L)`, weight has shape `(C, 1, K)`, and
   optional bias has shape `(C)`. Both state tensors have shape `(B, C, H)`.

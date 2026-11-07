@@ -3626,14 +3626,22 @@ static void CausalConvWithStateInference(InferenceContext& ctx) {
     if (k < 1) {
       fail_shape_inference("Kernel size k must be >= 1, got ", k);
     }
-    if (k - 1 > std::numeric_limits<int64_t>::max() / dilation) {
-      fail_shape_inference("CausalConvWithState: history length exceeds int64.");
+    if (k - 1 > (std::numeric_limits<int64_t>::max() - 1) / dilation) {
+      fail_shape_inference(
+          "CausalConvWithState: effective kernel size (k - 1) * dilation + 1 exceeds int64. "
+          "Reduce the kernel size or dilation.");
     }
     Dim expected;
     expected.set_dim_value((k - 1) * dilation);
     unifyDim(expected, History);
-  } else if (History.has_dim_value() && (History.dim_value() < 0 || History.dim_value() % dilation != 0)) {
-    fail_shape_inference("CausalConvWithState: history length must be a nonnegative multiple of dilation.");
+  } else if (History.has_dim_value()) {
+    if (History.dim_value() == std::numeric_limits<int64_t>::max()) {
+      fail_shape_inference(
+          "CausalConvWithState: history length + 1 exceeds int64. Reduce the kernel size or dilation.");
+    }
+    if (History.dim_value() < 0 || History.dim_value() % dilation != 0) {
+      fail_shape_inference("CausalConvWithState: history length must be a nonnegative multiple of dilation.");
+    }
   }
   updateOutputShape(ctx, 1, {B, C, History});
 }
@@ -3660,6 +3668,16 @@ CausalConvWithStateFunction(const FunctionBodyBuildContext& ctx, const OpSchema&
   const auto activation = activation_attr == nullptr ? "none" : activation_attr->s();
   if (dilation < 1 || (activation != "none" && activation != "silu" && activation != "swish")) {
     return false;
+  }
+  const auto* weight_type = ctx.getInputType(1);
+  if (weight_type != nullptr && weight_type->has_tensor_type() && weight_type->tensor_type().has_shape()) {
+    const auto& shape = weight_type->tensor_type().shape();
+    if (shape.dim_size() == 3 && shape.dim(2).has_dim_value()) {
+      const auto k = shape.dim(2).dim_value();
+      if (k < 1 || k - 1 > (std::numeric_limits<int64_t>::max() - 1) / dilation) {
+        return false;
+      }
+    }
   }
   FunctionBuilder builder(functionProto);
   builder.Const1D("One1D", int64_t{1}).Const1D("Dilation", dilation).Add(R"ONNX(
@@ -3725,8 +3743,8 @@ Stateful causal one-dimensional depthwise convolution with optional dilation.
 
 Let `d = dilation`, `K = weight.shape[2]`, and `H = (K - 1) * d`.
 The default value of `d` is 1. Both `d` and `K` must be at least 1,
-and `H` must be representable as a signed 64-bit integer.
-The effective kernel size is `H + 1`.
+and the effective kernel size `H + 1` must be representable as a signed
+64-bit integer.
 Here `B`, `C`, and `L` denote batch size, channel count, and input length.
 The input has shape `(B, C, L)`, weight has shape `(C, 1, K)`, and
 optional bias has shape `(C)`. Both state tensors have shape `(B, C, H)`.

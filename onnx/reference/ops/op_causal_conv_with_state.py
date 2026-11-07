@@ -46,8 +46,11 @@ class CausalConvWithState_27(OpRun):
         if k < 1 or weight.shape[:2] != (channels, 1):
             raise ValueError(f"weight must have shape ({channels}, 1, k) with k >= 1.")
         history = (k - 1) * dilation
-        if history > np.iinfo(np.int64).max:
-            raise ValueError("History length exceeds int64.")
+        if history >= np.iinfo(np.int64).max:
+            raise ValueError(
+                f"Effective kernel size {history + 1} exceeds int64. "
+                "Reduce the kernel size or dilation."
+            )
         if bias is not None and bias.shape != (channels,):
             raise ValueError(f"bias must have shape ({channels},).")
         if past_state is not None and past_state.shape != (

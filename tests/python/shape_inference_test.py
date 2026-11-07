@@ -3738,6 +3738,8 @@ class TestShapeInference(TestShapeInferenceHelper):
             ("K", 3, "H", "H"),
             ("4", 2, "6", 6),
             (str(2**62), 2, None, 2**63 - 2),
+            ("2", 2**63 - 2, None, 2**63 - 2),
+            ("1", 2**63 - 1, None, 0),
         ],
     )
     def test_causal_conv_with_state_dilated_shape(
@@ -3775,6 +3777,8 @@ class TestShapeInference(TestShapeInferenceHelper):
             ("K", 2, 3),
             (2**62 + 1, 2, 0),
             (3, 2**63 - 1, 0),
+            (2, 2**63 - 1, 2**63 - 1),
+            ("K", 2**63 - 1, 2**63 - 1),
         ],
     )
     def test_causal_conv_with_state_invalid_dilation_or_history(
