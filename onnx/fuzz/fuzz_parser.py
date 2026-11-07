@@ -12,7 +12,7 @@ from typing import TYPE_CHECKING
 import atheris
 
 with atheris.instrument_imports():
-    from onnx import parser
+    from onnx import parser, printer
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -94,6 +94,22 @@ def _check_integer(text: str) -> None:
             assert actual == value, (kind, text, actual, value)
 
 
+def _check_round_trip(parse, proto) -> None:
+    """Printing a parsed proto must give text that parses to the same text."""
+    printed = printer.to_text(proto)
+    try:
+        reparsed = parse(printed)
+    except parser.ParseError as error:
+        error.add_note(f"Parser entry point: {parse.__name__}")
+        error.add_note(printed)
+        raise AssertionError("Printed text does not parse") from error
+    assert printer.to_text(reparsed) == printed, (
+        parse.__name__,
+        printed,
+        "Printed text changed after parsing it back",
+    )
+
+
 def TestOneInput(data):
     try:
         text = data.decode("utf-8")
@@ -106,13 +122,14 @@ def TestOneInput(data):
         parser.parse_node,
     ):
         try:
-            parse(text)
+            proto = parse(text)
         except parser.ParseError:
             # Malformed ONNX text is expected on the raw-input path.
-            pass
+            continue
         except Exception as error:
             error.add_note(f"Parser entry point: {parse.__name__}")
             raise
+        _check_round_trip(parse, proto)
     if re.fullmatch(r"-?[0-9]+", text):
         _check_integer(text)
     # Decimal literals parse unless they overflow; underflow rounds to zero or a

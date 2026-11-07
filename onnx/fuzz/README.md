@@ -79,6 +79,16 @@ Fuzz targets must never crash on expected errors — only on *unexpected* ones
 fuzzer feeds random bytes. Swallowing them lets libFuzzer keep searching for
 inputs that cause real bugs.
 
+Swallowing exceptions alone would hide wrong results, so harnesses also check
+the outcome of every successful call:
+
+| Harness | Finding |
+|---|---|
+| `fuzz_checker.py` | A model accepted by `check_model(full_check=True)` has a string field that is not valid UTF-8 |
+| `fuzz_model_loader.py` | The printed text of a valid model does not parse, or parses to different text |
+| `fuzz_parser.py` | Printing a parsed model, graph, function, or node does not round-trip through the same parser entry point |
+| `fuzz_version_converter.py` | Converting a model that passes `check_model(full_check=True)` succeeds but produces a model that does not |
+
 The parser harness ignores only invalid UTF-8 and `parser.ParseError`; other
 exceptions are findings. Decimal literals must parse as float and double
 values unless they overflow, in which case they must be rejected. Escaped string
