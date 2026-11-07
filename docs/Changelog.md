@@ -16690,8 +16690,12 @@ This version of the operator has been available since version 13 of the default 
 
 ### <a name="MeanVarianceNormalization-13"></a>**MeanVarianceNormalization-13**</a>
 
-  A MeanVarianceNormalization Function: Perform mean variance normalization
-  on the input tensor X using formula: `(X-EX)/(sqrt(E((X-EX)^2)) + 1e-9)`.
+  Computes mean-variance normalization of `X`:
+  `Y = (X - mean) / (sqrt(variance) + 1e-9)`, where
+  `mean = ReduceMean(X, axes)` and
+  `variance = ReduceMean(X^2, axes) - mean^2`.
+  Each reduction computes the arithmetic mean over `axes` and retains the
+  reduced dimensions with size 1 for broadcasting.
 
 #### Version
 
