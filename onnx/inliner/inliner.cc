@@ -277,6 +277,8 @@ class InliningRenamer : public internal::MutableVisitor {
       VisitNode(n);
     for (auto& y : *graph.mutable_output())
       LookupOrRename(*y.mutable_name(), false);
+    for (auto& v : *graph.mutable_value_info())
+      LookupOrRename(*v.mutable_name(), false);
     rename_scopes.pop_back();
   }
 

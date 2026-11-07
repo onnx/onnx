@@ -53,9 +53,13 @@ def test_value_heads_attribute_must_be_integer():
     feeds, attrs = _case(1, 2, "linear", np.float32, False)
     attrs["v_num_heads"] = 0
     model = _model(feeds, attrs)
-    attr = next(attr for attr in model.graph.node[0].attribute if attr.name == "v_num_heads")
+    attr = next(
+        attr for attr in model.graph.node[0].attribute if attr.name == "v_num_heads"
+    )
     attr.CopyFrom(helper.make_attribute("v_num_heads", 0.0))
-    assert not _function_body(model.graph.node[0], [value.type for value in model.graph.input])
+    assert not _function_body(
+        model.graph.node[0], [value.type for value in model.graph.input]
+    )
 
 
 @pytest.mark.parametrize("dtype", [np.float16, ml_dtypes.bfloat16, np.float32])

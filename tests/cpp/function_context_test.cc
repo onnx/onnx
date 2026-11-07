@@ -249,6 +249,64 @@ TEST(FunctionAPITest, ExpandedCapturesDoNotCollideWithBoundNames) {
   }
 }
 
+TEST(FunctionAPITest, NestedValueInfoFollowsRenamedDefinitions) {
+  for (const bool expand : {false, true}) {
+    ModelProto model;
+    OnnxParser parser(R"ONNX(
+      <ir_version: 13, opset_import: ["" : 29]>
+      annotated (float[2,1] X) => (float[2,1] Y) {
+        Y = Scan (X) <
+          num_scan_inputs = 1,
+          body = step (float[1] item) => (float[1] result) {
+            intermediate = Identity(item)
+            result = Identity(intermediate)
+          }
+        >
+      }
+    )ONNX");
+    ASSERT_TRUE(parser.Parse(model).IsOK());
+    GraphProto* body = nullptr;
+    for (auto& attr : *model.mutable_graph()->mutable_node(0)->mutable_attribute()) {
+      if (attr.name() == "body")
+        body = attr.mutable_g();
+    }
+    ASSERT_NE(body, nullptr);
+    auto* annotation = body->add_value_info();
+    annotation->CopyFrom(body->input(0));
+    annotation->set_name("intermediate");
+    const auto annotated_type = annotation->type().SerializeAsString();
+    checker::check_model(model);
+    FunctionProto function;
+    function.set_name("Softsign");
+    function.add_input("X");
+    function.add_output("Y");
+    function.mutable_opset_import()->CopyFrom(model.opset_import());
+    if (expand) {
+      function.mutable_node()->CopyFrom(model.graph().node());
+      NodeProto call;
+      call.set_name("annotated_call");
+      call.set_op_type("Softsign");
+      call.add_input("X");
+      call.add_output("Y");
+      model.mutable_graph()->clear_node();
+      FunctionExpandHelper(call, function, *model.mutable_graph());
+    } else {
+      FunctionBuilder builder(function);
+      builder.AddInlinedCall({"Y"}, model.graph(), {"X"}, "annotated_call");
+      model.mutable_graph()->mutable_node()->CopyFrom(function.node());
+    }
+    checker::check_model(model);
+    for (const auto& attr : model.graph().node(0).attribute()) {
+      if (attr.name() != "body")
+        continue;
+      const auto& renamed_body = attr.g();
+      ASSERT_EQ(renamed_body.value_info_size(), 1);
+      EXPECT_EQ(renamed_body.value_info(0).name(), renamed_body.node(0).output(0));
+      EXPECT_EQ(renamed_body.value_info(0).type().SerializeAsString(), annotated_type);
+    }
+  }
+}
+
 // A polymorphic context-dependent function test-case.
 
 static bool
