@@ -103,6 +103,8 @@ class MeanVarianceNormalizationAdapter : public Adapter {
   }
 };
 
+// Retaining an MVN node would select v29's centered variance and low-precision
+// promotion. Expand instead to preserve the legacy computation on upgrade.
 class MeanVarianceNormalization_28_29 final : public MeanVarianceNormalizationAdapter {
  public:
   MeanVarianceNormalization_28_29() : MeanVarianceNormalizationAdapter(OpSetID(28), OpSetID(29)) {}

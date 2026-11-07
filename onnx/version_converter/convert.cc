@@ -22,6 +22,8 @@ struct CapturedTensorType {
   std::vector<Dimension> sizes;
 };
 
+// Runs before all version conversions, not only MVN: captured IR values may lack
+// the outer value's metadata even after model-level shape inference.
 static void PropagateCapturedTensorTypes(
     const std::shared_ptr<Graph>& graph,
     const std::unordered_map<std::string, CapturedTensorType>& outer_scope) {
