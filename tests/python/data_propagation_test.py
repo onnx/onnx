@@ -15,6 +15,46 @@ from onnx.reference import ReferenceEvaluator
 
 
 class TestDataPropagation(TestShapeInferenceHelper):
+    @pytest.mark.parametrize("symbolic_input", ["starts", "ends", "axes"])
+    def test_slice_symbolic_indices_do_not_default_to_zero(
+        self, symbolic_input: str
+    ) -> None:
+        model = onnx.helper.make_model(
+            onnx.helper.make_graph(
+                [
+                    make_node("Shape", ["x"], [symbolic_input]),
+                    make_node(
+                        "Slice", ["values", "starts", "ends", "axes"], ["target"]
+                    ),
+                    make_node("ConstantOfShape", ["target"], ["output"]),
+                ],
+                "symbolic_slice_indices",
+                [make_tensor_value_info("x", TensorProto.FLOAT, ["N"])],
+                [make_tensor_value_info("output", TensorProto.FLOAT, None)],
+                initializer=[
+                    make_tensor("values", TensorProto.INT64, [3], [2, 3, 4]),
+                    *[
+                        make_tensor(name, TensorProto.INT64, [1], [value])
+                        for name, value in (("starts", 0), ("ends", 2), ("axes", 0))
+                        if name != symbolic_input
+                    ],
+                ],
+            ),
+            opset_imports=[onnx.helper.make_opsetid("", 18)],
+        )
+        concrete_length = 0 if symbolic_input == "axes" else 1
+        actual = ReferenceEvaluator(model).run(
+            None, {"x": np.zeros(concrete_length, dtype=np.float32)}
+        )[0]
+        assert (
+            actual.shape
+            == {"starts": (3,), "ends": (2,), "axes": (2, 3)}[symbolic_input]
+        )
+        inferred = onnx.shape_inference.infer_shapes(
+            model, strict_mode=True, data_prop=True
+        )
+        assert not inferred.graph.output[0].type.tensor_type.HasField("shape")
+
     @pytest.mark.parametrize("version", [13, 14, 19, 21, 23, 24, 27])
     @pytest.mark.parametrize("operation", ["Identity", "Sub"])
     def test_reshape_symbolic_special_values_remain_unknown(

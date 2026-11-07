@@ -532,6 +532,9 @@ static void maxUnpoolShapeInference_opset11(InferenceContext& ctx) {
       const auto values = ParseData<int64_t>(output_shape_data);
       auto* final_output_shape = ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
       for (const auto& v : values) {
+        if (v < 0) {
+          fail_shape_inference("MaxUnpool output_shape dimensions must be non-negative; got ", v, ".");
+        }
         final_output_shape->add_dim()->set_dim_value(v);
       }
     }
@@ -2701,6 +2704,9 @@ static void maxUnpoolShapeInference_opset9(InferenceContext& ctx) {
       const auto values = ParseData<int64_t>(output_shape_data);
       auto* final_output_shape = ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
       for (const auto& v : values) {
+        if (v < 0) {
+          fail_shape_inference("MaxUnpool output_shape dimensions must be non-negative; got ", v, ".");
+        }
         final_output_shape->add_dim()->set_dim_value(v);
       }
     }

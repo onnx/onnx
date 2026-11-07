@@ -947,8 +947,10 @@ ONNX_OPERATOR_SET_SCHEMA(
                 ").");
           }
           // Only supports axis = 0 since the data comes from Shape
-          if ((!axes_specified || (axes->dim_size() == 1 && axes->dim(0).dim_value() == 0)) &&
-              starts->dim_size() == 1 && ends->dim_size() == 1) {
+          if ((!axes_specified ||
+               (axes->dim_size() == 1 && axes->dim(0).has_dim_value() && axes->dim(0).dim_value() == 0)) &&
+              starts->dim_size() == 1 && starts->dim(0).has_dim_value() && ends->dim_size() == 1 &&
+              ends->dim(0).has_dim_value()) {
             auto start = starts->dim(0).dim_value();
             auto end = ends->dim(0).dim_value();
             int64_t step = 1; // Default step is 1

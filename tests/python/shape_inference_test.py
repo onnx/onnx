@@ -84,6 +84,37 @@ def all_versions_for(op_name: str) -> list[int]:
 
 
 class TestShapeInference(TestShapeInferenceHelper):
+    @pytest.mark.parametrize("version", [9, 11, 22])
+    def test_maxunpool_explicit_output_shape_rejects_negative_dimension(
+        self, version: int
+    ) -> None:
+        model = make_model(
+            helper.make_graph(
+                [
+                    make_node(
+                        "MaxUnpool",
+                        ["x", "indices", "output_shape"],
+                        ["y"],
+                        kernel_shape=[2],
+                    )
+                ],
+                "negative_unpool_output",
+                [
+                    make_tensor_value_info("x", TensorProto.FLOAT, [1, 1, 2]),
+                    make_tensor_value_info("indices", TensorProto.INT64, [1, 1, 2]),
+                ],
+                [make_tensor_value_info("y", TensorProto.FLOAT, None)],
+                initializer=[
+                    make_tensor("output_shape", TensorProto.INT64, [3], [1, 1, -1])
+                ],
+            ),
+            opset_imports=[make_opsetid("", version)],
+        )
+        with pytest.raises(
+            onnx.shape_inference.InferenceError, match=r"output_shape.*non-negative"
+        ):
+            onnx.shape_inference.infer_shapes(model, strict_mode=True, data_prop=True)
+
     def test_shape_input_excessive_length_leaves_output_rank_unknown(self) -> None:
         graph = make_graph(
             [make_node("ConstantOfShape", ["shape"], ["output"])],
