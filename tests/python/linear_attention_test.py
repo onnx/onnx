@@ -22,6 +22,119 @@ class LinearAttention(OpRunExpand):
     op_domain = ""
 
 
+def _function_body(node, types, version=29):
+    return onnx.defs.get_schema(
+        "LinearAttention", version
+    ).get_context_dependent_function(
+        node.SerializeToString(), [t.SerializeToString() for t in types]
+    )
+
+
+@pytest.mark.parametrize("trajectory", [False, True])
+def test_linked_value_heads_require_binding(trajectory):
+    feeds = {
+        "query": np.array([[[1, 2]]], dtype=np.float32),
+        "key": np.array([[[1, 2]]], dtype=np.float32),
+        "value": np.array([[[3, 5]]], dtype=np.float32),
+    }
+    attrs = {
+        "q_num_heads": 1,
+        "kv_num_heads": 1,
+        "v_num_heads": 2,
+        "update_rule": "linear",
+        "scale": 1.0,
+    }
+    model = _model(feeds, attrs, trajectory=trajectory)
+    node = model.graph.node[0]
+    linked = next(attr for attr in node.attribute if attr.name == "v_num_heads")
+    linked.ClearField("i")
+    linked.ref_attr_name = "heads"
+    types = [value.type for value in model.graph.input]
+    assert not _function_body(node, types)
+
+    function = helper.make_function(
+        "local",
+        "linked_attention",
+        list(feeds),
+        list(node.output),
+        [node],
+        [helper.make_opsetid("", 29)],
+        attributes=["heads"],
+    )
+    call = helper.make_node(
+        function.name, list(feeds), list(node.output), domain=function.domain, heads=2
+    )
+    model.graph.node[0].CopyFrom(call)
+    model.functions.append(function)
+    model.opset_import.append(helper.make_opsetid(function.domain, 1))
+    selected = inliner.inline_selected_functions(
+        model, [("", "LinearAttention")], inline_schema_functions=True
+    )
+    assert selected.functions[0].node[0].op_type == "LinearAttention"
+    expected_state = np.array([[[[3], [6]], [[5], [10]]]], dtype=np.float32)
+    bound = inliner.inline_local_functions(selected)
+    expanded = inliner.inline_selected_functions(
+        bound, [("", "LinearAttention")], inline_schema_functions=True
+    )
+    assert all(node.op_type != "LinearAttention" for node in expanded.graph.node)
+    onnx.checker.check_model(expanded, full_check=True)
+    for candidate in (selected, bound, expanded):
+        actual = ReferenceEvaluator(candidate).run(None, feeds)
+        assert actual[1].shape == (1, 2, 2, 1)
+        assert_array_equal(actual[1], expected_state)
+        if trajectory:
+            assert_array_equal(actual[2][:, 0], expected_state)
+
+
+@pytest.mark.parametrize("version", [27, 29])
+def test_value_head_function_representation_is_bounded(version):
+    sizes = []
+    counts = []
+    for heads in (2, 32, 1024, 4096):
+        attrs = {
+            "q_num_heads": 1,
+            "kv_num_heads": 1,
+            "update_rule": "linear",
+            "scale": 1.0,
+        }
+        if version == 29:
+            attrs["v_num_heads"] = heads
+        node = helper.make_node("LinearAttention", ["Q", "K", "V"], ["Y", "S"], **attrs)
+        types = [
+            helper.make_tensor_type_proto(onnx.TensorProto.FLOAT, shape)
+            for shape in ((0, 0, 1), (0, 0, 1), (0, 0, heads))
+        ]
+        body = _function_body(node, types, version)
+        function = onnx.FunctionProto.FromString(body)
+        sizes.append(len(body))
+        counts.append(len(function.node))
+        assert all(
+            len(attr.t.int64_data) <= 5
+            for op in function.node
+            for attr in op.attribute
+            if attr.HasField("t")
+        )
+        output, state = ReferenceEvaluator(function).run(
+            None,
+            {
+                "query": np.empty((0, 0, 1), dtype=np.float32),
+                "key": np.empty((0, 0, 1), dtype=np.float32),
+                "value": np.empty((0, 0, heads), dtype=np.float32),
+            },
+            attributes={},
+        )
+        assert output.shape == (0, 0, heads)
+        assert state.shape == (
+            0,
+            heads if version == 29 else 1,
+            1,
+            1 if version == 29 else heads,
+        )
+    assert len(set(counts)) == 1
+    assert max(sizes) - min(sizes) <= 64
+    assert max(sizes) < 10_000
+
+
 @pytest.mark.parametrize("trajectory", [False, True])
 @pytest.mark.parametrize("length", [0, 2])
 @pytest.mark.parametrize("past", [False, True])

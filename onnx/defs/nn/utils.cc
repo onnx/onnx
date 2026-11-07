@@ -298,6 +298,9 @@ static bool BuildLinearAttentionFunction(
   const int64_t input_q_heads = q_num_heads;
   const int64_t input_k_heads = kv_num_heads;
   const auto* v_heads_attr = ctx.getAttribute("v_num_heads");
+  if (v_heads_attr != nullptr && !v_heads_attr->has_i()) {
+    return false;
+  }
   const int64_t v_heads = v_heads_attr == nullptr ? 0 : v_heads_attr->i();
   if (v_heads < 0 ||
       (v_heads > 0 && (q_num_heads != kv_num_heads || kv_num_heads <= 0 || v_heads % kv_num_heads != 0))) {
@@ -375,14 +378,17 @@ static bool BuildLinearAttentionFunction(
               )ONNX");
 
   if (v_heads > 0) {
-    std::vector<int64_t> head_indices;
-    head_indices.reserve(static_cast<std::size_t>(v_heads));
-    for (int64_t h = 0; h < v_heads; ++h) {
-      head_indices.push_back(h / (v_heads / input_k_heads));
-    }
-    builder.Const("HeadIndices", head_indices).Add(R"ONNX(
-                  Q4D = Gather <axis = 2> (QCompact, HeadIndices)
-                  K4D = Gather <axis = 2> (KCompact, HeadIndices)
+    builder.Const1D("ValueGroupSize", v_heads / input_k_heads)
+        .Const1D("HeadRepeatAxis", static_cast<int64_t>(3))
+        .Add(R"ONNX(
+                  HeadExpandShape = Concat <axis = 0> (SeqLenDim, BatchDim, InputHk, ValueGroupSize, DkDim)
+                  HeadReadShape = Concat <axis = 0> (SeqLenDim, BatchDim, HkvConst, DkDim)
+                  QWithGroup = Unsqueeze (QCompact, HeadRepeatAxis)
+                  KWithGroup = Unsqueeze (KCompact, HeadRepeatAxis)
+                  QExpanded = Expand (QWithGroup, HeadExpandShape)
+                  KExpanded = Expand (KWithGroup, HeadExpandShape)
+                  Q4D = Reshape <allowzero = 1> (QExpanded, HeadReadShape)
+                  K4D = Reshape <allowzero = 1> (KExpanded, HeadReadShape)
                 )ONNX");
   } else {
     builder.Add("Q4D = Identity (QCompact)\nK4D = Identity (KCompact)");
