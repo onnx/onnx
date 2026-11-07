@@ -90,6 +90,9 @@ OpSchema GatherNDSchema(bool allow_int32_indices) {
           .TypeConstraint("T", OpSchema::all_tensor_types_ir4(), "Constrain input and output types to any tensor type.")
           .TypeAndShapeInferenceFunction(GatherNDShapeInference);
   if (allow_int32_indices) {
+    schema.SetDoc(
+        std::string(kDoc_GatherND_ver13) +
+        "\nOpset 29 adds support for int32 indices; int64 indices remain supported.\n");
     schema.TypeConstraint("Tind", {types::Int32, types::Int64}, "Constrain indices to int32 or int64 tensors.");
   }
   return schema;
@@ -132,6 +135,9 @@ OpSchema ScatterNDSchema(bool allow_int32_indices) {
           .TypeConstraint("T", OpSchema::all_tensor_types_ir4(), "Constrain input and output types to any tensor type.")
           .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput);
   if (allow_int32_indices) {
+    schema.SetDoc(
+        std::string(kDoc_ScatterND_ver18) +
+        "\nOpset 29 adds support for int32 indices; int64 indices remain supported.\n");
     schema.TypeConstraint("Tind", {types::Int32, types::Int64}, "Constrain indices to int32 or int64 tensors.");
   }
   return schema;

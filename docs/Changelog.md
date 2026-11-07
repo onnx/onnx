@@ -34543,6 +34543,8 @@ This version of the operator has been available since version 28 of the default 
   output  = [[2,3],[4,5]]                 # output_shape  = [2, 2]
   ```
 
+  Opset 29 adds support for int32 indices; int64 indices remain supported.
+
 #### Version
 
 This version of the operator has been available since version 29 of the default ONNX operator set.
@@ -34772,6 +34774,8 @@ This version of the operator has been available since version 29 of the default 
               [[1, 1, 1, 1], [2, 2, 2, 2], [3, 3, 3, 3], [4, 4, 4, 4]],
               [[8, 7, 6, 5], [4, 3, 2, 1], [1, 2, 3, 4], [5, 6, 7, 8]]]
   ```
+
+  Opset 29 adds support for int32 indices; int64 indices remain supported.
 
 #### Version
 
