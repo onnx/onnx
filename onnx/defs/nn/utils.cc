@@ -298,7 +298,8 @@ static bool BuildLinearAttentionFunction(
   const int64_t input_q_heads = q_num_heads;
   const int64_t input_k_heads = kv_num_heads;
   const auto* v_heads_attr = ctx.getAttribute("v_num_heads");
-  if (v_heads_attr != nullptr && !v_heads_attr->has_i()) {
+  if (v_heads_attr != nullptr &&
+      (!v_heads_attr->ref_attr_name().empty() || v_heads_attr->type() != AttributeProto::INT)) {
     return false;
   }
   const int64_t v_heads = v_heads_attr == nullptr ? 0 : v_heads_attr->i();
@@ -601,7 +602,9 @@ static bool BuildLinearAttentionFunction(
   // We omit scan_input_axes/scan_output_axes (default 0); Q/K/V/decay/beta
   // were already pre-transposed so the T axis is the leading dimension.
   const std::string snapshot_output = has_states ? ", state_snapshot" : "";
-  const std::string snapshot_body = has_states ? "\nstate_snapshot = Identity (state_out)\n" : "";
+  const std::string state_type_source = ctx.hasInput(3) ? "past_state" : "query";
+  const std::string snapshot_body =
+      has_states ? "\nstate_snapshot = CastLike (state_out, " + state_type_source + ")\n" : "";
   const std::string scan_states = has_states ? ", ScanStates" : "";
   const std::string scan_text = "ScanFinalState, ScanOutput" + scan_states +
       " = Scan <\n"
@@ -631,7 +634,10 @@ static bool BuildLinearAttentionFunction(
                     EmptyFloat = ConstantOfShape (EmptyOutputShape)
                     EmptyOutput = CastLike (EmptyFloat, query)
               )ONNX" +
-      std::string(has_states ? "EmptyStates = ConstantOfShape (EmptyStatesShape)\n" : "") +
+      (has_states ? "EmptyStatesFloat = ConstantOfShape (EmptyStatesShape)\n"
+                    "EmptyStates = CastLike (EmptyStatesFloat, " +
+               state_type_source + ")\n"
+                  : "") +
       "},\nelse_branch = nonempty_sequence () => (ScanFinalState, ScanOutput" + scan_states + ") {\n" + scan_text +
       "\n}>";
   builder.Add(guarded_scan.c_str());
@@ -654,10 +660,7 @@ static bool BuildLinearAttentionFunction(
     builder.Add("present_state = CastLike (FinalState, query)");
   }
   if (has_states) {
-    builder.Add("StatesTransposed = Transpose <perm = [1, 0, 2, 3, 4]> (StatesAccum)");
-    builder.Add(
-        ctx.hasInput(3) ? "states = CastLike (StatesTransposed, past_state)"
-                        : "states = CastLike (StatesTransposed, query)");
+    builder.Add("states = Transpose <perm = [1, 0, 2, 3, 4]> (StatesAccum)");
   }
 
   schema.BuildFunction(functionProto);

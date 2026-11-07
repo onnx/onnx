@@ -30,6 +30,77 @@ def _function_body(node, types, version=29):
     )
 
 
+def test_concrete_zero_value_heads_without_integer_field():
+    feeds, attrs = _case(1, 2, "linear", np.float32, False)
+    attrs["v_num_heads"] = 0
+    model = _model(feeds, attrs)
+    node = model.graph.node[0]
+    attr = next(attr for attr in node.attribute if attr.name == "v_num_heads")
+    attr.ClearField("i")
+    onnx.checker.check_model(model, full_check=True)
+    types = [value.type for value in model.graph.input]
+    assert _function_body(node, types)
+    expanded = inliner.inline_selected_functions(
+        model, [("", "LinearAttention")], inline_schema_functions=True
+    )
+    expected = ReferenceEvaluator(model).run(None, feeds)
+    actual = ReferenceEvaluator(expanded).run(None, feeds)
+    for got, want in zip(actual, expected, strict=True):
+        assert_allclose(got, want, rtol=2e-5, atol=2e-5)
+
+
+def test_value_heads_attribute_must_be_integer():
+    feeds, attrs = _case(1, 2, "linear", np.float32, False)
+    attrs["v_num_heads"] = 0
+    model = _model(feeds, attrs)
+    attr = next(attr for attr in model.graph.node[0].attribute if attr.name == "v_num_heads")
+    attr.CopyFrom(helper.make_attribute("v_num_heads", 0.0))
+    assert not _function_body(model.graph.node[0], [value.type for value in model.graph.input])
+
+
+@pytest.mark.parametrize("dtype", [np.float16, ml_dtypes.bfloat16, np.float32])
+@pytest.mark.parametrize("past", [False, True])
+@pytest.mark.parametrize("length", [0, 3])
+def test_decomposition_collects_state_dtype_snapshots(dtype, past, length):
+    feeds, attrs = _case(3, length, "gated_delta", dtype, past)
+    if past:
+        feeds["past_state"] = feeds["past_state"].astype(dtype)
+    model = _model(feeds, attrs, trajectory=True)
+    node_types = [
+        next(value.type for value in model.graph.input if value.name == name)
+        if name
+        else onnx.TypeProto()
+        for name in model.graph.node[0].input
+    ]
+    function = onnx.FunctionProto.FromString(
+        _function_body(model.graph.node[0], node_types)
+    )
+    expected = ReferenceEvaluator(model).run(None, feeds)
+    accumulated, states, recurrent = ReferenceEvaluator(function).run(
+        ["StatesAccum", "states", "FinalState"], feeds, attributes={}
+    )
+    assert accumulated.dtype == np.dtype(dtype)
+    assert states.dtype == np.dtype(dtype)
+    assert recurrent.dtype == np.float32
+    assert accumulated.nbytes == states.nbytes
+    assert_allclose(
+        states.astype(np.float32), expected[2].astype(np.float32), rtol=2e-3, atol=2e-3
+    )
+    assert (
+        next(node for node in function.node if "states" in node.output).op_type
+        == "Transpose"
+    )
+    conditional = next(node for node in function.node if node.op_type == "If")
+    branch = next(
+        attr.g for attr in conditional.attribute if attr.name == "else_branch"
+    )
+    scan = next(node for node in branch.node if node.op_type == "Scan")
+    body = next(attr.g for attr in scan.attribute if attr.name == "body")
+    snapshot = next(node for node in body.node if "state_snapshot" in node.output)
+    assert snapshot.op_type == "CastLike"
+    assert list(snapshot.input) == ["state_out", "past_state" if past else "query"]
+
+
 @pytest.mark.parametrize("trajectory", [False, True])
 def test_linked_value_heads_require_binding(trajectory):
     feeds = {

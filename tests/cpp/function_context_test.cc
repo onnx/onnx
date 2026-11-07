@@ -208,6 +208,47 @@ TEST(FunctionAPITest, InlinePassthroughSubgraphOutputs) {
   }
 }
 
+TEST(FunctionAPITest, ExpandedCapturesDoNotCollideWithBoundNames) {
+  ModelProto model;
+  OnnxParser parser(R"ONNX(
+    <ir_version: 13, opset_import: ["" : 29]>
+    collision (float[1] X, bool condition) => (float[1] Y) {
+      c__f = Identity(X)
+      Y = If(condition) <
+        then_branch = yes () => (float[1] Func_fc) {
+          Func_fc = Add(c__f, c__f)
+        },
+        else_branch = no () => (float[1] other) {
+          other = Identity(c__f)
+        }
+      >
+    }
+  )ONNX");
+  ASSERT_TRUE(parser.Parse(model).IsOK());
+  checker::check_model(model);
+  FunctionProto function;
+  function.set_name("Softsign");
+  function.add_input("X");
+  function.add_input("condition");
+  function.add_output("Y");
+  function.mutable_node()->CopyFrom(model.graph().node());
+  function.mutable_opset_import()->CopyFrom(model.opset_import());
+  NodeProto call;
+  call.set_name("f");
+  call.set_op_type("Softsign");
+  call.add_input("X");
+  call.add_input("condition");
+  call.add_output("Y");
+  model.mutable_graph()->clear_node();
+  FunctionExpandHelper(call, function, *model.mutable_graph());
+  checker::check_model(model);
+  const auto& captured = model.graph().node(0).output(0);
+  for (const auto& branch : model.graph().node(1).attribute()) {
+    ASSERT_EQ(branch.g().node(0).input(0), captured);
+    ASSERT_NE(branch.g().output(0).name(), captured);
+  }
+}
+
 // A polymorphic context-dependent function test-case.
 
 static bool

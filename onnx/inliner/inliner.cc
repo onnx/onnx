@@ -189,6 +189,7 @@ class InliningRenamer : public internal::MutableVisitor {
    * @param actual_name The actual parameter name to bind to.
    */
   void BindFormalToActual(const std::string& formal_name, const std::string& actual_name) {
+    generator.Add(actual_name);
     auto& current_scope = rename_scopes.back();
     current_scope[formal_name] = actual_name;
   }

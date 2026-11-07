@@ -2149,6 +2149,46 @@ class TestAutomaticUpgrade(automatic_conversion_test_base.TestAutomaticConversio
         assert model.opset_import[0].version == 28
 
     @pytest.mark.parametrize("value_heads", [4, 6, 16])
+    def test_linear_attention_28_to_29_zero_width_decay(self, value_heads) -> None:
+        model = helper.make_model(
+            helper.make_graph(
+                [
+                    helper.make_node(
+                        "LinearAttention",
+                        ["Q", "K", "V", "", "Decay", "Beta"],
+                        ["Y", "S"],
+                        q_num_heads=1,
+                        kv_num_heads=1,
+                        update_rule="gated_delta",
+                    )
+                ],
+                "zero_width_decay",
+                [
+                    helper.make_tensor_value_info(name, TensorProto.FLOAT, shape)
+                    for name, shape in (
+                        ("Q", [1, 1, None]),
+                        ("K", [1, 1, None]),
+                        ("V", [1, 1, value_heads]),
+                        ("Decay", [1, 1, 0]),
+                        ("Beta", [1, 1, 1]),
+                    )
+                ],
+                [
+                    helper.make_tensor_value_info(
+                        "Y", TensorProto.FLOAT, [1, 1, value_heads]
+                    ),
+                    helper.make_tensor_value_info(
+                        "S", TensorProto.FLOAT, [1, 1, None, value_heads]
+                    ),
+                ],
+            ),
+            opset_imports=[helper.make_opsetid("", 28)],
+        )
+        onnx.checker.check_model(model, full_check=True)
+        with pytest.raises(RuntimeError, match="zero-width head dimension"):
+            onnx.version_converter.convert_version(model, 29)
+
+    @pytest.mark.parametrize("value_heads", [4, 6, 16])
     def test_linear_attention_expanded_heads(self, value_heads) -> None:
         self._test_op_upgrade(
             "LinearAttention",

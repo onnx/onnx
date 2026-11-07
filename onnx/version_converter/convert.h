@@ -1124,7 +1124,7 @@ class DefaultVersionConverter : public BaseVersionConverter {
     registerAdapter(std::make_unique<CompatibleAdapter>("Gemm", OpSetID(28), OpSetID(29)));
     registerAdapter("LinearAttention", 28, 29, [](const std::shared_ptr<Graph>& /*unused*/, Node* node) {
       const auto& inputs = node->inputs();
-      for (size_t i = 0; i < inputs.size() && i < 4; ++i) {
+      for (size_t i = 0; i < inputs.size() && i < 5; ++i) {
         const auto* input = inputs[i];
         const size_t rank = i == 3 ? 4 : 3;
         if (!input->has_sizes() || input->sizes().size() != rank) {
@@ -1135,7 +1135,7 @@ class DefaultVersionConverter : public BaseVersionConverter {
           ONNX_ASSERTM(
               !sizes[axis].is_int || sizes[axis].dim != 0,
               "LinearAttention input %zu has a zero-width head dimension at axis %zu and cannot be upgraded "
-              "to opset 29, which requires positive key and value head dimensions. Retain opset 28.",
+              "to opset 29, which requires positive key, value and decay widths. Retain opset 28.",
               i,
               axis);
         }
