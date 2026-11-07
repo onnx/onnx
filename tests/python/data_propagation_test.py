@@ -4,15 +4,219 @@
 
 from __future__ import annotations
 
+import numpy as np
 import pytest
 from shape_inference_test_utils import TestShapeInferenceHelper
 
 import onnx.parser
 from onnx import TensorProto
 from onnx.helper import make_node, make_tensor, make_tensor_value_info
+from onnx.reference import ReferenceEvaluator
 
 
 class TestDataPropagation(TestShapeInferenceHelper):
+    @pytest.mark.parametrize("version", [13, 14, 19, 21, 23, 24, 27])
+    @pytest.mark.parametrize("operation", ["Identity", "Sub"])
+    def test_reshape_symbolic_special_values_remain_unknown(
+        self, version: int, operation: str
+    ) -> None:
+        expression = (
+            "target = Identity(shape)"
+            if operation == "Identity"
+            else "one = Constant<value=int64[1]{1}>() target = Sub(shape, one)"
+        )
+        model = onnx.parser.parse_model(
+            f"""
+            <ir_version: 7, opset_import: ["": {version}]>
+            g (float[N] x, float[4] y) => (z) {{
+                shape = Shape(x)
+                {expression}
+                z = Reshape(y, target)
+            }}
+            """
+        )
+        output = ReferenceEvaluator(model).run(
+            None,
+            {
+                "x": np.empty((0,), dtype=np.float32),
+                "y": np.zeros((4,), dtype=np.float32),
+            },
+        )[0]
+        assert output.shape == (4,)
+        inferred = onnx.shape_inference.infer_shapes(
+            model, check_type=True, strict_mode=True, data_prop=True
+        )
+        if version == 13:
+            assert not inferred.graph.output[0].type.tensor_type.HasField("shape")
+            return
+        dim = inferred.graph.output[0].type.tensor_type.shape.dim[0]
+        assert not dim.HasField("dim_value")
+        assert dim.dim_param not in {"N", "N - 1"}
+
+    @pytest.mark.parametrize("version", [14, 19, 21, 23, 24, 27])
+    @pytest.mark.parametrize("allowzero", [0, 1])
+    @pytest.mark.parametrize("expression", ["identity", "positive", "overflow"])
+    def test_reshape_symbolic_target_requires_bound(
+        self, version: int, allowzero: int, expression: str
+    ) -> None:
+        nodes = [make_node("Shape", ["x"], ["length"])]
+        if expression == "identity":
+            nodes.append(make_node("Identity", ["length"], ["target"]))
+        else:
+            nodes.extend(
+                [
+                    make_node(
+                        "Div" if expression == "positive" else "Mul",
+                        ["length", "two"],
+                        ["scaled"],
+                    ),
+                    make_node("Add", ["scaled", "one"], ["target"]),
+                ]
+            )
+        nodes.append(make_node("Reshape", ["y", "target"], ["z"], allowzero=allowzero))
+        graph = self._make_graph(
+            [("x", TensorProto.FLOAT, ("N",)), ("y", TensorProto.FLOAT, ("M",))],
+            nodes,
+            [],
+            initializer=[
+                make_tensor("two", TensorProto.INT64, (1,), [2]),
+                make_tensor("one", TensorProto.INT64, (1,), [1]),
+            ],
+        )
+        inferred = self._inferred(
+            graph,
+            data_prop=True,
+            opset_imports=[onnx.helper.make_opsetid("", version)],
+        )
+        dims = {
+            info.name: info.type.tensor_type.shape for info in inferred.graph.value_info
+        }
+        target = dims["z"].dim[0]
+        if expression == "positive" or (expression == "identity" and allowzero):
+            assert target.dim_param == ("N" if expression == "identity" else "N/2 + 1")
+        else:
+            assert target.dim_param not in {"N", "N*2 + 1"}
+
+    @pytest.mark.parametrize("version", [14, 19, 21, 23, 24, 27])
+    def test_reshape_zero_copy_same_axis_identity(self, version: int) -> None:
+        graph = self._make_graph(
+            [("x", TensorProto.FLOAT, ("N",))],
+            [
+                make_node("Shape", ["x"], ["shape"]),
+                make_node("Reshape", ["x", "shape"], ["y"]),
+            ],
+            [],
+        )
+        inferred = self._inferred(
+            graph,
+            data_prop=True,
+            opset_imports=[onnx.helper.make_opsetid("", version)],
+        )
+        output = next(info for info in inferred.graph.value_info if info.name == "y")
+        assert (
+            output.type == make_tensor_value_info("y", TensorProto.FLOAT, ("N",)).type
+        )
+
+    @pytest.mark.parametrize("version", [14, 27])
+    @pytest.mark.parametrize(("width", "trim", "remaining"), [(8, 3, 5), (3, 8, 0)])
+    def test_relu_clamps_trimmed_sequence_length(
+        self, version: int, width: int, trim: int, remaining: int
+    ) -> None:
+        graph = self._make_graph(
+            [("x", TensorProto.FLOAT, (width,))],
+            [
+                make_node("Shape", ["x"], ["length"]),
+                make_node("Sub", ["length", "trim"], ["difference"]),
+                make_node("Relu", ["difference"], ["shape"]),
+                make_node("ConstantOfShape", ["shape"], ["mask"]),
+            ],
+            [],
+            initializer=[make_tensor("trim", TensorProto.INT64, (1,), [trim])],
+        )
+        inferred = self._inferred(
+            graph,
+            data_prop=True,
+            opset_imports=[onnx.helper.make_opsetid("", version)],
+        )
+        output = next(info for info in inferred.graph.value_info if info.name == "mask")
+        assert (
+            output.type
+            == make_tensor_value_info("mask", TensorProto.FLOAT, (remaining,)).type
+        )
+
+    @pytest.mark.parametrize("version", [27])
+    @pytest.mark.parametrize("length", [128, 1000, 1001])
+    def test_range_position_endpoint_builds_mask_shape(
+        self, version: int, length: int
+    ) -> None:
+        graph = self._make_graph(
+            [],
+            [
+                make_node("Range", ["start", "limit", "delta"], ["positions"]),
+                make_node("Gather", ["positions", "last"], ["endpoint"]),
+                make_node("Add", ["endpoint", "one"], ["shape"]),
+                make_node("ConstantOfShape", ["shape"], ["mask"]),
+            ],
+            [],
+            initializer=[
+                make_tensor("start", TensorProto.INT64, (), [0]),
+                make_tensor("limit", TensorProto.INT64, (), [length]),
+                make_tensor("delta", TensorProto.INT64, (), [1]),
+                make_tensor("last", TensorProto.INT64, (1,), [length - 1]),
+                make_tensor("one", TensorProto.INT64, (1,), [1]),
+            ],
+        )
+        inferred = self._inferred(
+            graph,
+            data_prop=True,
+            opset_imports=[onnx.helper.make_opsetid("", version)],
+        )
+        output = next(info for info in inferred.graph.value_info if info.name == "mask")
+        dim = output.type.tensor_type.shape.dim[0]
+        if length <= 1000:
+            assert dim.HasField("dim_value")
+            assert dim.dim_value == length
+        else:
+            assert not dim.HasField("dim_value")
+
+    @pytest.mark.parametrize("version", [13, 14, 27])
+    @pytest.mark.parametrize("value", [1, 2])
+    def test_negated_constant_reshape_inferred_dimension(
+        self, version: int, value: int
+    ) -> None:
+        graph = self._make_graph(
+            [("x", TensorProto.FLOAT, (2, 3))],
+            [
+                make_node("Neg", ["one"], ["inferred_dim"]),
+                make_node("Concat", ["inferred_dim", "three"], ["shape"], axis=0),
+                make_node("Reshape", ["x", "shape"], ["y"]),
+            ],
+            [],
+            initializer=[
+                make_tensor("one", TensorProto.INT64, (1,), [value]),
+                make_tensor("three", TensorProto.INT64, (1,), [3]),
+            ],
+        )
+        if value == 2:
+            with pytest.raises(
+                onnx.shape_inference.InferenceError, match="Invalid dimension value"
+            ):
+                self._inferred(
+                    graph,
+                    data_prop=True,
+                    opset_imports=[onnx.helper.make_opsetid("", version)],
+                )
+            return
+        inferred = self._inferred(
+            graph,
+            data_prop=True,
+            opset_imports=[onnx.helper.make_opsetid("", version)],
+        )
+        output = next(info for info in inferred.graph.value_info if info.name == "y")
+        assert (
+            output.type == make_tensor_value_info("y", TensorProto.FLOAT, (2, 3)).type
+        )
+
     def test_slice_multidimensional_records_do_not_publish_flat_slice(self) -> None:
         graph = self._make_graph(
             [],
@@ -765,11 +969,11 @@ class TestDataPropagation(TestShapeInferenceHelper):
         model = onnx.parser.parse_model(
             """
             <ir_version: 7, opset_import: [ "" : 18]>
-            agraph (float[N, 3, H, W] x, float[M] y) => (float[N, 5, H, W] z) {
+            agraph (float[N, 3, H, W] x, float[M] y) => (z) {
                 shape = Shape (x)
                 delta = Constant <value = int64[4] {0, 2, 0, 0}> ()
                 new_shape = Add (shape, delta)
-                z = Reshape (y, new_shape)
+                z = Reshape <allowzero=1> (y, new_shape)
             }
         """
         )
@@ -777,28 +981,21 @@ class TestDataPropagation(TestShapeInferenceHelper):
         output = inferred_model.graph.output[0]
         dims = list(output.type.tensor_type.shape.dim)
         assert len(dims) == 4
-        # First dim: N + 0 → should be "N + 0" or similar (symbolic expression)
-        assert dims[0].dim_param, f"Expected dim_param, got {dims[0]}"
-        assert "N" in dims[0].dim_param
-        # Second dim: 3 + 2 = 5 (concrete)
+        assert dims[0].dim_param == "N"
         assert dims[1].dim_value == 5
-        # Third dim: H + 0 → should contain "H"
-        assert dims[2].dim_param, f"Expected dim_param, got {dims[2]}"
-        assert "H" in dims[2].dim_param
-        # Fourth dim: W + 0 → should contain "W"
-        assert dims[3].dim_param, f"Expected dim_param, got {dims[3]}"
-        assert "W" in dims[3].dim_param
+        assert dims[2].dim_param == "H"
+        assert dims[3].dim_param == "W"
 
     def test_symbolic_sub_produces_expression(self) -> None:
         """Shape → Sub → Reshape: symbolic dim expression propagates to Reshape output."""
         model = onnx.parser.parse_model(
             """
             <ir_version: 7, opset_import: [ "" : 18]>
-            agraph (float[N, 4, H] x, float[M] y) => (float[N, 3, H] z) {
+            agraph (float[N, 4, H] x, float[M] y) => (z) {
                 shape = Shape (x)
                 delta = Constant <value = int64[3] {0, 1, 0}> ()
                 new_shape = Sub (shape, delta)
-                z = Reshape (y, new_shape)
+                z = Reshape <allowzero=1> (y, new_shape)
             }
         """
         )
@@ -806,22 +1003,20 @@ class TestDataPropagation(TestShapeInferenceHelper):
         output = inferred_model.graph.output[0]
         dims = list(output.type.tensor_type.shape.dim)
         assert len(dims) == 3
-        assert dims[0].dim_param, f"Expected dim_param, got {dims[0]}"
-        assert "N" in dims[0].dim_param
+        assert dims[0].dim_param == "N"
         assert dims[1].dim_value == 3
-        assert dims[2].dim_param, f"Expected dim_param, got {dims[2]}"
-        assert "H" in dims[2].dim_param
+        assert dims[2].dim_param == "H"
 
     def test_symbolic_mul_produces_expression(self) -> None:
         """Shape → Mul → Reshape: symbolic dim expression propagates to Reshape output."""
         model = onnx.parser.parse_model(
             """
             <ir_version: 7, opset_import: [ "" : 18]>
-            agraph (float[N, 3, H] x, float[1] y) => (float[N, 6, H] z) {
+            agraph (float[N, 3, H] x, float[M] y) => (z) {
                 shape = Shape (x)
                 scale = Constant <value = int64[3] {1, 2, 1}> ()
                 new_shape = Mul (shape, scale)
-                z = Reshape (y, new_shape)
+                z = Reshape <allowzero=1> (y, new_shape)
             }
         """
         )
@@ -829,22 +1024,20 @@ class TestDataPropagation(TestShapeInferenceHelper):
         output = inferred_model.graph.output[0]
         dims = list(output.type.tensor_type.shape.dim)
         assert len(dims) == 3
-        assert dims[0].dim_param, f"Expected dim_param, got {dims[0]}"
-        assert "N" in dims[0].dim_param
+        assert dims[0].dim_param == "N"
         assert dims[1].dim_value == 6
-        assert dims[2].dim_param, f"Expected dim_param, got {dims[2]}"
-        assert "H" in dims[2].dim_param
+        assert dims[2].dim_param == "H"
 
     def test_symbolic_shape_add_reshape(self) -> None:
         """End-to-end: Shape → Add → Reshape with symbolic dims produces expression-based shape."""
         model = onnx.parser.parse_model(
             """
             <ir_version: 7, opset_import: [ "" : 18]>
-            agraph (float[N, 3] x, float[1] y) => (float[N, 5] z) {
+            agraph (float[N, 3] x, float[M] y) => (z) {
                 shape = Shape (x)
                 delta = Constant <value = int64[2] {0, 2}> ()
                 new_shape = Add (shape, delta)
-                z = Reshape (y, new_shape)
+                z = Reshape <allowzero=1> (y, new_shape)
             }
         """
         )
@@ -852,22 +1045,17 @@ class TestDataPropagation(TestShapeInferenceHelper):
         output = inferred_model.graph.output[0]
         dims = list(output.type.tensor_type.shape.dim)
         assert len(dims) == 2
-        # First dim should be a symbolic expression containing "N"
-        assert dims[0].dim_param, (
-            f"Expected dim_param, got dim_value={dims[0].dim_value}"
-        )
-        assert "N" in dims[0].dim_param
-        # Second dim should be concrete 5
+        assert dims[0].dim_param == "N"
         assert dims[1].dim_value == 5
 
-    def test_symbolic_shape_concat_reshape(self) -> None:
-        """End-to-end: Shape → Reshape with symbolic + concrete dims."""
+    def test_symbolic_shape_reshape(self) -> None:
+        """Shape values propagate through a runtime Reshape."""
         model = onnx.parser.parse_model(
             """
             <ir_version: 7, opset_import: [ "" : 18]>
-            agraph (float[N, 3, H, W] x, float[1] y) => (float[N, 3, H, W] z) {
+            agraph (float[N, 3, H, W] x, float[M] y) => (z) {
                 shape = Shape (x)
-                z = Reshape (y, shape)
+                z = Reshape <allowzero=1> (y, shape)
             }
         """
         )

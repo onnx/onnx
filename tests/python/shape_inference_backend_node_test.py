@@ -21,15 +21,13 @@ import numpy as np
 import pytest
 
 import onnx
-import onnx.shape_inference
-from onnx import TensorProto, TypeProto, numpy_helper
 from onnx.backend.test.loader import load_node_model_tests
 
 if TYPE_CHECKING:
     from onnx.backend.test.case.test_case import TestCase
 
 
-def _get_tensor_shape(type_proto: TypeProto) -> list[int | str | None] | None:
+def _get_tensor_shape(type_proto: onnx.TypeProto) -> list[int | str | None] | None:
     """Extract shape from a TypeProto as a list of ints/dim_params, or None."""
     if not type_proto.HasField("tensor_type"):
         return None
@@ -47,7 +45,7 @@ def _get_tensor_shape(type_proto: TypeProto) -> list[int | str | None] | None:
     return dims
 
 
-def _get_tensor_dtype(type_proto: TypeProto) -> int:
+def _get_tensor_dtype(type_proto: onnx.TypeProto) -> int:
     """Extract element type from a TypeProto (0 if not a tensor)."""
     if not type_proto.HasField("tensor_type"):
         return 0
@@ -65,12 +63,12 @@ def _inject_inputs_as_initializers(model: onnx.ModelProto, test_case: TestCase) 
     inputs, _ = test_case.data_sets[0]
     for inp, value in zip(model.graph.input, inputs, strict=True):
         if inp.name not in existing and inp.type.HasField("tensor_type"):
-            if isinstance(value, TensorProto):
-                tensor = TensorProto()
+            if isinstance(value, onnx.TensorProto):
+                tensor = onnx.TensorProto()
                 tensor.CopyFrom(value)
                 tensor.name = inp.name
             else:
-                tensor = numpy_helper.from_array(np.asarray(value), inp.name)
+                tensor = onnx.numpy_helper.from_array(np.asarray(value), inp.name)
             model.graph.initializer.append(tensor)
 
 
@@ -225,8 +223,8 @@ class TestShapeInferenceBackendNode:
             if exp_dtype not in {0, inf_dtype}:
                 errors.append(
                     f"Output '{name}': dtype mismatch: "
-                    f"expected {TensorProto.DataType.Name(exp_dtype)}, "
-                    f"got {TensorProto.DataType.Name(inf_dtype)}"
+                    f"expected {onnx.TensorProto.DataType.Name(exp_dtype)}, "
+                    f"got {onnx.TensorProto.DataType.Name(inf_dtype)}"
                 )
 
             if exp_shape is not None and inf_shape is not None:

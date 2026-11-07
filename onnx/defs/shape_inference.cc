@@ -4,6 +4,7 @@
 
 #include "onnx/defs/shape_inference.h"
 
+#include <cctype>
 #include <limits>
 #include <string>
 #include <utility>
@@ -13,6 +14,107 @@
 #include "onnx/defs/tensor_proto_util.h"
 
 namespace ONNX_NAMESPACE {
+
+std::string dimToString(const TensorShapeProto::Dimension& dim) {
+  if (dim.has_dim_value()) {
+    return ONNX_NAMESPACE::to_string(dim.dim_value());
+  }
+  if (dim.has_dim_param() && dim.dim_param().size() <= 1024) {
+    return dim.dim_param();
+  }
+  return "";
+}
+
+bool dimParamIsSimple(const std::string& s) {
+  for (char c : s) {
+    if (c != '_' && !std::isalnum(static_cast<unsigned char>(c)))
+      return false;
+  }
+  return true;
+}
+
+std::string wrapIfCompound(const std::string& s) {
+  return dimParamIsSimple(s) ? s : "(" + s + ")";
+}
+
+TensorShapeProto::Dimension operator+(
+    const TensorShapeProto::Dimension& dim1,
+    const TensorShapeProto::Dimension& dim2) {
+  TensorShapeProto::Dimension result;
+  if (dim1.has_dim_value() && dim2.has_dim_value()) {
+    result.set_dim_value(checkedAdd(dim1.dim_value(), dim2.dim_value()));
+  } else if (dim1.has_dim_value() && dim1.dim_value() == 0) {
+    return dim2;
+  } else if (dim2.has_dim_value() && dim2.dim_value() == 0) {
+    return dim1;
+  }
+  return result;
+}
+
+TensorShapeProto::Dimension operator+(const TensorShapeProto::Dimension& dim1, int64_t dim2) {
+  TensorShapeProto::Dimension result;
+  if (dim1.has_dim_value()) {
+    result.set_dim_value(checkedAdd(dim1.dim_value(), dim2));
+  } else if (dim2 == 0) {
+    return dim1;
+  }
+  return result;
+}
+
+TensorShapeProto::Dimension operator-(
+    const TensorShapeProto::Dimension& dim1,
+    const TensorShapeProto::Dimension& dim2) {
+  TensorShapeProto::Dimension result;
+  if (dim1.has_dim_value() && dim2.has_dim_value()) {
+    result.set_dim_value(checkedSubtract(dim1.dim_value(), dim2.dim_value()));
+  } else if (dim2.has_dim_value() && dim2.dim_value() == 0) {
+    return dim1;
+  }
+  return result;
+}
+
+TensorShapeProto::Dimension operator-(const TensorShapeProto::Dimension& dim1, int64_t dim2) {
+  TensorShapeProto::Dimension result;
+  if (dim1.has_dim_value()) {
+    result.set_dim_value(checkedSubtract(dim1.dim_value(), dim2));
+  } else if (dim2 == 0) {
+    return dim1;
+  }
+  return result;
+}
+
+Dim computeDimension(SymbolTable* symbols, const std::string& op, const Dim& left, const Dim& right) {
+  Dim result;
+  if (op == "Add") {
+    result = left + right;
+  } else if (op == "Sub") {
+    result = left - right;
+  } else if (op == "Mul") {
+    result = left * right;
+  } else if (op == "Div" && right.has_dim_value()) {
+    result = left / right.dim_value();
+  }
+  if (!result.has_dim_value() && !result.has_dim_param() && symbols != nullptr) {
+    auto name = symbols->createExpression(op, left, right);
+    if (!name.empty()) {
+      result.set_dim_param(std::move(name));
+    }
+  }
+  return result;
+}
+
+bool isReshapeSymbolicDimSafe(const InferenceContext& ctx, const Dim& dim, int index, bool allowzero) {
+  int64_t lower_bound = 0;
+  const auto* symbols = ctx.getSymbolTable();
+  if (symbols != nullptr && symbols->getValueLowerBound(dim, lower_bound) &&
+      (lower_bound > 0 || (allowzero && lower_bound == 0))) {
+    return true;
+  }
+  const auto* input = ctx.getInputType(0);
+  return !allowzero && input != nullptr && input->has_tensor_type() && input->tensor_type().has_shape() &&
+      index < input->tensor_type().shape().dim_size() && input->tensor_type().shape().dim(index).has_dim_param() &&
+      input->tensor_type().shape().dim(index).dim_param() == dim.dim_param();
+}
 
 // Note: for all methods below for propagating type or shape, callers are
 // responsible to handle optional inputs/outputs and ensure that the specified

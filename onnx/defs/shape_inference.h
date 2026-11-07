@@ -53,6 +53,10 @@ class SymbolTable {
   virtual std::string createExpression(const std::string& /*op*/, const Dim& /*left*/, const Dim& /*right*/) {
     return "";
   }
+  // Returns a proven lower bound on an integer value, not on its spelling.
+  virtual bool getValueLowerBound(const Dim& /*value*/, int64_t& /*lower_bound*/) const {
+    return false;
+  }
   virtual ~SymbolTable() = default;
 };
 
@@ -230,33 +234,14 @@ getAttribute(const InferenceContext& ctx, const std::string& attributeName, cons
 // Compound symbolic results require a context-owned symbol allocator.
 
 // Convert a Dim to its string representation for use in expressions.
-inline std::string dimToString(const TensorShapeProto::Dimension& dim) {
-  if (dim.has_dim_value()) {
-    return ONNX_NAMESPACE::to_string(dim.dim_value());
-  }
-  // Stop expansion before copying or combining large expression strings.
-  if (dim.has_dim_param() && dim.dim_param().size() <= 1024) {
-    return dim.dim_param();
-  }
-  return "";
-}
+ONNX_API std::string dimToString(const TensorShapeProto::Dimension& dim);
 
 // Return true if a dim_param string is a "simple" token (identifier or number)
 // that does not need parentheses when used as an operand in a compound expression.
-inline bool dimParamIsSimple(const std::string& s) {
-  if (s.empty())
-    return true;
-  for (char c : s) {
-    if (c != '_' && !std::isalnum(static_cast<unsigned char>(c)))
-      return false;
-  }
-  return true;
-}
+ONNX_API bool dimParamIsSimple(const std::string& s);
 
 // Wrap an expression string in parentheses if it is compound.
-inline std::string wrapIfCompound(const std::string& s) {
-  return dimParamIsSimple(s) ? s : "(" + s + ")";
-}
+ONNX_API std::string wrapIfCompound(const std::string& s);
 
 inline int64_t checkedMultiply(int64_t lhs, int64_t rhs) {
   int64_t result = 0;
@@ -341,49 +326,17 @@ inline TensorShapeProto::Dimension operator/(const TensorShapeProto::Dimension& 
 
 // --- Addition and Subtraction operators for Dim ---
 
-inline TensorShapeProto::Dimension operator+(
+ONNX_API TensorShapeProto::Dimension operator+(
     const TensorShapeProto::Dimension& dim1,
-    const TensorShapeProto::Dimension& dim2) {
-  TensorShapeProto::Dimension result;
-  if (dim1.has_dim_value() && dim2.has_dim_value()) {
-    result.set_dim_value(checkedAdd(dim1.dim_value(), dim2.dim_value()));
-  } else if (dim1.has_dim_value() && dim1.dim_value() == 0) {
-    return dim2;
-  } else if (dim2.has_dim_value() && dim2.dim_value() == 0) {
-    return dim1;
-  }
-  return result;
-}
+    const TensorShapeProto::Dimension& dim2);
 
-inline TensorShapeProto::Dimension operator+(const TensorShapeProto::Dimension& dim1, int64_t dim2) {
-  TensorShapeProto::Dimension result;
-  if (dim1.has_dim_value()) {
-    result.set_dim_value(checkedAdd(dim1.dim_value(), dim2));
-  } else if (dim2 == 0) {
-    return dim1;
-  }
-  return result;
-}
+ONNX_API TensorShapeProto::Dimension operator+(const TensorShapeProto::Dimension& dim1, int64_t dim2);
 
-inline TensorShapeProto::Dimension operator-(
+ONNX_API TensorShapeProto::Dimension operator-(
     const TensorShapeProto::Dimension& dim1,
-    const TensorShapeProto::Dimension& dim2) {
-  TensorShapeProto::Dimension result;
-  if (dim1.has_dim_value() && dim2.has_dim_value()) {
-    result.set_dim_value(checkedSubtract(dim1.dim_value(), dim2.dim_value()));
-  }
-  return result;
-}
+    const TensorShapeProto::Dimension& dim2);
 
-inline TensorShapeProto::Dimension operator-(const TensorShapeProto::Dimension& dim1, int64_t dim2) {
-  TensorShapeProto::Dimension result;
-  if (dim1.has_dim_value()) {
-    result.set_dim_value(checkedSubtract(dim1.dim_value(), dim2));
-  } else if (dim2 == 0) {
-    return dim1;
-  }
-  return result;
-}
+ONNX_API TensorShapeProto::Dimension operator-(const TensorShapeProto::Dimension& dim1, int64_t dim2);
 
 // if from >= upto_exclusive, return 1.
 // Caller must make sure upto_exclusive is less than or equal to shape.size()
@@ -403,25 +356,9 @@ inline Dim makeDimension(int64_t value) {
   return dim;
 }
 
-inline Dim computeDimension(SymbolTable* symbols, const std::string& op, const Dim& left, const Dim& right) {
-  Dim result;
-  if (op == "Add") {
-    result = left + right;
-  } else if (op == "Sub") {
-    result = left - right;
-  } else if (op == "Mul") {
-    result = left * right;
-  } else if (op == "Div" && right.has_dim_value()) {
-    result = left / right.dim_value();
-  }
-  if (!result.has_dim_value() && !result.has_dim_param() && symbols != nullptr) {
-    auto name = symbols->createExpression(op, left, right);
-    if (!name.empty()) {
-      result.set_dim_param(std::move(name));
-    }
-  }
-  return result;
-}
+ONNX_API Dim computeDimension(SymbolTable* symbols, const std::string& op, const Dim& left, const Dim& right);
+
+ONNX_API bool isReshapeSymbolicDimSafe(const InferenceContext& ctx, const Dim& dim, int index, bool allowzero);
 
 class SymbolicDim {
  public:

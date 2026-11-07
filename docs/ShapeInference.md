@@ -70,6 +70,15 @@ or sibling graphs; subgraphs can read visible outer-scope records.
 Records whose value count differs from a fully known tensor shape are not
 propagated. Synthetic records of unknown values are limited to 1000 elements.
 
+For a symbolic `Reshape` target entry, inference retains the symbol only when
+the value is proven positive, or proven nonnegative with `allowzero=1`.
+With `allowzero=0`, an entry equal to the input dimension at the same axis
+is also retained: copying that dimension when the entry is zero gives the same
+result. Other entries remain unknown because zero and -1 have special meanings.
+Value bounds are derived from tensor dimensions and overflow-free integer
+operations within the current invocation; arbitrary partial symbolic values
+do not acquire nonnegative bounds.
+
 Supported symbolic arithmetic operations encode results as `dim_param` strings.
 For example, `Concat` on tensors of shapes `(5, 2)` and `(N, 2)` can produce
 `(5 + N, 2)`. ONNX IR treats each `dim_param` string as an opaque, globally

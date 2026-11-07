@@ -450,8 +450,8 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         })
         .PartialDataPropagationFunction([](DataPropagationContext& ctx) {
-          // Propagate computed Range values so downstream ops (e.g. ReduceMean)
-          // can use them for shape inference.
+          // Partial records represent INT32/INT64 values only, so these Range
+          // inputs and the length calculation are integral.
           const auto* start_data = ctx.getInputData(0);
           const auto* limit_data = ctx.getInputData(1);
           const auto* delta_data = ctx.getInputData(2);

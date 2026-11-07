@@ -175,7 +175,8 @@ void LoopInferenceFunction(InferenceContext& ctx) {
         // trip_count is only an upper bound: the loop can exit early.
         mutable_inferred_shape->add_dim();
 
-        // add dimensions from subgraph output shape
+        // dim_param symbols are model-global, so scan-element dimensions retain
+        // their identity across the body and enclosing graph.
         for (const auto& dim : subgraph_output_type->tensor_type().shape().dim()) {
           (*mutable_inferred_shape->add_dim()) = dim;
         }

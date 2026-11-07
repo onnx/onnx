@@ -424,10 +424,8 @@ class TestSymbolicShape:
         original_count = self._count_unique_dim_param_number(onnx_model)
         inferred_model = onnx.shape_inference.infer_shapes(onnx_model, strict_mode=True)
         inferred_count = self._count_unique_dim_param_number(inferred_model)
-        # to prevent duplicate so the inferred count will be count + 2
-        # new symbol '_d2' and '_d3' should be generated
-        # original: {'unk_0', '_d1'}
-        # inferred: {'unk_0', '_d1', '_d2', '_d3'}
+        # The two Concat expressions add distinct symbols without replacing
+        # the pre-existing '_d0' and '_d1' annotations.
         assert inferred_count == original_count + 2, f"{inferred_model}{onnx_model}"
 
     def test_unknown_shape(self) -> None:
@@ -456,8 +454,7 @@ class TestSymbolicShape:
         self._assert_valueinfo_shape(
             inferred_model, [make_tensor_value_info("C", TensorProto.FLOAT, (3, -1))]
         )
-        # the symbolic shape of C and output should be the same
-        # ('_d0', '_d1')
+        # C and output share the concrete first dimension and one symbolic dimension.
         assert self._get_shape_from_name(
             inferred_model, "C"
         ) == self._get_shape_from_name(inferred_model, "output")

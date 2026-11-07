@@ -23,6 +23,61 @@ void ScanInferenceFunction(InferenceContext& ctx);
 
 namespace Test {
 
+TEST(ShapeInferenceTest, SymbolicValueBoundsDistinguishDimensionsAndPartialValues) {
+  GraphProto graph;
+  auto* input = graph.add_input();
+  input->set_name("x");
+  input->mutable_type()->mutable_tensor_type()->mutable_shape()->add_dim()->set_dim_param("N");
+  shape_inference::SymbolTableImpl symbols;
+  symbols.addFromGraph(graph);
+
+  Dim n;
+  n.set_dim_param("N");
+  int64_t lower = 0;
+  ASSERT_TRUE(symbols.getValueLowerBound(n, lower));
+  EXPECT_EQ(lower, 0);
+
+  shape_inference::DataValueMap partial;
+  partial["raw"].add_dim()->set_dim_param("signed_value");
+  symbols.addFromData(partial);
+  EXPECT_FALSE(symbols.getValueLowerBound(partial.at("raw").dim(0), lower));
+  const auto signed_sum = computeDimension(&symbols, "Add", partial.at("raw").dim(0), makeDimension(1));
+  EXPECT_FALSE(symbols.getValueLowerBound(signed_sum, lower));
+
+  const auto negative = computeDimension(&symbols, "Sub", n, makeDimension(1));
+  ASSERT_TRUE(symbols.getValueLowerBound(negative, lower));
+  EXPECT_EQ(lower, -1);
+
+  const auto half = computeDimension(&symbols, "Div", n, makeDimension(2));
+  const auto positive = computeDimension(&symbols, "Add", half, makeDimension(1));
+  ASSERT_TRUE(symbols.getValueLowerBound(positive, lower));
+  EXPECT_EQ(lower, 1);
+
+  const auto product = computeDimension(&symbols, "Mul", n, makeDimension(2));
+  const auto potentially_wrapped = computeDimension(&symbols, "Add", product, makeDimension(1));
+  EXPECT_FALSE(symbols.getValueLowerBound(potentially_wrapped, lower));
+}
+
+TEST(ShapeInferenceTest, ReshapeDoesNotAssumePartialSymbolsAreNonnegative) {
+  ModelProto model;
+  OnnxParser parser(R"ONNX(
+    <ir_version: 8, opset_import: ["" : 24]>
+    g (int64[1] target, float[4] data) => (output) {
+      output = Reshape<allowzero=1>(data, target)
+    }
+  )ONNX");
+  const auto status = parser.Parse(model);
+  ASSERT_TRUE(status.IsOK()) << status.ErrorMessage();
+  shape_inference::DataValueMap partial;
+  partial["target"].add_dim()->set_dim_param("signed_value");
+  shape_inference::InferShapes(
+      model, OpSchemaRegistry::Instance(), ShapeInferenceOptions(true, 1, true), &partial);
+  const auto& output = model.graph().output(0).type().tensor_type().shape();
+  ASSERT_EQ(output.dim_size(), 1);
+  EXPECT_FALSE(output.dim(0).has_dim_value());
+  EXPECT_NE(output.dim(0).dim_param(), "signed_value");
+}
+
 template <class Type>
 static void CreateDims(Type& proto, int num_dims) {
   auto mutable_shape = proto.mutable_shape();

@@ -111,10 +111,78 @@ class SymbolTableImpl : public SymbolTable {
     const auto name = existing_symbols.insert(text).second ? text : createNew(text + "__");
     expressions_.emplace(key, name);
     expression_text_.emplace(name, std::move(text));
+    ValueBounds bounds{};
+    if (ComputeExpressionBounds(op, left, right, bounds)) {
+      value_bounds_.emplace(name, bounds);
+    }
     return name;
   }
 
+  bool getValueLowerBound(const Dim& value, int64_t& lower_bound) const override {
+    ValueBounds bounds{};
+    if (!GetValueBounds(value, bounds)) {
+      return false;
+    }
+    lower_bound = bounds.lower;
+    return true;
+  }
+
  private:
+  struct ValueBounds {
+    int64_t lower;
+    int64_t upper;
+  };
+
+  bool GetValueBounds(const Dim& dim, ValueBounds& bounds) const {
+    if (dim.has_dim_value()) {
+      bounds = {dim.dim_value(), dim.dim_value()};
+      return true;
+    }
+    if (dim.has_dim_param()) {
+      const auto found = value_bounds_.find(dim.dim_param());
+      if (found != value_bounds_.end()) {
+        bounds = found->second;
+        return true;
+      }
+    }
+    return false;
+  }
+
+  bool ComputeExpressionBounds(const std::string& op, const Dim& left, const Dim& right, ValueBounds& result) const {
+    ValueBounds lhs{};
+    ValueBounds rhs{};
+    if (!GetValueBounds(left, lhs) || !GetValueBounds(right, rhs)) {
+      return false;
+    }
+    if (op == "Add") {
+      return !checked_add_overflow(lhs.lower, rhs.lower, &result.lower) &&
+          !checked_add_overflow(lhs.upper, rhs.upper, &result.upper);
+    }
+    if (op == "Sub") {
+      return !checked_sub_overflow(lhs.lower, rhs.upper, &result.lower) &&
+          !checked_sub_overflow(lhs.upper, rhs.lower, &result.upper);
+    }
+    if (op == "Mul") {
+      result = {std::numeric_limits<int64_t>::max(), std::numeric_limits<int64_t>::min()};
+      for (int64_t l : {lhs.lower, lhs.upper}) {
+        for (int64_t r : {rhs.lower, rhs.upper}) {
+          int64_t product = 0;
+          if (checked_mul_overflow(l, r, &product)) {
+            return false;
+          }
+          result.lower = std::min(result.lower, product);
+          result.upper = std::max(result.upper, product);
+        }
+      }
+      return true;
+    }
+    if (op == "Div" && right.has_dim_value() && right.dim_value() > 0) {
+      result = {lhs.lower / right.dim_value(), lhs.upper / right.dim_value()};
+      return true;
+    }
+    return false;
+  }
+
   void AddTypeAttributeSymbols(const AttributeProto& attribute) {
     if (attribute.has_tp()) {
       AddExistingSymbolicDims(attribute.tp());
@@ -142,6 +210,7 @@ class SymbolTableImpl : public SymbolTable {
   }
   std::map<std::vector<std::string>, std::string> expressions_;
   std::unordered_map<std::string, std::string> expression_text_;
+  std::unordered_map<std::string, ValueBounds> value_bounds_;
   unsigned int index_{0};
   std::unordered_set<std::string> existing_symbols;
 
@@ -151,7 +220,13 @@ class SymbolTableImpl : public SymbolTable {
     if (tensorType.has_shape()) {
       for (int i = 0; i < tensorType.shape().dim_size(); ++i) {
         if (tensorType.shape().dim(i).has_dim_param()) {
-          existing_symbols.insert(tensorType.shape().dim(i).dim_param());
+          const auto& name = tensorType.shape().dim(i).dim_param();
+          existing_symbols.insert(name);
+          // Actual tensor dimensions are nonnegative. Arbitrary partial values
+          // reserved by addFromData do not acquire this constraint.
+          if (expression_text_.count(name) == 0) {
+            value_bounds_.emplace(name, ValueBounds{0, std::numeric_limits<int64_t>::max()});
+          }
         }
       }
     }
