@@ -1364,7 +1364,7 @@ static bool BuildContextDependentFunctionBodyGroupedMatMul(
     const OpSchema& schema,
     FunctionProto& functionProto) {
   const auto* transB_attr = ctx.getAttribute("transB");
-  if (transB_attr != nullptr && !transB_attr->has_i()) {
+  if (transB_attr != nullptr && !transB_attr->ref_attr_name().empty()) {
     return false;
   }
   const bool transB = transB_attr != nullptr && transB_attr->i() != 0;
