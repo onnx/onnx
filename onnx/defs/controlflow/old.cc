@@ -1276,7 +1276,7 @@ static void LoopInferenceFunction_opset8(InferenceContext& ctx) {
 
     // copy so we can remove the shape before passing to the subgraph
     // inferencing
-    temporary_type_protos.emplace_back(*ctx.getInputType(i));
+    temporary_type_protos.emplace_back(ctx.getInputTypeOrFail(i));
     auto& input_type = temporary_type_protos.back();
     input_type.mutable_tensor_type()->clear_shape();
 
@@ -1431,7 +1431,7 @@ static void LoopInferenceFunction_opset11(InferenceContext& ctx) {
 
     // copy so we can remove the shape before passing to the subgraph
     // inferencing
-    temporary_type_protos.emplace_back(*ctx.getInputType(i));
+    temporary_type_protos.emplace_back(ctx.getInputTypeOrFail(i));
     auto& input_type = temporary_type_protos.back();
     input_type.mutable_tensor_type()->clear_shape();
 
@@ -1957,7 +1957,7 @@ static void LoopInferenceFunction_opset13(InferenceContext& ctx) {
 
     // copy so we can remove the shape before passing to the subgraph
     // inferencing
-    temporary_type_protos.emplace_back(*ctx.getInputType(i));
+    temporary_type_protos.emplace_back(ctx.getInputTypeOrFail(i));
     auto& input_type = temporary_type_protos.back();
 
     if (input_type.has_tensor_type()) {

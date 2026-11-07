@@ -28,7 +28,7 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
           if (!hasNInputShapes(ctx, 1)) {
             return;
           }
-          const auto& input_shape = ctx.getInputType(0)->tensor_type().shape();
+          const auto& input_shape = ctx.getInputTypeOrFail(0).tensor_type().shape();
           const auto input_ndim = input_shape.dim_size();
           if (input_ndim == 1) {
             return;
@@ -192,7 +192,7 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
           if (nullptr == ctx.getInputType(0)) {
             return;
           }
-          auto input_elem_type = ctx.getInputType(0)->tensor_type().elem_type();
+          auto input_elem_type = ctx.getInputTypeOrFail(0).tensor_type().elem_type();
           if (TensorProto::STRING == input_elem_type) {
             updateOutputElemType(ctx, 0, TensorProto::INT64);
           } else if (TensorProto::INT64 == input_elem_type) {
@@ -236,7 +236,11 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
             AttributeProto::INTS,
             OPTIONAL_VALUE)
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-          auto input_elem_type = ctx.getInputType(0)->map_type().value_type().tensor_type().elem_type();
+          const auto* input_type = ctx.getInputType(0);
+          if (input_type == nullptr) {
+            return;
+          }
+          auto input_elem_type = input_type->map_type().value_type().tensor_type().elem_type();
           auto output_elem_type = ctx.getOutputType(0)->mutable_tensor_type();
           output_elem_type->set_elem_type(input_elem_type);
         }));
@@ -317,10 +321,11 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
           if (key_type == TensorProto::UNDEFINED) {
             fail_shape_inference("At least one of keys_tensor, keys_strings, keys_int64s, keys_floats must be set.");
           }
-          if (key_type != ctx.getInputType(0)->tensor_type().elem_type()) {
+          const auto* input_type = ctx.getInputType(0);
+          if (input_type != nullptr && key_type != input_type->tensor_type().elem_type()) {
             fail_shape_inference(
                 "The input type was ",
-                ctx.getInputType(0)->tensor_type().elem_type(),
+                input_type->tensor_type().elem_type(),
                 " and the key type ",
                 key_type,
                 " are different, which is not permitted for LabelEncoders.");
@@ -359,7 +364,9 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
           }
           // Propagate shape from input type and assign output type based on value type
           ctx.getOutputType(0)->mutable_tensor_type()->set_elem_type(value_type);
-          propagateShapeFromInputToOutput(ctx, 0, 0);
+          if (hasInputShape(ctx, 0)) {
+            propagateShapeFromInputToOutput(ctx, 0, 0);
+          }
         }));
 
 ONNX_ML_OPERATOR_SET_SCHEMA(
@@ -436,7 +443,7 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
           class_count_dim.set_dim_value(class_count);
 
           if (hasNInputShapes(ctx, 1)) {
-            const auto& input_shape = ctx.getInputType(0)->tensor_type().shape();
+            const auto& input_shape = ctx.getInputTypeOrFail(0).tensor_type().shape();
             const auto input_rank = input_shape.dim_size();
             if (input_rank == 1) {
               // if input_rank is 1, batch_size is interpreted to be 1
@@ -529,7 +536,7 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
           if (!hasNInputShapes(ctx, 1)) {
             return;
           }
-          const TensorShapeProto& input_shape = ctx.getInputType(0)->tensor_type().shape();
+          const TensorShapeProto& input_shape = ctx.getInputTypeOrFail(0).tensor_type().shape();
           TensorShapeProto* shape = ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
           for (int i = 0; i < input_shape.dim_size(); i++) {
             *shape->add_dim() = input_shape.dim(i);
@@ -963,7 +970,10 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
           if (nodes_splits->t().dims_size() != 1) {
             fail_shape_inference("Attribute 'nodes_splits' must be 1D.");
           }
-          auto input_type = ctx.getInputType(0)->tensor_type().elem_type();
+          // An unknown input type is taken to be the split type, which it must equal anyway.
+          const auto* input_type_proto = ctx.getInputType(0);
+          auto input_type =
+              input_type_proto != nullptr ? input_type_proto->tensor_type().elem_type() : nodes_splits->t().data_type();
           // Check that input type is same as split type
           if (input_type != nodes_splits->t().data_type()) {
             fail_shape_inference(
