@@ -38,30 +38,6 @@ SPDX-FileCopyrightText = "Copyright (c) ONNX Project Contributors"
 SPDX-License-Identifier = "Apache-2.0"
 
 [[annotations]]
-path = "onnx/backend/test/data/pytorch-operator/**/test_data_set_0/**.pb"
-precedence = "aggregate"
-SPDX-FileCopyrightText = "Copyright (c) ONNX Project Contributors"
-SPDX-License-Identifier = "Apache-2.0"
-
-[[annotations]]
-path = "onnx/backend/test/data/pytorch-operator/**/**.onnx"
-precedence = "aggregate"
-SPDX-FileCopyrightText = "Copyright (c) ONNX Project Contributors"
-SPDX-License-Identifier = "Apache-2.0"
-
-[[annotations]]
-path = "onnx/backend/test/data/pytorch-operator/**/**.pb"
-precedence = "aggregate"
-SPDX-FileCopyrightText = "Copyright (c) ONNX Project Contributors"
-SPDX-License-Identifier = "Apache-2.0"
-
-[[annotations]]
-path = "onnx/backend/test/data/pytorch-converted/**/test_data_set_0/**.pb"
-precedence = "aggregate"
-SPDX-FileCopyrightText = "Copyright (c) ONNX Project Contributors"
-SPDX-License-Identifier = "Apache-2.0"
-
-[[annotations]]
 path = "onnx/backend/test/data/light/**.onnx"
 precedence = "aggregate"
 SPDX-FileCopyrightText = "Copyright (c) ONNX Project Contributors"
@@ -75,12 +51,6 @@ SPDX-License-Identifier = "Apache-2.0"
 
 [[annotations]]
 path = "onnx/backend/test/data/real/**/**.json"
-precedence = "aggregate"
-SPDX-FileCopyrightText = "Copyright (c) ONNX Project Contributors"
-SPDX-License-Identifier = "Apache-2.0"
-
-[[annotations]]
-path = "onnx/backend/test/data/pytorch-converted/**/**.onnx"
 precedence = "aggregate"
 SPDX-FileCopyrightText = "Copyright (c) ONNX Project Contributors"
 SPDX-License-Identifier = "Apache-2.0"
