@@ -105,6 +105,8 @@ class SymbolTableImpl : public SymbolTable {
       text = wrapIfCompound(lhs) + "*" + wrapIfCompound(rhs);
     } else if (op == "Div") {
       text = wrapIfCompound(lhs) + "/" + wrapIfCompound(rhs);
+    } else if (op == "FloorDiv") {
+      text = "floor(" + wrapIfCompound(lhs) + "/" + wrapIfCompound(rhs) + ")";
     } else {
       return "";
     }
@@ -176,8 +178,12 @@ class SymbolTableImpl : public SymbolTable {
       }
       return true;
     }
-    if (op == "Div" && right.has_dim_value() && right.dim_value() > 0) {
+    if ((op == "Div" || op == "FloorDiv") && right.has_dim_value() && right.dim_value() > 0) {
       result = {lhs.lower / right.dim_value(), lhs.upper / right.dim_value()};
+      if (op == "FloorDiv") {
+        result.lower = checkedSubtract(result.lower, lhs.lower % right.dim_value() < 0 ? 1 : 0);
+        result.upper = checkedSubtract(result.upper, lhs.upper % right.dim_value() < 0 ? 1 : 0);
+      }
       return true;
     }
     return false;

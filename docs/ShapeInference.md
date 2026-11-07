@@ -80,6 +80,10 @@ operations within the current invocation; arbitrary partial symbolic values
 do not acquire nonnegative bounds.
 
 Supported symbolic arithmetic operations encode results as `dim_param` strings.
+Pooling and convolution extents use floor division; integer `Div` truncates
+toward zero. Their symbolic
+results have distinct identities unless the numerator is proven nonnegative
+or the divisor is one.
 For example, `Concat` on tensors of shapes `(5, 2)` and `(N, 2)` can produce
 `(5 + N, 2)`. ONNX IR treats each `dim_param` string as an opaque, globally
 scoped symbol, not as an expression evaluated at runtime. Shape inference

@@ -12,6 +12,47 @@ from onnx.helper import make_model, make_tensor_value_info
 
 
 class TestSymbolicShape:
+    @pytest.mark.parametrize("version", [1, 10, 11, 12, 18, 22])
+    def test_pooling_floor_does_not_alias_integer_division(self, version: int) -> None:
+        model = make_model(
+            helper.make_graph(
+                [
+                    helper.make_node(
+                        "MaxPool", ["x"], ["pooled"], kernel_shape=[2], strides=[2]
+                    ),
+                    helper.make_node("Shape", ["x"], ["shape"]),
+                    helper.make_node("Sub", ["shape", "two"], ["gap"]),
+                    helper.make_node("Div", ["gap", "two"], ["quotient"]),
+                    helper.make_node("Add", ["quotient", "one"], ["target"]),
+                    helper.make_node("ConstantOfShape", ["target"], ["arithmetic"]),
+                ],
+                "pooling_floor",
+                [make_tensor_value_info("x", TensorProto.FLOAT, [1, 1, "H"])],
+                [
+                    make_tensor_value_info(name, TensorProto.FLOAT, None)
+                    for name in ("pooled", "arithmetic")
+                ],
+                initializer=[
+                    helper.make_tensor("two", TensorProto.INT64, [1], [2]),
+                    helper.make_tensor("one", TensorProto.INT64, [1], [1]),
+                ],
+            ),
+            opset_imports=[helper.make_opsetid("", version)],
+        )
+        # ConstantOfShape and partial arithmetic are available together from 18.
+        if version < 18:
+            del model.graph.node[1:]
+            del model.graph.output[1:]
+        inferred = onnx.shape_inference.infer_shapes(
+            model, strict_mode=True, data_prop=True
+        )
+        pool_dim = inferred.graph.output[0].type.tensor_type.shape.dim[2]
+        assert pool_dim.dim_param.startswith("floor(")
+        if version >= 18:
+            arithmetic_dim = inferred.graph.output[1].type.tensor_type.shape.dim[2]
+            assert arithmetic_dim.dim_param
+            assert pool_dim.dim_param != arithmetic_dim.dim_param
+
     def test_expression_names_reserve_type_attributes(self) -> None:
         model = make_model(
             helper.make_graph(

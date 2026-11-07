@@ -23,6 +23,32 @@ void ScanInferenceFunction(InferenceContext& ctx);
 
 namespace Test {
 
+TEST(ShapeInferenceTest, FloorDivisionHasDistinctSignedExpressionIdentity) {
+  shape_inference::SymbolTableImpl symbols;
+  Dim h;
+  h.set_dim_param("H");
+  GraphProto graph;
+  graph.add_input()->mutable_type()->mutable_tensor_type()->mutable_shape()->add_dim()->CopyFrom(h);
+  symbols.addFromGraph(graph);
+  const auto gap = computeDimension(&symbols, "Sub", h, makeDimension(2));
+  const auto truncated = computeDimension(&symbols, "Div", gap, makeDimension(2));
+  const auto floored = computeDimension(&symbols, "FloorDiv", gap, makeDimension(2));
+  EXPECT_NE(truncated.dim_param(), floored.dim_param());
+  EXPECT_EQ(floored.dim_param(), computeDimension(&symbols, "FloorDiv", gap, makeDimension(2)).dim_param());
+  EXPECT_EQ(
+      computeDimension(&symbols, "Div", h, makeDimension(2)).dim_param(),
+      computeDimension(&symbols, "FloorDiv", h, makeDimension(2)).dim_param());
+  for (int64_t value : {-3, -2, -1, 0, 1, 2, 3}) {
+    const auto floor = computeDimension(&symbols, "FloorDiv", makeDimension(value), makeDimension(2));
+    EXPECT_EQ(floor.dim_value(), value / 2 - (value % 2 < 0 ? 1 : 0));
+  }
+  EXPECT_EQ(computeDimension(&symbols, "Div", makeDimension(-1), makeDimension(2)).dim_value(), 0);
+  EXPECT_EQ(computeDimension(&symbols, "FloorDiv", makeDimension(-1), makeDimension(2)).dim_value(), -1);
+  int64_t lower = 0;
+  ASSERT_TRUE(symbols.getValueLowerBound(floored, lower));
+  EXPECT_EQ(lower, -1);
+}
+
 TEST(ShapeInferenceTest, SymbolicValueBoundsDistinguishDimensionsAndPartialValues) {
   GraphProto graph;
   auto* input = graph.add_input();

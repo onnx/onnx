@@ -2838,12 +2838,12 @@ class TestShapeInference(TestShapeInferenceHelper):
         )
         self._assert_inferred(
             graph,
-            # (H + 2 - 3)/2 + 1
+            # floor((H + 2 - 3)/2) + 1
             [
                 make_tensor_value_info(
                     "z",
                     TensorProto.FLOAT,
-                    (1, 16, "(H + 2 - 3)/2 + 1", "(W + 2 - 3)/2 + 1"),
+                    (1, 16, "floor((H + 2 - 3)/2) + 1", "floor((W + 2 - 3)/2) + 1"),
                 )
             ],
             opset_imports=[make_opsetid(ONNX_DOMAIN, version)],
@@ -6427,13 +6427,13 @@ class TestShapeInference(TestShapeInferenceHelper):
             [],
         )
         self._assert_inferred(
-            # (H + 2 - 3)/2 + 1
+            # floor((H + 2 - 3)/2) + 1
             graph,
             [
                 make_tensor_value_info(
                     "Y",
                     TensorProto.FLOAT,
-                    (1, 3, "(H + 2 - 3)/2 + 1", "(W + 2 - 3)/2 + 1"),
+                    (1, 3, "floor((H + 2 - 3)/2) + 1", "floor((W + 2 - 3)/2) + 1"),
                 )
             ],
             opset_imports=[make_opsetid(ONNX_DOMAIN, version)],

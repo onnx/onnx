@@ -292,7 +292,7 @@ static void convPoolShapeInference_opset19(
     auto ceil_mode = getAttribute(ctx, "ceil_mode", 0);
     if (!input_dim.has_dim_value()) {
       if (ceil_mode != 1) {
-        *newdim = (effective_input_dim - effective_kernel_shape[i]) / strides[i] + 1;
+        *newdim = (effective_input_dim - effective_kernel_shape[i]).apply("FloorDiv", makeDimension(strides[i])) + 1;
       }
       continue;
     }
@@ -2161,7 +2161,7 @@ static void convPoolShapeInference_opset1_to_11(
     auto ceil_mode = getAttribute(ctx, "ceil_mode", 0);
     if (!input_dim.has_dim_value()) {
       if (ceil_mode != 1) {
-        *newdim = (effective_input_dim - effective_kernel_shape[i]) / strides[i] + 1;
+        *newdim = (effective_input_dim - effective_kernel_shape[i]).apply("FloorDiv", makeDimension(strides[i])) + 1;
       }
       continue;
     }

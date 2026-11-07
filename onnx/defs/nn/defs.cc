@@ -223,8 +223,9 @@ ONNX_API void convPoolShapeInference(
       continue;
     }
 
-    auto output_dim =
-        (effective_input_dim - effective_kernel_shape[i] + (ceil_mode ? strides[i] - 1 : 0)) / strides[i] + 1;
+    auto output_dim = (effective_input_dim - effective_kernel_shape[i] + (ceil_mode ? strides[i] - 1 : 0))
+                          .apply("FloorDiv", makeDimension(strides[i])) +
+        1;
 
     if (ceil_mode == 1 && output_dim.has_dim_value() && input_dim.has_dim_value() &&
         checkedMultiply(checkedSubtract(output_dim.dim_value(), 1), strides[i]) >=

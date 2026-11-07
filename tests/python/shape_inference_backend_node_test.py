@@ -134,6 +134,44 @@ _ALL_TESTS = sorted(load_node_model_tests(), key=lambda case: case.name)
 class TestShapeInferenceBackendNode:
     """Compare ONNX shape inference results against backend test expected outputs."""
 
+    @pytest.mark.parametrize("across_outputs", [False, True])
+    @pytest.mark.parametrize("conflict", [False, True])
+    def test_repeated_symbol_comparison_contract(
+        self, monkeypatch: pytest.MonkeyPatch, across_outputs: bool, conflict: bool
+    ) -> None:
+        test_case = next(case for case in _ALL_TESTS if case.name == "test_abs")
+        assert test_case.model is not None
+        expected = (
+            {
+                "first": (onnx.TensorProto.FLOAT, [2]),
+                "second": (onnx.TensorProto.FLOAT, [3 if conflict else 2]),
+            }
+            if across_outputs
+            else {
+                "first": (onnx.TensorProto.FLOAT, [2, 3 if conflict else 2]),
+            }
+        )
+        inferred = onnx.ModelProto()
+        for name, (_, shape) in expected.items():
+            inferred.graph.output.append(
+                onnx.helper.make_tensor_value_info(
+                    name, onnx.TensorProto.FLOAT, ["S"] * len(shape)
+                )
+            )
+        monkeypatch.setattr(
+            onnx.shape_inference, "infer_shapes", lambda *_args, **_kwargs: inferred
+        )
+        monkeypatch.setitem(
+            self._check_shape_inference.__globals__,
+            "_load_expected_output_shapes",
+            lambda _model: expected,
+        )
+        if conflict:
+            with pytest.raises(pytest.fail.Exception, match=r"symbol.*conflicting"):
+                self._check_shape_inference(test_case)
+        else:
+            self._check_shape_inference(test_case)
+
     @pytest.mark.parametrize(
         "shape_kind", ["unknown_rank", "unknown_dim", "wrong_dim", "wrong_rank"]
     )
@@ -207,6 +245,7 @@ class TestShapeInferenceBackendNode:
 
         # Compare each output
         errors: list[str] = []
+        symbol_bindings: dict[str, int] = {}
         for name, (exp_dtype, exp_shape) in expected.items():
             if name not in inferred_outputs:
                 errors.append(f"Output '{name}': missing from inferred model")
@@ -235,8 +274,16 @@ class TestShapeInferenceBackendNode:
                     )
                 else:
                     for i, (e, g) in enumerate(zip(exp_shape, inf_shape, strict=False)):
-                        # Symbolic and unknown dimensions need not be resolved.
-                        if isinstance(g, str) or g is None or e is None:
+                        if isinstance(g, str):
+                            if isinstance(e, int):
+                                previous = symbol_bindings.setdefault(g, e)
+                                if previous != e:
+                                    errors.append(
+                                        f"Output '{name}': symbol '{g}' has conflicting "
+                                        f"bindings {previous} and {e} at dim {i}"
+                                    )
+                            continue
+                        if g is None or e is None:
                             continue
                         if e != g:
                             errors.append(
