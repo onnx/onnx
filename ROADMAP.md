@@ -128,6 +128,23 @@ an unprioritized list of items for the next year.
 
 ---
 
+### Models / Tutorials SIG
+
+**Lead(s):** Javier Martinez
+**Last updated:** _2026-11-08_
+
+#### Q3 2026
+
+#### Q4 2026
+
+#### Q1 2027
+- Relaunch of onnx.ai
+
+#### Q2 2027
+
+
+---
+
 
 ### [SIG/WG Name]
 
