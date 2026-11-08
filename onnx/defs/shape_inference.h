@@ -53,7 +53,7 @@ class SymbolTable {
   virtual std::string createExpression(const std::string& /*op*/, const Dim& /*left*/, const Dim& /*right*/) {
     return "";
   }
-  // Returns a proven lower bound on an integer value, not on its spelling.
+  // On success, writes a proven lower bound on an integer value, not on its spelling.
   virtual bool getValueLowerBound(const Dim& /*value*/, int64_t& /*lower_bound*/) const {
     return false;
   }

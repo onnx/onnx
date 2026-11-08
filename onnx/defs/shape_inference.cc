@@ -95,7 +95,7 @@ Dim computeDimension(SymbolTable* symbols, const std::string& op, const Dim& lef
           checkedSubtract(checkedDivide(left.dim_value(), divisor), left.dim_value() % divisor < 0 ? 1 : 0));
       return result;
     }
-    int64_t lower_bound = 0;
+    int64_t lower_bound;
     if (right.dim_value() == 1 ||
         (symbols != nullptr && symbols->getValueLowerBound(left, lower_bound) && lower_bound >= 0)) {
       return computeDimension(symbols, "Div", left, right);
@@ -120,7 +120,7 @@ Dim computeDimension(SymbolTable* symbols, const std::string& op, const Dim& lef
 }
 
 bool isReshapeSymbolicDimSafe(const InferenceContext& ctx, const Dim& dim, int index, bool allowzero) {
-  int64_t lower_bound = 0;
+  int64_t lower_bound;
   const auto* symbols = ctx.getSymbolTable();
   if (symbols != nullptr && symbols->getValueLowerBound(dim, lower_bound) &&
       (allowzero ? lower_bound >= 0 : lower_bound >= 1)) {
