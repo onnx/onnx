@@ -23,6 +23,31 @@ void ScanInferenceFunction(InferenceContext& ctx);
 
 namespace Test {
 
+TEST(ShapeInferenceTest, OptionalBoundQueryPreservesOutputParameterOverrides) {
+  class LegacySymbolTable : public SymbolTable {
+   public:
+    void addFromGraph(const GraphProto&) override {}
+    std::string createNew(const std::string&) override {
+      return "";
+    }
+    bool getValueLowerBound(const Dim& value, int64_t& lower_bound) const override {
+      if (!value.has_dim_value()) {
+        return false;
+      }
+      lower_bound = value.dim_value();
+      return true;
+    }
+  };
+  LegacySymbolTable symbols;
+  const SymbolTable& api = symbols;
+  for (int64_t value : {-1, 0, 1}) {
+    const auto bound = api.getValueLowerBound(makeDimension(value));
+    ASSERT_TRUE(bound.has_value());
+    EXPECT_EQ(*bound, value);
+  }
+  EXPECT_FALSE(api.getValueLowerBound(Dim{}).has_value());
+}
+
 TEST(ShapeInferenceTest, FloorDivisionHasDistinctSignedExpressionIdentity) {
   shape_inference::SymbolTableImpl symbols;
   Dim h;
@@ -62,22 +87,29 @@ TEST(ShapeInferenceTest, SymbolicValueBoundsDistinguishDimensionsAndPartialValue
   int64_t lower = 0;
   ASSERT_TRUE(symbols.getValueLowerBound(n, lower));
   EXPECT_EQ(lower, 0);
+  ASSERT_TRUE(symbols.getValueLowerBound(n).has_value());
+  EXPECT_EQ(*symbols.getValueLowerBound(n), 0);
 
   shape_inference::DataValueMap partial;
   partial["raw"].add_dim()->set_dim_param("signed_value");
   symbols.addFromData(partial);
   EXPECT_FALSE(symbols.getValueLowerBound(partial.at("raw").dim(0), lower));
+  EXPECT_FALSE(symbols.getValueLowerBound(partial.at("raw").dim(0)).has_value());
   const auto signed_sum = computeDimension(&symbols, "Add", partial.at("raw").dim(0), makeDimension(1));
   EXPECT_FALSE(symbols.getValueLowerBound(signed_sum, lower));
 
   const auto negative = computeDimension(&symbols, "Sub", n, makeDimension(1));
   ASSERT_TRUE(symbols.getValueLowerBound(negative, lower));
   EXPECT_EQ(lower, -1);
+  ASSERT_TRUE(symbols.getValueLowerBound(negative).has_value());
+  EXPECT_EQ(*symbols.getValueLowerBound(negative), -1);
 
   const auto half = computeDimension(&symbols, "Div", n, makeDimension(2));
   const auto positive = computeDimension(&symbols, "Add", half, makeDimension(1));
   ASSERT_TRUE(symbols.getValueLowerBound(positive, lower));
   EXPECT_EQ(lower, 1);
+  ASSERT_TRUE(symbols.getValueLowerBound(positive).has_value());
+  EXPECT_EQ(*symbols.getValueLowerBound(positive), 1);
 
   const auto product = computeDimension(&symbols, "Mul", n, makeDimension(2));
   const auto potentially_wrapped = computeDimension(&symbols, "Add", product, makeDimension(1));

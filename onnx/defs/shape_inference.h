@@ -8,6 +8,7 @@
 #include <cctype>
 #include <functional>
 #include <limits>
+#include <optional>
 #include <string>
 #include <utility>
 #include <vector>
@@ -56,6 +57,13 @@ class SymbolTable {
   // On success, writes a proven lower bound on an integer value, not on its spelling.
   virtual bool getValueLowerBound(const Dim& /*value*/, int64_t& /*lower_bound*/) const {
     return false;
+  }
+  virtual std::optional<int64_t> getValueLowerBound(const Dim& value) const {
+    int64_t lower_bound = 0;
+    if (getValueLowerBound(value, lower_bound)) {
+      return lower_bound;
+    }
+    return std::nullopt;
   }
   virtual ~SymbolTable() = default;
 };

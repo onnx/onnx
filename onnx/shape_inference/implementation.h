@@ -121,12 +121,19 @@ class SymbolTableImpl : public SymbolTable {
   }
 
   bool getValueLowerBound(const Dim& value, int64_t& lower_bound) const override {
-    ValueBounds bounds{};
-    if (!GetValueBounds(value, bounds)) {
+    const auto bound = getValueLowerBound(value);
+    if (!bound.has_value()) {
       return false;
     }
-    lower_bound = bounds.lower;
+    lower_bound = *bound;
     return true;
+  }
+  std::optional<int64_t> getValueLowerBound(const Dim& value) const override {
+    ValueBounds bounds{};
+    if (!GetValueBounds(value, bounds)) {
+      return std::nullopt;
+    }
+    return bounds.lower;
   }
 
  private:
