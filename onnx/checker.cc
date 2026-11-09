@@ -12,6 +12,7 @@
 #include <limits>
 #include <optional>
 #include <string>
+#include <string_view>
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
@@ -104,7 +105,7 @@ static int min_ir_version_for_data_type(int32_t data_type) {
   }
 }
 
-static void check_data_type_ir_version(int32_t data_type, const std::string& name, const CheckerContext& ctx) {
+static void check_data_type_ir_version(int32_t data_type, std::string_view name, const CheckerContext& ctx) {
   const int min_ir_version = min_ir_version_for_data_type(data_type);
   // A non-positive IR version means the context does not carry one (e.g. a
   // default-constructed CheckerContext), so there is nothing to check against.
@@ -122,7 +123,7 @@ static void check_data_type_ir_version(int32_t data_type, const std::string& nam
   }
 }
 
-static void check_type_ir_version(const TypeProto& type, const std::string& name, const CheckerContext& ctx) {
+static void check_type_ir_version(const TypeProto& type, std::string_view name, const CheckerContext& ctx) {
   switch (type.value_case()) {
     case TypeProto::kTensorType:
       check_data_type_ir_version(type.tensor_type().elem_type(), name, ctx);
@@ -217,7 +218,7 @@ static int64_t expected_raw_data_bytes(const TensorProto& tensor, int64_t nelem)
 
 // Parses the value of an external_data "offset" or "length" entry, which must be a
 // non-negative decimal integer.
-static int64_t parse_external_data_integer(const StringStringEntryProto& entry, const std::string& tensor_name) {
+static int64_t parse_external_data_integer(const StringStringEntryProto& entry, std::string_view tensor_name) {
   const std::string& value = entry.value();
   const char* end = value.data() + value.size();
   int64_t result = -1;
