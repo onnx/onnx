@@ -93,3 +93,40 @@ class LpNormalization(Base):
         lp_norm_default = np.sqrt(np.sum(x**2, axis=-1, keepdims=True))
         y = x / lp_norm_default
         expect(node, inputs=[x], outputs=[y], name="test_lpnormalization_default")
+
+    @staticmethod
+    def export_l2normalization_float16_large_values() -> None:
+        node = onnx.helper.make_node(
+            "LpNormalization", inputs=["x"], outputs=["y"], axis=1, p=2
+        )
+        # Squaring values above 256 overflows float16 (max 65504), so the
+        # expected output is computed in float32.
+        x = np.array([[300.0, 400.0, 500.0]], dtype=np.float16)
+        x32 = x.astype(np.float32)
+        l2_norm = np.sqrt(np.sum(x32**2, axis=1, keepdims=True))
+        y = (x32 / l2_norm).astype(np.float16)
+        expect(
+            node,
+            inputs=[x],
+            outputs=[y],
+            name="test_l2normalization_float16_large_values",
+        )
+
+    @staticmethod
+    def export_float32_extremes() -> None:
+        # Squaring float32 extremes overflows float32 (2e21 ** 2 = 4e42),
+        # while the max-scaled algorithm normalizes them exactly. Expected
+        # outputs are computed in float64.
+        x = np.array([[2e20, 2e21]]).astype(np.float32)
+        norm = np.linalg.norm(x.astype(np.float64), ord=2, axis=-1, keepdims=True)
+        y = (x.astype(np.float64) / norm).astype(np.float32)
+        node = onnx.helper.make_node(
+            "LpNormalization", inputs=["x"], outputs=["y"], axis=-1, p=2
+        )
+        expect(
+            node,
+            inputs=[x],
+            outputs=[y],
+            rtol=1e-6,
+            name="test_l2normalization_float32_extremes",
+        )
