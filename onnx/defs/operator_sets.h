@@ -1521,12 +1521,14 @@ class OpSet_Onnx_ver28 {
 // Forward declarations for ai.onnx version 29
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 29, InitPRNG);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 29, SplitPRNG);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 29, Gemm);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 29, GroupedMatMul);
 
 // Iterate over schema from ai.onnx version 29
 class OpSet_Onnx_ver29 {
  public:
   static void ForEachSchema(const std::function<void(OpSchema&&)>& fn) {
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 29, Gemm)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 29, InitPRNG)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 29, SplitPRNG)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 29, GroupedMatMul)>());

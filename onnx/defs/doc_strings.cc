@@ -2362,6 +2362,17 @@ const char kDoc_MatMulInteger_ver10[] = R"DOC(
 Matrix product that behaves like [numpy.matmul](https://numpy.org/doc/stable/reference/generated/numpy.matmul.html).
 The production MUST never overflow. The accumulation may overflow if and only if in 32 bits.
 )DOC";
+const char kDoc_Gemm_ver29[] = R"DOC(
+Generalized matrix multiplication: `Y = alpha * A' * B' + beta * C`.
+A has rank at least 1 and B has rank 2. A' is A with its last two axes swapped
+when transA is non-zero; for rank-1 A, transA has no effect.
+B' is B transposed when transB is non-zero.
+If A' has shape (..., K) and B' has shape (K, N), Y has shape (..., N):
+each vector along A's contraction axis is multiplied by the same matrix B'.
+The leading dimensions of A' are preserved, including when there are none.
+C must be unidirectionally broadcastable to Y. If C is omitted, it is treated
+as scalar zero. When beta is zero, C does not contribute to the result.
+)DOC";
 const char kDoc_Gemm_ver13[] = R"DOC(General Matrix multiplication:
 https://en.wikipedia.org/wiki/Basic_Linear_Algebra_Subprograms#Level_3
 
@@ -6792,6 +6803,7 @@ const char kDoc_DFT_ver20[] = "";
 const char kDoc_SoftmaxCrossEntropyLoss_ver13[] = "";
 const char kDoc_MatMulInteger_ver10[] = "";
 const char kDoc_Gemm_ver13[] = "";
+const char kDoc_Gemm_ver29[] = "";
 const char kDoc_Clip_ver13[] = "";
 const char kDoc_GroupedMatMul_ver29[] = "";
 const char kDoc_SwiGLU_ver28[] = "";
