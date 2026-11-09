@@ -62,18 +62,20 @@ struct open_how {
 
 namespace ONNX_NAMESPACE::checker {
 
-#define enforce_has_field(proto, field)                                              \
-  do {                                                                               \
-    if (!(proto).has_##field()) {                                                    \
-      fail_check("Field '", #field, "' of '", #proto, "' is required but missing."); \
-    }                                                                                \
+#define enforce_has_field(proto, field)                                                                          \
+  do {                                                                                                           \
+    if (!(proto).has_##field()) {                                                                                \
+      fail_check_with_code(                                                                                      \
+          error_code::kRequiredFieldMissing, "Field '", #field, "' of '", #proto, "' is required but missing."); \
+    }                                                                                                            \
   } while (0)
 
-#define enforce_non_empty_field(proto, field)                                            \
-  do {                                                                                   \
-    if ((proto).field().empty()) {                                                       \
-      fail_check("Field '", #field, "' of '", #proto, "' is required to be non-empty."); \
-    }                                                                                    \
+#define enforce_non_empty_field(proto, field)                                                                      \
+  do {                                                                                                             \
+    if ((proto).field().empty()) {                                                                                 \
+      fail_check_with_code(                                                                                        \
+          error_code::kRequiredFieldEmpty, "Field '", #field, "' of '", #proto, "' is required to be non-empty."); \
+    }                                                                                                              \
   } while (0)
 
 // Returns the IR version that introduced the given tensor data type, or 0 for
@@ -110,7 +112,8 @@ static void check_data_type_ir_version(int32_t data_type, std::string_view name,
   // A non-positive IR version means the context does not carry one (e.g. a
   // default-constructed CheckerContext), so there is nothing to check against.
   if (ctx.get_ir_version() > 0 && ctx.get_ir_version() < min_ir_version) {
-    fail_check(
+    fail_check_with_code(
+        error_code::kDataTypeRequiresNewerIrVersion,
         "Data type ",
         Utils::DataTypeUtils::ToDataTypeString(data_type),
         " used by '",
@@ -239,7 +242,8 @@ static int64_t parse_external_data_integer(const StringStringEntryProto& entry, 
   int64_t result = -1;
   const auto [ptr, ec] = std::from_chars(value.data(), end, result);
   if (ec != std::errc() || ptr != end || result < 0) {
-    fail_check(
+    fail_check_with_code(
+        error_code::kExternalDataEntryInvalid,
         "External data ",
         entry.key(),
         " of TensorProto (tensor name: ",
@@ -279,14 +283,22 @@ static void check_external_data_size(
   }
   const auto start = static_cast<std::uintmax_t>(offset.value_or(0));
   if (start > file_size) {
-    fail_check(
-        "External data offset (", start, ") exceeds file size (", file_size, ") for tensor ", tensor.name(), ".");
+    fail_check_with_code(
+        error_code::kExternalDataOutOfRange,
+        "External data offset (",
+        start,
+        ") exceeds file size (",
+        file_size,
+        ") for tensor ",
+        tensor.name(),
+        ".");
   }
   std::uintmax_t available = file_size - start;
   if (length.has_value()) {
     const auto requested = static_cast<std::uintmax_t>(*length);
     if (requested > available) {
-      fail_check(
+      fail_check_with_code(
+          error_code::kExternalDataOutOfRange,
           "External data length (",
           requested,
           ") exceeds available data (",
@@ -301,7 +313,8 @@ static void check_external_data_size(
   }
   const int64_t expected_bytes = expected_raw_data_bytes(tensor, nelem);
   if (expected_bytes > 0 && available < static_cast<std::uintmax_t>(expected_bytes)) {
-    fail_check(
+    fail_check_with_code(
+        error_code::kExternalDataOutOfRange,
         "External data of TensorProto (tensor name: ",
         tensor.name(),
         ") is ",
@@ -371,7 +384,8 @@ void check_tensor(const TensorProto& tensor, const CheckerContext& ctx) {
   bool stored_externally = tensor.has_data_location() && tensor.data_location() == TensorProto::EXTERNAL;
   if (stored_externally) {
     if (num_value_fields != 0) {
-      fail_check(
+      fail_check_with_code(
+          error_code::kExternalDataEntryInvalid,
           "Data of TensorProto ( tensor name: ",
           tensor.name(),
           ") is stored externally and should not have data field.",
@@ -398,7 +412,11 @@ void check_tensor(const TensorProto& tensor, const CheckerContext& ctx) {
       }
     }
     if (!has_location) {
-      fail_check("TensorProto ( tensor name: ", tensor.name(), ") is stored externally but doesn't have a location.");
+      fail_check_with_code(
+          error_code::kExternalDataEntryInvalid,
+          "TensorProto ( tensor name: ",
+          tensor.name(),
+          ") is stored externally but doesn't have a location.");
     }
     std::optional<int64_t> offset;
     if (offset_entry != nullptr) {
@@ -977,7 +995,7 @@ void check_node(const NodeProto& node, const CheckerContext& ctx, const LexicalS
       dit = opset_imports.find(AI_ONNX_DOMAIN);
     }
     if (dit == opset_imports.end()) {
-      fail_check("No opset import for domain '" + node.domain() + "'");
+      fail_check_with_code(error_code::kOpsetImportMissing, "No opset import for domain '" + node.domain() + "'");
     }
   }
   auto domain_version = dit->second;
@@ -1003,16 +1021,26 @@ void check_node(const NodeProto& node, const CheckerContext& ctx, const LexicalS
     if (node.domain() == ONNX_DOMAIN || node.domain() == AI_ONNX_ML_DOMAIN || node.domain() == "ai.onnx" ||
         node.domain() == AI_ONNX_TRAINING_DOMAIN || ctx.check_custom_domain()) {
       // fail the checker if op is in built-in domains or if it has no schema when `check_custom_domain` is true
-      fail_check(
+      fail_check_with_code(
+          error_code::kOperatorNotRegistered,
           "No Op registered for " + node.op_type() + " with domain_version of " +
-          ONNX_NAMESPACE::to_string(domain_version));
+              ONNX_NAMESPACE::to_string(domain_version));
     }
   } else if (schema->Deprecated()) {
-    fail_check(
+    fail_check_with_code(
+        error_code::kOperatorDeprecated,
         "Op registered for " + node.op_type() + " is deprecated in domain_version of " +
-        ONNX_NAMESPACE::to_string(domain_version));
+            ONNX_NAMESPACE::to_string(domain_version));
   } else {
-    schema->Verify(node);
+    ONNX_TRY {
+      schema->Verify(node);
+    }
+    ONNX_CATCH(ValidationError & ex) {
+      ONNX_HANDLE_EXCEPTION([&]() {
+        ex.set_code_if_empty(error_code::kNodeSchemaMismatch);
+        throw;
+      });
+    }
   }
 }
 
@@ -1040,7 +1068,8 @@ void check_graph(const GraphProto& graph, const CheckerContext& ctx, const Lexic
     // TODO(ONNX): If shadowing isn't allowed, this should maybe use
     // this_or_ancestor_graph_has
     if (lex_ctx.this_graph_has(value_info.name())) {
-      fail_check(
+      fail_check_with_code(
+          error_code::kNotSsa,
           "Graph must be in single static assignment (SSA) form, however '",
           value_info.name(),
           "' has been used as graph input names multiple times.");
@@ -1054,7 +1083,7 @@ void check_graph(const GraphProto& graph, const CheckerContext& ctx, const Lexic
     enforce_has_field(init, name);
     const auto& name = init.name();
     if (name.empty()) {
-      fail_check("Tensor initializers must have a non-empty name");
+      fail_check_with_code(error_code::kRequiredFieldEmpty, "Tensor initializers must have a non-empty name");
     }
 
     if (!initializer_name_checker.emplace(name).second) {
@@ -1080,7 +1109,7 @@ void check_graph(const GraphProto& graph, const CheckerContext& ctx, const Lexic
     enforce_has_field(values, name);
     const auto& name = values.name();
     if (name.empty()) {
-      fail_check("Sparse tensor initializers must have a non-empty name");
+      fail_check_with_code(error_code::kRequiredFieldEmpty, "Sparse tensor initializers must have a non-empty name");
     }
     if (!initializer_name_checker.insert(name).second) {
       fail_check(name + " sparse initializer name is not unique across initializers and sparse_initializers");
@@ -1097,7 +1126,8 @@ void check_graph(const GraphProto& graph, const CheckerContext& ctx, const Lexic
         continue;
       }
       if (!lex_ctx.this_or_ancestor_graph_has(input)) {
-        fail_check(
+        fail_check_with_code(
+            error_code::kNotTopologicallySorted,
             "Nodes in a graph must be topologically sorted, however input '",
             input,
             "' of node: \n",
@@ -1138,7 +1168,8 @@ void check_graph(const GraphProto& graph, const CheckerContext& ctx, const Lexic
       }
 
       if (lex_ctx.this_or_ancestor_graph_has(output)) {
-        fail_check(
+        fail_check_with_code(
+            error_code::kNotSsa,
             "Graph must be in single static assignment (SSA) form, however '",
             output,
             "' has been used as output names multiple times.");
@@ -1148,7 +1179,11 @@ void check_graph(const GraphProto& graph, const CheckerContext& ctx, const Lexic
   }
   for (const auto& value_info : graph.output()) {
     if (!lex_ctx.this_graph_has(value_info.name())) {
-      fail_check("Graph output '", value_info.name(), "' is not an output of any node in graph.");
+      fail_check_with_code(
+          error_code::kGraphOutputNotProduced,
+          "Graph output '",
+          value_info.name(),
+          "' is not an output of any node in graph.");
     }
   }
 
@@ -1419,8 +1454,11 @@ void check_function(const FunctionProto& function, const CheckerContext& ctx, co
     // TODO(ONNX): If shadowing isn't allowed, this should maybe use
     // this_or_ancestor_graph_has
     if (lex_ctx.this_graph_has(input)) {
-      fail_check(
-          "Graph must be in single static assignment (SSA) form, however '", input, "' has been used multiple times.");
+      fail_check_with_code(
+          error_code::kNotSsa,
+          "Graph must be in single static assignment (SSA) form, however '",
+          input,
+          "' has been used multiple times.");
     }
     lex_ctx.add(input);
   }
@@ -1454,7 +1492,8 @@ void check_function(const FunctionProto& function, const CheckerContext& ctx, co
         continue;
       }
       if (!lex_ctx.this_graph_has(input)) {
-        fail_check(
+        fail_check_with_code(
+            error_code::kNotTopologicallySorted,
             "Nodes in a function must be topologically sorted, however input '",
             input,
             "' of node: \n",
@@ -1482,7 +1521,8 @@ void check_function(const FunctionProto& function, const CheckerContext& ctx, co
         continue;
       }
       if (lex_ctx.this_or_ancestor_graph_has(output)) {
-        fail_check(
+        fail_check_with_code(
+            error_code::kNotSsa,
             "Function must be in single static assignment (SSA) form, however '",
             output,
             "' has been used as output names multiple times.");
@@ -1495,17 +1535,24 @@ void check_function(const FunctionProto& function, const CheckerContext& ctx, co
 
 static void check_model(const ModelProto& model, CheckerContext& ctx) {
   if (!model.ir_version()) {
-    fail_check("The model does not have an ir_version set properly.");
+    fail_check_with_code(error_code::kIrVersionMissing, "The model does not have an ir_version set properly.");
   }
   if (model.ir_version() > IR_VERSION) {
-    fail_check("Your model ir_version ", model.ir_version(), " is higher than the checker's (", IR_VERSION, ").");
+    fail_check_with_code(
+        error_code::kIrVersionUnsupported,
+        "Your model ir_version ",
+        model.ir_version(),
+        " is higher than the checker's (",
+        IR_VERSION,
+        ").");
   }
   if (model.metadata_props_size() > 1) {
     std::unordered_set<std::string> keys;
     for (const StringStringEntryProto& entry : model.metadata_props()) {
       auto i = keys.insert(entry.key());
       if (!i.second) {
-        fail_check("Your model has duplicate keys in metadata_props.");
+        fail_check_with_code(
+            error_code::kMetadataPropsDuplicateKey, "Your model has duplicate keys in metadata_props.");
       }
     }
   }
@@ -1516,7 +1563,8 @@ static void check_model(const ModelProto& model, CheckerContext& ctx) {
   }
   if (model.ir_version() >= 3) {
     if (opset_imports.empty()) {
-      fail_check("model with IR version >= 3 must specify opset_import for ONNX");
+      fail_check_with_code(
+          error_code::kOpsetImportMissing, "model with IR version >= 3 must specify opset_import for ONNX");
     }
   } else {
     if (opset_imports.empty()) {
@@ -1615,7 +1663,11 @@ static std::filesystem::path verify_path_containment(
     base_str += std::filesystem::path::preferred_separator;
   }
   if (canonical_data.native().find(base_str) != 0 && canonical_data != canonical_base) { // NOSONAR
-    fail_check("Tensor ", tensor_name, " external data resolves outside model directory.");
+    fail_check_with_code(
+        error_code::kExternalDataLocationInvalid,
+        "Tensor ",
+        tensor_name,
+        " external data resolves outside model directory.");
   }
   return canonical_data;
 }
@@ -1627,10 +1679,15 @@ std::filesystem::path resolve_external_data_location(
   auto base_dir_path = utf8_to_path(base_dir);
   auto file_path = utf8_to_path(location);
   if (file_path.empty()) {
-    fail_check("Location of external TensorProto ( tensor name: ", tensor_name, ") should not be empty.");
+    fail_check_with_code(
+        error_code::kExternalDataLocationInvalid,
+        "Location of external TensorProto ( tensor name: ",
+        tensor_name,
+        ") should not be empty.");
   }
   if (file_path.is_absolute()) {
-    fail_check(
+    fail_check_with_code(
+        error_code::kExternalDataLocationInvalid,
         "Location of external TensorProto ( tensor name: ",
         tensor_name,
         ") should be a relative path, but it is an absolute path: ",
@@ -1638,7 +1695,8 @@ std::filesystem::path resolve_external_data_location(
   }
   auto relative_path = file_path.lexically_normal().make_preferred();
   if (relative_path.native().find(std::filesystem::path("..").native()) != std::filesystem::path::string_type::npos) {
-    fail_check(
+    fail_check_with_code(
+        error_code::kExternalDataLocationInvalid,
         "Data of TensorProto ( tensor name: ",
         tensor_name,
         ") should be file inside '",
@@ -1651,7 +1709,8 @@ std::filesystem::path resolve_external_data_location(
   auto data_path_str = path_to_utf8(data_path);
   // Do not allow symlinks or directories.
   if (data_path.empty() || std::filesystem::is_symlink(data_path)) {
-    fail_check(
+    fail_check_with_code(
+        error_code::kExternalDataLocationInvalid,
         "Data of TensorProto ( tensor name: ",
         tensor_name,
         ") should be stored in ",
@@ -1663,7 +1722,10 @@ std::filesystem::path resolve_external_data_location(
     verify_path_containment(data_path, base_dir, tensor_name);
   }
   if (data_path_str[0] != '#' && !std::filesystem::is_regular_file(data_path)) {
-    fail_check(
+    std::error_code ec;
+    const bool file_exists = std::filesystem::exists(data_path, ec);
+    fail_check_with_code(
+        file_exists ? error_code::kExternalDataLocationInvalid : error_code::kExternalDataFileMissing,
         "Data of TensorProto ( tensor name: ",
         tensor_name,
         ") should be stored in ",
@@ -1672,7 +1734,8 @@ std::filesystem::path resolve_external_data_location(
   }
   // Do not allow hardlinks, as they can be used to read arbitrary files.
   if (data_path_str[0] != '#' && std::filesystem::hard_link_count(data_path) > 1) {
-    fail_check(
+    fail_check_with_code(
+        error_code::kExternalDataLocationInvalid,
         "Data of TensorProto ( tensor name: ",
         tensor_name,
         ") should be stored in ",

@@ -610,9 +610,34 @@ NB_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
   nb::class_<checker::LexicalScopeContext> lexical_scope_context(checker, "LexicalScopeContext");
   lexical_scope_context.def(nb::init<>());
 
-  nb::exception<checker::ValidationError>( // NOLINT(bugprone-unused-raii,bugprone-throw-keyword-missing)
-      checker,
-      "ValidationError");
+  nb::exception<checker::ValidationError> validation_error(checker, "ValidationError");
+  // Errors raised elsewhere, e.g. from Python, have no code.
+  validation_error.attr("code") = nb::none();
+  // Tried before the translator nb::exception registers, which only sets the message.
+  nb::register_exception_translator(
+      [](const std::exception_ptr& p, void* payload) {
+        try {
+          std::rethrow_exception(p);
+        } catch (const checker::ValidationError& e) {
+          auto* type = static_cast<PyObject*>(payload);
+          PyObject* error = PyObject_CallFunction(type, "s", e.what());
+          if (error == nullptr) {
+            return; // The failed call has set a Python error.
+          }
+          if (!e.code().empty()) {
+            PyObject* code = PyUnicode_FromStringAndSize(e.code().data(), static_cast<Py_ssize_t>(e.code().size()));
+            const bool set = code != nullptr && PyObject_SetAttrString(error, "code", code) == 0;
+            Py_XDECREF(code);
+            if (!set) {
+              Py_DECREF(error);
+              return; // A Python error is set.
+            }
+          }
+          PyErr_SetObject(type, error);
+          Py_DECREF(error);
+        }
+      },
+      validation_error.ptr());
 
   checker.def("check_value_info", MakeChecker(checker::check_value_info));
   checker.def("check_tensor", MakeChecker(checker::check_tensor));

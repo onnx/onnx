@@ -141,6 +141,12 @@ def check_model(
             opset compatibility.
         check_custom_domain: If True, the function will check all domains. Otherwise
             only check built-in domains.
+
+    Raises:
+        ValidationError: If the model is invalid. Its ``code`` attribute names the
+            rule that failed, such as ``"not-topologically-sorted"``, or is None for
+            rules that have no code yet. Codes are stable across releases; messages
+            are not. See ``docs/CheckerErrorCodes.md``.
     """
     # If model is a path instead of ModelProto
     if isinstance(model, (str, os.PathLike)):

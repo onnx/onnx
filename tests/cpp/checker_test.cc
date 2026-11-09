@@ -38,6 +38,42 @@ TEST(CHECKER, ValidDataLocationTest) {
 #endif
 }
 
+TEST(CHECKER, ValidationErrorCodeTest) {
+#ifndef ONNX_NO_EXCEPTIONS
+  namespace error_code = ONNX_NAMESPACE::checker::error_code;
+  auto code_of = [](const ModelProto& model) -> std::string {
+    try {
+      ONNX_NAMESPACE::checker::check_model(model);
+    } catch (const ONNX_NAMESPACE::checker::ValidationError& e) {
+      return e.code();
+    }
+    return "<no error>";
+  };
+
+  ModelProto model;
+  EXPECT_EQ(code_of(model), error_code::kIrVersionMissing);
+
+  model.set_ir_version(10);
+  EXPECT_EQ(code_of(model), error_code::kOpsetImportMissing);
+
+  model.add_opset_import()->set_version(21);
+  EXPECT_EQ(code_of(model), error_code::kRequiredFieldEmpty);
+
+  try {
+    ONNX_NAMESPACE::checker::resolve_external_data_location("localfolder", "..", "tensor_name");
+    ADD_FAILURE() << "expected a ValidationError";
+  } catch (const ONNX_NAMESPACE::checker::ValidationError& e) {
+    EXPECT_EQ(e.code(), error_code::kExternalDataLocationInvalid);
+  }
+
+  ONNX_NAMESPACE::checker::ValidationError error("message");
+  EXPECT_TRUE(error.code().empty());
+  error.set_code_if_empty(error_code::kNotSsa);
+  error.set_code_if_empty(error_code::kNotTopologicallySorted);
+  EXPECT_EQ(error.code(), error_code::kNotSsa);
+#endif
+}
+
 TEST(CHECKER, ValidDataLocationSymLinkTest) {
 #if !defined(ONNX_NO_EXCEPTIONS) && !defined(_WIN32)
   // Use a temp directory as the base_dir (simulating the model directory).
