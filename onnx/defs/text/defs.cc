@@ -59,7 +59,9 @@ ONNX_OPERATOR_SET_SCHEMA(
         .SetDoc(kDoc_RegexFullMatch_ver20)
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           updateOutputElemType(ctx, 0, TensorProto::BOOL);
-          propagateShapeFromInputToOutput(ctx, 0, 0);
+          if (hasInputShape(ctx, 0)) {
+            propagateShapeFromInputToOutput(ctx, 0, 0);
+          }
         }));
 
 ONNX_OPERATOR_SET_SCHEMA(

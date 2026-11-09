@@ -41,7 +41,11 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
             AttributeProto::STRING,
             std::string("_Unused"))
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-          auto input_elem_type = ctx.getInputType(0)->tensor_type().elem_type();
+          const auto* input_type = ctx.getInputType(0);
+          if (input_type == nullptr) {
+            return;
+          }
+          auto input_elem_type = input_type->tensor_type().elem_type();
           auto output_elem_type = ctx.getOutputType(0)->mutable_tensor_type();
           if (TensorProto::STRING == input_elem_type) {
             output_elem_type->set_elem_type(TensorProto::INT64);
@@ -530,16 +534,18 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
             fail_shape_inference("Only one of keys_*'s can be set in label encoder.");
           }
 
-          // Check if the specified keys_* matches input type.
-          auto input_elem_type = ctx.getInputType(0)->tensor_type().elem_type();
-          if (keys_strings_result && input_elem_type != TensorProto::STRING) {
-            fail_shape_inference("Input type is not string tensor but key_strings is set");
-          }
-          if (keys_int64s_result && input_elem_type != TensorProto::INT64) {
-            fail_shape_inference("Input type is not int64 tensor but keys_int64s is set");
-          }
-          if (keys_floats_result && input_elem_type != TensorProto::FLOAT) {
-            fail_shape_inference("Input type is not float tensor but keys_floats is set");
+          // Check if the specified keys_* matches input type, when the input type is known.
+          if (const auto* input_type = ctx.getInputType(0); input_type != nullptr) {
+            auto input_elem_type = input_type->tensor_type().elem_type();
+            if (keys_strings_result && input_elem_type != TensorProto::STRING) {
+              fail_shape_inference("Input type is not string tensor but key_strings is set");
+            }
+            if (keys_int64s_result && input_elem_type != TensorProto::INT64) {
+              fail_shape_inference("Input type is not int64 tensor but keys_int64s is set");
+            }
+            if (keys_floats_result && input_elem_type != TensorProto::FLOAT) {
+              fail_shape_inference("Input type is not float tensor but keys_floats is set");
+            }
           }
 
           // Load all values_* attributes.
@@ -567,7 +573,9 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
             output_elem_type->set_elem_type(TensorProto::FLOAT);
 
           // Input and output shapes are the same.
-          propagateShapeFromInputToOutput(ctx, 0, 0);
+          if (hasInputShape(ctx, 0)) {
+            propagateShapeFromInputToOutput(ctx, 0, 0);
+          }
         }));
 } // namespace ONNX_NAMESPACE
 #endif
