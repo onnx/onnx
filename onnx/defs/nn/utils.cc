@@ -942,8 +942,9 @@ OpSchema LinearAttentionSchema(bool expanded_value_heads) {
           AttributeProto::INT)
       .Attr(
           "chunk_size",
-          "Chunk size for the chunk-parallel WY decomposition during prefill (T>1). "
-          "Tuning hint; does not affect output correctness.",
+          expanded_value_heads ? "Implementation hint for processing sequence chunks. Does not change results."
+                               : "Chunk size for the chunk-parallel WY decomposition during prefill (T>1). "
+                                 "Tuning hint; does not affect output correctness.",
           AttributeProto::INT,
           static_cast<int64_t>(64))
       .Input(
@@ -959,8 +960,10 @@ OpSchema LinearAttentionSchema(bool expanded_value_heads) {
       .Input(
           1,
           "key",
-          "Key vectors with 3D packed shape (B, T, H_kv * d_k). "
-          "Should be L2-normalized for delta/gated_delta modes.",
+          expanded_value_heads ? "Key vectors with 3D packed shape (B, T, H_kv * d_k). "
+                                 "The operator does not normalize these vectors."
+                               : "Key vectors with 3D packed shape (B, T, H_kv * d_k). "
+                                 "Should be L2-normalized for delta/gated_delta modes.",
           "T",
           OpSchema::Single,
           true,
@@ -1006,7 +1009,7 @@ OpSchema LinearAttentionSchema(bool expanded_value_heads) {
       .Input(
           5,
           "beta",
-          expanded_value_heads ? "Update rate (sigmoid output), with shape (B, T, H_v) or (B, T, 1). "
+          expanded_value_heads ? "Update rate with shape (B, T, H_v) or (B, T, 1). "
                                  "Required for 'delta' and 'gated_delta' modes."
                                : "Update rate (sigmoid output). 3D packed shape: "
                                  "(B, T, H_kv) or (B, T, 1). Required for 'delta' and 'gated_delta' modes.",
@@ -1043,8 +1046,10 @@ OpSchema LinearAttentionSchema(bool expanded_value_heads) {
       .TypeConstraint(
           "S",
           {"tensor(float16)", "tensor(bfloat16)", "tensor(float)"},
-          "Constrain state types to float16, bfloat16, or float32 tensors. "
-          "Should be float32 or the same as T for numerical stability on long sequences.")
+          expanded_value_heads ? "State tensors have type float16, bfloat16, or float32. "
+                                 "When past_state is omitted, state outputs have the activation type T."
+                               : "Constrain state types to float16, bfloat16, or float32 tensors. "
+                                 "Should be float32 or the same as T for numerical stability on long sequences.")
       .SetContextDependentFunctionBodyBuilder(BuildLinearAttentionFunction)
       .TypeAndShapeInferenceFunction(
           expanded_value_heads ? InferLinearAttentionShape_opset29 : InferLinearAttentionShape_opset27);

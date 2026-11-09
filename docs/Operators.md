@@ -21078,7 +21078,7 @@ Other versions of this operator: <a href="Changelog.md#LinearAttention-27">27</a
 
 <dl>
 <dt><tt>chunk_size</tt> : int (default is 64)</dt>
-<dd>Chunk size for the chunk-parallel WY decomposition during prefill (T>1). Tuning hint; does not affect output correctness.</dd>
+<dd>Implementation hint for processing sequence chunks. Does not change results.</dd>
 <dt><tt>kv_num_heads</tt> : int (required)</dt>
 <dd>Number of compact key heads. Always required.</dd>
 <dt><tt>q_num_heads</tt> : int (required)</dt>
@@ -21097,7 +21097,7 @@ Other versions of this operator: <a href="Changelog.md#LinearAttention-27">27</a
 <dt><tt>query</tt> (differentiable) : T</dt>
 <dd>Query vectors with 3D packed shape (B, T, H_q * d_k). Heads are packed into the last dimension.</dd>
 <dt><tt>key</tt> (differentiable) : T</dt>
-<dd>Key vectors with 3D packed shape (B, T, H_kv * d_k). Should be L2-normalized for delta/gated_delta modes.</dd>
+<dd>Key vectors with 3D packed shape (B, T, H_kv * d_k). The operator does not normalize these vectors.</dd>
 <dt><tt>value</tt> (differentiable) : T</dt>
 <dd>Value vectors with 3D packed shape (B, T, H_v * d_v), where H_v is kv_num_heads unless a positive v_num_heads is specified.</dd>
 <dt><tt>past_state</tt> (optional, non-differentiable) : S</dt>
@@ -21105,7 +21105,7 @@ Other versions of this operator: <a href="Changelog.md#LinearAttention-27">27</a
 <dt><tt>decay</tt> (optional, differentiable) : T</dt>
 <dd>Exponential decay gate in log-space, with shape (B, T, H_v * d_k) or (B, T, H_v). Required for 'gated' and 'gated_delta' modes.</dd>
 <dt><tt>beta</tt> (optional, differentiable) : T</dt>
-<dd>Update rate (sigmoid output), with shape (B, T, H_v) or (B, T, 1). Required for 'delta' and 'gated_delta' modes.</dd>
+<dd>Update rate with shape (B, T, H_v) or (B, T, 1). Required for 'delta' and 'gated_delta' modes.</dd>
 </dl>
 
 #### Outputs (2 - 3)
@@ -21125,7 +21125,7 @@ Other versions of this operator: <a href="Changelog.md#LinearAttention-27">27</a
 <dt><tt>T</tt> : tensor(float16), tensor(bfloat16), tensor(float)</dt>
 <dd>Constrain activation input and output types to float16, bfloat16, or float32 tensors.</dd>
 <dt><tt>S</tt> : tensor(float16), tensor(bfloat16), tensor(float)</dt>
-<dd>Constrain state types to float16, bfloat16, or float32 tensors. Should be float32 or the same as T for numerical stability on long sequences.</dd>
+<dd>State tensors have type float16, bfloat16, or float32. When past_state is omitted, state outputs have the activation type T.</dd>
 </dl>
 
 
