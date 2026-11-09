@@ -9,6 +9,7 @@ import pytest
 import onnx
 from onnx import TensorProto, helper
 from onnx.reference import ReferenceEvaluator
+from onnx.reference.op_run import RuntimeTypeError
 
 
 @pytest.mark.parametrize("opset", [10, 29])
@@ -126,3 +127,20 @@ def test_string_normalizer_default_attributes(matrix):
     np.testing.assert_array_equal(
         ReferenceEvaluator(model).run(None, {"x": x})[0], expected
     )
+
+
+@pytest.mark.parametrize("shape", [(), (2, 2), (1, 1, 1)])
+def test_string_normalizer_rejects_unsupported_shape(shape):
+    node = helper.make_node("StringNormalizer", ["x"], ["y"], locale="C")
+    evaluator = ReferenceEvaluator(node, opsets={"": 10})
+    with pytest.raises(RuntimeTypeError, match=r"x must have shape \[C\] or \[1, C\]"):
+        evaluator.run(None, {"x": np.full(shape, "Keep", dtype=object)})
+
+
+def test_string_normalizer_rejects_unknown_case_action():
+    node = helper.make_node(
+        "StringNormalizer", ["x"], ["y"], case_change_action="INVALID", locale="C"
+    )
+    evaluator = ReferenceEvaluator(node, opsets={"": 10})
+    with pytest.raises(RuntimeError, match="Unknown option for case_change_action"):
+        evaluator.run(None, {"x": np.array(["Keep"], dtype=object)})
