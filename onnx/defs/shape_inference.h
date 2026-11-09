@@ -49,7 +49,8 @@ class SymbolTable {
     return createNew("_d");
   }
   virtual std::string createNew(const std::string& symbol_prefix) = 0;
-  // Interns an operation and its typed operands; returns empty when unsupported.
+  // Interns an operation and its ordered operands, distinguishing constants from symbols.
+  // Returns an empty string when the expression cannot be represented.
   // Existing dimension names are atoms, not expressions parsed from their spelling.
   virtual std::string createExpression(const std::string& /*op*/, const Dim& /*left*/, const Dim& /*right*/) {
     return "";
@@ -58,6 +59,7 @@ class SymbolTable {
   virtual bool getValueLowerBound(const Dim& /*value*/, int64_t& /*lower_bound*/) const {
     return false;
   }
+  // Returns no value when no lower bound is proven; delegates to existing overrides.
   virtual std::optional<int64_t> getValueLowerBound(const Dim& value) const {
     int64_t lower_bound = 0;
     if (getValueLowerBound(value, lower_bound)) {
