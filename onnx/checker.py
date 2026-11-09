@@ -122,6 +122,7 @@ def check_model(
     full_check: bool = False,
     skip_opset_compatibility_check: bool = False,
     check_custom_domain: bool = False,
+    check_external_data_files: bool = True,
 ) -> None:
     """Check the consistency of a model.
 
@@ -141,6 +142,15 @@ def check_model(
             opset compatibility.
         check_custom_domain: If True, the function will check all domains. Otherwise
             only check built-in domains.
+        check_external_data_files: If False, the function does not access external
+            data files. External data references are still validated from the
+            model alone: each externally stored tensor has a location that is a
+            relative path inside the model directory, offset and length are
+            non-negative integers, and an explicit length is large enough for the
+            tensor's shape and type. Whether the files exist, are regular files
+            and hold that data is not checked. Use this to check a model whose
+            external data is not available, such as an in-memory model loaded
+            with ``load_external_data=False``.
     """
     # If model is a path instead of ModelProto
     if isinstance(model, (str, os.PathLike)):
@@ -149,6 +159,7 @@ def check_model(
             full_check,
             skip_opset_compatibility_check,
             check_custom_domain,
+            check_external_data_files,
         )
     else:
         protobuf_string = (
@@ -165,6 +176,7 @@ def check_model(
             full_check,
             skip_opset_compatibility_check,
             check_custom_domain,
+            check_external_data_files,
         )
 
 

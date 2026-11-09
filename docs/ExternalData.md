@@ -67,6 +67,19 @@ onnx.checker.check_model("path/to/the/model.onnx")
 # onnx.checker.check_model(loaded_onnx_model) will fail if given >2GB model
 ```
 
+### Checking a model without its external data
+
+By default, the checker verifies that each external data file exists, is a regular file inside the model directory, and holds enough data for its tensors. With `check_external_data_files=False`, it does not access the files and checks only what the model itself says about them: every externally stored tensor has a `location` that is a relative path inside the model directory, `offset` and `length` are non-negative integers, and an explicit `length` is large enough for the tensor's shape and type. This checks a model whose external data has not been downloaded, or a model loaded without its external data:
+
+```python
+import onnx
+
+onnx.checker.check_model("path/to/the/model.onnx", check_external_data_files=False)
+
+model = onnx.load("path/to/the/model.onnx", load_external_data=False)
+onnx.checker.check_model(model, check_external_data_files=False)
+```
+
 ## TensorProto: data_location and external_data fields
 
 There are two fields related to the external data in TensorProto message type.

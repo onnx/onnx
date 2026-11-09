@@ -251,6 +251,56 @@ static int64_t parse_external_data_integer(const StringStringEntryProto& entry, 
   return result;
 }
 
+// Checks what can be known about an external data location without the file
+// system: it must be a non-empty relative path that stays inside the model
+// directory. Returns the location in normalized form.
+static std::filesystem::path check_external_data_location_syntax(
+    const std::string& base_dir,
+    const std::string& location,
+    const std::string& tensor_name) {
+  auto file_path = utf8_to_path(location);
+  if (file_path.empty()) {
+    fail_check("Location of external TensorProto ( tensor name: ", tensor_name, ") should not be empty.");
+  }
+  // has_root_path() also covers locations that are not absolute on Windows but
+  // are not relative to the model directory either: "/data", "C:data".
+  if (file_path.has_root_path()) {
+    fail_check(
+        "Location of external TensorProto ( tensor name: ",
+        tensor_name,
+        ") should be a relative path, but it is an absolute path: ",
+        location);
+  }
+  auto relative_path = file_path.lexically_normal().make_preferred();
+  if (relative_path.native().find(std::filesystem::path("..").native()) != std::filesystem::path::string_type::npos) {
+    fail_check(
+        "Data of TensorProto ( tensor name: ",
+        tensor_name,
+        ") should be file inside '",
+        base_dir,
+        "', but '",
+        location,
+        "' points outside the directory.");
+  }
+  return relative_path;
+}
+
+// Checks that the external data available for a tensor is large enough for its
+// declared shape and type.
+static void check_external_data_available(const TensorProto& tensor, int64_t nelem, std::uintmax_t available) {
+  const int64_t expected_bytes = expected_raw_data_bytes(tensor, nelem);
+  if (expected_bytes > 0 && available < static_cast<std::uintmax_t>(expected_bytes)) {
+    fail_check(
+        "External data of TensorProto (tensor name: ",
+        tensor.name(),
+        ") is ",
+        available,
+        " bytes, which is too small for the declared shape and type (",
+        expected_bytes,
+        " bytes required).");
+  }
+}
+
 // Checks offset and length against the size of the external data file, as the
 // Python loader does before reading it, and that the data they describe is large
 // enough for the tensor's declared shape and type.
@@ -299,17 +349,7 @@ static void check_external_data_size(
     }
     available = requested;
   }
-  const int64_t expected_bytes = expected_raw_data_bytes(tensor, nelem);
-  if (expected_bytes > 0 && available < static_cast<std::uintmax_t>(expected_bytes)) {
-    fail_check(
-        "External data of TensorProto (tensor name: ",
-        tensor.name(),
-        ") is ",
-        available,
-        " bytes, which is too small for the declared shape and type (",
-        expected_bytes,
-        " bytes required).");
-  }
+  check_external_data_available(tensor, nelem, available);
 }
 
 void check_tensor(const TensorProto& tensor, const CheckerContext& ctx) {
@@ -390,7 +430,11 @@ void check_tensor(const TensorProto& tensor, const CheckerContext& ctx) {
       }
       if (entry.key() == "location") {
         has_location = true;
-        data_path = resolve_external_data_location(ctx.get_model_dir(), entry.value(), tensor.name());
+        if (ctx.check_external_data_files()) {
+          data_path = resolve_external_data_location(ctx.get_model_dir(), entry.value(), tensor.name());
+        } else {
+          data_path = check_external_data_location_syntax(ctx.get_model_dir(), entry.value(), tensor.name());
+        }
       } else if (entry.key() == "offset") {
         offset_entry = &entry;
       } else if (entry.key() == "length") {
@@ -408,7 +452,16 @@ void check_tensor(const TensorProto& tensor, const CheckerContext& ctx) {
     if (length_entry != nullptr) {
       length = parse_external_data_integer(*length_entry, tensor.name());
     }
-    check_external_data_size(tensor, nelem, data_path, offset, length);
+    if (ctx.check_external_data_files()) {
+      check_external_data_size(tensor, nelem, data_path, offset, length);
+    } else if (length.has_value()) {
+      // Without the file, an explicit length is the only size there is to check.
+      // Locations starting with '#' refer to in-memory data, as in check_external_data_size.
+      const auto location = path_to_utf8(data_path);
+      if (location.empty() || location[0] != '#') {
+        check_external_data_available(tensor, nelem, static_cast<std::uintmax_t>(*length));
+      }
+    }
     return;
   }
   if (nelem == 0 && num_value_fields != 0) {
@@ -1539,7 +1592,8 @@ void check_model(
     const std::string& model_path,
     bool full_check,
     bool skip_opset_compatibility_check,
-    bool check_custom_domain) {
+    bool check_custom_domain,
+    bool check_external_data_files) {
   ModelProto model;
   LoadProtoFromPath(model_path, model);
 
@@ -1552,6 +1606,7 @@ void check_model(
   ctx.set_model_dir(model_dir);
   ctx.set_skip_opset_compatibility_check(skip_opset_compatibility_check);
   ctx.set_check_custom_domain(check_custom_domain);
+  ctx.set_check_external_data_files(check_external_data_files);
   check_model(model, ctx);
 
   if (full_check) {
@@ -1564,10 +1619,12 @@ void check_model(
     const ModelProto& model,
     bool full_check,
     bool skip_opset_compatibility_check,
-    bool check_custom_domain) {
+    bool check_custom_domain,
+    bool check_external_data_files) {
   CheckerContext ctx;
   ctx.set_skip_opset_compatibility_check(skip_opset_compatibility_check);
   ctx.set_check_custom_domain(check_custom_domain);
+  ctx.set_check_external_data_files(check_external_data_files);
   check_model(model, ctx);
   if (full_check) {
     ShapeInferenceOptions options{true, 1, false};
@@ -1625,28 +1682,7 @@ std::filesystem::path resolve_external_data_location(
     const std::string& location,
     const std::string& tensor_name) {
   auto base_dir_path = utf8_to_path(base_dir);
-  auto file_path = utf8_to_path(location);
-  if (file_path.empty()) {
-    fail_check("Location of external TensorProto ( tensor name: ", tensor_name, ") should not be empty.");
-  }
-  if (file_path.is_absolute()) {
-    fail_check(
-        "Location of external TensorProto ( tensor name: ",
-        tensor_name,
-        ") should be a relative path, but it is an absolute path: ",
-        location);
-  }
-  auto relative_path = file_path.lexically_normal().make_preferred();
-  if (relative_path.native().find(std::filesystem::path("..").native()) != std::filesystem::path::string_type::npos) {
-    fail_check(
-        "Data of TensorProto ( tensor name: ",
-        tensor_name,
-        ") should be file inside '",
-        base_dir,
-        "', but '",
-        location,
-        "' points outside the directory.");
-  }
+  auto relative_path = check_external_data_location_syntax(base_dir, location, tensor_name);
   auto data_path = base_dir_path / relative_path;
   auto data_path_str = path_to_utf8(data_path);
   // Do not allow symlinks or directories.

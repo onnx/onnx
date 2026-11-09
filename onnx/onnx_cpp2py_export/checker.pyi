@@ -36,12 +36,14 @@ def check_model(
     full_check: bool,
     skip_opset_compatibility_check: bool,
     check_custom_domain: bool,
+    check_external_data_files: bool,
 ) -> None: ...
 def check_model_path(
     path: str,
     full_check: bool,
     skip_opset_compatibility_check: bool,
     check_custom_domain: bool,
+    check_external_data_files: bool,
 ) -> None: ...
 def _open_external_data(
     base_dir: str, location: str, tensor_name: str, read_only: bool
