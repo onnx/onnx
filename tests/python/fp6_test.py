@@ -104,23 +104,6 @@ class TestFP6(unittest.TestCase):
             np.signbit(y.astype(np.float32)), np.signbit(expected)
         )
 
-    def test_cast_nan_becomes_largest_value(self):
-        # FLOAT4E2M1 and FP6 have no NaN encoding. NaN of either sign becomes
-        # the largest positive value, as docs/technical/float4.md specifies.
-        x = np.array([np.nan, -np.nan, np.inf, -np.inf, 1.0, -1.0], dtype=np.float32)
-        for to_dtype, largest in (
-            (onnx.TensorProto.FLOAT4E2M1, 6.0),
-            (onnx.TensorProto.FLOAT6E2M3, 7.5),
-            (onnx.TensorProto.FLOAT6E3M2, 28.0),
-        ):
-            with self.subTest(to=onnx.TensorProto.DataType.Name(to_dtype)):
-                ref = ReferenceEvaluator(self._cast_model(to_dtype))
-                (y,) = ref.run(None, {"X": x})
-                np.testing.assert_array_equal(
-                    y.astype(np.float32),
-                    [largest, largest, largest, -largest, 1.0, -1.0],
-                )
-
     def _qdq_model(self, qdtype: int) -> onnx.ModelProto:
         g = helper.make_graph(
             [

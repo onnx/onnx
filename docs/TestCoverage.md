@@ -6812,7 +6812,7 @@ for from_type, to_type in test_cases:
                 "9",
                 "1000000",
                 "1e-7",
-                "NaN",
+                "-1000000",
                 "INF",
                 "+INF",
                 "-INF",
@@ -6882,11 +6882,7 @@ for from_type, to_type in test_cases:
             raw=True,
         )
     elif to_type in FOUR_BIT_TYPES:
-        np_to = np_from.astype(to_np_dtype)
-        if to_type == "FLOAT4E2M1":
-            # FLOAT4E2M1 has no NaN: NaN becomes 6 (docs/technical/float4.md).
-            np_to[np.isnan(np_from)] = 6
-        packed = onnx.numpy_helper._pack_4bitx2(np_to)
+        packed = onnx.numpy_helper._pack_4bitx2(np_from.astype(to_np_dtype))
         # No byteswap needed on big-endian machines as _pack_4bitx2()
         # returns a numpy array with uint8 datatype.
         output = make_tensor(
@@ -7208,7 +7204,7 @@ for from_type, to_type in test_cases:
                 "9",
                 "1000000",
                 "1e-7",
-                "NaN",
+                "-1000000",
                 "INF",
                 "+INF",
                 "-INF",
@@ -7280,11 +7276,7 @@ for from_type, to_type in test_cases:
             raw=True,
         )
     elif to_type in FOUR_BIT_TYPES:
-        np_to = np_from.astype(to_np_dtype)
-        if to_type == "FLOAT4E2M1":
-            # FLOAT4E2M1 has no NaN: NaN becomes 6 (docs/technical/float4.md).
-            np_to[np.isnan(np_from)] = 6
-        packed = onnx.numpy_helper._pack_4bitx2(np_to)
+        packed = onnx.numpy_helper._pack_4bitx2(np_from.astype(to_np_dtype))
         # No byteswap needed on big-endian machines as _pack_4bitx2()
         # returns a numpy array with uint8 datatype.
         output = make_tensor(

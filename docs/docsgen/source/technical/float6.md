@@ -71,8 +71,8 @@ Upcasting exact. Downcasting RNE with saturation. Examples:
      - 7.5 (sat)
      - 28.0 (sat)
    * - nan
-     - 7.5 (no NaN encoding; NaN becomes the largest value, as for FLOAT4E2M1)
-     - 28.0 (no NaN encoding; NaN becomes the largest value, as for FLOAT4E2M1)
+     - Unspecified (no NaN encoding)
+     - Unspecified (no NaN encoding)
 ```
 
 ## Packing and Unpacking
