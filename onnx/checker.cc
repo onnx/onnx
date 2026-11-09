@@ -377,6 +377,11 @@ void check_tensor(const TensorProto& tensor, const CheckerContext& ctx) {
           ") is stored externally and should not have data field.",
           value_field);
     }
+    // External data holds the bytes raw_data would hold, and raw_data cannot
+    // represent strings.
+    if (tensor.data_type() == TensorProto::STRING) {
+      fail_check("STRING data (tensor name: ", tensor.name(), ") should not be stored externally");
+    }
 
     // Every location is validated, but, as in the Python loader, the last value
     // of each key is the one that describes the data.
