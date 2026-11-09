@@ -16291,15 +16291,14 @@ expect(
   Given `data` tensor of rank `r` >= 1, `indices` tensor of rank `q` >= 1, and `batch_dims` integer `b`, this operator gathers
   slices of `data` into an output tensor of rank `q + r - indices_shape[-1] - 1 - b`.
 
-  `indices` is an q-dimensional integer tensor, best thought of as a `(q-1)`-dimensional tensor of index-tuples into `data`,
-  where each element defines a slice of `data`
+  Let `k = indices_shape[-1]`. Each length-`k` tuple in `indices` selects an element or slice of `data`.
 
-  `batch_dims` (denoted as `b`) is an integer indicating the number of batch dimensions, i.e the leading `b` number of dimensions of
-  `data` tensor and `indices` are representing the batches, and the gather starts from the `b+1` dimension.
+  The leading `b` dimensions of `data` and `indices` are batch dimensions. Each tuple indexes
+  the next `k` dimensions of `data`, starting at axis `b` (axes are zero-based).
 
-  Some salient points about the inputs' rank and shape:
+  The inputs must satisfy the following constraints:
 
-  1) r >= 1 and q >= 1 are to be honored. There is no dependency condition to be met between ranks `r` and `q`
+  1) `r >= 1` and `q >= 1`.
 
   2) The first `b` dimensions of the shape of `indices` tensor and `data` tensor must be equal.
 
@@ -16311,23 +16310,12 @@ expect(
      `-data_shape[b+i] <= indices[...,i] < data_shape[b+i]`.
      It is an error if any of the index values are out of bounds.
 
-  The output is computed as follows:
-
-  The output tensor is obtained by mapping each index-tuple in the `indices` tensor to the corresponding slice of the input `data`.
-
-  1) If `indices_shape[-1] > r-b` => error condition
-
-  2) If `indices_shape[-1] == r-b`, since the rank of `indices` is `q`, `indices` can be thought of as `N` `(q-b-1)`-dimensional tensors
-     containing 1-D tensors of dimension `r-b`, where `N` is an integer equals to the product of 1 and all the elements in the batch dimensions
-     of the indices_shape. Let us think of each such `r-b` ranked tensor as `indices_slice`. Each *scalar value* corresponding to `data[0:b-1,indices_slice]`
-     is filled into the corresponding location of the `(q-b-1)`-dimensional tensor to form the `output` tensor (Example 1 below)
-
-  3) If `indices_shape[-1] < r-b`, since the rank of `indices` is `q`, `indices` can be thought of as `N` `(q-b-1)`-dimensional tensor
-     containing 1-D tensors of dimension `< r-b`. Let us think of each such tensors as `indices_slice`. Each *tensor slice* corresponding
-     to `data[0:b-1, indices_slice , :]` is filled into the corresponding location of the `(q-b-1)`-dimensional tensor
-     to form the `output` tensor (Examples 2, 3, 4 and 5 below)
-
-  This operator is the inverse of `ScatterND`.
+  The output shape is `indices_shape[:-1] + data_shape[b+k:]`, where `+` denotes shape concatenation.
+  For each coordinate tuple `p` in `indices_shape[:-1]`, the selected value or slice is
+  `output[p] = data[p[:b] + tuple(indices[p])]`, using tuple concatenation for the data coordinate.
+  Unspecified trailing data axes select the entire slice. When `k = r-b`, each selected value is a scalar.
+  Negative indices count backwards from the end of the corresponding data dimension.
+  Within the same batch, repeated index tuples select the same value or slice at multiple output positions.
 
   **Example 1**
 
@@ -16386,7 +16374,7 @@ Other versions of this operator: <a href="Changelog.md#GatherND-11">11</a>, <a h
 
 <dl>
 <dt><tt>batch_dims</tt> : int (default is 0)</dt>
-<dd>The number of batch dimensions. The gather of indexing starts from dimension of data[batch_dims:]</dd>
+<dd>The number of leading batch dimensions shared by data and indices. Index tuples address data axes starting at axis batch_dims.</dd>
 </dl>
 
 #### Inputs
@@ -37436,8 +37424,9 @@ expect(
 
   `reduction` allows specification of an optional reduction operation, which is applied to all values in `updates`
   tensor into `output` at the specified `indices`.
-  In cases where `reduction` is set to "none", indices should not have duplicate entries: that is, if idx1 != idx2,
-  then indices[idx1] != indices[idx2]. This ensures that the output value does not depend on the iteration order.
+  When `reduction` is "none", no two index tuples may select the same output element or slice,
+  including through equivalent positive and negative indices. This ensures that the output value does not
+  depend on the iteration order.
   When `reduction` is set to some reduction function `f`, `output` is calculated as follows:
 
   ```
@@ -37448,8 +37437,6 @@ expect(
   ```
 
   where the `f` is `+`, `*`, `max` or `min` as specified.
-
-  This operator is the inverse of GatherND.
 
   (Opset 18 change): Adds max/min to the set of allowed reduction ops.
 

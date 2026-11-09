@@ -64,7 +64,8 @@ OpSchema GatherNDSchema(bool allow_int32_indices) {
           .SetDoc(kDoc_GatherND_ver13)
           .Attr(
               "batch_dims",
-              "The number of batch dimensions. The gather of indexing starts from dimension of data[batch_dims:]",
+              "The number of leading batch dimensions shared by data and indices. "
+              "Index tuples address data axes starting at axis batch_dims.",
               AttributeProto::INT,
               static_cast<int64_t>(0))
           .Input(0, "data", "Tensor of rank r >= 1.", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
