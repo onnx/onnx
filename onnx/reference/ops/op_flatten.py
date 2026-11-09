@@ -12,5 +12,7 @@ class Flatten(OpRunUnary):
     def _run(self, x, axis=None):
         i = axis or self.axis
         shape = x.shape
-        new_shape = (1, -1) if i == 0 else (np.prod(shape[:i]).astype(int), -1)
+        # Compute both dimensions explicitly: numpy cannot infer -1 when
+        # the input has no elements (e.g. an empty batch).
+        new_shape = (int(np.prod(shape[:i])), int(np.prod(shape[i:])))
         return (x.reshape(new_shape),)

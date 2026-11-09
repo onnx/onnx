@@ -5450,6 +5450,32 @@ class TestReferenceEvaluator:
         assert got.shape == (2, 2, 0, 4)
         assert got.dtype == data.dtype
 
+    @pytest.mark.parametrize(
+        ("shape", "axis", "expected_shape"),
+        [
+            ((0, 3, 4), 0, (1, 0)),
+            ((0, 3, 4), 1, (0, 12)),
+            ((0, 3, 4), 2, (0, 4)),
+            ((0, 3, 4), 3, (0, 1)),
+            ((0, 3, 4), -1, (0, 4)),
+            ((2, 0, 4), 1, (2, 0)),
+            ((2, 0, 4), 2, (0, 4)),
+            ((2, 3, 0), -1, (6, 0)),
+        ],
+    )
+    def test_flatten_empty_input(self, shape, axis, expected_shape):
+        X = make_tensor_value_info("X", TensorProto.FLOAT, None)
+        Y = make_tensor_value_info("Y", TensorProto.FLOAT, None)
+        node = make_node("Flatten", ["X"], ["Y"], axis=axis)
+        model = make_model(make_graph([node], "g", [X], [Y]))
+        ref = ReferenceEvaluator(model)
+        x = np.empty(shape, dtype=np.float32)
+
+        got = ref.run(None, {"X": x})[0]
+
+        assert got.shape == expected_shape
+        assert got.dtype == x.dtype
+
     def test_gather_non_contiguous_indices(self):
         data_info = make_tensor_value_info("X", TensorProto.FLOAT, None)
         indices_info = make_tensor_value_info("I", TensorProto.INT64, None)
