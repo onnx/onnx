@@ -56,7 +56,7 @@ ONNX_API void convPoolShapeInference(
     return;
   }
 
-  auto input_shape = ctx.getInputType(input1Idx)->tensor_type().shape();
+  auto input_shape = ctx.getInputTypeOrFail(input1Idx).tensor_type().shape();
   if (input_shape.dim_size() < 3) {
     fail_shape_inference("Input tensor must have at least 3 dimensions");
   }
@@ -89,7 +89,7 @@ ONNX_API void convPoolShapeInference(
   } else if (require_kernel_shape) {
     fail_shape_inference("Attribute kernel_shape must be specified");
   } else {
-    auto second_input_shape = ctx.getInputType(input2Idx)->tensor_type().shape();
+    auto second_input_shape = ctx.getInputTypeOrFail(input2Idx).tensor_type().shape();
     for (int i = 2; i < second_input_shape.dim_size(); ++i) {
       if (!second_input_shape.dim(i).has_dim_value()) {
         return;
@@ -404,7 +404,7 @@ static void maxUnpoolShapeInference(InferenceContext& ctx) {
   if (!hasInputShape(ctx, 0)) {
     return; // If first input does not have shape, we cannot infer much.
   }
-  auto input_shape = ctx.getInputType(0)->tensor_type().shape();
+  auto input_shape = ctx.getInputTypeOrFail(0).tensor_type().shape();
   if (input_shape.dim_size() < 2) {
     fail_shape_inference("Input tensor X must have at least 2 dimensions.");
   }
@@ -459,7 +459,7 @@ static void maxUnpoolShapeInference(InferenceContext& ctx) {
   if (!hasInputShape(ctx, 1)) {
     return; // If indices input does not have shape, we cannot infer output shape.
   }
-  auto indices_shape = ctx.getInputType(1)->tensor_type().shape();
+  auto indices_shape = ctx.getInputTypeOrFail(1).tensor_type().shape();
   if (indices_shape.dim_size() < 2) {
     fail_shape_inference("Indices tensor I must have at least 2 dimensions.");
   }
@@ -1122,7 +1122,7 @@ ONNX_API void convTransposeShapeInference(InferenceContext& ctx) {
     }
   };
 
-  auto input_shape = ctx.getInputType(0)->tensor_type().shape();
+  auto input_shape = ctx.getInputTypeOrFail(0).tensor_type().shape();
   if (input_shape.dim_size() < 3) {
     fail_shape_inference(
         "Input tensor must have at least 3 dimensions (N x C x D1...Dn). Got: ", input_shape.dim_size());
@@ -1130,7 +1130,7 @@ ONNX_API void convTransposeShapeInference(InferenceContext& ctx) {
   validate_input_channels_for_group(input_shape, group);
 
   // Weight tensor (input 1) must also have at least 3 dimensions (C x M/group x k1...kn).
-  auto weight_shape = ctx.getInputType(1)->tensor_type().shape();
+  auto weight_shape = ctx.getInputTypeOrFail(1).tensor_type().shape();
   if (weight_shape.dim_size() < 3) {
     fail_shape_inference(
         "Weight tensor must have at least 3 dimensions (C x M/group x k1...kn). Got: ", weight_shape.dim_size());
@@ -1507,7 +1507,7 @@ ONNX_API void globalPoolTypeShapeInference(InferenceContext& ctx) {
     return;
   }
 
-  auto input_shape = ctx.getInputType(0)->tensor_type().shape();
+  auto input_shape = ctx.getInputTypeOrFail(0).tensor_type().shape();
   if (input_shape.dim_size() < 2) {
     return;
   }
@@ -2102,7 +2102,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             auto max_last_axis = *greatest_hit + 1;
 
             TensorShapeProto output_shape;
-            auto& input_shape = ctx.getInputType(0)->tensor_type().shape();
+            auto& input_shape = ctx.getInputTypeOrFail(0).tensor_type().shape();
             auto dim_size = input_shape.dim_size();
             if (dim_size == 1) {
               output_shape.add_dim()->set_dim_value(max_last_axis);
@@ -2213,7 +2213,7 @@ static void col2imShapeInference(InferenceContext& ctx) {
     unifyDim(n_input_dims, static_cast<int64_t>(strides.size()));
   }
 
-  auto input_shape = ctx.getInputType(0)->tensor_type().shape();
+  auto input_shape = ctx.getInputTypeOrFail(0).tensor_type().shape();
   if (input_shape.dim_size() != 3) {
     fail_shape_inference("input must have rank 3.");
   }
@@ -2251,7 +2251,7 @@ static void col2imShapeInference(InferenceContext& ctx) {
 
   // Dimensions N and C are always present
   Dim N, C;
-  if (ctx.getInputType(0)->tensor_type().shape().dim(0).has_dim_value()) {
+  if (ctx.getInputTypeOrFail(0).tensor_type().shape().dim(0).has_dim_value()) {
     N = input_shape.dim(0); // Otherwise, N is unknown.
   }
   *final_image_shape->add_dim() = N;
@@ -2735,7 +2735,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           if (!hasNInputShapes(ctx, 1)) {
             return;
           }
-          auto& input_shape = ctx.getInputType(0)->tensor_type().shape();
+          auto& input_shape = ctx.getInputTypeOrFail(0).tensor_type().shape();
           int64_t input_ndim = input_shape.dim_size();
           int64_t axis = -1;
           auto axis_proto = ctx.getAttribute("axis");
@@ -2873,7 +2873,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             return;
           }
 
-          auto input_shape = ctx.getInputType(0)->tensor_type().shape();
+          auto input_shape = ctx.getInputTypeOrFail(0).tensor_type().shape();
           if ((input_shape.dim_size() < 3) || (input_shape.dim_size() > 4)) {
             fail_shape_inference("Input tensor must have at least 3 and at most 4 dimensions");
           }
@@ -4359,7 +4359,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           // provide past_state with the desired state element type.
           // (The spec recommends S == float32 or S == T for numerical stability.)
           propagateElemTypeFromInputToOutput(ctx, 0, 0);
-          if (has_past_state && ctx.getInputType(3) != nullptr && ctx.getInputType(3)->has_tensor_type()) {
+          if (has_past_state && ctx.getInputType(3) != nullptr && ctx.getInputTypeOrFail(3).has_tensor_type()) {
             propagateElemTypeFromInputToOutput(ctx, 3, 1);
           } else {
             // No past_state is available to anchor S, so present_state defaults to T.

@@ -177,8 +177,8 @@ void MatMulShapeInference(ONNX_NAMESPACE::InferenceContext& ctx, int input1Idx, 
     return;
   }
 
-  const auto shape0 = ctx.getInputType(input1Idx)->tensor_type().shape();
-  const auto shape1 = ctx.getInputType(input2Idx)->tensor_type().shape();
+  const auto shape0 = ctx.getInputTypeOrFail(input1Idx).tensor_type().shape();
+  const auto shape1 = ctx.getInputTypeOrFail(input2Idx).tensor_type().shape();
 
   if (shape0.dim_size() == 0 || shape1.dim_size() == 0) {
     fail_shape_inference("Input tensors of wrong rank (0).");
@@ -296,7 +296,7 @@ static void einsumShapeInference(ONNX_NAMESPACE::InferenceContext& ctx, std::str
     if (num_inputs <= num_operands) {
       fail_shape_inference("Number of input tensors does not match the operands in the equation.");
     }
-    const auto& shape = ctx.getInputType(num_operands)->tensor_type().shape();
+    const auto& shape = ctx.getInputTypeOrFail(num_operands).tensor_type().shape();
     size_t rank = shape.dim_size();
     size_t ellipsis_dims = 0;
 
