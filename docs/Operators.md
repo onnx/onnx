@@ -20017,7 +20017,7 @@ expect(node, inputs=[x], outputs=[y], name="test_isnan")
 
 ### <a name="LRN"></a><a name="lrn">**LRN**</a>
 
-  Local Response Normalization proposed in the [AlexNet paper](https://papers.nips.cc/paper/4824-imagenet-classification-with-deep-convolutional-neural-networks.pdf).
+  Local Response Normalization proposed in the [AlexNet paper](https://courses.csail.mit.edu/6.803/pdf/2012%20hinton.pdf).
   It normalizes over local input regions.
   The local region is defined across the channels. For an element `X[n, c, d1, ..., dk]` in a tensor
   of shape `(N x C x D1 x D2, ..., Dk)`, its region is

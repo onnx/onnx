@@ -3122,7 +3122,7 @@ Only one of pool_strings and pool_int64s can be set. If pool_int64s is set, the 
 If pool_strings is set, the input must be a string tensor.
 )DOC";
 const char kDoc_LRN_ver13[] = R"DOC(
-Local Response Normalization proposed in the [AlexNet paper](https://papers.nips.cc/paper/4824-imagenet-classification-with-deep-convolutional-neural-networks.pdf).
+Local Response Normalization proposed in the [AlexNet paper](https://courses.csail.mit.edu/6.803/pdf/2012%20hinton.pdf).
 It normalizes over local input regions.
 The local region is defined across the channels. For an element `X[n, c, d1, ..., dk]` in a tensor
 of shape `(N x C x D1 x D2, ..., Dk)`, its region is
@@ -3451,7 +3451,7 @@ const char kDoc_mvn_ver9[] = R"DOC(
       on the input tensor X using formula: <br/> ``` (X-EX)/sqrt(E(X-EX)^2) ```
 )DOC";
 const char kDoc_LRN_ver1[] = R"DOC(
-Local Response Normalization proposed in the [AlexNet paper](https://papers.nips.cc/paper/4824-imagenet-classification-with-deep-convolutional-neural-networks.pdf).
+Local Response Normalization proposed in the [AlexNet paper](https://courses.csail.mit.edu/6.803/pdf/2012%20hinton.pdf).
 It normalizes over local input regions.
 The local region is defined across the channels. For an element X[n, c, d1, ..., dk] in a tensor
 of shape (N x C x D1 x D2, ..., Dk), its region is

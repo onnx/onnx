@@ -1647,7 +1647,7 @@ This version of the operator has been available since version 1 of the default O
 
 ### <a name="LRN-1"></a>**LRN-1**</a>
 
-  Local Response Normalization proposed in the [AlexNet paper](https://papers.nips.cc/paper/4824-imagenet-classification-with-deep-convolutional-neural-networks.pdf).
+  Local Response Normalization proposed in the [AlexNet paper](https://courses.csail.mit.edu/6.803/pdf/2012%20hinton.pdf).
   It normalizes over local input regions.
   The local region is defined across the channels. For an element X[n, c, d1, ..., dk] in a tensor
   of shape (N x C x D1 x D2, ..., Dk), its region is
@@ -16257,7 +16257,7 @@ This version of the operator has been available since version 13 of the default 
 
 ### <a name="LRN-13"></a>**LRN-13**</a>
 
-  Local Response Normalization proposed in the [AlexNet paper](https://papers.nips.cc/paper/4824-imagenet-classification-with-deep-convolutional-neural-networks.pdf).
+  Local Response Normalization proposed in the [AlexNet paper](https://courses.csail.mit.edu/6.803/pdf/2012%20hinton.pdf).
   It normalizes over local input regions.
   The local region is defined across the channels. For an element `X[n, c, d1, ..., dk]` in a tensor
   of shape `(N x C x D1 x D2, ..., Dk)`, its region is
