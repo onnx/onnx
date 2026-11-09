@@ -29,23 +29,19 @@ def main() -> None:
     def run_cmake(*options: str | Path) -> None:
         subprocess.run([cmake, *map(str, options)], check=True)  # noqa: S603
 
-    # Makefiles and Visual Studio support building dependency subprojects.
-    generator = (
-        os.environ.get("CMAKE_GENERATOR", "Visual Studio 17 2022")
-        if os.name == "nt"
-        else "Unix Makefiles"
-    )
     command = [
         "-S",
         str(Path(__file__).resolve().parents[2]),
         "-B",
         str(build_dir),
-        "-G",
-        generator,
         f"-DCMAKE_INSTALL_PREFIX={prefix}",
         "-DONNX_BUILD_CUSTOM_PROTOBUF=ON",
         "-DONNX_INSTALL=OFF",
     ]
+    # Makefiles and Visual Studio support building dependency subprojects.
+    # On Windows, CMake honors CMAKE_GENERATOR or picks the newest Visual Studio.
+    if os.name != "nt":
+        command.extend(["-G", "Unix Makefiles"])
     if args.arch:
         command.extend(["-A", args.arch])
     run_cmake(*command)
