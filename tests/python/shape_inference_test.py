@@ -5320,6 +5320,53 @@ class TestShapeInference(TestShapeInferenceHelper):
         with pytest.raises(onnx.shape_inference.InferenceError):
             self._inferred(graph, opset_imports=[helper.make_opsetid("", 13)])
 
+    @pytest.mark.parametrize(
+        "input_shapes",
+        [
+            # Different ranks for x2
+            [(4,), (3,)],
+            [(4,), (2, 5)],
+            # Symbolic dimensions in x2 are propagated to the output.
+            [(4,), ("N", 5)],
+            # The optional sorter input does not affect the output shape.
+            [(4,), (3,), (4,)],
+        ],
+    )
+    def test_searchsorted(self, input_shapes) -> None:
+        # x1 and x2 are float; the optional sorter, if present, is int64.
+        names = ("x1", "x2", "sorter")
+        dtypes = (TensorProto.FLOAT, TensorProto.FLOAT, TensorProto.INT64)
+        inputs = list(zip(names, dtypes, input_shapes, strict=False))
+        graph = self._make_graph(
+            inputs,
+            [make_node("SearchSorted", list(names[: len(input_shapes)]), ["out"])],
+            [],
+        )
+        # The output has the same shape as x2 (the second input).
+        self._assert_inferred(
+            graph, [make_tensor_value_info("out", TensorProto.INT64, input_shapes[1])]
+        )
+
+    @pytest.mark.parametrize(
+        ("x1_shape", "attrs"),
+        [
+            # x1 must be one-dimensional.
+            ((4, 2), {}),
+            # side must be either "left" or "right".
+            ((4,), {"side": "middle"}),
+        ],
+    )
+    def test_searchsorted_fails(self, x1_shape, attrs) -> None:
+        graph = self._make_graph(
+            [("x1", TensorProto.FLOAT, x1_shape), ("x2", TensorProto.FLOAT, (3,))],
+            [make_node("SearchSorted", ["x1", "x2"], ["out"], **attrs)],
+            [],
+        )
+        with pytest.raises(onnx.shape_inference.InferenceError):
+            self._assert_inferred(
+                graph, [make_tensor_value_info("out", TensorProto.INT64, (3,))]
+            )
+
     @pytest.mark.parametrize("version", all_versions_for("Gemm"))
     def test_gemm(self, version: int) -> None:
         graph = self._make_graph(

@@ -606,3 +606,15 @@ class TestAutomaticDowngrade(automatic_conversion_test_base.TestAutomaticConvers
         onnx.checker.check_model(model)
         with pytest.raises(RuntimeError, match="mode must have value DCR"):
             onnx.version_converter.convert_version(model, 27)
+
+    def test_SearchSorted_downgrade_fails(self) -> None:
+        self._test_model_conversion_fails(
+            to_opset=28,
+            model="""
+            <ir_version: 13, opset_import: [ "" : 29]>
+            searchsorted (float[4] x1, float[3] x2) => (int64[3] out)
+            {
+                out = SearchSorted (x1, x2)
+            }
+        """,
+        )

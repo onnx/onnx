@@ -1450,6 +1450,140 @@ ONNX_OPERATOR_SET_SCHEMA(
     24,
     OpSchema().FillUsing(defs::math::utils::TopKOpGenerator(OpSchema::all_numeric_types_ir4())));
 
+static constexpr const char* SearchSorted_ver29_doc = R"DOC(
+Finds the indices into `x1` such that, if the corresponding elements in `x2` were inserted before the indices, the order of `x1`, when sorted in ascending order, would be preserved.
+
+Let `v` be an element of `x2` given by `v = x2[j]`.
+
+  - If `v` is less than all elements in `x1`, then `out[j]` must be `0`.
+  - If `v` is greater than all elements in `x1`, then `out[j]` must be `M`, where `M` is the number of elements in `x1`.
+  - Otherwise, each returned index `i = out[j]` must satisfy an index condition:
+
+    - If `side == 'left'`, then `x1[i-1] < v <= x1[i]`.
+    - If `side == 'right'`, then `x1[i-1] <= v < x1[i]`.
+
+**Notes**
+
+For real-valued floating-point tensors, NaNs are ordered after all non-NaN values and are equivalent to each other, and `-0` and `+0` are equivalent (as in NumPy).
+)DOC";
+
+static void SearchSortedShapeInference(InferenceContext& ctx) {
+  const std::string side = getAttribute(ctx, "side", "left");
+  if (side != "left" && side != "right") {
+    fail_shape_inference("SearchSorted: attribute 'side' must be 'left' or 'right', got `", side, "`.");
+  }
+  // The output is always int64, independent of the input element type.
+  updateOutputElemType(ctx, 0, TensorProto::INT64);
+  // x1 must be one-dimensional.
+  if (hasInputShape(ctx, 0)) {
+    const auto& x1_shape = getInputShape(ctx, 0);
+    if (x1_shape.dim_size() != 1) {
+      fail_shape_inference("SearchSorted: input 'x1' must be a 1-dimensional tensor.");
+    }
+  }
+  // The output has the same shape as x2.
+  if (hasInputShape(ctx, 1)) {
+    *ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape() = getInputShape(ctx, 1);
+  }
+}
+
+// Counts, for each element of x2, the elements of x1 ordered before it (side == "left") or not
+// after it (side == "right") using a Scan over x1. `Equal (x, x)` is false if and only if x is
+// NaN, which orders NaNs after all non-NaN values; for integer types the NaN terms vanish.
+static bool BuildFunctionBodySearchSorted(
+    const FunctionBodyBuildContext& ctx,
+    const OpSchema& schema,
+    FunctionProto& functionProto) {
+  const auto* side_attr = ctx.getAttribute("side");
+  const std::string side = (side_attr != nullptr) ? side_attr->s() : "left";
+  const char* hit = nullptr;
+  if (side == "left") {
+    hit = R"ONNX(
+        lt = Less (x1_i, x2)
+        nan_gap = And (x2_nan, x1_eq)
+        hit = Or (lt, nan_gap)
+    )ONNX";
+  } else if (side == "right") {
+    hit = R"ONNX(
+        x1_nan = Not (x1_eq)
+        gt = Less (x2, x1_i)
+        nan_gap = And (x1_nan, x2_eq)
+        not_hit = Or (gt, nan_gap)
+        hit = Not (not_hit)
+    )ONNX";
+  } else {
+    // No function body for invalid attribute values.
+    return false;
+  }
+
+  FunctionBuilder builder(functionProto);
+  builder.Add(ctx.hasInput(2) ? "x1_sorted = Gather <axis = 0> (x1, sorter)" : "x1_sorted = Identity (x1)");
+  builder.Add(R"ONNX(
+      x2_shape = Shape (x2)
+      count0 = ConstantOfShape <value = int64[1] {0}> (x2_shape)
+      x2_eq = Equal (x2, x2)
+      x2_nan = Not (x2_eq)
+  )ONNX");
+  const std::string scan = std::string(R"ONNX(
+      out = Scan <num_scan_inputs = 1, body = step (count_in, x1_i) => (count_out) {
+        x1_eq = Equal (x1_i, x1_i)
+  )ONNX") +
+      hit +
+      R"ONNX(
+        hit_i64 = Cast <to = 7> (hit)
+        count_out = Add (count_in, hit_i64)
+      }> (count0, x1_sorted)
+  )ONNX";
+  builder.Add(scan.c_str());
+
+  schema.BuildFunction(functionProto);
+  return true;
+}
+
+ONNX_OPERATOR_SET_SCHEMA(
+    SearchSorted,
+    29,
+    OpSchema()
+        .SetDoc(SearchSorted_ver29_doc)
+        .Attr(
+            "side",
+            "Either `\"left\"` or `\"right\"`. Controls which index is returned if a value lands exactly on an edge.",
+            AttributeProto::STRING,
+            std::string("left"))
+        .Input(
+            0,
+            "x1",
+            "Input tensor. Must be one-dimensional. If `sorter` is not given, must be sorted in ascending order; otherwise, `sorter` must be a tensor of indices that sort `x1` in ascending order.",
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::NonDifferentiable)
+        .Input(1, "x2", "Tensor containing search values.", "T", OpSchema::Single, true, 1, OpSchema::NonDifferentiable)
+        .Input(
+            2,
+            "sorter",
+            "Tensor of indices that sort `x1` in ascending order. The tensor must have the same shape as `x1`.",
+            "Tind",
+            OpSchema::Optional,
+            true,
+            1,
+            OpSchema::NonDifferentiable)
+        .Output(
+            0,
+            "out",
+            "A tensor of indices with the same shape as `x2`.",
+            "Tind",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::NonDifferentiable)
+        .TypeConstraint("T", OpSchema::all_numeric_types_ir4(), "Constrain input types to numeric tensors.")
+        .TypeConstraint("Tind", {types::Int64}, "Constrain indices to int64.")
+        .SetNodeDeterminism(OpSchema::NodeDeterminism::Deterministic)
+        .SetContextDependentFunctionBodyBuilder(BuildFunctionBodySearchSorted)
+        .TypeAndShapeInferenceFunction(SearchSortedShapeInference));
+
 ONNX_OPERATOR_SET_SCHEMA(
     Sin,
     22,

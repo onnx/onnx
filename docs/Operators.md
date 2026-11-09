@@ -205,6 +205,7 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#ReduceSumSquare">ReduceSumSquare</a>|<a href="Changelog.md#ReduceSumSquare-18">18</a>, <a href="Changelog.md#ReduceSumSquare-13">13</a>, <a href="Changelog.md#ReduceSumSquare-11">11</a>, <a href="Changelog.md#ReduceSumSquare-1">1</a>|18|
 |<a href="#Relu">Relu</a>|<a href="Changelog.md#Relu-14">14</a>, <a href="Changelog.md#Relu-13">13</a>, <a href="Changelog.md#Relu-6">6</a>, <a href="Changelog.md#Relu-1">1</a>|18|
 |<a href="#RotaryEmbedding">RotaryEmbedding</a>|<a href="Changelog.md#RotaryEmbedding-23">23</a>|23|
+|<a href="#SearchSorted">SearchSorted</a>|<a href="Changelog.md#SearchSorted-29">29</a>|29|
 |<a href="#Selu">Selu</a>|<a href="Changelog.md#Selu-22">22</a>, <a href="Changelog.md#Selu-6">6</a>, <a href="Changelog.md#Selu-1">1</a>|18|
 |<a href="#SequenceMap">SequenceMap</a>|<a href="Changelog.md#SequenceMap-17">17</a>|17|
 |<a href="#Shrink">Shrink</a>|<a href="Changelog.md#Shrink-9">9</a>|18|
@@ -37814,6 +37815,252 @@ expect(
     inputs=[data, indices, updates],
     outputs=[output],
     name="test_scatternd_multiply",
+)
+```
+
+</details>
+
+
+### <a name="SearchSorted"></a><a name="searchsorted">**SearchSorted**</a>
+
+  Finds the indices into `x1` such that, if the corresponding elements in `x2` were inserted before the indices, the order of `x1`, when sorted in ascending order, would be preserved.
+
+  Let `v` be an element of `x2` given by `v = x2[j]`.
+
+    - If `v` is less than all elements in `x1`, then `out[j]` must be `0`.
+    - If `v` is greater than all elements in `x1`, then `out[j]` must be `M`, where `M` is the number of elements in `x1`.
+    - Otherwise, each returned index `i = out[j]` must satisfy an index condition:
+
+      - If `side == 'left'`, then `x1[i-1] < v <= x1[i]`.
+      - If `side == 'right'`, then `x1[i-1] <= v < x1[i]`.
+
+  **Notes**
+
+  For real-valued floating-point tensors, NaNs are ordered after all non-NaN values and are equivalent to each other, and `-0` and `+0` are equivalent (as in NumPy).
+
+#### Version
+
+This version of the operator has been available since version 29 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>side</tt> : string (default is left)</dt>
+<dd>Either `"left"` or `"right"`. Controls which index is returned if a value lands exactly on an edge.</dd>
+</dl>
+
+#### Inputs (2 - 3)
+
+<dl>
+<dt><tt>x1</tt> (non-differentiable) : T</dt>
+<dd>Input tensor. Must be one-dimensional. If `sorter` is not given, must be sorted in ascending order; otherwise, `sorter` must be a tensor of indices that sort `x1` in ascending order.</dd>
+<dt><tt>x2</tt> (non-differentiable) : T</dt>
+<dd>Tensor containing search values.</dd>
+<dt><tt>sorter</tt> (optional, non-differentiable) : Tind</dt>
+<dd>Tensor of indices that sort `x1` in ascending order. The tensor must have the same shape as `x1`.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>out</tt> (non-differentiable) : Tind</dt>
+<dd>A tensor of indices with the same shape as `x2`.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
+<dd>Constrain input types to numeric tensors.</dd>
+<dt><tt>Tind</tt> : tensor(int64)</dt>
+<dd>Constrain indices to int64.</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>searchsorted</summary>
+
+```python
+node = onnx.helper.make_node(
+    "SearchSorted",
+    inputs=["x1", "x2"],
+    outputs=["out"],
+)
+x1 = np.array([1, 3, 5, 7], dtype=np.float32)
+x2 = np.array([0, 3, 8], dtype=np.float32)
+out = np.searchsorted(x1, x2, side="left").astype(np.int64)
+# out == [0, 1, 4]
+
+expect(
+    node,
+    inputs=[x1, x2],
+    outputs=[out],
+    name="test_searchsorted",
+    opset_imports=_OPSET_IMPORTS,
+)
+```
+
+</details>
+
+
+<details>
+<summary>searchsorted_2d_values</summary>
+
+```python
+node = onnx.helper.make_node(
+    "SearchSorted",
+    inputs=["x1", "x2"],
+    outputs=["out"],
+)
+x1 = np.array([1, 3, 5, 7], dtype=np.float32)
+x2 = np.array([[0, 3], [4, 8]], dtype=np.float32)
+out = np.searchsorted(x1, x2, side="left").astype(np.int64)
+
+expect(
+    node,
+    inputs=[x1, x2],
+    outputs=[out],
+    name="test_searchsorted_2d_values",
+    opset_imports=_OPSET_IMPORTS,
+)
+```
+
+</details>
+
+
+<details>
+<summary>searchsorted_int64</summary>
+
+```python
+node = onnx.helper.make_node(
+    "SearchSorted",
+    inputs=["x1", "x2"],
+    outputs=["out"],
+)
+x1 = np.array([1, 3, 5, 7], dtype=np.int64)
+x2 = np.array([0, 3, 8], dtype=np.int64)
+out = np.searchsorted(x1, x2, side="left").astype(np.int64)
+
+expect(
+    node,
+    inputs=[x1, x2],
+    outputs=[out],
+    name="test_searchsorted_int64",
+    opset_imports=_OPSET_IMPORTS,
+)
+```
+
+</details>
+
+
+<details>
+<summary>searchsorted_nan</summary>
+
+```python
+# NaNs are ordered after all non-NaN values and are equivalent to each other.
+x1 = np.array([1, 2, 3, np.nan, np.nan], dtype=np.float32)
+x2 = np.array([2.5, np.nan, np.inf], dtype=np.float32)
+for side in ("left", "right"):
+    node = onnx.helper.make_node(
+        "SearchSorted",
+        inputs=["x1", "x2"],
+        outputs=["out"],
+        side=side,
+    )
+    out = np.searchsorted(x1, x2, side=side).astype(np.int64)
+    # left: out == [2, 3, 3]; right: out == [2, 5, 3]
+
+    expect(
+        node,
+        inputs=[x1, x2],
+        outputs=[out],
+        name=f"test_searchsorted_nan_{side}",
+        opset_imports=_OPSET_IMPORTS,
+    )
+```
+
+</details>
+
+
+<details>
+<summary>searchsorted_right</summary>
+
+```python
+node = onnx.helper.make_node(
+    "SearchSorted",
+    inputs=["x1", "x2"],
+    outputs=["out"],
+    side="right",
+)
+x1 = np.array([1, 3, 5, 7], dtype=np.float32)
+x2 = np.array([0, 3, 8], dtype=np.float32)
+out = np.searchsorted(x1, x2, side="right").astype(np.int64)
+# out == [0, 2, 4]
+
+expect(
+    node,
+    inputs=[x1, x2],
+    outputs=[out],
+    name="test_searchsorted_right",
+    opset_imports=_OPSET_IMPORTS,
+)
+```
+
+</details>
+
+
+<details>
+<summary>searchsorted_signed_zero</summary>
+
+```python
+# -0 and +0 are equivalent.
+x1 = np.array([-1, -0.0, 0.0, 1], dtype=np.float32)
+x2 = np.array([-0.0, 0.0], dtype=np.float32)
+for side in ("left", "right"):
+    node = onnx.helper.make_node(
+        "SearchSorted",
+        inputs=["x1", "x2"],
+        outputs=["out"],
+        side=side,
+    )
+    out = np.searchsorted(x1, x2, side=side).astype(np.int64)
+    # left: out == [1, 1]; right: out == [3, 3]
+
+    expect(
+        node,
+        inputs=[x1, x2],
+        outputs=[out],
+        name=f"test_searchsorted_signed_zero_{side}",
+        opset_imports=_OPSET_IMPORTS,
+    )
+```
+
+</details>
+
+
+<details>
+<summary>searchsorted_sorter</summary>
+
+```python
+node = onnx.helper.make_node(
+    "SearchSorted",
+    inputs=["x1", "x2", "sorter"],
+    outputs=["out"],
+)
+# x1 is unsorted; sorter contains the indices that sort it ascending.
+x1 = np.array([5, 1, 7, 3], dtype=np.float32)
+sorter = np.argsort(x1).astype(np.int64)
+x2 = np.array([0, 3, 8], dtype=np.float32)
+out = np.searchsorted(x1, x2, side="left", sorter=sorter).astype(np.int64)
+
+expect(
+    node,
+    inputs=[x1, x2, sorter],
+    outputs=[out],
+    name="test_searchsorted_sorter",
+    opset_imports=_OPSET_IMPORTS,
 )
 ```
 
