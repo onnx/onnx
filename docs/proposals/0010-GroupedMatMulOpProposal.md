@@ -62,13 +62,13 @@ Any weighted combination of these per-expert results (for example the top-`k` ro
 sum in an MoE layer) is expressed with standard `Mul` / `ReduceSum` ops in the surrounding
 graph (see the example below).
 
-Use `k = 1` for the dense (single-expert) case.
+With `k = 1`, each token selects one expert.
 
 ### Typical Usage — MoE Feed-Forward Layer
 
 A standard top-k MoE FFN with two projections maps directly onto two `GroupedMatMul` ops.
-No `Expand` of the token batch is required — the op reuses each token row across its `k`
-selected experts internally.
+No explicit `Expand` of the token batch is required in the surrounding graph:
+each token row is multiplied by each of its `k` selected expert matrices.
 
 ```
 # Notation: B = batch, S = sequence length, H = hidden dim, F = FFN inner dim
@@ -109,24 +109,25 @@ post-activation up-projection outputs) rather than sharing a single input row.
 
 ### Semantics (Function Decomposition)
 
-This section is the **single, normative definition** of `GroupedMatMul`. The operator is
-specified as an ONNX **function**: its meaning is exactly the composition of standard ONNX
-operators given below. Because `transB` and the presence of the optional `bias` input change the graph
-that is produced, the function body is **context-dependent** (built via
-`SetContextDependentFunctionBodyBuilder`, in the style of existing ops such as
-`CenterCropPad`).
-
-Defining the semantics as a function has a useful consequence for onnx/onnx: the reference
-evaluator (`onnx.reference.ReferenceEvaluator`) automatically executes an operator through
-its function body when no dedicated Python kernel is registered, so **no separate reference
-implementation file is required**. A single decomposition therefore serves as specification,
-documentation, and reference implementation.
+For inputs satisfying the [Operator Specification](#operator-specification), the
+following decomposition defines the result of `GroupedMatMul`. It does not
+prescribe an execution strategy. The function body depends on `transB` and on
+whether the optional `bias` input is present.
 
 Input and output names, shapes, and type constraints are defined in
 [Operator Specification](#operator-specification).
 The symbols used below are `M` (number of input rows), `K` (contraction
 dimension), `N` (output dimension), `G` (number of groups), and `k`
 (number of selections per row, equal to `group_indices.shape[1]`).
+
+#### Implementation notes (informative)
+
+The context-dependent function body is built with `SetContextDependentFunctionBodyBuilder`.
+Defining the semantics as a function has a useful consequence for onnx/onnx: the reference
+evaluator (`onnx.reference.ReferenceEvaluator`) automatically executes an operator through
+its function body when no dedicated Python kernel is registered, so **no separate reference
+implementation file is required**. A single decomposition therefore serves as specification,
+documentation, and reference implementation.
 
 > **Note on efficiency.** The decomposition materialises a full `[M*k, K, N]` weight slice
 > and an `[M*k, K]` copy of the tokens. As explained in [Motivation](#motivation), these
@@ -159,15 +160,15 @@ non-zero and includes the `bias` line only when input 3 is present.
 
 #### Edge Cases
 
-The decomposition already gives well-defined behaviour for every special case below; the
-table records the resulting behaviour for clarity.
+The following table states the results for empty and single-selection cases and
+the restriction on group indices.
 
 | Case | Behaviour |
 |---|---|
 | `k == 0` | No expert selected; empty output tensor of shape `[M, 0, N]`. |
 | `k == 1` | One expert per token, output of shape `[M, 1, N]`. |
 | `G == 1`, all indices 0 | Each selection contains `input[m] @ weights[0]` if `transB == 0`, otherwise `input[m] @ weights[0].T`, plus `bias[0]` if present. |
-| `M == 0` | Zero-token input; output shape is `[0, k, N]`; no compute required. |
+| `M == 0` | Zero-token input; empty output tensor of shape `[0, k, N]`. |
 | Index outside `[0, G)`, including a negative index | Invalid input; behavior is undefined. Negative indices do not count backwards from `G`. |
 
 ### Operator Specification
@@ -190,11 +191,11 @@ table records the resulting behaviour for clarity.
 | 2 | `group_indices` | Tind | **Required** | `[M, k]` | Group index per token per selection. Each token selects `k` groups. Values must be in `[0, G)`. |
 | 3 | `bias` | T | **Optional** | `[G, N]` | Per-group bias vector. Added to each expert's result. |
 
-**Notes:**
+**Usage notes (informative):**
 
 * `G = weights.shape[0]` (number of groups / experts).
-* Callers with batched inputs of shape `[B, M, K]` should `Reshape` the batch dimensions into `M` first. In most backends, typically this is a zero-copy metadata-only view construction.
-* `weights` and `bias` are the same for all tokens (i.e., they are model parameters, not per-token).
+* Callers with batched inputs of shape `[B, M, K]` can reshape them to `[B*M, K]` and restore the batch dimensions after the operator.
+* `weights` and `bias` are shared across input rows; they are not required to be initializers.
 
 #### Outputs
 
@@ -221,7 +222,7 @@ DequantizeLinear(input_q)   ─┐
 DequantizeLinear(weights_q) ─┘
 ```
 
-For expert weights of shape `[G, K, N]`, blocked `DequantizeLinear` along
+For block size `B` and expert weights of shape `[G, K, N]`, blocked `DequantizeLinear` along
 `axis=1` supports scales of shape `[G, ceil(K/B), N]`. This permits independent
 scales per expert, block of `K`, and output channel. Per-expert,
 per-output-channel quantization is the special case `[G, 1, N]` with one
@@ -233,7 +234,9 @@ Dequantization preserves the stored layout; `transB` changes only how the
 resulting floating-point matrices are multiplied.
 
 No quantization parameters or quantized tensor types are needed in the
-`GroupedMatMul` schema. For efficient execution, runtimes should recognize and
+`GroupedMatMul` schema.
+
+**Implementation guidance (informative).** For efficient execution, runtimes can recognize and
 fuse the surrounding QDQ pattern so that the full dequantized expert-weight
 tensor is not materialized. If explicitly specified integer accumulation,
 requantization, or packed-weight formats are needed in the future, they should
@@ -254,7 +257,7 @@ Let:
 - `N  = weights.shape[2]` if `transB == 0`, otherwise `weights.shape[1]`
 - `k  = group_indices.shape[1]`
 
-Validation checks (raise error if violated):
+Where ranks and dimensions are known, shape inference checks:
 1. `input.rank == 2`
 2. `weights.rank == 3`
 3. `group_indices.rank == 2` and `group_indices.shape[0] == M`
@@ -270,7 +273,7 @@ output.shape = [M, k, N]
 
 These cases are intended for `onnx/backend/test/case/node/groupedmatmul.py`.
 
-#### Test 1 — Dense (k=1), no bias
+#### Test 1 — One expert per token (k=1), no bias
 
 ```python
 # 4 tokens, K=3, G=2 groups, N=2, k=1
@@ -323,7 +326,10 @@ group_indices = [[0], [0], [2], [2]]   # group 1 unused
 ```python
 G = 1
 group_indices = [[0], [0], [0]]        # all tokens -> group 0
-# output == MatMul(input, weights[0]) (reshaped from [M,1,N] to [M,1,N])
+# With transB=0 and no bias:
+# output == Unsqueeze(MatMul(input, weights[0]), axis=1)  # [M, 1, N]
+# With non-zero transB, use weights[0].T in the MatMul.
+# If bias is present, add bias[0] to each result.
 ```
 
 ## Rationale and alternatives
@@ -385,7 +391,7 @@ An alternative interface uses a sorted token buffer and integer offsets instead 
 indices. This matches the cuBLAS grouped-GEMM API more directly.
 
 **Decision: `group_indices` (unsorted).** Indices compose naturally with `TopK`/`Gather`
-and do not require callers to pre-sort the token batch. Runtimes sort internally.
+and do not require callers to pre-sort the token batch. Implementations may sort internally.
 
 ### Stacked 3-D weights `[G, K, N]` vs. a list of variable-size matrices
 
