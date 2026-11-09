@@ -4350,6 +4350,10 @@ Each dimension value of the output tensor is:
 output_dimension = floor(input_dimension * (roi_end - roi_start) * scale)
 ```
 if input \"sizes\" is not specified.
+
+When the input and output type is an integer type, each output value is the weighted average computed in floating point,
+rounded to the nearest integer with ties rounded to the nearest even integer, and then saturated to the range of the output type.
+In nearest mode every output value is a copy of one input value, so no rounding or saturation takes place.
 )DOC";
 const char kDoc_GatherElements_ver13[] = R"DOC(
 
