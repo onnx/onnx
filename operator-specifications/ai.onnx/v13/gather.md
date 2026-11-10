@@ -1,6 +1,8 @@
 ```toml
 name = "Gather"
 domain = "ai.onnx"
+shape_inference = "defs::tensor::utils::GatherShapeInference_opset13"
+data_propagation = "GatherOp13DataPropagator"
 
 [[inputs]]
 name = "data"

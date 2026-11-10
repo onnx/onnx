@@ -1,6 +1,7 @@
 ```toml
 name = "Einsum"
 domain = "ai.onnx"
+shape_inference = "defs::math::utils::EinsumShapeInference"
 
 [type_constraints.T]
 types = "all_numeric_types_ir4"

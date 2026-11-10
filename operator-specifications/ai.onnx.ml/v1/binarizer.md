@@ -1,6 +1,7 @@
 ```toml
 name = "Binarizer"
 domain = "ai.onnx.ml"
+shape_inference = "propagateShapeAndTypeFromFirstInput"
 
 [attributes.threshold]
 type = "FLOAT"

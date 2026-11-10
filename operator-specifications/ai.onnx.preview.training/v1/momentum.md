@@ -1,6 +1,7 @@
 ```toml
 name = "Momentum"
 domain = "ai.onnx.preview.training"
+shape_inference = "defs::training::utils::MomentumShapeInference_opset1"
 
 [attributes.alpha]
 type = "FLOAT"

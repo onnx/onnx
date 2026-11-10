@@ -1,6 +1,7 @@
 ```toml
 name = "Clip"
 domain = "ai.onnx"
+shape_inference = "propagateShapeAndTypeFromFirstInput"
 
 [attributes.max]
 type = "FLOAT"

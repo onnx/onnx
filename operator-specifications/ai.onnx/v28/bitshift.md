@@ -1,6 +1,7 @@
 ```toml
 name = "BitShift"
 domain = "ai.onnx"
+shape_inference = "defs::logical::utils::BitShiftShapeInference_opset28"
 
 [type_constraints.T]
 types = [

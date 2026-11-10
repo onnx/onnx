@@ -1,6 +1,8 @@
 ```toml
 name = "SpaceToDepth"
 domain = "ai.onnx"
+shape_inference = "defs::tensor::utils::SpaceToDepthShapeInference_opset28"
+function_body_builders = { 28 = "defs::tensor::utils::BuildContextDependentFunctionBodySpaceToDepth" }
 
 [attributes.blocksize]
 type = "INT"

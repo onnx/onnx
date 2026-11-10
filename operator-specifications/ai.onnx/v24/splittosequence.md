@@ -1,6 +1,7 @@
 ```toml
 name = "SplitToSequence"
 domain = "ai.onnx"
+shape_inference = "defs::sequence::utils::SplitToSequenceShapeInference"
 
 [type_constraints.T]
 types = "all_tensor_types_ir4"

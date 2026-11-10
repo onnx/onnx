@@ -1,6 +1,7 @@
 ```toml
 name = "BlackmanWindow"
 domain = "ai.onnx"
+shape_inference = "defs::math::utils::CosineSumWindowOpShapeInference"
 
 [attributes.output_datatype]
 type = "INT"

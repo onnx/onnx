@@ -1,6 +1,7 @@
 ```toml
 name = "AveragePool"
 domain = "ai.onnx"
+shape_inference = "defs::nn::utils::AveragePoolShapeInference_opset10"
 
 [attributes.auto_pad]
 type = "STRING"

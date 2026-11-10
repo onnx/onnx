@@ -8,9 +8,6 @@
 
 namespace ONNX_NAMESPACE {
 
-ONNX_OPERATOR_SET_SCHEMA(
-    SplitToSequence,
-    11,
-    generated::ai_onnx::SplitToSequence_ver11().FillUsing(defs::sequence::utils::SplitToSequenceOpGenerator()));
+ONNX_OPERATOR_SET_SCHEMA(SplitToSequence, 11, generated::ai_onnx::SplitToSequence_ver11());
 
 } // namespace ONNX_NAMESPACE

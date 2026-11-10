@@ -1,6 +1,7 @@
 ```toml
 name = "Einsum"
 domain = "ai.onnx"
+shape_inference = "defs::math::utils::EinsumShapeInference"
 
 [attributes.equation]
 type = "STRING"

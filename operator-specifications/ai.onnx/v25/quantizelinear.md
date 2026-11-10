@@ -1,6 +1,7 @@
 ```toml
 name = "QuantizeLinear"
 domain = "ai.onnx"
+shape_inference = "defs::quantization::utils::QuantizeLinearShapeInference_opset25"
 
 [type_constraints.T1]
 types = ["tensor(float)", "tensor(float16)", "tensor(bfloat16)", "tensor(int32)"]

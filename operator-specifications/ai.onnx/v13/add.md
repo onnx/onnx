@@ -1,6 +1,7 @@
 ```toml
 name = "Add"
 domain = "ai.onnx"
+shape_inference = "defs::math::utils::MathShapeInference_opset13"
 
 [[inputs]]
 name = "A"

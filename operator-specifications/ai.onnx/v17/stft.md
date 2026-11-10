@@ -1,6 +1,7 @@
 ```toml
 name = "STFT"
 domain = "ai.onnx"
+shape_inference = "defs::math::utils::STFTShapeInference_opset17"
 
 [attributes.onesided]
 type = "INT"

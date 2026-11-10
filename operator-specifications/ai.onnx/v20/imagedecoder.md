@@ -1,6 +1,7 @@
 ```toml
 name = "ImageDecoder"
 domain = "ai.onnx"
+shape_inference = "defs::image::utils::ImageDecoderShapeInference_opset20"
 
 [attributes.pixel_format]
 type = "STRING"

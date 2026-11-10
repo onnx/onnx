@@ -3,6 +3,8 @@ name = "GroupNormalization"
 domain = "ai.onnx"
 deprecated = true
 node_determinism = "deterministic"
+shape_inference = false
+function_body_builders = { 18 = "defs::nn::utils::GroupNormalizationFunctionBody_opset18" }
 
 [attributes.epsilon]
 type = "FLOAT"

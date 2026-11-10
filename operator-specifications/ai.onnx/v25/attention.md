@@ -1,6 +1,8 @@
 ```toml
 name = "Attention"
 domain = "ai.onnx"
+shape_inference = "defs::nn::utils::Attention25Inference"
+function_body_builders = { 25 = "defs::nn::utils::AttentionFunctionBody_opset25" }
 
 [attributes.is_causal]
 type = "INT"

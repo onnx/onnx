@@ -1,6 +1,7 @@
 ```toml
 name = "GlobalLpPool"
 domain = "ai.onnx"
+shape_inference = false
 
 [attributes.p]
 type = "FLOAT"

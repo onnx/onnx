@@ -1,6 +1,7 @@
 ```toml
 name = "GRU"
 domain = "ai.onnx"
+shape_inference = false
 
 [attributes.activation_alpha]
 type = "FLOATS"

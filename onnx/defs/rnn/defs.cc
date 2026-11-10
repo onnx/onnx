@@ -16,13 +16,9 @@ ONNX_API void RNNShapeInference(InferenceContext& ctx) {
   defs::rnn::utils::RNNShapeInference(ctx);
 }
 
-static std::function<void(OpSchema&)> RNNDocGenerator() {
-  return [=](OpSchema& schema) { schema.TypeAndShapeInferenceFunction(defs::rnn::utils::RNNShapeInference); };
-}
+ONNX_OPERATOR_SET_SCHEMA(RNN, 22, generated::ai_onnx::RNN_ver22());
 
-ONNX_OPERATOR_SET_SCHEMA(RNN, 22, generated::ai_onnx::RNN_ver22().FillUsing(RNNDocGenerator()));
+ONNX_OPERATOR_SET_SCHEMA(GRU, 22, generated::ai_onnx::GRU_ver22());
 
-ONNX_OPERATOR_SET_SCHEMA(GRU, 22, generated::ai_onnx::GRU_ver22().FillUsing(RNNDocGenerator()));
-
-ONNX_OPERATOR_SET_SCHEMA(LSTM, 22, generated::ai_onnx::LSTM_ver22().FillUsing(RNNDocGenerator()));
+ONNX_OPERATOR_SET_SCHEMA(LSTM, 22, generated::ai_onnx::LSTM_ver22());
 } // namespace ONNX_NAMESPACE

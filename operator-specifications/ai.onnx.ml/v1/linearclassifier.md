@@ -1,6 +1,7 @@
 ```toml
 name = "LinearClassifier"
 domain = "ai.onnx.ml"
+shape_inference = "defs::traditionalml::utils::LinearClassifierShapeInference_opset1"
 
 [attributes.classlabels_ints]
 type = "INTS"

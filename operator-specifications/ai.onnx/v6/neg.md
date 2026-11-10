@@ -2,6 +2,7 @@
 name = "Neg"
 domain = "ai.onnx"
 attributes = {}
+shape_inference = "propagateShapeAndTypeFromFirstInput"
 
 [type_constraints.T]
 types = [

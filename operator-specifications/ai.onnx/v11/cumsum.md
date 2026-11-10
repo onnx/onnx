@@ -1,6 +1,7 @@
 ```toml
 name = "CumSum"
 domain = "ai.onnx"
+shape_inference = "propagateShapeAndTypeFromFirstInput"
 
 [attributes.exclusive]
 type = "INT"

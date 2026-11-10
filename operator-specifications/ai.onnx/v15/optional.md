@@ -1,6 +1,7 @@
 ```toml
 name = "Optional"
 domain = "ai.onnx"
+shape_inference = "defs::optional::utils::OptionalInference"
 
 [attributes.type]
 type = "TYPE_PROTO"

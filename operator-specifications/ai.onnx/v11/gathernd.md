@@ -1,6 +1,7 @@
 ```toml
 name = "GatherND"
 domain = "ai.onnx"
+shape_inference = "defs::tensor::utils::GatherNDShapeInference_opset11"
 
 [[inputs]]
 name = "data"

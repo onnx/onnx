@@ -1,6 +1,7 @@
 ```toml
 name = "ReduceLogSumExp"
 domain = "ai.onnx"
+shape_inference = "defs::reduction::utils::ReduceShapeInference"
 
 [[inputs]]
 name = "data"

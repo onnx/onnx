@@ -1,6 +1,7 @@
 ```toml
 name = "GridSample"
 domain = "ai.onnx"
+shape_inference = "defs::tensor::utils::gridSampleShapeInference"
 
 [attributes.align_corners]
 type = "INT"

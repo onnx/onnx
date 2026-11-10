@@ -138,10 +138,6 @@ void SplitToSequenceShapeInference(InferenceContext& ctx) {
   }
 }
 
-std::function<void(OpSchema&)> SplitToSequenceOpGenerator() {
-  return [](OpSchema& schema) { schema.TypeAndShapeInferenceFunction(SplitToSequenceShapeInference); };
-}
-
 void SequenceEmptyShapeInference_opset11(InferenceContext& ctx) {
   const auto attr_proto = ctx.getAttribute("dtype");
   auto elem_type = TensorProto::FLOAT;

@@ -1,6 +1,7 @@
 ```toml
 name = "ScatterND"
 domain = "ai.onnx"
+shape_inference = "defs::tensor::utils::ScatterNDShapeInference_opset16"
 
 [attributes.reduction]
 type = "STRING"

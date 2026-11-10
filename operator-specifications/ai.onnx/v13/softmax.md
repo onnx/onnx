@@ -2,6 +2,14 @@
 name = "Softmax"
 domain = "ai.onnx"
 node_determinism = "deterministic"
+shape_inference = "defs::math::utils::SoftmaxShapeInference_opset13"
+# function body builder for opset version 13 (the default opset version is the same
+# as the operator's since_version.
+# function body builder for opset version 18.
+# ReduceSum is updated in opset 18 to have axes as the second input.
+# Therefore function body for opset version 18
+# is different than the one defined using opset version 13.
+function_body_builders = { 13 = "defs::math::utils::SoftmaxFunctionBody_opset13", 18 = "defs::math::utils::SoftmaxFunctionBody_opset18" }
 
 [attributes.axis]
 type = "INT"

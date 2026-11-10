@@ -1,6 +1,7 @@
 ```toml
 name = "RandomNormalLike"
 domain = "ai.onnx"
+shape_inference = "defs::generator::utils::RandomNormalLikeShapeInference_opset22"
 
 [type_constraints.T1]
 types = "all_tensor_types_ir4"

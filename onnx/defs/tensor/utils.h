@@ -46,7 +46,6 @@ void KeepAspectRatioHelper(
     const std::vector<int64_t>& axes,
     std::vector<int64_t>& sizes_data);
 
-std::function<void(OpSchema&)> PadDocGenerator();
 } // namespace ONNX_NAMESPACE
 
 namespace ONNX_NAMESPACE::defs::tensor::utils {

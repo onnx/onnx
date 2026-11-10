@@ -1,6 +1,7 @@
 ```toml
 name = "Split"
 domain = "ai.onnx"
+shape_inference = "defs::tensor::utils::SplitShapeInference_opset18"
 
 [attributes.axis]
 type = "INT"

@@ -1,6 +1,7 @@
 ```toml
 name = "IsInf"
 domain = "ai.onnx"
+shape_inference = "defs::tensor::utils::IsInfShapeInference_opset10"
 
 [attributes.detect_negative]
 type = "INT"

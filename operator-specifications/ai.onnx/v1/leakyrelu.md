@@ -1,6 +1,7 @@
 ```toml
 name = "LeakyRelu"
 domain = "ai.onnx"
+shape_inference = false
 
 [attributes.alpha]
 type = "FLOAT"

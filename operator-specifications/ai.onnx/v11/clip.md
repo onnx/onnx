@@ -2,6 +2,7 @@
 name = "Clip"
 domain = "ai.onnx"
 attributes = {}
+shape_inference = "propagateShapeAndTypeFromFirstInput"
 
 [[inputs]]
 name = "input"

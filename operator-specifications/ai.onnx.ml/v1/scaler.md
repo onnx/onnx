@@ -1,6 +1,7 @@
 ```toml
 name = "Scaler"
 domain = "ai.onnx.ml"
+shape_inference = false
 
 [attributes.offset]
 type = "FLOATS"

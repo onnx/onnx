@@ -2,6 +2,8 @@
 name = "Celu"
 domain = "ai.onnx"
 node_determinism = "deterministic"
+shape_inference = "propagateShapeAndTypeFromFirstInput"
+function_body_builders = { 12 = "defs::math::utils::BuildContextDependentFunctionBodyCelu" }
 
 [attributes.alpha]
 type = "FLOAT"

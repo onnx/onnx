@@ -1,6 +1,8 @@
 ```toml
 name = "Slice"
 domain = "ai.onnx"
+shape_inference = "defs::tensor::utils::SliceShapeInference_opset13"
+data_propagation = "defs::tensor::utils::SliceDataPropagation_opset13"
 
 [[inputs]]
 name = "data"

@@ -1,6 +1,7 @@
 ```toml
 name = "Less"
 domain = "ai.onnx"
+shape_inference = "defs::logical::utils::logicalOpInference_opset1"
 
 [attributes.axis]
 type = "INT"

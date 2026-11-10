@@ -1,6 +1,7 @@
 ```toml
 name = "Concat"
 domain = "ai.onnx"
+shape_inference = "defs::tensor::utils::ConcatShapeInference_opset4"
 
 [attributes.axis]
 type = "INT"

@@ -1,6 +1,7 @@
 ```toml
 name = "Mod"
 domain = "ai.onnx"
+shape_inference = "defs::math::utils::ModShapeInference_opset10"
 
 [attributes.fmod]
 type = "INT"

@@ -1,6 +1,8 @@
 ```toml
 name = "Cast"
 domain = "ai.onnx"
+shape_inference = "defs::tensor::utils::CastShapeInference_opset13"
+data_propagation = "defs::tensor::utils::CastDataPropagation_opset13"
 
 [[inputs]]
 name = "input"

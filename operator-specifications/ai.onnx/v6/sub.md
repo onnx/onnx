@@ -1,6 +1,7 @@
 ```toml
 name = "Sub"
 domain = "ai.onnx"
+shape_inference = "propagateShapeAndTypeFromFirstInput"
 
 [attributes.axis]
 type = "INT"

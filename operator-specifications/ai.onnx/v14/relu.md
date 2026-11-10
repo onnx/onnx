@@ -1,6 +1,7 @@
 ```toml
 name = "Relu"
 domain = "ai.onnx"
+shape_inference = "propagateShapeAndTypeFromFirstInput"
 
 [type_constraints.T]
 types = [

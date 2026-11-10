@@ -1,6 +1,7 @@
 ```toml
 name = "Normalizer"
 domain = "ai.onnx.ml"
+shape_inference = false
 
 [attributes.norm]
 type = "STRING"

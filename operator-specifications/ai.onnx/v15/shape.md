@@ -1,6 +1,8 @@
 ```toml
 name = "Shape"
 domain = "ai.onnx"
+shape_inference = "defs::tensor::utils::ShapeShapeInference_opset15"
+data_propagation = "defs::tensor::utils::ShapeDataPropagation_opset15"
 
 [attributes.end]
 type = "INT"

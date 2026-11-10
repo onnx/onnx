@@ -1,6 +1,8 @@
 ```toml
 name = "CausalConvWithState"
 domain = "ai.onnx"
+shape_inference = "defs::nn::utils::CausalConvWithStateShapeInference_opset27"
+function_body_builders = { 27 = "defs::nn::utils::CausalConvWithStateFunctionBody_opset27" }
 
 [attributes.activation]
 type = "STRING"

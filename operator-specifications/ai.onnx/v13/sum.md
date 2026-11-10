@@ -1,6 +1,7 @@
 ```toml
 name = "Sum"
 domain = "ai.onnx"
+shape_inference = "defs::math::utils::ElementwiseMultiOpShapeInference"
 
 [[inputs]]
 name = "data_0"

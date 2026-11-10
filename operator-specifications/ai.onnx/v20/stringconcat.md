@@ -1,6 +1,7 @@
 ```toml
 name = "StringConcat"
 domain = "ai.onnx"
+shape_inference = "defs::text::utils::StringConcatShapeInference_opset20"
 
 [[inputs]]
 name = "X"

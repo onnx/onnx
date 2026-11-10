@@ -1,6 +1,7 @@
 ```toml
 name = "BitwiseNot"
 domain = "ai.onnx"
+shape_inference = "propagateShapeAndTypeFromFirstInput"
 
 [[inputs]]
 name = "X"

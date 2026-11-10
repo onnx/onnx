@@ -1,6 +1,7 @@
 ```toml
 name = "DeformConv"
 domain = "ai.onnx"
+shape_inference = "defs::nn::utils::DeformConvShapeInference_opset19"
 
 [attributes.dilations]
 type = "INTS"

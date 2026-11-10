@@ -1,6 +1,8 @@
 ```toml
 name = "Squeeze"
 domain = "ai.onnx"
+shape_inference = "defs::tensor::utils::SqueezeShapeInference_opset23"
+data_propagation = "defs::tensor::utils::SqueezeDataPropagation_opset23"
 
 [[inputs]]
 name = "data"

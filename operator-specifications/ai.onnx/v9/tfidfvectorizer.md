@@ -1,6 +1,7 @@
 ```toml
 name = "TfIdfVectorizer"
 domain = "ai.onnx"
+shape_inference = "defs::nn::utils::TfIdfVectorizerShapeInference_opset9"
 
 [attributes.max_gram_length]
 type = "INT"

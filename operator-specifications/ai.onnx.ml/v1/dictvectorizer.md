@@ -1,6 +1,7 @@
 ```toml
 name = "DictVectorizer"
 domain = "ai.onnx.ml"
+shape_inference = "defs::traditionalml::utils::DictVectorizerShapeInference_opset1"
 
 [attributes.int64_vocabulary]
 type = "INTS"

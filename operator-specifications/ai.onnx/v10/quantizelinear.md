@@ -1,6 +1,7 @@
 ```toml
 name = "QuantizeLinear"
 domain = "ai.onnx"
+shape_inference = "defs::quantization::utils::QuantizeLinearShapeInference_opset10"
 
 [[inputs]]
 name = "x"

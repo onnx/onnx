@@ -1,6 +1,7 @@
 ```toml
 name = "Resize"
 domain = "ai.onnx"
+shape_inference = "defs::tensor::utils::resizeShapeInference_opset13_to_18"
 
 [attributes.coordinate_transformation_mode]
 type = "STRING"

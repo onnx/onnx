@@ -1,6 +1,7 @@
 ```toml
 name = "CategoryMapper"
 domain = "ai.onnx.ml"
+shape_inference = "defs::traditionalml::utils::CategoryMapperShapeInference_opset1"
 
 [attributes.cats_int64s]
 type = "INTS"

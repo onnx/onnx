@@ -1,6 +1,7 @@
 ```toml
 name = "QLinearConv"
 domain = "ai.onnx"
+shape_inference = "defs::nn::utils::QLinearConvShapeInference_opset10"
 
 [attributes.auto_pad]
 type = "STRING"

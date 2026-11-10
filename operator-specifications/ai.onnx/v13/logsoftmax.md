@@ -2,6 +2,10 @@
 name = "LogSoftmax"
 domain = "ai.onnx"
 node_determinism = "deterministic"
+shape_inference = "defs::math::utils::LogSoftmaxShapeInference_opset13"
+# Function for opset 13
+# Function for opset 18
+function_body_builders = { 13 = "defs::math::utils::LogSoftmaxFunctionBody_opset13", 18 = "defs::math::utils::LogSoftmaxFunctionBody_opset18" }
 
 [attributes.axis]
 type = "INT"

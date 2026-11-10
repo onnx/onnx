@@ -17,58 +17,32 @@ std::function<void(OpSchema&)> BinaryLogicDocGenerator() {
       [=](OpSchema& schema) { schema.TypeAndShapeInferenceFunction(defs::logical::utils::binaryLogicalOpInference); };
 }
 
-ONNX_OPERATOR_SET_SCHEMA(And, 7, generated::ai_onnx::And_ver7().FillUsing(BinaryLogicDocGenerator()));
+ONNX_OPERATOR_SET_SCHEMA(And, 7, generated::ai_onnx::And_ver7());
 
-ONNX_OPERATOR_SET_SCHEMA(Or, 7, generated::ai_onnx::Or_ver7().FillUsing(BinaryLogicDocGenerator()));
+ONNX_OPERATOR_SET_SCHEMA(Or, 7, generated::ai_onnx::Or_ver7());
 
-ONNX_OPERATOR_SET_SCHEMA(Xor, 7, generated::ai_onnx::Xor_ver7().FillUsing(BinaryLogicDocGenerator()));
+ONNX_OPERATOR_SET_SCHEMA(Xor, 7, generated::ai_onnx::Xor_ver7());
 
-ONNX_OPERATOR_SET_SCHEMA(Greater, 13, generated::ai_onnx::Greater_ver13().FillUsing(BinaryLogicDocGenerator()));
+ONNX_OPERATOR_SET_SCHEMA(Greater, 13, generated::ai_onnx::Greater_ver13());
 
-ONNX_OPERATOR_SET_SCHEMA(Less, 13, generated::ai_onnx::Less_ver13().FillUsing(BinaryLogicDocGenerator()));
+ONNX_OPERATOR_SET_SCHEMA(Less, 13, generated::ai_onnx::Less_ver13());
 
-ONNX_OPERATOR_SET_SCHEMA(Equal, 19, generated::ai_onnx::Equal_ver19().FillUsing(BinaryLogicDocGenerator()));
+ONNX_OPERATOR_SET_SCHEMA(Equal, 19, generated::ai_onnx::Equal_ver19());
 
-ONNX_OPERATOR_SET_SCHEMA(
-    Not,
-    1,
-    generated::ai_onnx::Not_ver1().TypeAndShapeInferenceFunction(defs::logical::utils::unaryLogicalOpInference));
+ONNX_OPERATOR_SET_SCHEMA(Not, 1, generated::ai_onnx::Not_ver1());
 
-ONNX_OPERATOR_SET_SCHEMA(
-    BitShift,
-    28,
-    generated::ai_onnx::BitShift_ver28().TypeAndShapeInferenceFunction(
-        defs::logical::utils::BitShiftShapeInference_opset28));
+ONNX_OPERATOR_SET_SCHEMA(BitShift, 28, generated::ai_onnx::BitShift_ver28());
 
-ONNX_OPERATOR_SET_SCHEMA(
-    LessOrEqual,
-    16,
-    generated::ai_onnx::LessOrEqual_ver16()
-        .FillUsing(BinaryLogicDocGenerator())
-        .TypeAndShapeInferenceFunction(defs::logical::utils::binaryLogicalOpInference));
+ONNX_OPERATOR_SET_SCHEMA(LessOrEqual, 16, generated::ai_onnx::LessOrEqual_ver16());
 
-ONNX_OPERATOR_SET_SCHEMA(
-    GreaterOrEqual,
-    16,
-    generated::ai_onnx::GreaterOrEqual_ver16()
-        .FillUsing(BinaryLogicDocGenerator())
-        .TypeAndShapeInferenceFunction(defs::logical::utils::binaryLogicalOpInference));
+ONNX_OPERATOR_SET_SCHEMA(GreaterOrEqual, 16, generated::ai_onnx::GreaterOrEqual_ver16());
 
-ONNX_OPERATOR_SET_SCHEMA(
-    BitwiseNot,
-    18,
-    generated::ai_onnx::BitwiseNot_ver18().TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
+ONNX_OPERATOR_SET_SCHEMA(BitwiseNot, 18, generated::ai_onnx::BitwiseNot_ver18());
 
-static std::function<void(OpSchema&)> BinaryBitwiseDocGenerator() {
-  return [=](OpSchema& schema) {
-    schema.TypeAndShapeInferenceFunction(defs::logical::utils::BinaryBitwiseShapeInference);
-  };
-}
+ONNX_OPERATOR_SET_SCHEMA(BitwiseAnd, 18, generated::ai_onnx::BitwiseAnd_ver18());
 
-ONNX_OPERATOR_SET_SCHEMA(BitwiseAnd, 18, generated::ai_onnx::BitwiseAnd_ver18().FillUsing(BinaryBitwiseDocGenerator()));
+ONNX_OPERATOR_SET_SCHEMA(BitwiseOr, 18, generated::ai_onnx::BitwiseOr_ver18());
 
-ONNX_OPERATOR_SET_SCHEMA(BitwiseOr, 18, generated::ai_onnx::BitwiseOr_ver18().FillUsing(BinaryBitwiseDocGenerator()));
-
-ONNX_OPERATOR_SET_SCHEMA(BitwiseXor, 18, generated::ai_onnx::BitwiseXor_ver18().FillUsing(BinaryBitwiseDocGenerator()));
+ONNX_OPERATOR_SET_SCHEMA(BitwiseXor, 18, generated::ai_onnx::BitwiseXor_ver18());
 
 } // namespace ONNX_NAMESPACE

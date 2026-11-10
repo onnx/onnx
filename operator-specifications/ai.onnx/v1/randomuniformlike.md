@@ -2,6 +2,7 @@
 name = "RandomUniformLike"
 domain = "ai.onnx"
 node_determinism = "non_deterministic"
+shape_inference = "defs::generator::utils::RandomUniformLikeShapeInference_opset1"
 
 [attributes.dtype]
 type = "INT"

@@ -1,6 +1,7 @@
 ```toml
 name = "LSTM"
 domain = "ai.onnx"
+shape_inference = "defs::rnn::utils::RNNShapeInference"
 
 [[inputs]]
 name = "X"

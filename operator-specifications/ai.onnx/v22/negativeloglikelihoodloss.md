@@ -1,6 +1,8 @@
 ```toml
 name = "NegativeLogLikelihoodLoss"
 domain = "ai.onnx"
+shape_inference = "defs::math::utils::NegativeLogLikelihoodLossShapeInference_opset22"
+function_body_builders = { 22 = "defs::math::utils::BuildContextDependentFunctionBody" }
 
 [type_constraints.T]
 types = "all_float_types_ir4"

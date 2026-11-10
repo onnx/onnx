@@ -1,6 +1,7 @@
 ```toml
 name = "Relu"
 domain = "ai.onnx"
+shape_inference = false
 
 [attributes.consumed_inputs]
 type = "INTS"

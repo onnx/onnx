@@ -1,6 +1,7 @@
 ```toml
 name = "CastMap"
 domain = "ai.onnx.ml"
+shape_inference = "defs::traditionalml::utils::CastMapShapeInference_opset1"
 
 [attributes.cast_to]
 type = "STRING"

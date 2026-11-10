@@ -2,6 +2,7 @@
 name = "Pow"
 domain = "ai.onnx"
 attributes = {}
+shape_inference = "defs::math::utils::PowShapeInference_opset7"
 
 [[inputs]]
 name = "X"

@@ -9,22 +9,10 @@
 
 namespace ONNX_NAMESPACE {
 
-ONNX_OPERATOR_SET_SCHEMA(
-    QuantizeLinear,
-    28,
-    generated::ai_onnx::QuantizeLinear_ver28().TypeAndShapeInferenceFunction(
-        defs::quantization::utils::QuantizeLinearShapeInference_opset28));
+ONNX_OPERATOR_SET_SCHEMA(QuantizeLinear, 28, generated::ai_onnx::QuantizeLinear_ver28());
 
-ONNX_OPERATOR_SET_SCHEMA(
-    DequantizeLinear,
-    28,
-    generated::ai_onnx::DequantizeLinear_ver28().TypeAndShapeInferenceFunction(
-        defs::quantization::utils::DequantizeLinearShapeInference_opset28));
+ONNX_OPERATOR_SET_SCHEMA(DequantizeLinear, 28, generated::ai_onnx::DequantizeLinear_ver28());
 
-ONNX_OPERATOR_SET_SCHEMA(
-    DynamicQuantizeLinear,
-    11,
-    generated::ai_onnx::DynamicQuantizeLinear_ver11().TypeAndShapeInferenceFunction(
-        defs::quantization::utils::DynamicQuantizeLinearShapeInference_opset11));
+ONNX_OPERATOR_SET_SCHEMA(DynamicQuantizeLinear, 11, generated::ai_onnx::DynamicQuantizeLinear_ver11());
 
 } // namespace ONNX_NAMESPACE

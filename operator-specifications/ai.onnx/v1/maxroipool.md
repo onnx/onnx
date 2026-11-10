@@ -1,6 +1,7 @@
 ```toml
 name = "MaxRoiPool"
 domain = "ai.onnx"
+shape_inference = "defs::nn::utils::roiPoolTypeShapeInference_opset1"
 
 [attributes.pooled_shape]
 type = "INTS"

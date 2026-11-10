@@ -1,6 +1,7 @@
 ```toml
 name = "ReverseSequence"
 domain = "ai.onnx"
+shape_inference = "defs::tensor::utils::ReverseSequenceShapeInference_opset10"
 
 [attributes.batch_axis]
 type = "INT"

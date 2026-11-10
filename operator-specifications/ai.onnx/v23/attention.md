@@ -2,6 +2,8 @@
 name = "Attention"
 domain = "ai.onnx"
 node_determinism = "deterministic"
+shape_inference = "defs::nn::utils::AttentionPropagateElemTypeFromInputToOutput"
+function_body_builders = { 23 = "defs::nn::utils::AttentionFunctionBody_opset23" }
 
 [attributes.is_causal]
 type = "INT"

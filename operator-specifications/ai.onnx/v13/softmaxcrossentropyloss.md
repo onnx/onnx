@@ -1,6 +1,8 @@
 ```toml
 name = "SoftmaxCrossEntropyLoss"
 domain = "ai.onnx"
+shape_inference = "defs::math::utils::SoftmaxCrossEntropyLossShapeInference_opset13"
+function_body_builders = { 13 = "defs::math::utils::BuildContextDependentFunctionBodySCE" }
 
 [[inputs]]
 name = "scores"

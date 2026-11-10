@@ -2,6 +2,7 @@
 name = "BitCast"
 domain = "ai.onnx"
 node_determinism = "deterministic"
+shape_inference = "defs::tensor::utils::BitCastShapeInference_opset26"
 
 [attributes.to]
 type = "INT"

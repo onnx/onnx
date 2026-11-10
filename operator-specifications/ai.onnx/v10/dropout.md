@@ -1,6 +1,7 @@
 ```toml
 name = "Dropout"
 domain = "ai.onnx"
+shape_inference = "defs::nn::utils::DropoutShapeInference_opset10"
 
 [[outputs]]
 name = "output"

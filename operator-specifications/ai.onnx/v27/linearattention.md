@@ -1,6 +1,8 @@
 ```toml
 name = "LinearAttention"
 domain = "ai.onnx"
+shape_inference = "defs::nn::utils::LinearAttentionShapeInference_opset27"
+function_body_builders = { 27 = "defs::nn::utils::LinearAttentionFunctionBody_opset27" }
 
 [attributes.chunk_size]
 type = "INT"

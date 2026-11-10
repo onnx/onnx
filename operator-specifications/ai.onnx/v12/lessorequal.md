@@ -1,6 +1,7 @@
 ```toml
 name = "LessOrEqual"
 domain = "ai.onnx"
+shape_inference = false
 
 [[inputs]]
 name = "A"

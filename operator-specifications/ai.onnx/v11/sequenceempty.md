@@ -1,6 +1,7 @@
 ```toml
 name = "SequenceEmpty"
 domain = "ai.onnx"
+shape_inference = "defs::sequence::utils::SequenceEmptyShapeInference_opset11"
 
 [attributes.dtype]
 type = "INT"

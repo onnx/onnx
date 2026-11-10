@@ -17,11 +17,6 @@ namespace ONNX_NAMESPACE {
 // Operator Schema Registration
 // ---------------------------------------------------------------------------
 
-ONNX_PREVIEW_OPERATOR_SET_SCHEMA(
-    FlexAttention,
-    1,
-    generated::ai_onnx_preview::FlexAttention_ver1()
-        .TypeAndShapeInferenceFunction(defs::preview::utils::FlexAttentionShapeInference)
-        .SetContextDependentFunctionBodyBuilder(defs::preview::utils::BuildFlexAttentionFunctionBody));
+ONNX_PREVIEW_OPERATOR_SET_SCHEMA(FlexAttention, 1, generated::ai_onnx_preview::FlexAttention_ver1());
 
 } // namespace ONNX_NAMESPACE

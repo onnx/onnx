@@ -1,6 +1,7 @@
 ```toml
 name = "GRU"
 domain = "ai.onnx"
+shape_inference = "defs::rnn::utils::RNNShapeInference_opset7_to_13"
 
 [attributes.activation_alpha]
 type = "FLOATS"

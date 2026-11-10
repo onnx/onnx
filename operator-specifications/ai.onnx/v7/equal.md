@@ -2,6 +2,7 @@
 name = "Equal"
 domain = "ai.onnx"
 attributes = {}
+shape_inference = "defs::logical::utils::BinaryLogicShapeInference_opset7"
 
 [[inputs]]
 name = "A"

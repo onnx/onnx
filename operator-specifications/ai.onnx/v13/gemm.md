@@ -1,6 +1,7 @@
 ```toml
 name = "Gemm"
 domain = "ai.onnx"
+shape_inference = "defs::math::utils::GemmShapeInference_opset13"
 
 [[inputs]]
 name = "A"

@@ -1,6 +1,7 @@
 ```toml
 name = "FeatureVectorizer"
 domain = "ai.onnx.ml"
+shape_inference = false
 
 [attributes.inputdimensions]
 type = "INTS"

@@ -1,6 +1,7 @@
 ```toml
 name = "ConcatFromSequence"
 domain = "ai.onnx"
+shape_inference = "defs::sequence::utils::ConcatFromSequenceShapeInference_opset11"
 
 [attributes.axis]
 type = "INT"

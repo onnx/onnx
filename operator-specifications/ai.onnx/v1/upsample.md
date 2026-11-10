@@ -2,6 +2,7 @@
 name = "Upsample"
 domain = "ai.onnx"
 support_level = "experimental"
+shape_inference = false
 
 [attributes.height_scale]
 type = "FLOAT"

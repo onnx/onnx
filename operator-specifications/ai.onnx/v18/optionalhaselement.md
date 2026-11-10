@@ -1,6 +1,7 @@
 ```toml
 name = "OptionalHasElement"
 domain = "ai.onnx"
+shape_inference = "defs::optional::utils::OptionalHasElementInference"
 
 [[inputs]]
 name = "input"

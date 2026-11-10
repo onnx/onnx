@@ -2,6 +2,8 @@
 name = "Range"
 domain = "ai.onnx"
 function_bodies = {}
+shape_inference = "defs::generator::utils::RangeShapeInference_opset27"
+function_body_builders = { 27 = "defs::generator::utils::BuildFunctionBodyRange27" }
 
 [attributes.stash_type]
 type = "INT"

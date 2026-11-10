@@ -2,6 +2,8 @@
 name = "NegativeLogLikelihoodLoss"
 domain = "ai.onnx"
 node_determinism = "deterministic"
+shape_inference = "defs::math::utils::NegativeLogLikelihoodLossShapeInference_opset12"
+function_body_builders = { 12 = "defs::math::utils::BuildContextDependentFunctionBody_opset12" }
 
 [attributes.ignore_index]
 type = "INT"

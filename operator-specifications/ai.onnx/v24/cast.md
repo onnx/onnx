@@ -1,6 +1,8 @@
 ```toml
 name = "Cast"
 domain = "ai.onnx"
+shape_inference = "defs::tensor::utils::CastShapeInference_opset24"
+data_propagation = "defs::tensor::utils::CastDataPropagation_opset24"
 
 [attributes.round_mode]
 type = "STRING"

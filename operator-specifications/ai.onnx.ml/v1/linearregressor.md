@@ -1,6 +1,7 @@
 ```toml
 name = "LinearRegressor"
 domain = "ai.onnx.ml"
+shape_inference = false
 
 [attributes.coefficients]
 type = "FLOATS"

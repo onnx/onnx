@@ -2,6 +2,8 @@
 name = "Gelu"
 domain = "ai.onnx"
 node_determinism = "deterministic"
+shape_inference = "propagateShapeAndTypeFromFirstInput"
+function_body_builders = { 20 = "defs::math::utils::BuildContextDependentFunctionBodyGelu" }
 
 [attributes.approximate]
 type = "STRING"

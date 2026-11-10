@@ -1,6 +1,7 @@
 ```toml
 name = "Cast"
 domain = "ai.onnx"
+shape_inference = "defs::tensor::utils::CastShapeInference_opset9"
 
 [type_constraints.T1]
 types = [

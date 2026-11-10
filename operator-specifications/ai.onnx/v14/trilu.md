@@ -1,6 +1,7 @@
 ```toml
 name = "Trilu"
 domain = "ai.onnx"
+shape_inference = "defs::tensor::utils::TriluShapeInference_opset14"
 
 [attributes.upper]
 type = "INT"

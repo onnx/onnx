@@ -1,6 +1,7 @@
 ```toml
 name = "LabelEncoder"
 domain = "ai.onnx.ml"
+shape_inference = "defs::traditionalml::utils::LabelEncoderShapeInference_opset1"
 
 [attributes.classes_strings]
 type = "STRINGS"

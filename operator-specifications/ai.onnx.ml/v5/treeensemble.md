@@ -1,6 +1,7 @@
 ```toml
 name = "TreeEnsemble"
 domain = "ai.onnx.ml"
+shape_inference = "defs::traditionalml::utils::TreeEnsembleShapeInference_opset5"
 
 [attributes.aggregate_function]
 type = "INT"

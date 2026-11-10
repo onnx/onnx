@@ -1,6 +1,7 @@
 ```toml
 name = "Unique"
 domain = "ai.onnx"
+shape_inference = "defs::tensor::utils::UniqueShapeInference_opset11"
 
 [attributes.axis]
 type = "INT"

@@ -1,6 +1,7 @@
 ```toml
 name = "Adam"
 domain = "ai.onnx.preview.training"
+shape_inference = "defs::training::utils::AdamShapeInference_opset1"
 
 [attributes.alpha]
 type = "FLOAT"

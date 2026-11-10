@@ -2,6 +2,7 @@
 name = "Or"
 domain = "ai.onnx"
 attributes = {}
+shape_inference = "defs::logical::utils::binaryLogicalOpInference"
 
 [[inputs]]
 name = "A"

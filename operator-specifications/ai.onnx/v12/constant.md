@@ -1,6 +1,7 @@
 ```toml
 name = "Constant"
 domain = "ai.onnx"
+shape_inference = "defs::generator::utils::ConstantOpInference"
 
 [attributes.sparse_value]
 type = "SPARSE_TENSOR"

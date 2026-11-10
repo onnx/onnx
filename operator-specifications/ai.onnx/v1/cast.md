@@ -1,6 +1,7 @@
 ```toml
 name = "Cast"
 domain = "ai.onnx"
+shape_inference = false
 
 [attributes.to]
 type = "STRING"

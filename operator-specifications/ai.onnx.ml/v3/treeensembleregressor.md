@@ -1,6 +1,7 @@
 ```toml
 name = "TreeEnsembleRegressor"
 domain = "ai.onnx.ml"
+shape_inference = "defs::traditionalml::utils::TreeEnsembleRegressorShapeInference_opset3"
 
 [attributes.aggregate_function]
 type = "STRING"

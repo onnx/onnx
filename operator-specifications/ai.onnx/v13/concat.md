@@ -1,6 +1,8 @@
 ```toml
 name = "Concat"
 domain = "ai.onnx"
+shape_inference = "defs::tensor::utils::ConcatShapeInference_opset13"
+data_propagation = "defs::tensor::utils::ConcatDataPropagation_opset13"
 
 [[inputs]]
 name = "inputs"

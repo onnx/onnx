@@ -1,6 +1,7 @@
 ```toml
 name = "CumProd"
 domain = "ai.onnx"
+shape_inference = "propagateShapeAndTypeFromFirstInput"
 
 [attributes.exclusive]
 type = "INT"

@@ -1,6 +1,7 @@
 ```toml
 name = "ZipMap"
 domain = "ai.onnx.ml"
+shape_inference = "defs::traditionalml::utils::ZipMapShapeInference_opset1"
 
 [attributes.classlabels_int64s]
 type = "INTS"

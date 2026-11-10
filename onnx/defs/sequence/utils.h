@@ -14,8 +14,6 @@
 
 namespace ONNX_NAMESPACE::defs::sequence::utils {
 
-std::function<void(OpSchema&)> SplitToSequenceOpGenerator();
-
 void SplitToSequenceShapeInference(InferenceContext& ctx);
 void SequenceEmptyShapeInference_opset11(InferenceContext& ctx);
 void SequenceConstructShapeInference_opset11(InferenceContext& ctx);

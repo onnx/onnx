@@ -2,6 +2,7 @@
 name = "Dropout"
 domain = "ai.onnx"
 node_determinism = "non_deterministic"
+shape_inference = false
 
 [attributes.consumed_inputs]
 type = "INTS"

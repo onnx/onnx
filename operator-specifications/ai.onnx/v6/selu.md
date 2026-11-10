@@ -1,6 +1,7 @@
 ```toml
 name = "Selu"
 domain = "ai.onnx"
+shape_inference = "propagateShapeAndTypeFromFirstInput"
 
 [attributes.alpha]
 type = "FLOAT"

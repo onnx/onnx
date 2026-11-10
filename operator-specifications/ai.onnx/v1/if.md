@@ -1,6 +1,7 @@
 ```toml
 name = "If"
 domain = "ai.onnx"
+shape_inference = "defs::controlflow::utils::IfInferenceFunction_opset1"
 
 [attributes.else_branch]
 type = "GRAPH"

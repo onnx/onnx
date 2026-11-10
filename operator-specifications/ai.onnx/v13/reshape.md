@@ -1,6 +1,7 @@
 ```toml
 name = "Reshape"
 domain = "ai.onnx"
+shape_inference = "defs::tensor::utils::ReshapeShapeInference_opset13"
 
 [[inputs]]
 name = "data"

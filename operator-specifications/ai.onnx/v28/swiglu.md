@@ -2,6 +2,7 @@
 name = "SwiGLU"
 domain = "ai.onnx"
 node_determinism = "deterministic"
+shape_inference = "defs::math::utils::SwiGLUShapeInference"
 
 [attributes.alpha]
 type = "FLOAT"

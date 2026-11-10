@@ -1,6 +1,7 @@
 ```toml
 name = "MaxUnpool"
 domain = "ai.onnx"
+shape_inference = "defs::nn::utils::maxUnpoolShapeInference_opset9"
 
 [attributes.kernel_shape]
 type = "INTS"

@@ -1,6 +1,7 @@
 ```toml
 name = "MaxPool"
 domain = "ai.onnx"
+shape_inference = "defs::nn::utils::MaxPoolShapeInference_opset22"
 
 [type_constraints.T]
 types = "all_float_types_plus_Xint8_ir4"

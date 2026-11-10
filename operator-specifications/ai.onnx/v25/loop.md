@@ -1,6 +1,7 @@
 ```toml
 name = "Loop"
 domain = "ai.onnx"
+shape_inference = "defs::controlflow::utils::LoopInferenceFunction"
 
 [type_constraints.V]
 types = [

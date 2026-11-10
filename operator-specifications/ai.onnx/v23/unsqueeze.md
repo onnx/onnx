@@ -1,6 +1,8 @@
 ```toml
 name = "Unsqueeze"
 domain = "ai.onnx"
+shape_inference = "defs::tensor::utils::UnsqueezeShapeInference_opset23"
+data_propagation = "defs::tensor::utils::UnsqueezeDataPropagation_opset23"
 
 [[inputs]]
 name = "data"

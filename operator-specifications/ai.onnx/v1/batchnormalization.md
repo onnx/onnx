@@ -2,6 +2,7 @@
 name = "BatchNormalization"
 domain = "ai.onnx"
 num_outputs = [1, 5]
+shape_inference = false
 
 [attributes.consumed_inputs]
 type = "INTS"

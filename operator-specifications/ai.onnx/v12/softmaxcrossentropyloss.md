@@ -2,6 +2,8 @@
 name = "SoftmaxCrossEntropyLoss"
 domain = "ai.onnx"
 node_determinism = "deterministic"
+shape_inference = "defs::math::utils::SoftmaxCrossEntropyLossShapeInference_opset12"
+function_body_builders = { 12 = "defs::math::utils::BuildContextDependentFunctionBodySCE_opset12" }
 
 [attributes.ignore_index]
 type = "INT"

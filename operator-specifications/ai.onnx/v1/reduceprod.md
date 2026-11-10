@@ -1,6 +1,7 @@
 ```toml
 name = "ReduceProd"
 domain = "ai.onnx"
+shape_inference = "defs::reduction::utils::ReduceShapeInference_opset1"
 
 [attributes.axes]
 type = "INTS"

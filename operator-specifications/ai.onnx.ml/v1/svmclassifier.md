@@ -1,6 +1,7 @@
 ```toml
 name = "SVMClassifier"
 domain = "ai.onnx.ml"
+shape_inference = "defs::traditionalml::utils::SVMClassifierShapeInference_opset1"
 
 [attributes.classlabels_ints]
 type = "INTS"

@@ -2,6 +2,7 @@
 name = "RandomNormalLike"
 domain = "ai.onnx"
 node_determinism = "non_deterministic"
+shape_inference = "defs::generator::utils::RandomNormalLikeShapeInference_opset1"
 
 [attributes.dtype]
 type = "INT"

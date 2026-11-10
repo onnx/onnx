@@ -1,6 +1,7 @@
 ```toml
 name = "ArgMin"
 domain = "ai.onnx"
+shape_inference = "defs::reduction::utils::ArgReduceShapeInference_opset11"
 
 [attributes.axis]
 type = "INT"

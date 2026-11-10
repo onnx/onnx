@@ -1,6 +1,7 @@
 ```toml
 name = "Loop"
 domain = "ai.onnx"
+shape_inference = "defs::controlflow::utils::LoopInferenceFunction_opset13"
 
 [[outputs]]
 name = "v_final_and_scan_outputs"

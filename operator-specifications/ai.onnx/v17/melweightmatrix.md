@@ -1,6 +1,7 @@
 ```toml
 name = "MelWeightMatrix"
 domain = "ai.onnx"
+shape_inference = "defs::math::utils::MelWeightMatrixShapeInference_opset17"
 
 [attributes.output_datatype]
 type = "INT"

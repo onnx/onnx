@@ -1,6 +1,7 @@
 ```toml
 name = "Scan"
 domain = "ai.onnx"
+shape_inference = "defs::controlflow::utils::ScanInferenceFunction_opset8"
 
 [attributes.body]
 type = "GRAPH"

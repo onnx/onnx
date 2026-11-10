@@ -1,6 +1,7 @@
 ```toml
 name = "RegexFullMatch"
 domain = "ai.onnx"
+shape_inference = "defs::text::utils::RegexFullMatchShapeInference_opset20"
 
 [attributes.pattern]
 type = "STRING"

@@ -1,6 +1,7 @@
 ```toml
 name = "OptionalGetElement"
 domain = "ai.onnx"
+shape_inference = "defs::optional::utils::OptionalGetElementShapeInference_opset15"
 
 [[inputs]]
 name = "input"

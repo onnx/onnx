@@ -1,6 +1,7 @@
 ```toml
 name = "AveragePool"
 domain = "ai.onnx"
+shape_inference = "defs::nn::utils::AveragePoolShapeInference_opset22"
 
 [type_constraints.T]
 types = "all_float_types_ir4"

@@ -1,6 +1,7 @@
 ```toml
 name = "GlobalMaxPool"
 domain = "ai.onnx"
+shape_inference = "defs::nn::utils::globalPoolTypeShapeInference_opset1"
 
 [[inputs]]
 name = "X"

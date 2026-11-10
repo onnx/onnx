@@ -1,6 +1,8 @@
 ```toml
 name = "NegativeLogLikelihoodLoss"
 domain = "ai.onnx"
+shape_inference = "defs::math::utils::NegativeLogLikelihoodLossShapeInference_opset13"
+function_body_builders = { 13 = "defs::math::utils::BuildContextDependentFunctionBody_opset13" }
 
 [[inputs]]
 name = "input"

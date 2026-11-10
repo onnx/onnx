@@ -1,6 +1,7 @@
 ```toml
 name = "TreeEnsembleClassifier"
 domain = "ai.onnx.ml"
+shape_inference = "defs::traditionalml::utils::TreeEnsembleClassifierShapeInference_opset1"
 
 [attributes.base_values]
 type = "FLOATS"

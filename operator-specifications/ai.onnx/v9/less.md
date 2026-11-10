@@ -1,6 +1,7 @@
 ```toml
 name = "Less"
 domain = "ai.onnx"
+shape_inference = "defs::logical::utils::BinaryLogicShapeInference_opset12"
 
 [type_constraints.T]
 types = "all_numeric_types"

@@ -1,6 +1,7 @@
 ```toml
 name = "Col2Im"
 domain = "ai.onnx"
+shape_inference = "defs::nn::utils::col2imShapeInference"
 
 [attributes.dilations]
 type = "INTS"

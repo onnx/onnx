@@ -2,6 +2,7 @@
 name = "Sub"
 domain = "ai.onnx"
 attributes = {}
+shape_inference = "defs::math::utils::MathShapeInference_opset_7"
 
 [[inputs]]
 name = "A"

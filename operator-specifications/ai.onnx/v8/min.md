@@ -1,6 +1,7 @@
 ```toml
 name = "Min"
 domain = "ai.onnx"
+shape_inference = "defs::math::utils::ElementwiseMultiOpShapeInference_old"
 
 [[inputs]]
 name = "data_0"

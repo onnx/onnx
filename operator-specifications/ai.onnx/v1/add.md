@@ -1,6 +1,7 @@
 ```toml
 name = "Add"
 domain = "ai.onnx"
+shape_inference = false
 
 [attributes.axis]
 type = "INT"

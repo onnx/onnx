@@ -2,6 +2,7 @@
 name = "Reshape"
 domain = "ai.onnx"
 attributes = {}
+shape_inference = "defs::tensor::utils::ReshapeShapeInference_opset5"
 
 [[inputs]]
 name = "data"

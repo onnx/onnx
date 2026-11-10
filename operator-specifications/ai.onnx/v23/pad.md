@@ -1,6 +1,7 @@
 ```toml
 name = "Pad"
 domain = "ai.onnx"
+shape_inference = "defs::tensor::utils::PadShapeInference"
 
 [type_constraints.T]
 types = "all_tensor_types_ir11"

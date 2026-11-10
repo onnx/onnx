@@ -1,6 +1,7 @@
 ```toml
 name = "Size"
 domain = "ai.onnx"
+shape_inference = "defs::tensor::utils::SizeShapeInference_opset1"
 
 [[inputs]]
 name = "data"

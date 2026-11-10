@@ -1,6 +1,7 @@
 ```toml
 name = "Adagrad"
 domain = "ai.onnx.preview.training"
+shape_inference = "defs::training::utils::AdagradShapeInference_opset1"
 
 [attributes.decay_factor]
 type = "FLOAT"

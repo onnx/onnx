@@ -1,6 +1,7 @@
 ```toml
 name = "EyeLike"
 domain = "ai.onnx"
+shape_inference = "defs::generator::utils::EyeLikeShapeInference_opset9"
 
 [attributes.dtype]
 type = "INT"

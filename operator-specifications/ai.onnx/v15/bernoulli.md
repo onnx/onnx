@@ -2,6 +2,8 @@
 name = "Bernoulli"
 domain = "ai.onnx"
 node_determinism = "non_deterministic"
+shape_inference = "defs::generator::utils::BernoulliShapeInference_opset15"
+function_body_builders = { 15 = "defs::generator::utils::BernoulliFunctionBody_opset15" }
 
 [attributes.dtype]
 type = "INT"

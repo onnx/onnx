@@ -1,6 +1,7 @@
 ```toml
 name = "Constant"
 domain = "ai.onnx"
+shape_inference = "defs::generator::utils::ConstantShapeInference_opset1"
 
 [attributes.value]
 type = "TENSOR"

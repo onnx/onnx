@@ -2,6 +2,7 @@
 name = "Multinomial"
 domain = "ai.onnx"
 node_determinism = "non_deterministic"
+shape_inference = "defs::generator::utils::MultinomialShapeInference_opset7"
 
 [attributes.dtype]
 type = "INT"

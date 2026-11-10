@@ -1,6 +1,7 @@
 ```toml
 name = "Not"
 domain = "ai.onnx"
+shape_inference = "defs::logical::utils::unaryLogicalOpInference"
 
 [[inputs]]
 name = "X"

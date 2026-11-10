@@ -2,6 +2,8 @@
 name = "Clip"
 domain = "ai.onnx"
 node_determinism = "deterministic"
+shape_inference = "propagateShapeAndTypeFromFirstInput"
+function_body_builders = { 13 = "defs::math::utils::BuildContextDependentFunctionBodyClip" }
 
 [[inputs]]
 name = "input"

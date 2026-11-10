@@ -1,6 +1,7 @@
 ```toml
 name = "MatMulInteger"
 domain = "ai.onnx"
+shape_inference = "defs::math::utils::MatMulIntegerShapeInference_opset10"
 
 [[inputs]]
 name = "A"

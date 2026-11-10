@@ -1,6 +1,7 @@
 ```toml
 name = "NonZero"
 domain = "ai.onnx"
+shape_inference = "defs::tensor::utils::NonZeroShapeInference_opset9"
 
 [[inputs]]
 name = "X"

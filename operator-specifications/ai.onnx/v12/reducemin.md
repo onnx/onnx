@@ -1,6 +1,7 @@
 ```toml
 name = "ReduceMin"
 domain = "ai.onnx"
+shape_inference = "defs::reduction::utils::ReduceShapeInference_opset12"
 
 [type_constraints.T]
 types = [

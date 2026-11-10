@@ -1,6 +1,7 @@
 ```toml
 name = "Scatter"
 domain = "ai.onnx"
+shape_inference = "defs::tensor::utils::ScatterShapeInference_opset9"
 
 [attributes.axis]
 type = "INT"

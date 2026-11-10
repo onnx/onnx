@@ -1,6 +1,7 @@
 ```toml
 name = "NonMaxSuppression"
 domain = "ai.onnx"
+shape_inference = "defs::object_detection::utils::NonMaxSuppressionShapeInference_opset11"
 
 [[inputs]]
 name = "boxes"

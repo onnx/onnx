@@ -1,6 +1,7 @@
 ```toml
 name = "DepthToSpace"
 domain = "ai.onnx"
+shape_inference = "defs::tensor::utils::DepthToSpaceShapeInference_opset13"
 
 [[inputs]]
 name = "input"

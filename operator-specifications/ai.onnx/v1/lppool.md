@@ -1,6 +1,7 @@
 ```toml
 name = "LpPool"
 domain = "ai.onnx"
+shape_inference = false
 
 [attributes.auto_pad]
 type = "STRING"

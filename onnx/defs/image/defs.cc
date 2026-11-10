@@ -11,10 +11,6 @@
 
 namespace ONNX_NAMESPACE {
 
-ONNX_OPERATOR_SET_SCHEMA(
-    ImageDecoder,
-    20,
-    generated::ai_onnx::ImageDecoder_ver20().TypeAndShapeInferenceFunction(
-        defs::image::utils::ImageDecoderShapeInference_opset20));
+ONNX_OPERATOR_SET_SCHEMA(ImageDecoder, 20, generated::ai_onnx::ImageDecoder_ver20());
 
 } // namespace ONNX_NAMESPACE

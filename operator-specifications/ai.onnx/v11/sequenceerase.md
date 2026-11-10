@@ -1,6 +1,7 @@
 ```toml
 name = "SequenceErase"
 domain = "ai.onnx"
+shape_inference = "defs::sequence::utils::SequenceEraseShapeInference_opset11"
 
 [[inputs]]
 name = "input_sequence"

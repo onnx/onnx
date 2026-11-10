@@ -1,6 +1,7 @@
 ```toml
 name = "LpPool"
 domain = "ai.onnx"
+shape_inference = "defs::nn::utils::LpPoolShapeInference_opset2"
 
 [attributes.auto_pad]
 type = "STRING"

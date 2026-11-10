@@ -1,6 +1,7 @@
 ```toml
 name = "QLinearMatMul"
 domain = "ai.onnx"
+shape_inference = "defs::math::utils::QLinearMatMulShapeInference"
 
 [[inputs]]
 name = "a"

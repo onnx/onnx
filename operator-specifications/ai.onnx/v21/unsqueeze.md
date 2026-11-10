@@ -1,6 +1,8 @@
 ```toml
 name = "Unsqueeze"
 domain = "ai.onnx"
+shape_inference = "defs::tensor::utils::UnsqueezeShapeInference_opset21"
+data_propagation = "defs::tensor::utils::UnsqueezeDataPropagation_opset21"
 
 [type_constraints.T]
 types = "all_tensor_types_ir10"

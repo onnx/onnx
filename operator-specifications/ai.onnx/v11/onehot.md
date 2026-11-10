@@ -1,6 +1,7 @@
 ```toml
 name = "OneHot"
 domain = "ai.onnx"
+shape_inference = "defs::tensor::utils::OneHotShapeInference_opset11"
 
 [attributes.axis]
 type = "INT"

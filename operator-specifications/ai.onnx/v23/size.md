@@ -1,6 +1,8 @@
 ```toml
 name = "Size"
 domain = "ai.onnx"
+shape_inference = "defs::tensor::utils::SizeShapeInference_opset23"
+data_propagation = "defs::tensor::utils::SizeDataPropagation_opset23"
 
 [type_constraints.T]
 types = "all_tensor_types_ir11"

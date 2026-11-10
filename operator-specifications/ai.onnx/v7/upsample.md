@@ -2,6 +2,7 @@
 name = "Upsample"
 domain = "ai.onnx"
 support_level = "common"
+shape_inference = "defs::tensor::utils::UpsampleShapeInference_opset7"
 
 [attributes.mode]
 type = "STRING"

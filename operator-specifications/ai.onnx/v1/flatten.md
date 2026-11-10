@@ -1,6 +1,7 @@
 ```toml
 name = "Flatten"
 domain = "ai.onnx"
+shape_inference = "defs::nn::utils::FlattenShapeInference_opset1"
 
 [attributes.axis]
 type = "INT"

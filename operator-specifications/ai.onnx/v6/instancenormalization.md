@@ -1,6 +1,7 @@
 ```toml
 name = "InstanceNormalization"
 domain = "ai.onnx"
+shape_inference = "propagateShapeAndTypeFromFirstInput"
 
 [attributes.epsilon]
 type = "FLOAT"

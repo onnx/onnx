@@ -1,6 +1,7 @@
 ```toml
 name = "GreaterOrEqual"
 domain = "ai.onnx"
+shape_inference = "defs::logical::utils::binaryLogicalOpInference"
 
 [type_constraints.T]
 types = "all_numeric_types_ir4"

@@ -1,6 +1,7 @@
 ```toml
 name = "Transpose"
 domain = "ai.onnx"
+shape_inference = "defs::tensor::utils::TransposeShapeInference_opset1"
 
 [attributes.perm]
 type = "INTS"

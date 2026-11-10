@@ -1,6 +1,8 @@
 ```toml
 name = "Cast"
 domain = "ai.onnx"
+shape_inference = "defs::tensor::utils::CastShapeInference_opset19"
+data_propagation = "defs::tensor::utils::CastDataPropagation_opset19"
 
 [attributes.saturate]
 type = "INT"

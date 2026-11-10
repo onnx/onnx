@@ -1,6 +1,7 @@
 ```toml
 name = "SplitToSequence"
 domain = "ai.onnx"
+shape_inference = "defs::sequence::utils::SplitToSequenceShapeInference"
 
 [attributes.axis]
 type = "INT"

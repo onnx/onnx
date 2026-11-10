@@ -2,6 +2,7 @@
 name = "TreeEnsembleClassifier"
 domain = "ai.onnx.ml"
 deprecated = true
+shape_inference = false
 ```
 
 This operator is DEPRECATED. Please use TreeEnsemble with provides similar functionality.

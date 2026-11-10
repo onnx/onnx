@@ -1,6 +1,7 @@
 ```toml
 name = "BatchNormalization"
 domain = "ai.onnx"
+shape_inference = "defs::nn::utils::BatchNormalizationShapeInference_opset15"
 
 [attributes.epsilon]
 type = "FLOAT"

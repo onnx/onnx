@@ -1,6 +1,7 @@
 ```toml
 name = "RNN"
 domain = "ai.onnx"
+shape_inference = "defs::rnn::utils::RNNShapeInference"
 
 [type_constraints.T]
 types = "all_float_types_ir4"

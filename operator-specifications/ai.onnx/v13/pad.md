@@ -1,6 +1,7 @@
 ```toml
 name = "Pad"
 domain = "ai.onnx"
+shape_inference = "defs::tensor::utils::PadShapeInference_opset13"
 
 [[inputs]]
 name = "data"

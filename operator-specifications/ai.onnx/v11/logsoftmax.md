@@ -1,6 +1,7 @@
 ```toml
 name = "LogSoftmax"
 domain = "ai.onnx"
+shape_inference = "defs::math::utils::LogSoftmaxShapeInference_opset11"
 
 [attributes.axis]
 type = "INT"

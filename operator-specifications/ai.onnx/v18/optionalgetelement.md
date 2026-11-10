@@ -1,6 +1,7 @@
 ```toml
 name = "OptionalGetElement"
 domain = "ai.onnx"
+shape_inference = "defs::optional::utils::OptionalGetElementInference"
 
 [type_constraints.O]
 types = [

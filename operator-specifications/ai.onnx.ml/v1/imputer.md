@@ -1,6 +1,7 @@
 ```toml
 name = "Imputer"
 domain = "ai.onnx.ml"
+shape_inference = false
 
 [attributes.imputed_value_floats]
 type = "FLOATS"

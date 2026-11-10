@@ -16,13 +16,6 @@
 
 namespace ONNX_NAMESPACE::defs::math::utils {
 
-std::function<void(OpSchema&)> TopKOpGenerator();
-
-std::function<void(OpSchema&)> EinsumOpGenerator();
-
-// Unary elementwise ops on float types: T input -> T output, no attrs, no function body.
-std::function<void(OpSchema&)> UnaryFloatMathOpGenerator();
-
 template <typename T>
 T GetScalarValueFromTensor(const ONNX_NAMESPACE::TensorProto* t) {
   if (t == nullptr) {

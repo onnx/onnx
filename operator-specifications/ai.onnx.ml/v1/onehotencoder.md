@@ -1,6 +1,7 @@
 ```toml
 name = "OneHotEncoder"
 domain = "ai.onnx.ml"
+shape_inference = "defs::traditionalml::utils::OneHotEncoderShapeInference_opset1"
 
 [attributes.cats_int64s]
 type = "INTS"

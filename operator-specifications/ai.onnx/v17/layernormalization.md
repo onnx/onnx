@@ -3,6 +3,8 @@ name = "LayerNormalization"
 domain = "ai.onnx"
 node_determinism = "deterministic"
 allow_unchecked_attributes = true
+shape_inference = "defs::nn::utils::LayerNormalizationShapeInference_opset17"
+function_body_builders = { 17 = "defs::nn::utils::BuildContextDependentFunctionBodyLayerNormalizationVer17", 18 = "defs::nn::utils::BuildContextDependentFunctionBodyLayerNormalizationVer18" }
 
 [attributes.axis]
 type = "INT"

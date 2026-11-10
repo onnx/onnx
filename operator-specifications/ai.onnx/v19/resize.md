@@ -1,6 +1,7 @@
 ````toml
 name = "Resize"
 domain = "ai.onnx"
+shape_inference = "defs::tensor::utils::resizeShapeInference_opset18_to_19"
 
 [attributes.antialias]
 type = "INT"

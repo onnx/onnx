@@ -1,6 +1,7 @@
 ```toml
 name = "Softmax"
 domain = "ai.onnx"
+shape_inference = "defs::math::utils::SoftmaxShapeInference_opset11"
 
 [attributes.axis]
 type = "INT"

@@ -1,6 +1,7 @@
 ```toml
 name = "ScatterND"
 domain = "ai.onnx"
+shape_inference = "propagateShapeAndTypeFromFirstInput"
 
 [[inputs]]
 name = "data"

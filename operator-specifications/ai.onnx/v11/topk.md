@@ -1,6 +1,7 @@
 ```toml
 name = "TopK"
 domain = "ai.onnx"
+shape_inference = "defs::math::utils::TopKShapeInference"
 
 [attributes.axis]
 type = "INT"

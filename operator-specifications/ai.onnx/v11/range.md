@@ -2,6 +2,7 @@
 name = "Range"
 domain = "ai.onnx"
 node_determinism = "deterministic"
+shape_inference = "defs::generator::utils::RangeShapeInference_opset11"
 
 [[inputs]]
 name = "start"

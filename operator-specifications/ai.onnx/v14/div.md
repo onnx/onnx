@@ -1,6 +1,7 @@
 ```toml
 name = "Div"
 domain = "ai.onnx"
+shape_inference = "defs::math::utils::MathShapeInference"
 
 [type_constraints.T]
 types = "all_numeric_types_ir4"

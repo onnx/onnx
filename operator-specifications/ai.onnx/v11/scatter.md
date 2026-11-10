@@ -2,6 +2,7 @@
 name = "Scatter"
 domain = "ai.onnx"
 deprecated = true
+shape_inference = "defs::tensor::utils::ScatterShapeInference_opset11"
 
 [attributes.axis]
 type = "INT"

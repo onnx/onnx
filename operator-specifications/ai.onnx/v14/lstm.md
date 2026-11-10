@@ -1,6 +1,7 @@
 ```toml
 name = "LSTM"
 domain = "ai.onnx"
+shape_inference = "defs::rnn::utils::RNNShapeInference_opset14"
 
 [attributes.activation_alpha]
 type = "FLOATS"

@@ -2,6 +2,7 @@
 name = "Slice"
 domain = "ai.onnx"
 attributes = {}
+shape_inference = "defs::tensor::utils::SliceShapeInference_opset10"
 
 [[inputs]]
 name = "data"

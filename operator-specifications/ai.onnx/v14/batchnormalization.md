@@ -2,6 +2,7 @@
 name = "BatchNormalization"
 domain = "ai.onnx"
 num_outputs = [1, 3]
+shape_inference = "defs::nn::utils::BatchNormalizationShapeInference_opset14"
 
 [attributes.epsilon]
 type = "FLOAT"

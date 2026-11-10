@@ -1,6 +1,7 @@
 ```toml
 name = "If"
 domain = "ai.onnx"
+shape_inference = "defs::controlflow::utils::IfInferenceFunction"
 
 [type_constraints.V]
 types = [

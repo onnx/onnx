@@ -1,6 +1,7 @@
 ```toml
 name = "Dropout"
 domain = "ai.onnx"
+shape_inference = "propagateShapeAndTypeFromFirstInput"
 
 [attributes.ratio]
 type = "FLOAT"

@@ -1,6 +1,8 @@
 ```toml
 name = "CastLike"
 domain = "ai.onnx"
+shape_inference = "defs::tensor::utils::CastLikeShapeInference_opset19"
+function_body_builders = { 19 = "defs::tensor::utils::CastLikeFunctionBody_opset19" }
 
 [attributes.saturate]
 type = "INT"

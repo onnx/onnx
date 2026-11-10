@@ -2,6 +2,8 @@
 name = "RotaryEmbedding"
 domain = "ai.onnx"
 node_determinism = "deterministic"
+shape_inference = "defs::nn::utils::RotaryEmbeddingShapeInference_opset23"
+function_body_builders = { 23 = "defs::nn::utils::RotaryEmbeddingFunctionBody_opset23" }
 
 [attributes.interleaved]
 type = "INT"

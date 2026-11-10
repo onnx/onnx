@@ -1,6 +1,7 @@
 ```toml
 name = "GlobalLpPool"
 domain = "ai.onnx"
+shape_inference = "defs::nn::utils::globalPoolTypeShapeInference_opset2"
 
 [attributes.p]
 type = "INT"

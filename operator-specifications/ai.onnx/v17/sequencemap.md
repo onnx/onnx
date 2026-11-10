@@ -3,6 +3,8 @@ name = "SequenceMap"
 domain = "ai.onnx"
 # Setting `NonDeterministic` since it needs to be evaluated after function inlining
 node_determinism = "non_deterministic"
+shape_inference = "defs::sequence::utils::SequenceMapInferenceFunction"
+function_body_builders = { 17 = "defs::sequence::utils::BuildSequenceMapBodyFunc" }
 
 [attributes.body]
 type = "GRAPH"

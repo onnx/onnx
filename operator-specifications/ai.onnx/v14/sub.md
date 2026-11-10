@@ -1,6 +1,8 @@
 ```toml
 name = "Sub"
 domain = "ai.onnx"
+shape_inference = "defs::math::utils::MathShapeInference"
+data_propagation = "defs::math::utils::SubDataPropagation_opset14"
 
 [type_constraints.T]
 types = "all_numeric_types_ir4"

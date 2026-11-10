@@ -1,6 +1,7 @@
 ```toml
 name = "Squeeze"
 domain = "ai.onnx"
+shape_inference = "defs::tensor::utils::SqueezeShapeInference_opset11"
 
 [attributes.axes]
 type = "INTS"

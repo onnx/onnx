@@ -1,6 +1,7 @@
 ```toml
 name = "Hardmax"
 domain = "ai.onnx"
+shape_inference = "defs::math::utils::HardmaxShapeInference_opset13"
 
 [attributes.axis]
 type = "INT"

@@ -1,6 +1,7 @@
 ```toml
 name = "StringNormalizer"
 domain = "ai.onnx"
+shape_inference = "defs::text::utils::StringNormalizerShapeInference_opset10"
 
 [attributes.case_change_action]
 type = "STRING"

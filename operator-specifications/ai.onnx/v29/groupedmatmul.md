@@ -2,6 +2,8 @@
 name = "GroupedMatMul"
 domain = "ai.onnx"
 node_determinism = "deterministic"
+shape_inference = "defs::math::utils::GroupedMatMulShapeInference"
+function_body_builders = { 29 = "defs::math::utils::BuildContextDependentFunctionBodyGroupedMatMul" }
 
 [[inputs]]
 name = "input"

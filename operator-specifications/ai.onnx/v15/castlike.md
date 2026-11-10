@@ -2,6 +2,8 @@
 name = "CastLike"
 domain = "ai.onnx"
 node_determinism = "deterministic"
+shape_inference = "defs::tensor::utils::CastLikeShapeInference_opset15"
+function_body_builders = { 15 = "defs::tensor::utils::CastLikeFunctionBody_opset15" }
 
 [[inputs]]
 name = "input"

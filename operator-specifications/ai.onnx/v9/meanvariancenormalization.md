@@ -1,6 +1,7 @@
 ```toml
 name = "MeanVarianceNormalization"
 domain = "ai.onnx"
+shape_inference = false
 
 [attributes.axes]
 type = "INTS"

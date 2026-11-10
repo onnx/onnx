@@ -1,6 +1,7 @@
 ```toml
 name = "AffineGrid"
 domain = "ai.onnx"
+shape_inference = "defs::tensor::utils::AffineGridShapeInference_opset20"
 
 [attributes.align_corners]
 type = "INT"

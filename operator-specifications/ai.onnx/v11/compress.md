@@ -1,6 +1,7 @@
 ```toml
 name = "Compress"
 domain = "ai.onnx"
+shape_inference = "defs::tensor::utils::CompressShapeInference_opset11"
 
 [attributes.axis]
 type = "INT"

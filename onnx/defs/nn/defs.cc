@@ -200,189 +200,62 @@ ONNX_API void convPoolShapeInference(
   }
 }
 
-ONNX_OPERATOR_SET_SCHEMA(
-    AveragePool,
-    22,
-    generated::ai_onnx::AveragePool_ver22().TypeAndShapeInferenceFunction(
-        defs::nn::utils::AveragePoolShapeInference_opset22));
+ONNX_OPERATOR_SET_SCHEMA(AveragePool, 22, generated::ai_onnx::AveragePool_ver22());
 
-ONNX_OPERATOR_SET_SCHEMA(
-    MaxPool,
-    22,
-    generated::ai_onnx::MaxPool_ver22().TypeAndShapeInferenceFunction(defs::nn::utils::MaxPoolShapeInference_opset22));
+ONNX_OPERATOR_SET_SCHEMA(MaxPool, 22, generated::ai_onnx::MaxPool_ver22());
 
-ONNX_OPERATOR_SET_SCHEMA(
-    MaxUnpool,
-    22,
-    generated::ai_onnx::MaxUnpool_ver22().TypeAndShapeInferenceFunction(defs::nn::utils::maxUnpoolShapeInference));
+ONNX_OPERATOR_SET_SCHEMA(MaxUnpool, 22, generated::ai_onnx::MaxUnpool_ver22());
 
-static std::function<void(OpSchema&)> LpPoolOpSchemaGenerator() {
-  return [=](OpSchema& schema) { schema.TypeAndShapeInferenceFunction(defs::nn::utils::LpPoolShapeInference); };
-}
+ONNX_OPERATOR_SET_SCHEMA(LpPool, 22, generated::ai_onnx::LpPool_ver22());
 
-ONNX_OPERATOR_SET_SCHEMA(LpPool, 22, generated::ai_onnx::LpPool_ver22().FillUsing(LpPoolOpSchemaGenerator()));
+ONNX_OPERATOR_SET_SCHEMA(MaxRoiPool, 22, generated::ai_onnx::MaxRoiPool_ver22());
 
-static std::function<void(OpSchema&)> RoiPoolOpSchemaGenerator() {
-  return [=](OpSchema& schema) { schema.TypeAndShapeInferenceFunction(defs::nn::utils::roiPoolTypeShapeInference); };
-}
+ONNX_OPERATOR_SET_SCHEMA(Conv, 22, generated::ai_onnx::Conv_ver22());
 
-ONNX_OPERATOR_SET_SCHEMA(MaxRoiPool, 22, generated::ai_onnx::MaxRoiPool_ver22().FillUsing(RoiPoolOpSchemaGenerator()));
+ONNX_OPERATOR_SET_SCHEMA(QLinearConv, 10, generated::ai_onnx::QLinearConv_ver10());
 
-static std::function<void(OpSchema&)> ConvOpSchemaGenerator() {
-  return [=](OpSchema& schema) { schema.TypeAndShapeInferenceFunction(defs::nn::utils::ConvShapeInference); };
-}
+ONNX_OPERATOR_SET_SCHEMA(ConvInteger, 10, generated::ai_onnx::ConvInteger_ver10());
 
-ONNX_OPERATOR_SET_SCHEMA(Conv, 22, generated::ai_onnx::Conv_ver22().FillUsing(ConvOpSchemaGenerator()));
+ONNX_OPERATOR_SET_SCHEMA(ConvTranspose, 22, generated::ai_onnx::ConvTranspose_ver22());
 
-ONNX_OPERATOR_SET_SCHEMA(
-    QLinearConv,
-    10,
-    generated::ai_onnx::QLinearConv_ver10().TypeAndShapeInferenceFunction(
-        defs::nn::utils::QLinearConvShapeInference_opset10));
+ONNX_OPERATOR_SET_SCHEMA(DeformConv, 22, generated::ai_onnx::DeformConv_ver22());
 
-ONNX_OPERATOR_SET_SCHEMA(
-    ConvInteger,
-    10,
-    generated::ai_onnx::ConvInteger_ver10().TypeAndShapeInferenceFunction(
-        defs::nn::utils::ConvIntegerShapeInference_opset10));
+ONNX_OPERATOR_SET_SCHEMA(GlobalAveragePool, 22, generated::ai_onnx::GlobalAveragePool_ver22());
+ONNX_OPERATOR_SET_SCHEMA(GlobalMaxPool, 22, generated::ai_onnx::GlobalMaxPool_ver22());
 
-static std::function<void(OpSchema&)> ConvTransposeOpSchemaGenerator() {
-  return [=](OpSchema& schema) { schema.TypeAndShapeInferenceFunction(defs::nn::utils::convTransposeShapeInference); };
-}
+ONNX_OPERATOR_SET_SCHEMA(GlobalLpPool, 22, generated::ai_onnx::GlobalLpPool_ver22());
 
-ONNX_OPERATOR_SET_SCHEMA(
-    ConvTranspose,
-    22,
-    generated::ai_onnx::ConvTranspose_ver22().FillUsing(ConvTransposeOpSchemaGenerator()));
+ONNX_OPERATOR_SET_SCHEMA(BatchNormalization, 15, generated::ai_onnx::BatchNormalization_ver15());
 
-ONNX_OPERATOR_SET_SCHEMA(
-    DeformConv,
-    22,
-    generated::ai_onnx::DeformConv_ver22().TypeAndShapeInferenceFunction(
-        defs::nn::utils::DeformConvShapeInference_opset22));
+ONNX_OPERATOR_SET_SCHEMA(InstanceNormalization, 22, generated::ai_onnx::InstanceNormalization_ver22());
 
-static std::function<void(OpSchema&)> GlobalPoolingOpSchemaGenerator() {
-  return [=](OpSchema& schema) { schema.TypeAndShapeInferenceFunction(defs::nn::utils::globalPoolTypeShapeInference); };
-}
-ONNX_OPERATOR_SET_SCHEMA(
-    GlobalAveragePool,
-    22,
-    generated::ai_onnx::GlobalAveragePool_ver22().FillUsing(GlobalPoolingOpSchemaGenerator()));
-ONNX_OPERATOR_SET_SCHEMA(
-    GlobalMaxPool,
-    22,
-    generated::ai_onnx::GlobalMaxPool_ver22().FillUsing(GlobalPoolingOpSchemaGenerator()));
+ONNX_OPERATOR_SET_SCHEMA(LpNormalization, 22, generated::ai_onnx::LpNormalization_ver22());
 
-static std::function<void(OpSchema&)> GlobalLpPoolingOpSchemaGenerator() {
-  return [=](OpSchema& schema) { schema.TypeAndShapeInferenceFunction(defs::nn::utils::globalPoolTypeShapeInference); };
-}
+ONNX_OPERATOR_SET_SCHEMA(Dropout, 22, generated::ai_onnx::Dropout_ver22());
 
-ONNX_OPERATOR_SET_SCHEMA(
-    GlobalLpPool,
-    22,
-    generated::ai_onnx::GlobalLpPool_ver22().FillUsing(GlobalLpPoolingOpSchemaGenerator()));
+ONNX_OPERATOR_SET_SCHEMA(Shrink, 9, generated::ai_onnx::Shrink_ver9());
 
-ONNX_OPERATOR_SET_SCHEMA(
-    BatchNormalization,
-    15,
-    generated::ai_onnx::BatchNormalization_ver15().TypeAndShapeInferenceFunction(
-        defs::nn::utils::BatchNormalizationShapeInference_opset15));
+ONNX_OPERATOR_SET_SCHEMA(Flatten, 25, generated::ai_onnx::Flatten_ver25());
 
-ONNX_OPERATOR_SET_SCHEMA(
-    InstanceNormalization,
-    22,
-    generated::ai_onnx::InstanceNormalization_ver22().TypeAndShapeInferenceFunction(
-        propagateShapeAndTypeFromFirstInput));
+ONNX_OPERATOR_SET_SCHEMA(LRN, 13, generated::ai_onnx::LRN_ver13());
 
-ONNX_OPERATOR_SET_SCHEMA(
-    LpNormalization,
-    22,
-    generated::ai_onnx::LpNormalization_ver22().TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
-
-ONNX_OPERATOR_SET_SCHEMA(
-    Dropout,
-    22,
-    generated::ai_onnx::Dropout_ver22().TypeAndShapeInferenceFunction(defs::nn::utils::DropoutShapeInference_opset22));
-
-ONNX_OPERATOR_SET_SCHEMA(
-    Shrink,
-    9,
-    generated::ai_onnx::Shrink_ver9().TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
-
-ONNX_OPERATOR_SET_SCHEMA(
-    Flatten,
-    25,
-    generated::ai_onnx::Flatten_ver25().TypeAndShapeInferenceFunction(defs::nn::utils::FlattenShapeInference_opset25));
-
-ONNX_OPERATOR_SET_SCHEMA(
-    LRN,
-    13,
-    generated::ai_onnx::LRN_ver13().TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
-
-ONNX_OPERATOR_SET_SCHEMA(
-    TfIdfVectorizer,
-    9,
-    generated::ai_onnx::TfIdfVectorizer_ver9().TypeAndShapeInferenceFunction(
-        defs::nn::utils::TfIdfVectorizerShapeInference_opset9));
+ONNX_OPERATOR_SET_SCHEMA(TfIdfVectorizer, 9, generated::ai_onnx::TfIdfVectorizer_ver9());
 
 ONNX_OPERATOR_SET_SCHEMA(MeanVarianceNormalization, 13, generated::ai_onnx::MeanVarianceNormalization_ver13());
 
-ONNX_OPERATOR_SET_SCHEMA(
-    Col2Im,
-    18,
-    generated::ai_onnx::Col2Im_ver18().TypeAndShapeInferenceFunction(defs::nn::utils::col2imShapeInference));
+ONNX_OPERATOR_SET_SCHEMA(Col2Im, 18, generated::ai_onnx::Col2Im_ver18());
 
-ONNX_OPERATOR_SET_SCHEMA(
-    LayerNormalization,
-    17,
-    generated::ai_onnx::LayerNormalization_ver17()
-        .SetContextDependentFunctionBodyBuilder(
-            defs::nn::utils::BuildContextDependentFunctionBodyLayerNormalizationVer17,
-            17)
-        .SetContextDependentFunctionBodyBuilder(
-            defs::nn::utils::BuildContextDependentFunctionBodyLayerNormalizationVer18,
-            18)
-        .TypeAndShapeInferenceFunction(defs::nn::utils::LayerNormalizationShapeInference_opset17));
+ONNX_OPERATOR_SET_SCHEMA(LayerNormalization, 17, generated::ai_onnx::LayerNormalization_ver17());
 
-ONNX_OPERATOR_SET_SCHEMA(
-    GroupNormalization,
-    21,
-    generated::ai_onnx::GroupNormalization_ver21()
-        .TypeAndShapeInferenceFunction(defs::nn::utils::GroupNormalizationShapeInference)
-        .SetContextDependentFunctionBodyBuilder(defs::nn::utils::GroupNormalizationFunctionBody_opset21));
+ONNX_OPERATOR_SET_SCHEMA(GroupNormalization, 21, generated::ai_onnx::GroupNormalization_ver21());
 
-ONNX_OPERATOR_SET_SCHEMA(
-    RMSNormalization,
-    23,
-    generated::ai_onnx::RMSNormalization_ver23()
-        .TypeAndShapeInferenceFunction(defs::nn::utils::RMSNormalizationShapeInference_opset23)
-        .SetContextDependentFunctionBodyBuilder(defs::nn::utils::RMSNormalizationFunctionBody_opset23));
+ONNX_OPERATOR_SET_SCHEMA(RMSNormalization, 23, generated::ai_onnx::RMSNormalization_ver23());
 
-ONNX_OPERATOR_SET_SCHEMA(
-    RotaryEmbedding,
-    23,
-    generated::ai_onnx::RotaryEmbedding_ver23()
-        .TypeAndShapeInferenceFunction(defs::nn::utils::RotaryEmbeddingShapeInference_opset23)
-        .SetContextDependentFunctionBodyBuilder(defs::nn::utils::RotaryEmbeddingFunctionBody_opset23));
+ONNX_OPERATOR_SET_SCHEMA(RotaryEmbedding, 23, generated::ai_onnx::RotaryEmbedding_ver23());
 
-ONNX_OPERATOR_SET_SCHEMA(
-    Attention,
-    25,
-    generated::ai_onnx::Attention_ver25()
-        .TypeAndShapeInferenceFunction(defs::nn::utils::Attention25Inference)
-        .SetContextDependentFunctionBodyBuilder(defs::nn::utils::AttentionFunctionBody_opset25));
+ONNX_OPERATOR_SET_SCHEMA(Attention, 25, generated::ai_onnx::Attention_ver25());
 
-ONNX_OPERATOR_SET_SCHEMA(
-    CausalConvWithState,
-    27,
-    generated::ai_onnx::CausalConvWithState_ver27()
-        .TypeAndShapeInferenceFunction(defs::nn::utils::CausalConvWithStateShapeInference_opset27)
-        .SetContextDependentFunctionBodyBuilder(defs::nn::utils::CausalConvWithStateFunctionBody_opset27));
+ONNX_OPERATOR_SET_SCHEMA(CausalConvWithState, 27, generated::ai_onnx::CausalConvWithState_ver27());
 
-ONNX_OPERATOR_SET_SCHEMA(
-    LinearAttention,
-    27,
-    generated::ai_onnx::LinearAttention_ver27()
-        .SetContextDependentFunctionBodyBuilder(defs::nn::utils::LinearAttentionFunctionBody_opset27)
-        .TypeAndShapeInferenceFunction(defs::nn::utils::LinearAttentionShapeInference_opset27));
+ONNX_OPERATOR_SET_SCHEMA(LinearAttention, 27, generated::ai_onnx::LinearAttention_ver27());
 } // namespace ONNX_NAMESPACE

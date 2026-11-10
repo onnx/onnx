@@ -1,6 +1,7 @@
 ```toml
 name = "Hardmax"
 domain = "ai.onnx"
+shape_inference = "propagateShapeAndTypeFromFirstInput"
 
 [attributes.axis]
 type = "INT"

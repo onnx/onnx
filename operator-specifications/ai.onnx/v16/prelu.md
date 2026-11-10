@@ -1,6 +1,7 @@
 ```toml
 name = "PRelu"
 domain = "ai.onnx"
+shape_inference = "propagateShapeAndTypeFromFirstInput"
 
 [type_constraints.T]
 types = "numeric_types_for_math_reduction_ir4"

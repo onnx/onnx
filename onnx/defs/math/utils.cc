@@ -88,14 +88,6 @@ void TopKShapeInference(InferenceContext& ctx) {
   return;
 }
 
-std::function<void(OpSchema&)> TopKOpGenerator() {
-  return [](OpSchema& schema) { schema.TypeAndShapeInferenceFunction(TopKShapeInference); };
-}
-
-std::function<void(OpSchema&)> UnaryFloatMathOpGenerator() {
-  return [](OpSchema& schema) { schema.TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput); };
-}
-
 int64_t MathOpTwoIntegers(std::string_view op_type, int64_t a, int64_t b) {
   bool (*checked_op)(int64_t, int64_t, int64_t*) = nullptr;
   if (op_type == "Add") {
@@ -398,10 +390,6 @@ void EinsumShapeInference(InferenceContext& ctx) {
   equation.erase(std::remove(equation.begin(), equation.end(), ' '),
                  equation.end()); // Remove space char
   einsumShapeInference(ctx, equation);
-}
-
-std::function<void(OpSchema&)> EinsumOpGenerator() {
-  return [](OpSchema& schema) { schema.TypeAndShapeInferenceFunction(EinsumShapeInference); };
 }
 
 static void MathOpDataPropagator(DataPropagationContext& ctx, std::string_view op_type) {

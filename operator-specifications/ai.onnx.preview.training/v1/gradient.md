@@ -1,6 +1,7 @@
 ```toml
 name = "Gradient"
 domain = "ai.onnx.preview.training"
+shape_inference = false
 
 [attributes.xs]
 type = "STRINGS"

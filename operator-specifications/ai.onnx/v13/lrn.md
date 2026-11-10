@@ -1,6 +1,7 @@
 ```toml
 name = "LRN"
 domain = "ai.onnx"
+shape_inference = "propagateShapeAndTypeFromFirstInput"
 
 [[inputs]]
 name = "X"

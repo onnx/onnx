@@ -1,6 +1,8 @@
 ```toml
 name = "Gemm"
 domain = "ai.onnx"
+shape_inference = "defs::math::utils::GemmShapeInference"
+function_body_builders = { 29 = "defs::math::utils::BuildContextDependentFunctionBodyGemm" }
 
 [attributes.alpha]
 type = "FLOAT"

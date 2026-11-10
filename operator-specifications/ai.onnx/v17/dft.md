@@ -1,6 +1,7 @@
 ```toml
 name = "DFT"
 domain = "ai.onnx"
+shape_inference = "defs::math::utils::DFTShapeInference_opset17"
 
 [attributes.axis]
 type = "INT"

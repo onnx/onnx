@@ -33,10 +33,6 @@ void OptionalInference(InferenceContext& ctx) {
   }
 }
 
-std::function<void(OpSchema&)> OptionalOpGenerator() {
-  return [](OpSchema& schema) { schema.TypeAndShapeInferenceFunction(OptionalInference); };
-}
-
 void OptionalHasElementInference(InferenceContext& ctx) {
   const size_t numInputs = ctx.getNumInputs();
   if (numInputs != 0 && numInputs != 1) {
@@ -49,10 +45,6 @@ void OptionalHasElementInference(InferenceContext& ctx) {
   auto* output_tensor_type = ctx.getOutputType(0)->mutable_tensor_type();
   output_tensor_type->set_elem_type(TensorProto::BOOL);
   output_tensor_type->mutable_shape()->Clear();
-}
-
-std::function<void(OpSchema&)> OptionalHasElementOpGenerator() {
-  return [](OpSchema& schema) { schema.TypeAndShapeInferenceFunction(OptionalHasElementInference); };
 }
 
 void OptionalGetElementInference(InferenceContext& ctx) {
@@ -72,10 +64,6 @@ void OptionalGetElementInference(InferenceContext& ctx) {
   } else {
     propagateShapeAndTypeFromFirstInput(ctx);
   }
-}
-
-std::function<void(OpSchema&)> OptionalGetElementOpGenerator() {
-  return [](OpSchema& schema) { schema.TypeAndShapeInferenceFunction(OptionalGetElementInference); };
 }
 
 void OptionalHasElementShapeInference_opset15(InferenceContext& ctx) {

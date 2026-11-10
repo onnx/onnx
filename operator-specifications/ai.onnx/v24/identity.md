@@ -1,6 +1,7 @@
 ```toml
 name = "Identity"
 domain = "ai.onnx"
+shape_inference = "propagateShapeAndTypeFromFirstInput"
 
 [type_constraints.V]
 types = [

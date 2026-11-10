@@ -3,6 +3,8 @@ name = "FlexAttention"
 domain = "ai.onnx.preview"
 support_level = "experimental"
 node_determinism = "deterministic"
+shape_inference = "defs::preview::utils::FlexAttentionShapeInference"
+function_body_builders = { 1 = "defs::preview::utils::BuildFlexAttentionFunctionBody" }
 
 [attributes.prob_mod]
 type = "GRAPH"

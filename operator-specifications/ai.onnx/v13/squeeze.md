@@ -2,6 +2,8 @@
 name = "Squeeze"
 domain = "ai.onnx"
 attributes = {}
+shape_inference = "defs::tensor::utils::SqueezeShapeInference_opset13"
+data_propagation = "defs::tensor::utils::SqueezeDataPropagation_opset13"
 
 [[inputs]]
 name = "data"

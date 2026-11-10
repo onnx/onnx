@@ -267,10 +267,6 @@ void resizeShapeInferenceHelper_opset7_to_10(
   }
 }
 
-std::function<void(OpSchema&)> PadDocGenerator() {
-  return [=](OpSchema& schema) { schema.TypeAndShapeInferenceFunction(defs::tensor::utils::PadShapeInference); };
-}
-
 void oneHotShapeInference(InferenceContext& ctx, int version) {
   // Check that the node has three inputs.
   if (ctx.getNumInputs() != 3) {

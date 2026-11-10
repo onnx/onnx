@@ -1,6 +1,7 @@
 ```toml
 name = "Multinomial"
 domain = "ai.onnx"
+shape_inference = "defs::generator::utils::MultinomialShapeInference_opset22"
 
 [type_constraints.T1]
 types = "all_float_types_ir4"

@@ -1,6 +1,7 @@
 ```toml
 name = "StringSplit"
 domain = "ai.onnx"
+shape_inference = "defs::text::utils::StringSplitShapeInference_opset20"
 
 [attributes.delimiter]
 type = "STRING"

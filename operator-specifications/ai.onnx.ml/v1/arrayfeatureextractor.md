@@ -1,6 +1,7 @@
 ```toml
 name = "ArrayFeatureExtractor"
 domain = "ai.onnx.ml"
+shape_inference = "defs::traditionalml::utils::ArrayFeatureExtractorShapeInference_opset1"
 
 [[inputs]]
 name = "X"

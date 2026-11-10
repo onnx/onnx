@@ -1,6 +1,7 @@
 ```toml
 name = "Max"
 domain = "ai.onnx"
+shape_inference = false
 
 [attributes.consumed_inputs]
 type = "INTS"

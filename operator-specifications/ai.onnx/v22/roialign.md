@@ -1,6 +1,7 @@
 ```toml
 name = "RoiAlign"
 domain = "ai.onnx"
+shape_inference = "defs::object_detection::utils::RoiAlignShapeInference_opset22"
 
 [type_constraints.T1]
 types = "all_float_types_ir4"

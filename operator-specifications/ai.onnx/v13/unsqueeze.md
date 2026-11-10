@@ -2,6 +2,8 @@
 name = "Unsqueeze"
 domain = "ai.onnx"
 attributes = {}
+shape_inference = "defs::tensor::utils::UnsqueezeShapeInference_opset13"
+data_propagation = "defs::tensor::utils::UnsqueezeDataPropagation_opset13"
 
 [[inputs]]
 name = "data"

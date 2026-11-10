@@ -1,6 +1,7 @@
 ```toml
 name = "Tile"
 domain = "ai.onnx"
+shape_inference = "defs::tensor::utils::TileShapeInference_opset6"
 
 [[inputs]]
 name = "input"

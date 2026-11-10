@@ -9,11 +9,7 @@
 #include "onnx/defs/schema.h"
 #include "onnx/defs/tensor_proto_util.h"
 
-namespace ONNX_NAMESPACE {
-
-std::function<void(OpSchema&)> ReduceOpGenerator();
-
-} // namespace ONNX_NAMESPACE
+namespace ONNX_NAMESPACE {} // namespace ONNX_NAMESPACE
 
 namespace ONNX_NAMESPACE::defs::reduction::utils {
 

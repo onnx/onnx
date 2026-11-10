@@ -9,12 +9,7 @@
 #include <string>
 #include <vector>
 
-namespace ONNX_NAMESPACE {
-
-std::function<void(OpSchema&)> ReduceOpGenerator() {
-  return [=](OpSchema& schema) { schema.TypeAndShapeInferenceFunction(defs::reduction::utils::ReduceShapeInference); };
-}
-} // namespace ONNX_NAMESPACE
+namespace ONNX_NAMESPACE {} // namespace ONNX_NAMESPACE
 
 namespace ONNX_NAMESPACE::defs::reduction::utils {
 

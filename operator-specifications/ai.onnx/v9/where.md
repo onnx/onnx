@@ -1,6 +1,7 @@
 ```toml
 name = "Where"
 domain = "ai.onnx"
+shape_inference = "defs::tensor::utils::WhereShapeInference_opset9"
 
 [[inputs]]
 name = "condition"

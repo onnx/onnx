@@ -2,6 +2,8 @@
 name = "RMSNormalization"
 domain = "ai.onnx"
 node_determinism = "deterministic"
+shape_inference = "defs::nn::utils::RMSNormalizationShapeInference_opset23"
+function_body_builders = { 23 = "defs::nn::utils::RMSNormalizationFunctionBody_opset23" }
 
 [attributes.axis]
 type = "INT"

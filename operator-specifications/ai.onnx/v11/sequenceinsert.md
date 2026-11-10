@@ -1,6 +1,7 @@
 ```toml
 name = "SequenceInsert"
 domain = "ai.onnx"
+shape_inference = "defs::sequence::utils::SequenceInsertShapeInference_opset11"
 
 [[inputs]]
 name = "input_sequence"

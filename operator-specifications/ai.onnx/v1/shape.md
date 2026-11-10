@@ -1,6 +1,8 @@
 ```toml
 name = "Shape"
 domain = "ai.onnx"
+shape_inference = "defs::tensor::utils::ShapeShapeInference_opset1"
+data_propagation = "defs::tensor::utils::ShapeOp13DataPropagator"
 
 [[inputs]]
 name = "data"

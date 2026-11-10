@@ -1,6 +1,7 @@
 ```toml
 name = "IsNaN"
 domain = "ai.onnx"
+shape_inference = "defs::tensor::utils::IsNaNShapeInference_opset9"
 
 [[inputs]]
 name = "X"

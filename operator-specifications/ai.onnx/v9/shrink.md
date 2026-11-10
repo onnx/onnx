@@ -1,6 +1,7 @@
 ```toml
 name = "Shrink"
 domain = "ai.onnx"
+shape_inference = "propagateShapeAndTypeFromFirstInput"
 
 [attributes.bias]
 type = "FLOAT"

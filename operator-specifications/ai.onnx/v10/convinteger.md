@@ -1,6 +1,7 @@
 ```toml
 name = "ConvInteger"
 domain = "ai.onnx"
+shape_inference = "defs::nn::utils::ConvIntegerShapeInference_opset10"
 
 [attributes.auto_pad]
 type = "STRING"

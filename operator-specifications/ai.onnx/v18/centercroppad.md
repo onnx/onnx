@@ -2,6 +2,8 @@
 name = "CenterCropPad"
 domain = "ai.onnx"
 node_determinism = "deterministic"
+shape_inference = "defs::tensor::utils::CenterCropPadShapeInference_opset18"
+function_body_builders = { 18 = "defs::tensor::utils::CenterCropPadFunctionBody_opset18" }
 
 [attributes.axes]
 type = "INTS"

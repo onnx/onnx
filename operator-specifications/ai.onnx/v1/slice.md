@@ -1,6 +1,7 @@
 ```toml
 name = "Slice"
 domain = "ai.onnx"
+shape_inference = "defs::tensor::utils::SliceShapeInference_opset1"
 
 [attributes.axes]
 type = "INTS"

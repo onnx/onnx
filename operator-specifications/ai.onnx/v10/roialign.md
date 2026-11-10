@@ -1,6 +1,7 @@
 ```toml
 name = "RoiAlign"
 domain = "ai.onnx"
+shape_inference = "defs::object_detection::utils::RoiAlignShapeInference_opset10"
 
 [attributes.mode]
 type = "STRING"

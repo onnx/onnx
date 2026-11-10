@@ -1,6 +1,7 @@
 ```toml
 name = "BitwiseOr"
 domain = "ai.onnx"
+shape_inference = "defs::logical::utils::BinaryBitwiseShapeInference"
 
 [[inputs]]
 name = "A"

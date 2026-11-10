@@ -1,6 +1,7 @@
 ```toml
 name = "DequantizeLinear"
 domain = "ai.onnx"
+shape_inference = "defs::quantization::utils::DequantizeLinearShapeInference_opset21"
 
 [attributes.axis]
 type = "INT"

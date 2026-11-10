@@ -1,6 +1,7 @@
 ```toml
 name = "LeakyRelu"
 domain = "ai.onnx"
+shape_inference = "propagateShapeAndTypeFromFirstInput"
 
 [type_constraints.T]
 types = "all_float_types_ir4"
