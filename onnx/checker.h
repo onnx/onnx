@@ -68,10 +68,18 @@ class CheckerContext final {
 
   void set_model_dir(const std::string& model_dir) {
     model_dir_ = model_dir;
+    // Only a model checked from a file path has a model directory. An
+    // in-memory model keeps the default (no directory), so its external
+    // data locations are never resolved against the working directory.
+    model_dir_from_path_ = true;
   }
 
   const std::string& get_model_dir() const {
     return model_dir_;
+  }
+
+  bool model_dir_from_path() const {
+    return model_dir_from_path_;
   }
 
   bool skip_opset_compatibility_check() const {
@@ -98,6 +106,7 @@ class CheckerContext final {
   bool is_main_graph_ = true;
   const ISchemaRegistry* schema_registry_ = OpSchemaRegistry::Instance();
   std::string model_dir_;
+  bool model_dir_from_path_ = false;
   bool skip_opset_compatibility_check_ = false;
   bool check_custom_domain_ = false;
 };
