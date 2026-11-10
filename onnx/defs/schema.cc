@@ -4,6 +4,7 @@
 
 #include "onnx/defs/schema.h"
 
+#include <algorithm>
 #include <limits>
 #include <memory>
 #include <stdexcept>
@@ -419,6 +420,8 @@ OpSchema& OpSchema::NumInputs(std::unordered_set<int> allowed_input_nums) {
 }
 
 OpSchema& OpSchema::NumOutputs(std::unordered_set<int> allowed_output_nums) {
+  allowed_output_nums_.emplace(allowed_output_nums.begin(), allowed_output_nums.end());
+  std::sort(allowed_output_nums_->begin(), allowed_output_nums_->end());
   num_outputs_allowed_ = [allowed_output_nums = std::move(allowed_output_nums)](int n) -> bool {
     return allowed_output_nums.count(n) > 0;
   };

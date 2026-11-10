@@ -5,6 +5,7 @@
 #include <nanobind/nanobind.h>
 #include <nanobind/operators.h>
 #include <nanobind/stl/function.h>
+#include <nanobind/stl/optional.h>
 #include <nanobind/stl/pair.h>
 #include <nanobind/stl/string.h>
 #include <nanobind/stl/string_view.h>
@@ -451,6 +452,9 @@ NB_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
       .def_prop_ro("has_data_propagation_function", &OpSchema::has_data_propagation_function)
       .def_prop_ro("type_constraints", &OpSchema::typeConstraintParams)
       .def_prop_ro("node_determinism", &OpSchema::GetNodeDeterminism)
+      .def_prop_ro("_declared_node_determinism", &OpSchema::declared_node_determinism)
+      .def_prop_ro("_allows_unchecked_attributes", &OpSchema::allows_unchecked_attributes)
+      .def_prop_ro("_allowed_output_nums", &OpSchema::allowed_output_nums)
       .def_static("is_infinite", [](int v) { return v == std::numeric_limits<int>::max(); })
       .def(
           "_infer_node_outputs",
