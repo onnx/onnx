@@ -46,9 +46,9 @@ You are doing a quick security-triage exercise on the ONNX codebase at <repo>.
 Use ONLY publicly available techniques: reading source, grep, reasoning.
 Do NOT look at security advisories, GHSA files, or the reports/ directory.
 
-Task: Someone reported <one-sentence high-level description: subsystem, bug class,
-rough mechanism — e.g. "an OOB read in Einsum shape inference where the output-shape
-build indexes a dim list with a std::map operator[] lookup on a crafted equation">.
+Task: Someone reported <one-sentence high-level description limited to the subsystem
+and bug class — e.g. "an out-of-bounds read in Einsum shape inference">.
+Do not include implementation details, source fragments, or trigger hints.
 
 Independently locate the responsible code and confirm the mechanism, as a motivated
 researcher who just got this tip. Locating/identifying by reading source is ENOUGH —
@@ -60,10 +60,10 @@ of difficulty given the tip (trivial / few minutes / hours). Be concise.
 ```
 
 Verdict: if the agent lands on the right `file:line` + trigger in "trivial"/"few minutes",
-the report is **publicly known** → should have been a public issue. Note a strengthening
-signal: bugs in subsystems already under continuous public fuzzing (e.g. OSS-Fuzz targets
-such as the checker, loader, text parser, shape inference, and version converter) are
-discoverable with *no* hint at all.
+the report is **publicly known** → should have been a public issue. Public fuzzing
+coverage alone does not show that a specific instance is reachable or readily found.
+Only count it as supporting evidence when the relevant harness has actually
+rediscovered this instance and trigger.
 
 ## Output
 
