@@ -41,7 +41,7 @@ struct CapturedTensorScope {
 
 // Runs before all version conversions, not only MVN: captured IR values may lack
 // the outer value's metadata even after model-level shape inference.
-static void PropagateCapturedTensorTypes(const std::shared_ptr<Graph>& graph, const CapturedTensorScope* outer_scope) {
+void PropagateCapturedTensorTypes(const std::shared_ptr<Graph>& graph, const CapturedTensorScope* outer_scope) {
   assertNonNull(graph);
   CapturedTensorScope scope{outer_scope, {}};
   for (const auto& initializer : graph->initializers()) {
