@@ -89,6 +89,29 @@ def make_sequence_value_info(name, elem_type, shape):
     return make_value_info(name, s_type, shape)
 
 
+def _causal_conv_with_state_from_spec(
+    x, weight, bias=None, past_state=None, *, dilation=1, activation="none"
+):
+    """Translate the opset-29 schema's indexed formula, without Conv helpers."""
+    batch, channels, length = x.shape
+    kernel_size = weight.shape[2]
+    history = (kernel_size - 1) * dilation
+    if past_state is None:
+        past_state = np.zeros((batch, channels, history), dtype=x.dtype)
+    samples = np.concatenate((past_state, x), axis=2)
+    output = np.empty(x.shape, dtype=np.float64)
+    for b in range(batch):
+        for c in range(channels):
+            for t in range(length):
+                output[b, c, t] = sum(
+                    float(weight[c, 0, j]) * float(samples[b, c, t + j * dilation])
+                    for j in range(kernel_size)
+                ) + (0.0 if bias is None else float(bias[c]))
+    if activation in ("silu", "swish"):
+        output = output / (1 + np.exp(-output))
+    return output.astype(x.dtype), samples[:, :, length : length + history].copy()
+
+
 def run_ort_inference(onnx_model):
     import onnxruntime as ort  # noqa: PLC0415
 
@@ -8165,16 +8188,31 @@ class TestReferenceEvaluator:
 
     @pytest.mark.parametrize(
         ("dilation", "kernel", "length"),
-        [(1, 3, 7), (2, 3, 7), (3, 4, 1), (2, 3, 0), (3, 1, 0), (3, 1, 7)],
+        [
+            (None, 3, 7),
+            (1, 3, 7),
+            (2, 3, 7),
+            (3, 4, 1),
+            (2, 3, 0),
+            (3, 1, 0),
+            (3, 1, 7),
+        ],
     )
     @pytest.mark.parametrize("dtype", ["float", "float16", "bfloat16"])
-    @pytest.mark.parametrize("activation", ["none", "silu", "swish"])
+    @pytest.mark.parametrize("activation", [None, "none", "silu", "swish"])
     @pytest.mark.parametrize("with_state", [False, True])
     @pytest.mark.parametrize("with_bias", [False, True])
     def test_causal_conv_with_state_dilated_function(
         self, dilation, kernel, length, dtype, activation, with_state, with_bias
     ):
-        history = (kernel - 1) * dilation
+        effective_dilation = 1 if dilation is None else dilation
+        history = (kernel - 1) * effective_dilation
+        attributes = []
+        if dilation is not None:
+            attributes.append(f"dilation={dilation}")
+        if activation is not None:
+            attributes.append(f'activation="{activation}"')
+        attribute_text = f"<{', '.join(attributes)}>" if attributes else ""
         bias_arg = ", bias" if with_bias else ', ""'
         past_arg = ", past" if with_state else ""
         model = onnx.parser.parse_model(
@@ -8184,7 +8222,7 @@ class TestReferenceEvaluator:
                {dtype}[3] bias, {dtype}[2,3,{history}] past)
                 => ({dtype}[2,3,L] output, {dtype}[2,3,{history}] present)
             {{
-                output, present = CausalConvWithState <dilation={dilation}, activation="{activation}">
+                output, present = CausalConvWithState {attribute_text}
                     (input, weight{bias_arg}{past_arg})
             }}
             """
@@ -8202,25 +8240,14 @@ class TestReferenceEvaluator:
             "bias": rng.standard_normal(3).astype(np_dtype),
             "past": rng.standard_normal((2, 3, history)).astype(np_dtype),
         }
-        padded = np.concatenate(
-            [
-                feeds["past"] if with_state else np.zeros_like(feeds["past"]),
-                feeds["input"],
-            ],
-            axis=2,
+        expected, expected_state = _causal_conv_with_state_from_spec(
+            feeds["input"],
+            feeds["weight"],
+            feeds["bias"] if with_bias else None,
+            feeds["past"] if with_state else None,
+            dilation=effective_dilation,
+            activation="none" if activation is None else activation,
         )
-        expected = np.empty_like(feeds["input"])
-        for t in range(length):
-            taps = padded[:, :, t + np.arange(kernel) * dilation].astype(np.float32)
-            values = np.sum(taps * feeds["weight"][:, 0, :].astype(np.float32), axis=2)
-            if with_bias:
-                values += feeds["bias"].astype(np.float32)
-            values = values.astype(np_dtype)
-            if activation != "none":
-                values = values.astype(np.float32)
-                values = (values / (1 + np.exp(-values))).astype(np_dtype)
-            expected[:, :, t] = values
-        expected_state = padded[:, :, length:]
 
         class CausalConvWithState(OpRunExpand):
             op_domain = ""
@@ -8343,8 +8370,13 @@ class TestReferenceEvaluator:
             "past": rng.standard_normal((1, 2, history)).astype(np.float32),
         }
         initial = feeds["past"] if with_state else np.zeros_like(feeds["past"])
-        full_output, full_state = ReferenceEvaluator(model).run(
-            None, {**feeds, "past": initial}
+        full_output, full_state = _causal_conv_with_state_from_spec(
+            feeds["input"],
+            feeds["weight"],
+            feeds["bias"],
+            initial,
+            dilation=dilation,
+            activation=activation,
         )
 
         class CausalConvWithState(OpRunExpand):
@@ -8353,9 +8385,18 @@ class TestReferenceEvaluator:
         for new_ops in (None, [CausalConvWithState]):
             evaluator = ReferenceEvaluator(model, new_ops=new_ops)
             state = initial
+            expected_state = initial
             outputs = []
             offset = 0
             for size in (0, 1, 2, 0, 3, 1, 0):
+                expected_chunk, expected_state = _causal_conv_with_state_from_spec(
+                    feeds["input"][:, :, offset : offset + size],
+                    feeds["weight"],
+                    feeds["bias"],
+                    expected_state,
+                    dilation=dilation,
+                    activation=activation,
+                )
                 chunk, state = evaluator.run(
                     None,
                     {
@@ -8364,6 +8405,8 @@ class TestReferenceEvaluator:
                         "past": state,
                     },
                 )
+                assert_allclose(chunk, expected_chunk, rtol=1e-5, atol=1e-6)
+                assert_array_equal(state, expected_state)
                 outputs.append(chunk)
                 offset += size
             assert_allclose(
