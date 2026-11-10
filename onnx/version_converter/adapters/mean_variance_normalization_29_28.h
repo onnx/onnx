@@ -8,6 +8,7 @@
 
 #include <cstdint>
 #include <memory>
+#include <string>
 #include <vector>
 
 #include "onnx/common/assertions.h"
@@ -93,11 +94,27 @@ class MeanVarianceNormalizationAdapter : public Adapter {
   }
 
   static Node* replace_node(Node* node, Node* replacement) {
-    replacement->output()->setElemType(node->output()->elemType());
-    if (!node->output()->sizes().empty()) {
-      replacement->output()->setSizes(node->output()->sizes());
+    Value* old_output = node->output();
+    Value* new_output = replacement->output();
+    Graph* graph = old_output->owningGraph();
+    const std::string original_name = old_output->uniqueName();
+    new_output->setElemType(old_output->elemType());
+    if (old_output->has_sizes()) {
+      new_output->setSizes(old_output->sizes());
+    } else {
+      new_output->wipeSizes();
     }
-    node->replaceAllUsesWith(replacement);
+    if (old_output->has_doc_string()) {
+      new_output->setDocString(old_output->docString());
+    }
+    // Keep capture names unchanged: descendant graphs may shadow this binding.
+    // The temporary name is unused throughout this graph and its descendants.
+    old_output->setUniqueName(graph->getNextUniqueName(), false);
+    new_output->setUniqueName(original_name, false);
+    const auto direct_uses = old_output->uses();
+    for (const auto& use : direct_uses) {
+      use.user->replaceInput(use.offset, new_output);
+    }
     node->destroy();
     return replacement;
   }

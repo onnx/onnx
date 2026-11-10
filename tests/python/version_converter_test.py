@@ -33,14 +33,22 @@ EINSUM_OPSET_28 = 28
 
 class TestVersionConverter:
     @pytest.mark.parametrize("initial_version,target_version", [(28, 29), (29, 28)])
+    @pytest.mark.parametrize("outer_mvn", [False, True])
     def test_nested_capture_shadows_outer_type(
-        self, initial_version, target_version
+        self, initial_version, target_version, outer_mvn
     ) -> None:
         leaf = onnx.parser.parse_graph(
             """leaf () => (float[2] Z) {
                 Z = MeanVarianceNormalization <axes = [0]> (X)
             }"""
         )
+        if outer_mvn:
+            leaf = helper.make_graph(
+                [helper.make_node("Identity", ["X"], ["Z"])],
+                "leaf",
+                [],
+                [helper.make_tensor_value_info("Z", TensorProto.FLOAT, [2])],
+            )
         body = helper.make_graph(
             [
                 helper.make_node("Identity", ["keep_going"], ["next_condition"]),
@@ -59,15 +67,27 @@ class TestVersionConverter:
                 helper.make_tensor_value_info("next_X", TensorProto.FLOAT, [2]),
             ],
         )
+        outer_nodes = []
+        if outer_mvn:
+            outer_nodes.append(
+                helper.make_node(
+                    "MeanVarianceNormalization", ["outer_input"], ["X"], axes=[0]
+                )
+            )
+        outer_nodes.append(
+            helper.make_node(
+                "Loop", ["trip_count", "cond", "initial"], ["Y"], body=body
+            )
+        )
         model = helper.make_model(
             helper.make_graph(
+                outer_nodes,
+                "outer",
                 [
-                    helper.make_node(
-                        "Loop", ["trip_count", "cond", "initial"], ["Y"], body=body
+                    helper.make_tensor_value_info(
+                        "outer_input" if outer_mvn else "X", TensorProto.DOUBLE, [3]
                     )
                 ],
-                "outer",
-                [helper.make_tensor_value_info("X", TensorProto.DOUBLE, [3])],
                 [helper.make_tensor_value_info("Y", TensorProto.FLOAT, [2])],
                 initializer=[
                     onnx.numpy_helper.from_array(
@@ -84,7 +104,11 @@ class TestVersionConverter:
         converted = onnx.version_converter.convert_version(model, target_version)
         checker.check_model(converted, full_check=True)
         converted_body = next(
-            attr.g for attr in converted.graph.node[0].attribute if attr.name == "body"
+            attr.g
+            for node in converted.graph.node
+            if node.op_type == "Loop"
+            for attr in node.attribute
+            if attr.name == "body"
         )
         output = ReferenceEvaluator(converted_body, opsets={"": target_version}).run(
             None,
@@ -95,7 +119,7 @@ class TestVersionConverter:
             },
         )[1]
         assert output.dtype == np.float32
-        np.testing.assert_allclose(output, [-1, 1])
+        np.testing.assert_allclose(output, [1, 3] if outer_mvn else [-1, 1])
 
     @pytest.mark.parametrize("initial_version,target_version", [(28, 29), (29, 28)])
     def test_sibling_branches_without_captures(
