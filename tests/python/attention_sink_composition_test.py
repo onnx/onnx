@@ -165,8 +165,9 @@ def test_online_numerator_range_requires_explicit_graph_fallback():
     np.testing.assert_allclose(output, 8e307)
     np.testing.assert_allclose(probabilities, 0.2)
     assert np.isfinite(output).all()
-    with np.errstate(over="raise"), pytest.raises(FloatingPointError):
-        np.ones(4, dtype=np.float64) @ values.reshape(4, 1)
+    with np.errstate(over="ignore"):
+        numerator = np.ones(4, dtype=np.float64) @ values.reshape(4, 1)
+    np.testing.assert_array_equal(np.isposinf(numerator), [True])
 
 
 @pytest.mark.parametrize("window", [1, 3])
