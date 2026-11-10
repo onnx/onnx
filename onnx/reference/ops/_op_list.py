@@ -144,6 +144,7 @@ __all__ = [
     "Min",
     "Mod",
     "Mul",
+    "Multinomial",
     "Neg",
     "NegativeLogLikelihoodLoss",
     "NonMaxSuppression",
@@ -410,6 +411,7 @@ from onnx.reference.ops.op_mel_weight_matrix import MelWeightMatrix
 from onnx.reference.ops.op_min import Min
 from onnx.reference.ops.op_mod import Mod
 from onnx.reference.ops.op_mul import Mul
+from onnx.reference.ops.op_multinomial import Multinomial
 from onnx.reference.ops.op_neg import Neg
 from onnx.reference.ops.op_negative_log_likelihood_loss import NegativeLogLikelihoodLoss
 from onnx.reference.ops.op_non_max_suppression import NonMaxSuppression
