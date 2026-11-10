@@ -10,14 +10,8 @@
 
 namespace ONNX_NAMESPACE {
 
-std::function<void(OpSchema&)> ReduceOpGenerator(
-    const char* func_body,
-    const ContextDependentFunctionBodyBuilder& function_builder) {
+std::function<void(OpSchema&)> ReduceOpGenerator() {
   return [=](OpSchema& schema) {
-    if (func_body) {
-    } else if (function_builder) {
-      schema.SetContextDependentFunctionBodyBuilder(function_builder);
-    }
     schema.TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
       propagateElemTypeFromInputToOutput(ctx, 0, 0);
       if (!hasNInputShapes(ctx, 1)) {

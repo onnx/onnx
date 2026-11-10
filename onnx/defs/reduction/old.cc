@@ -330,13 +330,10 @@ ONNX_OPERATOR_SET_SCHEMA(ReduceL2, 13, generated::ai_onnx::ReduceL2_ver13().Fill
 ONNX_OPERATOR_SET_SCHEMA(ReduceMax, 18, generated::ai_onnx::ReduceMax_ver18().FillUsing(ReduceOpGenerator()));
 ONNX_OPERATOR_SET_SCHEMA(ReduceMin, 18, generated::ai_onnx::ReduceMin_ver18().FillUsing(ReduceOpGenerator()));
 
-ONNX_OPERATOR_SET_SCHEMA(
-    ReduceLogSum,
-    18,
-    generated::ai_onnx::ReduceLogSum_ver18().FillUsing(ReduceFunctionOp(reduce_log_sum_func_body)));
+ONNX_OPERATOR_SET_SCHEMA(ReduceLogSum, 18, generated::ai_onnx::ReduceLogSum_ver18().FillUsing(ReduceOpGenerator()));
 
 ONNX_OPERATOR_SET_SCHEMA(
     ReduceLogSumExp,
     18,
-    generated::ai_onnx::ReduceLogSumExp_ver18().FillUsing(ReduceFunctionOp(reduce_log_sum_exp_func_body)));
+    generated::ai_onnx::ReduceLogSumExp_ver18().FillUsing(ReduceOpGenerator()));
 } // namespace ONNX_NAMESPACE

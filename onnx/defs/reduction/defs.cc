@@ -11,70 +11,31 @@
 
 namespace ONNX_NAMESPACE {
 
-ONNX_OPERATOR_SET_SCHEMA(
-    ReduceMax,
-    20,
-    generated::ai_onnx::ReduceMax_ver20().FillUsing(ReduceOpGenerator(nullptr, nullptr)));
+ONNX_OPERATOR_SET_SCHEMA(ReduceMax, 20, generated::ai_onnx::ReduceMax_ver20().FillUsing(ReduceOpGenerator()));
 
-ONNX_OPERATOR_SET_SCHEMA(
-    ReduceMin,
-    20,
-    generated::ai_onnx::ReduceMin_ver20().FillUsing(ReduceOpGenerator(nullptr, nullptr)));
+ONNX_OPERATOR_SET_SCHEMA(ReduceMin, 20, generated::ai_onnx::ReduceMin_ver20().FillUsing(ReduceOpGenerator()));
 
-ONNX_OPERATOR_SET_SCHEMA(ReduceSum, 13, generated::ai_onnx::ReduceSum_ver13().FillUsing(ReduceOpDynamicAxes()));
-
-static constexpr const char* reduce_sum_square_func_body = R"ONNX(
-  {
-    data_square = Mul(data, data)
-    reduced = ReduceSum<keepdims: int = @keepdims, noop_with_empty_axes: int = @noop_with_empty_axes>(data_square, axes)
-  }
-  )ONNX";
+ONNX_OPERATOR_SET_SCHEMA(ReduceSum, 13, generated::ai_onnx::ReduceSum_ver13().FillUsing(ReduceOpGenerator()));
 
 ONNX_OPERATOR_SET_SCHEMA(
     ReduceSumSquare,
     18,
-    generated::ai_onnx::ReduceSumSquare_ver18().FillUsing(ReduceFunctionOp(reduce_sum_square_func_body)));
+    generated::ai_onnx::ReduceSumSquare_ver18().FillUsing(ReduceOpGenerator()));
 
-ONNX_OPERATOR_SET_SCHEMA(ReduceMean, 18, generated::ai_onnx::ReduceMean_ver18().FillUsing(ReduceOpDynamicAxes()));
+ONNX_OPERATOR_SET_SCHEMA(ReduceMean, 18, generated::ai_onnx::ReduceMean_ver18().FillUsing(ReduceOpGenerator()));
 
-ONNX_OPERATOR_SET_SCHEMA(ReduceProd, 18, generated::ai_onnx::ReduceProd_ver18().FillUsing(ReduceOpDynamicAxes()));
+ONNX_OPERATOR_SET_SCHEMA(ReduceProd, 18, generated::ai_onnx::ReduceProd_ver18().FillUsing(ReduceOpGenerator()));
 
-ONNX_OPERATOR_SET_SCHEMA(
-    ReduceLogSum,
-    28,
-    generated::ai_onnx::ReduceLogSum_ver28().FillUsing(ReduceFunctionOpFloatOnly(reduce_log_sum_func_body)));
+ONNX_OPERATOR_SET_SCHEMA(ReduceLogSum, 28, generated::ai_onnx::ReduceLogSum_ver28().FillUsing(ReduceOpGenerator()));
 
 ONNX_OPERATOR_SET_SCHEMA(
     ReduceLogSumExp,
     28,
-    generated::ai_onnx::ReduceLogSumExp_ver28().FillUsing(ReduceFunctionOpFloatOnly(reduce_log_sum_exp_func_body)));
+    generated::ai_onnx::ReduceLogSumExp_ver28().FillUsing(ReduceOpGenerator()));
 
-static constexpr const char* reduce_l1_func_body = R"ONNX(
-  {
-    data_abs = Abs(data)
-    reduced = ReduceSum<keepdims: int = @keepdims, noop_with_empty_axes: int = @noop_with_empty_axes>(data_abs, axes)
-  }
-  )ONNX";
+ONNX_OPERATOR_SET_SCHEMA(ReduceL1, 18, generated::ai_onnx::ReduceL1_ver18().FillUsing(ReduceOpGenerator()));
 
-ONNX_OPERATOR_SET_SCHEMA(
-    ReduceL1,
-    18,
-    generated::ai_onnx::ReduceL1_ver18().FillUsing(ReduceFunctionOp(reduce_l1_func_body)));
-
-static constexpr const char* reduce_l2_func_body = R"ONNX(
-  {
-    data_square = Mul(data, data)
-    sum_square = ReduceSum<keepdims: int = @keepdims, noop_with_empty_axes: int = @noop_with_empty_axes>(data_square, axes)
-    sum_square_dbl = Cast <to = 1>(sum_square)
-    sqrt = Sqrt(sum_square_dbl)
-    reduced = CastLike(sqrt, data)
-  }
-  )ONNX";
-
-ONNX_OPERATOR_SET_SCHEMA(
-    ReduceL2,
-    18,
-    generated::ai_onnx::ReduceL2_ver18().FillUsing(ReduceFunctionOp(reduce_l2_func_body)));
+ONNX_OPERATOR_SET_SCHEMA(ReduceL2, 18, generated::ai_onnx::ReduceL2_ver18().FillUsing(ReduceOpGenerator()));
 
 static std::function<void(OpSchema&)> ArgReduceDocGenerator() {
   return [=](OpSchema& schema) {

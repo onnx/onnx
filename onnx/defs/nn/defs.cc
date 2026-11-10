@@ -190,29 +190,31 @@ ONNX_API void convPoolShapeInference(
   }
 }
 
-static std::function<void(OpSchema&)> PoolOpSchemaGenerator(bool use_dilation) {
-  return [=](OpSchema& schema) {
-    schema.TypeAndShapeInferenceFunction([use_dilation](InferenceContext& ctx) {
-      propagateElemTypeFromInputToOutput(ctx, 0, 0);
-      if (ctx.getNumOutputs() > 1) {
-        // MaxPool with two outputs case.
-        auto* output_type = ctx.getOutputType(1);
-        if (output_type->value_case() == TypeProto::kTensorType ||
-            output_type->value_case() == TypeProto::VALUE_NOT_SET) {
-          output_type->mutable_tensor_type()->set_elem_type(TensorProto::INT64);
-        }
-      }
-      convPoolShapeInference(ctx, use_dilation, true, 0, 1);
-    });
-  };
+static void PoolShapeInference(InferenceContext& ctx, bool use_dilation) {
+  propagateElemTypeFromInputToOutput(ctx, 0, 0);
+  if (ctx.getNumOutputs() > 1) {
+    // MaxPool with two outputs case.
+    auto* output_type = ctx.getOutputType(1);
+    if (output_type->value_case() == TypeProto::kTensorType || output_type->value_case() == TypeProto::VALUE_NOT_SET) {
+      output_type->mutable_tensor_type()->set_elem_type(TensorProto::INT64);
+    }
+  }
+  convPoolShapeInference(ctx, use_dilation, true, 0, 1);
 }
 
 ONNX_OPERATOR_SET_SCHEMA(
     AveragePool,
     22,
-    generated::ai_onnx::AveragePool_ver22().FillUsing(PoolOpSchemaGenerator(true)));
+    generated::ai_onnx::AveragePool_ver22().TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+      PoolShapeInference(ctx, true);
+    }));
 
-ONNX_OPERATOR_SET_SCHEMA(MaxPool, 22, generated::ai_onnx::MaxPool_ver22().FillUsing(PoolOpSchemaGenerator(true)));
+ONNX_OPERATOR_SET_SCHEMA(
+    MaxPool,
+    22,
+    generated::ai_onnx::MaxPool_ver22().TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+      PoolShapeInference(ctx, true);
+    }));
 
 static void maxUnpoolShapeInference(InferenceContext& ctx) {
   // we need at least two inputs to have a shape for this inference.

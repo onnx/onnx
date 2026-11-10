@@ -694,32 +694,31 @@ ONNX_OPERATOR_SET_SCHEMA(
       maxUnpoolShapeInference_opset11(ctx);
     }));
 
-static std::function<void(OpSchema&)> PoolOpSchemaGenerator_opset19(bool use_dilation) {
-  return [=](OpSchema& schema) {
-    schema.TypeAndShapeInferenceFunction([use_dilation](InferenceContext& ctx) {
-      propagateElemTypeFromInputToOutput(ctx, 0, 0);
-      if (ctx.getNumOutputs() > 1) {
-        // MaxPool with two outputs case.
-        auto* output_type = ctx.getOutputType(1);
-        if (output_type->value_case() == TypeProto::kTensorType ||
-            output_type->value_case() == TypeProto::VALUE_NOT_SET) {
-          output_type->mutable_tensor_type()->set_elem_type(TensorProto::INT64);
-        }
-      }
-      convPoolShapeInference_opset19(ctx, use_dilation, true, 0, 1);
-    });
-  };
+static void PoolShapeInference_opset19(InferenceContext& ctx, bool use_dilation) {
+  propagateElemTypeFromInputToOutput(ctx, 0, 0);
+  if (ctx.getNumOutputs() > 1) {
+    // MaxPool with two outputs case.
+    auto* output_type = ctx.getOutputType(1);
+    if (output_type->value_case() == TypeProto::kTensorType || output_type->value_case() == TypeProto::VALUE_NOT_SET) {
+      output_type->mutable_tensor_type()->set_elem_type(TensorProto::INT64);
+    }
+  }
+  convPoolShapeInference_opset19(ctx, use_dilation, true, 0, 1);
 }
 
 ONNX_OPERATOR_SET_SCHEMA(
     AveragePool,
     19,
-    generated::ai_onnx::AveragePool_ver19().FillUsing(PoolOpSchemaGenerator_opset19(true)));
+    generated::ai_onnx::AveragePool_ver19().TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+      PoolShapeInference_opset19(ctx, true);
+    }));
 
 ONNX_OPERATOR_SET_SCHEMA(
     MaxPool,
     12,
-    generated::ai_onnx::MaxPool_ver12().FillUsing(PoolOpSchemaGenerator_opset19(true)));
+    generated::ai_onnx::MaxPool_ver12().TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+      PoolShapeInference_opset19(ctx, true);
+    }));
 
 ONNX_OPERATOR_SET_SCHEMA(
     Dropout,
@@ -1044,38 +1043,28 @@ static std::function<void(OpSchema&)> PoolOpSchemaGenerator_opset1_to_8() {
   };
 }
 
-static std::function<void(OpSchema&)> PoolOpSchemaGenerator_opset10_to_11(bool use_dilation) {
-  return [=](OpSchema& schema) {
-    schema.TypeAndShapeInferenceFunction([use_dilation](InferenceContext& ctx) {
-      propagateElemTypeFromInputToOutput(ctx, 0, 0);
-      if (ctx.getNumOutputs() > 1) {
-        // MaxPool with two outputs case.
-        auto* output_type = ctx.getOutputType(1);
-        if (output_type->value_case() == TypeProto::kTensorType ||
-            output_type->value_case() == TypeProto::VALUE_NOT_SET) {
-          output_type->mutable_tensor_type()->set_elem_type(TensorProto::INT64);
-        }
-      }
-      convPoolShapeInference_opset1_to_11(ctx, use_dilation, true, 0, 1);
-    });
-  };
+static void PoolShapeInference_opset10_to_11(InferenceContext& ctx, bool use_dilation) {
+  propagateElemTypeFromInputToOutput(ctx, 0, 0);
+  if (ctx.getNumOutputs() > 1) {
+    // MaxPool with two outputs case.
+    auto* output_type = ctx.getOutputType(1);
+    if (output_type->value_case() == TypeProto::kTensorType || output_type->value_case() == TypeProto::VALUE_NOT_SET) {
+      output_type->mutable_tensor_type()->set_elem_type(TensorProto::INT64);
+    }
+  }
+  convPoolShapeInference_opset1_to_11(ctx, use_dilation, true, 0, 1);
 }
 
-static std::function<void(OpSchema&)> PoolOpSchemaGenerator_opset11(bool use_dilation) {
-  return [=](OpSchema& schema) {
-    schema.TypeAndShapeInferenceFunction([use_dilation](InferenceContext& ctx) {
-      propagateElemTypeFromInputToOutput(ctx, 0, 0);
-      if (ctx.getNumOutputs() > 1) {
-        // MaxPool with two outputs case.
-        auto* output_type = ctx.getOutputType(1);
-        if (output_type->value_case() == TypeProto::kTensorType ||
-            output_type->value_case() == TypeProto::VALUE_NOT_SET) {
-          output_type->mutable_tensor_type()->set_elem_type(TensorProto::INT64);
-        }
-      }
-      convPoolShapeInference_opset1_to_11(ctx, use_dilation, true, 0, 1);
-    });
-  };
+static void PoolShapeInference_opset11(InferenceContext& ctx, bool use_dilation) {
+  propagateElemTypeFromInputToOutput(ctx, 0, 0);
+  if (ctx.getNumOutputs() > 1) {
+    // MaxPool with two outputs case.
+    auto* output_type = ctx.getOutputType(1);
+    if (output_type->value_case() == TypeProto::kTensorType || output_type->value_case() == TypeProto::VALUE_NOT_SET) {
+      output_type->mutable_tensor_type()->set_elem_type(TensorProto::INT64);
+    }
+  }
+  convPoolShapeInference_opset1_to_11(ctx, use_dilation, true, 0, 1);
 }
 
 ONNX_OPERATOR_SET_SCHEMA(
@@ -1091,12 +1080,16 @@ ONNX_OPERATOR_SET_SCHEMA(
 ONNX_OPERATOR_SET_SCHEMA(
     AveragePool,
     10,
-    generated::ai_onnx::AveragePool_ver10().FillUsing(PoolOpSchemaGenerator_opset10_to_11(false)));
+    generated::ai_onnx::AveragePool_ver10().TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+      PoolShapeInference_opset10_to_11(ctx, false);
+    }));
 
 ONNX_OPERATOR_SET_SCHEMA(
     AveragePool,
     11,
-    generated::ai_onnx::AveragePool_ver11().FillUsing(PoolOpSchemaGenerator_opset11(true)));
+    generated::ai_onnx::AveragePool_ver11().TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+      PoolShapeInference_opset11(ctx, true);
+    }));
 
 ONNX_OPERATOR_SET_SCHEMA(MaxPool, 1, generated::ai_onnx::MaxPool_ver1().FillUsing(PoolOpSchemaGenerator_opset1_to_8()));
 
@@ -1105,12 +1098,16 @@ ONNX_OPERATOR_SET_SCHEMA(MaxPool, 8, generated::ai_onnx::MaxPool_ver8().FillUsin
 ONNX_OPERATOR_SET_SCHEMA(
     MaxPool,
     10,
-    generated::ai_onnx::MaxPool_ver10().FillUsing(PoolOpSchemaGenerator_opset10_to_11(true)));
+    generated::ai_onnx::MaxPool_ver10().TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+      PoolShapeInference_opset10_to_11(ctx, true);
+    }));
 
 ONNX_OPERATOR_SET_SCHEMA(
     MaxPool,
     11,
-    generated::ai_onnx::MaxPool_ver11().FillUsing(PoolOpSchemaGenerator_opset10_to_11(true)));
+    generated::ai_onnx::MaxPool_ver11().TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+      PoolShapeInference_opset10_to_11(ctx, true);
+    }));
 
 static void maxUnpoolShapeInference_opset9(InferenceContext& ctx) {
   // we need at least two inputs to have a shape for this inference.

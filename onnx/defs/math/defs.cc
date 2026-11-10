@@ -355,39 +355,35 @@ ONNX_OPERATOR_SET_SCHEMA(
         .SetContextDependentFunctionBodyBuilder(BuildContextDependentFunctionBodyClip)
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
-static std::function<void(OpSchema&)> SoftmaxFamilyDocGenerator(const char* name) {
-  return [=](OpSchema& schema) {
-    schema.TypeAndShapeInferenceFunction([name](InferenceContext& ctx) {
-      // Type inference
-      propagateElemTypeFromInputToOutput(ctx, 0, 0);
+static void SoftmaxFamilyShapeInference(InferenceContext& ctx, const char* name) {
+  // Type inference
+  propagateElemTypeFromInputToOutput(ctx, 0, 0);
 
-      // Shape inference starts
-      if (!hasNInputShapes(ctx, 1)) {
-        return;
-      }
+  // Shape inference starts
+  if (!hasNInputShapes(ctx, 1)) {
+    return;
+  }
 
-      // Validate the value of 'axis'
-      const TensorShapeProto& input_shape = ctx.getInputType(0)->tensor_type().shape();
-      int r = input_shape.dim_size();
-      if (r == 0) {
-        fail_shape_inference("Input rank must be >= 1 for ", name, ".");
-      }
-      int axis = static_cast<int>(getAttribute(ctx, "axis", -1));
-      if (axis < -r || axis >= r) {
-        fail_shape_inference("'axis' must be in [", -r, " , ", (r - 1), "]. Its actual value is: ", axis);
-      }
+  // Validate the value of 'axis'
+  const TensorShapeProto& input_shape = ctx.getInputType(0)->tensor_type().shape();
+  int r = input_shape.dim_size();
+  if (r == 0) {
+    fail_shape_inference("Input rank must be >= 1 for ", name, ".");
+  }
+  int axis = static_cast<int>(getAttribute(ctx, "axis", -1));
+  if (axis < -r || axis >= r) {
+    fail_shape_inference("'axis' must be in [", -r, " , ", (r - 1), "]. Its actual value is: ", axis);
+  }
 
-      // Shape inference
-      propagateShapeFromInputToOutput(ctx, 0, 0);
-    });
-  };
+  // Shape inference
+  propagateShapeFromInputToOutput(ctx, 0, 0);
 }
 
 ONNX_OPERATOR_SET_SCHEMA(
     Softmax,
     13,
     generated::ai_onnx::Softmax_ver13()
-        .FillUsing(SoftmaxFamilyDocGenerator("Softmax"))
+        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) { SoftmaxFamilyShapeInference(ctx, "Softmax"); })
         // function body builder for opset version 13 (the default opset version is the same
         // as the operator's since_version.
         .SetContextDependentFunctionBodyBuilder(
@@ -430,7 +426,7 @@ ONNX_OPERATOR_SET_SCHEMA(
     LogSoftmax,
     13,
     generated::ai_onnx::LogSoftmax_ver13()
-        .FillUsing(SoftmaxFamilyDocGenerator("LogSoftmax"))
+        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) { SoftmaxFamilyShapeInference(ctx, "LogSoftmax"); })
         // Function for opset 13
         .SetContextDependentFunctionBodyBuilder(
             [](const FunctionBodyBuildContext& ctx, const OpSchema& schema, FunctionProto& functionProto) -> bool {
@@ -471,7 +467,9 @@ ONNX_OPERATOR_SET_SCHEMA(
 ONNX_OPERATOR_SET_SCHEMA(
     Hardmax,
     13,
-    generated::ai_onnx::Hardmax_ver13().FillUsing(SoftmaxFamilyDocGenerator("Hardmax")));
+    generated::ai_onnx::Hardmax_ver13().TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+      SoftmaxFamilyShapeInference(ctx, "Hardmax");
+    }));
 
 ONNX_OPERATOR_SET_SCHEMA(
     Softsign,
