@@ -584,6 +584,7 @@ def _trajectory_expected(feeds, attrs):
     ).astype(np.float32)
     states = np.empty((batch, length, state_heads, dk, dv), dtype=state_dtype)
     output = np.empty((batch, length, output_heads, dv), dtype=feeds["query"].dtype)
+    scale = attrs.get("scale", 0.0) or 1.0 / np.sqrt(dk)
     for t in range(length):
         for b in range(batch):
             for h in range(state_heads):
@@ -606,13 +607,49 @@ def _trajectory_expected(feeds, attrs):
             for h in range(output_heads):
                 sh = h if attrs["v_num_heads"] else h // (q_heads // k_heads)
                 qh = h // (state_heads // k_heads) if attrs["v_num_heads"] else h
-                output[b, t, h] = attrs["scale"] * (query[b, t, qh] @ state[b, sh])
+                output[b, t, h] = scale * (query[b, t, qh] @ state[b, sh])
         states[:, t] = state
     return (
         output.reshape(batch, length, output_heads * dv),
         state.astype(state_dtype),
         states,
     )
+
+
+@pytest.mark.parametrize("heads", [(4, 2, 0), (2, 2, 6)])
+@pytest.mark.parametrize("rule", ["linear", "gated", "delta", "gated_delta"])
+@pytest.mark.parametrize(("key_decay", "scalar_beta"), [(False, False), (True, True)])
+@pytest.mark.parametrize("length", [0, 3])
+@pytest.mark.parametrize("dtype", [np.float16, ml_dtypes.bfloat16, np.float32])
+@pytest.mark.parametrize("past", [False, True])
+def test_spec_recurrence_with_defaults(
+    heads, rule, key_decay, scalar_beta, length, dtype, past
+):
+    feeds, attrs = _trajectory_case(
+        heads, length, rule, dtype, past, key_decay, scalar_beta
+    )
+    del attrs["scale"]
+    if rule == "gated_delta":
+        del attrs["update_rule"]
+    if not attrs["v_num_heads"]:
+        del attrs["v_num_heads"]
+    expected = _trajectory_expected(
+        feeds, {**attrs, "v_num_heads": attrs.get("v_num_heads", 0)}
+    )
+    for new_ops in (None, [LinearAttention]):
+        actual = ReferenceEvaluator(
+            _model(feeds, attrs, trajectory=True, empty_slots=True), new_ops=new_ops
+        ).run(None, feeds)
+        for got, want in zip(actual, expected, strict=True):
+            assert got.shape == want.shape
+            assert got.dtype == want.dtype
+            tolerance = max(3e-5, 2 * ml_dtypes.finfo(got.dtype).eps)
+            assert_allclose(
+                got.astype(np.float32),
+                want.astype(np.float32),
+                rtol=tolerance,
+                atol=2e-6,
+            )
 
 
 @pytest.mark.parametrize(

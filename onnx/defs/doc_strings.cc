@@ -2696,6 +2696,7 @@ element j of head h has packed index h*d+j, where d is that input's head width.
 With v_num_heads=0 (default), H_v=H_kv and H_q must be a multiple of H_kv.
 The output head count H_o is H_q. Query head h reads state head
 floor(h/(H_q/H_kv)), so adjacent query heads share each state head.
+State head h uses key head h.
 
 With v_num_heads>0, H_v=v_num_heads, H_q must equal H_kv, and H_v must be
 a multiple of H_kv. H_o is H_v. Value/state head h uses query and key head
@@ -2705,7 +2706,8 @@ Negative v_num_heads is invalid. State, decay and beta use H_v heads.
 The output tensor output has shape [B,T,H_o*d_v], with contiguous head packing.
 past_state and present_state have shape [B,H_v,d_k,d_v].
 The initial state is past_state when supplied, otherwise zeros.
-Computation accumulates in float32. The output tensor output has query's element type.
+Input values and the initial state are converted to float32 for the recurrence
+and output computation. The output tensor output has query's element type.
 The state outputs have past_state's element type when supplied, otherwise
 query's element type. A float32 past_state therefore retains float32 state
 with float16 or bfloat16 activations.
@@ -2713,15 +2715,20 @@ with float16 or bfloat16 activations.
 For each batch element and token, let S be a state head's preceding
 [d_k,d_v] matrix, k its mapped key vector, and v its value vector.
 The update_rule attribute is one of "linear", "gated", "delta", or
-"gated_delta" (default). Apply these steps in order:
+"gated_delta" (default). Process tokens in increasing order t=0,...,T-1.
+For each token, apply these steps in order:
 1. For "gated" and "gated_delta", D = exp(decay) * S; otherwise D = S.
    Decay is log-space [B,T,H_v] for per-head decay or [B,T,H_v*d_k]
    for per-key-element decay, packed by head. It broadcasts over d_v.
 2. For "delta" and "gated_delta", u = beta * (v - D^T k); otherwise u = v.
    Beta has shape [B,T,H_v] for per-head rates or [B,T,1] shared by all heads.
-3. S_new = D + k outer u.
+3. S_new = D + k outer u, where (k outer u)[i,j] = k[i] * u[j].
 4. For each output head, o = scale * q^T S_new using its mapped query and
-   state heads. The resulting vectors form output.
+   state heads. The resulting vectors form output, and S_new is the
+   preceding state for the next token.
+
+exp and scalar/vector multiplication are elementwise; transpose and
+matrix-vector products act on the displayed head matrix/vector dimensions.
 
 Decay must be supplied for "gated" and "gated_delta" and omitted otherwise.
 Beta must be supplied for "delta" and "gated_delta" and omitted otherwise.
