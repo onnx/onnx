@@ -1088,7 +1088,38 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-ONNX_OPERATOR_SET_SCHEMA(ScatterND, 29, ScatterNDSchema(true));
+ONNX_OPERATOR_SET_SCHEMA(
+    ScatterND,
+    29,
+    OpSchema()
+        .SetDoc(
+            std::string(kDoc_ScatterND_ver18) +
+            "\nOpset 29 adds support for int32 indices; int64 indices remain supported.\n")
+        .Attr(
+            "reduction",
+            "Type of reduction to apply: none (default), add, mul, max, min. "
+            "'none': no reduction applied. "
+            "'add':  reduction using the addition operation. "
+            "'mul':  reduction using the multiplication operation. "
+            "'max': reduction using the maximum operation. "
+            "'min': reduction using the minimum operation.",
+            AttributeProto::STRING,
+            std::string("none"))
+        .Input(0, "data", "Tensor of rank r >= 1.", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
+        .Input(1, "indices", "Tensor of rank q >= 1.", "Tind", OpSchema::Single, true, 1, OpSchema::NonDifferentiable)
+        .Input(
+            2,
+            "updates",
+            "Tensor of rank q + r - indices_shape[-1] - 1.",
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::Differentiable)
+        .Output(0, "output", "Tensor of rank r >= 1.", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
+        .TypeConstraint("T", OpSchema::all_tensor_types_ir4(), "Constrain input and output types to any tensor type.")
+        .TypeConstraint("Tind", {types::Int32, types::Int64}, "Constrain indices to int32 or int64 tensors.")
+        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
 ONNX_OPERATOR_SET_SCHEMA(
     ScatterElements,
@@ -2704,7 +2735,42 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-ONNX_OPERATOR_SET_SCHEMA(GatherND, 29, GatherNDSchema(true));
+ONNX_OPERATOR_SET_SCHEMA(
+    GatherND,
+    29,
+    OpSchema()
+        .SetDoc(
+            std::string(kDoc_GatherND_ver13) +
+            "\nOpset 29 adds support for int32 indices; int64 indices remain supported.\n")
+        .Attr(
+            "batch_dims",
+            "The number of leading batch dimensions shared by data and indices. "
+            "Index tuples address data axes starting at axis batch_dims.",
+            AttributeProto::INT,
+            static_cast<int64_t>(0))
+        .Input(0, "data", "Tensor of rank r >= 1.", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
+        .Input(
+            1,
+            "indices",
+            "Tensor of rank q >= 1. Each index must be in [-s, s-1], where s is the size of "
+            "the corresponding data axis after the batch dimensions. An out-of-bounds index is an error.",
+            "Tind",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::NonDifferentiable)
+        .Output(
+            0,
+            "output",
+            "Tensor of rank q + r - indices_shape[-1] - 1 - batch_dims.",
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::Differentiable)
+        .TypeConstraint("T", OpSchema::all_tensor_types_ir4(), "Constrain input and output types to any tensor type.")
+        .TypeConstraint("Tind", {types::Int32, types::Int64}, "Constrain indices to int32 or int64 tensors.")
+        .TypeAndShapeInferenceFunction(GatherNDShapeInference));
 
 ONNX_OPERATOR_SET_SCHEMA(
     Pad,

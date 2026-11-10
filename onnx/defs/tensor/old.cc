@@ -19,8 +19,76 @@
 
 namespace ONNX_NAMESPACE {
 
-ONNX_OPERATOR_SET_SCHEMA(GatherND, 13, GatherNDSchema(false));
-ONNX_OPERATOR_SET_SCHEMA(ScatterND, 18, ScatterNDSchema(false));
+ONNX_OPERATOR_SET_SCHEMA(
+    GatherND,
+    13,
+    OpSchema()
+        .SetDoc(kDoc_GatherND_ver13)
+        .Attr(
+            "batch_dims",
+            "The number of leading batch dimensions shared by data and indices. "
+            "Index tuples address data axes starting at axis batch_dims.",
+            AttributeProto::INT,
+            static_cast<int64_t>(0))
+        .Input(0, "data", "Tensor of rank r >= 1.", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
+        .Input(
+            1,
+            "indices",
+            "Tensor of rank q >= 1. Each index must be in [-s, s-1], where s is the size of "
+            "the corresponding data axis after the batch dimensions. An out-of-bounds index is an error.",
+            "tensor(int64)",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::NonDifferentiable)
+        .Output(
+            0,
+            "output",
+            "Tensor of rank q + r - indices_shape[-1] - 1 - batch_dims.",
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::Differentiable)
+        .TypeConstraint("T", OpSchema::all_tensor_types_ir4(), "Constrain input and output types to any tensor type.")
+        .TypeAndShapeInferenceFunction(GatherNDShapeInference));
+ONNX_OPERATOR_SET_SCHEMA(
+    ScatterND,
+    18,
+    OpSchema()
+        .SetDoc(kDoc_ScatterND_ver18)
+        .Attr(
+            "reduction",
+            "Type of reduction to apply: none (default), add, mul, max, min. "
+            "'none': no reduction applied. "
+            "'add':  reduction using the addition operation. "
+            "'mul':  reduction using the multiplication operation. "
+            "'max': reduction using the maximum operation. "
+            "'min': reduction using the minimum operation.",
+            AttributeProto::STRING,
+            std::string("none"))
+        .Input(0, "data", "Tensor of rank r >= 1.", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
+        .Input(
+            1,
+            "indices",
+            "Tensor of rank q >= 1.",
+            "tensor(int64)",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::NonDifferentiable)
+        .Input(
+            2,
+            "updates",
+            "Tensor of rank q + r - indices_shape[-1] - 1.",
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::Differentiable)
+        .Output(0, "output", "Tensor of rank r >= 1.", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
+        .TypeConstraint("T", OpSchema::all_tensor_types_ir4(), "Constrain input and output types to any tensor type.")
+        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
 ONNX_OPERATOR_SET_SCHEMA(
     Cast,

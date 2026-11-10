@@ -18,7 +18,7 @@
 #include "onnx/defs/type_builders.h"
 
 namespace ONNX_NAMESPACE {
-static void GatherNDShapeInference(InferenceContext& ctx) {
+void GatherNDShapeInference(InferenceContext& ctx) {
   propagateElemTypeFromInputToOutput(ctx, 0, 0);
   if (!hasNInputShapes(ctx, 2)) {
     return;
@@ -56,92 +56,6 @@ static void GatherNDShapeInference(InferenceContext& ctx) {
   for (int i = static_cast<int>(last_index_dimension); i < data_rank; ++i) {
     *output_shape->add_dim() = data_shape.dim(i);
   }
-}
-
-OpSchema GatherNDSchema(bool allow_int32_indices) {
-  auto schema =
-      OpSchema()
-          .SetDoc(kDoc_GatherND_ver13)
-          .Attr(
-              "batch_dims",
-              "The number of leading batch dimensions shared by data and indices. "
-              "Index tuples address data axes starting at axis batch_dims.",
-              AttributeProto::INT,
-              static_cast<int64_t>(0))
-          .Input(0, "data", "Tensor of rank r >= 1.", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
-          .Input(
-              1,
-              "indices",
-              "Tensor of rank q >= 1. Each index must be in [-s, s-1], where s is the size of "
-              "the corresponding data axis after the batch dimensions. An out-of-bounds index is an error.",
-              allow_int32_indices ? "Tind" : "tensor(int64)",
-              OpSchema::Single,
-              true,
-              1,
-              OpSchema::NonDifferentiable)
-          .Output(
-              0,
-              "output",
-              "Tensor of rank q + r - indices_shape[-1] - 1 - batch_dims.",
-              "T",
-              OpSchema::Single,
-              true,
-              1,
-              OpSchema::Differentiable)
-          .TypeConstraint("T", OpSchema::all_tensor_types_ir4(), "Constrain input and output types to any tensor type.")
-          .TypeAndShapeInferenceFunction(GatherNDShapeInference);
-  if (allow_int32_indices) {
-    schema.SetDoc(
-        std::string(kDoc_GatherND_ver13) +
-        "\nOpset 29 adds support for int32 indices; int64 indices remain supported.\n");
-    schema.TypeConstraint("Tind", {types::Int32, types::Int64}, "Constrain indices to int32 or int64 tensors.");
-  }
-  return schema;
-}
-
-OpSchema ScatterNDSchema(bool allow_int32_indices) {
-  auto schema =
-      OpSchema()
-          .SetDoc(kDoc_ScatterND_ver18)
-          .Attr(
-              "reduction",
-              "Type of reduction to apply: none (default), add, mul, max, min. "
-              "'none': no reduction applied. "
-              "'add':  reduction using the addition operation. "
-              "'mul':  reduction using the multiplication operation. "
-              "'max': reduction using the maximum operation. "
-              "'min': reduction using the minimum operation.",
-              AttributeProto::STRING,
-              std::string("none"))
-          .Input(0, "data", "Tensor of rank r >= 1.", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
-          .Input(
-              1,
-              "indices",
-              "Tensor of rank q >= 1.",
-              allow_int32_indices ? "Tind" : "tensor(int64)",
-              OpSchema::Single,
-              true,
-              1,
-              OpSchema::NonDifferentiable)
-          .Input(
-              2,
-              "updates",
-              "Tensor of rank q + r - indices_shape[-1] - 1.",
-              "T",
-              OpSchema::Single,
-              true,
-              1,
-              OpSchema::Differentiable)
-          .Output(0, "output", "Tensor of rank r >= 1.", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
-          .TypeConstraint("T", OpSchema::all_tensor_types_ir4(), "Constrain input and output types to any tensor type.")
-          .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput);
-  if (allow_int32_indices) {
-    schema.SetDoc(
-        std::string(kDoc_ScatterND_ver18) +
-        "\nOpset 29 adds support for int32 indices; int64 indices remain supported.\n");
-    schema.TypeConstraint("Tind", {types::Int32, types::Int64}, "Constrain indices to int32 or int64 tensors.");
-  }
-  return schema;
 }
 
 void resizeShapeInferenceHelper(
