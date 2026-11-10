@@ -116,6 +116,10 @@ tomli-w = ">=1.2.0,<2"
 [feature.dev.target.linux.dependencies]
 binutils = "*"
 
+[feature.dev.pypi-dependencies]
+tree-sitter = ">=0.26.0, <0.27"
+tree-sitter-cpp = ">=0.23.4, <0.24"
+
 [feature.reference.dependencies]
 pillow = ">=12.2.0"
 
