@@ -4,24 +4,16 @@
 #include <string>
 
 #include "onnx/defs/generated/schemas.h"
+#include "onnx/defs/logical/utils.h"
 #include "onnx/defs/schema.h"
 #include "onnx/defs/type_builders.h"
 
 namespace ONNX_NAMESPACE {
 
-static void BinaryLogicShapeInference_opset12(InferenceContext& ctx) {
-  // Type inference
-  updateOutputElemType(ctx, 0, TensorProto::BOOL);
-  // Shape inference
-  if (hasNInputShapes(ctx, 2))
-    bidirectionalBroadcastShapeInference(
-        ctx.getInputType(0)->tensor_type().shape(),
-        ctx.getInputType(1)->tensor_type().shape(),
-        *ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape());
-}
-
 static std::function<void(OpSchema&)> BinaryLogicDocGenerator_opset12() {
-  return [=](OpSchema& schema) { schema.TypeAndShapeInferenceFunction(BinaryLogicShapeInference_opset12); };
+  return [=](OpSchema& schema) {
+    schema.TypeAndShapeInferenceFunction(defs::logical::utils::BinaryLogicShapeInference_opset12);
+  };
 }
 
 ONNX_OPERATOR_SET_SCHEMA(Greater, 9, generated::ai_onnx::Greater_ver9().FillUsing(BinaryLogicDocGenerator_opset12()));
@@ -30,28 +22,15 @@ ONNX_OPERATOR_SET_SCHEMA(Less, 9, generated::ai_onnx::Less_ver9().FillUsing(Bina
 
 ONNX_OPERATOR_SET_SCHEMA(Equal, 11, generated::ai_onnx::Equal_ver11().FillUsing(BinaryLogicDocGenerator_opset12()));
 
-inline static void logicalOpInference_opset1(InferenceContext& ctx) {
-  updateOutputElemType(ctx, 0, TensorProto::BOOL);
-  if (hasInputShape(ctx, 0)) {
-    propagateShapeFromInputToOutput(ctx, 0, 0);
-  }
-}
-
 static std::function<void(OpSchema&)> BinaryLogicDocGenerator_opset1() {
-  return [=](OpSchema& schema) { schema.TypeAndShapeInferenceFunction(logicalOpInference_opset1); };
-}
-
-static void BinaryLogicShapeInference_opset7(InferenceContext& ctx) {
-  updateOutputElemType(ctx, 0, TensorProto::BOOL);
-  if (hasNInputShapes(ctx, 2))
-    bidirectionalBroadcastShapeInference(
-        ctx.getInputType(0)->tensor_type().shape(),
-        ctx.getInputType(1)->tensor_type().shape(),
-        *ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape());
+  return
+      [=](OpSchema& schema) { schema.TypeAndShapeInferenceFunction(defs::logical::utils::logicalOpInference_opset1); };
 }
 
 static std::function<void(OpSchema&)> BinaryLogicDocGenerator_opset7() {
-  return [=](OpSchema& schema) { schema.TypeAndShapeInferenceFunction(BinaryLogicShapeInference_opset7); };
+  return [=](OpSchema& schema) {
+    schema.TypeAndShapeInferenceFunction(defs::logical::utils::BinaryLogicShapeInference_opset7);
+  };
 }
 
 ONNX_OPERATOR_SET_SCHEMA(And, 1, generated::ai_onnx::And_ver1().FillUsing(BinaryLogicDocGenerator_opset1()));
@@ -91,20 +70,10 @@ ONNX_OPERATOR_SET_SCHEMA(
 
 ONNX_OPERATOR_SET_SCHEMA(Equal, 13, generated::ai_onnx::Equal_ver13().FillUsing(BinaryLogicDocGenerator()));
 
-static void BitShiftShapeInference_opset11(InferenceContext& ctx) {
-  // Type inference
-  propagateElemTypeFromInputToOutput(ctx, 0, 0);
-  // Shape inference
-  if (hasNInputShapes(ctx, 2))
-    bidirectionalBroadcastShapeInference(
-        ctx.getInputType(0)->tensor_type().shape(),
-        ctx.getInputType(1)->tensor_type().shape(),
-        *ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape());
-}
-
 ONNX_OPERATOR_SET_SCHEMA(
     BitShift,
     11,
-    generated::ai_onnx::BitShift_ver11().TypeAndShapeInferenceFunction(BitShiftShapeInference_opset11));
+    generated::ai_onnx::BitShift_ver11().TypeAndShapeInferenceFunction(
+        defs::logical::utils::BitShiftShapeInference_opset11));
 
 } // namespace ONNX_NAMESPACE

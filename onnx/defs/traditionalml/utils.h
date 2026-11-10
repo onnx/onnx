@@ -32,4 +32,24 @@ inline void AssertAttributeProtoTypeAndLength(
 
 } // namespace ONNX_NAMESPACE
 
+namespace ONNX_NAMESPACE::defs::traditionalml::utils {
+
+void ArrayFeatureExtractorShapeInference_opset1(InferenceContext& ctx);
+void CastMapShapeInference_opset1(InferenceContext& ctx);
+void CategoryMapperShapeInference_opset1(InferenceContext& ctx);
+void DictVectorizerShapeInference_opset1(InferenceContext& ctx);
+void LabelEncoderShapeInference_opset4(InferenceContext& ctx);
+void LinearClassifierShapeInference_opset1(InferenceContext& ctx);
+void OneHotEncoderShapeInference_opset1(InferenceContext& ctx);
+void SVMClassifierShapeInference_opset1(InferenceContext& ctx);
+void TreeEnsembleShapeInference_opset5(InferenceContext& ctx);
+void ZipMapShapeInference_opset1(InferenceContext& ctx);
+void LabelEncoderShapeInference_opset1(InferenceContext& ctx);
+void TreeEnsembleClassifierShapeInference_opset1(InferenceContext& ctx);
+void TreeEnsembleClassifierShapeInference_opset3(InferenceContext& ctx);
+void TreeEnsembleRegressorShapeInference_opset3(InferenceContext& ctx);
+void LabelEncoderShapeInference_opset2(InferenceContext& ctx);
+
+} // namespace ONNX_NAMESPACE::defs::traditionalml::utils
+
 #endif // ONNX_DEFS_TRADITIONALML_UTILS_H_

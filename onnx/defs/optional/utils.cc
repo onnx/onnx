@@ -8,7 +8,7 @@
 
 namespace ONNX_NAMESPACE::defs::optional::utils {
 
-static void OptionalInference(InferenceContext& ctx) {
+void OptionalInference(InferenceContext& ctx) {
   const size_t numOutputs = ctx.getNumOutputs();
   if (numOutputs != 1) {
     fail_type_inference("Optional is expected to have an output.");
@@ -37,7 +37,7 @@ std::function<void(OpSchema&)> OptionalOpGenerator() {
   return [](OpSchema& schema) { schema.TypeAndShapeInferenceFunction(OptionalInference); };
 }
 
-static void OptionalHasElementInference(InferenceContext& ctx) {
+void OptionalHasElementInference(InferenceContext& ctx) {
   const size_t numInputs = ctx.getNumInputs();
   if (numInputs != 0 && numInputs != 1) {
     fail_type_inference("OptionalHasElement is expected to have 0 or 1 input.");
@@ -55,7 +55,7 @@ std::function<void(OpSchema&)> OptionalHasElementOpGenerator() {
   return [](OpSchema& schema) { schema.TypeAndShapeInferenceFunction(OptionalHasElementInference); };
 }
 
-static void OptionalGetElementInference(InferenceContext& ctx) {
+void OptionalGetElementInference(InferenceContext& ctx) {
   const size_t numInputs = ctx.getNumInputs();
   if (numInputs != 1) {
     fail_type_inference("OptionalGetElement must have an input element.");
@@ -77,4 +77,34 @@ static void OptionalGetElementInference(InferenceContext& ctx) {
 std::function<void(OpSchema&)> OptionalGetElementOpGenerator() {
   return [](OpSchema& schema) { schema.TypeAndShapeInferenceFunction(OptionalGetElementInference); };
 }
+
+void OptionalHasElementShapeInference_opset15(InferenceContext& ctx) {
+  const size_t numInputs = ctx.getNumInputs();
+  if (numInputs != 1) {
+    fail_type_inference("OptionalHasElement is expected to have 1 input.");
+  }
+  const size_t numOutputs = ctx.getNumOutputs();
+  if (numOutputs != 1) {
+    fail_type_inference("OptionalHasElement is expected to have 1 output.");
+  }
+  auto output_tensor_type = ctx.getOutputType(0)->mutable_tensor_type();
+  output_tensor_type->set_elem_type(TensorProto::BOOL);
+  output_tensor_type->mutable_shape()->Clear();
+}
+
+void OptionalGetElementShapeInference_opset15(InferenceContext& ctx) {
+  const size_t numInputs = ctx.getNumInputs();
+  if (numInputs != 1) {
+    fail_type_inference("OptionalGetElement must have an input element.");
+  }
+  auto input_type = ctx.getInputType(0);
+  if (input_type == nullptr) {
+    fail_type_inference("Input type is null. Input must have Type information.");
+  }
+  if (!input_type->has_optional_type() || !input_type->optional_type().has_elem_type()) {
+    fail_type_inference("Input must be an optional-type value containing an element with type information.");
+  }
+  ctx.getOutputType(0)->CopyFrom(input_type->optional_type().elem_type());
+}
+
 } // namespace ONNX_NAMESPACE::defs::optional::utils

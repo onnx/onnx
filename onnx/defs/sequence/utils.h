@@ -16,4 +16,18 @@ namespace ONNX_NAMESPACE::defs::sequence::utils {
 
 std::function<void(OpSchema&)> SplitToSequenceOpGenerator();
 
+void SplitToSequenceShapeInference(InferenceContext& ctx);
+void SequenceEmptyShapeInference_opset11(InferenceContext& ctx);
+void SequenceConstructShapeInference_opset11(InferenceContext& ctx);
+void SequenceInsertShapeInference_opset11(InferenceContext& ctx);
+void SequenceAtShapeInference_opset11(InferenceContext& ctx);
+void SequenceEraseShapeInference_opset11(InferenceContext& ctx);
+void SequenceLengthShapeInference_opset11(InferenceContext& ctx);
+void ConcatFromSequenceShapeInference_opset11(InferenceContext& ctx);
+void SequenceMapInferenceFunction(InferenceContext& ctx);
+bool BuildSequenceMapBodyFunc(
+    const FunctionBodyBuildContext& ctx,
+    const OpSchema& schema,
+    FunctionProto& functionProto);
+
 } // namespace ONNX_NAMESPACE::defs::sequence::utils

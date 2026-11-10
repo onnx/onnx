@@ -14,8 +14,6 @@
 
 namespace ONNX_NAMESPACE {
 
-void ConstantOpInference(InferenceContext& ctx);
-
 template <typename T>
 int64_t compute_output_dim_for_range(const TensorProto* start, const TensorProto* limit, const TensorProto* delta) {
   if (!start->dims().empty() || !limit->dims().empty() || !delta->dims().empty()) {
@@ -59,3 +57,46 @@ int64_t compute_output_dim_for_range(const TensorProto* start, const TensorProto
 }
 
 } // namespace ONNX_NAMESPACE
+
+namespace ONNX_NAMESPACE::defs::generator::utils {
+
+void ConstantOpInference(InferenceContext& ctx);
+void ConstantOfShapeShapeInference_opset25(InferenceContext& ctx);
+void EyeLikeShapeInference_opset22(InferenceContext& ctx);
+void RandomUniformShapeInference_opset22(InferenceContext& ctx);
+void RandomNormalShapeInference_opset22(InferenceContext& ctx);
+void RandomUniformLikeShapeInference_opset22(InferenceContext& ctx);
+void RandomNormalLikeShapeInference_opset22(InferenceContext& ctx);
+void MultinomialShapeInference_opset22(InferenceContext& ctx);
+bool BuildFunctionBodyRange27(
+    const FunctionBodyBuildContext& ctx,
+    const OpSchema& schema,
+    FunctionProto& functionProto);
+void RangeShapeInference_opset27(InferenceContext& ctx);
+bool BernoulliFunctionBody_opset22(
+    const FunctionBodyBuildContext& ctx,
+    const OpSchema& schema,
+    FunctionProto& functionProto);
+void BernoulliShapeInference_opset22(ONNX_NAMESPACE::InferenceContext& ctx);
+bool BernoulliFunctionBody_opset15(
+    const FunctionBodyBuildContext& ctx,
+    const OpSchema& schema,
+    FunctionProto& functionProto);
+void BernoulliShapeInference_opset15(ONNX_NAMESPACE::InferenceContext& ctx);
+void MultinomialShapeInference_opset7(InferenceContext& ctx);
+void RandomNormalLikeShapeInference_opset1(InferenceContext& ctx);
+void RandomUniformLikeShapeInference_opset1(InferenceContext& ctx);
+void RandomNormalShapeInference_opset1(InferenceContext& ctx);
+void RandomUniformShapeInference_opset1(InferenceContext& ctx);
+void EyeLikeShapeInference_opset9(InferenceContext& ctx);
+void ConstantShapeInference_opset1(InferenceContext& ctx);
+void ConstantShapeInference_opset9(InferenceContext& ctx);
+void ConstantShapeInference_opset11(InferenceContext& ctx);
+void ConstantOfShapeShapeInference_opset24(InferenceContext& ctx);
+void ConstantOfShapeShapeInference_opset23(InferenceContext& ctx);
+void ConstantOfShapeShapeInference_opset21(InferenceContext& ctx);
+void ConstantOfShapeShapeInference_opset20(InferenceContext& ctx);
+void ConstantOfShapeShapeInference_opset9(InferenceContext& ctx);
+void RangeShapeInference_opset11(InferenceContext& ctx);
+
+} // namespace ONNX_NAMESPACE::defs::generator::utils

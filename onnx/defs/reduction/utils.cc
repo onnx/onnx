@@ -5,12 +5,20 @@
 #include "onnx/defs/reduction/utils.h"
 
 #include <algorithm>
+#include <functional>
 #include <string>
 #include <vector>
 
 namespace ONNX_NAMESPACE {
 
-static void ReduceShapeInference(InferenceContext& ctx) {
+std::function<void(OpSchema&)> ReduceOpGenerator() {
+  return [=](OpSchema& schema) { schema.TypeAndShapeInferenceFunction(defs::reduction::utils::ReduceShapeInference); };
+}
+} // namespace ONNX_NAMESPACE
+
+namespace ONNX_NAMESPACE::defs::reduction::utils {
+
+void ReduceShapeInference(InferenceContext& ctx) {
   propagateElemTypeFromInputToOutput(ctx, 0, 0);
   if (!hasNInputShapes(ctx, 1)) {
     return;
@@ -72,7 +80,244 @@ static void ReduceShapeInference(InferenceContext& ctx) {
   }
 }
 
-std::function<void(OpSchema&)> ReduceOpGenerator() {
-  return [=](OpSchema& schema) { schema.TypeAndShapeInferenceFunction(ReduceShapeInference); };
+void ArgReduceShapeInference(InferenceContext& ctx) {
+  // set output element type to int64
+  updateOutputElemType(ctx, 0, TensorProto_DataType_INT64);
+
+  if (!hasNInputShapes(ctx, 1)) {
+    return;
+  }
+
+  const auto& input_shape = ctx.getInputType(0)->tensor_type().shape();
+  auto* output_shape = ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
+  int64_t input_ndim = input_shape.dim_size();
+  int64_t axis = 0; // default to 0
+  const auto* const axis_proto = ctx.getAttribute("axis");
+  if (axis_proto) {
+    axis = axis_proto->i();
+    if (axis < -input_ndim || axis >= input_ndim) {
+      fail_shape_inference("'axis' must be in [-rank(indices), rank(indices)-1]");
+    }
+    if (axis < 0)
+      axis += input_ndim;
+  }
+
+  int64_t keep_dims = 1;
+  const auto* const attr_proto = ctx.getAttribute("keepdims");
+  if (attr_proto) {
+    keep_dims = attr_proto->i();
+  }
+  // do we need handle negative axis?
+  for (int i = 0; i < input_ndim; ++i) {
+    if (i != axis) {
+      auto* dim = output_shape->add_dim();
+      dim->CopyFrom(input_shape.dim(i));
+    } else {
+      if (keep_dims == 1) {
+        auto* dim = output_shape->add_dim();
+        dim->set_dim_value(1);
+      }
+    }
+  }
 }
-} // namespace ONNX_NAMESPACE
+
+void ReduceShapeInference_opset12(InferenceContext& ctx) {
+  propagateElemTypeFromInputToOutput(ctx, 0, 0);
+  if (!hasNInputShapes(ctx, 1)) {
+    return;
+  }
+
+  int64_t keep_dims = 1;
+  const auto* const attr_proto = ctx.getAttribute("keepdims");
+  if (attr_proto) {
+    keep_dims = attr_proto->i();
+  }
+  const auto& input_shape = ctx.getInputType(0)->tensor_type().shape();
+  int64_t input_ndim = input_shape.dim_size();
+  auto* output_shape = ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
+  std::vector<int64_t> axes;
+  const auto* const axes_proto = ctx.getAttribute("axes");
+  if (axes_proto)
+    axes.assign(axes_proto->ints().begin(), axes_proto->ints().end());
+
+  for (int64_t& axe : axes) {
+    if (axe < -input_ndim || axe >= input_ndim) {
+      fail_shape_inference("axis must be in [-rank, rank-1]. input rank was ", input_ndim);
+    }
+    if (axe < 0)
+      axe += input_ndim;
+  }
+  // do we need handle negative axis?
+  for (int i = 0; i < input_ndim; ++i) {
+    // axes empty means reduce all dim
+    if (!axes.empty() && std::find(axes.begin(), axes.end(), i) == axes.end()) {
+      auto* dim = output_shape->add_dim();
+      dim->CopyFrom(input_shape.dim(i));
+    } else {
+      if (keep_dims == 1) {
+        auto* dim = output_shape->add_dim();
+        dim->set_dim_value(1);
+      }
+    }
+  }
+}
+
+void ArgReduceShapeInference_opset12(InferenceContext& ctx) {
+  // set output element type to int64
+  updateOutputElemType(ctx, 0, TensorProto_DataType_INT64);
+
+  if (!hasNInputShapes(ctx, 1)) {
+    return;
+  }
+
+  const auto& input_shape = ctx.getInputType(0)->tensor_type().shape();
+  auto* output_shape = ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
+  int64_t input_ndim = input_shape.dim_size();
+  int64_t axis = 0; // default to 0
+  const auto* const axis_proto = ctx.getAttribute("axis");
+  if (axis_proto) {
+    axis = axis_proto->i();
+    if (axis < -input_ndim || axis >= input_ndim) {
+      fail_shape_inference("'axis' must be in [-rank(indices), rank(indices)-1]");
+    }
+    if (axis < 0)
+      axis += input_ndim;
+  }
+
+  int64_t keep_dims = 1;
+  const auto* const attr_proto = ctx.getAttribute("keepdims");
+  if (attr_proto) {
+    keep_dims = attr_proto->i();
+  }
+  // do we need handle negative axis?
+  for (int i = 0; i < input_ndim; ++i) {
+    if (i != axis) {
+      auto* dim = output_shape->add_dim();
+      dim->CopyFrom(input_shape.dim(i));
+    } else {
+      if (keep_dims == 1) {
+        auto* dim = output_shape->add_dim();
+        dim->set_dim_value(1);
+      }
+    }
+  }
+}
+
+void ReduceShapeInference_opset1(InferenceContext& ctx) {
+  propagateElemTypeFromInputToOutput(ctx, 0, 0);
+  if (!hasNInputShapes(ctx, 1)) {
+    return;
+  }
+
+  int64_t keep_dims = 1;
+  const auto* const attr_proto = ctx.getAttribute("keepdims");
+  if (attr_proto) {
+    keep_dims = attr_proto->i();
+  }
+  const auto& input_shape = ctx.getInputType(0)->tensor_type().shape();
+  int64_t input_ndim = input_shape.dim_size();
+  auto* output_shape = ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
+  std::vector<int64_t> axes;
+  const auto* const axes_proto = ctx.getAttribute("axes");
+  if (axes_proto)
+    axes.assign(axes_proto->ints().begin(), axes_proto->ints().end());
+
+  for (int64_t& axe : axes) {
+    if (axe < 0)
+      axe += input_ndim;
+  }
+  // do we need handle negative axis?
+  for (int i = 0; i < input_ndim; ++i) {
+    // axes empty means reduce all dim
+    if (!axes.empty() && std::find(axes.begin(), axes.end(), i) == axes.end()) {
+      auto* dim = output_shape->add_dim();
+      dim->CopyFrom(input_shape.dim(i));
+    } else {
+      if (keep_dims == 1) {
+        auto* dim = output_shape->add_dim();
+        dim->set_dim_value(1);
+      }
+    }
+  }
+}
+
+void ArgReduceShapeInference_opset1(InferenceContext& ctx) {
+  // set output element type to int64
+  updateOutputElemType(ctx, 0, TensorProto_DataType_INT64);
+
+  if (!hasNInputShapes(ctx, 1)) {
+    return;
+  }
+
+  const auto& input_shape = ctx.getInputType(0)->tensor_type().shape();
+  auto* output_shape = ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
+  int64_t input_ndim = input_shape.dim_size();
+  int64_t axis = 0; // default to 0
+  const auto* const axis_proto = ctx.getAttribute("axis");
+  if (axis_proto) {
+    axis = axis_proto->i();
+    if (axis < 0)
+      axis += input_ndim;
+  }
+
+  int64_t keep_dims = 1;
+  const auto* const attr_proto = ctx.getAttribute("keepdims");
+  if (attr_proto) {
+    keep_dims = attr_proto->i();
+  }
+  // do we need handle negative axis?
+  for (int i = 0; i < input_ndim; ++i) {
+    if (i != axis) {
+      auto* dim = output_shape->add_dim();
+      dim->CopyFrom(input_shape.dim(i));
+    } else {
+      if (keep_dims == 1) {
+        auto* dim = output_shape->add_dim();
+        dim->set_dim_value(1);
+      }
+    }
+  }
+}
+
+void ArgReduceShapeInference_opset11(InferenceContext& ctx) {
+  // set output element type to int64
+  updateOutputElemType(ctx, 0, TensorProto_DataType_INT64);
+
+  if (!hasNInputShapes(ctx, 1)) {
+    return;
+  }
+
+  const auto& input_shape = ctx.getInputType(0)->tensor_type().shape();
+  auto* output_shape = ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
+  int64_t input_ndim = input_shape.dim_size();
+  int64_t axis = 0; // default to 0
+  const auto* const axis_proto = ctx.getAttribute("axis");
+  if (axis_proto) {
+    axis = axis_proto->i();
+    if (axis < -input_ndim || axis >= input_ndim) {
+      fail_shape_inference("'axis' must be in [-rank(indices), rank(indices)-1]");
+    }
+    if (axis < 0)
+      axis += input_ndim;
+  }
+
+  int64_t keep_dims = 1;
+  const auto* const attr_proto = ctx.getAttribute("keepdims");
+  if (attr_proto) {
+    keep_dims = attr_proto->i();
+  }
+  // do we need handle negative axis?
+  for (int i = 0; i < input_ndim; ++i) {
+    if (i != axis) {
+      auto* dim = output_shape->add_dim();
+      dim->CopyFrom(input_shape.dim(i));
+    } else {
+      if (keep_dims == 1) {
+        auto* dim = output_shape->add_dim();
+        dim->set_dim_value(1);
+      }
+    }
+  }
+}
+
+} // namespace ONNX_NAMESPACE::defs::reduction::utils

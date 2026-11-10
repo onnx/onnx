@@ -14,3 +14,15 @@ namespace ONNX_NAMESPACE {
 std::function<void(OpSchema&)> ReduceOpGenerator();
 
 } // namespace ONNX_NAMESPACE
+
+namespace ONNX_NAMESPACE::defs::reduction::utils {
+
+void ReduceShapeInference(InferenceContext& ctx);
+void ArgReduceShapeInference(InferenceContext& ctx);
+void ReduceShapeInference_opset12(InferenceContext& ctx);
+void ArgReduceShapeInference_opset12(InferenceContext& ctx);
+void ReduceShapeInference_opset1(InferenceContext& ctx);
+void ArgReduceShapeInference_opset1(InferenceContext& ctx);
+void ArgReduceShapeInference_opset11(InferenceContext& ctx);
+
+} // namespace ONNX_NAMESPACE::defs::reduction::utils

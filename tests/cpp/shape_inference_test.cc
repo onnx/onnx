@@ -8,19 +8,13 @@
 #include <vector>
 
 #include "gtest/gtest.h"
+#include "onnx/defs/controlflow/utils.h"
 #include "onnx/defs/parser.h"
 #include "onnx/defs/schema.h"
 #include "onnx/defs/shape_inference.h"
 #include "onnx/shape_inference/implementation.h"
 
 namespace ONNX_NAMESPACE {
-// onnx/defs/controlflow/old.cc
-// NOLINTNEXTLINE(misc-use-internal-linkage)
-void ScanInferenceFunction_opset8(InferenceContext& ctx);
-// onnx/defs/controlflow/defs.cc
-// NOLINTNEXTLINE(misc-use-internal-linkage)
-void ScanInferenceFunction(InferenceContext& ctx);
-
 namespace Test {
 
 template <class Type>
@@ -448,9 +442,9 @@ static void doInferencingTest(bool use_scan_opset8) {
 
   shape_inference::InferenceContextImpl ctx(scan, valueTypesByName, {}, {}, options, {}, &graphInfCtx);
   if (use_scan_opset8)
-    ScanInferenceFunction_opset8(ctx);
+    defs::controlflow::utils::ScanInferenceFunction_opset8(ctx);
   else
-    ScanInferenceFunction(ctx);
+    defs::controlflow::utils::ScanInferenceFunction(ctx);
 
   EXPECT_EQ(ctx.getNumOutputs(), 2);
   checkType(*ctx.getOutputType(0), loop_state_out_tensor.tensor_type());

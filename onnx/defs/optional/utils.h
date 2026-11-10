@@ -17,4 +17,11 @@ std::function<void(OpSchema&)> OptionalOpGenerator();
 std::function<void(OpSchema&)> OptionalHasElementOpGenerator();
 
 std::function<void(OpSchema&)> OptionalGetElementOpGenerator();
+
+void OptionalInference(InferenceContext& ctx);
+void OptionalHasElementInference(InferenceContext& ctx);
+void OptionalGetElementInference(InferenceContext& ctx);
+void OptionalHasElementShapeInference_opset15(InferenceContext& ctx);
+void OptionalGetElementShapeInference_opset15(InferenceContext& ctx);
+
 } // namespace ONNX_NAMESPACE::defs::optional::utils
