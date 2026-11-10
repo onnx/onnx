@@ -589,6 +589,40 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Constrain input and output types to float tensors.")
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
+static constexpr const char* kDoc_Log1p_ver29 = R"DOC(
+Computes `y = ln(1 + x)` element-wise, where `ln` is the natural logarithm.
+The output has the same shape and element type as the input, including for
+scalar and empty inputs.
+
+For finite `x > -1`, the result is a floating-point approximation of `ln(1 + x)`,
+with `1 + x` evaluated as an exact real sum. Small nonzero results representable
+in the output type must be preserved even when floating-point addition would
+round `1 + x` to `1`. For example, a FLOAT input of `1e-8` produces approximately
+`1e-8`.
+
+Special values are defined element-wise as follows:
+
+| Input `x` | Output `y` |
+| --- | --- |
+| Positive zero | Positive zero |
+| Negative zero | Negative zero |
+| `-1` | Negative infinity |
+| Finite `x < -1` | NaN |
+| Negative infinity | NaN |
+| Positive infinity | Positive infinity |
+| NaN | NaN |
+
+The sign and payload of an output NaN are unspecified.
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(
+    Log1p,
+    29,
+    OpSchema().FillUsing(
+        defs::math::utils::UnaryFloatMathOpGenerator(
+            kDoc_Log1p_ver29,
+            "The natural logarithm of one plus the input, computed element-wise")));
+
 ONNX_OPERATOR_SET_SCHEMA(
     Tanh,
     13,
@@ -1015,6 +1049,47 @@ ONNX_OPERATOR_SET_SCHEMA(
             },
             18));
 
+// An opset 29 decomposition can use Log1p without rounding away the small
+// normalization term. Earlier function bodies retain their original dependencies.
+static bool BuildContextDependentFunctionBodyLogSoftmax29(
+    const FunctionBodyBuildContext& ctx,
+    const OpSchema& schema,
+    FunctionProto& functionProto) {
+  const auto* input_type = ctx.getInputType(0);
+  if (input_type == nullptr) {
+    return false;
+  }
+  const auto elem_type = input_type->tensor_type().elem_type();
+  const bool promote = elem_type == TensorProto::FLOAT16 || elem_type == TensorProto::BFLOAT16;
+  const int64_t axis = ctx.getAttribute("axis") != nullptr ? ctx.getAttribute("axis")->i() : -1;
+  FunctionBuilder builder(functionProto);
+  // Keep 16-bit inputs in float through exponentiation and normalization.
+  builder.Add(promote ? "X = Cast <to = 1> (input)" : "X = Identity (input)");
+  builder.Const1D("axes", axis).Const("OneInt", static_cast<int64_t>(1)).Const("ZeroFloat", 0.0f).Add(R"(
+        Zero = CastLike (ZeroFloat, X)
+        MaxLogit = ReduceMax <keepdims = 1> (X, axes)
+        Shifted = Sub (X, MaxLogit)
+        Exponentials = Exp (Shifted)
+        IsMax = Equal (Shifted, Zero)
+        Others = Where (IsMax, Zero, Exponentials)
+        IsMaxInt = Cast <to = 7> (IsMax)
+        MaxCount = ReduceSum <keepdims = 1> (IsMaxInt, axes)
+        RemainingMaxCount = Sub (MaxCount, OneInt)
+        TiedMaxima = CastLike (RemainingMaxCount, X)
+      )");
+  // Remove all maxima before summation, then restore all but one. Subtracting
+  // one from the full exponential sum would lose the small normalization term.
+  builder.Add(R"(
+        OtherSum = ReduceSum <keepdims = 1> (Others, axes)
+        NormalizerInput = Add (OtherSum, TiedMaxima)
+        Normalizer = Log1p (NormalizerInput)
+        OutputWide = Sub (Shifted, Normalizer)
+        output = CastLike (OutputWide, input)
+      )");
+  schema.BuildFunction(functionProto);
+  return true;
+}
+
 ONNX_OPERATOR_SET_SCHEMA(
     LogSoftmax,
     13,
@@ -1059,7 +1134,8 @@ ONNX_OPERATOR_SET_SCHEMA(
               schema.BuildFunction(functionProto);
               return true;
             },
-            18));
+            18)
+        .SetContextDependentFunctionBodyBuilder(BuildContextDependentFunctionBodyLogSoftmax29, 29));
 
 ONNX_OPERATOR_SET_SCHEMA(
     Hardmax,

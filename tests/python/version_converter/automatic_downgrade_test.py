@@ -70,6 +70,18 @@ class TestAutomaticDowngrade(automatic_conversion_test_base.TestAutomaticConvers
             """,
         )
 
+    def test_Log1p(self) -> None:
+        self._test_op_downgrade("Log1p", 29)
+
+    def test_Log1p_cannot_downgrade_to_28(self) -> None:
+        model = onnx.parser.parse_model("""
+            <ir_version: 10, opset_import: ["": 29]>
+            log1p (float[2] x) => (float[2] y) {
+                y = Log1p(x)
+            }
+        """)
+        self._test_model_conversion_fails(28, model)
+
     @pytest.mark.parametrize(
         "index_type", [onnx.TensorProto.INT32, onnx.TensorProto.INT64]
     )

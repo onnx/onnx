@@ -34687,6 +34687,57 @@ This version of the operator has been available since version 29 of the default 
 <dd>Constrain group indices to int32 or int64 tensors.</dd>
 </dl>
 
+### <a name="Log1p-29"></a>**Log1p-29**</a>
+
+  Computes `y = ln(1 + x)` element-wise, where `ln` is the natural logarithm.
+  The output has the same shape and element type as the input, including for
+  scalar and empty inputs.
+
+  For finite `x > -1`, the result is a floating-point approximation of `ln(1 + x)`,
+  with `1 + x` evaluated as an exact real sum. Small nonzero results representable
+  in the output type must be preserved even when floating-point addition would
+  round `1 + x` to `1`. For example, a FLOAT input of `1e-8` produces approximately
+  `1e-8`.
+
+  Special values are defined element-wise as follows:
+
+  | Input `x` | Output `y` |
+  | --- | --- |
+  | Positive zero | Positive zero |
+  | Negative zero | Negative zero |
+  | `-1` | Negative infinity |
+  | Finite `x < -1` | NaN |
+  | Negative infinity | NaN |
+  | Positive infinity | Positive infinity |
+  | NaN | NaN |
+
+  The sign and payload of an output NaN are unspecified.
+
+#### Version
+
+This version of the operator has been available since version 29 of the default ONNX operator set.
+
+#### Inputs
+
+<dl>
+<dt><tt>input</tt> (differentiable) : T</dt>
+<dd>Input tensor</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> (differentiable) : T</dt>
+<dd>The natural logarithm of one plus the input, computed element-wise</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(bfloat16), tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
 ### <a name="LogCumSumExp-29"></a>**LogCumSumExp-29**</a>
 
   Computes the inclusive, forward cumulative log-sum-exp of `X` along `axis`.
