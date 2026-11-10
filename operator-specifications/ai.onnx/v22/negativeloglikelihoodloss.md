@@ -1,0 +1,14 @@
+```toml
+name = "NegativeLogLikelihoodLoss"
+domain = "ai.onnx"
+shape_inference = "defs::math::utils::NegativeLogLikelihoodLossShapeInference_opset22"
+function_body_builders = { 22 = "defs::math::utils::BuildContextDependentFunctionBody" }
+
+[type_constraints.T]
+types = "all_float_types_ir4"
+desc = "Constrain input, weight, and output types to floating-point tensors."
+
+[type_constraints.Tind]
+types = ["tensor(int32)", "tensor(int64)"]
+desc = "Constrain target to integer types"
+```

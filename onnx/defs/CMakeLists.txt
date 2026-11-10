@@ -7,8 +7,6 @@ target_sources(onnx PRIVATE
     data_propagators.h
     data_type_utils.cc
     data_type_utils.h
-    doc_strings.cc
-    doc_strings.h
     function.cc
     function.h
     operator_sets.h
@@ -28,6 +26,48 @@ target_sources(onnx PRIVATE
     tensor_util.cc
     tensor_util.h
 )
+
+# Operator schemas generated from the spec files in operator-specifications.
+# One translation unit is generated per (domain, operator).
+set(SCHEMA_SPECS_DIR "${ONNX_ROOT}/operator-specifications")
+set(GEN_SCHEMAS_DIR "${CMAKE_CURRENT_BINARY_DIR}/generated")
+set(OPERATOR_SPECS_TOOL_DIR "${ONNX_ROOT}/tools/operator_specs")
+file(GLOB_RECURSE SCHEMA_SPEC_FILES CONFIGURE_DEPENDS "${SCHEMA_SPECS_DIR}/*.md")
+# Only <domain>/v<N>/<op>.md are spec files (e.g., not README.md).
+list(FILTER SCHEMA_SPEC_FILES INCLUDE REGEX "/[^/]+/v[0-9]+/[^/]+\\.md$")
+# Regenerate if spec files are removed; this file only changes with the list.
+string(JOIN "\n" SCHEMA_SPEC_FILES_CONTENT ${SCHEMA_SPEC_FILES})
+file(CONFIGURE OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/schema_spec_files.txt" CONTENT "${SCHEMA_SPEC_FILES_CONTENT}")
+file(GLOB_RECURSE OPERATOR_SPECS_TOOL_FILES CONFIGURE_DEPENDS
+     "${OPERATOR_SPECS_TOOL_DIR}/*.py" "${OPERATOR_SPECS_TOOL_DIR}/*.jinja")
+set(GEN_SCHEMAS_SOURCES)
+foreach(spec_file IN LISTS SCHEMA_SPEC_FILES)
+  # <domain>/v<N>/<op>.md -> <domain with '_' for '.'>/<op>.cc
+  file(RELATIVE_PATH rel "${SCHEMA_SPECS_DIR}" "${spec_file}")
+  string(REGEX REPLACE "^([^/]+)/v[0-9]+/([^/]+)\\.md$" "\\1/\\2.cc" rel "${rel}")
+  string(REPLACE "." "_" rel_dir "${rel}")
+  string(REGEX REPLACE "_cc$" ".cc" rel "${rel_dir}")
+  list(APPEND GEN_SCHEMAS_SOURCES "${GEN_SCHEMAS_DIR}/${rel}")
+endforeach()
+list(REMOVE_DUPLICATES GEN_SCHEMAS_SOURCES)
+# Operator set classes included by operator_sets*.h.
+list(APPEND GEN_SCHEMAS_SOURCES
+     "${GEN_SCHEMAS_DIR}/opsets_onnx.h"
+     "${GEN_SCHEMAS_DIR}/opsets_onnx_ml.h"
+     "${GEN_SCHEMAS_DIR}/opsets_onnx_preview.h")
+add_custom_command(
+  OUTPUT ${GEN_SCHEMAS_SOURCES} "${GEN_SCHEMAS_DIR}/schemas.h"
+  COMMAND ${ONNX_PYTHON_INTERPRETER} -m operator_specs
+          --input "${SCHEMA_SPECS_DIR}" --output "${GEN_SCHEMAS_DIR}"
+  WORKING_DIRECTORY "${ONNX_ROOT}/tools"
+  DEPENDS ${SCHEMA_SPEC_FILES} "${CMAKE_CURRENT_BINARY_DIR}/schema_spec_files.txt" ${OPERATOR_SPECS_TOOL_FILES}
+  COMMENT "Generating operator schemas from spec files"
+  VERBATIM)
+# The custom command is defined in a different directory than the 'onnx'
+# target; a custom target in this directory owns it.
+add_custom_target(onnx_gen_schemas DEPENDS ${GEN_SCHEMAS_SOURCES} "${GEN_SCHEMAS_DIR}/schemas.h")
+add_dependencies(onnx onnx_gen_schemas)
+target_sources(onnx PRIVATE ${GEN_SCHEMAS_SOURCES} "${GEN_SCHEMAS_DIR}/schemas.h")
 
 add_subdirectory(controlflow)
 add_subdirectory(generator)

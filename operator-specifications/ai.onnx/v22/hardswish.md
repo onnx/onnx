@@ -1,0 +1,17 @@
+```toml
+name = "HardSwish"
+domain = "ai.onnx"
+shape_inference = "propagateShapeAndTypeFromFirstInput"
+
+[type_constraints.T]
+types = "all_float_types_ir4"
+desc = "Constrain input and output types to float tensors."
+
+[function_bodies]
+22 = """
+{
+   HS_X = HardSigmoid <alpha: float = 0.16666667, beta: float = 0.5> (X)
+   Y = Mul (X, HS_X)
+}
+"""
+```

@@ -9,7 +9,7 @@ See also: [docs/ShapeInference.md](../../../docs/ShapeInference.md)
 
 | Component | File |
 |-----------|------|
-| Inference function | `onnx/defs/<domain>/defs.cc` (inline with schema) |
+| Inference function | `onnx/defs/<domain>/utils.{h,cc}`, named in `shape_inference` of `operator-specifications/<domain>/v<N>/<op>.md` |
 | Utility functions | `onnx/defs/shape_inference.h` |
 | Tests | `tests/python/shape_inference_test.py` |
 

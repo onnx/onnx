@@ -9,7 +9,7 @@ Follow the full guide in [docs/AddFunctionBody.md](../../../docs/AddFunctionBody
 
 | Component | File |
 |-----------|------|
-| Function body definition | `onnx/defs/<domain>/defs.cc` (inline with schema) |
+| Function body definition | `function_bodies` in `operator-specifications/<domain>/v<N>/<op>.md`; context-dependent function body builders named in `function_body_builders` and defined in `onnx/defs/<domain>/utils.{h,cc}` |
 | FunctionBuilder utilities | `onnx/defs/function.h` |
 | Function tests | `tests/cpp/function_get_test.cc`, `tests/cpp/function_verify_test.cc` |
 

@@ -18,10 +18,20 @@ int handle_negative_axis_validate(std::string_view attrib, int axis, int rank);
 // the loop state variable count. Shared by the current and opset-9 paths.
 size_t ValidateScanCountsAndGetNumLoopStateVars(size_t num_inputs, size_t num_scan_inputs, size_t num_outputs);
 
-void IfInferenceFunction(InferenceContext& ctx);
-
-void LoopInferenceFunction(InferenceContext& ctx);
-
-void ScanInferenceFunction(InferenceContext& ctx);
-
 } // namespace ONNX_NAMESPACE
+
+namespace ONNX_NAMESPACE::defs::controlflow::utils {
+
+void IfInferenceFunction(InferenceContext& ctx);
+void LoopInferenceFunction(InferenceContext& ctx);
+void ScanInferenceFunction(InferenceContext& ctx);
+void ScanInferenceFunction_opset8(InferenceContext& ctx);
+void ScanInferenceFunction_opset9(InferenceContext& ctx);
+void LoopInferenceFunction_opset8(InferenceContext& ctx);
+void LoopInferenceFunction_opset11(InferenceContext& ctx);
+void IfInferenceFunction_opset1(InferenceContext& ctx);
+void IfInferenceFunction_opset11(InferenceContext& ctx);
+void IfInferenceFunction_opset13(InferenceContext& ctx);
+void LoopInferenceFunction_opset13(InferenceContext& ctx);
+
+} // namespace ONNX_NAMESPACE::defs::controlflow::utils
