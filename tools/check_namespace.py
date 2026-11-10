@@ -9,7 +9,11 @@ in a private namespace, so the namespace should not be hardcoded.
 
 from __future__ import annotations
 
+import re
 import sys
+
+# `onnx::` not preceded by a word character, e.g., not `ai_onnx::`.
+_QUALIFIED = re.compile(r"\bonnx::")
 
 
 def main() -> int:
@@ -17,7 +21,7 @@ def main() -> int:
     for path in sys.argv[1:]:
         with open(path, encoding="utf-8") as f:
             for line_no, line in enumerate(f, 1):
-                if "namespace onnx" in line or "onnx::" in line:
+                if "namespace onnx" in line or _QUALIFIED.search(line):
                     violations.append(f"{path}:{line_no}: {line.rstrip()}")
     if violations:
         print("Hardcoded onnx namespace found:")

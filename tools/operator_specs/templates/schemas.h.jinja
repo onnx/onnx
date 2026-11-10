@@ -1,0 +1,23 @@
+{# Copyright (c) ONNX Project Contributors #}
+{# SPDX-License-Identifier: Apache-2.0 #}
+{#- Declarations of all generated schema functions, one namespace per domain. -#}
+#pragma once
+
+#include "onnx/defs/schema.h"
+{% for namespace, domain_ops in ops|groupby("namespace") %}
+{% set ml = domain_ops[0].is_ml %}
+
+{% if ml %}
+#ifdef ONNX_ML
+{% endif %}
+namespace ONNX_NAMESPACE::generated::{{ namespace }} {
+{% for op in domain_ops %}
+{% for v in op.versions %}
+OpSchema {{ v.function_name }}();
+{% endfor %}
+{% endfor %}
+} // namespace ONNX_NAMESPACE::generated::{{ namespace }}
+{% if ml %}
+#endif // ONNX_ML
+{% endif %}
+{% endfor %}

@@ -1,0 +1,100 @@
+<!--
+Copyright (c) ONNX Project Contributors
+-->
+
+<!--- SPDX-License-Identifier: Apache-2.0 -->
+
+# Operator specifications
+
+This directory holds the declarative part of every ONNX operator schema:
+doc string, attributes, inputs, outputs, type constraints, static function bodies and further settings.
+At build time, `tools/operator_specs` generates C++ functions from these files
+that return the corresponding `OpSchema`.
+The registrations in `onnx/defs/<area>/{defs,old}.cc` start from these functions
+and add the type and shape inference, data propagation and context-dependent function body builder functions.
+
+The design is described in
+[proposal 0009](../docs/proposals/0009-MarkdownSchemaGenerationProposal.md).
+
+## Layout
+
+```
+<domain>/v<N>/<op>.md
+```
+
+The file exists if and only if operator `<op>` of `<domain>` has a schema with `since_version == N`.
+`<op>` is the lowercase operator name.
+
+## Format
+
+A file is a fenced TOML block followed by the doc string in Markdown:
+
+````markdown
+```toml
+name = "LeakyRelu"
+domain = "ai.onnx"
+
+[attributes.alpha]
+type = "FLOAT"
+desc = "Coefficient of leakage."
+default = 0.01
+
+[[inputs]]
+name = "X"
+type = "T"
+desc = "Input tensor"
+differentiation = "differentiable"
+
+[[outputs]]
+name = "Y"
+type = "T"
+desc = "Output tensor"
+differentiation = "differentiable"
+
+[type_constraints.T]
+types = "all_float_types_ir4"
+desc = "Constrain input and output types to float tensors."
+```
+
+LeakyRelu takes input data (Tensor<T>) and an argument alpha, ...
+````
+
+| Key | Value |
+|-----|-------|
+| `name`, `domain` | Operator name and domain; required in every file and must match the path. |
+| `support_level` | `"common"` (default) or `"experimental"`. |
+| `deprecated` | `true` or `false` (default). |
+| `node_determinism` | `"unknown"` (default), `"deterministic"` or `"non_deterministic"`. |
+| `num_outputs` | List of the allowed numbers of outputs; by default, they follow from `outputs`. |
+| `allow_unchecked_attributes` | `true` or `false` (default). |
+| `attributes` | Map `name -> {type, desc, required, default}`; `type` is an `AttributeProto` type such as `"INT"` or `"FLOATS"`. |
+| `inputs`, `outputs` | Ordered list of `{name, type, desc, option, homogeneous, min_arity, differentiation}`; `option` is `"single"` (default), `"optional"` or `"variadic"`; `differentiation` is `"unknown"` (default), `"differentiable"` or `"non_differentiable"`. |
+| `type_constraints` | Map `name -> {types, desc}`; `types` is a list of type strings such as `["tensor(float)"]` or the name of an `OpSchema` type helper such as `"all_float_types_ir4"`. |
+| `function_bodies` | Map `opset_version -> ONNX text` of the function body. |
+
+The common indentation of all doc string lines but the first is removed.
+
+## Inheritance
+
+Each file inherits from the previous version of the same operator:
+
+- key absent: inherited unchanged;
+- key present: replaces the inherited value completely (lists and maps are restated in full);
+- doc string empty: inherited.
+
+`name` and `domain` are not inherited.
+
+## Adding a version of an operator
+
+1. Create `<domain>/v<N>/<op>.md` with `name`, `domain` and the keys that change.
+2. Register the generated schema in `onnx/defs/<area>/defs.cc`
+   and move the registration of the previous version to `onnx/defs/<area>/old.cc`:
+
+   ```cpp
+   ONNX_OPERATOR_SET_SCHEMA(
+       LeakyRelu,
+       16,
+       generated::ai_onnx::LeakyRelu_ver16().TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
+   ```
+
+3. Add the schema to the operator set in `onnx/defs/operator_sets*.h`.
