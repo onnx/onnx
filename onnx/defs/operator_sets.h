@@ -1522,6 +1522,7 @@ class OpSet_Onnx_ver28 {
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 29, Gemm);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 29, GroupedMatMul);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 29, CausalConvWithState);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 29, LogCumSumExp);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 29, Log1p);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 29, GatherND);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 29, ScatterND);
@@ -1532,6 +1533,7 @@ class OpSet_Onnx_ver29 {
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 29, Gemm)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 29, GroupedMatMul)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 29, CausalConvWithState)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 29, LogCumSumExp)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 29, Log1p)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 29, GatherND)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 29, ScatterND)>());
