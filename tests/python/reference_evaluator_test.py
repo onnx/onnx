@@ -8138,6 +8138,37 @@ class TestReferenceEvaluator:
         assert actual.dtype == np.float16
         assert_array_equal(actual, np.ones((1, 2), dtype=np.float16))
 
+    def test_rms_normalization_output_has_scale_type(self):
+        model = make_model(
+            make_graph(
+                [make_node("RMSNormalization", ["X", "Scale"], ["Y"])],
+                "rms_normalization_mixed_types",
+                [
+                    make_tensor_value_info("X", TensorProto.FLOAT, [2, 3]),
+                    make_tensor_value_info("Scale", TensorProto.FLOAT16, [3]),
+                ],
+                [make_tensor_value_info("Y", TensorProto.FLOAT16, [2, 3])],
+            ),
+            opset_imports=[make_opsetid("", 23)],
+        )
+        check_model(model, full_check=True)
+        x = np.arange(6, dtype=np.float32).reshape(2, 3) - 2
+        scale = np.array([0.5, 1.0, 2.0], dtype=np.float16)
+        feeds = {"X": x, "Scale": scale}
+
+        (actual,) = ReferenceEvaluator(model).run(None, feeds)
+
+        # The function body must agree with the reference implementation.
+        class RMSNormalization(OpRunExpand):
+            op_domain = ""
+
+        (expanded,) = ReferenceEvaluator(model, new_ops=[RMSNormalization]).run(
+            None, feeds
+        )
+        assert actual.dtype == np.float16
+        assert expanded.dtype == np.float16
+        assert_allclose(actual, expanded)
+
     def test_layer_normalization_float16_uses_float32_stash(self):
         model = make_model(
             make_graph(
