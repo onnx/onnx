@@ -8,26 +8,14 @@ from onnx.reference.op_run import OpRun
 
 class SequenceMap(OpRun):
     def _run(self, input_sequence, *additional_inputs, body=None, attributes=None):
-        if len(additional_inputs) == 1 and isinstance(additional_inputs[0], list):
-            res = None
-            for obj1, obj2 in zip(input_sequence, additional_inputs[0], strict=False):
-                feeds = {body.input_names[0]: obj1, body.input_names[1]: obj2}
-                r = body.run(None, feeds)
-                if res is None:
-                    res = [[i] for i in r]
-                else:
-                    for s, i in zip(res, r, strict=False):
-                        s.append(i)
-            return tuple(res)
-
-        feeds = dict(zip(body.input_names[1:], additional_inputs, strict=False))
-        res = None
-        for obj in input_sequence:
-            feeds[body.input_names[0]] = obj
+        inputs = (input_sequence, *additional_inputs)
+        res = [[] for _ in body.output_names]
+        for index in range(len(input_sequence)):
+            feeds = {
+                name: value[index] if isinstance(value, list) else value
+                for name, value in zip(body.input_names, inputs, strict=False)
+            }
             r = body.run(None, feeds, attributes=attributes)
-            if res is None:
-                res = [[i] for i in r]
-            else:
-                for s, i in zip(res, r, strict=False):
-                    s.append(i)
+            for s, i in zip(res, r, strict=False):
+                s.append(i)
         return tuple(res)
