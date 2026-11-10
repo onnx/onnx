@@ -79,6 +79,7 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#LSTM">LSTM</a>|<a href="Changelog.md#LSTM-22">22</a>, <a href="Changelog.md#LSTM-14">14</a>, <a href="Changelog.md#LSTM-7">7</a>, <a href="Changelog.md#LSTM-1">1</a>|
 |<a href="#Less">Less</a>|<a href="Changelog.md#Less-13">13</a>, <a href="Changelog.md#Less-9">9</a>, <a href="Changelog.md#Less-7">7</a>, <a href="Changelog.md#Less-1">1</a>|
 |<a href="#Log">Log</a>|<a href="Changelog.md#Log-13">13</a>, <a href="Changelog.md#Log-6">6</a>, <a href="Changelog.md#Log-1">1</a>|
+|<a href="#Log1p">Log1p</a>|<a href="Changelog.md#Log1p-29">29</a>|
 |<a href="#Loop">Loop</a>|<a href="Changelog.md#Loop-25">25</a>, <a href="Changelog.md#Loop-24">24</a>, <a href="Changelog.md#Loop-23">23</a>, <a href="Changelog.md#Loop-21">21</a>, <a href="Changelog.md#Loop-19">19</a>, <a href="Changelog.md#Loop-16">16</a>, <a href="Changelog.md#Loop-13">13</a>, <a href="Changelog.md#Loop-11">11</a>, <a href="Changelog.md#Loop-1">1</a>|
 |<a href="#LpNormalization">LpNormalization</a>|<a href="Changelog.md#LpNormalization-22">22</a>, <a href="Changelog.md#LpNormalization-1">1</a>|
 |<a href="#LpPool">LpPool</a>|<a href="Changelog.md#LpPool-22">22</a>, <a href="Changelog.md#LpPool-18">18</a>, <a href="Changelog.md#LpPool-11">11</a>, <a href="Changelog.md#LpPool-2">2</a>, <a href="Changelog.md#LpPool-1">1</a>|
@@ -191,7 +192,7 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#LeakyRelu">LeakyRelu</a>|<a href="Changelog.md#LeakyRelu-16">16</a>, <a href="Changelog.md#LeakyRelu-6">6</a>, <a href="Changelog.md#LeakyRelu-1">1</a>|16|
 |<a href="#LessOrEqual">LessOrEqual</a>|<a href="Changelog.md#LessOrEqual-16">16</a>, <a href="Changelog.md#LessOrEqual-12">12</a>|16|
 |<a href="#LinearAttention">LinearAttention</a>|<a href="Changelog.md#LinearAttention-27">27</a>|27|
-|<a href="#LogSoftmax">LogSoftmax</a>|<a href="Changelog.md#LogSoftmax-13">13</a>, <a href="Changelog.md#LogSoftmax-11">11</a>, <a href="Changelog.md#LogSoftmax-1">1</a>|13, 18|
+|<a href="#LogSoftmax">LogSoftmax</a>|<a href="Changelog.md#LogSoftmax-13">13</a>, <a href="Changelog.md#LogSoftmax-11">11</a>, <a href="Changelog.md#LogSoftmax-1">1</a>|13, 18, 29|
 |<a href="#MeanVarianceNormalization">MeanVarianceNormalization</a>|<a href="Changelog.md#MeanVarianceNormalization-29">29</a>, <a href="Changelog.md#MeanVarianceNormalization-13">13</a>, <a href="Changelog.md#MeanVarianceNormalization-9">9</a>|13, 18|
 |<a href="#Mish">Mish</a>|<a href="Changelog.md#Mish-22">22</a>, <a href="Changelog.md#Mish-18">18</a>|22|
 |<a href="#NegativeLogLikelihoodLoss">NegativeLogLikelihoodLoss</a>|<a href="Changelog.md#NegativeLogLikelihoodLoss-22">22</a>, <a href="Changelog.md#NegativeLogLikelihoodLoss-13">13</a>, <a href="Changelog.md#NegativeLogLikelihoodLoss-12">12</a>|22|
@@ -18244,33 +18245,47 @@ expect(
 
   GroupedMatMul multiplies each row of a token matrix by one or more selected
   group (expert) weight matrices. Given `input` of shape `[M, K]`, `weights` of
-  shape `[G, K, N]`, and `group_indices` of shape `[M, S]`, where `S` is the number
-  of selections per token, the output has shape `[M, S, N]` and is defined by:
+  shape `[G, K, N]` when `transB` is zero (the default), and `group_indices` of shape
+  `[M, S]`, where `S` is the number of selections per token, the output has shape
+  `[M, S, N]` and is defined by:
 
   ```
   output[m, i] = input[m] @ weights[group_indices[m, i]]
   ```
 
-  If `bias` is present, `bias[group_indices[m, i]]` is added to each corresponding
-  result. Every value in `group_indices` must be in the range `[0, G)`.
+  When `transB` is non-zero, `weights` has shape `[G, N, K]` and each selected
+  weight matrix is transposed before multiplication:
+
+  ```
+  output[m, i] = input[m] @ weights[group_indices[m, i]].T
+  ```
+
+  `M` is the number of input rows, `G` is the number of groups, `K` is the
+  contraction dimension, and `N` is the output dimension. Only the last two axes
+  of `weights` are logically transposed; the group axis and the layouts of
+  `input`, `output`, and `bias` are unchanged.
+
+  If `bias` is present, it must have shape `[G, N]`, and
+  `bias[group_indices[m, i]]` is added to each corresponding result.
+  If `M` or `S` is zero, the output is an empty tensor of shape `[M, S, N]`.
+  Every value in `group_indices` must be in the range `[0, G)`.
   Values outside this range, including negative indices, are invalid input;
   the behavior is undefined for such inputs. In particular, negative indices
   do not select groups by counting backwards from `G`.
 
-  This operator is represented as a context-dependent function, which also provides
-  its reference implementation. Its decomposition uses Gather, Expand, and MatMul
-  to define the result, while runtimes are expected to use a fused
-  grouped-matrix-multiplication implementation to avoid materializing the expanded
-  intermediate tensors, including selected weights of shape `[M * S, K, N]`.
-
-  Weight-only quantized experts are intended to be expressed by applying
-  DequantizeLinear to quantized weights (with the appropriate scales and zero
-  points) and passing the result to GroupedMatMul. Runtimes may fuse this
-  composition to avoid materializing the dequantized `[G, K, N]` weights.
+  Quantized weights can be dequantized with DequantizeLinear before this operator.
+  The dequantized weights must have the shape specified by `transB`.
 
 #### Version
 
 This version of the operator has been available since version 29 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>transB</tt> : int (default is 0)</dt>
+<dd>Whether to transpose the last two axes of weights before multiplication. If zero, weights has shape [G, K, N]; if non-zero, weights has shape [G, N, K].</dd>
+</dl>
 
 #### Inputs (3 - 4)
 
@@ -18278,7 +18293,7 @@ This version of the operator has been available since version 29 of the default 
 <dt><tt>input</tt> (differentiable) : T</dt>
 <dd>Token matrix with shape [M, K].</dd>
 <dt><tt>weights</tt> (differentiable) : T</dt>
-<dd>Stack of G group weight matrices with shape [G, K, N].</dd>
+<dd>Stack of G group weight matrices with shape [G, K, N] if transB is zero, or [G, N, K] if transB is non-zero.</dd>
 <dt><tt>group_indices</tt> (non-differentiable) : Tind</dt>
 <dd>Group index for each token and selection, with shape [M, S]. Values outside [0, G) are invalid input.</dd>
 <dt><tt>bias</tt> (optional, differentiable) : T</dt>
@@ -18372,6 +18387,7 @@ node = onnx.helper.make_node(
     "GroupedMatMul",
     inputs=["input", "weights", "group_indices"],
     outputs=["output"],
+    transB=0,
 )
 input = np.array([[1, 2], [3, 4], [5, 6]], dtype=np.float32)
 weights = np.array([[[1, 2, 3], [4, 5, 6]]], dtype=np.float32)
@@ -18385,6 +18401,96 @@ expect(
     name="test_groupedmatmul_single_group",
     opset_imports=[onnx.helper.make_opsetid("", 29)],
 )
+```
+
+</details>
+
+
+<details>
+<summary>transposed_weights</summary>
+
+```python
+input = np.array([[1, 2, -1], [3, 0, 4]], dtype=np.float32)
+weights = np.arange(18, dtype=np.float32).reshape(3, 2, 3)
+group_indices = np.array([[2, 0, 2], [1, 2, 0]], dtype=np.int64)
+bias = np.array([[0.5, 1], [1.5, -2], [3, 0.25]], dtype=np.float32)
+for bias_input in (None, "", "bias"):
+    input_names = ["input", "weights", "group_indices"]
+    values = [input, weights, group_indices]
+    if bias_input is not None:
+        input_names.append(bias_input)
+    if bias_input:
+        values.append(bias)
+    node = onnx.helper.make_node(
+        "GroupedMatMul", input_names, ["output"], transB=1
+    )
+    output = grouped_matmul(
+        input, weights, group_indices, bias if bias_input else None, transB=1
+    )
+    suffix = {None: "", "": "_explicit_empty_bias", "bias": "_with_bias"}[
+        bias_input
+    ]
+    expect(
+        node,
+        inputs=values,
+        outputs=[output],
+        name=f"test_groupedmatmul_transB{suffix}",
+        opset_imports=[onnx.helper.make_opsetid("", 29)],
+    )
+```
+
+</details>
+
+
+<details>
+<summary>transposed_weights_empty</summary>
+
+```python
+weights = np.arange(24, dtype=np.float32).reshape(2, 4, 3)
+for m, s in ((0, 2), (2, 0)):
+    input = np.empty((m, 3), dtype=np.float32)
+    group_indices = np.empty((m, s), dtype=np.int32)
+    node = onnx.helper.make_node(
+        "GroupedMatMul",
+        ["input", "weights", "group_indices"],
+        ["output"],
+        transB=1,
+    )
+    output = grouped_matmul(input, weights, group_indices, transB=1)
+    expect(
+        node,
+        inputs=[input, weights, group_indices],
+        outputs=[output],
+        name=f"test_groupedmatmul_transB_empty_{m}_{s}",
+        opset_imports=[onnx.helper.make_opsetid("", 29)],
+    )
+```
+
+</details>
+
+
+<details>
+<summary>transposed_weights_nonzero</summary>
+
+```python
+input = np.array([[1, 2, -1], [3, 0, 4]], dtype=np.float32)
+weights = np.arange(18, dtype=np.float32).reshape(3, 2, 3)
+group_indices = np.array([[2, 0], [1, 2]], dtype=np.int64)
+output = grouped_matmul(input, weights, group_indices, transB=1)
+for transB in (-1, 2):
+    node = onnx.helper.make_node(
+        "GroupedMatMul",
+        ["input", "weights", "group_indices"],
+        ["output"],
+        transB=transB,
+    )
+    expect(
+        node,
+        inputs=[input, weights, group_indices],
+        outputs=[output],
+        name=f"test_groupedmatmul_transB_nonzero_{transB}",
+        opset_imports=[onnx.helper.make_opsetid("", 29)],
+    )
 ```
 
 </details>
@@ -21707,6 +21813,173 @@ expect(node, inputs=[x], outputs=[y], name="test_log_example")
 x = np.exp(np.random.randn(3, 4, 5).astype(np.float32))
 y = np.log(x)
 expect(node, inputs=[x], outputs=[y], name="test_log")
+```
+
+</details>
+
+
+### <a name="Log1p"></a><a name="log1p">**Log1p**</a>
+
+  Computes `y = ln(1 + x)` element-wise, where `ln` is the natural logarithm.
+  The output has the same shape and element type as the input, including for
+  scalar and empty inputs.
+
+  For finite `x > -1`, the result is a floating-point approximation of `ln(1 + x)`,
+  with `1 + x` evaluated as an exact real sum. Small nonzero results representable
+  in the output type must be preserved even when floating-point addition would
+  round `1 + x` to `1`. For example, a FLOAT input of `1e-8` produces approximately
+  `1e-8`.
+
+  Special values are defined element-wise as follows:
+
+  | Input `x` | Output `y` |
+  | --- | --- |
+  | Positive zero | Positive zero |
+  | Negative zero | Negative zero |
+  | `-1` | Negative infinity |
+  | Finite `x < -1` | NaN |
+  | Negative infinity | NaN |
+  | Positive infinity | Positive infinity |
+  | NaN | NaN |
+
+  The sign and payload of an output NaN are unspecified.
+
+#### Version
+
+This version of the operator has been available since version 29 of the default ONNX operator set.
+
+#### Inputs
+
+<dl>
+<dt><tt>input</tt> (differentiable) : T</dt>
+<dd>Input tensor</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> (differentiable) : T</dt>
+<dd>The natural logarithm of one plus the input, computed element-wise</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(bfloat16), tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>log1p</summary>
+
+```python
+node = onnx.helper.make_node("Log1p", ["x"], ["y"])
+for dtype in [np.float16, ml_dtypes.bfloat16, np.float32, np.float64]:
+    x = np.array(
+        [[-0.75, -0.5, 0.0, 0.25], [0.5, 1.0, 3.0, 1000.0]], dtype=dtype
+    )
+    y = np.array([math.log1p(float(v)) for v in x.flat], dtype=dtype).reshape(
+        x.shape
+    )
+    expect(
+        node,
+        inputs=[x],
+        outputs=[y],
+        name=f"test_log1p_{np.dtype(dtype).name}",
+        rtol=1e-2 if dtype == ml_dtypes.bfloat16 else 1e-3,
+    )
+```
+
+</details>
+
+
+<details>
+<summary>log1p_near_negative_one</summary>
+
+```python
+node = onnx.helper.make_node("Log1p", ["x"], ["y"])
+for dtype in [np.float16, ml_dtypes.bfloat16, np.float32, np.float64]:
+    x = np.nextafter(
+        np.array([-1.0], dtype=dtype), np.array([0.0], dtype=dtype)
+    )
+    y = np.array([math.log1p(float(x[0]))], dtype=dtype)
+    expect(
+        node,
+        inputs=[x],
+        outputs=[y],
+        name=f"test_log1p_near_negative_one_{np.dtype(dtype).name}",
+        rtol=1e-2 if dtype == ml_dtypes.bfloat16 else 1e-3,
+    )
+```
+
+</details>
+
+
+<details>
+<summary>log1p_scalar_and_empty</summary>
+
+```python
+node = onnx.helper.make_node("Log1p", ["x"], ["y"])
+expect(
+    node,
+    inputs=[np.array(1.0, dtype=np.float32)],
+    outputs=[np.array(math.log(2), dtype=np.float32)],
+    name="test_log1p_scalar",
+)
+x = np.empty((0, 3), dtype=np.float32)
+expect(node, inputs=[x], outputs=[x], name="test_log1p_empty")
+```
+
+</details>
+
+
+<details>
+<summary>log1p_small_inputs</summary>
+
+```python
+node = onnx.helper.make_node("Log1p", ["x"], ["y"])
+for dtype, tiny in [
+    (np.float16, 2.0**-14),
+    (ml_dtypes.bfloat16, 2.0**-10),
+    (np.float32, 1e-8),
+    (np.float64, 1e-20),
+]:
+    x = np.array([-tiny, -0.0, 0.0, tiny], dtype=dtype)
+    y = np.array([math.log1p(float(v)) for v in x], dtype=dtype)
+    # Relative error allows backend variation, while atol=0 catches
+    # an incorrect zero caused by rounding the intermediate 1 + x.
+    expect(
+        node,
+        inputs=[x],
+        outputs=[y],
+        name=f"test_log1p_small_inputs_{np.dtype(dtype).name}",
+        rtol=1e-2 if dtype == ml_dtypes.bfloat16 else 1e-3,
+        atol=0,
+    )
+```
+
+</details>
+
+
+<details>
+<summary>log1p_special_values</summary>
+
+```python
+node = onnx.helper.make_node("Log1p", ["x"], ["y"])
+for dtype in [np.float16, ml_dtypes.bfloat16, np.float32, np.float64]:
+    x = np.array([-0.0, 0.0, -1.0, -2.0, -np.inf, np.inf, np.nan], dtype=dtype)
+    y = np.array(
+        [-0.0, 0.0, -np.inf, np.nan, np.nan, np.inf, np.nan], dtype=dtype
+    )
+    expect(
+        node,
+        inputs=[x],
+        outputs=[y],
+        name=f"test_log1p_special_values_{np.dtype(dtype).name}",
+    )
 ```
 
 </details>

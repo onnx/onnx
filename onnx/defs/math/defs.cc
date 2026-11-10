@@ -588,6 +588,40 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Constrain input and output types to float tensors.")
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
+static constexpr const char* kDoc_Log1p_ver29 = R"DOC(
+Computes `y = ln(1 + x)` element-wise, where `ln` is the natural logarithm.
+The output has the same shape and element type as the input, including for
+scalar and empty inputs.
+
+For finite `x > -1`, the result is a floating-point approximation of `ln(1 + x)`,
+with `1 + x` evaluated as an exact real sum. Small nonzero results representable
+in the output type must be preserved even when floating-point addition would
+round `1 + x` to `1`. For example, a FLOAT input of `1e-8` produces approximately
+`1e-8`.
+
+Special values are defined element-wise as follows:
+
+| Input `x` | Output `y` |
+| --- | --- |
+| Positive zero | Positive zero |
+| Negative zero | Negative zero |
+| `-1` | Negative infinity |
+| Finite `x < -1` | NaN |
+| Negative infinity | NaN |
+| Positive infinity | Positive infinity |
+| NaN | NaN |
+
+The sign and payload of an output NaN are unspecified.
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(
+    Log1p,
+    29,
+    OpSchema().FillUsing(
+        defs::math::utils::UnaryFloatMathOpGenerator(
+            kDoc_Log1p_ver29,
+            "The natural logarithm of one plus the input, computed element-wise")));
+
 ONNX_OPERATOR_SET_SCHEMA(
     Tanh,
     13,
@@ -1014,6 +1048,47 @@ ONNX_OPERATOR_SET_SCHEMA(
             },
             18));
 
+// An opset 29 decomposition can use Log1p without rounding away the small
+// normalization term. Earlier function bodies retain their original dependencies.
+static bool BuildContextDependentFunctionBodyLogSoftmax29(
+    const FunctionBodyBuildContext& ctx,
+    const OpSchema& schema,
+    FunctionProto& functionProto) {
+  const auto* input_type = ctx.getInputType(0);
+  if (input_type == nullptr) {
+    return false;
+  }
+  const auto elem_type = input_type->tensor_type().elem_type();
+  const bool promote = elem_type == TensorProto::FLOAT16 || elem_type == TensorProto::BFLOAT16;
+  const int64_t axis = ctx.getAttribute("axis") != nullptr ? ctx.getAttribute("axis")->i() : -1;
+  FunctionBuilder builder(functionProto);
+  // Keep 16-bit inputs in float through exponentiation and normalization.
+  builder.Add(promote ? "X = Cast <to = 1> (input)" : "X = Identity (input)");
+  builder.Const1D("axes", axis).Const("OneInt", static_cast<int64_t>(1)).Const("ZeroFloat", 0.0f).Add(R"(
+        Zero = CastLike (ZeroFloat, X)
+        MaxLogit = ReduceMax <keepdims = 1> (X, axes)
+        Shifted = Sub (X, MaxLogit)
+        Exponentials = Exp (Shifted)
+        IsMax = Equal (Shifted, Zero)
+        Others = Where (IsMax, Zero, Exponentials)
+        IsMaxInt = Cast <to = 7> (IsMax)
+        MaxCount = ReduceSum <keepdims = 1> (IsMaxInt, axes)
+        RemainingMaxCount = Sub (MaxCount, OneInt)
+        TiedMaxima = CastLike (RemainingMaxCount, X)
+      )");
+  // Remove all maxima before summation, then restore all but one. Subtracting
+  // one from the full exponential sum would lose the small normalization term.
+  builder.Add(R"(
+        OtherSum = ReduceSum <keepdims = 1> (Others, axes)
+        NormalizerInput = Add (OtherSum, TiedMaxima)
+        Normalizer = Log1p (NormalizerInput)
+        OutputWide = Sub (Shifted, Normalizer)
+        output = CastLike (OutputWide, input)
+      )");
+  schema.BuildFunction(functionProto);
+  return true;
+}
+
 ONNX_OPERATOR_SET_SCHEMA(
     LogSoftmax,
     13,
@@ -1058,7 +1133,8 @@ ONNX_OPERATOR_SET_SCHEMA(
               schema.BuildFunction(functionProto);
               return true;
             },
-            18));
+            18)
+        .SetContextDependentFunctionBodyBuilder(BuildContextDependentFunctionBodyLogSoftmax29, 29));
 
 ONNX_OPERATOR_SET_SCHEMA(
     Hardmax,
@@ -1347,7 +1423,11 @@ static void GroupedMatMulShapeInference(InferenceContext& ctx) {
 
   Dim M, K, G, N, S;
   ctx.unifyInputShape(0, {M, K});
-  ctx.unifyInputShape(1, {G, K, N});
+  if (getAttribute(ctx, "transB", int64_t{0}) != 0) {
+    ctx.unifyInputShape(1, {G, N, K});
+  } else {
+    ctx.unifyInputShape(1, {G, K, N});
+  }
   ctx.unifyInputShape(2, {M, S});
   if (ctx.hasInput(3)) {
     ctx.unifyInputShape(3, {G, N});
@@ -1359,6 +1439,11 @@ static bool BuildContextDependentFunctionBodyGroupedMatMul(
     const FunctionBodyBuildContext& ctx,
     const OpSchema& schema,
     FunctionProto& functionProto) {
+  const auto* transB_attr = ctx.getAttribute("transB");
+  if (transB_attr != nullptr && !transB_attr->ref_attr_name().empty()) {
+    return false;
+  }
+  const bool transB = transB_attr != nullptr && transB_attr->i() != 0;
   FunctionBuilder builder(functionProto);
   builder.Const1D("index_zero", int64_t{0})
       .Const1D("index_one", int64_t{1})
@@ -1368,12 +1453,19 @@ static bool BuildContextDependentFunctionBodyGroupedMatMul(
       .Add("indices_shape = Shape (group_indices)")
       .Add("M = Gather <axis = 0> (input_shape, index_zero)")
       .Add("K = Gather <axis = 0> (input_shape, index_one)")
-      .Add("N = Gather <axis = 0> (weights_shape, index_two)")
+      .Add(
+          transB ? "N = Gather <axis = 0> (weights_shape, index_one)"
+                 : "N = Gather <axis = 0> (weights_shape, index_two)")
       .Add("S = Gather <axis = 0> (indices_shape, index_one)")
       .Add("MS = Mul (M, S)")
-      .Add("indices_flat = Reshape <allowzero = 1> (group_indices, MS)")
-      .Add("selected_weights = Gather <axis = 0> (weights, indices_flat)")
-      .Add("input_unsqueezed = Unsqueeze (input, index_one)")
+      .Add("indices_flat = Reshape <allowzero = 1> (group_indices, MS)");
+  if (transB) {
+    builder.Add("gathered_weights = Gather <axis = 0> (weights, indices_flat)")
+        .Add("selected_weights = Transpose <perm = [0, 2, 1]> (gathered_weights)");
+  } else {
+    builder.Add("selected_weights = Gather <axis = 0> (weights, indices_flat)");
+  }
+  builder.Add("input_unsqueezed = Unsqueeze (input, index_one)")
       .Add("expanded_shape = Concat <axis = 0> (M, S, K)")
       .Add("input_expanded = Expand (input_unsqueezed, expanded_shape)")
       .Add("matmul_input_shape = Concat <axis = 0> (MS, index_one, K)")
@@ -1399,11 +1491,18 @@ ONNX_OPERATOR_SET_SCHEMA(
     29,
     OpSchema()
         .SetDoc(kDoc_GroupedMatMul_ver29)
+        .Attr(
+            "transB",
+            "Whether to transpose the last two axes of weights before multiplication. "
+            "If zero, weights has shape [G, K, N]; if non-zero, weights has shape [G, N, K].",
+            AttributeProto::INT,
+            int64_t{0})
         .Input(0, "input", "Token matrix with shape [M, K].", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
         .Input(
             1,
             "weights",
-            "Stack of G group weight matrices with shape [G, K, N].",
+            "Stack of G group weight matrices with shape [G, K, N] if transB is zero, "
+            "or [G, N, K] if transB is non-zero.",
             "T",
             OpSchema::Single,
             true,
