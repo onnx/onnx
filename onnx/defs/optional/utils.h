@@ -12,13 +12,9 @@ namespace ONNX_NAMESPACE::defs::optional::utils {
 // Optional and OptionalGetElement accept separate element and optional type sets
 // because historical schemas do not wrap the same element type set.
 
-std::function<void(OpSchema&)> OptionalOpGenerator(
-    std::vector<std::string> tensor_and_sequence_types,
-    std::vector<std::string> optional_types);
+std::function<void(OpSchema&)> OptionalOpGenerator();
 
-std::function<void(OpSchema&)> OptionalHasElementOpGenerator(std::vector<std::string> o_types);
+std::function<void(OpSchema&)> OptionalHasElementOpGenerator();
 
-std::function<void(OpSchema&)> OptionalGetElementOpGenerator(
-    std::vector<std::string> optional_types,
-    std::vector<std::string> tensor_and_sequence_types);
+std::function<void(OpSchema&)> OptionalGetElementOpGenerator();
 } // namespace ONNX_NAMESPACE::defs::optional::utils

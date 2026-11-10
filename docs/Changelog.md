@@ -241,27 +241,26 @@ This version of the operator has been available since version 1 of the default O
 ### <a name="AveragePool-1"></a>**AveragePool-1**</a>
 
   AveragePool consumes an input tensor X and applies average pooling across
-   the tensor according to kernel sizes, stride sizes, and pad lengths.
-   average pooling consisting of computing the average on all values of a
-   subset of the input tensor according to the kernel size and downsampling the
-   data into the output tensor Y for further processing. The output spatial shape will be following:
-   ```
-   output_spatial_shape[i] = floor((input_spatial_shape[i] + pad_shape[i] - kernel_spatial_shape[i]) / strides_spatial_shape[i] + 1)
+  the tensor according to kernel sizes, stride sizes, and pad lengths.
+  average pooling consisting of computing the average on all values of a
+  subset of the input tensor according to the kernel size and downsampling the
+  data into the output tensor Y for further processing. The output spatial shape will be following:
+  ```
+  output_spatial_shape[i] = floor((input_spatial_shape[i] + pad_shape[i] - kernel_spatial_shape[i]) / strides_spatial_shape[i] + 1)
 
-   * pad_shape[i] is sum of pads along axis i
-   ```
+  * pad_shape[i] is sum of pads along axis i
+  ```
 
-   `auto_pad` is a DEPRECATED attribute. If you are using them currently, the output spatial shape will be following:
-   ```
-   VALID: output_spatial_shape[i] = ceil((input_spatial_shape[i] - kernel_spatial_shape[i] + 1) / strides_spatial_shape[i])
-   SAME_UPPER or SAME_LOWER: output_spatial_shape[i] = ceil(input_spatial_shape[i] / strides_spatial_shape[i])
-   ```
-   And pad shape will be following if `SAME_UPPER` or `SAME_LOWER`:
-   ```
-   pad_shape[i] = (output_spatial_shape[i] - 1) * strides_spatial_shape[i] + kernel_spatial_shape[i] - input_spatial_shape[i]
-   ```
-   The output of each pooling window is divided by the number of elements exclude pad.
-
+  `auto_pad` is a DEPRECATED attribute. If you are using them currently, the output spatial shape will be following:
+  ```
+  VALID: output_spatial_shape[i] = ceil((input_spatial_shape[i] - kernel_spatial_shape[i] + 1) / strides_spatial_shape[i])
+  SAME_UPPER or SAME_LOWER: output_spatial_shape[i] = ceil(input_spatial_shape[i] / strides_spatial_shape[i])
+  ```
+  And pad shape will be following if `SAME_UPPER` or `SAME_LOWER`:
+  ```
+  pad_shape[i] = (output_spatial_shape[i] - 1) * strides_spatial_shape[i] + kernel_spatial_shape[i] - input_spatial_shape[i]
+  ```
+  The output of each pooling window is divided by the number of elements exclude pad.
 
 #### Version
 
@@ -309,7 +308,6 @@ This version of the operator has been available since version 1 of the default O
 
   Output case #1: Y, mean, var, saved_mean, saved_var (training mode)
   Output case #2: Y (test mode)
-
 
 #### Version
 
@@ -623,8 +621,6 @@ This version of the operator has been available since version 1 of the default O
     If (auto_pads != SAME_UPPER): pads[start_i] = total_padding[i]/2; pads[end_i] = total_padding[i] - (total_padding[i]/2)
     Else: pads[start_i] = total_padding[i] - (total_padding[i]/2); pads[end_i] = (total_padding[i]/2).
 
-
-
 #### Version
 
 This version of the operator has been available since version 1 of the default ONNX operator set.
@@ -826,7 +822,6 @@ This version of the operator has been available since version 1 of the default O
   Elu takes one input data (Tensor<T>) and produces one output data
   (Tensor<T>) where the function `f(x) = alpha * (exp(x) - 1.) for x <
   0`, `f(x) = x for x >= 0`., is applied to the tensor elementwise.
-
 
 #### Version
 
@@ -1293,8 +1288,8 @@ This version of the operator has been available since version 1 of the default O
 ### <a name="GlobalAveragePool-1"></a>**GlobalAveragePool-1**</a>
 
   GlobalAveragePool consumes an input tensor X and applies average pooling across
-   the values in the same channel. This is equivalent to AveragePool with kernel size
-   equal to the spatial dimension of input tensor.
+  the values in the same channel. This is equivalent to AveragePool with kernel size
+  equal to the spatial dimension of input tensor.
 
 #### Version
 
@@ -1324,8 +1319,8 @@ This version of the operator has been available since version 1 of the default O
 ### <a name="GlobalLpPool-1"></a>**GlobalLpPool-1**</a>
 
   GlobalLpPool consumes an input tensor X and applies lp pool pooling across the
-   the values in the same channel. This is equivalent to LpPool with kernel size
-   equal to the spatial dimension of input tensor.
+  the values in the same channel. This is equivalent to LpPool with kernel size
+  equal to the spatial dimension of input tensor.
 
 #### Version
 
@@ -1362,8 +1357,8 @@ This version of the operator has been available since version 1 of the default O
 ### <a name="GlobalMaxPool-1"></a>**GlobalMaxPool-1**</a>
 
   GlobalMaxPool consumes an input tensor X and applies max pooling across
-   the values in the same channel. This is equivalent to MaxPool with kernel size
-   equal to the spatial dimension of input tensor.
+  the values in the same channel. This is equivalent to MaxPool with kernel size
+  equal to the spatial dimension of input tensor.
 
 #### Version
 
@@ -1605,7 +1600,6 @@ This version of the operator has been available since version 1 of the default O
 
   y = scale * (x - mean) / sqrt(variance + epsilon) + B,
   where mean and variance are computed per instance per channel.
-
 
 #### Version
 
@@ -2218,10 +2212,10 @@ This version of the operator has been available since version 1 of the default O
 ### <a name="LpPool-1"></a>**LpPool-1**</a>
 
   LpPool consumes an input tensor X and applies Lp pooling across the
-   the tensor according to kernel sizes, stride sizes, and pad lengths.
-   Lp pooling consisting of computing the Lp norm on all values of a subset
-   of the input tensor according to the kernel size and downsampling the
-   data into the output tensor Y for further processing.
+  the tensor according to kernel sizes, stride sizes, and pad lengths.
+  Lp pooling consisting of computing the Lp norm on all values of a subset
+  of the input tensor according to the kernel size and downsampling the
+  data into the output tensor Y for further processing.
 
 #### Version
 
@@ -2334,27 +2328,26 @@ This version of the operator has been available since version 1 of the default O
 ### <a name="MaxPool-1"></a>**MaxPool-1**</a>
 
   MaxPool consumes an input tensor X and applies max pooling across
-   the tensor according to kernel sizes, stride sizes, and pad lengths.
-   max pooling consisting of computing the max on all values of a
-   subset of the input tensor according to the kernel size and downsampling the
-   data into the output tensor Y for further processing. The output spatial shape will be following:
-   ```
-   output_spatial_shape[i] = floor((input_spatial_shape[i] + pad_shape[i] - kernel_spatial_shape[i]) / strides_spatial_shape[i] + 1)
+  the tensor according to kernel sizes, stride sizes, and pad lengths.
+  max pooling consisting of computing the max on all values of a
+  subset of the input tensor according to the kernel size and downsampling the
+  data into the output tensor Y for further processing. The output spatial shape will be following:
+  ```
+  output_spatial_shape[i] = floor((input_spatial_shape[i] + pad_shape[i] - kernel_spatial_shape[i]) / strides_spatial_shape[i] + 1)
 
-   * pad_shape[i] is sum of pads along axis i
-   ```
+  * pad_shape[i] is sum of pads along axis i
+  ```
 
-   `auto_pad` is a DEPRECATED attribute. If you are using them currently, the output spatial shape will be following:
-   ```
-   VALID: output_spatial_shape[i] = ceil((input_spatial_shape[i] - kernel_spatial_shape[i] + 1) / strides_spatial_shape[i])
-   SAME_UPPER or SAME_LOWER: output_spatial_shape[i] = ceil(input_spatial_shape[i] / strides_spatial_shape[i])
-   ```
-   And pad shape will be following if `SAME_UPPER` or `SAME_LOWER`:
-   ```
-   pad_shape[i] = (output_spatial_shape[i] - 1) * strides_spatial_shape[i] + kernel_spatial_shape[i] - input_spatial_shape[i]
-   ```
-   The output of each pooling window is maximum number of elements exclude pad.
-
+  `auto_pad` is a DEPRECATED attribute. If you are using them currently, the output spatial shape will be following:
+  ```
+  VALID: output_spatial_shape[i] = ceil((input_spatial_shape[i] - kernel_spatial_shape[i] + 1) / strides_spatial_shape[i])
+  SAME_UPPER or SAME_LOWER: output_spatial_shape[i] = ceil(input_spatial_shape[i] / strides_spatial_shape[i])
+  ```
+  And pad shape will be following if `SAME_UPPER` or `SAME_LOWER`:
+  ```
+  pad_shape[i] = (output_spatial_shape[i] - 1) * strides_spatial_shape[i] + kernel_spatial_shape[i] - input_spatial_shape[i]
+  ```
+  The output of each pooling window is maximum number of elements exclude pad.
 
 #### Version
 
@@ -2397,8 +2390,8 @@ This version of the operator has been available since version 1 of the default O
 ### <a name="MaxRoiPool-1"></a>**MaxRoiPool-1**</a>
 
   ROI max pool consumes an input tensor X and region of interests (RoIs) to
-   apply max pooling across each RoI, to produce output 4-D tensor of shape
-   (num_rois, channels, pooled_shape[0], pooled_shape[1]).
+  apply max pooling across each RoI, to produce output 4-D tensor of shape
+  (num_rois, channels, pooled_shape[0], pooled_shape[1]).
 
 #### Version
 
@@ -2690,7 +2683,6 @@ This version of the operator has been available since version 1 of the default O
   PRelu takes input data (Tensor<T>) and slope tensor as input, and produces one
   output data (Tensor<T>) where the function `f(x) = slope * x for x < 0`,
   `f(x) = x for x >= 0`., is applied to the data tensor elementwise.
-
 
 #### Version
 
@@ -4614,8 +4606,8 @@ This version of the operator has been available since version 1 of the default O
 ### <a name="GlobalLpPool-2"></a>**GlobalLpPool-2**</a>
 
   GlobalLpPool consumes an input tensor X and applies lp pool pooling across
-   the values in the same channel. This is equivalent to LpPool with kernel size
-   equal to the spatial dimension of input tensor.
+  the values in the same channel. This is equivalent to LpPool with kernel size
+  equal to the spatial dimension of input tensor.
 
 #### Version
 
@@ -4652,10 +4644,10 @@ This version of the operator has been available since version 2 of the default O
 ### <a name="LpPool-2"></a>**LpPool-2**</a>
 
   LpPool consumes an input tensor X and applies Lp pooling across
-   the tensor according to kernel sizes, stride sizes, and pad lengths.
-   Lp pooling consisting of computing the Lp norm on all values of a subset
-   of the input tensor according to the kernel size and downsampling the
-   data into the output tensor Y for further processing.
+  the tensor according to kernel sizes, stride sizes, and pad lengths.
+  Lp pooling consisting of computing the Lp norm on all values of a subset
+  of the input tensor according to the kernel size and downsampling the
+  data into the output tensor Y for further processing.
 
 #### Version
 
@@ -5382,7 +5374,6 @@ This version of the operator has been available since version 6 of the default O
   (Tensor<T>) where the function `f(x) = alpha * (exp(x) - 1.) for x <
   0`, `f(x) = x for x >= 0`., is applied to the tensor elementwise.
 
-
 #### Version
 
 This version of the operator has been available since version 6 of the default ONNX operator set.
@@ -5577,7 +5568,6 @@ This version of the operator has been available since version 6 of the default O
 
   y = scale * (x - mean) / sqrt(variance + epsilon) + B,
   where mean and variance are computed per instance per channel.
-
 
 #### Version
 
@@ -5867,7 +5857,6 @@ This version of the operator has been available since version 6 of the default O
   PRelu takes input data (Tensor<T>) and slope tensor as input, and produces one
   output data (Tensor<T>) where the function `f(x) = slope * x for x < 0`,
   `f(x) = x for x >= 0`., is applied to the data tensor elementwise.
-
 
 #### Version
 
@@ -6374,27 +6363,26 @@ This version of the operator has been available since version 7 of the default O
 ### <a name="AveragePool-7"></a>**AveragePool-7**</a>
 
   AveragePool consumes an input tensor X and applies average pooling across
-   the tensor according to kernel sizes, stride sizes, and pad lengths.
-   average pooling consisting of computing the average on all values of a
-   subset of the input tensor according to the kernel size and downsampling the
-   data into the output tensor Y for further processing. The output spatial shape will be following:
-   ```
-   output_spatial_shape[i] = floor((input_spatial_shape[i] + pad_shape[i] - kernel_spatial_shape[i]) / strides_spatial_shape[i] + 1)
+  the tensor according to kernel sizes, stride sizes, and pad lengths.
+  average pooling consisting of computing the average on all values of a
+  subset of the input tensor according to the kernel size and downsampling the
+  data into the output tensor Y for further processing. The output spatial shape will be following:
+  ```
+  output_spatial_shape[i] = floor((input_spatial_shape[i] + pad_shape[i] - kernel_spatial_shape[i]) / strides_spatial_shape[i] + 1)
 
-   * pad_shape[i] is sum of pads along axis i
-   ```
+  * pad_shape[i] is sum of pads along axis i
+  ```
 
-   `auto_pad` is a DEPRECATED attribute. If you are using them currently, the output spatial shape will be following:
-   ```
-   VALID: output_spatial_shape[i] = ceil((input_spatial_shape[i] - kernel_spatial_shape[i] + 1) / strides_spatial_shape[i])
-   SAME_UPPER or SAME_LOWER: output_spatial_shape[i] = ceil(input_spatial_shape[i] / strides_spatial_shape[i])
-   ```
-   And pad shape will be following if `SAME_UPPER` or `SAME_LOWER`:
-   ```
-   pad_shape[i] = (output_spatial_shape[i] - 1) * strides_spatial_shape[i] + kernel_spatial_shape[i] - input_spatial_shape[i]
-   ```
-   The output of each pooling window is divided by the number of elements (exclude pad when attribute count_include_pad is zero).
-
+  `auto_pad` is a DEPRECATED attribute. If you are using them currently, the output spatial shape will be following:
+  ```
+  VALID: output_spatial_shape[i] = ceil((input_spatial_shape[i] - kernel_spatial_shape[i] + 1) / strides_spatial_shape[i])
+  SAME_UPPER or SAME_LOWER: output_spatial_shape[i] = ceil(input_spatial_shape[i] / strides_spatial_shape[i])
+  ```
+  And pad shape will be following if `SAME_UPPER` or `SAME_LOWER`:
+  ```
+  pad_shape[i] = (output_spatial_shape[i] - 1) * strides_spatial_shape[i] + kernel_spatial_shape[i] - input_spatial_shape[i]
+  ```
+  The output of each pooling window is divided by the number of elements (exclude pad when attribute count_include_pad is zero).
 
 #### Version
 
@@ -6439,12 +6427,12 @@ This version of the operator has been available since version 7 of the default O
 ### <a name="BatchNormalization-7"></a>**BatchNormalization-7**</a>
 
   Carries out batch normalization as described in the paper
-      https://arxiv.org/abs/1502.03167. Depending on the mode it is being run,
-      there are multiple cases for the number of outputs, which we list below:
+  https://arxiv.org/abs/1502.03167. Depending on the mode it is being run,
+  there are multiple cases for the number of outputs, which we list below:
 
-      Output case #1: Y, mean, var, saved_mean, saved_var (training mode)
-      Output case #2: Y (test mode)
-          This operator has **optional** inputs/outputs. See [the doc](IR.md) for more details about the representation of optional arguments. An empty string may be used in the place of an actual argument's name to indicate a missing argument. Trailing optional arguments (those not followed by an argument that is present) may also be simply omitted.
+  Output case #1: Y, mean, var, saved_mean, saved_var (training mode)
+  Output case #2: Y (test mode)
+      This operator has **optional** inputs/outputs. See [the doc](IR.md) for more details about the representation of optional arguments. An empty string may be used in the place of an actual argument's name to indicate a missing argument. Trailing optional arguments (those not followed by an argument that is present) may also be simply omitted.
 
 #### Version
 
@@ -7593,27 +7581,26 @@ This version of the operator has been available since version 8 of the default O
 ### <a name="MaxPool-8"></a>**MaxPool-8**</a>
 
   MaxPool consumes an input tensor X and applies max pooling across
-   the tensor according to kernel sizes, stride sizes, and pad lengths.
-   max pooling consisting of computing the max on all values of a
-   subset of the input tensor according to the kernel size and downsampling the
-   data into the output tensor Y for further processing. The output spatial shape will be following:
-   ```
-   output_spatial_shape[i] = floor((input_spatial_shape[i] + pad_shape[i] - kernel_spatial_shape[i]) / strides_spatial_shape[i] + 1)
+  the tensor according to kernel sizes, stride sizes, and pad lengths.
+  max pooling consisting of computing the max on all values of a
+  subset of the input tensor according to the kernel size and downsampling the
+  data into the output tensor Y for further processing. The output spatial shape will be following:
+  ```
+  output_spatial_shape[i] = floor((input_spatial_shape[i] + pad_shape[i] - kernel_spatial_shape[i]) / strides_spatial_shape[i] + 1)
 
-   * pad_shape[i] is sum of pads along axis i
-   ```
+  * pad_shape[i] is sum of pads along axis i
+  ```
 
-   `auto_pad` is a DEPRECATED attribute. If you are using them currently, the output spatial shape will be following:
-   ```
-   VALID: output_spatial_shape[i] = ceil((input_spatial_shape[i] - kernel_spatial_shape[i] + 1) / strides_spatial_shape[i])
-   SAME_UPPER or SAME_LOWER: output_spatial_shape[i] = ceil(input_spatial_shape[i] / strides_spatial_shape[i])
-   ```
-   And pad shape will be following if `SAME_UPPER` or `SAME_LOWER`:
-   ```
-   pad_shape[i] = (output_spatial_shape[i] - 1) * strides_spatial_shape[i] + kernel_spatial_shape[i] - input_spatial_shape[i]
-   ```
-   The output of each pooling window is maximum number of elements exclude pad.
-
+  `auto_pad` is a DEPRECATED attribute. If you are using them currently, the output spatial shape will be following:
+  ```
+  VALID: output_spatial_shape[i] = ceil((input_spatial_shape[i] - kernel_spatial_shape[i] + 1) / strides_spatial_shape[i])
+  SAME_UPPER or SAME_LOWER: output_spatial_shape[i] = ceil(input_spatial_shape[i] / strides_spatial_shape[i])
+  ```
+  And pad shape will be following if `SAME_UPPER` or `SAME_LOWER`:
+  ```
+  pad_shape[i] = (output_spatial_shape[i] - 1) * strides_spatial_shape[i] + kernel_spatial_shape[i] - input_spatial_shape[i]
+  ```
+  The output of each pooling window is maximum number of elements exclude pad.
 
 #### Version
 
@@ -7847,7 +7834,6 @@ This version of the operator has been available since version 8 of the default O
         %Accumulate = Identity(%Ht)
         return %Ht, %Accumulate
       }
-
 
 #### Version
 
@@ -8130,9 +8116,8 @@ This version of the operator has been available since version 9 of the default O
 ### <a name="Compress-9"></a>**Compress-9**</a>
 
   Selects slices from an input tensor along a given axis where condition evaluates to True for each axis index.
-      In case axis is not provided, input is flattened before elements are selected.
-      Compress behaves like numpy.compress: https://docs.scipy.org/doc/numpy/reference/generated/numpy.compress.html
-
+  In case axis is not provided, input is flattened before elements are selected.
+  Compress behaves like numpy.compress: https://docs.scipy.org/doc/numpy/reference/generated/numpy.compress.html
 
 #### Version
 
@@ -8435,7 +8420,7 @@ This version of the operator has been available since version 9 of the default O
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double), tensor(uint32), tensor(uint64), tensor(int32), tensor(int64)</dt>
+<dt><tt>T</tt> : tensor(uint32), tensor(uint64), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to float/int tensors.</dd>
 </dl>
 
@@ -8569,7 +8554,7 @@ This version of the operator has been available since version 9 of the default O
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double), tensor(uint32), tensor(uint64), tensor(int32), tensor(int64)</dt>
+<dt><tt>T</tt> : tensor(uint32), tensor(uint64), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to float/int tensors.</dd>
 </dl>
 
@@ -8639,7 +8624,7 @@ This version of the operator has been available since version 9 of the default O
 ### <a name="MeanVarianceNormalization-9"></a>**MeanVarianceNormalization-9**</a>
 
   A MeanVarianceNormalization Function: Perform mean variance normalization
-        on the input tensor X using formula: <br/> ``` (X-EX)/sqrt(E(X-EX)^2) ```
+  on the input tensor X using formula: <br/> ``` (X-EX)/sqrt(E(X-EX)^2) ```
 
 #### Version
 
@@ -8676,10 +8661,10 @@ This version of the operator has been available since version 9 of the default O
 ### <a name="NonZero-9"></a>**NonZero-9**</a>
 
   Returns the indices of the elements that are non-zero
-      (in row-major order - by dimension).
-      NonZero behaves similar to numpy.nonzero:
-      https://docs.scipy.org/doc/numpy/reference/generated/numpy.nonzero.html,
-      but for scalar input, NonZero produces output shape (0, N) instead of (1, N), which is different from Numpy's behavior.
+  (in row-major order - by dimension).
+  NonZero behaves similar to numpy.nonzero:
+  https://docs.scipy.org/doc/numpy/reference/generated/numpy.nonzero.html,
+  but for scalar input, NonZero produces output shape (0, N) instead of (1, N), which is different from Numpy's behavior.
 
 #### Version
 
@@ -8709,17 +8694,17 @@ This version of the operator has been available since version 9 of the default O
 ### <a name="OneHot-9"></a>**OneHot-9**</a>
 
   Produces a one-hot tensor based on inputs.
-      The locations represented by the index values in the 'indices' input tensor will have 'on_value'
-      and the other locations will have 'off_value' in the output tensor, where 'on_value' and 'off_value'
-      are specified as part of required input argument 'values', which is a two-element tensor of format
-      [off_value, on_value]. The rank of the output tensor will be one greater than the rank of the
-      input tensor. The additional dimension is for one-hot representation. The additional dimension will
-      be inserted at the position specified by 'axis'. If 'axis' is not specified then then additional
-      dimension will be inserted as the innermost dimension, i.e. axis=-1. The size of the additional
-      dimension is specified by required scalar input 'depth'. The type of the output tensor is the same
-      as the type of the 'values' input. Any entries in the 'indices' input tensor with values outside
-      the range [0, depth) will result in one-hot representation with all 'off_value' values in the
-      output tensor.
+  The locations represented by the index values in the 'indices' input tensor will have 'on_value'
+  and the other locations will have 'off_value' in the output tensor, where 'on_value' and 'off_value'
+  are specified as part of required input argument 'values', which is a two-element tensor of format
+  [off_value, on_value]. The rank of the output tensor will be one greater than the rank of the
+  input tensor. The additional dimension is for one-hot representation. The additional dimension will
+  be inserted at the position specified by 'axis'. If 'axis' is not specified then then additional
+  dimension will be inserted as the innermost dimension, i.e. axis=-1. The size of the additional
+  dimension is specified by required scalar input 'depth'. The type of the output tensor is the same
+  as the type of the 'values' input. Any entries in the 'indices' input tensor with values outside
+  the range [0, depth) will result in one-hot representation with all 'off_value' values in the
+  output tensor.
 
 #### Version
 
@@ -8792,7 +8777,7 @@ This version of the operator has been available since version 9 of the default O
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double), tensor(uint32), tensor(uint64), tensor(int32), tensor(int64)</dt>
+<dt><tt>T</tt> : tensor(uint32), tensor(uint64), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to float/int tensors.</dd>
 </dl>
 
@@ -8918,7 +8903,6 @@ This version of the operator has been available since version 9 of the default O
         %Accumulate = Identity(%Ht)
         return %Ht, %Accumulate
       }
-
 
 #### Version
 
@@ -9298,34 +9282,33 @@ This version of the operator has been available since version 9 of the default O
 ### <a name="AveragePool-10"></a>**AveragePool-10**</a>
 
   AveragePool consumes an input tensor X and applies average pooling across
-   the tensor according to kernel sizes, stride sizes, and pad lengths.
-   average pooling consisting of computing the average on all values of a
-   subset of the input tensor according to the kernel size and downsampling the
-   data into the output tensor Y for further processing. The output spatial shape will be following:
-   ```
-   output_spatial_shape[i] = floor((input_spatial_shape[i] + pad_shape[i] - kernel_spatial_shape[i]) / strides_spatial_shape[i] + 1)
-   ```
-   or
-   ```
-   output_spatial_shape[i] = ceil((input_spatial_shape[i] + pad_shape[i] - kernel_spatial_shape[i]) / strides_spatial_shape[i] + 1)
-   ```
-   if ceil_mode is enabled
+  the tensor according to kernel sizes, stride sizes, and pad lengths.
+  average pooling consisting of computing the average on all values of a
+  subset of the input tensor according to the kernel size and downsampling the
+  data into the output tensor Y for further processing. The output spatial shape will be following:
+  ```
+  output_spatial_shape[i] = floor((input_spatial_shape[i] + pad_shape[i] - kernel_spatial_shape[i]) / strides_spatial_shape[i] + 1)
+  ```
+  or
+  ```
+  output_spatial_shape[i] = ceil((input_spatial_shape[i] + pad_shape[i] - kernel_spatial_shape[i]) / strides_spatial_shape[i] + 1)
+  ```
+  if ceil_mode is enabled
 
-   ```
-   * pad_shape[i] is sum of pads along axis i
-   ```
+  ```
+  * pad_shape[i] is sum of pads along axis i
+  ```
 
-   `auto_pad` is a DEPRECATED attribute. If you are using them currently, the output spatial shape will be following:
-   ```
-   VALID: output_spatial_shape[i] = ceil((input_spatial_shape[i] - kernel_spatial_shape[i] + 1) / strides_spatial_shape[i])
-   SAME_UPPER or SAME_LOWER: output_spatial_shape[i] = ceil(input_spatial_shape[i] / strides_spatial_shape[i])
-   ```
-   And pad shape will be following if `SAME_UPPER` or `SAME_LOWER`:
-   ```
-   pad_shape[i] = (output_spatial_shape[i] - 1) * strides_spatial_shape[i] + kernel_spatial_shape[i] - input_spatial_shape[i]
-   ```
-   The output of each pooling window is divided by the number of elements (exclude pad when attribute count_include_pad is zero).
-
+  `auto_pad` is a DEPRECATED attribute. If you are using them currently, the output spatial shape will be following:
+  ```
+  VALID: output_spatial_shape[i] = ceil((input_spatial_shape[i] - kernel_spatial_shape[i] + 1) / strides_spatial_shape[i])
+  SAME_UPPER or SAME_LOWER: output_spatial_shape[i] = ceil(input_spatial_shape[i] / strides_spatial_shape[i])
+  ```
+  And pad shape will be following if `SAME_UPPER` or `SAME_LOWER`:
+  ```
+  pad_shape[i] = (output_spatial_shape[i] - 1) * strides_spatial_shape[i] + kernel_spatial_shape[i] - input_spatial_shape[i]
+  ```
+  The output of each pooling window is divided by the number of elements (exclude pad when attribute count_include_pad is zero).
 
 #### Version
 
@@ -9590,34 +9573,33 @@ This version of the operator has been available since version 10 of the default 
 ### <a name="MaxPool-10"></a>**MaxPool-10**</a>
 
   MaxPool consumes an input tensor X and applies max pooling across
-   the tensor according to kernel sizes, stride sizes, and pad lengths.
-   max pooling consisting of computing the max on all values of a
-   subset of the input tensor according to the kernel size and downsampling the
-   data into the output tensor Y for further processing. The output spatial shape will be following:
-   ```
-   output_spatial_shape[i] = floor((input_spatial_shape[i] + pad_shape[i] - ((kernel_spatial_shape[i] - 1) * dilations[i] + 1)) / strides_spatial_shape[i] + 1)
-   ```
-   or
-   ```
-   output_spatial_shape[i] = ceil((input_spatial_shape[i] + pad_shape[i] - ((kernel_spatial_shape[i] - 1) * dilations[i] + 1)) / strides_spatial_shape[i] + 1)
-   ```
-   if ceil_mode is enabled
+  the tensor according to kernel sizes, stride sizes, and pad lengths.
+  max pooling consisting of computing the max on all values of a
+  subset of the input tensor according to the kernel size and downsampling the
+  data into the output tensor Y for further processing. The output spatial shape will be following:
+  ```
+  output_spatial_shape[i] = floor((input_spatial_shape[i] + pad_shape[i] - ((kernel_spatial_shape[i] - 1) * dilations[i] + 1)) / strides_spatial_shape[i] + 1)
+  ```
+  or
+  ```
+  output_spatial_shape[i] = ceil((input_spatial_shape[i] + pad_shape[i] - ((kernel_spatial_shape[i] - 1) * dilations[i] + 1)) / strides_spatial_shape[i] + 1)
+  ```
+  if ceil_mode is enabled
 
-   ```
-   * pad_shape[i] is sum of pads along axis i
-   ```
+  ```
+  * pad_shape[i] is sum of pads along axis i
+  ```
 
-   `auto_pad` is a DEPRECATED attribute. If you are using them currently, the output spatial shape will be following:
-   ```
-   VALID: output_spatial_shape[i] = ceil((input_spatial_shape[i] - ((kernel_spatial_shape[i] - 1) * dilations[i] + 1) + 1) / strides_spatial_shape[i])
-   SAME_UPPER or SAME_LOWER: output_spatial_shape[i] = ceil(input_spatial_shape[i] / strides_spatial_shape[i])
-   ```
-   And pad shape will be following if `SAME_UPPER` or `SAME_LOWER`:
-   ```
-   pad_shape[i] = (output_spatial_shape[i] - 1) * strides_spatial_shape[i] + ((kernel_spatial_shape[i] - 1) * dilations[i] + 1) - input_spatial_shape[i]
-   ```
-   The output of each pooling window is maximum number of elements exclude pad.
-
+  `auto_pad` is a DEPRECATED attribute. If you are using them currently, the output spatial shape will be following:
+  ```
+  VALID: output_spatial_shape[i] = ceil((input_spatial_shape[i] - ((kernel_spatial_shape[i] - 1) * dilations[i] + 1) + 1) / strides_spatial_shape[i])
+  SAME_UPPER or SAME_LOWER: output_spatial_shape[i] = ceil(input_spatial_shape[i] / strides_spatial_shape[i])
+  ```
+  And pad shape will be following if `SAME_UPPER` or `SAME_LOWER`:
+  ```
+  pad_shape[i] = (output_spatial_shape[i] - 1) * strides_spatial_shape[i] + ((kernel_spatial_shape[i] - 1) * dilations[i] + 1) - input_spatial_shape[i]
+  ```
+  The output of each pooling window is maximum number of elements exclude pad.
 
 #### Version
 
@@ -9670,18 +9652,18 @@ This version of the operator has been available since version 10 of the default 
 ### <a name="Mod-10"></a>**Mod-10**</a>
 
   Performs element-wise binary modulus (with Numpy-style broadcasting support).
-      The sign of the remainder is the same as that of the Divisor.
+    The sign of the remainder is the same as that of the Divisor.
 
-      Mod operator can also behave like C fmod() or numpy.fmod. In this case, the sign of the remainder however, will be the same as the Dividend
-      (in contrast to integer mod). To force a behavior like numpy.fmod() an 'fmod' Attribute is provided.
-      This attribute is set to 0 by default causing the behavior to be like integer mod.
-      Setting this attribute to 1 causes the remainder to be calculated similar to that of numpy.fmod().
+    Mod operator can also behave like C fmod() or numpy.fmod. In this case, the sign of the remainder however, will be the same as the Dividend
+    (in contrast to integer mod). To force a behavior like numpy.fmod() an 'fmod' Attribute is provided.
+    This attribute is set to 0 by default causing the behavior to be like integer mod.
+    Setting this attribute to 1 causes the remainder to be calculated similar to that of numpy.fmod().
 
-      If the input type is floating point, then `fmod` attribute must be set to 1.
+    If the input type is floating point, then `fmod` attribute must be set to 1.
 
-      In case of dividend being zero, the results will be platform dependent.
+    In case of dividend being zero, the results will be platform dependent.
 
-    This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
+  This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
 
 #### Version
 
@@ -10443,7 +10425,6 @@ This version of the operator has been available since version 11 of the default 
    ```
    The output of each pooling window is divided by the number of elements (exclude pad when attribute count_include_pad is zero).
 
-
 #### Version
 
 This version of the operator has been available since version 11 of the default ONNX operator set.
@@ -10573,9 +10554,8 @@ This version of the operator has been available since version 11 of the default 
 ### <a name="Compress-11"></a>**Compress-11**</a>
 
   Selects slices from an input tensor along a given axis where condition evaluates to True for each axis index.
-      In case axis is not provided, input is flattened before elements are selected.
-      Compress behaves like numpy.compress: https://docs.scipy.org/doc/numpy/reference/generated/numpy.compress.html
-
+  In case axis is not provided, input is flattened before elements are selected.
+  Compress behaves like numpy.compress: https://docs.scipy.org/doc/numpy/reference/generated/numpy.compress.html
 
 #### Version
 
@@ -10793,8 +10773,6 @@ This version of the operator has been available since version 11 of the default 
     If (auto_pads == SAME_UPPER): pads[start_i] = total_padding[i]/2; pads[end_i] = total_padding[i] - (total_padding[i]/2)
     Else: pads[start_i] = total_padding[i] - (total_padding[i]/2); pads[end_i] = (total_padding[i]/2).
 
-
-
 #### Version
 
 This version of the operator has been available since version 11 of the default ONNX operator set.
@@ -10867,7 +10845,6 @@ This version of the operator has been available since version 11 of the default 
   output = [5, 3, 0]
   ```
 
-
 #### Version
 
 This version of the operator has been available since version 11 of the default ONNX operator set.
@@ -10934,7 +10911,6 @@ This version of the operator has been available since version 11 of the default 
   tmp = np.transpose(tmp, [0, 1, 4, 2, 5, 3])
 
   y = np.reshape(tmp, [b, c // (blocksize ** 2), h * blocksize, w * blocksize])
-
 
 #### Version
 
@@ -11396,7 +11372,6 @@ This version of the operator has been available since version 11 of the default 
 
     output  = [[[2,3]],[[4,5]]]             # output_shape = [2, 1, 2]
 
-
 #### Version
 
 This version of the operator has been available since version 11 of the default ONNX operator set.
@@ -11478,7 +11453,7 @@ This version of the operator has been available since version 11 of the default 
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double), tensor(uint32), tensor(uint64), tensor(int32), tensor(int64)</dt>
+<dt><tt>T</tt> : tensor(uint32), tensor(uint64), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to float/int tensors.</dd>
 </dl>
 
@@ -11799,10 +11774,10 @@ This version of the operator has been available since version 11 of the default 
 ### <a name="LpPool-11"></a>**LpPool-11**</a>
 
   LpPool consumes an input tensor X and applies Lp pooling across
-   the tensor according to kernel sizes, stride sizes, and pad lengths.
-   Lp pooling consisting of computing the Lp norm on all values of a subset
-   of the input tensor according to the kernel size and downsampling the
-   data into the output tensor Y for further processing.
+  the tensor according to kernel sizes, stride sizes, and pad lengths.
+  Lp pooling consisting of computing the Lp norm on all values of a subset
+  of the input tensor according to the kernel size and downsampling the
+  data into the output tensor Y for further processing.
 
 #### Version
 
@@ -11847,34 +11822,33 @@ This version of the operator has been available since version 11 of the default 
 ### <a name="MaxPool-11"></a>**MaxPool-11**</a>
 
   MaxPool consumes an input tensor X and applies max pooling across
-   the tensor according to kernel sizes, stride sizes, and pad lengths.
-   max pooling consisting of computing the max on all values of a
-   subset of the input tensor according to the kernel size and downsampling the
-   data into the output tensor Y for further processing. The output spatial shape will be following:
-   ```
-   output_spatial_shape[i] = floor((input_spatial_shape[i] + pad_shape[i] - ((kernel_spatial_shape[i] - 1) * dilations[i] + 1)) / strides_spatial_shape[i] + 1)
-   ```
-   or
-   ```
-   output_spatial_shape[i] = ceil((input_spatial_shape[i] + pad_shape[i] - ((kernel_spatial_shape[i] - 1) * dilations[i] + 1)) / strides_spatial_shape[i] + 1)
-   ```
-   if ceil_mode is enabled
+  the tensor according to kernel sizes, stride sizes, and pad lengths.
+  max pooling consisting of computing the max on all values of a
+  subset of the input tensor according to the kernel size and downsampling the
+  data into the output tensor Y for further processing. The output spatial shape will be following:
+  ```
+  output_spatial_shape[i] = floor((input_spatial_shape[i] + pad_shape[i] - ((kernel_spatial_shape[i] - 1) * dilations[i] + 1)) / strides_spatial_shape[i] + 1)
+  ```
+  or
+  ```
+  output_spatial_shape[i] = ceil((input_spatial_shape[i] + pad_shape[i] - ((kernel_spatial_shape[i] - 1) * dilations[i] + 1)) / strides_spatial_shape[i] + 1)
+  ```
+  if ceil_mode is enabled
 
-   ```
-   * pad_shape[i] is sum of pads along axis i
-   ```
+  ```
+  * pad_shape[i] is sum of pads along axis i
+  ```
 
-   `auto_pad` is a DEPRECATED attribute. If you are using them currently, the output spatial shape will be following:
-   ```
-   VALID: output_spatial_shape[i] = ceil((input_spatial_shape[i] - ((kernel_spatial_shape[i] - 1) * dilations[i] + 1) + 1) / strides_spatial_shape[i])
-   SAME_UPPER or SAME_LOWER: output_spatial_shape[i] = ceil(input_spatial_shape[i] / strides_spatial_shape[i])
-   ```
-   And pad shape will be following if `SAME_UPPER` or `SAME_LOWER`:
-   ```
-   pad_shape[i] = (output_spatial_shape[i] - 1) * strides_spatial_shape[i] + ((kernel_spatial_shape[i] - 1) * dilations[i] + 1) - input_spatial_shape[i]
-   ```
-   The output of each pooling window is maximum number of elements exclude pad.
-
+  `auto_pad` is a DEPRECATED attribute. If you are using them currently, the output spatial shape will be following:
+  ```
+  VALID: output_spatial_shape[i] = ceil((input_spatial_shape[i] - ((kernel_spatial_shape[i] - 1) * dilations[i] + 1) + 1) / strides_spatial_shape[i])
+  SAME_UPPER or SAME_LOWER: output_spatial_shape[i] = ceil(input_spatial_shape[i] / strides_spatial_shape[i])
+  ```
+  And pad shape will be following if `SAME_UPPER` or `SAME_LOWER`:
+  ```
+  pad_shape[i] = (output_spatial_shape[i] - 1) * strides_spatial_shape[i] + ((kernel_spatial_shape[i] - 1) * dilations[i] + 1) - input_spatial_shape[i]
+  ```
+  The output of each pooling window is maximum number of elements exclude pad.
 
 #### Version
 
@@ -12037,24 +12011,23 @@ This version of the operator has been available since version 11 of the default 
 ### <a name="OneHot-11"></a>**OneHot-11**</a>
 
   Produces a one-hot tensor based on inputs.
-      The locations represented by the index values in the 'indices' input tensor will have 'on_value'
-      and the other locations will have 'off_value' in the output tensor, where 'on_value' and 'off_value'
-      are specified as part of required input argument 'values', which is a two-element tensor of format
-      [off_value, on_value]. The rank of the output tensor will be one greater than the rank of the
-      input tensor. The additional dimension is for one-hot representation. The additional dimension will
-      be inserted at the position specified by 'axis'. If 'axis' is not specified then the additional
-      dimension will be inserted as the innermost dimension, i.e. axis=-1. The size of the additional
-      dimension is specified by required scalar input 'depth'. The type of the output tensor is the same
-      as the type of the 'values' input. Any entries in the 'indices' input tensor with values outside
-      the range [-depth, depth-1] will result in one-hot representation with all 'off_value' values in the
-      output tensor.
+  The locations represented by the index values in the 'indices' input tensor will have 'on_value'
+  and the other locations will have 'off_value' in the output tensor, where 'on_value' and 'off_value'
+  are specified as part of required input argument 'values', which is a two-element tensor of format
+  [off_value, on_value]. The rank of the output tensor will be one greater than the rank of the
+  input tensor. The additional dimension is for one-hot representation. The additional dimension will
+  be inserted at the position specified by 'axis'. If 'axis' is not specified then the additional
+  dimension will be inserted as the innermost dimension, i.e. axis=-1. The size of the additional
+  dimension is specified by required scalar input 'depth'. The type of the output tensor is the same
+  as the type of the 'values' input. Any entries in the 'indices' input tensor with values outside
+  the range [-depth, depth-1] will result in one-hot representation with all 'off_value' values in the
+  output tensor.
 
-      when axis = 0:
-      output[input[i, j, k], i, j, k] = 1 for all i, j, k and 0 otherwise.
+  when axis = 0:
+  output[input[i, j, k], i, j, k] = 1 for all i, j, k and 0 otherwise.
 
-      when axis = -1:
-      output[i, j, k, input[i, j, k]] = 1 for all i, j, k and 0 otherwise.
-
+  when axis = -1:
+  output[i, j, k, input[i, j, k]] = 1 for all i, j, k and 0 otherwise.
 
 #### Version
 
@@ -12172,7 +12145,6 @@ This version of the operator has been available since version 11 of the default 
         [2.3, 2.3, 2.3, 3.4],
         [4.5, 4.5, 4.5, 5.7],
     ]
-
 
 #### Version
 
@@ -12939,7 +12911,6 @@ This version of the operator has been available since version 11 of the default 
         %Accumulate = Identity(%Ht)
         return %Ht, %Accumulate
       }
-
 
 #### Version
 
@@ -13904,7 +13875,6 @@ This version of the operator has been available since version 11 of the default 
   Each value in `axes` should be within the (inclusive) range [-output_rank , output_rank - 1].
   The order of values in `axes` does not matter and can come in any order.
 
-
 #### Version
 
 This version of the operator has been available since version 11 of the default ONNX operator set.
@@ -14366,8 +14336,6 @@ This version of the operator has been available since version 12 of the default 
 
     output  = [[2,3],[4,5]]             # output_shape = [2, 2]
 
-
-
 #### Version
 
 This version of the operator has been available since version 12 of the default ONNX operator set.
@@ -14508,37 +14476,36 @@ This version of the operator has been available since version 12 of the default 
 ### <a name="MaxPool-12"></a>**MaxPool-12**</a>
 
   MaxPool consumes an input tensor X and applies max pooling across
-   the tensor according to kernel sizes, stride sizes, and pad lengths.
-   max pooling consisting of computing the max on all values of a
-   subset of the input tensor according to the kernel size and downsampling the
-   data into the output tensor Y for further processing. The output spatial shape is calculated differently
-   depending on whether explicit padding is used, where pads is employed, or auto padding is used, where auto_pad is utilized.
-   With explicit padding (https://pytorch.org/docs/stable/generated/torch.nn.MaxPool2d.html?highlight=maxpool#torch.nn.MaxPool2d):
-   ```
-   output_spatial_shape[i] = floor((input_spatial_shape[i] + pad_shape[i] - dilation[i] * (kernel_shape[i] - 1) - 1) / strides_spatial_shape[i] + 1)
-   ```
-   or
-   ```
-   output_spatial_shape[i] = ceil((input_spatial_shape[i] + pad_shape[i] - dilation[i] * (kernel_shape[i] - 1) - 1) / strides_spatial_shape[i] + 1)
-   ```
-   if ceil_mode is enabled. `pad_shape[i]` is the sum of pads along axis `i`.
+  the tensor according to kernel sizes, stride sizes, and pad lengths.
+  max pooling consisting of computing the max on all values of a
+  subset of the input tensor according to the kernel size and downsampling the
+  data into the output tensor Y for further processing. The output spatial shape is calculated differently
+  depending on whether explicit padding is used, where pads is employed, or auto padding is used, where auto_pad is utilized.
+  With explicit padding (https://pytorch.org/docs/stable/generated/torch.nn.MaxPool2d.html?highlight=maxpool#torch.nn.MaxPool2d):
+  ```
+  output_spatial_shape[i] = floor((input_spatial_shape[i] + pad_shape[i] - dilation[i] * (kernel_shape[i] - 1) - 1) / strides_spatial_shape[i] + 1)
+  ```
+  or
+  ```
+  output_spatial_shape[i] = ceil((input_spatial_shape[i] + pad_shape[i] - dilation[i] * (kernel_shape[i] - 1) - 1) / strides_spatial_shape[i] + 1)
+  ```
+  if ceil_mode is enabled. `pad_shape[i]` is the sum of pads along axis `i`.
 
-   `auto_pad` is a DEPRECATED attribute. If you are using them currently, the output spatial shape will be following when ceil_mode is enabled:
-   ```
-   VALID: output_spatial_shape[i] = ceil((input_spatial_shape[i] - ((kernel_spatial_shape[i] - 1) * dilations[i] + 1) + 1) / strides_spatial_shape[i])
-   SAME_UPPER or SAME_LOWER: output_spatial_shape[i] = ceil(input_spatial_shape[i] / strides_spatial_shape[i])
-   ```
-   or when ceil_mode is disabled (https://www.tensorflow.org/api_docs/python/tf/keras/layers/AveragePooling2D):
-   ```
-   VALID: output_spatial_shape[i] = floor((input_spatial_shape[i] - ((kernel_spatial_shape[i] - 1) * dilations[i] + 1)) / strides_spatial_shape[i]) + 1
-   SAME_UPPER or SAME_LOWER: output_spatial_shape[i] = floor((input_spatial_shape[i] - 1) / strides_spatial_shape[i]) + 1
-   ```
-   And pad shape will be following if `SAME_UPPER` or `SAME_LOWER`:
-   ```
-   pad_shape[i] = (output_spatial_shape[i] - 1) * strides_spatial_shape[i] + ((kernel_spatial_shape[i] - 1) * dilations[i] + 1) - input_spatial_shape[i]
-   ```
-   The output of each pooling window is maximum number of elements exclude pad.
-
+  `auto_pad` is a DEPRECATED attribute. If you are using them currently, the output spatial shape will be following when ceil_mode is enabled:
+  ```
+  VALID: output_spatial_shape[i] = ceil((input_spatial_shape[i] - ((kernel_spatial_shape[i] - 1) * dilations[i] + 1) + 1) / strides_spatial_shape[i])
+  SAME_UPPER or SAME_LOWER: output_spatial_shape[i] = ceil(input_spatial_shape[i] / strides_spatial_shape[i])
+  ```
+  or when ceil_mode is disabled (https://www.tensorflow.org/api_docs/python/tf/keras/layers/AveragePooling2D):
+  ```
+  VALID: output_spatial_shape[i] = floor((input_spatial_shape[i] - ((kernel_spatial_shape[i] - 1) * dilations[i] + 1)) / strides_spatial_shape[i]) + 1
+  SAME_UPPER or SAME_LOWER: output_spatial_shape[i] = floor((input_spatial_shape[i] - 1) / strides_spatial_shape[i]) + 1
+  ```
+  And pad shape will be following if `SAME_UPPER` or `SAME_LOWER`:
+  ```
+  pad_shape[i] = (output_spatial_shape[i] - 1) * strides_spatial_shape[i] + ((kernel_spatial_shape[i] - 1) * dilations[i] + 1) - input_spatial_shape[i]
+  ```
+  The output of each pooling window is maximum number of elements exclude pad.
 
 #### Version
 
@@ -15182,7 +15149,7 @@ This version of the operator has been available since version 13 of the default 
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
+<dt><tt>T</tt> : tensor(bfloat16), tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
@@ -15494,7 +15461,7 @@ This version of the operator has been available since version 13 of the default 
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
+<dt><tt>T</tt> : tensor(bfloat16), tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to float tensors.</dd>
 <dt><tt>T1</tt> : tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input 'ratio' types to float tensors.</dd>
@@ -15532,7 +15499,7 @@ This version of the operator has been available since version 13 of the default 
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(bool), tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(bool)</dt>
 <dd>Constrain input types to all numeric tensors.</dd>
 <dt><tt>T1</tt> : tensor(bool)</dt>
 <dd>Constrain output to boolean tensor.</dd>
@@ -15699,7 +15666,7 @@ This version of the operator has been available since version 13 of the default 
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
+<dt><tt>T</tt> : tensor(bfloat16), tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
@@ -16058,7 +16025,7 @@ This version of the operator has been available since version 13 of the default 
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double), tensor(uint32), tensor(uint64), tensor(int32), tensor(int64), tensor(bfloat16)</dt>
+<dt><tt>T</tt> : tensor(uint32), tensor(uint64), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
 <dd>Constrain input and output types to float/int tensors.</dd>
 </dl>
 
@@ -16140,7 +16107,7 @@ from the back. Accepted range is [-r, r-1] where r = rank(input).
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
+<dt><tt>T</tt> : tensor(bfloat16), tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
@@ -16238,7 +16205,7 @@ This version of the operator has been available since version 13 of the default 
 #### Type Constraints
 
 <dl>
-<dt><tt>T1</tt> : tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
+<dt><tt>T1</tt> : tensor(bfloat16), tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input types to float tensors.</dd>
 <dt><tt>T2</tt> : tensor(bool)</dt>
 <dd>Constrain output types to boolean tensors.</dd>
@@ -16291,7 +16258,7 @@ This version of the operator has been available since version 13 of the default 
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
+<dt><tt>T</tt> : tensor(bfloat16), tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output  types to float tensors.</dd>
 </dl>
 
@@ -16356,7 +16323,7 @@ This version of the operator has been available since version 13 of the default 
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
+<dt><tt>T</tt> : tensor(bfloat16), tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
@@ -16402,7 +16369,7 @@ from the back. Accepted range is [-r, r-1] where r = rank(input).
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
+<dt><tt>T</tt> : tensor(bfloat16), tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
@@ -16611,7 +16578,7 @@ This version of the operator has been available since version 13 of the default 
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double), tensor(uint32), tensor(uint64), tensor(int32), tensor(int64), tensor(bfloat16)</dt>
+<dt><tt>T</tt> : tensor(uint32), tensor(uint64), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
 <dd>Constrain input and output types to float/int tensors.</dd>
 </dl>
 
@@ -16673,14 +16640,14 @@ This version of the operator has been available since version 13 of the default 
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
+<dt><tt>T</tt> : tensor(bfloat16), tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
 ### <a name="MeanVarianceNormalization-13"></a>**MeanVarianceNormalization-13**</a>
 
   A MeanVarianceNormalization Function: Perform mean variance normalization
-        on the input tensor X using formula: `(X-EX)/sqrt(E(X-EX)^2)`
+  on the input tensor X using formula: `(X-EX)/sqrt(E(X-EX)^2)`
 
 #### Version
 
@@ -16710,7 +16677,7 @@ This version of the operator has been available since version 13 of the default 
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
+<dt><tt>T</tt> : tensor(bfloat16), tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to all numeric tensors.</dd>
 </dl>
 
@@ -17010,10 +16977,10 @@ This version of the operator has been available since version 13 of the default 
 ### <a name="NonZero-13"></a>**NonZero-13**</a>
 
   Returns the indices of the elements that are non-zero
-      (in row-major order - by dimension).
-      NonZero behaves similar to numpy.nonzero:
-      https://docs.scipy.org/doc/numpy/reference/generated/numpy.nonzero.html,
-      but for scalar input, NonZero produces output shape (0, N) instead of (1, N), which is different from Numpy's behavior.
+  (in row-major order - by dimension).
+  NonZero behaves similar to numpy.nonzero:
+  https://docs.scipy.org/doc/numpy/reference/generated/numpy.nonzero.html,
+  but for scalar input, NonZero produces output shape (0, N) instead of (1, N), which is different from Numpy's behavior.
 
 #### Version
 
@@ -17116,7 +17083,6 @@ This version of the operator has been available since version 13 of the default 
         [2.3, 2.3, 2.3, 3.4],
         [4.5, 4.5, 4.5, 5.7],
     ]
-
 
 #### Version
 
@@ -17263,7 +17229,7 @@ This version of the operator has been available since version 13 of the default 
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
+<dt><tt>T</tt> : tensor(bfloat16), tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
@@ -17746,7 +17712,7 @@ This version of the operator has been available since version 13 of the default 
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
+<dt><tt>T</tt> : tensor(bfloat16), tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
@@ -18101,7 +18067,7 @@ This version of the operator has been available since version 13 of the default 
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
+<dt><tt>T</tt> : tensor(bfloat16), tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
@@ -18308,7 +18274,7 @@ from the back. Accepted range is [-r, r-1] where r = rank(input).
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
+<dt><tt>T</tt> : tensor(bfloat16), tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
@@ -18391,7 +18357,7 @@ This version of the operator has been available since version 13 of the default 
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
+<dt><tt>T</tt> : tensor(bfloat16), tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to float tensors.</dd>
 <dt><tt>Tind</tt> : tensor(int32), tensor(int64)</dt>
 <dd>Constrain target to integer types</dd>
@@ -18502,7 +18468,7 @@ This version of the operator has been available since version 13 of the default 
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
+<dt><tt>T</tt> : tensor(bfloat16), tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
@@ -18600,7 +18566,7 @@ This version of the operator has been available since version 13 of the default 
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
+<dt><tt>T</tt> : tensor(bfloat16), tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
@@ -18881,9 +18847,9 @@ This version of the operator has been available since version 14 of the default 
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
+<dt><tt>T</tt> : tensor(bfloat16), tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to float tensors.</dd>
-<dt><tt>U</tt> : tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
+<dt><tt>U</tt> : tensor(bfloat16), tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain mean and variance types to float tensors. It allows all float type for U.</dd>
 </dl>
 
@@ -18908,7 +18874,6 @@ This version of the operator has been available since version 14 of the default 
   reverse=1
   output = [5, 3, 0]
   ```
-
 
 #### Version
 
@@ -19661,11 +19626,11 @@ This version of the operator has been available since version 15 of the default 
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
+<dt><tt>T</tt> : tensor(bfloat16), tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to float tensors.</dd>
-<dt><tt>T1</tt> : tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
+<dt><tt>T1</tt> : tensor(bfloat16), tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain scale and bias types to float tensors.</dd>
-<dt><tt>T2</tt> : tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
+<dt><tt>T2</tt> : tensor(bfloat16), tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain mean and variance types to float tensors.</dd>
 </dl>
 
@@ -19710,7 +19675,7 @@ This version of the operator has been available since version 15 of the default 
 <dl>
 <dt><tt>T1</tt> : tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input types to float tensors.</dd>
-<dt><tt>T2</tt> : tensor(float16), tensor(float), tensor(double), tensor(bfloat16), tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bool)</dt>
+<dt><tt>T2</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(bool)</dt>
 <dd>Constrain output types to all numeric tensors and bool tensors.</dd>
 </dl>
 
@@ -20408,7 +20373,7 @@ This version of the operator has been available since version 16 of the default 
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(uint32), tensor(uint64), tensor(int32), tensor(int64)</dt>
+<dt><tt>T</tt> : tensor(uint32), tensor(uint64), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
 <dd>Constrain input and output types to float/int tensors.</dd>
 </dl>
 
@@ -20596,7 +20561,6 @@ This version of the operator has been available since version 16 of the default 
         %Accumulate = Identity(%Ht)
         return %Ht, %Accumulate
       }
-
 
 #### Version
 
@@ -20967,7 +20931,7 @@ This version of the operator has been available since version 17 of the default 
 #### Type Constraints
 
 <dl>
-<dt><tt>T1</tt> : tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
+<dt><tt>T1</tt> : tensor(bfloat16), tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to float tensors.</dd>
 <dt><tt>T2</tt> : tensor(int32), tensor(int64)</dt>
 <dd>Constrain scalar length types to int64_t.</dd>
@@ -21056,46 +21020,46 @@ This version of the operator has been available since version 17 of the default 
 ### <a name="LayerNormalization-17"></a>**LayerNormalization-17**</a>
 
   This is layer normalization defined in ONNX as function.
-        The overall computation can be split into two stages.
-        The first stage is standardization, which makes the
-        normalized elements have zero mean and unit variances.
-        The computation required by standardization can be
-        described by the following equations.
-        ```
-        Mean = ReduceMean<axes=normalized_axes>(X)
-        D = Sub(X, Mean)
-        DD = Mul(D, D)
-        Var = ReduceMean<axes=normalized_axes>(DD)
-        VarEps = Add(Var, epsilon)
-        StdDev = Sqrt(VarEps)
-        InvStdDev = Reciprocal(StdDev)
-        Normalized = Mul(D, InvStdDev)
-        ```
-        where `normalized_axes` is `[axis, ..., rank of X - 1]`.
-        The variables `Var` and `StdDev` stand for variance and
-        standard deviation, respectively. The second output is
-        `Mean` and the last one is `InvStdDev`.
-        Depending on `stash_type` attribute, the actual computation
-        must happen in different floating-point precision.
-        For example, if `stash_type` is 1, this operator casts
-        all input variables to 32-bit float, perform the computation, and
-        finally cast `Normalized` back to the original type of `X`.
-        The second stage then scales and shifts the outcome of the
-        first stage using
-        ```
-        NormalizedScaled = Mul(Normalized, Scale)
-        Y = Add(NormalizedScaled, B)
-        ```
-        The second stage doesn't depends on `stash_type`.
-        All equations are in [this syntax](https://github.com/onnx/onnx/blob/main/docs/Syntax.md).
-        The same variable (i.e., input, output, and attribute) uses
-        the same name in the equations above and this operator's definition.
-        Let `d[i]` indicate the i-th dimension of `X`.
-        If `X`'s shape is `[d[0], ..., d[axis-1], d[axis], ..., d[rank-1]]`,
-        the shape of `Mean` and `InvStdDev` is `[d[0], ..., d[axis-1], 1, ..., 1]`.
-        `Y` and `X` have the same shape. This operator supports unidirectional broadcasting
-        (tensors `Scale` and `B` should be unidirectional broadcastable to tensor `X`);
-        for more details please check [the doc](Broadcasting.md).
+  The overall computation can be split into two stages.
+  The first stage is standardization, which makes the
+  normalized elements have zero mean and unit variances.
+  The computation required by standardization can be
+  described by the following equations.
+  ```
+  Mean = ReduceMean<axes=normalized_axes>(X)
+  D = Sub(X, Mean)
+  DD = Mul(D, D)
+  Var = ReduceMean<axes=normalized_axes>(DD)
+  VarEps = Add(Var, epsilon)
+  StdDev = Sqrt(VarEps)
+  InvStdDev = Reciprocal(StdDev)
+  Normalized = Mul(D, InvStdDev)
+  ```
+  where `normalized_axes` is `[axis, ..., rank of X - 1]`.
+  The variables `Var` and `StdDev` stand for variance and
+  standard deviation, respectively. The second output is
+  `Mean` and the last one is `InvStdDev`.
+  Depending on `stash_type` attribute, the actual computation
+  must happen in different floating-point precision.
+  For example, if `stash_type` is 1, this operator casts
+  all input variables to 32-bit float, perform the computation, and
+  finally cast `Normalized` back to the original type of `X`.
+  The second stage then scales and shifts the outcome of the
+  first stage using
+  ```
+  NormalizedScaled = Mul(Normalized, Scale)
+  Y = Add(NormalizedScaled, B)
+  ```
+  The second stage doesn't depends on `stash_type`.
+  All equations are in [this syntax](https://github.com/onnx/onnx/blob/main/docs/Syntax.md).
+  The same variable (i.e., input, output, and attribute) uses
+  the same name in the equations above and this operator's definition.
+  Let `d[i]` indicate the i-th dimension of `X`.
+  If `X`'s shape is `[d[0], ..., d[axis-1], d[axis], ..., d[rank-1]]`,
+  the shape of `Mean` and `InvStdDev` is `[d[0], ..., d[axis-1], 1, ..., 1]`.
+  `Y` and `X` have the same shape. This operator supports unidirectional broadcasting
+  (tensors `Scale` and `B` should be unidirectional broadcastable to tensor `X`);
+  for more details please check [the doc](Broadcasting.md).
 
 #### Version
 
@@ -21137,7 +21101,7 @@ This version of the operator has been available since version 17 of the default 
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
+<dt><tt>T</tt> : tensor(bfloat16), tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input types and output Y type to float tensors.</dd>
 <dt><tt>U</tt> : tensor(float), tensor(bfloat16)</dt>
 <dd>Type of Mean and InvStdDev tensors.</dd>
@@ -21192,7 +21156,7 @@ This version of the operator has been available since version 17 of the default 
 <dl>
 <dt><tt>T1</tt> : tensor(int32), tensor(int64)</dt>
 <dd>Constrain to integer tensors.</dd>
-<dt><tt>T2</tt> : tensor(float), tensor(float16), tensor(double), tensor(bfloat16)</dt>
+<dt><tt>T2</tt> : tensor(bfloat16), tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain to float tensors</dd>
 <dt><tt>T3</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
 <dd>Constrain to any numerical types.</dd>
@@ -21252,7 +21216,7 @@ This version of the operator has been available since version 17 of the default 
 #### Type Constraints
 
 <dl>
-<dt><tt>T1</tt> : tensor(float), tensor(float16), tensor(double), tensor(bfloat16)</dt>
+<dt><tt>T1</tt> : tensor(bfloat16), tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain signal and output to float tensors.</dd>
 <dt><tt>T2</tt> : tensor(int32), tensor(int64)</dt>
 <dd>Constrain scalar length types to int64_t.</dd>
@@ -21574,28 +21538,28 @@ This version of the operator has been deprecated since version 18 of the default
 ### <a name="LpPool-18"></a>**LpPool-18**</a>
 
   LpPool consumes an input tensor X and applies Lp pooling across
-   the tensor according to kernel sizes, stride sizes, and pad lengths.
-   Lp pooling consisting of computing the Lp norm on all values of a subset
-   of the input tensor according to the kernel size and downsampling the
-   data into the output tensor Y for further processing. The output spatial shape will be following:
-   ```
-   output_spatial_shape[i] = floor((input_spatial_shape[i] + pad_shape[i] - {kernelSpatialShape}) / strides_spatial_shape[i] + 1)
-   ```
-   or
-   ```
-   output_spatial_shape[i] = ceil((input_spatial_shape[i] + pad_shape[i] - {kernelSpatialShape}) / strides_spatial_shape[i] + 1)
-   ```
-   if ceil_mode is enabled `pad_shape[i]` is the sum of pads along axis `i`.
+  the tensor according to kernel sizes, stride sizes, and pad lengths.
+  Lp pooling consisting of computing the Lp norm on all values of a subset
+  of the input tensor according to the kernel size and downsampling the
+  data into the output tensor Y for further processing. The output spatial shape will be following:
+  ```
+  output_spatial_shape[i] = floor((input_spatial_shape[i] + pad_shape[i] - {kernelSpatialShape}) / strides_spatial_shape[i] + 1)
+  ```
+  or
+  ```
+  output_spatial_shape[i] = ceil((input_spatial_shape[i] + pad_shape[i] - {kernelSpatialShape}) / strides_spatial_shape[i] + 1)
+  ```
+  if ceil_mode is enabled `pad_shape[i]` is the sum of pads along axis `i`.
 
-   `auto_pad` is a DEPRECATED attribute. If you are using them currently, the output spatial shape will be following:
-   ```
-   VALID: output_spatial_shape[i] = ceil((input_spatial_shape[i] - {kernelSpatialShape} + 1) / strides_spatial_shape[i])
-   SAME_UPPER or SAME_LOWER: output_spatial_shape[i] = ceil(input_spatial_shape[i] / strides_spatial_shape[i])
-   ```
-   And pad shape will be following if `SAME_UPPER` or `SAME_LOWER`:
-   ```
-   pad_shape[i] = (output_spatial_shape[i] - 1) * strides_spatial_shape[i] + {kernelSpatialShape} - input_spatial_shape[i]
-   ```
+  `auto_pad` is a DEPRECATED attribute. If you are using them currently, the output spatial shape will be following:
+  ```
+  VALID: output_spatial_shape[i] = ceil((input_spatial_shape[i] - {kernelSpatialShape} + 1) / strides_spatial_shape[i])
+  SAME_UPPER or SAME_LOWER: output_spatial_shape[i] = ceil(input_spatial_shape[i] / strides_spatial_shape[i])
+  ```
+  And pad shape will be following if `SAME_UPPER` or `SAME_LOWER`:
+  ```
+  pad_shape[i] = (output_spatial_shape[i] - 1) * strides_spatial_shape[i] + {kernelSpatialShape} - input_spatial_shape[i]
+  ```
 
 #### Version
 
@@ -22650,37 +22614,36 @@ This version of the operator has been available since version 18 of the default 
 ### <a name="AveragePool-19"></a>**AveragePool-19**</a>
 
   AveragePool consumes an input tensor X and applies average pooling across
-   the tensor according to kernel sizes, stride sizes, and pad lengths.
-   average pooling consisting of computing the average on all values of a
-   subset of the input tensor according to the kernel size and downsampling the
-   data into the output tensor Y for further processing. The output spatial shape is calculated differently
-   depending on whether explicit padding is used, where pads is employed, or auto padding is used, where auto_pad is utilized.
-   With explicit padding (https://pytorch.org/docs/stable/generated/torch.nn.MaxPool2d.html?highlight=maxpool#torch.nn.MaxPool2d):
-   ```
-   output_spatial_shape[i] = floor((input_spatial_shape[i] + pad_shape[i] - dilation[i] * (kernel_shape[i] - 1) - 1) / strides_spatial_shape[i] + 1)
-   ```
-   or
-   ```
-   output_spatial_shape[i] = ceil((input_spatial_shape[i] + pad_shape[i] - dilation[i] * (kernel_shape[i] - 1) - 1) / strides_spatial_shape[i] + 1)
-   ```
-   if ceil_mode is enabled. `pad_shape[i]` is the sum of pads along axis `i`.
+  the tensor according to kernel sizes, stride sizes, and pad lengths.
+  average pooling consisting of computing the average on all values of a
+  subset of the input tensor according to the kernel size and downsampling the
+  data into the output tensor Y for further processing. The output spatial shape is calculated differently
+  depending on whether explicit padding is used, where pads is employed, or auto padding is used, where auto_pad is utilized.
+  With explicit padding (https://pytorch.org/docs/stable/generated/torch.nn.MaxPool2d.html?highlight=maxpool#torch.nn.MaxPool2d):
+  ```
+  output_spatial_shape[i] = floor((input_spatial_shape[i] + pad_shape[i] - dilation[i] * (kernel_shape[i] - 1) - 1) / strides_spatial_shape[i] + 1)
+  ```
+  or
+  ```
+  output_spatial_shape[i] = ceil((input_spatial_shape[i] + pad_shape[i] - dilation[i] * (kernel_shape[i] - 1) - 1) / strides_spatial_shape[i] + 1)
+  ```
+  if ceil_mode is enabled. `pad_shape[i]` is the sum of pads along axis `i`.
 
-   `auto_pad` is a DEPRECATED attribute. If you are using them currently, the output spatial shape will be following when ceil_mode is enabled:
-   ```
-   VALID: output_spatial_shape[i] = ceil((input_spatial_shape[i] - ((kernel_spatial_shape[i] - 1) * dilations[i] + 1) + 1) / strides_spatial_shape[i])
-   SAME_UPPER or SAME_LOWER: output_spatial_shape[i] = ceil(input_spatial_shape[i] / strides_spatial_shape[i])
-   ```
-   or when ceil_mode is disabled (https://www.tensorflow.org/api_docs/python/tf/keras/layers/AveragePooling2D):
-   ```
-   VALID: output_spatial_shape[i] = floor((input_spatial_shape[i] - ((kernel_spatial_shape[i] - 1) * dilations[i] + 1)) / strides_spatial_shape[i]) + 1
-   SAME_UPPER or SAME_LOWER: output_spatial_shape[i] = floor((input_spatial_shape[i] - 1) / strides_spatial_shape[i]) + 1
-   ```
-   And pad shape will be following if `SAME_UPPER` or `SAME_LOWER`:
-   ```
-   pad_shape[i] = (output_spatial_shape[i] - 1) * strides_spatial_shape[i] + ((kernel_spatial_shape[i] - 1) * dilations[i] + 1) - input_spatial_shape[i]
-   ```
-   The output of each pooling window is divided by the number of elements (exclude pad when attribute count_include_pad is zero).
-
+  `auto_pad` is a DEPRECATED attribute. If you are using them currently, the output spatial shape will be following when ceil_mode is enabled:
+  ```
+  VALID: output_spatial_shape[i] = ceil((input_spatial_shape[i] - ((kernel_spatial_shape[i] - 1) * dilations[i] + 1) + 1) / strides_spatial_shape[i])
+  SAME_UPPER or SAME_LOWER: output_spatial_shape[i] = ceil(input_spatial_shape[i] / strides_spatial_shape[i])
+  ```
+  or when ceil_mode is disabled (https://www.tensorflow.org/api_docs/python/tf/keras/layers/AveragePooling2D):
+  ```
+  VALID: output_spatial_shape[i] = floor((input_spatial_shape[i] - ((kernel_spatial_shape[i] - 1) * dilations[i] + 1)) / strides_spatial_shape[i]) + 1
+  SAME_UPPER or SAME_LOWER: output_spatial_shape[i] = floor((input_spatial_shape[i] - 1) / strides_spatial_shape[i]) + 1
+  ```
+  And pad shape will be following if `SAME_UPPER` or `SAME_LOWER`:
+  ```
+  pad_shape[i] = (output_spatial_shape[i] - 1) * strides_spatial_shape[i] + ((kernel_spatial_shape[i] - 1) * dilations[i] + 1) - input_spatial_shape[i]
+  ```
+  The output of each pooling window is divided by the number of elements (exclude pad when attribute count_include_pad is zero).
 
 #### Version
 
@@ -23807,7 +23770,6 @@ Note: `round_int` stands for computing the nearest integer value, rounding halfw
         return %Ht, %Accumulate
       }
 
-
 #### Version
 
 This version of the operator has been available since version 19 of the default ONNX operator set.
@@ -24132,7 +24094,6 @@ This version of the operator has been available since version 20 of the default 
   $y = 0.5 * x * (1 + Tanh(sqrt(2/\pi) * (x + 0.044715 * x^3)))$ is used and applied
   to the tensor elementwise.
 
-
 #### Version
 
 This version of the operator has been available since version 20 of the default ONNX operator set.
@@ -24161,7 +24122,7 @@ This version of the operator has been available since version 20 of the default 
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
+<dt><tt>T</tt> : tensor(bfloat16), tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
@@ -24673,9 +24634,9 @@ This version of the operator has been available since version 21 of the default 
 #### Type Constraints
 
 <dl>
-<dt><tt>T1</tt> : tensor(float16), tensor(float), tensor(double), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(bool), tensor(string), tensor(bfloat16), tensor(float8e4m3fn), tensor(float8e4m3fnuz), tensor(float8e5m2), tensor(float8e5m2fnuz), tensor(uint4), tensor(int4)</dt>
+<dt><tt>T1</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(float8e4m3fn), tensor(float8e4m3fnuz), tensor(float8e5m2), tensor(float8e5m2fnuz), tensor(uint4), tensor(int4)</dt>
 <dd>Constrain input types. Casting from complex is not supported.</dd>
-<dt><tt>T2</tt> : tensor(float16), tensor(float), tensor(double), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(bool), tensor(string), tensor(bfloat16), tensor(float8e4m3fn), tensor(float8e4m3fnuz), tensor(float8e5m2), tensor(float8e5m2fnuz), tensor(uint4), tensor(int4)</dt>
+<dt><tt>T2</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(float8e4m3fn), tensor(float8e4m3fnuz), tensor(float8e5m2), tensor(float8e5m2fnuz), tensor(uint4), tensor(int4)</dt>
 <dd>Constrain output types. Casting to complex is not supported.</dd>
 </dl>
 
@@ -25652,7 +25613,6 @@ This version of the operator has been available since version 21 of the default 
         return %Ht, %Accumulate
       }
 
-
 #### Version
 
 This version of the operator has been available since version 21 of the default ONNX operator set.
@@ -26106,37 +26066,36 @@ This version of the operator has been available since version 22 of the default 
 ### <a name="AveragePool-22"></a>**AveragePool-22**</a>
 
   AveragePool consumes an input tensor X and applies average pooling across
-   the tensor according to kernel sizes, stride sizes, and pad lengths.
-   average pooling consisting of computing the average on all values of a
-   subset of the input tensor according to the kernel size and downsampling the
-   data into the output tensor Y for further processing. The output spatial shape is calculated differently
-   depending on whether explicit padding is used, where pads is employed, or auto padding is used, where auto_pad is utilized.
-   With explicit padding (https://pytorch.org/docs/stable/generated/torch.nn.MaxPool2d.html?highlight=maxpool#torch.nn.MaxPool2d):
-   ```
-   output_spatial_shape[i] = floor((input_spatial_shape[i] + pad_shape[i] - dilation[i] * (kernel_shape[i] - 1) - 1) / strides_spatial_shape[i] + 1)
-   ```
-   or
-   ```
-   output_spatial_shape[i] = ceil((input_spatial_shape[i] + pad_shape[i] - dilation[i] * (kernel_shape[i] - 1) - 1) / strides_spatial_shape[i] + 1)
-   ```
-   if ceil_mode is enabled. `pad_shape[i]` is the sum of pads along axis `i`. Sliding windows that would start in the right padded region are ignored.
+  the tensor according to kernel sizes, stride sizes, and pad lengths.
+  average pooling consisting of computing the average on all values of a
+  subset of the input tensor according to the kernel size and downsampling the
+  data into the output tensor Y for further processing. The output spatial shape is calculated differently
+  depending on whether explicit padding is used, where pads is employed, or auto padding is used, where auto_pad is utilized.
+  With explicit padding (https://pytorch.org/docs/stable/generated/torch.nn.MaxPool2d.html?highlight=maxpool#torch.nn.MaxPool2d):
+  ```
+  output_spatial_shape[i] = floor((input_spatial_shape[i] + pad_shape[i] - dilation[i] * (kernel_shape[i] - 1) - 1) / strides_spatial_shape[i] + 1)
+  ```
+  or
+  ```
+  output_spatial_shape[i] = ceil((input_spatial_shape[i] + pad_shape[i] - dilation[i] * (kernel_shape[i] - 1) - 1) / strides_spatial_shape[i] + 1)
+  ```
+  if ceil_mode is enabled. `pad_shape[i]` is the sum of pads along axis `i`. Sliding windows that would start in the right padded region are ignored.
 
-   `auto_pad` is a DEPRECATED attribute. If you are using them currently, the output spatial shape will be following when ceil_mode is enabled:
-   ```
-   VALID: output_spatial_shape[i] = ceil((input_spatial_shape[i] - ((kernel_spatial_shape[i] - 1) * dilations[i] + 1) + 1) / strides_spatial_shape[i])
-   SAME_UPPER or SAME_LOWER: output_spatial_shape[i] = ceil(input_spatial_shape[i] / strides_spatial_shape[i])
-   ```
-   or when ceil_mode is disabled (https://www.tensorflow.org/api_docs/python/tf/keras/layers/AveragePooling2D):
-   ```
-   VALID: output_spatial_shape[i] = floor((input_spatial_shape[i] - ((kernel_spatial_shape[i] - 1) * dilations[i] + 1)) / strides_spatial_shape[i]) + 1
-   SAME_UPPER or SAME_LOWER: output_spatial_shape[i] = floor((input_spatial_shape[i] - 1) / strides_spatial_shape[i]) + 1
-   ```
-   And pad shape will be following if `SAME_UPPER` or `SAME_LOWER`:
-   ```
-   pad_shape[i] = (output_spatial_shape[i] - 1) * strides_spatial_shape[i] + ((kernel_spatial_shape[i] - 1) * dilations[i] + 1) - input_spatial_shape[i]
-   ```
-   The output of each pooling window is divided by the number of elements (exclude pad when attribute count_include_pad is zero).
-
+  `auto_pad` is a DEPRECATED attribute. If you are using them currently, the output spatial shape will be following when ceil_mode is enabled:
+  ```
+  VALID: output_spatial_shape[i] = ceil((input_spatial_shape[i] - ((kernel_spatial_shape[i] - 1) * dilations[i] + 1) + 1) / strides_spatial_shape[i])
+  SAME_UPPER or SAME_LOWER: output_spatial_shape[i] = ceil(input_spatial_shape[i] / strides_spatial_shape[i])
+  ```
+  or when ceil_mode is disabled (https://www.tensorflow.org/api_docs/python/tf/keras/layers/AveragePooling2D):
+  ```
+  VALID: output_spatial_shape[i] = floor((input_spatial_shape[i] - ((kernel_spatial_shape[i] - 1) * dilations[i] + 1)) / strides_spatial_shape[i]) + 1
+  SAME_UPPER or SAME_LOWER: output_spatial_shape[i] = floor((input_spatial_shape[i] - 1) / strides_spatial_shape[i]) + 1
+  ```
+  And pad shape will be following if `SAME_UPPER` or `SAME_LOWER`:
+  ```
+  pad_shape[i] = (output_spatial_shape[i] - 1) * strides_spatial_shape[i] + ((kernel_spatial_shape[i] - 1) * dilations[i] + 1) - input_spatial_shape[i]
+  ```
+  The output of each pooling window is divided by the number of elements (exclude pad when attribute count_include_pad is zero).
 
 #### Version
 
@@ -26292,8 +26251,6 @@ This version of the operator has been available since version 22 of the default 
     total_padding[i] = stride[i] * (input_size[i] - 1) + output_padding[i] + ((kernel_shape[i] - 1) * dilations[i] + 1) - output_shape[i]
     If (auto_pads == SAME_UPPER): pads[start_i] = total_padding[i]/2; pads[end_i] = total_padding[i] - (total_padding[i]/2)
     Else: pads[start_i] = total_padding[i] - (total_padding[i]/2); pads[end_i] = (total_padding[i]/2).
-
-
 
 #### Version
 
@@ -26554,7 +26511,6 @@ This version of the operator has been available since version 22 of the default 
   (Tensor<T>) where the function `f(x) = alpha * (exp(x) - 1.) for x <
   0`, `f(x) = x for x >= 0`., is applied to the tensor elementwise.
 
-
 #### Version
 
 This version of the operator has been available since version 22 of the default ONNX operator set.
@@ -26746,8 +26702,8 @@ This version of the operator has been available since version 22 of the default 
 ### <a name="GlobalAveragePool-22"></a>**GlobalAveragePool-22**</a>
 
   GlobalAveragePool consumes an input tensor X and applies average pooling across
-   the values in the same channel. This is equivalent to AveragePool with kernel size
-   equal to the spatial dimension of input tensor.
+  the values in the same channel. This is equivalent to AveragePool with kernel size
+  equal to the spatial dimension of input tensor.
 
 #### Version
 
@@ -26777,8 +26733,8 @@ This version of the operator has been available since version 22 of the default 
 ### <a name="GlobalLpPool-22"></a>**GlobalLpPool-22**</a>
 
   GlobalLpPool consumes an input tensor X and applies lp pool pooling across
-   the values in the same channel. This is equivalent to LpPool with kernel size
-   equal to the spatial dimension of input tensor.
+  the values in the same channel. This is equivalent to LpPool with kernel size
+  equal to the spatial dimension of input tensor.
 
 #### Version
 
@@ -26815,8 +26771,8 @@ This version of the operator has been available since version 22 of the default 
 ### <a name="GlobalMaxPool-22"></a>**GlobalMaxPool-22**</a>
 
   GlobalMaxPool consumes an input tensor X and applies max pooling across
-   the values in the same channel. This is equivalent to MaxPool with kernel size
-   equal to the spatial dimension of input tensor.
+  the values in the same channel. This is equivalent to MaxPool with kernel size
+  equal to the spatial dimension of input tensor.
 
 #### Version
 
@@ -26982,7 +26938,6 @@ This version of the operator has been available since version 22 of the default 
 
   y = scale * (x - mean) / sqrt(variance + epsilon) + B,
   where mean and variance are computed per instance per channel.
-
 
 #### Version
 
@@ -27183,28 +27138,28 @@ This version of the operator has been available since version 22 of the default 
 ### <a name="LpPool-22"></a>**LpPool-22**</a>
 
   LpPool consumes an input tensor X and applies Lp pooling across
-   the tensor according to kernel sizes, stride sizes, and pad lengths.
-   Lp pooling consisting of computing the Lp norm on all values of a subset
-   of the input tensor according to the kernel size and downsampling the
-   data into the output tensor Y for further processing. The output spatial shape will be following:
-   ```
-   output_spatial_shape[i] = floor((input_spatial_shape[i] + pad_shape[i] - {kernelSpatialShape}) / strides_spatial_shape[i] + 1)
-   ```
-   or
-   ```
-   output_spatial_shape[i] = ceil((input_spatial_shape[i] + pad_shape[i] - {kernelSpatialShape}) / strides_spatial_shape[i] + 1)
-   ```
-   if ceil_mode is enabled `pad_shape[i]` is the sum of pads along axis `i`.
+  the tensor according to kernel sizes, stride sizes, and pad lengths.
+  Lp pooling consisting of computing the Lp norm on all values of a subset
+  of the input tensor according to the kernel size and downsampling the
+  data into the output tensor Y for further processing. The output spatial shape will be following:
+  ```
+  output_spatial_shape[i] = floor((input_spatial_shape[i] + pad_shape[i] - {kernelSpatialShape}) / strides_spatial_shape[i] + 1)
+  ```
+  or
+  ```
+  output_spatial_shape[i] = ceil((input_spatial_shape[i] + pad_shape[i] - {kernelSpatialShape}) / strides_spatial_shape[i] + 1)
+  ```
+  if ceil_mode is enabled `pad_shape[i]` is the sum of pads along axis `i`.
 
-   `auto_pad` is a DEPRECATED attribute. If you are using them currently, the output spatial shape will be following:
-   ```
-   VALID: output_spatial_shape[i] = ceil((input_spatial_shape[i] - {kernelSpatialShape} + 1) / strides_spatial_shape[i])
-   SAME_UPPER or SAME_LOWER: output_spatial_shape[i] = ceil(input_spatial_shape[i] / strides_spatial_shape[i])
-   ```
-   And pad shape will be following if `SAME_UPPER` or `SAME_LOWER`:
-   ```
-   pad_shape[i] = (output_spatial_shape[i] - 1) * strides_spatial_shape[i] + {kernelSpatialShape} - input_spatial_shape[i]
-   ```
+  `auto_pad` is a DEPRECATED attribute. If you are using them currently, the output spatial shape will be following:
+  ```
+  VALID: output_spatial_shape[i] = ceil((input_spatial_shape[i] - {kernelSpatialShape} + 1) / strides_spatial_shape[i])
+  SAME_UPPER or SAME_LOWER: output_spatial_shape[i] = ceil(input_spatial_shape[i] / strides_spatial_shape[i])
+  ```
+  And pad shape will be following if `SAME_UPPER` or `SAME_LOWER`:
+  ```
+  pad_shape[i] = (output_spatial_shape[i] - 1) * strides_spatial_shape[i] + {kernelSpatialShape} - input_spatial_shape[i]
+  ```
 
 #### Version
 
@@ -27253,37 +27208,36 @@ This version of the operator has been available since version 22 of the default 
 ### <a name="MaxPool-22"></a>**MaxPool-22**</a>
 
   MaxPool consumes an input tensor X and applies max pooling across
-   the tensor according to kernel sizes, stride sizes, and pad lengths.
-   max pooling consisting of computing the max on all values of a
-   subset of the input tensor according to the kernel size and downsampling the
-   data into the output tensor Y for further processing. The output spatial shape is calculated differently
-   depending on whether explicit padding is used, where pads is employed, or auto padding is used, where auto_pad is utilized.
-   With explicit padding (https://pytorch.org/docs/stable/generated/torch.nn.MaxPool2d.html?highlight=maxpool#torch.nn.MaxPool2d):
-   ```
-   output_spatial_shape[i] = floor((input_spatial_shape[i] + pad_shape[i] - dilation[i] * (kernel_shape[i] - 1) - 1) / strides_spatial_shape[i] + 1)
-   ```
-   or
-   ```
-   output_spatial_shape[i] = ceil((input_spatial_shape[i] + pad_shape[i] - dilation[i] * (kernel_shape[i] - 1) - 1) / strides_spatial_shape[i] + 1)
-   ```
-   if ceil_mode is enabled. `pad_shape[i]` is the sum of pads along axis `i`. Sliding windows that would start in the right padded region are ignored.
+  the tensor according to kernel sizes, stride sizes, and pad lengths.
+  max pooling consisting of computing the max on all values of a
+  subset of the input tensor according to the kernel size and downsampling the
+  data into the output tensor Y for further processing. The output spatial shape is calculated differently
+  depending on whether explicit padding is used, where pads is employed, or auto padding is used, where auto_pad is utilized.
+  With explicit padding (https://pytorch.org/docs/stable/generated/torch.nn.MaxPool2d.html?highlight=maxpool#torch.nn.MaxPool2d):
+  ```
+  output_spatial_shape[i] = floor((input_spatial_shape[i] + pad_shape[i] - dilation[i] * (kernel_shape[i] - 1) - 1) / strides_spatial_shape[i] + 1)
+  ```
+  or
+  ```
+  output_spatial_shape[i] = ceil((input_spatial_shape[i] + pad_shape[i] - dilation[i] * (kernel_shape[i] - 1) - 1) / strides_spatial_shape[i] + 1)
+  ```
+  if ceil_mode is enabled. `pad_shape[i]` is the sum of pads along axis `i`. Sliding windows that would start in the right padded region are ignored.
 
-   `auto_pad` is a DEPRECATED attribute. If you are using them currently, the output spatial shape will be following when ceil_mode is enabled:
-   ```
-   VALID: output_spatial_shape[i] = ceil((input_spatial_shape[i] - ((kernel_spatial_shape[i] - 1) * dilations[i] + 1) + 1) / strides_spatial_shape[i])
-   SAME_UPPER or SAME_LOWER: output_spatial_shape[i] = ceil(input_spatial_shape[i] / strides_spatial_shape[i])
-   ```
-   or when ceil_mode is disabled (https://www.tensorflow.org/api_docs/python/tf/keras/layers/AveragePooling2D):
-   ```
-   VALID: output_spatial_shape[i] = floor((input_spatial_shape[i] - ((kernel_spatial_shape[i] - 1) * dilations[i] + 1)) / strides_spatial_shape[i]) + 1
-   SAME_UPPER or SAME_LOWER: output_spatial_shape[i] = floor((input_spatial_shape[i] - 1) / strides_spatial_shape[i]) + 1
-   ```
-   And pad shape will be following if `SAME_UPPER` or `SAME_LOWER`:
-   ```
-   pad_shape[i] = (output_spatial_shape[i] - 1) * strides_spatial_shape[i] + ((kernel_spatial_shape[i] - 1) * dilations[i] + 1) - input_spatial_shape[i]
-   ```
-   The output of each pooling window is maximum number of elements exclude pad.
-
+  `auto_pad` is a DEPRECATED attribute. If you are using them currently, the output spatial shape will be following when ceil_mode is enabled:
+  ```
+  VALID: output_spatial_shape[i] = ceil((input_spatial_shape[i] - ((kernel_spatial_shape[i] - 1) * dilations[i] + 1) + 1) / strides_spatial_shape[i])
+  SAME_UPPER or SAME_LOWER: output_spatial_shape[i] = ceil(input_spatial_shape[i] / strides_spatial_shape[i])
+  ```
+  or when ceil_mode is disabled (https://www.tensorflow.org/api_docs/python/tf/keras/layers/AveragePooling2D):
+  ```
+  VALID: output_spatial_shape[i] = floor((input_spatial_shape[i] - ((kernel_spatial_shape[i] - 1) * dilations[i] + 1)) / strides_spatial_shape[i]) + 1
+  SAME_UPPER or SAME_LOWER: output_spatial_shape[i] = floor((input_spatial_shape[i] - 1) / strides_spatial_shape[i]) + 1
+  ```
+  And pad shape will be following if `SAME_UPPER` or `SAME_LOWER`:
+  ```
+  pad_shape[i] = (output_spatial_shape[i] - 1) * strides_spatial_shape[i] + ((kernel_spatial_shape[i] - 1) * dilations[i] + 1) - input_spatial_shape[i]
+  ```
+  The output of each pooling window is maximum number of elements exclude pad.
 
 #### Version
 
@@ -27336,8 +27290,8 @@ This version of the operator has been available since version 22 of the default 
 ### <a name="MaxRoiPool-22"></a>**MaxRoiPool-22**</a>
 
   ROI max pool consumes an input tensor X and region of interests (RoIs) to
-   apply max pooling across each RoI, to produce output 4-D tensor of shape
-   (num_rois, channels, pooled_shape[0], pooled_shape[1]).
+  apply max pooling across each RoI, to produce output 4-D tensor of shape
+  (num_rois, channels, pooled_shape[0], pooled_shape[1]).
 
 #### Version
 
@@ -28328,7 +28282,6 @@ This version of the operator has been available since version 22 of the default 
                      Y
   ```
 
-
 #### Version
 
 This version of the operator has been available since version 23 of the default ONNX operator set.
@@ -28639,7 +28592,6 @@ This version of the operator has been available since version 23 of the default 
   `zero-point` is usually not used in the case of float8 and 4-bit types quantization, but the dequantization formula remains the same
   for consistency. The output type is determined by the attribute `output_dtype`. If `output_dtype` is not supplied then the output type
   is the same as `x_scale`. The output type also determines the precision of the multiplication operation.
-
 
 #### Version
 
@@ -29194,33 +29146,33 @@ This version of the operator has been available since version 23 of the default 
 ### <a name="RMSNormalization-23"></a>**RMSNormalization-23**</a>
 
   This is RMS normalization defined in ONNX as function as described in the paper https://arxiv.org/pdf/1910.07467.
-        The overall computation can be split into two stages. The root mean squared norm is taken over the last D dimensions,
-        where D is the dimension of normalized_shape. For example, if normalized_shape is (3, 5) (a 2-dimensional shape),
-        the rms norm is computed over the last 2 dimensions of the input. The computation required by standardization can be
-        described by the following equations.
-        ```
-        XSquared = Mul(X, X)
-        XSquaredMean = ReduceMean<axes=normalized_axes>(XSquared)
-        MeanSquareEpsilon = Add(XSquaredMean, epsilon)
-        RMS = Sqrt(MeanSquareEpsilon)
-        Normalized = Div(X, RMS)
-        ```
-        where `normalized_axes` is `[axis, ..., rank of X - 1]`. The variables `RMS` stand for root mean square,
-        Depending on `stash_type` attribute, the actual computation
-        must happen in different floating-point precision.
-        For example, if `stash_type` is 1, this operator casts
-        all input variables to 32-bit float, perform the computation, and
-        finally cast `Normalized` back to the original type of `X`.
-        The second stage then scales the outcome of the first stage using:
-        ```
-        Y= Mul(Normalized, Scale)
-        ```
-        Let `d[i]` indicate the i-th dimension of `X`.
-        If `X`'s shape is `[d[0], ..., d[axis-1], d[axis], ..., d[rank-1]]`,
-        the shape of `RMS` is `[d[0], ..., d[axis-1], 1, ..., 1]`.
-        `Y` and `X` have the same shape. This operator supports unidirectional broadcasting
-        (`Scale` should be unidirectional broadcastable to tensor `X`);
-        for more details please check [the doc](Broadcasting.md).
+  The overall computation can be split into two stages. The root mean squared norm is taken over the last D dimensions,
+  where D is the dimension of normalized_shape. For example, if normalized_shape is (3, 5) (a 2-dimensional shape),
+  the rms norm is computed over the last 2 dimensions of the input. The computation required by standardization can be
+  described by the following equations.
+  ```
+  XSquared = Mul(X, X)
+  XSquaredMean = ReduceMean<axes=normalized_axes>(XSquared)
+  MeanSquareEpsilon = Add(XSquaredMean, epsilon)
+  RMS = Sqrt(MeanSquareEpsilon)
+  Normalized = Div(X, RMS)
+  ```
+  where `normalized_axes` is `[axis, ..., rank of X - 1]`. The variables `RMS` stand for root mean square,
+  Depending on `stash_type` attribute, the actual computation
+  must happen in different floating-point precision.
+  For example, if `stash_type` is 1, this operator casts
+  all input variables to 32-bit float, perform the computation, and
+  finally cast `Normalized` back to the original type of `X`.
+  The second stage then scales the outcome of the first stage using:
+  ```
+  Y= Mul(Normalized, Scale)
+  ```
+  Let `d[i]` indicate the i-th dimension of `X`.
+  If `X`'s shape is `[d[0], ..., d[axis-1], d[axis], ..., d[rank-1]]`,
+  the shape of `RMS` is `[d[0], ..., d[axis-1], 1, ..., 1]`.
+  `Y` and `X` have the same shape. This operator supports unidirectional broadcasting
+  (`Scale` should be unidirectional broadcastable to tensor `X`);
+  for more details please check [the doc](Broadcasting.md).
 
 #### Version
 
@@ -29256,9 +29208,9 @@ This version of the operator has been available since version 23 of the default 
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
+<dt><tt>T</tt> : tensor(bfloat16), tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input X type to float tensors.</dd>
-<dt><tt>V</tt> : tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
+<dt><tt>V</tt> : tensor(bfloat16), tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain output Y and scale type to float tensors.</dd>
 </dl>
 
@@ -29581,7 +29533,6 @@ This version of the operator has been available since version 23 of the default 
         %Accumulate = Identity(%Ht)
         return %Ht, %Accumulate
       }
-
 
 #### Version
 
@@ -29956,7 +29907,6 @@ This version of the operator has been available since version 23 of the default 
                      Y
   ```
 
-
 #### Version
 
 This version of the operator has been available since version 24 of the default ONNX operator set.
@@ -30288,7 +30238,6 @@ This version of the operator has been available since version 24 of the default 
   `zero-point` is usually not used in the case of float8 and 4-bit types quantization, but the dequantization formula remains the same
   for consistency. The output type is determined by the attribute `output_dtype`. If `output_dtype` is not supplied then the output type
   is the same as `x_scale`. The output type also determines the precision of the multiplication operation.
-
 
 #### Version
 
@@ -31013,7 +30962,6 @@ This version of the operator has been available since version 24 of the default 
         return %Ht, %Accumulate
       }
 
-
 #### Version
 
 This version of the operator has been available since version 24 of the default ONNX operator set.
@@ -31286,7 +31234,7 @@ This version of the operator has been available since version 24 of the default 
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(bfloat16), tensor(double)</dt>
+<dt><tt>T</tt> : tensor(bfloat16), tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
@@ -31626,7 +31574,6 @@ This version of the operator has been available since version 24 of the default 
                      Y
   ```
 
-
 #### Version
 
 This version of the operator has been available since version 25 of the default ONNX operator set.
@@ -31962,7 +31909,6 @@ This version of the operator has been available since version 25 of the default 
   `zero-point` is usually not used in the case of float8 and 4-bit types quantization, but the dequantization formula remains the same
   for consistency. The output type is determined by the attribute `output_dtype`. If `output_dtype` is not supplied then the output type
   is the same as `x_scale`. The output type also determines the precision of the multiplication operation.
-
 
 #### Version
 
@@ -32689,7 +32635,6 @@ This version of the operator has been available since version 25 of the default 
         return %Ht, %Accumulate
       }
 
-
 #### Version
 
 This version of the operator has been available since version 25 of the default ONNX operator set.
@@ -33033,7 +32978,6 @@ This version of the operator has been available since version 26 of the default 
   output = [6, 3, 1]
   ```
 
-
 #### Version
 
 This version of the operator has been available since version 26 of the default ONNX operator set.
@@ -33092,7 +33036,6 @@ This version of the operator has been available since version 26 of the default 
   The carry state stores the last (k-1) positions for incremental decode.
 
   The optional activation attribute supports fused SiLU/Swish activation.
-
 
 #### Version
 
@@ -33159,7 +33102,6 @@ This version of the operator has been available since version 27 of the default 
 
   Semantics: Equivalent to running the recurrent update sequentially for each token,
   but may be implemented using chunk-parallel algorithms for GPU efficiency.
-
 
 #### Version
 
@@ -33508,9 +33450,8 @@ This version of the operator has been available since version 28 of the default 
 ### <a name="Compress-28"></a>**Compress-28**</a>
 
   Selects slices from an input tensor along a given axis where condition evaluates to True for each axis index.
-      In case axis is not provided, input is flattened before elements are selected.
-      Compress behaves like numpy.compress: https://docs.scipy.org/doc/numpy/reference/generated/numpy.compress.html
-
+  In case axis is not provided, input is flattened before elements are selected.
+  Compress behaves like numpy.compress: https://docs.scipy.org/doc/numpy/reference/generated/numpy.compress.html
 
 #### Version
 
@@ -33621,7 +33562,6 @@ This version of the operator has been available since version 28 of the default 
   `zero-point` is usually not used in the case of float8 and 4-bit types quantization, but the dequantization formula remains the same
   for consistency. The output type is determined by the attribute `output_dtype`. If `output_dtype` is not supplied then the output type
   is the same as `x_scale`. The output type also determines the precision of the multiplication operation.
-
 
 #### Version
 
@@ -33795,24 +33735,23 @@ This version of the operator has been available since version 28 of the default 
 ### <a name="OneHot-28"></a>**OneHot-28**</a>
 
   Produces a one-hot tensor based on inputs.
-      The locations represented by the index values in the 'indices' input tensor will have 'on_value'
-      and the other locations will have 'off_value' in the output tensor, where 'on_value' and 'off_value'
-      are specified as part of required input argument 'values', which is a two-element tensor of format
-      [off_value, on_value]. The rank of the output tensor will be one greater than the rank of the
-      input tensor. The additional dimension is for one-hot representation. The additional dimension will
-      be inserted at the position specified by 'axis'. If 'axis' is not specified then the additional
-      dimension will be inserted as the innermost dimension, i.e. axis=-1. The size of the additional
-      dimension is specified by required scalar input 'depth'. The type of the output tensor is the same
-      as the type of the 'values' input. Any entries in the 'indices' input tensor with values outside
-      the range [-depth, depth-1] will result in one-hot representation with all 'off_value' values in the
-      output tensor.
+  The locations represented by the index values in the 'indices' input tensor will have 'on_value'
+  and the other locations will have 'off_value' in the output tensor, where 'on_value' and 'off_value'
+  are specified as part of required input argument 'values', which is a two-element tensor of format
+  [off_value, on_value]. The rank of the output tensor will be one greater than the rank of the
+  input tensor. The additional dimension is for one-hot representation. The additional dimension will
+  be inserted at the position specified by 'axis'. If 'axis' is not specified then the additional
+  dimension will be inserted as the innermost dimension, i.e. axis=-1. The size of the additional
+  dimension is specified by required scalar input 'depth'. The type of the output tensor is the same
+  as the type of the 'values' input. Any entries in the 'indices' input tensor with values outside
+  the range [-depth, depth-1] will result in one-hot representation with all 'off_value' values in the
+  output tensor.
 
-      when axis = 0:
-      output[input[i, j, k], i, j, k] = 1 for all i, j, k and 0 otherwise.
+  when axis = 0:
+  output[input[i, j, k], i, j, k] = 1 for all i, j, k and 0 otherwise.
 
-      when axis = -1:
-      output[i, j, k, input[i, j, k]] = 1 for all i, j, k and 0 otherwise.
-
+  when axis = -1:
+  output[i, j, k, input[i, j, k]] = 1 for all i, j, k and 0 otherwise.
 
 #### Version
 
@@ -34608,7 +34547,7 @@ This version of the operator has been available since version 29 of the default 
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double), tensor(uint32), tensor(uint64), tensor(int32), tensor(int64), tensor(bfloat16)</dt>
+<dt><tt>T</tt> : tensor(uint32), tensor(uint64), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
 <dd>Constrain input and output types to float/int tensors.</dd>
 </dl>
 
@@ -34667,7 +34606,7 @@ This version of the operator has been available since version 29 of the default 
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
+<dt><tt>T</tt> : tensor(bfloat16), tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input, weights, bias, and output to floating-point tensors.</dd>
 <dt><tt>Tind</tt> : tensor(int32), tensor(int64)</dt>
 <dd>Constrain group indices to int32 or int64 tensors.</dd>
@@ -34883,55 +34822,55 @@ No versioning maintained for experimental ops.
 ### <a name="ai.onnx.preview.training.Adagrad-1"></a>**ai.onnx.preview.training.Adagrad-1**</a>
 
   Compute one iteration of ADAGRAD, a stochastic gradient based optimization
-      algorithm. This operator can conduct the optimization of multiple tensor variables.
+  algorithm. This operator can conduct the optimization of multiple tensor variables.
 
-      Let's define the behavior of this operator. As you can imagine, ADAGRAD requires
-      some parameters:
+  Let's define the behavior of this operator. As you can imagine, ADAGRAD requires
+  some parameters:
 
-       - The initial learning-rate "R".
-       - The update count "T". That is, the number of training iterations conducted.
-       - A L2-norm regularization coefficient "norm_coefficient".
-       - A learning-rate decay factor "decay_factor".
-       - A small constant "epsilon" to avoid dividing-by-zero.
+   - The initial learning-rate "R".
+   - The update count "T". That is, the number of training iterations conducted.
+   - A L2-norm regularization coefficient "norm_coefficient".
+   - A learning-rate decay factor "decay_factor".
+   - A small constant "epsilon" to avoid dividing-by-zero.
 
-      At each ADAGRAD iteration, the optimized tensors are moved along a direction
-      computed based on their estimated gradient and accumulated squared gradient. Assume
-      that only a single tensor "X" is updated by this operator. We need the value of "X",
-      its gradient "G", and its accumulated squared gradient "H". Therefore, variables in
-      this operator's input list are sequentially "R", "T", "X", "G", and "H". Other
-      parameters are given as attributes because they are usually constants. Also, the
-      corresponding output tensors are the new value of "X" (called "X_new"), and then
-      the new accumulated squared gradient (called "H_new"). Those outputs are computed
-      from the given inputs following the pseudo code below.
+  At each ADAGRAD iteration, the optimized tensors are moved along a direction
+  computed based on their estimated gradient and accumulated squared gradient. Assume
+  that only a single tensor "X" is updated by this operator. We need the value of "X",
+  its gradient "G", and its accumulated squared gradient "H". Therefore, variables in
+  this operator's input list are sequentially "R", "T", "X", "G", and "H". Other
+  parameters are given as attributes because they are usually constants. Also, the
+  corresponding output tensors are the new value of "X" (called "X_new"), and then
+  the new accumulated squared gradient (called "H_new"). Those outputs are computed
+  from the given inputs following the pseudo code below.
 
-      Let "+", "-", "*", and "/" are all element-wise arithmetic operations with
-      numpy-style broadcasting support. The pseudo code to compute those outputs is:
+  Let "+", "-", "*", and "/" are all element-wise arithmetic operations with
+  numpy-style broadcasting support. The pseudo code to compute those outputs is:
 
-        // Compute a scalar learning-rate factor. At the first update of X, T is generally
-        // 0 (0-based update index) or 1 (1-based update index).
-        r = R / (1 + T * decay_factor);
+    // Compute a scalar learning-rate factor. At the first update of X, T is generally
+    // 0 (0-based update index) or 1 (1-based update index).
+    r = R / (1 + T * decay_factor);
 
-        // Add gradient of 0.5 * norm_coefficient * ||X||_2^2, where ||X||_2 is the 2-norm.
-        G_regularized = norm_coefficient * X + G;
+    // Add gradient of 0.5 * norm_coefficient * ||X||_2^2, where ||X||_2 is the 2-norm.
+    G_regularized = norm_coefficient * X + G;
 
-        // Compute new accumulated squared gradient.
-        H_new = H + G_regularized * G_regularized;
+    // Compute new accumulated squared gradient.
+    H_new = H + G_regularized * G_regularized;
 
-        // Compute the adaptive part of per-coordinate learning rate. Note that Sqrt(...)
-        // computes element-wise square-root.
-        H_adaptive = Sqrt(H_new) + epsilon
+    // Compute the adaptive part of per-coordinate learning rate. Note that Sqrt(...)
+    // computes element-wise square-root.
+    H_adaptive = Sqrt(H_new) + epsilon
 
-        // Compute the new value of "X".
-        X_new = X - r * G_regularized / H_adaptive;
+    // Compute the new value of "X".
+    X_new = X - r * G_regularized / H_adaptive;
 
-      If one assign this operators to optimize multiple inputs, for example, "X_1" and "X_2", the same
-      pseudo code may be extended to handle all tensors jointly. More specifically, we can view "X" as a
-      concatenation of "X_1" and "X_2" (of course, their gradient and accumulate gradient should
-      be concatenated too) and then just reuse the entire pseudo code.
+  If one assign this operators to optimize multiple inputs, for example, "X_1" and "X_2", the same
+  pseudo code may be extended to handle all tensors jointly. More specifically, we can view "X" as a
+  concatenation of "X_1" and "X_2" (of course, their gradient and accumulate gradient should
+  be concatenated too) and then just reuse the entire pseudo code.
 
-      Note that ADAGRAD was first proposed in http://jmlr.org/papers/volume12/duchi11a/duchi11a.pdf.
-      In that reference paper, this operator is a special case of the Figure 1's composite mirror
-      descent update.
+  Note that ADAGRAD was first proposed in http://jmlr.org/papers/volume12/duchi11a/duchi11a.pdf.
+  In that reference paper, this operator is a special case of the Figure 1's composite mirror
+  descent update.
 
 #### Version
 
@@ -34980,66 +34919,66 @@ This version of the operator has been available since version 1 of the 'ai.onnx.
 ### <a name="ai.onnx.preview.training.Adam-1"></a>**ai.onnx.preview.training.Adam-1**</a>
 
   Compute one iteration of Adam, a stochastic gradient based optimization
-      algorithm. This operator can conduct the optimization of multiple tensor variables.
+  algorithm. This operator can conduct the optimization of multiple tensor variables.
 
-      Let's define the behavior of this operator. First of all, Adam requires
-      some parameters:
+  Let's define the behavior of this operator. First of all, Adam requires
+  some parameters:
 
-       - The learning-rate "R".
-       - The update count "T". That is, the number of training iterations conducted.
-       - A L2-norm regularization coefficient "norm_coefficient".
-       - A small constant "epsilon" to avoid dividing-by-zero.
-       - Two coefficients, "alpha" and "beta".
+   - The learning-rate "R".
+   - The update count "T". That is, the number of training iterations conducted.
+   - A L2-norm regularization coefficient "norm_coefficient".
+   - A small constant "epsilon" to avoid dividing-by-zero.
+   - Two coefficients, "alpha" and "beta".
 
-      At each Adam iteration, the optimized tensors are moved along a direction
-      computed based on their exponentially-averaged historical gradient and
-      exponentially-averaged historical squared gradient. Assume that only a tensor
-      "X" is being optimized. The rest of required information is
+  At each Adam iteration, the optimized tensors are moved along a direction
+  computed based on their exponentially-averaged historical gradient and
+  exponentially-averaged historical squared gradient. Assume that only a tensor
+  "X" is being optimized. The rest of required information is
 
-       - the value of "X",
-       - "X"'s gradient (denoted by "G"),
-       - "X"'s exponentially-averaged historical gradient (denoted by "V"), and
-       - "X"'s exponentially-averaged historical squared gradient (denoted by "H").
+   - the value of "X",
+   - "X"'s gradient (denoted by "G"),
+   - "X"'s exponentially-averaged historical gradient (denoted by "V"), and
+   - "X"'s exponentially-averaged historical squared gradient (denoted by "H").
 
-      Some of those parameters are passed into this operator as input tensors and others
-      are stored as this operator's attributes. Specifically, this operator's input tensor
-      list is ["R", "T", "X", "G", "V", "H"]. That is, "R" is the first input, "T" is
-      the second input, and so on. Other parameters are given as attributes because they
-      are constants. Moreover, the corresponding output tensors are
+  Some of those parameters are passed into this operator as input tensors and others
+  are stored as this operator's attributes. Specifically, this operator's input tensor
+  list is ["R", "T", "X", "G", "V", "H"]. That is, "R" is the first input, "T" is
+  the second input, and so on. Other parameters are given as attributes because they
+  are constants. Moreover, the corresponding output tensors are
 
-       - the new value of "X" (called "X_new"),
-       - the new exponentially-averaged historical gradient (denoted by "V_new"), and
-       - the new exponentially-averaged historical squared gradient (denoted by "H_new").
+   - the new value of "X" (called "X_new"),
+   - the new exponentially-averaged historical gradient (denoted by "V_new"), and
+   - the new exponentially-averaged historical squared gradient (denoted by "H_new").
 
-      Those outputs are computed following the pseudo code below.
+  Those outputs are computed following the pseudo code below.
 
-      Let "+", "-", "*", and "/" are all element-wise arithmetic operations with
-      numpy-style broadcasting support. The pseudo code to compute those outputs is:
+  Let "+", "-", "*", and "/" are all element-wise arithmetic operations with
+  numpy-style broadcasting support. The pseudo code to compute those outputs is:
 
-        // Add gradient of 0.5 * norm_coefficient * ||X||_2^2, where ||X||_2 is the 2-norm.
-        G_regularized = norm_coefficient * X + G
+    // Add gradient of 0.5 * norm_coefficient * ||X||_2^2, where ||X||_2 is the 2-norm.
+    G_regularized = norm_coefficient * X + G
 
-        // Update exponentially-averaged historical gradient.
-        V_new = alpha * V + (1 - alpha) * G_regularized
+    // Update exponentially-averaged historical gradient.
+    V_new = alpha * V + (1 - alpha) * G_regularized
 
-        // Update exponentially-averaged historical squared gradient.
-        H_new = beta * H + (1 - beta) * G_regularized * G_regularized
+    // Update exponentially-averaged historical squared gradient.
+    H_new = beta * H + (1 - beta) * G_regularized * G_regularized
 
-        // Compute the element-wise square-root of H_new. V_new will be element-wisely
-        // divided by H_sqrt for a better update direction.
-        H_sqrt = Sqrt(H_new) + epsilon
+    // Compute the element-wise square-root of H_new. V_new will be element-wisely
+    // divided by H_sqrt for a better update direction.
+    H_sqrt = Sqrt(H_new) + epsilon
 
-        // Compute learning-rate. Note that "alpha**T"/"beta**T" is alpha's/beta's T-th power.
-        R_adjusted = T > 0 ? R * Sqrt(1 - beta**T) / (1 - alpha**T) : R
+    // Compute learning-rate. Note that "alpha**T"/"beta**T" is alpha's/beta's T-th power.
+    R_adjusted = T > 0 ? R * Sqrt(1 - beta**T) / (1 - alpha**T) : R
 
-        // Compute new value of "X".
-        X_new = X - R_adjusted * V_new / H_sqrt
+    // Compute new value of "X".
+    X_new = X - R_adjusted * V_new / H_sqrt
 
-        // Post-update regularization.
-        X_final = (1 - norm_coefficient_post) * X_new
+    // Post-update regularization.
+    X_final = (1 - norm_coefficient_post) * X_new
 
-      If there are multiple inputs to be optimized, the pseudo code will be applied
-      independently to each of them.
+  If there are multiple inputs to be optimized, the pseudo code will be applied
+  independently to each of them.
 
 #### Version
 
@@ -35214,7 +35153,6 @@ This version of the operator has been available since version 1 of the 'ai.onnx.
   forward pass can be reused if the gradient is computed via reverse-mode
   auto-differentiation.
 
-
 #### Version
 
 This version of the operator has been available since version 1 of the 'ai.onnx.preview.training' operator set.
@@ -35256,65 +35194,65 @@ This version of the operator has been available since version 1 of the 'ai.onnx.
 ### <a name="ai.onnx.preview.training.Momentum-1"></a>**ai.onnx.preview.training.Momentum-1**</a>
 
   Compute one iteration of stochastic gradient update with momentum.
-      This operator can conduct the optimization of multiple tensor variables.
+  This operator can conduct the optimization of multiple tensor variables.
 
-      Let's define the behavior of this operator. As you can imagine, SG with momentum requires
-      several parameters:
+  Let's define the behavior of this operator. As you can imagine, SG with momentum requires
+  several parameters:
 
-       - The learning-rate "R".
-       - The update count "T". That is, the number of conducted training iterations. It should
-         be zero in the first training iteration.
-       - A L2-norm regularization coefficient "norm_coefficient".
-       - A decay coefficient of previous accumulated gradient (i.e., momentum) "alpha".
-       - The scaling coefficient of current gradient "beta".
-       - An attribute to choose either standard momentum or Nesterov's momentum "mode" should
-         be used.
+   - The learning-rate "R".
+   - The update count "T". That is, the number of conducted training iterations. It should
+     be zero in the first training iteration.
+   - A L2-norm regularization coefficient "norm_coefficient".
+   - A decay coefficient of previous accumulated gradient (i.e., momentum) "alpha".
+   - The scaling coefficient of current gradient "beta".
+   - An attribute to choose either standard momentum or Nesterov's momentum "mode" should
+     be used.
 
-      For the sake of simplicity, assume that there is only one tensor (called "X") to be optimized.
-      Other necessary inputs are "X"'s gradient (called "G") and "X"'s momentum (called "V"). This
-      Momentum operator maps all these inputs to the new value of "X" (called "X_new") and its new
-      momentum (called "V_new").
+  For the sake of simplicity, assume that there is only one tensor (called "X") to be optimized.
+  Other necessary inputs are "X"'s gradient (called "G") and "X"'s momentum (called "V"). This
+  Momentum operator maps all these inputs to the new value of "X" (called "X_new") and its new
+  momentum (called "V_new").
 
-      This operator supports two different momentum algorithms. Set the attribute "mode" to
-      "nesterov" if Nesterov's momentum is desired. Otherwise, set the attribute "model" to
-      "standard" to use standard momentum. Computation details are described subsequently.
+  This operator supports two different momentum algorithms. Set the attribute "mode" to
+  "nesterov" if Nesterov's momentum is desired. Otherwise, set the attribute "model" to
+  "standard" to use standard momentum. Computation details are described subsequently.
 
-      Let "+", "-", "*", and "/" are all element-wise operations with numpy-style broadcasting.
+  Let "+", "-", "*", and "/" are all element-wise operations with numpy-style broadcasting.
 
-      Pseudo code for SG with standard momentum:
+  Pseudo code for SG with standard momentum:
 
-        // Add gradient of 0.5 * norm_coefficient * ||X||^2, where ||X|| is the sum of squared
-        // values of all elements in X.
-        G_regularized = norm_coefficient * X + G
+    // Add gradient of 0.5 * norm_coefficient * ||X||^2, where ||X|| is the sum of squared
+    // values of all elements in X.
+    G_regularized = norm_coefficient * X + G
 
-        // In the first training iteration, beta should always be 1.
-        beta_adjusted = T > 0 ? beta : 1
+    // In the first training iteration, beta should always be 1.
+    beta_adjusted = T > 0 ? beta : 1
 
-        // Compute the current momentum based on previous momentum and the current gradient.
-        V_new = alpha * V + beta_adjusted * G_regularized
+    // Compute the current momentum based on previous momentum and the current gradient.
+    V_new = alpha * V + beta_adjusted * G_regularized
 
-        // Update X.
-        X_new = X - R * V_new
+    // Update X.
+    X_new = X - R * V_new
 
-      Pseudo code for SG with Nesterov's momentum:
+  Pseudo code for SG with Nesterov's momentum:
 
-        // Add gradient of 0.5 * norm_coefficient * ||X||^2, where ||X|| is the sum of squared
-        // values of all elements in X.
-        G_regularized = norm_coefficient * X + G;
+    // Add gradient of 0.5 * norm_coefficient * ||X||^2, where ||X|| is the sum of squared
+    // values of all elements in X.
+    G_regularized = norm_coefficient * X + G;
 
-        // In the first training iteration, beta should always be 1.
-        beta_adjusted = T > 0 ? beta : 1
+    // In the first training iteration, beta should always be 1.
+    beta_adjusted = T > 0 ? beta : 1
 
-        // Compute the current momentum based on previous momentum and the current gradient.
-        V_new = alpha * V + beta_adjusted * G_regularized;
+    // Compute the current momentum based on previous momentum and the current gradient.
+    V_new = alpha * V + beta_adjusted * G_regularized;
 
-        // Compute final update direction and then update X.
-        X_new = X - R * (G_regularized + alpha * V_new)
+    // Compute final update direction and then update X.
+    X_new = X - R * (G_regularized + alpha * V_new)
 
-      If one assign this operators to optimize multiple inputs, for example, "X_1" and "X_2". The same
-      pseudo code would be extended to handle all tensors jointly. More specifically, we can view "X" as a
-      concatenation of "X_1" and "X_2" (of course, their gradient and accumulate gradient should
-      be concatenated too) and then our pseudo code becomes applicable.
+  If one assign this operators to optimize multiple inputs, for example, "X_1" and "X_2". The same
+  pseudo code would be extended to handle all tensors jointly. More specifically, we can view "X" as a
+  concatenation of "X_1" and "X_2" (of course, their gradient and accumulate gradient should
+  be concatenated too) and then our pseudo code becomes applicable.
 
 #### Version
 

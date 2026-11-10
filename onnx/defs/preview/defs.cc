@@ -5,8 +5,8 @@
 #include <algorithm>
 #include <optional>
 
-#include "onnx/defs/doc_strings.h"
 #include "onnx/defs/function.h"
+#include "onnx/defs/generated/schemas.h"
 #include "onnx/defs/schema.h"
 #include "onnx/defs/shape_inference.h"
 
@@ -423,44 +423,8 @@ static bool BuildFlexAttentionFunctionBody(
 ONNX_PREVIEW_OPERATOR_SET_SCHEMA(
     FlexAttention,
     1,
-    OpSchema()
-        .SetDoc(kDoc_FlexAttention_ver1)
-        .Input(0, "Q", "Query tensor with shape `(batch_size, q_num_heads, q_seq_len, head_size)`.", "T1")
-        .Input(1, "K", "Key tensor with shape `(batch_size, kv_num_heads, kv_seq_len, head_size)`.", "T1")
-        .Input(2, "V", "Value tensor with shape `(batch_size, kv_num_heads, kv_seq_len, v_head_size)`.", "T1")
-        .Output(0, "Y", "Output tensor with shape `(batch_size, q_num_heads, q_seq_len, v_head_size)`.", "T1")
-        .Attr(
-            "scale",
-            "Scaling factor for Q*K^T. Defaults to 1/sqrt(head_size).",
-            AttributeProto::FLOAT,
-            OPTIONAL_VALUE)
-        .Attr(
-            "softmax_precision",
-            "Floating-point precision for softmax computation. "
-            "Defaults to float32 for non-double inputs, otherwise uses double. "
-            "Must be explicitly specified for non-float types.",
-            AttributeProto::INT,
-            OPTIONAL_VALUE)
-        .Attr(
-            "score_mod",
-            "Optional score modifier subgraph with 1 rank-4 tensor input and 1 rank-4 tensor output "
-            "of the same shape and element type: (scores) -> scores_out. "
-            "scores has softmax_precision element type and shape (B, Hq, L, S). "
-            "The output must preserve the input shape.",
-            AttributeProto::GRAPH,
-            OPTIONAL_VALUE)
-        .Attr(
-            "prob_mod",
-            "Optional probability modifier subgraph with 1 rank-4 tensor input and 1 rank-4 tensor output "
-            "of the same shape and element type: (probs) -> probs_out. "
-            "probs has softmax_precision element type and shape (B, Hq, L, S). "
-            "The output must preserve the input shape.",
-            AttributeProto::GRAPH,
-            OPTIONAL_VALUE)
-        .TypeConstraint("T1", OpSchema::all_float_types_ir4(), "Constrain Q, K, V to float tensors.")
+    generated::ai_onnx_preview::FlexAttention_ver1()
         .TypeAndShapeInferenceFunction(FlexAttentionShapeInference)
-        .SetSupportLevel(OpSchema::SupportType::EXPERIMENTAL)
-        .SetNodeDeterminism(OpSchema::NodeDeterminism::Deterministic)
         .SetContextDependentFunctionBodyBuilder(BuildFlexAttentionFunctionBody));
 
 } // namespace ONNX_NAMESPACE

@@ -4,7 +4,7 @@
 
 #include <string>
 
-#include "onnx/defs/doc_strings.h"
+#include "onnx/defs/generated/schemas.h"
 #include "onnx/defs/schema.h"
 #include "onnx/defs/type_builders.h"
 
@@ -13,170 +13,77 @@ namespace ONNX_NAMESPACE {
 ONNX_OPERATOR_SET_SCHEMA(
     StringConcat,
     20,
-    OpSchema()
-        .Input(
-            0,
-            "X",
-            "Tensor to prepend in concatenation",
-            "T",
-            OpSchema::Single,
-            true,
-            1,
-            OpSchema::NonDifferentiable)
-        .Input(1, "Y", "Tensor to append in concatenation", "T", OpSchema::Single, true, 1, OpSchema::NonDifferentiable)
-        .Output(0, "Z", "Concatenated string tensor", "T", OpSchema::Single, true, 1, OpSchema::NonDifferentiable)
-        .TypeConstraint("T", {types::String}, "Inputs and outputs must be UTF-8 strings")
-        .SetDoc(kDoc_StringConcat_ver20)
-        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-          propagateElemTypeFromInputToOutput(ctx, 0, 0);
-          if (hasNInputShapes(ctx, 2))
-            bidirectionalBroadcastShapeInference(
-                ctx.getInputType(0)->tensor_type().shape(),
-                ctx.getInputType(1)->tensor_type().shape(),
-                *ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape());
-        }));
+    generated::ai_onnx::StringConcat_ver20().TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+      propagateElemTypeFromInputToOutput(ctx, 0, 0);
+      if (hasNInputShapes(ctx, 2))
+        bidirectionalBroadcastShapeInference(
+            ctx.getInputType(0)->tensor_type().shape(),
+            ctx.getInputType(1)->tensor_type().shape(),
+            *ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape());
+    }));
 
 ONNX_OPERATOR_SET_SCHEMA(
     RegexFullMatch,
     20,
-    OpSchema()
-        .Input(0, "X", "Tensor with strings to match on.", "T1", OpSchema::Single, true, 1, OpSchema::NonDifferentiable)
-        .Attr("pattern", "Regex pattern to match on. This must be valid RE2 syntax.", AttributeProto::STRING, false)
-        .Output(
-            0,
-            "Y",
-            "Tensor of bools indicating if each input string fully matches the regex pattern specified.",
-            "T2",
-            OpSchema::Single,
-            true,
-            1,
-            OpSchema::NonDifferentiable)
-        .TypeConstraint("T1", {types::String}, "Inputs must be UTF-8 strings")
-        .TypeConstraint(
-            "T2",
-            {types::Bool},
-            "Outputs are bools and are True where there is a full regex match and False otherwise.")
-        .SetDoc(kDoc_RegexFullMatch_ver20)
-        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-          updateOutputElemType(ctx, 0, TensorProto::BOOL);
-          propagateShapeFromInputToOutput(ctx, 0, 0);
-        }));
+    generated::ai_onnx::RegexFullMatch_ver20().TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+      updateOutputElemType(ctx, 0, TensorProto::BOOL);
+      propagateShapeFromInputToOutput(ctx, 0, 0);
+    }));
 
 ONNX_OPERATOR_SET_SCHEMA(
     StringSplit,
     20,
-    OpSchema()
-        .Input(0, "X", "Tensor of strings to split.", "T1", OpSchema::Single, true, 1, OpSchema::NonDifferentiable)
-        .Attr(
-            "delimiter",
-            "Delimiter to split on. If left unset or set to the empty string (\"\"), the input is split on consecutive whitespace.",
-            AttributeProto::STRING,
-            false)
-        .Attr(
-            "maxsplit",
-            "Maximum number of splits (from left to right). If left unset (or if the number of possible splits are less than maxsplit), it will make as many splits as possible. Note that the maximum possible number of substrings returned with `maxsplit` specified is `maxsplit+1` since the remaining suffix after the `maxsplit`th split is included in the output.",
-            AttributeProto::INT,
-            false)
-        .Output(
-            0,
-            "Y",
-            "Tensor of substrings representing the outcome of splitting the strings in the input on the delimiter. Note that to ensure the same number of elements are present in the final rank, this tensor will pad any necessary empty strings.",
-            "T2",
-            OpSchema::Single,
-            true,
-            1,
-            OpSchema::NonDifferentiable)
-        .Output(
-            1,
-            "Z",
-            "The number of substrings generated for each input element.",
-            "T3",
-            OpSchema::Single,
-            true,
-            1,
-            OpSchema::NonDifferentiable)
-        .TypeConstraint("T1", {types::String}, "The input must be a UTF-8 string tensor")
-        .TypeConstraint("T2", {types::String}, "Tensor of substrings.")
-        .TypeConstraint("T3", {types::Int64}, "The number of substrings generated.")
-        .SetDoc(kDoc_StringSplit_ver20)
-        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-          if (!hasInputShape(ctx, 0)) {
-            return;
-          }
-          const TypeProto* input_type = ctx.getInputType(0);
-          if (input_type == nullptr || !input_type->has_tensor_type() ||
-              input_type->tensor_type().elem_type() != TensorProto::STRING) {
-            return;
-          }
+    generated::ai_onnx::StringSplit_ver20().TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+      if (!hasInputShape(ctx, 0)) {
+        return;
+      }
+      const TypeProto* input_type = ctx.getInputType(0);
+      if (input_type == nullptr || !input_type->has_tensor_type() ||
+          input_type->tensor_type().elem_type() != TensorProto::STRING) {
+        return;
+      }
 
-          // We produce a string tensor per input element. Therefore we have one additional rank with a runtime
-          // dependent number of elements. All except the final dimension of the output shape can be inferred directly
-          // from the input.
-          propagateElemTypeFromInputToOutput(ctx, 0, 0);
-          propagateShapeFromInputToOutput(ctx, 0, 0);
-          getOutputShape(ctx, 0)->add_dim();
+      // We produce a string tensor per input element. Therefore we have one additional rank with a runtime
+      // dependent number of elements. All except the final dimension of the output shape can be inferred directly
+      // from the input.
+      propagateElemTypeFromInputToOutput(ctx, 0, 0);
+      propagateShapeFromInputToOutput(ctx, 0, 0);
+      getOutputShape(ctx, 0)->add_dim();
 
-          // The output tensor containing the number of substrings has identical shape to the input but produces int32
-          // results.
-          ctx.getOutputType(1)->mutable_tensor_type()->set_elem_type(TensorProto::INT64);
-          propagateShapeFromInputToOutput(ctx, 0, 1);
-        }));
+      // The output tensor containing the number of substrings has identical shape to the input but produces int32
+      // results.
+      ctx.getOutputType(1)->mutable_tensor_type()->set_elem_type(TensorProto::INT64);
+      propagateShapeFromInputToOutput(ctx, 0, 1);
+    }));
 
 ONNX_OPERATOR_SET_SCHEMA(
     StringNormalizer,
     10,
-    OpSchema()
-        .Input(0, "X", "UTF-8 strings to normalize", "tensor(string)")
-        .Output(0, "Y", "UTF-8 Normalized strings", "tensor(string)")
-        .Attr(
-            std::string("case_change_action"),
-            std::string(
-                "string enum that cases output to be lowercased/uppercases/unchanged."
-                " Valid values are \"LOWER\", \"UPPER\", \"NONE\". Default is \"NONE\""),
-            AttributeProto::STRING,
-            std::string("NONE"))
-        .Attr(
-            std::string("is_case_sensitive"),
-            std::string("Boolean. Whether the identification of stop words in X is case-sensitive. Default is false"),
-            AttributeProto::INT,
-            static_cast<int64_t>(0))
-        .Attr(
-            "stopwords",
-            "List of stop words. If not set, no word would be removed from X.",
-            AttributeProto::STRINGS,
-            OPTIONAL_VALUE)
-        .Attr(
-            "locale",
-            "Environment dependent string that denotes the locale according to which output strings needs to be upper/lowercased."
-            "Default en_US or platform specific equivalent as decided by the implementation.",
-            AttributeProto::STRING,
-            OPTIONAL_VALUE)
-        .SetDoc(kDoc_StringNormalizer_ver10)
-        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-          auto output_elem_type = ctx.getOutputType(0)->mutable_tensor_type();
-          output_elem_type->set_elem_type(TensorProto::STRING);
-          if (!hasInputShape(ctx, 0)) {
-            return;
-          }
-          TensorShapeProto output_shape;
-          auto& input_shape = ctx.getInputType(0)->tensor_type().shape();
-          auto dim_size = input_shape.dim_size();
-          // Last axis dimension is unknown if we have stop-words since we do
-          // not know how many stop-words are dropped
-          if (dim_size == 1) {
-            // Unknown output dimension
-            output_shape.add_dim();
-          } else if (dim_size == 2) {
-            // Copy B-dim
-            auto& b_dim = input_shape.dim(0);
-            if (!b_dim.has_dim_value() || b_dim.dim_value() != 1) {
-              fail_shape_inference("Input shape must have either [C] or [1,C] dimensions where C > 0");
-            }
-            *output_shape.add_dim() = b_dim;
-            output_shape.add_dim();
-          } else {
-            fail_shape_inference("Input shape must have either [C] or [1,C] dimensions where C > 0");
-          }
-          updateOutputShape(ctx, 0, output_shape);
-        }));
+    generated::ai_onnx::StringNormalizer_ver10().TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+      auto output_elem_type = ctx.getOutputType(0)->mutable_tensor_type();
+      output_elem_type->set_elem_type(TensorProto::STRING);
+      if (!hasInputShape(ctx, 0)) {
+        return;
+      }
+      TensorShapeProto output_shape;
+      auto& input_shape = ctx.getInputType(0)->tensor_type().shape();
+      auto dim_size = input_shape.dim_size();
+      // Last axis dimension is unknown if we have stop-words since we do
+      // not know how many stop-words are dropped
+      if (dim_size == 1) {
+        // Unknown output dimension
+        output_shape.add_dim();
+      } else if (dim_size == 2) {
+        // Copy B-dim
+        auto& b_dim = input_shape.dim(0);
+        if (!b_dim.has_dim_value() || b_dim.dim_value() != 1) {
+          fail_shape_inference("Input shape must have either [C] or [1,C] dimensions where C > 0");
+        }
+        *output_shape.add_dim() = b_dim;
+        output_shape.add_dim();
+      } else {
+        fail_shape_inference("Input shape must have either [C] or [1,C] dimensions where C > 0");
+      }
+      updateOutputShape(ctx, 0, output_shape);
+    }));
 } // namespace ONNX_NAMESPACE

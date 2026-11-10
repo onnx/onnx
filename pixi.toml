@@ -93,6 +93,8 @@ packaging = ">=24.1"
 pip = ">=25.0"
 python = ">=3.11"
 scikit-build-core = ">=0.12.1"
+jinja2 = ">=3.1"
+pydantic = ">=2"
 
 [feature.dev.dependencies]
 c-compiler = ">=1.8.0"
@@ -107,11 +109,16 @@ pytest-cov = ">=6.0.0"
 pytest-xdist = ">=3.6.1"
 zizmor = ">=1.24.1,<2,!=1.29.0"  # 1.29.0 has a regression for prek builtins, which is fixed in the next release
 onnxruntime = "*"
+tomli-w = ">=1.2.0,<2"
 
 # Workaround for https://github.com/conda-forge/compilers-feedstock/issues/84;
 # remove once the `gcc` package depends on `binutils` (conda-forge/ctng-compilers-feedstock#236).
 [feature.dev.target.linux.dependencies]
 binutils = "*"
+
+[feature.dev.pypi-dependencies]
+tree-sitter = ">=0.26.0, <0.27"
+tree-sitter-cpp = ">=0.23.4, <0.24"
 
 [feature.reference.dependencies]
 pillow = ">=12.2.0"

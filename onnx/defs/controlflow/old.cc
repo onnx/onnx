@@ -6,898 +6,76 @@
 #include <vector>
 
 #include "onnx/defs/controlflow/utils.h"
-#include "onnx/defs/doc_strings.h"
+#include "onnx/defs/generated/schemas.h"
 #include "onnx/defs/schema.h"
 #include "onnx/defs/type_builders.h"
 
 namespace ONNX_NAMESPACE {
 
-using SupportType = OpSchema::SupportType;
+ONNX_OPERATOR_SET_SCHEMA(If, 24, generated::ai_onnx::If_ver24().TypeAndShapeInferenceFunction(IfInferenceFunction));
 
-static std::vector<std::string> control_flow_types_ir12() {
-  auto t = OpSchema::all_tensor_types_ir12();
-  auto s = OpSchema::all_tensor_sequence_types_ir12();
-  auto o = OpSchema::all_optional_types_ir12();
-  t.insert(t.end(), s.begin(), s.end());
-  t.insert(t.end(), o.begin(), o.end());
-  return t;
-}
+ONNX_OPERATOR_SET_SCHEMA(If, 23, generated::ai_onnx::If_ver23().TypeAndShapeInferenceFunction(IfInferenceFunction));
 
-static std::vector<std::string> control_flow_types_ir11() {
-  auto t = OpSchema::all_tensor_types_ir11();
-  auto s = OpSchema::all_tensor_sequence_types_ir11();
-  auto o = OpSchema::all_optional_types_ir11();
-  t.insert(t.end(), s.begin(), s.end());
-  t.insert(t.end(), o.begin(), o.end());
-  return t;
-}
+ONNX_OPERATOR_SET_SCHEMA(If, 21, generated::ai_onnx::If_ver21().TypeAndShapeInferenceFunction(IfInferenceFunction));
 
-static std::vector<std::string> control_flow_types_ir10() {
-  auto t = OpSchema::all_tensor_types_ir10();
-  auto s = OpSchema::all_tensor_sequence_types_ir10();
-  auto o = OpSchema::all_optional_types_ir10();
-  t.insert(t.end(), s.begin(), s.end());
-  t.insert(t.end(), o.begin(), o.end());
-  return t;
-}
+ONNX_OPERATOR_SET_SCHEMA(If, 19, generated::ai_onnx::If_ver19().TypeAndShapeInferenceFunction(IfInferenceFunction));
 
-static std::vector<std::string> control_flow_types_ir9() {
-  auto t = OpSchema::all_tensor_types_ir9();
-  auto s = OpSchema::all_tensor_sequence_types_ir9();
-  auto o = OpSchema::all_optional_types_ir9();
-  t.insert(t.end(), s.begin(), s.end());
-  t.insert(t.end(), o.begin(), o.end());
-  return t;
-}
-
-static std::vector<std::string> control_flow_types_ir4() {
-  auto t = OpSchema::all_tensor_types_ir4();
-  auto s = OpSchema::all_tensor_sequence_types_ir4();
-  auto o = OpSchema::all_optional_types_ir4();
-  t.insert(t.end(), s.begin(), s.end());
-  t.insert(t.end(), o.begin(), o.end());
-  return t;
-}
-
-ONNX_OPERATOR_SET_SCHEMA(
-    If,
-    24,
-    OpSchema()
-        .SetDoc(kDoc_If_ver25)
-        .Input(0, "cond", "Condition for the if. The tensor must contain a single element.", "B")
-        .Output(
-            0,
-            "outputs",
-            "Values that are live-out to the enclosing scope. The return values in "
-            "the `then_branch` and `else_branch` must be of the same data type. "
-            "The `then_branch` and `else_branch` may produce tensors with the same "
-            "element type and different shapes. "
-            "If corresponding outputs from the then-branch and the else-branch have "
-            "static shapes S1 and S2, then the shape of the corresponding output "
-            "variable of the if-node (if present) must be compatible with both S1 "
-            "and S2 as it represents the union of both possible shapes."
-            "For example, if in a model file, the first "
-            "output of `then_branch` is typed float tensor with shape [2] and the "
-            "first output of `else_branch` is another float tensor with shape [3], "
-            "If's first output should have (a) no shape set, or (b) "
-            "a shape of rank 1 with neither `dim_value` nor `dim_param` set, or (c) "
-            "a shape of rank 1 with a unique `dim_param`. "
-            "In contrast, the first output cannot have the shape [2] since [2] and "
-            "[3] are not compatible.",
-            "V",
-            OpSchema::Variadic,
-            false)
-        .Attr(
-            "then_branch",
-            "Graph to run if condition is true. Has N outputs: values you wish to "
-            "be live-out to the enclosing scope. The number of outputs must match"
-            " the number of outputs in the else_branch.",
-            AttributeProto::GRAPH)
-        .Attr(
-            "else_branch",
-            "Graph to run if condition is false. Has N outputs: values you wish to"
-            " be live-out to the enclosing scope. The number of outputs must match"
-            " the number of outputs in the then_branch.",
-            AttributeProto::GRAPH)
-        .TypeConstraint(
-            "V",
-            control_flow_types_ir12(),
-            "All Tensor, Sequence(Tensor), Optional(Tensor), and Optional(Sequence(Tensor)) types up to IRv11.")
-        .TypeConstraint("B", {types::Bool}, "Only bool")
-        .TypeAndShapeInferenceFunction(IfInferenceFunction));
-
-ONNX_OPERATOR_SET_SCHEMA(
-    If,
-    23,
-    OpSchema()
-        .SetDoc(kDoc_If_ver25)
-        .Input(0, "cond", "Condition for the if. The tensor must contain a single element.", "B")
-        .Output(
-            0,
-            "outputs",
-            "Values that are live-out to the enclosing scope. The return values in "
-            "the `then_branch` and `else_branch` must be of the same data type. "
-            "The `then_branch` and `else_branch` may produce tensors with the same "
-            "element type and different shapes. "
-            "If corresponding outputs from the then-branch and the else-branch have "
-            "static shapes S1 and S2, then the shape of the corresponding output "
-            "variable of the if-node (if present) must be compatible with both S1 "
-            "and S2 as it represents the union of both possible shapes."
-            "For example, if in a model file, the first "
-            "output of `then_branch` is typed float tensor with shape [2] and the "
-            "first output of `else_branch` is another float tensor with shape [3], "
-            "If's first output should have (a) no shape set, or (b) "
-            "a shape of rank 1 with neither `dim_value` nor `dim_param` set, or (c) "
-            "a shape of rank 1 with a unique `dim_param`. "
-            "In contrast, the first output cannot have the shape [2] since [2] and "
-            "[3] are not compatible.",
-            "V",
-            OpSchema::Variadic,
-            false)
-        .Attr(
-            "then_branch",
-            "Graph to run if condition is true. Has N outputs: values you wish to "
-            "be live-out to the enclosing scope. The number of outputs must match"
-            " the number of outputs in the else_branch.",
-            AttributeProto::GRAPH)
-        .Attr(
-            "else_branch",
-            "Graph to run if condition is false. Has N outputs: values you wish to"
-            " be live-out to the enclosing scope. The number of outputs must match"
-            " the number of outputs in the then_branch.",
-            AttributeProto::GRAPH)
-        .TypeConstraint(
-            "V",
-            control_flow_types_ir11(),
-            "All Tensor, Sequence(Tensor), Optional(Tensor), and Optional(Sequence(Tensor)) types up to IRv11.")
-        .TypeConstraint("B", {types::Bool}, "Only bool")
-        .TypeAndShapeInferenceFunction(IfInferenceFunction));
-
-ONNX_OPERATOR_SET_SCHEMA(
-    If,
-    21,
-    OpSchema()
-        .SetDoc(kDoc_If_ver25)
-        .Input(0, "cond", "Condition for the if. The tensor must contain a single element.", "B")
-        .Output(
-            0,
-            "outputs",
-            "Values that are live-out to the enclosing scope. The return values in "
-            "the `then_branch` and `else_branch` must be of the same data type. "
-            "The `then_branch` and `else_branch` may produce tensors with the same "
-            "element type and different shapes. "
-            "If corresponding outputs from the then-branch and the else-branch have "
-            "static shapes S1 and S2, then the shape of the corresponding output "
-            "variable of the if-node (if present) must be compatible with both S1 "
-            "and S2 as it represents the union of both possible shapes."
-            "For example, if in a model file, the first "
-            "output of `then_branch` is typed float tensor with shape [2] and the "
-            "first output of `else_branch` is another float tensor with shape [3], "
-            "If's first output should have (a) no shape set, or (b) "
-            "a shape of rank 1 with neither `dim_value` nor `dim_param` set, or (c) "
-            "a shape of rank 1 with a unique `dim_param`. "
-            "In contrast, the first output cannot have the shape [2] since [2] and "
-            "[3] are not compatible.",
-            "V",
-            OpSchema::Variadic,
-            false)
-        .Attr(
-            "then_branch",
-            "Graph to run if condition is true. Has N outputs: values you wish to "
-            "be live-out to the enclosing scope. The number of outputs must match"
-            " the number of outputs in the else_branch.",
-            AttributeProto::GRAPH)
-        .Attr(
-            "else_branch",
-            "Graph to run if condition is false. Has N outputs: values you wish to"
-            " be live-out to the enclosing scope. The number of outputs must match"
-            " the number of outputs in the then_branch.",
-            AttributeProto::GRAPH)
-        .TypeConstraint(
-            "V",
-            control_flow_types_ir10(),
-            "All Tensor, Sequence(Tensor), Optional(Tensor), and Optional(Sequence(Tensor)) types up to IRv10.")
-        .TypeConstraint("B", {types::Bool}, "Only bool")
-        .TypeAndShapeInferenceFunction(IfInferenceFunction));
-
-ONNX_OPERATOR_SET_SCHEMA(
-    If,
-    19,
-    OpSchema()
-        .SetDoc(kDoc_If_ver25)
-        .Input(0, "cond", "Condition for the if. The tensor must contain a single element.", "B")
-        .Output(
-            0,
-            "outputs",
-            "Values that are live-out to the enclosing scope. The return values in "
-            "the `then_branch` and `else_branch` must be of the same data type. "
-            "The `then_branch` and `else_branch` may produce tensors with the same "
-            "element type and different shapes. "
-            "If corresponding outputs from the then-branch and the else-branch have "
-            "static shapes S1 and S2, then the shape of the corresponding output "
-            "variable of the if-node (if present) must be compatible with both S1 "
-            "and S2 as it represents the union of both possible shapes."
-            "For example, if in a model file, the first "
-            "output of `then_branch` is typed float tensor with shape [2] and the "
-            "first output of `else_branch` is another float tensor with shape [3], "
-            "If's first output should have (a) no shape set, or (b) "
-            "a shape of rank 1 with neither `dim_value` nor `dim_param` set, or (c) "
-            "a shape of rank 1 with a unique `dim_param`. "
-            "In contrast, the first output cannot have the shape [2] since [2] and "
-            "[3] are not compatible.",
-            "V",
-            OpSchema::Variadic,
-            false)
-        .Attr(
-            "then_branch",
-            "Graph to run if condition is true. Has N outputs: values you wish to "
-            "be live-out to the enclosing scope. The number of outputs must match"
-            " the number of outputs in the else_branch.",
-            AttributeProto::GRAPH)
-        .Attr(
-            "else_branch",
-            "Graph to run if condition is false. Has N outputs: values you wish to"
-            " be live-out to the enclosing scope. The number of outputs must match"
-            " the number of outputs in the then_branch.",
-            AttributeProto::GRAPH)
-        .TypeConstraint(
-            "V",
-            control_flow_types_ir9(),
-            "All Tensor, Sequence(Tensor), Optional(Tensor), and Optional(Sequence(Tensor)) types up to IRv9.")
-        .TypeConstraint("B", {types::Bool}, "Only bool")
-        .TypeAndShapeInferenceFunction(IfInferenceFunction));
-
-ONNX_OPERATOR_SET_SCHEMA(
-    If,
-    16,
-    OpSchema()
-        .SetDoc(kDoc_If_ver25)
-        .Input(0, "cond", "Condition for the if. The tensor must contain a single element.", "B")
-        .Output(
-            0,
-            "outputs",
-            "Values that are live-out to the enclosing scope. The return values in "
-            "the `then_branch` and `else_branch` must be of the same data type. "
-            "The `then_branch` and `else_branch` may produce tensors with the same "
-            "element type and different shapes. "
-            "If corresponding outputs from the then-branch and the else-branch have "
-            "static shapes S1 and S2, then the shape of the corresponding output "
-            "variable of the if-node (if present) must be compatible with both S1 "
-            "and S2 as it represents the union of both possible shapes."
-            "For example, if in a model file, the first "
-            "output of `then_branch` is typed float tensor with shape [2] and the "
-            "first output of `else_branch` is another float tensor with shape [3], "
-            "If's first output should have (a) no shape set, or (b) "
-            "a shape of rank 1 with neither `dim_value` nor `dim_param` set, or (c) "
-            "a shape of rank 1 with a unique `dim_param`. "
-            "In contrast, the first output cannot have the shape [2] since [2] and "
-            "[3] are not compatible.",
-            "V",
-            OpSchema::Variadic,
-            false)
-        .Attr(
-            "then_branch",
-            "Graph to run if condition is true. Has N outputs: values you wish to "
-            "be live-out to the enclosing scope. The number of outputs must match"
-            " the number of outputs in the else_branch.",
-            AttributeProto::GRAPH)
-        .Attr(
-            "else_branch",
-            "Graph to run if condition is false. Has N outputs: values you wish to"
-            " be live-out to the enclosing scope. The number of outputs must match"
-            " the number of outputs in the then_branch.",
-            AttributeProto::GRAPH)
-        .TypeConstraint(
-            "V",
-            control_flow_types_ir4(),
-            "All Tensor, Sequence(Tensor), Optional(Tensor), and Optional(Sequence(Tensor)) types up to IRv4.")
-        .TypeConstraint("B", {types::Bool}, "Only bool")
-        .TypeAndShapeInferenceFunction(IfInferenceFunction));
+ONNX_OPERATOR_SET_SCHEMA(If, 16, generated::ai_onnx::If_ver16().TypeAndShapeInferenceFunction(IfInferenceFunction));
 
 ONNX_OPERATOR_SET_SCHEMA(
     Loop,
     24,
-    OpSchema()
-        .SetDoc(kDoc_Loop_ver23)
-        .Input(
-            0,
-            "M",
-            "A maximum trip-count for the loop specified at runtime. Optional."
-            " Pass empty string to skip.",
-            "I",
-            OpSchema::Optional)
-        .Input(
-            1,
-            "cond",
-            "A boolean termination condition. Optional. Pass empty string to skip.",
-            "B",
-            OpSchema::Optional)
-        .Input(
-            2,
-            "v_initial",
-            "The initial values of any loop-carried dependencies (values that "
-            "change across loop iterations)",
-            "V",
-            OpSchema::Variadic,
-            false,
-            0)
-        .Output(
-            0,
-            "v_final_and_scan_outputs",
-            "Final N loop carried dependency values then K scan_outputs. "
-            "Scan outputs must be Tensors.",
-            "V",
-            OpSchema::Variadic,
-            false)
-        .Attr(
-            "body",
-            "The graph run each iteration. It has 2+N inputs: (iteration_num, "
-            "condition, loop carried dependencies...). It has 1+N+K outputs: "
-            "(condition, loop carried dependencies..., scan_outputs...). Each "
-            "scan_output is created by concatenating the value of the specified "
-            "output value at the end of each iteration of the loop. It is an error"
-            " if the dimensions or data type of these scan_outputs change across loop"
-            " iterations.",
-            AttributeProto::GRAPH)
-        .TypeConstraint(
-            "V",
-            control_flow_types_ir12(),
-            "All Tensor, Sequence(Tensor), Optional(Tensor), and Optional(Sequence(Tensor)) types up to IRv11.")
-        .TypeConstraint("I", {types::Int64}, "tensor of int64, which should be a scalar.")
-        .TypeConstraint("B", {types::Bool}, "tensor of bool, which should be a scalar.")
-        .TypeAndShapeInferenceFunction(LoopInferenceFunction));
+    generated::ai_onnx::Loop_ver24().TypeAndShapeInferenceFunction(LoopInferenceFunction));
 
 ONNX_OPERATOR_SET_SCHEMA(
     Loop,
     23,
-    OpSchema()
-        .SetDoc(kDoc_Loop_ver23)
-        .Input(
-            0,
-            "M",
-            "A maximum trip-count for the loop specified at runtime. Optional."
-            " Pass empty string to skip.",
-            "I",
-            OpSchema::Optional)
-        .Input(
-            1,
-            "cond",
-            "A boolean termination condition. Optional. Pass empty string to skip.",
-            "B",
-            OpSchema::Optional)
-        .Input(
-            2,
-            "v_initial",
-            "The initial values of any loop-carried dependencies (values that "
-            "change across loop iterations)",
-            "V",
-            OpSchema::Variadic,
-            false,
-            0)
-        .Output(
-            0,
-            "v_final_and_scan_outputs",
-            "Final N loop carried dependency values then K scan_outputs. "
-            "Scan outputs must be Tensors.",
-            "V",
-            OpSchema::Variadic,
-            false)
-        .Attr(
-            "body",
-            "The graph run each iteration. It has 2+N inputs: (iteration_num, "
-            "condition, loop carried dependencies...). It has 1+N+K outputs: "
-            "(condition, loop carried dependencies..., scan_outputs...). Each "
-            "scan_output is created by concatenating the value of the specified "
-            "output value at the end of each iteration of the loop. It is an error"
-            " if the dimensions or data type of these scan_outputs change across loop"
-            " iterations.",
-            AttributeProto::GRAPH)
-        .TypeConstraint(
-            "V",
-            control_flow_types_ir11(),
-            "All Tensor, Sequence(Tensor), Optional(Tensor), and Optional(Sequence(Tensor)) types up to IRv11.")
-        .TypeConstraint("I", {types::Int64}, "tensor of int64, which should be a scalar.")
-        .TypeConstraint("B", {types::Bool}, "tensor of bool, which should be a scalar.")
-        .TypeAndShapeInferenceFunction(LoopInferenceFunction));
+    generated::ai_onnx::Loop_ver23().TypeAndShapeInferenceFunction(LoopInferenceFunction));
 
 ONNX_OPERATOR_SET_SCHEMA(
     Loop,
     21,
-    OpSchema()
-        .SetDoc(kDoc_Loop_ver23)
-        .Input(
-            0,
-            "M",
-            "A maximum trip-count for the loop specified at runtime. Optional."
-            " Pass empty string to skip.",
-            "I",
-            OpSchema::Optional)
-        .Input(
-            1,
-            "cond",
-            "A boolean termination condition. Optional. Pass empty string to skip.",
-            "B",
-            OpSchema::Optional)
-        .Input(
-            2,
-            "v_initial",
-            "The initial values of any loop-carried dependencies (values that "
-            "change across loop iterations)",
-            "V",
-            OpSchema::Variadic,
-            false,
-            0)
-        .Output(
-            0,
-            "v_final_and_scan_outputs",
-            "Final N loop carried dependency values then K scan_outputs. "
-            "Scan outputs must be Tensors.",
-            "V",
-            OpSchema::Variadic,
-            false)
-        .Attr(
-            "body",
-            "The graph run each iteration. It has 2+N inputs: (iteration_num, "
-            "condition, loop carried dependencies...). It has 1+N+K outputs: "
-            "(condition, loop carried dependencies..., scan_outputs...). Each "
-            "scan_output is created by concatenating the value of the specified "
-            "output value at the end of each iteration of the loop. It is an error"
-            " if the dimensions or data type of these scan_outputs change across loop"
-            " iterations.",
-            AttributeProto::GRAPH)
-        .TypeConstraint(
-            "V",
-            control_flow_types_ir10(),
-            "All Tensor, Sequence(Tensor), Optional(Tensor), and Optional(Sequence(Tensor)) types up to IRv10.")
-        .TypeConstraint("I", {types::Int64}, "tensor of int64, which should be a scalar.")
-        .TypeConstraint("B", {types::Bool}, "tensor of bool, which should be a scalar.")
-        .TypeAndShapeInferenceFunction(LoopInferenceFunction));
+    generated::ai_onnx::Loop_ver21().TypeAndShapeInferenceFunction(LoopInferenceFunction));
 
 ONNX_OPERATOR_SET_SCHEMA(
     Loop,
     19,
-    OpSchema()
-        .SetDoc(kDoc_Loop_ver23)
-        .Input(
-            0,
-            "M",
-            "A maximum trip-count for the loop specified at runtime. Optional."
-            " Pass empty string to skip.",
-            "I",
-            OpSchema::Optional)
-        .Input(
-            1,
-            "cond",
-            "A boolean termination condition. Optional. Pass empty string to skip.",
-            "B",
-            OpSchema::Optional)
-        .Input(
-            2,
-            "v_initial",
-            "The initial values of any loop-carried dependencies (values that "
-            "change across loop iterations)",
-            "V",
-            OpSchema::Variadic,
-            false,
-            0)
-        .Output(
-            0,
-            "v_final_and_scan_outputs",
-            "Final N loop carried dependency values then K scan_outputs. "
-            "Scan outputs must be Tensors.",
-            "V",
-            OpSchema::Variadic,
-            false)
-        .Attr(
-            "body",
-            "The graph run each iteration. It has 2+N inputs: (iteration_num, "
-            "condition, loop carried dependencies...). It has 1+N+K outputs: "
-            "(condition, loop carried dependencies..., scan_outputs...). Each "
-            "scan_output is created by concatenating the value of the specified "
-            "output value at the end of each iteration of the loop. It is an error"
-            " if the dimensions or data type of these scan_outputs change across loop"
-            " iterations.",
-            AttributeProto::GRAPH)
-        .TypeConstraint(
-            "V",
-            control_flow_types_ir9(),
-            "All Tensor, Sequence(Tensor), Optional(Tensor), and Optional(Sequence(Tensor)) types up to IRv9.")
-        .TypeConstraint("I", {types::Int64}, "tensor of int64, which should be a scalar.")
-        .TypeConstraint("B", {types::Bool}, "tensor of bool, which should be a scalar.")
-        .TypeAndShapeInferenceFunction(LoopInferenceFunction));
+    generated::ai_onnx::Loop_ver19().TypeAndShapeInferenceFunction(LoopInferenceFunction));
 
 ONNX_OPERATOR_SET_SCHEMA(
     Loop,
     16,
-    OpSchema()
-        .SetDoc(kDoc_Loop_ver23)
-        .Input(
-            0,
-            "M",
-            "A maximum trip-count for the loop specified at runtime. Optional."
-            " Pass empty string to skip.",
-            "I",
-            OpSchema::Optional)
-        .Input(
-            1,
-            "cond",
-            "A boolean termination condition. Optional. Pass empty string to skip.",
-            "B",
-            OpSchema::Optional)
-        .Input(
-            2,
-            "v_initial",
-            "The initial values of any loop-carried dependencies (values that "
-            "change across loop iterations)",
-            "V",
-            OpSchema::Variadic,
-            false,
-            0)
-        .Output(
-            0,
-            "v_final_and_scan_outputs",
-            "Final N loop carried dependency values then K scan_outputs. "
-            "Scan outputs must be Tensors.",
-            "V",
-            OpSchema::Variadic,
-            false)
-        .Attr(
-            "body",
-            "The graph run each iteration. It has 2+N inputs: (iteration_num, "
-            "condition, loop carried dependencies...). It has 1+N+K outputs: "
-            "(condition, loop carried dependencies..., scan_outputs...). Each "
-            "scan_output is created by concatenating the value of the specified "
-            "output value at the end of each iteration of the loop. It is an error"
-            " if the dimensions or data type of these scan_outputs change across loop"
-            " iterations.",
-            AttributeProto::GRAPH)
-        .TypeConstraint(
-            "V",
-            control_flow_types_ir4(),
-            "All Tensor, Sequence(Tensor), Optional(Tensor), and Optional(Sequence(Tensor)) types up to IRv4.")
-        .TypeConstraint("I", {types::Int64}, "tensor of int64, which should be a scalar.")
-        .TypeConstraint("B", {types::Bool}, "tensor of bool, which should be a scalar.")
-        .TypeAndShapeInferenceFunction(LoopInferenceFunction));
+    generated::ai_onnx::Loop_ver16().TypeAndShapeInferenceFunction(LoopInferenceFunction));
 
 ONNX_OPERATOR_SET_SCHEMA(
     Scan,
     24,
-    OpSchema()
-        .SetDoc(kDoc_scan_24)
-        .Input(
-            0,
-            "initial_state_and_scan_inputs",
-            "Initial values of the loop's N state variables followed by M scan_inputs",
-            "V",
-            OpSchema::Variadic,
-            false)
-        .Output(
-            0,
-            "final_state_and_scan_outputs",
-            "Final values of the loop's N state variables followed by K scan_outputs",
-            "V",
-            OpSchema::Variadic,
-            false)
-        .Attr(
-            "body",
-            "The graph run each iteration. It has N+M inputs: "
-            "(loop state variables..., scan_input_elts...). It has N+K outputs: "
-            "(loop state variables..., scan_output_elts...). Each "
-            "scan_output is created by concatenating the value of the specified "
-            "scan_output_elt value at the end of each iteration of the loop. It is an error"
-            " if the dimensions of these values change across loop iterations.",
-            AttributeProto::GRAPH,
-            true)
-        .Attr("num_scan_inputs", "An attribute specifying the number of scan_inputs M. ", AttributeProto::INT, true)
-        .Attr(
-            "scan_input_directions",
-            "An optional list of M flags. The i-th element of the list specifies the direction "
-            "to be scanned for the i-th scan_input tensor: 0 indicates forward direction and 1 "
-            "indicates reverse direction. "
-            "If omitted, all scan_input tensors will be scanned in the forward direction.",
-            AttributeProto::INTS,
-            false)
-        .Attr(
-            "scan_output_directions",
-            "An optional list of K flags, one for each scan_output. The i-th element of the list "
-            "specifies whether the i-th scan_output should be constructed by appending or "
-            "prepending a new value in each iteration: 0 indicates appending and 1 "
-            "indicates prepending. "
-            "If omitted, all scan_output tensors will be produced by appending a value "
-            "in each iteration.",
-            AttributeProto::INTS,
-            false)
-        .Attr(
-            "scan_input_axes",
-            "An optional list of M flags. The i-th element of the list specifies the axis "
-            "to be scanned (the sequence axis) for the i-th scan_input. If omitted, 0 will "
-            "be used as the scan axis for every scan_input. Negative value for an axis means "
-            "counting dimensions from the back. Accepted range is [-r, r-1] where r = rank(input).",
-            AttributeProto::INTS,
-            false)
-        .Attr(
-            "scan_output_axes",
-            "An optional list of K flags. The i-th element of the list specifies the axis "
-            "for the i-th scan_output. The scan outputs are accumulated along the specified "
-            "axis. If omitted, 0 will be used as the scan axis for every scan_output. "
-            "Negative value for an axis means counting dimensions from the back. Accepted "
-            "range is [-r, r-1].",
-            AttributeProto::INTS,
-            false)
-        .TypeConstraint("V", OpSchema::all_tensor_types_ir12(), "All Tensor types up to IRv12.")
-        .TypeAndShapeInferenceFunction(ScanInferenceFunction)); // Shares same shape inference as opset 11
+    generated::ai_onnx::Scan_ver24().TypeAndShapeInferenceFunction(
+        ScanInferenceFunction)); // Shares same shape inference as opset 11
 
 ONNX_OPERATOR_SET_SCHEMA(
     Scan,
     23,
-    OpSchema()
-        .SetDoc(kDoc_scan_24)
-        .Input(
-            0,
-            "initial_state_and_scan_inputs",
-            "Initial values of the loop's N state variables followed by M scan_inputs",
-            "V",
-            OpSchema::Variadic,
-            false)
-        .Output(
-            0,
-            "final_state_and_scan_outputs",
-            "Final values of the loop's N state variables followed by K scan_outputs",
-            "V",
-            OpSchema::Variadic,
-            false)
-        .Attr(
-            "body",
-            "The graph run each iteration. It has N+M inputs: "
-            "(loop state variables..., scan_input_elts...). It has N+K outputs: "
-            "(loop state variables..., scan_output_elts...). Each "
-            "scan_output is created by concatenating the value of the specified "
-            "scan_output_elt value at the end of each iteration of the loop. It is an error"
-            " if the dimensions of these values change across loop iterations.",
-            AttributeProto::GRAPH,
-            true)
-        .Attr("num_scan_inputs", "An attribute specifying the number of scan_inputs M. ", AttributeProto::INT, true)
-        .Attr(
-            "scan_input_directions",
-            "An optional list of M flags. The i-th element of the list specifies the direction "
-            "to be scanned for the i-th scan_input tensor: 0 indicates forward direction and 1 "
-            "indicates reverse direction. "
-            "If omitted, all scan_input tensors will be scanned in the forward direction.",
-            AttributeProto::INTS,
-            false)
-        .Attr(
-            "scan_output_directions",
-            "An optional list of K flags, one for each scan_output. The i-th element of the list "
-            "specifies whether the i-th scan_output should be constructed by appending or "
-            "prepending a new value in each iteration: 0 indicates appending and 1 "
-            "indicates prepending. "
-            "If omitted, all scan_output tensors will be produced by appending a value "
-            "in each iteration.",
-            AttributeProto::INTS,
-            false)
-        .Attr(
-            "scan_input_axes",
-            "An optional list of M flags. The i-th element of the list specifies the axis "
-            "to be scanned (the sequence axis) for the i-th scan_input. If omitted, 0 will "
-            "be used as the scan axis for every scan_input. Negative value for an axis means "
-            "counting dimensions from the back. Accepted range is [-r, r-1] where r = rank(input).",
-            AttributeProto::INTS,
-            false)
-        .Attr(
-            "scan_output_axes",
-            "An optional list of K flags. The i-th element of the list specifies the axis "
-            "for the i-th scan_output. The scan outputs are accumulated along the specified "
-            "axis. If omitted, 0 will be used as the scan axis for every scan_output. "
-            "Negative value for an axis means counting dimensions from the back. Accepted "
-            "range is [-r, r-1].",
-            AttributeProto::INTS,
-            false)
-        .TypeConstraint("V", OpSchema::all_tensor_types_ir11(), "All Tensor types up to IRv11.")
-        .TypeAndShapeInferenceFunction(ScanInferenceFunction)); // Shares same shape inference as opset 11
+    generated::ai_onnx::Scan_ver23().TypeAndShapeInferenceFunction(
+        ScanInferenceFunction)); // Shares same shape inference as opset 11
 
 ONNX_OPERATOR_SET_SCHEMA(
     Scan,
     21,
-    OpSchema()
-        .SetDoc(kDoc_scan_24)
-        .Input(
-            0,
-            "initial_state_and_scan_inputs",
-            "Initial values of the loop's N state variables followed by M scan_inputs",
-            "V",
-            OpSchema::Variadic,
-            false)
-        .Output(
-            0,
-            "final_state_and_scan_outputs",
-            "Final values of the loop's N state variables followed by K scan_outputs",
-            "V",
-            OpSchema::Variadic,
-            false)
-        .Attr(
-            "body",
-            "The graph run each iteration. It has N+M inputs: "
-            "(loop state variables..., scan_input_elts...). It has N+K outputs: "
-            "(loop state variables..., scan_output_elts...). Each "
-            "scan_output is created by concatenating the value of the specified "
-            "scan_output_elt value at the end of each iteration of the loop. It is an error"
-            " if the dimensions of these values change across loop iterations.",
-            AttributeProto::GRAPH,
-            true)
-        .Attr("num_scan_inputs", "An attribute specifying the number of scan_inputs M. ", AttributeProto::INT, true)
-        .Attr(
-            "scan_input_directions",
-            "An optional list of M flags. The i-th element of the list specifies the direction "
-            "to be scanned for the i-th scan_input tensor: 0 indicates forward direction and 1 "
-            "indicates reverse direction. "
-            "If omitted, all scan_input tensors will be scanned in the forward direction.",
-            AttributeProto::INTS,
-            false)
-        .Attr(
-            "scan_output_directions",
-            "An optional list of K flags, one for each scan_output. The i-th element of the list "
-            "specifies whether the i-th scan_output should be constructed by appending or "
-            "prepending a new value in each iteration: 0 indicates appending and 1 "
-            "indicates prepending. "
-            "If omitted, all scan_output tensors will be produced by appending a value "
-            "in each iteration.",
-            AttributeProto::INTS,
-            false)
-        .Attr(
-            "scan_input_axes",
-            "An optional list of M flags. The i-th element of the list specifies the axis "
-            "to be scanned (the sequence axis) for the i-th scan_input. If omitted, 0 will "
-            "be used as the scan axis for every scan_input. Negative value for an axis means "
-            "counting dimensions from the back. Accepted range is [-r, r-1] where r = rank(input).",
-            AttributeProto::INTS,
-            false)
-        .Attr(
-            "scan_output_axes",
-            "An optional list of K flags. The i-th element of the list specifies the axis "
-            "for the i-th scan_output. The scan outputs are accumulated along the specified "
-            "axis. If omitted, 0 will be used as the scan axis for every scan_output. "
-            "Negative value for an axis means counting dimensions from the back. Accepted "
-            "range is [-r, r-1].",
-            AttributeProto::INTS,
-            false)
-        .TypeConstraint("V", OpSchema::all_tensor_types_ir10(), "All Tensor types up to IRv10.")
-        .TypeAndShapeInferenceFunction(ScanInferenceFunction)); // Shares same shape inference as opset 11
+    generated::ai_onnx::Scan_ver21().TypeAndShapeInferenceFunction(
+        ScanInferenceFunction)); // Shares same shape inference as opset 11
 
 ONNX_OPERATOR_SET_SCHEMA(
     Scan,
     19,
-    OpSchema()
-        .SetDoc(kDoc_scan_24)
-        .Input(
-            0,
-            "initial_state_and_scan_inputs",
-            "Initial values of the loop's N state variables followed by M scan_inputs",
-            "V",
-            OpSchema::Variadic,
-            false)
-        .Output(
-            0,
-            "final_state_and_scan_outputs",
-            "Final values of the loop's N state variables followed by K scan_outputs",
-            "V",
-            OpSchema::Variadic,
-            false)
-        .Attr(
-            "body",
-            "The graph run each iteration. It has N+M inputs: "
-            "(loop state variables..., scan_input_elts...). It has N+K outputs: "
-            "(loop state variables..., scan_output_elts...). Each "
-            "scan_output is created by concatenating the value of the specified "
-            "scan_output_elt value at the end of each iteration of the loop. It is an error"
-            " if the dimensions of these values change across loop iterations.",
-            AttributeProto::GRAPH,
-            true)
-        .Attr("num_scan_inputs", "An attribute specifying the number of scan_inputs M. ", AttributeProto::INT, true)
-        .Attr(
-            "scan_input_directions",
-            "An optional list of M flags. The i-th element of the list specifies the direction "
-            "to be scanned for the i-th scan_input tensor: 0 indicates forward direction and 1 "
-            "indicates reverse direction. "
-            "If omitted, all scan_input tensors will be scanned in the forward direction.",
-            AttributeProto::INTS,
-            false)
-        .Attr(
-            "scan_output_directions",
-            "An optional list of K flags, one for each scan_output. The i-th element of the list "
-            "specifies whether the i-th scan_output should be constructed by appending or "
-            "prepending a new value in each iteration: 0 indicates appending and 1 "
-            "indicates prepending. "
-            "If omitted, all scan_output tensors will be produced by appending a value "
-            "in each iteration.",
-            AttributeProto::INTS,
-            false)
-        .Attr(
-            "scan_input_axes",
-            "An optional list of M flags. The i-th element of the list specifies the axis "
-            "to be scanned (the sequence axis) for the i-th scan_input. If omitted, 0 will "
-            "be used as the scan axis for every scan_input. Negative value for an axis means "
-            "counting dimensions from the back. Accepted range is [-r, r-1] where r = rank(input).",
-            AttributeProto::INTS,
-            false)
-        .Attr(
-            "scan_output_axes",
-            "An optional list of K flags. The i-th element of the list specifies the axis "
-            "for the i-th scan_output. The scan outputs are accumulated along the specified "
-            "axis. If omitted, 0 will be used as the scan axis for every scan_output. "
-            "Negative value for an axis means counting dimensions from the back. Accepted "
-            "range is [-r, r-1].",
-            AttributeProto::INTS,
-            false)
-        .TypeConstraint("V", OpSchema::all_tensor_types_ir9(), "All Tensor types up to IRv9.")
-        .TypeAndShapeInferenceFunction(ScanInferenceFunction)); // Shares same shape inference as opset 11
+    generated::ai_onnx::Scan_ver19().TypeAndShapeInferenceFunction(
+        ScanInferenceFunction)); // Shares same shape inference as opset 11
 
 ONNX_OPERATOR_SET_SCHEMA(
     Scan,
     16,
-    OpSchema()
-        .SetDoc(kDoc_scan_24)
-        .Input(
-            0,
-            "initial_state_and_scan_inputs",
-            "Initial values of the loop's N state variables followed by M scan_inputs",
-            "V",
-            OpSchema::Variadic,
-            false)
-        .Output(
-            0,
-            "final_state_and_scan_outputs",
-            "Final values of the loop's N state variables followed by K scan_outputs",
-            "V",
-            OpSchema::Variadic,
-            false)
-        .Attr(
-            "body",
-            "The graph run each iteration. It has N+M inputs: "
-            "(loop state variables..., scan_input_elts...). It has N+K outputs: "
-            "(loop state variables..., scan_output_elts...). Each "
-            "scan_output is created by concatenating the value of the specified "
-            "scan_output_elt value at the end of each iteration of the loop. It is an error"
-            " if the dimensions of these values change across loop iterations.",
-            AttributeProto::GRAPH,
-            true)
-        .Attr("num_scan_inputs", "An attribute specifying the number of scan_inputs M. ", AttributeProto::INT, true)
-        .Attr(
-            "scan_input_directions",
-            "An optional list of M flags. The i-th element of the list specifies the direction "
-            "to be scanned for the i-th scan_input tensor: 0 indicates forward direction and 1 "
-            "indicates reverse direction. "
-            "If omitted, all scan_input tensors will be scanned in the forward direction.",
-            AttributeProto::INTS,
-            false)
-        .Attr(
-            "scan_output_directions",
-            "An optional list of K flags, one for each scan_output. The i-th element of the list "
-            "specifies whether the i-th scan_output should be constructed by appending or "
-            "prepending a new value in each iteration: 0 indicates appending and 1 "
-            "indicates prepending. "
-            "If omitted, all scan_output tensors will be produced by appending a value "
-            "in each iteration.",
-            AttributeProto::INTS,
-            false)
-        .Attr(
-            "scan_input_axes",
-            "An optional list of M flags. The i-th element of the list specifies the axis "
-            "to be scanned (the sequence axis) for the i-th scan_input. If omitted, 0 will "
-            "be used as the scan axis for every scan_input. Negative value for an axis means "
-            "counting dimensions from the back. Accepted range is [-r, r-1] where r = rank(input).",
-            AttributeProto::INTS,
-            false)
-        .Attr(
-            "scan_output_axes",
-            "An optional list of K flags. The i-th element of the list specifies the axis "
-            "for the i-th scan_output. The scan outputs are accumulated along the specified "
-            "axis. If omitted, 0 will be used as the scan axis for every scan_output. "
-            "Negative value for an axis means counting dimensions from the back. Accepted "
-            "range is [-r, r-1].",
-            AttributeProto::INTS,
-            false)
-        .TypeConstraint("V", OpSchema::all_tensor_types_ir4(), "All Tensor types up to IRv4.")
-        .TypeAndShapeInferenceFunction(ScanInferenceFunction)); // Shares same shape inference as opset 11
+    generated::ai_onnx::Scan_ver16().TypeAndShapeInferenceFunction(
+        ScanInferenceFunction)); // Shares same shape inference as opset 11
 
 // NOLINTNEXTLINE(misc-use-internal-linkage)
 void ScanInferenceFunction_opset8(InferenceContext& ctx) {
@@ -1202,53 +380,7 @@ static void ScanInferenceFunction_opset9(InferenceContext& ctx) {
 ONNX_OPERATOR_SET_SCHEMA(
     Scan,
     8,
-    OpSchema()
-        .SetDoc(kDoc_scan_ver8)
-        .Input(
-            0,
-            "sequence_lens",
-            "Optional tensor specifying lengths of the sequences in a batch. "
-            "If this input is not specified, all sequences are assumed to be of "
-            "the maximum sequence length (the dimension of the sequence axis of "
-            "the scan_input tensors).",
-            "I",
-            OpSchema::Optional)
-        .Input(
-            1,
-            "initial_state_and_scan_inputs",
-            "Initial values of the loop's N state variables followed by M scan_inputs",
-            "V",
-            OpSchema::Variadic,
-            false)
-        .Output(
-            0,
-            "final_state_and_scan_outputs",
-            "Final values of the loop's N state variables followed by K scan_outputs",
-            "V",
-            OpSchema::Variadic,
-            false)
-        .Attr(
-            "body",
-            "The graph run each iteration. It has N+M inputs: "
-            "(loop state variables..., scan_input_elts...). It has N+K outputs: "
-            "(loop state variables..., scan_output_elts...). Each "
-            "scan_output is created by concatenating the value of the specified "
-            "scan_output_elt value at the end of each iteration of the loop. It is an error"
-            " if the dimensions of these values change across loop iterations.",
-            AttributeProto::GRAPH,
-            true)
-        .Attr("num_scan_inputs", "An attribute specifying the number of scan_inputs M. ", AttributeProto::INT, true)
-        .Attr(
-            "directions",
-            "An optional list of M flags. The i-th element of the list specifies the direction "
-            "to be scanned for the i-th scan_input tensor: 0 indicates forward direction and 1 "
-            "indicates reverse direction. "
-            "If omitted, all scan_input tensors will be scanned in the forward direction.",
-            AttributeProto::INTS,
-            false)
-        .TypeConstraint("I", {types::Int64}, "Int64 tensor")
-        .TypeConstraint("V", OpSchema::all_tensor_types(), "All Tensor types")
-        .TypeAndShapeInferenceFunction(ScanInferenceFunction_opset8));
+    generated::ai_onnx::Scan_ver8().TypeAndShapeInferenceFunction(ScanInferenceFunction_opset8));
 
 static void LoopInferenceFunction_opset8(InferenceContext& ctx) {
   auto num_inputs = ctx.getNumInputs();
@@ -1360,50 +492,7 @@ static void LoopInferenceFunction_opset8(InferenceContext& ctx) {
 ONNX_OPERATOR_SET_SCHEMA(
     Loop,
     1,
-    OpSchema()
-        .SetDoc(kDoc_Loop_ver1)
-        .Input(
-            0,
-            "M",
-            "A maximum trip-count for the loop specified at runtime. Optional."
-            " Pass empty string to skip.",
-            "I",
-            OpSchema::Optional)
-        .Input(
-            1,
-            "cond",
-            "A boolean termination condition. Optional. Pass empty string to skip.",
-            "B",
-            OpSchema::Optional)
-        .Input(
-            2,
-            "v_initial",
-            "The initial values of any loop-carried dependencies (values that "
-            "change across loop iterations)",
-            "V",
-            OpSchema::Variadic,
-            false)
-        .Output(
-            0,
-            "v_final_and_scan_outputs",
-            "Final N loop carried dependency values then K scan_outputs",
-            "V",
-            OpSchema::Variadic,
-            false)
-        .Attr(
-            "body",
-            "The graph run each iteration. It has 2+N inputs: (iteration_num, "
-            "condition, loop carried dependencies...). It has 1+N+K outputs: "
-            "(condition, loop carried dependencies..., scan_outputs...). Each "
-            "scan_output is created by concatenating the value of the specified "
-            "output value at the end of each iteration of the loop. It is an error"
-            " if the dimensions or data type of these scan_outputs change across loop"
-            " iterations.",
-            AttributeProto::GRAPH)
-        .TypeConstraint("V", OpSchema::all_tensor_types(), "All Tensor types")
-        .TypeConstraint("I", {types::Int64}, "tensor of int64, which should be a scalar.")
-        .TypeConstraint("B", {types::Bool}, "tensor of bool, which should be a scalar.")
-        .TypeAndShapeInferenceFunction(LoopInferenceFunction_opset8));
+    generated::ai_onnx::Loop_ver1().TypeAndShapeInferenceFunction(LoopInferenceFunction_opset8));
 
 static void LoopInferenceFunction_opset11(InferenceContext& ctx) {
   auto num_inputs = ctx.getNumInputs();
@@ -1515,116 +604,12 @@ static void LoopInferenceFunction_opset11(InferenceContext& ctx) {
 ONNX_OPERATOR_SET_SCHEMA(
     Loop,
     11,
-    OpSchema()
-        .SetDoc(kDoc_Loop_ver11)
-        .Input(
-            0,
-            "M",
-            "A maximum trip-count for the loop specified at runtime. Optional."
-            " Pass empty string to skip.",
-            "I",
-            OpSchema::Optional)
-        .Input(
-            1,
-            "cond",
-            "A boolean termination condition. Optional. Pass empty string to skip.",
-            "B",
-            OpSchema::Optional)
-        .Input(
-            2,
-            "v_initial",
-            "The initial values of any loop-carried dependencies (values that "
-            "change across loop iterations)",
-            "V",
-            OpSchema::Variadic,
-            false,
-            0)
-        .Output(
-            0,
-            "v_final_and_scan_outputs",
-            "Final N loop carried dependency values then K scan_outputs",
-            "V",
-            OpSchema::Variadic,
-            false)
-        .Attr(
-            "body",
-            "The graph run each iteration. It has 2+N inputs: (iteration_num, "
-            "condition, loop carried dependencies...). It has 1+N+K outputs: "
-            "(condition, loop carried dependencies..., scan_outputs...). Each "
-            "scan_output is created by concatenating the value of the specified "
-            "output value at the end of each iteration of the loop. It is an error"
-            " if the dimensions or data type of these scan_outputs change across loop"
-            " iterations.",
-            AttributeProto::GRAPH)
-        .TypeConstraint("V", OpSchema::all_tensor_types(), "All Tensor types")
-        .TypeConstraint("I", {types::Int64}, "tensor of int64, which should be a scalar.")
-        .TypeConstraint("B", {types::Bool}, "tensor of bool, which should be a scalar.")
-        .TypeAndShapeInferenceFunction(LoopInferenceFunction_opset11));
+    generated::ai_onnx::Loop_ver11().TypeAndShapeInferenceFunction(LoopInferenceFunction_opset11));
 
 ONNX_OPERATOR_SET_SCHEMA(
     Scan,
     9,
-    OpSchema()
-        .SetDoc(kDoc_scan_24)
-        .Input(
-            0,
-            "initial_state_and_scan_inputs",
-            "Initial values of the loop's N state variables followed by M scan_inputs",
-            "V",
-            OpSchema::Variadic,
-            false)
-        .Output(
-            0,
-            "final_state_and_scan_outputs",
-            "Final values of the loop's N state variables followed by K scan_outputs",
-            "V",
-            OpSchema::Variadic,
-            false)
-        .Attr(
-            "body",
-            "The graph run each iteration. It has N+M inputs: "
-            "(loop state variables..., scan_input_elts...). It has N+K outputs: "
-            "(loop state variables..., scan_output_elts...). Each "
-            "scan_output is created by concatenating the value of the specified "
-            "scan_output_elt value at the end of each iteration of the loop. It is an error"
-            " if the dimensions of these values change across loop iterations.",
-            AttributeProto::GRAPH,
-            true)
-        .Attr("num_scan_inputs", "An attribute specifying the number of scan_inputs M. ", AttributeProto::INT, true)
-        .Attr(
-            "scan_input_directions",
-            "An optional list of M flags. The i-th element of the list specifies the direction "
-            "to be scanned for the i-th scan_input tensor: 0 indicates forward direction and 1 "
-            "indicates reverse direction. "
-            "If omitted, all scan_input tensors will be scanned in the forward direction.",
-            AttributeProto::INTS,
-            false)
-        .Attr(
-            "scan_output_directions",
-            "An optional list of K flags, one for each scan_output. The i-th element of the list "
-            "specifies whether the i-th scan_output should be constructed by appending or "
-            "prepending a new value in each iteration: 0 indicates appending and 1 "
-            "indicates prepending. "
-            "If omitted, all scan_output tensors will be produced by appending a value "
-            "in each iteration.",
-            AttributeProto::INTS,
-            false)
-        .Attr(
-            "scan_input_axes",
-            "An optional list of M flags. The i-th element of the list specifies the axis "
-            "to be scanned (the sequence axis) for the i-th scan_input. If omitted, 0 will "
-            "be used as the scan axis for every scan_input.",
-            AttributeProto::INTS,
-            false)
-        .Attr(
-            "scan_output_axes",
-            "An optional list of K flags. The i-th element of the list specifies the axis "
-            "for the i-th scan_output. The scan outputs are accumulated along the specified "
-            "axis. If omitted, 0 will be used as the scan axis for every scan_output.",
-            AttributeProto::INTS,
-            false)
-        .TypeConstraint("V", OpSchema::all_tensor_types(), "All Tensor types")
-        .TypeAndShapeInferenceFunction(ScanInferenceFunction_opset9));
+    generated::ai_onnx::Scan_ver9().TypeAndShapeInferenceFunction(ScanInferenceFunction_opset9));
 
 static void IfInferenceFunction_opset1(InferenceContext& ctx) {
   // there are no inputs so we just need to run the subgraph inferencing for
@@ -1694,33 +679,7 @@ static void IfInferenceFunction_opset1(InferenceContext& ctx) {
 ONNX_OPERATOR_SET_SCHEMA(
     If,
     1,
-    OpSchema()
-        .SetDoc(kDoc_If_ver25)
-        .Input(0, "cond", "Condition for the if. The tensor must contain a single element.", "B")
-        .Output(
-            0,
-            "outputs",
-            "Values that are live-out to the enclosing scope. The return values in "
-            "the `then_branch` and `else_branch` must be of the same shape and same "
-            "data type.",
-            "V",
-            OpSchema::Variadic,
-            false)
-        .Attr(
-            "then_branch",
-            "Graph to run if condition is true. Has N outputs: values you wish to "
-            "be live-out to the enclosing scope. The number of outputs must match"
-            " the number of outputs in the else_branch.",
-            AttributeProto::GRAPH)
-        .Attr(
-            "else_branch",
-            "Graph to run if condition is false. Has N outputs: values you wish to"
-            " be live-out to the enclosing scope. The number of outputs must match"
-            " the number of outputs in the then_branch.",
-            AttributeProto::GRAPH)
-        .TypeConstraint("V", OpSchema::all_tensor_types(), "All Tensor types")
-        .TypeConstraint("B", {types::Bool}, "Only bool")
-        .TypeAndShapeInferenceFunction(IfInferenceFunction_opset1));
+    generated::ai_onnx::If_ver1().TypeAndShapeInferenceFunction(IfInferenceFunction_opset1));
 
 static void IfInferenceFunction_opset11(InferenceContext& ctx) {
   // there are no inputs so we just need to run the subgraph inferencing for
@@ -1788,46 +747,7 @@ static void IfInferenceFunction_opset11(InferenceContext& ctx) {
 ONNX_OPERATOR_SET_SCHEMA(
     If,
     11,
-    OpSchema()
-        .SetDoc(kDoc_If_ver25)
-        .Input(0, "cond", "Condition for the if. The tensor must contain a single element.", "B")
-        .Output(
-            0,
-            "outputs",
-            "Values that are live-out to the enclosing scope. The return values in "
-            "the `then_branch` and `else_branch` must be of the same data type. "
-            "The `then_branch` and `else_branch` may produce tensors with the same "
-            "element type and different shapes. "
-            "If corresponding outputs from the then-branch and the else-branch have "
-            "static shapes S1 and S2, then the shape of the corresponding output "
-            "variable of the if-node (if present) must be compatible with both S1 "
-            "and S2 as it represents the union of both possible shapes."
-            "For example, if in a model file, the first "
-            "output of `then_branch` is typed float tensor with shape [2] and the "
-            "first output of `else_branch` is another float tensor with shape [3], "
-            "If's first output should have (a) no shape set, or (b) "
-            "a shape of rank 1 with neither `dim_value` nor `dim_param` set, or (c) "
-            "a shape of rank 1 with a unique `dim_param`. "
-            "In contrast, the first output cannot have the shape [2] since [2] and "
-            "[3] are not compatible.",
-            "V",
-            OpSchema::Variadic,
-            false)
-        .Attr(
-            "then_branch",
-            "Graph to run if condition is true. Has N outputs: values you wish to "
-            "be live-out to the enclosing scope. The number of outputs must match"
-            " the number of outputs in the else_branch.",
-            AttributeProto::GRAPH)
-        .Attr(
-            "else_branch",
-            "Graph to run if condition is false. Has N outputs: values you wish to"
-            " be live-out to the enclosing scope. The number of outputs must match"
-            " the number of outputs in the then_branch.",
-            AttributeProto::GRAPH)
-        .TypeConstraint("V", OpSchema::all_tensor_types(), "All Tensor types")
-        .TypeConstraint("B", {types::Bool}, "Only bool")
-        .TypeAndShapeInferenceFunction(IfInferenceFunction_opset11));
+    generated::ai_onnx::If_ver11().TypeAndShapeInferenceFunction(IfInferenceFunction_opset11));
 
 static void IfInferenceFunction_opset13(InferenceContext& ctx) {
   // there are no inputs so we just need to run the subgraph inferencing for
@@ -1880,54 +800,7 @@ static void IfInferenceFunction_opset13(InferenceContext& ctx) {
 ONNX_OPERATOR_SET_SCHEMA(
     If,
     13,
-    OpSchema()
-        .SetDoc(kDoc_If_ver25)
-        .Input(0, "cond", "Condition for the if. The tensor must contain a single element.", "B")
-        .Output(
-            0,
-            "outputs",
-            "Values that are live-out to the enclosing scope. The return values in "
-            "the `then_branch` and `else_branch` must be of the same data type. "
-            "The `then_branch` and `else_branch` may produce tensors with the same "
-            "element type and different shapes. "
-            "If corresponding outputs from the then-branch and the else-branch have "
-            "static shapes S1 and S2, then the shape of the corresponding output "
-            "variable of the if-node (if present) must be compatible with both S1 "
-            "and S2 as it represents the union of both possible shapes."
-            "For example, if in a model file, the first "
-            "output of `then_branch` is typed float tensor with shape [2] and the "
-            "first output of `else_branch` is another float tensor with shape [3], "
-            "If's first output should have (a) no shape set, or (b) "
-            "a shape of rank 1 with neither `dim_value` nor `dim_param` set, or (c) "
-            "a shape of rank 1 with a unique `dim_param`. "
-            "In contrast, the first output cannot have the shape [2] since [2] and "
-            "[3] are not compatible.",
-            "V",
-            OpSchema::Variadic,
-            false)
-        .Attr(
-            "then_branch",
-            "Graph to run if condition is true. Has N outputs: values you wish to "
-            "be live-out to the enclosing scope. The number of outputs must match"
-            " the number of outputs in the else_branch.",
-            AttributeProto::GRAPH)
-        .Attr(
-            "else_branch",
-            "Graph to run if condition is false. Has N outputs: values you wish to"
-            " be live-out to the enclosing scope. The number of outputs must match"
-            " the number of outputs in the then_branch.",
-            AttributeProto::GRAPH)
-        .TypeConstraint(
-            "V",
-            []() {
-              auto t = OpSchema::all_tensor_types();
-              auto s = OpSchema::all_tensor_sequence_types();
-              t.insert(t.end(), s.begin(), s.end());
-              return t;
-            }(),
-            "All Tensor and Sequence types")
-        .TypeConstraint("B", {types::Bool}, "Only bool")
-        .TypeAndShapeInferenceFunction(IfInferenceFunction_opset13));
+    generated::ai_onnx::If_ver13().TypeAndShapeInferenceFunction(IfInferenceFunction_opset13));
 
 static void LoopInferenceFunction_opset13(InferenceContext& ctx) {
   auto num_inputs = ctx.getNumInputs();
@@ -2057,127 +930,11 @@ static void LoopInferenceFunction_opset13(InferenceContext& ctx) {
 ONNX_OPERATOR_SET_SCHEMA(
     Loop,
     13,
-    OpSchema()
-        .SetDoc(kDoc_Loop_ver13)
-        .Input(
-            0,
-            "M",
-            "A maximum trip-count for the loop specified at runtime. Optional."
-            " Pass empty string to skip.",
-            "I",
-            OpSchema::Optional)
-        .Input(
-            1,
-            "cond",
-            "A boolean termination condition. Optional. Pass empty string to skip.",
-            "B",
-            OpSchema::Optional)
-        .Input(
-            2,
-            "v_initial",
-            "The initial values of any loop-carried dependencies (values that "
-            "change across loop iterations)",
-            "V",
-            OpSchema::Variadic,
-            false,
-            0)
-        .Output(
-            0,
-            "v_final_and_scan_outputs",
-            "Final N loop carried dependency values then K scan_outputs. "
-            "Scan outputs must be Tensors.",
-            "V",
-            OpSchema::Variadic,
-            false)
-        .Attr(
-            "body",
-            "The graph run each iteration. It has 2+N inputs: (iteration_num, "
-            "condition, loop carried dependencies...). It has 1+N+K outputs: "
-            "(condition, loop carried dependencies..., scan_outputs...). Each "
-            "scan_output is created by concatenating the value of the specified "
-            "output value at the end of each iteration of the loop. It is an error"
-            " if the dimensions or data type of these scan_outputs change across loop"
-            " iterations.",
-            AttributeProto::GRAPH)
-        .TypeConstraint(
-            "V",
-            []() {
-              auto t = OpSchema::all_tensor_types();
-              auto s = OpSchema::all_tensor_sequence_types();
-              t.insert(t.end(), s.begin(), s.end());
-              return t;
-            }(),
-            "All Tensor and Sequence types")
-        .TypeConstraint("I", {types::Int64}, "tensor of int64, which should be a scalar.")
-        .TypeConstraint("B", {types::Bool}, "tensor of bool, which should be a scalar.")
-        .TypeAndShapeInferenceFunction(LoopInferenceFunction_opset13));
+    generated::ai_onnx::Loop_ver13().TypeAndShapeInferenceFunction(LoopInferenceFunction_opset13));
 
 ONNX_OPERATOR_SET_SCHEMA(
     Scan,
     11,
-    OpSchema()
-        .SetDoc(kDoc_scan_24)
-        .Input(
-            0,
-            "initial_state_and_scan_inputs",
-            "Initial values of the loop's N state variables followed by M scan_inputs",
-            "V",
-            OpSchema::Variadic,
-            false)
-        .Output(
-            0,
-            "final_state_and_scan_outputs",
-            "Final values of the loop's N state variables followed by K scan_outputs",
-            "V",
-            OpSchema::Variadic,
-            false)
-        .Attr(
-            "body",
-            "The graph run each iteration. It has N+M inputs: "
-            "(loop state variables..., scan_input_elts...). It has N+K outputs: "
-            "(loop state variables..., scan_output_elts...). Each "
-            "scan_output is created by concatenating the value of the specified "
-            "scan_output_elt value at the end of each iteration of the loop. It is an error"
-            " if the dimensions of these values change across loop iterations.",
-            AttributeProto::GRAPH,
-            true)
-        .Attr("num_scan_inputs", "An attribute specifying the number of scan_inputs M. ", AttributeProto::INT, true)
-        .Attr(
-            "scan_input_directions",
-            "An optional list of M flags. The i-th element of the list specifies the direction "
-            "to be scanned for the i-th scan_input tensor: 0 indicates forward direction and 1 "
-            "indicates reverse direction. "
-            "If omitted, all scan_input tensors will be scanned in the forward direction.",
-            AttributeProto::INTS,
-            false)
-        .Attr(
-            "scan_output_directions",
-            "An optional list of K flags, one for each scan_output. The i-th element of the list "
-            "specifies whether the i-th scan_output should be constructed by appending or "
-            "prepending a new value in each iteration: 0 indicates appending and 1 "
-            "indicates prepending. "
-            "If omitted, all scan_output tensors will be produced by appending a value "
-            "in each iteration.",
-            AttributeProto::INTS,
-            false)
-        .Attr(
-            "scan_input_axes",
-            "An optional list of M flags. The i-th element of the list specifies the axis "
-            "to be scanned (the sequence axis) for the i-th scan_input. If omitted, 0 will "
-            "be used as the scan axis for every scan_input. Negative value for an axis means "
-            "counting dimensions from the back. Accepted range is [-r, r-1] where r = rank(input).",
-            AttributeProto::INTS,
-            false)
-        .Attr(
-            "scan_output_axes",
-            "An optional list of K flags. The i-th element of the list specifies the axis "
-            "for the i-th scan_output. The scan outputs are accumulated along the specified "
-            "axis. If omitted, 0 will be used as the scan axis for every scan_output. "
-            "Negative value for an axis means counting dimensions from the back. Accepted "
-            "range is [-r, r-1].",
-            AttributeProto::INTS,
-            false)
-        .TypeConstraint("V", OpSchema::all_tensor_types(), "All Tensor types")
-        .TypeAndShapeInferenceFunction(ScanInferenceFunction));
+    generated::ai_onnx::Scan_ver11().TypeAndShapeInferenceFunction(ScanInferenceFunction));
 
 } // namespace ONNX_NAMESPACE

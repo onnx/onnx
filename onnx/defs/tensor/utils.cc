@@ -13,12 +13,11 @@
 #include <vector>
 
 #include "onnx/common/safe_math.h"
-#include "onnx/defs/doc_strings.h"
 #include "onnx/defs/tensor_proto_util.h"
 #include "onnx/defs/type_builders.h"
 
 namespace ONNX_NAMESPACE {
-static void GatherNDShapeInference(InferenceContext& ctx) {
+void GatherNDShapeInference(InferenceContext& ctx) {
   propagateElemTypeFromInputToOutput(ctx, 0, 0);
   if (!hasNInputShapes(ctx, 2)) {
     return;
@@ -56,92 +55,6 @@ static void GatherNDShapeInference(InferenceContext& ctx) {
   for (int i = static_cast<int>(last_index_dimension); i < data_rank; ++i) {
     *output_shape->add_dim() = data_shape.dim(i);
   }
-}
-
-OpSchema GatherNDSchema(bool allow_int32_indices) {
-  auto schema =
-      OpSchema()
-          .SetDoc(kDoc_GatherND_ver13)
-          .Attr(
-              "batch_dims",
-              "The number of leading batch dimensions shared by data and indices. "
-              "Index tuples address data axes starting at axis batch_dims.",
-              AttributeProto::INT,
-              static_cast<int64_t>(0))
-          .Input(0, "data", "Tensor of rank r >= 1.", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
-          .Input(
-              1,
-              "indices",
-              "Tensor of rank q >= 1. Each index must be in [-s, s-1], where s is the size of "
-              "the corresponding data axis after the batch dimensions. An out-of-bounds index is an error.",
-              allow_int32_indices ? "Tind" : "tensor(int64)",
-              OpSchema::Single,
-              true,
-              1,
-              OpSchema::NonDifferentiable)
-          .Output(
-              0,
-              "output",
-              "Tensor of rank q + r - indices_shape[-1] - 1 - batch_dims.",
-              "T",
-              OpSchema::Single,
-              true,
-              1,
-              OpSchema::Differentiable)
-          .TypeConstraint("T", OpSchema::all_tensor_types_ir4(), "Constrain input and output types to any tensor type.")
-          .TypeAndShapeInferenceFunction(GatherNDShapeInference);
-  if (allow_int32_indices) {
-    schema.SetDoc(
-        std::string(kDoc_GatherND_ver13) +
-        "\nOpset 29 adds support for int32 indices; int64 indices remain supported.\n");
-    schema.TypeConstraint("Tind", {types::Int32, types::Int64}, "Constrain indices to int32 or int64 tensors.");
-  }
-  return schema;
-}
-
-OpSchema ScatterNDSchema(bool allow_int32_indices) {
-  auto schema =
-      OpSchema()
-          .SetDoc(kDoc_ScatterND_ver18)
-          .Attr(
-              "reduction",
-              "Type of reduction to apply: none (default), add, mul, max, min. "
-              "'none': no reduction applied. "
-              "'add':  reduction using the addition operation. "
-              "'mul':  reduction using the multiplication operation. "
-              "'max': reduction using the maximum operation. "
-              "'min': reduction using the minimum operation.",
-              AttributeProto::STRING,
-              std::string("none"))
-          .Input(0, "data", "Tensor of rank r >= 1.", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
-          .Input(
-              1,
-              "indices",
-              "Tensor of rank q >= 1.",
-              allow_int32_indices ? "Tind" : "tensor(int64)",
-              OpSchema::Single,
-              true,
-              1,
-              OpSchema::NonDifferentiable)
-          .Input(
-              2,
-              "updates",
-              "Tensor of rank q + r - indices_shape[-1] - 1.",
-              "T",
-              OpSchema::Single,
-              true,
-              1,
-              OpSchema::Differentiable)
-          .Output(0, "output", "Tensor of rank r >= 1.", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
-          .TypeConstraint("T", OpSchema::all_tensor_types_ir4(), "Constrain input and output types to any tensor type.")
-          .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput);
-  if (allow_int32_indices) {
-    schema.SetDoc(
-        std::string(kDoc_ScatterND_ver18) +
-        "\nOpset 29 adds support for int32 indices; int64 indices remain supported.\n");
-    schema.TypeConstraint("Tind", {types::Int32, types::Int64}, "Constrain indices to int32 or int64 tensors.");
-  }
-  return schema;
 }
 
 void resizeShapeInferenceHelper(
@@ -502,56 +415,8 @@ void resizeShapeInference_opset7_to_10(InferenceContext& ctx) {
   }
 }
 
-std::function<void(OpSchema&)> PadDocGenerator(
-    const char* description,
-    const char* mode_description,
-    std::vector<std::string> op_schema,
-    std::string op_schema_description) {
-  return [=, op_schema = std::move(op_schema), op_schema_description = std::move(op_schema_description)](
-             OpSchema& schema) {
-    schema.SetDoc(description);
-    schema.Attr("mode", mode_description, AttributeProto::STRING, std::string("constant"));
-    schema.Input(0, "data", "Input tensor.", "T", OpSchema::Single, true, 1, OpSchema::Differentiable);
-    schema.Input(
-        1,
-        "pads",
-        "Tensor of integers indicating the number of padding elements to add or remove (if negative) "
-        "at the beginning and end of each axis. For 2D input tensor, it is the number of pixels. "
-        "`pads` should be a 1D tensor of shape [2 * num_axes] where `num_axes` refers to the number "
-        "of elements in the `axes` input or the input rank if `axes` are not provided explicitly. "
-        "`pads` format should be: [x1_begin, x2_begin, ..., x1_end, x2_end,...], "
-        "where xi_begin is the number of pad values added at the beginning of axis `axes[i]` and "
-        "xi_end, the number of pad values added at the end of axis `axes[i]`.",
-        "tensor(int64)",
-        OpSchema::Single,
-        true,
-        1,
-        OpSchema::NonDifferentiable);
-    schema.Input(
-        2,
-        "constant_value",
-        "(Optional) A scalar value to be used if the mode chosen is `constant` (by default it is 0, "
-        "empty string or False).",
-        "T",
-        OpSchema::Optional,
-        true,
-        1,
-        OpSchema::NonDifferentiable);
-    schema.Input(
-        3,
-        "axes",
-        "1-D tensor of axes that `pads` apply to. Negative value means counting dimensions "
-        "from the back. Accepted range is [-r, r-1] where r = rank(data). Behavior is undefined if an "
-        "axis is repeated. If not provided, all axes are assumed (`[0, 1, ..., input_rank-1]`).",
-        "Tind",
-        OpSchema::Optional,
-        true,
-        1,
-        OpSchema::NonDifferentiable);
-
-    schema.Output(0, "output", "Tensor after padding.", "T", OpSchema::Single, true, 1, OpSchema::Differentiable);
-    schema.TypeConstraint("T", op_schema, op_schema_description);
-    schema.TypeConstraint("Tind", {types::Int32, types::Int64}, "Constrain indices to integer types");
+std::function<void(OpSchema&)> PadDocGenerator() {
+  return [=](OpSchema& schema) {
     schema.TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
       // Type inference
       propagateElemTypeFromInputToOutput(ctx, 0, 0);

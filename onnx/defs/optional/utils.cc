@@ -4,7 +4,6 @@
 
 #include "onnx/defs/optional/utils.h"
 
-#include "onnx/defs/doc_strings.h"
 #include "onnx/defs/type_builders.h"
 
 namespace ONNX_NAMESPACE::defs::optional::utils {
@@ -34,19 +33,8 @@ static void OptionalInference(InferenceContext& ctx) {
   }
 }
 
-std::function<void(OpSchema&)> OptionalOpGenerator(
-    std::vector<std::string> tensor_and_sequence_types,
-    std::vector<std::string> optional_types) {
-  return [tensor_and_sequence_types = std::move(tensor_and_sequence_types),
-          optional_types = std::move(optional_types)](OpSchema& schema) {
-    schema.SetDoc(kDoc_Optional_ver15)
-        .Input(0, "input", "The input element.", "V", OpSchema::Optional)
-        .Attr("type", "Type of the element in the optional output", AttributeProto::TYPE_PROTO, OPTIONAL_VALUE)
-        .Output(0, "output", "The optional output enclosing the input element.", "O")
-        .TypeConstraint("V", tensor_and_sequence_types, "Constrain input type to all tensor and sequence types.")
-        .TypeConstraint("O", optional_types, "Constrain output type to all optional tensor or optional sequence types.")
-        .TypeAndShapeInferenceFunction(OptionalInference);
-  };
+std::function<void(OpSchema&)> OptionalOpGenerator() {
+  return [](OpSchema& schema) { schema.TypeAndShapeInferenceFunction(OptionalInference); };
 }
 
 static void OptionalHasElementInference(InferenceContext& ctx) {
@@ -63,19 +51,8 @@ static void OptionalHasElementInference(InferenceContext& ctx) {
   output_tensor_type->mutable_shape()->Clear();
 }
 
-std::function<void(OpSchema&)> OptionalHasElementOpGenerator(std::vector<std::string> o_types) {
-  return [o_types = std::move(o_types)](OpSchema& schema) {
-    schema.SetDoc(kDoc_OptionalHasElement_ver18)
-        .Input(0, "input", "The optional input.", "O", OpSchema::Optional)
-        .Output(
-            0,
-            "output",
-            "A scalar boolean tensor. If true, it indicates that optional-type input contains an element. Otherwise, it is empty.",
-            "B")
-        .TypeConstraint("O", o_types, "Constrain input type to optional, tensor and sequence types.")
-        .TypeConstraint("B", {types::Bool}, "Constrain output to a boolean tensor.")
-        .TypeAndShapeInferenceFunction(OptionalHasElementInference);
-  };
+std::function<void(OpSchema&)> OptionalHasElementOpGenerator() {
+  return [](OpSchema& schema) { schema.TypeAndShapeInferenceFunction(OptionalHasElementInference); };
 }
 
 static void OptionalGetElementInference(InferenceContext& ctx) {
@@ -97,21 +74,7 @@ static void OptionalGetElementInference(InferenceContext& ctx) {
   }
 }
 
-std::function<void(OpSchema&)> OptionalGetElementOpGenerator(
-    std::vector<std::string> optional_types,
-    std::vector<std::string> tensor_and_sequence_types) {
-  std::vector<std::string> opt_tensor_seq;
-  opt_tensor_seq.insert(opt_tensor_seq.begin(), optional_types.begin(), optional_types.end());
-  opt_tensor_seq.insert(opt_tensor_seq.end(), tensor_and_sequence_types.begin(), tensor_and_sequence_types.end());
-
-  return [opt_tensor_seq = std::move(opt_tensor_seq),
-          tensor_and_sequence_types = std::move(tensor_and_sequence_types)](OpSchema& schema) {
-    schema.SetDoc(kDoc_OptionalGetElement_ver18)
-        .Input(0, "input", "The optional input.", "O")
-        .Output(0, "output", "Output element in the optional input.", "V")
-        .TypeConstraint("O", opt_tensor_seq, "Constrain input type to optional, tensor and sequence types.")
-        .TypeConstraint("V", tensor_and_sequence_types, "Constrain output type to all tensor or sequence types.")
-        .TypeAndShapeInferenceFunction(OptionalGetElementInference);
-  };
+std::function<void(OpSchema&)> OptionalGetElementOpGenerator() {
+  return [](OpSchema& schema) { schema.TypeAndShapeInferenceFunction(OptionalGetElementInference); };
 }
 } // namespace ONNX_NAMESPACE::defs::optional::utils

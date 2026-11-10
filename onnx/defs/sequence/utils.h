@@ -14,8 +14,6 @@
 
 namespace ONNX_NAMESPACE::defs::sequence::utils {
 
-std::function<void(OpSchema&)> SplitToSequenceOpGenerator(
-    std::vector<std::string> input_types,
-    std::vector<std::string> output_types);
+std::function<void(OpSchema&)> SplitToSequenceOpGenerator();
 
 } // namespace ONNX_NAMESPACE::defs::sequence::utils

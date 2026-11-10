@@ -10,104 +10,11 @@
 
 namespace ONNX_NAMESPACE {
 
-static std::vector<std::string> GetSupportedDataTypesForReductionOps(bool supports8bit, bool supports_bool) {
-  auto data_types = OpSchema::numeric_types_for_math_reduction_ir4();
-  if (supports8bit) {
-    data_types.emplace_back("tensor(uint8)");
-    data_types.emplace_back("tensor(int8)");
-  }
-  if (supports_bool) {
-    data_types.emplace_back("tensor(bool)");
-  }
-
-  return data_types;
-}
-
 std::function<void(OpSchema&)> ReduceOpGenerator(
-    const char* name,
-    const char* empty_value,
-    bool supports_8bit_datatypes,
-    bool axes_input,
     const char* func_body,
-    const ContextDependentFunctionBodyBuilder& function_builder,
-    bool supports_boolean_datatype /* = false */,
-    bool float_types_only /* = false */) {
+    const ContextDependentFunctionBodyBuilder& function_builder) {
   return [=](OpSchema& schema) {
-    std::string doc = R"DOC(
-Computes the {name} of the input tensor's elements along the provided axes. The resulting
-tensor has the same rank as the input if `keepdims` equals 1. If `keepdims` equals 0, then
-the resulting tensor has the reduced dimension pruned. Input tensors of rank zero are
-valid. Reduction over an empty set of values yields {empty_value}.
-)DOC";
-    if (supports_boolean_datatype) {
-      doc += R"DOC(
-
-If the input data type is Boolean, the comparison should consider `False < True`.)DOC";
-    }
-    doc += R"DOC(
-
-The above behavior is similar to numpy, with the exception that numpy defaults `keepdims`
-to `False` instead of `True`.)DOC";
-
-    ReplaceAll(doc, "{name}", name);
-    ReplaceAll(doc, "{empty_value}", empty_value);
-    POPULATE_OP_DOC_STR(doc = doc;);
-    schema.SetDoc(doc.c_str());
-    schema.Attr(
-        "keepdims",
-        "Keep the reduced dimension or not, default 1 means keep reduced dimension.",
-        AttributeProto::INT,
-        static_cast<int64_t>(1));
-    schema.Input(0, "data", "An input tensor.", "T", OpSchema::Single, true, 1, OpSchema::Differentiable);
-    if (axes_input) {
-      schema.Attr(
-          "noop_with_empty_axes",
-          "Defines behavior when axes is not provided or is empty. "
-          "If false (default), reduction happens over all axes (similar to the case "
-          "when `axis=None` in numpy). "
-          "If true, reduction happens over an empty set of axes (similar to the case "
-          "when `axis=()` in numpy). "
-          "Note that reduction over an empty set of axes means that the reduction step "
-          "behaves like a no-op (identity function), but composite-reduction operators "
-          "will still perform the non-reduction steps as needed. "
-          "Thus, ReduceLogSum returns the Log of input tensor, and ReduceSumSquare "
-          "returns the Square of the input tensor, in this case.",
-          AttributeProto::INT,
-          static_cast<int64_t>(0));
-      schema.Input(
-          1,
-          "axes",
-          "Optional input list of integers, along which to reduce. "
-          "The default is to reduce over empty axes. "
-          "When axes is empty (either not provided or explicitly empty), behavior depends on 'noop_with_empty_axes': "
-          "reduction over all axes if 'noop_with_empty_axes' is false, "
-          "and reduction over the empty set of axes when 'noop_with_empty_axes' is true. "
-          "Accepted range is [-r, r-1] where r = rank(data).",
-          "tensor(int64)",
-          OpSchema::Optional,
-          true,
-          1,
-          OpSchema::NonDifferentiable);
-    } else {
-      schema.Attr(
-          "axes",
-          "A list of integers, along which to reduce. The default is to reduce over "
-          "all the dimensions of the input tensor. Accepted range is [-r, r-1] where r = rank(data).",
-          AttributeProto::INTS,
-          OPTIONAL_VALUE);
-    }
-    schema.Output(0, "reduced", "Reduced output tensor.", "T", OpSchema::Single, true, 1, OpSchema::Differentiable);
-    if (float_types_only) {
-      schema.TypeConstraint("T", OpSchema::all_float_types_ir4(), "Constrain input and output types to float tensors.");
-    } else {
-      schema.TypeConstraint(
-          "T",
-          GetSupportedDataTypesForReductionOps(supports_8bit_datatypes, supports_boolean_datatype),
-          supports_boolean_datatype ? "Constrain input and output types to numeric and Boolean tensors."
-                                    : "Constrain input and output types to numeric tensors.");
-    }
     if (func_body) {
-      schema.FunctionBody(func_body);
     } else if (function_builder) {
       schema.SetContextDependentFunctionBodyBuilder(function_builder);
     }

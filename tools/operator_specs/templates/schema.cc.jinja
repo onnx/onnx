@@ -1,0 +1,25 @@
+{# Copyright (c) ONNX Project Contributors #}
+{# SPDX-License-Identifier: Apache-2.0 #}
+{#- Functions returning the OpSchema of each version of one operator. -#}
+{% if op.is_ml %}
+#ifdef ONNX_ML
+{% endif %}
+#include "onnx/defs/generated/schemas.h"
+
+namespace ONNX_NAMESPACE::generated::{{ op.namespace }} {
+{% for v in op.versions %}
+
+// Generated from {{ v.source }}.
+OpSchema {{ v.function_name }}() {
+  OpSchema schema;
+{% for call in v.cpp_calls() %}
+  schema.{{ call }};
+{% endfor %}
+  return schema;
+}
+{% endfor %}
+
+} // namespace ONNX_NAMESPACE::generated::{{ op.namespace }}
+{% if op.is_ml %}
+#endif // ONNX_ML
+{% endif %}
