@@ -47,7 +47,7 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#CumSum">CumSum</a>|<a href="Changelog.md#CumSum-14">14</a>, <a href="Changelog.md#CumSum-11">11</a>|
 |<a href="#DFT">DFT</a>|<a href="Changelog.md#DFT-20">20</a>, <a href="Changelog.md#DFT-17">17</a>|
 |<a href="#DeformConv">DeformConv</a>|<a href="Changelog.md#DeformConv-22">22</a>, <a href="Changelog.md#DeformConv-19">19</a>|
-|<a href="#DequantizeLinear">DequantizeLinear</a>|<a href="Changelog.md#DequantizeLinear-28">28</a>, <a href="Changelog.md#DequantizeLinear-25">25</a>, <a href="Changelog.md#DequantizeLinear-24">24</a>, <a href="Changelog.md#DequantizeLinear-23">23</a>, <a href="Changelog.md#DequantizeLinear-21">21</a>, <a href="Changelog.md#DequantizeLinear-19">19</a>, <a href="Changelog.md#DequantizeLinear-13">13</a>, <a href="Changelog.md#DequantizeLinear-10">10</a>|
+|<a href="#DequantizeLinear">DequantizeLinear</a>|<a href="Changelog.md#DequantizeLinear-29">29</a>, <a href="Changelog.md#DequantizeLinear-28">28</a>, <a href="Changelog.md#DequantizeLinear-25">25</a>, <a href="Changelog.md#DequantizeLinear-24">24</a>, <a href="Changelog.md#DequantizeLinear-23">23</a>, <a href="Changelog.md#DequantizeLinear-21">21</a>, <a href="Changelog.md#DequantizeLinear-19">19</a>, <a href="Changelog.md#DequantizeLinear-13">13</a>, <a href="Changelog.md#DequantizeLinear-10">10</a>|
 |<a href="#Det">Det</a>|<a href="Changelog.md#Det-22">22</a>, <a href="Changelog.md#Det-11">11</a>|
 |<a href="#Div">Div</a>|<a href="Changelog.md#Div-14">14</a>, <a href="Changelog.md#Div-13">13</a>, <a href="Changelog.md#Div-7">7</a>, <a href="Changelog.md#Div-6">6</a>, <a href="Changelog.md#Div-1">1</a>|
 |<a href="#Dropout">Dropout</a>|<a href="Changelog.md#Dropout-22">22</a>, <a href="Changelog.md#Dropout-13">13</a>, <a href="Changelog.md#Dropout-12">12</a>, <a href="Changelog.md#Dropout-10">10</a>, <a href="Changelog.md#Dropout-7">7</a>, <a href="Changelog.md#Dropout-6">6</a>, <a href="Changelog.md#Dropout-1">1</a>|
@@ -108,7 +108,7 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#Pow">Pow</a>|<a href="Changelog.md#Pow-15">15</a>, <a href="Changelog.md#Pow-13">13</a>, <a href="Changelog.md#Pow-12">12</a>, <a href="Changelog.md#Pow-7">7</a>, <a href="Changelog.md#Pow-1">1</a>|
 |<a href="#QLinearConv">QLinearConv</a>|<a href="Changelog.md#QLinearConv-10">10</a>|
 |<a href="#QLinearMatMul">QLinearMatMul</a>|<a href="Changelog.md#QLinearMatMul-21">21</a>, <a href="Changelog.md#QLinearMatMul-10">10</a>|
-|<a href="#QuantizeLinear">QuantizeLinear</a>|<a href="Changelog.md#QuantizeLinear-28">28</a>, <a href="Changelog.md#QuantizeLinear-25">25</a>, <a href="Changelog.md#QuantizeLinear-24">24</a>, <a href="Changelog.md#QuantizeLinear-23">23</a>, <a href="Changelog.md#QuantizeLinear-21">21</a>, <a href="Changelog.md#QuantizeLinear-19">19</a>, <a href="Changelog.md#QuantizeLinear-13">13</a>, <a href="Changelog.md#QuantizeLinear-10">10</a>|
+|<a href="#QuantizeLinear">QuantizeLinear</a>|<a href="Changelog.md#QuantizeLinear-29">29</a>, <a href="Changelog.md#QuantizeLinear-28">28</a>, <a href="Changelog.md#QuantizeLinear-25">25</a>, <a href="Changelog.md#QuantizeLinear-24">24</a>, <a href="Changelog.md#QuantizeLinear-23">23</a>, <a href="Changelog.md#QuantizeLinear-21">21</a>, <a href="Changelog.md#QuantizeLinear-19">19</a>, <a href="Changelog.md#QuantizeLinear-13">13</a>, <a href="Changelog.md#QuantizeLinear-10">10</a>|
 |<a href="#RNN">RNN</a>|<a href="Changelog.md#RNN-22">22</a>, <a href="Changelog.md#RNN-14">14</a>, <a href="Changelog.md#RNN-7">7</a>, <a href="Changelog.md#RNN-1">1</a>|
 |<a href="#RandomNormal">RandomNormal</a>|<a href="Changelog.md#RandomNormal-22">22</a>, <a href="Changelog.md#RandomNormal-1">1</a>|
 |<a href="#RandomNormalLike">RandomNormalLike</a>|<a href="Changelog.md#RandomNormalLike-22">22</a>, <a href="Changelog.md#RandomNormalLike-1">1</a>|
@@ -13407,19 +13407,36 @@ expect(node, inputs=[x], outputs=[y], name="test_depthtospace_example")
   is the same as `x_scale`. The output type also determines the precision of the multiplication operation.
 
 
+  When `block_shape` is specified, multi-axis blocked dequantization is used instead of the
+  scalar, per-axis, or single-axis blocked modes described above. For input shape
+  `[D0, ..., Dn]` and `block_shape=[B0, ..., Bn]`, the scale and optional zero point
+  must have shape `[ceil(D0/B0), ..., ceil(Dn/Bn)]`. At input index `[i0, ..., in]`,
+  the scale and zero point are selected at `[floor(i0/B0), ..., floor(in/Bn)]`.
+  Edge blocks may be smaller than `block_shape`. `axis` is ignored and `block_size`
+  must be zero. Omitting `block_shape` preserves the existing quantization modes.
+  The data types, zero-point behavior, and arithmetic precision are unchanged.
+
+  For example, an FP8 input of shape `[256, 256]` with `block_shape=[128, 128]`
+  and FP32 scales `[[1, 2], [3, 4]]` uses one scale per 128 by 128 tile.
+  An all-ones input produces four quadrants containing 1, 2, 3, and 4.
+  For stacked experts `[E, O, I]`, use `block_shape=[1, 128, 128]` and scales
+  `[E, ceil(O/128), ceil(I/128)]` to keep the experts independent.
+
 #### Version
 
-This version of the operator has been available since version 28 of the default ONNX operator set.
+This version of the operator has been available since version 29 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#DequantizeLinear-10">10</a>, <a href="Changelog.md#DequantizeLinear-13">13</a>, <a href="Changelog.md#DequantizeLinear-19">19</a>, <a href="Changelog.md#DequantizeLinear-21">21</a>, <a href="Changelog.md#DequantizeLinear-23">23</a>, <a href="Changelog.md#DequantizeLinear-24">24</a>, <a href="Changelog.md#DequantizeLinear-25">25</a>
+Other versions of this operator: <a href="Changelog.md#DequantizeLinear-10">10</a>, <a href="Changelog.md#DequantizeLinear-13">13</a>, <a href="Changelog.md#DequantizeLinear-19">19</a>, <a href="Changelog.md#DequantizeLinear-21">21</a>, <a href="Changelog.md#DequantizeLinear-23">23</a>, <a href="Changelog.md#DequantizeLinear-24">24</a>, <a href="Changelog.md#DequantizeLinear-25">25</a>, <a href="Changelog.md#DequantizeLinear-28">28</a>
 
 #### Attributes
 
 <dl>
 <dt><tt>axis</tt> : int (default is 1)</dt>
-<dd>(Optional) The axis of the dequantizing dimension of the input tensor. Used for per-axis and blocked quantization. Negative value means counting dimensions from the back. Accepted range is `[-r, r-1]` where `r = rank(input)`.</dd>
+<dd>(Optional) The axis of the dequantizing dimension of the input tensor. Used for per-axis and blocked quantization. Negative value means counting dimensions from the back. Accepted range is `[-r, r-1]` where `r = rank(input)`. Ignored when `block_shape` is specified.</dd>
+<dt><tt>block_shape</tt> : list of ints</dt>
+<dd>(Optional) Multi-axis block sizes, with one positive integer per input dimension. When specified, x_scale and x_zero_point must have the same rank as x, with dimension ceil(x.shape[i] / block_shape[i]) along each axis i. Partial edge blocks are supported. Use 1 for an unblocked dimension. axis is ignored and block_size must be zero.</dd>
 <dt><tt>block_size</tt> : int (default is 0)</dt>
-<dd>(Optional) The size of the quantization block (number of times every scale is replicated). Used only for blocked quantization. The block size is a positive integer. Given `x` shape `(D0, ..., Di, ..., Dn)`, `y_scale` shape `(S0, ... Si, ...Sn)` and `axis=i`, the accepted range is `[ceil(Di/Si), ceil(Di/(Si-1))-1]`</dd>
+<dd>(Optional) The size of the quantization block (number of times every scale is replicated). Used only for blocked quantization. The block size is a positive integer. Given `x` shape `(D0, ..., Di, ..., Dn)`, `y_scale` shape `(S0, ... Si, ...Sn)` and `axis=i`, the accepted range is `[ceil(Di/Si), ceil(Di/(Si-1))-1]`. Must be zero when `block_shape` is specified.</dd>
 <dt><tt>output_dtype</tt> : int (default is 0)</dt>
 <dd>(Optional) The output data type. If not supplied, the output data type is inferred from `x_scale` data type (`T2`)</dd>
 </dl>
@@ -13430,7 +13447,7 @@ Other versions of this operator: <a href="Changelog.md#DequantizeLinear-10">10</
 <dt><tt>x</tt> : T1</dt>
 <dd>N-D quantized input tensor to be de-quantized.</dd>
 <dt><tt>x_scale</tt> : T2</dt>
-<dd>Scale for input `x`. For per-tensor/layer dequantization the scale is a scalar, for per per-axis dequantization it is a 1-D Tensor and for blocked dequantization it has the same shape as the input, except for one dimension in which blocking is performed.</dd>
+<dd>Scale for input `x`. For per-tensor/layer dequantization the scale is a scalar, for per-axis dequantization it is a 1-D Tensor and for blocked dequantization it has the same shape as the input, except for one dimension in which blocking is performed. With `block_shape`, it is a grid with dimension `ceil(x.shape[i] / block_shape[i])` along each axis `i`.</dd>
 <dt><tt>x_zero_point</tt> (optional) : T1</dt>
 <dd>Zero point for input `x`. Shape must match x_scale. It's optional. Zero point is 0 when it's not specified.</dd>
 </dl>
@@ -13812,6 +13829,40 @@ expect(
     outputs=[y],
     name="test_dequantizelinear_int4",
 )
+```
+
+</details>
+
+
+<details>
+<summary>multi_axis_blocked</summary>
+
+```python
+for name, shape, blocks in [
+    ("tiles", (256, 256), [128, 128]),
+    ("partial", (259, 257), [128, 128]),
+    ("experts", (2, 129, 131), [1, 128, 128]),
+]:
+    node = onnx.helper.make_node(
+        "DequantizeLinear", ["x", "x_scale"], ["y"], block_shape=blocks
+    )
+    x = np.ones(
+        shape,
+        dtype=onnx.helper.tensor_dtype_to_np_dtype(TensorProto.FLOAT8E4M3FN),
+    )
+    grid = tuple((d + b - 1) // b for d, b in zip(shape, blocks, strict=True))
+    x_scale = np.arange(1, np.prod(grid) + 1, dtype=np.float32).reshape(grid)
+    indices = np.ix_(
+        *(np.arange(d) // b for d, b in zip(shape, blocks, strict=True))
+    )
+    y = x.astype(np.float32) * x_scale[indices]
+    expect(
+        node,
+        inputs=[x, x_scale],
+        outputs=[y],
+        name=f"test_dequantizelinear_multi_axis_{name}",
+        opset_imports=[onnx.helper.make_opsetid("", 29)],
+    )
 ```
 
 </details>
@@ -29246,19 +29297,37 @@ for quant_type_name in ["uint8", "int8"]:
     blocking is performed. Given `x` shape `(D0, ..., Di, ..., Dn)`, `axis=i`, and block size `B`: `y_scale` shape is
     `(D0, ..., ceil(Di/B), ..., Dn)`.
 
+  When `block_shape` is specified, multi-axis blocked quantization is used instead of the
+  scalar, per-axis, or single-axis blocked modes described above. For input shape
+  `[D0, ..., Dn]` and `block_shape=[B0, ..., Bn]`, the scale and optional zero point
+  must have shape `[ceil(D0/B0), ..., ceil(Dn/Bn)]`. At input index `[i0, ..., in]`,
+  the scale and zero point are selected at `[floor(i0/B0), ..., floor(in/Bn)]`.
+  Edge blocks may be smaller than `block_shape`. `axis` is ignored and `block_size`
+  must be zero. Omitting `block_shape` preserves the existing quantization modes.
+  Rounding, saturation, division precision, output types, and zero-point behavior
+  are unchanged.
+
+  For example, an input of shape `[256, 256]` with `block_shape=[128, 128]`
+  and FP32 scales `[[1, 2], [4, 8]]` uses one scale per 128 by 128 tile.
+  An all-ones input quantized to FP8 produces quadrants containing 1, 0.5, 0.25, and 0.125.
+  For stacked experts `[E, O, I]`, use `block_shape=[1, 128, 128]` and scales
+  `[E, ceil(O/128), ceil(I/128)]` to keep the experts independent.
+
 #### Version
 
-This version of the operator has been available since version 28 of the default ONNX operator set.
+This version of the operator has been available since version 29 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#QuantizeLinear-10">10</a>, <a href="Changelog.md#QuantizeLinear-13">13</a>, <a href="Changelog.md#QuantizeLinear-19">19</a>, <a href="Changelog.md#QuantizeLinear-21">21</a>, <a href="Changelog.md#QuantizeLinear-23">23</a>, <a href="Changelog.md#QuantizeLinear-24">24</a>, <a href="Changelog.md#QuantizeLinear-25">25</a>
+Other versions of this operator: <a href="Changelog.md#QuantizeLinear-10">10</a>, <a href="Changelog.md#QuantizeLinear-13">13</a>, <a href="Changelog.md#QuantizeLinear-19">19</a>, <a href="Changelog.md#QuantizeLinear-21">21</a>, <a href="Changelog.md#QuantizeLinear-23">23</a>, <a href="Changelog.md#QuantizeLinear-24">24</a>, <a href="Changelog.md#QuantizeLinear-25">25</a>, <a href="Changelog.md#QuantizeLinear-28">28</a>
 
 #### Attributes
 
 <dl>
 <dt><tt>axis</tt> : int (default is 1)</dt>
-<dd>(Optional) The axis of the dequantizing dimension of the input tensor. Used only for per-axis and blocked quantization. Negative value means counting dimensions from the back. Accepted range is `[-r, r-1]` where `r = rank(input)`. When the rank of the input is 1, per-tensor quantization is applied, rendering the axis unnecessary in this scenario.</dd>
+<dd>(Optional) The axis of the dequantizing dimension of the input tensor. Used only for per-axis and blocked quantization. Negative value means counting dimensions from the back. Accepted range is `[-r, r-1]` where `r = rank(input)`. When the rank of the input is 1, per-tensor quantization is applied, rendering the axis unnecessary in this scenario. Ignored when `block_shape` is specified.</dd>
+<dt><tt>block_shape</tt> : list of ints</dt>
+<dd>(Optional) Multi-axis block sizes, with one positive integer per input dimension. When specified, y_scale and y_zero_point must have the same rank as x, with dimension ceil(x.shape[i] / block_shape[i]) along each axis i. Partial edge blocks are supported. Use 1 for an unblocked dimension. axis is ignored and block_size must be zero.</dd>
 <dt><tt>block_size</tt> : int (default is 0)</dt>
-<dd>(Optional) The size of the quantization block (number of times every scale is replicated). Used only for blocked quantization. The block size is a positive integer. Given `x` shape `(D0, ..., Di, ..., Dn)`, `y_scale` shape `(S0, ... Si, ...Sn)` and `axis=i`, the accepted range is `[ceil(Di/Si), ceil(Di/(Si-1))-1]`</dd>
+<dd>(Optional) The size of the quantization block (number of times every scale is replicated). Used only for blocked quantization. The block size is a positive integer. Given `x` shape `(D0, ..., Di, ..., Dn)`, `y_scale` shape `(S0, ... Si, ...Sn)` and `axis=i`, the accepted range is `[ceil(Di/Si), ceil(Di/(Si-1))-1]`. Must be zero when `block_shape` is specified.</dd>
 <dt><tt>output_dtype</tt> : int (default is 0)</dt>
 <dd>(Optional) The output data type. If not supplied, the output data type is inferred from `y_zero_point` data type (`T3`). If neither `output_dtype` nor `y_zero_point` are supplied, output data type is uint8. If both `output_dtype` and `y_zero_point` are specified, `output_dtype` must be `T3`.</dd>
 <dt><tt>precision</tt> : int (default is 0)</dt>
@@ -29273,7 +29342,7 @@ Other versions of this operator: <a href="Changelog.md#QuantizeLinear-10">10</a>
 <dt><tt>x</tt> : T1</dt>
 <dd>N-D full precision Input tensor to be quantized.</dd>
 <dt><tt>y_scale</tt> : T2</dt>
-<dd>Scale for doing quantization to get `y`. For per-tensor/layer quantization the scale is a scalar, for per-axis quantization it is a 1-D Tensor and for blocked quantization it has the same shape as the input, except for one dimension in which blocking is performed.</dd>
+<dd>Scale for doing quantization to get `y`. For per-tensor/layer quantization the scale is a scalar, for per-axis quantization it is a 1-D Tensor and for blocked quantization it has the same shape as the input, except for one dimension in which blocking is performed. With `block_shape`, it is a grid with dimension `ceil(x.shape[i] / block_shape[i])` along each axis `i`.</dd>
 <dt><tt>y_zero_point</tt> (optional) : T3</dt>
 <dd>Zero point for doing quantization to get `y`. Shape must match `y_scale`. Default is uint8 with zero point of 0 if it's not specified.</dd>
 </dl>
@@ -29700,6 +29769,51 @@ expect(
     outputs=[y],
     name="test_quantizelinear_int4",
 )
+```
+
+</details>
+
+
+<details>
+<summary>multi_axis_blocked</summary>
+
+```python
+for name, shape, blocks in [
+    ("tiles", (256, 256), [128, 128]),
+    ("partial", (259, 257), [128, 128]),
+    ("experts", (2, 129, 131), [1, 128, 128]),
+]:
+    for output_dtype in [TensorProto.FLOAT8E4M3FN, TensorProto.INT8]:
+        dtype = onnx.helper.tensor_dtype_to_np_dtype(output_dtype)
+        grid = tuple(
+            (d + b - 1) // b for d, b in zip(shape, blocks, strict=True)
+        )
+        scale = np.arange(1, np.prod(grid) + 1, dtype=np.float32).reshape(grid)
+        zero_point = np.zeros(grid, dtype=dtype)
+        if output_dtype == TensorProto.INT8:
+            zero_point[:] = np.arange(np.prod(grid)).reshape(grid)
+        indices = np.ix_(
+            *(np.arange(d) // b for d, b in zip(shape, blocks, strict=True))
+        )
+        x = np.full(shape, 3.25, dtype=np.float32)
+        scaled = x / scale[indices]
+        if output_dtype == TensorProto.INT8:
+            y = (np.rint(scaled) + zero_point[indices]).astype(dtype)
+        else:
+            y = scaled.astype(dtype)
+        node = onnx.helper.make_node(
+            "QuantizeLinear",
+            ["x", "y_scale", "y_zero_point"],
+            ["y"],
+            block_shape=blocks,
+        )
+        expect(
+            node,
+            inputs=[x, scale, zero_point],
+            outputs=[y],
+            name=f"test_quantizelinear_multi_axis_{name}_{output_dtype}",
+            opset_imports=[onnx.helper.make_opsetid("", 29)],
+        )
 ```
 
 </details>

@@ -14,6 +14,45 @@ from onnx.helper import make_tensor
 
 class QuantizeLinear(Base):
     @staticmethod
+    def export_multi_axis_blocked() -> None:
+        for name, shape, blocks in [
+            ("tiles", (256, 256), [128, 128]),
+            ("partial", (259, 257), [128, 128]),
+            ("experts", (2, 129, 131), [1, 128, 128]),
+        ]:
+            for output_dtype in [TensorProto.FLOAT8E4M3FN, TensorProto.INT8]:
+                dtype = onnx.helper.tensor_dtype_to_np_dtype(output_dtype)
+                grid = tuple(
+                    (d + b - 1) // b for d, b in zip(shape, blocks, strict=True)
+                )
+                scale = np.arange(1, np.prod(grid) + 1, dtype=np.float32).reshape(grid)
+                zero_point = np.zeros(grid, dtype=dtype)
+                if output_dtype == TensorProto.INT8:
+                    zero_point[:] = np.arange(np.prod(grid)).reshape(grid)
+                indices = np.ix_(
+                    *(np.arange(d) // b for d, b in zip(shape, blocks, strict=True))
+                )
+                x = np.full(shape, 3.25, dtype=np.float32)
+                scaled = x / scale[indices]
+                if output_dtype == TensorProto.INT8:
+                    y = (np.rint(scaled) + zero_point[indices]).astype(dtype)
+                else:
+                    y = scaled.astype(dtype)
+                node = onnx.helper.make_node(
+                    "QuantizeLinear",
+                    ["x", "y_scale", "y_zero_point"],
+                    ["y"],
+                    block_shape=blocks,
+                )
+                expect(
+                    node,
+                    inputs=[x, scale, zero_point],
+                    outputs=[y],
+                    name=f"test_quantizelinear_multi_axis_{name}_{output_dtype}",
+                    opset_imports=[onnx.helper.make_opsetid("", 29)],
+                )
+
+    @staticmethod
     def export() -> None:
         node = onnx.helper.make_node(
             "QuantizeLinear",

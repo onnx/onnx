@@ -410,6 +410,35 @@ class TestAutomaticUpgrade(automatic_conversion_test_base.TestAutomaticConversio
             [TensorProto.INT8, TensorProto.FLOAT, TensorProto.INT8],
         )
 
+    @pytest.mark.parametrize(
+        ("scale_shape", "attrs"),
+        [([], {}), ([5], {"axis": 1}), ([3, 2], {"axis": 1, "block_size": 3})],
+    )
+    def test_DequantizeLinear_28_to_29(self, scale_shape, attrs) -> None:
+        self._test_op_upgrade(
+            "DequantizeLinear",
+            28,
+            [[3, 5], scale_shape, scale_shape],
+            [[3, 5]],
+            [TensorProto.INT8, TensorProto.FLOAT, TensorProto.INT8],
+            attrs=attrs,
+        )
+
+    @pytest.mark.parametrize(
+        ("scale_shape", "attrs"),
+        [([], {}), ([5], {"axis": 1}), ([3, 2], {"axis": 1, "block_size": 3})],
+    )
+    def test_QuantizeLinear_28_to_29(self, scale_shape, attrs) -> None:
+        self._test_op_upgrade(
+            "QuantizeLinear",
+            28,
+            [[3, 5], scale_shape, scale_shape],
+            [[3, 5]],
+            [TensorProto.FLOAT, TensorProto.FLOAT, TensorProto.INT8],
+            output_types=[TensorProto.INT8],
+            attrs=attrs,
+        )
+
     def test_Det_1(self) -> None:
         self._test_op_upgrade("Det", 11, [[3, 5, 5]], [[3]])
 

@@ -8347,6 +8347,195 @@ class TestShapeInference(TestShapeInferenceHelper):
             graph, [make_tensor_value_info("y", elem_type, (30, 4, 5))]
         )
 
+    @pytest.mark.parametrize(
+        ("shape", "grid", "blocks"),
+        [
+            ((256, 256), (2, 2), [128, 128]),
+            ((259, 257), (3, 3), [128, 128]),
+            ((3, 259, 257), (3, 3, 3), [1, 128, 128]),
+            (("E", "O", 257), ("E", None, 3), [1, 128, 128]),
+            ((None, None), (None, None), [128, 128]),
+            ((0, 5), (0, 2), [2, 3]),
+            ((5, 7), (1, 1), [8, 8]),
+            ((5, 7), (1, 1), [2**63 - 1, 2**63 - 1]),
+            ((), (), []),
+        ],
+    )
+    @pytest.mark.parametrize(
+        ("quantized_dtype", "dequantized_dtype"),
+        [
+            (0, 0),
+            (TensorProto.INT16, TensorProto.FLOAT16),
+            (TensorProto.FLOAT8E4M3FN, TensorProto.BFLOAT16),
+        ],
+    )
+    @pytest.mark.parametrize("op_type", ["QuantizeLinear", "DequantizeLinear"])
+    def test_quantization_multi_axis(
+        self, shape, grid, blocks, quantized_dtype, dequantized_dtype, op_type
+    ) -> None:
+        quantize = op_type == "QuantizeLinear"
+        output_dtype = quantized_dtype if quantize else dequantized_dtype
+        elem_type = (
+            (output_dtype or TensorProto.UINT8)
+            if quantize
+            else TensorProto.FLOAT8E4M3FN
+        )
+        graph = self._make_graph(
+            [
+                ("x", TensorProto.FLOAT if quantize else elem_type, shape),
+                ("s", TensorProto.FLOAT, grid),
+                ("z", elem_type, grid),
+            ],
+            [
+                make_node(
+                    op_type,
+                    ["x", "s", "z"],
+                    ["y"],
+                    output_dtype=output_dtype,
+                )
+            ],
+            [],
+        )
+        graph.node[-1].attribute.append(
+            helper.make_attribute(
+                "block_shape", blocks, attr_type=onnx.AttributeProto.INTS
+            )
+        )
+        self._assert_inferred(
+            graph,
+            [
+                make_tensor_value_info(
+                    "y",
+                    elem_type if quantize else output_dtype or TensorProto.FLOAT,
+                    shape,
+                )
+            ],
+            opset_imports=[make_opsetid(ONNX_DOMAIN, 29)],
+        )
+
+    @pytest.mark.parametrize(
+        ("shape", "grid", "zero_grid", "blocks", "block_size", "message"),
+        [
+            ((5, 7), (2, 3), None, [3], 0, "one entry"),
+            ((5, 7), (2, 3), None, [], 0, "one entry"),
+            ((5, 7), (2, 3), None, [0, 3], 0, "positive"),
+            (None, None, None, [-1, 3], 0, "positive"),
+            (None, None, None, [3, 3], 1, "block_size must be zero"),
+            ((5, 7), (), None, [3, 3], 0, "ranks must match"),
+            ((5, 7), (2,), None, [3, 3], 0, "ranks must match"),
+            ((5, 7), (1, 3), None, [3, 3], 0, "grid dimension"),
+            ((5, 7), (2, 4), None, [3, 3], 0, "grid dimension"),
+            ((5, 7), (2, 3), (2, 1), [3, 3], 0, "grid dimension"),
+            (("N", 7), (2, 3), (3, 3), [3, 3], 0, "grid shapes must match"),
+            (None, (2,), None, [3, 3], 0, "ranks must match"),
+            ((5, 7), None, (2, 4), [3, 3], 0, "grid dimension"),
+        ],
+    )
+    @pytest.mark.parametrize("op_type", ["QuantizeLinear", "DequantizeLinear"])
+    def test_quantization_multi_axis_invalid(
+        self, shape, grid, zero_grid, blocks, block_size, message, op_type
+    ) -> None:
+        inputs = [
+            (
+                "x",
+                TensorProto.FLOAT if op_type == "QuantizeLinear" else TensorProto.INT8,
+                shape,
+            ),
+            ("s", TensorProto.FLOAT, grid),
+        ]
+        if zero_grid is not None:
+            inputs.append(("z", TensorProto.INT8, zero_grid))
+        graph = self._make_graph(
+            inputs,
+            [
+                make_node(
+                    op_type,
+                    [item[0] for item in inputs],
+                    ["y"],
+                    block_size=block_size,
+                )
+            ],
+            [],
+        )
+        graph.node[-1].attribute.append(
+            helper.make_attribute(
+                "block_shape", blocks, attr_type=onnx.AttributeProto.INTS
+            )
+        )
+        with pytest.raises(onnx.shape_inference.InferenceError, match=message):
+            self._inferred(graph, opset_imports=[make_opsetid(ONNX_DOMAIN, 29)])
+
+    @pytest.mark.parametrize("op_type", ["QuantizeLinear", "DequantizeLinear"])
+    def test_quantization_multi_axis_unknown_ranks(self, op_type) -> None:
+        graph = self._make_graph(
+            [
+                (
+                    "x",
+                    TensorProto.FLOAT
+                    if op_type == "QuantizeLinear"
+                    else TensorProto.INT8,
+                    None,
+                ),
+                ("s", TensorProto.FLOAT, None),
+            ],
+            [make_node(op_type, ["x", "s"], ["y"], block_shape=[128, 128])],
+            [],
+        )
+        self._assert_inferred(
+            graph,
+            [
+                make_tensor_value_info(
+                    "y",
+                    TensorProto.UINT8
+                    if op_type == "QuantizeLinear"
+                    else TensorProto.FLOAT,
+                    (None, None),
+                )
+            ],
+            opset_imports=[make_opsetid(ONNX_DOMAIN, 29)],
+        )
+
+    @pytest.mark.parametrize("op_type", ["QuantizeLinear", "DequantizeLinear"])
+    def test_quantization_multi_axis_versioned_schema(self, op_type) -> None:
+        old = defs.get_schema(op_type, 28)
+        new = defs.get_schema(op_type, 29)
+        assert old.since_version == 28
+        assert new.since_version == 29
+        assert "block_shape" not in old.attributes
+        assert "block_shape" in new.attributes
+        assert [t.allowed_type_strs for t in old.type_constraints] == [
+            t.allowed_type_strs for t in new.type_constraints
+        ]
+        graph = make_graph(
+            [make_node(op_type, ["x", "s"], ["y"], block_shape=[128, 128])],
+            "old_schema",
+            [
+                make_tensor_value_info(
+                    "x",
+                    TensorProto.FLOAT
+                    if op_type == "QuantizeLinear"
+                    else TensorProto.FLOAT8E4M3FN,
+                    (256, 256),
+                ),
+                make_tensor_value_info("s", TensorProto.FLOAT, (2, 2)),
+            ],
+            [
+                make_tensor_value_info(
+                    "y",
+                    TensorProto.UINT8
+                    if op_type == "QuantizeLinear"
+                    else TensorProto.FLOAT,
+                    (256, 256),
+                )
+            ],
+        )
+        with pytest.raises(
+            checker.ValidationError, match="Unrecognized attribute: block_shape"
+        ):
+            checker.check_model(
+                make_model(graph, opset_imports=[make_opsetid(ONNX_DOMAIN, 28)])
+            )
+
     def test_dynamicquantizelinear(self) -> None:
         graph = self._make_graph(
             [("x", TensorProto.FLOAT, (30, 4, 5))],

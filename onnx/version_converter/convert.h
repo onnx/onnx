@@ -31,6 +31,7 @@
 #include "onnx/version_converter/adapters/cast_9_8.h"
 #include "onnx/version_converter/adapters/clip_10_11.h"
 #include "onnx/version_converter/adapters/compatible.h"
+#include "onnx/version_converter/adapters/dequantize_linear_29_28.h"
 #include "onnx/version_converter/adapters/dropout_11_12.h"
 #include "onnx/version_converter/adapters/extend_supported_types.h"
 #include "onnx/version_converter/adapters/gemm_29_28.h"
@@ -49,6 +50,7 @@
 #include "onnx/version_converter/adapters/pad_19_18.h"
 #include "onnx/version_converter/adapters/q_dq_21_20.h"
 #include "onnx/version_converter/adapters/quantize_linear_28_27.h"
+#include "onnx/version_converter/adapters/quantize_linear_29_28.h"
 #include "onnx/version_converter/adapters/range_27_26.h"
 #include "onnx/version_converter/adapters/reduce_log_sum_27_28.h"
 #include "onnx/version_converter/adapters/reshape_4_5.h"
@@ -1124,12 +1126,16 @@ class DefaultVersionConverter : public BaseVersionConverter {
 
     /******** 28 -> 29 ********/
     registerAdapter(std::make_unique<MeanVarianceNormalization_28_29>());
+    registerAdapter(std::make_unique<CompatibleAdapter>("DequantizeLinear", OpSetID(28), OpSetID(29)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("QuantizeLinear", OpSetID(28), OpSetID(29)));
     registerAdapter(std::make_unique<CompatibleAdapter>("Gemm", OpSetID(28), OpSetID(29)));
     registerAdapter(std::make_unique<CompatibleAdapter>("GatherND", OpSetID(28), OpSetID(29)));
     registerAdapter(std::make_unique<CompatibleAdapter>("ScatterND", OpSetID(28), OpSetID(29)));
 
     /******** 29 -> 28 ********/
     registerAdapter(std::make_unique<MeanVarianceNormalization_29_28>());
+    registerAdapter(std::make_unique<DequantizeLinear_29_28>());
+    registerAdapter(std::make_unique<QuantizeLinear_29_28>());
     registerAdapter(std::make_unique<Gemm_29_28>());
     registerAdapter(std::make_unique<NDIndices_29_28>("GatherND"));
     registerAdapter(std::make_unique<NDIndices_29_28>("ScatterND"));

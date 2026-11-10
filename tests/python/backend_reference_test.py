@@ -13,7 +13,7 @@ import version_utils
 
 import onnx.backend.base
 import onnx.backend.test
-from onnx import ModelProto
+from onnx import ModelProto, TensorProto
 from onnx.backend.base import Device, DeviceType
 from onnx.reference import ReferenceEvaluator
 
@@ -159,6 +159,9 @@ if version_utils.numpy_older_than("2.0"):
     # assert_allclose does not support ml_dtypes types in numpy < 2.0
     backend_test.exclude(r"test_cast.*(FLOAT8|BFLOAT16|FLOAT4|INT4)")
     backend_test.exclude(r"test_quantizelinear_e4m3fn")
+    backend_test.exclude(
+        rf"test_quantizelinear_multi_axis_.*_{TensorProto.FLOAT8E4M3FN}_"
+    )
     backend_test.exclude(r"test_quantizelinear_float4e2m1")
     # float16 is a native NumPy dtype and works with assert_allclose in all NumPy versions;
     # only bfloat16 (ml_dtypes) requires NumPy >= 2.0.
