@@ -498,7 +498,13 @@ class TestAutomaticUpgrade(automatic_conversion_test_base.TestAutomaticConversio
         )
 
     def test_GatherND(self) -> None:
-        self._test_op_upgrade("GatherND", 11, [[1, 2, 3], [1, 2, 3]], [[1, 2]])
+        self._test_op_upgrade(
+            "GatherND",
+            11,
+            [[1, 2, 3], [1, 2, 3]],
+            [[1, 2]],
+            [TensorProto.FLOAT, TensorProto.INT64],
+        )
 
     def test_Gelu_approximate_tanh(self) -> None:
         self._test_op_upgrade("Gelu", 20, attrs={"approximate": "tanh"})

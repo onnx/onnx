@@ -15900,42 +15900,31 @@ This version of the operator has been available since version 13 of the default 
   Given `data` tensor of rank `r` >= 1, `indices` tensor of rank `q` >= 1, and `batch_dims` integer `b`, this operator gathers
   slices of `data` into an output tensor of rank `q + r - indices_shape[-1] - 1 - b`.
 
-  `indices` is an q-dimensional integer tensor, best thought of as a `(q-1)`-dimensional tensor of index-tuples into `data`,
-  where each element defines a slice of `data`
+  Let `k = indices_shape[-1]`. Each length-`k` tuple in `indices` selects an element or slice of `data`.
 
-  `batch_dims` (denoted as `b`) is an integer indicating the number of batch dimensions, i.e the leading `b` number of dimensions of
-  `data` tensor and `indices` are representing the batches, and the gather starts from the `b+1` dimension.
+  The leading `b` dimensions of `data` and `indices` are batch dimensions. Each tuple indexes
+  the next `k` dimensions of `data`, starting at axis `b` (axes are zero-based).
 
-  Some salient points about the inputs' rank and shape:
+  The inputs must satisfy the following constraints:
 
-  1) r >= 1 and q >= 1 are to be honored. There is no dependency condition to be met between ranks `r` and `q`
+  1) `r >= 1` and `q >= 1`.
 
   2) The first `b` dimensions of the shape of `indices` tensor and `data` tensor must be equal.
 
-  3) b < min(q, r) is to be honored.
+  3) `batch_dims` must satisfy `0 <= b < min(q, r)`.
 
-  4) The `indices_shape[-1]` should have a value between 1 (inclusive) and rank `r-b` (inclusive)
+  4) `indices_shape[-1]` must be between 1 and `r-b`, inclusive.
 
-  5) All values in `indices` are expected to be within bounds [-s, s-1] along axis of size `s` (i.e.) `-data_shape[i] <= indices[...,i] <= data_shape[i] - 1`.
+  5) For each tuple component `i`, `0 <= i < indices_shape[-1]`, the index must satisfy
+     `-data_shape[b+i] <= indices[...,i] < data_shape[b+i]`.
      It is an error if any of the index values are out of bounds.
 
-  The output is computed as follows:
-
-  The output tensor is obtained by mapping each index-tuple in the `indices` tensor to the corresponding slice of the input `data`.
-
-  1) If `indices_shape[-1] > r-b` => error condition
-
-  2) If `indices_shape[-1] == r-b`, since the rank of `indices` is `q`, `indices` can be thought of as `N` `(q-b-1)`-dimensional tensors
-     containing 1-D tensors of dimension `r-b`, where `N` is an integer equals to the product of 1 and all the elements in the batch dimensions
-     of the indices_shape. Let us think of each such `r-b` ranked tensor as `indices_slice`. Each *scalar value* corresponding to `data[0:b-1,indices_slice]`
-     is filled into the corresponding location of the `(q-b-1)`-dimensional tensor to form the `output` tensor (Example 1 below)
-
-  3) If `indices_shape[-1] < r-b`, since the rank of `indices` is `q`, `indices` can be thought of as `N` `(q-b-1)`-dimensional tensor
-     containing 1-D tensors of dimension `< r-b`. Let us think of each such tensors as `indices_slice`. Each *tensor slice* corresponding
-     to `data[0:b-1, indices_slice , :]` is filled into the corresponding location of the `(q-b-1)`-dimensional tensor
-     to form the `output` tensor (Examples 2, 3, 4 and 5 below)
-
-  This operator is the inverse of `ScatterND`.
+  The output shape is `indices_shape[:-1] + data_shape[b+k:]`, where `+` denotes shape concatenation.
+  For each coordinate tuple `p` in `indices_shape[:-1]`, the selected value or slice is
+  `output[p] = data[p[:b] + tuple(indices[p])]`, using tuple concatenation for the data coordinate.
+  Unspecified trailing data axes select the entire slice. When `k = r-b`, each selected value is a scalar.
+  Negative indices count backwards from the end of the corresponding data dimension.
+  Within the same batch, repeated index tuples select the same value or slice at multiple output positions.
 
   **Example 1**
 
@@ -15990,7 +15979,7 @@ This version of the operator has been available since version 13 of the default 
 
 <dl>
 <dt><tt>batch_dims</tt> : int (default is 0)</dt>
-<dd>The number of batch dimensions. The gather of indexing starts from dimension of data[batch_dims:]</dd>
+<dd>The number of leading batch dimensions shared by data and indices. Index tuples address data axes starting at axis batch_dims.</dd>
 </dl>
 
 #### Inputs
@@ -15999,14 +15988,14 @@ This version of the operator has been available since version 13 of the default 
 <dt><tt>data</tt> (differentiable) : T</dt>
 <dd>Tensor of rank r >= 1.</dd>
 <dt><tt>indices</tt> (non-differentiable) : tensor(int64)</dt>
-<dd>Tensor of rank q >= 1. All index values are expected to be within bounds [-s, s-1] along axis of size s. It is an error if any of the index values are out of bounds.</dd>
+<dd>Tensor of rank q >= 1. Each index must be in [-s, s-1], where s is the size of the corresponding data axis after the batch dimensions. An out-of-bounds index is an error.</dd>
 </dl>
 
 #### Outputs
 
 <dl>
 <dt><tt>output</tt> (differentiable) : T</dt>
-<dd>Tensor of rank q + r - indices_shape[-1] - 1.</dd>
+<dd>Tensor of rank q + r - indices_shape[-1] - 1 - batch_dims.</dd>
 </dl>
 
 #### Type Constraints
@@ -22513,8 +22502,9 @@ This version of the operator has been available since version 18 of the default 
   `indices` is treated as a (q-1)-dimensional tensor of k-tuples, where each k-tuple is a partial-index into `data`.
   Hence, k can be a value at most the rank of `data`. When k equals rank(data), each update entry specifies an
   update to a single element of the tensor. When k is less than rank(data) each update entry specifies an
-  update to a slice of the tensor. Index values are allowed to be negative, as per the usual
-  convention for counting backwards from the end, but are expected in the valid range.
+  update to a slice of the tensor. For each tuple component `i`, `0 <= i < k`, the index must satisfy
+  `-data.shape[i] <= indices[...,i] < data.shape[i]`. Negative indices count backwards from the end
+  of the corresponding dimension. An out-of-bounds index is an error.
 
   `updates` is treated as a (q-1)-dimensional tensor of replacement-slice-values. Thus, the
   first (q-1) dimensions of updates.shape must match the first (q-1) dimensions of indices.shape.
@@ -22534,13 +22524,12 @@ This version of the operator has been available since version 18 of the default 
   ```
 
   The order of iteration in the above loop is not specified.
-  In particular, indices should not have duplicate entries: that is, if idx1 != idx2, then indices[idx1] != indices[idx2].
-  This ensures that the output value does not depend on the iteration order.
 
   `reduction` allows specification of an optional reduction operation, which is applied to all values in `updates`
   tensor into `output` at the specified `indices`.
-  In cases where `reduction` is set to "none", indices should not have duplicate entries: that is, if idx1 != idx2,
-  then indices[idx1] != indices[idx2]. This ensures that the output value does not depend on the iteration order.
+  When `reduction` is "none", no two index tuples may select the same output element or slice,
+  including through equivalent positive and negative indices. This ensures that the output value does not
+  depend on the iteration order.
   When `reduction` is set to some reduction function `f`, `output` is calculated as follows:
 
   ```
@@ -22551,8 +22540,6 @@ This version of the operator has been available since version 18 of the default 
   ```
 
   where the `f` is `+`, `*`, `max` or `min` as specified.
-
-  This operator is the inverse of GatherND.
 
   (Opset 18 change): Adds max/min to the set of allowed reduction ops.
 
@@ -22587,7 +22574,7 @@ This version of the operator has been available since version 18 of the default 
 
 <dl>
 <dt><tt>reduction</tt> : string (default is none)</dt>
-<dd>Type of reduction to apply: none (default), add, mul, max, min. 'none': no reduction applied. 'add':  reduction using the addition operation. 'mul':  reduction using the addition operation. 'max': reduction using the maximum operation.'min': reduction using the minimum operation.</dd>
+<dd>Type of reduction to apply: none (default), add, mul, max, min. 'none': no reduction applied. 'add':  reduction using the addition operation. 'mul':  reduction using the multiplication operation. 'max': reduction using the maximum operation. 'min': reduction using the minimum operation.</dd>
 </dl>
 
 #### Inputs
@@ -34455,6 +34442,120 @@ This version of the operator has been available since version 28 of the default 
 </dl>
 
 ## Version 29 of the default ONNX operator set
+### <a name="GatherND-29"></a>**GatherND-29**</a>
+
+  Given `data` tensor of rank `r` >= 1, `indices` tensor of rank `q` >= 1, and `batch_dims` integer `b`, this operator gathers
+  slices of `data` into an output tensor of rank `q + r - indices_shape[-1] - 1 - b`.
+
+  Let `k = indices_shape[-1]`. Each length-`k` tuple in `indices` selects an element or slice of `data`.
+
+  The leading `b` dimensions of `data` and `indices` are batch dimensions. Each tuple indexes
+  the next `k` dimensions of `data`, starting at axis `b` (axes are zero-based).
+
+  The inputs must satisfy the following constraints:
+
+  1) `r >= 1` and `q >= 1`.
+
+  2) The first `b` dimensions of the shape of `indices` tensor and `data` tensor must be equal.
+
+  3) `batch_dims` must satisfy `0 <= b < min(q, r)`.
+
+  4) `indices_shape[-1]` must be between 1 and `r-b`, inclusive.
+
+  5) For each tuple component `i`, `0 <= i < indices_shape[-1]`, the index must satisfy
+     `-data_shape[b+i] <= indices[...,i] < data_shape[b+i]`.
+     It is an error if any of the index values are out of bounds.
+
+  The output shape is `indices_shape[:-1] + data_shape[b+k:]`, where `+` denotes shape concatenation.
+  For each coordinate tuple `p` in `indices_shape[:-1]`, the selected value or slice is
+  `output[p] = data[p[:b] + tuple(indices[p])]`, using tuple concatenation for the data coordinate.
+  Unspecified trailing data axes select the entire slice. When `k = r-b`, each selected value is a scalar.
+  Negative indices count backwards from the end of the corresponding data dimension.
+  Within the same batch, repeated index tuples select the same value or slice at multiple output positions.
+
+  **Example 1**
+
+  ```
+  batch_dims = 0
+  data    = [[0,1],[2,3]]   # data_shape    = [2, 2]
+  indices = [[0,0],[1,1]]   # indices_shape = [2, 2]
+  output  = [0,3]           # output_shape  = [2]
+  ```
+
+  **Example 2**
+
+  ```
+  batch_dims = 0
+  data    = [[0,1],[2,3]]  # data_shape    = [2, 2]
+  indices = [[1],[0]]      # indices_shape = [2, 1]
+  output  = [[2,3],[0,1]]  # output_shape  = [2, 2]
+  ```
+
+  **Example 3**
+
+  ```
+  batch_dims = 0
+  data    = [[[0,1],[2,3]],[[4,5],[6,7]]] # data_shape    = [2, 2, 2]
+  indices = [[0,1],[1,0]]                 # indices_shape = [2, 2]
+  output  = [[2,3],[4,5]]                 # output_shape  = [2, 2]
+  ```
+
+  **Example 4**
+
+  ```
+  batch_dims = 0
+  data    = [[[0,1],[2,3]],[[4,5],[6,7]]] # data_shape    = [2, 2, 2]
+  indices = [[[0,1]],[[1,0]]]             # indices_shape = [2, 1, 2]
+  output  = [[[2,3]],[[4,5]]]             # output_shape  = [2, 1, 2]
+  ```
+
+  **Example 5**
+
+  ```
+  batch_dims = 1
+  data    = [[[0,1],[2,3]],[[4,5],[6,7]]] # data_shape    = [2, 2, 2]
+  indices = [[1],[0]]                     # indices_shape = [2, 1]
+  output  = [[2,3],[4,5]]                 # output_shape  = [2, 2]
+  ```
+
+  Opset 29 adds support for int32 indices; int64 indices remain supported.
+
+#### Version
+
+This version of the operator has been available since version 29 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>batch_dims</tt> : int (default is 0)</dt>
+<dd>The number of leading batch dimensions shared by data and indices. Index tuples address data axes starting at axis batch_dims.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>data</tt> (differentiable) : T</dt>
+<dd>Tensor of rank r >= 1.</dd>
+<dt><tt>indices</tt> (non-differentiable) : Tind</dt>
+<dd>Tensor of rank q >= 1. Each index must be in [-s, s-1], where s is the size of the corresponding data axis after the batch dimensions. An out-of-bounds index is an error.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> (differentiable) : T</dt>
+<dd>Tensor of rank q + r - indices_shape[-1] - 1 - batch_dims.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
+<dd>Constrain input and output types to any tensor type.</dd>
+<dt><tt>Tind</tt> : tensor(int32), tensor(int64)</dt>
+<dd>Constrain indices to int32 or int64 tensors.</dd>
+</dl>
+
 ### <a name="Gemm-29"></a>**Gemm-29**</a>
 
   Generalized matrix multiplication: `Y = alpha * A' * B' + beta * C`.
@@ -34603,8 +34704,6 @@ This version of the operator has been available since version 29 of the default 
   negative infinity. Floating-point results are converted to the input element
   type after division.
 
-  (Opset 29 change): Adds "mean".
-
   Example:
   ```
   data = [1.0, 2.0, 3.0, 4.0]
@@ -34689,8 +34788,6 @@ This version of the operator has been available since version 29 of the default 
   negative infinity. Floating-point results are converted to the input element
   type after division.
 
-  (Opset 29 change): Adds "mean".
-
   Example:
   ```
   data = [[1.0, 2.0], [3.0, 4.0]]
@@ -34700,6 +34797,8 @@ This version of the operator has been available since version 29 of the default 
   output = [[3.0, 4.0], [3.0, 4.0]]
   ```
 
+  Opset 29 adds support for int32 indices; int64 indices remain supported.
+
 #### Version
 
 This version of the operator has been available since version 29 of the default ONNX operator set.
@@ -34708,7 +34807,7 @@ This version of the operator has been available since version 29 of the default 
 
 <dl>
 <dt><tt>reduction</tt> : string (default is none)</dt>
-<dd>Type of reduction to apply: none (default), add, mul, max, min, mean. 'none': no reduction applied. 'add':  reduction using the addition operation. 'mul': reduction using the multiplication operation. 'max': reduction using the maximum operation. 'min': reduction using the minimum operation. 'mean': arithmetic mean of all contributions to each output element.</dd>
+<dd>Type of reduction to apply: none (default), add, mul, max, min, mean. 'none': no reduction applied. 'add': reduction using the addition operation. 'mul': reduction using the multiplication operation. 'max': reduction using the maximum operation. 'min': reduction using the minimum operation. 'mean': arithmetic mean of all contributions to each output element.</dd>
 </dl>
 
 #### Inputs
@@ -34716,7 +34815,7 @@ This version of the operator has been available since version 29 of the default 
 <dl>
 <dt><tt>data</tt> (differentiable) : T</dt>
 <dd>Tensor of rank r >= 1.</dd>
-<dt><tt>indices</tt> (non-differentiable) : tensor(int64)</dt>
+<dt><tt>indices</tt> (non-differentiable) : Tind</dt>
 <dd>Tensor of rank q >= 1.</dd>
 <dt><tt>updates</tt> (differentiable) : T</dt>
 <dd>Tensor of rank q + r - indices_shape[-1] - 1.</dd>
@@ -34734,6 +34833,8 @@ This version of the operator has been available since version 29 of the default 
 <dl>
 <dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
 <dd>Constrain input and output types to any tensor type.</dd>
+<dt><tt>Tind</tt> : tensor(int32), tensor(int64)</dt>
+<dd>Constrain indices to int32 or int64 tensors.</dd>
 </dl>
 
 # ai.onnx.preview

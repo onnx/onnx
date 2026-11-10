@@ -40,6 +40,7 @@
 #include "onnx/version_converter/adapters/group_normalization_20_21.h"
 #include "onnx/version_converter/adapters/group_normalization_21_20.h"
 #include "onnx/version_converter/adapters/maxpool_8_7.h"
+#include "onnx/version_converter/adapters/nd_indices_29_28.h"
 #include "onnx/version_converter/adapters/no_previous_version.h"
 #include "onnx/version_converter/adapters/optional_ops.h"
 #include "onnx/version_converter/adapters/pad_10_11.h"
@@ -1122,21 +1123,22 @@ class DefaultVersionConverter : public BaseVersionConverter {
 
     /******** 28 -> 29 ********/
     registerAdapter(std::make_unique<CompatibleAdapter>("Gemm", OpSetID(28), OpSetID(29)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("GatherND", OpSetID(28), OpSetID(29)));
     registerAdapter(std::make_unique<CompatibleAdapter>("ScatterElements", OpSetID(28), OpSetID(29)));
     registerAdapter(std::make_unique<CompatibleAdapter>("ScatterND", OpSetID(28), OpSetID(29)));
 
     /******** 29 -> 28 ********/
     registerAdapter(std::make_unique<Gemm_29_28>());
-    for (const auto* op : {"ScatterElements", "ScatterND"}) {
-      registerAdapter(op, 29, 28, [](const std::shared_ptr<Graph>& /*unused*/, Node* node) {
-        const Symbol reduction{"reduction"};
-        ONNX_ASSERTM(
-            !node->hasAttribute(reduction) || node->s(reduction) != "mean",
-            "Scatter reduction 'mean' cannot be downgraded to opset 28. "
-            "Keep opset 29 or decompose the mean into scatter sums and counts.")
-        return node;
-      });
-    }
+    registerAdapter(std::make_unique<NDIndices_29_28>("GatherND"));
+    registerAdapter(std::make_unique<NDIndices_29_28>("ScatterND"));
+    registerAdapter("ScatterElements", 29, 28, [](const std::shared_ptr<Graph>& /*unused*/, Node* node) {
+      const Symbol reduction{"reduction"};
+      ONNX_ASSERTM(
+          !node->hasAttribute(reduction) || node->s(reduction) != "mean",
+          "Scatter reduction 'mean' cannot be downgraded to opset 28. "
+          "Keep opset 29 or decompose the mean into scatter sums and counts.")
+      return node;
+    });
   }
 
   ModelProto convert_version(const ModelProto& mp_in, const OpSetID& initial_version, const OpSetID& target_version)

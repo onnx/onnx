@@ -62,7 +62,7 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#GRU">GRU</a>|<a href="Changelog.md#GRU-22">22</a>, <a href="Changelog.md#GRU-14">14</a>, <a href="Changelog.md#GRU-7">7</a>, <a href="Changelog.md#GRU-3">3</a>, <a href="Changelog.md#GRU-1">1</a>|
 |<a href="#Gather">Gather</a>|<a href="Changelog.md#Gather-13">13</a>, <a href="Changelog.md#Gather-11">11</a>, <a href="Changelog.md#Gather-1">1</a>|
 |<a href="#GatherElements">GatherElements</a>|<a href="Changelog.md#GatherElements-13">13</a>, <a href="Changelog.md#GatherElements-11">11</a>|
-|<a href="#GatherND">GatherND</a>|<a href="Changelog.md#GatherND-13">13</a>, <a href="Changelog.md#GatherND-12">12</a>, <a href="Changelog.md#GatherND-11">11</a>|
+|<a href="#GatherND">GatherND</a>|<a href="Changelog.md#GatherND-29">29</a>, <a href="Changelog.md#GatherND-13">13</a>, <a href="Changelog.md#GatherND-12">12</a>, <a href="Changelog.md#GatherND-11">11</a>|
 |<a href="#GlobalAveragePool">GlobalAveragePool</a>|<a href="Changelog.md#GlobalAveragePool-22">22</a>, <a href="Changelog.md#GlobalAveragePool-1">1</a>|
 |<a href="#GlobalLpPool">GlobalLpPool</a>|<a href="Changelog.md#GlobalLpPool-22">22</a>, <a href="Changelog.md#GlobalLpPool-2">2</a>, <a href="Changelog.md#GlobalLpPool-1">1</a>|
 |<a href="#GlobalMaxPool">GlobalMaxPool</a>|<a href="Changelog.md#GlobalMaxPool-22">22</a>, <a href="Changelog.md#GlobalMaxPool-1">1</a>|
@@ -16291,42 +16291,31 @@ expect(
   Given `data` tensor of rank `r` >= 1, `indices` tensor of rank `q` >= 1, and `batch_dims` integer `b`, this operator gathers
   slices of `data` into an output tensor of rank `q + r - indices_shape[-1] - 1 - b`.
 
-  `indices` is an q-dimensional integer tensor, best thought of as a `(q-1)`-dimensional tensor of index-tuples into `data`,
-  where each element defines a slice of `data`
+  Let `k = indices_shape[-1]`. Each length-`k` tuple in `indices` selects an element or slice of `data`.
 
-  `batch_dims` (denoted as `b`) is an integer indicating the number of batch dimensions, i.e the leading `b` number of dimensions of
-  `data` tensor and `indices` are representing the batches, and the gather starts from the `b+1` dimension.
+  The leading `b` dimensions of `data` and `indices` are batch dimensions. Each tuple indexes
+  the next `k` dimensions of `data`, starting at axis `b` (axes are zero-based).
 
-  Some salient points about the inputs' rank and shape:
+  The inputs must satisfy the following constraints:
 
-  1) r >= 1 and q >= 1 are to be honored. There is no dependency condition to be met between ranks `r` and `q`
+  1) `r >= 1` and `q >= 1`.
 
   2) The first `b` dimensions of the shape of `indices` tensor and `data` tensor must be equal.
 
-  3) b < min(q, r) is to be honored.
+  3) `batch_dims` must satisfy `0 <= b < min(q, r)`.
 
-  4) The `indices_shape[-1]` should have a value between 1 (inclusive) and rank `r-b` (inclusive)
+  4) `indices_shape[-1]` must be between 1 and `r-b`, inclusive.
 
-  5) All values in `indices` are expected to be within bounds [-s, s-1] along axis of size `s` (i.e.) `-data_shape[i] <= indices[...,i] <= data_shape[i] - 1`.
+  5) For each tuple component `i`, `0 <= i < indices_shape[-1]`, the index must satisfy
+     `-data_shape[b+i] <= indices[...,i] < data_shape[b+i]`.
      It is an error if any of the index values are out of bounds.
 
-  The output is computed as follows:
-
-  The output tensor is obtained by mapping each index-tuple in the `indices` tensor to the corresponding slice of the input `data`.
-
-  1) If `indices_shape[-1] > r-b` => error condition
-
-  2) If `indices_shape[-1] == r-b`, since the rank of `indices` is `q`, `indices` can be thought of as `N` `(q-b-1)`-dimensional tensors
-     containing 1-D tensors of dimension `r-b`, where `N` is an integer equals to the product of 1 and all the elements in the batch dimensions
-     of the indices_shape. Let us think of each such `r-b` ranked tensor as `indices_slice`. Each *scalar value* corresponding to `data[0:b-1,indices_slice]`
-     is filled into the corresponding location of the `(q-b-1)`-dimensional tensor to form the `output` tensor (Example 1 below)
-
-  3) If `indices_shape[-1] < r-b`, since the rank of `indices` is `q`, `indices` can be thought of as `N` `(q-b-1)`-dimensional tensor
-     containing 1-D tensors of dimension `< r-b`. Let us think of each such tensors as `indices_slice`. Each *tensor slice* corresponding
-     to `data[0:b-1, indices_slice , :]` is filled into the corresponding location of the `(q-b-1)`-dimensional tensor
-     to form the `output` tensor (Examples 2, 3, 4 and 5 below)
-
-  This operator is the inverse of `ScatterND`.
+  The output shape is `indices_shape[:-1] + data_shape[b+k:]`, where `+` denotes shape concatenation.
+  For each coordinate tuple `p` in `indices_shape[:-1]`, the selected value or slice is
+  `output[p] = data[p[:b] + tuple(indices[p])]`, using tuple concatenation for the data coordinate.
+  Unspecified trailing data axes select the entire slice. When `k = r-b`, each selected value is a scalar.
+  Negative indices count backwards from the end of the corresponding data dimension.
+  Within the same batch, repeated index tuples select the same value or slice at multiple output positions.
 
   **Example 1**
 
@@ -16373,17 +16362,19 @@ expect(
   output  = [[2,3],[4,5]]                 # output_shape  = [2, 2]
   ```
 
+  Opset 29 adds support for int32 indices; int64 indices remain supported.
+
 #### Version
 
-This version of the operator has been available since version 13 of the default ONNX operator set.
+This version of the operator has been available since version 29 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#GatherND-11">11</a>, <a href="Changelog.md#GatherND-12">12</a>
+Other versions of this operator: <a href="Changelog.md#GatherND-11">11</a>, <a href="Changelog.md#GatherND-12">12</a>, <a href="Changelog.md#GatherND-13">13</a>
 
 #### Attributes
 
 <dl>
 <dt><tt>batch_dims</tt> : int (default is 0)</dt>
-<dd>The number of batch dimensions. The gather of indexing starts from dimension of data[batch_dims:]</dd>
+<dd>The number of leading batch dimensions shared by data and indices. Index tuples address data axes starting at axis batch_dims.</dd>
 </dl>
 
 #### Inputs
@@ -16391,15 +16382,15 @@ Other versions of this operator: <a href="Changelog.md#GatherND-11">11</a>, <a h
 <dl>
 <dt><tt>data</tt> (differentiable) : T</dt>
 <dd>Tensor of rank r >= 1.</dd>
-<dt><tt>indices</tt> (non-differentiable) : tensor(int64)</dt>
-<dd>Tensor of rank q >= 1. All index values are expected to be within bounds [-s, s-1] along axis of size s. It is an error if any of the index values are out of bounds.</dd>
+<dt><tt>indices</tt> (non-differentiable) : Tind</dt>
+<dd>Tensor of rank q >= 1. Each index must be in [-s, s-1], where s is the size of the corresponding data axis after the batch dimensions. An out-of-bounds index is an error.</dd>
 </dl>
 
 #### Outputs
 
 <dl>
 <dt><tt>output</tt> (differentiable) : T</dt>
-<dd>Tensor of rank q + r - indices_shape[-1] - 1.</dd>
+<dd>Tensor of rank q + r - indices_shape[-1] - 1 - batch_dims.</dd>
 </dl>
 
 #### Type Constraints
@@ -16407,6 +16398,8 @@ Other versions of this operator: <a href="Changelog.md#GatherND-11">11</a>, <a h
 <dl>
 <dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
 <dd>Constrain input and output types to any tensor type.</dd>
+<dt><tt>Tind</tt> : tensor(int32), tensor(int64)</dt>
+<dd>Constrain indices to int32 or int64 tensors.</dd>
 </dl>
 
 
@@ -16485,6 +16478,27 @@ expect(
     inputs=[data, indices],
     outputs=[output],
     name="test_gathernd_example_int32_batch_dim1",
+)
+```
+
+</details>
+
+
+<details>
+<summary>selected_kv_int32_indices</summary>
+
+```python
+node = onnx.helper.make_node(
+    "GatherND", ["cache", "positions"], ["selected"], batch_dims=1
+)
+cache = np.arange(24, dtype=np.float32).reshape(2, 4, 3)
+positions = np.array([[[[0], [2]]], [[[1], [-1]]]], dtype=np.int32)
+selected = np.stack([cache[0, [[0, 2]]], cache[1, [[1, 3]]]])
+expect(
+    node,
+    inputs=[cache, positions],
+    outputs=[selected],
+    name="test_gathernd_selected_kv_int32_indices",
 )
 ```
 
@@ -19683,6 +19697,37 @@ Other versions of this operator: <a href="Changelog.md#InstanceNormalization-1">
 #### Examples
 
 <details>
+<summary>float16_large_values</summary>
+
+```python
+node = onnx.helper.make_node(
+    "InstanceNormalization",
+    inputs=["x", "s", "bias"],
+    outputs=["y"],
+)
+# input size: (1, 1, 256)
+x = np.arange(0, 512, 2).reshape(1, 1, 256).astype(np.float16)
+s = np.array([1.0]).astype(np.float16)
+bias = np.array([0.0]).astype(np.float16)
+# The variance (about 21845) is representable in float16, but squaring
+# values up to 510 overflows it, so compute in float32.
+x32 = x.astype(np.float32)
+mean = np.mean(x32, axis=2, keepdims=True)
+var = np.var(x32, axis=2, keepdims=True)
+y = ((x32 - mean) / np.sqrt(var + 1e-5)).astype(np.float16)
+
+expect(
+    node,
+    inputs=[x, s, bias],
+    outputs=[y],
+    name="test_instancenorm_float16_large_values",
+)
+```
+
+</details>
+
+
+<details>
 <summary>instancenormalization</summary>
 
 ```python
@@ -20000,6 +20045,30 @@ for n, c, h, w in np.ndindex(x.shape):
     )
 y = x / ((bias + (alpha / nsize) * square_sum) ** beta)
 expect(node, inputs=[x], outputs=[y], name="test_lrn_default")
+```
+
+</details>
+
+
+<details>
+<summary>float16_large_values</summary>
+
+```python
+alpha = 0.0001
+beta = 0.75
+bias = 1.0
+nsize = 5
+node = onnx.helper.make_node("LRN", inputs=["x"], outputs=["y"], size=nsize)
+x = np.full((1, 5, 1, 1), 300).astype(np.float16)
+# 300 ** 2 overflows float16 (max 65504), so compute in float32.
+x32 = x.astype(np.float32)
+square_sum = np.zeros_like(x32)
+for c in range(x.shape[1]):
+    begin = max(0, c - math.floor((nsize - 1) / 2))
+    end = min(x.shape[1], c + math.ceil((nsize - 1) / 2) + 1)
+    square_sum[:, c] = np.sum(x32[:, begin:end] ** 2, axis=1)
+y = (x32 / ((bias + (alpha / nsize) * square_sum) ** beta)).astype(np.float16)
+expect(node, inputs=[x], outputs=[y], name="test_lrn_float16_large_values")
 ```
 
 </details>
@@ -37080,8 +37149,6 @@ expect(
   negative infinity. Floating-point results are converted to the input element
   type after division.
 
-  (Opset 29 change): Adds "mean".
-
   Example:
   ```
   data = [1.0, 2.0, 3.0, 4.0]
@@ -37436,8 +37503,6 @@ expect(
   negative infinity. Floating-point results are converted to the input element
   type after division.
 
-  (Opset 29 change): Adds "mean".
-
   Example:
   ```
   data = [[1.0, 2.0], [3.0, 4.0]]
@@ -37446,6 +37511,8 @@ expect(
   reduction = "mean"
   output = [[3.0, 4.0], [3.0, 4.0]]
   ```
+
+  Opset 29 adds support for int32 indices; int64 indices remain supported.
 
 #### Version
 
@@ -37457,7 +37524,7 @@ Other versions of this operator: <a href="Changelog.md#ScatterND-11">11</a>, <a 
 
 <dl>
 <dt><tt>reduction</tt> : string (default is none)</dt>
-<dd>Type of reduction to apply: none (default), add, mul, max, min, mean. 'none': no reduction applied. 'add':  reduction using the addition operation. 'mul': reduction using the multiplication operation. 'max': reduction using the maximum operation. 'min': reduction using the minimum operation. 'mean': arithmetic mean of all contributions to each output element.</dd>
+<dd>Type of reduction to apply: none (default), add, mul, max, min, mean. 'none': no reduction applied. 'add': reduction using the addition operation. 'mul': reduction using the multiplication operation. 'max': reduction using the maximum operation. 'min': reduction using the minimum operation. 'mean': arithmetic mean of all contributions to each output element.</dd>
 </dl>
 
 #### Inputs
@@ -37465,7 +37532,7 @@ Other versions of this operator: <a href="Changelog.md#ScatterND-11">11</a>, <a 
 <dl>
 <dt><tt>data</tt> (differentiable) : T</dt>
 <dd>Tensor of rank r >= 1.</dd>
-<dt><tt>indices</tt> (non-differentiable) : tensor(int64)</dt>
+<dt><tt>indices</tt> (non-differentiable) : Tind</dt>
 <dd>Tensor of rank q >= 1.</dd>
 <dt><tt>updates</tt> (differentiable) : T</dt>
 <dd>Tensor of rank q + r - indices_shape[-1] - 1.</dd>
@@ -37483,10 +37550,37 @@ Other versions of this operator: <a href="Changelog.md#ScatterND-11">11</a>, <a 
 <dl>
 <dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
 <dd>Constrain input and output types to any tensor type.</dd>
+<dt><tt>Tind</tt> : tensor(int32), tensor(int64)</dt>
+<dd>Constrain indices to int32 or int64 tensors.</dd>
 </dl>
 
 
 #### Examples
+
+<details>
+<summary>batched_token_add_int32_indices</summary>
+
+```python
+node = onnx.helper.make_node(
+    "ScatterND", ["data", "indices", "updates"], ["output"], reduction="add"
+)
+data = np.zeros((2, 3, 2), dtype=np.float32)
+indices = np.array([[0, 1], [1, 0], [0, 1], [1, -1]], dtype=np.int32)
+updates = np.array([[1, 2], [3, 4], [5, 6], [7, 8]], dtype=np.float32)
+output = np.array(
+    [[[0, 0], [6, 8], [0, 0]], [[3, 4], [0, 0], [7, 8]]],
+    dtype=np.float32,
+)
+expect(
+    node,
+    inputs=[data, indices, updates],
+    outputs=[output],
+    name="test_scatternd_batched_token_add_int32_indices",
+)
+```
+
+</details>
+
 
 <details>
 <summary>scatternd</summary>

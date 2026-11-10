@@ -19,6 +19,9 @@
 
 namespace ONNX_NAMESPACE {
 
+ONNX_OPERATOR_SET_SCHEMA(GatherND, 13, GatherNDSchema(false));
+ONNX_OPERATOR_SET_SCHEMA(ScatterND, 18, ScatterNDSchema(false));
+
 ONNX_OPERATOR_SET_SCHEMA(
     Cast,
     25,
@@ -2826,44 +2829,6 @@ ONNX_OPERATOR_SET_SCHEMA(
             appendSingleDimCopiedFromInputTypeToOutputType(ctx, 0, 0, static_cast<size_t>(i));
           }
         }));
-
-ONNX_OPERATOR_SET_SCHEMA(
-    ScatterND,
-    18,
-    OpSchema()
-        .SetDoc(kDoc_ScatterND_ver18)
-        .Attr(
-            "reduction",
-            "Type of reduction to apply: none (default), add, mul, max, min. "
-            "'none': no reduction applied. "
-            "'add':  reduction using the addition operation. "
-            "'mul':  reduction using the addition operation. "
-            "'max': reduction using the maximum operation."
-            "'min': reduction using the minimum operation.",
-            AttributeProto::STRING,
-            std::string("none"))
-        .Input(0, "data", "Tensor of rank r >= 1.", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
-        .Input(
-            1,
-            "indices",
-            "Tensor of rank q >= 1.",
-            "tensor(int64)",
-            OpSchema::Single,
-            true,
-            1,
-            OpSchema::NonDifferentiable)
-        .Input(
-            2,
-            "updates",
-            "Tensor of rank q + r - indices_shape[-1] - 1.",
-            "T",
-            OpSchema::Single,
-            true,
-            1,
-            OpSchema::Differentiable)
-        .Output(0, "output", "Tensor of rank r >= 1.", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
-        .TypeConstraint("T", OpSchema::all_tensor_types_ir4(), "Constrain input and output types to any tensor type.")
-        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
 ONNX_OPERATOR_SET_SCHEMA(
     ScatterElements,
