@@ -178,7 +178,167 @@ use gradual underflow. Overflow produces the corresponding signed infinity.
 Signed zero, infinity, and NaN arithmetic follows IEEE 754; NaN payload bits
 are unspecified. `mul`, `add`, and `sub` below express these rounding points.
 
-### Common operations
+### Mathematical decoding rules
+
+The following rules define the decoded values without requiring execution of
+the Python notation below. Field names refer to the packed-layout table.
+Indices and byte offsets start at zero. A slice `a[r:s]` includes index `r`
+and excludes index `s`. All index arithmetic, powers of integers, and bit
+operations are exact. `floor` rounds down, and `mod` gives the nonnegative
+remainder.
+
+Let `bit(v,k) = floor(v / 2^k) mod 2` and
+`field(v,k,w) = floor(v / 2^k) mod 2^w`. Let `U(a)` interpret a byte sequence
+as an unsigned little-endian integer. Floating-point fields are converted
+exactly to FLOAT before use. `M(a,b)`, `A(a,b)`, and `D(a,b)`
+denote multiplication, addition, and subtraction, respectively, with the
+binary32 rounding and special-value behavior specified above. Nested calls
+specify separate rounding points; they are not fused or reassociated.
+
+For a byte sequence `a` whose length is a multiple of `g`, define `P(a,w,g)`
+as the sequence of `field(a[s+j],w*p,w)`, enumerating, in this order:
+byte-group starts `s = 0,g,2g,...`; bit planes `p = 0,...,8/w-1`; and byte
+positions `j = 0,...,g-1`. Here `w` is 1, 2, or 4. Thus, for example,
+`P(q,4,16)` lists the 16 low nibbles followed by the 16 high nibbles.
+The output index in each rule below is the flattened index within one block.
+
+#### Conventional and nonlinear formats
+
+For Q4_0, Q4_1, Q5_0, Q5_1, and IQ4_NL, set `v = P(q,4,16)`.
+For Q5_0 and Q5_1, replace each `v[j]` with
+`v[j] + 16*bit(U(high),j)`. For `j = 0,...,31`, the outputs are:
+
+| Format | Output `y[j]` |
+| ------ | ------------- |
+| Q4_0 | `M(d,v[j]-8)` |
+| Q4_1 | `A(M(d,v[j]),m)` |
+| Q5_0 | `M(d,v[j]-16)` |
+| Q5_1 | `A(M(d,v[j]),m)` |
+| IQ4_NL | `M(d,IQ4[v[j]])`, using the IQ4_NL table above |
+
+Q8_0, Q8_1, and Q8_K produce `y[j] = M(d,q[j])`, where each `q[j]` is
+the signed INT8 field. Their output counts are 32, 32, and 256, respectively.
+Q8_1's `s` and Q8_K's `sums` are ignored, including their bit patterns.
+Q1_0 produces `y[j] = d` if `bit(q[floor(j/8)],j mod 8)` is one and `-d`
+otherwise, for `j = 0,...,127`. Q2_0 produces `y[j] = M(d,v[j]-1)` for
+`v = P(q,2,1)` and `j = 0,...,63`; all four two-bit codes are defined.
+
+#### K-quant formats and IQ4_XS
+
+Each K-quant block has 256 outputs, indexed by `j = 0,...,255`.
+
+- Q2_K: set `v = P(q,2,32)` and `s = scales[floor(j/16)]`.
+  Then `y[j] = D(M(M(d,s mod 16),v[j]),M(dmin,floor(s/16)))`.
+- Q3_K: set `v = P(q,2,32)`, `h = P(mask,1,32)`,
+  `l = P(b[96:104],4,8)`, and `a = P(b[104:108],2,4)`.
+  With `k = floor(j/16)` and `s = l[k] + 16*a[k] - 32`,
+  `y[j] = M(M(d,s),v[j]-4*(1-h[j]))`.
+- Q4_K and Q5_K: set `v = P(q,4,32)`. For Q5_K only, replace `v[j]`
+  with `v[j] + 16*P(high,1,32)[j]`. For `k = 0,...,7`, unpack the
+  12-byte `scales` field `s` into
+  `a[k] = s[k] mod 64` and `m[k] = s[k+4] mod 64` when `k < 4`;
+  otherwise use
+  `a[k] = (s[k+4] mod 16) + 16*floor(s[k-4]/64)` and
+  `m[k] = floor(s[k+4]/16) + 16*floor(s[k]/64)`.
+  With `k = floor(j/32)`,
+  `y[j] = D(M(M(d,a[k]),v[j]),M(dmin,m[k]))`.
+- Q6_K: set `l = P(low,4,64)`, `h = P(high,2,32)`, and
+  `s = scales[floor(j/16)]`, interpreted as signed INT8.
+  Then `y[j] = M(M(d,s),l[j]+16*h[j]-32)`.
+- Q8_K uses the signed INT8 rule in the preceding subsection.
+
+IQ4_XS also has 256 outputs. Set `v = P(q,4,16)`. For `k = 0,...,7`,
+let `s[k] = field(scales[floor(k/2)],4*(k mod 2),4)
++ 16*field(high,2*k,2) - 32`. Then
+`y[j] = M(M(d,s[floor(j/32)]),IQ4[v[j]])`.
+
+#### IQ2, IQ3, and IQ1 formats
+
+Let `G(name,r)` be row `r` of the named complete codebook below. Let `S(v)`
+be the eight signs `1-2*bit(v,j)` for `j = 0,...,7`. Let `SP(v)` use the
+seven low bits of `v` for signs 0 through 6, and their parity
+`(sum(bit(v,j),j=0,...,6) mod 2)` for sign 7.
+
+Each block consists of eight consecutive groups of 32 outputs. Each group
+has four consecutive lanes of eight outputs. For group `g = 0,...,7` and
+lane `l = 0,...,3`, set `i = 4*g+l`. The following rules define a lane's
+eight codebook values `v`, signs `s`, and FLOAT scale `c`:
+
+- IQ2_XXS: let `a = U(b[6+8*g:10+8*g])`.
+  Set `v = G(iq2xxs_grid,b[2+8*g+l])`,
+  `s = SP(field(a,7*l,7))`, and
+  `c = M(M(d,0.5+floor(a/2^28)),0.25)`.
+- IQ2_XS: let `a = U(b[2+2*i:4+2*i])` and
+  `t = field(b[66+g],4*floor(l/2),4)`.
+  Set `v = G(iq2xs_grid,a mod 512)`, `s = SP(floor(a/512))`, and
+  `c = M(M(d,0.5+t),0.25)`.
+- IQ2_S: let `r = b[2+i] + 256*field(b[66+g],2*l,2)` and
+  `t = field(b[74+g],4*floor(l/2),4)`.
+  Set `v = G(iq2s_grid,r)`, `s = S(b[34+i])`, and
+  `c = M(M(d,0.5+t),0.25)`.
+- IQ3_XXS: let `a = U(b[66+4*g:70+4*g])`. Concatenate
+  `G(iq3xxs_grid,b[2+2*i])` and `G(iq3xxs_grid,b[3+2*i])` to form `v`.
+  Set `s = SP(field(a,7*l,7))` and
+  `c = M(M(d,0.5+floor(a/2^28)),0.5)`.
+- IQ3_S: for `t = 0,1`, let
+  `r[t] = b[2+2*i+t] + 256*bit(b[66+g],2*l+t)`.
+  Concatenate `G(iq3s_grid,r[0])` and `G(iq3s_grid,r[1])` to form `v`.
+  Set `s = S(b[74+i])` and
+  `c = M(d,1+2*field(b[106+floor(g/2)],4*(g mod 2),4))`.
+
+For these five formats, output
+`y[8*i+j] = M(M(c,v[j]),s[j])` for `j = 0,...,7`.
+
+IQ1_S and IQ1_M instead use a shifted codebook row, without a separate
+sign multiplication:
+
+- IQ1_S: let `a = U(b[34+2*g:36+2*g])`,
+  `r = b[2+i] + 256*field(a,3*l,3)`,
+  `c = M(d,2*field(a,12,3)+1)`, and
+  `delta = -0.125` if `bit(a,15)` is one, otherwise `0.125`.
+- IQ1_M: first read `w[k] = U(b[48+2*k:50+2*k])` for `k = 0,...,3`.
+  The block scale `d` is the binary16 value whose bit pattern is
+  `sum(floor(w[k]/2^12)*2^(4*k),k=0,...,3)`.
+  Let `a = field(b[32+floor(i/2)],4*(i mod 2),4)`,
+  `r = b[i] + 256*(a mod 8)`, and
+  `t = field(w[floor(g/2)],6*(g mod 2)+3*floor(l/2),3)`.
+  Set `c = M(d,2*t+1)` and
+  `delta = -0.125` if `bit(a,3)` is one, otherwise `0.125`.
+
+For both formats, set `v = G(iq1s_grid,r)` and output
+`y[8*i+j] = M(c,A(v[j],delta))` for `j = 0,...,7`.
+
+#### Ternary and block-floating formats
+
+TQ1_0 concatenates three output sequences, for
+`(start,width,count) = (0,32,5), (32,16,5), (48,4,4)`, in that order.
+Within each sequence, enumerate `p = 0,...,count-1` before
+`j = 0,...,width-1`. The corresponding output is
+`M(d,floor(3*((b[start+j]*3^p) mod 256)/256)-1)`.
+TQ2_0 outputs `y[j] = M(d,v[j]-1)` for
+`v = P(q,2,32)` and `j = 0,...,255`.
+
+For MXFP4 and NVFP4, use the doubled E2M1 table
+`V = [0,1,2,3,4,6,8,12,0,-1,-2,-3,-4,-6,-8,-12]`.
+Both zero entries denote positive zero.
+
+MXFP4 uses `e = exponent`. Its half scale `d` is the FLOAT value with
+unsigned bit pattern `0x00200000 * 2^e` when `e < 2`, and
+`(e-1)*2^23` otherwise. Set `v = P(q,4,16)` and output
+`y[j] = M(d,V[v[j]])` for `j = 0,...,31`.
+
+NVFP4 consists of four consecutive groups of 16 outputs. For
+`g = 0,...,3`, let `e = scales[g]`, `E = field(e,3,4)`, and `m = e mod 8`.
+The half scale `d` is zero when `e` is 0 or 127; otherwise it is
+`m*2^-10` when `E = 0`, and `(1+m/8)*2^(E-8)` when `E > 0`.
+These scale values are exactly representable in FLOAT. Bit 7 does not enter
+`E` or `m`; the special case `e = 127` tests the entire byte.
+Set `v = P(q[8*g:8*g+8],4,8)` and output
+`y[16*g+j] = M(d,V[v[j]])` for `j = 0,...,15`.
+
+### Equivalent Python notation
+
+#### Common operations
 
 `H` converts a little-endian binary16 field exactly to FLOAT; `R` reinterprets
 a 32-bit pattern as FLOAT. `planes` enumerates byte groups in order, then
@@ -258,7 +418,7 @@ IQ4 = [-127, -104, -83, -65, -49, -35, -22, -10,
 FP4 = [0, 1, 2, 3, 4, 6, 8, 12, 0, -1, -2, -3, -4, -6, -8, -12]
 ```
 
-### Conventional, K-quant, nonlinear, ternary, and block-floating formats
+#### Conventional, K-quant, nonlinear, ternary, and block-floating formats
 
 Offsets passed to `H` and `U`, and offsets in slices, are byte offsets in `b`.
 Q8_1's cached `s` and Q8_K's cached `sums` fields do not enter the calculation.
@@ -398,7 +558,7 @@ def decode_block(b, kind):
     raise ValueError("Unknown format")
 ```
 
-### IQ2, IQ3, and IQ1 formats
+#### IQ2, IQ3, and IQ1 formats
 
 These formats produce eight groups of 32 values per block. Each group consists
 of four consecutive eight-value lanes. IQ3 lanes concatenate two four-value
