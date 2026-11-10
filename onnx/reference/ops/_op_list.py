@@ -589,6 +589,12 @@ def load_op(
             body = schema.get_context_dependent_function(
                 node.SerializeToString(), [it.SerializeToString() for it in input_types]
             )
+            if not body:
+                raise RuntimeImplementationError(
+                    f"Cannot build a context-dependent function for operator {op_type!r} "
+                    f"from domain {domain!r} at opset {version}. Provide concrete attributes "
+                    "and supported input types, or register a custom implementation."
+                )
             proto = FunctionProto()
             proto.ParseFromString(body)
             assert evaluator_cls is not None, (

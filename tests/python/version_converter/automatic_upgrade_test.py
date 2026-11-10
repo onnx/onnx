@@ -508,7 +508,13 @@ class TestAutomaticUpgrade(automatic_conversion_test_base.TestAutomaticConversio
         )
 
     def test_GatherND(self) -> None:
-        self._test_op_upgrade("GatherND", 11, [[1, 2, 3], [1, 2, 3]], [[1, 2]])
+        self._test_op_upgrade(
+            "GatherND",
+            11,
+            [[1, 2, 3], [1, 2, 3]],
+            [[1, 2]],
+            [TensorProto.FLOAT, TensorProto.INT64],
+        )
 
     def test_Gelu_approximate_tanh(self) -> None:
         self._test_op_upgrade("Gelu", 20, attrs={"approximate": "tanh"})
@@ -564,11 +570,12 @@ class TestAutomaticUpgrade(automatic_conversion_test_base.TestAutomaticConversio
             attrs={"mode": "nearest", "padding_mode": "border", "align_corners": 1},
         )
 
-    def test_GroupedMatMul(self) -> None:
+    @pytest.mark.parametrize("transB", [0, 1])
+    def test_GroupedMatMul(self, transB) -> None:
         self._test_op_upgrade(
             "GroupedMatMul",
             29,
-            [[4, 3], [2, 3, 5], [4, 2], [2, 5]],
+            [[4, 3], [2, 5, 3] if transB else [2, 3, 5], [4, 2], [2, 5]],
             [[4, 2, 5]],
             [
                 TensorProto.FLOAT,
@@ -576,6 +583,7 @@ class TestAutomaticUpgrade(automatic_conversion_test_base.TestAutomaticConversio
                 TensorProto.INT64,
                 TensorProto.FLOAT,
             ],
+            attrs={"transB": transB},
         )
 
     def test_GRU_1(self) -> None:
