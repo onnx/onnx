@@ -391,6 +391,11 @@ class TestAutomaticUpgrade(automatic_conversion_test_base.TestAutomaticConversio
             [TensorProto.FLOAT, TensorProto.INT64],
         )
 
+    def test_LogCumSumExp(self) -> None:
+        self._test_op_upgrade(
+            "LogCumSumExp", 29, [[2, 3]], [[2, 3]], attrs={"axis": -1}
+        )
+
     def test_DepthToSpace(self) -> None:
         self._test_op_upgrade(
             "DepthToSpace", 1, [[1, 8, 3, 3]], [[1, 2, 6, 6]], attrs={"blocksize": 2}
