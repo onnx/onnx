@@ -5,14 +5,15 @@
 
 One-off migration tool, to be run after 'remove_empty_generators.py'. The
 candidates are the file-local symbols in 'onnx/defs/<area>/*.cc' ('static'
-symbols, 'const' and 'constexpr' variables, and type aliases) and the symbols
-declared in 'onnx/defs/<area>/*.h' and 'onnx/defs/doc_strings.h', except for
-those marked 'ONNX_API'. A candidate is unused if its name does not occur
-outside of comments and of its declarations and definitions: for file-local
-symbols in its own file, otherwise in 'onnx', 'tests' and the spec files, which
-name functions. Unused symbols are removed until there
-are none left. Files without any symbols are deleted together with their
-includes and their entries in the 'CMakeLists.txt' of their directory.
+symbols, 'const' and 'constexpr' variables, and type aliases), the other
+symbols of 'onnx/defs/<area>/{defs,old}.cc', and the symbols declared in
+'onnx/defs/<area>/*.h' and 'onnx/defs/doc_strings.h', except for those marked
+'ONNX_API'. A candidate is unused if its name does not occur outside of
+comments and of its declarations and definitions: for file-local symbols in
+its own file, otherwise in 'onnx', 'tests' and the spec files, which name
+functions. Unused symbols are removed until there are none left. Files
+without any symbols are deleted together with their includes and their
+entries in the 'CMakeLists.txt' of their directory.
 
 Requires 'tree-sitter' and 'tree-sitter-cpp'. Run 'pixi run lint' afterwards.
 
@@ -111,6 +112,9 @@ def candidates() -> set[Symbol]:
                 out.add(Symbol(name, None))
             elif is_file_local(node) and Symbol(name, None) not in out:
                 out.add(Symbol(name, path))
+            elif path.name in ("defs.cc", "old.cc") and Symbol(name, None) not in out:
+                # Shared between 'defs.cc' and 'old.cc' via 'extern' declarations.
+                out.add(Symbol(name, None))
     return out
 
 
