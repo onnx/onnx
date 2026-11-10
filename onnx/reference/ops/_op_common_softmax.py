@@ -3,6 +3,7 @@
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
+import ml_dtypes
 import numpy as np
 
 
@@ -14,7 +15,10 @@ def _log_softmax(x: np.ndarray, axis: int = -1) -> np.ndarray:
     """
     if x.size == 0:
         return x
-    shifted = x - x.max(axis=axis, keepdims=True)
+    # Accumulate low-precision inputs in float32 to avoid overflowing float16
+    # sums or losing contributions after 256 equal bfloat16 values.
+    xc = x.astype(np.float32) if x.dtype in (np.float16, ml_dtypes.bfloat16) else x
+    shifted = xc - xc.max(axis=axis, keepdims=True)
     exp_shifted = np.exp(shifted)
     # Exclude exactly one maximum, even when several logits tie. Keeping its
     # contribution separate lets log1p preserve small nonzero log probabilities.
