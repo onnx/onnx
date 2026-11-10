@@ -28,6 +28,11 @@ a regression check — e.g. to catch a harness failing to import or a documented
 going missing. This is separate from, and much shallower than, OSS-Fuzz's own continuous
 fuzzing campaigns; OSS-Fuzz findings are not surfaced in this repo's CI.
 
+The CI build enables AddressSanitizer and UndefinedBehaviorSanitizer (`-DONNX_USE_ASAN=ON`),
+so memory errors and undefined behavior in the C++ code are reported as crashes. Crashing
+inputs are saved under `crashes/<harness>/`, replayed to print the sanitizer and Python
+stack traces, and uploaded as the `fuzz-crashes` artifact.
+
 ## How OSS-Fuzz uses these files
 
 The companion OSS-Fuzz project ([google/oss-fuzz#15382](https://github.com/google/oss-fuzz/pull/15382))
