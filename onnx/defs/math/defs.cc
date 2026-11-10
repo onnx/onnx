@@ -1333,7 +1333,11 @@ static void GroupedMatMulShapeInference(InferenceContext& ctx) {
 
   Dim M, K, G, N, S;
   ctx.unifyInputShape(0, {M, K});
-  ctx.unifyInputShape(1, {G, K, N});
+  if (getAttribute(ctx, "transB", int64_t{0}) != 0) {
+    ctx.unifyInputShape(1, {G, N, K});
+  } else {
+    ctx.unifyInputShape(1, {G, K, N});
+  }
   ctx.unifyInputShape(2, {M, S});
   if (ctx.hasInput(3)) {
     ctx.unifyInputShape(3, {G, N});
@@ -1345,6 +1349,11 @@ static bool BuildContextDependentFunctionBodyGroupedMatMul(
     const FunctionBodyBuildContext& ctx,
     const OpSchema& schema,
     FunctionProto& functionProto) {
+  const auto* transB_attr = ctx.getAttribute("transB");
+  if (transB_attr != nullptr && !transB_attr->ref_attr_name().empty()) {
+    return false;
+  }
+  const bool transB = transB_attr != nullptr && transB_attr->i() != 0;
   FunctionBuilder builder(functionProto);
   builder.Const1D("index_zero", int64_t{0})
       .Const1D("index_one", int64_t{1})
@@ -1354,12 +1363,19 @@ static bool BuildContextDependentFunctionBodyGroupedMatMul(
       .Add("indices_shape = Shape (group_indices)")
       .Add("M = Gather <axis = 0> (input_shape, index_zero)")
       .Add("K = Gather <axis = 0> (input_shape, index_one)")
-      .Add("N = Gather <axis = 0> (weights_shape, index_two)")
+      .Add(
+          transB ? "N = Gather <axis = 0> (weights_shape, index_one)"
+                 : "N = Gather <axis = 0> (weights_shape, index_two)")
       .Add("S = Gather <axis = 0> (indices_shape, index_one)")
       .Add("MS = Mul (M, S)")
-      .Add("indices_flat = Reshape <allowzero = 1> (group_indices, MS)")
-      .Add("selected_weights = Gather <axis = 0> (weights, indices_flat)")
-      .Add("input_unsqueezed = Unsqueeze (input, index_one)")
+      .Add("indices_flat = Reshape <allowzero = 1> (group_indices, MS)");
+  if (transB) {
+    builder.Add("gathered_weights = Gather <axis = 0> (weights, indices_flat)")
+        .Add("selected_weights = Transpose <perm = [0, 2, 1]> (gathered_weights)");
+  } else {
+    builder.Add("selected_weights = Gather <axis = 0> (weights, indices_flat)");
+  }
+  builder.Add("input_unsqueezed = Unsqueeze (input, index_one)")
       .Add("expanded_shape = Concat <axis = 0> (M, S, K)")
       .Add("input_expanded = Expand (input_unsqueezed, expanded_shape)")
       .Add("matmul_input_shape = Concat <axis = 0> (MS, index_one, K)")
@@ -1385,11 +1401,18 @@ ONNX_OPERATOR_SET_SCHEMA(
     29,
     OpSchema()
         .SetDoc(kDoc_GroupedMatMul_ver29)
+        .Attr(
+            "transB",
+            "Whether to transpose the last two axes of weights before multiplication. "
+            "If zero, weights has shape [G, K, N]; if non-zero, weights has shape [G, N, K].",
+            AttributeProto::INT,
+            int64_t{0})
         .Input(0, "input", "Token matrix with shape [M, K].", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
         .Input(
             1,
             "weights",
-            "Stack of G group weight matrices with shape [G, K, N].",
+            "Stack of G group weight matrices with shape [G, K, N] if transB is zero, "
+            "or [G, N, K] if transB is non-zero.",
             "T",
             OpSchema::Single,
             true,

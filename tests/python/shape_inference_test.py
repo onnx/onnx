@@ -314,11 +314,16 @@ class TestShapeInference(TestShapeInferenceHelper):
         self._make_matmul_test_allow_unknown(version, None, None, None)
 
     @pytest.mark.parametrize("version", all_versions_for("GroupedMatMul"))
-    def test_groupedmatmul(self, version) -> None:
+    @pytest.mark.parametrize("transB", [None, 0, 1, -1, 2])
+    def test_groupedmatmul(self, version, transB) -> None:
         graph = self._make_graph(
             [
                 ("input", TensorProto.FLOAT, ("M", "K")),
-                ("weights", TensorProto.FLOAT, ("G", "K", "N")),
+                (
+                    "weights",
+                    TensorProto.FLOAT,
+                    ("G", "N", "K") if transB else ("G", "K", "N"),
+                ),
                 ("group_indices", TensorProto.INT64, ("M", "S")),
                 ("bias", TensorProto.FLOAT, ("G", "N")),
             ],
@@ -327,6 +332,7 @@ class TestShapeInference(TestShapeInferenceHelper):
                     "GroupedMatMul",
                     ["input", "weights", "group_indices", "bias"],
                     ["output"],
+                    **({} if transB is None else {"transB": transB}),
                 )
             ],
             [],
@@ -342,11 +348,14 @@ class TestShapeInference(TestShapeInferenceHelper):
         "elem_type", [TensorProto.FLOAT16, TensorProto.BFLOAT16, TensorProto.DOUBLE]
     )
     @pytest.mark.parametrize("index_type", [TensorProto.INT32, TensorProto.INT64])
-    def test_groupedmatmul_without_bias(self, version, elem_type, index_type) -> None:
+    @pytest.mark.parametrize("transB", [None, 0, 1, -1, 2])
+    def test_groupedmatmul_without_bias(
+        self, version, elem_type, index_type, transB
+    ) -> None:
         graph = self._make_graph(
             [
                 ("input", elem_type, (4, 3)),
-                ("weights", elem_type, (2, 3, 5)),
+                ("weights", elem_type, (2, 5, 3) if transB else (2, 3, 5)),
                 ("group_indices", index_type, (4, 2)),
             ],
             [
@@ -354,6 +363,7 @@ class TestShapeInference(TestShapeInferenceHelper):
                     "GroupedMatMul",
                     ["input", "weights", "group_indices"],
                     ["output"],
+                    **({} if transB is None else {"transB": transB}),
                 )
             ],
             [],
@@ -382,7 +392,16 @@ class TestShapeInference(TestShapeInferenceHelper):
             ),
         ],
     )
-    def test_groupedmatmul_invalid_shapes(self, input_shapes, input_names) -> None:
+    @pytest.mark.parametrize("transB", [0, 1])
+    def test_groupedmatmul_invalid_shapes(
+        self, input_shapes, input_names, transB
+    ) -> None:
+        if transB and len(input_shapes[1]) == 3:
+            input_shapes = (
+                input_shapes[0],
+                (input_shapes[1][0], input_shapes[1][2], input_shapes[1][1]),
+                *input_shapes[2:],
+            )
         input_types = [
             TensorProto.INT64 if name == "group_indices" else TensorProto.FLOAT
             for name in input_names
@@ -394,11 +413,58 @@ class TestShapeInference(TestShapeInferenceHelper):
                     input_names, input_types, input_shapes, strict=True
                 )
             ],
-            [make_node("GroupedMatMul", list(input_names), ["output"])],
+            [make_node("GroupedMatMul", list(input_names), ["output"], transB=transB)],
             [],
         )
         with pytest.raises(onnx.shape_inference.InferenceError):
             self._inferred(graph)
+
+    @pytest.mark.parametrize("transB", [0, 1])
+    @pytest.mark.parametrize(
+        ("input_shape", "weights_shape", "indices_shape", "bias_shape", "output_shape"),
+        [
+            ((None, 3), (2, None, 5), (4, None), None, (4, None, 5)),
+            (None, None, ("M", "S"), ("G", "N"), ("M", "S", "N")),
+            ((0, 3), (2, 3, 5), (0, 2), None, (0, 2, 5)),
+            ((4, 3), (2, 3, 5), (4, 0), None, (4, 0, 5)),
+            (None, None, None, None, (None, None, None)),
+        ],
+    )
+    def test_groupedmatmul_partial_shapes(
+        self,
+        transB,
+        input_shape,
+        weights_shape,
+        indices_shape,
+        bias_shape,
+        output_shape,
+    ) -> None:
+        if transB and weights_shape is not None:
+            weights_shape = (weights_shape[0], weights_shape[2], weights_shape[1])
+        inputs = [
+            ("input", TensorProto.FLOAT, input_shape),
+            ("weights", TensorProto.FLOAT, weights_shape),
+            ("group_indices", TensorProto.INT64, indices_shape),
+        ]
+        if bias_shape is not None:
+            inputs.append(("bias", TensorProto.FLOAT, bias_shape))
+        graph = self._make_graph(
+            inputs,
+            [
+                make_node(
+                    "GroupedMatMul",
+                    [name for name, _, _ in inputs],
+                    ["output"],
+                    transB=transB,
+                )
+            ],
+            [],
+        )
+        self._assert_inferred(
+            graph,
+            [make_tensor_value_info("output", TensorProto.FLOAT, output_shape)],
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, 29)],
+        )
 
     @pytest.mark.parametrize("version", all_versions_for("Cast"))
     def test_cast(self, version) -> None:
