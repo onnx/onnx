@@ -328,6 +328,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/noarch/scikit-build-core-1.1.1-pyhcb39dcd_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/sysroot_linux-64-2.28-h4ee821c_9.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/tomli-2.5.0-pyh5ded981_0.conda
+      - conda: https://conda.anaconda.org/conda-forge/noarch/tomli-w-1.2.0-pyhd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/types-futures-3.3.8-pyhcf101f3_3.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/types-protobuf-6.32.1.20260221-pyhcf101f3_1.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/typing-extensions-4.16.0-h69aa097_0.conda
@@ -459,6 +460,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/noarch/scikit-build-core-1.1.1-pyhcb39dcd_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/sysroot_linux-aarch64-2.28-h585391f_9.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/tomli-2.5.0-pyh5ded981_0.conda
+      - conda: https://conda.anaconda.org/conda-forge/noarch/tomli-w-1.2.0-pyhd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/types-futures-3.3.8-pyhcf101f3_3.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/types-protobuf-6.32.1.20260221-pyhcf101f3_1.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/typing-extensions-4.16.0-h69aa097_0.conda
@@ -494,6 +496,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/noarch/python_abi-3.14-9_cp314.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/scikit-build-core-1.1.1-pyhcb39dcd_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/tomli-2.5.0-pyh5ded981_0.conda
+      - conda: https://conda.anaconda.org/conda-forge/noarch/tomli-w-1.2.0-pyhd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/types-futures-3.3.8-pyhcf101f3_3.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/types-protobuf-6.32.1.20260221-pyhcf101f3_1.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/typing-extensions-4.16.0-h69aa097_0.conda
@@ -633,6 +636,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/noarch/python_abi-3.14-9_cp314.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/scikit-build-core-1.1.1-pyhcb39dcd_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/tomli-2.5.0-pyh5ded981_0.conda
+      - conda: https://conda.anaconda.org/conda-forge/noarch/tomli-w-1.2.0-pyhd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/types-futures-3.3.8-pyhcf101f3_3.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/types-protobuf-6.32.1.20260221-pyhcf101f3_1.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/typing-extensions-4.16.0-h69aa097_0.conda
@@ -988,6 +992,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/noarch/sphinxcontrib-serializinghtml-2.0.0-pyhd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/sysroot_linux-64-2.28-h4ee821c_9.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/tomli-2.5.0-pyh5ded981_0.conda
+      - conda: https://conda.anaconda.org/conda-forge/noarch/tomli-w-1.2.0-pyhd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/types-futures-3.3.8-pyhcf101f3_3.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/types-protobuf-6.32.1.20260221-pyhcf101f3_1.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/typing-extensions-4.16.0-h69aa097_0.conda
@@ -1263,6 +1268,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/noarch/sphinxcontrib-serializinghtml-2.0.0-pyhd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/sysroot_linux-aarch64-2.28-h585391f_9.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/tomli-2.5.0-pyh5ded981_0.conda
+      - conda: https://conda.anaconda.org/conda-forge/noarch/tomli-w-1.2.0-pyhd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/types-futures-3.3.8-pyhcf101f3_3.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/types-protobuf-6.32.1.20260221-pyhcf101f3_1.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/typing-extensions-4.16.0-h69aa097_0.conda
@@ -1350,6 +1356,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/noarch/sphinxcontrib-qthelp-2.0.0-pyhd8ed1ab_1.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/sphinxcontrib-serializinghtml-2.0.0-pyhd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/tomli-2.5.0-pyh5ded981_0.conda
+      - conda: https://conda.anaconda.org/conda-forge/noarch/tomli-w-1.2.0-pyhd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/types-futures-3.3.8-pyhcf101f3_3.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/types-protobuf-6.32.1.20260221-pyhcf101f3_1.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/typing-extensions-4.16.0-h69aa097_0.conda
@@ -1580,6 +1587,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/noarch/sphinxcontrib-qthelp-2.0.0-pyhd8ed1ab_1.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/sphinxcontrib-serializinghtml-2.0.0-pyhd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/tomli-2.5.0-pyh5ded981_0.conda
+      - conda: https://conda.anaconda.org/conda-forge/noarch/tomli-w-1.2.0-pyhd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/types-futures-3.3.8-pyhcf101f3_3.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/types-protobuf-6.32.1.20260221-pyhcf101f3_1.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/typing-extensions-4.16.0-h69aa097_0.conda
@@ -1875,6 +1883,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/noarch/scikit-build-core-1.1.1-pyhcb39dcd_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/sysroot_linux-64-2.28-h4ee821c_9.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/tomli-2.5.0-pyh5ded981_0.conda
+      - conda: https://conda.anaconda.org/conda-forge/noarch/tomli-w-1.2.0-pyhd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/types-futures-3.3.8-pyhcf101f3_3.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/types-protobuf-6.32.1.20260221-pyhcf101f3_1.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/typing-extensions-4.16.0-h69aa097_0.conda
@@ -2010,6 +2019,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/noarch/scikit-build-core-1.1.1-pyhcb39dcd_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/sysroot_linux-aarch64-2.28-h585391f_9.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/tomli-2.5.0-pyh5ded981_0.conda
+      - conda: https://conda.anaconda.org/conda-forge/noarch/tomli-w-1.2.0-pyhd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/types-futures-3.3.8-pyhcf101f3_3.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/types-protobuf-6.32.1.20260221-pyhcf101f3_1.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/typing-extensions-4.16.0-h69aa097_0.conda
@@ -2049,6 +2059,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/noarch/python_abi-3.14-9_cp314.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/scikit-build-core-1.1.1-pyhcb39dcd_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/tomli-2.5.0-pyh5ded981_0.conda
+      - conda: https://conda.anaconda.org/conda-forge/noarch/tomli-w-1.2.0-pyhd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/types-futures-3.3.8-pyhcf101f3_3.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/types-protobuf-6.32.1.20260221-pyhcf101f3_1.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/typing-extensions-4.16.0-h69aa097_0.conda
@@ -2192,6 +2203,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/noarch/python_abi-3.14-9_cp314.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/scikit-build-core-1.1.1-pyhcb39dcd_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/tomli-2.5.0-pyh5ded981_0.conda
+      - conda: https://conda.anaconda.org/conda-forge/noarch/tomli-w-1.2.0-pyhd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/types-futures-3.3.8-pyhcf101f3_3.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/types-protobuf-6.32.1.20260221-pyhcf101f3_1.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/typing-extensions-4.16.0-h69aa097_0.conda
@@ -2412,6 +2424,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/noarch/setuptools-84.2.1-pyhe730653_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/sysroot_linux-64-2.28-h4ee821c_9.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/tomli-2.5.0-pyh5ded981_0.conda
+      - conda: https://conda.anaconda.org/conda-forge/noarch/tomli-w-1.2.0-pyhd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/types-futures-3.3.8-pyhcf101f3_3.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/types-protobuf-6.32.1.20260221-pyhcf101f3_1.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/typing-extensions-4.16.0-h69aa097_0.conda
@@ -2548,6 +2561,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/noarch/setuptools-84.2.1-pyhe730653_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/sysroot_linux-aarch64-2.28-h585391f_9.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/tomli-2.5.0-pyh5ded981_0.conda
+      - conda: https://conda.anaconda.org/conda-forge/noarch/tomli-w-1.2.0-pyhd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/types-futures-3.3.8-pyhcf101f3_3.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/types-protobuf-6.32.1.20260221-pyhcf101f3_1.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/typing-extensions-4.16.0-h69aa097_0.conda
@@ -2585,6 +2599,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/noarch/scikit-build-core-1.1.1-pyhcb39dcd_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/setuptools-84.2.1-pyhe730653_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/tomli-2.5.0-pyh5ded981_0.conda
+      - conda: https://conda.anaconda.org/conda-forge/noarch/tomli-w-1.2.0-pyhd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/types-futures-3.3.8-pyhcf101f3_3.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/types-protobuf-6.32.1.20260221-pyhcf101f3_1.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/typing-extensions-4.16.0-h69aa097_0.conda
@@ -2725,6 +2740,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/noarch/scikit-build-core-1.1.1-pyhcb39dcd_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/setuptools-84.2.1-pyhe730653_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/tomli-2.5.0-pyh5ded981_0.conda
+      - conda: https://conda.anaconda.org/conda-forge/noarch/tomli-w-1.2.0-pyhd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/types-futures-3.3.8-pyhcf101f3_3.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/types-protobuf-6.32.1.20260221-pyhcf101f3_1.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/typing-extensions-4.16.0-h69aa097_0.conda
@@ -12904,6 +12920,18 @@ packages:
   run_exports: {}
   size: 21687
   timestamp: 1791394576814
+- conda: https://conda.anaconda.org/conda-forge/noarch/tomli-w-1.2.0-pyhd8ed1ab_0.conda
+  sha256: 304834f2438017921d69f05b3f5a6394b42dc89a90a6128a46acbf8160d377f6
+  md5: 32e37e8fe9ef45c637ee38ad51377769
+  depends:
+  - python >=3.9
+  license: MIT
+  license_family: MIT
+  purls:
+  - pkg:pypi/tomli-w?source=hash-mapping
+  run_exports: {}
+  size: 12680
+  timestamp: 1736962345843
 - conda: https://conda.anaconda.org/conda-forge/noarch/tomlkit-0.15.2-pyh5ded981_0.conda
   sha256: e6aa9e1c4d4e229280ef5446ebbc99e7b65c874deb47f83be6a751ba20332cc8
   md5: eadfe340211fea481536d602af9ace99
