@@ -40,6 +40,7 @@
 #include "onnx/version_converter/adapters/group_normalization_20_21.h"
 #include "onnx/version_converter/adapters/group_normalization_21_20.h"
 #include "onnx/version_converter/adapters/maxpool_8_7.h"
+#include "onnx/version_converter/adapters/nd_indices_29_28.h"
 #include "onnx/version_converter/adapters/no_previous_version.h"
 #include "onnx/version_converter/adapters/optional_ops.h"
 #include "onnx/version_converter/adapters/pad_10_11.h"
@@ -1122,9 +1123,13 @@ class DefaultVersionConverter : public BaseVersionConverter {
 
     /******** 28 -> 29 ********/
     registerAdapter(std::make_unique<CompatibleAdapter>("Gemm", OpSetID(28), OpSetID(29)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("GatherND", OpSetID(28), OpSetID(29)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("ScatterND", OpSetID(28), OpSetID(29)));
 
     /******** 29 -> 28 ********/
     registerAdapter(std::make_unique<Gemm_29_28>());
+    registerAdapter(std::make_unique<NDIndices_29_28>("GatherND"));
+    registerAdapter(std::make_unique<NDIndices_29_28>("ScatterND"));
   }
 
   ModelProto convert_version(const ModelProto& mp_in, const OpSetID& initial_version, const OpSetID& target_version)
