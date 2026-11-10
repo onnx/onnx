@@ -49,7 +49,7 @@ static void ValidateQuantizationBlockShape(InferenceContext& ctx) {
         if (dim.has_dim_value() && grid_dim.has_dim_value()) {
           const auto block = block_shape->ints(i);
           // Avoid overflow in ceiling division for large dimensions/block sizes.
-          const auto expected = dim.dim_value() / block + (dim.dim_value() % block != 0);
+          const auto expected = (dim.dim_value() / block) + (dim.dim_value() % block != 0);
           if (grid_dim.dim_value() != expected) {
             fail_shape_inference("Scale/zero-point grid dimension must equal ceil(input dimension / block_shape).");
           }
@@ -69,7 +69,7 @@ static void ValidateQuantizationBlockShape(InferenceContext& ctx) {
 static void InferQuantizeLinear29(InferenceContext& ctx) {
   // y_zero_point's type is known only if it is present as an input *and* its type could be inferred
   // (e.g. it is not simply an unresolved formal parameter of an enclosing function).
-  auto const zp_type = ctx.hasInput(2) ? ctx.getInputType(2) : nullptr;
+  const auto* const zp_type = ctx.hasInput(2) ? ctx.getInputType(2) : nullptr;
   auto const output_dtype =
       static_cast<TensorProto_DataType>(getAttribute(ctx, "output_dtype", TensorProto::UNDEFINED));
   if (zp_type != nullptr) {
