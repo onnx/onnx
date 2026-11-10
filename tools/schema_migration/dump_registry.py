@@ -50,10 +50,6 @@ def dump_schema(s: onnx.defs.OpSchema) -> dict[str, Any]:
         "support_level": str(s.support_level),
         "deprecated": s.deprecated,
         "node_determinism": str(s.node_determinism),
-        # Exposed temporarily for the migration.
-        "declared_node_determinism": str(s._declared_node_determinism),
-        "allowed_output_nums": s._allowed_output_nums,
-        "allows_unchecked_attributes": s._allows_unchecked_attributes,
         "min_input": s.min_input,
         "max_input": s.max_input,
         "min_output": s.min_output,

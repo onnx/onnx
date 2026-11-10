@@ -11,7 +11,6 @@
 #include <map>
 #include <memory>
 #include <mutex>
-#include <optional>
 #include <ostream>
 #include <string>
 #include <string_view>
@@ -747,19 +746,6 @@ class OpSchema final {
     return max_output_;
   }
 
-  // Temporarily exposed for the migration to the spec files in 'operator-specifications'.
-  ONNX_API bool allows_unchecked_attributes() const {
-    return allows_unchecked_attributes_;
-  }
-
-  ONNX_API NodeDeterminism declared_node_determinism() const {
-    return node_determinism_;
-  }
-
-  ONNX_API const std::optional<std::vector<int>>& allowed_output_nums() const {
-    return allowed_output_nums_;
-  }
-
   ONNX_API bool has_type_and_shape_inference_function() const {
     return static_cast<bool>(tensor_inference_function_);
   }
@@ -904,7 +890,6 @@ class OpSchema final {
   bool deprecated_{};
   std::function<bool(int)> num_inputs_allowed_ = [](int) { return true; };
   std::function<bool(int)> num_outputs_allowed_ = [](int) { return true; };
-  std::optional<std::vector<int>> allowed_output_nums_;
   InferenceFunction tensor_inference_function_;
   DataPropagationFunction data_propagation_function_;
 
