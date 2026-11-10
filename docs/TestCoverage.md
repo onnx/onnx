@@ -12328,7 +12328,7 @@ expect(
 
 
 ### GatherND
-There are 3 test cases, listed as following:
+There are 4 test cases, listed as following:
 <details>
 <summary>float32</summary>
 
@@ -12402,6 +12402,25 @@ expect(
 ```
 
 </details>
+<details>
+<summary>selected_kv_int32_indices</summary>
+
+```python
+node = onnx.helper.make_node(
+    "GatherND", ["cache", "positions"], ["selected"], batch_dims=1
+)
+cache = np.arange(24, dtype=np.float32).reshape(2, 4, 3)
+positions = np.array([[[[0], [2]]], [[[1], [-1]]]], dtype=np.int32)
+selected = np.stack([cache[0, [[0, 2]]], cache[1, [[1, 3]]]])
+expect(
+    node,
+    inputs=[cache, positions],
+    outputs=[selected],
+    name="test_gathernd_selected_kv_int32_indices",
+)
+```
+
+</details>
 
 
 ### Gelu
@@ -12455,7 +12474,7 @@ expect(node, inputs=[x], outputs=[y], name="test_gelu_tanh_2")
 
 
 ### Gemm
-There are 11 test cases, listed as following:
+There are 13 test cases, listed as following:
 <details>
 <summary>all_attributes</summary>
 
@@ -12594,6 +12613,69 @@ b = np.random.ranf([5, 4]).astype(np.float32)
 c = np.zeros([1, 4]).astype(np.float32)
 y = gemm_reference_implementation(a, b, c)
 expect(node, inputs=[a, b, c], outputs=[y], name="test_gemm_default_zero_bias")
+```
+
+</details>
+<details>
+<summary>high_rank_transpose</summary>
+
+```python
+node = onnx.helper.make_node(
+    "Gemm",
+    inputs=["a", "b", "c"],
+    outputs=["y"],
+    transA=1,
+    transB=1,
+    alpha=0.25,
+    beta=0.5,
+)
+a = np.random.ranf((2, 5, 3)).astype(np.float32)
+b = np.random.ranf((7, 5)).astype(np.float32)
+c = np.random.ranf((2, 1, 7)).astype(np.float32)
+y = gemm_reference_implementation(
+    a, b, c, transA=1, transB=1, alpha=0.25, beta=0.5
+)
+expect(
+    node,
+    inputs=[a, b, c],
+    outputs=[y],
+    name="test_gemm_high_rank_transpose",
+    opset_imports=[onnx.helper.make_opsetid("", 29)],
+)
+```
+
+</details>
+<details>
+<summary>linear</summary>
+
+```python
+for shape, suffix in [
+    ((5,), "vector"),
+    ((2, 3, 5), "rank3"),
+    ((2, 3, 4, 5), "rank4"),
+    ((0, 3, 5), "empty_batch"),
+    ((2, 3, 0), "empty_features"),
+]:
+    for has_bias in (False, True):
+        node = onnx.helper.make_node(
+            "Gemm",
+            inputs=["a", "b", "c"] if has_bias else ["a", "b"],
+            outputs=["y"],
+            transB=1,
+        )
+        a = np.random.ranf(shape).astype(np.float32)
+        b = np.random.ranf((7, shape[-1])).astype(np.float32)
+        c = np.random.ranf((7,)).astype(np.float32)
+        y = gemm_reference_implementation(
+            a, b, c if has_bias else None, transB=1
+        )
+        expect(
+            node,
+            inputs=[a, b, c] if has_bias else [a, b],
+            outputs=[y],
+            name=f"test_gemm_linear_{suffix}_{'bias' if has_bias else 'no_bias'}",
+            opset_imports=[onnx.helper.make_opsetid("", 29)],
+        )
 ```
 
 </details>
@@ -14674,7 +14756,36 @@ expect(
 
 
 ### InstanceNormalization
-There are 1 test cases, listed as following:
+There are 2 test cases, listed as following:
+<details>
+<summary>float16_large_values</summary>
+
+```python
+node = onnx.helper.make_node(
+    "InstanceNormalization",
+    inputs=["x", "s", "bias"],
+    outputs=["y"],
+)
+# input size: (1, 1, 256)
+x = np.arange(0, 512, 2).reshape(1, 1, 256).astype(np.float16)
+s = np.array([1.0]).astype(np.float16)
+bias = np.array([0.0]).astype(np.float16)
+# The variance (about 21845) is representable in float16, but squaring
+# values up to 510 overflows it, so compute in float32.
+x32 = x.astype(np.float32)
+mean = np.mean(x32, axis=2, keepdims=True)
+var = np.var(x32, axis=2, keepdims=True)
+y = ((x32 - mean) / np.sqrt(var + 1e-5)).astype(np.float16)
+
+expect(
+    node,
+    inputs=[x, s, bias],
+    outputs=[y],
+    name="test_instancenorm_float16_large_values",
+)
+```
+
+</details>
 <details>
 <summary>instancenormalization</summary>
 
@@ -14828,7 +14939,7 @@ expect(node, inputs=[x], outputs=[y], name="test_isnan")
 
 
 ### LRN
-There are 2 test cases, listed as following:
+There are 3 test cases, listed as following:
 <details>
 <summary>default</summary>
 
@@ -14854,6 +14965,28 @@ for n, c, h, w in np.ndindex(x.shape):
     )
 y = x / ((bias + (alpha / nsize) * square_sum) ** beta)
 expect(node, inputs=[x], outputs=[y], name="test_lrn_default")
+```
+
+</details>
+<details>
+<summary>float16_large_values</summary>
+
+```python
+alpha = 0.0001
+beta = 0.75
+bias = 1.0
+nsize = 5
+node = onnx.helper.make_node("LRN", inputs=["x"], outputs=["y"], size=nsize)
+x = np.full((1, 5, 1, 1), 300).astype(np.float16)
+# 300 ** 2 overflows float16 (max 65504), so compute in float32.
+x32 = x.astype(np.float32)
+square_sum = np.zeros_like(x32)
+for c in range(x.shape[1]):
+    begin = max(0, c - math.floor((nsize - 1) / 2))
+    end = min(x.shape[1], c + math.ceil((nsize - 1) / 2) + 1)
+    square_sum[:, c] = np.sum(x32[:, begin:end] ** 2, axis=1)
+y = (x32 / ((bias + (alpha / nsize) * square_sum) ** beta)).astype(np.float16)
+expect(node, inputs=[x], outputs=[y], name="test_lrn_float16_large_values")
 ```
 
 </details>
@@ -27465,7 +27598,30 @@ expect(
 
 
 ### ScatterND
-There are 7 test cases, listed as following:
+There are 8 test cases, listed as following:
+<details>
+<summary>batched_token_add_int32_indices</summary>
+
+```python
+node = onnx.helper.make_node(
+    "ScatterND", ["data", "indices", "updates"], ["output"], reduction="add"
+)
+data = np.zeros((2, 3, 2), dtype=np.float32)
+indices = np.array([[0, 1], [1, 0], [0, 1], [1, -1]], dtype=np.int32)
+updates = np.array([[1, 2], [3, 4], [5, 6], [7, 8]], dtype=np.float32)
+output = np.array(
+    [[[0, 0], [6, 8], [0, 0]], [[3, 4], [0, 0], [7, 8]]],
+    dtype=np.float32,
+)
+expect(
+    node,
+    inputs=[data, indices, updates],
+    outputs=[output],
+    name="test_scatternd_batched_token_add_int32_indices",
+)
+```
+
+</details>
 <details>
 <summary>scatternd</summary>
 

@@ -12,10 +12,10 @@ from typing import TYPE_CHECKING, Any, TypeVar
 
 import google.protobuf.message
 import numpy as np
-import typing_extensions
 
 import onnx
 from onnx import _mapping, defs
+from onnx._deprecated import deprecated
 from onnx.onnx_data_pb import MapProto, OptionalProto, SequenceProto
 from onnx.onnx_pb import (
     AttributeProto,
@@ -1153,9 +1153,7 @@ def printable_node(
     return prefix + " ".join(content)
 
 
-@typing_extensions.deprecated(
-    "Deprecated since 1.19. Consider using onnx.printer.to_text() instead."
-)
+@deprecated("Deprecated since 1.19. Consider using onnx.printer.to_text() instead.")
 def printable_graph(graph: GraphProto, prefix: str = "") -> str:
     """Display a GraphProto as a string.
 
@@ -1314,7 +1312,7 @@ def tensor_dtype_to_string(tensor_dtype: int) -> str:
     return _mapping.TENSOR_TYPE_MAP[tensor_dtype].name
 
 
-@functools.lru_cache(None)
+@functools.cache
 def tensor_dtype_to_field(tensor_dtype: int) -> str:
     """Convert a TensorProto's data_type to corresponding field name for storage. It can be used while making tensors.
 
@@ -1338,7 +1336,7 @@ def tensor_dtype_to_field(tensor_dtype: int) -> str:
     ]
 
 
-@functools.lru_cache(None)
+@functools.cache
 def np_dtype_to_tensor_dtype(np_dtype: np.dtype) -> TensorProto.DataType:
     """Convert a numpy's dtype to corresponding tensor type. It can be used while converting numpy arrays to tensors.
 

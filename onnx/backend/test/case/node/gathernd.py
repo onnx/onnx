@@ -60,6 +60,21 @@ def gather_nd_impl(
 
 class GatherND(Base):
     @staticmethod
+    def export_selected_kv_int32_indices() -> None:
+        node = onnx.helper.make_node(
+            "GatherND", ["cache", "positions"], ["selected"], batch_dims=1
+        )
+        cache = np.arange(24, dtype=np.float32).reshape(2, 4, 3)
+        positions = np.array([[[[0], [2]]], [[[1], [-1]]]], dtype=np.int32)
+        selected = np.stack([cache[0, [[0, 2]]], cache[1, [[1, 3]]]])
+        expect(
+            node,
+            inputs=[cache, positions],
+            outputs=[selected],
+            name="test_gathernd_selected_kv_int32_indices",
+        )
+
+    @staticmethod
     def export_int32() -> None:
         node = onnx.helper.make_node(
             "GatherND",
