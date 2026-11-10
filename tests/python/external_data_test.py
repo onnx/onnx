@@ -902,6 +902,18 @@ class TestCheckExternalDataBounds:
         ):
             checker.check_model(model)
 
+    def test_check_model_in_memory_hash_dotdot_location_still_rejected(self) -> None:
+        # '#unused/../data.bin' normalizes to 'data.bin', so it refers to a
+        # file even though the raw location starts with '#'.
+        model_filename = self.create_test_model(
+            {"location": "#unused/../data.bin"}, self.value.tobytes()
+        )
+        model = onnx.load(model_filename, load_external_data=False)
+        with pytest.raises(
+            checker.ValidationError, match="not checked from a file path"
+        ):
+            checker.check_model(model)
+
     def test_check_model_bare_filename_still_resolves_against_cwd(
         self, monkeypatch: pytest.MonkeyPatch
     ) -> None:

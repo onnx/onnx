@@ -394,7 +394,13 @@ void check_tensor(const TensorProto& tensor, const CheckerContext& ctx) {
         // location must not be resolved against the current working
         // directory. (A '#' location refers to in-memory data, not a
         // file, and is unaffected.)
-        if (!ctx.model_dir_from_path() && !entry.value().empty() && entry.value()[0] != '#') {
+        // Classify the location after the same lexical normalization
+        // resolve_external_data_location applies: '#unused/../data.bin'
+        // normalizes to 'data.bin' and refers to a file, so only a
+        // location that still starts with '#' once normalized is
+        // in-memory data.
+        const auto normalized_location = path_to_utf8(utf8_to_path(entry.value()).lexically_normal().make_preferred());
+        if (!ctx.model_dir_from_path() && !normalized_location.empty() && normalized_location[0] != '#') {
           fail_check(
               "Data of TensorProto ( tensor name: ",
               tensor.name(),
