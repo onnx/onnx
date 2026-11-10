@@ -281,6 +281,49 @@ def test_specification_block_float_scales(specification, qtype: int) -> None:
         np.testing.assert_array_equal(actual.view(np.uint32), expected.view(np.uint32))
 
 
+def test_iq2_xxs_group_scale_and_sign_lanes() -> None:
+    block = bytearray(66)
+    struct.pack_into("<e", block, 0, 1.0)
+    struct.pack_into("<I", block, 6, (3 << 28) | 1 | (3 << 7) | (127 << 14))
+    expected = np.ones(256, dtype=np.float32)
+    expected[:32] = [
+        -7,
+        7,
+        7,
+        7,
+        7,
+        7,
+        7,
+        -7,
+        -7,
+        -7,
+        7,
+        7,
+        7,
+        7,
+        7,
+        7,
+        -7,
+        -7,
+        -7,
+        -7,
+        -7,
+        -7,
+        -7,
+        -7,
+        7,
+        7,
+        7,
+        7,
+        7,
+        7,
+        7,
+        7,
+    ]
+    actual = _run(np.frombuffer(block, dtype=np.uint8), "gguf:iq2_xxs", [256])
+    np.testing.assert_array_equal(actual, expected)
+
+
 @pytest.mark.parametrize("qtype", sorted(set(GGUF_BLOCK_SIZES) - {39, 40}))
 def test_specification_ieee_scales(specification, qtype: int) -> None:
     scale_bits = [0, 0x8000, 1, 0x3C00, 0x7BFF, 0x7C00, 0xFC00, 0x7E00]
