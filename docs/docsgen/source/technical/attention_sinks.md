@@ -68,6 +68,9 @@ P = Slice(P_all, [0], [-1], [-1], [1])   # retain only real keys
 Y = MatMul(P, V)                        # [B,Hq,Q,Dv]
 ```
 
+[Softmax-13](https://onnx.ai/onnx/operators/onnx__Softmax.html#softmax-13)
+normalizes the final axis of `Z`, including
+the sink. The output `P` has shape `[B,Hq,Q,K]`; `Y` has shape `[B,Hq,Q,Dv]`.
 `Slice` inputs above are `starts`, `ends`, `axes`, and `steps`, all int64.
 The exclusive end `-1` removes exactly the last candidate, including when
 `K = 0`. `Concat` itself does **not** broadcast: its non-concatenated
@@ -100,7 +103,8 @@ precede the core subgraph; they do not add a sink to stored K or V.
 
 ### Precision and exceptional inputs
 
-The executable example below accepts float16, float32, or float64 storage.
+In the executable example, `L`, `S`, and `V` share one storage type:
+float16, float32, or float64.
 It casts **final** `L`, `S`, and `V` to float32 for float16/float32 storage,
 or retains float64 for float64 storage, before expansion/normalization and
 the value contraction. `P` stays in that computation type; only `Y` is cast
@@ -191,8 +195,8 @@ overflow-safe accumulation that satisfies the graph's numerical contract;
 otherwise fall back to the explicit graph. Finite inputs alone are not a
 sufficient range check. Block reductions can also change rounding, so this
 strategy is not a bitwise-equivalence promise.
-If real probabilities are requested, compute them from the final `m,d`
-without renormalizing over real keys alone.
+If real probabilities are requested, compute `p_j = exp(L_j - m) / d`
+using the final `m` and `d`, without renormalizing over real keys alone.
 
 ## Executable example
 
