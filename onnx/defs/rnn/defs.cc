@@ -11,6 +11,11 @@
 #include "onnx/defs/type_builders.h"
 
 namespace ONNX_NAMESPACE {
+// Kept for backward compatibility of the public API.
+ONNX_API void RNNShapeInference(InferenceContext& ctx) {
+  defs::rnn::utils::RNNShapeInference(ctx);
+}
+
 static std::function<void(OpSchema&)> RNNDocGenerator() {
   return [=](OpSchema& schema) { schema.TypeAndShapeInferenceFunction(defs::rnn::utils::RNNShapeInference); };
 }

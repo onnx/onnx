@@ -14,6 +14,16 @@
 #include "onnx/defs/type_builders.h"
 
 namespace ONNX_NAMESPACE {
+// Kept for backward compatibility of the public API.
+ONNX_API void convTransposeShapeInference(InferenceContext& ctx) {
+  defs::nn::utils::convTransposeShapeInference(ctx);
+}
+
+// Kept for backward compatibility of the public API.
+ONNX_API void globalPoolTypeShapeInference(InferenceContext& ctx) {
+  defs::nn::utils::globalPoolTypeShapeInference(ctx);
+}
+
 ONNX_API void convPoolShapeInference(
     InferenceContext& ctx,
     bool use_dilation,
