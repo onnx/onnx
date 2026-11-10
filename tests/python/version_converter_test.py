@@ -33,7 +33,7 @@ EINSUM_OPSET_28 = 28
 
 class TestVersionConverter:
     @pytest.mark.parametrize("ir_version", [None, 0, 1])
-    def test_unparseable_graph_is_rejected(self, ir_version) -> None:
+    def test_unparsable_graph_is_rejected(self, ir_version) -> None:
         model = helper.make_model(
             helper.make_graph([], "empty", [], []),
             opset_imports=[helper.make_opsetid("", 28)],

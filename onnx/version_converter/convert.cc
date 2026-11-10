@@ -16,9 +16,11 @@
 
 namespace ONNX_NAMESPACE::version_conversion {
 
+namespace {
+
 struct CapturedTensorType {
-  int32_t elem_type;
-  bool has_sizes;
+  int32_t elem_type = TensorProto_DataType_UNDEFINED;
+  bool has_sizes = false;
   std::vector<Dimension> sizes;
 };
 
@@ -64,6 +66,8 @@ static void PropagateCapturedTensorTypes(
     }
   }
 }
+
+} // namespace
 
 ModelProto ConvertVersion(const ModelProto& mp_in, int target_version) {
   ModelProto inferred_model = mp_in;
