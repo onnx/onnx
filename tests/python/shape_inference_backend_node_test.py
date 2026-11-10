@@ -207,15 +207,6 @@ class TestShapeInferenceBackendNode:
         test_name = test_case.name
         if test_name in _SKIP_TESTS:
             pytest.skip(f"In skip list: {test_name}")
-        if test_name == "test_negative_pad_axes":
-            # Also fails on main 04e9ef9f7: Pad parses int32 axes as int64.
-            with pytest.raises(
-                onnx.shape_inference.InferenceError,
-                match="ParseData type mismatch for tensor: axes",
-            ):
-                self._check_shape_inference(test_case)
-            pytest.xfail("Pad shape inference does not yet support int32 axes")
-
         self._check_shape_inference(test_case)
 
     def _check_shape_inference(self, test_case: TestCase) -> None:

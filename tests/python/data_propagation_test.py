@@ -15,6 +15,41 @@ from onnx.reference import ReferenceEvaluator
 
 
 class TestDataPropagation(TestShapeInferenceHelper):
+    @pytest.mark.parametrize("version", [18, 19, 21, 23, 24, 25, 27])
+    @pytest.mark.parametrize("index_type", [TensorProto.INT32, TensorProto.INT64])
+    @pytest.mark.parametrize("axis", [0, -1])
+    def test_pad_computed_integer_axes(
+        self, version: int, index_type: int, axis: int
+    ) -> None:
+        model = onnx.helper.make_model(
+            onnx.helper.make_graph(
+                [
+                    make_node("Add", ["axis", "zero"], ["axes"]),
+                    make_node("Pad", ["x", "pads", "", "axes"], ["y"]),
+                ],
+                "computed_pad_axes",
+                [make_tensor_value_info("x", TensorProto.FLOAT, [2, 3])],
+                [make_tensor_value_info("y", TensorProto.FLOAT, None)],
+                initializer=[
+                    make_tensor("axis", index_type, [1], [axis]),
+                    make_tensor("zero", index_type, [1], [0]),
+                    make_tensor("pads", TensorProto.INT64, [2], [1, 2]),
+                ],
+            ),
+            opset_imports=[onnx.helper.make_opsetid("", version)],
+        )
+        expected = [5, 3] if axis == 0 else [2, 6]
+        actual = ReferenceEvaluator(model).run(
+            None, {"x": np.zeros((2, 3), dtype=np.float32)}
+        )[0]
+        assert actual.shape == tuple(expected)
+        inferred = onnx.shape_inference.infer_shapes(
+            model, check_type=True, strict_mode=True, data_prop=True
+        )
+        assert inferred.graph.output[0] == make_tensor_value_info(
+            "y", TensorProto.FLOAT, expected
+        )
+
     @pytest.mark.parametrize("symbolic_input", ["starts", "ends", "axes"])
     def test_slice_symbolic_indices_do_not_default_to_zero(
         self, symbolic_input: str

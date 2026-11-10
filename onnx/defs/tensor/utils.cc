@@ -594,7 +594,12 @@ std::function<void(OpSchema&)> PadDocGenerator(
         if (axes_initializer == nullptr)
           return; // can't do shape inference then
 
-        axes = ParseData<int64_t>(axes_initializer);
+        if (axes_initializer->data_type() == TensorProto::INT32) {
+          const auto int32_axes = ParseData<int32_t>(axes_initializer);
+          axes.assign(int32_axes.begin(), int32_axes.end());
+        } else {
+          axes = ParseData<int64_t>(axes_initializer);
+        }
         checkAxesRange(axes, input_rank);
         adjustNegativeAxes(axes, input_rank);
         checkDuplicateAxes(axes, input_rank);
