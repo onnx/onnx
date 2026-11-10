@@ -17,74 +17,74 @@
 
 namespace ONNX_NAMESPACE::defs::math::utils {
 
+static void TopKShapeInference(InferenceContext& ctx) {
+  // Type inference:
+  propagateElemTypeFromInputToOutput(ctx, 0, 0);
+  updateOutputElemType(ctx, 1, TensorProto::INT64);
+  // Shape inference:
+  if (!hasInputShape(ctx, 0))
+    return;
+  const auto& input_shape = getInputShape(ctx, 0);
+  int64_t rank = input_shape.dim_size();
+  int64_t axis = getAttribute(ctx, "axis", -1);
+  if (axis < 0)
+    axis += rank;
+  if (axis < 0 || axis >= rank) {
+    fail_shape_inference("Invalid value for attribute axis");
+  }
+
+  const auto& axis_dim = input_shape.dim(static_cast<int>(axis));
+  const auto* const k = ctx.getInputData(1);
+
+  int64_t k_value = 0;
+  if (nullptr != k) {
+    if (k->dims_size() != 1 || k->dims(0) != 1) {
+      fail_shape_inference("K input must be a one-dimensional tensor of size 1.");
+    }
+    if (k->data_type() == TensorProto::INT64) {
+      const auto data = ParseData<int64_t>(k);
+      k_value = data[0];
+    } else {
+      fail_shape_inference("K input must be of type int64.");
+    }
+    if (k_value <= 0) {
+      fail_shape_inference("K input must contain a single positive value.");
+    }
+  }
+
+  // Infer output shape if:
+  // (1) 'K' is available
+  // (2) axis_dim has dim value
+  // Otherwise cannot reliably compute output shape as axis dim value is
+  // unknown and hence cannot determine if axis dim value >= k (which
+  // should be enforced)
+  if (nullptr != k && axis_dim.has_dim_value()) {
+    if (axis_dim.dim_value() < k_value) {
+      fail_shape_inference("Axis has less than the requested k elements.");
+    }
+
+    TensorShapeProto result_shape = input_shape;
+    result_shape.mutable_dim(static_cast<int>(axis))->set_dim_value(k_value);
+
+    updateOutputShape(ctx, 0, result_shape);
+    updateOutputShape(ctx, 1, result_shape);
+
+    return;
+  }
+
+  // Infer output shapes' rank in any case
+  auto* output_shape_0 = getOutputShape(ctx, 0);
+  auto* output_shape_1 = getOutputShape(ctx, 1);
+  for (int i = 0; i < input_shape.dim_size(); ++i) {
+    output_shape_0->add_dim();
+    output_shape_1->add_dim();
+  }
+
+  return;
+}
+
 std::function<void(OpSchema&)> TopKOpGenerator() {
-  return [](OpSchema& schema) {
-    schema.TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-      // Type inference:
-      propagateElemTypeFromInputToOutput(ctx, 0, 0);
-      updateOutputElemType(ctx, 1, TensorProto::INT64);
-      // Shape inference:
-      if (!hasInputShape(ctx, 0))
-        return;
-      const auto& input_shape = getInputShape(ctx, 0);
-      int64_t rank = input_shape.dim_size();
-      int64_t axis = getAttribute(ctx, "axis", -1);
-      if (axis < 0)
-        axis += rank;
-      if (axis < 0 || axis >= rank) {
-        fail_shape_inference("Invalid value for attribute axis");
-      }
-
-      const auto& axis_dim = input_shape.dim(static_cast<int>(axis));
-      const auto* const k = ctx.getInputData(1);
-
-      int64_t k_value = 0;
-      if (nullptr != k) {
-        if (k->dims_size() != 1 || k->dims(0) != 1) {
-          fail_shape_inference("K input must be a one-dimensional tensor of size 1.");
-        }
-        if (k->data_type() == TensorProto::INT64) {
-          const auto data = ParseData<int64_t>(k);
-          k_value = data[0];
-        } else {
-          fail_shape_inference("K input must be of type int64.");
-        }
-        if (k_value <= 0) {
-          fail_shape_inference("K input must contain a single positive value.");
-        }
-      }
-
-      // Infer output shape if:
-      // (1) 'K' is available
-      // (2) axis_dim has dim value
-      // Otherwise cannot reliably compute output shape as axis dim value is
-      // unknown and hence cannot determine if axis dim value >= k (which
-      // should be enforced)
-      if (nullptr != k && axis_dim.has_dim_value()) {
-        if (axis_dim.dim_value() < k_value) {
-          fail_shape_inference("Axis has less than the requested k elements.");
-        }
-
-        TensorShapeProto result_shape = input_shape;
-        result_shape.mutable_dim(static_cast<int>(axis))->set_dim_value(k_value);
-
-        updateOutputShape(ctx, 0, result_shape);
-        updateOutputShape(ctx, 1, result_shape);
-
-        return;
-      }
-
-      // Infer output shapes' rank in any case
-      auto* output_shape_0 = getOutputShape(ctx, 0);
-      auto* output_shape_1 = getOutputShape(ctx, 1);
-      for (int i = 0; i < input_shape.dim_size(); ++i) {
-        output_shape_0->add_dim();
-        output_shape_1->add_dim();
-      }
-
-      return;
-    });
-  };
+  return [](OpSchema& schema) { schema.TypeAndShapeInferenceFunction(TopKShapeInference); };
 }
 
 std::function<void(OpSchema&)> UnaryFloatMathOpGenerator() {
@@ -382,21 +382,21 @@ static void einsumShapeInference(ONNX_NAMESPACE::InferenceContext& ctx, std::str
   updateOutputShape(ctx, 0, output_shape);
 }
 
-std::function<void(OpSchema&)> EinsumOpGenerator() {
-  return [](OpSchema& schema) {
-    schema.TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-      // Type inference
-      propagateElemTypeFromInputToOutput(ctx, 0, 0);
-      std::string equation = getAttribute(ctx, "equation", "");
-      if (equation.empty()) {
-        return;
-      }
+static void EinsumShapeInference(InferenceContext& ctx) {
+  // Type inference
+  propagateElemTypeFromInputToOutput(ctx, 0, 0);
+  std::string equation = getAttribute(ctx, "equation", "");
+  if (equation.empty()) {
+    return;
+  }
 
-      equation.erase(std::remove(equation.begin(), equation.end(), ' '),
-                     equation.end()); // Remove space char
-      einsumShapeInference(ctx, equation);
-    });
-  };
+  equation.erase(std::remove(equation.begin(), equation.end(), ' '),
+                 equation.end()); // Remove space char
+  einsumShapeInference(ctx, equation);
+}
+
+std::function<void(OpSchema&)> EinsumOpGenerator() {
+  return [](OpSchema& schema) { schema.TypeAndShapeInferenceFunction(EinsumShapeInference); };
 }
 
 } // namespace ONNX_NAMESPACE::defs::math::utils

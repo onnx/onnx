@@ -49,19 +49,21 @@ ONNX_OPERATOR_SET_SCHEMA(Equal, 19, generated::ai_onnx::Equal_ver19().FillUsing(
 
 ONNX_OPERATOR_SET_SCHEMA(Not, 1, generated::ai_onnx::Not_ver1().TypeAndShapeInferenceFunction(unaryLogicalOpInference));
 
+static void BitShiftShapeInference_opset28(InferenceContext& ctx) {
+  // Type inference
+  propagateElemTypeFromInputToOutput(ctx, 0, 0);
+  // Shape inference
+  if (hasNInputShapes(ctx, 2))
+    bidirectionalBroadcastShapeInference(
+        ctx.getInputType(0)->tensor_type().shape(),
+        ctx.getInputType(1)->tensor_type().shape(),
+        *ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape());
+}
+
 ONNX_OPERATOR_SET_SCHEMA(
     BitShift,
     28,
-    generated::ai_onnx::BitShift_ver28().TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-      // Type inference
-      propagateElemTypeFromInputToOutput(ctx, 0, 0);
-      // Shape inference
-      if (hasNInputShapes(ctx, 2))
-        bidirectionalBroadcastShapeInference(
-            ctx.getInputType(0)->tensor_type().shape(),
-            ctx.getInputType(1)->tensor_type().shape(),
-            *ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape());
-    }));
+    generated::ai_onnx::BitShift_ver28().TypeAndShapeInferenceFunction(BitShiftShapeInference_opset28));
 
 ONNX_OPERATOR_SET_SCHEMA(
     LessOrEqual,
@@ -82,19 +84,19 @@ ONNX_OPERATOR_SET_SCHEMA(
     18,
     generated::ai_onnx::BitwiseNot_ver18().TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
+static void BinaryBitwiseShapeInference(InferenceContext& ctx) {
+  // Type inference
+  propagateElemTypeFromInputToOutput(ctx, 0, 0);
+  // Shape inference
+  if (hasNInputShapes(ctx, 2))
+    bidirectionalBroadcastShapeInference(
+        ctx.getInputType(0)->tensor_type().shape(),
+        ctx.getInputType(1)->tensor_type().shape(),
+        *ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape());
+}
+
 static std::function<void(OpSchema&)> BinaryBitwiseDocGenerator() {
-  return [=](OpSchema& schema) {
-    schema.TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-      // Type inference
-      propagateElemTypeFromInputToOutput(ctx, 0, 0);
-      // Shape inference
-      if (hasNInputShapes(ctx, 2))
-        bidirectionalBroadcastShapeInference(
-            ctx.getInputType(0)->tensor_type().shape(),
-            ctx.getInputType(1)->tensor_type().shape(),
-            *ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape());
-    });
-  };
+  return [=](OpSchema& schema) { schema.TypeAndShapeInferenceFunction(BinaryBitwiseShapeInference); };
 }
 
 ONNX_OPERATOR_SET_SCHEMA(BitwiseAnd, 18, generated::ai_onnx::BitwiseAnd_ver18().FillUsing(BinaryBitwiseDocGenerator()));

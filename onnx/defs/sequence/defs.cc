@@ -15,126 +15,136 @@
 
 namespace ONNX_NAMESPACE {
 
+static void SequenceEmptyShapeInference_opset11(InferenceContext& ctx) {
+  const auto attr_proto = ctx.getAttribute("dtype");
+  auto elem_type = TensorProto::FLOAT;
+  if (nullptr != attr_proto) {
+    if (!attr_proto->has_i()) {
+      fail_type_inference("Attribute dtype should be of integer type and specify a type.");
+    }
+    auto attr_value = attr_proto->i();
+    elem_type = static_cast<TensorProto_DataType>(attr_value);
+  }
+  ctx.getOutputType(0)->mutable_sequence_type()->mutable_elem_type()->mutable_tensor_type()->set_elem_type(elem_type);
+}
+
 ONNX_OPERATOR_SET_SCHEMA(
     SequenceEmpty,
     11,
-    generated::ai_onnx::SequenceEmpty_ver11().TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-      const auto attr_proto = ctx.getAttribute("dtype");
-      auto elem_type = TensorProto::FLOAT;
-      if (nullptr != attr_proto) {
-        if (!attr_proto->has_i()) {
-          fail_type_inference("Attribute dtype should be of integer type and specify a type.");
-        }
-        auto attr_value = attr_proto->i();
-        elem_type = static_cast<TensorProto_DataType>(attr_value);
-      }
-      ctx.getOutputType(0)->mutable_sequence_type()->mutable_elem_type()->mutable_tensor_type()->set_elem_type(
-          elem_type);
-    }));
+    generated::ai_onnx::SequenceEmpty_ver11().TypeAndShapeInferenceFunction(SequenceEmptyShapeInference_opset11));
+
+static void SequenceConstructShapeInference_opset11(InferenceContext& ctx) {
+  const size_t numInputs = ctx.getNumInputs();
+  if (numInputs < 1) {
+    fail_type_inference("SequenceConstruct is expected to have at least 1 input.");
+  }
+
+  std::vector<int> input_elem_types;
+  input_elem_types.reserve(numInputs);
+  for (size_t i = 0; i < numInputs; ++i) {
+    auto input_type = ctx.getInputType(i);
+    if (nullptr == input_type) {
+      fail_type_inference("Input type for input at index ", i, " is null. Type info is expected.");
+    }
+    input_elem_types.emplace_back(input_type->tensor_type().elem_type());
+  }
+  if (std::adjacent_find(input_elem_types.begin(), input_elem_types.end(), std::not_equal_to()) !=
+      input_elem_types.end()) {
+    // not all input elem types are the same.
+    fail_type_inference("Element type of inputs are expected to be the same.");
+  }
+
+  auto output_tensor_type = ctx.getOutputType(0)->mutable_sequence_type()->mutable_elem_type()->mutable_tensor_type();
+
+  output_tensor_type->set_elem_type(static_cast<TensorProto_DataType>(input_elem_types[0]));
+
+  if (!hasNInputShapes(ctx, numInputs)) {
+    return;
+  }
+
+  *(output_tensor_type->mutable_shape()) = ctx.getInputType(0)->tensor_type().shape();
+
+  for (size_t i = 1; i < numInputs; ++i) {
+    const auto& input_shape = ctx.getInputType(i)->tensor_type().shape();
+    UnionShapeInfo(input_shape, *output_tensor_type);
+  }
+}
 
 ONNX_OPERATOR_SET_SCHEMA(
     SequenceConstruct,
     11,
-    generated::ai_onnx::SequenceConstruct_ver11().TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-      const size_t numInputs = ctx.getNumInputs();
-      if (numInputs < 1) {
-        fail_type_inference("SequenceConstruct is expected to have at least 1 input.");
-      }
+    generated::ai_onnx::SequenceConstruct_ver11().TypeAndShapeInferenceFunction(
+        SequenceConstructShapeInference_opset11));
 
-      std::vector<int> input_elem_types;
-      input_elem_types.reserve(numInputs);
-      for (size_t i = 0; i < numInputs; ++i) {
-        auto input_type = ctx.getInputType(i);
-        if (nullptr == input_type) {
-          fail_type_inference("Input type for input at index ", i, " is null. Type info is expected.");
-        }
-        input_elem_types.emplace_back(input_type->tensor_type().elem_type());
-      }
-      if (std::adjacent_find(input_elem_types.begin(), input_elem_types.end(), std::not_equal_to()) !=
-          input_elem_types.end()) {
-        // not all input elem types are the same.
-        fail_type_inference("Element type of inputs are expected to be the same.");
-      }
+static void SequenceInsertShapeInference_opset11(InferenceContext& ctx) {
+  const auto input0_type = ctx.getInputType(0);
+  const auto input1_type = ctx.getInputType(1);
+  if (nullptr == input0_type || nullptr == input1_type) {
+    fail_type_inference("Input Sequence and Tensor are expected to have type info. Current type is null.");
+  }
+  const auto seq_elem_type = input0_type->sequence_type().elem_type().tensor_type().elem_type();
+  const auto tensor_elem_type = input1_type->tensor_type().elem_type();
+  if (seq_elem_type != tensor_elem_type) {
+    fail_type_inference(
+        "Input Sequence and Tensor are expected to have the same elem type. Sequence=",
+        seq_elem_type,
+        " Tensor=",
+        tensor_elem_type);
+  }
 
-      auto output_tensor_type =
-          ctx.getOutputType(0)->mutable_sequence_type()->mutable_elem_type()->mutable_tensor_type();
+  auto output_tensor_type = ctx.getOutputType(0)->mutable_sequence_type()->mutable_elem_type()->mutable_tensor_type();
+  output_tensor_type->set_elem_type(seq_elem_type);
 
-      output_tensor_type->set_elem_type(static_cast<TensorProto_DataType>(input_elem_types[0]));
+  if (!hasNInputShapes(ctx, 2)) {
+    return;
+  }
 
-      if (!hasNInputShapes(ctx, numInputs)) {
-        return;
-      }
+  *(output_tensor_type->mutable_shape()) = input0_type->sequence_type().elem_type().tensor_type().shape();
 
-      *(output_tensor_type->mutable_shape()) = ctx.getInputType(0)->tensor_type().shape();
-
-      for (size_t i = 1; i < numInputs; ++i) {
-        const auto& input_shape = ctx.getInputType(i)->tensor_type().shape();
-        UnionShapeInfo(input_shape, *output_tensor_type);
-      }
-    }));
+  UnionShapeInfo(input1_type->tensor_type().shape(), *output_tensor_type);
+}
 
 ONNX_OPERATOR_SET_SCHEMA(
     SequenceInsert,
     11,
-    generated::ai_onnx::SequenceInsert_ver11().TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-      const auto input0_type = ctx.getInputType(0);
-      const auto input1_type = ctx.getInputType(1);
-      if (nullptr == input0_type || nullptr == input1_type) {
-        fail_type_inference("Input Sequence and Tensor are expected to have type info. Current type is null.");
-      }
-      const auto seq_elem_type = input0_type->sequence_type().elem_type().tensor_type().elem_type();
-      const auto tensor_elem_type = input1_type->tensor_type().elem_type();
-      if (seq_elem_type != tensor_elem_type) {
-        fail_type_inference(
-            "Input Sequence and Tensor are expected to have the same elem type. Sequence=",
-            seq_elem_type,
-            " Tensor=",
-            tensor_elem_type);
-      }
+    generated::ai_onnx::SequenceInsert_ver11().TypeAndShapeInferenceFunction(SequenceInsertShapeInference_opset11));
 
-      auto output_tensor_type =
-          ctx.getOutputType(0)->mutable_sequence_type()->mutable_elem_type()->mutable_tensor_type();
-      output_tensor_type->set_elem_type(seq_elem_type);
-
-      if (!hasNInputShapes(ctx, 2)) {
-        return;
-      }
-
-      *(output_tensor_type->mutable_shape()) = input0_type->sequence_type().elem_type().tensor_type().shape();
-
-      UnionShapeInfo(input1_type->tensor_type().shape(), *output_tensor_type);
-    }));
+static void SequenceAtShapeInference_opset11(InferenceContext& ctx) {
+  const auto input0_type = ctx.getInputType(0);
+  if (nullptr == input0_type) {
+    fail_type_inference("Input type for input at index 0 is null. Type info is expected.");
+  }
+  ctx.getOutputType(0)->CopyFrom(input0_type->sequence_type().elem_type());
+}
 
 ONNX_OPERATOR_SET_SCHEMA(
     SequenceAt,
     11,
-    generated::ai_onnx::SequenceAt_ver11().TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-      const auto input0_type = ctx.getInputType(0);
-      if (nullptr == input0_type) {
-        fail_type_inference("Input type for input at index 0 is null. Type info is expected.");
-      }
-      ctx.getOutputType(0)->CopyFrom(input0_type->sequence_type().elem_type());
-    }));
+    generated::ai_onnx::SequenceAt_ver11().TypeAndShapeInferenceFunction(SequenceAtShapeInference_opset11));
+
+static void SequenceEraseShapeInference_opset11(InferenceContext& ctx) {
+  const auto input0_type = ctx.getInputType(0);
+  if (nullptr == input0_type) {
+    fail_type_inference("Input type for input at index 0 is null. Type info is expected.")
+  }
+  ctx.getOutputType(0)->CopyFrom(*input0_type);
+}
 
 ONNX_OPERATOR_SET_SCHEMA(
     SequenceErase,
     11,
-    generated::ai_onnx::SequenceErase_ver11().TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-      const auto input0_type = ctx.getInputType(0);
-      if (nullptr == input0_type) {
-        fail_type_inference("Input type for input at index 0 is null. Type info is expected.")
-      }
-      ctx.getOutputType(0)->CopyFrom(*input0_type);
-    }));
+    generated::ai_onnx::SequenceErase_ver11().TypeAndShapeInferenceFunction(SequenceEraseShapeInference_opset11));
+
+static void SequenceLengthShapeInference_opset11(InferenceContext& ctx) {
+  auto output_tensor_type = ctx.getOutputType(0)->mutable_tensor_type();
+  output_tensor_type->set_elem_type(TensorProto::INT64);
+  output_tensor_type->mutable_shape()->Clear();
+}
 
 ONNX_OPERATOR_SET_SCHEMA(
     SequenceLength,
     11,
-    generated::ai_onnx::SequenceLength_ver11().TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-      auto output_tensor_type = ctx.getOutputType(0)->mutable_tensor_type();
-      output_tensor_type->set_elem_type(TensorProto::INT64);
-      output_tensor_type->mutable_shape()->Clear();
-    }));
+    generated::ai_onnx::SequenceLength_ver11().TypeAndShapeInferenceFunction(SequenceLengthShapeInference_opset11));
 
 // Updated operators that consume/produce sequence of tensors.
 
@@ -143,60 +153,63 @@ ONNX_OPERATOR_SET_SCHEMA(
     24,
     generated::ai_onnx::SplitToSequence_ver24().FillUsing(defs::sequence::utils::SplitToSequenceOpGenerator()));
 
+static void ConcatFromSequenceShapeInference_opset11(InferenceContext& ctx) {
+  const auto input0_type = ctx.getInputType(0);
+  if (nullptr == input0_type) {
+    fail_type_inference("Input type for input at index 0 is null. Type info is expected.")
+  }
+  auto elem_type = input0_type->sequence_type().elem_type().tensor_type().elem_type();
+  ctx.getOutputType(0)->mutable_tensor_type()->set_elem_type(elem_type);
+
+  if (!hasInputShape(ctx, 0)) {
+    return;
+  }
+
+  auto axis_attr = ctx.getAttribute("axis");
+  if (!axis_attr) {
+    fail_shape_inference("Required attribute axis is missing");
+  }
+  int axis = static_cast<int>(axis_attr->i());
+
+  int new_axis = 0;
+  auto new_axis_attr = ctx.getAttribute("new_axis");
+  if (new_axis_attr) {
+    new_axis = static_cast<int>(new_axis_attr->i());
+  }
+
+  const auto& input_shape = ctx.getInputType(0)->sequence_type().elem_type().tensor_type().shape();
+  auto rank = input_shape.dim_size();
+  if (1 != new_axis && 0 != new_axis) {
+    fail_shape_inference("new_axis must be either 0 or 1");
+  }
+
+  auto upper_bound = 1 == new_axis ? rank : rank - 1;
+  auto lower_bound = 1 == new_axis ? -rank - 1 : -rank;
+
+  if (axis < lower_bound || axis > upper_bound) {
+    fail_shape_inference(
+        "Invalid value of attribute 'axis'. Accepted range=[", lower_bound, ", ", upper_bound, "], Value=", axis);
+  }
+
+  if (axis < 0) {
+    axis += (upper_bound + 1);
+  }
+
+  auto output_shape = ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
+
+  for (int i = 0; i <= upper_bound; ++i) {
+    output_shape->add_dim();
+    if (i != axis) {
+      output_shape->mutable_dim(i)->CopyFrom(input_shape.dim((i > axis && new_axis) ? i - 1 : i));
+    }
+  }
+}
+
 ONNX_OPERATOR_SET_SCHEMA(
     ConcatFromSequence,
     11,
-    generated::ai_onnx::ConcatFromSequence_ver11().TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-      const auto input0_type = ctx.getInputType(0);
-      if (nullptr == input0_type) {
-        fail_type_inference("Input type for input at index 0 is null. Type info is expected.")
-      }
-      auto elem_type = input0_type->sequence_type().elem_type().tensor_type().elem_type();
-      ctx.getOutputType(0)->mutable_tensor_type()->set_elem_type(elem_type);
-
-      if (!hasInputShape(ctx, 0)) {
-        return;
-      }
-
-      auto axis_attr = ctx.getAttribute("axis");
-      if (!axis_attr) {
-        fail_shape_inference("Required attribute axis is missing");
-      }
-      int axis = static_cast<int>(axis_attr->i());
-
-      int new_axis = 0;
-      auto new_axis_attr = ctx.getAttribute("new_axis");
-      if (new_axis_attr) {
-        new_axis = static_cast<int>(new_axis_attr->i());
-      }
-
-      const auto& input_shape = ctx.getInputType(0)->sequence_type().elem_type().tensor_type().shape();
-      auto rank = input_shape.dim_size();
-      if (1 != new_axis && 0 != new_axis) {
-        fail_shape_inference("new_axis must be either 0 or 1");
-      }
-
-      auto upper_bound = 1 == new_axis ? rank : rank - 1;
-      auto lower_bound = 1 == new_axis ? -rank - 1 : -rank;
-
-      if (axis < lower_bound || axis > upper_bound) {
-        fail_shape_inference(
-            "Invalid value of attribute 'axis'. Accepted range=[", lower_bound, ", ", upper_bound, "], Value=", axis);
-      }
-
-      if (axis < 0) {
-        axis += (upper_bound + 1);
-      }
-
-      auto output_shape = ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
-
-      for (int i = 0; i <= upper_bound; ++i) {
-        output_shape->add_dim();
-        if (i != axis) {
-          output_shape->mutable_dim(i)->CopyFrom(input_shape.dim((i > axis && new_axis) ? i - 1 : i));
-        }
-      }
-    }));
+    generated::ai_onnx::ConcatFromSequence_ver11().TypeAndShapeInferenceFunction(
+        ConcatFromSequenceShapeInference_opset11));
 
 static void SequenceMapInferenceFunction(InferenceContext& ctx) {
   auto num_inputs = ctx.getNumInputs();

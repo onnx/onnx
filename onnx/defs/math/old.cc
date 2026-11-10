@@ -130,98 +130,101 @@ static bool BuildContextDependentFunctionBody_opset13(
   return true;
 }
 
+static void NegativeLogLikelihoodLossShapeInference_opset13(InferenceContext& ctx) {
+  // Type inference
+  propagateElemTypeFromInputToOutput(ctx, 0, 0);
+
+  // Shape inference
+  if (hasNInputShapes(ctx, 2)) {
+    const TensorShapeProto& input_shape = ctx.getInputType(0)->tensor_type().shape();
+    const TensorShapeProto& target_shape = ctx.getInputType(1)->tensor_type().shape();
+
+    const int input_rank = static_cast<int>(input_shape.dim_size());
+    const int target_rank = static_cast<int>(target_shape.dim_size());
+
+    if (input_rank < 2) {
+      fail_shape_inference("Input rank must be >= 2.");
+    }
+    if (target_rank != input_rank - 1) {
+      fail_shape_inference("Target rank must be 1 less than the input rank.");
+    }
+
+    // match input dimensions (N, C, d1, ..., dk) with target
+    // dimensions of (C, d1, ..., dk)
+    for (int dim = 0; dim < target_rank; dim++) {
+      const auto input_dim = dim == 0 ? input_shape.dim(dim) : input_shape.dim(dim + 1);
+      const auto target_dim = target_shape.dim(dim);
+      if (input_dim.has_dim_value() && target_dim.has_dim_value() && input_dim.dim_value() != target_dim.dim_value())
+        fail_shape_inference("Input and target dimension value mismatch.");
+    }
+
+    if (ctx.getNumInputs() == 3 && hasInputShape(ctx, 2)) {
+      const TensorShapeProto& weight_shape = ctx.getInputType(2)->tensor_type().shape();
+      if (weight_shape.dim_size() != 1) {
+        fail_shape_inference("Weight rank must be 1.");
+      }
+    }
+
+    TensorShapeProto* output_shape = ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
+
+    if (getAttribute(ctx, "reduction", "mean") == "none") {
+      // output tensor is of shape (N, d1, d2, ..., dk) if
+      // reduction attribute is "none".
+      for (int i = 0; i < input_rank - 1; i++) {
+        auto dim = output_shape->add_dim();
+        if (i == 0)
+          *dim = input_shape.dim(i);
+        else
+          *dim = input_shape.dim(i + 1);
+      }
+    }
+    // otherwise output is a scalar.
+  }
+}
+
 ONNX_OPERATOR_SET_SCHEMA(
     NegativeLogLikelihoodLoss,
     13,
     generated::ai_onnx::NegativeLogLikelihoodLoss_ver13()
         .SetContextDependentFunctionBodyBuilder(BuildContextDependentFunctionBody_opset13)
-        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-          // Type inference
-          propagateElemTypeFromInputToOutput(ctx, 0, 0);
+        .TypeAndShapeInferenceFunction(NegativeLogLikelihoodLossShapeInference_opset13));
 
-          // Shape inference
-          if (hasNInputShapes(ctx, 2)) {
-            const TensorShapeProto& input_shape = ctx.getInputType(0)->tensor_type().shape();
-            const TensorShapeProto& target_shape = ctx.getInputType(1)->tensor_type().shape();
+static void DetShapeInference_opset11(InferenceContext& ctx) {
+  // Type inference
+  propagateElemTypeFromInputToOutput(ctx, 0, 0);
 
-            const int input_rank = static_cast<int>(input_shape.dim_size());
-            const int target_rank = static_cast<int>(target_shape.dim_size());
+  // Shape inference
+  if (hasInputShape(ctx, 0)) {
+    const TensorShapeProto& input_shape = ctx.getInputType(0)->tensor_type().shape();
+    TensorShapeProto* output_shape = ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
+    const int rank = static_cast<int>(input_shape.dim_size());
 
-            if (input_rank < 2) {
-              fail_shape_inference("Input rank must be >= 2.");
-            }
-            if (target_rank != input_rank - 1) {
-              fail_shape_inference("Target rank must be 1 less than the input rank.");
-            }
+    if (rank < 2) {
+      fail_shape_inference("Input rank must be >= 2.");
+    }
 
-            // match input dimensions (N, C, d1, ..., dk) with target
-            // dimensions of (C, d1, ..., dk)
-            for (int dim = 0; dim < target_rank; dim++) {
-              const auto input_dim = dim == 0 ? input_shape.dim(dim) : input_shape.dim(dim + 1);
-              const auto target_dim = target_shape.dim(dim);
-              if (input_dim.has_dim_value() && target_dim.has_dim_value() &&
-                  input_dim.dim_value() != target_dim.dim_value())
-                fail_shape_inference("Input and target dimension value mismatch.");
-            }
+    const auto mat_w = input_shape.dim(rank - 1);
+    const auto mat_h = input_shape.dim(rank - 2);
+    if (mat_w.has_dim_value() && mat_h.has_dim_value() && (mat_w.dim_value() != mat_h.dim_value())) {
+      fail_shape_inference(
+          "The inner-most 2 dimensions must have the same size (mat_w:",
+          mat_w.dim_value(),
+          " != mat_h:",
+          mat_h.dim_value(),
+          ").");
+    }
 
-            if (ctx.getNumInputs() == 3 && hasInputShape(ctx, 2)) {
-              const TensorShapeProto& weight_shape = ctx.getInputType(2)->tensor_type().shape();
-              if (weight_shape.dim_size() != 1) {
-                fail_shape_inference("Weight rank must be 1.");
-              }
-            }
-
-            TensorShapeProto* output_shape = ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
-
-            if (getAttribute(ctx, "reduction", "mean") == "none") {
-              // output tensor is of shape (N, d1, d2, ..., dk) if
-              // reduction attribute is "none".
-              for (int i = 0; i < input_rank - 1; i++) {
-                auto dim = output_shape->add_dim();
-                if (i == 0)
-                  *dim = input_shape.dim(i);
-                else
-                  *dim = input_shape.dim(i + 1);
-              }
-            }
-            // otherwise output is a scalar.
-          }
-        }));
+    for (int i = 0; i < rank - 2; ++i) {
+      auto dim = output_shape->add_dim();
+      *dim = input_shape.dim(i);
+    }
+  }
+}
 
 ONNX_OPERATOR_SET_SCHEMA(
     Det,
     11,
-    generated::ai_onnx::Det_ver11().TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-      // Type inference
-      propagateElemTypeFromInputToOutput(ctx, 0, 0);
-
-      // Shape inference
-      if (hasInputShape(ctx, 0)) {
-        const TensorShapeProto& input_shape = ctx.getInputType(0)->tensor_type().shape();
-        TensorShapeProto* output_shape = ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
-        const int rank = static_cast<int>(input_shape.dim_size());
-
-        if (rank < 2) {
-          fail_shape_inference("Input rank must be >= 2.");
-        }
-
-        const auto mat_w = input_shape.dim(rank - 1);
-        const auto mat_h = input_shape.dim(rank - 2);
-        if (mat_w.has_dim_value() && mat_h.has_dim_value() && (mat_w.dim_value() != mat_h.dim_value())) {
-          fail_shape_inference(
-              "The inner-most 2 dimensions must have the same size (mat_w:",
-              mat_w.dim_value(),
-              " != mat_h:",
-              mat_h.dim_value(),
-              ").");
-        }
-
-        for (int i = 0; i < rank - 2; ++i) {
-          auto dim = output_shape->add_dim();
-          *dim = input_shape.dim(i);
-        }
-      }
-    }));
+    generated::ai_onnx::Det_ver11().TypeAndShapeInferenceFunction(DetShapeInference_opset11));
 
 ONNX_OPERATOR_SET_SCHEMA(
     Round,
@@ -323,17 +326,17 @@ ONNX_OPERATOR_SET_SCHEMA(
     10,
     generated::ai_onnx::ThresholdedRelu_ver10().TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
+static void MathShapeInference_opset13(InferenceContext& ctx) {
+  propagateElemTypeFromInputToOutput(ctx, 0, 0);
+  if (hasNInputShapes(ctx, 2))
+    bidirectionalBroadcastShapeInference(
+        ctx.getInputType(0)->tensor_type().shape(),
+        ctx.getInputType(1)->tensor_type().shape(),
+        *ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape());
+}
+
 static std::function<void(OpSchema&)> MathDocGenerator_opset13() {
-  return [=](OpSchema& schema) {
-    schema.TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-      propagateElemTypeFromInputToOutput(ctx, 0, 0);
-      if (hasNInputShapes(ctx, 2))
-        bidirectionalBroadcastShapeInference(
-            ctx.getInputType(0)->tensor_type().shape(),
-            ctx.getInputType(1)->tensor_type().shape(),
-            *ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape());
-    });
-  };
+  return [=](OpSchema& schema) { schema.TypeAndShapeInferenceFunction(MathShapeInference_opset13); };
 }
 
 ONNX_OPERATOR_SET_SCHEMA(Add, 13, generated::ai_onnx::Add_ver13().FillUsing(MathDocGenerator_opset13()));
@@ -344,17 +347,17 @@ ONNX_OPERATOR_SET_SCHEMA(Mul, 13, generated::ai_onnx::Mul_ver13().FillUsing(Math
 
 ONNX_OPERATOR_SET_SCHEMA(Div, 13, generated::ai_onnx::Div_ver13().FillUsing(MathDocGenerator_opset13()));
 
+static void MathShapeInference_opset_7(InferenceContext& ctx) {
+  propagateElemTypeFromInputToOutput(ctx, 0, 0);
+  if (hasNInputShapes(ctx, 2))
+    bidirectionalBroadcastShapeInference(
+        ctx.getInputType(0)->tensor_type().shape(),
+        ctx.getInputType(1)->tensor_type().shape(),
+        *ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape());
+}
+
 static std::function<void(OpSchema&)> MathDocGenerator_opset_7() {
-  return [=](OpSchema& schema) {
-    schema.TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-      propagateElemTypeFromInputToOutput(ctx, 0, 0);
-      if (hasNInputShapes(ctx, 2))
-        bidirectionalBroadcastShapeInference(
-            ctx.getInputType(0)->tensor_type().shape(),
-            ctx.getInputType(1)->tensor_type().shape(),
-            *ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape());
-    });
-  };
+  return [=](OpSchema& schema) { schema.TypeAndShapeInferenceFunction(MathShapeInference_opset_7); };
 }
 
 ONNX_OPERATOR_SET_SCHEMA(Add, 7, generated::ai_onnx::Add_ver7().FillUsing(MathDocGenerator_opset_7()));
@@ -389,38 +392,46 @@ static void SoftmaxFamilyShapeInference_opset11(InferenceContext& ctx, const cha
   propagateShapeFromInputToOutput(ctx, 0, 0);
 }
 
+static void SoftmaxShapeInference_opset11(InferenceContext& ctx) {
+  SoftmaxFamilyShapeInference_opset11(ctx, "softmax");
+}
+
 ONNX_OPERATOR_SET_SCHEMA(
     Softmax,
     11,
-    generated::ai_onnx::Softmax_ver11().TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-      SoftmaxFamilyShapeInference_opset11(ctx, "softmax");
-    }));
+    generated::ai_onnx::Softmax_ver11().TypeAndShapeInferenceFunction(SoftmaxShapeInference_opset11));
+
+static void LogSoftmaxShapeInference_opset11(InferenceContext& ctx) {
+  SoftmaxFamilyShapeInference_opset11(ctx, "logsoftmax");
+}
 
 ONNX_OPERATOR_SET_SCHEMA(
     LogSoftmax,
     11,
-    generated::ai_onnx::LogSoftmax_ver11().TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-      SoftmaxFamilyShapeInference_opset11(ctx, "logsoftmax");
-    }));
+    generated::ai_onnx::LogSoftmax_ver11().TypeAndShapeInferenceFunction(LogSoftmaxShapeInference_opset11));
+
+static void HardmaxShapeInference_opset11(InferenceContext& ctx) {
+  SoftmaxFamilyShapeInference_opset11(ctx, "hardmax");
+}
 
 ONNX_OPERATOR_SET_SCHEMA(
     Hardmax,
     11,
-    generated::ai_onnx::Hardmax_ver11().TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-      SoftmaxFamilyShapeInference_opset11(ctx, "hardmax");
-    }));
+    generated::ai_onnx::Hardmax_ver11().TypeAndShapeInferenceFunction(HardmaxShapeInference_opset11));
+
+static void ModShapeInference_opset10(InferenceContext& ctx) {
+  propagateElemTypeFromInputToOutput(ctx, 0, 0);
+  if (hasNInputShapes(ctx, 2))
+    bidirectionalBroadcastShapeInference(
+        ctx.getInputType(0)->tensor_type().shape(),
+        ctx.getInputType(1)->tensor_type().shape(),
+        *ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape());
+}
 
 ONNX_OPERATOR_SET_SCHEMA(
     Mod,
     10,
-    generated::ai_onnx::Mod_ver10().TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-      propagateElemTypeFromInputToOutput(ctx, 0, 0);
-      if (hasNInputShapes(ctx, 2))
-        bidirectionalBroadcastShapeInference(
-            ctx.getInputType(0)->tensor_type().shape(),
-            ctx.getInputType(1)->tensor_type().shape(),
-            *ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape());
-    }));
+    generated::ai_onnx::Mod_ver10().TypeAndShapeInferenceFunction(ModShapeInference_opset10));
 
 ONNX_OPERATOR_SET_SCHEMA(
     Neg,
@@ -477,54 +488,58 @@ ONNX_OPERATOR_SET_SCHEMA(
     6,
     generated::ai_onnx::Tanh_ver6().TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
+static void PowShapeInference_opset13(InferenceContext& ctx) {
+  propagateElemTypeFromInputToOutput(ctx, 0, 0);
+  if (hasNInputShapes(ctx, 2))
+    bidirectionalBroadcastShapeInference(
+        ctx.getInputType(0)->tensor_type().shape(),
+        ctx.getInputType(1)->tensor_type().shape(),
+        *ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape());
+}
+
 ONNX_OPERATOR_SET_SCHEMA(
     Pow,
     13,
-    generated::ai_onnx::Pow_ver13().TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-      propagateElemTypeFromInputToOutput(ctx, 0, 0);
-      if (hasNInputShapes(ctx, 2))
-        bidirectionalBroadcastShapeInference(
-            ctx.getInputType(0)->tensor_type().shape(),
-            ctx.getInputType(1)->tensor_type().shape(),
-            *ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape());
-    }));
+    generated::ai_onnx::Pow_ver13().TypeAndShapeInferenceFunction(PowShapeInference_opset13));
+
+static void PowShapeInference_opset12(InferenceContext& ctx) {
+  propagateElemTypeFromInputToOutput(ctx, 0, 0);
+  if (hasNInputShapes(ctx, 2))
+    bidirectionalBroadcastShapeInference(
+        ctx.getInputType(0)->tensor_type().shape(),
+        ctx.getInputType(1)->tensor_type().shape(),
+        *ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape());
+}
 
 ONNX_OPERATOR_SET_SCHEMA(
     Pow,
     12,
-    generated::ai_onnx::Pow_ver12().TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-      propagateElemTypeFromInputToOutput(ctx, 0, 0);
-      if (hasNInputShapes(ctx, 2))
-        bidirectionalBroadcastShapeInference(
-            ctx.getInputType(0)->tensor_type().shape(),
-            ctx.getInputType(1)->tensor_type().shape(),
-            *ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape());
-    }));
+    generated::ai_onnx::Pow_ver12().TypeAndShapeInferenceFunction(PowShapeInference_opset12));
 
 ONNX_OPERATOR_SET_SCHEMA(
     Sigmoid,
     6,
     generated::ai_onnx::Sigmoid_ver6().TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
+static void ElementwiseMultiOpShapeInference_opset8(InferenceContext& ctx) {
+  propagateElemTypeFromInputToOutput(ctx, 0, 0);
+  auto num_inputs = ctx.getNumInputs();
+  std::vector<const TensorShapeProto*> shapes;
+  for (size_t i = 0; i < num_inputs; ++i) {
+    const auto* const input_type = ctx.getInputType(i);
+    if (nullptr == input_type || !input_type->has_tensor_type() || !input_type->tensor_type().has_shape()) {
+      return;
+    }
+    shapes.push_back(&input_type->tensor_type().shape());
+  }
+
+  multidirectionalBroadcastShapeInference(shapes, *ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape());
+}
+
 // Generate opschema for element-wise ops. Leaves type constraint "T"
 // unspecified.
 static std::function<void(OpSchema&)> ElementwiseMultiOpDocGenerator_opset8() {
-  return [=](OpSchema& schema) {
-    schema.TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-      propagateElemTypeFromInputToOutput(ctx, 0, 0);
-      auto num_inputs = ctx.getNumInputs();
-      std::vector<const TensorShapeProto*> shapes;
-      for (size_t i = 0; i < num_inputs; ++i) {
-        const auto* const input_type = ctx.getInputType(i);
-        if (nullptr == input_type || !input_type->has_tensor_type() || !input_type->tensor_type().has_shape()) {
-          return;
-        }
-        shapes.push_back(&input_type->tensor_type().shape());
-      }
-
-      multidirectionalBroadcastShapeInference(shapes, *ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape());
-    });
-  };
+  return [=](OpSchema& schema) { schema.TypeAndShapeInferenceFunction(ElementwiseMultiOpShapeInference_opset8); };
 }
 
 ONNX_OPERATOR_SET_SCHEMA(Max, 12, generated::ai_onnx::Max_ver12().FillUsing(ElementwiseMultiOpDocGenerator_opset8()));
@@ -540,53 +555,57 @@ ONNX_OPERATOR_SET_SCHEMA(
     12,
     generated::ai_onnx::Clip_ver12().TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
+static void GemmShapeInference_opset13(InferenceContext& ctx) {
+  propagateElemTypeFromInputToOutput(ctx, 0, 0);
+  auto transAAttr = ctx.getAttribute("transA");
+  bool transA = transAAttr ? static_cast<int>(transAAttr->i()) != 0 : false;
+  auto transBAttr = ctx.getAttribute("transB");
+  bool transB = transBAttr ? static_cast<int>(transBAttr->i()) != 0 : false;
+  // Gemm computes Y = alpha * A' * B' + beta * C
+  // A' is A or A^T depending on transA; B' is B or B^T depending on transB
+  Dim M, N, K;
+  if (transA) {
+    ctx.unifyInputShape(0, {K, M});
+  } else {
+    ctx.unifyInputShape(0, {M, K});
+  }
+  if (transB) {
+    ctx.unifyInputShape(1, {N, K});
+  } else {
+    ctx.unifyInputShape(1, {K, N});
+  }
+  // Output shape is (M, N)
+  updateOutputShape(ctx, 0, {M, N});
+}
+
 ONNX_OPERATOR_SET_SCHEMA(
     Gemm,
     13,
-    generated::ai_onnx::Gemm_ver13().TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-      propagateElemTypeFromInputToOutput(ctx, 0, 0);
-      auto transAAttr = ctx.getAttribute("transA");
-      bool transA = transAAttr ? static_cast<int>(transAAttr->i()) != 0 : false;
-      auto transBAttr = ctx.getAttribute("transB");
-      bool transB = transBAttr ? static_cast<int>(transBAttr->i()) != 0 : false;
-      // Gemm computes Y = alpha * A' * B' + beta * C
-      // A' is A or A^T depending on transA; B' is B or B^T depending on transB
-      Dim M, N, K;
-      if (transA) {
-        ctx.unifyInputShape(0, {K, M});
-      } else {
-        ctx.unifyInputShape(0, {M, K});
-      }
-      if (transB) {
-        ctx.unifyInputShape(1, {N, K});
-      } else {
-        ctx.unifyInputShape(1, {K, N});
-      }
-      // Output shape is (M, N)
-      updateOutputShape(ctx, 0, {M, N});
-    }));
+    generated::ai_onnx::Gemm_ver13().TypeAndShapeInferenceFunction(GemmShapeInference_opset13));
+
+static void GemmShapeInference_opset11(InferenceContext& ctx) {
+  propagateElemTypeFromInputToOutput(ctx, 0, 0);
+  if (hasNInputShapes(ctx, 2)) {
+    auto transAAttr = ctx.getAttribute("transA");
+    bool transA = transAAttr ? static_cast<int>(transAAttr->i()) != 0 : false;
+    auto transBAttr = ctx.getAttribute("transB");
+    bool transB = transBAttr ? static_cast<int>(transBAttr->i()) != 0 : false;
+    auto& first_input_shape = getInputShape(ctx, 0);
+    auto& second_input_shape = getInputShape(ctx, 1);
+    if (first_input_shape.dim_size() != 2) {
+      fail_shape_inference("First input does not have rank 2");
+    }
+    if (second_input_shape.dim_size() != 2) {
+      fail_shape_inference("Second input does not have rank 2");
+    }
+    updateOutputShape(ctx, 0, {first_input_shape.dim(transA ? 1 : 0), second_input_shape.dim(transB ? 0 : 1)});
+  }
+}
 
 ONNX_OPERATOR_SET_SCHEMA(
     Gemm,
     11,
-    generated::ai_onnx::Gemm_ver11().TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-      propagateElemTypeFromInputToOutput(ctx, 0, 0);
-      if (hasNInputShapes(ctx, 2)) {
-        auto transAAttr = ctx.getAttribute("transA");
-        bool transA = transAAttr ? static_cast<int>(transAAttr->i()) != 0 : false;
-        auto transBAttr = ctx.getAttribute("transB");
-        bool transB = transBAttr ? static_cast<int>(transBAttr->i()) != 0 : false;
-        auto& first_input_shape = getInputShape(ctx, 0);
-        auto& second_input_shape = getInputShape(ctx, 1);
-        if (first_input_shape.dim_size() != 2) {
-          fail_shape_inference("First input does not have rank 2");
-        }
-        if (second_input_shape.dim_size() != 2) {
-          fail_shape_inference("Second input does not have rank 2");
-        }
-        updateOutputShape(ctx, 0, {first_input_shape.dim(transA ? 1 : 0), second_input_shape.dim(transB ? 0 : 1)});
-      }
-    }));
+    generated::ai_onnx::Gemm_ver11().TypeAndShapeInferenceFunction(GemmShapeInference_opset11));
 
 static void matmulShapeInference_opset_9(ONNX_NAMESPACE::InferenceContext& ctx, size_t input1Idx, size_t input2Idx) {
   if (!hasInputShape(ctx, input1Idx) || !hasInputShape(ctx, input2Idx)) {
@@ -656,51 +675,55 @@ static void matmulShapeInference_opset_9(ONNX_NAMESPACE::InferenceContext& ctx, 
   *ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape() = std::move(resultShape);
 }
 
+static void MatMulShapeInference_opset9(InferenceContext& ctx) {
+  propagateElemTypeFromInputToOutput(ctx, 0, 0);
+  matmulShapeInference_opset_9(ctx, 0, 1);
+}
+
 ONNX_OPERATOR_SET_SCHEMA(
     MatMul,
     9,
-    generated::ai_onnx::MatMul_ver9().TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-      propagateElemTypeFromInputToOutput(ctx, 0, 0);
-      matmulShapeInference_opset_9(ctx, 0, 1);
-    }));
+    generated::ai_onnx::MatMul_ver9().TypeAndShapeInferenceFunction(MatMulShapeInference_opset9));
+
+static void ExpandShapeInference_opset8(InferenceContext& ctx) {
+  // Type inference
+  propagateElemTypeFromInputToOutput(ctx, 0, 0);
+
+  // Shape inference
+  // For shape inference, we need both input shape
+  const auto shape_initializer = ctx.getInputData(1);
+  if (hasNInputShapes(ctx, 2)) {
+    const auto& shape_input_shape = ctx.getInputType(1)->tensor_type().shape();
+    if (shape_input_shape.dim_size() != 1) {
+      fail_shape_inference("'shape' input must be 1D tensor");
+    }
+
+    const auto& input_shape = ctx.getInputType(0)->tensor_type().shape();
+    TensorShapeProto second_shape;
+    if (nullptr != shape_initializer) {
+      const auto shape_data = ParseData<int64_t>(shape_initializer);
+
+      for (const auto& e : shape_data) {
+        auto dim = second_shape.add_dim();
+        dim->set_dim_value(e);
+      }
+    } else if (shape_input_shape.dim(0).has_dim_value()) {
+      // Attempt rank inference using shape of shape input
+      int64_t dim_value = shape_input_shape.dim(0).dim_value();
+      for (int64_t i = 0; i < dim_value; ++i) {
+        second_shape.add_dim();
+      }
+    } else {
+      return;
+    }
+    bidirectionalBroadcastShapeInference(input_shape, second_shape, *getOutputShape(ctx, 0));
+  }
+}
 
 ONNX_OPERATOR_SET_SCHEMA(
     Expand,
     8,
-    generated::ai_onnx::Expand_ver8().TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-      // Type inference
-      propagateElemTypeFromInputToOutput(ctx, 0, 0);
-
-      // Shape inference
-      // For shape inference, we need both input shape
-      const auto shape_initializer = ctx.getInputData(1);
-      if (hasNInputShapes(ctx, 2)) {
-        const auto& shape_input_shape = ctx.getInputType(1)->tensor_type().shape();
-        if (shape_input_shape.dim_size() != 1) {
-          fail_shape_inference("'shape' input must be 1D tensor");
-        }
-
-        const auto& input_shape = ctx.getInputType(0)->tensor_type().shape();
-        TensorShapeProto second_shape;
-        if (nullptr != shape_initializer) {
-          const auto shape_data = ParseData<int64_t>(shape_initializer);
-
-          for (const auto& e : shape_data) {
-            auto dim = second_shape.add_dim();
-            dim->set_dim_value(e);
-          }
-        } else if (shape_input_shape.dim(0).has_dim_value()) {
-          // Attempt rank inference using shape of shape input
-          int64_t dim_value = shape_input_shape.dim(0).dim_value();
-          for (int64_t i = 0; i < dim_value; ++i) {
-            second_shape.add_dim();
-          }
-        } else {
-          return;
-        }
-        bidirectionalBroadcastShapeInference(input_shape, second_shape, *getOutputShape(ctx, 0));
-      }
-    }));
+    generated::ai_onnx::Expand_ver8().TypeAndShapeInferenceFunction(ExpandShapeInference_opset8));
 
 ONNX_OPERATOR_SET_SCHEMA(
     Sign,
@@ -904,71 +927,69 @@ static bool BuildContextDependentFunctionBody_opset12(
   return true;
 }
 
+static void NegativeLogLikelihoodLossShapeInference_opset12(InferenceContext& ctx) {
+  // Type inference
+  propagateElemTypeFromInputToOutput(ctx, 0, 0);
+
+  // Shape inference
+  if (hasNInputShapes(ctx, 2)) {
+    const TensorShapeProto& input_shape = ctx.getInputType(0)->tensor_type().shape();
+    const TensorShapeProto& target_shape = ctx.getInputType(1)->tensor_type().shape();
+
+    const int input_rank = static_cast<int>(input_shape.dim_size());
+    const int target_rank = static_cast<int>(target_shape.dim_size());
+
+    if (input_rank < 2) {
+      fail_shape_inference("Input rank must be >= 2. input_rank=", input_rank);
+    }
+    if (target_rank != input_rank - 1) {
+      fail_shape_inference(
+          "Target rank must be 1 less than the input rank. input_rank=", input_rank, ", target_rank=", target_rank);
+    }
+
+    // match input dimensions (N, C, d1, ..., dk) with target
+    // dimensions of (C, d1, ..., dk)
+    for (int dim = 0; dim < target_rank; dim++) {
+      const auto input_dim = dim == 0 ? input_shape.dim(dim) : input_shape.dim(dim + 1);
+      const auto target_dim = target_shape.dim(dim);
+      if (input_dim.has_dim_value() && target_dim.has_dim_value() && input_dim.dim_value() != target_dim.dim_value())
+        fail_shape_inference(
+            "Input and target dimension value mismatch. input_dim_value=",
+            input_dim.dim_value(),
+            " target_dim_value=",
+            target_dim.dim_value());
+    }
+
+    if (ctx.getNumInputs() == 3 && hasInputShape(ctx, 2)) {
+      const TensorShapeProto& weight_shape = ctx.getInputType(2)->tensor_type().shape();
+      const auto weight_rank = weight_shape.dim_size();
+      if (weight_rank != 1) {
+        fail_shape_inference("Weight rank must be 1. weight_rank=", weight_rank);
+      }
+    }
+
+    TensorShapeProto* output_shape = ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
+    if (getAttribute(ctx, "reduction", "mean") == "none") {
+      // output tensor is of shape (N, d1, d2, ..., dk) if
+      // reduction attribute is "none".
+      for (int i = 0; i < input_rank - 1; i++) {
+        auto dim = output_shape->add_dim();
+        if (i == 0)
+          *dim = input_shape.dim(i);
+        else
+          *dim = input_shape.dim(i + 1);
+      }
+    }
+    // otherwise output is a scalar.
+  }
+}
+
 ONNX_OPERATOR_SET_SCHEMA(
     NegativeLogLikelihoodLoss,
     12,
     generated::ai_onnx::NegativeLogLikelihoodLoss_ver12()
         .SetContextDependentFunctionBodyBuilder(BuildContextDependentFunctionBody_opset12)
-        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-          // Type inference
-          propagateElemTypeFromInputToOutput(ctx, 0, 0);
-
-          // Shape inference
-          if (hasNInputShapes(ctx, 2)) {
-            const TensorShapeProto& input_shape = ctx.getInputType(0)->tensor_type().shape();
-            const TensorShapeProto& target_shape = ctx.getInputType(1)->tensor_type().shape();
-
-            const int input_rank = static_cast<int>(input_shape.dim_size());
-            const int target_rank = static_cast<int>(target_shape.dim_size());
-
-            if (input_rank < 2) {
-              fail_shape_inference("Input rank must be >= 2. input_rank=", input_rank);
-            }
-            if (target_rank != input_rank - 1) {
-              fail_shape_inference(
-                  "Target rank must be 1 less than the input rank. input_rank=",
-                  input_rank,
-                  ", target_rank=",
-                  target_rank);
-            }
-
-            // match input dimensions (N, C, d1, ..., dk) with target
-            // dimensions of (C, d1, ..., dk)
-            for (int dim = 0; dim < target_rank; dim++) {
-              const auto input_dim = dim == 0 ? input_shape.dim(dim) : input_shape.dim(dim + 1);
-              const auto target_dim = target_shape.dim(dim);
-              if (input_dim.has_dim_value() && target_dim.has_dim_value() &&
-                  input_dim.dim_value() != target_dim.dim_value())
-                fail_shape_inference(
-                    "Input and target dimension value mismatch. input_dim_value=",
-                    input_dim.dim_value(),
-                    " target_dim_value=",
-                    target_dim.dim_value());
-            }
-
-            if (ctx.getNumInputs() == 3 && hasInputShape(ctx, 2)) {
-              const TensorShapeProto& weight_shape = ctx.getInputType(2)->tensor_type().shape();
-              const auto weight_rank = weight_shape.dim_size();
-              if (weight_rank != 1) {
-                fail_shape_inference("Weight rank must be 1. weight_rank=", weight_rank);
-              }
-            }
-
-            TensorShapeProto* output_shape = ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
-            if (getAttribute(ctx, "reduction", "mean") == "none") {
-              // output tensor is of shape (N, d1, d2, ..., dk) if
-              // reduction attribute is "none".
-              for (int i = 0; i < input_rank - 1; i++) {
-                auto dim = output_shape->add_dim();
-                if (i == 0)
-                  *dim = input_shape.dim(i);
-                else
-                  *dim = input_shape.dim(i + 1);
-              }
-            }
-            // otherwise output is a scalar.
-          }
-        }));
+        .TypeAndShapeInferenceFunction(NegativeLogLikelihoodLossShapeInference_opset12));
 
 static bool BuildContextDependentFunctionBodySCE_opset12(
     const FunctionBodyBuildContext& ctx,
@@ -1022,27 +1043,29 @@ static bool BuildContextDependentFunctionBodySCE_opset12(
   return true;
 }
 
+static void SoftmaxCrossEntropyLossShapeInference_opset12(InferenceContext& ctx) {
+  propagateElemTypeFromInputToOutput(ctx, 0, 0);
+  std::string reduction = getAttribute(ctx, "reduction", "mean");
+  if (reduction == "none") {
+    if (hasInputShape(ctx, 1)) {
+      propagateShapeFromInputToOutput(ctx, 1, 0);
+    }
+  } else {
+    updateOutputShape(ctx, 0, TensorShapeProto());
+  }
+
+  if (ctx.getNumOutputs() == 2) {
+    propagateElemTypeFromInputToOutput(ctx, 0, 1);
+    propagateShapeFromInputToOutput(ctx, 0, 1);
+  }
+}
+
 ONNX_OPERATOR_SET_SCHEMA(
     SoftmaxCrossEntropyLoss,
     12,
     generated::ai_onnx::SoftmaxCrossEntropyLoss_ver12()
         .SetContextDependentFunctionBodyBuilder(BuildContextDependentFunctionBodySCE_opset12)
-        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-          propagateElemTypeFromInputToOutput(ctx, 0, 0);
-          std::string reduction = getAttribute(ctx, "reduction", "mean");
-          if (reduction == "none") {
-            if (hasInputShape(ctx, 1)) {
-              propagateShapeFromInputToOutput(ctx, 1, 0);
-            }
-          } else {
-            updateOutputShape(ctx, 0, TensorShapeProto());
-          }
-
-          if (ctx.getNumOutputs() == 2) {
-            propagateElemTypeFromInputToOutput(ctx, 0, 1);
-            propagateShapeFromInputToOutput(ctx, 0, 1);
-          }
-        }));
+        .TypeAndShapeInferenceFunction(SoftmaxCrossEntropyLossShapeInference_opset12));
 
 static std::function<void(OpSchema&)> SoftmaxFamilyDocGenerator_opset1() {
   return [=](OpSchema& schema) { schema.TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput); };
@@ -1082,17 +1105,19 @@ ONNX_OPERATOR_SET_SCHEMA(
     1,
     generated::ai_onnx::Pow_ver1().TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
+static void PowShapeInference_opset7(InferenceContext& ctx) {
+  propagateElemTypeFromInputToOutput(ctx, 0, 0);
+  if (hasNInputShapes(ctx, 2))
+    bidirectionalBroadcastShapeInference(
+        ctx.getInputType(0)->tensor_type().shape(),
+        ctx.getInputType(1)->tensor_type().shape(),
+        *ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape());
+}
+
 ONNX_OPERATOR_SET_SCHEMA(
     Pow,
     7,
-    generated::ai_onnx::Pow_ver7().TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-      propagateElemTypeFromInputToOutput(ctx, 0, 0);
-      if (hasNInputShapes(ctx, 2))
-        bidirectionalBroadcastShapeInference(
-            ctx.getInputType(0)->tensor_type().shape(),
-            ctx.getInputType(1)->tensor_type().shape(),
-            *ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape());
-    }));
+    generated::ai_onnx::Pow_ver7().TypeAndShapeInferenceFunction(PowShapeInference_opset7));
 
 ONNX_OPERATOR_SET_SCHEMA(Neg, 1, generated::ai_onnx::Neg_ver1());
 
@@ -1148,76 +1173,80 @@ ONNX_OPERATOR_SET_SCHEMA(Clip, 1, generated::ai_onnx::Clip_ver1());
 
 ONNX_OPERATOR_SET_SCHEMA(Gemm, 1, generated::ai_onnx::Gemm_ver1());
 
+static void GemmShapeInference_opset6(InferenceContext& ctx) {
+  propagateElemTypeFromInputToOutput(ctx, 0, 0);
+  if (hasNInputShapes(ctx, 2)) {
+    auto transAAttr = ctx.getAttribute("transA");
+    bool transA = transAAttr ? static_cast<int>(transAAttr->i()) != 0 : false;
+    auto transBAttr = ctx.getAttribute("transB");
+    bool transB = transBAttr ? static_cast<int>(transBAttr->i()) != 0 : false;
+
+    checkInputRank(ctx, 0, 2);
+    checkInputRank(ctx, 1, 2);
+
+    auto& first_input_shape = getInputShape(ctx, 0);
+    auto& second_input_shape = getInputShape(ctx, 1);
+    *ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape()->add_dim() = first_input_shape.dim(transA ? 1 : 0);
+    *ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape()->add_dim() = second_input_shape.dim(transB ? 0 : 1);
+  } else if (
+      hasInputShape(ctx, 2) &&
+      (!ctx.getAttribute("broadcast") || static_cast<int>(ctx.getAttribute("broadcast")->i()) == 0)) {
+    *ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape() = ctx.getInputType(2)->tensor_type().shape();
+  }
+}
+
 ONNX_OPERATOR_SET_SCHEMA(
     Gemm,
     6,
-    generated::ai_onnx::Gemm_ver6().TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-      propagateElemTypeFromInputToOutput(ctx, 0, 0);
-      if (hasNInputShapes(ctx, 2)) {
-        auto transAAttr = ctx.getAttribute("transA");
-        bool transA = transAAttr ? static_cast<int>(transAAttr->i()) != 0 : false;
-        auto transBAttr = ctx.getAttribute("transB");
-        bool transB = transBAttr ? static_cast<int>(transBAttr->i()) != 0 : false;
+    generated::ai_onnx::Gemm_ver6().TypeAndShapeInferenceFunction(GemmShapeInference_opset6));
 
-        checkInputRank(ctx, 0, 2);
-        checkInputRank(ctx, 1, 2);
-
-        auto& first_input_shape = getInputShape(ctx, 0);
-        auto& second_input_shape = getInputShape(ctx, 1);
-        *ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape()->add_dim() =
-            first_input_shape.dim(transA ? 1 : 0);
-        *ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape()->add_dim() =
-            second_input_shape.dim(transB ? 0 : 1);
-      } else if (
-          hasInputShape(ctx, 2) &&
-          (!ctx.getAttribute("broadcast") || static_cast<int>(ctx.getAttribute("broadcast")->i()) == 0)) {
-        *ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape() = ctx.getInputType(2)->tensor_type().shape();
-      }
-    }));
+static void GemmShapeInference_opset7(InferenceContext& ctx) {
+  propagateElemTypeFromInputToOutput(ctx, 0, 0);
+  if (hasNInputShapes(ctx, 2)) {
+    auto transAAttr = ctx.getAttribute("transA");
+    bool transA = transAAttr ? static_cast<int>(transAAttr->i()) != 0 : false;
+    auto transBAttr = ctx.getAttribute("transB");
+    bool transB = transBAttr ? static_cast<int>(transBAttr->i()) != 0 : false;
+    auto& first_input_shape = getInputShape(ctx, 0);
+    auto& second_input_shape = getInputShape(ctx, 1);
+    if (first_input_shape.dim_size() != 2) {
+      fail_shape_inference("First input does not have rank 2");
+    }
+    if (second_input_shape.dim_size() != 2) {
+      fail_shape_inference("Second input does not have rank 2");
+    }
+    updateOutputShape(ctx, 0, {first_input_shape.dim(transA ? 1 : 0), second_input_shape.dim(transB ? 0 : 1)});
+  }
+}
 
 ONNX_OPERATOR_SET_SCHEMA(
     Gemm,
     7,
-    generated::ai_onnx::Gemm_ver7().TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-      propagateElemTypeFromInputToOutput(ctx, 0, 0);
-      if (hasNInputShapes(ctx, 2)) {
-        auto transAAttr = ctx.getAttribute("transA");
-        bool transA = transAAttr ? static_cast<int>(transAAttr->i()) != 0 : false;
-        auto transBAttr = ctx.getAttribute("transB");
-        bool transB = transBAttr ? static_cast<int>(transBAttr->i()) != 0 : false;
-        auto& first_input_shape = getInputShape(ctx, 0);
-        auto& second_input_shape = getInputShape(ctx, 1);
-        if (first_input_shape.dim_size() != 2) {
-          fail_shape_inference("First input does not have rank 2");
-        }
-        if (second_input_shape.dim_size() != 2) {
-          fail_shape_inference("Second input does not have rank 2");
-        }
-        updateOutputShape(ctx, 0, {first_input_shape.dim(transA ? 1 : 0), second_input_shape.dim(transB ? 0 : 1)});
-      }
-    }));
+    generated::ai_onnx::Gemm_ver7().TypeAndShapeInferenceFunction(GemmShapeInference_opset7));
+
+static void GemmShapeInference_opset9(InferenceContext& ctx) {
+  propagateElemTypeFromInputToOutput(ctx, 0, 0);
+  if (hasNInputShapes(ctx, 2)) {
+    auto transAAttr = ctx.getAttribute("transA");
+    bool transA = transAAttr ? static_cast<int>(transAAttr->i()) != 0 : false;
+    auto transBAttr = ctx.getAttribute("transB");
+    bool transB = transBAttr ? static_cast<int>(transBAttr->i()) != 0 : false;
+    auto& first_input_shape = getInputShape(ctx, 0);
+    auto& second_input_shape = getInputShape(ctx, 1);
+    if (first_input_shape.dim_size() != 2) {
+      fail_shape_inference("First input does not have rank 2");
+    }
+    if (second_input_shape.dim_size() != 2) {
+      fail_shape_inference("Second input does not have rank 2");
+    }
+    updateOutputShape(ctx, 0, {first_input_shape.dim(transA ? 1 : 0), second_input_shape.dim(transB ? 0 : 1)});
+  }
+}
 
 ONNX_OPERATOR_SET_SCHEMA(
     Gemm,
     9,
-    generated::ai_onnx::Gemm_ver9().TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-      propagateElemTypeFromInputToOutput(ctx, 0, 0);
-      if (hasNInputShapes(ctx, 2)) {
-        auto transAAttr = ctx.getAttribute("transA");
-        bool transA = transAAttr ? static_cast<int>(transAAttr->i()) != 0 : false;
-        auto transBAttr = ctx.getAttribute("transB");
-        bool transB = transBAttr ? static_cast<int>(transBAttr->i()) != 0 : false;
-        auto& first_input_shape = getInputShape(ctx, 0);
-        auto& second_input_shape = getInputShape(ctx, 1);
-        if (first_input_shape.dim_size() != 2) {
-          fail_shape_inference("First input does not have rank 2");
-        }
-        if (second_input_shape.dim_size() != 2) {
-          fail_shape_inference("Second input does not have rank 2");
-        }
-        updateOutputShape(ctx, 0, {first_input_shape.dim(transA ? 1 : 0), second_input_shape.dim(transB ? 0 : 1)});
-      }
-    }));
+    generated::ai_onnx::Gemm_ver9().TypeAndShapeInferenceFunction(GemmShapeInference_opset9));
 
 ONNX_OPERATOR_SET_SCHEMA(
     Max,
@@ -1239,178 +1268,184 @@ ONNX_OPERATOR_SET_SCHEMA(
     6,
     generated::ai_onnx::Mean_ver6().TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
+static void MatMulShapeInference_opset1(InferenceContext& ctx) {
+  propagateElemTypeFromInputToOutput(ctx, 0, 0);
+  if (!hasNInputShapes(ctx, 2)) {
+    return;
+  }
+
+  const auto shape0 = ctx.getInputType(0)->tensor_type().shape();
+  const auto shape1 = ctx.getInputType(1)->tensor_type().shape();
+
+  if (shape0.dim_size() == 0 || shape1.dim_size() == 0) {
+    fail_shape_inference("Input tensors of wrong rank (0).");
+  }
+
+  TensorShapeProto shapeL, shapeR;
+
+  // First promote each shape to at least rank-2. This logic is
+  // specific to matmul, not generic broadcasting.
+  {
+    if (shape0.dim_size() == 1) {
+      shapeL.add_dim()->set_dim_value(1);
+      *shapeL.add_dim() = shape0.dim(0);
+    } else {
+      *shapeL.mutable_dim() = shape0.dim();
+    }
+    if (shape1.dim_size() == 1) {
+      *shapeR.add_dim() = shape1.dim(0);
+      shapeR.add_dim()->set_dim_value(1);
+    } else {
+      *shapeR.mutable_dim() = shape1.dim();
+    }
+  }
+
+  // Check for compatible matrix multiply dimensions
+  {
+    auto const& dimL = shapeL.dim(shapeL.dim_size() - 1);
+    auto const& dimR = shapeR.dim(shapeR.dim_size() - 2);
+    if (dimL.has_dim_value() && dimR.has_dim_value() && dimL.dim_value() != dimR.dim_value()) {
+      fail_shape_inference("Incompatible dimensions for matrix multiplication");
+      ;
+    }
+  }
+
+  TensorShapeProto resultShape;
+
+  // Now call out to generic multidimensional broadcasting for
+  // the broadcastable prefixes.
+  {
+    TensorShapeProto prefixShapeL, prefixShapeR;
+    for (int i = 0; i < shapeL.dim_size() - 2; ++i) {
+      *prefixShapeL.add_dim() = shapeL.dim(i);
+    }
+    for (int i = 0; i < shapeR.dim_size() - 2; ++i) {
+      *prefixShapeR.add_dim() = shapeR.dim(i);
+    }
+    bidirectionalBroadcastShapeInference(prefixShapeL, prefixShapeR, resultShape);
+  }
+
+  // Back to matmul-specific. Add the trailing dimensions back in.
+  {
+    if (shape0.dim_size() != 1) {
+      *resultShape.add_dim() = shapeL.dim(shapeL.dim_size() - 2);
+    }
+    if (shape1.dim_size() != 1) {
+      *resultShape.add_dim() = shapeR.dim(shapeR.dim_size() - 1);
+    }
+  }
+
+  *ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape() = resultShape;
+}
+
 ONNX_OPERATOR_SET_SCHEMA(
     MatMul,
     1,
-    generated::ai_onnx::MatMul_ver1().TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-      propagateElemTypeFromInputToOutput(ctx, 0, 0);
-      if (!hasNInputShapes(ctx, 2)) {
-        return;
-      }
+    generated::ai_onnx::MatMul_ver1().TypeAndShapeInferenceFunction(MatMulShapeInference_opset1));
 
-      const auto shape0 = ctx.getInputType(0)->tensor_type().shape();
-      const auto shape1 = ctx.getInputType(1)->tensor_type().shape();
+static void TopKShapeInference_opset1(InferenceContext& ctx) {
+  // Type inference:
+  propagateElemTypeFromInputToOutput(ctx, 0, 0);
+  updateOutputElemType(ctx, 1, TensorProto::INT64);
 
-      if (shape0.dim_size() == 0 || shape1.dim_size() == 0) {
-        fail_shape_inference("Input tensors of wrong rank (0).");
-      }
-
-      TensorShapeProto shapeL, shapeR;
-
-      // First promote each shape to at least rank-2. This logic is
-      // specific to matmul, not generic broadcasting.
-      {
-        if (shape0.dim_size() == 1) {
-          shapeL.add_dim()->set_dim_value(1);
-          *shapeL.add_dim() = shape0.dim(0);
-        } else {
-          *shapeL.mutable_dim() = shape0.dim();
-        }
-        if (shape1.dim_size() == 1) {
-          *shapeR.add_dim() = shape1.dim(0);
-          shapeR.add_dim()->set_dim_value(1);
-        } else {
-          *shapeR.mutable_dim() = shape1.dim();
-        }
-      }
-
-      // Check for compatible matrix multiply dimensions
-      {
-        auto const& dimL = shapeL.dim(shapeL.dim_size() - 1);
-        auto const& dimR = shapeR.dim(shapeR.dim_size() - 2);
-        if (dimL.has_dim_value() && dimR.has_dim_value() && dimL.dim_value() != dimR.dim_value()) {
-          fail_shape_inference("Incompatible dimensions for matrix multiplication");
-          ;
-        }
-      }
-
-      TensorShapeProto resultShape;
-
-      // Now call out to generic multidimensional broadcasting for
-      // the broadcastable prefixes.
-      {
-        TensorShapeProto prefixShapeL, prefixShapeR;
-        for (int i = 0; i < shapeL.dim_size() - 2; ++i) {
-          *prefixShapeL.add_dim() = shapeL.dim(i);
-        }
-        for (int i = 0; i < shapeR.dim_size() - 2; ++i) {
-          *prefixShapeR.add_dim() = shapeR.dim(i);
-        }
-        bidirectionalBroadcastShapeInference(prefixShapeL, prefixShapeR, resultShape);
-      }
-
-      // Back to matmul-specific. Add the trailing dimensions back in.
-      {
-        if (shape0.dim_size() != 1) {
-          *resultShape.add_dim() = shapeL.dim(shapeL.dim_size() - 2);
-        }
-        if (shape1.dim_size() != 1) {
-          *resultShape.add_dim() = shapeR.dim(shapeR.dim_size() - 1);
-        }
-      }
-
-      *ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape() = resultShape;
-    }));
+  // Shape inference:
+  if (!hasInputShape(ctx, 0))
+    return;
+  auto& input_shape = getInputShape(ctx, 0);
+  int64_t rank = input_shape.dim_size();
+  int64_t axis = getAttribute(ctx, "axis", -1);
+  if (axis < 0)
+    axis += rank;
+  if (axis < 0 || axis >= rank) {
+    fail_shape_inference("Invalid value for attribute axis");
+  }
+  int64_t k = getAttribute(ctx, "k", -1);
+  if (k <= 0) {
+    fail_shape_inference("Invalid value for attribute k");
+  }
+  TensorShapeProto result_shape = input_shape;
+  result_shape.mutable_dim(static_cast<int>(axis))->set_dim_value(k);
+  updateOutputShape(ctx, 0, result_shape);
+  updateOutputShape(ctx, 1, result_shape);
+}
 
 ONNX_OPERATOR_SET_SCHEMA(
     TopK,
     1,
-    generated::ai_onnx::TopK_ver1().TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-      // Type inference:
-      propagateElemTypeFromInputToOutput(ctx, 0, 0);
-      updateOutputElemType(ctx, 1, TensorProto::INT64);
+    generated::ai_onnx::TopK_ver1().TypeAndShapeInferenceFunction(TopKShapeInference_opset1));
 
-      // Shape inference:
-      if (!hasInputShape(ctx, 0))
-        return;
-      auto& input_shape = getInputShape(ctx, 0);
-      int64_t rank = input_shape.dim_size();
-      int64_t axis = getAttribute(ctx, "axis", -1);
-      if (axis < 0)
-        axis += rank;
-      if (axis < 0 || axis >= rank) {
-        fail_shape_inference("Invalid value for attribute axis");
-      }
-      int64_t k = getAttribute(ctx, "k", -1);
-      if (k <= 0) {
-        fail_shape_inference("Invalid value for attribute k");
-      }
-      TensorShapeProto result_shape = input_shape;
-      result_shape.mutable_dim(static_cast<int>(axis))->set_dim_value(k);
-      updateOutputShape(ctx, 0, result_shape);
-      updateOutputShape(ctx, 1, result_shape);
-    }));
+static void TopKShapeInference_opset10(InferenceContext& ctx) {
+  // Type inference:
+  propagateElemTypeFromInputToOutput(ctx, 0, 0);
+  updateOutputElemType(ctx, 1, TensorProto::INT64);
+  // Shape inference:
+  if (!hasInputShape(ctx, 0))
+    return;
+  auto& input_shape = getInputShape(ctx, 0);
+  int64_t rank = input_shape.dim_size();
+  int64_t axis = getAttribute(ctx, "axis", -1);
+  if (axis < 0)
+    axis += rank;
+  if (axis < 0 || axis >= rank) {
+    fail_shape_inference("Invalid value for attribute axis");
+  }
+
+  const auto& axis_dim = input_shape.dim(static_cast<int>(axis));
+  const auto k = ctx.getInputData(1);
+
+  int64_t k_value = 0;
+  if (nullptr != k) {
+    if (k->dims_size() != 1 || k->dims(0) != 1) {
+      fail_shape_inference("K input must be a one-dimensional tensor of size 1.");
+    }
+
+    if (k->data_type() == TensorProto::INT64) {
+      const auto data = ParseData<int64_t>(k);
+      k_value = data[0];
+    } else {
+      fail_shape_inference("K input must be of type int64.");
+    }
+
+    if (k_value <= 0) {
+      fail_shape_inference("K input must contain a single positive value.");
+    }
+  }
+
+  // Infer output shape if:
+  // (1) 'K' is available
+  // (2) axis_dim has dim value
+  // Otherwise cannot reliably compute output shape as axis dim value is
+  // unknown and hence cannot determine if axis dim value >= k (which
+  // should be enforced)
+  if (nullptr != k && axis_dim.has_dim_value()) {
+    if (axis_dim.dim_value() < k_value) {
+      fail_shape_inference("Axis has less than the requested k elements.");
+    }
+
+    TensorShapeProto result_shape = input_shape;
+    result_shape.mutable_dim(static_cast<int>(axis))->set_dim_value(k_value);
+
+    updateOutputShape(ctx, 0, result_shape);
+    updateOutputShape(ctx, 1, result_shape);
+
+    return;
+  }
+
+  // Infer output shapes' rank in any case
+  auto output_shape_0 = getOutputShape(ctx, 0);
+  auto output_shape_1 = getOutputShape(ctx, 1);
+  for (int i = 0; i < input_shape.dim_size(); ++i) {
+    output_shape_0->add_dim();
+    output_shape_1->add_dim();
+  }
+
+  return;
+}
 
 ONNX_OPERATOR_SET_SCHEMA(
     TopK,
     10,
-    generated::ai_onnx::TopK_ver10().TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-      // Type inference:
-      propagateElemTypeFromInputToOutput(ctx, 0, 0);
-      updateOutputElemType(ctx, 1, TensorProto::INT64);
-      // Shape inference:
-      if (!hasInputShape(ctx, 0))
-        return;
-      auto& input_shape = getInputShape(ctx, 0);
-      int64_t rank = input_shape.dim_size();
-      int64_t axis = getAttribute(ctx, "axis", -1);
-      if (axis < 0)
-        axis += rank;
-      if (axis < 0 || axis >= rank) {
-        fail_shape_inference("Invalid value for attribute axis");
-      }
-
-      const auto& axis_dim = input_shape.dim(static_cast<int>(axis));
-      const auto k = ctx.getInputData(1);
-
-      int64_t k_value = 0;
-      if (nullptr != k) {
-        if (k->dims_size() != 1 || k->dims(0) != 1) {
-          fail_shape_inference("K input must be a one-dimensional tensor of size 1.");
-        }
-
-        if (k->data_type() == TensorProto::INT64) {
-          const auto data = ParseData<int64_t>(k);
-          k_value = data[0];
-        } else {
-          fail_shape_inference("K input must be of type int64.");
-        }
-
-        if (k_value <= 0) {
-          fail_shape_inference("K input must contain a single positive value.");
-        }
-      }
-
-      // Infer output shape if:
-      // (1) 'K' is available
-      // (2) axis_dim has dim value
-      // Otherwise cannot reliably compute output shape as axis dim value is
-      // unknown and hence cannot determine if axis dim value >= k (which
-      // should be enforced)
-      if (nullptr != k && axis_dim.has_dim_value()) {
-        if (axis_dim.dim_value() < k_value) {
-          fail_shape_inference("Axis has less than the requested k elements.");
-        }
-
-        TensorShapeProto result_shape = input_shape;
-        result_shape.mutable_dim(static_cast<int>(axis))->set_dim_value(k_value);
-
-        updateOutputShape(ctx, 0, result_shape);
-        updateOutputShape(ctx, 1, result_shape);
-
-        return;
-      }
-
-      // Infer output shapes' rank in any case
-      auto output_shape_0 = getOutputShape(ctx, 0);
-      auto output_shape_1 = getOutputShape(ctx, 1);
-      for (int i = 0; i < input_shape.dim_size(); ++i) {
-        output_shape_0->add_dim();
-        output_shape_1->add_dim();
-      }
-
-      return;
-    }));
+    generated::ai_onnx::TopK_ver10().TypeAndShapeInferenceFunction(TopKShapeInference_opset10));
 
 ONNX_OPERATOR_SET_SCHEMA(TopK, 11, generated::ai_onnx::TopK_ver11().FillUsing(defs::math::utils::TopKOpGenerator()));
 
@@ -1424,23 +1459,23 @@ ONNX_OPERATOR_SET_SCHEMA(
     11,
     generated::ai_onnx::Clip_ver11().TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
-static std::function<void(OpSchema&)> ElementwiseMultiOpDocGenerator_old() {
-  return [=](OpSchema& schema) {
-    schema.TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-      propagateElemTypeFromInputToOutput(ctx, 0, 0);
-      auto num_inputs = ctx.getNumInputs();
-      std::vector<const TensorShapeProto*> shapes;
-      for (size_t i = 0; i < num_inputs; ++i) {
-        const auto* const input_type = ctx.getInputType(i);
-        if (nullptr == input_type || !input_type->has_tensor_type() || !input_type->tensor_type().has_shape()) {
-          return;
-        }
-        shapes.push_back(&input_type->tensor_type().shape());
-      }
+static void ElementwiseMultiOpShapeInference_old(InferenceContext& ctx) {
+  propagateElemTypeFromInputToOutput(ctx, 0, 0);
+  auto num_inputs = ctx.getNumInputs();
+  std::vector<const TensorShapeProto*> shapes;
+  for (size_t i = 0; i < num_inputs; ++i) {
+    const auto* const input_type = ctx.getInputType(i);
+    if (nullptr == input_type || !input_type->has_tensor_type() || !input_type->tensor_type().has_shape()) {
+      return;
+    }
+    shapes.push_back(&input_type->tensor_type().shape());
+  }
 
-      multidirectionalBroadcastShapeInference(shapes, *ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape());
-    });
-  };
+  multidirectionalBroadcastShapeInference(shapes, *ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape());
+}
+
+static std::function<void(OpSchema&)> ElementwiseMultiOpDocGenerator_old() {
+  return [=](OpSchema& schema) { schema.TypeAndShapeInferenceFunction(ElementwiseMultiOpShapeInference_old); };
 }
 
 ONNX_OPERATOR_SET_SCHEMA(Max, 8, generated::ai_onnx::Max_ver8().FillUsing(ElementwiseMultiOpDocGenerator_old()));
@@ -1457,118 +1492,120 @@ ONNX_OPERATOR_SET_SCHEMA(
     9,
     generated::ai_onnx::PRelu_ver9().TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
+static void DFTShapeInference_opset17(ONNX_NAMESPACE::InferenceContext& ctx) {
+  bool is_onesided = static_cast<bool>(getAttribute(ctx, "onesided", 0));
+  bool inverse = static_cast<bool>(getAttribute(ctx, "inverse", 0));
+
+  propagateElemTypeFromInputToOutput(ctx, 0, 0);
+  if (!hasInputShape(ctx, 0)) {
+    // If no shape is available for the input, skip shape inference...
+    return;
+  }
+
+  // In general the output shape will match the input shape exactly
+  // So initialize the output shape with the input shape
+  auto& input_shape = getInputShape(ctx, 0);
+  ONNX_NAMESPACE::TensorShapeProto result_shape_proto = input_shape;
+
+  // Get the axis where the DFT will be performed.
+  auto axis = static_cast<int>(getAttribute(ctx, "axis", 1));
+  // The last dimension is the real and imaginary parts of the value.
+  const int64_t rank = input_shape.dim_size();
+  if (rank < 2) {
+    fail_shape_inference("input tensor must have rank >= 2, including the complex dimension.");
+  }
+
+  // check the inputs are correct types for one-sided DFT
+  if (is_onesided) {
+    auto last_dim = input_shape.dim(rank - 1);
+    if (inverse) {
+      // Check last dimension is 2 (complex input required)
+      if (last_dim.has_dim_value() && last_dim.dim_value() != 2) {
+        fail_shape_inference("inverse one-sided DFT requires complex input (last dimension must be 2)");
+      }
+    } else {
+      // Check last dimension is 1 (real input required)
+      if (last_dim.has_dim_value() && last_dim.dim_value() != 1) {
+        fail_shape_inference("one-sided DFT requires real input (last dimension must be 1)");
+      }
+    }
+  }
+  // NOLINTNEXTLINE(readability-simplify-boolean-expr)
+  if (!(-rank <= axis && axis != -1 && axis < rank - 1)) {
+    fail_shape_inference(
+        "axis attribute value ",
+        axis,
+        " is invalid for a tensor of rank ",
+        rank,
+        ". Valid values are '-rank <= axis && axis != -1 && axis < rank - 1'");
+  }
+
+  int axis_idx = static_cast<int>(axis >= 0 ? axis : axis + rank);
+
+  // If dft_length is specified, then we should honor the shape.
+  // Set the output dimension to match the dft_length on the axis.
+  const TensorProto* dft_length = nullptr;
+  if (ctx.hasInput(1)) {
+    dft_length = ctx.getInputData(1);
+    if (dft_length == nullptr) {
+      // If we cannot read the dft_length, we cannot infer shape
+      // return...
+      return;
+    }
+  }
+
+  if (nullptr != dft_length) {
+    if (dft_length->dims_size() != 0) {
+      fail_shape_inference("dft_length input must be a scalar.");
+    }
+    auto dft_length_value = defs::math::utils::GetScalarValueFromTensor<int64_t>(dft_length);
+
+    // For RFFT, output size on signal axis is floor(dft_length/2) + 1
+    if (is_onesided && !inverse) {
+      // RFFT: one-sided output
+      auto half_signal_size = (dft_length_value / 2) + 1;
+      result_shape_proto.mutable_dim(axis_idx)->set_dim_value(half_signal_size);
+    } else {
+      // Standard FFT/IFFT and IRFFT: full length
+      result_shape_proto.mutable_dim(axis_idx)->set_dim_value(dft_length_value);
+    }
+  } else if (is_onesided) {
+    auto axis_dimension = result_shape_proto.dim(axis_idx);
+    if (axis_dimension.has_dim_value()) {
+      auto axis_dimension_value = axis_dimension.dim_value();
+      if (inverse) {
+        // IRFFT without explicit dft_length: cannot reliably infer full signal length
+        // Default to even length: N = 2 * (input_size - 1)
+        auto full_signal_size = checkedMultiply(2, checkedSubtract(axis_dimension_value, 1));
+        result_shape_proto.mutable_dim(axis_idx)->set_dim_value(full_signal_size);
+      } else {
+        // RFFT without explicit dft_length: infer one-sided output size from input
+        auto half_signal_size = (axis_dimension_value / 2) + 1;
+        result_shape_proto.mutable_dim(axis_idx)->set_dim_value(half_signal_size);
+      }
+    } else {
+      result_shape_proto.mutable_dim(axis_idx)->clear_dim_value();
+      result_shape_proto.mutable_dim(axis_idx)->clear_dim_param();
+    }
+  }
+
+  // Set the last dimension based on whether output is real or complex
+  auto dim_size = static_cast<int64_t>(result_shape_proto.dim_size());
+  if (is_onesided && inverse) {
+    // IRFFT: complex input -> real output (last dim = 1)
+    result_shape_proto.mutable_dim(static_cast<int>(dim_size - 1))->set_dim_value(1);
+  } else {
+    // All other cases: complex output (last dim = 2)
+    result_shape_proto.mutable_dim(static_cast<int>(dim_size - 1))->set_dim_value(2);
+  }
+
+  updateOutputShape(ctx, 0, result_shape_proto);
+}
+
 ONNX_OPERATOR_SET_SCHEMA(
     DFT,
     17,
-    generated::ai_onnx::DFT_ver17().TypeAndShapeInferenceFunction([](ONNX_NAMESPACE::InferenceContext& ctx) {
-      bool is_onesided = static_cast<bool>(getAttribute(ctx, "onesided", 0));
-      bool inverse = static_cast<bool>(getAttribute(ctx, "inverse", 0));
-
-      propagateElemTypeFromInputToOutput(ctx, 0, 0);
-      if (!hasInputShape(ctx, 0)) {
-        // If no shape is available for the input, skip shape inference...
-        return;
-      }
-
-      // In general the output shape will match the input shape exactly
-      // So initialize the output shape with the input shape
-      auto& input_shape = getInputShape(ctx, 0);
-      ONNX_NAMESPACE::TensorShapeProto result_shape_proto = input_shape;
-
-      // Get the axis where the DFT will be performed.
-      auto axis = static_cast<int>(getAttribute(ctx, "axis", 1));
-      // The last dimension is the real and imaginary parts of the value.
-      const int64_t rank = input_shape.dim_size();
-      if (rank < 2) {
-        fail_shape_inference("input tensor must have rank >= 2, including the complex dimension.");
-      }
-
-      // check the inputs are correct types for one-sided DFT
-      if (is_onesided) {
-        auto last_dim = input_shape.dim(rank - 1);
-        if (inverse) {
-          // Check last dimension is 2 (complex input required)
-          if (last_dim.has_dim_value() && last_dim.dim_value() != 2) {
-            fail_shape_inference("inverse one-sided DFT requires complex input (last dimension must be 2)");
-          }
-        } else {
-          // Check last dimension is 1 (real input required)
-          if (last_dim.has_dim_value() && last_dim.dim_value() != 1) {
-            fail_shape_inference("one-sided DFT requires real input (last dimension must be 1)");
-          }
-        }
-      }
-      // NOLINTNEXTLINE(readability-simplify-boolean-expr)
-      if (!(-rank <= axis && axis != -1 && axis < rank - 1)) {
-        fail_shape_inference(
-            "axis attribute value ",
-            axis,
-            " is invalid for a tensor of rank ",
-            rank,
-            ". Valid values are '-rank <= axis && axis != -1 && axis < rank - 1'");
-      }
-
-      int axis_idx = static_cast<int>(axis >= 0 ? axis : axis + rank);
-
-      // If dft_length is specified, then we should honor the shape.
-      // Set the output dimension to match the dft_length on the axis.
-      const TensorProto* dft_length = nullptr;
-      if (ctx.hasInput(1)) {
-        dft_length = ctx.getInputData(1);
-        if (dft_length == nullptr) {
-          // If we cannot read the dft_length, we cannot infer shape
-          // return...
-          return;
-        }
-      }
-
-      if (nullptr != dft_length) {
-        if (dft_length->dims_size() != 0) {
-          fail_shape_inference("dft_length input must be a scalar.");
-        }
-        auto dft_length_value = defs::math::utils::GetScalarValueFromTensor<int64_t>(dft_length);
-
-        // For RFFT, output size on signal axis is floor(dft_length/2) + 1
-        if (is_onesided && !inverse) {
-          // RFFT: one-sided output
-          auto half_signal_size = (dft_length_value / 2) + 1;
-          result_shape_proto.mutable_dim(axis_idx)->set_dim_value(half_signal_size);
-        } else {
-          // Standard FFT/IFFT and IRFFT: full length
-          result_shape_proto.mutable_dim(axis_idx)->set_dim_value(dft_length_value);
-        }
-      } else if (is_onesided) {
-        auto axis_dimension = result_shape_proto.dim(axis_idx);
-        if (axis_dimension.has_dim_value()) {
-          auto axis_dimension_value = axis_dimension.dim_value();
-          if (inverse) {
-            // IRFFT without explicit dft_length: cannot reliably infer full signal length
-            // Default to even length: N = 2 * (input_size - 1)
-            auto full_signal_size = checkedMultiply(2, checkedSubtract(axis_dimension_value, 1));
-            result_shape_proto.mutable_dim(axis_idx)->set_dim_value(full_signal_size);
-          } else {
-            // RFFT without explicit dft_length: infer one-sided output size from input
-            auto half_signal_size = (axis_dimension_value / 2) + 1;
-            result_shape_proto.mutable_dim(axis_idx)->set_dim_value(half_signal_size);
-          }
-        } else {
-          result_shape_proto.mutable_dim(axis_idx)->clear_dim_value();
-          result_shape_proto.mutable_dim(axis_idx)->clear_dim_param();
-        }
-      }
-
-      // Set the last dimension based on whether output is real or complex
-      auto dim_size = static_cast<int64_t>(result_shape_proto.dim_size());
-      if (is_onesided && inverse) {
-        // IRFFT: complex input -> real output (last dim = 1)
-        result_shape_proto.mutable_dim(static_cast<int>(dim_size - 1))->set_dim_value(1);
-      } else {
-        // All other cases: complex output (last dim = 2)
-        result_shape_proto.mutable_dim(static_cast<int>(dim_size - 1))->set_dim_value(2);
-      }
-
-      updateOutputShape(ctx, 0, result_shape_proto);
-    }));
+    generated::ai_onnx::DFT_ver17().TypeAndShapeInferenceFunction(DFTShapeInference_opset17));
 
 ONNX_OPERATOR_SET_SCHEMA(
     QLinearMatMul,
@@ -1604,17 +1641,19 @@ ONNX_OPERATOR_SET_SCHEMA(
     Einsum,
     12,
     generated::ai_onnx::Einsum_ver12().FillUsing(defs::math::utils::EinsumOpGenerator()));
+static void ModShapeInference_opset13(InferenceContext& ctx) {
+  propagateElemTypeFromInputToOutput(ctx, 0, 0);
+  if (hasNInputShapes(ctx, 2))
+    bidirectionalBroadcastShapeInference(
+        ctx.getInputType(0)->tensor_type().shape(),
+        ctx.getInputType(1)->tensor_type().shape(),
+        *ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape());
+}
+
 // codeql[cpp/unused-static-variable]: The schema macro defines a debug counter used by static-opset validation.
 ONNX_OPERATOR_SET_SCHEMA(
     Mod,
     13,
-    generated::ai_onnx::Mod_ver13().TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-      propagateElemTypeFromInputToOutput(ctx, 0, 0);
-      if (hasNInputShapes(ctx, 2))
-        bidirectionalBroadcastShapeInference(
-            ctx.getInputType(0)->tensor_type().shape(),
-            ctx.getInputType(1)->tensor_type().shape(),
-            *ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape());
-    }));
+    generated::ai_onnx::Mod_ver13().TypeAndShapeInferenceFunction(ModShapeInference_opset13));
 
 } // namespace ONNX_NAMESPACE
