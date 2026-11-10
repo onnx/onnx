@@ -9516,6 +9516,52 @@ class TestShapeInference(TestShapeInferenceHelper):
             graph, [make_tensor_value_info("z", TensorProto.FLOAT, (2, 3))]
         )
 
+    @pytest.mark.parametrize(
+        "dtype",
+        [
+            TensorProto.FLOAT16,
+            TensorProto.BFLOAT16,
+            TensorProto.FLOAT,
+            TensorProto.DOUBLE,
+        ],
+    )
+    @pytest.mark.parametrize(
+        "shape,axis", [((2, 3, 4), 1), (("N", None, 4), -1), ((2, 0), 0)]
+    )
+    def test_logcumsumexp(self, dtype, shape, axis) -> None:
+        graph = self._make_graph(
+            [("X", dtype, shape)],
+            [make_node("LogCumSumExp", ["X"], ["Y"], axis=axis)],
+            [],
+        )
+        self._assert_inferred(
+            graph,
+            [make_tensor_value_info("Y", dtype, shape)],
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, 29)],
+        )
+
+    @pytest.mark.parametrize("shape,axis", [((), 0), ((2, 3), 2), ((2, 3), -3)])
+    def test_logcumsumexp_invalid_axis(self, shape, axis) -> None:
+        graph = self._make_graph(
+            [("X", TensorProto.FLOAT, shape)],
+            [make_node("LogCumSumExp", ["X"], ["Y"], axis=axis)],
+            [],
+        )
+        with pytest.raises(onnx.shape_inference.InferenceError, match="LogCumSumExp"):
+            self._inferred(graph, opset_imports=[helper.make_opsetid(ONNX_DOMAIN, 29)])
+
+    def test_logcumsumexp_unknown_rank(self) -> None:
+        graph = self._make_graph(
+            [("X", TensorProto.FLOAT, None)],
+            [make_node("LogCumSumExp", ["X"], ["Y"])],
+            [],
+        )
+        self._assert_inferred(
+            graph,
+            [make_tensor_value_info("Y", TensorProto.FLOAT, None)],
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, 29)],
+        )
+
     def test_nonmaxsuppression(self) -> None:
         graph = self._make_graph(
             [
