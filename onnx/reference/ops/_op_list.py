@@ -128,6 +128,7 @@ __all__ = [
     "LessOrEqual",
     "LinearAttention",
     "Log",
+    "Log1p",
     "LogSoftmax",
     "Loop",
     "LpNormalization",
@@ -394,6 +395,7 @@ from onnx.reference.ops.op_less import Less
 from onnx.reference.ops.op_less_or_equal import LessOrEqual
 from onnx.reference.ops.op_linear_attention import LinearAttention
 from onnx.reference.ops.op_log import Log
+from onnx.reference.ops.op_log1p import Log1p
 from onnx.reference.ops.op_log_softmax import LogSoftmax
 from onnx.reference.ops.op_loop import Loop
 from onnx.reference.ops.op_lp_normalization import LpNormalization
@@ -587,6 +589,12 @@ def load_op(
             body = schema.get_context_dependent_function(
                 node.SerializeToString(), [it.SerializeToString() for it in input_types]
             )
+            if not body:
+                raise RuntimeImplementationError(
+                    f"Cannot build a context-dependent function for operator {op_type!r} "
+                    f"from domain {domain!r} at opset {version}. Provide concrete attributes "
+                    "and supported input types, or register a custom implementation."
+                )
             proto = FunctionProto()
             proto.ParseFromString(body)
             assert evaluator_cls is not None, (

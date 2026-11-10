@@ -560,11 +560,12 @@ class TestAutomaticUpgrade(automatic_conversion_test_base.TestAutomaticConversio
             attrs={"mode": "nearest", "padding_mode": "border", "align_corners": 1},
         )
 
-    def test_GroupedMatMul(self) -> None:
+    @pytest.mark.parametrize("transB", [0, 1])
+    def test_GroupedMatMul(self, transB) -> None:
         self._test_op_upgrade(
             "GroupedMatMul",
             29,
-            [[4, 3], [2, 3, 5], [4, 2], [2, 5]],
+            [[4, 3], [2, 5, 3] if transB else [2, 3, 5], [4, 2], [2, 5]],
             [[4, 2, 5]],
             [
                 TensorProto.FLOAT,
@@ -572,6 +573,7 @@ class TestAutomaticUpgrade(automatic_conversion_test_base.TestAutomaticConversio
                 TensorProto.INT64,
                 TensorProto.FLOAT,
             ],
+            attrs={"transB": transB},
         )
 
     def test_GRU_1(self) -> None:
@@ -704,6 +706,9 @@ class TestAutomaticUpgrade(automatic_conversion_test_base.TestAutomaticConversio
 
     def test_Log(self) -> None:
         self._test_op_upgrade("Log", 1, attrs={"consumed_inputs": [0]})
+
+    def test_Log1p(self) -> None:
+        self._test_op_upgrade("Log1p", 29)
 
     def test_LogSoftmax(self) -> None:
         self._test_op_upgrade("LogSoftmax", 1)
