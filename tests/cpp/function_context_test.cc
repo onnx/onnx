@@ -87,6 +87,63 @@ TEST(FunctionAPITest, ContextDependentFunctionTest) {
   checker::check_function(fnProto, checkerCtx, lexicalScope);
 }
 
+#ifndef ONNX_NO_EXCEPTIONS
+TEST(FunctionAPITest, RejectReferencedGraphCaptureSubstitution) {
+  ModelProto model;
+  OnnxParser parser(R"ONNX(
+    <ir_version: 13, opset_import: ["" : 29]>
+    capture (bool A, float[1] X) => (float[1] Y) {
+      Y = If(A) <
+        then_branch = yes () => (float[1] result) { result = Identity(X) },
+        else_branch = no () => (float[1] result) { result = Identity(X) }
+      >
+    }
+  )ONNX");
+  ASSERT_TRUE(parser.Parse(model).IsOK());
+  checker::check_model(model);
+  NodeProto call = model.graph().node(0);
+  call.set_name("caller_graph");
+  FunctionProto function;
+  function.set_name("If");
+  function.add_input("X");
+  function.add_output("Y");
+  function.mutable_opset_import()->CopyFrom(model.opset_import());
+  auto* inner = function.add_node();
+  inner->set_op_type("If");
+  inner->add_input("X");
+  inner->add_output("Y");
+  for (const auto* name : {"then_branch", "else_branch"}) {
+    function.add_attribute(name);
+    auto* reference = inner->add_attribute();
+    reference->set_name(name);
+    reference->set_ref_attr_name(name);
+    reference->set_type(AttributeProto::GRAPH);
+  }
+  for (const bool graph_list : {false, true}) {
+    NodeProto actual_call = call;
+    if (graph_list) {
+      for (auto& attr : *actual_call.mutable_attribute()) {
+        GraphProto graph = attr.g();
+        attr.clear_g();
+        attr.set_type(AttributeProto::GRAPHS);
+        attr.add_graphs()->CopyFrom(graph);
+      }
+    }
+    model.mutable_graph()->clear_node();
+    try {
+      FunctionExpandHelper(actual_call, function, *model.mutable_graph());
+      FAIL() << "Caller-owned graph captures must not enter the function renaming scope";
+    } catch (const std::runtime_error& error) {
+      const std::string message(error.what());
+      EXPECT_NE(message.find("caller_graph"), std::string::npos);
+      EXPECT_NE(message.find("then_branch"), std::string::npos);
+      EXPECT_NE(message.find("Retain the function call"), std::string::npos);
+    }
+    EXPECT_EQ(model.graph().node_size(), 0);
+  }
+}
+#endif
+
 static void CheckExpandedLinearAttention(bool trajectory, int64_t length) {
   const auto* const schema = OpSchemaRegistry::Schema("LinearAttention", 29, ONNX_DOMAIN);
   ASSERT_NE(schema, nullptr);

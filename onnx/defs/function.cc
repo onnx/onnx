@@ -80,6 +80,22 @@ void FunctionExpandHelper(
     }
   }
 
+  for (const auto& function_node : func.node()) {
+    for (const auto& attr : function_node.attribute()) {
+      if (!attr.has_ref_attr_name())
+        continue;
+      const auto actual = attr_map.find(attr.ref_attr_name());
+      if (actual != attr_map.end() &&
+          (actual->second.type() == AttributeProto::GRAPH || actual->second.type() == AttributeProto::GRAPHS)) {
+        ONNX_THROW(
+            "Cannot expand function node '" + node_name + "': graph-valued attribute '" + attr.ref_attr_name() +
+            "' referenced by '" + attr.name() +
+            "' is unsupported because caller graph captures cannot be safely renamed. "
+            "Retain the function call or define the subgraph directly in the function body.");
+      }
+    }
+  }
+
   inliner::Renamer renamer(node_name, g);
   for (const auto& [formal, actual] : io_names_map) {
     renamer.BindName(formal, actual);
