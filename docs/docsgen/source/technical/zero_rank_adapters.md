@@ -44,6 +44,13 @@ be absent, as in a single input vector.
 | `base` | Base model output | `[..., output_dim]` |
 | `Y` | `Add(base, correction)` | `[..., output_dim]` |
 
+`X`, the decoded adapter weights, `base`, and all intermediate values use the
+same floating-point element type, supported by `MatMul`, `Mul` when scaling is
+used, and `Add` at the model's imported opset. Without quantization, `down` and
+`up` are already decoded weights. Arithmetic and broadcasting follow those
+operator schemas; this convention does not specify a different accumulation
+precision or rounding rule.
+
 At `r = 0`, `hidden` has no elements. Each element of `correction` is a sum
 over an empty reduction dimension, with value zero. The correction retains its
 full output shape; it is not itself an empty tensor unless an output dimension
@@ -79,6 +86,9 @@ Multiply the correction by the resulting finite coefficient before `Add`.
 The coefficient must also be representable and finite in the chosen computation
 type: multiplying zero by infinity or NaN does not disable
 an adapter.
+
+The coefficient is a scalar with the correction's element type. Without
+scaling, omit `Mul` and add `correction` directly, as in the shape table.
 
 ## Switching adapters at runtime
 
@@ -197,8 +207,10 @@ block-size constraint is undefined when both the blocked input dimension and
 its scale dimension are zero; checker acceptance alone does not resolve this
 schema limitation.
 
-Use the quantized weight's element type for the zero point. It may be omitted
-when the operator's default zero point is appropriate. Nonempty scales must be
+Use the quantized weight's element type for the zero point. If omitted,
+`DequantizeLinear` uses zero; for the `UINT8` QDQ example, omitting the zero point
+from both operators also selects `UINT8` quantization with zero point zero.
+Nonempty scales must be
 valid positive, finite quantization scales; empty scales have the shapes above,
 not scalar placeholders. In a quantize/dequantize (QDQ) pair, give
 `QuantizeLinear` and `DequantizeLinear` matching axes, block sizes, scales, and
