@@ -9,6 +9,7 @@ from numpy.testing import assert_array_equal
 
 from onnx import TensorProto, checker, helper
 from onnx.reference import ReferenceEvaluator
+from onnx.reference.ops.op_multinomial import Multinomial
 
 
 def _evaluator(x, opset=22, **attributes):
@@ -126,3 +127,42 @@ def test_multinomial_non_normalizable_input(values):
     # implementation reports an error rather than inventing probabilities.
     with pytest.raises(ValueError, match="normaliz"):
         _evaluator(x).run(None, {"X": x})
+
+
+@pytest.mark.parametrize(
+    "shape,attributes,message",
+    [
+        ((1, 0), {}, "at least one class"),
+        ((1, 2), {"sample_size": -1}, "sample_size must be nonnegative"),
+    ],
+)
+def test_multinomial_runtime_guards(shape, attributes, message):
+    # Full model checking accepts these shapes/attributes, but they do not
+    # describe a distribution with a valid number of samples.
+    x = np.zeros(shape, dtype=np.float32)
+    evaluator = _evaluator(x, **attributes)
+    with pytest.raises(ValueError, match=message):
+        evaluator.run(None, {"X": x})
+
+
+@pytest.mark.parametrize(
+    "shape,dtype,message",
+    [
+        ((2,), TensorProto.INT32, "rank-2 input"),
+        ((1, 2), TensorProto.FLOAT, "output dtype must be INT32 or INT64"),
+    ],
+)
+def test_multinomial_direct_operator_guards(shape, dtype, message):
+    # Full model checking rejects these cases before evaluation. Exercise only
+    # the operator's defensive validation, not a checker-valid model contract.
+    with pytest.raises(ValueError, match=message):
+        Multinomial.eval(np.zeros(shape, dtype=np.float32), dtype=dtype)
+
+
+def test_multinomial_direct_run_defaults():
+    # Normal evaluation supplies schema defaults before calling _run. Check
+    # the implementation's None fallbacks separately from model evaluation.
+    operator = Multinomial.create()
+    (result,) = operator._run(np.zeros((2, 1), dtype=np.float32))
+    assert result.dtype == np.int32
+    assert_array_equal(result, np.zeros((2, 1), dtype=np.int32))
