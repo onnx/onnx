@@ -34759,8 +34759,9 @@ This version of the operator has been available since version 29 of the default 
   "add", "mul", "max", and "min" compute the sum, product, maximum,
   and minimum of each group, respectively.
 
-  For "mean", let x be the original `data` value at an output element and
-  u_1, ..., u_N be all update values addressing that element. Its output value is:
+  For "mean", consider an output element addressed by N >= 1 updates.
+  Let x be its original `data` value and u_1, ..., u_N be those update values.
+  Its output value is:
   ```
   output = (x + u_1 + ... + u_N) / (N + 1)
   ```
@@ -34768,6 +34769,9 @@ This version of the operator has been available since version 29 of the default 
   boolean, string, or complex tensors. Integer results are rounded toward
   negative infinity. Floating-point results are converted to the input element
   type after division.
+
+  A floating-point mean is NaN if x, u_1, ..., u_N contain a NaN or infinities of
+  both signs. Otherwise, if any of these values is infinite, the mean is that infinity.
 
   Example:
   ```
@@ -34843,8 +34847,9 @@ This version of the operator has been available since version 29 of the default 
   "add", "mul", "max", and "min" compute the sum, product, maximum, and minimum,
   respectively.
 
-  For "mean", let x be the original `data` value at an output element and
-  u_1, ..., u_N be all update values addressing that element. Its output value is:
+  For "mean", consider an output element addressed by N >= 1 updates.
+  Let x be its original `data` value and u_1, ..., u_N be those update values.
+  Its output value is:
   ```
   output = (x + u_1 + ... + u_N) / (N + 1)
   ```
@@ -34852,6 +34857,9 @@ This version of the operator has been available since version 29 of the default 
   boolean, string, or complex tensors. Integer results are rounded toward
   negative infinity. Floating-point results are converted to the input element
   type after division.
+
+  A floating-point mean is NaN if x, u_1, ..., u_N contain a NaN or infinities of
+  both signs. Otherwise, if any of these values is infinite, the mean is that infinity.
 
   Example:
   ```
