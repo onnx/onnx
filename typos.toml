@@ -58,3 +58,8 @@ extend-ignore-re = ["foward\\)"]  # typo in published spec
 [type.lint_yml]
 extend-glob = ["lint.yml"]
 extend-ignore-re = ["foward,"]  # typo in published spec
+
+[type.rnn_specs]
+extend-glob = ["lstm.md", "gru.md", "rnn.md"]
+extend-words = { ot = "ot", iof = "iof" }
+extend-ignore-re = ["\"foward\""]  # typo in published spec
