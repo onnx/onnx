@@ -27,6 +27,7 @@ struct CapturedTensorType {
 static void PropagateCapturedTensorTypes(
     const std::shared_ptr<Graph>& graph,
     const std::unordered_map<std::string, CapturedTensorType>& outer_scope) {
+  assertNonNull(graph);
   auto scope = outer_scope;
   for (const auto& initializer : graph->initializers()) {
     scope[initializer.name()] = {

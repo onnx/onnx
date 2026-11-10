@@ -32,6 +32,19 @@ EINSUM_OPSET_28 = 28
 
 
 class TestVersionConverter:
+    @pytest.mark.parametrize("ir_version", [None, 0, 1])
+    def test_unparseable_graph_is_rejected(self, ir_version) -> None:
+        model = helper.make_model(
+            helper.make_graph([], "empty", [], []),
+            opset_imports=[helper.make_opsetid("", 28)],
+        )
+        if ir_version is None:
+            model.ClearField("ir_version")
+        else:
+            model.ir_version = ir_version
+        with pytest.raises(RuntimeError, match="unable to parse input model"):
+            onnx.version_converter.convert_version(model, 29)
+
     @pytest.mark.parametrize(
         ("initial_version", "target_version"), [(28, 29), (29, 28)]
     )
