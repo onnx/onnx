@@ -65,7 +65,7 @@ def _mean(data, axes, keepdims):
 
 class ReduceMean_1(OpRunReduceNumpy):
     def _run(self, data, axes=None, keepdims=None):
-        axes = tuple(axes) if axes is not None else None
+        axes = (tuple(axes) or None) if axes is not None else None
         res = _mean(data, axes=axes, keepdims=keepdims)
         if keepdims == 0 and not isinstance(res, np.ndarray):
             # The runtime must return a numpy array of a single float.

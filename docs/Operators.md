@@ -195,7 +195,7 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#LinearAttention">LinearAttention</a>|<a href="Changelog.md#LinearAttention-27">27</a>|27|
 |<a href="#LogCumSumExp">LogCumSumExp</a>|<a href="Changelog.md#LogCumSumExp-29">29</a>|29|
 |<a href="#LogSoftmax">LogSoftmax</a>|<a href="Changelog.md#LogSoftmax-13">13</a>, <a href="Changelog.md#LogSoftmax-11">11</a>, <a href="Changelog.md#LogSoftmax-1">1</a>|13, 18, 29|
-|<a href="#MeanVarianceNormalization">MeanVarianceNormalization</a>|<a href="Changelog.md#MeanVarianceNormalization-13">13</a>, <a href="Changelog.md#MeanVarianceNormalization-9">9</a>|13, 18|
+|<a href="#MeanVarianceNormalization">MeanVarianceNormalization</a>|<a href="Changelog.md#MeanVarianceNormalization-29">29</a>, <a href="Changelog.md#MeanVarianceNormalization-13">13</a>, <a href="Changelog.md#MeanVarianceNormalization-9">9</a>|13, 18|
 |<a href="#Mish">Mish</a>|<a href="Changelog.md#Mish-22">22</a>, <a href="Changelog.md#Mish-18">18</a>|22|
 |<a href="#NegativeLogLikelihoodLoss">NegativeLogLikelihoodLoss</a>|<a href="Changelog.md#NegativeLogLikelihoodLoss-22">22</a>, <a href="Changelog.md#NegativeLogLikelihoodLoss-13">13</a>, <a href="Changelog.md#NegativeLogLikelihoodLoss-12">12</a>|22|
 |<a href="#PRelu">PRelu</a>|<a href="Changelog.md#PRelu-16">16</a>, <a href="Changelog.md#PRelu-9">9</a>, <a href="Changelog.md#PRelu-7">7</a>, <a href="Changelog.md#PRelu-6">6</a>, <a href="Changelog.md#PRelu-1">1</a>|16|
@@ -25211,20 +25211,33 @@ expect(
 
 ### <a name="MeanVarianceNormalization"></a><a name="meanvariancenormalization">**MeanVarianceNormalization**</a>
 
-  A MeanVarianceNormalization Function: Perform mean variance normalization
-        on the input tensor X using formula: `(X-EX)/sqrt(E(X-EX)^2)`
+  Computes mean-variance normalization of `X`:
+  `Y = (X - mean) / (sqrt(variance) + epsilon)`, where
+  `mean = ReduceMean(X, axes)` and
+  `variance = ReduceMean((X - mean)^2, axes)`.
+  Each reduction computes the arithmetic mean over `axes` and retains the
+  reduced dimensions with size 1 for broadcasting.
+  An empty `axes` list reduces over all dimensions.
+
+  The default `epsilon` is 1e-9 and is added after the square root.
+  For float16 and bfloat16 inputs, `X` is converted to float32 before computation.
+  Otherwise, computation uses the input type. `epsilon` is converted to the
+  computation type, and the result is cast to the input type.
+  `Y` has the same shape and element type as `X`.
 
 #### Version
 
-This version of the operator has been available since version 13 of the default ONNX operator set.
+This version of the operator has been available since version 29 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#MeanVarianceNormalization-9">9</a>
+Other versions of this operator: <a href="Changelog.md#MeanVarianceNormalization-9">9</a>, <a href="Changelog.md#MeanVarianceNormalization-13">13</a>
 
 #### Attributes
 
 <dl>
 <dt><tt>axes</tt> : list of ints (default is ['0', '2', '3'])</dt>
-<dd>A list of integers, along which to reduce. The default is to calculate along axes [0,2,3] for calculating mean and variance along each channel. Two variables with the same C-coordinate are associated with the same mean and variance.</dd>
+<dd>Axes over which to compute mean and variance. Values must be in [-r, r-1], where r is the rank of X; negative values count from the last dimension. An empty list reduces over all dimensions. The default is [0, 2, 3], which computes per-channel statistics for an NCHW tensor.</dd>
+<dt><tt>epsilon</tt> : float (default is (1.000000e-09))</dt>
+<dd>Value added to the standard deviation in the denominator.</dd>
 </dl>
 
 #### Inputs
@@ -25245,11 +25258,43 @@ Other versions of this operator: <a href="Changelog.md#MeanVarianceNormalization
 
 <dl>
 <dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
-<dd>Constrain input and output types to all numeric tensors.</dd>
+<dd>Constrain input and output types to floating-point tensors.</dd>
 </dl>
 
 
 #### Examples
+
+<details>
+<summary>epsilon</summary>
+
+```python
+epsilon = 1.0
+node = onnx.helper.make_node(
+    "MeanVarianceNormalization",
+    inputs=["X"],
+    outputs=["Y"],
+    axes=[1, -1],
+    epsilon=epsilon,
+)
+
+input_data = np.arange(24, dtype=np.float64).reshape(2, 3, 4)
+
+# Calculate expected output with custom epsilon
+data_mean = np.mean(input_data, axis=(1, -1), keepdims=True)
+centered = input_data - data_mean
+std = np.sqrt(np.mean(np.square(centered), axis=(1, -1), keepdims=True))
+expected_output = (input_data - data_mean) / (std + epsilon)
+
+expect(
+    node,
+    inputs=[input_data],
+    outputs=[expected_output],
+    name="test_mvn_epsilon",
+)
+```
+
+</details>
+
 
 <details>
 <summary>meanvariancenormalization</summary>
@@ -25282,13 +25327,39 @@ input_data = np.array(
 
 # Calculate expected output data
 data_mean = np.mean(input_data, axis=(0, 2, 3), keepdims=1)
-data_mean_squared = np.power(data_mean, 2)
-data_squared = np.power(input_data, 2)
-data_squared_mean = np.mean(data_squared, axis=(0, 2, 3), keepdims=1)
-std = np.sqrt(data_squared_mean - data_mean_squared)
+centered = input_data - data_mean
+std = np.sqrt(np.mean(np.square(centered), axis=(0, 2, 3), keepdims=True))
 expected_output = (input_data - data_mean) / (std + 1e-9)
 
 expect(node, inputs=[input_data], outputs=[expected_output], name="test_mvn")
+```
+
+</details>
+
+
+<details>
+<summary>zero_variance</summary>
+
+```python
+node = onnx.helper.make_node(
+    "MeanVarianceNormalization",
+    inputs=["X"],
+    outputs=["Y"],
+    axes=[0],
+)
+input_data = np.ones(2, dtype=np.float32)
+mean = np.mean(input_data, axis=0, keepdims=True)
+centered = input_data - mean
+expected_output = centered / (
+    np.sqrt(np.mean(np.square(centered), axis=0, keepdims=True)) + 1e-9
+)
+
+expect(
+    node,
+    inputs=[input_data],
+    outputs=[expected_output],
+    name="test_mvn_zero_variance",
+)
 ```
 
 </details>
@@ -47015,7 +47086,7 @@ This version of the operator has been available since version 1 of the 'ai.onnx.
 <dl>
 <dt><tt>decay_factor</tt> : float (default is 0.0)</dt>
 <dd>The decay factor of learning rate after one update.The effective learning rate is computed by r = R / (1 + T * decay_factor). Default to 0 so that increasing update counts doesn't reduce the learning rate.</dd>
-<dt><tt>epsilon</tt> : float (default is 0.0)</dt>
+<dt><tt>epsilon</tt> : float (default is (1.000000e-06))</dt>
 <dd>Small scalar to avoid dividing by zero.</dd>
 <dt><tt>norm_coefficient</tt> : float (default is 0.0)</dt>
 <dd>Regularization coefficient in 0.5 * norm_coefficient * ||X||_2^2. Default to 0, which means no regularization.</dd>
@@ -47229,7 +47300,7 @@ This version of the operator has been available since version 1 of the 'ai.onnx.
 <dd>Coefficient of previously accumulated gradient in running average. Default to 0.9.</dd>
 <dt><tt>beta</tt> : float (default is 0.999)</dt>
 <dd>Coefficient of previously accumulated squared-gradient in running average. Default to 0.999.</dd>
-<dt><tt>epsilon</tt> : float (default is 0.0)</dt>
+<dt><tt>epsilon</tt> : float (default is (1.000000e-06))</dt>
 <dd>Small scalar to avoid dividing by zero.</dd>
 <dt><tt>norm_coefficient</tt> : float (default is 0.0)</dt>
 <dd>Regularization coefficient of 0.5 * norm_coefficient * ||X||_2^2. Default to 0, which means no regularization.</dd>

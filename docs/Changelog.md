@@ -16679,8 +16679,12 @@ This version of the operator has been available since version 13 of the default 
 
 ### <a name="MeanVarianceNormalization-13"></a>**MeanVarianceNormalization-13**</a>
 
-  A MeanVarianceNormalization Function: Perform mean variance normalization
-        on the input tensor X using formula: `(X-EX)/sqrt(E(X-EX)^2)`
+  Computes mean-variance normalization of `X`:
+  `Y = (X - mean) / (sqrt(variance) + 1e-9)`, where
+  `mean = ReduceMean(X, axes)` and
+  `variance = ReduceMean(X^2, axes) - mean^2`.
+  Each reduction computes the arithmetic mean over `axes` and retains the
+  reduced dimensions with size 1 for broadcasting.
 
 #### Version
 
@@ -34902,6 +34906,56 @@ This version of the operator has been available since version 29 of the default 
 <dd>Input and output have the same floating-point element type.</dd>
 </dl>
 
+### <a name="MeanVarianceNormalization-29"></a>**MeanVarianceNormalization-29**</a>
+
+  Computes mean-variance normalization of `X`:
+  `Y = (X - mean) / (sqrt(variance) + epsilon)`, where
+  `mean = ReduceMean(X, axes)` and
+  `variance = ReduceMean((X - mean)^2, axes)`.
+  Each reduction computes the arithmetic mean over `axes` and retains the
+  reduced dimensions with size 1 for broadcasting.
+  An empty `axes` list reduces over all dimensions.
+
+  The default `epsilon` is 1e-9 and is added after the square root.
+  For float16 and bfloat16 inputs, `X` is converted to float32 before computation.
+  Otherwise, computation uses the input type. `epsilon` is converted to the
+  computation type, and the result is cast to the input type.
+  `Y` has the same shape and element type as `X`.
+
+#### Version
+
+This version of the operator has been available since version 29 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>axes</tt> : list of ints (default is ['0', '2', '3'])</dt>
+<dd>Axes over which to compute mean and variance. Values must be in [-r, r-1], where r is the rank of X; negative values count from the last dimension. An empty list reduces over all dimensions. The default is [0, 2, 3], which computes per-channel statistics for an NCHW tensor.</dd>
+<dt><tt>epsilon</tt> : float (default is (1.000000e-09))</dt>
+<dd>Value added to the standard deviation in the denominator.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> (differentiable) : T</dt>
+<dd>Input tensor</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> (differentiable) : T</dt>
+<dd>Output tensor</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
+<dd>Constrain input and output types to floating-point tensors.</dd>
+</dl>
+
 ### <a name="ScatterND-29"></a>**ScatterND-29**</a>
 
   ScatterND takes three inputs `data` tensor of rank r >= 1, `indices` tensor of rank q >= 1,
@@ -35171,7 +35225,7 @@ This version of the operator has been available since version 1 of the 'ai.onnx.
 <dl>
 <dt><tt>decay_factor</tt> : float (default is 0.0)</dt>
 <dd>The decay factor of learning rate after one update.The effective learning rate is computed by r = R / (1 + T * decay_factor). Default to 0 so that increasing update counts doesn't reduce the learning rate.</dd>
-<dt><tt>epsilon</tt> : float (default is 0.0)</dt>
+<dt><tt>epsilon</tt> : float (default is (1.000000e-06))</dt>
 <dd>Small scalar to avoid dividing by zero.</dd>
 <dt><tt>norm_coefficient</tt> : float (default is 0.0)</dt>
 <dd>Regularization coefficient in 0.5 * norm_coefficient * ||X||_2^2. Default to 0, which means no regularization.</dd>
@@ -35281,7 +35335,7 @@ This version of the operator has been available since version 1 of the 'ai.onnx.
 <dd>Coefficient of previously accumulated gradient in running average. Default to 0.9.</dd>
 <dt><tt>beta</tt> : float (default is 0.999)</dt>
 <dd>Coefficient of previously accumulated squared-gradient in running average. Default to 0.999.</dd>
-<dt><tt>epsilon</tt> : float (default is 0.0)</dt>
+<dt><tt>epsilon</tt> : float (default is (1.000000e-06))</dt>
 <dd>Small scalar to avoid dividing by zero.</dd>
 <dt><tt>norm_coefficient</tt> : float (default is 0.0)</dt>
 <dd>Regularization coefficient of 0.5 * norm_coefficient * ||X||_2^2. Default to 0, which means no regularization.</dd>
