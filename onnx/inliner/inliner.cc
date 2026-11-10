@@ -294,6 +294,11 @@ class InliningRenamer : public internal::MutableVisitor {
       LookupOrRename(*y.mutable_name(), false);
     for (auto& v : *graph.mutable_value_info())
       LookupOrRename(*v.mutable_name(), false);
+    for (auto& annotation : *graph.mutable_quantization_annotation()) {
+      LookupOrRename(*annotation.mutable_tensor_name(), false);
+      for (auto& parameter : *annotation.mutable_quant_parameter_tensor_names())
+        LookupOrRename(*parameter.mutable_value(), false);
+    }
     rename_scopes.pop_back();
   }
 

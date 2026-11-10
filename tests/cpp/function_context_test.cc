@@ -332,6 +332,14 @@ TEST(FunctionAPITest, NestedValueInfoFollowsRenamedDefinitions) {
     annotation->CopyFrom(body->input(0));
     annotation->set_name("intermediate");
     const auto annotated_type = annotation->type().SerializeAsString();
+    auto* quantization = body->add_quantization_annotation();
+    quantization->set_tensor_name("intermediate");
+    auto* scale = quantization->add_quant_parameter_tensor_names();
+    scale->set_key("SCALE_TENSOR");
+    scale->set_value("item");
+    auto* captured = quantization->add_quant_parameter_tensor_names();
+    captured->set_key("ZERO_POINT_TENSOR");
+    captured->set_value("X");
     checker::check_model(model);
     FunctionProto function;
     function.set_name("Softsign");
@@ -360,6 +368,14 @@ TEST(FunctionAPITest, NestedValueInfoFollowsRenamedDefinitions) {
       ASSERT_EQ(renamed_body.value_info_size(), 1);
       EXPECT_EQ(renamed_body.value_info(0).name(), renamed_body.node(0).output(0));
       EXPECT_EQ(renamed_body.value_info(0).type().SerializeAsString(), annotated_type);
+      ASSERT_EQ(renamed_body.quantization_annotation_size(), 1);
+      const auto& renamed_quantization = renamed_body.quantization_annotation(0);
+      EXPECT_EQ(renamed_quantization.tensor_name(), renamed_body.node(0).output(0));
+      ASSERT_EQ(renamed_quantization.quant_parameter_tensor_names_size(), 2);
+      EXPECT_EQ(renamed_quantization.quant_parameter_tensor_names(0).key(), "SCALE_TENSOR");
+      EXPECT_EQ(renamed_quantization.quant_parameter_tensor_names(0).value(), renamed_body.input(0).name());
+      EXPECT_EQ(renamed_quantization.quant_parameter_tensor_names(1).key(), "ZERO_POINT_TENSOR");
+      EXPECT_EQ(renamed_quantization.quant_parameter_tensor_names(1).value(), "X");
     }
   }
 }
