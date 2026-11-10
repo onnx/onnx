@@ -31,11 +31,13 @@ SPDX-License-Identifier: Apache-2.0
 
 | Workflow | When it runs | What it does |
 |---|---|---|
-| [ReproducibleBuild](/.github/workflows/reproducible_build.yml) | Weekly (Monday 06:00 UTC), workflow\_dispatch, PRs that change the build configuration (`CMakeLists.txt`, `cmake/`, `pyproject.toml`, `sbom.cdx.json`, the cibw workflows) | Calls each platform cibw workflow twice with a single `cp312` target and tests skipped, so the two builds run as separate jobs on separate runners (artifact prefixes `repro-build1` and `repro-build2`). A `compare` job then checks that each platform's two wheels are byte-identical. A mismatch on any platform fails the workflow. |
+| [ReproducibleBuild](/.github/workflows/reproducible_build.yml) | Weekly (Monday 06:00 UTC), workflow\_dispatch, PRs that change the build configuration (any `CMakeLists.txt`, `cmake/`, `pyproject.toml`, `sbom.cdx.json`, the cibw workflows and the actions they use) | Calls each platform cibw workflow twice, one call after the other, with tests and wheel validation skipped (artifact prefixes `repro-build1` and `repro-build2`, kept for one day). PRs build one `cp312` wheel per platform; the weekly and manual runs build the full release matrix. A `compare` job then checks that each pair of wheels with the same name is byte-identical. A mismatch on any platform fails the workflow. |
 
-The three cibw workflows (`release_linux_cibw.yml`, `release_macos_cibw.yml`, `release_windows_cibw.yml`) accept a `builds` input (JSON array of cibuildwheel identifiers, defaulting to the full release matrix), an `artifact_name_prefix` input and a `skip_tests` input.
+The three cibw workflows (`release_linux_cibw.yml`, `release_macos_cibw.yml`, `release_windows_cibw.yml`) accept a `builds` input (JSON array of cibuildwheel identifiers; empty builds the full release matrix), an `artifact_name_prefix` input, a `skip_tests` input that skips the test-command and the wheel validation, and a `retention_days` input for the wheel artifacts.
 
-Both builds check out the same commit into the same workspace path, so differences caused by the checkout path are not detected; differences between runners and build times are.
+The two builds run on separate runners, so differences between runners are detected. They check out the same commit into the same workspace path, so differences caused by the checkout path are not. A timestamp is detected only if it changes between the two builds: the second build starts after the first one has finished, so a value with second or minute resolution differs, but a date usually does not.
+
+Runners with the same label can run different image versions while GitHub rolls out an update, and a different compiler or bundled runtime also changes the wheel. Each build lists its runner image and, on macOS and Windows, its toolchain versions in the job summary. When a comparison fails, check those first.
 
 ### Diagnosing a mismatch with diffoscope
 
@@ -50,13 +52,13 @@ pip install diffoscope
 diffoscope build1/onnx-*.whl build2/onnx-*.whl --html diffoscope.html
 ```
 
-For **Windows PE** (`.pyd`) files, install `binutils-mingw-w64-x86-64` so diffoscope can disassemble them. For **macOS Mach-O** (`.dylib`), install `llvm` (provides `llvm-objdump`). Common causes of non-determinism on each platform:
+For **Windows PE** (`.pyd`) files, install `binutils-mingw-w64-x86-64` so diffoscope can disassemble them. For the **macOS Mach-O** extension module (`onnx_cpp2py_export*.so`), install `llvm` (provides `llvm-objdump`). Common causes of non-determinism on each platform:
 
 | Platform | Typical cause | Fix |
 |---|---|---|
-| Linux | zip timestamp in `.whl` archive | `SOURCE_DATE_EPOCH`, set from the commit time and passed into the manylinux container via `CIBW_ENVIRONMENT_PASS_LINUX` |
+| Linux | zip timestamp in `.whl` archive | `SOURCE_DATE_EPOCH`, set from the commit time; cibuildwheel passes it into the manylinux container |
 | macOS | archive member timestamps; ad-hoc codesign hash embedding build path | `ZERO_AR_DATE=1` (set in `release_macos_cibw.yml`); avoid absolute paths in CMake |
-| Windows | PE `TimeDateStamp` header field | `/Brepro` for Release builds (set in `add_onnx_compile_options` in `cmake/Utils.cmake`) |
+| Windows | PE `TimeDateStamp` header field; timestamps in object files and static libraries | `/Brepro` for Release builds (set for MSVC in the top-level `CMakeLists.txt`) |
 
 ## Security and Supply Chain
 

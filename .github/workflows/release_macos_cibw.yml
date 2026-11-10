@@ -16,15 +16,20 @@ on:
         type: string
         default: "wheels"
       builds:
-        description: 'JSON array of cibuildwheel build identifiers'
+        description: 'JSON array of cibuildwheel build identifiers; empty builds the full release matrix'
         required: false
         type: string
-        default: '["cp311-macosx_universal2","cp312-macosx_universal2","cp314t-macosx_universal2","cp315t-macosx_universal2"]'
+        default: ''
       skip_tests:
-        description: 'Skip the cibuildwheel test-command'
+        description: 'Skip the cibuildwheel test-command and the wheel validation'
         required: false
         type: boolean
         default: false
+      retention_days:
+        description: 'Days to keep the wheel artifacts; 0 uses the repository default'
+        required: false
+        type: number
+        default: 0
   workflow_dispatch:
     inputs:
       build_mode:
@@ -33,16 +38,20 @@ on:
         type: choice
         options: [release, preview]
         default: preview
-      builds:
-        description: 'JSON array of cibuildwheel build identifiers'
+      artifact_name_prefix:
         required: false
-        default: '["cp312-macosx_universal2"]'
+        default: "wheels"
+      builds:
+        description: 'JSON array of cibuildwheel build identifiers; empty builds the full release matrix'
+        required: false
+        default: ''
 
 permissions:
   contents: read
 
 concurrency:
-  group: macos-release-${{ github.workflow }}-${{ github.ref }}-${{ inputs.artifact_name_prefix }}
+  # Like Create Releases, keep manual runs apart from push and scheduled runs of the same ref.
+  group: macos-release-${{ github.workflow }}-${{ github.ref }}-${{ github.event_name == 'workflow_dispatch' }}-${{ inputs.artifact_name_prefix }}
   cancel-in-progress: true
 
 jobs:
@@ -50,7 +59,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        build: ${{ fromJSON(inputs.builds) }}
+        build: ${{ fromJSON(inputs.builds || '["cp311-macosx_universal2","cp312-macosx_universal2","cp314t-macosx_universal2","cp315t-macosx_universal2"]') }}
 
     runs-on: macos-14
 
@@ -112,13 +121,29 @@ jobs:
       - name: Set SOURCE_DATE_EPOCH for reproducible builds
         run: echo "SOURCE_DATE_EPOCH=$(git log -1 --pretty=%ct)" >> $GITHUB_ENV
 
+      - name: Skip the test-command
+        # Only set when skipping: an empty CIBW_TEST_SKIP would override test-skip in pyproject.toml.
+        if: inputs.skip_tests
+        run: echo "CIBW_TEST_SKIP=*" >> $GITHUB_ENV
+
+      - name: Record build environment
+        env:
+          BUILD: ${{ matrix.build }}
+        run: |
+          {
+            echo "### Build environment for $BUILD"
+            echo "- Runner image: $ImageOS $ImageVersion"
+            echo "- $(xcodebuild -version | head -1)"
+            echo "- $(clang --version | head -1)"
+            echo "- $(cmake --version | head -1)"
+          } >> "$GITHUB_STEP_SUMMARY"
+
       - name: Build wheels
         uses: pypa/cibuildwheel@e090b81e30c4d855ea63bf4b6e59204c09a101ae  # v4.2.1
         with:
           output-dir: dist/
           only: ${{ matrix.build }}
         env:
-          CIBW_TEST_SKIP: ${{ inputs.skip_tests && '*' || '' }}
           CIBW_ENVIRONMENT: >-
             MACOSX_DEPLOYMENT_TARGET=13.3
             ZERO_AR_DATE=1
@@ -132,10 +157,12 @@ jobs:
 
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: ${{ inputs.artifact_name_prefix || 'wheels' }}-macos-${{ matrix.build }}
+          name: ${{ inputs.artifact_name_prefix }}-macos-${{ matrix.build }}
           path: dist/*.whl
+          retention-days: ${{ inputs.retention_days }}
 
       - name: Validate wheel
+        if: ${{ !inputs.skip_tests }}
         run: |
           python -m pip install -q -r requirements-release_wheel_check.txt
           for whl in dist/*.whl; do

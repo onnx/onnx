@@ -16,15 +16,20 @@ on:
         type: string
         default: "wheels"
       builds:
-        description: 'JSON array of cibuildwheel build identifiers'
+        description: 'JSON array of cibuildwheel build identifiers; empty builds the full release matrix'
         required: false
         type: string
-        default: '["cp311-win_amd64","cp311-win32","cp311-win_arm64","cp312-win_amd64","cp312-win32","cp312-win_arm64","cp314t-win_amd64","cp315t-win_amd64","cp314t-win_arm64","cp315t-win_arm64"]'
+        default: ''
       skip_tests:
-        description: 'Skip the cibuildwheel test-command'
+        description: 'Skip the cibuildwheel test-command and the wheel validation'
         required: false
         type: boolean
         default: false
+      retention_days:
+        description: 'Days to keep the wheel artifacts; 0 uses the repository default'
+        required: false
+        type: number
+        default: 0
   workflow_dispatch:
     inputs:
       build_mode:
@@ -33,16 +38,20 @@ on:
         type: choice
         options: [release, preview]
         default: preview
-      builds:
-        description: 'JSON array of cibuildwheel build identifiers'
+      artifact_name_prefix:
         required: false
-        default: '["cp312-win_amd64"]'
+        default: "wheels"
+      builds:
+        description: 'JSON array of cibuildwheel build identifiers; empty builds the full release matrix'
+        required: false
+        default: ''
 
 permissions:
   contents: read
 
 concurrency:
-  group: windows-release-${{ github.workflow }}-${{ github.ref }}-${{ inputs.artifact_name_prefix }}
+  # Like Create Releases, keep manual runs apart from push and scheduled runs of the same ref.
+  group: windows-release-${{ github.workflow }}-${{ github.ref }}-${{ github.event_name == 'workflow_dispatch' }}-${{ inputs.artifact_name_prefix }}
   cancel-in-progress: true
 
 jobs:
@@ -50,7 +59,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        build: ${{ fromJSON(inputs.builds) }}
+        build: ${{ fromJSON(inputs.builds || '["cp311-win_amd64","cp311-win32","cp311-win_arm64","cp312-win_amd64","cp312-win32","cp312-win_arm64","cp314t-win_amd64","cp315t-win_amd64","cp314t-win_arm64","cp315t-win_arm64"]') }}
     runs-on: ${{ contains(matrix.build, 'arm64') && 'windows-11-arm' || 'windows-2022' }}
 
     steps:
@@ -125,13 +134,34 @@ jobs:
         shell: bash
         run: echo "SOURCE_DATE_EPOCH=$(git log -1 --pretty=%ct)" >> $GITHUB_ENV
 
+      - name: Skip the test-command
+        # Only set when skipping: an empty CIBW_TEST_SKIP would override test-skip in pyproject.toml.
+        if: inputs.skip_tests
+        shell: bash
+        run: echo "CIBW_TEST_SKIP=*" >> $GITHUB_ENV
+
+      - name: Record build environment
+        env:
+          BUILD: ${{ matrix.build }}
+        run: |
+          $vs = & "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" -latest -property installationPath
+          $toolset = Get-Content "$vs\VC\Auxiliary\Build\Microsoft.VCToolsVersion.default.txt"
+          # delvewheel bundles the C++ runtime from the runner's system directory.
+          $systemDir = if ($env:BUILD -like '*-win32') { 'SysWOW64' } else { 'System32' }
+          $runtime = (Get-Item "$env:SystemRoot\$systemDir\msvcp140.dll").VersionInfo.FileVersion
+          @(
+            "### Build environment for $env:BUILD"
+            "- Runner image: $env:ImageOS $env:ImageVersion"
+            "- MSVC toolset: $toolset"
+            "- msvcp140.dll: $runtime"
+          ) | Add-Content -Path $env:GITHUB_STEP_SUMMARY
+
       - name: Build wheels
         uses: pypa/cibuildwheel@e090b81e30c4d855ea63bf4b6e59204c09a101ae  # v4.2.1
         with:
           output-dir: dist/
           only: ${{ matrix.build }}
         env:
-          CIBW_TEST_SKIP: ${{ inputs.skip_tests && '*' || '' }}
           CIBW_ENVIRONMENT: >-
             CMAKE_ARGS="
             -DFETCHCONTENT_SOURCE_DIR_PROTOBUF=${{ env.PROTOBUF_SRC }}
@@ -143,10 +173,12 @@ jobs:
 
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: ${{ inputs.artifact_name_prefix || 'wheels' }}-windows-${{ matrix.build }}
+          name: ${{ inputs.artifact_name_prefix }}-windows-${{ matrix.build }}
           path: dist/*.whl
+          retention-days: ${{ inputs.retention_days }}
 
       - name: Validate wheel
+        if: ${{ !inputs.skip_tests }}
         run: |
           python -m pip install -q -r requirements-release_wheel_check.txt
           Get-ChildItem -Path dist/*.whl | ForEach-Object {
