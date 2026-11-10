@@ -1519,6 +1519,7 @@ class OpSet_Onnx_ver28 {
 };
 
 // Iterate over schema from ai.onnx version 29
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 29, MeanVarianceNormalization);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 29, Gemm);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 29, GroupedMatMul);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 29, CausalConvWithState);
@@ -1530,6 +1531,7 @@ class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 29, ScatterND);
 class OpSet_Onnx_ver29 {
  public:
   static void ForEachSchema(const std::function<void(OpSchema&&)>& fn) {
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 29, MeanVarianceNormalization)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 29, Gemm)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 29, GroupedMatMul)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 29, CausalConvWithState)>());
