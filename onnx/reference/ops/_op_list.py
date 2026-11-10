@@ -128,6 +128,8 @@ __all__ = [
     "LessOrEqual",
     "LinearAttention",
     "Log",
+    "Log1p",
+    "LogCumSumExp",
     "LogSoftmax",
     "Loop",
     "LpNormalization",
@@ -140,6 +142,9 @@ __all__ = [
     "MaxPool",
     "MaxUnpool",
     "Mean",
+    "MeanVarianceNormalization_9",
+    "MeanVarianceNormalization_13",
+    "MeanVarianceNormalization_29",
     "MelWeightMatrix",
     "Min",
     "Mod",
@@ -394,6 +399,8 @@ from onnx.reference.ops.op_less import Less
 from onnx.reference.ops.op_less_or_equal import LessOrEqual
 from onnx.reference.ops.op_linear_attention import LinearAttention
 from onnx.reference.ops.op_log import Log
+from onnx.reference.ops.op_log1p import Log1p
+from onnx.reference.ops.op_log_cum_sum_exp import LogCumSumExp
 from onnx.reference.ops.op_log_softmax import LogSoftmax
 from onnx.reference.ops.op_loop import Loop
 from onnx.reference.ops.op_lp_normalization import LpNormalization
@@ -406,6 +413,11 @@ from onnx.reference.ops.op_max import Max
 from onnx.reference.ops.op_max_pool import MaxPool
 from onnx.reference.ops.op_max_unpool import MaxUnpool
 from onnx.reference.ops.op_mean import Mean
+from onnx.reference.ops.op_mean_variance_normalization import (
+    MeanVarianceNormalization_9,
+    MeanVarianceNormalization_13,
+    MeanVarianceNormalization_29,
+)
 from onnx.reference.ops.op_mel_weight_matrix import MelWeightMatrix
 from onnx.reference.ops.op_min import Min
 from onnx.reference.ops.op_mod import Mod
@@ -587,6 +599,12 @@ def load_op(
             body = schema.get_context_dependent_function(
                 node.SerializeToString(), [it.SerializeToString() for it in input_types]
             )
+            if not body:
+                raise RuntimeImplementationError(
+                    f"Cannot build a context-dependent function for operator {op_type!r} "
+                    f"from domain {domain!r} at opset {version}. Provide concrete attributes "
+                    "and supported input types, or register a custom implementation."
+                )
             proto = FunctionProto()
             proto.ParseFromString(body)
             assert evaluator_cls is not None, (
