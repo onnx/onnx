@@ -23,6 +23,40 @@ void ScanInferenceFunction(InferenceContext& ctx);
 
 namespace Test {
 
+TEST(ShapeInferenceTest, Int64ExpressionsShareExactIdentityOnlyWithOverflowProof) {
+  for (bool reverse : {false, true}) {
+    shape_inference::SymbolTableImpl symbols;
+    GraphProto graph;
+    graph.add_input()->mutable_type()->mutable_tensor_type()->mutable_shape()->add_dim()->set_dim_param("N");
+    symbols.addFromGraph(graph);
+    Dim n;
+    n.set_dim_param("N");
+    for (const std::string op : {"Add", "Mul"}) {
+      const auto data_op = "Int64" + op;
+      const auto first = computeDimension(&symbols, reverse ? op : data_op, n, makeDimension(2));
+      const auto second = computeDimension(&symbols, reverse ? data_op : op, n, makeDimension(2));
+      EXPECT_NE(first.dim_param(), second.dim_param());
+      EXPECT_EQ(first.dim_param(), computeDimension(&symbols, reverse ? op : data_op, n, makeDimension(2)).dim_param());
+    }
+    for (const std::string op : {"Sub", "Div"}) {
+      EXPECT_EQ(
+          computeDimension(&symbols, op, n, makeDimension(2)).dim_param(),
+          computeDimension(&symbols, "Int64" + op, n, makeDimension(2)).dim_param());
+    }
+    const auto half = computeDimension(&symbols, "Int64Div", n, makeDimension(2));
+    const auto positive = computeDimension(&symbols, "Int64Add", half, makeDimension(1));
+    EXPECT_EQ(positive.dim_param(), computeDimension(&symbols, "Add", half, makeDimension(1)).dim_param());
+    ASSERT_TRUE(symbols.getValueLowerBound(positive).has_value());
+    EXPECT_EQ(*symbols.getValueLowerBound(positive), 1);
+    const auto wrapped = computeDimension(&symbols, "Int64Mul", n, makeDimension(2));
+    EXPECT_FALSE(symbols.getValueLowerBound(wrapped).has_value());
+    const auto wrapped_sum = computeDimension(&symbols, "Int64Add", wrapped, makeDimension(1));
+    EXPECT_NE(wrapped_sum.dim_param(), computeDimension(&symbols, "Add", wrapped, makeDimension(1)).dim_param());
+    EXPECT_EQ(computeDimension(&symbols, "Int64Add", n, makeDimension(0)).dim_param(), "N");
+    EXPECT_EQ(computeDimension(&symbols, "Int64Mul", n, makeDimension(1)).dim_param(), "N");
+  }
+}
+
 TEST(ShapeInferenceTest, OptionalBoundQueryPreservesOutputParameterOverrides) {
   class LegacySymbolTable : public SymbolTable {
    public:

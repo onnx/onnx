@@ -49,7 +49,7 @@ void MathOpDataPropagator(DataPropagationContext& ctx, std::string_view op_type,
     } else if (left.has_dim_value() && right.has_dim_value()) {
       tsp.add_dim()->set_dim_value(MathOpTwoIntegers(op_type, left.dim_value(), right.dim_value()));
     } else {
-      *tsp.add_dim() = computeDimension(ctx.getSymbolTable(), std::string(op_type), left, right);
+      *tsp.add_dim() = computeDimension(ctx.getSymbolTable(), "Int64" + std::string(op_type), left, right);
     }
   }
   ctx.addOutputData(0, std::move(tsp));

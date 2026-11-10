@@ -91,21 +91,27 @@ class SymbolTableImpl : public SymbolTable {
     const auto token = [](const Dim& dim) {
       return dim.has_dim_value() ? "i" + std::to_string(dim.dim_value()) : "s" + dim.dim_param();
     };
-    const std::vector<std::string> key{op, token(left), token(right)};
+    const bool integer_data = op.compare(0, 5, "Int64") == 0;
+    const auto arithmetic_op = integer_data ? op.substr(5) : op;
+    ValueBounds bounds{};
+    const bool bounded = ComputeExpressionBounds(arithmetic_op, left, right, bounds);
+    // Tensor arithmetic may wrap; only proven overflow-free expressions share
+    // the identity of exact dimension arithmetic.
+    const std::vector<std::string> key{integer_data && !bounded ? op : arithmetic_op, token(left), token(right)};
     const auto previous = expressions_.find(key);
     if (previous != expressions_.end()) {
       return previous->second;
     }
     std::string text;
-    if (op == "Add") {
+    if (arithmetic_op == "Add") {
       text = lhs + " + " + rhs;
-    } else if (op == "Sub") {
+    } else if (arithmetic_op == "Sub") {
       text = lhs + " - " + wrapIfCompound(rhs);
-    } else if (op == "Mul") {
+    } else if (arithmetic_op == "Mul") {
       text = wrapIfCompound(lhs) + "*" + wrapIfCompound(rhs);
-    } else if (op == "Div") {
+    } else if (arithmetic_op == "Div") {
       text = wrapIfCompound(lhs) + "/" + wrapIfCompound(rhs);
-    } else if (op == "FloorDiv") {
+    } else if (arithmetic_op == "FloorDiv") {
       text = "floor(" + wrapIfCompound(lhs) + "/" + wrapIfCompound(rhs) + ")";
     } else {
       return "";
@@ -113,8 +119,7 @@ class SymbolTableImpl : public SymbolTable {
     const auto name = existing_symbols.insert(text).second ? text : createNew(text + "__");
     expressions_.emplace(key, name);
     expression_text_.emplace(name, std::move(text));
-    ValueBounds bounds{};
-    if (ComputeExpressionBounds(op, left, right, bounds)) {
+    if (bounded) {
       value_bounds_.emplace(name, bounds);
     }
     return name;

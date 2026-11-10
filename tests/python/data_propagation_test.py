@@ -346,6 +346,40 @@ class TestDataPropagation(TestShapeInferenceHelper):
         assert shapes["flat"].dim[1].dim_param == "N*2"
         assert shapes["y"].dim[0].dim_param != "N*2"
 
+    @pytest.mark.parametrize("reverse", [False, True])
+    def test_symbolic_int64_wrap_does_not_alias_exact_dimension_product(
+        self, reverse: bool
+    ) -> None:
+        nodes = [
+            make_node("Shape", ["x"], ["shape"]),
+            make_node("Mul", ["shape", "four"], ["wrapped"]),
+            make_node("ConstantOfShape", ["wrapped"], ["y"]),
+            make_node("Mul", ["shape", "four"], ["again"]),
+            make_node("ConstantOfShape", ["again"], ["repeated"]),
+        ]
+        flat = make_node("Flatten", ["matrix"], ["flat"], axis=0)
+        if reverse:
+            nodes.insert(0, flat)
+        else:
+            nodes.append(flat)
+        graph = self._make_graph(
+            [("x", TensorProto.FLOAT, ("N",)), ("matrix", TensorProto.FLOAT, ("N", 4))],
+            nodes,
+            [],
+            initializer=[make_tensor("four", TensorProto.INT64, (1,), [4])],
+        )
+        inferred = self._inferred(graph, data_prop=True)
+        shapes = {
+            info.name: info.type.tensor_type.shape for info in inferred.graph.value_info
+        }
+        name = shapes["y"].dim[0].dim_param
+        assert name
+        assert name != shapes["flat"].dim[1].dim_param
+        assert shapes["repeated"] == shapes["y"]
+        n = (1 << 62) + 1
+        assert int(np.multiply(np.int64(n), np.int64(4))) == 4
+        assert n * 4 != 4
+
     @pytest.mark.parametrize(
         ("operation", "spelling"),
         [("Add", "N + 2"), ("Sub", "N - 2"), ("Mul", "N*2"), ("Div", "N/2")],
@@ -384,7 +418,7 @@ class TestDataPropagation(TestShapeInferenceHelper):
         assert name and name != spelling
         assert shapes["repeated"] == shapes["y"]
         if operation == "Mul":
-            assert shapes["flat"].dim[1].dim_param == name
+            assert shapes["flat"].dim[1].dim_param != name
 
     @pytest.mark.parametrize("op_type", ["Identity", "Neg"])
     def test_large_nonconstant_integer_vector(self, op_type: str) -> None:

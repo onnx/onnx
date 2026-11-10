@@ -85,6 +85,7 @@ TensorShapeProto::Dimension operator-(const TensorShapeProto::Dimension& dim1, i
 
 Dim computeDimension(SymbolTable* symbols, const std::string& op, const Dim& left, const Dim& right) {
   Dim result;
+  const auto arithmetic_op = op.compare(0, 5, "Int64") == 0 ? op.substr(5) : op;
   if (op == "FloorDiv") {
     if (!right.has_dim_value() || right.dim_value() <= 0) {
       return result;
@@ -100,13 +101,13 @@ Dim computeDimension(SymbolTable* symbols, const std::string& op, const Dim& lef
       return computeDimension(symbols, "Div", left, right);
     }
   }
-  if (op == "Add") {
+  if (arithmetic_op == "Add") {
     result = left + right;
-  } else if (op == "Sub") {
+  } else if (arithmetic_op == "Sub") {
     result = left - right;
-  } else if (op == "Mul") {
+  } else if (arithmetic_op == "Mul") {
     result = left * right;
-  } else if (op == "Div" && right.has_dim_value()) {
+  } else if (arithmetic_op == "Div" && right.has_dim_value()) {
     result = left / right.dim_value();
   }
   if (!result.has_dim_value() && !result.has_dim_param() && symbols != nullptr) {
