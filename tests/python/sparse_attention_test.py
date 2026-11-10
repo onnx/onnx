@@ -418,9 +418,13 @@ def test_int32_selection_with_visibility_holes(expanded: bool) -> None:
 
 
 @pytest.mark.parametrize("expanded", [False, True])
-def test_block_sparse_support(expanded: bool) -> None:
+@pytest.mark.parametrize("reordered_coordinates", [False, True])
+def test_block_sparse_support(expanded: bool, reordered_coordinates: bool) -> None:
     feeds = _feeds()
     del feeds["indices"], feeds["counts"]
+    if reordered_coordinates:
+        feeds["query_positions"] = np.array([[9, 2, 7], [1, 8, 4]], np.int64)
+        feeds["key_positions"] = np.array([[7, 0, 9, 2, 4], [8, 1, 6, 0, 4]], np.int64)
     feeds["blocks"] = np.array(
         [
             [[[1, 0, 1], [0, 1, 1]], [[0, 1, 0], [1, 0, 1]]],

@@ -38,6 +38,24 @@ cannot be substituted into the shared-selection shape. Such an exporter must
 carry its head axis through gathering and masking (or fold query heads into
 batch with the corresponding KV-head mapping), preserving each head's list.
 
+For each batch `b`, query head `h` and query row `i`, let `A` be the list of
+allowed candidate occurrences defined by the composition below, and `g = h // 2`.
+Each occurrence `t` supplies a key vector `k_t` and value vector `v_t` from
+source head `g`. The float32 output `Y` has shape `[B,Hq,Q,Dv]`:
+
+```text
+z_t = dot(Q[b,h,i,:], k_t) / sqrt(D)
+m = max(z_t for t in A)
+w_t = exp(z_t - m)
+Y[b,h,i,:] = sum(w_t * v_t for t in A) / sum(w_t for t in A)
+```
+
+If `A` is empty, the output vector is zero; the maximum and division above are
+not evaluated. Repeated occurrences remain separate terms. The graphs use
+[Attention-25](Changelog.md#Attention-25) with `is_causal=0`, no cache inputs,
+no soft cap, and default computation precision. The equations specify the
+mathematical result, not a particular floating-point evaluation order.
+
 ## Canonical selected-position composition
 
 The portable boundary is an ordinary tensor of selected source-row positions,
@@ -126,8 +144,12 @@ An exporter targeting a different contract must handle such cases explicitly.
 `_selected_attention_model(local_plus_selected=True)` uses a separate auxiliary
 K/V source with the same KV-head mapping and head sizes. Here `indices` addresses
 auxiliary rows, with `aux_positions[B,4]` in the same original coordinate system.
+Auxiliary K and V are float32 tensors of shapes `[B,Hkv,4,D]` and
+`[B,Hkv,4,Dv]`, respectively.
 Main candidates satisfy `0 <= query_position - key_position <= 1`: a causal
 window including the current position and its immediate predecessor.
+For this graph's int64 subtraction, each query/key coordinate difference must
+be representable as int64.
 Auxiliary candidates use the count and original-coordinate causal masks, but no
 local-window restriction.
 
