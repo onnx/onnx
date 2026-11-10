@@ -50,6 +50,9 @@ class SymbolTable {
   }
   virtual std::string createNew(const std::string& symbol_prefix) = 0;
   // Interns an operation and its ordered operands, distinguishing constants from symbols.
+  // Add, Sub, Mul, Div, and FloorDiv denote exact dimension arithmetic.
+  // Int64Add, Int64Sub, Int64Mul, and Int64Div denote INT64 tensor arithmetic;
+  // they may share exact arithmetic identities only with a proof of no overflow.
   // Returns an empty string when the expression cannot be represented.
   // Existing dimension names are atoms, not expressions parsed from their spelling.
   virtual std::string createExpression(const std::string& /*op*/, const Dim& /*left*/, const Dim& /*right*/) {
@@ -366,6 +369,9 @@ inline Dim makeDimension(int64_t value) {
   return dim;
 }
 
+// Computes checked concrete arithmetic and identity operations before interning.
+// FloorDiv requires a positive concrete divisor. Without an allocator, other
+// compound expressions remain unknown. Operation names are defined by SymbolTable.
 ONNX_API Dim computeDimension(SymbolTable* symbols, const std::string& op, const Dim& left, const Dim& right);
 
 ONNX_API bool isReshapeSymbolicDimSafe(const InferenceContext& ctx, const Dim& dim, int index, bool allowzero);

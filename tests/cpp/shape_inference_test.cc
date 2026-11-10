@@ -148,6 +148,9 @@ TEST(ShapeInferenceTest, SymbolicValueBoundsDistinguishDimensionsAndPartialValue
   const auto product = computeDimension(&symbols, "Mul", n, makeDimension(2));
   const auto potentially_wrapped = computeDimension(&symbols, "Add", product, makeDimension(1));
   EXPECT_FALSE(symbols.getValueLowerBound(potentially_wrapped, lower));
+  graph.add_output()->mutable_type()->mutable_tensor_type()->mutable_shape()->add_dim()->CopyFrom(product);
+  symbols.addFromGraph(graph);
+  EXPECT_FALSE(symbols.getValueLowerBound(product).has_value());
 }
 
 TEST(ShapeInferenceTest, ReshapeDoesNotAssumePartialSymbolsAreNonnegative) {
