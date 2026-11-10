@@ -9,10 +9,11 @@ Follow the full procedure in [docs/AddNewOp.md](../../../docs/AddNewOp.md).
 
 | Component | File |
 |-----------|------|
-| Schema definition | `onnx/defs/<domain>/defs.cc` |
+| Schema definition | `operator-specifications/<domain>/v<N>/<op>.md` (see `operator-specifications/README.md`) |
+| Schema registration | `onnx/defs/<domain>/defs.cc` |
 | Operator set registration | `onnx/defs/operator_sets.h` |
-| Type/shape inference | Inline in schema via `.TypeAndShapeInferenceFunction(...)` |
-| Function body (if applicable) | Inline in schema via `.FunctionBody(...)` |
+| Type/shape inference | In the registration via `.TypeAndShapeInferenceFunction(...)` |
+| Function body (if applicable) | `function_bodies` in the spec file, or in the registration via `.SetContextDependentFunctionBodyBuilder(...)` |
 | Reference implementation | `onnx/reference/ops/op_<lowercase_name>.py` |
 | Node tests | `onnx/backend/test/case/node/<lowercase_name>.py` |
 | Shape inference tests | `tests/python/shape_inference_test.py` |
@@ -44,8 +45,8 @@ ONNX_OPERATOR_SET_SCHEMA(
 
 ## Updating an Existing Operator
 
-1. Move current schema from `defs.cc` to `old.cc` in the same domain directory
-2. Create new version in `defs.cc` with the new opset version number
+1. Create `operator-specifications/<domain>/v<N>/<op>.md` with the keys that change
+2. Move the current registration from `defs.cc` to `old.cc` in the same domain directory and register the new version in `defs.cc`
 3. Update `onnx/defs/operator_sets.h`
 4. Add a version converter adapter if behavior changed
 5. Add upgrade/downgrade tests

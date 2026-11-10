@@ -66,10 +66,11 @@ Once the criteria of proposing new operator/function has been satisfied, you wil
 
 | Component | File location |
 |-----------|--------------|
-| Schema definition | `onnx/defs/<domain>/defs.cc` |
+| Schema definition | `operator-specifications/<domain>/v<N>/<op>.md` (see [its README](/operator-specifications/README.md)) |
+| Schema registration | `onnx/defs/<area>/defs.cc` |
 | Operator set registration | `onnx/defs/operator_sets.h` |
-| Type/shape inference | Inline in schema via `.TypeAndShapeInferenceFunction(...)` |
-| Function body (if applicable) | Inline in schema via `.FunctionBody(...)` — see [AddFunctionBody.md](AddFunctionBody.md) |
+| Type/shape inference | In the registration via `.TypeAndShapeInferenceFunction(...)` |
+| Function body (if applicable) | `function_bodies` in the spec file, or in the registration via `.SetContextDependentFunctionBodyBuilder(...)` — see [AddFunctionBody.md](AddFunctionBody.md) |
 | Reference implementation | `onnx/reference/ops/op_<lowercase_name>.py` |
 | Node tests | `onnx/backend/test/case/node/<lowercase_name>.py` |
 | Shape inference tests | `tests/python/shape_inference_test.py` |
@@ -128,8 +129,8 @@ The definition of an existing operator may need to be updated when e.g. there ar
 
 ### Steps for updating
 
-1. **Move the current schema** from `onnx/defs/<domain>/defs.cc` to `onnx/defs/<domain>/old.cc`. This preserves the previous version for the version converter.
-2. **Create the new version** in `defs.cc` using `ONNX_OPERATOR_SET_SCHEMA(OpName, NEW_VERSION, ...)` with the new opset version number.
+1. **Create the spec file** `operator-specifications/<domain>/v<NEW_VERSION>/<op>.md` with the keys that change; the others are inherited from the previous version.
+2. **Move the current registration** from `onnx/defs/<domain>/defs.cc` to `onnx/defs/<domain>/old.cc` and **register the new version** in `defs.cc` using `ONNX_OPERATOR_SET_SCHEMA(OpName, NEW_VERSION, generated::<domain>::OpName_ver<NEW_VERSION>()...)`.
 3. **Update operator set registration** in `onnx/defs/operator_sets.h` to reference the new version.
 4. **Add a version converter adapter** if the behavior or signature changed (see `onnx/version_converter/adapters/` for examples).
 5. **Update the reference implementation** in `onnx/reference/ops/op_<name>.py` if behavior changed.
