@@ -5,6 +5,9 @@
 #ifdef ONNX_ML
 {% endif %}
 #include "onnx/defs/generated/schemas.h"
+{% for header in op.includes %}
+#include "{{ header }}"
+{% endfor %}
 
 namespace ONNX_NAMESPACE::generated::{{ op.namespace }} {
 {% for v in op.versions %}

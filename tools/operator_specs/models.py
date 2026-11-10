@@ -45,7 +45,9 @@ class SpecError(Exception):
 
 
 # Fields of `Spec` that are taken from each file instead of being inherited.
-_NOT_INHERITED = frozenset({"name", "domain"})
+_NOT_INHERITED = frozenset(
+    {"name", "domain", "shape_inference", "data_propagation", "function_body_builders"}
+)
 
 
 def cpp_str(s: str) -> str:
@@ -77,6 +79,14 @@ Identifier = Annotated[str, StringConstraints(pattern=r"^[A-Za-z_]\w*$")]
 Domain = Literal["ai.onnx", "ai.onnx.ml", "ai.onnx.preview", "ai.onnx.preview.training"]
 # A type string such as `tensor(float)`.
 TypeString = Annotated[str, StringConstraints(pattern=r"^\w+\([\w(), ]*\)$")]
+# A C++ function name relative to `ONNX_NAMESPACE`: either unqualified or in
+# `defs::<area>::utils`, such as `defs::math::utils::EinsumShapeInference_opset12`.
+FunctionName = Annotated[str, StringConstraints(pattern=r"^(defs::\w+::utils::)?\w+$")]
+
+# Header declaring a function `defs::<area>::utils::<name>`.
+_UTILS_FUNCTION = re.compile(r"defs::(\w+)::utils::\w+")
+# Headers declaring the unqualified functions in `ONNX_NAMESPACE`.
+_GLOBAL_HEADERS = ("onnx/defs/data_propagators.h", "onnx/defs/shape_inference.h")
 
 AttributeType = Literal[
     "FLOAT",
@@ -221,10 +231,14 @@ class TypeConstraint(_Model):
 class Spec(_Model):
     """The TOML part of a spec file.
 
-    `name` and `domain` identify the operator, are required in every file and
-    are not inherited. The defaults of the other fields apply to the first
-    version of an operator. Later versions inherit every field not set in
-    their file from the previous version.
+    `name` and `domain` identify the operator and are required in every file.
+    `shape_inference` names the type and shape inference function or is
+    `False` if there is none. `data_propagation` optionally names the data
+    propagation function, and `function_body_builders` the context-dependent
+    function body builders by opset version. These five fields are not
+    inherited. The defaults of the other fields apply to the first version of
+    an operator. Later versions inherit every field not set in their file from
+    the previous version.
     """
 
     name: Identifier
@@ -236,6 +250,9 @@ class Spec(_Model):
     )
     num_outputs: list[NonNegativeInt] | None = None
     allow_unchecked_attributes: bool = False
+    shape_inference: FunctionName | Literal[False] | None = None
+    data_propagation: FunctionName | None = None
+    function_body_builders: dict[int, FunctionName] = {}
     attributes: dict[str, Attribute] = {}
     inputs: list[FormalParameter] = []
     outputs: list[FormalParameter] = []
@@ -246,6 +263,12 @@ class Spec(_Model):
         """Return `child` with all inherited fields not set in its file taken from `self`."""
         keys = child.model_fields_set | _NOT_INHERITED
         return self.model_copy(update={k: getattr(child, k) for k in keys})
+
+    def functions(self) -> list[str]:
+        """Return the names of the C++ functions used by this spec."""
+        names = [self.shape_inference, self.data_propagation]
+        builders = list(self.function_body_builders.values())
+        return [n for n in names if isinstance(n, str)] + builders
 
     def cpp_calls(self) -> list[str]:
         """Return the `OpSchema` builder calls that set this spec."""
@@ -270,6 +293,14 @@ class Spec(_Model):
             f"FunctionBody({cpp_str(body)}, {opset})"
             for opset, body in self.function_bodies.items()
         ]
+        calls += [
+            f"SetContextDependentFunctionBodyBuilder({name}, {opset})"
+            for opset, name in self.function_body_builders.items()
+        ]
+        if isinstance(self.shape_inference, str):
+            calls.append(f"TypeAndShapeInferenceFunction({self.shape_inference})")
+        if self.data_propagation is not None:
+            calls.append(f"PartialDataPropagationFunction({self.data_propagation})")
         return calls
 
 
@@ -310,6 +341,17 @@ class Operator:
     @property
     def is_ml(self) -> bool:
         return self.domain == "ai.onnx.ml"
+
+    @property
+    def includes(self) -> list[str]:
+        """Return the headers declaring the C++ functions used by any version."""
+        headers: set[str] = set()
+        for name in (n for v in self.versions for n in v.spec.functions()):
+            if (match := _UTILS_FUNCTION.fullmatch(name)) is not None:
+                headers.add(f"onnx/defs/{match.group(1)}/utils.h")
+            else:
+                headers.update(_GLOBAL_HEADERS)
+        return sorted(headers)
 
 
 def _dedent(doc: str) -> str:
