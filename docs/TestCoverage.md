@@ -12328,7 +12328,7 @@ expect(
 
 
 ### GatherND
-There are 3 test cases, listed as following:
+There are 4 test cases, listed as following:
 <details>
 <summary>float32</summary>
 
@@ -12398,6 +12398,25 @@ expect(
     inputs=[data, indices],
     outputs=[output],
     name="test_gathernd_example_int32_batch_dim1",
+)
+```
+
+</details>
+<details>
+<summary>selected_kv_int32_indices</summary>
+
+```python
+node = onnx.helper.make_node(
+    "GatherND", ["cache", "positions"], ["selected"], batch_dims=1
+)
+cache = np.arange(24, dtype=np.float32).reshape(2, 4, 3)
+positions = np.array([[[[0], [2]]], [[[1], [-1]]]], dtype=np.int32)
+selected = np.stack([cache[0, [[0, 2]]], cache[1, [[1, 3]]]])
+expect(
+    node,
+    inputs=[cache, positions],
+    outputs=[selected],
+    name="test_gathernd_selected_kv_int32_indices",
 )
 ```
 
@@ -14737,7 +14756,36 @@ expect(
 
 
 ### InstanceNormalization
-There are 1 test cases, listed as following:
+There are 2 test cases, listed as following:
+<details>
+<summary>float16_large_values</summary>
+
+```python
+node = onnx.helper.make_node(
+    "InstanceNormalization",
+    inputs=["x", "s", "bias"],
+    outputs=["y"],
+)
+# input size: (1, 1, 256)
+x = np.arange(0, 512, 2).reshape(1, 1, 256).astype(np.float16)
+s = np.array([1.0]).astype(np.float16)
+bias = np.array([0.0]).astype(np.float16)
+# The variance (about 21845) is representable in float16, but squaring
+# values up to 510 overflows it, so compute in float32.
+x32 = x.astype(np.float32)
+mean = np.mean(x32, axis=2, keepdims=True)
+var = np.var(x32, axis=2, keepdims=True)
+y = ((x32 - mean) / np.sqrt(var + 1e-5)).astype(np.float16)
+
+expect(
+    node,
+    inputs=[x, s, bias],
+    outputs=[y],
+    name="test_instancenorm_float16_large_values",
+)
+```
+
+</details>
 <details>
 <summary>instancenormalization</summary>
 
@@ -14891,7 +14939,7 @@ expect(node, inputs=[x], outputs=[y], name="test_isnan")
 
 
 ### LRN
-There are 2 test cases, listed as following:
+There are 3 test cases, listed as following:
 <details>
 <summary>default</summary>
 
@@ -14917,6 +14965,28 @@ for n, c, h, w in np.ndindex(x.shape):
     )
 y = x / ((bias + (alpha / nsize) * square_sum) ** beta)
 expect(node, inputs=[x], outputs=[y], name="test_lrn_default")
+```
+
+</details>
+<details>
+<summary>float16_large_values</summary>
+
+```python
+alpha = 0.0001
+beta = 0.75
+bias = 1.0
+nsize = 5
+node = onnx.helper.make_node("LRN", inputs=["x"], outputs=["y"], size=nsize)
+x = np.full((1, 5, 1, 1), 300).astype(np.float16)
+# 300 ** 2 overflows float16 (max 65504), so compute in float32.
+x32 = x.astype(np.float32)
+square_sum = np.zeros_like(x32)
+for c in range(x.shape[1]):
+    begin = max(0, c - math.floor((nsize - 1) / 2))
+    end = min(x.shape[1], c + math.ceil((nsize - 1) / 2) + 1)
+    square_sum[:, c] = np.sum(x32[:, begin:end] ** 2, axis=1)
+y = (x32 / ((bias + (alpha / nsize) * square_sum) ** beta)).astype(np.float16)
+expect(node, inputs=[x], outputs=[y], name="test_lrn_float16_large_values")
 ```
 
 </details>
@@ -27635,7 +27705,30 @@ expect(
 
 
 ### ScatterND
-There are 7 test cases, listed as following:
+There are 8 test cases, listed as following:
+<details>
+<summary>batched_token_add_int32_indices</summary>
+
+```python
+node = onnx.helper.make_node(
+    "ScatterND", ["data", "indices", "updates"], ["output"], reduction="add"
+)
+data = np.zeros((2, 3, 2), dtype=np.float32)
+indices = np.array([[0, 1], [1, 0], [0, 1], [1, -1]], dtype=np.int32)
+updates = np.array([[1, 2], [3, 4], [5, 6], [7, 8]], dtype=np.float32)
+output = np.array(
+    [[[0, 0], [6, 8], [0, 0]], [[3, 4], [0, 0], [7, 8]]],
+    dtype=np.float32,
+)
+expect(
+    node,
+    inputs=[data, indices, updates],
+    outputs=[output],
+    name="test_scatternd_batched_token_add_int32_indices",
+)
+```
+
+</details>
 <details>
 <summary>scatternd</summary>
 
