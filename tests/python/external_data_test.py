@@ -1083,6 +1083,121 @@ class TestCheckExternalDataWithoutFiles:
         with pytest.raises(checker.ValidationError, match="should not have data field"):
             checker.check_model(model, check_external_data_files=False)
 
+    @pytest.mark.parametrize("check_files", [False, True])
+    def test_hash_filename_length_is_checked(self, check_files: bool) -> None:
+        model_filename = self.create_test_model(
+            {"location": "#weights.bin", "length": "12"}
+        )
+        # With a model directory, this is a filename, not an in-memory sentinel.
+        with open(os.path.join(self.temp_dir, "#weights.bin"), "wb") as data_file:
+            data_file.write(self.value.tobytes())
+        with pytest.raises(checker.ValidationError, match="too small"):
+            checker.check_model(model_filename, check_external_data_files=check_files)
+
+    def test_missing_hash_filename_length_is_checked(self) -> None:
+        model_filename = self.create_test_model(
+            {"location": "#weights.bin", "length": "12"}
+        )
+        with pytest.raises(checker.ValidationError, match="too small"):
+            checker.check_model(model_filename, check_external_data_files=False)
+        model_filename = self.create_test_model(
+            {"location": "#weights.bin", "length": "24"}
+        )
+        checker.check_model(model_filename, check_external_data_files=False)
+
+    @pytest.mark.parametrize("check_files", [False, True])
+    def test_in_memory_sentinel_preserved(self, check_files: bool) -> None:
+        model_filename = self.create_test_model(
+            {"location": "#weights.bin", "length": "12"}
+        )
+        model = onnx.load(model_filename, load_external_data=False)
+        checker.check_model(model, check_external_data_files=check_files)
+
+
+class TestCheckExternalSparseIndicesWithoutFiles:
+    @staticmethod
+    def make_model(indices: np.ndarray, *, external_indices: bool = True) -> ModelProto:
+        index_tensor = from_array(indices, "indices")
+        if external_indices:
+            set_external_data(index_tensor, "indices.bin", length=indices.nbytes)
+            index_tensor.ClearField("raw_data")
+        sparse = helper.make_sparse_tensor(
+            from_array(np.array([1, 2], dtype=np.float32), "weight"),
+            index_tensor,
+            [2, 3],
+        )
+        graph = helper.make_graph(
+            [helper.make_node("Identity", ["weight"], ["y"])],
+            "sparse_graph",
+            inputs=[],
+            outputs=[helper.make_tensor_value_info("y", TensorProto.FLOAT, [2, 3])],
+            sparse_initializer=[sparse],
+        )
+        return helper.make_model(graph)
+
+    @pytest.mark.parametrize("indices", [[0, 5], [[0, 0], [1, 2]]])
+    @pytest.mark.parametrize("external_values", [False, True])
+    def test_missing_indices_pass(
+        self, tmp_path: Path, indices: list, external_values: bool
+    ) -> None:
+        model = self.make_model(np.array(indices, dtype=np.int64))
+        if external_values:
+            values = model.graph.sparse_initializer[0].values
+            set_external_data(values, "values.bin", length=len(values.raw_data))
+            values.ClearField("raw_data")
+        model_path = tmp_path / "model.onnx"
+        model_path.write_bytes(model.SerializeToString())
+        with pytest.raises(checker.ValidationError):
+            checker.check_model(model_path)
+        checker.check_model(model_path, check_external_data_files=False)
+        checker.check_model(model, check_external_data_files=False)
+
+    @pytest.mark.parametrize(
+        ("index_shape", "dtype", "dense_shape", "length", "match"),
+        [
+            ([3], np.int64, [2, 3], 48, "NNZ"),
+            ([3, 2], np.int64, [2, 3], 48, "NNZ"),
+            ([2, 1], np.int64, [2, 3], 48, "second dimension"),
+            ([2, 1, 1], np.int64, [2, 3], 48, "rank 1 or 2"),
+            ([2], np.float32, [2, 3], 48, "INT64"),
+            ([2], np.int64, [0, 3], 48, "not positive"),
+            ([2], np.int64, [2, 3], 8, "too small"),
+            ([2, 2], np.int64, [2, 3], 16, "too small"),
+        ],
+    )
+    def test_invalid_metadata_fails(
+        self,
+        index_shape: list[int],
+        dtype: Any,
+        dense_shape: list[int],
+        length: int,
+        match: str,
+    ) -> None:
+        model = self.make_model(np.zeros(index_shape, dtype=dtype))
+        sparse = model.graph.sparse_initializer[0]
+        sparse.dims[:] = dense_shape
+        for entry in sparse.indices.external_data:
+            if entry.key == "length":
+                entry.value = str(length)
+        with pytest.raises(checker.ValidationError, match=match):
+            checker.check_model(model, check_external_data_files=False)
+
+    @pytest.mark.parametrize(
+        ("indices", "match"),
+        [
+            ([5, 0], "sorted order"),
+            ([0, 6], "out of range"),
+            ([[1, 2], [0, 0]], "sorted order"),
+            ([[0, 0], [2, 0]], "out of range"),
+        ],
+    )
+    def test_inline_indices_are_still_checked(self, indices: list, match: str) -> None:
+        model = self.make_model(
+            np.array(indices, dtype=np.int64), external_indices=False
+        )
+        with pytest.raises(checker.ValidationError, match=match):
+            checker.check_model(model, check_external_data_files=False)
+
 
 class TestSaveAllTensorsAsExternalDataWithPath(TestSaveAllTensorsAsExternalData):
     def get_temp_model_filename(self) -> pathlib.Path:

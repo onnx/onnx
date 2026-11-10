@@ -433,7 +433,8 @@ void check_tensor(const TensorProto& tensor, const CheckerContext& ctx) {
         if (ctx.check_external_data_files()) {
           data_path = resolve_external_data_location(ctx.get_model_dir(), entry.value(), tensor.name());
         } else {
-          data_path = check_external_data_location_syntax(ctx.get_model_dir(), entry.value(), tensor.name());
+          data_path = utf8_to_path(ctx.get_model_dir()) /
+              check_external_data_location_syntax(ctx.get_model_dir(), entry.value(), tensor.name());
         }
       } else if (entry.key() == "offset") {
         offset_entry = &entry;
@@ -456,7 +457,8 @@ void check_tensor(const TensorProto& tensor, const CheckerContext& ctx) {
       check_external_data_size(tensor, nelem, data_path, offset, length);
     } else if (length.has_value()) {
       // Without the file, an explicit length is the only size there is to check.
-      // Locations starting with '#' refer to in-memory data, as in check_external_data_size.
+      // Use the model-directory-prefixed path for the '#' in-memory sentinel,
+      // as in check_external_data_size.
       const auto location = path_to_utf8(data_path);
       if (location.empty() || location[0] != '#') {
         check_external_data_available(tensor, nelem, static_cast<std::uintmax_t>(*length));
@@ -794,15 +796,22 @@ void check_map(const MapProto& map, const CheckerContext& ctx) {
 // Check that the index data stored in a SparseTensorProto is valid.
 // indices: a 1-dimensional tensor; indices[i] represents the
 // linearized index value for the i-th nonzero value.
-static void
-check_sparse_tensor_indices_1(const TensorProto& indices, const SparseTensorProto& sparse_tensor_proto, size_t nnz) {
+static void check_sparse_tensor_indices_1(
+    const TensorProto& indices,
+    const SparseTensorProto& sparse_tensor_proto,
+    size_t nnz,
+    bool check_index_data) {
+  if (static_cast<size_t>(indices.dims(0)) != nnz) {
+    fail_check("Sparse tensor indices (", indices.name(), ") has ", indices.dims(0), " values, but NNZ is ", nnz);
+  }
+  if (!check_index_data) {
+    return;
+  }
+
   int dense_rank = sparse_tensor_proto.dims_size();
   int64_t dense_size = 1;
   for (int i = 0; i < dense_rank; ++i)
     dense_size *= sparse_tensor_proto.dims(i);
-  if (static_cast<size_t>(indices.dims(0)) != nnz) {
-    fail_check("Sparse tensor indices (", indices.name(), ") has ", indices.dims(0), " values, but NNZ is ", nnz);
-  }
 
   // Check if indices appear in ascending order, and if they have valid
   // values. The i-th value in index_data is the linear index of the i-th
@@ -832,14 +841,20 @@ check_sparse_tensor_indices_1(const TensorProto& indices, const SparseTensorProt
 // Check that the index data stored in a SparseTensorProto is valid.
 // indices: a 2-dimensional tensor; indices[i,j] represents the j-th
 // index value for the i-th nonzero value.
-static void
-check_sparse_tensor_indices_2(const TensorProto& indices, const SparseTensorProto& sparse_tensor_proto, size_t nnz) {
+static void check_sparse_tensor_indices_2(
+    const TensorProto& indices,
+    const SparseTensorProto& sparse_tensor_proto,
+    size_t nnz,
+    bool check_index_data) {
   int dense_rank = sparse_tensor_proto.dims_size();
   if (static_cast<size_t>(indices.dims(0)) != nnz) {
     fail_check("Sparse tensor indices (", indices.name(), ") first dimension size does not equal NNZ.");
   }
   if (indices.dims(1) != dense_rank) {
     fail_check("Sparse tensor indices (", indices.name(), ") second dimension size does not match rank of tensor.");
+  }
+  if (!check_index_data) {
+    return;
   }
 
   // Check if indices appear in ascending order, and if they have valid
@@ -894,14 +909,17 @@ void check_sparse_tensor(const SparseTensorProto& sparse_tensor_proto, const Che
     if (indices.data_type() != TensorProto::INT64) {
       fail_check("Sparse tensor indices (", indices.name(), ") must have INT64 type.");
     }
+    // Without external data, validate the index metadata but not payload-dependent
+    // ordering and range constraints. Inline indices are always checked in full.
+    const bool check_index_data = ctx.check_external_data_files() || indices.data_location() != TensorProto::EXTERNAL;
     switch (indices.dims().size()) {
       case 1:
         // Indices in linearized format
-        check_sparse_tensor_indices_1(indices, sparse_tensor_proto, nnz);
+        check_sparse_tensor_indices_1(indices, sparse_tensor_proto, nnz, check_index_data);
         return;
       case 2:
         // Check COO-style index. E.g., an index for a 3D tensor is a 3-tuple.
-        check_sparse_tensor_indices_2(indices, sparse_tensor_proto, nnz);
+        check_sparse_tensor_indices_2(indices, sparse_tensor_proto, nnz, check_index_data);
         return;
       default:
         fail_check("Sparse tensor indices (", indices.name(), ") must have rank 1 or 2.");

@@ -80,6 +80,11 @@ model = onnx.load("path/to/the/model.onnx", load_external_data=False)
 onnx.checker.check_model(model, check_external_data_files=False)
 ```
 
+For sparse tensors with external indices, this mode still checks the index type,
+rank, dimensions, and agreement with the number of nonzero values. Index ordering
+and range checks require the external payload and are skipped. Indices stored
+inline are checked as usual.
+
 ## TensorProto: data_location and external_data fields
 
 There are two fields related to the external data in TensorProto message type.

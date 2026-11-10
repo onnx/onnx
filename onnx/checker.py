@@ -150,7 +150,9 @@ def check_model(
             tensor's shape and type. Whether the files exist, are regular files
             and hold that data is not checked. Use this to check a model whose
             external data is not available, such as an in-memory model loaded
-            with ``load_external_data=False``.
+            with ``load_external_data=False``. For external sparse indices,
+            structural checks still apply, but index ordering and range checks
+            are skipped because they require the payload.
     """
     # If model is a path instead of ModelProto
     if isinstance(model, (str, os.PathLike)):
