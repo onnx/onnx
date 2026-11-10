@@ -41,13 +41,13 @@ Expert matrices use input-width-by-output-width layout:
 | `X` | `[T,H]` | Token hidden states |
 | `Gate`, `Up` | `[E,H,I]` | Expert gate and up matrices |
 | `Down` | `[E,I,H]` | Expert down matrices |
-| `Indices` | `[T,k]` | Selected expert IDs |
+| `Indices` | `[T,k]` | int64 selected expert IDs |
 | `Weights` | `[T,k]` | Mixture weights, separate from selection scores |
 
 `SelectedSwiGLU` first applies `GroupedMatMul(X, Gate, Indices)` and
 `GroupedMatMul(X, Up, Indices)`, producing `[T,k,I]` tensors. The activation is
-`SiLU(gate) * up`: sigmoid and multiplication are applied to the gate projection
-**before** multiplication by the up projection. Flatten this selected activation
+`SiLU(gate) * up`, where `SiLU(gate) = gate * sigmoid(gate)` and both
+multiplications are elementwise. Flatten this selected activation
 to `[T*k,I]` and the IDs to `[T*k,1]`, then apply `GroupedMatMul` with `Down`.
 Reshape to `[T,k,H]`, multiply by `Weights[...,None]`, and `ReduceSum` over `k`.
 The result is `[T,H]`. Routing weights are applied after the down projection.
@@ -93,10 +93,14 @@ it is not added to expert projections or mixture weights.
 
 ## Shared experts
 
-The complete softmax model computes a separate dense SwiGLU shared expert,
-multiplies it by `sigmoid(X @ SharedRouter)`, then adds it to the routed output.
-The grouped model directly adds its dense shared expert. `J`, the shared
-intermediate width, is independent of routed expert width `I`. Multiple
+Both models compute
+`SharedOutput = (SiLU(X @ SharedGate) * (X @ SharedUp)) @ SharedDown`.
+The softmax model multiplies `SharedOutput` by `sigmoid(X @ SharedRouter)`,
+broadcasting the `[T,1]` gate across the hidden width. The grouped model uses
+`SharedOutput` directly. Each model adds its shared result to the routed output
+to produce `Y`; routing normalization and `Scale` do not affect the shared
+result. `J`, the shared intermediate width, is independent of routed expert
+width `I`. Multiple
 ungated shared experts can be represented by concatenating their gate/up
 intermediate channels and concatenating their down matrices along that
 intermediate dimension.
@@ -129,6 +133,9 @@ inputs defined above, the complete models use the following inputs. `J` is the
 shared expert's intermediate width; `G` is the number of groups and `P` is the
 number of experts per group.
 
+All graph inputs are required and have no default values. Router and expert
+projections have no additive biases; `Correction` is used only for selection.
+
 | Input | Shape | Meaning |
 |---|---|---|
 | `Router` | `[H,E]` | Router projection; `Logits = X @ Router` has shape `[T,E]` |
@@ -143,7 +150,7 @@ number of experts per group.
 | `Epsilon` | `[]` | float32 added to the selected-score sum when normalizing |
 | `Scale` | `[]` | float32 multiplier applied after optional normalization |
 
-These examples use **float32 throughout**, including router logits, softmax or
+All floating-point tensors use **float32**, including router logits, softmax or
 sigmoid, correction, normalization, expert projections and weighted reduction.
 They illustrate the floating-point graph, not bitwise equivalence with
 low-precision checkpoints or a particular fused kernel. To export a mixed
