@@ -130,6 +130,17 @@ if(MSVC)
   if(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
     add_compile_options(/Zc:lambda) # https://developercommunity.visualstudio.com/t/fatal--error-C1001:-Internal-compiler-er/10906076
   endif()
+  # Reproducible builds: omit timestamps from object files and static libraries,
+  # and replace the PE TimeDateStamp with a hash of the output image. Set for the
+  # whole directory tree so that FetchContent dependencies get it too, and limited
+  # to the release configurations, which link without /INCREMENTAL.
+  add_compile_options($<$<CONFIG:Release,MinSizeRel>:/Brepro>)
+  add_link_options($<$<CONFIG:Release,MinSizeRel>:/Brepro>)
+  if(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
+    # Static libraries take archiver flags, which LINK_OPTIONS does not cover.
+    string(APPEND CMAKE_STATIC_LINKER_FLAGS_RELEASE " /Brepro")
+    string(APPEND CMAKE_STATIC_LINKER_FLAGS_MINSIZEREL " /Brepro")
+  endif()
 endif()
 
 if(ONNX_DISABLE_EXCEPTIONS)
