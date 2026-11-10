@@ -223,6 +223,8 @@ if not summary.uses_only_standard_operators:
 
 `OperatorKind` distinguishes standard operators (`ai.onnx`, `ai.onnx.ml`), preview operators, model-local functions, operators of other domains whose schema is registered in the current process (for example with `onnx.defs.register_schema`), and unknown operators. A model-local function counts as standard if its body does.
 
+Classification reflects the schema registry of the current process. An operator whose schema is unavailable in the current build is reported as unknown; for example, this applies to `ai.onnx.ml` operators when ONNX is built with `ONNX_ML=0`.
+
 ## Running Shape Inference on an ONNX Model
 
 ```{eval-rst}

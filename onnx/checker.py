@@ -184,7 +184,8 @@ class OperatorKind(enum.Enum):
     """How the operator a node refers to is defined. See :func:`summarize_operators`."""
 
     STANDARD = "standard"
-    """An operator of the ``ai.onnx`` or ``ai.onnx.ml`` domain."""
+    """An operator with a schema registered in the current process in the
+    ``ai.onnx`` or ``ai.onnx.ml`` domain."""
     PREVIEW = "preview"
     """An operator of a preview domain, such as ``ai.onnx.preview.training``."""
     FUNCTION = "function"
@@ -194,7 +195,8 @@ class OperatorKind(enum.Enum):
     for example with :func:`onnx.defs.register_schema`."""
     UNKNOWN = "unknown"
     """Neither a registered schema nor a model-local function defines the operator,
-    or the model does not import an opset for its domain."""
+    or the model does not import an opset for its domain. This includes schemas
+    unavailable in the current build."""
 
 
 @dataclasses.dataclass(frozen=True)
@@ -282,6 +284,11 @@ def summarize_operators(model: onnx.ModelProto) -> OperatorSummary:
     subgraphs are included. The bodies of model-local functions the model calls
     are included once each, so a function counts as standard only if its body
     is. Functions the model never calls are left out.
+
+    Classification reflects the schema registry of the current process. An
+    operator whose schema is unavailable in the current build is unknown; for
+    example, this applies to ``ai.onnx.ml`` operators in a build configured with
+    ``ONNX_ML=0``.
 
     Args:
         model: The model to summarize.

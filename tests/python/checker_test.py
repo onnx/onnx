@@ -2235,13 +2235,20 @@ class TestSummarizeOperators:
                 helper.make_opsetid(onnx.defs.ONNX_ML_DOMAIN, 1),
             ],
         )
+        ml_schema_available = onnx.defs.has("Binarizer", 1, onnx.defs.ONNX_ML_DOMAIN)
+        ml_kind = (
+            checker.OperatorKind.STANDARD
+            if ml_schema_available
+            else checker.OperatorKind.UNKNOWN
+        )
         summary = checker.summarize_operators(model)
         # "ai.onnx" and "" both name the default domain.
         assert self.kinds(summary) == {
             ("", "Relu"): (checker.OperatorKind.STANDARD, 21, 1),
-            ("ai.onnx.ml", "Binarizer"): (checker.OperatorKind.STANDARD, 1, 1),
+            ("ai.onnx.ml", "Binarizer"): (ml_kind, 1, 1),
         }
-        assert summary.uses_only_standard_operators
+        assert summary.uses_only_standard_operators is ml_schema_available
+        assert summary.all_operators_defined is ml_schema_available
 
     def test_unregistered_custom_domain(self) -> None:
         model = onnx.parser.parse_model(
