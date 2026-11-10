@@ -3739,33 +3739,28 @@ OpSchema defs::nn::utils::CausalConvWithStateSchema(bool dilated) {
       OpSchema()
           .SetDoc(
               dilated ? R"DOC(
-Stateful causal one-dimensional depthwise convolution with optional dilation.
+Stateful causal one-dimensional depthwise convolution.
 
-Let `d = dilation`, `K = weight.shape[2]`, and `H = (K - 1) * d`.
-The default value of `d` is 1. Both `d` and `K` must be at least 1,
-and the effective kernel size `H + 1` must be representable as a signed
-64-bit integer.
-Here `B`, `C`, and `L` denote batch size, channel count, and input length.
-The input has shape `(B, C, L)`, weight has shape `(C, 1, K)`, and
-optional bias has shape `(C)`. Both state tensors have shape `(B, C, H)`.
-The state contains consecutive raw input samples in chronological order,
-not subsampled, convolved, or activated values.
+`input` has shape `(B, C, L)`, `weight` has shape `(C, 1, K)`, and optional
+`bias` has shape `(C)`: `B` is batch size, `C` is channel count, `L` is input
+length, and `K` is kernel size. Let `d = dilation` (default 1) and
+`H = (K - 1) * d`. Both `K` and `d` must be at least 1, and the effective
+kernel size `H + 1` must fit in a signed 64-bit integer.
 
-Concatenate `past_state` (or `H` zeros per batch/channel when absent) and
-`input` along axis 2 to obtain `P`. Before optional activation,
-`output[b,c,t] = sum_j weight[c,0,j] * P[b,c,t+j*d] + bias[c]`,
-where `0 <= j < K` and `0 <= t < L`; omitted bias is zero.
-This uses the cross-correlation convention of Conv. The output has shape
-`(B, C, L)`. Activation is identity for 'none' (the default), or
-`x / (1 + exp(-x))` for 'silu' and its alias 'swish'.
+Both state tensors have shape `(B, C, H)` and store consecutive raw samples
+in chronological order. Form `P` by concatenating `past_state` and `input`
+along axis 2; use a zero tensor of shape `(B, C, H)` when `past_state` is absent.
+For each batch `b`, channel `c`, and position `0 <= t < L`, compute
+`z[b,c,t] = sum_{j=0}^{K-1} weight[c,0,j] * P[b,c,t+j*d] + bias[c]`,
+with omitted bias treated as zero. The output has shape `(B, C, L)` and equals
+`z` for activation 'none' (the default), or `z / (1 + exp(-z))` elementwise
+for 'silu' and its alias 'swish'.
 
-`present_state` is the last `H` samples of `P`, including past samples or
-zero padding when `L < H`. Feeding it into the next call gives the same
-result as processing the concatenated sequence in one call. For example,
-`K=3, d=2` requires four consecutive history samples, while each output
-uses three samples spaced two positions apart. `K=1` gives empty state.
-When `L = 0`, the output has shape `(B, C, 0)`, and `present_state` equals
-`past_state` if provided, or a zero tensor of shape `(B, C, H)` otherwise.
+The next state is `present_state = P[:, :, L:L+H]`, independent of activation.
+When `L < H`, it retains the required past samples or initial zeros.
+Passing this state to the next call preserves convolution across chunk boundaries.
+For `K = 1`, state has shape `(B, C, 0)`. For `L = 0`, output has shape
+`(B, C, 0)` and state is unchanged (all zeros if `past_state` is absent).
 )DOC"
                       : kDoc_CausalConvWithState_ver27)
           .Attr(
