@@ -39,6 +39,23 @@ def test_special_values_and_signed_zero(dtype):
     np.testing.assert_array_equal(np.signbit(y[:2]), [True, False])
 
 
+@pytest.mark.parametrize("dtype", DTYPES)
+@pytest.mark.parametrize("shape", [(), (0, 3), (2, 3)])
+def test_signed_zero_when_numpy_loses_sign(dtype, shape, monkeypatch):
+    expm1 = np.expm1
+
+    def expm1_without_signed_zero(x):
+        return np.where(x == 0, np.zeros_like(x), expm1(x))
+
+    monkeypatch.setattr(np, "expm1", expm1_without_signed_zero)
+    x = np.full(shape, -0.0, dtype=dtype)
+    y = evaluate(x)
+    assert y.dtype == x.dtype
+    assert y.shape == x.shape
+    np.testing.assert_array_equal(y, x)
+    np.testing.assert_array_equal(np.signbit(y), np.signbit(x))
+
+
 @pytest.mark.parametrize(
     "dtype,tiny",
     [
