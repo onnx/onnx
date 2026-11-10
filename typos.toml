@@ -30,10 +30,6 @@ extend-words = { iy = "iy" }
 extend-glob = ["group_normalization_20_21.h"]
 extend-words = { kend = "kend" }
 
-[type.doc_strings_cc]
-extend-glob = ["doc_strings.cc"]
-extend-words = { ot = "ot", iof = "iof"  }
-
 [type.defs_cc]
 extend-glob = ["defs.cc"]
 extend-words = { ot = "ot", iof = "iof"  }

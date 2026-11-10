@@ -13,144 +13,82 @@
 #include <vector>
 
 #include "onnx/common/safe_math.h"
-#include "onnx/defs/doc_strings.h"
 #include "onnx/defs/type_builders.h"
 
 namespace ONNX_NAMESPACE::defs::math::utils {
 
-std::function<void(OpSchema&)> TopKOpGenerator(std::vector<std::string> allowed_types) {
-  return [allowed_types = std::move(allowed_types)](OpSchema& schema) {
-    schema.SetDoc(kDoc_TopK_ver11)
-        .Input(
-            0,
-            "X",
-            "Tensor of shape [a_0, a_1, ..., a_{n-1}]",
-            "T",
-            OpSchema::Single,
-            true,
-            1,
-            OpSchema::Differentiable)
-        .Input(
-            1,
-            "K",
-            "A 1-D tensor containing a single positive value corresponding to the number of top elements to retrieve",
-            "tensor(int64)",
-            OpSchema::Single,
-            true,
-            1,
-            OpSchema::NonDifferentiable)
-        .Output(
-            0,
-            "Values",
-            "Tensor of shape [a_0, a_1, ..., a_{axis-1}, k, a_{axis+1}, ... a_{n-1}] "
-            "containing top K values from the input tensor",
-            "T",
-            OpSchema::Single,
-            true,
-            1,
-            OpSchema::Differentiable)
-        .Output(
-            1,
-            "Indices",
-            "Tensor of shape [a_0, a_1, ..., a_{axis-1}, k, a_{axis+1}, ... a_{n-1}] "
-            "containing the corresponding input tensor indices for the top K "
-            "values.",
-            "I",
-            OpSchema::Single,
-            true,
-            1,
-            OpSchema::NonDifferentiable)
-        .TypeConstraint("T", allowed_types, "Constrain input and output types to numeric tensors.")
-        .TypeConstraint("I", {types::Int64}, "Constrain index tensor to int64")
-        .Attr(
-            "axis",
-            "Dimension on which to do the sort. Negative value means counting dimensions "
-            "from the back. Accepted range is [-r, r-1] where r = rank(input).",
-            AttributeProto::INT,
-            static_cast<int64_t>(-1))
-        .Attr(
-            "largest",
-            "Whether to return the top-K largest or smallest elements.",
-            AttributeProto::INT,
-            static_cast<int64_t>(1))
-        .Attr("sorted", "Whether to return the elements in sorted order.", AttributeProto::INT, static_cast<int64_t>(1))
-        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-          // Type inference:
-          propagateElemTypeFromInputToOutput(ctx, 0, 0);
-          updateOutputElemType(ctx, 1, TensorProto::INT64);
-          // Shape inference:
-          if (!hasInputShape(ctx, 0))
-            return;
-          const auto& input_shape = getInputShape(ctx, 0);
-          int64_t rank = input_shape.dim_size();
-          int64_t axis = getAttribute(ctx, "axis", -1);
-          if (axis < 0)
-            axis += rank;
-          if (axis < 0 || axis >= rank) {
-            fail_shape_inference("Invalid value for attribute axis");
-          }
+std::function<void(OpSchema&)> TopKOpGenerator() {
+  return [](OpSchema& schema) {
+    schema.TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+      // Type inference:
+      propagateElemTypeFromInputToOutput(ctx, 0, 0);
+      updateOutputElemType(ctx, 1, TensorProto::INT64);
+      // Shape inference:
+      if (!hasInputShape(ctx, 0))
+        return;
+      const auto& input_shape = getInputShape(ctx, 0);
+      int64_t rank = input_shape.dim_size();
+      int64_t axis = getAttribute(ctx, "axis", -1);
+      if (axis < 0)
+        axis += rank;
+      if (axis < 0 || axis >= rank) {
+        fail_shape_inference("Invalid value for attribute axis");
+      }
 
-          const auto& axis_dim = input_shape.dim(static_cast<int>(axis));
-          const auto* const k = ctx.getInputData(1);
+      const auto& axis_dim = input_shape.dim(static_cast<int>(axis));
+      const auto* const k = ctx.getInputData(1);
 
-          int64_t k_value = 0;
-          if (nullptr != k) {
-            if (k->dims_size() != 1 || k->dims(0) != 1) {
-              fail_shape_inference("K input must be a one-dimensional tensor of size 1.");
-            }
-            if (k->data_type() == TensorProto::INT64) {
-              const auto data = ParseData<int64_t>(k);
-              k_value = data[0];
-            } else {
-              fail_shape_inference("K input must be of type int64.");
-            }
-            if (k_value <= 0) {
-              fail_shape_inference("K input must contain a single positive value.");
-            }
-          }
+      int64_t k_value = 0;
+      if (nullptr != k) {
+        if (k->dims_size() != 1 || k->dims(0) != 1) {
+          fail_shape_inference("K input must be a one-dimensional tensor of size 1.");
+        }
+        if (k->data_type() == TensorProto::INT64) {
+          const auto data = ParseData<int64_t>(k);
+          k_value = data[0];
+        } else {
+          fail_shape_inference("K input must be of type int64.");
+        }
+        if (k_value <= 0) {
+          fail_shape_inference("K input must contain a single positive value.");
+        }
+      }
 
-          // Infer output shape if:
-          // (1) 'K' is available
-          // (2) axis_dim has dim value
-          // Otherwise cannot reliably compute output shape as axis dim value is
-          // unknown and hence cannot determine if axis dim value >= k (which
-          // should be enforced)
-          if (nullptr != k && axis_dim.has_dim_value()) {
-            if (axis_dim.dim_value() < k_value) {
-              fail_shape_inference("Axis has less than the requested k elements.");
-            }
+      // Infer output shape if:
+      // (1) 'K' is available
+      // (2) axis_dim has dim value
+      // Otherwise cannot reliably compute output shape as axis dim value is
+      // unknown and hence cannot determine if axis dim value >= k (which
+      // should be enforced)
+      if (nullptr != k && axis_dim.has_dim_value()) {
+        if (axis_dim.dim_value() < k_value) {
+          fail_shape_inference("Axis has less than the requested k elements.");
+        }
 
-            TensorShapeProto result_shape = input_shape;
-            result_shape.mutable_dim(static_cast<int>(axis))->set_dim_value(k_value);
+        TensorShapeProto result_shape = input_shape;
+        result_shape.mutable_dim(static_cast<int>(axis))->set_dim_value(k_value);
 
-            updateOutputShape(ctx, 0, result_shape);
-            updateOutputShape(ctx, 1, result_shape);
+        updateOutputShape(ctx, 0, result_shape);
+        updateOutputShape(ctx, 1, result_shape);
 
-            return;
-          }
+        return;
+      }
 
-          // Infer output shapes' rank in any case
-          auto* output_shape_0 = getOutputShape(ctx, 0);
-          auto* output_shape_1 = getOutputShape(ctx, 1);
-          for (int i = 0; i < input_shape.dim_size(); ++i) {
-            output_shape_0->add_dim();
-            output_shape_1->add_dim();
-          }
+      // Infer output shapes' rank in any case
+      auto* output_shape_0 = getOutputShape(ctx, 0);
+      auto* output_shape_1 = getOutputShape(ctx, 1);
+      for (int i = 0; i < input_shape.dim_size(); ++i) {
+        output_shape_0->add_dim();
+        output_shape_1->add_dim();
+      }
 
-          return;
-        });
+      return;
+    });
   };
 }
 
-std::function<void(OpSchema&)>
-UnaryFloatMathOpGenerator(const char* doc, const char* output_description, std::vector<std::string> allowed_types) {
-  return [doc, output_description, allowed_types = std::move(allowed_types)](OpSchema& schema) {
-    schema.SetDoc(doc)
-        .Input(0, "input", "Input tensor", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
-        .Output(0, "output", output_description, "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
-        .TypeConstraint("T", allowed_types, "Constrain input and output types to float tensors.")
-        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput);
-  };
+std::function<void(OpSchema&)> UnaryFloatMathOpGenerator() {
+  return [](OpSchema& schema) { schema.TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput); };
 }
 
 int64_t MathOpTwoIntegers(std::string_view op_type, int64_t a, int64_t b) {
@@ -444,25 +382,20 @@ static void einsumShapeInference(ONNX_NAMESPACE::InferenceContext& ctx, std::str
   updateOutputShape(ctx, 0, output_shape);
 }
 
-std::function<void(OpSchema&)> EinsumOpGenerator(std::vector<std::string> allowed_types) {
-  return [allowed_types = std::move(allowed_types)](OpSchema& schema) {
-    schema.SetDoc(kDoc_Einsum_ver12)
-        .Attr("equation", "Einsum expression string.", AttributeProto::STRING)
-        .Input(0, "Inputs", "Operands", "T", OpSchema::Variadic, true, 1, OpSchema::Differentiable)
-        .Output(0, "Output", "Output tensor", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
-        .TypeConstraint("T", allowed_types, "Constrain input and output types to all numerical tensor types.")
-        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-          // Type inference
-          propagateElemTypeFromInputToOutput(ctx, 0, 0);
-          std::string equation = getAttribute(ctx, "equation", "");
-          if (equation.empty()) {
-            return;
-          }
+std::function<void(OpSchema&)> EinsumOpGenerator() {
+  return [](OpSchema& schema) {
+    schema.TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+      // Type inference
+      propagateElemTypeFromInputToOutput(ctx, 0, 0);
+      std::string equation = getAttribute(ctx, "equation", "");
+      if (equation.empty()) {
+        return;
+      }
 
-          equation.erase(std::remove(equation.begin(), equation.end(), ' '),
-                         equation.end()); // Remove space char
-          einsumShapeInference(ctx, equation);
-        });
+      equation.erase(std::remove(equation.begin(), equation.end(), ' '),
+                     equation.end()); // Remove space char
+      einsumShapeInference(ctx, equation);
+    });
   };
 }
 

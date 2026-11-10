@@ -7,56 +7,14 @@
 #include <string>
 #include <vector>
 
+#include "onnx/defs/generated/schemas.h"
 #include "onnx/defs/reduction/utils.h"
 #include "onnx/defs/schema.h"
 
 namespace ONNX_NAMESPACE {
 
-static std::vector<std::string> GetSupportedDataTypesForReductionOps_opset12(bool supports8bit) {
-  if (supports8bit) {
-    auto data_types = OpSchema::numeric_types_for_math_reduction();
-    data_types.emplace_back("tensor(uint8)");
-    data_types.emplace_back("tensor(int8)");
-
-    return data_types;
-  }
-
-  return OpSchema::numeric_types_for_math_reduction();
-}
-
-static std::function<void(OpSchema&)> ReduceDocGenerator_opset12(
-    const char* name,
-    bool supports_8bit_datatypes = false) {
+static std::function<void(OpSchema&)> ReduceDocGenerator_opset12() {
   return [=](OpSchema& schema) {
-    std::string doc;
-    POPULATE_OP_DOC_STR(
-        doc = R"DOC(
-Computes the {name} of the input tensor's element along the provided axes. The resulting
-tensor has the same rank as the input if keepdims equals 1. If keepdims equal 0, then
-the resulted tensor have the reduced dimension pruned.
-
-The above behavior is similar to numpy, with the exception that numpy defaults keepdims to
-False instead of True.)DOC";
-        ReplaceAll(doc, "{name}", name););
-    schema.SetDoc(doc.c_str());
-    schema.Attr(
-        "axes",
-        "A list of integers, along which to reduce. The default is to reduce over "
-        "all the dimensions of the input tensor. Accepted range is [-r, r-1] where r = rank(data).",
-        AttributeProto::INTS,
-        OPTIONAL_VALUE);
-    schema.Attr(
-        "keepdims",
-        "Keep the reduced dimension or not, default 1 means keep reduced dimension.",
-        AttributeProto::INT,
-        static_cast<int64_t>(1));
-    schema.Input(0, "data", "An input tensor.", "T");
-    schema.Output(0, "reduced", "Reduced output tensor.", "T");
-    schema.TypeConstraint(
-        "T",
-        GetSupportedDataTypesForReductionOps_opset12(supports_8bit_datatypes),
-        supports_8bit_datatypes ? "Constrain input and output types to high-precision and 8 bit numeric tensors."
-                                : "Constrain input and output types to high-precision numeric tensors.");
     schema.TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
       propagateElemTypeFromInputToOutput(ctx, 0, 0);
       if (!hasNInputShapes(ctx, 1)) {
@@ -100,59 +58,43 @@ False instead of True.)DOC";
   };
 }
 
-ONNX_OPERATOR_SET_SCHEMA(ReduceMax, 12, OpSchema().FillUsing(ReduceDocGenerator_opset12("max", true)));
+ONNX_OPERATOR_SET_SCHEMA(ReduceMax, 12, generated::ai_onnx::ReduceMax_ver12().FillUsing(ReduceDocGenerator_opset12()));
 
-ONNX_OPERATOR_SET_SCHEMA(ReduceMin, 12, OpSchema().FillUsing(ReduceDocGenerator_opset12("min", true)));
+ONNX_OPERATOR_SET_SCHEMA(ReduceMin, 12, generated::ai_onnx::ReduceMin_ver12().FillUsing(ReduceDocGenerator_opset12()));
 
-ONNX_OPERATOR_SET_SCHEMA(ReduceSum, 11, OpSchema().FillUsing(ReduceDocGenerator_opset12("sum")));
+ONNX_OPERATOR_SET_SCHEMA(ReduceSum, 11, generated::ai_onnx::ReduceSum_ver11().FillUsing(ReduceDocGenerator_opset12()));
 
-ONNX_OPERATOR_SET_SCHEMA(ReduceSumSquare, 11, OpSchema().FillUsing(ReduceDocGenerator_opset12("sum square")));
+ONNX_OPERATOR_SET_SCHEMA(
+    ReduceSumSquare,
+    11,
+    generated::ai_onnx::ReduceSumSquare_ver11().FillUsing(ReduceDocGenerator_opset12()));
 
-ONNX_OPERATOR_SET_SCHEMA(ReduceMean, 11, OpSchema().FillUsing(ReduceDocGenerator_opset12("mean")));
+ONNX_OPERATOR_SET_SCHEMA(
+    ReduceMean,
+    11,
+    generated::ai_onnx::ReduceMean_ver11().FillUsing(ReduceDocGenerator_opset12()));
 
-ONNX_OPERATOR_SET_SCHEMA(ReduceProd, 11, OpSchema().FillUsing(ReduceDocGenerator_opset12("product")));
+ONNX_OPERATOR_SET_SCHEMA(
+    ReduceProd,
+    11,
+    generated::ai_onnx::ReduceProd_ver11().FillUsing(ReduceDocGenerator_opset12()));
 
-ONNX_OPERATOR_SET_SCHEMA(ReduceLogSum, 11, OpSchema().FillUsing(ReduceDocGenerator_opset12("log sum")));
+ONNX_OPERATOR_SET_SCHEMA(
+    ReduceLogSum,
+    11,
+    generated::ai_onnx::ReduceLogSum_ver11().FillUsing(ReduceDocGenerator_opset12()));
 
-ONNX_OPERATOR_SET_SCHEMA(ReduceLogSumExp, 11, OpSchema().FillUsing(ReduceDocGenerator_opset12("log sum exponent")));
+ONNX_OPERATOR_SET_SCHEMA(
+    ReduceLogSumExp,
+    11,
+    generated::ai_onnx::ReduceLogSumExp_ver11().FillUsing(ReduceDocGenerator_opset12()));
 
-ONNX_OPERATOR_SET_SCHEMA(ReduceL1, 11, OpSchema().FillUsing(ReduceDocGenerator_opset12("L1 norm")));
+ONNX_OPERATOR_SET_SCHEMA(ReduceL1, 11, generated::ai_onnx::ReduceL1_ver11().FillUsing(ReduceDocGenerator_opset12()));
 
-ONNX_OPERATOR_SET_SCHEMA(ReduceL2, 11, OpSchema().FillUsing(ReduceDocGenerator_opset12("L2 norm")));
+ONNX_OPERATOR_SET_SCHEMA(ReduceL2, 11, generated::ai_onnx::ReduceL2_ver11().FillUsing(ReduceDocGenerator_opset12()));
 
-static std::function<void(OpSchema&)> ArgReduceDocGenerator_opset12(const char* name) {
+static std::function<void(OpSchema&)> ArgReduceDocGenerator_opset12() {
   return [=](OpSchema& schema) {
-    std::string doc;
-    POPULATE_OP_DOC_STR(
-        doc = R"DOC(
-Computes the indices of the {name} elements of the input tensor's element along the
-provided axis. The resulting tensor has the same rank as the input if keepdims equals 1.
-If keepdims equal 0, then the resulting tensor has the reduced dimension pruned.
-If select_last_index is True (default False), the index of the last occurrence of the {name}
-is selected if the {name} appears more than once in the input. Otherwise the index of the
-first occurrence is selected.
-The type of the output tensor is integer.)DOC";
-        ReplaceAll(doc, "{name}", name););
-    schema.SetDoc(doc.c_str());
-    schema.Attr(
-        "axis",
-        "The axis in which to compute the arg indices. Accepted range is [-r, r-1] where r = rank(data).",
-        AttributeProto::INT,
-        static_cast<int64_t>(0));
-    schema.Attr(
-        "keepdims",
-        "Keep the reduced dimension or not, default 1 means keep reduced dimension.",
-        AttributeProto::INT,
-        static_cast<int64_t>(1));
-    schema.Attr(
-        "select_last_index",
-        "Whether to select the last index or the first index if the {name} appears in multiple indices, default is False (first index).",
-        AttributeProto::INT,
-        static_cast<int64_t>(0));
-    schema.Input(0, "data", "An input tensor.", "T");
-    schema.Output(0, "reduced", "Reduced output tensor with integer data type.", "tensor(int64)");
-    schema.TypeConstraint(
-        "T", OpSchema::all_numeric_types(), "Constrain input and output types to all numeric tensors.");
     schema.TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
       // set output element type to int64
       updateOutputElemType(ctx, 0, TensorProto_DataType_INT64);
@@ -196,45 +138,12 @@ The type of the output tensor is integer.)DOC";
   };
 } // namespace ONNX_NAMESPACE
 
-ONNX_OPERATOR_SET_SCHEMA(ArgMax, 12, OpSchema().FillUsing(ArgReduceDocGenerator_opset12("max")));
+ONNX_OPERATOR_SET_SCHEMA(ArgMax, 12, generated::ai_onnx::ArgMax_ver12().FillUsing(ArgReduceDocGenerator_opset12()));
 
-ONNX_OPERATOR_SET_SCHEMA(ArgMin, 12, OpSchema().FillUsing(ArgReduceDocGenerator_opset12("min")));
+ONNX_OPERATOR_SET_SCHEMA(ArgMin, 12, generated::ai_onnx::ArgMin_ver12().FillUsing(ArgReduceDocGenerator_opset12()));
 
-static std::function<void(OpSchema&)>
-ReduceDocGenerator_opset1(const char* name, const char* empty_value, int opset = 1) {
+static std::function<void(OpSchema&)> ReduceDocGenerator_opset1() {
   return [=](OpSchema& schema) {
-    std::string doc;
-    POPULATE_OP_DOC_STR(
-        doc = R"DOC(
-Computes the {name} of the input tensor's element along the provided axes. The resulting
-tensor has the same rank as the input if keepdims equals 1. If keepdims equal 0, then
-the resulted tensor have the reduced dimension pruned. Input tensors of rank zero are
-valid. Reduction over an empty set of values yields {empty_value}.
-
-The above behavior is similar to numpy, with the exception that numpy defaults keepdims to
-False instead of True.)DOC";
-        ReplaceAll(doc, "{name}", name););
-    ReplaceAll(doc, "{empty_value}", empty_value);
-    schema.SetDoc(doc.c_str());
-    schema.Attr(
-        "axes",
-        opset >= 11 ? "A list of integers, along which to reduce. The default is to reduce over "
-                      "all the dimensions of the input tensor. Accepted range is [-r, r-1] where r = rank(data)."
-                    : "A list of integers, along which to reduce. The default is to reduce over "
-                      "all the dimensions of the input tensor.",
-        AttributeProto::INTS,
-        OPTIONAL_VALUE);
-    schema.Attr(
-        "keepdims",
-        "Keep the reduced dimension or not, default 1 means keep reduced dimension.",
-        AttributeProto::INT,
-        static_cast<int64_t>(1));
-    schema.Input(0, "data", "An input tensor.", "T");
-    schema.Output(0, "reduced", "Reduced output tensor.", "T");
-    schema.TypeConstraint(
-        "T",
-        OpSchema::numeric_types_for_math_reduction(),
-        "Constrain input and output types to high-precision numeric tensors.");
     schema.TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
       propagateElemTypeFromInputToOutput(ctx, 0, 0);
       if (!hasNInputShapes(ctx, 1)) {
@@ -275,54 +184,41 @@ False instead of True.)DOC";
   };
 }
 
-ONNX_OPERATOR_SET_SCHEMA(ReduceMax, 1, OpSchema().FillUsing(ReduceDocGenerator_opset1("max", EMPTY_MIN)));
+ONNX_OPERATOR_SET_SCHEMA(ReduceMax, 1, generated::ai_onnx::ReduceMax_ver1().FillUsing(ReduceDocGenerator_opset1()));
 
-ONNX_OPERATOR_SET_SCHEMA(ReduceMin, 1, OpSchema().FillUsing(ReduceDocGenerator_opset1("min", EMPTY_MAX)));
+ONNX_OPERATOR_SET_SCHEMA(ReduceMin, 1, generated::ai_onnx::ReduceMin_ver1().FillUsing(ReduceDocGenerator_opset1()));
 
-ONNX_OPERATOR_SET_SCHEMA(ReduceSum, 1, OpSchema().FillUsing(ReduceDocGenerator_opset1("sum", EMPTY_ZERO)));
+ONNX_OPERATOR_SET_SCHEMA(ReduceSum, 1, generated::ai_onnx::ReduceSum_ver1().FillUsing(ReduceDocGenerator_opset1()));
 
-ONNX_OPERATOR_SET_SCHEMA(ReduceSumSquare, 1, OpSchema().FillUsing(ReduceDocGenerator_opset1("sum square", EMPTY_ZERO)));
+ONNX_OPERATOR_SET_SCHEMA(
+    ReduceSumSquare,
+    1,
+    generated::ai_onnx::ReduceSumSquare_ver1().FillUsing(ReduceDocGenerator_opset1()));
 
-ONNX_OPERATOR_SET_SCHEMA(ReduceMean, 1, OpSchema().FillUsing(ReduceDocGenerator_opset1("mean", EMPTY_UNDEFINED)));
+ONNX_OPERATOR_SET_SCHEMA(ReduceMean, 1, generated::ai_onnx::ReduceMean_ver1().FillUsing(ReduceDocGenerator_opset1()));
 
-ONNX_OPERATOR_SET_SCHEMA(ReduceProd, 1, OpSchema().FillUsing(ReduceDocGenerator_opset1("product", EMPTY_ONE)));
+ONNX_OPERATOR_SET_SCHEMA(ReduceProd, 1, generated::ai_onnx::ReduceProd_ver1().FillUsing(ReduceDocGenerator_opset1()));
 
-ONNX_OPERATOR_SET_SCHEMA(ReduceLogSum, 1, OpSchema().FillUsing(ReduceDocGenerator_opset1("log sum", EMPTY_MINUS_INF)));
+ONNX_OPERATOR_SET_SCHEMA(
+    ReduceLogSum,
+    1,
+    generated::ai_onnx::ReduceLogSum_ver1().FillUsing(ReduceDocGenerator_opset1()));
 
 ONNX_OPERATOR_SET_SCHEMA(
     ReduceLogSumExp,
     1,
-    OpSchema().FillUsing(ReduceDocGenerator_opset1("log sum exponent", EMPTY_MINUS_INF)));
+    generated::ai_onnx::ReduceLogSumExp_ver1().FillUsing(ReduceDocGenerator_opset1()));
 
-ONNX_OPERATOR_SET_SCHEMA(ReduceL1, 1, OpSchema().FillUsing(ReduceDocGenerator_opset1("L1 norm", EMPTY_ZERO)));
+ONNX_OPERATOR_SET_SCHEMA(ReduceL1, 1, generated::ai_onnx::ReduceL1_ver1().FillUsing(ReduceDocGenerator_opset1()));
 
-ONNX_OPERATOR_SET_SCHEMA(ReduceL2, 1, OpSchema().FillUsing(ReduceDocGenerator_opset1("L2 norm", EMPTY_ZERO)));
+ONNX_OPERATOR_SET_SCHEMA(ReduceL2, 1, generated::ai_onnx::ReduceL2_ver1().FillUsing(ReduceDocGenerator_opset1()));
 
-ONNX_OPERATOR_SET_SCHEMA(ReduceMax, 11, OpSchema().FillUsing(ReduceDocGenerator_opset1("max", EMPTY_MIN, 11)));
+ONNX_OPERATOR_SET_SCHEMA(ReduceMax, 11, generated::ai_onnx::ReduceMax_ver11().FillUsing(ReduceDocGenerator_opset1()));
 
-ONNX_OPERATOR_SET_SCHEMA(ReduceMin, 11, OpSchema().FillUsing(ReduceDocGenerator_opset1("min", EMPTY_MAX, 11)));
+ONNX_OPERATOR_SET_SCHEMA(ReduceMin, 11, generated::ai_onnx::ReduceMin_ver11().FillUsing(ReduceDocGenerator_opset1()));
 
-static std::function<void(OpSchema&)> ArgReduceDocGenerator_opset1(const char* name) {
+static std::function<void(OpSchema&)> ArgReduceDocGenerator_opset1() {
   return [=](OpSchema& schema) {
-    std::string doc;
-    POPULATE_OP_DOC_STR(
-        doc = R"DOC(
-Computes the indices of the {name} elements of the input tensor's element along the
-provided axis. The resulting tensor has the same rank as the input if keepdims equals 1.
-If keepdims equal 0, then the resulted tensor have the reduced dimension pruned.
-The type of the output tensor is integer.)DOC";
-        ReplaceAll(doc, "{name}", name););
-    schema.SetDoc(doc.c_str());
-    schema.Attr("axis", "The axis in which to compute the arg indices.", AttributeProto::INT, static_cast<int64_t>(0));
-    schema.Attr(
-        "keepdims",
-        "Keep the reduced dimension or not, default 1 means keep reduced dimension.",
-        AttributeProto::INT,
-        static_cast<int64_t>(1));
-    schema.Input(0, "data", "An input tensor.", "T");
-    schema.Output(0, "reduced", "Reduced output tensor with integer data type.", "tensor(int64)");
-    schema.TypeConstraint(
-        "T", OpSchema::all_numeric_types(), "Constrain input and output types to all numeric tensors.");
     schema.TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
       // set output element type to int64
       updateOutputElemType(ctx, 0, TensorProto_DataType_INT64);
@@ -363,34 +259,12 @@ The type of the output tensor is integer.)DOC";
   };
 } // namespace ONNX_NAMESPACE
 
-ONNX_OPERATOR_SET_SCHEMA(ArgMax, 1, OpSchema().FillUsing(ArgReduceDocGenerator_opset1("max")));
+ONNX_OPERATOR_SET_SCHEMA(ArgMax, 1, generated::ai_onnx::ArgMax_ver1().FillUsing(ArgReduceDocGenerator_opset1()));
 
-ONNX_OPERATOR_SET_SCHEMA(ArgMin, 1, OpSchema().FillUsing(ArgReduceDocGenerator_opset1("min")));
+ONNX_OPERATOR_SET_SCHEMA(ArgMin, 1, generated::ai_onnx::ArgMin_ver1().FillUsing(ArgReduceDocGenerator_opset1()));
 
-static std::function<void(OpSchema&)> ArgReduceDocGenerator_opset11(const char* name) {
+static std::function<void(OpSchema&)> ArgReduceDocGenerator_opset11() {
   return [=](OpSchema& schema) {
-    std::string doc = R"DOC(
-Computes the indices of the {name} elements of the input tensor's element along the
-provided axis. The resulting tensor has the same rank as the input if keepdims equals 1.
-If keepdims equal 0, then the resulting tensor has the reduced dimension pruned.
-The input tensor must not be empty.
-The type of the output tensor is integer.)DOC";
-    ReplaceAll(doc, "{name}", name);
-    schema.SetDoc(doc.c_str());
-    schema.Attr(
-        "axis",
-        "The axis in which to compute the arg indices. Accepted range is [-r, r-1] where r = rank(data).",
-        AttributeProto::INT,
-        static_cast<int64_t>(0));
-    schema.Attr(
-        "keepdims",
-        "Keep the reduced dimension or not, default 1 means keep reduced dimension.",
-        AttributeProto::INT,
-        static_cast<int64_t>(1));
-    schema.Input(0, "data", "An input tensor.", "T");
-    schema.Output(0, "reduced", "Reduced output tensor with integer data type.", "tensor(int64)");
-    schema.TypeConstraint(
-        "T", OpSchema::all_numeric_types(), "Constrain input and output types to all numeric tensors.");
     schema.TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
       // set output element type to int64
       updateOutputElemType(ctx, 0, TensorProto_DataType_INT64);
@@ -434,32 +308,35 @@ The type of the output tensor is integer.)DOC";
   };
 } // namespace ONNX_NAMESPACE
 
-ONNX_OPERATOR_SET_SCHEMA(ArgMax, 11, OpSchema().FillUsing(ArgReduceDocGenerator_opset11("max")));
-ONNX_OPERATOR_SET_SCHEMA(ArgMin, 11, OpSchema().FillUsing(ArgReduceDocGenerator_opset11("min")));
+ONNX_OPERATOR_SET_SCHEMA(ArgMax, 11, generated::ai_onnx::ArgMax_ver11().FillUsing(ArgReduceDocGenerator_opset11()));
+ONNX_OPERATOR_SET_SCHEMA(ArgMin, 11, generated::ai_onnx::ArgMin_ver11().FillUsing(ArgReduceDocGenerator_opset11()));
 
-ONNX_OPERATOR_SET_SCHEMA(ReduceMax, 13, OpSchema().FillUsing(ReduceOpGenerator("max", EMPTY_MIN, true)));
-ONNX_OPERATOR_SET_SCHEMA(ReduceMin, 13, OpSchema().FillUsing(ReduceOpGenerator("min", EMPTY_MAX, true)));
-ONNX_OPERATOR_SET_SCHEMA(ReduceSumSquare, 13, OpSchema().FillUsing(ReduceOpGenerator("sum square", EMPTY_ZERO)));
-ONNX_OPERATOR_SET_SCHEMA(ReduceMean, 13, OpSchema().FillUsing(ReduceOpGenerator("mean", EMPTY_UNDEFINED)));
-ONNX_OPERATOR_SET_SCHEMA(ReduceProd, 13, OpSchema().FillUsing(ReduceOpGenerator("product", EMPTY_ONE)));
-ONNX_OPERATOR_SET_SCHEMA(ReduceLogSum, 13, OpSchema().FillUsing(ReduceOpGenerator("log sum", EMPTY_MINUS_INF)));
+ONNX_OPERATOR_SET_SCHEMA(ReduceMax, 13, generated::ai_onnx::ReduceMax_ver13().FillUsing(ReduceOpGenerator()));
+ONNX_OPERATOR_SET_SCHEMA(ReduceMin, 13, generated::ai_onnx::ReduceMin_ver13().FillUsing(ReduceOpGenerator()));
+ONNX_OPERATOR_SET_SCHEMA(
+    ReduceSumSquare,
+    13,
+    generated::ai_onnx::ReduceSumSquare_ver13().FillUsing(ReduceOpGenerator()));
+ONNX_OPERATOR_SET_SCHEMA(ReduceMean, 13, generated::ai_onnx::ReduceMean_ver13().FillUsing(ReduceOpGenerator()));
+ONNX_OPERATOR_SET_SCHEMA(ReduceProd, 13, generated::ai_onnx::ReduceProd_ver13().FillUsing(ReduceOpGenerator()));
+ONNX_OPERATOR_SET_SCHEMA(ReduceLogSum, 13, generated::ai_onnx::ReduceLogSum_ver13().FillUsing(ReduceOpGenerator()));
 ONNX_OPERATOR_SET_SCHEMA(
     ReduceLogSumExp,
     13,
-    OpSchema().FillUsing(ReduceOpGenerator("log sum exponent", EMPTY_MINUS_INF)));
-ONNX_OPERATOR_SET_SCHEMA(ReduceL1, 13, OpSchema().FillUsing(ReduceOpGenerator("L1 norm", EMPTY_ZERO)));
-ONNX_OPERATOR_SET_SCHEMA(ReduceL2, 13, OpSchema().FillUsing(ReduceOpGenerator("L2 norm", EMPTY_ZERO)));
+    generated::ai_onnx::ReduceLogSumExp_ver13().FillUsing(ReduceOpGenerator()));
+ONNX_OPERATOR_SET_SCHEMA(ReduceL1, 13, generated::ai_onnx::ReduceL1_ver13().FillUsing(ReduceOpGenerator()));
+ONNX_OPERATOR_SET_SCHEMA(ReduceL2, 13, generated::ai_onnx::ReduceL2_ver13().FillUsing(ReduceOpGenerator()));
 
-ONNX_OPERATOR_SET_SCHEMA(ReduceMax, 18, OpSchema().FillUsing(ReduceOpGenerator("max", EMPTY_MIN, true, true)));
-ONNX_OPERATOR_SET_SCHEMA(ReduceMin, 18, OpSchema().FillUsing(ReduceOpGenerator("min", EMPTY_MAX, true, true)));
+ONNX_OPERATOR_SET_SCHEMA(ReduceMax, 18, generated::ai_onnx::ReduceMax_ver18().FillUsing(ReduceOpGenerator()));
+ONNX_OPERATOR_SET_SCHEMA(ReduceMin, 18, generated::ai_onnx::ReduceMin_ver18().FillUsing(ReduceOpGenerator()));
 
 ONNX_OPERATOR_SET_SCHEMA(
     ReduceLogSum,
     18,
-    OpSchema().FillUsing(ReduceFunctionOp("log sum", EMPTY_MINUS_INF, reduce_log_sum_func_body)));
+    generated::ai_onnx::ReduceLogSum_ver18().FillUsing(ReduceFunctionOp(reduce_log_sum_func_body)));
 
 ONNX_OPERATOR_SET_SCHEMA(
     ReduceLogSumExp,
     18,
-    OpSchema().FillUsing(ReduceFunctionOp("log sum exponent", EMPTY_MINUS_INF, reduce_log_sum_exp_func_body)));
+    generated::ai_onnx::ReduceLogSumExp_ver18().FillUsing(ReduceFunctionOp(reduce_log_sum_exp_func_body)));
 } // namespace ONNX_NAMESPACE

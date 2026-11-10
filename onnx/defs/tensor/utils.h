@@ -13,9 +13,6 @@
 namespace ONNX_NAMESPACE {
 void GatherNDShapeInference(InferenceContext& ctx);
 
-// The below is called by ops after opset 11, inclusively.
-void resizeShapeInference(InferenceContext& ctx);
-
 void gridSampleShapeInference(InferenceContext& ctx);
 
 // Shared type/shape inference for the OneHot operator. 'version' is the opset
@@ -56,9 +53,5 @@ void KeepAspectRatioHelper(
     const std::vector<int64_t>& axes,
     std::vector<int64_t>& sizes_data);
 
-std::function<void(OpSchema&)> PadDocGenerator(
-    const char* description,
-    const char* mode_description,
-    std::vector<std::string> op_schema = OpSchema::all_tensor_types_ir4(),
-    std::string op_schema_description = "Constrain input and output types to all tensor types.");
+std::function<void(OpSchema&)> PadDocGenerator();
 } // namespace ONNX_NAMESPACE

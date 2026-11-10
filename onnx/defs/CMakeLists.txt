@@ -7,8 +7,6 @@ target_sources(onnx PRIVATE
     data_propagators.h
     data_type_utils.cc
     data_type_utils.h
-    doc_strings.cc
-    doc_strings.h
     function.cc
     function.h
     operator_sets.h
