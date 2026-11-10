@@ -1,0 +1,48 @@
+{# Copyright (c) ONNX Project Contributors #}
+{# SPDX-License-Identifier: Apache-2.0 #}
+{#- Operator set classes and their registration for one 'onnx/defs/operator_sets*.h'. -#}
+#pragma once
+
+#include "onnx/defs/schema.h"
+
+namespace ONNX_NAMESPACE {
+{% for version, names in opsets %}
+
+{% for name in names %}
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME({{ prefix }}, {{ version }}, {{ name }});
+{% endfor %}
+
+class OpSet_{{ prefix }}_ver{{ version }} {
+ public:
+  static void ForEachSchema(const std::function<void(OpSchema&&)>& fn) {
+{% for name in names %}
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME({{ prefix }}, {{ version }}, {{ name }})>());
+{% endfor %}
+  }
+};
+{% endfor %}
+
+ONNX_API inline void {{ register }}() {
+{% for version, _ in opsets %}
+  RegisterOpSetSchema<OpSet_{{ prefix }}_ver{{ version }}>();
+{% endfor %}
+{% if versioned %}
+  // 0 means all versions of ONNX schema have been loaded
+  OpSchemaRegistry::SetLoadedSchemaVersion(0);
+{% endif %}
+}
+{% if versioned %}
+
+ONNX_API inline void {{ register }}(int target_version, bool fail_duplicate_schema = true) {
+  // These calls for schema registration here are required to be in descending order for this to work correctly
+  //
+  // Version-specific registration sees duplicate schema version request as error if fail_duplicate_schema
+{% for version, _ in opsets | reverse %}
+  RegisterOpSetSchema<OpSet_{{ prefix }}_ver{{ version }}>(target_version, fail_duplicate_schema);
+{% endfor %}
+  // Sets to record the loaded version and prevent the full operator check in Debug mode
+  OpSchemaRegistry::SetLoadedSchemaVersion(target_version);
+}
+{% endif %}
+
+} // namespace ONNX_NAMESPACE

@@ -34,7 +34,7 @@ If an operator can be split into new primitives, prefer proposing those primitiv
 
 | Component | File |
 |-----------|------|
-| Function body definition | `function_bodies` in `operator-specifications/<domain>/v<N>/<op>.md`; context-dependent function body builders in `onnx/defs/<domain>/defs.cc` (in the registration) |
+| Function body definition | `function_bodies` in `operator-specifications/<domain>/v<N>/<op>.md`; context-dependent function body builders named in `function_body_builders` and defined in `onnx/defs/<domain>/utils.{h,cc}` |
 | FunctionBuilder utilities | `onnx/defs/function.h` |
 | Function tests (C++) | `tests/cpp/function_get_test.cc`, `tests/cpp/function_verify_test.cc` |
 

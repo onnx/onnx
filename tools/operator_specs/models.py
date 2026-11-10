@@ -44,6 +44,14 @@ class SpecError(Exception):
     """A spec file is invalid."""
 
 
+# Macros that register an operator schema, by `Domain`.
+_REGISTRATION_MACROS = {
+    "ai.onnx": "ONNX_OPERATOR_SET_SCHEMA",
+    "ai.onnx.ml": "ONNX_ML_OPERATOR_SET_SCHEMA",
+    "ai.onnx.preview": "ONNX_PREVIEW_OPERATOR_SET_SCHEMA",
+    "ai.onnx.preview.training": "ONNX_PREVIEW_TRAINING_OPERATOR_SET_SCHEMA",
+}
+
 # Fields of `Spec` that are taken from each file instead of being inherited.
 _NOT_INHERITED = frozenset(
     {"name", "domain", "shape_inference", "data_propagation", "function_body_builders"}
@@ -233,12 +241,12 @@ class Spec(_Model):
 
     `name` and `domain` identify the operator and are required in every file.
     `shape_inference` is required in every file as well; it names the type
-    and shape inference function or is `False` if there is none. `data_propagation` optionally names the data
-    propagation function, and `function_body_builders` the context-dependent
-    function body builders by opset version. These five fields are not
-    inherited. The defaults of the other fields apply to the first version of
-    an operator. Later versions inherit every field not set in their file from
-    the previous version.
+    and shape inference function or is `False` if there is none.
+    `data_propagation` optionally names the data propagation function, and
+    `function_body_builders` the context-dependent function body builders by
+    opset version. These five fields are not inherited. The defaults of the
+    other fields apply to the first version of an operator. Later versions
+    inherit every field not set in their file from the previous version.
     """
 
     name: Identifier
@@ -341,6 +349,11 @@ class Operator:
     @property
     def is_ml(self) -> bool:
         return self.domain == "ai.onnx.ml"
+
+    @property
+    def macro(self) -> str:
+        """Return the macro that registers the versions of this operator."""
+        return _REGISTRATION_MACROS[self.domain]
 
     @property
     def includes(self) -> list[str]:

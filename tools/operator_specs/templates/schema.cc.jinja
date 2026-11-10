@@ -1,6 +1,6 @@
 {# Copyright (c) ONNX Project Contributors #}
 {# SPDX-License-Identifier: Apache-2.0 #}
-{#- Functions returning the OpSchema of each version of one operator. -#}
+{#- Functions returning the OpSchema of each version of one operator, and their registration. -#}
 {% if op.is_ml %}
 #ifdef ONNX_ML
 {% endif %}
@@ -23,6 +23,16 @@ OpSchema {{ v.function_name }}() {
 {% endfor %}
 
 } // namespace ONNX_NAMESPACE::generated::{{ op.namespace }}
+
+namespace ONNX_NAMESPACE {
+{% for v in op.versions %}
+
+// The location of the schema is its spec file.
+#line 1 "{{ v.source }}"
+{{ op.macro }}({{ op.name }}, {{ v.since_version }}, generated::{{ op.namespace }}::{{ v.function_name }}());
+{% endfor %}
+
+} // namespace ONNX_NAMESPACE
 {% if op.is_ml %}
 #endif // ONNX_ML
 {% endif %}

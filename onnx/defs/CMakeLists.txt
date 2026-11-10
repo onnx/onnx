@@ -50,6 +50,11 @@ foreach(spec_file IN LISTS SCHEMA_SPEC_FILES)
   list(APPEND GEN_SCHEMAS_SOURCES "${GEN_SCHEMAS_DIR}/${rel}")
 endforeach()
 list(REMOVE_DUPLICATES GEN_SCHEMAS_SOURCES)
+# Operator set classes included by operator_sets*.h.
+list(APPEND GEN_SCHEMAS_SOURCES
+     "${GEN_SCHEMAS_DIR}/opsets_onnx.h"
+     "${GEN_SCHEMAS_DIR}/opsets_onnx_ml.h"
+     "${GEN_SCHEMAS_DIR}/opsets_onnx_preview.h")
 add_custom_command(
   OUTPUT ${GEN_SCHEMAS_SOURCES} "${GEN_SCHEMAS_DIR}/schemas.h"
   COMMAND ${ONNX_PYTHON_INTERPRETER} -m operator_specs

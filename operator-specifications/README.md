@@ -12,7 +12,8 @@ as well as the names of the type and shape inference, data propagation
 and context-dependent function body builder functions.
 At build time, `tools/operator_specs` generates C++ functions from these files
 that return the corresponding `OpSchema`.
-The named functions themselves are hand-written C++ in `onnx/defs/<area>/utils.cc`.
+The generator also registers them;
+the named functions themselves are hand-written C++ in `onnx/defs/<area>/utils.cc`.
 
 The design is described in
 [proposal 0009](../docs/proposals/0009-MarkdownSchemaGenerationProposal.md).
@@ -95,15 +96,14 @@ Every schema should have a type and shape inference function.
 
 ## Adding a version of an operator
 
-1. Create `<domain>/v<N>/<op>.md` with `name`, `domain` and the keys that change.
-2. Register the generated schema in `onnx/defs/<area>/defs.cc`
-   and move the registration of the previous version to `onnx/defs/<area>/old.cc`:
+Create `<domain>/v<N>/<op>.md` with `name`, `domain`, `shape_inference` and the keys that change.
+The generator registers every spec file; no C++ registration is needed.
 
-   ```cpp
-   ONNX_OPERATOR_SET_SCHEMA(
-       LeakyRelu,
-       16,
-       generated::ai_onnx::LeakyRelu_ver16().TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
-   ```
+## Opset versions
 
-3. Add the schema to the operator set in `onnx/defs/operator_sets*.h`.
+The classes `OpSet_<domain>_ver<N>` that list the operators of an opset version
+and the functions that register them, e.g. `RegisterOnnxOperatorSetSchema`,
+are generated from the layout.
+The range of opset versions of a domain is set by `DomainToVersionRange` in `onnx/defs/schema.h`;
+its highest version is increased when a release is prepared
+(see [OnnxReleases.md](../docs/OnnxReleases.md)).

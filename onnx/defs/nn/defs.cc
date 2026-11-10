@@ -8,7 +8,6 @@
 
 #include "onnx/common/assertions.h"
 #include "onnx/defs/function.h"
-#include "onnx/defs/generated/schemas.h"
 #include "onnx/defs/nn/utils.h"
 #include "onnx/defs/schema.h"
 #include "onnx/defs/type_builders.h"
@@ -200,62 +199,4 @@ ONNX_API void convPoolShapeInference(
   }
 }
 
-ONNX_OPERATOR_SET_SCHEMA(AveragePool, 22, generated::ai_onnx::AveragePool_ver22());
-
-ONNX_OPERATOR_SET_SCHEMA(MaxPool, 22, generated::ai_onnx::MaxPool_ver22());
-
-ONNX_OPERATOR_SET_SCHEMA(MaxUnpool, 22, generated::ai_onnx::MaxUnpool_ver22());
-
-ONNX_OPERATOR_SET_SCHEMA(LpPool, 22, generated::ai_onnx::LpPool_ver22());
-
-ONNX_OPERATOR_SET_SCHEMA(MaxRoiPool, 22, generated::ai_onnx::MaxRoiPool_ver22());
-
-ONNX_OPERATOR_SET_SCHEMA(Conv, 22, generated::ai_onnx::Conv_ver22());
-
-ONNX_OPERATOR_SET_SCHEMA(QLinearConv, 10, generated::ai_onnx::QLinearConv_ver10());
-
-ONNX_OPERATOR_SET_SCHEMA(ConvInteger, 10, generated::ai_onnx::ConvInteger_ver10());
-
-ONNX_OPERATOR_SET_SCHEMA(ConvTranspose, 22, generated::ai_onnx::ConvTranspose_ver22());
-
-ONNX_OPERATOR_SET_SCHEMA(DeformConv, 22, generated::ai_onnx::DeformConv_ver22());
-
-ONNX_OPERATOR_SET_SCHEMA(GlobalAveragePool, 22, generated::ai_onnx::GlobalAveragePool_ver22());
-ONNX_OPERATOR_SET_SCHEMA(GlobalMaxPool, 22, generated::ai_onnx::GlobalMaxPool_ver22());
-
-ONNX_OPERATOR_SET_SCHEMA(GlobalLpPool, 22, generated::ai_onnx::GlobalLpPool_ver22());
-
-ONNX_OPERATOR_SET_SCHEMA(BatchNormalization, 15, generated::ai_onnx::BatchNormalization_ver15());
-
-ONNX_OPERATOR_SET_SCHEMA(InstanceNormalization, 22, generated::ai_onnx::InstanceNormalization_ver22());
-
-ONNX_OPERATOR_SET_SCHEMA(LpNormalization, 22, generated::ai_onnx::LpNormalization_ver22());
-
-ONNX_OPERATOR_SET_SCHEMA(Dropout, 22, generated::ai_onnx::Dropout_ver22());
-
-ONNX_OPERATOR_SET_SCHEMA(Shrink, 9, generated::ai_onnx::Shrink_ver9());
-
-ONNX_OPERATOR_SET_SCHEMA(Flatten, 25, generated::ai_onnx::Flatten_ver25());
-
-ONNX_OPERATOR_SET_SCHEMA(LRN, 13, generated::ai_onnx::LRN_ver13());
-
-ONNX_OPERATOR_SET_SCHEMA(TfIdfVectorizer, 9, generated::ai_onnx::TfIdfVectorizer_ver9());
-
-ONNX_OPERATOR_SET_SCHEMA(MeanVarianceNormalization, 13, generated::ai_onnx::MeanVarianceNormalization_ver13());
-
-ONNX_OPERATOR_SET_SCHEMA(Col2Im, 18, generated::ai_onnx::Col2Im_ver18());
-
-ONNX_OPERATOR_SET_SCHEMA(LayerNormalization, 17, generated::ai_onnx::LayerNormalization_ver17());
-
-ONNX_OPERATOR_SET_SCHEMA(GroupNormalization, 21, generated::ai_onnx::GroupNormalization_ver21());
-
-ONNX_OPERATOR_SET_SCHEMA(RMSNormalization, 23, generated::ai_onnx::RMSNormalization_ver23());
-
-ONNX_OPERATOR_SET_SCHEMA(RotaryEmbedding, 23, generated::ai_onnx::RotaryEmbedding_ver23());
-
-ONNX_OPERATOR_SET_SCHEMA(Attention, 25, generated::ai_onnx::Attention_ver25());
-
-ONNX_OPERATOR_SET_SCHEMA(CausalConvWithState, 27, generated::ai_onnx::CausalConvWithState_ver27());
-
-ONNX_OPERATOR_SET_SCHEMA(LinearAttention, 27, generated::ai_onnx::LinearAttention_ver27());
 } // namespace ONNX_NAMESPACE

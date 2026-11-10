@@ -67,10 +67,8 @@ Once the criteria of proposing new operator/function has been satisfied, you wil
 | Component | File location |
 |-----------|--------------|
 | Schema definition | `operator-specifications/<domain>/v<N>/<op>.md` (see [its README](/operator-specifications/README.md)) |
-| Schema registration | `onnx/defs/<area>/defs.cc` |
-| Operator set registration | `onnx/defs/operator_sets.h` |
-| Type/shape inference | In the registration via `.TypeAndShapeInferenceFunction(...)` |
-| Function body (if applicable) | `function_bodies` in the spec file, or in the registration via `.SetContextDependentFunctionBodyBuilder(...)` — see [AddFunctionBody.md](AddFunctionBody.md) |
+| Type/shape inference | `shape_inference` in the spec file names a function in `onnx/defs/<area>/utils.{h,cc}` |
+| Function body (if applicable) | `function_bodies` or `function_body_builders` in the spec file — see [AddFunctionBody.md](AddFunctionBody.md) |
 | Reference implementation | `onnx/reference/ops/op_<lowercase_name>.py` |
 | Node tests | `onnx/backend/test/case/node/<lowercase_name>.py` |
 | Shape inference tests | `tests/python/shape_inference_test.py` |
@@ -101,7 +99,7 @@ Domain subdirectories under `onnx/defs/`: `math/`, `nn/`, `tensor/`, `logical/`,
     2. In cases where shape inference is not possible, it must have logic to perform
 rank inference at the very least (adding right amount of dimensions to the output shape)
     3. Shape inference functions must be accompanied by unit tests ([tests/python/shape_inference_test.py](/tests/python/shape_inference_test.py)).
-    4. You can refer to the shape inference function for the `TopK` operator while implementing your own function ([onnx/defs/math/defs.cc](/onnx/defs/math/defs.cc))
+    4. You can refer to the shape inference function for the `TopK` operator while implementing your own function ([onnx/defs/math/utils.cc](/onnx/defs/math/utils.cc))
     5. See [ShapeInference.md](ShapeInference.md) for details on the shape inference API and utility functions.
 8. Function body (if applicable)
     1. If the operator can be expressed in terms of other ONNX operators, provide a function body definition.
@@ -130,26 +128,16 @@ The definition of an existing operator may need to be updated when e.g. there ar
 ### Steps for updating
 
 1. **Create the spec file** `operator-specifications/<domain>/v<NEW_VERSION>/<op>.md` with the keys that change; the others are inherited from the previous version.
-2. **Move the current registration** from `onnx/defs/<domain>/defs.cc` to `onnx/defs/<domain>/old.cc` and **register the new version** in `defs.cc` using `ONNX_OPERATOR_SET_SCHEMA(OpName, NEW_VERSION, generated::<domain>::OpName_ver<NEW_VERSION>()...)`.
-3. **Update operator set registration** in `onnx/defs/operator_sets.h` to reference the new version.
-4. **Add a version converter adapter** if the behavior or signature changed (see `onnx/version_converter/adapters/` for examples).
-5. **Update the reference implementation** in `onnx/reference/ops/op_<name>.py` if behavior changed.
-6. **Add upgrade/downgrade tests** using `_test_op_upgrade` and `_test_op_downgrade`.
-7. **Regenerate documentation** by running `python onnx/defs/gen_doc.py`.
-
-### Avoiding duplication between defs.cc and old.cc
-
-When moving an operator schema to `old.cc`, avoid significant duplication of code or documentation between the old and new versions. Use these strategies:
-
-- **Shared utility functions**: Extract common logic (e.g., doc strings, type constraint lists, shape inference helpers) into shared functions in the domain's `utils.cc`/`utils.h` or a `defs.h` header.
-- **Parameterized functions**: When the old and new versions differ only slightly (e.g., an expanded type list or an additional optional input), use parameterized helper functions that accept the differences as arguments.
-- **Use judgment**: Some duplication is acceptable when the alternative would be overly complicated shared logic. If sharing the code makes it harder to understand either version independently, prefer clarity over DRY.
+2. **Use the opset version under development**, i.e., the highest version of the domain in `DomainToVersionRange` in `onnx/defs/schema.h`, which is increased when a release is prepared (see [OnnxReleases.md](OnnxReleases.md)). The registration and the operator set are generated (see [operator-specifications/README.md](/operator-specifications/README.md#opset-versions)).
+3. **Add a version converter adapter** if the behavior or signature changed (see `onnx/version_converter/adapters/` for examples).
+4. **Update the reference implementation** in `onnx/reference/ops/op_<name>.py` if behavior changed.
+5. **Add upgrade/downgrade tests** using `_test_op_upgrade` and `_test_op_downgrade`.
+6. **Regenerate documentation** by running `python onnx/defs/gen_doc.py`.
 
 ### Additional files for updates
 
 | Component | File location |
 |-----------|--------------|
-| Previous schema version | `onnx/defs/<domain>/old.cc` |
 | Version converter adapter | `onnx/version_converter/adapters/<name>_<from>_<to>.h` |
 | Upgrade tests | `tests/python/version_converter/automatic_upgrade_test.py` |
 | Downgrade tests | `tests/python/version_converter/automatic_downgrade_test.py` |
