@@ -232,8 +232,8 @@ class Spec(_Model):
     """The TOML part of a spec file.
 
     `name` and `domain` identify the operator and are required in every file.
-    `shape_inference` names the type and shape inference function or is
-    `False` if there is none. `data_propagation` optionally names the data
+    `shape_inference` is required in every file as well; it names the type
+    and shape inference function or is `False` if there is none. `data_propagation` optionally names the data
     propagation function, and `function_body_builders` the context-dependent
     function body builders by opset version. These five fields are not
     inherited. The defaults of the other fields apply to the first version of
@@ -250,7 +250,7 @@ class Spec(_Model):
     )
     num_outputs: list[NonNegativeInt] | None = None
     allow_unchecked_attributes: bool = False
-    shape_inference: FunctionName | Literal[False] | None = None
+    shape_inference: FunctionName | Literal[False]
     data_propagation: FunctionName | None = None
     function_body_builders: dict[int, FunctionName] = {}
     attributes: dict[str, Attribute] = {}
