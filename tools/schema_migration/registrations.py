@@ -1,7 +1,7 @@
 # Copyright (c) ONNX Project Contributors
 # SPDX-License-Identifier: Apache-2.0
 # mypy: disable-error-code="union-attr,assignment,arg-type,return-value,index"
-"""Operator registrations and schema generators in 'onnx/defs'.
+"""Operator registrations, schema generators and the functions they set in 'onnx/defs'.
 
 Shared by the migration scripts. A registration is a call of one of the
 'MACROS' whose third argument is a chain of builder calls on 'OpSchema()' or on a
@@ -14,6 +14,7 @@ Requires 'tree-sitter' and 'tree-sitter-cpp'.
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -30,6 +31,10 @@ MACROS = {
     b"ONNX_PREVIEW_OPERATOR_SET_SCHEMA": "ai.onnx.preview",
     b"ONNX_PREVIEW_TRAINING_OPERATOR_SET_SCHEMA": "ai.onnx.preview.training",
 }
+
+
+SHAPE_INFERENCE = b"TypeAndShapeInferenceFunction"
+DATA_PROPAGATION = b"PartialDataPropagationFunction"
 
 
 class RegistrationError(Exception):
@@ -74,6 +79,62 @@ def arguments(call: Node) -> list[Node]:
         for c in call.child_by_field_name("arguments").named_children
         if c.type != "comment"
     ]
+
+
+def namespace_of(node: Node) -> str:
+    """Return the namespace enclosing `node`, relative to `ONNX_NAMESPACE`."""
+    names: list[str] = []
+    parent = node.parent
+    while parent is not None:
+        if parent.type == "namespace_definition":
+            name = parent.child_by_field_name("name")
+            if name is not None:
+                names.insert(0, name.text.decode())
+        parent = parent.parent
+    qualified = "::".join(names).split("::")
+    if qualified[:1] != ["ONNX_NAMESPACE"]:
+        raise RegistrationError(f"unexpected namespace `{'::'.join(names)}`")
+    return "::".join(qualified[1:])
+
+
+def function_name(arg: Node, path: Path) -> str | bool:
+    """Return the name of the function passed as `arg` relative to `ONNX_NAMESPACE`.
+
+    An empty `InferenceFunction()` yields False.
+    """
+    text = arg.text.decode()
+    if text in ("InferenceFunction()", "DataPropagationFunction()"):
+        return False
+    if arg.type not in ("identifier", "qualified_identifier"):
+        raise RegistrationError(f"{location(path, arg)}: not a function name: {text}")
+    text = text.removeprefix("ONNX_NAMESPACE::")
+    namespace = namespace_of(arg)
+    if "::" not in text and namespace and declares(namespace, text):
+        text = f"{namespace}::{text}"
+    return text
+
+
+def declares(namespace: str, name: str) -> bool:
+    """Return whether the header of `namespace` (`defs::<area>::utils`) declares `name`."""
+    match = re.fullmatch(r"defs::(\w+)::utils", namespace)
+    if match is None:
+        raise RegistrationError(f"unexpected namespace `{namespace}`")
+    header = DEFS_DIR / match.group(1) / "utils.h"
+    return re.search(rf"\b{name}\b", header.read_text()) is not None
+
+
+@dataclass
+class Functions:
+    """Inference functions set by a builder chain; None if not set."""
+
+    shape_inference: str | bool | None = None
+    data_propagation: str | bool | None = None
+
+    def update(self, other: Functions) -> None:
+        if other.shape_inference is not None:
+            self.shape_inference = other.shape_inference
+        if other.data_propagation is not None:
+            self.data_propagation = other.data_propagation
 
 
 @dataclass
@@ -138,6 +199,61 @@ def generators() -> dict[str, Generator]:
                     name, path, node, schema_statements(body), forwarded_call(body)
                 )
     return out
+
+
+def chain_functions(
+    calls: list[Node], path: Path, gens: dict[str, Generator]
+) -> Functions:
+    """Return the inference functions set by the method calls `calls`, in order."""
+    result = Functions()
+    for call in calls:
+        name = method_name(call)
+        if name == SHAPE_INFERENCE:
+            (arg,) = arguments(call)
+            result.shape_inference = function_name(arg, path)
+        elif name == DATA_PROPAGATION:
+            (arg,) = arguments(call)
+            result.data_propagation = function_name(arg, path)
+        elif name == b"FillUsing":
+            (arg,) = arguments(call)
+            result.update(generator_functions(arg, path, gens))
+    return result
+
+
+def called_generator(call: Node, path: Path, gens: dict[str, Generator]) -> Generator:
+    """Return the generator called by `call`, i.e., `Generator(...)`."""
+    if call.type != "call_expression":
+        raise RegistrationError(f"{location(path, call)}: not a generator call")
+    callee = call.child_by_field_name("function").text.decode().rsplit("::", 1)[-1]
+    gen = gens.get(callee)
+    if gen is None:
+        raise RegistrationError(f"{location(path, call)}: unknown generator `{callee}`")
+    return gen
+
+
+def generator_functions(
+    call: Node, path: Path, gens: dict[str, Generator]
+) -> Functions:
+    """Return the inference functions set by the generator call `call`."""
+    gen = called_generator(call, path, gens)
+    if gen.forward is not None:
+        return generator_functions(gen.forward, gen.path, gens)
+    result = Functions()
+    for statement in gen.statements:
+        _, calls = unroll_chain(statement.named_children[0])
+        functions = chain_functions(calls, gen.path, gens)
+        if functions != Functions() and statement.parent.type != "compound_statement":
+            raise RegistrationError(
+                f"{location(gen.path, statement)}: conditional inference function"
+            )
+        if functions != Functions() and (
+            statement.parent.parent.type != "lambda_expression"
+        ):
+            raise RegistrationError(
+                f"{location(gen.path, statement)}: nested inference function"
+            )
+        result.update(functions)
+    return result
 
 
 @dataclass

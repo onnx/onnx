@@ -9,7 +9,8 @@ symbols, 'const' and 'constexpr' variables, and type aliases) and the symbols
 declared in 'onnx/defs/<area>/*.h' and 'onnx/defs/doc_strings.h', except for
 those marked 'ONNX_API'. A candidate is unused if its name does not occur
 outside of comments and of its declarations and definitions: for file-local
-symbols in its own file, otherwise in 'onnx' and 'tests'. Unused symbols are removed until there
+symbols in its own file, otherwise in 'onnx', 'tests' and the spec files, which
+name functions. Unused symbols are removed until there
 are none left. Files without any symbols are deleted together with their
 includes and their entries in the 'CMakeLists.txt' of their directory.
 
@@ -33,6 +34,7 @@ if TYPE_CHECKING:
 
     from tree_sitter import Node
 
+SPECS_DIR = REPO_ROOT / "operator-specifications"
 _SYMBOLS = ("declaration", "function_definition", "alias_declaration")
 # Top-level nodes of a file without any content.
 _SCAFFOLDING = (
@@ -64,7 +66,7 @@ def searched_files() -> list[Path]:
         for p in root.rglob("*")
         if p.suffix in (".cc", ".h", ".cpp")
     ]
-    return sorted(sources)
+    return sorted(sources) + sorted(SPECS_DIR.rglob("*.md"))
 
 
 def symbols(path: Path) -> list[tuple[str, int, int]]:
@@ -144,7 +146,7 @@ def remove_file(path: Path) -> None:
     rel = path.relative_to(REPO_ROOT).as_posix()
     include = re.compile(rf'^#include "{re.escape(rel)}"\n', re.MULTILINE)
     for other in searched_files():
-        if include.search(text := other.read_text()):
+        if other.suffix != ".md" and include.search(text := other.read_text()):
             other.write_text(include.sub("", text))
     cmake_lists = path.parent / "CMakeLists.txt"
     entry = re.compile(rf"^\s+{re.escape(path.name)}\n", re.MULTILINE)
