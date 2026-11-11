@@ -122,7 +122,10 @@ Besides crashes, a successful inference is a finding when inferring its result
 again fails or changes an inferred type, or when an inferred output type differs
 from the type its type constraint takes from valid inputs. Outputs whose type
 comes from an attribute, such as Cast's `to`, are not checked: without
-`check_type`, inference does not validate such attributes.
+`check_type`, inference does not validate such attributes. Both checks include
+nested graphs, with enclosing-scope types available to the output constraint
+check. That check skips unchanged annotations supplied by the original model
+and opset versions outside the schema lookup API's signed 32-bit range.
 
 ### `fuzz_compose.py` toggle byte
 

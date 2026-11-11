@@ -324,7 +324,7 @@ def _build_schema_model(fdp):
     nodes = []
     imports: dict[str, int] = {}
     graph_inputs = []
-    initializers = []
+    initializers: list[TensorProto] = []
     produced: list[str] = []
     for k in range(_MAX_NODES):
         schema = _SCHEMAS[fdp.ConsumeIntInRange(0, len(_SCHEMAS) - 1)]
@@ -477,16 +477,53 @@ def _known_types(graph):
     return types
 
 
-def _check_output_types(model):
+def _graph_types(graph, path=(), outer_types=None):
+    # Subgraphs may capture values from the enclosing graph. Local declarations
+    # shadow those bindings, including graph inputs without a known type.
+    types = dict(outer_types or {})
+    for value in graph.input:
+        types.pop(value.name, None)
+    types.update(_known_types(graph))
+    yield path, graph, types
+    for node_index, node in enumerate(graph.node):
+        for attr_index, attr in enumerate(node.attribute):
+            if attr.type == onnx.AttributeProto.GRAPH:
+                subgraphs = (attr.g,)
+            elif attr.type == onnx.AttributeProto.GRAPHS:
+                subgraphs = tuple(attr.graphs)
+            else:
+                continue
+            for graph_index, subgraph in enumerate(subgraphs):
+                yield from _graph_types(
+                    subgraph, (*path, node_index, attr_index, graph_index), types
+                )
+
+
+def _check_output_types(model, original):
     """Inferred output types must satisfy the schema when the inputs do."""
     opsets = {
         ("" if opset.domain == "ai.onnx" else opset.domain): opset.version
         for opset in model.opset_import
     }
-    types = _known_types(model.graph)
-    for node in model.graph.node:
+    original_types = {
+        (path, value.name): _type_to_str(value.type)
+        for path, graph, _ in _graph_types(original.graph)
+        for value in (*graph.input, *graph.value_info, *graph.output)
+        if value.HasField("type")
+    }
+    for path, graph, types in _graph_types(model.graph):
+        _check_graph_output_types(graph, path, types, original_types, opsets)
+
+
+def _check_graph_output_types(graph, path, types, original_types, opsets):
+    for node in graph.node:
         domain = "" if node.domain == "ai.onnx" else node.domain
-        if domain not in opsets or not defs.has(node.op_type, opsets[domain], domain):
+        # The schema binding takes a C++ int, while the protobuf stores int64.
+        if (
+            domain not in opsets
+            or not -(2**31) <= opsets[domain] < 2**31
+            or not defs.has(node.op_type, opsets[domain], domain)
+        ):
             continue
         schema = defs.get_schema(node.op_type, opsets[domain], domain)
         if (not schema.inputs and node.input) or not schema.outputs:
@@ -516,7 +553,13 @@ def _check_output_types(model):
             # Outputs typed by an attribute, such as Cast's "to", are only
             # validated with check_type and are not bound by the inputs.
             expected = bound.get(param.type_str) if param.is_homogeneous else None
-            if type_str is None or expected is None:
+            # Non-strict inference can suppress a merge error and retain an
+            # invalid annotation supplied by the fuzz input.
+            if (
+                type_str is None
+                or expected is None
+                or original_types.get((path, name)) == type_str
+            ):
                 continue
             assert expected == type_str, (
                 domain,
@@ -553,15 +596,16 @@ def _clear_defaults(message):
 
 def _value_types(graph):
     return {
-        value.name: _clear_defaults(
+        (path, value.name): _clear_defaults(
             onnx.TypeProto.FromString(value.type.SerializeToString())
         ).SerializeToString(deterministic=True)
-        for value in (*graph.value_info, *graph.output)
+        for path, nested, _ in _graph_types(graph)
+        for value in (*nested.value_info, *nested.output)
         if value.HasField("type")
     }
 
 
-def _check_inferred(inferred, options):
+def _check_inferred(original, inferred, options):
     """Inference must accept its own output and keep the inferred types."""
     # The type check may flag inputs that only become visible once inferred,
     # so it is left to the output type conformance check below.
@@ -577,7 +621,7 @@ def _check_inferred(inferred, options):
             name,
             "Inferring an inferred model changed an inferred type",
         )
-    _check_output_types(inferred)
+    _check_output_types(inferred, original)
 
 
 def TestOneInput(data):
@@ -610,7 +654,7 @@ def TestOneInput(data):
         # Real bugs surface as crashes, hangs, sanitizer reports, or
         # inconsistent results of a successful inference.
         return
-    _check_inferred(inferred, options)
+    _check_inferred(model, inferred, options)
 
 
 def main():
