@@ -4,14 +4,83 @@
 
 #include "onnx/version_converter/convert.h"
 
+#include <cstdint>
 #include <iostream>
 #include <memory>
 #include <string>
+#include <unordered_map>
+#include <vector>
 
 #include "onnx/common/ir_pb_converter.h"
 #include "onnx/shape_inference/implementation.h"
 
 namespace ONNX_NAMESPACE::version_conversion {
+
+namespace {
+
+struct CapturedTensorType {
+  int32_t elem_type = TensorProto_DataType_UNDEFINED;
+  bool has_sizes = false;
+  std::vector<Dimension> sizes;
+};
+
+struct CapturedTensorScope {
+  const CapturedTensorScope* parent = nullptr;
+  std::unordered_map<std::string, CapturedTensorType> values;
+
+  const CapturedTensorType* find(const std::string& name) const {
+    for (const auto* scope = this; scope != nullptr; scope = scope->parent) {
+      const auto value = scope->values.find(name);
+      if (value != scope->values.end()) {
+        return &value->second;
+      }
+    }
+    return nullptr;
+  }
+};
+
+// Runs before all version conversions, not only MVN: captured IR values may lack
+// the outer value's metadata even after model-level shape inference.
+void PropagateCapturedTensorTypes(const std::shared_ptr<Graph>& graph, const CapturedTensorScope* outer_scope) {
+  assertNonNull(graph);
+  CapturedTensorScope scope{outer_scope, {}};
+  for (const auto& initializer : graph->initializers()) {
+    scope.values[initializer.name()] = {
+        initializer.elem_type(), true, {initializer.sizes().begin(), initializer.sizes().end()}};
+  }
+  for (auto* input : graph->inputs()) {
+    scope.values[input->uniqueName()] = {input->elemType(), input->has_sizes(), input->sizes()};
+  }
+  for (auto* node : graph->nodes()) {
+    for (auto* output : node->outputs()) {
+      if (node->kind() == kCaptured && outer_scope != nullptr) {
+        const auto* source = outer_scope->find(output->uniqueName());
+        if (source != nullptr) {
+          if (output->elemType() == TensorProto_DataType_UNDEFINED) {
+            output->setElemType(source->elem_type);
+          }
+          if (!output->has_sizes() && source->has_sizes) {
+            output->setSizes(source->sizes);
+          }
+        }
+      }
+      scope.values[output->uniqueName()] = {output->elemType(), output->has_sizes(), output->sizes()};
+    }
+  }
+  for (auto* node : graph->nodes()) {
+    for (const auto& attr : node->attributeNames()) {
+      if (node->kindOf(attr) == AttributeKind::g) {
+        PropagateCapturedTensorTypes(node->g(attr), &scope);
+      } else if (node->kindOf(attr) == AttributeKind::gs) {
+        for (const auto& subgraph : node->gs(attr)) {
+          PropagateCapturedTensorTypes(subgraph, &scope);
+        }
+      }
+    }
+  }
+}
+
+} // namespace
 
 ModelProto ConvertVersion(const ModelProto& mp_in, int target_version) {
   ModelProto inferred_model = mp_in;
@@ -158,6 +227,8 @@ ModelProto DefaultVersionConverter::convert_version(
 
   std::shared_ptr<Graph> g(ImportModelProto(mp_in));
 
+  // Imported capture placeholders lack the types inferred in their enclosing scope.
+  PropagateCapturedTensorTypes(g, nullptr);
   convert_graph(g, initial_version, target_version);
 
   // Export g as ModelProto
