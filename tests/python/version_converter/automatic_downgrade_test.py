@@ -6,9 +6,11 @@ from __future__ import annotations
 import automatic_conversion_test_base
 import numpy as np
 import pytest
+from numpy.testing import assert_allclose
 
 import onnx
 from onnx import helper
+from onnx.reference import ReferenceEvaluator
 
 #####################################################################################
 # Every test calls _test_op_conversion to downgrade a model from the most recent opset version
@@ -53,6 +55,34 @@ class TestAutomaticDowngrade(automatic_conversion_test_base.TestAutomaticConvers
         strict_check = kwargs.pop("strict_check", False)
         mode = "strict_downgrade" if strict_check else "downgrade"
         self._test_op_conversion(op, *args, **kwargs, mode=mode)
+
+    def test_LogCumSumExp(self) -> None:
+        self._test_op_downgrade(
+            "LogCumSumExp", 29, [[2, 3]], [[2, 3]], attrs={"axis": -1}
+        )
+
+    def test_LogCumSumExp_downgrade_fails(self) -> None:
+        self._test_model_conversion_fails(
+            to_opset=28,
+            model="""
+                <ir_version: 13, opset_import: ["" : 29]>
+                g (float[2, 3] X) => (float[2, 3] Y) {
+                    Y = LogCumSumExp <axis = -1> (X)
+                }
+            """,
+        )
+
+    def test_Log1p(self) -> None:
+        self._test_op_downgrade("Log1p", 29)
+
+    def test_Log1p_cannot_downgrade_to_28(self) -> None:
+        model = onnx.parser.parse_model("""
+            <ir_version: 10, opset_import: ["": 29]>
+            log1p (float[2] x) => (float[2] y) {
+                y = Log1p(x)
+            }
+        """)
+        self._test_model_conversion_fails(28, model)
 
     @pytest.mark.parametrize(
         "index_type", [onnx.TensorProto.INT32, onnx.TensorProto.INT64]
@@ -366,6 +396,36 @@ class TestAutomaticDowngrade(automatic_conversion_test_base.TestAutomaticConvers
             [onnx.TensorProto.UINT8],
             attrs={"direction": "RIGHT"},
         )
+
+    def test_mean_variance_normalization_default_epsilon(self) -> None:
+        self._test_op_downgrade(
+            "MeanVarianceNormalization",
+            28,
+            attrs={"axes": [1, 2], "epsilon": 1e-9},
+        )
+
+    def test_mean_variance_normalization_custom_epsilon(self) -> None:
+        model = onnx.parser.parse_model(
+            """
+            <ir_version: 13, opset_import: [ "" : 29]>
+            mvn (float16[4] X) => (float16[4] Y)
+            {
+                Y = MeanVarianceNormalization <axes = [0], epsilon = 0.5> (X)
+            }
+            """
+        )
+        onnx.checker.check_model(model)
+        x = np.array([1000.0, 1001.0, 1002.0, 1003.0], dtype=np.float16)
+        expected = ReferenceEvaluator(model).run(None, {"X": x})[0]
+
+        converted = onnx.version_converter.convert_version(model, 28)
+        onnx.checker.check_model(converted)
+        assert all(
+            node.op_type != "MeanVarianceNormalization" for node in converted.graph.node
+        )
+        got = ReferenceEvaluator(converted).run(None, {"X": x})[0]
+
+        assert_allclose(got, expected)
 
     def test_BitShift_signed_downgrade_fails(self) -> None:
         # BitShift gained the signed integer types at opset 28. Downgrading a
