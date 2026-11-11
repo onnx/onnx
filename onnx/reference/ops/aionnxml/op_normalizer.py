@@ -12,8 +12,9 @@ class Normalizer(OpRunAiOnnxMl):
     @staticmethod
     def norm_max(x):
         """Max normalization"""
-        div = np.abs(x).max(axis=1).reshape((x.shape[0], -1))
-        return x / np.maximum(div, 1e-30)
+        div = x.max(axis=1).reshape((x.shape[0], -1))
+        # Per the spec, if the divisor is zero, Y == X.
+        return x / np.where(div == 0, 1.0, div)
 
     @staticmethod
     def norm_l1(x):
