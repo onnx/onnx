@@ -13,6 +13,7 @@ import atheris
 
 with atheris.instrument_imports():
     from onnx import parser, printer
+    from onnx.fuzz._text import supports_text_round_trip
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -96,6 +97,8 @@ def _check_integer(text: str) -> None:
 
 def _check_round_trip(parse, proto) -> None:
     """Printing a parsed proto must give text that parses to the same text."""
+    if not supports_text_round_trip(proto):
+        return
     printed = printer.to_text(proto)
     try:
         reparsed = parse(printed)

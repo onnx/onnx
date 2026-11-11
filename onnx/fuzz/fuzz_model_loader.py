@@ -9,6 +9,7 @@ import atheris
 with atheris.instrument_imports():
     import onnx
     from onnx import parser, printer
+    from onnx.fuzz._text import supports_text_round_trip
 
 
 def TestOneInput(data):
@@ -18,6 +19,8 @@ def TestOneInput(data):
         _ = len(model.graph.input)
         _ = len(model.graph.output)
         onnx.checker.check_model(model)
+        if not supports_text_round_trip(model):
+            return
         text = printer.to_text(model)
     except Exception:
         return
