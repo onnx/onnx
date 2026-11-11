@@ -956,15 +956,18 @@ ONNX_OPERATOR_SET_SCHEMA(
             }
             processSliceInputs(input_data->dim_size(), start, end, step);
 
+            // start and end are now clamped to the input, but step is an arbitrary
+            // model-provided int64. Count the selected elements up front so that no
+            // index computation can overflow or step outside the input.
+            int64_t count = 0;
+            if (step > 0 && start < end) {
+              count = (end - start - 1) / step + 1;
+            } else if (step < 0 && start > end) {
+              count = (end - start + 1) / step + 1;
+            }
             TensorShapeProto tsp;
-            if (step > 0) {
-              for (int i = start; i < end; i += step) {
-                *tsp.add_dim() = input_data->dim(i);
-              }
-            } else {
-              for (int i = start; i > end; i += step) {
-                *tsp.add_dim() = input_data->dim(i);
-              }
+            for (int64_t k = 0; k < count; ++k) {
+              *tsp.add_dim() = input_data->dim(static_cast<int>(start + k * step));
             }
             if (tsp.dim_size() > 0) {
               ctx.addOutputData(0, std::move(tsp));
