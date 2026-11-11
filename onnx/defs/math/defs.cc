@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include <algorithm>
+#include <limits>
 #include <map>
 #include <string>
 #include <unordered_set>
@@ -13,12 +14,13 @@
 #include "onnx/defs/doc_strings.h"
 #include "onnx/defs/function.h"
 #include "onnx/defs/math/utils.h"
+#include "onnx/defs/printer.h"
 #include "onnx/defs/schema.h"
 #include "onnx/defs/type_builders.h"
 
 namespace ONNX_NAMESPACE {
 
-static void MathOpDataPropagator(DataPropagationContext& ctx, const std::string& op_type) {
+static void MathOpDataPropagator(DataPropagationContext& ctx, std::string_view op_type) {
   const auto* const input_0 = ctx.getInputData(0);
   const auto* const input_1 = ctx.getInputData(1);
   if (input_0 == nullptr || input_1 == nullptr) {
@@ -587,6 +589,40 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Constrain input and output types to float tensors.")
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
+static constexpr const char* kDoc_Log1p_ver29 = R"DOC(
+Computes `y = ln(1 + x)` element-wise, where `ln` is the natural logarithm.
+The output has the same shape and element type as the input, including for
+scalar and empty inputs.
+
+For finite `x > -1`, the result is a floating-point approximation of `ln(1 + x)`,
+with `1 + x` evaluated as an exact real sum. Small nonzero results representable
+in the output type must be preserved even when floating-point addition would
+round `1 + x` to `1`. For example, a FLOAT input of `1e-8` produces approximately
+`1e-8`.
+
+Special values are defined element-wise as follows:
+
+| Input `x` | Output `y` |
+| --- | --- |
+| Positive zero | Positive zero |
+| Negative zero | Negative zero |
+| `-1` | Negative infinity |
+| Finite `x < -1` | NaN |
+| Negative infinity | NaN |
+| Positive infinity | Positive infinity |
+| NaN | NaN |
+
+The sign and payload of an output NaN are unspecified.
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(
+    Log1p,
+    29,
+    OpSchema().FillUsing(
+        defs::math::utils::UnaryFloatMathOpGenerator(
+            kDoc_Log1p_ver29,
+            "The natural logarithm of one plus the input, computed element-wise")));
+
 ONNX_OPERATOR_SET_SCHEMA(
     Tanh,
     13,
@@ -1013,6 +1049,47 @@ ONNX_OPERATOR_SET_SCHEMA(
             },
             18));
 
+// An opset 29 decomposition can use Log1p without rounding away the small
+// normalization term. Earlier function bodies retain their original dependencies.
+static bool BuildContextDependentFunctionBodyLogSoftmax29(
+    const FunctionBodyBuildContext& ctx,
+    const OpSchema& schema,
+    FunctionProto& functionProto) {
+  const auto* input_type = ctx.getInputType(0);
+  if (input_type == nullptr) {
+    return false;
+  }
+  const auto elem_type = input_type->tensor_type().elem_type();
+  const bool promote = elem_type == TensorProto::FLOAT16 || elem_type == TensorProto::BFLOAT16;
+  const int64_t axis = ctx.getAttribute("axis") != nullptr ? ctx.getAttribute("axis")->i() : -1;
+  FunctionBuilder builder(functionProto);
+  // Keep 16-bit inputs in float through exponentiation and normalization.
+  builder.Add(promote ? "X = Cast <to = 1> (input)" : "X = Identity (input)");
+  builder.Const1D("axes", axis).Const("OneInt", static_cast<int64_t>(1)).Const("ZeroFloat", 0.0f).Add(R"(
+        Zero = CastLike (ZeroFloat, X)
+        MaxLogit = ReduceMax <keepdims = 1> (X, axes)
+        Shifted = Sub (X, MaxLogit)
+        Exponentials = Exp (Shifted)
+        IsMax = Equal (Shifted, Zero)
+        Others = Where (IsMax, Zero, Exponentials)
+        IsMaxInt = Cast <to = 7> (IsMax)
+        MaxCount = ReduceSum <keepdims = 1> (IsMaxInt, axes)
+        RemainingMaxCount = Sub (MaxCount, OneInt)
+        TiedMaxima = CastLike (RemainingMaxCount, X)
+      )");
+  // Remove all maxima before summation, then restore all but one. Subtracting
+  // one from the full exponential sum would lose the small normalization term.
+  builder.Add(R"(
+        OtherSum = ReduceSum <keepdims = 1> (Others, axes)
+        NormalizerInput = Add (OtherSum, TiedMaxima)
+        Normalizer = Log1p (NormalizerInput)
+        OutputWide = Sub (Shifted, Normalizer)
+        output = CastLike (OutputWide, input)
+      )");
+  schema.BuildFunction(functionProto);
+  return true;
+}
+
 ONNX_OPERATOR_SET_SCHEMA(
     LogSoftmax,
     13,
@@ -1057,7 +1134,8 @@ ONNX_OPERATOR_SET_SCHEMA(
               schema.BuildFunction(functionProto);
               return true;
             },
-            18));
+            18)
+        .SetContextDependentFunctionBodyBuilder(BuildContextDependentFunctionBodyLogSoftmax29, 29));
 
 ONNX_OPERATOR_SET_SCHEMA(
     Hardmax,
@@ -1117,19 +1195,156 @@ ONNX_OPERATOR_SET_SCHEMA(
             )ONNX",
             18));
 
+static void GemmShapeInference(InferenceContext& ctx) {
+  propagateElemTypeFromInputToOutput(ctx, 0, 0);
+  const bool transA = getAttribute(ctx, "transA", int64_t{0}) != 0;
+  const bool transB = getAttribute(ctx, "transB", int64_t{0}) != 0;
+  if (hasInputShape(ctx, 1) && getInputShape(ctx, 1).dim_size() != 2) {
+    const auto& b_shape = getInputShape(ctx, 1);
+    fail_shape_inference(
+        "Gemm input B must have rank 2, but has rank ", b_shape.dim_size(), " and shape ", b_shape, ".");
+  }
+  Dim K, N;
+  if (transB) {
+    ctx.unifyInputShape(1, {N, K});
+  } else {
+    ctx.unifyInputShape(1, {K, N});
+  }
+  if (!hasInputShape(ctx, 0)) {
+    return;
+  }
+  auto shape = getInputShape(ctx, 0);
+  const int rank = shape.dim_size();
+  if (rank == 0) {
+    fail_shape_inference("Gemm input A must have rank at least 1, but has rank 0 and shape ", shape, ".");
+  }
+  if (transA && rank > 1) {
+    shape.mutable_dim()->SwapElements(rank - 2, rank - 1);
+  }
+  const auto& a_k = shape.dim(rank - 1);
+  if (a_k.has_dim_value() && K.has_dim_value() && a_k.dim_value() != K.dim_value()) {
+    fail_shape_inference(
+        "Gemm inputs have incompatible contraction dimensions: A has shape ",
+        getInputShape(ctx, 0),
+        " with transA=",
+        transA,
+        ", B has shape ",
+        getInputShape(ctx, 1),
+        " with transB=",
+        transB,
+        ". After transposition, A's last dimension is ",
+        a_k.dim_value(),
+        " but B's first dimension is ",
+        K.dim_value(),
+        "; these dimensions must match.");
+  }
+  *shape.mutable_dim(rank - 1) = N;
+  if (hasInputShape(ctx, 2)) {
+    const auto& bias = getInputShape(ctx, 2);
+    if (bias.dim_size() > rank) {
+      fail_shape_inference(
+          "Gemm input C with shape ",
+          bias,
+          " must be unidirectionally broadcastable to output shape ",
+          shape,
+          ", but C has rank ",
+          bias.dim_size(),
+          " greater than output rank ",
+          rank,
+          ".");
+    }
+    for (int i = 0; i < bias.dim_size(); ++i) {
+      const auto& c_dim = bias.dim(i);
+      const auto& y_dim = shape.dim(rank - bias.dim_size() + i);
+      if (c_dim.has_dim_value() && y_dim.has_dim_value() && c_dim.dim_value() != 1 &&
+          c_dim.dim_value() != y_dim.dim_value()) {
+        fail_shape_inference(
+            "Gemm input C with shape ",
+            bias,
+            " must be unidirectionally broadcastable to output shape ",
+            shape,
+            ", but C dimension ",
+            i,
+            " has size ",
+            c_dim.dim_value(),
+            " instead of 1 or ",
+            y_dim.dim_value(),
+            " (output dimension ",
+            rank - bias.dim_size() + i,
+            ").");
+      }
+    }
+  }
+  updateOutputShape(ctx, 0, shape);
+}
+
+static bool BuildContextDependentFunctionBodyGemm(
+    const FunctionBodyBuildContext& ctx,
+    const OpSchema& schema,
+    FunctionProto& functionProto) {
+  const auto* a_type = ctx.getInputType(0);
+  if (a_type == nullptr) {
+    return false;
+  }
+  const auto elem_type = a_type->tensor_type().elem_type();
+  if (elem_type != TensorProto::FLOAT && elem_type != TensorProto::DOUBLE && elem_type != TensorProto::FLOAT16 &&
+      elem_type != TensorProto::BFLOAT16) {
+    return false;
+  }
+  const auto* transA = ctx.getAttribute("transA");
+  const auto* transB = ctx.getAttribute("transB");
+  FunctionBuilder builder(functionProto);
+  if (transA != nullptr && transA->i() != 0) {
+    if (!a_type->tensor_type().has_shape()) {
+      return false;
+    }
+    const int rank = a_type->tensor_type().shape().dim_size();
+    std::vector<int64_t> perm;
+    perm.reserve(rank);
+    for (int i = 0; i < rank; ++i) {
+      perm.push_back(i);
+    }
+    if (rank > 1) {
+      std::swap(perm[rank - 2], perm[rank - 1]);
+    }
+    builder.Add("AT = Transpose (A)", "perm", perm);
+  } else {
+    builder.Add("AT = Identity (A)");
+  }
+  builder.Add(transB != nullptr && transB->i() != 0 ? "BT = Transpose <perm = [1, 0]> (B)" : "BT = Identity (B)");
+  builder.Add(R"ONNX(
+    Product = MatMul (AT, BT)
+    Alpha = Constant <value_float: float = @alpha> ()
+    AlphaCast = CastLike (Alpha, A)
+    ScaledProduct = Mul (Product, AlphaCast)
+  )ONNX");
+  const auto* beta = ctx.getAttribute("beta");
+  if (ctx.hasInput(2) && (beta == nullptr || beta->f() != 0.0f)) {
+    builder.Add(R"ONNX(
+      Beta = Constant <value_float: float = @beta> ()
+      BetaCast = CastLike (Beta, A)
+      ScaledBias = Mul (C, BetaCast)
+      Y = Add (ScaledProduct, ScaledBias)
+    )ONNX");
+  } else {
+    builder.Add("Y = Identity (ScaledProduct)");
+  }
+  schema.BuildFunction(functionProto);
+  return true;
+}
+
 ONNX_OPERATOR_SET_SCHEMA(
     Gemm,
-    13,
+    29,
     OpSchema()
         .SetDoc(GET_OP_DOC_STR(
-            std::string(kDoc_Gemm_ver13) + GenerateBroadcastingDocUni("tensor C", "tensor A * B") + "\n" +
+            std::string(kDoc_Gemm_ver29) + GenerateBroadcastingDocUni("tensor C", "tensor A' * B'") + "\n" +
             GenerateOptionalArgumentsDoc()))
         .Input(
             0,
             "A",
             "Input tensor A. "
-            "The shape of A should be (M, K) if transA is 0, "
-            "or (K, M) if transA is non-zero.",
+            "Rank >= 1 tensor. After applying transA, its shape is (..., K).",
             "T",
             OpSchema::Single,
             true,
@@ -1151,13 +1366,13 @@ ONNX_OPERATOR_SET_SCHEMA(
             "C",
             "Optional input tensor C. "
             "If not specified, the computation is done as if C is a scalar 0. "
-            "The shape of C should be unidirectional broadcastable to (M, N).",
+            "The shape of C must be unidirectionally broadcastable to the output shape (..., N).",
             "T",
             OpSchema::Optional,
             true,
             1,
             OpSchema::Differentiable)
-        .Output(0, "Y", "Output tensor of shape (M, N).", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
+        .Output(0, "Y", "Output tensor of shape (..., N).", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
         .TypeConstraint(
             "T",
             {types::Float16,
@@ -1169,32 +1384,16 @@ ONNX_OPERATOR_SET_SCHEMA(
              types::Int64,
              types::BFloat16},
             "Constrain input and output types to float/int tensors.")
-        .Attr("transA", "Whether A should be transposed", AttributeProto::INT, static_cast<int64_t>(0))
+        .Attr(
+            "transA",
+            "Whether to swap the last two axes of A. Has no effect on rank-1 A.",
+            AttributeProto::INT,
+            static_cast<int64_t>(0))
         .Attr("transB", "Whether B should be transposed", AttributeProto::INT, static_cast<int64_t>(0))
         .Attr("alpha", "Scalar multiplier for the product of input tensors A * B.", AttributeProto::FLOAT, 1.0f)
         .Attr("beta", "Scalar multiplier for input tensor C.", AttributeProto::FLOAT, 1.0f)
-        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-          propagateElemTypeFromInputToOutput(ctx, 0, 0);
-          auto transAAttr = ctx.getAttribute("transA");
-          bool transA = transAAttr ? static_cast<int>(transAAttr->i()) != 0 : false;
-          auto transBAttr = ctx.getAttribute("transB");
-          bool transB = transBAttr ? static_cast<int>(transBAttr->i()) != 0 : false;
-          // Gemm computes Y = alpha * A' * B' + beta * C
-          // A' is A or A^T depending on transA; B' is B or B^T depending on transB
-          Dim M, N, K;
-          if (transA) {
-            ctx.unifyInputShape(0, {K, M});
-          } else {
-            ctx.unifyInputShape(0, {M, K});
-          }
-          if (transB) {
-            ctx.unifyInputShape(1, {N, K});
-          } else {
-            ctx.unifyInputShape(1, {K, N});
-          }
-          // Output shape is (M, N)
-          updateOutputShape(ctx, 0, {M, N});
-        }));
+        .TypeAndShapeInferenceFunction(GemmShapeInference)
+        .SetContextDependentFunctionBodyBuilder(BuildContextDependentFunctionBodyGemm));
 
 ONNX_OPERATOR_SET_SCHEMA(
     MatMul,
@@ -1225,7 +1424,11 @@ static void GroupedMatMulShapeInference(InferenceContext& ctx) {
 
   Dim M, K, G, N, S;
   ctx.unifyInputShape(0, {M, K});
-  ctx.unifyInputShape(1, {G, K, N});
+  if (getAttribute(ctx, "transB", int64_t{0}) != 0) {
+    ctx.unifyInputShape(1, {G, N, K});
+  } else {
+    ctx.unifyInputShape(1, {G, K, N});
+  }
   ctx.unifyInputShape(2, {M, S});
   if (ctx.hasInput(3)) {
     ctx.unifyInputShape(3, {G, N});
@@ -1237,6 +1440,11 @@ static bool BuildContextDependentFunctionBodyGroupedMatMul(
     const FunctionBodyBuildContext& ctx,
     const OpSchema& schema,
     FunctionProto& functionProto) {
+  const auto* transB_attr = ctx.getAttribute("transB");
+  if (transB_attr != nullptr && !transB_attr->ref_attr_name().empty()) {
+    return false;
+  }
+  const bool transB = transB_attr != nullptr && transB_attr->i() != 0;
   FunctionBuilder builder(functionProto);
   builder.Const1D("index_zero", int64_t{0})
       .Const1D("index_one", int64_t{1})
@@ -1246,12 +1454,19 @@ static bool BuildContextDependentFunctionBodyGroupedMatMul(
       .Add("indices_shape = Shape (group_indices)")
       .Add("M = Gather <axis = 0> (input_shape, index_zero)")
       .Add("K = Gather <axis = 0> (input_shape, index_one)")
-      .Add("N = Gather <axis = 0> (weights_shape, index_two)")
+      .Add(
+          transB ? "N = Gather <axis = 0> (weights_shape, index_one)"
+                 : "N = Gather <axis = 0> (weights_shape, index_two)")
       .Add("S = Gather <axis = 0> (indices_shape, index_one)")
       .Add("MS = Mul (M, S)")
-      .Add("indices_flat = Reshape <allowzero = 1> (group_indices, MS)")
-      .Add("selected_weights = Gather <axis = 0> (weights, indices_flat)")
-      .Add("input_unsqueezed = Unsqueeze (input, index_one)")
+      .Add("indices_flat = Reshape <allowzero = 1> (group_indices, MS)");
+  if (transB) {
+    builder.Add("gathered_weights = Gather <axis = 0> (weights, indices_flat)")
+        .Add("selected_weights = Transpose <perm = [0, 2, 1]> (gathered_weights)");
+  } else {
+    builder.Add("selected_weights = Gather <axis = 0> (weights, indices_flat)");
+  }
+  builder.Add("input_unsqueezed = Unsqueeze (input, index_one)")
       .Add("expanded_shape = Concat <axis = 0> (M, S, K)")
       .Add("input_expanded = Expand (input_unsqueezed, expanded_shape)")
       .Add("matmul_input_shape = Concat <axis = 0> (MS, index_one, K)")
@@ -1277,11 +1492,18 @@ ONNX_OPERATOR_SET_SCHEMA(
     29,
     OpSchema()
         .SetDoc(kDoc_GroupedMatMul_ver29)
+        .Attr(
+            "transB",
+            "Whether to transpose the last two axes of weights before multiplication. "
+            "If zero, weights has shape [G, K, N]; if non-zero, weights has shape [G, N, K].",
+            AttributeProto::INT,
+            int64_t{0})
         .Input(0, "input", "Token matrix with shape [M, K].", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
         .Input(
             1,
             "weights",
-            "Stack of G group weight matrices with shape [G, K, N].",
+            "Stack of G group weight matrices with shape [G, K, N] if transB is zero, "
+            "or [G, N, K] if transB is non-zero.",
             "T",
             OpSchema::Single,
             true,
@@ -1726,6 +1948,186 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Constrain input and output types to numeric tensors.")
         .TypeConstraint("T2", {types::Int32, types::Int64}, "axis tensor can be int32 or int64 only")
         .TypeAndShapeInferenceFunction(ONNX_NAMESPACE::propagateShapeAndTypeFromFirstInput));
+
+static void LogCumSumExpShapeInference(InferenceContext& ctx) {
+  propagateShapeAndTypeFromFirstInput(ctx);
+  if (!hasNInputShapes(ctx, 1)) {
+    return;
+  }
+  const auto rank = getInputShape(ctx, 0).dim_size();
+  const auto axis = getAttribute(ctx, "axis", int64_t{0});
+  if (rank == 0) {
+    fail_shape_inference("LogCumSumExp requires rank >= 1; reshape scalar X to a one-element tensor.");
+  }
+  if (axis < -rank || axis >= rank) {
+    fail_shape_inference("LogCumSumExp axis ", axis, " is outside [-", rank, ", ", rank - 1, "] for X.");
+  }
+}
+
+static bool
+BuildLogCumSumExpFunction(const FunctionBodyBuildContext& ctx, const OpSchema& schema, FunctionProto& functionProto) {
+  const auto* input_type = ctx.getInputType(0);
+  if (input_type == nullptr || !input_type->has_tensor_type()) {
+    return false;
+  }
+  const auto elem_type = input_type->tensor_type().elem_type();
+  if (elem_type != TensorProto::FLOAT16 && elem_type != TensorProto::BFLOAT16 && elem_type != TensorProto::FLOAT &&
+      elem_type != TensorProto::DOUBLE) {
+    return false;
+  }
+  const bool use_double = elem_type == TensorProto::DOUBLE;
+  FunctionBuilder builder(functionProto);
+  builder.Add("X_acc = Cast (X)", "to", int64_t{use_double ? TensorProto::DOUBLE : TensorProto::FLOAT});
+  builder.Const("negative_infinity_float", -std::numeric_limits<float>::infinity())
+      .Add("negative_infinity = CastLike (negative_infinity_float, X_acc)");
+  if (ctx.getAttribute("axis") == nullptr) {
+    builder.Const("axis_value", int64_t{0});
+  } else {
+    builder.Add("axis_value = Constant <value_int: int = @axis> ()");
+  }
+  const std::string prefix = R"ONNX(
+        scalar_zero = Constant <value = int64 {0}> ()
+        zero = Constant <value = int64[1] {0}> ()
+        one = Constant <value = int64[1] {1}> ()
+        end = Constant <value = int64[1] {9223372036854775807}> ()
+        X_shape = Shape (X)
+        rank = Size (X_shape)
+        axis_negative = Less (axis_value, zero)
+        axis_from_end = Add (axis_value, rank)
+        axis_normalized = Where (axis_negative, axis_from_end, axis_value)
+        size = Size (X)
+        empty = Equal (size, scalar_zero)
+        Y_acc = If (empty) <
+          then_branch = empty_input () => (empty_output) {
+            empty_output = Identity (X_acc)
+          },
+          else_branch = nonempty_input () => (nonempty_output) {
+            axis_end = Add (axis_normalized, one)
+            before_shape = Slice (X_shape, zero, axis_normalized)
+            after_shape = Slice (X_shape, axis_end, end)
+            before = ReduceProd <keepdims = 1> (before_shape)
+            after = ReduceProd <keepdims = 1> (after_shape)
+            length = Gather <axis = 0> (X_shape, axis_normalized)
+            scan_shape = Concat <axis = 0> (before, length, after)
+            state_shape = Concat <axis = 0> (before, after)
+            reshaped = Reshape (X_acc, scan_shape)
+            scan_input = Transpose <perm = [1, 0, 2]> (reshaped)
+            initial = Expand (negative_infinity, state_shape)
+      )ONNX";
+  // Flatten the dimensions before and after the axis so the Scan always uses axis 0,
+  // including when X's rank is unknown at function-building time.
+  // The log1p correction below retains exp(difference) when 1 + exp(difference)
+  // rounds to 1; its argument is in [0, 1], so the correction is well-conditioned.
+  const std::string acc_type = use_double ? "double" : "float";
+  builder.Add((prefix + R"ONNX(
+            final_state, scanned = Scan (initial, scan_input) <
+              num_scan_inputs = 1,
+              body = prefix ()ONNX" +
+               acc_type + "[?, ?] previous, " + acc_type + "[?, ?] current) => (" + acc_type + "[?, ?] next, " +
+               acc_type + R"ONNX([?, ?] output) {
+                zero_acc = Constant <value = float {0}> ()
+                one_acc = Constant <value = float {1}> ()
+                zero_t = CastLike (zero_acc, previous)
+                one_t = CastLike (one_acc, previous)
+                maximum = Max (previous, current)
+                minimum = Min (previous, current)
+                infinite = IsInf (maximum)
+                safe_maximum = Where (infinite, zero_t, maximum)
+                safe_minimum = Where (infinite, zero_t, minimum)
+                difference = Sub (safe_minimum, safe_maximum)
+                exponential = Exp (difference)
+                sum = Add (one_t, exponential)
+                logarithm = Log (sum)
+                rounded_exponential = Sub (sum, one_t)
+                error = Sub (exponential, rounded_exponential)
+                correction = Div (error, sum)
+                log_one_plus = Add (logarithm, correction)
+                finite_result = Add (safe_maximum, log_one_plus)
+                result = Where (infinite, maximum, finite_result)
+                previous_nan = IsNaN (previous)
+                current_nan = IsNaN (current)
+                any_nan = Or (previous_nan, current_nan)
+                nan_value = Where (previous_nan, previous, current)
+                next = Where (any_nan, nan_value, result)
+                output = Identity (next)
+              }
+            >
+            restored = Transpose <perm = [1, 0, 2]> (scanned)
+            nonempty_output = Reshape <allowzero = 1> (restored, X_shape)
+          }
+        >
+        Y = CastLike (Y_acc, X)
+      )ONNX")
+                  .c_str());
+  schema.BuildFunction(functionProto);
+  return true;
+}
+
+static constexpr const char* LogCumSumExp_doc = R"DOC(
+Computes the inclusive, forward cumulative log-sum-exp of `X` along `axis`.
+Let `r = rank(X)`, where `r >= 1`. The attribute `axis` defaults to 0 and must
+be in `[-r, r-1]`. The normalized axis is `a = axis` if `axis >= 0`, and
+`a = axis + r` otherwise.
+
+For each fixed choice of indices in the dimensions other than `a`, let
+`x[0], ..., x[n-1]` be the input slice along `a`, where `n = X.shape[a]`.
+The corresponding output slice is defined by
+`y[j] = log(sum(exp(x[k]), k = 0, ..., j))` for `0 <= j < n`.
+Thus, each prefix includes the current element and all preceding elements,
+and excludes subsequent elements. The output `Y` has the same shape and
+element type as `X`. If any dimension of `X` is zero, `Y` is empty.
+
+The following rules apply independently to each prefix, in order:
+
+* If the prefix contains NaN, its output is NaN.
+* Otherwise, if the prefix contains positive infinity, its output is positive infinity.
+* Otherwise, if every element in the prefix is negative infinity, its output is negative infinity.
+
+Negative infinity contributes zero to the sum of exponentials.
+
+Accumulation must be numerically stable and use at least float32 precision
+for float16, bfloat16 and float32 inputs, and at least float64 precision for
+float64 inputs. Each prefix result is converted to the element type of `X`
+to form `Y`; this conversion must not reduce the precision of the intermediate
+accumulation for subsequent prefixes. The floating-point accumulation order
+is unspecified, and different orders may produce different rounding.
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(
+    LogCumSumExp,
+    29,
+    OpSchema()
+        .SetDoc(LogCumSumExp_doc)
+        .Attr(
+            "axis",
+            "Axis along which to compute inclusive prefixes, defaulting to 0. "
+            "Must be in [-rank(X), rank(X)-1]. A negative value is normalized by adding rank(X).",
+            AttributeProto::INT,
+            int64_t{0})
+        .Input(
+            0,
+            "X",
+            "Floating-point input tensor of rank at least one. Dimensions may be zero.",
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::Differentiable)
+        .Output(
+            0,
+            "Y",
+            "Tensor with the same shape and element type as X, containing inclusive cumulative log-sum-exp values.",
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::Differentiable)
+        .TypeConstraint(
+            "T",
+            {types::Float16, types::BFloat16, types::Float, types::Double},
+            "Input and output have the same floating-point element type.")
+        .TypeAndShapeInferenceFunction(LogCumSumExpShapeInference)
+        .SetContextDependentFunctionBodyBuilder(BuildLogCumSumExpFunction));
 
 ONNX_OPERATOR_SET_SCHEMA(
     Round,
