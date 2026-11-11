@@ -3,6 +3,7 @@
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
+import ml_dtypes
 import numpy as np
 
 from onnx.reference.op_run import OpRun
@@ -19,9 +20,14 @@ def softmaxcrossentropy(
     N = input_shape[0]
     C = input_shape[1]
 
+    # float16 and bfloat16 are computed in float32: the sum of exp over the
+    # classes overflows float16 (max 65504) once there are more classes than
+    # that, and bfloat16 stops accumulating at 256.
+    xc = x.astype(np.float32) if x.dtype in (np.float16, ml_dtypes.bfloat16) else x
+
     # compute log_softmax
-    max_x = np.max(x, axis=1, keepdims=True)
-    shifted_x = x - max_x
+    max_x = np.max(xc, axis=1, keepdims=True)
+    shifted_x = xc - max_x
     inp = shifted_x - np.log(np.sum(np.exp(shifted_x), axis=1, keepdims=True))
     log_prob = None
     if get_log_prob is True:
@@ -30,13 +36,15 @@ def softmaxcrossentropy(
     # initialize the positional weights when required
     gather_weight = None
     if weight is not None:
-        gather_weight = np.take(weight, np.array(target, dtype=np.int32), mode="clip")
+        gather_weight = np.take(
+            weight, np.array(target, dtype=np.int32), mode="clip"
+        ).astype(xc.dtype)
         if ignore_index is not None:
             gather_weight = np.where(target == ignore_index, 0, gather_weight).astype(
-                dtype=x.dtype
+                dtype=xc.dtype
             )
     elif ignore_index is not None:
-        gather_weight = np.where(target == ignore_index, 0, 1).astype(dtype=x.dtype)
+        gather_weight = np.where(target == ignore_index, 0, 1).astype(dtype=xc.dtype)
 
     # if input is 4-d and above, make it 3-d
     if len(input_shape) != 3:
@@ -48,7 +56,7 @@ def softmaxcrossentropy(
     # the D here should be H * W because we reshape
     # [N, C, H, W] to [N, C, H * W].
     D = inp.shape[2]
-    neg_gather_element_input = np.zeros((N, D), dtype=x.dtype)
+    neg_gather_element_input = np.zeros((N, D), dtype=xc.dtype)
     for i in range(N):
         for d in range(D):
             if target[i, d] != ignore_index:
@@ -64,7 +72,7 @@ def softmaxcrossentropy(
     if gather_weight is not None:
         loss = gather_weight * loss
         if reduction == "mean":
-            loss = loss.sum() / gather_weight.sum()
+            loss = (loss.sum() / gather_weight.sum()).astype(x.dtype)
             if get_log_prob is True:
                 return loss, log_prob
             return (loss,)

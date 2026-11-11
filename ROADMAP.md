@@ -4,7 +4,7 @@ SPDX-FileCopyrightText: Copyright (c) ONNX Project Contributors
 SPDX-License-Identifier: Apache-2.0
 -->
 
-# ONNX 12-Month Roadmap (Q3 2026 – Q2 2027)
+# ONNX 12-Month Roadmap (Q4 2026 – Q3 2027)
 
 > This is a living document and a starting point — not yet a complete picture of all ONNX SIGs and Working Groups.
 > Every group is invited to add or update their milestones below.
@@ -28,12 +28,7 @@ SPDX-License-Identifier: Apache-2.0
 
 **Lead(s):** Andreas Fehlner (TRUMPF Laser), Christian Bourjau (QuantCo)
 
-**Last updated:** 2026-08-12
-
-#### Q3 2026
-- Remove test files from release packages (reduce package size and install surface)
-- Convert deprecated branch protection rules to Rules within Github
-- Newer minimal protobuf
+**Last updated:** 2026-10-29
 
 #### Q4 2026
 - Automate and improve SBOM generation and publication
@@ -43,13 +38,17 @@ SPDX-License-Identifier: Apache-2.0
 - Immutable releases (tamper-evident, verifiable artifacts)
 
 #### Q1 2027
+- Clarify need of test file corpus
 - Move to C++20
-- OpenSSF Gold Badge
 - Achieve SLSA Build Level 3 compliance
 
 #### Q2 2027
+- OpenSSF Gold Badge
 - Improved conformance test suite (parameterized, filterable, usable from non-Python runtimes)
 - Continued C++ hardening improvements
+
+#### Q3 2027
+-
 
 ---
 
@@ -71,6 +70,8 @@ an unprioritized list of items for the next year.
 #### Q4 2026:
 - Variable length scan support
 - LinearAttention (support for Gated DeltaNet-2)
+- Support quantized formats defined by the GGUF format
+- Better MoE model support
 
 #### Q1 2027:
 - Support Mixture-of-Experts (possibly via Grouped MatMul operator)
@@ -107,6 +108,23 @@ an unprioritized list of items for the next year.
 #### Q2 2027
 - Fourth subset of ONNX operators (i) fully specified in compliance with the SONNX guidelines, (ii) fully formally specified and proved, (iii) implemented, (iv) tested and (v) integrated in the AIDGE framework.
 - Second subset of operators with numerical accuracy analysis.
+
+---
+
+
+### Optimizations SIG
+
+**Lead(s):** Freddy Chiu, Justin Chu
+**Last updated:** _2026-11-06_
+
+#### Q3 2026
+
+#### Q4 2026
+- Migration of the onnx-shape-inference project as a SIG-owned project
+
+#### Q1 2027
+
+#### Q2 2027
 
 ---
 

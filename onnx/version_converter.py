@@ -28,6 +28,7 @@ def convert_version(model: ModelProto, target_version: int) -> ModelProto:
         RuntimeError when some necessary conversion is not supported.
         ConvertError when preserved model-local functions are incompatible with
         the target opset. Function bodies are not converted.
+        ConvertError when a graph contains unsupported sparse initializers.
     """
     if not isinstance(model, ModelProto):
         raise TypeError(

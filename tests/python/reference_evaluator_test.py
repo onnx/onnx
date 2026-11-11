@@ -212,6 +212,138 @@ def im2col(
 
 
 class TestReferenceEvaluator:
+    @pytest.mark.parametrize(
+        "shape", [(5,), (2, 5), (2, 3, 5), (2, 3, 4, 5), (0, 3, 5), (2, 3, 0)]
+    )
+    @pytest.mark.parametrize("transA", [0, 1, -1])
+    @pytest.mark.parametrize("transB", [0, 1, -1])
+    @pytest.mark.parametrize("bias_shape", [None, (), (7,)])
+    @pytest.mark.parametrize("expand", [False, True])
+    def test_gemm_29_linear(self, shape, transA, transB, bias_shape, expand):
+        rng = np.random.default_rng(0)
+        a = rng.standard_normal(shape).astype(np.float32)
+        weights = rng.standard_normal((7, shape[-1])).astype(np.float32)
+        b = weights if transB else weights.T
+        input_a = a.swapaxes(-1, -2) if transA and a.ndim > 1 else a
+        inputs = [
+            make_tensor_value_info("A", TensorProto.FLOAT, input_a.shape),
+            make_tensor_value_info("B", TensorProto.FLOAT, b.shape),
+        ]
+        feeds = {"A": input_a, "B": b}
+        expected = 0.25 * np.einsum("...k,nk->...n", a, weights)
+        if bias_shape is not None:
+            c = rng.standard_normal(bias_shape).astype(np.float32)
+            inputs.append(make_tensor_value_info("C", TensorProto.FLOAT, c.shape))
+            feeds["C"] = c
+            expected += 0.5 * c
+        node = make_node(
+            "Gemm",
+            list(feeds),
+            ["Y"],
+            transA=transA,
+            transB=transB,
+            alpha=0.25,
+            beta=0.5,
+        )
+        model = make_model(
+            make_graph(
+                [node],
+                "linear",
+                inputs,
+                [make_tensor_value_info("Y", TensorProto.FLOAT, expected.shape)],
+            ),
+            opset_imports=[make_opsetid("", 29)],
+        )
+        check_model(model, full_check=True)
+        expanded_op = type("Gemm", (OpRunExpand,), {"op_domain": ""})
+        ref = ReferenceEvaluator(model, new_ops=[expanded_op] if expand else None)
+        got = ref.run(None, feeds)[0]
+        assert got.shape == expected.shape
+        assert got.dtype == expected.dtype
+        assert_allclose(got, expected, rtol=1e-5, atol=1e-6)
+
+    @pytest.mark.parametrize("expand", [False, True])
+    def test_gemm_29_beta_zero(self, expand):
+        model = parser.parse_model("""
+            <ir_version: 14, opset_import: ["" : 29]>
+            g (float[2, 3, 5] A, float[5, 7] B, float[7] C) => (float[2, 3, 7] Y) {
+                Y = Gemm <beta = 0.0> (A, B, C)
+            }
+        """)
+        feeds = {
+            "A": np.ones((2, 3, 5), dtype=np.float32),
+            "B": np.ones((5, 7), dtype=np.float32),
+            "C": np.full((7,), np.nan, dtype=np.float32),
+        }
+        expanded_op = type("Gemm", (OpRunExpand,), {"op_domain": ""})
+        got = ReferenceEvaluator(model, new_ops=[expanded_op] if expand else None).run(
+            None, feeds
+        )[0]
+        assert_array_equal(got, np.full((2, 3, 7), 5, dtype=np.float32))
+
+    @pytest.mark.parametrize(
+        "dtype",
+        [
+            np.float16,
+            ml_dtypes.bfloat16,
+            np.float32,
+            np.float64,
+            np.int32,
+            np.int64,
+            np.uint32,
+            np.uint64,
+        ],
+    )
+    def test_gemm_29_types(self, dtype):
+        a = np.arange(30).reshape(2, 3, 5).astype(dtype)
+        b = np.arange(35).reshape(5, 7).astype(dtype)
+        node = make_node("Gemm", ["A", "B"], ["Y"])
+        ref = ReferenceEvaluator(node)
+        got = ref.run(None, {"A": a, "B": b})[0]
+        assert got.dtype == a.dtype
+        assert_array_equal(got, np.matmul(a, b).astype(a.dtype))
+
+    @pytest.mark.parametrize("version", [13, 28, 29])
+    def test_gemm_version_dispatch(self, version):
+        model = parser.parse_model(f"""
+            <ir_version: 14, opset_import: ["" : {version}]>
+            g (float[2, 5] A, float[7, 5] B, float[7] C) => (float[2, 7] Y) {{
+                Y = Gemm <transB = 1> (A, B, C)
+            }}
+        """)
+        feeds = {
+            "A": np.ones((2, 5), dtype=np.float32),
+            "B": np.ones((7, 5), dtype=np.float32),
+            "C": np.ones((7,), dtype=np.float32),
+        }
+        ref = ReferenceEvaluator(model)
+        expected_class = "Gemm_29" if version == 29 else "Gemm_7"
+        assert ref.rt_nodes_[0].__class__.__name__ == expected_class
+        assert_array_equal(
+            ref.run(None, feeds)[0], np.full((2, 7), 6, dtype=np.float32)
+        )
+
+    @pytest.mark.parametrize(
+        ("a_shape", "b_shape", "c_shape"),
+        [
+            ((), (5, 7), (7,)),
+            ((2, 3, 5), (1, 5, 7), (7,)),
+            ((2, 3, 5), (5, 7), (2, 4, 7)),
+            ((5,), (5, 7), (1, 7)),
+        ],
+    )
+    def test_gemm_29_invalid_shapes(self, a_shape, b_shape, c_shape):
+        ref = ReferenceEvaluator(make_node("Gemm", ["A", "B", "C"], ["Y"]))
+        with pytest.raises(ValueError, match="Gemm input"):
+            ref.run(
+                None,
+                {
+                    "A": np.ones(a_shape, dtype=np.float32),
+                    "B": np.ones(b_shape, dtype=np.float32),
+                    "C": np.ones(c_shape, dtype=np.float32),
+                },
+            )
+
     m2_def = """
         <
             ir_version: 7,
@@ -397,6 +529,7 @@ class TestReferenceEvaluator:
 
     @staticmethod
     def _linear_regression(clip=False, opset=None, min_value=-1.0, max_value=1.0):
+        clip_input_opset = 11
         X = make_tensor_value_info("X", TensorProto.FLOAT, [None, None])
         A = make_tensor_value_info("A", TensorProto.FLOAT, [None, None])
         B = make_tensor_value_info("B", TensorProto.FLOAT, [None, None])
@@ -404,7 +537,7 @@ class TestReferenceEvaluator:
         node1 = make_node("MatMul", ["X", "A"], ["XA"])
         if clip:
             node2 = make_node("Add", ["XA", "B"], ["Y_clip"])
-            if opset is not None and opset < 11:
+            if opset is not None and opset < clip_input_opset:
                 if min_value:
                     if max_value:
                         node3 = make_node(
@@ -1632,6 +1765,7 @@ class TestReferenceEvaluator:
         assert_allclose(got[0], expected)
 
     def test_onnxt_runtime_bernoulli(self):
+        tolerance = 1e-5
         X = make_tensor_value_info("X", TensorProto.FLOAT, [None])
         Y = make_tensor_value_info("Y", TensorProto.FLOAT, [None])
         node1 = make_node("Bernoulli", ["X"], ["Y"], seed=0.0)
@@ -1642,8 +1776,8 @@ class TestReferenceEvaluator:
         got = sess.run(None, {"X": np.zeros((2, 4), dtype=np.float32) + 0.5})[0]
         assert got.shape == (2, 4)
         assert got.dtype == np.float32
-        assert got.min() > -1e-5
-        assert got.max() < 1 + 1e-5
+        assert got.min() > -tolerance
+        assert got.max() < 1 + tolerance
 
     def test_onnxt_runtime_random_uniform(self):
         Y = make_tensor_value_info("Y", TensorProto.FLOAT, [None])
@@ -1696,11 +1830,12 @@ class TestReferenceEvaluator:
         assert got.dtype == np.float32
 
     def test_eval_celu(self):
-        inst = Celu.create(alpha=0.5)
-        assert inst.alpha == 0.5
+        alpha = 0.5
+        inst = Celu.create(alpha=alpha)
+        assert inst.alpha == alpha
         x = np.array([[0, 1], [-1, 2]], dtype=np.float32)
-        y = Celu.eval(x, alpha=0.5)
-        expected = _vcelu1(x, alpha=0.5)
+        y = Celu.eval(x, alpha=alpha)
+        expected = _vcelu1(x, alpha=alpha)
         assert_allclose(y, expected)
 
     @pytest.mark.parametrize("op_type", ["Celu", "Elu", "Selu"])
@@ -1735,18 +1870,20 @@ class TestReferenceEvaluator:
         assert y.dtype == np.int64
 
     def test_eval_celu_load_op(self):
+        alpha = 0.5
         celu = load_op("", "Celu")
         assert celu.op_domain == ""
-        inst = celu.create(alpha=0.5)
-        assert inst.alpha == 0.5
+        inst = celu.create(alpha=alpha)
+        assert inst.alpha == alpha
         x = np.array([[0, 1], [-1, 2]], dtype=np.float32)
-        y = celu.eval(x, alpha=0.5)
-        expected = _vcelu1(x, alpha=0.5)
+        y = celu.eval(x, alpha=alpha)
+        expected = _vcelu1(x, alpha=alpha)
         assert_allclose(y, expected)
 
     def test_create_adam(self):
-        inst = Adam.create(alpha=0.5)
-        assert inst.alpha == 0.5
+        alpha = 0.5
+        inst = Adam.create(alpha=alpha)
+        assert inst.alpha == alpha
 
     @skip_if_no_onnxruntime
     def test_conv(self):
@@ -3098,6 +3235,33 @@ class TestReferenceEvaluator:
         got1 = ref1.run(None, feeds)
         assert_allclose(got1[0], expected)
 
+    @pytest.mark.parametrize(
+        "operator,tensor_type,size,index,expected",
+        [
+            ("HannWindow", TensorProto.FLOAT16, 32768, 24576, 0.5),
+            ("HammingWindow", TensorProto.FLOAT16, 16384, 12288, 25 / 46),
+            ("HannWindow", TensorProto.INT8, 64, 32, 1),
+        ],
+    )
+    def test_window_small_types(self, operator, tensor_type, size, index, expected):
+        node = make_node(
+            operator, ["size"], ["y"], periodic=1, output_datatype=tensor_type
+        )
+        inputs = [make_tensor_value_info("size", TensorProto.INT64, [])]
+        outputs = [make_tensor_value_info("y", tensor_type, [size])]
+        model = make_model(
+            make_graph([node], "test", inputs, outputs),
+            opset_imports=[make_opsetid("", 17)],
+        )
+        check_model(model, full_check=True)
+        result = ReferenceEvaluator(model).run(
+            None, {"size": np.array(size, dtype=np.int64)}
+        )[0]
+        dtype = onnx.helper.tensor_dtype_to_np_dtype(tensor_type)
+        assert result.dtype == dtype
+        assert np.isfinite(result).all()
+        assert result[index] == dtype.type(expected)
+
     def test_stft_with_window(self):
         signal = make_tensor_value_info("signal", TensorProto.FLOAT, [None, None, None])
         frame_step = make_tensor_value_info("frame_step", TensorProto.INT64, [None])
@@ -3495,7 +3659,8 @@ class TestReferenceEvaluator:
             make_tensor_value_info("scan_out", TensorProto.FLOAT, [None]),
         ]
 
-        if opset >= 18:
+        axes_input_opset = 18
+        if opset >= axes_input_opset:
             initializers.append(
                 from_array(np.array([1], dtype=np.int64), name="axis_red")
             )
@@ -3789,32 +3954,310 @@ class TestReferenceEvaluator:
                     raise AssertionError(
                         f"Shape mismatch for {reduce_op!r}, {baseline}:{a.shape} != {k}:{b.shape}."
                     )
+                tolerance = 1e-6
                 diff = np.abs(a - b).max()
-                if diff > 1e-6:
+                if diff > tolerance:
                     raise AssertionError(
                         f"Discrepancies (max={diff}) for {reduce_op!r}, {baseline} != {k}\n{a}\n!=\n{b}"
                     )
 
-    @pytest.mark.parametrize("opset", [13, 17, 18])
-    def test_mvn(self, opset: int, ref_opset: int = 13):
+    @pytest.mark.parametrize("opset", [13, 17, 18, 28, 29])
+    def test_mvn(self, opset: int):
         X = make_tensor_value_info("X", TensorProto.FLOAT, [None, None, None, None])
         Y = make_tensor_value_info("Y", TensorProto.FLOAT, [None, None, None, None])
         nodes = [
             make_node("MeanVarianceNormalization", ["X"], ["Y"]),
         ]
         graph = make_graph(nodes, "g", [X], [Y])
-        x = np.random.rand(3, 3, 3, 1).astype(np.float32)
+        x = np.random.default_rng(75).random((3, 3, 3, 1)).astype(np.float32)
 
         onnx_model = make_model(graph, opset_imports=[make_opsetid("", opset)])
         ref = ReferenceEvaluator(onnx_model)
         got = ref.run(None, {"X": x})[0]
 
-        ref_onnx_model = make_model(graph, opset_imports=[make_opsetid("", ref_opset)])
-        ref_expected = ReferenceEvaluator(ref_onnx_model)
-        expected = ref_expected.run(None, {"X": x})[0]
+        mean = np.mean(x, axis=(0, 2, 3), keepdims=True)
+        centered = x - mean
+        if opset >= 29:
+            variance = np.mean(np.square(centered), axis=(0, 2, 3), keepdims=True)
+        else:
+            variance = np.mean(np.square(x), axis=(0, 2, 3), keepdims=True) - np.square(
+                mean
+            )
+        expected = centered / (np.sqrt(variance) + np.float32(1e-9))
 
         assert got.shape == expected.shape
+        assert_allclose(got, expected, rtol=1e-6)
+
+    @pytest.mark.parametrize("opset", [9, 13, 28])
+    @pytest.mark.parametrize("values", [[1.0, 1.0], [1.0, 3.0]])
+    @pytest.mark.parametrize(
+        ("tensor_type", "dtype"),
+        [("float16", np.float16), ("bfloat16", ml_dtypes.bfloat16)],
+    )
+    def test_mvn_legacy_low_precision_dtype(
+        self, opset, values, tensor_type, dtype
+    ) -> None:
+        model = parser.parse_model(
+            f"""
+            <ir_version: 13, opset_import: ["" : {opset}]>
+            mvn ({tensor_type}[2] X) => ({tensor_type}[2] Y) {{
+                A = MeanVarianceNormalization <axes = [0]> (X)
+                Y = Add (A, X)
+            }}
+            """
+        )
+        x = np.array(values, dtype=dtype)
+        centered = x - np.mean(x, keepdims=True, dtype=x.dtype)
+        variance = np.mean(np.square(x), keepdims=True, dtype=x.dtype) - np.square(
+            np.mean(x, keepdims=True, dtype=x.dtype)
+        )
+        with np.errstate(divide="ignore", invalid="ignore"):
+            expected = centered / (np.sqrt(variance) + dtype(1e-9)) + x
+            got = ReferenceEvaluator(model).run(None, {"X": x})[0]
+            converted = onnx.version_converter.convert_version(model, 29)
+            check_model(converted, full_check=True)
+            upgraded = ReferenceEvaluator(converted).run(None, {"X": x})[0]
+        assert got.dtype == x.dtype
+        assert upgraded.dtype == x.dtype
+        assert_allclose(got.astype(np.float32), expected.astype(np.float32))
+        assert_allclose(upgraded.astype(np.float32), got.astype(np.float32))
+
+    @pytest.mark.parametrize(
+        ("tensor_type", "dtype"),
+        [
+            (TensorProto.FLOAT16, np.float16),
+            (TensorProto.BFLOAT16, ml_dtypes.bfloat16),
+            (TensorProto.FLOAT, np.float32),
+            (TensorProto.DOUBLE, np.float64),
+        ],
+    )
+    def test_mvn_opset29_custom_epsilon_and_dtype(self, tensor_type, dtype) -> None:
+        x_info = make_tensor_value_info("X", tensor_type, [2, 3, 4])
+        y_info = make_tensor_value_info("Y", tensor_type, [2, 3, 4])
+        node = make_node(
+            "MeanVarianceNormalization",
+            ["X"],
+            ["Y"],
+            axes=[1, -1],
+            epsilon=1e-5,
+        )
+        graph = make_graph([node], "g", [x_info], [y_info])
+        model = make_model(graph, opset_imports=[make_opsetid("", 29)])
+        x = np.arange(24, dtype=dtype).reshape(2, 3, 4)
+
+        got = ReferenceEvaluator(model).run(None, {"X": x})[0]
+        compute_x = (
+            x.astype(np.float32) if dtype in (np.float16, ml_dtypes.bfloat16) else x
+        )
+        mean = np.mean(compute_x, axis=(1, -1), keepdims=True)
+        centered = compute_x - mean
+        variance = np.mean(np.square(centered), axis=(1, -1), keepdims=True)
+        expected = (centered / (np.sqrt(variance) + 1e-5)).astype(dtype)
+
+        assert got.dtype == x.dtype
+        if dtype == ml_dtypes.bfloat16:
+            assert_allclose(
+                got.astype(np.float32),
+                expected.astype(np.float32),
+                rtol=1e-3,
+                atol=1e-4,
+            )
+        else:
+            assert_allclose(got, expected, rtol=1e-3, atol=1e-4)
+
+    def test_mvn_opset29_high_offset_low_spread(self) -> None:
+        x_info = make_tensor_value_info("X", TensorProto.FLOAT, [3])
+        y_info = make_tensor_value_info("Y", TensorProto.FLOAT, [3])
+        node = make_node(
+            "MeanVarianceNormalization",
+            ["X"],
+            ["Y"],
+            axes=[0],
+            epsilon=1e-5,
+        )
+        graph = make_graph([node], "g", [x_info], [y_info])
+        model = make_model(graph, opset_imports=[make_opsetid("", 29)])
+        x = np.array([1e6 - 0.25, 1e6, 1e6 + 0.25], dtype=np.float32)
+
+        got = ReferenceEvaluator(model).run(None, {"X": x})[0]
+        centered = x - np.mean(x)
+        expected = centered / (np.sqrt(np.mean(np.square(centered))) + 1e-5)
+
+        assert np.all(np.isfinite(got))
+        assert_allclose(got, expected, rtol=1e-5, atol=1e-5)
+
+    def test_mvn_opset29_float16_default_epsilon_is_nonzero(self) -> None:
+        x_info = make_tensor_value_info("X", TensorProto.FLOAT16, [2])
+        y_info = make_tensor_value_info("Y", TensorProto.FLOAT16, [2])
+        node = make_node("MeanVarianceNormalization", ["X"], ["Y"], axes=[0])
+        graph = make_graph([node], "g", [x_info], [y_info])
+        model = make_model(graph, opset_imports=[make_opsetid("", 29)])
+
+        got = ReferenceEvaluator(model).run(None, {"X": np.ones(2, dtype=np.float16)})[
+            0
+        ]
+
+        assert_allclose(got, np.zeros(2, dtype=np.float16), rtol=0, atol=0)
+
+    def test_mvn_opset29_unannotated_node(self) -> None:
+        node = make_node(
+            "MeanVarianceNormalization",
+            ["X"],
+            ["Y"],
+            axes=[0],
+            epsilon=1e-5,
+        )
+        x = np.array([1.0, 2.0, 4.0], dtype=np.float32)
+
+        got = ReferenceEvaluator(node).run(None, {"X": x})[0]
+        centered = x - np.mean(x)
+        expected = centered / (np.sqrt(np.mean(np.square(centered))) + 1e-5)
+
         assert_allclose(got, expected)
+
+    @pytest.mark.parametrize("opset", [9, 13, 18, 28, 29])
+    def test_mvn_empty_axes(self, opset: int) -> None:
+        model = onnx.parser.parse_model(
+            f"""
+            <ir_version: 13, opset_import: ["" : {opset}]>
+            mvn (float[2] X) => (float[2] Y) {{
+                Y = MeanVarianceNormalization <axes: ints = []> (X)
+            }}
+            """
+        )
+        x = np.array([1.0, 3.0], dtype=np.float32)
+        got = ReferenceEvaluator(model).run(None, {"X": x})[0]
+        assert_allclose(got, [-1.0, 1.0])
+
+    @pytest.mark.parametrize(
+        ("tensor_type", "dtype", "value"),
+        [
+            ("float16", np.float16, 60000.0),
+            ("bfloat16", ml_dtypes.bfloat16, 3e38),
+            ("float", np.float32, 3e38),
+            ("double", np.float64, 1e308),
+        ],
+    )
+    def test_mvn_opset29_large_constant(self, tensor_type, dtype, value) -> None:
+        model = onnx.parser.parse_model(
+            f"""
+            <ir_version: 13, opset_import: ["" : 29]>
+            mvn ({tensor_type}[2] X) => ({tensor_type}[2] Y) {{
+                Y = MeanVarianceNormalization <axes = [0]> (X)
+            }}
+            """
+        )
+        x = np.full(2, value, dtype=dtype)
+
+        class MeanVarianceNormalization(OpRunExpand):
+            op_domain = ""
+
+        for new_ops in (None, [MeanVarianceNormalization]):
+            got = ReferenceEvaluator(model, new_ops=new_ops).run(None, {"X": x})[0]
+            assert got.dtype == x.dtype
+            assert_allclose(got.astype(np.float64), np.zeros(2), rtol=0, atol=0)
+
+    def test_mvn_opset29_large_variance(self) -> None:
+        model = onnx.parser.parse_model(
+            """
+            <ir_version: 13, opset_import: ["" : 29]>
+            mvn (float[4] X) => (float[4] Y) {
+                Y = MeanVarianceNormalization <axes = [0]> (X)
+            }
+            """
+        )
+        x = np.array([1e19, -1e19, 1e19, -1e19], dtype=np.float32)
+
+        class MeanVarianceNormalization(OpRunExpand):
+            op_domain = ""
+
+        for new_ops in (None, [MeanVarianceNormalization]):
+            got = ReferenceEvaluator(model, new_ops=new_ops).run(None, {"X": x})[0]
+            assert_allclose(got, [1.0, -1.0, 1.0, -1.0])
+
+    def test_mvn_opset29_unannotated_function_with_linked_epsilon(self) -> None:
+        domain = "local"
+        x_info = make_tensor_value_info("X", TensorProto.FLOAT, [3])
+        y_info = make_tensor_value_info("Y", TensorProto.FLOAT, [3])
+        epsilon_ref = onnx.helper.make_attribute_ref(
+            "epsilon", AttributeProto.FLOAT, ref_attr_name="function_epsilon"
+        )
+        mvn_node = make_node("MeanVarianceNormalization", ["X"], ["Y"], axes=[0])
+        mvn_node.attribute.append(epsilon_ref)
+        function = make_function(
+            domain,
+            "LocalMVN",
+            ["X"],
+            ["Y"],
+            [mvn_node],
+            [make_opsetid("", 29)],
+            attributes=["function_epsilon"],
+            value_info=[x_info, y_info],
+        )
+        call = make_node(
+            "LocalMVN",
+            ["X"],
+            ["Y"],
+            domain=domain,
+            function_epsilon=0.5,
+        )
+        model = make_model(
+            make_graph([call], "g", [x_info], [y_info]),
+            functions=[function],
+            opset_imports=[make_opsetid("", 29), make_opsetid(domain, 1)],
+        )
+        x = np.array([1.0, 2.0, 4.0], dtype=np.float32)
+
+        got = ReferenceEvaluator(model).run(None, {"X": x})[0]
+        centered = x - np.mean(x)
+        expected = centered / (np.sqrt(np.mean(np.square(centered))) + 0.5)
+
+        assert_allclose(got, expected)
+
+        class MeanVarianceNormalization(OpRunExpand):
+            op_domain = ""
+
+        expanded = ReferenceEvaluator(model, new_ops=[MeanVarianceNormalization]).run(
+            None, {"X": x}
+        )[0]
+        assert_allclose(expanded, expected)
+
+    @pytest.mark.parametrize("epsilon", [1e-46, 1e-5])
+    def test_mvn_opset29_python_linked_epsilon_float_rounding(self, epsilon) -> None:
+        node = make_node("MeanVarianceNormalization", ["X"], ["Y"], axes=[0])
+        node.attribute.append(
+            onnx.helper.make_attribute_ref(
+                "epsilon", AttributeProto.FLOAT, ref_attr_name="function_epsilon"
+            )
+        )
+        function = make_function(
+            "local",
+            "LocalMVN",
+            ["X"],
+            ["Y"],
+            [node],
+            [make_opsetid("", 29)],
+            attributes=["function_epsilon"],
+            value_info=[
+                make_tensor_value_info("X", TensorProto.DOUBLE, [2]),
+                make_tensor_value_info("Y", TensorProto.DOUBLE, [2]),
+            ],
+        )
+        x = np.array([0.0, 2e-46], dtype=np.float64)
+        centered = x - np.mean(x)
+        expected = centered / (
+            np.sqrt(np.mean(np.square(centered))) + np.float64(np.float32(epsilon))
+        )
+
+        class MeanVarianceNormalization(OpRunExpand):
+            op_domain = ""
+
+        for new_ops in (None, [MeanVarianceNormalization]):
+            got = ReferenceEvaluator(function, new_ops=new_ops).run(
+                None, {"X": x}, attributes={"function_epsilon": epsilon}
+            )[0]
+            assert got.dtype == x.dtype
+            assert_allclose(got, expected, rtol=1e-15, atol=0)
 
     def test_concat_in_a_function(self):
         def create_model():
@@ -4898,6 +5341,119 @@ class TestReferenceEvaluator:
         r = got[0]
         assert isinstance(r, np.ndarray)
         assert r.shape == ()
+
+    @pytest.mark.parametrize("opset", [17, 18])
+    @pytest.mark.parametrize(
+        "data, expected",
+        [
+            (
+                np.array([[1e30, 1e30]], dtype=np.float32),
+                np.array([[np.sqrt(2) * 1e30]], dtype=np.float32),
+            ),
+            (
+                np.array([[1e-30, 1e-30]], dtype=np.float32),
+                np.array([[np.sqrt(2) * 1e-30]], dtype=np.float32),
+            ),
+            (
+                np.array([[1e200, 1e200]], dtype=np.float64),
+                np.array([[np.sqrt(2) * 1e200]], dtype=np.float64),
+            ),
+            (
+                np.array([[1e-200, 1e-200]], dtype=np.float64),
+                np.array([[np.sqrt(2) * 1e-200]], dtype=np.float64),
+            ),
+        ],
+    )
+    def test_reduce_l2_finite_range(self, opset, data, expected):
+        tensor_type = (
+            TensorProto.FLOAT if data.dtype == np.float32 else TensorProto.DOUBLE
+        )
+        X = make_tensor_value_info("X", tensor_type, [1, 2])
+        Y = make_tensor_value_info("Y", tensor_type, [1, 1])
+        if opset < 18:
+            node = make_node("ReduceL2", ["X"], ["Y"], axes=[1], keepdims=1)
+            inputs = [X]
+            feeds = {"X": data}
+        else:
+            A = make_tensor_value_info("axes", TensorProto.INT64, [1])
+            node = make_node("ReduceL2", ["X", "axes"], ["Y"], keepdims=1)
+            inputs = [X, A]
+            feeds = {"X": data, "axes": np.array([1], dtype=np.int64)}
+        model = make_model(
+            make_graph([node], "reduce_l2_finite_range", inputs, [Y]),
+            opset_imports=[make_opsetid("", opset)],
+        )
+
+        got = ReferenceEvaluator(model).run(None, feeds)[0]
+        assert_allclose(got, expected, rtol=1e-6, atol=0)
+
+    @pytest.mark.parametrize("exponent", [-100, 100])
+    @pytest.mark.parametrize("keepdims", [0, 1])
+    def test_reduce_l2_bfloat16_finite_range(self, exponent, keepdims):
+        data = np.array([[2.0**exponent, -(2.0**exponent)]], dtype=ml_dtypes.bfloat16)
+        expected = np.array(
+            [math.hypot(*(float(x) for x in data[0]))], dtype=ml_dtypes.bfloat16
+        )
+        if keepdims:
+            expected = expected[:, None]
+        X = make_tensor_value_info("X", TensorProto.BFLOAT16, [1, 2])
+        A = make_tensor_value_info("axes", TensorProto.INT64, [1])
+        Y = make_tensor_value_info("Y", TensorProto.BFLOAT16, list(expected.shape))
+        model = make_model(
+            make_graph(
+                [make_node("ReduceL2", ["X", "axes"], ["Y"], keepdims=keepdims)],
+                "reduce_l2_bfloat16_finite_range",
+                [X, A],
+                [Y],
+            ),
+            opset_imports=[make_opsetid("", 18)],
+        )
+        check_model(model)
+        got = ReferenceEvaluator(model).run(
+            None, {"X": data, "axes": np.array([1], dtype=np.int64)}
+        )[0]
+        assert got.dtype == data.dtype
+        assert got.shape == expected.shape
+        assert_array_equal(got.astype(np.float32), expected.astype(np.float32))
+
+    @pytest.mark.parametrize(
+        "dtype", [np.float16, np.float32, np.float64, ml_dtypes.bfloat16]
+    )
+    @pytest.mark.parametrize("keepdims", [0, 1])
+    @pytest.mark.parametrize(
+        "data, expected",
+        [
+            ([[0, 0], [0, -0.0]], [0, 0]),
+            (np.empty((2, 0)), [0, 0]),
+            (np.empty((0, 2)), np.empty(0)),
+            ([[3, 4], [np.inf, 0], [0, np.nan], [0, 0]], [5, np.inf, np.nan, 0]),
+        ],
+    )
+    def test_reduce_l2_nonfinite_and_empty(self, dtype, keepdims, data, expected):
+        data = np.array(data, dtype=dtype)
+        expected = np.array(expected, dtype=dtype)
+        if keepdims:
+            expected = expected[:, None]
+        tensor_type = onnx.helper.np_dtype_to_tensor_dtype(data.dtype)
+        X = make_tensor_value_info("X", tensor_type, list(data.shape))
+        A = make_tensor_value_info("axes", TensorProto.INT64, [1])
+        Y = make_tensor_value_info("Y", tensor_type, list(expected.shape))
+        model = make_model(
+            make_graph(
+                [make_node("ReduceL2", ["X", "axes"], ["Y"], keepdims=keepdims)],
+                "reduce_l2_nonfinite_and_empty",
+                [X, A],
+                [Y],
+            ),
+            opset_imports=[make_opsetid("", 18)],
+        )
+        check_model(model)
+        got = ReferenceEvaluator(model).run(
+            None, {"X": data, "axes": np.array([1], dtype=np.int64)}
+        )[0]
+        assert got.dtype == data.dtype
+        assert got.shape == expected.shape
+        assert_array_equal(got.astype(np.float64), expected.astype(np.float64))
 
     @pytest.mark.parametrize("op", ["ReduceLogSum", "ReduceLogSumExp"])
     @pytest.mark.parametrize("opset", [13, 18, onnx_opset_version()])
@@ -6318,7 +6874,8 @@ class TestReferenceEvaluator:
         )
         ref = ReferenceEvaluator(model)
         got = ref.run(None, feeds)
-        assert len(got) == 3
+        expected_output_count = 3
+        assert len(got) == expected_output_count
         for i in range(2, -1, -1):
             assert_allclose(got[i], expected[i])
 
@@ -6574,6 +7131,35 @@ class TestReferenceEvaluator:
         )
 
         np.testing.assert_array_equal(np.array(expected_values, dtype=dtype), got[0])
+
+    @pytest.mark.parametrize(
+        ("a_value", "expected"),
+        [
+            # x / y_scale = 0.5, y_zero_point = 1.
+            # Spec: rint(0.5) + 1 = 1. Rounding the sum yields rint(1.5) = 2.
+            (1, 1),
+            # x / y_scale = 2.5. Spec: rint(2.5) + 1 = 3. Sum-then-round: rint(3.5) = 4.
+            (5, 3),
+            # x / y_scale = -1.5. Spec: rint(-1.5) + 1 = -1. Sum-then-round: rint(-0.5) = 0.
+            (-3, -1),
+        ],
+    )
+    def test_qlinearmatmul_rounds_before_odd_zero_point(self, a_value, expected):
+        # b_scale is 1/2, exact in float32, so the quotient is a half-integer.
+        feeds = {
+            "a": np.array([[a_value]], dtype=np.int8),
+            "a_scale": np.array([1.0], dtype=np.float32),
+            "a_zero_point": np.array([0], dtype=np.int8),
+            "b": np.array([[1]], dtype=np.int8),
+            "b_scale": np.array([0.5], dtype=np.float32),
+            "b_zero_point": np.array([0], dtype=np.int8),
+            "y_scale": np.array([1.0], dtype=np.float32),
+            "y_zero_point": np.array([1], dtype=np.int8),
+        }
+        got = self._run_qlinear_int8(
+            "QLinearMatMul", feeds, ([1, 1], [1, 1]), [1, 1], opset=21
+        )
+        np.testing.assert_array_equal(np.array([[expected]], dtype=np.int8), got)
 
     @pytest.mark.parametrize(
         "x, pattern, expected, expected_shape",
@@ -7515,8 +8101,7 @@ class TestReferenceEvaluator:
         # A fully-masked row (all `-inf`) must softmax to all-zeros without
         # producing NaN or emitting a NumPy warning.
         x = np.array([[0.0, 1.0, 2.0], [-np.inf, -np.inf, -np.inf]], dtype=np.float64)
-        with warnings.catch_warnings():
-            warnings.simplefilter("error")
+        with warnings.catch_warnings(action="error"):
             got = _softmax(x)
         assert not np.isnan(got).any()
         assert_allclose(got[1], np.zeros(3, dtype=np.float64))
@@ -8215,6 +8800,91 @@ class TestReferenceEvaluator:
         got = ReferenceEvaluator(node).run(None, {"X": x})[0]
         assert got.dtype == expected.dtype
         assert_array_equal(got.astype(np.int8), expected.astype(np.int8))
+
+    @staticmethod
+    def _non_max_suppression_boxes_and_scores() -> tuple[np.ndarray, np.ndarray]:
+        # Same boxes and scores as test_nonmaxsuppression_suppress_by_IOU.
+        boxes = np.array(
+            [
+                [
+                    [0.0, 0.0, 1.0, 1.0],
+                    [0.0, 0.1, 1.0, 1.1],
+                    [0.0, -0.1, 1.0, 0.9],
+                    [0.0, 10.0, 1.0, 11.0],
+                    [0.0, 10.1, 1.0, 11.1],
+                    [0.0, 100.0, 1.0, 101.0],
+                ]
+            ],
+            dtype=np.float32,
+        )
+        scores = np.array([[[0.9, 0.75, 0.6, 0.95, 0.5, 0.3]]], dtype=np.float32)
+        return boxes, scores
+
+    @pytest.mark.parametrize("shape", [(), (1,)], ids=["0d", "1d"])
+    def test_non_max_suppression_scalar_inputs(self, shape) -> None:
+        # max_output_boxes_per_class, iou_threshold and score_threshold are
+        # scalars in the spec; 1-D tensors holding one element are accepted too.
+        boxes, scores = self._non_max_suppression_boxes_and_scores()
+        node = make_node(
+            "NonMaxSuppression",
+            [
+                "boxes",
+                "scores",
+                "max_output_boxes_per_class",
+                "iou_threshold",
+                "score_threshold",
+            ],
+            ["selected_indices"],
+        )
+        (got,) = ReferenceEvaluator(node).run(
+            None,
+            {
+                "boxes": boxes,
+                "scores": scores,
+                "max_output_boxes_per_class": np.full(shape, 3, dtype=np.int64),
+                "iou_threshold": np.full(shape, 0.5, dtype=np.float32),
+                "score_threshold": np.full(shape, 0.4, dtype=np.float32),
+            },
+        )
+        assert_array_equal(got, np.array([[0, 0, 3], [0, 0, 0]], dtype=np.int64))
+
+    @pytest.mark.parametrize(
+        ("optional_inputs", "expected"),
+        [
+            # max_output_boxes_per_class defaults to 0, which means no output.
+            ({}, []),
+            # iou_threshold defaults to 0, so any overlap suppresses a box.
+            (
+                {"max_output_boxes_per_class": np.array(3, dtype=np.int64)},
+                [[0, 0, 3], [0, 0, 0], [0, 0, 5]],
+            ),
+            (
+                {
+                    "max_output_boxes_per_class": np.array(3, dtype=np.int64),
+                    "score_threshold": np.array(0.4, dtype=np.float32),
+                },
+                [[0, 0, 3], [0, 0, 0]],
+            ),
+        ],
+        ids=["all_omitted", "thresholds_omitted", "iou_threshold_omitted"],
+    )
+    def test_non_max_suppression_omitted_optional_inputs(
+        self, optional_inputs, expected
+    ) -> None:
+        boxes, scores = self._non_max_suppression_boxes_and_scores()
+        input_names = ["boxes", "scores"] + [
+            name if name in optional_inputs else ""
+            for name in (
+                "max_output_boxes_per_class",
+                "iou_threshold",
+                "score_threshold",
+            )
+        ]
+        node = make_node("NonMaxSuppression", input_names, ["selected_indices"])
+        (got,) = ReferenceEvaluator(node).run(
+            None, {"boxes": boxes, "scores": scores, **optional_inputs}
+        )
+        assert_array_equal(got, np.array(expected, dtype=np.int64).reshape(-1, 3))
 
 
 class TestReferenceEvaluatorShapeAnnotationChecking:
