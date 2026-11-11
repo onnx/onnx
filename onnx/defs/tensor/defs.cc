@@ -178,45 +178,6 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::all_non_string_tensor_types_ir13(),
             "Constrain output types. Bitcasting to string is not supported.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-          auto get_bit_size = [](int element_type) -> int {
-            switch (element_type) {
-              case TensorProto::FLOAT:
-              case TensorProto::INT32:
-              case TensorProto::UINT32:
-                return 32;
-              case TensorProto::DOUBLE:
-              case TensorProto::INT64:
-              case TensorProto::UINT64:
-              case TensorProto::COMPLEX64:
-                return 64;
-              case TensorProto::COMPLEX128:
-                return 128;
-              case TensorProto::FLOAT16:
-              case TensorProto::BFLOAT16:
-              case TensorProto::INT16:
-              case TensorProto::UINT16:
-                return 16;
-              case TensorProto::INT8:
-              case TensorProto::UINT8:
-              case TensorProto::BOOL:
-              case TensorProto::FLOAT8E4M3FN:
-              case TensorProto::FLOAT8E4M3FNUZ:
-              case TensorProto::FLOAT8E5M2:
-              case TensorProto::FLOAT8E5M2FNUZ:
-              case TensorProto::FLOAT8E8M0:
-                return 8;
-              case TensorProto::INT4:
-              case TensorProto::UINT4:
-              case TensorProto::FLOAT4E2M1:
-                return 4;
-              case TensorProto::INT2:
-              case TensorProto::UINT2:
-                return 2;
-              default:
-                return 0;
-            }
-          };
-
           // Validate that input and output types have the same bit-width
           auto input_type = ctx.getInputType(0);
           if (input_type && input_type->has_tensor_type()) {
@@ -224,9 +185,9 @@ ONNX_OPERATOR_SET_SCHEMA(
             auto* to_attr = ctx.getAttribute("to");
             if (to_attr) {
               auto output_element_type = static_cast<int32_t>(to_attr->i());
-              int input_element_bit_size = get_bit_size(input_element_type);
-              int output_element_bit_size = get_bit_size(output_element_type);
-              if (input_element_bit_size != 0 && output_element_bit_size != 0 &&
+              int64_t input_element_bit_size = ElementBitWidth(input_element_type);
+              int64_t output_element_bit_size = ElementBitWidth(output_element_type);
+              if (input_element_bit_size > 0 && output_element_bit_size > 0 &&
                   input_element_bit_size != output_element_bit_size) {
                 fail_shape_inference(
                     "BitCast requires input and output types to have the same bit-width, but input type has ",
@@ -1127,48 +1088,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-ONNX_OPERATOR_SET_SCHEMA(
-    ScatterND,
-    18,
-    OpSchema()
-        .SetDoc(kDoc_ScatterND_ver18)
-        .Attr(
-            "reduction",
-            "Type of reduction to apply: none (default), add, mul, max, min. "
-            "'none': no reduction applied. "
-            "'add':  reduction using the addition operation. "
-            "'mul':  reduction using the addition operation. "
-            "'max': reduction using the maximum operation."
-            "'min': reduction using the minimum operation.",
-            AttributeProto::STRING,
-            std::string("none"))
-        .Input(0, "data", "Tensor of rank r >= 1.", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
-        .Input(
-            1,
-            "indices",
-            "Tensor of rank q >= 1.",
-            "tensor(int64)",
-            OpSchema::Single,
-            true,
-            1,
-            OpSchema::NonDifferentiable)
-        .Input(
-            2,
-            "updates",
-            "Tensor of rank q + r - indices_shape[-1] - 1.",
-            "T",
-            OpSchema::Single,
-            true,
-            1,
-            OpSchema::Differentiable)
-        .Output(0, "output", "Tensor of rank r >= 1.", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
-        .TypeConstraint("T", OpSchema::all_tensor_types_ir4(), "Constrain input and output types to any tensor type.")
-        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-          propagateElemTypeFromInputToOutput(ctx, 0, 0);
-          if (hasNInputShapes(ctx, 1)) {
-            propagateShapeFromInputToOutput(ctx, 0, 0);
-          }
-        }));
+ONNX_OPERATOR_SET_SCHEMA(ScatterND, 29, ScatterNDSchema(true));
 
 ONNX_OPERATOR_SET_SCHEMA(
     ScatterElements,
@@ -2784,89 +2704,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-ONNX_OPERATOR_SET_SCHEMA(
-    GatherND,
-    13,
-    OpSchema()
-        .SetDoc(kDoc_GatherND_ver13)
-        .Attr(
-            "batch_dims",
-            "The number of batch dimensions. The gather of indexing starts from dimension of data[batch_dims:]",
-            AttributeProto::INT,
-            static_cast<int64_t>(0))
-        .Input(0, "data", "Tensor of rank r >= 1.", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
-        .Input(
-            1,
-            "indices",
-            "Tensor of rank q >= 1. All index values are expected to be within bounds [-s, s-1] "
-            "along axis of size s. It is an error if any of the index values are out of bounds.",
-            "tensor(int64)",
-            OpSchema::Single,
-            true,
-            1,
-            OpSchema::NonDifferentiable)
-        .Output(
-            0,
-            "output",
-            "Tensor of rank q + r - indices_shape[-1] - 1.",
-            "T",
-            OpSchema::Single,
-            true,
-            1,
-            OpSchema::Differentiable)
-        .TypeConstraint("T", OpSchema::all_tensor_types_ir4(), "Constrain input and output types to any tensor type.")
-        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-          // Type inference
-          propagateElemTypeFromInputToOutput(ctx, 0, 0);
-
-          // Shape inference
-          if (!hasNInputShapes(ctx, 2)) {
-            // cannot proceed with shape or rank inference
-            return;
-          }
-
-          const auto& data_shape = ctx.getInputType(0)->tensor_type().shape();
-          const auto data_rank = data_shape.dim_size();
-
-          const auto& indices_shape = ctx.getInputType(1)->tensor_type().shape();
-          const auto indices_rank = indices_shape.dim_size();
-
-          int64_t batch_dims_data = getAttribute(ctx, "batch_dims", 0);
-          if (data_rank < 1 || indices_rank < 1) {
-            fail_shape_inference(
-                "Both `data` and `indices` input tensors in GatherND op "
-                "need to have rank larger than 0.");
-          }
-          if (batch_dims_data < 0) {
-            fail_shape_inference("attribute 'batch_dims' of 'GatherND' must not be negative");
-          }
-
-          // cannot ascertain if the input shapes are valid if shape of
-          // `indices` is missing last dimension value so return at this point
-          if (!indices_shape.dim(indices_rank - 1).has_dim_value()) {
-            return;
-          }
-
-          const auto indices_last_dim = indices_shape.dim(indices_rank - 1).dim_value();
-          if (indices_last_dim < 0) {
-            fail_shape_inference("Last dimension of `indices` input tensor in GatherND op must not be negative");
-          }
-          const auto last_index_dimension = checkedAdd(indices_last_dim, batch_dims_data);
-
-          if (last_index_dimension > data_rank) {
-            fail_shape_inference(
-                "Last dimension of `indices` input tensor in GatherND op "
-                "must not be larger than the rank of `data` tensor");
-          }
-
-          for (int i = 0; i < indices_rank - 1; ++i) {
-            *ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape()->add_dim() = indices_shape.dim(i);
-          }
-
-          for (auto i = last_index_dimension; i < data_rank; ++i) {
-            *ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape()->add_dim() = data_shape.dim(i);
-          }
-        }));
+ONNX_OPERATOR_SET_SCHEMA(GatherND, 29, GatherNDSchema(true));
 
 ONNX_OPERATOR_SET_SCHEMA(
     Pad,

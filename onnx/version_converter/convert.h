@@ -12,6 +12,7 @@
 #include <map>
 #include <memory>
 #include <string>
+#include <string_view>
 #include <unordered_map>
 #include <utility>
 #include <vector>
@@ -32,12 +33,15 @@
 #include "onnx/version_converter/adapters/compatible.h"
 #include "onnx/version_converter/adapters/dropout_11_12.h"
 #include "onnx/version_converter/adapters/extend_supported_types.h"
+#include "onnx/version_converter/adapters/gemm_29_28.h"
 #include "onnx/version_converter/adapters/gemm_6_7.h"
 #include "onnx/version_converter/adapters/gemm_7_6.h"
 #include "onnx/version_converter/adapters/gridsample_19_20.h"
 #include "onnx/version_converter/adapters/group_normalization_20_21.h"
 #include "onnx/version_converter/adapters/group_normalization_21_20.h"
 #include "onnx/version_converter/adapters/maxpool_8_7.h"
+#include "onnx/version_converter/adapters/mean_variance_normalization_29_28.h"
+#include "onnx/version_converter/adapters/nd_indices_29_28.h"
 #include "onnx/version_converter/adapters/no_previous_version.h"
 #include "onnx/version_converter/adapters/optional_ops.h"
 #include "onnx/version_converter/adapters/pad_10_11.h"
@@ -91,7 +95,7 @@ class DefaultVersionConverter : public BaseVersionConverter {
          (version_it->second.find(curr_version + step) != version_it->second.end() && up));
   }
 
-  void debug(const std::string& str) const {
+  void debug(std::string_view str) const {
     if (DEBUG)
       std::cerr << str << '\n';
   }
@@ -104,15 +108,6 @@ class DefaultVersionConverter : public BaseVersionConverter {
         " and ",
         version_range.second,
         ")")
-  }
-
-  void assertDefaultDomain(const std::string& initial_domain, const std::string& target_domain) const {
-    ONNX_ASSERTM(
-        (initial_domain.empty() || initial_domain == "ai.onnx") &&
-            (target_domain.empty() || target_domain == "ai.onnx"),
-        "Warning: default onnx version converter can only convert "
-        " between default domain opset versions ('' or 'ai.onnx')\n")
-    ONNX_ASSERTM(initial_domain == target_domain, "initial_version and target_version must have the same domains")
   }
 
   void convert_graph(const std::shared_ptr<Graph>& g, const OpSetID& initial_version, const OpSetID& target_version)
@@ -1126,6 +1121,18 @@ class DefaultVersionConverter : public BaseVersionConverter {
     // Downgrading needs no restriction: opset 27 accepts a superset of the v28 float-only types.
     registerAdapter(std::make_unique<CompatibleAdapter>("ReduceLogSum", OpSetID(28), OpSetID(27)));
     registerAdapter(std::make_unique<CompatibleAdapter>("ReduceLogSumExp", OpSetID(28), OpSetID(27)));
+
+    /******** 28 -> 29 ********/
+    registerAdapter(std::make_unique<MeanVarianceNormalization_28_29>());
+    registerAdapter(std::make_unique<CompatibleAdapter>("Gemm", OpSetID(28), OpSetID(29)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("GatherND", OpSetID(28), OpSetID(29)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("ScatterND", OpSetID(28), OpSetID(29)));
+
+    /******** 29 -> 28 ********/
+    registerAdapter(std::make_unique<MeanVarianceNormalization_29_28>());
+    registerAdapter(std::make_unique<Gemm_29_28>());
+    registerAdapter(std::make_unique<NDIndices_29_28>("GatherND"));
+    registerAdapter(std::make_unique<NDIndices_29_28>("ScatterND"));
   }
 
   ModelProto convert_version(const ModelProto& mp_in, const OpSetID& initial_version, const OpSetID& target_version)
