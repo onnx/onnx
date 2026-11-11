@@ -7,7 +7,9 @@
 
 #pragma once
 
+#include <atomic>
 #include <cmath>
+#include <cstdint>
 #include <string>
 #include <utility>
 #include <vector>
@@ -18,8 +20,59 @@
 
 namespace ONNX_NAMESPACE {
 
+// Lazily-minted per-Tensor id. A newly constructed or assigned-to object
+// always starts (or resets to) unassigned; a move additionally invalidates
+// the moved-from source, self-move included, since it may go on to hold
+// different content under the same id otherwise. This makes tensor_id()
+// safe to key a cache on instead of &tensor, which can alias a stale entry
+// onto an unrelated tensor reusing a freed address (e.g. via
+// Graph::eraseInitializer). See
+// onnxoptimizer/passes/tensor_content_hash.h's TensorContentDigest cache,
+// the motivating consumer. Wrapped in its own class so Tensor keeps fully
+// compiler-generated special member functions. The minting counter is
+// atomic, so ids stay globally unique even when different Tensors mint
+// concurrently on different threads. id_ itself is plain: a single Tensor
+// (and so a single LazyTensorId) must not be accessed from more than one
+// thread at a time without external synchronization, same as the rest of
+// Tensor and Graph.
+class LazyTensorId {
+ public:
+  LazyTensorId() = default;
+  ~LazyTensorId() = default;
+  LazyTensorId(const LazyTensorId& /*unused*/) noexcept {}
+  LazyTensorId(LazyTensorId&& other) noexcept {
+    other.id_ = 0;
+  }
+  LazyTensorId& operator=(const LazyTensorId& other) noexcept {
+    if (this != &other) {
+      id_ = 0;
+    }
+    return *this;
+  }
+  LazyTensorId& operator=(LazyTensorId&& other) noexcept {
+    // Unconditional, even for self-move (this == &other): the moved-from
+    // side must never keep stale content paired with a live id, and a
+    // self-move-assignment is exactly that case with this == &other.
+    id_ = 0;
+    other.id_ = 0;
+    return *this;
+  }
+  uint64_t Get() const {
+    if (id_ == 0) {
+      static std::atomic<uint64_t> counter{0};
+      id_ = counter.fetch_add(1, std::memory_order_relaxed) + 1;
+    }
+    return id_;
+  }
+
+ private:
+  mutable uint64_t id_{0};
+};
+
 struct Tensor final {
  private:
+  LazyTensorId tensor_id_;
+
   bool is_segment_{false};
   int64_t segment_begin_{0};
   int64_t segment_end_{0};
@@ -42,6 +95,14 @@ struct Tensor final {
   ONNX_NAMESPACE::TensorProto_DataLocation data_location_{ONNX_NAMESPACE::TensorProto_DataLocation_DEFAULT};
 
  public:
+  // Special member functions are all implicit: LazyTensorId's own copy/move
+  // constructor and assignment operator already give tensor_id_ the right
+  // behavior.
+
+  uint64_t tensor_id() const {
+    return tensor_id_.Get();
+  }
+
   const std::vector<int64_t>& sizes() const {
     return sizes_;
   }
