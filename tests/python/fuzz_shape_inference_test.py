@@ -183,3 +183,162 @@ def test_omitted_optional_input(harness, monkeypatch) -> None:
     harness["TestOneInput"](b"\x00\x04")
     node = infer.call_args_list[0].args[0].graph.node[0]
     assert list(node.input) == ["X0", ""]
+
+
+def _relu_model(output_type=None, version=16):
+    output = (
+        helper.make_empty_tensor_value_info("Y")
+        if output_type is None
+        else helper.make_tensor_value_info("Y", output_type, [1])
+    )
+    return helper.make_model(
+        helper.make_graph(
+            [helper.make_node("Relu", ["X"], ["Y"])],
+            "relu",
+            [helper.make_tensor_value_info("X", onnx.TensorProto.FLOAT, [1])],
+            [output],
+        ),
+        opset_imports=[helper.make_opsetid("", version)],
+    )
+
+
+def test_reinference_error_is_a_finding(harness, monkeypatch) -> None:
+    model = _relu_model()
+    inferred = onnx.shape_inference.infer_shapes(model)
+    infer = Mock(side_effect=[inferred, RuntimeError("reinference failed")])
+    monkeypatch.setattr(onnx.shape_inference, "infer_shapes", infer)
+    with pytest.raises(AssertionError, match="rejected its own output"):
+        harness["TestOneInput"](model.SerializeToString())
+
+
+def test_reinference_type_change_is_a_finding(harness, monkeypatch) -> None:
+    model = _relu_model()
+    inferred = onnx.shape_inference.infer_shapes(model)
+    again = _relu_model(onnx.TensorProto.INT64)
+    infer = Mock(side_effect=[inferred, again])
+    monkeypatch.setattr(onnx.shape_inference, "infer_shapes", infer)
+    with pytest.raises(AssertionError, match="changed an inferred type"):
+        harness["TestOneInput"](model.SerializeToString())
+
+
+def test_output_bound_to_wrong_input_is_a_finding(harness, monkeypatch) -> None:
+    # Where's condition is bool, but its output must take the data inputs' type.
+    model = helper.make_model(
+        helper.make_graph(
+            [helper.make_node("Where", ["C", "X", "X"], ["Y"])],
+            "where",
+            [
+                helper.make_tensor_value_info("C", onnx.TensorProto.BOOL, [1]),
+                helper.make_tensor_value_info("X", onnx.TensorProto.FLOAT, [1]),
+            ],
+            [helper.make_empty_tensor_value_info("Y")],
+        ),
+        opset_imports=[helper.make_opsetid("", 16)],
+    )
+    inferred = onnx.ModelProto.FromString(model.SerializeToString())
+    inferred.graph.output[0].type.CopyFrom(
+        helper.make_tensor_type_proto(onnx.TensorProto.BOOL, [1])
+    )
+    infer = Mock(return_value=inferred)
+    monkeypatch.setattr(onnx.shape_inference, "infer_shapes", infer)
+    with pytest.raises(AssertionError, match="violates the type constraint"):
+        harness["TestOneInput"](model.SerializeToString())
+
+
+def test_attribute_determined_output_type(harness) -> None:
+    model = _relu_model()
+    node = model.graph.node[0]
+    node.op_type = "Cast"
+    node.attribute.append(helper.make_attribute("to", onnx.TensorProto.INT64))
+    inferred = onnx.shape_inference.infer_shapes(model)
+    assert inferred.graph.output[0].type.tensor_type.elem_type == onnx.TensorProto.INT64
+    harness["TestOneInput"](model.SerializeToString())
+
+
+def test_unchanged_invalid_output_annotation(harness) -> None:
+    model = _relu_model(onnx.TensorProto.INT64)
+    inferred = onnx.shape_inference.infer_shapes(model, strict_mode=False)
+    assert inferred.graph.output[0] == model.graph.output[0]
+    harness["TestOneInput"](model.SerializeToString())
+
+
+@pytest.mark.parametrize("version", [2**32 + 16, -(2**32) + 16, 2**63 - 1, -(2**63)])
+def test_opset_outside_schema_lookup_range(harness, version) -> None:
+    model = _relu_model(version=version)
+    # Check the oracle directly so a first-pass error cannot mask a lookup error.
+    harness["_check_output_types"](model, model)
+    harness["TestOneInput"](model.SerializeToString())
+
+
+def _if_model():
+    branch = helper.make_graph(
+        [helper.make_node("Relu", ["X"], ["Y"])],
+        "branch",
+        [],
+        [helper.make_empty_tensor_value_info("Y")],
+    )
+    return helper.make_model(
+        helper.make_graph(
+            [
+                helper.make_node(
+                    "If", ["C"], ["Y"], then_branch=branch, else_branch=branch
+                )
+            ],
+            "if",
+            [
+                helper.make_tensor_value_info("C", onnx.TensorProto.BOOL, []),
+                helper.make_tensor_value_info("X", onnx.TensorProto.FLOAT, [1]),
+            ],
+            [helper.make_empty_tensor_value_info("Y")],
+        ),
+        opset_imports=[helper.make_opsetid("", 16)],
+    )
+
+
+def test_subgraph_reinference_type_change_is_a_finding(harness, monkeypatch) -> None:
+    model = _if_model()
+    inferred = onnx.shape_inference.infer_shapes(model)
+    again = onnx.ModelProto.FromString(inferred.SerializeToString())
+    output = again.graph.node[0].attribute[0].g.output[0]
+    output.type.tensor_type.elem_type = onnx.TensorProto.INT64
+    infer = Mock(side_effect=[inferred, again])
+    monkeypatch.setattr(onnx.shape_inference, "infer_shapes", infer)
+    with pytest.raises(AssertionError, match="changed an inferred type"):
+        harness["TestOneInput"](model.SerializeToString())
+
+
+def test_subgraph_output_type_uses_outer_scope(harness) -> None:
+    model = _if_model()
+    inferred = onnx.shape_inference.infer_shapes(model)
+    harness["_check_output_types"](inferred, model)
+    branch = inferred.graph.node[0].attribute[0].g
+    branch.output[0].type.tensor_type.elem_type = onnx.TensorProto.INT64
+    with pytest.raises(AssertionError, match="violates the type constraint"):
+        harness["_check_output_types"](inferred, model)
+    # A local input shadows the outer X binding.
+    branch.input.append(helper.make_tensor_value_info("X", onnx.TensorProto.INT64, [1]))
+    harness["_check_output_types"](inferred, model)
+    branch.input[0].ClearField("type")
+    harness["_check_output_types"](inferred, model)
+
+
+def test_subgraph_unchanged_invalid_output_annotation(harness) -> None:
+    model = _if_model()
+    model.graph.node[0].attribute[0].g.output[0].type.CopyFrom(
+        helper.make_tensor_type_proto(onnx.TensorProto.INT64, [1])
+    )
+    inferred = onnx.shape_inference.infer_shapes(model, strict_mode=False)
+    harness["_check_output_types"](inferred, model)
+
+
+def test_graph_list_snapshots_have_distinct_paths(harness) -> None:
+    branches = [_relu_model(onnx.TensorProto.FLOAT).graph for _ in range(2)]
+    graph = helper.make_graph(
+        [helper.make_node("Custom", [], [], branches=branches)], "graphs", [], []
+    )
+    before = harness["_value_types"](graph)
+    assert len(before) == 2
+    output = graph.node[0].attribute[0].graphs[1].output[0]
+    output.type.tensor_type.elem_type = onnx.TensorProto.INT64
+    after = harness["_value_types"](graph)
+    assert sum(before[key] != after[key] for key in before) == 1
