@@ -417,6 +417,11 @@ void check_tensor(const TensorProto& tensor, const CheckerContext& ctx) {
           ") is stored externally and should not have data field.",
           value_field);
     }
+    // External data holds the bytes raw_data would hold, and raw_data cannot
+    // represent strings.
+    if (tensor.data_type() == TensorProto::STRING) {
+      fail_check("STRING data (tensor name: ", tensor.name(), ") should not be stored externally");
+    }
 
     // Every location is validated, but, as in the Python loader, the last value
     // of each key is the one that describes the data.
@@ -430,6 +435,24 @@ void check_tensor(const TensorProto& tensor, const CheckerContext& ctx) {
       }
       if (entry.key() == "location") {
         has_location = true;
+        // An in-memory model has no model directory, so an external data
+        // location must not be resolved against the current working
+        // directory. (A '#' location refers to in-memory data, not a
+        // file, and is unaffected.)
+        // Classify the location after the same lexical normalization
+        // resolve_external_data_location applies: '#unused/../data.bin'
+        // normalizes to 'data.bin' and refers to a file, so only a
+        // location that still starts with '#' once normalized is
+        // in-memory data.
+        const auto normalized_location = path_to_utf8(utf8_to_path(entry.value()).lexically_normal().make_preferred());
+        if (!ctx.model_dir_from_path() && !normalized_location.empty() && normalized_location[0] != '#') {
+          fail_check(
+              "Data of TensorProto ( tensor name: ",
+              tensor.name(),
+              ") is stored externally, but the model was not checked from a file path, so its external data location '",
+              entry.value(),
+              "' cannot be resolved. Pass a model path to check_model to check external data.");
+        }
         if (ctx.check_external_data_files()) {
           data_path = resolve_external_data_location(ctx.get_model_dir(), entry.value(), tensor.name());
         } else {

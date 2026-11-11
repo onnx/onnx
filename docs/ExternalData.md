@@ -113,7 +113,7 @@ After an ONNX file is loaded, all `external_data` fields may be updated with an 
 
 ### External data files
 
-Data stored in external data files will be in the same binary bytes string format as is used by the `raw_data` field in current ONNX implementations.
+Data stored in external data files will be in the same binary bytes string format as is used by the `raw_data` field in current ONNX implementations. Like `raw_data`, external data cannot hold `STRING` tensors.
 
 Reference
 https://github.com/onnx/onnx/pull/678
