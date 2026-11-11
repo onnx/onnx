@@ -610,10 +610,17 @@ NB_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
   nb::class_<checker::LexicalScopeContext> lexical_scope_context(checker, "LexicalScopeContext");
   lexical_scope_context.def(nb::init<>());
 
-  nb::exception<checker::ValidationError> validation_error(checker, "ValidationError");
+  // Created by hand rather than with nb::exception, which would register a second
+  // translator for ValidationError that sets only the message: this way, the one
+  // below is the only one.
+  const std::string validation_error_name = nb::cast<std::string>(checker.attr("__name__")) + ".ValidationError";
+  nb::object validation_error = nb::steal(PyErr_NewException(validation_error_name.c_str(), PyExc_Exception, nullptr));
+  if (!validation_error.is_valid()) {
+    throw nb::python_error();
+  }
   // Errors raised elsewhere, e.g. from Python, have no code.
   validation_error.attr("code") = nb::none();
-  // Tried before the translator nb::exception registers, which only sets the message.
+  checker.attr("ValidationError") = validation_error;
   nb::register_exception_translator(
       [](const std::exception_ptr& p, void* payload) {
         try {

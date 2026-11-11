@@ -32,7 +32,7 @@ inline constexpr std::string_view kOpsetImportMissing = "opset-import-missing";
 inline constexpr std::string_view kOperatorNotRegistered = "operator-not-registered";
 inline constexpr std::string_view kOperatorDeprecated = "operator-deprecated";
 inline constexpr std::string_view kNodeSchemaMismatch = "node-schema-mismatch";
-inline constexpr std::string_view kNotTopologicallySorted = "not-topologically-sorted";
+inline constexpr std::string_view kInputNotDefined = "input-not-defined";
 inline constexpr std::string_view kNotSsa = "not-ssa";
 inline constexpr std::string_view kGraphOutputNotProduced = "graph-output-not-produced";
 inline constexpr std::string_view kExternalDataEntryInvalid = "external-data-entry-invalid";
@@ -46,6 +46,8 @@ inline constexpr std::string_view kExternalDataOutOfRange = "external-data-out-o
 class ValidationError final : public std::runtime_error {
  public:
   using std::runtime_error::runtime_error;
+  // code must refer to a string that outlives the error, such as an error_code
+  // constant.
   ValidationError(const std::string& message, std::string_view code) : std::runtime_error(message), code_(code) {}
   const char* what() const noexcept override {
     if (!expanded_message_.empty()) {
@@ -57,20 +59,13 @@ class ValidationError final : public std::runtime_error {
     expanded_message_ = ONNX_NAMESPACE::MakeString(std::runtime_error::what(), "\n\n==> Context: ", context);
   }
   // The error_code of the rule that failed, or empty if the rule has none.
-  const std::string& code() const noexcept {
+  std::string_view code() const noexcept {
     return code_;
-  }
-  // Assigns a code to an error raised by a rule that has none, keeping a more
-  // specific code set where the error was raised.
-  void set_code_if_empty(std::string_view code) {
-    if (code_.empty()) {
-      code_ = code;
-    }
   }
 
  private:
   std::string expanded_message_;
-  std::string code_;
+  std::string_view code_;
 };
 
 #define fail_check(...) ONNX_THROW_EX(ONNX_NAMESPACE::checker::ValidationError(ONNX_NAMESPACE::MakeString(__VA_ARGS__)))

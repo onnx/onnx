@@ -2219,6 +2219,37 @@ def _model_with_duplicate_metadata_key() -> ModelProto:
     return model
 
 
+def _model_with_duplicate_attribute() -> ModelProto:
+    model = onnx.parser.parse_model(_IDENTITY_MODEL)
+    for _ in range(2):
+        model.graph.node[0].attribute.append(helper.make_attribute("alpha", 1.0))
+    return model
+
+
+def _model_with_duplicate_initializer() -> ModelProto:
+    model = onnx.parser.parse_model(_IDENTITY_MODEL)
+    for _ in range(2):
+        model.graph.initializer.append(
+            numpy_helper.from_array(np.zeros(2, dtype=np.float32), "w")
+        )
+    return model
+
+
+def _model_with_initializer_and_sparse_initializer_of_same_name() -> ModelProto:
+    model = onnx.parser.parse_model(_IDENTITY_MODEL)
+    model.graph.initializer.append(
+        numpy_helper.from_array(np.zeros(2, dtype=np.float32), "w")
+    )
+    model.graph.sparse_initializer.append(
+        helper.make_sparse_tensor(
+            numpy_helper.from_array(np.ones(1, dtype=np.float32), "w"),
+            numpy_helper.from_array(np.zeros(1, dtype=np.int64), "w_indices"),
+            [2],
+        )
+    )
+    return model
+
+
 def _model_without_opset_import() -> ModelProto:
     model = onnx.parser.parse_model(_IDENTITY_MODEL)
     del model.opset_import[:]
@@ -2250,7 +2281,7 @@ class TestValidationErrorCode:
                     y = Identity(x)
                 }
                 """,
-                "not-topologically-sorted",
+                "input-not-defined",
             ),
             (
                 """
@@ -2331,11 +2362,33 @@ class TestValidationErrorCode:
                     c = Identity(a)
                 }
                 """,
-                "not-topologically-sorted",
+                "input-not-defined",
+            ),
+            (
+                """
+                <ir_version: 10, opset_import: ["" : 21]>
+                agraph (float[2] x) => (float[2] y) {
+                    y = Identity(typo)
+                }
+                """,
+                "input-not-defined",
+            ),
+            (
+                """
+                <ir_version: 10, opset_import: ["" : 21, "local" : 1]>
+                agraph (float[2] x) => (float[2] y) {
+                    y = local.f(x)
+                }
+                <domain: "local", opset_import: ["" : 21]>
+                f (a) => (b) {
+                    b = custom.Op(a)
+                }
+                """,
+                "opset-import-missing",
             ),
         ],
         ids=[
-            "not_topologically_sorted",
+            "input_not_defined",
             "not_ssa",
             "operator_not_registered",
             "opset_import_missing",
@@ -2344,6 +2397,8 @@ class TestValidationErrorCode:
             "graph_output_not_produced",
             "in_subgraph",
             "in_function",
+            "input_never_defined",
+            "opset_import_missing_in_function",
         ],
     )
     def test_parsed_model(self, model_text: str, code: str) -> None:
@@ -2365,6 +2420,9 @@ class TestValidationErrorCode:
             (_model_without_graph_name, "required-field-empty"),
             (_model_with_untyped_initializer, "required-field-missing"),
             (_model_with_newer_data_type, "data-type-requires-newer-ir-version"),
+            (_model_with_duplicate_attribute, "node-schema-mismatch"),
+            (_model_with_duplicate_initializer, "not-ssa"),
+            (_model_with_initializer_and_sparse_initializer_of_same_name, "not-ssa"),
         ],
         ids=[
             "ir_version_missing",
@@ -2374,6 +2432,9 @@ class TestValidationErrorCode:
             "graph_name_empty",
             "initializer_data_type_missing",
             "data_type_requires_newer_ir_version",
+            "duplicate_attribute",
+            "duplicate_initializer",
+            "initializer_and_sparse_initializer_of_same_name",
         ],
     )
     def test_built_model(self, make_model: Callable[[], ModelProto], code: str) -> None:
@@ -2454,3 +2515,13 @@ class TestValidationErrorCode:
 
     def test_raised_from_python(self) -> None:
         assert checker.ValidationError("message").code is None
+
+    def test_infer_node_outputs(self) -> None:
+        # Shape inference verifies the node against its schema the same way.
+        with pytest.raises(checker.ValidationError) as excinfo:
+            shape_inference.infer_node_outputs(
+                onnx.defs.get_schema("Add", 21),
+                helper.make_node("Add", ["x"], ["y"]),
+                {"x": helper.make_tensor_type_proto(TensorProto.FLOAT, [2])},
+            )
+        assert excinfo.value.code == "node-schema-mismatch"

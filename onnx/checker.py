@@ -144,7 +144,7 @@ def check_model(
 
     Raises:
         ValidationError: If the model is invalid. Its ``code`` attribute names the
-            rule that failed, such as ``"not-topologically-sorted"``, or is None for
+            rule that failed, such as ``"input-not-defined"``, or is None for
             rules that have no code yet. Codes are stable across releases; messages
             are not. See ``docs/CheckerErrorCodes.md``.
     """

@@ -1028,7 +1028,7 @@ void check_node(const NodeProto& node, const CheckerContext& ctx, const LexicalS
   std::unordered_set<std::string> seen_attr_names{};
   for (const auto& attr : node.attribute()) {
     if (!seen_attr_names.insert(attr.name()).second) {
-      fail_check("Attribute '", attr.name(), "' appeared multiple times.");
+      fail_check_with_code(error_code::kNodeSchemaMismatch, "Attribute '", attr.name(), "' appeared multiple times.");
     }
 
     check_attribute(attr, ctx, lex_ctx);
@@ -1055,15 +1055,7 @@ void check_node(const NodeProto& node, const CheckerContext& ctx, const LexicalS
         "Op registered for " + node.op_type() + " is deprecated in domain_version of " +
             ONNX_NAMESPACE::to_string(domain_version));
   } else {
-    ONNX_TRY {
-      schema->Verify(node);
-    }
-    ONNX_CATCH(ValidationError & ex) {
-      ONNX_HANDLE_EXCEPTION([&]() {
-        ex.set_code_if_empty(error_code::kNodeSchemaMismatch);
-        throw;
-      });
-    }
+    schema->Verify(node);
   }
 }
 
@@ -1110,7 +1102,7 @@ void check_graph(const GraphProto& graph, const CheckerContext& ctx, const Lexic
     }
 
     if (!initializer_name_checker.emplace(name).second) {
-      fail_check(name + " initializer name is not unique");
+      fail_check_with_code(error_code::kNotSsa, name + " initializer name is not unique");
     }
 
     check_tensor(init, ctx);
@@ -1135,7 +1127,9 @@ void check_graph(const GraphProto& graph, const CheckerContext& ctx, const Lexic
       fail_check_with_code(error_code::kRequiredFieldEmpty, "Sparse tensor initializers must have a non-empty name");
     }
     if (!initializer_name_checker.insert(name).second) {
-      fail_check(name + " sparse initializer name is not unique across initializers and sparse_initializers");
+      fail_check_with_code(
+          error_code::kNotSsa,
+          name + " sparse initializer name is not unique across initializers and sparse_initializers");
     }
     check_sparse_tensor(sparse_init, ctx);
     lex_ctx.add(name);
@@ -1150,7 +1144,7 @@ void check_graph(const GraphProto& graph, const CheckerContext& ctx, const Lexic
       }
       if (!lex_ctx.this_or_ancestor_graph_has(input)) {
         fail_check_with_code(
-            error_code::kNotTopologicallySorted,
+            error_code::kInputNotDefined,
             "Nodes in a graph must be topologically sorted, however input '",
             input,
             "' of node: \n",
@@ -1243,7 +1237,7 @@ void check_opset_compatibility(
   auto model_opset_version = get_version_for_domain(node.domain(), model_opset_imports);
 
   if (func_opset_version == -1) {
-    fail_check("No Opset registered for domain " + node.domain());
+    fail_check_with_code(error_code::kOpsetImportMissing, "No Opset registered for domain " + node.domain());
   }
 
   if (model_opset_version == -1) {
@@ -1516,7 +1510,7 @@ void check_function(const FunctionProto& function, const CheckerContext& ctx, co
       }
       if (!lex_ctx.this_graph_has(input)) {
         fail_check_with_code(
-            error_code::kNotTopologicallySorted,
+            error_code::kInputNotDefined,
             "Nodes in a function must be topologically sorted, however input '",
             input,
             "' of node: \n",
@@ -1743,17 +1737,19 @@ std::filesystem::path resolve_external_data_location(
   // Verify canonical containment (catches parent-dir symlinks).
   if (data_path_str[0] != '#') {
     verify_path_containment(data_path, base_dir, tensor_name);
-  }
-  if (data_path_str[0] != '#' && !std::filesystem::is_regular_file(data_path)) {
+    // One status call tells a missing file apart from a directory or other file type.
     std::error_code ec;
-    const bool file_exists = std::filesystem::exists(data_path, ec);
-    fail_check_with_code(
-        file_exists ? error_code::kExternalDataLocationInvalid : error_code::kExternalDataFileMissing,
-        "Data of TensorProto ( tensor name: ",
-        tensor_name,
-        ") should be stored in ",
-        data_path_str,
-        ", but it is not regular file.");
+    const auto data_status = std::filesystem::status(data_path, ec);
+    if (!std::filesystem::is_regular_file(data_status)) {
+      fail_check_with_code(
+          data_status.type() == std::filesystem::file_type::not_found ? error_code::kExternalDataFileMissing
+                                                                      : error_code::kExternalDataLocationInvalid,
+          "Data of TensorProto ( tensor name: ",
+          tensor_name,
+          ") should be stored in ",
+          data_path_str,
+          ", but it is not regular file.");
+    }
   }
   // Do not allow hardlinks, as they can be used to read arbitrary files.
   if (data_path_str[0] != '#' && std::filesystem::hard_link_count(data_path) > 1) {

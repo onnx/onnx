@@ -45,7 +45,7 @@ TEST(CHECKER, ValidationErrorCodeTest) {
     try {
       ONNX_NAMESPACE::checker::check_model(model);
     } catch (const ONNX_NAMESPACE::checker::ValidationError& e) {
-      return e.code();
+      return std::string(e.code());
     }
     return "<no error>";
   };
@@ -68,9 +68,19 @@ TEST(CHECKER, ValidationErrorCodeTest) {
 
   ONNX_NAMESPACE::checker::ValidationError error("message");
   EXPECT_TRUE(error.code().empty());
-  error.set_code_if_empty(error_code::kNotSsa);
-  error.set_code_if_empty(error_code::kNotTopologicallySorted);
-  EXPECT_EQ(error.code(), error_code::kNotSsa);
+  // OpSchema::Verify sets the code itself, so other callers get it too.
+  const auto* add_schema = OpSchemaRegistry::Schema("Add", 21);
+  ASSERT_NE(add_schema, nullptr);
+  NodeProto node;
+  node.set_op_type("Add");
+  node.add_input("x");
+  node.add_output("y");
+  try {
+    add_schema->Verify(node);
+    ADD_FAILURE() << "expected a ValidationError";
+  } catch (const ONNX_NAMESPACE::checker::ValidationError& e) {
+    EXPECT_EQ(e.code(), error_code::kNodeSchemaMismatch);
+  }
 #endif
 }
 
