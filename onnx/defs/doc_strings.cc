@@ -41,6 +41,31 @@ shift on a negative X, where the fill is a sign bit of 1, and 0 in every other
 case.
 )DOC";
 
+const char kDoc_MeanVarianceNormalization_ver13[] = R"DOC(
+Computes mean-variance normalization of `X`:
+`Y = (X - mean) / (sqrt(variance) + 1e-9)`, where
+`mean = ReduceMean(X, axes)` and
+`variance = ReduceMean(X^2, axes) - mean^2`.
+Each reduction computes the arithmetic mean over `axes` and retains the
+reduced dimensions with size 1 for broadcasting.
+)DOC";
+
+const char kDoc_MeanVarianceNormalization_ver29[] = R"DOC(
+Computes mean-variance normalization of `X`:
+`Y = (X - mean) / (sqrt(variance) + epsilon)`, where
+`mean = ReduceMean(X, axes)` and
+`variance = ReduceMean((X - mean)^2, axes)`.
+Each reduction computes the arithmetic mean over `axes` and retains the
+reduced dimensions with size 1 for broadcasting.
+An empty `axes` list reduces over all dimensions.
+
+The default `epsilon` is 1e-9 and is added after the square root.
+For float16 and bfloat16 inputs, `X` is converted to float32 before computation.
+Otherwise, computation uses the input type. `epsilon` is converted to the
+computation type, and the result is cast to the input type.
+`Y` has the same shape and element type as `X`.
+)DOC";
+
 const char kDoc_GRU_ver14[] = R"DOC(
 Computes an one-layer GRU. This operator is usually supported via some custom
 implementation such as CuDNN.
@@ -2362,29 +2387,36 @@ the value of 'max'. Thus, this is equivalent to 'Min(max, Max(input, min))'.
 const char kDoc_GroupedMatMul_ver29[] = R"DOC(
 GroupedMatMul multiplies each row of a token matrix by one or more selected
 group (expert) weight matrices. Given `input` of shape `[M, K]`, `weights` of
-shape `[G, K, N]`, and `group_indices` of shape `[M, S]`, where `S` is the number
-of selections per token, the output has shape `[M, S, N]` and is defined by:
+shape `[G, K, N]` when `transB` is zero (the default), and `group_indices` of shape
+`[M, S]`, where `S` is the number of selections per token, the output has shape
+`[M, S, N]` and is defined by:
 
 ```
 output[m, i] = input[m] @ weights[group_indices[m, i]]
 ```
 
-If `bias` is present, `bias[group_indices[m, i]]` is added to each corresponding
-result. Every value in `group_indices` must be in the range `[0, G)`.
+When `transB` is non-zero, `weights` has shape `[G, N, K]` and each selected
+weight matrix is transposed before multiplication:
+
+```
+output[m, i] = input[m] @ weights[group_indices[m, i]].T
+```
+
+`M` is the number of input rows, `G` is the number of groups, `K` is the
+contraction dimension, and `N` is the output dimension. Only the last two axes
+of `weights` are logically transposed; the group axis and the layouts of
+`input`, `output`, and `bias` are unchanged.
+
+If `bias` is present, it must have shape `[G, N]`, and
+`bias[group_indices[m, i]]` is added to each corresponding result.
+If `M` or `S` is zero, the output is an empty tensor of shape `[M, S, N]`.
+Every value in `group_indices` must be in the range `[0, G)`.
 Values outside this range, including negative indices, are invalid input;
 the behavior is undefined for such inputs. In particular, negative indices
 do not select groups by counting backwards from `G`.
 
-This operator is represented as a context-dependent function, which also provides
-its reference implementation. Its decomposition uses Gather, Expand, and MatMul
-to define the result, while runtimes are expected to use a fused
-grouped-matrix-multiplication implementation to avoid materializing the expanded
-intermediate tensors, including selected weights of shape `[M * S, K, N]`.
-
-Weight-only quantized experts are intended to be expressed by applying
-DequantizeLinear to quantized weights (with the appropriate scales and zero
-points) and passing the result to GroupedMatMul. Runtimes may fuse this
-composition to avoid materializing the dequantized `[G, K, N]` weights.
+Quantized weights can be dequantized with DequantizeLinear before this operator.
+The dequantized weights must have the shape specified by `transB`.
 )DOC";
 const char kDoc_SwiGLU_ver28[] = R"DOC(
 SwiGLU is a gated activation that takes two inputs, a gate `A` and a linear (value)
@@ -6663,6 +6695,8 @@ const char kDoc_RandomNormal_ver1[] = "";
 const char kDoc_Round_ver11[] = "";
 const char kDoc_SpaceToDepth_ver1[] = "";
 const char kDoc_InstanceNormalization_ver6[] = "";
+const char kDoc_MeanVarianceNormalization_ver13[] = "";
+const char kDoc_MeanVarianceNormalization_ver29[] = "";
 const char kDoc_ThresholdedRelu_ver10[] = "";
 const char kDoc_Acosh_ver9[] = "";
 const char kDoc_Dropout_ver13[] = "";
