@@ -480,6 +480,62 @@ class TestHelperTensorFunctions:
         )
         assert string_list == list(tensor.string_data)
 
+    @pytest.mark.parametrize(
+        ("dims", "vals", "expected"),
+        [
+            ((), [b"\xffa\x00"], [b"\xffa\x00"]),
+            ((), b"\xffa\x00", [b"\xffa\x00"]),
+            ((), np.array(b"\xffa\x00", dtype=object), [b"\xffa\x00"]),
+            (
+                (4,),
+                [b"", b"\x00", b"\xffa\x00", b"a\x00b\x00\x00"],
+                [b"", b"\x00", b"\xffa\x00", b"a\x00b\x00\x00"],
+            ),
+            (
+                (2, 2),
+                [[b"\x00", b"\xffa\x00"], [b"a\x00b\x00", b""]],
+                [b"\x00", b"\xffa\x00", b"a\x00b\x00", b""],
+            ),
+            (
+                (2, 2),
+                np.array([[b"\x00", b"\xffa\x00"], [b"a\x00b\x00", b""]], dtype=object),
+                [b"\x00", b"\xffa\x00", b"a\x00b\x00", b""],
+            ),
+            (
+                (3,),
+                ["caf\u00e9\x00", "\u4e2d", ""],
+                [b"caf\xc3\xa9\x00", b"\xe4\xb8\xad", b""],
+            ),
+            (
+                (2,),
+                [b"\xffa\x00", "caf\u00e9\x00"],
+                [b"\xffa\x00", b"caf\xc3\xa9\x00"],
+            ),
+            (
+                (2,),
+                np.array(["caf\u00e9\x00", "\u4e2d"], dtype=object),
+                [b"caf\xc3\xa9\x00", b"\xe4\xb8\xad"],
+            ),
+            (
+                (2,),
+                np.array(["caf\u00e9", "\u4e2d"]),
+                [b"caf\xc3\xa9", b"\xe4\xb8\xad"],
+            ),
+            ((2,), np.array([b"abc", b"d"], dtype="S3"), [b"abc", b"d"]),
+            ((), [b""], [b""]),
+            ((0,), [], []),
+            ((2, 0), np.empty((2, 0), dtype=object), []),
+        ],
+    )
+    def test_make_string_tensor_preserves_values(self, dims, vals, expected) -> None:
+        tensor = helper.make_tensor("test", TensorProto.STRING, dims, vals)
+
+        assert list(tensor.string_data) == expected
+        assert list(tensor.dims) == list(dims)
+        checker.check_tensor(tensor)
+        restored = TensorProto.FromString(tensor.SerializeToString())
+        assert list(restored.string_data) == expected
+
     def test_make_bfloat16_tensor(self) -> None:
         # numpy doesn't support bf16, so we have to compute the correct result manually
         np_array = np.array(
