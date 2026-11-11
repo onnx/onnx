@@ -333,7 +333,7 @@ def replace_initializer_by_constant_of_shape(  # noqa: PLR0911
             "ConstantOfShape",
             [new_name],
             [init.name],
-            value=from_array(np.array([0.5], dtype=dtype)),
+            value=from_array(np.array([value_constant_of_shape], dtype=dtype)),
         )
         new_nodes.append(node)
         removed.add(init.name)
