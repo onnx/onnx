@@ -667,6 +667,10 @@ class ReferenceEvaluator:
             else:
                 outputs = node.run(*inputs, **linked_attributes)
             for name, value in zip(node.output, outputs, strict=False):
+                if name == "":
+                    # An omitted output: keep results[""] as None, which is what
+                    # nodes with an omitted optional input read.
+                    continue
                 self._log(2, " + %s: %s", name, value)  # type: ignore[arg-type]
                 results[name] = value
                 if bindings is not None and self.all_types_:
