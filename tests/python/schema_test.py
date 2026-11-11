@@ -6,13 +6,17 @@ from __future__ import annotations
 import contextlib
 from typing import TYPE_CHECKING
 
+import ml_dtypes
+import numpy as np
 import pytest
 
 import onnx
-from onnx import TensorProto, defs, helper
+from onnx import AttributeProto, TensorProto, defs, helper
+from onnx.reference import ReferenceEvaluator
 
 MOD_OPSET_13 = 13
 MOD_OPSET_28 = 28
+MVN_LEGACY_OPSET = 13
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
@@ -31,13 +35,151 @@ class TestSchema:
             relu_schema.node_determinism == defs.OpSchema.NodeDeterminism.Deterministic
         )
 
-    def test_typecheck(self) -> None:
-        defs.get_schema("Conv")
-
     def test_attr_default_value(self) -> None:
         v = defs.get_schema("BatchNormalization").attributes["epsilon"].default_value
         assert type(v) is onnx.AttributeProto
         assert v.type == onnx.AttributeProto.FLOAT
+
+    def test_mean_variance_normalization_opset29_schema(self) -> None:
+        opset = 29
+        schema = defs.get_schema("MeanVarianceNormalization", opset)
+        old_schema = defs.get_schema("MeanVarianceNormalization", opset - 1)
+
+        assert schema.since_version == opset
+        assert schema.attributes["epsilon"].default_value.f == pytest.approx(1e-9)
+        assert tuple(schema.attributes["axes"].default_value.ints) == (0, 2, 3)
+        assert schema.has_context_dependent_function
+        assert schema.node_determinism == defs.OpSchema.NodeDeterminism.Deterministic
+        assert "epsilon" not in old_schema.attributes
+
+        node = helper.make_node(
+            "MeanVarianceNormalization",
+            ["X"],
+            ["Y"],
+            axes=[1, -1],
+            epsilon=1e-5,
+        )
+        function_proto = onnx.FunctionProto()
+        function_proto.ParseFromString(
+            schema.get_context_dependent_function(
+                node.SerializeToString(),
+                [self._tensor_type_proto(TensorProto.DOUBLE).SerializeToString()],
+            )
+        )
+        casts = {
+            output: helper.get_attribute_value(n.attribute[0])
+            for n in function_proto.node
+            if n.op_type == "Cast"
+            for output in n.output
+        }
+        assert casts == {
+            "XCompute": TensorProto.DOUBLE,
+            "Exponent": TensorProto.DOUBLE,
+            "Epsilon": TensorProto.DOUBLE,
+            "Y": TensorProto.DOUBLE,
+        }
+        epsilon_constant = next(
+            n
+            for n in function_proto.node
+            if "EpsilonFloat" in n.output and n.op_type == "Constant"
+        )
+        assert epsilon_constant.attribute[0].ref_attr_name == "epsilon"
+
+        linked_epsilon = helper.make_attribute_ref(
+            "epsilon", AttributeProto.FLOAT, ref_attr_name="outer_epsilon"
+        )
+        linked_node = helper.make_node(
+            "MeanVarianceNormalization", ["X"], ["Y"], axes=[0]
+        )
+        linked_node.attribute.append(linked_epsilon)
+        linked_function = onnx.FunctionProto()
+        linked_function.ParseFromString(
+            schema.get_context_dependent_function(
+                linked_node.SerializeToString(),
+                [self._tensor_type_proto(TensorProto.FLOAT).SerializeToString()],
+            )
+        )
+        linked_constant = next(
+            n
+            for n in linked_function.node
+            if "EpsilonFloat" in n.output and n.op_type == "Constant"
+        )
+        assert linked_constant.attribute[0].ref_attr_name == "epsilon"
+
+    def test_mean_variance_normalization_legacy_static_function(self) -> None:
+        schema = defs.get_schema("MeanVarianceNormalization", 28)
+        assert schema.since_version == MVN_LEGACY_OPSET
+        assert schema.has_function
+        assert not schema.has_context_dependent_function
+        assert schema.function_body.name == "MeanVarianceNormalization"
+        assert all(node.op_type != "Cast" for node in schema.function_body.node)
+
+    @pytest.mark.parametrize(
+        ("requested_opset", "body_opset"), [(13, 13), (18, 18), (29, 18)]
+    )
+    @pytest.mark.parametrize("axes", [[1, -1], []])
+    @pytest.mark.parametrize("epsilon", [None, 1e-5])
+    @pytest.mark.parametrize(
+        ("elem_type", "dtype"),
+        [
+            (TensorProto.FLOAT16, np.float16),
+            (TensorProto.BFLOAT16, ml_dtypes.bfloat16),
+            (TensorProto.FLOAT, np.float32),
+            (TensorProto.DOUBLE, np.float64),
+        ],
+    )
+    def test_mean_variance_normalization_function_opsets(
+        self, requested_opset, body_opset, axes, epsilon, elem_type, dtype
+    ) -> None:
+        schema = defs.get_schema("MeanVarianceNormalization", 29)
+        node = helper.make_node("MeanVarianceNormalization", ["X"], ["Y"])
+        node.attribute.append(
+            helper.make_attribute("axes", axes, attr_type=AttributeProto.INTS)
+        )
+        if epsilon is not None:
+            node.attribute.append(helper.make_attribute("epsilon", epsilon))
+        function = onnx.FunctionProto()
+        input_types = [
+            helper.make_tensor_type_proto(elem_type, [2, 3, 4]).SerializeToString()
+        ]
+        if requested_opset == 29:
+            function_bytes = schema.get_context_dependent_function(
+                node.SerializeToString(), input_types
+            )
+        else:
+            function_bytes = schema.get_context_dependent_function_with_opset_version(
+                requested_opset,
+                node.SerializeToString(),
+                input_types,
+            )
+        function.ParseFromString(function_bytes)
+        assert function.opset_import[0].version == requested_opset
+        onnx.checker.check_function(function)
+        reductions = [n for n in function.node if n.op_type == "ReduceMean"]
+        assert len(reductions) == 2
+        assert all(len(n.input) == (1 if body_opset == 13 else 2) for n in reductions)
+
+        attributes: dict[str, list[int] | float] = {"axes": axes}
+        if epsilon is not None:
+            attributes["epsilon"] = epsilon
+        x = np.arange(24, dtype=dtype).reshape(2, 3, 4)
+        got = ReferenceEvaluator(function).run(None, {"X": x}, attributes=attributes)[0]
+        compute_x = (
+            x.astype(np.float32)
+            if elem_type in (TensorProto.FLOAT16, TensorProto.BFLOAT16)
+            else x
+        )
+        reduce_axes = tuple(axes) or None
+        centered = compute_x - np.mean(compute_x, axis=reduce_axes, keepdims=True)
+        variance = np.mean(np.square(centered), axis=reduce_axes, keepdims=True)
+        effective_epsilon = np.asarray(
+            np.float32(1e-9 if epsilon is None else epsilon), dtype=compute_x.dtype
+        )
+        expected = (centered / (np.sqrt(variance) + effective_epsilon)).astype(dtype)
+        assert got.dtype == x.dtype
+        np.testing.assert_allclose(
+            got.astype(np.float64), expected.astype(np.float64), rtol=1e-5, atol=1e-6
+        )
 
     def test_function_body(self) -> None:
         selu_schema = defs.get_schema("Selu")
@@ -206,7 +348,7 @@ class TestSchema:
         assert "A - trunc(A / B) * B" in mod28.doc
 
     def test_range_supported_types(self) -> None:
-        """Test Range operator supports all expected numeric types."""
+        """Test Range operator supports exactly the expected numeric types."""
         range_schema = defs.get_schema("Range")
 
         supported_types = set()
@@ -224,28 +366,7 @@ class TestSchema:
             "tensor(int64)",
         }
 
-        for expected_type in expected_types:
-            assert expected_type in supported_types, (
-                f"Range should support {expected_type}"
-            )
-
-        # Verify no unexpected types are supported (regression check)
-        allowed_type_families = {
-            "float16",
-            "bfloat16",
-            "float",
-            "double",
-            "int16",
-            "int32",
-            "int64",
-        }
-
-        for supported_type in supported_types:
-            if supported_type.startswith("tensor(") and supported_type.endswith(")"):
-                base_type = supported_type[7:-1]
-                assert base_type in allowed_type_families, (
-                    f"Unexpected type {supported_type} supported by Range"
-                )
+        assert supported_types == expected_types
 
     def test_range_type_consistency(self) -> None:
         """Test Range operator type constraints are consistent."""
@@ -273,47 +394,6 @@ class TestSchema:
         assert len(type_constraints) == 1, (
             "Range should have exactly one type constraint 'T'"
         )
-
-    def test_range_numeric_types_only(self) -> None:
-        """Test Range operator only supports appropriate numeric types."""
-        range_schema = defs.get_schema("Range")
-
-        supported_types = set()
-        for constraint in range_schema.type_constraints:
-            if constraint.type_param_str == "T":
-                supported_types.update(constraint.allowed_type_strs)
-
-        unsupported_types = {
-            "tensor(bool)",
-            "tensor(string)",
-            "tensor(uint8)",
-            "tensor(uint16)",
-            "tensor(uint32)",
-            "tensor(uint64)",
-            "tensor(int8)",
-        }
-
-        for unsupported_type in unsupported_types:
-            assert unsupported_type not in supported_types, (
-                f"Range should not support {unsupported_type}"
-            )
-
-        # All supported types should be appropriate for arithmetic operations
-        for supported_type in supported_types:
-            assert supported_type.startswith("tensor("), (
-                f"All Range types should be tensors, got {supported_type}"
-            )
-
-            base_type = supported_type[7:-1]
-            assert base_type in [
-                "float16",
-                "bfloat16",
-                "float",
-                "double",
-                "int16",
-                "int32",
-                "int64",
-            ], f"Range type {base_type} should be a supported numeric type"
 
     def test_optional_type_constraints(self) -> None:
         def tensor(ts):
@@ -543,30 +623,6 @@ class TestSchema:
 
 
 class TestOpSchema:
-    def test_init(self):
-        # Test that the constructor creates an OpSchema object
-        schema = defs.OpSchema("test_op", "test_domain", 1)
-        assert isinstance(schema, defs.OpSchema)
-        assert schema.node_determinism == defs.OpSchema.NodeDeterminism.Deterministic
-
-    def test_init_with_inputs(self) -> None:
-        op_schema = defs.OpSchema(
-            "test_op",
-            "test_domain",
-            1,
-            inputs=[defs.OpSchema.FormalParameter("input1", "T")],
-            type_constraints=[("T", ["tensor(int64)"], "")],
-        )
-        assert op_schema.name == "test_op"
-        assert op_schema.domain == "test_domain"
-        assert op_schema.since_version == 1
-        assert len(op_schema.inputs) == 1
-        assert op_schema.inputs[0].name == "input1"
-        assert op_schema.inputs[0].type_str == "T"
-        assert len(op_schema.type_constraints) == 1
-        assert op_schema.type_constraints[0].type_param_str == "T"
-        assert op_schema.type_constraints[0].allowed_type_strs == ["tensor(int64)"]
-
     def test_init_creates_multi_input_output_schema(self) -> None:
         expected_parameter_count = 2
         op_schema = defs.OpSchema(
@@ -614,6 +670,7 @@ class TestOpSchema:
         assert len(op_schema.inputs) == 0
         assert len(op_schema.outputs) == 0
         assert len(op_schema.type_constraints) == 0
+        assert op_schema.node_determinism == defs.OpSchema.NodeDeterminism.Deterministic
 
     def test_name(self):
         # Test that the name parameter is required and is a string
@@ -622,9 +679,6 @@ class TestOpSchema:
         with pytest.raises(TypeError):
             defs.OpSchema(123, "test_domain", 1)
 
-        schema = defs.OpSchema("test_op", "test_domain", 1)
-        assert schema.name == "test_op"
-
     def test_domain(self):
         # Test that the domain parameter is required and is a string
         with pytest.raises(TypeError):
@@ -632,22 +686,27 @@ class TestOpSchema:
         with pytest.raises(TypeError):
             defs.OpSchema("test_op", 123, 1)
 
-        schema = defs.OpSchema("test_op", "test_domain", 1)
-        assert schema.domain == "test_domain"
-
     def test_since_version(self):
         # Test that the since_version parameter is required and is an integer
         with pytest.raises(TypeError):
             defs.OpSchema("test_op", "test_domain")
 
-        schema = defs.OpSchema("test_op", "test_domain", 1)
-        assert schema.since_version == 1
-
     def test_doc(self):
         schema = defs.OpSchema("test_op", "test_domain", 1, doc="test_doc")
         assert schema.doc == "test_doc"
 
-    def test_inputs(self):
+    @pytest.mark.parametrize(
+        ("type_str", "canonical"),
+        [
+            ("tensor(int64)", "tensor(int64)"),
+            (
+                " \tseq ( map ( int64 , optional ( tensor ( float ) ) ) ) \r\n",
+                "seq(map(int64,optional(tensor(float))))",
+            ),
+            ("opaque ( domain , name )", "opaque(domain , name)"),
+        ],
+    )
+    def test_inputs(self, type_str: str, canonical: str) -> None:
         # Test that the inputs parameter is optional and is a sequence of FormalParameter tuples
         inputs = [
             defs.OpSchema.FormalParameter(
@@ -659,12 +718,13 @@ class TestOpSchema:
             "test_domain",
             1,
             inputs=inputs,
-            type_constraints=[("T", ["tensor(int64)"], "")],
+            type_constraints=[("T", [type_str], "")],
         )
 
         assert len(schema.inputs) == 1
         assert schema.inputs[0].name == "input1"
         assert schema.inputs[0].type_str == "T"
+        assert schema.inputs[0].types == {canonical}
         assert schema.inputs[0].description == "The first input."
 
     def test_outputs(self):
