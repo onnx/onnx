@@ -160,6 +160,19 @@ class TestToolsFunctions:
         y2 = oinf2.run(None, {"X": x})[0]
         assert_allclose(y1.shape, y2.shape)
 
+    def test_replace_constant_of_shape_without_value(self):
+        # ConstantOfShape without attribute `value` is valid (it fills with 0.0).
+        X = helper.make_tensor_value_info("X", TensorProto.INT64, [2])
+        Y = helper.make_tensor_value_info("Y", TensorProto.FLOAT, [None, None])
+        node = helper.make_node("ConstantOfShape", ["X"], ["Y"])
+        model = helper.make_model(helper.make_graph([node], "g", [X], [Y]))
+
+        repl = replace_initializer_by_constant_of_shape(model)
+        y = ReferenceEvaluator(repl).run(None, {"X": np.array([2, 3], dtype=np.int64)})[
+            0
+        ]
+        assert_allclose(y, np.full((2, 3), 0.5, dtype=np.float32))
+
     def test_replace_constant_function(self):
         dtype = np.float32
         value = np.random.randn(2, 100).astype(dtype)
