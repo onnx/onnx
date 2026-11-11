@@ -251,9 +251,18 @@ static int64_t parse_external_data_integer(const StringStringEntryProto& entry, 
   return result;
 }
 
+// True if a lexically normalized path still has a '..' component, so it points
+// outside the directory it is relative to. Names that merely contain two dots,
+// such as "model..weights.bin", do not count.
+static bool has_parent_directory_component(const std::filesystem::path& normalized_path) {
+  return std::any_of(normalized_path.begin(), normalized_path.end(), [](const std::filesystem::path& part) {
+    return part == std::filesystem::path("..");
+  });
+}
+
 // Checks what can be known about an external data location without the file
-// system: it must be a non-empty relative path that stays inside the model
-// directory. Returns the location in normalized form.
+// system: it must be a non-empty relative path that names a file and has no '..'
+// component. Returns the location in normalized form.
 static std::filesystem::path check_external_data_location_syntax(
     const std::string& base_dir,
     const std::string& location,
@@ -262,9 +271,7 @@ static std::filesystem::path check_external_data_location_syntax(
   if (file_path.empty()) {
     fail_check("Location of external TensorProto ( tensor name: ", tensor_name, ") should not be empty.");
   }
-  // has_root_path() also covers locations that are not absolute on Windows but
-  // are not relative to the model directory either: "/data", "C:data".
-  if (file_path.has_root_path()) {
+  if (file_path.is_absolute()) {
     fail_check(
         "Location of external TensorProto ( tensor name: ",
         tensor_name,
@@ -272,7 +279,7 @@ static std::filesystem::path check_external_data_location_syntax(
         location);
   }
   auto relative_path = file_path.lexically_normal().make_preferred();
-  if (relative_path.native().find(std::filesystem::path("..").native()) != std::filesystem::path::string_type::npos) {
+  if (has_parent_directory_component(relative_path)) {
     fail_check(
         "Data of TensorProto ( tensor name: ",
         tensor_name,
@@ -282,7 +289,27 @@ static std::filesystem::path check_external_data_location_syntax(
         location,
         "' points outside the directory.");
   }
+  // ".", "sub/.." and "weights/" name a directory, never a file.
+  if (relative_path == std::filesystem::path(".") || !relative_path.has_filename()) {
+    fail_check(
+        "Location of external TensorProto ( tensor name: ", tensor_name, ") should name a file, but it is: ", location);
+  }
   return relative_path;
+}
+
+// Without the file system, the containment check of resolve_external_data_location
+// cannot run. What can be decided from the path alone: on Windows, a location with
+// a root directory ("\data.bin") or with a drive other than the model directory's
+// ("D:data.bin") resolves outside the model directory. A location on the model
+// directory's drive ("C:data.bin" next to "C:\models\") resolves inside it.
+static void check_external_data_location_in_model_dir(
+    const std::string& base_dir,
+    const std::filesystem::path& relative_path,
+    const std::string& tensor_name) {
+  if (relative_path.has_root_directory() ||
+      (relative_path.has_root_name() && relative_path.root_name() != utf8_to_path(base_dir).root_name())) {
+    fail_check("Tensor ", tensor_name, " external data resolves outside model directory.");
+  }
 }
 
 // Checks that the external data available for a tensor is large enough for its
@@ -456,8 +483,10 @@ void check_tensor(const TensorProto& tensor, const CheckerContext& ctx) {
         if (ctx.check_external_data_files()) {
           data_path = resolve_external_data_location(ctx.get_model_dir(), entry.value(), tensor.name());
         } else {
-          data_path = utf8_to_path(ctx.get_model_dir()) /
+          const auto relative_path =
               check_external_data_location_syntax(ctx.get_model_dir(), entry.value(), tensor.name());
+          check_external_data_location_in_model_dir(ctx.get_model_dir(), relative_path, tensor.name());
+          data_path = utf8_to_path(ctx.get_model_dir()) / relative_path;
         }
       } else if (entry.key() == "offset") {
         offset_entry = &entry;
@@ -478,13 +507,25 @@ void check_tensor(const TensorProto& tensor, const CheckerContext& ctx) {
     }
     if (ctx.check_external_data_files()) {
       check_external_data_size(tensor, nelem, data_path, offset, length);
-    } else if (length.has_value()) {
-      // Without the file, an explicit length is the only size there is to check.
-      // Use the model-directory-prefixed path for the '#' in-memory sentinel,
-      // as in check_external_data_size.
+    } else {
+      // Without the file, offset and length can only be checked against each other
+      // and against the tensor's size. Use the model-directory-prefixed path for the
+      // '#' in-memory sentinel, as in check_external_data_size.
       const auto location = path_to_utf8(data_path);
       if (location.empty() || location[0] != '#') {
-        check_external_data_available(tensor, nelem, static_cast<std::uintmax_t>(*length));
+        if (offset.has_value() && length.has_value() && *offset > std::numeric_limits<int64_t>::max() - *length) {
+          fail_check(
+              "External data offset (",
+              *offset,
+              ") plus length (",
+              *length,
+              ") of TensorProto (tensor name: ",
+              tensor.name(),
+              ") exceeds the largest possible file size.");
+        }
+        if (length.has_value()) {
+          check_external_data_available(tensor, nelem, static_cast<std::uintmax_t>(*length));
+        }
       }
     }
     return;
@@ -819,18 +860,8 @@ void check_map(const MapProto& map, const CheckerContext& ctx) {
 // Check that the index data stored in a SparseTensorProto is valid.
 // indices: a 1-dimensional tensor; indices[i] represents the
 // linearized index value for the i-th nonzero value.
-static void check_sparse_tensor_indices_1(
-    const TensorProto& indices,
-    const SparseTensorProto& sparse_tensor_proto,
-    size_t nnz,
-    bool check_index_data) {
-  if (static_cast<size_t>(indices.dims(0)) != nnz) {
-    fail_check("Sparse tensor indices (", indices.name(), ") has ", indices.dims(0), " values, but NNZ is ", nnz);
-  }
-  if (!check_index_data) {
-    return;
-  }
-
+static void
+check_sparse_tensor_indices_1(const TensorProto& indices, const SparseTensorProto& sparse_tensor_proto, size_t nnz) {
   int dense_rank = sparse_tensor_proto.dims_size();
   int64_t dense_size = 1;
   for (int i = 0; i < dense_rank; ++i)
@@ -864,22 +895,9 @@ static void check_sparse_tensor_indices_1(
 // Check that the index data stored in a SparseTensorProto is valid.
 // indices: a 2-dimensional tensor; indices[i,j] represents the j-th
 // index value for the i-th nonzero value.
-static void check_sparse_tensor_indices_2(
-    const TensorProto& indices,
-    const SparseTensorProto& sparse_tensor_proto,
-    size_t nnz,
-    bool check_index_data) {
+static void
+check_sparse_tensor_indices_2(const TensorProto& indices, const SparseTensorProto& sparse_tensor_proto, size_t nnz) {
   int dense_rank = sparse_tensor_proto.dims_size();
-  if (static_cast<size_t>(indices.dims(0)) != nnz) {
-    fail_check("Sparse tensor indices (", indices.name(), ") first dimension size does not equal NNZ.");
-  }
-  if (indices.dims(1) != dense_rank) {
-    fail_check("Sparse tensor indices (", indices.name(), ") second dimension size does not match rank of tensor.");
-  }
-  if (!check_index_data) {
-    return;
-  }
-
   // Check if indices appear in ascending order, and if they have valid
   // values.
   const std::vector<int64_t> index_data = ParseData<int64_t>(&indices);
@@ -932,21 +950,45 @@ void check_sparse_tensor(const SparseTensorProto& sparse_tensor_proto, const Che
     if (indices.data_type() != TensorProto::INT64) {
       fail_check("Sparse tensor indices (", indices.name(), ") must have INT64 type.");
     }
-    // Without external data, validate the index metadata but not payload-dependent
-    // ordering and range constraints. Inline indices are always checked in full.
-    const bool check_index_data = ctx.check_external_data_files() || indices.data_location() != TensorProto::EXTERNAL;
     switch (indices.dims().size()) {
       case 1:
         // Indices in linearized format
-        check_sparse_tensor_indices_1(indices, sparse_tensor_proto, nnz, check_index_data);
-        return;
+        if (static_cast<size_t>(indices.dims(0)) != nnz) {
+          fail_check("Sparse tensor indices (", indices.name(), ") has ", indices.dims(0), " values, but NNZ is ", nnz);
+        }
+        break;
       case 2:
         // Check COO-style index. E.g., an index for a 3D tensor is a 3-tuple.
-        check_sparse_tensor_indices_2(indices, sparse_tensor_proto, nnz, check_index_data);
-        return;
+        if (static_cast<size_t>(indices.dims(0)) != nnz) {
+          fail_check("Sparse tensor indices (", indices.name(), ") first dimension size does not equal NNZ.");
+        }
+        if (indices.dims(1) != dense_rank) {
+          fail_check(
+              "Sparse tensor indices (", indices.name(), ") second dimension size does not match rank of tensor.");
+        }
+        break;
       default:
         fail_check("Sparse tensor indices (", indices.name(), ") must have rank 1 or 2.");
     }
+    // The order and range of the index values can only be checked from the values
+    // themselves, and the checker does not read external data. Without the files,
+    // the shape checks above are all there is; with them, reject such indices
+    // rather than accept index values that were never checked.
+    if (indices.data_location() == TensorProto::EXTERNAL) {
+      if (ctx.check_external_data_files()) {
+        fail_check(
+            "Sparse tensor indices (",
+            indices.name(),
+            ") are stored externally, so the checker cannot check their order and range.");
+      }
+      return;
+    }
+    if (indices.dims().size() == 1) {
+      check_sparse_tensor_indices_1(indices, sparse_tensor_proto, nnz);
+    } else {
+      check_sparse_tensor_indices_2(indices, sparse_tensor_proto, nnz);
+    }
+    return;
   } else if (nnz != 0) {
     fail_check("Sparse tensor (", values.name(), ") has no index values.");
   }
@@ -1676,6 +1718,22 @@ void check_model(
   }
 }
 
+void check_model(
+    const std::string& model_path,
+    bool full_check,
+    bool skip_opset_compatibility_check,
+    bool check_custom_domain) {
+  check_model(model_path, full_check, skip_opset_compatibility_check, check_custom_domain, true);
+}
+
+void check_model(
+    const ModelProto& model,
+    bool full_check,
+    bool skip_opset_compatibility_check,
+    bool check_custom_domain) {
+  check_model(model, full_check, skip_opset_compatibility_check, check_custom_domain, true);
+}
+
 using ONNX_NAMESPACE::ScopedFd;
 using ONNX_NAMESPACE::utf8_to_path;
 #ifdef _WIN32
@@ -1769,8 +1827,7 @@ validate_write_location(const std::string& base_dir, const std::string& location
   if (rel == std::filesystem::path(".")) {
     fail_check("External data location for tensor ", tensor_name, " is invalid: ", location);
   }
-  if (rel.native().find(std::filesystem::path("..").native()) !=
-      std::filesystem::path::string_type::npos) { // NOSONAR — C++17, no contains
+  if (has_parent_directory_component(rel)) {
     fail_check("External data location for tensor ", tensor_name, " contains '..': ", location);
   }
   return utf8_to_path(base_dir) / rel;

@@ -23,6 +23,7 @@ from onnx import (
     parser,
     shape_inference,
 )
+from onnx.bin import checker as checker_cli
 from onnx.external_data_helper import (
     _ALLOWED_EXTERNAL_DATA_KEYS,
     _MAX_EXTERNAL_DATA_PADDING,
@@ -1042,16 +1043,22 @@ class TestCheckExternalDataWithoutFiles:
             checker.check_model(model_filename)
         checker.check_model(model_filename, check_external_data_files=False)
 
-    def test_in_memory_model_ignores_working_directory(
-        self, monkeypatch: pytest.MonkeyPatch
+    @pytest.mark.parametrize("check_files", [False, True])
+    def test_in_memory_model_fails(
+        self, monkeypatch: pytest.MonkeyPatch, check_files: bool
     ) -> None:
         model_filename = self.create_test_model({"location": "data.bin"})
         model = onnx.load(model_filename, load_external_data=False)
-        # A file of the same name in the working directory is not consulted.
+        # Locations are relative to the model directory, which an in-memory model
+        # does not have; a file of the same name in the working directory does not
+        # count.
         monkeypatch.chdir(self.temp_dir)
         with open("data.bin", "wb") as data_file:
-            data_file.write(b"\x00")
-        checker.check_model(model, check_external_data_files=False)
+            data_file.write(self.value.tobytes())
+        with pytest.raises(
+            checker.ValidationError, match="not checked from a file path"
+        ):
+            checker.check_model(model, check_external_data_files=check_files)
 
     def test_file_contents_are_not_checked(self) -> None:
         model_filename = self.create_test_model({"location": "data.bin"})
@@ -1068,20 +1075,33 @@ class TestCheckExternalDataWithoutFiles:
             ({"location": ""}, "should not be empty"),
             ({"location": "../data.bin"}, "points outside the directory"),
             ({"location": "nested/../../data.bin"}, "points outside the directory"),
-            ({"location": "/data.bin"}, "should be a relative path"),
+            ({"location": "."}, "should name a file"),
+            ({"location": "nested/.."}, "should name a file"),
+            ({"location": "nested/"}, "should name a file"),
             ({"location": "data.bin", "offset": "-1"}, "non-negative integer"),
             ({"location": "data.bin", "length": "abc"}, "non-negative integer"),
             ({"location": "data.bin", "length": "12"}, "too small"),
+            (
+                {
+                    "location": "data.bin",
+                    "offset": str(2**63 - 1),
+                    "length": "24",
+                },
+                "largest possible file size",
+            ),
         ],
         ids=[
             "no_location",
             "empty_location",
             "parent_directory",
             "nested_parent_directory",
-            "rooted_location",
+            "current_directory",
+            "directory_after_normalization",
+            "trailing_separator",
             "negative_offset",
             "length_not_an_integer",
             "length_too_small",
+            "offset_plus_length_overflows",
         ],
     )
     def test_invalid_metadata_fails(
@@ -1090,18 +1110,50 @@ class TestCheckExternalDataWithoutFiles:
         model_filename = self.create_test_model(external_data)
         with pytest.raises(checker.ValidationError, match=match):
             checker.check_model(model_filename, check_external_data_files=False)
-        model = onnx.load(model_filename, load_external_data=False)
-        with pytest.raises(checker.ValidationError, match=match):
-            checker.check_model(model, check_external_data_files=False)
+
+    @pytest.mark.skipif(
+        os.name == "nt", reason="'/data.bin' is not absolute on Windows"
+    )
+    def test_absolute_location_fails(self) -> None:
+        model_filename = self.create_test_model({"location": "/data.bin"})
+        with pytest.raises(checker.ValidationError, match="should be a relative path"):
+            checker.check_model(model_filename, check_external_data_files=False)
+
+    @pytest.mark.parametrize("check_files", [False, True])
+    def test_double_dot_in_filename_passes(self, check_files: bool) -> None:
+        model_filename = self.create_test_model({"location": "model..weights.bin"})
+        with open(os.path.join(self.temp_dir, "model..weights.bin"), "wb") as data_file:
+            data_file.write(self.value.tobytes())
+        checker.check_model(model_filename, check_external_data_files=check_files)
 
     @pytest.mark.skipif(os.name != "nt", reason="Windows path syntax")
     @pytest.mark.parametrize(
-        "location", ["C:/data.bin", "C:data.bin", "\\\\server\\share\\data.bin"]
+        ("location", "match"),
+        [
+            ("C:/data.bin", "should be a relative path"),
+            ("\\\\server\\share\\data.bin", "should be a relative path"),
+            ("/data.bin", "resolves outside model directory"),
+            ("{other_drive}data.bin", "resolves outside model directory"),
+        ],
+        ids=["absolute", "unc", "root_relative", "other_drive"],
     )
-    def test_windows_rooted_location_fails(self, location: str) -> None:
+    def test_windows_rooted_location_fails(self, location: str, match: str) -> None:
+        drive = os.path.splitdrive(self.temp_dir)[0]
+        other_drive = "Y:" if drive.upper() == "Z:" else "Z:"
+        location = location.format(other_drive=other_drive)
         model_filename = self.create_test_model({"location": location})
-        with pytest.raises(checker.ValidationError, match="should be a relative path"):
+        with pytest.raises(checker.ValidationError, match=match):
             checker.check_model(model_filename, check_external_data_files=False)
+
+    @pytest.mark.skipif(os.name != "nt", reason="Windows path syntax")
+    @pytest.mark.parametrize("check_files", [False, True])
+    def test_windows_same_drive_location_passes(self, check_files: bool) -> None:
+        # Joined to the model directory, "C:data.bin" names C:\<model dir>\data.bin.
+        drive = os.path.splitdrive(self.temp_dir)[0]
+        model_filename = self.create_test_model({"location": f"{drive}data.bin"})
+        with open(os.path.join(self.temp_dir, "data.bin"), "wb") as data_file:
+            data_file.write(self.value.tobytes())
+        checker.check_model(model_filename, check_external_data_files=check_files)
 
     def test_inline_data_with_external_location_fails(self) -> None:
         model_filename = self.create_test_model({"location": "data.bin"})
@@ -1131,6 +1183,23 @@ class TestCheckExternalDataWithoutFiles:
             {"location": "#weights.bin", "length": "24"}
         )
         checker.check_model(model_filename, check_external_data_files=False)
+
+    @pytest.mark.parametrize(
+        ("location", "valid"), [("data.bin", True), ("../data.bin", False)]
+    )
+    def test_command_line(
+        self, monkeypatch: pytest.MonkeyPatch, location: str, valid: bool
+    ) -> None:
+        model_filename = self.create_test_model({"location": location})
+        monkeypatch.setattr(
+            "sys.argv",
+            ["check-model", "--no-check-external-data-files", model_filename],
+        )
+        if valid:
+            checker_cli.check_model()
+        else:
+            with pytest.raises(checker.ValidationError, match="outside the directory"):
+                checker_cli.check_model()
 
     @pytest.mark.parametrize("check_files", [False, True])
     def test_in_memory_sentinel_preserved(self, check_files: bool) -> None:
@@ -1177,7 +1246,22 @@ class TestCheckExternalSparseIndicesWithoutFiles:
         with pytest.raises(checker.ValidationError):
             checker.check_model(model_path)
         checker.check_model(model_path, check_external_data_files=False)
-        checker.check_model(model, check_external_data_files=False)
+
+    @pytest.mark.parametrize("indices", [[0, 5], [[0, 0], [1, 2]]])
+    def test_present_indices_fail_by_default(
+        self, tmp_path: Path, indices: list
+    ) -> None:
+        index_array = np.array(indices, dtype=np.int64)
+        model_path = tmp_path / "model.onnx"
+        model_path.write_bytes(self.make_model(index_array).SerializeToString())
+        (tmp_path / "indices.bin").write_bytes(index_array.tobytes())
+        # The checker does not read external data, so it cannot check the order and
+        # range of the index values and rejects them instead of passing them.
+        with pytest.raises(
+            checker.ValidationError, match="cannot check their order and range"
+        ):
+            checker.check_model(model_path)
+        checker.check_model(model_path, check_external_data_files=False)
 
     @pytest.mark.parametrize(
         ("index_shape", "dtype", "dense_shape", "length", "match"),
@@ -1194,6 +1278,7 @@ class TestCheckExternalSparseIndicesWithoutFiles:
     )
     def test_invalid_metadata_fails(
         self,
+        tmp_path: Path,
         index_shape: list[int],
         dtype: Any,
         dense_shape: list[int],
@@ -1206,8 +1291,10 @@ class TestCheckExternalSparseIndicesWithoutFiles:
         for entry in sparse.indices.external_data:
             if entry.key == "length":
                 entry.value = str(length)
+        model_path = tmp_path / "model.onnx"
+        model_path.write_bytes(model.SerializeToString())
         with pytest.raises(checker.ValidationError, match=match):
-            checker.check_model(model, check_external_data_files=False)
+            checker.check_model(model_path, check_external_data_files=False)
 
     @pytest.mark.parametrize(
         ("indices", "match"),

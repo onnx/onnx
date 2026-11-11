@@ -69,21 +69,19 @@ onnx.checker.check_model("path/to/the/model.onnx")
 
 ### Checking a model without its external data
 
-By default, the checker verifies that each external data file exists, is a regular file inside the model directory, and holds enough data for its tensors. With `check_external_data_files=False`, it does not access the files and checks only what the model itself says about them: every externally stored tensor has a `location` that is a relative path inside the model directory, `offset` and `length` are non-negative integers, and an explicit `length` is large enough for the tensor's shape and type. This checks a model whose external data has not been downloaded, or a model loaded without its external data:
+By default, the checker verifies that each external data file exists, is a regular file inside the model directory, and holds enough data for its tensors. With `check_external_data_files=False`, it does not access the files and checks only what the model itself says about them: every externally stored tensor has a `location` that is a relative path naming a file inside the model directory, `offset` and `length` are non-negative integers whose sum fits a file, and an explicit `length` is large enough for the tensor's shape and type. This checks a model whose external data has not been downloaded:
 
 ```python
 import onnx
 
 onnx.checker.check_model("path/to/the/model.onnx", check_external_data_files=False)
-
-model = onnx.load("path/to/the/model.onnx", load_external_data=False)
-onnx.checker.check_model(model, check_external_data_files=False)
 ```
 
-For sparse tensors with external indices, this mode still checks the index type,
-rank, dimensions, and agreement with the number of nonzero values. Index ordering
-and range checks require the external payload and are skipped. Indices stored
-inline are checked as usual.
+On the command line, `check-model --no-check-external-data-files path/to/the/model.onnx` does the same.
+
+Check the model from its path: locations are relative to the model directory, so a model checked in memory, for example one loaded with `load_external_data=False`, fails in both modes when it has external data.
+
+The checker never reads external data, so it cannot check the order and range of sparse tensor indices that are stored externally. With `check_external_data_files=False`, only the type, rank and dimensions of such indices are checked; by default, they are rejected. Indices stored inline are checked as usual.
 
 ## TensorProto: data_location and external_data fields
 

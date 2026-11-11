@@ -145,14 +145,16 @@ def check_model(
         check_external_data_files: If False, the function does not access external
             data files. External data references are still validated from the
             model alone: each externally stored tensor has a location that is a
-            relative path inside the model directory, offset and length are
-            non-negative integers, and an explicit length is large enough for the
-            tensor's shape and type. Whether the files exist, are regular files
-            and hold that data is not checked. Use this to check a model whose
-            external data is not available, such as an in-memory model loaded
-            with ``load_external_data=False``. For external sparse indices,
-            structural checks still apply, but index ordering and range checks
-            are skipped because they require the payload.
+            relative path naming a file inside the model directory, offset and
+            length are non-negative integers whose sum fits a file, and an
+            explicit length is large enough for the tensor's shape and type.
+            Whether the files exist, are regular files and hold that data is not
+            checked. Use this with a model path to check a model whose external
+            data is not available; a model checked in memory cannot have its
+            external data locations resolved in either mode. The checker never
+            reads external data, so for sparse indices stored externally only
+            the type, rank and dimensions are checked; with the default True,
+            such indices are rejected.
     """
     # If model is a path instead of ModelProto
     if isinstance(model, (str, os.PathLike)):

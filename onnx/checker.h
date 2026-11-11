@@ -196,21 +196,32 @@ check_model_local_functions(const ModelProto& model, const CheckerContext& ctx, 
 // Throws ValidationError if any function directly or indirectly references itself.
 ONNX_API void check_function_call_cycles(const ModelProto& model);
 
-// With check_external_data_files = false, external data references are checked
-// without accessing the files: their entries are validated, but not whether the
-// files exist or hold enough data.
 ONNX_API void check_model(
     const ModelProto& model,
     bool full_check = false,
     bool skip_opset_compatibility_check = false,
-    bool check_custom_domain = false,
-    bool check_external_data_files = true);
+    bool check_custom_domain = false);
 ONNX_API void check_model(
     const std::string& model_path,
     bool full_check = false,
     bool skip_opset_compatibility_check = false,
-    bool check_custom_domain = false,
-    bool check_external_data_files = true);
+    bool check_custom_domain = false);
+// With check_external_data_files = false, external data references are checked
+// without accessing the files: their entries are validated, but not whether the
+// files exist or hold enough data. Separate overloads keep the ones above, and
+// their exported symbols, unchanged.
+ONNX_API void check_model(
+    const ModelProto& model,
+    bool full_check,
+    bool skip_opset_compatibility_check,
+    bool check_custom_domain,
+    bool check_external_data_files);
+ONNX_API void check_model(
+    const std::string& model_path,
+    bool full_check,
+    bool skip_opset_compatibility_check,
+    bool check_custom_domain,
+    bool check_external_data_files);
 std::filesystem::path resolve_external_data_location(
     const std::string& base_dir,
     const std::string& location,
