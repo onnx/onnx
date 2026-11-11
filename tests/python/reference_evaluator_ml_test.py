@@ -262,6 +262,34 @@ class TestReferenceEvaluatorAiOnnxMl:
         assert_allclose(got, expected_value, atol=1e-6)
 
     @pytest.mark.skipif(not ONNX_ML, reason="onnx not compiled with ai.onnx.ml")
+    def test_feature_vectorizer_one_dimension(self):
+        X = [
+            make_tensor_value_info("X0", TensorProto.FLOAT, [None]),
+            make_tensor_value_info("X1", TensorProto.FLOAT, [None, None]),
+        ]
+        Y = make_tensor_value_info("Y", TensorProto.FLOAT, [None, None])
+        node1 = make_node(
+            "FeatureVectorizer",
+            ["X0", "X1"],
+            ["Y"],
+            inputdimensions=[3, 2],
+            domain="ai.onnx.ml",
+        )
+        graph = make_graph([node1], "ml", X, [Y])
+        model = make_model_gen_version(graph, opset_imports=OPSETS)
+        onnx.checker.check_model(model)
+
+        feeds = {
+            "X0": np.array([1, 2, 3], dtype=np.float32),
+            "X1": np.array([[4, 5]], dtype=np.float32),
+        }
+        expected = np.array([[1, 2, 3, 4, 5]], dtype=np.float32)
+        self._check_ort(model, feeds, atol=1e-6)
+        sess = ReferenceEvaluator(model)
+        got = sess.run(None, feeds)[0]
+        assert_allclose(got, expected, atol=1e-6)
+
+    @pytest.mark.skipif(not ONNX_ML, reason="onnx not compiled with ai.onnx.ml")
     def test_imputer_float(self):
         X = make_tensor_value_info("X", TensorProto.FLOAT, [None, None])
         Y = make_tensor_value_info("Y", TensorProto.FLOAT, [None, None])
