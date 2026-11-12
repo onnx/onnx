@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include <algorithm>
+#include <limits>
 #include <map>
 #include <string>
 #include <unordered_set>
@@ -623,6 +624,40 @@ ONNX_OPERATOR_SET_SCHEMA(
             kDoc_Expm1_ver29,
             "The exponential of the input minus one, computed element-wise")));
 
+static constexpr const char* kDoc_Log1p_ver29 = R"DOC(
+Computes `y = ln(1 + x)` element-wise, where `ln` is the natural logarithm.
+The output has the same shape and element type as the input, including for
+scalar and empty inputs.
+
+For finite `x > -1`, the result is a floating-point approximation of `ln(1 + x)`,
+with `1 + x` evaluated as an exact real sum. Small nonzero results representable
+in the output type must be preserved even when floating-point addition would
+round `1 + x` to `1`. For example, a FLOAT input of `1e-8` produces approximately
+`1e-8`.
+
+Special values are defined element-wise as follows:
+
+| Input `x` | Output `y` |
+| --- | --- |
+| Positive zero | Positive zero |
+| Negative zero | Negative zero |
+| `-1` | Negative infinity |
+| Finite `x < -1` | NaN |
+| Negative infinity | NaN |
+| Positive infinity | Positive infinity |
+| NaN | NaN |
+
+The sign and payload of an output NaN are unspecified.
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(
+    Log1p,
+    29,
+    OpSchema().FillUsing(
+        defs::math::utils::UnaryFloatMathOpGenerator(
+            kDoc_Log1p_ver29,
+            "The natural logarithm of one plus the input, computed element-wise")));
+
 ONNX_OPERATOR_SET_SCHEMA(
     Tanh,
     13,
@@ -1049,6 +1084,47 @@ ONNX_OPERATOR_SET_SCHEMA(
             },
             18));
 
+// An opset 29 decomposition can use Log1p without rounding away the small
+// normalization term. Earlier function bodies retain their original dependencies.
+static bool BuildContextDependentFunctionBodyLogSoftmax29(
+    const FunctionBodyBuildContext& ctx,
+    const OpSchema& schema,
+    FunctionProto& functionProto) {
+  const auto* input_type = ctx.getInputType(0);
+  if (input_type == nullptr) {
+    return false;
+  }
+  const auto elem_type = input_type->tensor_type().elem_type();
+  const bool promote = elem_type == TensorProto::FLOAT16 || elem_type == TensorProto::BFLOAT16;
+  const int64_t axis = ctx.getAttribute("axis") != nullptr ? ctx.getAttribute("axis")->i() : -1;
+  FunctionBuilder builder(functionProto);
+  // Keep 16-bit inputs in float through exponentiation and normalization.
+  builder.Add(promote ? "X = Cast <to = 1> (input)" : "X = Identity (input)");
+  builder.Const1D("axes", axis).Const("OneInt", static_cast<int64_t>(1)).Const("ZeroFloat", 0.0f).Add(R"(
+        Zero = CastLike (ZeroFloat, X)
+        MaxLogit = ReduceMax <keepdims = 1> (X, axes)
+        Shifted = Sub (X, MaxLogit)
+        Exponentials = Exp (Shifted)
+        IsMax = Equal (Shifted, Zero)
+        Others = Where (IsMax, Zero, Exponentials)
+        IsMaxInt = Cast <to = 7> (IsMax)
+        MaxCount = ReduceSum <keepdims = 1> (IsMaxInt, axes)
+        RemainingMaxCount = Sub (MaxCount, OneInt)
+        TiedMaxima = CastLike (RemainingMaxCount, X)
+      )");
+  // Remove all maxima before summation, then restore all but one. Subtracting
+  // one from the full exponential sum would lose the small normalization term.
+  builder.Add(R"(
+        OtherSum = ReduceSum <keepdims = 1> (Others, axes)
+        NormalizerInput = Add (OtherSum, TiedMaxima)
+        Normalizer = Log1p (NormalizerInput)
+        OutputWide = Sub (Shifted, Normalizer)
+        output = CastLike (OutputWide, input)
+      )");
+  schema.BuildFunction(functionProto);
+  return true;
+}
+
 ONNX_OPERATOR_SET_SCHEMA(
     LogSoftmax,
     13,
@@ -1093,7 +1169,8 @@ ONNX_OPERATOR_SET_SCHEMA(
               schema.BuildFunction(functionProto);
               return true;
             },
-            18));
+            18)
+        .SetContextDependentFunctionBodyBuilder(BuildContextDependentFunctionBodyLogSoftmax29, 29));
 
 ONNX_OPERATOR_SET_SCHEMA(
     Hardmax,
@@ -1382,7 +1459,11 @@ static void GroupedMatMulShapeInference(InferenceContext& ctx) {
 
   Dim M, K, G, N, S;
   ctx.unifyInputShape(0, {M, K});
-  ctx.unifyInputShape(1, {G, K, N});
+  if (getAttribute(ctx, "transB", int64_t{0}) != 0) {
+    ctx.unifyInputShape(1, {G, N, K});
+  } else {
+    ctx.unifyInputShape(1, {G, K, N});
+  }
   ctx.unifyInputShape(2, {M, S});
   if (ctx.hasInput(3)) {
     ctx.unifyInputShape(3, {G, N});
@@ -1394,6 +1475,11 @@ static bool BuildContextDependentFunctionBodyGroupedMatMul(
     const FunctionBodyBuildContext& ctx,
     const OpSchema& schema,
     FunctionProto& functionProto) {
+  const auto* transB_attr = ctx.getAttribute("transB");
+  if (transB_attr != nullptr && !transB_attr->ref_attr_name().empty()) {
+    return false;
+  }
+  const bool transB = transB_attr != nullptr && transB_attr->i() != 0;
   FunctionBuilder builder(functionProto);
   builder.Const1D("index_zero", int64_t{0})
       .Const1D("index_one", int64_t{1})
@@ -1403,12 +1489,19 @@ static bool BuildContextDependentFunctionBodyGroupedMatMul(
       .Add("indices_shape = Shape (group_indices)")
       .Add("M = Gather <axis = 0> (input_shape, index_zero)")
       .Add("K = Gather <axis = 0> (input_shape, index_one)")
-      .Add("N = Gather <axis = 0> (weights_shape, index_two)")
+      .Add(
+          transB ? "N = Gather <axis = 0> (weights_shape, index_one)"
+                 : "N = Gather <axis = 0> (weights_shape, index_two)")
       .Add("S = Gather <axis = 0> (indices_shape, index_one)")
       .Add("MS = Mul (M, S)")
-      .Add("indices_flat = Reshape <allowzero = 1> (group_indices, MS)")
-      .Add("selected_weights = Gather <axis = 0> (weights, indices_flat)")
-      .Add("input_unsqueezed = Unsqueeze (input, index_one)")
+      .Add("indices_flat = Reshape <allowzero = 1> (group_indices, MS)");
+  if (transB) {
+    builder.Add("gathered_weights = Gather <axis = 0> (weights, indices_flat)")
+        .Add("selected_weights = Transpose <perm = [0, 2, 1]> (gathered_weights)");
+  } else {
+    builder.Add("selected_weights = Gather <axis = 0> (weights, indices_flat)");
+  }
+  builder.Add("input_unsqueezed = Unsqueeze (input, index_one)")
       .Add("expanded_shape = Concat <axis = 0> (M, S, K)")
       .Add("input_expanded = Expand (input_unsqueezed, expanded_shape)")
       .Add("matmul_input_shape = Concat <axis = 0> (MS, index_one, K)")
@@ -1434,11 +1527,18 @@ ONNX_OPERATOR_SET_SCHEMA(
     29,
     OpSchema()
         .SetDoc(kDoc_GroupedMatMul_ver29)
+        .Attr(
+            "transB",
+            "Whether to transpose the last two axes of weights before multiplication. "
+            "If zero, weights has shape [G, K, N]; if non-zero, weights has shape [G, N, K].",
+            AttributeProto::INT,
+            int64_t{0})
         .Input(0, "input", "Token matrix with shape [M, K].", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
         .Input(
             1,
             "weights",
-            "Stack of G group weight matrices with shape [G, K, N].",
+            "Stack of G group weight matrices with shape [G, K, N] if transB is zero, "
+            "or [G, N, K] if transB is non-zero.",
             "T",
             OpSchema::Single,
             true,
@@ -1883,6 +1983,186 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Constrain input and output types to numeric tensors.")
         .TypeConstraint("T2", {types::Int32, types::Int64}, "axis tensor can be int32 or int64 only")
         .TypeAndShapeInferenceFunction(ONNX_NAMESPACE::propagateShapeAndTypeFromFirstInput));
+
+static void LogCumSumExpShapeInference(InferenceContext& ctx) {
+  propagateShapeAndTypeFromFirstInput(ctx);
+  if (!hasNInputShapes(ctx, 1)) {
+    return;
+  }
+  const auto rank = getInputShape(ctx, 0).dim_size();
+  const auto axis = getAttribute(ctx, "axis", int64_t{0});
+  if (rank == 0) {
+    fail_shape_inference("LogCumSumExp requires rank >= 1; reshape scalar X to a one-element tensor.");
+  }
+  if (axis < -rank || axis >= rank) {
+    fail_shape_inference("LogCumSumExp axis ", axis, " is outside [-", rank, ", ", rank - 1, "] for X.");
+  }
+}
+
+static bool
+BuildLogCumSumExpFunction(const FunctionBodyBuildContext& ctx, const OpSchema& schema, FunctionProto& functionProto) {
+  const auto* input_type = ctx.getInputType(0);
+  if (input_type == nullptr || !input_type->has_tensor_type()) {
+    return false;
+  }
+  const auto elem_type = input_type->tensor_type().elem_type();
+  if (elem_type != TensorProto::FLOAT16 && elem_type != TensorProto::BFLOAT16 && elem_type != TensorProto::FLOAT &&
+      elem_type != TensorProto::DOUBLE) {
+    return false;
+  }
+  const bool use_double = elem_type == TensorProto::DOUBLE;
+  FunctionBuilder builder(functionProto);
+  builder.Add("X_acc = Cast (X)", "to", int64_t{use_double ? TensorProto::DOUBLE : TensorProto::FLOAT});
+  builder.Const("negative_infinity_float", -std::numeric_limits<float>::infinity())
+      .Add("negative_infinity = CastLike (negative_infinity_float, X_acc)");
+  if (ctx.getAttribute("axis") == nullptr) {
+    builder.Const("axis_value", int64_t{0});
+  } else {
+    builder.Add("axis_value = Constant <value_int: int = @axis> ()");
+  }
+  const std::string prefix = R"ONNX(
+        scalar_zero = Constant <value = int64 {0}> ()
+        zero = Constant <value = int64[1] {0}> ()
+        one = Constant <value = int64[1] {1}> ()
+        end = Constant <value = int64[1] {9223372036854775807}> ()
+        X_shape = Shape (X)
+        rank = Size (X_shape)
+        axis_negative = Less (axis_value, zero)
+        axis_from_end = Add (axis_value, rank)
+        axis_normalized = Where (axis_negative, axis_from_end, axis_value)
+        size = Size (X)
+        empty = Equal (size, scalar_zero)
+        Y_acc = If (empty) <
+          then_branch = empty_input () => (empty_output) {
+            empty_output = Identity (X_acc)
+          },
+          else_branch = nonempty_input () => (nonempty_output) {
+            axis_end = Add (axis_normalized, one)
+            before_shape = Slice (X_shape, zero, axis_normalized)
+            after_shape = Slice (X_shape, axis_end, end)
+            before = ReduceProd <keepdims = 1> (before_shape)
+            after = ReduceProd <keepdims = 1> (after_shape)
+            length = Gather <axis = 0> (X_shape, axis_normalized)
+            scan_shape = Concat <axis = 0> (before, length, after)
+            state_shape = Concat <axis = 0> (before, after)
+            reshaped = Reshape (X_acc, scan_shape)
+            scan_input = Transpose <perm = [1, 0, 2]> (reshaped)
+            initial = Expand (negative_infinity, state_shape)
+      )ONNX";
+  // Flatten the dimensions before and after the axis so the Scan always uses axis 0,
+  // including when X's rank is unknown at function-building time.
+  // The log1p correction below retains exp(difference) when 1 + exp(difference)
+  // rounds to 1; its argument is in [0, 1], so the correction is well-conditioned.
+  const std::string acc_type = use_double ? "double" : "float";
+  builder.Add((prefix + R"ONNX(
+            final_state, scanned = Scan (initial, scan_input) <
+              num_scan_inputs = 1,
+              body = prefix ()ONNX" +
+               acc_type + "[?, ?] previous, " + acc_type + "[?, ?] current) => (" + acc_type + "[?, ?] next, " +
+               acc_type + R"ONNX([?, ?] output) {
+                zero_acc = Constant <value = float {0}> ()
+                one_acc = Constant <value = float {1}> ()
+                zero_t = CastLike (zero_acc, previous)
+                one_t = CastLike (one_acc, previous)
+                maximum = Max (previous, current)
+                minimum = Min (previous, current)
+                infinite = IsInf (maximum)
+                safe_maximum = Where (infinite, zero_t, maximum)
+                safe_minimum = Where (infinite, zero_t, minimum)
+                difference = Sub (safe_minimum, safe_maximum)
+                exponential = Exp (difference)
+                sum = Add (one_t, exponential)
+                logarithm = Log (sum)
+                rounded_exponential = Sub (sum, one_t)
+                error = Sub (exponential, rounded_exponential)
+                correction = Div (error, sum)
+                log_one_plus = Add (logarithm, correction)
+                finite_result = Add (safe_maximum, log_one_plus)
+                result = Where (infinite, maximum, finite_result)
+                previous_nan = IsNaN (previous)
+                current_nan = IsNaN (current)
+                any_nan = Or (previous_nan, current_nan)
+                nan_value = Where (previous_nan, previous, current)
+                next = Where (any_nan, nan_value, result)
+                output = Identity (next)
+              }
+            >
+            restored = Transpose <perm = [1, 0, 2]> (scanned)
+            nonempty_output = Reshape <allowzero = 1> (restored, X_shape)
+          }
+        >
+        Y = CastLike (Y_acc, X)
+      )ONNX")
+                  .c_str());
+  schema.BuildFunction(functionProto);
+  return true;
+}
+
+static constexpr const char* LogCumSumExp_doc = R"DOC(
+Computes the inclusive, forward cumulative log-sum-exp of `X` along `axis`.
+Let `r = rank(X)`, where `r >= 1`. The attribute `axis` defaults to 0 and must
+be in `[-r, r-1]`. The normalized axis is `a = axis` if `axis >= 0`, and
+`a = axis + r` otherwise.
+
+For each fixed choice of indices in the dimensions other than `a`, let
+`x[0], ..., x[n-1]` be the input slice along `a`, where `n = X.shape[a]`.
+The corresponding output slice is defined by
+`y[j] = log(sum(exp(x[k]), k = 0, ..., j))` for `0 <= j < n`.
+Thus, each prefix includes the current element and all preceding elements,
+and excludes subsequent elements. The output `Y` has the same shape and
+element type as `X`. If any dimension of `X` is zero, `Y` is empty.
+
+The following rules apply independently to each prefix, in order:
+
+* If the prefix contains NaN, its output is NaN.
+* Otherwise, if the prefix contains positive infinity, its output is positive infinity.
+* Otherwise, if every element in the prefix is negative infinity, its output is negative infinity.
+
+Negative infinity contributes zero to the sum of exponentials.
+
+Accumulation must be numerically stable and use at least float32 precision
+for float16, bfloat16 and float32 inputs, and at least float64 precision for
+float64 inputs. Each prefix result is converted to the element type of `X`
+to form `Y`; this conversion must not reduce the precision of the intermediate
+accumulation for subsequent prefixes. The floating-point accumulation order
+is unspecified, and different orders may produce different rounding.
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(
+    LogCumSumExp,
+    29,
+    OpSchema()
+        .SetDoc(LogCumSumExp_doc)
+        .Attr(
+            "axis",
+            "Axis along which to compute inclusive prefixes, defaulting to 0. "
+            "Must be in [-rank(X), rank(X)-1]. A negative value is normalized by adding rank(X).",
+            AttributeProto::INT,
+            int64_t{0})
+        .Input(
+            0,
+            "X",
+            "Floating-point input tensor of rank at least one. Dimensions may be zero.",
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::Differentiable)
+        .Output(
+            0,
+            "Y",
+            "Tensor with the same shape and element type as X, containing inclusive cumulative log-sum-exp values.",
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::Differentiable)
+        .TypeConstraint(
+            "T",
+            {types::Float16, types::BFloat16, types::Float, types::Double},
+            "Input and output have the same floating-point element type.")
+        .TypeAndShapeInferenceFunction(LogCumSumExpShapeInference)
+        .SetContextDependentFunctionBodyBuilder(BuildLogCumSumExpFunction));
 
 ONNX_OPERATOR_SET_SCHEMA(
     Round,

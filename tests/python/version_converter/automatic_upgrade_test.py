@@ -8,9 +8,11 @@ from typing import ClassVar
 import automatic_conversion_test_base
 import numpy as np
 import pytest
+from numpy.testing import assert_allclose
 
 import onnx
 from onnx import TensorProto, helper
+from onnx.reference import ReferenceEvaluator
 
 #####################################################################################
 # Every test calls _test_op_conversion to upgrade a model from an initial opset version
@@ -26,6 +28,16 @@ class TestAutomaticUpgrade(automatic_conversion_test_base.TestAutomaticConversio
         strict_check = kwargs.pop("strict_check", False)
         mode = "strict_upgrade" if strict_check else "upgrade"
         self._test_op_conversion(op, *args, **kwargs, mode=mode)
+
+    def test_DequantizePacked(self) -> None:
+        self._test_op_upgrade(
+            "DequantizePacked",
+            29,
+            [[18]],
+            [[32]],
+            input_types=[TensorProto.UINT8],
+            attrs={"format": "gguf:q4_0", "shape": [32]},
+        )
 
     def test_Abs(self) -> None:
         self._test_op_upgrade("Abs", 1, attrs={"consumed_inputs": [0]})
@@ -389,6 +401,11 @@ class TestAutomaticUpgrade(automatic_conversion_test_base.TestAutomaticConversio
             [TensorProto.FLOAT, TensorProto.INT64],
         )
 
+    def test_LogCumSumExp(self) -> None:
+        self._test_op_upgrade(
+            "LogCumSumExp", 29, [[2, 3]], [[2, 3]], attrs={"axis": -1}
+        )
+
     def test_DepthToSpace(self) -> None:
         self._test_op_upgrade(
             "DepthToSpace", 1, [[1, 8, 3, 3]], [[1, 2, 6, 6]], attrs={"blocksize": 2}
@@ -560,11 +577,12 @@ class TestAutomaticUpgrade(automatic_conversion_test_base.TestAutomaticConversio
             attrs={"mode": "nearest", "padding_mode": "border", "align_corners": 1},
         )
 
-    def test_GroupedMatMul(self) -> None:
+    @pytest.mark.parametrize("transB", [0, 1])
+    def test_GroupedMatMul(self, transB) -> None:
         self._test_op_upgrade(
             "GroupedMatMul",
             29,
-            [[4, 3], [2, 3, 5], [4, 2], [2, 5]],
+            [[4, 3], [2, 5, 3] if transB else [2, 3, 5], [4, 2], [2, 5]],
             [[4, 2, 5]],
             [
                 TensorProto.FLOAT,
@@ -572,6 +590,7 @@ class TestAutomaticUpgrade(automatic_conversion_test_base.TestAutomaticConversio
                 TensorProto.INT64,
                 TensorProto.FLOAT,
             ],
+            attrs={"transB": transB},
         )
 
     def test_GRU_1(self) -> None:
@@ -707,6 +726,9 @@ class TestAutomaticUpgrade(automatic_conversion_test_base.TestAutomaticConversio
 
     def test_Log(self) -> None:
         self._test_op_upgrade("Log", 1, attrs={"consumed_inputs": [0]})
+
+    def test_Log1p(self) -> None:
+        self._test_op_upgrade("Log1p", 29)
 
     def test_LogSoftmax(self) -> None:
         self._test_op_upgrade("LogSoftmax", 1)
@@ -953,6 +975,28 @@ class TestAutomaticUpgrade(automatic_conversion_test_base.TestAutomaticConversio
 
     def test_MeanVarianceNormalization(self) -> None:
         self._test_op_upgrade("MeanVarianceNormalization", 9, attrs={"axes": [1, 2]})
+
+    def test_MeanVarianceNormalization_opset28(self) -> None:
+        model = onnx.parser.parse_model(
+            """
+            <ir_version: 13, opset_import: [ "" : 28]>
+            mvn (float[3] X) => (float[3] Y)
+            {
+                Y = MeanVarianceNormalization <axes = [0]> (X)
+            }
+            """
+        )
+        x = np.array([1000.0, 1001.0, 1002.0], dtype=np.float32)
+        expected = ReferenceEvaluator(model).run(None, {"X": x})[0]
+
+        converted = onnx.version_converter.convert_version(model, 29)
+        onnx.checker.check_model(converted)
+        assert all(
+            node.op_type != "MeanVarianceNormalization" for node in converted.graph.node
+        )
+        got = ReferenceEvaluator(converted).run(None, {"X": x})[0]
+
+        assert_allclose(got, expected)
 
     def test_Min(self) -> None:
         self._test_op_upgrade(
