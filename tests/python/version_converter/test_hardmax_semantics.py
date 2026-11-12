@@ -8,6 +8,7 @@ from __future__ import annotations
 import unittest
 
 import numpy as np
+
 import onnx
 from onnx import TensorProto, helper, version_converter
 from onnx.reference import ReferenceEvaluator
