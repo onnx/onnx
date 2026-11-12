@@ -83,6 +83,7 @@ __all__ = [
     "DequantizeLinear_21",
     "DequantizeLinear_23",
     "DequantizeLinear_25",
+    "DequantizePacked",
     "Det",
     "DFT_17",
     "DFT_20",
@@ -95,6 +96,7 @@ __all__ = [
     "Equal",
     "Erf",
     "Exp",
+    "Expm1",
     "Expand",
     "EyeLike",
     "Flatten",
@@ -362,6 +364,7 @@ from onnx.reference.ops.op_dequantize_linear import (
     DequantizeLinear_23,
     DequantizeLinear_25,
 )
+from onnx.reference.ops.op_dequantize_packed import DequantizePacked
 from onnx.reference.ops.op_det import Det
 from onnx.reference.ops.op_dft import DFT_17, DFT_20
 from onnx.reference.ops.op_div import Div
@@ -373,6 +376,7 @@ from onnx.reference.ops.op_equal import Equal
 from onnx.reference.ops.op_erf import Erf
 from onnx.reference.ops.op_exp import Exp
 from onnx.reference.ops.op_expand import Expand
+from onnx.reference.ops.op_expm1 import Expm1
 from onnx.reference.ops.op_eyelike import EyeLike
 from onnx.reference.ops.op_flatten import Flatten
 from onnx.reference.ops.op_floor import Floor

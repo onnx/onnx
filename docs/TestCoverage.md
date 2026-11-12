@@ -6,7 +6,7 @@
 * [Overall Test Coverage](#overall-test-coverage)
 # Node Test Coverage
 ## Summary
-Node tests have covered 196/205 (95.61%, 5 generators excluded) common operators.
+Node tests have covered 198/207 (95.65%, 5 generators excluded) common operators.
 
 Node tests have covered 1/1 (100.00%, 0 generators excluded) experimental operators.
 
@@ -10944,6 +10944,123 @@ expect(
 </details>
 
 
+### DequantizePacked
+There are 5 test cases, listed as following:
+<details>
+<summary>empty</summary>
+
+```python
+node = helper.make_node(
+    "DequantizePacked", ["x"], ["y"], format="gguf:q2_k", shape=[0, 256]
+)
+expect(
+    node,
+    inputs=[np.empty(0, dtype=np.uint8)],
+    outputs=[np.empty((0, 256), dtype=np.float32)],
+    name="test_dequantizepacked_empty",
+)
+```
+
+</details>
+<details>
+<summary>iq4_nl</summary>
+
+```python
+node = helper.make_node(
+    "DequantizePacked",
+    ["x"],
+    ["y"],
+    format="gguf:iq4_nl",
+    shape=[32],
+    output_dtype=TensorProto.FLOAT16,
+)
+x = np.frombuffer(struct.pack("<e", 0.5) + bytes(range(16)), dtype=np.uint8)
+y = np.array(
+    [
+        -127,
+        -104,
+        -83,
+        -65,
+        -49,
+        -35,
+        -22,
+        -10,
+        1,
+        13,
+        25,
+        38,
+        53,
+        69,
+        89,
+        113,
+    ]
+    + [-127] * 16,
+    dtype=np.float16,
+) * np.float16(0.5)
+expect(
+    node, inputs=[x], outputs=[y], name="test_dequantizepacked_iq4_nl_float16"
+)
+```
+
+</details>
+<details>
+<summary>mxfp4</summary>
+
+```python
+node = helper.make_node(
+    "DequantizePacked", ["x"], ["y"], format="gguf:mxfp4", shape=[32]
+)
+x = np.array([127, *list(range(16))], dtype=np.uint8)
+y = np.array(
+    [0, 0.5, 1, 1.5, 2, 3, 4, 6, 0, -0.5, -1, -1.5, -2, -3, -4, -6] + [0] * 16,
+    dtype=np.float32,
+)
+expect(node, inputs=[x], outputs=[y], name="test_dequantizepacked_mxfp4")
+```
+
+</details>
+<details>
+<summary>q4_0</summary>
+
+```python
+node = helper.make_node(
+    "DequantizePacked", ["x"], ["y"], format="gguf:q4_0", shape=[2, 32]
+)
+x = np.frombuffer(
+    struct.pack("<e", 0.5)
+    + bytes(range(16))
+    + struct.pack("<e", -2)
+    + bytes([0xF0] * 16),
+    dtype=np.uint8,
+)
+y = np.array(
+    [
+        list(np.arange(-8, 8) * 0.5) + [-4] * 16,
+        [16] * 16 + [-14] * 16,
+    ],
+    dtype=np.float32,
+)
+expect(node, inputs=[x], outputs=[y], name="test_dequantizepacked_q4_0")
+```
+
+</details>
+<details>
+<summary>q5_1</summary>
+
+```python
+node = helper.make_node(
+    "DequantizePacked", ["x"], ["y"], format="gguf:q5_1", shape=[32]
+)
+x = np.frombuffer(
+    struct.pack("<eeI", 0.5, -1, 0xFFFF0000) + bytes(range(16)), dtype=np.uint8
+)
+y = np.array(list(np.arange(16) * 0.5 - 1) + [7] * 16, dtype=np.float32)
+expect(node, inputs=[x], outputs=[y], name="test_dequantizepacked_q5_1")
+```
+
+</details>
+
+
 ### Det
 There are 2 test cases, listed as following:
 <details>
@@ -11770,6 +11887,89 @@ expect(
     outputs=[expanded],
     name="test_expand_dim_unchanged",
 )
+```
+
+</details>
+
+
+### Expm1
+There are 4 test cases, listed as following:
+<details>
+<summary>expm1</summary>
+
+```python
+node = onnx.helper.make_node("Expm1", ["x"], ["y"])
+for dtype in [np.float16, ml_dtypes.bfloat16, np.float32, np.float64]:
+    x = np.array([[-10.0, -0.5, 0.0, 0.25], [0.5, 1.0, 3.0, 5.0]], dtype=dtype)
+    y = np.array([math.expm1(float(v)) for v in x.flat], dtype=dtype).reshape(
+        x.shape
+    )
+    expect(
+        node,
+        inputs=[x],
+        outputs=[y],
+        name=f"test_expm1_{np.dtype(dtype).name}",
+        rtol=1e-2 if dtype == ml_dtypes.bfloat16 else 1e-3,
+    )
+```
+
+</details>
+<details>
+<summary>expm1_scalar_and_empty</summary>
+
+```python
+node = onnx.helper.make_node("Expm1", ["x"], ["y"])
+expect(
+    node,
+    inputs=[np.array(1.0, dtype=np.float32)],
+    outputs=[np.array(math.expm1(1), dtype=np.float32)],
+    name="test_expm1_scalar",
+)
+x = np.empty((0, 3), dtype=np.float32)
+expect(node, inputs=[x], outputs=[x], name="test_expm1_empty")
+```
+
+</details>
+<details>
+<summary>expm1_small_inputs</summary>
+
+```python
+node = onnx.helper.make_node("Expm1", ["x"], ["y"])
+for dtype, tiny in [
+    (np.float16, 2.0**-14),
+    (ml_dtypes.bfloat16, 2.0**-10),
+    (np.float32, 1e-8),
+    (np.float64, 1e-20),
+]:
+    x = np.array([-tiny, -0.0, 0.0, tiny], dtype=dtype)
+    y = np.array([math.expm1(float(v)) for v in x], dtype=dtype)
+    # Relative error allows backend variation, while atol=0 catches
+    # an incorrect zero caused by rounding the intermediate exp(x).
+    expect(
+        node,
+        inputs=[x],
+        outputs=[y],
+        name=f"test_expm1_small_inputs_{np.dtype(dtype).name}",
+        rtol=1e-2 if dtype == ml_dtypes.bfloat16 else 1e-3,
+        atol=0,
+    )
+```
+
+</details>
+<details>
+<summary>expm1_special_values</summary>
+
+```python
+node = onnx.helper.make_node("Expm1", ["x"], ["y"])
+for dtype in [np.float16, ml_dtypes.bfloat16, np.float32, np.float64]:
+    x = np.array([-0.0, 0.0, -np.inf, np.inf, np.nan], dtype=dtype)
+    y = np.array([-0.0, 0.0, -1.0, np.inf, np.nan], dtype=dtype)
+    expect(
+        node,
+        inputs=[x],
+        outputs=[y],
+        name=f"test_expm1_special_values_{np.dtype(dtype).name}",
+    )
 ```
 
 </details>
@@ -27757,7 +27957,54 @@ expect(
 
 
 ### ScatterElements
-There are 7 test cases, listed as following:
+There are 9 test cases, listed as following:
+<details>
+<summary>scatter_elements_mean</summary>
+
+```python
+data = np.array([[1, 2, 3, 4]], dtype=np.float32)
+indices = np.array([[0, 1, 0, 1, -2, 1]], dtype=np.int64)
+updates = np.array([[1, 2, 3, 4, 5, 6]], dtype=np.float32)
+node = onnx.helper.make_node(
+    "ScatterElements",
+    ["data", "indices", "updates"],
+    ["y"],
+    axis=-1,
+    reduction="mean",
+)
+expect(
+    node,
+    inputs=[data, indices, updates],
+    outputs=[np.array([[5 / 3, 3.5, 4, 4]], dtype=np.float32)],
+    name="test_scatter_elements_mean",
+    opset_imports=[onnx.helper.make_opsetid("", 29)],
+)
+```
+
+</details>
+<details>
+<summary>scatter_elements_mean_integer</summary>
+
+```python
+node = onnx.helper.make_node(
+    "ScatterElements",
+    ["data", "indices", "updates"],
+    ["y"],
+    reduction="mean",
+)
+data = np.array([-2, 8, 9], dtype=np.int64)
+indices = np.array([0, 0, 1], dtype=np.int64)
+updates = np.array([-3, -3, 5], dtype=np.int64)
+expect(
+    node,
+    inputs=[data, indices, updates],
+    outputs=[np.array([-3, 6, 9], dtype=np.int64)],
+    name="test_scatter_elements_mean_integer",
+    opset_imports=[onnx.helper.make_opsetid("", 29)],
+)
+```
+
+</details>
 <details>
 <summary>scatter_elements_with_axis</summary>
 
@@ -27961,7 +28208,7 @@ expect(
 
 
 ### ScatterND
-There are 8 test cases, listed as following:
+There are 10 test cases, listed as following:
 <details>
 <summary>batched_token_add_int32_indices</summary>
 
@@ -28132,6 +28379,52 @@ expect(
     inputs=[data, indices, updates],
     outputs=[output],
     name="test_scatternd_max_with_element_indices",
+)
+```
+
+</details>
+<details>
+<summary>scatternd_mean</summary>
+
+```python
+data = np.array([[1, 2], [3, 4]], dtype=np.float32)
+indices = np.array([[0], [-2]], dtype=np.int64)
+updates = np.array([[3, 4], [5, 6]], dtype=np.float32)
+node = onnx.helper.make_node(
+    "ScatterND",
+    ["data", "indices", "updates"],
+    ["y"],
+    reduction="mean",
+)
+expect(
+    node,
+    inputs=[data, indices, updates],
+    outputs=[np.array([[3, 4], [3, 4]], dtype=np.float32)],
+    name="test_scatternd_mean",
+    opset_imports=[onnx.helper.make_opsetid("", 29)],
+)
+```
+
+</details>
+<details>
+<summary>scatternd_mean_integer</summary>
+
+```python
+node = onnx.helper.make_node(
+    "ScatterND",
+    ["data", "indices", "updates"],
+    ["y"],
+    reduction="mean",
+)
+data = np.array([[-2, 8], [9, 10]], dtype=np.int64)
+indices = np.array([[0, 0], [0, 0], [0, 1]], dtype=np.int64)
+updates = np.array([-3, -3, 5], dtype=np.int64)
+expect(
+    node,
+    inputs=[data, indices, updates],
+    outputs=[np.array([[-3, 6], [9, 10]], dtype=np.int64)],
+    name="test_scatternd_mean_integer",
+    opset_imports=[onnx.helper.make_opsetid("", 29)],
 )
 ```
 

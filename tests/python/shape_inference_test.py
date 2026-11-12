@@ -1952,6 +1952,66 @@ class TestShapeInference(TestShapeInferenceHelper):
             opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
         )
 
+    @pytest.mark.parametrize("op", ["ScatterElements", "ScatterND"])
+    @pytest.mark.parametrize(
+        "elem_type", [TensorProto.FLOAT, TensorProto.INT64, TensorProto.BFLOAT16]
+    )
+    def test_scatter_mean(self, op, elem_type) -> None:
+        graph = self._make_graph(
+            [
+                ("data", elem_type, ("N", 3)),
+                ("indices", TensorProto.INT64, (2, 2)),
+                ("updates", elem_type, (2, 2) if op == "ScatterElements" else (2,)),
+            ],
+            [
+                make_node(
+                    op,
+                    ["data", "indices", "updates"],
+                    ["output"],
+                    reduction="mean",
+                )
+            ],
+            [],
+        )
+        self._assert_inferred(
+            graph,
+            [make_tensor_value_info("output", elem_type, ("N", 3))],
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, 29)],
+        )
+
+    @pytest.mark.parametrize("op", ["ScatterElements", "ScatterND"])
+    @pytest.mark.parametrize(
+        "attributes, type_name, message",
+        [
+            ('reduction = "average"', "float", "Invalid scatter reduction"),
+            ('reduction = "mean"', "bool", "requires an integer or floating-point"),
+            ('reduction = "mean"', "string", "requires an integer or floating-point"),
+            (
+                'reduction = "mean"',
+                "complex64",
+                "requires an integer or floating-point",
+            ),
+            (
+                'reduction = "mean"',
+                "complex128",
+                "requires an integer or floating-point",
+            ),
+        ],
+    )
+    def test_scatter_invalid_reduction(
+        self, op, attributes, type_name, message
+    ) -> None:
+        index_shape = "1" if op == "ScatterElements" else "1, 1"
+        model = onnx.parser.parse_model(f"""
+            <ir_version: 13, opset_import: ["" : 29]>
+            scatter ({type_name}[2] data, int64[{index_shape}] indices,
+                     {type_name}[1] updates) => ({type_name}[2] output) {{
+                output = {op}<{attributes}>(data, indices, updates)
+            }}
+        """)
+        with pytest.raises(onnx.shape_inference.InferenceError, match=message):
+            onnx.shape_inference.infer_shapes(model, strict_mode=True)
+
     def test_tensor_scatter(self) -> None:
         graph = self._make_graph(
             [
@@ -6014,6 +6074,22 @@ class TestShapeInference(TestShapeInferenceHelper):
         ],
     )
     @pytest.mark.parametrize("shape", [(), (2, 3), ("N", None, 3), (0, 3)])
+    def test_expm1(self, elem_type, shape) -> None:
+        graph = self._make_graph(
+            [("x", elem_type, shape)], [make_node("Expm1", ["x"], ["y"])], []
+        )
+        self._assert_inferred(graph, [make_tensor_value_info("y", elem_type, shape)])
+
+    @pytest.mark.parametrize(
+        "elem_type",
+        [
+            TensorProto.FLOAT16,
+            TensorProto.BFLOAT16,
+            TensorProto.FLOAT,
+            TensorProto.DOUBLE,
+        ],
+    )
+    @pytest.mark.parametrize("shape", [(), (2, 3), ("N", None, 3), (0, 3)])
     def test_log1p(self, elem_type, shape) -> None:
         graph = self._make_graph(
             [("x", elem_type, shape)], [make_node("Log1p", ["x"], ["y"])], []
@@ -9359,6 +9435,77 @@ class TestShapeInference(TestShapeInferenceHelper):
             self._inferred(
                 graph, opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)]
             )
+
+    @pytest.mark.parametrize(
+        "version,indices_dtype",
+        [
+            *((version, TensorProto.INT64) for version in all_versions_for("GatherND")),
+            (29, TensorProto.INT32),
+        ],
+    )
+    def test_gathernd_reject_zero_indices_last_dim(
+        self, version, indices_dtype
+    ) -> None:
+        graph = self._make_graph(
+            [
+                ("x", TensorProto.FLOAT, (2, 2, 2)),
+                ("indices", indices_dtype, (2, 0)),
+            ],
+            [make_node("GatherND", ["x", "indices"], ["y"])],
+            [],
+        )
+        with pytest.raises(
+            onnx.shape_inference.InferenceError, match="must be greater than 0"
+        ):
+            self._inferred(
+                graph, opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)]
+            )
+
+    @pytest.mark.parametrize(
+        "version,indices_dtype",
+        [
+            *((version, TensorProto.INT64) for version in all_versions_for("GatherND")),
+            (29, TensorProto.INT32),
+        ],
+    )
+    def test_gathernd_allows_unknown_indices_last_dim(
+        self, version, indices_dtype
+    ) -> None:
+        graph = self._make_graph(
+            [
+                ("x", TensorProto.FLOAT, (2, 2, 2)),
+                ("indices", indices_dtype, (2, None)),
+            ],
+            [make_node("GatherND", ["x", "indices"], ["y"])],
+            [],
+        )
+        self._assert_inferred(
+            graph,
+            [make_tensor_value_info("y", TensorProto.FLOAT, None)],
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
+        )
+
+    @pytest.mark.parametrize(
+        "version,indices_dtype",
+        [
+            *((version, TensorProto.INT64) for version in all_versions_for("GatherND")),
+            (29, TensorProto.INT32),
+        ],
+    )
+    def test_gathernd_allows_empty_non_tuple_axis(self, version, indices_dtype) -> None:
+        graph = self._make_graph(
+            [
+                ("x", TensorProto.FLOAT, (0, 3)),
+                ("indices", indices_dtype, (0, 1)),
+            ],
+            [make_node("GatherND", ["x", "indices"], ["y"])],
+            [],
+        )
+        self._assert_inferred(
+            graph,
+            [make_tensor_value_info("y", TensorProto.FLOAT, (0, 3))],
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
+        )
 
     def test_gathernd_12_reject_negative_batch_dims(self) -> None:
         graph = self._make_graph(
