@@ -391,7 +391,19 @@ class TestChecker:
         with pytest.raises(ValueError):
             checker.check_model(model.SerializeToString() + trailer)
 
-    def test_check_model_path_trailing_data_raises(self) -> None:
+    @pytest.mark.parametrize(
+        "trailer",
+        [b"\x00", b"\x00" * 16, b"\x0c", b"\x0c\xff", b"\x80", b"\x12\x05x"],
+        ids=[
+            "zero_tag",
+            "zero_padding",
+            "end_group",
+            "end_group_trailer",
+            "varint",
+            "string",
+        ],
+    )
+    def test_check_model_path_trailing_data_raises(self, trailer: bytes) -> None:
         node = helper.make_node("Relu", ["X"], ["Y"], name="test")
         graph = helper.make_graph(
             [node],
@@ -403,11 +415,25 @@ class TestChecker:
 
         with tempfile.TemporaryDirectory() as temp_dir:
             model_path = os.path.join(temp_dir, "model.onnx")
-            # Trailing NUL padding, e.g. from a preallocated or partly zeroed file.
             with open(model_path, "wb") as f:
-                f.write(model.SerializeToString() + b"\x00" * 16)
+                f.write(model.SerializeToString() + trailer)
             with pytest.raises(checker.ValidationError):
                 checker.check_model(model_path)
+
+    @pytest.mark.parametrize("doc_size", [0, 8192, 65536])
+    def test_check_model_path_streaming(self, tmp_path: Path, doc_size: int) -> None:
+        model = helper.make_model(helper.make_graph([], "test", [], []))
+        model.doc_string = "x" * doc_size
+        model_path = tmp_path / "模型.onnx"
+        serialized = model.SerializeToString()
+        model_path.write_bytes(serialized)
+        checker.check_model(model_path)
+
+        # A length-delimited field that spans stream buffers must not be
+        # accepted if its payload ends before the declared length.
+        model_path.write_bytes(serialized + b"\x32\x80\x80\x04" + b"x" * 32767)
+        with pytest.raises(checker.ValidationError):
+            checker.check_model(model_path)
 
     def test_check_model_protobuf_size_boundary(
         self, monkeypatch: pytest.MonkeyPatch
