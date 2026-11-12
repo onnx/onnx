@@ -502,7 +502,9 @@ using FunctionMap = std::unordered_map<FunctionImplId, std::pair<const FunctionP
 using NodeList = google::protobuf::RepeatedPtrField<NodeProto>;
 
 void AddSchemaDefaultAttributes(NodeProto& node, const OpSchema& schema) {
-  for (const auto& [name, attr] : schema.attributes()) {
+  for (const auto& attribute : schema.attributes()) {
+    const auto& name = attribute.first;
+    const auto& attr = attribute.second;
     if (attr.default_value.type() == AttributeProto::UNDEFINED) {
       continue;
     }
