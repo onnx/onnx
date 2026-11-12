@@ -284,10 +284,11 @@ class TestReferenceEvaluatorAiOnnxMl:
             "X1": np.array([[4, 5]], dtype=np.float32),
         }
         expected = np.array([[1, 2, 3, 4, 5]], dtype=np.float32)
-        self._check_ort(model, feeds, atol=1e-6)
         sess = ReferenceEvaluator(model)
         got = sess.run(None, feeds)[0]
         assert_allclose(got, expected, atol=1e-6)
+        if has_onnxruntime():
+            self._check_ort(model, feeds, atol=1e-6)
 
     @pytest.mark.skipif(not ONNX_ML, reason="onnx not compiled with ai.onnx.ml")
     def test_imputer_float(self):
