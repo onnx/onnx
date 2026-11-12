@@ -10,6 +10,12 @@ import numpy as np
 
 from onnx.reference.op_run import OpRun
 
+# Image formats the ImageDecoder operator is specified to support
+# (see onnx/defs/image/defs.cc). Restricting PIL.Image.open to this allow-list
+# ensures `encoded` is only decoded as one of the documented formats instead of any
+# plugin Pillow happens to have registered. Names are Pillow format identifiers.
+_SUPPORTED_FORMATS = ("BMP", "JPEG", "JPEG2000", "TIFF", "PNG", "WEBP", "PPM")
+
 
 class ImageDecoder(OpRun):
     def _run(self, encoded: np.ndarray, pixel_format="RGB") -> tuple[np.ndarray]:
@@ -19,7 +25,7 @@ class ImageDecoder(OpRun):
             raise ImportError(
                 "Pillow must be installed to use the reference implementation of the ImageDecoder operator"
             ) from e
-        img = PIL.Image.open(io.BytesIO(encoded.tobytes()))
+        img = PIL.Image.open(io.BytesIO(encoded.tobytes()), formats=_SUPPORTED_FORMATS)
         if pixel_format == "BGR":
             decoded = np.array(img)[:, :, ::-1]
         elif pixel_format == "RGB":
