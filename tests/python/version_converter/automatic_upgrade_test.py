@@ -29,6 +29,16 @@ class TestAutomaticUpgrade(automatic_conversion_test_base.TestAutomaticConversio
         mode = "strict_upgrade" if strict_check else "upgrade"
         self._test_op_conversion(op, *args, **kwargs, mode=mode)
 
+    def test_DequantizePacked(self) -> None:
+        self._test_op_upgrade(
+            "DequantizePacked",
+            29,
+            [[18]],
+            [[32]],
+            input_types=[TensorProto.UINT8],
+            attrs={"format": "gguf:q4_0", "shape": [32]},
+        )
+
     def test_Abs(self) -> None:
         self._test_op_upgrade("Abs", 1, attrs={"consumed_inputs": [0]})
 
@@ -710,6 +720,9 @@ class TestAutomaticUpgrade(automatic_conversion_test_base.TestAutomaticConversio
             [[2, 3]],
             output_types=[TensorProto.BOOL],
         )
+
+    def test_Expm1(self) -> None:
+        self._test_op_upgrade("Expm1", 29)
 
     def test_Log(self) -> None:
         self._test_op_upgrade("Log", 1, attrs={"consumed_inputs": [0]})
@@ -1441,6 +1454,20 @@ class TestAutomaticUpgrade(automatic_conversion_test_base.TestAutomaticConversio
             [TensorProto.FLOAT, TensorProto.INT64, TensorProto.FLOAT],
             [TensorProto.FLOAT],
             attrs={"reduction": "mul"},
+        )
+
+    @pytest.mark.parametrize("op", ["ScatterElements", "ScatterND"])
+    @pytest.mark.parametrize("reduction", ["none", "add", "mul", "min", "max"])
+    def test_scatter_28_to_29(self, op, reduction) -> None:
+        self._test_op_upgrade(
+            op,
+            28,
+            [[2], [2] if op == "ScatterElements" else [2, 1], [2]],
+            [[2]],
+            [TensorProto.FLOAT, TensorProto.INT64, TensorProto.FLOAT],
+            [TensorProto.FLOAT],
+            attrs={"reduction": reduction},
+            strict_check=True,
         )
 
     def test_Scan(self) -> None:
