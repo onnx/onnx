@@ -23892,6 +23892,47 @@ Other versions of this operator: <a href="Changelog.md#MatMul-1">1</a>, <a href=
 #### Examples
 
 <details>
+<summary>2d_bfloat16</summary>
+
+```python
+node = onnx.helper.make_node("MatMul", inputs=["a", "b"], outputs=["c"])
+
+# Products and sums are exactly representable in bfloat16.
+a = np.array([[1.5, -2, 0.5], [0, 2, -1]], dtype=ml_dtypes.bfloat16)
+b = np.array([[2, 0.5], [-1, 3], [4, -2]], dtype=ml_dtypes.bfloat16)
+c = np.array([[7, -6.25], [-6, 8]], dtype=ml_dtypes.bfloat16)
+
+expect(node, inputs=[a, b], outputs=[c], name="test_matmul_2d_bfloat16")
+```
+
+</details>
+
+
+<details>
+<summary>bcast_bfloat16</summary>
+
+```python
+node = onnx.helper.make_node("MatMul", inputs=["a", "b"], outputs=["c"])
+
+# Broadcast (2, 1, 1, 3) and (1, 2, 3, 2) to (2, 2, 1, 2).
+a = np.array([[[[1.5, -2, 0.5]]], [[[0, 2, -1]]]], dtype=ml_dtypes.bfloat16)
+b = np.array(
+    [[[[2, 0.5], [-1, 3], [4, -2]], [[0.5, 2], [1, -1], [2, 0]]]],
+    dtype=ml_dtypes.bfloat16,
+)
+# Use exact, independently computed results with the required output dtype.
+c = np.array(
+    [[[[7, -6.25]], [[-0.25, 5]]], [[[-6, 8]], [[0, -2]]]],
+    dtype=ml_dtypes.bfloat16,
+)
+
+expect(node, inputs=[a, b], outputs=[c], name="test_matmul_bcast_bfloat16")
+```
+
+</details>
+
+
+<details>
 <summary>matmul</summary>
 
 ```python
