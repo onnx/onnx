@@ -92,7 +92,6 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#MaxRoiPool">MaxRoiPool</a>|<a href="Changelog.md#MaxRoiPool-22">22</a>, <a href="Changelog.md#MaxRoiPool-1">1</a>|
 |<a href="#MaxUnpool">MaxUnpool</a>|<a href="Changelog.md#MaxUnpool-22">22</a>, <a href="Changelog.md#MaxUnpool-11">11</a>, <a href="Changelog.md#MaxUnpool-9">9</a>|
 |<a href="#Mean">Mean</a>|<a href="Changelog.md#Mean-13">13</a>, <a href="Changelog.md#Mean-8">8</a>, <a href="Changelog.md#Mean-6">6</a>, <a href="Changelog.md#Mean-1">1</a>|
-|<a href="#MelWeightMatrix">MelWeightMatrix</a>|<a href="Changelog.md#MelWeightMatrix-17">17</a>|
 |<a href="#Min">Min</a>|<a href="Changelog.md#Min-13">13</a>, <a href="Changelog.md#Min-12">12</a>, <a href="Changelog.md#Min-8">8</a>, <a href="Changelog.md#Min-6">6</a>, <a href="Changelog.md#Min-1">1</a>|
 |<a href="#Mod">Mod</a>|<a href="Changelog.md#Mod-28">28</a>, <a href="Changelog.md#Mod-13">13</a>, <a href="Changelog.md#Mod-10">10</a>|
 |<a href="#Mul">Mul</a>|<a href="Changelog.md#Mul-14">14</a>, <a href="Changelog.md#Mul-13">13</a>, <a href="Changelog.md#Mul-7">7</a>, <a href="Changelog.md#Mul-6">6</a>, <a href="Changelog.md#Mul-1">1</a>|
@@ -197,6 +196,7 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#LogCumSumExp">LogCumSumExp</a>|<a href="Changelog.md#LogCumSumExp-29">29</a>|29|
 |<a href="#LogSoftmax">LogSoftmax</a>|<a href="Changelog.md#LogSoftmax-13">13</a>, <a href="Changelog.md#LogSoftmax-11">11</a>, <a href="Changelog.md#LogSoftmax-1">1</a>|13, 18, 29|
 |<a href="#MeanVarianceNormalization">MeanVarianceNormalization</a>|<a href="Changelog.md#MeanVarianceNormalization-29">29</a>, <a href="Changelog.md#MeanVarianceNormalization-13">13</a>, <a href="Changelog.md#MeanVarianceNormalization-9">9</a>|13, 18|
+|<a href="#MelWeightMatrix">MelWeightMatrix</a>|<a href="Changelog.md#MelWeightMatrix-17">17</a>|29|
 |<a href="#Mish">Mish</a>|<a href="Changelog.md#Mish-22">22</a>, <a href="Changelog.md#Mish-18">18</a>|22|
 |<a href="#NegativeLogLikelihoodLoss">NegativeLogLikelihoodLoss</a>|<a href="Changelog.md#NegativeLogLikelihoodLoss-22">22</a>, <a href="Changelog.md#NegativeLogLikelihoodLoss-13">13</a>, <a href="Changelog.md#NegativeLogLikelihoodLoss-12">12</a>|22|
 |<a href="#PRelu">PRelu</a>|<a href="Changelog.md#PRelu-16">16</a>, <a href="Changelog.md#PRelu-9">9</a>, <a href="Changelog.md#PRelu-7">7</a>, <a href="Changelog.md#PRelu-6">6</a>, <a href="Changelog.md#PRelu-1">1</a>|16|
@@ -25673,6 +25673,19 @@ expect(
       mel(f) = 2595 * log10(1 + f/700)
 
   In the returned matrix, all the triangles (filterbanks) have a peak value of 1.0.
+
+  Let `N = num_mel_bins`, `L = mel(lower_edge_hertz)`, and
+  `U = mel(upper_edge_hertz)`. The `N + 2` boundary points are
+  `m[k] = L + k * (U - L) / (N + 2)`, for `0 <= k < N + 2`.
+  Their discretized frequency-bin indices are
+  `b[k] = floor((dft_length + 1) * 700 * (10^(m[k]/2595) - 1) / sample_rate)`.
+  Column `i` has its left edge, center, and right edge at `b[i]`, `b[i+1]`,
+  and `b[i+2]`, respectively. Its weights increase linearly from zero at the
+  left edge to one at the center, then decrease linearly toward zero at the
+  right edge; weights outside the triangle are zero. When the left edge and
+  center coincide, the center has weight one. When the center and right edge
+  coincide, there is no descending segment. Weights are converted to
+  `output_datatype` after constructing the triangles.
 
   The returned MelWeightMatrix can be used to right-multiply a spectrogram S of shape [frames, num_spectrogram_bins] of linear scale spectrum values (e.g. STFT magnitudes) to generate a "mel spectrogram" M of shape [frames, num_mel_bins].
 
