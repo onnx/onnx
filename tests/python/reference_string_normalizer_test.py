@@ -45,6 +45,28 @@ from onnx.reference.op_run import RuntimeTypeError
         ),
         (["the", "the"], ["the", "the"], [], []),
         (["ß", "İ"], None, ["ß", "İ"], ["ß", "İ"]),
+        (
+            ["\u03c2", "\u03c3", "\u03a3", "Keep"],
+            ["\u03a3"],
+            ["\u03c2", "\u03c3", "Keep"],
+            ["Keep"],
+        ),
+        (
+            ["\u039f\u03a3", "\u03bf\u03c3", "Keep"],
+            ["\u03bf\u03c3"],
+            ["\u039f\u03a3", "Keep"],
+            ["Keep"],
+        ),
+        (
+            ["Straße", "STRASSE", "Keep"],
+            ["strasse"],
+            ["Straße", "STRASSE", "Keep"],
+            ["Keep"],
+        ),
+        (["STRASSE", "Keep"], ["Straße"], ["STRASSE", "Keep"], ["Keep"]),
+        (["Straße", "Keep"], ["other"], ["Straße", "Keep"], ["Straße", "Keep"]),
+        (["é", "e\u0301"], ["é"], ["e\u0301"], ["e\u0301"]),
+        (["İ", "\u0131", "I", "i"], ["i"], ["İ", "\u0131", "I"], ["İ", "\u0131"]),
     ],
 )
 def test_string_normalizer_elements(

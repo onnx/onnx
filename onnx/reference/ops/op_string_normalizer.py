@@ -45,8 +45,8 @@ class StringNormalizer(OpRun):
         if is_case_sensitive:
             retained = [value for value in x.flat if value not in stops]
         else:
-            stops = {value.lower() for value in stops}
-            retained = [value for value in x.flat if value.lower() not in stops]
+            stops = {value.casefold() for value in stops}
+            retained = [value for value in x.flat if value.casefold() not in stops]
 
         if case_change_action == "LOWER":
             retained = [value.lower() for value in retained]
