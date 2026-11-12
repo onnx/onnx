@@ -34446,6 +34446,73 @@ This version of the operator has been available since version 28 of the default 
 </dl>
 
 ## Version 29 of the default ONNX operator set
+### <a name="CausalConvWithState-29"></a>**CausalConvWithState-29**</a>
+
+  Stateful causal one-dimensional depthwise convolution.
+
+  `input` has shape `(B, C, L)`, `weight` has shape `(C, 1, K)`, and optional
+  `bias` has shape `(C)`: `B` is batch size, `C` is channel count, `L` is input
+  length, and `K` is kernel size. Let `d = dilation` (default 1) and
+  `H = (K - 1) * d`. Both `K` and `d` must be at least 1, and the effective
+  kernel size `H + 1` must fit in a signed 64-bit integer.
+
+  Both state tensors have shape `(B, C, H)` and store consecutive raw samples
+  in chronological order. Form `P` by concatenating `past_state` and `input`
+  along axis 2; use a zero tensor of shape `(B, C, H)` when `past_state` is absent.
+  For each batch `b`, channel `c`, and position `0 <= t < L`, compute
+  `z[b,c,t] = sum_{j=0}^{K-1} weight[c,0,j] * P[b,c,t+j*d] + bias[c]`,
+  with omitted bias treated as zero. The output has shape `(B, C, L)` and equals
+  `z` for activation 'none' (the default), or `z / (1 + exp(-z))` elementwise
+  for 'silu' and its alias 'swish'.
+
+  The next state is `present_state = P[:, :, L:L+H]`, independent of activation.
+  When `L < H`, it retains the required past samples or initial zeros.
+  Passing this state to the next call preserves convolution across chunk boundaries.
+  For `K = 1`, state has shape `(B, C, 0)`. For `L = 0`, output has shape
+  `(B, C, 0)` and state is unchanged (all zeros if `past_state` is absent).
+
+#### Version
+
+This version of the operator has been available since version 29 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>activation</tt> : string (default is none)</dt>
+<dd>Fused activation function. One of: 'silu', 'swish', 'none'. Default is 'none'.</dd>
+<dt><tt>dilation</tt> : int (default is 1)</dt>
+<dd>Spacing between kernel samples. Must be >= 1.</dd>
+</dl>
+
+#### Inputs (2 - 4)
+
+<dl>
+<dt><tt>input</tt> (differentiable) : T</dt>
+<dd>Input tensor with shape (batch_size, channels, length). Channels-first layout.</dd>
+<dt><tt>weight</tt> (differentiable) : T</dt>
+<dd>Depthwise convolution kernel with shape (channels, 1, k), where k must be >= 1. Each channel is convolved independently with its corresponding kernel.</dd>
+<dt><tt>bias</tt> (optional, differentiable) : T</dt>
+<dd>Optional per-channel bias with shape (channels).</dd>
+<dt><tt>past_state</tt> (optional, non-differentiable) : T</dt>
+<dd>Raw chronological history with shape (batch_size, channels, (k - 1) * dilation). If not provided, history is zero.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> (differentiable) : T</dt>
+<dd>Convolution output with same shape as input.</dd>
+<dt><tt>present_state</tt> (non-differentiable) : T</dt>
+<dd>The last (k - 1) * dilation raw samples of the concatenated history and input, with shape (batch_size, channels, (k - 1) * dilation).</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float), tensor(float16), tensor(bfloat16)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
 ### <a name="DequantizePacked-29"></a>**DequantizePacked-29**</a>
 
   Dequantizes the packed payload of one quantized tensor.

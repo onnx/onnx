@@ -1123,6 +1123,7 @@ class DefaultVersionConverter : public BaseVersionConverter {
     registerAdapter(std::make_unique<CompatibleAdapter>("ReduceLogSumExp", OpSetID(28), OpSetID(27)));
 
     /******** 28 -> 29 ********/
+    registerAdapter(std::make_unique<CompatibleAdapter>("CausalConvWithState", OpSetID(28), OpSetID(29)));
     registerAdapter(std::make_unique<MeanVarianceNormalization_28_29>());
     registerAdapter(std::make_unique<CompatibleAdapter>("Gemm", OpSetID(28), OpSetID(29)));
     registerAdapter(std::make_unique<CompatibleAdapter>("GatherND", OpSetID(28), OpSetID(29)));
@@ -1130,6 +1131,7 @@ class DefaultVersionConverter : public BaseVersionConverter {
     registerAdapter(std::make_unique<CompatibleAdapter>("ScatterND", OpSetID(28), OpSetID(29)));
 
     /******** 29 -> 28 ********/
+    registerAdapter("CausalConvWithState", 29, 28, RemoveAttribute(Symbol("dilation"), int64_t{1}));
     registerAdapter(std::make_unique<MeanVarianceNormalization_29_28>());
     registerAdapter(std::make_unique<Gemm_29_28>());
     registerAdapter(std::make_unique<NDIndices_29_28>("GatherND"));
