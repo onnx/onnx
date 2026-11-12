@@ -16679,8 +16679,12 @@ This version of the operator has been available since version 13 of the default 
 
 ### <a name="MeanVarianceNormalization-13"></a>**MeanVarianceNormalization-13**</a>
 
-  A MeanVarianceNormalization Function: Perform mean variance normalization
-        on the input tensor X using formula: `(X-EX)/sqrt(E(X-EX)^2)`
+  Computes mean-variance normalization of `X`:
+  `Y = (X - mean) / (sqrt(variance) + 1e-9)`, where
+  `mean = ReduceMean(X, axes)` and
+  `variance = ReduceMean(X^2, axes) - mean^2`.
+  Each reduction computes the arithmetic mean over `axes` and retains the
+  reduced dimensions with size 1 for broadcasting.
 
 #### Version
 
@@ -34442,6 +34446,160 @@ This version of the operator has been available since version 28 of the default 
 </dl>
 
 ## Version 29 of the default ONNX operator set
+### <a name="DequantizePacked-29"></a>**DequantizePacked-29**</a>
+
+  Dequantizes the packed payload of one quantized tensor.
+  `x` is a one-dimensional UINT8 tensor containing exactly the tensor's bytes.
+  All multibyte fields are little-endian.
+
+  `format` selects the quantization format using an ONNX-defined, case-sensitive
+  string identifier. The `gguf:` prefix identifies the existing GGML/GGUF layouts.
+  Only the following fixed identifiers are supported; they accept no parameters:
+
+  | Identifier | Format | Elements | Bytes |
+  |---|---|---|---|
+  | gguf:q4_0 | Q4_0 | 32 | 18 |
+  | gguf:q4_1 | Q4_1 | 32 | 20 |
+  | gguf:q5_0 | Q5_0 | 32 | 22 |
+  | gguf:q5_1 | Q5_1 | 32 | 24 |
+  | gguf:q8_0 | Q8_0 | 32 | 34 |
+  | gguf:q8_1 | Q8_1 | 32 | 36 |
+  | gguf:q2_k | Q2_K | 256 | 84 |
+  | gguf:q3_k | Q3_K | 256 | 110 |
+  | gguf:q4_k | Q4_K | 256 | 144 |
+  | gguf:q5_k | Q5_K | 256 | 176 |
+  | gguf:q6_k | Q6_K | 256 | 210 |
+  | gguf:q8_k | Q8_K | 256 | 292 |
+  | gguf:iq2_xxs | IQ2_XXS | 256 | 66 |
+  | gguf:iq2_xs | IQ2_XS | 256 | 74 |
+  | gguf:iq3_xxs | IQ3_XXS | 256 | 98 |
+  | gguf:iq1_s | IQ1_S | 256 | 50 |
+  | gguf:iq4_nl | IQ4_NL | 32 | 18 |
+  | gguf:iq3_s | IQ3_S | 256 | 110 |
+  | gguf:iq2_s | IQ2_S | 256 | 82 |
+  | gguf:iq4_xs | IQ4_XS | 256 | 136 |
+  | gguf:iq1_m | IQ1_M | 256 | 56 |
+  | gguf:tq1_0 | TQ1_0 | 256 | 54 |
+  | gguf:tq2_0 | TQ2_0 | 256 | 66 |
+  | gguf:mxfp4 | MXFP4 | 32 | 17 |
+  | gguf:nvfp4 | NVFP4 | 64 | 36 |
+  | gguf:q1_0 | Q1_0 | 128 | 18 |
+  | gguf:q2_0 | Q2_0 | 64 | 18 |
+
+  The byte layouts, per-format decoding algorithms, and complete IQ codebooks
+  are defined in the in-tree
+  [DequantizePacked decoding specification](DequantizePacked.md).
+  The [online specification](https://github.com/onnx/onnx/blob/19b091202765d5d444acd9d9c25a0b81eef474b5/docs/DequantizePacked.md)
+  is also accessible from installed schema documentation.
+
+  `shape` gives the logical output dimensions in ONNX (row-major) order.
+  For a GGUF descriptor `[ne0, ne1, ...]`, use `shape=[..., ne1, ne0]`.
+  Decoding preserves the flattened element order.
+  Rank must be at least one. Dimensions are nonnegative literal sizes;
+  a zero dimension produces an empty tensor. The last dimension must be a
+  multiple of the format's elements per block, even for an empty tensor.
+  If B is elements per block and S is bytes per block, the input length must be
+  `product(shape[:-1]) * (shape[-1] / B) * S`.
+
+  Blocks are decoded in input order to FLOAT using the specified
+  arithmetic and codebooks. The concatenated values are reshaped to `shape`
+  and converted once to `output_dtype`. Decoding arithmetic uses FLOAT
+  precision for all output types. FLOAT16 and BFLOAT16 conversion uses
+  round-to-nearest, ties-to-even, as in Cast.
+
+  For example, a Q4_0 block is a little-endian FLOAT16 scale `d` followed
+  by 16 bytes `q`. It produces `y[j]=d*((q[j]&15)-8)` and
+  `y[j+16]=d*((q[j]>>4)-8)` for j=0,...,15. Thus 36 bytes containing two
+  blocks can be decoded with `format="gguf:q4_0", shape=[2,32]`.
+
+#### Version
+
+This version of the operator has been available since version 29 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>format</tt> : string (required)</dt>
+<dd>ONNX-defined, case-sensitive fixed quantization format identifier.</dd>
+<dt><tt>output_dtype</tt> : int (default is 1)</dt>
+<dd>ONNX TensorProto data type of the output: FLOAT, FLOAT16, BFLOAT16, or DOUBLE.</dd>
+<dt><tt>shape</tt> : list of ints (required)</dt>
+<dd>Logical output dimensions in ONNX order; rank at least one.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>x</tt> : tensor(uint8)</dt>
+<dd>Consecutive quantization blocks with little-endian fields.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>y</tt> : T</dt>
+<dd>Dequantized tensor with the specified shape and output_dtype.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float), tensor(float16), tensor(bfloat16), tensor(double)</dt>
+<dd>Floating-point output.</dd>
+</dl>
+
+### <a name="Expm1-29"></a>**Expm1-29**</a>
+
+  Computes `exp(x) - 1` element-wise, where `exp` is the exponential to base `e`.
+  The input may have any shape, including a scalar or an empty tensor. The output
+  has the same shape and element type as the input.
+
+  For finite nonzero `x`, the output is a floating-point approximation of the
+  real-valued function `exp(x) - 1` at the exact value represented by `x`.
+  The computation must preserve nonzero results representable in the output type
+  when an intermediate floating-point `exp(x)` would round to `1`. For example,
+  a FLOAT input `1e-8` produces a result approximately equal to `1e-8`, rather
+  than zero.
+
+  Special values are defined element-wise as follows:
+
+  | Input `x` | Output `y` |
+  | --- | --- |
+  | Positive zero | Positive zero |
+  | Negative zero | Negative zero |
+  | Negative infinity | `-1` |
+  | Positive infinity | Positive infinity |
+  | NaN | NaN |
+
+  The sign and payload of an output NaN are unspecified. Finite positive inputs
+  whose results overflow the output type produce positive infinity.
+
+
+#### Version
+
+This version of the operator has been available since version 29 of the default ONNX operator set.
+
+#### Inputs
+
+<dl>
+<dt><tt>input</tt> (differentiable) : T</dt>
+<dd>Input tensor</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> (differentiable) : T</dt>
+<dd>The exponential of the input minus one, computed element-wise</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(bfloat16), tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
 ### <a name="GatherND-29"></a>**GatherND-29**</a>
 
   Given `data` tensor of rank `r` >= 1, `indices` tensor of rank `q` >= 1, and `batch_dims` integer `b`, this operator gathers
@@ -34800,6 +34958,56 @@ This version of the operator has been available since version 29 of the default 
 <dd>Input and output have the same floating-point element type.</dd>
 </dl>
 
+### <a name="MeanVarianceNormalization-29"></a>**MeanVarianceNormalization-29**</a>
+
+  Computes mean-variance normalization of `X`:
+  `Y = (X - mean) / (sqrt(variance) + epsilon)`, where
+  `mean = ReduceMean(X, axes)` and
+  `variance = ReduceMean((X - mean)^2, axes)`.
+  Each reduction computes the arithmetic mean over `axes` and retains the
+  reduced dimensions with size 1 for broadcasting.
+  An empty `axes` list reduces over all dimensions.
+
+  The default `epsilon` is 1e-9 and is added after the square root.
+  For float16 and bfloat16 inputs, `X` is converted to float32 before computation.
+  Otherwise, computation uses the input type. `epsilon` is converted to the
+  computation type, and the result is cast to the input type.
+  `Y` has the same shape and element type as `X`.
+
+#### Version
+
+This version of the operator has been available since version 29 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>axes</tt> : list of ints (default is ['0', '2', '3'])</dt>
+<dd>Axes over which to compute mean and variance. Values must be in [-r, r-1], where r is the rank of X; negative values count from the last dimension. An empty list reduces over all dimensions. The default is [0, 2, 3], which computes per-channel statistics for an NCHW tensor.</dd>
+<dt><tt>epsilon</tt> : float (default is (1.000000e-09))</dt>
+<dd>Value added to the standard deviation in the denominator.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> (differentiable) : T</dt>
+<dd>Input tensor</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> (differentiable) : T</dt>
+<dd>Output tensor</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
+<dd>Constrain input and output types to floating-point tensors.</dd>
+</dl>
+
 ### <a name="ScatterElements-29"></a>**ScatterElements-29**</a>
 
   ScatterElements takes three inputs `data`, `indices`, and `updates` of the same
@@ -35125,7 +35333,7 @@ This version of the operator has been available since version 1 of the 'ai.onnx.
 <dl>
 <dt><tt>decay_factor</tt> : float (default is 0.0)</dt>
 <dd>The decay factor of learning rate after one update.The effective learning rate is computed by r = R / (1 + T * decay_factor). Default to 0 so that increasing update counts doesn't reduce the learning rate.</dd>
-<dt><tt>epsilon</tt> : float (default is 0.0)</dt>
+<dt><tt>epsilon</tt> : float (default is (1.000000e-06))</dt>
 <dd>Small scalar to avoid dividing by zero.</dd>
 <dt><tt>norm_coefficient</tt> : float (default is 0.0)</dt>
 <dd>Regularization coefficient in 0.5 * norm_coefficient * ||X||_2^2. Default to 0, which means no regularization.</dd>
@@ -35235,7 +35443,7 @@ This version of the operator has been available since version 1 of the 'ai.onnx.
 <dd>Coefficient of previously accumulated gradient in running average. Default to 0.9.</dd>
 <dt><tt>beta</tt> : float (default is 0.999)</dt>
 <dd>Coefficient of previously accumulated squared-gradient in running average. Default to 0.999.</dd>
-<dt><tt>epsilon</tt> : float (default is 0.0)</dt>
+<dt><tt>epsilon</tt> : float (default is (1.000000e-06))</dt>
 <dd>Small scalar to avoid dividing by zero.</dd>
 <dt><tt>norm_coefficient</tt> : float (default is 0.0)</dt>
 <dd>Regularization coefficient of 0.5 * norm_coefficient * ||X||_2^2. Default to 0, which means no regularization.</dd>

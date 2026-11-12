@@ -82,6 +82,7 @@ __all__ = [
     "DequantizeLinear_21",
     "DequantizeLinear_23",
     "DequantizeLinear_25",
+    "DequantizePacked",
     "Det",
     "DFT_17",
     "DFT_20",
@@ -94,6 +95,7 @@ __all__ = [
     "Equal",
     "Erf",
     "Exp",
+    "Expm1",
     "Expand",
     "EyeLike",
     "Flatten",
@@ -142,6 +144,9 @@ __all__ = [
     "MaxPool",
     "MaxUnpool",
     "Mean",
+    "MeanVarianceNormalization_9",
+    "MeanVarianceNormalization_13",
+    "MeanVarianceNormalization_29",
     "MelWeightMatrix",
     "Min",
     "Mod",
@@ -355,6 +360,7 @@ from onnx.reference.ops.op_dequantize_linear import (
     DequantizeLinear_23,
     DequantizeLinear_25,
 )
+from onnx.reference.ops.op_dequantize_packed import DequantizePacked
 from onnx.reference.ops.op_det import Det
 from onnx.reference.ops.op_dft import DFT_17, DFT_20
 from onnx.reference.ops.op_div import Div
@@ -366,6 +372,7 @@ from onnx.reference.ops.op_equal import Equal
 from onnx.reference.ops.op_erf import Erf
 from onnx.reference.ops.op_exp import Exp
 from onnx.reference.ops.op_expand import Expand
+from onnx.reference.ops.op_expm1 import Expm1
 from onnx.reference.ops.op_eyelike import EyeLike
 from onnx.reference.ops.op_flatten import Flatten
 from onnx.reference.ops.op_floor import Floor
@@ -410,6 +417,11 @@ from onnx.reference.ops.op_max import Max
 from onnx.reference.ops.op_max_pool import MaxPool
 from onnx.reference.ops.op_max_unpool import MaxUnpool
 from onnx.reference.ops.op_mean import Mean
+from onnx.reference.ops.op_mean_variance_normalization import (
+    MeanVarianceNormalization_9,
+    MeanVarianceNormalization_13,
+    MeanVarianceNormalization_29,
+)
 from onnx.reference.ops.op_mel_weight_matrix import MelWeightMatrix
 from onnx.reference.ops.op_min import Min
 from onnx.reference.ops.op_mod import Mod

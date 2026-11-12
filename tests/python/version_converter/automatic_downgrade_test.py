@@ -6,9 +6,11 @@ from __future__ import annotations
 import automatic_conversion_test_base
 import numpy as np
 import pytest
+from numpy.testing import assert_allclose
 
 import onnx
 from onnx import helper
+from onnx.reference import ReferenceEvaluator
 
 #####################################################################################
 # Every test calls _test_op_conversion to downgrade a model from the most recent opset version
@@ -79,6 +81,39 @@ class TestAutomaticDowngrade(automatic_conversion_test_base.TestAutomaticConvers
                          float[2] updates) => (float[2] output) {{
                     output = {op}<reduction = "mean">(data, indices, updates)
                 }}
+            """,
+        )
+
+    def test_Expm1(self) -> None:
+        self._test_op_downgrade("Expm1", 29)
+
+    def test_Expm1_cannot_downgrade_to_28(self) -> None:
+        model = onnx.parser.parse_model("""
+            <ir_version: 10, opset_import: ["": 29]>
+            expm1 (float[2] x) => (float[2] y) {
+                y = Expm1(x)
+            }
+        """)
+        self._test_model_conversion_fails(28, model)
+
+    def test_dequantizepacked(self) -> None:
+        self._test_op_downgrade(
+            "DequantizePacked",
+            29,
+            [[18]],
+            [[32]],
+            input_types=[onnx.TensorProto.UINT8],
+            attrs={"format": "gguf:q4_0", "shape": [32]},
+        )
+
+    def test_dequantizepacked_before_introduction_fails(self) -> None:
+        self._test_model_conversion_fails(
+            to_opset=28,
+            model="""
+                <ir_version: 13, opset_import: ["" : 29]>
+                gguf (uint8[18] x) => (float[32] y) {
+                    y = DequantizePacked<format="gguf:q4_0", shape=[32]>(x)
+                }
             """,
         )
 
@@ -422,6 +457,36 @@ class TestAutomaticDowngrade(automatic_conversion_test_base.TestAutomaticConvers
             [onnx.TensorProto.UINT8],
             attrs={"direction": "RIGHT"},
         )
+
+    def test_mean_variance_normalization_default_epsilon(self) -> None:
+        self._test_op_downgrade(
+            "MeanVarianceNormalization",
+            28,
+            attrs={"axes": [1, 2], "epsilon": 1e-9},
+        )
+
+    def test_mean_variance_normalization_custom_epsilon(self) -> None:
+        model = onnx.parser.parse_model(
+            """
+            <ir_version: 13, opset_import: [ "" : 29]>
+            mvn (float16[4] X) => (float16[4] Y)
+            {
+                Y = MeanVarianceNormalization <axes = [0], epsilon = 0.5> (X)
+            }
+            """
+        )
+        onnx.checker.check_model(model)
+        x = np.array([1000.0, 1001.0, 1002.0, 1003.0], dtype=np.float16)
+        expected = ReferenceEvaluator(model).run(None, {"X": x})[0]
+
+        converted = onnx.version_converter.convert_version(model, 28)
+        onnx.checker.check_model(converted)
+        assert all(
+            node.op_type != "MeanVarianceNormalization" for node in converted.graph.node
+        )
+        got = ReferenceEvaluator(converted).run(None, {"X": x})[0]
+
+        assert_allclose(got, expected)
 
     def test_BitShift_signed_downgrade_fails(self) -> None:
         # BitShift gained the signed integer types at opset 28. Downgrading a

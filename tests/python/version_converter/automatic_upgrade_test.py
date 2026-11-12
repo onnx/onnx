@@ -8,9 +8,11 @@ from typing import ClassVar
 import automatic_conversion_test_base
 import numpy as np
 import pytest
+from numpy.testing import assert_allclose
 
 import onnx
 from onnx import TensorProto, helper
+from onnx.reference import ReferenceEvaluator
 
 #####################################################################################
 # Every test calls _test_op_conversion to upgrade a model from an initial opset version
@@ -26,6 +28,16 @@ class TestAutomaticUpgrade(automatic_conversion_test_base.TestAutomaticConversio
         strict_check = kwargs.pop("strict_check", False)
         mode = "strict_upgrade" if strict_check else "upgrade"
         self._test_op_conversion(op, *args, **kwargs, mode=mode)
+
+    def test_DequantizePacked(self) -> None:
+        self._test_op_upgrade(
+            "DequantizePacked",
+            29,
+            [[18]],
+            [[32]],
+            input_types=[TensorProto.UINT8],
+            attrs={"format": "gguf:q4_0", "shape": [32]},
+        )
 
     def test_Abs(self) -> None:
         self._test_op_upgrade("Abs", 1, attrs={"consumed_inputs": [0]})
@@ -709,6 +721,9 @@ class TestAutomaticUpgrade(automatic_conversion_test_base.TestAutomaticConversio
             output_types=[TensorProto.BOOL],
         )
 
+    def test_Expm1(self) -> None:
+        self._test_op_upgrade("Expm1", 29)
+
     def test_Log(self) -> None:
         self._test_op_upgrade("Log", 1, attrs={"consumed_inputs": [0]})
 
@@ -960,6 +975,28 @@ class TestAutomaticUpgrade(automatic_conversion_test_base.TestAutomaticConversio
 
     def test_MeanVarianceNormalization(self) -> None:
         self._test_op_upgrade("MeanVarianceNormalization", 9, attrs={"axes": [1, 2]})
+
+    def test_MeanVarianceNormalization_opset28(self) -> None:
+        model = onnx.parser.parse_model(
+            """
+            <ir_version: 13, opset_import: [ "" : 28]>
+            mvn (float[3] X) => (float[3] Y)
+            {
+                Y = MeanVarianceNormalization <axes = [0]> (X)
+            }
+            """
+        )
+        x = np.array([1000.0, 1001.0, 1002.0], dtype=np.float32)
+        expected = ReferenceEvaluator(model).run(None, {"X": x})[0]
+
+        converted = onnx.version_converter.convert_version(model, 29)
+        onnx.checker.check_model(converted)
+        assert all(
+            node.op_type != "MeanVarianceNormalization" for node in converted.graph.node
+        )
+        got = ReferenceEvaluator(converted).run(None, {"X": x})[0]
+
+        assert_allclose(got, expected)
 
     def test_Min(self) -> None:
         self._test_op_upgrade(

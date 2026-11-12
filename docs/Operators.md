@@ -48,6 +48,7 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#DFT">DFT</a>|<a href="Changelog.md#DFT-20">20</a>, <a href="Changelog.md#DFT-17">17</a>|
 |<a href="#DeformConv">DeformConv</a>|<a href="Changelog.md#DeformConv-22">22</a>, <a href="Changelog.md#DeformConv-19">19</a>|
 |<a href="#DequantizeLinear">DequantizeLinear</a>|<a href="Changelog.md#DequantizeLinear-28">28</a>, <a href="Changelog.md#DequantizeLinear-25">25</a>, <a href="Changelog.md#DequantizeLinear-24">24</a>, <a href="Changelog.md#DequantizeLinear-23">23</a>, <a href="Changelog.md#DequantizeLinear-21">21</a>, <a href="Changelog.md#DequantizeLinear-19">19</a>, <a href="Changelog.md#DequantizeLinear-13">13</a>, <a href="Changelog.md#DequantizeLinear-10">10</a>|
+|<a href="#DequantizePacked">DequantizePacked</a>|<a href="Changelog.md#DequantizePacked-29">29</a>|
 |<a href="#Det">Det</a>|<a href="Changelog.md#Det-22">22</a>, <a href="Changelog.md#Det-11">11</a>|
 |<a href="#Div">Div</a>|<a href="Changelog.md#Div-14">14</a>, <a href="Changelog.md#Div-13">13</a>, <a href="Changelog.md#Div-7">7</a>, <a href="Changelog.md#Div-6">6</a>, <a href="Changelog.md#Div-1">1</a>|
 |<a href="#Dropout">Dropout</a>|<a href="Changelog.md#Dropout-22">22</a>, <a href="Changelog.md#Dropout-13">13</a>, <a href="Changelog.md#Dropout-12">12</a>, <a href="Changelog.md#Dropout-10">10</a>, <a href="Changelog.md#Dropout-7">7</a>, <a href="Changelog.md#Dropout-6">6</a>, <a href="Changelog.md#Dropout-1">1</a>|
@@ -56,6 +57,7 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#Erf">Erf</a>|<a href="Changelog.md#Erf-13">13</a>, <a href="Changelog.md#Erf-9">9</a>|
 |<a href="#Exp">Exp</a>|<a href="Changelog.md#Exp-13">13</a>, <a href="Changelog.md#Exp-6">6</a>, <a href="Changelog.md#Exp-1">1</a>|
 |<a href="#Expand">Expand</a>|<a href="Changelog.md#Expand-13">13</a>, <a href="Changelog.md#Expand-8">8</a>|
+|<a href="#Expm1">Expm1</a>|<a href="Changelog.md#Expm1-29">29</a>|
 |<a href="#EyeLike">EyeLike</a>|<a href="Changelog.md#EyeLike-22">22</a>, <a href="Changelog.md#EyeLike-9">9</a>|
 |<a href="#Flatten">Flatten</a>|<a href="Changelog.md#Flatten-25">25</a>, <a href="Changelog.md#Flatten-24">24</a>, <a href="Changelog.md#Flatten-23">23</a>, <a href="Changelog.md#Flatten-21">21</a>, <a href="Changelog.md#Flatten-13">13</a>, <a href="Changelog.md#Flatten-11">11</a>, <a href="Changelog.md#Flatten-9">9</a>, <a href="Changelog.md#Flatten-1">1</a>|
 |<a href="#Floor">Floor</a>|<a href="Changelog.md#Floor-13">13</a>, <a href="Changelog.md#Floor-6">6</a>, <a href="Changelog.md#Floor-1">1</a>|
@@ -194,7 +196,7 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#LinearAttention">LinearAttention</a>|<a href="Changelog.md#LinearAttention-27">27</a>|27|
 |<a href="#LogCumSumExp">LogCumSumExp</a>|<a href="Changelog.md#LogCumSumExp-29">29</a>|29|
 |<a href="#LogSoftmax">LogSoftmax</a>|<a href="Changelog.md#LogSoftmax-13">13</a>, <a href="Changelog.md#LogSoftmax-11">11</a>, <a href="Changelog.md#LogSoftmax-1">1</a>|13, 18, 29|
-|<a href="#MeanVarianceNormalization">MeanVarianceNormalization</a>|<a href="Changelog.md#MeanVarianceNormalization-13">13</a>, <a href="Changelog.md#MeanVarianceNormalization-9">9</a>|13, 18|
+|<a href="#MeanVarianceNormalization">MeanVarianceNormalization</a>|<a href="Changelog.md#MeanVarianceNormalization-29">29</a>, <a href="Changelog.md#MeanVarianceNormalization-13">13</a>, <a href="Changelog.md#MeanVarianceNormalization-9">9</a>|13, 18|
 |<a href="#Mish">Mish</a>|<a href="Changelog.md#Mish-22">22</a>, <a href="Changelog.md#Mish-18">18</a>|22|
 |<a href="#NegativeLogLikelihoodLoss">NegativeLogLikelihoodLoss</a>|<a href="Changelog.md#NegativeLogLikelihoodLoss-22">22</a>, <a href="Changelog.md#NegativeLogLikelihoodLoss-13">13</a>, <a href="Changelog.md#NegativeLogLikelihoodLoss-12">12</a>|22|
 |<a href="#PRelu">PRelu</a>|<a href="Changelog.md#PRelu-16">16</a>, <a href="Changelog.md#PRelu-9">9</a>, <a href="Changelog.md#PRelu-7">7</a>, <a href="Changelog.md#PRelu-6">6</a>, <a href="Changelog.md#PRelu-1">1</a>|16|
@@ -13899,6 +13901,234 @@ expect(
 </details>
 
 
+### <a name="DequantizePacked"></a><a name="dequantizepacked">**DequantizePacked**</a>
+
+  Dequantizes the packed payload of one quantized tensor.
+  `x` is a one-dimensional UINT8 tensor containing exactly the tensor's bytes.
+  All multibyte fields are little-endian.
+
+  `format` selects the quantization format using an ONNX-defined, case-sensitive
+  string identifier. The `gguf:` prefix identifies the existing GGML/GGUF layouts.
+  Only the following fixed identifiers are supported; they accept no parameters:
+
+  | Identifier | Format | Elements | Bytes |
+  |---|---|---|---|
+  | gguf:q4_0 | Q4_0 | 32 | 18 |
+  | gguf:q4_1 | Q4_1 | 32 | 20 |
+  | gguf:q5_0 | Q5_0 | 32 | 22 |
+  | gguf:q5_1 | Q5_1 | 32 | 24 |
+  | gguf:q8_0 | Q8_0 | 32 | 34 |
+  | gguf:q8_1 | Q8_1 | 32 | 36 |
+  | gguf:q2_k | Q2_K | 256 | 84 |
+  | gguf:q3_k | Q3_K | 256 | 110 |
+  | gguf:q4_k | Q4_K | 256 | 144 |
+  | gguf:q5_k | Q5_K | 256 | 176 |
+  | gguf:q6_k | Q6_K | 256 | 210 |
+  | gguf:q8_k | Q8_K | 256 | 292 |
+  | gguf:iq2_xxs | IQ2_XXS | 256 | 66 |
+  | gguf:iq2_xs | IQ2_XS | 256 | 74 |
+  | gguf:iq3_xxs | IQ3_XXS | 256 | 98 |
+  | gguf:iq1_s | IQ1_S | 256 | 50 |
+  | gguf:iq4_nl | IQ4_NL | 32 | 18 |
+  | gguf:iq3_s | IQ3_S | 256 | 110 |
+  | gguf:iq2_s | IQ2_S | 256 | 82 |
+  | gguf:iq4_xs | IQ4_XS | 256 | 136 |
+  | gguf:iq1_m | IQ1_M | 256 | 56 |
+  | gguf:tq1_0 | TQ1_0 | 256 | 54 |
+  | gguf:tq2_0 | TQ2_0 | 256 | 66 |
+  | gguf:mxfp4 | MXFP4 | 32 | 17 |
+  | gguf:nvfp4 | NVFP4 | 64 | 36 |
+  | gguf:q1_0 | Q1_0 | 128 | 18 |
+  | gguf:q2_0 | Q2_0 | 64 | 18 |
+
+  The byte layouts, per-format decoding algorithms, and complete IQ codebooks
+  are defined in the in-tree
+  [DequantizePacked decoding specification](DequantizePacked.md).
+  The [online specification](https://github.com/onnx/onnx/blob/19b091202765d5d444acd9d9c25a0b81eef474b5/docs/DequantizePacked.md)
+  is also accessible from installed schema documentation.
+
+  `shape` gives the logical output dimensions in ONNX (row-major) order.
+  For a GGUF descriptor `[ne0, ne1, ...]`, use `shape=[..., ne1, ne0]`.
+  Decoding preserves the flattened element order.
+  Rank must be at least one. Dimensions are nonnegative literal sizes;
+  a zero dimension produces an empty tensor. The last dimension must be a
+  multiple of the format's elements per block, even for an empty tensor.
+  If B is elements per block and S is bytes per block, the input length must be
+  `product(shape[:-1]) * (shape[-1] / B) * S`.
+
+  Blocks are decoded in input order to FLOAT using the specified
+  arithmetic and codebooks. The concatenated values are reshaped to `shape`
+  and converted once to `output_dtype`. Decoding arithmetic uses FLOAT
+  precision for all output types. FLOAT16 and BFLOAT16 conversion uses
+  round-to-nearest, ties-to-even, as in Cast.
+
+  For example, a Q4_0 block is a little-endian FLOAT16 scale `d` followed
+  by 16 bytes `q`. It produces `y[j]=d*((q[j]&15)-8)` and
+  `y[j+16]=d*((q[j]>>4)-8)` for j=0,...,15. Thus 36 bytes containing two
+  blocks can be decoded with `format="gguf:q4_0", shape=[2,32]`.
+
+#### Version
+
+This version of the operator has been available since version 29 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>format</tt> : string (required)</dt>
+<dd>ONNX-defined, case-sensitive fixed quantization format identifier.</dd>
+<dt><tt>output_dtype</tt> : int (default is 1)</dt>
+<dd>ONNX TensorProto data type of the output: FLOAT, FLOAT16, BFLOAT16, or DOUBLE.</dd>
+<dt><tt>shape</tt> : list of ints (required)</dt>
+<dd>Logical output dimensions in ONNX order; rank at least one.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>x</tt> : tensor(uint8)</dt>
+<dd>Consecutive quantization blocks with little-endian fields.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>y</tt> : T</dt>
+<dd>Dequantized tensor with the specified shape and output_dtype.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float), tensor(float16), tensor(bfloat16), tensor(double)</dt>
+<dd>Floating-point output.</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>empty</summary>
+
+```python
+node = helper.make_node(
+    "DequantizePacked", ["x"], ["y"], format="gguf:q2_k", shape=[0, 256]
+)
+expect(
+    node,
+    inputs=[np.empty(0, dtype=np.uint8)],
+    outputs=[np.empty((0, 256), dtype=np.float32)],
+    name="test_dequantizepacked_empty",
+)
+```
+
+</details>
+
+
+<details>
+<summary>iq4_nl</summary>
+
+```python
+node = helper.make_node(
+    "DequantizePacked",
+    ["x"],
+    ["y"],
+    format="gguf:iq4_nl",
+    shape=[32],
+    output_dtype=TensorProto.FLOAT16,
+)
+x = np.frombuffer(struct.pack("<e", 0.5) + bytes(range(16)), dtype=np.uint8)
+y = np.array(
+    [
+        -127,
+        -104,
+        -83,
+        -65,
+        -49,
+        -35,
+        -22,
+        -10,
+        1,
+        13,
+        25,
+        38,
+        53,
+        69,
+        89,
+        113,
+    ]
+    + [-127] * 16,
+    dtype=np.float16,
+) * np.float16(0.5)
+expect(
+    node, inputs=[x], outputs=[y], name="test_dequantizepacked_iq4_nl_float16"
+)
+```
+
+</details>
+
+
+<details>
+<summary>mxfp4</summary>
+
+```python
+node = helper.make_node(
+    "DequantizePacked", ["x"], ["y"], format="gguf:mxfp4", shape=[32]
+)
+x = np.array([127, *list(range(16))], dtype=np.uint8)
+y = np.array(
+    [0, 0.5, 1, 1.5, 2, 3, 4, 6, 0, -0.5, -1, -1.5, -2, -3, -4, -6] + [0] * 16,
+    dtype=np.float32,
+)
+expect(node, inputs=[x], outputs=[y], name="test_dequantizepacked_mxfp4")
+```
+
+</details>
+
+
+<details>
+<summary>q4_0</summary>
+
+```python
+node = helper.make_node(
+    "DequantizePacked", ["x"], ["y"], format="gguf:q4_0", shape=[2, 32]
+)
+x = np.frombuffer(
+    struct.pack("<e", 0.5)
+    + bytes(range(16))
+    + struct.pack("<e", -2)
+    + bytes([0xF0] * 16),
+    dtype=np.uint8,
+)
+y = np.array(
+    [
+        list(np.arange(-8, 8) * 0.5) + [-4] * 16,
+        [16] * 16 + [-14] * 16,
+    ],
+    dtype=np.float32,
+)
+expect(node, inputs=[x], outputs=[y], name="test_dequantizepacked_q4_0")
+```
+
+</details>
+
+
+<details>
+<summary>q5_1</summary>
+
+```python
+node = helper.make_node(
+    "DequantizePacked", ["x"], ["y"], format="gguf:q5_1", shape=[32]
+)
+x = np.frombuffer(
+    struct.pack("<eeI", 0.5, -1, 0xFFFF0000) + bytes(range(16)), dtype=np.uint8
+)
+y = np.array(list(np.arange(16) * 0.5 - 1) + [7] * 16, dtype=np.float32)
+expect(node, inputs=[x], outputs=[y], name="test_dequantizepacked_q5_1")
+```
+
+</details>
+
+
 ### <a name="Det"></a><a name="det">**Det**</a>
 
   Det calculates determinant of a square matrix or batches of square matrices.
@@ -15229,6 +15459,148 @@ expect(
     outputs=[expanded],
     name="test_expand_dim_unchanged",
 )
+```
+
+</details>
+
+
+### <a name="Expm1"></a><a name="expm1">**Expm1**</a>
+
+  Computes `exp(x) - 1` element-wise, where `exp` is the exponential to base `e`.
+  The input may have any shape, including a scalar or an empty tensor. The output
+  has the same shape and element type as the input.
+
+  For finite nonzero `x`, the output is a floating-point approximation of the
+  real-valued function `exp(x) - 1` at the exact value represented by `x`.
+  The computation must preserve nonzero results representable in the output type
+  when an intermediate floating-point `exp(x)` would round to `1`. For example,
+  a FLOAT input `1e-8` produces a result approximately equal to `1e-8`, rather
+  than zero.
+
+  Special values are defined element-wise as follows:
+
+  | Input `x` | Output `y` |
+  | --- | --- |
+  | Positive zero | Positive zero |
+  | Negative zero | Negative zero |
+  | Negative infinity | `-1` |
+  | Positive infinity | Positive infinity |
+  | NaN | NaN |
+
+  The sign and payload of an output NaN are unspecified. Finite positive inputs
+  whose results overflow the output type produce positive infinity.
+
+
+#### Version
+
+This version of the operator has been available since version 29 of the default ONNX operator set.
+
+#### Inputs
+
+<dl>
+<dt><tt>input</tt> (differentiable) : T</dt>
+<dd>Input tensor</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> (differentiable) : T</dt>
+<dd>The exponential of the input minus one, computed element-wise</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(bfloat16), tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>expm1</summary>
+
+```python
+node = onnx.helper.make_node("Expm1", ["x"], ["y"])
+for dtype in [np.float16, ml_dtypes.bfloat16, np.float32, np.float64]:
+    x = np.array([[-10.0, -0.5, 0.0, 0.25], [0.5, 1.0, 3.0, 5.0]], dtype=dtype)
+    y = np.array([math.expm1(float(v)) for v in x.flat], dtype=dtype).reshape(
+        x.shape
+    )
+    expect(
+        node,
+        inputs=[x],
+        outputs=[y],
+        name=f"test_expm1_{np.dtype(dtype).name}",
+        rtol=1e-2 if dtype == ml_dtypes.bfloat16 else 1e-3,
+    )
+```
+
+</details>
+
+
+<details>
+<summary>expm1_scalar_and_empty</summary>
+
+```python
+node = onnx.helper.make_node("Expm1", ["x"], ["y"])
+expect(
+    node,
+    inputs=[np.array(1.0, dtype=np.float32)],
+    outputs=[np.array(math.expm1(1), dtype=np.float32)],
+    name="test_expm1_scalar",
+)
+x = np.empty((0, 3), dtype=np.float32)
+expect(node, inputs=[x], outputs=[x], name="test_expm1_empty")
+```
+
+</details>
+
+
+<details>
+<summary>expm1_small_inputs</summary>
+
+```python
+node = onnx.helper.make_node("Expm1", ["x"], ["y"])
+for dtype, tiny in [
+    (np.float16, 2.0**-14),
+    (ml_dtypes.bfloat16, 2.0**-10),
+    (np.float32, 1e-8),
+    (np.float64, 1e-20),
+]:
+    x = np.array([-tiny, -0.0, 0.0, tiny], dtype=dtype)
+    y = np.array([math.expm1(float(v)) for v in x], dtype=dtype)
+    # Relative error allows backend variation, while atol=0 catches
+    # an incorrect zero caused by rounding the intermediate exp(x).
+    expect(
+        node,
+        inputs=[x],
+        outputs=[y],
+        name=f"test_expm1_small_inputs_{np.dtype(dtype).name}",
+        rtol=1e-2 if dtype == ml_dtypes.bfloat16 else 1e-3,
+        atol=0,
+    )
+```
+
+</details>
+
+
+<details>
+<summary>expm1_special_values</summary>
+
+```python
+node = onnx.helper.make_node("Expm1", ["x"], ["y"])
+for dtype in [np.float16, ml_dtypes.bfloat16, np.float32, np.float64]:
+    x = np.array([-0.0, 0.0, -np.inf, np.inf, np.nan], dtype=dtype)
+    y = np.array([-0.0, 0.0, -1.0, np.inf, np.nan], dtype=dtype)
+    expect(
+        node,
+        inputs=[x],
+        outputs=[y],
+        name=f"test_expm1_special_values_{np.dtype(dtype).name}",
+    )
 ```
 
 </details>
@@ -24982,20 +25354,33 @@ expect(
 
 ### <a name="MeanVarianceNormalization"></a><a name="meanvariancenormalization">**MeanVarianceNormalization**</a>
 
-  A MeanVarianceNormalization Function: Perform mean variance normalization
-        on the input tensor X using formula: `(X-EX)/sqrt(E(X-EX)^2)`
+  Computes mean-variance normalization of `X`:
+  `Y = (X - mean) / (sqrt(variance) + epsilon)`, where
+  `mean = ReduceMean(X, axes)` and
+  `variance = ReduceMean((X - mean)^2, axes)`.
+  Each reduction computes the arithmetic mean over `axes` and retains the
+  reduced dimensions with size 1 for broadcasting.
+  An empty `axes` list reduces over all dimensions.
+
+  The default `epsilon` is 1e-9 and is added after the square root.
+  For float16 and bfloat16 inputs, `X` is converted to float32 before computation.
+  Otherwise, computation uses the input type. `epsilon` is converted to the
+  computation type, and the result is cast to the input type.
+  `Y` has the same shape and element type as `X`.
 
 #### Version
 
-This version of the operator has been available since version 13 of the default ONNX operator set.
+This version of the operator has been available since version 29 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#MeanVarianceNormalization-9">9</a>
+Other versions of this operator: <a href="Changelog.md#MeanVarianceNormalization-9">9</a>, <a href="Changelog.md#MeanVarianceNormalization-13">13</a>
 
 #### Attributes
 
 <dl>
 <dt><tt>axes</tt> : list of ints (default is ['0', '2', '3'])</dt>
-<dd>A list of integers, along which to reduce. The default is to calculate along axes [0,2,3] for calculating mean and variance along each channel. Two variables with the same C-coordinate are associated with the same mean and variance.</dd>
+<dd>Axes over which to compute mean and variance. Values must be in [-r, r-1], where r is the rank of X; negative values count from the last dimension. An empty list reduces over all dimensions. The default is [0, 2, 3], which computes per-channel statistics for an NCHW tensor.</dd>
+<dt><tt>epsilon</tt> : float (default is (1.000000e-09))</dt>
+<dd>Value added to the standard deviation in the denominator.</dd>
 </dl>
 
 #### Inputs
@@ -25016,11 +25401,43 @@ Other versions of this operator: <a href="Changelog.md#MeanVarianceNormalization
 
 <dl>
 <dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
-<dd>Constrain input and output types to all numeric tensors.</dd>
+<dd>Constrain input and output types to floating-point tensors.</dd>
 </dl>
 
 
 #### Examples
+
+<details>
+<summary>epsilon</summary>
+
+```python
+epsilon = 1.0
+node = onnx.helper.make_node(
+    "MeanVarianceNormalization",
+    inputs=["X"],
+    outputs=["Y"],
+    axes=[1, -1],
+    epsilon=epsilon,
+)
+
+input_data = np.arange(24, dtype=np.float64).reshape(2, 3, 4)
+
+# Calculate expected output with custom epsilon
+data_mean = np.mean(input_data, axis=(1, -1), keepdims=True)
+centered = input_data - data_mean
+std = np.sqrt(np.mean(np.square(centered), axis=(1, -1), keepdims=True))
+expected_output = (input_data - data_mean) / (std + epsilon)
+
+expect(
+    node,
+    inputs=[input_data],
+    outputs=[expected_output],
+    name="test_mvn_epsilon",
+)
+```
+
+</details>
+
 
 <details>
 <summary>meanvariancenormalization</summary>
@@ -25053,13 +25470,39 @@ input_data = np.array(
 
 # Calculate expected output data
 data_mean = np.mean(input_data, axis=(0, 2, 3), keepdims=1)
-data_mean_squared = np.power(data_mean, 2)
-data_squared = np.power(input_data, 2)
-data_squared_mean = np.mean(data_squared, axis=(0, 2, 3), keepdims=1)
-std = np.sqrt(data_squared_mean - data_mean_squared)
+centered = input_data - data_mean
+std = np.sqrt(np.mean(np.square(centered), axis=(0, 2, 3), keepdims=True))
 expected_output = (input_data - data_mean) / (std + 1e-9)
 
 expect(node, inputs=[input_data], outputs=[expected_output], name="test_mvn")
+```
+
+</details>
+
+
+<details>
+<summary>zero_variance</summary>
+
+```python
+node = onnx.helper.make_node(
+    "MeanVarianceNormalization",
+    inputs=["X"],
+    outputs=["Y"],
+    axes=[0],
+)
+input_data = np.ones(2, dtype=np.float32)
+mean = np.mean(input_data, axis=0, keepdims=True)
+centered = input_data - mean
+expected_output = centered / (
+    np.sqrt(np.mean(np.square(centered), axis=0, keepdims=True)) + 1e-9
+)
+
+expect(
+    node,
+    inputs=[input_data],
+    outputs=[expected_output],
+    name="test_mvn_zero_variance",
+)
 ```
 
 </details>
@@ -46838,7 +47281,7 @@ This version of the operator has been available since version 1 of the 'ai.onnx.
 <dl>
 <dt><tt>decay_factor</tt> : float (default is 0.0)</dt>
 <dd>The decay factor of learning rate after one update.The effective learning rate is computed by r = R / (1 + T * decay_factor). Default to 0 so that increasing update counts doesn't reduce the learning rate.</dd>
-<dt><tt>epsilon</tt> : float (default is 0.0)</dt>
+<dt><tt>epsilon</tt> : float (default is (1.000000e-06))</dt>
 <dd>Small scalar to avoid dividing by zero.</dd>
 <dt><tt>norm_coefficient</tt> : float (default is 0.0)</dt>
 <dd>Regularization coefficient in 0.5 * norm_coefficient * ||X||_2^2. Default to 0, which means no regularization.</dd>
@@ -47052,7 +47495,7 @@ This version of the operator has been available since version 1 of the 'ai.onnx.
 <dd>Coefficient of previously accumulated gradient in running average. Default to 0.9.</dd>
 <dt><tt>beta</tt> : float (default is 0.999)</dt>
 <dd>Coefficient of previously accumulated squared-gradient in running average. Default to 0.999.</dd>
-<dt><tt>epsilon</tt> : float (default is 0.0)</dt>
+<dt><tt>epsilon</tt> : float (default is (1.000000e-06))</dt>
 <dd>Small scalar to avoid dividing by zero.</dd>
 <dt><tt>norm_coefficient</tt> : float (default is 0.0)</dt>
 <dd>Regularization coefficient of 0.5 * norm_coefficient * ||X||_2^2. Default to 0, which means no regularization.</dd>
