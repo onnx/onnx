@@ -2184,3 +2184,259 @@ class TestChecker:
             match=r"Input channels C must be divisible by group for ConvTranspose",
         ):
             checker.check_model(model, full_check=True)
+
+
+class TestSummarizeOperators:
+    @staticmethod
+    def kinds(
+        summary: checker.OperatorSummary,
+    ) -> dict[tuple[str, str], tuple[checker.OperatorKind, int | None, int]]:
+        return {
+            (op.domain, op.op_type): (op.kind, op.opset_version, op.count)
+            for op in summary.operators
+        }
+
+    def test_standard(self) -> None:
+        model = onnx.parser.parse_model(
+            """
+            <ir_version: 10, opset_import: ["" : 21]>
+            agraph (float[2] x) => (float[2] y) {
+                t = Relu(x)
+                u = Relu(t)
+                y = Identity(u)
+            }
+            """
+        )
+        summary = checker.summarize_operators(model)
+        assert self.kinds(summary) == {
+            ("", "Identity"): (checker.OperatorKind.STANDARD, 21, 1),
+            ("", "Relu"): (checker.OperatorKind.STANDARD, 21, 2),
+        }
+        assert summary.uses_only_standard_operators
+        assert summary.all_operators_defined
+
+    def test_standard_domains(self) -> None:
+        nodes = [
+            helper.make_node("Relu", ["x"], ["t"], domain="ai.onnx"),
+            helper.make_node(
+                "Binarizer", ["t"], ["y"], domain=onnx.defs.ONNX_ML_DOMAIN
+            ),
+        ]
+        graph = helper.make_graph(
+            nodes,
+            "g",
+            [helper.make_tensor_value_info("x", TensorProto.FLOAT, [2])],
+            [helper.make_tensor_value_info("y", TensorProto.FLOAT, [2])],
+        )
+        model = helper.make_model(
+            graph,
+            opset_imports=[
+                helper.make_opsetid("ai.onnx", 21),
+                helper.make_opsetid(onnx.defs.ONNX_ML_DOMAIN, 1),
+            ],
+        )
+        ml_schema_available = onnx.defs.has("Binarizer", 1, onnx.defs.ONNX_ML_DOMAIN)
+        ml_kind = (
+            checker.OperatorKind.STANDARD
+            if ml_schema_available
+            else checker.OperatorKind.UNKNOWN
+        )
+        summary = checker.summarize_operators(model)
+        # "ai.onnx" and "" both name the default domain.
+        assert self.kinds(summary) == {
+            ("", "Relu"): (checker.OperatorKind.STANDARD, 21, 1),
+            ("ai.onnx.ml", "Binarizer"): (ml_kind, 1, 1),
+        }
+        assert summary.uses_only_standard_operators is ml_schema_available
+        assert summary.all_operators_defined is ml_schema_available
+
+    def test_unregistered_custom_domain(self) -> None:
+        model = onnx.parser.parse_model(
+            """
+            <ir_version: 10, opset_import: ["" : 21, "com.example" : 1]>
+            agraph (float[2] x) => (float[2] y) {
+                t = com.example.MyOp(x)
+                y = Relu(t)
+            }
+            """
+        )
+        # The checker accepts the model; the summary shows what it depends on.
+        checker.check_model(model)
+        summary = checker.summarize_operators(model)
+        assert self.kinds(summary) == {
+            ("", "Relu"): (checker.OperatorKind.STANDARD, 21, 1),
+            ("com.example", "MyOp"): (checker.OperatorKind.UNKNOWN, 1, 1),
+        }
+        assert not summary.uses_only_standard_operators
+        assert not summary.all_operators_defined
+
+    def test_registered_custom_domain(self) -> None:
+        model = onnx.parser.parse_model(
+            """
+            <ir_version: 10, opset_import: ["" : 21, "com.example" : 1]>
+            agraph (float[2] x) => (float[2] y) {
+                y = com.example.MyOp(x)
+            }
+            """
+        )
+        onnx.defs.register_schema(onnx.defs.OpSchema("MyOp", "com.example", 1))
+        try:
+            summary = checker.summarize_operators(model)
+        finally:
+            onnx.defs.deregister_schema("MyOp", 1, "com.example")
+        assert self.kinds(summary) == {
+            ("com.example", "MyOp"): (checker.OperatorKind.CUSTOM, 1, 1),
+        }
+        assert not summary.uses_only_standard_operators
+        assert summary.all_operators_defined
+
+    def test_preview_domain(self) -> None:
+        node = helper.make_node(
+            "Adagrad",
+            ["r", "t", "x", "g", "h"],
+            ["x_new", "h_new"],
+            domain=onnx.defs.AI_ONNX_PREVIEW_TRAINING_DOMAIN,
+        )
+        graph = helper.make_graph([node], "g", [], [])
+        model = helper.make_model(
+            graph,
+            opset_imports=[
+                helper.make_opsetid("", 21),
+                helper.make_opsetid(onnx.defs.AI_ONNX_PREVIEW_TRAINING_DOMAIN, 1),
+            ],
+        )
+        summary = checker.summarize_operators(model)
+        assert self.kinds(summary) == {
+            ("ai.onnx.preview.training", "Adagrad"): (
+                checker.OperatorKind.PREVIEW,
+                1,
+                1,
+            ),
+        }
+        assert not summary.uses_only_standard_operators
+        assert summary.all_operators_defined
+
+    def test_domain_not_imported(self) -> None:
+        model = onnx.parser.parse_model(
+            """
+            <ir_version: 10, opset_import: ["" : 21]>
+            agraph (float[2] x) => (float[2] y) {
+                y = com.example.Relu(x)
+            }
+            """
+        )
+        summary = checker.summarize_operators(model)
+        assert self.kinds(summary) == {
+            ("com.example", "Relu"): (checker.OperatorKind.UNKNOWN, None, 1),
+        }
+
+    def test_subgraphs(self) -> None:
+        model = onnx.parser.parse_model(
+            """
+            <ir_version: 10, opset_import: ["" : 21, "com.example" : 1]>
+            agraph (bool cond, float[2] x) => (float[2] y) {
+                y = If (cond) <
+                    then_branch = g1 () => (float[2] t) { t = Relu(x) },
+                    else_branch = g2 () => (float[2] e) { e = com.example.MyOp(x) }
+                >
+            }
+            """
+        )
+        summary = checker.summarize_operators(model)
+        assert self.kinds(summary) == {
+            ("", "If"): (checker.OperatorKind.STANDARD, 21, 1),
+            ("", "Relu"): (checker.OperatorKind.STANDARD, 21, 1),
+            ("com.example", "MyOp"): (checker.OperatorKind.UNKNOWN, 1, 1),
+        }
+
+    def test_model_local_functions(self) -> None:
+        model = onnx.parser.parse_model(
+            """
+            <ir_version: 10, opset_import: ["" : 21, "local" : 1]>
+            agraph (float[2] x) => (float[2] y) {
+                t = local.f(x)
+                y = local.f(t)
+            }
+            <domain: "local", opset_import: ["" : 21]>
+            f (a) => (b) {
+                b = Relu(a)
+            }
+            <domain: "local", opset_import: ["" : 21, "com.example" : 1]>
+            unused (a) => (b) {
+                b = com.example.MyOp(a)
+            }
+            """
+        )
+        summary = checker.summarize_operators(model)
+        # A called function's body is listed once; uncalled functions are left out.
+        assert self.kinds(summary) == {
+            ("", "Relu"): (checker.OperatorKind.STANDARD, 21, 1),
+            ("local", "f"): (checker.OperatorKind.FUNCTION, 1, 2),
+        }
+        assert summary.uses_only_standard_operators
+
+    def test_model_local_function_with_custom_body(self) -> None:
+        model = onnx.parser.parse_model(
+            """
+            <ir_version: 10, opset_import: ["" : 21, "local" : 1]>
+            agraph (float[2] x) => (float[2] y) {
+                y = local.f(x)
+            }
+            <domain: "local", opset_import: ["" : 21, "com.example" : 2]>
+            f (a) => (b) {
+                c = com.example.MyOp(a)
+                b = local.g(c)
+            }
+            <domain: "local", opset_import: ["" : 21]>
+            g (a) => (b) {
+                b = Relu(a)
+            }
+            """
+        )
+        summary = checker.summarize_operators(model)
+        # Nodes in a function resolve against the function's opset imports.
+        assert self.kinds(summary) == {
+            ("", "Relu"): (checker.OperatorKind.STANDARD, 21, 1),
+            ("com.example", "MyOp"): (checker.OperatorKind.UNKNOWN, 2, 1),
+            ("local", "f"): (checker.OperatorKind.FUNCTION, 1, 1),
+            ("local", "g"): (checker.OperatorKind.FUNCTION, None, 1),
+        }
+        assert not summary.uses_only_standard_operators
+
+    def test_recursive_function(self) -> None:
+        model = onnx.parser.parse_model(
+            """
+            <ir_version: 10, opset_import: ["" : 21, "local" : 1]>
+            agraph (float[2] x) => (float[2] y) {
+                y = local.f(x)
+            }
+            <domain: "local", opset_import: ["" : 21, "local" : 1]>
+            f (a) => (b) {
+                b = local.f(a)
+            }
+            """
+        )
+        summary = checker.summarize_operators(model)
+        assert self.kinds(summary) == {
+            ("local", "f"): (checker.OperatorKind.FUNCTION, 1, 2),
+        }
+
+    def test_sorted(self) -> None:
+        model = onnx.parser.parse_model(
+            """
+            <ir_version: 10, opset_import: ["" : 21, "com.example" : 1]>
+            agraph (float[2] x) => (float[2] y) {
+                t = Relu(x)
+                u = com.example.B(t)
+                v = com.example.A(u)
+                y = Identity(v)
+            }
+            """
+        )
+        summary = checker.summarize_operators(model)
+        assert [(op.domain, op.op_type) for op in summary.operators] == [
+            ("", "Identity"),
+            ("", "Relu"),
+            ("com.example", "A"),
+            ("com.example", "B"),
+        ]
