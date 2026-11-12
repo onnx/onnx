@@ -9402,8 +9402,18 @@ class TestReferenceEvaluator:
             TensorProto.UINT64,
         ],
     )
+    @pytest.mark.parametrize(
+        "parameters",
+        [
+            [3, 32, 8192, 0, 4096],
+            [8, 16, 8192, 0, 4096],
+            [1, 8, 400, -200, 503.052],
+            [1, 8, 9000, 0, 700 * np.expm1(3 * np.log1p(1000 / 700)) * (1 - 1e-12)],
+            [1, 8, 9000, 0, 700 * np.expm1(3 * np.log1p(1000 / 700)) * (1 + 1e-12)],
+        ],
+    )
     def test_mel_weight_matrix_function_dtypes(
-        self, integer_dtype, edge_dtype, output_datatype
+        self, integer_dtype, edge_dtype, output_datatype, parameters
     ):
         model = self._mel_weight_matrix_model(
             integer_dtype, edge_dtype, output_datatype
@@ -9417,9 +9427,7 @@ class TestReferenceEvaluator:
                     value.type.tensor_type.elem_type
                 ),
             )
-            for value, number in zip(
-                model.graph.input, [3, 32, 8192, 0, 4096], strict=True
-            )
+            for value, number in zip(model.graph.input, parameters, strict=True)
         }
         expected = ReferenceEvaluator(model).run(None, feeds)[0]
         actual = ReferenceEvaluator(model, new_ops=[expanded_op]).run(None, feeds)[0]
@@ -9430,7 +9438,9 @@ class TestReferenceEvaluator:
         )
         assert all(node.op_type != "MelWeightMatrix" for node in inlined.graph.node)
         check_model(inlined, full_check=True)
-        assert_array_equal(ReferenceEvaluator(inlined).run(None, feeds)[0], expected)
+        inlined_output = ReferenceEvaluator(inlined).run(None, feeds)[0]
+        assert inlined_output.dtype == expected.dtype
+        assert_array_equal(inlined_output, expected)
 
     @pytest.mark.parametrize("opset", [17, 28])
     def test_mel_weight_matrix_function_older_opsets(self, opset):
@@ -9462,6 +9472,10 @@ class TestReferenceEvaluator:
             ([2, 0, 8192, 0, 4096], [[1, 1]]),
             ([3, 16, 8192, -100, 100], None),
             ([3, 16, 8192, 100, -100], None),
+            (
+                [1, 8, 400, -200, 503.052],
+                np.array([[0.8], [0.6], [0.4], [0.2], [1]], dtype=np.float32),
+            ),
             ([1, 4, 3150, 0, 4900], [[0], [1], [0.5]]),
         ]
         # A tiny change across this edge moves the center to the next DFT bin.
