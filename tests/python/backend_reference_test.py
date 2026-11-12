@@ -119,6 +119,22 @@ backend_test.exclude(
     "|test_scan_sum)"
 )
 
+# LogSoftmax's opset-13/18 function bodies use Exp -> ReduceSum -> Log. Their
+# exponential sum rounds to one for these inputs, losing the small result.
+# The node cases also generate these legacy expansions automatically. Keep them
+# as expected failures to document the limitation and detect a future fix via
+# an unexpected success, while retaining strict checks for the native nodes.
+for function_opset in (13, 18):
+    # Only the selected schema's since_version gets an unsuffixed expansion.
+    suffix = (
+        ""
+        if function_opset == onnx.defs.get_schema("LogSoftmax").since_version
+        else f"_ver{function_opset}"
+    )
+    backend_test.xfail(
+        rf"test_logsoftmax_small_log_probability_.*_expanded{suffix}(?:_cpu|_cuda)?$"
+    )
+
 # The following tests are about deprecated operators.
 backend_test.exclude("(test_scatter_with_axis|test_scatter_without)")
 
