@@ -56,6 +56,18 @@ class TestAutomaticDowngrade(automatic_conversion_test_base.TestAutomaticConvers
         mode = "strict_downgrade" if strict_check else "downgrade"
         self._test_op_conversion(op, *args, **kwargs, mode=mode)
 
+    def test_Expm1(self) -> None:
+        self._test_op_downgrade("Expm1", 29)
+
+    def test_Expm1_cannot_downgrade_to_28(self) -> None:
+        model = onnx.parser.parse_model("""
+            <ir_version: 10, opset_import: ["": 29]>
+            expm1 (float[2] x) => (float[2] y) {
+                y = Expm1(x)
+            }
+        """)
+        self._test_model_conversion_fails(28, model)
+
     def test_dequantizepacked(self) -> None:
         self._test_op_downgrade(
             "DequantizePacked",
