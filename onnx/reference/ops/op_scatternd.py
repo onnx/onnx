@@ -6,9 +6,17 @@ from __future__ import annotations
 import numpy as np
 
 from onnx.reference.op_run import OpRun
+from onnx.reference.ops._scatter import scatter_mean
 
 
 def _scatter_nd_impl(data, indices, updates, reduction=None):
+    if reduction == "mean":
+
+        def update_pairs():
+            for i in np.ndindex(indices.shape[:-1]):
+                yield tuple(indices[i]), updates[i]
+
+        return scatter_mean(data, update_pairs)
     output = np.copy(data)
     for i in np.ndindex(indices.shape[:-1]):
         if reduction == "add":

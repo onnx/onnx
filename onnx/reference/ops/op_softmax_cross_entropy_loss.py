@@ -7,6 +7,7 @@ import ml_dtypes
 import numpy as np
 
 from onnx.reference.op_run import OpRun
+from onnx.reference.ops._op_common_softmax import _log_softmax
 
 
 def softmaxcrossentropy(
@@ -26,9 +27,7 @@ def softmaxcrossentropy(
     xc = x.astype(np.float32) if x.dtype in (np.float16, ml_dtypes.bfloat16) else x
 
     # compute log_softmax
-    max_x = np.max(xc, axis=1, keepdims=True)
-    shifted_x = xc - max_x
-    inp = shifted_x - np.log(np.sum(np.exp(shifted_x), axis=1, keepdims=True))
+    inp = _log_softmax(xc, axis=1)
     log_prob = None
     if get_log_prob is True:
         log_prob = np.copy(inp).astype(x.dtype)

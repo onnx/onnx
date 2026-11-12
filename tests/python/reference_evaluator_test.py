@@ -5,8 +5,10 @@
 from __future__ import annotations
 
 import importlib.util
+import itertools
 import math
 import warnings
+import weakref
 from os import getenv
 from textwrap import dedent
 from typing import TYPE_CHECKING
@@ -49,6 +51,7 @@ from onnx.reference.op_run import OpRun, OpRunExpand
 from onnx.reference.ops import load_op
 from onnx.reference.ops._op_common_indices import _get_indices, _is_out
 from onnx.reference.ops._op_list import Cast_19, Celu, NonZero
+from onnx.reference.ops._scatter import scatter_mean
 from onnx.reference.ops.aionnx_preview_training._op_list import Adam
 from onnx.reference.ops.op_attention import _apply_causal, _softmax
 from onnx.reference.ops.op_celu import _vcelu1
@@ -57,6 +60,7 @@ from onnx.reference.ops.op_col2im import (
     col2im_naive_implementation,
 )
 from onnx.reference.ops.op_conv import Conv, _conv_implementation
+from onnx.reference.ops.op_reduce_mean import _mean
 from onnx.reference.shape_annotation_checker import ShapeAnnotationError
 
 if TYPE_CHECKING:
@@ -87,6 +91,29 @@ def make_sequence_value_info(name, elem_type, shape):
         return make_tensor_sequence_value_info(name, elem_type, shape)
     s_type = make_sequence_type_proto(elem_type)
     return make_value_info(name, s_type, shape)
+
+
+def _causal_conv_with_state_from_spec(
+    x, weight, bias=None, past_state=None, *, dilation=1, activation="none"
+):
+    """Translate the opset-29 schema's indexed formula, without Conv helpers."""
+    batch, channels, length = x.shape
+    kernel_size = weight.shape[2]
+    history = (kernel_size - 1) * dilation
+    if past_state is None:
+        past_state = np.zeros((batch, channels, history), dtype=x.dtype)
+    samples = np.concatenate((past_state, x), axis=2)
+    output = np.empty(x.shape, dtype=np.float64)
+    for b in range(batch):
+        for c in range(channels):
+            for t in range(length):
+                output[b, c, t] = sum(
+                    float(weight[c, 0, j]) * float(samples[b, c, t + j * dilation])
+                    for j in range(kernel_size)
+                ) + (0.0 if bias is None else float(bias[c]))
+    if activation in ("silu", "swish"):
+        output = output / (1 + np.exp(-output))
+    return output.astype(x.dtype), samples[:, :, length : length + history].copy()
 
 
 def run_ort_inference(onnx_model):
@@ -3035,6 +3062,369 @@ class TestReferenceEvaluator:
 
         np.testing.assert_array_equal(got, expected)
 
+    @pytest.mark.parametrize("op", ["ScatterElements", "ScatterND"])
+    @pytest.mark.parametrize(
+        "dtype, type_name",
+        [
+            (np.float16, "float16"),
+            (np.float32, "float"),
+            (np.float64, "double"),
+            (ml_dtypes.bfloat16, "bfloat16"),
+            (np.int8, "int8"),
+            (np.int32, "int32"),
+            (np.int64, "int64"),
+        ],
+    )
+    def test_scatter_mean(self, op, dtype, type_name):
+        index_shape = "3" if op == "ScatterElements" else "3, 1"
+        model = onnx.parser.parse_model(f"""
+            <ir_version: 13, opset_import: ["" : 29]>
+            scatter ({type_name}[3] data, int64[{index_shape}] indices,
+                     {type_name}[3] updates) => ({type_name}[3] output) {{
+                output = {op}<reduction = "mean">
+                         (data, indices, updates)
+            }}
+        """)
+        onnx.checker.check_model(model, full_check=True)
+        data = np.array([-2, 8, 9], dtype=dtype)
+        indices = np.array([0, -3, 1], dtype=np.int64)
+        if op == "ScatterND":
+            indices = indices[:, None]
+        updates = np.array([-3, -3, 5], dtype=dtype)
+        expected = [-3, 6, 9] if np.issubdtype(dtype, np.integer) else [-8 / 3, 6.5, 9]
+        got = ReferenceEvaluator(model).run(
+            None, {"data": data, "indices": indices, "updates": updates}
+        )[0]
+        assert got.dtype == data.dtype
+        assert_allclose(
+            got.astype(np.float64),
+            np.array(expected, dtype=dtype).astype(np.float64),
+            rtol=1e-3,
+        )
+        np.testing.assert_array_equal(data, np.array([-2, 8, 9], dtype=dtype))
+
+    @pytest.mark.parametrize("op", ["ScatterElements", "ScatterND"])
+    @pytest.mark.parametrize(
+        "type_name, dtype", [("int64", np.int64), ("uint64", np.uint64)]
+    )
+    def test_scatter_mean_large_integer(self, op, type_name, dtype):
+        index_shape = "2, 2" if op == "ScatterElements" else "2, 1"
+        model = onnx.parser.parse_model(f"""
+            <ir_version: 13, opset_import: ["" : 29]>
+            scatter ({type_name}[2, 2] data, int64[{index_shape}] indices,
+                     {type_name}[2, 2] updates) => ({type_name}[2, 2] output) {{
+                output = {op}<reduction = "mean">
+                         (data, indices, updates)
+            }}
+        """)
+        value = np.iinfo(dtype).max
+        data = np.array([[value, value], [7, 7]], dtype=dtype)
+        indices = np.zeros(
+            (2, 2) if op == "ScatterElements" else (2, 1), dtype=np.int64
+        )
+        got = ReferenceEvaluator(model).run(
+            None,
+            {
+                "data": data,
+                "indices": indices,
+                "updates": np.full((2, 2), value, dtype=dtype),
+            },
+        )[0]
+        np.testing.assert_array_equal(got, data)
+
+    @pytest.mark.parametrize("op", ["ScatterElements", "ScatterND"])
+    def test_scatter_mean_empty(self, op):
+        index_shape = "0" if op == "ScatterElements" else "0, 1"
+        model = onnx.parser.parse_model(f"""
+            <ir_version: 13, opset_import: ["" : 29]>
+            scatter (float[3] data, int64[{index_shape}] indices,
+                     float[0] updates) => (float[3] output) {{
+                output = {op}<reduction = "mean">
+                         (data, indices, updates)
+            }}
+        """)
+        data = np.array([np.nan, np.inf, -0.0], dtype=np.float32)
+        indices = np.empty((0,) if op == "ScatterElements" else (0, 1), dtype=np.int64)
+        got = ReferenceEvaluator(model).run(
+            None,
+            {
+                "data": data,
+                "indices": indices,
+                "updates": np.empty(0, dtype=np.float32),
+            },
+        )[0]
+        np.testing.assert_array_equal(got.view(np.uint32), data.view(np.uint32))
+
+    @pytest.mark.parametrize("op", ["ScatterElements", "ScatterND"])
+    def test_scatter_mean_nan(self, op):
+        index_shape = "2" if op == "ScatterElements" else "2, 1"
+        model = onnx.parser.parse_model(f"""
+            <ir_version: 13, opset_import: ["" : 29]>
+            scatter (float[2] data, int64[{index_shape}] indices,
+                     float[2] updates) => (float[2] output) {{
+                output = {op}<reduction = "mean">
+                         (data, indices, updates)
+            }}
+        """)
+        indices = np.array([0, 0], dtype=np.int64)
+        if op == "ScatterND":
+            indices = indices[:, None]
+        got = ReferenceEvaluator(model).run(
+            None,
+            {
+                "data": np.array([np.nan, 7], dtype=np.float32),
+                "indices": indices,
+                "updates": np.array([2, 4], dtype=np.float32),
+            },
+        )[0]
+        np.testing.assert_array_equal(got, np.array([np.nan, 7], dtype=np.float32))
+
+    @pytest.mark.parametrize("op", ["ScatterElements", "ScatterND"])
+    @pytest.mark.parametrize(
+        "values, expected",
+        [
+            ([1e308, 1e308, 1e308], 1e308),
+            ([-1e308, -1e308, -1e308], -1e308),
+            ([1e308, 1e308, -1e308], 1e308 / 3),
+            ([np.finfo(np.float64).max] * 3, np.finfo(np.float64).max),
+            ([-np.finfo(np.float64).max] * 3, -np.finfo(np.float64).max),
+            (
+                [np.finfo(np.float64).max] * 2 + [-np.finfo(np.float64).max],
+                np.finfo(np.float64).max / 3,
+            ),
+            ([np.inf, 1e308, 1e308], np.inf),
+            ([np.inf, -np.inf, 1e308], np.nan),
+            ([np.nan, 1e308, 1e308], np.nan),
+        ],
+    )
+    def test_scatter_mean_float64_overflow(self, op, values, expected):
+        model = onnx.parser.parse_model(f"""
+            <ir_version: 13, opset_import: ["" : 29]>
+            scatter (double[2, 1] data, int64[2, 1] indices,
+                     double[2, 1] updates) => (double[2, 1] output) {{
+                output = {op}<reduction = "mean">(data, indices, updates)
+            }}
+        """)
+        data = np.array([[values[0]], [-0.0]], dtype=np.float64)
+        got = ReferenceEvaluator(model).run(
+            None,
+            {
+                "data": data,
+                "indices": np.array([[0], [-2]], dtype=np.int64),
+                "updates": np.array(values[1:], dtype=np.float64).reshape(2, 1),
+            },
+        )[0]
+        assert got.dtype == data.dtype
+        assert_allclose(got, np.array([[expected], [-0.0]]), equal_nan=True)
+        assert np.signbit(got[1, 0])
+        np.testing.assert_array_equal(
+            data, np.array([[values[0]], [-0.0]], dtype=np.float64)
+        )
+
+    @pytest.mark.parametrize("op", ["ScatterElements", "ScatterND"])
+    @pytest.mark.parametrize("sign", [-1, 1])
+    @pytest.mark.parametrize(
+        "values, expected",
+        [
+            ([np.finfo(np.float64).max, np.finfo(np.float64).max, -np.inf], -np.inf),
+            ([np.finfo(np.float64).max, -np.inf, -np.inf], -np.inf),
+            ([np.finfo(np.float64).max, np.inf, -np.inf], np.nan),
+            ([np.finfo(np.float64).max, np.nan, -np.inf], np.nan),
+        ],
+    )
+    def test_scatter_mean_infinity_overflow_order(self, op, sign, values, expected):
+        model = onnx.parser.parse_model(f"""
+            <ir_version: 13, opset_import: ["" : 29]>
+            scatter (double[2, 1] data, int64[2, 1] indices,
+                     double[2, 1] updates) => (double[2, 1] output) {{
+                output = {op}<reduction = "mean">(data, indices, updates)
+            }}
+        """)
+        evaluator = ReferenceEvaluator(model)
+        for order in itertools.permutations(values):
+            contributions = np.array(order, dtype=np.float64) * sign
+            got = evaluator.run(
+                None,
+                {
+                    "data": np.array([[contributions[0]], [-0.0]]),
+                    "indices": np.array([[0], [-2]], dtype=np.int64),
+                    "updates": contributions[1:].reshape(2, 1),
+                },
+            )[0]
+            assert_allclose(got, [[expected * sign], [-0.0]], equal_nan=True)
+            assert np.signbit(got[1, 0])
+            assert_allclose(
+                _mean(contributions, axes=None, keepdims=False),
+                expected * sign,
+                equal_nan=True,
+            )
+
+    def test_scatternd_mean_whole_tensor(self):
+        model = onnx.parser.parse_model("""
+            <ir_version: 13, opset_import: ["" : 29]>
+            scatter (float[2] data, int64[2, 0] indices,
+                     float[2, 2] updates) => (float[2] output) {
+                output = ScatterND<reduction = "mean">
+                         (data, indices, updates)
+            }
+        """)
+        onnx.checker.check_model(model, full_check=True)
+        got = ReferenceEvaluator(model).run(
+            None,
+            {
+                "data": np.array([1, 2], dtype=np.float32),
+                "indices": np.empty((2, 0), dtype=np.int64),
+                "updates": np.array([[3, 4], [5, 6]], dtype=np.float32),
+            },
+        )[0]
+        np.testing.assert_array_equal(got, np.array([3, 4], dtype=np.float32))
+
+    @pytest.mark.parametrize("op", ["ScatterElements", "ScatterND"])
+    def test_scatter_none_string(self, op):
+        index_shape = "1" if op == "ScatterElements" else "1, 1"
+        model = onnx.parser.parse_model(f"""
+            <ir_version: 13, opset_import: ["" : 29]>
+            scatter (string[2] data, int64[{index_shape}] indices,
+                     string[1] updates) => (string[2] output) {{
+                output = {op}(data, indices, updates)
+            }}
+        """)
+        onnx.checker.check_model(model, full_check=True)
+        indices = np.array([0] if op == "ScatterElements" else [[0]], dtype=np.int64)
+        got = ReferenceEvaluator(model).run(
+            None,
+            {
+                "data": np.array(["old", "untouched"]),
+                "indices": indices,
+                "updates": np.array(["new"]),
+            },
+        )[0]
+        np.testing.assert_array_equal(got, np.array(["new", "untouched"]))
+
+    @skip_if_no_torch
+    @pytest.mark.parametrize("op", ["ScatterElements", "ScatterND"])
+    @pytest.mark.parametrize("axis", [0, 1, -1])
+    @pytest.mark.parametrize("dtype", [np.float32, np.int64])
+    @pytest.mark.parametrize(
+        "reduction, torch_reduction",
+        [
+            ("add", "sum"),
+            ("mul", "prod"),
+            ("min", "amin"),
+            ("max", "amax"),
+            ("mean", "mean"),
+        ],
+    )
+    def test_scatter_reduction_pytorch(
+        self, op, axis, dtype, reduction, torch_reduction
+    ):
+        import torch  # noqa: PLC0415
+
+        rng = np.random.default_rng(0)
+        data = rng.integers(-3, 4, size=(3, 4)).astype(dtype)
+        update_shape = (5, 4) if axis == 0 else (3, 5)
+        indices = rng.integers(0, data.shape[axis], size=update_shape, dtype=np.int64)
+        updates = rng.integers(-3, 4, size=update_shape).astype(dtype)
+        expected = (
+            torch.from_numpy(data)
+            .scatter_reduce(
+                axis,
+                torch.from_numpy(indices),
+                torch.from_numpy(updates),
+                torch_reduction,
+            )
+            .numpy()
+        )
+        if op == "ScatterND":
+            coordinates = np.moveaxis(np.indices(update_shape), 0, -1)
+            coordinates[..., axis] = indices
+            indices = coordinates
+        type_name = "float" if dtype == np.float32 else "int64"
+        index_shape = ", ".join(map(str, indices.shape))
+        updates_shape = ", ".join(map(str, updates.shape))
+        axis_attribute = f", axis = {axis}" if op == "ScatterElements" else ""
+        model = onnx.parser.parse_model(f"""
+            <ir_version: 13, opset_import: ["" : 29]>
+            scatter ({type_name}[3, 4] data, int64[{index_shape}] indices,
+                     {type_name}[{updates_shape}] updates) => ({type_name}[3, 4] output) {{
+                output = {op}<reduction = "{reduction}"{axis_attribute}>
+                         (data, indices, updates)
+            }}
+        """)
+        onnx.checker.check_model(model, full_check=True)
+        got = ReferenceEvaluator(model).run(
+            None, {"data": data, "indices": indices, "updates": updates}
+        )[0]
+        assert_allclose(got, expected, rtol=1e-6, atol=1e-6)
+
+    @pytest.mark.parametrize(
+        "reduction, expected",
+        [
+            ("none", [3, 4]),
+            ("add", [4, 6]),
+            ("mul", [3, 8]),
+            ("max", [3, 4]),
+            ("min", [1, 2]),
+        ],
+    )
+    def test_scatternd_whole_tensor_opset18(self, reduction, expected):
+        model = make_model(
+            make_graph(
+                [
+                    make_node(
+                        "ScatterND",
+                        ["data", "indices", "updates"],
+                        ["out"],
+                        reduction=reduction,
+                    )
+                ],
+                "scatter",
+                [
+                    make_tensor_value_info("data", TensorProto.FLOAT, [2]),
+                    make_tensor_value_info("indices", TensorProto.INT64, [1, 0]),
+                    make_tensor_value_info("updates", TensorProto.FLOAT, [1, 2]),
+                ],
+                [make_tensor_value_info("out", TensorProto.FLOAT, [2])],
+            ),
+            opset_imports=[make_opsetid("", 18)],
+        )
+        check_model(model, full_check=True)
+        got = ReferenceEvaluator(model).run(
+            None,
+            {
+                "data": np.array([1, 2], dtype=np.float32),
+                "indices": np.empty((1, 0), dtype=np.int64),
+                "updates": np.array([[3, 4]], dtype=np.float32),
+            },
+        )[0]
+        assert_array_equal(got, expected)
+
+    @pytest.mark.parametrize(
+        "dtype, value, expected_traversals",
+        [
+            (np.float64, 2, 1),
+            (np.int64, 2, 1),
+            (np.float64, np.finfo(np.float64).max, 2),
+        ],
+    )
+    def test_scatter_mean_streaming(self, dtype, value, expected_traversals):
+        traversals = 0
+
+        def update_pairs():
+            nonlocal traversals
+            traversals += 1
+            references = []
+            for _ in range(4):
+                if len(references) > 1 and expected_traversals == 1:
+                    assert references[-2]() is None
+                update = np.array(value, dtype=dtype)
+                references.append(weakref.ref(update))
+                yield (0,), update
+
+        data = np.array([value, 7], dtype=dtype)
+        assert_array_equal(scatter_mean(data, update_pairs), data)
+        assert traversals == expected_traversals
+
     def test_scatter_elements(self):
         X = make_tensor_value_info("X", TensorProto.FLOAT, [None, None])
         Ind = make_tensor_value_info("I", TensorProto.INT64, [None, None])
@@ -3598,6 +3988,18 @@ class TestReferenceEvaluator:
             expected = np.mean(feeds["X"], axis=1, dtype=np.float32)
             np.testing.assert_array_equal(expected[0], np.float32(5.0e-11))
             np.testing.assert_array_equal(got, expected)
+
+    @pytest.mark.parametrize("sign", [1, -1])
+    @pytest.mark.parametrize("keepdims", [False, True])
+    def test_reduce_mean_finite_float64_limit(self, sign, keepdims):
+        maximum = float(np.finfo(np.float64).max)
+        data = np.full((2, 3), sign * maximum)
+        data[1, 2] *= -1
+        got = _mean(data, axes=(1,), keepdims=keepdims)
+        expected = np.array([sign * maximum, sign * maximum / 3])
+        if keepdims:
+            expected = expected[:, None]
+        np.testing.assert_array_equal(got, expected)
 
     def test_reduce_mean_repairs_only_overflowed_finite_slices(self):
         for opset in (17, 18):
@@ -5267,20 +5669,22 @@ class TestReferenceEvaluator:
         assert_allclose(got, expected)
 
     @pytest.mark.parametrize(
-        ("auto_pad", "expected"),
+        ("auto_pad", "dilation", "expected"),
         [
-            ("SAME_UPPER", [[[3.0, 5.0]], [[15.0, 13.0]]]),
-            ("SAME_LOWER", [[[1.0, 6.0]], [[9.0, 18.0]]]),
-            ("VALID", [[[3.0]], [[15.0]]]),
+            ("SAME_UPPER", 1, [[[3.0, 5.0]], [[15.0, 13.0]]]),
+            ("SAME_LOWER", 1, [[[1.0, 6.0]], [[9.0, 18.0]]]),
+            ("VALID", 1, [[[3.0]], [[15.0]]]),
+            ("SAME_UPPER", 2, [[[4.0, 4.0]], [[12.0, 12.0]]]),
+            ("SAME_LOWER", 2, [[[2.0, 2.0]], [[10.0, 10.0]]]),
         ],
     )
-    def test_conv_im2col_auto_pad_modes(self, auto_pad, expected):
+    def test_conv_im2col_auto_pad_modes(self, auto_pad, dilation, expected):
         got = _conv_implementation(
             X=np.arange(8, dtype=np.float32).reshape((2, 1, 4)),
             W=np.ones((1, 1, 3), dtype=np.float32),
             B=None,
             auto_pad=auto_pad,
-            dilations=[1],
+            dilations=[dilation],
             group=1,
             kernel_shape=[3],
             pads=None,
@@ -8232,6 +8636,105 @@ class TestReferenceEvaluator:
         assert_allclose(loss, np.array([104.0], dtype=np.float32), rtol=0, atol=0)
         assert_allclose(log_prob, x, rtol=0, atol=0)
 
+    @pytest.mark.parametrize(
+        "dtype,margin", [(np.float16, 10.0), (np.float32, 18.0), (np.float64, 40.0)]
+    )
+    @pytest.mark.parametrize("axis", [0, 1, -1])
+    def test_logsoftmax_preserves_small_log_probability(self, dtype, margin, axis):
+        # Move the winning class between entries to exercise argmax selection.
+        x = np.full((3, 3), -margin, dtype=dtype)
+        np.fill_diagonal(x, 0)
+        x = np.stack([x, x], axis=0)
+        normalizer = np.log1p(2 * np.exp(-margin))
+        expected = (x.astype(np.float64) - normalizer).astype(dtype)
+        x = np.moveaxis(x, -1, axis)
+        expected = np.moveaxis(expected, -1, axis)
+        original = x.copy()
+        node = make_node("LogSoftmax", ["X"], ["Y"], axis=axis)
+
+        (got,) = ReferenceEvaluator(node).run(None, {"X": x})
+
+        assert got.dtype == dtype
+        assert (got < 0).all()
+        assert_array_equal(x, original)
+        assert_allclose(got, expected, rtol=4 * np.finfo(dtype).eps, atol=0)
+
+    def test_logsoftmax_tied_maxima_and_masked_classes(self):
+        x = np.array([[0, 0, -200], [4, 4, 4], [0, -np.inf, -np.inf]], dtype=np.float64)
+        expected = np.array(
+            [
+                [-np.log(2), -np.log(2), -200 - np.log(2)],
+                [-np.log(3), -np.log(3), -np.log(3)],
+                [0, -np.inf, -np.inf],
+            ],
+            dtype=np.float64,
+        )
+        node = make_node("LogSoftmax", ["X"], ["Y"], axis=-1)
+
+        (got,) = ReferenceEvaluator(node).run(None, {"X": x})
+
+        assert_allclose(got, expected, rtol=1e-15, atol=0)
+
+    @pytest.mark.parametrize("shape", [(2, 1, 3), (0, 3)])
+    def test_logsoftmax_single_class_and_empty_input(self, shape):
+        x = np.zeros(shape, dtype=np.float32)
+        node = make_node("LogSoftmax", ["X"], ["Y"], axis=1)
+
+        (got,) = ReferenceEvaluator(node).run(None, {"X": x})
+
+        assert_array_equal(got, x)
+
+    @pytest.mark.parametrize(
+        "dtype,margin", [(np.float16, 10.0), (np.float32, 18.0), (np.float64, 40.0)]
+    )
+    @pytest.mark.parametrize("reduction", ["none", "sum", "mean"])
+    @pytest.mark.parametrize("weighted", [False, True])
+    @pytest.mark.parametrize("spatial", [False, True])
+    def test_softmax_cross_entropy_preserves_small_loss(
+        self, dtype, margin, reduction, weighted, spatial
+    ):
+        x = np.full((3, 3), -margin, dtype=dtype)
+        np.fill_diagonal(x, 0)
+        labels = np.array([0, 1, -1], dtype=np.int64)
+        normalizer = np.log1p(2 * np.exp(-margin))
+        expected_log_prob = (x.astype(np.float64) - normalizer).astype(dtype)
+        expected_loss = np.array([normalizer, normalizer, 0], dtype=dtype)
+        weights = np.array([1, 2, 3], dtype=dtype)
+        if weighted:
+            expected_loss *= np.array([1, 2, 0], dtype=dtype)
+        if spatial:
+            x = np.repeat(x[..., None, None], 2, axis=-1)
+            labels = np.repeat(labels[..., None, None], 2, axis=-1)
+            expected_log_prob = np.repeat(
+                expected_log_prob[..., None, None], 2, axis=-1
+            )
+            expected_loss = np.repeat(expected_loss[..., None, None], 2, axis=-1)
+        if reduction == "sum":
+            expected_loss = expected_loss.sum()
+        elif reduction == "mean":
+            denominator = (3 if weighted else 2) * (2 if spatial else 1)
+            expected_loss = (expected_loss.sum() / denominator).astype(dtype)
+        feeds = {"X": x, "labels": labels}
+        if weighted:
+            feeds["weights"] = weights
+        node = make_node(
+            "SoftmaxCrossEntropyLoss",
+            list(feeds),
+            ["loss", "log_prob"],
+            reduction=reduction,
+            ignore_index=-1,
+        )
+
+        loss, log_prob = ReferenceEvaluator(node).run(None, feeds)
+
+        assert loss.dtype == dtype
+        assert log_prob.dtype == dtype
+        assert np.any(loss > 0)
+        assert_allclose(loss, expected_loss, rtol=4 * np.finfo(dtype).eps, atol=0)
+        assert_allclose(
+            log_prob, expected_log_prob, rtol=4 * np.finfo(dtype).eps, atol=0
+        )
+
     def test_softmax_cross_entropy_weighted_mean_preserves_float16_dtype(self):
         x_info = make_tensor_value_info("X", TensorProto.FLOAT16, [1, 2])
         label_info = make_tensor_value_info("label", TensorProto.INT64, [1])
@@ -8445,6 +8948,298 @@ class TestReferenceEvaluator:
 
         # Each of the 3 iterations adds `bias` to the running state.
         assert_allclose(final, np.array([30, 300], dtype=np.float32))
+
+    @pytest.mark.parametrize(
+        ("dilation", "kernel", "length"),
+        [
+            (None, 3, 7),
+            (1, 3, 7),
+            (2, 3, 7),
+            (3, 4, 1),
+            (2, 3, 0),
+            (3, 1, 0),
+            (3, 1, 7),
+        ],
+    )
+    @pytest.mark.parametrize("dtype", ["float", "float16", "bfloat16"])
+    @pytest.mark.parametrize("activation", [None, "none", "silu", "swish"])
+    @pytest.mark.parametrize("with_state", [False, True])
+    @pytest.mark.parametrize("with_bias", [False, True])
+    def test_causal_conv_with_state_dilated_function(
+        self, dilation, kernel, length, dtype, activation, with_state, with_bias
+    ):
+        effective_dilation = 1 if dilation is None else dilation
+        history = (kernel - 1) * effective_dilation
+        attributes = []
+        if dilation is not None:
+            attributes.append(f"dilation={dilation}")
+        if activation is not None:
+            attributes.append(f'activation="{activation}"')
+        attribute_text = f"<{', '.join(attributes)}>" if attributes else ""
+        bias_arg = ", bias" if with_bias else ', ""'
+        past_arg = ", past" if with_state else ""
+        model = onnx.parser.parse_model(
+            f"""
+            <ir_version: 10, opset_import: ["" : 29]>
+            g ({dtype}[2,C,L] input, {dtype}[3,1,{kernel}] weight,
+               {dtype}[3] bias, {dtype}[2,3,{history}] past)
+                => ({dtype}[2,3,L] output, {dtype}[2,3,{history}] present)
+            {{
+                output, present = CausalConvWithState {attribute_text}
+                    (input, weight{bias_arg}{past_arg})
+            }}
+            """
+        )
+        check_model(model, full_check=True)
+        rng = np.random.default_rng(42)
+        np_dtype = {
+            "float": np.float32,
+            "float16": np.float16,
+            "bfloat16": ml_dtypes.bfloat16,
+        }[dtype]
+        feeds = {
+            "input": rng.standard_normal((2, 3, length)).astype(np_dtype),
+            "weight": rng.standard_normal((3, 1, kernel)).astype(np_dtype),
+            "bias": rng.standard_normal(3).astype(np_dtype),
+            "past": rng.standard_normal((2, 3, history)).astype(np_dtype),
+        }
+        expected, expected_state = _causal_conv_with_state_from_spec(
+            feeds["input"],
+            feeds["weight"],
+            feeds["bias"] if with_bias else None,
+            feeds["past"] if with_state else None,
+            dilation=effective_dilation,
+            activation="none" if activation is None else activation,
+        )
+
+        class CausalConvWithState(OpRunExpand):
+            op_domain = ""
+
+        for new_ops in (None, [CausalConvWithState]):
+            output, state = ReferenceEvaluator(model, new_ops=new_ops).run(None, feeds)
+            assert output.dtype == np_dtype
+            assert output.shape == expected.shape
+            tolerance = {"float": 1e-6, "float16": 5e-3, "bfloat16": 4e-2}[dtype]
+            assert_allclose(
+                output.astype(np.float32),
+                expected.astype(np.float32),
+                rtol=tolerance,
+                atol=tolerance,
+            )
+            assert_array_equal(state, expected_state)
+
+    @pytest.mark.parametrize("expand", [False, True])
+    @pytest.mark.parametrize("nonfinite", [np.inf, -np.inf, np.nan])
+    @pytest.mark.parametrize(
+        ("input_values", "past_values", "weight_values", "expected_values"),
+        [
+            ([1, None, 2], None, [1, 1], [1, None, 3]),
+            ([1, 2, 3], [1, None], [1, 1], [2, None, 4]),
+            ([1, 2, 3], [None, 1], [1, 1], [None, 3, 4]),
+            ([1, 2, 3], [None, 1], [0, 1], [np.nan, 2, 3]),
+        ],
+    )
+    def test_causal_conv_with_state_dilated_nonfinite(
+        self,
+        expand,
+        nonfinite,
+        input_values,
+        past_values,
+        weight_values,
+        expected_values,
+    ):
+        def tensor(values):
+            return np.array(
+                [nonfinite if v is None else v for v in values], dtype=np.float32
+            ).reshape(1, 1, -1)
+
+        def model(with_state):
+            past_arg = ', "", past' if with_state else ""
+            return onnx.parser.parse_model(
+                f"""
+                <ir_version: 10, opset_import: ["" : 29]>
+                g (float[1,1,L] input, float[1,1,2] weight, float[1,1,2] past)
+                    => (float[1,1,L] output, float[1,1,2] present)
+                {{
+                    output, present = CausalConvWithState <dilation=2>
+                        (input, weight{past_arg})
+                }}
+                """
+            )
+
+        feeds = {
+            "input": tensor(input_values),
+            "weight": tensor(weight_values),
+            "past": tensor([0, 0] if past_values is None else past_values),
+        }
+        expected = tensor(expected_values)
+        expected_state = feeds["input"][:, :, -2:]
+
+        class CausalConvWithState(OpRunExpand):
+            op_domain = ""
+
+        new_ops = [CausalConvWithState] if expand else None
+        evaluator = ReferenceEvaluator(model(past_values is not None), new_ops=new_ops)
+        # Zero-valued actual taps still multiply nonfinite samples.
+        with np.errstate(invalid="ignore"):
+            output, state = evaluator.run(None, feeds)
+        assert_array_equal(output, expected)
+        assert_array_equal(state, expected_state)
+
+        streaming = ReferenceEvaluator(model(True), new_ops=new_ops)
+        state = feeds["past"]
+        chunks = []
+        offset = 0
+        for size in (0, 1, 1, 0, 1, 0):
+            with np.errstate(invalid="ignore"):
+                chunk, state = streaming.run(
+                    None,
+                    {
+                        **feeds,
+                        "input": feeds["input"][:, :, offset : offset + size],
+                        "past": state,
+                    },
+                )
+            chunks.append(chunk)
+            offset += size
+        assert_array_equal(np.concatenate(chunks, axis=2), expected)
+        assert_array_equal(state, expected_state)
+
+    @pytest.mark.parametrize("dilation", [1, 2, 3])
+    @pytest.mark.parametrize("kernel", [1, 4])
+    @pytest.mark.parametrize("with_state", [False, True])
+    @pytest.mark.parametrize("activation", ["none", "silu"])
+    def test_causal_conv_with_state_dilated_streaming(
+        self, dilation, kernel, with_state, activation
+    ):
+        history = (kernel - 1) * dilation
+        model = onnx.parser.parse_model(
+            f"""
+            <ir_version: 10, opset_import: ["" : 29]>
+            g (float[1,2,L] input, float[2,1,{kernel}] weight, float[2] bias,
+               float[1,2,{history}] past)
+                => (float[1,2,L] output, float[1,2,{history}] present)
+            {{
+                output, present = CausalConvWithState <dilation={dilation}, activation="{activation}">
+                    (input, weight, bias, past)
+            }}
+            """
+        )
+        rng = np.random.default_rng(0)
+        feeds = {
+            "input": rng.standard_normal((1, 2, 7)).astype(np.float32),
+            "weight": rng.standard_normal((2, 1, kernel)).astype(np.float32),
+            "bias": rng.standard_normal(2).astype(np.float32),
+            "past": rng.standard_normal((1, 2, history)).astype(np.float32),
+        }
+        initial = feeds["past"] if with_state else np.zeros_like(feeds["past"])
+        full_output, full_state = _causal_conv_with_state_from_spec(
+            feeds["input"],
+            feeds["weight"],
+            feeds["bias"],
+            initial,
+            dilation=dilation,
+            activation=activation,
+        )
+
+        class CausalConvWithState(OpRunExpand):
+            op_domain = ""
+
+        for new_ops in (None, [CausalConvWithState]):
+            evaluator = ReferenceEvaluator(model, new_ops=new_ops)
+            state = initial
+            expected_state = initial
+            outputs = []
+            offset = 0
+            for size in (0, 1, 2, 0, 3, 1, 0):
+                expected_chunk, expected_state = _causal_conv_with_state_from_spec(
+                    feeds["input"][:, :, offset : offset + size],
+                    feeds["weight"],
+                    feeds["bias"],
+                    expected_state,
+                    dilation=dilation,
+                    activation=activation,
+                )
+                chunk, state = evaluator.run(
+                    None,
+                    {
+                        **feeds,
+                        "input": feeds["input"][:, :, offset : offset + size],
+                        "past": state,
+                    },
+                )
+                assert_allclose(chunk, expected_chunk, rtol=1e-5, atol=1e-6)
+                assert_array_equal(state, expected_state)
+                outputs.append(chunk)
+                offset += size
+            assert_allclose(
+                np.concatenate(outputs, axis=2), full_output, rtol=1e-5, atol=1e-6
+            )
+            assert_array_equal(state, full_state)
+
+    @pytest.mark.parametrize("version", [27, 28, 29])
+    def test_causal_conv_with_state_reference_version(self, version):
+        model = onnx.parser.parse_model(
+            f"""
+            <ir_version: 10, opset_import: ["" : {version}]>
+            g (float[1,1,2] input, float[1,1,2] weight)
+                => (float[1,1,2] output, float[1,1,1] present)
+            {{
+                output, present = CausalConvWithState (input, weight)
+            }}
+            """
+        )
+        ref = ReferenceEvaluator(model)
+        assert (
+            ref.rt_nodes_[0].__class__.__name__
+            == f"CausalConvWithState_{27 if version < 29 else 29}"
+        )
+        output, state = ref.run(
+            None,
+            {
+                "input": np.array([[[1, 2]]], dtype=np.float32),
+                "weight": np.array([[[3, 4]]], dtype=np.float32),
+            },
+        )
+        assert_array_equal(output, [[[4, 11]]])
+        assert_array_equal(state, [[[2]]])
+
+    @pytest.mark.parametrize(
+        ("dilation", "activation", "name", "shape", "message"),
+        [
+            (0, "none", "input", (1, 2, 1), "dilation"),
+            (2, "relu", "input", (1, 2, 1), "activation"),
+            (2, "none", "input", (1, 2), "input must be rank 3"),
+            (2, "none", "weight", (2, 1, 0), "weight must have shape"),
+            (2, "none", "weight", (2, 2, 3), "weight must have shape"),
+            (2, "none", "bias", (1,), "bias must have shape"),
+            (2, "none", "past", (1, 2, 2), "past_state must have shape"),
+            (2**63 - 1, "none", "weight", (2, 1, 2), "Effective kernel size"),
+        ],
+    )
+    def test_causal_conv_with_state_invalid_reference(
+        self, dilation, activation, name, shape, message
+    ):
+        model = onnx.parser.parse_model(
+            f"""
+            <ir_version: 10, opset_import: ["" : 29]>
+            g (float[1,2,1] input, float[2,1,3] weight, float[2] bias, float[1,2,4] past)
+                => (float[1,2,1] output, float[1,2,4] present)
+            {{
+                output, present = CausalConvWithState <dilation={dilation}, activation="{activation}">
+                    (input, weight, bias, past)
+            }}
+            """
+        )
+        feeds = {
+            "input": np.ones((1, 2, 1), dtype=np.float32),
+            "weight": np.ones((2, 1, 3), dtype=np.float32),
+            "bias": np.ones(2, dtype=np.float32),
+            "past": np.ones((1, 2, 4), dtype=np.float32),
+        }
+        feeds[name] = np.ones(shape, dtype=np.float32)
+        with pytest.raises(ValueError, match=message):
+            ReferenceEvaluator(model).run(None, feeds)
 
     def test_causal_conv_with_state_silu_fp16_function_body(self):
         # Regression test: the CausalConvWithState function body must upcast

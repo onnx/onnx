@@ -1519,12 +1519,16 @@ class OpSet_Onnx_ver28 {
 };
 
 // Iterate over schema from ai.onnx version 29
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 29, Expm1);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 29, DequantizePacked);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 29, MeanVarianceNormalization);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 29, Gemm);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 29, GroupedMatMul);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 29, CausalConvWithState);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 29, LogCumSumExp);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 29, Log1p);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 29, GatherND);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 29, ScatterElements);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 29, ScatterND);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 29, Pack);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 29, Unpack);
@@ -1532,12 +1536,16 @@ class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 29, Unpack);
 class OpSet_Onnx_ver29 {
  public:
   static void ForEachSchema(const std::function<void(OpSchema&&)>& fn) {
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 29, Expm1)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 29, DequantizePacked)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 29, MeanVarianceNormalization)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 29, Gemm)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 29, GroupedMatMul)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 29, CausalConvWithState)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 29, LogCumSumExp)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 29, Log1p)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 29, GatherND)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 29, ScatterElements)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 29, ScatterND)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 29, Pack)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 29, Unpack)>());

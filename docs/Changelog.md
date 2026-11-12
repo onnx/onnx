@@ -34446,6 +34446,227 @@ This version of the operator has been available since version 28 of the default 
 </dl>
 
 ## Version 29 of the default ONNX operator set
+### <a name="CausalConvWithState-29"></a>**CausalConvWithState-29**</a>
+
+  Stateful causal one-dimensional depthwise convolution.
+
+  `input` has shape `(B, C, L)`, `weight` has shape `(C, 1, K)`, and optional
+  `bias` has shape `(C)`: `B` is batch size, `C` is channel count, `L` is input
+  length, and `K` is kernel size. Let `d = dilation` (default 1) and
+  `H = (K - 1) * d`. Both `K` and `d` must be at least 1, and the effective
+  kernel size `H + 1` must fit in a signed 64-bit integer.
+
+  Both state tensors have shape `(B, C, H)` and store consecutive raw samples
+  in chronological order. Form `P` by concatenating `past_state` and `input`
+  along axis 2; use a zero tensor of shape `(B, C, H)` when `past_state` is absent.
+  For each batch `b`, channel `c`, and position `0 <= t < L`, compute
+  `z[b,c,t] = sum_{j=0}^{K-1} weight[c,0,j] * P[b,c,t+j*d] + bias[c]`,
+  with omitted bias treated as zero. The output has shape `(B, C, L)` and equals
+  `z` for activation 'none' (the default), or `z / (1 + exp(-z))` elementwise
+  for 'silu' and its alias 'swish'.
+
+  The next state is `present_state = P[:, :, L:L+H]`, independent of activation.
+  When `L < H`, it retains the required past samples or initial zeros.
+  Passing this state to the next call preserves convolution across chunk boundaries.
+  For `K = 1`, state has shape `(B, C, 0)`. For `L = 0`, output has shape
+  `(B, C, 0)` and state is unchanged (all zeros if `past_state` is absent).
+
+#### Version
+
+This version of the operator has been available since version 29 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>activation</tt> : string (default is none)</dt>
+<dd>Fused activation function. One of: 'silu', 'swish', 'none'. Default is 'none'.</dd>
+<dt><tt>dilation</tt> : int (default is 1)</dt>
+<dd>Spacing between kernel samples. Must be >= 1.</dd>
+</dl>
+
+#### Inputs (2 - 4)
+
+<dl>
+<dt><tt>input</tt> (differentiable) : T</dt>
+<dd>Input tensor with shape (batch_size, channels, length). Channels-first layout.</dd>
+<dt><tt>weight</tt> (differentiable) : T</dt>
+<dd>Depthwise convolution kernel with shape (channels, 1, k), where k must be >= 1. Each channel is convolved independently with its corresponding kernel.</dd>
+<dt><tt>bias</tt> (optional, differentiable) : T</dt>
+<dd>Optional per-channel bias with shape (channels).</dd>
+<dt><tt>past_state</tt> (optional, non-differentiable) : T</dt>
+<dd>Raw chronological history with shape (batch_size, channels, (k - 1) * dilation). If not provided, history is zero.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> (differentiable) : T</dt>
+<dd>Convolution output with same shape as input.</dd>
+<dt><tt>present_state</tt> (non-differentiable) : T</dt>
+<dd>The last (k - 1) * dilation raw samples of the concatenated history and input, with shape (batch_size, channels, (k - 1) * dilation).</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float), tensor(float16), tensor(bfloat16)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
+### <a name="DequantizePacked-29"></a>**DequantizePacked-29**</a>
+
+  Dequantizes the packed payload of one quantized tensor.
+  `x` is a one-dimensional UINT8 tensor containing exactly the tensor's bytes.
+  All multibyte fields are little-endian.
+
+  `format` selects the quantization format using an ONNX-defined, case-sensitive
+  string identifier. The `gguf:` prefix identifies the existing GGML/GGUF layouts.
+  Only the following fixed identifiers are supported; they accept no parameters:
+
+  | Identifier | Format | Elements | Bytes |
+  |---|---|---|---|
+  | gguf:q4_0 | Q4_0 | 32 | 18 |
+  | gguf:q4_1 | Q4_1 | 32 | 20 |
+  | gguf:q5_0 | Q5_0 | 32 | 22 |
+  | gguf:q5_1 | Q5_1 | 32 | 24 |
+  | gguf:q8_0 | Q8_0 | 32 | 34 |
+  | gguf:q8_1 | Q8_1 | 32 | 36 |
+  | gguf:q2_k | Q2_K | 256 | 84 |
+  | gguf:q3_k | Q3_K | 256 | 110 |
+  | gguf:q4_k | Q4_K | 256 | 144 |
+  | gguf:q5_k | Q5_K | 256 | 176 |
+  | gguf:q6_k | Q6_K | 256 | 210 |
+  | gguf:q8_k | Q8_K | 256 | 292 |
+  | gguf:iq2_xxs | IQ2_XXS | 256 | 66 |
+  | gguf:iq2_xs | IQ2_XS | 256 | 74 |
+  | gguf:iq3_xxs | IQ3_XXS | 256 | 98 |
+  | gguf:iq1_s | IQ1_S | 256 | 50 |
+  | gguf:iq4_nl | IQ4_NL | 32 | 18 |
+  | gguf:iq3_s | IQ3_S | 256 | 110 |
+  | gguf:iq2_s | IQ2_S | 256 | 82 |
+  | gguf:iq4_xs | IQ4_XS | 256 | 136 |
+  | gguf:iq1_m | IQ1_M | 256 | 56 |
+  | gguf:tq1_0 | TQ1_0 | 256 | 54 |
+  | gguf:tq2_0 | TQ2_0 | 256 | 66 |
+  | gguf:mxfp4 | MXFP4 | 32 | 17 |
+  | gguf:nvfp4 | NVFP4 | 64 | 36 |
+  | gguf:q1_0 | Q1_0 | 128 | 18 |
+  | gguf:q2_0 | Q2_0 | 64 | 18 |
+
+  The byte layouts, per-format decoding algorithms, and complete IQ codebooks
+  are defined in the in-tree
+  [DequantizePacked decoding specification](DequantizePacked.md).
+  The [online specification](https://github.com/onnx/onnx/blob/19b091202765d5d444acd9d9c25a0b81eef474b5/docs/DequantizePacked.md)
+  is also accessible from installed schema documentation.
+
+  `shape` gives the logical output dimensions in ONNX (row-major) order.
+  For a GGUF descriptor `[ne0, ne1, ...]`, use `shape=[..., ne1, ne0]`.
+  Decoding preserves the flattened element order.
+  Rank must be at least one. Dimensions are nonnegative literal sizes;
+  a zero dimension produces an empty tensor. The last dimension must be a
+  multiple of the format's elements per block, even for an empty tensor.
+  If B is elements per block and S is bytes per block, the input length must be
+  `product(shape[:-1]) * (shape[-1] / B) * S`.
+
+  Blocks are decoded in input order to FLOAT using the specified
+  arithmetic and codebooks. The concatenated values are reshaped to `shape`
+  and converted once to `output_dtype`. Decoding arithmetic uses FLOAT
+  precision for all output types. FLOAT16 and BFLOAT16 conversion uses
+  round-to-nearest, ties-to-even, as in Cast.
+
+  For example, a Q4_0 block is a little-endian FLOAT16 scale `d` followed
+  by 16 bytes `q`. It produces `y[j]=d*((q[j]&15)-8)` and
+  `y[j+16]=d*((q[j]>>4)-8)` for j=0,...,15. Thus 36 bytes containing two
+  blocks can be decoded with `format="gguf:q4_0", shape=[2,32]`.
+
+#### Version
+
+This version of the operator has been available since version 29 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>format</tt> : string (required)</dt>
+<dd>ONNX-defined, case-sensitive fixed quantization format identifier.</dd>
+<dt><tt>output_dtype</tt> : int (default is 1)</dt>
+<dd>ONNX TensorProto data type of the output: FLOAT, FLOAT16, BFLOAT16, or DOUBLE.</dd>
+<dt><tt>shape</tt> : list of ints (required)</dt>
+<dd>Logical output dimensions in ONNX order; rank at least one.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>x</tt> : tensor(uint8)</dt>
+<dd>Consecutive quantization blocks with little-endian fields.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>y</tt> : T</dt>
+<dd>Dequantized tensor with the specified shape and output_dtype.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float), tensor(float16), tensor(bfloat16), tensor(double)</dt>
+<dd>Floating-point output.</dd>
+</dl>
+
+### <a name="Expm1-29"></a>**Expm1-29**</a>
+
+  Computes `exp(x) - 1` element-wise, where `exp` is the exponential to base `e`.
+  The input may have any shape, including a scalar or an empty tensor. The output
+  has the same shape and element type as the input.
+
+  For finite nonzero `x`, the output is a floating-point approximation of the
+  real-valued function `exp(x) - 1` at the exact value represented by `x`.
+  The computation must preserve nonzero results representable in the output type
+  when an intermediate floating-point `exp(x)` would round to `1`. For example,
+  a FLOAT input `1e-8` produces a result approximately equal to `1e-8`, rather
+  than zero.
+
+  Special values are defined element-wise as follows:
+
+  | Input `x` | Output `y` |
+  | --- | --- |
+  | Positive zero | Positive zero |
+  | Negative zero | Negative zero |
+  | Negative infinity | `-1` |
+  | Positive infinity | Positive infinity |
+  | NaN | NaN |
+
+  The sign and payload of an output NaN are unspecified. Finite positive inputs
+  whose results overflow the output type produce positive infinity.
+
+
+#### Version
+
+This version of the operator has been available since version 29 of the default ONNX operator set.
+
+#### Inputs
+
+<dl>
+<dt><tt>input</tt> (differentiable) : T</dt>
+<dd>Input tensor</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> (differentiable) : T</dt>
+<dd>The exponential of the input minus one, computed element-wise</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(bfloat16), tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
 ### <a name="GatherND-29"></a>**GatherND-29**</a>
 
   Given `data` tensor of rank `r` >= 1, `indices` tensor of rank `q` >= 1, and `batch_dims` integer `b`, this operator gathers
@@ -34952,80 +35173,136 @@ This version of the operator has been available since version 29 of the default 
 <dd>Unsigned storage word tensors.</dd>
 </dl>
 
+### <a name="ScatterElements-29"></a>**ScatterElements-29**</a>
+
+  ScatterElements takes three inputs `data`, `indices`, and `updates` of the same
+  rank r >= 1. `indices` and `updates` must have the same shape; their sizes must
+  not exceed the sizes of `data` in dimensions other than `axis`.
+  `data` and `updates` must have the same element type.
+  The output has the same shape and element type as `data`.
+
+  For each entry in `updates`, the target coordinate is the entry's coordinate
+  with the coordinate along `axis` replaced by the corresponding value in `indices`.
+  For an axis of size s, index values must be in [-s, s-1].
+  A negative index i identifies the same element as i + s.
+
+  When `reduction` is "none", each update replaces its target element. Multiple
+  updates must not address the same output element.
+  For other reductions, group all updates that address the same output element.
+  Also include the original `data` value exactly once in that group.
+  Elements not addressed by any update retain their original `data` values.
+  "add", "mul", "max", and "min" compute the sum, product, maximum,
+  and minimum of each group, respectively.
+
+  For "mean", consider an output element addressed by N >= 1 updates.
+  Let x be its original `data` value and u_1, ..., u_N be those update values.
+  Its output value is:
+  ```
+  output = (x + u_1 + ... + u_N) / (N + 1)
+  ```
+  The "mean" reduction supports integer and floating-point tensors, but not
+  boolean, string, or complex tensors. Integer results are rounded toward
+  negative infinity. Floating-point results are converted to the input element
+  type after division.
+
+  A floating-point mean is NaN if x, u_1, ..., u_N contain a NaN or infinities of
+  both signs. Otherwise, if any of these values is infinite, the mean is that infinity.
+
+  Example:
+  ```
+  data = [1.0, 2.0, 3.0, 4.0]
+  indices = [0, 1, 0, 1, 2, 1]
+  updates = [1.0, 2.0, 3.0, 4.0, 5.0, 6.0]
+  axis = 0
+  reduction = "mean"
+  output = [5.0 / 3.0, 3.5, 4.0, 4.0]
+  ```
+
+#### Version
+
+This version of the operator has been available since version 29 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>axis</tt> : int (default is 0)</dt>
+<dd>Which axis to scatter on. Negative value means counting dimensions from the back. Accepted range is [-r, r-1] where r = rank(data).</dd>
+<dt><tt>reduction</tt> : string (default is none)</dt>
+<dd>Type of reduction to apply: none (default), add, mul, max, min, mean. 'none': no reduction applied. 'add':  reduction using the addition operation. 'mul': reduction using the multiplication operation. 'max': reduction using the maximum operation. 'min': reduction using the minimum operation. 'mean': arithmetic mean of all contributions to each output element.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>data</tt> (differentiable) : T</dt>
+<dd>Tensor of rank r >= 1.</dd>
+<dt><tt>indices</tt> (non-differentiable) : Tind</dt>
+<dd>Tensor of int32/int64 indices, of r >= 1 (same rank as input). All index values are expected to be within bounds [-s, s-1] along axis of size s. It is an error if any of the index values are out of bounds.</dd>
+<dt><tt>updates</tt> (differentiable) : T</dt>
+<dd>Tensor of rank r >=1 (same rank and shape as indices)</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> (differentiable) : T</dt>
+<dd>Tensor of rank r >= 1 (same rank as input).</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
+<dd>Input and output types can be of any tensor type.</dd>
+<dt><tt>Tind</tt> : tensor(int32), tensor(int64)</dt>
+<dd>Constrain indices to integer types</dd>
+</dl>
+
 ### <a name="ScatterND-29"></a>**ScatterND-29**</a>
 
-  ScatterND takes three inputs `data` tensor of rank r >= 1, `indices` tensor of rank q >= 1,
-  and `updates` tensor of rank q + r - indices.shape[-1] - 1. The output of the operation
-  is produced by creating a copy of the input `data`, and then updating its value to values
-  specified by `updates` at specific index positions specified by `indices`. Its output shape
-  is the same as the shape of `data`.
+  ScatterND takes `data` of rank r >= 1, `indices` of rank q >= 1, and `updates`
+  of rank q + r - k - 1, where k = indices.shape[-1] and 0 <= k <= r.
+  `data` and `updates` must have the same element type.
+  The output has the same shape and element type as `data`.
 
-  `indices` is an integer tensor. Let k denote indices.shape[-1], the last dimension in the shape of `indices`.
-  `indices` is treated as a (q-1)-dimensional tensor of k-tuples, where each k-tuple is a partial-index into `data`.
-  Hence, k can be a value at most the rank of `data`. When k equals rank(data), each update entry specifies an
-  update to a single element of the tensor. When k is less than rank(data) each update entry specifies an
-  update to a slice of the tensor. For each tuple component `i`, `0 <= i < k`, the index must satisfy
-  `-data.shape[i] <= indices[...,i] < data.shape[i]`. Negative indices count backwards from the end
-  of the corresponding dimension. An out-of-bounds index is an error.
+  Each entry in `indices` is a k-tuple indexing the first k dimensions of `data`.
+  For a dimension of size s, index values must be in [-s, s-1].
+  A negative index i identifies the same position as i + s.
+  Each tuple addresses a single element when k = r or a slice of the trailing
+  r - k dimensions otherwise. When k = 0, each tuple addresses the entire tensor.
+  The shape of `updates` must equal indices.shape[:-1] + data.shape[k:].
+  For every coordinate `i` in indices.shape[:-1], updates[i] is scattered to
+  output[tuple(indices[i])].
 
-  `updates` is treated as a (q-1)-dimensional tensor of replacement-slice-values. Thus, the
-  first (q-1) dimensions of updates.shape must match the first (q-1) dimensions of indices.shape.
-  The remaining dimensions of `updates` correspond to the dimensions of the
-  replacement-slice-values. Each replacement-slice-value is a (r-k) dimensional tensor,
-  corresponding to the trailing (r-k) dimensions of `data`.  Thus, the shape of `updates`
-  must equal indices.shape[0:q-1] ++ data.shape[k:r], where ++ denotes the concatenation
-  of shapes.
+  When `reduction` is "none", updates replace the addressed elements or slices,
+  and multiple tuples must not address the same location.
+  For other reductions, group all updates addressing the same location and reduce
+  elementwise over each group, including the original `data` value exactly once.
+  Untouched elements retain their original `data` values.
+  "add", "mul", "max", and "min" compute the sum, product, maximum, and minimum,
+  respectively.
 
-  The `output` is calculated via the following equation:
-
+  For "mean", consider an output element addressed by N >= 1 updates.
+  Let x be its original `data` value and u_1, ..., u_N be those update values.
+  Its output value is:
   ```
-  output = np.copy(data)
-  update_indices = indices.shape[:-1]
-  for idx in np.ndindex(update_indices):
-      output[tuple(indices[idx])] = updates[idx]
+  output = (x + u_1 + ... + u_N) / (N + 1)
   ```
+  The "mean" reduction supports integer and floating-point tensors, but not
+  boolean, string, or complex tensors. Integer results are rounded toward
+  negative infinity. Floating-point results are converted to the input element
+  type after division.
 
-  The order of iteration in the above loop is not specified.
+  A floating-point mean is NaN if x, u_1, ..., u_N contain a NaN or infinities of
+  both signs. Otherwise, if any of these values is infinite, the mean is that infinity.
 
-  `reduction` allows specification of an optional reduction operation, which is applied to all values in `updates`
-  tensor into `output` at the specified `indices`.
-  When `reduction` is "none", no two index tuples may select the same output element or slice,
-  including through equivalent positive and negative indices. This ensures that the output value does not
-  depend on the iteration order.
-  When `reduction` is set to some reduction function `f`, `output` is calculated as follows:
-
+  Example:
   ```
-  output = np.copy(data)
-  update_indices = indices.shape[:-1]
-  for idx in np.ndindex(update_indices):
-      output[tuple(indices[idx])] = f(output[tuple(indices[idx])], updates[idx])
-  ```
-
-  where the `f` is `+`, `*`, `max` or `min` as specified.
-
-  (Opset 18 change): Adds max/min to the set of allowed reduction ops.
-
-  Example 1:
-  ```
-  data    = [1, 2, 3, 4, 5, 6, 7, 8]
-  indices = [[4], [3], [1], [7]]
-  updates = [9, 10, 11, 12]
-  output  = [1, 11, 3, 10, 9, 6, 7, 12]
-  ```
-
-  Example 2:
-  ```
-  data    = [[[1, 2, 3, 4], [5, 6, 7, 8], [8, 7, 6, 5], [4, 3, 2, 1]],
-              [[1, 2, 3, 4], [5, 6, 7, 8], [8, 7, 6, 5], [4, 3, 2, 1]],
-              [[8, 7, 6, 5], [4, 3, 2, 1], [1, 2, 3, 4], [5, 6, 7, 8]],
-              [[8, 7, 6, 5], [4, 3, 2, 1], [1, 2, 3, 4], [5, 6, 7, 8]]]
-  indices = [[0], [2]]
-  updates = [[[5, 5, 5, 5], [6, 6, 6, 6], [7, 7, 7, 7], [8, 8, 8, 8]],
-              [[1, 1, 1, 1], [2, 2, 2, 2], [3, 3, 3, 3], [4, 4, 4, 4]]]
-  output  = [[[5, 5, 5, 5], [6, 6, 6, 6], [7, 7, 7, 7], [8, 8, 8, 8]],
-              [[1, 2, 3, 4], [5, 6, 7, 8], [8, 7, 6, 5], [4, 3, 2, 1]],
-              [[1, 1, 1, 1], [2, 2, 2, 2], [3, 3, 3, 3], [4, 4, 4, 4]],
-              [[8, 7, 6, 5], [4, 3, 2, 1], [1, 2, 3, 4], [5, 6, 7, 8]]]
+  data = [[1.0, 2.0], [3.0, 4.0]]
+  indices = [[0], [0]]
+  updates = [[3.0, 4.0], [5.0, 6.0]]
+  reduction = "mean"
+  output = [[3.0, 4.0], [3.0, 4.0]]
   ```
 
   Opset 29 adds support for int32 indices; int64 indices remain supported.
@@ -35038,7 +35315,7 @@ This version of the operator has been available since version 29 of the default 
 
 <dl>
 <dt><tt>reduction</tt> : string (default is none)</dt>
-<dd>Type of reduction to apply: none (default), add, mul, max, min. 'none': no reduction applied. 'add':  reduction using the addition operation. 'mul':  reduction using the multiplication operation. 'max': reduction using the maximum operation. 'min': reduction using the minimum operation.</dd>
+<dd>Type of reduction to apply: none (default), add, mul, max, min, mean. 'none': no reduction applied. 'add': reduction using the addition operation. 'mul': reduction using the multiplication operation. 'max': reduction using the maximum operation. 'min': reduction using the minimum operation. 'mean': arithmetic mean of all contributions to each output element.</dd>
 </dl>
 
 #### Inputs
