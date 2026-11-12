@@ -746,19 +746,17 @@ static void InferLinearAttentionShape(InferenceContext& ctx, bool expanded_value
   // --- Type propagation ---
   // output: type T from query.
   //
-  // present_state uses the separately-declared state type S only when S can be
-  // anchored by the optional past_state input. When past_state is omitted,
-  // type inference cannot independently infer S, so present_state explicitly
-  // falls back to type T from query on the first step. Callers that require an
-  // fp32 state while using lower-precision query activations must therefore
-  // provide past_state with the desired state element type.
-  // (The spec recommends S == float32 or S == T for numerical stability.)
+  // State outputs inherit past_state's element type, which may be unknown.
+  // Only an omitted past_state defaults to the query element type.
   propagateElemTypeFromInputToOutput(ctx, 0, 0);
-  const size_t state_type_input =
-      has_past_state && ctx.getInputType(3) != nullptr && ctx.getInputType(3)->has_tensor_type() ? 3 : 0;
-  propagateElemTypeFromInputToOutput(ctx, state_type_input, 1);
-  if (expanded_value_heads && ctx.hasOutput(2)) {
-    propagateElemTypeFromInputToOutput(ctx, state_type_input, 2);
+  const size_t state_type_input = has_past_state ? 3 : 0;
+  const auto* state_type = ctx.getInputType(state_type_input);
+  if (state_type != nullptr && state_type->has_tensor_type() &&
+      state_type->tensor_type().elem_type() != TensorProto::UNDEFINED) {
+    propagateElemTypeFromInputToOutput(ctx, state_type_input, 1);
+    if (expanded_value_heads && ctx.hasOutput(2)) {
+      propagateElemTypeFromInputToOutput(ctx, state_type_input, 2);
+    }
   }
 
   // --- Shape inference via dimension unification ---

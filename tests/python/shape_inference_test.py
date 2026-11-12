@@ -3325,6 +3325,62 @@ class TestShapeInference(TestShapeInferenceHelper):
             ],
         )
 
+    @pytest.mark.parametrize("version", all_versions_for("LinearAttention"))
+    @pytest.mark.parametrize("past", ["absent", "known", "unknown", "unknown_shaped"])
+    def test_linear_attention_state_type_source(self, version, past) -> None:
+        trajectory = version >= 29
+        state_argument = (
+            "" if past == "absent" else ", S" if past == "known" else ", PS"
+        )
+        unknown_state = "PS = custom.Unknown(S)" if past.startswith("unknown") else ""
+        state_output = ", States" if trajectory else ""
+        graph_state_outputs = ", States, StatesCopy" if trajectory else ""
+        state_copy = "StatesCopy = Identity(States)" if trajectory else ""
+        model = onnx.parser.parse_model(
+            f"""
+            <ir_version: 13, opset_import: ["" : {version}, "custom" : 1]>
+            g (float16[1,2,8] Q, float[1,2,4,4] S)
+                => (Y, Next, NextCopy{graph_state_outputs}) {{
+                {unknown_state}
+                Y, Next{state_output} = LinearAttention <
+                    q_num_heads=2, kv_num_heads=2, update_rule="linear"
+                > (Q, Q, Q{state_argument})
+                NextCopy = Identity(Next)
+                {state_copy}
+            }}
+            """
+        )
+        if past == "unknown_shaped":
+            model.graph.value_info.append(
+                make_tensor_value_info("PS", TensorProto.UNDEFINED, (1, 2, 4, 4))
+            )
+        inferred = onnx.shape_inference.infer_shapes(model, strict_mode=True)
+        types = {
+            value.name: value.type.tensor_type
+            for value in [*inferred.graph.output, *inferred.graph.value_info]
+        }
+        expected = {
+            "absent": TensorProto.FLOAT16,
+            "known": TensorProto.FLOAT,
+            "unknown": TensorProto.UNDEFINED,
+            "unknown_shaped": TensorProto.UNDEFINED,
+        }[past]
+        assert types["Y"].elem_type == TensorProto.FLOAT16
+        state_values = ["Next", "NextCopy"]
+        if trajectory:
+            state_values.extend(["States", "StatesCopy"])
+        for name in state_values:
+            assert types[name].elem_type == expected, name
+        assert [dim.dim_value for dim in types["Next"].shape.dim] == [1, 2, 4, 4]
+        if trajectory:
+            assert [dim.dim_value for dim in types["States"].shape.dim] == [
+                1,
+                2,
+                2,
+                4,
+                4,
+            ]
+
     @pytest.mark.parametrize("past", [False, True])
     def test_linear_attention_trajectory_symbolic(self, past) -> None:
         state_input = ", float[B,2,Dk,Dv] S" if past else ""
