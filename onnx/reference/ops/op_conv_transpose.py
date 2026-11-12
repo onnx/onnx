@@ -103,8 +103,11 @@ class ConvTranspose(OpRun):
         else:
             final = np.zeros((X.shape[0], num_output_channels, *output_shape))
             output_array = []
+            channels_per_group = num_output_channels // group
 
             for group_id in range(group):
+                start_ch = group_id * channels_per_group
+                end_ch = start_ch + channels_per_group
                 group_X = X[:, group_id * C // group : (group_id + 1) * C // group, ...]
                 group_W = W[
                     group_id * num_output_channels // group : (group_id + 1)
@@ -116,7 +119,7 @@ class ConvTranspose(OpRun):
                 group_output = self._run(
                     group_X,
                     group_W,
-                    B=B,
+                    B=B[start_ch:end_ch] if B is not None else None,
                     auto_pad=auto_pad,
                     dilations=dilations,
                     group=1,
@@ -129,7 +132,6 @@ class ConvTranspose(OpRun):
                 group_output = np.array(group_output[0])
                 output_array.append(group_output)
 
-            channels_per_group = num_output_channels // group
             for image_id in range(X.shape[0]):
                 for group_id in range(group):
                     group_output = output_array[group_id]
