@@ -59,6 +59,44 @@ class ScatterND(Base):
         )
 
     @staticmethod
+    def export_scatternd_mean() -> None:
+        data = np.array([[1, 2], [3, 4]], dtype=np.float32)
+        indices = np.array([[0], [-2]], dtype=np.int64)
+        updates = np.array([[3, 4], [5, 6]], dtype=np.float32)
+        node = onnx.helper.make_node(
+            "ScatterND",
+            ["data", "indices", "updates"],
+            ["y"],
+            reduction="mean",
+        )
+        expect(
+            node,
+            inputs=[data, indices, updates],
+            outputs=[np.array([[3, 4], [3, 4]], dtype=np.float32)],
+            name="test_scatternd_mean",
+            opset_imports=[onnx.helper.make_opsetid("", 29)],
+        )
+
+    @staticmethod
+    def export_scatternd_mean_integer() -> None:
+        node = onnx.helper.make_node(
+            "ScatterND",
+            ["data", "indices", "updates"],
+            ["y"],
+            reduction="mean",
+        )
+        data = np.array([[-2, 8], [9, 10]], dtype=np.int64)
+        indices = np.array([[0, 0], [0, 0], [0, 1]], dtype=np.int64)
+        updates = np.array([-3, -3, 5], dtype=np.int64)
+        expect(
+            node,
+            inputs=[data, indices, updates],
+            outputs=[np.array([[-3, 6], [9, 10]], dtype=np.int64)],
+            name="test_scatternd_mean_integer",
+            opset_imports=[onnx.helper.make_opsetid("", 29)],
+        )
+
+    @staticmethod
     def export_scatternd() -> None:
         node = onnx.helper.make_node(
             "ScatterND",
