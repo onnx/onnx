@@ -277,6 +277,7 @@ __all__ = [
 ]
 
 import textwrap
+from collections.abc import Callable as _Callable  # noqa: TC003
 from typing import Any
 
 from onnx import FunctionProto, NodeProto, TypeProto
@@ -548,7 +549,7 @@ def load_op(
     node: NodeProto | None = None,
     input_types: list[TypeProto] | None = None,
     expand: bool = False,
-    evaluator_cls: type | None = None,
+    evaluator_cls: _Callable[[FunctionProto], Any] | None = None,
 ) -> Any:
     """Loads the implemented for a specified operator.
 
@@ -563,7 +564,7 @@ def load_op(
             operator defines a function which is context dependent
         expand: use the function implemented in the schema instead of
             its reference implementation
-        evaluator_cls: evaluator to use
+        evaluator_cls: factory for evaluating a schema-defined function
 
     Returns:
         class
@@ -591,7 +592,14 @@ def load_op(
                 f"and domain {domain!r}. Did you recompile the sources after updating the repository?"
             ) from None
         if schema.has_function:
-            body = schema.function_body
+            function_bytes = schema.get_function_with_opset_version(version)
+            if not function_bytes:
+                raise RuntimeImplementationError(
+                    f"No function body for operator {op_type!r} from domain {domain!r} "
+                    f"is available at opset {version}. Use its native implementation "
+                    f"or an opset with a function body: {schema.function_opset_versions}."
+                )
+            body = FunctionProto.FromString(function_bytes)
             assert evaluator_cls is not None, (
                 f"evaluator_cls must be specified to implement operator {op_type!r} from domain {domain!r}"
             )
@@ -604,8 +612,10 @@ def load_op(
                     f"and domain {domain!r}, the operator has a context dependent function. "
                     f"but argument node or input_types is not defined (input_types={input_types})."
                 )
-            body = schema.get_context_dependent_function(
-                node.SerializeToString(), [it.SerializeToString() for it in input_types]
+            body = schema.get_context_dependent_function_with_opset_version(
+                version,
+                node.SerializeToString(),
+                [it.SerializeToString() for it in input_types],
             )
             if not body:
                 raise RuntimeImplementationError(
@@ -615,6 +625,7 @@ def load_op(
                 )
             proto = FunctionProto()
             proto.ParseFromString(body)
+            del proto.output[len(node.output) :]
             assert evaluator_cls is not None, (
                 f"evaluator_cls must be specified to evaluate function {proto.name!r}"
             )

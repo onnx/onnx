@@ -325,6 +325,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             AttributeProto::FLOAT,
             1.05070102214813232421875f)
         .SetDoc(kDoc_Selu_ver6)
+        .SetNodeDeterminism(OpSchema::NodeDeterminism::Deterministic)
         .Input(0, "X", "Input tensor", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
         .Output(0, "Y", "Output tensor", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
         .TypeConstraint("T", OpSchema::all_float_types_ir4(), "Constrain input and output types to float tensors.")
@@ -347,7 +348,75 @@ ONNX_OPERATOR_SET_SCHEMA(
             Y = Where(XLessThanZero, Neg, Pos)
           }
         )ONNX",
-            18));
+            18)
+        // Factoring out a zero or infinite alpha would change signed zeros or
+        // turn an indeterminate subtraction into infinity.
+        .FunctionBody(
+            R"ONNX(
+          {
+            Alpha = Constant <value_float: float = @alpha>()
+            AlphaCast = CastLike (Alpha, X)
+            Gamma = Constant <value_float: float = @gamma>()
+            GammaCast = CastLike (Gamma, X)
+            Zero = Constant <value = float {0.0}>()
+            ZeroCast = CastLike (Zero, X)
+            AlphaZero = Equal (AlphaCast, ZeroCast)
+            AlphaInfinite = IsInf (AlphaCast)
+            Unfactored = Or (AlphaZero, AlphaInfinite)
+            X_acc = Cast <to = 11> (X)
+            Alpha_acc = Cast <to = 11> (AlphaCast)
+            Gamma_acc = Cast <to = 11> (GammaCast)
+            Negative = If (Unfactored) <
+              then_branch = unfactored () => (Difference) {
+                ExpX = Exp (X)
+                AlphaMulExpX = Mul (AlphaCast, ExpX)
+                DifferenceNarrow = Sub (AlphaMulExpX, AlphaCast)
+                Difference = Cast <to = 11> (DifferenceNarrow)
+              },
+              else_branch = factored () => (Product) {
+                ExpXSubOne = Expm1 (X_acc)
+                Product = Mul (Alpha_acc, ExpXSubOne)
+              }
+            >
+            XLessThanZero = Less (X, ZeroCast)
+            Selected = Where (XLessThanZero, Negative, X_acc)
+            Y_acc = Mul (Gamma_acc, Selected)
+            Y = CastLike (Y_acc, X)
+          }
+        )ONNX",
+            29));
+
+static std::vector<NodeProto> BuildEluFunctionBody(bool with_celu) {
+  FunctionProto function;
+  FunctionBuilder builder(function);
+  builder.Add(R"ONNX(
+    Alpha = Constant <value_float: float = @alpha>()
+    AlphaCast = CastLike (Alpha, X)
+    Zero = Constant <value = float {0.0}>()
+    ZeroCast = CastLike (Zero, X)
+  )ONNX");
+  if (with_celu) {
+    builder.Add("XScaled = Div (X, AlphaCast)");
+  }
+  std::string body = R"ONNX(
+    XLessThanZero = Less ({X}, ZeroCast)
+    ExpXSubOne = Expm1 ({X})
+  )ONNX";
+  ReplaceAll(body, "{X}", with_celu ? "XScaled" : "X");
+  builder.Add(body.c_str());
+  if (with_celu) {
+    builder.Add(R"ONNX(
+      EluResult = Where (XLessThanZero, ExpXSubOne, XScaled)
+      Y = Mul (AlphaCast, EluResult)
+    )ONNX");
+  } else {
+    builder.Add(R"ONNX(
+      AlphaMulExpXSubOne = Mul (AlphaCast, ExpXSubOne)
+      Y = Where (XLessThanZero, AlphaMulExpXSubOne, X)
+    )ONNX");
+  }
+  return {function.node().begin(), function.node().end()};
+}
 
 ONNX_OPERATOR_SET_SCHEMA(
     Elu,
@@ -375,7 +444,34 @@ ONNX_OPERATOR_SET_SCHEMA(
             Y = Where(XLessThanZero, AlphaMulExpXSubOne, X)
           }
         )ONNX",
-            18));
+            18)
+        .FunctionBody(BuildEluFunctionBody(false), 29));
+
+// Share the promoted core without round-trip casts through a nested Softplus.
+static std::vector<NodeProto> BuildStableSoftplusFunctionBody(bool with_mish) {
+  FunctionProto function;
+  FunctionBuilder builder(function);
+  builder.Add(R"ONNX(
+    X_acc = Cast <to = 11> (X)
+    Zero = Constant <value = double {0.0}>()
+    Positive = Max (X_acc, Zero)
+    Absolute = Abs (X_acc)
+    NegativeAbsolute = Neg (Absolute)
+    Exponential = Exp (NegativeAbsolute)
+    Correction = Log1p (Exponential)
+    Softplus_X = Add (Positive, Correction)
+  )ONNX");
+  if (with_mish) {
+    builder.Add(R"ONNX(
+      TanHSoftplusX = Tanh (Softplus_X)
+      Y_acc = Mul (X_acc, TanHSoftplusX)
+      Y = CastLike (Y_acc, X)
+    )ONNX");
+  } else {
+    builder.Add("Y = CastLike (Softplus_X, X)");
+  }
+  return {function.node().begin(), function.node().end()};
+}
 
 ONNX_OPERATOR_SET_SCHEMA(
     Mish,
@@ -392,6 +488,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             Y = Mul (X, TanHSoftplusX)
            }
         )ONNX")
+        .FunctionBody(BuildStableSoftplusFunctionBody(true), 29)
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
 ONNX_OPERATOR_SET_SCHEMA(
@@ -419,7 +516,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             EluResult = Elu <alpha = 1.0> (XScaled)
             Y = Mul (AlphaCast, EluResult)
           }
-        )ONNX"));
+        )ONNX")
+        .FunctionBody(BuildEluFunctionBody(true), 29));
 
 static constexpr const char* gelu_default_approx = "none";
 
@@ -1099,28 +1197,34 @@ static bool BuildContextDependentFunctionBodyLogSoftmax29(
   const int64_t axis = ctx.getAttribute("axis") != nullptr ? ctx.getAttribute("axis")->i() : -1;
   FunctionBuilder builder(functionProto);
   // Keep 16-bit inputs in float through exponentiation and normalization.
-  builder.Add(promote ? "X = Cast <to = 1> (input)" : "X = Identity (input)");
-  builder.Const1D("axes", axis).Const("OneInt", static_cast<int64_t>(1)).Const("ZeroFloat", 0.0f).Add(R"(
-        Zero = CastLike (ZeroFloat, X)
-        MaxLogit = ReduceMax <keepdims = 1> (X, axes)
-        Shifted = Sub (X, MaxLogit)
+  if (promote) {
+    builder.Add("X = Cast <to = 1> (input)");
+  }
+  builder.Const1D("axes", axis).Const("OneInt", static_cast<int64_t>(1)).Const("ZeroFloat", 0.0f);
+  // Remove all maxima before summation, then restore all but one. Subtracting
+  // one from the full exponential sum would lose the small normalization term.
+  std::string body = R"(
+        Zero = CastLike (ZeroFloat, {X})
+        MaxLogit = ReduceMax <keepdims = 1> ({X}, axes)
+        Shifted = Sub ({X}, MaxLogit)
         Exponentials = Exp (Shifted)
         IsMax = Equal (Shifted, Zero)
         Others = Where (IsMax, Zero, Exponentials)
         IsMaxInt = Cast <to = 7> (IsMax)
         MaxCount = ReduceSum <keepdims = 1> (IsMaxInt, axes)
         RemainingMaxCount = Sub (MaxCount, OneInt)
-        TiedMaxima = CastLike (RemainingMaxCount, X)
-      )");
-  // Remove all maxima before summation, then restore all but one. Subtracting
-  // one from the full exponential sum would lose the small normalization term.
-  builder.Add(R"(
+        TiedMaxima = CastLike (RemainingMaxCount, {X})
         OtherSum = ReduceSum <keepdims = 1> (Others, axes)
         NormalizerInput = Add (OtherSum, TiedMaxima)
         Normalizer = Log1p (NormalizerInput)
-        OutputWide = Sub (Shifted, Normalizer)
-        output = CastLike (OutputWide, input)
-      )");
+        {output} = Sub (Shifted, Normalizer)
+      )";
+  ReplaceAll(body, "{X}", promote ? "X" : "input");
+  ReplaceAll(body, "{output}", promote ? "OutputWide" : "output");
+  builder.Add(body.c_str());
+  if (promote) {
+    builder.Add("output = CastLike (OutputWide, input)");
+  }
   schema.BuildFunction(functionProto);
   return true;
 }
@@ -1228,7 +1332,8 @@ ONNX_OPERATOR_SET_SCHEMA(
               Y = Log (exp_x_add_one)
             }
             )ONNX",
-            18));
+            18)
+        .FunctionBody(BuildStableSoftplusFunctionBody(false), 29));
 
 static void GemmShapeInference(InferenceContext& ctx) {
   propagateElemTypeFromInputToOutput(ctx, 0, 0);
@@ -2011,10 +2116,16 @@ BuildLogCumSumExpFunction(const FunctionBodyBuildContext& ctx, const OpSchema& s
     return false;
   }
   const bool use_double = elem_type == TensorProto::DOUBLE;
+  const bool promote = elem_type == TensorProto::FLOAT16 || elem_type == TensorProto::BFLOAT16;
   FunctionBuilder builder(functionProto);
-  builder.Add("X_acc = Cast (X)", "to", int64_t{use_double ? TensorProto::DOUBLE : TensorProto::FLOAT});
-  builder.Const("negative_infinity_float", -std::numeric_limits<float>::infinity())
-      .Add("negative_infinity = CastLike (negative_infinity_float, X_acc)");
+  if (promote) {
+    builder.Add("X_acc = Cast <to = 1> (X)");
+  }
+  if (use_double) {
+    builder.Const("negative_infinity", -std::numeric_limits<double>::infinity()).Const("zero_t", 0.0);
+  } else {
+    builder.Const("negative_infinity", -std::numeric_limits<float>::infinity()).Const("zero_t", 0.0f);
+  }
   if (ctx.getAttribute("axis") == nullptr) {
     builder.Const("axis_value", int64_t{0});
   } else {
@@ -2032,9 +2143,9 @@ BuildLogCumSumExpFunction(const FunctionBodyBuildContext& ctx, const OpSchema& s
         axis_normalized = Where (axis_negative, axis_from_end, axis_value)
         size = Size (X)
         empty = Equal (size, scalar_zero)
-        Y_acc = If (empty) <
+        {Y} = If (empty) <
           then_branch = empty_input () => (empty_output) {
-            empty_output = Identity (X_acc)
+            empty_output = Identity ({X})
           },
           else_branch = nonempty_input () => (nonempty_output) {
             axis_end = Add (axis_normalized, one)
@@ -2045,25 +2156,19 @@ BuildLogCumSumExpFunction(const FunctionBodyBuildContext& ctx, const OpSchema& s
             length = Gather <axis = 0> (X_shape, axis_normalized)
             scan_shape = Concat <axis = 0> (before, length, after)
             state_shape = Concat <axis = 0> (before, after)
-            reshaped = Reshape (X_acc, scan_shape)
+            reshaped = Reshape ({X}, scan_shape)
             scan_input = Transpose <perm = [1, 0, 2]> (reshaped)
             initial = Expand (negative_infinity, state_shape)
       )ONNX";
   // Flatten the dimensions before and after the axis so the Scan always uses axis 0,
   // including when X's rank is unknown at function-building time.
-  // The log1p correction below retains exp(difference) when 1 + exp(difference)
-  // rounds to 1; its argument is in [0, 1], so the correction is well-conditioned.
   const std::string acc_type = use_double ? "double" : "float";
-  builder.Add((prefix + R"ONNX(
+  std::string body = prefix + R"ONNX(
             final_state, scanned = Scan (initial, scan_input) <
               num_scan_inputs = 1,
               body = prefix ()ONNX" +
-               acc_type + "[?, ?] previous, " + acc_type + "[?, ?] current) => (" + acc_type + "[?, ?] next, " +
-               acc_type + R"ONNX([?, ?] output) {
-                zero_acc = Constant <value = float {0}> ()
-                one_acc = Constant <value = float {1}> ()
-                zero_t = CastLike (zero_acc, previous)
-                one_t = CastLike (one_acc, previous)
+      acc_type + "[?, ?] previous, " + acc_type + "[?, ?] current) => (" + acc_type + "[?, ?] next, " + acc_type +
+      R"ONNX([?, ?] output) {
                 maximum = Max (previous, current)
                 minimum = Min (previous, current)
                 infinite = IsInf (maximum)
@@ -2071,12 +2176,7 @@ BuildLogCumSumExpFunction(const FunctionBodyBuildContext& ctx, const OpSchema& s
                 safe_minimum = Where (infinite, zero_t, minimum)
                 difference = Sub (safe_minimum, safe_maximum)
                 exponential = Exp (difference)
-                sum = Add (one_t, exponential)
-                logarithm = Log (sum)
-                rounded_exponential = Sub (sum, one_t)
-                error = Sub (exponential, rounded_exponential)
-                correction = Div (error, sum)
-                log_one_plus = Add (logarithm, correction)
+                log_one_plus = Log1p (exponential)
                 finite_result = Add (safe_maximum, log_one_plus)
                 result = Where (infinite, maximum, finite_result)
                 previous_nan = IsNaN (previous)
@@ -2091,9 +2191,13 @@ BuildLogCumSumExpFunction(const FunctionBodyBuildContext& ctx, const OpSchema& s
             nonempty_output = Reshape <allowzero = 1> (restored, X_shape)
           }
         >
-        Y = CastLike (Y_acc, X)
-      )ONNX")
-                  .c_str());
+      )ONNX";
+  ReplaceAll(body, "{X}", promote ? "X_acc" : "X");
+  ReplaceAll(body, "{Y}", promote ? "Y_acc" : "Y");
+  builder.Add(body.c_str());
+  if (promote) {
+    builder.Add("Y = CastLike (Y_acc, X)");
+  }
   schema.BuildFunction(functionProto);
   return true;
 }

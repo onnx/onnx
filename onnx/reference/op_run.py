@@ -707,9 +707,13 @@ class OpFunctionContextDependant(OpFunction):
             types.append(onnx.helper.make_tensor_type_proto(dtype, t.shape))  # type: ignore[arg-type]
         node = onnx.NodeProto()
         node.CopyFrom(self.onnx_node)
-        for att in node.attribute:
+        for att in list(node.attribute):
             if att.ref_attr_name:
                 value = kwargs[att.name]
+                definition = self.schema_.attributes.get(att.name)
+                if value is None and definition is not None and not definition.required:
+                    node.attribute.remove(att)
+                    continue
                 if att.type == onnx.AttributeProto.TENSOR:
                     value = onnx.numpy_helper.from_array(value)
                 elif att.type == onnx.AttributeProto.TENSORS:

@@ -46,7 +46,8 @@ class ReferenceEvaluator:
             :class:`OpRun <onnx.reference.op_run.OpRun>`, every class
             must define the static attribute `domain`, there may be
             multiple implementations for the same operator, the first
-            one in the list is used.
+            one in the list is used. Overrides also apply recursively
+            inside schema-defined functions.
         check_shape_annotations: if True, every input and computed value is
             checked, as it becomes available, against its declared static
             shape annotation (see `docs/ShapeAnnotationSemantics.md
@@ -432,9 +433,9 @@ class ReferenceEvaluator:
         for node in self.nodes_:
             try:
                 cl = self._load_impl(node)
-            except op_run.RuntimeContextError as e:
-                # A node has a context dependent implementation.
-                # Shape inference must be run to get the input types.
+            except op_run.RuntimeContextError:
+                # Resolve context-dependent functions now if input types are known,
+                # or defer construction until their inputs are available at runtime.
                 if any(att.ref_attr_name for att in node.attribute):
 
                     def cl(*args, parent=self):
@@ -450,11 +451,10 @@ class ReferenceEvaluator:
                     else:
                         cl = self._load_impl(node, it)
                 else:
-                    raise op_run.RuntimeContextError(
-                        f"No implementation was found for node type {node.op_type!r} from domain {node.domain!r}. "
-                        f"If this node has a context dependent implementation, you should run function infer_shapes "
-                        f"before calling ReferenceEvaluator."
-                    ) from e
+
+                    def cl(*args, parent=self):
+                        return op_run.OpFunctionContextDependant(*args, parent=parent)
+
             try:
                 inst = cl(node, run_params)
             except TypeError as e:
@@ -489,13 +489,16 @@ class ReferenceEvaluator:
         if node.domain == "":
             from onnx.reference.ops import load_op  # noqa: PLC0415
 
+            def evaluator_cls(proto: FunctionProto) -> ReferenceEvaluator:
+                return self.__class__(proto, new_ops=list(self.new_ops_.values()))
+
             try:
                 return load_op(
                     node.domain,
                     node.op_type,
                     version,
                     expand=expand,
-                    evaluator_cls=self.__class__,
+                    evaluator_cls=evaluator_cls,
                 )
             except op_run.RuntimeContextError:
                 if input_types is None:
@@ -507,7 +510,7 @@ class ReferenceEvaluator:
                     node=node,
                     input_types=input_types,
                     expand=expand,
-                    evaluator_cls=self.__class__,
+                    evaluator_cls=evaluator_cls,
                 )
 
         if expand:
