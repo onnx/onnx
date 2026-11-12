@@ -382,6 +382,10 @@ void check_tensor(const TensorProto& tensor, const CheckerContext& ctx) {
     if (tensor.data_type() == TensorProto::STRING) {
       fail_check("STRING data (tensor name: ", tensor.name(), ") should not be stored externally");
     }
+    if (ctx.skip_external_data_check()) {
+      // The data file is not accessed (e.g. the model was loaded without its external data).
+      return;
+    }
 
     // Every location is validated, but, as in the Python loader, the last value
     // of each key is the one that describes the data.

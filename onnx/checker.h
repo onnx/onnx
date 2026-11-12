@@ -90,6 +90,14 @@ class CheckerContext final {
     skip_opset_compatibility_check_ = value;
   }
 
+  bool skip_external_data_check() const {
+    return skip_external_data_check_;
+  }
+
+  void set_skip_external_data_check(bool value) {
+    skip_external_data_check_ = value;
+  }
+
   bool check_custom_domain() const {
     return check_custom_domain_;
   }
@@ -108,6 +116,7 @@ class CheckerContext final {
   std::string model_dir_;
   bool model_dir_from_path_ = false;
   bool skip_opset_compatibility_check_ = false;
+  bool skip_external_data_check_ = false;
   bool check_custom_domain_ = false;
 };
 
