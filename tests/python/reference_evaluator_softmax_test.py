@@ -138,3 +138,39 @@ def test_softmax_float32_float64_unchanged(dtype):
     assert log_prob.dtype == np.dtype(dtype)
     assert_allclose(log_prob, expected_log_prob, rtol=rtol)
     assert_allclose(loss, -expected_log_prob[np.arange(3), labels].mean(), rtol=rtol)
+
+
+@pytest.mark.parametrize("dtype,margin", [(np.float16, 10), (ml_dtypes.bfloat16, 18)])
+def test_log_softmax_low_precision_preserves_small_probabilities_and_loss(
+    dtype, margin
+):
+    x = np.array([[0, -margin, -margin], [-margin, 0, -margin]], dtype=dtype)
+    labels = np.array([0, 1], dtype=np.int64)
+    weights = np.full(3, 32768, dtype=dtype)
+    normalizer = np.log1p(2 * np.exp(-float(margin)))
+    expected_log_prob = (x.astype(np.float64) - normalizer).astype(dtype)
+    expected_loss = np.array(normalizer, dtype=dtype)
+
+    result = _log_softmax(x)
+    loss, log_prob = _softmax_cross_entropy_loss(x, labels, weights)
+
+    assert result.dtype == x.dtype
+    assert log_prob.dtype == x.dtype
+    assert loss.dtype == x.dtype
+    assert np.all(result < 0)
+    assert loss > 0
+    assert_allclose(
+        result.astype(np.float32),
+        expected_log_prob.astype(np.float32),
+        rtol=1e-2,
+        atol=0,
+    )
+    assert_allclose(
+        log_prob.astype(np.float32),
+        expected_log_prob.astype(np.float32),
+        rtol=1e-2,
+        atol=0,
+    )
+    assert_allclose(
+        loss.astype(np.float32), expected_loss.astype(np.float32), rtol=1e-2, atol=0
+    )

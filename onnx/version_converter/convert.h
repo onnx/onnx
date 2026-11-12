@@ -40,6 +40,8 @@
 #include "onnx/version_converter/adapters/group_normalization_20_21.h"
 #include "onnx/version_converter/adapters/group_normalization_21_20.h"
 #include "onnx/version_converter/adapters/maxpool_8_7.h"
+#include "onnx/version_converter/adapters/mean_variance_normalization_29_28.h"
+#include "onnx/version_converter/adapters/nd_indices_29_28.h"
 #include "onnx/version_converter/adapters/no_previous_version.h"
 #include "onnx/version_converter/adapters/optional_ops.h"
 #include "onnx/version_converter/adapters/pad_10_11.h"
@@ -1121,10 +1123,27 @@ class DefaultVersionConverter : public BaseVersionConverter {
     registerAdapter(std::make_unique<CompatibleAdapter>("ReduceLogSumExp", OpSetID(28), OpSetID(27)));
 
     /******** 28 -> 29 ********/
+    registerAdapter(std::make_unique<CompatibleAdapter>("CausalConvWithState", OpSetID(28), OpSetID(29)));
+    registerAdapter(std::make_unique<MeanVarianceNormalization_28_29>());
     registerAdapter(std::make_unique<CompatibleAdapter>("Gemm", OpSetID(28), OpSetID(29)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("GatherND", OpSetID(28), OpSetID(29)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("ScatterElements", OpSetID(28), OpSetID(29)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("ScatterND", OpSetID(28), OpSetID(29)));
 
     /******** 29 -> 28 ********/
+    registerAdapter("CausalConvWithState", 29, 28, RemoveAttribute(Symbol("dilation"), int64_t{1}));
+    registerAdapter(std::make_unique<MeanVarianceNormalization_29_28>());
     registerAdapter(std::make_unique<Gemm_29_28>());
+    registerAdapter(std::make_unique<NDIndices_29_28>("GatherND"));
+    registerAdapter(std::make_unique<NDIndices_29_28>("ScatterND"));
+    registerAdapter("ScatterElements", 29, 28, [](const std::shared_ptr<Graph>& /*unused*/, Node* node) {
+      const Symbol reduction{"reduction"};
+      ONNX_ASSERTM(
+          !node->hasAttribute(reduction) || node->s(reduction) != "mean",
+          "Scatter reduction 'mean' cannot be downgraded to opset 28. "
+          "Keep opset 29 or decompose the mean into scatter sums and counts.")
+      return node;
+    });
   }
 
   ModelProto convert_version(const ModelProto& mp_in, const OpSetID& initial_version, const OpSetID& target_version)

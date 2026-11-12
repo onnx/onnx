@@ -6,7 +6,7 @@
 * [Overall Test Coverage](#overall-test-coverage)
 # Node Test Coverage
 ## Summary
-Node tests have covered 196/205 (95.61%, 5 generators excluded) common operators.
+Node tests have covered 200/209 (95.69%, 5 generators excluded) common operators.
 
 Node tests have covered 1/1 (100.00%, 0 generators excluded) experimental operators.
 
@@ -6812,7 +6812,7 @@ for from_type, to_type in test_cases:
                 "9",
                 "1000000",
                 "1e-7",
-                "NaN",
+                "-1000000",
                 "INF",
                 "+INF",
                 "-INF",
@@ -7204,7 +7204,7 @@ for from_type, to_type in test_cases:
                 "9",
                 "1000000",
                 "1e-7",
-                "NaN",
+                "-1000000",
                 "INF",
                 "+INF",
                 "-INF",
@@ -7394,7 +7394,7 @@ for from_type, to_type in test_cases:
 
 
 ### CausalConvWithState
-There are 13 test cases, listed as following:
+There are 14 test cases, listed as following:
 <details>
 <summary>b1_c1_degenerate</summary>
 
@@ -7475,6 +7475,45 @@ expect(
     name="test_causal_conv_with_state_decode_step",
     opset_imports=[onnx.helper.make_opsetid("", 27)],
 )
+```
+
+</details>
+<details>
+<summary>dilated</summary>
+
+```python
+for dilation, length, k, with_state, activation in (
+    (2, 7, 3, False, "none"),
+    (3, 1, 4, True, "silu"),
+    (2, 0, 3, True, "none"),
+    (3, 2, 1, False, "swish"),
+):
+    input_ = np.arange(2 * length, dtype=np.float32).reshape(1, 2, length)
+    weight = np.arange(2 * k, dtype=np.float32).reshape(2, 1, k) / 10
+    bias = np.array([0.25, -0.5], dtype=np.float32)
+    history = (k - 1) * dilation
+    past = np.arange(2 * history, dtype=np.float32).reshape(1, 2, history)
+    node = onnx.helper.make_node(
+        "CausalConvWithState",
+        ["input", "weight", "bias", "past_state"]
+        if with_state
+        else ["input", "weight", "bias"],
+        ["output", "present_state"],
+        dilation=dilation,
+        activation=activation,
+    )
+    expected = _compute(
+        input_, weight, bias, past if with_state else None, activation, dilation
+    )
+    expect(
+        node,
+        inputs=[input_, weight, bias, past]
+        if with_state
+        else [input_, weight, bias],
+        outputs=list(expected),
+        name=f"test_causal_conv_with_state_dilated_d{dilation}_l{length}_k{k}",
+        opset_imports=[onnx.helper.make_opsetid("", 29)],
+    )
 ```
 
 </details>
@@ -10905,6 +10944,123 @@ expect(
 </details>
 
 
+### DequantizePacked
+There are 5 test cases, listed as following:
+<details>
+<summary>empty</summary>
+
+```python
+node = helper.make_node(
+    "DequantizePacked", ["x"], ["y"], format="gguf:q2_k", shape=[0, 256]
+)
+expect(
+    node,
+    inputs=[np.empty(0, dtype=np.uint8)],
+    outputs=[np.empty((0, 256), dtype=np.float32)],
+    name="test_dequantizepacked_empty",
+)
+```
+
+</details>
+<details>
+<summary>iq4_nl</summary>
+
+```python
+node = helper.make_node(
+    "DequantizePacked",
+    ["x"],
+    ["y"],
+    format="gguf:iq4_nl",
+    shape=[32],
+    output_dtype=TensorProto.FLOAT16,
+)
+x = np.frombuffer(struct.pack("<e", 0.5) + bytes(range(16)), dtype=np.uint8)
+y = np.array(
+    [
+        -127,
+        -104,
+        -83,
+        -65,
+        -49,
+        -35,
+        -22,
+        -10,
+        1,
+        13,
+        25,
+        38,
+        53,
+        69,
+        89,
+        113,
+    ]
+    + [-127] * 16,
+    dtype=np.float16,
+) * np.float16(0.5)
+expect(
+    node, inputs=[x], outputs=[y], name="test_dequantizepacked_iq4_nl_float16"
+)
+```
+
+</details>
+<details>
+<summary>mxfp4</summary>
+
+```python
+node = helper.make_node(
+    "DequantizePacked", ["x"], ["y"], format="gguf:mxfp4", shape=[32]
+)
+x = np.array([127, *list(range(16))], dtype=np.uint8)
+y = np.array(
+    [0, 0.5, 1, 1.5, 2, 3, 4, 6, 0, -0.5, -1, -1.5, -2, -3, -4, -6] + [0] * 16,
+    dtype=np.float32,
+)
+expect(node, inputs=[x], outputs=[y], name="test_dequantizepacked_mxfp4")
+```
+
+</details>
+<details>
+<summary>q4_0</summary>
+
+```python
+node = helper.make_node(
+    "DequantizePacked", ["x"], ["y"], format="gguf:q4_0", shape=[2, 32]
+)
+x = np.frombuffer(
+    struct.pack("<e", 0.5)
+    + bytes(range(16))
+    + struct.pack("<e", -2)
+    + bytes([0xF0] * 16),
+    dtype=np.uint8,
+)
+y = np.array(
+    [
+        list(np.arange(-8, 8) * 0.5) + [-4] * 16,
+        [16] * 16 + [-14] * 16,
+    ],
+    dtype=np.float32,
+)
+expect(node, inputs=[x], outputs=[y], name="test_dequantizepacked_q4_0")
+```
+
+</details>
+<details>
+<summary>q5_1</summary>
+
+```python
+node = helper.make_node(
+    "DequantizePacked", ["x"], ["y"], format="gguf:q5_1", shape=[32]
+)
+x = np.frombuffer(
+    struct.pack("<eeI", 0.5, -1, 0xFFFF0000) + bytes(range(16)), dtype=np.uint8
+)
+y = np.array(list(np.arange(16) * 0.5 - 1) + [7] * 16, dtype=np.float32)
+expect(node, inputs=[x], outputs=[y], name="test_dequantizepacked_q5_1")
+```
+
+</details>
+
+
 ### Det
 There are 2 test cases, listed as following:
 <details>
@@ -11736,6 +11892,89 @@ expect(
 </details>
 
 
+### Expm1
+There are 4 test cases, listed as following:
+<details>
+<summary>expm1</summary>
+
+```python
+node = onnx.helper.make_node("Expm1", ["x"], ["y"])
+for dtype in [np.float16, ml_dtypes.bfloat16, np.float32, np.float64]:
+    x = np.array([[-10.0, -0.5, 0.0, 0.25], [0.5, 1.0, 3.0, 5.0]], dtype=dtype)
+    y = np.array([math.expm1(float(v)) for v in x.flat], dtype=dtype).reshape(
+        x.shape
+    )
+    expect(
+        node,
+        inputs=[x],
+        outputs=[y],
+        name=f"test_expm1_{np.dtype(dtype).name}",
+        rtol=1e-2 if dtype == ml_dtypes.bfloat16 else 1e-3,
+    )
+```
+
+</details>
+<details>
+<summary>expm1_scalar_and_empty</summary>
+
+```python
+node = onnx.helper.make_node("Expm1", ["x"], ["y"])
+expect(
+    node,
+    inputs=[np.array(1.0, dtype=np.float32)],
+    outputs=[np.array(math.expm1(1), dtype=np.float32)],
+    name="test_expm1_scalar",
+)
+x = np.empty((0, 3), dtype=np.float32)
+expect(node, inputs=[x], outputs=[x], name="test_expm1_empty")
+```
+
+</details>
+<details>
+<summary>expm1_small_inputs</summary>
+
+```python
+node = onnx.helper.make_node("Expm1", ["x"], ["y"])
+for dtype, tiny in [
+    (np.float16, 2.0**-14),
+    (ml_dtypes.bfloat16, 2.0**-10),
+    (np.float32, 1e-8),
+    (np.float64, 1e-20),
+]:
+    x = np.array([-tiny, -0.0, 0.0, tiny], dtype=dtype)
+    y = np.array([math.expm1(float(v)) for v in x], dtype=dtype)
+    # Relative error allows backend variation, while atol=0 catches
+    # an incorrect zero caused by rounding the intermediate exp(x).
+    expect(
+        node,
+        inputs=[x],
+        outputs=[y],
+        name=f"test_expm1_small_inputs_{np.dtype(dtype).name}",
+        rtol=1e-2 if dtype == ml_dtypes.bfloat16 else 1e-3,
+        atol=0,
+    )
+```
+
+</details>
+<details>
+<summary>expm1_special_values</summary>
+
+```python
+node = onnx.helper.make_node("Expm1", ["x"], ["y"])
+for dtype in [np.float16, ml_dtypes.bfloat16, np.float32, np.float64]:
+    x = np.array([-0.0, 0.0, -np.inf, np.inf, np.nan], dtype=dtype)
+    y = np.array([-0.0, 0.0, -1.0, np.inf, np.nan], dtype=dtype)
+    expect(
+        node,
+        inputs=[x],
+        outputs=[y],
+        name=f"test_expm1_special_values_{np.dtype(dtype).name}",
+    )
+```
+
+</details>
+
+
 ### EyeLike
 There are 3 test cases, listed as following:
 <details>
@@ -12328,7 +12567,7 @@ expect(
 
 
 ### GatherND
-There are 3 test cases, listed as following:
+There are 4 test cases, listed as following:
 <details>
 <summary>float32</summary>
 
@@ -12398,6 +12637,25 @@ expect(
     inputs=[data, indices],
     outputs=[output],
     name="test_gathernd_example_int32_batch_dim1",
+)
+```
+
+</details>
+<details>
+<summary>selected_kv_int32_indices</summary>
+
+```python
+node = onnx.helper.make_node(
+    "GatherND", ["cache", "positions"], ["selected"], batch_dims=1
+)
+cache = np.arange(24, dtype=np.float32).reshape(2, 4, 3)
+positions = np.array([[[[0], [2]]], [[[1], [-1]]]], dtype=np.int32)
+selected = np.stack([cache[0, [[0, 2]]], cache[1, [[1, 3]]]])
+expect(
+    node,
+    inputs=[cache, positions],
+    outputs=[selected],
+    name="test_gathernd_selected_kv_int32_indices",
 )
 ```
 
@@ -13779,7 +14037,7 @@ expect(
 
 
 ### GroupedMatMul
-There are 8 test cases, listed as following:
+There are 11 test cases, listed as following:
 <details>
 <summary>additional_types</summary>
 
@@ -13844,6 +14102,7 @@ node = onnx.helper.make_node(
     "GroupedMatMul",
     inputs=["input", "weights", "group_indices"],
     outputs=["output"],
+    transB=0,
 )
 input = np.array([[1, 2], [3, 4], [5, 6]], dtype=np.float32)
 weights = np.array([[[1, 2, 3], [4, 5, 6]]], dtype=np.float32)
@@ -13857,6 +14116,90 @@ expect(
     name="test_groupedmatmul_single_group",
     opset_imports=[onnx.helper.make_opsetid("", 29)],
 )
+```
+
+</details>
+<details>
+<summary>transposed_weights</summary>
+
+```python
+input = np.array([[1, 2, -1], [3, 0, 4]], dtype=np.float32)
+weights = np.arange(18, dtype=np.float32).reshape(3, 2, 3)
+group_indices = np.array([[2, 0, 2], [1, 2, 0]], dtype=np.int64)
+bias = np.array([[0.5, 1], [1.5, -2], [3, 0.25]], dtype=np.float32)
+for bias_input in (None, "", "bias"):
+    input_names = ["input", "weights", "group_indices"]
+    values = [input, weights, group_indices]
+    if bias_input is not None:
+        input_names.append(bias_input)
+    if bias_input:
+        values.append(bias)
+    node = onnx.helper.make_node(
+        "GroupedMatMul", input_names, ["output"], transB=1
+    )
+    output = grouped_matmul(
+        input, weights, group_indices, bias if bias_input else None, transB=1
+    )
+    suffix = {None: "", "": "_explicit_empty_bias", "bias": "_with_bias"}[
+        bias_input
+    ]
+    expect(
+        node,
+        inputs=values,
+        outputs=[output],
+        name=f"test_groupedmatmul_transB{suffix}",
+        opset_imports=[onnx.helper.make_opsetid("", 29)],
+    )
+```
+
+</details>
+<details>
+<summary>transposed_weights_empty</summary>
+
+```python
+weights = np.arange(24, dtype=np.float32).reshape(2, 4, 3)
+for m, s in ((0, 2), (2, 0)):
+    input = np.empty((m, 3), dtype=np.float32)
+    group_indices = np.empty((m, s), dtype=np.int32)
+    node = onnx.helper.make_node(
+        "GroupedMatMul",
+        ["input", "weights", "group_indices"],
+        ["output"],
+        transB=1,
+    )
+    output = grouped_matmul(input, weights, group_indices, transB=1)
+    expect(
+        node,
+        inputs=[input, weights, group_indices],
+        outputs=[output],
+        name=f"test_groupedmatmul_transB_empty_{m}_{s}",
+        opset_imports=[onnx.helper.make_opsetid("", 29)],
+    )
+```
+
+</details>
+<details>
+<summary>transposed_weights_nonzero</summary>
+
+```python
+input = np.array([[1, 2, -1], [3, 0, 4]], dtype=np.float32)
+weights = np.arange(18, dtype=np.float32).reshape(3, 2, 3)
+group_indices = np.array([[2, 0], [1, 2]], dtype=np.int64)
+output = grouped_matmul(input, weights, group_indices, transB=1)
+for transB in (-1, 2):
+    node = onnx.helper.make_node(
+        "GroupedMatMul",
+        ["input", "weights", "group_indices"],
+        ["output"],
+        transB=transB,
+    )
+    expect(
+        node,
+        inputs=[input, weights, group_indices],
+        outputs=[output],
+        name=f"test_groupedmatmul_transB_nonzero_{transB}",
+        opset_imports=[onnx.helper.make_opsetid("", 29)],
+    )
 ```
 
 </details>
@@ -16143,8 +16486,193 @@ expect(node, inputs=[x], outputs=[y], name="test_log")
 </details>
 
 
+### Log1p
+There are 5 test cases, listed as following:
+<details>
+<summary>log1p</summary>
+
+```python
+node = onnx.helper.make_node("Log1p", ["x"], ["y"])
+for dtype in [np.float16, ml_dtypes.bfloat16, np.float32, np.float64]:
+    x = np.array(
+        [[-0.75, -0.5, 0.0, 0.25], [0.5, 1.0, 3.0, 1000.0]], dtype=dtype
+    )
+    y = np.array([math.log1p(float(v)) for v in x.flat], dtype=dtype).reshape(
+        x.shape
+    )
+    expect(
+        node,
+        inputs=[x],
+        outputs=[y],
+        name=f"test_log1p_{np.dtype(dtype).name}",
+        rtol=1e-2 if dtype == ml_dtypes.bfloat16 else 1e-3,
+    )
+```
+
+</details>
+<details>
+<summary>log1p_near_negative_one</summary>
+
+```python
+node = onnx.helper.make_node("Log1p", ["x"], ["y"])
+for dtype in [np.float16, ml_dtypes.bfloat16, np.float32, np.float64]:
+    x = np.nextafter(
+        np.array([-1.0], dtype=dtype), np.array([0.0], dtype=dtype)
+    )
+    y = np.array([math.log1p(float(x[0]))], dtype=dtype)
+    expect(
+        node,
+        inputs=[x],
+        outputs=[y],
+        name=f"test_log1p_near_negative_one_{np.dtype(dtype).name}",
+        rtol=1e-2 if dtype == ml_dtypes.bfloat16 else 1e-3,
+    )
+```
+
+</details>
+<details>
+<summary>log1p_scalar_and_empty</summary>
+
+```python
+node = onnx.helper.make_node("Log1p", ["x"], ["y"])
+expect(
+    node,
+    inputs=[np.array(1.0, dtype=np.float32)],
+    outputs=[np.array(math.log(2), dtype=np.float32)],
+    name="test_log1p_scalar",
+)
+x = np.empty((0, 3), dtype=np.float32)
+expect(node, inputs=[x], outputs=[x], name="test_log1p_empty")
+```
+
+</details>
+<details>
+<summary>log1p_small_inputs</summary>
+
+```python
+node = onnx.helper.make_node("Log1p", ["x"], ["y"])
+for dtype, tiny in [
+    (np.float16, 2.0**-14),
+    (ml_dtypes.bfloat16, 2.0**-10),
+    (np.float32, 1e-8),
+    (np.float64, 1e-20),
+]:
+    x = np.array([-tiny, -0.0, 0.0, tiny], dtype=dtype)
+    y = np.array([math.log1p(float(v)) for v in x], dtype=dtype)
+    # Relative error allows backend variation, while atol=0 catches
+    # an incorrect zero caused by rounding the intermediate 1 + x.
+    expect(
+        node,
+        inputs=[x],
+        outputs=[y],
+        name=f"test_log1p_small_inputs_{np.dtype(dtype).name}",
+        rtol=1e-2 if dtype == ml_dtypes.bfloat16 else 1e-3,
+        atol=0,
+    )
+```
+
+</details>
+<details>
+<summary>log1p_special_values</summary>
+
+```python
+node = onnx.helper.make_node("Log1p", ["x"], ["y"])
+for dtype in [np.float16, ml_dtypes.bfloat16, np.float32, np.float64]:
+    x = np.array([-0.0, 0.0, -1.0, -2.0, -np.inf, np.inf, np.nan], dtype=dtype)
+    y = np.array(
+        [-0.0, 0.0, -np.inf, np.nan, np.nan, np.inf, np.nan], dtype=dtype
+    )
+    expect(
+        node,
+        inputs=[x],
+        outputs=[y],
+        name=f"test_log1p_special_values_{np.dtype(dtype).name}",
+    )
+```
+
+</details>
+
+
+### LogCumSumExp
+There are 5 test cases, listed as following:
+<details>
+<summary>logcumsumexp</summary>
+
+```python
+x = np.array([-200, -100, 100], dtype=np.float32)
+node = onnx.helper.make_node("LogCumSumExp", ["X"], ["Y"])
+expect(node, [x], [x.copy()], name="test_logcumsumexp_dynamic_range")
+```
+
+</details>
+<details>
+<summary>logcumsumexp_axes</summary>
+
+```python
+x = np.log(np.arange(1, 25, dtype=np.float64)).reshape(2, 3, 4)
+for axis in (0, 1, 2, -1, -3):
+    node = onnx.helper.make_node("LogCumSumExp", ["X"], ["Y"], axis=axis)
+    y = np.log(np.cumsum(np.exp(x), axis=axis))
+    expect(node, [x], [y], name=f"test_logcumsumexp_axis_{axis}")
+```
+
+</details>
+<details>
+<summary>logcumsumexp_empty</summary>
+
+```python
+for shape, axis in (((2, 0, 3), 1), ((0, 3), -1)):
+    x = np.empty(shape, dtype=np.float32)
+    node = onnx.helper.make_node("LogCumSumExp", ["X"], ["Y"], axis=axis)
+    expect(node, [x], [x.copy()], name=f"test_logcumsumexp_empty_axis_{axis}")
+```
+
+</details>
+<details>
+<summary>logcumsumexp_low_precision</summary>
+
+```python
+for dtype in (np.float16, ml_dtypes.bfloat16):
+    x = np.zeros(128, dtype=dtype)
+    y = np.log(np.arange(1, 129, dtype=np.float64)).astype(dtype)
+    node = onnx.helper.make_node("LogCumSumExp", ["X"], ["Y"])
+    expect(node, [x], [y], name=f"test_logcumsumexp_{np.dtype(dtype).name}")
+```
+
+</details>
+<details>
+<summary>logcumsumexp_special_values</summary>
+
+```python
+x = np.array(
+    [
+        [-np.inf, -np.inf, -np.inf, -np.inf],
+        [-np.inf, 0, np.inf, -np.inf],
+        [0, np.inf, np.inf, 1],
+        [0, np.nan, np.inf, -np.inf],
+        [np.inf, -np.inf, np.nan, 0],
+    ],
+    dtype=np.float32,
+)
+y = np.array(
+    [
+        [-np.inf, -np.inf, -np.inf, -np.inf],
+        [-np.inf, 0, np.inf, np.inf],
+        [0, np.inf, np.inf, np.inf],
+        [0, np.nan, np.nan, np.nan],
+        [np.inf, np.inf, np.nan, np.nan],
+    ],
+    dtype=np.float32,
+)
+node = onnx.helper.make_node("LogCumSumExp", ["X"], ["Y"], axis=1)
+expect(node, [x], [y], name="test_logcumsumexp_special_values")
+```
+
+</details>
+
+
 ### LogSoftmax
-There are 2 test cases, listed as following:
+There are 7 test cases, listed as following:
 <details>
 <summary>logsoftmax</summary>
 
@@ -16157,7 +16685,7 @@ node = onnx.helper.make_node(
 x = np.array([[-1, 0, 1]]).astype(np.float32)
 # expected output
 # [[-2.4076061 -1.407606  -0.407606 ]]
-y = logsoftmax(x)
+y = _log_softmax(x)
 expect(node, inputs=[x], outputs=[y], name="test_logsoftmax_example_1")
 ```
 
@@ -16170,7 +16698,7 @@ x = np.array([[0, 1, 2, 3], [10000, 10001, 10002, 10003]]).astype(np.float32)
 # expected output
 # [[-3.4401896  -2.4401896  -1.4401896  -0.44018966]
 # [-3.4401896  -2.4401896  -1.4401896  -0.44018966]]
-y = logsoftmax(x)
+y = _log_softmax(x)
 
 node = onnx.helper.make_node(
     "LogSoftmax",
@@ -16186,7 +16714,7 @@ node = onnx.helper.make_node(
     outputs=["y"],
     axis=0,
 )
-y = logsoftmax(x, axis=0)
+y = _log_softmax(x, axis=0)
 expect(node, inputs=[x], outputs=[y], name="test_logsoftmax_axis_0")
 
 node = onnx.helper.make_node(
@@ -16195,7 +16723,7 @@ node = onnx.helper.make_node(
     outputs=["y"],
     axis=1,
 )
-y = logsoftmax(x, axis=1)
+y = _log_softmax(x, axis=1)
 expect(node, inputs=[x], outputs=[y], name="test_logsoftmax_axis_1")
 
 node = onnx.helper.make_node(
@@ -16204,7 +16732,7 @@ node = onnx.helper.make_node(
     outputs=["y"],
     axis=2,
 )
-y = logsoftmax(x, axis=2)
+y = _log_softmax(x, axis=2)
 expect(node, inputs=[x], outputs=[y], name="test_logsoftmax_axis_2")
 
 node = onnx.helper.make_node(
@@ -16213,7 +16741,7 @@ node = onnx.helper.make_node(
     outputs=["y"],
     axis=-1,
 )
-y = logsoftmax(x, axis=-1)
+y = _log_softmax(x, axis=-1)
 expect(node, inputs=[x], outputs=[y], name="test_logsoftmax_negative_axis")
 
 # default axis is -1
@@ -16223,6 +16751,104 @@ node = onnx.helper.make_node(
     outputs=["y"],
 )
 expect(node, inputs=[x], outputs=[y], name="test_logsoftmax_default_axis")
+```
+
+</details>
+<details>
+<summary>logsoftmax_empty_input</summary>
+
+```python
+node = onnx.helper.make_node("LogSoftmax", ["x"], ["y"], axis=1)
+x = np.empty((0, 3), dtype=np.float32)
+expect(node, inputs=[x], outputs=[x], name="test_logsoftmax_empty_input")
+```
+
+</details>
+<details>
+<summary>logsoftmax_large_finite_gap</summary>
+
+```python
+node = onnx.helper.make_node("LogSoftmax", ["x"], ["y"], axis=1)
+x = np.array([[0, -200]], dtype=np.float32)
+expect(
+    node,
+    inputs=[x],
+    outputs=[x],
+    name="test_logsoftmax_large_finite_gap",
+    rtol=1e-3,
+    atol=0,
+)
+```
+
+</details>
+<details>
+<summary>logsoftmax_single_class</summary>
+
+```python
+node = onnx.helper.make_node("LogSoftmax", ["x"], ["y"], axis=1)
+x = np.array([[[1, -2, 3]], [[4, 5, -6]]], dtype=np.float32)
+expect(
+    node,
+    inputs=[x],
+    outputs=[np.zeros_like(x)],
+    name="test_logsoftmax_single_class",
+    atol=0,
+)
+```
+
+</details>
+<details>
+<summary>logsoftmax_small_log_probability</summary>
+
+```python
+for dtype, margin in [
+    (np.float16, 10.0),
+    (np.float32, 18.0),
+    (np.float64, 40.0),
+]:
+    x = np.full((3, 3), -margin, dtype=dtype)
+    np.fill_diagonal(x, 0)
+    x = np.stack([x, x])
+    # Zero absolute tolerance catches a collapsed result; relative
+    # tolerance still allows differences between backend implementations.
+    # Compute the expected value analytically, independently of the helper.
+    normalizer = np.log1p(2 * np.exp(-margin))
+    expected = (x.astype(np.float64) - normalizer).astype(dtype)
+    for axis in [0, 1, -1]:
+        node = onnx.helper.make_node("LogSoftmax", ["x"], ["y"], axis=axis)
+        expect(
+            node,
+            inputs=[np.moveaxis(x, -1, axis)],
+            outputs=[np.moveaxis(expected, -1, axis)],
+            name=f"test_logsoftmax_small_log_probability_{np.dtype(dtype).name}_axis_{axis}",
+            rtol=1e-3,
+            atol=0,
+        )
+```
+
+</details>
+<details>
+<summary>logsoftmax_tied_maxima</summary>
+
+```python
+node = onnx.helper.make_node("LogSoftmax", ["x"], ["y"], axis=-1)
+x = np.array([[0, 0, -200], [4, 4, 4], [0, -np.inf, -np.inf]], dtype=np.float64)
+expected = np.array(
+    [
+        [-np.log(2), -np.log(2), -200 - np.log(2)],
+        [-np.log(3), -np.log(3), -np.log(3)],
+        [0, -np.inf, -np.inf],
+    ],
+    dtype=np.float64,
+)
+expect(
+    node,
+    inputs=[x],
+    outputs=[expected],
+    name="test_logsoftmax_tied_maxima",
+    rtol=1e-3,
+    atol=0,
+)
 ```
 
 </details>
@@ -18226,7 +18852,37 @@ expect(
 
 
 ### MeanVarianceNormalization
-There are 1 test cases, listed as following:
+There are 3 test cases, listed as following:
+<details>
+<summary>epsilon</summary>
+
+```python
+epsilon = 1.0
+node = onnx.helper.make_node(
+    "MeanVarianceNormalization",
+    inputs=["X"],
+    outputs=["Y"],
+    axes=[1, -1],
+    epsilon=epsilon,
+)
+
+input_data = np.arange(24, dtype=np.float64).reshape(2, 3, 4)
+
+# Calculate expected output with custom epsilon
+data_mean = np.mean(input_data, axis=(1, -1), keepdims=True)
+centered = input_data - data_mean
+std = np.sqrt(np.mean(np.square(centered), axis=(1, -1), keepdims=True))
+expected_output = (input_data - data_mean) / (std + epsilon)
+
+expect(
+    node,
+    inputs=[input_data],
+    outputs=[expected_output],
+    name="test_mvn_epsilon",
+)
+```
+
+</details>
 <details>
 <summary>meanvariancenormalization</summary>
 
@@ -18258,13 +18914,37 @@ input_data = np.array(
 
 # Calculate expected output data
 data_mean = np.mean(input_data, axis=(0, 2, 3), keepdims=1)
-data_mean_squared = np.power(data_mean, 2)
-data_squared = np.power(input_data, 2)
-data_squared_mean = np.mean(data_squared, axis=(0, 2, 3), keepdims=1)
-std = np.sqrt(data_squared_mean - data_mean_squared)
+centered = input_data - data_mean
+std = np.sqrt(np.mean(np.square(centered), axis=(0, 2, 3), keepdims=True))
 expected_output = (input_data - data_mean) / (std + 1e-9)
 
 expect(node, inputs=[input_data], outputs=[expected_output], name="test_mvn")
+```
+
+</details>
+<details>
+<summary>zero_variance</summary>
+
+```python
+node = onnx.helper.make_node(
+    "MeanVarianceNormalization",
+    inputs=["X"],
+    outputs=["Y"],
+    axes=[0],
+)
+input_data = np.ones(2, dtype=np.float32)
+mean = np.mean(input_data, axis=0, keepdims=True)
+centered = input_data - mean
+expected_output = centered / (
+    np.sqrt(np.mean(np.square(centered), axis=0, keepdims=True)) + 1e-9
+)
+
+expect(
+    node,
+    inputs=[input_data],
+    outputs=[expected_output],
+    name="test_mvn_zero_variance",
+)
 ```
 
 </details>
@@ -27403,7 +28083,54 @@ expect(
 
 
 ### ScatterElements
-There are 7 test cases, listed as following:
+There are 9 test cases, listed as following:
+<details>
+<summary>scatter_elements_mean</summary>
+
+```python
+data = np.array([[1, 2, 3, 4]], dtype=np.float32)
+indices = np.array([[0, 1, 0, 1, -2, 1]], dtype=np.int64)
+updates = np.array([[1, 2, 3, 4, 5, 6]], dtype=np.float32)
+node = onnx.helper.make_node(
+    "ScatterElements",
+    ["data", "indices", "updates"],
+    ["y"],
+    axis=-1,
+    reduction="mean",
+)
+expect(
+    node,
+    inputs=[data, indices, updates],
+    outputs=[np.array([[5 / 3, 3.5, 4, 4]], dtype=np.float32)],
+    name="test_scatter_elements_mean",
+    opset_imports=[onnx.helper.make_opsetid("", 29)],
+)
+```
+
+</details>
+<details>
+<summary>scatter_elements_mean_integer</summary>
+
+```python
+node = onnx.helper.make_node(
+    "ScatterElements",
+    ["data", "indices", "updates"],
+    ["y"],
+    reduction="mean",
+)
+data = np.array([-2, 8, 9], dtype=np.int64)
+indices = np.array([0, 0, 1], dtype=np.int64)
+updates = np.array([-3, -3, 5], dtype=np.int64)
+expect(
+    node,
+    inputs=[data, indices, updates],
+    outputs=[np.array([-3, 6, 9], dtype=np.int64)],
+    name="test_scatter_elements_mean_integer",
+    opset_imports=[onnx.helper.make_opsetid("", 29)],
+)
+```
+
+</details>
 <details>
 <summary>scatter_elements_with_axis</summary>
 
@@ -27607,7 +28334,30 @@ expect(
 
 
 ### ScatterND
-There are 7 test cases, listed as following:
+There are 10 test cases, listed as following:
+<details>
+<summary>batched_token_add_int32_indices</summary>
+
+```python
+node = onnx.helper.make_node(
+    "ScatterND", ["data", "indices", "updates"], ["output"], reduction="add"
+)
+data = np.zeros((2, 3, 2), dtype=np.float32)
+indices = np.array([[0, 1], [1, 0], [0, 1], [1, -1]], dtype=np.int32)
+updates = np.array([[1, 2], [3, 4], [5, 6], [7, 8]], dtype=np.float32)
+output = np.array(
+    [[[0, 0], [6, 8], [0, 0]], [[3, 4], [0, 0], [7, 8]]],
+    dtype=np.float32,
+)
+expect(
+    node,
+    inputs=[data, indices, updates],
+    outputs=[output],
+    name="test_scatternd_batched_token_add_int32_indices",
+)
+```
+
+</details>
 <details>
 <summary>scatternd</summary>
 
@@ -27755,6 +28505,52 @@ expect(
     inputs=[data, indices, updates],
     outputs=[output],
     name="test_scatternd_max_with_element_indices",
+)
+```
+
+</details>
+<details>
+<summary>scatternd_mean</summary>
+
+```python
+data = np.array([[1, 2], [3, 4]], dtype=np.float32)
+indices = np.array([[0], [-2]], dtype=np.int64)
+updates = np.array([[3, 4], [5, 6]], dtype=np.float32)
+node = onnx.helper.make_node(
+    "ScatterND",
+    ["data", "indices", "updates"],
+    ["y"],
+    reduction="mean",
+)
+expect(
+    node,
+    inputs=[data, indices, updates],
+    outputs=[np.array([[3, 4], [3, 4]], dtype=np.float32)],
+    name="test_scatternd_mean",
+    opset_imports=[onnx.helper.make_opsetid("", 29)],
+)
+```
+
+</details>
+<details>
+<summary>scatternd_mean_integer</summary>
+
+```python
+node = onnx.helper.make_node(
+    "ScatterND",
+    ["data", "indices", "updates"],
+    ["y"],
+    reduction="mean",
+)
+data = np.array([[-2, 8], [9, 10]], dtype=np.int64)
+indices = np.array([[0, 0], [0, 0], [0, 1]], dtype=np.int64)
+updates = np.array([-3, -3, 5], dtype=np.int64)
+expect(
+    node,
+    inputs=[data, indices, updates],
+    outputs=[np.array([[-3, 6], [9, 10]], dtype=np.int64)],
+    name="test_scatternd_mean_integer",
+    opset_imports=[onnx.helper.make_opsetid("", 29)],
 )
 ```
 
@@ -28776,7 +29572,7 @@ expect(node, inputs=[x], outputs=[y], name="test_softmax_default_axis")
 
 
 ### SoftmaxCrossEntropyLoss
-There are 34 test cases, listed as following:
+There are 38 test cases, listed as following:
 <details>
 <summary>input_shape_is_NCd1_mean_weight_negative_ii</summary>
 
@@ -29125,6 +29921,29 @@ expect(
     inputs=[x, labels],
     outputs=[loss, log_prob],
     name="test_sce_NCd1d2d3d4d5_none_no_weight_log_prob",
+)
+```
+
+</details>
+<details>
+<summary>softmaxcrossentropy_large_finite_gap</summary>
+
+```python
+node = onnx.helper.make_node(
+    "SoftmaxCrossEntropyLoss",
+    ["x", "labels"],
+    ["loss", "log_prob"],
+    reduction="none",
+)
+x = np.array([[0, -200]], dtype=np.float32)
+labels = np.array([1], dtype=np.int64)
+expect(
+    node,
+    inputs=[x, labels],
+    outputs=[np.array([200], dtype=np.float32), x],
+    name="test_sce_large_finite_gap",
+    rtol=1e-3,
+    atol=0,
 )
 ```
 
@@ -29911,6 +30730,77 @@ expect(
 
 </details>
 <details>
+<summary>softmaxcrossentropy_single_class</summary>
+
+```python
+node = onnx.helper.make_node(
+    "SoftmaxCrossEntropyLoss",
+    ["x", "labels"],
+    ["loss", "log_prob"],
+    reduction="none",
+)
+x = np.array([[10], [-20]], dtype=np.float32)
+labels = np.zeros(2, dtype=np.int64)
+expect(
+    node,
+    inputs=[x, labels],
+    outputs=[np.zeros(2, dtype=np.float32), np.zeros_like(x)],
+    name="test_sce_single_class",
+    atol=0,
+)
+```
+
+</details>
+<details>
+<summary>softmaxcrossentropy_small_loss</summary>
+
+```python
+for dtype, margin in [
+    (np.float16, 10.0),
+    (np.float32, 18.0),
+    (np.float64, 40.0),
+]:
+    x = np.full((3, 3), -margin, dtype=dtype)
+    np.fill_diagonal(x, 0)
+    # Zero absolute tolerance catches a collapsed result; relative
+    # tolerance still allows differences between backend implementations.
+    # Independent analytical values ensure a regression cannot change
+    # both the implementation and its expected outputs together.
+    normalizer = np.log1p(2 * np.exp(-margin))
+    log_prob = (x.astype(np.float64) - normalizer).astype(dtype)
+    loss = np.array([normalizer, 2 * normalizer, 0], dtype=dtype)
+    x = np.repeat(x[..., None, None], 2, axis=-1)
+    log_prob = np.repeat(log_prob[..., None, None], 2, axis=-1)
+    loss = np.repeat(loss[..., None, None], 2, axis=-1)
+    labels = np.repeat(
+        np.array([0, 1, -1], dtype=np.int64)[..., None, None], 2, axis=-1
+    )
+    weights = np.array([1, 2, 3], dtype=dtype)
+    for reduction in ["none", "sum", "mean"]:
+        node = onnx.helper.make_node(
+            "SoftmaxCrossEntropyLoss",
+            ["x", "labels", "weights"],
+            ["loss", "log_prob"],
+            reduction=reduction,
+            ignore_index=-1,
+        )
+        expected_loss = loss
+        if reduction == "sum":
+            expected_loss = loss.sum()
+        elif reduction == "mean":
+            expected_loss = (loss.sum() / 6).astype(dtype)
+        expect(
+            node,
+            inputs=[x, labels, weights],
+            outputs=[expected_loss, log_prob],
+            name=f"test_sce_small_loss_{np.dtype(dtype).name}_{reduction}",
+            rtol=1e-3,
+            atol=0,
+        )
+```
+
+</details>
+<details>
 <summary>softmaxcrossentropy_sum</summary>
 
 ```python
@@ -29969,6 +30859,37 @@ expect(
     inputs=[x, labels],
     outputs=[loss, log_prob],
     name="test_sce_sum_log_prob",
+)
+```
+
+</details>
+<details>
+<summary>softmaxcrossentropy_tied_maxima</summary>
+
+```python
+node = onnx.helper.make_node(
+    "SoftmaxCrossEntropyLoss",
+    ["x", "labels"],
+    ["loss", "log_prob"],
+    reduction="none",
+)
+x = np.array([[0, 0, -200], [4, 4, 4]], dtype=np.float64)
+labels = np.array([1, 2], dtype=np.int64)
+loss = np.array([np.log(2), np.log(3)], dtype=np.float64)
+log_prob = np.array(
+    [
+        [-np.log(2), -np.log(2), -200 - np.log(2)],
+        [-np.log(3), -np.log(3), -np.log(3)],
+    ],
+    dtype=np.float64,
+)
+expect(
+    node,
+    inputs=[x, labels],
+    outputs=[loss, log_prob],
+    name="test_sce_tied_maxima",
+    rtol=1e-3,
+    atol=0,
 )
 ```
 

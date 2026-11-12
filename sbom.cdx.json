@@ -133,12 +133,27 @@
         }
       ],
       "licenses": [{"license": {"id": "BSD-3-Clause"}}]
+    },
+    {
+      "type": "data",
+      "name": "ggml-iq-codebooks",
+      "version": "da8e2a54b919557b816b1c2beb432ccb766f7ce0",
+      "bom-ref": "ggml-iq-codebooks",
+      "description": "IQ lookup tables compacted from ggml-common.h; no GGML runtime dependency",
+      "purl": "pkg:github/ggml-org/ggml@da8e2a54b919557b816b1c2beb432ccb766f7ce0",
+      "externalReferences": [
+        {
+          "type": "vcs",
+          "url": "https://github.com/ggml-org/ggml/blob/da8e2a54b919557b816b1c2beb432ccb766f7ce0/src/ggml-common.h"
+        }
+      ],
+      "licenses": [{"license": {"id": "MIT"}}]
     }
   ],
   "dependencies": [
     {
       "ref": "onnx",
-      "dependsOn": ["abseil-cpp", "protobuf", "nanobind"]
+      "dependsOn": ["abseil-cpp", "protobuf", "nanobind", "ggml-iq-codebooks"]
     },
     {"ref": "abseil-cpp"},
     {"ref": "protobuf"},
@@ -146,6 +161,7 @@
     {"ref": "protoc-linux-aarch_64"},
     {"ref": "protoc-osx-universal_binary"},
     {"ref": "protoc-win64"},
-    {"ref": "nanobind"}
+    {"ref": "nanobind"},
+    {"ref": "ggml-iq-codebooks"}
   ]
 }

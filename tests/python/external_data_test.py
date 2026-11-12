@@ -894,6 +894,33 @@ class TestCheckExternalDataBounds:
         checker.check_model(model_filename)
         onnx.load(model_filename)
 
+    def test_check_model_in_memory_does_not_resolve_against_cwd(self) -> None:
+        model_filename = self.create_test_model({}, self.value.tobytes())
+        model = onnx.load(model_filename, load_external_data=False)
+        with pytest.raises(
+            checker.ValidationError, match="not checked from a file path"
+        ):
+            checker.check_model(model)
+
+    def test_check_model_in_memory_hash_dotdot_location_still_rejected(self) -> None:
+        # '#unused/../data.bin' normalizes to 'data.bin', so it refers to a
+        # file even though the raw location starts with '#'.
+        model_filename = self.create_test_model(
+            {"location": "#unused/../data.bin"}, self.value.tobytes()
+        )
+        model = onnx.load(model_filename, load_external_data=False)
+        with pytest.raises(
+            checker.ValidationError, match="not checked from a file path"
+        ):
+            checker.check_model(model)
+
+    def test_check_model_bare_filename_still_resolves_against_cwd(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        model_filename = self.create_test_model({}, self.value.tobytes())
+        monkeypatch.chdir(self.temp_dir)
+        checker.check_model(os.path.basename(model_filename))
+
     @pytest.mark.parametrize(
         ("external_data", "data_size", "match"),
         [
@@ -964,6 +991,68 @@ class TestCheckExternalDataBounds:
 
         with pytest.raises(checker.ValidationError, match="non-negative integer"):
             checker.check_model(model_filename)
+
+
+class TestCheckExternalStringTensor:
+    """STRING tensors cannot be stored externally: onnx.load would put their bytes
+    into raw_data, which cannot hold strings.
+    """
+
+    @pytest.fixture(autouse=True)
+    def setup(self, tmp_path: Path) -> None:
+        self.temp_dir = str(tmp_path)
+
+    @staticmethod
+    def make_external_string_tensor(name: str) -> TensorProto:
+        tensor = TensorProto(name=name, data_type=TensorProto.STRING, dims=[2])
+        tensor.data_location = TensorProto.EXTERNAL
+        tensor.external_data.add(key="location", value="strings.bin")
+        return tensor
+
+    def save(self, model: ModelProto, *, with_data_file: bool) -> str:
+        if with_data_file:
+            with open(os.path.join(self.temp_dir, "strings.bin"), "wb") as data_file:
+                data_file.write(b"catdog")
+        model_filename = os.path.join(self.temp_dir, "model.onnx")
+        with open(model_filename, "wb") as model_file:
+            model_file.write(model.SerializeToString())
+        return model_filename
+
+    @staticmethod
+    def make_model(where: str, tensor: TensorProto) -> ModelProto:
+        output = helper.make_tensor_value_info("y", TensorProto.STRING, [2])
+        if where == "initializer":
+            nodes = [helper.make_node("Identity", [tensor.name], ["y"])]
+            return helper.make_model(
+                helper.make_graph(nodes, "g", [], [output], [tensor])
+            )
+        constant = helper.make_node("Constant", [], ["y"], value=tensor)
+        if where == "attribute":
+            return helper.make_model(helper.make_graph([constant], "g", [], [output]))
+        # where == "subgraph"
+        branch = helper.make_graph([constant], "branch", [], [output])
+        if_node = helper.make_node(
+            "If", ["cond"], ["y"], then_branch=branch, else_branch=branch
+        )
+        cond = helper.make_tensor_value_info("cond", TensorProto.BOOL, [])
+        return helper.make_model(helper.make_graph([if_node], "g", [cond], [output]))
+
+    @pytest.mark.parametrize("with_data_file", [True, False])
+    @pytest.mark.parametrize("where", ["initializer", "attribute", "subgraph"])
+    def test_check_model_rejects(self, where: str, with_data_file: bool) -> None:
+        model = self.make_model(where, self.make_external_string_tensor("labels"))
+        model_filename = self.save(model, with_data_file=with_data_file)
+        with pytest.raises(
+            checker.ValidationError,
+            match=r"STRING data .* should not be stored externally",
+        ):
+            checker.check_model(model_filename)
+
+    def test_check_tensor_rejects(self) -> None:
+        with pytest.raises(
+            checker.ValidationError, match="should not be stored externally"
+        ):
+            checker.check_tensor(self.make_external_string_tensor("labels"))
 
 
 class TestSaveAllTensorsAsExternalDataWithPath(TestSaveAllTensorsAsExternalData):
