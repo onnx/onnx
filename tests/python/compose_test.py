@@ -1058,6 +1058,62 @@ class TestComposeFunctions:
         assert [n.op_type for n in m.functions[1].node] == ["Add", "Mul", "Add"]
         assert [n.op_type for n in m.functions[2].node] == ["m3/f1", "Mul", "Add"]
 
+    def test_add_prefix_function_calls_in_subgraphs(self) -> None:
+        """Tests that local function calls inside subgraphs are prefixed"""
+        ops = [helper.make_opsetid("", 13), helper.make_opsetid("local", 1)]
+        f = helper.make_function(
+            "local",
+            "f1",
+            ["x"],
+            ["y"],
+            [helper.make_node("Add", ["x", "x"], ["y"])],
+            opset_imports=ops,
+        )
+        y = helper.make_tensor_value_info("y", TensorProto.FLOAT, [1])
+        then_branch = helper.make_graph(
+            [helper.make_node("f1", ["x"], ["y"], domain="local")],
+            "then",
+            [],
+            [y],
+        )
+        else_branch = helper.make_graph(
+            [helper.make_node("Identity", ["x"], ["y"])], "else", [], [y]
+        )
+        g = helper.make_graph(
+            [
+                helper.make_node(
+                    "If",
+                    ["c"],
+                    ["out"],
+                    then_branch=then_branch,
+                    else_branch=else_branch,
+                )
+            ],
+            "g",
+            [
+                helper.make_tensor_value_info("c", TensorProto.BOOL, []),
+                helper.make_tensor_value_info("x", TensorProto.FLOAT, [1]),
+            ],
+            [helper.make_tensor_value_info("out", TensorProto.FLOAT, [1])],
+        )
+        m = helper.make_model(g, opset_imports=ops, functions=[f])
+        checker.check_model(m)
+
+        prefixed = compose.add_prefix(m, "p/")
+        checker.check_model(prefixed)
+
+        assert [fn.name for fn in prefixed.functions] == ["p/f1"]
+        (branch,) = (
+            a.g for a in prefixed.graph.node[0].attribute if a.name == "then_branch"
+        )
+        assert [n.op_type for n in branch.node] == ["p/f1"]
+
+        (result,) = ReferenceEvaluator(prefixed).run(
+            None,
+            {"p/c": np.array(True), "p/x": np.array([2.0], dtype=np.float32)},
+        )
+        np.testing.assert_allclose(result, np.array([4.0], dtype=np.float32))
+
     def test_merge_drop_unnecessary_initializers_and_value_info(self) -> None:
         """Tests automatic removal of initializers when merging graphs"""
         ops = [helper.make_opsetid("", 10)]
