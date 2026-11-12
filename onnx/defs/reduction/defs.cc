@@ -69,7 +69,7 @@ static constexpr const char* reduce_log_sum_exp_func_body_29 = R"ONNX(
     maximum_out = Reshape <allowzero = 1> (maximum, output_shape)
     base = Add (maximum_out, log_count)
     finite_result = Add (base, correction)
-    infinite_out = IsInf (maximum_out)
+    infinite_out = Reshape <allowzero = 1> (infinite, output_shape)
     reduced_double = Where (infinite_out, maximum_out, finite_result)
     reduced = CastLike (reduced_double, data)
   }

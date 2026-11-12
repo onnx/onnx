@@ -625,6 +625,7 @@ def load_op(
                 )
             proto = FunctionProto()
             proto.ParseFromString(body)
+            del proto.output[len(node.output) :]
             assert evaluator_cls is not None, (
                 f"evaluator_cls must be specified to evaluate function {proto.name!r}"
             )

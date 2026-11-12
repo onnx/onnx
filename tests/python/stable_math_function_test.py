@@ -38,11 +38,19 @@ class ReduceLogSumExp(OpRunExpand):
     pass
 
 
+class LogCumSumExp(OpRunExpand):
+    pass
+
+
 class LogSoftmax(OpRunExpand):
     pass
 
 
 class SoftmaxCrossEntropyLoss(OpRunExpand):
+    pass
+
+
+class NegativeLogLikelihoodLoss(OpRunExpand):
     pass
 
 
@@ -55,7 +63,9 @@ _FUNCTION_OPS = [
     Celu,
     Mish,
     ReduceLogSumExp,
+    LogCumSumExp,
     SoftmaxCrossEntropyLoss,
+    NegativeLogLikelihoodLoss,
     LogSoftmax,
 ]
 _FUNCTIONS = [op.__name__ for op in _FUNCTION_OPS]
@@ -90,7 +100,7 @@ def _expand(op, feeds, output_shapes, *, opset=_OPSET, inline=True, **attributes
     )
     assert not any(node.op_type in _FUNCTIONS for node in expanded.graph.node)
     checker.check_model(expanded)
-    inferred = shape_inference.infer_shapes(expanded, strict_mode=True)
+    inferred = shape_inference.infer_shapes(expanded, strict_mode=True, check_type=True)
     checker.check_model(inferred)
     return expanded, ReferenceEvaluator(inferred)
 
@@ -214,6 +224,23 @@ def test_elu_selu_function_coefficient_edges(op, dtype, alpha):
     assert_array_equal(np.signbit(actual[zeros]), np.signbit(expected[zeros]))
 
 
+@pytest.mark.parametrize("dtype", _FLOAT_TYPES)
+@pytest.mark.parametrize(
+    "alpha", [0.0, -0.0, -0.5, np.inf, -np.inf, np.nan, 1e-30, 1e30]
+)
+def test_celu_function_coefficient_edges(dtype, alpha):
+    x = np.array([-np.inf, -1, -0.0, 0.0, 1, np.inf, np.nan], dtype=dtype)
+    _, evaluator = _expand("Celu", {"X": x}, {"Y": x.shape}, alpha=alpha)
+    with np.errstate(over="ignore", invalid="ignore", divide="ignore"):
+        coefficient = np.array(np.float32(alpha), dtype=dtype)
+        scaled = x / coefficient
+        expected = coefficient * np.where(scaled < 0, np.expm1(scaled), scaled)
+        (actual,) = evaluator.run(None, {"X": x})
+    _assert_close(actual, expected.astype(dtype))
+    zeros = (expected == 0) & (actual == 0)
+    assert_array_equal(np.signbit(actual[zeros]), np.signbit(expected[zeros]))
+
+
 @pytest.mark.parametrize("op", ["Elu", "Selu", "Celu"])
 @pytest.mark.parametrize("dtype", _FLOAT_TYPES)
 @pytest.mark.parametrize("inline", [False, True])
@@ -228,6 +255,67 @@ def test_activation_function_default_coefficients(op, dtype, inline):
     if op == "Selu":
         expected = np.where(wide < 0, alpha * np.expm1(wide), wide) * gamma
     _assert_close(actual, expected.astype(dtype))
+
+
+@pytest.mark.parametrize("dtype", _FLOAT_TYPES)
+def test_selu_function_subnormal_precision(dtype):
+    tiny = np.nextafter(np.array(0, dtype=dtype), np.array(1, dtype=dtype))
+    x = np.array([-tiny, tiny], dtype=dtype)
+    _, evaluator = _expand("Selu", {"X": x}, {"Y": x.shape})
+    (actual,) = evaluator.run(None, {"X": x})
+    wide = x.astype(np.float64)
+    alpha = np.array(np.float32(1.6732631921768188), dtype=dtype).astype(np.float64)
+    gamma = np.array(np.float32(1.0507010221481323), dtype=dtype).astype(np.float64)
+    expected = (np.where(wide < 0, alpha * np.expm1(wide), wide) * gamma).astype(dtype)
+    _assert_close(actual, expected)
+
+
+@pytest.mark.parametrize("dtype", _FLOAT_TYPES)
+def test_mish_function_single_promotion(dtype):
+    x = np.array([-104, -20, 0, 100], dtype=dtype)
+    model, evaluator = _expand("Mish", {"X": x}, {"Y": x.shape})
+    # The shared Softplus core must not cast an already promoted tensor again.
+    casts = [node for node in model.graph.node if node.op_type == "Cast"]
+    assert len(casts) == 1
+    (actual,) = evaluator.run(None, {"X": x})
+    wide = x.astype(np.float64)
+    expected = (wide * np.tanh(np.logaddexp(wide, 0))).astype(dtype)
+    _assert_close(actual, expected)
+
+
+@pytest.mark.parametrize("op", ["LogSoftmax", "LogCumSumExp"])
+@pytest.mark.parametrize("dtype", [np.float32, np.float64])
+def test_unpromoted_context_function_avoids_round_trip_copies(op, dtype):
+    input_name = "input" if op == "LogSoftmax" else "X"
+    x_type = helper.make_tensor_type_proto(
+        helper.np_dtype_to_tensor_dtype(np.dtype(dtype)), [2, 3]
+    )
+    node = helper.make_node(op, [input_name], ["Y"])
+    schema = defs.get_schema(op, _OPSET)
+    function = onnx.FunctionProto.FromString(
+        schema.get_context_dependent_function_with_opset_version(
+            _OPSET, node.SerializeToString(), [x_type.SerializeToString()]
+        )
+    )
+    assert not any(
+        node.op_type in {"Cast", "CastLike", "Identity"} and node.input[0] == input_name
+        for node in function.node
+    )
+    assert function.node[-1].op_type not in {"Cast", "CastLike", "Identity"}
+
+
+@pytest.mark.parametrize("dtype", _FLOAT_TYPES)
+@pytest.mark.parametrize("inline", [False, True])
+def test_logcumsumexp_function_supported_dtypes(dtype, inline):
+    x = np.array([[0, -20, -40], [np.inf, -np.inf, np.nan]], dtype=dtype)
+    _, evaluator = _expand(
+        "LogCumSumExp", {"X": x}, {"Y": x.shape}, inline=inline, axis=1
+    )
+    with np.errstate(invalid="raise"):
+        (actual,) = evaluator.run(None, {"X": x})
+    with np.errstate(invalid="ignore"):
+        expected = np.logaddexp.accumulate(x.astype(np.float64), axis=1).astype(dtype)
+    _assert_close(actual, expected)
 
 
 def _logsumexp_oracle(x, axes, keepdims, noop):
@@ -347,6 +435,59 @@ def test_cross_entropy_function_transitive_log1p(dtype, margin, inline):
     normalizer = np.log1p(2 * np.exp(-margin))
     _assert_close(loss, np.array([normalizer], dtype=dtype))
     _assert_close(log_prob, (x.astype(np.float64) - normalizer).astype(dtype))
+
+
+@pytest.mark.parametrize("dtype", _FLOAT_TYPES)
+@pytest.mark.parametrize("label_dtype", [np.int32, np.int64])
+@pytest.mark.parametrize("weighted", [False, True])
+@pytest.mark.parametrize("log_prob_output", [False, True])
+@pytest.mark.parametrize("reduction", ["none", "sum", "mean"])
+@pytest.mark.parametrize("inline", [False, True])
+def test_cross_entropy_function_supported_dtypes(
+    dtype, label_dtype, weighted, log_prob_output, reduction, inline
+):
+    scores = np.array(
+        [
+            [[0, -2], [-20, 0], [-30, -20]],
+            [[-3, 0], [-2, -20], [0, -30]],
+        ],
+        dtype=dtype,
+    )
+    labels = np.array([[0, 1], [2, -1]], dtype=label_dtype)
+    feeds = {"scores": scores, "labels": labels}
+    weights = np.array([0.25, 2, 1.5], dtype=dtype) if weighted else None
+    if weights is not None:
+        feeds["weights"] = weights
+    wide = scores.astype(np.float64)
+    log_prob = wide - np.logaddexp.reduce(wide, axis=1, keepdims=True)
+    safe_labels = np.maximum(labels, 0)
+    loss = -np.take_along_axis(log_prob, safe_labels[:, None, :], axis=1)[:, 0, :]
+    sample_weights = (
+        weights.astype(np.float64)[safe_labels]
+        if weights is not None
+        else np.ones(labels.shape, dtype=np.float64)
+    )
+    sample_weights = np.where(labels == -1, 0, sample_weights)
+    loss *= sample_weights
+    if reduction != "none":
+        loss = np.sum(loss)
+        if reduction == "mean":
+            loss /= np.sum(sample_weights)
+    output_shapes = {"loss": loss.shape}
+    if log_prob_output:
+        output_shapes["log_prob"] = scores.shape
+    _, evaluator = _expand(
+        "SoftmaxCrossEntropyLoss",
+        feeds,
+        output_shapes,
+        inline=inline,
+        reduction=reduction,
+        ignore_index=-1,
+    )
+    outputs = evaluator.run(None, feeds)
+    _assert_close(outputs[0], np.asarray(loss, dtype=dtype))
+    if log_prob_output:
+        _assert_close(outputs[1], log_prob.astype(dtype))
 
 
 @pytest.mark.parametrize("op", ["Softplus", "Mish"])
