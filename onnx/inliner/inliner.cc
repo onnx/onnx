@@ -501,6 +501,19 @@ using FunctionMap = std::unordered_map<FunctionImplId, std::pair<const FunctionP
 
 using NodeList = google::protobuf::RepeatedPtrField<NodeProto>;
 
+void AddSchemaDefaultAttributes(NodeProto& node, const OpSchema& schema) {
+  for (const auto& [name, attr] : schema.attributes()) {
+    if (attr.default_value.type() == AttributeProto::UNDEFINED) {
+      continue;
+    }
+    const auto& attributes = node.attribute();
+    if (std::none_of(
+            attributes.begin(), attributes.end(), [&](const AttributeProto& value) { return value.name() == name; })) {
+      *node.add_attribute() = attr.default_value;
+    }
+  }
+}
+
 struct InlinerImpl {
   ModelProto& model;
   const FunctionIdSet& to_inline;
@@ -523,7 +536,7 @@ struct InlinerImpl {
 
   ~InlinerImpl() = default;
 
-  bool GetCallee(const NodeProto& node, FunctionProto& callee, int64_t& target_version) {
+  bool GetCallee(NodeProto& node, FunctionProto& callee, int64_t& target_version) {
     const std::string& domain = node.domain();
     const std::string& function_name = node.op_type();
     if (!to_inline.Contains(domain, function_name)) {
@@ -551,6 +564,7 @@ struct InlinerImpl {
         const FunctionProto* function_ptr = op_schema->GetFunction(domain_version, false);
         if (function_ptr != nullptr) {
           callee = *function_ptr;
+          AddSchemaDefaultAttributes(node, *op_schema);
           target_version = kNoConversion;
           return true;
         }
@@ -565,7 +579,11 @@ struct InlinerImpl {
         }
         ONNX_NAMESPACE::FunctionBodyBuildContextImpl function_body_ctx(node, input_types);
         target_version = kNoConversion;
-        return op_schema->BuildContextDependentFunction(function_body_ctx, callee, domain_version);
+        if (!op_schema->BuildContextDependentFunction(function_body_ctx, callee, domain_version)) {
+          return false;
+        }
+        AddSchemaDefaultAttributes(node, *op_schema);
+        return true;
       }
     }
     return false;

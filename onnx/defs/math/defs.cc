@@ -325,6 +325,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             AttributeProto::FLOAT,
             1.05070102214813232421875f)
         .SetDoc(kDoc_Selu_ver6)
+        .SetNodeDeterminism(OpSchema::NodeDeterminism::Deterministic)
         .Input(0, "X", "Input tensor", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
         .Output(0, "Y", "Output tensor", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
         .TypeConstraint("T", OpSchema::all_float_types_ir4(), "Constrain input and output types to float tensors.")
@@ -347,7 +348,44 @@ ONNX_OPERATOR_SET_SCHEMA(
             Y = Where(XLessThanZero, Neg, Pos)
           }
         )ONNX",
-            18));
+            18)
+        // Factoring out a zero or infinite alpha would change signed zeros or
+        // turn an indeterminate subtraction into infinity.
+        .FunctionBody(
+            R"ONNX(
+          {
+            Alpha = Constant <value_float: float = @alpha>()
+            AlphaCast = CastLike (Alpha, X)
+            Gamma = Constant <value_float: float = @gamma>()
+            GammaCast = CastLike (Gamma, X)
+            Zero = Constant <value = float {0.0}>()
+            ZeroCast = CastLike (Zero, X)
+            AlphaZero = Equal (AlphaCast, ZeroCast)
+            AlphaInfinite = IsInf (AlphaCast)
+            Unfactored = Or (AlphaZero, AlphaInfinite)
+            X_acc = Cast <to = 11> (X)
+            Alpha_acc = Cast <to = 11> (AlphaCast)
+            Gamma_acc = Cast <to = 11> (GammaCast)
+            Negative = If (Unfactored) <
+              then_branch = unfactored () => (Difference) {
+                ExpX = Exp (X)
+                AlphaMulExpX = Mul (AlphaCast, ExpX)
+                DifferenceNarrow = Sub (AlphaMulExpX, AlphaCast)
+                Difference = Cast <to = 11> (DifferenceNarrow)
+              },
+              else_branch = factored () => (Product) {
+                ExpXSubOne = Expm1 (X_acc)
+                Product = Mul (Alpha_acc, ExpXSubOne)
+              }
+            >
+            Neg = Mul (Gamma_acc, Negative)
+            Pos = Mul (Gamma_acc, X_acc)
+            XLessThanZero = Less (X, ZeroCast)
+            Y_acc = Where (XLessThanZero, Neg, Pos)
+            Y = CastLike (Y_acc, X)
+          }
+        )ONNX",
+            29));
 
 ONNX_OPERATOR_SET_SCHEMA(
     Elu,
@@ -375,7 +413,21 @@ ONNX_OPERATOR_SET_SCHEMA(
             Y = Where(XLessThanZero, AlphaMulExpXSubOne, X)
           }
         )ONNX",
-            18));
+            18)
+        .FunctionBody(
+            R"ONNX(
+          {
+            Alpha = Constant <value_float: float = @alpha>()
+            AlphaCast = CastLike (Alpha, X)
+            Zero = Constant <value = float {0.0}>()
+            ZeroCast = CastLike (Zero, X)
+            XLessThanZero = Less (X, ZeroCast)
+            ExpXSubOne = Expm1 (X)
+            AlphaMulExpXSubOne = Mul (AlphaCast, ExpXSubOne)
+            Y = Where (XLessThanZero, AlphaMulExpXSubOne, X)
+          }
+        )ONNX",
+            29));
 
 ONNX_OPERATOR_SET_SCHEMA(
     Mish,
@@ -392,6 +444,17 @@ ONNX_OPERATOR_SET_SCHEMA(
             Y = Mul (X, TanHSoftplusX)
            }
         )ONNX")
+        .FunctionBody(
+            R"ONNX(
+          {
+            X_acc = Cast <to = 11> (X)
+            Softplus_X = Softplus (X_acc)
+            TanHSoftplusX = Tanh (Softplus_X)
+            Y_acc = Mul (X_acc, TanHSoftplusX)
+            Y = CastLike (Y_acc, X)
+          }
+        )ONNX",
+            29)
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
 ONNX_OPERATOR_SET_SCHEMA(
@@ -419,7 +482,18 @@ ONNX_OPERATOR_SET_SCHEMA(
             EluResult = Elu <alpha = 1.0> (XScaled)
             Y = Mul (AlphaCast, EluResult)
           }
-        )ONNX"));
+        )ONNX")
+        .FunctionBody(
+            R"ONNX(
+          {
+            Alpha = Constant <value_float: float = @alpha>()
+            AlphaCast = CastLike (Alpha, X)
+            XScaled = Div (X, AlphaCast)
+            EluResult = Elu <alpha = 1.0> (XScaled)
+            Y = Mul (AlphaCast, EluResult)
+          }
+        )ONNX",
+            29));
 
 static constexpr const char* gelu_default_approx = "none";
 
@@ -1228,7 +1302,22 @@ ONNX_OPERATOR_SET_SCHEMA(
               Y = Log (exp_x_add_one)
             }
             )ONNX",
-            18));
+            18)
+        .FunctionBody(
+            R"ONNX(
+            {
+              X_acc = Cast <to = 11> (X)
+              Zero = Constant <value = double {0.0}>()
+              Positive = Max (X_acc, Zero)
+              Absolute = Abs (X_acc)
+              NegativeAbsolute = Neg (Absolute)
+              Exponential = Exp (NegativeAbsolute)
+              Correction = Log1p (Exponential)
+              Result = Add (Positive, Correction)
+              Y = CastLike (Result, X)
+            }
+            )ONNX",
+            29));
 
 static void GemmShapeInference(InferenceContext& ctx) {
   propagateElemTypeFromInputToOutput(ctx, 0, 0);
@@ -2051,8 +2140,6 @@ BuildLogCumSumExpFunction(const FunctionBodyBuildContext& ctx, const OpSchema& s
       )ONNX";
   // Flatten the dimensions before and after the axis so the Scan always uses axis 0,
   // including when X's rank is unknown at function-building time.
-  // The log1p correction below retains exp(difference) when 1 + exp(difference)
-  // rounds to 1; its argument is in [0, 1], so the correction is well-conditioned.
   const std::string acc_type = use_double ? "double" : "float";
   builder.Add((prefix + R"ONNX(
             final_state, scanned = Scan (initial, scan_input) <
@@ -2061,9 +2148,7 @@ BuildLogCumSumExpFunction(const FunctionBodyBuildContext& ctx, const OpSchema& s
                acc_type + "[?, ?] previous, " + acc_type + "[?, ?] current) => (" + acc_type + "[?, ?] next, " +
                acc_type + R"ONNX([?, ?] output) {
                 zero_acc = Constant <value = float {0}> ()
-                one_acc = Constant <value = float {1}> ()
                 zero_t = CastLike (zero_acc, previous)
-                one_t = CastLike (one_acc, previous)
                 maximum = Max (previous, current)
                 minimum = Min (previous, current)
                 infinite = IsInf (maximum)
@@ -2071,12 +2156,7 @@ BuildLogCumSumExpFunction(const FunctionBodyBuildContext& ctx, const OpSchema& s
                 safe_minimum = Where (infinite, zero_t, minimum)
                 difference = Sub (safe_minimum, safe_maximum)
                 exponential = Exp (difference)
-                sum = Add (one_t, exponential)
-                logarithm = Log (sum)
-                rounded_exponential = Sub (sum, one_t)
-                error = Sub (exponential, rounded_exponential)
-                correction = Div (error, sum)
-                log_one_plus = Add (logarithm, correction)
+                log_one_plus = Log1p (exponential)
                 finite_result = Add (safe_maximum, log_one_plus)
                 result = Where (infinite, maximum, finite_result)
                 previous_nan = IsNaN (previous)
