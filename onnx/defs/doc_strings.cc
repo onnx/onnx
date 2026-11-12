@@ -41,6 +41,31 @@ shift on a negative X, where the fill is a sign bit of 1, and 0 in every other
 case.
 )DOC";
 
+const char kDoc_MeanVarianceNormalization_ver13[] = R"DOC(
+Computes mean-variance normalization of `X`:
+`Y = (X - mean) / (sqrt(variance) + 1e-9)`, where
+`mean = ReduceMean(X, axes)` and
+`variance = ReduceMean(X^2, axes) - mean^2`.
+Each reduction computes the arithmetic mean over `axes` and retains the
+reduced dimensions with size 1 for broadcasting.
+)DOC";
+
+const char kDoc_MeanVarianceNormalization_ver29[] = R"DOC(
+Computes mean-variance normalization of `X`:
+`Y = (X - mean) / (sqrt(variance) + epsilon)`, where
+`mean = ReduceMean(X, axes)` and
+`variance = ReduceMean((X - mean)^2, axes)`.
+Each reduction computes the arithmetic mean over `axes` and retains the
+reduced dimensions with size 1 for broadcasting.
+An empty `axes` list reduces over all dimensions.
+
+The default `epsilon` is 1e-9 and is added after the square root.
+For float16 and bfloat16 inputs, `X` is converted to float32 before computation.
+Otherwise, computation uses the input type. `epsilon` is converted to the
+computation type, and the result is cast to the input type.
+`Y` has the same shape and element type as `X`.
+)DOC";
+
 const char kDoc_GRU_ver14[] = R"DOC(
 Computes an one-layer GRU. This operator is usually supported via some custom
 implementation such as CuDNN.
@@ -4535,6 +4560,96 @@ output = [
 ]
 ```
 )DOC";
+const char kDoc_ScatterElements_ver29[] = R"DOC(
+ScatterElements takes three inputs `data`, `indices`, and `updates` of the same
+rank r >= 1. `indices` and `updates` must have the same shape; their sizes must
+not exceed the sizes of `data` in dimensions other than `axis`.
+`data` and `updates` must have the same element type.
+The output has the same shape and element type as `data`.
+
+For each entry in `updates`, the target coordinate is the entry's coordinate
+with the coordinate along `axis` replaced by the corresponding value in `indices`.
+For an axis of size s, index values must be in [-s, s-1].
+A negative index i identifies the same element as i + s.
+
+When `reduction` is "none", each update replaces its target element. Multiple
+updates must not address the same output element.
+For other reductions, group all updates that address the same output element.
+Also include the original `data` value exactly once in that group.
+Elements not addressed by any update retain their original `data` values.
+"add", "mul", "max", and "min" compute the sum, product, maximum,
+and minimum of each group, respectively.
+
+For "mean", consider an output element addressed by N >= 1 updates.
+Let x be its original `data` value and u_1, ..., u_N be those update values.
+Its output value is:
+```
+output = (x + u_1 + ... + u_N) / (N + 1)
+```
+The "mean" reduction supports integer and floating-point tensors, but not
+boolean, string, or complex tensors. Integer results are rounded toward
+negative infinity. Floating-point results are converted to the input element
+type after division.
+
+A floating-point mean is NaN if x, u_1, ..., u_N contain a NaN or infinities of
+both signs. Otherwise, if any of these values is infinite, the mean is that infinity.
+
+Example:
+```
+data = [1.0, 2.0, 3.0, 4.0]
+indices = [0, 1, 0, 1, 2, 1]
+updates = [1.0, 2.0, 3.0, 4.0, 5.0, 6.0]
+axis = 0
+reduction = "mean"
+output = [5.0 / 3.0, 3.5, 4.0, 4.0]
+```
+)DOC";
+const char kDoc_ScatterND_ver29[] = R"DOC(
+ScatterND takes `data` of rank r >= 1, `indices` of rank q >= 1, and `updates`
+of rank q + r - k - 1, where k = indices.shape[-1] and 0 <= k <= r.
+`data` and `updates` must have the same element type.
+The output has the same shape and element type as `data`.
+
+Each entry in `indices` is a k-tuple indexing the first k dimensions of `data`.
+For a dimension of size s, index values must be in [-s, s-1].
+A negative index i identifies the same position as i + s.
+Each tuple addresses a single element when k = r or a slice of the trailing
+r - k dimensions otherwise. When k = 0, each tuple addresses the entire tensor.
+The shape of `updates` must equal indices.shape[:-1] + data.shape[k:].
+For every coordinate `i` in indices.shape[:-1], updates[i] is scattered to
+output[tuple(indices[i])].
+
+When `reduction` is "none", updates replace the addressed elements or slices,
+and multiple tuples must not address the same location.
+For other reductions, group all updates addressing the same location and reduce
+elementwise over each group, including the original `data` value exactly once.
+Untouched elements retain their original `data` values.
+"add", "mul", "max", and "min" compute the sum, product, maximum, and minimum,
+respectively.
+
+For "mean", consider an output element addressed by N >= 1 updates.
+Let x be its original `data` value and u_1, ..., u_N be those update values.
+Its output value is:
+```
+output = (x + u_1 + ... + u_N) / (N + 1)
+```
+The "mean" reduction supports integer and floating-point tensors, but not
+boolean, string, or complex tensors. Integer results are rounded toward
+negative infinity. Floating-point results are converted to the input element
+type after division.
+
+A floating-point mean is NaN if x, u_1, ..., u_N contain a NaN or infinities of
+both signs. Otherwise, if any of these values is infinite, the mean is that infinity.
+
+Example:
+```
+data = [[1.0, 2.0], [3.0, 4.0]]
+indices = [[0], [0]]
+updates = [[3.0, 4.0], [5.0, 6.0]]
+reduction = "mean"
+output = [[3.0, 4.0], [3.0, 4.0]]
+```
+)DOC";
 const char kDoc_ScatterElements_ver18[] = R"DOC(
 ScatterElements takes three inputs `data`, `updates`, and `indices` of the same
 rank r >= 1 and an optional attribute axis that identifies an axis of `data`
@@ -6739,6 +6854,8 @@ const char kDoc_RandomNormal_ver1[] = "";
 const char kDoc_Round_ver11[] = "";
 const char kDoc_SpaceToDepth_ver1[] = "";
 const char kDoc_InstanceNormalization_ver6[] = "";
+const char kDoc_MeanVarianceNormalization_ver13[] = "";
+const char kDoc_MeanVarianceNormalization_ver29[] = "";
 const char kDoc_ThresholdedRelu_ver10[] = "";
 const char kDoc_Acosh_ver9[] = "";
 const char kDoc_Dropout_ver13[] = "";
@@ -6929,7 +7046,9 @@ const char kDoc_Resize_ver19[] = "";
 const char kDoc_GatherElements_ver13[] = "";
 const char kDoc_Gather_ver13[] = "";
 const char kDoc_ScatterElements_ver18[] = "";
+const char kDoc_ScatterElements_ver29[] = "";
 const char kDoc_ScatterND_ver18[] = "";
+const char kDoc_ScatterND_ver29[] = "";
 const char kDoc_Scatter_ver11[] = "";
 const char kDoc_Slice_ver13[] = "";
 const char kDoc_Split_ver18[] = "";

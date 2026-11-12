@@ -6,13 +6,17 @@ from __future__ import annotations
 import contextlib
 from typing import TYPE_CHECKING
 
+import ml_dtypes
+import numpy as np
 import pytest
 
 import onnx
-from onnx import TensorProto, defs, helper
+from onnx import AttributeProto, TensorProto, defs, helper
+from onnx.reference import ReferenceEvaluator
 
 MOD_OPSET_13 = 13
 MOD_OPSET_28 = 28
+MVN_LEGACY_OPSET = 13
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
@@ -36,12 +40,174 @@ class TestSchema:
         assert type(v) is onnx.AttributeProto
         assert v.type == onnx.AttributeProto.FLOAT
 
+    def test_mean_variance_normalization_opset29_schema(self) -> None:
+        opset = 29
+        schema = defs.get_schema("MeanVarianceNormalization", opset)
+        old_schema = defs.get_schema("MeanVarianceNormalization", opset - 1)
+
+        assert schema.since_version == opset
+        assert schema.attributes["epsilon"].default_value.f == pytest.approx(1e-9)
+        assert tuple(schema.attributes["axes"].default_value.ints) == (0, 2, 3)
+        assert schema.has_context_dependent_function
+        assert schema.node_determinism == defs.OpSchema.NodeDeterminism.Deterministic
+        assert "epsilon" not in old_schema.attributes
+
+        node = helper.make_node(
+            "MeanVarianceNormalization",
+            ["X"],
+            ["Y"],
+            axes=[1, -1],
+            epsilon=1e-5,
+        )
+        function_proto = onnx.FunctionProto()
+        function_proto.ParseFromString(
+            schema.get_context_dependent_function(
+                node.SerializeToString(),
+                [self._tensor_type_proto(TensorProto.DOUBLE).SerializeToString()],
+            )
+        )
+        casts = {
+            output: helper.get_attribute_value(n.attribute[0])
+            for n in function_proto.node
+            if n.op_type == "Cast"
+            for output in n.output
+        }
+        assert casts == {
+            "XCompute": TensorProto.DOUBLE,
+            "Exponent": TensorProto.DOUBLE,
+            "Epsilon": TensorProto.DOUBLE,
+            "Y": TensorProto.DOUBLE,
+        }
+        epsilon_constant = next(
+            n
+            for n in function_proto.node
+            if "EpsilonFloat" in n.output and n.op_type == "Constant"
+        )
+        assert epsilon_constant.attribute[0].ref_attr_name == "epsilon"
+
+        linked_epsilon = helper.make_attribute_ref(
+            "epsilon", AttributeProto.FLOAT, ref_attr_name="outer_epsilon"
+        )
+        linked_node = helper.make_node(
+            "MeanVarianceNormalization", ["X"], ["Y"], axes=[0]
+        )
+        linked_node.attribute.append(linked_epsilon)
+        linked_function = onnx.FunctionProto()
+        linked_function.ParseFromString(
+            schema.get_context_dependent_function(
+                linked_node.SerializeToString(),
+                [self._tensor_type_proto(TensorProto.FLOAT).SerializeToString()],
+            )
+        )
+        linked_constant = next(
+            n
+            for n in linked_function.node
+            if "EpsilonFloat" in n.output and n.op_type == "Constant"
+        )
+        assert linked_constant.attribute[0].ref_attr_name == "epsilon"
+
+    def test_mean_variance_normalization_legacy_static_function(self) -> None:
+        schema = defs.get_schema("MeanVarianceNormalization", 28)
+        assert schema.since_version == MVN_LEGACY_OPSET
+        assert schema.has_function
+        assert not schema.has_context_dependent_function
+        assert schema.function_body.name == "MeanVarianceNormalization"
+        assert all(node.op_type != "Cast" for node in schema.function_body.node)
+
+    @pytest.mark.parametrize(
+        ("requested_opset", "body_opset"), [(13, 13), (18, 18), (29, 18)]
+    )
+    @pytest.mark.parametrize("axes", [[1, -1], []])
+    @pytest.mark.parametrize("epsilon", [None, 1e-5])
+    @pytest.mark.parametrize(
+        ("elem_type", "dtype"),
+        [
+            (TensorProto.FLOAT16, np.float16),
+            (TensorProto.BFLOAT16, ml_dtypes.bfloat16),
+            (TensorProto.FLOAT, np.float32),
+            (TensorProto.DOUBLE, np.float64),
+        ],
+    )
+    def test_mean_variance_normalization_function_opsets(
+        self, requested_opset, body_opset, axes, epsilon, elem_type, dtype
+    ) -> None:
+        schema = defs.get_schema("MeanVarianceNormalization", 29)
+        node = helper.make_node("MeanVarianceNormalization", ["X"], ["Y"])
+        node.attribute.append(
+            helper.make_attribute("axes", axes, attr_type=AttributeProto.INTS)
+        )
+        if epsilon is not None:
+            node.attribute.append(helper.make_attribute("epsilon", epsilon))
+        function = onnx.FunctionProto()
+        input_types = [
+            helper.make_tensor_type_proto(elem_type, [2, 3, 4]).SerializeToString()
+        ]
+        if requested_opset == 29:
+            function_bytes = schema.get_context_dependent_function(
+                node.SerializeToString(), input_types
+            )
+        else:
+            function_bytes = schema.get_context_dependent_function_with_opset_version(
+                requested_opset,
+                node.SerializeToString(),
+                input_types,
+            )
+        function.ParseFromString(function_bytes)
+        assert function.opset_import[0].version == requested_opset
+        onnx.checker.check_function(function)
+        reductions = [n for n in function.node if n.op_type == "ReduceMean"]
+        assert len(reductions) == 2
+        assert all(len(n.input) == (1 if body_opset == 13 else 2) for n in reductions)
+
+        attributes: dict[str, list[int] | float] = {"axes": axes}
+        if epsilon is not None:
+            attributes["epsilon"] = epsilon
+        x = np.arange(24, dtype=dtype).reshape(2, 3, 4)
+        got = ReferenceEvaluator(function).run(None, {"X": x}, attributes=attributes)[0]
+        compute_x = (
+            x.astype(np.float32)
+            if elem_type in (TensorProto.FLOAT16, TensorProto.BFLOAT16)
+            else x
+        )
+        reduce_axes = tuple(axes) or None
+        centered = compute_x - np.mean(compute_x, axis=reduce_axes, keepdims=True)
+        variance = np.mean(np.square(centered), axis=reduce_axes, keepdims=True)
+        effective_epsilon = np.asarray(
+            np.float32(1e-9 if epsilon is None else epsilon), dtype=compute_x.dtype
+        )
+        expected = (centered / (np.sqrt(variance) + effective_epsilon)).astype(dtype)
+        assert got.dtype == x.dtype
+        np.testing.assert_allclose(
+            got.astype(np.float64), expected.astype(np.float64), rtol=1e-5, atol=1e-6
+        )
+
     def test_function_body(self) -> None:
         selu_schema = defs.get_schema("Selu")
         assert type(selu_schema.function_body) is onnx.FunctionProto
         assert (
             selu_schema.node_determinism == defs.OpSchema.NodeDeterminism.Deterministic
         )
+
+    @pytest.mark.parametrize(
+        ("kernel", "dilation", "expected"),
+        [(2, 2**63 - 1, False), (2, 2**63 - 2, True), (1, 2**63 - 1, True)],
+    )
+    def test_causal_conv_with_state_function_kernel_boundary(
+        self, kernel: int, dilation: int, expected: bool
+    ) -> None:
+        node = helper.make_node(
+            "CausalConvWithState", ["X", "W"], ["Y", "S"], dilation=dilation
+        )
+        input_types = [
+            helper.make_tensor_type_proto(TensorProto.FLOAT, [1, 1, 0]),
+            helper.make_tensor_type_proto(TensorProto.FLOAT, [1, 1, kernel]),
+        ]
+        function = defs.get_schema(
+            "CausalConvWithState", 29
+        ).get_context_dependent_function(
+            node.SerializeToString(), [t.SerializeToString() for t in input_types]
+        )
+        assert bool(function) == expected
 
     @pytest.mark.parametrize("op_version", [23, 24])
     @pytest.mark.parametrize(

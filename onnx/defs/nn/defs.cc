@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include <algorithm>
+#include <limits>
 #include <string>
 #include <vector>
 
@@ -2117,60 +2118,31 @@ ONNX_OPERATOR_SET_SCHEMA(
         })
         .SetDoc(kDoc_TfIdfVectorizer_ver9));
 
-static const std::vector<int64_t> mvn_default_axes = {0, 2, 3};
-
 ONNX_OPERATOR_SET_SCHEMA(
     MeanVarianceNormalization,
-    13,
+    29,
     OpSchema()
-        .SetDoc(kDoc_mvn_ver13)
+        .SetDoc(kDoc_MeanVarianceNormalization_ver29)
         .Input(0, "X", "Input tensor", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
         .Output(0, "Y", "Output tensor", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
         .Attr(
             "axes",
-            "A list of integers, along which to reduce. The default is to "
-            "calculate along axes [0,2,3] for calculating mean and variance "
-            "along each channel. Two variables with the same C-coordinate "
-            "are associated with the same mean and variance.",
+            "Axes over which to compute mean and variance. Values must be in "
+            "[-r, r-1], where r is the rank of X; negative values count from "
+            "the last dimension. An empty list reduces over all dimensions. "
+            "The default is [0, 2, 3], which computes per-channel statistics "
+            "for an NCHW tensor.",
             AttributeProto::INTS,
-            mvn_default_axes)
+            defs::nn::utils::kMeanVarianceNormalizationDefaultAxes)
+        .Attr("epsilon", "Value added to the standard deviation in the denominator.", AttributeProto::FLOAT, 1e-9f)
         .TypeConstraint(
             "T",
             {types::Float16, types::Float, types::Double, types::BFloat16},
-            "Constrain input and output types to all numeric tensors.")
-        .FunctionBody(R"ONNX(
-        {
-          Exponent = Constant <value = float {2.0}>()
-          Epsilon = Constant <value = float {1e-9}>()
-          X_RM = ReduceMean <axes : ints = @axes> (X)
-          EX_squared = Pow (X_RM, Exponent)
-          X_squared = Pow (X, Exponent)
-          E_Xsquared = ReduceMean <axes : ints = @axes> (X_squared)
-          Variance = Sub (E_Xsquared, EX_squared)
-          STD = Sqrt (Variance)
-          X_variance = Sub (X, X_RM)
-          Processed_STD = Add (STD, Epsilon)
-          Y = Div (X_variance, Processed_STD)
-        }
-        )ONNX")
-        .FunctionBody(
-            R"ONNX(
-        {
-          Exponent = Constant <value = float {2.0}>()
-          Epsilon = Constant <value = float {1e-9}>()
-          axes = Constant <value_ints: ints = @axes>()
-          X_RM = ReduceMean (X, axes)
-          EX_squared = Pow (X_RM, Exponent)
-          X_squared = Pow (X, Exponent)
-          E_Xsquared = ReduceMean (X_squared, axes)
-          Variance = Sub (E_Xsquared, EX_squared)
-          STD = Sqrt (Variance)
-          X_variance = Sub (X, X_RM)
-          Processed_STD = Add (STD, Epsilon)
-          Y = Div (X_variance, Processed_STD)
-        }
-        )ONNX",
-            18));
+            "Constrain input and output types to floating-point tensors.")
+        .SetNodeDeterminism(OpSchema::NodeDeterminism::Deterministic)
+        .SetContextDependentFunctionBodyBuilder(defs::nn::utils::BuildMeanVarianceNormalizationFunctionBody_opset13, 13)
+        .SetContextDependentFunctionBodyBuilder(defs::nn::utils::BuildMeanVarianceNormalizationFunctionBody_opset18, 18)
+        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
 static void col2imShapeInference(InferenceContext& ctx) {
   propagateElemTypeFromInputToOutput(ctx, 0, 0);
@@ -3598,248 +3570,259 @@ ONNX_OPERATOR_SET_SCHEMA(
           return true;
         }));
 
-ONNX_OPERATOR_SET_SCHEMA(
-    CausalConvWithState,
-    27,
-    OpSchema()
-        .SetDoc(kDoc_CausalConvWithState_ver27)
-        .Attr(
-            "activation",
-            "Fused activation function. One of: 'silu', 'swish', 'none'. "
-            "Default is 'none'.",
-            AttributeProto::STRING,
-            std::string("none"))
-        .Input(
-            0,
-            "input",
-            "Input tensor with shape (batch_size, channels, length). Channels-first layout.",
-            "T",
-            OpSchema::Single,
-            true,
-            1,
-            OpSchema::Differentiable)
-        .Input(
-            1,
-            "weight",
-            "Depthwise convolution kernel with shape (channels, 1, k) where k is the kernel size. "
-            "The middle dim of size 1 follows the ONNX `Conv` weight layout `(M, C/group, k1, ..., kn)`: "
-            "since this op is always depthwise, `group = channels`, so `C/group = 1`. "
-            "Keeping this layout makes the weight tensor a drop-in for a depthwise `Conv(group=channels)` "
-            "weight, so `Conv` <-> `CausalConvWithState` rewrites require no reshape.",
-            "T",
-            OpSchema::Single,
-            true,
-            1,
-            OpSchema::Differentiable)
-        .Input(
-            2,
-            "bias",
-            "Optional per-channel bias with shape (channels).",
-            "T",
-            OpSchema::Optional,
-            true,
-            1,
-            OpSchema::Differentiable)
-        .Input(
-            3,
-            "past_state",
-            "Carry state from previous step with shape (batch_size, channels, k - 1). "
-            "If not provided, padding is zero.",
-            "T",
-            OpSchema::Optional,
-            true,
-            1,
-            OpSchema::NonDifferentiable)
-        .Output(
-            0,
-            "output",
-            "Convolution output with same shape as input.",
-            "T",
-            OpSchema::Single,
-            true,
-            1,
-            OpSchema::Differentiable)
-        .Output(
-            1,
-            "present_state",
-            "Updated carry state with shape (batch_size, channels, k - 1). "
-            "Contains the last (k - 1) values of the effective padded/concatenated "
-            "sequence along the causal axis, including any values from past_state "
-            "or zero-padding when the current input is shorter than k - 1.",
-            "T",
-            OpSchema::Single,
-            true,
-            1,
-            OpSchema::NonDifferentiable)
-        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-          // --- Validate activation attribute ---
-          // Reject unknown values here (rather than in the function-body builder)
-          // so checker/shape-inference users get a clear error even when the op
-          // is never inlined. Allowed values mirror the schema doc string and
-          // the Python reference implementation.
-          auto* activation_attr = ctx.getAttribute("activation");
-          if (activation_attr != nullptr && activation_attr->has_s()) {
-            const std::string& activation = activation_attr->s();
-            if (activation != "none" && activation != "silu" && activation != "swish") {
-              fail_shape_inference(
-                  "CausalConvWithState: unsupported activation value '",
-                  activation,
-                  "'. Supported values are 'none', 'silu', and 'swish'.");
-            }
-          }
+static void CausalConvWithStateInference(InferenceContext& ctx) {
+  const auto dilation = getAttribute(ctx, "dilation", int64_t{1});
+  if (dilation < 1) {
+    fail_shape_inference("CausalConvWithState: dilation must be >= 1.");
+  }
+  const auto* activation = ctx.getAttribute("activation");
+  if (activation != nullptr && activation->s() != "none" && activation->s() != "silu" && activation->s() != "swish") {
+    fail_shape_inference("CausalConvWithState: unsupported activation value '", activation->s(), "'.");
+  }
+  propagateElemTypeFromInputToOutput(ctx, 0, 0);
+  propagateElemTypeFromInputToOutput(ctx, 0, 1);
+  propagateShapeFromInputToOutput(ctx, 0, 0);
+  Dim B, C, L, One, K, History;
+  One.set_dim_value(1);
+  ctx.unifyInputShape(0, {B, C, L});
+  ctx.unifyInputShape(1, {C, One, K});
+  if (ctx.hasInput(2)) {
+    ctx.unifyInputShape(2, {C});
+  }
+  if (ctx.hasInput(3)) {
+    ctx.unifyInputShape(3, {B, C, History});
+  }
+  if (K.has_dim_value()) {
+    const auto k = K.dim_value();
+    if (k < 1) {
+      fail_shape_inference("Kernel size k must be >= 1, got ", k);
+    }
+    if (k - 1 > (std::numeric_limits<int64_t>::max() - 1) / dilation) {
+      fail_shape_inference(
+          "CausalConvWithState: effective kernel size (k - 1) * dilation + 1 exceeds int64. "
+          "Reduce the kernel size or dilation.");
+    }
+    Dim expected;
+    expected.set_dim_value((k - 1) * dilation);
+    unifyDim(expected, History);
+  } else if (History.has_dim_value()) {
+    if (History.dim_value() == std::numeric_limits<int64_t>::max()) {
+      fail_shape_inference(
+          "CausalConvWithState: history length + 1 exceeds int64. Reduce the kernel size or dilation.");
+    }
+    if (History.dim_value() < 0 || History.dim_value() % dilation != 0) {
+      fail_shape_inference("CausalConvWithState: history length must be a nonnegative multiple of dilation.");
+    }
+  }
+  updateOutputShape(ctx, 1, {B, C, History});
+}
 
-          // --- Type inference ---
-          // All inputs and outputs share the same type T.
-          propagateElemTypeFromInputToOutput(ctx, 0, 0); // input -> output
-          propagateElemTypeFromInputToOutput(ctx, 0, 1); // input -> present_state
+static bool
+CausalConvWithStateFunction(const FunctionBodyBuildContext& ctx, const OpSchema& schema, FunctionProto& functionProto) {
+  int64_t channels = 0;
+  for (const auto& source : {std::pair<int, int>{0, 1}, {1, 0}}) {
+    const auto* type = ctx.getInputType(source.first);
+    if (type != nullptr && type->has_tensor_type() && type->tensor_type().has_shape()) {
+      const auto& shape = type->tensor_type().shape();
+      if (shape.dim_size() > source.second && shape.dim(source.second).has_dim_value()) {
+        channels = shape.dim(source.second).dim_value();
+        break;
+      }
+    }
+  }
+  if (channels <= 0) {
+    return false;
+  }
+  const auto* dilation_attr = ctx.getAttribute("dilation");
+  const int64_t dilation = dilation_attr == nullptr ? 1 : dilation_attr->i();
+  const auto* activation_attr = ctx.getAttribute("activation");
+  const auto activation = activation_attr == nullptr ? "none" : activation_attr->s();
+  if (dilation < 1 || (activation != "none" && activation != "silu" && activation != "swish")) {
+    return false;
+  }
+  const auto* weight_type = ctx.getInputType(1);
+  if (weight_type != nullptr && weight_type->has_tensor_type() && weight_type->tensor_type().has_shape()) {
+    const auto& shape = weight_type->tensor_type().shape();
+    if (shape.dim_size() == 3 && shape.dim(2).has_dim_value()) {
+      const auto k = shape.dim(2).dim_value();
+      if (k < 1 || k - 1 > (std::numeric_limits<int64_t>::max() - 1) / dilation) {
+        return false;
+      }
+    }
+  }
+  FunctionBuilder builder(functionProto);
+  builder.Const1D("One1D", int64_t{1}).Const1D("Dilation", dilation).Add(R"ONNX(
+    KernelSize = Shape <start = 2, end = 3> (weight)
+    Km1 = Sub (KernelSize, One1D)
+    History = Mul (Km1, Dilation)
+  )ONNX");
+  if (ctx.hasInput(3)) {
+    builder.Add("PaddedInput = Concat <axis = 2> (past_state, input)");
+  } else {
+    builder.Add(R"ONNX(
+      BatchChannels = Shape <start = 0, end = 2> (input)
+      ZeroPadShape = Concat <axis = 0> (BatchChannels, History)
+      ZeroPad = ConstantOfShape (ZeroPadShape)
+      ZeroPadCast = CastLike (ZeroPad, input)
+      PaddedInput = Concat <axis = 2> (ZeroPadCast, input)
+    )ONNX");
+  }
+  // An empty chunk has only H history samples, shorter than the H + 1 kernel span.
+  // Both v27 and v29 append one sample, discard the extra Conv output, and slice state from PaddedInput.
+  builder.Add(R"ONNX(
+    BatchChannelsConv = Shape <start = 0, end = 2> (input)
+    ExtraShape = Concat <axis = 0> (BatchChannelsConv, One1D)
+    ExtraZero = ConstantOfShape (ExtraShape)
+    Extra = CastLike (ExtraZero, input)
+    ConvInput = Concat <axis = 2> (PaddedInput, Extra)
+  )ONNX");
+  builder.Add(
+      ctx.hasInput(2) ? "ConvAll = Conv (ConvInput, weight, bias)" : "ConvAll = Conv (ConvInput, weight)",
+      "dilations",
+      std::vector<int64_t>{dilation},
+      "group",
+      channels);
+  builder.Const1D("Zero1D", int64_t{0}).Const1D("SliceAxes", int64_t{2}).Add(R"ONNX(
+    InputLength = Shape <start = 2, end = 3> (input)
+    ConvOut = Slice (ConvAll, Zero1D, InputLength, SliceAxes)
+  )ONNX");
+  if (activation == "none") {
+    builder.Add("output = Identity (ConvOut)");
+  } else {
+    builder.Add(R"ONNX(
+      ConvOutFloat = Cast <to = 1> (ConvOut)
+      ConvSigmoid = Sigmoid (ConvOutFloat)
+      MulOutFloat = Mul (ConvOutFloat, ConvSigmoid)
+      output = CastLike (MulOutFloat, ConvOut)
+    )ONNX");
+  }
+  builder.Add(R"ONNX(
+    PadLen = Shape <start = 2, end = 3> (PaddedInput)
+    StartIdx = Sub (PadLen, History)
+    present_state = Slice (PaddedInput, StartIdx, PadLen, SliceAxes)
+  )ONNX");
+  schema.BuildFunction(functionProto);
+  return true;
+}
 
-          // --- Output 0: same shape as input (B, C, L) ---
-          propagateShapeFromInputToOutput(ctx, 0, 0);
+OpSchema defs::nn::utils::CausalConvWithStateSchema(bool dilated) {
+  auto schema =
+      OpSchema()
+          .SetDoc(
+              dilated ? R"DOC(
+Stateful causal one-dimensional depthwise convolution.
 
-          // --- Shape inference via dimension unification ---
-          // Declare logical dims and unify each input against its expected shape.
-          // unifyInputShape implicitly validates the rank of each provided input
-          // and propagates the most-informative known value across inputs that
-          // share a dim (e.g. B and C across input/weight/bias/past_state, and
-          // K between weight and past_state).
-          Dim B, C, L, One, K, KMinus1;
-          One.set_dim_value(1);
-          ctx.unifyInputShape(0, {B, C, L});
-          ctx.unifyInputShape(1, {C, One, K});
-          if (ctx.hasInput(2)) {
-            ctx.unifyInputShape(2, {C});
-          }
-          if (ctx.hasInput(3)) {
-            ctx.unifyInputShape(3, {B, C, KMinus1});
-          }
+`input` has shape `(B, C, L)`, `weight` has shape `(C, 1, K)`, and optional
+`bias` has shape `(C)`: `B` is batch size, `C` is channel count, `L` is input
+length, and `K` is kernel size. Let `d = dilation` (default 1) and
+`H = (K - 1) * d`. Both `K` and `d` must be at least 1, and the effective
+kernel size `H + 1` must fit in a signed 64-bit integer.
 
-          // Connect KMinus1 to K (when K is known) using Dim arithmetic.
-          // If both are known via past_state and weight, unifyDim checks they agree.
-          unifyDim(K - 1, KMinus1);
+Both state tensors have shape `(B, C, H)` and store consecutive raw samples
+in chronological order. Form `P` by concatenating `past_state` and `input`
+along axis 2; use a zero tensor of shape `(B, C, H)` when `past_state` is absent.
+For each batch `b`, channel `c`, and position `0 <= t < L`, compute
+`z[b,c,t] = sum_{j=0}^{K-1} weight[c,0,j] * P[b,c,t+j*d] + bias[c]`,
+with omitted bias treated as zero. The output has shape `(B, C, L)` and equals
+`z` for activation 'none' (the default), or `z / (1 + exp(-z))` elementwise
+for 'silu' and its alias 'swish'.
 
-          if (K.has_dim_value() && K.dim_value() < 1) {
-            fail_shape_inference("Kernel size k must be >= 1, got ", K.dim_value());
-          }
+The next state is `present_state = P[:, :, L:L+H]`, independent of activation.
+When `L < H`, it retains the required past samples or initial zeros.
+Passing this state to the next call preserves convolution across chunk boundaries.
+For `K = 1`, state has shape `(B, C, 0)`. For `L = 0`, output has shape
+`(B, C, 0)` and state is unchanged (all zeros if `past_state` is absent).
+)DOC"
+                      : kDoc_CausalConvWithState_ver27)
+          .Attr(
+              "activation",
+              "Fused activation function. One of: 'silu', 'swish', 'none'. "
+              "Default is 'none'.",
+              AttributeProto::STRING,
+              std::string("none"))
+          .Input(
+              0,
+              "input",
+              "Input tensor with shape (batch_size, channels, length). Channels-first layout.",
+              "T",
+              OpSchema::Single,
+              true,
+              1,
+              OpSchema::Differentiable)
+          .Input(
+              1,
+              "weight",
+              dilated ? "Depthwise convolution kernel with shape (channels, 1, k), where k must be >= 1. "
+                        "Each channel is convolved independently with its corresponding kernel."
+                      : "Depthwise convolution kernel with shape (channels, 1, k) where k is the kernel size. "
+                        "The middle dim of size 1 follows the ONNX `Conv` weight layout `(M, C/group, k1, ..., kn)`: "
+                        "since this op is always depthwise, `group = channels`, so `C/group = 1`. "
+                        "Keeping this layout makes the weight tensor a drop-in for a depthwise `Conv(group=channels)` "
+                        "weight, so `Conv` <-> `CausalConvWithState` rewrites require no reshape.",
+              "T",
+              OpSchema::Single,
+              true,
+              1,
+              OpSchema::Differentiable)
+          .Input(
+              2,
+              "bias",
+              "Optional per-channel bias with shape (channels).",
+              "T",
+              OpSchema::Optional,
+              true,
+              1,
+              OpSchema::Differentiable)
+          .Input(
+              3,
+              "past_state",
+              dilated ? "Raw chronological history with shape (batch_size, channels, (k - 1) * dilation). "
+                        "If not provided, history is zero."
+                      : "Carry state from previous step with shape (batch_size, channels, k - 1). "
+                        "If not provided, padding is zero.",
+              "T",
+              OpSchema::Optional,
+              true,
+              1,
+              OpSchema::NonDifferentiable)
+          .Output(
+              0,
+              "output",
+              "Convolution output with same shape as input.",
+              "T",
+              OpSchema::Single,
+              true,
+              1,
+              OpSchema::Differentiable)
+          .Output(
+              1,
+              "present_state",
+              dilated ? "The last (k - 1) * dilation raw samples of the concatenated history and input, "
+                        "with shape (batch_size, channels, (k - 1) * dilation)."
+                      : "Updated carry state with shape (batch_size, channels, k - 1). "
+                        "Contains the last (k - 1) values of the effective padded/concatenated "
+                        "sequence along the causal axis, including any values from past_state "
+                        "or zero-padding when the current input is shorter than k - 1.",
+              "T",
+              OpSchema::Single,
+              true,
+              1,
+              OpSchema::NonDifferentiable)
+          .TypeAndShapeInferenceFunction(CausalConvWithStateInference)
+          .SetContextDependentFunctionBodyBuilder(CausalConvWithStateFunction)
+          .TypeConstraint(
+              "T",
+              {"tensor(float)", "tensor(float16)", "tensor(bfloat16)"},
+              "Constrain input and output types to float tensors.");
+  if (dilated) {
+    schema.Attr("dilation", "Spacing between kernel samples. Must be >= 1.", AttributeProto::INT, int64_t{1});
+  }
+  // v27 exposes no dilation attribute: the shared inference and function builders use dilation 1.
+  // Both schemas retain activation="none" and zero history when past_state is omitted.
+  return schema;
+}
 
-          // --- Output 1: present_state shape (B, C, k - 1) ---
-          updateOutputShape(ctx, 1, {B, C, KMinus1});
-        })
-        .SetContextDependentFunctionBodyBuilder(
-            [](const FunctionBodyBuildContext& ctx, const OpSchema& schema, FunctionProto& functionProto) {
-              // CausalConvWithState <activation> (input, weight, bias?, past_state?)
-              //   => (output, present_state)
-              //
-              // Reference decomposition:
-              //   1. Left-pad input with past_state (or zeros if absent) along axis 2
-              //   2. Depthwise Conv1d (group=C, no padding) on the padded input
-              //   3. Optional SiLU/Swish activation
-              //   4. Slice last (k-1) positions from padded input as present_state
-
-              // --- Step 1: Extract static channel count for Conv group attribute ---
-              // Conv's group attribute must be a compile-time integer. Prefer the
-              // input channel dimension when concrete; otherwise fall back to the
-              // leading weight dimension, which for depthwise weights is C and is
-              // typically statically known because weights are commonly
-              // initializers.
-              auto* input_type = ctx.getInputType(0);
-              if (input_type == nullptr || !input_type->has_tensor_type() || !input_type->tensor_type().has_shape() ||
-                  input_type->tensor_type().shape().dim_size() < 2) {
-                return false;
-              }
-              int64_t C = 0;
-              if (input_type->tensor_type().shape().dim(1).has_dim_value()) {
-                C = input_type->tensor_type().shape().dim(1).dim_value();
-              } else {
-                auto* weight_type = ctx.getInputType(1);
-                if (weight_type == nullptr || !weight_type->has_tensor_type() ||
-                    !weight_type->tensor_type().has_shape() || weight_type->tensor_type().shape().dim_size() < 1 ||
-                    !weight_type->tensor_type().shape().dim(0).has_dim_value()) {
-                  return false;
-                }
-                C = weight_type->tensor_type().shape().dim(0).dim_value();
-              }
-
-              // Read the activation attribute (default: "none")
-              auto* activation_attr = ctx.getAttribute("activation");
-              std::string activation =
-                  (activation_attr != nullptr && activation_attr->has_s()) ? activation_attr->s() : "none";
-
-              FunctionBuilder builder(functionProto);
-
-              // --- Shared kernel-size helpers (used by Step 2 zero-pad and Step 5 slice) ---
-              builder.Const1D("One1D", static_cast<int64_t>(1)).Add(R"ONNX(
-                KernelSize = Shape <start = 2, end = 3> (weight)
-                Km1 = Sub (KernelSize, One1D)
-              )ONNX");
-
-              // --- Step 2: Build the left-padded input (B, C, L+k-1) ---
-              if (ctx.hasInput(3)) {
-                // past_state is provided: concat it on the left along axis 2
-                builder.Add("PaddedInput = Concat <axis = 2> (past_state, input)");
-              } else {
-                // No past_state: zero-pad on the left by (k-1)
-                builder.Add(R"ONNX(
-                  BatchDim = Shape <start = 0, end = 1> (input)
-                  ChannelDim = Shape <start = 1, end = 2> (input)
-                  ZeroPadShape = Concat <axis = 0> (BatchDim, ChannelDim, Km1)
-                  ZeroPad = ConstantOfShape (ZeroPadShape)
-                  ZeroPadCast = CastLike (ZeroPad, input)
-                  PaddedInput = Concat <axis = 2> (ZeroPadCast, input)
-                )ONNX");
-              }
-
-              // --- Step 3: Depthwise Conv1d (group=C, valid padding) ---
-              if (ctx.hasInput(2)) {
-                // Bias provided: pass directly to Conv
-                builder.Add("ConvOut = Conv (PaddedInput, weight, bias)", "group", C);
-              } else {
-                // No bias
-                builder.Add("ConvOut = Conv (PaddedInput, weight)", "group", C);
-              }
-
-              // --- Step 4: Optional fused activation ---
-              if (activation == "silu" || activation == "swish") {
-                // Upcast Sigmoid/Mul to float32 to match the Python reference
-                // implementation, which evaluates SiLU in float32 for fp16/bf16
-                // inputs and casts back. For float32 inputs the Cast/CastLike
-                // pair is a no-op that runtimes fold away.
-                builder.Add(R"ONNX(
-                  ConvOutFloat = Cast <to = 1> (ConvOut)
-                  ConvSigmoid = Sigmoid (ConvOutFloat)
-                  MulOutFloat = Mul (ConvOutFloat, ConvSigmoid)
-                  output = CastLike (MulOutFloat, ConvOut)
-                )ONNX");
-              } else if (activation == "none") {
-                builder.Add("output = Identity (ConvOut)");
-              } else {
-                // Unsupported activation values are rejected up front by
-                // TypeAndShapeInferenceFunction; if we somehow reach the body
-                // builder with an unknown value (e.g. inference was bypassed),
-                // decline to build a function body rather than throw.
-                return false;
-              }
-
-              // --- Step 5: Slice last (k-1) positions from PaddedInput as present_state ---
-              // present_state = PaddedInput[:, :, L : L+(k-1)]
-              // Compute start/end from PaddedInput's actual length so the k=1 (Km1=0)
-              // edge case yields an empty (B, C, 0) slice. A negative start index
-              // would not work here because Slice treats -0 as 0, returning the full
-              // padded sequence instead of an empty tensor.
-              builder
-                  .Add(R"ONNX(
-                    PadLen = Shape <start = 2, end = 3> (PaddedInput)
-                    StartIdx = Sub (PadLen, Km1)
-                  )ONNX")
-                  .Const("SliceAxes", std::vector<int64_t>{2})
-                  .Add("present_state = Slice (PaddedInput, StartIdx, PadLen, SliceAxes)");
-
-              schema.BuildFunction(functionProto);
-              return true;
-            })
-        .TypeConstraint(
-            "T",
-            {"tensor(float)", "tensor(float16)", "tensor(bfloat16)"},
-            "Constrain input and output types to float tensors."));
+ONNX_OPERATOR_SET_SCHEMA(CausalConvWithState, 29, defs::nn::utils::CausalConvWithStateSchema(true));
 
 ONNX_OPERATOR_SET_SCHEMA(LinearAttention, 29, defs::nn::utils::LinearAttentionSchema(true));
 } // namespace ONNX_NAMESPACE
