@@ -36,12 +36,31 @@ class Unpack(OpRun):
         result = np.empty((*x.shape[:-1], n), dtype=np.uint8)
         if x.size == 0:
             return (np.moveaxis(result, -1, axis),)
-        for index in np.ndindex(x.shape[:-1]):
-            word = sum(
-                int(value) << (i * word_bits) for i, value in enumerate(x[index])
+        if group_size == 1:
+            words = np.ascontiguousarray(x, dtype=x.dtype.newbyteorder("<"))
+            byte_rows = words.view(np.uint8).reshape(
+                *x.shape[:-1], x.shape[-1] * x.dtype.itemsize
             )
+            stream = np.unpackbits(byte_rows, axis=-1, bitorder="little")[
+                ..., : n * width
+            ]
+            code_bits = stream.reshape(*x.shape[:-1], n, width)
+            result = np.packbits(code_bits, axis=-1, bitorder="little")[..., 0]
+            if np.any(result > radix - 1):
+                raise ValueError(
+                    "Packed group index must be less than radix^group_size."
+                )
+            return (np.moveaxis(result, -1, axis),)
+        for index in np.ndindex(x.shape[:-1]):
             for g in range(groups):
-                code = (word >> (g * width)) & ((1 << width) - 1)
+                word_index, shift = divmod(g * width, word_bits)
+                word_count = (shift + width + word_bits - 1) // word_bits
+                # Read only this group's words, keeping integer widths bounded.
+                window = sum(
+                    int(x[index][word_index + i]) << (i * word_bits)
+                    for i in range(word_count)
+                )
+                code = (window >> shift) & ((1 << width) - 1)
                 if code >= radix**group_size:
                     raise ValueError(
                         "Packed group index must be less than radix^group_size."

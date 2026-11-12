@@ -107,6 +107,7 @@ static void InferPackedShape(InferenceContext& ctx, bool unpack) {
     fail_shape_inference("count must be a scalar.");
   }
   int64_t count = -1;
+  const TensorShapeProto* symbolic_count = nullptr;
   if (unpack) {
     const auto* data = ctx.getInputData(1);
     if (data != nullptr) {
@@ -118,6 +119,14 @@ static void InferPackedShape(InferenceContext& ctx, bool unpack) {
         fail_shape_inference("count must be nonnegative.");
       }
       count = values[0];
+    } else {
+      symbolic_count = ctx.getSymbolicInput(1);
+      if (symbolic_count != nullptr && symbolic_count->dim_size() == 1 && symbolic_count->dim(0).has_dim_value()) {
+        count = symbolic_count->dim(0).dim_value();
+        if (count < 0) {
+          fail_shape_inference("count must be nonnegative.");
+        }
+      }
     }
   }
   if (!hasNInputShapes(ctx, 1)) {
@@ -149,6 +158,10 @@ static void InferPackedShape(InferenceContext& ctx, bool unpack) {
           last.dim_value() != PackedGroupWordCount(count, parameters, word_bits)) {
         fail_shape_inference("Packed axis dimension must equal the word count required by the packing attributes.");
       }
+    } else if (symbolic_count != nullptr && symbolic_count->dim_size() == 1) {
+      *output_last = symbolic_count->dim(0);
+    } else if (storage_type != TensorProto::UNDEFINED && parameters.width == word_bits && parameters.group_size == 1) {
+      *output_last = last;
     }
   } else if (last.has_dim_value()) {
     output_last->set_dim_value(PackedGroupWordCount(last.dim_value(), parameters, word_bits));
@@ -174,6 +187,7 @@ BuildGroupedPacking(const FunctionBodyBuildContext& ctx, const OpSchema& schema,
   }
   const int64_t word_bits = storage_type == TensorProto::UINT32 ? 32 : 8;
   auto axis = getAttribute(ctx, "axis", -1);
+  // Normalize the packing axis to the last dimension and restore the original layout afterward.
   std::vector<int64_t> permutation;
   std::vector<int64_t> inverse;
   if (axis != -1) {
@@ -206,6 +220,7 @@ BuildGroupedPacking(const FunctionBodyBuildContext& ctx, const OpSchema& schema,
   } else {
     builder.Add("packing_input = Transpose(X)", "perm", permutation);
   }
+  // Group indices fit in INT64; storage-word bit weights also fit when bit 31 is set.
   builder.Const("radix_value", p.radix);
   builder.Const("group_size_value", p.group_size);
   builder.Const("width", p.width);
@@ -260,6 +275,7 @@ BuildGroupedPacking(const FunctionBodyBuildContext& ctx, const OpSchema& schema,
     size = Size(X)
     empty = Equal(size, zero)
   )ONNX");
+  // Avoid constructing code-index tensors for empty rows, including huge symbolic dimensions.
   if (unpack) {
     builder.Add(R"ONNX(
       packing_output = If(empty) <
@@ -295,6 +311,8 @@ BuildGroupedPacking(const FunctionBodyBuildContext& ctx, const OpSchema& schema,
       >
     )ONNX");
   } else {
+    // The final word sum is at most 2^32 - 1, so its expanded intermediates need only UINT32.
+    builder.Add("word_powers32 = Cast <to = 12>(word_powers)");
     builder.Add(R"ONNX(
       packing_output = If(empty) <
         then_branch = empty_encode () => (empty_output) {
@@ -329,7 +347,8 @@ BuildGroupedPacking(const FunctionBodyBuildContext& ctx, const OpSchema& schema,
           divisors = Gather(bit_powers, bit_indices)
           divided = Div(selected, divisors)
           bits64 = Mod(divided, ConstantTwo)
-          placed = Mul(bits64, word_powers)
+          bits32 = Cast <to = 12>(bits64)
+          placed = Mul(bits32, word_powers32)
           summed = ReduceSum <keepdims = 0>(placed, axes)
           encoded = CastLike(summed, packed_zero)
         }
@@ -358,11 +377,9 @@ ONNX_OPERATOR_SET_SCHEMA(
     29,
     OpSchema()
         .SetDoc(R"DOC(
-Packs UINT8 unsigned integer codes into UINT8 or UINT32 storage words
-independently along `axis` (default -1). Input and output have the same
-rank, at least 1. Negative axes are supported; axis must be in [-rank, rank-1].
-The `output_type` attribute selects UINT8 (default) or UINT32 storage,
-with word_bits equal to 8 or 32 respectively. All other dimensions are preserved.
+Packs UINT8 codes into UINT8 (default) or UINT32 words along `axis` (default -1).
+Input and output have the same rank, at least 1; axis must be in [-rank, rank-1].
+The `output_type` selects storage words of word_bits = 8 or 32 bits.
 Specify either `bits` in [1, 8], or both `radix` and `group_size`;
 the two spellings are mutually exclusive. With `bits`, each element of `X`
 must be in [0, 2^bits - 1].
@@ -411,6 +428,8 @@ into one byte because 3^5 = 243.
 The original bits spelling is exactly (R, G) = (2^bits, 1).
 With UINT8 storage and R=3, G=5, [0, 1, 2, 0, 1] becomes [102], and [2, 2, 2, 2, 2]
 becomes [242]. Partial group [1, 2] becomes [7].
+Results for invalid inputs are unspecified; function decompositions need
+not diagnose out-of-range codes.
 )DOC")
         .Attr(
             "axis",

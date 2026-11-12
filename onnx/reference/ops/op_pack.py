@@ -42,13 +42,29 @@ class Pack(OpRun):
         result = np.zeros(shape, dtype=dtype)
         if x.size == 0:
             return (np.moveaxis(result, -1, axis),)
+        if group_size == 1:
+            code_bits = np.unpackbits(x[..., None], axis=-1, bitorder="little")
+            stream = code_bits[..., :width].reshape(*x.shape[:-1], -1)
+            packed = np.packbits(stream, axis=-1, bitorder="little")
+            byte_count = shape[-1] * dtype.itemsize
+            padded = np.zeros((*x.shape[:-1], byte_count), dtype=np.uint8)
+            padded[..., : packed.shape[-1]] = packed
+            result = padded.view(dtype.newbyteorder("<")).astype(dtype, copy=False)
+            return (np.moveaxis(result, -1, axis),)
         for index in np.ndindex(x.shape[:-1]):
-            word = 0
             for g in range(groups):
                 start = g * group_size
                 digits = x[index][start : start + group_size]
                 code = sum(int(digit) * radix**j for j, digit in enumerate(digits))
-                word |= code << (g * width)
-            for i in range(shape[-1]):
-                result[index][i] = (word >> (i * word_bits)) & ((1 << word_bits) - 1)
+                word_index, shift = divmod(g * width, word_bits)
+                remaining = width
+                while remaining:
+                    take = min(remaining, word_bits - shift)
+                    result[index][word_index] = int(result[index][word_index]) | (
+                        (code & ((1 << take) - 1)) << shift
+                    )
+                    code >>= take
+                    remaining -= take
+                    word_index += 1
+                    shift = 0
         return (np.moveaxis(result, -1, axis),)

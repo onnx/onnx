@@ -228,6 +228,67 @@ def test_uint32_symbolic_axis_shape() -> None:
     assert shape.dim[1] == model.graph.input[0].type.tensor_type.shape.dim[1]
 
 
+def test_unpack_byte_identity_symbolic_axis() -> None:
+    model = grouped_evaluator("Unpack", {"bits": 8, "axis": 0}, (2, 3)).proto_
+    model.graph.input[0].type.tensor_type.shape.dim[0].dim_param = "N"
+    inferred = shape_inference.infer_shapes(model, strict_mode=True)
+    shape = inferred.graph.output[0].type.tensor_type.shape
+    assert shape.dim[0].dim_param == "N"
+    assert shape.dim[1] == model.graph.input[0].type.tensor_type.shape.dim[1]
+
+
+@pytest.mark.parametrize("dimension", [17, "codes"])
+def test_unpack_propagated_count(dimension: int | str) -> None:
+    graph = helper.make_graph(
+        [
+            helper.make_node("Shape", ["W"], ["shape"]),
+            helper.make_node("Gather", ["shape", "axis"], ["count"], axis=0),
+            helper.make_node("Unpack", ["X", "count"], ["Y"], bits=3),
+        ],
+        "propagated_count",
+        [
+            helper.make_tensor_value_info("W", TensorProto.UINT8, [2, dimension]),
+            helper.make_tensor_value_info("X", TensorProto.UINT8, [2, None]),
+        ],
+        [helper.make_tensor_value_info("Y", TensorProto.UINT8, None)],
+        [helper.make_tensor("axis", TensorProto.INT64, [], [-1])],
+    )
+    inferred = shape_inference.infer_shapes(
+        helper.make_model(graph, opset_imports=[helper.make_opsetid("", 29)]),
+        strict_mode=True,
+        data_prop=True,
+    )
+    shape = inferred.graph.output[0].type.tensor_type.shape
+    assert shape.dim[1] == graph.input[0].type.tensor_type.shape.dim[1]
+
+
+@pytest.mark.parametrize("storage_type", [TensorProto.UINT8, TensorProto.UINT32])
+@pytest.mark.parametrize(
+    "attrs",
+    [{"bits": 5}, {"radix": 3, "group_size": 5}, {"radix": 3, "group_size": 39}],
+)
+def test_long_rows(storage_type: int, attrs: dict[str, int]) -> None:
+    # Repeat a word-aligned tile, then add a partial group/word at the end.
+    radix = attrs.get("radix", 1 << attrs.get("bits", 1))
+    group_size = attrs.get("group_size", 1)
+    tile = (np.arange(32 * group_size) % radix).astype(np.uint8)
+    repeats = 1001
+    x = np.concatenate([np.tile(tile, repeats), tile[:1]])[None, :]
+    pack_attrs = {**attrs, "output_type": storage_type}
+    small_pack = grouped_evaluator("Pack", pack_attrs, (tile.size,))
+    packed_tile = small_pack.run(None, {"X": tile})[0]
+    packed_tail = grouped_evaluator("Pack", pack_attrs, (1,)).run(
+        None, {"X": tile[:1]}
+    )[0]
+    expected = np.concatenate([np.tile(packed_tile, repeats), packed_tail])[None, :]
+    packed = grouped_evaluator("Pack", pack_attrs, x.shape).run(None, {"X": x})[0]
+    np.testing.assert_array_equal(packed, expected)
+    decoded = grouped_evaluator(
+        "Unpack", attrs, packed.shape, storage_type=storage_type
+    ).run(None, {"X": packed, "count": np.array(x.shape[-1], dtype=np.int64)})[0]
+    np.testing.assert_array_equal(decoded, x)
+
+
 def grouped_oracle(x: np.ndarray, radix: int, group_size: int) -> np.ndarray:
     groups = (x.shape[-1] + group_size - 1) // group_size
     width = (radix**group_size - 1).bit_length()

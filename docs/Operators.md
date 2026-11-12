@@ -28358,11 +28358,9 @@ expect(node, inputs=[x, slope], outputs=[y], name="test_prelu_broadcast")
 
 ### <a name="Pack"></a><a name="pack">**Pack**</a>
 
-  Packs UINT8 unsigned integer codes into UINT8 or UINT32 storage words
-  independently along `axis` (default -1). Input and output have the same
-  rank, at least 1. Negative axes are supported; axis must be in [-rank, rank-1].
-  The `output_type` attribute selects UINT8 (default) or UINT32 storage,
-  with word_bits equal to 8 or 32 respectively. All other dimensions are preserved.
+  Packs UINT8 codes into UINT8 (default) or UINT32 words along `axis` (default -1).
+  Input and output have the same rank, at least 1; axis must be in [-rank, rank-1].
+  The `output_type` selects storage words of word_bits = 8 or 32 bits.
   Specify either `bits` in [1, 8], or both `radix` and `group_size`;
   the two spellings are mutually exclusive. With `bits`, each element of `X`
   must be in [0, 2^bits - 1].
@@ -28411,6 +28409,8 @@ expect(node, inputs=[x, slope], outputs=[y], name="test_prelu_broadcast")
   The original bits spelling is exactly (R, G) = (2^bits, 1).
   With UINT8 storage and R=3, G=5, [0, 1, 2, 0, 1] becomes [102], and [2, 2, 2, 2, 2]
   becomes [242]. Partial group [1, 2] becomes [7].
+  Results for invalid inputs are unspecified; function decompositions need
+  not diagnose out-of-range codes.
 
 #### Version
 
