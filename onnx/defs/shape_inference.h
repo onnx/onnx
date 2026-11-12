@@ -5,8 +5,10 @@
 #pragma once
 
 #include <algorithm>
+#include <cctype>
 #include <functional>
 #include <limits>
+#include <optional>
 #include <string>
 #include <utility>
 #include <vector>
@@ -44,9 +46,30 @@ class SymbolTable {
   virtual void addFromGraph(const GraphProto& g) = 0;
   // Creates a new symbol which is not duplicate as any existing one
   std::string createNew() {
-    return createNew("unk__");
+    return createNew("_d");
   }
   virtual std::string createNew(const std::string& symbol_prefix) = 0;
+  // Interns an operation and its ordered operands, distinguishing constants from symbols.
+  // Add, Sub, Mul, Div, and FloorDiv denote exact dimension arithmetic.
+  // Int64Add, Int64Sub, Int64Mul, and Int64Div denote INT64 tensor arithmetic;
+  // they may share exact arithmetic identities only with a proof of no overflow.
+  // Returns an empty string when the expression cannot be represented.
+  // Existing dimension names are atoms, not expressions parsed from their spelling.
+  virtual std::string createExpression(const std::string& /*op*/, const Dim& /*left*/, const Dim& /*right*/) {
+    return "";
+  }
+  // On success, writes a proven lower bound on an integer value, not on its spelling.
+  virtual bool getValueLowerBound(const Dim& /*value*/, int64_t& /*lower_bound*/) const {
+    return false;
+  }
+  // Returns no value when no lower bound is proven; delegates to existing overrides.
+  virtual std::optional<int64_t> getValueLowerBound(const Dim& value) const {
+    int64_t lower_bound = 0;
+    if (getValueLowerBound(value, lower_bound)) {
+      return lower_bound;
+    }
+    return std::nullopt;
+  }
   virtual ~SymbolTable() = default;
 };
 
@@ -90,6 +113,9 @@ class InferenceError final : public std::runtime_error {
   ONNX_THROW_EX(ONNX_NAMESPACE::InferenceError(ONNX_NAMESPACE::MakeString("[ShapeInferenceError] ", __VA_ARGS__)));
 
 struct InferenceContext {
+  virtual SymbolTable* getSymbolTable() const {
+    return nullptr;
+  }
   virtual const AttributeProto* getAttribute(const std::string& name) const = 0;
   virtual size_t getNumInputs() const = 0;
   virtual const TypeProto* getInputType(size_t index) const = 0;
@@ -141,6 +167,9 @@ struct InferenceContext {
 // If the shape of X is statically known, then data-propagation should be able to determine
 // the value of newshape, as well as the shape of Z.
 struct DataPropagationContext {
+  virtual SymbolTable* getSymbolTable() const {
+    return nullptr;
+  }
   virtual const AttributeProto* getAttribute(const std::string& name) const = 0;
   virtual size_t getNumInputs() const = 0;
   virtual const TypeProto* getInputType(size_t index) const = 0;
@@ -213,6 +242,20 @@ getAttribute(const InferenceContext& ctx, const std::string& attributeName, cons
     return defaultValue;
 }
 
+// --- Symbolic Dimension Arithmetic Helpers ---
+// Context-free arithmetic preserves concrete results and identity operations.
+// Compound symbolic results require a context-owned symbol allocator.
+
+// Convert a Dim to its string representation for use in expressions.
+ONNX_API std::string dimToString(const TensorShapeProto::Dimension& dim);
+
+// Return true if a dim_param string is a "simple" token (identifier or number)
+// that does not need parentheses when used as an operand in a compound expression.
+ONNX_API bool dimParamIsSimple(const std::string& s);
+
+// Wrap an expression string in parentheses if it is compound.
+ONNX_API std::string wrapIfCompound(const std::string& s);
+
 inline int64_t checkedMultiply(int64_t lhs, int64_t rhs) {
   int64_t result = 0;
   if (checked_mul_overflow(lhs, rhs, &result)) {
@@ -257,6 +300,8 @@ inline TensorShapeProto::Dimension operator*(
     return dim2;
   } else if (dim2.has_dim_value() && (dim2.dim_value() == 1)) {
     return dim1;
+  } else if ((dim1.has_dim_value() && dim1.dim_value() == 0) || (dim2.has_dim_value() && dim2.dim_value() == 0)) {
+    result.set_dim_value(0);
   }
   return result;
 }
@@ -276,6 +321,8 @@ inline TensorShapeProto::Dimension operator*(const TensorShapeProto::Dimension& 
     result.set_dim_value(checkedMultiply(dim1.dim_value(), dim2));
   } else if (dim2 == 1) {
     return dim1;
+  } else if (dim2 == 0) {
+    result.set_dim_value(0);
   }
   return result;
 }
@@ -290,25 +337,19 @@ inline TensorShapeProto::Dimension operator/(const TensorShapeProto::Dimension& 
   return result;
 }
 
-inline TensorShapeProto::Dimension operator+(const TensorShapeProto::Dimension& dim1, int64_t dim2) {
-  TensorShapeProto::Dimension result;
-  if (dim1.has_dim_value()) {
-    result.set_dim_value(checkedAdd(dim1.dim_value(), dim2));
-  } else if (dim2 == 0) {
-    return dim1;
-  }
-  return result;
-}
+// --- Addition and Subtraction operators for Dim ---
 
-inline TensorShapeProto::Dimension operator-(const TensorShapeProto::Dimension& dim1, int64_t dim2) {
-  TensorShapeProto::Dimension result;
-  if (dim1.has_dim_value()) {
-    result.set_dim_value(checkedSubtract(dim1.dim_value(), dim2));
-  } else if (dim2 == 0) {
-    return dim1;
-  }
-  return result;
-}
+ONNX_API TensorShapeProto::Dimension operator+(
+    const TensorShapeProto::Dimension& dim1,
+    const TensorShapeProto::Dimension& dim2);
+
+ONNX_API TensorShapeProto::Dimension operator+(const TensorShapeProto::Dimension& dim1, int64_t dim2);
+
+ONNX_API TensorShapeProto::Dimension operator-(
+    const TensorShapeProto::Dimension& dim1,
+    const TensorShapeProto::Dimension& dim2);
+
+ONNX_API TensorShapeProto::Dimension operator-(const TensorShapeProto::Dimension& dim1, int64_t dim2);
 
 // if from >= upto_exclusive, return 1.
 // Caller must make sure upto_exclusive is less than or equal to shape.size()
@@ -322,6 +363,73 @@ inline TensorShapeProto::Dimension multiplyDims(const TensorShapeProto& shape, i
   return dim;
 }
 
+inline Dim makeDimension(int64_t value) {
+  Dim dim;
+  dim.set_dim_value(value);
+  return dim;
+}
+
+// Computes checked concrete arithmetic and identity operations before interning.
+// FloorDiv requires a positive concrete divisor. Without an allocator, other
+// compound expressions remain unknown. Operation names are defined by SymbolTable.
+ONNX_API Dim computeDimension(SymbolTable* symbols, const std::string& op, const Dim& left, const Dim& right);
+
+ONNX_API bool isReshapeSymbolicDimSafe(const InferenceContext& ctx, const Dim& dim, int index, bool allowzero);
+
+class SymbolicDim {
+ public:
+  SymbolicDim(SymbolTable* symbols, Dim value) : symbols_(symbols), value_(std::move(value)) {}
+  // Arithmetic chains retain the allocator until assigned to a protobuf dimension.
+  // NOLINTNEXTLINE(cppcoreguidelines-explicit-constructor,google-explicit-constructor,misc-explicit-constructor)
+  operator const Dim&() const {
+    return value_;
+  }
+  bool has_dim_value() const {
+    return value_.has_dim_value();
+  }
+  bool has_dim_param() const {
+    return value_.has_dim_param();
+  }
+  int64_t dim_value() const {
+    return value_.dim_value();
+  }
+  void set_dim_value(int64_t value) {
+    value_.set_dim_value(value);
+  }
+  SymbolicDim apply(const std::string& op, const Dim& right) const {
+    return SymbolicDim(symbols_, computeDimension(symbols_, op, value_, right));
+  }
+  SymbolicDim operator+(int64_t right) const {
+    return apply("Add", makeDimension(right));
+  }
+  SymbolicDim operator-(int64_t right) const {
+    return apply("Sub", makeDimension(right));
+  }
+  SymbolicDim operator*(int64_t right) const {
+    return apply("Mul", makeDimension(right));
+  }
+  SymbolicDim operator/(int64_t right) const {
+    return apply("Div", makeDimension(right));
+  }
+
+ private:
+  SymbolTable* symbols_;
+  Dim value_;
+};
+
+template <typename Context>
+SymbolicDim symbolicDim(const Context& ctx, const Dim& dim) {
+  return SymbolicDim(ctx.getSymbolTable(), dim);
+}
+
+template <typename Context>
+Dim multiplyDims(const Context& ctx, const TensorShapeProto& shape, int from, int upto_exclusive) {
+  Dim result = makeDimension(1);
+  for (int i = from; i < upto_exclusive; ++i) {
+    result = computeDimension(ctx.getSymbolTable(), "Mul", result, shape.dim(i));
+  }
+  return result;
+}
 inline int32_t getTensorElementType(const TypeProto& type) {
   int32_t result = TensorProto::UNDEFINED;
   const auto value_case = type.value_case();

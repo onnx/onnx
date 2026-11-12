@@ -23,6 +23,156 @@ void ScanInferenceFunction(InferenceContext& ctx);
 
 namespace Test {
 
+TEST(ShapeInferenceTest, Int64ExpressionsShareExactIdentityOnlyWithOverflowProof) {
+  for (bool reverse : {false, true}) {
+    shape_inference::SymbolTableImpl symbols;
+    GraphProto graph;
+    graph.add_input()->mutable_type()->mutable_tensor_type()->mutable_shape()->add_dim()->set_dim_param("N");
+    symbols.addFromGraph(graph);
+    Dim n;
+    n.set_dim_param("N");
+    for (const std::string op : {"Add", "Mul"}) {
+      const auto data_op = "Int64" + op;
+      const auto first = computeDimension(&symbols, reverse ? op : data_op, n, makeDimension(2));
+      const auto second = computeDimension(&symbols, reverse ? data_op : op, n, makeDimension(2));
+      EXPECT_NE(first.dim_param(), second.dim_param());
+      EXPECT_EQ(first.dim_param(), computeDimension(&symbols, reverse ? op : data_op, n, makeDimension(2)).dim_param());
+    }
+    for (const std::string op : {"Sub", "Div"}) {
+      EXPECT_EQ(
+          computeDimension(&symbols, op, n, makeDimension(2)).dim_param(),
+          computeDimension(&symbols, "Int64" + op, n, makeDimension(2)).dim_param());
+    }
+    const auto half = computeDimension(&symbols, "Int64Div", n, makeDimension(2));
+    const auto positive = computeDimension(&symbols, "Int64Add", half, makeDimension(1));
+    EXPECT_EQ(positive.dim_param(), computeDimension(&symbols, "Add", half, makeDimension(1)).dim_param());
+    ASSERT_TRUE(symbols.getValueLowerBound(positive).has_value());
+    EXPECT_EQ(*symbols.getValueLowerBound(positive), 1);
+    const auto wrapped = computeDimension(&symbols, "Int64Mul", n, makeDimension(2));
+    EXPECT_FALSE(symbols.getValueLowerBound(wrapped).has_value());
+    const auto wrapped_sum = computeDimension(&symbols, "Int64Add", wrapped, makeDimension(1));
+    EXPECT_NE(wrapped_sum.dim_param(), computeDimension(&symbols, "Add", wrapped, makeDimension(1)).dim_param());
+    EXPECT_EQ(computeDimension(&symbols, "Int64Add", n, makeDimension(0)).dim_param(), "N");
+    EXPECT_EQ(computeDimension(&symbols, "Int64Mul", n, makeDimension(1)).dim_param(), "N");
+  }
+}
+
+TEST(ShapeInferenceTest, OptionalBoundQueryPreservesOutputParameterOverrides) {
+  class LegacySymbolTable : public SymbolTable {
+   public:
+    void addFromGraph(const GraphProto&) override {}
+    std::string createNew(const std::string&) override {
+      return "";
+    }
+    bool getValueLowerBound(const Dim& value, int64_t& lower_bound) const override {
+      if (!value.has_dim_value()) {
+        return false;
+      }
+      lower_bound = value.dim_value();
+      return true;
+    }
+  };
+  LegacySymbolTable symbols;
+  const SymbolTable& api = symbols;
+  for (int64_t value : {-1, 0, 1}) {
+    const auto bound = api.getValueLowerBound(makeDimension(value));
+    ASSERT_TRUE(bound.has_value());
+    EXPECT_EQ(*bound, value);
+  }
+  EXPECT_FALSE(api.getValueLowerBound(Dim{}).has_value());
+}
+
+TEST(ShapeInferenceTest, FloorDivisionHasDistinctSignedExpressionIdentity) {
+  shape_inference::SymbolTableImpl symbols;
+  Dim h;
+  h.set_dim_param("H");
+  GraphProto graph;
+  graph.add_input()->mutable_type()->mutable_tensor_type()->mutable_shape()->add_dim()->CopyFrom(h);
+  symbols.addFromGraph(graph);
+  const auto gap = computeDimension(&symbols, "Sub", h, makeDimension(2));
+  const auto truncated = computeDimension(&symbols, "Div", gap, makeDimension(2));
+  const auto floored = computeDimension(&symbols, "FloorDiv", gap, makeDimension(2));
+  EXPECT_NE(truncated.dim_param(), floored.dim_param());
+  EXPECT_EQ(floored.dim_param(), computeDimension(&symbols, "FloorDiv", gap, makeDimension(2)).dim_param());
+  EXPECT_EQ(
+      computeDimension(&symbols, "Div", h, makeDimension(2)).dim_param(),
+      computeDimension(&symbols, "FloorDiv", h, makeDimension(2)).dim_param());
+  for (int64_t value : {-3, -2, -1, 0, 1, 2, 3}) {
+    const auto floor = computeDimension(&symbols, "FloorDiv", makeDimension(value), makeDimension(2));
+    EXPECT_EQ(floor.dim_value(), value / 2 - (value % 2 < 0 ? 1 : 0));
+  }
+  EXPECT_EQ(computeDimension(&symbols, "Div", makeDimension(-1), makeDimension(2)).dim_value(), 0);
+  EXPECT_EQ(computeDimension(&symbols, "FloorDiv", makeDimension(-1), makeDimension(2)).dim_value(), -1);
+  int64_t lower = 0;
+  ASSERT_TRUE(symbols.getValueLowerBound(floored, lower));
+  EXPECT_EQ(lower, -1);
+}
+
+TEST(ShapeInferenceTest, SymbolicValueBoundsDistinguishDimensionsAndPartialValues) {
+  GraphProto graph;
+  auto* input = graph.add_input();
+  input->set_name("x");
+  input->mutable_type()->mutable_tensor_type()->mutable_shape()->add_dim()->set_dim_param("N");
+  shape_inference::SymbolTableImpl symbols;
+  symbols.addFromGraph(graph);
+
+  Dim n;
+  n.set_dim_param("N");
+  int64_t lower = 0;
+  ASSERT_TRUE(symbols.getValueLowerBound(n, lower));
+  EXPECT_EQ(lower, 0);
+  ASSERT_TRUE(symbols.getValueLowerBound(n).has_value());
+  EXPECT_EQ(*symbols.getValueLowerBound(n), 0);
+
+  shape_inference::DataValueMap partial;
+  partial["raw"].add_dim()->set_dim_param("signed_value");
+  symbols.addFromData(partial);
+  EXPECT_FALSE(symbols.getValueLowerBound(partial.at("raw").dim(0), lower));
+  EXPECT_FALSE(symbols.getValueLowerBound(partial.at("raw").dim(0)).has_value());
+  const auto signed_sum = computeDimension(&symbols, "Add", partial.at("raw").dim(0), makeDimension(1));
+  EXPECT_FALSE(symbols.getValueLowerBound(signed_sum, lower));
+
+  const auto negative = computeDimension(&symbols, "Sub", n, makeDimension(1));
+  ASSERT_TRUE(symbols.getValueLowerBound(negative, lower));
+  EXPECT_EQ(lower, -1);
+  ASSERT_TRUE(symbols.getValueLowerBound(negative).has_value());
+  EXPECT_EQ(*symbols.getValueLowerBound(negative), -1);
+
+  const auto half = computeDimension(&symbols, "Div", n, makeDimension(2));
+  const auto positive = computeDimension(&symbols, "Add", half, makeDimension(1));
+  ASSERT_TRUE(symbols.getValueLowerBound(positive, lower));
+  EXPECT_EQ(lower, 1);
+  ASSERT_TRUE(symbols.getValueLowerBound(positive).has_value());
+  EXPECT_EQ(*symbols.getValueLowerBound(positive), 1);
+
+  const auto product = computeDimension(&symbols, "Mul", n, makeDimension(2));
+  const auto potentially_wrapped = computeDimension(&symbols, "Add", product, makeDimension(1));
+  EXPECT_FALSE(symbols.getValueLowerBound(potentially_wrapped, lower));
+  graph.add_output()->mutable_type()->mutable_tensor_type()->mutable_shape()->add_dim()->CopyFrom(product);
+  symbols.addFromGraph(graph);
+  EXPECT_FALSE(symbols.getValueLowerBound(product).has_value());
+}
+
+TEST(ShapeInferenceTest, ReshapeDoesNotAssumePartialSymbolsAreNonnegative) {
+  ModelProto model;
+  OnnxParser parser(R"ONNX(
+    <ir_version: 8, opset_import: ["" : 24]>
+    g (int64[1] target, float[4] data) => (output) {
+      output = Reshape<allowzero=1>(data, target)
+    }
+  )ONNX");
+  const auto status = parser.Parse(model);
+  ASSERT_TRUE(status.IsOK()) << status.ErrorMessage();
+  shape_inference::DataValueMap partial;
+  partial["target"].add_dim()->set_dim_param("signed_value");
+  shape_inference::InferShapes(
+      model, OpSchemaRegistry::Instance(), ShapeInferenceOptions(true, 1, true), &partial);
+  const auto& output = model.graph().output(0).type().tensor_type().shape();
+  ASSERT_EQ(output.dim_size(), 1);
+  EXPECT_FALSE(output.dim(0).has_dim_value());
+  EXPECT_NE(output.dim(0).dim_param(), "signed_value");
+}
+
 template <class Type>
 static void CreateDims(Type& proto, int num_dims) {
   auto mutable_shape = proto.mutable_shape();

@@ -11,6 +11,7 @@
 #include <vector>
 
 #include "onnx/common/assertions.h"
+#include "onnx/defs/data_propagators.h"
 #include "onnx/defs/doc_strings.h"
 #include "onnx/defs/function.h"
 #include "onnx/defs/math/utils.h"
@@ -19,34 +20,6 @@
 #include "onnx/defs/type_builders.h"
 
 namespace ONNX_NAMESPACE {
-
-static void MathOpDataPropagator(DataPropagationContext& ctx, std::string_view op_type) {
-  const auto* const input_0 = ctx.getInputData(0);
-  const auto* const input_1 = ctx.getInputData(1);
-  if (input_0 == nullptr || input_1 == nullptr) {
-    return;
-  }
-  int size_0 = input_0->dim_size();
-  int size_1 = input_1->dim_size();
-  // Fails to broadcast if the ranks are different and no any rank is 1
-  if (size_0 != size_1 && size_0 != 1 && size_1 != 1) {
-    fail_shape_inference("Invalid rank for ", op_type, " broadcasting: (", size_0, ") vs (", size_1, ").");
-  }
-  TensorShapeProto tsp;
-  int size_out = size_0 == 1 ? size_1 : size_0;
-  for (int i = 0; i < size_out; ++i) {
-    const auto& input_dim_0 = input_0->dim(size_0 == 1 ? 0 : i);
-    const auto& input_dim_1 = input_1->dim(size_1 == 1 ? 0 : i);
-    if (input_dim_0.has_dim_value() && input_dim_1.has_dim_value()) {
-      tsp.mutable_dim()->Add()->set_dim_value(
-          defs::math::utils::MathOpTwoIntegers(op_type, input_dim_0.dim_value(), input_dim_1.dim_value()));
-    } else {
-      // Cannot compute the value; simply add an empty dim without value and param
-      tsp.mutable_dim()->Add();
-    }
-  }
-  ctx.addOutputData(0, std::move(tsp));
-}
 
 static std::function<void(OpSchema&)> MathDocGenerator(const char* name) {
   return [=](OpSchema& schema) {
@@ -104,7 +77,7 @@ ONNX_OPERATOR_SET_SCHEMA(
     Add,
     14,
     OpSchema().FillUsing(MathDocGenerator("addition")).PartialDataPropagationFunction([](DataPropagationContext& ctx) {
-      MathOpDataPropagator(ctx, "Add");
+      defs::math::utils::MathOpDataPropagator(ctx, "Add");
     }));
 
 ONNX_OPERATOR_SET_SCHEMA(
@@ -112,7 +85,9 @@ ONNX_OPERATOR_SET_SCHEMA(
     14,
     OpSchema()
         .FillUsing(MathDocGenerator("subtraction"))
-        .PartialDataPropagationFunction([](DataPropagationContext& ctx) { MathOpDataPropagator(ctx, "Sub"); }));
+        .PartialDataPropagationFunction([](DataPropagationContext& ctx) {
+          defs::math::utils::MathOpDataPropagator(ctx, "Sub");
+        }));
 
 ONNX_OPERATOR_SET_SCHEMA(
     Mod,
@@ -142,9 +117,16 @@ ONNX_OPERATOR_SET_SCHEMA(
     14,
     OpSchema()
         .FillUsing(MathDocGenerator("multiplication"))
-        .PartialDataPropagationFunction([](DataPropagationContext& ctx) { MathOpDataPropagator(ctx, "Mul"); }));
+        .PartialDataPropagationFunction([](DataPropagationContext& ctx) {
+          defs::math::utils::MathOpDataPropagator(ctx, "Mul");
+        }));
 
-ONNX_OPERATOR_SET_SCHEMA(Div, 14, OpSchema().FillUsing(MathDocGenerator("division")));
+ONNX_OPERATOR_SET_SCHEMA(
+    Div,
+    14,
+    OpSchema().FillUsing(MathDocGenerator("division")).PartialDataPropagationFunction([](DataPropagationContext& ctx) {
+      defs::math::utils::MathOpDataPropagator(ctx, "Div");
+    }));
 
 ONNX_OPERATOR_SET_SCHEMA(
     Neg,
@@ -164,7 +146,8 @@ ONNX_OPERATOR_SET_SCHEMA(
              types::Double,
              types::BFloat16},
             "Constrain input and output types to signed numeric tensors.")
-        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
+        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput)
+        .PartialDataPropagationFunction(defs::math::utils::NegDataPropagator));
 
 ONNX_OPERATOR_SET_SCHEMA(
     Abs,
@@ -203,7 +186,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             "T",
             {types::Float16, types::Float, types::Double, types::BFloat16},
             "Constrain input and output types to float tensors.")
-        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
+        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput)
+        .PartialDataPropagationFunction(IdentityDataPropagator));
 
 ONNX_OPERATOR_SET_SCHEMA(
     Ceil,
@@ -216,7 +200,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             "T",
             {types::Float16, types::Float, types::Double, types::BFloat16},
             "Constrain input and output types to float tensors.")
-        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
+        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput)
+        .PartialDataPropagationFunction(IdentityDataPropagator));
 
 ONNX_OPERATOR_SET_SCHEMA(
     Sqrt,
@@ -258,7 +243,8 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         )ONNX",
             18)
-        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
+        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput)
+        .PartialDataPropagationFunction(defs::math::utils::ReluDataPropagator));
 
 ONNX_OPERATOR_SET_SCHEMA(
     LeakyRelu,

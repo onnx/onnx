@@ -68,7 +68,6 @@ def test_nd_indices_type_constraints(op, version, index_type):
         ([0, 3, 4], [0, 2, 1], 1, [0, 2, 4]),
         ([2, 3, 4], [2, 3, 2, 1], 2, [2, 3, 2]),
         ([2, 3], [2], 0, []),
-        ([2, None, 4], [3, 1], 0, [3, None, 4]),
     ],
 )
 def test_gathernd_inference(
@@ -80,9 +79,18 @@ def test_gathernd_inference(
     inferred = shape_inference.infer_shapes(model, check_type=True, strict_mode=True)
     expected = helper.make_tensor_value_info("output", TensorProto.FLOAT, output_shape)
     actual = inferred.graph.output[0]
-    for dim in actual.type.tensor_type.shape.dim:
-        if dim.dim_param.startswith("unk__"):
-            dim.ClearField("dim_param")
+    assert actual == expected
+
+
+@pytest.mark.parametrize("index_type", [TensorProto.INT32, TensorProto.INT64])
+def test_gathernd_infers_anonymous_dimension(index_type):
+    model = _model("GatherND", [2, None, 4], [3, 1], index_type)
+    inferred = shape_inference.infer_shapes(model, check_type=True, strict_mode=True)
+    actual = inferred.graph.output[0]
+    unknown_dim = actual.type.tensor_type.shape.dim[1]
+    assert not unknown_dim.HasField("dim_value")
+    unknown_dim.ClearField("dim_param")
+    expected = helper.make_tensor_value_info("output", TensorProto.FLOAT, [3, None, 4])
     assert actual == expected
 
 

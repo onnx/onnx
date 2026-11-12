@@ -58,14 +58,124 @@ dynamic behaviors block the flow of shape inference, for example a
 Reshape to a dynamically-provide shape. Also, all operators are not
 required to have a shape inference implementation.
 
-Shape inference works only with constants and simple variables. It
-does not support arithmetic expressions containing variables. For
-example, `Concat` on tensors of shapes `(5, 2)` and `(7, 2)` can be
-inferred to produce a result of shape `(12, 2)`, but `Concat` on
-tensors of shapes `(5, 2)` and `(N, 2)` will simply produce `(M, 2)`,
-rather than containing a representation of `N+5`. Note that differing
-unknown symbolic values will be propagated, so the `M` here represents
-an unknown quantity that is the same as other occurrences of `M`.
+### Partial data propagation
+
+With `data_prop=True` in Python or
+`ShapeInferenceOptions::enable_data_propagation` in C++, partial data propagation
+represents INT32 and INT64 tensor elements as known integers, symbolic values,
+or unknown values.
+These entries describe tensor values, not tensor dimensions; a symbolic
+entry need not be nonnegative.
+It does not evaluate floating-point values. An INT32 result containing a value
+outside the range [-2147483648, 2147483647] or a symbolic value is not propagated.
+`Size` propagation uses the input shape regardless of the input element type.
+A propagated record is exposed as a concrete tensor only if all stored values
+are known integers, the tensor has a known shape with nonnegative integer
+dimensions, and their product equals the number of stored values.
+Subgraph-local records are not visible to enclosing or sibling graphs;
+subgraphs can read visible outer-scope records.
+Records whose value count differs from a fully known tensor shape are not
+propagated.
+
+For a symbolic `Reshape` target entry, inference retains the symbol only when
+the value is proven positive, or proven nonnegative with `allowzero=1`.
+With `allowzero=0`, an entry equal to the input dimension at the same axis
+is also retained: copying that dimension when the entry is zero gives the same
+result. Otherwise, the entry does not determine an output dimension, because
+zero and -1 have special meanings.
+
+### Arithmetic and bounds
+
+The symbolic arithmetic helpers support addition, subtraction, multiplication,
+and integer division (`Div`, rounding toward zero). `FloorDiv` rounds toward
+negative infinity and requires a known positive integer divisor; otherwise
+its result is unknown. Computing addition, subtraction, multiplication, or
+`Div` on two known integers uses checked signed INT64 arithmetic: overflow or
+division by zero is an inference error, not a wrapped constant.
+
+The identities `x + 0`, `0 + x`, `x - 0`, `x * 1`, `1 * x`, and `Div(x, 1)`
+retain `x`. Multiplication by zero yields zero even when the other operand is
+unknown. Other compound expressions require both operands to be known integers
+or named symbols; an anonymous unknown operand leaves the result unknown.
+These rules describe arithmetic performed by inference, not a requirement that
+every operator compute every representable expression.
+
+The shared graph-level registry derives bounds within one invocation.
+Symbols from existing tensor-shape annotations have the closed integer bounds
+[0, 9223372036854775807], and a known integer has its own value as both bounds.
+Arbitrary partial symbolic values have no bounds unless the same symbol occurs
+in such an annotation. Generated expression symbols acquire bounds from their
+arithmetic, not merely from being used as output dimensions.
+Addition adds corresponding endpoints; subtraction
+subtracts the right upper bound from the left lower bound, and the right lower
+bound from the left upper bound. Multiplication takes the minimum and maximum
+of the four endpoint products. Division by a known positive integer applies
+the operation's rounding rule to both endpoints.
+A derived interval is retained only when all required operand bounds are
+available and all endpoint results fit in signed INT64. Otherwise no bound is
+established by that operation, even if an expression symbol can be allocated.
+Missing proof does not establish positivity, nonnegativity, or absence of overflow.
+
+For example, let `N` be a symbol from an existing tensor-shape annotation,
+with the shared registry available:
+
+| Expression or target | Inference consequence |
+|---|---|
+| `Div(N, 2) + 1` | Its lower bound is one, so it passes the symbolic `Reshape` positivity condition. |
+| `N - 1` | Its lower bound is -1; it is not retained merely as a symbolic `Reshape` target dimension. |
+| `N` at the same input axis | It passes the `allowzero=0` same-axis condition, including when `N` is zero. |
+| INT64 tensor `N * 4` and exact dimension `N * 4` | The bounds cannot exclude overflow, so the two computations have distinct expression identities. |
+| `Div(-1, 2)` and `FloorDiv(-1, 2)` | Their known results are zero and -1, respectively. |
+
+### Symbolic identities
+
+Supported symbolic arithmetic operations represent results using `dim_param`
+symbols. For positive divisors, floor division used in pooling and convolution
+differs from integer `Div`, which truncates toward zero. The implementation
+uses distinct expression identities unless the numerator is proven
+nonnegative or the divisor is one.
+For example, `Concat` on tensors of shapes `(5, 2)` and `(N, 2)` can produce
+`(5 + N, 2)`. ONNX IR treats each `dim_param` string as an opaque, globally
+scoped symbol, not as an expression evaluated at runtime. Shape inference
+does not solve equations between symbols. Before allocating expression names,
+inference reserves existing symbols in the model, including subgraphs and local
+functions. When a compound symbolic expression can be represented, the same
+operation and ordered operands reuse one symbol within an inference invocation,
+across shape inference, data propagation, and subgraphs sharing the registry.
+Operand identity distinguishes integer constants from symbolic names;
+operand order is retained rather than canonicalized using commutativity.
+A readable expression
+spelling is used only if it is unclaimed; otherwise a fresh name is allocated.
+A matching spelling alone does not establish expression identity or equality
+with an existing user symbol.
+INT64 tensor arithmetic shares an expression identity with exact dimension
+arithmetic only when integer bounds prove the operation cannot overflow.
+Otherwise, its symbolic result has a distinct identity.
+
+Expression provenance is not serialized. On a subsequent invocation, every
+existing `dim_param` is an opaque atom, including names generated by a previous
+invocation. Existing output annotations are retained when a newly inferred
+symbol differs; equality with that new symbol is not inferred. Inference
+contexts without an expression allocator preserve concrete results and
+identity operations but leave new compound symbolic results unknown.
+
+Graph-level inference may assign a fresh symbol to an anonymous unknown
+dimension. Such a name identifies an unknown value; it does not imply a
+recovered arithmetic expression. An unknown rank remains represented by an
+absent shape field.
+Generated names have no guaranteed prefix or stable spelling across invocations.
+
+### Implementation limits (informative)
+
+Synthetic records of unknown values are limited to 1000 elements. This is not
+a limit on all propagated records or on total inference memory use.
+Each subgraph inference copies visible propagation records; memory use can
+therefore grow with both record size and subgraph nesting depth.
+The concrete-data bridge currently leaves empty records unmaterialized.
+When constructing a new arithmetic expression, an operand string longer than
+1024 characters leaves the result unknown.
+Pooling with `ceil_mode=1` leaves a symbolic spatial output dimension
+unknown unless effective `SAME_UPPER` or `SAME_LOWER` auto-padding determines it.
 
 These limitations are a property of the current implementation, not
 fundamental constraints - if you are in need of something more

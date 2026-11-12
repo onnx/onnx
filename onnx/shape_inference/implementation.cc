@@ -424,6 +424,47 @@ class ShapeInferenceImplBase {
     input_data_by_name[name] = &input_data_by_name_holder[name];
   }
 
+  // Like AddTemporaryConstant, but also sets dims on the TensorProto based on the
+  // tensor's known shape from value_types_by_name. This is needed for ops like Pad
+  // that check dims_size() on the TensorProto.
+  template <typename T>
+  void AddTemporaryConstantWithDims(const std::string& name, const T& vector) {
+    auto type_iter = value_types_by_name.find(name);
+    if (type_iter == value_types_by_name.end() || type_iter->second == nullptr ||
+        !type_iter->second->has_tensor_type() || !type_iter->second->tensor_type().has_shape()) {
+      return;
+    }
+    const auto& shape = type_iter->second->tensor_type().shape();
+    size_t element_count = 1;
+    for (const auto& dim : shape.dim()) {
+      if (!dim.has_dim_value() || dim.dim_value() < 0) {
+        return;
+      }
+      if (dim.dim_value() == 0) {
+        element_count = 0;
+      }
+    }
+    if (element_count != 0) {
+      for (const auto& dim : shape.dim()) {
+        if (element_count == 0 || static_cast<uint64_t>(dim.dim_value()) > vector.size() / element_count) {
+          return;
+        }
+        element_count *= static_cast<size_t>(dim.dim_value());
+      }
+    }
+    if (element_count != vector.size()) {
+      return;
+    }
+    auto tp = ToTensor(vector);
+    tp.clear_dims();
+    for (const auto& dim : shape.dim()) {
+      tp.add_dims(dim.dim_value());
+    }
+    input_data_by_name_holder[name] = std::move(tp);
+    auto& stored = input_data_by_name_holder[name];
+    input_data_by_name[name] = &stored;
+  }
+
   void ProcessConstant(const NodeProto& n) {
     if (IsOnnxDomain(n.domain()) && n.op_type() == "Constant" && n.output().size() == 1) {
       const std::string& output_name = n.output(0);
@@ -467,6 +508,17 @@ class ShapeInferenceImplBase {
               break;
           }
         }
+      }
+    }
+
+    // Identity forwards constant data from input to output, enabling
+    // downstream ops (e.g. Range) to see through Identity wrappers.
+    if (IsOnnxDomain(n.domain()) && n.op_type() == "Identity" && n.input().size() == 1 && n.output().size() == 1) {
+      const std::string& input_name = n.input(0);
+      const std::string& output_name = n.output(0);
+      auto it = input_data_by_name.find(input_name);
+      if (it != input_data_by_name.end()) {
+        input_data_by_name[output_name] = it->second;
       }
     }
   }
@@ -541,8 +593,66 @@ class ShapeInferenceImplBase {
               "Container for generated shape data cannot be nullptr when enable_data_propagation option is set.");
         }
         DataPropagationContextImpl data_propagation_ctx(
-            n, value_types_by_name, input_data_by_name, *generated_shape_data_by_name);
+            n, value_types_by_name, input_data_by_name, *generated_shape_data_by_name, symbol_table);
         schema->GetDataPropagationFunction()(data_propagation_ctx);
+        // Bridge propagated shape data to input_data_by_name so that downstream
+        // shape inference functions (which use getInputData returning TensorProto*)
+        // can see values produced by data propagation (stored as TensorShapeProto).
+        // Only bridges integer types since TensorShapeProto dim_value is int64.
+        for (int i = 0; i < n.output_size(); ++i) {
+          const auto& output_name = n.output(i);
+          if (output_name.empty()) {
+            continue;
+          }
+          // Skip if already available as TensorProto
+          if (input_data_by_name.count(output_name)) {
+            continue;
+          }
+          // Only bridge integer types — TensorShapeProto stores int64 dim_values
+          auto type_iter = value_types_by_name.find(output_name);
+          if (type_iter == value_types_by_name.end() || type_iter->second == nullptr ||
+              !type_iter->second->has_tensor_type()) {
+            continue;
+          }
+          int elem_type = type_iter->second->tensor_type().elem_type();
+          if (elem_type != TensorProto::INT64 && elem_type != TensorProto::INT32) {
+            continue;
+          }
+          auto it = generated_shape_data_by_name->find(output_name);
+          if (it == generated_shape_data_by_name->end()) {
+            continue;
+          }
+          const auto& tsp = it->second;
+          // Only convert if all dims have concrete values
+          bool all_concrete = tsp.dim_size() > 0;
+          for (const auto& dim : tsp.dim()) {
+            if (!dim.has_dim_value()) {
+              all_concrete = false;
+              break;
+            }
+          }
+          if (all_concrete) {
+            std::vector<int64_t> values;
+            values.reserve(tsp.dim_size());
+            for (const auto& dim : tsp.dim()) {
+              values.push_back(dim.dim_value());
+            }
+            if (elem_type == TensorProto::INT32) {
+              std::vector<int32_t> int32_values;
+              int32_values.reserve(values.size());
+              for (const auto value : values) {
+                if (value < std::numeric_limits<int32_t>::min() || value > std::numeric_limits<int32_t>::max()) {
+                  fail_shape_inference(
+                      "Propagated value ", value, " for ", output_name, " is outside the int32 range.");
+                }
+                int32_values.push_back(static_cast<int32_t>(value));
+              }
+              AddTemporaryConstantWithDims(output_name, int32_values);
+            } else {
+              AddTemporaryConstantWithDims(output_name, values);
+            }
+          }
+        }
       }
     }
     ONNX_CATCH(const ONNX_NAMESPACE::InferenceError& ex) {
@@ -855,6 +965,9 @@ void InferShapes(
     const ShapeInferenceOptions& options,
     const std::unordered_map<std::string, const FunctionProto*>& model_local_functions) {
   SymbolTableImpl symbol_table;
+  for (const auto& entry : model_local_functions) {
+    symbol_table.addFromFunction(*entry.second);
+  }
   InferShapesImpl(
       g,
       std::unordered_map<std::string, TypeProto*>(0),
@@ -872,8 +985,12 @@ void InferShapes(
     DataValueMap* generated_shape_data_by_name) {
   auto opset_imports = GetOpsetImportsFromProto(m);
   SymbolTableImpl symbol_table;
+  if (generated_shape_data_by_name != nullptr) {
+    symbol_table.addFromData(*generated_shape_data_by_name);
+  }
   ModelLocalFunctionsMap model_local_functions_by_id;
   for (const auto& function_proto : m.functions()) {
+    symbol_table.addFromFunction(function_proto);
     model_local_functions_by_id.insert({GetFunctionIdentifier(function_proto), &function_proto});
   }
   checker::check_function_call_cycles(m);
@@ -1201,6 +1318,26 @@ std::vector<const TypeProto*> GraphInferencerImpl::doInferencing(
   // future: pass inputData into InferShapes either directly, or indirectly by
   // updating initializers that match subgraph inputs.
   (void)input_data;
+  // Sibling subgraphs may reuse local names. Keep visible outer records, but
+  // never publish local records into the enclosing or sibling scope.
+  DataValueMap local_shape_data;
+  if (context_->generated_shape_data_by_name != nullptr) {
+    local_shape_data = *context_->generated_shape_data_by_name;
+    for (const auto& input : g_->input()) {
+      local_shape_data.erase(input.name());
+    }
+    for (const auto& initializer : g_->initializer()) {
+      local_shape_data.erase(initializer.name());
+    }
+    for (const auto& initializer : g_->sparse_initializer()) {
+      local_shape_data.erase(initializer.values().name());
+    }
+    for (const auto& node : g_->node()) {
+      for (const auto& output : node.output()) {
+        local_shape_data.erase(output);
+      }
+    }
+  }
   InferShapesImpl(
       g_,
       *context_->outer_scope_value_types_by_name, // never null
@@ -1209,7 +1346,7 @@ std::vector<const TypeProto*> GraphInferencerImpl::doInferencing(
       symbol_table,
       context_->model_local_functions,
       context_->schema_registry,
-      context_->generated_shape_data_by_name);
+      context_->generated_shape_data_by_name != nullptr ? &local_shape_data : nullptr);
 
   std::vector<const TypeProto*> graph_output_types;
   graph_output_types.reserve(g_->output().size());
@@ -1231,6 +1368,9 @@ void TraverseGraphsToAddExistingSymbols(const GraphProto& g, SymbolTable& symbol
     for (const auto& attr : n.attribute()) {
       if (attr.has_g()) {
         TraverseGraphsToAddExistingSymbols(attr.g(), symbol_table);
+      }
+      for (const auto& graph : attr.graphs()) {
+        TraverseGraphsToAddExistingSymbols(graph, symbol_table);
       }
     }
   }

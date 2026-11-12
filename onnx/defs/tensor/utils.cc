@@ -159,6 +159,13 @@ OpSchema ScatterNDSchema(bool allow_int32_indices, bool allow_mean) {
 
 void resizeShapeInferenceHelper(
     const TensorShapeProto& input_shape,
+    const std::vector<float>& scales_data,
+    TensorShapeProto* output_shape) {
+  resizeShapeInferenceHelper(input_shape, scales_data, output_shape, nullptr);
+}
+
+void resizeShapeInferenceHelper(
+    const TensorShapeProto& input_shape,
     const std::vector<int64_t>& sizes_data,
     TensorShapeProto* output_shape) {
   if (!sizes_data.empty()) {
@@ -274,9 +281,28 @@ void gridSampleShapeInference(InferenceContext& ctx) {
 void resizeShapeInferenceHelper(
     const TensorShapeProto& input_shape,
     const std::vector<float>& scales_data,
-    TensorShapeProto* output_shape) {
-  // Newer opsets reuse the frozen opset 7-10 helper; give this its own body when they diverge.
+    TensorShapeProto* output_shape,
+    SymbolTable* symbols) {
   resizeShapeInferenceHelper_opset7_to_10(input_shape, scales_data, output_shape);
+  for (int i = 0; i < input_shape.dim_size(); ++i) {
+    auto* dim = output_shape->mutable_dim(i);
+    if (input_shape.dim(i).has_dim_param()) {
+      // Propagate symbolic dim when the scale is an exact integer
+      auto scale = scales_data[i];
+      if (!std::isfinite(scale) || scale <= 0 ||
+          static_cast<double>(scale) >= static_cast<double>(std::numeric_limits<int64_t>::max())) {
+        continue;
+      }
+      auto int_scale = static_cast<int64_t>(scale);
+      if (static_cast<float>(int_scale) == scale && int_scale > 0) {
+        if (int_scale == 1) {
+          *dim = input_shape.dim(i);
+        } else {
+          *dim = SymbolicDim(symbols, input_shape.dim(i)) * int_scale;
+        }
+      }
+    }
+  }
 }
 
 static void resizeShapeInferenceVersioned(InferenceContext& ctx, int opset_version) {
@@ -429,7 +455,7 @@ static void resizeShapeInferenceVersioned(InferenceContext& ctx, int opset_versi
           fail_shape_inference("Number of elements of input 'scales' must be same as rank of input 'X'");
         }
       }
-      resizeShapeInferenceHelper(input_shape, scales_data, output_shape);
+      resizeShapeInferenceHelper(input_shape, scales_data, output_shape, ctx.getSymbolTable());
     } else {
       fail_shape_inference("Input 'scales' must have float element type.");
     }
@@ -581,7 +607,12 @@ std::function<void(OpSchema&)> PadDocGenerator(
         if (axes_initializer == nullptr)
           return; // can't do shape inference then
 
-        axes = ParseData<int64_t>(axes_initializer);
+        if (axes_initializer->data_type() == TensorProto::INT32) {
+          const auto int32_axes = ParseData<int32_t>(axes_initializer);
+          axes.assign(int32_axes.begin(), int32_axes.end());
+        } else {
+          axes = ParseData<int64_t>(axes_initializer);
+        }
         checkAxesRange(axes, input_rank);
         adjustNegativeAxes(axes, input_rank);
         checkDuplicateAxes(axes, input_rank);
@@ -618,11 +649,13 @@ std::function<void(OpSchema&)> PadDocGenerator(
               " values.");
         }
 
-        // Set default dim values
+        // Set default dim values (propagate symbolic dims too)
         for (int i = 0; i < input_rank; ++i) {
           const auto& input_dim = input_shape.dim(i);
           if (input_dim.has_dim_value()) {
             out_dims[i]->set_dim_value(input_dim.dim_value());
+          } else if (input_dim.has_dim_param()) {
+            out_dims[i]->set_dim_param(input_dim.dim_param());
           }
         }
 
@@ -635,6 +668,8 @@ std::function<void(OpSchema&)> PadDocGenerator(
             out_dim.set_dim_value(checkedAdd(input_dim.dim_value(), total_pad));
           } else if (total_pad == 0) {
             out_dim = input_dim;
+          } else if (input_dim.has_dim_param()) {
+            out_dim = symbolicDim(ctx, input_dim) + total_pad;
           }
         }
       }

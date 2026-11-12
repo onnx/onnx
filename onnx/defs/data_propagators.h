@@ -60,6 +60,40 @@ inline void PropagateShapeDataFromInputToOutput(DataPropagationContext& ctx, int
   }
 }
 
+inline void IdentityDataPropagator(DataPropagationContext& ctx) {
+  PropagateShapeDataFromInputToOutput(ctx, 0);
+}
+
+inline void SizeDataPropagator(DataPropagationContext& ctx) {
+  const auto* type = ctx.getInputType(0);
+  if (type == nullptr || !type->has_tensor_type() || !type->tensor_type().has_shape()) {
+    return;
+  }
+  const auto& shape = type->tensor_type().shape();
+  int64_t count = 1;
+  bool has_unknown = false;
+  for (const auto& dim : shape.dim()) {
+    if (!dim.has_dim_value()) {
+      has_unknown = true;
+    } else if (dim.dim_value() < 0) {
+      return;
+    } else if (dim.dim_value() == 0) {
+      count = 0;
+    }
+  }
+  if (count != 0) {
+    if (has_unknown) {
+      return;
+    }
+    for (const auto& dim : shape.dim()) {
+      count = checkedMultiply(count, dim.dim_value());
+    }
+  }
+  TensorShapeProto data;
+  data.add_dim()->set_dim_value(count);
+  ctx.addOutputData(0, std::move(data));
+}
+
 inline void GatherOp13DataPropagator(DataPropagationContext& ctx) {
   if (!axisIsZero(ctx, true)) {
     return;

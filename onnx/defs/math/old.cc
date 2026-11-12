@@ -7,6 +7,7 @@
 #include <string>
 #include <vector>
 
+#include "onnx/defs/data_propagators.h"
 #include "onnx/defs/doc_strings.h"
 #include "onnx/defs/function.h"
 #include "onnx/defs/math/utils.h"
@@ -15,6 +16,11 @@
 #include "onnx/defs/type_builders.h"
 
 namespace ONNX_NAMESPACE {
+
+// Div data propagation for old versions (binary elementwise integer division).
+static void DivDataPropagator_opset1_to_13(DataPropagationContext& ctx) {
+  defs::math::utils::MathOpDataPropagator(ctx, "Div", true);
+}
 
 static bool BuildContextDependentFunctionBody_opset13(
     const FunctionBodyBuildContext& ctx,
@@ -680,7 +686,12 @@ ONNX_OPERATOR_SET_SCHEMA(Sub, 13, OpSchema().FillUsing(MathDocGenerator_opset13(
 
 ONNX_OPERATOR_SET_SCHEMA(Mul, 13, OpSchema().FillUsing(MathDocGenerator_opset13("multiplication")));
 
-ONNX_OPERATOR_SET_SCHEMA(Div, 13, OpSchema().FillUsing(MathDocGenerator_opset13("division")));
+ONNX_OPERATOR_SET_SCHEMA(
+    Div,
+    13,
+    OpSchema()
+        .FillUsing(MathDocGenerator_opset13("division"))
+        .PartialDataPropagationFunction(DivDataPropagator_opset1_to_13));
 
 static std::function<void(OpSchema&)> MathDocGenerator_opset_7(const char* name) {
   return [=](OpSchema& schema) {
@@ -731,7 +742,12 @@ ONNX_OPERATOR_SET_SCHEMA(Sub, 7, OpSchema().FillUsing(MathDocGenerator_opset_7("
 
 ONNX_OPERATOR_SET_SCHEMA(Mul, 7, OpSchema().FillUsing(MathDocGenerator_opset_7("multiplication")));
 
-ONNX_OPERATOR_SET_SCHEMA(Div, 7, OpSchema().FillUsing(MathDocGenerator_opset_7("division")));
+ONNX_OPERATOR_SET_SCHEMA(
+    Div,
+    7,
+    OpSchema()
+        .FillUsing(MathDocGenerator_opset_7("division"))
+        .PartialDataPropagationFunction(DivDataPropagator_opset1_to_13));
 
 static std::function<void(OpSchema&)> SoftmaxFamilyDocGenerator_opset_11(const char* name, const char* description) {
   return [=](OpSchema& schema) {
@@ -857,7 +873,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             "T",
             {types::Float, types::Int32, types::Int8, types::Int16, types::Int64, types::Float16, types::Double},
             "Constrain input and output types to signed numeric tensors.")
-        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
+        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput)
+        .PartialDataPropagationFunction(defs::math::utils::NegDataPropagator));
 
 ONNX_OPERATOR_SET_SCHEMA(
     Abs,
@@ -893,7 +910,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             "T",
             {types::Float16, types::Float, types::Double},
             "Constrain input and output types to float tensors.")
-        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
+        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput)
+        .PartialDataPropagationFunction(IdentityDataPropagator));
 
 ONNX_OPERATOR_SET_SCHEMA(
     Ceil,
@@ -906,7 +924,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             "T",
             {types::Float16, types::Float, types::Double},
             "Constrain input and output types to float tensors.")
-        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
+        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput)
+        .PartialDataPropagationFunction(IdentityDataPropagator));
 
 ONNX_OPERATOR_SET_SCHEMA(
     Sqrt,
@@ -932,7 +951,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             "T",
             {types::Float16, types::Float, types::Double},
             "Constrain input and output types to float tensors.")
-        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
+        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput)
+        .PartialDataPropagationFunction(defs::math::utils::ReluDataPropagator));
 
 ONNX_OPERATOR_SET_SCHEMA(
     Relu,
@@ -945,7 +965,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             "T",
             {types::Float16, types::Float, types::Double, types::BFloat16},
             "Constrain input and output types to float tensors.")
-        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
+        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput)
+        .PartialDataPropagationFunction(defs::math::utils::ReluDataPropagator));
 
 ONNX_OPERATOR_SET_SCHEMA(
     Exp,
@@ -2095,7 +2116,12 @@ ONNX_OPERATOR_SET_SCHEMA(Sub, 1, OpSchema().FillUsing(MathDocGenerator_old("subt
 
 ONNX_OPERATOR_SET_SCHEMA(Mul, 1, OpSchema().FillUsing(MathDocGenerator_old("multiplication")));
 
-ONNX_OPERATOR_SET_SCHEMA(Div, 1, OpSchema().FillUsing(MathDocGenerator_old("division")));
+ONNX_OPERATOR_SET_SCHEMA(
+    Div,
+    1,
+    OpSchema()
+        .FillUsing(MathDocGenerator_old("division"))
+        .PartialDataPropagationFunction(DivDataPropagator_opset1_to_13));
 
 ONNX_OPERATOR_SET_SCHEMA(Add, 6, OpSchema().FillUsing(MathDocGenerator_old_opset6("addition")));
 
@@ -2103,7 +2129,12 @@ ONNX_OPERATOR_SET_SCHEMA(Sub, 6, OpSchema().FillUsing(MathDocGenerator_old_opset
 
 ONNX_OPERATOR_SET_SCHEMA(Mul, 6, OpSchema().FillUsing(MathDocGenerator_old_opset6("multiplication")));
 
-ONNX_OPERATOR_SET_SCHEMA(Div, 6, OpSchema().FillUsing(MathDocGenerator_old_opset6("division")));
+ONNX_OPERATOR_SET_SCHEMA(
+    Div,
+    6,
+    OpSchema()
+        .FillUsing(MathDocGenerator_old_opset6("division"))
+        .PartialDataPropagationFunction(DivDataPropagator_opset1_to_13));
 
 ONNX_OPERATOR_SET_SCHEMA(
     Pow,
@@ -2165,7 +2196,8 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint(
             "T",
             {types::Float16, types::Float, types::Double},
-            "Constrain input and output types to float tensors."));
+            "Constrain input and output types to float tensors.")
+        .PartialDataPropagationFunction(defs::math::utils::NegDataPropagator));
 
 ONNX_OPERATOR_SET_SCHEMA(
     Abs,
@@ -2213,7 +2245,8 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint(
             "T",
             {types::Float16, types::Float, types::Double},
-            "Constrain input and output types to float tensors."));
+            "Constrain input and output types to float tensors.")
+        .PartialDataPropagationFunction(IdentityDataPropagator));
 
 ONNX_OPERATOR_SET_SCHEMA(
     Ceil,
@@ -2229,7 +2262,8 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint(
             "T",
             {types::Float16, types::Float, types::Double},
-            "Constrain input and output types to float tensors."));
+            "Constrain input and output types to float tensors.")
+        .PartialDataPropagationFunction(IdentityDataPropagator));
 
 ONNX_OPERATOR_SET_SCHEMA(
     Sqrt,
@@ -2261,7 +2295,8 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint(
             "T",
             {types::Float16, types::Float, types::Double},
-            "Constrain input and output types to float tensors."));
+            "Constrain input and output types to float tensors.")
+        .PartialDataPropagationFunction(defs::math::utils::ReluDataPropagator));
 
 ONNX_OPERATOR_SET_SCHEMA(
     LeakyRelu,

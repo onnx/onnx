@@ -179,34 +179,62 @@ ONNX_API void convPoolShapeInference(
     *output_shape->add_dim() = second_input_shape.dim(0);
   }
 
+  // Detect SAME auto_pad for symbolic dim handling below.
+  // auto_pad is only effective when explicit pads are not specified.
+  bool is_same_pad = false;
+  {
+    std::vector<int64_t> explicit_pads;
+    if (!getRepeatedAttribute(ctx, "pads", explicit_pads)) {
+      const auto* const ap = ctx.getAttribute("auto_pad");
+      if (ap && (ap->s() == "SAME_UPPER" || ap->s() == "SAME_LOWER")) {
+        is_same_pad = true;
+      }
+    }
+  }
+
   int kernel_shape_size = static_cast<int>(kernel_shape.size());
   for (int i = 0; i < kernel_shape_size; ++i) {
     auto* newdim = output_shape->add_dim();
-    if (!input_shape.dim(2 + i).has_dim_value()) {
+    if (!input_shape.dim(2 + i).has_dim_value() && !input_shape.dim(2 + i).has_dim_param()) {
       continue;
     }
-    // how big is the input, including padding
-    int64_t input_size = input_shape.dim(2 + i).dim_value();
-    int64_t effective_input_size = checkedAdd(checkedAdd(input_size, pads[i]), pads[i + kernel_shape_size]);
+    auto input_dim = symbolicDim(ctx, input_shape.dim(2 + i));
+
+    // For SAME auto_pad with symbolic dims, output = ceil(input / stride)
+    if (is_same_pad && input_dim.has_dim_param()) {
+      if (strides[i] == 1) {
+        *newdim = input_dim;
+      } else {
+        *newdim = (input_dim + (strides[i] - 1)) / strides[i];
+      }
+      continue;
+    }
+
+    // Use Dim arithmetic to support both concrete and symbolic input dims.
+    // For concrete dims this produces dim_value; for symbolic dims it
+    // produces a dim_param expression string.
+    auto effective_input_dim = input_dim + checkedAdd(pads[i], pads[i + kernel_shape_size]);
 
     // default is floor mode .i.e. ceil_mode is set to 0
     auto ceil_mode = getAttribute(ctx, "ceil_mode", 0);
 
-    int64_t numerator = checkedSubtract(effective_input_size, effective_kernel_shape[i]);
-    if (ceil_mode) {
-      numerator = checkedAdd(numerator, checkedSubtract(strides[i], 1));
-    }
-    int64_t output_size = checkedAdd(checkedDivide(numerator, strides[i]), 1);
-    if (ceil_mode == 1 &&
-        checkedMultiply(checkedSubtract(output_size, 1), strides[i]) >= checkedAdd(input_size, pads[i])) {
-      // we need to match pytorch's behavior of "Sliding windows that would start in the right padded region are
-      // ignored." (https://pytorch.org/docs/stable/generated/torch.nn.MaxPool1d.html#maxpool1d). this code follows the
-      // same logic as PyTorch's C++ implementation:
-      // https://github.com/pytorch/pytorch/blob/f1cdb39da3850c47d51ec6a5b1ae864c32b3accf/aten/src/ATen/native/Pool.h#L54C21-L54C21
-      --output_size;
+    // The final window may start entirely in right padding. Without a concrete
+    // input dimension, the ceil-mode correction cannot be decided statically.
+    if (ceil_mode == 1 && !input_dim.has_dim_value()) {
+      continue;
     }
 
-    newdim->set_dim_value(output_size);
+    auto output_dim = (effective_input_dim - effective_kernel_shape[i] + (ceil_mode ? strides[i] - 1 : 0))
+                          .apply("FloorDiv", makeDimension(strides[i])) +
+        1;
+
+    if (ceil_mode == 1 && output_dim.has_dim_value() && input_dim.has_dim_value() &&
+        checkedMultiply(checkedSubtract(output_dim.dim_value(), 1), strides[i]) >=
+            checkedAdd(input_dim.dim_value(), pads[i])) {
+      output_dim.set_dim_value(checkedSubtract(output_dim.dim_value(), 1));
+    }
+
+    *newdim = output_dim;
   }
 
   if (ctx.getNumOutputs() > 1) {
@@ -453,8 +481,19 @@ static void maxUnpoolShapeInference(InferenceContext& ctx) {
         fail_shape_inference("'output_shape' must have same number of elements as the shape of input tensor X.");
       }
     }
-    return; // 'output_shape' is specified as input. Actual shape will be
-            // determined at runtime.
+    // If output_shape data is available, use it to set the output shape.
+    const TensorProto* output_shape_data = ctx.getInputData(2);
+    if (output_shape_data != nullptr) {
+      const auto values = ParseData<int64_t>(output_shape_data);
+      auto* final_output_shape = ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
+      for (const auto& v : values) {
+        if (v < 0) {
+          fail_shape_inference("MaxUnpool output_shape dimensions must be non-negative; got ", v, ".");
+        }
+        final_output_shape->add_dim()->set_dim_value(v);
+      }
+    }
+    return;
   }
 
   if (!hasInputShape(ctx, 1)) {
@@ -473,17 +512,19 @@ static void maxUnpoolShapeInference(InferenceContext& ctx) {
   int kernel_shape_size = static_cast<int>(kernel_shape.size());
   for (int i = 0; i < kernel_shape_size; ++i) {
     auto* newdim = final_output_shape->add_dim();
-    if (!input_shape.dim(2 + i).has_dim_value()) {
+    if (!input_shape.dim(2 + i).has_dim_value() && !input_shape.dim(2 + i).has_dim_param()) {
       continue;
     }
 
-    int64_t newdim_value = checkedMultiply(strides[i], checkedSubtract(input_shape.dim(2 + i).dim_value(), 1));
-    newdim_value = checkedAdd(newdim_value, kernel_shape[i]);
-    newdim_value = checkedSubtract(newdim_value, pads[i]);
-    newdim_value = checkedSubtract(newdim_value, pads[i + kernel_shape_size]);
+    auto input_dim = symbolicDim(ctx, input_shape.dim(2 + i));
+    auto output_dim = (input_dim - 1) * strides[i];
+    if (input_dim.has_dim_value()) {
+      output_dim = output_dim + kernel_shape[i] - pads[i] - pads[i + kernel_shape_size];
+    } else {
+      output_dim = output_dim + checkedSubtract(checkedSubtract(kernel_shape[i], pads[i]), pads[i + kernel_shape_size]);
+    }
 
-    // add in the initial position
-    newdim->set_dim_value(newdim_value);
+    *newdim = output_dim;
   }
 }
 
@@ -1253,8 +1294,7 @@ ONNX_API void convTransposeShapeInference(InferenceContext& ctx) {
   auto* final_output_shape = ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
 
   *final_output_shape->add_dim() = input_shape.dim(0);
-  *final_output_shape->add_dim() = weight_shape.dim(1) * group; // channels should be the second dim of second input
-                                                                // multiply group.
+  *final_output_shape->add_dim() = symbolicDim(ctx, weight_shape.dim(1)) * group;
 
   int size_of_output = 0;
   if (output_shape_presented) {
@@ -1978,7 +2018,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             fail_shape_inference("Invalid value(", axis, ") for attribute 'axis'");
           }
           // TODO(ONNX): is the operation defined for input-rank < 2?
-          updateOutputShape(ctx, 0, {multiplyDims(input_shape, 0, axis), multiplyDims(input_shape, axis, rank)});
+          updateOutputShape(
+              ctx, 0, {multiplyDims(ctx, input_shape, 0, axis), multiplyDims(ctx, input_shape, axis, rank)});
         }));
 
 ONNX_OPERATOR_SET_SCHEMA(
@@ -2229,7 +2270,7 @@ static void col2imShapeInference(InferenceContext& ctx) {
   *final_image_shape->add_dim() = N;
 
   if (block_shape_size > 0) {
-    C = input_shape.dim(1) / block_shape_size; // Otherwise, C is unknown.
+    C = symbolicDim(ctx, input_shape.dim(1)) / block_shape_size; // Otherwise, C is unknown.
   }
   *final_image_shape->add_dim() = C;
 

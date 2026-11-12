@@ -1020,11 +1020,9 @@ ONNX_OPERATOR_SET_SCHEMA(
             // Add a new dimension to outputShape
             auto new_dim = outputShape->add_dim();
             if (targetShapeProto.dim(i).has_dim_param()) {
-              // There is a tricky edge case here. It is possible that the value of
-              // symbolic dim can be -1 or 0 at runtime. In that case simply propagating this
-              // symbol can be erroneous. This should be a very rare scenario and in such a
-              // case an option is to turn off data propagation during shape inference.
-              new_dim->set_dim_param(targetShapeProto.dim(i).dim_param());
+              if (isReshapeSymbolicDimSafe(ctx, targetShapeProto.dim(i), i, allowzero != 0)) {
+                new_dim->set_dim_param(targetShapeProto.dim(i).dim_param());
+              }
               outputProductValid = false;
             } else {
               if (!targetShapeProto.dim(i).has_dim_value()) {
@@ -1168,11 +1166,9 @@ ONNX_OPERATOR_SET_SCHEMA(
             // Add a new dimension to outputShape
             auto new_dim = outputShape->add_dim();
             if (targetShapeProto.dim(i).has_dim_param()) {
-              // There is a tricky edge case here. It is possible that the value of
-              // symbolic dim can be -1 or 0 at runtime. In that case simply propagating this
-              // symbol can be erroneous. This should be a very rare scenario and in such a
-              // case an option is to turn off data propagation during shape inference.
-              new_dim->set_dim_param(targetShapeProto.dim(i).dim_param());
+              if (isReshapeSymbolicDimSafe(ctx, targetShapeProto.dim(i), i, allowzero != 0)) {
+                new_dim->set_dim_param(targetShapeProto.dim(i).dim_param());
+              }
               outputProductValid = false;
             } else {
               if (!targetShapeProto.dim(i).has_dim_value()) {
@@ -1316,11 +1312,9 @@ ONNX_OPERATOR_SET_SCHEMA(
             // Add a new dimension to outputShape
             auto new_dim = outputShape->add_dim();
             if (targetShapeProto.dim(i).has_dim_param()) {
-              // There is a tricky edge case here. It is possible that the value of
-              // symbolic dim can be -1 or 0 at runtime. In that case simply propagating this
-              // symbol can be erroneous. This should be a very rare scenario and in such a
-              // case an option is to turn off data propagation during shape inference.
-              new_dim->set_dim_param(targetShapeProto.dim(i).dim_param());
+              if (isReshapeSymbolicDimSafe(ctx, targetShapeProto.dim(i), i, allowzero != 0)) {
+                new_dim->set_dim_param(targetShapeProto.dim(i).dim_param());
+              }
               outputProductValid = false;
             } else {
               if (!targetShapeProto.dim(i).has_dim_value()) {
@@ -1464,11 +1458,9 @@ ONNX_OPERATOR_SET_SCHEMA(
             // Add a new dimension to outputShape
             auto new_dim = outputShape->add_dim();
             if (targetShapeProto.dim(i).has_dim_param()) {
-              // There is a tricky edge case here. It is possible that the value of
-              // symbolic dim can be -1 or 0 at runtime. In that case simply propagating this
-              // symbol can be erroneous. This should be a very rare scenario and in such a
-              // case an option is to turn off data propagation during shape inference.
-              new_dim->set_dim_param(targetShapeProto.dim(i).dim_param());
+              if (isReshapeSymbolicDimSafe(ctx, targetShapeProto.dim(i), i, allowzero != 0)) {
+                new_dim->set_dim_param(targetShapeProto.dim(i).dim_param());
+              }
               outputProductValid = false;
             } else {
               if (!targetShapeProto.dim(i).has_dim_value()) {
@@ -1990,14 +1982,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           ctx.getOutputType(0)->mutable_tensor_type()->set_elem_type(TensorProto::INT64);
           ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
         })
-        .PartialDataPropagationFunction([](DataPropagationContext& ctx) {
-          const auto input_data = ctx.getInputData(0);
-          if (input_data != nullptr) {
-            TensorShapeProto tsp;
-            tsp.mutable_dim()->Add()->set_dim_value(input_data->dim_size());
-            ctx.addOutputData(0, std::move(tsp));
-          }
-        }));
+        .PartialDataPropagationFunction(SizeDataPropagator));
 
 ONNX_OPERATOR_SET_SCHEMA(
     Size,
@@ -2020,14 +2005,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           ctx.getOutputType(0)->mutable_tensor_type()->set_elem_type(TensorProto::INT64);
           ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
         })
-        .PartialDataPropagationFunction([](DataPropagationContext& ctx) {
-          const auto input_data = ctx.getInputData(0);
-          if (input_data != nullptr) {
-            TensorShapeProto tsp;
-            tsp.mutable_dim()->Add()->set_dim_value(input_data->dim_size());
-            ctx.addOutputData(0, std::move(tsp));
-          }
-        }));
+        .PartialDataPropagationFunction(SizeDataPropagator));
 
 ONNX_OPERATOR_SET_SCHEMA(
     Size,
@@ -4009,9 +3987,9 @@ ONNX_OPERATOR_SET_SCHEMA(
                   ctx,
                   0,
                   {input_shape.dim(0),
-                   input_shape.dim(1) * block_area,
-                   input_shape.dim(2) / blocksize,
-                   input_shape.dim(3) / blocksize});
+                   symbolicDim(ctx, input_shape.dim(1)) * block_area,
+                   symbolicDim(ctx, input_shape.dim(2)) / blocksize,
+                   symbolicDim(ctx, input_shape.dim(3)) / blocksize});
             } else {
               fail_shape_inference("Input tensor must be 4-dimensional");
             }
@@ -4058,9 +4036,9 @@ ONNX_OPERATOR_SET_SCHEMA(
                   ctx,
                   0,
                   {input_shape.dim(0),
-                   input_shape.dim(1) * block_area,
-                   input_shape.dim(2) / blocksize,
-                   input_shape.dim(3) / blocksize});
+                   symbolicDim(ctx, input_shape.dim(1)) * block_area,
+                   symbolicDim(ctx, input_shape.dim(2)) / blocksize,
+                   symbolicDim(ctx, input_shape.dim(3)) / blocksize});
             } else {
               fail_shape_inference("Input tensor must be 4-dimensional");
             }
@@ -4100,9 +4078,9 @@ ONNX_OPERATOR_SET_SCHEMA(
                   ctx,
                   0,
                   {input_shape.dim(0),
-                   input_shape.dim(1) / block_area,
-                   input_shape.dim(2) * blocksize,
-                   input_shape.dim(3) * blocksize});
+                   symbolicDim(ctx, input_shape.dim(1)) / block_area,
+                   symbolicDim(ctx, input_shape.dim(2)) * blocksize,
+                   symbolicDim(ctx, input_shape.dim(3)) * blocksize});
             } else {
               fail_shape_inference("Input tensor must be 4-dimensional");
             }
@@ -4154,9 +4132,9 @@ ONNX_OPERATOR_SET_SCHEMA(
                   ctx,
                   0,
                   {input_shape.dim(0),
-                   input_shape.dim(1) / block_area,
-                   input_shape.dim(2) * blocksize,
-                   input_shape.dim(3) * blocksize});
+                   symbolicDim(ctx, input_shape.dim(1)) / block_area,
+                   symbolicDim(ctx, input_shape.dim(2)) * blocksize,
+                   symbolicDim(ctx, input_shape.dim(3)) * blocksize});
             } else {
               fail_shape_inference("Input tensor must be 4-dimensional");
             }
@@ -4221,9 +4199,15 @@ ONNX_OPERATOR_SET_SCHEMA(
                 fail_shape_inference("'Repeats' input must not contain negative values");
               }
               const auto& input_dim = input_shape.dim(i);
-              auto output_dim = output_shape->add_dim();
+              auto* output_dim = output_shape->add_dim();
               if (input_dim.has_dim_value()) {
                 output_dim->set_dim_value(checkedMultiply(input_dim.dim_value(), repeats_data[i]));
+              } else if (input_dim.has_dim_param()) {
+                if (repeats_data[i] == 1) {
+                  *output_dim = input_dim;
+                } else {
+                  *output_dim = symbolicDim(ctx, input_dim) * repeats_data[i];
+                }
               }
             }
           } else {
@@ -4589,7 +4573,8 @@ ONNX_OPERATOR_SET_SCHEMA(
               return t;
             }(),
             "Constrain input and output types to all tensor, sequence, and optional types.")
-        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
+        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput)
+        .PartialDataPropagationFunction(IdentityDataPropagator));
 
 ONNX_OPERATOR_SET_SCHEMA(
     Identity,
@@ -4609,7 +4594,8 @@ ONNX_OPERATOR_SET_SCHEMA(
               return t;
             }(),
             "Constrain input and output types to all tensor, sequence, and optional types.")
-        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
+        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput)
+        .PartialDataPropagationFunction(IdentityDataPropagator));
 
 ONNX_OPERATOR_SET_SCHEMA(
     Identity,
@@ -4629,7 +4615,8 @@ ONNX_OPERATOR_SET_SCHEMA(
               return t;
             }(),
             "Constrain input and output types to all tensor, sequence, and optional types.")
-        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
+        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput)
+        .PartialDataPropagationFunction(IdentityDataPropagator));
 
 ONNX_OPERATOR_SET_SCHEMA(
     Identity,
@@ -4649,7 +4636,8 @@ ONNX_OPERATOR_SET_SCHEMA(
               return t;
             }(),
             "Constrain input and output types to all tensor, sequence, and optional types.")
-        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
+        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput)
+        .PartialDataPropagationFunction(IdentityDataPropagator));
 
 ONNX_OPERATOR_SET_SCHEMA(
     Identity,
@@ -4659,7 +4647,8 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Input(0, "input", "Input tensor", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
         .Output(0, "output", "Tensor to copy input into.", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
         .TypeConstraint("T", OpSchema::all_tensor_types_ir4(), "Constrain input and output types to all tensor types.")
-        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
+        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput)
+        .PartialDataPropagationFunction(IdentityDataPropagator));
 
 ONNX_OPERATOR_SET_SCHEMA(
     Identity,
@@ -4669,7 +4658,8 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Input(0, "input", "Input tensor", "T")
         .Output(0, "output", "Tensor to copy input into.", "T")
         .TypeConstraint("T", OpSchema::all_tensor_types(), "Constrain input and output types to all tensor types.")
-        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
+        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput)
+        .PartialDataPropagationFunction(IdentityDataPropagator));
 
 ONNX_OPERATOR_SET_SCHEMA(
     IsNaN,
@@ -5632,9 +5622,9 @@ ONNX_OPERATOR_SET_SCHEMA(
                   ctx,
                   0,
                   {input_shape.dim(0),
-                   input_shape.dim(1) / block_area,
-                   input_shape.dim(2) * blocksize,
-                   input_shape.dim(3) * blocksize});
+                   symbolicDim(ctx, input_shape.dim(1)) / block_area,
+                   symbolicDim(ctx, input_shape.dim(2)) * blocksize,
+                   symbolicDim(ctx, input_shape.dim(3)) * blocksize});
             } else {
               fail_shape_inference("Input tensor must be 4-dimensional");
             }
@@ -6077,7 +6067,8 @@ ONNX_OPERATOR_SET_SCHEMA(
               return t;
             }(),
             "Constrain input and output types to all tensor and sequence types.")
-        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
+        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput)
+        .PartialDataPropagationFunction(IdentityDataPropagator));
 
 ONNX_OPERATOR_SET_SCHEMA(
     Where,
@@ -6237,7 +6228,8 @@ ONNX_OPERATOR_SET_SCHEMA(
               return t;
             }(),
             "Constrain input and output types to all tensor, sequence, and optional types.")
-        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
+        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput)
+        .PartialDataPropagationFunction(IdentityDataPropagator));
 
 ONNX_OPERATOR_SET_SCHEMA(
     Reshape,
@@ -6295,11 +6287,9 @@ ONNX_OPERATOR_SET_SCHEMA(
             // Add a new dimension to outputShape
             auto new_dim = outputShape->add_dim();
             if (targetShapeProto.dim(i).has_dim_param()) {
-              // There is a tricky edge case here. It is possible that the value of
-              // symbolic dim can be -1 or 0 at runtime. In that case simply propagating this
-              // symbol can be erroneous. This should be a very rare scenario and in such a
-              // case an option is to turn off data propagation during shape inference.
-              new_dim->set_dim_param(targetShapeProto.dim(i).dim_param());
+              if (isReshapeSymbolicDimSafe(ctx, targetShapeProto.dim(i), i, allowzero != 0)) {
+                new_dim->set_dim_param(targetShapeProto.dim(i).dim_param());
+              }
               outputProductValid = false;
             } else {
               if (!targetShapeProto.dim(i).has_dim_value()) {
@@ -6594,14 +6584,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           ctx.getOutputType(0)->mutable_tensor_type()->set_elem_type(TensorProto::INT64);
           ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
         })
-        .PartialDataPropagationFunction([](DataPropagationContext& ctx) {
-          const auto input_data = ctx.getInputData(0);
-          if (input_data != nullptr) {
-            TensorShapeProto tsp;
-            tsp.mutable_dim()->Add()->set_dim_value(input_data->dim_size());
-            ctx.addOutputData(0, std::move(tsp));
-          }
-        }));
+        .PartialDataPropagationFunction(SizeDataPropagator));
 
 ONNX_OPERATOR_SET_SCHEMA(
     Size,
@@ -6624,14 +6607,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           ctx.getOutputType(0)->mutable_tensor_type()->set_elem_type(TensorProto::INT64);
           ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
         })
-        .PartialDataPropagationFunction([](DataPropagationContext& ctx) {
-          const auto input_data = ctx.getInputData(0);
-          if (input_data != nullptr) {
-            TensorShapeProto tsp;
-            tsp.mutable_dim()->Add()->set_dim_value(input_data->dim_size());
-            ctx.addOutputData(0, std::move(tsp));
-          }
-        }));
+        .PartialDataPropagationFunction(SizeDataPropagator));
 
 ONNX_OPERATOR_SET_SCHEMA(
     Size,
@@ -6654,14 +6630,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           ctx.getOutputType(0)->mutable_tensor_type()->set_elem_type(TensorProto::INT64);
           ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
         })
-        .PartialDataPropagationFunction([](DataPropagationContext& ctx) {
-          const auto input_data = ctx.getInputData(0);
-          if (input_data != nullptr) {
-            TensorShapeProto tsp;
-            tsp.mutable_dim()->Add()->set_dim_value(input_data->dim_size());
-            ctx.addOutputData(0, std::move(tsp));
-          }
-        }));
+        .PartialDataPropagationFunction(SizeDataPropagator));
 
 ONNX_OPERATOR_SET_SCHEMA(
     Compress,
