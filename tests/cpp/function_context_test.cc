@@ -13,6 +13,7 @@
 #include "onnx/defs/function.h"
 #include "onnx/defs/parser.h"
 #include "onnx/defs/schema.h"
+#include "onnx/shape_inference/implementation.h"
 
 namespace ONNX_NAMESPACE::Test {
 
@@ -85,6 +86,50 @@ TEST(FunctionAPITest, ContextDependentFunctionTest) {
   checkerCtx.set_opset_imports(opset_imports);
   checkerCtx.set_ir_version(7);
   checker::check_function(fnProto, checkerCtx, lexicalScope);
+}
+
+TEST(FunctionAPITest, OmittedTrailingInputDoesNotCaptureCallerValue) {
+  const auto* schema = OpSchemaRegistry::Schema("ReduceSumSquare", 18, ONNX_DOMAIN);
+  ASSERT_NE(schema, nullptr);
+  const auto* function = schema->GetFunction(18);
+  ASSERT_NE(function, nullptr);
+  for (const int input_mode : {0, 1, 2}) {
+    SCOPED_TRACE(input_mode);
+    ModelProto model;
+    OnnxParser parser(R"ONNX(
+      <ir_version: 8, opset_import: ["" : 18]>
+      reduction (float[2,3] X, int64[1] axes, int64[1] chosen_axes) => (float[M,N] Y) {
+        Y = ReduceSumSquare(X)
+      }
+    )ONNX");
+    ASSERT_TRUE(parser.Parse(model).IsOK());
+    for (const auto* name : {"axes", "chosen_axes"}) {
+      auto* initializer = model.mutable_graph()->add_initializer();
+      initializer->set_name(name);
+      initializer->set_data_type(TensorProto::INT64);
+      initializer->add_dims(1);
+      initializer->add_int64_data(std::string(name) == "axes" ? 1 : 0);
+    }
+    auto* node = model.mutable_graph()->mutable_node(0);
+    if (input_mode != 0) {
+      node->add_input(input_mode == 1 ? "" : "chosen_axes");
+    }
+    checker::check_model(model);
+    ModelProto original = model;
+    shape_inference::InferShapes(original);
+    const auto& expected_shape = original.graph().output(0).type().tensor_type().shape();
+    ASSERT_EQ(expected_shape.dim(0).dim_value(), 1);
+    ASSERT_EQ(expected_shape.dim(1).dim_value(), input_mode == 2 ? 3 : 1);
+
+    NodeProto call = *node;
+    model.mutable_graph()->clear_node();
+    FunctionExpandHelper(call, *function, *model.mutable_graph());
+    ASSERT_EQ(model.graph().node_size(), 2);
+    EXPECT_EQ(model.graph().node(1).input(1), input_mode == 2 ? "chosen_axes" : "");
+    checker::check_model(model);
+    shape_inference::InferShapes(model);
+    EXPECT_EQ(model.graph().output(0).type().tensor_type().shape().SerializeAsString(), expected_shape.SerializeAsString());
+  }
 }
 
 #ifndef ONNX_NO_EXCEPTIONS

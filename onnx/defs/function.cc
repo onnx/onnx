@@ -35,6 +35,9 @@ void FunctionExpandHelper(
     }
     io_names_map[func.input().Get(idx)] = node.input().Get(idx);
   }
+  for (int idx = node.input_size(); idx < func.input_size(); ++idx) {
+    io_names_map[func.input().Get(idx)] = "";
+  }
   for (int idx = 0; idx < node.output_size(); ++idx) {
     // If the node output is missing, the corresponding function output should
     // be treated as an internal value (not as missing) because it could also be
