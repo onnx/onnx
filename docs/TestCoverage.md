@@ -6,7 +6,7 @@
 * [Overall Test Coverage](#overall-test-coverage)
 # Node Test Coverage
 ## Summary
-Node tests have covered 198/207 (95.65%, 5 generators excluded) common operators.
+Node tests have covered 200/209 (95.69%, 5 generators excluded) common operators.
 
 Node tests have covered 1/1 (100.00%, 0 generators excluded) experimental operators.
 
@@ -21340,6 +21340,77 @@ expect(node, inputs=[x, slope], outputs=[y], name="test_prelu_broadcast")
 </details>
 
 
+### Pack
+There are 6 test cases, listed as following:
+<details>
+<summary>pack_3bit</summary>
+
+```python
+node = helper.make_node("Pack", ["X"], ["Y"], bits=3)
+x = np.arange(8, dtype=np.uint8)
+y = np.array([0x88, 0xC6, 0xFA], dtype=np.uint8)
+expect(node, inputs=[x], outputs=[y], name="test_pack_3bit")
+```
+
+</details>
+<details>
+<summary>pack_empty</summary>
+
+```python
+node = helper.make_node("Pack", ["X"], ["Y"], bits=3)
+x = np.empty((2, 0), dtype=np.uint8)
+expect(node, inputs=[x], outputs=[x], name="test_pack_empty")
+```
+
+</details>
+<details>
+<summary>pack_empty_rows</summary>
+
+```python
+node = helper.make_node("Pack", ["X"], ["Y"], bits=5)
+x = np.empty((2, 0, 9), dtype=np.uint8)
+y = np.empty((2, 0, 6), dtype=np.uint8)
+expect(node, inputs=[x], outputs=[y], name="test_pack_empty_rows")
+```
+
+</details>
+<details>
+<summary>pack_rows_5bit</summary>
+
+```python
+node = helper.make_node("Pack", ["X"], ["Y"], bits=5)
+x = np.array([[1, 2, 3], [31, 0, 16]], dtype=np.uint8)
+y = np.array([[0x41, 0x0C], [0x1F, 0x40]], dtype=np.uint8)
+expect(node, inputs=[x], outputs=[y], name="test_pack_rows_5bit")
+```
+
+</details>
+<details>
+<summary>pack_ternary</summary>
+
+```python
+node = helper.make_node("Pack", ["X"], ["Y"], radix=3, group_size=5)
+x = np.array([[0, 1, 2, 0, 1], [2, 2, 2, 2, 2]], dtype=np.uint8)
+y = np.array([[102], [242]], dtype=np.uint8)
+expect(node, inputs=[x], outputs=[y], name="test_pack_ternary")
+```
+
+</details>
+<details>
+<summary>pack_uint32_axis</summary>
+
+```python
+node = helper.make_node(
+    "Pack", ["X"], ["Y"], bits=5, axis=0, output_type=TensorProto.UINT32
+)
+x = np.full((7, 2), 31, dtype=np.uint8)
+y = np.array([[0xFFFFFFFF, 0xFFFFFFFF], [7, 7]], dtype=np.uint32)
+expect(node, inputs=[x], outputs=[y], name="test_pack_uint32_axis")
+```
+
+</details>
+
+
 ### Pad
 There are 8 test cases, listed as following:
 <details>
@@ -33966,6 +34037,81 @@ expect(
     outputs=[y, indices, inverse_indices, counts],
     name="test_unique_bfloat16_sorted_without_axis",
 )
+```
+
+</details>
+
+
+### Unpack
+There are 6 test cases, listed as following:
+<details>
+<summary>unpack_3bit</summary>
+
+```python
+node = helper.make_node("Unpack", ["X", "count"], ["Y"], bits=3)
+x = np.array([0x88, 0xC6, 0xFA], dtype=np.uint8)
+count = np.array(8, dtype=np.int64)
+y = np.arange(8, dtype=np.uint8)
+expect(node, inputs=[x, count], outputs=[y], name="test_unpack_3bit")
+```
+
+</details>
+<details>
+<summary>unpack_empty</summary>
+
+```python
+node = helper.make_node("Unpack", ["X", "count"], ["Y"], bits=3)
+x = np.empty((2, 0), dtype=np.uint8)
+count = np.array(0, dtype=np.int64)
+expect(node, inputs=[x, count], outputs=[x], name="test_unpack_empty")
+```
+
+</details>
+<details>
+<summary>unpack_empty_rows</summary>
+
+```python
+node = helper.make_node("Unpack", ["X", "count"], ["Y"], bits=5)
+x = np.empty((2, 0, 6), dtype=np.uint8)
+count = np.array(9, dtype=np.int64)
+y = np.empty((2, 0, 9), dtype=np.uint8)
+expect(node, inputs=[x, count], outputs=[y], name="test_unpack_empty_rows")
+```
+
+</details>
+<details>
+<summary>unpack_rows_5bit</summary>
+
+```python
+node = helper.make_node("Unpack", ["X", "count"], ["Y"], bits=5)
+x = np.array([[0x41, 0x0C], [0x1F, 0x40]], dtype=np.uint8)
+count = np.array(3, dtype=np.int64)
+y = np.array([[1, 2, 3], [31, 0, 16]], dtype=np.uint8)
+expect(node, inputs=[x, count], outputs=[y], name="test_unpack_rows_5bit")
+```
+
+</details>
+<details>
+<summary>unpack_ternary</summary>
+
+```python
+node = helper.make_node("Unpack", ["X", "count"], ["Y"], radix=3, group_size=5)
+x = np.array([[102], [242]], dtype=np.uint8)
+count = np.array(5, dtype=np.int64)
+y = np.array([[0, 1, 2, 0, 1], [2, 2, 2, 2, 2]], dtype=np.uint8)
+expect(node, inputs=[x, count], outputs=[y], name="test_unpack_ternary")
+```
+
+</details>
+<details>
+<summary>unpack_uint32_axis</summary>
+
+```python
+node = helper.make_node("Unpack", ["X", "count"], ["Y"], bits=5, axis=0)
+x = np.full((2, 2), 0xFFFFFFFF, dtype=np.uint32)
+count = np.array(7, dtype=np.int64)
+y = np.full((7, 2), 31, dtype=np.uint8)
+expect(node, inputs=[x, count], outputs=[y], name="test_unpack_uint32_axis")
 ```
 
 </details>
