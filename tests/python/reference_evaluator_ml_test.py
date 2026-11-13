@@ -558,6 +558,54 @@ class TestReferenceEvaluatorAiOnnxMl:
         got = sess.run(None, {"X": x})
         assert_allclose(got[0], expected, atol=1e-6)
 
+    @pytest.mark.skipif(not ONNX_ML, reason="onnx not compiled with ai.onnx.ml")
+    def test_linear_regressor_no_intercepts(self):
+        X = make_tensor_value_info("X", TensorProto.FLOAT, [None, None])
+        Y = make_tensor_value_info("Y", TensorProto.FLOAT, [None, None])
+        node1 = make_node(
+            "LinearRegressor",
+            ["X"],
+            ["Y"],
+            domain="ai.onnx.ml",
+            coefficients=[0.3, -0.77],
+            post_transform="NONE",
+            targets=1,
+        )
+        graph = make_graph([node1], "ml", [X], [Y])
+        model = make_model_gen_version(graph, opset_imports=OPSETS)
+        onnx.checker.check_model(model)
+        x = np.arange(6).reshape((-1, 2)).astype(np.float32)
+        expected = np.array([[-0.77], [-1.71], [-2.65]], dtype=np.float32)
+        self._check_ort(model, {"X": x}, equal=True)
+        sess = ReferenceEvaluator(model)
+        got = sess.run(None, {"X": x})
+        assert_allclose(got[0], expected, atol=1e-6)
+
+    @pytest.mark.skipif(not ONNX_ML, reason="onnx not compiled with ai.onnx.ml")
+    def test_linear_classifier_no_intercepts(self):
+        X = make_tensor_value_info("X", TensorProto.FLOAT, [None, None])
+        In = make_tensor_value_info("I", TensorProto.INT64, [None])
+        Y = make_tensor_value_info("Y", TensorProto.FLOAT, [None, None])
+        node1 = make_node(
+            "LinearClassifier",
+            ["X"],
+            ["I", "Y"],
+            domain="ai.onnx.ml",
+            classlabels_ints=[0, 1, 2],
+            coefficients=[-1.0, -2.0, 3.0, 1.0, 2.0, 0.5],
+            post_transform="NONE",
+        )
+        graph = make_graph([node1], "ml", [X], [In, Y])
+        model = make_model_gen_version(graph, opset_imports=OPSETS)
+        onnx.checker.check_model(model)
+        x = np.array([[1, 2], [3, 4]], dtype=np.float32)
+        sess = ReferenceEvaluator(model)
+        labels, scores = sess.run(None, {"X": x})
+        assert_allclose(labels, np.array([1, 1], dtype=np.int64))
+        assert_allclose(
+            scores, np.array([[-5, 5, 3], [-11, 13, 8]], dtype=np.float32), atol=1e-6
+        )
+
     @pytest.mark.parametrize(
         "post", ["SOFTMAX", "NONE", "LOGISTIC", "SOFTMAX_ZERO", "PROBIT"]
     )
