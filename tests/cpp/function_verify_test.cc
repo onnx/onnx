@@ -397,7 +397,7 @@ TEST(FunctionVerification, VerifyPackingFunctionsAndExpansion) {
                 getAttribute(context, "output_type", TensorProto::UINT8));
           }
           FunctionExpandHelper(node, function, graph);
-          EXPECT_NO_THROW(checker::check_model(model));
+          checker::check_model(model);
         }
       }
     }
@@ -440,7 +440,7 @@ TEST(FunctionVerification, VerifyFunctionExpansionWithNestedCaptures) {
   node.add_output("caller_output");
   auto& graph = *model.mutable_graph();
   FunctionExpandHelper(node, function, graph);
-  EXPECT_NO_THROW(checker::check_model(model));
+  checker::check_model(model);
   const auto& outer_if = graph.node(2);
   const auto& outer_then = outer_if.attribute(0).g();
   const auto& outer_else = outer_if.attribute(1).g();

@@ -122,6 +122,7 @@ __all__ = [
     "Identity",
     "If",
     "ImageDecoder",
+    "InitPRNG",
     "InstanceNormalization",
     "IsInf",
     "IsNaN",
@@ -246,6 +247,7 @@ __all__ = [
     "Split_11",
     "Split_13",
     "Split_18",
+    "SplitPRNG",
     "SplitToSequence",
     "Sqrt",
     "Squeeze_1",
@@ -400,6 +402,7 @@ from onnx.reference.ops.op_hardmax import Hardmax
 from onnx.reference.ops.op_identity import Identity
 from onnx.reference.ops.op_if import If
 from onnx.reference.ops.op_image_decoder import ImageDecoder
+from onnx.reference.ops.op_init_prng import InitPRNG
 from onnx.reference.ops.op_instance_normalization import InstanceNormalization
 from onnx.reference.ops.op_isinf import IsInf
 from onnx.reference.ops.op_isnan import IsNaN
@@ -512,6 +515,7 @@ from onnx.reference.ops.op_softplus import Softplus
 from onnx.reference.ops.op_softsign import Softsign
 from onnx.reference.ops.op_space_to_depth import SpaceToDepth
 from onnx.reference.ops.op_split import Split_2, Split_11, Split_13, Split_18
+from onnx.reference.ops.op_split_prng import SplitPRNG
 from onnx.reference.ops.op_split_to_sequence import SplitToSequence
 from onnx.reference.ops.op_sqrt import Sqrt
 from onnx.reference.ops.op_squeeze import Squeeze_1, Squeeze_11, Squeeze_13
